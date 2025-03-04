@@ -1,221 +1,136 @@
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53C3A1FC7C1
-	for <dm-devel@lists.linux.dev>; Tue,  4 Mar 2025 09:07:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F6471FC107
+	for <dm-devel@lists.linux.dev>; Tue,  4 Mar 2025 11:18:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741079273; cv=none; b=dlheGIaCLrKLMLCap+mkTZjO1r8aC/lI2mLRwvMKCtWBrWTd2sSdkIs1SMVJd4qOrbNNtY2WPk87KAEW9LILp6UwRN8+l6Ovt25jC2SWtA+bGwH8CCGBBHu0sFc2ID/59GHgsKDzd6vM+R84QZFFEiWTxiBS6PvZlnWWq1haGI0=
+	t=1741087115; cv=none; b=udei4jOqq6fsmaf8uPmsAuoWfLFjbREFnoPo78MqNIrhsYLbkq/SnJnjfozAIY2lNXq5G6AmoD0vleGSf6vUlt8k5y2HUYM55BlRJSqqvRfHl9vk5okccAh3fejM1gB3+bu0kGXrtqLBnJb4IBwG83YJLom0zvL/hJPUSo5/AIg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741079273; c=relaxed/simple;
-	bh=HlRuJsObdmTIXLy2gntSExiNIMT953QBK+Wk2BF7v2Y=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:In-Reply-To:
-	 Content-Type:References; b=k6pgq2zvnI5Nb/0mpVeIK5MTVZFW/S8Y+stH/eAQu1nz9T2Gq/Nk6IWbbvhS2THUzSb/6OlV2KC7opJrJrXWBt4hQ8XOD3/9mk9KdwceiZMI2eRPiPt9AYm6Uqit0wAh8JZ21/w/MeNGpRPmpNBcVLE0XofJq0erSkgE60/QrtA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=j6JYOB95; arc=none smtp.client-ip=203.254.224.33
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1741087115; c=relaxed/simple;
+	bh=9mTH7ItLTK9ncQHKsdc3UyY37G50MU5MYZiyBlBzTrM=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=a5KVPIGEmWjOOwsDJ9yFg56ljOrLcrnknU/MQDcywzb2Kbglo1B713at6xZU2UIcyVAQCPhqfR0xgtnGWKx92uRlpiLfsPJyySUFK4Qv/qfwnkZ9MJpPuNqLDX5Q/8crIjDV+OwHbNeLwo1pcHzPxL5in6fg9+gDfYjYmagWB7Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Xd0GuxDS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="j6JYOB95"
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
-	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20250304090749epoutp034c40758ef91c2b8dce5bcb2cfc83a273~pjl7o-3QC1067110671epoutp03T
-	for <dm-devel@lists.linux.dev>; Tue,  4 Mar 2025 09:07:49 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20250304090749epoutp034c40758ef91c2b8dce5bcb2cfc83a273~pjl7o-3QC1067110671epoutp03T
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1741079269;
-	bh=lYUkzFUtjAJu2r8Sfk/2FkWYl0bsmp8WMCZ3jAWLAa0=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=j6JYOB95C/pmvw7Lmp7RFuqvzaptCW8a9/e/eh1cjwACWwUFTUh8zJNeGiCj+aRcd
-	 M1UbDAX8qxxoB5BOsso+b0OQ70SCbcEJdVcUPdDG1o0hPcv0PErw3TIKXq6blTtSYf
-	 fJrAtzO4jqV9+/FiLqIHH+a03F04FgS8QvvpCzZw=
-Received: from epsnrtp1.localdomain (unknown [182.195.42.162]) by
-	epcas5p4.samsung.com (KnoxPortal) with ESMTP id
-	20250304090748epcas5p4eb357b126b85673c8abd3224e4e5ccc0~pjl7QfCAo2922629226epcas5p4A;
-	Tue,  4 Mar 2025 09:07:48 +0000 (GMT)
-Received: from epsmges5p3new.samsung.com (unknown [182.195.38.182]) by
-	epsnrtp1.localdomain (Postfix) with ESMTP id 4Z6VFZ34t7z4x9Q3; Tue,  4 Mar
-	2025 09:07:46 +0000 (GMT)
-Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
-	epsmges5p3new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	A7.0B.19956.2E2C6C76; Tue,  4 Mar 2025 18:07:46 +0900 (KST)
-Received: from epsmtrp1.samsung.com (unknown [182.195.40.13]) by
-	epcas5p2.samsung.com (KnoxPortal) with ESMTPA id
-	20250304085652epcas5p27939cc1666c3c792c972ce357031cd52~pjcXyiPfK2121921219epcas5p2U;
-	Tue,  4 Mar 2025 08:56:52 +0000 (GMT)
-Received: from epsmgms1p2new.samsung.com (unknown [182.195.42.42]) by
-	epsmtrp1.samsung.com (KnoxPortal) with ESMTP id
-	20250304085652epsmtrp12bc988aa8f22d49630f449dfb733c945~pjcXxza2n0410804108epsmtrp1a;
-	Tue,  4 Mar 2025 08:56:52 +0000 (GMT)
-X-AuditID: b6c32a4b-fd1f170000004df4-08-67c6c2e22fbe
-Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
-	epsmgms1p2new.samsung.com (Symantec Messaging Gateway) with SMTP id
-	5B.AB.18949.450C6C76; Tue,  4 Mar 2025 17:56:52 +0900 (KST)
-Received: from green245 (unknown [107.99.41.245]) by epsmtip1.samsung.com
-	(KnoxPortal) with ESMTPA id
-	20250304085650epsmtip1023e35fb0295564b7ea289ac153165d0~pjcWV0cRw0129801298epsmtip1N;
-	Tue,  4 Mar 2025 08:56:50 +0000 (GMT)
-Date: Tue, 4 Mar 2025 14:18:33 +0530
-From: Anuj Gupta <anuj20.g@samsung.com>
-To: Christoph Hellwig <hch@lst.de>
-Cc: axboe@kernel.dk, martin.petersen@oracle.com, anuj1072538@gmail.com,
-	nikh1092@linux.ibm.com, linux-nvme@lists.infradead.org,
-	linux-block@vger.kernel.org, linux-scsi@vger.kernel.org,
-	dm-devel@lists.linux.dev, M Nikhil <nikhilm@linux.ibm.com>
-Subject: Re: [PATCH v2 1/2] block: ensure correct integrity capability
- propagation in stacked devices
-Message-ID: <20250304084833.GA29801@green245>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Xd0GuxDS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1741087110;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=usTDXviTOoXK2bqIgIBvnRDmIQUTE9ubAbo+F2b7Uro=;
+	b=Xd0GuxDSOkQ5bJZ3NZGdr6rQewb58+EHBYUInGGHgp5F7a1WX2bO46K/VJoo5VluC+FHZ5
+	ibEG4Ry0TX5tlz0xkSy3oGsYnbDvWE4VhXYoUKltNSZD+IvVcDMyy2sugBACUzpziHvppY
+	Uigo0uem3EUp+0OG/82uuHBj2scca6U=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-100-m6SLKZ_7NNaTqO1wbE1WlA-1; Tue,
+ 04 Mar 2025 06:18:15 -0500
+X-MC-Unique: m6SLKZ_7NNaTqO1wbE1WlA-1
+X-Mimecast-MFC-AGG-ID: m6SLKZ_7NNaTqO1wbE1WlA_1741087094
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B25B8193585F;
+	Tue,  4 Mar 2025 11:18:13 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AC5561954B00;
+	Tue,  4 Mar 2025 11:18:08 +0000 (UTC)
+Date: Tue, 4 Mar 2025 12:18:04 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dave Chinner <david@fromorbit.com>
+cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, 
+    Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, 
+    zkabelac@redhat.com, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
+    linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH] the dm-loop target
+In-Reply-To: <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
+Message-ID: <1fde6ab6-bfba-3dc4-d7fb-67074036deb0@redhat.com>
+References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com> <Z8W1q6OYKIgnfauA@infradead.org> <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com> <Z8XlvU0o3C5hAAaM@infradead.org> <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com>
+ <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250303141236.GB16268@lst.de>
-User-Agent: Mutt/1.9.4 (2018-02-28)
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrBJsWRmVeSWpSXmKPExsWy7bCmhu6jQ8fSDV5sFLL4+PU3i8Xqu/1s
-	FgsWzWWxWLn6KJPF3lvaFvOXPWW36L6+g81i+fF/TBZ3Lz5lttjZfozRgctj56y77B6Xz5Z6
-	TFh0gNFj85J6jxebZzJ67L7ZwObx8ektFo/Pm+QCOKKybTJSE1NSixRS85LzUzLz0m2VvIPj
-	neNNzQwMdQ0tLcyVFPISc1NtlVx8AnTdMnOALlRSKEvMKQUKBSQWFyvp29kU5ZeWpCpk5BeX
-	2CqlFqTkFJgU6BUn5haX5qXr5aWWWBkaGBiZAhUmZGfs23uCqaBJuuL+9z72BsZusS5GTg4J
-	AROJky/esnUxcnEICexmlPh75hYjSEJI4BOjRNN2CYjEN0aJ+//PsMF07DwxhwkisZdRomNS
-	AzOE84xRYuuNBUwgVSwCKhJn3xxgB7HZBNQljjxvBRsrIqAk8fTVWUaQBmaBn4wSy+69ZgVJ
-	CAukS7z9fhTM5hXQlZh/ZAkLhC0ocXLmEzCbU0BHYv3paWA1ogLKEge2HQc7Q0JgKYfEg09n
-	2SHuc5F4PbGLFcIWlnh1fAtUXEriZX8blJ0u8ePyUyYIu0Ci+dg+RgjbXqL1VD8ziM0skCGx
-	/V83M0RcVmLqqXVMEHE+id7fT6B6eSV2zIOxlSTaV86BsiUk9p5rgLI9JJ7MOsUCCaLbjBIv
-	HvYwTWCUn4XkuVlI9kHYOhILdn9im8XIAWRLSyz/xwFhakqs36W/gJF1FaNkakFxbnpqsWmB
-	cV5qOTzKk/NzNzGCk7CW9w7GRw8+6B1iZOJgPMQowcGsJML7+cCxdCHelMTKqtSi/Pii0pzU
-	4kOMpsDYmsgsJZqcD8wDeSXxhiaWBiZmZmYmlsZmhkrivM07W9KFBNITS1KzU1MLUotg+pg4
-	OKUamBbz5Mf/OMi9VvfrPFU35f8rnctnWxs/7m+5ypp8v/Tpiu9/eZbwdgTly8nFpunXHp/U
-	91p3j5+fzmUfXsYPoucvmIryznk9ud/thQnjQ2GDqyUHc450HHSr6lqjLTXrd3PNM5aX1dnH
-	3319cs+o0re7Sb8mWnLBka+2fvkHdPY890qW6ZJfFa+2rKLTIrj4drL0I4ejOoWMHpF9RW9O
-	PkzIN13hIJF8ZYUNg1DQlTTPfp9G70WfklfqvjG1sv685op00L1p8psO/HMW2V6dGDelS2tt
-	t+/shQLH7mqI2zkdKo173LI8bFH6FAezqtvFyXWxTcGbVm5tSjBTXH82yTao5JD3EcWV7r8L
-	H8xRYinOSDTUYi4qTgQAsFzcp0sEAAA=
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFvrBLMWRmVeSWpSXmKPExsWy7bCSnG7IgWPpBr9+cll8/PqbxWL13X42
-	iwWL5rJYrFx9lMli7y1ti/nLnrJbdF/fwWax/Pg/Jou7F58yW+xsP8bowOWxc9Zddo/LZ0s9
-	Jiw6wOixeUm9x4vNMxk9dt9sYPP4+PQWi8fnTXIBHFFcNimpOZllqUX6dglcGX/nHmMrOCRR
-	MXtPYAPjE+EuRk4OCQETiZ0n5jB1MXJxCAnsZpRY/+05E0RCQuLUy2WMELawxMp/z9khip4w
-	Svy6vA8swSKgInH2zQF2EJtNQF3iyPNWsLiIgJLE01dnGUEamAV+Mkosu/eaFSQhLJAu8fb7
-	UTCbV0BXYv6RJSwgtpDAXUaJLzNzIOKCEidnPgGLMwtoSdz49xLoIg4gW1pi+T8OkDCngI7E
-	+tPTwMaICihLHNh2nGkCo+AsJN2zkHTPQuhewMi8ilEytaA4Nz232LDAKC+1XK84Mbe4NC9d
-	Lzk/dxMjOHK0tHYw7ln1Qe8QIxMH4yFGCQ5mJRHeW+1H04V4UxIrq1KL8uOLSnNSiw8xSnOw
-	KInzfnvdmyIkkJ5YkpqdmlqQWgSTZeLglGpg4hXTvTK7rqtX5fyrfwJuurnreo2N6/5UsAkF
-	lpjziltcYShaMuFXYfm/qyudFKqj2na8Kkk4O3vGOfcg/W/7Hc/9+bXbPVam+wdL5IX33IlM
-	K9i95ob3/mtOPqoUcezgdaHdn7qZCmaF18Xfs9tSY/fR5/+kzHY+vVqh3pI0dgHzv5wLxEVP
-	vZJjVtaJ/LT4UmnLtucbLsYVxmfMNQ1hT/vxtzhl1waZ6voAxw1HDmsduuQ04cnh+Pioddvb
-	7r1QOrsveevm5RPTY//zLpQKDN0+KydYjfucYbl8TrLjwsOMU+a7ekw+bvw99PLOrekfot3V
-	LNmf2myb/Sf5XVPhwyfqkevyHuslHDix78EsJZbijERDLeai4kQAaye1TAsDAAA=
-X-CMS-MailID: 20250304085652epcas5p27939cc1666c3c792c972ce357031cd52
-X-Msg-Generator: CA
-Content-Type: multipart/mixed;
-	boundary="----MTAFpDJBIS7x0DorxmyomC-IKR7RHdtq514vGN5lDcSFRf5o=_a01c4_"
-X-Sendblock-Type: REQ_APPROVE
-CMS-TYPE: 105P
-DLP-Filter: Pass
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20250226112857epcas5p1654e62b5fff4551926622f19269c6ff4
-References: <20250226112035.2571-1-anuj20.g@samsung.com>
-	<CGME20250226112857epcas5p1654e62b5fff4551926622f19269c6ff4@epcas5p1.samsung.com>
-	<20250226112035.2571-2-anuj20.g@samsung.com> <20250303141236.GB16268@lst.de>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-------MTAFpDJBIS7x0DorxmyomC-IKR7RHdtq514vGN5lDcSFRf5o=_a01c4_
-Content-Type: text/plain; charset="us-ascii"
-Content-Disposition: inline
 
-On Mon, Mar 03, 2025 at 03:12:36PM +0100, Christoph Hellwig wrote:
-> On Wed, Feb 26, 2025 at 04:50:34PM +0530, Anuj Gupta wrote:
-> > diff --git a/block/blk-settings.c b/block/blk-settings.c
-> > index c44dadc35e1e..8bd0d0f1479c 100644
-> > --- a/block/blk-settings.c
-> > +++ b/block/blk-settings.c
-> > @@ -861,7 +861,8 @@ bool queue_limits_stack_integrity(struct queue_limits *t,
-> >  
-> >  	if (!ti->tuple_size) {
-> >  		/* inherit the settings from the first underlying device */
-> > -		if (!(ti->flags & BLK_INTEGRITY_STACKED)) {
-> > +		if (!(ti->flags & BLK_INTEGRITY_STACKED) &&
-> > +		    (bi->flags & BLK_INTEGRITY_DEVICE_CAPABLE)) {
-> >  			ti->flags = BLK_INTEGRITY_DEVICE_CAPABLE |
-> >  				(bi->flags & BLK_INTEGRITY_REF_TAG);
-> >  			ti->csum_type = bi->csum_type;
+
+On Tue, 4 Mar 2025, Dave Chinner wrote:
+
+> On Mon, Mar 03, 2025 at 10:03:42PM +0100, Mikulas Patocka wrote:
+> > 
+> > 
+> > On Mon, 3 Mar 2025, Christoph Hellwig wrote:
+> > 
+> > > On Mon, Mar 03, 2025 at 05:16:48PM +0100, Mikulas Patocka wrote:
+> > > > What should I use instead of bmap? Is fiemap exported for use in the 
+> > > > kernel?
+> > > 
+> > > You can't do an ahead of time mapping.  It's a broken concept.
+> > 
+> > Swapfile does ahead of time mapping. And I just looked at what swapfile 
+> > does and copied the logic into dm-loop. If swapfile is not broken, how 
+> > could dm-loop be broken?
 > 
-> As mentioned last round this still does the wrong thing if the first
-> device(s) is/are not PI-capable but the next one(s) is/are.  Please
-> look into the pseudocode I posted in reply to the previous iteration
-> on how to fix it.
+> Swap files cannot be accessed/modified by user code once the
+> swapfile is activated.  See all the IS_SWAPFILE() checked throughout
+> the VFS and filesystem code.
+> 
+> Swap files must be fully allocated (i.e. not sparse), nor contan
+> shared extents. This is required so that writes to the swapfile do
+> not require block allocation which would change the mapping...
+> 
+> Hence we explicitly prevent modification of the underlying file
+> mapping once a swapfile is owned and mapped by the kernel as a
+> swapfile.
+> 
+> That's not how loop devices/image files work - we actually rely on
+> them being:
+> 
+> a) sparse; and
+> b) the mapping being mutable via direct access to the loop file
+> whilst there is an active mounted filesystem on that loop file.
+> 
+> and so every IO needs to be mapped through the filesystem at
+> submission time.
+> 
+> The reason for a) is obvious: we don't need to allocate space for
+> the filesystem so it's effectively thin provisioned. Also, fstrim on
+> the mounted loop device can punch out unused space in the mounted
+> filesytsem.
+> 
+> The reason for b) is less obvious: snapshots via file cloning,
+> deduplication via extent sharing.
+> 
+> The clone operaiton is an atomic modification of the underlying file
+> mapping, which then triggers COW on future writes to those mappings,
+> which causes the mapping to the change at write IO time.
+> 
+> IOWs, the whole concept that there is a "static mapping" for a loop
+> device image file for the life of the image file is fundamentally
+> flawed.
 
-Christoph,
-Right, based on your comment modified this patch.
-Does this look ok?
+I'm not trying to break existing loop.
 
-diff --git a/block/blk-settings.c b/block/blk-settings.c
-index c44dadc35e1e..d0469a812734 100644
---- a/block/blk-settings.c
-+++ b/block/blk-settings.c
-@@ -859,36 +859,28 @@ bool queue_limits_stack_integrity(struct queue_limits *t,
- 	if (!IS_ENABLED(CONFIG_BLK_DEV_INTEGRITY))
- 		return true;
- 
--	if (!ti->tuple_size) {
--		/* inherit the settings from the first underlying device */
--		if (!(ti->flags & BLK_INTEGRITY_STACKED)) {
--			ti->flags = BLK_INTEGRITY_DEVICE_CAPABLE |
--				(bi->flags & BLK_INTEGRITY_REF_TAG);
--			ti->csum_type = bi->csum_type;
--			ti->tuple_size = bi->tuple_size;
--			ti->pi_offset = bi->pi_offset;
--			ti->interval_exp = bi->interval_exp;
--			ti->tag_size = bi->tag_size;
--			goto done;
--		}
--		if (!bi->tuple_size)
--			goto done;
-+	if (ti->flags & BLK_INTEGRITY_STACKED) {
-+		if (ti->tuple_size != bi->tuple_size)
-+			goto incompatible;
-+		if (ti->interval_exp != bi->interval_exp)
-+			goto incompatible;
-+		if (ti->tag_size != bi->tag_size)
-+			goto incompatible;
-+		if (ti->csum_type != bi->csum_type)
-+			goto incompatible;
-+		if ((ti->flags & BLK_INTEGRITY_REF_TAG) !=
-+		    (bi->flags & BLK_INTEGRITY_REF_TAG))
-+			goto incompatible;
-+	} else {
-+		ti->flags = BLK_INTEGRITY_STACKED;
-+		ti->flags |= (bi->flags & BLK_INTEGRITY_DEVICE_CAPABLE) |
-+			     (bi->flags & BLK_INTEGRITY_REF_TAG);
-+		ti->csum_type = bi->csum_type;
-+		ti->tuple_size = bi->tuple_size;
-+		ti->pi_offset = bi->pi_offset;
-+		ti->interval_exp = bi->interval_exp;
-+		ti->tag_size = bi->tag_size;
- 	}
--
--	if (ti->tuple_size != bi->tuple_size)
--		goto incompatible;
--	if (ti->interval_exp != bi->interval_exp)
--		goto incompatible;
--	if (ti->tag_size != bi->tag_size)
--		goto incompatible;
--	if (ti->csum_type != bi->csum_type)
--		goto incompatible;
--	if ((ti->flags & BLK_INTEGRITY_REF_TAG) !=
--	    (bi->flags & BLK_INTEGRITY_REF_TAG))
--		goto incompatible;
--
--done:
--	ti->flags |= BLK_INTEGRITY_STACKED;
- 	return true;
- 
- incompatible:
--- 
-2.25.1
+But some users don't use COW filesystems, some users use fully provisioned 
+files, some users don't need to write to a file when it is being mapped - 
+and for them dm-loop would be viable alternative because of better 
+performance.
 
+The Android people concluded that loop is too slow and rather than using 
+loop they want to map a file using a table with dm-linear targets over the 
+image of the host filesystem. So, they are already doing what dm-loop is 
+doing.
 
+Mikulas
 
-------MTAFpDJBIS7x0DorxmyomC-IKR7RHdtq514vGN5lDcSFRf5o=_a01c4_
-Content-Type: text/plain; charset="utf-8"
-
-
-------MTAFpDJBIS7x0DorxmyomC-IKR7RHdtq514vGN5lDcSFRf5o=_a01c4_--
