@@ -1,129 +1,139 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1B252E3388
-	for <dm-devel@lists.linux.dev>; Wed,  5 Mar 2025 03:58:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96EFC1EEA5D
+	for <dm-devel@lists.linux.dev>; Wed,  5 Mar 2025 07:41:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741147117; cv=none; b=Gz58og/Iz9Zud8jkpXaSwSr6KY8U/oN2WW6maEYw6tpFA+Zp0yyteRacNlS4yTS7vx8s6kI3x57kJNxmiuFTh8yEptwpLmWm41w5R4HHZ+7vUJzw6zXrhau7EoyZXYFAaigY5s+D0Dd5pv8Qor7UPbPa7kI8GnAiSSubF5K0hXs=
+	t=1741160471; cv=none; b=fpxOzuMpHxx0wu0CedMzdTmcDAyWOqtAsfKJt0Qz8zH2flbJLLCT5C4yWHLoZvoU/7IrBal7Nt0PBrSLNkaiK210PcrU/l7ct4/bn8cnOormXAumHIOUawM5zaGOdPbmsUjQsWgI2bK2LttLXy5LedTCrVbgPa3lYvRTICuP7+0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741147117; c=relaxed/simple;
-	bh=LY5DuHpYunf5f3eA/XdyF7Hxk2QhdlwlzyjaAfMXUgc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=RQY93IpFCxXFRuN95bHdLMCDS2S5Xj25wuZEoB5a+MpbB3VxHLR3m5iuPCKieXz32lha11hxeyT+gB7NMP5OkB4wRjXmUqhpXP5kXN3TUYIV3TMP+zKyBDTg5zA1un3tbSvLyWCRxQ2uSnMv5NGIDlkLy024c6mGIpk0MW92MAM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bBsOrncN; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741160471; c=relaxed/simple;
+	bh=+0v9asLaBPRNl7EokrcaYWNtIFxIhxzqEMJXvGxnmdE=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type:
+	 References; b=KOmKOy7Hr48rUsi8bLeHH2lc1CfrtGMu25QXL+RGkkt32PuDCXC16zwDQPwgSGoHVcSILqxeMiUytbEj825rDpWUy9fWxRAl9O31j4asj30/m2dRjwSrJ7/O9XXPzqW6vPWmwV9IdGZbJeGrM1rH/d8KFY3f3hWs6zzqgfPmMUE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=BCUqLNUg; arc=none smtp.client-ip=203.254.224.33
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bBsOrncN"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741147114;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Kjh1hQuW+jeiBBKoKE436K0vWFMdTY1fYMLiqT+RVv8=;
-	b=bBsOrncNOacC/0c1m/fGcBG7Z3AbzS5MiHxBfnJCZ7H6aeLwIgwwpw6d+aBt19jX1AUn2q
-	4u5GNDaPtd3Znx6EZMgcBMj+pWN041qkfVGRNYyw6zjFlXsLcZZTY3YY6Pf4gINGHQoe3Y
-	iCVzwLNaQcCI1SeuY+vfWfbgr8f/1uE=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-3-fAm8sXv3NbqvVCgT-bGYdQ-1; Tue,
- 04 Mar 2025 22:58:33 -0500
-X-MC-Unique: fAm8sXv3NbqvVCgT-bGYdQ-1
-X-Mimecast-MFC-AGG-ID: fAm8sXv3NbqvVCgT-bGYdQ_1741147112
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3405F1954B1B;
-	Wed,  5 Mar 2025 03:58:32 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D0622180035E;
-	Wed,  5 Mar 2025 03:58:31 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5253wUh23061987
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 4 Mar 2025 22:58:30 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5253wU073061986;
-	Tue, 4 Mar 2025 22:58:30 -0500
-Date: Tue, 4 Mar 2025 22:58:30 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH] libmultipath: remove buggy reinstate_paths function
-Message-ID: <Z8fL5nrT5an0eUwY@redhat.com>
-References: <20250303195628.2998595-1-bmarzins@redhat.com>
- <a314cad2fc4f78fde0960ba204321fe182ce45d8.camel@suse.com>
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="BCUqLNUg"
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20250305074105epoutp030a4c1533a26929f888f283425da6445e~p2DfiepqP1836518365epoutp03g
+	for <dm-devel@lists.linux.dev>; Wed,  5 Mar 2025 07:41:05 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20250305074105epoutp030a4c1533a26929f888f283425da6445e~p2DfiepqP1836518365epoutp03g
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
+	s=mail20170921; t=1741160465;
+	bh=TqTMIzOu/gxWCqxo2RhLijjV18qKrUTqkY9kGAPDnjc=;
+	h=From:To:Cc:Subject:Date:References:From;
+	b=BCUqLNUg3AQK+eFt6t3zq1DmCGkSiH2rEkVbmJo9nlExtaG6GgbD/D8NotUIAPcq1
+	 eoC/j+cPhBEaigpK/lyaqE9OsrWr+LjUk+9hZaS5mw/DmqMwwPxUAFfWUOuabBWa0t
+	 We31/fyZ+gyQyRuApQfOEf6jcaqGFhMcq2otF7bc=
+Received: from epsnrtp4.localdomain (unknown [182.195.42.165]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTP id
+	20250305074105epcas5p2ea7197f1fa88dd7766f2a65ad5139f88~p2DfFpRxB3180831808epcas5p27;
+	Wed,  5 Mar 2025 07:41:05 +0000 (GMT)
+Received: from epsmges5p1new.samsung.com (unknown [182.195.38.180]) by
+	epsnrtp4.localdomain (Postfix) with ESMTP id 4Z74H33PL7z4x9QD; Wed,  5 Mar
+	2025 07:41:03 +0000 (GMT)
+Received: from epcas5p2.samsung.com ( [182.195.41.40]) by
+	epsmges5p1new.samsung.com (Symantec Messaging Gateway) with SMTP id
+	58.1E.20052.F0008C76; Wed,  5 Mar 2025 16:41:03 +0900 (KST)
+Received: from epsmtrp2.samsung.com (unknown [182.195.40.14]) by
+	epcas5p3.samsung.com (KnoxPortal) with ESMTPA id
+	20250305063900epcas5p38bb20587ccf4310cfb0f3307180eb536~p1NSb-V4G1936819368epcas5p3U;
+	Wed,  5 Mar 2025 06:39:00 +0000 (GMT)
+Received: from epsmgmcp1.samsung.com (unknown [182.195.42.82]) by
+	epsmtrp2.samsung.com (KnoxPortal) with ESMTP id
+	20250305063900epsmtrp2d7a9c79c37c0042a29392c21b8b0893f~p1NSVvIPN0758807588epsmtrp2B;
+	Wed,  5 Mar 2025 06:39:00 +0000 (GMT)
+X-AuditID: b6c32a49-3fffd70000004e54-0a-67c8000ff15f
+Received: from epsmtip1.samsung.com ( [182.195.34.30]) by
+	epsmgmcp1.samsung.com (Symantec Messaging Gateway) with SMTP id
+	49.53.33707.481F7C76; Wed,  5 Mar 2025 15:39:00 +0900 (KST)
+Received: from localhost.localdomain (unknown [107.99.41.245]) by
+	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+	20250305063858epsmtip1ca541a816175f86a904b65b74ee49cf7~p1NQ6wL351091010910epsmtip19;
+	Wed,  5 Mar 2025 06:38:58 +0000 (GMT)
+From: Anuj Gupta <anuj20.g@samsung.com>
+To: axboe@kernel.dk, hch@lst.de, martin.petersen@oracle.com
+Cc: anuj1072538@gmail.com, nikh1092@linux.ibm.com,
+	linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+	linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev, Anuj Gupta
+	<anuj20.g@samsung.com>
+Subject: [PATCH v3 0/2] Fix integrity sysfs reporting inconsistencies
+Date: Wed,  5 Mar 2025 12:00:31 +0530
+Message-Id: <20250305063033.1813-1-anuj20.g@samsung.com>
+X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <a314cad2fc4f78fde0960ba204321fe182ce45d8.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: olGnbmK3WXa-9iqJm80QEQuNtSqLMAmvwLDhppABSDk_1741147112
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFlrEJsWRmVeSWpSXmKPExsWy7bCmhi4/w4l0g4MfJC0+fv3NYtE04S+z
+	xeq7/WwWCxbNZbFYufook8XeW9oW85c9Zbfovr6DzWL58X9MFncvPmV24PLYOesuu8fls6Ue
+	ExYdYPTYvKTe48XmmYweu282sHl8fHqLxaNvyypGj8+b5AI4o7JtMlITU1KLFFLzkvNTMvPS
+	bZW8g+Od403NDAx1DS0tzJUU8hJzU22VXHwCdN0yc4DOVFIoS8wpBQoFJBYXK+nb2RTll5ak
+	KmTkF5fYKqUWpOQUmBToFSfmFpfmpevlpZZYGRoYGJkCFSZkZ5zs28lWcI+14vzzI+wNjI9Y
+	uhg5OSQETCS23dvICmILCexmlNi03RLC/sQosWJZUBcjF4S9+/9LNpiGuzN/s0IkdjJKXF15
+	ng3C+cwo8ezMN3aQKjYBdYkjz1sZuxg5OEQErCXevxYHqWEWOMso8bfxP9hqYQFXiX9nl4Gt
+	ZhFQldh47ysTiM0rYCGx/uBSqPPkJWZe+s4OEReUODnzCVicGSjevHU2M8hQCYGv7BKTtnUz
+	QzS4SFy+v5MRwhaWeHV8CzuELSXx+d1eqBfSJX5cfsoEYRdINB/bB1VvL9F6qp8Z5GhmAU2J
+	9bv0IcKyElNPrWOC2Msn0fv7CVQrr8SOeTC2kkT7yjlQtoTE3nMNULaHxO5ra9ghQRor0XXk
+	F/MERvlZSN6ZheSdWQibFzAyr2KUTC0ozk1PLTYtMMxLLYfHa3J+7iZGcGLV8tzBePfBB71D
+	jEwcjIcYJTiYlUR4X586ni7Em5JYWZValB9fVJqTWnyI0RQYxhOZpUST84GpPa8k3tDE0sDE
+	zMzMxNLYzFBJnLd5Z0u6kEB6YklqdmpqQWoRTB8TB6dUAxNLn7Hor/8zNW+nbpNn/JFi1rfx
+	su/kuSL3s/0efViY1vDoxu/prNdnrC/n/CcpHXhuEW97uNGe9Emb7pfc1tF1E+X/4LPQfcPZ
+	Iw/SbS6kPFcOYu/wP2az8Oj97S3HJz/8kvBxsdKJ951/p1ny194M2yLFG5+Rf3sFi2RWxOI1
+	f+pvGE37wX0kxFRt7+Ir6oGp346qWzxtf7IqJLyu/kexcXDLvrUvfTlXpf5huZrxbYq67xar
+	fqvg+AMuHz5o36ic99apaHZaWuvUC5dj56Q0O0ilLmTap/WBT3FTabn+qcSbFQE3i0Mm3Kr1
+	jA+pO2DTGJzRpLnoWeDXWul3imbr5izdkOzHfkfmySuTlulKLMUZiYZazEXFiQAmnHv6NQQA
+	AA==
+X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFjrNLMWRmVeSWpSXmKPExsWy7bCSnG7Lx+PpBtdXSVh8/PqbxaJpwl9m
+	i9V3+9ksFiyay2KxcvVRJou9t7Qt5i97ym7RfX0Hm8Xy4/+YLO5efMrswOWxc9Zddo/LZ0s9
+	Jiw6wOixeUm9x4vNMxk9dt9sYPP4+PQWi0ffllWMHp83yQVwRnHZpKTmZJalFunbJXBlnOzb
+	yVZwj7Xi/PMj7A2Mj1i6GDk5JARMJO7O/M3axcjFISSwnVFizuoWqISExKmXyxghbGGJlf+e
+	s0MUfWSUuDLzCViCTUBd4sjzViCbg0NEwF7i3o8KkBpmgcuMElNefWEFqREWcJX4d3YZmM0i
+	oCqx8d5XJhCbV8BCYv3BpVDL5CVmXvrODhEXlDg58wlYnBko3rx1NvMERr5ZSFKzkKQWMDKt
+	YhRNLSjOTc9NLjDUK07MLS7NS9dLzs/dxAgOb62gHYzL1v/VO8TIxMF4iFGCg1lJhPf1qePp
+	QrwpiZVVqUX58UWlOanFhxilOViUxHmVczpThATSE0tSs1NTC1KLYLJMHJxSDUwq7W53LHep
+	3w2aI7Z3EQfjvbNiCYzN8xqMP+o93tfk7XTL/gtD6bUMufnhATv+Ts4Q+bOs8ir/mYLT6X8W
+	z/QXnJ8jt0wo1+WNvnnN5+xEyVf70nL5BMTPRh4NSHqu+LFnQr7hSk72+pCH+hYGUcId9oy8
+	JX98ulw9inidSs6IbnOrWun3o9Kvb//+tva23BMa103MlxbpWj1fp/t/8rFLM/i7LhUVTjrF
+	o2Vi87z97ap1DOJGsXdnF2tcimkIqd5741vP4YM3frcd/K28+ip7p71T7xzRpdxLFJMnmq6c
+	HK+xUHjWu+WrmG44sN/W07WdYijJ2lmY+qHDKCZV8+Lx3hj1XrtHNvKz7grdVWIpzkg01GIu
+	Kk4EAJFyOqTeAgAA
+X-CMS-MailID: 20250305063900epcas5p38bb20587ccf4310cfb0f3307180eb536
+X-Msg-Generator: CA
+Content-Type: text/plain; charset="utf-8"
+X-Sendblock-Type: REQ_APPROVE
+CMS-TYPE: 105P
+DLP-Filter: Pass
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20250305063900epcas5p38bb20587ccf4310cfb0f3307180eb536
+References: <CGME20250305063900epcas5p38bb20587ccf4310cfb0f3307180eb536@epcas5p3.samsung.com>
 
-On Tue, Mar 04, 2025 at 11:30:29PM +0100, Martin Wilck wrote:
-> On Mon, 2025-03-03 at 14:56 -0500, Benjamin Marzinski wrote:
-> > The purpose of reinstate_paths() is to reinstate all the paths on a
-> > multipath device that multipathd thinks are usable, similar to
-> > sync_map_state(). However, reinstate_paths() doesn't work correctly.
-> > For instance, it will always reinstate every path in enabled (as
-> > opposed
-> > to active or disabled) pathgroups. This is clearly wrong. It might be
-> > badly written code to avoid enabling paths in PATH_GHOST in active
-> > pathgroups, but that's just a guess and isn't necessary at any rate.
-> > 
-> > It's called in two places. The first is when multipath is run with
-> > CMD_CREATE. The second is when domap() is run with a mpp->action of
-> > ACT_SWITCHPG or ACT_SWITCHPG_RENAME. This case just exists to run
-> > extra
-> > reinstates for paths that are not in PATH_UP, on pathgroups that are
-> > now
-> > in the enabled state, instead of the active state. This is old code.
-> > I'm
-> > not sure if it ever made sense to do this, but it certainly doesn't
-> > now.
-> > 
-> > Multipathd already will make sure that its path states are synced
-> > with
-> > the kernel states whenever either the paths get checked or a dm event
-> > occurs. It makes sense to additionally sync with the kernel state
-> > when a
-> > multipath device is reloaded, like sync_map_state() currently does,
-> > since the path's kernel state will start out of sync with
-> > multipathd's
-> > state.
-> > 
-> > However, if multipathd isn't running, I can see the benefit of being
-> > able to reinstate paths by running "multipath". So if multipath is
-> > run to create or reload multipath devices (CMD_CREATE), it will now
-> > call
-> > sync_map_state() with a flag to make it behave like reinstate_paths()
-> > did (it will only reinstate paths, but never preemptively fail them).
-> > I
-> > thought about only doing this if check_daemon() said that multipathd
-> > wasn't running, but perhaps people are relying on running multipath
-> > to reinstate paths before the next scheduled checker run.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Reviewed-by: Martin Wilck <mwilck@suse.com>
-> 
-> PS: this doesn't look like "stable" material to me. Right?
+Patch 1: Ensures DM devices correctly propagate
+device_is_integrity_capable
+Patch 2: initialize nogenerate and noverify correctly
 
-I don't think so. It's not fixing a bug. I would think code cleanups
-don't need to be in the stable branch unless there are stable-worthy
-bugfixes that apply on top of them, and its easier to bring back the
-cleanup rather than rewrite the bugfix.
+Changes since v2:
+Ensure that integrity capability gets propogated correctly for all cases
+in DM (hch)
 
--Ben
+Changes since v1:
+initialize BLK_INTEGRITY_NOGENERATE and BLK_INTEGRITY_NOVERIFY in
+blk_validate_integrity_limits rather than doing it in the driver (hch)
+
+Anuj Gupta (2):
+  block: ensure correct integrity capability propagation in stacked
+    devices
+  block: Correctly initialize BLK_INTEGRITY_NOGENERATE and
+    BLK_INTEGRITY_NOVERIFY
+
+ block/blk-settings.c | 51 +++++++++++++++++++-------------------------
+ 1 file changed, 22 insertions(+), 29 deletions(-)
+
+-- 
+2.25.1
 
