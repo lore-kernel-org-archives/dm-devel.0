@@ -1,134 +1,114 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F0401854
-	for <dm-devel@lists.linux.dev>; Fri,  7 Mar 2025 00:10:42 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10DF221C9E4
+	for <dm-devel@lists.linux.dev>; Fri,  7 Mar 2025 15:22:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741306244; cv=none; b=VsawyTpOzbeT8NWgYbqJ7wGEGNvc/0wWIZQ8GsJ2zXeiREGbv7TlKEVynYdRsNQWqKB8sQaGSBv3ktmIS/XJ+hKQ5QJqIwNDiMrMjgwpHZnCzLYXzOq1vY5zOfADUQFK+oIpgVlis/58BNfxax0Ezz6gzlfQmU5tbIojVsPp60s=
+	t=1741360936; cv=none; b=cAhJQqzAW4F6OPcvt6wpXTzQWk2edrqKsCBkPyLlHwL5DZzXrjCDC9epH4weIkvk7PZcHdrqmts3XT9SbHD/Nw/xrfK7IJJArN1YtVfdre17mzK9hmO4RjhmkH8Pt7N30gLACz24Fky5tKkDEK0zP4LkNPyfkKy6T/CHKj//qr4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741306244; c=relaxed/simple;
-	bh=QDGqhr/k33XqeakqySZ5t1BNZ40J8dpEwUGvNciRz3Q=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=Jcihi2pW4b9KWDQ8BBbXNxccwREbqtVof89moqpKh+dPisx50Lx8vWnX8vxaFk3RY/TmlsY3rw2QF5LV3SO3Wsx/T1tDW27WnuKRSPQgwCdBtOHrDsy8LX1g1NT8RwuGRSyCMr5kYA4TllDRb9GnL2/StYZFfKQgJXCai/CiQ3w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N1sd4OJt; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1741360936; c=relaxed/simple;
+	bh=8bkm9D+A9b09Me9TsLQSLQoaTKIDYLGe1bUICWPE0eY=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=DNGc8WLoRgFf2oP6GkcxfQ8Vq8DaxlA18EN5zOmpfL9qorK1zHzgyar++EGbs8eiIp5/QzkYMeLfgMjUFhqn4AOxlW63Hy/af3M2KY5IdqvkAB4KVaCaRbShF9MDfvqhwvJnwDNMcA10FGmJG2xwUz7VnsSeqNVMCh9yVIfC+b4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C0Ti8X36; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N1sd4OJt"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C0Ti8X36"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741306241;
+	s=mimecast20190719; t=1741360933;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=+8KSejnH7eiwh9Nc+HhbFqZTThwMeGU9ogwFpkRxWUU=;
-	b=N1sd4OJtmMlXZTbxhSYBqekUy2E3lLOApAPiZ6x9k+B4Mpf8mUMhDxXoKBeruAPhggvYMJ
-	qiNk2qHtII8kmLSfzMjwWJiq1rd7RrdJB6zo0cRiHTHuWb3EOgytG6zBQWu7SHs/3RppXN
-	muXNlTB3jc6cSyejqmfPR+TK2UAS6M0=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=HeDSEd/YjPeusnr10Mm42vys340e0N+uOy6aIocYd3Q=;
+	b=C0Ti8X36PX90VfPOtXyX8KYaDwzBaGMfpYWDXTlgSfMjJDmOEf6jR2Og/5pfI5szwK3doa
+	DWvZSDeyaNgJ14Z6i1JV4viwvh7FM8J5ecGB4bpT6sjJMD6e/ESONh0YjEMa1c2GU/ZqF0
+	V9HSgDqnzsD93PM+mwFt0UfaN0wI7eY=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-638-KbeijMwsOIyoG8AVkuqyvg-1; Thu,
- 06 Mar 2025 19:10:38 -0500
-X-MC-Unique: KbeijMwsOIyoG8AVkuqyvg-1
-X-Mimecast-MFC-AGG-ID: KbeijMwsOIyoG8AVkuqyvg_1741306237
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-190-DViTGFTgMkuZHqgu0UVOTQ-1; Fri,
+ 07 Mar 2025 10:22:10 -0500
+X-MC-Unique: DViTGFTgMkuZHqgu0UVOTQ-1
+X-Mimecast-MFC-AGG-ID: DViTGFTgMkuZHqgu0UVOTQ_1741360929
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AE88719560BC;
-	Fri,  7 Mar 2025 00:10:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 396F6180174C;
-	Fri,  7 Mar 2025 00:10:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5270AYCQ3141847
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 6 Mar 2025 19:10:34 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5270AYcj3141846;
-	Thu, 6 Mar 2025 19:10:34 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 2/2] multipathd: Add multipathd man page section about sockets
-Date: Thu,  6 Mar 2025 19:10:34 -0500
-Message-ID: <20250307001034.3141833-2-bmarzins@redhat.com>
-In-Reply-To: <20250307001034.3141833-1-bmarzins@redhat.com>
-References: <20250307001034.3141833-1-bmarzins@redhat.com>
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 19F261828A93;
+	Fri,  7 Mar 2025 15:22:06 +0000 (UTC)
+Received: from [10.45.224.44] (unknown [10.45.224.44])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0251E1955DCE;
+	Fri,  7 Mar 2025 15:22:01 +0000 (UTC)
+Date: Fri, 7 Mar 2025 16:21:58 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dave Chinner <david@fromorbit.com>
+cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, 
+    Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, Heinz Mauelshagen <heinzm@redhat.com>, 
+    zkabelac@redhat.com, dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
+    linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH] the dm-loop target
+In-Reply-To: <Z8eURG4AMbhornMf@dread.disaster.area>
+Message-ID: <81b037c8-8fea-2d4c-0baf-d9aa18835063@redhat.com>
+References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com> <Z8W1q6OYKIgnfauA@infradead.org> <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com> <Z8XlvU0o3C5hAAaM@infradead.org> <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com> <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
+ <1fde6ab6-bfba-3dc4-d7fb-67074036deb0@redhat.com> <Z8eURG4AMbhornMf@dread.disaster.area>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: i-Tv9nV9PuRRLbyST8uPFGnWK69ftUS9gxkYiaa-ECc_1741306237
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Add a section with information about how to communicate with the
-multipathd daemon to the man page. Also mention that multipathd
-CLI commands can be run without the -k option.
+> I didn't say you were. I said the concept that dm-loop is based on
+> is fundamentally flawed and that your benchmark setup does not
+> reflect real world usage of loop devices.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/multipathd.8.in | 31 +++++++++++++++++++++++++++++++
- 1 file changed, 31 insertions(+)
+> Where are the bug reports about the loop device being slow and the
+> analysis that indicates that it is unfixable?
 
-diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
-index 315884eb..5b1aeb42 100644
---- a/multipathd/multipathd.8.in
-+++ b/multipathd/multipathd.8.in
-@@ -83,6 +83,11 @@ multipathd executes the given command (see \fBCOMMANDS\fR below). If the
- command contains whitespace or shell special characters, it needs to be quoted
- like in \fImultipathd -k'show topology'\fR. No whitespace is allowed between
- the \fB-k\fR and the command string.
-+
-+Commands can also be issued without using \fB-k\fR. In this case, the command
-+string should not be quoted. Command arguments that contain whitespace or
-+special characters still need to be quoted, like in \fImultipathd show paths
-+format "%n %w"\fR
- .
- .TP
- .B \-k
-@@ -103,6 +108,32 @@ multipath devices on dmevents. Use this flag to force it to use the old event
- waiting method, based on creating a separate thread for each device.
- .
- .
-+.\" ----------------------------------------------------------------------------
-+.SH COMMUNICATING WITH MULTIPATHD
-+.\" ----------------------------------------------------------------------------
-+
-+In addition to the multipathd CLI, the \fBlibmpathcmd\fR library can be used to
-+send commands (see \fBCOMMANDS\fR below) to the multipathd daemon from other
-+programs. By default, multipathd listens on both the \fI@ABSTRACT_SOCKET@\fR
-+abstract namespace socket and the \fI@PATHNAME_SOCKET@\fR socket file.
-+libmpathcmd will use either of these sockets to connect to multipathd. The
-+socket file can be useful to communicate with multipathd from different
-+namespaces since it can be bind mounted in them, unlike the abstract namespace
-+socket. Multipathd will accept \fBlist|show\fR commands from any user. All
-+other commands must be issued by root.
-+
-+It is possible to change the sockets that multipathd listens on. If
-+\fImultipathd.socket\fR is running, multipathd will use the sockets it listens
-+on.  A maximum of two sockets can be defined by \fImultipathd.socket\fR, and by
-+default it listens on \fI@ABSTRACT_SOCKET@\fR and \fI@PATHNAME_SOCKET@\fR. If
-+\fImultipathd.socket\fR is not running, a single socket can be configured for
-+listening on by setting the \fIMULTIPATH_SOCKET_NAME\fR environment variable
-+when starting multipathd. This environment variable must also be set to make
-+multipathd CLI commands (or any other program using libmpathcmd) connect to the
-+multipathd daemon using a non-default socket, regardless of whether that socket
-+was set for the daemon using \fImultipathd.socket\fR or the
-+\fIMULTIPATH_SOCKET_NAME\fR environment variable.
-+.
- .
- .\" ----------------------------------------------------------------------------
- .SH COMMANDS
--- 
-2.48.1
+So, I did benchmarks on an enterprise nvme drive (SAMSUNG 
+MZPLJ1T6HBJR-00007). I stacked ext4/loop/ext4, xfs/loop/xfs (using losetup 
+--direct-io=on), ext4/dm-loop/ext4 and xfs/dm-loop/xfs. And loop is slow.
+
+synchronous I/O:
+fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=psync --iodepth=1 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+raw block device:
+   READ: bw=399MiB/s (418MB/s), 399MiB/s-399MiB/s (418MB/s-418MB/s), io=3985MiB (4179MB), run=10001-10001msec
+  WRITE: bw=399MiB/s (418MB/s), 399MiB/s-399MiB/s (418MB/s-418MB/s), io=3990MiB (4184MB), run=10001-10001msec
+ext4/loop/ext4:
+   READ: bw=223MiB/s (234MB/s), 223MiB/s-223MiB/s (234MB/s-234MB/s), io=2232MiB (2341MB), run=10002-10002msec
+  WRITE: bw=223MiB/s (234MB/s), 223MiB/s-223MiB/s (234MB/s-234MB/s), io=2231MiB (2339MB), run=10002-10002msec
+xfs/loop/xfs:
+   READ: bw=220MiB/s (230MB/s), 220MiB/s-220MiB/s (230MB/s-230MB/s), io=2196MiB (2303MB), run=10001-10001msec
+  WRITE: bw=219MiB/s (230MB/s), 219MiB/s-219MiB/s (230MB/s-230MB/s), io=2193MiB (2300MB), run=10001-10001msec
+ext4/dm-loop/ext4:
+   READ: bw=338MiB/s (355MB/s), 338MiB/s-338MiB/s (355MB/s-355MB/s), io=3383MiB (3547MB), run=10002-10002msec
+  WRITE: bw=338MiB/s (355MB/s), 338MiB/s-338MiB/s (355MB/s-355MB/s), io=3385MiB (3549MB), run=10002-10002msec
+xfs/dm-loop/xfs:
+   READ: bw=375MiB/s (393MB/s), 375MiB/s-375MiB/s (393MB/s-393MB/s), io=3752MiB (3934MB), run=10002-10002msec
+  WRITE: bw=376MiB/s (394MB/s), 376MiB/s-376MiB/s (394MB/s-394MB/s), io=3756MiB (3938MB), run=10002-10002msec
+
+asynchronous I/O:
+fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=libaio --iodepth=16 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+raw block device:
+   READ: bw=1246MiB/s (1306MB/s), 1246MiB/s-1246MiB/s (1306MB/s-1306MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
+  WRITE: bw=1247MiB/s (1308MB/s), 1247MiB/s-1247MiB/s (1308MB/s-1308MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
+ext4/loop/ext4:
+   READ: bw=274MiB/s (288MB/s), 274MiB/s-274MiB/s (288MB/s-288MB/s), io=2743MiB (2877MB), run=10001-10001msec
+  WRITE: bw=275MiB/s (288MB/s), 275MiB/s-275MiB/s (288MB/s-288MB/s), io=2747MiB (2880MB), run=10001-10001msec
+xfs/loop/xfs:
+   READ: bw=276MiB/s (289MB/s), 276MiB/s-276MiB/s (289MB/s-289MB/s), io=2761MiB (2896MB), run=10002-10002msec
+  WRITE: bw=276MiB/s (290MB/s), 276MiB/s-276MiB/s (290MB/s-290MB/s), io=2765MiB (2899MB), run=10002-10002msec
+ext4/dm-loop/ext4:
+   READ: bw=1189MiB/s (1247MB/s), 1189MiB/s-1189MiB/s (1247MB/s-1247MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
+  WRITE: bw=1190MiB/s (1248MB/s), 1190MiB/s-1190MiB/s (1248MB/s-1248MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
+xfs/dm-loop/xfs:
+   READ: bw=1209MiB/s (1268MB/s), 1209MiB/s-1209MiB/s (1268MB/s-1268MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
+  WRITE: bw=1210MiB/s (1269MB/s), 1210MiB/s-1210MiB/s (1269MB/s-1269MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
+
+Mikulas
 
