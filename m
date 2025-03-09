@@ -1,115 +1,104 @@
-Received: from fout-a6-smtp.messagingengine.com (fout-a6-smtp.messagingengine.com [103.168.172.149])
+Received: from out-172.mta1.migadu.com (out-172.mta1.migadu.com [95.215.58.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11A5B184F
-	for <dm-devel@lists.linux.dev>; Sun,  9 Mar 2025 16:01:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.149
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 651652AE95
+	for <dm-devel@lists.linux.dev>; Sun,  9 Mar 2025 17:04:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741536064; cv=none; b=HHC90Z1mwe3AKqK83xJIR3owXmeZwbLMBrbavBw9bvyOSp1bRkP+2DOfNNiDMKLD7LMjmPE5bBWNq7HypptSZi88mJ2sTrXaQwocz9SMA09OJm7T7a55R/JpWxhboHh78YNJb2C41RtqSicoDwIxJJ2ZoqRgr1wdho2f4LYBHRQ=
+	t=1741539874; cv=none; b=q6WldkWhQWYFBDKUh/kzu6wKRbvJNeTJT61r+PtqsqiA9XxIla3/va+PsnUuNEw4KzrseRtWXRhKRs8Na/POEd88jpdWjAB4WnIV719a+0KCYl6tUBhKjLGyDbRQTC40GBW23O3gRPKX8JukDQAlnUP//snLMdCEyJO66XXsqec=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741536064; c=relaxed/simple;
-	bh=nDwYZupDUsmNtD5KXjLHq3sA78rZCKq+IGssDT9/7g0=;
-	h=MIME-Version:Date:From:To:Message-Id:Subject:Content-Type; b=HlEMGvXzErciR17+Mn9RxUeZk00EVne8Wy5ZHnx8FXhDE9G2UWnWqK50FqJsukmdI84VpyCiEJfCBAjeYVW3gE6fMDGOHqrQbA8a8XtHKFZ9PUsy8rOKwC+AxDvSQOp6Xw1jxJkEtEQFSahZp/d+V67Z+ffBe7SFhuSywNx+zqI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=owlfolio.org; spf=pass smtp.mailfrom=owlfolio.org; dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b=YuvfBRbw; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=fOb73p2I; arc=none smtp.client-ip=103.168.172.149
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=owlfolio.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=owlfolio.org
+	s=arc-20240116; t=1741539874; c=relaxed/simple;
+	bh=5F9GMK+dh0RLB41h5cOrqscqckOnfTZ2PetY+a9Kfrc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=eL0eA0As7F8lFZDUWnugyI9PVIxzmQKYiQpT5Ls8U12WkO/nQSrIWGRV4V0XVi9XxuSlfAXgIHL7BwTLY2/kt3ksk73Sih9iEY6qhgJDfhbmFBeJzjJGU8vJ2jp3C2YdLq4WKYH/IULI+Ltna3M/x6H0tbQQgHDwbiAWkpPYGA0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=iZE47u+L; arc=none smtp.client-ip=95.215.58.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b="YuvfBRbw";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="fOb73p2I"
-Received: from phl-compute-01.internal (phl-compute-01.phl.internal [10.202.2.41])
-	by mailfout.phl.internal (Postfix) with ESMTP id 0D0EA1382CA1
-	for <dm-devel@lists.linux.dev>; Sun,  9 Mar 2025 12:01:00 -0400 (EDT)
-Received: from phl-imap-05 ([10.202.2.95])
-  by phl-compute-01.internal (MEProxy); Sun, 09 Mar 2025 12:01:00 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=owlfolio.org; h=
-	cc:content-transfer-encoding:content-type:content-type:date:date
-	:from:from:in-reply-to:message-id:mime-version:reply-to:subject
-	:subject:to:to; s=fm3; t=1741536060; x=1741622460; bh=CrmWmoWLpE
-	+wutjIMyvMdmK3+FA/NWun1FpooZDTG60=; b=YuvfBRbw/Lwpc7Dq7oCbBFY8GO
-	argvryfnB9D7LznUvBpflgp0/TQ4Lh4IimgJxkccJXqpKoNssJxu1dtiTJE04U0+
-	TZFImfzfl2SVYxqZlHZ0Rv7zWq8RJcUmggvWVIeYwdIFMK2O6GX5MH9mdJDyl0fA
-	hRqLU/cg9PQ852zJKcn4L2pvGiiizIvXQrcHK6cd8kh9HiInffgm1WEQUKRofCs4
-	kZX2GX/Xx0EOyheJ87ZkdJ4XopPPxlNadb6bbJ1P6v1m3IFXL0JS3sYxFmMMt3bF
-	z5ZRnXZuVILZBcgFr0i2PbRIbtLPQs2VlKwVpKuHHMo+0CDK/mwmuE1CgrZg==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:content-transfer-encoding:content-type
-	:content-type:date:date:feedback-id:feedback-id:from:from
-	:in-reply-to:message-id:mime-version:reply-to:subject:subject:to
-	:to:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm1; t=
-	1741536060; x=1741622460; bh=CrmWmoWLpE+wutjIMyvMdmK3+FA/NWun1Fp
-	ooZDTG60=; b=fOb73p2IefH1WAIhDjJf7lG/UPq4o8jOagZxz1MFvUdu+C+dnms
-	sAYB1g+QhKWU/6/VzntebWIzS5dof99Sz+PK4fUo26fX+EA447WKwn05UYKDB/eU
-	oHiAWTBbMvCM72zWVuDDUswSoSrUMJu+LoqyUAykQ3q3eiYeVG5PXIvy1HDoSr8l
-	t5H07y9PXlUoxxzW7iYxsjZZsfKmfNpn37VJXFM06TMzXSx9uCd8vlXaCRGddqcj
-	I9TRD1SQYI9/V+M7NRKmG/rxHzs7TOwE1kVDMzCxC8BSeLyHU9idKyawPpyLfjt2
-	Ni0t26cYKCKBoAw13ITtiAaDseBsXYMwqYA==
-X-ME-Sender: <xms:O7vNZ7RNVBNrsCaUDp079fWTKdKNaJN2TBwOKtu2OY6tkctUKHA0oQ>
-    <xme:O7vNZ8zpmvr3CyFvUPynTN5n74o8HSo6iCAej16wO0OI3S7NgrjuNmZResZX2g_TP
-    ZHD_igBlAiIeuCZ5I4>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeefvddrtddtgdduudeikeejucetufdoteggodetrf
-    dotffvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdggtfgfnhhsuhgsshgtrhhisggv
-    pdfurfetoffkrfgpnffqhgenuceurghilhhouhhtmecufedttdenucenucfjughrpefogg
-    ffhffvkffutgfgsehtjeertdertddtnecuhfhrohhmpedfkggrtghkucghvghinhgsvghr
-    ghdfuceoiigrtghksehofihlfhholhhiohdrohhrgheqnecuggftrfgrthhtvghrnhepfe
-    duteeifeevuedtgeehvefgtedvjefhleejteduvddtvddvhedvgeekhfejffdtnecuvehl
-    uhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepiigrtghksehofi
-    hlfhholhhiohdrohhrghdpnhgspghrtghpthhtohepuddpmhhouggvpehsmhhtphhouhht
-    pdhrtghpthhtohepughmqdguvghvvghlsehlihhsthhsrdhlihhnuhigrdguvghv
-X-ME-Proxy: <xmx:O7vNZw0sc0kFB7Usv6-ooTSN_M58ufb0fFir1R-LlDVSs05oEAR4AA>
-    <xmx:O7vNZ7DbfOb2igLJSyUfhQL9tByFe0VT_MXUMM9NWvzm1OcIkpBNdw>
-    <xmx:O7vNZ0huDbOwEhI5pnwYJTyVRkcT-sANTud-zZ3ACkHy8QEMpOf_0g>
-    <xmx:O7vNZ_pAE-k-Rk0ho5eHPhmp689BluDu0_OL4yI35tAr2yZmLvxSZA>
-    <xmx:PLvNZ8LdYplA3CTS3h0drSHBwtcxqfoPExr7VhqUhQdwAqNHVVytj45d>
-Feedback-ID: i876146a2:Fastmail
-Received: by mailuser.phl.internal (Postfix, from userid 501)
-	id C2B783020080; Sun,  9 Mar 2025 12:00:59 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="iZE47u+L"
+Date: Sun, 9 Mar 2025 13:04:22 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1741539869;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=JN2+3PxWzjJWZY3E01tDTQ/yxuQF1+/hXqt42PsFsCQ=;
+	b=iZE47u+LZypnqrhSWr2cDhml+RN5iJ81/O7ZOWANbRLu5TuG1yWZfOq5KKp0zSPd92TmQu
+	EYsr+Us8I0qLIqKgbID5ZjQ0DXMpOB0BfCygnpM2NpWMz7QmnQrbLt2ZmPD1bUwWNvr9gg
+	0gYVPHznCDM3BOWqg2uo/pHCPCB/v0U=
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Kent Overstreet <kent.overstreet@linux.dev>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>, 
+	Alasdair Kergon <agk@redhat.com>, linux-block@vger.kernel.org, Josef Bacik <josef@redhat.com>, 
+	axboe@kernel.dk, Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Bring back md-faulty? (was Re: dm-flakey: Fix memory corruption)
+Message-ID: <xt5b22a3i6klpdsysz4ds3fubu3p6s22redu56w6ewc7mmcter@kcgbz3ccoedf>
+References: <20250308155011.1742461-1-kent.overstreet@linux.dev>
+ <Z8yKMlhd-Z0sf6tG@kernel.org>
+ <ij3pre7rlgez3ybsfrsj2i3ohoeb5ma5rgz3tfuv63h7rv6uoo@2hw6452r4qbn>
+ <Z823ZmamUoGO8P6I@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Date: Sun, 09 Mar 2025 12:00:39 -0400
-From: "Zack Weinberg" <zack@owlfolio.org>
-To: dm-devel@lists.linux.dev
-Message-Id: <0211b995-d844-4a0d-a02f-2f9bd2a4215e@app.fastmail.com>
-Subject: Allowed characters in strings passed to/from device-mapper APIs
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Z823ZmamUoGO8P6I@kernel.org>
+X-Migadu-Flow: FLOW_OUT
 
-I am developing a device-mapper client library in Rust.  The language is
-relevant here because Rust's standard library makes a strong distinction
-between strings that are known to be encoded in UTF-8 and strings whose
-encoding is not known (`str` vs `OsStr`), with the latter being awkward
-to use compared to the former.
+On Sun, Mar 09, 2025 at 11:44:38AM -0400, Mike Snitzer wrote:
+> On Sat, Mar 08, 2025 at 04:50:05PM -0500, Kent Overstreet wrote:
+> > On Sat, Mar 08, 2025 at 01:19:30PM -0500, Mike Snitzer wrote:
+> > > On Sat, Mar 08, 2025 at 10:50:08AM -0500, Kent Overstreet wrote:
+> > > > So, this code clearly isn't getting tested - at all. Besides this bug,
+> > > > the parsing for the "corrupt" modes is also broken.
+> > > > 
+> > > > Guys, don't push broken crap, and figure out how to write some tests.
+> > > 
+> > > Thank you sir, may we have another?
+> > > 
+> > > Like you never introduced a bug in your life?
+> > > 
+> > > Not going to tolerate your entitled primadonna attitude here.  You are
+> > > capable of being better, you've chosen not to be on this issue (twice)
+> > 
+> > Talking about basic engineering standards is in no way "being a prima
+> > donna". Testing your changes is as basic as it gets, and this code
+> > wasn't tested _at all_.
+> 
+> "entitled primadonna attitude" was me pulling punches.
+> 
+> I don't disagree that this is a bug that was missed and that proper
+> testing hasn't been performed (I'd quibble with the no testing part
+> only because I cannot speak for Mikulas and don't like to assume I
+> know it all).
+> 
+> But you're missing the very problematic detail: you used a bug in an
+> optional feature of the test-only dm-flakey target to try to take a
+> pound of flesh while preaching from your high horse.  That is
+> unacceptable behaviour that won't be tolerated here.  Be cool and
+> others will be in return (unless you keep setting fire to bridges).
+> 
+> Fin.
 
-The device-mapper ioctls use a lot of strings, and it's not clear
-to me from either the documentation or the kernel's source code
-what expectations the *kernel* has of the character encoding of these
-strings.  I don't expect the kernel to care about UTF-8 versus
-ISO-8859-n or whatever, but it is plausible to me that at least some
-of the strings used in device-mapper ioctls can be expected always to
-be ASCII, in which case I can safely use `str` for them on the library
-side and it'll be more ergonomic for end users.
+Mike, saying code needs to be tested is not an "entitled primadonna
+attitude". Pushing completely broken code because you made no attempt to
+test it and then flipping out when called out over it - that is.
 
-There are, I think, four different kinds of strings used in device-
-mapper ioctls: target names, device names and UUIDs, table parameters,
-and target messages.  For each of these, I would like to ask:
+To recap, we're not talking about some obscure corner cases, we're
+talking about core documentated functionality in dm-flakey that is
+completely broken in ways that show up immediately if you run it - and
+there's at least three bugs that I saw; the parsing code, the
+clone_bio() memory corruption, and the read side corruption still wasn't
+working when I fixed or worked around the other two (write side did).
 
-* Are there any circumstances where non-ASCII bytes *should* be
-used in this type of string *when supplied to the kernel*?
+This isn't your personal project, this is the kernel - there are
+standards, and other people depend on your work. dm-flakey is used
+heavily by filesystem folks, and additionally, md-faulty was recently
+removed because, supposedly, dm-flakey was sufficient.
 
-* Are there any circumstances where a client library should expect
-non-ASCII bytes to *appear* in this type of string *when reported
-back to the client by the kernel*?
-
-* If there are any such circumstances (either way), does the kernel
-try to interpret non-ASCII bytes in this type of string as characters
-in a specific encoding, or does it just treat them as an opaque
-token (as is typical e.g. for pathname components)?
-
-Thanks,
-zw
-
-please cc: me directly on all responses, I'm not subscribed to the list
+And that's what I was using before, and it worked fine, so I'm willing
+to bring it back and maintain it if dm-flakey can't be relied on.
