@@ -1,139 +1,142 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8606D14885B;
-	Sun,  9 Mar 2025 23:59:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4301A26296;
+	Mon, 10 Mar 2025 01:13:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741564768; cv=none; b=Sj7pOJxIaAfrU4mBHC+5ZLCitZM+kHCHtLH6LMPeD8rv6QdjkGQdtlCbcQYe2bmgdj8fsCCfSjyt7DeGjpe6bIomrwwEOMKbMhUZ5RV4NfnRtrtob2xMK8aoJLA0/xiUqWNDibhOp5YToZps71pSFuRFbRxxfm16hiteSuSo+1U=
+	t=1741569211; cv=none; b=SMPPpR+l7LH+TxtwTYExLYVsDLTe+d4DDTS3+SFs6O/DBRPrBbM8ihLKSzERF7HtYaHRF4ECPSowvW/BOQtZeQLK5Woof35a2HxFM6/T+2rCRPo17hqxAPxZ1Clno4zDj5yJV8pdeB2BL6mdzyeoOqoZlzsTMGI8AJZNLAKasLw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741564768; c=relaxed/simple;
-	bh=pNKpqJ+CVqOFsGvdTXBJ1Gv/GX2FszZ+1rt65BkOFsc=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=upuucOQ3e6Ef9GTxt+It2E8BAgjhN1dIbLAT+eF1MaHtvvMnZ8D+8GztAMarSUUk5AVDV5wl4RhBtV1rOu27lVD1M4R2xKAL/bu3nnAflIMInObKId6gdwyQ3KXVa5vVMOfWBA2EkdYwdYFzQHfAEXPFgbbEJOggkSiwb8SBr6E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Y+xGHSlf; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1741569211; c=relaxed/simple;
+	bh=soyTNczKLXceFGzIrc9GsPLorNN8OpES+pQcgj/cgMg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=mPQ0jRDvDo7T3kUNO3SZX4ZPfUsUknwPOVaqWWbAWttMzU9mclBl7nCSuF+DpA8f/XPW82H5a/oQj9QbetOrk0D8ASBbX134InxPf9qLUE6fYFnSv5JKUtIV7JHrDXmBihLi3fsDMPpvxCPmVL19cvGjJyOQ5/sffeBD70vPfe8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jndHNvdK; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Y+xGHSlf"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 20219C4CEE3;
-	Sun,  9 Mar 2025 23:59:27 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jndHNvdK"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7124CC4CEE3;
+	Mon, 10 Mar 2025 01:13:30 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741564768;
-	bh=pNKpqJ+CVqOFsGvdTXBJ1Gv/GX2FszZ+1rt65BkOFsc=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=Y+xGHSlf4gMiIs8gHblW+QfQUNW5Yj/5ZRpQvOpWWl13Dc6PVUZlHFz9RWhNL/jss
-	 vxieO2bn8X4l68a250s/q7nvglYRAlyiF50qlq1CvrTZ4U4Gpywnk4gRZReKX/0pi5
-	 ulM9+WyLcpbJqrkhlhaVMM22kmGJ16bqz+ZzLRTHnkCbTMmMV/kyn2UuuuoOOjRzga
-	 JDsObI58BLomzrR3IP7arB9pzl7C2j+ychgJtfyZg17dDBdpueT2cvlJxOg/avMRvy
-	 dAcsOsSuVxNEDeyDxvhuN+aHfesvHJlOEdHlyb7sCV2lCTP1DQpWOFO5Fb4zLneN77
-	 Y+f1KFR/xHk4Q==
-Message-ID: <7e0a1b47-3c96-4864-80b0-813f357845ad@kernel.org>
-Date: Mon, 10 Mar 2025 08:59:26 +0900
+	s=k20201202; t=1741569210;
+	bh=soyTNczKLXceFGzIrc9GsPLorNN8OpES+pQcgj/cgMg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=jndHNvdKU0cAW+3i1gXI/NRumE5RevL5HhmRgsxC6shN6komkjcWovvxzH+Ul6bAZ
+	 smD105ebrVJOJE+6nKKWIu4b+xXxp2KXrIj8eX8C2Vy8O9l29nvIJA4mNJ/zKsxqMo
+	 l2Hr6DntbV5Mb0TPy3KXQcJsBjV1ciwTqdoZix6bSuBbr0IefHvN7SkLliy9BEWX/F
+	 0USwQa+aVPhtjXiSoQrYZUEMltRA1WtVYzBAyNFDI96VnQJm+g9qz+bfmVYt5RNEZs
+	 jiH9uSTqcocsfDJAbgH6xm9kqNGKgGc2LxnbO+Qyw0qW848GAqxhklQ0MjwOdBQ82U
+	 woJ/LKymwxVIA==
+Date: Sun, 9 Mar 2025 21:13:29 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Kent Overstreet <kent.overstreet@linux.dev>
+Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>, linux-block@vger.kernel.org,
+	Josef Bacik <josef@redhat.com>, Jens Axboe <axboe@kernel.dk>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Bring back md-faulty? (was Re: dm-flakey: Fix memory corruption)
+Message-ID: <CAF3mmA=-xSKpW6M+0L0DVGO0dHugyoiGNNBdJQ9BcbEjocDRrw@mail.gmail.com>
+References: <20250308155011.1742461-1-kent.overstreet@linux.dev>
+ <Z8yKMlhd-Z0sf6tG@kernel.org>
+ <ij3pre7rlgez3ybsfrsj2i3ohoeb5ma5rgz3tfuv63h7rv6uoo@2hw6452r4qbn>
+ <Z823ZmamUoGO8P6I@kernel.org>
+ <xt5b22a3i6klpdsysz4ds3fubu3p6s22redu56w6ewc7mmcter@kcgbz3ccoedf>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH 7/7] dm: allow devices to revalidate existing zones
-To: Benjamin Marzinski <bmarzins@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
- Jens Axboe <axboe@kernel.dk>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
- Christoph Hellwig <hch@lst.de>
-References: <20250309222904.449803-1-bmarzins@redhat.com>
- <20250309222904.449803-8-bmarzins@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20250309222904.449803-8-bmarzins@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <xt5b22a3i6klpdsysz4ds3fubu3p6s22redu56w6ewc7mmcter@kcgbz3ccoedf>
 
-On 3/10/25 07:29, Benjamin Marzinski wrote:
-> dm_revalidate_zones() only allowed devices that had no zone resources
-> set up to call blk_revalidate_disk_zones(). If the device already had
-> zone resources, disk->nr_zones would always equal md->nr_zones so
-> dm_revalidate_zones() returned without doing any work. Instead, always
-> call blk_revalidate_disk_zones() if you are loading a new zoned table.
+On Sun, Mar 09, 2025 at 01:04:22PM -0400, Kent Overstreet wrote:
+> On Sun, Mar 09, 2025 at 11:44:38AM -0400, Mike Snitzer wrote:
+> > On Sat, Mar 08, 2025 at 04:50:05PM -0500, Kent Overstreet wrote:
+> > > On Sat, Mar 08, 2025 at 01:19:30PM -0500, Mike Snitzer wrote:
+> > > > On Sat, Mar 08, 2025 at 10:50:08AM -0500, Kent Overstreet wrote:
+> > > > > So, this code clearly isn't getting tested - at all. Besides this 
+bug,
+> > > > > the parsing for the "corrupt" modes is also broken.
+> > > > > 
+> > > > > Guys, don't push broken crap, and figure out how to write some 
+tests.
+> > > > 
+> > > > Thank you sir, may we have another?
+> > > > 
+> > > > Like you never introduced a bug in your life?
+> > > > 
+> > > > Not going to tolerate your entitled primadonna attitude here.  You 
+are
+> > > > capable of being better, you've chosen not to be on this issue 
+(twice)
+> > > 
+> > > Talking about basic engineering standards is in no way "being a prima
+> > > donna". Testing your changes is as basic as it gets, and this code
+> > > wasn't tested _at all_.
+> > 
+> > "entitled primadonna attitude" was me pulling punches.
+> > 
+> > I don't disagree that this is a bug that was missed and that proper
+> > testing hasn't been performed (I'd quibble with the no testing part
+> > only because I cannot speak for Mikulas and don't like to assume I
+> > know it all).
+> > 
+> > But you're missing the very problematic detail: you used a bug in an
+> > optional feature of the test-only dm-flakey target to try to take a
+> > pound of flesh while preaching from your high horse.  That is
+> > unacceptable behaviour that won't be tolerated here.  Be cool and
+> > others will be in return (unless you keep setting fire to bridges).
+> > 
+> > Fin.
 > 
-> However, if the device emulates zone append operations and already has
-> zone append emulation resources, the table size cannot change when
-> loading a new table. Otherwise, all those resources will be garbage.
+> Mike, saying code needs to be tested is not an "entitled primadonna
+> attitude".
+
+Definition of primadonna: 
+"a very temperamental person with an inflated view of their own talent
+or importance."
+
+My issue from the start on Friday night (in private) has always been
+how holier-than-thou yet abusive you've been since having discovered
+this bug in dm-flakey's optional "corrupt_bio_byte" feature.
+
+> Pushing completely broken code because you made no attempt to
+> test it and then flipping out when called out over it - that is.
+
+I didn't push commit 1d9a94389853 _because_ I "made no attempt to test
+it".  Commit 1d9a94389853 sought to fix a similar but different
+corruption in the original "corrupt_bio_byte" implementation (which
+proved useful for the specific case it was first developed for).
+
+> To recap, we're not talking about some obscure corner cases, we're
+> talking about core documentated functionality in dm-flakey that is
+> completely broken in ways that show up immediately if you run it - and
+> there's at least three bugs that I saw; the parsing code, the
+> clone_bio() memory corruption, and the read side corruption still wasn't
+> working when I fixed or worked around the other two (write side did).
 > 
-> If emulated zone append operations are needed and the zone write pointer
-> offsets of the new table do not match those of the old table, writes to
-> the device will still fail. This patch allows users to safely grow and
-> shrink zone devices. But swapping arbitrary zoned tables will still not
-> work.
-
-I do not think that this patch correctly address the shrinking of dm zoned
-device: blk_revalidate_disk_zones() will look at a smaller set of zones, which
-will leave already hashed zone write plugs outside of that new zone range in the
-disk zwplug hash table. disk_revalidate_zone_resources() does not cleanup and
-reallocate the hash table if the number of zones shrinks. For a physical drive,
-this can only happen if the drive is reformatted with some magic vendor unique
-command, which is why this was never implemented as that is not a valid
-production use case.
-
-To make things simpler, I think we should allow growing/shrinking zoned device
-tables, and much less swapping tables between zoned and not-zoned. I am more
-inclined to avoid all these corner cases by simply not supporting table
-switching for zoned device. That would be much safer I think.
-No-one complained about any issue with table switching until now, which likely
-means that no-one is using this. So what about simply returning an error for
-table switching for a zoned device ? If someone request this support, we can
-revisit this.
-
+> This isn't your personal project, this is the kernel - there are
+> standards, and other people depend on your work. dm-flakey is used
+> heavily by filesystem folks, and additionally, md-faulty was recently
+> removed because, supposedly, dm-flakey was sufficient.
 > 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  drivers/md/dm-zone.c | 23 +++++++++++++----------
->  1 file changed, 13 insertions(+), 10 deletions(-)
-> 
-> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-> index ac86011640c3..7e9ebeee7eac 100644
-> --- a/drivers/md/dm-zone.c
-> +++ b/drivers/md/dm-zone.c
-> @@ -164,16 +164,8 @@ int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
->  	if (!get_capacity(disk))
->  		return 0;
->  
-> -	/* Revalidate only if something changed. */
-> -	if (!disk->nr_zones || disk->nr_zones != md->nr_zones) {
-> -		DMINFO("%s using %s zone append",
-> -		       disk->disk_name,
-> -		       queue_emulates_zone_append(q) ? "emulated" : "native");
-> -		md->nr_zones = 0;
-> -	}
-> -
-> -	if (md->nr_zones)
-> -		return 0;
-> +	DMINFO("%s using %s zone append", disk->disk_name,
-> +	       queue_emulates_zone_append(q) ? "emulated" : "native");
->  
->  	/*
->  	 * Our table is not live yet. So the call to dm_get_live_table()
-> @@ -392,6 +384,17 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
->  		return 0;
->  	}
->  
-> +	/*
-> +	 * If the device needs zone append emulation, and the device already has
-> +	 * zone append emulation resources, make sure that the chunk_sectors
-> +	 * hasn't changed size. Otherwise those resources will be garbage.
-> +	 */
-> +	if (!lim->max_hw_zone_append_sectors && disk->zone_wplugs_hash &&
-> +	    q->limits.chunk_sectors != lim->chunk_sectors) {
-> +		DMERR("Cannot change zone size when swapping tables");
-> +		return -EINVAL;
-> +	}
-> +
->  	/*
->  	 * Warn once (when the capacity is not yet set) if the mapped device is
->  	 * partially using zone resources of the target devices as that leads to
+> And that's what I was using before, and it worked fine, so I'm willing
+> to bring it back and maintain it if dm-flakey can't be relied on.
 
+This dm-flakey corrupt_bio_byte bug will be fixed upstream this week.
 
--- 
-Damien Le Moal
-Western Digital Research
+But your recap is devoid of any understanding that my responses to
+this dm-devel thread, and your private messages, have primarily taken
+issue with how you've chosen to conduct yourself.
+
+I'm not aware of dm-flakey's corrupt_bio_byte being used in upstream
+testing frameworks (xfstests only uses flakey's basic capabilities).
+
+Any willingness to elevate dm-flakey's corrupt_bio_byte to wider use
+in upstream testing frameworks would have uncovered the need for your
+fix.  You were first to notice it.  Rather than be cool about it,
+you've been hostile from the start and completely misrepresented the
+significance of the bug given the limited scope of who is impacted.
+
+I really am done responding to your escalating campaign of self-owns.
