@@ -1,100 +1,128 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from fout-a5-smtp.messagingengine.com (fout-a5-smtp.messagingengine.com [103.168.172.148])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4027216392
-	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 16:39:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1093231A2D
+	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 17:05:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.148
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741624764; cv=none; b=Nc8HF+msWeQ+XYSJ0WWnpvh+7LC3i9aTYCZTueJ4AsKvhtHIlR5fCqpKRrPyFoCMoTd2j595e2MWqoT/1uC5DG5i9OiKpyIxAF1gBDN1DiPG/bv3L2Yu8FSv3dV/9ETyQbjdUQ0cUBpxDGrlYXGgOrKepgt8inHL9qKJ78xuniU=
+	t=1741626344; cv=none; b=gLy7G6Yk4lMChZRBAF93dolKMlBSfXfjxljoauVWDxSNfs5QiDYFcgzN8Ped2UqHp3NzPdWrWAy4vmtH4sAo3V04j0J4Jm0EZYpBLjZ7PzsQe8geGjK1O7d7xsIcb1A3VXIrGuJ8oZMVTNep2zSsuMpN2unlefffmawmLU5x7HY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741624764; c=relaxed/simple;
-	bh=cpyV4JgH1AWo+do8fcQTYy2kPWL9ktMAlboZe779qEk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=aOXCwPj9eAjUO1K5AnW8wbER/oUdPYr5PZNZKaaV6VNmlu9MnrHeEeHLF8VQRXoPjN9ZBJdeKrFXd9KFnZGH8vGzWdp2qEx4JvPzMrhqUXa8ULtawL+7gYgqF2ilOs5fTVRvKsAmutIUPVJ9tsPYg1jwgyLohP9Yo/W9s7BaZz0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AFQJi0nx; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741626344; c=relaxed/simple;
+	bh=RZqjh0F1hffEJl1SKeFYRUXx9828kAhYY9hPbcP559Y=;
+	h=MIME-Version:Date:From:To:Message-Id:In-Reply-To:References:
+	 Subject:Content-Type; b=E99hhgy5mmNXKPixgbk/5pnx1o+dne0/dCYn9CYfSmhopa9JSZt3w9nbKX2Q9haTkTQtjmTpSv7IJyQJkQ40sBX9S6ZWIvaDdV5Ac4Cjdm5QpknoJWTZUPtut9s0tn8uk3U0E/z9rqQbp+7zJsKbXnoYzYx43nOj+iwqSp1HpOU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=owlfolio.org; spf=pass smtp.mailfrom=owlfolio.org; dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b=kVcPrWZF; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=ufPafcE8; arc=none smtp.client-ip=103.168.172.148
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=owlfolio.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=owlfolio.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AFQJi0nx"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741624761;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WRQ5j56SYpEQ4INQoex+HolFgwnUbJQFdN2MGNRw2E8=;
-	b=AFQJi0nxAfKJwZQ3CAoUymuyMVK/+9ays3sevGDBlZiVy1bLlDTt2nMA3yREmLrNkO5Q7Q
-	ihaSRG1GWFRXD9wFAD9sH5VGQ+dF6pySSrNmRnt6IM3KE4nlo2dJPTAkKRYTjeU4RJkY/I
-	Tp8J0ON2X53opFi+XExufsaEmPrDQRE=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-320-SkjFCRVBODm0jTA8TYeAlQ-1; Mon,
- 10 Mar 2025 12:39:20 -0400
-X-MC-Unique: SkjFCRVBODm0jTA8TYeAlQ-1
-X-Mimecast-MFC-AGG-ID: SkjFCRVBODm0jTA8TYeAlQ_1741624759
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 858241955D66;
-	Mon, 10 Mar 2025 16:39:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6BECB1800944;
-	Mon, 10 Mar 2025 16:39:17 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52AGdGWn478738
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 10 Mar 2025 12:39:16 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52AGdGxV478737;
-	Mon, 10 Mar 2025 12:39:16 -0400
-Date: Mon, 10 Mar 2025 12:39:16 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-        Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 1/7] dm: don't change md if dm_table_set_restrictions()
- fails
-Message-ID: <Z88VtC6BLVWTbOM-@redhat.com>
-References: <20250309222904.449803-1-bmarzins@redhat.com>
- <20250309222904.449803-2-bmarzins@redhat.com>
- <671584b2-89ca-42f0-b7d5-a16bc77c3dab@kernel.org>
+	dkim=pass (2048-bit key) header.d=owlfolio.org header.i=@owlfolio.org header.b="kVcPrWZF";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="ufPafcE8"
+Received: from phl-compute-01.internal (phl-compute-01.phl.internal [10.202.2.41])
+	by mailfout.phl.internal (Postfix) with ESMTP id A42B81382D56;
+	Mon, 10 Mar 2025 13:05:40 -0400 (EDT)
+Received: from phl-imap-05 ([10.202.2.95])
+  by phl-compute-01.internal (MEProxy); Mon, 10 Mar 2025 13:05:40 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=owlfolio.org; h=
+	cc:content-transfer-encoding:content-type:content-type:date:date
+	:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:subject:subject:to:to; s=fm3; t=1741626340;
+	 x=1741712740; bh=HrksSGldFsMzQXPwBqslCsmt15iHqOW6RMDTJ2HqZwE=; b=
+	kVcPrWZF54miOH/6bE+3AVt7YWlhLcFL8EBBhGexOmuXPrwnuQp6y3jW4GMM20K0
+	82FiBXyQUv6bFUSEqqV9vimnETmVYBrd5wgtXSerZi1S7tRIOtzruDTwGYBbcLLD
+	FQi0OizvaIxuFL4ged2Dhi6Fj/2suyz4pN5ZD++B/aaFygpFJ671+eYPYd0ucFRh
+	mil/idlOm0uEo/CjJgHwRLSS4vxdtpuI75/KLGlQOOAoyiINjzOMjHfXmXZTW1Wz
+	jTaW+BCyg4r55b8sfJ43pArUqtKfBJmR1u5WLAaJlkwQ1bM/i1fZcd9T7GsXeILv
+	hCbdKh6jogsX9UyPVy/oIQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:content-transfer-encoding:content-type
+	:content-type:date:date:feedback-id:feedback-id:from:from
+	:in-reply-to:in-reply-to:message-id:mime-version:references
+	:reply-to:subject:subject:to:to:x-me-proxy:x-me-sender
+	:x-me-sender:x-sasl-enc; s=fm1; t=1741626340; x=1741712740; bh=H
+	rksSGldFsMzQXPwBqslCsmt15iHqOW6RMDTJ2HqZwE=; b=ufPafcE8Xa9azw/HK
+	Gas/h5pDHyFX9aTHms62zOeb+zOkvp1cxQY6KRrwZml9tIbwCxfgObNsDt3DBr9G
+	+DJtauzyYjACnMMLmzhcOmYgzfzKgm0LcXEsNPI695e1tK1071t40JPzgQ/9sHxE
+	Bu/cFuRLmU8Ymm9FnYvPlDSJ4h++xQ4AJmgfi8zUj+Lyldh/4VEk3I2/76cwJQ7h
+	qomfmABwvthXopFR21ixVlojmcM08ux8JGvuK/otbPh2qA1GH9RoPY60RQrnv9EK
+	g1su2rMQb8NYkFxhuuv977AZCkENCUWYWrHcC0sNY+2+LP5GS6NaTHNg/Gd/4Xv7
+	S3ZSA==
+X-ME-Sender: <xms:5BvPZy2JqqsuXiey8sONdUn07f6xyixaDAAzP7MEhAPK_6U6V27uPw>
+    <xme:5BvPZ1HyTBJ-5HzNX1_X65LIOYm4zEoKfcKyk_3tHBZzDaXOq43KRJ_VO8Qg8wk1f
+    td6EL6QZSl0L6XIQ6Q>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeefvddrtddtgdduudelledtucetufdoteggodetrf
+    dotffvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdggtfgfnhhsuhgsshgtrhhisggv
+    pdfurfetoffkrfgpnffqhgenuceurghilhhouhhtmecufedttdenucesvcftvggtihhpih
+    gvnhhtshculddquddttddmnecujfgurhepofggfffhvffkjghfufgtgfesthejredtredt
+    tdenucfhrhhomhepfdgkrggtkhcuhggvihhnsggvrhhgfdcuoeiirggtkhesohiflhhfoh
+    hlihhordhorhhgqeenucggtffrrghtthgvrhhnpefgveelheeliedvfeejteffheeuleev
+    geduffeludehiedufeevjeejvdevudelteenucevlhhushhtvghrufhiiigvpedtnecurf
+    grrhgrmhepmhgrihhlfhhrohhmpeiirggtkhesohiflhhfohhlihhordhorhhgpdhnsggp
+    rhgtphhtthhopedvpdhmohguvgepshhmthhpohhuthdprhgtphhtthhopeiiuggvnhgvkh
+    drkhgrsggvlhgrtgesghhmrghilhdrtghomhdprhgtphhtthhopegumhdquggvvhgvlhes
+    lhhishhtshdrlhhinhhugidruggvvh
+X-ME-Proxy: <xmx:5BvPZ65KhIQVagrmQybrqUtzFnbM97I8jtCYvzSOLFaLOs1Qm3md5w>
+    <xmx:5BvPZz2Mt0jk3GaRuYfutIDjvvbkruYGxyQ_Pu2OF0BQ8PB4qjpuBQ>
+    <xmx:5BvPZ1FIpUjB-rsnh_yR1VaOv_i-V8XRnlZbWSX5bcdrNd01D8d1mg>
+    <xmx:5BvPZ88s69a1PKhufNFRsVP9VWCfHaQm8LBHBH26D4EI04wY2wntJw>
+    <xmx:5BvPZzMC66L3VZoNUiePHeY9XgOpTfdpPZ6mjstgXn0ltvXwR0NqTX2x>
+Feedback-ID: i876146a2:Fastmail
+Received: by mailuser.phl.internal (Postfix, from userid 501)
+	id 626AB3020083; Mon, 10 Mar 2025 13:05:40 -0400 (EDT)
+X-Mailer: MessagingEngine.com Webmail Interface
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <671584b2-89ca-42f0-b7d5-a16bc77c3dab@kernel.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+Date: Mon, 10 Mar 2025 13:05:20 -0400
+From: "Zack Weinberg" <zack@owlfolio.org>
+To: "Zdenek Kabelac" <zdenek.kabelac@gmail.com>, dm-devel@lists.linux.dev
+Message-Id: <25a38d69-4128-4c51-bf28-95f2f76b78a9@app.fastmail.com>
+In-Reply-To: <4dd35799-f43b-461a-a3c4-5cec8ff22006@redhat.com>
+References: <0211b995-d844-4a0d-a02f-2f9bd2a4215e@app.fastmail.com>
+ <4dd35799-f43b-461a-a3c4-5cec8ff22006@redhat.com>
+Subject: Re: Allowed characters in strings passed to/from device-mapper APIs
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-On Mon, Mar 10, 2025 at 08:18:31AM +0900, Damien Le Moal wrote:
-> On 3/10/25 07:28, Benjamin Marzinski wrote:
-> > __bind was changing the disk capacity, geometry and mempools of the
-> > mapped device before calling dm_table_set_restrictions() which could
-> > fail, forcing dm to drop the new table. Failing here would leave the
-> > device using the old table but with the wrong capacity and mempools.
-> > 
-> > Move dm_table_set_restrictions() earlier in __bind(). Since it needs the
-> > capacity to be set, save the old version and restore it on failure.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Does this need a "Fixes" tag maybe ?
+On Mon, Mar 10, 2025, at 10:35 AM, Zdenek Kabelac wrote:
+> Dne 09. 03. 25 v 17:00 Zack Weinberg napsal(a):
+>> I am developing a device-mapper client library in Rust. 
+[...]
+> While you could surely interface kernel directly through ioctl(),
+> you should probably base your tool around libdevmapper as this library
+> is there to solve version differences or possible kernel or udev
+> issue that pops up here and there -  if you will go your own path,
+> you will need to reimplement these things within Rust - which
+> might potentially be problematic - as we are solving i.e. udev trouble
+> to be working only within our 'small world' across different version of kernel 
+> and udev version installed on the system.
 
-Yeah. I can go through and add the appropriate Fixes tags.
+Unfortunately this is not an option for me, as my library needs to be usable
+in a context where neither the base C library nor udev is available.
 
--Ben
+> Again - you are free to reimplement your Rust version - but eventually this 
+> may lead to a completely different set of udev rules needed for management of 
+> Rust devices -  as libdevmapper is free to 'change' DM udev rules as long as 
+> we are 'internally' consistent - as these rules are seen as 'internal' 
+> property for DM world.
 
-> 
-> Otherwise looks good to me.
-> 
-> Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
-> 
-> -- 
-> Damien Le Moal
-> Western Digital Research
+I don't immediately see how that could happen, can you be more specific about the
+potential problems you have in mind?
 
+> Device name and UUID are always plain 7bit ASCII.
+
+Is that enforced by the kernel, and if so, where?  I was not able to find any
+code in the kernel that does that, but I could easily have missed it.
+
+> But there is a catch in udev process - as udev has even further limited char 
+> subset usable for device names - libdevmapper uses name mangling for those.
+
+Thanks, this is helpful.  Do you happen to know offhand where udev documents
+its character restrictions?
+
+How about target names, table parameters, and target message strings?  What are
+the restrictions on those?
+
+zw 
