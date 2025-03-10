@@ -1,142 +1,85 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4301A26296;
-	Mon, 10 Mar 2025 01:13:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DFB122371B
+	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 09:16:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741569211; cv=none; b=SMPPpR+l7LH+TxtwTYExLYVsDLTe+d4DDTS3+SFs6O/DBRPrBbM8ihLKSzERF7HtYaHRF4ECPSowvW/BOQtZeQLK5Woof35a2HxFM6/T+2rCRPo17hqxAPxZ1Clno4zDj5yJV8pdeB2BL6mdzyeoOqoZlzsTMGI8AJZNLAKasLw=
+	t=1741598190; cv=none; b=OKh2QPpk0B7EpOaj5snLGXjEpnyEqJtylERdmFX2/1Az9RVzYcwEC8wM5ciVZxGIH7vd1KXGeh7lyRgnRoMGMdGyeH7Y/8QYI786rMcNnKbzG7jIdRSJOHB33kfbi5Fh8Ilh3yJ56ED3+FkQ76gZqJyHbF3jBVu9oomKcOys5JE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741569211; c=relaxed/simple;
-	bh=soyTNczKLXceFGzIrc9GsPLorNN8OpES+pQcgj/cgMg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=mPQ0jRDvDo7T3kUNO3SZX4ZPfUsUknwPOVaqWWbAWttMzU9mclBl7nCSuF+DpA8f/XPW82H5a/oQj9QbetOrk0D8ASBbX134InxPf9qLUE6fYFnSv5JKUtIV7JHrDXmBihLi3fsDMPpvxCPmVL19cvGjJyOQ5/sffeBD70vPfe8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jndHNvdK; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1741598190; c=relaxed/simple;
+	bh=j/2Hy4clFrckMjtEZF1Tq32bqKe4GusaZ8+plIUuhdQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BBYoP27DxF5hF6zXQIAdnPD4FRIFkoVpMIBtEQr58to2dKhaC30vnCZrmdezLroGD3qP+ICFKYKEnz+1hXo+DnCrDpMAoMWzCNoiUl1lqqrL94Cu593btaze0k/+SQlLUa4MqbQlZFsPKBmvhuuoF+L7bEVq3WnYEgDZQ2G2Rqw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fQEKVIv7; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jndHNvdK"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7124CC4CEE3;
-	Mon, 10 Mar 2025 01:13:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741569210;
-	bh=soyTNczKLXceFGzIrc9GsPLorNN8OpES+pQcgj/cgMg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=jndHNvdKU0cAW+3i1gXI/NRumE5RevL5HhmRgsxC6shN6komkjcWovvxzH+Ul6bAZ
-	 smD105ebrVJOJE+6nKKWIu4b+xXxp2KXrIj8eX8C2Vy8O9l29nvIJA4mNJ/zKsxqMo
-	 l2Hr6DntbV5Mb0TPy3KXQcJsBjV1ciwTqdoZix6bSuBbr0IefHvN7SkLliy9BEWX/F
-	 0USwQa+aVPhtjXiSoQrYZUEMltRA1WtVYzBAyNFDI96VnQJm+g9qz+bfmVYt5RNEZs
-	 jiH9uSTqcocsfDJAbgH6xm9kqNGKgGc2LxnbO+Qyw0qW848GAqxhklQ0MjwOdBQ82U
-	 woJ/LKymwxVIA==
-Date: Sun, 9 Mar 2025 21:13:29 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: Kent Overstreet <kent.overstreet@linux.dev>
-Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>, linux-block@vger.kernel.org,
-	Josef Bacik <josef@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: Bring back md-faulty? (was Re: dm-flakey: Fix memory corruption)
-Message-ID: <CAF3mmA=-xSKpW6M+0L0DVGO0dHugyoiGNNBdJQ9BcbEjocDRrw@mail.gmail.com>
-References: <20250308155011.1742461-1-kent.overstreet@linux.dev>
- <Z8yKMlhd-Z0sf6tG@kernel.org>
- <ij3pre7rlgez3ybsfrsj2i3ohoeb5ma5rgz3tfuv63h7rv6uoo@2hw6452r4qbn>
- <Z823ZmamUoGO8P6I@kernel.org>
- <xt5b22a3i6klpdsysz4ds3fubu3p6s22redu56w6ewc7mmcter@kcgbz3ccoedf>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fQEKVIv7"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1741598187;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=iqH5sQhQgNCBmrsNGoSMQgNgdnc53Pyacipz5oblkxI=;
+	b=fQEKVIv7BYDgU1rGVwTye4VOtW8oIzRd7N/F3qGvyhYQSWQOQKvosY2BXFd+z5Fo1TPcHm
+	KekBg/Dj9N/YVGj0BVLVYEQoKQV10nadbQtrAX9QdpCZrT7QyTgLEPQeV7DIN5UN+FxsbN
+	Asd1wx/9UEp18xLe6UQczf0u6eV2tIU=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-577-FShKbrLpOaKJdXm6nMCKsw-1; Mon,
+ 10 Mar 2025 05:16:21 -0400
+X-MC-Unique: FShKbrLpOaKJdXm6nMCKsw-1
+X-Mimecast-MFC-AGG-ID: FShKbrLpOaKJdXm6nMCKsw_1741598181
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C90191954216;
+	Mon, 10 Mar 2025 09:16:20 +0000 (UTC)
+Received: from localhost (unknown [10.72.120.24])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 421B61956095;
+	Mon, 10 Mar 2025 09:16:18 +0000 (UTC)
+From: Ming Lei <ming.lei@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org
+Cc: dm-devel@lists.linux.dev,
+	Ming Lei <ming.lei@redhat.com>,
+	stable@vger.kernel.org
+Subject: [PATCH] block: make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone
+Date: Mon, 10 Mar 2025 17:16:10 +0800
+Message-ID: <20250310091610.2010623-1-ming.lei@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <xt5b22a3i6klpdsysz4ds3fubu3p6s22redu56w6ewc7mmcter@kcgbz3ccoedf>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On Sun, Mar 09, 2025 at 01:04:22PM -0400, Kent Overstreet wrote:
-> On Sun, Mar 09, 2025 at 11:44:38AM -0400, Mike Snitzer wrote:
-> > On Sat, Mar 08, 2025 at 04:50:05PM -0500, Kent Overstreet wrote:
-> > > On Sat, Mar 08, 2025 at 01:19:30PM -0500, Mike Snitzer wrote:
-> > > > On Sat, Mar 08, 2025 at 10:50:08AM -0500, Kent Overstreet wrote:
-> > > > > So, this code clearly isn't getting tested - at all. Besides this 
-bug,
-> > > > > the parsing for the "corrupt" modes is also broken.
-> > > > > 
-> > > > > Guys, don't push broken crap, and figure out how to write some 
-tests.
-> > > > 
-> > > > Thank you sir, may we have another?
-> > > > 
-> > > > Like you never introduced a bug in your life?
-> > > > 
-> > > > Not going to tolerate your entitled primadonna attitude here.  You 
-are
-> > > > capable of being better, you've chosen not to be on this issue 
-(twice)
-> > > 
-> > > Talking about basic engineering standards is in no way "being a prima
-> > > donna". Testing your changes is as basic as it gets, and this code
-> > > wasn't tested _at all_.
-> > 
-> > "entitled primadonna attitude" was me pulling punches.
-> > 
-> > I don't disagree that this is a bug that was missed and that proper
-> > testing hasn't been performed (I'd quibble with the no testing part
-> > only because I cannot speak for Mikulas and don't like to assume I
-> > know it all).
-> > 
-> > But you're missing the very problematic detail: you used a bug in an
-> > optional feature of the test-only dm-flakey target to try to take a
-> > pound of flesh while preaching from your high horse.  That is
-> > unacceptable behaviour that won't be tolerated here.  Be cool and
-> > others will be in return (unless you keep setting fire to bridges).
-> > 
-> > Fin.
-> 
-> Mike, saying code needs to be tested is not an "entitled primadonna
-> attitude".
+Make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone(),
+otherwise zero ->nr_integrity_segments will be observed in
+sg_alloc_table_chained(), in which BUG() is hit.
 
-Definition of primadonna: 
-"a very temperamental person with an inflated view of their own talent
-or importance."
+Cc: stable@vger.kernel.org
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ block/blk-mq.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-My issue from the start on Friday night (in private) has always been
-how holier-than-thou yet abusive you've been since having discovered
-this bug in dm-flakey's optional "corrupt_bio_byte" feature.
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index 40490ac88045..005c520d3498 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -3314,6 +3314,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
+ 		rq->special_vec = rq_src->special_vec;
+ 	}
+ 	rq->nr_phys_segments = rq_src->nr_phys_segments;
++	rq->nr_integrity_segments = rq_src->nr_integrity_segments;
+ 
+ 	if (rq->bio && blk_crypto_rq_bio_prep(rq, rq->bio, gfp_mask) < 0)
+ 		goto free_and_out;
+-- 
+2.47.0
 
-> Pushing completely broken code because you made no attempt to
-> test it and then flipping out when called out over it - that is.
-
-I didn't push commit 1d9a94389853 _because_ I "made no attempt to test
-it".  Commit 1d9a94389853 sought to fix a similar but different
-corruption in the original "corrupt_bio_byte" implementation (which
-proved useful for the specific case it was first developed for).
-
-> To recap, we're not talking about some obscure corner cases, we're
-> talking about core documentated functionality in dm-flakey that is
-> completely broken in ways that show up immediately if you run it - and
-> there's at least three bugs that I saw; the parsing code, the
-> clone_bio() memory corruption, and the read side corruption still wasn't
-> working when I fixed or worked around the other two (write side did).
-> 
-> This isn't your personal project, this is the kernel - there are
-> standards, and other people depend on your work. dm-flakey is used
-> heavily by filesystem folks, and additionally, md-faulty was recently
-> removed because, supposedly, dm-flakey was sufficient.
-> 
-> And that's what I was using before, and it worked fine, so I'm willing
-> to bring it back and maintain it if dm-flakey can't be relied on.
-
-This dm-flakey corrupt_bio_byte bug will be fixed upstream this week.
-
-But your recap is devoid of any understanding that my responses to
-this dm-devel thread, and your private messages, have primarily taken
-issue with how you've chosen to conduct yourself.
-
-I'm not aware of dm-flakey's corrupt_bio_byte being used in upstream
-testing frameworks (xfstests only uses flakey's basic capabilities).
-
-Any willingness to elevate dm-flakey's corrupt_bio_byte to wider use
-in upstream testing frameworks would have uncovered the need for your
-fix.  You were first to notice it.  Rather than be cool about it,
-you've been hostile from the start and completely misrepresented the
-significance of the bug given the limited scope of who is impacted.
-
-I really am done responding to your escalating campaign of self-owns.
