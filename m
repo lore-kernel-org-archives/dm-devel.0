@@ -1,103 +1,133 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D54422170F;
-	Mon, 10 Mar 2025 23:27:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD8B7221DAB
+	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 23:42:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741649256; cv=none; b=YQ2vTO6z2a4BMeYQlAsYGQKR9gv+LlytEnwBPgfyhSZdQUnVG4kOPkdqKytLK0L0F7kHPP0b3Dm6VqdpsSxn6YgLUd4RjycqbSrWS+iJjo95JYaNdFqROuoiR/D8aMVXRLvGSWasJFGgocwj4yHtnKytOh8wccTjEF1SCMf+IfE=
+	t=1741650174; cv=none; b=jXzN+zSeeOOT8KQsJWN4jKk/OGycAnsUJF2PKgSbZK0wM3vJVLYqGhzsNeyvU0q4dbWoidz3tdXy7F+kxCvQUsb2lTFUAgCuVjmhHRg4GXe9p1aSjZ58D4Ejdm/bfMF4h7ooM1UCxOObUF483efCj54oEtct2hCbGEWNQkSZa9g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741649256; c=relaxed/simple;
-	bh=Nhfos4r2JyzaqDBHmpwbDUQG/Z4zLQP/uCRP2Hz8yVg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=dud6Pgjp89ZdKycjz5V4DAAooMUmQtPYQoI79H+Y2FzsGwtWm9QTQ/8/B5yz9ApmORhQm+w3UEoHMZZKeyO8DaqRLzMasinTm/32FuLEauzz+DWJlv7tFXEDKELMowWOffoHk9e9Qxqq5kYVrA7qkAxm5OSz67RPpoVjPkGqD2c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=p9TD4Kg9; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1741650174; c=relaxed/simple;
+	bh=bEHb/XuKFvYwvTUlClFzRfHDWBIjRYrLFyegwd5yCLM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=orv5aWt5QGqrtsPY6OFTQZ2HB1d40RWW6hkzmisbYU2+dNaO8B/hhndQeSjKeJeqS+nj0UXxrSIwf+NcZ+ZYhioxOhDdJGrV+FGIvQ7fodaNIWv5YoSRTu3GA2R2x8HFFuU6oxoKbhbh+LCZFbCKv/rGeAbEV3mco5MBJfnY6bg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XLXPgRyC; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="p9TD4Kg9"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EA623C4CEE5;
-	Mon, 10 Mar 2025 23:27:34 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741649255;
-	bh=Nhfos4r2JyzaqDBHmpwbDUQG/Z4zLQP/uCRP2Hz8yVg=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=p9TD4Kg9KByfiH8pr264cFPuTjs56+W7Ko8WLCofagLG8rOAjV1XhmkkXm97v+UO/
-	 bYxCiyjXeFJcKLoW/ShCMjLSaKpG2zrePILOO68UPQHbfRhpXYLuf1AfKJF8nYtw6U
-	 fRMSNSx5ayROOp/FLaG3zOorwIpMNppCIsncTAGyqGhBrEVZcdZDJEFeA54kUGnvGO
-	 8Ag3D5U3Eo1Nnofs/CpldDmQZyQ1zO8GG3iB3SdhiLs1H8jt0VHHf7fxwe9FuSsccq
-	 orQi7c0OhDtfcvWHu/hPP9tMkqT+eR7K95/EbyCzg6DfxSbYDVsWWhaExwuxfAIDcg
-	 KmJhvg23ejdtg==
-Message-ID: <60f0f94c-3c80-4806-82aa-04ace428b4d4@kernel.org>
-Date: Tue, 11 Mar 2025 08:27:34 +0900
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XLXPgRyC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1741650171;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=HD+QO/wcq7UDXBHOW5cqJpCGmrmPyKM6LVw7Evp6oR8=;
+	b=XLXPgRyCsxg64oBeWnFTMPksXClUu56xpsaKPFqOuCvyT7Iu5mb7RTMeZHkBDK/Pa5+Q//
+	SL1Z+Ktnfjm/barXzYYKMN90ly4NiNBZ/NtK5cBvr1muoZhlkr9vaRMQGScDkPsktcTWqT
+	75HcOAr+YhngUBEXNbzmUAq53nE9WZk=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-70-ZH71itX7MAKio7QB_Gn9BA-1; Mon,
+ 10 Mar 2025 19:42:48 -0400
+X-MC-Unique: ZH71itX7MAKio7QB_Gn9BA-1
+X-Mimecast-MFC-AGG-ID: ZH71itX7MAKio7QB_Gn9BA_1741650167
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CB75F19560BB;
+	Mon, 10 Mar 2025 23:42:46 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 981811800944;
+	Mon, 10 Mar 2025 23:42:45 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52ANgiit491406
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 10 Mar 2025 19:42:44 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52ANgh2D491405;
+	Mon, 10 Mar 2025 19:42:43 -0400
+Date: Mon, 10 Mar 2025 19:42:43 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+        Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Subject: Re: [RFC PATCH 7/7] dm: allow devices to revalidate existing zones
+Message-ID: <Z8948_PSARorliqn@redhat.com>
+References: <20250309222904.449803-1-bmarzins@redhat.com>
+ <20250309222904.449803-8-bmarzins@redhat.com>
+ <7e0a1b47-3c96-4864-80b0-813f357845ad@kernel.org>
+ <Z88k2RD6s5KpuxOD@redhat.com>
+ <ab56c408-c98d-4333-b4f1-c3f380008e12@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 3/7] dm: handle failures in dm_table_set_restrictions
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
- Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
-References: <20250309222904.449803-1-bmarzins@redhat.com>
- <20250309222904.449803-4-bmarzins@redhat.com>
- <9b5ff861-964d-472c-9267-5e5b10186ed3@kernel.org>
- <Z88jTxQqoLitl4ee@redhat.com> <Z88sP2WyotRbTd2E@redhat.com>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <Z88sP2WyotRbTd2E@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ab56c408-c98d-4333-b4f1-c3f380008e12@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-On 3/11/25 03:15, Benjamin Marzinski wrote:
->>>> @@ -1883,6 +1879,7 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->>>>  	if (dm_table_supports_atomic_writes(t))
->>>>  		limits->features |= BLK_FEAT_ATOMIC_WRITES;
->>>>  
->>>> +	old_limits = q->limits;
->>>
->>> I am not sure this is safe to do like this since the user may be simultaneously
->>> changing attributes, which would result in the old_limits struct being in an
->>> inconsistent state. So shouldn't we hold q->limits_lock here ? We probably want
->>> a queue_limits_get() helper for that though.
->>>
->>>>  	r = queue_limits_set(q, limits);
->>>
->>> ...Or, we could modify queue_limits_set() to also return the old limit struct
->>> under the q limits_lock. That maybe easier.
->>
->> If we disallow switching between zoned devices then this is unnecssary.
+On Tue, Mar 11, 2025 at 08:19:29AM +0900, Damien Le Moal wrote:
+> On 3/11/25 02:43, Benjamin Marzinski wrote:
+> > On Mon, Mar 10, 2025 at 08:59:26AM +0900, Damien Le Moal wrote:
+> >> On 3/10/25 07:29, Benjamin Marzinski wrote:
+> >>> dm_revalidate_zones() only allowed devices that had no zone resources
+> >>> set up to call blk_revalidate_disk_zones(). If the device already had
+> >>> zone resources, disk->nr_zones would always equal md->nr_zones so
+> >>> dm_revalidate_zones() returned without doing any work. Instead, always
+> >>> call blk_revalidate_disk_zones() if you are loading a new zoned table.
+> >>>
+> >>> However, if the device emulates zone append operations and already has
+> >>> zone append emulation resources, the table size cannot change when
+> >>> loading a new table. Otherwise, all those resources will be garbage.
+> >>>
+> >>> If emulated zone append operations are needed and the zone write pointer
+> >>> offsets of the new table do not match those of the old table, writes to
+> >>> the device will still fail. This patch allows users to safely grow and
+> >>> shrink zone devices. But swapping arbitrary zoned tables will still not
+> >>> work.
+> >>
+> >> I do not think that this patch correctly address the shrinking of dm zoned
+> >> device: blk_revalidate_disk_zones() will look at a smaller set of zones, which
+> >> will leave already hashed zone write plugs outside of that new zone range in the
+> >> disk zwplug hash table. disk_revalidate_zone_resources() does not cleanup and
+> >> reallocate the hash table if the number of zones shrinks.
+> > 
+> > This is necessary for DM. There could be plugged bios that are on on
+> > these no longer in-range zones.  They will obviously fail when they get
+> > reissued, but we need to keep the plugs around so that they *do* get
+> > reissued. A cleaner alternative would be to add code to immediately
+> > error out all the plugged bios on shrinks, but I was trying to avoid
+> > adding a bunch of code to deal with these cases (of course simply
+> > disallowing them adds even less code).
 > 
-> Err.. nevermind that last line. There are still multiple cases where we
-> could still fail here and need to fail back to the earlier limits. But
-> I'm less sure that it's really necessary to lock the limits before
-> reading them. For DM devices, I don't see a place where a bunch of
-> limits could be updated at the same time, while we are swapping tables.
-> An individual limit could get updated by things like the sysfs
-> interface. But since that could happen at any time, I don't see what
-> locking gets us. And if it's not safe to simply read a limit without
-> locking them, then there are lots of places where we have unsafe code.
-> Am I missing something here?
+> I am confused now :)
+> Under the assumption that we do not allow switching to a new table that changes
+> the zone configuration (in particualr, there is no grow/shrink of the device),
+> then I do not think we have to do anything special for DM.
 
-Yes, for simple scalar limits, I do not think there is any issue. But there are
-some cases where changing one limit implies a change to other limits when the
-limits are committed (under the limits lock). So my concern was that if the
-above runs simultaneously with a queue limits commit, we may endup with the
-limits struct copy grabbing part of the new limits and thus resulting in an
-inconsistent limits struct. Not entirely sure that can actually happen though.
-But given that queue_limits_commit_update() does:
+If we don't allow switching between zoned tables, then we obviously
+don't need to make DM call blk_revalidate_disk_zones() on a zoned table
+switch. I was just saying that I know that this patch would leave
+out-of-range zone plugs behind on a shrink, but that is necessary to
+allow shrinking while there could still be outstanding plugged bios
+attached to those plugs.
 
-	q->limits = *lim;
+So, if we wanted to allow shrinking, then I think this patch is correct
+(although erroring out all the out-of-range bios would be a cleaner
+solution). But assuming we don't allow shrinking, then you are correct.
+We don't need to do anything special for DM.
 
-and this code does:
+-Ben
 
-	old_limits = q->limits;
+> 
+> 
+> -- 
+> Damien Le Moal
+> Western Digital Research
 
-we may endup depending on how the compiler handles the struct copy ?
-
-
--- 
-Damien Le Moal
-Western Digital Research
