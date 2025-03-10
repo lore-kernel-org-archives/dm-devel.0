@@ -1,135 +1,106 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0710A1DF72D
-	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 21:24:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C002620B22;
+	Mon, 10 Mar 2025 23:13:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741641897; cv=none; b=PSR/8lcqUW1YDN6Hs9LklJa+jt536fDeZoqYq6nYZZcvIoiOzi67gOLBmJWR+jSwAjqnYgKCpHIGFsXJrWnlUQBjyIHEQ+il8UBTqh/YbTUBytWS5U4Oeqr+IX2e2sEG2UnzaXKqMWuVatk8J1RFiP+bQ0lsymhjiQIC3CYjVJU=
+	t=1741648439; cv=none; b=lOGsF9Q9BxqidJM7BWmwsSCLt/RVvGL4M1GuF+zZ9X4ARKH+78ZrtcoFbV7QLudGoCbktg9mL7l87yy02X8AaOIOWiuen2FbTUy4Fwp44nuskcc242aYkOf0BVRBIsYvtmYJKhOYCo4tL9UeHfWQ3ZqS74JpCJFO5mxRPvXaXKI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741641897; c=relaxed/simple;
-	bh=6gKm3cDYlZkS44vV5VvqXJfrlw0dTtNzRpW7jfAnRUM=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=j1CjCVHNv224OEIknSQxCjfC+999WucIH/VReQkE1MM0r6ohrwLeGtDVGVoJRAIYh9k2tSUfxzTS1CYLHETw2ERCfqVgdz1Gq+m7+b5WT+c3vkk8hvYK+ufwmDvXU53YhyYLAP1d3oeHpc/2FxhD8NAnJTTSU15vpzOPrjT8RiQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MaAoY7jd; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741648439; c=relaxed/simple;
+	bh=ZMPUuoxsJB05Imxo4EDg1YKKTGBgB9+iMvPW21LwCpo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=iaSqP6fbNxwR6tzt8pzjVe5MA6oOWzbzSy4DL510ifGsLVRV71iXDGHxLreGWi4gAAp1e8Kg1hFBX7WpYMleVSlO2a5pdWKNBbNn8NGDYN892vmiu/PatVd3QgFkHs85i57GtxBYr0lFas40qXl+S65G/sgm2lpjLQqp5aHi37U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=NYG8CvAs; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MaAoY7jd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741641894;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=LEnlNaswidzUugJbJ7UhbKuL7xpkOPT1NVdOljaiZuA=;
-	b=MaAoY7jdacVJqZ5tnbeohtxudt2MNT4Dk5Fv8txdHTYQ6N+PQske9BFREhQ0nhiqHdRzDe
-	vtAzO8eA2wlvVLvThlbSIoOMurVsBwJZ5mmUNWtxlNtK24ZelYGVZuoZ49z9ReO1mnQz9D
-	+rN1x8KfshYObEIsIgquz2tkjVr5Vss=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-6asTICabPMu0sV_96wP1lQ-1; Mon,
- 10 Mar 2025 17:24:51 -0400
-X-MC-Unique: 6asTICabPMu0sV_96wP1lQ-1
-X-Mimecast-MFC-AGG-ID: 6asTICabPMu0sV_96wP1lQ_1741641890
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 66618180049D;
-	Mon, 10 Mar 2025 21:24:50 +0000 (UTC)
-Received: from [10.22.82.75] (unknown [10.22.82.75])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 55C6A1956094;
-	Mon, 10 Mar 2025 21:24:49 +0000 (UTC)
-Date: Mon, 10 Mar 2025 22:24:44 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Zack Weinberg <zack@owlfolio.org>
-cc: dm-devel@lists.linux.dev
-Subject: Re: Allowed characters in strings passed to/from device-mapper
- APIs
-In-Reply-To: <0211b995-d844-4a0d-a02f-2f9bd2a4215e@app.fastmail.com>
-Message-ID: <a81665e6-8516-2c98-1f89-cbfc11774f14@redhat.com>
-References: <0211b995-d844-4a0d-a02f-2f9bd2a4215e@app.fastmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="NYG8CvAs"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 47C38C4CEE5;
+	Mon, 10 Mar 2025 23:13:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1741648439;
+	bh=ZMPUuoxsJB05Imxo4EDg1YKKTGBgB9+iMvPW21LwCpo=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=NYG8CvAsMJIPO3nNL45LwXxqXCtZVjSBclaUoX53dM2nWx2Z8RBRL03sghgXdme6P
+	 2KOYG6IuUBANdHG5OlaLoUjYX3Q/AKM/QBc5+/OngXxywdcGazHBmc+vrZ73ZKChFD
+	 teeo7lhJQKRlt3TI33KakWTRvpYDb0Ns2fh3MgLp5QiAm8moL3jNvaTA+TYhfit8QI
+	 uvEG/fcE0D841LTVORG/4vpJB6kOvnLYEocV8zlpRP5RXq5FVeBxZW+GhvyMUjyC1b
+	 Cv8GbxjvL/D6kW1GPuWkF0DgfY9+lW1LeYi7lkv6gu5zVZYeiCCsMJis9nwpKL5wbP
+	 /Qj4lmTu3gSAA==
+Message-ID: <0de801e9-1943-4243-9a88-5e3bce3fdfc0@kernel.org>
+Date: Tue, 11 Mar 2025 08:13:57 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: JmDkZ3GD40cpqGPqtZmbhqHq5b08k5-htYIJSii29qg_1741641890
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="-1463811712-999599827-1741641890=:646484"
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH 0/7] dm: fix issues with swapping dm tables
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+ Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+ linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+References: <20250309222904.449803-1-bmarzins@redhat.com>
+ <788a1ec4-ac86-40fb-a709-eba7e6d5535f@kernel.org>
+ <Z88VdfOmo1MU73ue@redhat.com>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <Z88VdfOmo1MU73ue@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-999599827-1741641890=:646484
-Content-Type: text/plain; charset=ISO-8859-2
-Content-Transfer-Encoding: 8BIT
-
-Hi
-
-On Sun, 9 Mar 2025, Zack Weinberg wrote:
-
-> I am developing a device-mapper client library in Rust.  The language is
-> relevant here because Rust's standard library makes a strong distinction
-> between strings that are known to be encoded in UTF-8 and strings whose
-> encoding is not known (`str` vs `OsStr`), with the latter being awkward
-> to use compared to the former.
+On 3/11/25 01:38, Benjamin Marzinski wrote:
+> On Mon, Mar 10, 2025 at 08:16:43AM +0900, Damien Le Moal wrote:
+>> On 3/10/25 07:28, Benjamin Marzinski wrote:
+>>> There were multiple places in dm's __bind() function where it could fail
+>>> and not completely roll back, leaving the device using the the old
+>>> table, but with device limits and resources from the new table.
+>>> Additionally, unused mempools for request-based devices were not always
+>>> freed immediately.
+>>>
+>>> Finally, there were a number of issues with switching zoned tables that
+>>> emulate zone append (in other words, dm-crypt on top of zoned devices).
+>>> dm_blk_report_zones() could be called while the device was suspended and
+>>> modifying zoned resources or could possibly fail to end a srcu read
+>>> section.  More importantly, blk_revalidate_disk_zones() would never get
+>>> called when updating a zoned table. This could cause the dm device to
+>>> see the wrong zone write offsets, not have a large enough zwplugs
+>>> reserved in its mempool, or read invalid memory when checking the
+>>> conventional zones bitmap.
+>>>
+>>> This patchset fixes these issues. It does not make it so that
+>>> device-mapper is able to load any zoned table from any other zoned
+>>> table. Zoned dm-crypt devices can be safely grown and shrunk, but
+>>> reloading a zoned dm-crypt device to, for instance, point at a
+>>> completely different underlying device won't work correctly. IO might
+>>> fail since the zone write offsets of the dm-crypt device will not be
+>>> updated for all the existing zones with plugs. If the new device's zone
+>>> offsets don't match the old device's offsets, IO to the zone will fail.
+>>> If the ability to switch tables from a zoned dm-crypt device to an
+>>> abritry other zoned dm-crypt device is important to people, it could be
+>>> done as long as there are no plugged zones when dm suspends.
+>>
+>> Thanks for fixing this.
+>>
+>> Given that in the general case switching tables will always likely result in
+>> unaligned write errors, I think we should just report a ENOTSUPP error if the
+>> user attempts to swap tables.
 > 
-> The device-mapper ioctls use a lot of strings, and it's not clear
-> to me from either the documentation or the kernel's source code
-> what expectations the *kernel* has of the character encoding of these
-> strings.  I don't expect the kernel to care about UTF-8 versus
-> ISO-8859-n or whatever, but it is plausible to me that at least some
-> of the strings used in device-mapper ioctls can be expected always to
-> be ASCII, in which case I can safely use `str` for them on the library
-> side and it'll be more ergonomic for end users.
-> 
-> There are, I think, four different kinds of strings used in device-
-> mapper ioctls: target names, device names and UUIDs, table parameters,
-> and target messages.  For each of these, I would like to ask:
-> 
-> * Are there any circumstances where non-ASCII bytes *should* be
-> used in this type of string *when supplied to the kernel*?
+> If we don't think there's any interest in growing or shrinking zoned
+> dm-crypt devices, that's fine.  I do think we should make an exception
+> for switching to the dm-error target. We specifically call that out with
+> DM_TARGET_WILDCARD so that we can always switch to it from any table if
+> we just want to fail out all the IO.
 
-I think there's no reason to use non-ASCII characters in device mapper.
+Arg ! dm-error is used in xfstests so we need it (for btrfs at least since btrfs
+supports zoned devices, and soon xfs as well). So I guess we should disallow
+switching tables when the new table changes something to the zone configuration
+(grow, shrink, zone size, zoned/non-zoned). dm-error does not change anything,
+so we should still be able to allow it.
 
-> * Are there any circumstances where a client library should expect
-> non-ASCII bytes to *appear* in this type of string *when reported
-> back to the client by the kernel*?
 
-If the user creates a device name with non-ascii characters, it will be 
-reported as such in the kernel ioctls.
 
-> * If there are any such circumstances (either way), does the kernel
-> try to interpret non-ASCII bytes in this type of string as characters
-> in a specific encoding, or does it just treat them as an opaque
-> token (as is typical e.g. for pathname components)?
-
-The kernel just passes non-ascii characters as opaque tokens. It doesn't 
-attempt to interpret them.
-
-But udev mangles non-ascii characters - i.e. if you create
-dmsetup create ì¹èø¾ýáíé --table '0 3951256 zero'
-you get
-ls -la /dev/mapper/
-'\xc4\x9b\xc5\xa1\xc4\x8d\xc5\x99\xc5\xbe\xc3\xbd\xc3\xa1\xc3\xad\xc3\xa9' -> ../dm-0
-ls -al /dev/disk/by-id/
-'dm-name-\xc4\x9b\xc5\xa1\xc4\x8d\xc5\x99\xc5\xbe\xc3\xbd\xc3\xa1\xc3\xad\xc3\xa9' -> ../../dm-0
-
-dmsetup table will show
-ì¹èø¾ýáíé: 0 3951256 zero
-
-dmsetup remove ì¹èø¾ýáíé will remove the device
-
-Mikulas
-
-> Thanks,
-> zw
-> 
-> please cc: me directly on all responses, I'm not subscribed to the list
-> 
----1463811712-999599827-1741641890=:646484--
-
+-- 
+Damien Le Moal
+Western Digital Research
