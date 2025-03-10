@@ -1,85 +1,68 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DFB122371B
-	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 09:16:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3144616D9C2;
+	Mon, 10 Mar 2025 10:42:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741598190; cv=none; b=OKh2QPpk0B7EpOaj5snLGXjEpnyEqJtylERdmFX2/1Az9RVzYcwEC8wM5ciVZxGIH7vd1KXGeh7lyRgnRoMGMdGyeH7Y/8QYI786rMcNnKbzG7jIdRSJOHB33kfbi5Fh8Ilh3yJ56ED3+FkQ76gZqJyHbF3jBVu9oomKcOys5JE=
+	t=1741603347; cv=none; b=AHtrsQn98Z7zFqg+sjI0mZtJ3d62hDvVhStGlSIgBPkDlJeltRRBbFita2vR796rsEGIwA7FIrCE3pQ+mK6J6hTbCECJ6ue88F+5ueMhoNzIQ+Wwws7ytK9Wc9FCOp7Ldu/4TrU+/EWGkxRrlFp3DtC2y3iQlhVNs9f3maC0Zfc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741598190; c=relaxed/simple;
-	bh=j/2Hy4clFrckMjtEZF1Tq32bqKe4GusaZ8+plIUuhdQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BBYoP27DxF5hF6zXQIAdnPD4FRIFkoVpMIBtEQr58to2dKhaC30vnCZrmdezLroGD3qP+ICFKYKEnz+1hXo+DnCrDpMAoMWzCNoiUl1lqqrL94Cu593btaze0k/+SQlLUa4MqbQlZFsPKBmvhuuoF+L7bEVq3WnYEgDZQ2G2Rqw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fQEKVIv7; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741603347; c=relaxed/simple;
+	bh=BchiH3ks/Bb+a9/rT5xqXs4QG+DKMNtdKB33D7ZrnDE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=adVr/7v2N40f4ABHU81oKQacCw6vQoraJlsN/kJLzbMTtvXFjQPUg70nZvB8CWLPwa4X36uI5kV8ZYpn2vmrSjdjY1xZkrPLu8deDkBCl4IfTFLvNCIcPEPZdTuPc4IeT9vmqXJ2oguE1xQ161OfoFp/eiYbaqJ/fvY9J08FUYY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=kll8VgK7; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fQEKVIv7"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741598187;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=iqH5sQhQgNCBmrsNGoSMQgNgdnc53Pyacipz5oblkxI=;
-	b=fQEKVIv7BYDgU1rGVwTye4VOtW8oIzRd7N/F3qGvyhYQSWQOQKvosY2BXFd+z5Fo1TPcHm
-	KekBg/Dj9N/YVGj0BVLVYEQoKQV10nadbQtrAX9QdpCZrT7QyTgLEPQeV7DIN5UN+FxsbN
-	Asd1wx/9UEp18xLe6UQczf0u6eV2tIU=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-577-FShKbrLpOaKJdXm6nMCKsw-1; Mon,
- 10 Mar 2025 05:16:21 -0400
-X-MC-Unique: FShKbrLpOaKJdXm6nMCKsw-1
-X-Mimecast-MFC-AGG-ID: FShKbrLpOaKJdXm6nMCKsw_1741598181
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C90191954216;
-	Mon, 10 Mar 2025 09:16:20 +0000 (UTC)
-Received: from localhost (unknown [10.72.120.24])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 421B61956095;
-	Mon, 10 Mar 2025 09:16:18 +0000 (UTC)
-From: Ming Lei <ming.lei@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>,
-	linux-block@vger.kernel.org
-Cc: dm-devel@lists.linux.dev,
-	Ming Lei <ming.lei@redhat.com>,
-	stable@vger.kernel.org
-Subject: [PATCH] block: make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone
-Date: Mon, 10 Mar 2025 17:16:10 +0800
-Message-ID: <20250310091610.2010623-1-ming.lei@redhat.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="kll8VgK7"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Transfer-Encoding
+	:Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+	Sender:Reply-To:Content-ID:Content-Description;
+	bh=BchiH3ks/Bb+a9/rT5xqXs4QG+DKMNtdKB33D7ZrnDE=; b=kll8VgK7x71s7MRcsXZaZljJ+d
+	CZmyUA4t9opO/YG6CSrjVYn/PDWzBn0UCVrvG/B7gsNpbxizd/6e6LxFKha8AdunpZchZaxv2CU6e
+	clMZLChAMVQ0Kg9RVDeojpBdencE/P/cV1vv7JbuUpxnIkIuY2qDUFZ3+KXvVyvAvQHC0f5m3Wass
+	9VChsgreKUfJY7zvzTAaWAjX0MgWXs7CPEpPm9NAkIxUOESl7+8+5O7Z8qFM4edKjia+aYW9A68n+
+	3VBfCA7Yqr+JkMzkeMMFbMKNdOxVBLZxWFrxwn7hD2D2G42uSsxpPtYHneh85rofjNu0h+TdtxoiI
+	nh7fgzsg==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98 #2 (Red Hat Linux))
+	id 1traaQ-00000002Hm0-3Vjm;
+	Mon, 10 Mar 2025 10:42:18 +0000
+Date: Mon, 10 Mar 2025 03:42:18 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Ming Lei <ming.lei@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev, stable@vger.kernel.org
+Subject: Re: [PATCH] block: make sure ->nr_integrity_segments is cloned in
+ blk_rq_prep_clone
+Message-ID: <Z87CCuYFgA71JvXV@infradead.org>
+References: <20250310091610.2010623-1-ming.lei@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+In-Reply-To: <20250310091610.2010623-1-ming.lei@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone(),
-otherwise zero ->nr_integrity_segments will be observed in
-sg_alloc_table_chained(), in which BUG() is hit.
+On Mon, Mar 10, 2025 at 05:16:10PM +0800, Ming Lei wrote:
+> Make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone(),
+> otherwise zero ->nr_integrity_segments will be observed in
+> sg_alloc_table_chained(), in which BUG() is hit.
 
-Cc: stable@vger.kernel.org
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
----
- block/blk-mq.c | 1 +
- 1 file changed, 1 insertion(+)
+Maybe reword this to:
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 40490ac88045..005c520d3498 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3314,6 +3314,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
- 		rq->special_vec = rq_src->special_vec;
- 	}
- 	rq->nr_phys_segments = rq_src->nr_phys_segments;
-+	rq->nr_integrity_segments = rq_src->nr_integrity_segments;
- 
- 	if (rq->bio && blk_crypto_rq_bio_prep(rq, rq->bio, gfp_mask) < 0)
- 		goto free_and_out;
--- 
-2.47.0
+... otherwise requests cloned by device-mapper multipath will not
+have the prope nr_integrity_segments values set?
+
+The fact that sg_alloc_table_chained BUG⁽)s is just a symptom of that.
+
+> Cc: stable@vger.kernel.org
+
+... and replace this with a proper Fixes tag?
 
