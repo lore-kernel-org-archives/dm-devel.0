@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EB08221553
-	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 11:19:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBE5F2206A9
+	for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 11:20:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741605546; cv=none; b=TbuOR/7ZwFjBWC4X8DTPYGtk8MnBlLfWAv/4vs4qqoEQKAUrH7xkh1hll5TxV+1BBOECkYxSahWCBaozShhlKeR5Z2yUXObiS5NnUXOHnfrHcckTG4cYlLoDOImmS9uBoDHomaqszjOvr5DxWbgfyyIQNpFsvjQidxqmpejWElA=
+	t=1741605647; cv=none; b=FRhh7MrKKLVjfrBm1X++DyYuwUrr5LFkwaO3EaCy1FLNlhNG3Fk3C1twXed/HritQWgnL4NioRyoSVCYG0/T56iyOK7kGLDJfdeQexfUocoiXbc5xch+BpA80V8aDMIcmhK1+zsn2UoTYAP/0sqr0MwzbXN8yAS2mnKEFb74Zps=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741605546; c=relaxed/simple;
-	bh=E9vy+7ZZSCNSqS/a5RaQtqZ+dBTKHVlGqId6boiKsns=;
+	s=arc-20240116; t=1741605647; c=relaxed/simple;
+	bh=fGr3BNhMVOr7TeVMqln/q9SDeGXkyalVL4FjxkOB3jM=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=E2SMl3gFNpycfdPTr6Dbk6UlLw+oH1Bm/D7kQnm435pRisuUjHGprD8OL6NPDU77NoDFqLyDluxZY+fcol8ogojUtE3Y4yfUDLmyh6EleQc6YBTdo6ujqyPLDUPynoj3bzeDpGm3LnHAdpyMOe7ic8FFyGjT0N60mn6yeJdsHik=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gHlF/yVe; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=rxFZekVxNhrGey1SxPhEAFnbIFt7A7B8vfwy6XSx75vIHng/aT5cvjupbq4nibRuIz/KylujY+XF99jcgMhAG2XNuxoswL8yjUdXsaaUrjCuJlmBCOyBOVCfBga8HqUga0E4OhXxgMxgN7UPYqzRTZPHaWUH68xi99cxCcBgSAY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Qgxz09mX; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gHlF/yVe"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Qgxz09mX"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741605543;
+	s=mimecast20190719; t=1741605644;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=MdVJpJDSCf8VK9aSFyWsVw9QtWdz+77Ho+x7EaRXXMc=;
-	b=gHlF/yVeITDwZ0PcBJTQvDhXfp+9j5Eq5vj75I3srHiYytDS2KLYJ+KqIWGF9DeCuHqCL9
-	1jNxHDnqAPSiGwboTzKbtlh8JQcc9l/BJU/rjryS54w2WM/QVkRqRqnKcdlXHdLpcA4okn
-	b4zqd43H4SGl6nkKen7cPX0FC7hVwTM=
+	bh=tIGJRRONDUfWtW53ChawtWMmz7c8o56oFPc2hHVQKfM=;
+	b=Qgxz09mXziAbje34K0V8qyN8knUfKtTIA1HOitZ4VYfzjCmbijVwI8IVITua8RFmThGqQU
+	OyY+LitIe3boblpr0BBsbdCTJZnVF1T9UIB5lPM5JwzxFMJvP1KtCerZfN1x0VZky2X9wP
+	mX2uOatp/VNCVILvyryZKigMIJNWuXg=
 Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-341-sDXs6nBPMcOLK0wmhbY1fw-1; Mon,
- 10 Mar 2025 07:19:00 -0400
-X-MC-Unique: sDXs6nBPMcOLK0wmhbY1fw-1
-X-Mimecast-MFC-AGG-ID: sDXs6nBPMcOLK0wmhbY1fw_1741605538
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-344-bcOjqFFfOgCy9g5ksPa7zg-1; Mon,
+ 10 Mar 2025 07:20:41 -0400
+X-MC-Unique: bcOjqFFfOgCy9g5ksPa7zg-1
+X-Mimecast-MFC-AGG-ID: bcOjqFFfOgCy9g5ksPa7zg_1741605640
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0BB5319560A1;
-	Mon, 10 Mar 2025 11:18:58 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7448F19560AB;
+	Mon, 10 Mar 2025 11:20:39 +0000 (UTC)
 Received: from [10.45.224.17] (unknown [10.45.224.17])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 714C71800946;
-	Mon, 10 Mar 2025 11:18:54 +0000 (UTC)
-Date: Mon, 10 Mar 2025 12:18:51 +0100 (CET)
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3ACCB1956094;
+	Mon, 10 Mar 2025 11:20:35 +0000 (UTC)
+Date: Mon, 10 Mar 2025 12:20:32 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Ming Lei <ming.lei@redhat.com>
 cc: Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@infradead.org>, 
@@ -51,10 +51,10 @@ cc: Dave Chinner <david@fromorbit.com>, Christoph Hellwig <hch@infradead.org>,
     dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
     linux-fsdevel@vger.kernel.org
 Subject: Re: [PATCH] the dm-loop target
-In-Reply-To: <Z8zbYOkwSaOJKD1z@fedora>
-Message-ID: <a8e5c76a-231f-07d1-a394-847de930f638@redhat.com>
+In-Reply-To: <Z8zd85X2gosbrsc8@fedora>
+Message-ID: <f7c9d956-2b9b-8bb4-aa49-d57323fc8eb0@redhat.com>
 References: <7d6ae2c9-df8e-50d0-7ad6-b787cb3cfab4@redhat.com> <Z8W1q6OYKIgnfauA@infradead.org> <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com> <Z8XlvU0o3C5hAAaM@infradead.org> <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com> <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
- <1fde6ab6-bfba-3dc4-d7fb-67074036deb0@redhat.com> <Z8eURG4AMbhornMf@dread.disaster.area> <81b037c8-8fea-2d4c-0baf-d9aa18835063@redhat.com> <Z8zbYOkwSaOJKD1z@fedora>
+ <1fde6ab6-bfba-3dc4-d7fb-67074036deb0@redhat.com> <Z8eURG4AMbhornMf@dread.disaster.area> <81b037c8-8fea-2d4c-0baf-d9aa18835063@redhat.com> <Z8zd85X2gosbrsc8@fedora>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -62,7 +62,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
 
 
@@ -103,64 +103,17 @@ On Sun, 9 Mar 2025, Ming Lei wrote:
 > > raw block device:
 > >    READ: bw=1246MiB/s (1306MB/s), 1246MiB/s-1246MiB/s (1306MB/s-1306MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
 > >   WRITE: bw=1247MiB/s (1308MB/s), 1247MiB/s-1247MiB/s (1308MB/s-1308MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
-> > ext4/loop/ext4:
-> >    READ: bw=274MiB/s (288MB/s), 274MiB/s-274MiB/s (288MB/s-288MB/s), io=2743MiB (2877MB), run=10001-10001msec
-> >   WRITE: bw=275MiB/s (288MB/s), 275MiB/s-275MiB/s (288MB/s-288MB/s), io=2747MiB (2880MB), run=10001-10001msec
-> > xfs/loop/xfs:
-> >    READ: bw=276MiB/s (289MB/s), 276MiB/s-276MiB/s (289MB/s-289MB/s), io=2761MiB (2896MB), run=10002-10002msec
-> >   WRITE: bw=276MiB/s (290MB/s), 276MiB/s-276MiB/s (290MB/s-290MB/s), io=2765MiB (2899MB), run=10002-10002msec
-> > ext4/dm-loop/ext4:
-> >    READ: bw=1189MiB/s (1247MB/s), 1189MiB/s-1189MiB/s (1247MB/s-1247MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
-> >   WRITE: bw=1190MiB/s (1248MB/s), 1190MiB/s-1190MiB/s (1248MB/s-1248MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
-> > xfs/dm-loop/xfs:
-> >    READ: bw=1209MiB/s (1268MB/s), 1209MiB/s-1209MiB/s (1268MB/s-1268MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
-> >   WRITE: bw=1210MiB/s (1269MB/s), 1210MiB/s-1210MiB/s (1269MB/s-1269MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
 > 
-> Hi Mikulas,
-> 
-> Please try the following patchset:
-> 
-> https://lore.kernel.org/linux-block/20250308162312.1640828-1-ming.lei@redhat.com/
-> 
-> which tries to handle IO in current context directly via NOWAIT, and
-> supports MQ for loop since 12 io jobs are applied in your test. With this
-> change, I can observe similar perf data on raw block device and loop/xfs
-> over mq-virtio-scsi & nvme in my test VM.
+> BTW, raw device is supposed to be xfs or ext4 over raw block device, right?
 
-Yes - with these patches, it is much better.
+No - raw device means fio directly on /dev/nvme0n1
 
-> 1) try single queue first by `modprobe loop`
-
-fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=psync --iodepth=1 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
-xfs/loop/xfs
-   READ: bw=302MiB/s (317MB/s), 302MiB/s-302MiB/s (317MB/s-317MB/s), io=3024MiB (3170MB), run=10001-10001msec
-  WRITE: bw=303MiB/s (317MB/s), 303MiB/s-303MiB/s (317MB/s-317MB/s), io=3026MiB (3173MB), run=10001-10001msec
-
-fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=libaio --iodepth=16 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
-xfs/loop/xfs
-   READ: bw=1055MiB/s (1106MB/s), 1055MiB/s-1055MiB/s (1106MB/s-1106MB/s), io=10.3GiB (11.1GB), run=10001-10001msec
-  WRITE: bw=1056MiB/s (1107MB/s), 1056MiB/s-1056MiB/s (1107MB/s-1107MB/s), io=10.3GiB (11.1GB), run=10001-10001msec
-
-> 2) then try MQ by 'modprobe loop nr_hw_queues=4'
-
-fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=psync --iodepth=1 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
-xfs/loop/xfs
-   READ: bw=352MiB/s (370MB/s), 352MiB/s-352MiB/s (370MB/s-370MB/s), io=3525MiB (3696MB), run=10001-10001msec
-  WRITE: bw=353MiB/s (370MB/s), 353MiB/s-353MiB/s (370MB/s-370MB/s), io=3527MiB (3698MB), run=10001-10001msec
-
-fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=libaio --iodepth=16 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
-xfs/loop/xfs
-   READ: bw=1181MiB/s (1239MB/s), 1181MiB/s-1181MiB/s (1239MB/s-1239MB/s), io=11.5GiB (12.4GB), run=10001-10001msec
-  WRITE: bw=1183MiB/s (1240MB/s), 1183MiB/s-1183MiB/s (1240MB/s-1240MB/s), io=11.5GiB (12.4GB), run=10001-10001msec
-
-> If it still doesn't work, please provide fio log for both `raw block
-> device` and 'loop/xfs', which may provide some clue for the big perf
-> gap.
-> 
-> 
+> Otherwise, please provide test data for this case, then it becomes one fair
+> comparison because there should be lock contention for FS write IOs on same file.
 > 
 > Thanks,
 > Ming
+
 
 Mikulas
 
