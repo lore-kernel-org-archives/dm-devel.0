@@ -1,117 +1,269 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B38F5258;
-	Tue, 11 Mar 2025 00:01:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CCA9A923
+	for <dm-devel@lists.linux.dev>; Tue, 11 Mar 2025 01:27:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741651260; cv=none; b=ZkX3ua1IfCDzXPKjsDjgui4Vkfg5JNXm0CweE0gYKseDxXx3l4I/tLKt3XZJ4kDGLfrOIvpspjO73dwqRjIgEONluC1I5aE6BoZ6Dz4Fohz7iqQxujqGr/8JNVnx4O1HPOqgkwRJhQloPL3YTM0hzvNO6u37JVkm26iKPMdJL0s=
+	t=1741656449; cv=none; b=t+OuUX2ngsD5N1O+p39T68zvCPdGMkjPBk7j/u5KmUnofIe6FmmSYSWO4sFdwjImKU9IYh+npeTVvBb/FEg8VpIBGnlYx0CvFwhgMB4CapOEU/Nka3wlPcebmRn6xSPgQUsFdzLQpgCBiKv3w5rHrOzMH0p1Z+hRpBLohAN88WY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741651260; c=relaxed/simple;
-	bh=/TPN2tuwQS7g2pZFqu9CAb3x0cuedC161qmzjfTvCpo=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=DCvm+mE9/1XOrOlZxKpsUCML14EZPAMZsELKvekRRcGMaoy9Oygv9S3P8WD8XGVhiIUwKLaP6yr8DaV/F7Gl6e47oEW9/tGH+L/RqonxsKXfhu24jdQbdc4RdAA6dbMACcxjV+0rEbQ+PM1tkVxgYQJi0WZhF8oBTujONIMRAyc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=s5B85Fqt; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1741656449; c=relaxed/simple;
+	bh=yd0tvkajftiDcyo9cbo+Euelf894/Gh0EHYlrxNiUPg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=nUGU2bxgPd16HHtkkohBRcJiQ+/8gxFTaSCRDi3HUaqb+wuUnfBjTWeuYvL1UDKAYNYCuygV9l9U0uVU2ENZLIMJmKESbairHybInqUY2OmKRANddKiHEgofqrXSPHEDLEDEDCBRNvFw/sCpdpsZ8zWsrcg04KjzW4CFfLCZYhs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com; spf=pass smtp.mailfrom=fromorbit.com; dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b=tft0lN/4; arc=none smtp.client-ip=209.85.214.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fromorbit.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fromorbit.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="s5B85Fqt"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 23367C4CEE5;
-	Tue, 11 Mar 2025 00:00:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1741651260;
-	bh=/TPN2tuwQS7g2pZFqu9CAb3x0cuedC161qmzjfTvCpo=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=s5B85FqtcQyKUaEY9Y6o6TODxVMr33jBUE09nPtUqFY5/jBRHnKWz9xFTYsMCruMj
-	 ajv74Lnx1bJu+yQGhO12XlN30umAm3YW/PD7G9kEnEs3o5ZBVL0KTjZ5BWru/fKitT
-	 SUY7rP90yQLwM/koZ1LviJbalFFzKzaH0wmwRuBGEuLwthwmuF2XDvFkokG3fh6yVU
-	 bIAZau+54EjhGL5AmWK9AyfkLEjugzraGlAZUYSje0gZTXhK3sz3JqDCEBdn7aGlee
-	 /h0Q6l44gBFND0iYmDA9sSjSSJG2uRdbU2OvplXgxGjWvoBXdAra65CpxI8G6uL9tO
-	 QFFcwnbpGfV9Q==
-Message-ID: <cde5f2fb-a7af-49a3-b660-382f4ad80fbe@kernel.org>
-Date: Tue, 11 Mar 2025 09:00:58 +0900
+	dkim=pass (2048-bit key) header.d=fromorbit-com.20230601.gappssmtp.com header.i=@fromorbit-com.20230601.gappssmtp.com header.b="tft0lN/4"
+Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-22438c356c8so57706035ad.1
+        for <dm-devel@lists.linux.dev>; Mon, 10 Mar 2025 18:27:27 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fromorbit-com.20230601.gappssmtp.com; s=20230601; t=1741656446; x=1742261246; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=vnnlRtfdf6JJQ+GgX7W8whItH8r4U22DKrAzj9YwijY=;
+        b=tft0lN/4cg7eZidsfv+IqyMebpLRgNHI4oYHzNPqwZ/79M6uV2pj+I40A16ajNDvrs
+         HHgmSPCOlJEpC/WxZRH8zSgEx+BeiAPIqSY8776+fu5t2O1uQczdv48LizWsheDtjpu8
+         8Rz7YRgdnqqVyWclaKbhEY9a0TKTKSjRX+a8d4nqMD9tb2w2VZS0feFdQwE10fzdR8a5
+         2uml+hDeYQsynwToxMzzm8jhLUnvEdRyNU7bAOj9S83LKFavvJewgXR32BoZpNK6l7WG
+         nA5M05n6SxxwHI9mcYm1tuoJ+0nxVNg6RwvBQtFDQhebpfBpAW5LoJhIl8K7F/CAvVEO
+         uVvA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1741656446; x=1742261246;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=vnnlRtfdf6JJQ+GgX7W8whItH8r4U22DKrAzj9YwijY=;
+        b=jSf3ugF9viLjWAWGVRBdmDYbLdIFPhZyU2Dj6VZo7Ti3CExcefe5IKotiD/deg7pBC
+         Wv7mpqwQ9xtqbiMSXp2AOgtEKB7SODwLqHZrwXa0AETFeuBKHPV/0+ePzOJ3Z8RQD09q
+         qscDE5ACyrFxwO4ZSo7OvSTRgyM2w5jwT+bkCpTo3u/iz39p7b/K1LXFztGBoELoR7dy
+         w2sCd9H2cy2I3T1eLttQyKruHdQtMaVuaA7gWe+U97fT0XcMFGPQQsUez1pyag3QxJ6Q
+         uMuNxmiLrqCGEt5EiiOmvhtZUs8Wk0nS0jvyzhOccH6ww7Pal2p/NB9JCvSsYrQEXQxY
+         u4EQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWUGnAyZMi9N0X6ebheJxoLRxMJ7p72wNluACvGW/vgOaiy6u+siynqSoNc+ZsHIgBq01sruw3PXQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxMHhFmsgw3445BOmHjSP1jmyzEYHj9LcnzGZKwDf6/CpB+1Xyk
+	ohBSD/AhIvnA9d6HQxU5pA6VieXfeyVwHE8F+CHzBW7NOcyovIld8eCRtwsHlmE=
+X-Gm-Gg: ASbGncud57zc2LhSXQTCLSgWNYCEmeQ11cOxpXdfFCU8GJg4ttKoL6ReWclD6MIQPlx
+	dJUXeuSM7lifgLRtq/JFrtkE/EFYwQ35CXa6wn7nNZ98v11oY/h6tiz9eBMNCNrAM3fvGveXeo+
+	6n4UrHmBRWYE+izNuVbbzAb+JNP0Vb1Tnu4ikzkU9iabClO10LxFH7CDghN/ZTGhpT1Tj02Ch1Q
+	MepFgQicwQKIdCKWJY918dWqEs8NMKml45YSnlvIyFBGrcw1j1wxN+Ipo9ZRWyho9qesCOV8Qe7
+	6daOGAq2ONMvS9lwAgfauAMMh8iTfano2x++1442EJDIt6HylrHA2Cgc+gOQQQD4Rkf4PSWWJcV
+	zvkCnyu95j2YeoHHLNSUW
+X-Google-Smtp-Source: AGHT+IHdCIBG9Q+ikp04BtthZtSdlzURVMOHvSAT5bnHrk/BUP6x7DTNqVmtJsryQ3BPig+WeP8OAw==
+X-Received: by 2002:a17:903:32c5:b0:224:249f:9734 with SMTP id d9443c01a7336-2242887ecd7mr239695415ad.4.1741656446503;
+        Mon, 10 Mar 2025 18:27:26 -0700 (PDT)
+Received: from dread.disaster.area (pa49-186-89-135.pa.vic.optusnet.com.au. [49.186.89.135])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-224109e9f29sm85662185ad.81.2025.03.10.18.27.25
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 10 Mar 2025 18:27:25 -0700 (PDT)
+Received: from dave by dread.disaster.area with local (Exim 4.98)
+	(envelope-from <david@fromorbit.com>)
+	id 1troOx-0000000BWxq-0bQ7;
+	Tue, 11 Mar 2025 12:27:23 +1100
+Date: Tue, 11 Mar 2025 12:27:23 +1100
+From: Dave Chinner <david@fromorbit.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Ming Lei <ming.lei@redhat.com>, Christoph Hellwig <hch@infradead.org>,
+	Jens Axboe <axboe@kernel.dk>, Jooyung Han <jooyung@google.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org
+Subject: Re: [PATCH] the dm-loop target
+Message-ID: <Z8-ReyFRoTN4G7UU@dread.disaster.area>
+References: <Z8W1q6OYKIgnfauA@infradead.org>
+ <b3caee06-c798-420e-f39f-f500b3ea68ca@redhat.com>
+ <Z8XlvU0o3C5hAAaM@infradead.org>
+ <8adb8df2-0c75-592d-bc3e-5609bb8de8d8@redhat.com>
+ <Z8Zh5T9ZtPOQlDzX@dread.disaster.area>
+ <1fde6ab6-bfba-3dc4-d7fb-67074036deb0@redhat.com>
+ <Z8eURG4AMbhornMf@dread.disaster.area>
+ <81b037c8-8fea-2d4c-0baf-d9aa18835063@redhat.com>
+ <Z8zbYOkwSaOJKD1z@fedora>
+ <a8e5c76a-231f-07d1-a394-847de930f638@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH 7/7] dm: allow devices to revalidate existing zones
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
- Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, Christoph Hellwig <hch@lst.de>
-References: <20250309222904.449803-1-bmarzins@redhat.com>
- <20250309222904.449803-8-bmarzins@redhat.com>
- <7e0a1b47-3c96-4864-80b0-813f357845ad@kernel.org>
- <Z88k2RD6s5KpuxOD@redhat.com>
- <ab56c408-c98d-4333-b4f1-c3f380008e12@kernel.org>
- <Z8948_PSARorliqn@redhat.com>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <Z8948_PSARorliqn@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <a8e5c76a-231f-07d1-a394-847de930f638@redhat.com>
 
-On 3/11/25 08:42, Benjamin Marzinski wrote:
-> On Tue, Mar 11, 2025 at 08:19:29AM +0900, Damien Le Moal wrote:
->> On 3/11/25 02:43, Benjamin Marzinski wrote:
->>> On Mon, Mar 10, 2025 at 08:59:26AM +0900, Damien Le Moal wrote:
->>>> On 3/10/25 07:29, Benjamin Marzinski wrote:
->>>>> dm_revalidate_zones() only allowed devices that had no zone resources
->>>>> set up to call blk_revalidate_disk_zones(). If the device already had
->>>>> zone resources, disk->nr_zones would always equal md->nr_zones so
->>>>> dm_revalidate_zones() returned without doing any work. Instead, always
->>>>> call blk_revalidate_disk_zones() if you are loading a new zoned table.
->>>>>
->>>>> However, if the device emulates zone append operations and already has
->>>>> zone append emulation resources, the table size cannot change when
->>>>> loading a new table. Otherwise, all those resources will be garbage.
->>>>>
->>>>> If emulated zone append operations are needed and the zone write pointer
->>>>> offsets of the new table do not match those of the old table, writes to
->>>>> the device will still fail. This patch allows users to safely grow and
->>>>> shrink zone devices. But swapping arbitrary zoned tables will still not
->>>>> work.
->>>>
->>>> I do not think that this patch correctly address the shrinking of dm zoned
->>>> device: blk_revalidate_disk_zones() will look at a smaller set of zones, which
->>>> will leave already hashed zone write plugs outside of that new zone range in the
->>>> disk zwplug hash table. disk_revalidate_zone_resources() does not cleanup and
->>>> reallocate the hash table if the number of zones shrinks.
->>>
->>> This is necessary for DM. There could be plugged bios that are on on
->>> these no longer in-range zones.  They will obviously fail when they get
->>> reissued, but we need to keep the plugs around so that they *do* get
->>> reissued. A cleaner alternative would be to add code to immediately
->>> error out all the plugged bios on shrinks, but I was trying to avoid
->>> adding a bunch of code to deal with these cases (of course simply
->>> disallowing them adds even less code).
->>
->> I am confused now :)
->> Under the assumption that we do not allow switching to a new table that changes
->> the zone configuration (in particualr, there is no grow/shrink of the device),
->> then I do not think we have to do anything special for DM.
+On Mon, Mar 10, 2025 at 12:18:51PM +0100, Mikulas Patocka wrote:
 > 
-> If we don't allow switching between zoned tables, then we obviously
-> don't need to make DM call blk_revalidate_disk_zones() on a zoned table
-> switch. I was just saying that I know that this patch would leave
-> out-of-range zone plugs behind on a shrink, but that is necessary to
-> allow shrinking while there could still be outstanding plugged bios
-> attached to those plugs.
 > 
-> So, if we wanted to allow shrinking, then I think this patch is correct
-> (although erroring out all the out-of-range bios would be a cleaner
-> solution). But assuming we don't allow shrinking, then you are correct.
-> We don't need to do anything special for DM.
+> On Sun, 9 Mar 2025, Ming Lei wrote:
+> 
+> > On Fri, Mar 07, 2025 at 04:21:58PM +0100, Mikulas Patocka wrote:
+> > > > I didn't say you were. I said the concept that dm-loop is based on
+> > > > is fundamentally flawed and that your benchmark setup does not
+> > > > reflect real world usage of loop devices.
+> > > 
+> > > > Where are the bug reports about the loop device being slow and the
+> > > > analysis that indicates that it is unfixable?
+> > > 
+> > > So, I did benchmarks on an enterprise nvme drive (SAMSUNG 
+> > > MZPLJ1T6HBJR-00007). I stacked ext4/loop/ext4, xfs/loop/xfs (using losetup 
+> > > --direct-io=on), ext4/dm-loop/ext4 and xfs/dm-loop/xfs. And loop is slow.
+> > > 
+> > > synchronous I/O:
+> > > fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=psync --iodepth=1 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+> > > raw block device:
+> > >    READ: bw=399MiB/s (418MB/s), 399MiB/s-399MiB/s (418MB/s-418MB/s), io=3985MiB (4179MB), run=10001-10001msec
+> > >   WRITE: bw=399MiB/s (418MB/s), 399MiB/s-399MiB/s (418MB/s-418MB/s), io=3990MiB (4184MB), run=10001-10001msec
+> > > ext4/loop/ext4:
+> > >    READ: bw=223MiB/s (234MB/s), 223MiB/s-223MiB/s (234MB/s-234MB/s), io=2232MiB (2341MB), run=10002-10002msec
+> > >   WRITE: bw=223MiB/s (234MB/s), 223MiB/s-223MiB/s (234MB/s-234MB/s), io=2231MiB (2339MB), run=10002-10002msec
+> > > xfs/loop/xfs:
+> > >    READ: bw=220MiB/s (230MB/s), 220MiB/s-220MiB/s (230MB/s-230MB/s), io=2196MiB (2303MB), run=10001-10001msec
+> > >   WRITE: bw=219MiB/s (230MB/s), 219MiB/s-219MiB/s (230MB/s-230MB/s), io=2193MiB (2300MB), run=10001-10001msec
+> > > ext4/dm-loop/ext4:
+> > >    READ: bw=338MiB/s (355MB/s), 338MiB/s-338MiB/s (355MB/s-355MB/s), io=3383MiB (3547MB), run=10002-10002msec
+> > >   WRITE: bw=338MiB/s (355MB/s), 338MiB/s-338MiB/s (355MB/s-355MB/s), io=3385MiB (3549MB), run=10002-10002msec
+> > > xfs/dm-loop/xfs:
+> > >    READ: bw=375MiB/s (393MB/s), 375MiB/s-375MiB/s (393MB/s-393MB/s), io=3752MiB (3934MB), run=10002-10002msec
+> > >   WRITE: bw=376MiB/s (394MB/s), 376MiB/s-376MiB/s (394MB/s-394MB/s), io=3756MiB (3938MB), run=10002-10002msec
+> > > 
+> > > asynchronous I/O:
+> > > fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=libaio --iodepth=16 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+> > > raw block device:
+> > >    READ: bw=1246MiB/s (1306MB/s), 1246MiB/s-1246MiB/s (1306MB/s-1306MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
+> > >   WRITE: bw=1247MiB/s (1308MB/s), 1247MiB/s-1247MiB/s (1308MB/s-1308MB/s), io=12.2GiB (13.1GB), run=10001-10001msec
+> > > ext4/loop/ext4:
+> > >    READ: bw=274MiB/s (288MB/s), 274MiB/s-274MiB/s (288MB/s-288MB/s), io=2743MiB (2877MB), run=10001-10001msec
+> > >   WRITE: bw=275MiB/s (288MB/s), 275MiB/s-275MiB/s (288MB/s-288MB/s), io=2747MiB (2880MB), run=10001-10001msec
+> > > xfs/loop/xfs:
+> > >    READ: bw=276MiB/s (289MB/s), 276MiB/s-276MiB/s (289MB/s-289MB/s), io=2761MiB (2896MB), run=10002-10002msec
+> > >   WRITE: bw=276MiB/s (290MB/s), 276MiB/s-276MiB/s (290MB/s-290MB/s), io=2765MiB (2899MB), run=10002-10002msec
+> > > ext4/dm-loop/ext4:
+> > >    READ: bw=1189MiB/s (1247MB/s), 1189MiB/s-1189MiB/s (1247MB/s-1247MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
+> > >   WRITE: bw=1190MiB/s (1248MB/s), 1190MiB/s-1190MiB/s (1248MB/s-1248MB/s), io=11.6GiB (12.5GB), run=10002-10002msec
+> > > xfs/dm-loop/xfs:
+> > >    READ: bw=1209MiB/s (1268MB/s), 1209MiB/s-1209MiB/s (1268MB/s-1268MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
+> > >   WRITE: bw=1210MiB/s (1269MB/s), 1210MiB/s-1210MiB/s (1269MB/s-1269MB/s), io=11.8GiB (12.7GB), run=10001-10001msec
+> > 
+> > Hi Mikulas,
+> > 
+> > Please try the following patchset:
+> > 
+> > https://lore.kernel.org/linux-block/20250308162312.1640828-1-ming.lei@redhat.com/
+> > 
+> > which tries to handle IO in current context directly via NOWAIT, and
+> > supports MQ for loop since 12 io jobs are applied in your test. With this
+> > change, I can observe similar perf data on raw block device and loop/xfs
+> > over mq-virtio-scsi & nvme in my test VM.
 
-OK. Got it.
-As mentioned, I think we really still need to allow switching (or inserting ?)
-dm-error. In that case, calling blk_revalidate_disk_zones() should still be fine
-as long as there is no change to the zone config, which is true for dm-error. Do
-you agree ?
+I'm not sure RWF_NOWAIT is a workable solution.
 
+Why?
 
+IO submission is queued to a different thread context because to
+avoid a potential deadlock. That is, we are operating here in the
+writeback context of another filesystem, and so we cannot do things
+like depend on memory allocation making forwards progress for IO
+submission.  RWF_NOWAIT is not a guarantee that memory allocation
+will not occur in the IO submission path - it is implemented as best
+effort non-blocking behaviour.
+
+Further, if we have stacked loop devices (e.g.
+xfs-loop-ext4-loop-btrfs-loop-xfs) we can will be stacking
+RWF_NOWAIT IO submission contexts through multiple filesystems. This
+is not a filesystem IO path I want to support - being in the middle
+of such a stack creates all sorts of subtle constraints on behaviour
+that otherwise wouldn't exist. We actually do this sort of multi-fs
+stacking in fstests, so it's not a made up scenario.
+
+I'm also concerned that RWF_NOWAIT submission is not an optimisation
+at all for the common sparse/COW image file case, because in this
+case RWF_NOWAIT failing with EAGAIN is just as common (if not
+moreso) than it succeeding.
+
+i.e. in this case, RWF_NOWAIT writes will fail with -EAGAIN very
+frequently, so all that time spent doing IO submission is wasted
+time.
+
+Further, because allocation on write requires an exclusive lock and
+it is held for some time, this will affect read performance from the
+backing device as well. i.e. block mapping during a read while a
+write is doing allocation will also return EAGAIN for RWF_NOWAIT.
+This will push the read off to the background worker thread to be
+serviced and so that will go much slower than a RWF_NOWAIT read that
+hits the backing file between writes doing allocation. i.e. read
+latency is going to become much, much more variable.
+
+Hence I suspect RWF_NOWAIT is simply hiding the underlying issue
+by providing this benchmark with a "pure overwrite" fast path that
+avoids the overhead of queueing work through loop_queue_work()....
+
+Can you run these same loop dev tests using a sparse image file and
+a sparse fio test file so that the fio benchmark measures the impact
+of loop device block allocation on the test? I suspect the results
+with the RWF_NOWAIT patch will be somewhat different to the fully
+allocated case...
+
+> 
+> Yes - with these patches, it is much better.
+> 
+> > 1) try single queue first by `modprobe loop`
+> 
+> fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=psync --iodepth=1 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+> xfs/loop/xfs
+>    READ: bw=302MiB/s (317MB/s), 302MiB/s-302MiB/s (317MB/s-317MB/s), io=3024MiB (3170MB), run=10001-10001msec
+>   WRITE: bw=303MiB/s (317MB/s), 303MiB/s-303MiB/s (317MB/s-317MB/s), io=3026MiB (3173MB), run=10001-10001msec
+> 
+> fio --direct=1 --bs=4k --runtime=10 --time_based --numjobs=12 --ioengine=libaio --iodepth=16 --group_reporting=1 --filename=/mnt/test2/l -name=job --rw=rw
+> xfs/loop/xfs
+>    READ: bw=1055MiB/s (1106MB/s), 1055MiB/s-1055MiB/s (1106MB/s-1106MB/s), io=10.3GiB (11.1GB), run=10001-10001msec
+>   WRITE: bw=1056MiB/s (1107MB/s), 1056MiB/s-1056MiB/s (1107MB/s-1107MB/s), io=10.3GiB (11.1GB), run=10001-10001msec
+
+Yup, this sort of difference in performance simply from bypassing
+loop_queue_work() implies the problem is the single threaded loop
+device queue implementation needs to be fixed.
+
+loop_queue_work()
+{
+	....
+	spin_lock_irq(&lo->lo_work_lock);
+	....
+
+        } else {
+                work = &lo->rootcg_work;
+                cmd_list = &lo->rootcg_cmd_list;
+        }
+	list_add_tail(&cmd->list_entry, cmd_list);
+	queue_work(lo->workqueue, work);
+	spin_unlock_irq(&lo->lo_work_lock);
+}
+
+Not only does every IO that is queued takes this queue lock, there
+is only one work instance for the loop device. Therefore there is
+only one kworker process per control group that does IO submission
+for the loop device. And that kworker thread also takes the work
+lock to do dequeue as well.
+
+That serialised queue with a single IO dispatcher thread looks to be
+the performance bottleneck to me. We could get rid of the lock by
+using a llist for this multi-producer/single consumer cmd list
+pattern, though I suspect we can get rid of the list entirely...
+
+i.e. we have a work queue that can run a
+thousand concurrent works for this loop device, but the request
+queue is depth limited to 128 requests. hence we can have a full
+set of requests in flight and not run out of submission worker
+concurrency. There's no need to isolate IO from different cgroups in
+this situation - they will not get blocked behind IO submission
+from a different cgroup that is throttled...
+
+i.e. the cmd->list_entry list_head could be replaced with a struct
+work_struct and that whole cmd list management and cgroup scheduling
+thing could be replaced with a single call to
+queue_work(cmd->io_work). i.e. the single point that all IO
+submission is directed through goes away completely.
+
+-Dave
 -- 
-Damien Le Moal
-Western Digital Research
+Dave Chinner
+david@fromorbit.com
