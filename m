@@ -1,109 +1,63 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 952FA2E336E
-	for <dm-devel@lists.linux.dev>; Fri, 14 Mar 2025 13:46:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8001F1DFED
+	for <dm-devel@lists.linux.dev>; Fri, 14 Mar 2025 21:35:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741959980; cv=none; b=Sw6gEvjRsDaBv4ux7YNlWYDKsDUcYKR+o/d6r8Xw3b2i3nQFaxRWpc/WXSBrloilhRgD3b3uyV3dQXIAkaEYv6BYYpZsc/3/KaSc1rFaGMg+IDV4gxoN+sLtNNvkA1nmTsY4txn5s91a5K1FiOnvybX3Ox8jdPXURy53evhTC3A=
+	t=1741988106; cv=none; b=mMzkv2nqd97MukIRDbhg4rxosPLEUObhunIJ1pLx0k1ZmTIoVAH6Hdbg5STR/tbHj2UcXKOV4X9ZyTEv9ODQSI1gviXhA4TI9/tS44PEPiSLwRsN/A31F5we+IAJlRJVxH6mkceat6BXW8kAZ9GXGObmlgYMEkMyJqq17R3dCUw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741959980; c=relaxed/simple;
-	bh=CMosphvIKObhrydM+YJMtYd9w5/5+7A3bY1ZPhjerxk=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=lw5lSKb3Epq7Wgnb/2UdrZ1PAnP3MC92No9qJ2wbmAjNkwZs9zlaGj3TzaTUM8BhDATuwZOuUpaTjbp5Rpvk/poAQ6I+L/qMotujV+6INMONORH0yry/uDWwHBfGSHXgEerYZXDkYboK1yOd0Aww2Ni5VHNP6lr76w4gcD3zqbU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X4Knb+b8; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1741988106; c=relaxed/simple;
+	bh=WgoOL83A8CWredtDiKphDJ1rFM1pHRhX2VOdKtAQLd4=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=TD283sM1S9unOU9e2D8XlZNyw1z86tVSvAJ6oOBzzq/45kzY/DHZZkb+JEUrCpiWH4D5DOwDqOgqO9vHJulrPAHVV7idE7f2y7aJiIUNrekd8TMXspigpXaWRLcHFqkiwSxOHXTH1ynIXRh7ZeYYSgwQxqc5ZbryPdSebK7MZrQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GjBgRWk6; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X4Knb+b8"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741959977;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=bpaiR54VREhXZFyomjKr4V+aMQOgKWe9LPRjtR3j5E8=;
-	b=X4Knb+b8zpQ2EtZxI+YzMS3W/YmO+2Gvuww7C5bQJcWghXyNdqLH0gRmGUmEGmZb007rvi
-	U/P23OBTlIugQ9TlIi/3o2IH7LaIvBeLfWKHYaY+2RK3Qjh2eKFC6EvaoGegKj27VhOSdv
-	QVTXJhK6Q5LFX7H9H2ic1Mq0TnH8ye4=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-103-YdDR5skXPNehbMugQ1myXQ-1; Fri,
- 14 Mar 2025 09:46:14 -0400
-X-MC-Unique: YdDR5skXPNehbMugQ1myXQ-1
-X-Mimecast-MFC-AGG-ID: YdDR5skXPNehbMugQ1myXQ_1741959973
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4BD8619560B7;
-	Fri, 14 Mar 2025 13:46:12 +0000 (UTC)
-Received: from [10.22.82.75] (unknown [10.22.82.75])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A43981954B32;
-	Fri, 14 Mar 2025 13:46:09 +0000 (UTC)
-Date: Fri, 14 Mar 2025 14:46:06 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-cc: Benjamin Marzinski <bmarzins@redhat.com>, 
-    Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>, 
-    dm-devel@lists.linux.dev, linux-block@vger.kernel.org, 
-    Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 3/7] dm: handle failures in dm_table_set_restrictions
-In-Reply-To: <ad565ffc-d34e-7c24-ab2b-aad4774f92f1@redhat.com>
-Message-ID: <260b3f5f-a58e-0815-6d27-7efff0e1fc76@redhat.com>
-References: <20250309222904.449803-1-bmarzins@redhat.com> <20250309222904.449803-4-bmarzins@redhat.com> <9b5ff861-964d-472c-9267-5e5b10186ed3@kernel.org> <Z88jTxQqoLitl4ee@redhat.com> <Z88sP2WyotRbTd2E@redhat.com> <60f0f94c-3c80-4806-82aa-04ace428b4d4@kernel.org>
- <ad565ffc-d34e-7c24-ab2b-aad4774f92f1@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GjBgRWk6"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F24C9C4CEE3;
+	Fri, 14 Mar 2025 21:35:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1741988106;
+	bh=WgoOL83A8CWredtDiKphDJ1rFM1pHRhX2VOdKtAQLd4=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=GjBgRWk617sW4vcJbe525tYMShZXfnGlvyah2RVEyo1W5r5SvsgfvccgUIYNftR8h
+	 L4iYAmXWI66p/Tm6g/USD816GE8XFeXq5nwBPGoxqnhnryzCwK35tegK5Cah221zbc
+	 SqESUqCMFDZq3GMHk71krwJ53VHe7L5OXCmeJmoX+sUcS6QTRTJQkV1i5qNO8JREA5
+	 03sofXUqFouRCvjYUFvWXSEATJ2pEYjeNynvvhGg+AcfWChHqtwcvXNTx5ye3BPO0g
+	 4ay7yuXzep0S1rpobKOeWYtfHoXzChkPDqmCGuAovU4KTT8b6HFW6xL757pZdNzbks
+	 ipPxqRp+EX0zw==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id EB1DB380CEE2;
+	Fri, 14 Mar 2025 21:35:41 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes 2 for 6.14
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <f965255f-978d-af57-50f5-fd3942edd570@redhat.com>
+References: <f965255f-978d-af57-50f5-fd3942edd570@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <f965255f-978d-af57-50f5-fd3942edd570@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.14/dm-fixes-2
+X-PR-Tracked-Commit-Id: 57e9417f69839cb10f7ffca684c38acd28ceb57b
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: b35233e7bfa04045388967d3dc219e80cc88bc74
+Message-Id: <174198814057.2391063.17804644400830418837.pr-tracker-bot@kernel.org>
+Date: Fri, 14 Mar 2025 21:35:40 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Kent Overstreet <kent.overstreet@linux.dev>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
+The pull request you sent on Fri, 14 Mar 2025 13:36:53 +0100 (CET):
 
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.14/dm-fixes-2
 
-On Fri, 14 Mar 2025, Mikulas Patocka wrote:
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/b35233e7bfa04045388967d3dc219e80cc88bc74
 
-> 
-> 
-> On Tue, 11 Mar 2025, Damien Le Moal wrote:
-> 
-> > Yes, for simple scalar limits, I do not think there is any issue. But there are
-> > some cases where changing one limit implies a change to other limits when the
-> > limits are committed (under the limits lock). So my concern was that if the
-> > above runs simultaneously with a queue limits commit, we may endup with the
-> > limits struct copy grabbing part of the new limits and thus resulting in an
-> > inconsistent limits struct. Not entirely sure that can actually happen though.
-> > But given that queue_limits_commit_update() does:
-> > 
-> > 	q->limits = *lim;
-> > 
-> > and this code does:
-> > 
-> > 	old_limits = q->limits;
-> > 
-> > we may endup depending on how the compiler handles the struct copy ?
-> 
-> There is no guarantee that struct copy will update the structure fields 
-> atomically.
-> 
-> On some CPUs, a "rep movsb" instruction may be used, which may be 
-> optimized by the CPU, but it may be also interrupted at any byte boundary.
-> 
-> I think it should be changed to the sequence of WRITE_ONCE statements, for 
-> example:
-> WRITE_ONCE(q->limits->file, lim->field);
-> 
-> Mikulas
+Thank you!
 
-BTW. some SPARC CPUs had an instruction that would zero a cache line 
-without loading it from memory. The memcpy implementation on SPARC used 
-this instruction to avoid loading data that would be soon overwritten.
-
-The result was that if you read a region of memory concurrently with 
-memcpy writing to it, you could read zeros produced by this instruction.
-
-Mikulas
-
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
