@@ -1,108 +1,112 @@
-Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com [209.85.222.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F1104E567
-	for <dm-devel@lists.linux.dev>; Sat, 15 Mar 2025 13:18:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E758C15DBB3
+	for <dm-devel@lists.linux.dev>; Mon, 17 Mar 2025 04:45:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742044716; cv=none; b=scyhDTNQaL1oc1hnY/Wo4IN7z6/q+Tp566BaL60Bpdk0cUmIm3uRxdvIuL83F3yoVzRFoUKQbCM9dxFQymWG7lctvZVL8e/7UAMedq/9wiorH7MvJarzKFTdAIT1M/6lJd7WaETYv8K93OSBKvCiyqd35v0M8SwR3wejw2puCOo=
+	t=1742186719; cv=none; b=jhKndUNiTQMoU1FmjR8r31Wy4AiZX66c7Z/QLbwioD0mGHqztu+GW+hL9MIUfdLxPNVFCAxmZKeLhojL0MfYXMWNXvxcg1MHgH+YhP0Ja5l3Yc5Fq+xZBOF4ecGzFMKVsT4LDHVKqMSgcvTCiExpgR11bmKDZqDVSk21mQ/6Vhg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742044716; c=relaxed/simple;
-	bh=0iecudTPQSi7Gf+dBv7Xlu/nteUvTNI01W51p3hWVc4=;
-	h=Content-Type:Message-ID:From:To:Subject:Date:MIME-Version; b=HHa+qXBbYQ5n3B7fpMVb0qtRkBLyGvquI9fb9AKLCkh2k6xczJlGJZgJ88JikAEj+HcaBWJVlRJ7iuHIa970SOo8Maonf24XQD9xncmYo4a4UgriPZvycrjVXUd8czci1vlC+/4UoOiXUmsmnsgaYOkKOSSZX+WdBp6iLI7uhug=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=japanesekitchens.com; spf=pass smtp.mailfrom=japanesekitchens.com; dkim=pass (2048-bit key) header.d=japanesekitchens.com header.i=@japanesekitchens.com header.b=TbqlmkTI; arc=none smtp.client-ip=209.85.222.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=japanesekitchens.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=japanesekitchens.com
+	s=arc-20240116; t=1742186719; c=relaxed/simple;
+	bh=79Iz68fntPRFIZIxlkxI6B6WsLznUqgckDnCkswLdZA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=IbFfP6NzXIVAEYoKdQlien1WzsKcN7h2+QBtty29j8I0sVzgsTL9OIFcnG9iQwul+/NH4K/eX+sTrQsO3WfSOjVr8dFc5zyK7bPWputgs6llgHwoCvESWLbOqi+Of/RI041pcaSjn6hZvhNu19jrdjqwpZ8PHgtFNzY63dQvwtI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UN+DVcIo; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=japanesekitchens.com header.i=@japanesekitchens.com header.b="TbqlmkTI"
-Received: by mail-qk1-f172.google.com with SMTP id af79cd13be357-7c56a3def84so296705685a.0
-        for <dm-devel@lists.linux.dev>; Sat, 15 Mar 2025 06:18:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=japanesekitchens.com; s=google; t=1742044714; x=1742649514; darn=lists.linux.dev;
-        h=mime-version:date:content-transfer-encoding:subject:to:from
-         :message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=0iecudTPQSi7Gf+dBv7Xlu/nteUvTNI01W51p3hWVc4=;
-        b=TbqlmkTIEmpb5pOA2UU6Nf0Dugk178WWASaAvu1SwBBO7PjlXmGBE8n3YjB3jhRNqT
-         N8nVbGUgUHjeH0YBUKz+7iRUltcP+XrrtlZW/OVo0kwqylu4fM3pQAh++oBtjcGDvmCg
-         B9mj05ddfuR/8KNDI/876fXsHdVdfMPWhJo5iFRCmZdrG0gOG+IaP4td9zCr9TZ6EQBx
-         2m1q3l2R0qhS6bAyMo0/GabCOXl67D40KRU9d0z8IOUFNZekND8gzCx8rqlY3lBgVOdJ
-         27sXCT4x8HeHxKKfHq6qLbhNNE25Mgug0YeCc+zqaL+5WwTzZRHggn+d2F+Us1ujrHAd
-         7kbA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1742044714; x=1742649514;
-        h=mime-version:date:content-transfer-encoding:subject:to:from
-         :message-id:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=0iecudTPQSi7Gf+dBv7Xlu/nteUvTNI01W51p3hWVc4=;
-        b=FwI9yNzxTsmPUfEU1SINFSqj3l6nrlMQF9IOxlNoG/fBmPCn17aODr45VDA85jEWy6
-         H/vYUZiGlKxJL3VK9ERhEB9tesH/TDIH+eLS8gWMfIZQKKSJMXxeDR3PbA9k5PHC+YoI
-         vEvJ00HVTL59KbHAMvAqSXIHGW3ANrRNTvQLkJ0eDLKjXqIfaGaZhl6b+W6Es53oBpeM
-         3vAFKHGuarOgcu+wHBnHpo/NTMI9F1qvqxUho2+zBLjw7/NPe1dksMfJSV/IKBAchMFS
-         PrKVXTgu2jw1DSOKdCdXnXYcDqmmgM3eK7V6D/bLSBpT/QFZQPJzGCuG3O8e+TeMYCTA
-         YO5Q==
-X-Gm-Message-State: AOJu0Yzc19iAKrPScIDRGza33P8bXl9vp+BoVvEg2ikWU4E7S0vFqoHW
-	yMEk+Si4Lscp2uW/xdAwSLLQLlch5mZYdOdtGCnvpcKUoWIn/g2eULM/jwdnLhhDQP6nSbuANJa
-	F
-X-Gm-Gg: ASbGncsgcEiiIFcJ8zVMeuTeBvbo+yrU3DzA1a5gF1b2o6opEHUUYhUS62WKKreDTjz
-	eg3fAlVu9042Z3wGLaKK/X8Pdyw8nWKVxhvuGduMnCzR0b164clIRzdRs2JuHx72FKGSoc/B7w+
-	wkdKAHSsv86q9i5Qq5ed5YGG3QVZmCIjdktlJc7N/Qg/FrklOSKC9fyxmWXPYIIPYuLDYlCNVN9
-	M5BmbJS8FIR8e8W91yBSxZG1149li1FS4DYfE/1roNM1+P5RHo4t/lzQbUt5GoW2TUo+vkaF2vy
-	Z1HqgNubeE/sSfoIc0/YqOTGuVq5qaHTKTWU17EWSrHs9aGEjrXiKnlSajHgbHvcQEjGp8QpNxV
-	9pR8B6571M2oJtSEEQc0TLLD03TTygCmsEHQaDMQD0aunHWcQyL7cIPXMyLElvBXGiGZh2o1vOM
-	8=
-X-Google-Smtp-Source: AGHT+IEADZdNtTtIhdpE1MH3J0zxBOxotrk1mEnI+CiesgUT/xCSxWOp7l7kQsQswutwBJ3f77EjOQ==
-X-Received: by 2002:a05:620a:c47:b0:7c5:5a97:f780 with SMTP id af79cd13be357-7c57c8abc03mr937806785a.35.1742044713682;
-        Sat, 15 Mar 2025 06:18:33 -0700 (PDT)
-Received: from 058bec55-2ce2-42c7-b097-4125acb134ac.local (ec2-35-170-69-141.compute-1.amazonaws.com. [35.170.69.141])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c573c9d641sm375659685a.65.2025.03.15.06.18.33
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 15 Mar 2025 06:18:33 -0700 (PDT)
-Content-Type: text/plain; charset=utf-8
-Message-ID: <058bec55-2ce2-42c7-b097-4125acb134ac@japanesekitchens.com>
-From: Richard Lee <richard@japanesekitchens.com>
-To: dm-devel@lists.linux.dev
-Subject: knife Offer lists
-Content-Transfer-Encoding: quoted-printable
-Date: Sat, 15 Mar 2025 13:18:33 +0000
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UN+DVcIo"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1742186716;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C81+Pdz0tp6ARDKNY27QzSrdA4N9lXGz/6auv5mqWME=;
+	b=UN+DVcIotFJxPXET0Oe3ZrhG+lmVL7e5oWYjMMSFeMcQrMPdrqKM4dUpzcH6FuI0sMzwlO
+	98g5k2oBG7Kdqw2IkbIU6enFYi3Wi3JA29EhZqi+6VugXgjEq12hO+7dUoOa5YelB4CPja
+	8rGekadd+WK06q4Hl78IcxchTfHSV/E=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-42-xouzEVscNyWhDfCaH0jpyA-1; Mon,
+ 17 Mar 2025 00:45:15 -0400
+X-MC-Unique: xouzEVscNyWhDfCaH0jpyA-1
+X-Mimecast-MFC-AGG-ID: xouzEVscNyWhDfCaH0jpyA_1742186714
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8A7EC180025C;
+	Mon, 17 Mar 2025 04:45:13 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 832111956094;
+	Mon, 17 Mar 2025 04:45:12 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52H4jBmY2200870
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 17 Mar 2025 00:45:11 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52H4jBS42200869;
+	Mon, 17 Mar 2025 00:45:11 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+        Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+        Damien Le Moal <dlemoal@kernel.org>, Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v2 2/6] dm: free table mempools if not used in __bind
+Date: Mon, 17 Mar 2025 00:45:06 -0400
+Message-ID: <20250317044510.2200856-3-bmarzins@redhat.com>
+In-Reply-To: <20250317044510.2200856-1-bmarzins@redhat.com>
+References: <20250317044510.2200856-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-How's it going lists ,
+With request-based dm, the mempools don't need reloading when switching
+tables, but the unused table mempools are not freed until the active
+table is finally freed. Free them immediately if they are not needed.
 
-=C2=A0 I trust you are doing well! I am Richard Lee=
- representing SAKUTO KNIVES, Our reputation is built on producing premium =
-Damascus Chef Knives.=C2=A0
+Fixes: 29dec90a0f1d9 ("dm: fix bio_set allocation")
+Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ drivers/md/dm.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-We've long been following lists, for a long =
-time, and We're always impressed by the quality and innovation of the =
-content you create every time.=C2=A0
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index f5c5ccb6f8d2..292414da871d 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2461,10 +2461,10 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 		 * requests in the queue may refer to bio from the old bioset,
+ 		 * so you must walk through the queue to unprep.
+ 		 */
+-		if (!md->mempools) {
++		if (!md->mempools)
+ 			md->mempools = t->mempools;
+-			t->mempools = NULL;
+-		}
++		else
++			dm_free_md_mempools(t->mempools);
+ 	} else {
+ 		/*
+ 		 * The md may already have mempools that need changing.
+@@ -2473,8 +2473,8 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 		 */
+ 		dm_free_md_mempools(md->mempools);
+ 		md->mempools = t->mempools;
+-		t->mempools = NULL;
+ 	}
++	t->mempools = NULL;
+ 
+ 	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
+ 	rcu_assign_pointer(md->map, (void *)t);
+-- 
+2.48.1
 
-
-With a strong inclination to =
-cooperate, We are thrilled to offer you a high-end Damascus Chef Knife =
-=C2=A0( Rated at 199. 99) as a gesture of gratitude in exchange for a bac =
-klink.
-
-
-Here's a advantageous suggestion: We'd eagerly send you a =
-top-quality Damascus Chef Knife Without ch arge.
-
-
-
-We present a thoroughly detailed article ( crafted by our colleagues =
-high-quality content ) that has overcome five A I checker tools and Never =
-published .
-
-
-If this sounds enticing, reply with your shipping address, =
-and we'll be happy to send you( lists ) the knife and the content for your =
-esteemed review.=C2=A0
-
-
-Sincerely =C2=A0 ,
-Richard Lee
