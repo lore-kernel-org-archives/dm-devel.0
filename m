@@ -1,112 +1,117 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90DC328F3
-	for <dm-devel@lists.linux.dev>; Mon, 17 Mar 2025 17:33:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED17D2745C
+	for <dm-devel@lists.linux.dev>; Mon, 17 Mar 2025 20:01:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742232838; cv=none; b=RFE8vYTLFA3OaGbSDymOjCPMHqxV0emygy9zr4agc5DbOTOcd9Rzy34qwN6NarZSKxyALVEMQa/cIBM52H9NkMnFMe4hvimVytORPxVxWMILkThTuF3AViTM0mtcw+CUISuB3ZtX5+61NkouXFvmi4bHU8In7Eo1vKOXhDlMlB0=
+	t=1742241664; cv=none; b=HF03IXtyhojAJ379gaVJb/tUdLpLtWxgStsBHp3iC2TQGVSG2MR79j0WxOxm9iIdftU1gU1V91oU8NmRZ9QgUwJCmaesVgjFPwfp+x70Et+McotVY5FVhxTYkbEVK1bfgAJ4PIKi+y3STAzzJ3mESNIyrXyeZat9c3FImKqmEmY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742232838; c=relaxed/simple;
-	bh=NbKsy1WVZVfRlWXN3n0fevId8I9CyUqRuV68o+6AQMc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cejPQIVByX0M4SEZr9+tpQqOTetsPjBLnFSqeeD5H0KhHSDCr08D9UxvnpcI6Q2BXbRlCI2FFb76J2k4Ou6KS6SzwSGYVMD1ghKijcPYi6NjH+l7B1axwlddgy3KtkdRS/586jZi8TE+up8f3dDq17R+nxZfnxCFPmKa4kG+Ihs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k1gVYnKm; arc=none smtp.client-ip=209.85.221.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1742241664; c=relaxed/simple;
+	bh=hT5nh3nk//h0HzDxGRry/QOxl5nZKUigDC7AXKcl0Jk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=SP+XSSWAh0ZXk4GZQT89EmqZNXpKRvb/FUPSD07gz6roRN8WSbtZaNMOOK9PQtFKNx0G9EVi5fPgz/v6Cwe9oBDoE2+erJ0Y1mkw31z2ZMV44wyyXAzeBU6ivbP0JQdaxtDZNQH6BQMvsnHkRDjBMQFltxfPZ2lGEolpeYsBhpk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hws0/DaH; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k1gVYnKm"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-3912b75c0f2so584392f8f.0
-        for <dm-devel@lists.linux.dev>; Mon, 17 Mar 2025 10:33:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1742232835; x=1742837635; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=bIP32nINp07O4kkVp+QL3fGnIMJ5F0RleSoKCbs+Sj0=;
-        b=k1gVYnKmez67iq1keMWYCE962d4L73ny/rkC8QlVhqKLWSMZ7YyecGOj++lnaUIAyF
-         EVYlMSDhazVaj59FrzIyu/MgqvTWEOaFYUviQdwayYAVDSTYvmR6XVn4mGwS1u4xr545
-         j1J9WaX8VV8q8L/Uum17t1gCGMdGjXvQRWA9LYXfyT3hrb3yRvDNlwoTZ3ZSzSZ2L4pL
-         phEzP0WYQKHWmmJobWFaHQ/pRAdZuXeoUZq/I7+jXdmkrztEDvc29zxEfd5prwCT7XnN
-         BJPGUgXIr31kQIPqvu8RfX0IMAJ3bpGe/eGVTGWq/Ry4rPmR4tu+ePf/Idhwl7Xg8qUy
-         z8mA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1742232835; x=1742837635;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=bIP32nINp07O4kkVp+QL3fGnIMJ5F0RleSoKCbs+Sj0=;
-        b=IBjsTOMCDuKCDTsTWMw9lfVDkfyu4n/U3MZgL0T7CwDfjkHQm6/CEbAo/2Cg0R2Tgm
-         GihM1DHD1RGkCnVMynyESiOE1DzLHKXkUatFrRhwvBAvoB6y9UuUWIUoYyU8ne0euOYM
-         feley1CwukazPdU8o+Dr7Puvfkgn/qWBPDhbkKVInQDnUagKNgunl4qwyPwb00Zekt1n
-         vWzMbyAxM6akiPE574cED2sp9/g01JAoPH2J1LHgUAWY/p7FIzPYoWBtumeeyzjommfO
-         5r2A6ksKHH1aXOCRzWcdwMOUaFWNhpll3sI9E178br9c6zquslB/qzoCIYjkXNnXhJON
-         02Yg==
-X-Forwarded-Encrypted: i=1; AJvYcCVP9S/JXozv6s89kRAsyo6zpl+yPLQpCaV4LdAkEdIP4uEI4TaVryVhCqNlkPv2lQcYgo2yC2HvoQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy5CR0vEoenIwhJi4ihacJz2+/SxkS24kNycFO0D8uA7Hey/v0L
-	lG/u5xarNNYFIeUUy0JuK2jfWRs84rUcHM37u73f04ZbgKYsPjM=
-X-Gm-Gg: ASbGnct+4+GulpKeMeC1OcZWtljMOC6t23ldfqXkFHqPgpI68HFMcd8lOHJDr2guEE1
-	EXYSBnVCXJXc1co7HTXOuSXCgIWwSK1TuLjJ0qB90w2k9TMirfQz2zfdOKjuMUMlbPJpuTOx9CW
-	YMxd7YeKql0IuQvgPQiLQ4GSN16M8f+yj4Tcp/tXvCyWnh+rDgUZv3WsyXHOIwyjEQTCZmnqpRE
-	aNt/6tdor3/qzvl5jX4tBMQwY1pUCTzLyPgCvmP7AHe/PBq0BBn5hg5px9P8Pcfh0mT4dDLLQ+N
-	n7iiJIg6NU3X4lq+FaLzRffUtfFE71hmdErXqxvCGeTPj8nB2J+C/TtWR1OVm/Ag3IV6Okt5QQ7
-	Iwp2eIHrk+k7VLCBZZs40
-X-Google-Smtp-Source: AGHT+IH1q1QyAiiNMhkDZZCLARFLwVcCKg7EoULqcp2pXInqn1Q/Vl8ly80Dq7lAWjQyCa+0y89TWA==
-X-Received: by 2002:a5d:6dac:0:b0:391:c42:dae with SMTP id ffacd0b85a97d-3971d8fa89emr5913432f8f.4.1742232834593;
-        Mon, 17 Mar 2025 10:33:54 -0700 (PDT)
-Received: from localhost (191.red-88-28-10.dynamicip.rima-tde.net. [88.28.10.191])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-395c83b6b37sm15843254f8f.37.2025.03.17.10.33.53
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 17 Mar 2025 10:33:54 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH RFC] multipath-tools: add Generic SCSI in hwtable
-Date: Mon, 17 Mar 2025 18:33:51 +0100
-Message-ID: <20250317173352.14387-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.48.1
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hws0/DaH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1742241661;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2B44CMyXaUbm9Akq+Gw9SylBv64aVj04I/tIpX6CsLA=;
+	b=hws0/DaH27WLJFgl4e0xnc6VwRM50+G3r6mStyZYKEKOhDhu+LiAoQ1273EIXJgeL1oVMK
+	SEoxUgPn/ydZxKNOwPDbiTF2/GoF6x7dLKO6OtM0XWKG4G597ipjKSzvx4EjBYLJvge6Ex
+	jzDGldr2CRtgAsLicGq0ci4aj+o2OBA=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-76-jZ05CcOXNGSCWQR-nLX9eQ-1; Mon,
+ 17 Mar 2025 16:01:00 -0400
+X-MC-Unique: jZ05CcOXNGSCWQR-nLX9eQ-1
+X-Mimecast-MFC-AGG-ID: jZ05CcOXNGSCWQR-nLX9eQ_1742241659
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 43FAB1808868;
+	Mon, 17 Mar 2025 20:00:57 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AB1B3180094A;
+	Mon, 17 Mar 2025 20:00:56 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52HK0tvN2227891
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 17 Mar 2025 16:00:55 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52HK0sS62227890;
+	Mon, 17 Mar 2025 16:00:54 -0400
+Date: Mon, 17 Mar 2025 16:00:54 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH RFC] multipath-tools: add Generic SCSI in hwtable
+Message-ID: <Z9h_dgeRCakpLak9@redhat.com>
+References: <20250317173352.14387-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20250317173352.14387-1-xose.vazquez@gmail.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: wYBCoV_QbBVcF1Tp16OCaMKHv_pIDszRoiEmOlmG090_1742241659
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+On Mon, Mar 17, 2025 at 06:33:51PM +0100, Xose Vazquez Perez wrote:
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+>  libmultipath/hwtable.c | 11 +++++++++++
+>  1 file changed, 11 insertions(+)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index f8cf3fa9..34b1fd2f 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -79,6 +79,17 @@
+>  #endif
+>  
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index f8cf3fa9..34b1fd2f 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -79,6 +79,17 @@
- #endif
- 
- static struct hwentry default_hw[] = {
-+	/*
-+	 * Generic SCSI devices
-+	 */
-+	{
-+		/* Generic SCSI */
-+		.vendor        = ".*",
-+		.product       = ".*",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * Generic NVMe devices
- 	 *
--- 
-2.48.1
+If we wanted to make these changes, we could just change
+DEFAULT_PGPOLICY, DEFAULT_FAILBACK, and DEFAULT_NO_PATH_RETRY. But I
+still think that for completely unknown devices, we should stick with
+our current defaults. They're safe and I haven't heard any complaints
+about them.
+
+-Ben
+
+>  static struct hwentry default_hw[] = {
+> +	/*
+> +	 * Generic SCSI devices
+> +	 */
+> +	{
+> +		/* Generic SCSI */
+> +		.vendor        = ".*",
+> +		.product       = ".*",
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.no_path_retry = 30,
+> +	},
+>  	/*
+>  	 * Generic NVMe devices
+>  	 *
+> -- 
+> 2.48.1
 
