@@ -1,28 +1,28 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D19741F4CBF
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:34:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C5E31F0983
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:34:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742283291; cv=none; b=piAyFgbaCeIXdInCLh9/AbD11Gtx5v+DPA8hu2GsHwV/tFvQ+kWeEg1f72bGWpLKi34aPxWSq3egZTRfEXCDx3tzNaLXHMn56gkGkVYnHjGP1CMp+a4pJWSOI+YP0X0phADGqf/Aw6kZQHqLc1qj13RKOHnoJpw2+2CDUMOUVDo=
+	t=1742283291; cv=none; b=b32cZPA21Sbz55cmtPGG0myO4TeYQlAN0gn6AKOuCj3UrBIx3keAaK+H7pgt4yo+7OZzdjuxk2VFPcemRZaJqOU3t2Qv+tapdFxmognWCEr7rTi4SfF3RDzW2bpAla/XVIoewsGtqpv3KdZtccOWAPpLIwXEgoNgsn/AogMhiKs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1742283291; c=relaxed/simple;
-	bh=+Wd77a3MgC9BFnYRzCDNhtBxKRK4gLPP9T34lanhpGo=;
+	bh=L+ouOj41YhRbekkzz9nlgWr+5i3mO6Mv6VS53KQ8hZ0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=bPdaKl5WY76gGmLye+xAcRWH0q20yv24SJsYqpELPu9G0fknP7YOdgRM6h+Y7fqwFR/Hai6lWnkQaEUBkyQalkzYx5Akva/vPingc+QFNoxEj22+hFaZNwGBl9zUSCM+BuzEv7AyRlX9rkXJcX5VISGUic2Ii/+ecSDlY2565Dg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	 MIME-Version; b=lKEhmFaPdL45HWThTRBKZhkBzigHFHMVT2mIHpW5wLUCBMz91ELwqZuUOpafud1iaFPMoa6u6ET+sTJL2TeXYEhJKctDYaNeUXyMI8cz8nLV6/LEMkl4vTEoQWuYWrCbneMbqQkcLWVKcHX5QJcY0YnUQ/v26sWMleobMLD1BdU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZH3WN2Nwyz4f3khb
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:24 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZH3WJ4X8Zz4f3lg9
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:20 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id EC3E81A13B1
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:46 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id B449F1A1217
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:44 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.112.188])
-	by APP4 (Coremail) with SMTP id gCh0CgCnCl8EItlnJDdYGw--.56140S9;
-	Tue, 18 Mar 2025 15:34:46 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgCnCl8EItlnJDdYGw--.56140S6;
+	Tue, 18 Mar 2025 15:34:44 +0800 (CST)
 From: Zhang Yi <yi.zhang@huaweicloud.com>
 To: linux-fsdevel@vger.kernel.org,
 	linux-ext4@vger.kernel.org,
@@ -44,9 +44,9 @@ Cc: linux-xfs@vger.kernel.org,
 	chengzhihao1@huawei.com,
 	yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH xfstests 5/5] fsx: add fallocate write zeroes support
-Date: Tue, 18 Mar 2025 15:26:15 +0800
-Message-ID: <20250318072615.3505873-6-yi.zhang@huaweicloud.com>
+Subject: [PATCH xfstests 2/5] generic/765: add generic tests for fallocate write zeroes
+Date: Tue, 18 Mar 2025 15:26:12 +0800
+Message-ID: <20250318072615.3505873-3-yi.zhang@huaweicloud.com>
 X-Mailer: git-send-email 2.46.1
 In-Reply-To: <20250318072615.3505873-1-yi.zhang@huaweicloud.com>
 References: <20250318072615.3505873-1-yi.zhang@huaweicloud.com>
@@ -57,190 +57,359 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCnCl8EItlnJDdYGw--.56140S9
-X-Coremail-Antispam: 1UD129KBjvJXoWxGF48Zr4DCrWfWF4kAF4fXwb_yoWrKw4DpF
-	WkK3yrKFy0qF9xAr4fC3WkWFs0gwn5uryfCrW2yr1rZ3y3ta4fKan0gry0gr1UWr47Ja13
-	J3WYv39F9F4UAaUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUXVWUAwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
-	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
-	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
-	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
-	4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
-	daVFxhVjvjDU0xZFpf9x0pRJ3kZUUUUU=
+X-CM-TRANSID:gCh0CgCnCl8EItlnJDdYGw--.56140S6
+X-Coremail-Antispam: 1UD129KBjvJXoW3Xr1UAF18JrWkKFW8tryfXrb_yoWfAFy5pr
+	Wqvw1DCr48Gw4kZa1YkF4rGr97XFsFy3WDur1xuF1Ykry7Kry0kF48Ww4xA342yF1xCF43
+	XrZ5A3ZFgr1qk3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmY14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_Jryl82xGYIkIc2
+	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
+	Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
+	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
+	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
+	IY67AKxVWUXVWUAwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
+	Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kIc2
+	xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWU
+	JVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67
+	kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY
+	6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42
+	IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIev
+	Ja73UjIFyTuYvjTR_3kZDUUUU
 X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
 From: Zhang Yi <yi.zhang@huawei.com>
 
-Add fsx to suppoet fallocate FALLOC_FL_WRITE_ZEROES command by
-introducing OP_WRITE_ZEROES operation.
+Add generic tests for the fallocate FALLOC_FL_WRITE_ZEROES command.
 
 Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
 ---
- ltp/fsx.c | 80 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 80 insertions(+)
+ tests/generic/765     |  40 +++++++
+ tests/generic/765.out | 269 ++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 309 insertions(+)
+ create mode 100755 tests/generic/765
+ create mode 100644 tests/generic/765.out
 
-diff --git a/ltp/fsx.c b/ltp/fsx.c
-index 41933354..0c5dc93f 100644
---- a/ltp/fsx.c
-+++ b/ltp/fsx.c
-@@ -111,6 +111,7 @@ enum {
- 	OP_FALLOCATE,
- 	OP_PUNCH_HOLE,
- 	OP_ZERO_RANGE,
-+	OP_WRITE_ZEROES,
- 	OP_COLLAPSE_RANGE,
- 	OP_INSERT_RANGE,
- 	OP_CLONE_RANGE,
-@@ -175,6 +176,7 @@ int     keep_size_calls = 1;            /* -K flag disables */
- int     unshare_range_calls = 1;        /* -u flag disables */
- int     punch_hole_calls = 1;           /* -H flag disables */
- int     zero_range_calls = 1;           /* -z flag disables */
-+int	write_zeroes_calls = 1;		/* -M flag disables */
- int	collapse_range_calls = 1;	/* -C flag disables */
- int	insert_range_calls = 1;		/* -I flag disables */
- int	mapped_reads = 1;		/* -R flag disables it */
-@@ -273,6 +275,7 @@ static const char *op_names[] = {
- 	[OP_FALLOCATE] = "fallocate",
- 	[OP_PUNCH_HOLE] = "punch_hole",
- 	[OP_ZERO_RANGE] = "zero_range",
-+	[OP_WRITE_ZEROES] = "write_zeroes",
- 	[OP_COLLAPSE_RANGE] = "collapse_range",
- 	[OP_INSERT_RANGE] = "insert_range",
- 	[OP_CLONE_RANGE] = "clone_range",
-@@ -450,6 +453,13 @@ logdump(void)
- 			if (overlap)
- 				prt("\t******ZZZZ");
- 			break;
-+		case OP_WRITE_ZEROES:
-+			prt("WZERO    0x%x thru 0x%x\t(0x%x bytes)",
-+			    lp->args[0], lp->args[0] + lp->args[1] - 1,
-+			    lp->args[1]);
-+			if (overlap)
-+				prt("\t******ZZZZ");
-+			break;
- 		case OP_COLLAPSE_RANGE:
- 			prt("COLLAPSE 0x%x thru 0x%x\t(0x%x bytes)",
- 			    lp->args[0], lp->args[0] + lp->args[1] - 1,
-@@ -1352,6 +1362,58 @@ do_zero_range(unsigned offset, unsigned length, int keep_size)
- }
- #endif
- 
-+#ifdef FALLOC_FL_WRITE_ZEROES
-+void
-+do_write_zeroes(unsigned offset, unsigned length)
-+{
-+	unsigned end_offset;
-+	int mode = FALLOC_FL_WRITE_ZEROES;
+diff --git a/tests/generic/765 b/tests/generic/765
+new file mode 100755
+index 00000000..4cbef82a
+--- /dev/null
++++ b/tests/generic/765
+@@ -0,0 +1,40 @@
++#! /bin/bash
++# SPDX-License-Identifier: GPL-2.0
++# Copyright (c) 2025 Huawei.  All Rights Reserved.
++#
++# FS QA Test No. 765
++#
++# Test fallocate FALLOC_FL_WRITE_ZEROES
++#
++# (generic/008 is a similar test but for fzero.)
++#
++. ./common/preamble
++_begin_fstest auto quick prealloc zero fiemap
 +
-+	if (length == 0) {
-+		if (!quiet && testcalls > simulatedopcount)
-+			prt("skipping zero length write zeroes\n");
-+		log4(OP_WRITE_ZEROES, offset, length, FL_SKIPPED);
-+		return;
-+	}
++# Import common functions.
++. ./common/filter
++. ./common/punch
 +
-+	end_offset = offset + length;
-+	if (end_offset > biggest) {
-+		biggest = end_offset;
-+		if (!quiet && testcalls > simulatedopcount)
-+			prt("write_zeroes to largest ever: 0x%x\n", end_offset);
-+	}
++# Modify as appropriate.
++_require_xfs_io_command "fwzero"
++_require_xfs_io_command "fiemap"
++_require_xfs_io_command "falloc"
++_require_test
 +
-+	log4(OP_WRITE_ZEROES, offset, length, FL_NONE);
++testfile=$TEST_DIR/765.$$
 +
-+	if (end_offset > file_size)
-+		update_file_size(offset, length);
++# Standard write zeroes tests
++_test_generic_punch falloc fwzero fwzero fiemap _filter_fiemap $testfile
 +
-+	if (testcalls <= simulatedopcount)
-+		return;
++# Delayed allocation write zeroes tests
++_test_generic_punch -d falloc fwzero fwzero fiemap _filter_fiemap $testfile
 +
-+	if ((progressinterval && testcalls % progressinterval == 0) ||
-+	    (debug && (monitorstart == -1 || monitorend == -1 ||
-+		      end_offset <= monitorend))) {
-+		prt("%lld write zeroes\tfrom 0x%x to 0x%x, (0x%x bytes)\n", testcalls,
-+			offset, offset+length, length);
-+	}
-+	if (fallocate(fd, mode, (loff_t)offset, (loff_t)length) == -1) {
-+		prt("write zeroes: 0x%x to 0x%x\n", offset, offset + length);
-+		prterr("do_write_zeroes: fallocate");
-+		report_failure(161);
-+	}
++# Multi write zeroes tests
++_test_generic_punch -k falloc fwzero fwzero fiemap _filter_fiemap $testfile
 +
-+	memset(good_buf + offset, '\0', length);
-+}
++# Delayed allocation multi write zeroes tests
++_test_generic_punch -d -k falloc fwzero fwzero fiemap _filter_fiemap $testfile
 +
-+#else
-+void
-+do_write_zeroes(unsigned offset, unsigned length)
-+{
-+	return;
-+}
-+#endif
-+
- #ifdef FALLOC_FL_COLLAPSE_RANGE
- void
- do_collapse_range(unsigned offset, unsigned length)
-@@ -2296,6 +2358,12 @@ have_op:
- 			goto out;
- 		}
- 		break;
-+	case OP_WRITE_ZEROES:
-+		if (!write_zeroes_calls) {
-+			log4(OP_WRITE_ZEROES, offset, size, FL_SKIPPED);
-+			goto out;
-+		}
-+		break;
- 	case OP_COLLAPSE_RANGE:
- 		if (!collapse_range_calls) {
- 			log4(OP_COLLAPSE_RANGE, offset, size, FL_SKIPPED);
-@@ -2372,6 +2440,10 @@ have_op:
- 		TRIM_OFF_LEN(offset, size, maxfilelen);
- 		do_zero_range(offset, size, keep_size);
- 		break;
-+	case OP_WRITE_ZEROES:
-+		TRIM_OFF_LEN(offset, size, maxfilelen);
-+		do_write_zeroes(offset, size);
-+		break;
- 	case OP_COLLAPSE_RANGE:
- 		TRIM_OFF_LEN(offset, size, file_size - 1);
- 		offset = rounddown_64(offset, block_size);
-@@ -2519,6 +2591,9 @@ usage(void)
- #ifdef FALLOC_FL_ZERO_RANGE
- "	-z: Do not use zero range calls\n"
- #endif
-+#ifdef FALLOC_FL_WRITE_ZEROES
-+"	-z: Do not use write zeroes calls\n"
-+#endif
- #ifdef FALLOC_FL_COLLAPSE_RANGE
- "	-C: Do not use collapse range calls\n"
- #endif
-@@ -3019,6 +3094,9 @@ main(int argc, char **argv)
- 		case 'z':
- 			zero_range_calls = 0;
- 			break;
-+		case 'M':
-+			write_zeroes_calls = 0;
-+			break;
- 		case 'C':
- 			collapse_range_calls = 0;
- 			break;
-@@ -3281,6 +3359,8 @@ main(int argc, char **argv)
- 		punch_hole_calls = test_fallocate(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE);
- 	if (zero_range_calls)
- 		zero_range_calls = test_fallocate(FALLOC_FL_ZERO_RANGE);
-+	if (write_zeroes_calls)
-+		write_zeroes_calls = test_fallocate(FALLOC_FL_WRITE_ZEROES);
- 	if (collapse_range_calls)
- 		collapse_range_calls = test_fallocate(FALLOC_FL_COLLAPSE_RANGE);
- 	if (insert_range_calls)
++# success, all done
++status=0
++exit
+diff --git a/tests/generic/765.out b/tests/generic/765.out
+new file mode 100644
+index 00000000..7dd949c4
+--- /dev/null
++++ b/tests/generic/765.out
+@@ -0,0 +1,269 @@
++QA output created by 765
++	1. into a hole
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	2. into allocated space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	3. into unwritten space
++0: [0..127]: unwritten
++1: [128..383]: data
++2: [384..639]: unwritten
++1aca77e2188f52a62674fe8a873bdaba
++	4. hole -> data
++0: [0..127]: hole
++1: [128..511]: data
++2: [512..639]: hole
++286aad7ca07b2256f0f2bb8e608ff63d
++	5. hole -> unwritten
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..511]: unwritten
++3: [512..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	6. data -> hole
++0: [0..383]: data
++1: [384..639]: hole
++3976e5cc0b8a47c4cdc9e0211635f568
++	7. data -> unwritten
++0: [0..383]: data
++1: [384..511]: unwritten
++2: [512..639]: hole
++3976e5cc0b8a47c4cdc9e0211635f568
++	8. unwritten -> hole
++0: [0..127]: unwritten
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	9. unwritten -> data
++0: [0..127]: unwritten
++1: [128..511]: data
++2: [512..639]: hole
++286aad7ca07b2256f0f2bb8e608ff63d
++	10. hole -> data -> hole
++0: [0..127]: hole
++1: [128..511]: data
++2: [512..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	11. data -> hole -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	12. unwritten -> data -> unwritten
++0: [0..127]: unwritten
++1: [128..511]: data
++2: [512..639]: unwritten
++1aca77e2188f52a62674fe8a873bdaba
++	13. data -> unwritten -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	14. data -> hole @ EOF
++0: [0..639]: data
++eb591f549edabba2b21f80ce4deed8a9
++	15. data -> hole @ 0
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	16. data -> cache cold ->hole
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	17. data -> hole in single block file
++0: [0..7]: data
++0000000 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++0000200 0000 0000 0000 0000 0000 0000 0000 0000
++*
++0000400 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++	1. into a hole
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	2. into allocated space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	3. into unwritten space
++0: [0..127]: unwritten
++1: [128..383]: data
++2: [384..639]: unwritten
++1aca77e2188f52a62674fe8a873bdaba
++	4. hole -> data
++0: [0..127]: hole
++1: [128..511]: data
++2: [512..639]: hole
++286aad7ca07b2256f0f2bb8e608ff63d
++	5. hole -> unwritten
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..511]: unwritten
++3: [512..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	6. data -> hole
++0: [0..383]: data
++1: [384..639]: hole
++3976e5cc0b8a47c4cdc9e0211635f568
++	7. data -> unwritten
++0: [0..383]: data
++1: [384..511]: unwritten
++2: [512..639]: hole
++3976e5cc0b8a47c4cdc9e0211635f568
++	8. unwritten -> hole
++0: [0..127]: unwritten
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	9. unwritten -> data
++0: [0..127]: unwritten
++1: [128..511]: data
++2: [512..639]: hole
++286aad7ca07b2256f0f2bb8e608ff63d
++	10. hole -> data -> hole
++0: [0..127]: hole
++1: [128..511]: data
++2: [512..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	11. data -> hole -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	12. unwritten -> data -> unwritten
++0: [0..127]: unwritten
++1: [128..511]: data
++2: [512..639]: unwritten
++1aca77e2188f52a62674fe8a873bdaba
++	13. data -> unwritten -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	14. data -> hole @ EOF
++0: [0..639]: data
++eb591f549edabba2b21f80ce4deed8a9
++	15. data -> hole @ 0
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	16. data -> cache cold ->hole
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	17. data -> hole in single block file
++0: [0..7]: data
++0000000 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++0000200 0000 0000 0000 0000 0000 0000 0000 0000
++*
++0000400 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++	1. into a hole
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	2. into allocated space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	3. into unwritten space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	4. hole -> data
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	5. hole -> unwritten
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	6. data -> hole
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	7. data -> unwritten
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	8. unwritten -> hole
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	9. unwritten -> data
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	10. hole -> data -> hole
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	11. data -> hole -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	12. unwritten -> data -> unwritten
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	13. data -> unwritten -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	14. data -> hole @ EOF
++0: [0..639]: data
++eb591f549edabba2b21f80ce4deed8a9
++	15. data -> hole @ 0
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	16. data -> cache cold ->hole
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	17. data -> hole in single block file
++0: [0..7]: data
++0000000 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++0000200 0000 0000 0000 0000 0000 0000 0000 0000
++*
++0000400 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++	1. into a hole
++0: [0..127]: hole
++1: [128..383]: data
++2: [384..639]: hole
++1aca77e2188f52a62674fe8a873bdaba
++	2. into allocated space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	3. into unwritten space
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	4. hole -> data
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	5. hole -> unwritten
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	6. data -> hole
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	7. data -> unwritten
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	8. unwritten -> hole
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	9. unwritten -> data
++0: [0..639]: data
++2f7a72b9ca9923b610514a11a45a80c9
++	10. hole -> data -> hole
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	11. data -> hole -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	12. unwritten -> data -> unwritten
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	13. data -> unwritten -> data
++0: [0..639]: data
++0bcfc7652751f8fe46381240ccadd9d7
++	14. data -> hole @ EOF
++0: [0..639]: data
++eb591f549edabba2b21f80ce4deed8a9
++	15. data -> hole @ 0
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	16. data -> cache cold ->hole
++0: [0..639]: data
++b0c249edb75ce5b52136864d879cde83
++	17. data -> hole in single block file
++0: [0..7]: data
++0000000 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
++0000200 0000 0000 0000 0000 0000 0000 0000 0000
++*
++0000400 cdcd cdcd cdcd cdcd cdcd cdcd cdcd cdcd
++*
 -- 
 2.46.1
 
