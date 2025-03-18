@@ -1,175 +1,111 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E88920767E
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 11:08:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FF7520DD7F
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 14:26:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742296116; cv=none; b=heirEOF11hYLcyF/mbL/kTA1agXd3/1n7xBph/RftvOq7esyvp7jItdefgWg+N5Vk3nShe55qHeESz8gHTbQ3enm03vS9DR8b3u65OwH5XqyoUh17n0wMJnyFhBOGuI/SF0phkwEe4m3YH5TlXyRcg2NWkAC1vIy1xriz7jBuEQ=
+	t=1742307985; cv=none; b=OJZWR/VBQWD7scI8WzQisJ/Z2rNx5x8j2kK4VnfBjUkQrM7ExQuIjt7qK5UEOxFqbL0N6cDCDcywctE7M6ZihM1nxr7PuhiFJcXiHxz5UO3WqhVM9JDEa+TWGpRK4J4eGQUUMPr+YU7O9LXMJRDLwyyUVDADcjYIaMt3OmSjAoI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742296116; c=relaxed/simple;
-	bh=EVdWYkfcmkGOqZLLWgbEZXK2tkWnY8lqXQrOIe1RvEE=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=LRDSlZV4HMUxe4Nndw8ShST/Z+Rl003HkY7KRXIf/ccEBdCJWHRVe9M+jZj9ymAktCwJ+xfY2MLj7lESCXM1jccz4jClRgR5aJnxQqbVLdy943BP8q8ffG4JJFHtBog5JecNvtm5JzsBddJTgOcd6etkxcurdK5GSBgvoIZFSxg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=bRjM/T0c; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=bRjM/T0c; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1742307985; c=relaxed/simple;
+	bh=OosZcgJIKzG1WoaoxuMYkBhQpSNSLo+s8stp5KAGHJQ=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=V0u4eXwWA7gMbKWH0ZwCKXLno4crQZ7fMJ9Op2MVyWcYL9jUVkjqbBtZQZFRPAQZTMPyj5mUEi21rX5Qhu81dRJIQfLV+Jl6MVbCCw0mVISt2sLJbvGOMnK7DKlOKU/hzxm9a6HlPYr4rI8dKvliorLpenUIOYDZ45xd2SvIIJI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=L5SHTnqQ; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="bRjM/T0c";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="bRjM/T0c"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="L5SHTnqQ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1742307982;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=9DK79vEkj60H4A6R6HETunbW5RhdY45htg39zNnZN74=;
+	b=L5SHTnqQS4bM5hkGhiRQZJvzoOpG+o7O0wHJVfhLjZUmY49uknQcCTBjN6RnG0pim1mud9
+	3KVPAWDbnbEMBazt33LoxIThuZYFUWKSHVXDfSkmDtYdWOa7FZoUQJm8ZlJb+JRl9NuPpE
+	BP2Kr/eo9KWTv5S6dxA3FA5oJhPx/Jk=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-434-Dj22WKlSOWKVl3TP6Ptv-A-1; Tue,
+ 18 Mar 2025 10:26:19 -0400
+X-MC-Unique: Dj22WKlSOWKVl3TP6Ptv-A-1
+X-Mimecast-MFC-AGG-ID: Dj22WKlSOWKVl3TP6Ptv-A_1742307978
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 259D521AB1;
-	Tue, 18 Mar 2025 11:08:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1742296113; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GodyCswUlNHCiyuFk+rCxOn/x4wZfeZKPKUYFFNo5kc=;
-	b=bRjM/T0cSSq1D7n8PiHbhGYl4KBW1RGmQUNCm7XBQrbKKLX/gYp4ciliJ8bq5kbb6R3CiT
-	tdN3O7InPZVSUyGXWJUw7Wy8w6uWY8Zu3mCy0Wg0FWOhGo34UimVQDOyUuQ4W3r++dfQHt
-	zxYwlcYkaNa+RwdBIBlmrclr9nCFu54=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1742296113; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GodyCswUlNHCiyuFk+rCxOn/x4wZfeZKPKUYFFNo5kc=;
-	b=bRjM/T0cSSq1D7n8PiHbhGYl4KBW1RGmQUNCm7XBQrbKKLX/gYp4ciliJ8bq5kbb6R3CiT
-	tdN3O7InPZVSUyGXWJUw7Wy8w6uWY8Zu3mCy0Wg0FWOhGo34UimVQDOyUuQ4W3r++dfQHt
-	zxYwlcYkaNa+RwdBIBlmrclr9nCFu54=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id EDD1D139D2;
-	Tue, 18 Mar 2025 11:08:32 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id AOaCODBU2WeRRAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 18 Mar 2025 11:08:32 +0000
-Message-ID: <3d9867d00eeb9d9ec65a2f93ea09cd71a960c4bc.camel@suse.com>
-Subject: Re: [PATCH RFC] multipath-tools: add Generic SCSI in hwtable
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, DM-DEVEL ML
-	 <dm-devel@lists.linux.dev>
-Date: Tue, 18 Mar 2025 12:08:32 +0100
-In-Reply-To: <Z9h_dgeRCakpLak9@redhat.com>
-References: <20250317173352.14387-1-xose.vazquez@gmail.com>
-	 <Z9h_dgeRCakpLak9@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.54.3 
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 51FBD19560B3;
+	Tue, 18 Mar 2025 14:26:17 +0000 (UTC)
+Received: from [10.22.82.75] (unknown [10.22.82.75])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 94CFC1955BE1;
+	Tue, 18 Mar 2025 14:26:15 +0000 (UTC)
+Date: Tue, 18 Mar 2025 15:26:10 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: [PATC] block: update queue limits atomically
+Message-ID: <ee66a4f2-ecc4-68d2-4594-a0bcba7ffe9c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-X-Spamd-Result: default: False [-2.80 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	FREEMAIL_TO(0.00)[redhat.com,gmail.com];
-	ARC_NA(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	TO_DN_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCPT_COUNT_THREE(0.00)[4];
-	MIME_TRACE(0.00)[0:+];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TAGGED_RCPT(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Score: -2.80
-X-Spam-Flag: NO
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-On Mon, 2025-03-17 at 16:00 -0400, Benjamin Marzinski wrote:
-> On Mon, Mar 17, 2025 at 06:33:51PM +0100, Xose Vazquez Perez wrote:
-> > Cc: Martin Wilck <mwilck@suse.com>
-> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > ---
-> > =C2=A0libmultipath/hwtable.c | 11 +++++++++++
-> > =C2=A01 file changed, 11 insertions(+)
-> >=20
-> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> > index f8cf3fa9..34b1fd2f 100644
-> > --- a/libmultipath/hwtable.c
-> > +++ b/libmultipath/hwtable.c
-> > @@ -79,6 +79,17 @@
-> > =C2=A0#endif
-> > =C2=A0
->=20
-> If we wanted to make these changes, we could just change
-> DEFAULT_PGPOLICY, DEFAULT_FAILBACK, and DEFAULT_NO_PATH_RETRY. But I
-> still think that for completely unknown devices, we should stick with
-> our current defaults. They're safe and I haven't heard any complaints
-> about them.
+The block limits may be read while they are being modified. The statement
+"q->limits = *lim" is not really atomic. The compiler may turn it into
+memcpy (clang does).
 
-I agree. The point of the hwtable is to change the defaults for
-specific devices. Using "vendor =3D .*" and "product =3D ".*" is against
-the spirit of the hwtable.=C2=A0
+On x86-64, the kernel uses the "rep movsb" instruction for memcpy - it is
+optimized on modern CPUs, but it is not atomic, it may be interrupted at
+any byte boundary - and if it is interrupted, the readers may read
+garbage.
 
-Unless I am mistaken, this  change would override user settings in the
-"defaults" section of multipath.conf.=C2=A0This happens a lot already for
-those systems that do have a specific hwtable entry, and I am sure that
-that comes as a surprise for users (it has confused myself a
-significant couple of times). By adding these catch-all entries, we'd
-make the "defaults" section ineffective for any setting that's
-available in the "devices" section, too.
+On sparc64, there's an instruction that zeroes a cache line without
+reading it from memory. The kernel memcpy implementation uses it (see
+b3a04ed507bf) to avoid loading the destination buffer from memory. The
+problem is that if we copy a block of data to q->limits and someone reads
+it at the same time, the reader may read zeros.
 
-Thinking about it, that might actually be a good thing, as it would
-eliminate the uncertainty whether or not a given "defaults" setting
-would take effect for a given storage device.=C2=A0Maybe we should
-officially stop supporting settings in "defaults" that can be
-overridden by device-spefic settings, just to reduce confusion in this
-area, and recommend using a catch-all device setting (in
-multipath.conf, not in the built-in hwtable) instead.
+This commit changes it to use WRITE_ONCE, so that individual words are
+updated atomically.
 
-Anyway, that would be a possible cause for major breakage, as user
-settings in the field would suddenly stop being effective. We can't
-possibly just let it slip in with a minor hwtable patch like this.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-Regards
-Martin
+---
+ block/blk-settings.c |   10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-> -Ben
->=20
-> > =C2=A0static struct hwentry default_hw[] =3D {
-> > +	/*
-> > +	 * Generic SCSI devices
-> > +	 */
-> > +	{
-> > +		/* Generic SCSI */
-> > +		.vendor=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D ".*",
-> > +		.product=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D ".*",
-> > +		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_PRIO,
-> > +		.pgfailback=C2=A0=C2=A0=C2=A0 =3D -FAILBACK_IMMEDIATE,
-> > +		.no_path_retry =3D 30,
-> > +	},
-> > =C2=A0	/*
-> > =C2=A0	 * Generic NVMe devices
-> > =C2=A0	 *
-> > --=20
-> > 2.48.1
->=20
+Index: linux-2.6/block/blk-settings.c
+===================================================================
+--- linux-2.6.orig/block/blk-settings.c
++++ linux-2.6/block/blk-settings.c
+@@ -433,6 +433,7 @@ int queue_limits_commit_update(struct re
+ 		struct queue_limits *lim)
+ {
+ 	int error;
++	size_t i;
+ 
+ 	error = blk_validate_limits(lim);
+ 	if (error)
+@@ -446,7 +447,14 @@ int queue_limits_commit_update(struct re
+ 	}
+ #endif
+ 
+-	q->limits = *lim;
++	/*
++	 * Note that direct assignment like "q->limits = *lim" is not atomic
++	 * (the compiler can generate things like "rep movsb" for it),
++	 * so we use WRITE_ONCE.
++	 */
++	for (i = 0; i < sizeof(struct queue_limits) / sizeof(long); i++)
++		WRITE_ONCE(*((long *)&q->limits + i), *((long *)lim + i));
++
+ 	if (q->disk)
+ 		blk_apply_bdi_limits(q->disk->bdi, lim);
+ out_unlock:
 
