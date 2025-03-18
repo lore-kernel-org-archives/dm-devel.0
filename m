@@ -1,27 +1,27 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C6601F0985
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:34:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D19741F4CBF
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:34:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742283290; cv=none; b=b8nOD6eptntkJBco1Nk9ru04+K7cc8eA4qX6N5sQyjHwuExc0ARV9Umtrnd99je93yjYx1f7E+ZcdSPC9Wsgqu/D6MxKQpYXyTeDZRGPKNpptvOk9XLVGhuim/eQJYEd1m0arolxIGk3jfzR0JJxcmtkbpygtbVgxGylJDitwIo=
+	t=1742283291; cv=none; b=piAyFgbaCeIXdInCLh9/AbD11Gtx5v+DPA8hu2GsHwV/tFvQ+kWeEg1f72bGWpLKi34aPxWSq3egZTRfEXCDx3tzNaLXHMn56gkGkVYnHjGP1CMp+a4pJWSOI+YP0X0phADGqf/Aw6kZQHqLc1qj13RKOHnoJpw2+2CDUMOUVDo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742283290; c=relaxed/simple;
-	bh=6g3bhbPGPsuTRVT8vq4jGUeLPW16Uvdsrbmr2YsZQSU=;
+	s=arc-20240116; t=1742283291; c=relaxed/simple;
+	bh=+Wd77a3MgC9BFnYRzCDNhtBxKRK4gLPP9T34lanhpGo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=bbD+kSdAZ1WmghAuGT0I6KXmtjidzPAmZiLIn7MYDjPzMVWZpvwf2AxSkRqTODljDabPDrZcaMxVxMCw39bmu75CYKi3+oBnufwllOfmMglT6CAMZQRcmr24I7wWy0MNWgvYE2F0g73bwJ/GRlnTWy1Hyg3o2b/xVYRCilWSSpk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=bPdaKl5WY76gGmLye+xAcRWH0q20yv24SJsYqpELPu9G0fknP7YOdgRM6h+Y7fqwFR/Hai6lWnkQaEUBkyQalkzYx5Akva/vPingc+QFNoxEj22+hFaZNwGBl9zUSCM+BuzEv7AyRlX9rkXJcX5VISGUic2Ii/+ecSDlY2565Dg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZH3WS6n2qz4f3jkr
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:28 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZH3WN2Nwyz4f3khb
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:24 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 37DC91A058E
+	by mail.maildlp.com (Postfix) with ESMTP id EC3E81A13B1
 	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:34:46 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.112.188])
-	by APP4 (Coremail) with SMTP id gCh0CgCnCl8EItlnJDdYGw--.56140S8;
+	by APP4 (Coremail) with SMTP id gCh0CgCnCl8EItlnJDdYGw--.56140S9;
 	Tue, 18 Mar 2025 15:34:46 +0800 (CST)
 From: Zhang Yi <yi.zhang@huaweicloud.com>
 To: linux-fsdevel@vger.kernel.org,
@@ -44,9 +44,9 @@ Cc: linux-xfs@vger.kernel.org,
 	chengzhihao1@huawei.com,
 	yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH xfstests 4/5] fstress: add fallocate write zeroes support
-Date: Tue, 18 Mar 2025 15:26:14 +0800
-Message-ID: <20250318072615.3505873-5-yi.zhang@huaweicloud.com>
+Subject: [PATCH xfstests 5/5] fsx: add fallocate write zeroes support
+Date: Tue, 18 Mar 2025 15:26:15 +0800
+Message-ID: <20250318072615.3505873-6-yi.zhang@huaweicloud.com>
 X-Mailer: git-send-email 2.46.1
 In-Reply-To: <20250318072615.3505873-1-yi.zhang@huaweicloud.com>
 References: <20250318072615.3505873-1-yi.zhang@huaweicloud.com>
@@ -57,10 +57,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCnCl8EItlnJDdYGw--.56140S8
-X-Coremail-Antispam: 1UD129KBjvJXoW7uFWDAr45Kw4UXFWDurWUXFb_yoW8uFy3pa
-	yDtFW8Cay8Wa4ayr18urs5WFn0qrsYqr15C397Kr1IvayYyr9Igrn0g3s5Gw1DXFWDtay5
-	ZF90gFyq93WUA37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgCnCl8EItlnJDdYGw--.56140S9
+X-Coremail-Antispam: 1UD129KBjvJXoWxGF48Zr4DCrWfWF4kAF4fXwb_yoWrKw4DpF
+	WkK3yrKFy0qF9xAr4fC3WkWFs0gwn5uryfCrW2yr1rZ3y3ta4fKan0gry0gr1UWr47Ja13
+	J3WYv39F9F4UAaUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -79,81 +79,168 @@ X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
 From: Zhang Yi <yi.zhang@huawei.com>
 
-Add fstress to suppoet fallocate FALLOC_FL_WRITE_ZEROES command by
-introducing OP_WZERO operation.
+Add fsx to suppoet fallocate FALLOC_FL_WRITE_ZEROES command by
+introducing OP_WRITE_ZEROES operation.
 
 Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
 ---
- ltp/fsstress.c | 12 ++++++++++++
- src/global.h   |  4 ++++
- 2 files changed, 16 insertions(+)
+ ltp/fsx.c | 80 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 80 insertions(+)
 
-diff --git a/ltp/fsstress.c b/ltp/fsstress.c
-index 3d248ee2..ed2a54ab 100644
---- a/ltp/fsstress.c
-+++ b/ltp/fsstress.c
-@@ -114,6 +114,7 @@ typedef enum {
- 	OP_MWRITE,
- 	OP_PUNCH,
- 	OP_ZERO,
-+	OP_WZERO,
- 	OP_COLLAPSE,
- 	OP_INSERT,
- 	OP_READ,
-@@ -245,6 +246,7 @@ void	mread_f(opnum_t, long);
- void	mwrite_f(opnum_t, long);
- void	punch_f(opnum_t, long);
- void	zero_f(opnum_t, long);
-+void	wzero_f(opnum_t, long);
- void	collapse_f(opnum_t, long);
- void	insert_f(opnum_t, long);
- void	unshare_f(opnum_t, long);
-@@ -312,6 +314,7 @@ struct opdesc	ops[OP_LAST]	= {
- 	[OP_MWRITE]	   = {"mwrite",	       mwrite_f,	2, 1 },
- 	[OP_PUNCH]	   = {"punch",	       punch_f,		1, 1 },
- 	[OP_ZERO]	   = {"zero",	       zero_f,		1, 1 },
-+	[OP_WZERO]	   = {"wzero",	       wzero_f,		1, 1 },
- 	[OP_COLLAPSE]	   = {"collapse",      collapse_f,	1, 1 },
- 	[OP_INSERT]	   = {"insert",	       insert_f,	1, 1 },
- 	[OP_READ]	   = {"read",	       read_f,		1, 0 },
-@@ -3758,6 +3761,7 @@ struct print_flags falloc_flags [] = {
- 	{ FALLOC_FL_NO_HIDE_STALE, "NO_HIDE_STALE"},
- 	{ FALLOC_FL_COLLAPSE_RANGE, "COLLAPSE_RANGE"},
- 	{ FALLOC_FL_ZERO_RANGE, "ZERO_RANGE"},
-+	{ FALLOC_FL_WRITE_ZEROES, "WRITE_ZEROES"},
- 	{ FALLOC_FL_INSERT_RANGE, "INSERT_RANGE"},
- 	{ FALLOC_FL_UNSHARE_RANGE, "UNSHARE_RANGE"},
- 	{ -1, NULL}
-@@ -4446,6 +4450,14 @@ zero_f(opnum_t opno, long r)
- #endif
+diff --git a/ltp/fsx.c b/ltp/fsx.c
+index 41933354..0c5dc93f 100644
+--- a/ltp/fsx.c
++++ b/ltp/fsx.c
+@@ -111,6 +111,7 @@ enum {
+ 	OP_FALLOCATE,
+ 	OP_PUNCH_HOLE,
+ 	OP_ZERO_RANGE,
++	OP_WRITE_ZEROES,
+ 	OP_COLLAPSE_RANGE,
+ 	OP_INSERT_RANGE,
+ 	OP_CLONE_RANGE,
+@@ -175,6 +176,7 @@ int     keep_size_calls = 1;            /* -K flag disables */
+ int     unshare_range_calls = 1;        /* -u flag disables */
+ int     punch_hole_calls = 1;           /* -H flag disables */
+ int     zero_range_calls = 1;           /* -z flag disables */
++int	write_zeroes_calls = 1;		/* -M flag disables */
+ int	collapse_range_calls = 1;	/* -C flag disables */
+ int	insert_range_calls = 1;		/* -I flag disables */
+ int	mapped_reads = 1;		/* -R flag disables it */
+@@ -273,6 +275,7 @@ static const char *op_names[] = {
+ 	[OP_FALLOCATE] = "fallocate",
+ 	[OP_PUNCH_HOLE] = "punch_hole",
+ 	[OP_ZERO_RANGE] = "zero_range",
++	[OP_WRITE_ZEROES] = "write_zeroes",
+ 	[OP_COLLAPSE_RANGE] = "collapse_range",
+ 	[OP_INSERT_RANGE] = "insert_range",
+ 	[OP_CLONE_RANGE] = "clone_range",
+@@ -450,6 +453,13 @@ logdump(void)
+ 			if (overlap)
+ 				prt("\t******ZZZZ");
+ 			break;
++		case OP_WRITE_ZEROES:
++			prt("WZERO    0x%x thru 0x%x\t(0x%x bytes)",
++			    lp->args[0], lp->args[0] + lp->args[1] - 1,
++			    lp->args[1]);
++			if (overlap)
++				prt("\t******ZZZZ");
++			break;
+ 		case OP_COLLAPSE_RANGE:
+ 			prt("COLLAPSE 0x%x thru 0x%x\t(0x%x bytes)",
+ 			    lp->args[0], lp->args[0] + lp->args[1] - 1,
+@@ -1352,6 +1362,58 @@ do_zero_range(unsigned offset, unsigned length, int keep_size)
  }
+ #endif
  
++#ifdef FALLOC_FL_WRITE_ZEROES
 +void
-+wzero_f(opnum_t opno, long r)
++do_write_zeroes(unsigned offset, unsigned length)
 +{
-+#ifdef HAVE_LINUX_FALLOC_H
-+	do_fallocate(opno, r, FALLOC_FL_WRITE_ZEROES);
-+#endif
++	unsigned end_offset;
++	int mode = FALLOC_FL_WRITE_ZEROES;
++
++	if (length == 0) {
++		if (!quiet && testcalls > simulatedopcount)
++			prt("skipping zero length write zeroes\n");
++		log4(OP_WRITE_ZEROES, offset, length, FL_SKIPPED);
++		return;
++	}
++
++	end_offset = offset + length;
++	if (end_offset > biggest) {
++		biggest = end_offset;
++		if (!quiet && testcalls > simulatedopcount)
++			prt("write_zeroes to largest ever: 0x%x\n", end_offset);
++	}
++
++	log4(OP_WRITE_ZEROES, offset, length, FL_NONE);
++
++	if (end_offset > file_size)
++		update_file_size(offset, length);
++
++	if (testcalls <= simulatedopcount)
++		return;
++
++	if ((progressinterval && testcalls % progressinterval == 0) ||
++	    (debug && (monitorstart == -1 || monitorend == -1 ||
++		      end_offset <= monitorend))) {
++		prt("%lld write zeroes\tfrom 0x%x to 0x%x, (0x%x bytes)\n", testcalls,
++			offset, offset+length, length);
++	}
++	if (fallocate(fd, mode, (loff_t)offset, (loff_t)length) == -1) {
++		prt("write zeroes: 0x%x to 0x%x\n", offset, offset + length);
++		prterr("do_write_zeroes: fallocate");
++		report_failure(161);
++	}
++
++	memset(good_buf + offset, '\0', length);
 +}
 +
- void
- collapse_f(opnum_t opno, long r)
- {
-diff --git a/src/global.h b/src/global.h
-index fbc0a0b5..6b1e30c9 100644
---- a/src/global.h
-+++ b/src/global.h
-@@ -175,6 +175,10 @@
- #define FALLOC_FL_ZERO_RANGE		0x10
- #endif
- 
-+#ifndef FALLOC_FL_WRITE_ZEROES
-+#define FALLOC_FL_WRITE_ZEROES		0x80
++#else
++void
++do_write_zeroes(unsigned offset, unsigned length)
++{
++	return;
++}
 +#endif
 +
- #ifndef FALLOC_FL_INSERT_RANGE
- #define FALLOC_FL_INSERT_RANGE		0x20
+ #ifdef FALLOC_FL_COLLAPSE_RANGE
+ void
+ do_collapse_range(unsigned offset, unsigned length)
+@@ -2296,6 +2358,12 @@ have_op:
+ 			goto out;
+ 		}
+ 		break;
++	case OP_WRITE_ZEROES:
++		if (!write_zeroes_calls) {
++			log4(OP_WRITE_ZEROES, offset, size, FL_SKIPPED);
++			goto out;
++		}
++		break;
+ 	case OP_COLLAPSE_RANGE:
+ 		if (!collapse_range_calls) {
+ 			log4(OP_COLLAPSE_RANGE, offset, size, FL_SKIPPED);
+@@ -2372,6 +2440,10 @@ have_op:
+ 		TRIM_OFF_LEN(offset, size, maxfilelen);
+ 		do_zero_range(offset, size, keep_size);
+ 		break;
++	case OP_WRITE_ZEROES:
++		TRIM_OFF_LEN(offset, size, maxfilelen);
++		do_write_zeroes(offset, size);
++		break;
+ 	case OP_COLLAPSE_RANGE:
+ 		TRIM_OFF_LEN(offset, size, file_size - 1);
+ 		offset = rounddown_64(offset, block_size);
+@@ -2519,6 +2591,9 @@ usage(void)
+ #ifdef FALLOC_FL_ZERO_RANGE
+ "	-z: Do not use zero range calls\n"
  #endif
++#ifdef FALLOC_FL_WRITE_ZEROES
++"	-z: Do not use write zeroes calls\n"
++#endif
+ #ifdef FALLOC_FL_COLLAPSE_RANGE
+ "	-C: Do not use collapse range calls\n"
+ #endif
+@@ -3019,6 +3094,9 @@ main(int argc, char **argv)
+ 		case 'z':
+ 			zero_range_calls = 0;
+ 			break;
++		case 'M':
++			write_zeroes_calls = 0;
++			break;
+ 		case 'C':
+ 			collapse_range_calls = 0;
+ 			break;
+@@ -3281,6 +3359,8 @@ main(int argc, char **argv)
+ 		punch_hole_calls = test_fallocate(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE);
+ 	if (zero_range_calls)
+ 		zero_range_calls = test_fallocate(FALLOC_FL_ZERO_RANGE);
++	if (write_zeroes_calls)
++		write_zeroes_calls = test_fallocate(FALLOC_FL_WRITE_ZEROES);
+ 	if (collapse_range_calls)
+ 		collapse_range_calls = test_fallocate(FALLOC_FL_COLLAPSE_RANGE);
+ 	if (insert_range_calls)
 -- 
 2.46.1
 
