@@ -1,27 +1,28 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F23471E8354
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:40:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A412198823
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:44:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742283643; cv=none; b=Cfsjf2HyOj4Qf9iTmiXa58Mya4HBMSvExzIpfAdqR+r3rnAjM6/YYQppWMF5vqF3URNK8LmOI+KaccpAjChn0vcMc4plxsXlAfRz/k0ysVC2U19lVqArR7HGbKrttK0dXDumbQBdK0DdUGOAGwEItAzShgklVbISb/MmhADgZ/0=
+	t=1742283855; cv=none; b=Hik1H3az/92+hGZJ3iZTgcFfagLVKIChDmMlIVhKGSM+wNvGMg6cNtAnmxxUH/N0q2LAc1gAWifi13t6UcrgmmeTpZOvKhpaQ57sVlALrVlVGXZC+RWy9/AHd+1rDWDxdmapBaaEw2qRnTiPsc5xElj6PfBI1MhSN2gZt8D5cPc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742283643; c=relaxed/simple;
-	bh=K+XA7GFK0xb73WCV79w/cHUhfkLJzifDbaFT/ICcowg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=jaciZL9Y9k5KXa542EJk1yZYu9J/kUWlBm5UMqQ2xIhAEQfi16PLBChovnqQU4QmO/Mpad7FpP55y6T2xn3PkCpnJs/aT3q0Z6Hu1YA/BBc/VVK5KVq6cISJoCa7a5dPjkCXpaiggXDS3aw+893mlQuUk7vSR3G6phOwmUTMlwM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	s=arc-20240116; t=1742283855; c=relaxed/simple;
+	bh=cCuJ+gwEr/Sa3VDT4raUh609F+vIYmABsebMD1OFI/4=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=I4J83FyaIqfd0RhQ5vRzkru9CvU0muiX4mmXVc/0jyKiKkyDa6kjwG52njXE1gLtgsslYXqQb10Wr9LYlv7UaFCmP0pjqHgzOp8rcJnm/xUi/bJI4B4/snkBV2kGaeGmTyIVDIrhfsnNB7po+3DV0GFnUvvxXf9ylLsBDyP1TeI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZH3f56GZRz4f3m7J
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:40:13 +0800 (CST)
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZH3kD6gFsz4f3khd
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:43:48 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id EDDFF1A06DF
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:40:37 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 89C971A12D5
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:44:11 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.112.188])
-	by APP4 (Coremail) with SMTP id gCh0CgBHq19uI9ln0aBYGw--.57558S4;
-	Tue, 18 Mar 2025 15:40:37 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgCH6189JNlnEt1YGw--.55732S7;
+	Tue, 18 Mar 2025 15:44:11 +0800 (CST)
 From: Zhang Yi <yi.zhang@huaweicloud.com>
 To: linux-fsdevel@vger.kernel.org,
 	linux-ext4@vger.kernel.org,
@@ -43,10 +44,12 @@ Cc: linux-xfs@vger.kernel.org,
 	chengzhihao1@huawei.com,
 	yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH util-linux] fallocate: add FALLOC_FL_WRITE_ZEROES support
-Date: Tue, 18 Mar 2025 15:32:18 +0800
-Message-ID: <20250318073218.3513262-1-yi.zhang@huaweicloud.com>
+Subject: [RFC PATCH -next v3 03/10] nvme-multipath: add BLK_FEAT_WRITE_ZEROES_UNMAP support
+Date: Tue, 18 Mar 2025 15:35:38 +0800
+Message-ID: <20250318073545.3518707-4-yi.zhang@huaweicloud.com>
 X-Mailer: git-send-email 2.46.1
+In-Reply-To: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
+References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -54,153 +57,51 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgBHq19uI9ln0aBYGw--.57558S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxKF1DuF4DWw18Cry5KFW5GFg_yoW7Kw48pF
-	W5tF18K3yFgw47Gwn7Aw4kWrn8Z395WrW5CrZ2grykAr13Ga17Ka1vgFyFgasrXrWvka15
-	XryaqFy3ur48AFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9I14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_JF0_Jw1lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
-	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
-	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
-	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Gr0_Xr
-	1lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4UJVWxJr1lIxAIcVCF04k26cxKx2IYs7xG6r1j
-	6r1xMIIF0xvEx4A2jsIE14v26r4j6F4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJb
-	IYCTnIWIevJa73UjIFyTuYvjTRMv31DUUUU
+X-CM-TRANSID:gCh0CgCH6189JNlnEt1YGw--.55732S7
+X-Coremail-Antispam: 1UD129KBjvdXoWrKFy5Kr4Uuw4Uur4ktrW3GFg_yoWDArcEv3
+	W5Xr47ZFs2kF1vvrn5ur13CryvkrnxZr1xu3WSgry3Jry8Xr13Aas2vrnxtw1Yk3WY9rs2
+	9w18XF15GrWUtjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUIcSsGvfJTRUUUbv8FF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
+	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUWwA2048vs2IY02
+	0Ec7CjxVAFwI0_Xr0E3s1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28EF7xv
+	wVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr1UM2
+	8EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0DM2AI
+	xVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjxv20x
+	vE14v26r126r1DMcIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1lF7xv
+	r2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2IY04
+	v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j
+	6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7
+	AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r4j6ryUMIIF0xvE
+	2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42
+	IY6I8E87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2
+	KfnxnUUI43ZEXa7sRR0eH3UUUUU==
 X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
 From: Zhang Yi <yi.zhang@huawei.com>
 
-The Linux kernel is planning to supports FALLOC_FL_WRITE_ZEROES in
-fallocate(2). Add FALLOC_FL_ZERO_RANGE support to fallocate utility by
-introducing a new option -w|--write-zeroes.
+Set the BLK_FEAT_WRITE_ZEROES_UNMAP feature while creating multipath
+stacking queue limits by default. This feature shall be disabled if any
+attached namespace does not support it.
 
 Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
 ---
- sys-utils/fallocate.1.adoc | 11 +++++++++--
- sys-utils/fallocate.c      | 20 ++++++++++++++++----
- 2 files changed, 25 insertions(+), 6 deletions(-)
+ drivers/nvme/host/multipath.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/sys-utils/fallocate.1.adoc b/sys-utils/fallocate.1.adoc
-index 44ee0ef4c..f9226b909 100644
---- a/sys-utils/fallocate.1.adoc
-+++ b/sys-utils/fallocate.1.adoc
-@@ -12,7 +12,7 @@ fallocate - preallocate or deallocate space to a file
+diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+index 2a7635565083..82f12209446f 100644
+--- a/drivers/nvme/host/multipath.c
++++ b/drivers/nvme/host/multipath.c
+@@ -638,7 +638,8 @@ int nvme_mpath_alloc_disk(struct nvme_ctrl *ctrl, struct nvme_ns_head *head)
  
- == SYNOPSIS
+ 	blk_set_stacking_limits(&lim);
+ 	lim.dma_alignment = 3;
+-	lim.features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL;
++	lim.features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL |
++			BLK_FEAT_WRITE_ZEROES_UNMAP;
+ 	if (head->ids.csi == NVME_CSI_ZNS)
+ 		lim.features |= BLK_FEAT_ZONED;
  
--*fallocate* [*-c*|*-p*|*-z*] [*-o* _offset_] *-l* _length_ [*-n*] _filename_
-+*fallocate* [*-c*|*-p*|*-z*|*-w*] [*-o* _offset_] *-l* _length_ [*-n*] _filename_
- 
- *fallocate* *-d* [*-o* _offset_] [*-l* _length_] _filename_
- 
-@@ -28,7 +28,7 @@ The exit status returned by *fallocate* is 0 on success and 1 on failure.
- 
- The _length_ and _offset_ arguments may be followed by the multiplicative suffixes KiB (=1024), MiB (=1024*1024), and so on for GiB, TiB, PiB, EiB, ZiB, and YiB (the "iB" is optional, e.g., "K" has the same meaning as "KiB") or the suffixes KB (=1000), MB (=1000*1000), and so on for GB, TB, PB, EB, ZB, and YB.
- 
--The options *--collapse-range*, *--dig-holes*, *--punch-hole*, *--zero-range* and *--posix* are mutually exclusive.
-+The options *--collapse-range*, *--dig-holes*, *--punch-hole*, *--zero-range*, *--write-zeroes* and *--posix* are mutually exclusive.
- 
- *-c*, *--collapse-range*::
- Removes a byte range from a file, without leaving a hole. The byte range to be collapsed starts at _offset_ and continues for _length_ bytes. At the completion of the operation, the contents of the file starting at the location __offset__+_length_ will be appended at the location _offset_, and the file will be _length_ bytes smaller. The option *--keep-size* may not be specified for the collapse-range operation.
-@@ -76,6 +76,13 @@ Option *--keep-size* can be specified to prevent file length modification.
- +
- Available since Linux 3.14 for ext4 (only for extent-based files) and XFS.
- 
-+*-w*, *--write-zeroes*::
-+Zeroes space in the byte range starting at _offset_ and continuing for _length_ bytes. Within the specified range, blocks are preallocated for the regions that span the holes in the file. After a successful call, subsequent reads from this range will return zeroes.
-++
-+Zeroing is done within the filesystem by preferably submitting write zeores commands, the alternative way is submitting actual zeroed data, the specified range will be converted into written extents. The write zeroes command is significantly faster than write actual data if the device supports unmap write zeroes, and the specified range will not be physically zeroed out on the device.
-++
-+Options *--keep-size* can not be specified for the write-zeroes operation.
-+
- include::man-common/help-version.adoc[]
- 
- == AUTHORS
-diff --git a/sys-utils/fallocate.c b/sys-utils/fallocate.c
-index fff75b03f..69e1e1e5b 100644
---- a/sys-utils/fallocate.c
-+++ b/sys-utils/fallocate.c
-@@ -41,7 +41,7 @@
- #if defined(HAVE_LINUX_FALLOC_H) && \
-     (!defined(FALLOC_FL_KEEP_SIZE) || !defined(FALLOC_FL_PUNCH_HOLE) || \
-      !defined(FALLOC_FL_COLLAPSE_RANGE) || !defined(FALLOC_FL_ZERO_RANGE) || \
--     !defined(FALLOC_FL_INSERT_RANGE))
-+     !defined(FALLOC_FL_INSERT_RANGE) || !defined(FALLOC_FL_WRITE_ZEROES))
- # include <linux/falloc.h>	/* non-libc fallback for FALLOC_FL_* flags */
- #endif
- 
-@@ -66,6 +66,10 @@
- # define FALLOC_FL_INSERT_RANGE		0x20
- #endif
- 
-+#ifndef FALLOC_FL_WRITE_ZEROES
-+# define FALLOC_FL_WRITE_ZEROES		0x80
-+#endif
-+
- #include "nls.h"
- #include "strutils.h"
- #include "c.h"
-@@ -95,6 +99,7 @@ static void __attribute__((__noreturn__)) usage(void)
- 	fputs(_(" -o, --offset <num>   offset for range operations, in bytes\n"), out);
- 	fputs(_(" -p, --punch-hole     replace a range with a hole (implies -n)\n"), out);
- 	fputs(_(" -z, --zero-range     zero and ensure allocation of a range\n"), out);
-+	fputs(_(" -w, --write-zeroes   write zeroes and ensure allocation of a range\n"), out);
- #ifdef HAVE_POSIX_FALLOCATE
- 	fputs(_(" -x, --posix          use posix_fallocate(3) instead of fallocate(2)\n"), out);
- #endif
-@@ -305,6 +310,7 @@ int main(int argc, char **argv)
- 	    { "dig-holes",      no_argument,       NULL, 'd' },
- 	    { "insert-range",   no_argument,       NULL, 'i' },
- 	    { "zero-range",     no_argument,       NULL, 'z' },
-+	    { "write-zeroes",   no_argument,       NULL, 'w' },
- 	    { "offset",         required_argument, NULL, 'o' },
- 	    { "length",         required_argument, NULL, 'l' },
- 	    { "posix",          no_argument,       NULL, 'x' },
-@@ -313,8 +319,8 @@ int main(int argc, char **argv)
- 	};
- 
- 	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
--		{ 'c', 'd', 'i', 'p', 'x', 'z'},
--		{ 'c', 'i', 'n', 'x' },
-+		{ 'c', 'd', 'i', 'p', 'w', 'x', 'z'},
-+		{ 'c', 'i', 'n', 'w', 'x' },
- 		{ 0 }
- 	};
- 	int excl_st[ARRAY_SIZE(excl)] = UL_EXCL_STATUS_INIT;
-@@ -324,7 +330,7 @@ int main(int argc, char **argv)
- 	textdomain(PACKAGE);
- 	close_stdout_atexit();
- 
--	while ((c = getopt_long(argc, argv, "hvVncpdizxl:o:", longopts, NULL))
-+	while ((c = getopt_long(argc, argv, "hvVncpdizwxl:o:", longopts, NULL))
- 			!= -1) {
- 
- 		err_exclusive_options(c, longopts, excl, excl_st);
-@@ -354,6 +360,9 @@ int main(int argc, char **argv)
- 		case 'z':
- 			mode |= FALLOC_FL_ZERO_RANGE;
- 			break;
-+		case 'w':
-+			mode |= FALLOC_FL_WRITE_ZEROES;
-+			break;
- 		case 'x':
- #ifdef HAVE_POSIX_FALLOCATE
- 			posix = 1;
-@@ -430,6 +439,9 @@ int main(int argc, char **argv)
- 			else if (mode & FALLOC_FL_ZERO_RANGE)
- 				fprintf(stdout, _("%s: %s (%ju bytes) zeroed.\n"),
- 								filename, str, length);
-+			else if (mode & FALLOC_FL_WRITE_ZEROES)
-+				fprintf(stdout, _("%s: %s (%ju bytes) write zeroed.\n"),
-+								filename, str, length);
- 			else
- 				fprintf(stdout, _("%s: %s (%ju bytes) allocated.\n"),
- 								filename, str, length);
 -- 
 2.46.1
 
