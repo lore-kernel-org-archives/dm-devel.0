@@ -1,27 +1,28 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87A181EF369
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:44:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F18841F5846
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 07:44:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742283857; cv=none; b=jBtBmH7CFDrxOpSETniNyqbwxsd8CeGyXIOgOgsoy24EafS21qgQM0NDAtCj0/93+B4UQAfEezVE+N7cxvVhwD+7WO21jcPg0KL+bsZRtTmzPieWtG1EuTxlFmTw/Y1UWm4FhHshd9PCWboqMIMcKeVNVMkJjQZRWYdqmjyYHA4=
+	t=1742283858; cv=none; b=QWjJBhERrZGI1pwIbjcen69GnAvgASY+YBFqJBYdEnw4jno1eN3dibt3DuxMvYIy7n1P+5uchVWMN01/knDRHXQ5g59/o6Np0+v1kSMGZUjQuSKi/79ZJh+PygNo0HD6s/0YuGuAMbqrKuHz1AbAdEn+ZEXCdkosM5/Yf7AukGQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742283857; c=relaxed/simple;
-	bh=D62hU0UbBe50hVmwESXBSTMdGOW2ppQgTS0YlGm3+5E=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DUQtb9lz6UW3ewbZQJeUBxyPhYkqWZ4wCD5b4z+QyGd0qlR1u2PUNmLTcLwvQH3SEQdbi/FjfR3izbQAD6OR1lKNco2M9urQGu6V+TxV27/aFRih3rMNvAoL7mW+ni8CnLIIv4Lcgfneboa5Z6A9Uq4/QnmBQF+f+OIOk30V2b8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	s=arc-20240116; t=1742283858; c=relaxed/simple;
+	bh=X4pMOYTSWhX0IJM2gqJZG979HxvaHLl2kbgCXf1BEYM=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=JhS/AJOHqyOwgeRbkhj9hkTZSj/S/R7vcIsSjSDi+AYPdjzb/bdfPiCIw/HmUB6odzUK4Y1XQQPow4UUWj9I661d6gKiSn9cpbUAvV5LeQMA1wcwkcvCcf1lwqbTgFfFIURXdBvFDC/7HgCHohXbazn5QF3OQJn803PSv2zCrz8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZH3kB5rvFz4f3khY
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:43:46 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZH3kD643yz4f3lfr
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:43:48 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 711241A058E
-	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:44:09 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id EADD71A058E
+	for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 15:44:12 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.112.188])
-	by APP4 (Coremail) with SMTP id gCh0CgCH6189JNlnEt1YGw--.55732S4;
-	Tue, 18 Mar 2025 15:44:07 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgCH6189JNlnEt1YGw--.55732S9;
+	Tue, 18 Mar 2025 15:44:12 +0800 (CST)
 From: Zhang Yi <yi.zhang@huaweicloud.com>
 To: linux-fsdevel@vger.kernel.org,
 	linux-ext4@vger.kernel.org,
@@ -43,10 +44,12 @@ Cc: linux-xfs@vger.kernel.org,
 	chengzhihao1@huawei.com,
 	yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: [RFC PATCH -next v3 00/10] fallocate: introduce FALLOC_FL_WRITE_ZEROES flag
-Date: Tue, 18 Mar 2025 15:35:35 +0800
-Message-ID: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
+Subject: [RFC PATCH -next v3 05/10] scsi: sd: set BLK_FEAT_WRITE_ZEROES_UNMAP if device supports unmap zeroing mode
+Date: Tue, 18 Mar 2025 15:35:40 +0800
+Message-ID: <20250318073545.3518707-6-yi.zhang@huaweicloud.com>
 X-Mailer: git-send-email 2.46.1
+In-Reply-To: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
+References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -54,214 +57,55 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCH6189JNlnEt1YGw--.55732S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxKFy3AryrZF43Zr4UAFW5KFg_yoW3tryfpa
-	y8XryYkryDKryxC3s3ua1I9ryrZws5ArW3Gw4xK34UuFZ8ZF1xKFs2ga4Yqa9rZFyxW3WD
-	XFsF9r9ru3W7A3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9I14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_JF0_Jw1lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
-	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
-	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
-	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Gr0_Xr
-	1lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4UJVWxJr1lIxAIcVCF04k26cxKx2IYs7xG6r1j
-	6r1xMIIF0xvEx4A2jsIE14v26r4j6F4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJb
-	IYCTnIWIevJa73UjIFyTuYvjTRMv31DUUUU
+X-CM-TRANSID:gCh0CgCH6189JNlnEt1YGw--.55732S9
+X-Coremail-Antispam: 1UD129KBjvdXoWrZFW3tF18AF48ur4kZFW5Wrg_yoWDZwc_Ca
+	1fur9rJr4vyFyIkrWfXF43Cryvvan7uFyjgrnFqrySyrZ7Zrs5J3Wvvr1av3WUJayUK343
+	Aa9rXr1Syr1DJjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUIcSsGvfJTRUUUbvAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
+	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUAVCq3wA2048vs2
+	IY020Ec7CjxVAFwI0_Xr0E3s1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28E
+	F7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr
+	1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0D
+	M2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjx
+	v20xvE14v26r126r1DMcIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1l
+	F7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2
+	IY04v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY
+	6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17
+	CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r4j6ryUMIIF
+	0xvE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCw
+	CI42IY6I8E87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsG
+	vfC2KfnxnUUI43ZEXa7sRitxhPUUUUU==
 X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
 From: Zhang Yi <yi.zhang@huawei.com>
 
-Changes since RFC v2:
- - Rebase codes on next-20250314.
- - Add support for nvme multipath.
- - Add support for NVMeT with block device backing.
- - Clear FALLOC_FL_WRITE_ZEROES if dm clear
-   limits->max_write_zeroes_sectors.
- - Complement the counterpart userspace tools(util-linux and xfs_io)
-   and tests(blktests and xfstests), please see below for details.
-Changes since RFC v1:
- - Switch to add a new write zeroes operation, FALLOC_FL_WRITE_ZEROES,
-   in fallocate, instead of just adding a supported flag to
-   FALLOC_FL_ZERO_RANGE.
- - Introduce a new flag BLK_FEAT_WRITE_ZEROES_UNMAP to the block
-   device's queue limit features, and implement it on SCSI sd driver,
-   NVMe SSD driver and dm driver.
- - Implement FALLOC_FL_WRITE_ZEROES on both the ext4 filesystem and
-   block device (bdev).
+When the device supports the Write Zeroes command and the zeroing mode
+is set to SD_ZERO_WS16_UNMAP or SD_ZERO_WS10_UNMAP, this means that the
+device supports unmap Write Zeroes, so set the corresponding
+BLK_FEAT_WRITE_ZEROES_UNMAP feature to the device's queue limit.
 
-RFC v2: https://lore.kernel.org/linux-fsdevel/20250115114637.2705887-1-yi.zhang@huaweicloud.com/
-RFC v1: https://lore.kernel.org/linux-fsdevel/20241228014522.2395187-1-yi.zhang@huaweicloud.com/
-
-The counterpart userspace tools changes and tests are here:
- - util-linux: https://lore.kernel.org/linux-fsdevel/20250318073218.3513262-1-yi.zhang@huaweicloud.com/ 
- - xfsprogs: https://lore.kernel.org/linux-fsdevel/20250318072318.3502037-1-yi.zhang@huaweicloud.com/
- - xfstests: https://lore.kernel.org/linux-fsdevel/20250318072615.3505873-1-yi.zhang@huaweicloud.com/
- - blktests: https://lore.kernel.org/linux-fsdevel/20250318072835.3508696-1-yi.zhang@huaweicloud.com/
-
-Currently, we can use the fallocate command to quickly create a
-pre-allocated file. However, on most filesystems, such as ext4 and XFS,
-fallocate create pre-allocation blocks in an unwritten state, and the
-FALLOC_FL_ZERO_RANGE flag also behaves similarly. The extent state must
-be converted to a written state when the user writes data into this
-range later, which can trigger numerous metadata changes and consequent
-journal I/O. This may leads to significant write amplification and
-performance degradation in synchronous write mode. Therefore, we need a
-method to create a pre-allocated file with written extents that can be
-used for pure overwriting. At the monent, the only method available is
-to create an empty file and write zero data into it (for example, using
-'dd' with a large block size). However, this method is slow and consumes
-a considerable amount of disk bandwidth, we must pre-allocate files in
-advance but cannot add pre-allocated files while user business services
-are running.
-
-Fortunately, with the development and more and more widely used of
-flash-based storage devices, we can efficiently write zeros to SSDs
-using the unmap write zeroes command if the devices do not write
-physical zeroes to the media. For example, if SCSI SSDs support the
-UMMAP bit or NVMe SSDs support the DEAC bit[1], the write zeroes command
-does not write actual data to the device, instead, NVMe converts the
-zeroed range to a deallocated state, which works fast and consumes
-almost no disk write bandwidth. Consequently, this feature can provide
-us with a faster method for creating pre-allocated files with written
-extents and zeroed data.
-
-This series aims to implement this by:
-1. Introduce a new feature BLK_FEAT_WRITE_ZEROES_UNMAP to the block
-   device queue limit features, which indicates whether the storage is
-   device explicitly supports the unmapped write zeroes command. This
-   flag should be set to 1 by the driver if the attached disk supports
-   this command. Users can check this flag by querying:
-
-       /sys/block/<disk>/queue/write_zeroes_unmap
-
-2. Introduce a new flag FALLOC_FL_WRITE_ZEROES into the fallocate,
-   filesystems with this operaion should allocate written extents and
-   issuing zeroes to the range of the device. If the device supports
-   unmap write zeroes command, the zeroing can be accelerated, if not,
-   we currently still allow to fall back to submit zeroes data. Users
-   can verify if the device supports the unmap write zeroes command and
-   then decide whether to use it.
-
-This series implemented the BLK_FEAT_WRITE_ZEROES_UNMAP flag for SCSI,
-NVMe and device-mapper drivers, and added the FALLOC_FL_WRITE_ZEROES
-support for ext4 and raw bdev devices. Any comments are welcome.
-
-I've tested performance with this series on ext4 filesystem on my
-machine with an Intel Xeon Gold 6248R CPU, a 7TB KCD61LUL7T68 NVMe SSD
-which supports unmap write zeroes command with the Deallocated state
-and the DEAC bit. Feel free to give it a try.
-
-0. Ensure the NVMe device supports WRITE_ZERO command.
-
- $ cat /sys/block/nvme5n1/queue/write_zeroes_max_bytes
-   8388608
- $ nvme id-ns -H /dev/nvme5n1 | grep -i -A 3 "dlfeat"
-   dlfeat  : 25
-   [4:4] : 0x1   Guard Field of Deallocated Logical Blocks is set to CRC
-                 of The Value Read
-   [3:3] : 0x1   Deallocate Bit in the Write Zeroes Command is Supported
-   [2:0] : 0x1   Bytes Read From a Deallocated Logical Block and its
-                 Metadata are 0x00
-
-1. Compare 'dd' and fallocate with unmap write zeroes, the later one is
-   significantly faster than 'dd'.
-
-   Create a 1GB and 10GB zeroed file.
-    $dd if=/dev/zero of=foo bs=2M count=$count oflag=direct
-    $time fallocate -w -l $size bar
-
-    #1G
-    dd:                     0.5s
-    FALLOC_FL_WRITE_ZEROES: 0.17s
-
-    #10G
-    dd:                     5.0s
-    FALLOC_FL_WRITE_ZEROES: 1.7s
-
-2. Run fio overwrite and fallocate with unmap write zeroes
-   simultaneously, fallocate has little impact on write bandwidth and
-   only slightly affects write latency.
-
- a) Test bandwidth costs.
-  $ fio -directory=/test -direct=1 -iodepth=10 -fsync=0 -rw=write \
-        -numjobs=10 -bs=2M -ioengine=libaio -size=20G -runtime=20 \
-        -fallocate=none -overwrite=1 -group_reportin -name=bw_test
-
-   Without background zero range:
-    bw (MiB/s): min= 2068, max= 2280, per=100.00%, avg=2186.40
-
-   With background zero range:
-    bw (MiB/s): min= 2056, max= 2308, per=100.00%, avg=2186.20
-
- b) Test write latency costs.
-  $ fio -filename=/test/foo -direct=1 -iodepth=1 -fsync=0 -rw=write \
-        -numjobs=1 -bs=4k -ioengine=psync -size=5G -runtime=20 \
-        -fallocate=none -overwrite=1 -group_reportin -name=lat_test
-
-   Without background zero range:
-   lat (nsec): min=9269, max=71635, avg=9840.65
-
-   With a background zero range:
-   lat (usec): min=9, max=982, avg=11.03
-
-3. Compare overwriting in a pre-allocated unwritten file and a written
-   file in O_DSYNC mode. Write to a file with written extents is much
-   faster.
-
-  # First mkfs and create a test file according to below three cases,
-  # and then run fio.
-
-  $ fio -filename=/test/foo -direct=1 -iodepth=1 -fdatasync=1 \
-        -rw=write -numjobs=1 -bs=4k -ioengine=psync -size=5G \
-        -runtime=20 -fallocate=none -group_reportin -name=test
-
-   unwritten file:                 IOPS=20.1k, BW=78.7MiB/s
-   unwritten file + fast_commit:   IOPS=42.9k, BW=167MiB/s
-   written file:                   IOPS=98.8k, BW=386MiB/s
-
-Thanks,
-Yi.
-
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
+ drivers/scsi/sd.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-[1] https://nvmexpress.org/specifications/
-    NVM Command Set Specification, section 3.2.8
-
-Zhang Yi (10):
-  block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to queue limits features
-  nvme: set BLK_FEAT_WRITE_ZEROES_UNMAP if device supports DEAC bit
-  nvme-multipath: add BLK_FEAT_WRITE_ZEROES_UNMAP support
-  nvmet: set WZDS and DRB if device supports BLK_FEAT_WRITE_ZEROES_UNMAP
-  scsi: sd: set BLK_FEAT_WRITE_ZEROES_UNMAP if device supports unmap
-    zeroing mode
-  dm: add BLK_FEAT_WRITE_ZEROES_UNMAP support
-  fs: introduce FALLOC_FL_WRITE_ZEROES to fallocate
-  block: add FALLOC_FL_WRITE_ZEROES support
-  block: factor out common part in blkdev_fallocate()
-  ext4: add FALLOC_FL_WRITE_ZEROES support
-
- Documentation/ABI/stable/sysfs-block | 14 +++++++
- block/blk-settings.c                 |  6 +++
- block/blk-sysfs.c                    |  3 ++
- block/fops.c                         | 37 +++++++++--------
- drivers/md/dm-table.c                |  7 +++-
- drivers/md/dm.c                      |  1 +
- drivers/nvme/host/core.c             | 21 +++++-----
- drivers/nvme/host/multipath.c        |  3 +-
- drivers/nvme/target/io-cmd-bdev.c    |  4 ++
- drivers/scsi/sd.c                    |  5 +++
- fs/ext4/extents.c                    | 59 ++++++++++++++++++++++------
- fs/open.c                            |  1 +
- include/linux/blkdev.h               |  8 ++++
- include/linux/falloc.h               |  3 +-
- include/trace/events/ext4.h          |  3 +-
- include/uapi/linux/falloc.h          | 18 +++++++++
- 16 files changed, 149 insertions(+), 44 deletions(-)
-
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index 950d8c9fb884..652630b410de 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -1118,6 +1118,11 @@ static void sd_config_write_same(struct scsi_disk *sdkp,
+ 	else
+ 		sdkp->zeroing_mode = SD_ZERO_WRITE;
+ 
++	if (sdkp->max_ws_blocks &&
++	    (sdkp->zeroing_mode == SD_ZERO_WS16_UNMAP ||
++	     sdkp->zeroing_mode == SD_ZERO_WS10_UNMAP))
++		lim->features |= BLK_FEAT_WRITE_ZEROES_UNMAP;
++
+ 	if (sdkp->max_ws_blocks &&
+ 	    sdkp->physical_block_size > logical_block_size) {
+ 		/*
 -- 
 2.46.1
 
