@@ -1,175 +1,240 @@
-Received: from mail-il1-f172.google.com (mail-il1-f172.google.com [209.85.166.172])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E51D622489A
-	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 01:58:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8140D1F4CBE
+	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 10:06:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742349493; cv=none; b=SSL7MmMsVvylDOXBxR9AjlqtWx+c/4CPssPsz7G/d8aL9BvhVa3KHTAAfzvOFbKQq38xOsG49qjS6oslhiEKwnwnFDMMoDBqbaX3QqRR8hf0bU697XMR0OxyzP9npxQm1pnhlcGHZ1KMr5A1XzEUSf+stghSArBlOv91oj//P4M=
+	t=1742378791; cv=none; b=V+meFCR+DWyLOo4Kd+UajLRnk9rnXTA/tSmNSmU3HxN5ssWkRxw74za0oDjSogSLt8lAoYJ7Ku1mPzZSYMHizNWRBDY/9fR3ljcTCJbNqBnRNIKwNIeQzDopAZxXSv0QUJNUM8b0pa3nKB8wKlTKJW9Psg6r1uX23r6Lto0aiNQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742349493; c=relaxed/simple;
-	bh=WZyf3MJ9EOEbObbzPSe9nqueYSpxPvSFo2cK6SEpYhI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=DtyxmDk1PkSDurWtQBBPtRlF5YUYTS+UxqkAqJvO5CWfESA3Dk82n5noQBEIT9JPkYT9A1uua+R74g1kfCaUAD5bpl3I552uoOXvwMiPBmhFWXhCOexDcbFvLOIx/gwo3p6BDDG/CoRCbZvVJeOSa3jr1Y5oemUT/QL/iZ15ZU4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=Mngzi8Qj; arc=none smtp.client-ip=209.85.166.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1742378791; c=relaxed/simple;
+	bh=fOE2efMHV41LwYhm/o3qDDa69sjLxjrsymYuCii07yk=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=VayO8xDBKsHzRoRz3ctsJ70xs9lkNbetg3qgOewasTr2bkUb3clw+1eza06GhYkNV3E9YboDCm4ovmyDDfUX2CgKaq8u/IkeC9n5lTJZf2Xc6sO1yUc4k6nWxQY53MxNgv6B5y+aUPNK/X92q7Zm9br+mu6aKVClCZYAk5yWGbo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=KM4IBT/P; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=KM4IBT/P; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="Mngzi8Qj"
-Received: by mail-il1-f172.google.com with SMTP id e9e14a558f8ab-3d4436ba324so42398875ab.2
-        for <dm-devel@lists.linux.dev>; Tue, 18 Mar 2025 18:58:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1742349491; x=1742954291; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=f6MK63jhxMlZt6sJeJv41vQot4VyzaKtZyKetUK2DPU=;
-        b=Mngzi8QjU+w59VDEFDJMD6cTERP1zWuyft6ZQNNmsBYeUyzQ6Abv3ApGzv+aW4tRx/
-         ySiVIrzNeh9kXKpHXgaSYF05Q0aQJViZ7ZuSoveKQ4B9+dyhYApiCD4zgBCVCby6kP3d
-         EUQd6cIK3yt+u4NtpYVRzSj0twyx0bmQVTwE/R3ysHprbPAwVjt4eH+zOSWdKl8EEEbp
-         ywOxlg3eTdwJONtFPy1kAPjdaAi6PXtOTR3bqbWEo77fw6whcQovvfyCdUDjjR0aWQ0F
-         xBxXF1TFszaGAiM9Q350nFefT9YQzu4/J4pKVPYEcCfvsmV4uZLPWT910n5aKKz6pnvR
-         Ut0w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1742349491; x=1742954291;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=f6MK63jhxMlZt6sJeJv41vQot4VyzaKtZyKetUK2DPU=;
-        b=PjS3h+Jf1svIY6Z2QFp3dCl/rn6us3Cjysv6UySKF2sfxTBodnJCIM6SCCQtJHihtF
-         WxGyrKFDfHcHM1JU59IMhN5k57IfYR/lg07+gSXThO0OMoJ9ha6TRSjADtwiIisptdzy
-         aQRPz2kNEcxVDqsXKssahHyCJZMmvOz5nB2wDSKY35nTe9jGuyzMwrOzysYu+YY6A+hg
-         4w0BWCBwbbY1VYq7A/RqJ3BVPbifbiGhOEMOO9zEBpUI3JHk3GAUWQ5dKnbHMOcbnrZL
-         3tHKl7OmyI4cG9ZWL1qqdfsADaDL4I40+krpDxhTqQHOzAeTjHHFu1du4czDkU7Egjd4
-         0new==
-X-Forwarded-Encrypted: i=1; AJvYcCV8q67gRxcX06qPkyr0KcyA9lEoCDX2oo7PKCb3cnVY5uVEJ8kTjmlc1u15Qs05Ux1f0wGHJOx4/w==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyf+J+cbT+HOvfRAQBnLXLGqCgznyDQ8ZAc6UfGtmb13OfIISBM
-	t4JR613BZ+pxX5nvL8Rb8wWqisAfYKdDNiJZuPWWtplvaXnGazLu5WOCgJWCTi0=
-X-Gm-Gg: ASbGnct9TOnWgbVg1xcsq2EAViy5YDs8w48+yj53BcXhPXL3fnx+TWW4hwYupTJuL0k
-	alHQDGfYg0Kjau4ObtQ8sSmYzhw05zWz+fmJ+xX8ZCA02aN1Wnj01WQaMamPChrDfzOdscVxM5e
-	VgRJnA9r/ta3PWiD0eUOHYx+7hAmJA9apr+dq1VWRgn+Qap0BlHakW2U3EvUlIQBxp4VFoPmZYX
-	daUJaxsV2Di+LXuTssMENxtc4AOHDN4j1QjzU87Fk57TrUlm+0yFT8XRCj3uGeArQ/ohhP67898
-	9YDJaFQwrFXlq6ncEUVh591rhZbGhQC2EN3AWHQVyQ==
-X-Google-Smtp-Source: AGHT+IHf7JjLapO8/hmnBVRoBaz2gGmSZDSDsmfk5exQlSCqK4QGMo8kuGEcRjSQq1tD6bhcqOIKOw==
-X-Received: by 2002:a05:6e02:1549:b0:3d3:e3fc:d5e1 with SMTP id e9e14a558f8ab-3d586b1b246mr10865835ab.1.1742349490923;
-        Tue, 18 Mar 2025 18:58:10 -0700 (PDT)
-Received: from [192.168.1.150] ([198.8.77.157])
-        by smtp.gmail.com with ESMTPSA id e9e14a558f8ab-3d47a646eecsm35476115ab.1.2025.03.18.18.58.10
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 18 Mar 2025 18:58:10 -0700 (PDT)
-Message-ID: <6ebdd2ae-8fc2-4072-b131-a7c0da56d3f2@kernel.dk>
-Date: Tue, 18 Mar 2025 19:58:09 -0600
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="KM4IBT/P";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="KM4IBT/P"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 5F5B21F38F;
+	Wed, 19 Mar 2025 10:06:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1742378786; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Xv1ePlXTuLazU1ikXfz4TTlr90GzYONrRMeGh4HATMg=;
+	b=KM4IBT/PSxyKiXbiR3KndY8fIaF+4YfF6PedvvaJKetvpFegoIQb5DzMiE+A/HgNox7te7
+	EPmFRpcfaiBEV4UlYwNkTgtmnCN1KHTfKzkBQUmRkYPHxBgo84tzToDZ4iOnKW+QlkATSw
+	mHb3USCvREwg1vEZDXJvekaVuTanDrA=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b="KM4IBT/P"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1742378786; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Xv1ePlXTuLazU1ikXfz4TTlr90GzYONrRMeGh4HATMg=;
+	b=KM4IBT/PSxyKiXbiR3KndY8fIaF+4YfF6PedvvaJKetvpFegoIQb5DzMiE+A/HgNox7te7
+	EPmFRpcfaiBEV4UlYwNkTgtmnCN1KHTfKzkBQUmRkYPHxBgo84tzToDZ4iOnKW+QlkATSw
+	mHb3USCvREwg1vEZDXJvekaVuTanDrA=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 2F4F613726;
+	Wed, 19 Mar 2025 10:06:26 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id pgkQCSKX2me2VwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 19 Mar 2025 10:06:26 +0000
+Message-ID: <0fc9d18df1c4baa1cbea67cbadca73b9142030d9.camel@suse.com>
+Subject: Re: [PATCH RFC] multipath-tools: add Generic SCSI in hwtable
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
+Date: Wed, 19 Mar 2025 11:06:25 +0100
+In-Reply-To: <Z9oCmSP3Zm11T7zr@redhat.com>
+References: <20250317173352.14387-1-xose.vazquez@gmail.com>
+	 <Z9h_dgeRCakpLak9@redhat.com>
+	 <3d9867d00eeb9d9ec65a2f93ea09cd71a960c4bc.camel@suse.com>
+	 <Z9oCmSP3Zm11T7zr@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATC] block: update queue limits atomically
-To: Ming Lei <ming.lei@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev
-References: <ee66a4f2-ecc4-68d2-4594-a0bcba7ffe9c@redhat.com>
- <Z9mJmlhmZwnOlnqT@fedora> <d5193df0-5944-8cf6-7eb6-26adf191269e@redhat.com>
- <Z9ocUCrvXQRJHFVY@fedora>
-Content-Language: en-US
-From: Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <Z9ocUCrvXQRJHFVY@fedora>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+X-Rspamd-Queue-Id: 5F5B21F38F
+X-Spam-Score: -3.01
+X-Rspamd-Action: no action
+X-Spamd-Result: default: False [-3.01 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	TO_DN_ALL(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	URIBL_BLOCKED(0.00)[suse.com:dkim,suse.com:mid,suse.com:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,opensvc.com:email,linux.dev:email];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCVD_TLS_ALL(0.00)[];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_COUNT_TWO(0.00)[2];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[gmail.com,opensvc.com,lists.linux.dev];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DKIM_TRACE(0.00)[suse.com:+];
+	TAGGED_RCPT(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	ASN(0.00)[asn:25478, ipnet:::/0, country:RU];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:dkim,suse.com:mid,suse.com:email]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Spam-Flag: NO
+X-Spam-Level: 
 
-On 3/18/25 7:22 PM, Ming Lei wrote:
-> On Tue, Mar 18, 2025 at 04:31:35PM +0100, Mikulas Patocka wrote:
->>
->>
->> On Tue, 18 Mar 2025, Ming Lei wrote:
->>
->>> On Tue, Mar 18, 2025 at 03:26:10PM +0100, Mikulas Patocka wrote:
->>>> The block limits may be read while they are being modified. The statement
->>>
->>> It is supposed to not be so for IO path, that is why queue is usually down
->>> or frozen when updating limit.
->>
->> The limits are read at some points when constructing a bio - for example 
->> bio_integrity_add_page, bvec_try_merge_hw_page, bio_integrity_map_user.
-> 
-> For request based code path, there isn't such issue because queue usage
-> counter is grabbed.
-> 
-> I should be one device mapper specific issue because the above interface
-> may not be called from dm_submit_bio().
-> 
-> One fix is to make sure that queue usage counter is grabbed in dm's bio/clone
-> submission code path.
-> 
->>
->>> For other cases, limit lock can be held for sync the read/write.
->>>
->>> Or you have cases not covered by both queue freeze and limit lock?
->>
->> For example, device mapper reads the limits of the underlying devices 
->> without holding any lock (dm_set_device_limits,
-> 
-> dm_set_device_limits() need to be fixed by holding limit lock.
-> 
-> 
->> __process_abnormal_io, 
->> __max_io_len).
-> 
-> The two is called with queue usage counter grabbed, so it should be fine.
-> 
-> 
->> It also writes the limits in the I/O path - 
->> disable_discard, disable_write_zeroes - you couldn't easily lock it here 
->> because it happens in the interrupt contex.
-> 
-> IMO it is one bad implementation, why does device mapper have to clear
-> it in bio->end_io() or request's blk_mq_ops->complete()?
-> 
->>
->> I'm not sure how many other kernel subsystems do it and whether they could 
->> all be converted to locking.
-> 
-> Most request based driver should have been converted to new API.
-> 
-> I guess only device mapper / raid / other bio based driver should have such
-> kind of risk.
-> 
->>
->>>> "q->limits = *lim" is not really atomic. The compiler may turn it into
->>>> memcpy (clang does).
->>>>
->>>> On x86-64, the kernel uses the "rep movsb" instruction for memcpy - it is
->>>> optimized on modern CPUs, but it is not atomic, it may be interrupted at
->>>> any byte boundary - and if it is interrupted, the readers may read
->>>> garbage.
->>>>
->>>> On sparc64, there's an instruction that zeroes a cache line without
->>>> reading it from memory. The kernel memcpy implementation uses it (see
->>>> b3a04ed507bf) to avoid loading the destination buffer from memory. The
->>>> problem is that if we copy a block of data to q->limits and someone reads
->>>> it at the same time, the reader may read zeros.
->>>>
->>>> This commit changes it to use WRITE_ONCE, so that individual words are
->>>> updated atomically.
->>>
->>> It isn't necessary, for this particular problem, it is also fragile to
->>> provide atomic word update in this low level way, such as, what if
->>> sizeof(struct queue_limits) isn't 8byte aligned?
->>
->> struct queue_limits contains two "unsigned long" fields, so it must be 
->> aligned on "unsigned long" boundary.
->>
->> In order to make it future-proof, we could use __alignof__(struct 
->> queue_limits) to determine the size of the update step.
-> 
-> Yeah, it looks fine, but I feel it is still fragile, and not sure it is one
-> accepted solution.
+On Tue, 2025-03-18 at 19:32 -0400, Benjamin Marzinski wrote:
+> On Tue, Mar 18, 2025 at 12:08:32PM +0100, Martin Wilck wrote:
+> > On Mon, 2025-03-17 at 16:00 -0400, Benjamin Marzinski wrote:
+> > > On Mon, Mar 17, 2025 at 06:33:51PM +0100, Xose Vazquez Perez
+> > > wrote:
+> > > > Cc: Martin Wilck <mwilck@suse.com>
+> > > > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > > > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > > > Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> > > > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > > > ---
+> > > > =C2=A0libmultipath/hwtable.c | 11 +++++++++++
+> > > > =C2=A01 file changed, 11 insertions(+)
+> > > >=20
+> > > > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > > > index f8cf3fa9..34b1fd2f 100644
+> > > > --- a/libmultipath/hwtable.c
+> > > > +++ b/libmultipath/hwtable.c
+> > > > @@ -79,6 +79,17 @@
+> > > > =C2=A0#endif
+> > > > =C2=A0
+> > >=20
+> > > If we wanted to make these changes, we could just change
+> > > DEFAULT_PGPOLICY, DEFAULT_FAILBACK, and DEFAULT_NO_PATH_RETRY.
+> > > But I
+> > > still think that for completely unknown devices, we should stick
+> > > with
+> > > our current defaults. They're safe and I haven't heard any
+> > > complaints
+> > > about them.
+> >=20
+> > I agree. The point of the hwtable is to change the defaults for
+> > specific devices. Using "vendor =3D .*" and "product =3D ".*" is
+> > against
+> > the spirit of the hwtable.=C2=A0
+> >=20
+> > Unless I am mistaken, this=C2=A0 change would override user settings in
+> > the
+> > "defaults" section of multipath.conf.=C2=A0This happens a lot already
+> > for
+> > those systems that do have a specific hwtable entry, and I am sure
+> > that
+> > that comes as a surprise for users (it has confused myself a
+> > significant couple of times). By adding these catch-all entries,
+> > we'd
+> > make the "defaults" section ineffective for any setting that's
+> > available in the "devices" section, too.
+> >=20
+> > Thinking about it, that might actually be a good thing, as it would
+> > eliminate the uncertainty whether or not a given "defaults" setting
+> > would take effect for a given storage device.=C2=A0Maybe we should
+> > officially stop supporting settings in "defaults" that can be
+> > overridden by device-spefic settings, just to reduce confusion in
+> > this
+> > area, and recommend using a catch-all device setting (in
+> > multipath.conf, not in the built-in hwtable) instead.
+>=20
+> The device configs from /etc/multipath.conf will override values in
+> the
+> built-in hwtable. So a catch-all device config in /etc/multipath.conf
+> is
+> the same as putting options in the overrides section, not the
+> defaults
+> section.
 
-Agree - it'd be much better to have the bio drivers provide the same
-guarantees that we get on the request side, rather than play games with
-this and pretend that concurrent update and usage is fine.
+Yes. I'd realized that meanwhile, too. Thanks for clarifying it, and
+sorry for the confusion.
 
--- 
-Jens Axboe
+The "proble"m that I see with our configuration logic is that some
+settings simply don't take effect.
+
+- hwtable settings take precedence over defaults
+- detect_prio etc. take precedence over explicit settings
+
+While this logic does make general sense, I am sure that many users
+have pulled their hair about it, even though it's documented.
+But this is how it has been for a decade. User have got used to it. I
+don't think it makes sense to put lots of energy into changing it.
+
+> Now that we changed how hwentry configs work, we could probably
+> deprecate the overrides section, but I don't think we can replace the
+> defaults section.
+
+No, we can't. And we should keep overrides, too. I find it quite
+convenient. Unlike the other sections, you can be certain that what you
+set there will take effect :-) Also, we need it for the protocol
+subsection.
+
+Martin
+
+
+
+>=20
+> right?
+>=20
+> -Ben
+> =C2=A0
+> > Anyway, that would be a possible cause for major breakage, as user
+> > settings in the field would suddenly stop being effective. We can't
+> > possibly just let it slip in with a minor hwtable patch like this.
+> >=20
+> > Regards
+> > Martin
+> >=20
+> > > -Ben
+> > >=20
+> > > > =C2=A0static struct hwentry default_hw[] =3D {
+> > > > +	/*
+> > > > +	 * Generic SCSI devices
+> > > > +	 */
+> > > > +	{
+> > > > +		/* Generic SCSI */
+> > > > +		.vendor=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D ".*",
+> > > > +		.product=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D ".*",
+> > > > +		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_PRIO,
+> > > > +		.pgfailback=C2=A0=C2=A0=C2=A0 =3D -FAILBACK_IMMEDIATE,
+> > > > +		.no_path_retry =3D 30,
+> > > > +	},
+> > > > =C2=A0	/*
+> > > > =C2=A0	 * Generic NVMe devices
+> > > > =C2=A0	 *
+> > > > --=20
+> > > > 2.48.1
+> > >=20
+>=20
+
