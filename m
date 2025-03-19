@@ -1,62 +1,69 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D81F1FB3
-	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 19:07:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 04FD32135D8
+	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 19:50:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742411254; cv=none; b=e3hIKFx0yKpdS+QqoUN9Ap6aeJRNxbdHOR5JkJelGm6FLtYqgTozSSknmnKdopVj8hNfax1ONuQ3k1fmGFX+8tji280BEyL9BXU6unsP0usyBt9fbzncXNFzIPKF768tW7rY3/aZMZf7Iye/Vxfep8hAq6BKVB42vMY4NFqhIa0=
+	t=1742413847; cv=none; b=bWrYgex874y29ShBD9XdErQ1mjOGHMk5eqsFr+RY+l7wSy+V9E6KWGefNpwvesZE8CB4o1f/549Hd4H7TFDFvT0A9Oy6+MqGBx3M9WkggGCLy8koq4SBQ89j4FV/6854kEA8HQqfyUP5Cqh2vkbFqcylnWzP5yfXAQMzWwbZp/g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742411254; c=relaxed/simple;
-	bh=hc8niUt8v/9/GCK4VXBm0yx6h1QT7YGX5MABwhSvCd0=;
+	s=arc-20240116; t=1742413847; c=relaxed/simple;
+	bh=sExoy8pqp0ariENfKfzxL5q5xGicuuhF34RlyGSM2pc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ZIADlzgB3Z7TR2K+rzMn2aKiwm1RUwjB+IaBeNxIblHBnK7ebCSD+/9Rhk3TsvD5opjCqoSbQtP+ZRpw79GMu6d0B9YtYqlF1XABhK0B0MvJoG3OdnuXcZpiWBUp3wKTXp74JcWKvvd+ftDO5ThuZN9sGF8ndHU1iSCtj07TgJw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SDXKiKRy; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=Sf42aMMkDHRLATE5fdRE3ebMuKFR7WF80Lx8yMHK8lOz6Vdwr5tc+p3x+9bBBh8/adZ2EirbFT2Rfctk22UucE5BbawDgXZiGvDnOKXHfP0xb/PhWnyTMZcT2jG3m1PW1J1GIbsQNn4nQeXAYSfpvHnW3yIouYLEBgapNDajuQI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NHDX1cKI; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SDXKiKRy"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NHDX1cKI"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742411251;
+	s=mimecast20190719; t=1742413845;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=wTtKeadc2EJ6wZ4tqEct53alfdvnMFDx/DalHKIKvw8=;
-	b=SDXKiKRy6YwEP0TxCZqutDZQlGmiGOEirazX7lHt+eNObuOF4KAU0qDDgUf/yA7cXHC0QO
-	gCAr7U1AZQLfDhnz/ZG7oOg0cJRrCj/efe05WeIR+qDegacatRdpZHva9rYNrShe7XLMc+
-	7VEi9qdVGSaq0uaQEJ029qHTZ5NJVc4=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=UoMsJz6uQ9Xsq6hoAcbPVlQz7ODTaS5nZ9IsZpDthKQ=;
+	b=NHDX1cKIbm7j5kNaRHMMsBWuS24rPLW94Re6JybzkThBBz2+31vgedxPP/yQqfNWvsuOr2
+	2iLChSgYgrJ3xdIzO2gJEXOxnZ+DStXBpf+VwL3DFn/O1puAQShuFApbkCvog2c9mxU5WJ
+	B8o6WrfRBWM5IP+dq0o74+nJ1Mfgad8=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-156-OHuexILqPkSkY3LaJrzDaQ-1; Wed,
- 19 Mar 2025 15:07:29 -0400
-X-MC-Unique: OHuexILqPkSkY3LaJrzDaQ-1
-X-Mimecast-MFC-AGG-ID: OHuexILqPkSkY3LaJrzDaQ_1742411248
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-550-pc5hPzSgOM-Mh3OFUt2lmQ-1; Wed,
+ 19 Mar 2025 15:50:38 -0400
+X-MC-Unique: pc5hPzSgOM-Mh3OFUt2lmQ-1
+X-Mimecast-MFC-AGG-ID: pc5hPzSgOM-Mh3OFUt2lmQ_1742413836
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9BE9419560AF;
-	Wed, 19 Mar 2025 19:07:27 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7B028180AB19;
+	Wed, 19 Mar 2025 19:50:33 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6E3761955BEE;
-	Wed, 19 Mar 2025 19:07:26 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4E6C11956095;
+	Wed, 19 Mar 2025 19:50:31 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52JJ7OER2308457
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52JJoUdr2309780
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 19 Mar 2025 15:07:24 -0400
+	Wed, 19 Mar 2025 15:50:30 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52JJ7Ovx2308456;
-	Wed, 19 Mar 2025 15:07:24 -0400
-Date: Wed, 19 Mar 2025 15:07:24 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52JJoRRp2309779;
+	Wed, 19 Mar 2025 15:50:27 -0400
+Date: Wed, 19 Mar 2025 15:50:27 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-        Jens Axboe <axboe@kernel.dk>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-        Damien Le Moal <dlemoal@kernel.org>, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v2 0/6] dm: fix issues with swapping dm tables
-Message-ID: <Z9sV7N9c-W8-qy6s@redhat.com>
-References: <20250317044510.2200856-1-bmarzins@redhat.com>
+To: Zhang Yi <yi.zhang@huaweicloud.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+        linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+        linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+        linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, hch@lst.de,
+        tytso@mit.edu, djwong@kernel.org, john.g.garry@oracle.com,
+        chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
+        yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
+        yangerkun@huawei.com
+Subject: Re: [RFC PATCH -next v3 06/10] dm: add BLK_FEAT_WRITE_ZEROES_UNMAP
+ support
+Message-ID: <Z9sgAxM-hZZJtZu9@redhat.com>
+References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
+ <20250318073545.3518707-7-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -65,116 +72,62 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250317044510.2200856-1-bmarzins@redhat.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+In-Reply-To: <20250318073545.3518707-7-yi.zhang@huaweicloud.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-I noticed another issue while playing areound with this.  If you have a
-linear device stacked on top of a zoned dm-crypt device, it will
-allocate zone write plug resources, although it won't use them.
-Actually, this is also true if you create a linear device on top of the
-a zoned scsi_debug device.
-
-The reason is that both dm-crypt and scsi_debug set
-lim->max_hw_zone_append_sectors to 0. This makes sense, both of them are
-simply emulating zone append. DM's check for devices that need zone
-append emulation, dm_table_supports_zone_append(), correctly identifies
-these linear devices as not needing emulation, so the
-DMF_EMULATE_ZONE_APPEND isn't set and dm doesn't do zone write plugging.
-But since these devices have lim->max_hw_zone_append_sectors = 0,
-blk_revalidate_disk_zones() thinks they do need zone append emulation,
-and allocates resources for it.
-
-My question is "How do we solve this?" The easy DM answer is to change
-dm_set_zones_restrictions() to do something like:
-
-if (!dm_table_supports_zone_append(t))
-	lim->max_hw_zone_append_sectors = 0;
-else if (lim->max_hw_zone_append_sectors == 0)
-	lim->max_hw_zone_append_sectors = lim->max_zone_append_sectors;
-
-But I wonder if the correct fix is to change blk_stack_limits()
-to do something like:
-
-t->max_hw_zone_append_sectors = min(t->max_hw_zone_append_sectors,
-                                    b->max_zone_append_sectors);
-
-Even if the bottom device is emulating zone appends, from the point
-of view of the top device, that is the max zone append sectors that
-the underlying *hardware* supports. It's just that more drivers
-than just DM use this, and prehaps some really do need to know what
-the actual hardware supports, and not just what the device below then
-can support or emulate.
-
-Thoughts?
-
--Ben
-
-On Mon, Mar 17, 2025 at 12:45:04AM -0400, Benjamin Marzinski wrote:
-> There were multiple places in dm's __bind() function where it could fail
-> and not completely roll back, leaving the device using the the old
-> table, but with device limits and resources from the new table.
-> Additionally, unused mempools for request-based devices were not always
-> freed immediately.
+On Tue, Mar 18, 2025 at 03:35:41PM +0800, Zhang Yi wrote:
+> From: Zhang Yi <yi.zhang@huawei.com>
 > 
-> Finally, there were a number of issues with switching zoned tables that
-> emulate zone append (in other words, dm-crypt on top of zoned devices).
-> dm_blk_report_zones() could be called while the device was suspended and
-> modifying zoned resources or could possibly fail to end a srcu read
-> section.  More importantly, blk_revalidate_disk_zones() would never get
-> called when updating a zoned table. This could cause the dm device to
-> see the wrong zone write offsets, not have a large enough zwplugs
-> reserved in its mempool, or read invalid memory when checking the
-> conventional zones bitmap.
+> Set the BLK_FEAT_WRITE_ZEROES_UNMAP feature on stacking queue limits by
+> default. This feature shall be disabled if any underlying device does
+> not support it.
 > 
-> This patchset fixes these issues. It deals with the problems around
-> blk_revalidate_disk_zones() by only calling it for devices that have no 
-> zone write plug resources. This will always correctly update the zoned
-> settings. If a device has zone write plug resources, calling
-> blk_revalidate_disk_zones() will not correctly update them in many
-> cases, so DM simply doesn't call it for devices with zone write plug
-> resources. Instead of allowing people to load tables that can break the
-> device, like currently happens, DM disallosw any table reloads that
-> change the zoned setting for devices that already have zone write plug
-> resources.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
+> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+> ---
+>  drivers/md/dm-table.c | 7 +++++--
+>  drivers/md/dm.c       | 1 +
+>  2 files changed, 6 insertions(+), 2 deletions(-)
 > 
-> Specifically, if a device already has zone plug resources allocated, it
-> can only switch to another zoned table that also emulates zone append.
-> Also, it cannot change the device size or the zone size. There are some
-> tweaks to make sure that a device can always switch to an error target.
-> 
-> Changes in V2:
-> - Made queue_limits_set() optionally return the old limits (grabbed
->   while holding the limits_lock), and used this in
->   dm_table_set_restrictions()
-> - dropped changes to disk_free_zone_resources() and the
->   blk_revalidate_disk_zones() code path (removed patches 0005 & 0006)
-> - Instead of always calling blk_revalidate_disk_zones(), disallow
->   changes that would change zone settings if the device has
->   zone write plug resources (final patch).
-> 
-> Benjamin Marzinski (6):
->   dm: don't change md if dm_table_set_restrictions() fails
->   dm: free table mempools if not used in __bind
->   block: make queue_limits_set() optionally return old limits
->   dm: handle failures in dm_table_set_restrictions
->   dm: fix dm_blk_report_zones
->   dm: limit swapping tables for devices with zone write plugs
-> 
->  block/blk-settings.c   |  9 ++++-
->  drivers/md/dm-core.h   |  1 +
->  drivers/md/dm-table.c  | 66 ++++++++++++++++++++++++++-------
->  drivers/md/dm-zone.c   | 84 +++++++++++++++++++++++++++++-------------
->  drivers/md/dm.c        | 36 +++++++++++-------
->  drivers/md/dm.h        |  6 +++
->  drivers/md/md-linear.c |  2 +-
->  drivers/md/raid0.c     |  2 +-
->  drivers/md/raid1.c     |  2 +-
->  drivers/md/raid10.c    |  2 +-
->  drivers/md/raid5.c     |  2 +-
->  include/linux/blkdev.h |  3 +-
->  12 files changed, 154 insertions(+), 61 deletions(-)
-> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 453803f1edf5..d4a483287e26 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -598,7 +598,8 @@ int dm_split_args(int *argc, char ***argvp, char *input)
+>  static void dm_set_stacking_limits(struct queue_limits *limits)
+>  {
+>  	blk_set_stacking_limits(limits);
+> -	limits->features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL;
+> +	limits->features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL |
+> +			    BLK_FEAT_WRITE_ZEROES_UNMAP;
+>  }
+>  
+>  /*
+> @@ -1848,8 +1849,10 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+>  		limits->discard_alignment = 0;
+>  	}
+>  
+> -	if (!dm_table_supports_write_zeroes(t))
+> +	if (!dm_table_supports_write_zeroes(t)) {
+>  		limits->max_write_zeroes_sectors = 0;
+> +		limits->features &= ~BLK_FEAT_WRITE_ZEROES_UNMAP;
+> +	}
+>  
+>  	if (!dm_table_supports_secure_erase(t))
+>  		limits->max_secure_erase_sectors = 0;
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 5ab7574c0c76..b59c3dbeaaf1 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -1096,6 +1096,7 @@ void disable_write_zeroes(struct mapped_device *md)
+>  
+>  	/* device doesn't really support WRITE ZEROES, disable it */
+>  	limits->max_write_zeroes_sectors = 0;
+> +	limits->features &= ~BLK_FEAT_WRITE_ZEROES_UNMAP;
+>  }
+>  
+>  static bool swap_bios_limit(struct dm_target *ti, struct bio *bio)
 > -- 
-> 2.48.1
-> 
+> 2.46.1
 
