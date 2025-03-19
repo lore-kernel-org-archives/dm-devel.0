@@ -1,157 +1,142 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5270D8C0B
-	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 01:22:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12C8A12CD8B;
+	Wed, 19 Mar 2025 01:41:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742347365; cv=none; b=OhX87t0RfVZjt9LZnUYL59NwmAEAKdwNSyire+ZtdGBhhTgmzQCVKWb7k0dl1KVvBQKmKEqjrVu+H+i+vBgprOLV8kQsEd3PtHXLyRAD6EqkfQNqB6rLXgLhmYDeqLMPIkJQg2ocZRqjCmNxv5GQIzISx3h455Q4CtwDjEgO7MM=
+	t=1742348472; cv=none; b=OX1quNh+yDADRbABBbuVWT+XnTHCXgpWr2IeyEkU753rG40iovLMA6UvqoNkeeyfzXTaS6RfK6IYIFnPMMMyhTmGfJ1CdMy/EIMgp7gOo/QiCCGnJALdKNZmFAer8CyLfABn45Zs9obF+tji75xgj77L7mzG2welt+6ixRdpXWM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742347365; c=relaxed/simple;
-	bh=Og5gMBu4yQLJLoNKB1vsd7hr6ai+Ji3bwLNoeb7EOtM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FkGMlhem/aHaKdMiZIaoQbA8UwxECGM8QpFFzOcasXjaWlHKteYvYIMdMxb1SrtlQYV3YWHmCR3jJmOt6XMHt0qfqhIUHiSRGPdZ+BlSZ99AEebdiBYmkmEIF2DrQPBxgQ08RqX27G6E3x51syLEuTmEcmY4P0A6scHqSbc8YgQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J3kKF0RL; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1742348472; c=relaxed/simple;
+	bh=u4VHbYwCy1SXsrB93FaqV0IDSgJLRNG/nVselvNk5tc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=qMgWyqwhM4ng10yWf6XHxMdXnD4FXI50IGFR/TdS/0uu37nk5qm96sQojyhJ0oVch8jOZ5ORuS8/0Sgy4mMOIT0w7UdMPr8V0K9QtIOtQ53afkJCJ1jFyOIObQsSKSacUmPA9lno3Gb3g0z0wCz73cUj2bea7OT6w4LUyO2QGIQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=q+OEW0v+; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J3kKF0RL"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742347360;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YVnEpY4FTtltB2PlWR8iztmvBuYLVfPF3J9cZ6Q3XiQ=;
-	b=J3kKF0RLlrpm3DQWjZzSL6bY2pMJ3CPlRniMYA7iMZOtSPDvYoUke5jKXR3p+Nnex3x8El
-	XYCLAaAVwm7Oi7Is0aJRz4EvijYbe7s39aEIRjywX1Ub+fupQ0xJIwwqdjBpshx46iiVUu
-	zFChgdowPDLupj6/+JFtttoFcoBnnhw=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-307-z5KcS8DVPjuHgEndG4_DqQ-1; Tue,
- 18 Mar 2025 21:22:36 -0400
-X-MC-Unique: z5KcS8DVPjuHgEndG4_DqQ-1
-X-Mimecast-MFC-AGG-ID: z5KcS8DVPjuHgEndG4_DqQ_1742347355
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B37ED180049D;
-	Wed, 19 Mar 2025 01:22:34 +0000 (UTC)
-Received: from fedora (unknown [10.72.120.14])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 201F03001D13;
-	Wed, 19 Mar 2025 01:22:29 +0000 (UTC)
-Date: Wed, 19 Mar 2025 09:22:24 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATC] block: update queue limits atomically
-Message-ID: <Z9ocUCrvXQRJHFVY@fedora>
-References: <ee66a4f2-ecc4-68d2-4594-a0bcba7ffe9c@redhat.com>
- <Z9mJmlhmZwnOlnqT@fedora>
- <d5193df0-5944-8cf6-7eb6-26adf191269e@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="q+OEW0v+"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 34C3EC4CEDD;
+	Wed, 19 Mar 2025 01:41:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1742348471;
+	bh=u4VHbYwCy1SXsrB93FaqV0IDSgJLRNG/nVselvNk5tc=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=q+OEW0v+EP1swX61eH89htc1YJ8I60kVlUChKew66UC33nAV8NjpJvHQR1TCnO0ON
+	 796xOzZSzmmfO8Rnd6FzrDFhkH5POxpEfwoIvrsqtw4VsJtEX99YCIrU6kMOB1sUiC
+	 3lj1PZ3YjcuCARAHJVLEEfLIphIxs5eQkBU9Vl+IcDGEw+dozSJeiU/O7naBaqw0fp
+	 lS5bTeps372XJulRysfhMdhsH2NUKMmDVEegw/9+Dae+KJXlidJTWBCdtEoDAizbNX
+	 EPK5xsJAb0918iSneanWHkcdqDU557P6/LbdMvkFNbdEG2Y+7M0mLKiuUGAFhs4Xrs
+	 EFKirTUVuqcyQ==
+Message-ID: <ae356993-ffa3-4ee1-87e3-3257dedf9908@kernel.org>
+Date: Wed, 19 Mar 2025 10:40:38 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d5193df0-5944-8cf6-7eb6-26adf191269e@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 5/6] dm: fix dm_blk_report_zones
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christoph Hellwig <hch@lst.de>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+ Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+ linux-block@vger.kernel.org
+References: <20250317044510.2200856-1-bmarzins@redhat.com>
+ <20250317044510.2200856-6-bmarzins@redhat.com>
+ <20250318065721.GB16259@lst.de> <Z9nvOcQRrxopHfrF@redhat.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <Z9nvOcQRrxopHfrF@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Tue, Mar 18, 2025 at 04:31:35PM +0100, Mikulas Patocka wrote:
+On 3/19/25 7:10 AM, Benjamin Marzinski wrote:
+> On Tue, Mar 18, 2025 at 07:57:21AM +0100, Christoph Hellwig wrote:
+>> On Mon, Mar 17, 2025 at 12:45:09AM -0400, Benjamin Marzinski wrote:
+>>> __bind(). Otherwise the zone resources could change while accessing
+>>> them. Finally, it is possible that md->zone_revalidate_map will change
+>>> while calling this function. Only read it once, so that we are always
+>>> using the same value. Otherwise we might miss a call to
+>>> dm_put_live_table().
+>>
+>> This checking for calling context is pretty ugly.  Can you just use
+>> a separate report zones helper or at least a clearly documented flag for it?
 > 
+> Not sure how that would work. The goal is to keep another process,
+> calling something like blkdev_report_zones_ioctl(), from being able to
+> call its report_zones_cb, while DM is in blk_revalidate_disk_zones()
+> which needs to use that same disk->fops->report_zones() interface in
+> order to call blk_revalidate_zone_cb(). We need some way to distinguish
+> between the callers. We could export blk_revalidate_zone_cb() and have
+> dm_blk_report_zones() check if it was called with that report_zones_cb.
+> That seems just as ugly to me. But if you like that better, fine.
+> Otherwise I don't see how we can distinguish between the call from
+> blk_revalidate_disk_zones() and a call from something like
+> blkdev_report_zones_ioctl(). Am I not understanding your suggestion?
 > 
-> On Tue, 18 Mar 2025, Ming Lei wrote:
+> Allowing the blkdev_report_zones_ioctl() call to go ahead using
+> md->zone_revalidate_map runs into three problems.
 > 
-> > On Tue, Mar 18, 2025 at 03:26:10PM +0100, Mikulas Patocka wrote:
-> > > The block limits may be read while they are being modified. The statement
-> > 
-> > It is supposed to not be so for IO path, that is why queue is usually down
-> > or frozen when updating limit.
+> 1. It's running while the device is switching tables, and there's no
+> guarantee that DM won't encounter an error and have to fail back. So it
+> could report information for this unused table. We could just say that
+> this is what you get from trying to grab the zone information of a
+> device while it's switching tables. Fine.
 > 
-> The limits are read at some points when constructing a bio - for example 
-> bio_integrity_add_page, bvec_try_merge_hw_page, bio_integrity_map_user.
-
-For request based code path, there isn't such issue because queue usage
-counter is grabbed.
-
-I should be one device mapper specific issue because the above interface
-may not be called from dm_submit_bio().
-
-One fix is to make sure that queue usage counter is grabbed in dm's bio/clone
-submission code path.
-
+> 2. Without this patch, it's possible that while
+> blkdev_report_zones_ioctl() is still running its report_zones_cb, DM
+> fails switching tables and frees the new table that's being used by
+> blkdev_report_zones_ioctl(), causing use-after-free errors. However,
+> this is solvable by calling srcu_read_lock(&md->io_barrier) to make sure
+> that we're in a SRCU read section while using md->zone_revalidate_map.
+> Making that chage should make DM as safe as any other zoned device,
+> which brings me to...
 > 
-> > For other cases, limit lock can be held for sync the read/write.
-> > 
-> > Or you have cases not covered by both queue freeze and limit lock?
-> 
-> For example, device mapper reads the limits of the underlying devices 
-> without holding any lock (dm_set_device_limits,
+> 3. On any zoned device, not just DM, what's stopping
+> one process from syncing the zone write plug offsets:
+> blkdev_report_zones_ioctl() -> blkdev_report_zones() ->
+> various.report_zones() -> disk_report_zones_cb() ->
+> disk_zone_wplug_sync_wp_offset()
 
-dm_set_device_limits() need to be fixed by holding limit lock.
-
-
-> __process_abnormal_io, 
-> __max_io_len).
-
-The two is called with queue usage counter grabbed, so it should be fine.
-
-
-> It also writes the limits in the I/O path - 
-> disable_discard, disable_write_zeroes - you couldn't easily lock it here 
-> because it happens in the interrupt contex.
-
-IMO it is one bad implementation, why does device mapper have to clear
-it in bio->end_io() or request's blk_mq_ops->complete()?
-
-> 
-> I'm not sure how many other kernel subsystems do it and whether they could 
-> all be converted to locking.
-
-Most request based driver should have been converted to new API.
-
-I guess only device mapper / raid / other bio based driver should have such
-kind of risk.
+disk_zone_wplug_sync_wp_offset() is a nop for any zone write plug that does not
+have BLK_ZONE_WPLUG_NEED_WP_UPDATE set. And that flag is set only for zones
+that had a write error. Given that recovering from write errors on zoned device
+requires to:
+1) stop writing to the zone,
+2) Do a report zone (which will sync the wp offset)
+3) Restart writing
+there is no write IOs going on for the zone that is being reported, for a well
+behaved user. If the user is not well behaved, it will get errors/out of sync
+wp, until the user behaves :) So I would not worry too much about this.
+As we discussed, the table switching should be allowed only for the wildcard
+target (dm-error) and that's it. We should not allow table switching otherwise.
+And given that inserting dm-error does not cause any change to the zone
+configuration, I do not see why we need to revalidate zones.
 
 > 
-> > > "q->limits = *lim" is not really atomic. The compiler may turn it into
-> > > memcpy (clang does).
-> > > 
-> > > On x86-64, the kernel uses the "rep movsb" instruction for memcpy - it is
-> > > optimized on modern CPUs, but it is not atomic, it may be interrupted at
-> > > any byte boundary - and if it is interrupted, the readers may read
-> > > garbage.
-> > > 
-> > > On sparc64, there's an instruction that zeroes a cache line without
-> > > reading it from memory. The kernel memcpy implementation uses it (see
-> > > b3a04ed507bf) to avoid loading the destination buffer from memory. The
-> > > problem is that if we copy a block of data to q->limits and someone reads
-> > > it at the same time, the reader may read zeros.
-> > > 
-> > > This commit changes it to use WRITE_ONCE, so that individual words are
-> > > updated atomically.
-> > 
-> > It isn't necessary, for this particular problem, it is also fragile to
-> > provide atomic word update in this low level way, such as, what if
-> > sizeof(struct queue_limits) isn't 8byte aligned?
+> While another process is running into problems while dealing with the
+> gendisk's zone configuration changing:
 > 
-> struct queue_limits contains two "unsigned long" fields, so it must be 
-> aligned on "unsigned long" boundary.
+> blk_revalidate_disk_zones() -> disk_free_zone_resources()
+
+We should not allow the zone configuration to change. That is impossible to
+deal with at the user level.
+
+> I don't see any synchronizing between these two call paths. Am I missing
+> something that stops this? Can this only happen for DM devices, for some
+> reason? If this can't happen, I'm fine with just adding a
+> srcu_read_lock() to dm_blk_report_zones() and calling it good.  If it
+> can happen, then we should fix that.
+
+I think it can happen today but no-one ever had this issue because no-one has
+tried to switch a dm-table on a zoned drive. And I really think we should
+prevent that from being done, except for dm-error since that's used for fstests.
+
 > 
-> In order to make it future-proof, we could use __alignof__(struct 
-> queue_limits) to determine the size of the update step.
-
-Yeah, it looks fine, but I feel it is still fragile, and not sure it is one
-accepted solution.
+> -Ben
+> 
 
 
-
-Thanks,
-Ming
-
+-- 
+Damien Le Moal
+Western Digital Research
