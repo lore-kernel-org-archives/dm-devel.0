@@ -1,66 +1,62 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65F5D1E1E11
-	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 16:50:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D81F1FB3
+	for <dm-devel@lists.linux.dev>; Wed, 19 Mar 2025 19:07:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742403034; cv=none; b=LZPzJGETQG8hseWrE4ZX6S8MolweyOuQwYYGsax5tx49A9pIWy6RlKxF18EsWOvh8q1eBVtUu0RcMUtKxG+bwpZ1RJ2xhQ8YeX9UD+zs/M97GQTDDFdbOyCcKbnrO8TnH2OVz9Kq24qBXf/gOqyqFy8V57mR1GKkYoItsxMGuLk=
+	t=1742411254; cv=none; b=e3hIKFx0yKpdS+QqoUN9Ap6aeJRNxbdHOR5JkJelGm6FLtYqgTozSSknmnKdopVj8hNfax1ONuQ3k1fmGFX+8tji280BEyL9BXU6unsP0usyBt9fbzncXNFzIPKF768tW7rY3/aZMZf7Iye/Vxfep8hAq6BKVB42vMY4NFqhIa0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742403034; c=relaxed/simple;
-	bh=vKKVX17AjrXlAFLfclNoUTodVrDTOorrXT8recqIP6M=;
+	s=arc-20240116; t=1742411254; c=relaxed/simple;
+	bh=hc8niUt8v/9/GCK4VXBm0yx6h1QT7YGX5MABwhSvCd0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=kfeAJq+Blj97OwO08H+v1OYw74oy9DQeAFTRKDwDTozaf57xXpIrhsh7IKObH0V5yEU0b5kWLeu7g/LTjLHUTkmLfZjjV/YJGmleJIo70ViabsTghhl2mzGt0ummxKcShMxMsQNmUpUq0r8lrm2HMcrOtuJA6p37sUX/rn8XqZU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MBwxylvN; arc=none smtp.client-ip=170.10.133.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=ZIADlzgB3Z7TR2K+rzMn2aKiwm1RUwjB+IaBeNxIblHBnK7ebCSD+/9Rhk3TsvD5opjCqoSbQtP+ZRpw79GMu6d0B9YtYqlF1XABhK0B0MvJoG3OdnuXcZpiWBUp3wKTXp74JcWKvvd+ftDO5ThuZN9sGF8ndHU1iSCtj07TgJw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SDXKiKRy; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MBwxylvN"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SDXKiKRy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742403031;
+	s=mimecast20190719; t=1742411251;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=tUXfMsKF0dQ22/314PRUuLEKobtCdevpLn/draYtV+4=;
-	b=MBwxylvN1Nq14AHgcS2BaLcJe5/gvIpf1ATfKJDreWIbThbWNfS1TtRjeufD5T8iKhVszT
-	dAN1OzqfXzTipocC640/yssQeRCoamT4fD+2NmShIkm2ug8smR1yIVkOGoPS/7zXRxxNPj
-	Jz+KsqSd+fciF0UVXUIsQPFXKwnb9gQ=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=wTtKeadc2EJ6wZ4tqEct53alfdvnMFDx/DalHKIKvw8=;
+	b=SDXKiKRy6YwEP0TxCZqutDZQlGmiGOEirazX7lHt+eNObuOF4KAU0qDDgUf/yA7cXHC0QO
+	gCAr7U1AZQLfDhnz/ZG7oOg0cJRrCj/efe05WeIR+qDegacatRdpZHva9rYNrShe7XLMc+
+	7VEi9qdVGSaq0uaQEJ029qHTZ5NJVc4=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-300-P62khHSwPzifWzY5qJFRGw-1; Wed,
- 19 Mar 2025 12:50:27 -0400
-X-MC-Unique: P62khHSwPzifWzY5qJFRGw-1
-X-Mimecast-MFC-AGG-ID: P62khHSwPzifWzY5qJFRGw_1742403025
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-156-OHuexILqPkSkY3LaJrzDaQ-1; Wed,
+ 19 Mar 2025 15:07:29 -0400
+X-MC-Unique: OHuexILqPkSkY3LaJrzDaQ-1
+X-Mimecast-MFC-AGG-ID: OHuexILqPkSkY3LaJrzDaQ_1742411248
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C0088180035E;
-	Wed, 19 Mar 2025 16:50:25 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9BE9419560AF;
+	Wed, 19 Mar 2025 19:07:27 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6EB563001D0E;
-	Wed, 19 Mar 2025 16:50:24 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6E3761955BEE;
+	Wed, 19 Mar 2025 19:07:26 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52JGoN1P2303807
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52JJ7OER2308457
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 19 Mar 2025 12:50:23 -0400
+	Wed, 19 Mar 2025 15:07:24 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52JGoLoW2303806;
-	Wed, 19 Mar 2025 12:50:21 -0400
-Date: Wed, 19 Mar 2025 12:50:21 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52JJ7Ovx2308456;
+	Wed, 19 Mar 2025 15:07:24 -0400
+Date: Wed, 19 Mar 2025 15:07:24 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <snitzer@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-        dm-devel@lists.linux.dev, linux-block@vger.kernel.org
-Subject: Re: [PATCH v2 5/6] dm: fix dm_blk_report_zones
-Message-ID: <Z9r1zUwAJTlqanpR@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
+        Jens Axboe <axboe@kernel.dk>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+        Damien Le Moal <dlemoal@kernel.org>, Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v2 0/6] dm: fix issues with swapping dm tables
+Message-ID: <Z9sV7N9c-W8-qy6s@redhat.com>
 References: <20250317044510.2200856-1-bmarzins@redhat.com>
- <20250317044510.2200856-6-bmarzins@redhat.com>
- <20250318065721.GB16259@lst.de>
- <Z9nvOcQRrxopHfrF@redhat.com>
- <ae356993-ffa3-4ee1-87e3-3257dedf9908@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -69,165 +65,116 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ae356993-ffa3-4ee1-87e3-3257dedf9908@kernel.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+In-Reply-To: <20250317044510.2200856-1-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-On Wed, Mar 19, 2025 at 10:40:38AM +0900, Damien Le Moal wrote:
-> On 3/19/25 7:10 AM, Benjamin Marzinski wrote:
-> > On Tue, Mar 18, 2025 at 07:57:21AM +0100, Christoph Hellwig wrote:
-> >> On Mon, Mar 17, 2025 at 12:45:09AM -0400, Benjamin Marzinski wrote:
-> >>> __bind(). Otherwise the zone resources could change while accessing
-> >>> them. Finally, it is possible that md->zone_revalidate_map will change
-> >>> while calling this function. Only read it once, so that we are always
-> >>> using the same value. Otherwise we might miss a call to
-> >>> dm_put_live_table().
-> >>
-> >> This checking for calling context is pretty ugly.  Can you just use
-> >> a separate report zones helper or at least a clearly documented flag for it?
-> > 
-> > Not sure how that would work. The goal is to keep another process,
-> > calling something like blkdev_report_zones_ioctl(), from being able to
-> > call its report_zones_cb, while DM is in blk_revalidate_disk_zones()
-> > which needs to use that same disk->fops->report_zones() interface in
-> > order to call blk_revalidate_zone_cb(). We need some way to distinguish
-> > between the callers. We could export blk_revalidate_zone_cb() and have
-> > dm_blk_report_zones() check if it was called with that report_zones_cb.
-> > That seems just as ugly to me. But if you like that better, fine.
-> > Otherwise I don't see how we can distinguish between the call from
-> > blk_revalidate_disk_zones() and a call from something like
-> > blkdev_report_zones_ioctl(). Am I not understanding your suggestion?
-> > 
-> > Allowing the blkdev_report_zones_ioctl() call to go ahead using
-> > md->zone_revalidate_map runs into three problems.
-> > 
-> > 1. It's running while the device is switching tables, and there's no
-> > guarantee that DM won't encounter an error and have to fail back. So it
-> > could report information for this unused table. We could just say that
-> > this is what you get from trying to grab the zone information of a
-> > device while it's switching tables. Fine.
-> > 
-> > 2. Without this patch, it's possible that while
-> > blkdev_report_zones_ioctl() is still running its report_zones_cb, DM
-> > fails switching tables and frees the new table that's being used by
-> > blkdev_report_zones_ioctl(), causing use-after-free errors. However,
-> > this is solvable by calling srcu_read_lock(&md->io_barrier) to make sure
-> > that we're in a SRCU read section while using md->zone_revalidate_map.
-> > Making that chage should make DM as safe as any other zoned device,
-> > which brings me to...
-> > 
-> > 3. On any zoned device, not just DM, what's stopping
-> > one process from syncing the zone write plug offsets:
-> > blkdev_report_zones_ioctl() -> blkdev_report_zones() ->
-> > various.report_zones() -> disk_report_zones_cb() ->
-> > disk_zone_wplug_sync_wp_offset()
-> 
-> disk_zone_wplug_sync_wp_offset() is a nop for any zone write plug that does not
-> have BLK_ZONE_WPLUG_NEED_WP_UPDATE set. And that flag is set only for zones
-> that had a write error. Given that recovering from write errors on zoned device
-> requires to:
-> 1) stop writing to the zone,
-> 2) Do a report zone (which will sync the wp offset)
-> 3) Restart writing
-> there is no write IOs going on for the zone that is being reported, for a well
-> behaved user. If the user is not well behaved, it will get errors/out of sync
-> wp, until the user behaves :) So I would not worry too much about this.
+I noticed another issue while playing areound with this.  If you have a
+linear device stacked on top of a zoned dm-crypt device, it will
+allocate zone write plug resources, although it won't use them.
+Actually, this is also true if you create a linear device on top of the
+a zoned scsi_debug device.
 
-The issue isn't that there could be IO errors, it's that we are reading
-and writing from these zwplugs without any way to keep them from being
-freed while we're doing so. 
+The reason is that both dm-crypt and scsi_debug set
+lim->max_hw_zone_append_sectors to 0. This makes sense, both of them are
+simply emulating zone append. DM's check for devices that need zone
+append emulation, dm_table_supports_zone_append(), correctly identifies
+these linear devices as not needing emulation, so the
+DMF_EMULATE_ZONE_APPEND isn't set and dm doesn't do zone write plugging.
+But since these devices have lim->max_hw_zone_append_sectors = 0,
+blk_revalidate_disk_zones() thinks they do need zone append emulation,
+and allocates resources for it.
 
-> As we discussed, the table switching should be allowed only for the wildcard
-> target (dm-error) and that's it. We should not allow table switching otherwise.
-> And given that inserting dm-error does not cause any change to the zone
-> configuration, I do not see why we need to revalidate zones.
+My question is "How do we solve this?" The easy DM answer is to change
+dm_set_zones_restrictions() to do something like:
 
-With this patchset we will never call blk_revalidate_disk_zones() when
-we have disk->zone_wplugs_hash, which means that
-disk_zone_wplug_sync_wp_offset() can never be called once we are using a
-zoned table, so that's not a problem.
+if (!dm_table_supports_zone_append(t))
+	lim->max_hw_zone_append_sectors = 0;
+else if (lim->max_hw_zone_append_sectors == 0)
+	lim->max_hw_zone_append_sectors = lim->max_zone_append_sectors;
 
-The problem we do have happens when we are initially switching to that
-zoned table. blk_revalidate_disk_zones() can allocate
-disk->zone_wplugs_hash, and the later fail and free it. In this case, if
-some userspace process does a BLKREPORTZONE ioctl() while
-md->zone_revalidate_map is set and disk->zone_wplugs_hash exists, it
-could well be still running when disk->zone_wplugs_hash gets freed. We
-obviously can't ban loading a zoned dm-crypt table at all.
+But I wonder if the correct fix is to change blk_stack_limits()
+to do something like:
 
-I admit, this is a very unlikely occurance, but very unlikely memory
-corruptions are still memory corruptions, and much harder to track down
-when they do occur. My original patch, which only allows the task that
-set md->zone_revalidate_map to work during suspends, solves this issue.
-So does my suggestion that dm_blk_report_zones() only allow calls with
-blk_revalidate_zone_cb() as the callback to use md->zone_revalidate_map.
-If Christoph has a better solution that I'm misunderstanding, I'm fine
-with that to. But since we want people to be able to set up dm-crypt on
-top of zoned devices, we have to guard against userspace processes
-running at the same time as we're doing that, in case we fail and free
-the resources.
+t->max_hw_zone_append_sectors = min(t->max_hw_zone_append_sectors,
+                                    b->max_zone_append_sectors);
 
-> > 
-> > While another process is running into problems while dealing with the
-> > gendisk's zone configuration changing:
-> > 
-> > blk_revalidate_disk_zones() -> disk_free_zone_resources()
-> 
-> We should not allow the zone configuration to change. That is impossible to
-> deal with at the user level.
+Even if the bottom device is emulating zone appends, from the point
+of view of the top device, that is the max zone append sectors that
+the underlying *hardware* supports. It's just that more drivers
+than just DM use this, and prehaps some really do need to know what
+the actual hardware supports, and not just what the device below then
+can support or emulate.
 
-The comments above blk_revalidate_disk_zones() sure make it sound like
-it could get called after a device has already been set up
-
-/*
- * blk_revalidate_disk_zones - (re)allocate and initialize zone write plugs
- * @disk:       Target disk
- *
- * Helper function for low-level device drivers to check, (re) allocate and
- * initialize resources used for managing zoned disks. This function should
- * normally be called by blk-mq based drivers when a zoned gendisk is probed
- * and when the zone configuration of the gendisk changes (e.g. after a format).
- * Before calling this function, the device driver must already have set the
- * device zone size (chunk_sector limit) and the max zone append limit.
- * BIO based drivers can also use this function as long as the device queue
- * can be safely frozen.
- */
-
-and a brief look does make it appear that nvme and scsi device can call
-this when the device is rescanned. Perhaps there's no risk of them
-failing in this case? 
-
-> > I don't see any synchronizing between these two call paths. Am I missing
-> > something that stops this? Can this only happen for DM devices, for some
-> > reason? If this can't happen, I'm fine with just adding a
-> > srcu_read_lock() to dm_blk_report_zones() and calling it good.  If it
-> > can happen, then we should fix that.
-> 
-> I think it can happen today but no-one ever had this issue because no-one has
-> tried to switch a dm-table on a zoned drive. And I really think we should
-> prevent that from being done, except for dm-error since that's used for fstests.
-
-This patchset allows zoned devices that don't allocate zone write plug
-resources to be arbitrarily changed. This never caused problems, so we
-have no idea how often people were doing it. I don't see anything unsafe
-there, and people typically do all sorts of things with linear dm devices.
-
-For devices that have allocated zone write plug resources, they can only
-reload tables that do not change the zone resources (only dm-crypat and
-dm-error targets will work here), and blk_revalidate_disk_zones() is
-never called. Not allowing any dm-crypt reloads would keep people from
-reloading a dm-crypt device with the exact same table or simply with an
-optional parameter changed. Doing that is safe, and again we have no
-idea how often this has been happening, since it wouldn't cause any
-problems. 
+Thoughts?
 
 -Ben
 
-> > 
-> > -Ben
-> > 
+On Mon, Mar 17, 2025 at 12:45:04AM -0400, Benjamin Marzinski wrote:
+> There were multiple places in dm's __bind() function where it could fail
+> and not completely roll back, leaving the device using the the old
+> table, but with device limits and resources from the new table.
+> Additionally, unused mempools for request-based devices were not always
+> freed immediately.
 > 
+> Finally, there were a number of issues with switching zoned tables that
+> emulate zone append (in other words, dm-crypt on top of zoned devices).
+> dm_blk_report_zones() could be called while the device was suspended and
+> modifying zoned resources or could possibly fail to end a srcu read
+> section.  More importantly, blk_revalidate_disk_zones() would never get
+> called when updating a zoned table. This could cause the dm device to
+> see the wrong zone write offsets, not have a large enough zwplugs
+> reserved in its mempool, or read invalid memory when checking the
+> conventional zones bitmap.
+> 
+> This patchset fixes these issues. It deals with the problems around
+> blk_revalidate_disk_zones() by only calling it for devices that have no 
+> zone write plug resources. This will always correctly update the zoned
+> settings. If a device has zone write plug resources, calling
+> blk_revalidate_disk_zones() will not correctly update them in many
+> cases, so DM simply doesn't call it for devices with zone write plug
+> resources. Instead of allowing people to load tables that can break the
+> device, like currently happens, DM disallosw any table reloads that
+> change the zoned setting for devices that already have zone write plug
+> resources.
+> 
+> Specifically, if a device already has zone plug resources allocated, it
+> can only switch to another zoned table that also emulates zone append.
+> Also, it cannot change the device size or the zone size. There are some
+> tweaks to make sure that a device can always switch to an error target.
+> 
+> Changes in V2:
+> - Made queue_limits_set() optionally return the old limits (grabbed
+>   while holding the limits_lock), and used this in
+>   dm_table_set_restrictions()
+> - dropped changes to disk_free_zone_resources() and the
+>   blk_revalidate_disk_zones() code path (removed patches 0005 & 0006)
+> - Instead of always calling blk_revalidate_disk_zones(), disallow
+>   changes that would change zone settings if the device has
+>   zone write plug resources (final patch).
+> 
+> Benjamin Marzinski (6):
+>   dm: don't change md if dm_table_set_restrictions() fails
+>   dm: free table mempools if not used in __bind
+>   block: make queue_limits_set() optionally return old limits
+>   dm: handle failures in dm_table_set_restrictions
+>   dm: fix dm_blk_report_zones
+>   dm: limit swapping tables for devices with zone write plugs
+> 
+>  block/blk-settings.c   |  9 ++++-
+>  drivers/md/dm-core.h   |  1 +
+>  drivers/md/dm-table.c  | 66 ++++++++++++++++++++++++++-------
+>  drivers/md/dm-zone.c   | 84 +++++++++++++++++++++++++++++-------------
+>  drivers/md/dm.c        | 36 +++++++++++-------
+>  drivers/md/dm.h        |  6 +++
+>  drivers/md/md-linear.c |  2 +-
+>  drivers/md/raid0.c     |  2 +-
+>  drivers/md/raid1.c     |  2 +-
+>  drivers/md/raid10.c    |  2 +-
+>  drivers/md/raid5.c     |  2 +-
+>  include/linux/blkdev.h |  3 +-
+>  12 files changed, 154 insertions(+), 61 deletions(-)
 > 
 > -- 
-> Damien Le Moal
-> Western Digital Research
+> 2.48.1
+> 
 
