@@ -1,58 +1,68 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7914F1E3769
-	for <dm-devel@lists.linux.dev>; Thu, 20 Mar 2025 07:38:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A9C581C3BF1
+	for <dm-devel@lists.linux.dev>; Thu, 20 Mar 2025 07:42:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742456319; cv=none; b=KySsN2mtJ3SCfo87F85WMpVQFqfzHYKDYwzp1jrPDYStptFchYtiGkNJCOBtzfN8pJk8t9R/H1MvNkq/tsSwewBeWidTd9/mBudWb2rTqW0xdPWRzs+fvEEnxIQFfVb/dlFYKP0z1hr7aluAzExZJ6I+0DEBHRuy3y1aAc6OAf4=
+	t=1742456542; cv=none; b=iPlaewvkgmYMQA99mBZuwo846nbQtAGwDI8vgNGtsF77Eo7Dfy7jNmX1375T9RZSzliUrmyJDJA1l1IBTX8PD1ZbadoXuvGONvlM9InRjAow0kvDRMOaTU4YSrTvY3mXjL9LX1Y6MWyfUiVnv7OBe7BDKxn/aBiKX9K2HwE12ZI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742456319; c=relaxed/simple;
-	bh=JHLdkLcUJAeoSjLOjOQ5Yu1UAGtK5l5dDgCqHVL9ySA=;
+	s=arc-20240116; t=1742456542; c=relaxed/simple;
+	bh=DJzXSmy/bbs+qKb+f67Qgl7ywvF5y9oAZVpOItOiVZ4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=miDwYQVC2KUEFyHxWS+9dBQVC7Vm697M/7oRdMViOZm4rOUin95t/ddn+UO+sUT8gB/Pn+8KlMQN0lfQNhmRhQ/732bLJoF8hzmXJklvqxYKVSHFTiH8ADTvX7TO/PJ08lRCB5IANbOiZVIuArs3UjSeRV5i2LVfuoLeaNwyPZ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AOZYTct3; arc=none smtp.client-ip=170.10.129.124
+	 Content-Type:Content-Disposition:In-Reply-To; b=HRyGnHo0YhQL0n9N3TZQ90XOerfPSLSfJvS3CRB6qC4eIhdXTrz0pN5oyCI+x9Khy+345iu8ZoLdhrio083EbcodF17X3bMw+JtHTEOEHvaFpguzqPzEVh3CaUJoK5GCHIN21mnaC59ftRmtwuRbq5hFu1L7enYf/3ZMeGJ8FvE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F2PBYwek; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AOZYTct3"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F2PBYwek"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742456316;
+	s=mimecast20190719; t=1742456539;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=C2fhhdo0Q2kmWfyznvsRRLod+tnwx+qo4Nfy04dgWUo=;
-	b=AOZYTct3KAjTFAo355b6lbpaFZKYGFLzF9zqGnct93gPQf22W84/zVNY6o3Nu1Cea8/SOy
-	uN5spk0dqFWkcnQ13S0VzH/cu0cEBgfmyaIxsQbkUnFgCCcDBtF2Z8ksUYpjI2i6AMa5GE
-	mIhFwevOftHyIj8jnrPe95An2v23IlM=
+	bh=U8pGM+K1r9HJttHN9XN8AarpXIQG27tn6vD2t40C+P8=;
+	b=F2PBYwekMUhhaErAsvVYQj5Fo8eFyudZ6OJbfOZwTDpJXv82N8RcQ9IMn3o/+yIyd1f9Gy
+	+3VOnYUefaTN7wcPf6wW+H3CoA5cRHbPFkogfGDPAAbjd50knhP4sfkO0rDRHOujEm9Hza
+	QevaQ+w9om8OK/eRKoMyMpgfqs4mtC8=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-637-C8OsfNuvOxiBNBCv_luntA-1; Thu,
- 20 Mar 2025 03:38:32 -0400
-X-MC-Unique: C8OsfNuvOxiBNBCv_luntA-1
-X-Mimecast-MFC-AGG-ID: C8OsfNuvOxiBNBCv_luntA_1742456311
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-157-ncbbwjXyPlqHiGYBctJwvg-1; Thu,
+ 20 Mar 2025 03:42:16 -0400
+X-MC-Unique: ncbbwjXyPlqHiGYBctJwvg-1
+X-Mimecast-MFC-AGG-ID: ncbbwjXyPlqHiGYBctJwvg_1742456534
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C9AB41956075;
-	Thu, 20 Mar 2025 07:38:30 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 64D8D19560B0;
+	Thu, 20 Mar 2025 07:42:14 +0000 (UTC)
 Received: from fedora (unknown [10.72.120.32])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A1BCD3001D16;
-	Thu, 20 Mar 2025 07:38:23 +0000 (UTC)
-Date: Thu, 20 Mar 2025 15:38:18 +0800
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 684B81828A87;
+	Thu, 20 Mar 2025 07:42:03 +0000 (UTC)
+Date: Thu, 20 Mar 2025 15:41:58 +0800
 From: Ming Lei <ming.lei@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	Jooyung Han <jooyung@google.com>, Mike Snitzer <snitzer@kernel.org>,
-	zkabelac@redhat.com, dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>
-Subject: Re: [PATCH V2 5/5] loop: add hint for handling aio via IOCB_NOWAIT
-Message-ID: <Z9vF6vophr8uw66p@fedora>
-References: <20250314021148.3081954-1-ming.lei@redhat.com>
- <20250314021148.3081954-6-ming.lei@redhat.com>
- <20250320072247.GD14337@lst.de>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Dave Chinner <david@fromorbit.com>,
+	Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>,
+	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org
+Subject: Re: [PATCH] the dm-loop target
+Message-ID: <Z9vGxrPzJ6oswWrS@fedora>
+References: <a8e5c76a-231f-07d1-a394-847de930f638@redhat.com>
+ <Z8-ReyFRoTN4G7UU@dread.disaster.area>
+ <Z9ATyhq6PzOh7onx@fedora>
+ <Z9DymjGRW3mTPJTt@dread.disaster.area>
+ <Z9FFTiuMC8WD6qMH@fedora>
+ <7b8b8a24-f36b-d213-cca1-d8857b6aca02@redhat.com>
+ <Z9j2RJBark15LQQ1@dread.disaster.area>
+ <Z9knXQixQhs90j5F@infradead.org>
+ <Z9k-JE8FmWKe0fm0@fedora>
+ <Z9u-489C_PVu8Se1@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -61,69 +71,56 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250320072247.GD14337@lst.de>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+In-Reply-To: <Z9u-489C_PVu8Se1@infradead.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On Thu, Mar 20, 2025 at 08:22:47AM +0100, Christoph Hellwig wrote:
-> On Fri, Mar 14, 2025 at 10:11:45AM +0800, Ming Lei wrote:
-> > Add hint for using IOCB_NOWAIT to handle loop aio command for avoiding
-> > to cause write(especially randwrite) perf regression on sparse file.
+On Thu, Mar 20, 2025 at 12:08:19AM -0700, Christoph Hellwig wrote:
+> On Tue, Mar 18, 2025 at 05:34:28PM +0800, Ming Lei wrote:
+> > On Tue, Mar 18, 2025 at 12:57:17AM -0700, Christoph Hellwig wrote:
+> > > On Tue, Mar 18, 2025 at 03:27:48PM +1100, Dave Chinner wrote:
+> > > > Yes, NOWAIT may then add an incremental performance improvement on
+> > > > top for optimal layout cases, but I'm still not yet convinced that
+> > > > it is a generally applicable loop device optimisation that everyone
+> > > > wants to always enable due to the potential for 100% NOWAIT
+> > > > submission failure on any given loop device.....
 > > 
-> > Try IOCB_NOWAIT in the following situations:
+> > NOWAIT failure can be avoided actually:
 > > 
-> > - backing file is block device
+> > https://lore.kernel.org/linux-block/20250314021148.3081954-6-ming.lei@redhat.com/
 > 
-> Why limit yourself to block devices?
+> That's a very complex set of heuristics which doesn't match up
+> with other uses of it.
 
-It doesn't limit to block device, just submit NOWAIT unconditionally.
-
-I should have added 'OR' among the three lines.
-
-> 
-> > - READ aio command
-> > - there isn't queued aio non-NOWAIT WRITE, since retry of NOWAIT won't
-> > cause contention on WRITE and non-NOWAIT WRITE often implies exclusive
-> > lock.
-> 
-> This reads really odd because to me the list implies that you only
-> support reads, but the code also supports writes.  Maybe try to
-> explain this more clearly.
-
-Will improve the comment log.
+I'd suggest you to point them out in the patch review.
 
 > 
-> > With this simple policy, perf regression of randwrte/write on sparse
-> > backing file is fixed. Meantime this way addresses perf problem[1] in
-> > case of stable FS block mapping via NOWAIT.
+> > 
+> > > 
+> > > Yes, I think this is a really good first step:
+> > > 
+> > > 1) switch loop to use a per-command work_item unconditionally, which also
+> > >    has the nice effect that it cleans up the horrible mess of the
+> > >    per-blkcg workers.  (note that this is what the nvmet file backend has
+> > 
+> > It could be worse to take per-command work, because IO handling crosses
+> > all system wq worker contexts.
 > 
-> This needs to go in with the patch implementing the logic.
-
-OK.
-
+> So do other workloads with pretty good success.
 > 
-> > @@ -70,6 +70,7 @@ struct loop_device {
-> >  	struct rb_root          worker_tree;
-> >  	struct timer_list       timer;
-> >  	bool			sysfs_inited;
-> > +	unsigned 		queued_wait_write;
+> > 
+> > >    always done with good result)
+> > 
+> > per-command work does burn lots of CPU unnecessarily, it isn't good for
+> > use case of container
 > 
-> lo_nr_blocking_writes?
-> 
-> What serializes access to this variable?
+> That does not match my observations in say nvmet.  But if you have
+> numbers please share them.
 
-The write is serialized by the loop spin lock, and the read is done
-via READ_ONCE(), since it is just a hint.
+Please see the result I posted:
 
-> 
-> > +static inline bool lo_aio_need_try_nowait(struct loop_device *lo,
-> > +		struct loop_cmd *cmd)
-> 
-> Drop the need_ in the name, it not only is superfluous, but also
-> makes it really hard to read the function name.
-
-OK.
+https://lore.kernel.org/linux-block/Z9FFTiuMC8WD6qMH@fedora/
 
 
-Thanks, 
+Thanks,
 Ming
 
