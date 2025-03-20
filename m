@@ -1,126 +1,133 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-il1-f172.google.com (mail-il1-f172.google.com [209.85.166.172])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A9C581C3BF1
-	for <dm-devel@lists.linux.dev>; Thu, 20 Mar 2025 07:42:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 858FE200B0
+	for <dm-devel@lists.linux.dev>; Thu, 20 Mar 2025 12:58:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742456542; cv=none; b=iPlaewvkgmYMQA99mBZuwo846nbQtAGwDI8vgNGtsF77Eo7Dfy7jNmX1375T9RZSzliUrmyJDJA1l1IBTX8PD1ZbadoXuvGONvlM9InRjAow0kvDRMOaTU4YSrTvY3mXjL9LX1Y6MWyfUiVnv7OBe7BDKxn/aBiKX9K2HwE12ZI=
+	t=1742475541; cv=none; b=pv0RfbTtKU+y+7zKJI5I1XyJ8CF1Cn+F07b1AyMYuq+N8Mjm6WwJjrYdCSFUVuUWkqEuatfsJLjgwFPvRYEgf+6mz5E5I26ONkCkNAvyAf2aXnrvyypLVRHxq2yTV7P39qVf25ck+e1cDiMqtZScJmnwB8VBWRiY2LSngSzJq6Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742456542; c=relaxed/simple;
-	bh=DJzXSmy/bbs+qKb+f67Qgl7ywvF5y9oAZVpOItOiVZ4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HRyGnHo0YhQL0n9N3TZQ90XOerfPSLSfJvS3CRB6qC4eIhdXTrz0pN5oyCI+x9Khy+345iu8ZoLdhrio083EbcodF17X3bMw+JtHTEOEHvaFpguzqPzEVh3CaUJoK5GCHIN21mnaC59ftRmtwuRbq5hFu1L7enYf/3ZMeGJ8FvE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F2PBYwek; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1742475541; c=relaxed/simple;
+	bh=QJbjoUU1hkaoY/YmGkvIJJhYaQzGERVBOCIcORbR4ww=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=gqYs6eA936oPNMHs1Fxrz5EvAlPKjxpIZ1C3Kpnjb8DOIkQsDPXZGtkSbDA962MoYM5Z9PBSgdk4GkejUsRvEYHt1/yenIGukBvHYpFxusfXAEd7HUlAArfWWyc3D7yLAL18+OkOJ3saQlLEkzP7bCNyKdv5P7Eaedb37ZEuLwM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=hw3pIrqc; arc=none smtp.client-ip=209.85.166.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F2PBYwek"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742456539;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=U8pGM+K1r9HJttHN9XN8AarpXIQG27tn6vD2t40C+P8=;
-	b=F2PBYwekMUhhaErAsvVYQj5Fo8eFyudZ6OJbfOZwTDpJXv82N8RcQ9IMn3o/+yIyd1f9Gy
-	+3VOnYUefaTN7wcPf6wW+H3CoA5cRHbPFkogfGDPAAbjd50knhP4sfkO0rDRHOujEm9Hza
-	QevaQ+w9om8OK/eRKoMyMpgfqs4mtC8=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-157-ncbbwjXyPlqHiGYBctJwvg-1; Thu,
- 20 Mar 2025 03:42:16 -0400
-X-MC-Unique: ncbbwjXyPlqHiGYBctJwvg-1
-X-Mimecast-MFC-AGG-ID: ncbbwjXyPlqHiGYBctJwvg_1742456534
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 64D8D19560B0;
-	Thu, 20 Mar 2025 07:42:14 +0000 (UTC)
-Received: from fedora (unknown [10.72.120.32])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 684B81828A87;
-	Thu, 20 Mar 2025 07:42:03 +0000 (UTC)
-Date: Thu, 20 Mar 2025 15:41:58 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Dave Chinner <david@fromorbit.com>,
-	Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org
-Subject: Re: [PATCH] the dm-loop target
-Message-ID: <Z9vGxrPzJ6oswWrS@fedora>
-References: <a8e5c76a-231f-07d1-a394-847de930f638@redhat.com>
- <Z8-ReyFRoTN4G7UU@dread.disaster.area>
- <Z9ATyhq6PzOh7onx@fedora>
- <Z9DymjGRW3mTPJTt@dread.disaster.area>
- <Z9FFTiuMC8WD6qMH@fedora>
- <7b8b8a24-f36b-d213-cca1-d8857b6aca02@redhat.com>
- <Z9j2RJBark15LQQ1@dread.disaster.area>
- <Z9knXQixQhs90j5F@infradead.org>
- <Z9k-JE8FmWKe0fm0@fedora>
- <Z9u-489C_PVu8Se1@infradead.org>
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="hw3pIrqc"
+Received: by mail-il1-f172.google.com with SMTP id e9e14a558f8ab-3cf880d90bdso2745255ab.3
+        for <dm-devel@lists.linux.dev>; Thu, 20 Mar 2025 05:58:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1742475538; x=1743080338; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=iVnHryLbM4HSGexWSoyzqAnHzYi2U3F+uNUwYKaXBbg=;
+        b=hw3pIrqcm7elWzU7fRscpQV14Pae/He1QqL0QSx/e7yk/0jJxiZjgaaJq9kPzOIy7J
+         p9FKgpdU2EL0WfexYXieDGUwPh+L/1MXd9xQBe7T7UmkpoJespkTtg8obQ3yamMaB3Jh
+         JQiNgwPU1DTyqoWV44EtZ8dQQZLzW9OjAY2LSB5xyRhTl9uLzLiph3IEWNIeEtGzhtk8
+         wSpEJQWOQhBOKiyXkUVLh89etQx0ClPIigzqlNv9RxoTEnBD7VZpRVXwspubo25LEpGj
+         ITedLTdU0HFZjKv8uW/XRBHZ80xdpxNhu6HAKFECEUJqwBdwqOqM6XfeNuaUfLlJ3Rd/
+         cb3g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1742475538; x=1743080338;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=iVnHryLbM4HSGexWSoyzqAnHzYi2U3F+uNUwYKaXBbg=;
+        b=lWMrtY5ESFyUDsrzmyoH5/Afj3/Mcjf+fGXBbQJPT2vNSuroC3mOPR26uHdj3imu9P
+         O9b+3Z8rY05cOM1WR/wDOqW/+/B7YrPShCfuxbbaDUqqku1DT0GP98yC0AXLW2jVRBY0
+         1K32S2NV8zPavPNcTHfQ6dnW5XdHPcNNTPQpKU18KuxQxuoawBBRw1EcvCAhYg+9weUn
+         UVoSJrX92w8Ugz3qUDSCZmcrpAeui63sci3WYRHqEIJtPm3GgDueZ9dwTLzD3MCZzpYX
+         /mut3j1rayoBVo3PyxJl3hn01L9ebCbCrLQGNlvmuzTn6CV8m4KWZ8hkT++5MlC0054C
+         TfbQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWmz0Tl3VIHIJdFM/m4jsRL+hiq9sNiF137Y6H4fmIQs+IRPaFPbFqLpFHTGnaNpLsuLkKZWmQUvw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyGzlhYk8LtgiXh28RmK/5Cs93Wb6f5A9UDBUAO0TeKrUXZfvKK
+	c3hr364uPUaZMWB8ntNlFUDEUMeXoNNnhMCLztp47lnXTAOQtNHSllTWNVsZ8y0=
+X-Gm-Gg: ASbGncvB8oMB5wmMhoWbQexwRoULw1Mi2EyppzoHSFqYdbrcVxaATy0fVS0yUSXOrq+
+	pJvD9rGXI+uVhZPdqpZCE4p2CUIDEWj7klsrc1aw2uYKFlIVnYh41OLWy/cnNuuAf79V0nZwoNI
+	Gnln1vjOBaAWU8hxWhDdTe6eBFzgLCsxtGwnHxi+Z/JTE5XHXMIv/4BrOwg3PQleHz8lm2qf//3
+	yPMGVWfe5uzCT0hwICvkHwzdB/cbr0KxPIskkrGPj3+lp95EkHUcENSs0jBQAw3v0r3Mfi3McxP
+	PpWrc6vU8EWWspo9WXfEtOZHsh1J0rAZ2FcylWHlxw==
+X-Google-Smtp-Source: AGHT+IFc/x57QJZx5favzhvE8V/QLoHjC7cHsoOW38xsaVU+AcJ3TJmBZSKivizLO8YzuV9hrOmDqg==
+X-Received: by 2002:a92:ca05:0:b0:3d5:893a:93ea with SMTP id e9e14a558f8ab-3d58ebeb656mr26601915ab.13.1742475538571;
+        Thu, 20 Mar 2025 05:58:58 -0700 (PDT)
+Received: from [192.168.1.150] ([198.8.77.157])
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4f2637198eesm3716437173.50.2025.03.20.05.58.57
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 20 Mar 2025 05:58:58 -0700 (PDT)
+Message-ID: <5f6c8dec-103b-4aa3-affd-f08fdf68f1dc@kernel.dk>
+Date: Thu, 20 Mar 2025 06:58:57 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Z9u-489C_PVu8Se1@infradead.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATC] block: update queue limits atomically
+To: Ming Lei <ming.lei@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+References: <ee66a4f2-ecc4-68d2-4594-a0bcba7ffe9c@redhat.com>
+ <Z9mJmlhmZwnOlnqT@fedora> <d5193df0-5944-8cf6-7eb6-26adf191269e@redhat.com>
+ <Z9ocUCrvXQRJHFVY@fedora> <6ebdd2ae-8fc2-4072-b131-a7c0da56d3f2@kernel.dk>
+ <d04fcd9f-b4a7-100a-e9a4-b0d4d45b372b@redhat.com> <Z9t709DZs-Flq1qS@fedora>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <Z9t709DZs-Flq1qS@fedora>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Thu, Mar 20, 2025 at 12:08:19AM -0700, Christoph Hellwig wrote:
-> On Tue, Mar 18, 2025 at 05:34:28PM +0800, Ming Lei wrote:
-> > On Tue, Mar 18, 2025 at 12:57:17AM -0700, Christoph Hellwig wrote:
-> > > On Tue, Mar 18, 2025 at 03:27:48PM +1100, Dave Chinner wrote:
-> > > > Yes, NOWAIT may then add an incremental performance improvement on
-> > > > top for optimal layout cases, but I'm still not yet convinced that
-> > > > it is a generally applicable loop device optimisation that everyone
-> > > > wants to always enable due to the potential for 100% NOWAIT
-> > > > submission failure on any given loop device.....
-> > 
-> > NOWAIT failure can be avoided actually:
-> > 
-> > https://lore.kernel.org/linux-block/20250314021148.3081954-6-ming.lei@redhat.com/
+On 3/19/25 8:22 PM, Ming Lei wrote:
+> On Wed, Mar 19, 2025 at 10:18:39PM +0100, Mikulas Patocka wrote:
+>>
+>>
+>> On Tue, 18 Mar 2025, Jens Axboe wrote:
+>>
+>>>> Yeah, it looks fine, but I feel it is still fragile, and not sure it is one
+>>>> accepted solution.
+>>>
+>>> Agree - it'd be much better to have the bio drivers provide the same
+>>> guarantees that we get on the request side, rather than play games with
+>>> this and pretend that concurrent update and usage is fine.
+>>>
+>>> -- 
+>>> Jens Axboe
+>>
+>> And what mechanism should they use to read the queue limits?
+>> * locking? (would degrade performance)
+>> * percpu-rwsem? (no overhead for readers, writers wait for the RCU 
+>>   synchronization)
+>> * RCU?
+>> * anything else?
 > 
-> That's a very complex set of heuristics which doesn't match up
-> with other uses of it.
-
-I'd suggest you to point them out in the patch review.
-
+> 1) queue usage counter is for covering fast IO code path
 > 
-> > 
-> > > 
-> > > Yes, I think this is a really good first step:
-> > > 
-> > > 1) switch loop to use a per-command work_item unconditionally, which also
-> > >    has the nice effect that it cleans up the horrible mess of the
-> > >    per-blkcg workers.  (note that this is what the nvmet file backend has
-> > 
-> > It could be worse to take per-command work, because IO handling crosses
-> > all system wq worker contexts.
+> - in __submit_bio(), queue usage counter is grabbed when calling
+>   ->submit_bio()
 > 
-> So do other workloads with pretty good success.
+> - the only trouble should be from dm-crypt or thin-provision which offloads
+> bio submission to other context, so you can grab the usage counter by
+> percpu_ref_get(&q->q_usage_counter) until this bio submission or queue
+> limit consumption is done
+
+Indeed - this is an entirely solved problem already, it's just that the
+bio bypassing gunk thinks it can get away with just bypassing all of
+that. The mechanisms very much exist and are used by the request path,
+which is why this problem doesn't exist there.
+
+> 2) slow path: dm_set_device_limits
 > 
-> > 
-> > >    always done with good result)
-> > 
-> > per-command work does burn lots of CPU unnecessarily, it isn't good for
-> > use case of container
+> which is done before DM disk is on, so it should be fine by holding limit lock.
 > 
-> That does not match my observations in say nvmet.  But if you have
-> numbers please share them.
+> 3) changing queue limits from bio->end_io() or request completion handler
+> 
+> - this usage need fix
 
-Please see the result I posted:
+All looks reasonable.
 
-https://lore.kernel.org/linux-block/Z9FFTiuMC8WD6qMH@fedora/
-
-
-Thanks,
-Ming
+-- 
+Jens Axboe
 
