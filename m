@@ -1,45 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 195DD175A5
-	for <dm-devel@lists.linux.dev>; Sat, 22 Mar 2025 01:26:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6CB89200B0
+	for <dm-devel@lists.linux.dev>; Sat, 22 Mar 2025 01:26:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742606798; cv=none; b=QRRajJ3Pgwg54ghvCqdC2rRDMSdhGUIY6yddXO+FY4MpRyQW6j9i6zhL7+OID6M2VFWfFa3oUSYesjlFgrZeJrvdou1x5PwezfCkQFUAg6V4UTFiiyp56TYb3nhyC2t/Dm+utNW725u0BbnUz9IpMlK4d10IjlB5XPIGyoBZTfA=
+	t=1742606804; cv=none; b=jUSHsfxJWSrrCpJ0/q6oiYhUxIKuA1v4NbvghtF8m20D1+ztB/j7tFU1bvY5Dn1qn3GD83SSNjJ9qH6FFbsEVCbMF+uZX94LDaHSe5RxkFnURq/vfX7vfc7BkeRvMsYhFye69U6K5gvGY6+EC6osuCRwzQ82O6AFCbTim+mWHy0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742606798; c=relaxed/simple;
-	bh=0racscnRCfh/AdjoiQFYdmgOMu33A7CkgRtpZ4LuZDI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=k5SH9LDBgWvZCHZbjFMu4PAuuuIIJyEQi+MZjNJlGwP92+Qh1GqwDb/u87lYzFqnTxVKu5gzPK7si9QMHxHgO+fUw//UfK1f1ioh/CDGMpsHAFSgBaWuOXqhko+gQy/JraGWUPOdKR9ypVF3wACMd01GRVqbYWPApCtBvZE17X0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZZx42P6b; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1742606804; c=relaxed/simple;
+	bh=NcAuwn+i8L5oEuXthUIDxYma2alnjm5NSxoSC+LOAzg=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=FbtKutZIBnLMTOrd7v4VPNdgT6NPKc6jsoz3leL1TN/nifTtkIJAeMBd4H75/wJRp6vwRKwFB080hkrQ/xup+NNEOIPi8p053OG8mxJieQs/KUQoGObnReFAL+mXzdVMr48gDnV2Re/ETUoPCzksZTYZtVXKA0CfHTwJJFquRGs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RMGMak0L; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZZx42P6b"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RMGMak0L"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742606796;
+	s=mimecast20190719; t=1742606801;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=26uniy9Au7w7dcoMJII49KTj/ZCNXT0EQn7UPP0JFng=;
-	b=ZZx42P6bFVcrx0vHY4fJDSmmc1zZjqE01YK4B+XPtA+wTRg3oh9gC4rHv3DhIwwq/gs7zb
-	QBAq8jn5dwIJsrHQw7Aqqc//SUFU8VmbrxmiDIB1wr1/yhu6uyfP8XzjVyvHi0lrkKeYfc
-	6lGBDorR7hM7uUBsvuAvy/7tq6CtBcs=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=nUlqBDHfwWUJZK2tW62gTBJFE4Ef6WuSuhLHJpSvsEw=;
+	b=RMGMak0LZB7/bF+NBIWnzDxBRZvQkgxYL6NiJuum3uqVvWChJYkVoyFd9WxV7dxeuDW7mB
+	O+w1cNx/c7rY7b6BmqcgQKeXtFTwTrBsVAbngQv/HkD+BgQ59EIGOIqdNDDawnSSmIskVy
+	yLOkyaHPP+ixdkzmjLpukb6badTiSl0=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-638-ph2a7LA5M9iCwqbSm9jWGQ-1; Fri,
- 21 Mar 2025 21:26:32 -0400
-X-MC-Unique: ph2a7LA5M9iCwqbSm9jWGQ-1
-X-Mimecast-MFC-AGG-ID: ph2a7LA5M9iCwqbSm9jWGQ_1742606790
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-131-yVCNuLI3NP275SQFsWYb3A-1; Fri,
+ 21 Mar 2025 21:26:38 -0400
+X-MC-Unique: yVCNuLI3NP275SQFsWYb3A-1
+X-Mimecast-MFC-AGG-ID: yVCNuLI3NP275SQFsWYb3A_1742606797
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 18FE7180035C;
-	Sat, 22 Mar 2025 01:26:30 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 307311801A06;
+	Sat, 22 Mar 2025 01:26:36 +0000 (UTC)
 Received: from localhost (unknown [10.72.120.2])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EA5B830001A1;
-	Sat, 22 Mar 2025 01:26:27 +0000 (UTC)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 6650219560AF;
+	Sat, 22 Mar 2025 01:26:33 +0000 (UTC)
 From: Ming Lei <ming.lei@redhat.com>
 To: Jens Axboe <axboe@kernel.dk>,
 	linux-block@vger.kernel.org
@@ -51,9 +53,11 @@ Cc: Christoph Hellwig <hch@lst.de>,
 	Alasdair Kergon <agk@redhat.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Ming Lei <ming.lei@redhat.com>
-Subject: [PATCH V3 0/5] loop: improve loop aio perf by IOCB_NOWAIT
-Date: Sat, 22 Mar 2025 09:26:09 +0800
-Message-ID: <20250322012617.354222-1-ming.lei@redhat.com>
+Subject: [PATCH V3 1/5] loop: simplify do_req_filebacked()
+Date: Sat, 22 Mar 2025 09:26:10 +0800
+Message-ID: <20250322012617.354222-2-ming.lei@redhat.com>
+In-Reply-To: <20250322012617.354222-1-ming.lei@redhat.com>
+References: <20250322012617.354222-1-ming.lei@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -61,48 +65,99 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
-Hello Jens,
+lo_rw_aio() is only called for READ/WRITE operation, which can be
+figured out from request directly, so remove 'rw' parameter from
+lo_rw_aio(), meantime rename the local variable as 'dir' which makes
+the check more readable in lo_rw_aio().
 
-This patchset improves loop aio perf by using IOCB_NOWAIT for avoiding to queue aio
-command to workqueue context, meantime refactor lo_rw_aio() a bit.
+Meantime add lo_rw_simple() so that do_req_filebacked() can be
+simplified in the following way:
 
-In my test VM, loop disk perf becomes very close to perf of the backing block
-device(nvme/mq virtio-scsi).
+```
+	if (cmd->use_aio)
+		return lo_rw_aio(lo, cmd, pos);
+	else
+		return lo_rw_simple(lo, rq, pos);
+```
 
-And Mikulas verified that this way can improve 12jobs sequential rw io by
-~5X, and basically solve the reported problem together with loop MQ change.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Ming Lei <ming.lei@redhat.com>
+---
+ drivers/block/loop.c | 23 +++++++++++++----------
+ 1 file changed, 13 insertions(+), 10 deletions(-)
 
-https://lore.kernel.org/linux-block/a8e5c76a-231f-07d1-a394-847de930f638@redhat.com/
-
-The loop MQ change will be posted as standalone patch, because it needs
-losetup change.
-
-
-Thanks,
-Ming
-
-V3:
-	- add reviewed-by tag
-	- rename variable & improve commit log & comment on 5/5(Christoph)
-
-V2:
-	- patch style fix & cleanup (Christoph)
-	- fix randwrite perf regression on sparse backing file
-	- drop MQ change
-
-
-Ming Lei (5):
-  loop: simplify do_req_filebacked()
-  loop: cleanup lo_rw_aio()
-  loop: move command blkcg/memcg initialization into loop_queue_work
-  loop: try to handle loop aio command via NOWAIT IO first
-  loop: add hint for handling aio via IOCB_NOWAIT
-
- drivers/block/loop.c | 227 ++++++++++++++++++++++++++++++++++---------
- 1 file changed, 181 insertions(+), 46 deletions(-)
-
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index 674527d770dc..339b19671450 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -277,6 +277,13 @@ static int lo_read_simple(struct loop_device *lo, struct request *rq,
+ 	return 0;
+ }
+ 
++static int lo_rw_simple(struct loop_device *lo, struct request *rq, loff_t pos)
++{
++	if (req_op(rq) == REQ_OP_READ)
++		return lo_read_simple(lo, rq, pos);
++	return lo_write_simple(lo, rq, pos);
++}
++
+ static void loop_clear_limits(struct loop_device *lo, int mode)
+ {
+ 	struct queue_limits lim = queue_limits_start_update(lo->lo_queue);
+@@ -392,13 +399,13 @@ static void lo_rw_aio_complete(struct kiocb *iocb, long ret)
+ 	lo_rw_aio_do_completion(cmd);
+ }
+ 
+-static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+-		     loff_t pos, int rw)
++static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd, loff_t pos)
+ {
+ 	struct iov_iter iter;
+ 	struct req_iterator rq_iter;
+ 	struct bio_vec *bvec;
+ 	struct request *rq = blk_mq_rq_from_pdu(cmd);
++	int dir = (req_op(rq) == REQ_OP_READ) ? ITER_DEST : ITER_SOURCE;
+ 	struct bio *bio = rq->bio;
+ 	struct file *file = lo->lo_backing_file;
+ 	struct bio_vec tmp;
+@@ -440,7 +447,7 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+ 	}
+ 	atomic_set(&cmd->ref, 2);
+ 
+-	iov_iter_bvec(&iter, rw, bvec, nr_bvec, blk_rq_bytes(rq));
++	iov_iter_bvec(&iter, dir, bvec, nr_bvec, blk_rq_bytes(rq));
+ 	iter.iov_offset = offset;
+ 
+ 	cmd->iocb.ki_pos = pos;
+@@ -449,7 +456,7 @@ static int lo_rw_aio(struct loop_device *lo, struct loop_cmd *cmd,
+ 	cmd->iocb.ki_flags = IOCB_DIRECT;
+ 	cmd->iocb.ki_ioprio = IOPRIO_PRIO_VALUE(IOPRIO_CLASS_NONE, 0);
+ 
+-	if (rw == ITER_SOURCE)
++	if (dir == ITER_SOURCE)
+ 		ret = file->f_op->write_iter(&cmd->iocb, &iter);
+ 	else
+ 		ret = file->f_op->read_iter(&cmd->iocb, &iter);
+@@ -490,15 +497,11 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
+ 	case REQ_OP_DISCARD:
+ 		return lo_fallocate(lo, rq, pos, FALLOC_FL_PUNCH_HOLE);
+ 	case REQ_OP_WRITE:
+-		if (cmd->use_aio)
+-			return lo_rw_aio(lo, cmd, pos, ITER_SOURCE);
+-		else
+-			return lo_write_simple(lo, rq, pos);
+ 	case REQ_OP_READ:
+ 		if (cmd->use_aio)
+-			return lo_rw_aio(lo, cmd, pos, ITER_DEST);
++			return lo_rw_aio(lo, cmd, pos);
+ 		else
+-			return lo_read_simple(lo, rq, pos);
++			return lo_rw_simple(lo, rq, pos);
+ 	default:
+ 		WARN_ON_ONCE(1);
+ 		return -EIO;
 -- 
 2.47.0
 
