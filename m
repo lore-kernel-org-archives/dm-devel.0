@@ -1,101 +1,114 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D64C17E0;
-	Mon, 24 Mar 2025 20:23:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41F891DDA18
+	for <dm-devel@lists.linux.dev>; Mon, 24 Mar 2025 20:55:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742847805; cv=none; b=ksko+qZKeT/uZODDjjA+G7M+PhFwI7x8LD4P1BeH4SMABGCuuLrVoH3xSl5awrJXClluwyXFEX4FE/+06otwiAxuoTbROARBbGNjBmQPqZ/yLjsiIJHH70pLOyAZu34XoDcLX+3uLaxGwwQadx7p1l98gF7x46VZqSfBC+dRBws=
+	t=1742849714; cv=none; b=CRX3Lsk1TXxcXygaBo526OFdLN1bb07f4ES8ItCoHIgt4mGpqvhJlV4CpGvf8S9LWS8wiZeyzGBIb53/PzyWbbAmsqIevyrYjLZkkEPjKyj6m/kp67e88CBH7KHkeKrvi8nOCldTeAf/a+g0GjPJJgQhdKy2XNo0n3AbHFv/maM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742847805; c=relaxed/simple;
-	bh=oyUKXubP2QeX5/W43JfhhMzPCc/CGvuco4rN8IE+Z3k=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=RPAJY6VuI7SEJdebMnb+9gssyT4UoMvSG6NovOWk0f03+nJ24lXNnzB8/dZNbMjKtEwpLLmk5wIrM35mOOqqi8PxLVEhB0SMqruQW+7Yl7BL8nb/oA4j4+T9gZ5uONHvoYNSOnBuKorJ7s/BZDNW/AgdiPbllNWgoQelATFC7AU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bzMC3mEF; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1742849714; c=relaxed/simple;
+	bh=Eq1P4wevQMGmoBVReAo5bH0svaozpDLI7anGc1zf6f0=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=aoho7mmPwPdFHINGWGBgspXnOc3bCXjQha7oHjfPHlRiOYjssU4Gg25tsEkZVyWhNAXgHDyxNfQiL/rq8btc9EklAxpQk7UmsVJxBE3mdSCLSVK3Lm22J1cKgJDPLkGUoZddhrOcrDYQ4HhRCUzOZCVeRObRBeWSJM6Jk7h9/5M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LCvVbriK; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bzMC3mEF"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4DB46C4CEDD;
-	Mon, 24 Mar 2025 20:23:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1742847803;
-	bh=oyUKXubP2QeX5/W43JfhhMzPCc/CGvuco4rN8IE+Z3k=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=bzMC3mEFipY/1rVNUtYsh5pD/7a37NOfUlzQ4ENvlN6qsw0Cqep8ZkEioQeTOdPS4
-	 gCzKbiIgV+JA8DCVWuUuFtf3i+0T3mq8zRdB22PwMFR4BlGwpDJ61kDIBzsYcoA9y3
-	 0xE9CQSwsg3d8U26E4cIRG6l/NJVK3CFZNdfV3SXgFL1dbSaXiRHRIUNABgovBHqFe
-	 ssRVMPsj5v6t94MMiMW6e4pH2hEp+HJcU+hAeqA3Q6yNGv1f9zRwG4WAjmoM9LHdoc
-	 xrKHeFlhmCsYjUBg2rEh3VxYofHbqle7mMRupd05tfveHM8c6Ka2r8GWC5dVJx3zxD
-	 snlZwdyXb2D4Q==
-Date: Mon, 24 Mar 2025 16:23:22 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: John Meneghini <jmeneghi@redhat.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	dm-devel@lists.linux.dev, Samuel Petrovic <spetrovi@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [LSF/MM/BPF TOPIC] Multipath bio vs. request
-Message-ID: <Z-G_Oj7C4wmLaJnT@kernel.org>
-References: <6fc92ed7-5656-4cef-9f36-fd2d37e56e12@redhat.com>
- <Z-G-fAHSygeJuPBV@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LCvVbriK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1742849710;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=e8YLlaggAOH6av1/SrVgEFD3DRwpdRqueeKDpdRQ22s=;
+	b=LCvVbriKVVZk4DYWUWKbTzwe8aL8o+lCICDXtbPBoPJTVplV7Tdexj8AbAZh9W6hjFn6oD
+	17yO/F3cBRMHzJpTn14TwQA3ZwQUe7s25Cy52O1v2+67PLk9W6pYfh3OUclPhLfA4XZai9
+	+dTHH2vR5OjfhhtHL8BKi13IHH0u54Y=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-103-jv0XEXqxOPuet9eUOsB1iA-1; Mon,
+ 24 Mar 2025 16:55:08 -0400
+X-MC-Unique: jv0XEXqxOPuet9eUOsB1iA-1
+X-Mimecast-MFC-AGG-ID: jv0XEXqxOPuet9eUOsB1iA_1742849707
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C44A7180025E;
+	Mon, 24 Mar 2025 20:55:07 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6A251195609D;
+	Mon, 24 Mar 2025 20:55:07 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52OKt52o2523509
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 24 Mar 2025 16:55:06 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52OKt5512523508;
+	Mon, 24 Mar 2025 16:55:05 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 1/3] multipathd: monitor new multipath dev even if we can't update it
+Date: Mon, 24 Mar 2025 16:55:02 -0400
+Message-ID: <20250324205504.2523493-2-bmarzins@redhat.com>
+In-Reply-To: <20250324205504.2523493-1-bmarzins@redhat.com>
+References: <20250324205504.2523493-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Z-G-fAHSygeJuPBV@kernel.org>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: volrKTr2qMIRsWWZmueYYFUQ2s14Yj3FQu398-POmsM_1742849707
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Mon, Mar 24, 2025 at 04:20:12PM -0400, Mike Snitzer wrote:
-> Hi John,
-> 
-> On Sat, Mar 22, 2025 at 02:38:29PM -0400, John Meneghini wrote:
-> > I will be presenting on this topic at LSF/MM/BPF this year, in the IO track.
-> > 
-> > Here's an introduction for my talk.
-> > 
-> > DMMP currently supports two different kernel IO interfaces: the BIO interface[1] (struct bio) and the Request interface[2] (struct request).
-> > By default DMMP uses the Request interface and over the years much work has been done test and improve the performance of the DMMP Request
-> > interface. DMMP can also be manually configured to use the BIO interface. The DMMP BIO interface is supported but little work has been done
-> > to test and improve its performance. DMMP is currently the only upstream component which continues to use the Request interface for submitting IO.
-> 
-> As I clarified at lunch today, your "DMMP is currently the only
-> upstream component which continues to use the Request interface for
-> submitting IO." makes no sense to me.  The request-based DM multipath
-> target is a blk-mq driver.  It just acts like most blk-mq drivers.
-> 
-> What is different is DM core's request-based code will clone each
-> request that gets submitted to the request-based DMMP device.  And
-> then when the request is submitted to an underlying path it gets
-> directly inserted in the unlering blk-mq request-queue for that path.
+If a multipath device was created by the multipath command, multipathd
+might not agree with how the device was created. ev_add_map() can reload
+the device with a different table by calling add_map_without_path() ->
+update_map(). If this reloading of the map failed, multipathd was simply
+ignoring the multipath device, even though it still existed.
 
-Sorry for typoe: s/unlering/underlying/
+One way that reloading can fail is if a path that multipathd already has
+initialized goes offline. If a multipath device is created by the
+multipath command while the path is offline, it will not use the offline
+path, since multipath won't be able to get the necessary pathinfo.
+However, multipathd will already have the pathinfo for the path, and may
+not even know that it's offline, since the path is an orphan. When it
+tries to reload the device, it will include the offline path, and the
+reload will fail.
+
+Instead of ignoring the device if it can't reload it, multipathd should
+just montior it as it is. When the path device is no longer offline, it
+can be added back to the multipath device by calling
+"multipathd reconfigure" or "multipathd add path <path>".
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index e63b6aa7..7aaae773 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -679,7 +679,7 @@ retry:
+ 	}
  
-> So in those aspects request-based DM core and DM multipath are unique
-> and they do require block interfaces that only benefit DMMP -- but
-> that has _always_ been the case (nothing else ever needed to clone
-> requests before submitting them).
-> 
-> > At the ALPSS 2024 conference last October we discussed the possibility of deprecating and eventually removing support the Request interface
-> > as kernel API. Such a change could impact DMMP so I was asked if Red Hat would be willing to support the effort by measuring the performance
-> > of DMMP's BIO interface[3] and comparing it to its Request based performance. Having such a comparative performance analysis would be very helpful
-> > in determining what further changes might be needed to move DMMP away from using the Request interface. This would help with the overall effort
-> > to improve BIO interface performance and eventually remove support for Request based IO as a kernel API.
-> > 
-> > In this presentation I will share the preliminary results of Red Hat's DMMP BIO vs Request performance tests[4] and discuss what the next possible
-> > steps could be for moving forward.
-> > 
-> > The tests and performance graphs in this presentation were developed and run by Samuel Petrovic <spetrovi@redhat.com>.
-> > Credit goes to Samuel for creating these performance tests and many thanks to Benjamin Marzinski <bmarzins@redhat.com>,
-> > Mikulas Patocka <mpatocka@redhat.com> and others on the Red Hat DMMP and Performance teams who contributed to this work.
-> > 
-> > [1] https://lwn.net/Articles/736534/
-> > [2] https://lwn.net/Articles/738449/
-> > [3] https://lore.kernel.org/linux-scsi/643e61a8-b0cb-4c9d-831a-879aa86d888e@redhat.com
-> > [4] https://people.redhat.com/jmeneghi/LSFMM_2025/DMMP_BIOvsRequest/
-> 
-> Other useful context is the 2007 paper that provides an overview of
-> why dm-multipath was switched from bio-based to request-based:
-> https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf
-> 
+ fail:
+-	if (new_map && (retries < 0 || wait_for_events(mpp, vecs))) {
++	if (new_map && wait_for_events(mpp, vecs)) {
+ 		condlog(0, "%s: failed to create new map", mpp->alias);
+ 		remove_map(mpp, vecs->pathvec, vecs->mpvec);
+ 		return 1;
+-- 
+2.48.1
+
