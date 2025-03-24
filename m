@@ -1,116 +1,96 @@
-Received: from mail-qk1-f172.google.com (mail-qk1-f172.google.com [209.85.222.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65AAA25D536
-	for <dm-devel@lists.linux.dev>; Mon, 24 Mar 2025 14:50:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D96671C84C6;
+	Mon, 24 Mar 2025 20:20:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742827819; cv=none; b=Fasdo4A0VRN7W2e32fW7SMZbtJQdUyVTkHg2UzGbMmZpRMJstJESaCCbCBj914CQiGAYhXyLiZAFxlVdRI97xK5YlvhnlWoAp/1fsNJLJA4FF4dn5aIiK9UZd+tVguf5S8voZUZXI9Bo9laSMApi08PBwLDKkSXB3C5T9QZaCuY=
+	t=1742847614; cv=none; b=nJBoMtuorf5yUoRJ+//BjK3SkwLXLGS4OhbgISwZkkOIELi+uzBLuUhZgn8DV0z9hJQhVto64F2QSnnzQ9d1ca25q1NbUGV+9GhQg3hMrPHWSmF3fo6Sc8D/sb9r8DXUAFwfTWO+BSqEoU81GO9OZmlXyf4V+AQD+Tz9FX7jwcY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742827819; c=relaxed/simple;
-	bh=HleYglh6SNoemWJqyHcoVtw2MuympvSfAw3VGgl39t0=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=k2teBxnsW/DfzDUnU1Rqv8CWvQswxMGfBsacS6XfkzDNSmsQgcnn7pdhzNHDgcDY1KyjzQ1UMaOwuCcaELrquaAdIZIkuygAB+SbHMsIVOcq1zpmcXu/DoieLO2B1IIEeZwU9Lzz2zUkni23YqBVgHsbpNEejFO/g+VWWxcIdAA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=Pd4O56q8; arc=none smtp.client-ip=209.85.222.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1742847614; c=relaxed/simple;
+	bh=TqmWZLLYJeCzJ8r4wDZbpJYGwztrJVpmgOeDMET6YS0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=qKqJ6dkAiHA2SweJqGfFB3ov76u7tyD2Xie79ISsNh2DpxRbThJFdwi71v6tmHx2S2lmhoIJ6oL+9e863cA9HYN7Y7687YZodNzwNWaYKp7ffnh8fLwjAyXsCfKq7FKuQMkp013ywNp9gxD/2/ioa/pBJkaQQOsGd7wL8fDm+Go=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ArbbxUES; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="Pd4O56q8"
-Received: by mail-qk1-f172.google.com with SMTP id af79cd13be357-7c55500d08cso436959685a.0
-        for <dm-devel@lists.linux.dev>; Mon, 24 Mar 2025 07:50:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1742827816; x=1743432616; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:from:subject:user-agent:mime-version:date:message-id:from:to
-         :cc:subject:date:message-id:reply-to;
-        bh=WJpqac8FkfRl4dKUqOI+g7NBf1RZg0PdmYi66ba3tmk=;
-        b=Pd4O56q8cu9DwqsmwAYda45PU0A2Tv+RkhCx6wPvY1cjZdiOKD2IXRZNFnZrUCyt7l
-         pAxg8Xcqlyu0Z3L9mGpPpyMTGQhacoxEgy4GlECj+9DLw2lLTeX4QHCArXSNT1J1y4TS
-         9hFaI1IXaLMVRMUJNA+B8MQota9znRl8xnCx1qQjwKhRDbLYfzC9zGqdotj9Iu5oxZwX
-         mjPSebxrNr02+0lFyZ0/deuwHll113ZWGJQov0JbXl8M86FNqQFxq9G+9slIL0ctVrcg
-         Yy3Z1Av1RUC5n0NvVMTxfCRbf2XSdt3oe6QLN5mXZJghhtybD/0FJNbjNH5zGlfMAUq0
-         xVrg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1742827816; x=1743432616;
-        h=content-transfer-encoding:in-reply-to:content-language:references
-         :cc:to:from:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=WJpqac8FkfRl4dKUqOI+g7NBf1RZg0PdmYi66ba3tmk=;
-        b=ZkrAtU0rOiP7gbNrQ0idMbWYoSD/qgZ0K/StJ10fOzfd/z3cFD/RAWdJWZyaqeUSzA
-         Qlq9MD2UMRjkZhZb7VMJPVCzWTrV7rq93IGMJT+zqC+pjJbZOLUs2wz7Je73eanizPp2
-         gYPToCIaxynOsR88RITOd3zLsehx7dZ8mrJVDL7li3MZjgGV8xpIXeIHUfKvb9IeQVG2
-         j70rJBXP9+EI4g8xfgWybn604tDKRonrj1btezlOxK1qKgTNOpUv6c5XJzrgOrPs2NrB
-         aTWZ/yRsfI+EoTzOzhCsY2r1la9Lq0bT82/LiqLiFEfow+T9poYGiQ4KMbszy1p8U+GA
-         vS4Q==
-X-Forwarded-Encrypted: i=1; AJvYcCXL/7WQOfWNscZwKDROKN+qBRsppFfzeCXRECKVdaK7oX+Wpgr3pRxFZkQeOGWgaxaGx+crmFnnPQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx7PaG282sqog4w6WeNcqInO+sgaAB4VTNfS+WwS805pXLhoaIr
-	ZnWWoCIs8jrZA52YnnNThRjjuFotICy5vg6qCq+lie0dnIurMM/qXKY8K+TTHxQ=
-X-Gm-Gg: ASbGncts4ppVjU1Jo6oRYzEmiuMFTH7QApEmGzfIgMRZa4YtK+TexeX9BGiATttEP9d
-	i9sWHEuX0ECmAWVa62nEivopeM6O9SLIBoxtIWk5nv7e0Gol8cFpHSeCzgeCKK6H/fK2fIuAv34
-	F5wVohs75qIl8e1nxvTB4fqDtThJNaEnLQF0sIyfuhWpIeBE1SuLlzWhECI6ouIinchr9FqI9jN
-	krmiozh48LQCV9FROgW5AWnaYRsqmpwEzOAtu5/XvrK/yJ2699raEFbIhQpdacyWuVy7haMIIP6
-	ITA1fEodh52T//pKdex+jCsS9Zjh9YENCaZuRSYowTMkFWdiFbkz
-X-Google-Smtp-Source: AGHT+IFd6Qt3Tu+MlBCaaufmT6WIx1BbRwRxZfYtd4svimdm5Al9jd5KGVJUXvCyTu5MAy37bMvQKg==
-X-Received: by 2002:a05:620a:3906:b0:7c5:4c44:db9a with SMTP id af79cd13be357-7c5ba1ee96emr1722409085a.37.1742827815673;
-        Mon, 24 Mar 2025 07:50:15 -0700 (PDT)
-Received: from [172.22.32.183] ([99.209.85.25])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-7c5b935f1c1sm516602285a.117.2025.03.24.07.50.14
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 24 Mar 2025 07:50:15 -0700 (PDT)
-Message-ID: <aed4f9cd-863b-44b8-bc24-68ac67eb75f2@kernel.dk>
-Date: Mon, 24 Mar 2025 08:50:14 -0600
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ArbbxUES"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 28243C4CEDD;
+	Mon, 24 Mar 2025 20:20:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1742847613;
+	bh=TqmWZLLYJeCzJ8r4wDZbpJYGwztrJVpmgOeDMET6YS0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=ArbbxUESUzuKg9PXrJ0DJnpd/eihLzt6kzalY+i/VDscWb3KB7PqD2HFn6n4Ly6TF
+	 d6q0X8Nbs8W+e6s6syqty5fyJNhs2ExHGwsBjRmWpKDtyQbZ9/NpUK84suHdnrh3CU
+	 +U5iCscuIidYDFpfBAEP20TSGGfMHo9WAmzfWRiqeppdfmU7wEJ8CoJkCpczJ0Lg0W
+	 0p8WaEG7Pdlg8ZhOVkTH38GhbvSQhY8vQEd/xUxhOjVpiQVyENI+nAJ6Xit/sUzNbV
+	 1qXJ+jDU6kWvKHgAuVzK/Ilxc7sfvbjM5Ph05ZlZcWQzwEWTxz0Rc/SZtMwZs+924a
+	 T6sliejenEPVg==
+Date: Mon, 24 Mar 2025 16:20:12 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: John Meneghini <jmeneghi@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+	dm-devel@lists.linux.dev, Samuel Petrovic <spetrovi@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [LSF/MM/BPF TOPIC] Multipath bio vs. request
+Message-ID: <Z-G-fAHSygeJuPBV@kernel.org>
+References: <6fc92ed7-5656-4cef-9f36-fd2d37e56e12@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH V3 0/5] loop: improve loop aio perf by IOCB_NOWAIT
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, Ming Lei <ming.lei@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Jooyung Han <jooyung@google.com>,
- Mike Snitzer <snitzer@kernel.org>, zkabelac@redhat.com,
- dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>
-References: <20250322012617.354222-1-ming.lei@redhat.com>
- <174266520675.800027.959344570613955585.b4-ty@kernel.dk>
-Content-Language: en-US
-In-Reply-To: <174266520675.800027.959344570613955585.b4-ty@kernel.dk>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <6fc92ed7-5656-4cef-9f36-fd2d37e56e12@redhat.com>
 
-On 3/22/25 11:40 AM, Jens Axboe wrote:
-> 
-> On Sat, 22 Mar 2025 09:26:09 +0800, Ming Lei wrote:
->> This patchset improves loop aio perf by using IOCB_NOWAIT for avoiding to queue aio
->> command to workqueue context, meantime refactor lo_rw_aio() a bit.
->>
->> In my test VM, loop disk perf becomes very close to perf of the backing block
->> device(nvme/mq virtio-scsi).
->>
->> And Mikulas verified that this way can improve 12jobs sequential rw io by
->> ~5X, and basically solve the reported problem together with loop MQ change.
->>
->> [...]
-> 
-> Applied, thanks!
-> 
-> [1/5] loop: simplify do_req_filebacked()
->       commit: 04dcb8a909b5b68464ec5ccb123e9614f3ac333d
-> [2/5] loop: cleanup lo_rw_aio()
->       commit: 832c9fec8e2314170c5451023565b94f05477aa7
-> [3/5] loop: move command blkcg/memcg initialization into loop_queue_work
->       commit: a23d34a31758000b2b158288226bf24f96d8864d
-> [4/5] loop: try to handle loop aio command via NOWAIT IO first
->       commit: dfc77a934a3acdb13dadf237b7417c6a31b19da8
-> [5/5] loop: add hint for handling aio via IOCB_NOWAIT
->       commit: 4c3f4bad7a6e9022489a9f8392f7147ed3ce74b1
+Hi John,
 
-Just a heads-up that I had applied this for testing, not necessarily to
-get included. To clear up that confusion, I have retained patches 1-3
-for now, and then we can queue up 4-5/5 later when everybody is happy
-with them.
+On Sat, Mar 22, 2025 at 02:38:29PM -0400, John Meneghini wrote:
+> I will be presenting on this topic at LSF/MM/BPF this year, in the IO track.
+> 
+> Here's an introduction for my talk.
+> 
+> DMMP currently supports two different kernel IO interfaces: the BIO interface[1] (struct bio) and the Request interface[2] (struct request).
+> By default DMMP uses the Request interface and over the years much work has been done test and improve the performance of the DMMP Request
+> interface. DMMP can also be manually configured to use the BIO interface. The DMMP BIO interface is supported but little work has been done
+> to test and improve its performance. DMMP is currently the only upstream component which continues to use the Request interface for submitting IO.
 
--- 
-Jens Axboe
+As I clarified at lunch today, your "DMMP is currently the only
+upstream component which continues to use the Request interface for
+submitting IO." makes no sense to me.  The request-based DM multipath
+target is a blk-mq driver.  It just acts like most blk-mq drivers.
+
+What is different is DM core's request-based code will clone each
+request that gets submitted to the request-based DMMP device.  And
+then when the request is submitted to an underlying path it gets
+directly inserted in the unlering blk-mq request-queue for that path.
+
+So in those aspects request-based DM core and DM multipath are unique
+and they do require block interfaces that only benefit DMMP -- but
+that has _always_ been the case (nothing else ever needed to clone
+requests before submitting them).
+
+> At the ALPSS 2024 conference last October we discussed the possibility of deprecating and eventually removing support the Request interface
+> as kernel API. Such a change could impact DMMP so I was asked if Red Hat would be willing to support the effort by measuring the performance
+> of DMMP's BIO interface[3] and comparing it to its Request based performance. Having such a comparative performance analysis would be very helpful
+> in determining what further changes might be needed to move DMMP away from using the Request interface. This would help with the overall effort
+> to improve BIO interface performance and eventually remove support for Request based IO as a kernel API.
+> 
+> In this presentation I will share the preliminary results of Red Hat's DMMP BIO vs Request performance tests[4] and discuss what the next possible
+> steps could be for moving forward.
+> 
+> The tests and performance graphs in this presentation were developed and run by Samuel Petrovic <spetrovi@redhat.com>.
+> Credit goes to Samuel for creating these performance tests and many thanks to Benjamin Marzinski <bmarzins@redhat.com>,
+> Mikulas Patocka <mpatocka@redhat.com> and others on the Red Hat DMMP and Performance teams who contributed to this work.
+> 
+> [1] https://lwn.net/Articles/736534/
+> [2] https://lwn.net/Articles/738449/
+> [3] https://lore.kernel.org/linux-scsi/643e61a8-b0cb-4c9d-831a-879aa86d888e@redhat.com
+> [4] https://people.redhat.com/jmeneghi/LSFMM_2025/DMMP_BIOvsRequest/
+
+Other useful context is the 2007 paper that provides an overview of
+why dm-multipath was switched from bio-based to request-based:
+https://www.kernel.org/doc/ols/2007/ols2007v2-pages-235-244.pdf
