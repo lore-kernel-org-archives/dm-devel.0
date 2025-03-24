@@ -1,63 +1,64 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A9FA1DB933
-	for <dm-devel@lists.linux.dev>; Sun, 23 Mar 2025 06:28:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 752971A3173
+	for <dm-devel@lists.linux.dev>; Mon, 24 Mar 2025 11:09:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742711331; cv=none; b=RsF2yvKDPUfZaw5YY8Jf4UkZhiQAzrvFHhjH8VAej4v2n2oyIEuoDTBjjV0wLJl4z+gAFhUp7OMHfQAR2/pwUq8Wp2blW0TIWq4IjubB9Cl9JeMkfSjP/97BlEg70UB7yCrExZs4zPsdNU9a5sWtuRVnlo0FzppQpYQTCTuyAxo=
+	t=1742814570; cv=none; b=QycULtKd74Ox4t9gJNOOrSBow3gABP5pUT8tWnj9j9XdI36KBKgBejvVM9FkfLsyIUJbKzsGhWv+MTJSA5wBoVEQRyhzT9kiuvDEz0zwBhoh/m9WeW0mWxas05Ad9B6Zp0FJhRBXwRB5JeZWjixK5MWnpPbQkMrdkzE9YFX4kSE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742711331; c=relaxed/simple;
-	bh=eNzYKDyg4tx3rs/SKQW6IS88UUw917U8STmq6WUgxRs=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=E6ZXFvTyaZ73jC1L8aQyuJCFX6mHIu7YchVl1iHcZSavAAJ8Bnm5+PzWi6L4vvz+rLC2e0MAFm1Ke7Ii0WJ5ls2I4ASIcnbfIga3IyiLAaK5BMMiTgQwr5UrOCkmL058AopgSUHraoRZt3Z9O+awG+V+bbZWcEsrUjDoUiYSubs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 2802967373; Sun, 23 Mar 2025 07:28:38 +0100 (CET)
-Date: Sun, 23 Mar 2025 07:28:37 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, snitzer@kernel.org, mpatocka@redhat.com,
-	dm-devel@lists.linux.dev, Damien Le Moal <dlemoal@kernel.org>
-Subject: Re: [PATCH] dm-delay: support zoned devices
-Message-ID: <20250323062837.GA30617@lst.de>
-References: <20250321071816.1674943-1-hch@lst.de> <Z92naQRO2DrpMnXE@redhat.com>
+	s=arc-20240116; t=1742814570; c=relaxed/simple;
+	bh=ah3dw0xZMsr6yJFEtxeQyK3cGHYdEasDo0X3AZYn2/8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=GSwUt+vGwLfXTHKyYPxnvL+ZFmgItDtMjlO3IuAyj6MmMRe0EK6V9G/iwxpZXFHToBojXxAg5/Fkc8V5vj8YcLK9xgVidCgO3Nrsiyg7n9xRGGvkZ6uNxuCTql8ApTHmfCxhnhkD4SyP+xlK2ar3+nDmC572mxwLkvyaYrSu7m0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=elSM82Qf; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="elSM82Qf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7E915C4CEDD;
+	Mon, 24 Mar 2025 11:09:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1742814569;
+	bh=ah3dw0xZMsr6yJFEtxeQyK3cGHYdEasDo0X3AZYn2/8=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=elSM82QftUHe1C6M3esTDeEyEouy5sN1u2cIhKqAhbgTGLK5bqjRRF5dQ1luv8RLN
+	 CNrA6XgDcaronUfu8T5zvh4nXCpksgMQWefN0DDys1PHgpW8QrJxvOZdDjrxjQb0+D
+	 PyMCR9NzE5DQ97uvY+l9b1pV4eZjxjwiQ2L4dHqiQCNsYpzYI9iHtOwu+XCoORYeYG
+	 d7Ww9ue7o7xxa4Ad54eiRGDda+LIfB/2qPWqgz5eOsEobcfD1jLlcUMy5W6lN9VjZg
+	 tnLpcMZucYY3ZV2SbgFgAHmWs0gTo/CVQYIfPK/n2tYQOfmrT26uW4zF13htgi3u/3
+	 RMDTReyhy5RVw==
+Message-ID: <d02b81ee-6416-469f-99e3-c5510b9c9904@kernel.org>
+Date: Mon, 24 Mar 2025 07:09:28 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <Z92naQRO2DrpMnXE@redhat.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm-delay: support zoned devices
+To: Christoph Hellwig <hch@lst.de>, snitzer@kernel.org, mpatocka@redhat.com
+Cc: dm-devel@lists.linux.dev
+References: <20250321071816.1674943-1-hch@lst.de>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <20250321071816.1674943-1-hch@lst.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Fri, Mar 21, 2025 at 01:52:41PM -0400, Benjamin Marzinski wrote:
-> On Fri, Mar 21, 2025 at 08:18:16AM +0100, Christoph Hellwig wrote:
-> > Add support for zoned device by passing through report_zoned to the
-> > underlying read device.
-> > 
-> > This is required to make enable xfstests xfs/311 on zoned devices.
+On 2025/03/21 3:18, Christoph Hellwig wrote:
+> Add support for zoned device by passing through report_zoned to the
+> underlying read device.
 > 
-> On suspend, delay_presuspend() stops delaying and it doesn't guarantee
-> that new bios coming in will always be submitted after the delayed bios
-> it is flushing. That can mess things up for zoned devices. I didn't
-> check if that matters for the specific test. Setting
+> This is required to make enable xfstests xfs/311 on zoned devices.
 > 
-> ti->emulate_zone_append = true;
-> 
-> would enforce write ordering, at the expense of adding a whole other
-> layer of delays to zoned dm-delay devices. Since this isn't really
-> useful outside of testing, I think that could be acceptable if necessary
-> (it would require us to support table reloads of zoned devices with
-> emulated zone append, since tests often want to change the delay).
-> However it would probably be better to see if we can just make dm-delay
-> preserve write ordering during a suspend.
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-My use case is all about using zone append, so emulating it would be
-a bit counter productive, but I'll give it a spin.  I doubt that this
-test is very timing critical.
+Looks good to me.
 
+Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+
+
+-- 
+Damien Le Moal
+Western Digital Research
