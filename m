@@ -1,68 +1,40 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88AA32620FC
-	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 12:24:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0070D1A5B90
+	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 17:43:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742905448; cv=none; b=YdeOA8MqPlZjV235VPz9ihUL9gOVi3kTk0p4YthE6qtqESX5bwWyJ3pHnQu0JNzpddnWjtNOFoGKtWop0aeprxlbY8J1ZnT/hb4d4ZbW/JXX2euF4SoCyCOUJLtCnRaf9yAAB1+O4vqXOh+W7M1/KvpJp9ly9TOIH73hWy4XvM8=
+	t=1742924601; cv=none; b=EunVApxXDXClZbDVhnBEeWLRwaEPd4uYXDOtb+MDmlrxvE5h4Bavnjt69HtHzrKElscI7YvgyqFkDocNPU9BUkXocYg9wR8Y4OpXdmJPbhmS1JWHCBXJPB0DLYO3xig12bZhPjgz6dw+z+yK+CcQmU0/mIrRU1+REw1hNau23wM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742905448; c=relaxed/simple;
-	bh=wn1WBoIMzL15p320nXFa8dKndRoz/qSGoUe1u5eIMCQ=;
+	s=arc-20240116; t=1742924601; c=relaxed/simple;
+	bh=kGx3rKSGENU9gKOiB29pU2/4zwJ79Y6b4hwKx/kZl+g=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=aRNIaVxM5Ne6k4KHGGHeHNNNfZv+67OPfhqOij9kMvfnPgXGxUWJAgvpF0NDaNdPw311XY2fhGzqMGv7rzJGlhogjxN1Rr+W70YHReQ9lj7AtWrijEN4UkLKlYbTKhkkXLBGZRlrgi23vOhLTTB+ZNOFI+2TSkjx01wu/Ab1iTs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=epTnfdWE; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=RGHlTMVtyzGRzyO7b4qUJ2Dk4k/i0M08hTKI0B4fOp04YHgeuXK/3/AW9AkAxCRPiNafNCM/xWvudsWZtRsDxcL4d82pU6cDzUcU3+A+Etoik4zcd/LqosFdn6v7kY0g5VUCz9k63fR1YzQHbztHDXoj0wZYqU6K+h8V6+Kb04M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GIA8jETf; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="epTnfdWE"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742905445;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8FZoxiXkYnN/E/dxEvlD3+meuAIyG+ElT4G9u+2PW1g=;
-	b=epTnfdWEENwwYyAYHojLmn8qP+0Y6tOu92nLJJ9dlTuojm3Z3uU89M60eDUyFcH2ZpgWDL
-	VDEfBbn8yPlYpku/dc7fu/8RofQd4QzU+qeaJ7qmUJkm1TPTPlzNYvWcI4I5Acag3yI8Vr
-	tbsu2fWuJJvpHaarR6aJOyi5bLmgYtA=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-456-1sbbKYNFPeeJZ9r7Jdz1Wg-1; Tue,
- 25 Mar 2025 08:24:00 -0400
-X-MC-Unique: 1sbbKYNFPeeJZ9r7Jdz1Wg-1
-X-Mimecast-MFC-AGG-ID: 1sbbKYNFPeeJZ9r7Jdz1Wg_1742905438
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B1EBC180049D;
-	Tue, 25 Mar 2025 12:23:57 +0000 (UTC)
-Received: from fedora (unknown [10.72.120.3])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 397CA180A803;
-	Tue, 25 Mar 2025 12:23:48 +0000 (UTC)
-Date: Tue, 25 Mar 2025 20:23:43 +0800
-From: Ming Lei <ming.lei@redhat.com>
-To: Dave Chinner <david@fromorbit.com>
-Cc: Christoph Hellwig <hch@infradead.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <axboe@kernel.dk>,
-	Jooyung Han <jooyung@google.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Heinz Mauelshagen <heinzm@redhat.com>, zkabelac@redhat.com,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org
-Subject: Re: [PATCH] the dm-loop target
-Message-ID: <Z-KgT3Xine0kcVo-@fedora>
-References: <Z9ATyhq6PzOh7onx@fedora>
- <Z9DymjGRW3mTPJTt@dread.disaster.area>
- <Z9FFTiuMC8WD6qMH@fedora>
- <7b8b8a24-f36b-d213-cca1-d8857b6aca02@redhat.com>
- <Z9j2RJBark15LQQ1@dread.disaster.area>
- <Z9knXQixQhs90j5F@infradead.org>
- <Z9k-JE8FmWKe0fm0@fedora>
- <Z9u-489C_PVu8Se1@infradead.org>
- <Z9vGxrPzJ6oswWrS@fedora>
- <Z-KCPvmBO3AeuiDf@dread.disaster.area>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GIA8jETf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 55666C4CEE4;
+	Tue, 25 Mar 2025 17:43:20 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1742924600;
+	bh=kGx3rKSGENU9gKOiB29pU2/4zwJ79Y6b4hwKx/kZl+g=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=GIA8jETf3pUMBpoLERsYej42fLQyEKBWEPAMiWAIATRrOUDgey9W7uCKvv284gXav
+	 LlLZ8xKiEZyicbGTmzcPGsw+iBOMftXs13zvalf7aJTrqVRs6BIQRMmFZ/5aBZjkhh
+	 6Ayb/WIzqNbVaw7eke6O3xHROwTOh814cBHK233XgZtdhufZOY5CxG0Hqf6XxumY8x
+	 bNrFaQks7tXhZGvptvYOkWlU7nybzDVh5Csnm1HS0F/K0uR/WesNs9uh6Lmmb+fvgh
+	 vpy04qb+HWq3g6CBBLtzqPWOSHiJGddIRAQRhd5YhCk5QG6YLzsXmege7DR50rcifo
+	 LM/71wuCzjcZA==
+Date: Tue, 25 Mar 2025 17:43:18 +0000
+From: Eric Biggers <ebiggers@kernel.org>
+To: LongPing Wei <weilongping@oppo.com>
+Cc: snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
+	guoweichao@oppo.com, Eran Messeri <eranm@google.com>
+Subject: Re: [PATCH] dm-verity: support block number limits for different
+ ioprio classes
+Message-ID: <20250325174318.GA559858@google.com>
+References: <20250325104942.1170388-1-weilongping@oppo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,110 +43,129 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <Z-KCPvmBO3AeuiDf@dread.disaster.area>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+In-Reply-To: <20250325104942.1170388-1-weilongping@oppo.com>
 
-On Tue, Mar 25, 2025 at 09:15:26PM +1100, Dave Chinner wrote:
-> On Thu, Mar 20, 2025 at 03:41:58PM +0800, Ming Lei wrote:
-> > On Thu, Mar 20, 2025 at 12:08:19AM -0700, Christoph Hellwig wrote:
-> > > On Tue, Mar 18, 2025 at 05:34:28PM +0800, Ming Lei wrote:
-> > > > On Tue, Mar 18, 2025 at 12:57:17AM -0700, Christoph Hellwig wrote:
-> > > > > On Tue, Mar 18, 2025 at 03:27:48PM +1100, Dave Chinner wrote:
-> > > > > > Yes, NOWAIT may then add an incremental performance improvement on
-> > > > > > top for optimal layout cases, but I'm still not yet convinced that
-> > > > > > it is a generally applicable loop device optimisation that everyone
-> > > > > > wants to always enable due to the potential for 100% NOWAIT
-> > > > > > submission failure on any given loop device.....
-> > > > 
-> > > > NOWAIT failure can be avoided actually:
-> > > > 
-> > > > https://lore.kernel.org/linux-block/20250314021148.3081954-6-ming.lei@redhat.com/
-> > > 
-> > > That's a very complex set of heuristics which doesn't match up
-> > > with other uses of it.
-> > 
-> > I'd suggest you to point them out in the patch review.
+Hi LongPing,
+
+On Tue, Mar 25, 2025 at 06:49:43PM +0800, LongPing Wei wrote:
+> Calling verity_verify_io in bh for IO of all sizes is not suitable for
+> embedded devices. From our tests, it can improve the performance of 4K
+> synchronise random reads.
+> For example:
+> ./fio --name=rand_read --ioengine=psync --rw=randread --bs=4K \
+>  --direct=1 --numjobs=8 --runtime=60 --time_based --group_reporting \
+>  --filename=/dev/block/mapper/xx-verity
 > 
-> Until you pointed them out here, I didn't know these patches
-> existed.
+> But it will degrade the performance of 512K synchronise sequential reads
+> on our devices.
+> For example:
+> ./fio --name=read --ioengine=psync --rw=read --bs=512K --direct=1 \
+>  --numjobs=8 --runtime=60 --time_based --group_reporting \
+>  --filename=/dev/block/mapper/xx-verity
 > 
-> Please cc linux-fsdevel on any loop device changes you are
-> proposing, Ming. It is as much a filesystem driver as it is a block
-> device, and it changes need review from both sides of the fence.
-
-Please see the patchset:
-
-https://lore.kernel.org/linux-block/20250322012617.354222-1-ming.lei@redhat.com/
-
+> A parameter array is introduced by this change. And users can modify the
+> default config by /sys/module/dm_verity/parameters/use_bh_blocks.
 > 
-> > > > > Yes, I think this is a really good first step:
-> > > > > 
-> > > > > 1) switch loop to use a per-command work_item unconditionally, which also
-> > > > >    has the nice effect that it cleans up the horrible mess of the
-> > > > >    per-blkcg workers.  (note that this is what the nvmet file backend has
-> > > > 
-> > > > It could be worse to take per-command work, because IO handling crosses
-> > > > all system wq worker contexts.
-> > > 
-> > > So do other workloads with pretty good success.
-> > > 
-> > > > 
-> > > > >    always done with good result)
-> > > > 
-> > > > per-command work does burn lots of CPU unnecessarily, it isn't good for
-> > > > use case of container
-> > > 
-> > > That does not match my observations in say nvmet.  But if you have
-> > > numbers please share them.
-> > 
-> > Please see the result I posted:
-> > 
-> > https://lore.kernel.org/linux-block/Z9FFTiuMC8WD6qMH@fedora/
+> The default limits for NONE/RT/BE/IDLE is set to UINT_MAX to keep the
+> original behaviour.
 > 
-> You are arguing in circles about how we need to optimise for static
-> file layouts.
+> Signed-off-by: LongPing Wei <weilongping@oppo.com>
+> ---
+>  drivers/md/dm-verity-target.c | 19 ++++++++++++++++++-
+>  1 file changed, 18 insertions(+), 1 deletion(-)
 > 
-> Please listen to the filesystem people when they tell you that
-> static file layouts are a -secondary- optimisation target for loop
-> devices.
-> 
-> The primary optimisation target is the modification that makes all
-> types of IO perform better in production, not just the one use case
-> that overwrite-specific IO benchmarks exercise.
-> 
-> If you want me to test your changes, I have a very loop device heavy
-> workload here - it currently creates about 300 *sparse* loop devices
-> totalling about 1.2TB of capacity, then does all sorts of IO to them
-> through both the loop devices themselves and filesystems created on
-> top of the loop devices. It typically generates 4-5GB/s of IO
-> through the loop devices to the backing filesystem and it's physical
-> storage.
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index e86c1431b108..1e0d0920d6a9 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -30,6 +30,7 @@
+>  #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
+>  
+>  #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
+> +#define DM_VERITY_USE_BH_DEFAULT_BLOCKS	UINT_MAX
+>  
+>  #define DM_VERITY_MAX_CORRUPTED_ERRS	100
+>  
+> @@ -49,6 +50,15 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
+>  
+>  module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
+>  
+> +static unsigned int dm_verity_use_bh_blocks[4] = {
+> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_NONE
+> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_RT
+> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_BE
+> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS		// IOPRIO_CLASS_IDLE
+> +};
+> +
+> +module_param_array_named(use_bh_blocks, dm_verity_use_bh_blocks, uint, NULL, 0644);
+> +
+>  static DEFINE_STATIC_KEY_FALSE(use_bh_wq_enabled);
+>  
+>  /* Is at least one dm-verity instance using ahash_tfm instead of shash_tfm? */
+> @@ -652,6 +662,12 @@ static void verity_bh_work(struct work_struct *w)
+>  	verity_finish_io(io, errno_to_blk_status(err));
+>  }
+>  
+> +static inline bool verity_use_bh(unsigned int n_blocks, unsigned short ioprio)
+> +{
+> +	return ioprio <= IOPRIO_CLASS_IDLE &&
+> +		n_blocks <= READ_ONCE(dm_verity_use_bh_blocks[ioprio]);
+> +}
+> +
+>  static void verity_end_io(struct bio *bio)
+>  {
+>  	struct dm_verity_io *io = bio->bi_private;
+> @@ -664,7 +680,8 @@ static void verity_end_io(struct bio *bio)
+>  		return;
+>  	}
+>  
+> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq) {
+> +	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq &&
+> +		verity_use_bh(io->n_blocks, IOPRIO_PRIO_CLASS(bio->bi_ioprio))) {
+>  		INIT_WORK(&io->bh_work, verity_bh_work);
+>  		queue_work(system_bh_wq, &io->bh_work);
 
-The patchset does cover the sparse backfile, and I also provide one test
-case in which one completely sparse file is used, and make sure that
-there isn't regression in this case.
+Thanks for working on this and sending a patch!
 
-This patchset is supposed to address Mikulas's case of stable FS mapping,
-meantime without introducing regression on other cases, such as
-the sparse backing file.
+Just for some background: "try_verify_in_tasklet" was originally developed for
+use in Android, but it did not actually end up being used there because of
+concern about softirqs interfering with real-time tasks.  Yet, the scheduling
+delay in dm-verity remains a problem.  I think that opportunistically doing the
+verity work in softirq context remains promising (not necessarily ideal, but
+helpful in practice), especially in cases where the block softirq already has to
+run so the work can just be done in-line.  dm-verity mainly just needs to be
+smarter about whether it chooses to use softirq or kworker for each request.
 
-> 
-> Speeding up or slowing down IO submission through the loop devices
-> has direct impact on the speed of the workload. Using buffered IO
-> through the loop device right now is about 25% faster than using
-> aio+dio for the loop because there is some amount of re-read and
-> re-write in the filesystem IO patterns. That said, AIO+DIO should be
-> much faster than it is, hence my interest in making all the AIO+DIO
-> IO submission independent of potential blocking operations.
-> 
-> Hence if you have patch sets that improve loop device performance,
-> then you need to make sure filesystem people like myself see those
-> patch series so they can be tested and reviewed in a timely manner.
-> That means you need to cc loop device patches to linux-fsdevel....
+Choosing softirq context only for short requests seems helpful, and it's the
+same idea I had.  In practice, dm-verity I/O request lengths have a bimodal
+distribution with peaks at 4 KiB for synchronous reads and 128 KiB for
+readahead.  These cases are quite different, and it makes sense that different
+solutions could be optimal for them.  SHA-256 hashing a 4 KiB block takes only
+2-6 microseconds, so there is not much reason to punt it to a kworker.
 
-OK, will Cc you and linux-fsdevel in future loop patch submission.
+Taking the I/O priority into account makes sense too.  In theory, the higher the
+priority, the more softirq should be preferred.  Though, I do wonder if almost
+all the benefit actually just comes from the 4 KiB case, in which case there
+would not be much reason to bother looking the I/O priority.
 
+FWIW, other ideas that I have are:
 
-Thanks,
-Ming
+    - When possible, make dm-verity do the work inline in the existing block
+      softirq, instead of using the BH workqueue.  This would reduce the amount
+      of overhead.  Note that dm-crypt does it this way.
 
+    - If the CPU has been in softirq context for too long, then stop choosing
+      softirq context and instead fall back to the traditional workqueue.  This
+      could help address objections about increased use of softirq context.
+
+But this patch seems like a good start.
+
+> The default limits for NONE/RT/BE/IDLE is set to UINT_MAX to keep the
+> original behaviour.
+
+Let's just set good parameters by default instead.  "try_verify_in_tasklet" is
+kind of useless as-is, and we should just fix it.  Especially since it only
+affects performance and not other behavior, I don't think there are any
+compatibility concerns with changing what it does exactly.
+
+- Eric
