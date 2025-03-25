@@ -1,166 +1,129 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 610F318A6A8
-	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 21:17:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9A0B193086
+	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 22:33:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742937471; cv=none; b=IJSxX6dUGTTaGlDDx1p1P6gYjxXOsUq8JAW5u2JWcC7KJFmmF7w5Q/BuaGwt9UQpFVdkFDwxXSc029UFOwxdkkrflp03RLWoJfgUoxmJ6r3AF2TIYsAj24Ieb//AeC7XaxX4lgiQMQstjs+HlbigP0hXA0w6uPtTOTMZe/Wh2hI=
+	t=1742942000; cv=none; b=t8P0trRhjeGEd6S5TctMN/i8m+n185sR9u5m1Bk0bdJpueOJoLLJAS0rSEj4TJlHzyUbU3ZBUtfAw4LcCROpKCjf9Wx24jam2EODstvQ/uMeziJqSgD/9WaUzwPHRVCX3NAMLR8qtzPsBl7mXu6FUduGu0BZpjMalbgtphQcaeQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742937471; c=relaxed/simple;
-	bh=UJV58HEHZw2tH1Jc1yGhxksnpGgdE09+ZxdOZvGOzqU=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=nTkRIemNDN3ENkHp7dZjs8f/ZSAsySDrMWu/+aZTbXrl8j9xNJfp/6OOLkiqCLhd2vEKB7pOy1RklXrdv+aH1mRDwPbKncg8jktnr400rngIKBRUPCkGCdE7ooEGUtAr6ONsJltpDmPitOUG+oEh+/WNlDqeDyyoEZ1iBHScA80=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BnZVWq64; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1742942000; c=relaxed/simple;
+	bh=6rSIdakFn8Evp7lA3hWg3IeoEgbUkYuUex6nZW6MmSU=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=euLTzT0Gg78IDUStqJvDUlYz79jjLAu07eW8K6I68r6B5zzqmcLAE58aoiDF0yn1z0I78qfOAssb8JRS/kK5GrQD2GIHyrJ3zW8MaNBXfJ6zsAMcLRFR3VemSXX4Qj7X60mmiyJwiKU5a09B3/GRWTqgSaeM37Q/uMQR52bMaI4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=gwrL8yxy; arc=none smtp.client-ip=209.85.128.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BnZVWq64"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1742937468;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5AaB7BazDeyn6WXrQ6YewUv1Mg+fuZiGuFUOSBk7qY8=;
-	b=BnZVWq64k7kITRA/ks3KNdLC9JgWAU8eAOBkUgTgvwp+40NApEPFrGbwJw8VbYmXupUV1N
-	WjvBiPDgt1DmGvB+df8QZOXzGpyzBZXVzNMPsaGJNBvoK/DhvSt4EjdXIXxrdreYM/Yjzf
-	nvKzPwwdNM+Op4HElTvCRPyOpXW51U0=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-33-_ZsUi0zCNn-XCMwH6a3yBw-1; Tue,
- 25 Mar 2025 17:17:46 -0400
-X-MC-Unique: _ZsUi0zCNn-XCMwH6a3yBw-1
-X-Mimecast-MFC-AGG-ID: _ZsUi0zCNn-XCMwH6a3yBw_1742937465
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 626F6195E92A;
-	Tue, 25 Mar 2025 21:17:45 +0000 (UTC)
-Received: from [10.22.82.75] (unknown [10.22.82.75])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5F537195609D;
-	Tue, 25 Mar 2025 21:17:43 +0000 (UTC)
-Date: Tue, 25 Mar 2025 22:17:38 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: LongPing Wei <weilongping@oppo.com>
-cc: snitzer@kernel.org, Alasdair Kergon <agk@redhat.com>, 
-    dm-devel@lists.linux.dev, guoweichao@oppo.com
-Subject: Re: [PATCH] dm-verity: support block number limits for different
- ioprio classes
-In-Reply-To: <20250325104942.1170388-1-weilongping@oppo.com>
-Message-ID: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com>
-References: <20250325104942.1170388-1-weilongping@oppo.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="gwrL8yxy"
+Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-43cf034d4abso65714055e9.3
+        for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 15:33:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1742941994; x=1743546794; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=6rSIdakFn8Evp7lA3hWg3IeoEgbUkYuUex6nZW6MmSU=;
+        b=gwrL8yxyd7gRQ4Neg+jlurx5z3WUOTQyBwh6F+yHCHweaYVaRVoUfLjn/VG2j2aSeW
+         zmMUdnjIFoWg06JoN2Z6MtNdz6Ikouv78JJLdv3pSdquP76WZocu6yRcRkhZtebpUMIl
+         PfIEzTJddAOIFSJFA4j9XfqtuJh70WzLDyZRHPX1PuNDEDkPz/mI7KSXJ1pMpfmkCkgN
+         NDcYwrvgyaDhP7lZfcCKY7BLGeWku4LZ+EI/vZLs+i7OI+CymkrJ7cmeqp4kgoq2/N8W
+         8yWPKEnfqaKKdxIRdsjqXX2QFssKzCWSiaDyuWLKQHWzZuTngRncSAmb5fqp6rX7ypAq
+         p7/w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1742941994; x=1743546794;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=6rSIdakFn8Evp7lA3hWg3IeoEgbUkYuUex6nZW6MmSU=;
+        b=m9YXF2V2XZj0fhS4rbLBDQ+Oy90+qX440YpvkfbvOtH0qmYGmUlr0GE3NsNwLXMHfp
+         fx8AkeGst9dlUtFGXl9cWDAG3Mnw4E30RQ+M1eRmcIilZ6GydEoxJ8E/mS3SX7p6Bqx7
+         XNTIriFj8Bj93fXB+pCYBHC4imIkTms+nLt6SMU2ntWVXholxaIQp+h4PqnFONMOYqyY
+         XAPm+wXA90s72opMeBiooYGERJjuUQyAM4t1PluxH2YrC6Qt59PwXzbPRU8GE1cpra+B
+         8cbpy9qpP79CdgCTBksD6jBuZKJGgWAOhjJmMAW5Ps+upQTYjUrLQMYODBMmoyQFXeMS
+         3hIg==
+X-Gm-Message-State: AOJu0Yzpx4eJ9jHBqlyFNKsFwDvX7VCX8Zl4xPOAKJ93CFYPNrceqYkD
+	FibQbdvhiBByykJBjCUAOpSCyuNvz0Qb35unr0ebWt6Z/fml+4haKOY6RfCNqVEMubRcZf5//R/
+	O
+X-Gm-Gg: ASbGncsuqDwCb1Hr9zHZ88dQQkCN7dMXMsp7doVkhgtRw6AoTxBUjyGt1sUIV2jvNfR
+	528bw6nGndYQSB6F5pEUulQn9WzgEN9i9IA65UNLTCZJ+NDE2ha1YwhKu0cJ4kFi44DHqcAkzu0
+	bouLr29YlDWi02u7qEhcxWsb0crkgBt4ZEGfLqmRfRmkRJL+yIErYUT/Za/OtxNkJOB+UIE0Xt6
+	hKnUh91XxLZVIsOwzWIeyq7KbSYtmAX+gnjfqMp6ya/b0oyzZsHi3Pv4FdGJX2NOJCPjPK2SzUb
+	9Lq4GsCFLI+iNPuK3kMwEF3I49w7r2mMyHTdCZawmYZ/YNAQbF0KSj/1SX+jBfXOfVh6waPRl0a
+	RUDRJFbVXmjFvQvbMH/+6UniENStaiN1Fg21kxQkrB2HAnWwl5wbvyBOwQ9wghnQH+qoos7HIBT
+	1Wmbg=
+X-Google-Smtp-Source: AGHT+IFLhXaO+zP1ixwDwarrRRkaZ/L7liws7bI64NUZikKgQWPnqO/LeDsTXDQlc52GnTwN3evwiA==
+X-Received: by 2002:a05:600c:4ec7:b0:43c:e7a7:aea0 with SMTP id 5b1f17b1804b1-43d50a35fb0mr131010865e9.26.1742941993860;
+        Tue, 25 Mar 2025 15:33:13 -0700 (PDT)
+Received: from ?IPv6:2003:de:3744:d600:a441:a57b:4aaa:2b39? (p200300de3744d600a441a57b4aaa2b39.dip0.t-ipconnect.de. [2003:de:3744:d600:a441:a57b:4aaa:2b39])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3997f9efc9bsm14668405f8f.87.2025.03.25.15.33.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 25 Mar 2025 15:33:13 -0700 (PDT)
+Message-ID: <99b1d67f46298eed77b2d77ec396a1b0727481d0.camel@suse.com>
+Subject: Re: [PATCH 1/3] multipathd: monitor new multipath dev even if we
+ can't update it
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 25 Mar 2025 23:33:12 +0100
+In-Reply-To: <20250324205504.2523493-2-bmarzins@redhat.com>
+References: <20250324205504.2523493-1-bmarzins@redhat.com>
+	 <20250324205504.2523493-2-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.54.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: wTBo5ZeKoUQ-XPcUMich85SlIF12IHgm6tgCPLm7UjQ_1742937465
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
 
-Hi
+On Mon, 2025-03-24 at 16:55 -0400, Benjamin Marzinski wrote:
+> If a multipath device was created by the multipath command,
+> multipathd
+> might not agree with how the device was created. ev_add_map() can
+> reload
+> the device with a different table by calling add_map_without_path() -
+> >
+> update_map(). If this reloading of the map failed, multipathd was
+> simply
+> ignoring the multipath device, even though it still existed.
+>=20
+> One way that reloading can fail is if a path that multipathd already
+> has
+> initialized goes offline. If a multipath device is created by the
+> multipath command while the path is offline, it will not use the
+> offline
+> path, since multipath won't be able to get the necessary pathinfo.
+> However, multipathd will already have the pathinfo for the path, and
+> may
+> not even know that it's offline, since the path is an orphan. When it
+> tries to reload the device, it will include the offline path, and the
+> reload will fail.
 
-I think the patch is OK, I just suggest these changes:
+Am I understanding correctly that during the reload, bdev_open() failed
+in the kernel because the path was offline?
 
-- set the limit for the number of bytes, rather than the number of blocks, 
-because different dm-verity devices can have different block size
+I was thinking about my recent tests [1] where I'd come to the
+conclusion that reload failure is hardly possible. While I'd realized
+that "trying to add a path device that was not previously mapped" might
+fail, I didn't think of the scenario you describe here.
 
-- run some benchmarks and set the default values according to the 
-benchmark results
+[1] https://lore.kernel.org/dm-devel/ee6fcbda31fd1f13969653782417fbed748f5b=
+c7.camel@suse.com/
 
-- increase the target version number
+>=20
+> Instead of ignoring the device if it can't reload it, multipathd
+> should
+> just montior it as it is. When the path device is no longer offline,
+> it
+> can be added back to the multipath device by calling
+> "multipathd reconfigure" or "multipathd add path <path>".
 
-- add a note about this feature to 
-Documentation/admin-guide/device-mapper/verity.rst
 
-Mikulas
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-
-On Tue, 25 Mar 2025, LongPing Wei wrote:
-
-> Calling verity_verify_io in bh for IO of all sizes is not suitable for
-> embedded devices. From our tests, it can improve the performance of 4K
-> synchronise random reads.
-> For example:
-> ./fio --name=rand_read --ioengine=psync --rw=randread --bs=4K \
->  --direct=1 --numjobs=8 --runtime=60 --time_based --group_reporting \
->  --filename=/dev/block/mapper/xx-verity
-> 
-> But it will degrade the performance of 512K synchronise sequential reads
-> on our devices.
-> For example:
-> ./fio --name=read --ioengine=psync --rw=read --bs=512K --direct=1 \
->  --numjobs=8 --runtime=60 --time_based --group_reporting \
->  --filename=/dev/block/mapper/xx-verity
-> 
-> A parameter array is introduced by this change. And users can modify the
-> default config by /sys/module/dm_verity/parameters/use_bh_blocks.
-> 
-> The default limits for NONE/RT/BE/IDLE is set to UINT_MAX to keep the
-> original behaviour.
-> 
-> Signed-off-by: LongPing Wei <weilongping@oppo.com>
-> ---
->  drivers/md/dm-verity-target.c | 19 ++++++++++++++++++-
->  1 file changed, 18 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index e86c1431b108..1e0d0920d6a9 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -30,6 +30,7 @@
->  #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
->  
->  #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
-> +#define DM_VERITY_USE_BH_DEFAULT_BLOCKS	UINT_MAX
->  
->  #define DM_VERITY_MAX_CORRUPTED_ERRS	100
->  
-> @@ -49,6 +50,15 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
->  
->  module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
->  
-> +static unsigned int dm_verity_use_bh_blocks[4] = {
-> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_NONE
-> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_RT
-> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS,	// IOPRIO_CLASS_BE
-> +	DM_VERITY_USE_BH_DEFAULT_BLOCKS		// IOPRIO_CLASS_IDLE
-> +};
-> +
-> +module_param_array_named(use_bh_blocks, dm_verity_use_bh_blocks, uint, NULL, 0644);
-> +
->  static DEFINE_STATIC_KEY_FALSE(use_bh_wq_enabled);
->  
->  /* Is at least one dm-verity instance using ahash_tfm instead of shash_tfm? */
-> @@ -652,6 +662,12 @@ static void verity_bh_work(struct work_struct *w)
->  	verity_finish_io(io, errno_to_blk_status(err));
->  }
->  
-> +static inline bool verity_use_bh(unsigned int n_blocks, unsigned short ioprio)
-> +{
-> +	return ioprio <= IOPRIO_CLASS_IDLE &&
-> +		n_blocks <= READ_ONCE(dm_verity_use_bh_blocks[ioprio]);
-> +}
-> +
->  static void verity_end_io(struct bio *bio)
->  {
->  	struct dm_verity_io *io = bio->bi_private;
-> @@ -664,7 +680,8 @@ static void verity_end_io(struct bio *bio)
->  		return;
->  	}
->  
-> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq) {
-> +	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq &&
-> +		verity_use_bh(io->n_blocks, IOPRIO_PRIO_CLASS(bio->bi_ioprio))) {
->  		INIT_WORK(&io->bh_work, verity_bh_work);
->  		queue_work(system_bh_wq, &io->bh_work);
->  	} else {
-> -- 
-> 2.34.1
-> 
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
