@@ -1,39 +1,55 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0070D1A5B90
-	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 17:43:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 610F318A6A8
+	for <dm-devel@lists.linux.dev>; Tue, 25 Mar 2025 21:17:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742924601; cv=none; b=EunVApxXDXClZbDVhnBEeWLRwaEPd4uYXDOtb+MDmlrxvE5h4Bavnjt69HtHzrKElscI7YvgyqFkDocNPU9BUkXocYg9wR8Y4OpXdmJPbhmS1JWHCBXJPB0DLYO3xig12bZhPjgz6dw+z+yK+CcQmU0/mIrRU1+REw1hNau23wM=
+	t=1742937471; cv=none; b=IJSxX6dUGTTaGlDDx1p1P6gYjxXOsUq8JAW5u2JWcC7KJFmmF7w5Q/BuaGwt9UQpFVdkFDwxXSc029UFOwxdkkrflp03RLWoJfgUoxmJ6r3AF2TIYsAj24Ieb//AeC7XaxX4lgiQMQstjs+HlbigP0hXA0w6uPtTOTMZe/Wh2hI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742924601; c=relaxed/simple;
-	bh=kGx3rKSGENU9gKOiB29pU2/4zwJ79Y6b4hwKx/kZl+g=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=RGHlTMVtyzGRzyO7b4qUJ2Dk4k/i0M08hTKI0B4fOp04YHgeuXK/3/AW9AkAxCRPiNafNCM/xWvudsWZtRsDxcL4d82pU6cDzUcU3+A+Etoik4zcd/LqosFdn6v7kY0g5VUCz9k63fR1YzQHbztHDXoj0wZYqU6K+h8V6+Kb04M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GIA8jETf; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1742937471; c=relaxed/simple;
+	bh=UJV58HEHZw2tH1Jc1yGhxksnpGgdE09+ZxdOZvGOzqU=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=nTkRIemNDN3ENkHp7dZjs8f/ZSAsySDrMWu/+aZTbXrl8j9xNJfp/6OOLkiqCLhd2vEKB7pOy1RklXrdv+aH1mRDwPbKncg8jktnr400rngIKBRUPCkGCdE7ooEGUtAr6ONsJltpDmPitOUG+oEh+/WNlDqeDyyoEZ1iBHScA80=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BnZVWq64; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GIA8jETf"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 55666C4CEE4;
-	Tue, 25 Mar 2025 17:43:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1742924600;
-	bh=kGx3rKSGENU9gKOiB29pU2/4zwJ79Y6b4hwKx/kZl+g=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=GIA8jETf3pUMBpoLERsYej42fLQyEKBWEPAMiWAIATRrOUDgey9W7uCKvv284gXav
-	 LlLZ8xKiEZyicbGTmzcPGsw+iBOMftXs13zvalf7aJTrqVRs6BIQRMmFZ/5aBZjkhh
-	 6Ayb/WIzqNbVaw7eke6O3xHROwTOh814cBHK233XgZtdhufZOY5CxG0Hqf6XxumY8x
-	 bNrFaQks7tXhZGvptvYOkWlU7nybzDVh5Csnm1HS0F/K0uR/WesNs9uh6Lmmb+fvgh
-	 vpy04qb+HWq3g6CBBLtzqPWOSHiJGddIRAQRhd5YhCk5QG6YLzsXmege7DR50rcifo
-	 LM/71wuCzjcZA==
-Date: Tue, 25 Mar 2025 17:43:18 +0000
-From: Eric Biggers <ebiggers@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BnZVWq64"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1742937468;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5AaB7BazDeyn6WXrQ6YewUv1Mg+fuZiGuFUOSBk7qY8=;
+	b=BnZVWq64k7kITRA/ks3KNdLC9JgWAU8eAOBkUgTgvwp+40NApEPFrGbwJw8VbYmXupUV1N
+	WjvBiPDgt1DmGvB+df8QZOXzGpyzBZXVzNMPsaGJNBvoK/DhvSt4EjdXIXxrdreYM/Yjzf
+	nvKzPwwdNM+Op4HElTvCRPyOpXW51U0=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-33-_ZsUi0zCNn-XCMwH6a3yBw-1; Tue,
+ 25 Mar 2025 17:17:46 -0400
+X-MC-Unique: _ZsUi0zCNn-XCMwH6a3yBw-1
+X-Mimecast-MFC-AGG-ID: _ZsUi0zCNn-XCMwH6a3yBw_1742937465
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 626F6195E92A;
+	Tue, 25 Mar 2025 21:17:45 +0000 (UTC)
+Received: from [10.22.82.75] (unknown [10.22.82.75])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5F537195609D;
+	Tue, 25 Mar 2025 21:17:43 +0000 (UTC)
+Date: Tue, 25 Mar 2025 22:17:38 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
 To: LongPing Wei <weilongping@oppo.com>
-Cc: snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
-	guoweichao@oppo.com, Eran Messeri <eranm@google.com>
+cc: snitzer@kernel.org, Alasdair Kergon <agk@redhat.com>, 
+    dm-devel@lists.linux.dev, guoweichao@oppo.com
 Subject: Re: [PATCH] dm-verity: support block number limits for different
  ioprio classes
-Message-ID: <20250325174318.GA559858@google.com>
+In-Reply-To: <20250325104942.1170388-1-weilongping@oppo.com>
+Message-ID: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com>
 References: <20250325104942.1170388-1-weilongping@oppo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -41,13 +57,32 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250325104942.1170388-1-weilongping@oppo.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: wTBo5ZeKoUQ-XPcUMich85SlIF12IHgm6tgCPLm7UjQ_1742937465
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Hi LongPing,
+Hi
 
-On Tue, Mar 25, 2025 at 06:49:43PM +0800, LongPing Wei wrote:
+I think the patch is OK, I just suggest these changes:
+
+- set the limit for the number of bytes, rather than the number of blocks, 
+because different dm-verity devices can have different block size
+
+- run some benchmarks and set the default values according to the 
+benchmark results
+
+- increase the target version number
+
+- add a note about this feature to 
+Documentation/admin-guide/device-mapper/verity.rst
+
+Mikulas
+
+
+On Tue, 25 Mar 2025, LongPing Wei wrote:
+
 > Calling verity_verify_io in bh for IO of all sizes is not suitable for
 > embedded devices. From our tests, it can improve the performance of 4K
 > synchronise random reads.
@@ -124,48 +159,8 @@ On Tue, Mar 25, 2025 at 06:49:43PM +0800, LongPing Wei wrote:
 > +		verity_use_bh(io->n_blocks, IOPRIO_PRIO_CLASS(bio->bi_ioprio))) {
 >  		INIT_WORK(&io->bh_work, verity_bh_work);
 >  		queue_work(system_bh_wq, &io->bh_work);
+>  	} else {
+> -- 
+> 2.34.1
+> 
 
-Thanks for working on this and sending a patch!
-
-Just for some background: "try_verify_in_tasklet" was originally developed for
-use in Android, but it did not actually end up being used there because of
-concern about softirqs interfering with real-time tasks.  Yet, the scheduling
-delay in dm-verity remains a problem.  I think that opportunistically doing the
-verity work in softirq context remains promising (not necessarily ideal, but
-helpful in practice), especially in cases where the block softirq already has to
-run so the work can just be done in-line.  dm-verity mainly just needs to be
-smarter about whether it chooses to use softirq or kworker for each request.
-
-Choosing softirq context only for short requests seems helpful, and it's the
-same idea I had.  In practice, dm-verity I/O request lengths have a bimodal
-distribution with peaks at 4 KiB for synchronous reads and 128 KiB for
-readahead.  These cases are quite different, and it makes sense that different
-solutions could be optimal for them.  SHA-256 hashing a 4 KiB block takes only
-2-6 microseconds, so there is not much reason to punt it to a kworker.
-
-Taking the I/O priority into account makes sense too.  In theory, the higher the
-priority, the more softirq should be preferred.  Though, I do wonder if almost
-all the benefit actually just comes from the 4 KiB case, in which case there
-would not be much reason to bother looking the I/O priority.
-
-FWIW, other ideas that I have are:
-
-    - When possible, make dm-verity do the work inline in the existing block
-      softirq, instead of using the BH workqueue.  This would reduce the amount
-      of overhead.  Note that dm-crypt does it this way.
-
-    - If the CPU has been in softirq context for too long, then stop choosing
-      softirq context and instead fall back to the traditional workqueue.  This
-      could help address objections about increased use of softirq context.
-
-But this patch seems like a good start.
-
-> The default limits for NONE/RT/BE/IDLE is set to UINT_MAX to keep the
-> original behaviour.
-
-Let's just set good parameters by default instead.  "try_verify_in_tasklet" is
-kind of useless as-is, and we should just fix it.  Especially since it only
-affects performance and not other behavior, I don't think there are any
-compatibility concerns with changing what it does exactly.
-
-- Eric
