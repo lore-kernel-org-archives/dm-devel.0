@@ -1,83 +1,136 @@
-Received: from 003.mia.mailroute.net (003.mia.mailroute.net [199.89.3.6])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 32C041A2541
-	for <dm-devel@lists.linux.dev>; Wed, 26 Mar 2025 20:32:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.6
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A51025F783
+	for <dm-devel@lists.linux.dev>; Wed, 26 Mar 2025 20:48:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743021149; cv=none; b=dOKwuk1gMgMlspnrW9JqfRZ+75XteBUJeNEPH0aJB/NYc2byEhzmJJfF3nKdjDhFcI8P9Uta2YdLbGZRJvYfdZL6yuGgp2jaibSVdqXaNWcK1p3TS1tJbe7xJOlRZt1VyAmBlYkOrZuS+jitxoXjFq6dCMMwDwQBR30ePWUIGxY=
+	t=1743022127; cv=none; b=SMce6S+Au9eKKXhOqgsFBqset7J6ff60sbZn9AqolWlOcIWDZcVnUn7homhkpgnBSD7rN5BZ3oPekN1FPvv9HUsuwtvumewMUGRB4gthnDX5webcwI3ViM9CepJmaQpE2+bW9b2bVkIYYy7C7tFC5JvsHX4z4pBVfpo2vWzG3qw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743021149; c=relaxed/simple;
-	bh=5IJnG5CC5CLQbAbRWi5c0RbaCHfWp1UKYbYgIphvwyE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=XTjRGQuw/+faQQ6atY+2SUIeuaKwgetsfXi4CjxwUQilPBIyp3HN3hkXliDVdBEgEr90b2F4QP59KpPrHsZ1vYXKHlcem/SkbDNb/pvZcVjkIjxf6D0Kx+w17FF1IymFCsHKi/Np2SPlNnbmTPTS+Os92YVvkuiJpzf3bc0BXU0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=GhH4rLU3; arc=none smtp.client-ip=199.89.3.6
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1743022127; c=relaxed/simple;
+	bh=Ows7V7fm7LjQIFmtp3vzgYxpdtcBlnHhzX0wvDKSf18=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=D/BLG+AS3xy3P++K/IwpY86jLDDeB3yXfnX+EVv+YWTd6bV7ACVCiwhg+xBc8jFl8ydXKZ35EvQsF4/Q1y6EQQ2nqYIDChRglWZEUvRvjgP6/Rfk8gYlnhAxWGJBRS5HWiyFsGHpvgOTFYdARXNknGMMwK90MEppbZ13Rw9HT7U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Nqe4apOc; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="GhH4rLU3"
-Received: from localhost (localhost [127.0.0.1])
-	by 003.mia.mailroute.net (Postfix) with ESMTP id 4ZNJPJ6q5Dzlyw8L;
-	Wed, 26 Mar 2025 20:32:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1743021139; x=1745613140; bh=22nCE/JdheVwlJ0qulXutrPQ
-	FmbXQq0Se/8tA2qFuXQ=; b=GhH4rLU34yFZD8Q0s0yabwImVBwmnsLfr9V0Jv8j
-	xxorKdAFTmM/fPay/2kuSpm+/nWKq4eOZuF6ADp3K7SFmOynZMRTXYW1WvwZyC4d
-	HRSJppoSjIT+GN3ghp2qJ6u0bXTOLpygnRggbtO7Yn7dDyNfhnh0153yRIiagSN6
-	P5A6gOvLB4vymPOylGU1yAUzqMVADikGwpRpu0eWwhp/NLv6grtkLXM4V6LzeHBg
-	igN3+TjnvLQTIWTevWBFbpqomJS4iW+FKu/mW129ySrpAtktsr2vXqldwwjXQ3Fd
-	uJQD0A4NJapISSe+fQQTi8hAKcLoW2z0rMUEmlQF6VDY1w==
-X-Virus-Scanned: by MailRoute
-Received: from 003.mia.mailroute.net ([127.0.0.1])
- by localhost (003.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id 5ErmMQoYtZ7y; Wed, 26 Mar 2025 20:32:19 +0000 (UTC)
-Received: from [172.22.32.156] (unknown [99.209.85.25])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 003.mia.mailroute.net (Postfix) with ESMTPSA id 4ZNJPB17fZzlvq84;
-	Wed, 26 Mar 2025 20:32:13 +0000 (UTC)
-Message-ID: <20581448-73f1-41fe-993c-a46cc6309cdd@acm.org>
-Date: Wed, 26 Mar 2025 16:32:10 -0400
-Precedence: bulk
-X-Mailing-List: dm-devel@lists.linux.dev
-List-Id: <dm-devel.lists.linux.dev>
-List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
-List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Nqe4apOc"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 935F9C4CEE2;
+	Wed, 26 Mar 2025 20:48:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1743022126;
+	bh=Ows7V7fm7LjQIFmtp3vzgYxpdtcBlnHhzX0wvDKSf18=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=Nqe4apOcbfeasQvuu5PCpHnvL9lSCGYhCOGdMmlorQoB58IVfY2bG3joYzm5TXapV
+	 oxgMOGiIJFTy/VwEyNvlz6FDojlEEc7GBXskDd0ZpBQOyzYbrTCpVZ+Ib4Sai7Zgk3
+	 cJxs/AbtwAzXLNkZpoPdcNFhLbzH6feQOyZCxoakT5EmC1qv0pVPmmW/vyR7qW+T4F
+	 4QUq7KfWzIzj6lZkdKySoTSK1Wp1Q5ey6GKHS8VPNWAeB9uZ5dz9ory0/rSnLkQGkK
+	 NnKF4+P2a54dN8+Lj9KcT9VkZLrTnlbUv2jcjgODxE3oEuHAya7na7SL0l3LWYXLhf
+	 oyccvMQ6LMMDw==
+Date: Wed, 26 Mar 2025 13:48:45 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: LongPing Wei <weilongping@oppo.com>, agk@redhat.com,
+	dm-devel@lists.linux.dev, guoweichao@oppo.com, snitzer@kernel.org,
+	Bart Van Assche <bvanassche@acm.org>
 Subject: Re: [PATCH v2] dm-verity: support block number limits for different
  ioprio classes
-To: Mikulas Patocka <mpatocka@redhat.com>, Eric Biggers <ebiggers@kernel.org>
-Cc: LongPing Wei <weilongping@oppo.com>, agk@redhat.com,
- dm-devel@lists.linux.dev, guoweichao@oppo.com, snitzer@kernel.org
+Message-ID: <20250326204845.GB6625@sol.localdomain>
 References: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com>
  <20250326013049.1292617-1-weilongping@oppo.com>
  <93b863a6-24f3-2281-c9a7-c3e59b2a6ec2@redhat.com>
  <431f8798-e0e5-362c-bf6b-fb6cddadd4b2@oppo.com>
  <20250326165336.GB1243@sol.localdomain>
  <052d22b6-2d49-7faf-49f3-742c9b79fc8e@redhat.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
+Precedence: bulk
+X-Mailing-List: dm-devel@lists.linux.dev
+List-Id: <dm-devel.lists.linux.dev>
+List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
+List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 In-Reply-To: <052d22b6-2d49-7faf-49f3-742c9b79fc8e@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-On 3/26/25 2:50 PM, Mikulas Patocka wrote:
+On Wed, Mar 26, 2025 at 07:50:34PM +0100, Mikulas Patocka wrote:
+> 
+> 
+> On Wed, 26 Mar 2025, Eric Biggers wrote:
+> 
+> > On Wed, Mar 26, 2025 at 09:32:27PM +0800, LongPing Wei wrote:
+> > > On 2025/3/26 19:04, Mikulas Patocka wrote:
+> > > > 
+> > > > 
+> > > > On Wed, 26 Mar 2025, LongPing Wei wrote:
+> > > > 
+> > > > > Calling verity_verify_io in bh for IO of all sizes is not suitable for
+> > > > > embedded devices. From our tests, it can improve the performance of 4K
+> > > > > synchronise random reads.
+> > > > > For example:
+> > > > > ./fio --name=rand_read --ioengine=psync --rw=randread --bs=4K \
+> > > > >   --direct=1 --numjobs=8 --runtime=60 --time_based --group_reporting \
+> > > > >   --filename=/dev/block/mapper/xx-verity
+> > > > > 
+> > > > > But it will degrade the performance of 512K synchronise sequential reads
+> > > > > on our devices.
+> > > > > For example:
+> > > > > ./fio --name=read --ioengine=psync --rw=read --bs=512K --direct=1 \
+> > > > >   --numjobs=8 --runtime=60 --time_based --group_reporting \
+> > > > >   --filename=/dev/block/mapper/xx-verity
+> > > > > 
+> > > > > A parameter array is introduced by this change. And users can modify the
+> > > > > default config by /sys/module/dm_verity/parameters/use_bh_bytes.
+> > > > > 
+> > > > > The default limits for NONE/RT/BE/IDLE is set to 4096.
+> > > > > 
+> > > > > Call verity_verify_io directly when verity_end_io is in softirq.
+> > > > > 
+> > > > > Signed-off-by: LongPing Wei <weilongping@oppo.com>
+> > > > 
+> > > > Are you sure that 4096 bytes is the correct threshold?
+> > > > 
+> > > > I suggest that you run the benchmarks for 4k, 8k, 16k, 32k, 64k, 128k,
+> > > > 256k, 512k and set the default threshold to the largest value where bh
+> > > > code performs better than non-bh code.
+> > > > 
+> > > > Mikulas
+> > > > 
+> > 
+> > 4096 bytes sounds good to me.  As I mentioned elsewhere in the thread
+> > (https://lore.kernel.org/dm-devel/20250326164057.GA1243@sol.localdomain/),
+> > objections keep getting raised to doing more work in softirq context due to
+> > potential impact on real-time tasks.  So while more I/O benchmarks would be
+> > interesting, they are also not the whole story and we should probably prefer a
+> > more conservative threshold.  Also, dm-verity I/O requests have a bimodal
+> > distribution with peaks at 4 KiB (for synchronous reads) and 128 KiB or
+> > read_ahead_kb (for readahead) anyway, so most of the impact should come from 4
+> > KiB anyway.
+> > 
+> > 8 KiB could also be reasonable when taking into account multibuffer hashing
+> > though, since multibuffer hashing makes hashing two 4 KiB blocks almost as fast
+> > as hashing a single 4 KiB block.  (Though multibuffer hashing is currently
+> > Android-only, as the crypto maintainer keeps rejecting it upstream.)
+> > 
+> > - Eric
+> 
 > OK, so I'll set it to 8KiB.
 > 
-> Do you think that I should increase this limit to "unlimited" for
+> Do you think that I should increase this limit to "unlimited" for 
 > IOPRIO_CLASS_RT and disable this feature at all for IOPRIO_CLASS_NONE?
 
-How about a single limit for all I/O priority classes? Running too much
-work in tasklet context can cause all kinds of nasty issues, e.g. the
-user interface seeming to freeze if the tasklet happens to run on the
-same CPU core as the user interface code.
+IOPRIO_CLASS_NONE means an I/O priority isn't set, so it probably should be
+treated the same as IOPRIO_CLASS_BE which is the "normal" priority.
 
-Thanks,
+For now I think it makes sense to use 4 or 8 KiB even for IOPRIO_CLASS_RT.  That
+covers the single-block request case which is the one that matters most.  We can
+bump it up later if we can be shown that something higher is better.  Softirqs
+normally get prioritized over all real-time tasks; so while it should be more
+acceptable to use them for IOPRIO_CLASS_RT, it's not a perfect solution.
 
-Bart.
+Another concern I have with longer requests is that when dm-verity runs the
+verification work in a softirq and finds that a Merkle tree block isn't cached,
+it punts the request to a kworker and restarts it from the beginning.  That not
+only defeats the point of using softirq context, but it also throws away work
+that was done.  I think we could fix it to not throw away work, but having to
+fall back at all would still defeat the point of using softirq context.
+
+- Eric
