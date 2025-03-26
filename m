@@ -1,63 +1,61 @@
-Received: from HK2PR02CU002.outbound.protection.outlook.com (mail-eastasiaazon11010021.outbound.protection.outlook.com [52.101.128.21])
+Received: from APC01-SG2-obe.outbound.protection.outlook.com (mail-sg2apc01on2065.outbound.protection.outlook.com [40.107.215.65])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 750BCD27E
-	for <dm-devel@lists.linux.dev>; Wed, 26 Mar 2025 01:32:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.128.21
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D3B0199BC
+	for <dm-devel@lists.linux.dev>; Wed, 26 Mar 2025 02:09:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.215.65
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1742952750; cv=fail; b=UXYWyT9k+91gb06O/mPekYIzFvsoUIjk751rxW9hiotuK0+WTYQjAyAzlMaKqC5tszJHTjiTK247vJ9ODXNe+o8B1Xm51aKEYy2nxTCjAEq47jmpDh4gvfGzGE+vPh4kU69imROtYNqzeRwfE4YXqzkAuMzgjrzg00dBEtAkUU0=
+	t=1742954972; cv=fail; b=Z8ExfR8hcrisAtyaib1fu9rZBuBXCJPXDqd2VBMuZlykaDKkoFJwXwnY+paO9TC5p8yAchZWV5TtSAgVVucy1g/r0mTRepy4kTrAmXk50djZ0xKxGkA+ISY3nEeIb7eX1dhvkhoiydSgimZieMpoah32d9mhJ4DFw0VNGZPigpE=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1742952750; c=relaxed/simple;
-	bh=Ii/jMHM9LwBcmv7p7ten0iKbVnGSZao1Yuc/KJaWoao=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=I0NBwVWjyGL95IDmbJLOPhHqWkrVs4PhUXJDGaeBevLH1b1XFid0/0DhocPEVrjBXdg/qb59ofkIELp4Peflh2yQTSl7tsq0YJkvlu+jQxci1HKGd102Kc2x8PN467Rl7wPjU80a0iVApkytpqwLYbqyM6+1pDhOBJiVzdDj2o0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com; spf=pass smtp.mailfrom=oppo.com; dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b=aXQM0WRm; arc=fail smtp.client-ip=52.101.128.21
+	s=arc-20240116; t=1742954972; c=relaxed/simple;
+	bh=8jnGTMMHV5nm7PjWlYEW03VMs9XWVlGOlVYqhQDV930=;
+	h=Message-ID:Date:To:Cc:References:Subject:From:In-Reply-To:
+	 Content-Type:MIME-Version; b=AeSMpwsXwMXLWjY9uMtj/cEJeCIMIfAOEsIjcdZszxTJ2SrNkxxtlCrvOWYacqXM3g5wVu10ke1QsdgdukGkZnv8cMn/fdyxGH4Zam/0z8IZ9eMoWQ8Eq6OZ4rwilWQe90S07qUnC98d4tNu1K0NYHI/zuJ6PstOGbInncxQpq0=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com; spf=pass smtp.mailfrom=oppo.com; dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b=ROfrt5Bc; arc=fail smtp.client-ip=40.107.215.65
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oppo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b="aXQM0WRm"
+	dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b="ROfrt5Bc"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=Mxce3Y7X8l5V/GQ92z4iFR5TGppMG2spp/pnWIJV6rgVNcle3muSiewGoRYz9g3LMfDBH88lrIni0LHgOfDJE1x0giDFKnuSFC5UmvKino0hA67xmL1WJF4WsDTluy4dfWHKzNZAw4jGvKT3VKYGehBYB52AlRmywBJaB5ulDN0gh7X2nQNAk0WnJ5tz3N3r1gycRZDUf4HDR/ouEmf9uQL5ojbFRPD1zcV1qLWEOEpyB9vZ6FRFDjM0vpNgQoZSfm9Pmbd7f6g1FwKXcVJIcJ/2i9TiV/bWmbddsTX0IgLTakLtcjDKrUslOXB4EkAcQHNJn7Gp4R38czpssP92bw==
+ b=j5oos9awSvNaAuJ+y1MkrFQhWYhtdu5jpk2yQLx+BU61lldfUzy1oZqtPI1fqz2P4j3p1CczIfDrQDaS2IdVM95INOXgKHvtcbMBDctIDT2mrXGYc+QJYb0k8A6FZ3x/ImgzJObSNujhhBDgEki5bDU0EfA0QcAanbE76uhLR3HQj6s4GumX+tQeifvDglsPTCch0GakoaZ2FSAfvHw2E2ZkQdOiURSgFsV2V6TrNCTUSllA+QQJk9ngxV3wDykjutCTtgIo/FBrruEXeamovMNTQ4E6ZTIDyx0UyJ7UZMfXOCNI1iyXdjR8Xei2fcP8v9TQozYiG7AZQ4AXuKj58A==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=Gl/J0ak5mML4fWOo++9KQiWQPAF7GfmgB9sYEqemtmU=;
- b=ee+526xHORHDsy9Lsvbg6CjDhWux5Sl1rXuWazvMYaMVRUWWBYSPfT49IUR/yL3wex0IHHnX6JXLwA3qcTaNaKtQfQEHCN6w9M0eCmDhBJ4gZ1i14TWtgmJoVX498Vn4bkCyt0iosOE0FtE+QLGqYpI0tTZHNmYom3FJuDeD9IFsn7yGR2zsBLlyjH6GBlCcZQ/5sZcmEmikUfxZOFKQmnHE0F6q29cyf89i5Mg/Bg91uWkjppKfnuVFAF42tJ+FOlDqimf/24f1go+B1Ad/KMSNvVwRxZNN+A5T5sZiCHADZYK1shpsaET7pasATApGGBiEXpEjBjOG5EoJul5RmA==
+ bh=ycSZcO10/2CInMBXLpBtQxVkf40DnhOEsD2ExnYlNEk=;
+ b=Dyx9ZY8u/dg4QNAY2fNgFLuksNxgUO4miNKnY06Y+IEi5t2CtQDw/6vRYmqg4CCq44IPpavMcJE7L8DrQbxgzsNY06xkXyN5SDkCe4oMql8a5Mu1P22XIjo2rpyq4IjW7jqes8YJTBA9Nq6H2FU0NG20Q5adAEfZbCoEvX3IsKQ0GNS4k69DYYkFxgcTQfMBU3SfBH2lSeSHYXwXwaQSUuimXviPAaDJuDuhrVtXT7FncJZQOxx5nrZ0lSYbfq6NsEmugdYdzvv8Zaq1YF8oQw+uXyxINMrT3sqcQaJeBVQxsHYN6k6GeHVGrX8ovwpY1QnEkv7Y5wYXLjzwotulDQ==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=oppo.com; dmarc=pass action=none header.from=oppo.com;
  dkim=pass header.d=oppo.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oppo.com; s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=Gl/J0ak5mML4fWOo++9KQiWQPAF7GfmgB9sYEqemtmU=;
- b=aXQM0WRmsquyWwxbxDfha92tMRidk8dJyktVNDCOUZ9yzHvdQXo8qM+MU7+fH9G7rDUCVOXNm+KmDdHs3pPEvXUV4Kru6UWopW9VeV0xw1d7ogIFAqeegtWbhuBch5GWd08gQMCgMgwxh/F9W62RgRS9jtHgc1mTmGzln2qq0w8=
+ bh=ycSZcO10/2CInMBXLpBtQxVkf40DnhOEsD2ExnYlNEk=;
+ b=ROfrt5BcqE94GE+k7kfgAQiUHFLL3Y6nEScTPRm4vrlyUsLBZXWBAF09sBsQQHg+LXXFx/HvLe6qx6IRlDMOpgvEAIdoXphqptiKt6hVYdfjxyyOrhP4FC1ipGKlU8AdZMCU1B5/3jwqlDAr6kHlkVdB7NX9qLA3aIm9y0ggoDE=
 Authentication-Results: dkim=none (message not signed)
  header.d=none;dmarc=none action=none header.from=oppo.com;
 Received: from SEZPR02MB7967.apcprd02.prod.outlook.com (2603:1096:101:22a::14)
- by OSQPR02MB7980.apcprd02.prod.outlook.com (2603:1096:604:293::10) with
+ by TYZPR02MB7987.apcprd02.prod.outlook.com (2603:1096:405:a9::14) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8583.25; Wed, 26 Mar
- 2025 01:32:23 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8583.23; Wed, 26 Mar
+ 2025 02:09:27 +0000
 Received: from SEZPR02MB7967.apcprd02.prod.outlook.com
  ([fe80::5723:5b88:ed4c:d49b]) by SEZPR02MB7967.apcprd02.prod.outlook.com
  ([fe80::5723:5b88:ed4c:d49b%5]) with mapi id 15.20.8583.023; Wed, 26 Mar 2025
- 01:32:22 +0000
+ 02:09:26 +0000
+Message-ID: <6c4f18d8-39f9-4eac-9bb2-d6f0d9c3b376@oppo.com>
+Date: Wed, 26 Mar 2025 10:09:22 +0800
+User-Agent: Mozilla Thunderbird
+To: ebiggers@kernel.org
+Cc: dm-devel@lists.linux.dev, eranm@google.com, guoweichao@oppo.com,
+ mpatocka@redhat.com, snitzer@kernel.org, weilongping@oppo.com
+References: <20250325174318.GA559858@google.com>
+Subject: Re: [PATCH] dm-verity: support block number limits for different
+ ioprio classes
 From: LongPing Wei <weilongping@oppo.com>
-To: mpatocka@redhat.com
-Cc: agk@redhat.com,
-	dm-devel@lists.linux.dev,
-	guoweichao@oppo.com,
-	snitzer@kernel.org,
-	weilongping@oppo.com
-Subject: [PATCH v2] dm-verity: support block number limits for different ioprio classes
-Date: Wed, 26 Mar 2025 09:30:51 +0800
-Message-Id: <20250326013049.1292617-1-weilongping@oppo.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com>
-References: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com>
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: SI2P153CA0008.APCP153.PROD.OUTLOOK.COM
- (2603:1096:4:140::19) To SEZPR02MB7967.apcprd02.prod.outlook.com
+In-Reply-To: <20250325174318.GA559858@google.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: SI2PR02CA0002.apcprd02.prod.outlook.com
+ (2603:1096:4:194::22) To SEZPR02MB7967.apcprd02.prod.outlook.com
  (2603:1096:101:22a::14)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -66,204 +64,115 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SEZPR02MB7967:EE_|OSQPR02MB7980:EE_
-X-MS-Office365-Filtering-Correlation-Id: b07e74c1-16e9-4596-cd12-08dd6c060e86
+X-MS-TrafficTypeDiagnostic: SEZPR02MB7967:EE_|TYZPR02MB7987:EE_
+X-MS-Office365-Filtering-Correlation-Id: 8ffb17c7-e6e9-4885-9d92-08dd6c0b3c0e
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|376014|1800799024|52116014|366016|38350700014;
+X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|1800799024|376014;
 X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?yZ3i9PU1VvSpSCW6bbPFwww1M9+g+pCwsCamSbZkMI/PMZiLpUtgItTDGKDk?=
- =?us-ascii?Q?JDDgAB+pw2eAyprujBHMzdl54g8n3Nzv1LblSfKZub0XHQdPOXnLd7URK9TU?=
- =?us-ascii?Q?7B7neijBL/AJWEdvpA4NWXse+qQjCkAzXXlqYREiLojuolTI1c8Oe7F6lqka?=
- =?us-ascii?Q?Sx732pPFW2/sZkhaPBAIRvpXGOKzR33UM4j8RwqvskdO1P+2dl4c2I0wyfK0?=
- =?us-ascii?Q?mU/MBb4MMGnYPCBdB0W+Ks5sJ/1kzVm9TBIPvD9bIVM5rwlgvNt0lv7pwQNy?=
- =?us-ascii?Q?2dLMHx8MAkRwkrgchT2Vu5QeAF+X0mit6RYAqtiFnZDyHxHoWlkgNm+En5hu?=
- =?us-ascii?Q?FaqL5SqO06d2FAZPGOlhw1Fz9u3Pao54cSfPBN8Azlu4UPW1zNoIKAmV6J/v?=
- =?us-ascii?Q?zOVCzGymqqdTQ/cVbJVZx+hL4GKo5jf9Pv7np8dg4clLhFZ16VomEjg6o3YQ?=
- =?us-ascii?Q?n2+oM/YH+e7NNQOSyrH+03XKWEz7yOaGoMy/agp10UCwJnv4oQmlsna7SXVa?=
- =?us-ascii?Q?3KbD/Z+B+nLjaPkx1+VjcGRdkxI+SNCZiL+Shn+6Z5hVRRveKdByERhp00bw?=
- =?us-ascii?Q?FnCWn8F0vDO9Zzlc01O1TClOGuR6Gs64Z9y/QpiFwRnMS66T+XyOrhbT390O?=
- =?us-ascii?Q?KPFuuDsJX6BPo5bT/gPZewThNsK0eD7ieBFJuKr2uBUxANbSyyoZpTGOhTyL?=
- =?us-ascii?Q?tZeNIA3JJTaq5pKTQ/l6t6eqy0nKq5nqfmEglwHeJiS98wFfDr1A5lWZo9sv?=
- =?us-ascii?Q?+7yuOhKTRzi41iBajDpJrlYV68lpkK6EBvoPga+DTSOxj3yGNGR/82LjxYGT?=
- =?us-ascii?Q?m7JAWgmoIgO1tIm6NEcuLcsSAssQQiVYm0eFu9mmZIj9GipivySgHRPYp0vl?=
- =?us-ascii?Q?YtRKKm7UhPR//+Xm70Db8Yp2MKr5VoZdbN/pw0EQ2fTTf6b2yp1s0o3i1iUM?=
- =?us-ascii?Q?HhpKOgsiUSHIlU7wrTve35ai1DPKpFY6DkIdeMoBvoujqTKigNbX3Z6n+5SE?=
- =?us-ascii?Q?VnNhDcXAsHu14eOFUSaQg+ZkxQQqpSSsgXef7MI2QgkyK/Zd77J4Y+YmhamA?=
- =?us-ascii?Q?QEEgzNFLcq/9ngITnv8BzQOaHLRhX6b7D49GJGw/nL4tqOPunOdkR3XFvAga?=
- =?us-ascii?Q?pY0CDKhmZNeTu9p/cVXY0rk1xJ2PL99nhzwgiF57MEFVazOXSSOH39pRVDjz?=
- =?us-ascii?Q?J8+sM3Vn4gGyiqV1ckRtHRjJ+kTufHaffrZjRUWBt58lPHtmOJnduc1sXyss?=
- =?us-ascii?Q?EH6wtfExBuIKyM478YnssQFdsDs+6Zg7+rBhmABZkoJHkaAC1tVmmDrKjUqV?=
- =?us-ascii?Q?vCiHQ7YpXGDLapmzHRiNgI5GdWMzowhe2CX5nZdKn5mAix+fFPOVVaWe7uBB?=
- =?us-ascii?Q?q6lLm+Uv1nP7qGlxi7RiqHYTloNR04paoMwpYsszxmwNBdB8cXpluIjVdPHz?=
- =?us-ascii?Q?BYwJbpM60U9YAEZFtK8jy3m21xWOUWLV?=
+	=?utf-8?B?ZE51K1BndnJrQmh0MFZLdTAxcXRtOTVvV3FsbzJhRndadkV2RzRVb3I5MkdE?=
+ =?utf-8?B?MGhSRXdNeHByTS9UYXdSeXhxVWtRc1ZhUWJmM0hEdE13WlhuRnROMW1aSDV5?=
+ =?utf-8?B?MlFadG9YTDQrWC90RDFEdU9lS1duNi9DYWJXSHFxSmo2bWwwZTJFcFZXNlJ6?=
+ =?utf-8?B?WXFYUm5MbU01ckk4eFV5MnBsV3RzelhKRTdEaWp2SHFYY2NvZ2kxd1NIejVv?=
+ =?utf-8?B?SEIxL3Qza0FNN2hUR0hhV1h1M01RRWY1S0F1TFovblcvaDZHS1FKVUk0dDZI?=
+ =?utf-8?B?NDFFR2lTVEo3MjdFd2VxcEI0TFdpRkdDSWJialc1ZkZuMzRuWko5dkRnRTQx?=
+ =?utf-8?B?WW94OEJlbGtmTjliK1R0ZVUybTFSYm5CRk1oVzBMMHZEcEE0MXEvN0dKK3lP?=
+ =?utf-8?B?dldMeUdFTWdUWHcwVnNTaTZDTEd5eU9mazNDOHJwWnVyMmVmL2ROTzVOdzRX?=
+ =?utf-8?B?VC9Xd3h2cXl4eGtPb2oxMjlxZ2hSNlg3MlIwUy9mVXZ4aGNBdjhPaGJkM0V2?=
+ =?utf-8?B?dTFYcnBucFpaRGxRS2FnSDl3d0VFQkE3dEg4V3kyclVzeEdBQlM4amxtSjdj?=
+ =?utf-8?B?bis0UXgxRzdsSHpDcGtBZFQyTS9GN3ZoRXo4MDZielBuUGpQMW1BVkgwa2JG?=
+ =?utf-8?B?SnlmWmIva09tRHZuZ2w3U2s0VzNMK1pEWnZWOVZEcHdLRjZkWHVKeVl6Yjc1?=
+ =?utf-8?B?dnJmeWFNZHViQW5ianpUOEExTnFTSmxJelozZjI3WlRxYWkxcjFObkRCRHI3?=
+ =?utf-8?B?UkRhbzY5WEorUytPUW9xYUFNR2VlREhaU3ZyOWpZbmFVelB2ZWl0TDZZWXIw?=
+ =?utf-8?B?c3BhQkVJZzF3WXYrOFd3N0I0NEg4ZUlkUWltRE5DQzJTck5KUDEva3Aza2hD?=
+ =?utf-8?B?MElhbCtkUDlYL1A1Yi9PRW1XMVdkNFRUUEs1RHlHSnJlWExyVC91RTZKemNI?=
+ =?utf-8?B?R3ZBUmRwTDFXeXFKVmJZNGNOck9mbXBqYjBTMHczZml6KzU1TXRJVGl0SEdm?=
+ =?utf-8?B?SVZFZFVXY3QrdENTYndpNXhXRytNK0oxTWhLbldjTTJ0ODdWWEFZM2FkZ1k1?=
+ =?utf-8?B?T29LYnNpSW41WFcraFJSdTB2THhQWkk3OTg5UUJlZ1J1a1kyZnJhR29wN0s2?=
+ =?utf-8?B?ZHVhcWh3a2RRTmMrcTRNWEtkWE8yMWFqMVRTMWx0elkyMDhqSGllY0YxWXd1?=
+ =?utf-8?B?NFV1eDdPK0VoY3RxSU0va0I1aHpWblkzaDN2ck1jODBPV3RaMVBZNkw0MjEx?=
+ =?utf-8?B?RXA5T3hILzJkWXl6dlM2RFlHZ2F3MjAvcDcrZnZYeUNHODVwZUpicWFJT1hn?=
+ =?utf-8?B?MjVmWWJ0QlBNUnNNK0VzdFh3NXorUk1uenVWMjlpd3hUdXJqSHNPblVTUGlK?=
+ =?utf-8?B?YW0yamNxM3B6SjZWNlVWWEMxK29INWd2b28zVUd6RzI3dTZJbEo0YTRkSjRT?=
+ =?utf-8?B?b0lMM1MwMXpqcW1jdG1zYk1FZ2FlOC9iaFBDNU9WSG0xWVVOMUo2UnVIbUUy?=
+ =?utf-8?B?WFM4WE5ROU5aZXZSWWthTkhNRzdxKy9DOW92TWRhd0lVSm5scGpVZEIyZ0VE?=
+ =?utf-8?B?cDlvNzV2TzhYQWJ1QXB5cFpSZWNzZnVBZmZtYXJ4b2w0cmNMUEY3b0ZjSVJE?=
+ =?utf-8?B?bmNubFBuVnhSZ3lzUlA2NHlZalh0SENJaWdZQlpqd0w5ZFJYd2xQQ2piQTBR?=
+ =?utf-8?B?c0JMNTBNN2FiSGlBU2h6MFE4L20xbTBtUVpCempHZ1BvVjU2VE5rWHN4QTNY?=
+ =?utf-8?B?alcvVmZaZk8rczcvbGd2K21vNWFtL2N3Q2dtam10VVJ1OWZyNTdaMmZnVmVB?=
+ =?utf-8?B?WU8xOUJwMDljM0g5OS90aHNKV1ZDbU1TcEh5MzJuVUZzUmZ0OTRYbThXUlNH?=
+ =?utf-8?Q?SBDugLufLn32M?=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR02MB7967.apcprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(1800799024)(52116014)(366016)(38350700014);DIR:OUT;SFP:1101;
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR02MB7967.apcprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?mVTh9TDPcnLf2C5ab+q4dHfMfLtC9Jcko98PzVc7JpKO2Vg1ygIK4tNb6s08?=
- =?us-ascii?Q?4CqLKBEuW4/g9/ViV/Qtq/kBlt+vm/MZcIofKZg3CmuV/ET376P9G97dHGDa?=
- =?us-ascii?Q?A5yxsNzrRZoEHRmm3z745wzUbcGC2JnHtrHvCCLamZRQv6bGIG05b8EchCGz?=
- =?us-ascii?Q?vMdZZ3Q+tJKU9qC36vRJA50QKW9Ch99yopU4AwfDE+rRUa/yHBtLowqsNfaq?=
- =?us-ascii?Q?SJcEGRVGvfY4xJStuZTbNhq5p4wn5janOHnkyKyX1pofAzynRWOaWtg9t2i4?=
- =?us-ascii?Q?QwbfklKIPubj+6BU8KQ5Rqsl5KarY01U5roB0Lsc94JhhMig89v9wj304u+o?=
- =?us-ascii?Q?7RvLg6T8m/KU1cxBBmsiL5t4Joh5/0Qp1mmEdNPqcaeLvXLGuzR0GMsDQwSt?=
- =?us-ascii?Q?cJ9sMVKwMaWQda9M7esfv7BbeSYzXlHTYWYWzPVGEN+yGCUjfFaYK+8bJ6j6?=
- =?us-ascii?Q?pXUKjVI5m/XoE4njbqxVk+SvZSY3XPmSzluDnRT8Ce5CYIQBXDCQ7UllZG2u?=
- =?us-ascii?Q?qGok0xx3KIV7Pb4/57wu9DU30jLYtG9E4gmxuM236KdQG/RYARHod6MLnGr9?=
- =?us-ascii?Q?gXlyuUoJvWtA6txZGlBcCxYRNpjVSMOTDwmFiXKnUz5BErWvDeC8VIlW4fXk?=
- =?us-ascii?Q?jMceUA1FX9g+3w7Z6JfUCMQ0dFOcy3p0AJhl9ywBIxvPqaC6WDmR41lqTWOD?=
- =?us-ascii?Q?zOd/QGOhwZqtDvY8vU2otGfmglvVPYUgvCBVQiy2mIjaHk2eQlnyVwUAyFVt?=
- =?us-ascii?Q?oRIWonJ7j4QFfrIg052ADZP28nmUyG5TnCX9MtiD6/37qHD8Mc+CLFSCW6YC?=
- =?us-ascii?Q?XHxcdQfOioy9NMGlFp6BCwLd482Asgu6gtBzwRdQ/fgqYF5DyFsT3JC+OuYY?=
- =?us-ascii?Q?bEVSMq9zx5crDOkswSHp/pe6mmSMvJsCiudQ/9wYET93BZecwa08t2pimWBL?=
- =?us-ascii?Q?a+k3I/V3p5fzgIKo1MrWGbprFUXEDF+OMkW0Mj8k80LYCjG0bi9dzKXs1G86?=
- =?us-ascii?Q?Sxmp9ht2mln8HfiJ9E9utEZpiyuHmK0VMz8JHkbQ2G+w9yKD1TZdK8rsF0my?=
- =?us-ascii?Q?0GYZVyAC83o/qCrh5KVzh1Qt4jUhkzsxBu0mmBELRj6FVFMbzkut5g4gRo+w?=
- =?us-ascii?Q?MVc7S6ZDopipNke0cDhOoegQ1L1tYPxsf30SRlcIsxJQU9V7T4Po1wZsNfuC?=
- =?us-ascii?Q?zAihZE9qpDOcPteCrCmpR9zX+o2In7BqLweG3uzfNK8Yc8KxUuc1iqqU+NOw?=
- =?us-ascii?Q?pAAGVGkpu4sjkVrAu4/AcRs0sOKMkX+AXO/DgMOVmJA94ikH1j4M/cw8pDFr?=
- =?us-ascii?Q?7D2Ovtjfl84NUF+7xk+NSc2/TFe8UuJQsN6QdF9aSyOk1+6V85bypv1Dt4cw?=
- =?us-ascii?Q?BDw5zGO25wHBg/KJnOjeTVg0+e+ddKAtmpAd0UfjkS0/b+lD3gBGRWYzFjVs?=
- =?us-ascii?Q?ANKvc7FBtX6+HF6BaqEU+3TA2a3UFs2s1zAEq3GSXlRSnKZqxWT7xfX9iUP/?=
- =?us-ascii?Q?rOj6NzuTEDQhGb5d0Rpvu09KgaVRWCpWPnRgAosq4X+fNl2Fax293eVP2bBw?=
- =?us-ascii?Q?NA/ElkM+KUkyg9xXN9jPYYjl10tFVVrCEQxlJJ3Y?=
+	=?utf-8?B?ZFBxS0FVYkpmUkh3OHpxSUhQSjdIOXdib2Fyck5kYjN0LzR1blBlVTdsMk5i?=
+ =?utf-8?B?TU1ubnI4ZTZTM2IwQzRzUklmb3IvUWdheW4renVPRmtsVEttSDZlWTUzaVRX?=
+ =?utf-8?B?dzNJMGowV2VZUityVGw3TDRzZ0g3U2IxS1lpQ0RrYXlxY2g1MlBnblRSakps?=
+ =?utf-8?B?SHpUWkFLQnJnckFsQmNyaEpJYzhSek8rNVREUnpKU0l1TVhIVWNESFpOYjRJ?=
+ =?utf-8?B?SHBQcmFtVGg3NFpzeCswUTI3QWg4bFUzL2VpZHZ4QStXU09UL3RReVg2QXdK?=
+ =?utf-8?B?K3RGQ04rcVdjK01JT2RvM1RTaW5QWDJNQTF4Q0MrR1dlMVhpZDZucU5Dcm02?=
+ =?utf-8?B?WFI3emF1NmR2N1FsUHhMVXVBZENUbjByZmpCS3BSeFJHeXE3NVhrRWtzWS80?=
+ =?utf-8?B?WDhhUG5BVkY4ZGN4S3RuS0EvR2tpaHRlUjkxc09NenZkY24xVW1FaU5HZkRG?=
+ =?utf-8?B?MUplMXR5ZUY4T3lTeVl6Y1ZFcUFrMUpWYXhMSFplMmpZR3kwL0lBQmZVYUQx?=
+ =?utf-8?B?bUdqRGJuQmc4WW0zKzRLVUJYNFV1a213N1VZUnkxLzhlUFB1dEtXVzRqRWVU?=
+ =?utf-8?B?aFBBeG0wRFFtYUJvc01Wcno0NEk2RmFUeDFHT0thM2NLMGI0dGFSbmZZb1Nl?=
+ =?utf-8?B?Mm9TeWNqWTRKU1JpTWV2cjlOV0o3alF2MWtiV044bTI4SjN1T1RNK1NldUFW?=
+ =?utf-8?B?bENPTkpIM29aNXBlU0xCTVBoQzJZTEp0bTRZUDN6ajIzUStMRnpoOXFvU2xv?=
+ =?utf-8?B?Z0dGS3BicEdiZlQ2OFdPRDJnM3EwWExWSlJqdkNGNWVMd0o0YjJNT1dzTXQ0?=
+ =?utf-8?B?MEJ0bGpIdUJDcXlDZDlaYTlOR1pBTzd3S29zeFR4Z1J4aWJjYXY2RE40czk5?=
+ =?utf-8?B?ckcvbndLcDNwWjNqZjlUdlVrL2ZMSkVTVU1SdHJvN1BLcmdYWlQ1cURhaUdS?=
+ =?utf-8?B?bldCTU5WTlE4Q3pndkZRK0RieWErMlFMWkF2Q0ZXUEhwMk9IYzFTQzk0SU5P?=
+ =?utf-8?B?ZDR5NmJEZVdYbm5WQ09sbm9ibXFyZWZUNnRpNUw3bHBWd29EczN6Nk41em5K?=
+ =?utf-8?B?Y2ZQWnZsanBpQ2cxcExENThoWEEwRFNKSjR4ZGZPZlcweFoyc2xBZDVkcmNk?=
+ =?utf-8?B?YWFzM1ZsSkhqYXprT3BrSEp4TkZENjJoY080THE2b3k5Wmxnd0NReTBMM2JL?=
+ =?utf-8?B?YlAwUkVUaTdzdjZBS0Z3dzUvVGtjNzZuZHkrSk5NZEpoVUFXWEZUZ0V3NDZx?=
+ =?utf-8?B?K1l6b1VzTXZWOEhjbXVmWjdHbm9WZmVoaXQzU0dQeDV2OWxHUE5EWnFXOXdu?=
+ =?utf-8?B?OXhsMy8zdzhHbEtwamJuV3diZUtpeUVITi9ZU2ZDVUFHelB3VUN3OUxJRk1D?=
+ =?utf-8?B?YUlCK245di92QzNqMXIxWVd2ZFYxVW4zWWRDanhvdGZlZGR0NzNrelVWMEhw?=
+ =?utf-8?B?OUVuYVV6dlpxSy82R09UMkV0NFBUT3JCaHlCTkxUQXhtbWJBdkxNRkNWMnNo?=
+ =?utf-8?B?WnhuTk81TUhaNDJ5QzdIVDlLalhoVW1ZMmJ1L1k1T1V2N1g3Vm5ySlpLSjJY?=
+ =?utf-8?B?WDdoV0NmcVRvWEhoUkdEa3JXNXZpMGtJanc2Rk15THpHaWVkYWlzSlMxSlk0?=
+ =?utf-8?B?TUlROC9udVQ0VHlBaGNDRS9ldkVsQmEyaC9memU4dkQyV3hDV3F2TW93SkFv?=
+ =?utf-8?B?VysyblJ0aU05SHRtVFdmbDlVM0F6NE9maVpreHhjTzIzV1FhQktYWWhzcmtW?=
+ =?utf-8?B?N3g3T3FxSWd4eGhOcDgrbndvYlZUZHdPL05KUVFZdEk3U1I0b01xSktWSFlk?=
+ =?utf-8?B?bFhzOHBZQVJOQWl1L1lBaGt6eDlJbENtdWFURTVrYkp3U2t6THpWdzVqUWFM?=
+ =?utf-8?B?OE1pWTV5K2w2TDVaT2w4RU13WGxDc2RFb2g1emM0SExCTGU0MEpkMVBpazBz?=
+ =?utf-8?B?Z0l2eG1mZWdBVllkSm1GYTJGOHpmQ3E2ZjBwNEJBTXdaeDJvZ3RDWWJSOWRS?=
+ =?utf-8?B?NEpwVkszVTF4UGV5WmpWUS9LOUdwK1d6bER5N1AyZ2ZyOFVrYks3bUF1TEFF?=
+ =?utf-8?B?N0ZsKzlpYWkyY1RwSXQ0TFdoKzV3aEVGd1ZoQWRBSUk4dlhMRk01VFNIeGxQ?=
+ =?utf-8?Q?yEWJ0f/jBd3wwJJLnLitq05GE?=
 X-OriginatorOrg: oppo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b07e74c1-16e9-4596-cd12-08dd6c060e86
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8ffb17c7-e6e9-4885-9d92-08dd6c0b3c0e
 X-MS-Exchange-CrossTenant-AuthSource: SEZPR02MB7967.apcprd02.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Mar 2025 01:32:22.8533
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 26 Mar 2025 02:09:26.6970
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: f1905eb1-c353-41c5-9516-62b4a54b5ee6
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 8dVu0YhISwWrEHPRKIilJdTLDULztN4tYGc9NPjauZSNk8WqboxAy5zYRXHf3gQvFWq0hWNEl9Ev3y+PO2MtbA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: OSQPR02MB7980
+X-MS-Exchange-CrossTenant-UserPrincipalName: mae6ISnd5DosyURSEMXWmbD4lQkyG+t5YHJ/NtESMaiyvTVw1xbm05Xeic0/q8HIjKkFFcfstTtgw71Hl4KpJw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYZPR02MB7987
 
-Calling verity_verify_io in bh for IO of all sizes is not suitable for
-embedded devices. From our tests, it can improve the performance of 4K
-synchronise random reads.
-For example:
-./fio --name=rand_read --ioengine=psync --rw=randread --bs=4K \
- --direct=1 --numjobs=8 --runtime=60 --time_based --group_reporting \
- --filename=/dev/block/mapper/xx-verity
+Hi, Eric
 
-But it will degrade the performance of 512K synchronise sequential reads
-on our devices.
-For example:
-./fio --name=read --ioengine=psync --rw=read --bs=512K --direct=1 \
- --numjobs=8 --runtime=60 --time_based --group_reporting \
- --filename=/dev/block/mapper/xx-verity
+ > If the CPU has been in softirq context for too long, then stop
+ > choosing softirq context and instead fall back to the traditional
+ > workqueue.  This could help address objections about increased use of 
+ > softirq context.
 
-A parameter array is introduced by this change. And users can modify the
-default config by /sys/module/dm_verity/parameters/use_bh_bytes.
+Could you share me some example about this?
 
-The default limits for NONE/RT/BE/IDLE is set to 4096.
+ > When possible, make dm-verity do the work inline in the existing block
+ > softirq, instead of using the BH workqueue.  This would reduce the
+ > amount of overhead.  Note that dm-crypt does it this way.
 
-Call verity_verify_io directly when verity_end_io is in softirq.
+ > Let's just set good parameters by default instead.
+ > "try_verify_in_tasklet" is kind of useless as-is, and we should just
+ > fix it.  Especially since it only affects performance and not other
+ > behavior, I don't think there are any compatibility concerns with
+ > changing what it does exactly.
 
-Signed-off-by: LongPing Wei <weilongping@oppo.com>
----
-v2:
-1. change from use_bh_blocks to use_bh_bytes;
-2. update documention;
-3. set the default limit to 4096bytes;
-4. call verity_verify_io directly when verity_end_io is in softirq;
-5. bump version of dm-verity;
----
- .../admin-guide/device-mapper/verity.rst      |  8 ++++-
- drivers/md/dm-verity-target.c                 | 30 +++++++++++++++++--
- 2 files changed, 34 insertions(+), 4 deletions(-)
+These ideas have been implemented in patch v2. Thanks for your suggestions.
 
-diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documentation/admin-guide/device-mapper/verity.rst
-index a65c1602cb23..f7fb5ea3c0df 100644
---- a/Documentation/admin-guide/device-mapper/verity.rst
-+++ b/Documentation/admin-guide/device-mapper/verity.rst
-@@ -143,7 +143,13 @@ root_hash_sig_key_desc <key_description>
- 
- try_verify_in_tasklet
-     If verity hashes are in cache, verify data blocks in kernel tasklet instead
--    of workqueue. This option can reduce IO latency.
-+    of workqueue. This option can reduce IO latency. The size limits could be
-+    configured via /sys/module/dm_verity/parameters/use_bh_bytes. The four
-+    parameters correspond to limits for IOPRIO_CLASS_NONE,IOPRIO_CLASS_RT,
-+    IOPRIO_CLASS_BE and IOPRIO_CLASS_IDLE in turn.
-+    For example:
-+    <none>,<rt>,<be>,<idle>
-+    4096,4096,4096,4096
- 
- Theory of operation
- ===================
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index e86c1431b108..6e26d59cdcef 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -30,6 +30,7 @@
- #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
- 
- #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
-+#define DM_VERITY_USE_BH_DEFAULT_BYTES	4096
- 
- #define DM_VERITY_MAX_CORRUPTED_ERRS	100
- 
-@@ -49,6 +50,15 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
- 
- module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
- 
-+static unsigned int dm_verity_use_bh_bytes[4] = {
-+	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_NONE
-+	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_RT
-+	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_BE
-+	DM_VERITY_USE_BH_DEFAULT_BYTES	// IOPRIO_CLASS_IDLE
-+};
-+
-+module_param_array_named(use_bh_bytes, dm_verity_use_bh_bytes, uint, NULL, 0644);
-+
- static DEFINE_STATIC_KEY_FALSE(use_bh_wq_enabled);
- 
- /* Is at least one dm-verity instance using ahash_tfm instead of shash_tfm? */
-@@ -652,6 +662,12 @@ static void verity_bh_work(struct work_struct *w)
- 	verity_finish_io(io, errno_to_blk_status(err));
- }
- 
-+static inline bool verity_use_bh(unsigned int bytes, unsigned short ioprio)
-+{
-+	return ioprio <= IOPRIO_CLASS_IDLE &&
-+		bytes <= READ_ONCE(dm_verity_use_bh_bytes[ioprio]);
-+}
-+
- static void verity_end_io(struct bio *bio)
- {
- 	struct dm_verity_io *io = bio->bi_private;
-@@ -665,8 +681,16 @@ static void verity_end_io(struct bio *bio)
- 	}
- 
- 	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq) {
--		INIT_WORK(&io->bh_work, verity_bh_work);
--		queue_work(system_bh_wq, &io->bh_work);
-+		unsigned short ioprio = IOPRIO_PRIO_CLASS(bio->bi_ioprio);
-+
-+		if (verity_use_bh(bio->bi_iter.bi_size, ioprio)) {
-+			if (in_hardirq() || irqs_disabled()) {
-+				INIT_WORK(&io->bh_work, verity_bh_work);
-+				queue_work(system_bh_wq, &io->bh_work);
-+			} else {
-+				verity_bh_work(&io->bh_work);
-+			}
-+		}
- 	} else {
- 		INIT_WORK(&io->work, verity_work);
- 		queue_work(io->v->verify_wq, &io->work);
-@@ -1761,7 +1785,7 @@ static struct target_type verity_target = {
- 	.name		= "verity",
- /* Note: the LSMs depend on the singleton and immutable features */
- 	.features	= DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE,
--	.version	= {1, 10, 0},
-+	.version	= {1, 11, 0},
- 	.module		= THIS_MODULE,
- 	.ctr		= verity_ctr,
- 	.dtr		= verity_dtr,
--- 
-2.34.1
-
+- LongPing
