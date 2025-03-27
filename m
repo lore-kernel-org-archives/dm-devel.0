@@ -1,84 +1,126 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 862231C7019
-	for <dm-devel@lists.linux.dev>; Thu, 27 Mar 2025 19:39:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13FD81B043F
+	for <dm-devel@lists.linux.dev>; Thu, 27 Mar 2025 23:51:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743104356; cv=none; b=flvMlfP/BEDyIfi9VSZvW/5fuvdJI4286Q9jY+VYXkEk0/mHiveo8fVRmkKsiww+P+4sO/caW4bom+tRgbxesQmtAd5AjDcj3bHMeP8Cb54Jg6KFaLjY+j1wppEyfG1O4ezPAyMyzAInpjIBNr+itclOTnZPMgn8YdTWLrDkMyA=
+	t=1743119498; cv=none; b=dN971JwLwJ6xQzChotyb2ks+jDazofIeasVDS3RvTlZ/OFI5z/hbyy5lHwzjfE5h9t6Oa0vNeq3+yb9x6gK7Qku6+trqEVc8M77u4xV+Bs3I+jnYRRgnRtu+NG94IQNuQGlTf12TJT3zz1i2BQRlh5cOm8AS+6DEXGT8qLsw91M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743104356; c=relaxed/simple;
-	bh=jbUrWmJOOivjK++FyJY4ffvi/bIChxtLEJWEMdlKwhs=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=rnEnbrWm16opzy7qksGePwF1kFcIc0Qa+kC4wAg/goI8AfLeUoW7CZ53wJ2Cwp7tshTNAg7bsv+7Dpy6hNDvb/3CYoY7YJ8hbv89F32HAMISLeHzdna+dtynf8D9Y0E0qvFKeu9D7HWh4OJ1691Dz/B3bFRCt8Q0PSTZ01J+Q9c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JkzDSGdM; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1743119498; c=relaxed/simple;
+	bh=DQZ69/qUYubJ2yTP02FZXrnbLz5WhNe9fbbPunIhHHk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=ZCvJa2AbnkMv80FWys+eX0cI31E/W9B1wkvLw7I56BKXOkO54P8lFKRLwA54kh3dR+wwgHrOOnVC6PzYXRrvuYqFsMA+csTRxQM8qeRmLjOkqKt+InaSvqw0KhdkhZdt23AA+RUFR97Z+jEzXDuSOKyXsauDlRGulHhvXwdCVU8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QoPmy5da; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JkzDSGdM"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QoPmy5da"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1743104353;
+	s=mimecast20190719; t=1743119494;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=skwapfZN6+QPDu20TdIsdgn/96cVcHrFRu6X5oAD1NM=;
-	b=JkzDSGdMKOpMxYd3hiQqhY3TTfj5Yp8K6MC7zHO7jzx5B9ujaOdRITBDE8iE6Jev4E/H8d
-	KXhNbmI41/cVrWoiul7dyYbVjAa9AIAKx6vVXz5DUP73tZTUGRGb020g3d1WLM4IWWXu5Z
-	zu8HeOSWgA0676Mo4DtwN1Q3N29gtcQ=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=9KwnooAmN46DY+VYDhWvvgsW7YXuA0OOZnYRtG6vn1I=;
+	b=QoPmy5daTfj5Ql4BvTvwN5hV1nL7NFFBYQP/cqZZm3tkZ6rF4A7r9v1Rl4K5FayMbm+VEX
+	OR+BNWD36jNlpKxi8CsWaMy8oGpn0P+7/mrqZGyiXNFy9PDGCeEMz6SugSkuiMUVdRgpKS
+	G3VbBfdxArArocqgVrYsh0QjDGonVtY=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-687-WIHScWMkNi2ZIUPsRfeGVQ-1; Thu,
- 27 Mar 2025 15:39:08 -0400
-X-MC-Unique: WIHScWMkNi2ZIUPsRfeGVQ-1
-X-Mimecast-MFC-AGG-ID: WIHScWMkNi2ZIUPsRfeGVQ_1743104347
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-623-fCobGMRyOf6PXeASd_Y1tg-1; Thu,
+ 27 Mar 2025 19:51:29 -0400
+X-MC-Unique: fCobGMRyOf6PXeASd_Y1tg-1
+X-Mimecast-MFC-AGG-ID: fCobGMRyOf6PXeASd_Y1tg_1743119488
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D65F180AF4C;
-	Thu, 27 Mar 2025 19:39:07 +0000 (UTC)
-Received: from [10.22.82.75] (unknown [10.22.82.75])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1BFED1801747;
-	Thu, 27 Mar 2025 19:39:04 +0000 (UTC)
-Date: Thu, 27 Mar 2025 20:39:00 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Eric Biggers <ebiggers@kernel.org>
-cc: LongPing Wei <weilongping@oppo.com>, agk@redhat.com, 
-    dm-devel@lists.linux.dev, guoweichao@oppo.com, snitzer@kernel.org, 
-    Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v2] dm-verity: support block number limits for different
- ioprio classes
-In-Reply-To: <a5553d19-d773-b004-e848-6cd2f2839d6f@redhat.com>
-Message-ID: <21f64cbe-20a7-ffd8-b665-b03d37284d0e@redhat.com>
-References: <50200020-3c4f-0667-1697-7c2ff62133b2@redhat.com> <20250326013049.1292617-1-weilongping@oppo.com> <93b863a6-24f3-2281-c9a7-c3e59b2a6ec2@redhat.com> <431f8798-e0e5-362c-bf6b-fb6cddadd4b2@oppo.com> <20250326165336.GB1243@sol.localdomain>
- <052d22b6-2d49-7faf-49f3-742c9b79fc8e@redhat.com> <20250326204845.GB6625@sol.localdomain> <dd421003-2d7f-4d35-aa77-12d319454160@oppo.com> <20250327170524.GF1425@sol.localdomain> <6421ae31-5b4a-f35a-724c-1970ec3ab06b@redhat.com> <20250327173510.GA3371050@google.com>
- <a5553d19-d773-b004-e848-6cd2f2839d6f@redhat.com>
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 359A21944F0A;
+	Thu, 27 Mar 2025 23:51:28 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AB3081956095;
+	Thu, 27 Mar 2025 23:51:27 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52RNpQXO2664409
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 27 Mar 2025 19:51:26 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52RNpPEv2664408;
+	Thu, 27 Mar 2025 19:51:25 -0400
+Date: Thu, 27 Mar 2025 19:51:25 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH 1/3] multipathd: monitor new multipath dev even if we
+ can't update it
+Message-ID: <Z-XkfUIhidQymNhf@redhat.com>
+References: <20250324205504.2523493-1-bmarzins@redhat.com>
+ <20250324205504.2523493-2-bmarzins@redhat.com>
+ <99b1d67f46298eed77b2d77ec396a1b0727481d0.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+In-Reply-To: <99b1d67f46298eed77b2d77ec396a1b0727481d0.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: yw572AabrpJOd3Ch_3q3v8cqfZ9-huY-qPlPO13wid8_1743104347
+X-Mimecast-MFC-PROC-ID: 19bAzJHlp_2sWzEgOPH_fErD6_dR45Zalvem39rh7Ok_1743119488
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-
-
-On Thu, 27 Mar 2025, Mikulas Patocka wrote:
-
-> There is also a bug that prefetch may race with suspend, sending I/Os even 
-> when the dm-verity device is suspended - but that is fixable by adding 
-> flush_workqueue to the postsuspend hook.
+On Tue, Mar 25, 2025 at 11:33:12PM +0100, Martin Wilck wrote:
+> On Mon, 2025-03-24 at 16:55 -0400, Benjamin Marzinski wrote:
+> > If a multipath device was created by the multipath command,
+> > multipathd
+> > might not agree with how the device was created. ev_add_map() can
+> > reload
+> > the device with a different table by calling add_map_without_path() -
+> > >
+> > update_map(). If this reloading of the map failed, multipathd was
+> > simply
+> > ignoring the multipath device, even though it still existed.
+> > 
+> > One way that reloading can fail is if a path that multipathd already
+> > has
+> > initialized goes offline. If a multipath device is created by the
+> > multipath command while the path is offline, it will not use the
+> > offline
+> > path, since multipath won't be able to get the necessary pathinfo.
+> > However, multipathd will already have the pathinfo for the path, and
+> > may
+> > not even know that it's offline, since the path is an orphan. When it
+> > tries to reload the device, it will include the offline path, and the
+> > reload will fail.
 > 
-> Mikulas
+> Am I understanding correctly that during the reload, bdev_open() failed
+> in the kernel because the path was offline?
 
-flush_workqueue won't make it - it seems that I'll have to add a new 
-function dm_bufio_quisce that will wait until all prefetches terminate and 
-use this function in the postsuspend hook of targets that do prefetch.
-
-Mikulas
+Yep. It's failing in sd_open() -> scsi_block_when_processing_errors()
+see the comment here:
+https://github.com/torvalds/linux/blob/5c2a430e85994f4873ea5ec42091baa1153bc731/drivers/scsi/sd.c#L1523
+ 
+> I was thinking about my recent tests [1] where I'd come to the
+> conclusion that reload failure is hardly possible. While I'd realized
+> that "trying to add a path device that was not previously mapped" might
+> fail, I didn't think of the scenario you describe here.
+> 
+> [1] https://lore.kernel.org/dm-devel/ee6fcbda31fd1f13969653782417fbed748f5bc7.camel@suse.com/
+> 
+> > 
+> > Instead of ignoring the device if it can't reload it, multipathd
+> > should
+> > just montior it as it is. When the path device is no longer offline,
+> > it
+> > can be added back to the multipath device by calling
+> > "multipathd reconfigure" or "multipathd add path <path>".
+> 
+> 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> 
+> Reviewed-by: Martin Wilck <mwilck@suse.com>
 
