@@ -1,27 +1,27 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 947CF211A20
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1CBC3212B0D
 	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 06:14:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743142495; cv=none; b=OTo7Q+FR1QcOnFa66TOzb/jYIi6bqn2x5NKr6Tp/irJVJlNM6R8ID2KVcbQ03rF+rJMku9iPvIaI2ZI0/EKc3SAKExx/gINZlnyQRxT48prsb7Jwm+Ek1FBcQh2i2/3x8XET6Da/pIPvIRE6n2kAOXfSTJqYcJJQ2aTlSwagmbQ=
+	t=1743142497; cv=none; b=QIacACaa7z4PikkizzzRHLZBnBcYF4LSWFr3I61y/wu4Nu4VJBy8hfIUjOLy/sq8Y17+8ohyQnu8hZdSBy7+vDAY9RuqmULrt3lX48ieOE4gQjSDB6mdtvTRXCQreKsqxpTvlbCt4eVZIejIQr/kNwb9hkVL8YqP94/+redUoCc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743142495; c=relaxed/simple;
-	bh=KIeqCI1rQ9xEoTnMFgzrPuDOkPsFLF9qmyeXIjCapD8=;
+	s=arc-20240116; t=1743142497; c=relaxed/simple;
+	bh=fpMef2Wjto4vzE9UBqDAsFYzDduBP36pF2FndpsCTmk=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=o81VlcW4eq6EJKMsUUk0D1GidY1JWRJ0hSec3lCVOaExbP+doX8gY8t94Hgr/i9cz15W/pd7IZZF39gK4eglBY1FnDTyztUPhE1IW3vLmnRXGzOHE+yv7p2ZKb/gwVWPFrNMeS92v3IKYKVHi3Wh1DZMM41R8JS9nK0QUEnB07w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=lJPdGruWTcmU5LbebQi7HK0agYCPFIaHQBOkCBtl21auwdX9cP/9HWE31c/jt9xbpS3nprNrdXd300QTlFFTkmALjZQ0NS22p3Th1SeTkwCSDGse83DyKfPVaHr4TIOXuL4Zn88/Kvv/lmZZ81Cw/UfaYGlmThQxOoWxNT3QL40=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZP9Gc6R7yz4f3jt8
-	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:32 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZP9Gd3jfKz4f3jkw
+	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:33 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 81E3C1A13CE
-	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:50 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 241961A13D5
+	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:51 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDHK2BSPuZnfAUtHw--.25875S11;
+	by APP4 (Coremail) with SMTP id gCh0CgDHK2BSPuZnfAUtHw--.25875S12;
 	Fri, 28 Mar 2025 14:14:50 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: hch@lst.de,
@@ -40,9 +40,9 @@ Cc: linux-block@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH RFC v2 07/14] md/md-llbitmap: implement hidden disk to manage bitmap IO
-Date: Fri, 28 Mar 2025 14:08:46 +0800
-Message-Id: <20250328060853.4124527-8-yukuai1@huaweicloud.com>
+Subject: [PATCH RFC v2 08/14] md/md-llbitmap: implement APIs for page level dirty bits synchronization
+Date: Fri, 28 Mar 2025 14:08:47 +0800
+Message-Id: <20250328060853.4124527-9-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
 References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
@@ -53,10 +53,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDHK2BSPuZnfAUtHw--.25875S11
-X-Coremail-Antispam: 1UD129KBjvJXoWxuw15ury3Kr4kAF43GryxAFb_yoW3AFWxpF
-	W3X3W5Kr4rJrn3Ww17JrW7AFyFqr4DJr92qFZ7ua4S9r1jyrZIgF48GFy8Aws8WrnrCFnr
-	JFs8K34rGw48XFDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgDHK2BSPuZnfAUtHw--.25875S12
+X-Coremail-Antispam: 1UD129KBjvJXoWxKF47KryrKF1kKryxJrW5KFg_yoW7GFy5pF
+	WxX345GFW5JF1xW3y3JrZrAFyrtr4kt392g3s3C34F9w12krZa9F1xCFyUAws8Wrn3GFnr
+	Ars8Kw15G3W8XFUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -75,281 +75,177 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Bitmap is stored in each member disk, the old bitmap implementation is
-allocating memory and managing data by itself, read and write will
-attach the allocated page to bio for member disks, and a bitmap level
-spinlock is used for synchronization
+IO fast path will set bits to dirty, and those dirty bits must be
+cleared after IO is done, to prevent unnecessary data recovery after
+power failure.
 
-For llbitmap, a hidden disk, named mdxxx_bitmap, is created for bitmap, see
-details in llbitmap_add_disk(). And a file is created as well to manage
-bitmap IO for this disk. Read/write bitmap will be converted to buffer
-IO to this file.
+This patch add a bitmap page level barrier and related APIs,
+- llbitmap_{suspend, resume} will be used by daemon from slow path:
+ 1) suspend new write IO;
+ 2) wait for inflight write IO to be done;
+ 3) clear dirty bits;
+ 4) resume write IO;
+
+- llbitmap_{raise, release}_barrier will be used in IO fast path, the
+overhead is just one percpu ref get if the page is not suspended.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md-llbitmap.c | 238 +++++++++++++++++++++++++++++++++++++++
- 1 file changed, 238 insertions(+)
+ drivers/md/md-llbitmap.c | 119 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 119 insertions(+)
 
 diff --git a/drivers/md/md-llbitmap.c b/drivers/md/md-llbitmap.c
-index 1f97b6868279..bbd8a7c99577 100644
+index bbd8a7c99577..7d4a0e81f8e1 100644
 --- a/drivers/md/md-llbitmap.c
 +++ b/drivers/md/md-llbitmap.c
-@@ -56,8 +56,16 @@
-  *   unwritten blocks.
-  * - After resync is done, change state from Syncing to Dirty first, in case
-  *   Startwrite happen before the state is Clean.
+@@ -63,12 +63,29 @@
+  * llbitmap_add_disk(). And a file is created as well to manage bitmap IO for
+  * this disk, see details in llbitmap_open_disk(). Read/write bitmap is
+  * converted to buffer IO to this file.
 + *
-+ * ##### Bitmap IO
++ * IO fast path will set bits to dirty, and those dirty bits will be cleared
++ * by daemon after IO is done. llbitmap_barrier is used to syncronize between
++ * IO path and daemon;
 + *
-+ * A hidden disk, named mdxxx_bitmap, is created for bitmap, see details in
-+ * llbitmap_add_disk(). And a file is created as well to manage bitmap IO for
-+ * this disk, see details in llbitmap_open_disk(). Read/write bitmap is
-+ * converted to buffer IO to this file.
++ * IO patch:
++ *  1) try to grab a reference, if succeed, set expire time after 5s and return;
++ *  2) wait for daemon to finish clearing dirty bits;
++ *
++ * Daemon(Daemon will be wake up every daemon_sleep seconds):
++ * For each page:
++ *  1) check if page expired, if not skip this page; for expired page:
++ *  2) suspend the page and wait for inflight write IO to be done;
++ *  3) change dirty page to clean;
++ *  4) resume the page;
   */
  
-+#define BITMAP_MAX_SECTOR (128 * 2)
+ #define BITMAP_MAX_SECTOR (128 * 2)
  #define BITMAP_MAX_PAGES 32
  #define BITMAP_SB_SIZE 1024
  
-@@ -135,6 +143,13 @@ struct llbitmap {
- 	__u64	events_cleared;
++#define BARRIER_IDLE 5
++
+ enum llbitmap_state {
+ 	/* No valid data, init state after assemble the array */
+ 	BitUnwritten = 0,
+@@ -115,6 +132,16 @@ enum llbitmap_action {
+ 	BitmapActionInit,
  };
  
-+struct llbitmap_bio {
-+	struct md_rdev *rdev;
-+	struct bio bio;
-+};
++/*
++ * page level barrier to synchronize between dirty bit by write IO and clean bit
++ * by daemon.
++ */
++struct llbitmap_barrier {
++	struct percpu_ref active;
++	unsigned long expire;
++	wait_queue_head_t wait;
++} ____cacheline_aligned_in_smp;
 +
-+static struct workqueue_struct *md_llbitmap_io_wq;
-+
- static char state_machine[nr_llbitmap_state][nr_llbitmap_action] = {
- 	[BitUnwritten] = {BitDirty, BitNone, BitNone, BitNone, BitNone, BitNone, BitNone, BitNone},
- 	[BitClean] = {BitDirty, BitNone, BitNone, BitNone, BitNone, BitNone, BitUnwritten, BitNeedSync},
-@@ -254,3 +269,226 @@ static enum llbitmap_state llbitmap_state_machine(struct llbitmap *llbitmap,
+ struct llbitmap {
+ 	struct mddev *mddev;
+ 	/* hidden disk to manage bitmap IO */
+@@ -123,6 +150,7 @@ struct llbitmap {
+ 	struct file *bitmap_file;
+ 	int nr_pages;
+ 	struct page *pages[BITMAP_MAX_PAGES];
++	struct llbitmap_barrier barrier[BITMAP_MAX_PAGES];
  
- 	return state;
+ 	struct bio_set bio_set;
+ 	struct bio_list retry_list;
+@@ -492,3 +520,94 @@ static void llbitmap_close_disk(struct llbitmap *llbitmap)
+ 	fput(bitmap_file);
  }
-+
-+static void llbitmap_end_write(struct bio *bio)
+ 
++static void llbitmap_free_pages(struct llbitmap *llbitmap)
 +{
-+	struct bio *parent = bio->bi_private;
-+	struct llbitmap_bio *llbitmap_bio;
-+	struct md_rdev *rdev;
++	int i;
 +
-+	if (bio->bi_status == BLK_STS_OK) {
-+		WRITE_ONCE(parent->bi_status, BLK_STS_OK);
-+	} else {
-+		llbitmap_bio = container_of(bio, struct llbitmap_bio, bio);
-+		rdev = llbitmap_bio->rdev;
++	for (i = 0; i < BITMAP_MAX_PAGES; i++) {
++		struct page *page = llbitmap->pages[i];
 +
-+		pr_err("%s: %s: bitmap write failed for %pg\n", __func__,
-+		       mdname(rdev->mddev), rdev->bdev);
-+		md_error(rdev->mddev, rdev);
++		if (!page)
++			return;
++
++		llbitmap->pages[i] = NULL;
++		put_page(page);
++		percpu_ref_exit(&llbitmap->barrier[i].active);
 +	}
-+
-+	bio_put(bio);
-+	bio_endio(parent);
 +}
 +
-+static void md_llbitmap_retry_read(struct llbitmap *llbitmap, struct bio *bio)
++static void llbitmap_raise_barrier(struct llbitmap *llbitmap, int page_idx)
 +{
-+	unsigned long flags;
++	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
 +
-+	spin_lock_irqsave(&llbitmap->retry_lock, flags);
-+	bio_list_add(&llbitmap->retry_list, bio);
-+	queue_work(md_llbitmap_io_wq, &llbitmap->retry_work);
-+	spin_unlock_irqrestore(&llbitmap->retry_lock, flags);
-+}
-+
-+static void llbitmap_end_read(struct bio *bio)
-+{
-+	struct bio *parent = bio->bi_private;
-+	struct llbitmap_bio *llbitmap_bio;
-+	struct llbitmap *llbitmap;
-+	struct md_rdev *rdev;
-+
-+	if (bio->bi_status == BLK_STS_OK) {
-+		WRITE_ONCE(parent->bi_status, BLK_STS_OK);
-+		bio_put(bio);
-+		bio_endio(parent);
++retry:
++	if (likely(percpu_ref_tryget_live(&barrier->active))) {
++		WRITE_ONCE(barrier->expire, jiffies + BARRIER_IDLE * HZ);
 +		return;
 +	}
 +
-+	llbitmap_bio = container_of(bio, struct llbitmap_bio, bio);
-+	rdev = llbitmap_bio->rdev;
-+	pr_err("%s: %s: bitmap read failed for %pg\n", __func__,
-+	       mdname(rdev->mddev), rdev->bdev);
-+	md_error(rdev->mddev, rdev);
-+	bio_put(bio);
-+	md_llbitmap_retry_read(llbitmap, parent);
++	wait_event(barrier->wait, !percpu_ref_is_dying(&barrier->active));
++	goto retry;
 +}
 +
-+static void md_llbitmap_retry_fn(struct work_struct *work)
++static void llbitmap_release_barrier(struct llbitmap *llbitmap, int page_idx)
 +{
-+	struct llbitmap *llbitmap =
-+		container_of(work, struct llbitmap, retry_work);
-+	struct mddev *mddev = llbitmap->mddev;
-+	struct md_rdev *rdev;
-+	struct bio *bio;
++	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
 +
-+again:
-+	spin_lock_irq(&llbitmap->retry_lock);
-+	bio = bio_list_pop(&llbitmap->retry_list);
-+	spin_unlock_irq(&llbitmap->retry_lock);
-+
-+	if (!bio)
-+		return;
-+
-+	rdev_for_each(rdev, mddev) {
-+		struct llbitmap_bio *llbitmap_bio;
-+		struct bio *new;
-+
-+		if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
-+			continue;
-+
-+		new = bio_alloc_clone(rdev->bdev, bio, GFP_NOIO,
-+				      &llbitmap->bio_set);
-+		new->bi_iter.bi_sector = bio->bi_iter.bi_sector +
-+					 rdev->sb_start +
-+					 mddev->bitmap_info.offset;
-+		new->bi_opf |= REQ_SYNC | REQ_IDLE | REQ_META;
-+		new->bi_private = bio;
-+		new->bi_end_io = llbitmap_end_read;
-+
-+		llbitmap_bio = container_of(new, struct llbitmap_bio, bio);
-+		llbitmap_bio->rdev = rdev;
-+
-+		submit_bio_noacct(new);
-+		goto again;
-+	}
++	percpu_ref_put(&barrier->active);
 +}
 +
-+static void llbitmap_submit_bio(struct bio *bio)
++static void llbitmap_suspend(struct llbitmap *llbitmap, int page_idx)
 +{
-+	struct mddev *mddev = bio->bi_bdev->bd_disk->private_data;
-+	struct llbitmap *llbitmap = mddev->bitmap;
-+	struct llbitmap_bio *llbitmap_bio;
-+	struct md_rdev *rdev;
-+	struct bio *new;
++	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
 +
-+	if (unlikely(bio->bi_opf & REQ_PREFLUSH))
-+		bio->bi_opf &= ~REQ_PREFLUSH;
++	percpu_ref_kill(&barrier->active);
++	wait_event(barrier->wait, percpu_ref_is_zero(&barrier->active));
++}
 +
-+	if (!bio_sectors(bio)) {
-+		bio_endio(bio);
-+		return;
-+	}
++static void llbitmap_resume(struct llbitmap *llbitmap, int page_idx)
++{
++	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
 +
-+	/* status will be cleared if any member disk IO succeed */
-+	bio->bi_status = BLK_STS_IOERR;
++	barrier->expire = LONG_MAX;
++	percpu_ref_resurrect(&barrier->active);
++	wake_up(&barrier->wait);
++}
 +
-+	rdev_for_each(rdev, mddev) {
-+		if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
-+			continue;
++static void active_release(struct percpu_ref *ref)
++{
++	struct llbitmap_barrier *barrier =
++		container_of(ref, struct llbitmap_barrier, active);
 +
-+		new = bio_alloc_clone(rdev->bdev, bio, GFP_NOIO,
-+				      &llbitmap->bio_set);
-+		new->bi_iter.bi_sector = bio->bi_iter.bi_sector +
-+					 rdev->sb_start +
-+					 mddev->bitmap_info.offset;
-+		new->bi_opf |= REQ_SYNC | REQ_IDLE | REQ_META;
++	wake_up(&barrier->wait);
++}
 +
-+		llbitmap_bio = container_of(new, struct llbitmap_bio, bio);
-+		llbitmap_bio->rdev = rdev;
-+		bio_inc_remaining(bio);
-+		new->bi_private = bio;
++static int llbitmap_cache_pages(struct llbitmap *llbitmap)
++{
++	int nr_pages = (llbitmap->chunks + BITMAP_SB_SIZE + PAGE_SIZE - 1) / PAGE_SIZE;
++	struct page *page;
++	int i = 0;
 +
-+		if (bio_data_dir(bio) == WRITE) {
-+			new->bi_end_io = llbitmap_end_write;
-+			new->bi_opf |= REQ_FUA;
-+			submit_bio_noacct(new);
-+			continue;
++	llbitmap->nr_pages = nr_pages;
++	while (i < nr_pages) {
++		page = read_mapping_page(llbitmap->bitmap_file->f_mapping, i, NULL);
++		if (IS_ERR(page)) {
++			int ret = PTR_ERR(page);
++
++			llbitmap_free_pages(llbitmap);
++			return ret;
 +		}
 +
-+		new->bi_end_io = llbitmap_end_read;
-+		submit_bio_noacct(new);
-+		break;
++		if (percpu_ref_init(&llbitmap->barrier[i].active, active_release,
++				    PERCPU_REF_ALLOW_REINIT, GFP_KERNEL)) {
++			put_page(page);
++			return -ENOMEM;
++		}
++
++		init_waitqueue_head(&llbitmap->barrier[i].wait);
++		llbitmap->pages[i++] = page;
 +	}
 +
-+	bio_endio(bio);
-+}
-+
-+const struct block_device_operations llbitmap_fops = {
-+	.owner = THIS_MODULE,
-+	.submit_bio = llbitmap_submit_bio,
-+};
-+
-+static int llbitmap_add_disk(struct llbitmap *llbitmap)
-+{
-+	struct mddev *mddev = llbitmap->mddev;
-+	struct gendisk *disk = blk_alloc_disk(&mddev->gendisk->queue->limits,
-+					      NUMA_NO_NODE);
-+	int ret;
-+
-+	if (IS_ERR(disk))
-+		return PTR_ERR(disk);
-+
-+	sprintf(disk->disk_name, "%s_bitmap", mdname(mddev));
-+	disk->flags |= GENHD_FL_HIDDEN;
-+	disk->fops = &llbitmap_fops;
-+
-+	ret = add_disk(disk);
-+	if (ret) {
-+		put_disk(disk);
-+		return ret;
-+	}
-+
-+	set_capacity(disk, BITMAP_MAX_SECTOR);
-+	disk->private_data = mddev;
-+	llbitmap->bitmap_disk = disk;
 +	return 0;
-+}
-+
-+static void llbitmap_del_disk(struct llbitmap *llbitmap)
-+{
-+	struct gendisk *disk = llbitmap->bitmap_disk;
-+
-+	if (!disk)
-+		return;
-+
-+	llbitmap->bitmap_disk = NULL;
-+	del_gendisk(disk);
-+	put_disk(disk);
-+}
-+
-+static int llbitmap_open_disk(struct llbitmap *llbitmap)
-+{
-+	struct gendisk *disk = llbitmap->bitmap_disk;
-+	struct file *bitmap_file;
-+
-+	bitmap_file = bdev_file_alloc(disk->part0,
-+				      BLK_OPEN_READ | BLK_OPEN_WRITE);
-+	if (IS_ERR(bitmap_file))
-+		return PTR_ERR(bitmap_file);
-+
-+	/* corresponding to the blkdev_put_no_open() from blkdev_release() */
-+	get_device(disk_to_dev(disk));
-+
-+	bitmap_file->f_flags |= O_LARGEFILE;
-+	bitmap_file->f_mode |= FMODE_CAN_ODIRECT;
-+	bitmap_file->f_mapping = disk->part0->bd_mapping;
-+	bitmap_file->f_wb_err = filemap_sample_wb_err(bitmap_file->f_mapping);
-+
-+	/* not actually opened, let blkdev_release() know */
-+	bitmap_file->private_data = ERR_PTR(-ENODEV);
-+	llbitmap->bitmap_file = bitmap_file;
-+	return 0;
-+}
-+
-+static void llbitmap_close_disk(struct llbitmap *llbitmap)
-+{
-+	struct file *bitmap_file = llbitmap->bitmap_file;
-+
-+	if (!bitmap_file)
-+		return;
-+
-+	llbitmap->bitmap_file = NULL;
-+	fput(bitmap_file);
 +}
 +
 -- 
