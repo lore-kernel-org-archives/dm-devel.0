@@ -1,28 +1,28 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A131121129A
-	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 06:14:51 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 947CF211A20
+	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 06:14:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743142494; cv=none; b=lUmDRLHCjz0+3gGCcsrxQ7YIYrov8uPVuN78AeE+uKlM/6zhcznL0zja9LxXBzeiVZNW1oljuky59dZKT5HhXYU3MpIZZE6eaO4+GzOwQ9tZB2od8EpEdCCmBT5U0CVI/h9S1z10FfyLin0o6cbqSKg/z0+v3OSkq/yJxK4dbW4=
+	t=1743142495; cv=none; b=OTo7Q+FR1QcOnFa66TOzb/jYIi6bqn2x5NKr6Tp/irJVJlNM6R8ID2KVcbQ03rF+rJMku9iPvIaI2ZI0/EKc3SAKExx/gINZlnyQRxT48prsb7Jwm+Ek1FBcQh2i2/3x8XET6Da/pIPvIRE6n2kAOXfSTJqYcJJQ2aTlSwagmbQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743142494; c=relaxed/simple;
-	bh=k0Ng/C8gXnGDGbkLMcu5Y8Y/OzzmQgc2x4SfzM1m+X4=;
+	s=arc-20240116; t=1743142495; c=relaxed/simple;
+	bh=KIeqCI1rQ9xEoTnMFgzrPuDOkPsFLF9qmyeXIjCapD8=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=jdbRqfre1Xmzos4HTSvMgLWGhA1pMOGV9j5/qngnERzHO9BWjTfF9In5erbTxwZ4zabbtrT3oSi+uKGMAd9zol3axQOt7QvoFzVYaRX2tfVJ7b1pWbm9YFaSg9dPWZBwBIEqCfgYzjC0DyuMILMEvAIfMC7kJu8M4zB2Igz/bEo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+	 MIME-Version; b=o81VlcW4eq6EJKMsUUk0D1GidY1JWRJ0hSec3lCVOaExbP+doX8gY8t94Hgr/i9cz15W/pd7IZZF39gK4eglBY1FnDTyztUPhE1IW3vLmnRXGzOHE+yv7p2ZKb/gwVWPFrNMeS92v3IKYKVHi3Wh1DZMM41R8JS9nK0QUEnB07w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZP9Gb0KMdz4f3jkw
-	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:31 +0800 (CST)
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZP9Gc6R7yz4f3jt8
+	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:32 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id A51DC1A19E7
-	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:48 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 81E3C1A13CE
+	for <dm-devel@lists.linux.dev>; Fri, 28 Mar 2025 14:14:50 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDHK2BSPuZnfAUtHw--.25875S8;
-	Fri, 28 Mar 2025 14:14:48 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgDHK2BSPuZnfAUtHw--.25875S11;
+	Fri, 28 Mar 2025 14:14:50 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: hch@lst.de,
 	xni@redhat.com,
@@ -40,9 +40,9 @@ Cc: linux-block@vger.kernel.org,
 	yukuai1@huaweicloud.com,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH RFC v2 04/14] md: add a new sysfs api bitmap_version
-Date: Fri, 28 Mar 2025 14:08:43 +0800
-Message-Id: <20250328060853.4124527-5-yukuai1@huaweicloud.com>
+Subject: [PATCH RFC v2 07/14] md/md-llbitmap: implement hidden disk to manage bitmap IO
+Date: Fri, 28 Mar 2025 14:08:46 +0800
+Message-Id: <20250328060853.4124527-8-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
 References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
@@ -53,11 +53,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDHK2BSPuZnfAUtHw--.25875S8
-X-Coremail-Antispam: 1UD129KBjvJXoWxWF1xKrW7KF4fXFW3Ww4xCrg_yoWrZFW8pa
-	y8tFy3GF4rXFZaqr4xGa4ku3ZYgw1vva9Fq34ft34rGr17WrsxGFWrK3W5tr1kG3WxurnI
-	9F15JF48WrWUuF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmI14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+X-CM-TRANSID:gCh0CgDHK2BSPuZnfAUtHw--.25875S11
+X-Coremail-Antispam: 1UD129KBjvJXoWxuw15ury3Kr4kAF43GryxAFb_yoW3AFWxpF
+	W3X3W5Kr4rJrn3Ww17JrW7AFyFqr4DJr92qFZ7ua4S9r1jyrZIgF48GFy8Aws8WrnrCFnr
+	JFs8K34rGw48XFDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
 	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
@@ -67,171 +67,291 @@ X-Coremail-Antispam: 1UD129KBjvJXoWxWF1xKrW7KF4fXFW3Ww4xCrg_yoWrZFW8pa
 	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
 	kIc2xKxwCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
 	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
-	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI
-	42IY6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCw
-	CI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnI
-	WIevJa73UjIFyTuYvjfUOyIUUUUUU
+	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
+	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
+	4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
+	daVFxhVjvjDU0xZFpf9x0JUQFxUUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-The api will be used by mdadm to set bitmap version while creating new
-array or assemble array, prepare to add a new bitmap.
+Bitmap is stored in each member disk, the old bitmap implementation is
+allocating memory and managing data by itself, read and write will
+attach the allocated page to bio for member disks, and a bitmap level
+spinlock is used for synchronization
 
-Currently available options are:
-
-cat /sys/block/md0/md/bitmap_version
-none [bitmap]
+For llbitmap, a hidden disk, named mdxxx_bitmap, is created for bitmap, see
+details in llbitmap_add_disk(). And a file is created as well to manage
+bitmap IO for this disk. Read/write bitmap will be converted to buffer
+IO to this file.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md.c | 87 ++++++++++++++++++++++++++++++++++++++++++++++---
- drivers/md/md.h |  2 ++
- 2 files changed, 84 insertions(+), 5 deletions(-)
+ drivers/md/md-llbitmap.c | 238 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 238 insertions(+)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index c4fbd4d6a9f1..6ec8b5311a0a 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -649,13 +649,13 @@ static void active_io_release(struct percpu_ref *ref)
+diff --git a/drivers/md/md-llbitmap.c b/drivers/md/md-llbitmap.c
+index 1f97b6868279..bbd8a7c99577 100644
+--- a/drivers/md/md-llbitmap.c
++++ b/drivers/md/md-llbitmap.c
+@@ -56,8 +56,16 @@
+  *   unwritten blocks.
+  * - After resync is done, change state from Syncing to Dirty first, in case
+  *   Startwrite happen before the state is Clean.
++ *
++ * ##### Bitmap IO
++ *
++ * A hidden disk, named mdxxx_bitmap, is created for bitmap, see details in
++ * llbitmap_add_disk(). And a file is created as well to manage bitmap IO for
++ * this disk, see details in llbitmap_open_disk(). Read/write bitmap is
++ * converted to buffer IO to this file.
+  */
  
- static void no_op(struct percpu_ref *r) {}
++#define BITMAP_MAX_SECTOR (128 * 2)
+ #define BITMAP_MAX_PAGES 32
+ #define BITMAP_SB_SIZE 1024
  
--static void mddev_set_bitmap_ops(struct mddev *mddev, enum md_submodule_id id)
-+static void mddev_set_bitmap_ops(struct mddev *mddev)
- {
- 	xa_lock(&md_submodule);
--	mddev->bitmap_ops = xa_load(&md_submodule, id);
-+	mddev->bitmap_ops = xa_load(&md_submodule, mddev->bitmap_id);
- 	xa_unlock(&md_submodule);
- 	if (!mddev->bitmap_ops)
--		pr_warn_once("md: can't find bitmap id %d\n", id);
-+		pr_warn_once("md: can't find bitmap id %d\n", mddev->bitmap_id);
- }
- 
- static void mddev_clear_bitmap_ops(struct mddev *mddev)
-@@ -665,8 +665,8 @@ static void mddev_clear_bitmap_ops(struct mddev *mddev)
- 
- int mddev_init(struct mddev *mddev)
- {
--	/* TODO: support more versions */
--	mddev_set_bitmap_ops(mddev, ID_BITMAP);
-+	mddev->bitmap_id = ID_BITMAP;
-+	mddev_set_bitmap_ops(mddev);
- 
- 	if (percpu_ref_init(&mddev->active_io, active_io_release,
- 			    PERCPU_REF_ALLOW_REINIT, GFP_KERNEL)) {
-@@ -4145,6 +4145,82 @@ new_level_store(struct mddev *mddev, const char *buf, size_t len)
- static struct md_sysfs_entry md_new_level =
- __ATTR(new_level, 0664, new_level_show, new_level_store);
- 
-+static ssize_t
-+bitmap_version_show(struct mddev *mddev, char *page)
-+{
-+	struct md_submodule_head *head;
-+	unsigned long i;
-+	ssize_t len = 0;
-+
-+	if (mddev->bitmap_id == ID_BITMAP_NONE)
-+		len += sprintf(page + len, "[none] ");
-+	else
-+		len += sprintf(page + len, "none ");
-+
-+	xa_lock(&md_submodule);
-+	xa_for_each(&md_submodule, i, head) {
-+		if (head->type != MD_BITMAP)
-+			continue;
-+
-+		if (mddev->bitmap_id == head->id)
-+			len += sprintf(page + len, "[%s] ", head->name);
-+		else
-+			len += sprintf(page + len, "%s ", head->name);
-+	}
-+	xa_unlock(&md_submodule);
-+
-+	len += sprintf(page + len, "\n");
-+	return len;
-+}
-+
-+static ssize_t
-+bitmap_version_store(struct mddev *mddev, const char *buf, size_t len)
-+{
-+	struct md_submodule_head *head;
-+	enum md_submodule_id id;
-+	unsigned long i;
-+	int err;
-+
-+	if (mddev->bitmap_ops)
-+		return -EBUSY;
-+
-+	err = kstrtoint(buf, 10, &id);
-+	if (!err) {
-+		if (id == ID_BITMAP_NONE) {
-+			mddev->bitmap_id = id;
-+			return len;
-+		}
-+
-+		xa_lock(&md_submodule);
-+		head = xa_load(&md_submodule, id);
-+		xa_unlock(&md_submodule);
-+
-+		if (head && head->type == MD_BITMAP) {
-+			mddev->bitmap_id = id;
-+			return len;
-+		}
-+	}
-+
-+	if (cmd_match(buf, "none")) {
-+		mddev->bitmap_id = ID_BITMAP_NONE;
-+		return len;
-+	}
-+
-+	xa_lock(&md_submodule);
-+	xa_for_each(&md_submodule, i, head) {
-+		if (head->type == MD_BITMAP && cmd_match(buf, head->name)) {
-+			mddev->bitmap_id = head->id;
-+			xa_unlock(&md_submodule);
-+			return len;
-+		}
-+	}
-+	xa_unlock(&md_submodule);
-+	return -ENOENT;
-+}
-+
-+static struct md_sysfs_entry md_bitmap_version =
-+__ATTR(bitmap_version, 0664, bitmap_version_show, bitmap_version_store);
-+
- static ssize_t
- layout_show(struct mddev *mddev, char *page)
- {
-@@ -5680,6 +5756,7 @@ __ATTR(serialize_policy, S_IRUGO | S_IWUSR, serialize_policy_show,
- static struct attribute *md_default_attrs[] = {
- 	&md_level.attr,
- 	&md_new_level.attr,
-+	&md_bitmap_version.attr,
- 	&md_layout.attr,
- 	&md_raid_disks.attr,
- 	&md_uuid.attr,
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index ad18ef9b5061..3bc367f6bd62 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -40,6 +40,7 @@ enum md_submodule_id {
- 	ID_CLUSTER,
- 	ID_BITMAP,
- 	ID_LLBITMAP,	/* TODO */
-+	ID_BITMAP_NONE,
+@@ -135,6 +143,13 @@ struct llbitmap {
+ 	__u64	events_cleared;
  };
  
- struct md_submodule_head {
-@@ -562,6 +563,7 @@ struct mddev {
- 	struct percpu_ref		writes_pending;
- 	int				sync_checkers;	/* # of threads checking writes_pending */
++struct llbitmap_bio {
++	struct md_rdev *rdev;
++	struct bio bio;
++};
++
++static struct workqueue_struct *md_llbitmap_io_wq;
++
+ static char state_machine[nr_llbitmap_state][nr_llbitmap_action] = {
+ 	[BitUnwritten] = {BitDirty, BitNone, BitNone, BitNone, BitNone, BitNone, BitNone, BitNone},
+ 	[BitClean] = {BitDirty, BitNone, BitNone, BitNone, BitNone, BitNone, BitUnwritten, BitNeedSync},
+@@ -254,3 +269,226 @@ static enum llbitmap_state llbitmap_state_machine(struct llbitmap *llbitmap,
  
-+	enum md_submodule_id		bitmap_id;
- 	void				*bitmap; /* the bitmap for the device */
- 	struct bitmap_operations	*bitmap_ops;
- 	struct {
+ 	return state;
+ }
++
++static void llbitmap_end_write(struct bio *bio)
++{
++	struct bio *parent = bio->bi_private;
++	struct llbitmap_bio *llbitmap_bio;
++	struct md_rdev *rdev;
++
++	if (bio->bi_status == BLK_STS_OK) {
++		WRITE_ONCE(parent->bi_status, BLK_STS_OK);
++	} else {
++		llbitmap_bio = container_of(bio, struct llbitmap_bio, bio);
++		rdev = llbitmap_bio->rdev;
++
++		pr_err("%s: %s: bitmap write failed for %pg\n", __func__,
++		       mdname(rdev->mddev), rdev->bdev);
++		md_error(rdev->mddev, rdev);
++	}
++
++	bio_put(bio);
++	bio_endio(parent);
++}
++
++static void md_llbitmap_retry_read(struct llbitmap *llbitmap, struct bio *bio)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&llbitmap->retry_lock, flags);
++	bio_list_add(&llbitmap->retry_list, bio);
++	queue_work(md_llbitmap_io_wq, &llbitmap->retry_work);
++	spin_unlock_irqrestore(&llbitmap->retry_lock, flags);
++}
++
++static void llbitmap_end_read(struct bio *bio)
++{
++	struct bio *parent = bio->bi_private;
++	struct llbitmap_bio *llbitmap_bio;
++	struct llbitmap *llbitmap;
++	struct md_rdev *rdev;
++
++	if (bio->bi_status == BLK_STS_OK) {
++		WRITE_ONCE(parent->bi_status, BLK_STS_OK);
++		bio_put(bio);
++		bio_endio(parent);
++		return;
++	}
++
++	llbitmap_bio = container_of(bio, struct llbitmap_bio, bio);
++	rdev = llbitmap_bio->rdev;
++	pr_err("%s: %s: bitmap read failed for %pg\n", __func__,
++	       mdname(rdev->mddev), rdev->bdev);
++	md_error(rdev->mddev, rdev);
++	bio_put(bio);
++	md_llbitmap_retry_read(llbitmap, parent);
++}
++
++static void md_llbitmap_retry_fn(struct work_struct *work)
++{
++	struct llbitmap *llbitmap =
++		container_of(work, struct llbitmap, retry_work);
++	struct mddev *mddev = llbitmap->mddev;
++	struct md_rdev *rdev;
++	struct bio *bio;
++
++again:
++	spin_lock_irq(&llbitmap->retry_lock);
++	bio = bio_list_pop(&llbitmap->retry_list);
++	spin_unlock_irq(&llbitmap->retry_lock);
++
++	if (!bio)
++		return;
++
++	rdev_for_each(rdev, mddev) {
++		struct llbitmap_bio *llbitmap_bio;
++		struct bio *new;
++
++		if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
++			continue;
++
++		new = bio_alloc_clone(rdev->bdev, bio, GFP_NOIO,
++				      &llbitmap->bio_set);
++		new->bi_iter.bi_sector = bio->bi_iter.bi_sector +
++					 rdev->sb_start +
++					 mddev->bitmap_info.offset;
++		new->bi_opf |= REQ_SYNC | REQ_IDLE | REQ_META;
++		new->bi_private = bio;
++		new->bi_end_io = llbitmap_end_read;
++
++		llbitmap_bio = container_of(new, struct llbitmap_bio, bio);
++		llbitmap_bio->rdev = rdev;
++
++		submit_bio_noacct(new);
++		goto again;
++	}
++}
++
++static void llbitmap_submit_bio(struct bio *bio)
++{
++	struct mddev *mddev = bio->bi_bdev->bd_disk->private_data;
++	struct llbitmap *llbitmap = mddev->bitmap;
++	struct llbitmap_bio *llbitmap_bio;
++	struct md_rdev *rdev;
++	struct bio *new;
++
++	if (unlikely(bio->bi_opf & REQ_PREFLUSH))
++		bio->bi_opf &= ~REQ_PREFLUSH;
++
++	if (!bio_sectors(bio)) {
++		bio_endio(bio);
++		return;
++	}
++
++	/* status will be cleared if any member disk IO succeed */
++	bio->bi_status = BLK_STS_IOERR;
++
++	rdev_for_each(rdev, mddev) {
++		if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
++			continue;
++
++		new = bio_alloc_clone(rdev->bdev, bio, GFP_NOIO,
++				      &llbitmap->bio_set);
++		new->bi_iter.bi_sector = bio->bi_iter.bi_sector +
++					 rdev->sb_start +
++					 mddev->bitmap_info.offset;
++		new->bi_opf |= REQ_SYNC | REQ_IDLE | REQ_META;
++
++		llbitmap_bio = container_of(new, struct llbitmap_bio, bio);
++		llbitmap_bio->rdev = rdev;
++		bio_inc_remaining(bio);
++		new->bi_private = bio;
++
++		if (bio_data_dir(bio) == WRITE) {
++			new->bi_end_io = llbitmap_end_write;
++			new->bi_opf |= REQ_FUA;
++			submit_bio_noacct(new);
++			continue;
++		}
++
++		new->bi_end_io = llbitmap_end_read;
++		submit_bio_noacct(new);
++		break;
++	}
++
++	bio_endio(bio);
++}
++
++const struct block_device_operations llbitmap_fops = {
++	.owner = THIS_MODULE,
++	.submit_bio = llbitmap_submit_bio,
++};
++
++static int llbitmap_add_disk(struct llbitmap *llbitmap)
++{
++	struct mddev *mddev = llbitmap->mddev;
++	struct gendisk *disk = blk_alloc_disk(&mddev->gendisk->queue->limits,
++					      NUMA_NO_NODE);
++	int ret;
++
++	if (IS_ERR(disk))
++		return PTR_ERR(disk);
++
++	sprintf(disk->disk_name, "%s_bitmap", mdname(mddev));
++	disk->flags |= GENHD_FL_HIDDEN;
++	disk->fops = &llbitmap_fops;
++
++	ret = add_disk(disk);
++	if (ret) {
++		put_disk(disk);
++		return ret;
++	}
++
++	set_capacity(disk, BITMAP_MAX_SECTOR);
++	disk->private_data = mddev;
++	llbitmap->bitmap_disk = disk;
++	return 0;
++}
++
++static void llbitmap_del_disk(struct llbitmap *llbitmap)
++{
++	struct gendisk *disk = llbitmap->bitmap_disk;
++
++	if (!disk)
++		return;
++
++	llbitmap->bitmap_disk = NULL;
++	del_gendisk(disk);
++	put_disk(disk);
++}
++
++static int llbitmap_open_disk(struct llbitmap *llbitmap)
++{
++	struct gendisk *disk = llbitmap->bitmap_disk;
++	struct file *bitmap_file;
++
++	bitmap_file = bdev_file_alloc(disk->part0,
++				      BLK_OPEN_READ | BLK_OPEN_WRITE);
++	if (IS_ERR(bitmap_file))
++		return PTR_ERR(bitmap_file);
++
++	/* corresponding to the blkdev_put_no_open() from blkdev_release() */
++	get_device(disk_to_dev(disk));
++
++	bitmap_file->f_flags |= O_LARGEFILE;
++	bitmap_file->f_mode |= FMODE_CAN_ODIRECT;
++	bitmap_file->f_mapping = disk->part0->bd_mapping;
++	bitmap_file->f_wb_err = filemap_sample_wb_err(bitmap_file->f_mapping);
++
++	/* not actually opened, let blkdev_release() know */
++	bitmap_file->private_data = ERR_PTR(-ENODEV);
++	llbitmap->bitmap_file = bitmap_file;
++	return 0;
++}
++
++static void llbitmap_close_disk(struct llbitmap *llbitmap)
++{
++	struct file *bitmap_file = llbitmap->bitmap_file;
++
++	if (!bitmap_file)
++		return;
++
++	llbitmap->bitmap_file = NULL;
++	fput(bitmap_file);
++}
++
 -- 
 2.39.2
 
