@@ -1,102 +1,271 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33B7F1C36
-	for <dm-devel@lists.linux.dev>; Sat, 29 Mar 2025 01:11:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19A3E21C9F3
+	for <dm-devel@lists.linux.dev>; Mon, 31 Mar 2025 23:17:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743210684; cv=none; b=jGoaVO2jZy6nCGudEqPY+bXikpgEmhq2ODivUzTVAVl2TZrU5dUriB6pR8ZebIbRmx5kU8CemvQGGcgcAdp8seaZRpL+jIin8QeDaZdRwmVpkWAnvZkEjh4TE8bVcKy063g4wzeYZxcY98RprkGfdNF61yTD/9Gt63pumQt+iBc=
+	t=1743463058; cv=none; b=bw99wMUZQxOpymYnnFOS+tPr78Euu7Z1KXaD0nqu5vCV+R2GG6QpXZEg/0XphLNZ5lzUmSOq9S6L5MNqKkFKjlkl2v84Sds7q+TbI481Rp6p4bhqI4RpAg6ULOCAGyGZH1VYtGXePAXENbdHbD06yiQ0YFSOiwQ5Ie3DPTYNTkU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743210684; c=relaxed/simple;
-	bh=UO+g2BYpGAaukMg/9O98RekdQq371VrJWc/GvFKjUQY=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=LsbIw6eEyZqZhOKpA/dW4NFxn23HKu5nc0AEFt2Bwq+yKG5Rs2BYjuFO+FTJJsA6wfd039caAQlqgvoNvF3qL8pwBH2ZfH9UaANj6B3AUC6PQ57yRvR2yOONjfWKc4DuJ7VYrvjTNrL+QOCIpG2SI7QjhNG1RawGoGpL6e5/hEg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZPfTs624nz4f3jtF
-	for <dm-devel@lists.linux.dev>; Sat, 29 Mar 2025 09:10:57 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 7B7CA1A1388
-	for <dm-devel@lists.linux.dev>; Sat, 29 Mar 2025 09:11:15 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP4 (Coremail) with SMTP id gCh0CgCH61+xSOdn_T56Hw--.31005S3;
-	Sat, 29 Mar 2025 09:11:15 +0800 (CST)
-Subject: Re: [PATCH RFC v2 00/14] md: introduce a new lockless bitmap
-To: Christoph Hellwig <hch@infradead.org>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: hch@lst.de, xni@redhat.com, colyli@kernel.org, axboe@kernel.dk,
- agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
- yangerkun@huawei.com, "yukuai (C)" <yukuai3@huawei.com>
-References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
- <Z-aCzTWXzFWe4oxU@infradead.org>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <c6c608e2-23e7-486f-100a-d1fb6cfff4f2@huaweicloud.com>
-Date: Sat, 29 Mar 2025 09:11:13 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.9.1
+	s=arc-20240116; t=1743463058; c=relaxed/simple;
+	bh=7hSDe2jBduwiztd+49nvMYNwR5s0aLY6vsiMsEpq6Zo=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=BIW4TH9iSrL3eRBBMoY3B+CSmTAGRYrywiWK1sJqhyG+iCuuf2hQpPflpnVnuLVy7N13gkm6JJ2+6U0XBv8ftYohoeuFEdfIPauSeTvRYzt9Jfe53TRaEK5qnlEBftuUz1+uPi4AJ4bZBqCuSuqJz+ZzMaHzcErFSnFCdnQzod0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UEprlFFK; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UEprlFFK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1743463055;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=CSHjrG8ORIrJUr/JdmqansfhLwmOoKsw9sjKPhWkb/Q=;
+	b=UEprlFFKsALZYJTXgMkgRkZeUmvYfzgZHluFvheU4RPIuc4Ct+qaVanZdxiXfcWPuY9wxw
+	S6+6sgO/cbJYwwDQVlJyt5Y6PB2Jgr/bnMcfY51Z9rKn9nQZK/B9XPjeUalg7KbBCim8at
+	3/0grZ2lihtLDNhkuqs2sBMXAHSyNr8=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-358-DPC51exCNYCt6T0kmxQzIQ-1; Mon,
+ 31 Mar 2025 19:17:34 -0400
+X-MC-Unique: DPC51exCNYCt6T0kmxQzIQ-1
+X-Mimecast-MFC-AGG-ID: DPC51exCNYCt6T0kmxQzIQ_1743463053
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7B62F180049D;
+	Mon, 31 Mar 2025 23:17:33 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E84511801A6F;
+	Mon, 31 Mar 2025 23:17:32 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 52VNHVrx2857675
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 31 Mar 2025 19:17:31 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 52VNHVnA2857674;
+	Mon, 31 Mar 2025 19:17:31 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2 2/3] multipathd: re-add paths skipped because they were offline
+Date: Mon, 31 Mar 2025 19:17:29 -0400
+Message-ID: <20250331231730.2857655-3-bmarzins@redhat.com>
+In-Reply-To: <20250331231730.2857655-1-bmarzins@redhat.com>
+References: <20250331231730.2857655-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <Z-aCzTWXzFWe4oxU@infradead.org>
-Content-Type: text/plain; charset=gbk; format=flowed
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: YhsJ0ogGos3Qk39Tn_-1ylmkwW3NHcscyocIePx-r1s_1743463053
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCH61+xSOdn_T56Hw--.31005S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7Ar1fKw1UGr4rWw1xKF4xtFb_yoW8Jw1fpF
-	ZIqw4UGw4kAr4Y9rn7Cay7GFy0q3ykJrnxWryFqr9IgFn8uFna9F1fKanYka45urn7GF1a
-	vas5XryrGa18uFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x
-	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
-	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcV
-	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
-	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
-	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0pRHUDLUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Hi,
+When a new device is added by the multipath command, multipathd may know
+of other paths that cannot be added to the device because they are
+currently offline. Instead of ignoring these paths, multipathd will now
+re-add them when they come back online. To do this, it multipathd needs
+a new path variable add_when_online, to track devices that could not be
+added to an existing multipath device because they were offline. These
+paths are handled along with the other uninitialized paths.
 
-ÔÚ 2025/03/28 19:06, Christoph Hellwig Ð´µÀ:
-> On Fri, Mar 28, 2025 at 02:08:39PM +0800, Yu Kuai wrote:
->> A hidden disk, named mdxxx_bitmap, is created for bitmap, see details in
->> llbitmap_add_disk(). And a file is created as well to manage bitmap IO for
->> this disk, see details in llbitmap_open_disk(). Read/write bitmap is
->> converted to buffer IO to this file.
->>
->> IO fast path will set bits to dirty, and those dirty bits will be cleared
->> by daemon after IO is done. llbitmap_barrier is used to syncronize between
->> IO path and daemon;
-> 
-> Why do you need a separate gendisk?  I'll try to find some time to read
-> the code to understand what it does, but it would also be really useful
-> to explain the need for such an unusual concept here.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/print.c       |  5 +++-
+ libmultipath/structs.h     |  1 +
+ libmultipath/structs_vec.c |  5 ++++
+ multipathd/main.c          | 59 ++++++++++++++++++++++++++++++++++++--
+ multipathd/multipathd.8.in |  5 ++--
+ 5 files changed, 70 insertions(+), 5 deletions(-)
 
-The purpose here is to hide the low level bitmap IO implementation to
-the API disk->submit_bio(), and the bitmap IO can be converted to buffer
-IO to the bdev_file. This is the easiest way that I can think of to
-resue the pagecache, with natural ability for dirty page writeback. I do
-think about creating a new anon file and implement a new
-file_operations, this will be much more complicated.
-
-Meanwhile, bitmap file for the old bitmap will be removed sooner or
-later, and this bdev_file implementation will compatible with bitmap
-file as well.
-
-Thanks,
-Kuai
-
-> 
-> .
-> 
+diff --git a/libmultipath/print.c b/libmultipath/print.c
+index 00c03ace..019ae56f 100644
+--- a/libmultipath/print.c
++++ b/libmultipath/print.c
+@@ -658,8 +658,11 @@ snprint_path_serial (struct strbuf *buff, const struct path * pp)
+ static int
+ snprint_path_mpp (struct strbuf *buff, const struct path * pp)
+ {
+-	if (!pp->mpp)
++	if (!pp->mpp) {
++		if (pp->add_when_online)
++			return append_strbuf_str(buff, "[offline]");
+ 		return append_strbuf_str(buff, "[orphan]");
++	}
+ 	if (!pp->mpp->alias)
+ 		return append_strbuf_str(buff, "[unknown]");
+ 	return snprint_str(buff, pp->mpp->alias);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 28de9a7f..39d1c71c 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -413,6 +413,7 @@ struct path {
+ 	int eh_deadline;
+ 	enum check_path_states is_checked;
+ 	bool can_use_env_uid;
++	bool add_when_online;
+ 	unsigned int checker_timeout;
+ 	/* configlet pointers */
+ 	vector hwe;
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index f6407e12..663c9053 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -389,6 +389,9 @@ static void orphan_paths(vector pathvec, struct multipath *mpp, const char *reas
+ 				free_path(pp);
+ 			} else
+ 				orphan_path(pp, reason);
++		} else if (pp->add_when_online &&
++			   strncmp(mpp->wwid, pp->wwid, WWID_SIZE) == 0) {
++			pp->add_when_online = false;
+ 		}
+ 	}
+ }
+@@ -595,6 +598,8 @@ void sync_paths(struct multipath *mpp, vector pathvec)
+ 		found = 0;
+ 		vector_foreach_slot(mpp->pg, pgp, j) {
+ 			if (find_slot(pgp->paths, (void *)pp) != -1) {
++				if (pp->add_when_online)
++					pp->add_when_online = false;
+ 				found = 1;
+ 				break;
+ 			}
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7aaae773..9aa5a2fa 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -644,11 +644,45 @@ pr_register_active_paths(struct multipath *mpp)
+ 	}
+ }
+ 
++static void
++save_offline_paths(const struct multipath *mpp, vector offline_paths)
++{
++	unsigned int i, j;
++	struct path *pp;
++	struct pathgroup *pgp;
++
++	vector_foreach_slot (mpp->pg, pgp, i)
++		vector_foreach_slot (pgp->paths, pp, j)
++			if (pp->initialized == INIT_OK &&
++			    pp->sysfs_state == PATH_DOWN)
++				/* ignore failures storing the paths. */
++				store_path(offline_paths, pp);
++}
++
++static void
++handle_orphaned_offline_paths(vector offline_paths)
++{
++	unsigned int i;
++	struct path *pp;
++
++	vector_foreach_slot (offline_paths, pp, i)
++		if (pp->mpp == NULL)
++			pp->add_when_online = true;
++}
++
++static void
++cleanup_reset_vec(struct vector_s **v)
++{
++	vector_reset(*v);
++}
++
+ static int
+ update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
+ {
+ 	int retries = 3;
+ 	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
++	struct vector_s offline_paths_vec = { .allocated = 0 };
++	vector offline_paths __attribute__((cleanup(cleanup_reset_vec))) = &offline_paths_vec;
+ 
+ retry:
+ 	condlog(4, "%s: updating new map", mpp->alias);
+@@ -685,6 +719,9 @@ fail:
+ 		return 1;
+ 	}
+ 
++	if (new_map && retries < 0)
++		save_offline_paths(mpp, offline_paths);
++
+ 	if (setup_multipath(vecs, mpp))
+ 		return 1;
+ 
+@@ -695,6 +732,9 @@ fail:
+ 	if (mpp->prflag == PRFLAG_SET)
+ 		pr_register_active_paths(mpp);
+ 
++	if (VECTOR_SIZE(offline_paths) != 0)
++		handle_orphaned_offline_paths(offline_paths);
++
+ 	if (retries < 0)
+ 		condlog(0, "%s: failed reload in new map update", mpp->alias);
+ 	return 0;
+@@ -2793,7 +2833,8 @@ check_uninitialized_path(struct path * pp, unsigned int ticks)
+ 	struct config *conf;
+ 
+ 	if (pp->initialized != INIT_NEW && pp->initialized != INIT_FAILED &&
+-	    pp->initialized != INIT_MISSING_UDEV)
++	    pp->initialized != INIT_MISSING_UDEV &&
++	    !(pp->initialized == INIT_OK && pp->add_when_online))
+ 		return CHECK_PATH_SKIPPED;
+ 
+ 	if (pp->tick)
+@@ -2849,7 +2890,8 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 	struct config *conf;
+ 
+ 	if (pp->initialized != INIT_NEW && pp->initialized != INIT_FAILED &&
+-	    pp->initialized != INIT_MISSING_UDEV)
++	    pp->initialized != INIT_MISSING_UDEV &&
++	    !(pp->initialized == INIT_OK && pp->add_when_online))
+ 		return CHECK_PATH_SKIPPED;
+ 
+ 	newstate = get_new_state(pp);
+@@ -2875,6 +2917,19 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 			free_path(pp);
+ 			return CHECK_PATH_REMOVED;
+ 		}
++	} else if (pp->initialized == INIT_OK && pp->add_when_online &&
++		   (newstate == PATH_UP || newstate == PATH_GHOST)) {
++		pp->initialized = INIT_OK;
++		if (pp->recheck_wwid == RECHECK_WWID_ON &&
++		    check_path_wwid_change(pp)) {
++			condlog(0, "%s: path wwid change detected. Removing",
++				pp->dev);
++			return handle_path_wwid_change(pp, vecs)?
++					CHECK_PATH_REMOVED :
++					CHECK_PATH_SKIPPED;
++		}
++		ev_add_path(pp, vecs, 1);
++		pp->tick = 1;
+ 	}
+ 	return CHECK_PATH_CHECKED;
+ }
+diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
+index 43f87bf8..a91acff1 100644
+--- a/multipathd/multipathd.8.in
++++ b/multipathd/multipathd.8.in
+@@ -595,8 +595,9 @@ The device serial number.
+ The device marginal state, either \fImarginal\fR or \fInormal\fR.
+ .TP
+ .B %m
+-The multipath device that this device is a path of, or \fI[orphan]\fR if
+-it is not part of any multipath device.
++The multipath device that this device is a path of, or \fI[offline]\fR
++if this device could not be added to a device because is is offline or
++\fI[orphan]\fR if it is not part of any multipath device.
+ .TP
+ .B %N
+ The host World Wide Node Name (WWNN) of the device, if any.
+-- 
+2.48.1
 
