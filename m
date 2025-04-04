@@ -1,32 +1,33 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BF3717A300
-	for <dm-devel@lists.linux.dev>; Fri,  4 Apr 2025 09:20:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E17641A5BAA
+	for <dm-devel@lists.linux.dev>; Fri,  4 Apr 2025 09:27:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1743758426; cv=none; b=Dygoz9mSRXTJYYbTumn5srMCLLl2InOtMq1cqI6X6mgbluHyvu0pDM0s8GjN+q+HNiAkqsYCKcd2k1aiZbMN2KhsMLt3NvCaU8T7cUu4wgo+13kKPAIEtYsKTh42u4XRfPJeJFcvuP3C9rzIqRwi0/Gn8UhqGJB78GQCixInHyw=
+	t=1743758867; cv=none; b=Ad5q7ksHEHgpK0JzZGtnS2h6D7VnhBc4Rm+IfHzPiNy4FM9j8cf6QcrwOSA71o0+M6K+XhwRsqYFF7l1J/sX3zvAwMhjQUwcVHI386t1b8FHLwf2XRHwJi/8HdlGAELN+cNF7XGDdXFfbARg3ghEpZByewe+paE6NWxgYtoRc8s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1743758426; c=relaxed/simple;
-	bh=ut9cSDbsDEKTYeR6bElefCMLv6ytlB7Y0CNMaxKsVAU=;
+	s=arc-20240116; t=1743758867; c=relaxed/simple;
+	bh=aAD5iFrq3/jJIUHExCWlYV/HCg1lmL3zH3x/zCqIb2A=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MfQ2MUseto76m1fkKTJNYahntyqQ4k/G8hVJQ6LC+Tcwg68Y7w9A9ej64Bu3EYjeEnJcMaEB+Q5/SL8NGx9jR+FDH0SAh5jPJW2GdeTuLqAVLYiMYzRoTDcOPx8o06sEtJJqzT3SqImABPAbGiBZwtLamSrSi7DF7lOk/9NIC8Q=
+	 Content-Type:Content-Disposition:In-Reply-To; b=hu3RVG9PThV/np2QsB4PX8pPU8ywotSk3zCWkWtcWZ+DVqXEFFI0BSnEDHM0pGL3oS01q/09s3PAL7C2FOP7yFul4q/kXEXoQpCqT/xo5Ag8L2rstlWBRZqpVTHj/sF/sAzFH/GmDF0yfuqPf1hxOj0xJ8K1DWM2tKuvQgxlUCc=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 37D8268BEB; Fri,  4 Apr 2025 11:20:20 +0200 (CEST)
-Date: Fri, 4 Apr 2025 11:20:19 +0200
+	id 1635B68B05; Fri,  4 Apr 2025 11:27:40 +0200 (CEST)
+Date: Fri, 4 Apr 2025 11:27:39 +0200
 From: Christoph Hellwig <hch@lst.de>
-To: Chanho Min <chanho.min@lge.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org, Sven <dm-devel@schwermer.no>,
-	Neil Brown <neilb@suse.de>, hch@lst.de, dm-devel@lists.linux.dev,
-	Gunho Lee <gunho.lee@lge.com>
-Subject: Re: [PATCH] block: remove non-existent partition dev_t return from
- blk_lookup_devt
-Message-ID: <20250404092019.GA13334@lst.de>
-References: <20250403003532.412-1-chanho.min@lge.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: hch@lst.de, xni@redhat.com, colyli@kernel.org, axboe@kernel.dk,
+	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+	song@kernel.org, yukuai3@huawei.com, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+	yangerkun@huawei.com
+Subject: Re: [PATCH RFC v2 00/14] md: introduce a new lockless bitmap
+Message-ID: <20250404092739.GA14046@lst.de>
+References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,18 +36,16 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250403003532.412-1-chanho.min@lge.com>
+In-Reply-To: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-NAK.
+On Fri, Mar 28, 2025 at 02:08:39PM +0800, Yu Kuai wrote:
+> 1) user must apply the following mdadm patch, and then llbitmap can be
+> enabled by --bitmap=lockless
+> https://lore.kernel.org/all/20250327134853.1069356-1-yukuai1@huaweicloud.com/
+> 2) this set is cooked on the top of my other set:
+> https://lore.kernel.org/all/20250219083456.941760-1-yukuai1@huaweicloud.com/
 
-Don't do this.  Md at least has a reason for doing this silly things
-as in the code as written in the 1990s where people did not know better.
+I tried to create a tree to review the entire thing but failed.  Can you
+please also provide a working git branch?
 
-The dm-initwait code has no such excuse as it was written recently and
-explicitly ignored the rules to not use this early dev_t lookup code that
-is known to be broken.  You now have to live with the fallout because you
-decided to you this broken code.  Stop using it if you care.
-
-If there's one thing we need to do is to warn everyone in the Kconfig
-and boot time dmesg that dm-initwait is broken.
