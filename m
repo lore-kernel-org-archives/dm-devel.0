@@ -1,411 +1,155 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6402022ACEE
-	for <dm-devel@lists.linux.dev>; Mon,  7 Apr 2025 10:34:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 22E19237194
+	for <dm-devel@lists.linux.dev>; Mon,  7 Apr 2025 10:53:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744022055; cv=none; b=OYZmL7a9UGOCsuFn614RC++rD6GWtchjNQo5avcZUtq6PXGJyuXaHTv+yxdHGZGC7sP6u8euuiAoxryI8gxuFfjSOKT0ccDXqrOAU27GkfHHRXnbEMWnqfKk44wFSssxl9CIc7RK3E4Ntl5gj2D1Z/lcySU7Tr0nuxjv9356MlI=
+	t=1744023234; cv=none; b=s9vuGtVD8TWA5TMwvMhQaB6Rcf5WIxMJtmEpgRtqdXwO4g8GQtcdtsVoIXRmDFonO/jWhlTeCoSZ2gMMKxd3XNrln5ZADqvPy1zrzJ/aALwRQKo7+3/UBw8Nah4vLN1AnsCGg12uM6RZ68qzuhfWJ7/QQo0SEmaBnfTc4NInQ8g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744022055; c=relaxed/simple;
-	bh=jJ8bfPSoeE0Afmz4sruvURiZugEA+UoJZ6+tHuehBvI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=PKhXvifBFC+q3G10sWlbBKcNPNUYl5+4N94KL3oQt8Ocxkrz4GHkV1mZoyMPu25ps5HFeOWE96dSEppMg7jWfGNHXk53ql44JI7XVcUS6s2934A7MUSIKX+o4GYA7//e3QGjph1nOJJgzFINppBaJTGcUyr+C/Be1/AREbK5gJ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Pe/1w6en; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1744023234; c=relaxed/simple;
+	bh=aIDdCo+1i8sOH2djO2ICbw6f6bX85oqEG1331TvOY8s=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ind3MZG1rTtUyKB+dofKT5VJf1zng2z5oXPkPbpo/Co0McVM/AHZVL/2CRbZnklAs0CJjwIB1ktT8FBWGYknd4C+z/IyIT4C+Poq0aw1udn96d5KrMn5DYcwQ5JZQXlBgOA4J39p5kvNHkVjM+4/IvPjrAINGM/1parF7G5CEg8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=smile.fr; spf=pass smtp.mailfrom=smile.fr; dkim=pass (1024-bit key) header.d=smile.fr header.i=@smile.fr header.b=pbvxnVMi; arc=none smtp.client-ip=209.85.221.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=smile.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=smile.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Pe/1w6en"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-399749152b4so2198143f8f.3
-        for <dm-devel@lists.linux.dev>; Mon, 07 Apr 2025 03:34:12 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=smile.fr header.i=@smile.fr header.b="pbvxnVMi"
+Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-38f2f391864so2304448f8f.3
+        for <dm-devel@lists.linux.dev>; Mon, 07 Apr 2025 03:53:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1744022050; x=1744626850; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=eYYhlKUaWYEiqDkMR0HjbqmukgVckRQVx03Ufd/2Sj8=;
-        b=Pe/1w6enF6R6VHIRFCSLGNxIV6kUGPQONecrCDtpjISFVwNkAqjaLKhVXbpwvw3PdW
-         CGdYIgUCs1p7zDr4gqnG4L8bdtjH7fvbFxSV1BhNxtle6C4f97Um3e52gd/NCOgYI3w/
-         VUDHm9ToOgn+l15IF9xLHfz2lPT6CbMAcLxONitpMNnbQERj1275VbBVBSvzfpXa7xT8
-         SHs5k0AR0cmvGCKsfGz6y7/d44qdS4dzLXBLAbS48tFGVxcC0IKFCPc1rvDL747KmG+n
-         aeEuET44LBcrZbzFEh+pugL+SXCNPSpeVejbuMb5RjnkW2CMVStAnGHMMJmp4T/YBfNs
-         RPgw==
+        d=smile.fr; s=google; t=1744023229; x=1744628029; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=I5a+lditdfnRfhCWKjnGX9UGQTDBMDvtmWaY1Exrnhg=;
+        b=pbvxnVMilu98XwM2JXd93YbFuNBNsfOgfJ4YY4tIfIwXkh7iB8DnXlwY75X1wDM/oh
+         HkXE8GA2QS2rFK+Y0U0cCosD9FKWP+eE9LRECd0cmRurG3gfrQAuUdG3taGLaeqrlzqg
+         o41AzoG5a72EF9swagEswThlGG6M0kPqDUBTI=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1744022051; x=1744626851;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=eYYhlKUaWYEiqDkMR0HjbqmukgVckRQVx03Ufd/2Sj8=;
-        b=ducIS+ygVTrgLHbx34nMNJWmDHnetDlTWYoOuBbkmvwfF9t+zoR7XtP8jEBgnMzqZy
-         H4YV/MuaCKlk6n6HAjggqpULkELoIvWw7Z/+cQL9wNtMtSYu5lr6wZ0fqADPC6QfLqxm
-         ITQghvVuHtaiCFPGmfBTfxDqCiCwzZT9is/mvKqAMYKITfczkcpouamOcSg2un3/v+Kg
-         yfqaVWpYrE1sD2IYEbqsKmK75t1aD2TFfen5Dy70PeMHPZa1ZfX4pjnbCun333v7XuSO
-         ipQzrWPYXxnULLKEr0G8MPqqMOaU/rC/zkXjQCF6lMwZtTL1zNalk7IuokVxMFaWphK4
-         MEkQ==
-X-Gm-Message-State: AOJu0YznPGNzthKtJ71YU/k7mgb+sqojsO5mjnCS+OJjjc1ku1zTMHVs
-	/23kcM7H7A8gr7zRVrWm+tVDT2imXr3lDu6Ab0/BDEN8HN6+px7WL5qGkMv2ai8=
-X-Gm-Gg: ASbGnctBPgAbKtlfOR0TzC2+1fyrwHQK5TnSTADsdnDrE6HqP1lzE/iHDKtjkVNVUk5
-	JDhmtcfiQjmfiJ1MMG/bQxr0j8LUZeqWohIVS0aCK1s6JZBMW33mKUt1X8HoyEgZiMHQCB++z5I
-	AjAlyDNIX2n/p9XgeHYWTkrB2B5BZp2tXiSURqS41j9VLWyhj/5zIbibJ+C9e4TEgfxKmolljVc
-	OFVn6QTmdm3EgNHKUy/f3LUq1pTU0pgKynkTL9sjHJYs+JaEwGsX28UT71wRYhFW2caSaG2+/ui
-	1/6S8ZhSXcEBfYYh8Sgmv59qg28RYDbZWioA/ep7qqTQV5qdLhqkyjlTlZKLwEzxZ+AmD/k+DH3
-	22gucyucAOeigYZ5YcliEsAt8f37HldIG
-X-Google-Smtp-Source: AGHT+IF7be/VDeiYMKN3I9hhkoJqjKfezp04YvXAEy2vpQ3GyvG/MSBVw8Hh5JYbJoTrhDDxKgnyvg==
-X-Received: by 2002:a5d:59a9:0:b0:391:300f:749e with SMTP id ffacd0b85a97d-39cb35b2592mr10671537f8f.11.1744022050359;
-        Mon, 07 Apr 2025 03:34:10 -0700 (PDT)
-Received: from localhost (p200300de3744d600a441a57b4aaa2b39.dip0.t-ipconnect.de. [2003:de:3744:d600:a441:a57b:4aaa:2b39])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-39c301a79bfsm11948812f8f.36.2025.04.07.03.34.09
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 07 Apr 2025 03:34:10 -0700 (PDT)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Yoann Congal <yoann.congal@smile.fr>,
-	Sofiane HAMAM <sofiane.hamam@smile.fr>,
-	Kelefa Sane <kelefa.sane@smile.fr>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] libdmmp: update time stamp of man pages
-Date: Mon,  7 Apr 2025 12:33:46 +0200
-Message-ID: <20250407103346.55121-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.49.0
+        d=1e100.net; s=20230601; t=1744023229; x=1744628029;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=I5a+lditdfnRfhCWKjnGX9UGQTDBMDvtmWaY1Exrnhg=;
+        b=K9xqNrUkO2fJrqUvfrdTJeXHUnpXjS3wTCAZQMdEC9qsMxxjfHyz5gXoQa2VSoaI8F
+         QMIhCh4BLHTqRu4BNh9PoOM2B7/RViG3N7bHMkeM8da/pEiSiutLnhIq7Xk0YeW9BzhO
+         VGoL7cRkVvnH8JOaE/KiOYzGoLy1WJo0dsga9JrotMgmMJ9EgS512DD0wGSZG0zAYJYi
+         crsNfn3VkjPJxJwf2A8/9tEHX6vitF3nWwACeJ8BU34b42CnQD2XULZUmbQKjcp0FtJH
+         2TPb60TmOLHn1z8tgOydLpMiViAf2XMAkuVeQQRNbS2mxs6/GObuCLRLKpsBSM/x8MBH
+         WMaA==
+X-Forwarded-Encrypted: i=1; AJvYcCV+rnDso5lpVzumS5AoYbYpsXIqNVEKnPqPRLYtbgRLmobpcpGyhWfEn6QT5/L8003/e34PHR0rag==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz+q5P5OhLuTdVGKBxbiQfKotd027VkGzl0oXE0SKR+z/RBxtVy
+	RS2x7JmVfmykTRK34EMlDHmOhU05uZRrlaOhwJl3s1npwLsuJHGjGTjdIdGRx0tXMwJMZIrqIxV
+	96RYJ71OXlY+PEE2Z3t5f7Rk4gneEP/rzIRavBA==
+X-Gm-Gg: ASbGncs2WzMaspijrJJgMxT3CrfqWRV9J1R/urmmrYWPFNlbGuiK6jq0sBiI8twGQ69
+	hgVF3aXbqjekXzXW/biHXL7szZqVitacIgcQ67jjSMShSYtc0cPy2MGGUjPPkUtxuuY8zQqKZdr
+	Q2wd1+NhHz1fq03aPPPK0rPSKbLHssnQ7/sgoadVcKxrSsEFNaaxK2jQtMP9U=
+X-Google-Smtp-Source: AGHT+IEoVtS3wtABMueDyhwxwPrmwekordJTJx/TktHKgJJHSvBtMqZN9mqoDPlniigIDnIWShFsVJg6OcS8AgF/8qI=
+X-Received: by 2002:a5d:5c84:0:b0:39c:2665:2bfc with SMTP id
+ ffacd0b85a97d-39d146624demr9176866f8f.52.1744023229145; Mon, 07 Apr 2025
+ 03:53:49 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20250404122902.2750036-1-sofiane.hamam@smile.fr>
+ <20250404122902.2750036-2-sofiane.hamam@smile.fr> <72355f1d0984647e91f8c50f1c2295071af49e33.camel@suse.com>
+ <b88e8b9c8f4fb17478b2020d9a00dabbe49d1f29.camel@suse.com>
+In-Reply-To: <b88e8b9c8f4fb17478b2020d9a00dabbe49d1f29.camel@suse.com>
+From: Yoann Congal <yoann.congal@smile.fr>
+Date: Mon, 7 Apr 2025 12:53:23 +0200
+X-Gm-Features: ATxdqUExZj9Ryx5aO8fBfcZYT4EXlMtR8Xu0tprjpeUSvlYJpb-g9Uc_YUn86h8
+Message-ID: <CAMSfU+5pbVe4JsXDY2xH40CS_K=vqH9iaCEso9tfMh19daNgZA@mail.gmail.com>
+Subject: Re: [PATCH 2/2] libdmmp/Makefile: Add target docs/man/dmmp_strerror.3
+ to .PHONY list
+To: Martin Wilck <mwilck@suse.com>
+Cc: Sofiane HAMAM <sofiane.hamam@smile.fr>, dm-devel@lists.linux.dev, bmarzins@redhat.com, 
+	=?UTF-8?B?S8OpbMOpZmEgU2Fuw6k=?= <kelefa.sane@smile.fr>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-The man pages should have the same timestamp as the last change
-in libdmmp.h, which was 216de53 ("multipath-tools: use common convention
-for "header file included" macros") in August 2024.
+Hello,
 
-Together with the previous patch, this should ensure that the man pages
-will get the correct time stamp in the future.
+Le lun. 7 avr. 2025 =C3=A0 12:32, Martin Wilck <mwilck@suse.com> a =C3=A9cr=
+it :
+>
+> On Mon, 2025-04-07 at 10:53 +0200, Martin Wilck wrote:
+> > On Fri, 2025-04-04 at 14:29 +0200, Sofiane HAMAM wrote:
+> > > From: K=C3=A9l=C3=A9fa San=C3=A9 <kelefa.sane@smile.fr>
+> > >
+> > > When checking out the git repos, sometimes, target
+> > > docs/man/dmmp_strerror.3 is newer that the prerequisite
+> > > libdmmp/libdmmp.h this leads to a non reproducible behavior:
+> > > Sometimes, the timestamps are updated in the manpages, sometimes
+> > > not.
+> > >
+> > > Signed-off-by: Yoann Congal <yoann.congal@smile.fr>
+> > > Signed-off-by: Sofiane HAMAM <sofiane.hamam@smile.fr>
+> > > Signed-off-by: Kelefa Sane <kelefa.sane@smile.fr>
+> > > ---
+> > >  libdmmp/Makefile | 2 +-
+> > >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > >
+> > > diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+> > > index 7e0e2509..187bcb8c 100644
+> > > --- a/libdmmp/Makefile
+> > > +++ b/libdmmp/Makefile
+> > > @@ -20,7 +20,7 @@ CFLAGS +=3D $(LIB_CFLAGS) -fvisibility=3Dhidden
+> > >  LIBDEPS +=3D $(shell $(PKG_CONFIG) --libs json-c) -L$(mpathcmddir) -
+> > > lmpathcmd -lpthread
+> > >
+> > >  all: $(LIBS) doc
+> > > -.PHONY:    doc clean install uninstall check speed_test
+> > > dep_clean
+> > > +.PHONY:    doc clean install uninstall check speed_test
+> > > dep_clean docs/man/dmmp_strerror.3
+> > >
+> >
+> > I've seen the issue you refer to, but this is not the right solution.
+> > It will cause the time stamps of the man pages to be regenerated on
+> > every build.
+>
+> After investigating this some more: AFAICS, your patch 1/2 fixes the
+> erratic behavior in the (normal) case where KBUILD_BUILD_TIMESTAMP is
+> not set and git is available. Previously, in this case, the kernel-doc
+> script would have substituted the current date for
+> KBUILD_BUILD_TIMESTAMP (yielding "April 2025" today). With your fix,
+> KBUILD_BUILD_TIMESTAMP is correctly set to "August 2024".
+>
+> We need to create a commit that updates the man page time stamps to
+> "August 2024". I'll do this.
+>
+> Once this is done, the build rule does the right thing, AFAICS. While
+> it will rewrite the man pages if the libdmmp.h timestamp is updated, it
+> won't apply any real changes (visible in "git diff" or "git status")
+> unless libdmmp.h has actually changed.
+>
+> Am I overlooking something?
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libdmmp/docs/man/dmmp_context_free.3             | 2 +-
- libdmmp/docs/man/dmmp_context_log_func_set.3     | 2 +-
- libdmmp/docs/man/dmmp_context_log_priority_get.3 | 2 +-
- libdmmp/docs/man/dmmp_context_log_priority_set.3 | 2 +-
- libdmmp/docs/man/dmmp_context_new.3              | 2 +-
- libdmmp/docs/man/dmmp_context_timeout_get.3      | 2 +-
- libdmmp/docs/man/dmmp_context_timeout_set.3      | 2 +-
- libdmmp/docs/man/dmmp_context_userdata_get.3     | 2 +-
- libdmmp/docs/man/dmmp_context_userdata_set.3     | 2 +-
- libdmmp/docs/man/dmmp_flush_mpath.3              | 2 +-
- libdmmp/docs/man/dmmp_last_error_msg.3           | 2 +-
- libdmmp/docs/man/dmmp_log_priority_str.3         | 2 +-
- libdmmp/docs/man/dmmp_mpath_array_free.3         | 2 +-
- libdmmp/docs/man/dmmp_mpath_array_get.3          | 2 +-
- libdmmp/docs/man/dmmp_mpath_kdev_name_get.3      | 2 +-
- libdmmp/docs/man/dmmp_mpath_name_get.3           | 2 +-
- libdmmp/docs/man/dmmp_mpath_wwid_get.3           | 2 +-
- libdmmp/docs/man/dmmp_path_array_get.3           | 2 +-
- libdmmp/docs/man/dmmp_path_blk_name_get.3        | 2 +-
- libdmmp/docs/man/dmmp_path_group_array_get.3     | 2 +-
- libdmmp/docs/man/dmmp_path_group_id_get.3        | 2 +-
- libdmmp/docs/man/dmmp_path_group_priority_get.3  | 2 +-
- libdmmp/docs/man/dmmp_path_group_selector_get.3  | 2 +-
- libdmmp/docs/man/dmmp_path_group_status_get.3    | 2 +-
- libdmmp/docs/man/dmmp_path_group_status_str.3    | 2 +-
- libdmmp/docs/man/dmmp_path_status_get.3          | 2 +-
- libdmmp/docs/man/dmmp_path_status_str.3          | 2 +-
- libdmmp/docs/man/dmmp_reconfig.3                 | 2 +-
- libdmmp/docs/man/dmmp_strerror.3                 | 2 +-
- 29 files changed, 29 insertions(+), 29 deletions(-)
+Depending on the order the files are written on disk during the git
+clone/archive extraction (is dmmp_strerror.3 written before or after
+libdmmp.h ?), the build rule will either run or not.
+But, as you wrote, with your latest patch, it does not matter at all
+because the rewritten timestamp will be exactly the same.
 
-diff --git a/libdmmp/docs/man/dmmp_context_free.3 b/libdmmp/docs/man/dmmp_context_free.3
-index 7c109e1..2a9bbb1 100644
---- a/libdmmp/docs/man/dmmp_context_free.3
-+++ b/libdmmp/docs/man/dmmp_context_free.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_free" 3 "dmmp_context_free" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_free" 3 "dmmp_context_free" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_free \- Release the memory of struct dmmp_context.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_log_func_set.3 b/libdmmp/docs/man/dmmp_context_log_func_set.3
-index be311ec..f593eb5 100644
---- a/libdmmp/docs/man/dmmp_context_log_func_set.3
-+++ b/libdmmp/docs/man/dmmp_context_log_func_set.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_log_func_set" 3 "dmmp_context_log_func_set" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_log_func_set" 3 "dmmp_context_log_func_set" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_log_func_set \- Set log handler function.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_log_priority_get.3 b/libdmmp/docs/man/dmmp_context_log_priority_get.3
-index be38301..6f7c320 100644
---- a/libdmmp/docs/man/dmmp_context_log_priority_get.3
-+++ b/libdmmp/docs/man/dmmp_context_log_priority_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_log_priority_get" 3 "dmmp_context_log_priority_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_log_priority_get" 3 "dmmp_context_log_priority_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_log_priority_get \- Get log priority.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_log_priority_set.3 b/libdmmp/docs/man/dmmp_context_log_priority_set.3
-index 79e4d2e..c1ff371 100644
---- a/libdmmp/docs/man/dmmp_context_log_priority_set.3
-+++ b/libdmmp/docs/man/dmmp_context_log_priority_set.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_log_priority_set" 3 "dmmp_context_log_priority_set" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_log_priority_set" 3 "dmmp_context_log_priority_set" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_log_priority_set \- Set log priority.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_new.3 b/libdmmp/docs/man/dmmp_context_new.3
-index 12505f9..487ccde 100644
---- a/libdmmp/docs/man/dmmp_context_new.3
-+++ b/libdmmp/docs/man/dmmp_context_new.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_new" 3 "dmmp_context_new" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_new" 3 "dmmp_context_new" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_new \- Create struct dmmp_context.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_timeout_get.3 b/libdmmp/docs/man/dmmp_context_timeout_get.3
-index 2ed825d..b738fb9 100644
---- a/libdmmp/docs/man/dmmp_context_timeout_get.3
-+++ b/libdmmp/docs/man/dmmp_context_timeout_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_timeout_get" 3 "dmmp_context_timeout_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_timeout_get" 3 "dmmp_context_timeout_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_timeout_get \- Get IPC timeout.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_timeout_set.3 b/libdmmp/docs/man/dmmp_context_timeout_set.3
-index 16bc9d9..af84be9 100644
---- a/libdmmp/docs/man/dmmp_context_timeout_set.3
-+++ b/libdmmp/docs/man/dmmp_context_timeout_set.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_timeout_set" 3 "dmmp_context_timeout_set" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_timeout_set" 3 "dmmp_context_timeout_set" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_timeout_set \- Set IPC timeout.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_userdata_get.3 b/libdmmp/docs/man/dmmp_context_userdata_get.3
-index eff446c..23e1da4 100644
---- a/libdmmp/docs/man/dmmp_context_userdata_get.3
-+++ b/libdmmp/docs/man/dmmp_context_userdata_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_userdata_get" 3 "dmmp_context_userdata_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_userdata_get" 3 "dmmp_context_userdata_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_userdata_get \- Get user data pointer.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_context_userdata_set.3 b/libdmmp/docs/man/dmmp_context_userdata_set.3
-index d7be869..8a4a765 100644
---- a/libdmmp/docs/man/dmmp_context_userdata_set.3
-+++ b/libdmmp/docs/man/dmmp_context_userdata_set.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_context_userdata_set" 3 "dmmp_context_userdata_set" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_context_userdata_set" 3 "dmmp_context_userdata_set" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_context_userdata_set \- Set user data pointer.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_flush_mpath.3 b/libdmmp/docs/man/dmmp_flush_mpath.3
-index 359607e..e5690ed 100644
---- a/libdmmp/docs/man/dmmp_flush_mpath.3
-+++ b/libdmmp/docs/man/dmmp_flush_mpath.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_flush_mpath" 3 "dmmp_flush_mpath" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_flush_mpath" 3 "dmmp_flush_mpath" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_flush_mpath \- Flush specified multipath device map if unused.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_last_error_msg.3 b/libdmmp/docs/man/dmmp_last_error_msg.3
-index 378c55a..548e1a7 100644
---- a/libdmmp/docs/man/dmmp_last_error_msg.3
-+++ b/libdmmp/docs/man/dmmp_last_error_msg.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_last_error_msg" 3 "dmmp_last_error_msg" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_last_error_msg" 3 "dmmp_last_error_msg" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_last_error_msg \- Retrieves the last error message.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_log_priority_str.3 b/libdmmp/docs/man/dmmp_log_priority_str.3
-index b276160..cf31556 100644
---- a/libdmmp/docs/man/dmmp_log_priority_str.3
-+++ b/libdmmp/docs/man/dmmp_log_priority_str.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_log_priority_str" 3 "dmmp_log_priority_str" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_log_priority_str" 3 "dmmp_log_priority_str" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_log_priority_str \- Convert log priority to string.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_mpath_array_free.3 b/libdmmp/docs/man/dmmp_mpath_array_free.3
-index 0514a66..8d2090e 100644
---- a/libdmmp/docs/man/dmmp_mpath_array_free.3
-+++ b/libdmmp/docs/man/dmmp_mpath_array_free.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_mpath_array_free" 3 "dmmp_mpath_array_free" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_mpath_array_free" 3 "dmmp_mpath_array_free" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_mpath_array_free \- Free 'struct dmmp_mpath' pointer array.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_mpath_array_get.3 b/libdmmp/docs/man/dmmp_mpath_array_get.3
-index 8b0e5b5..4191571 100644
---- a/libdmmp/docs/man/dmmp_mpath_array_get.3
-+++ b/libdmmp/docs/man/dmmp_mpath_array_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_mpath_array_get" 3 "dmmp_mpath_array_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_mpath_array_get" 3 "dmmp_mpath_array_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_mpath_array_get \- Query all existing multipath devices.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_mpath_kdev_name_get.3 b/libdmmp/docs/man/dmmp_mpath_kdev_name_get.3
-index ddead55..261bea6 100644
---- a/libdmmp/docs/man/dmmp_mpath_kdev_name_get.3
-+++ b/libdmmp/docs/man/dmmp_mpath_kdev_name_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_mpath_kdev_name_get" 3 "dmmp_mpath_kdev_name_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_mpath_kdev_name_get" 3 "dmmp_mpath_kdev_name_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_mpath_kdev_name_get \- Retrieve kernel DEVNAME of certain mpath.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_mpath_name_get.3 b/libdmmp/docs/man/dmmp_mpath_name_get.3
-index 2b0027e..894d318 100644
---- a/libdmmp/docs/man/dmmp_mpath_name_get.3
-+++ b/libdmmp/docs/man/dmmp_mpath_name_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_mpath_name_get" 3 "dmmp_mpath_name_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_mpath_name_get" 3 "dmmp_mpath_name_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_mpath_name_get \- Retrieve name(alias) of certain mpath.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_mpath_wwid_get.3 b/libdmmp/docs/man/dmmp_mpath_wwid_get.3
-index b8e9e7d..e6afcb1 100644
---- a/libdmmp/docs/man/dmmp_mpath_wwid_get.3
-+++ b/libdmmp/docs/man/dmmp_mpath_wwid_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_mpath_wwid_get" 3 "dmmp_mpath_wwid_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_mpath_wwid_get" 3 "dmmp_mpath_wwid_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_mpath_wwid_get \- Retrieve WWID of certain mpath.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_array_get.3 b/libdmmp/docs/man/dmmp_path_array_get.3
-index 21f486b..de29c9d 100644
---- a/libdmmp/docs/man/dmmp_path_array_get.3
-+++ b/libdmmp/docs/man/dmmp_path_array_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_array_get" 3 "dmmp_path_array_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_array_get" 3 "dmmp_path_array_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_array_get \- Retrieve path pointer array.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_blk_name_get.3 b/libdmmp/docs/man/dmmp_path_blk_name_get.3
-index 5938f0e..167e81c 100644
---- a/libdmmp/docs/man/dmmp_path_blk_name_get.3
-+++ b/libdmmp/docs/man/dmmp_path_blk_name_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_blk_name_get" 3 "dmmp_path_blk_name_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_blk_name_get" 3 "dmmp_path_blk_name_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_blk_name_get \- Retrieve block name.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_array_get.3 b/libdmmp/docs/man/dmmp_path_group_array_get.3
-index ca3187c..b9b663f 100644
---- a/libdmmp/docs/man/dmmp_path_group_array_get.3
-+++ b/libdmmp/docs/man/dmmp_path_group_array_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_array_get" 3 "dmmp_path_group_array_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_array_get" 3 "dmmp_path_group_array_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_array_get \- Retrieve path groups pointer array.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_id_get.3 b/libdmmp/docs/man/dmmp_path_group_id_get.3
-index a84f31f..67ba5c0 100644
---- a/libdmmp/docs/man/dmmp_path_group_id_get.3
-+++ b/libdmmp/docs/man/dmmp_path_group_id_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_id_get" 3 "dmmp_path_group_id_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_id_get" 3 "dmmp_path_group_id_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_id_get \- Retrieve path group ID.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_priority_get.3 b/libdmmp/docs/man/dmmp_path_group_priority_get.3
-index 1cda8af..09cbea9 100644
---- a/libdmmp/docs/man/dmmp_path_group_priority_get.3
-+++ b/libdmmp/docs/man/dmmp_path_group_priority_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_priority_get" 3 "dmmp_path_group_priority_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_priority_get" 3 "dmmp_path_group_priority_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_priority_get \- Retrieve path group priority.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_selector_get.3 b/libdmmp/docs/man/dmmp_path_group_selector_get.3
-index f55477b..dc73fa8 100644
---- a/libdmmp/docs/man/dmmp_path_group_selector_get.3
-+++ b/libdmmp/docs/man/dmmp_path_group_selector_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_selector_get" 3 "dmmp_path_group_selector_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_selector_get" 3 "dmmp_path_group_selector_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_selector_get \- Retrieve path group selector.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_status_get.3 b/libdmmp/docs/man/dmmp_path_group_status_get.3
-index 53e68b8..a7662b6 100644
---- a/libdmmp/docs/man/dmmp_path_group_status_get.3
-+++ b/libdmmp/docs/man/dmmp_path_group_status_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_status_get" 3 "dmmp_path_group_status_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_status_get" 3 "dmmp_path_group_status_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_status_get \- Retrieve path group status.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_group_status_str.3 b/libdmmp/docs/man/dmmp_path_group_status_str.3
-index 98f877a..160c8a7 100644
---- a/libdmmp/docs/man/dmmp_path_group_status_str.3
-+++ b/libdmmp/docs/man/dmmp_path_group_status_str.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_group_status_str" 3 "dmmp_path_group_status_str" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_group_status_str" 3 "dmmp_path_group_status_str" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_group_status_str \- Convert path group status to string.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_status_get.3 b/libdmmp/docs/man/dmmp_path_status_get.3
-index baa4437..92e6433 100644
---- a/libdmmp/docs/man/dmmp_path_status_get.3
-+++ b/libdmmp/docs/man/dmmp_path_status_get.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_status_get" 3 "dmmp_path_status_get" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_status_get" 3 "dmmp_path_status_get" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_status_get \- Retrieve the path status.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_path_status_str.3 b/libdmmp/docs/man/dmmp_path_status_str.3
-index 425e472..456cf24 100644
---- a/libdmmp/docs/man/dmmp_path_status_str.3
-+++ b/libdmmp/docs/man/dmmp_path_status_str.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_path_status_str" 3 "dmmp_path_status_str" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_path_status_str" 3 "dmmp_path_status_str" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_path_status_str \- Convert path status to string.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_reconfig.3 b/libdmmp/docs/man/dmmp_reconfig.3
-index 36bd504..413a3e6 100644
---- a/libdmmp/docs/man/dmmp_reconfig.3
-+++ b/libdmmp/docs/man/dmmp_reconfig.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_reconfig" 3 "dmmp_reconfig" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_reconfig" 3 "dmmp_reconfig" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_reconfig \- Instruct multipathd daemon to do reconfiguration.
- .SH SYNOPSIS
-diff --git a/libdmmp/docs/man/dmmp_strerror.3 b/libdmmp/docs/man/dmmp_strerror.3
-index 3acd9c9..202941c 100644
---- a/libdmmp/docs/man/dmmp_strerror.3
-+++ b/libdmmp/docs/man/dmmp_strerror.3
-@@ -1,4 +1,4 @@
--.TH "dmmp_strerror" 3 "dmmp_strerror" "March 2018" "Device Mapper Multipath API - libdmmp Manual" 
-+.TH "dmmp_strerror" 3 "dmmp_strerror" "August 2024" "Device Mapper Multipath API - libdmmp Manual" 
- .SH NAME
- dmmp_strerror \- Convert error code to string.
- .SH SYNOPSIS
--- 
-2.49.0
+Apart from this little quirk without any consequence, it looks good to me.
 
+The only future problem I can imagine is if libdmmp.h is updated
+without updating the timestamps (again).
+In this case, we will either get the timestamps from the sources or from gi=
+t.
+
+Thanks for looking into this!
+
+>
+> Martin
+>
+
+Regards,
+--=20
+Yoann Congal
+Smile ECS
