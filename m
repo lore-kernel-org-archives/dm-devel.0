@@ -1,110 +1,133 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.10])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DD2722D78F;
-	Mon,  7 Apr 2025 07:21:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.10
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6463D226883
+	for <dm-devel@lists.linux.dev>; Mon,  7 Apr 2025 08:51:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744010494; cv=none; b=IeE6HBg3yUre83iQXDqOrPgvPPCaI+GQp579WtwUMM+/6wXpvC9RKiMcgTS9ljhZrHCVfhK6JoSmtfYs4F4yIGsagve9TXBBr+k2I8egzbEN78zC91A9f82khWbM5NFjL5FVwRUeMLqOjO3jbeKAKKJ6w1Qdtar+X3/aLPPmgn4=
+	t=1744015919; cv=none; b=FtzHpyxosTaSNAZiEqf/du45BDwrFJrGImMY2ebgCKVyhniibPe7Qq1uXWQs3Qk/qhJhI9RkWZPkzGQjLHEnF3VX7K2/QUYVXoIv6ZsNK5L65qRAAlCYKJmGZAjThEukBDgOe0mgvi2joK7XJidpJRln4PeZY1IdpJDjWmvZq7w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744010494; c=relaxed/simple;
-	bh=4qx9srvVw5/073OAlAi2thUlYG31LR/V0K21OZO/4rI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=nvqMukQTDGhk1D0MC0DmiUJoxZQMaO96o9yif0WXcWXVBDMear14QECzBgDE5OJLGOu/VcvbjjTsZlfwmmhvOCoogQiG1KWUo694kVQpuXkXSyJL+ftUbARK5wuzmRkVVAWMWP6Wre4Bt/WcJ2T0VTalAG+xRcKM3Cu/8NgQXDI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=XPCSjXZ6; arc=none smtp.client-ip=198.175.65.10
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
+	s=arc-20240116; t=1744015919; c=relaxed/simple;
+	bh=41eoQJNixBgb3BhV3DhVb6KLoQjFemI13ytSIWdy1Pc=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Yszk0ZPorQBmN2XkJ4DYW8MTYT3OcxJRGv0TvoAxg2DVd/gg4h+PAhadfaN/SKrM2NKUME7KLjeXznk0PNnvAwXsY+7wTkZRR/lPnzgqInz7Vaqgei2YNJcttIY+b5ciCK6WJQ06YrdOqOMeizN39Sz89eSX5MyD/LHINsQj87M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=NUQDImCk; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=NUQDImCk; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="XPCSjXZ6"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1744010493; x=1775546493;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=4qx9srvVw5/073OAlAi2thUlYG31LR/V0K21OZO/4rI=;
-  b=XPCSjXZ6FyFd5WkmLwBI3gls9ttYBikGsXT7J6CW2yur9b5AAcMVH0Bf
-   eh4S7qjgJzVdwH8/+JS3eFHmiU9DZkta75+mWxDaTlBY5vx0HwX53PUi4
-   tpCbZwXBaLOgz9/8C4Chu4pC0laA4VzEH7hOTiPKHTtYn8zpGEHrVmau9
-   uThgevH3G2oXd3tQUfMuo9O2X1f8Ova2KBJjsN4JwCUnoNL12uAyWMr/K
-   gHVhnLh4Ia51uZHRVw66qUMUJCxVgZESTqXdYk2uCHISEKw808JfD9Xkx
-   +FRCZtriFkEzFhU5xbCB8hWY4M+otgoo7iMMgIJ01f4Be+q1dfgrclAm/
-   g==;
-X-CSE-ConnectionGUID: iVHBWgV1RGud27aKBgOQBQ==
-X-CSE-MsgGUID: U6xBOKQ7Q9mSfqsOwSu8bw==
-X-IronPort-AV: E=McAfee;i="6700,10204,11396"; a="62776511"
-X-IronPort-AV: E=Sophos;i="6.15,193,1739865600"; 
-   d="scan'208";a="62776511"
-Received: from fmviesa007.fm.intel.com ([10.60.135.147])
-  by orvoesa102.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 07 Apr 2025 00:21:32 -0700
-X-CSE-ConnectionGUID: FalYELIfTy28RPnuAw+9nA==
-X-CSE-MsgGUID: 0V7vV61KQVaaXUii0bRFFA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.15,193,1739865600"; 
-   d="scan'208";a="127862657"
-Received: from black.fi.intel.com ([10.237.72.28])
-  by fmviesa007.fm.intel.com with ESMTP; 07 Apr 2025 00:21:29 -0700
-Received: by black.fi.intel.com (Postfix, from userid 1003)
-	id 596EC340; Mon, 07 Apr 2025 10:21:28 +0300 (EEST)
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-To: Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	llvm@lists.linux.dev
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Nathan Chancellor <nathan@kernel.org>,
-	Nick Desaulniers <nick.desaulniers+lkml@gmail.com>,
-	Bill Wendling <morbo@google.com>,
-	Justin Stitt <justinstitt@google.com>,
-	Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Subject: [PATCH v1 1/1] dm table: Fix W=1 build warning when mempool_needs_integrity is unused
-Date: Mon,  7 Apr 2025 10:21:26 +0300
-Message-ID: <20250407072126.3879086-1-andriy.shevchenko@linux.intel.com>
-X-Mailer: git-send-email 2.47.2
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="NUQDImCk";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="NUQDImCk"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 5218E1F449;
+	Mon,  7 Apr 2025 08:51:54 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1744015914; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3mqYQsvmBrJytq8wwCbbID7IPtKQTx7kNbppDoL/so4=;
+	b=NUQDImCkTDdsOVxlhSElDozNgUd7PmPkjwVr/Qwh4vCKHqYwTx6G3ojoi+YL6WNNa5omdc
+	GRxR/uo2R1CvoICSZwqxKcdtFeAppaO22O0nbCmh6GC45dfg9y/xum2wQ5KghVcQTlmrtZ
+	BcJwDNSK4jJo23zrEyYP5bBeByO9Wss=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=NUQDImCk
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1744015914; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3mqYQsvmBrJytq8wwCbbID7IPtKQTx7kNbppDoL/so4=;
+	b=NUQDImCkTDdsOVxlhSElDozNgUd7PmPkjwVr/Qwh4vCKHqYwTx6G3ojoi+YL6WNNa5omdc
+	GRxR/uo2R1CvoICSZwqxKcdtFeAppaO22O0nbCmh6GC45dfg9y/xum2wQ5KghVcQTlmrtZ
+	BcJwDNSK4jJo23zrEyYP5bBeByO9Wss=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 1DCCA13691;
+	Mon,  7 Apr 2025 08:51:54 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id XL+1BSqS82e3NQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 07 Apr 2025 08:51:54 +0000
+Message-ID: <cceb5e41c4042e11566ecefb98150d220a5b474b.camel@suse.com>
+Subject: Re: [PATCH 1/2] libdmmp/Makefile: Fix KBUILD_BUILD_TIMESTAMP usage
+From: Martin Wilck <mwilck@suse.com>
+To: Sofiane HAMAM <sofiane.hamam@smile.fr>, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, =?ISO-8859-1?Q?K=E9l=E9fa_San=E9?=
+	 <kelefa.sane@smile.fr>, Yoann Congal <yoann.congal@smile.fr>
+Date: Mon, 07 Apr 2025 10:51:53 +0200
+In-Reply-To: <20250404122902.2750036-1-sofiane.hamam@smile.fr>
+References: <20250404122902.2750036-1-sofiane.hamam@smile.fr>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.0 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Rspamd-Queue-Id: 5218E1F449
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[99.98%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_FIVE(0.00)[5];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:dkim,suse.com:mid];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Score: -4.51
+X-Spam-Flag: NO
 
-The mempool_needs_integrity is unused. This, in particular, prevents
-kernel builds with Clang, `make W=1` and CONFIG_WERROR=y:
+On Fri, 2025-04-04 at 14:29 +0200, Sofiane HAMAM wrote:
+> From: K=C3=A9l=C3=A9fa San=C3=A9 <kelefa.sane@smile.fr>
+>=20
+> Add missing $ (Makefile need to escape '$' as '$$')
+>=20
+> Signed-off-by: Yoann Congal <yoann.congal@smile.fr>
+> Signed-off-by: Sofiane HAMAM <sofiane.hamam@smile.fr>
+> Signed-off-by: Kelefa Sane <kelefa.sane@smile.fr>
+> ---
+> =C2=A0libdmmp/Makefile | 2 +-
+> =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
+>=20
+> diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+> index 172ba045..7e0e2509 100644
+> --- a/libdmmp/Makefile
+> +++ b/libdmmp/Makefile
+> @@ -74,7 +74,7 @@ doc: docs/man/dmmp_strerror.3
+> =C2=A0docs/man/dmmp_strerror.3:	$(HEADERS)
+> =C2=A0	$(Q)TEMPFILE=3D$(shell mktemp); \
+> =C2=A0	cat $^ | perl docs/doc-preclean.pl >$$TEMPFILE; \
+> -	[ "$KBUILD_BUILD_TIMESTAMP" ] || \
+> +	[ "$$KBUILD_BUILD_TIMESTAMP" ] || \
+> =C2=A0	=C2=A0=C2=A0=C2=A0 KBUILD_BUILD_TIMESTAMP=3D`git log -n1 --pretty=
+=3D%cd --
+> date=3Diso -- $^`; \
+> =C2=A0	export KBUILD_BUILD_TIMESTAMP; \
+> =C2=A0	LC_ALL=3DC \
 
-drivers/md/dm-table.c:1052:7: error: variable 'mempool_needs_integrity' set but not used [-Werror,-Wunused-but-set-variable]
- 1052 |         bool mempool_needs_integrity = t->integrity_supported;
-      |              ^
-
-Fix this by removing the leftover.
-
-Fixes: 105ca2a2c2ff ("block: split struct bio_integrity_payload")
-Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
----
- drivers/md/dm-table.c | 3 ---
- 1 file changed, 3 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 35100a435c88..53759dbbe9d6 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1049,7 +1049,6 @@ static int dm_table_alloc_md_mempools(struct dm_table *t, struct mapped_device *
- 	unsigned int min_pool_size = 0, pool_size;
- 	struct dm_md_mempools *pools;
- 	unsigned int bioset_flags = 0;
--	bool mempool_needs_integrity = t->integrity_supported;
- 
- 	if (unlikely(type == DM_TYPE_NONE)) {
- 		DMERR("no table type is set, can't allocate mempools");
-@@ -1074,8 +1073,6 @@ static int dm_table_alloc_md_mempools(struct dm_table *t, struct mapped_device *
- 
- 		per_io_data_size = max(per_io_data_size, ti->per_io_data_size);
- 		min_pool_size = max(min_pool_size, ti->num_flush_bios);
--
--		mempool_needs_integrity |= ti->mempool_needs_integrity;
- 	}
- 	pool_size = max(dm_get_reserved_bio_based_ios(), min_pool_size);
- 	front_pad = roundup(per_io_data_size,
--- 
-2.47.2
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
