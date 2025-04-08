@@ -1,61 +1,61 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F6A4255E37
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71B1F25522E
 	for <dm-devel@lists.linux.dev>; Tue,  8 Apr 2025 23:52:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744156329; cv=none; b=s1Vsq4goZf2ttpk+Q3L/6Nv+vhQt0KRwSRPY8pq2QSkMw7deE6wrzwiX4V/0Uk03Rzy48mdRGbH+GI0IlG7UYnH6A6K/885iag2h19GsCNezcVPyYJAt35wt4hCQZ6RGvYzFuI9rQ+vLAjvAPjkB8MHWH7cvm+Q/jZgJEGfAYJA=
+	t=1744156329; cv=none; b=ivmxorFKTKcYGVeqkvunv39KdNWRmOZHpsf/ifJnevXLp/CLBzS8UdHneDV6LJdhlG/y7yOfdDDtsp+4fxUXePtCPss6sm0o8zmQ+QTQ3+jOq1mskqTirpd8GzXlBcZ73L0Ot4DqTA2jWSRj6wU7z5PZjhRLGNSu4ZrHrB+YeT8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1744156329; c=relaxed/simple;
-	bh=avA/K8CWsY4Pci06rNHNdUL8Q0MAAApxnpKeR7F8xyA=;
+	bh=uiQzfVefLjThepy24mpxJ2z9rAFCMoiphxq3Xq4OwFU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=guxbk+qamdGCb0N/qIJwpjmFsQDFTCl7r5aODulfPOBpmo/6YsgRAypkRCVMlcIsUPMSLL4QricTAOgOW5malV94e5RBpSDHKEBZzF8Es4AMERlYOy6Ue+Y5AH9zJu8HfN5hQjp2unGXT4caGAco7VEGQB4dpwjp+pCkpilSLdU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Yac7S3oU; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:content-type; b=kFXGELHBgwueXW1Hmnr/xfAzkGMyMfF+dylnY8C7RnaYH47AHLgR/OmRxNlb63dzAB/obogTFggtM6yKMWOZ7MUm9Kh2E8IwmN0hXUdbqyV3IDRKTMHfaP3uXpN7cLR/4N8zNXF7G+Yz2svrb6D1ktk+28yN9hK/4sYYx6Qss1s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZpVx/P9K; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Yac7S3oU"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZpVx/P9K"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1744156326;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=RkWV1GgFEZGi9nt6Ij1mhj3YtogvIjfkm8VSTSCcyfs=;
-	b=Yac7S3oUxiunkZ4M4ElBPnNQ09cpf4QmCPR+bHezLknX5Gyv1mbINFsfWjklTvIm8vmTBw
-	HCHRSoWLqQhemYn+pDK4vAhMF54KdNifJRFD5w/WU6e4IhOHdsrjw/8z5pAZZL/fqjrXY9
-	+aGfDi4V7KD9Gzc9n2U1aygJMFl4/qk=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	bh=2T7qhnNKKothtB1xbNLDzxlSnGf3ysMn6wQ3dw8nnKM=;
+	b=ZpVx/P9KnnENlp9vgFyic7rHwk6l6MyVLohYilm8Vb0E8QHLEM7txHdsk3/TLONPF5TfHr
+	qtLym98fqLdDWi7bITD60ZAKDW/PKaQpLlYRY3pNCvKvJSNoRXomgjFjwS50+fCLAGjqu3
+	yC4BZTr7tA5rFaC9QHl/P2IneCkdF1s=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-475-JWjsHkayMeGticGhdNwtmA-1; Tue,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-395-uMVOZprWP4K5XhmVXTXOlg-1; Tue,
  08 Apr 2025 19:52:03 -0400
-X-MC-Unique: JWjsHkayMeGticGhdNwtmA-1
-X-Mimecast-MFC-AGG-ID: JWjsHkayMeGticGhdNwtmA_1744156322
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+X-MC-Unique: uMVOZprWP4K5XhmVXTXOlg-1
+X-Mimecast-MFC-AGG-ID: uMVOZprWP4K5XhmVXTXOlg_1744156322
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 59A5719560BB;
-	Tue,  8 Apr 2025 23:52:02 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E67C7195608B;
+	Tue,  8 Apr 2025 23:52:01 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8F6113001D0E;
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B063D1955DCE;
 	Tue,  8 Apr 2025 23:52:01 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 538Nq02s4128877
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 538Nq0aI4128873
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
 	Tue, 8 Apr 2025 19:52:00 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 538Nq0034128876;
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 538Nq0HG4128872;
 	Tue, 8 Apr 2025 19:52:00 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
 Cc: dm-devel@lists.linux.dev, Damien Le Moal <dlemoal@kernel.org>,
         Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v3 6/6] dm: fix native zone append devices on top of emulated ones
-Date: Tue,  8 Apr 2025 19:51:59 -0400
-Message-ID: <20250408235159.4128838-7-bmarzins@redhat.com>
+Subject: [PATCH v3 5/6] dm: limit swapping tables for devices with zone write plugs
+Date: Tue,  8 Apr 2025 19:51:58 -0400
+Message-ID: <20250408235159.4128838-6-bmarzins@redhat.com>
 In-Reply-To: <20250408235159.4128838-1-bmarzins@redhat.com>
 References: <20250408235159.4128838-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -64,49 +64,239 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: nCpbUgfrTMbiwgXAhUn_wq4hY6aT8x9n1xqp0jg8USg_1744156322
+X-Mimecast-MFC-PROC-ID: dzM3y0Rv4wTFXOSKJ8kQtB05YwgI7kgAoNpg019oLLk_1744156322
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
 
-If a DM device that can pass down zone append commands is stacked on top
-of a device that emulates zone append commands, it will allocate zone
-append emulation resources, even though it doesn't use them. This is
-because the underlying device will have max_hw_zone_append_sectors set
-to 0 to request zone append emulation. When the DM device is stacked on
-top of it, it will inherit that max_hw_zone_append_sectors limit,
-despite being able to pass down zone append bios. Solve this by making
-sure max_hw_zone_append_sectors is non-zero for DM devices that do not
-need zone append emulation.
+dm_revalidate_zones() only allowed new or previously unzoned devices to
+call blk_revalidate_disk_zones(). If the device was already zoned,
+disk->nr_zones would always equal md->nr_zones, so dm_revalidate_zones()
+returned without doing any work. This would make the zoned settings for
+the device not match the new table. If the device had zone write plug
+resources, it could run into errors like bdev_zone_is_seq() reading
+invalid memory because disk->conv_zones_bitmap was the wrong size.
 
+If the device doesn't have any zone write plug resources, calling
+blk_revalidate_disk_zones() will always correctly update device.  If
+blk_revalidate_disk_zones() fails, it can still overwrite or clear the
+current disk->nr_zones value. In this case, DM must restore the previous
+value of disk->nr_zones, so that the zoned settings will continue to
+match the previous that it failed back to.
+
+If the device already has zone write plug resources,
+blk_revalidate_disk_zones() will not correctly update them, if it is
+called for arbitrary zoned device changes.  Since there is not much need
+for this ability, the easiest solution is to disallow any table reloads
+that change the zoned settings, for devices that already have zone plug
+resources.  Specifically, if a device already has zone plug resources
+allocated, it can only switch to another zoned table that also emulates
+zone append.  Also, it cannot change the device size or the zone size. A
+device can switch to an error target.
+
+Fixes: bb37d77239af2 ("dm: introduce zone append emulation")
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/md/dm-zone.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-table.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ drivers/md/dm-zone.c  | 35 ++++++++++++++++++++++++++---------
+ drivers/md/dm.c       |  6 ++++++
+ drivers/md/dm.h       |  5 +++++
+ 4 files changed, 73 insertions(+), 14 deletions(-)
 
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b8191ce691f1..04680c0950b7 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1496,6 +1496,18 @@ bool dm_table_has_no_data_devices(struct dm_table *t)
+ 	return true;
+ }
+ 
++bool dm_table_is_wildcard(struct dm_table *t)
++{
++	for (unsigned int i = 0; i < t->num_targets; i++) {
++		struct dm_target *ti = dm_table_get_target(t, i);
++
++		if (!dm_target_is_wildcard(ti->type))
++			return false;
++	}
++
++	return true;
++}
++
+ static int device_not_zoned(struct dm_target *ti, struct dm_dev *dev,
+ 			    sector_t start, sector_t len, void *data)
+ {
+@@ -1836,6 +1848,19 @@ static bool dm_table_supports_atomic_writes(struct dm_table *t)
+ 	return true;
+ }
+ 
++bool dm_table_supports_size_change(struct dm_table *t, sector_t old_size,
++				   sector_t new_size)
++{
++	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) && dm_has_zone_plugs(t->md) &&
++	    old_size != new_size) {
++		DMWARN("%s: device has zone write plug resources. "
++		       "Cannot change size",
++		       dm_device_name(t->md));
++		return false;
++	}
++	return true;
++}
++
+ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 			      struct queue_limits *limits)
+ {
+@@ -1873,11 +1898,17 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+ 		limits->features &= ~BLK_FEAT_DAX;
+ 
+ 	/* For a zoned table, setup the zone related queue attributes. */
+-	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
+-	    (limits->features & BLK_FEAT_ZONED)) {
+-		r = dm_set_zones_restrictions(t, q, limits);
+-		if (r)
+-			return r;
++	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED)) {
++		if (limits->features & BLK_FEAT_ZONED) {
++			r = dm_set_zones_restrictions(t, q, limits);
++			if (r)
++				return r;
++		} else if (dm_has_zone_plugs(t->md)) {
++			DMWARN("%s: device has zone write plug resources. "
++			       "Cannot switch to non-zoned table.",
++			       dm_device_name(t->md));
++			return -EINVAL;
++		}
+ 	}
+ 
+ 	if (dm_table_supports_atomic_writes(t))
 diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 1d419734fefc..f89590f904e1 100644
+index 11e19281bb64..1d419734fefc 100644
 --- a/drivers/md/dm-zone.c
 +++ b/drivers/md/dm-zone.c
-@@ -345,11 +345,15 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
+@@ -158,22 +158,22 @@ int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
+ {
+ 	struct mapped_device *md = t->md;
+ 	struct gendisk *disk = md->disk;
++	unsigned int nr_zones = disk->nr_zones;
+ 	int ret;
  
+ 	if (!get_capacity(disk))
+ 		return 0;
+ 
+-	/* Revalidate only if something changed. */
+-	if (!disk->nr_zones || disk->nr_zones != md->nr_zones) {
+-		DMINFO("%s using %s zone append",
+-		       disk->disk_name,
+-		       queue_emulates_zone_append(q) ? "emulated" : "native");
+-		md->nr_zones = 0;
+-	}
+-
+-	if (md->nr_zones)
++	/*
++	 * Do not revalidate if zone append emulation resources have already
++	 * been allocated.
++	 */
++	if (dm_has_zone_plugs(md))
+ 		return 0;
+ 
++	DMINFO("%s using %s zone append", disk->disk_name,
++	       queue_emulates_zone_append(q) ? "emulated" : "native");
++
  	/*
- 	 * Check if zone append is natively supported, and if not, set the
--	 * mapped device queue as needing zone append emulation.
-+	 * mapped device queue as needing zone append emulation. If zone
-+	 * append is natively supported, make sure that
-+	 * max_hw_zone_append_sectors is not set to 0.
- 	 */
- 	WARN_ON_ONCE(queue_is_mq(q));
- 	if (!dm_table_supports_zone_append(t))
+ 	 * Our table is not live yet. So the call to dm_get_live_table()
+ 	 * in dm_blk_report_zones() will fail. Set a temporary pointer to
+@@ -187,6 +187,7 @@ int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
+ 
+ 	if (ret) {
+ 		DMERR("Revalidate zones failed %d", ret);
++		disk->nr_zones = nr_zones;
+ 		return ret;
+ 	}
+ 
+@@ -383,12 +384,28 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
+ 		lim->max_open_zones = 0;
+ 		lim->max_active_zones = 0;
  		lim->max_hw_zone_append_sectors = 0;
-+	else if (lim->max_hw_zone_append_sectors == 0)
-+		lim->max_hw_zone_append_sectors = lim->max_zone_append_sectors;
++		lim->max_zone_append_sectors = 0;
+ 		lim->zone_write_granularity = 0;
+ 		lim->chunk_sectors = 0;
+ 		lim->features &= ~BLK_FEAT_ZONED;
+ 		return 0;
+ 	}
  
++	if (get_capacity(disk) && dm_has_zone_plugs(t->md)) {
++		if (q->limits.chunk_sectors != lim->chunk_sectors) {
++			DMWARN("%s: device has zone write plug resources. "
++			       "Cannot change zone size",
++			       disk->disk_name);
++			return -EINVAL;
++		}
++		if (lim->max_hw_zone_append_sectors != 0 &&
++		    !dm_table_is_wildcard(t)) {
++			DMWARN("%s: device has zone write plug resources. "
++			       "New table must emulate zone append",
++			       disk->disk_name);
++			return -EINVAL;
++		}
++	}
  	/*
- 	 * Determine the max open and max active zone limits for the mapped
+ 	 * Warn once (when the capacity is not yet set) if the mapped device is
+ 	 * partially using zone resources of the target devices as that leads to
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 292414da871d..240f6dab8dda 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2429,6 +2429,12 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
+ 	size = dm_table_get_size(t);
+ 
+ 	old_size = dm_get_size(md);
++
++	if (!dm_table_supports_size_change(t, old_size, size)) {
++		old_map = ERR_PTR(-EINVAL);
++		goto out;
++	}
++
+ 	set_capacity(md->disk, size);
+ 
+ 	ret = dm_table_set_restrictions(t, md->queue, limits);
+diff --git a/drivers/md/dm.h b/drivers/md/dm.h
+index e5d3a9f46a91..245f52b59215 100644
+--- a/drivers/md/dm.h
++++ b/drivers/md/dm.h
+@@ -58,6 +58,7 @@ void dm_table_event_callback(struct dm_table *t,
+ 			     void (*fn)(void *), void *context);
+ struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector);
+ bool dm_table_has_no_data_devices(struct dm_table *table);
++bool dm_table_is_wildcard(struct dm_table *t);
+ int dm_calculate_queue_limits(struct dm_table *table,
+ 			      struct queue_limits *limits);
+ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
+@@ -72,6 +73,8 @@ struct target_type *dm_table_get_immutable_target_type(struct dm_table *t);
+ struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
+ struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
+ bool dm_table_request_based(struct dm_table *t);
++bool dm_table_supports_size_change(struct dm_table *t, sector_t old_size,
++				   sector_t new_size);
+ 
+ void dm_lock_md_type(struct mapped_device *md);
+ void dm_unlock_md_type(struct mapped_device *md);
+@@ -111,12 +114,14 @@ bool dm_is_zone_write(struct mapped_device *md, struct bio *bio);
+ int dm_zone_get_reset_bitmap(struct mapped_device *md, struct dm_table *t,
+ 			     sector_t sector, unsigned int nr_zones,
+ 			     unsigned long *need_reset);
++#define dm_has_zone_plugs(md) ((md)->disk->zone_wplugs_hash != NULL)
+ #else
+ #define dm_blk_report_zones	NULL
+ static inline bool dm_is_zone_write(struct mapped_device *md, struct bio *bio)
+ {
+ 	return false;
+ }
++#define dm_has_zone_plugs(md) false
+ #endif
+ 
+ /*
 -- 
 2.48.1
 
