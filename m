@@ -1,136 +1,150 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E1971EF080
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 03:52:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A90E01EF080
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 04:33:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744257147; cv=none; b=K8th+mNkO3W5wg3SM5YVRhZ9oIJk07VRYbHbxHsfTDYFyYD0Tf2bYFVu4u8ZCp/UoFKH8vibfva/2DRSauTwWYrOQGhgyfeyZOhdMX1N/2cfey5JSIsNB037Um8Gz1pMzCPaQLAARWrn0bLqO3YWra7x3zPzLvn2eTK/rQ3Uowk=
+	t=1744259634; cv=none; b=nZhxKcxN5t4ADZ1NVq5jjoS4ZadDdYZHp/hIaGu2I0Tv2PVTAVMbjm1WV5OOsy3mFvZzKIDI3eRzomcjLo8gPWpLqhNCCfiyGyg/vvr7ViqbLEhx/YH/xMX2BPMZ1igD0uBD5GNsNW3003cWWZRCG/XGMoS7CSAzhpdUJd3/q3Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744257147; c=relaxed/simple;
-	bh=8UR0rCYcem4Ns+qpODAMEUGXyGRLAyiltIyTO13LKmo=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=at1qXZXy8xHzZG1iZEYddrbZOs95a1Hb6qpgdr0BMp6NfFByYxKsrUpbhlL5S0/oxd+VuiAGsMq5c0M2kwuKZ/9Omu8+1Yak6JDLqeUOx9pP4i0KCcjqB2dzdbCf71kQbjraQq0YgUFzN5qwAMG6erIdszTNDg5F7UVhhEbPDbw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZY5V92XDpz4f3jtF
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 11:52:01 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 69E131A0847
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 11:52:19 +0800 (CST)
-Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP4 (Coremail) with SMTP id gCh0CgD3Wl9xQPdn5yMjJA--.22084S3;
-	Thu, 10 Apr 2025 11:52:19 +0800 (CST)
-Message-ID: <43a34aa8-3f2f-4d86-be53-8a832be8532f@huaweicloud.com>
-Date: Thu, 10 Apr 2025 11:52:17 +0800
+	s=arc-20240116; t=1744259634; c=relaxed/simple;
+	bh=BoavCZDRqYuErE5eTYhNv6AoNipJIDFKurpsOfCXHUA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=EUcU6LTl7mMNT7RgoRH3qIOmSqtgK91rSlRimCL4THT+0F6VSmYBj3fsQ45sO6ef1iUlUq59srihJQC8TTyVYPt0yqG06Vt36rdeH/Q4eN7Wzn7pr9GcRntvVRqn+JpA5jk1bLQ8GV8nqW3HkJYjgSN3EbFIQi6c78II5BVKubs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fF/4WrP1; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fF/4WrP1"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7784BC4CEE7;
+	Thu, 10 Apr 2025 04:33:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1744259634;
+	bh=BoavCZDRqYuErE5eTYhNv6AoNipJIDFKurpsOfCXHUA=;
+	h=From:To:Cc:Subject:Date:From;
+	b=fF/4WrP1DY/VKat53BNk639wlsMCcVdNPOUL2HLKqm+PBpVcpO5l63beIPHyNiTED
+	 yhWWINGmq601oBlHv9iCiC6MOB+MfoQO4nXvHSlQ33GscbTEU/tkc55NtAeM+R1wIQ
+	 kMPeHi7otwS443OPkee4JeJRNWmA99YXS8rtJwJxuBLyZsEyhL0Ehea9yfXrs8Oujw
+	 lJv0Q3iXxLG9Zw6wl56uoC9Qopsdv59EO+oRqsvymuU527gtI/AbVGOH00Jbsq838i
+	 R9+VZGNXVUnxMhbsD/H+9mjX+yv6JQ056SyOgX8VyQVP1cpoH6QQikEpRU148s6p1K
+	 evVToo9U+Fchw==
+From: Damien Le Moal <dlemoal@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] dm-delay: Prevent zoned write reordering on suspend
+Date: Thu, 10 Apr 2025 13:33:11 +0900
+Message-ID: <20250410043311.990675-1-dlemoal@kernel.org>
+X-Mailer: git-send-email 2.49.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH -next v3 01/10] block: introduce
- BLK_FEAT_WRITE_ZEROES_UNMAP to queue limits features
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
- linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
- linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, tytso@mit.edu,
- djwong@kernel.org, john.g.garry@oracle.com, bmarzins@redhat.com,
- chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com, yi.zhang@huawei.com,
- chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
- <20250318073545.3518707-2-yi.zhang@huaweicloud.com>
- <20250409103148.GA4950@lst.de>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <20250409103148.GA4950@lst.de>
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgD3Wl9xQPdn5yMjJA--.22084S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxGFWxXw43Jr1DWF47Zw4xZwb_yoW5WFW5p3
-	yfJF1jyrnaqw1fC3Z7Zw48Wr109ws7GF43Gw4aqryjvwnxXF1xKF1S93WYvFWkurs3G3W0
-	qFWjqF9rCw1qvF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-On 2025/4/9 18:31, Christoph Hellwig wrote:
-> On Tue, Mar 18, 2025 at 03:35:36PM +0800, Zhang Yi wrote:
->> From: Zhang Yi <yi.zhang@huawei.com>
->>
->> Currently, disks primarily implement the write zeroes command (aka
->> REQ_OP_WRITE_ZEROES) through two mechanisms: the first involves
->> physically writing zeros to the disk media (e.g., HDDs), while the
->> second performs an unmap operation on the logical blocks, effectively
->> putting them into a deallocated state (e.g., SSDs). The first method is
->> generally slow, while the second method is typically very fast.
->>
->> For example, on certain NVMe SSDs that support NVME_NS_DEAC, submitting
->> REQ_OP_WRITE_ZEROES requests with the NVME_WZ_DEAC bit can accelerate
->> the write zeros operation by placing disk blocks into
-> 
-> Note that this is a can, not a must.  The NVMe definition of Write
-> Zeroes is unfortunately pretty stupid.
-> 
->> +		[RO] Devices that explicitly support the unmap write zeroes
->> +		operation in which a single write zeroes request with the unmap
->> +		bit set to zero out the range of contiguous blocks on storage
->> +		by freeing blocks, rather than writing physical zeroes to the
->> +		media.
-> 
-> This is not actually guaranteed for nvme or scsi.
+When a dm-delay devie is being suspended, the .presuspend() operation is
+first executed (delay_presuspend()) to immediately issue all the BIOs
+present in the delayed list of the device and also sets the device
+may_delay boolean to false. At the same time, any new BIO is issued to
+the device will not be delayed and immediately issued with delay_bio()
+returning DM_MAPIO_REMAPPED. This creates a situation where potentially
+2 different contexts may be issuing write BIOs to the same zone of a
+zone device without respecting the issuing order from the user, that is,
+a newly issued write BIO may be issued before other write BIOs for the
+same target zone that are in the device delayed list. If such situation
+occurs, write BIOs may be failed by the underlying zoned device due to
+an unaligned write error.
 
-Thank you for your review and comments. However, I'm not sure I fully
-understand your points. Could you please provide more details?
+Prevent this situation from happening by always handling newly issued
+write BIOs using the delayed list of BIOs, even when the device is being
+suspended. This is done by forcing the use of the worker kthread for
+zoned devices, and by modifying flush_worker_fn() to always flush all
+delayed BIOs if the device may_delay boolean is false.
 
-AFAIK, the NVMe protocol has the following description in the latest
-NVM Command Set Specification Figure 82 and Figure 114:
+Fixes: d43929ef65a6 ("dm-delay: support zoned devices")
+Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+---
+ drivers/md/dm-delay.c | 29 +++++++++++++++++++++--------
+ 1 file changed, 21 insertions(+), 8 deletions(-)
 
-===
-Deallocate (DEAC): If this bit is set to ‘1’, then the host is
-requesting that the controller deallocate the specified logical blocks.
-If this bit is cleared to ‘0’, then the host is not requesting that
-the controller deallocate the specified logical blocks...
-
-DLFEAT:
-Write Zeroes Deallocation Support (WZDS): If this bit is set to ‘1’,
-then the controller supports the Deallocate bit in the Write Zeroes
-command for this namespace...
-Deallocation Read Behavior (DRB): This field indicates the deallocated
-logical block read behavior. For a logical block that is deallocated,
-this field indicates the values read from that deallocated logical block
-and its metadata (excluding protection information)...
-
-  Value  Definition
-  001b   A deallocated logical block returns all bytes cleared to 0h
-===
-
-At the same time, the current kernel determines whether to set the
-unmap bit when submitting the write zeroes command based on the above
-protocol. So I think this rules should be clear now.
-
-Were you saying that what is described in this protocol is not a
-mandatory requirement? Which means the disks that claiming to support
-the UNMAP write zeroes command(WZDS=1,DRB=1), but in fact, they still
-write actual zeroes data to the storage media? Or were you referring
-to some irregular disks that do not obey the protocol and mislead
-users?
-
-Thanks,
-Yi.
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index d4cf0ac2a7aa..c665b2ab1115 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -128,7 +128,7 @@ static int flush_worker_fn(void *data)
+ 	struct delay_c *dc = data;
+ 
+ 	while (!kthread_should_stop()) {
+-		flush_delayed_bios(dc, false);
++		flush_delayed_bios(dc, !dc->may_delay);
+ 		spin_lock(&dc->delayed_bios_lock);
+ 		if (unlikely(list_empty(&dc->delayed_bios))) {
+ 			set_current_state(TASK_INTERRUPTIBLE);
+@@ -213,6 +213,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct delay_c *dc;
+ 	int ret;
+ 	unsigned int max_delay;
++	bool is_zoned = false;
+ 
+ 	if (argc != 3 && argc != 6 && argc != 9) {
+ 		ti->error = "Requires exactly 3, 6 or 9 arguments";
+@@ -236,6 +237,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (ret)
+ 		goto bad;
+ 	max_delay = dc->read.delay;
++	is_zoned = bdev_is_zoned(dc->read.dev->bdev);
+ 
+ 	if (argc == 3) {
+ 		ret = delay_class_ctr(ti, &dc->write, argv);
+@@ -251,6 +253,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (ret)
+ 		goto bad;
+ 	max_delay = max(max_delay, dc->write.delay);
++	is_zoned = is_zoned || bdev_is_zoned(dc->write.dev->bdev);
+ 
+ 	if (argc == 6) {
+ 		ret = delay_class_ctr(ti, &dc->flush, argv + 3);
+@@ -263,13 +266,16 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (ret)
+ 		goto bad;
+ 	max_delay = max(max_delay, dc->flush.delay);
++	is_zoned = is_zoned || bdev_is_zoned(dc->flush.dev->bdev);
+ 
+ out:
+-	if (max_delay < 50) {
+-		/*
+-		 * In case of small requested delays, use kthread instead of
+-		 * timers and workqueue to achieve better latency.
+-		 */
++	/*
++	 * In case of small requested delays, use kthread instead of timers and
++	 * workqueue to achieve better latency. Also use a kthread for a zoned
++	 * device so that we can preserve the order of write operations during
++	 * suspend.
++	 */
++	if (max_delay < 50 || is_zoned) {
+ 		dc->worker = kthread_run(&flush_worker_fn, dc, "dm-delay-flush-worker");
+ 		if (IS_ERR(dc->worker)) {
+ 			ret = PTR_ERR(dc->worker);
+@@ -313,8 +319,15 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+ 
+ 	spin_lock(&dc->delayed_bios_lock);
+ 	if (unlikely(!dc->may_delay)) {
+-		spin_unlock(&dc->delayed_bios_lock);
+-		return DM_MAPIO_REMAPPED;
++		/*
++		 * Issue the BIO immediately if the device is not zoned. FOr a
++		 * zoned device, preserver the ordering of write operations by
++		 * using the delay list.
++		 */
++		if (!bdev_is_zoned(c->dev->bdev) || c != &dc->write) {
++			spin_unlock(&dc->delayed_bios_lock);
++			return DM_MAPIO_REMAPPED;
++		}
+ 	}
+ 	c->ops++;
+ 	list_add_tail(&delayed->list, &dc->delayed_bios);
+-- 
+2.49.0
 
