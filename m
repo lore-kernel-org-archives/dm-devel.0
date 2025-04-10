@@ -1,88 +1,59 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A5AA1E5B97;
-	Thu, 10 Apr 2025 08:20:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD58720AF77
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 08:26:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744273243; cv=none; b=e/30LSeMjdvHTOKpSuuuc7QKZXHqa4GsW33JleqNWYs12sz9IyTx1ghzVQxgK1Y3LFrG/DCrGERShr2Fb2aoyjMR+9m7/U88lsyTsnUvT39WtErjdRhz0sBlWal/jLFaxU6B4rDbvAH+ZoHk2H72y8bSnZh2N8f2HtXIVxhBal0=
+	t=1744273609; cv=none; b=BfkEt8ZmMiONH7vcnh5NMi4dzXVSv/QiFYEKY47DP16KhHipWDont3OzobyPlvMv4OELgIgEAb5NX3UN2xNhwjiai5clcyVS8RLK6rt+edtp9J48mM0ide3KmN3PdaMJ5UB6+lHyHdsALk5EMnv/tP12cmqsQmJ6EPWSo2UwDLo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744273243; c=relaxed/simple;
-	bh=YgQZI2+bS0r3KyGq34MBVFDhX4BUm2eJmrGkw/kgVT8=;
+	s=arc-20240116; t=1744273609; c=relaxed/simple;
+	bh=HEIlhrzYw9mup7fwqaBfCELyF2SxjcyFSDDqXCaouGc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=rVqO4kuXpWS9HOREq0Yi4BpSe0ESUxS9gwFG2aRHuBxIuZhuDuhADOB9JWtH8Rh20Db8w5YCaBU/qTPaSRM3Czj7gb7WSmFxyU/GDgl9k5EPNogeplLiBnrL5u6aMTkRKKusL34JWZ7S+afjDktDS1j7gMMG54bucsTyhpFaWL0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=RpWvJqaK; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=gOH5YC34JWN1U/fgqf7xaF+8ow3TkDv3WbKugaZOLtmmmP6eg1TUwQWFrkVItybQ2vX9NOcvPGfODui0rFOVkUhgkjW8wFucGHniN3EEBN5IDlRT18gT8DpLe5ss0f23N9uoLasfH44sFXRrMsF566bJvEi2ka6DWCILjPauE6k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=m5j3jnTK; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="RpWvJqaK"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 50ECCC4CEE3;
-	Thu, 10 Apr 2025 08:20:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1744273243;
-	bh=YgQZI2+bS0r3KyGq34MBVFDhX4BUm2eJmrGkw/kgVT8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=RpWvJqaKvTE/btMBJezY0+TzIVZFo6iMd3QE9E3IGJVCDFd2F76GVsz57hOknfpE5
-	 jZxllrJ3N3DbH3+uv9ZHHYrrfFgyRcK7QqSakVZiTg5lJs+o+nwwllB2G2g2ivYJ0f
-	 XZdHUzjN71la1YQ85wZ+ULJsoBZKXmxNkFFfI7zZILynyLL+8H34GHTgc8exE4YpLM
-	 Wv85WSPJn19pxfUXpjS18ukegqDYAleOgGZ/39ODRJvzIgCsFk2LqnmO6ok1NfZjTh
-	 p23jjdXQODTYtCQ9mESNPxKIFf4ZQAK9pzJunWbJgfcyy6XJVURM9aoh5Ev+5mz0DX
-	 Fm0HaSUcp0csw==
-Date: Thu, 10 Apr 2025 09:20:36 +0100
-From: Keith Busch <kbusch@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Zhang Yi <yi.zhang@huaweicloud.com>, linux-fsdevel@vger.kernel.org,
-	linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org, tytso@mit.edu, djwong@kernel.org,
-	john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
-	shinichiro.kawasaki@wdc.com, yi.zhang@huawei.com,
-	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [RFC PATCH -next v3 01/10] block: introduce
- BLK_FEAT_WRITE_ZEROES_UNMAP to queue limits features
-Message-ID: <Z_d_VDvgBkgt4UhS@kbusch-mbp>
-References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
- <20250318073545.3518707-2-yi.zhang@huaweicloud.com>
- <20250409103148.GA4950@lst.de>
- <43a34aa8-3f2f-4d86-be53-8a832be8532f@huaweicloud.com>
- <20250410071559.GA32420@lst.de>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="m5j3jnTK"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=HMvFDf6vO43KDcoILOCFZz2j05ez/RdLUgFBi1wcIz8=; b=m5j3jnTKzFL+8npSa41j6g5cNR
+	5RUCKT2tOCwFW50Nw7g7WlaokVqt0mkUq0waNIFq+Ulwf+rUosJDb/Nru0yxTkldFdi0PF6s5+loO
+	ppbM2+oIIFGs3YtKa0PUn4E77W7HymfhhrPjGWW1S5cWh0E2ScM6COKzLKjphyim5kiQ7EfE6Dd0M
+	EadyjENoe58VLx1WEfLwUt36HzoFVq47Adz9Bo2s6+JgaXSmGhMyVGlR0rbnuKFp3Ef8W6EPztWzL
+	HmAwuqQNbS0QuVJHCw8nmu36jWPkxwEPYGd5XnhePfeS7qYh0BVmvFJcwFCJsyxoJYFykaLIEod9o
+	Jova46mQ==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1u2nFH-00000009jwT-1Z5u;
+	Thu, 10 Apr 2025 08:26:47 +0000
+Date: Thu, 10 Apr 2025 01:26:47 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: LongPing Wei <weilongping@oppo.com>
+Cc: snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev,
+	guoweichao@oppo.com, ebiggers@kernel.org, bvanassche@acm.org
+Subject: Re: [PATCH 2/2] dm-verity: prefetch all hash blocks in verity_ctr
+Message-ID: <Z_eAx9N8IWiz_G9x@infradead.org>
+References: <20250402070934.2387587-1-weilongping@oppo.com>
+ <20250402070934.2387587-2-weilongping@oppo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20250410071559.GA32420@lst.de>
+In-Reply-To: <20250402070934.2387587-2-weilongping@oppo.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On Thu, Apr 10, 2025 at 09:15:59AM +0200, Christoph Hellwig wrote:
-> On Thu, Apr 10, 2025 at 11:52:17AM +0800, Zhang Yi wrote:
-> > 
-> > Thank you for your review and comments. However, I'm not sure I fully
-> > understand your points. Could you please provide more details?
-> > 
-> > AFAIK, the NVMe protocol has the following description in the latest
-> > NVM Command Set Specification Figure 82 and Figure 114:
-> > 
-> > ===
-> > Deallocate (DEAC): If this bit is set to `1´, then the host is
-> > requesting that the controller deallocate the specified logical blocks.
-> > If this bit is cleared to `0´, then the host is not requesting that
-> > the controller deallocate the specified logical blocks...
-> > 
-> > DLFEAT:
-> > Write Zeroes Deallocation Support (WZDS): If this bit is set to `1´,
-> > then the controller supports the Deallocate bit in the Write Zeroes
-> > command for this namespace...
-> 
-> Yes.  The host is requesting, not the controller shall.  It's not
-> guaranteed behavior and the controller might as well actually write
-> zeroes to the media.  That is rather stupid, but still.
+On Wed, Apr 02, 2025 at 03:09:36PM +0800, LongPing Wei wrote:
+>  
+> +	dm_bufio_prefetch_with_ioprio(v->bufio, v->hash_start,
+> +		v->hash_blocks - v->hash_start,
+> +		IOPRIO_PRIO_VALUE(IOPRIO_CLASS_RT, 0));
 
-I guess some controllers _really_ want specific alignments to
-successfully do a proper discard. While still not guaranteed in spec, I
-think it is safe to assume a proper deallocation will occur if you align
-to NPDA and NPDG. Otherwise, the controller may do a read-modify-write
-to ensure zeroes are returned for the requested LBA range on anything
-that straddles an implementation specific boundary.
+Err, no.  Random code should not prefetch with a RT priority.
+
