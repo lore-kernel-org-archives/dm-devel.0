@@ -1,43 +1,31 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21E20258A;
-	Thu, 10 Apr 2025 07:36:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF4261CEEBB
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 07:54:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744270575; cv=none; b=nGh6EVMoYliPcPOnBKdjkiO8G9o1HqA6+hT0BoahoJ/ysWtyus8V7m9E37KljbenGLqpkfzonbQ7xq5um/ffAjuUn4jEtFBynb24oxuRBvX2/ugrJwxMsh/plaHBJ4FMsUPO4+tNkJEnSV1Tg8Msg/LMuyH8rVVFjpJ6fiWlcio=
+	t=1744271678; cv=none; b=NKnbQ7fVhiuqyCDS7fzsUwSyBY3k6llkwplyx7wAiHLKzAvRdmQ4UGFmSdEKEGihJlBKlH4R+/XNq5QzgZCBq4rAj7haUqJQgDT6PRVH1fA7Zlr6XgbeiEkNMrtR+vOLy5ISray3BisRElib3LFZmMoAF/AwFhZEObFSk3EPeOM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744270575; c=relaxed/simple;
-	bh=PkB9Sd7WAZ72HPghU2JQ8fpnzq1QgnUWnaKuvqxAyxA=;
+	s=arc-20240116; t=1744271678; c=relaxed/simple;
+	bh=rA4bvuWBjJKOBUCPGayHQVRp9xmtmURDLDww5Eb7VrQ=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HDogg8rEAoyC5v0CGQg9QzTw2HczY28kDTgvP6qC91ZLdoqYBlmTZhj0j7Kw3sYfter3wPZowxeG1ZwWFDGs+P+N7RVxEH/sZbbyxU8CDJLy/pxT42fvulQ5dG0B+kITl8ZYO9z7bt5OujPFc8pX6K8kn7H8ItcSv1/0ox22qTI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=CAeq1jw3; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="CAeq1jw3"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=QMKa6eYG5dZhaQEYKdrpNMNE122GZcpoMQ/GqSsxHIk=; b=CAeq1jw3gWUcnunQtWz00D+hix
-	yqZdlzHunLGHUJLbyRL5clv4yfNNHLrMWcmqKvGIv3OUrzQ2kHYf62urnqH5u9/K5NIBMcjkBqwKJ
-	i3oyAJlQolr4OFwMpS/gQSoW3gxuuqa9IBS88NywlLLbfYBIduD5Fqihcrbj12ivhAbbBRItNnnuQ
-	zmQXE7IjVzhOGr8nsLWdIkbSefuIprbqLBFpjvo9gGK/6jlUrBeWkcKz1ObmAkKzgxXXEhmOazerS
-	viWfIaz3uHK6ydhfkT8M6W48pvNvGOnCdfOmV14uEbxTphpfvUXKmPhjVmdHelje6NgKfnMJCjxNM
-	8RKjUgPg==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1u2mSK-00000009aET-35os;
-	Thu, 10 Apr 2025 07:36:12 +0000
-Date: Thu, 10 Apr 2025 00:36:12 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: LongPing Wei <weilongping@oppo.com>
-Cc: snitzer@kernel.org, mpatocka@redhat.com, axboe@kernel.dk,
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
-	guoweichao@oppo.com, sfr@canb.auug.org.au
-Subject: Re: [PATCH] block: Export __blk_flush_plug to modules
-Message-ID: <Z_d07I1b71zQYS0M@infradead.org>
-References: <20250410030903.3393536-1-weilongping@oppo.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=ZM9SCLkOHfJD0InaFzXCNgy6gdT3YJ6PLgKG3/6KcJTrgAq+TN0zi0XoTi+C+zWzcC82oUOTVlPRG3eWs2Z/4tqFWqCPwS3JfWU8nDOOv+HS3XOalj/D+arKrD21Od8AU1M41sRWsWtIZfO7nxAYya3r+aG48+IMRo0Eo1o9lLM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id CCE7468B05; Thu, 10 Apr 2025 09:54:31 +0200 (CEST)
+Date: Thu, 10 Apr 2025 09:54:31 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Christoph Hellwig <hch@lst.de>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH] dm-delay: Prevent zoned write reordering on suspend
+Message-ID: <20250410075431.GA763@lst.de>
+References: <20250410043311.990675-1-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -46,19 +34,50 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250410030903.3393536-1-weilongping@oppo.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <20250410043311.990675-1-dlemoal@kernel.org>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Thu, Apr 10, 2025 at 11:09:04AM +0800, LongPing Wei wrote:
-> Fix the compile error when dm-bufio is built as a module.
+On Thu, Apr 10, 2025 at 01:33:11PM +0900, Damien Le Moal wrote:
+> When a dm-delay devie is being suspended, the .presuspend() operation is
+
+s/devie/device/
+
+> first executed (delay_presuspend()) to immediately issue all the BIOs
+> present in the delayed list of the device and also sets the device
+> may_delay boolean to false. At the same time, any new BIO is issued to
+> the device will not be delayed and immediately issued with delay_bio()
+> returning DM_MAPIO_REMAPPED. This creates a situation where potentially
+> 2 different contexts may be issuing write BIOs to the same zone of a
+> zone device without respecting the issuing order from the user, that is,
+> a newly issued write BIO may be issued before other write BIOs for the
+> same target zone that are in the device delayed list. If such situation
+> occurs, write BIOs may be failed by the underlying zoned device due to
+> an unaligned write error.
 > 
-> 1. dm-bufio module use blk_flush_plug();
-> 2. blk_flush_plug is an inline function and it calls __blk_flush_plug.
+> Prevent this situation from happening by always handling newly issued
+> write BIOs using the delayed list of BIOs, even when the device is being
+> suspended. This is done by forcing the use of the worker kthread for
+> zoned devices, and by modifying flush_worker_fn() to always flush all
+> delayed BIOs if the device may_delay boolean is false.
 
-Then don't call blk_flush_plug from dm-bufio, as drivers should not
-micro-manage plug flushing.
+Is that scenario specific to dm-delay?  I think the same applies to
+any other target that supports passing on bios to zoned devices.
 
-Note that at least in current upstream and linux-next dm-bufio does
-not actually call blk_flush_plug, so I'm not sure where your
-report comes from.
+>  	spin_lock(&dc->delayed_bios_lock);
+>  	if (unlikely(!dc->may_delay)) {
+> -		spin_unlock(&dc->delayed_bios_lock);
+> -		return DM_MAPIO_REMAPPED;
+> +		/*
+> +		 * Issue the BIO immediately if the device is not zoned. FOr a
+> +		 * zoned device, preserver the ordering of write operations by
+> +		 * using the delay list.
+> +		 */
+> +		if (!bdev_is_zoned(c->dev->bdev) || c != &dc->write) {
+> +			spin_unlock(&dc->delayed_bios_lock);
+> +			return DM_MAPIO_REMAPPED;
+
+Don't we only need to do that if anything is queued up due to a
+suspension?  Then again having a different patch might be premature
+optimization, it's not like anyone cares about dm-delay performance
+almost by definition :)
 
