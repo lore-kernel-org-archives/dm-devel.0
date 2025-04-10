@@ -1,168 +1,166 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from HK3PR03CU002.outbound.protection.outlook.com (mail-eastasiaazon11011013.outbound.protection.outlook.com [52.101.129.13])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2174278F4F
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 00:57:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744246655; cv=none; b=W2YpT3NjXuVyvLui6blvNeVIoOSaS6KAwVygEhBKhDFruY6waot6DDXVm5FMXepMkiLXFM5zQVH3Iaq85tjFiDPZOwDUcjDk9/WCP+iK2LouFDvgOB/fjRhWikn/flaeyXtIB1eu8lcT0D3uYtuzjKFBEooMwHkoei/Ms0MmPQg=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744246655; c=relaxed/simple;
-	bh=Um7vF0RgFUaRTJkF0UDlcE2vhCMbneDPMMIDzC2NZ+I=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=dD7QPO2uVwmuHgooLxu6pTJu2FN/NCY1E2hsKh7altQjxPqSU6c8Bgz2IVPSBX41BDWCTvnk+hOZOOX9cKhdL1z/Y9dJt/Vp+nSECeRs/3a6FOfH9nWxLJJQ46UNcIgYKRqnxhM8zu5rL77k0Kp9Z9QH63AKePI2/wcAG5JhrZw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sOmE+9z+; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D8DC1EE010
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 03:09:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.129.13
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1744254589; cv=fail; b=ICfQdC1SUg30oSDPyCWaepqlvELdk3l/+nbX8ZSsValZXUXbDAa1e3egHyVyWOHSvPpLrqJdVGS5JACeOLGIxNbtuZ5/76pD7HzEx/OwKb8hlQJQRv6C2cehcSaqR1jPSU32ahKwh1abpkDzQ1SQtgQAP5bRrzb79yK+5xuy3Tk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1744254589; c=relaxed/simple;
+	bh=/jv18j6N9mUwxlk8e7BT8Kb2kYhY68Tz/dvINWPD3wQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=Y3WzqD34m6L89LuWyctf7s8FY2kmaOk+yhMDcQQLWysJsbi2kNYZmnLdhcj/dl7xo4nncu4K4qkgG5q2l2ULyh/J/m8qEork3/ZfzIVYGT3emqTe5KJLgrokOEy8WpOt5sqfPW0Nx5nFkvhJllHWzL9b3vT/F8s5rGCQADTxmTE=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com; spf=pass smtp.mailfrom=oppo.com; dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b=Kpz2GX3f; arc=fail smtp.client-ip=52.101.129.13
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oppo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sOmE+9z+"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DBF47C4CEE2;
-	Thu, 10 Apr 2025 00:57:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1744246654;
-	bh=Um7vF0RgFUaRTJkF0UDlcE2vhCMbneDPMMIDzC2NZ+I=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=sOmE+9z+sHbCt6nbUkT4ppPvucKqB1+7VXYv90IMAUt6rFL/SMj6wnBmPOfaKCmYP
-	 eeVbQxyWkNeM6beV4CLtsS7rSLpHEYF3MioVbFBue850Dnv8D720Fg85aHyU5W+vLW
-	 IiWUgk+IoA3sCacgP9JcuP1rDNMEZKI8ddHTvwciW/AWEIMCJBRDaFB727iw7MzP9o
-	 djsNSFhk/qSqMw+dT+WEUCJvYgRF7JCRHDTYTPsk7UsXPPsHzYM3knPUObuvpUmcka
-	 HUDvTNBlV7GgQdwgpWet01JQdWPAvid8BmiUl7q1qWtmrbyJUTJeYJw9mVDnvPxWi3
-	 nHlD9WzOVbRRg==
-Message-ID: <abdd07c2-5ef8-4edf-93ce-19807fe37368@kernel.org>
-Date: Thu, 10 Apr 2025 09:56:52 +0900
+	dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b="Kpz2GX3f"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=TKLp2slcregynmzJcIz6wtNQReq3QfBcsHyumdxWRN2fOd/yF+4IJjb1HQluFy2149qTRYjN0VD2/w/z2+Ry/DcQs71to18NTKsbM02q0bUvQYepS/p2G2sIaWL+XzYThIku/F8KajQpBy5PtreQzF5OYR+uwirWR2NB5VUF9jqP0CVX0NqTXSOydqu60hOVlPsntqQMvc7fg9GlQaT+3xGuP7OHqrCKo3rp6kJJhhIBxn1kQsOBFzwOrDVSGf25GNz55RHHeXkHCjOk6OIyUVpRjeUvo7MDWb64OwWmloXjXODmb6t+ysoorUjn5mdFYA+1TzXjjnaGx3eIzLMtIg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=ha+bSolPWMRjJq5+plf1AoJIVyPxaaMpWpmTowDlJaw=;
+ b=qZeYmVBuRRXuTjQ4Wgy1aBDeG8UjoKEdqaxbpkNu7SOkDlBR5EWgoGUUCbBI/Q473BKzWXPAQKsUHpdWn0RW8YETiW9/7LloanwXwMamuFnGrzem/AaLYfuShLfSjddYqRV5alDpb582WVqHFYMCx8qVoo7KyhylN3B9vbwUtWrYUchDO8p37O50By7cfXkPF63hyQJ5fvO0VbZn65milHLcufMTLtCPXKuPQ9xq0rPHi6S4hwf95Bqi6YCF12BtNHbamDj7oyVZkaCMoD5R1XzOVZs7TMiZLoYmgr28TiKwx6Us32UO/mcu7HCa3TIF1XSDrQ2YdMDNOclSXKFnNg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oppo.com; dmarc=pass action=none header.from=oppo.com;
+ dkim=pass header.d=oppo.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oppo.com; s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=ha+bSolPWMRjJq5+plf1AoJIVyPxaaMpWpmTowDlJaw=;
+ b=Kpz2GX3fBkq0dZVEstu/hnOZ2dDM/vn2+1JS1eK6d6n2wNDg7R0mT4Gsl2TIOZRdlXkp06Hoa8ov5mwJjZQ8dATjE4LIwHdJGMclA6auO53hoTp0ov2AH8AnyGtNDmg6Di6oCEvdxChhmmZwAfWyD4sfp8l7pBPRMVHJjlevmNM=
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=oppo.com;
+Received: from SEZPR02MB7967.apcprd02.prod.outlook.com (2603:1096:101:22a::14)
+ by TYSPR02MB7489.apcprd02.prod.outlook.com (2603:1096:405:34::6) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8632.22; Thu, 10 Apr
+ 2025 03:09:44 +0000
+Received: from SEZPR02MB7967.apcprd02.prod.outlook.com
+ ([fe80::5723:5b88:ed4c:d49b]) by SEZPR02MB7967.apcprd02.prod.outlook.com
+ ([fe80::5723:5b88:ed4c:d49b%5]) with mapi id 15.20.8632.017; Thu, 10 Apr 2025
+ 03:09:43 +0000
+From: LongPing Wei <weilongping@oppo.com>
+To: snitzer@kernel.org,
+	mpatocka@redhat.com,
+	axboe@kernel.dk
+Cc: dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org,
+	guoweichao@oppo.com,
+	sfr@canb.auug.org.au,
+	LongPing Wei <weilongping@oppo.com>
+Subject: [PATCH] block: Export __blk_flush_plug to modules
+Date: Thu, 10 Apr 2025 11:09:04 +0800
+Message-Id: <20250410030903.3393536-1-weilongping@oppo.com>
+X-Mailer: git-send-email 2.34.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: SG3P274CA0012.SGPP274.PROD.OUTLOOK.COM (2603:1096:4:be::24)
+ To SEZPR02MB7967.apcprd02.prod.outlook.com (2603:1096:101:22a::14)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 5/6] dm: limit swapping tables for devices with zone
- write plugs
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
- dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>
-References: <20250408235159.4128838-1-bmarzins@redhat.com>
- <20250408235159.4128838-6-bmarzins@redhat.com>
- <2fb19069-5e02-4f5a-9f8a-b362e08dffe3@kernel.org>
- <Z_bVTz1rgfmcPt9h@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <Z_bVTz1rgfmcPt9h@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: SEZPR02MB7967:EE_|TYSPR02MB7489:EE_
+X-MS-Office365-Filtering-Correlation-Id: 19c6dcfa-31c7-403a-a9e0-08dd77dd23fd
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|1800799024|376014|52116014|366016|38350700014;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?WoU9x0q7ROKji3aNkexmAwnDLDm11sGy/S+WfNa4EoMBZAU/b5P76dhJWnFh?=
+ =?us-ascii?Q?OwH57YgRs8Z1DlYArDrxe3IjsszxBjw4eGW2SJVhNpTLMwQ4B4M+520XM24b?=
+ =?us-ascii?Q?csuirJueRThcixi6Ylu9fdA3hnAYQ6peSSwAJZ2Br0OYdNRxFh9QkrPSKn6E?=
+ =?us-ascii?Q?LFTOROYBwbj0OtncRdXsMPoO1WFCnocOGkzQdjRm8RejoxbgfrgVk6aJGEh/?=
+ =?us-ascii?Q?OIDMvs889d8q/+BjeZtQdlFWhZga+V7bize3HZ4fERP8e/uWObuvVTXPSgj4?=
+ =?us-ascii?Q?zzJgXQv4Foas9Sx+pKaFCThfJEhHUX1Jc6fZNrT4y+76DmXvUlaH3eAcam/Y?=
+ =?us-ascii?Q?mHIyQQ4PzWqqEIJaS69QecM55DUNO02ZZysfM1bE3UIzxDjScQ71N6dCNVjc?=
+ =?us-ascii?Q?bP0UlFBZtNyfFr0GmDA2tSS9E9YF0x6BbvVYZJd+tz5gRL24oCCmN+kHcfuK?=
+ =?us-ascii?Q?lyoWU4tkX8oXtj79wX0C/wZo0lz1pE6plxttwnOa0VV7dyU8mSf5HFS2c9nk?=
+ =?us-ascii?Q?ZKpzHL3+eUROVgFneADq4Sj6r5H7Ir74VJStBehj0jC5SMNHYkN19rsce249?=
+ =?us-ascii?Q?sho4Z+TRQ9YnF8NN97tn7ifXgB9VMBkcYZz6xI+D1O1X2HviD2JWt7T1jGCe?=
+ =?us-ascii?Q?z5eWWTU9F0BG41GY/lXCljROOQfLeIzAQHj4gpWoT/8bU6f4sz8nPNamGtvB?=
+ =?us-ascii?Q?/UclAksfgZERZibmDVHEXpQo4Sc7M00PdrCCab4N2CUlCt4/CzMw/8vKn6rz?=
+ =?us-ascii?Q?FNBkp2epTxPMRfXiqoSYtFVKH/7/IspLS8lbzH7Q45w+78mXQuuxu9jo+5ff?=
+ =?us-ascii?Q?zL17hNthuSFxLwqfLv83rJecJqolVA8jyipuLJjdFf+fIgcTkVknmJ5wIF6P?=
+ =?us-ascii?Q?Jz5ERbBtC8QXwkcH/2gfx9mSsOfCA/SIyTYwPkqgj9IuOWlwAlALfTNKIsvG?=
+ =?us-ascii?Q?+XmdcYhMdukZ+oyB3tiieczSR8h98LJo40lDJ2gUmrmilWt9weoaqbiSBRER?=
+ =?us-ascii?Q?u5Ng78qUNBGi8vtLMFbWtfbcodSLIeXQ03eHVgFZ5odGi3CI+byyEhpXHxMg?=
+ =?us-ascii?Q?Z79y3nkPeknUDJ0AvZTspfPIynA8Dw0U2TN5iPBmjRT+ueTRKnGkY3jNxCF1?=
+ =?us-ascii?Q?oe9foH8ONOnDvwni9SAVYbIIyUc0GXFYdYR9Nm0wH32xajhJHFzcq+l262Qf?=
+ =?us-ascii?Q?AkLgJtOSxRW+C7v09o979SuNDH5A7HvwVDwNXVaEtYy29nvmT02hhxP2MU7O?=
+ =?us-ascii?Q?GhFyXx87YrJ5qegDmxgnCkazENg1pO7rRYNH9yB4GljoolFsMfRiDG3HZ+Q2?=
+ =?us-ascii?Q?X77RHAjSLMcmWX9+Z3NvgKtjKMBsl3XU+MCiTPgJyYdPZ0vU1YxweRf8kfoX?=
+ =?us-ascii?Q?9+wlydiBndDXQ9Zr7yD/JWOQH3XOUP32gAcarYBKzsVs9u6wZ/pwz6/Sh92i?=
+ =?us-ascii?Q?ogeBMMmYBociMhDGoZarX3S8XTNOL0Zb?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SEZPR02MB7967.apcprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(376014)(52116014)(366016)(38350700014);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?z+AVSDdC9bL72SeoaR+JTcu+hKSsbdYWbpCVsWY0MCVEebTxwLYN5EXDbgZJ?=
+ =?us-ascii?Q?lSiEBCSp58BDVy+YTJok+juAKclt5RlbjunWdrjlj43tfLN6Ebx6JJO2g8Nt?=
+ =?us-ascii?Q?j+1qKuWD7k5P+sDeAz8RRLo1+sUMNCOKlErP2rAZbKxL+JZUAhPaVelNwaZ0?=
+ =?us-ascii?Q?GXcJpxpTg7CtmJ4K6U0joAUye3Y2jPW0566BC1Sb114UFwHuZ4Mb7ImBi/Yc?=
+ =?us-ascii?Q?aj1yTW8LQH0vISJ+2iVC1OzN06M8vGsYnYqx0P8REMzLRYWpNVOJRdKCTAJj?=
+ =?us-ascii?Q?xfNjjnzCTm96rP2NbtOHWAiT/QLlz5l1lodZoGQ8xN8EvJe1ZbO0eQYQ+kX+?=
+ =?us-ascii?Q?bc4arF36h3r24ifaNoUAaOoQiORCv9slqmLhTmH+/TdvqYFic20iORYe67FF?=
+ =?us-ascii?Q?c65qWQiZi2//5nznI8ynOOhAYsM4HU85A6Jq8SXuFPenMWu3nkEAdsiLXm86?=
+ =?us-ascii?Q?7wCKEiRejZD3kxiMyGSFjwxdNwKhBan2W0PvGd+s+c9APlIff7PsEIObLlmj?=
+ =?us-ascii?Q?PYP1t9x7AkvSVAF7GRJ61840PBf38fJiMxmRZwg3fg/GK4SdciGhf6Raryhu?=
+ =?us-ascii?Q?j528iLX+jim/K0hEo79xSzUImAk8Z8XA0EPZMoyPbNOtJS4A/eYE38G69+3g?=
+ =?us-ascii?Q?4puFznsPzVvqu2bEx1KRyB9Ff/6Vk85pY/maOJffbfBcZjiFLUTKNjVjVXpb?=
+ =?us-ascii?Q?2IDw7uMwCovNuuqVwSnSi557uz28cxvvSmkvFHCiEY1iYgVpf2xMqROywata?=
+ =?us-ascii?Q?hAr403CsO/0r37lmT100rbxlG3gqK1K8Ep6WAu2qLlR2Q93cgU8uqMnmohNT?=
+ =?us-ascii?Q?vmCXnZAkXTa9PH+nwDQjIcb8+7n2fD7AWV4QVCau1Humqu1vCekjCMJw7rbs?=
+ =?us-ascii?Q?z4yyK0+4XrdpTVla1TzQgQ37NqG92aWa+rqSVafcKYYxGRUvlVWWIA00ApIM?=
+ =?us-ascii?Q?DrWFu3ul22rOUWaAve6ius/vPHWtvnHPyuiXGoA7OO2NuE93LNuJR2Zsw35P?=
+ =?us-ascii?Q?ja7+V3aZhPE/h5nYzZl37Ecz24XHln5+EyMqIABI58NUzuPXh6BvsFUActee?=
+ =?us-ascii?Q?AFY/DMVf8EzWDi1iVxq05UhdhY4ANtL4sPog5vKjIpnJq9fbI6k3eC0j9D2c?=
+ =?us-ascii?Q?0Ac+/zjykcqSKrIgE5jB7/D/mUJpzcVXBuRP7RUDJ6bA0xsbFaTFP/AU2P+h?=
+ =?us-ascii?Q?AF2KMAGZ+c/dbYm7OGTuxcUFscq1Rk+nVZGNo+O3qkrDujBcEWXndq6yKyV5?=
+ =?us-ascii?Q?pJLdclzxQ31YBlRYb877LZXwGD+oJR1fOk/toIOhuW9zZQVw8xYa0pO81bHe?=
+ =?us-ascii?Q?tfb1b1sLolOw2/FT0YpBXzGpQlMsxOw8HjziHCGUdNnYk5OTExC0S7GpJLxY?=
+ =?us-ascii?Q?BMKHUWqnOIVZQNWzu/pDn3PiD1AIVBvzJ0cCZ5E8j8ZUW9uotB5sWXOXITOa?=
+ =?us-ascii?Q?RBz82yc/FwpGv1+He+h9x3TPhwmxExMjbzm2dyoC/4GUXOIFSDOWace1Ty6i?=
+ =?us-ascii?Q?K3ni9p0qBUZdO25G+MHmLMMu3t7YqLmH1itYGb87TjW8G8dqKt4hxuZjy38U?=
+ =?us-ascii?Q?+Moo/PgMOX/DIvrPO5GF3V2arGkeVMi5BnsV/GBC?=
+X-OriginatorOrg: oppo.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 19c6dcfa-31c7-403a-a9e0-08dd77dd23fd
+X-MS-Exchange-CrossTenant-AuthSource: SEZPR02MB7967.apcprd02.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Apr 2025 03:09:43.4997
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: f1905eb1-c353-41c5-9516-62b4a54b5ee6
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: gVI7sldoj5SudGBlHboJWSYeb7/hq4CllBQxuaoidY2l3vod/oGqNYAcNlGsLXyhcO3Rz8So7+QUQ9ex9Rj9Kg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: TYSPR02MB7489
 
-On 4/10/25 5:15 AM, Benjamin Marzinski wrote:
->>> @@ -1873,11 +1898,17 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
->>>  		limits->features &= ~BLK_FEAT_DAX;
->>>  
->>>  	/* For a zoned table, setup the zone related queue attributes. */
->>> -	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
->>> -	    (limits->features & BLK_FEAT_ZONED)) {
->>> -		r = dm_set_zones_restrictions(t, q, limits);
->>> -		if (r)
->>> -			return r;
->>> +	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED)) {
->>> +		if (limits->features & BLK_FEAT_ZONED) {
->>> +			r = dm_set_zones_restrictions(t, q, limits);
->>> +			if (r)
->>> +				return r;
->>> +		} else if (dm_has_zone_plugs(t->md)) {
->>> +			DMWARN("%s: device has zone write plug resources. "
->>> +			       "Cannot switch to non-zoned table.",
->>> +			       dm_device_name(t->md));
->>> +			return -EINVAL;
->>> +		}
->>
->> I am confused with this one. We can only have zone write plugs if the device is
->> zoned. So it seems that the check for "if (dm_has_zone_plugs(t->md)" should
->> really be inside dm_set_zones_restrictions(). Or is this trying to detect a
->> table change that would switch the device from zoned to non-zoned ? If that is
->> the case, regardless of the zone write plug initialization state, we should
->> never allow such change.
+Fix the compile error when dm-bufio is built as a module.
 
-And I was wrong on this one: using dm-linear to map only conventional zones of
-an SMR HDD, the DM device will *not* be zoned but the underlying device is. So
-this check is fine since the dm device will not have wplugs in that case.
+1. dm-bufio module use blk_flush_plug();
+2. blk_flush_plug is an inline function and it calls __blk_flush_plug.
 
-> I don't think that, for instance, allowing a linear device stacked on
-> top of a zoned device to get remapped to stack on top of a non-zoned
-> device runs much more risk than allowing a linear device to get remapped
-> in any other case? This is currently allowed, and I don't believe anyone
-> has complained about it. I would rather assume that the user knows what
-> they are doing, instead of disallowing things that aren't obviously
-> wrong, and won't cause system problems if they are (aside from the
-> problems that naturally result from putting the wrong device in your
-> table line). But if Mikulas and Mike think it would be better to
-> disallow this, then I'm fine with that.
+Signed-off-by: LongPing Wei <weilongping@oppo.com>
+---
+ block/blk-core.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-OK. Let's leave things as you have now.
-
->>> +	if (get_capacity(disk) && dm_has_zone_plugs(t->md)) {
->>> +		if (q->limits.chunk_sectors != lim->chunk_sectors) {
->>> +			DMWARN("%s: device has zone write plug resources. "
->>> +			       "Cannot change zone size",
->>> +			       disk->disk_name);
->>> +			return -EINVAL;
->>> +		}
->>> +		if (lim->max_hw_zone_append_sectors != 0 &&
->>> +		    !dm_table_is_wildcard(t)) {
->>> +			DMWARN("%s: device has zone write plug resources. "
->>> +			       "New table must emulate zone append",
->>> +			       disk->disk_name);
->>> +			return -EINVAL;
->>> +		}
->>> +	}
->>
->> I have some concerns about this: what if the new table has the same capacity
->> and the same zone size but the types of zones changed ? We are not checking
->> this here and we cannot actually check that without doing a report zones. So I
->> really think we should just use the big hammer here and simply only allow the
->> wildcard target and no other change.
-> 
-> I don't see how this could lead to accessing invalid memory, which was
-> my big concern, with these patches. The worst that could happen in an IO
-> error, AFAICS. Disallowing all table loads except for the error target
-> would keep people from being able from things like changing options on
-> the dm-crypt target. Again, that is just my preference, and I'll defer
-> to Mike and Mikulas on how this should be handled.
-
-Yeah, but these IO errors that can happen would be hard to debug/understand...
-But as you said, given that this has never been checked/prevented before and
-that no one complained, let's keep this as is. Your example for dm-crypt is
-indeed a valid case.
-
->>>  	/*
->>>  	 * Warn once (when the capacity is not yet set) if the mapped device is
->>>  	 * partially using zone resources of the target devices as that leads to
->>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
->>> index 292414da871d..240f6dab8dda 100644
->>> --- a/drivers/md/dm.c
->>> +++ b/drivers/md/dm.c
->>> @@ -2429,6 +2429,12 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
->>>  	size = dm_table_get_size(t);
->>>  
->>>  	old_size = dm_get_size(md);
->>> +
->>> +	if (!dm_table_supports_size_change(t, old_size, size)) {
->>> +		old_map = ERR_PTR(-EINVAL);
->>> +		goto out;
->>> +	}
->>
->> And I guess we could probably move the "wildcard-only is allowed" change check
->> here as that would further simplify the revalidation code. No ?
-> 
-> If we are disallowing any zoned device to reload its table to something
-> other than an error target, then yes. It can go here. If we only care
-> about zoned devices that emulate zoned append, when we need to wait till
-> dm_set_zones_restrictions() where we determine that. Since we already
-> need to handle failures in dm_table_set_restrictions(), moving it
-> doesn't simplify the code much.
-
-OK. So with the commit message typos fixed, feel free to add:
-
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
-
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e8cc270a453f..4d72ebeb18f7 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1230,6 +1230,7 @@ void __blk_flush_plug(struct blk_plug *plug, bool from_schedule)
+ 	plug->cur_ktime = 0;
+ 	current->flags &= ~PF_BLOCK_TS;
+ }
++EXPORT_SYMBOL(__blk_flush_plug);
+ 
+ /**
+  * blk_finish_plug - mark the end of a batch of submitted I/O
 -- 
-Damien Le Moal
-Western Digital Research
+2.34.1
+
