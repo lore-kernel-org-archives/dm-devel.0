@@ -1,191 +1,132 @@
-Received: from lgeamrelo11.lge.com (lgeamrelo11.lge.com [156.147.23.51])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F181C1F1932
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 08:31:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=156.147.23.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55D3E20C027
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 09:11:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744273895; cv=none; b=QMIzNKoLRAEwRmKsqQ8YFF+QEQsMaNyCsrJSRPsmqTRwWYs6fLq9aUQhPUNoIk399HSPp95/cFgAmcuvylJjzbRT/4AQ6rV/vxruqE+f0AVWPJ0Pmli8g6bhBA8L2wqi3TAKXA/VhB098mLqu89sVs+oaqW2+aMsNN+xwBf+o/w=
+	t=1744276277; cv=none; b=czMd/Smhx0moR7VRRRS4rF6lwNK2UrBmSAInlYHnQSJrCIwtI/TQRGN6iDQeqUIgKgTZfR63e7FVNExxPHcDGyMdL482J0wa3HOHNYQsfxRwQQzJv7rn27qul2WLBe9FkDogSo6QczM2/nkL2AuECwmkJGA6LXoyvSeXpO/eAHg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744273895; c=relaxed/simple;
-	bh=MH9inepon/NwBHx7CSMIuKgmZl41UPCwzOKE9quAemE=;
-	h=From:To:Cc:Subject:Date:Message-Id; b=FaIUm8FyfnUO0KqbyFE8GMTd4SzyBw/lGnoUmxrZS/EBmTyHMvVPmLw3jtqa6i8gFQH7rAuboE60GAHdTdnBfH07yT1T2EmbTj/yAWqy1aDy1zDGm/shB/Xx6AQo7Qr7lmS3Ko5DLN1ZhL/9itga4nmqKrBOrrNJ7shyBhKyJ44=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com; spf=pass smtp.mailfrom=lge.com; arc=none smtp.client-ip=156.147.23.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lge.com
-Received: from unknown (HELO lgeamrelo01.lge.com) (156.147.1.125)
-	by 156.147.23.51 with ESMTP; 10 Apr 2025 17:01:30 +0900
-X-Original-SENDERIP: 156.147.1.125
-X-Original-MAILFROM: chanho.min@lge.com
-Received: from unknown (HELO localhost.localdomain) (10.178.31.96)
-	by 156.147.1.125 with ESMTP; 10 Apr 2025 17:01:30 +0900
-X-Original-SENDERIP: 10.178.31.96
-X-Original-MAILFROM: chanho.min@lge.com
-From: Chanho Min <chanho.min@lge.com>
-To: Jens Axboe <axboe@kernel.dk>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	Christoph Hellwig <hch@lst.de>,
-	gunho.lee@lge.com,
-	Chanho Min <chanho.min@lge.com>
-Subject: [PATCH] block/dm: add early_lookup_ready_bdev to ensure ready device lookup
-Date: Thu, 10 Apr 2025 17:00:56 +0900
-Message-Id: <20250410080056.43247-1-chanho.min@lge.com>
-X-Mailer: git-send-email 2.17.1
+	s=arc-20240116; t=1744276277; c=relaxed/simple;
+	bh=lpcBAAAMtXAvRF5z9Pseb8tS/jIcMnWsdTKRQaycIm0=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=KCxQB1JnER5x+Or5yBrEHVooyF/eQO90aM2BR2hwGLNcnThcU7fNS+zfveBbN+23wYnXxX5AAW5MvrGyiiMtf8F5KKaHXFmhm18/LNJkrpMjg4QiPOGUcdXZTHgLhyV8uAWlBslpA9KdIRdpEYQZ+UFuxFn10jUCCXgfH52IjjI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZYDYx561sz4f3jXl
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:10:45 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 35AC61A06DC
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:11:09 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgB3218pi_dnH984JA--.39933S3;
+	Thu, 10 Apr 2025 17:11:06 +0800 (CST)
+Subject: Re: [PATCH] block: Export __blk_flush_plug to modules
+To: LongPing Wei <weilongping@oppo.com>, Christoph Hellwig <hch@infradead.org>
+Cc: snitzer@kernel.org, mpatocka@redhat.com, axboe@kernel.dk,
+ dm-devel@lists.linux.dev, linux-block@vger.kernel.org, guoweichao@oppo.com,
+ sfr@canb.auug.org.au, "yukuai (C)" <yukuai3@huawei.com>
+References: <20250410030903.3393536-1-weilongping@oppo.com>
+ <Z_d07I1b71zQYS0M@infradead.org>
+ <a3523b3c-4c89-44c5-867e-75378ebb652a@oppo.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <21aa6521-e814-d3f9-2ba7-eb511e4ae8d6@huaweicloud.com>
+Date: Thu, 10 Apr 2025 17:11:04 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+In-Reply-To: <a3523b3c-4c89-44c5-867e-75378ebb652a@oppo.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgB3218pi_dnH984JA--.39933S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7AFW8GF1kWr13XFy8Kw1UGFg_yoW8AFW5pw
+	48Ga1j9r4vyryvkan5tw13ZFyagws3XFyYga45JrZ7u3yj9rn5JrWakrZagrWUWwn5Kay7
+	Ka43W34UXa48GrUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Ib4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7Mxk0xIA0c2IE
+	e2xFo4CEbIxvr21lc7CjxVAaw2AFwI0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4I
+	kC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWU
+	WwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr
+	0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK8VAvwI8IcIk0rVWU
+	JVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJb
+	IYCTnIWIevJa73UjIFyTuYvjxUF1v3UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-The dm-init code, waiting for devices specified by dm-mod.waitfor (e.g.,
-root=/dev/dm-0, dm-mod.waitfor=/dev/mmcblk0p23), fails sporadically with
-dm-verity setups, as reported in:
-https://lore.kernel.org/all/e746b8b5-c04c-4982-b4bc-0fa240742755@schwermer.no/T/
+Hi,
 
-This occurs because early_lookup_bdev() uses blk_lookup_devt(), which, since
-commit 41b8c853a4954 ("block: fix booting from partitioned md array"),
-returns a dev_t for non-existent partitions to support MD RAID booting. This
-leads dm-init to proceed with invalid dev_t values, causing "Data device
-lookup failed (-ENXIO)". The issue became more noticeable after commit
-238d991f054a6e2d ("dm: use fsleep() instead of msleep() for deterministic
-sleep duration").
+在 2025/04/10 16:06, LongPing Wei 写道:
+> On 2025/4/10 15:36, Christoph Hellwig wrote:
+>> On Thu, Apr 10, 2025 at 11:09:04AM +0800, LongPing Wei wrote:
+>>> Fix the compile error when dm-bufio is built as a module.
+>>>
+>>> 1. dm-bufio module use blk_flush_plug();
+>>> 2. blk_flush_plug is an inline function and it calls __blk_flush_plug.
+>>
+>> Then don't call blk_flush_plug from dm-bufio, as drivers should not
+>> micro-manage plug flushing.
+>>
+>> Note that at least in current upstream and linux-next dm-bufio does
+>> not actually call blk_flush_plug, so I'm not sure where your
+>> report comes from.
+>>
+> Hi, Christoph
+> 
+> Stephen reported that a compile error happened when he tried merging
+> device-mapper tree.
+> 
+>> Hi all,
+>>
+>> After merging the device-mapper tree, today's linux-next build (powerpc
+>> ppc64_defconfig) failed like this:
+>>
+>> ERROR: modpost: "__blk_flush_plug" [drivers/md/dm-bufio.ko] undefined!
+>>
+>> Caused by commit
+>>
+>>   713ff5c782f5 ("dm-bufio: improve the performance of 
+>> __dm_bufio_prefetch")
+>>
+>> I have used the device-mapper tree from next-20250409 for today.
+> 
+> 
+> More details are here.
+> 
+> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/commit/?h=for-next&id=713ff5c782f5a497bd0e93ca19607daf5bf34005 
 
-This patch introduces early_lookup_ready_bdev(), a variant of
-early_lookup_bdev() that only returns dev_t for devices with ready partitions,
-by adding a 'ready' flag to blk_lookup_devt(). The original early_lookup_bdev()
-is preserved for MD RAID compatibility, while dm-init switches to the new
-function to wait for actual device availability. This resolves dm-verity boot
-failures cleanly at the block layer, avoiding DM-specific workarounds.
+So, this patch has compile problem, I think it should be removed from
+dm tree.
 
-Tested with dm-verity (root=/dev/dm-0, dm-mod.waitfor=/dev/mmcblk0p23), this
-eliminates boot issues without impacting MD RAID.
+BTW, I don't get it from commit message, why you need to flush plug when
+bio is not contiguous. Other than bio merge, plug is also benefit from
+batch submitting:
 
-Signed-off-by: Chanho Min <chanho.min@lge.com>
----
- block/early-lookup.c   | 26 ++++++++++++++++++--------
- drivers/md/dm-init.c   |  2 +-
- include/linux/blkdev.h |  2 ++
- 3 files changed, 21 insertions(+), 9 deletions(-)
+__blk_mq_flush_plug_list
+  q->mq_ops->queue_rqs(&plug->mq_list)
 
-diff --git a/block/early-lookup.c b/block/early-lookup.c
-index 3fb57f7d2b127..011cfda5e4843 100644
---- a/block/early-lookup.c
-+++ b/block/early-lookup.c
-@@ -121,7 +121,7 @@ static int __init devt_from_partlabel(const char *label, dev_t *devt)
- 	return 0;
- }
- 
--static dev_t __init blk_lookup_devt(const char *name, int partno)
-+static dev_t __init blk_lookup_devt(const char *name, int partno, bool ready)
- {
- 	dev_t devt = MKDEV(0, 0);
- 	struct class_dev_iter iter;
-@@ -134,7 +134,7 @@ static dev_t __init blk_lookup_devt(const char *name, int partno)
- 		if (strcmp(dev_name(dev), name))
- 			continue;
- 
--		if (partno < disk->minors) {
-+		if (!ready && partno < disk->minors) {
- 			/* We need to return the right devno, even
- 			 * if the partition doesn't exist yet.
- 			 */
-@@ -150,7 +150,7 @@ static dev_t __init blk_lookup_devt(const char *name, int partno)
- 	return devt;
- }
- 
--static int __init devt_from_devname(const char *name, dev_t *devt)
-+static int __init devt_from_devname(const char *name, dev_t *devt, bool ready)
- {
- 	int part;
- 	char s[32];
-@@ -164,7 +164,7 @@ static int __init devt_from_devname(const char *name, dev_t *devt)
- 			*p = '!';
- 	}
- 
--	*devt = blk_lookup_devt(s, 0);
-+	*devt = blk_lookup_devt(s, 0, ready);
- 	if (*devt)
- 		return 0;
- 
-@@ -180,7 +180,7 @@ static int __init devt_from_devname(const char *name, dev_t *devt)
- 	/* try disk name without <part number> */
- 	part = simple_strtoul(p, NULL, 10);
- 	*p = '\0';
--	*devt = blk_lookup_devt(s, part);
-+	*devt = blk_lookup_devt(s, part, ready);
- 	if (*devt)
- 		return 0;
- 
-@@ -188,7 +188,7 @@ static int __init devt_from_devname(const char *name, dev_t *devt)
- 	if (p < s + 2 || !isdigit(p[-2]) || p[-1] != 'p')
- 		return -ENODEV;
- 	p[-1] = '\0';
--	*devt = blk_lookup_devt(s, part);
-+	*devt = blk_lookup_devt(s, part, ready);
- 	if (*devt)
- 		return 0;
- 	return -ENODEV;
-@@ -241,17 +241,27 @@ static int __init devt_from_devnum(const char *name, dev_t *devt)
-  *	name contains slashes, the device name has them replaced with
-  *	bangs.
-  */
--int __init early_lookup_bdev(const char *name, dev_t *devt)
-+int __init __early_lookup_bdev(const char *name, dev_t *devt, bool ready)
- {
- 	if (strncmp(name, "PARTUUID=", 9) == 0)
- 		return devt_from_partuuid(name + 9, devt);
- 	if (strncmp(name, "PARTLABEL=", 10) == 0)
- 		return devt_from_partlabel(name + 10, devt);
- 	if (strncmp(name, "/dev/", 5) == 0)
--		return devt_from_devname(name + 5, devt);
-+		return devt_from_devname(name + 5, devt, ready);
- 	return devt_from_devnum(name, devt);
- }
- 
-+int __init early_lookup_bdev(const char *name, dev_t *devt)
-+{
-+	return __early_lookup_bdev(name, devt, 0);
-+}
-+
-+int __init early_lookup_ready_bdev(const char *name, dev_t *devt)
-+{
-+	return __early_lookup_bdev(name, devt, 1);
-+}
-+
- static char __init *bdevt_str(dev_t devt, char *buf)
- {
- 	if (MAJOR(devt) <= 0xff && MINOR(devt) <= 0xff) {
-diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
-index 81b8bbd1b63a8..1adfeb4ff8ce3 100644
---- a/drivers/md/dm-init.c
-+++ b/drivers/md/dm-init.c
-@@ -301,7 +301,7 @@ static int __init dm_init_init(void)
- 			dev_t dev;
- 
- 			DMINFO("waiting for device %s ...", waitfor[i]);
--			while (early_lookup_bdev(waitfor[i], &dev))
-+			while (early_lookup_ready_bdev(waitfor[i], &dev))
- 				fsleep(5000);
- 		}
- 	}
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 50c3b959da281..f520540ad6a69 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1614,7 +1614,9 @@ int sync_blockdev_nowait(struct block_device *bdev);
- void sync_bdevs(bool wait);
- void bdev_statx(struct path *, struct kstat *, u32);
- void printk_all_partitions(void);
-+int __init __early_lookup_bdev(const char *pathname, dev_t *dev, bool ready);
- int __init early_lookup_bdev(const char *pathname, dev_t *dev);
-+int __init early_lookup_ready_bdev(const char *pathname, dev_t *dev);
- #else
- static inline void invalidate_bdev(struct block_device *bdev)
- {
--- 
-2.17.1
+Thanks,
+Kuai
+
+> 
+> 
+> https://lore.kernel.org/dm-devel/66bf8a8e-0a7d-47b8-9676-dc2e8c596bdb@oppo.com/T/#t 
+> 
+> 
+> Thanks
+> 
+> LongPing
+> 
+> .
+> 
 
