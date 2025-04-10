@@ -1,30 +1,30 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B3E5420C47B
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 09:16:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C85C26A0BA
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 09:35:55 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744276564; cv=none; b=MjSEo9OuqZ/E71taEbxkusB3r10mgZMAoNpkpyl3l2RcRn+O6u25TUhTCKdcqDrrkCvlFJ7CQGxx/Fwd1NMKzPxrrF+SmLhPu8PrZJA1BXI1mgpdXNV7DP342Mm3bH/T06Jqqu1sISReRYBW454LvYZFnVt1A51dhNuVLXo/Pxg=
+	t=1744277759; cv=none; b=ZX8tVgK8gZclxzUGD4ewsL37sBWQBsmYMj9nO81knAsJEz/dFb1EpkTgAABp49KaFT5Iw6i8GA1KbdnDzReeQrFOcrljqkRNKe6pgI1aKLHvBkXS0lQgDdDzAKYp3s/IQ6noIKs2Ebf7OBI08YIUANc5alRFiWtg/+eX5zuNvto=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744276564; c=relaxed/simple;
-	bh=NuaiFWf/MGmb/slPvCMgGIM4CudTdEL+DN/zBMIEYWY=;
+	s=arc-20240116; t=1744277759; c=relaxed/simple;
+	bh=ivEwnUgWmXZxQZ46vxW33DSnaFX1TgTeaPOIVDxd0Cg=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=TFvcuT3X0vWsGhnokBrDYjlgGCzJCd7hMmBfNI0eNoWm06pV/gh+7I5Zilypq+rGo2cXu2L80L0CZTY/MqGVjeUP5PHjY8H51LIPCK42ITbuNVVzFyAjpv12MVRhSrfVi/Ey1ueqo64Stjj7Q1/lSUHcHxGCbDW3NXgBCNC/u00=
+	 In-Reply-To:Content-Type; b=kk7FzDj7+tK8SW3Lhj16Zp2wD1Ih7USpKiqQHd1BjPs4pY20d8q9yLP5+ZImV1dbI6zd4aSWVytyocoQPHz98MrEhpyGnVnS3V5siXXG+eyHohz71kyBrGM79SofnNfymhzcrXDullUC2araYhi3qHjLWWglSNLtrdRgPf09y1A=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZYDgT0z2Sz4f3m7D
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:15:33 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZYF6S0qDNz4f3jYl
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:35:28 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 28B551A1882
-	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:15:58 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 2F1991A1687
+	for <dm-devel@lists.linux.dev>; Thu, 10 Apr 2025 17:35:46 +0800 (CST)
 Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP4 (Coremail) with SMTP id gCh0CgB32l5LjPdnfjI5JA--.26910S3;
-	Thu, 10 Apr 2025 17:15:57 +0800 (CST)
-Message-ID: <1131e6ec-9b78-4758-9250-02bde792e6b3@huaweicloud.com>
-Date: Thu, 10 Apr 2025 17:15:55 +0800
+	by APP4 (Coremail) with SMTP id gCh0CgBXvGDvkPdnWY46JA--.28764S3;
+	Thu, 10 Apr 2025 17:35:46 +0800 (CST)
+Message-ID: <db5bf241-0fb6-4009-963b-32b89d3c1648@huaweicloud.com>
+Date: Thu, 10 Apr 2025 17:35:43 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -34,7 +34,7 @@ MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: [RFC PATCH -next v3 01/10] block: introduce
  BLK_FEAT_WRITE_ZEROES_UNMAP to queue limits features
-To: Christoph Hellwig <hch@lst.de>
+To: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>
 Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
  linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
  linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
@@ -46,16 +46,16 @@ References: <20250318073545.3518707-1-yi.zhang@huaweicloud.com>
  <20250318073545.3518707-2-yi.zhang@huaweicloud.com>
  <20250409103148.GA4950@lst.de>
  <43a34aa8-3f2f-4d86-be53-8a832be8532f@huaweicloud.com>
- <20250410071559.GA32420@lst.de>
+ <20250410071559.GA32420@lst.de> <Z_d_VDvgBkgt4UhS@kbusch-mbp>
 Content-Language: en-US
 From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <20250410071559.GA32420@lst.de>
+In-Reply-To: <Z_d_VDvgBkgt4UhS@kbusch-mbp>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgB32l5LjPdnfjI5JA--.26910S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7Kr45Jr48uF17tw1fXr13Arb_yoW8ZryDpF
-	W3KFs2yFn3tr4Ikwn2gw10gFyF9wn7AF45GanavryjywnxWFWIgF1IgF10vFyDurn7Wr4Y
-	vF4Uta4xurn0vaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgBXvGDvkPdnWY46JA--.28764S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7WFW5tw1kKw1ktFWkKFy3urg_yoW8Ar43pF
+	W3KFs7tFn7t3Waywn2vw18Wa4F93s3KFs8Wws0vry2yrnIgF1IgF1a93W09FyDur1Iqr1j
+	vayjqa4fJF1jva7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
 	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
 	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
@@ -71,49 +71,43 @@ X-Coremail-Antispam: 1UD129KBjvJXoW7Kr45Jr48uF17tw1fXr13Arb_yoW8ZryDpF
 	s2-5UUUUU==
 X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-On 2025/4/10 15:15, Christoph Hellwig wrote:
-> On Thu, Apr 10, 2025 at 11:52:17AM +0800, Zhang Yi wrote:
+On 2025/4/10 16:20, Keith Busch wrote:
+> On Thu, Apr 10, 2025 at 09:15:59AM +0200, Christoph Hellwig wrote:
+>> On Thu, Apr 10, 2025 at 11:52:17AM +0800, Zhang Yi wrote:
+>>>
+>>> Thank you for your review and comments. However, I'm not sure I fully
+>>> understand your points. Could you please provide more details?
+>>>
+>>> AFAIK, the NVMe protocol has the following description in the latest
+>>> NVM Command Set Specification Figure 82 and Figure 114:
+>>>
+>>> ===
+>>> Deallocate (DEAC): If this bit is set to `1´, then the host is
+>>> requesting that the controller deallocate the specified logical blocks.
+>>> If this bit is cleared to `0´, then the host is not requesting that
+>>> the controller deallocate the specified logical blocks...
+>>>
+>>> DLFEAT:
+>>> Write Zeroes Deallocation Support (WZDS): If this bit is set to `1´,
+>>> then the controller supports the Deallocate bit in the Write Zeroes
+>>> command for this namespace...
 >>
->> Thank you for your review and comments. However, I'm not sure I fully
->> understand your points. Could you please provide more details?
->>
->> AFAIK, the NVMe protocol has the following description in the latest
->> NVM Command Set Specification Figure 82 and Figure 114:
->>
->> ===
->> Deallocate (DEAC): If this bit is set to ‘1’, then the host is
->> requesting that the controller deallocate the specified logical blocks.
->> If this bit is cleared to ‘0’, then the host is not requesting that
->> the controller deallocate the specified logical blocks...
->>
->> DLFEAT:
->> Write Zeroes Deallocation Support (WZDS): If this bit is set to ‘1’,
->> then the controller supports the Deallocate bit in the Write Zeroes
->> command for this namespace...
+>> Yes.  The host is requesting, not the controller shall.  It's not
+>> guaranteed behavior and the controller might as well actually write
+>> zeroes to the media.  That is rather stupid, but still.
 > 
-> Yes.  The host is requesting, not the controller shall.  It's not
-> guaranteed behavior and the controller might as well actually write
-> zeroes to the media.  That is rather stupid, but still.
-
-IIUC, the DEAC is requested by the host, but the WZDS and DRB bits in
-DLFEAT is returned by the controller(no?). The host will only initiate
-a DEAC request when both WZDS and DRB are satisfied. So I think that
-if the disk controller returns WZDS=1 and DRB=1, the kernel can only
-trust it according to the protocol and then set
-BLK_FEAT_WRITE_ZEROES_UNMAP flag, the kernel can't and also do not
-need to identify those irregular disks.
-
+> I guess some controllers _really_ want specific alignments to
+> successfully do a proper discard. While still not guaranteed in spec, I
+> think it is safe to assume a proper deallocation will occur if you align
+> to NPDA and NPDG. Otherwise, the controller may do a read-modify-write
+> to ensure zeroes are returned for the requested LBA range on anything
+> that straddles an implementation specific boundary.
 > 
-> Also note that some write zeroes implementations in consumer devices
-> are really slow even when deallocation is requested so that we had
-> to blacklist them.
 
-Yes, indeed. For now, the kernel can only detect through protocol
-specifications, and there seems to be no better way to distinguish
-the specific behavior of the disk. Perhaps we should emphasize that
-this write_zeroes_unmap tag is not equivalent to disk support for
-'fast' write zeros in the DOC.
+I understand. A proper deallocation has certain constraints, but I
+guess it should be useful for most scenarios. Thank you for
+the explanation.
 
-Thanks.
+Thanks,
 Yi.
 
