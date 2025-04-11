@@ -1,129 +1,96 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 029882572
-	for <dm-devel@lists.linux.dev>; Fri, 11 Apr 2025 01:36:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 267A628D857
+	for <dm-devel@lists.linux.dev>; Fri, 11 Apr 2025 08:42:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744335414; cv=none; b=Jaahj/tbsqPAa4Ps0LSmCT26MCADZ/+118slC8DSFn1vb4YI1ZRUCynfxv9/NNxHkDHE2lIDVD/20QyZD/3fIH/yit4EYYgIyQFBcwUeGIB4Tr3dNyEbCu+V3m9XE0gJnAkWBbe1KpDYh0CeOTg2xGjoJW4uiTAM1SbKG0Zzwgg=
+	t=1744360922; cv=none; b=btw0JFj3iQq7AwYwEPVIqYflNbrCcRUhOmgc82XPP9WeJldG9zIVTE6kNjVD7uGBfJDdFZ2Qq3I1pAIm0msyc+SLQtPlwQDLhcqcU+1zkOdJjnzkZVA2eg3jE+2xICm4XXL5gnKmgS2+a4SXCcopQZFv8umzjEku5r7dBciDQ0o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744335414; c=relaxed/simple;
-	bh=ZRR2/INA9CZRa8hce9t/BDmx3eaWvex4MtkXrh/QCws=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=omIp0TeKUAi06/uEkqtteAX7T//cJ7/AMsiiZM1qR3ul557yz+5bV0DDMHVRqasZUT6Vv6B3J9G7hcOwOJbhV4l1akVd5VBXhY+23gB2bZQGX23b803gXbYqOO+2R3fp+CaaJ3X4ZbYSmZXDItZ1dhiA/tma16QLTyXwp7Jm3Mw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZYfRL2SGHz4f3jt7
-	for <dm-devel@lists.linux.dev>; Fri, 11 Apr 2025 09:36:30 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 71A201A058E
-	for <dm-devel@lists.linux.dev>; Fri, 11 Apr 2025 09:36:48 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP4 (Coremail) with SMTP id gCh0CgAni18ucvhnmjx9JA--.57143S3;
-	Fri, 11 Apr 2025 09:36:48 +0800 (CST)
-Subject: Re: [PATCH RFC v2 00/14] md: introduce a new lockless bitmap
-To: Christoph Hellwig <hch@lst.de>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: xni@redhat.com, colyli@kernel.org, axboe@kernel.dk, agk@redhat.com,
- snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
- yangerkun@huawei.com, kbusch@kernel.org, "yukuai (C)" <yukuai3@huawei.com>
-References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
- <Z-aCzTWXzFWe4oxU@infradead.org>
- <c6c608e2-23e7-486f-100a-d1fb6cfff4f2@huaweicloud.com>
- <20250409083208.GA2326@lst.de>
- <115c3b08-aff1-dd97-fe6a-7901452ce62c@huaweicloud.com>
- <20250409094019.GA3890@lst.de>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <28bb1c35-5f75-4e1c-4b5d-32bcb87050ce@huaweicloud.com>
-Date: Fri, 11 Apr 2025 09:36:45 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.9.1
+	s=arc-20240116; t=1744360922; c=relaxed/simple;
+	bh=N6msE6fWmT8+/+mO0RPCrvKlRrGhZiGVb5jPedVx7qI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Tvb4+bHFDXtnjG7CHX1/msxxljYUqVMr0eG6zx3UEyl4IYdr9UZJGcga9fJIpi/y3je8J5IP+f441XWOVZY1cTQ3u8eQWkk8BblPXyNTbbe1pEYMqC/HSsfXJ3Slo7aIjSEAKImFdXrIiR02G5LPIC38UJ5Wk5Xr1kv1jQwWALY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=S/nwmnTV; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="S/nwmnTV"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D0916C4CEE2;
+	Fri, 11 Apr 2025 08:42:00 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1744360921;
+	bh=N6msE6fWmT8+/+mO0RPCrvKlRrGhZiGVb5jPedVx7qI=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=S/nwmnTV1gbO+hr8+Bw+Rlg9E3k2e1vle8zSRMpv4QC+LSY9OtMaQoUhvma23Bk1q
+	 3K25onhzp5ljUsdiLip7RgnH3B4rMJWZ85vN1rb6RjzyAAxnA1WPxDz5fcmZ5C9D5X
+	 1lOHUs4dbPvCCL7zV3dX3+PxOkWlsbPZd751Cqikszyskn0YAgiEhpknXP0OMKvZtq
+	 LPiwRZY1W0OtzHXvpmg8OARTUtmOf1h/RLtiiyNAjF5bCNvzOrNx2fkLyXF3x8C5Yh
+	 e6LcFunEUxAPyCEZECEiHE0Iga2jaTIDtato41XZyS7AZMPxLBUgyv/Gu0Ts5cebnP
+	 xTB1ibuuXFY3Q==
+Message-ID: <80cfd413-1bee-4ed1-a49f-163a28d0b426@kernel.org>
+Date: Fri, 11 Apr 2025 17:41:59 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250409094019.GA3890@lst.de>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgAni18ucvhnmjx9JA--.57143S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7tF4fKF1kAF43AF47ZrW5KFg_yoW8tr45pF
-	ZrW3Waka1DAr17trs2yws7KF4Ska93JFW7JFySgr98Ar95Xr9agr18KF4Y9Fy3Zr1kt3W2
-	v34jqF93Za15AFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBY14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
-	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7V
-	AKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCj
-	r7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6x
-	IIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAI
-	w20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x
-	0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7sRidbbtUUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 0/6] dm: fix issues with swapping dm tables
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@lists.linux.dev, Christoph Hellwig <hch@lst.de>
+References: <20250410194943.9326-1-bmarzins@redhat.com>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <20250410194943.9326-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hi,
+On 4/11/25 04:49, Benjamin Marzinski wrote:
+> There were multiple places in dm's __bind() function where it could fail
+> and not completely roll back, leaving the device using the the old
+> table, but with device limits and resources from the new table.
+> Additionally, unused mempools for request-based devices were not always
+> freed immediately.
+> 
+> Also, there were a number of issues with switching zoned tables that
+> emulate zone append (in other words, dm-crypt on top of zoned devices).
+> dm_blk_report_zones() could be called while the device was initially
+> setting up a zoned table and creating zoned resources or could possibly
+> fail to end a srcu read section.  More importantly,
+> blk_revalidate_disk_zones() would never get called when updating a zoned
+> table. This could cause the dm device to see the wrong zone write
+> offsets, not have a large enough zwplugs reserved in its mempool, or
+> read invalid memory when checking the conventional zones bitmap.
+> 
+> Finally, any DM device created on top of a device emulating zone appeads
+> will automatically have zone write plug resources created for it, since
+> max_hw_zone_append_sectors will always be 0 for a device stacked on top
+> of a device max_hw_zone_append_sectors = 0
+> 
+> This patchset fixes these issues. It deals with the problems around
+> blk_revalidate_disk_zones() by only calling it for devices that have no
+> zone write plug resources. This will always correctly update the zoned
+> settings. If a device has zone write plug resources, calling
+> blk_revalidate_disk_zones() will not correctly update them in many
+> cases, so DM simply doesn't call it for devices with zone write plug
+> resources. Instead of allowing people to load tables that can break the
+> device, like currently happens, DM disallosw any table reloads that
+> change the zoned setting for devices that already have zone write plug
+> resources. Finally, it deals with the max_hw_zone_append_sectors issue
+> by making sure that it is non-zero for zoned DM devices that do not need
+> zone write append emulation.
+> 
+> Changes in V4:
+> - Fixed typos in 2 commit messages (patches 4 and 5)
+> - rephrased comment in dm_revalidate_zones() (patch 5)
 
-ÔÚ 2025/04/09 17:40, Christoph Hellwig Ð´µÀ:
-> On Wed, Apr 09, 2025 at 05:27:11PM +0800, Yu Kuai wrote:
->>> For that you'd be much better of just creating your own trivial
->>> file_system_type with an inode fully controlled by your driver
->>> that has a trivial set of address_space ops instead of oddly
->>> mixing with the block layer.
->>
->> Yes, this is exactly what I said implement a new file_operations(and
->> address_space ops), I wanted do this the easy way, just reuse the raw
->> block device ops, this way I just need to implement the submit_bio ops
->> for new hidden disk.
->>
->> I can try with new fs type if we really think this solution is too
->> hacky, however, the code line will be much more. :(
-> 
-> I don't think it should be much more.  It'll also remove the rather
-> unexpected indirection through submit_bio.  Just make sure you use
-> iomap for your operations, and implement the submit_io hook.  That
-> will also be more efficient than the buffer_head based block ops
-> for writes.
-> 
->>>
->>> Note that either way I'm not sure using the page cache here is an
->>> all that good idea, as we're at the bottom of the I/O stack and
->>> thus memory allocations can very easily deadlock.
->>
->> Yes, for the page from bitmap, this set do the easy way just read and
->> ping all realted pages while loading the bitmap. For two reasons:
->>
->> 1) We don't need to allocate and read pages from IO path;(In the first
->> RFC version, I'm using a worker to do that).
-> 
-> You still depend on the worker, which will still deadlock.
-> 
->>> What speaks against using your own folios explicitly allocated at
->>> probe time and then just doing manual submit_bio on that?  That's
->>> probably not much more code but a lot more robust.
->>
->> I'm not quite sure if I understand you correctly. Do you means don't use
->> pagecache for bitmap IO, and manually create BIOs like the old bitmap,
->> meanwhile invent a new solution for synchronism instead of the global
->> spin_lock from old bitmap?
-> 
-> Yes.  Alternatively you need to pre-populate the page cache and keep
-> extra page references.
+I gave this a quick spin and did not detect any issues.
+So feel free to add:
 
-Ok, I'll think about self managed pages and IO path. Meanwhile, please
-let me know if you have questions with other parts.
+Tested-by: Damien Le Moal <dlemoal@kernel.org>
 
-Thanks,
-Kuai
-
-> 
-> .
-> 
-
+-- 
+Damien Le Moal
+Western Digital Research
