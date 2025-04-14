@@ -1,115 +1,91 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.16])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4E9464D
-	for <dm-devel@lists.linux.dev>; Mon, 14 Apr 2025 00:24:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5595C25DAE8;
+	Mon, 14 Apr 2025 10:04:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.16
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744590264; cv=none; b=osmrdTHG7S98caxpa4B0owseaJ8iu/We5A+dlGRHYjt6d614vkIyKsF0dWLFY/C/JHlCJGyLNfzZQ5HSuqgZav6GoIW/2MtpAfRgFK/7FlhG8VBGrp7ZFSGr+9TgeE7QhYAJvygN3Tp5/S/nd4n0YI8IkFTNPjM3jTj7mA6/9OM=
+	t=1744625097; cv=none; b=TCesB2FK2Ge/7O81zGCQCd8GY3L51elpW6pPaYwLPcYMRWLe/wrXuUJ4JsxIOzksUHwACdfpbYtUUPUChjRb2W7uu66P37Mo5SrTE86q7yv+oCvVQ5/JiMDPxLPlndaEdJkD4QcxT9xylHViQTj961czUwQh1+E7tDFyxi5aCww=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744590264; c=relaxed/simple;
-	bh=PGD7drQY6mfaZUroT3/blMumacpLqff7lrWxL1w0m/8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Zylk+ENuwb5Rkba5m+Jr+td7e77KNGTaFZ36HqMviUwNAI8nhcoaezSS0OplPuJJd46csk3wWla5+QoYQWlj749T6K6/5nX39PgMWrzShxC+lnfZz/j8K968xWfLWPBS3jzCCxgAI90IRK5Ww65R/x8uvZbp8b+2uVb7oDE8N9w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=P00ZUa4L; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1744625097; c=relaxed/simple;
+	bh=B4+8mhY5Rf52CyIiU1x8DAj27NU1NFg//5iFDhqhKlc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=ohQk3xVolURvG0MXc2bKRsovfnlIMS/koCSpcwVfhfhrQwanTEcWGqlwhHDsDazQEYaZtNu+4jsqG+ikoErSbKgA4D/TwdMBSjA04X8WcsVNDiPQrSJfN05eXEA8jSLU6wtOuT9b8uaDh+URnQgj9xT1dbQoCn0e2v8GDaWSR1A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=LEi5+Ox7; arc=none smtp.client-ip=198.175.65.16
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="P00ZUa4L"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E9D6DC4CEDD;
-	Mon, 14 Apr 2025 00:24:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1744590263;
-	bh=PGD7drQY6mfaZUroT3/blMumacpLqff7lrWxL1w0m/8=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=P00ZUa4Lt6rswa1hqDCr2lvAK87XTBpBSmRYPi1XFah0lwwWbcLVcyd1XFm59gNbg
-	 c6SCEZkBwDP2BmSsjcvCRs0RI1OO9ZC/HdwbIIuBz/rnVXLk1MB7cuqxCGNtpSPuhF
-	 +U1o+BufWiLxgQSZGCDUh51piwKCaO1vUn9TqJryCtSAFmeDCBmurZDkPH09h0cq34
-	 GmFVQF6gTMArED/gXZijP13bJdArUaQIlgKv5HvC7zeZAMp+KPHxt2mXs6F5JEpvhK
-	 gW36iigoExDXwPq5JE+pmvgwxn5qQBlPsaERTgFLqyS7KkiAdZdmVD5jqYekoiXi+K
-	 NebAOms5tZgkQ==
-Message-ID: <99d3e0b0-faac-4262-8f8c-1979b5bc839d@kernel.org>
-Date: Mon, 14 Apr 2025 09:23:35 +0900
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="LEi5+Ox7"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1744625096; x=1776161096;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=B4+8mhY5Rf52CyIiU1x8DAj27NU1NFg//5iFDhqhKlc=;
+  b=LEi5+Ox7rk0+PcSSa9ugUgXsJeIjwW424I/0yOYqny43fzUnA9GWq1Sa
+   dGk/Na8JFNLKh8VNf4/nreeYxXHVCAcTGL80jCCNUtG7ZXSql1x0tyBPg
+   UP5bGlA46jHeHgPEctJoq5KNInl5kCTHGPK/n15OwJpMZ/6riO66hAV2n
+   wB8NJvsaCoeiilorvvDfywJVdcnrtc5rmsLFHjmu9fTp5dXiE6MiST3Tc
+   MEaWCXTE9MbJ5emR0eQjvYEoqobw98+QHW/j83Me4ssqwT6N+XI0jxD5n
+   wkSjYRaFwmBw+bxpn8AVghZXDLrpcVAmg0XekYbUuaAj1KRSe8QyjLe+Z
+   Q==;
+X-CSE-ConnectionGUID: s/zC7xsmSUq5CXdwBqqnBA==
+X-CSE-MsgGUID: VubpNqUDQRyd8jhY8bzltw==
+X-IronPort-AV: E=McAfee;i="6700,10204,11402"; a="46177149"
+X-IronPort-AV: E=Sophos;i="6.15,212,1739865600"; 
+   d="scan'208";a="46177149"
+Received: from fmviesa006.fm.intel.com ([10.60.135.146])
+  by orvoesa108.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 03:04:55 -0700
+X-CSE-ConnectionGUID: sYvzi0ujQVisNrbvSfgiYQ==
+X-CSE-MsgGUID: BAG13m+QQM+xrs3GY3cglg==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.15,212,1739865600"; 
+   d="scan'208";a="129625749"
+Received: from smile.fi.intel.com ([10.237.72.58])
+  by fmviesa006.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 03:04:52 -0700
+Received: from andy by smile.fi.intel.com with local (Exim 4.98.2)
+	(envelope-from <andriy.shevchenko@linux.intel.com>)
+	id 1u4GgL-0000000CCZO-1BjH;
+	Mon, 14 Apr 2025 13:04:49 +0300
+Date: Mon, 14 Apr 2025 13:04:49 +0300
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+To: Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, llvm@lists.linux.dev
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Nick Desaulniers <nick.desaulniers+lkml@gmail.com>,
+	Bill Wendling <morbo@google.com>,
+	Justin Stitt <justinstitt@google.com>
+Subject: Re: [PATCH v1 1/1] dm table: Fix W=1 build warning when
+ mempool_needs_integrity is unused
+Message-ID: <Z_zdwSCfaYDotOI2@smile.fi.intel.com>
+References: <20250407072126.3879086-1-andriy.shevchenko@linux.intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 0/6] dm: fix issues with swapping dm tables
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
- Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev,
- Christoph Hellwig <hch@lst.de>
-References: <20250410194943.9326-1-bmarzins@redhat.com>
- <80cfd413-1bee-4ed1-a49f-163a28d0b426@kernel.org>
- <35ea47e0-21dc-a0b9-8531-b1c49fce08c3@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <35ea47e0-21dc-a0b9-8531-b1c49fce08c3@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250407072126.3879086-1-andriy.shevchenko@linux.intel.com>
+Organization: Intel Finland Oy - BIC 0357606-4 - Westendinkatu 7, 02160 Espoo
 
-On 4/11/25 8:41 PM, Mikulas Patocka wrote:
+On Mon, Apr 07, 2025 at 10:21:26AM +0300, Andy Shevchenko wrote:
+> The mempool_needs_integrity is unused. This, in particular, prevents
+> kernel builds with Clang, `make W=1` and CONFIG_WERROR=y:
 > 
+> drivers/md/dm-table.c:1052:7: error: variable 'mempool_needs_integrity' set but not used [-Werror,-Wunused-but-set-variable]
+>  1052 |         bool mempool_needs_integrity = t->integrity_supported;
+>       |              ^
 > 
-> On Fri, 11 Apr 2025, Damien Le Moal wrote:
-> 
->> On 4/11/25 04:49, Benjamin Marzinski wrote:
->>> There were multiple places in dm's __bind() function where it could fail
->>> and not completely roll back, leaving the device using the the old
->>> table, but with device limits and resources from the new table.
->>> Additionally, unused mempools for request-based devices were not always
->>> freed immediately.
->>>
->>> Also, there were a number of issues with switching zoned tables that
->>> emulate zone append (in other words, dm-crypt on top of zoned devices).
->>> dm_blk_report_zones() could be called while the device was initially
->>> setting up a zoned table and creating zoned resources or could possibly
->>> fail to end a srcu read section.  More importantly,
->>> blk_revalidate_disk_zones() would never get called when updating a zoned
->>> table. This could cause the dm device to see the wrong zone write
->>> offsets, not have a large enough zwplugs reserved in its mempool, or
->>> read invalid memory when checking the conventional zones bitmap.
->>>
->>> Finally, any DM device created on top of a device emulating zone appeads
->>> will automatically have zone write plug resources created for it, since
->>> max_hw_zone_append_sectors will always be 0 for a device stacked on top
->>> of a device max_hw_zone_append_sectors = 0
->>>
->>> This patchset fixes these issues. It deals with the problems around
->>> blk_revalidate_disk_zones() by only calling it for devices that have no
->>> zone write plug resources. This will always correctly update the zoned
->>> settings. If a device has zone write plug resources, calling
->>> blk_revalidate_disk_zones() will not correctly update them in many
->>> cases, so DM simply doesn't call it for devices with zone write plug
->>> resources. Instead of allowing people to load tables that can break the
->>> device, like currently happens, DM disallosw any table reloads that
->>> change the zoned setting for devices that already have zone write plug
->>> resources. Finally, it deals with the max_hw_zone_append_sectors issue
->>> by making sure that it is non-zero for zoned DM devices that do not need
->>> zone write append emulation.
->>>
->>> Changes in V4:
->>> - Fixed typos in 2 commit messages (patches 4 and 5)
->>> - rephrased comment in dm_revalidate_zones() (patch 5)
->>
->> I gave this a quick spin and did not detect any issues.
->> So feel free to add:
->>
->> Tested-by: Damien Le Moal <dlemoal@kernel.org>
->>
->> -- 
->> Damien Le Moal
->> Western Digital Research
-> 
-> Thanks.
-> 
-> I staged the patches for the next merge window.
+> Fix this by removing the leftover.
 
-Hmmm... These are all fixes, so shouldn't they go into rc3 ?
-
+This issue is still present in v6.15-rc1.
 
 -- 
-Damien Le Moal
-Western Digital Research
+With Best Regards,
+Andy Shevchenko
+
+
