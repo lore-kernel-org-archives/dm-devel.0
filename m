@@ -1,120 +1,119 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87A58433CB
-	for <dm-devel@lists.linux.dev>; Mon, 14 Apr 2025 13:19:30 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4DC0252298
+	for <dm-devel@lists.linux.dev>; Mon, 14 Apr 2025 13:52:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744636772; cv=none; b=W5nzsEBPyEzMkx1VuajP5O3oYv3Ae9F6zqxjFNODbDRYlptt19/F8Cy/8o3qS41P6HbBwfmkcEKFlaZW1k6vB7xyEET7xk5ypRV6pklAxrpKETFQEtFRXc6sGDGi9i7M7YWQ3PgT0tmBzUGkTS2Smt5oBOrTqziHubKTta7JohQ=
+	t=1744638753; cv=none; b=R1PDixb7ZNex3V1TzCynC0BtaAv5BU12eHfplieNf7bXgErcr+p8I6EJiJOMynNTusk1mPyHVlbL/lqOWd0+yNf3Kq6TnHUHpC7mmHhq+hMb5imFqExdJtBLc2Q5fXY9JZc3wW0slNbsD/AkI5DOqV3BK86Jp3DZPZEaSzCRR9s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744636772; c=relaxed/simple;
-	bh=XFcmVKfl/murXq1FOltyjI0RZClONBYZsora0YeqTqc=;
+	s=arc-20240116; t=1744638753; c=relaxed/simple;
+	bh=4mXNJheCb43vBYUEPbb+N+k7Jmsj5yYT9AFNRMnzR0I=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Ax+ZZku0jGODPWOI6FMHqKKFRnq0u4ehYK5f3sn0BpossLnqwN+Z7zYL78xbQ0oqrnzCaRAC+7azokMJ0pgKWVXP4ZjTWDwsX/4xJG79RnFQWhmsyvy4u/lX7uDIo4wBy8W+eUxmcwZkF6K32UdtVdETh5fefoF32EPcTj6gRYw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VT1br+hl; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=aVt045RkKB35fYu3npur3Tg7cWE+p8gN5pMMPe26WCiaFclGfCBY80GCCcyBO/0bT69KJLQudh/zi06IZEZr/IQOVkb7BuJLFmhHq2BU5vPQyCRFeDjIhTc9aj3iM+A8TXAD1C9iR98oNDAKioGB8dy6gHAT3zVNHLxNuOL5II8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JI1Av+0S; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VT1br+hl"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JI1Av+0S"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1744636769;
+	s=mimecast20190719; t=1744638750;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=p3jx3ZvHp10mqTC4aZ8136TKAVA3Z9xsT7LVpk7QStU=;
-	b=VT1br+hl0VZYQU2JUTIPeHe4L90/DlHdBOW3GarXtYcJaQtg4kZnJK/2XbywPibPpRof1f
-	CusdAhXyLlONbN4JR+0+O6N2Vo6EtEUpHFEZRINr2SWxqhDPEBgixWv8R3V7prromfFquX
-	io61BajMnfH5olOBm8uqQZ/CpqRQ6J4=
+	bh=i2TZR70IZ+86a+saPhGG9LhSxOVPKHHAIPhSL6YAwNc=;
+	b=JI1Av+0SrxzqWtGukxNhOJvKGJ64nEvNusVgfHOJmYrOS7FY4Z77zWEAEeMJmXRD9LNj6T
+	yJmO3YWHGws237myicAy7xVBhz/cFpc8y8rznSFN0L1MUQ26MvoLN5GORHrBAqLws2mKlX
+	3MTy8XOra6T+qdzC8tKuL0VuOIBt+6I=
 Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-210-cxnEgnuMMr-t4BHoc1MYng-1; Mon,
- 14 Apr 2025 09:19:26 -0400
-X-MC-Unique: cxnEgnuMMr-t4BHoc1MYng-1
-X-Mimecast-MFC-AGG-ID: cxnEgnuMMr-t4BHoc1MYng_1744636765
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-422-BqKbaaNEO3GApoA6BzekSw-1; Mon,
+ 14 Apr 2025 09:52:26 -0400
+X-MC-Unique: BqKbaaNEO3GApoA6BzekSw-1
+X-Mimecast-MFC-AGG-ID: BqKbaaNEO3GApoA6BzekSw_1744638745
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DD5DB180AB1C;
-	Mon, 14 Apr 2025 13:19:24 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 203FB18007E1;
+	Mon, 14 Apr 2025 13:52:25 +0000 (UTC)
 Received: from [10.22.80.44] (unknown [10.22.80.44])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D0E5195609D;
-	Mon, 14 Apr 2025 13:19:22 +0000 (UTC)
-Date: Mon, 14 Apr 2025 15:19:19 +0200 (CEST)
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AF63F19560AD;
+	Mon, 14 Apr 2025 13:52:22 +0000 (UTC)
+Date: Mon, 14 Apr 2025 15:52:18 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>, 
-    Christoph Hellwig <hch@lst.de>, Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH v2] dm-delay: Prevent zoned write reordering on suspend
-In-Reply-To: <20250411000435.1007720-1-dlemoal@kernel.org>
-Message-ID: <81bd6eca-6d62-6934-9007-28eaef465bb7@redhat.com>
-References: <20250411000435.1007720-1-dlemoal@kernel.org>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
+    Damien Le Moal <dlemoal@kernel.org>, 
+    Christian Loehle <christian.loehle@arm.com>
+Subject: Re: [PATCH] dm-delay: don't busy-wait in kthread
+In-Reply-To: <20250411205656.60709-1-bmarzins@redhat.com>
+Message-ID: <459f3125-843a-0067-dc37-b04d5b67b556@redhat.com>
+References: <20250411205656.60709-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: h6PI7CvNcgqMHCbYJph694YfcjyDX2oSuNv4XHkgweE_1744636765
+X-Mimecast-MFC-PROC-ID: OhiIup3oORMGHG3Hmu3IV6e_pGk6kAtDauw79BruoJ0_1744638745
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
 
 
-On Fri, 11 Apr 2025, Damien Le Moal wrote:
+On Fri, 11 Apr 2025, Benjamin Marzinski wrote:
 
-> When a dm-delay device is being suspended, the .presuspend() operation
-> is first executed (delay_presuspend()) to immediately issue all the BIOs
-> present in the delayed list of the device and also sets the device
-> may_delay boolean to false. At the same time, if any new BIO is issued
-> to the device will not be delayed and immediately issued with
-> delay_bio() returning DM_MAPIO_REMAPPED. This creates a situation where
-> potentially 2 different contexts may be issuing write BIOs to the same
-> zone of a zone device without respecting the issuing order from the
-> user, that is, a newly issued write BIO may be issued before other write
-> BIOs for the same target zone that are in the device delayed list. If
-> such situation occurs, write BIOs may be failed by the underlying zoned
-> device due to an unaligned write error.
+> When using a kthread to delay the IOs, dm-delay would continuously loop,
+> checking if IOs were ready to submit. It had a cond_resched() call in
+> the loop, but might still loop hundreds of millions of times waiting for
+> an IO that was scheduled to be submitted 10s of ms in the future. With
+> the change to make dm-delay over zoned devices always use kthreads
+> regardless of the length of the delay, this wasted work only gets worse.
 > 
-> Prevent this situation from happening by always handling newly issued
-> write BIOs using the delayed list of BIOs, even when the device is being
-> suspended. This is done by forcing the use of the worker kthread for
-> zoned devices, and by modifying flush_worker_fn() to always flush all
-> delayed BIOs if the device may_delay boolean is false.
+> To solve this and still keep roughly the same precision for very short
+> delays, dm-delay now calls fsleep() for 1/8th of the smallest non-zero
+> delay it will place on IOs, or 1 ms, whichever is smaller. The reason
+> that dm-delay doesn't just use the actual expiration time of the next
+> delayed IO to calculated the sleep time is that delay_dtr() must wait
+> for the kthread to finish before deleting the table. If a zoned device
+> with a long delay queued an IO shortly before being suspended and
+> removed, the IO would be flushed in delay_presuspend(), but the removing
+> the device would still have to wait for the remainder of the long delay.
+> This time is now capped at 1 ms.
 > 
-> Reported-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Fixes: d43929ef65a6 ("dm-delay: support zoned devices")
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> Fixes: 70bbeb29fab09 ("dm delay: for short delays, use kthread instead of timers and wq")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
-> Changes from v1:
->  - Fixed typo in commit message
->  - Added reported-by tag
-> 
->  drivers/md/dm-delay.c | 29 +++++++++++++++++++++--------
->  1 file changed, 21 insertions(+), 8 deletions(-)
+> This patch is meant to apply on top of Damien Le Moal's "dm-delay:
+> Prevent zoned write reordering on suspend" patch. If people think it's
+> important to avoid either this much smaller amount of looping or the
+> possible 1 ms delay on deleting a table, I can send a patch that uses
+> usleep_range_state() and msleep_interruptible() to do an interruptible
+> sleep with a duration based on the expiration time of the next delayed
+> IO.
 
 Hi
 
-I looked at the generic device mapper code and it seems that ordering of 
-write bios is not guaranteed with any target in case of suspend/resume.
+worker_sleep_ns should be worker_sleep_us - as the value is in 
+microseconds.
 
-* we suspend the device:
-* received bios are added to md->deferred in queue_io
+fsleep in flush_worker_fn should be called unconditionally, to not consume 
+100% CPU when suspending.
 
-* we resume the device:
-* __dm_resume calls dm_queue_flush
-* dm_queue_flush clears DMF_BLOCK_IO_FOR_SUSPEND and submits work item 
-  &md->work (dm_wq_work)
-* dm_resume clears DMF_SUSPENDED
-* the device starts accepting new bios in dm_submit_bio
-* dm_wq_work runs concurrently with new bios that are received, so 
-  ordering of bios is not preserved
+cond_resched() shouldn't be removed because fsleep may fall back to 
+udelay.
 
-So it doesn't make much sense to try to fix it in dm-delay, if it isn't 
-supposed to work at all.
+The patch should increase target version.
+
+I fixed the patch so that it applies on the top Linus' tree and applied 
+it to the linux-dm tree.
+
+BTW. do we need to backport this to the stable kernels? I think not, but 
+if you have some reason why should we backport it, explain it.
 
 Mikulas
 
