@@ -1,103 +1,120 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.12])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99B5618A6A9;
-	Tue, 15 Apr 2025 06:17:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCCC327A135
+	for <dm-devel@lists.linux.dev>; Tue, 15 Apr 2025 08:09:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744697853; cv=none; b=utZ53IgOhXOXoQ3/T5CWUltpxjSqI+besRjvXOGvHTHUb1qgXyJSp9eQ+vUR+C64WvJXBRPquY/YEzJ2u6Jxus4G5+4pI4hYksKGIZxw0IERvXX6wPqmvXcpZQBAcSOEpop2SLHwAh3aJ0D5HLzATEcciBQ3mQAyL4Q56I3TRQ8=
+	t=1744704548; cv=none; b=mGf9H3ivPqPFg+wuOKyU2PjVY0Mbjx2JCd/YTir35NNkHizzheCyC16Yog863f61mQm4ZdW6/fPKp81/FkjGoNOO0Q98X5RrQrTNshhXsXkE1f4BqYDmVI2buxUUh3lOFcRLu/X57NoVP+aunKdMieHDXHBcx/sXXeUeuFBRWd4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744697853; c=relaxed/simple;
-	bh=oMp5bg88AhH5U94XDV4HaMSAy3UaGzipazBEuW0fFLQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XGNXtpnT5j1eR2D+V2CuKz/RT+NLh2PrqBNrZPC6gdSQLmamksq4tFlMJIFpYijwK5MRS6CdyvN54d6Ql3KVGUWLpHyv9PRW2Y8rYL/X0ZMi/YudhSmB01KK6/EskDhaVqNwIZQJcptLDfyagyqamGSWVspoy9tsC86BVk7whcs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=I8VjnLjj; arc=none smtp.client-ip=198.175.65.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
+	s=arc-20240116; t=1744704548; c=relaxed/simple;
+	bh=rooBHucPKIEoppmVDj+wpP5zhNm4lIedv0liUDOtmlM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=P+MjcEF9RaKBE6mjF6Lzlk5QMM2h5ZKTU3DZC6NC1B2wJ+6Tlgp9FLNHCIyJd3j8AgG2nRY44oMS03/BsxSAGDCJpNEa4oMir8kOWi/VTNYI0u4cwf0j5Os/lrDmMYTCmhxwUC+SQJFlJxYRRXw3VGxvjlpfjY0/BgLWL2fWubE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=B3zdj7C0; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="I8VjnLjj"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1744697852; x=1776233852;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=oMp5bg88AhH5U94XDV4HaMSAy3UaGzipazBEuW0fFLQ=;
-  b=I8VjnLjj3KZFAH6gC5kcZlmTqniRLtYFGssW8bX8fZt4QW9foYdEP0CW
-   LDI5qN4DKcbGaPV0w84MW9J0O0GoAtdYLcGpZv9aYoMe1/gMtYutZIxAa
-   WIknaKOeGz9lDruTufxs7ImV3qqINXztCVKyJ34gRcuSRIfM7Qlzs5ytV
-   26DLPROH9lWltW2KMrKKwUIEC7UnXoc2RD99lztAO/EbUItABVvE7Nyda
-   WH/EaWgFGmnu9+53G3HUz2GqxtKMnLh+lizkx6pPo0dXc6slyRzWjQ3Bt
-   +8zeVBZ38/AzgR5TI/gTuu3g1sr6bShnVrisDk59OsktvM6GohBRIoCl4
-   w==;
-X-CSE-ConnectionGUID: mXbkBWFuQc6wRVFaJ/hIpA==
-X-CSE-MsgGUID: Nd/2xxyZSouOhIgSBoCw1A==
-X-IronPort-AV: E=McAfee;i="6700,10204,11403"; a="57553653"
-X-IronPort-AV: E=Sophos;i="6.15,213,1739865600"; 
-   d="scan'208";a="57553653"
-Received: from fmviesa008.fm.intel.com ([10.60.135.148])
-  by orvoesa104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 23:17:31 -0700
-X-CSE-ConnectionGUID: F3Bjzp7aS8yBT+ylbnfwxA==
-X-CSE-MsgGUID: 09qgvQJFTgupxCMA3RiOYw==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.15,213,1739865600"; 
-   d="scan'208";a="130349942"
-Received: from smile.fi.intel.com ([10.237.72.58])
-  by fmviesa008.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 23:17:28 -0700
-Received: from andy by smile.fi.intel.com with local (Exim 4.98.2)
-	(envelope-from <andriy.shevchenko@linux.intel.com>)
-	id 1u4Zbp-0000000CSTC-2I7c;
-	Tue, 15 Apr 2025 09:17:25 +0300
-Date: Tue, 15 Apr 2025 09:17:25 +0300
-From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, llvm@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Nathan Chancellor <nathan@kernel.org>,
-	Nick Desaulniers <nick.desaulniers+lkml@gmail.com>,
-	Bill Wendling <morbo@google.com>,
-	Justin Stitt <justinstitt@google.com>
-Subject: Re: [PATCH v1 1/1] dm table: Fix W=1 build warning when
- mempool_needs_integrity is unused
-Message-ID: <Z_359RoIe9TjAWV0@smile.fi.intel.com>
-References: <20250407072126.3879086-1-andriy.shevchenko@linux.intel.com>
- <Z_zdwSCfaYDotOI2@smile.fi.intel.com>
- <Z_zd1NCtn_QxaCzC@smile.fi.intel.com>
- <a0b1fcbf-9cda-9da2-ecbe-ac5cbc75b775@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="B3zdj7C0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5464AC4CEDD;
+	Tue, 15 Apr 2025 08:09:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1744704548;
+	bh=rooBHucPKIEoppmVDj+wpP5zhNm4lIedv0liUDOtmlM=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=B3zdj7C0r/4sNyJYO4yXxa7R8JkqKOg0VmxK5busXRY2B4n/NWLLiIPc7brrD6DRk
+	 Ka6HDFZ2m4eZgamU8qkB/3bo09o0X3gq6XPAA8Bwh/xtPH5tr9j6NCuCRW3odth1Ee
+	 CiOA3kJvCfiHHYtZEus3FEfPIXVzctsXds2lSYQmO86s+MEXkRCImyALDuvYDoNLRq
+	 99n+34DfV5VtlhibJdE3K2063mdqeyd/pRG4Sif9lLHcGsGbyyyeztbSCsiqCN355a
+	 s0ItvGgrxZ13EL4kBMzuLeClepmz38tVp6IQYQbsNwNmhOeat9OpFBYLqSUU0JddmF
+	 Emg0IWo79TDBA==
+Message-ID: <79733459-5674-4bd3-9a33-dd5fbd7ed651@kernel.org>
+Date: Tue, 15 Apr 2025 17:08:20 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <a0b1fcbf-9cda-9da2-ecbe-ac5cbc75b775@redhat.com>
-Organization: Intel Finland Oy - BIC 0357606-4 - Westendinkatu 7, 02160 Espoo
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2] dm-delay: Prevent zoned write reordering on suspend
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Benjamin Marzinski <bmarzins@redhat.com>
+References: <20250411000435.1007720-1-dlemoal@kernel.org>
+ <81bd6eca-6d62-6934-9007-28eaef465bb7@redhat.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <81bd6eca-6d62-6934-9007-28eaef465bb7@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Mon, Apr 14, 2025 at 02:13:18PM +0200, Mikulas Patocka wrote:
-> On Mon, 14 Apr 2025, Andy Shevchenko wrote:
-> > On Mon, Apr 14, 2025 at 01:04:49PM +0300, Andy Shevchenko wrote:
-> > > On Mon, Apr 07, 2025 at 10:21:26AM +0300, Andy Shevchenko wrote:
-> > > > The mempool_needs_integrity is unused. This, in particular, prevents
-> > > > kernel builds with Clang, `make W=1` and CONFIG_WERROR=y:
-> > > > 
-> > > > drivers/md/dm-table.c:1052:7: error: variable 'mempool_needs_integrity' set but not used [-Werror,-Wunused-but-set-variable]
-> > > >  1052 |         bool mempool_needs_integrity = t->integrity_supported;
-> > > >       |              ^
-> > > > 
-> > > > Fix this by removing the leftover.
-> > > 
-> > > This issue is still present in v6.15-rc1.
-> > 
-> > I meant v6.15-rc2, of course.
+On 4/14/25 10:19 PM, Mikulas Patocka wrote:
 > 
-> I will send it to Linus (maybe with other changes) before 6.15 comes out.
+> 
+> On Fri, 11 Apr 2025, Damien Le Moal wrote:
+> 
+>> When a dm-delay device is being suspended, the .presuspend() operation
+>> is first executed (delay_presuspend()) to immediately issue all the BIOs
+>> present in the delayed list of the device and also sets the device
+>> may_delay boolean to false. At the same time, if any new BIO is issued
+>> to the device will not be delayed and immediately issued with
+>> delay_bio() returning DM_MAPIO_REMAPPED. This creates a situation where
+>> potentially 2 different contexts may be issuing write BIOs to the same
+>> zone of a zone device without respecting the issuing order from the
+>> user, that is, a newly issued write BIO may be issued before other write
+>> BIOs for the same target zone that are in the device delayed list. If
+>> such situation occurs, write BIOs may be failed by the underlying zoned
+>> device due to an unaligned write error.
+>>
+>> Prevent this situation from happening by always handling newly issued
+>> write BIOs using the delayed list of BIOs, even when the device is being
+>> suspended. This is done by forcing the use of the worker kthread for
+>> zoned devices, and by modifying flush_worker_fn() to always flush all
+>> delayed BIOs if the device may_delay boolean is false.
+>>
+>> Reported-by: Benjamin Marzinski <bmarzins@redhat.com>
+>> Fixes: d43929ef65a6 ("dm-delay: support zoned devices")
+>> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+>> ---
+>> Changes from v1:
+>>  - Fixed typo in commit message
+>>  - Added reported-by tag
+>>
+>>  drivers/md/dm-delay.c | 29 +++++++++++++++++++++--------
+>>  1 file changed, 21 insertions(+), 8 deletions(-)
+> 
+> Hi
+> 
+> I looked at the generic device mapper code and it seems that ordering of 
+> write bios is not guaranteed with any target in case of suspend/resume.
+> 
+> * we suspend the device:
+> * received bios are added to md->deferred in queue_io
+> 
+> * we resume the device:
+> * __dm_resume calls dm_queue_flush
+> * dm_queue_flush clears DMF_BLOCK_IO_FOR_SUSPEND and submits work item 
+>   &md->work (dm_wq_work)
+> * dm_resume clears DMF_SUSPENDED
+> * the device starts accepting new bios in dm_submit_bio
+> * dm_wq_work runs concurrently with new bios that are received, so 
+>   ordering of bios is not preserved
+> 
+> So it doesn't make much sense to try to fix it in dm-delay, if it isn't 
+> supposed to work at all.
 
-Thank you!
+Just need to fix the generic DM resume code then. This patch fixing dm-delay is
+still relevant even with DM generic resume fixes.
+
+I can resend the dm-delay fix together with DM core resume fixes. And Benjamin
+can re-send the dm-delay kthread timer cleanup independently (I will rebase) or
+on top of that fix series. Does that work for you ?
+
+> 
+> Mikulas
+> 
+
 
 -- 
-With Best Regards,
-Andy Shevchenko
-
-
+Damien Le Moal
+Western Digital Research
