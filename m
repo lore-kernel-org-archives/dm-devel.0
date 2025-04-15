@@ -1,95 +1,103 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 525A12DFA51
-	for <dm-devel@lists.linux.dev>; Tue, 15 Apr 2025 04:17:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99B5618A6A9;
+	Tue, 15 Apr 2025 06:17:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744690645; cv=none; b=fZ7qBUwJLZcNY2nNj+xwB75+R4/gENY7K+3VbC8io6NJ6fFzw1Wd6T7QhhRLiqgbeF2ifVlI6qAdvvyAltV/n1Dph2y/1FwYThEMMEE8PmLUNSq819qo6OQffD722Ci3FNK3LUiINMQJjCA6kNPog5g8ypYv90Xa83m+3I7SBQ4=
+	t=1744697853; cv=none; b=utZ53IgOhXOXoQ3/T5CWUltpxjSqI+besRjvXOGvHTHUb1qgXyJSp9eQ+vUR+C64WvJXBRPquY/YEzJ2u6Jxus4G5+4pI4hYksKGIZxw0IERvXX6wPqmvXcpZQBAcSOEpop2SLHwAh3aJ0D5HLzATEcciBQ3mQAyL4Q56I3TRQ8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744690645; c=relaxed/simple;
-	bh=9hA0V/DsZSiXOJJYJHTZ1IqgYghcVyiXq2YYWgjJkUc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=MSGGUO0X2OEsfZGj9+p5wLGSn/Zv4Paz7Sx5QByuFGO/L9nDwRgwUUBOgZJQSlSXwV+lhdlLPt6bU5CXSdN/RZ9yesiXbHpMMVQH5M+W/ID5GzR5JP9iQ8s2frsdhWm/O1NWCNC25Z+FJzCN8pu30EBtPXMJ2xxnw5csNeNFi3k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I8a4yidF; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1744697853; c=relaxed/simple;
+	bh=oMp5bg88AhH5U94XDV4HaMSAy3UaGzipazBEuW0fFLQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XGNXtpnT5j1eR2D+V2CuKz/RT+NLh2PrqBNrZPC6gdSQLmamksq4tFlMJIFpYijwK5MRS6CdyvN54d6Ql3KVGUWLpHyv9PRW2Y8rYL/X0ZMi/YudhSmB01KK6/EskDhaVqNwIZQJcptLDfyagyqamGSWVspoy9tsC86BVk7whcs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=none smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=I8VjnLjj; arc=none smtp.client-ip=198.175.65.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I8a4yidF"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1744690641;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1xa8Y7qxBaMO++3ahJv6Ukul316M0IYNo4Gh7IDiQYg=;
-	b=I8a4yidF+YhS45cDCoUjA/AyJ0mQ2GWjRUN0ujHWIrrkJ03VbB4Nl5XDRE/U9vkBF6RfBD
-	PL2udJ/bqtxjyeEzOyPSut+Tl+5bA6CHbvtmiWRcD+w8cSwodwmvz5rrTOAnYXFi3APHe5
-	Mwtza/leTeCchMvBzCNKm7kciB07YRo=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-4KbYJfBrOraVvMlaSZqBqw-1; Tue,
- 15 Apr 2025 00:17:20 -0400
-X-MC-Unique: 4KbYJfBrOraVvMlaSZqBqw-1
-X-Mimecast-MFC-AGG-ID: 4KbYJfBrOraVvMlaSZqBqw_1744690639
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C2CFF1956089
-	for <dm-devel@lists.linux.dev>; Tue, 15 Apr 2025 04:17:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DBE37180B488;
-	Tue, 15 Apr 2025 04:17:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 53F4HHfK657023
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 15 Apr 2025 00:17:17 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 53F4HHqF657022;
-	Tue, 15 Apr 2025 00:17:17 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 1/2] dm: remove unneeded kvfree from alloc_targets
-Date: Tue, 15 Apr 2025 00:17:15 -0400
-Message-ID: <20250415041716.657008-2-bmarzins@redhat.com>
-In-Reply-To: <20250415041716.657008-1-bmarzins@redhat.com>
-References: <20250415041716.657008-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="I8VjnLjj"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1744697852; x=1776233852;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=oMp5bg88AhH5U94XDV4HaMSAy3UaGzipazBEuW0fFLQ=;
+  b=I8VjnLjj3KZFAH6gC5kcZlmTqniRLtYFGssW8bX8fZt4QW9foYdEP0CW
+   LDI5qN4DKcbGaPV0w84MW9J0O0GoAtdYLcGpZv9aYoMe1/gMtYutZIxAa
+   WIknaKOeGz9lDruTufxs7ImV3qqINXztCVKyJ34gRcuSRIfM7Qlzs5ytV
+   26DLPROH9lWltW2KMrKKwUIEC7UnXoc2RD99lztAO/EbUItABVvE7Nyda
+   WH/EaWgFGmnu9+53G3HUz2GqxtKMnLh+lizkx6pPo0dXc6slyRzWjQ3Bt
+   +8zeVBZ38/AzgR5TI/gTuu3g1sr6bShnVrisDk59OsktvM6GohBRIoCl4
+   w==;
+X-CSE-ConnectionGUID: mXbkBWFuQc6wRVFaJ/hIpA==
+X-CSE-MsgGUID: Nd/2xxyZSouOhIgSBoCw1A==
+X-IronPort-AV: E=McAfee;i="6700,10204,11403"; a="57553653"
+X-IronPort-AV: E=Sophos;i="6.15,213,1739865600"; 
+   d="scan'208";a="57553653"
+Received: from fmviesa008.fm.intel.com ([10.60.135.148])
+  by orvoesa104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 23:17:31 -0700
+X-CSE-ConnectionGUID: F3Bjzp7aS8yBT+ylbnfwxA==
+X-CSE-MsgGUID: 09qgvQJFTgupxCMA3RiOYw==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.15,213,1739865600"; 
+   d="scan'208";a="130349942"
+Received: from smile.fi.intel.com ([10.237.72.58])
+  by fmviesa008.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 14 Apr 2025 23:17:28 -0700
+Received: from andy by smile.fi.intel.com with local (Exim 4.98.2)
+	(envelope-from <andriy.shevchenko@linux.intel.com>)
+	id 1u4Zbp-0000000CSTC-2I7c;
+	Tue, 15 Apr 2025 09:17:25 +0300
+Date: Tue, 15 Apr 2025 09:17:25 +0300
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, llvm@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Nick Desaulniers <nick.desaulniers+lkml@gmail.com>,
+	Bill Wendling <morbo@google.com>,
+	Justin Stitt <justinstitt@google.com>
+Subject: Re: [PATCH v1 1/1] dm table: Fix W=1 build warning when
+ mempool_needs_integrity is unused
+Message-ID: <Z_359RoIe9TjAWV0@smile.fi.intel.com>
+References: <20250407072126.3879086-1-andriy.shevchenko@linux.intel.com>
+ <Z_zdwSCfaYDotOI2@smile.fi.intel.com>
+ <Z_zd1NCtn_QxaCzC@smile.fi.intel.com>
+ <a0b1fcbf-9cda-9da2-ecbe-ac5cbc75b775@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: kyuwjBTPH6dlr1bRgfmXzj218dCXATzy87nIuiSF_nU_1744690639
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <a0b1fcbf-9cda-9da2-ecbe-ac5cbc75b775@redhat.com>
+Organization: Intel Finland Oy - BIC 0357606-4 - Westendinkatu 7, 02160 Espoo
 
-alloc_targets() is always called with a newly initialized table where
-t->highs == NULL.
+On Mon, Apr 14, 2025 at 02:13:18PM +0200, Mikulas Patocka wrote:
+> On Mon, 14 Apr 2025, Andy Shevchenko wrote:
+> > On Mon, Apr 14, 2025 at 01:04:49PM +0300, Andy Shevchenko wrote:
+> > > On Mon, Apr 07, 2025 at 10:21:26AM +0300, Andy Shevchenko wrote:
+> > > > The mempool_needs_integrity is unused. This, in particular, prevents
+> > > > kernel builds with Clang, `make W=1` and CONFIG_WERROR=y:
+> > > > 
+> > > > drivers/md/dm-table.c:1052:7: error: variable 'mempool_needs_integrity' set but not used [-Werror,-Wunused-but-set-variable]
+> > > >  1052 |         bool mempool_needs_integrity = t->integrity_supported;
+> > > >       |              ^
+> > > > 
+> > > > Fix this by removing the leftover.
+> > > 
+> > > This issue is still present in v6.15-rc1.
+> > 
+> > I meant v6.15-rc2, of course.
+> 
+> I will send it to Linus (maybe with other changes) before 6.15 comes out.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/dm-table.c | 1 -
- 1 file changed, 1 deletion(-)
+Thank you!
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 69d4a0e0e613..31e2f9071ca8 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -117,7 +117,6 @@ static int alloc_targets(struct dm_table *t, unsigned int num)
- 	n_targets = (struct dm_target *) (n_highs + num);
- 
- 	memset(n_highs, -1, sizeof(*n_highs) * num);
--	kvfree(t->highs);
- 
- 	t->num_allocated = num;
- 	t->highs = n_highs;
 -- 
-2.48.1
+With Best Regards,
+Andy Shevchenko
+
 
