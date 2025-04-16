@@ -1,141 +1,104 @@
-Received: from APC01-SG2-obe.outbound.protection.outlook.com (mail-sg2apc01on2050.outbound.protection.outlook.com [40.107.215.50])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E01720ADE9
-	for <dm-devel@lists.linux.dev>; Wed, 16 Apr 2025 09:45:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.215.50
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1744796760; cv=fail; b=Ognl8xF7MkE6eoZMJvqRnRmq88y89bDgye83icBNwWBASSwLID0zNMCEBsbeU5+mDHk7ZMWWTjgTBMe6406pjWvFqIeOYufDAvjNNeAkCdn23m7PPGmmt4NeQvl5eogaEyxswXv/3wiKRBUvnPOgT8PtfCQ5lsEoWAUFh9K/COs=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1744796760; c=relaxed/simple;
-	bh=n6HvBvACQZm6SYOkFzzC5WDKA+FgUi5anLw+dfN1kr4=;
-	h=From:To:Cc:Subject:Date:Message-Id:Content-Type:MIME-Version; b=cNOFy9ufEY8Q5DpdPHMtl1qzpoFAphyBSxKv1H7VNTvIIoRk/UpW2K02QZCEhybNTk272CMHfvBuO3GprkQpMVGQtL32N+/b6gv75gy0/2DEORQtffHV+D+zALHrEmqIOc1NXqKP1M9GGumrxUaZxlfCQfcJ+8mx+vVeRyj/gzs=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com; spf=pass smtp.mailfrom=oppo.com; dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b=HGrXqUlk; arc=fail smtp.client-ip=40.107.215.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oppo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4432F233703
+	for <dm-devel@lists.linux.dev>; Wed, 16 Apr 2025 12:23:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1744806193; cv=none; b=grcjd/FmryMcSGlJHJkpRiszE513eA2tztlylG2IPjZhuYUFaBlRD+jW/S4TT0YklA4vH5SSdB4A75sN2u/v59U9TPCgmxwZqcwbhpFmdndu9kmy/D+sOT+bW3gVuxTRfNRG52Sy8eTvAPXLwuJMOgYzNJNMrVJladO5is1O84k=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1744806193; c=relaxed/simple;
+	bh=BNNXHc3G4/P42wkC6YrERhqTngXbHGqYCDxu1ZPNtgw=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=avZDogB05AuG+sWhvodKPZAdYO6mpumnkaOSLXqom7396ItyT4o6kgqBnYlqCktgiWnt57554QZUh9Fb6COW+9/0QXzlwAkJU8TKea1wy+9B13nWRWeT92Pw92aPf9Y9HRNlRV75ElG3WLMADuni/qp7jLd1V8YbjlGBvF6IChc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U2Z/F9Et; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b="HGrXqUlk"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=M1UDYZq3C0PgShYDL7Y6aKQd/8ZAh/hhMgvkVapxwL1bCNY364oXzxg8z6xkzcF0fP/HPSp0MaMJfeL26gWZvJPxLVjytouU9sdAjrNnvicxFLSw8iUk8qWxCiro+Hmplx4TUajjXavttpXhHfDsdWtKqj9IypDJRVfjJMjEq/guAbJtzAoSIp6106LE8BgF1w2zwZnho4oNwpqE3BZX0fiUdr+3z0Ct8ZPBR8+YRzdaDpFEEhoUnnS1qLqjvUfkSx4ZBJF7nnruMUifXlYBvzKrXJ9L0U4TEwmo6IiyqEQcQvv13r8HvhN4CDCManohqKu/vYvTL3/haCqwknFrNg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=nJGDijpK9LUsO1kap2Z8gN1o0P2OFCu4kMSkCOhLMJw=;
- b=qGpT8pDPTmtrAJjt5KkXmI5Ws6DW+/CjXPnN3mtu76R2FChs2mqe/L3uxrrWBT2NW0zfv8E4ijK9zn6Vt6UGY8Qs7IVUBonibJ+46twYtbqNPlEqZ1+PhgMKfPdVrysO6ie+3D/OZ+tyB6xWwNZr0aVIowWQefrajnZaVss3wANw9Gihq/zA5vdK+gTJ6qiFZmU10QNwjj+inM4a5YvuKG1+lRrclYyeqoGhavEJ1j98zrcj2MyUvsGH6doP/MdjHpGZsjlC3ECHtMudefE55tOAMR6FzYrzhJBLoqmkTa1IqbH+MTEwYwWIJ84PFg8I2gxbxDKxg6PUMe0oQYqeXw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oppo.com; dmarc=pass action=none header.from=oppo.com;
- dkim=pass header.d=oppo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oppo.com; s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=nJGDijpK9LUsO1kap2Z8gN1o0P2OFCu4kMSkCOhLMJw=;
- b=HGrXqUlkQFCKqDPc3vdsj9f+o9V4bBvCRy0+/kL0nwyjU9dil1Xu68lZIaIShChc3VubB4HKJT1gpaGo6X3dPyWAAMG5n36AxrbhjWvKe25hYga5gpL8uwUDYgMGk4rSqKaj3QbkjO11q2+1WH3eJgUz5gG1u/FytEg1nXOFNXc=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=oppo.com;
-Received: from TYSPR02MB7970.apcprd02.prod.outlook.com (2603:1096:405:91::6)
- by SEYPR02MB5631.apcprd02.prod.outlook.com (2603:1096:101:58::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8655.16; Wed, 16 Apr
- 2025 09:45:51 +0000
-Received: from TYSPR02MB7970.apcprd02.prod.outlook.com
- ([fe80::e36:2f4b:2770:2106]) by TYSPR02MB7970.apcprd02.prod.outlook.com
- ([fe80::e36:2f4b:2770:2106%3]) with mapi id 15.20.8655.018; Wed, 16 Apr 2025
- 09:45:48 +0000
-From: LongPing Wei <weilongping@oppo.com>
-To: snitzer@kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	guoweichao@oppo.com,
-	LongPing Wei <weilongping@oppo.com>
-Subject: [PATCH] dm-bufio: skip cond_resched when no_sleep is enabled
-Date: Wed, 16 Apr 2025 17:45:13 +0800
-Message-Id: <20250416094512.3561667-1-weilongping@oppo.com>
-X-Mailer: git-send-email 2.34.1
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: TYCPR01CA0125.jpnprd01.prod.outlook.com
- (2603:1096:400:26d::7) To TYSPR02MB7970.apcprd02.prod.outlook.com
- (2603:1096:405:91::6)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U2Z/F9Et"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1744806190;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5+95kStl2BNlED8Hin7xB1+gkS6ToMqarNmefKmS1C8=;
+	b=U2Z/F9Et+07iv/RvaAc+Uw6FydMxLO8X/2j5N/+PYSaY4ZJZMMeCWLwS8yxX5pUuJ/Bfur
+	y8bCQwnmvHgepMKuYGXEe9nKf0jfLGcZJeUIxTzgWpsdQigTKrjVtOXqAG1zEw9TVNBUyS
+	OhbLbiDVghwTZNPEAZ8/ZIy3W4SiWLU=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-343-PSZ2yjHyNQ2m7Q0TR286ww-1; Wed,
+ 16 Apr 2025 08:23:06 -0400
+X-MC-Unique: PSZ2yjHyNQ2m7Q0TR286ww-1
+X-Mimecast-MFC-AGG-ID: PSZ2yjHyNQ2m7Q0TR286ww_1744806185
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8D73518004A7;
+	Wed, 16 Apr 2025 12:23:05 +0000 (UTC)
+Received: from [10.22.80.44] (unknown [10.22.80.44])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C93C180045B;
+	Wed, 16 Apr 2025 12:23:03 +0000 (UTC)
+Date: Wed, 16 Apr 2025 14:22:59 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: LongPing Wei <weilongping@oppo.com>
+cc: snitzer@kernel.org, dm-devel@lists.linux.dev, guoweichao@oppo.com
+Subject: Re: [PATCH] dm-bufio: skip cond_resched when no_sleep is enabled
+In-Reply-To: <20250416094512.3561667-1-weilongping@oppo.com>
+Message-ID: <16733109-69f6-e347-e1af-02af6223ca8d@redhat.com>
+References: <20250416094512.3561667-1-weilongping@oppo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: TYSPR02MB7970:EE_|SEYPR02MB5631:EE_
-X-MS-Office365-Filtering-Correlation-Id: 83679767-5873-4c86-c1ab-08dd7ccb77c5
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|1800799024|52116014|366016|376014|38350700014;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?pRqrH3BWcCxOaAWg7eU64nbaLc5HVIafvPaBG4Y19gfMkZSVa/Qm/ni31ZCV?=
- =?us-ascii?Q?gtNIb6oHPM4OGJ64XrW12iqMlf9ie+uO1/Tt9GGsk4StMDiVR4SBcrV5zhP6?=
- =?us-ascii?Q?IjS8xgtmoURJDjqiGBCkRhwBSVOyO00ZQqFP1Jtfr1kPVPxpcrRXLCAnpm24?=
- =?us-ascii?Q?DTeQv1SuDpHnQmnrh0szJHK/AXndc5MFk/1nAz0x70KH6JBkIHwSWW2u0N5K?=
- =?us-ascii?Q?HwUgP/rjy2Pvfny6DWMgxh7N/lqvNLeS8Ub+uEX3om2U8zTEh6VjYzZxYSml?=
- =?us-ascii?Q?eSAqTSRH7LGu0wGzvxYXr2T1Nlg9Oc0KgyOWdo21c0i5rwMUI/MT6Q5fHvr8?=
- =?us-ascii?Q?dooO96EiYf56tzDBlPnuqhkP2ty1ufVmsQRkzGQwXG5XKc8jQwcz9AyP8crE?=
- =?us-ascii?Q?B0ztGtJNzNR6zNmTaWsTEb3upR0gr1W0l1gj9YNUG44GYHcif/Q4cV27BhwE?=
- =?us-ascii?Q?cuyfUW6j6341IB2uXB6jji532O8d2dR1xkJQOFwK6jNbT0LoakbKHz7Arz9l?=
- =?us-ascii?Q?zULtYiAlPL+lSJQC3flIzsl4QM1yOBQ0e4tRIemsVrSgE9hk7JgZ86WRyXWi?=
- =?us-ascii?Q?C4tQcZkIt4/hbPG54NvP3UFZT8+xsmX2IiCTxyilgs21y5AG6qlx5aKRCq2t?=
- =?us-ascii?Q?lMXyZNwatTD+BdIWA3m9WBb4pjkaNYUY1JOVa5fmlvytY6M64uccqP05KAtZ?=
- =?us-ascii?Q?UBgsd0mAeNzCaiyjLC1H0/FtAARfB/CU4VwbT4Iptb6lBVfnkXOMytd3TVwt?=
- =?us-ascii?Q?VG8o4goxMT+J/MqC0Wsvin+KUryoKYMvUEfyFxgqnOYvxx/eRUtBfsuhp+mK?=
- =?us-ascii?Q?S4cdbGvwtGPsQz+PIYGfXDL4FoPRZwCTWMVayf06w4no9tBKuC/RjbV//33/?=
- =?us-ascii?Q?fFCBlKj9PHXLkfNXHONOGGEd/VxHp9EDH2Q5tXUAl3A7CjFVgI5+MoAaIHPe?=
- =?us-ascii?Q?S4xrlse0xaudfQB4eCGSHJh5nvLdjEdyG3//vjjujSXfP2bwu3hF8bvuztAm?=
- =?us-ascii?Q?8norDF5SRJmgrkiQBeo8W3sffToYaTat+QWLaFGiiPpoliIm+Z2wHY+HvdOO?=
- =?us-ascii?Q?XB/M5LIpMMUJHVwRwV5vh71gIn94FdxkCjNdvsYH7HzZvTrqi0TnmnLBEWVp?=
- =?us-ascii?Q?AsUDVRzm8GPgLY4hvbNujXScc1BAngzhEWxdXNyqT5H65yoJ0BnKweC51AAq?=
- =?us-ascii?Q?tmrPg7n0iO8ED/WDmZBBtJASb8PPVx5moJiLmZDAFTOG1RcN906L2vWnIwtO?=
- =?us-ascii?Q?2wFQfwcNfCdGKLNdK9LOFv+OiQj9njdW3SCA4/QMxfyFcuU37n9ymhJ21ofW?=
- =?us-ascii?Q?WZ0MwdW/D1Nx9Cl/Qr8jYWZ2fYub426AlES9FJm50x/IghmnSbBiTIhyysdV?=
- =?us-ascii?Q?8UnxfXDpxeck+OmC5hb7i13l2JZ/vIVfrNNDxQzbugjZghDyW9L/Cf0RNpiE?=
- =?us-ascii?Q?ODcLnKzI6epeg38siqcERrCUMioStWDaGziuv6U3OxFbz0+76SZGDg=3D=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:TYSPR02MB7970.apcprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(52116014)(366016)(376014)(38350700014);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?aY56ijU2wYuETPhjdaXIYStThRUdL+Erqp8A9GLfihjWeeB803y0cRD6KhVN?=
- =?us-ascii?Q?wHUWVLCJb+OnqTPO6N3pgPk48qvx4DlGsxvrG7PKdqNjpmXFlfcTta8BsQvu?=
- =?us-ascii?Q?6CFUd0NVt000aHhIvvm0GgsWIkR37EJkQmNeZzNKts6nUDw0Jey1bLGAk3jo?=
- =?us-ascii?Q?EdSEiDafzWPbd1lymr4S7WnMazoHWTFkBMagKdDM9qe6h1itjZ0VNmBA0xW6?=
- =?us-ascii?Q?i+itogL1BVuM80XWYymcD7KNaGDk1JvCGCWnzMRnZ5kAlCR/WWNI3d6gGL0L?=
- =?us-ascii?Q?/7C4mMvY94a6Fxn/PcsFM6nAFPDdToGWJUgh8C1BqEiUbgHkWHSejjKAT9vP?=
- =?us-ascii?Q?EDRmNH98c+D8u7dXGLHok210/59KxR2vVGpxpbRzkeH6p5j/5kmztgsdi2ii?=
- =?us-ascii?Q?ueOSfYa7Re4+Xp8mXxHIsGcwAofYlfKD8f2AmZOP0W+9sG1ZqegqE5uJO6uU?=
- =?us-ascii?Q?tioY/FNPxHt2W9n0e2VB3ddUI+15xJ2N9Fhfio42I7ue8W0p7qsLOTh2vPBX?=
- =?us-ascii?Q?W2KDDnEBntV3dLrv4dgdbKQMin0LJjcPvXfNp5XXUQsb/rUsQS2b4CFi/oe8?=
- =?us-ascii?Q?fM6ZGSuQMPgwoQlhoiX5VOtbso3NSl9wbkVWeD5C2cXCsdKXrG7gjRnWwqUa?=
- =?us-ascii?Q?h4T/JC7cXJWEmsC3auSU33f3ro5D8TMlqttWJV6wg1a0g3Rlfh5XU41ca43K?=
- =?us-ascii?Q?c535cqxTFdBqnrcYTqibqeKhg1yNIyYYSdOugPXoIaKRBUoC5Y2rMuWGKHQX?=
- =?us-ascii?Q?bjTCrFLbPkoU0uAM3r0WnLQF4LgtoYjYtpoz1REwx4csYncm/My7NkcQNnBM?=
- =?us-ascii?Q?uvnaUmZyash6BbqWfQGgyTaEhDhhZA4Neh5eukbGeYkXnUBxfaKoaY6u0AT7?=
- =?us-ascii?Q?870CXFLOLfaw14QRvc5I8cLGjLFQdDQQ721wHF0IfHwGh7/OQ29kNraFWhhD?=
- =?us-ascii?Q?Gfc5RRh2qc0wIQzs+S8r6Mxj5iIW1fIYpXXId3RnipzQppBgr2wH3dhjT0aQ?=
- =?us-ascii?Q?WmdvvSbnhsoP7zfb5IOJFhvzWlQNGZPbIVsxWRVhakQj5hPVyBMkqig+kPTy?=
- =?us-ascii?Q?3AZDWg7/zqSYlEcd6K2Ht4lrRZ7vC6E8zgJGV4mG1M6QlgBUwQ8i7nM7fzji?=
- =?us-ascii?Q?qskBY2uwtooMqIQogRvzdTydrYpDUwM1Jt6sX2e4l/4404mbXadNoiyI5Mpn?=
- =?us-ascii?Q?LecaIJ32KItonaMWKoUv+/bEuRwztXA3NxKprPMIygVaoG59jf0smhhQQXzH?=
- =?us-ascii?Q?6BhL1YKHEkgHf+xBgQDKT8FBjv81CD3h46eTp75WUPwD0Q20bEoGVY0bOsTK?=
- =?us-ascii?Q?IobsWZXAKz21cSRQ3M+C3cpziWQpvmtbwcZwR7y2Zv94//H2jXxMAVQ+Zdzj?=
- =?us-ascii?Q?PKhTZz9xs+DA3MfttX94MzYBiR3ZUHcfkvNZt2ICLhYhRfehdp8lAGfHB0Xv?=
- =?us-ascii?Q?tp+Y5SSHZqhUnuGdxnwX50iQWEP7dpjUW+XpR3ijwL3Jxk8fnWmCEoXocGjI?=
- =?us-ascii?Q?TH+L2f3i7u5HlBJx2ZxMYKd3NKfmTnwHc0yrPL7z4wQ26S8YYXv2WSZMyIjZ?=
- =?us-ascii?Q?ikvAYKQ/Do8M2gAQFKwAdpgbhgjod9zxttUJCHe5?=
-X-OriginatorOrg: oppo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 83679767-5873-4c86-c1ab-08dd7ccb77c5
-X-MS-Exchange-CrossTenant-AuthSource: TYSPR02MB7970.apcprd02.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 16 Apr 2025 09:45:48.9462
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: f1905eb1-c353-41c5-9516-62b4a54b5ee6
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 4qsXoFbCwbZc5yZCIh5N/PKFEZJS4CTrWZDL5Dc2FdyA5J2MlTsuT21hD3hVVkWPMTmJ6HTLIr4dx8vONciU/A==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SEYPR02MB5631
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: YShv_cKfUXS3X6Ye3L162aA0T2sCqxlJ1OdijHYewZc_1744806185
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
+
+
+
+On Wed, 16 Apr 2025, LongPing Wei wrote:
+
+> A BUG was reported as below when CONFIG_DEBUG_ATOMIC_SLEEP and
+> try_verify_in_tasklet are enabled.
+> 
+> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+> index 9c8ed65cd87e..bdbd79e76f96 100644
+> --- a/drivers/md/dm-bufio.c
+> +++ b/drivers/md/dm-bufio.c
+> @@ -2424,6 +2424,10 @@ static void __scan(struct dm_bufio_client *c)
+>  
+>  			atomic_long_dec(&c->need_shrink);
+>  			freed++;
+> +
+> +			if (static_branch_unlikely(&no_sleep_enabled) && c->no_sleep)
+> +				continue;
+> +
+>  			cond_resched();
+>  		}
+>  	}
+> -- 
+> 2.34.1
+
+Hi
+
+Thanks for the bug report. I think it is not a good practice in general to 
+hold a spinlock and loop over a list of unbounded size. So, I modified 
+your patch so that it drops the lock after every 16 iterations and calls 
+cond_resched() with the lock dropped.
+
+Please, test this patch and report whether it works for you.
+
+Mikulas
+
+
+[PATCH] dm-bufio: don't schedule in atomic context
 
 A BUG was reported as below when CONFIG_DEBUG_ATOMIC_SLEEP and
 try_verify_in_tasklet are enabled.
@@ -179,27 +142,29 @@ try_verify_in_tasklet are enabled.
 dm_bufio_lock will call spin_lock_bh when try_verify_in_tasklet
 is enabled, and __scan will be called in atomic context.
 
-Fixes: 7cd326747f46 ("dm bufio: remove dm_bufio_cond_resched()")
 Signed-off-by: LongPing Wei <weilongping@oppo.com>
----
- drivers/md/dm-bufio.c | 4 ++++
- 1 file changed, 4 insertions(+)
+Cc: stable@vger.kernel.org
 
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 9c8ed65cd87e..bdbd79e76f96 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -2424,6 +2424,10 @@ static void __scan(struct dm_bufio_client *c)
+---
+ drivers/md/dm-bufio.c |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2025-04-14 16:01:58.000000000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2025-04-16 14:18:44.000000000 +0200
+@@ -2424,7 +2424,12 @@ static void __scan(struct dm_bufio_clien
  
  			atomic_long_dec(&c->need_shrink);
  			freed++;
+-			cond_resched();
 +
-+			if (static_branch_unlikely(&no_sleep_enabled) && c->no_sleep)
-+				continue;
-+
- 			cond_resched();
++			if (!(freed & 15)) {
++				dm_bufio_unlock(c);
++				cond_resched();
++				dm_bufio_lock(c);
++			}
  		}
  	}
--- 
-2.34.1
+ }
 
