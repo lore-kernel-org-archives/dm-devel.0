@@ -1,334 +1,251 @@
-Received: from mail-108-mta6.mxroute.com (mail-108-mta6.mxroute.com [136.175.108.6])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 972F8136E
-	for <dm-devel@lists.linux.dev>; Sat, 19 Apr 2025 05:08:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=136.175.108.6
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2887A1B6D01
+	for <dm-devel@lists.linux.dev>; Sat, 19 Apr 2025 08:46:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745039334; cv=none; b=F9ZTDl3qOfMBwytZuKyFh7XoSbK0A5rYkurRxAVBdS/fw1wbBgYhNtkH5aM6KafqBa6Uy5YZ2+D01EzLLbgOy+ZFNy0/krmcvbfaC7aKGDh//mWR8p149Pzx4PbxG6daTq8z+Twq/y0QAi5KabrYBZPDIwG5Xwl3WnHhpb0+UNw=
+	t=1745052376; cv=none; b=gt9dvX8yyCEBVYClYymYEjBth5CN0f9Xr0V5e4JacZr0mOnNb2AzZFHFNbAH7LuOvaemAmrFRh05JCLYYmdJKJbpEfEUKPAEGvD6/FfTsJE7o+uB3UL8/VKmfl8Kl1T5k0L0nNSnYhHiwt1m6mRUlCfNihvN7QhN0EtpmqtAL9U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745039334; c=relaxed/simple;
-	bh=A3tNZDJcm4cvUZ1O6Z65DWR1sO9mHY36lteyQLaE/lA=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=nRv5hfXUsXQZzonQPSE5GoImkhvXh0WifxzeRsh+M5w3lyx3YHzngIH6FVrEHM1WxjN4Kj5KiipGpW/6G8RyqSDKWN+Xes4/77pxf03TIaTQjnk6UmrsEDH1Va88R3KMx87EUT83zfNlbA12Y77Ojwx8VpgajYfZIhA0ofT3KYo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=damenly.org; spf=pass smtp.mailfrom=damenly.org; dkim=pass (2048-bit key) header.d=damenly.org header.i=@damenly.org header.b=and5crRP; arc=none smtp.client-ip=136.175.108.6
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=damenly.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=damenly.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=damenly.org header.i=@damenly.org header.b="and5crRP"
-Received: from filter006.mxroute.com ([136.175.111.3] filter006.mxroute.com)
- (Authenticated sender: mN4UYu2MZsgR)
- by mail-108-mta6.mxroute.com (ZoneMTA) with ESMTPSA id 1964c6e573a0008631.00d
- for <dm-devel@lists.linux.dev>
- (version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384);
- Sat, 19 Apr 2025 05:03:41 +0000
-X-Zone-Loop: 57a17436cce0eabd6b8f24675d5ad4ba505ad036d65f
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=damenly.org
-	; s=x; h=Content-Transfer-Encoding:Content-Type:MIME-Version:Date:References:
-	In-Reply-To:Subject:Cc:To:From:Sender:Reply-To:Content-ID:Content-Description
-	:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
-	List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:
-	List-Archive; bh=A3tNZDJcm4cvUZ1O6Z65DWR1sO9mHY36lteyQLaE/lA=; b=and5crRPKsy5
-	ISMG2TLM1BCRd+KfGFvOKgdQj35qEkMIMLYn8f/7xD82uv4mrbO6wqPNgdBy9amGDHpdhaaHld1mb
-	9Q3wAsgvJwhlq7pwBJ8appZxljHWs+ZsfOggU5iPkEoNe3G9JMgMyHYPNB0sGb2FwfFxepQQYQ1js
-	zUe+mQsCWkjbdJD509ccLoi7RgwEUCk2JrvBcM+TiA3MQ4E3cxkt2g/cIYczo78o9ncn27ECtiEUp
-	17bIs3JLmMf3+HKzDeRkvwIVNSLmBMCPodOaiGZpx+yuEcV7vBfwZ18pwpsH9LERDP2FieJBamo9a
-	epx9MnVIPIGc1JXq6UeDQQ==;
-From: Su Yue <l@damenly.org>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk,  xni@redhat.com,  agk@redhat.com,  snitzer@kernel.org,
-  mpatocka@redhat.com,  song@kernel.org,  viro@zeniv.linux.org.uk,
-  akpm@linux-foundation.org,  nadav.amit@gmail.com,  ubizjak@gmail.com,
-  cl@linux.com,  linux-block@vger.kernel.org,
-  linux-kernel@vger.kernel.org,  dm-devel@lists.linux.dev,
-  linux-raid@vger.kernel.org,  yi.zhang@huawei.com,  yangerkun@huawei.com,
-  johnny.chenyi@huawei.com,  "yukuai (C)" <yukuai3@huawei.com>
-Subject: Re: [PATCH v2 4/5] md: fix is_mddev_idle()
-In-Reply-To: <e5ec218e-dcab-ff8c-f455-d8fc6943a6e7@huaweicloud.com> (Yu Kuai's
-	message of "Sat, 19 Apr 2025 10:00:16 +0800")
-References: <20250418010941.667138-1-yukuai1@huaweicloud.com>
-	<20250418010941.667138-5-yukuai1@huaweicloud.com>
-	<v7r19baz.fsf@damenly.org>
-	<e5ec218e-dcab-ff8c-f455-d8fc6943a6e7@huaweicloud.com>
-User-Agent: mu4e 1.12.7; emacs 30.1
-Date: Sat, 19 Apr 2025 13:03:16 +0800
-Message-ID: <plh8agkr.fsf@damenly.org>
+	s=arc-20240116; t=1745052376; c=relaxed/simple;
+	bh=sKecEVGccN2Gsv7wSldTED5rOsVAxlOK2KmQYKt+9Vo=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=SOBs26CIV5zmWwaALidi3MBKT8bvgNYyhxi7zxAe8E+ABYOOV9rh4dgv3Gn9LUQ8ydNv5XyX+0r0t5SqSIpWa0cMRszUPQP0gCI+s8tDMbuOKwQSifSyvSyA243wue4/vhz6h0Kc6napxt43g9pLaVs+aCUWRqI6KwPwJ7qYitM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZflZz1vjqz4f3jtJ
+	for <dm-devel@lists.linux.dev>; Sat, 19 Apr 2025 16:45:47 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id B66231A1A43
+	for <dm-devel@lists.linux.dev>; Sat, 19 Apr 2025 16:46:05 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgBXu1_LYgNo_N23Jw--.38949S3;
+	Sat, 19 Apr 2025 16:46:05 +0800 (CST)
+Subject: Re: [PATCH RFC v2 00/14] md: introduce a new lockless bitmap
+To: Yu Kuai <yukuai1@huaweicloud.com>, Christoph Hellwig <hch@lst.de>
+Cc: xni@redhat.com, colyli@kernel.org, axboe@kernel.dk, agk@redhat.com,
+ snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, kbusch@kernel.org, "yukuai (C)" <yukuai3@huawei.com>
+References: <20250328060853.4124527-1-yukuai1@huaweicloud.com>
+ <Z-aCzTWXzFWe4oxU@infradead.org>
+ <c6c608e2-23e7-486f-100a-d1fb6cfff4f2@huaweicloud.com>
+ <20250409083208.GA2326@lst.de>
+ <115c3b08-aff1-dd97-fe6a-7901452ce62c@huaweicloud.com>
+ <20250409094019.GA3890@lst.de>
+ <28bb1c35-5f75-4e1c-4b5d-32bcb87050ce@huaweicloud.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <54ab4291-9152-44d1-bf6c-675b58cfcea8@huaweicloud.com>
+Date: Sat, 19 Apr 2025 16:46:03 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-X-Authenticated-Id: l@damenly.org
+In-Reply-To: <28bb1c35-5f75-4e1c-4b5d-32bcb87050ce@huaweicloud.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgBXu1_LYgNo_N23Jw--.38949S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxWr43AF43Aw1UKryDXrW5KFg_yoWrKr18pF
+	W7Xa4jkrs8Jr13Xr18trZrAF1Syrs7JFsrJrWSk34rC3sFyrnxKF1kKFyYkFy5W3ykWF12
+	vrs8Kw43Ar4rZF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUBY14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26F4j
+	6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7V
+	AKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCj
+	r7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6x
+	IIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAI
+	w20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x
+	0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7sRidbbtUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Sat 19 Apr 2025 at 10:00, Yu Kuai <yukuai1@huaweicloud.com>=20
-wrote:
+Hi, Christoph!
 
+在 2025/04/11 9:36, Yu Kuai 写道:
 > Hi,
->
-> =E5=9C=A8 2025/04/19 9:42, Su Yue =E5=86=99=E9=81=93:
->> On Fri 18 Apr 2025 at 09:09, Yu Kuai <yukuai1@huaweicloud.com>=20
->> wrote:
+> 
+> 在 2025/04/09 17:40, Christoph Hellwig 写道:
+>> On Wed, Apr 09, 2025 at 05:27:11PM +0800, Yu Kuai wrote:
+>>>> For that you'd be much better of just creating your own trivial
+>>>> file_system_type with an inode fully controlled by your driver
+>>>> that has a trivial set of address_space ops instead of oddly
+>>>> mixing with the block layer.
+>>>
+>>> Yes, this is exactly what I said implement a new file_operations(and
+>>> address_space ops), I wanted do this the easy way, just reuse the raw
+>>> block device ops, this way I just need to implement the submit_bio ops
+>>> for new hidden disk.
+>>>
+>>> I can try with new fs type if we really think this solution is too
+>>> hacky, however, the code line will be much more. :(
 >>
->>> From: Yu Kuai <yukuai3@huawei.com>
+>> I don't think it should be much more.  It'll also remove the rather
+>> unexpected indirection through submit_bio.  Just make sure you use
+>> iomap for your operations, and implement the submit_io hook.  That
+>> will also be more efficient than the buffer_head based block ops
+>> for writes.
+>>
+>>>>
+>>>> Note that either way I'm not sure using the page cache here is an
+>>>> all that good idea, as we're at the bottom of the I/O stack and
+>>>> thus memory allocations can very easily deadlock.
 >>>
->>> If sync_speed is above speed_min, then is_mddev_idle() will be=20
->>> called
->>> for each sync IO to check if the array is idle, and inflihgt=20
->>> sync_io
->>> will be limited if the array is not idle.
+>>> Yes, for the page from bitmap, this set do the easy way just read and
+>>> ping all realted pages while loading the bitmap. For two reasons:
 >>>
->>> However, while mkfs.ext4 for a large raid5 array while=20
->>> recovery is in
->>> progress, it's found that sync_speed is already above=20
->>> speed_min while
->>> lots of stripes are used for sync IO, causing long delay for=20
->>> mkfs.ext4.
+>>> 1) We don't need to allocate and read pages from IO path;(In the first
+>>> RFC version, I'm using a worker to do that).
+>>
+>> You still depend on the worker, which will still deadlock.
+>>
+>>>> What speaks against using your own folios explicitly allocated at
+>>>> probe time and then just doing manual submit_bio on that?  That's
+>>>> probably not much more code but a lot more robust.
 >>>
->>> Root cause is the following checking from is_mddev_idle():
->>>
->>> t1: submit sync IO: events1 =3D completed IO - issued sync IO
->>> t2: submit next sync IO: events2=C2=A0 =3D completed IO - issued sync=20
->>> IO
->>> if (events2 - events1 > 64)
->>>
->>> For consequence, the more sync IO issued, the less likely=20
->>> checking will
->>> pass. And when completed normal IO is more than issued sync=20
->>> IO, the
->>> condition will finally pass and is_mddev_idle() will return=20
->>> false,
->>> however, last_events will be updated hence is_mddev_idle() can=20
->>> only
->>> return false once in a while.
->>>
->>> Fix this problem by changing the checking as following:
->>>
->>> 1) mddev doesn't have normal IO completed;
->>> 2) mddev doesn't have normal IO inflight;
->>> 3) if any member disks is partition, and all other partitions=20
->>> doesn't
->>> =C2=A0=C2=A0 have IO completed.
->>>
->>> Signed-off-by: Yu Kuai <yukuai3@huawei.com>
->>> ---
->>> =C2=A0drivers/md/md.c | 84=20
->>> =C2=A0+++++++++++++++++++++++++++----------------------
->>> =C2=A0drivers/md/md.h |=C2=A0 3 +-
->>> =C2=A02 files changed, 48 insertions(+), 39 deletions(-)
->>>
->>> diff --git a/drivers/md/md.c b/drivers/md/md.c
->>> index 52cadfce7e8d..dfd85a5d6112 100644
->>> --- a/drivers/md/md.c
->>> +++ b/drivers/md/md.c
->>> @@ -8625,50 +8625,58 @@ void md_cluster_stop(struct mddev=20
->>> *mddev)
->>> =C2=A0=C2=A0=C2=A0=C2=A0 put_cluster_ops(mddev);
->>> =C2=A0}
->>>
->>> -static int is_mddev_idle(struct mddev *mddev, int init)
->>> +static bool is_rdev_holder_idle(struct md_rdev *rdev, bool=20
->>> init)
->>> =C2=A0{
->>> +=C2=A0=C2=A0=C2=A0 unsigned long last_events =3D rdev->last_events;
->>> +
->>> +=C2=A0=C2=A0=C2=A0 if (!bdev_is_partition(rdev->bdev))
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return true;
->>> +
->>> +=C2=A0=C2=A0=C2=A0 /*
->>> +=C2=A0=C2=A0=C2=A0=C2=A0 * If rdev is partition, and user doesn't issu=
-e IO to the=20
->>> array, the
->>> +=C2=A0=C2=A0=C2=A0=C2=A0 * array is still not idle if user issues IO t=
-o other=20
->>> partitions.
->>> +=C2=A0=C2=A0=C2=A0=C2=A0 */
->>> +=C2=A0=C2=A0=C2=A0 rdev->last_events =3D=20
->>> part_stat_read_accum(rdev->bdev->bd_disk->part0,
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
- sectors) -
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 part_stat_read_accum(rdev->bdev, sectors);
->>> +
->>> +=C2=A0=C2=A0=C2=A0 if (!init && rdev->last_events > last_events)
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return false;
->>> +
->>> +=C2=A0=C2=A0=C2=A0 return true;
->>> +}
->>> +
->>> +/*
->>> + * mddev is idle if following conditions are match since last=20
->>> check:
->>> + * 1) mddev doesn't have normal IO completed;
->>> + * 2) mddev doesn't have inflight normal IO;
->>> + * 3) if any member disk is partition, and other partitions=20
->>> doesn't have IO
->>> + *=C2=A0=C2=A0=C2=A0 completed;
->>> + *
->>> + * Noted this checking rely on IO accounting is enabled.
->>> + */
->>> +static bool is_mddev_idle(struct mddev *mddev, int init)
->>> +{
->>> +=C2=A0=C2=A0=C2=A0 unsigned long last_events =3D mddev->last_events;
->>> +=C2=A0=C2=A0=C2=A0 struct gendisk *disk;
->>> =C2=A0=C2=A0=C2=A0=C2=A0 struct md_rdev *rdev;
->>> -=C2=A0=C2=A0=C2=A0 int idle;
->>> -=C2=A0=C2=A0=C2=A0 int curr_events;
->>> +=C2=A0=C2=A0=C2=A0 bool idle =3D true;
->>>
->>> -=C2=A0=C2=A0=C2=A0 idle =3D 1;
->>> -=C2=A0=C2=A0=C2=A0 rcu_read_lock();
->>> -=C2=A0=C2=A0=C2=A0 rdev_for_each_rcu(rdev, mddev) {
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct gendisk *disk =3D rd=
-ev->bdev->bd_disk;
->>> +=C2=A0=C2=A0=C2=A0 disk =3D mddev_is_dm(mddev) ? mddev->dm_gendisk :=20
->>> mddev->gendisk;
->>> +=C2=A0=C2=A0=C2=A0 if (!disk)
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 return true;
->>>
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!init && !blk_queue_io_=
-stat(disk->queue))
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 con=
-tinue;
->>> +=C2=A0=C2=A0=C2=A0 mddev->last_events =3D part_stat_read_accum(disk->p=
-art0,=20
->>> sectors);
->>> +=C2=A0=C2=A0=C2=A0 if (!init && (mddev->last_events > last_events ||
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0 bdev_count_inflight(disk->part0)))
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 idle =3D false;
->>>
->> Forgot return or goto here?
->
-> No, following still need to be executed to init or update
-> rdev->last_events.k
->
+>>> I'm not quite sure if I understand you correctly. Do you means don't use
+>>> pagecache for bitmap IO, and manually create BIOs like the old bitmap,
+>>> meanwhile invent a new solution for synchronism instead of the global
+>>> spin_lock from old bitmap?
+>>
+>> Yes.  Alternatively you need to pre-populate the page cache and keep
+>> extra page references.
+> 
+> Ok, I'll think about self managed pages and IO path. Meanwhile, please
+> let me know if you have questions with other parts.
 
-Okay, I see. is_rdev_holder_idle does the work.
+So, today I implement a version, and I do admit this way is much
+simpler, turns out total 200 less code lines. And can you check the
+following untested code if you agree with the implementation? I'll
+start to work a new version if you agree.
 
---
-Su
+Thanks,
+Kuai
 
+static int llbitmap_rdev_page_io(struct md_rdev *rdev, struct page *page,
+                                 ┊int idx, bool rw)
+{
+         struct bio bio;
+         int ret;
+
+         bio_init(&bio, rdev->bdev, bio.bi_inline_vecs, BIO_INLINE_VECS,
+                 ┊REQ_SYNC | REQ_IDLE | REQ_META);
+         if (rw)
+                 bio.bi_opf |= REQ_OP_WRITE;
+         else
+                 bio.bi_opf |= REQ_OP_READ;
+
+         __bio_add_page(&bio, page, PAGE_SIZE, 0);
+         bio.bi_iter.bi_size = PAGE_SIZE;
+         bio.bi_iter.bi_sector = rdev->sb_start +
+                                 rdev->mddev->bitmap_info.offset +
+                                 (PAGE_SECTORS << PAGE_SECTORS_SHIFT);
+
+         ret = submit_bio_wait(&bio);
+         bio_uninit(&bio);
+
+         if (ret)
+                 md_error(rdev->mddev, rdev);
+         return ret;
+}
+
+static struct page *llbitmap_read_page(struct llbitmap *llbitmap, int idx)
+{
+         struct page *page = llbitmap->pages[idx];
+         struct mddev *mddev = llbitmap->mddev;
+         struct md_rdev *rdev;
+         int err = -EIO;
+
+         if (page)
+                 return page;
+
+         page = alloc_page(GFP_KERNEL);
+         if (!page)
+                 return ERR_PTR(-ENOMEM);
+
+         rdev_for_each(rdev, mddev) {
+                 if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
+                         continue;
+
+                 err = llbitmap_rdev_page_io(rdev, page, idx, READ);
+                 if (!err)
+                         break;
+         }
+
+         if (err) {
+                 __free_page(page);
+                 return ERR_PTR(err);
+         }
+
+         return page;
+}
+
+static int llbitmap_write_page(struct llbitmap *llbitmap, int idx)
+{
+         struct page *page = llbitmap->pages[idx];
+         struct mddev *mddev = llbitmap->mddev;
+         struct md_rdev *rdev;
+         int err = -EIO;
+
+         if (!page)
+                 return err;
+
+         rdev_for_each(rdev, mddev) {
+                 if (rdev->raid_disk < 0 || test_bit(Faulty, &rdev->flags))
+                         continue;
+
+                 if (!llbitmap_rdev_page_io(rdev, page, idx, WRITE))
+                         err = 0;
+         }
+
+         return err;
+}
+
+static bool llbitmap_dirty(struct llbitmap *llbitmap)
+{
+         int i;
+
+         for (i = 0; i < llbitmap->nr_pages; ++i) {
+                 struct llbitmap_barrier *barrier = &llbitmap->barrier[i];
+
+                 if (test_bit(BitmapPageDirty, &barrier->flags))
+                         return true;
+         }
+
+         return false;
+}
+
+static void llbitmap_flush_dirty_page(struct llbitmap *llbitmap)
+{
+         int i;
+
+         for (i = 0; i < llbitmap->nr_pages; ++i) {
+                 struct llbitmap_barrier *barrier = &llbitmap->barrier[i];
+
+                 if (!test_and_clear_bit(BitmapPageDirty, &barrier->flags))
+                         continue;
+                 llbitmap_write_page(llbitmap, i);
+         }
+}
+
+> 
 > Thanks,
 > Kuai
->
->> -- Su
+> 
 >>
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 curr_events =3D (int)part_s=
-tat_read_accum(disk->part0,=20
->>> sectors) -
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 atomic_read(&disk->sync_io);
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /* sync IO will cause sync_=
-io to increase before the=20
->>> disk_stats
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * as sync_io is count=
-ed when a request starts, and
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * disk_stats is count=
-ed when it completes.
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * So resync activity =
-will cause curr_events to be=20
->>> smaller than
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * when there was no s=
-uch activity.
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * non-sync IO will ca=
-use disk_stat to increase=20
->>> without
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * increasing sync_io =
-so curr_events will=20
->>> (eventually)
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * be larger than it w=
-as before.=C2=A0 Once it becomes
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * substantially large=
-r, the test below will cause
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * the array to appear=
- non-idle, and resync will slow
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * down.
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * If there is a lot o=
-f outstanding resync activity=20
->>> when
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * we set last_event t=
-o curr_events, then all that=20
->>> activity
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * completing might ca=
-use the array to appear=20
->>> non-idle
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * and resync will be =
-slowed down even though there=20
->>> might
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * not have been non-r=
-esync activity.=C2=A0 This will only
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * happen once though.=
-=C2=A0 'last_events' will soon=20
->>> reflect
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * the state where the=
-re is little or no outstanding
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * resync requests, an=
-d further resync activity will
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * always make curr_ev=
-ents less than last_events.
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 *
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 */
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (init || curr_events - r=
-dev->last_events > 64) {
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rde=
-v->last_events =3D curr_events;
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 idl=
-e =3D 0;
->>> -=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 }
->>> -=C2=A0=C2=A0=C2=A0 }
->>> +=C2=A0=C2=A0=C2=A0 rcu_read_lock();
->>> +=C2=A0=C2=A0=C2=A0 rdev_for_each_rcu(rdev, mddev)
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if (!is_rdev_holder_idle(rd=
-ev, init))
->>> +=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 idl=
-e =3D false;
->>> =C2=A0=C2=A0=C2=A0=C2=A0 rcu_read_unlock();
->>> +
->>> =C2=A0=C2=A0=C2=A0=C2=A0 return idle;
->>> =C2=A0}
->>>
->>> diff --git a/drivers/md/md.h b/drivers/md/md.h
->>> index b57842188f18..1d51c2405d3d 100644
->>> --- a/drivers/md/md.h
->>> +++ b/drivers/md/md.h
->>> @@ -132,7 +132,7 @@ struct md_rdev {
->>>
->>> =C2=A0=C2=A0=C2=A0=C2=A0 sector_t sectors;=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 /* Device size (in 512bytes=20
->>> sectors) =C2=A0*/
->>> =C2=A0=C2=A0=C2=A0=C2=A0 struct mddev *mddev;=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 /* RAID array if running */
->>> -=C2=A0=C2=A0=C2=A0 int last_events;=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0 /* IO event timestamp */
->>> +=C2=A0=C2=A0=C2=A0 unsigned long last_events;=C2=A0=C2=A0=C2=A0 /* IO =
-event timestamp */
->>>
->>> =C2=A0=C2=A0=C2=A0=C2=A0 /*
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * If meta_bdev is non-NULL, it means tha=
-t a separate=20
->>> device =C2=A0is
->>> @@ -520,6 +520,7 @@ struct mddev {
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 * adding a spare
->>> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 */
->>>
->>> +=C2=A0=C2=A0=C2=A0 unsigned long=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 last_events;=C2=A0=C2=A0=C2=A0 /* IO event=20
->>> timestamp */
->>> =C2=A0=C2=A0=C2=A0=C2=A0 atomic_t=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 recovery_active; /* blocks scheduled,=20
->>> but =C2=A0not
->>> written */
->>> =C2=A0=C2=A0=C2=A0=C2=A0 wait_queue_head_t=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 recovery_wait;
->>> =C2=A0=C2=A0=C2=A0=C2=A0 sector_t=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 recovery_cp;
 >> .
 >>
+> 
+> .
+> 
+
