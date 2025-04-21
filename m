@@ -1,102 +1,144 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 400A4264624;
-	Mon, 21 Apr 2025 12:00:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A47C9258CFD
+	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 13:14:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745236808; cv=none; b=f4KUYsPGvjFYq7Iszrzra+rVExufRmNwfcVuXGTnwTkB+Dvr3U1KC35nHlZmRkFQIIdhNG9945sinNOc/5EO7cigG06nR7/T1hk48X/SyyFtpR+xdQ39r39ppWsCoEeZap9GiT8ZmH5zyyA67TKvVixw6VOeubyzoAET9gypQBs=
+	t=1745241247; cv=none; b=TjDtrirnfPpsowSwyjfwiVeqFWyqD3LdW/vBqRONtwUjhZYWGipZiwDP1wppElSIICUioNQuQ890T04C+yz2JUUhF1zEcviRzyUnUYwxycbWRD+JKsWcfDepSrqGEqNf66x/4XHiEpOfdyKMlLJMHJIT43euD7tM59cUXwFXPMo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745236808; c=relaxed/simple;
-	bh=CzHQBIEgY5H8jlzmoQRh9h6aCBHyrFdLlDjnHcZx2ow=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HR4G6j/U8bKpnudfg5TJah3yVGQCrbYjWY8N6xd6Rtrn5/SNGz/mMDcAhEdU8zNC6Php0VK1zR+r+vZdOWZuir4kYQ4E9DZUPIkLgrjDMpUvB3eqq1d5s2qMKJpXzso5oP8g71EW04Cg+cUDayXOe9oL8lJ4k7fTb3v4JQMyNBY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=2skvae9h; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="2skvae9h"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=IXi712kwKHh2MZzmtEd2555xtxCOXdWziL8U8Y8S3gY=; b=2skvae9hTmNxd34o4WDlXLoFTY
-	yxjo6ALjtgU3qyLRbK7EkhNcafN9cnJbkdBy21PH2WFNR+N/sIIpJyt4cSDx1nlmo2+l/HgpcDAy5
-	ZL4I7cwKJTPxCzaIs3gUGhDaWq64X+GAG1RzXSbglfSMnp49oFc48JMWo7CRKTmlTI5oyAIfosfy4
-	WGygiXCJHOUHPT1LJWm9Fx2YCZyYbBxRd9FZBmeIQTmKssfNLa0Mo6KkLNMAAHzw0yMbO/zIOZadU
-	7Y55NlRLPQfpCjYlo31EGJ9RWSlpzdna9gq6kC0kX6yLroKWvfUe9ByKPgyLGKTgEkGT5D4e03+XA
-	VDuGgTRw==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1u6pob-00000004EW8-1FBN;
-	Mon, 21 Apr 2025 11:59:57 +0000
-Date: Mon, 21 Apr 2025 04:59:57 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk, xni@redhat.com, agk@redhat.com, snitzer@kernel.org,
-	mpatocka@redhat.com, song@kernel.org, yukuai3@huawei.com,
-	viro@zeniv.linux.org.uk, akpm@linux-foundation.org,
-	nadav.amit@gmail.com, ubizjak@gmail.com, cl@linux.com,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-	yi.zhang@huawei.com, yangerkun@huawei.com, johnny.chenyi@huawei.com
+	s=arc-20240116; t=1745241247; c=relaxed/simple;
+	bh=IdQbmGzuuQ6dFSsgC24zxtxhDHuKqzcmqcVagXyTWp0=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=S83tyb8E4FDbHsNe40ANce5wyuj75Ez0JKGsvDSBi6oQnk8/sHQv9nyS2+wshrUHkNyo+Y/GEVop6e3D8K6ll8u5XKqCtGh62cJAfuj7UfNaOzvK+2pRzoOO5W+ZNFwQGFWOIeIxab7vlwXJxFhjAEMZ8xc18cl2cBUoTpS3pdk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Zh5R920kfz4f3jq5
+	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 21:13:41 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id D014F1A169C
+	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 21:13:59 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgAXe1+VRAZoJ06RKA--.64775S3;
+	Mon, 21 Apr 2025 21:13:59 +0800 (CST)
 Subject: Re: [PATCH v2 1/5] block: cleanup and export bdev IO inflight APIs
-Message-ID: <aAYzPYGR_eF7qveO@infradead.org>
+To: Christoph Hellwig <hch@infradead.org>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: axboe@kernel.dk, xni@redhat.com, agk@redhat.com, snitzer@kernel.org,
+ mpatocka@redhat.com, song@kernel.org, viro@zeniv.linux.org.uk,
+ akpm@linux-foundation.org, nadav.amit@gmail.com, ubizjak@gmail.com,
+ cl@linux.com, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, johnny.chenyi@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
 References: <20250418010941.667138-1-yukuai1@huaweicloud.com>
  <20250418010941.667138-2-yukuai1@huaweicloud.com>
+ <aAYzPYGR_eF7qveO@infradead.org>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <f01cb2d7-d69c-1565-d3e4-09c4b70856f6@huaweicloud.com>
+Date: Mon, 21 Apr 2025 21:13:57 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250418010941.667138-2-yukuai1@huaweicloud.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <aAYzPYGR_eF7qveO@infradead.org>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgAXe1+VRAZoJ06RKA--.64775S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7KFWrtrW5Xw1rXF1UAryfCrg_yoW8KrW5pF
+	4UKa98trWDGr1xur1Iqws7ZFySyws8GryS9r1Sy3sI9r1DJr1fur4xtrsrCF4xtrZ2kFnr
+	u3WYyFyxuFsYy3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x
+	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
+	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcV
+	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
+	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
+	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0pRHUDLUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Fri, Apr 18, 2025 at 09:09:37AM +0800, Yu Kuai wrote:
-> - remove unused blk_mq_in_flight
+Hi,
 
-That should probably be a separate patch.
+ÔÚ 2025/04/21 19:59, Christoph Hellwig Ð´µÀ:
+> On Fri, Apr 18, 2025 at 09:09:37AM +0800, Yu Kuai wrote:
+>> - remove unused blk_mq_in_flight
+> 
+> That should probably be a separate patch.
+ok
 
-> - rename blk_mq_in_flight_rw to blk_mq_count_in_driver_rw, to distinguish
->   from bdev_count_inflight_rw.
+> 
+>> - rename blk_mq_in_flight_rw to blk_mq_count_in_driver_rw, to distinguish
+>>    from bdev_count_inflight_rw.
+> 
+> I'm not sure why this is needed or related, or even what additional
+> distinction is added here.
 
-I'm not sure why this is needed or related, or even what additional
-distinction is added here.
+Because for rq-based device, there are two different stage,
+blk_account_io_start() while allocating new rq, and
+blk_mq_start_request() while issuing the rq to driver.
 
-> -
-> -void blk_mq_in_flight_rw(struct request_queue *q, struct block_device *part,
-> -		unsigned int inflight[2])
-> +void blk_mq_count_in_driver_rw(struct request_queue *q,
-> +			       struct block_device *part,
-> +			       unsigned int inflight[2])
+When will we think the reqeust is inflight? For iostat, my anser is the
+former one, because rq->start_time_ns is set here as well. And noted in
+iostats api diskstats_show£¨/proc/diskstats) and part_stat_show
+(/sys/block/sda/stat), inflight is get by part_in_flight, which is
+different from disk sysfs api(/sys/block/sda/inflight).
 
-Any reason to move away from two tab indents for the prototype
-continuations in various places in this patch?
+> 
+>> -
+>> -void blk_mq_in_flight_rw(struct request_queue *q, struct block_device *part,
+>> -		unsigned int inflight[2])
+>> +void blk_mq_count_in_driver_rw(struct request_queue *q,
+>> +			       struct block_device *part,
+>> +			       unsigned int inflight[2])
+> 
+> Any reason to move away from two tab indents for the prototype
+> continuations in various places in this patch?
+> 
+>> + * Noted, for rq-based block device, use blk_mq_count_in_driver_rw() to get the
+>> + * number of requests issued to driver.
+> 
+> I'd just change this helper to call blk_mq_count_in_driver_rw for
+> blk-mq devices and remove the conditional from the sysfs code instead.
+> That gives us a much more robust and easier to understand API.
 
-> + * Noted, for rq-based block device, use blk_mq_count_in_driver_rw() to get the
-> + * number of requests issued to driver.
+Ok, and another separate patch, right?
+> 
+>> +void bdev_count_inflight_rw(struct block_device *bdev, unsigned int inflight[2]);
+> 
+> Overly long line.
+> 
+>> +static inline unsigned int bdev_count_inflight(struct block_device *bdev)
+>> +{
+>> +	unsigned int inflight[2];
+>> +
+>> +	bdev_count_inflight_rw(bdev, inflight);
+>> +
+>> +	return inflight[0] + inflight[1];
+>> +}
+>>   #endif /* _LINUX_PART_STAT_H */
+> 
+> Maybe keep this inside of block as it should not not be used by
+> drivers?  Also the reimplementation should probably be a separate
+> patch from the public API change and exporting.
 
-I'd just change this helper to call blk_mq_count_in_driver_rw for
-blk-mq devices and remove the conditional from the sysfs code instead.
-That gives us a much more robust and easier to understand API.
+ok, and I should probably send the first set just related to this patch
+first.
 
-> +void bdev_count_inflight_rw(struct block_device *bdev, unsigned int inflight[2]);
+Thanks,
+Kuai
 
-Overly long line.
-
-> +static inline unsigned int bdev_count_inflight(struct block_device *bdev)
-> +{
-> +	unsigned int inflight[2];
-> +
-> +	bdev_count_inflight_rw(bdev, inflight);
-> +
-> +	return inflight[0] + inflight[1];
-> +}
->  #endif /* _LINUX_PART_STAT_H */
-
-Maybe keep this inside of block as it should not not be used by
-drivers?  Also the reimplementation should probably be a separate
-patch from the public API change and exporting.
+> 
+> .
+> 
 
