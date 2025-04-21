@@ -1,109 +1,53 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C10F025A326
-	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 02:25:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58B7A3D81
+	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 07:39:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745202341; cv=none; b=SMM7myblPIKpgH2Io5eYANwYYJ4vV+ddty9dhgWauaoB6j24gfBU2SMci/cEPYlOSn5KLuUt3Up4tlKuaG2vTqGIYgn7n7Cu43mwbxFhhSTm8FnLIl+/aCknkb205W9mPW7NyNUd0rbxdZXzcjWh9U5zQOk536MNrP2vi1PAC2k=
+	t=1745221175; cv=none; b=WQmh3XuJyVmbFWZuCmk9a2z5iNgb01BJAU5qo6F3wNWAeOUZ9LcYCyin5ixwj2ncc6emWFWvqGM/fxhL6rvnFqL/dUzucZIcl+JI9AxGMJ+DPEp7pwdeQd14OA1HluWaZDlxV5Ucey8O64lzN/VltzE6SD1QdjZoKCPEDndsQus=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745202341; c=relaxed/simple;
-	bh=hfKFNPbETFGs/Xuenk3gewjpcnxeJb9ZL7s2EGkEUak=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ly9KTuf8AHp7zs7d46SI6Uhn7NtHuYjQiJduri7cq6pJK0AnzkqhZKW8IV79Mh4qq7AaoQ/0KILaYFtlH6tBYomApgqk0d05ASYjHqjnOL9NIVLCGkqgtT0wFPBf7W/nvofVzwXfWz4LKc4sjcp69NS49UbC3oQOhocVpbtFHQY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Zgq2p65SLz4f3jXK
-	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 10:25:06 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id B4C3C1A06D7
-	for <dm-devel@lists.linux.dev>; Mon, 21 Apr 2025 10:25:30 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.112.188])
-	by APP4 (Coremail) with SMTP id gCh0CgA3m1+MrAVoFxZkKA--.3102S8;
-	Mon, 21 Apr 2025 10:25:30 +0800 (CST)
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-To: linux-fsdevel@vger.kernel.org,
-	linux-ext4@vger.kernel.org,
-	linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org
-Cc: linux-xfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	hch@lst.de,
-	tytso@mit.edu,
-	djwong@kernel.org,
-	john.g.garry@oracle.com,
-	bmarzins@redhat.com,
-	chaitanyak@nvidia.com,
-	shinichiro.kawasaki@wdc.com,
-	brauner@kernel.org,
-	yi.zhang@huawei.com,
-	yi.zhang@huaweicloud.com,
-	chengzhihao1@huawei.com,
-	yukuai3@huawei.com,
-	yangerkun@huawei.com
-Subject: [RFC PATCH v4 04/11] nvmet: set WZDS and DRB if device supports BLK_FEAT_WRITE_ZEROES_UNMAP
-Date: Mon, 21 Apr 2025 10:15:02 +0800
-Message-ID: <20250421021509.2366003-5-yi.zhang@huaweicloud.com>
-X-Mailer: git-send-email 2.46.1
-In-Reply-To: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
-References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
+	s=arc-20240116; t=1745221175; c=relaxed/simple;
+	bh=boRLROJn4ucEtnjOb76u7xegVX7n55u48HuLH2Zc5uQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=YNws1mHA59ZprQlsfZDmWi7umNTjQjHYZrBH0Mz3pd7bc3K16bgmZWfrMcL6SMMUr40AwrG8Czx1Q7nTzUu459X8515eR+OW3rUoFg4DdKz+zSuZ6gzIN8jGubJUhQAeLByiFrG0gpwbJP74pfjEkBS4Qg2DS4gDu2fmgmlMNI0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id C2CA067373; Mon, 21 Apr 2025 09:39:22 +0200 (CEST)
+Date: Mon, 21 Apr 2025 09:39:22 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Christoph Hellwig <hch@lst.de>, xni@redhat.com, colyli@kernel.org,
+	axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org,
+	mpatocka@redhat.com, song@kernel.org, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+	yangerkun@huawei.com, kbusch@kernel.org,
+	"yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: [PATCH RFC v2 00/14] md: introduce a new lockless bitmap
+Message-ID: <20250421073922.GA19465@lst.de>
+References: <20250328060853.4124527-1-yukuai1@huaweicloud.com> <Z-aCzTWXzFWe4oxU@infradead.org> <c6c608e2-23e7-486f-100a-d1fb6cfff4f2@huaweicloud.com> <20250409083208.GA2326@lst.de> <115c3b08-aff1-dd97-fe6a-7901452ce62c@huaweicloud.com> <20250409094019.GA3890@lst.de> <28bb1c35-5f75-4e1c-4b5d-32bcb87050ce@huaweicloud.com> <54ab4291-9152-44d1-bf6c-675b58cfcea8@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgA3m1+MrAVoFxZkKA--.3102S8
-X-Coremail-Antispam: 1UD129KBjvdXoWrZFy7WFyUCryxtFW7GF15urg_yoWDCwcEv3
-	W8ur47Wa1kur1kKFWa9F15ZryUKw48ZF1IqFs2qa4S9r9rWrs5uw1vvF9Iya4UAF4rXrsx
-	ur17XFsagFWxKjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUbvAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
-	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUAVCq3wA2048vs2
-	IY020Ec7CjxVAFwI0_Xr0E3s1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28E
-	F7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr
-	1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0D
-	M2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjx
-	v20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1l
-	F7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2
-	IY04v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY
-	6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17
-	CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF
-	0xvE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCw
-	CI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsG
-	vfC2KfnxnUUI43ZEXa7sRiHUDtUUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <54ab4291-9152-44d1-bf6c-675b58cfcea8@huaweicloud.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-From: Zhang Yi <yi.zhang@huawei.com>
+On Sat, Apr 19, 2025 at 04:46:03PM +0800, Yu Kuai wrote:
+> So, today I implement a version, and I do admit this way is much
+> simpler, turns out total 200 less code lines.
 
-Set WZDS and DRB bit to the namespace dlfeat if the underlying block
-device supports BLK_FEAT_WRITE_ZEROES_UNMAP, make the nvme target
-device supports unmaped write zeroes command.
+That's what I thought :)
 
-Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
----
- drivers/nvme/target/io-cmd-bdev.c | 4 ++++
- 1 file changed, 4 insertions(+)
+> And can you check the
+> following untested code if you agree with the implementation? I'll
+> start to work a new version if you agree.
 
-diff --git a/drivers/nvme/target/io-cmd-bdev.c b/drivers/nvme/target/io-cmd-bdev.c
-index 83be0657e6df..052da6174548 100644
---- a/drivers/nvme/target/io-cmd-bdev.c
-+++ b/drivers/nvme/target/io-cmd-bdev.c
-@@ -46,6 +46,10 @@ void nvmet_bdev_set_limits(struct block_device *bdev, struct nvme_id_ns *id)
- 	id->npda = id->npdg;
- 	/* NOWS = Namespace Optimal Write Size */
- 	id->nows = to0based(bdev_io_opt(bdev) / bdev_logical_block_size(bdev));
-+
-+	/* Set WZDS and DRB if device supports unmapped write zeroes */
-+	if (bdev_write_zeroes_unmap(bdev))
-+		id->dlfeat = (1 << 3) | 0x1;
- }
- 
- void nvmet_bdev_ns_disable(struct nvmet_ns *ns)
--- 
-2.46.1
-
+From a very quick look this looks great.
