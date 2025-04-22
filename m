@@ -1,135 +1,154 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-170.mta0.migadu.com (out-170.mta0.migadu.com [91.218.175.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 307CB1FDA94
-	for <dm-devel@lists.linux.dev>; Tue, 22 Apr 2025 12:20:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5B7A284B27
+	for <dm-devel@lists.linux.dev>; Tue, 22 Apr 2025 13:24:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745324449; cv=none; b=kc6MRbm4Em64hBPc7RT/9GCb23S06nluJ8TUdBJK6G+Msg+IzAdMl17i+FtbfYxs5ZYrO/7M6g+gvpIBmp4JpgACMR+Cy4ICkE+gcq4Thr2+T9ev9xEQyI5wY8wRnPXgJnMWhct99n6f7ogBduATSMx05hz3QxHh1okW2ciIJ/4=
+	t=1745328248; cv=none; b=BO7OvSyFyOqKKSiRtjUil2HgIVej8ni6hNf6YBfO82FRY6ZJilFWeTCQWe3kcpjzZWfGZJMLgJazSlU85j1QUqSGYdJ7FWBg/gADlxmH2G83rp4QT2zzPQnozIo+d4WR4v+HEpzJH5HJgABEf1gLpSQU4Gy8lJuOzDKsURieWsA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745324449; c=relaxed/simple;
-	bh=tq4njeU/xWVTlR9ZAIvGapnbO0vbmpgPYUdvo9Qpwy4=;
+	s=arc-20240116; t=1745328248; c=relaxed/simple;
+	bh=ch74M5gwke3IpuxZFue4DFh7OqtxFpGswgMoOAIW8dQ=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=TFfdlSzrx2VpzldK8QgSt7WgWYQFM+js9nalNF8jjBxCZ9rexejMQAKKhDRCCgJHKZEIAJXMGf9HMuvk4XVUAe5wR9ramY1N/efXOFE5xernUr0KFrhOgrX4UOGuA/tA0sVpp56f5rCHzTGFXBfc/RPkc0A9N+gRjyK5X1HxDIM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aAvVpymi; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:Content-Type; b=ooJHIAMBAxMXx+Uoy9n+vcCsS922PRE2OARBxmk6fEfyDnnbE2n4PWtePDGCoJvuEHXwnijkQ0mvXwk/XdijO2PUwF8ht/KfMLrcQeCTzbwaMFp8WDxcSGvKl327mOYcdiLLFdZBdlSxb5MSgA0B7zLzK6PqXPNSOoz28eTE9gU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=CwDZ4v20; arc=none smtp.client-ip=91.218.175.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aAvVpymi"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CE4F5C4CEE9;
-	Tue, 22 Apr 2025 12:20:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1745324447;
-	bh=tq4njeU/xWVTlR9ZAIvGapnbO0vbmpgPYUdvo9Qpwy4=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=aAvVpymilGdDjprPmh+vH3pu6V/g3culTLTJk93eAx04/AYFo0fEdCZXS7C5YRND3
-	 fycLYwCKb1E9A4+65YWlcGGDh9AGNOElOEF7cbzzikPpoHM+b/0900B5Lr58E5nHmV
-	 jBhswBcCF5YRxfM+heiKrQAK/js5JDrxATxKVgIcRBfYHa4f4IKnjBvDQ7He0/eD3k
-	 enwNOb7Lkh85q+o8Oo87ovqBGb7c9sCCg3S0+kCIO1AcSrunDpzCrE6X/Ec+6C0JKa
-	 JooAK7MqmaONPl9KWDjbKt52VTn4AroKgVU+fpQ+9yfssvbgdT7wTnwj9U5v5BG5Ji
-	 xdgAn/9iRpCVA==
-Message-ID: <6d4718f8-49c2-451f-8253-37a0ba039c80@kernel.org>
-Date: Tue, 22 Apr 2025 21:20:45 +0900
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="CwDZ4v20"
+Message-ID: <3b9a2b25-9476-4806-be91-254dda385f38@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1745328241;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=yxPypqLDgGtdwJxcEcCayVfWENXwv6JuKnCdt8mdTtg=;
+	b=CwDZ4v203UYOq3NuBK0L4KWMa91rgo0fmLTpPArwhlNpGpfqnpv8yO5QB2X/6VxqeIzhOM
+	64ys++yDmVKOm4Xng7anf3Lmpl9IdDq3ILC/pSpd1EhChnIgIRrR00GzblmiUnJdBYqO2f
+	p0YwvnCFOnHwLHGta0eMi0EAxNYir7I=
+Date: Tue, 22 Apr 2025 21:23:52 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2] dm-delay: Prevent zoned write reordering on suspend
+Subject: Re: [RFC PATCH 00/11] pcache: Persistent Memory Cache for Block
+ Devices
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Christoph Hellwig <hch@lst.de>, Benjamin Marzinski <bmarzins@redhat.com>
-References: <20250411000435.1007720-1-dlemoal@kernel.org>
- <81bd6eca-6d62-6934-9007-28eaef465bb7@redhat.com>
- <79733459-5674-4bd3-9a33-dd5fbd7ed651@kernel.org>
- <cadd3b0f-2eca-c8af-62e9-27dd528007bd@redhat.com>
- <222c2fac-ae6d-4b6a-8a83-a40eaf044d44@kernel.org>
- <d9c47917-0ff9-5d6a-01a3-cbb357ca6812@redhat.com>
-Content-Language: en-US
-From: Damien Le Moal <dlemoal@kernel.org>
-Organization: Western Digital Research
-In-Reply-To: <d9c47917-0ff9-5d6a-01a3-cbb357ca6812@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Cc: Jens Axboe <axboe@kernel.dk>, Dan Williams <dan.j.williams@intel.com>,
+ hch@lst.de, gregory.price@memverge.com, John@groves.net,
+ Jonathan.Cameron@huawei.com, bbhushan2@marvell.com, chaitanyak@nvidia.com,
+ rdunlap@infradead.org, agk@redhat.com, snitzer@kernel.org,
+ linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-cxl@vger.kernel.org, linux-bcache@vger.kernel.org,
+ nvdimm@lists.linux.dev, dm-devel@lists.linux.dev
+References: <20250414014505.20477-1-dongsheng.yang@linux.dev>
+ <67fe9ea2850bc_71fe294d8@dwillia2-xfh.jf.intel.com.notmuch>
+ <15e2151a-d788-48eb-8588-1d9a930c64dd@kernel.dk>
+ <07f93a57-6459-46e2-8ee3-e0328dd67967@linux.dev>
+ <d3231630-9445-4c17-9151-69fe5ae94a0d@kernel.dk>
+ <235030ca-93a4-4666-93f8-93f8d81ff650@linux.dev>
+ <3bdad772-9710-2763-c9a3-fefb3723fdf6@redhat.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <3bdad772-9710-2763-c9a3-fefb3723fdf6@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-On 4/22/25 20:27, Mikulas Patocka wrote:
-> 
-> 
-> On Fri, 18 Apr 2025, Damien Le Moal wrote:
-> 
->>> It seems that you want to send many small overlapping write bios - the 
->>> question is why? Why can't the application accumulate the content and send 
->>> it as one big bio?
+
+On 2025/4/22 18:29, Mikulas Patocka wrote:
+> Hi
+>
+>
+> On Thu, 17 Apr 2025, Dongsheng Yang wrote:
+>
+>> +ccing md-devel
 >>
->> That is the application problem. On HDDs at least, small IOs will hurt
->> performance. SMR or not, same problem. Intellignet applications will try to
->> shape their workload to optimize performance. But that point is irrelevant here.
->> The kernel porvides a service: process write requests, regardless of how big
->> these requests are, if they are correct (i.e. for zoned devices, they must be
->> issued in order by the user), we must correctly execute the writes.
+>> On 2025/4/16 23:10, Jens Axboe wrote:
+>>> On 4/16/25 12:08 AM, Dongsheng Yang wrote:
+>>>> On 2025/4/16 9:04, Jens Axboe wrote:
+>>>>> On 4/15/25 12:00 PM, Dan Williams wrote:
+>>>>>> Thanks for making the comparison chart. The immediate question this
+>>>>>> raises is why not add "multi-tree per backend", "log structured
+>>>>>> writeback", "readcache", and "CRC" support to dm-writecache?
+>>>>>> device-mapper is everywhere, has a long track record, and enhancing it
+>>>>>> immediately engages a community of folks in this space.
+>>>>> Strongly agree.
+>>>> Hi Dan and Jens,
+>>>> Thanks for your reply, that's a good question.
+>>>>
+>>>>       1. Why not optimize within dm-writecache?
+>>>>   From my perspective, the design goal of dm-writecache is to be a
+>>>> minimal write cache. It achieves caching by dividing the cache device
+>>>> into n blocks, each managed by a wc_entry, using a very simple
+>>>> management mechanism. On top of this design, it's quite difficult to
+>>>> implement features like multi-tree structures, CRC, or log-structured
+>>>> writeback. Moreover, adding such optimizations?especially a read
+>>>> cache?would deviate from the original semantics of dm-writecache. So,
+>>>> we didn't consider optimizing dm-writecache to meet our goals.
+>>>>
+>>>>       2. Why not optimize within bcache or dm-cache?
+>>>> As mentioned above, dm-writecache is essentially a minimal write
+>>>> cache. So, why not build on bcache or dm-cache, which are more
+>>>> complete caching systems? The truth is, it's also quite difficult.
+>>>> These systems were designed with traditional SSDs/NVMe in mind, and
+>>>> many of their design assumptions no longer hold true in the context of
+>>>> PMEM. Every design targets a specific scenario, which is why, even
+>>>> with dm-cache available, dm-writecache emerged to support DAX-capable
+>>>> PMEM devices.
+>>>>
+>>>>       3. Then why not implement a full PMEM cache within the dm framework?
+>>>> In high-performance IO scenarios?especially with PMEM hardware?adding
+>>>> an extra DM layer in the IO stack is often unnecessary. For example,
+>>>> DM performs a bio clone before calling __map_bio(clone) to invoke the
+>>>> target operation, which introduces overhead.
+> Device mapper performs (in the common fast case) one allocation per
+> incoming bio - the allocation contains the outgoing bio and a structure
+> that may be used for any purpose by the target driver. For interlocking,
+> it uses RCU, so there is no synchronizing instruction. So, DM overhead is
+> not big.
+>
+>>>> Thank you again for the suggestion. I absolutely agree that leveraging
+>>>> existing frameworks would be helpful in terms of code review, and
+>>>> merging. I, more than anyone, hope more people can help review the
+>>>> code or join in this work. However, I believe that in the long run,
+>>>> building a standalone pcache module is a better choice.
+>>> I think we'd need much stronger reasons for NOT adopting some kind of dm
+>>> approach for this, this is really the place to do it. If dm-writecache
+>>> etc aren't a good fit, add a dm-whatevercache for it? If dm is
+>>> unnecessarily cloning bios when it doesn't need to, then that seems like
+>>> something that would be worthwhile fixing in the first place, or at
+>>> least eliminate for cases that don't need it. That'd benefit everyone,
+>>> and we would not be stuck with a new stack to manage.
+>>>
+>>> Would certainly be worth exploring with the dm folks.
+>> well, introducing dm-pcache (assuming we use this name) could, on one hand,
+>> attract more users and developers from the device-mapper community to pay
+>> attention to this project, and on the other hand, serve as a way to validate
+>> or improve the dm framework’s performance in high-performance I/O scenarios.
+>> If necessary, we can enhance the dm framework instead of bypassing it
+>> entirely. This indeed sounds like something that would “benefit everyone.”
 >>
->>> I'm a bit worried that supporting this ordering will just bloat the kernel 
->>> with marginal benefit.
+>> Hmm, I will seriously consider this approach.
 >>
->> Bloat ?
-> 
-> We would need three states instead of two: normal, suspended, resuming (so 
-> it would bloat all the device mapper logic with another state). There's 
-> dm_wq_work using submit_bio_noacct, which wouldn't work, as it would 
-> immediatelly enqueue the bio for suspend again, so we would need some 
-> other path to submit the bio.
-> 
-> dm_wq_work would have to transition the device from the "resuming" state 
-> to the "normal" state when it processes all the bios, but it is called for 
-> various other reasons too.
-
-It is not because you do not see a clean solution that there is not one. So
-unless you have completely made up your mind already and are not willing to
-accept any change in this area to improve things, I will dig into this and find
-a solution that is not "bloat".
-
->> everything is already in place to preserve the order of write operations
->> to zoned devices, since a long time ago.
-> 
-> What if the controller doesn't preserve the order of writes? I think that 
-> there was some bit for that, but I forgot its name. So we can simply not 
-> set the bit for device mapper - and the applications will have to deal 
-> with it by using write plugging.
-
-I do not understand what you are talking about. A zoned DM device is zoned
-because it is on top of a zoned device. That bottom zoned device may be another
-DM target or a real zoned device. For the real zoned device, zone write plugging
-is always used so it does not matter if the host controller does or does not
-preserve command order. There will always be at most 1 in-flight write per zone,
-which makes reordering of commands completely irrelevant for write commands success.
-
-For DM, it is up to the target driver to determine if it is OK without zone
-write plugging or if that will be needed, as the driver knows if it will
-preserve (issue) writes in the same order it received them. E.g. dm-crypt does
-not, so it sets the emulate zone append flag to use zone append emulation and
-zone write plugging (note that these 2 aspects are aggregated into a single flag
-because there was no need to control them separately for the existing DM targets
-that support zones).
-
-So I do not understand your point.
-
-There are literally tens of millions of SMR drives running in production, a lot
-of them using DM (e.g. dm-crypt). I would know if that was not working fine.
-
-> 
->> What has not been covered are cases
->> like suspend/resume which may, depending on what they do, break the ordering
->> guarantees that we have for write requests. The only reason this has not been
->> fixed is because I completely overlooked these cases as zoned block devices were
->> in the past mostly used in enterprise systems where suspend/resume is not really
->> used at all. But we have zoned UFS devices these days (smart phones), so
->> properly supporting DM suspend/resume is important I think.
-> 
-> Do you mean zoned flash devices? I've never heard of them.
-
-They exist and are gathering interest and use cases.
+>> Hi Alasdair, Mike, Mikulas,  Do you have any suggestions?
+>>
+>> Thanx
+> If you create a new self-contained target that doesn't need changes in the
+> generic dm or block code, it's OK and I would accept that.
 
 
--- 
-Damien Le Moal
-Western Digital Research
+I will try to port pcache into dm to be a new self-contained target.
+
+
+Thanx
+
+Dongsheng
+
+>
+> Improving dm-writecache is also possible.
+>
+> Mikulas
