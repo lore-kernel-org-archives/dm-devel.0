@@ -1,154 +1,101 @@
-Received: from out-170.mta0.migadu.com (out-170.mta0.migadu.com [91.218.175.170])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5B7A284B27
-	for <dm-devel@lists.linux.dev>; Tue, 22 Apr 2025 13:24:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81AF227CB30;
+	Tue, 22 Apr 2025 14:26:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745328248; cv=none; b=BO7OvSyFyOqKKSiRtjUil2HgIVej8ni6hNf6YBfO82FRY6ZJilFWeTCQWe3kcpjzZWfGZJMLgJazSlU85j1QUqSGYdJ7FWBg/gADlxmH2G83rp4QT2zzPQnozIo+d4WR4v+HEpzJH5HJgABEf1gLpSQU4Gy8lJuOzDKsURieWsA=
+	t=1745331996; cv=none; b=Eijrp4V5c/+qByO67X3h7yiPbSvazASj6lv7ZMXm10vhMwxzYcpAC32UkCcv++cA5ISak6JV8RcUNufNJfGgD7N5VVnZvWua2CKKWUep8udB20mT//DNFMRvu//IDzk+r9VSFEW4CJr4QXk+d4exX72alK5sjgFGFVNsZPxpSYY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745328248; c=relaxed/simple;
-	bh=ch74M5gwke3IpuxZFue4DFh7OqtxFpGswgMoOAIW8dQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ooJHIAMBAxMXx+Uoy9n+vcCsS922PRE2OARBxmk6fEfyDnnbE2n4PWtePDGCoJvuEHXwnijkQ0mvXwk/XdijO2PUwF8ht/KfMLrcQeCTzbwaMFp8WDxcSGvKl327mOYcdiLLFdZBdlSxb5MSgA0B7zLzK6PqXPNSOoz28eTE9gU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=CwDZ4v20; arc=none smtp.client-ip=91.218.175.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1745331996; c=relaxed/simple;
+	bh=Crj6FNVi7mDhiVzWMlIqnYV4VfaXwOklDJNvmzIXW3o=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pdK39KQDHgdlMdSfhgPEqvT8SiKD2kXcBuBl5nkUMUX38JxV9udzQ6Dd+f0fMLPMAQQwKoZjxfBo15Fg6sd5qFuYk0DnC3J5q6eUr3xvB5x51BzuXhWd9oPMqPdHGAdR8SZWe0SuDaCIGD/qNowrxNyb7ZxikTAZSulvhDLiT5Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Wbo/YkAc; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="CwDZ4v20"
-Message-ID: <3b9a2b25-9476-4806-be91-254dda385f38@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1745328241;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=yxPypqLDgGtdwJxcEcCayVfWENXwv6JuKnCdt8mdTtg=;
-	b=CwDZ4v203UYOq3NuBK0L4KWMa91rgo0fmLTpPArwhlNpGpfqnpv8yO5QB2X/6VxqeIzhOM
-	64ys++yDmVKOm4Xng7anf3Lmpl9IdDq3ILC/pSpd1EhChnIgIRrR00GzblmiUnJdBYqO2f
-	p0YwvnCFOnHwLHGta0eMi0EAxNYir7I=
-Date: Tue, 22 Apr 2025 21:23:52 +0800
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Wbo/YkAc"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=svFwjk5mDlegrlNjoyNVDlQrYp0eiPHyH4DQI4cVX3M=; b=Wbo/YkAcvVzWpPhyUQpQKOmA1G
+	mTD7QdQKJ0YrfWElD2Zo+VU9LwlA9TtAUt/XiX2a3w+j5/y51x+SURVViniD+VH57mava+Vm4Ijxy
+	pWwiixY+N13qjJcC0rnrUIhXLO61TJB+cyJuiVAxfVMWXOEHG6hdYk/KqwdiiBmXjetaVSXzNiWqe
+	vcmoIh0ChZBTReSCu1zxNNPSApFNGbu+TsyA9NcLynok/WdekMyOjBr+HzkWuv1qAeshNBX23wcQU
+	4ZaEVKrAXLVBbKFBkrbJy32z/o2QoqxtImBpPmfBHVMdyiAYifijDpzUezWhen0qpQ9iwm1yBQFvV
+	kC5cyLGw==;
+Received: from [2001:4bb8:2fc:38c3:78fb:84a5:c78c:68b6] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1u7Ea0-00000007U8i-03JY;
+	Tue, 22 Apr 2025 14:26:32 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org,
+	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+	Jack Wang <jinpu.wang@ionos.com>,
+	Coly Li <colyli@kernel.org>,
+	Kent Overstreet <kent.overstreet@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Chris Mason <clm@fb.com>,
+	Josef Bacik <josef@toxicpanda.com>,
+	David Sterba <dsterba@suse.com>,
+	Andreas Gruenbacher <agruenba@redhat.com>,
+	Carlos Maiolino <cem@kernel.org>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Naohiro Aota <naohiro.aota@wdc.com>,
+	Johannes Thumshirn <jth@kernel.org>,
+	"Rafael J. Wysocki" <rafael@kernel.org>,
+	Pavel Machek <pavel@kernel.org>,
+	linux-bcache@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-btrfs@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	linux-pm@vger.kernel.org
+Subject: add more bio helper
+Date: Tue, 22 Apr 2025 16:26:01 +0200
+Message-ID: <20250422142628.1553523-1-hch@lst.de>
+X-Mailer: git-send-email 2.47.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [RFC PATCH 00/11] pcache: Persistent Memory Cache for Block
- Devices
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, Dan Williams <dan.j.williams@intel.com>,
- hch@lst.de, gregory.price@memverge.com, John@groves.net,
- Jonathan.Cameron@huawei.com, bbhushan2@marvell.com, chaitanyak@nvidia.com,
- rdunlap@infradead.org, agk@redhat.com, snitzer@kernel.org,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-cxl@vger.kernel.org, linux-bcache@vger.kernel.org,
- nvdimm@lists.linux.dev, dm-devel@lists.linux.dev
-References: <20250414014505.20477-1-dongsheng.yang@linux.dev>
- <67fe9ea2850bc_71fe294d8@dwillia2-xfh.jf.intel.com.notmuch>
- <15e2151a-d788-48eb-8588-1d9a930c64dd@kernel.dk>
- <07f93a57-6459-46e2-8ee3-e0328dd67967@linux.dev>
- <d3231630-9445-4c17-9151-69fe5ae94a0d@kernel.dk>
- <235030ca-93a4-4666-93f8-93f8d81ff650@linux.dev>
- <3bdad772-9710-2763-c9a3-fefb3723fdf6@redhat.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <3bdad772-9710-2763-c9a3-fefb3723fdf6@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
+Hi all,
 
-On 2025/4/22 18:29, Mikulas Patocka wrote:
-> Hi
->
->
-> On Thu, 17 Apr 2025, Dongsheng Yang wrote:
->
->> +ccing md-devel
->>
->> On 2025/4/16 23:10, Jens Axboe wrote:
->>> On 4/16/25 12:08 AM, Dongsheng Yang wrote:
->>>> On 2025/4/16 9:04, Jens Axboe wrote:
->>>>> On 4/15/25 12:00 PM, Dan Williams wrote:
->>>>>> Thanks for making the comparison chart. The immediate question this
->>>>>> raises is why not add "multi-tree per backend", "log structured
->>>>>> writeback", "readcache", and "CRC" support to dm-writecache?
->>>>>> device-mapper is everywhere, has a long track record, and enhancing it
->>>>>> immediately engages a community of folks in this space.
->>>>> Strongly agree.
->>>> Hi Dan and Jens,
->>>> Thanks for your reply, that's a good question.
->>>>
->>>>       1. Why not optimize within dm-writecache?
->>>>   From my perspective, the design goal of dm-writecache is to be a
->>>> minimal write cache. It achieves caching by dividing the cache device
->>>> into n blocks, each managed by a wc_entry, using a very simple
->>>> management mechanism. On top of this design, it's quite difficult to
->>>> implement features like multi-tree structures, CRC, or log-structured
->>>> writeback. Moreover, adding such optimizations?especially a read
->>>> cache?would deviate from the original semantics of dm-writecache. So,
->>>> we didn't consider optimizing dm-writecache to meet our goals.
->>>>
->>>>       2. Why not optimize within bcache or dm-cache?
->>>> As mentioned above, dm-writecache is essentially a minimal write
->>>> cache. So, why not build on bcache or dm-cache, which are more
->>>> complete caching systems? The truth is, it's also quite difficult.
->>>> These systems were designed with traditional SSDs/NVMe in mind, and
->>>> many of their design assumptions no longer hold true in the context of
->>>> PMEM. Every design targets a specific scenario, which is why, even
->>>> with dm-cache available, dm-writecache emerged to support DAX-capable
->>>> PMEM devices.
->>>>
->>>>       3. Then why not implement a full PMEM cache within the dm framework?
->>>> In high-performance IO scenarios?especially with PMEM hardware?adding
->>>> an extra DM layer in the IO stack is often unnecessary. For example,
->>>> DM performs a bio clone before calling __map_bio(clone) to invoke the
->>>> target operation, which introduces overhead.
-> Device mapper performs (in the common fast case) one allocation per
-> incoming bio - the allocation contains the outgoing bio and a structure
-> that may be used for any purpose by the target driver. For interlocking,
-> it uses RCU, so there is no synchronizing instruction. So, DM overhead is
-> not big.
->
->>>> Thank you again for the suggestion. I absolutely agree that leveraging
->>>> existing frameworks would be helpful in terms of code review, and
->>>> merging. I, more than anyone, hope more people can help review the
->>>> code or join in this work. However, I believe that in the long run,
->>>> building a standalone pcache module is a better choice.
->>> I think we'd need much stronger reasons for NOT adopting some kind of dm
->>> approach for this, this is really the place to do it. If dm-writecache
->>> etc aren't a good fit, add a dm-whatevercache for it? If dm is
->>> unnecessarily cloning bios when it doesn't need to, then that seems like
->>> something that would be worthwhile fixing in the first place, or at
->>> least eliminate for cases that don't need it. That'd benefit everyone,
->>> and we would not be stuck with a new stack to manage.
->>>
->>> Would certainly be worth exploring with the dm folks.
->> well, introducing dm-pcache (assuming we use this name) could, on one hand,
->> attract more users and developers from the device-mapper community to pay
->> attention to this project, and on the other hand, serve as a way to validate
->> or improve the dm framework’s performance in high-performance I/O scenarios.
->> If necessary, we can enhance the dm framework instead of bypassing it
->> entirely. This indeed sounds like something that would “benefit everyone.”
->>
->> Hmm, I will seriously consider this approach.
->>
->> Hi Alasdair, Mike, Mikulas,  Do you have any suggestions?
->>
->> Thanx
-> If you create a new self-contained target that doesn't need changes in the
-> generic dm or block code, it's OK and I would accept that.
+this series adds more block layer helpers to remove boilerplate code when
+adding memory to a bio or to even do the entire synchronous I/O.
 
+The main aim is to avoid having to convert to a struct page in the caller
+when adding kernel direct mapping or vmalloc memory.
 
-I will try to port pcache into dm to be a new self-contained target.
-
-
-Thanx
-
-Dongsheng
-
->
-> Improving dm-writecache is also possible.
->
-> Mikulas
+Diffstat:
+ block/bio.c                   |   57 ++++++++++++++++++++++
+ block/blk-map.c               |  108 ++++++++++++++++--------------------------
+ drivers/block/pktcdvd.c       |    2 
+ drivers/block/rnbd/rnbd-srv.c |    7 --
+ drivers/block/ublk_drv.c      |    3 -
+ drivers/block/virtio_blk.c    |    4 -
+ drivers/md/bcache/super.c     |    3 -
+ drivers/md/dm-bufio.c         |    2 
+ drivers/md/dm-integrity.c     |   16 ++----
+ drivers/nvme/host/core.c      |    2 
+ drivers/scsi/scsi_ioctl.c     |    2 
+ drivers/scsi/scsi_lib.c       |    3 -
+ fs/btrfs/scrub.c              |   10 ---
+ fs/gfs2/ops_fstype.c          |   24 +++------
+ fs/hfsplus/wrapper.c          |   46 +++--------------
+ fs/xfs/xfs_bio_io.c           |   30 ++++-------
+ fs/xfs/xfs_buf.c              |   27 +++-------
+ fs/zonefs/super.c             |   34 ++++---------
+ include/linux/bio.h           |   39 ++++++++++++++-
+ include/linux/blk-mq.h        |    4 -
+ kernel/power/swap.c           |  103 +++++++++++++++++-----------------------
+ 21 files changed, 253 insertions(+), 273 deletions(-)
