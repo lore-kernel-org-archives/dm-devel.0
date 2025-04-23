@@ -1,72 +1,152 @@
-Received: from out-174.mta0.migadu.com (out-174.mta0.migadu.com [91.218.175.174])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D2B979D0
-	for <dm-devel@lists.linux.dev>; Wed, 23 Apr 2025 00:46:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7786C18DF86
+	for <dm-devel@lists.linux.dev>; Wed, 23 Apr 2025 06:05:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745369202; cv=none; b=FR7CIVItB1diDT+xwQoKuKCW03qk/I8EKc9sGyiwfSoy4MUJgWgqgEAMeZhrBwZATtov8kipL97vh5BmUe3LVfExdKeA+1lbeDN942EfO6QU6xGeXYXPA5vq19BsMQg38PhaPExB99mUqSWL60lBsspK/rQM63M6L4p+48uhpFc=
+	t=1745388361; cv=none; b=Jyv2F+SsKK1Q0r0hknzJRYS+qec2VK0c723sc5jniJZtPJNgNMZ11tbQhnHBpAr1s5NTcTs0Dd2UIj4XMZJN8urzaj0sPcr4adTJoK18Otb8KD8G64Zoz2v976tORSNkCzbubooRij+e5HYGkN0aSB/GJP4BEsu0xWR+pW1X6eQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745369202; c=relaxed/simple;
-	bh=i5zSXdtUmz/TjJ0Rz5QPbIof7aA8XXlWzFW9Ekc7lUU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=WPq28Xlux+pda12FL7t7zYClCknxJkpouA5iU9xhg5mxNlQpHKjq5m3+LY9JWOvWxSXg1mDM1GDfbagQbb+BSPVVWh1Io+6J1L/aL6bS9ecsrdGjODLIg6/xptTGzWX22NsVhXd4IMvLVoZnZPIBab8JwRDs0uw7ReAJtcoO60g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=X80ndWST; arc=none smtp.client-ip=91.218.175.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1745388361; c=relaxed/simple;
+	bh=GYzMHLcAsVWzyWn3po2G26RuijsKguDyw9DQZzgjWQw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=U2FIMhv/E3ab53tFhHYEmOukfpM2EP0bzD+O1alNdHchcAagp2vWSNWq6bteF7rCzFFz1T173lOdpXB1IqYOwBtvpyGbjIIiwIhOX+05j6d/6a5QcwVUblpto1Kbu8Ub1tEDD1YzH9b+els9z5zIF2JxI1zemOeSLJU4WikNYS8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=CmTl5vO3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=j3xXW7/z; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=CmTl5vO3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=j3xXW7/z; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="X80ndWST"
-Date: Tue, 22 Apr 2025 20:46:34 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1745369198;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="CmTl5vO3";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="j3xXW7/z";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="CmTl5vO3";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="j3xXW7/z"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 80BB31F38D;
+	Wed, 23 Apr 2025 06:05:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1745388356; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=CWy84PJHS5kNx0RNxrl0rTlAk3+kKc/MD63AvKNXtUY=;
-	b=X80ndWSTArk5KEO1TsCAwPQxrslSHy/k98vGDFliBW58EQ7r/Yyj/fU6KOBfzztlSIkM3R
-	oMuvymOeAmIGwnNB4cWxif4Qy+aPQnhpxIp1hdq4lKQJCzEmz5DWuzYtF38G1D5bFyU5L4
-	zMqflFVj6Hq97hkplclEluCBXgxmUGw=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, 
-	Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH 0/4] dm-flakey fixes
-Message-ID: <ethruuoyqppc5gh54eowhvlzrkjd4pmvoe2gkljvyyqrmqmunu@g2jaur22cf6b>
-References: <20250422234738.1654052-1-bmarzins@redhat.com>
- <gdw3hv5qnvnrusmh6lt3kfrqlwsmf7o7azdx2sfwlebbqsecla@djyd6a7f3ag2>
- <aAgxGBw7ytEOifIY@redhat.com>
+	bh=Pkzb5x8KFVWrmch90shf5Lt4wD8+BB40ntGSkZkdBzM=;
+	b=CmTl5vO3dxQW9RSc/336cz1fh0uZ+Kg4+K0acCigDMBg7VpjlT1RpgXh92XW4kfTNn91C5
+	uQs9nCX/ydFdhjGKL+NUu0cGeS1KnpljFLnJGs4d6AXx4r9VlTYUNy1JGOBcq7FOVBIXar
+	yPLguBBogvP0MHmmKTwxOuAH54lvusE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1745388356;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Pkzb5x8KFVWrmch90shf5Lt4wD8+BB40ntGSkZkdBzM=;
+	b=j3xXW7/z2Ton30OQVWplDQcCwDFad7mIt5H3jpq1faEPWa5W6V3y5/IstHTl4Fm64MXxbz
+	P6Ugc0vJJODcabBA==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1745388356; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Pkzb5x8KFVWrmch90shf5Lt4wD8+BB40ntGSkZkdBzM=;
+	b=CmTl5vO3dxQW9RSc/336cz1fh0uZ+Kg4+K0acCigDMBg7VpjlT1RpgXh92XW4kfTNn91C5
+	uQs9nCX/ydFdhjGKL+NUu0cGeS1KnpljFLnJGs4d6AXx4r9VlTYUNy1JGOBcq7FOVBIXar
+	yPLguBBogvP0MHmmKTwxOuAH54lvusE=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1745388356;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Pkzb5x8KFVWrmch90shf5Lt4wD8+BB40ntGSkZkdBzM=;
+	b=j3xXW7/z2Ton30OQVWplDQcCwDFad7mIt5H3jpq1faEPWa5W6V3y5/IstHTl4Fm64MXxbz
+	P6Ugc0vJJODcabBA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 8588E13691;
+	Wed, 23 Apr 2025 06:05:55 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id iZOvHkODCGi+SwAAD6G6ig
+	(envelope-from <hare@suse.de>); Wed, 23 Apr 2025 06:05:55 +0000
+Message-ID: <8ec98935-fac7-44d1-a9ba-d5d8688bcf4a@suse.de>
+Date: Wed, 23 Apr 2025 08:05:55 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aAgxGBw7ytEOifIY@redhat.com>
-X-Migadu-Flow: FLOW_OUT
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 01/17] block: add a bio_add_virt_nofail helper
+To: Christoph Hellwig <hch@lst.de>, Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+ Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>,
+ Kent Overstreet <kent.overstreet@linux.dev>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>,
+ David Sterba <dsterba@suse.com>, Andreas Gruenbacher <agruenba@redhat.com>,
+ Carlos Maiolino <cem@kernel.org>, Damien Le Moal <dlemoal@kernel.org>,
+ Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>,
+ "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@kernel.org>,
+ linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
+ linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org,
+ linux-pm@vger.kernel.org
+References: <20250422142628.1553523-1-hch@lst.de>
+ <20250422142628.1553523-2-hch@lst.de>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20250422142628.1553523-2-hch@lst.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spam-Score: -4.30
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_TWELVE(0.00)[26];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	R_RATELIMIT(0.00)[to_ip_from(RL4dj9zzjoqkf1d3y4dfoejhya)];
+	RCVD_COUNT_TWO(0.00)[2];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[lst.de:email,suse.de:mid,suse.de:email]
+X-Spam-Flag: NO
+X-Spam-Level: 
 
-On Tue, Apr 22, 2025 at 08:15:20PM -0400, Benjamin Marzinski wrote:
-> On Tue, Apr 22, 2025 at 08:02:54PM -0400, Kent Overstreet wrote:
-> > On Tue, Apr 22, 2025 at 07:47:34PM -0400, Benjamin Marzinski wrote:
-> > > This patchset handles some dm-flakey issues reported by Kent Overstreet.
-> > > It fixes some issues with dm-flakey's parsing and feature interactions
-> > > and makes corrupting read bios work.
-> > > 
-> > > Benjamin Marzinski (4):
-> > >   dm-flakey: Clean up parsing messages
-> > >   dm-flakey: error all IOs when num_features is absent
-> > >   dm-flakey: remove useless ERROR_READS check in flakey_end_io
-> > >   dm-flakey: make corrupting read bios work
-> > > 
-> > >  drivers/md/dm-flakey.c | 114 ++++++++++++++++++++++-------------------
-> > >  1 file changed, 62 insertions(+), 52 deletions(-)
-> > 
-> > Does it have tests now?
+On 4/22/25 16:26, Christoph Hellwig wrote:
+> Add a helper to add a directly mapped kernel virtual address to a
+> bio so that callers don't have to convert to pages or folios.
 > 
-> I tested it. Adding automated tests for it is a work in progress.
+> For now only the _nofail variant is provided as that is what all the
+> obvious callers want.
+> 
+> Signed-off-by: Christoph Hellwig <hch@lst.de>
+> ---
+>   include/linux/bio.h | 17 +++++++++++++++++
+>   1 file changed, 17 insertions(+)
+> 
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
-If I get done with my other things tonight I can write you a ktest test
-for it, if you'd like. It's what I use for testing bcachefs, shouldn't
-take too long...
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
