@@ -1,128 +1,133 @@
-Received: from out-186.mta1.migadu.com (out-186.mta1.migadu.com [95.215.58.186])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B9D31F873F
-	for <dm-devel@lists.linux.dev>; Thu, 24 Apr 2025 12:01:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.186
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE9813597A
+	for <dm-devel@lists.linux.dev>; Fri, 25 Apr 2025 13:46:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745496092; cv=none; b=Yad8N4KVOvox0RcY1m9Zd7kCxqAu8EdXDHaBJz+smuer//4xnlFpOjYtwfO1oCbSu1CiE7waibW7PgSfLBiytHNGW/+of7BJ7p2FwepEzfZOTFrUD5WvUlKbyraTxGS+mR0ieRW+6M/n5klHDkOKNXf8gkdpA4rR3yA3n33iZSg=
+	t=1745588774; cv=none; b=Itd4ZpItN+9IbORCVRO7wPVzV/tm2Cge5atcUJPtZmqPp5oY8uaJP9x4ZQiqSNi9ZJECLmyISMBXenek7Mw+eywgqjxGz6q/ujmZ3imnn/84M2djQnD46JJReBER9O3ytsRGibTNLczpPZOa516JBYhewu+alhS1qIU5xVdBFMY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745496092; c=relaxed/simple;
-	bh=RDRKZeNKN55umrzQ5oGHsI+0KYc+ooDByqGf/CbRS4M=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tSOJnC8Ym0GA+qvA80PLRm8aV9Ddx2hIY1OYlh6SK7l2umfT33YrMPFmcPTPqSQp18y8vNd3BYysrZl+kQNqm3eHitT/DjBDL3zYhITp/XblQoHvN2xO3vUcyc5pDGbk7agBfC2nR1SaOkG2vsTA2HrHkl6kudUTYskKTPi/Lh4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=u9gRpvYC; arc=none smtp.client-ip=95.215.58.186
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1745588774; c=relaxed/simple;
+	bh=0H8bbTPo/PfAEvjI9PoZPZ3NHX4i3xV7zu4kIGw9DZc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=WuF/sm0yNNkNF7Ia9BuWVpWWOfXtbeOL1N2SkrFuYUj+1pYbl+F/x2UK3DriXP5mEIE/jdbebBeZj8bqMCAqFaf5SaVGJL/55ZfDShXKa4ejDMMiOocKLIZpgL+Z8GHM5rCSsKO57hngn8a9AkYC6lB9hTF3SviwG9YaahUFhxc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=S1YdI+5t; arc=none smtp.client-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="u9gRpvYC"
-Date: Thu, 24 Apr 2025 08:01:20 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1745496087;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=T2MMeEmusMY/E/i/SQKbyFaL7BU6CcGYmFZRFD2drdA=;
-	b=u9gRpvYCA7IkAb0B4poNcSjWcfnEIwKuPsuUltPGgb8dOqhtvOFUuqTpBE1musH7/BVP9b
-	38vbULDjl6NCX/pmhSnebe2rg3ejQKWdffXIWBn1CsORMSUQcA3dgQXk9yIE8/M4BAoo1k
-	1DBuUEL/zkkYq7EeqOTzQe9EbZUJZTQ=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Kent Overstreet <kent.overstreet@linux.dev>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org, 
-	"Md. Haris Iqbal" <haris.iqbal@ionos.com>, Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>, 
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>, 
-	Andreas Gruenbacher <agruenba@redhat.com>, Carlos Maiolino <cem@kernel.org>, 
-	Damien Le Moal <dlemoal@kernel.org>, Naohiro Aota <naohiro.aota@wdc.com>, 
-	Johannes Thumshirn <jth@kernel.org>, "Rafael J. Wysocki" <rafael@kernel.org>, 
-	Pavel Machek <pavel@kernel.org>, linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, linux-fsdevel@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-pm@vger.kernel.org
-Subject: Re: add more bio helper
-Message-ID: <anc2qstnukiwtskc4pd3kqajfswm3dzljxwa3awrxjs7mzppoc@nziz3h4ilqpd>
-References: <20250422142628.1553523-1-hch@lst.de>
- <jetduw7zshrmp4gl7zfpwqjweycwesxiod7xvtnxqwqekgtvdf@idwnvfzvhgik>
- <20250423093621.GA2578@lst.de>
- <sl4oibdxpjygqfpy6llq237zuckz7ym4fmzcfvxn2raofr37a5@hvevbcgm5trn>
- <20250423160733.GA656@lst.de>
- <q53k4x5nshvr2zatrgyhygxouv7ijyepe6cj2pfooemi6gbu4y@lpxxcvozazzu>
- <20250424083740.GA24723@lst.de>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="S1YdI+5t"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-43cfe99f2a7so3281025e9.2
+        for <dm-devel@lists.linux.dev>; Fri, 25 Apr 2025 06:46:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1745588771; x=1746193571; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=bOdLROu3wJbojscQhoZPo16E581e+G0ZmtJgxB9OnKs=;
+        b=S1YdI+5tFhcDkgs18G6V5W6zyZWnPRfx5KScTIaz9Ulo646z0DdOswexLQCOFFZEJQ
+         ZQ9Tbh633Q2q2+fZQn0LrafPCxe3AswAp8c+iMHCYB6CH6ot7H+d7lmSUZwK+K6uqpb5
+         OXlRg59YaQ2zwuvjwtoBNcUubfybUvAwWMHr6VpjjQdgvESzixKHssHqfW6JpWR94Btr
+         4CGFYwosr4R/A9myn+lMxZPvSuzIp1KScDxJA+OwaLjH7u/UJtoCovHk4ba7YA/qq/26
+         0dClA4/EKu/A2zJ8YKgOyfJNqFERkjIEvVM5E/5NZ/XK+phPQ+87+x5ORNGrVeg7tCsE
+         18SA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1745588771; x=1746193571;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=bOdLROu3wJbojscQhoZPo16E581e+G0ZmtJgxB9OnKs=;
+        b=mRpQ332AF9iE4duPiFSuYQyIaj5CPG389tqoNd00chE2/sVIyh5TK14kpZ/6zIGKa7
+         oIPkh/AxYsbm0avu992hGXs3LgkIYNHWP1491QyvNiIM1trqVlXVoaJjyRX+40oJZ037
+         RHNnyS2FzSXWD8MIGCEOaA8Wnv4sFqr5sSXxz0vdds9sPL7rVfRCaGiRIRAusHvXRcZw
+         OUN8aT0slgz9lY8Hi0v5wOmuy+6rsJ6RHLVfqU00QVaH6YAFFQtR6rPo+gnQo1jqOyXz
+         yNc81ZptVcRfExDgLgQsjVO55H7I/17sMZRCvchqnUgBMUAWloxwiWNytWdgRmny7w2S
+         hYUw==
+X-Forwarded-Encrypted: i=1; AJvYcCVtvcDe1pBCDBsG/bWCQSQlF4pUdPec7+8CQ5Mexz/HSRwKU6PcEHUZ/4q/anowUIhIxYqy+4ciAg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy+nvepR2PZDgf6X+w4em1c5bAM5u7N8UIVxr5oPpvbO8snlxl9
+	xlfhW84G6fcAn6nLr6YLbIX/j0PnCZNcDMlPVFQYHIdDoKE2MXv00rKAVLb1MQ==
+X-Gm-Gg: ASbGncshenvWtnJ3pYIo0v7BdCIZ6BduqKBaibdeX3rqtEXbFct5dqb4pWP99Kk1qLN
+	zLnhv2nJChouJQMDl60mrHRDTyRMZzFrz+6WY3zOGCaouSFpu8fz8l3/ES7KoPTaMfnixqklsYt
+	hL6XiJmb6j0+9c19Gl/kXJlpxu22FFmYt5SFLSKwqSwiDRBvNwU8aQLbwSVTcEueHwW3f2g/sSc
+	PwZD9uMUGxe4ttwbCgWbaynBHhBplGJBqCI3b0m/MbNHo27l4nakOjkmiy+ZoO9/pw5c1i2MziS
+	bTfQuz/uD2lhC/dOsh2q8MP/hgrNNO0XBS1YwThXsLCkoEatE+iW2y1/RpiFQmPvHcG3c/bUi8R
+	AGGyI8MKh
+X-Google-Smtp-Source: AGHT+IFSE3K7T1HytnoUqVYecWQclynPNbJ9cW1twGEoEF0s/IOy53MBr1VkhcBRlGGFqcm6A4B2ZA==
+X-Received: by 2002:a05:600c:2d53:b0:43b:c0fa:f9bf with SMTP id 5b1f17b1804b1-440a9edb7c1mr2204295e9.3.1745588770783;
+        Fri, 25 Apr 2025 06:46:10 -0700 (PDT)
+Received: from localhost (234.red-80-39-170.dynamicip.rima-tde.net. [80.39.170.234])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4409d2a0e7esm59906705e9.10.2025.04.25.06.46.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 25 Apr 2025 06:46:10 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH] multipath-tools: add Quantum devices to hwtable
+Date: Fri, 25 Apr 2025 15:46:08 +0200
+Message-ID: <20250425134609.186615-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.49.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250424083740.GA24723@lst.de>
-X-Migadu-Flow: FLOW_OUT
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-On Thu, Apr 24, 2025 at 10:37:40AM +0200, Christoph Hellwig wrote:
-> On Wed, Apr 23, 2025 at 02:02:11PM -0400, Kent Overstreet wrote:
-> > Allocating your own bio doesn't allow you to safely exceed the
-> > BIO_MAX_VECS limit - there's places in the io path that need to bounce,
-> > and they all use biosets.
-> 
-> Yes.  Another reason not to do it, which I don't want to anyway.
-> 
-> But we do have a few places that do it like squashs which we need to
-> weed out.  And/or finally kill the bounce bufferingreal, which is long
-> overdue.
-> 
-> > That may be an issue even for non vmalloc bios, unless everything that
-> > bounces has been converted to bounce to a folio of the same order.
-> 
-> Anything that actually hits the bounce buffering is going to
-> cause problems because it hasn't kept up with the evolution of
-> the block layer, and is basically not used for anything relevant.
+Info from: https://qsupport.quantum.com/kb/Flare/Content/appliances/common/InfoHubDocSite/shared_SN_appliances/Topics/overview-MultipathConf.htm
 
-It's not just block/bounce.c that does bouncing, though.
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/hwtable.c | 30 ++++++++++++++++++++++++++++++
+ 1 file changed, 30 insertions(+)
 
-e.g. bcache has to bounce on a cache miss that will be written to the
-cache - we don't want to wait for the write to the backing device to
-complete before returning the read completion, and we can't write to the
-backing device with the original buffer if it was mapped to userspace.
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 8001d5be..8b43c14d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1322,6 +1322,36 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_ALUA,
+ 		.no_path_retry = 30,
+ 	},
++	/*
++	 * Quantum
++	 */
++	{
++		/* StorNext family */
++		.vendor        = "Quantum",
++		.product       = "(StorNext QX|QXS)",
++		.bl_product    = "cvfsctl",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 18,
++	},
++	{
++		/* F-Series */
++		.vendor        = "QUANTUM",
++		.product       = "^(F|P|H)[24]",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.prio_name     = PRIO_ALUA,
++		.no_path_retry = 30,
++	},
++	{
++		/* F1000 */
++		.vendor        = "QUANTUM",
++		.product       = "^F1",
++		.pgpolicy      = GROUP_BY_SERIAL,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.no_path_retry = 30,
++	},
+ 	/*
+ 	 * EOL
+ 	 */
+-- 
+2.49.0
 
-I'm pretty sure I've seen bouncing in dm and maybe md as well, but it's
-been years.
-
-> > > The problem with transparent vmalloc handling is that it's not possible.
-> > > The magic handling for virtually indexed caches can be hidden on the
-> > > submission side, but the completion side also needs to call
-> > > invalidate_kernel_vmap_range for reads.  Requiring the caller to know
-> > > they deal vmalloc is a way to at least keep that on the radar.
-> > 
-> > yeesh, that's a landmine.
-> > 
-> > having a separate bio_add_vmalloc as a hint is still a really bad
-> > "solution", unfortunately. And since this is something we don't have
-> > sanitizers or debug code for, and it only shows up on some archs -
-> > that's nasty.
-> 
-> Well, we can't do it in the block stack because that doesn't have the
-> vmalloc address available.  So the caller has to do it, and having a
-> very visible sign is the best we can do.  Yes, signs aren't the
-> best cure for landmines, but they are better than nothing.
-
-Given that only a few architectures need it, maybe sticking the vmalloc
-address in struct bio is something we should think about.
-
-Obviously not worth it if only 2-3 codepaths need it, but if vmalloc
-fallbacks become more common it's something to think about.
-
-> > > Not for a purely synchronous helper we could handle both, but so far
-> > > I've not seen anything but the xfs log recovery code that needs it,
-> > > and we'd probably get into needing to pass a bio_set to avoid
-> > > deadlock when used deeper in the stack, etc.  I can look into that
-> > > if we have more than a single user, but for now it doesn't seem
-> > > worth it.
-> > 
-> > bcache and bcachefs btree buffers can also be vmalloc backed. Possibly
-> > also the prio_set path in bcache, for reading/writing bucket gens, but
-> > I'd have to check.
-> 
-> But do you do synchronous I/O, i.e. using sumit_bio_wait on them?
-
-Most btree node reads are synchronous, but not when we're prefetching.
