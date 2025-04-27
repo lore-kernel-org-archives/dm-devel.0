@@ -1,115 +1,126 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47B3B1F4199
-	for <dm-devel@lists.linux.dev>; Sun, 27 Apr 2025 02:45:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B0BF1F3BAC
+	for <dm-devel@lists.linux.dev>; Sun, 27 Apr 2025 08:37:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745721953; cv=none; b=T66xBFgYcb6EsogPBo3Vu3WGm12pdHZQkHI4JXq2LyQYfeukXQ+Q/bIzI4GiZPwRWhje8ef3p8J6uY7raJ63dJ2VOsoJLfXE3QjthAtcj5kfJjzBKrw0MMXziUjE18qJUDZXwmIhoEEjVb17jVK97WA4VWIiQmkU7d6KoFqScl4=
+	t=1745743033; cv=none; b=sFX5VqkNSZnHnC807K4WhIlBICNiXn0dHFDwTHO4TDoK88yUujufoq9nX9/wxjucw+jkm9pCkn8w3E13IXiw8jL17mu7CYU8QpzjW1gZO5FRERiJcF7x6EfUhT8PLWVKVqyIMrtYpBKC0BTy+8awbt1OVnl6b6Co9asobgh5ZSk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745721953; c=relaxed/simple;
-	bh=9HyWmovfxbdO9WlvHm/CrZCGdDuQYBCiz0YIKAxiQIw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=BT9p98iSci8IrccvQL8s4C8a4fQ8m921ARP9Qsk4VAPoQoum52XdbOkCn+OshtH4R6K37wy9EDUFt8limvf7YxtaJa7nEIOEhpkC09miHbJrcE7q93btQG2hbkaqYMsE2e1Qec9L4xPpHYyfbOkUi8opRTNq7IKXKJcE0NH2+W8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Bv3qL5dl; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Bv3qL5dl"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1745721950;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=5lOD5wJKRJSGzLBcfg1idl+BdURTBGXU653f/FvKAjA=;
-	b=Bv3qL5dlqFp4Ayz0xoBMi2VRHFPpgNKP7J/3Him+lF24KycqSfU8R7zOg/WoK0+Fbzqn41
-	wL9oBWObdSHfQ9ehYnBlSzWY5ywxVPd607FiA2KgskXs2L9b3ebm8ozkYul4rYJJzDhI0S
-	uEI9HBcc+BZ3obtxVaynX9B6rEuM2dQ=
-Received: from mail-lf1-f69.google.com (mail-lf1-f69.google.com
- [209.85.167.69]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-77-zKUrRT5qM26DaPjPKPBzJQ-1; Sat, 26 Apr 2025 22:45:47 -0400
-X-MC-Unique: zKUrRT5qM26DaPjPKPBzJQ-1
-X-Mimecast-MFC-AGG-ID: zKUrRT5qM26DaPjPKPBzJQ_1745721946
-Received: by mail-lf1-f69.google.com with SMTP id 2adb3069b0e04-549948b27a7so1865320e87.3
-        for <dm-devel@lists.linux.dev>; Sat, 26 Apr 2025 19:45:47 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1745721946; x=1746326746;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=5lOD5wJKRJSGzLBcfg1idl+BdURTBGXU653f/FvKAjA=;
-        b=QJDwXrm1/m7yJiotWJ9krCHVjC8HGLdbQi/Qd2hyS24iJN4WLj9mPX02Ru2vxTnovp
-         ZSuwFOeyHwLjrpmqNusaLFWt7oQlL0oUl8VPrB5dUMCOFK0GATmLdH05r08zpBQX0sTD
-         lAaUIeqP5TXj/aoNU8TF8uZV8QLVK3W12x6XrrODUEyJHVbuW4qiCv92HE/ejr+gHOXA
-         EAg5darjXi828mTA6gyIejujddLB/snT53oNao71YqNyPPKzn1hQGSAS1VJGMgGgpQZN
-         /FN5MXe4vH+WuyS5fdWrR5VyXRD6R4J9Rjjf71+opv0fks1vnoaNcfB41P/V5MOGV41h
-         QU/A==
-X-Forwarded-Encrypted: i=1; AJvYcCXuiH8VqUeWDeRv3qNzgcGe4Mj1XbmzXwS6GHRw1BcweSa6L/fLkpNM4LRy/2779H4m/YqVH6AFhg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxAWpbN7nW9tE2qTJaHmcq+EPOiwXSDT2l7ZyTvgZ7wOIyQ3KEd
-	PORGbezUMg8onOeEByUPnJ8vN3lCdZmu9XniYQGmLFsqTtkgUqHme8Jcn51Kpu3M1BIkOY0qlE+
-	e8H+tiThHU2IJI3fqFkw3fVhwveGDU61rT9gnlMnUBCmHKd/jnHxIfMhnL+JAtM27Y4Zon+b7Et
-	18SZNx2lzxK3KMaKduwSEoJsf8Dk0XCvM=
-X-Gm-Gg: ASbGncu5Jzg0LejCcj+jWqdQo7PM1U7e9arbHjCVtUOWeljhFjxI+kwbdmjT1vpUBEh
-	8iNClicobHudagCAjgD2ok+SEgYPYVbKml3gFh1WzE7VzDuY57gEByA/vWyQXX6bkiSt47Q==
-X-Received: by 2002:a2e:bc13:0:b0:30c:1441:9e84 with SMTP id 38308e7fff4ca-3190614e2efmr19465691fa.13.1745721946228;
-        Sat, 26 Apr 2025 19:45:46 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IGS0Yc4bGIbl2/v9OhZ9z0uTs3mIqptakH90A1Qqw9fP/ktQZ1u60ZhGAtb0KMTfZsMAlADrGR3uW4Ef7E40xE=
-X-Received: by 2002:a2e:bc13:0:b0:30c:1441:9e84 with SMTP id
- 38308e7fff4ca-3190614e2efmr19465581fa.13.1745721945851; Sat, 26 Apr 2025
- 19:45:45 -0700 (PDT)
+	s=arc-20240116; t=1745743033; c=relaxed/simple;
+	bh=Fy+XrpR+XQNXmNL2PJU2JswxEOnS0jPUJGAsgpm1quQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=cCpMQGNE2cEwXc0Z+XFVc8anWjxg3MWH4+NljBNztiPirHGjH7uRC0gPtMvRwPxaSytEOUZN0L3+2LGZIJZShhqQnltLes6P0lBdsjTqmXh7lKuTHkDhdHAlCPPgrzrSYg+1L2IAnNyLyexOgD1EvMpPP9/S1NMj/Wljvblph64=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Zlg0p5Bl7z4f3lDK
+	for <dm-devel@lists.linux.dev>; Sun, 27 Apr 2025 16:36:42 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.252])
+	by mail.maildlp.com (Postfix) with ESMTP id 5B6971A18E8
+	for <dm-devel@lists.linux.dev>; Sun, 27 Apr 2025 16:37:08 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP3 (Coremail) with SMTP id _Ch0CgDHGsWx7A1oOv4xKg--.7274S5;
+	Sun, 27 Apr 2025 16:37:08 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: hch@infradead.org,
+	axboe@kernel.dk,
+	xni@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	cl@linux.com,
+	nadav.amit@gmail.com,
+	ubizjak@gmail.com,
+	akpm@linux-foundation.org
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com,
+	johnny.chenyi@huawei.com
+Subject: [PATCH v2 1/9] blk-mq: remove blk_mq_in_flight()
+Date: Sun, 27 Apr 2025 16:29:20 +0800
+Message-Id: <20250427082928.131295-2-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20250427082928.131295-1-yukuai1@huaweicloud.com>
+References: <20250427082928.131295-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20250418010941.667138-1-yukuai1@huaweicloud.com>
- <20250418010941.667138-5-yukuai1@huaweicloud.com> <CALTww29aehPQcbcy0j+V69r+RVgzNPwNhpAQ-7wWMdD-VPfNgQ@mail.gmail.com>
- <f14eac30-ab65-85b2-3e65-de6d50ea15e2@huaweicloud.com>
-In-Reply-To: <f14eac30-ab65-85b2-3e65-de6d50ea15e2@huaweicloud.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Sun, 27 Apr 2025 10:45:34 +0800
-X-Gm-Features: ATxdqUFJRCKVD9aqKTI3GFPq-KDsm4Enqte1rPq47L--gyfTK3VWtePr_uH3814
-Message-ID: <CALTww29b1MN8Q-ayFLxnRA=+=J-jrR90nrDrrY7xs1C_2k8KXQ@mail.gmail.com>
-Subject: Re: [PATCH v2 4/5] md: fix is_mddev_idle()
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
-	song@kernel.org, viro@zeniv.linux.org.uk, akpm@linux-foundation.org, 
-	nadav.amit@gmail.com, ubizjak@gmail.com, cl@linux.com, 
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com, 
-	yangerkun@huawei.com, johnny.chenyi@huawei.com, 
-	"yukuai (C)" <yukuai3@huawei.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: XE6Jzc60vWQCg7lO7lUry-IkSnOb3ad1zBGB7tIlCIk_1745721946
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_Ch0CgDHGsWx7A1oOv4xKg--.7274S5
+X-Coremail-Antispam: 1UD129KBjvJXoW7KFyrKrW7Wry8ArW3Kw4kZwb_yoW8Jw4UpF
+	W5Gan8CrW2gr18uFy8tanrX3Wayws8KryxAwsxAry5tr18Kr13ZF18Zr4kZr4SvrZ3uFZr
+	uFs0yFy7CF10g37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmvb4IE77IF4wAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUGw
+	A2048vs2IY020Ec7CjxVAFwI0_Gr0_Xr1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxS
+	w2x7M28EF7xvwVC0I7IYx2IY67AKxVW7JVWDJwA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxV
+	W8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v2
+	6rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMc
+	Ij6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_
+	Jr0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I
+	0E8cxan2IY04v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCa
+	FVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_Jr
+	Wlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j
+	6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr
+	0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUv
+	cSsGvfC2KfnxnUUI43ZEXa7sRMv31JUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Sun, Apr 27, 2025 at 9:37=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> w=
-rote:
->
-> Hi,
->
-> =E5=9C=A8 2025/04/22 14:35, Xiao Ni =E5=86=99=E9=81=93:
-> >> +       unsigned long                   last_events;    /* IO event ti=
-mestamp */
-> > Can we use another name? Because mddev has events counter. This name
-> > can easily be confused with that counter.
->
-> Sorry for the late reply.
->
-> Sure, how about, normal_IO_events?
+From: Yu Kuai <yukuai3@huawei.com>
 
-It looks much better, thanks for this. I guess it's a typo error about
-uppercase IO, right? We usually use lowercase.
+It's not used and can be removed.
 
-Best Regards
-Xiao
->
-> Thanks,
-> Kuai
->
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+---
+ block/blk-mq.c | 10 ----------
+ block/blk-mq.h |  2 --
+ 2 files changed, 12 deletions(-)
+
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index c2697db59109..301dbd3e1743 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -101,16 +101,6 @@ static bool blk_mq_check_inflight(struct request *rq, void *priv)
+ 	return true;
+ }
+ 
+-unsigned int blk_mq_in_flight(struct request_queue *q,
+-		struct block_device *part)
+-{
+-	struct mq_inflight mi = { .part = part };
+-
+-	blk_mq_queue_tag_busy_iter(q, blk_mq_check_inflight, &mi);
+-
+-	return mi.inflight[0] + mi.inflight[1];
+-}
+-
+ void blk_mq_in_flight_rw(struct request_queue *q, struct block_device *part,
+ 		unsigned int inflight[2])
+ {
+diff --git a/block/blk-mq.h b/block/blk-mq.h
+index 3011a78cf16a..a23d5812d08f 100644
+--- a/block/blk-mq.h
++++ b/block/blk-mq.h
+@@ -246,8 +246,6 @@ static inline bool blk_mq_hw_queue_mapped(struct blk_mq_hw_ctx *hctx)
+ 	return hctx->nr_ctx && hctx->tags;
+ }
+ 
+-unsigned int blk_mq_in_flight(struct request_queue *q,
+-		struct block_device *part);
+ void blk_mq_in_flight_rw(struct request_queue *q, struct block_device *part,
+ 		unsigned int inflight[2]);
+ 
+-- 
+2.39.2
 
