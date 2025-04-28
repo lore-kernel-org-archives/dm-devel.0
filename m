@@ -1,63 +1,103 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D9BF25392E
-	for <dm-devel@lists.linux.dev>; Mon, 28 Apr 2025 19:44:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 350E478F29
+	for <dm-devel@lists.linux.dev>; Mon, 28 Apr 2025 21:45:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745869484; cv=none; b=HuYejdL7Phok7WcX4ThGFt7sUwEl9m98tSb0JIJ/OZBE0v6cCiYUI+Ymc07j2D5GhpJF5wXKG82RneQ63qBLH8R2VLM1f5KxaQ9mS+pqZvQeEfzboqVI5ZzVsczJgpmrv/lJajPynw/i7eqTNVfXRz8DWqBs2hfdk1vAGYmVZfA=
+	t=1745876723; cv=none; b=gZwzIfSCKZ8zV04Yidvfb5fxfFOcf9QZGI3rhOv68fn4BRujTC8BLowrDdyW8+u2Baa5l8gI1fYrlKLnCiyJYMBlDq/iDfizsSAQrs7IeDVPDvF/C30IReslhDZ15E/nwGb/IDV78/ErpjL6KPs93AKrFPSIWDfMYUbvZcSjzec=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745869484; c=relaxed/simple;
-	bh=l8/Su25FRqSfQ+f7kmaeQ63GMPQL6MNl1oTFok0lOmU=;
-	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=jGR7kkNcj3Gvn5cAoeyy+v21RE1F1CDRyrvSGCrpu7Zh0TnaRGckHjc1Vyd3OBogSnviJ92pp5TIVZxb178dQqrNOP5LN9mgbJXAEcRp9qYyZnvmEnqDu+QGXurlSzDY3qgVHdLwlXJdA32gUKb5YeKHaTvJuIcGQT7tieBKpYw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UuzR69oh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1745876723; c=relaxed/simple;
+	bh=MYomZuZVHBcUbqKD8Od5nzxYWT6yyjPRcZ3qGXGktT0=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=mODsbMDftJ5g5JUWQfs/gTDv4DdCYdHPYSekYWsJeVGVj8tt4QsmqC8M6lpJaEkrTYavcb+TC81/3vb/YtgzporDkNIbsb8wxvd4gz8E4qAIsVcirIQ24CsHxkRGQXEGvHwKSRqSxtsXOqzAcddqn1anCOyWNhHm77jh+zKbIJw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HPIVklCZ; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UuzR69oh"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1AF06C4CEE4;
-	Mon, 28 Apr 2025 19:44:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1745869484;
-	bh=l8/Su25FRqSfQ+f7kmaeQ63GMPQL6MNl1oTFok0lOmU=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
-	b=UuzR69oh10yqj7iXlXUTzso1ucEkKA9pmyc0AZ1qyhMbwzn7gNoJto6CqH9W0NHN2
-	 u60Fw939DRWIAqvF0ERorplhGXV70swoihDRQQRZ3wbsxiw3XulFkkoWlwrjsA3hVz
-	 DDY5Nn/z98C0/Xb//4L49ISiWmuQU/025ER+aSkFXp4fOnf3adBCje811nyR1Xjc3T
-	 h2T1d1JTPTf0+lxfcz6BVeX6YMQBlvCTRlQdQWO6WNDx4oSHVBReHp0fYk4kokK/FW
-	 O2avjZbZHbR1/OHoxpMh6Mnhf7JkVsMjk03JgFnN+sdE26bSEtfSEEi3+2qValrl4u
-	 +/dD4AIeRQWBw==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 33F5A3822D43;
-	Mon, 28 Apr 2025 19:45:24 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes for 6.15
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <7f751e0d-49ff-9099-5269-af809a70fd08@redhat.com>
-References: <7f751e0d-49ff-9099-5269-af809a70fd08@redhat.com>
-X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
-X-PR-Tracked-Message-Id: <7f751e0d-49ff-9099-5269-af809a70fd08@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes
-X-PR-Tracked-Commit-Id: 5a2a6c428190f945c5cbf5791f72dbea83e97f66
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 78109c591b806e41987e0b83390e61d675d1f724
-Message-Id: <174586952276.1022398.14599879438742288778.pr-tracker-bot@kernel.org>
-Date: Mon, 28 Apr 2025 19:45:22 +0000
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Shevchenko <andriy.shevchenko@linux.intel.com>, Benjamin Marzinski <bmarzins@redhat.com>, LongPing Wei <weilongping@oppo.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HPIVklCZ"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1745876720;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xc7RtSZxTilhkrBlJEai7E6wIt96DRbVHohRZwQXX2w=;
+	b=HPIVklCZFtxxY42MI9Tfgq/mZF8Pch/AJwgAdOAn5oU644lEqbx4fT0Qtk6krCbTp1exjG
+	my5mlaAq77rDLJRAB5uMAJxt8+22KBLP1TTu+XHM3baG+pBt2/04bfsCXDvYWJdF8Hjvw4
+	LBvxQLlr751vhDdvjIxFot3jPL+QFss=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-412-FeOTgBnrMVKixTlqSONsnw-1; Mon,
+ 28 Apr 2025 17:45:18 -0400
+X-MC-Unique: FeOTgBnrMVKixTlqSONsnw-1
+X-Mimecast-MFC-AGG-ID: FeOTgBnrMVKixTlqSONsnw_1745876717
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DB9AE1800876;
+	Mon, 28 Apr 2025 21:45:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AA4611800361;
+	Mon, 28 Apr 2025 21:45:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 53SLjFDc1905346
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 28 Apr 2025 17:45:15 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 53SLjFBF1905345;
+	Mon, 28 Apr 2025 17:45:15 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 2/2] multipathd: disable queueing on invalid multipath devices
+Date: Mon, 28 Apr 2025 17:45:14 -0400
+Message-ID: <20250428214514.1905327-3-bmarzins@redhat.com>
+In-Reply-To: <20250428214514.1905327-1-bmarzins@redhat.com>
+References: <20250428214514.1905327-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: WO4_e-Bkf6MccNIUiWXBc7FtcXbE5hUzRNgQAqExBt4_1745876717
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-The pull request you sent on Mon, 28 Apr 2025 18:01:56 +0200 (CEST):
+If the multipath configuration has changed and a multipath device is no
+longer valid after a reconfigure, disable queueing on it before
+attempting to delete it. This makes it more likely to be deleted and if
+the device isn't valid, then it there is no defined no_path_retry value
+for it.
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes
+Fixes: https://github.com/opensvc/multipath-tools/issues/113
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/78109c591b806e41987e0b83390e61d675d1f724
-
-Thank you!
-
+diff --git a/multipathd/main.c b/multipathd/main.c
+index bdd97178..83a0b055 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -820,6 +820,10 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
+ 			 * remove all current maps not allowed by the
+ 			 * current configuration
+ 			 */
++			ompp->retry_tick = 0;
++			ompp->no_path_retry = NO_PATH_RETRY_FAIL;
++			ompp->disable_queueing = 1;
++			dm_queue_if_no_path(ompp, 0);
+ 			if (dm_flush_map(ompp->alias) != DM_FLUSH_OK) {
+ 				condlog(0, "%s: unable to flush devmap",
+ 					ompp->alias);
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+2.48.1
+
