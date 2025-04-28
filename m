@@ -1,28 +1,30 @@
-Received: from mx3.molgen.mpg.de (mx3.molgen.mpg.de [141.14.17.11])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 218F53D3B8
-	for <dm-devel@lists.linux.dev>; Sun, 27 Apr 2025 10:00:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=141.14.17.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4C744431
+	for <dm-devel@lists.linux.dev>; Mon, 28 Apr 2025 03:32:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745748023; cv=none; b=tVVKa1amHM9n7Vs0/bHFeSBL8evOOLBV0XSrD2T3/in6YLl6P5orREXS6RSJulpNibuAups7VomR26TodTbIrcqBdTla8IZNse/iy9IvPD+sm2GT0h9eye+ccY6+kAC8MksIGXDMR8p7iHGhOzsHuig9Xp8LM9jZXD7/lMWpH2Y=
+	t=1745811179; cv=none; b=Q7ZHoyszMlhkdOjPOvDh+T6Vz2hjO/I6MmaCd2lvdNAdfa/khYhGndi7VdEAw9Ximu27VCgHaxEFwaHIycAz7IlGHef7KhYbyGChFh4imOrh7pfSOy4mvY+3UAahiuMzEyBEBmL8ywvb6+b6cQCDNpwoOgLwz1/merGwwbpxxKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745748023; c=relaxed/simple;
-	bh=2AJESlIzrICkfNVKItN+ZI13DbHRQ2WIsWRmd0Gg2bQ=;
+	s=arc-20240116; t=1745811179; c=relaxed/simple;
+	bh=rZPb+nYyN6fqWnBmjxisPyPRLgUVCz2sdtg+z7gQqTk=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=T401s1tWzESVJAZLUwLWqLgocnWxAy13DSyhazjpVlsYBPqwp7AOuZPEFq+yqZ8fhOTJCL7t60v+KmBcke33b7Omc9HMcbr2TUNqh+XUyk/1AiXIgTnToqxk5Q713ohYlpYh0egLNAsIgDJ+UXV2zNIYZC6BtJeZqGgWOnQ5QAU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de; spf=pass smtp.mailfrom=molgen.mpg.de; arc=none smtp.client-ip=141.14.17.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=molgen.mpg.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=molgen.mpg.de
-Received: from [192.168.0.224] (ip5f5aecdf.dynamic.kabel-deutschland.de [95.90.236.223])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: pmenzel)
-	by mx.molgen.mpg.de (Postfix) with ESMTPSA id 2CCF561E647A7;
-	Sun, 27 Apr 2025 11:59:42 +0200 (CEST)
-Message-ID: <5b26202c-475f-48be-b6d4-b32b62eff7b1@molgen.mpg.de>
-Date: Sun, 27 Apr 2025 11:59:41 +0200
+	 In-Reply-To:Content-Type; b=MWcoelEnvwxys/HYllNgmqSnfN7OlMpAKE/ENFikW4dAlog8le/4mUSSrXcUmiyWgJShYXU6Wh7cWaZeORRR8QNIQOe6KfeIx8+qvefwlYzZv8NhG7UVQFUMmKjKcd8GGzNzV8WpAgD29Y2Wk6duuNuRQvc8ZqS+bEuBozSQz8w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4Zm8Cj0YpYzKHMbW
+	for <dm-devel@lists.linux.dev>; Mon, 28 Apr 2025 11:32:49 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 159871A0D11
+	for <dm-devel@lists.linux.dev>; Mon, 28 Apr 2025 11:32:48 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP4 (Coremail) with SMTP id gCh0CgBXu1_d9g5ov1YkKw--.49750S3;
+	Mon, 28 Apr 2025 11:32:47 +0800 (CST)
+Message-ID: <6db8d3e6-44ce-4b2b-b496-ec0104aee997@huaweicloud.com>
+Date: Mon, 28 Apr 2025 11:32:45 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -30,75 +32,136 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 0/9] md: fix is_mddev_idle()
-To: Yu Kuai <yukuai1@huaweicloud.com>
-Cc: hch@infradead.org, axboe@kernel.dk, xni@redhat.com, agk@redhat.com,
- snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org,
- yukuai3@huawei.com, cl@linux.com, nadav.amit@gmail.com, ubizjak@gmail.com,
- akpm@linux-foundation.org, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-raid@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com,
- johnny.chenyi@huawei.com
-References: <20250427082928.131295-1-yukuai1@huaweicloud.com>
+Subject: Re: [PATCH blktests 1/3] scsi/010: add unmap write zeroes tests
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ "linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ hch <hch@lst.de>, "tytso@mit.edu" <tytso@mit.edu>,
+ "djwong@kernel.org" <djwong@kernel.org>,
+ "john.g.garry@oracle.com" <john.g.garry@oracle.com>,
+ "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "chaitanyak@nvidia.com" <chaitanyak@nvidia.com>,
+ "yi.zhang@huawei.com" <yi.zhang@huawei.com>,
+ "chengzhihao1@huawei.com" <chengzhihao1@huawei.com>,
+ "yukuai3@huawei.com" <yukuai3@huawei.com>,
+ "yangerkun@huawei.com" <yangerkun@huawei.com>
+References: <20250318072835.3508696-1-yi.zhang@huaweicloud.com>
+ <20250318072835.3508696-2-yi.zhang@huaweicloud.com>
+ <krhbty6cnaj3zv4bka4jmpwmm74v7k3cts6csp6yoc7xjexoyu@6yrwd7rr2rip>
 Content-Language: en-US
-From: Paul Menzel <pmenzel@molgen.mpg.de>
-In-Reply-To: <20250427082928.131295-1-yukuai1@huaweicloud.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <krhbty6cnaj3zv4bka4jmpwmm74v7k3cts6csp6yoc7xjexoyu@6yrwd7rr2rip>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgBXu1_d9g5ov1YkKw--.49750S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxXFy8Cw48GryUuFyUZFWrXwb_yoW5Gry5pF
+	WxGa9Ykr1ktr17G3WSvF45Wr13J3yfAr47AFWxCw1UCr98Zryakr1IgrWUWa4fGrZ8Gw1F
+	y3WUXFySkryUt3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
+	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
+	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
+	s2-5UUUUU==
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-Dear Kuai,
+Hello Shinichiro！
 
+I apologize for the significant delay, and I greatly appreciate your
+review and suggestions.
 
-Thank you for your patch series. Some minor comments below.
-
-
-Am 27.04.25 um 10:29 schrieb Yu Kuai:
-> From: Yu Kuai <yukuai3@huawei.com>
-
-If a full cover letter is not warranted, maybe state, what patch to look 
-at? (In this case 8/9.)
-
-> Changes in v2:
->   - add patch 1-5
->   - add reviewed-by in patch 6,7,9
->   - rename mddev->last_events to mddev->normal_IO_events in patch 8
+On 2025/4/3 15:26, Shinichiro Kawasaki wrote:
+> Hello Zhang, thank you for the patches.
 > 
-> Yu Kuai (9):
->    blk-mq: remove blk_mq_in_flight()
->    block: reuse part_in_flight_rw for part_in_flight
->    block: WARN if bdev inflight counter is negative
->    block: cleanup blk_mq_in_flight_rw()
+> On Mar 18, 2025 / 15:28, Zhang Yi wrote:
+>> From: Zhang Yi <yi.zhang@huawei.com>
+>>
+>> Test block device unmap write zeroes sysfs interface with various SCSI
+>> debug devices. The /sys/block/<disk>/queue/write_zeroes_unmap interface
+>> should return 1 if the SCSI device enable the WRITE SAME command with
+>> unmap functionality, and it should return 0 otherwise.
+>>
+>> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+>> ---
+>>  tests/scsi/010     | 56 ++++++++++++++++++++++++++++++++++++++++++++++
+>>  tests/scsi/010.out |  2 ++
+>>  2 files changed, 58 insertions(+)
+>>  create mode 100755 tests/scsi/010
+>>  create mode 100644 tests/scsi/010.out
+>>
+>> diff --git a/tests/scsi/010 b/tests/scsi/010
+>> new file mode 100755
+>> index 0000000..27a672c
+>> --- /dev/null
+>> +++ b/tests/scsi/010
+>> @@ -0,0 +1,56 @@
+>> +#!/bin/bash
+>> +# SPDX-License-Identifier: GPL-3.0+
+>> +# Copyright (C) 2025 Huawei.
+>> +#
+>> +# Test block device unmap write zeroes sysfs interface with various scsi
+>> +# devices.
+>> +
+>> +. tests/scsi/rc
+>> +. common/scsi_debug
+>> +
+>> +DESCRIPTION="test unmap write zeroes sysfs interface with scsi devices"
+>> +QUICK=1
+>> +
+>> +requires() {
+>> +	_have_scsi_debug
+>> +}
+>> +
+>> +device_requries() {
+>> +	_require_test_dev_sysfs queue/write_zeroes_unmap
+>> +}
+> 
+> The device_requries() hook does not work for test cases which implement test().
+> It is rather dirty, but I think we need to delay the check for
+> write_zeroes_unmap sysfs attribute availability until test() gets called.
+> See below for my idea.
+> 
 
-cleanup → clean up
+Indeed, I completely missed that.
 
->    block: export API to get the number of bdev inflight IO
->    md: record dm-raid gendisk in mddev
->    md: add a new api sync_io_depth
+>> +
+>> +test() {
+>> +	echo "Running ${TEST_NAME}"
+>> +
+>> +	# disable WRITE SAME with unmap
+>> +	if ! _configure_scsi_debug lbprz=0; then
+>> +		return 1
+>> +	fi
+> 
+> I suggest to check queue/write_zeroes_unmap here. If it's not available, set
+> SKIP_REASONS and return like this (totally untested):
+> 
+> 	if [[ ! -f /sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap ]]; then
+> 		_exit_scsi_debug
+> 		SKIP_REASONS+=("kernel does not support unmap write zeroes sysfs interface")
+> 		return 1
+> 	fi
+> 
 
-add a new → add new
+Yeah, I agree with you. For now, there is no helper available for
+checking the sysfs interface of the SCSI debugging device.
 
->    md: fix is_mddev_idle()
->    md: cleanup accounting for issued sync IO
+I will add a new helper setup_test_device() in this test as the
+following two patches do, and put this check into that helper.
 
-cleanup → clean up
+Thanks,
+Yi.
 
->   block/blk-core.c          |   2 +-
->   block/blk-mq.c            |  22 ++---
->   block/blk-mq.h            |   5 +-
->   block/blk.h               |   1 -
->   block/genhd.c             |  69 ++++++++------
->   drivers/md/dm-raid.c      |   3 +
->   drivers/md/md.c           | 193 +++++++++++++++++++++++++++-----------
->   drivers/md/md.h           |  18 +---
->   drivers/md/raid1.c        |   3 -
->   drivers/md/raid10.c       |   9 --
->   drivers/md/raid5.c        |   8 --
->   include/linux/blkdev.h    |   1 -
->   include/linux/part_stat.h |   2 +
->   13 files changed, 194 insertions(+), 142 deletions(-)
-
-
-
-Kind regards,
-
-Paul
