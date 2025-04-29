@@ -1,272 +1,108 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E257824E00D
-	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 16:52:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09572254852
+	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 19:59:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745945539; cv=none; b=lEUxE3wccJyKV/zO8RzfGAEjNx3dlOB858/U2SYog2GKKEHdBXkxLUTG8jl+jVB7mdaCsRvGUW0rJ67nDof/Vz2GjMe0fToLIAsNzZMUDxgTB+Z2eVjDAIA1tPCM2x2TMvrsBLwWCI4ldmKMKJCBKQLDiQ16ICIPYwgrTVpSBsY=
+	t=1745956786; cv=none; b=hj/NEfnx98GKC3LzoLEtIgRgf6VQG2KKG8gseZQqg0VXaNEN7egHHs026TlJPSgxLCQwbwfEjAYENQ66cCbYL5T7RnBVNIiO95a5t0S9NLR6XJIF9HvQECDA5Cb/ZrqK/UpN8BmzeweIK02urlnlGWH3MEIjW29VliUTtStKWQw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745945539; c=relaxed/simple;
-	bh=EfD/o66GX0OKRvbZSaNzNHske3QcGjcjuQjaULquzI8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=TK3EDnfzwuqAT8otg44wE/iggeZKOZ5jyGeeQnEU6laFpmdvK1Sx3SY/Z5IIdoHH8CU9Lmhh9dhdKvYlD3KUlJFipQf1/wRpaf1POXjfWuElMfJ2B5X3NVLXg28J8tyBK9AOwTBqFsz5qiaixfmu/mYTSOC1YsfT+yVFsOjAFCw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=D3EV/UUV; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1745956786; c=relaxed/simple;
+	bh=TpeeCAONNIHICjtsDc5EicK/naWpruIupLOnMbhGkSs=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=XmEv/aZySJuyX5fPDp4fDcTpeI8+Ql9QRwe6H8X8xTj6YG4jk2bYjHVgCFPL2WqwRB0Vd2Ah31ttB4bXMhEhz+dY+BRhYW8qjmjFVISs+PVyCvmPZrvJMN5LEC/R6cqxGA+tjnqON08ZjyPyE5B/1NtSvp6VHn6kiMkiE8M0a1k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UCLCDbfQ; arc=none smtp.client-ip=209.85.221.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="D3EV/UUV"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1745945536;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pvlclyJOdlodk0vJ4LxFoHs9tOLTNVW8rNQpOB1HHMg=;
-	b=D3EV/UUVq4jkCeN/3M4rM8xkobDu5aC5Vo4oC6czyS9NwqoDf0MG3wCjOAfIBKHBafq0m1
-	LDTtp7mpQGylQ38q7V7vQQOBcNfZpBEAZN2yzABLfQdvxE1veK4MhRyE2e9QJp1LUP6loN
-	yUivCmyVpgVryC0gU1nuYywq8PxVGNM=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-259-Miky6MDoPh2AYYmMSFCl3Q-1; Tue,
- 29 Apr 2025 12:52:14 -0400
-X-MC-Unique: Miky6MDoPh2AYYmMSFCl3Q-1
-X-Mimecast-MFC-AGG-ID: Miky6MDoPh2AYYmMSFCl3Q_1745945533
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD6AF195609F;
-	Tue, 29 Apr 2025 16:52:13 +0000 (UTC)
-Received: from merkur.redhat.com (unknown [10.44.34.64])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id AA8A21956094;
-	Tue, 29 Apr 2025 16:52:11 +0000 (UTC)
-From: Kevin Wolf <kwolf@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: kwolf@redhat.com,
-	hreitz@redhat.com,
-	mpatocka@redhat.com,
-	snitzer@kernel.org,
-	bmarzins@redhat.com,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH 2/2] dm mpath: Interface for explicit probing of active paths
-Date: Tue, 29 Apr 2025 18:50:18 +0200
-Message-ID: <20250429165018.112999-3-kwolf@redhat.com>
-In-Reply-To: <20250429165018.112999-1-kwolf@redhat.com>
-References: <20250429165018.112999-1-kwolf@redhat.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UCLCDbfQ"
+Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-3912d2c89ecso4945682f8f.2
+        for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 12:59:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1745956782; x=1746561582; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=TpeeCAONNIHICjtsDc5EicK/naWpruIupLOnMbhGkSs=;
+        b=UCLCDbfQ08Dh7GVsxMOj9OwxHrZQD6BumC8xZ9dEjrrILtYZL0XbJyZzPedGLsRBVU
+         9QGQasNwp48M8vzlJrhS1Bm28G18q+83xVcpril12EmUOWCKR2o/nGmGMEsJo1QZ/AeZ
+         KKG77U53epBiX9Ti/VAz0CkbxtgKvEgRfn1tDXxLjdnCb62O8dYOZZPYDeEGUwaHEq9A
+         gvpp+MWoJpx3VcCVryXLUplXADDqCwxS5Amwdw+AUuYqLKOjsQaYbS5M4n6UL8cUFFNe
+         Cduq1ujgVWeQw6heulXCSyMjtAbwcNwEiTtHTvSoWWKjdjAsiGDd9GR1P+cwuHF7W926
+         0bIA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1745956782; x=1746561582;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=TpeeCAONNIHICjtsDc5EicK/naWpruIupLOnMbhGkSs=;
+        b=JJNKwqA2lHILoSg95qMzwGKRlOOfsoTyu4/bNQRm8Zb9eiv9Xzkjn6MpASD4uoMDNB
+         /z2hxIg52BnRunvuVUv7ZdhqM3ECkhAGeEjgNpE5tgz6Y4Q6MoCz2E5R+FLntTZ10Z4Y
+         ytlR07h/nDAnmfA/zokurXyRTWnYm34fwCsQrSpYbBJziRn5nUIWw1CVaRk2eL+YS9g4
+         zmExikXiZslKEoMQMNCl0xtOXR0zwtdsl2hood0ePvf4eu+GLkW4EnumCbQoVy9XeyTq
+         T/GGKmcHmihTlRO5aJWqas/3Q2ZOOXwemqwKD1QrtuvoHQCSOIKXl29UkxjJdfo2zXcj
+         kHEA==
+X-Gm-Message-State: AOJu0Yy2IJNXopHs7rvPxNxmXGkqYm9HdwfOTFlDytjGWQFvPPNOp0X8
+	xrvr6WwqPBxC26gwqfOHP9UVVMYfbWetjzVsjPoBll43bfQ/US3tCAj4nIe8qnr5w5/qhCistdd
+	u
+X-Gm-Gg: ASbGncugKhSbpJ5c7laZWhLmqqAWmPHY8VXC6e8p8mU+ovJ4mSEWEs05a5HwRu012A3
+	6uccIoLRWGzyUigzREXOXMaVdOx2uLF3GCENtrc3XqwkTCbLyc8orOXDmrXqa3ysjJQzRAFvaFt
+	vWJkvM9SaoA4YpatcsS3n9bNPRLGd3o0rjjINfspRas5D3mAsUjUVKCePu0V+ykPJgvVeBbLwFj
+	6OL+Dhad8vzk2/DXxuwEbyhTlNpA0jPq7uK1Ky+BWPX/2IOq+tzO8CzbNXmXzCCPKTuawLCLkn5
+	l5uLHgnLQ4pXpDWE5wth+SgV0MyaiIyxPfV+Y8oy10oDEn9Se3IZPEe4T6UD8Wo88h323vRqfBQ
+	yYYhsjwkxBS0LZxQArv9k9somP4EJm1jxX9Jpq3TkMWbvuTYehBoDpGINNKQwTyN+ntQjMWMdUt
+	FaqnHt+A2E1Q==
+X-Google-Smtp-Source: AGHT+IHKPusFrodo2HGGMX+IN3495UHPzHRgnJTPwoeyItzO1/TIJy7fMrGugSulyY/AYRDz2J/75w==
+X-Received: by 2002:a05:6000:240c:b0:3a0:8380:3395 with SMTP id ffacd0b85a97d-3a08f7b95e8mr534969f8f.48.1745956782168;
+        Tue, 29 Apr 2025 12:59:42 -0700 (PDT)
+Received: from ?IPv6:2003:de:3740:fd00:677a:2a06:a366:3993? (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a073c8d1a5sm15231198f8f.13.2025.04.29.12.59.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 29 Apr 2025 12:59:41 -0700 (PDT)
+Message-ID: <d277b26e716775ef3778aa47c8a96ea24a551de7.camel@suse.com>
+Subject: Re: [PATCH 1/2] libmutipath: handle blacklisted paths on
+ map_discovery
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 29 Apr 2025 21:59:40 +0200
+In-Reply-To: <20250428214514.1905327-2-bmarzins@redhat.com>
+References: <20250428214514.1905327-1-bmarzins@redhat.com>
+	 <20250428214514.1905327-2-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-Multipath cannot directly provide failover for ioctls in the kernel
-because it doesn't know what each ioctl means and which result could
-indicate a path error. Userspace generally knows what the ioctl it
-issued means and if it might be a path error, but neither does it know
-which path the ioctl took nor does it necessarily have the privileges to
-fail a path using the control device.
+On Mon, 2025-04-28 at 17:45 -0400, Benjamin Marzinski wrote:
+> If the multipath configuration is changed to blacklist existing
+> devices,
+> and multipathd is reloaded but the blacklisted multipaths device
+> can't
+> be removed, multipathd was marking the paths as INIT_PARTIAL, causing
+> them to stay in the multipath device, at least until the
+> partial_retrigger_delay timeout elapsed. Instead, mark them as
+> INIT_REMOVED and set mpp->need_reload, so the device is reloaded and
+> the
+> paths are removed. To make sure the blacklisted paths are deleted
+> when
+> the multipath device is removed in coalesce_maps(), set their pp->mpp
+> to point to map before removing it.
+>=20
+> Fixes d9c61332 ("multipathd: trigger uevents for blacklisted paths in
+> reconfigure")
 
-In order to allow userspace to address this situation, implement a
-DM_MPATH_PROBE_PATHS ioctl that prompts the dm-mpath driver to probe all
-active paths in the current path group to see whether they still work,
-and fail them if not. If this returns success, userspace can retry the
-ioctl and expect that the previously hit bad path is now failed (or
-working again).
+The patch looks good to me, but I only vaguely understand why the bug
+is introduced in d9c61332. Are you positive that before d9c61332, the
+hang didn't occur?
 
-The immediate motivation for this is the use of SG_IO in QEMU for SCSI
-passthrough. Following a failed SG_IO ioctl, QEMU will trigger probing
-to ensure that all active paths are actually alive, so that retrying
-SG_IO at least has a lower chance of failing due to a path error.
-However, the problem is broader than just SG_IO (it affects any ioctl),
-and if applications need failover support for other ioctls, the same
-probing can be used.
+>=20
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-This is not implemented on the DM control device, but on the DM mpath
-block devices, to allow all users who have access to such a block device
-to make use of this interface, specifically to implement failover for
-ioctls. For the same reason, it is also unprivileged. Its implementation
-is effectively just a bunch of reads, which could already be issued by
-userspace, just without any guarantee that all the rights paths are
-selected.
-
-The probing implemented here is done fully synchronously path by path;
-probing all paths concurrently is left as an improvement for the future.
-
-Co-developed-by: Hanna Czenczek <hreitz@redhat.com>
-Signed-off-by: Hanna Czenczek <hreitz@redhat.com>
-Signed-off-by: Kevin Wolf <kwolf@redhat.com>
----
- include/uapi/linux/dm-ioctl.h |  9 +++-
- drivers/md/dm-ioctl.c         |  1 +
- drivers/md/dm-mpath.c         | 91 ++++++++++++++++++++++++++++++++++-
- 3 files changed, 98 insertions(+), 3 deletions(-)
-
-diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
-index b08c7378164d..3225e025e30e 100644
---- a/include/uapi/linux/dm-ioctl.h
-+++ b/include/uapi/linux/dm-ioctl.h
-@@ -258,10 +258,12 @@ enum {
- 	DM_DEV_SET_GEOMETRY_CMD,
- 	DM_DEV_ARM_POLL_CMD,
- 	DM_GET_TARGET_VERSION_CMD,
-+	DM_MPATH_PROBE_PATHS_CMD,
- };
- 
- #define DM_IOCTL 0xfd
- 
-+/* Control device ioctls */
- #define DM_VERSION       _IOWR(DM_IOCTL, DM_VERSION_CMD, struct dm_ioctl)
- #define DM_REMOVE_ALL    _IOWR(DM_IOCTL, DM_REMOVE_ALL_CMD, struct dm_ioctl)
- #define DM_LIST_DEVICES  _IOWR(DM_IOCTL, DM_LIST_DEVICES_CMD, struct dm_ioctl)
-@@ -285,10 +287,13 @@ enum {
- #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
-+/* Block device ioctls */
-+#define DM_MPATH_PROBE_PATHS _IO(DM_IOCTL, DM_MPATH_PROBE_PATHS_CMD)
-+
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	49
-+#define DM_VERSION_MINOR	50
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2025-01-17)"
-+#define DM_VERSION_EXTRA	"-ioctl (2025-04-28)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index d42eac944eb5..4165fef4c170 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1885,6 +1885,7 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
- 		{DM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometry},
- 		{DM_DEV_ARM_POLL_CMD, IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
- 		{DM_GET_TARGET_VERSION_CMD, 0, get_target_version},
-+		{DM_MPATH_PROBE_PATHS_CMD, 0, NULL}, /* block device ioctl */
- 	};
- 
- 	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 909ed6890ba5..af17a35c6457 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -2021,6 +2021,85 @@ static int multipath_message(struct dm_target *ti, unsigned int argc, char **arg
- 	return r;
- }
- 
-+/*
-+ * Perform a minimal read from the given path to find out whether the
-+ * path still works.  If a path error occurs, fail it.
-+ */
-+static int probe_path(struct pgpath *pgpath)
-+{
-+	struct block_device *bdev = pgpath->path.dev->bdev;
-+	unsigned int read_size = bdev_logical_block_size(bdev);
-+	struct page *page;
-+	struct bio *bio;
-+	blk_status_t status;
-+	int r = 0;
-+
-+	if (WARN_ON_ONCE(read_size > PAGE_SIZE))
-+		return -EINVAL;
-+
-+	page = alloc_page(GFP_KERNEL);
-+	if (!page)
-+		return -ENOMEM;
-+
-+	/* Perform a minimal read: Sector 0, length read_size */
-+	bio = bio_alloc(bdev, 1, REQ_OP_READ, GFP_KERNEL);
-+	if (!bio) {
-+		r = -ENOMEM;
-+		goto out;
-+	}
-+
-+	bio->bi_iter.bi_sector = 0;
-+	__bio_add_page(bio, page, read_size, 0);
-+	submit_bio_wait(bio);
-+	status = bio->bi_status;
-+	bio_put(bio);
-+
-+	if (status && blk_path_error(status))
-+		fail_path(pgpath);
-+
-+out:
-+	__free_page(page);
-+	return r;
-+}
-+
-+/*
-+ * Probe all active paths in current_pg to find out whether they still work.
-+ * Fail all paths that do not work.
-+ *
-+ * Return -ENOTCONN if no valid path is left (even outside of current_pg). We
-+ * cannot probe paths in other pgs without switching current_pg, so if valid
-+ * paths are only in different pgs, they may or may not work. Userspace can
-+ * submit a request and we'll switch. If the request fails, it may need to
-+ * probe again.
-+ */
-+static int probe_active_paths(struct multipath *m)
-+{
-+	struct pgpath *pgpath;
-+	struct priority_group *pg;
-+	int r = 0;
-+
-+	mutex_lock(&m->work_mutex);
-+
-+	pg = READ_ONCE(m->current_pg);
-+	if (pg) {
-+		list_for_each_entry(pgpath, &pg->pgpaths, list) {
-+			if (!pgpath->is_active)
-+				continue;
-+
-+			r = probe_path(pgpath);
-+			if (r < 0)
-+				goto out;
-+		}
-+	}
-+
-+	if (!atomic_read(&m->nr_valid_paths))
-+		r = -ENOTCONN;
-+
-+out:
-+	mutex_unlock(&m->work_mutex);
-+	return r;
-+}
-+
- static int multipath_prepare_ioctl(struct dm_target *ti,
- 				   struct block_device **bdev,
- 				   unsigned int cmd, unsigned long arg,
-@@ -2031,6 +2110,16 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
- 	unsigned long flags;
- 	int r;
- 
-+	if (_IOC_TYPE(cmd) == DM_IOCTL) {
-+		*forward = false;
-+		switch (cmd) {
-+		case DM_MPATH_PROBE_PATHS:
-+			return probe_active_paths(m);
-+		default:
-+			return -ENOTTY;
-+		}
-+	}
-+
- 	pgpath = READ_ONCE(m->current_pgpath);
- 	if (!pgpath || !mpath_double_check_test_bit(MPATHF_QUEUE_IO, m))
- 		pgpath = choose_pgpath(m, 0);
-@@ -2182,7 +2271,7 @@ static int multipath_busy(struct dm_target *ti)
-  */
- static struct target_type multipath_target = {
- 	.name = "multipath",
--	.version = {1, 14, 0},
-+	.version = {1, 15, 0},
- 	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE |
- 		    DM_TARGET_PASSES_INTEGRITY,
- 	.module = THIS_MODULE,
--- 
-2.49.0
-
+Reviewed-by: Martin Wilck <mwilck@suse.com>
