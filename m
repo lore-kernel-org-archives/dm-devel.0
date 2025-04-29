@@ -1,74 +1,75 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 620A32472B0
-	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 20:00:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4922622F3B0
+	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 20:06:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745956814; cv=none; b=X1FZuXY4KgZy9SqvpNUa7fI/9IXV7FTsRGDRBz5Ki1qy+Q8a1/AfcR1ISEe1t33B9dmWlYu2dOAw14OnO321CD3YUzFEpXqC56xpi2wMVlqZ+a7jUgrFgh3EIaeAAqSGW5Tw7ky60LIAUECJC6trxoiHomxi0QGDdDWO9Vk01fI=
+	t=1745957171; cv=none; b=B6nbxbJW7NAIuAcqqFHrO2aSanew+pMCpft/DJ1uvl3U3/oY0F8cxkNSdQxSmea0Mu2Zr77eX0D9WCmRuTmP50bzlEopd+w1dHR63ThoGTenqb8qxKtIzskjv3VqE86K1hZ/a+aY46aGtRwXR/5jraBz0kPh+As87O/ypun1JRI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745956814; c=relaxed/simple;
-	bh=Ce9jSDPmU0Eo+UUz4XDpHFi5jPgG8Nv5X/hH+FzFkmg=;
+	s=arc-20240116; t=1745957171; c=relaxed/simple;
+	bh=aMe+/8/FfiylRKf6BmOCIEFOY0hOpHIsQfuIskp9uNk=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=X/TEUNzlstMfDRuy0dNzJ2sjBAXh4iiaiRcEf9sL455DJN3HWzzhypBGnW38RyAyOSNurFnltk3VbceX4u/qKGFqQjWYF6cRkdamenhiVh+XiDC4k89YOXo+QeRVbgVUfdT2Et1sD55RXe2fiWv5K7gQIAsR1a0QOEAmLq71cPs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=L4Rj7NXJ; arc=none smtp.client-ip=209.85.128.53
+	 Content-Type:MIME-Version; b=XEX2mreOU4A8Vn6GSNqfakxZwN96U0K+DexmU4If2klh61CPypFyGroyPGYjn2hyISZdvwRQkeXUynyLSZcCgA9gdPYvy5Lz2dXrvbVWzbcJ8Mf1AYvbalMKn7FEnC+HNhMkjilLFUPfU+UfMOs7b+myjcYRG8ti5/JlmCh3viw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=OOF0+lrx; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=OOF0+lrx; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="L4Rj7NXJ"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-43cf06eabdaso57553475e9.2
-        for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 13:00:11 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1745956810; x=1746561610; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=Ce9jSDPmU0Eo+UUz4XDpHFi5jPgG8Nv5X/hH+FzFkmg=;
-        b=L4Rj7NXJuoXFr9+u7FxyXoCJDZzqjNh/WBvWYYyYlqEM3XcIk/A+fFhyjy2wyFu1Uc
-         mqYpNoHrb+L8nqrIAsBWYaBdFhtnPedJ/XpbfXMAwnbkJRzKegR3EdgpiiFVPzS+s6ry
-         xEmtoOs3gsUlQCLXS7wV4kz/OerXC0AHwjBDLwUwfGhKJ0ROUlr+MaExGCsww7YcfBrD
-         qLJtfkj/H/XfL4wNQQjLWV+a1rdsCVy6bg+XaM/UdzY6TBPcaak6g7wDG39VuTLxtyMN
-         7u1+fHgDgFWawxiY12dn6pep40raWZ8gHa9WaWaIH+MB74f3TigO0bBv5PwboDZ6IBml
-         7YDA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1745956810; x=1746561610;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=Ce9jSDPmU0Eo+UUz4XDpHFi5jPgG8Nv5X/hH+FzFkmg=;
-        b=Ff0ZcxTVxjVQYGNmK7QFBFig5zEwRMGGb7sV0pkffd0x3xuRkcutDjBHaPz5qOQ/PM
-         AHRIvNc6yL9H1ee9pUHS0YG0R5yZ/yIzIqIrGl0ApULQ9DGZApH3PgRM3K0v0e92arcJ
-         o7/AscEOlh+16+MvTbyd0J+XFRNfnvfd1sBLBYaBX6IeZUFQ8vYNkcwYkyy5cEetDS+A
-         D8kfRMgX62opRnnSowdK9buJKbQguetHOVICZRRMfVVS2r31HniznWMfzG4wK7r5kYmR
-         Xv1OXUUPPqdjYBArRFsWPOmkVVC8LXwPy3I5taaTEDMa1A2pefI+hdVqMrrDK5RO5oKE
-         juDg==
-X-Gm-Message-State: AOJu0YwejNeU66H4DafX8HYM+8PMgMMckdtimkJ0O2lSM5nQJP0Int1n
-	7FDgZFHqyH8MxhfA+zlexbnfMr2kXmyycVEB1SaU8yKfg5RYnyNxkU4XolDj1Is=
-X-Gm-Gg: ASbGncsHSmFiD43Vcbrl2f3iZwD5qpnP4+vDldRrfwQ681Qpz9AZCdrz63M59XiXzbx
-	DRgMOh5zkMH01/7gmLJZf3Kcea0/hRy3va2Ox8X2ik0QeGBUC7/O277A1Z0lLnD/rg8R5gIGQ3Y
-	gunwWo+yJtWhZyce9JujGBxyyGW65JzIBM8edxfnlx9Cc7CC3a1SKPB/1Ibce1tAiTp8gyBI6//
-	fS3/pH7b+reD/quBl3a77nbEDWbfe6lE/pje1ck8zlfVoR5roRrhd45CmcAavYSy13uA68GNxZt
-	z4m5cPmPo1PZs3CPHz2vzLOv/Z78m/jQnTfKy8WqUYkedZXDgZVmm51QT470dsOs75NiDM3yD0l
-	NbFVvV+xtglFWCt9E2M5bX/sh0x0rO3c6n1aawCF6sF7eRHmhm/Xb4BzP27UX10hFoVkvlk22DZ
-	k=
-X-Google-Smtp-Source: AGHT+IHCb1wi6HJFiaIl6N39Dra87Qq2aKc660vUFw03yJyRMRQpkNk6M/A8fRYmIYJmYl82rzUwEA==
-X-Received: by 2002:a05:6000:2cb:b0:391:3915:cffb with SMTP id ffacd0b85a97d-3a08f7a3bedmr594904f8f.43.1745956809591;
-        Tue, 29 Apr 2025 13:00:09 -0700 (PDT)
-Received: from ?IPv6:2003:de:3740:fd00:677a:2a06:a366:3993? (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-441ad813a64sm26480945e9.0.2025.04.29.13.00.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 29 Apr 2025 13:00:09 -0700 (PDT)
-Message-ID: <e18bee85edf64a1cdd54520018023212db994dd7.camel@suse.com>
-Subject: Re: [PATCH 2/2] multipathd: disable queueing on invalid multipath
- devices
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 29 Apr 2025 22:00:08 +0200
-In-Reply-To: <20250428214514.1905327-3-bmarzins@redhat.com>
-References: <20250428214514.1905327-1-bmarzins@redhat.com>
-	 <20250428214514.1905327-3-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="OOF0+lrx";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="OOF0+lrx"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 27B2821908;
+	Tue, 29 Apr 2025 20:06:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1745957167; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=aMe+/8/FfiylRKf6BmOCIEFOY0hOpHIsQfuIskp9uNk=;
+	b=OOF0+lrxMPnOFtccwJMUKlRPcuOziClGpMqPwJaSGJ7ldfmlmqCAryTkromdZYbS20ZKC0
+	QRxaMLcTi2m9BOKWD+3m1zdOq9yHAqd9jmzSY0NV4TpyLX2rN2R86WaAkwoHy+JgHCNxoy
+	J4zFQJTel+sYZPKRsNJyp4fR/++TIDc=
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=OOF0+lrx
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1745957167; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=aMe+/8/FfiylRKf6BmOCIEFOY0hOpHIsQfuIskp9uNk=;
+	b=OOF0+lrxMPnOFtccwJMUKlRPcuOziClGpMqPwJaSGJ7ldfmlmqCAryTkromdZYbS20ZKC0
+	QRxaMLcTi2m9BOKWD+3m1zdOq9yHAqd9jmzSY0NV4TpyLX2rN2R86WaAkwoHy+JgHCNxoy
+	J4zFQJTel+sYZPKRsNJyp4fR/++TIDc=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id E8DBC1340C;
+	Tue, 29 Apr 2025 20:06:06 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id lJkDNy4xEWjYVAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Tue, 29 Apr 2025 20:06:06 +0000
+Message-ID: <bee02f6baae30380b8f2c5021dd0dcdebc7d81d8.camel@suse.com>
+Subject: Re: [PATCH 2/2] libdmmp/Makefile: Add target
+ docs/man/dmmp_strerror.3 to .PHONY list
+From: Martin Wilck <mwilck@suse.com>
+To: Yoann Congal <yoann.congal@smile.fr>
+Cc: Sofiane HAMAM <sofiane.hamam@smile.fr>, dm-devel@lists.linux.dev, 
+	bmarzins@redhat.com, =?ISO-8859-1?Q?K=E9l=E9fa_San=E9?=
+ <kelefa.sane@smile.fr>
+Date: Tue, 29 Apr 2025 22:06:06 +0200
+In-Reply-To: <CAMSfU+6ho6uxcNW4zx9Orb8qHAN239NaNt31vB3qE5vKuAVX=A@mail.gmail.com>
+References: <20250404122902.2750036-1-sofiane.hamam@smile.fr>
+	 <20250404122902.2750036-2-sofiane.hamam@smile.fr>
+	 <72355f1d0984647e91f8c50f1c2295071af49e33.camel@suse.com>
+	 <b88e8b9c8f4fb17478b2020d9a00dabbe49d1f29.camel@suse.com>
+	 <CAMSfU+5pbVe4JsXDY2xH40CS_K=vqH9iaCEso9tfMh19daNgZA@mail.gmail.com>
+	 <4333916895109b795283620765d57d74c18137ad.camel@suse.com>
+	 <CAMSfU+6ho6uxcNW4zx9Orb8qHAN239NaNt31vB3qE5vKuAVX=A@mail.gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.56.1 
@@ -78,18 +79,164 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Rspamd-Queue-Id: 27B2821908
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	TO_DN_SOME(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	RCPT_COUNT_FIVE(0.00)[5];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.com:email,suse.com:dkim,suse.com:mid];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Score: -4.51
+X-Spam-Flag: NO
 
-On Mon, 2025-04-28 at 17:45 -0400, Benjamin Marzinski wrote:
-> If the multipath configuration has changed and a multipath device is
-> no
-> longer valid after a reconfigure, disable queueing on it before
-> attempting to delete it. This makes it more likely to be deleted and
-> if
-> the device isn't valid, then it there is no defined no_path_retry
-> value
-> for it.
+On Sat, 2025-04-12 at 00:05 +0200, Yoann Congal wrote:
+> Le lun. 7 avr. 2025 =C3=A0 16:42, Martin Wilck <mwilck@suse.com> a =C3=A9=
+crit :
+> >=20
+> > On Mon, 2025-04-07 at 12:53 +0200, Yoann Congal wrote:
+> > > Hello,
+> > >=20
+> > > Le lun. 7 avr. 2025 =C3=A0 12:32, Martin Wilck <mwilck@suse.com> a
+> > > =C3=A9crit :
+> > > >=20
+> > > > On Mon, 2025-04-07 at 10:53 +0200, Martin Wilck wrote:
+> > > > > On Fri, 2025-04-04 at 14:29 +0200, Sofiane HAMAM wrote:
+> > > > > > From: K=C3=A9l=C3=A9fa San=C3=A9 <kelefa.sane@smile.fr>
+> > > > > >=20
+> > > > > > When checking out the git repos, sometimes, target
+> > > > > > docs/man/dmmp_strerror.3 is newer that the prerequisite
+> > > > > > libdmmp/libdmmp.h this leads to a non reproducible
+> > > > > > behavior:
+> > > > > > Sometimes, the timestamps are updated in the manpages,
+> > > > > > sometimes
+> > > > > > not.
+> > > > > >=20
+> > > > > > Signed-off-by: Yoann Congal <yoann.congal@smile.fr>
+> > > > > > Signed-off-by: Sofiane HAMAM <sofiane.hamam@smile.fr>
+> > > > > > Signed-off-by: Kelefa Sane <kelefa.sane@smile.fr>
+> > > > > > ---
+> > > > > > =C2=A0libdmmp/Makefile | 2 +-
+> > > > > > =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
+> > > > > >=20
+> > > > > > diff --git a/libdmmp/Makefile b/libdmmp/Makefile
+> > > > > > index 7e0e2509..187bcb8c 100644
+> > > > > > --- a/libdmmp/Makefile
+> > > > > > +++ b/libdmmp/Makefile
+> > > > > > @@ -20,7 +20,7 @@ CFLAGS +=3D $(LIB_CFLAGS) -
+> > > > > > fvisibility=3Dhidden
+> > > > > > =C2=A0LIBDEPS +=3D $(shell $(PKG_CONFIG) --libs json-c) -
+> > > > > > L$(mpathcmddir) -
+> > > > > > lmpathcmd -lpthread
+> > > > > >=20
+> > > > > > =C2=A0all: $(LIBS) doc
+> > > > > > -.PHONY:=C2=A0=C2=A0=C2=A0 doc clean install uninstall check sp=
+eed_test
+> > > > > > dep_clean
+> > > > > > +.PHONY:=C2=A0=C2=A0=C2=A0 doc clean install uninstall check sp=
+eed_test
+> > > > > > dep_clean docs/man/dmmp_strerror.3
+> > > > > >=20
+> > > > >=20
+> > > > > I've seen the issue you refer to, but this is not the right
+> > > > > solution.
+> > > > > It will cause the time stamps of the man pages to be
+> > > > > regenerated
+> > > > > on
+> > > > > every build.
+> > > >=20
+> > > > After investigating this some more: AFAICS, your patch 1/2
+> > > > fixes
+> > > > the
+> > > > erratic behavior in the (normal) case where
+> > > > KBUILD_BUILD_TIMESTAMP
+> > > > is
+> > > > not set and git is available. Previously, in this case, the
+> > > > kernel-
+> > > > doc
+> > > > script would have substituted the current date for
+> > > > KBUILD_BUILD_TIMESTAMP (yielding "April 2025" today). With your
+> > > > fix,
+> > > > KBUILD_BUILD_TIMESTAMP is correctly set to "August 2024".
+> > > >=20
+> > > > We need to create a commit that updates the man page time
+> > > > stamps to
+> > > > "August 2024". I'll do this.
+> > > >=20
+> > > > Once this is done, the build rule does the right thing, AFAICS.
+> > > > While
+> > > > it will rewrite the man pages if the libdmmp.h timestamp is
+> > > > updated, it
+> > > > won't apply any real changes (visible in "git diff" or "git
+> > > > status")
+> > > > unless libdmmp.h has actually changed.
+> > > >=20
+> > > > Am I overlooking something?
+> > >=20
+> > > Depending on the order the files are written on disk during the
+> > > git
+> > > clone/archive extraction (is dmmp_strerror.3 written before or
+> > > after
+> > > libdmmp.h ?), the build rule will either run or not.
+> > > But, as you wrote, with your latest patch, it does not matter at
+> > > all
+> > > because the rewritten timestamp will be exactly the same.
+> > >=20
+> > > Apart from this little quirk without any consequence, it looks
+> > > good
+> > > to me.
+> > >=20
+> > > The only future problem I can imagine is if libdmmp.h is updated
+> > > without updating the timestamps (again).
+> > > In this case, we will either get the timestamps from the sources
+> > > or
+> > > from git.
+> >=20
+> > That shouldn't happen because as soon as someone changes libdmmp.h
+> > and
+> > runs "make", the timestamps will be updated. Even if it does, the
+> > worst
+> > possible outcome is an outdated timestamp in the man pages, which
+> > we've
+> > seem to have had for several years now.
+> > Also, the actual content of libdmmp.h has hardly changed over
+> > years.
+> >=20
+> > If someone can contribute a better fix, we'll apply it happily. But
+> > I'd
+> > rather not want to have to check in the man pages after every
+> > build.
 >=20
-> Fixes: https://github.com/opensvc/multipath-tools/issues/113
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Our (Yocto project) situation is quite different: We build from
+> scratch every time and the sources are only kept during the
+> compilation, erased after.
+> So we will use in our integration the 2 patches of this series to
+> force a reproducible build of the manpages.
+>=20
+> Thanks!
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Can I take this as an acked-by: from your part?
+Or @Ben could you give it a review?
+
+Martin
