@@ -1,141 +1,103 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12A48218EAB;
-	Tue, 29 Apr 2025 14:53:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E909621772B
+	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 16:52:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745938431; cv=none; b=bI9JJ7y3oNEPtJCJ8ZfC7hUawfvjm+etilBL10whtHQaoGw4jxGprtbuOlkc/Bb9dtvevbSQPgyA9/ZOqwPInrUjiYpv5HWdnTSqHJ9YgPdcn9hBaYGVlQ9wpPdO9FtS3TrV2zDDF+EVZXOZjjLkzASg3cw6VHvQ8+JEdpRxnwM=
+	t=1745945533; cv=none; b=iTS9qyROtSdXc9UIzb13aqYzv4UBCwq25V1hm3DLQsppwCFixveXMUV9muhwFmcVehsrkyNVkjcjT1DP0n+7nPvC51gJIOJAG7g9xOxxVNnw1ehiTSDWGeVp6iZoBXmMAMOIlxg3JH38/3le7rbXiIDwvRIka/SU+VMzrqTTLAY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745938431; c=relaxed/simple;
-	bh=80oIUsHpv+Tf57N6ZwfsoIQUoCwZ9ddJyskhAtcRR5c=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=iXXAjLjMJ/Pt/bgoptRUrKmojTyOpeXxmtnjlKhVh8mSKhgmatyeHI8K/ozWfjI3hC6MUZQItOb5lqrJXazINeVWPkUb+q2VgdIkG+kUNs6DkdNeDYZultuZ1UeKVS/9DxeKppq7PdjZQ6TKAgTnCBSdEYnqMo3dO1bj4Y1dtN4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=PHrYG0LS; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1745945533; c=relaxed/simple;
+	bh=qrEOMHmtTp7OFHh8ZgfaWUBX6cj24khtRPb/lao4Adk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Wku6Rli/1UuML3D3DMfT7gxaCQsvaGyGmjiF/SJwQIjOEukZSgoSSgqANLAYvWcqOIJ1qgxeLAkkP/sJrfxNYl9ssMWBHtrXWOaerwPaUV82oo3eYnyp0uxypzZU0ZgGGZwUVlcG6AzKa4YZ4kdF6G0OzucbZiYPzwKtLopHEzk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CaqE8g9g; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="PHrYG0LS"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D2A55C4CEE3;
-	Tue, 29 Apr 2025 14:53:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1745938430;
-	bh=80oIUsHpv+Tf57N6ZwfsoIQUoCwZ9ddJyskhAtcRR5c=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=PHrYG0LSGsB/fuoyy6PpxGgxDr1vXVUS7IBmNAwJN0px/6XFMrBwK3kvugCVmDmV1
-	 BTVoj/U+pKr1lc0ZnX/fehwYyK6Ag03yivcM33Madc+jd+25LOnl5xRGl5yw/qYPVB
-	 gqJDP83J/6oeK1UCvV0Gw88FLB42SvxFUqvNZSGZQ7wpZSLOJfMyByRKdVJesAYkwN
-	 xbdpq2btXh4NKtvEDRi2TwV/xn1/98a4ooVZo+GDtET4Tg0+lxeu426fyXGUAEIwh7
-	 wDMU6/+5/tOgl2qwiwJYYSfcHOPYbnRzRymuO90DawKK0qHmEV93Ie3xWUK6AsdOJB
-	 W+IWNJ8s6wlYQ==
-Date: Tue, 29 Apr 2025 07:53:50 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
-	Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>,
-	Kent Overstreet <kent.overstreet@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Carlos Maiolino <cem@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Naohiro Aota <naohiro.aota@wdc.com>,
-	Johannes Thumshirn <jth@kernel.org>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Pavel Machek <pavel@kernel.org>, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-btrfs@vger.kernel.org,
-	gfs2@lists.linux.dev, linux-fsdevel@vger.kernel.org,
-	linux-xfs@vger.kernel.org, linux-pm@vger.kernel.org
-Subject: Re: [PATCH 12/17] xfs: simplify xfs_rw_bdev
-Message-ID: <20250429145350.GW25675@frogsfrogsfrogs>
-References: <20250422142628.1553523-1-hch@lst.de>
- <20250422142628.1553523-13-hch@lst.de>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CaqE8g9g"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1745945530;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=pCP+Jn5db3OWqLaQDlXS5vWrXACMSWyu8xwgwx1Ls7M=;
+	b=CaqE8g9gJp8DxcTgLIcNKJFghMvlLpAykevHFAY4EJ22f6G962zXYm77wB69KiBxKaAttP
+	kU238yXSDP5CVxEYtq06/k4saP4IBI1S2tNM3wkimVhe0Rlb1XkrD+KBrF8j2eoFZa4Xsm
+	NrqJ0jpIzdYNAiaghGgQCttuIW5Kq3g=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-320-FfRgJyh9OQemIzvpxLE6MQ-1; Tue,
+ 29 Apr 2025 12:52:08 -0400
+X-MC-Unique: FfRgJyh9OQemIzvpxLE6MQ-1
+X-Mimecast-MFC-AGG-ID: FfRgJyh9OQemIzvpxLE6MQ_1745945527
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9274F1800EC8;
+	Tue, 29 Apr 2025 16:52:07 +0000 (UTC)
+Received: from merkur.redhat.com (unknown [10.44.34.64])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 1CE381956094;
+	Tue, 29 Apr 2025 16:52:04 +0000 (UTC)
+From: Kevin Wolf <kwolf@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: kwolf@redhat.com,
+	hreitz@redhat.com,
+	mpatocka@redhat.com,
+	snitzer@kernel.org,
+	bmarzins@redhat.com,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH 0/2] dm mpath: Interface for explicit probing of active paths
+Date: Tue, 29 Apr 2025 18:50:16 +0200
+Message-ID: <20250429165018.112999-1-kwolf@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250422142628.1553523-13-hch@lst.de>
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-On Tue, Apr 22, 2025 at 04:26:13PM +0200, Christoph Hellwig wrote:
-> Delegate to bdev_rw_virt when operating on non-vmalloc memory and use
-> bio_add_vmalloc to insulate xfs from the details of adding vmalloc memory
-> to a bio.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
+Multipath cannot directly provide failover for ioctls in the kernel
+because it doesn't know what each ioctl means and which result could
+indicate a path error. Userspace generally knows what the ioctl it
+issued means and if it might be a path error, but neither does it know
+which path the ioctl took nor does it necessarily have the privileges to
+fail a path using the control device.
 
-Looks good,
-Reviewed-by: "Darrick J. Wong" <djwong@kernel.org>
+This series adds an interface that userspace can use to probe paths and
+fail the bad ones after seeing a potential path error in an ioctl
+result. Once the bad paths are eliminated, the ioctl can be retried.
 
---D
+While the fundamental problem is relatively broad and can affect any
+sort of ioctl, the immediate motivation for this is the use of SG_IO in
+QEMU for SCSI passthrough. A preliminary QEMU side patch that makes use
+of the new interface to support multipath failover with SCSI passthrough
+can be found at:
 
-> ---
->  fs/xfs/xfs_bio_io.c | 30 ++++++++++++------------------
->  1 file changed, 12 insertions(+), 18 deletions(-)
-> 
-> diff --git a/fs/xfs/xfs_bio_io.c b/fs/xfs/xfs_bio_io.c
-> index fe21c76f75b8..98ad42b0271e 100644
-> --- a/fs/xfs/xfs_bio_io.c
-> +++ b/fs/xfs/xfs_bio_io.c
-> @@ -18,42 +18,36 @@ xfs_rw_bdev(
->  	enum req_op		op)
->  
->  {
-> -	unsigned int		is_vmalloc = is_vmalloc_addr(data);
-> -	unsigned int		left = count;
-> +	unsigned int		done = 0, added;
->  	int			error;
->  	struct bio		*bio;
->  
-> -	if (is_vmalloc && op == REQ_OP_WRITE)
-> -		flush_kernel_vmap_range(data, count);
-> +	op |= REQ_META | REQ_SYNC;
-> +	if (!is_vmalloc_addr(data))
-> +		return bdev_rw_virt(bdev, sector, data, count, op);
->  
-> -	bio = bio_alloc(bdev, bio_max_vecs(left), op | REQ_META | REQ_SYNC,
-> -			GFP_KERNEL);
-> +	bio = bio_alloc(bdev, bio_max_vecs(count), op, GFP_KERNEL);
->  	bio->bi_iter.bi_sector = sector;
->  
->  	do {
-> -		struct page	*page = kmem_to_page(data);
-> -		unsigned int	off = offset_in_page(data);
-> -		unsigned int	len = min_t(unsigned, left, PAGE_SIZE - off);
-> -
-> -		while (bio_add_page(bio, page, len, off) != len) {
-> +		added = bio_add_vmalloc(bio, data + done, count - done);
-> +		if (!added) {
->  			struct bio	*prev = bio;
->  
-> -			bio = bio_alloc(prev->bi_bdev, bio_max_vecs(left),
-> +			bio = bio_alloc(prev->bi_bdev,
-> +					bio_max_vecs(count - done),
->  					prev->bi_opf, GFP_KERNEL);
->  			bio->bi_iter.bi_sector = bio_end_sector(prev);
->  			bio_chain(prev, bio);
-> -
->  			submit_bio(prev);
->  		}
-> -
-> -		data += len;
-> -		left -= len;
-> -	} while (left > 0);
-> +		done += added;
-> +	} while (done < count);
->  
->  	error = submit_bio_wait(bio);
->  	bio_put(bio);
->  
-> -	if (is_vmalloc && op == REQ_OP_READ)
-> +	if (op == REQ_OP_READ)
->  		invalidate_kernel_vmap_range(data, count);
->  	return error;
->  }
-> -- 
-> 2.47.2
-> 
-> 
+https://repo.or.cz/qemu/kevin.git/commitdiff/78a474da3b39469b11fbb1d4e0ddf4797b637d35
+
+Kevin Wolf (2):
+  dm: Allow .prepare_ioctl to handle ioctls directly
+  dm mpath: Interface for explicit probing of active paths
+
+ include/linux/device-mapper.h |  9 +++-
+ include/uapi/linux/dm-ioctl.h |  9 +++-
+ drivers/md/dm-dust.c          |  4 +-
+ drivers/md/dm-ebs-target.c    |  3 +-
+ drivers/md/dm-flakey.c        |  4 +-
+ drivers/md/dm-ioctl.c         |  1 +
+ drivers/md/dm-linear.c        |  4 +-
+ drivers/md/dm-log-writes.c    |  4 +-
+ drivers/md/dm-mpath.c         | 95 ++++++++++++++++++++++++++++++++++-
+ drivers/md/dm-switch.c        |  4 +-
+ drivers/md/dm-verity-target.c |  4 +-
+ drivers/md/dm-zoned-target.c  |  3 +-
+ drivers/md/dm.c               | 17 ++++---
+ 13 files changed, 142 insertions(+), 19 deletions(-)
+
+-- 
+2.49.0
+
