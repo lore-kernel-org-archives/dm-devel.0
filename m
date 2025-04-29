@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 169AF24BD02
-	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 16:52:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E257824E00D
+	for <dm-devel@lists.linux.dev>; Tue, 29 Apr 2025 16:52:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745945539; cv=none; b=IiT5JW9wQiKaRcFntkL/d13kNskHzn1ElvmwXjWbVlgshL0muoQWyP5ECTq4du95pTjFuQTN4L0fEtrru+G2P1EhjcJeYXhMdUDGFi5YIdI3nIC3mY/xeVgXcisjuTZzvnpr9zpxu90WvLx4ysZEHnkBEby5a6ZsXzhSugErOqs=
+	t=1745945539; cv=none; b=lEUxE3wccJyKV/zO8RzfGAEjNx3dlOB858/U2SYog2GKKEHdBXkxLUTG8jl+jVB7mdaCsRvGUW0rJ67nDof/Vz2GjMe0fToLIAsNzZMUDxgTB+Z2eVjDAIA1tPCM2x2TMvrsBLwWCI4ldmKMKJCBKQLDiQ16ICIPYwgrTVpSBsY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1745945539; c=relaxed/simple;
-	bh=8wzVPnQBzqZHuHZJ13js/haaaiGlfCgs4ahOVLlrbfM=;
+	bh=EfD/o66GX0OKRvbZSaNzNHske3QcGjcjuQjaULquzI8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=UVIo7h4FL3sURWa3bqc9BCQ69x1grjxmgWoT93Tjm1kfItTuiSXL+05p+5o6ypYSNOKqPfm9A4/Jc/iy9TNqwAUIhKlc++lva+afDmJbZ5rJtprZAq/16d/fCtIBStTLlPiFUuGJrYjxQsS0hN/zXoNdWBGt/W0Np8FjZQuY1OE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=L6qQvaqP; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=TK3EDnfzwuqAT8otg44wE/iggeZKOZ5jyGeeQnEU6laFpmdvK1Sx3SY/Z5IIdoHH8CU9Lmhh9dhdKvYlD3KUlJFipQf1/wRpaf1POXjfWuElMfJ2B5X3NVLXg28J8tyBK9AOwTBqFsz5qiaixfmu/mYTSOC1YsfT+yVFsOjAFCw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=D3EV/UUV; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="L6qQvaqP"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="D3EV/UUV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1745945536;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=JripGfRv86s8YrwJ8gkd+o3MrSxA3aSVFaX4RLxjwxM=;
-	b=L6qQvaqP4kI0qjt+P9cVbyoK8Y3xtO+W1/KSwB2yUM6wBbw489ghgGVYAG4K5EslD789JX
-	qSbuCAs0S5LJfQ/w8tbz+zJtTPegm3ysSmXeRQsU+LkkBBeLk4O1Ep15X9a8PzEGuf9ro0
-	OGTcfbty0oDZoTg63tldn2YD2PDYF0k=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=pvlclyJOdlodk0vJ4LxFoHs9tOLTNVW8rNQpOB1HHMg=;
+	b=D3EV/UUVq4jkCeN/3M4rM8xkobDu5aC5Vo4oC6czyS9NwqoDf0MG3wCjOAfIBKHBafq0m1
+	LDTtp7mpQGylQ38q7V7vQQOBcNfZpBEAZN2yzABLfQdvxE1veK4MhRyE2e9QJp1LUP6loN
+	yUivCmyVpgVryC0gU1nuYywq8PxVGNM=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-HGm6B3gpMDC6jq1lET9QJA-1; Tue,
- 29 Apr 2025 12:52:12 -0400
-X-MC-Unique: HGm6B3gpMDC6jq1lET9QJA-1
-X-Mimecast-MFC-AGG-ID: HGm6B3gpMDC6jq1lET9QJA_1745945531
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-259-Miky6MDoPh2AYYmMSFCl3Q-1; Tue,
+ 29 Apr 2025 12:52:14 -0400
+X-MC-Unique: Miky6MDoPh2AYYmMSFCl3Q-1
+X-Mimecast-MFC-AGG-ID: Miky6MDoPh2AYYmMSFCl3Q_1745945533
 Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1E6B7180048E;
-	Tue, 29 Apr 2025 16:52:11 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD6AF195609F;
+	Tue, 29 Apr 2025 16:52:13 +0000 (UTC)
 Received: from merkur.redhat.com (unknown [10.44.34.64])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 4649A1956094;
-	Tue, 29 Apr 2025 16:52:07 +0000 (UTC)
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id AA8A21956094;
+	Tue, 29 Apr 2025 16:52:11 +0000 (UTC)
 From: Kevin Wolf <kwolf@redhat.com>
 To: dm-devel@lists.linux.dev
 Cc: kwolf@redhat.com,
@@ -50,9 +50,9 @@ Cc: kwolf@redhat.com,
 	snitzer@kernel.org,
 	bmarzins@redhat.com,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 1/2] dm: Allow .prepare_ioctl to handle ioctls directly
-Date: Tue, 29 Apr 2025 18:50:17 +0200
-Message-ID: <20250429165018.112999-2-kwolf@redhat.com>
+Subject: [PATCH 2/2] dm mpath: Interface for explicit probing of active paths
+Date: Tue, 29 Apr 2025 18:50:18 +0200
+Message-ID: <20250429165018.112999-3-kwolf@redhat.com>
 In-Reply-To: <20250429165018.112999-1-kwolf@redhat.com>
 References: <20250429165018.112999-1-kwolf@redhat.com>
 Precedence: bulk
@@ -64,242 +64,209 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-This adds a 'bool *forward' parameter to .prepare_ioctl, which allows
-device mapper targets to accept ioctls to themselves instead of the
-underlying device. If the target already fully handled the ioctl, it
-sets *forward to false and device mapper won't forward it to the
-underlying device any more.
+Multipath cannot directly provide failover for ioctls in the kernel
+because it doesn't know what each ioctl means and which result could
+indicate a path error. Userspace generally knows what the ioctl it
+issued means and if it might be a path error, but neither does it know
+which path the ioctl took nor does it necessarily have the privileges to
+fail a path using the control device.
 
-In order for targets to actually know what the ioctl is about and how to
-handle it, pass also cmd and arg.
+In order to allow userspace to address this situation, implement a
+DM_MPATH_PROBE_PATHS ioctl that prompts the dm-mpath driver to probe all
+active paths in the current path group to see whether they still work,
+and fail them if not. If this returns success, userspace can retry the
+ioctl and expect that the previously hit bad path is now failed (or
+working again).
 
-As long as targets restrict themselves to interpreting ioctls of type
-DM_IOCTL, this is a backwards compatible change because previously, any
-such ioctl would have been passed down through all device mapper layers
-until it reached a device that can't understand the ioctl and would
-return an error.
+The immediate motivation for this is the use of SG_IO in QEMU for SCSI
+passthrough. Following a failed SG_IO ioctl, QEMU will trigger probing
+to ensure that all active paths are actually alive, so that retrying
+SG_IO at least has a lower chance of failing due to a path error.
+However, the problem is broader than just SG_IO (it affects any ioctl),
+and if applications need failover support for other ioctls, the same
+probing can be used.
 
+This is not implemented on the DM control device, but on the DM mpath
+block devices, to allow all users who have access to such a block device
+to make use of this interface, specifically to implement failover for
+ioctls. For the same reason, it is also unprivileged. Its implementation
+is effectively just a bunch of reads, which could already be issued by
+userspace, just without any guarantee that all the rights paths are
+selected.
+
+The probing implemented here is done fully synchronously path by path;
+probing all paths concurrently is left as an improvement for the future.
+
+Co-developed-by: Hanna Czenczek <hreitz@redhat.com>
+Signed-off-by: Hanna Czenczek <hreitz@redhat.com>
 Signed-off-by: Kevin Wolf <kwolf@redhat.com>
 ---
- include/linux/device-mapper.h |  9 ++++++++-
- drivers/md/dm-dust.c          |  4 +++-
- drivers/md/dm-ebs-target.c    |  3 ++-
- drivers/md/dm-flakey.c        |  4 +++-
- drivers/md/dm-linear.c        |  4 +++-
- drivers/md/dm-log-writes.c    |  4 +++-
- drivers/md/dm-mpath.c         |  4 +++-
- drivers/md/dm-switch.c        |  4 +++-
- drivers/md/dm-verity-target.c |  4 +++-
- drivers/md/dm-zoned-target.c  |  3 ++-
- drivers/md/dm.c               | 17 +++++++++++------
- 11 files changed, 44 insertions(+), 16 deletions(-)
+ include/uapi/linux/dm-ioctl.h |  9 +++-
+ drivers/md/dm-ioctl.c         |  1 +
+ drivers/md/dm-mpath.c         | 91 ++++++++++++++++++++++++++++++++++-
+ 3 files changed, 98 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index bcc6d7b69470..cb95951547ab 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -93,7 +93,14 @@ typedef void (*dm_status_fn) (struct dm_target *ti, status_type_t status_type,
- typedef int (*dm_message_fn) (struct dm_target *ti, unsigned int argc, char **argv,
- 			      char *result, unsigned int maxlen);
+diff --git a/include/uapi/linux/dm-ioctl.h b/include/uapi/linux/dm-ioctl.h
+index b08c7378164d..3225e025e30e 100644
+--- a/include/uapi/linux/dm-ioctl.h
++++ b/include/uapi/linux/dm-ioctl.h
+@@ -258,10 +258,12 @@ enum {
+ 	DM_DEV_SET_GEOMETRY_CMD,
+ 	DM_DEV_ARM_POLL_CMD,
+ 	DM_GET_TARGET_VERSION_CMD,
++	DM_MPATH_PROBE_PATHS_CMD,
+ };
  
--typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti, struct block_device **bdev);
-+/*
-+ * Called with *forward == true. If it remains true, the ioctl should be
-+ * forwarded to bdev. If it is reset to false, the target already fully handled
-+ * the ioctl and the return value is the return value for the whole ioctl.
-+ */
-+typedef int (*dm_prepare_ioctl_fn) (struct dm_target *ti, struct block_device **bdev,
-+				    unsigned int cmd, unsigned long arg,
-+				    bool *forward);
+ #define DM_IOCTL 0xfd
  
- #ifdef CONFIG_BLK_DEV_ZONED
- typedef int (*dm_report_zones_fn) (struct dm_target *ti,
-diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-index 1a33820c9f46..e75310232bbf 100644
---- a/drivers/md/dm-dust.c
-+++ b/drivers/md/dm-dust.c
-@@ -534,7 +534,9 @@ static void dust_status(struct dm_target *ti, status_type_t type,
- 	}
- }
++/* Control device ioctls */
+ #define DM_VERSION       _IOWR(DM_IOCTL, DM_VERSION_CMD, struct dm_ioctl)
+ #define DM_REMOVE_ALL    _IOWR(DM_IOCTL, DM_REMOVE_ALL_CMD, struct dm_ioctl)
+ #define DM_LIST_DEVICES  _IOWR(DM_IOCTL, DM_LIST_DEVICES_CMD, struct dm_ioctl)
+@@ -285,10 +287,13 @@ enum {
+ #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
+ #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
  
--static int dust_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int dust_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+			      unsigned int cmd, unsigned long arg,
-+			      bool *forward)
- {
- 	struct dust_device *dd = ti->private;
- 	struct dm_dev *dev = dd->dev;
-diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-index b19b0142a690..6abb31ca9662 100644
---- a/drivers/md/dm-ebs-target.c
-+++ b/drivers/md/dm-ebs-target.c
-@@ -415,7 +415,8 @@ static void ebs_status(struct dm_target *ti, status_type_t type,
- 	}
- }
++/* Block device ioctls */
++#define DM_MPATH_PROBE_PATHS _IO(DM_IOCTL, DM_MPATH_PROBE_PATHS_CMD)
++
+ #define DM_VERSION_MAJOR	4
+-#define DM_VERSION_MINOR	49
++#define DM_VERSION_MINOR	50
+ #define DM_VERSION_PATCHLEVEL	0
+-#define DM_VERSION_EXTRA	"-ioctl (2025-01-17)"
++#define DM_VERSION_EXTRA	"-ioctl (2025-04-28)"
  
--static int ebs_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int ebs_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+			     unsigned int cmd, unsigned long arg, bool *forward)
- {
- 	struct ebs_c *ec = ti->private;
- 	struct dm_dev *dev = ec->dev;
-diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
-index b690905ab89f..0fceb08f4622 100644
---- a/drivers/md/dm-flakey.c
-+++ b/drivers/md/dm-flakey.c
-@@ -638,7 +638,9 @@ static void flakey_status(struct dm_target *ti, status_type_t type,
- 	}
- }
+ /* Status bits */
+ #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index d42eac944eb5..4165fef4c170 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1885,6 +1885,7 @@ static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
+ 		{DM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometry},
+ 		{DM_DEV_ARM_POLL_CMD, IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
+ 		{DM_GET_TARGET_VERSION_CMD, 0, get_target_version},
++		{DM_MPATH_PROBE_PATHS_CMD, 0, NULL}, /* block device ioctl */
+ 	};
  
--static int flakey_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int flakey_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+				unsigned int cmd, unsigned long arg,
-+				bool *forward)
- {
- 	struct flakey_c *fc = ti->private;
- 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index 66318aba4bdb..15538ec58f8e 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -119,7 +119,9 @@ static void linear_status(struct dm_target *ti, status_type_t type,
- 	}
- }
- 
--static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int linear_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+				unsigned int cmd, unsigned long arg,
-+				bool *forward)
- {
- 	struct linear_c *lc = ti->private;
- 	struct dm_dev *dev = lc->dev;
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 8d7df8303d0a..d484e8e1d48a 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -818,7 +818,9 @@ static void log_writes_status(struct dm_target *ti, status_type_t type,
- }
- 
- static int log_writes_prepare_ioctl(struct dm_target *ti,
--				    struct block_device **bdev)
-+				    struct block_device **bdev,
-+				    unsigned int cmd, unsigned long arg,
-+				    bool *forward)
- {
- 	struct log_writes_c *lc = ti->private;
- 	struct dm_dev *dev = lc->dev;
+ 	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
 diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 6c98f4ae5ea9..909ed6890ba5 100644
+index 909ed6890ba5..af17a35c6457 100644
 --- a/drivers/md/dm-mpath.c
 +++ b/drivers/md/dm-mpath.c
-@@ -2022,7 +2022,9 @@ static int multipath_message(struct dm_target *ti, unsigned int argc, char **arg
+@@ -2021,6 +2021,85 @@ static int multipath_message(struct dm_target *ti, unsigned int argc, char **arg
+ 	return r;
  }
  
++/*
++ * Perform a minimal read from the given path to find out whether the
++ * path still works.  If a path error occurs, fail it.
++ */
++static int probe_path(struct pgpath *pgpath)
++{
++	struct block_device *bdev = pgpath->path.dev->bdev;
++	unsigned int read_size = bdev_logical_block_size(bdev);
++	struct page *page;
++	struct bio *bio;
++	blk_status_t status;
++	int r = 0;
++
++	if (WARN_ON_ONCE(read_size > PAGE_SIZE))
++		return -EINVAL;
++
++	page = alloc_page(GFP_KERNEL);
++	if (!page)
++		return -ENOMEM;
++
++	/* Perform a minimal read: Sector 0, length read_size */
++	bio = bio_alloc(bdev, 1, REQ_OP_READ, GFP_KERNEL);
++	if (!bio) {
++		r = -ENOMEM;
++		goto out;
++	}
++
++	bio->bi_iter.bi_sector = 0;
++	__bio_add_page(bio, page, read_size, 0);
++	submit_bio_wait(bio);
++	status = bio->bi_status;
++	bio_put(bio);
++
++	if (status && blk_path_error(status))
++		fail_path(pgpath);
++
++out:
++	__free_page(page);
++	return r;
++}
++
++/*
++ * Probe all active paths in current_pg to find out whether they still work.
++ * Fail all paths that do not work.
++ *
++ * Return -ENOTCONN if no valid path is left (even outside of current_pg). We
++ * cannot probe paths in other pgs without switching current_pg, so if valid
++ * paths are only in different pgs, they may or may not work. Userspace can
++ * submit a request and we'll switch. If the request fails, it may need to
++ * probe again.
++ */
++static int probe_active_paths(struct multipath *m)
++{
++	struct pgpath *pgpath;
++	struct priority_group *pg;
++	int r = 0;
++
++	mutex_lock(&m->work_mutex);
++
++	pg = READ_ONCE(m->current_pg);
++	if (pg) {
++		list_for_each_entry(pgpath, &pg->pgpaths, list) {
++			if (!pgpath->is_active)
++				continue;
++
++			r = probe_path(pgpath);
++			if (r < 0)
++				goto out;
++		}
++	}
++
++	if (!atomic_read(&m->nr_valid_paths))
++		r = -ENOTCONN;
++
++out:
++	mutex_unlock(&m->work_mutex);
++	return r;
++}
++
  static int multipath_prepare_ioctl(struct dm_target *ti,
--				   struct block_device **bdev)
-+				   struct block_device **bdev,
-+				   unsigned int cmd, unsigned long arg,
-+				   bool *forward)
- {
- 	struct multipath *m = ti->private;
- 	struct pgpath *pgpath;
-diff --git a/drivers/md/dm-switch.c b/drivers/md/dm-switch.c
-index dfd9fb52a6f3..bb1a70b5a215 100644
---- a/drivers/md/dm-switch.c
-+++ b/drivers/md/dm-switch.c
-@@ -517,7 +517,9 @@ static void switch_status(struct dm_target *ti, status_type_t type,
-  *
-  * Passthrough all ioctls to the path for sector 0
+ 				   struct block_device **bdev,
+ 				   unsigned int cmd, unsigned long arg,
+@@ -2031,6 +2110,16 @@ static int multipath_prepare_ioctl(struct dm_target *ti,
+ 	unsigned long flags;
+ 	int r;
+ 
++	if (_IOC_TYPE(cmd) == DM_IOCTL) {
++		*forward = false;
++		switch (cmd) {
++		case DM_MPATH_PROBE_PATHS:
++			return probe_active_paths(m);
++		default:
++			return -ENOTTY;
++		}
++	}
++
+ 	pgpath = READ_ONCE(m->current_pgpath);
+ 	if (!pgpath || !mpath_double_check_test_bit(MPATHF_QUEUE_IO, m))
+ 		pgpath = choose_pgpath(m, 0);
+@@ -2182,7 +2271,7 @@ static int multipath_busy(struct dm_target *ti)
   */
--static int switch_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int switch_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+				unsigned int cmd, unsigned long arg,
-+				bool *forward)
- {
- 	struct switch_ctx *sctx = ti->private;
- 	unsigned int path_nr;
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 4de2c226ac9d..34a9f9fbd0d1 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -994,7 +994,9 @@ static void verity_status(struct dm_target *ti, status_type_t type,
- 	}
- }
- 
--static int verity_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int verity_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+				unsigned int cmd, unsigned long arg,
-+				bool *forward)
- {
- 	struct dm_verity *v = ti->private;
- 
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 6141fc25d842..5da3db06da10 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -1015,7 +1015,8 @@ static void dmz_io_hints(struct dm_target *ti, struct queue_limits *limits)
- /*
-  * Pass on ioctl to the backend device.
-  */
--static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-+static int dmz_prepare_ioctl(struct dm_target *ti, struct block_device **bdev,
-+			     unsigned int cmd, unsigned long arg, bool *forward)
- {
- 	struct dmz_target *dmz = ti->private;
- 	struct dmz_dev *dev = &dmz->dev[0];
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index ccccc098b30e..1726f0f828cc 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -411,7 +411,8 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
- }
- 
- static int dm_prepare_ioctl(struct mapped_device *md, int *srcu_idx,
--			    struct block_device **bdev)
-+			    struct block_device **bdev, unsigned int cmd,
-+			    unsigned long arg, bool *forward)
- {
- 	struct dm_target *ti;
- 	struct dm_table *map;
-@@ -434,8 +435,8 @@ static int dm_prepare_ioctl(struct mapped_device *md, int *srcu_idx,
- 	if (dm_suspended_md(md))
- 		return -EAGAIN;
- 
--	r = ti->type->prepare_ioctl(ti, bdev);
--	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
-+	r = ti->type->prepare_ioctl(ti, bdev, cmd, arg, forward);
-+	if (r == -ENOTCONN && *forward && !fatal_signal_pending(current)) {
- 		dm_put_live_table(md, *srcu_idx);
- 		fsleep(10000);
- 		goto retry;
-@@ -454,9 +455,10 @@ static int dm_blk_ioctl(struct block_device *bdev, blk_mode_t mode,
- {
- 	struct mapped_device *md = bdev->bd_disk->private_data;
- 	int r, srcu_idx;
-+	bool forward = true;
- 
--	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
--	if (r < 0)
-+	r = dm_prepare_ioctl(md, &srcu_idx, &bdev, cmd, arg, &forward);
-+	if (!forward || r < 0)
- 		goto out;
- 
- 	if (r > 0) {
-@@ -3630,10 +3632,13 @@ static int dm_pr_clear(struct block_device *bdev, u64 key)
- 	struct mapped_device *md = bdev->bd_disk->private_data;
- 	const struct pr_ops *ops;
- 	int r, srcu_idx;
-+	bool forward = true;
- 
--	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-+	/* Not a real ioctl, but targets must not interpret non-DM ioctls */
-+	r = dm_prepare_ioctl(md, &srcu_idx, &bdev, 0, 0, &forward);
- 	if (r < 0)
- 		goto out;
-+	WARN_ON_ONCE(!forward);
- 
- 	ops = bdev->bd_disk->fops->pr_ops;
- 	if (ops && ops->pr_clear)
+ static struct target_type multipath_target = {
+ 	.name = "multipath",
+-	.version = {1, 14, 0},
++	.version = {1, 15, 0},
+ 	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE |
+ 		    DM_TARGET_PASSES_INTEGRITY,
+ 	.module = THIS_MODULE,
 -- 
 2.49.0
 
