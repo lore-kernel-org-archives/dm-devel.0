@@ -1,109 +1,104 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com [209.85.221.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C6C91EDA0E
-	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 08:05:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C487A1F941
+	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 13:45:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746000361; cv=none; b=RZzTWB1yC0VzJuiX6awlIOlhUr2m/U4PtfII8vLU9jNaevLu+PsAvWzO3jDhOvmOi1wlyhfRu6bWJw2bBHA/fnLPZozqmsFQUuhJbWeaI5Vp8PXgCbV1S3vNIofXlgbQEa2Vntt+R8ClWyBhAfAwJVTHpHGdCpSdxQ4d6KUmGPk=
+	t=1746020736; cv=none; b=hHgg3eXBdZfxEGPj/bYpchvDotGWKWVcS52L7ztCOR1DH6ZVrjFq3vAyfkj3CZWmTDoEQG/VlyXnFUluYBF3S20jhWQZPz6eTiwPsvPMvgf7EilDkZ9aTGAyWQUF4oUXh6E8pwb8298NAvuovT8xbUiwfzv3unnnLyxq03x5G6c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746000361; c=relaxed/simple;
-	bh=DUHxlAwhz09uoCCY/km3TFaTU24WnD8mv0hKD36WSmQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=GC5vveeC8DhCfRaT7GygtMbaG9SqsAg3DMfbQXNrnX8JqmIT0KNdunTBCUbcvpCwqwSLOayke9iOoWfUG1hNSCTm6LxeJ8SvZIg034I7qWC+eKquQJegUOwxdOSS5YDl4thf9u8CslHZoqQlFjM7tDcptPwJ1BqROszGLkJ4c7I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=UAf1cbXU; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+	s=arc-20240116; t=1746020736; c=relaxed/simple;
+	bh=n2L1t5IWRBYa8/8es7Og0tMTkDSpN/6cT0TLSHSwjBo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JA8CxIAxsg41M4eyNMJpN9rbc57lTnsR69ip6W7rMSLXfshmuYGvdw12WS/2LMI0LhGT+0CrIvxaTIjtyv9KD+4icmG8jDANKxTtyw+zoUMRTfBl4uvVy3Voc2wUCWHXlHXfzTXLUlkD63LdoZPU2DqLSTpw/KIthsdP3ZP8zVE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ZQ+7daFh; arc=none smtp.client-ip=209.85.221.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="UAf1cbXU"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-43cfe574976so47924565e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 01:05:59 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ZQ+7daFh"
+Received: by mail-wr1-f44.google.com with SMTP id ffacd0b85a97d-39123ad8a9fso499106f8f.2
+        for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 06:45:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linaro.org; s=google; t=1746000358; x=1746605158; darn=lists.linux.dev;
-        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=ZYENxwyZq0Q3qL0QvqAbL/WUtfShupQ9hB5wEZFyU3M=;
-        b=UAf1cbXUsB/M/TYWeZZz0COypTAtxGgqqBybu7jdq6Un6z7Mp0No9G2qNa+G9LcCK6
-         BVOa/KEq62vQWjiSNAP1C9AU4sm+W/tHOpJyXY4OQV9tWJShj/wxohC2/uVOgAYnewJ1
-         FnGH2SlF6CFQWrZjgrD2LH8ZZss5tXeHyITTSBNL2Grm13VA9PuE/VTYhlHXEuCHamQp
-         fERaYObitszlFEGjiLp4JRDooT3/Lw4lfKMQuSNgsZkN+Iqv4gRl2D+vzqzwSatafZ7i
-         bV7L3PsXws5QAplvromZUQJKud7RQc8qnepmq5fWSjrOaiikVhvl37yd0d0A+CAgmNXK
-         CTRg==
+        d=gmail.com; s=20230601; t=1746020733; x=1746625533; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=n1CeDhTyPTUczDOgeao5ROqNhlbc75CGsOx1JmDj87w=;
+        b=ZQ+7daFhImXfGmC17t1rf3LvLDKS6XGNXGeYHSSv1vHHFBYiVHCAr64mL9n9gWxhjz
+         87aPV+/U9pO8/HiuCGqv+03+y1QIXIJhg7PYTufXNYaalpxQtecKTlx2y5wPKnZQZUXj
+         wvT1gHiT2f3zaYUuFGrKdsCVo51Ji+pIKQwGhx8bWsuB5SLWt/WVqZhFigIgx09IxFwv
+         0A7uFLr2z0WpzjecubQK/evvJvMjjD8lqhOd8/jh5xjAbiSSxvmMHEQ+fL4c1qFdc7ze
+         YMa9WP2Hl0fZawQCcgt3VVmTXxj7Ed33+Hda9RNsBchlAKcklaSq3kmquKVzPmggJtkr
+         mEGA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746000358; x=1746605158;
-        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZYENxwyZq0Q3qL0QvqAbL/WUtfShupQ9hB5wEZFyU3M=;
-        b=EFJi0yoJX4ig4H1oTDnf9mERGir+tfrkbxCY6G63wJdVb7xZpOhWITTKvE/DJPPC5w
-         Z2w68ly+9XRoMJRyPs4vnefosXOAkH/23nl4uNKjZJ5ww2zGTsFFKovVsMJEWsWKYKlX
-         yObvrBLGGK6qIc9Qi1u4YDoCqs/To7NxivWiG2lLfEaMNsSWumWh3tUNMRwyTT69cyab
-         2OlJTzsOGTboAvAXEXLrgPdX5I51x8WXhxii5OV5KKZOhRaLBBr+pJWq/W8iI6OdfyVL
-         AyIUzi9Pqlki6Zn42Ag5+QczC3+QLH93t+vN8mEfjTS60+T3O9gA2TyPgoNLHSUmiYbd
-         pteg==
-X-Forwarded-Encrypted: i=1; AJvYcCX1nRafI5KmpXS+hw5GH3zQPX7npOQV6VNby4sYxt9Yn4U9Bx//K1RaT3G70pitG+4veKOgR3uTkw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx+jPRE1+H4z1PmJf5MVKgyxCWwbdpFcq7JSNv5NVRk7E8D8azx
-	+Sl3az/43iHn6j1NMC8WlPK1JSv9QMICaZFBi9GDQpK8rLTNuYEOSsuZI+2XK/c=
-X-Gm-Gg: ASbGncvFs6ontrBt8liIm8CBm8h3eu2UAFgU6SasqSzCtYdNttrAYpGYXhig0MjyBGm
-	v4J7ej+J7TqdHaaI3yQnUODj1JEKYMVJcizAQ043Piuj61dCz3RTRWKygBisl6Ppnws84cEe245
-	MziNaxWilxzoTUqK8OAh11N7JRXoqGu6l1saia0Myw7zRAkfihnygG0ES413fg+zMd8XMxt4RkU
-	yM2A7G43rOa1TMO6x8rBrQ5VEbUsz9ZGbAB4ZEaL4wUiICovYORQhxlxVM6TZ0lOyQ1IO5xCZF0
-	4/TKzTTDR3g1AEAmBSZDT7NzBMniE9yA3bcveRljCDmVAP66kC0Ak3Ze
-X-Google-Smtp-Source: AGHT+IE/vJgkReHfU0yex981z0mRRJKC7iIQUf/5YtQH4VoE02PsQEx8EvbLqs3gYSEqbq0UVxslLw==
-X-Received: by 2002:a05:6000:430b:b0:3a0:8429:a2e2 with SMTP id ffacd0b85a97d-3a08f7a2776mr1682112f8f.32.1746000358002;
-        Wed, 30 Apr 2025 01:05:58 -0700 (PDT)
-Received: from localhost ([196.207.164.177])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3a07a5ed2e0sm13777037f8f.39.2025.04.30.01.05.57
+        d=1e100.net; s=20230601; t=1746020733; x=1746625533;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=n1CeDhTyPTUczDOgeao5ROqNhlbc75CGsOx1JmDj87w=;
+        b=jdGL23JYjIIXFgHMdofu28JNCTWEnCMNPfLPE0ROA27lptAHjgIX3fYNFNBqZKXJHX
+         u5ak1gd7IiY87B3MicBVwZmdA+SHcjkpaFCzwrlr6Pr0Ere3FeA7pbJWwVGl2dcsEviw
+         GH93xrqt4gATXpCqF2+pmDjw2SwmbeOm8LFqfTV4aiAh1B+RNJLrtHsO8misUFUfr9y8
+         ULAHEOlBpdr4mkhI8VCPDkrtoaAjZswOmN4Tp0HzgxC3wt6iMIQc6k0oCUP0whICFZiz
+         an8Ze/a+PHlSJEq+QJos8sjwI+Jky8ARnL7cmvYEy4pJ2S9L1IyX1d12WesqJ+f9Q36t
+         dB2A==
+X-Forwarded-Encrypted: i=1; AJvYcCWAQpJzPQghZCn0b0SRkFGHANZN7xLytdWW5kgALok1EFAfSx6dMkUfka7S/CNqZ2MykUyG8TgV+Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzIqHHl9+ajtSvAoR7b9IjxI0BGdNT4qgyAKdhYV9QFb9q/lpXH
+	v0n6tZwnRquCb5ILRzRCBhIUgMUpTJxnSh3zUJHHM+m9bys72jA=
+X-Gm-Gg: ASbGncs57mbA0h7KJOYoObZlLvry5OPzZ60JL8VDJ+NVM4C9PoNl/d/o3SfShtQorcF
+	D4EhXXHdnBFC4LhrnLexFf39RQ00XDDzTFKq9JiQwykBHarcar8aR9St9xAmHsUFQQSd0yHotrm
+	4o1fip1UBFdF986nBL3n8kPpefRdCnhpgziSExIGeLZ7HguY+qTGI9jYSXqDUgivrcWB0ESfqgC
+	hoxloF+0SZBzyQ0jsSzLVgvIsZKUGLhAsMWTGkjiy3LZx+snvr3iUzM0qcvkVX6T0uadScwbsh+
+	VblQThkY9zwI0xvUEfTHPhYhU6d6H1Mb9D0g99kYV8uF4F65jyOxQYLU2+YuCUFfZ7br9O2EXLt
+	oJ89UqDzss76xddw=
+X-Google-Smtp-Source: AGHT+IGZ2P28Ro/E905cdboBOU68u+OBpQlhn+4UWzvmK9UMjkFzcaFaO4/1xXGixA7Jh1ZtK82gow==
+X-Received: by 2002:a05:6000:1846:b0:39c:30d8:a44 with SMTP id ffacd0b85a97d-3a08ff5c739mr862882f8f.5.1746020732637;
+        Wed, 30 Apr 2025 06:45:32 -0700 (PDT)
+Received: from localhost (202.red-88-7-162.staticip.rima-tde.net. [88.7.162.202])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a073e5c7d1sm16934423f8f.83.2025.04.30.06.45.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 30 Apr 2025 01:05:57 -0700 (PDT)
-Date: Wed, 30 Apr 2025 11:05:54 +0300
-From: Dan Carpenter <dan.carpenter@linaro.org>
-To: Satya Tangirala <satyat@google.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Eric Biggers <ebiggers@google.com>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
-Subject: [PATCH] dm: add missing unlock on in dm_keyslot_evict()
-Message-ID: <aBHZ4puON8GNK0vw@stanley.mountain>
+        Wed, 30 Apr 2025 06:45:32 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM-DEVEL ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 1/2] multipath-tools: hwtable: remove .pgfailback from QUANTUM/F1
+Date: Wed, 30 Apr 2025 15:45:26 +0200
+Message-ID: <20250430134528.82361-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.49.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-X-Mailer: git-send-email haha only kidding
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-We need to call dm_put_live_table() even if dm_get_live_table() returns
-NULL.
+Useless without a prio
 
-Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
-Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/md/dm-table.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/hwtable.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 933e01f3fab4..1a7e2623069b 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1177,7 +1177,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
- 
- 	t = dm_get_live_table(md, &srcu_idx);
- 	if (!t)
--		return 0;
-+		goto put_live_table;
- 
- 	for (unsigned int i = 0; i < t->num_targets; i++) {
- 		struct dm_target *ti = dm_table_get_target(t, i);
-@@ -1188,6 +1188,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
- 					  (void *)key);
- 	}
- 
-+put_live_table:
- 	dm_put_live_table(md, srcu_idx);
- 	return 0;
- }
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 8b43c14d..f76d9180 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -1349,7 +1349,6 @@ static struct hwentry default_hw[] = {
+ 		.vendor        = "QUANTUM",
+ 		.product       = "^F1",
+ 		.pgpolicy      = GROUP_BY_SERIAL,
+-		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.no_path_retry = 30,
+ 	},
+ 	/*
 -- 
-2.47.2
+2.49.0
 
