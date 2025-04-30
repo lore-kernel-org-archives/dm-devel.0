@@ -1,104 +1,136 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F33B03B2A0
-	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 19:17:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ACD32BD93D;
+	Wed, 30 Apr 2025 21:22:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746040636; cv=none; b=cpLvu65IcWqmthkQ64lhGYkKlQLAHq8jZxNUtjxT1KDKut4kWFghIfYoOk5gD5BJcw0/pPSmybBZfpw3ej9idGHsqhboX9lodxv4Ze5X3eiixwZVD+4PU/82d8gDYnDjFJ0pVQ98ix8fV5Fz4XjQfrPNXVjH7F+uvaz1JUDHr9w=
+	t=1746048128; cv=none; b=YZjXh5iTz4jczxf+FtcnUO9GP8WcIHPDuA19ei1Yw+Un2+bexzIA0+AJSk1ZRCgudPyIIyIOduu0zqIVVdXfyPhaBPAfahqtV56336w+8AIOdt8t37257UiwlDTJcHZyXuZ7m/W3EHAXqXhfoAY1HtKeudTm69KAzAw44cPzryc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746040636; c=relaxed/simple;
-	bh=WE3U9M6bFtNqTnlRCzpMfoMFofIWbXyu0m0xU2AgNKI=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=uwFxueYscAxVtXZOJyWR2trNl6sEz5q5kFyaeyjeoMD2HCotGIDUsOXtMmh+c/Du6HIMRBzjzkGW+eZi/xUv5THrZNjJg/2ynNZZdDglHm6PBTr8V6vAuhmKUzg8mlRnwZ4TtHpBHNbVrqyi0iNKmEL/x1sO8ZjlEY5L9doD8MA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XatjeYdS; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1746048128; c=relaxed/simple;
+	bh=sWO2f/PxHT1FPtFUalwag2d9hPPO/aR7oKxfBHK7ykw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=CjBSIoVHgjCBQTOwFcojQT2DOmKg+sRgdT2nntV+FCbt6TiNysNflPSLjhYKoxJaWgWQ7gbhvNG6IoRd49WfzTy8ngsd6dmV8/Ip4BHaHwgZnVcy6Mb29esVufEvYETZfLGXuCUU6GYMv1s5+TlCPTjSu6xUUMgtjZPHmDQ9xy8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=D+ofx2nx; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XatjeYdS"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1746040633;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=qcJbYty0ZuARoMmKQQUrWafrtx6uU8ln7Eiw3EBt3kw=;
-	b=XatjeYdSJYAqusgPR7p5KmQRxQUXFzULHqwKamE4AoYMf8tgv6Ya6S5RlK4S01y53LG6mk
-	bbCbHwePrbbWvPh1hkRvN5cTbt0ME2p8r12aki+7ncWy6YLoXWxtxPpbVwzKyqYqHKRBQW
-	J7OrFyNZG4iGfAIZzbYrlb1W1FmUi2s=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-664-sshOLpprMcSD7bfy4TRoSg-1; Wed,
- 30 Apr 2025 15:17:10 -0400
-X-MC-Unique: sshOLpprMcSD7bfy4TRoSg-1
-X-Mimecast-MFC-AGG-ID: sshOLpprMcSD7bfy4TRoSg_1746040629
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C6251800878;
-	Wed, 30 Apr 2025 19:17:09 +0000 (UTC)
-Received: from [10.22.80.45] (unknown [10.22.80.45])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82504180087B;
-	Wed, 30 Apr 2025 19:17:06 +0000 (UTC)
-Date: Wed, 30 Apr 2025 21:17:01 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Dan Carpenter <dan.carpenter@linaro.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>
-cc: Eric Biggers <ebiggers@kernel.org>, Satya Tangirala <satyat@google.com>, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    kernel-janitors@vger.kernel.org
-Subject: Re: [PATCH] dm: add missing unlock on in dm_keyslot_evict()
-In-Reply-To: <aBJgeV7pZ7Q47OCb@stanley.mountain>
-Message-ID: <cad25513-31c4-5895-cfc0-b9c7dce4ce08@redhat.com>
-References: <aBHZ4puON8GNK0vw@stanley.mountain> <20250430165037.GA1958@sol.localdomain> <aBJgeV7pZ7Q47OCb@stanley.mountain>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="D+ofx2nx"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender
+	:Reply-To:Content-Type:Content-ID:Content-Description;
+	bh=R5NIVw/93J/inPIJ3/N2tOuwD8pOE89NikFOGZTqiC4=; b=D+ofx2nxOGw3yGY/8psrCG4CGg
+	wSpsZV3SlGqkToRY30U+M8OwT2tIVU2BU9Xbo01ttwJ4qF8tp6Q2MN6Sne/d2fWpc0htF53qI/VpF
+	pcAWkMJ4LuGnqG9MKROb8Rsp1gsJLj7kUJSWrGJ+hH2KxwFHNd9gDeDfoUHAWGaU6EVZ1P6uvNsWX
+	oqO/GM2yKUqRza45WoEqKPbPFRO4Zkb4o+jX2nvbwqH8ZDv0rJ6SmEh3bBmT06mRi2uHRxSagHn37
+	9tVRNAzo1pXfMcp6c8qEY4pCmej3/P+diktB/1KYO5KeI1QdINlCnXwbUvwpLWolxUEZQc0NID/BR
+	0JX12Smg==;
+Received: from [206.0.71.65] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uAEsW-0000000E2W5-2808;
+	Wed, 30 Apr 2025 21:22:04 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org,
+	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+	Jack Wang <jinpu.wang@ionos.com>,
+	Coly Li <colyli@kernel.org>,
+	Kent Overstreet <kent.overstreet@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Chris Mason <clm@fb.com>,
+	Josef Bacik <josef@toxicpanda.com>,
+	David Sterba <dsterba@suse.com>,
+	Andreas Gruenbacher <agruenba@redhat.com>,
+	Carlos Maiolino <cem@kernel.org>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Naohiro Aota <naohiro.aota@wdc.com>,
+	Johannes Thumshirn <jth@kernel.org>,
+	"Rafael J. Wysocki" <rafael@kernel.org>,
+	Pavel Machek <pavel@kernel.org>,
+	slava@dubeyko.com,
+	glaubitz@physik.fu-berlin.de,
+	frank.li@vivo.com,
+	linux-bcache@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-btrfs@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	linux-pm@vger.kernel.org,
+	Hannes Reinecke <hare@suse.de>,
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Subject: [PATCH 01/19] block: add a bio_add_virt_nofail helper
+Date: Wed, 30 Apr 2025 16:21:31 -0500
+Message-ID: <20250430212159.2865803-2-hch@lst.de>
+X-Mailer: git-send-email 2.47.2
+In-Reply-To: <20250430212159.2865803-1-hch@lst.de>
+References: <20250430212159.2865803-1-hch@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
+Add a helper to add a directly mapped kernel virtual address to a
+bio so that callers don't have to convert to pages or folios.
 
+For now only the _nofail variant is provided as that is what all the
+obvious callers want.
 
-On Wed, 30 Apr 2025, Dan Carpenter wrote:
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+---
+ block/bio.c         | 16 ++++++++++++++++
+ include/linux/bio.h |  2 ++
+ 2 files changed, 18 insertions(+)
 
-> On Wed, Apr 30, 2025 at 09:50:37AM -0700, Eric Biggers wrote:
-> > On Wed, Apr 30, 2025 at 11:05:54AM +0300, Dan Carpenter wrote:
-> > > We need to call dm_put_live_table() even if dm_get_live_table() returns
-> > > NULL.
-> > > 
-> > > Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
-> > > Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
-> > > ---
-> > >  drivers/md/dm-table.c | 3 ++-
-> > >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > > 
-> > 
-> > Reviewed-by: Eric Biggers <ebiggers@kernel.org>
-> > 
-> > But that's an awfully error-prone API.
-> 
-> Yep.
-> 
-> > 
-> > dm_blk_report_zones() gets this wrong too.
-> 
-> Ugh...  dm_blk_report_zones() is too weird for my static checker tool.
-> The checker is looking very specifically for error paths with missing
-> unlocks.
-
-Ben already tried to fix it in dm_blk_report_zones (see the linux-dm git, 
-for-next branch) - but his fix is incorrect because the "if" condition for 
-dm_get_live_table and dm_put_live_table differs. I'll update his patch to 
-fix this mismatch.
-
-Mikulas
-
-> regards,
-> dan carpenter
-> 
+diff --git a/block/bio.c b/block/bio.c
+index 4e6c85a33d74..c1789a58f23f 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -989,6 +989,22 @@ void __bio_add_page(struct bio *bio, struct page *page,
+ }
+ EXPORT_SYMBOL_GPL(__bio_add_page);
+ 
++/**
++ * bio_add_virt_nofail - add data in the direct kernel mapping to a bio
++ * @bio: destination bio
++ * @vaddr: data to add
++ * @len: length of the data to add, may cross pages
++ *
++ * Add the data at @vaddr to @bio.  The caller must have ensure a segment
++ * is available for the added data.  No merging into an existing segment
++ * will be performed.
++ */
++void bio_add_virt_nofail(struct bio *bio, void *vaddr, unsigned len)
++{
++	__bio_add_page(bio, virt_to_page(vaddr), len, offset_in_page(vaddr));
++}
++EXPORT_SYMBOL_GPL(bio_add_virt_nofail);
++
+ /**
+  *	bio_add_page	-	attempt to add page(s) to bio
+  *	@bio: destination bio
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index cafc7c215de8..acca7464080c 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -417,6 +417,8 @@ void __bio_add_page(struct bio *bio, struct page *page,
+ 		unsigned int len, unsigned int off);
+ void bio_add_folio_nofail(struct bio *bio, struct folio *folio, size_t len,
+ 			  size_t off);
++void bio_add_virt_nofail(struct bio *bio, void *vaddr, unsigned len);
++
+ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter);
+ void bio_iov_bvec_set(struct bio *bio, const struct iov_iter *iter);
+ void __bio_release_pages(struct bio *bio, bool mark_dirty);
+-- 
+2.47.2
 
