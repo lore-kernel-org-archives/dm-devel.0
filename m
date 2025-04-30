@@ -1,169 +1,104 @@
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBD041D5CD7
-	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 19:09:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F33B03B2A0
+	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 19:17:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746040158; cv=none; b=NgQ915u9tNvIQ08UDl8IKw6erwsJTzuqEZolgnU1Qv7fgVlOOGHRAHrl13+LeZlPklSHyklcsPuSwaijPuRjCFKFQL6ROXwOCIKj48PgLXrrdoP1qUvJ9GCC0lW9wKNzJ/tsqcBUUlKfJvfN/dPrt50Yka1y05alqJlSFm/Klq4=
+	t=1746040636; cv=none; b=cpLvu65IcWqmthkQ64lhGYkKlQLAHq8jZxNUtjxT1KDKut4kWFghIfYoOk5gD5BJcw0/pPSmybBZfpw3ej9idGHsqhboX9lodxv4Ze5X3eiixwZVD+4PU/82d8gDYnDjFJ0pVQ98ix8fV5Fz4XjQfrPNXVjH7F+uvaz1JUDHr9w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746040158; c=relaxed/simple;
-	bh=KvxZHu46uBpHJbcvSOOjNzLKh/aWZRjUZFG3AH+ox9s=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=HYYijH0kn/iSapek49Nd0aNioZWYSLApgRBVLpqP/eDyn4znHjE6BDLecW3BnK5CfVj5X1+4xLlighZtgbGN8WPkQk6dEHdVvnk5+KzW//+aegRdH/6WKvYbaEhClpAs5VcUt2S+8YEnDYF2gRc1R491j9xFg5og28NggUR8phI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=IRmjagjf; arc=none smtp.client-ip=209.85.128.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1746040636; c=relaxed/simple;
+	bh=WE3U9M6bFtNqTnlRCzpMfoMFofIWbXyu0m0xU2AgNKI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=uwFxueYscAxVtXZOJyWR2trNl6sEz5q5kFyaeyjeoMD2HCotGIDUsOXtMmh+c/Du6HIMRBzjzkGW+eZi/xUv5THrZNjJg/2ynNZZdDglHm6PBTr8V6vAuhmKUzg8mlRnwZ4TtHpBHNbVrqyi0iNKmEL/x1sO8ZjlEY5L9doD8MA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XatjeYdS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="IRmjagjf"
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-43edecbfb94so1190705e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 12:09:15 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1746040154; x=1746644954; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=KvxZHu46uBpHJbcvSOOjNzLKh/aWZRjUZFG3AH+ox9s=;
-        b=IRmjagjfZqs2c9NDyGIgT1zDTojGOz9ERoCL9D3/YGFYvnIPyO6qYrkjxmwTlfeNJq
-         fKQff7A1XtyI12QXZWTUHPBSOULaHjgtFvJjCN+/Tc+H6RkgVu9LgRQdZaWDKvNDS9GA
-         YNpYYGjHqgyhk+A5hdluVfpToK8pAg8RG0HxsOWzIE8IeCmGOMvNmIOrBhyQ930wFz3F
-         p+DZiJrnS6wPjZ3iEx1DXDuA+6LAU3Gg9nDPxqzGGHfg+7eA/eE1iR1m1GRvfE2qaOZQ
-         ciNkN1PtzWuzIU+rtCHZ/VgnJs++tcQhCDzMUVIXnpwoy4VwM+93K0tAePFf0zotdNQf
-         bw7Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746040154; x=1746644954;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=KvxZHu46uBpHJbcvSOOjNzLKh/aWZRjUZFG3AH+ox9s=;
-        b=UOgG8alX0hgmYuSjYBxqYAC6Bsnl8FvsFrg1cwzO0L6Ns7mlEukENNNVacQ6OzNGPy
-         RXTVgObcdACUejplGdFUQdWXHB1xfOQPH0IvdhwtN9qbPK2vb8XLwq5hJsinIe8lCxBB
-         /h2NFxyvJLAv3NnhjBiaqrZUy6ZR6nmEkFdZ/+JMTBUiLPPyNh3dWfOywVv2ZorLloI1
-         SkAa3Wzv4NFtzol0loLKQIqEsyrZT7KznZpC/J3OeqTWwZFH1KCeTLZJVid+jmnqQv1Y
-         WC/My6uH/nPGpXos40HBiXS82zuGfw/usEK9c4NLORqTf34Ttw3n8+iQ3wm1jV9gnK2m
-         X2JA==
-X-Forwarded-Encrypted: i=1; AJvYcCUxfY8qZ3B6ooeWCg+QbWRvttftCnT1cL4ZDDl/A9NyIcCsxISm11mZBopO+68Kirj1o9by9uConw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz7rlPnZG//r8Y0N4VkE5wF9itaNl6tCR+HIHGAktEXRE9uKJIA
-	9M4lrG2zKSDrScODmI/NbyJxX9f62AAEueshu5jA4k9WnxNoAqlsJk126gvsHuCQ2P34PnWc3Le
-	A
-X-Gm-Gg: ASbGncsG5sl+urUp9xB6movQjURHzV2IK/oXuxtuaYnNpOscRq5wb8xCE21SZxZXnt/
-	zmevKthiq/rUsiWIPDtDYSMP25BCK5kknhCk93natsvvduggtUxMTU4m15SihYKCzPzyU2btzRQ
-	AqlaIe7UaCQQkz4nZl6/YJXh37HlV8h1i6m+iFhUD9w3nWfDEkowAKvo8txaZTw4JEQOA3nfJeq
-	CWIYM5MzvV5AzFw/thAMDUZuc4bOvTrdD4wPqojfz4+AjDkApPjJLRp/N6NBTnCfDsK/Dt5feZE
-	Wq21uMLQQpj6NQ5TajUKwdpHSngDqJTrj90ox8rBEJS32/UcIn1XV4WAwvF+k8ezVOUPKKtHjEF
-	9fuH88MnmqkLEenxjTAO9Sey1txbeHp2QwQD3grKuGSIML2rBiLD83p4HwVQaTEfOJYiO+QWjCF
-	U=
-X-Google-Smtp-Source: AGHT+IF53SKOKO7AGx6dmitqenRBee3EnOsmgcANE1Z6umtire/2fnT5GGy3DQeiLZrEc2le/I2x4w==
-X-Received: by 2002:a05:600c:c04f:b0:43d:2313:7b54 with SMTP id 5b1f17b1804b1-441b249af77mr31522285e9.3.1746040153812;
-        Wed, 30 Apr 2025 12:09:13 -0700 (PDT)
-Received: from ?IPv6:2003:de:3740:fd00:677a:2a06:a366:3993? (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-441b2b97288sm35050595e9.6.2025.04.30.12.09.12
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 30 Apr 2025 12:09:13 -0700 (PDT)
-Message-ID: <61d7afaac05f4121ba7988459bd80498737c2d4d.camel@suse.com>
-Subject: Re: Coding stye (was Re: [PATCH 1/2] libmutipath: handle
- blacklisted paths on map_discovery)
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>, Xose Vazquez Perez
- <xose.vazquez@gmail.com>
-Date: Wed, 30 Apr 2025 21:09:11 +0200
-In-Reply-To: <aBJAQwhaIq2Seaob@redhat.com>
-References: <20250428214514.1905327-1-bmarzins@redhat.com>
-	 <20250428214514.1905327-2-bmarzins@redhat.com>
-	 <d277b26e716775ef3778aa47c8a96ea24a551de7.camel@suse.com>
-	 <aBE2IX4re8qXv-GG@redhat.com>
-	 <00c8651c4f589c56b034e7bbe5eb9d59688a1c78.camel@suse.com>
-	 <aBJAQwhaIq2Seaob@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XatjeYdS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1746040633;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=qcJbYty0ZuARoMmKQQUrWafrtx6uU8ln7Eiw3EBt3kw=;
+	b=XatjeYdSJYAqusgPR7p5KmQRxQUXFzULHqwKamE4AoYMf8tgv6Ya6S5RlK4S01y53LG6mk
+	bbCbHwePrbbWvPh1hkRvN5cTbt0ME2p8r12aki+7ncWy6YLoXWxtxPpbVwzKyqYqHKRBQW
+	J7OrFyNZG4iGfAIZzbYrlb1W1FmUi2s=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-664-sshOLpprMcSD7bfy4TRoSg-1; Wed,
+ 30 Apr 2025 15:17:10 -0400
+X-MC-Unique: sshOLpprMcSD7bfy4TRoSg-1
+X-Mimecast-MFC-AGG-ID: sshOLpprMcSD7bfy4TRoSg_1746040629
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C6251800878;
+	Wed, 30 Apr 2025 19:17:09 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82504180087B;
+	Wed, 30 Apr 2025 19:17:06 +0000 (UTC)
+Date: Wed, 30 Apr 2025 21:17:01 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dan Carpenter <dan.carpenter@linaro.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>
+cc: Eric Biggers <ebiggers@kernel.org>, Satya Tangirala <satyat@google.com>, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+    kernel-janitors@vger.kernel.org
+Subject: Re: [PATCH] dm: add missing unlock on in dm_keyslot_evict()
+In-Reply-To: <aBJgeV7pZ7Q47OCb@stanley.mountain>
+Message-ID: <cad25513-31c4-5895-cfc0-b9c7dce4ce08@redhat.com>
+References: <aBHZ4puON8GNK0vw@stanley.mountain> <20250430165037.GA1958@sol.localdomain> <aBJgeV7pZ7Q47OCb@stanley.mountain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On Wed, 2025-04-30 at 11:22 -0400, Benjamin Marzinski wrote:
-> On Wed, Apr 30, 2025 at 09:55:43AM +0200, Martin Wilck wrote:
-> > On Tue, 2025-04-29 at 16:27 -0400, Benjamin Marzinski wrote:
-> > > On Tue, Apr 29, 2025 at 09:59:40PM +0200, Martin Wilck wrote:
-> > > > On Mon, 2025-04-28 at 17:45 -0400, Benjamin Marzinski wrote:
-> > > > > If the multipath configuration is changed to blacklist
-> > > > > existing
-> > > > > devices,
-> > > > > and multipathd is reloaded but the blacklisted multipaths
-> > > > > device
-> > > > > can't
-> > > > > be removed, multipathd was marking the paths as INIT_PARTIAL,
-> > > > > causing
-> > > > > them to stay in the multipath device, at least until the
-> > > > > partial_retrigger_delay timeout elapsed. Instead, mark them
-> > > > > as
-> > > > > INIT_REMOVED and set mpp->need_reload, so the device is
-> > > > > reloaded
-> > > > > and
-> > > > > the
-> > > > > paths are removed. To make sure the blacklisted paths are
-> > > > > deleted
-> > > > > when
-> > > > > the multipath device is removed in coalesce_maps(), set their
-> > > > > pp-
-> > > > > > mpp
-> > > > > to point to map before removing it.
-> > > > >=20
-> > > > > Fixes d9c61332 ("multipathd: trigger uevents for blacklisted
-> > > > > paths in
-> > > > > reconfigure")
-> > > >=20
-> > > > The patch looks good to me, but I only vaguely understand why
-> > > > the
-> > > > bug
-> > > > is introduced in d9c61332. Are you positive that before
-> > > > d9c61332,
-> > > > the
-> > > > hang didn't occur?
-> > >=20
-> > > Well, I'm pretty sure these blacklisted paths stopped getting
-> > > deleted
-> > > during reconfigure by d9c61332. Before d9c61332, blacklisted
-> > > paths
-> > > were
-> > > immediately deleted in update_pathvec_from_dm().
-> >=20
-> > Right, thanks.
-> >=20
-> > I've taken the liberty to fix the typo ("libmutipath") and make
-> > some
-> > minor coding style adjustments in my queue branch. You can inspect
-> > the
-> > result there.
-> >=20
-> > The coding style stuff is work in progress, I've added a clang-
-> > format
-> > based workflow on my tip branch.
-> >=20
-> > I'd like to avoid major reformatting of past code while enforcing
-> > consistent formatting for present and future submissions which is
-> > more-
-> > or-less in line with what we used to do "sub-conciously" during the
-> > last years. clang-format has a lot of options [1]. I'm still
-> > struggling
-> > to find style settings that match ours [2].
-> >=20
-> > Let me know if you dislike this, or if you have suggestions for
-> > improving the settings.
->=20
-> I'm fine with your changes and with using clang-format in general.
-> And I
-> do prefer just formatting our new changes, like you mentioned in your
-> tip commit, but if someone wants to make the case for a mass
-> reformat,
-> I'm willing to consider it.=20
 
-Ok, let's try it then. If it becomes too annoying we can disable the
-workflow any time.
 
-Martin
+On Wed, 30 Apr 2025, Dan Carpenter wrote:
+
+> On Wed, Apr 30, 2025 at 09:50:37AM -0700, Eric Biggers wrote:
+> > On Wed, Apr 30, 2025 at 11:05:54AM +0300, Dan Carpenter wrote:
+> > > We need to call dm_put_live_table() even if dm_get_live_table() returns
+> > > NULL.
+> > > 
+> > > Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
+> > > Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
+> > > ---
+> > >  drivers/md/dm-table.c | 3 ++-
+> > >  1 file changed, 2 insertions(+), 1 deletion(-)
+> > > 
+> > 
+> > Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+> > 
+> > But that's an awfully error-prone API.
+> 
+> Yep.
+> 
+> > 
+> > dm_blk_report_zones() gets this wrong too.
+> 
+> Ugh...  dm_blk_report_zones() is too weird for my static checker tool.
+> The checker is looking very specifically for error paths with missing
+> unlocks.
+
+Ben already tried to fix it in dm_blk_report_zones (see the linux-dm git, 
+for-next branch) - but his fix is incorrect because the "if" condition for 
+dm_get_live_table and dm_put_live_table differs. I'll update his patch to 
+fix this mismatch.
+
+Mikulas
+
+> regards,
+> dan carpenter
+> 
+
