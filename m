@@ -1,183 +1,109 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D317D19048A
-	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 07:55:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C6C91EDA0E
+	for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 08:05:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745999749; cv=none; b=L7H2sz9hK1jDIjF/wYqxUPg9gmeP6D6f53OZwlbETn5zVHCWbu00L21o3EVQPaOQXYIIuAzssvVdF5jAcil/vegzSujXhLEnU70CTvSQpBCU/4v78pOULiqMVt3WtcUvqrlCdVAiO7VbSnM/hfNw60/opV/L7lGTAetP5/xHUvI=
+	t=1746000361; cv=none; b=RZzTWB1yC0VzJuiX6awlIOlhUr2m/U4PtfII8vLU9jNaevLu+PsAvWzO3jDhOvmOi1wlyhfRu6bWJw2bBHA/fnLPZozqmsFQUuhJbWeaI5Vp8PXgCbV1S3vNIofXlgbQEa2Vntt+R8ClWyBhAfAwJVTHpHGdCpSdxQ4d6KUmGPk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745999749; c=relaxed/simple;
-	bh=PJGywcZ5fDrimmL9MhHQe2EEqXiYtwSWLlycILUNQYk=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=p9hkHzUABxhvrFieQcClxMqkkETso+S4DfKrgtJyTeuEkiLqf/IETLOIIt4dTUDYQeWFIW4AnWMTGU7aRgwJicNkQNzg4ytwfVGL3vd32T4LOkWUOHhJIlynharve/O7qeR4trkQYxZ2/FNt67q7HGAOfn82+ACv8klThTIeKCw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=CBZKflXX; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1746000361; c=relaxed/simple;
+	bh=DUHxlAwhz09uoCCY/km3TFaTU24WnD8mv0hKD36WSmQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=GC5vveeC8DhCfRaT7GygtMbaG9SqsAg3DMfbQXNrnX8JqmIT0KNdunTBCUbcvpCwqwSLOayke9iOoWfUG1hNSCTm6LxeJ8SvZIg034I7qWC+eKquQJegUOwxdOSS5YDl4thf9u8CslHZoqQlFjM7tDcptPwJ1BqROszGLkJ4c7I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=UAf1cbXU; arc=none smtp.client-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="CBZKflXX"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-39141ffa9fcso8091456f8f.0
-        for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 00:55:46 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="UAf1cbXU"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-43cfe574976so47924565e9.1
+        for <dm-devel@lists.linux.dev>; Wed, 30 Apr 2025 01:05:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1745999745; x=1746604545; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=z1NeGrl/nyErBQ4+euL48lJ4ZDgl5xoiE4RN0Aq3qco=;
-        b=CBZKflXXo3/nSPSMHPAyurOD0Q08AM9DEjhd6GNE4GGbwZoWcrOD7Jm+99x88NRgd4
-         hj+1NaWiWrDjmAty2EFEMCfjl04Nvolq1AQr6rMe5d54LlYI4LqRt90KrKFqiI8JwWHf
-         bKAew/E5pMkm/+cYaQaINVmwrN/+Bw5Cq8+w7cDtb3G4yabkrLN4+fCWUsaTwKN3Rekf
-         GUywmsvSC257MuvYwffIHefcAVBcQrKpgs1Nb6ALRCSoFsXHZpc+2/Wts9xi/tBxgr5s
-         WLHkmWQYlN401WiY/+n+ps/4GTcL/nqzXdPiZygoCL+kevUMxwakPB0w2SdtcwyScIf/
-         gp/g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1745999745; x=1746604545;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+        d=linaro.org; s=google; t=1746000358; x=1746605158; darn=lists.linux.dev;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=z1NeGrl/nyErBQ4+euL48lJ4ZDgl5xoiE4RN0Aq3qco=;
-        b=PqSWVUTWNJBRIuS7osM4Tzlc/QPHjY5kTen5NE9t/PZQH3EKOpO76HTj7b67giMmMv
-         7gkEz64JfricGopM8rvHImI7/kXPrjqqgyzeFVRF2K7+XpJyIBjMQrfwQYnbt/kURlnX
-         BzF5NnBt8WgFto1c2c+mYAYbe11rTuVytElK2txtesX9Siew3v1/kmvSeF4ZyFNqJFvr
-         ioXeY2wyh0hQxbHhpgCNsM+Wl8AkctTUX2HrfS1UJ9D/D50jm1dCa2FM/ivS65Bnyv1S
-         nU2RD1fjU5qA9L9O4Ffh1LsUsPUBeG9YjZxGnBb6ZoSF1h9zqUhpd0R9APsSkjCjBiiO
-         GSAA==
-X-Forwarded-Encrypted: i=1; AJvYcCXUpo2fWlplXbKAxHjmnFnItCRZNo8ITW26/KiQKqvcDX4WEag6Ug5zfXOnAjYZ4d22rNknlHB/mA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxztBJQ0L80cxbxbeRBlH+nwXB5w2g/Z6PMxXIiM4RJI+ONq8bn
-	TRAEXMrsjyQedMrRgS8JN21o3q63CeNXYe/DUjeO69Qt4TyA4JMFvTcadM9xO7i3wVmL2fcE7TM
-	W
-X-Gm-Gg: ASbGncuOaXAPAHYy0HWDNTS/wud75OJUAfaRll/stN+zFdxCuLNsFwg3CtsrGX3gkFF
-	yqbHaGkM9TT8nAMvT5WXQSBCf+PwbSyHJO19ZbkPiHA8tFIzzXnkkbVJolrQgUXXiVHSRC3aKag
-	8Ux7aMuijln5Os7BEMQ0dq43eY0XqmpkQXI5yXJoogYBfbkx1VKBhsJ0KOuvl8hZrXYywjpBMzT
-	MmvmREshQ2DOpmLUkHocKbU1jPoZvED9l2hYL0np3tzFRkANtQ5StlK6yuuYbOE6O4DXOI+m5nV
-	hr9tAmaeK21xAaAxnWw1jMhgo/F3xefr8RffJdLnsz3maqcs3r+TJ8ziT2ZGBfDxaZw54FZ8ocK
-	x36W2/6f90uFP2hipckRB8jx6v0yhivdVwntsyTRpBXf7WviyIiN87VXUv172w+CyMi44m9qqGH
-	OZFVBm6r6dKw==
-X-Google-Smtp-Source: AGHT+IFXTkC+owdkoqfJd2lveImPACBCyYlzpwHQNY4jSSqqZvMekvMAmsscLDHqWRzvMzolDSfh9Q==
-X-Received: by 2002:a05:6000:2209:b0:39c:1258:7e18 with SMTP id ffacd0b85a97d-3a08f7a5e72mr2090295f8f.57.1745999744981;
-        Wed, 30 Apr 2025 00:55:44 -0700 (PDT)
-Received: from ?IPv6:2003:de:3740:fd00:677a:2a06:a366:3993? (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a073e46a49sm16373089f8f.61.2025.04.30.00.55.44
+        bh=ZYENxwyZq0Q3qL0QvqAbL/WUtfShupQ9hB5wEZFyU3M=;
+        b=UAf1cbXUsB/M/TYWeZZz0COypTAtxGgqqBybu7jdq6Un6z7Mp0No9G2qNa+G9LcCK6
+         BVOa/KEq62vQWjiSNAP1C9AU4sm+W/tHOpJyXY4OQV9tWJShj/wxohC2/uVOgAYnewJ1
+         FnGH2SlF6CFQWrZjgrD2LH8ZZss5tXeHyITTSBNL2Grm13VA9PuE/VTYhlHXEuCHamQp
+         fERaYObitszlFEGjiLp4JRDooT3/Lw4lfKMQuSNgsZkN+Iqv4gRl2D+vzqzwSatafZ7i
+         bV7L3PsXws5QAplvromZUQJKud7RQc8qnepmq5fWSjrOaiikVhvl37yd0d0A+CAgmNXK
+         CTRg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1746000358; x=1746605158;
+        h=content-disposition:mime-version:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=ZYENxwyZq0Q3qL0QvqAbL/WUtfShupQ9hB5wEZFyU3M=;
+        b=EFJi0yoJX4ig4H1oTDnf9mERGir+tfrkbxCY6G63wJdVb7xZpOhWITTKvE/DJPPC5w
+         Z2w68ly+9XRoMJRyPs4vnefosXOAkH/23nl4uNKjZJ5ww2zGTsFFKovVsMJEWsWKYKlX
+         yObvrBLGGK6qIc9Qi1u4YDoCqs/To7NxivWiG2lLfEaMNsSWumWh3tUNMRwyTT69cyab
+         2OlJTzsOGTboAvAXEXLrgPdX5I51x8WXhxii5OV5KKZOhRaLBBr+pJWq/W8iI6OdfyVL
+         AyIUzi9Pqlki6Zn42Ag5+QczC3+QLH93t+vN8mEfjTS60+T3O9gA2TyPgoNLHSUmiYbd
+         pteg==
+X-Forwarded-Encrypted: i=1; AJvYcCX1nRafI5KmpXS+hw5GH3zQPX7npOQV6VNby4sYxt9Yn4U9Bx//K1RaT3G70pitG+4veKOgR3uTkw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx+jPRE1+H4z1PmJf5MVKgyxCWwbdpFcq7JSNv5NVRk7E8D8azx
+	+Sl3az/43iHn6j1NMC8WlPK1JSv9QMICaZFBi9GDQpK8rLTNuYEOSsuZI+2XK/c=
+X-Gm-Gg: ASbGncvFs6ontrBt8liIm8CBm8h3eu2UAFgU6SasqSzCtYdNttrAYpGYXhig0MjyBGm
+	v4J7ej+J7TqdHaaI3yQnUODj1JEKYMVJcizAQ043Piuj61dCz3RTRWKygBisl6Ppnws84cEe245
+	MziNaxWilxzoTUqK8OAh11N7JRXoqGu6l1saia0Myw7zRAkfihnygG0ES413fg+zMd8XMxt4RkU
+	yM2A7G43rOa1TMO6x8rBrQ5VEbUsz9ZGbAB4ZEaL4wUiICovYORQhxlxVM6TZ0lOyQ1IO5xCZF0
+	4/TKzTTDR3g1AEAmBSZDT7NzBMniE9yA3bcveRljCDmVAP66kC0Ak3Ze
+X-Google-Smtp-Source: AGHT+IE/vJgkReHfU0yex981z0mRRJKC7iIQUf/5YtQH4VoE02PsQEx8EvbLqs3gYSEqbq0UVxslLw==
+X-Received: by 2002:a05:6000:430b:b0:3a0:8429:a2e2 with SMTP id ffacd0b85a97d-3a08f7a2776mr1682112f8f.32.1746000358002;
+        Wed, 30 Apr 2025 01:05:58 -0700 (PDT)
+Received: from localhost ([196.207.164.177])
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3a07a5ed2e0sm13777037f8f.39.2025.04.30.01.05.57
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 30 Apr 2025 00:55:44 -0700 (PDT)
-Message-ID: <00c8651c4f589c56b034e7bbe5eb9d59688a1c78.camel@suse.com>
-Subject: Coding stye (was Re: [PATCH 1/2] libmutipath: handle blacklisted
- paths on map_discovery)
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>, Xose Vazquez Perez
- <xose.vazquez@gmail.com>
-Date: Wed, 30 Apr 2025 09:55:43 +0200
-In-Reply-To: <aBE2IX4re8qXv-GG@redhat.com>
-References: <20250428214514.1905327-1-bmarzins@redhat.com>
-	 <20250428214514.1905327-2-bmarzins@redhat.com>
-	 <d277b26e716775ef3778aa47c8a96ea24a551de7.camel@suse.com>
-	 <aBE2IX4re8qXv-GG@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+        Wed, 30 Apr 2025 01:05:57 -0700 (PDT)
+Date: Wed, 30 Apr 2025 11:05:54 +0300
+From: Dan Carpenter <dan.carpenter@linaro.org>
+To: Satya Tangirala <satyat@google.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Eric Biggers <ebiggers@google.com>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
+Subject: [PATCH] dm: add missing unlock on in dm_keyslot_evict()
+Message-ID: <aBHZ4puON8GNK0vw@stanley.mountain>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+X-Mailer: git-send-email haha only kidding
 
-On Tue, 2025-04-29 at 16:27 -0400, Benjamin Marzinski wrote:
-> On Tue, Apr 29, 2025 at 09:59:40PM +0200, Martin Wilck wrote:
-> > On Mon, 2025-04-28 at 17:45 -0400, Benjamin Marzinski wrote:
-> > > If the multipath configuration is changed to blacklist existing
-> > > devices,
-> > > and multipathd is reloaded but the blacklisted multipaths device
-> > > can't
-> > > be removed, multipathd was marking the paths as INIT_PARTIAL,
-> > > causing
-> > > them to stay in the multipath device, at least until the
-> > > partial_retrigger_delay timeout elapsed. Instead, mark them as
-> > > INIT_REMOVED and set mpp->need_reload, so the device is reloaded
-> > > and
-> > > the
-> > > paths are removed. To make sure the blacklisted paths are deleted
-> > > when
-> > > the multipath device is removed in coalesce_maps(), set their pp-
-> > > >mpp
-> > > to point to map before removing it.
-> > >=20
-> > > Fixes d9c61332 ("multipathd: trigger uevents for blacklisted
-> > > paths in
-> > > reconfigure")
-> >=20
-> > The patch looks good to me, but I only vaguely understand why the
-> > bug
-> > is introduced in d9c61332. Are you positive that before d9c61332,
-> > the
-> > hang didn't occur?
->=20
-> Well, I'm pretty sure these blacklisted paths stopped getting deleted
-> during reconfigure by d9c61332. Before d9c61332, blacklisted paths
-> were
-> immediately deleted in update_pathvec_from_dm().
+We need to call dm_put_live_table() even if dm_get_live_table() returns
+NULL.
 
-Right, thanks.
+Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
+Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
+---
+ drivers/md/dm-table.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-I've taken the liberty to fix the typo ("libmutipath") and make some
-minor coding style adjustments in my queue branch. You can inspect the
-result there.
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 933e01f3fab4..1a7e2623069b 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1177,7 +1177,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
+ 
+ 	t = dm_get_live_table(md, &srcu_idx);
+ 	if (!t)
+-		return 0;
++		goto put_live_table;
+ 
+ 	for (unsigned int i = 0; i < t->num_targets; i++) {
+ 		struct dm_target *ti = dm_table_get_target(t, i);
+@@ -1188,6 +1188,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
+ 					  (void *)key);
+ 	}
+ 
++put_live_table:
+ 	dm_put_live_table(md, srcu_idx);
+ 	return 0;
+ }
+-- 
+2.47.2
 
-The coding style stuff is work in progress, I've added a clang-format
-based workflow on my tip branch.
-
-I'd like to avoid major reformatting of past code while enforcing
-consistent formatting for present and future submissions which is more-
-or-less in line with what we used to do "sub-conciously" during the
-last years. clang-format has a lot of options [1]. I'm still struggling
-to find style settings that match ours [2].
-
-Let me know if you dislike this, or if you have suggestions for
-improving the settings.
-
-Regards
-Martin
-
-[1] https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-[2] https://github.com/openSUSE/multipath-tools/blob/refs/heads/tip/.clang-=
-format
-
->  After this change
->=20
-> @@ -193,7 +196,8 @@ static void update_pathvec_from_dm(vector
-> pathvec, struct multipath *mpp,
-> =C2=A0		rc =3D pathinfo(pp, conf,
-> =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0
-> DI_SYSFS|DI_WWID|DI_BLACKLIST|DI_NOFALLBACK|pathinfo_flags);
-> =C2=A0		pthread_cleanup_pop(1);
-> -		if (rc !=3D PATHINFO_OK) {
-> +		if (rc =3D=3D PATHINFO_FAILED ||
-> +		=C2=A0=C2=A0=C2=A0 (rc =3D=3D PATHINFO_SKIPPED && !map_discovery)) {
-> =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 condlog(1, "%s: error =
-%d in pathinfo,
-> discarding path",
-> =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0 pp->dev, rc);
-> =C2=A0		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 vector_del_slot(pgp->p=
-aths, j--);
->=20
-> they started hanging around, so that uevents could be generated for
-> them
-> by trigger_paths_udev_change(). However, since coalesce_paths() will
-> usually clear pp->mpp, they won't get removed when orphan_paths() is
-> later called by remove_maps() to remove the old maps. I admit I
-> didn't
-> test if the paths got removed before that commit, but the commit
-> message
-> says that they did.
->=20
-> -Ben
->=20
-> >=20
-> > >=20
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> >=20
-> > Reviewed-by: Martin Wilck <mwilck@suse.com>
