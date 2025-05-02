@@ -1,119 +1,129 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4275114B965
-	for <dm-devel@lists.linux.dev>; Fri,  2 May 2025 10:13:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C514235044
+	for <dm-devel@lists.linux.dev>; Fri,  2 May 2025 11:12:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746180809; cv=none; b=jIMP7a/+WcmLzOF+75Daw7Czos9ng+UMRIK9IShtkOH/n0Po9qlyMc0qIA840aSodfHno7I7+la7ZIiSed1NIdZxqPw8PBu3SxAtAQ3LsxFYjA2/zVceIRzJnLz8fTDDAaySldLe43z9a2oPn6IV3NfbC7fLXZtaGHDq0/gh+88=
+	t=1746184350; cv=none; b=u3HtecUvuovRVPWXrjtZ+p0GEYYxX2+isyAo0a0eBPhAmHHkB9t6EhxpXmNbWP7zlYFxbmwk2x2dtDDn7yl9SQtIAS6G1iDKcfF/XndtRXIHj++y7cnG8QsBg4MPDuiLIJe84m39vckSBO+rudltQvTr6R4IdyPpmj/9B8+5fww=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746180809; c=relaxed/simple;
-	bh=7cFtfQfdck01Jsgj3vY7kYq6yK/EBai3ry3aTC3KAjQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=RoYcGMUfwNz+vBrF1v4jD+mHdb+b/nhKfz6n/O1P0AF2j4h7qHqWx4nFXrqaUbjOLdMza60SMWfxis4O/fTrMJjcvFkyGGpM2MG3HtwoLsZlOM0OXaCoTB049yYi6nPttq7AE89qKCFIxwQy6ElBJGw4WVlMvdPy73ByxkV1TJc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=fI6qG+T3; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=fI6qG+T3; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1746184350; c=relaxed/simple;
+	bh=DREzjcl9ABYrBk8gGvFsDp9hZlwFArIofTMcBzIYSAc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=DPQrYsgh9YkrUPdx0OW9uHIOqH1sujXwQ2vXUJ5dYP24ViIW/zCvYp0eagVlFB9Y1Qz2ufPJHIW8RFI+0QY7fgXtdmh8Fs7wH7EYA+o0aeUp7PuczLVHqBz8G88mGHVHKVrWISb40kks3Hg9DD8fEPBuModbJPJGg5voAd8Vxb8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VvoggCUk; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="fI6qG+T3";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="fI6qG+T3"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 47EBD1F387;
-	Fri,  2 May 2025 10:13:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746180805; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VvoggCUk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1746184347;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=7cFtfQfdck01Jsgj3vY7kYq6yK/EBai3ry3aTC3KAjQ=;
-	b=fI6qG+T3MRXeYL00ZroNPD3GM+Lwn4Y8yp1pqqdmq9N5RTM/qbeJdygsPtVLYqIY77PZzV
-	FGlhxTUbLcF030CksmefajO1Q/MZBIunJ8lPM4u+7+7FCa0x3ltBHZL18LuQNhHKNXvxv1
-	H/Wbz0a2aSDpZ84We3ofZd3utxZHB5c=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=fI6qG+T3
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746180805; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=7cFtfQfdck01Jsgj3vY7kYq6yK/EBai3ry3aTC3KAjQ=;
-	b=fI6qG+T3MRXeYL00ZroNPD3GM+Lwn4Y8yp1pqqdmq9N5RTM/qbeJdygsPtVLYqIY77PZzV
-	FGlhxTUbLcF030CksmefajO1Q/MZBIunJ8lPM4u+7+7FCa0x3ltBHZL18LuQNhHKNXvxv1
-	H/Wbz0a2aSDpZ84We3ofZd3utxZHB5c=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=FNoz6tRyg3xbTY50ONWx6bXruQQy98HNaRa9a2+ivBE=;
+	b=VvoggCUkXIR9IjuWpCG1U4pLcp8ZTfSz03ctImPe+zIeZKA7RBnzfTCETY3c5autujtZfZ
+	KG61jmHcgG2WL+80yyDMnvI5fRzuPm9ePWBHDFAktfnHdPic1C6Mx6no8xwcBw9D3HlgLr
+	hs5EDwKDoeqHhzco0LXXrGHezJI26CM=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-449-AycIMfrEPkWoi_gFOLjNtg-1; Fri,
+ 02 May 2025 07:12:25 -0400
+X-MC-Unique: AycIMfrEPkWoi_gFOLjNtg-1
+X-Mimecast-MFC-AGG-ID: AycIMfrEPkWoi_gFOLjNtg_1746184345
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 1B9381372E;
-	Fri,  2 May 2025 10:13:25 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id Co8vBcWaFGhdZQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 02 May 2025 10:13:25 +0000
-Message-ID: <e80e7e7df2ebd92da296847dacd31eba27d9448e.camel@suse.com>
-Subject: Re: [PATCH 1/2] multipath-tools: hwtable: change AStor/NeoSapphire
- to work also with ALUA
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Fri, 02 May 2025 12:13:24 +0200
-In-Reply-To: <20250430134528.82361-2-xose.vazquez@gmail.com>
-References: <20250430134528.82361-1-xose.vazquez@gmail.com>
-	 <20250430134528.82361-2-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1A6EB1800368
+	for <dm-devel@lists.linux.dev>; Fri,  2 May 2025 11:12:25 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 36F0218001D5;
+	Fri,  2 May 2025 11:12:22 +0000 (UTC)
+Date: Fri, 2 May 2025 13:12:16 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
+    Kevin Wolf <kwolf@redhat.com>, Hanna Czenczek <hreitz@redhat.com>
+Subject: Re: [PATCH] dm-mpath: Don't probe paths that are getting
+ initialized
+In-Reply-To: <20250501050624.2475903-1-bmarzins@redhat.com>
+Message-ID: <2b27b24b-9044-0c96-b9d1-257901b54bb1@redhat.com>
+References: <20250501050624.2475903-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Queue-Id: 47EBD1F387
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	TO_DN_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_TRACE(0.00)[suse.com:+];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
-	TAGGED_RCPT(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Score: -3.01
-X-Spam-Flag: NO
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 3eZKftt_sRSj13bFFOTHQwRPmTmXTPENtVzOXr29Dl8_1746184345
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Wed, 2025-04-30 at 15:45 +0200, Xose Vazquez Perez wrote:
-> Some devices supoorts also ALUA
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+On Thu, 1 May 2025, Benjamin Marzinski wrote:
+
+> __switch_pg() sets m->current_pg before initializing the pathgroup. If
+> probe_active_paths() is called and pathgroup has not been fully
+> initialized, IO to the paths may fail, even though they will be usable
+> when the pathgroup has finished initializing. Instead, skip sending IO
+> in this situation and just return the number of usable paths. The next
+> request will wait for the pathgroup to be fully initialized.
+
+Thanks.
+
+I folded this change into the existing patch.
+
+Mikulas
+
+
+> Fixes: d5d16fabe431 ("dm mpath: Interface for explicit probing of active paths")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  drivers/md/dm-mpath.c | 15 ++++++++++++---
+>  1 file changed, 12 insertions(+), 3 deletions(-)
+> 
+> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> index af17a35c6457..53861ad5dd1d 100644
+> --- a/drivers/md/dm-mpath.c
+> +++ b/drivers/md/dm-mpath.c
+> @@ -2068,19 +2068,28 @@ static int probe_path(struct pgpath *pgpath)
+>   *
+>   * Return -ENOTCONN if no valid path is left (even outside of current_pg). We
+>   * cannot probe paths in other pgs without switching current_pg, so if valid
+> - * paths are only in different pgs, they may or may not work. Userspace can
+> - * submit a request and we'll switch. If the request fails, it may need to
+> + * paths are only in different pgs, they may or may not work. Additionally
+> + * we should not probe paths in a pathgroup that is in the process of
+> + * Initializing. Userspace can submit a request and we'll switch and wait
+> + * for the pathgroup to be initialized. If the request fails, it may need to
+>   * probe again.
+>   */
+>  static int probe_active_paths(struct multipath *m)
+>  {
+>  	struct pgpath *pgpath;
+>  	struct priority_group *pg;
+> +	unsigned long flags;
+>  	int r = 0;
+>  
+>  	mutex_lock(&m->work_mutex);
+>  
+> -	pg = READ_ONCE(m->current_pg);
+> +	spin_lock_irqsave(&m->lock, flags);
+> +	if (test_bit(MPATHF_QUEUE_IO, &m->flags))
+> +		pg = NULL;
+> +	else
+> +		pg = m->current_pg;
+> +	spin_unlock_irqrestore(&m->lock, flags);
+> +
+>  	if (pg) {
+>  		list_for_each_entry(pgpath, &pg->pgpaths, list) {
+>  			if (!pgpath->is_active)
+> -- 
+> 2.48.1
+> 
+
