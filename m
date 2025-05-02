@@ -1,82 +1,111 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BC8B201033;
-	Fri,  2 May 2025 09:20:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E522D14B965
+	for <dm-devel@lists.linux.dev>; Fri,  2 May 2025 10:13:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746177657; cv=none; b=dAust/ggCXg3MWN9lGqRN6Z5ZsvrwJ17Ldr/ZQJ4xztn96LrLWuynXlkD9/zC2aF4RyC12qsNNQFbY5G7qApQma+5jcgrrFw36HSDYZqH6LWVrWxlRdmgqbtm/IVSdmLdqxTPuVB8VcYnfIxgkasBQxKzx5j2/Q9R6CjmX3h+i4=
+	t=1746180798; cv=none; b=ZcuzwudMrsyRV2wUOfcsvcMDplb27qg1C4Z9WnNYnLZ6DfPP2jO1QHHNC4AP7vKqHEltdYK0SJt259rzOfxHm7XQwoCn2xR/DYISn28uV28BXLI2zjYWerPkt7mdDKHhwTiubUMnCnKWLIdkocFrAIWPVDbIH0KElvWB9ZSKTwI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746177657; c=relaxed/simple;
-	bh=h1UF7RGtB1Pbog0NUMV8tDJBLwjc+mTRVhKiphrplxs=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=d251SIS0NgVnp6q6ZKa+6rcR4vlEG0M8yFIUwS39sSGXaW4dCGf2nH8AEzp5bEd7ElOYTcxRwOqcjNTIGRKry8oIxkPdeBsx8o31WwmtFzd4/hIol4BFDj5WNng2mc1TdDXy/PfroCq6Fm6m8zMatZdjbi0t8mKtLtdSMaM781M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=kernel.org; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=kernel.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-43cfecdd8b2so10345165e9.2;
-        Fri, 02 May 2025 02:20:55 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746177654; x=1746782454;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=h1UF7RGtB1Pbog0NUMV8tDJBLwjc+mTRVhKiphrplxs=;
-        b=vH/cIiSYCosnf/P33dtGzCAsGURXC+WzRt5iZALG0TacGLQoBw9UYxxjzXaHyrUB3c
-         BY4/TNL/VfG0rjrIV2YT2CkknoqhQm5pDw4Nru9OhoXIYI27v4SMlTKo/feYt/sViGDr
-         MTOlG6WqdjH0XfgnSCiUmV67o9Qu+aY0y7FgpBE1LWekeYGF47ynetL7bIMlaD+p0QbB
-         HxVo3lxi1DwtLjyKTndTTqvWQa2E2Z61rl8m0yPdWN8xu6lmDJFrJBPxgjBHmIjA/FgB
-         OfYtZVlkc5TrJexBFMDRwuKuc0ZVewwbj+9lBq2F8NDOL/mEWumQbXvZKzUc0Se3h07i
-         5btQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUFbHnODw2uWSLhC87MwoduwQPjHk7EXcsUYqRREUFmNgSKv1ttTdtTFvU3XQQW3rM+voeI7jcBQQ==@lists.linux.dev, AJvYcCVF5kL8J7xQGEFfR/ZjmAVuiU6NWDi1NWCN91wVW/iKwGiZwcs0XVada62uVAU6mGHXwhqJbQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwcdhZ4uu6m84VyFaan+G9OOVVLZggidGGVqel1NxyV9DpEf+Mp
-	nskn2MzCNTIRXYi+qptZfflQwdXyqRVkHOOhv0+EtjEPWekui6yj
-X-Gm-Gg: ASbGncuBgiFTSqz3hgdS/k8LbZClCEPydQ2ZShvH6/t2AXSxsIDOt49DE3J9CPiSBdE
-	IY4U1ixrTLviA0VUrJHVJ9Y4EMZPVgcgCnKIohVptIwjTwp9B4S7tZiEFfrwhCKL8deKA6mAFr0
-	KovUmIOBXPT5lZglXA7VJtqHtJkwAhSgY94Nlqb2/ajNsYuVhXfIaocwGqB1vqpd3sLBFy84U5p
-	lLEgIWSH5JwlY2EGw+cJAeJCFd/AKgBRADVhxwZE0zddihP819lYRD8UqthH0whQBKXENPRFJ1o
-	DplDAd7irmjvQqEOS4PJyYe4Ocx9n28VP1SkuqlVRDnPambf1EBUmV7APg==
-X-Google-Smtp-Source: AGHT+IFgGSam1M2eyL/4Vk4mDkIaVvxS1jdjCI6lel5HYbzONYXZiJZ8VWNJWL/XzxR8+LguUZV9dA==
-X-Received: by 2002:a05:600c:3b20:b0:43c:fb95:c76f with SMTP id 5b1f17b1804b1-441bbeb0efbmr17223385e9.9.1746177654117;
-        Fri, 02 May 2025 02:20:54 -0700 (PDT)
-Received: from fedora (p54ad9a78.dip0.t-ipconnect.de. [84.173.154.120])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a099ae0b9fsm1571335f8f.4.2025.05.02.02.20.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 02 May 2025 02:20:53 -0700 (PDT)
-Date: Fri, 2 May 2025 11:20:51 +0200
-From: Johannes Thumshirn <jth@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
-	Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>,
-	Kent Overstreet <kent.overstreet@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Carlos Maiolino <cem@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Naohiro Aota <naohiro.aota@wdc.com>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Pavel Machek <pavel@kernel.org>, slava@dubeyko.com,
-	glaubitz@physik.fu-berlin.de, frank.li@vivo.com,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-pm@vger.kernel.org
-Subject: Re: [PATCH 04/19] block: add a bio_add_vmalloc helpers
-Message-ID: <aBSOc4-xWw9JLUgB@fedora>
-References: <20250430212159.2865803-1-hch@lst.de>
- <20250430212159.2865803-5-hch@lst.de>
+	s=arc-20240116; t=1746180798; c=relaxed/simple;
+	bh=+WqgyI6vnuSlG5f2e9QfRE3ylPcnIhMeHn5G/pNGDLA=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=FfHLOiESMBp725NDh7YU0MPIHscShxcLnzuedYnWwnu9+qv63Wv7OzyIasdGcxzGjXnWtNwRRrgh9ZNsHBa89R7fhLXKWT/sfXcfk4KLOOYHBJVmSUBztH8077ijPuGSe3mO1on+aCehK3S6CQqO2JfGBHiUg8+COnsiD5+RWOg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=WToHwOrH; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Sjgxu7C9; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="WToHwOrH";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Sjgxu7C9"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id DF81C21228;
+	Fri,  2 May 2025 10:13:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1746180795; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+WqgyI6vnuSlG5f2e9QfRE3ylPcnIhMeHn5G/pNGDLA=;
+	b=WToHwOrHu3Omq8+WuKtJbUL40xfVKpDA96JqMo75BonE4rQix++/o5g6VabW3TkqKB2V3V
+	ntBuFK8WPozRNarkfi2gCWQfnoozPV3JZcQzycyzxNoKiJ+dw8KGjLKOfqyd+JPS+C68Cp
+	K7m6bvEkFsHNhLNLp4SbVpOyR/ONi+U=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1746180794; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+WqgyI6vnuSlG5f2e9QfRE3ylPcnIhMeHn5G/pNGDLA=;
+	b=Sjgxu7C9Ka4WUDXMUMbngUM+dYD5MH00p4wT/Wusr557RwU0eolhXueDgN0Jj1f4/Uf8lL
+	2ZL2OnMohMiqCYo0WVzhp5vBj7MTMsL+qO1V5DRkppuLMIMEOzgaWC41fFBoX3T5BLU/ql
+	8xIDnJz8XJcKp2DxWwg7Jo6gJ7PQ6lI=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id B38E61372E;
+	Fri,  2 May 2025 10:13:14 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id mMxPKrqaFGhQZQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 02 May 2025 10:13:14 +0000
+Message-ID: <b0961d94d47d9d4cb61abd6ff03e05af0134222b.camel@suse.com>
+Subject: Re: [PATCH 1/2] multipath-tools: hwtable: remove .pgfailback from
+ QUANTUM/F1
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
+Date: Fri, 02 May 2025 12:13:14 +0200
+In-Reply-To: <20250430134528.82361-1-xose.vazquez@gmail.com>
+References: <20250430134528.82361-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250430212159.2865803-5-hch@lst.de>
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FREEMAIL_TO(0.00)[gmail.com];
+	ARC_NA(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	TO_DN_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email,suse.com:mid]
+X-Spam-Score: -2.80
+X-Spam-Flag: NO
 
-Looks good,
-Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+On Wed, 2025-04-30 at 15:45 +0200, Xose Vazquez Perez wrote:
+> Useless without a prio
+>=20
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
