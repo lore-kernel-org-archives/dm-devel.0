@@ -1,43 +1,46 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5601F2F22EC;
-	Mon,  5 May 2025 22:23:47 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0D5728DF51;
+	Mon,  5 May 2025 22:28:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746483828; cv=none; b=glKppbLGlqVF6U3T+tv1TbmSG09IH01dypkSBXKgSO6P8AbYKEWrqMj+dDh6L+NzQoo+LgOJXsBXqy0kmaDzWHnCfFRynpWfKJ+W+mDSXlwcM3iRczQ5xCUp/CHDznjza4btK5oNqGlAATvtXWIelF9FR2LPLeAWaiCrCdhxb8s=
+	t=1746484083; cv=none; b=gE5u/GFczPSgwGxBlhiYGPEqKrOlNmYG/9tejr6UMOVojcmiP7IfZmortSb/f/5T/gQSXIw+uC/XWjiDiQjcJHwIl7yYjEkc9HLHgzJ5r2LQG5X+s7hErA/W5I+P05k9KlzArek7zQjVyTUxQvi5W6UBh3kprDH3n1z6RKDn6LY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746483828; c=relaxed/simple;
-	bh=0Nr/ta38SD6jkNugVDox21O7/YbltIMs3uhhJ8OOVTM=;
+	s=arc-20240116; t=1746484083; c=relaxed/simple;
+	bh=GgUyOlh6QndMosRmQQVAr1qNSR4+JCwAbOLiljwPkCw=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=e9UEjNwIJ548AE1ao9cWjuNO5QdGBKBUVYr+9x7tVejy/MiMlepVSxghaVM+v/OzkCjjZT8rGXMi8PWv90dPdVymjItvcgH+0Cqar0cSQClQ/r7SqzmIkpFqlbDFWuNTKk7DFwz6y+s1WW044JTl82H634wbokhHw4VghHX0hgY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BuGS1IYc; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=l5U+i/tXbUsEKAK9gNtfSa078afHUT80ixw2i8YrVu/+g5ZiEikNTH38lqNIeE8fhuBaQjh5vgngla5BnWbsBh69wdv1ogy7xn52xiX+h0e/U7imYMw0vdyIswlDX6zo3IGWQMHchTJo4Pr4kKsUFFHOBQYaQWeH0wkFeDC5GIk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DA8sGu+l; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BuGS1IYc"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F335CC4CEE4;
-	Mon,  5 May 2025 22:23:46 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DA8sGu+l"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5A73EC4CEEE;
+	Mon,  5 May 2025 22:28:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746483827;
-	bh=0Nr/ta38SD6jkNugVDox21O7/YbltIMs3uhhJ8OOVTM=;
+	s=k20201202; t=1746484083;
+	bh=GgUyOlh6QndMosRmQQVAr1qNSR4+JCwAbOLiljwPkCw=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=BuGS1IYcWZzMcfiImAIVXxXSPUixxFkFTRCcguOCf2N5pWLVrN0XI39O0j2v1CUUN
-	 g7aJCwCiGNXO6lEpO/+NRRxQ8pY5m0s1qlnjDMeBmTHHa2Jx2ywcbduvpJCLFmt9ux
-	 r/MdMhi41TKXmd3K9/H6HGa1yNOwnPXSlHx78EEBt4/XFSH7u1q9FkDXDUG4wEFphD
-	 xyHz2/4e1LgSWKiFTCVGrs8Ej3YRMO63LNl+6Qgen3Nk2LiOKUbuZA+T/n2Ad3mBiF
-	 IcumlX3kUOJ35cTqt/vU2d6No6O5BKam8tlTOUzIowLWIdsoL1E4dYNHqcUEF+ZKp2
-	 AuP95vJ6yZqig==
+	b=DA8sGu+lx1R8B108iSkgcj3P7KC6t+VM9v0Kl9FhJuAJvjmU2Aw4TFj6yuhkj4I/U
+	 q2zyKh04vN2bvsboshuz8vMhOlrzBjTjeI4gQnTwgsbByC5r40LEWxpqS721NdAqB5
+	 UI1+ClnI6atkzycy1OrCbdOTWNuefygkBefDvcU/n+qkh6K+heOZNiO5KrD1xUkn0c
+	 zJDjxhb4Elt6a7J9c8PW/ELOA1sQ+g+EfhAwGvnEAOBR1sF6krk+v3hLZTuj6zwK6B
+	 1eqkrWG4NWxpJhl2QVEWBCHSIoywCDNjUn7P+0lDN0V0khkxqYpKuSKSFnvWu0iHyH
+	 8or1F9kUgSHRQ==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
-Cc: Ming-Hung Tsai <mtsai@redhat.com>,
+Cc: Jinliang Zheng <alexjlzheng@gmail.com>,
+	Jinliang Zheng <alexjlzheng@tencent.com>,
+	Tianxiang Peng <txpeng@tencent.com>,
+	Hao Peng <flyingpeng@tencent.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
 	agk@redhat.com,
 	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.14 238/642] dm cache: prevent BUG_ON by blocking retries on failed device resumes
-Date: Mon,  5 May 2025 18:07:34 -0400
-Message-Id: <20250505221419.2672473-238-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.14 341/642] dm: fix unconditional IO throttle caused by REQ_PREFLUSH
+Date: Mon,  5 May 2025 18:09:17 -0400
+Message-Id: <20250505221419.2672473-341-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
 In-Reply-To: <20250505221419.2672473-1-sashal@kernel.org>
 References: <20250505221419.2672473-1-sashal@kernel.org>
@@ -52,119 +55,80 @@ X-Patchwork-Hint: Ignore
 X-stable-base: Linux 6.14.5
 Content-Transfer-Encoding: 8bit
 
-From: Ming-Hung Tsai <mtsai@redhat.com>
+From: Jinliang Zheng <alexjlzheng@gmail.com>
 
-[ Upstream commit 5da692e2262b8f81993baa9592f57d12c2703dea ]
+[ Upstream commit 88f7f56d16f568f19e1a695af34a7f4a6ce537a6 ]
 
-A cache device failing to resume due to mapping errors should not be
-retried, as the failure leaves a partially initialized policy object.
-Repeating the resume operation risks triggering BUG_ON when reloading
-cache mappings into the incomplete policy object.
+When a bio with REQ_PREFLUSH is submitted to dm, __send_empty_flush()
+generates a flush_bio with REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC,
+which causes the flush_bio to be throttled by wbt_wait().
 
-Reproduce steps:
+An example from v5.4, similar problem also exists in upstream:
 
-1. create a cache metadata consisting of 512 or more cache blocks,
-   with some mappings stored in the first array block of the mapping
-   array. Here we use cache_restore v1.0 to build the metadata.
+    crash> bt 2091206
+    PID: 2091206  TASK: ffff2050df92a300  CPU: 109  COMMAND: "kworker/u260:0"
+     #0 [ffff800084a2f7f0] __switch_to at ffff80004008aeb8
+     #1 [ffff800084a2f820] __schedule at ffff800040bfa0c4
+     #2 [ffff800084a2f880] schedule at ffff800040bfa4b4
+     #3 [ffff800084a2f8a0] io_schedule at ffff800040bfa9c4
+     #4 [ffff800084a2f8c0] rq_qos_wait at ffff8000405925bc
+     #5 [ffff800084a2f940] wbt_wait at ffff8000405bb3a0
+     #6 [ffff800084a2f9a0] __rq_qos_throttle at ffff800040592254
+     #7 [ffff800084a2f9c0] blk_mq_make_request at ffff80004057cf38
+     #8 [ffff800084a2fa60] generic_make_request at ffff800040570138
+     #9 [ffff800084a2fae0] submit_bio at ffff8000405703b4
+    #10 [ffff800084a2fb50] xlog_write_iclog at ffff800001280834 [xfs]
+    #11 [ffff800084a2fbb0] xlog_sync at ffff800001280c3c [xfs]
+    #12 [ffff800084a2fbf0] xlog_state_release_iclog at ffff800001280df4 [xfs]
+    #13 [ffff800084a2fc10] xlog_write at ffff80000128203c [xfs]
+    #14 [ffff800084a2fcd0] xlog_cil_push at ffff8000012846dc [xfs]
+    #15 [ffff800084a2fda0] xlog_cil_push_work at ffff800001284a2c [xfs]
+    #16 [ffff800084a2fdb0] process_one_work at ffff800040111d08
+    #17 [ffff800084a2fe00] worker_thread at ffff8000401121cc
+    #18 [ffff800084a2fe70] kthread at ffff800040118de4
 
-cat <<EOF >> cmeta.xml
-<superblock uuid="" block_size="128" nr_cache_blocks="512" \
-policy="smq" hint_width="4">
-  <mappings>
-    <mapping cache_block="0" origin_block="0" dirty="false"/>
-  </mappings>
-</superblock>
-EOF
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-cache_restore -i cmeta.xml -o /dev/mapper/cmeta --metadata-version=2
-dmsetup remove cmeta
+After commit 2def2845cc33 ("xfs: don't allow log IO to be throttled"),
+the metadata submitted by xlog_write_iclog() should not be throttled.
+But due to the existence of the dm layer, throttling flush_bio indirectly
+causes the metadata bio to be throttled.
 
-2. wipe the second array block of the mapping array to simulate
-   data degradations.
+Fix this by conditionally adding REQ_IDLE to flush_bio.bi_opf, which makes
+wbt_should_throttle() return false to avoid wbt_wait().
 
-mapping_root=$(dd if=/dev/sdc bs=1c count=8 skip=192 \
-2>/dev/null | hexdump -e '1/8 "%u\n"')
-ablock=$(dd if=/dev/sdc bs=1c count=8 skip=$((4096*mapping_root+2056)) \
-2>/dev/null | hexdump -e '1/8 "%u\n"')
-dd if=/dev/zero of=/dev/sdc bs=4k count=1 seek=$ablock
-
-3. try bringing up the cache device. The resume is expected to fail
-   due to the broken array block.
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 65536 linear /dev/sdc 8192"
-dmsetup create corig --table "0 524288 linear /dev/sdc 262144"
-dmsetup create cache --notable
-dmsetup load cache --table "0 524288 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writethrough smq 0"
-dmsetup resume cache
-
-4. try resuming the cache again. An unexpected BUG_ON is triggered
-   while loading cache mappings.
-
-dmsetup resume cache
-
-Kernel logs:
-
-(snip)
-------------[ cut here ]------------
-kernel BUG at drivers/md/dm-cache-policy-smq.c:752!
-Oops: invalid opcode: 0000 [#1] PREEMPT SMP KASAN NOPTI
-CPU: 0 UID: 0 PID: 332 Comm: dmsetup Not tainted 6.13.4 #3
-RIP: 0010:smq_load_mapping+0x3e5/0x570
-
-Fix by disallowing resume operations for devices that failed the
-initial attempt.
-
-Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>
+Signed-off-by: Jinliang Zheng <alexjlzheng@tencent.com>
+Reviewed-by: Tianxiang Peng <txpeng@tencent.com>
+Reviewed-by: Hao Peng <flyingpeng@tencent.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm-cache-target.c | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ drivers/md/dm.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 9cb797a561d6e..6cee5eac8b9e2 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2899,6 +2899,27 @@ static dm_cblock_t get_cache_dev_size(struct cache *cache)
- 	return to_cblock(size);
- }
- 
-+static bool can_resume(struct cache *cache)
-+{
-+	/*
-+	 * Disallow retrying the resume operation for devices that failed the
-+	 * first resume attempt, as the failure leaves the policy object partially
-+	 * initialized. Retrying could trigger BUG_ON when loading cache mappings
-+	 * into the incomplete policy object.
-+	 */
-+	if (cache->sized && !cache->loaded_mappings) {
-+		if (get_cache_mode(cache) != CM_WRITE)
-+			DMERR("%s: unable to resume a failed-loaded cache, please check metadata.",
-+			      cache_device_name(cache));
-+		else
-+			DMERR("%s: unable to resume cache due to missing proper cache table reload",
-+			      cache_device_name(cache));
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
- static bool can_resize(struct cache *cache, dm_cblock_t new_size)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 4d1e42891d246..5ab7574c0c76a 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1540,14 +1540,18 @@ static void __send_empty_flush(struct clone_info *ci)
  {
- 	if (from_cblock(new_size) > from_cblock(cache->cache_size)) {
-@@ -2947,6 +2968,9 @@ static int cache_preresume(struct dm_target *ti)
- 	struct cache *cache = ti->private;
- 	dm_cblock_t csize = get_cache_dev_size(cache);
- 
-+	if (!can_resume(cache))
-+		return -EINVAL;
+ 	struct dm_table *t = ci->map;
+ 	struct bio flush_bio;
++	blk_opf_t opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
 +
++	if ((ci->io->orig_bio->bi_opf & (REQ_IDLE | REQ_SYNC)) ==
++	    (REQ_IDLE | REQ_SYNC))
++		opf |= REQ_IDLE;
+ 
  	/*
- 	 * Check to see if the cache has resized.
+ 	 * Use an on-stack bio for this, it's safe since we don't
+ 	 * need to reference it after submit. It's just used as
+ 	 * the basis for the clone(s).
  	 */
+-	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0,
+-		 REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
++	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0, opf);
+ 
+ 	ci->bio = &flush_bio;
+ 	ci->sector_count = 0;
 -- 
 2.39.5
 
