@@ -1,46 +1,42 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F349376423;
-	Mon,  5 May 2025 22:48:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59D62278747;
+	Mon,  5 May 2025 22:55:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746485323; cv=none; b=FzHkMHdi1uTYIignvSG4X3+LyFBJ/Xl2qqNawkCTE528I3urDZw4Uea3sZSUVyTIp9pTZtSIQ+qSlUsZZ6PPUOpqkK0jmiIjBbJmNqZqbtbbQzjofj7H51ygEUvOzNGdnqiNYipZu3tc0evEbRy6nMFvrbPKoFW8QOA6qpqs6M4=
+	t=1746485739; cv=none; b=uCIOh68gDmwRAKoLFA0ZbCau4kFxIb8HyylWhkB9taCU051tvtJPgMy2dmUoODjtPyvv0lkduKHcVdrAPURHm04BkRglCEMrsibvePhE5Fly5OM7/FJR++H7701pfftcMwVEUCiBMKPIYZh0obEUyXBHvgmYE8zg6OhthRelFAY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746485323; c=relaxed/simple;
-	bh=yWFjMX1ZqvLqly+P9GlnkqG3a4TI4FX3wlkXs3YyfEQ=;
+	s=arc-20240116; t=1746485739; c=relaxed/simple;
+	bh=auIwF0BsRvnVi0C+zFWokWEcplIdWkcrNlydNQ+w1hI=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Yheks+VZyp5zrAH730EzBJScfZzWJVoACVGZoNkCAEJrjqZq/WacH60IVCIDuAtlaxEGcl7NDh1EC0dJMGyQT/0m5WOnRVFFgIms+pB32XKsy1x7evwhQjeIQcI1bK37C2epRQBDxXIc7F56FWk2MzFSXIqs+seu7D4gMCSNVgk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jlL/514e; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version:Content-Type; b=m+FEzs56/maVOC5zdYWHIiKkC/339d7DIXKWqWlm2dFOA24MzzXOx0t7vl+D5FPGHIMFq5V3HfCo5seENq+/JCkAzT+yYwwY6N/riHFJLe2lS6DWBHOQYC7GmI1YsVifNWbBCfDpvJsODfpHj3giq32M0BIfLh5zkTjnvDmfocI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=OqCES1vf; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jlL/514e"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0F1F1C4CEEE;
-	Mon,  5 May 2025 22:48:41 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="OqCES1vf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0191EC4CEEE;
+	Mon,  5 May 2025 22:55:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746485323;
-	bh=yWFjMX1ZqvLqly+P9GlnkqG3a4TI4FX3wlkXs3YyfEQ=;
+	s=k20201202; t=1746485738;
+	bh=auIwF0BsRvnVi0C+zFWokWEcplIdWkcrNlydNQ+w1hI=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=jlL/514eN6/t4Vg8hkrl9JMiLuD7zrGJ3I6i/1cfZ5/bGf2GVH49n0XHW/k6cW42D
-	 IgcyIwW+FC3nbSo3SuffbFR4pZjb8N5piKV8FXH5LWJvUf6gNxeYBv0iLnFzB+prAt
-	 l2wy7rxoz3Y+wMV7opAEDu/BSEohLd9o4zv8ILF6fLgLy4gR5sut6641cZyKIGJ1Iz
-	 zmKgNSgcYg1sg4/vZllHu3bw5kGl3aBVZrcldRFL/mdc57iJfyjLi9WvoS3P5Ru9NV
-	 r6pWZSEQTpkQCRs75TyH5wf46PeKlUFpKOjarK+zgpUeZkFZDGZefiCWpN90B0LwRO
-	 3INcIiXTXJOdg==
+	b=OqCES1vfYjdCVcVKg+9N1ifYL3IRrMMzjSm/D181Ml00LeY+ij5Hxq6fncFfr862E
+	 FQNEFP6mC26HVkbmwdfvcYRTUGOtXfIngG/icHrbomOMzHhL0AnXZMMFJonBwfG3Xz
+	 vbJ75/2sn3JU0CPbdMElA3+P/KgyGsm6V68T77aB/ROHsXsapkZaVCYyKNlp95q+VA
+	 xNMymKm1Ph1R6zgzeuRvqQlI3YiSL/W1EZNp/AuW+MaHaAQjE/Cqdg/cOHTSjumdou
+	 nIbm0s5nuT9OBqcjSguytbSsyvZTk0CXggU3+Wq/Igy78eZ+js0oqnIknpeYtkIps0
+	 0/mzbyWf/nlqw==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
-Cc: Jinliang Zheng <alexjlzheng@gmail.com>,
-	Jinliang Zheng <alexjlzheng@tencent.com>,
-	Tianxiang Peng <txpeng@tencent.com>,
-	Hao Peng <flyingpeng@tencent.com>,
+Cc: Matthew Sakai <msakai@redhat.com>,
+	John Garry <john.g.garry@oracle.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
-	agk@redhat.com,
-	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.12 267/486] dm: fix unconditional IO throttle caused by REQ_PREFLUSH
-Date: Mon,  5 May 2025 18:35:43 -0400
-Message-Id: <20250505223922.2682012-267-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.12 454/486] dm vdo: use a short static string for thread name prefix
+Date: Mon,  5 May 2025 18:38:50 -0400
+Message-Id: <20250505223922.2682012-454-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
 In-Reply-To: <20250505223922.2682012-1-sashal@kernel.org>
 References: <20250505223922.2682012-1-sashal@kernel.org>
@@ -50,85 +46,77 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 X-stable: review
 X-Patchwork-Hint: Ignore
 X-stable-base: Linux 6.12.26
 Content-Transfer-Encoding: 8bit
 
-From: Jinliang Zheng <alexjlzheng@gmail.com>
+From: Matthew Sakai <msakai@redhat.com>
 
-[ Upstream commit 88f7f56d16f568f19e1a695af34a7f4a6ce537a6 ]
+[ Upstream commit 3280c9313c9adce01550cc9f00edfb1dc7c744da ]
 
-When a bio with REQ_PREFLUSH is submitted to dm, __send_empty_flush()
-generates a flush_bio with REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC,
-which causes the flush_bio to be throttled by wbt_wait().
+Also remove MODULE_NAME and a BUG_ON check, both unneeded.
 
-An example from v5.4, similar problem also exists in upstream:
+This fixes a warning about string truncation in snprintf that
+will never happen in practice:
 
-    crash> bt 2091206
-    PID: 2091206  TASK: ffff2050df92a300  CPU: 109  COMMAND: "kworker/u260:0"
-     #0 [ffff800084a2f7f0] __switch_to at ffff80004008aeb8
-     #1 [ffff800084a2f820] __schedule at ffff800040bfa0c4
-     #2 [ffff800084a2f880] schedule at ffff800040bfa4b4
-     #3 [ffff800084a2f8a0] io_schedule at ffff800040bfa9c4
-     #4 [ffff800084a2f8c0] rq_qos_wait at ffff8000405925bc
-     #5 [ffff800084a2f940] wbt_wait at ffff8000405bb3a0
-     #6 [ffff800084a2f9a0] __rq_qos_throttle at ffff800040592254
-     #7 [ffff800084a2f9c0] blk_mq_make_request at ffff80004057cf38
-     #8 [ffff800084a2fa60] generic_make_request at ffff800040570138
-     #9 [ffff800084a2fae0] submit_bio at ffff8000405703b4
-    #10 [ffff800084a2fb50] xlog_write_iclog at ffff800001280834 [xfs]
-    #11 [ffff800084a2fbb0] xlog_sync at ffff800001280c3c [xfs]
-    #12 [ffff800084a2fbf0] xlog_state_release_iclog at ffff800001280df4 [xfs]
-    #13 [ffff800084a2fc10] xlog_write at ffff80000128203c [xfs]
-    #14 [ffff800084a2fcd0] xlog_cil_push at ffff8000012846dc [xfs]
-    #15 [ffff800084a2fda0] xlog_cil_push_work at ffff800001284a2c [xfs]
-    #16 [ffff800084a2fdb0] process_one_work at ffff800040111d08
-    #17 [ffff800084a2fe00] worker_thread at ffff8000401121cc
-    #18 [ffff800084a2fe70] kthread at ffff800040118de4
+drivers/md/dm-vdo/vdo.c: In function ‘vdo_make’:
+drivers/md/dm-vdo/vdo.c:564:5: error: ‘%s’ directive output may be truncated writing up to 55 bytes into a region of size 16 [-Werror=format-truncation=]
+    "%s%u", MODULE_NAME, instance);
+     ^~
+drivers/md/dm-vdo/vdo.c:563:2: note: ‘snprintf’ output between 2 and 66 bytes into a destination of size 16
+  snprintf(vdo->thread_name_prefix, sizeof(vdo->thread_name_prefix),
+  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    "%s%u", MODULE_NAME, instance);
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After commit 2def2845cc33 ("xfs: don't allow log IO to be throttled"),
-the metadata submitted by xlog_write_iclog() should not be throttled.
-But due to the existence of the dm layer, throttling flush_bio indirectly
-causes the metadata bio to be throttled.
-
-Fix this by conditionally adding REQ_IDLE to flush_bio.bi_opf, which makes
-wbt_should_throttle() return false to avoid wbt_wait().
-
-Signed-off-by: Jinliang Zheng <alexjlzheng@tencent.com>
-Reviewed-by: Tianxiang Peng <txpeng@tencent.com>
-Reviewed-by: Hao Peng <flyingpeng@tencent.com>
+Reported-by: John Garry <john.g.garry@oracle.com>
+Reviewed-by: John Garry <john.g.garry@oracle.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ drivers/md/dm-vdo/vdo.c | 11 +----------
+ 1 file changed, 1 insertion(+), 10 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 19230404d8c2b..d29125ee9e72a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1541,14 +1541,18 @@ static void __send_empty_flush(struct clone_info *ci)
- {
- 	struct dm_table *t = ci->map;
- 	struct bio flush_bio;
-+	blk_opf_t opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
-+
-+	if ((ci->io->orig_bio->bi_opf & (REQ_IDLE | REQ_SYNC)) ==
-+	    (REQ_IDLE | REQ_SYNC))
-+		opf |= REQ_IDLE;
+diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
+index fff847767755a..b897f88250d2a 100644
+--- a/drivers/md/dm-vdo/vdo.c
++++ b/drivers/md/dm-vdo/vdo.c
+@@ -31,9 +31,7 @@
  
- 	/*
- 	 * Use an on-stack bio for this, it's safe since we don't
- 	 * need to reference it after submit. It's just used as
- 	 * the basis for the clone(s).
- 	 */
--	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0,
--		 REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
-+	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0, opf);
+ #include <linux/completion.h>
+ #include <linux/device-mapper.h>
+-#include <linux/kernel.h>
+ #include <linux/lz4.h>
+-#include <linux/module.h>
+ #include <linux/mutex.h>
+ #include <linux/spinlock.h>
+ #include <linux/types.h>
+@@ -142,12 +140,6 @@ static void finish_vdo_request_queue(void *ptr)
+ 	vdo_unregister_allocating_thread();
+ }
  
- 	ci->bio = &flush_bio;
- 	ci->sector_count = 0;
+-#ifdef MODULE
+-#define MODULE_NAME THIS_MODULE->name
+-#else
+-#define MODULE_NAME "dm-vdo"
+-#endif  /* MODULE */
+-
+ static const struct vdo_work_queue_type default_queue_type = {
+ 	.start = start_vdo_request_queue,
+ 	.finish = finish_vdo_request_queue,
+@@ -559,8 +551,7 @@ int vdo_make(unsigned int instance, struct device_config *config, char **reason,
+ 	*vdo_ptr = vdo;
+ 
+ 	snprintf(vdo->thread_name_prefix, sizeof(vdo->thread_name_prefix),
+-		 "%s%u", MODULE_NAME, instance);
+-	BUG_ON(vdo->thread_name_prefix[0] == '\0');
++		 "vdo%u", instance);
+ 	result = vdo_allocate(vdo->thread_config.thread_count,
+ 			      struct vdo_thread, __func__, &vdo->threads);
+ 	if (result != VDO_SUCCESS) {
 -- 
 2.39.5
 
