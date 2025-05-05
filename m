@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A49FB2EDB28;
-	Mon,  5 May 2025 23:09:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FF122F7C47;
+	Mon,  5 May 2025 23:19:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746486555; cv=none; b=Z/IWLKtbOerls+aJg1SVOil94M+4tsSqzaSw33LdpXhZgLXgdXIGOPbNLEUXrZfiNKwG62fV73ojxBAB9TGUqq3i4V88mo5AnQrHSwty8cDfLr9Gyqjkig+VoWtfKtsW9l/0B77zyMYq5r4b9Y80oHoBnCi2GGWEin6lgw1+Xpc=
+	t=1746487179; cv=none; b=ibXcsn9rXkd/011SGUWOSKWP1gdtKw5cvsCSTdnZp5LEmzTnkgxdqAU4RNyH6juq7JGSf5b+NaU4RhYznLtKrNcFoJ0iU7XRKIg9eEbyhfMI9Bc25/bbF68QrFyiYRQx0XMO5fQnliLlBaxwJP/31BF6N1s3gYberJK1Cu87DYY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746486555; c=relaxed/simple;
-	bh=Wv0PuBRqn/JHUW9ehWz1ZK9rxfmTdcrlgN08tUOQC+o=;
+	s=arc-20240116; t=1746487179; c=relaxed/simple;
+	bh=zP48NaC8zatt6+VthKy0qBWGgDnt0MNITV1jAUaOFqc=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=IBjJ6OJsJCPNZR0QF1q1dOb0ASzz1rraVaFMrIoCWogYnLnz+GlCMB9MmsYGfFqJbGMqCnS2wiwPybxfEiiWmoTiPovqcvBOgmUVNprDIU/rPUTUBL9eB58z6f8jqMw26S7CTUaiJLh7w/pGv7waewgVac3v3bKUIHctDrgWkvo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=V79kUgy6; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=cv4m8LymUZ6fnv1k41HaMNKb4R07mUpJF4U2v7E55yhoLDTpX0M+fbB08iE8qzQAg/ZV9wkKeeLkkGbfC78grMl9+JfL8ABmMyJqjZsIDrg/BhVF5LzNpSMaOXGeBBhk8WXjfKPiFSd2xzyhy6MWdWgJJmdws+uHZ7LnSTXeI1s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Je3dp90z; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="V79kUgy6"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 99D58C4CEED;
-	Mon,  5 May 2025 23:09:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Je3dp90z"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8D516C4CEED;
+	Mon,  5 May 2025 23:19:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746486554;
-	bh=Wv0PuBRqn/JHUW9ehWz1ZK9rxfmTdcrlgN08tUOQC+o=;
+	s=k20201202; t=1746487179;
+	bh=zP48NaC8zatt6+VthKy0qBWGgDnt0MNITV1jAUaOFqc=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=V79kUgy6xhxaAfSulnW7lG2yOfYVmYg9TrPPrQ4KVhpQMyiYs24NNme9NTvAy0bOA
-	 nbbQfNc0P8yIdEgqrMrBMV3khiILPkYE6gFCiROIvHX6OsiI4gPyvz9YSxh/ML5eAt
-	 Cfo1pIvagTigUs7l0xknp8jubLDC1bJxltb1g5MD/rPEEp0LWMgyVSw/zRW2458lLc
-	 YMSR1NHor/MxL3KIlSQA4+4yCtvs6lbox97lbmxZ2LC4nfrZHy4yrVcd2QDXPqzgkB
-	 dhpfBujPaiTIXkUzj7KIBTrvblaEAsZ2RLlCix5K274brtKsjo7z6k86pRJa9H4pXG
-	 Xe28G9+T+nxHg==
+	b=Je3dp90ztYnhKNhQjanXPB3JRjuxyeB4D0yzPeEgmYAr7Iha9hC2JUPsY4c4u8lp6
+	 ShKkctPvtNVS17CY3icUxQ05eiz7N1QMhTTQ0hIRC6603eHnb8SWEZ35zjXyTSpYXi
+	 BZ85Eniz6+dEpnEimOvo4uUudHlRe+7Pcv59Lm7kNFZsSQHMqyfHuHHh431mrciBOh
+	 M7t4nUzqHJO7RMi3vMQTTOHkob4XAHMNY2wJceednoQhyT7etKvKqfIUnIilSJwxQX
+	 CUhdXqJdNySa2PJNWJPxFBqzo6+THaIGnN/9Pa6cve2UoOlR3HUQOTfedKez2ns4AX
+	 lmerXs1YiRp+g==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
@@ -35,12 +35,12 @@ Cc: Ming-Hung Tsai <mtsai@redhat.com>,
 	agk@redhat.com,
 	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.1 088/212] dm cache: prevent BUG_ON by blocking retries on failed device resumes
-Date: Mon,  5 May 2025 19:04:20 -0400
-Message-Id: <20250505230624.2692522-88-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 5.10 044/114] dm cache: prevent BUG_ON by blocking retries on failed device resumes
+Date: Mon,  5 May 2025 19:17:07 -0400
+Message-Id: <20250505231817.2697367-44-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
-In-Reply-To: <20250505230624.2692522-1-sashal@kernel.org>
-References: <20250505230624.2692522-1-sashal@kernel.org>
+In-Reply-To: <20250505231817.2697367-1-sashal@kernel.org>
+References: <20250505231817.2697367-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -49,7 +49,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
-X-stable-base: Linux 6.1.136
+X-stable-base: Linux 5.10.237
 Content-Transfer-Encoding: 8bit
 
 From: Ming-Hung Tsai <mtsai@redhat.com>
@@ -124,10 +124,10 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 24 insertions(+)
 
 diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index e714114d495a9..66608b42ee1ad 100644
+index 8a03357f8c936..fc6ad47c08b58 100644
 --- a/drivers/md/dm-cache-target.c
 +++ b/drivers/md/dm-cache-target.c
-@@ -2875,6 +2875,27 @@ static dm_cblock_t get_cache_dev_size(struct cache *cache)
+@@ -2958,6 +2958,27 @@ static dm_cblock_t get_cache_dev_size(struct cache *cache)
  	return to_cblock(size);
  }
  
@@ -155,7 +155,7 @@ index e714114d495a9..66608b42ee1ad 100644
  static bool can_resize(struct cache *cache, dm_cblock_t new_size)
  {
  	if (from_cblock(new_size) > from_cblock(cache->cache_size)) {
-@@ -2923,6 +2944,9 @@ static int cache_preresume(struct dm_target *ti)
+@@ -3006,6 +3027,9 @@ static int cache_preresume(struct dm_target *ti)
  	struct cache *cache = ti->private;
  	dm_cblock_t csize = get_cache_dev_size(cache);
  
