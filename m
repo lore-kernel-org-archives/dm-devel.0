@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 628DC2036EC
-	for <dm-devel@lists.linux.dev>; Mon,  5 May 2025 11:56:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 670CE255F2D
+	for <dm-devel@lists.linux.dev>; Mon,  5 May 2025 13:22:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746446169; cv=none; b=YjD+wygfVU3UkOCb+13sx0shWBT7+JSyDUe/TbwYt3YO6Y7liErdZrhig/5mPMipZQKDeI56PHN0OiCm8NJLNL5HpsXkKPWllr+vQFFyYk1ty5rntXc4h9PLIjdpFfNw5rrcMGUDm1LXnbKhd62shDk/scMZvHIut0uXCpCq2qY=
+	t=1746451336; cv=none; b=uwsyWyDteJ1IHcd/oO+WMYloPq72cxzxLqnVrsmqjAM6fwGeXJYPIM57hPsJMAp/lC8vZ0+FaIKnBzlQsqvRZi3Ec+3CVO78Cxt9qylVdTSvybRd1U43SNsebMUhRZaucgyc309Yncq9nTM9l0CVX1pCnM88XWlPG2by+qCsH6w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746446169; c=relaxed/simple;
-	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
+	s=arc-20240116; t=1746451336; c=relaxed/simple;
+	bh=+O8XcPHr3zahII0nWAcKTPrXEdHRGL4hSFQbkqlKhMc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=hfiZEnws7uZOxX6SQHkejK/fLwMuNmBsgM3ZPWnPzHotk8BBiV063D7/IcGk5qQvbOm72ZS0puzOUqnKUWbt+2aNF3yJjwiz1qmAMDOuMM8BEuotn6MNsFBZgxaxgThYfTLhlAWHwvy8Vf2JWKm1Oi5vx68FdCaeeLmcbtH5Xyc=
+	 Content-Type:Content-Disposition:In-Reply-To; b=WUEEVa8fzFQfyoaoATsLCdOLIKnBY4RMx1zbUmk4Cajt6a2zZaGWoIlUBc2MHpeB4dGveoWLOHFtYQzm3K7YRfya5uWlTPKtYWD+o0/voeSSSZ1UX6bYnni6oL3LuV4KkWcCuh2sKX4I0P2Fr7D9g+kn4nLW39ol/BFbNQw7Q8I=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id CF24368BEB; Mon,  5 May 2025 13:56:04 +0200 (CEST)
-Date: Mon, 5 May 2025 13:56:04 +0200
+	id A7E7D68BFE; Mon,  5 May 2025 15:22:08 +0200 (CEST)
+Date: Mon, 5 May 2025 15:22:08 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Zhang Yi <yi.zhang@huaweicloud.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -28,10 +28,9 @@ Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
 	shinichiro.kawasaki@wdc.com, brauner@kernel.org,
 	yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: Re: [RFC PATCH v4 04/11] nvmet: set WZDS and DRB if device
- supports BLK_FEAT_WRITE_ZEROES_UNMAP
-Message-ID: <20250505115604.GD15314@lst.de>
-References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com> <20250421021509.2366003-5-yi.zhang@huaweicloud.com>
+Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
+Message-ID: <20250505132208.GA22182@lst.de>
+References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com> <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -40,10 +39,39 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250421021509.2366003-5-yi.zhang@huaweicloud.com>
+In-Reply-To: <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-Looks good:
+On Mon, Apr 21, 2025 at 10:15:05AM +0800, Zhang Yi wrote:
+> From: Zhang Yi <yi.zhang@huawei.com>
+> 
+> Add a new attribute flag to statx to determine whether a bdev or a file
+> supports the unmap write zeroes command.
+> 
+> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+> ---
+>  block/bdev.c              | 4 ++++
+>  fs/ext4/inode.c           | 9 ++++++---
+>  include/uapi/linux/stat.h | 1 +
+>  3 files changed, 11 insertions(+), 3 deletions(-)
+> 
+> diff --git a/block/bdev.c b/block/bdev.c
+> index 4844d1e27b6f..29b0e5feb138 100644
+> --- a/block/bdev.c
+> +++ b/block/bdev.c
+> @@ -1304,6 +1304,10 @@ void bdev_statx(struct path *path, struct kstat *stat,
+>  			queue_atomic_write_unit_max_bytes(bd_queue));
+>  	}
+>  
+> +	if (bdev_write_zeroes_unmap(bdev))
+> +		stat->attributes |= STATX_ATTR_WRITE_ZEROES_UNMAP;
+> +	stat->attributes_mask |= STATX_ATTR_WRITE_ZEROES_UNMAP;
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Hmm, shouldn't this always be set by stat?  But I might just be
+really confused what attributes_mask is, and might in fact have
+misapplied it in past patches of my own..
+
+Also shouldn't the patches to report the flag go into the bdev/ext4
+patches that actually implement the feature for the respective files
+to keep bisectability?
 
