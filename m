@@ -1,61 +1,63 @@
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
+Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com [209.85.221.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C2165189916
-	for <dm-devel@lists.linux.dev>; Mon,  5 May 2025 16:30:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98AFA25A347
+	for <dm-devel@lists.linux.dev>; Mon,  5 May 2025 16:30:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746462628; cv=none; b=k2vje3mJi0VC7jmNGdjFhxBa8xNGGQd+3JDZ4MNxwuZDgofZT8B9zHLHxMbjgCGvaJzrb+CXwECwp2y21TwI1nkBE51Js/RZkWjv1YDt3V0NfOR0W+xyUeeQDKNEMGvRQSfpZzMwWOdt1a/5LEZ58ePOkhEjdehnvc/98cKTwvU=
+	t=1746462628; cv=none; b=bOvcmYAE9jOJM0BRoJSugViBnm0PiGVV3m1MN3X91JqUc5rbS1Z2samgOnpGM9jqt7Yh+W8UxA4FlymnGXO/CUiST8kcbxHuD4nvHO2B9e+mPv82H0yZ0t27F34rjGz1AxWiJTFXu63Co2RSx0HOU4TRusK4uiLX0d3WasfcaC8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1746462628; c=relaxed/simple;
-	bh=vuNM9LTXUreH/rrIpEhWR4I9JEYP1Er0bcoMq2fbcVY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=aIPvD2T+m+GKplGBdVSL0aBaDrSDCNrDMlk+W65XMo+tOQ8Lc2KsB/oEnyXmhC02JaaRm/clDbdvot8PIME4Iym481RqNSCAZHIK+32gxFIx3q+uCHCV+LMzcdUxyG5AwDYLrJB3T0Fu+ZmJwkBy78tEP+zUIHkwCELIZyKpeyo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=cGclZNyp; arc=none smtp.client-ip=209.85.128.42
+	bh=ez1/HjE7MadwY6icQIZ8AvkZMbpQATX5YT6qNc0tAT8=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=mZnxc99/APVsRcda/wQQxvUjE89gndvpHXyuc2DRz9GQHN+y2n8wGWuZExYwpPmwyiRsKYqZhTu1taf2OCrCMTjLNeT6hurVQ/xNSeRv8itgJ+SUZ3YtTO206Zu6vfwJpjv0/q1XOdzsOHstDO93bLyohyyFm8/SnBj6nuVMaaI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UibwvuUz; arc=none smtp.client-ip=209.85.221.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="cGclZNyp"
-Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-43cf0d787eeso42598235e9.3
-        for <dm-devel@lists.linux.dev>; Mon, 05 May 2025 09:30:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UibwvuUz"
+Received: by mail-wr1-f44.google.com with SMTP id ffacd0b85a97d-39ee5a5bb66so2987460f8f.3
+        for <dm-devel@lists.linux.dev>; Mon, 05 May 2025 09:30:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1746462624; x=1747067424; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=4HL8qZhjL6jb2JVoPfk1gKfpUKMVCXLbJzecQfVQ2aI=;
-        b=cGclZNypeZq9Y1ldcuoRloD3p5ApFsCNRdFzJcf+TVW9DuHvwVVvvsmh4UiT2KENaq
-         PlYNWnebX7OE8sFEFx9OQt1guHn5wBaN4a5oLP1P8TUlEdCGk8KcjF7KujEJxLzvGe8/
-         pOF2dbkV1tn9o16gz0tf9MsEHLW2Zh/AMRNcxprxrCQxHGxwD0Yh4wCd7PGtUerLNHrD
-         5H84p+MzuJb8y8c5YGQRQx+XkAxjgV+/aOUswjnOuODN4C5pcEbWBDuWdhlqqirX3JQ7
-         ckVGW5IT0HlU8+Z6fHPZBseT24p0P0P+mjVJth6PcnGM+CtZ/+rQCaq0XO/NjatdKv7m
-         8Ejg==
+        d=suse.com; s=google; t=1746462625; x=1747067425; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=B2T/Bu4YROn5HbpCHKiW6ATA5yTthmYetQy0WYVYyDU=;
+        b=UibwvuUzfiDxrccWGlg9HMKmMsZrtgw3kDt2SNEsHO76lCU2eOS4Y7bVzpHBE4qIZ1
+         vJcJDdMVdFxtDSsLmQkZkzkgcp81cbQLAiopz8V7FuMZkkgk5RI9lfEni8pvwMM371PH
+         m49CdDyImYR8W+MBumTiahPFiDq/68hL4mLKHjU3+RxdLhynE8mMZasokdcAc2LUtqAw
+         tnGiM6UAXpjw5n5aFl936RaGRKMKycIOC+hO8pv6sO0XOXtU+RMViogRzfwWeVnfSmIB
+         Uu2HgmMQGMZAWiuBPGgMnsIEp2DCifz0A+RYaWmNvLQTxrJty7VfNjf06jUZilK8sP/3
+         Kdcw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746462624; x=1747067424;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=4HL8qZhjL6jb2JVoPfk1gKfpUKMVCXLbJzecQfVQ2aI=;
-        b=Q7/f6Wua9wt8y9B0B4Q9jP/4fuqas2OVSI4KLE0qsoietnDQYI7mI+Gny32I/D1dOn
-         sTZKpE9aVr1rKMVg+jWL8qKZMjwDcBDJadW4U7kYF47tupqV7D2s1Wst564yiobzTvAw
-         wVPZz0mcEXDVWk+5q5p7ZgxDZ7d/uqoSW0DyNDlOrHzspofTuH7JqkpNM4CGQ79m2NK8
-         Qa7rzMxUTwL4EL0OmVTu01o8/Y9sMjH/IrqRR13Jw6AayYgMb0J4uxQAe5Ir5j+LZbqv
-         hPuvHD4HS07Rb5PdVd3yrqJzyBxv9HFsNbTTXLczj9vt59XI2y4MKLDrKka5h8Wj+Fbo
-         xipA==
-X-Forwarded-Encrypted: i=1; AJvYcCX75e4pokEdKQYMKC6oQe7RnZduBHXOZwDGOjH2TG7DcZlXfeYj2ulWZaPpgj/o8Hy+DSZT+39DNA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy7KGYNAaD6X+cuvBKLSh4keasYaDTEsK34NBqbEyhW2+GjeGSU
-	5W5X9aedPs+OUN+UDfsdTZTJUa73S8sOoQ4kz/dbItHLUWxM1BzztmczGWBOqWc=
-X-Gm-Gg: ASbGncvupybPLo88Rd5oxAWiHK08c32zTbQH+lAQK04Qm3vEW+bgvMzXsXAi1CpwMdy
-	DCx12lxwKV4VANJAAwhaX42FjvWB3SvLh19wKzUo80KKKiIS97Sh3m2G3C6M8B6kXSiuw+cXMpZ
-	P7tyHhSdaPC3jNy9KeNkXlLtBtEZkzDCFHzT7dA58eMp9vxqvMQKPPS2P33Pqjvtdx3shFz6y2M
-	orokz2tEnfsWX/7SZpst9st3Dk7JO4fyAOzECMzqeqgJj4QhBp6CMyCdoow7X9GLytHHdXSwaZ0
-	UdlBdt1P8npq9jzSgXDl3GzX0mB7yYunX9dSnSV/L89q+bZi797olIzu014RkM2b+zDKwpHKAF3
-	aInif8Wt75G6c1qB0uospkwrv4gEX
-X-Google-Smtp-Source: AGHT+IEe5qvGCGx128Reawc1fSjx2g0lxgEJ2QsNOggnnuXipFO6McB40Ch2sdMBhqX4jgjswBABUg==
-X-Received: by 2002:a05:600c:3e09:b0:43d:82c:2b23 with SMTP id 5b1f17b1804b1-441c49236ecmr54202715e9.23.1746462623634;
-        Mon, 05 May 2025 09:30:23 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1746462625; x=1747067425;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=B2T/Bu4YROn5HbpCHKiW6ATA5yTthmYetQy0WYVYyDU=;
+        b=g5OKwY3WY9oqKk5Y2NuAgvqPSeQmgFUOherA1Wsc5nQhf5Q0P0zxCJC9M64QsfcR85
+         FCOsa9Gkbo7gBWfLpvRAcdm4a2vj1Sx5bZclP3RnDn5u9+rhsyXDsnc75LbIrTvYNGUx
+         CYb/FVwJ3Y8gvJ3KJfEDM16ANu4PRep4iKfKe2YQLDVQsv3hxPe8KQeqAaOxLJAAuq8q
+         y+BgGDfcJ5j0XK3DC0oALTtEo24u8aoGh68XTGZZsVHX+/8cRrtPv20ia2UrIs5JcXL1
+         J4vQMd6qg2QeWt2V0hA6fW6JGPrNWVlVn8HX1nKIVk6VUbP3RhVrqSXBeR0UP/CLnSd+
+         QK8Q==
+X-Forwarded-Encrypted: i=1; AJvYcCUnsIzuGo2gybhNR4XM1djah4aGahDGgIQ1l5NNaw111fmjcWxif/k2hCWI9FGZRCTFEMUTqzZvmA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yxv1Zx00uri4rg69BM9fW02cFfmXIs2UBRcC+zz503HyYDMau7X
+	RcDrokQuXRASTusD1ZhsC/ciQBVmdkUhdfezIIG6FPegk5ObR4+C7NcoinIbqvM=
+X-Gm-Gg: ASbGnctWmlVuC4GP/aHFkY+3FyTwFRgNn7metrzwOKqDw237smKwc43+XzkdCo4c/Xd
+	ZCp/ynHpKpMIyET3ab3FUTmAsUjEXxZQiMOT5HHIQo6ycst+3SeMYsiUnaZGpBAGS4BC6Arsqie
+	aK1P/6Q+WAQH3GiP7UeA0GN/UxcfmBXpX/ALUHI3DRK5uUUM3zRWnL8xiqUg/f6BTqV1EDPPHGN
+	hcuuMFt28Fg9XBba1K/VkrUdCFHzne04ionLJqpLj9gFQCWy6uc89xMkCgkoAxdjxX2x5hslQKb
+	FdUGcBQEbTp2qg+jDXp1/qgy5Fk7rOMKdWJRqrMqsDdGibd/QiRH9akSBjfdZLGtYPHpl7057BR
+	bcpIYzhTaMMNs2Nuim5ssDxwErB3q
+X-Google-Smtp-Source: AGHT+IGGi0dOwXNDoIxu8Y6Lfk4XW8kZmYxrN1N051H1rrLIHhARDFOvEpdpe3qD1cvNxyvjG0ILBw==
+X-Received: by 2002:a05:6000:240d:b0:3a0:7017:61f6 with SMTP id ffacd0b85a97d-3a09ceaff3bmr7705419f8f.14.1746462624746;
+        Mon, 05 May 2025 09:30:24 -0700 (PDT)
 Received: from localhost (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3a099b16ea2sm10669571f8f.85.2025.05.05.09.30.22
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3a099ae0d3csm10691683f8f.3.2025.05.05.09.30.24
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 05 May 2025 09:30:23 -0700 (PDT)
+        Mon, 05 May 2025 09:30:24 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -63,155 +65,67 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH 0/6] multipath-tools: static analyzer fixes
-Date: Mon,  5 May 2025 18:29:52 +0200
-Message-ID: <20250505163007.59352-1-mwilck@suse.com>
+Subject: [PATCH 1/6] kpartx_id: fix shellcheck reported errors
+Date: Mon,  5 May 2025 18:29:53 +0200
+Message-ID: <20250505163007.59352-2-mwilck@suse.com>
 X-Mailer: git-send-email 2.49.0
+In-Reply-To: <20250505163007.59352-1-mwilck@suse.com>
+References: <20250505163007.59352-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Xose has kindly informed me about the warnings from Fedora's static
-code analysis tool.
+Found by Fedora's static analysis [1].
 
-I'm sending a couple of related fixes here. Most of the warnings
-appear to be false positives though, see below (a second look by
-another eye pair would be appreciated).
+[1] https://openscanhub.fedoraproject.org/task/51915/log/device-mapper-multipath-0.11.1-1.fc43/scan-results.html
 
-Regards
-Martin
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+---
+ kpartx/kpartx_id | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-On Sat, 2025-05-03 at 23:29 +0200, Xose Vazquez Perez wrote:
-> Findings by static analyzers in Fedora 43 Critical Path Packages:
-> https://marc.info/?l=fedora-devel-list&m=174582743823723
-> 
-> device-mapper-multipath-0.11.1-1.fc43:
-> https://openscanhub.fedoraproject.org/task/51915/
-> 
-> device-mapper-multipath-0.11.1-1.fc43 List of Findings:
-> https://openscanhub.fedoraproject.org/task/51915/log/device-mapper-multipath-0.11.1-1.fc43/scan-results.html
-
-I'll leave the shellcheck errors in mpathconf to Ben.
-
-> Error: GCC_ANALYZER_WARNING (CWE-775): [#def42]
-> multipath-tools-0.11.1/kpartx/dasd.c:89:24: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘fd_dasd’
-> multipath-tools-0.11.1/kpartx/dasd.c:69:1: enter_function: entry to ‘read_dasd_pt’
-> ...
-> multipath-tools-0.11.1/kpartx/dasd.c:134:20: branch_true: following ‘true’ branch (when ‘fd_dasd < 0’)...
-> branch_true: ...to here
-
-This one looks like a false positive to me. If fd_dasd < 0, it can't be leaked.
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def45]
-> multipath-tools-0.11.1/libmpathutil/parser.c:139:29: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘keyword’
-
-False positive, too. VECTOR_SLOT won't return NULL here. 
-We could add a test to make the compiler happy, but I don't quite see the point.
-
-> Error: GCC_ANALYZER_WARNING (CWE-457): [#def49]
-> multipath-tools-0.11.1/libmultipath/alias.c:201:31: warning[-Wanalyzer-use-of-uninitialized-value]: use of uninitialized value ‘bdg’
-
-False positive. bdg won't be NULL here.
-
-> Error: GCC_ANALYZER_WARNING (CWE-465): [#def50]
-> multipath-tools-0.11.1/libmultipath/dmparser.c:31:12: warning[-Wanalyzer-deref-before-check]: check of ‘p’ for NULL after already dereferencing it
-
-False positive. *dst is non-NULL when we call merge_words(). We must double-check
-after calling realloc().
-(That said, we should reimplement this using strbuf functions).
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def51]
-> multipath-tools-0.11.1/libmultipath/dmparser.c:436:25: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pgp’
-
-False positive. VECTOR_SLOT won't return NULL here. Same for the next 3 errors.
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def55]
-> multipath-tools-0.11.1/libmultipath/dmparser.c:501:33: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp’
-
-Likewise. Same for the next 2 errors.
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def58]
-> multipath-tools-0.11.1/libmultipath/foreign/nvme.c:494:28: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘path’
-
-The nvme_pathgroup is a member of struct nvme_path. nvme_pg_to_path() doesn't return NULL. Same for the next 2 errors in nvme.c
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def62]
-> multipath-tools-0.11.1/libmultipath/pgpolicies.c:191:17: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp1’
-
-Again, false positives; VECTOR_SLOT() doesn't return NULL here.
-Same for the next 3 errors.
-
-> Error: GCC_ANALYZER_WARNING (CWE-401): [#def66]
-> multipath-tools-0.11.1/libmultipath/print.c:920:16: warning[-Wanalyzer-malloc-leak]: leak of ‘alloc_path_layout()’
-
-False positive. Strange one - gcc doesn't understand its own __attribute__((cleanup))?
-Or am I blind? Same for the next one.
-
-> Error: GCC_ANALYZER_WARNING (CWE-126): [#def70]
-multipath-tools-0.11.1/libmultipath/uevent.c:122:9: warning[-Wanalyzer-out-of-bounds]: stack-based buffer over-read
-
-This one is somewhat harder because it involves list handling macros, but I believe that our code is correct and that this is a false positive, too.
-
-> Error: GCC_ANALYZER_WARNING (CWE-775): [#def69]
-> multipath-tools-0.11.1/libmultipath/sysfs.c:309:22: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘open(&pathbuf, 0)’
-
-Again, false positive; there's a cleanup function for fd.
-
-> Error: GCC_ANALYZER_WARNING (CWE-775): [#def71]
-> multipath-tools-0.11.1/libmultipath/valid.c:208:34: warning[-Wanalyzer-file-leak]: leak of FILE ‘fopen(&mountinfo, "r")’
-
-False positive, gcc doesn't understand the cleanup_fclose().
-Same for the next error.
-
-> Error: GCC_ANALYZER_WARNING (CWE-415): [#def73]
-> multipath-tools-0.11.1/multipathd/fpin_handlers.c:508:17: warning[-Wanalyzer-double-free]: double-‘free’ of ‘els_marginal_list_head.next + -2056’
-
-I don't see an error in this code. Looks like another false positive to me.
-
-> Error: GCC_ANALYZER_WARNING: [#def74]
-> multipath-tools-0.11.1/multipathd/fpin_handlers.c:624:23: warning[-Wanalyzer-fd-use-without-check]: ‘read’ on possibly invalid file descriptor ‘fd’
-
-False positive, too. fd == -1 is checked beforehand.
-
-> Error: GCC_ANALYZER_WARNING (CWE-688): [#def75]
-> multipath-tools-0.11.1/multipathd/main.c:3286:21: warning[-Wanalyzer-null-argument]: use of NULL ‘new’ where non-null expected
-
-Similar to other false positives above, VECTOR_SLOT() won't return NULL in a  loop like this.
-
-> Error: GCC_ANALYZER_WARNING (CWE-775): [#def77]
-> multipath-tools-0.11.1/multipathd/main.c:3973:12: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘dup2(open("/dev/null", 2), 0)’
-
-Yet another false positive, the fd is closed in the cleanup handler. Same for the next 3 errors.
-
-> Error: GCC_ANALYZER_WARNING (CWE-476): [#def81]
-multipath-tools-0.11.1/multipathd/multipathc.c:97:30: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘kw’
-
-Another case of VECTOR_SLOT() false positive. Same for the next error.
-
-Regards
-Martin
-
-Martin Wilck (6):
-  kpartx_id: fix shellcheck reported errors
-  kpartx: fix file descriptor leak
-  libmpathpersist: fix memory leak in mpath_prout_rel()
-  libmpathutil: silence compiler warning in vector_del_slot()
-  libmultipath: fix undefined behavior in 31-bit shift
-  libmultipath: prioritizers/iet: fix possible NULL dereference
-
- kpartx/kpartx.c                     | 14 +++++++-------
- kpartx/kpartx_id                    |  8 ++++----
- libmpathpersist/mpath_persist_int.c | 12 ++++++------
- libmpathutil/vector.c               | 16 ++++++++--------
- libmultipath/nvme/nvme-ioctl.c      |  2 +-
- libmultipath/prioritizers/iet.c     |  3 +++
- 6 files changed, 29 insertions(+), 26 deletions(-)
-
+diff --git a/kpartx/kpartx_id b/kpartx/kpartx_id
+index f9211d2..ffd3424 100755
+--- a/kpartx/kpartx_id
++++ b/kpartx/kpartx_id
+@@ -25,7 +25,7 @@ MAJOR=$1
+ MINOR=$2
+ UUID=$3
+ 
+-if [ -z "$MAJOR" -o -z "$MINOR" ]; then
++if [ -z "$MAJOR" ] || [ -z "$MINOR" ]; then
+     echo "usage: $0 major minor UUID"
+     exit 1;
+ fi
+@@ -53,13 +53,13 @@ fi
+ # Set the name of the table. We're only interested in dmraid,
+ # multipath, and kpartx tables; everything else is ignored.
+ if [ "$dmtbl" = "part" ] ; then
+-    dmname=$($DMSETUP info  -c --noheadings -o name -u $dmuuid)
++    dmname=$($DMSETUP info  -c --noheadings -o name -u "$dmuuid")
+     echo "DM_MPATH=$dmname"
+     # We need the dependencies of the parent table to figure out
+     # the type if the parent is a multipath table
+     case "$dmuuid" in
+ 	mpath-*)
+-	    dmdeps=$($DMSETUP deps -u $dmuuid)
++	    dmdeps=$($DMSETUP deps -u "$dmuuid")
+ 	    dmserial=${dmuuid#mpath-}
+ 	    ;;
+     esac
+@@ -67,7 +67,7 @@ elif [ "$dmtbl" = "mpath" ] ; then
+     dmname="$dmuuid"
+     dmserial="$dmuuid"
+     # We need the dependencies of the table to figure out the type
+-    dmdeps=$($DMSETUP deps -u $UUID)
++    dmdeps=$($DMSETUP deps -u "$UUID")
+ fi
+ 
+ [ -n "$dmpart" ] && echo "DM_PART=$dmpart"
 -- 
 2.49.0
 
