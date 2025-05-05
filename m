@@ -1,46 +1,42 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0D5728DF51;
-	Mon,  5 May 2025 22:28:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2451E33AAA0;
+	Mon,  5 May 2025 22:37:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746484083; cv=none; b=gE5u/GFczPSgwGxBlhiYGPEqKrOlNmYG/9tejr6UMOVojcmiP7IfZmortSb/f/5T/gQSXIw+uC/XWjiDiQjcJHwIl7yYjEkc9HLHgzJ5r2LQG5X+s7hErA/W5I+P05k9KlzArek7zQjVyTUxQvi5W6UBh3kprDH3n1z6RKDn6LY=
+	t=1746484637; cv=none; b=uV8FClONwwcW8IqsJoGN4k5a2c1uP6OUFzvBBmKP/8W9gcuCpkiP9mLvk3g1KeAP3boSz+T+xR9c8h0C3t7UA32wufdlTmgdTnqEr/Moj61kI6JJZg39jEzVZPENueTi+IxczeBcsd7mYYZgLACU9ZVYXM8w1aRxOLLkBcOKn10=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746484083; c=relaxed/simple;
-	bh=GgUyOlh6QndMosRmQQVAr1qNSR4+JCwAbOLiljwPkCw=;
+	s=arc-20240116; t=1746484637; c=relaxed/simple;
+	bh=wd1gU0vc2PC5N3RVtHUMTB5Gt9yUbgtlpWl4FNKNyjk=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=l5U+i/tXbUsEKAK9gNtfSa078afHUT80ixw2i8YrVu/+g5ZiEikNTH38lqNIeE8fhuBaQjh5vgngla5BnWbsBh69wdv1ogy7xn52xiX+h0e/U7imYMw0vdyIswlDX6zo3IGWQMHchTJo4Pr4kKsUFFHOBQYaQWeH0wkFeDC5GIk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DA8sGu+l; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=TSdwogmWtfyGt9xZjH1QkFIej47I3sIwMoNcRGgHFlEM4KD26YAiriqJcFfXfErF13JYmitJTDraqE5eq8JrgkIpkGqsk59Qjgo2P5ZfTRsN4ARDq0RJyC/fLe2MNmjkVMrOhA4NTL8Hk1tv3e600kHSb9gOFG4LHUyuI/x+cDA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ACO7kYCs; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DA8sGu+l"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5A73EC4CEEE;
-	Mon,  5 May 2025 22:28:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ACO7kYCs"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 34E29C4CEE4;
+	Mon,  5 May 2025 22:37:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746484083;
-	bh=GgUyOlh6QndMosRmQQVAr1qNSR4+JCwAbOLiljwPkCw=;
+	s=k20201202; t=1746484637;
+	bh=wd1gU0vc2PC5N3RVtHUMTB5Gt9yUbgtlpWl4FNKNyjk=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=DA8sGu+lx1R8B108iSkgcj3P7KC6t+VM9v0Kl9FhJuAJvjmU2Aw4TFj6yuhkj4I/U
-	 q2zyKh04vN2bvsboshuz8vMhOlrzBjTjeI4gQnTwgsbByC5r40LEWxpqS721NdAqB5
-	 UI1+ClnI6atkzycy1OrCbdOTWNuefygkBefDvcU/n+qkh6K+heOZNiO5KrD1xUkn0c
-	 zJDjxhb4Elt6a7J9c8PW/ELOA1sQ+g+EfhAwGvnEAOBR1sF6krk+v3hLZTuj6zwK6B
-	 1eqkrWG4NWxpJhl2QVEWBCHSIoywCDNjUn7P+0lDN0V0khkxqYpKuSKSFnvWu0iHyH
-	 8or1F9kUgSHRQ==
+	b=ACO7kYCsI0WOKKVAdT3Hz05iuhI77ZvEUp3gvMXDg2WEICKPFKzfOnW2Jx6Wq50mU
+	 s6bFXp/3iGVlqtGe/dYvY8L/n8M6+W50yGgO08/+8E3IatZ5Sg/Q17SJbKHnZVUrVr
+	 nds8bmmVEfBAJbNtCeZ8GmA6aToANpmvpwZMmneChOVrqsaYEGL0dXaKYjtNxDXOJq
+	 LwIqp807tZ1YDg0dCKj3IUQ6A8oJ9VVY3HFAXxWXwslEPSjko4umjiAD9qep3HWCp/
+	 cl4kHmD0IsO//Ln5b3wsUyCNySV/X6noTKVH1EGburOz8EiRJMN0q6uZuERXCAaA/B
+	 q3BeR/KaToNBw==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org
-Cc: Jinliang Zheng <alexjlzheng@gmail.com>,
-	Jinliang Zheng <alexjlzheng@tencent.com>,
-	Tianxiang Peng <txpeng@tencent.com>,
-	Hao Peng <flyingpeng@tencent.com>,
+Cc: Ken Raeburn <raeburn@redhat.com>,
+	Matthew Sakai <msakai@redhat.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
-	agk@redhat.com,
-	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.14 341/642] dm: fix unconditional IO throttle caused by REQ_PREFLUSH
-Date: Mon,  5 May 2025 18:09:17 -0400
-Message-Id: <20250505221419.2672473-341-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.14 576/642] dm vdo vio-pool: allow variable-sized metadata vios
+Date: Mon,  5 May 2025 18:13:12 -0400
+Message-Id: <20250505221419.2672473-576-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
 In-Reply-To: <20250505221419.2672473-1-sashal@kernel.org>
 References: <20250505221419.2672473-1-sashal@kernel.org>
@@ -55,80 +51,206 @@ X-Patchwork-Hint: Ignore
 X-stable-base: Linux 6.14.5
 Content-Transfer-Encoding: 8bit
 
-From: Jinliang Zheng <alexjlzheng@gmail.com>
+From: Ken Raeburn <raeburn@redhat.com>
 
-[ Upstream commit 88f7f56d16f568f19e1a695af34a7f4a6ce537a6 ]
+[ Upstream commit f979da512553a41a657f2c1198277e84d66f8ce3 ]
 
-When a bio with REQ_PREFLUSH is submitted to dm, __send_empty_flush()
-generates a flush_bio with REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC,
-which causes the flush_bio to be throttled by wbt_wait().
+With larger-sized metadata vio pools, vdo will sometimes need to
+issue I/O with a smaller size than the allocated size. Since
+vio_reset_bio is where the bvec array and I/O size are initialized,
+this reset interface must now specify what I/O size to use.
 
-An example from v5.4, similar problem also exists in upstream:
-
-    crash> bt 2091206
-    PID: 2091206  TASK: ffff2050df92a300  CPU: 109  COMMAND: "kworker/u260:0"
-     #0 [ffff800084a2f7f0] __switch_to at ffff80004008aeb8
-     #1 [ffff800084a2f820] __schedule at ffff800040bfa0c4
-     #2 [ffff800084a2f880] schedule at ffff800040bfa4b4
-     #3 [ffff800084a2f8a0] io_schedule at ffff800040bfa9c4
-     #4 [ffff800084a2f8c0] rq_qos_wait at ffff8000405925bc
-     #5 [ffff800084a2f940] wbt_wait at ffff8000405bb3a0
-     #6 [ffff800084a2f9a0] __rq_qos_throttle at ffff800040592254
-     #7 [ffff800084a2f9c0] blk_mq_make_request at ffff80004057cf38
-     #8 [ffff800084a2fa60] generic_make_request at ffff800040570138
-     #9 [ffff800084a2fae0] submit_bio at ffff8000405703b4
-    #10 [ffff800084a2fb50] xlog_write_iclog at ffff800001280834 [xfs]
-    #11 [ffff800084a2fbb0] xlog_sync at ffff800001280c3c [xfs]
-    #12 [ffff800084a2fbf0] xlog_state_release_iclog at ffff800001280df4 [xfs]
-    #13 [ffff800084a2fc10] xlog_write at ffff80000128203c [xfs]
-    #14 [ffff800084a2fcd0] xlog_cil_push at ffff8000012846dc [xfs]
-    #15 [ffff800084a2fda0] xlog_cil_push_work at ffff800001284a2c [xfs]
-    #16 [ffff800084a2fdb0] process_one_work at ffff800040111d08
-    #17 [ffff800084a2fe00] worker_thread at ffff8000401121cc
-    #18 [ffff800084a2fe70] kthread at ffff800040118de4
-
-After commit 2def2845cc33 ("xfs: don't allow log IO to be throttled"),
-the metadata submitted by xlog_write_iclog() should not be throttled.
-But due to the existence of the dm layer, throttling flush_bio indirectly
-causes the metadata bio to be throttled.
-
-Fix this by conditionally adding REQ_IDLE to flush_bio.bi_opf, which makes
-wbt_should_throttle() return false to avoid wbt_wait().
-
-Signed-off-by: Jinliang Zheng <alexjlzheng@tencent.com>
-Reviewed-by: Tianxiang Peng <txpeng@tencent.com>
-Reviewed-by: Hao Peng <flyingpeng@tencent.com>
+Signed-off-by: Ken Raeburn <raeburn@redhat.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- drivers/md/dm.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ drivers/md/dm-vdo/io-submitter.c |  6 ++++--
+ drivers/md/dm-vdo/io-submitter.h | 18 +++++++++++++---
+ drivers/md/dm-vdo/types.h        |  3 +++
+ drivers/md/dm-vdo/vio.c          | 36 +++++++++++++++++++-------------
+ drivers/md/dm-vdo/vio.h          |  2 ++
+ 5 files changed, 46 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 4d1e42891d246..5ab7574c0c76a 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1540,14 +1540,18 @@ static void __send_empty_flush(struct clone_info *ci)
+diff --git a/drivers/md/dm-vdo/io-submitter.c b/drivers/md/dm-vdo/io-submitter.c
+index 421e5436c32c9..11d47770b54d2 100644
+--- a/drivers/md/dm-vdo/io-submitter.c
++++ b/drivers/md/dm-vdo/io-submitter.c
+@@ -327,6 +327,7 @@ void vdo_submit_data_vio(struct data_vio *data_vio)
+  * @error_handler: the handler for submission or I/O errors (may be NULL)
+  * @operation: the type of I/O to perform
+  * @data: the buffer to read or write (may be NULL)
++ * @size: the I/O amount in bytes
+  *
+  * The vio is enqueued on a vdo bio queue so that bio submission (which may block) does not block
+  * other vdo threads.
+@@ -338,7 +339,7 @@ void vdo_submit_data_vio(struct data_vio *data_vio)
+  */
+ void __submit_metadata_vio(struct vio *vio, physical_block_number_t physical,
+ 			   bio_end_io_t callback, vdo_action_fn error_handler,
+-			   blk_opf_t operation, char *data)
++			   blk_opf_t operation, char *data, int size)
  {
- 	struct dm_table *t = ci->map;
- 	struct bio flush_bio;
-+	blk_opf_t opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
+ 	int result;
+ 	struct vdo_completion *completion = &vio->completion;
+@@ -349,7 +350,8 @@ void __submit_metadata_vio(struct vio *vio, physical_block_number_t physical,
+ 
+ 	vdo_reset_completion(completion);
+ 	completion->error_handler = error_handler;
+-	result = vio_reset_bio(vio, data, callback, operation | REQ_META, physical);
++	result = vio_reset_bio_with_size(vio, data, size, callback, operation | REQ_META,
++					 physical);
+ 	if (result != VDO_SUCCESS) {
+ 		continue_vio(vio, result);
+ 		return;
+diff --git a/drivers/md/dm-vdo/io-submitter.h b/drivers/md/dm-vdo/io-submitter.h
+index 80748699496f2..3088f11055fdd 100644
+--- a/drivers/md/dm-vdo/io-submitter.h
++++ b/drivers/md/dm-vdo/io-submitter.h
+@@ -8,6 +8,7 @@
+ 
+ #include <linux/bio.h>
+ 
++#include "constants.h"
+ #include "types.h"
+ 
+ struct io_submitter;
+@@ -26,14 +27,25 @@ void vdo_submit_data_vio(struct data_vio *data_vio);
+ 
+ void __submit_metadata_vio(struct vio *vio, physical_block_number_t physical,
+ 			   bio_end_io_t callback, vdo_action_fn error_handler,
+-			   blk_opf_t operation, char *data);
++			   blk_opf_t operation, char *data, int size);
+ 
+ static inline void vdo_submit_metadata_vio(struct vio *vio, physical_block_number_t physical,
+ 					   bio_end_io_t callback, vdo_action_fn error_handler,
+ 					   blk_opf_t operation)
+ {
+ 	__submit_metadata_vio(vio, physical, callback, error_handler,
+-			      operation, vio->data);
++			      operation, vio->data, vio->block_count * VDO_BLOCK_SIZE);
++}
 +
-+	if ((ci->io->orig_bio->bi_opf & (REQ_IDLE | REQ_SYNC)) ==
-+	    (REQ_IDLE | REQ_SYNC))
-+		opf |= REQ_IDLE;
++static inline void vdo_submit_metadata_vio_with_size(struct vio *vio,
++						     physical_block_number_t physical,
++						     bio_end_io_t callback,
++						     vdo_action_fn error_handler,
++						     blk_opf_t operation,
++						     int size)
++{
++	__submit_metadata_vio(vio, physical, callback, error_handler,
++			      operation, vio->data, size);
+ }
  
- 	/*
- 	 * Use an on-stack bio for this, it's safe since we don't
- 	 * need to reference it after submit. It's just used as
- 	 * the basis for the clone(s).
- 	 */
--	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0,
--		 REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC);
-+	bio_init(&flush_bio, ci->io->md->disk->part0, NULL, 0, opf);
+ static inline void vdo_submit_flush_vio(struct vio *vio, bio_end_io_t callback,
+@@ -41,7 +53,7 @@ static inline void vdo_submit_flush_vio(struct vio *vio, bio_end_io_t callback,
+ {
+ 	/* FIXME: Can we just use REQ_OP_FLUSH? */
+ 	__submit_metadata_vio(vio, 0, callback, error_handler,
+-			      REQ_OP_WRITE | REQ_PREFLUSH, NULL);
++			      REQ_OP_WRITE | REQ_PREFLUSH, NULL, 0);
+ }
  
- 	ci->bio = &flush_bio;
- 	ci->sector_count = 0;
+ #endif /* VDO_IO_SUBMITTER_H */
+diff --git a/drivers/md/dm-vdo/types.h b/drivers/md/dm-vdo/types.h
+index dbe892b10f265..cdf36e7d77021 100644
+--- a/drivers/md/dm-vdo/types.h
++++ b/drivers/md/dm-vdo/types.h
+@@ -376,6 +376,9 @@ struct vio {
+ 	/* The size of this vio in blocks */
+ 	unsigned int block_count;
+ 
++	/* The amount of data to be read or written, in bytes */
++	unsigned int io_size;
++
+ 	/* The data being read or written. */
+ 	char *data;
+ 
+diff --git a/drivers/md/dm-vdo/vio.c b/drivers/md/dm-vdo/vio.c
+index e710f3c5a972d..725d87ecf2150 100644
+--- a/drivers/md/dm-vdo/vio.c
++++ b/drivers/md/dm-vdo/vio.c
+@@ -188,14 +188,23 @@ void vdo_set_bio_properties(struct bio *bio, struct vio *vio, bio_end_io_t callb
+ 
+ /*
+  * Prepares the bio to perform IO with the specified buffer. May only be used on a VDO-allocated
+- * bio, as it assumes the bio wraps a 4k buffer that is 4k aligned, but there does not have to be a
+- * vio associated with the bio.
++ * bio, as it assumes the bio wraps a 4k-multiple buffer that is 4k aligned, but there does not
++ * have to be a vio associated with the bio.
+  */
+ int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
+ 		  blk_opf_t bi_opf, physical_block_number_t pbn)
+ {
+-	int bvec_count, offset, len, i;
++	return vio_reset_bio_with_size(vio, data, vio->block_count * VDO_BLOCK_SIZE,
++				       callback, bi_opf, pbn);
++}
++
++int vio_reset_bio_with_size(struct vio *vio, char *data, int size, bio_end_io_t callback,
++			    blk_opf_t bi_opf, physical_block_number_t pbn)
++{
++	int bvec_count, offset, i;
+ 	struct bio *bio = vio->bio;
++	int vio_size = vio->block_count * VDO_BLOCK_SIZE;
++	int remaining;
+ 
+ 	bio_reset(bio, bio->bi_bdev, bi_opf);
+ 	vdo_set_bio_properties(bio, vio, callback, bi_opf, pbn);
+@@ -205,22 +214,21 @@ int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
+ 	bio->bi_ioprio = 0;
+ 	bio->bi_io_vec = bio->bi_inline_vecs;
+ 	bio->bi_max_vecs = vio->block_count + 1;
+-	len = VDO_BLOCK_SIZE * vio->block_count;
++	if (VDO_ASSERT(size <= vio_size, "specified size %d is not greater than allocated %d",
++		       size, vio_size) != VDO_SUCCESS)
++		size = vio_size;
++	vio->io_size = size;
+ 	offset = offset_in_page(data);
+-	bvec_count = DIV_ROUND_UP(offset + len, PAGE_SIZE);
++	bvec_count = DIV_ROUND_UP(offset + size, PAGE_SIZE);
++	remaining = size;
+ 
+-	/*
+-	 * If we knew that data was always on one page, or contiguous pages, we wouldn't need the
+-	 * loop. But if we're using vmalloc, it's not impossible that the data is in different
+-	 * pages that can't be merged in bio_add_page...
+-	 */
+-	for (i = 0; (i < bvec_count) && (len > 0); i++) {
++	for (i = 0; (i < bvec_count) && (remaining > 0); i++) {
+ 		struct page *page;
+ 		int bytes_added;
+ 		int bytes = PAGE_SIZE - offset;
+ 
+-		if (bytes > len)
+-			bytes = len;
++		if (bytes > remaining)
++			bytes = remaining;
+ 
+ 		page = is_vmalloc_addr(data) ? vmalloc_to_page(data) : virt_to_page(data);
+ 		bytes_added = bio_add_page(bio, page, bytes, offset);
+@@ -232,7 +240,7 @@ int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
+ 		}
+ 
+ 		data += bytes;
+-		len -= bytes;
++		remaining -= bytes;
+ 		offset = 0;
+ 	}
+ 
+diff --git a/drivers/md/dm-vdo/vio.h b/drivers/md/dm-vdo/vio.h
+index 3490e9f59b04a..74e8fd7c8c029 100644
+--- a/drivers/md/dm-vdo/vio.h
++++ b/drivers/md/dm-vdo/vio.h
+@@ -123,6 +123,8 @@ void vdo_set_bio_properties(struct bio *bio, struct vio *vio, bio_end_io_t callb
+ 
+ int vio_reset_bio(struct vio *vio, char *data, bio_end_io_t callback,
+ 		  blk_opf_t bi_opf, physical_block_number_t pbn);
++int vio_reset_bio_with_size(struct vio *vio, char *data, int size, bio_end_io_t callback,
++			    blk_opf_t bi_opf, physical_block_number_t pbn);
+ 
+ void update_vio_error_stats(struct vio *vio, const char *format, ...)
+ 	__printf(2, 3);
 -- 
 2.39.5
 
