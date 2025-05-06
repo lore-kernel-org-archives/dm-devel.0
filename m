@@ -1,63 +1,90 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB091284B5E
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 16:37:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCC5D248881
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 17:14:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746549464; cv=none; b=luO7iYvIN5SHLfRKtyVq9fzhrw7a6YXaMzeGtGeWs87IcRzgCFgiYsK38K9dvG2FJxU1av6GAeGxTYnl31mgh7OB6+VDu422EKDwDxGdcpFsJxVg4Mg9MTh6HBShxitNgtIm71IzmU1famnT8nZr/faHY5cGCsM8SNwQVwFaHxU=
+	t=1746551667; cv=none; b=oOwlwtJoY1Z+0/2OZL0wmzT37C5fBzVEjgIsiXehcQ4LfabZ0kzmuSpLHdqGyMoFijT6TAWwnesU0akrYLJHVp9I+FmZwfZoCrPW0L7O0YZIQZ+EGbQ0ldc2a9p6dSf4vTfNl6dN+x7ZnufzawRdzmM03oLr1Pkl1NCw7X4RJTE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746549464; c=relaxed/simple;
-	bh=8JJaNJStPQrgJrLmILJYS1JlbbSWpQ/goa2952Etjwk=;
-	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=eP+W8gVnkT5sDemvcTg/0a3KNVdjV1WdmGJNz10eSRxCQHRSmGAWm9Ao8hWrkzF1G2nHNkPDlPJg5OwQTXKoDDF6m/EMdZL9OVpIX9IrBhhv3qn1lI1NJjivVaz06r7eNeT4U4YvCYOcIfm3TCIVvie/QgkXHEGPaMDR10npvVw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=guQc1vCn; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1746551667; c=relaxed/simple;
+	bh=YJlIiL2as+FQzRYLAmfyUw6lBk0apgvBss0amf+RMTg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Yd2gBVwzXmjLQN9+V9kncArh9YLybpRP0UL4Bz6SKCPUK0z35DIffLwv5vmZK9caOhAepwGlgEYCjxMI5yv8NmPp3nKtscyaWbWXaQ1p3N0szWhTfh2+vsKF2wkxjWtw+M3p/uiV2/9lofEJd1/9aLphmbp58XfFRQxEat+0CkY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=K53VR70/; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="guQc1vCn"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5BD91C4CEE4;
-	Tue,  6 May 2025 16:37:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746549464;
-	bh=8JJaNJStPQrgJrLmILJYS1JlbbSWpQ/goa2952Etjwk=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
-	b=guQc1vCnfIn3Kl5tnOxetYMFRJ8FH63X7psuRhODmNngYI2VruzVMGvcXx3BLYoAw
-	 UhpXGOGpJ7Zas09IIjXjD/lCepp9hXhu6Og6uyoZUPMuv6lscuMs75nzu6MquTP61F
-	 4A/DoaI0CVT7SB6C65wBoMawH+5Mz6bkXBAHhpjGxu6sWW44tjuw+y/Wbo5Dmz2u+e
-	 uPX59nlYLieNZcZTAa0e2E7HYRFeej/LFM/iG9fYnMtTR4J6qnPwf7n9gV51OghkcL
-	 UGTNy/0TCX+Z/7qGf66H1XWPsuYXhWs+2gzksGzChvRQTmXR/rMxyf4DD3PwvhXDph
-	 /Y44TliDBSFww==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id ADE43380CFD7;
-	Tue,  6 May 2025 16:38:24 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes 2 for 6.15
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
-References: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
-X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
-X-PR-Tracked-Message-Id: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes-2
-X-PR-Tracked-Commit-Id: f1aff4bc199cb92c055668caed65505e3b4d2656
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: cccd03371475e4c25ddad7f5b2467d9b4d3f5a09
-Message-Id: <174654950318.1583977.120993953881906101.pr-tracker-bot@kernel.org>
-Date: Tue, 06 May 2025 16:38:23 +0000
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Dan Carpenter <dan.carpenter@linaro.org>, Tudor Ambarus <tudor.ambarus@linaro.org>, Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="K53VR70/"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1746551663;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SDuv8z2Zer1kzmJsg6JfkCgHosBhI0/BOFDH4XiwtSw=;
+	b=K53VR70//tECJJO7HTRbFGebuGZvWWs1Hi9oZUnqGokSdUJVrJbsmKci6+NOHm5aw4nFgv
+	Y7EKZVSirH5hW7b1chT/MncTcPkggaYJI8dIYfoWlXEACdJYKpaw+CNFV1Z0R/iWesnuzz
+	pH2cdLWMNN3DiksJZY+VGOG1Twk//VM=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-248-hZeuOhmVOcCR-ecxitQPig-1; Tue,
+ 06 May 2025 13:14:17 -0400
+X-MC-Unique: hZeuOhmVOcCR-ecxitQPig-1
+X-Mimecast-MFC-AGG-ID: hZeuOhmVOcCR-ecxitQPig_1746551654
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BCD0C1800ECA;
+	Tue,  6 May 2025 17:14:13 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 03A30195608F;
+	Tue,  6 May 2025 17:14:10 +0000 (UTC)
+Date: Tue, 6 May 2025 19:14:06 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eric Biggers <ebiggers@kernel.org>
+cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, linux-block@vger.kernel.org, 
+    linux-kernel@vger.kernel.org, linux-fscrypt@vger.kernel.org, 
+    Bartosz Golaszewski <brgl@bgdev.pl>, 
+    Gaurav Kashyap <quic_gaurkash@quicinc.com>
+Subject: Re: [PATCH v2 2/2] dm: pass through operations on wrapped inline
+ crypto keys
+In-Reply-To: <20250505211428.GA10047@google.com>
+Message-ID: <3a0ef010-ec08-de32-134f-80286a3960c9@redhat.com>
+References: <20250501212320.8281-1-ebiggers@kernel.org> <20250501212320.8281-3-ebiggers@kernel.org> <af9771ce-5e88-02d1-3595-fd18a6f2eb28@redhat.com> <20250505170336.GA197153@sol> <5ca7e728-96ed-4419-6689-f36081b7e2da@redhat.com>
+ <20250505211428.GA10047@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-The pull request you sent on Tue, 6 May 2025 14:26:45 +0200 (CEST):
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes-2
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/cccd03371475e4c25ddad7f5b2467d9b4d3f5a09
+On Mon, 5 May 2025, Eric Biggers wrote:
 
-Thank you!
+> We have to forward derive_sw_secret anyway, since that's invoked by the
+> filesystem, not by the ioctls.
+> 
+> The other operations are for the ioctls, but I don't see a reason to make things
+> harder for userspace by forcing userspace to implement logic like:
+> 
+>     if (is_dm(blkdev))
+>         blkdev = underlying_device(blkdev)
+>     ioctl(blkdev)
+> 
+> The device-mapper block device has a blk-crypto profile that declares wrapped
+> key support.  We should just make the ioctls work on that block device, so that
+> upper layers don't need to care whether it's device-mapper or native.
+> 
+> - Eric
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+OK, I accepted both patches for the next merge window.
+
+Mikulas
+
