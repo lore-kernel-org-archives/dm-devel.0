@@ -1,28 +1,28 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0465280CF6
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33B08281372
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746536245; cv=none; b=TO31xXxGRdKkMxHbUtfWl8y3bedPxZC2JuulrpUIfUZGjQydog41pUArwthJPER9cw5qK9KaO2Z4hsnWUTnGtloUpOkk77b+7/HUuISFoUMTAcYCVwBV74m3UsorZAPLS7G3LBYVJlP2PuZLK7JuyXXmQy37Y8R/Tmgz2+gsD7U=
+	t=1746536245; cv=none; b=K4Nmelz4rU5RaTaH3cuSOf9j3QfXXTWkja1Mxdv2rDCmsVsKosUiOPukNzW6xptvGb7UEkB+wwUCE/y7uBn5xzX213rBwm9Nl15aMC+vHIypUC+Q3CVhWczrbzncL2HC86vNNfilni0aDLt3yLGVmL7FbTqfHO8nM1QOCIlGjW0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1746536245; c=relaxed/simple;
-	bh=J8bFkfk+MCfF7XzZERo8lUNzg/aNDMc3ryTWN5qAMBQ=;
+	bh=UUlfRbNxqRX+inojac2LpJYdnoiFWG30qef9A/6iNUc=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=CMXaVNonHqZ98Puoz7P8m/ja3DdSlVqaGa19Je5yqjJWo3RL7G7HjJIbi9l8KF+uZH3vLOUXibP2MzLA0k18DpYGJ0D7KW2QXU17LGpaihJmqMZsO1IsF2HOlxSfmHidkdiegVp3xlqcKpaN3idFzrVg2UdwUWLRknsNDdV3aDw=
+	 MIME-Version; b=Jxv/7gb5+t5trORjCXyiaGqqkFO0DS9aSHW3PzmyQQVQUHUbi/+qCjwct4uv27NPgQtvLle2fUojJplTqWQbrH28EzcgCKPxEXHkFtl04fYSjiOkT5M3AKUgkzZve2VqK5h1xy4BCVSXGkeMus5LNzpShDcB7kL/QD03nJTq4Hg=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZsJM03LVJz4f3jt8
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:00 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZsJLt2hQkz4f3lDG
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:56:54 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id ACEE81A0FD3
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:19 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 56B571A0359
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:20 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S11;
-	Tue, 06 May 2025 20:57:19 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S12;
+	Tue, 06 May 2025 20:57:20 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: axboe@kernel.dk,
 	agk@redhat.com,
@@ -41,9 +41,9 @@ Cc: linux-block@vger.kernel.org,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com
-Subject: [PATCH v3 7/9] md: add a new api sync_io_depth
-Date: Tue,  6 May 2025 20:49:01 +0800
-Message-Id: <20250506124903.2540268-8-yukuai1@huaweicloud.com>
+Subject: [PATCH v3 8/9] md: fix is_mddev_idle()
+Date: Tue,  6 May 2025 20:49:02 +0800
+Message-Id: <20250506124903.2540268-9-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250506124903.2540268-1-yukuai1@huaweicloud.com>
 References: <20250506124658.2537886-1-yukuai1@huaweicloud.com>
@@ -55,10 +55,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S11
-X-Coremail-Antispam: 1UD129KBjvJXoWxKFW7uw47JrWrKw4fWF4xCrg_yoWxKr1fpa
-	y7AFy3Gr1UZFZxXr43JFsxCa4rXr4fK3yUt3y7Gw1xJF13Wr9rGF1SqFW5XF9rWa4fCrnr
-	ZF1UJFZ8ua1Iyr7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S12
+X-Coremail-Antispam: 1UD129KBjvJXoW3Xr48WrW5Xw1kGw1DWFW5Awb_yoW7AFW7pa
+	y3Ca43tr48XF4Sqw15AFyv9a4Fg34fJ39xtFy3A34xZF15Grn0kF4agrWYv3s8WaykZFyY
+	qa15KFWDCa4UJFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -77,236 +77,160 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Currently if sync speed is above speed_min and below speed_max,
-md_do_sync() will wait for all sync IOs to be done before issuing new
-sync IO, means sync IO depth is limited to just 1.
+If sync_speed is above speed_min, then is_mddev_idle() will be called
+for each sync IO to check if the array is idle, and inflight sync_io
+will be limited if the array is not idle.
 
-This limit is too low, in order to prevent sync speed drop conspicuously
-after fixing is_mddev_idle() in the next patch, add a new api for
-limiting sync IO depth, the default value is 32.
+However, while mkfs.ext4 for a large raid5 array while recovery is in
+progress, it's found that sync_speed is already above speed_min while
+lots of stripes are used for sync IO, causing long delay for mkfs.ext4.
+
+Root cause is the following checking from is_mddev_idle():
+
+t1: submit sync IO: events1 = completed IO - issued sync IO
+t2: submit next sync IO: events2  = completed IO - issued sync IO
+if (events2 - events1 > 64)
+
+For consequence, the more sync IO issued, the less likely checking will
+pass. And when completed normal IO is more than issued sync IO, the
+condition will finally pass and is_mddev_idle() will return false,
+however, last_events will be updated hence is_mddev_idle() can only
+return false once in a while.
+
+Fix this problem by changing the checking as following:
+
+1) mddev doesn't have normal IO completed;
+2) mddev doesn't have normal IO inflight;
+3) if any member disks is partition, and all other partitions doesn't
+   have IO completed.
+
+Also change rdev->last_events to unsigned long to cleanup type casting.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Reviewed-by: Xiao Ni <xni@redhat.com>
 ---
- drivers/md/md.c | 109 +++++++++++++++++++++++++++++++++++++++---------
- drivers/md/md.h |   1 +
- 2 files changed, 91 insertions(+), 19 deletions(-)
+ drivers/md/md.c | 81 ++++++++++++++++++++++++++-----------------------
+ drivers/md/md.h |  3 +-
+ 2 files changed, 45 insertions(+), 39 deletions(-)
 
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 9daa78c5fe33..541151bcfe81 100644
+index 541151bcfe81..0fde115e921f 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -111,32 +111,48 @@ static void md_wakeup_thread_directly(struct md_thread __rcu *thread);
- /* Default safemode delay: 200 msec */
- #define DEFAULT_SAFEMODE_DELAY ((200 * HZ)/1000 +1)
- /*
-- * Current RAID-1,4,5 parallel reconstruction 'guaranteed speed limit'
-- * is 1000 KB/sec, so the extra system load does not show up that much.
-- * Increase it if you want to have more _guaranteed_ speed. Note that
-- * the RAID driver will use the maximum available bandwidth if the IO
-- * subsystem is idle. There is also an 'absolute maximum' reconstruction
-- * speed limit - in case reconstruction slows down your system despite
-- * idle IO detection.
-+ * Current RAID-1,4,5,6,10 parallel reconstruction 'guaranteed speed limit'
-+ * is sysctl_speed_limit_min, 1000 KB/sec by default, so the extra system load
-+ * does not show up that much. Increase it if you want to have more guaranteed
-+ * speed. Note that the RAID driver will use the maximum bandwidth
-+ * sysctl_speed_limit_max, 200 MB/sec by default, if the IO subsystem is idle.
-  *
-- * you can change it via /proc/sys/dev/raid/speed_limit_min and _max.
-- * or /sys/block/mdX/md/sync_speed_{min,max}
-+ * Background sync IO speed control:
-+ *
-+ * - below speed min:
-+ *   no limit;
-+ * - above speed min and below speed max:
-+ *   a) if mddev is idle, then no limit;
-+ *   b) if mddev is busy handling normal IO, then limit inflight sync IO
-+ *   to sync_io_depth;
-+ * - above speed max:
-+ *   sync IO can't be issued;
-+ *
-+ * Following configurations can be changed via /proc/sys/dev/raid/ for system
-+ * or /sys/block/mdX/md/ for one array.
-  */
--
- static int sysctl_speed_limit_min = 1000;
- static int sysctl_speed_limit_max = 200000;
--static inline int speed_min(struct mddev *mddev)
-+static int sysctl_sync_io_depth = 32;
-+
-+static int speed_min(struct mddev *mddev)
- {
- 	return mddev->sync_speed_min ?
- 		mddev->sync_speed_min : sysctl_speed_limit_min;
+@@ -8625,50 +8625,55 @@ void md_cluster_stop(struct mddev *mddev)
+ 	put_cluster_ops(mddev);
  }
  
--static inline int speed_max(struct mddev *mddev)
-+static int speed_max(struct mddev *mddev)
+-static int is_mddev_idle(struct mddev *mddev, int init)
++static bool is_rdev_holder_idle(struct md_rdev *rdev, bool init)
  {
- 	return mddev->sync_speed_max ?
- 		mddev->sync_speed_max : sysctl_speed_limit_max;
- }
- 
-+static int sync_io_depth(struct mddev *mddev)
-+{
-+	return mddev->sync_io_depth ?
-+		mddev->sync_io_depth : sysctl_sync_io_depth;
-+}
++	unsigned long last_events = rdev->last_events;
 +
- static void rdev_uninit_serial(struct md_rdev *rdev)
- {
- 	if (!test_and_clear_bit(CollisionCheck, &rdev->flags))
-@@ -293,14 +309,21 @@ static const struct ctl_table raid_table[] = {
- 		.procname	= "speed_limit_min",
- 		.data		= &sysctl_speed_limit_min,
- 		.maxlen		= sizeof(int),
--		.mode		= S_IRUGO|S_IWUSR,
-+		.mode		= 0644,
- 		.proc_handler	= proc_dointvec,
- 	},
- 	{
- 		.procname	= "speed_limit_max",
- 		.data		= &sysctl_speed_limit_max,
- 		.maxlen		= sizeof(int),
--		.mode		= S_IRUGO|S_IWUSR,
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec,
-+	},
-+	{
-+		.procname	= "sync_io_depth",
-+		.data		= &sysctl_sync_io_depth,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
- 		.proc_handler	= proc_dointvec,
- 	},
- };
-@@ -5091,7 +5114,7 @@ static ssize_t
- sync_min_show(struct mddev *mddev, char *page)
- {
- 	return sprintf(page, "%d (%s)\n", speed_min(mddev),
--		       mddev->sync_speed_min ? "local": "system");
-+		       mddev->sync_speed_min ? "local" : "system");
- }
- 
- static ssize_t
-@@ -5100,7 +5123,7 @@ sync_min_store(struct mddev *mddev, const char *buf, size_t len)
- 	unsigned int min;
- 	int rv;
- 
--	if (strncmp(buf, "system", 6)==0) {
-+	if (strncmp(buf, "system", 6) == 0) {
- 		min = 0;
- 	} else {
- 		rv = kstrtouint(buf, 10, &min);
-@@ -5120,7 +5143,7 @@ static ssize_t
- sync_max_show(struct mddev *mddev, char *page)
- {
- 	return sprintf(page, "%d (%s)\n", speed_max(mddev),
--		       mddev->sync_speed_max ? "local": "system");
-+		       mddev->sync_speed_max ? "local" : "system");
- }
- 
- static ssize_t
-@@ -5129,7 +5152,7 @@ sync_max_store(struct mddev *mddev, const char *buf, size_t len)
- 	unsigned int max;
- 	int rv;
- 
--	if (strncmp(buf, "system", 6)==0) {
-+	if (strncmp(buf, "system", 6) == 0) {
- 		max = 0;
- 	} else {
- 		rv = kstrtouint(buf, 10, &max);
-@@ -5145,6 +5168,35 @@ sync_max_store(struct mddev *mddev, const char *buf, size_t len)
- static struct md_sysfs_entry md_sync_max =
- __ATTR(sync_speed_max, S_IRUGO|S_IWUSR, sync_max_show, sync_max_store);
- 
-+static ssize_t
-+sync_io_depth_show(struct mddev *mddev, char *page)
-+{
-+	return sprintf(page, "%d (%s)\n", sync_io_depth(mddev),
-+		       mddev->sync_io_depth ? "local" : "system");
-+}
-+
-+static ssize_t
-+sync_io_depth_store(struct mddev *mddev, const char *buf, size_t len)
-+{
-+	unsigned int max;
-+	int rv;
-+
-+	if (strncmp(buf, "system", 6) == 0) {
-+		max = 0;
-+	} else {
-+		rv = kstrtouint(buf, 10, &max);
-+		if (rv < 0)
-+			return rv;
-+		if (max == 0)
-+			return -EINVAL;
-+	}
-+	mddev->sync_io_depth = max;
-+	return len;
-+}
-+
-+static struct md_sysfs_entry md_sync_io_depth =
-+__ATTR_RW(sync_io_depth);
-+
- static ssize_t
- degraded_show(struct mddev *mddev, char *page)
- {
-@@ -5671,6 +5723,7 @@ static struct attribute *md_redundancy_attrs[] = {
- 	&md_mismatches.attr,
- 	&md_sync_min.attr,
- 	&md_sync_max.attr,
-+	&md_sync_io_depth.attr,
- 	&md_sync_speed.attr,
- 	&md_sync_force_parallel.attr,
- 	&md_sync_completed.attr,
-@@ -8927,6 +8980,23 @@ static sector_t md_sync_position(struct mddev *mddev, enum sync_action action)
- 	}
- }
- 
-+static bool sync_io_within_limit(struct mddev *mddev)
-+{
-+	int io_sectors;
++	if (!bdev_is_partition(rdev->bdev))
++		return true;
 +
 +	/*
-+	 * For raid456, sync IO is stripe(4k) per IO, for other levels, it's
-+	 * RESYNC_PAGES(64k) per IO.
++	 * If rdev is partition, and user doesn't issue IO to the array, the
++	 * array is still not idle if user issues IO to other partitions.
 +	 */
-+	if (mddev->level == 4 || mddev->level == 5 || mddev->level == 6)
-+		io_sectors = 8;
-+	else
-+		io_sectors = 128;
++	rdev->last_events = part_stat_read_accum(rdev->bdev->bd_disk->part0,
++						 sectors) -
++			    part_stat_read_accum(rdev->bdev, sectors);
 +
-+	return atomic_read(&mddev->recovery_active) <
-+		io_sectors * sync_io_depth(mddev);
++	return init || rdev->last_events <= last_events;
 +}
 +
- #define SYNC_MARKS	10
- #define	SYNC_MARK_STEP	(3*HZ)
- #define UPDATE_FREQUENCY (5*60*HZ)
-@@ -9195,7 +9265,8 @@ void md_do_sync(struct md_thread *thread)
- 				msleep(500);
- 				goto repeat;
- 			}
--			if (!is_mddev_idle(mddev, 0)) {
-+			if (!sync_io_within_limit(mddev) &&
-+			    !is_mddev_idle(mddev, 0)) {
- 				/*
- 				 * Give other IO more of a chance.
- 				 * The faster the devices, the less we wait.
++/*
++ * mddev is idle if following conditions are matched since last check:
++ * 1) mddev doesn't have normal IO completed;
++ * 2) mddev doesn't have inflight normal IO;
++ * 3) if any member disk is partition, and other partitions don't have IO
++ *    completed;
++ *
++ * Noted this checking rely on IO accounting is enabled.
++ */
++static bool is_mddev_idle(struct mddev *mddev, int init)
++{
++	unsigned long last_events = mddev->normal_io_events;
++	struct gendisk *disk;
+ 	struct md_rdev *rdev;
+-	int idle;
+-	int curr_events;
++	bool idle = true;
+ 
+-	idle = 1;
+-	rcu_read_lock();
+-	rdev_for_each_rcu(rdev, mddev) {
+-		struct gendisk *disk = rdev->bdev->bd_disk;
++	disk = mddev_is_dm(mddev) ? mddev->dm_gendisk : mddev->gendisk;
++	if (!disk)
++		return true;
+ 
+-		if (!init && !blk_queue_io_stat(disk->queue))
+-			continue;
++	mddev->normal_io_events = part_stat_read_accum(disk->part0, sectors);
++	if (!init && (mddev->normal_io_events > last_events ||
++		      bdev_count_inflight(disk->part0)))
++		idle = false;
+ 
+-		curr_events = (int)part_stat_read_accum(disk->part0, sectors) -
+-			      atomic_read(&disk->sync_io);
+-		/* sync IO will cause sync_io to increase before the disk_stats
+-		 * as sync_io is counted when a request starts, and
+-		 * disk_stats is counted when it completes.
+-		 * So resync activity will cause curr_events to be smaller than
+-		 * when there was no such activity.
+-		 * non-sync IO will cause disk_stat to increase without
+-		 * increasing sync_io so curr_events will (eventually)
+-		 * be larger than it was before.  Once it becomes
+-		 * substantially larger, the test below will cause
+-		 * the array to appear non-idle, and resync will slow
+-		 * down.
+-		 * If there is a lot of outstanding resync activity when
+-		 * we set last_event to curr_events, then all that activity
+-		 * completing might cause the array to appear non-idle
+-		 * and resync will be slowed down even though there might
+-		 * not have been non-resync activity.  This will only
+-		 * happen once though.  'last_events' will soon reflect
+-		 * the state where there is little or no outstanding
+-		 * resync requests, and further resync activity will
+-		 * always make curr_events less than last_events.
+-		 *
+-		 */
+-		if (init || curr_events - rdev->last_events > 64) {
+-			rdev->last_events = curr_events;
+-			idle = 0;
+-		}
+-	}
++	rcu_read_lock();
++	rdev_for_each_rcu(rdev, mddev)
++		if (!is_rdev_holder_idle(rdev, init))
++			idle = false;
+ 	rcu_read_unlock();
++
+ 	return idle;
+ }
+ 
 diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 9d55b4630077..b57842188f18 100644
+index b57842188f18..1982f1f18627 100644
 --- a/drivers/md/md.h
 +++ b/drivers/md/md.h
-@@ -484,6 +484,7 @@ struct mddev {
- 	/* if zero, use the system-wide default */
- 	int				sync_speed_min;
- 	int				sync_speed_max;
-+	int				sync_io_depth;
+@@ -132,7 +132,7 @@ struct md_rdev {
  
- 	/* resync even though the same disks are shared among md-devices */
- 	int				parallel_resync;
+ 	sector_t sectors;		/* Device size (in 512bytes sectors) */
+ 	struct mddev *mddev;		/* RAID array if running */
+-	int last_events;		/* IO event timestamp */
++	unsigned long last_events;	/* IO event timestamp */
+ 
+ 	/*
+ 	 * If meta_bdev is non-NULL, it means that a separate device is
+@@ -520,6 +520,7 @@ struct mddev {
+ 							 * adding a spare
+ 							 */
+ 
++	unsigned long			normal_io_events; /* IO event timestamp */
+ 	atomic_t			recovery_active; /* blocks scheduled, but not written */
+ 	wait_queue_head_t		recovery_wait;
+ 	sector_t			recovery_cp;
 -- 
 2.39.2
 
