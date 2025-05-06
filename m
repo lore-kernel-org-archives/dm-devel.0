@@ -1,78 +1,63 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9341427FD67;
-	Tue,  6 May 2025 15:55:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB091284B5E
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 16:37:44 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746546918; cv=none; b=RCmQWK8JeMm0JUN34d0YhXl/2DQ4tMmjzyWBUPt7xCf/23mjl7Q64v5iPbIZg/WAbO2fGr8HnAIMllfcMBZTUbC3MtVEYhtW7D4vQ3C4lA0BP3QQ/vjnNWqhVzI+fLxrEp4XSu2Q1OiA+TjQjRHh8AwUeG7lsa0FALzrm5uuCsY=
+	t=1746549464; cv=none; b=luO7iYvIN5SHLfRKtyVq9fzhrw7a6YXaMzeGtGeWs87IcRzgCFgiYsK38K9dvG2FJxU1av6GAeGxTYnl31mgh7OB6+VDu422EKDwDxGdcpFsJxVg4Mg9MTh6HBShxitNgtIm71IzmU1famnT8nZr/faHY5cGCsM8SNwQVwFaHxU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746546918; c=relaxed/simple;
-	bh=KokwTcsPEjcIZ/f64cPMglQ909nlpDnMzhPyZGYvzxw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=exbdEODe0RwZrlhJEf6UbFgU8jULxbkEmqeF0o0R+Bbuh3e6un8eXXZTDU1Pv2KR0ZJAaxso8hwMvyLNjpVqdu2NQjNo1AeG89u4d5NhWsQsYToSjpFENdHKv0+SCELEgg/5ZaO6p0V8KmDl7kayMm2DqynBsvNsXyFu+OViZzc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=YA/lDEym; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1746549464; c=relaxed/simple;
+	bh=8JJaNJStPQrgJrLmILJYS1JlbbSWpQ/goa2952Etjwk=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=eP+W8gVnkT5sDemvcTg/0a3KNVdjV1WdmGJNz10eSRxCQHRSmGAWm9Ao8hWrkzF1G2nHNkPDlPJg5OwQTXKoDDF6m/EMdZL9OVpIX9IrBhhv3qn1lI1NJjivVaz06r7eNeT4U4YvCYOcIfm3TCIVvie/QgkXHEGPaMDR10npvVw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=guQc1vCn; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="YA/lDEym"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id ED659C4CEE4;
-	Tue,  6 May 2025 15:55:15 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="guQc1vCn"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5BD91C4CEE4;
+	Tue,  6 May 2025 16:37:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1746546916;
-	bh=KokwTcsPEjcIZ/f64cPMglQ909nlpDnMzhPyZGYvzxw=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=YA/lDEym02kXPHJYYAshEh37VVEPXYr6h6uUOT3HR5v3gjEgKBOj1grHVWAuVgdtJ
-	 8reM6KCZV5esAd60c4cIkLJo1L6p4kV6Roxnos9n5MjPW7xW/XLfQYonwyhmXvLFoM
-	 9EI3HKKa7GNlohfqkWY+hAhP3v46T18EJBGhmMXzu49uqvTibHpMsanT7iWqsoHoqh
-	 ecDC9NIr1t/MsHrIYhKdR/msNFEoAQHS1f8sa9oQR7tXwFKusOM38K7A7cjMzKOwEs
-	 nQCLhZaGH+jh7whmh0N7cGYW2y2NP4M7dC3JhGvHmT9xJhTbyH5ljZTmmslu47n5Ia
-	 hP7QgfInSFQWQ==
-Date: Tue, 6 May 2025 08:55:15 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Zhang Yi <yi.zhang@huaweicloud.com>, dhowells@redhat.com,
-	brauner@kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org, tytso@mit.edu,
-	john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
-	shinichiro.kawasaki@wdc.com, yi.zhang@huawei.com,
-	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
-Message-ID: <20250506155515.GL1035866@frogsfrogsfrogs>
-References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
- <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
- <20250505132208.GA22182@lst.de>
- <20250505142945.GJ1035866@frogsfrogsfrogs>
- <20250506050239.GA27687@lst.de>
- <20250506053654.GA25700@frogsfrogsfrogs>
- <20250506054722.GA28781@lst.de>
- <c3105509-9d63-4fa2-afaf-5b508ddeeaca@huaweicloud.com>
- <20250506121012.GA21705@lst.de>
+	s=k20201202; t=1746549464;
+	bh=8JJaNJStPQrgJrLmILJYS1JlbbSWpQ/goa2952Etjwk=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=guQc1vCnfIn3Kl5tnOxetYMFRJ8FH63X7psuRhODmNngYI2VruzVMGvcXx3BLYoAw
+	 UhpXGOGpJ7Zas09IIjXjD/lCepp9hXhu6Og6uyoZUPMuv6lscuMs75nzu6MquTP61F
+	 4A/DoaI0CVT7SB6C65wBoMawH+5Mz6bkXBAHhpjGxu6sWW44tjuw+y/Wbo5Dmz2u+e
+	 uPX59nlYLieNZcZTAa0e2E7HYRFeej/LFM/iG9fYnMtTR4J6qnPwf7n9gV51OghkcL
+	 UGTNy/0TCX+Z/7qGf66H1XWPsuYXhWs+2gzksGzChvRQTmXR/rMxyf4DD3PwvhXDph
+	 /Y44TliDBSFww==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id ADE43380CFD7;
+	Tue,  6 May 2025 16:38:24 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes 2 for 6.15
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
+References: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <32f30a35-1bab-0538-8cd8-31ba3635ea7f@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes-2
+X-PR-Tracked-Commit-Id: f1aff4bc199cb92c055668caed65505e3b4d2656
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: cccd03371475e4c25ddad7f5b2467d9b4d3f5a09
+Message-Id: <174654950318.1583977.120993953881906101.pr-tracker-bot@kernel.org>
+Date: Tue, 06 May 2025 16:38:23 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Dan Carpenter <dan.carpenter@linaro.org>, Tudor Ambarus <tudor.ambarus@linaro.org>, Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250506121012.GA21705@lst.de>
 
-On Tue, May 06, 2025 at 02:10:12PM +0200, Christoph Hellwig wrote:
-> On Tue, May 06, 2025 at 07:25:06PM +0800, Zhang Yi wrote:
-> > +       if (request_mask & STATX_WRITE_ZEROES_UNMAP &&
-> > +           bdev_write_zeroes_unmap(bdev))
-> > +               stat->result_mask |= STATX_WRITE_ZEROES_UNMAP;
-> 
-> That would be my expectation.  But then again this area seems to
-> confuse me a lot, so maybe we'll get Christian or Dave to chim in.
+The pull request you sent on Tue, 6 May 2025 14:26:45 +0200 (CEST):
 
-Um... does STATX_WRITE_ZEROES_UNMAP protect a field somewhere?
-It might be nice to expose the request alignment granularity/max
-size/etc.  Or does this flag exist solely to support discovering that
-FALLOC_FL_WRITE_ZEROES is supported?  In which case, why not discover
-its existence by calling fallocate(fd, WRITE_ZEROES, 0, 0) like the
-other modes?
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.15/dm-fixes-2
 
---D
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/cccd03371475e4c25ddad7f5b2467d9b4d3f5a09
+
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
