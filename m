@@ -1,27 +1,27 @@
 Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E02B4280322
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A7F528001C
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746536243; cv=none; b=rRjDh4aFxmrhLBcg0sZwXEnIpYqE1fJc2l/JPQfGNrBI/ydFZaenMxKf62QLW21pBPwP3Rx+7BETEyRd5ddcMxf018mxkKA21ydTA9pVr9Cd+uVRrWVmEYz8bCoV+/BWhwYPBELRmfpuqJnnZQGWT/dEB1TySKqJ0tgFeOkR4+4=
+	t=1746536243; cv=none; b=hl0LdsHHad8tSTZlEK1MPpN362zuZVukfWW5cfWvrlgMPAl7hR9/bJqGt/KWgVvYHeQtIrDsrsMUZ97ahuxzrfDKZZmcwYrF64441SJW/79ic+CVdIHtzGFDc6GuRrNOV5be4S4DK3SAFT9rS4AvBs+LNW9KDEFvwNxMEfxJjF0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1746536243; c=relaxed/simple;
-	bh=wO9Y0wqHdeWfdHbfJPLlykXM5N1LOb5pjmWpm6HDKfk=;
+	bh=9HvytNFZLzxscgQdQ7UkwMiUyIzF+y/aobPVsrzIgko=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ovs/xs/q3MaaaNt1YyqT5tdeG/M3mJEsQCWZf5gnsNmDBJ2BbGUGFxzhwJwxPGYCkrIa00T/HKXZHOZyR21itP0nGl6TjvAP01rq50bWVuseK7e3LDTSaLYKu5V+OtFIIkJDec42jw8RXs5dSlkAZoTO0tEMN/gxObrf9orDUEU=
+	 MIME-Version; b=ln3gJV3yjfNd4Rv/O9ij5I1GHPZ07eDnGiNAHizpp54h7juCJWrBSeijkX7ofnp69j2rvaTOS3SSM9QKJIAYEObfxsbjQTy2jFeZ78oiXzm3AsZkcZsW0VkoACs6U9iKqG4YthbC4kY6CnsnBpGngvHPfZNfBfFcGXJLuD8YYd0=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4ZsJMN1sZpzKHMqs
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:20 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4ZsJLs6lHvz4f3jd2
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:56:53 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 10C051A0359
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:19 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 675C81A0F0E
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:18 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S10;
+	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S9;
 	Tue, 06 May 2025 20:57:18 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: axboe@kernel.dk,
@@ -41,9 +41,9 @@ Cc: linux-block@vger.kernel.org,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com
-Subject: [PATCH v3 6/9] md: record dm-raid gendisk in mddev
-Date: Tue,  6 May 2025 20:49:00 +0800
-Message-Id: <20250506124903.2540268-7-yukuai1@huaweicloud.com>
+Subject: [PATCH v3 5/9] block: export API to get the number of bdev inflight IO
+Date: Tue,  6 May 2025 20:48:59 +0800
+Message-Id: <20250506124903.2540268-6-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250506124903.2540268-1-yukuai1@huaweicloud.com>
 References: <20250506124658.2537886-1-yukuai1@huaweicloud.com>
@@ -55,10 +55,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S10
-X-Coremail-Antispam: 1UD129KBjvJXoW7AFy8Gw4xtF1kGF4rCr1ftFb_yoW8WF4fpa
-	1DC3yrArW5J39Fq3WDJr4DZa45X3WvqryrKFZxCaySvayavF98Ww1kKF42qr4DGrZIgFnx
-	ur4jvrZ5Kry0yrJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S9
+X-Coremail-Antispam: 1UD129KBjvJXoWxAF13Xr13Cr1kWw1UCFW5GFg_yoWrCF4Dpr
+	1UGas8ArZ8Kr1fuF1Utw4xWr1ftw4qk34Svr1xA34akF4DtrySvF92yr92yr4SvrZ7AFWU
+	uw1YkF97CF1jkw7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -77,59 +77,123 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Following patch will use gendisk to check if there are normal IO
-completed or inflight, to fix a problem in mdraid that foreground IO
-can be starved by background sync IO in later patches.
+- rename part_in_{flight, flight_rw} to bdev_count_{inflight, inflight_rw}
+- export bdev_count_inflight, to fix a problem in mdraid that foreground
+  IO can be starved by background sync IO in later patches
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Reviewed-by: Xiao Ni <xni@redhat.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm-raid.c | 3 +++
- drivers/md/md.h      | 3 ++-
- 2 files changed, 5 insertions(+), 1 deletion(-)
+ block/blk-core.c          |  2 +-
+ block/blk.h               |  1 -
+ block/genhd.c             | 22 ++++++++++++++++------
+ include/linux/part_stat.h |  2 ++
+ 4 files changed, 19 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 6adc55fd90d3..127138c61be5 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -14,6 +14,7 @@
- #include "raid5.h"
- #include "raid10.h"
- #include "md-bitmap.h"
-+#include "dm-core.h"
+diff --git a/block/blk-core.c b/block/blk-core.c
+index e8cc270a453f..b862c66018f2 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -1018,7 +1018,7 @@ void update_io_ticks(struct block_device *part, unsigned long now, bool end)
+ 	stamp = READ_ONCE(part->bd_stamp);
+ 	if (unlikely(time_after(now, stamp)) &&
+ 	    likely(try_cmpxchg(&part->bd_stamp, &stamp, now)) &&
+-	    (end || part_in_flight(part)))
++	    (end || bdev_count_inflight(part)))
+ 		__part_stat_add(part, io_ticks, now - stamp);
  
- #include <linux/device-mapper.h>
+ 	if (bdev_is_partition(part)) {
+diff --git a/block/blk.h b/block/blk.h
+index ff21f234b62f..c5a18f0fd3a9 100644
+--- a/block/blk.h
++++ b/block/blk.h
+@@ -421,7 +421,6 @@ void blk_apply_bdi_limits(struct backing_dev_info *bdi,
+ int blk_dev_init(void);
  
-@@ -3308,6 +3309,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ void update_io_ticks(struct block_device *part, unsigned long now, bool end);
+-unsigned int part_in_flight(struct block_device *part);
  
- 	/* Disable/enable discard support on raid set. */
- 	configure_discard_support(rs);
-+	rs->md.dm_gendisk = ti->table->md->disk;
+ static inline void req_set_nomerge(struct request_queue *q, struct request *req)
+ {
+diff --git a/block/genhd.c b/block/genhd.c
+index 2470099b492b..fdaeafddfc4c 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -125,7 +125,7 @@ static void part_stat_read_all(struct block_device *part,
+ 	}
+ }
  
- 	mddev_unlock(&rs->md);
- 	return 0;
-@@ -3327,6 +3329,7 @@ static void raid_dtr(struct dm_target *ti)
+-static void part_in_flight_rw(struct block_device *part,
++static void bdev_count_inflight_rw(struct block_device *part,
+ 		unsigned int inflight[2], bool mq_driver)
+ {
+ 	int cpu;
+@@ -147,14 +147,24 @@ static void part_in_flight_rw(struct block_device *part,
+ 		inflight[WRITE] = 0;
+ }
  
- 	mddev_lock_nointr(&rs->md);
- 	md_stop(&rs->md);
-+	rs->md.dm_gendisk = NULL;
- 	mddev_unlock(&rs->md);
+-unsigned int part_in_flight(struct block_device *part)
++/**
++ * bdev_count_inflight - get the number of inflight IOs for a block device.
++ *
++ * @part: the block device.
++ *
++ * Inflight here means started IO accounting, from bdev_start_io_acct() for
++ * bio-based block device, and from blk_account_io_start() for rq-based block
++ * device.
++ */
++unsigned int bdev_count_inflight(struct block_device *part)
+ {
+ 	unsigned int inflight[2] = {0};
  
- 	if (work_pending(&rs->md.event_work))
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 1cf00a04bcdd..9d55b4630077 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -404,7 +404,8 @@ struct mddev {
- 						       * are happening, so run/
- 						       * takeover/stop are not safe
- 						       */
--	struct gendisk			*gendisk;
-+	struct gendisk			*gendisk;    /* mdraid gendisk */
-+	struct gendisk			*dm_gendisk; /* dm-raid gendisk */
+-	part_in_flight_rw(part, inflight, false);
++	bdev_count_inflight_rw(part, inflight, false);
  
- 	struct kobject			kobj;
- 	int				hold_active;
+ 	return inflight[READ] + inflight[WRITE];
+ }
++EXPORT_SYMBOL_GPL(bdev_count_inflight);
+ 
+ /*
+  * Can be deleted altogether. Later.
+@@ -1004,7 +1014,7 @@ ssize_t part_stat_show(struct device *dev,
+ 	struct disk_stats stat;
+ 	unsigned int inflight;
+ 
+-	inflight = part_in_flight(bdev);
++	inflight = bdev_count_inflight(bdev);
+ 	if (inflight) {
+ 		part_stat_lock();
+ 		update_io_ticks(bdev, jiffies, true);
+@@ -1053,7 +1063,7 @@ ssize_t part_inflight_show(struct device *dev, struct device_attribute *attr,
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	unsigned int inflight[2] = {0};
+ 
+-	part_in_flight_rw(bdev, inflight, queue_is_mq(q));
++	bdev_count_inflight_rw(bdev, inflight, queue_is_mq(q));
+ 
+ 	return sysfs_emit(buf, "%8u %8u\n", inflight[READ], inflight[WRITE]);
+ }
+@@ -1308,7 +1318,7 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 		if (bdev_is_partition(hd) && !bdev_nr_sectors(hd))
+ 			continue;
+ 
+-		inflight = part_in_flight(hd);
++		inflight = bdev_count_inflight(hd);
+ 		if (inflight) {
+ 			part_stat_lock();
+ 			update_io_ticks(hd, jiffies, true);
+diff --git a/include/linux/part_stat.h b/include/linux/part_stat.h
+index c5e9cac0575e..eeeff2a04529 100644
+--- a/include/linux/part_stat.h
++++ b/include/linux/part_stat.h
+@@ -79,4 +79,6 @@ static inline void part_stat_set_all(struct block_device *part, int value)
+ #define part_stat_local_read_cpu(part, field, cpu)			\
+ 	local_read(&(part_stat_get_cpu(part, field, cpu)))
+ 
++unsigned int bdev_count_inflight(struct block_device *part);
++
+ #endif /* _LINUX_PART_STAT_H */
 -- 
 2.39.2
 
