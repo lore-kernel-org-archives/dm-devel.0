@@ -1,45 +1,36 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2A041F1905;
-	Tue,  6 May 2025 04:47:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6CAC223D2AE
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 05:02:44 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746506850; cv=none; b=nJ8fUcC/4MjU7WrEbKFw0y4gUPU6cOS5VORXSFUiRLjOoWh6gG6qhQQofwsYhzW9MNEEf4eKbnpGH6uddUi5JcUlEwpJGNaNT1g4oTJ7uoDH6/kXvjk2Nh/j1n2UUVtYxVzb19va3De2bqGxSu1aXMigSvJPkxb3IsTPYbXS5h4=
+	t=1746507766; cv=none; b=ZtM7JGrRGc78fNR6VvwiKNbYNi3u/ixQW3X6MELdwy4ElxItFy2aVt206vtdqlZrwjnTx9gWWBWlA1kPIkvhUvLMvEWB8L86IlUorXzuYuhuXB4oICTGMYPQ0CyKqE+3cTEvTSRrI0vrmrj9yYzShBnUZMzHsxitV8//YEOu074=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746506850; c=relaxed/simple;
-	bh=6yNFM7ngHYeSSeoUicHGAyGghCXiMKa68OxABeUigu0=;
+	s=arc-20240116; t=1746507766; c=relaxed/simple;
+	bh=WpiL9RUKgpw4IAWGl2V9dyiwaKBSUahbWcqFMg2jLmA=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=uYdS3orM6eaUl3WuoiPDXhWqyHLeboDYP4/WK2V0GLhvpWx7FJGNeqh25NJccQMuhpPge1Z4U5KEIar4lKtihEiR7nxYKyvElA83UJ+P9NwxSYszd6YT1MOsJstAGOaP2tvnjTEAzhSCUG9t/gQWCq1s98XzELw1t0b2ItRa9Aw=
+	 Content-Type:Content-Disposition:In-Reply-To; b=VzDjx3w/nu8ptsXvhArrhoUpSffAO1O7E9IYdSFSi7zjW0r+jioJx22LFTDWRBBPJyKDpA3fQKfdQuDmqSOYrpx8bP8Zy4io1uY4Dy8rKZ068DN9xWmqE/5exBzjb7cFUn5vAwqBJs5qp1bM3FSDtynoXWWmaFr2N1+gIfgPoqc=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 020CC67373; Tue,  6 May 2025 06:47:24 +0200 (CEST)
-Date: Tue, 6 May 2025 06:47:23 +0200
+	id 9C5A767373; Tue,  6 May 2025 07:02:39 +0200 (CEST)
+Date: Tue, 6 May 2025 07:02:39 +0200
 From: Christoph Hellwig <hch@lst.de>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, "Md. Haris Iqbal" <haris.iqbal@ionos.com>,
-	Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>,
-	Kent Overstreet <kent.overstreet@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Carlos Maiolino <cem@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Naohiro Aota <naohiro.aota@wdc.com>,
-	Johannes Thumshirn <jth@kernel.org>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Pavel Machek <pavel@kernel.org>, slava@dubeyko.com,
-	glaubitz@physik.fu-berlin.de, frank.li@vivo.com,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-pm@vger.kernel.org
-Subject: Re: add more bio helpers v2
-Message-ID: <20250506044723.GA27656@lst.de>
-References: <20250430212159.2865803-1-hch@lst.de>
+To: "Darrick J. Wong" <djwong@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Zhang Yi <yi.zhang@huaweicloud.com>,
+	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+	linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org,
+	tytso@mit.edu, john.g.garry@oracle.com, bmarzins@redhat.com,
+	chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
+	brauner@kernel.org, yi.zhang@huawei.com, chengzhihao1@huawei.com,
+	yukuai3@huawei.com, yangerkun@huawei.com
+Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
+Message-ID: <20250506050239.GA27687@lst.de>
+References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com> <20250421021509.2366003-8-yi.zhang@huaweicloud.com> <20250505132208.GA22182@lst.de> <20250505142945.GJ1035866@frogsfrogsfrogs>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -48,10 +39,22 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250430212159.2865803-1-hch@lst.de>
+In-Reply-To: <20250505142945.GJ1035866@frogsfrogsfrogs>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-This has maintaner ACKs for everything but the two dm and the one
-btrfs patch one.  Maybe we can queue up the series minus those three
-patches and then deal with them later?
+On Mon, May 05, 2025 at 07:29:45AM -0700, Darrick J. Wong wrote:
+> attributes_mask contains attribute flags known to the filesystem,
+> whereas attributes contains flags actually set on the file.
+> "known_attributes" would have been a better name, but that's water under
+> the bridge. :P
+
+Oooh.  I think I was very confused at what this patch does, and what
+it does seems confused as well.
+
+The patch adds a new flag to the STATX_ATTR_* namespace, which
+historically was used for persistent on-disk flags like immutable,
+not the STATX_* namespace where I assumed it, and which has no
+support mask.  Which seems really odd for a pure kernel feature.
+Then again it seems to follow STATX_ATTR_WRITE_ATOMIC which seems
+just as wrongly place unless I'm missing something?
 
