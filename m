@@ -1,130 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 07F9E280310
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:28:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAA6D27A47A
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:55:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746534511; cv=none; b=AbukaFUYVAH+f9TxMtr8HrZ2ofPHK0UurHsBz2oPEiuJPxGDEv8ojJQbM4rtpxqTdT8tfJwq/gWZm9nAKHhzi4ZQNjKa32JrkUbL/2bY3xoPDwBSemJmlC99dI5VqtTj01jJmjzC0wxetpqt2tjKI2z+CDTKdv8a2kgfsk6pipY=
+	t=1746536115; cv=none; b=a6ytYJqwjdSuW0fv/jCWdIAaBgsmtjESncRE/HR7CQJ4Lq8lGdbWTv8RlVOQySzG45bllEN+K4Vx885kSC1ldYkQxUtOnZKAv29hIrhT5mdFLsYNM6sq8b0qVIk6l9yDCgURhcgVkjQiw7i+tIM9dzwA8CBMHiuECaRojPCVBgA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746534511; c=relaxed/simple;
-	bh=svjgCeA4okvl7uFO2WfawpA/ktNJ2XCIYkBBNa1uT1k=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=pUkj5/Sg7pV9bd2U6UkigJAL0ayU0rwdWjhpfKFSBwss79TfVgCV3bEnLc22FlgJWaNkYofR5HIY5DUaGpXMYgXzUHjRpqmyavT1MjIyDGZFLq8xgoyyIQ5HIW5rukmRjjr6BmFvNrULR7fUXLFrkZfaHw1nQ/OQVJikToMUR0s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=inkq4A0l; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="inkq4A0l"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1746534508;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4RqHIHWGcV5oq3BR6dRROKyVGbZDU2ZQtpUE9Q3QM1c=;
-	b=inkq4A0lC/zr9ey/0HG/VL45IbMaiRxKpytfr0W19Oe10Awm+fRhGeGdw6jdqcCpuCHuMd
-	RRXVxt0M7WzIDWz2VaiR043QrjqObW97mSOv/K6ykq6YaFFwhyzq8keFb63AuzrS7sX2OF
-	leIQWU6LHWvMvSfLzld0Zyb+IDzDNTY=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-176-9m9TwKlAPGe_uChjA179IQ-1; Tue,
- 06 May 2025 08:28:27 -0400
-X-MC-Unique: 9m9TwKlAPGe_uChjA179IQ-1
-X-Mimecast-MFC-AGG-ID: 9m9TwKlAPGe_uChjA179IQ_1746534506
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A2B33186A72A;
-	Tue,  6 May 2025 12:28:18 +0000 (UTC)
-Received: from [10.22.80.45] (unknown [10.22.80.45])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 44F4519560AF;
-	Tue,  6 May 2025 12:28:16 +0000 (UTC)
-Date: Tue, 6 May 2025 14:28:13 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Tudor Ambarus <tudor.ambarus@linaro.org>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Subject: Re: [PATCH] dm: fix copying after src array boundaries
-In-Reply-To: <20250506-dm-past-array-boundaries-v1-1-b5b1bb8b2b34@linaro.org>
-Message-ID: <f9f3b82e-dd37-eff8-3718-1b71746e8c01@redhat.com>
-References: <20250506-dm-past-array-boundaries-v1-1-b5b1bb8b2b34@linaro.org>
+	s=arc-20240116; t=1746536115; c=relaxed/simple;
+	bh=226HvrpzIggRv7+P11Xi1OD0yG8CL9+835GwM5RSIDM=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=FpAfgUHoQpAwIMU0WbT2SBrp2FXqxL2uJXdrPHK4dbXR+KOD+9PESVhmK96tVPMoj8C6tON2wZJy3/5/HGpOUE1r2EaO5DuY58JvNtH0OYYxRzsqJdt3b6d+qgWIc/gg/pVKetNkS4hKBzOvRT36h7I/trFpkYGw1BuZArl+jwY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4ZsJJw0ktdzKHMgd
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:55:12 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id DF1DD1A1A18
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:55:10 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgDnSl+sBhpo8C9vLg--.36407S4;
+	Tue, 06 May 2025 20:55:10 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: axboe@kernel.dk,
+	agk@redhat.com,
+	song@kernel.org,
+	hch@lst.de,
+	john.g.garry@oracle.com,
+	hare@suse.de,
+	xni@redhat.com,
+	pmenzel@molgen.mpg.de
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	yukuai3@huawei.com,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com,
+	johnny.chenyi@huawei.com
+Subject: [PATCH v3 0/9] md: fix is_mddev_idle()
+Date: Tue,  6 May 2025 20:46:47 +0800
+Message-Id: <20250506124658.2537886-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgDnSl+sBhpo8C9vLg--.36407S4
+X-Coremail-Antispam: 1UD129KBjvdXoWrtr18Ww1xAFyUJFyDKryUWrg_yoWDKwc_uF
+	WkZFyaqF4xXF13AF90kF13ZrW0krW8X3s8XFySqrZ5Zr93Xr98K398K39Yq398WFW3u3ZY
+	yr18ur48Ar1IqjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUIcSsGvfJTRUUUb3AFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k26cxKx2IYs7xG
+	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8w
+	A2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j
+	6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628v
+	n2kIc2xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7x
+	kEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E
+	67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCw
+	CI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1x
+	MIIF0xvEx4A2jsIE14v26r4j6F4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr1j6F4UJbIYCT
+	nIWIevJa73UjIFyTuYvjTRNJ5oDUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
+From: Yu Kuai <yukuai3@huawei.com>
 
+Changes in v3:
+ - add review tag for patch 1-5;
+ - fix some typo and words;
+Changes in v2:
+ - add patch 1-5;
+ - add reviewed-by in patch 6,7,9;
+ - rename mddev->last_events to mddev->normal_IO_events in patch 8;
 
-On Tue, 6 May 2025, Tudor Ambarus wrote:
+Yu Kuai (9):
+  blk-mq: remove blk_mq_in_flight()
+  block: reuse part_in_flight_rw for part_in_flight
+  block: WARN if bdev inflight counter is negative
+  block: clean up blk_mq_in_flight_rw()
+  block: export API to get the number of bdev inflight IO
+  md: record dm-raid gendisk in mddev
+  md: add a new api sync_io_depth
+  md: fix is_mddev_idle()
+  md: clean up accounting for issued sync IO
 
-> The blammed commit copied to argv the size of the reallocated argv,
-> instead of the size of the old_argv, thus reading and copying from
-> past the old_argv allocated memory.
-> 
-> Following BUG_ON was hit:
-> [    3.038929][    T1] kernel BUG at lib/string_helpers.c:1040!
-> [    3.039147][    T1] Internal error: Oops - BUG: 00000000f2000800 [#1]  SMP
-> ...
-> [    3.056489][    T1] Call trace:
-> [    3.056591][    T1]  __fortify_panic+0x10/0x18 (P)
-> [    3.056773][    T1]  dm_split_args+0x20c/0x210
-> [    3.056942][    T1]  dm_table_add_target+0x13c/0x360
-> [    3.057132][    T1]  table_load+0x110/0x3ac
-> [    3.057292][    T1]  dm_ctl_ioctl+0x424/0x56c
-> [    3.057457][    T1]  __arm64_sys_ioctl+0xa8/0xec
-> [    3.057634][    T1]  invoke_syscall+0x58/0x10c
-> [    3.057804][    T1]  el0_svc_common+0xa8/0xdc
-> [    3.057970][    T1]  do_el0_svc+0x1c/0x28
-> [    3.058123][    T1]  el0_svc+0x50/0xac
-> [    3.058266][    T1]  el0t_64_sync_handler+0x60/0xc4
-> [    3.058452][    T1]  el0t_64_sync+0x1b0/0x1b4
-> [    3.058620][    T1] Code: f800865e a9bf7bfd 910003fd 941f48aa (d4210000)
-> [    3.058897][    T1] ---[ end trace 0000000000000000 ]---
-> [    3.059083][    T1] Kernel panic - not syncing: Oops - BUG: Fatal exception
-> 
-> Fix it by copying the size of src, and not the size of dst, as it was.
-> 
-> Fixes: 5a2a6c428190 ("dm: always update the array size in realloc_argv on success")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Tudor Ambarus <tudor.ambarus@linaro.org>
-> ---
->  drivers/md/dm-table.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index 9e175c5e0634b49b990436898f63c2b1e696febb..6dae73ee49dbb36d89341ff09556876d0973c4ff 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -524,9 +524,9 @@ static char **realloc_argv(unsigned int *size, char **old_argv)
->  	}
->  	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
->  	if (argv) {
-> -		*size = new_size;
->  		if (old_argv)
->  			memcpy(argv, old_argv, *size * sizeof(*argv));
-> +		*size = new_size;
->  	}
->  
->  	kfree(old_argv);
-> 
-> ---
-> base-commit: 92a09c47464d040866cf2b4cd052bc60555185fb
-> change-id: 20250506-dm-past-array-boundaries-1fe2f5a1030f
-> 
-> Best regards,
-> -- 
-> Tudor Ambarus <tudor.ambarus@linaro.org>
+ block/blk-core.c          |   2 +-
+ block/blk-mq.c            |  22 ++---
+ block/blk-mq.h            |   5 +-
+ block/blk.h               |   1 -
+ block/genhd.c             |  69 ++++++++------
+ drivers/md/dm-raid.c      |   3 +
+ drivers/md/md.c           | 190 ++++++++++++++++++++++++++------------
+ drivers/md/md.h           |  18 +---
+ drivers/md/raid1.c        |   3 -
+ drivers/md/raid10.c       |   9 --
+ drivers/md/raid5.c        |   8 --
+ include/linux/blkdev.h    |   1 -
+ include/linux/part_stat.h |   2 +
+ 13 files changed, 191 insertions(+), 142 deletions(-)
 
-Thanks
-
-I sent a pull request to Linus that includes this patch.
-
-Mikulas
+-- 
+2.39.2
 
