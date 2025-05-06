@@ -1,28 +1,28 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 280DE280016
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4E1427CCE7
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 12:57:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746536241; cv=none; b=O81evvJ+WSy5cTAHVjqcnZmKLISDW1ui1el5J2GiROpjSB3jUzFLpprLCTG8m20nHAd2mo/bETI/FL1qeIlJlJEoh4kgwxW6n56QKUs3YGh2iFzMVKL1vPORBSyHsf22Wb+r/phcGFzLwutKW73e9xDiqngVKPixoIIVJBNoZH8=
+	t=1746536241; cv=none; b=OfKDGCFfjrPxrLW+4UbKfM5/FrCDDkxugZG+vxA4HGG7RHXY7xxAvylBb5VSjJ5c1S/NV3UE+oT82Q6SSQ8+2m86wChZE3dogFk6gQRl3FvTZhrKYvvMBgPtv4y+alGEwOfccu7QsleWPkYrudx/G/whhUPBKIs5DfgQIqi3aWc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1746536241; c=relaxed/simple;
-	bh=JSvR7C4+yIzGcyP4RuB4kV0hCZ9UNCP5oQNtJtfpLpA=;
+	bh=ijmU0npkFWkOhFlJZmS1k2UfSaOwsdS9IBPLWBwjzwA=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=YvhiqM3Mi85drN+ZHOMhVCMBa02PM7IydJvVjcPt0IbYGsJjqdzBJM75XI2aGH3wX0eL6bLnyaH6kEsaV3dSVHQ56p0HpQED6S4h2b1GxDvF0XxAG6oIbL4CIT2TzRoLp6w51UGs78bvYlHwgHyXPGDn/2FLMzdjydYWPlqdyUs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+	 MIME-Version; b=DCGSxS4BWt0CIrjDycvTBX06UF+nwt4UZn6rjPmFpRxHwpiC6YXeQy79UNaPfGXu36A2yhsHKo6CREEuPe0weCrvKTwoj31rMc1nxVVfQCKxCJ8yIggLj7u/1bVVcxXyk/mxC7NNlyAFmsLgxvbDt+I41sp6vsOJqcty3/JNJY4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4ZsJML29JMzKHMpr
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4ZsJML2xMSzYQvDG
 	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:18 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 1C5361A18F2
+	by mail.maildlp.com (Postfix) with ESMTP id BD8531A18F7
 	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 20:57:17 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S7;
-	Tue, 06 May 2025 20:57:16 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgDXOl8pBxpoilNvLg--.37994S8;
+	Tue, 06 May 2025 20:57:17 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: axboe@kernel.dk,
 	agk@redhat.com,
@@ -41,9 +41,9 @@ Cc: linux-block@vger.kernel.org,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com
-Subject: [PATCH v3 4/9] block: clean up blk_mq_in_flight_rw()
-Date: Tue,  6 May 2025 20:48:57 +0800
-Message-Id: <20250506124903.2540268-4-yukuai1@huaweicloud.com>
+Subject: [PATCH 4/9] block: cleanup blk_mq_in_flight_rw()
+Date: Tue,  6 May 2025 20:48:58 +0800
+Message-Id: <20250506124903.2540268-5-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250506124903.2540268-1-yukuai1@huaweicloud.com>
 References: <20250506124658.2537886-1-yukuai1@huaweicloud.com>
@@ -55,24 +55,24 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S7
-X-Coremail-Antispam: 1UD129KBjvJXoWxuF15Jw1rWrWfXFyxury5twb_yoWrZw45pr
-	45Ka98JrW5Wr1S9r1xtan7XFyfKw48KryIvwnxAr1ayr18Kr9xZFy8Gw1ktr1IvrykCFW3
-	C3WYyFy7GF1UG37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmF14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JrWl82xGYIkIc2
-	x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2z4x0
-	Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJw
-	A2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS
-	0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2
-	IY67AKxVWUGVWUXwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0
-	Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kIc2
-	xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWU
-	JVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67
-	kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY
-	6xIIjxv20xvEc7CjxVAFwI0_Cr0_Gr1UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42
-	IY6I8E87Iv67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2
-	KfnxnUUI43ZEXa7VUUbAw7UUUUU==
+X-CM-TRANSID:gCh0CgDXOl8pBxpoilNvLg--.37994S8
+X-Coremail-Antispam: 1UD129KBjvJXoWxuF15Jw1xtw45KF47Ar43ZFb_yoWrZF45pr
+	45Ka98trW5Wr1fur1xtan7XF1fKw48KryIvwnxAr1ayr18Kr98ZFy8Gw1kAr1SvrykCFW3
+	C3WYyFy7GF1UC37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
+	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
+	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
+	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
+	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
+	IYx2IY67AKxVWUGVWUXwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
+	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
+	kIc2xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
+	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
+	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
+	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
+	4lIxAIcVC2z280aVAFwI0_Gr0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
+	daVFxhVjvjDU0xZFpf9x0pRiF4iUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
@@ -81,7 +81,6 @@ Also add comment for part_inflight_show() for the difference between
 bio-based and rq-based device.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
  block/blk-mq.c | 12 ++++++------
  block/blk-mq.h |  3 +--
@@ -89,7 +88,7 @@ Reviewed-by: Christoph Hellwig <hch@lst.de>
  3 files changed, 32 insertions(+), 26 deletions(-)
 
 diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 45989960a89d..4722a4ad4121 100644
+index 301dbd3e1743..0067e8226e05 100644
 --- a/block/blk-mq.c
 +++ b/block/blk-mq.c
 @@ -89,7 +89,7 @@ struct mq_inflight {
@@ -122,7 +121,7 @@ index 45989960a89d..4722a4ad4121 100644
  
  #ifdef CONFIG_LOCKDEP
 diff --git a/block/blk-mq.h b/block/blk-mq.h
-index eeac0d47c878..affb2e14b56e 100644
+index a23d5812d08f..4205da1a4836 100644
 --- a/block/blk-mq.h
 +++ b/block/blk-mq.h
 @@ -246,8 +246,7 @@ static inline bool blk_mq_hw_queue_mapped(struct blk_mq_hw_ctx *hctx)
