@@ -1,149 +1,99 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9587926D4D3
-	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 10:05:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B7071474B8
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 11:17:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746525907; cv=none; b=J9B41IAjoVax8kf5aGXXIBWPVr3aClwMcxpK80Tn+sgVNT2cJxSNHJVByHIgmJqyLffpKFawX9ckkQB4dtp2G3OBuXXXUjL3/y+Lgf+XwuFV7+PmFahTvxe3Pimm4uSPHf8p5aRK3xuldofZRjCZUXkgPptgzyunqwxBThqFfW8=
+	t=1746530225; cv=none; b=RpJOvHfQk/T1Bk5FU2eqkSUUSRac4pSfovZ2PSZPlWAbLD2xLXwLgtPw3lLQYkrwvqX9hF887q9dg8nmPY0+lck79tXDvG0dlqo+lkJchYKMgOR2srh/Deacy0iERtwF4dhedRIgcOvO4q5rKl+fiA2XgSc5VNCWgz58SGAvZgU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746525907; c=relaxed/simple;
-	bh=NYYPUTt20O2TPocnUB7Huf4QETUChDygy6WWv8pAHHA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Z4U6vV8CHZ4Oswsap/l2JhcP1CXGvkF/dqbPgqnMqlChyZ3S2Qv7Ar1LzI+lO8JtdyI50H+fVqpVDXR/7+1GGUo8nV5EQcR0Yg9Mlc4wDsXJhewIh2RdUR4AopbHFUNntM/x5BTB1JfPLvr/3xegilNxleNBAE76w0cD1DRxyOk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=nwj6ZlrZ; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=QlUFc5M7; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=3OW/QdYO; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=7pkniqqj; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="nwj6ZlrZ";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="QlUFc5M7";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="3OW/QdYO";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="7pkniqqj"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 8EDC81F441;
-	Tue,  6 May 2025 10:05:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1746525903;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zk0fDN+7PJwjKDDJ2t6a08GL5EW0lCf5wZyG/z+TpX0=;
-	b=nwj6ZlrZcRjlCYdYReDfiy1eA0rokC3eC7qMNjEzo6jZoP5RYGmCpmqTXYSz+gYSHdcBct
-	1fQ8VGOSfmPR5GUJ3SjIgFC+FmaB6dnOwp3j1YObZqC5vMQp2Gq3UtLJzGZZUm+cO3/6al
-	GgjxAZxybGEM732anF1sYDwIE+KC5qw=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1746525903;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zk0fDN+7PJwjKDDJ2t6a08GL5EW0lCf5wZyG/z+TpX0=;
-	b=QlUFc5M7P2UMRTf5b8sMNOvsNWpV3EKID+TC1Ny1SOjRGv9mK8BD8XFGHZVSSgbMVHA+e0
-	yZAzBiZGErpa+HCQ==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1746525902;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zk0fDN+7PJwjKDDJ2t6a08GL5EW0lCf5wZyG/z+TpX0=;
-	b=3OW/QdYOX0c1xiiAgUgDKH2AcQ7BDVzfTjnX3yBpkGJhMqnt3PY4oT8nBSRc3gigMJWnco
-	XxtBxQtK+j03L3mhgVDyfYkrDkoqyJg4Gfl5zHs1fQzyEJ4AZ/EsldoecJVF9js0IXMSor
-	jEWK1qgIsbJZ7rr6c604gjs56bE4T2k=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1746525902;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zk0fDN+7PJwjKDDJ2t6a08GL5EW0lCf5wZyG/z+TpX0=;
-	b=7pkniqqj3sMt7dDjl4jgK30iZTiYX4ZtHQwoF9Zs7NawwyLpJYWEWz2IaTq8DDbxyN0L9U
-	R2K4cBWvwD5vRkDQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 574EA13687;
-	Tue,  6 May 2025 10:05:02 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id sv0WFc7eGWjjegAAD6G6ig
-	(envelope-from <dsterba@suse.cz>); Tue, 06 May 2025 10:05:02 +0000
-Date: Tue, 6 May 2025 12:05:01 +0200
-From: David Sterba <dsterba@suse.cz>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
-	Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>,
-	Kent Overstreet <kent.overstreet@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Chris Mason <clm@fb.com>,
-	Josef Bacik <josef@toxicpanda.com>, David Sterba <dsterba@suse.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Carlos Maiolino <cem@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Naohiro Aota <naohiro.aota@wdc.com>,
-	Johannes Thumshirn <jth@kernel.org>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Pavel Machek <pavel@kernel.org>, slava@dubeyko.com,
-	glaubitz@physik.fu-berlin.de, frank.li@vivo.com,
-	linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-pm@vger.kernel.org,
-	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
-	Qu Wenruo <wqu@suse.com>
-Subject: Re: [PATCH 18/19] btrfs: use bdev_rw_virt in scrub_one_super
-Message-ID: <20250506100500.GC9140@twin.jikos.cz>
-Reply-To: dsterba@suse.cz
-References: <20250430212159.2865803-1-hch@lst.de>
- <20250430212159.2865803-19-hch@lst.de>
+	s=arc-20240116; t=1746530225; c=relaxed/simple;
+	bh=Z7jOwuEBTaEvhsLGSpRE/ZPVJ70iFQdIT9GmLOYv7TU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=l+SVea76V2dRL+7pwEbbxyuHY2+oUIIYHoB3drCikJrIjWCSe+2rfNOeyTqqpSQQW5BmHi4J3TIc2roXptO9lKtITaHFCH+ZP0HeogRj/Ew1e2ZiI1QG4R87fohGt7Q3yTWHygd5ZgZvz7wSjr09F7Tk5Tx+AAN4LNKCXEtM//A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZsG7C1HT7z4f3jt8
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 19:16:39 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 65B0C1A07BD
+	for <dm-devel@lists.linux.dev>; Tue,  6 May 2025 19:16:58 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP4 (Coremail) with SMTP id gCh0CgDXOl+o7xlohYhoLg--.37289S3;
+	Tue, 06 May 2025 19:16:58 +0800 (CST)
+Message-ID: <64c8b62a-83ba-45be-a83e-62b6ad8d6f22@huaweicloud.com>
+Date: Tue, 6 May 2025 19:16:56 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250430212159.2865803-19-hch@lst.de>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.00 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	HAS_REPLYTO(0.30)[dsterba@suse.cz];
-	NEURAL_HAM_SHORT(-0.20)[-0.999];
-	MIME_GOOD(-0.10)[text/plain];
-	R_RATELIMIT(0.00)[to_ip_from(RLndmnr811gycae4b5bcnms9ur)];
-	RCPT_COUNT_TWELVE(0.00)[31];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TO_DN_SOME(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	REPLYTO_ADDR_EQ_FROM(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,twin.jikos.cz:mid,suse.com:email,lst.de:email,wdc.com:email,suse.cz:replyto];
-	URIBL_BLOCKED(0.00)[suse.com:email];
-	REPLYTO_DOM_NEQ_TO_DOM(0.00)[]
-X-Spam-Score: -4.00
-X-Spam-Flag: NO
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
+To: Christoph Hellwig <hch@lst.de>, "Darrick J. Wong" <djwong@kernel.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+ linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, tytso@mit.edu,
+ john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
+ shinichiro.kawasaki@wdc.com, brauner@kernel.org, yi.zhang@huawei.com,
+ chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
+References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
+ <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
+ <20250505132208.GA22182@lst.de> <20250505142945.GJ1035866@frogsfrogsfrogs>
+ <c7d8d0c3-7efa-4ee6-b518-f8b09ec87b73@huaweicloud.com>
+ <20250506043907.GA27061@lst.de>
+Content-Language: en-US
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <20250506043907.GA27061@lst.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:gCh0CgDXOl+o7xlohYhoLg--.37289S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7Xr1rZFyDCrWUGw4rKFy3Jwb_yoW8JrWDpa
+	yUKFyqyw4DKr15Xwn7uw4vgrn5Zrs5JFn8Gw4rKr18Zws8X3WxKF9Yg3WDGF9xWr1fAa4U
+	ArsxK34DXayfC3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvYb4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
+	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
+	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBIdaVFxhVjvjDU0xZFpf9x07
+	jIksgUUUUU=
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-On Wed, Apr 30, 2025 at 04:21:48PM -0500, Christoph Hellwig wrote:
-> Replace the code building a bio from a kernel direct map address and
-> submitting it synchronously with the bdev_rw_virt helper.
+On 2025/5/6 12:39, Christoph Hellwig wrote:
+> On Tue, May 06, 2025 at 12:28:54PM +0800, Zhang Yi wrote:
+>> OK, since this statx reporting flag is not strongly tied to
+>> FALLOC_FL_WRITE_ZEROES in vfs_fallocate(), I'll split this patch into
+>> three separate patches.
 > 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
-> Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
-> Reviewed-by: Qu Wenruo <wqu@suse.com>
+> I don't think that is the right thing to do do.  Keep the flag addition
+> here, and then report it in the ext4 and bdev patches adding
+> FALLOC_FL_WRITE_ZEROES as the reporting should be consistent with
+> the added support.
+> 
 
-Acked-by: David Sterba <dsterba@suse.com>
+Sorry, but I don't understand your suggestion. The
+STATX_ATTR_WRITE_ZEROES_UNMAP attribute only indicate whether the bdev
+and the block device that under the specified file support unmap write
+zeroes commoand. It does not reflect whether the bdev and the
+filesystems support FALLOC_FL_WRITE_ZEROES. The implementation of
+FALLOC_FL_WRITE_ZEROES doesn't fully rely on the unmap write zeroes
+commoand now, users simply refer to this attribute flag to determine
+whether to use FALLOC_FL_WRITE_ZEROES when preallocating a file.
+So, STATX_ATTR_WRITE_ZEROES_UNMAP and FALLOC_FL_WRITE_ZEROES doesn't
+have strong relations, why do you suggested to put this into the ext4
+and bdev patches that adding FALLOC_FL_WRITE_ZEROES?
+
+Thanks,
+Yi.
+
