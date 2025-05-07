@@ -1,219 +1,74 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from 003.mia.mailroute.net (003.mia.mailroute.net [199.89.3.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20F912820A6
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 14:24:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D56B28B3FB
+	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 15:44:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.6
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746627867; cv=none; b=rXJXQLtetLLEK8gv454Bh3mMSNf77CQzahZ3QRu2Th4/6j/4NSCjo2yB/z48aTX02DXOSbqPn+8NgcxmjLD1kDiyALS4xo2myqdlegiIxlF6csW18MZwEIXRZ+nOl+iVL7BDllhpGOrtsDt9fXotLPbecGOgxLqpzKjVaEbqaIg=
+	t=1746632654; cv=none; b=o4azzHPRmYt1OmCQe3RHcPdkdaIja/siTv9B2H3YodsfWWKrPQVlpE2CUrNE3RUH6MdcFIxuvtSRuUFmAsJWqz0B/PSMm7KRQAWwa5HdHmONPnFiBwIrPzX4Y9fPRvBkIZLWNt2x8nCVtkt3UDKWOj4pupmG4hvMjJlLz1qdGeQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746627867; c=relaxed/simple;
-	bh=X2bf3rNZ57PQ7M/M+ioloYh+U/MM3pzb3vZ23H3l4kk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=RFspDa1ZtiLAgi6Qp6Jo+GYkQ9vQ8l650iMoTH0u6TYL3qwuRMBFy8YnP2VQ+RlZaBR283h8J8egJqzSXsKk+EHE9UryICwWMsNwa68U1LCohZgavWrSHzFEr7P5wVZe/B0sGYS09PdDDTfyVBu6ENyUySbKCUozmlunmBBtir4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MzXyA6bk; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1746632654; c=relaxed/simple;
+	bh=qnR1Y+HtlUnFWD8R+hi38YyhqOeBa/HiPHEMpUd7rmw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=GAGF74tO7SST+tHo3u6PZzFIkeoAKgu8cNAE9hzWDuzmw+roV/wYLkhgp5m3cMoKvTt7Hkgn3S3QfJwnmuX2NKAv6u63t5POrDZ+Z+GyKkDO0UjtirizHaIrUYLFWrzkBHP+jVFSxxUoffyJO0EkNdJHk7x1fkesk3WmLoFOp1U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=pc1VjF0C; arc=none smtp.client-ip=199.89.3.6
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MzXyA6bk"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1746627864;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WxpCnoHta5JbzCje8yMA0JQ3FCc6l/GU3G3GKYtoeNc=;
-	b=MzXyA6bkJZgmVFX3+p2BIHB+g9uz/dMRSWPlQJsXxwPjpp1216+m6FsKv47NrVIxLkWx2f
-	j7dYin/jdY2YdMhzIDY46bs4XV6E0phqlJsowjGYGPVbmfRpNSwDDtk0y/bU8v7l/I79Ml
-	Cza+ngM4WLhLsMlx8mlDdKDgsV/f8PU=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-157--uTeupZ6NMavwtHZlMaKFA-1; Wed,
- 07 May 2025 10:24:21 -0400
-X-MC-Unique: -uTeupZ6NMavwtHZlMaKFA-1
-X-Mimecast-MFC-AGG-ID: -uTeupZ6NMavwtHZlMaKFA_1746627860
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="pc1VjF0C"
+Received: from localhost (localhost [127.0.0.1])
+	by 003.mia.mailroute.net (Postfix) with ESMTP id 4Zt01Q0JJZzlvkSx;
+	Wed,  7 May 2025 15:44:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1746632648; x=1749224649; bh=qnR1Y+HtlUnFWD8R+hi38Yyh
+	qOeBa/HiPHEMpUd7rmw=; b=pc1VjF0CHZLW6ci45jUl7mXMbQVtFGMNcBWDOPqe
+	1fKYQlxD+od6fdxvhvbhOJoZQcAypzZegDZe8Fue5QAHZTEJJxc+dZf1QA8s+own
+	pByfNnRus/CiCSazS0sOxRv3DMuAooDrtTLV5OjDuXy8ojyW2if8DSaBjb9NZcfl
+	cjSNydV1bcENKYRfNR6xrkxoY8OCcz2B0SdZBfErUHtu6twi2tGmpFho8r1hVRRb
+	qomwyatZq+ZdrG/4yGASzdvmI5rh+3jwr57pwDAVMs8cYiVYZJhzL9np0CeHiOyj
+	5Qkme4tqlzOk7WfKBamiUxbhAkejzK9/e1Q92tE0bfcmIw==
+X-Virus-Scanned: by MailRoute
+Received: from 003.mia.mailroute.net ([127.0.0.1])
+ by localhost (003.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id gCDazEgCr4j5; Wed,  7 May 2025 15:44:08 +0000 (UTC)
+Received: from [100.66.154.22] (unknown [104.135.204.82])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3BE9F1955E7A;
-	Wed,  7 May 2025 14:24:20 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A368A18001D8;
-	Wed,  7 May 2025 14:24:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 547EOHh73027451
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 7 May 2025 10:24:18 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 547EOHnj3027450;
-	Wed, 7 May 2025 10:24:17 -0400
-Date: Wed, 7 May 2025 10:24:17 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        Xose Vazquez Perez <xose.vazquez@gmail.com>,
-        Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH 0/6] multipath-tools: static analyzer fixes
-Message-ID: <aBttEeWlIFCuAE6-@redhat.com>
-References: <20250505163007.59352-1-mwilck@suse.com>
+	(Authenticated sender: bvanassche@acm.org)
+	by 003.mia.mailroute.net (Postfix) with ESMTPSA id 4Zt01M0vx2zltPsg;
+	Wed,  7 May 2025 15:44:05 +0000 (UTC)
+Message-ID: <c09e5298-4824-4b0c-8fc8-0be33975da17@acm.org>
+Date: Wed, 7 May 2025 08:44:04 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250505163007.59352-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: qjBb7gRCHGsMtPhPZ8ntButtnPRoGz22yaiC06_qQf8_1746627860
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: LVM RAID1 regression in 6.15-rc5, bisected
+To: =?UTF-8?Q?Malte_Schr=C3=B6der?= <malte.schroeder@tnxip.de>,
+ bmarzins@redhat.com, dm-devel@lists.linux.dev
+References: <fc8148d9-4b9f-4c13-9924-2f9b0eced194@tnxip.de>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <fc8148d9-4b9f-4c13-9924-2f9b0eced194@tnxip.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-On Mon, May 05, 2025 at 06:29:52PM +0200, Martin Wilck wrote:
-> Xose has kindly informed me about the warnings from Fedora's static
-> code analysis tool.
-> 
-> I'm sending a couple of related fixes here. Most of the warnings
-> appear to be false positives though, see below (a second look by
-> another eye pair would be appreciated).
+On 5/7/25 3:40 AM, Malte Schr=C3=B6der wrote:
+> kernel 6.15-rc5 fails to access lvs which use mirroring (lvcreate -m1).
+> Last working release is -rc4. Reverting
+> 5a2a6c428190f945c5cbf5791f72dbea83e97f66 fixes the issue.
 
-For all but patch 4/6:
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+ From commit f1aff4bc199cb92c055668caed65505e3b4d2656 in Linus' master
+branch:
 
-> 
-> Regards
-> Martin
-> 
-> On Sat, 2025-05-03 at 23:29 +0200, Xose Vazquez Perez wrote:
-> > Findings by static analyzers in Fedora 43 Critical Path Packages:
-> > https://marc.info/?l=fedora-devel-list&m=174582743823723
-> > 
-> > device-mapper-multipath-0.11.1-1.fc43:
-> > https://openscanhub.fedoraproject.org/task/51915/
-> > 
-> > device-mapper-multipath-0.11.1-1.fc43 List of Findings:
-> > https://openscanhub.fedoraproject.org/task/51915/log/device-mapper-multipath-0.11.1-1.fc43/scan-results.html
-> 
-> I'll leave the shellcheck errors in mpathconf to Ben.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def42]
-> > multipath-tools-0.11.1/kpartx/dasd.c:89:24: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘fd_dasd’
-> > multipath-tools-0.11.1/kpartx/dasd.c:69:1: enter_function: entry to ‘read_dasd_pt’
-> > ...
-> > multipath-tools-0.11.1/kpartx/dasd.c:134:20: branch_true: following ‘true’ branch (when ‘fd_dasd < 0’)...
-> > branch_true: ...to here
-> 
-> This one looks like a false positive to me. If fd_dasd < 0, it can't be leaked.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def45]
-> > multipath-tools-0.11.1/libmpathutil/parser.c:139:29: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘keyword’
-> 
-> False positive, too. VECTOR_SLOT won't return NULL here. 
-> We could add a test to make the compiler happy, but I don't quite see the point.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-457): [#def49]
-> > multipath-tools-0.11.1/libmultipath/alias.c:201:31: warning[-Wanalyzer-use-of-uninitialized-value]: use of uninitialized value ‘bdg’
-> 
-> False positive. bdg won't be NULL here.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-465): [#def50]
-> > multipath-tools-0.11.1/libmultipath/dmparser.c:31:12: warning[-Wanalyzer-deref-before-check]: check of ‘p’ for NULL after already dereferencing it
-> 
-> False positive. *dst is non-NULL when we call merge_words(). We must double-check
-> after calling realloc().
-> (That said, we should reimplement this using strbuf functions).
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def51]
-> > multipath-tools-0.11.1/libmultipath/dmparser.c:436:25: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pgp’
-> 
-> False positive. VECTOR_SLOT won't return NULL here. Same for the next 3 errors.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def55]
-> > multipath-tools-0.11.1/libmultipath/dmparser.c:501:33: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp’
-> 
-> Likewise. Same for the next 2 errors.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def58]
-> > multipath-tools-0.11.1/libmultipath/foreign/nvme.c:494:28: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘path’
-> 
-> The nvme_pathgroup is a member of struct nvme_path. nvme_pg_to_path() doesn't return NULL. Same for the next 2 errors in nvme.c
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def62]
-> > multipath-tools-0.11.1/libmultipath/pgpolicies.c:191:17: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp1’
-> 
-> Again, false positives; VECTOR_SLOT() doesn't return NULL here.
-> Same for the next 3 errors.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-401): [#def66]
-> > multipath-tools-0.11.1/libmultipath/print.c:920:16: warning[-Wanalyzer-malloc-leak]: leak of ‘alloc_path_layout()’
-> 
-> False positive. Strange one - gcc doesn't understand its own __attribute__((cleanup))?
-> Or am I blind? Same for the next one.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-126): [#def70]
-> multipath-tools-0.11.1/libmultipath/uevent.c:122:9: warning[-Wanalyzer-out-of-bounds]: stack-based buffer over-read
-> 
-> This one is somewhat harder because it involves list handling macros, but I believe that our code is correct and that this is a false positive, too.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def69]
-> > multipath-tools-0.11.1/libmultipath/sysfs.c:309:22: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘open(&pathbuf, 0)’
-> 
-> Again, false positive; there's a cleanup function for fd.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def71]
-> > multipath-tools-0.11.1/libmultipath/valid.c:208:34: warning[-Wanalyzer-file-leak]: leak of FILE ‘fopen(&mountinfo, "r")’
-> 
-> False positive, gcc doesn't understand the cleanup_fclose().
-> Same for the next error.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-415): [#def73]
-> > multipath-tools-0.11.1/multipathd/fpin_handlers.c:508:17: warning[-Wanalyzer-double-free]: double-‘free’ of ‘els_marginal_list_head.next + -2056’
-> 
-> I don't see an error in this code. Looks like another false positive to me.
-> 
-> > Error: GCC_ANALYZER_WARNING: [#def74]
-> > multipath-tools-0.11.1/multipathd/fpin_handlers.c:624:23: warning[-Wanalyzer-fd-use-without-check]: ‘read’ on possibly invalid file descriptor ‘fd’
-> 
-> False positive, too. fd == -1 is checked beforehand.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-688): [#def75]
-> > multipath-tools-0.11.1/multipathd/main.c:3286:21: warning[-Wanalyzer-null-argument]: use of NULL ‘new’ where non-null expected
-> 
-> Similar to other false positives above, VECTOR_SLOT() won't return NULL in a  loop like this.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def77]
-> > multipath-tools-0.11.1/multipathd/main.c:3973:12: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘dup2(open("/dev/null", 2), 0)’
-> 
-> Yet another false positive, the fd is closed in the cleanup handler. Same for the next 3 errors.
-> 
-> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def81]
-> multipath-tools-0.11.1/multipathd/multipathc.c:97:30: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘kw’
-> 
-> Another case of VECTOR_SLOT() false positive. Same for the next error.
-> 
-> Regards
-> Martin
-> 
-> Martin Wilck (6):
->   kpartx_id: fix shellcheck reported errors
->   kpartx: fix file descriptor leak
->   libmpathpersist: fix memory leak in mpath_prout_rel()
->   libmpathutil: silence compiler warning in vector_del_slot()
->   libmultipath: fix undefined behavior in 31-bit shift
->   libmultipath: prioritizers/iet: fix possible NULL dereference
-> 
->  kpartx/kpartx.c                     | 14 +++++++-------
->  kpartx/kpartx_id                    |  8 ++++----
->  libmpathpersist/mpath_persist_int.c | 12 ++++++------
->  libmpathutil/vector.c               | 16 ++++++++--------
->  libmultipath/nvme/nvme-ioctl.c      |  2 +-
->  libmultipath/prioritizers/iet.c     |  3 +++
->  6 files changed, 29 insertions(+), 26 deletions(-)
-> 
-> -- 
-> 2.49.0
+Fixes: 5a2a6c428190 ("dm: always update the array size in realloc_argv=20
+on success")
 
+Bart.
