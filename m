@@ -1,151 +1,219 @@
-Received: from mail-io1-f48.google.com (mail-io1-f48.google.com [209.85.166.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CA9028934F
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 14:02:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20F912820A6
+	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 14:24:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746626556; cv=none; b=QB7HPmAvLgo1eoi02nofk0aWg2w9A20T6kVwjb5rXCpzBa0mqyLcZilZGlopYuUeh9fbj8jXcyW4x1KYz/Y6gCN/4SOY213/Tadyphw/maenOuIaFzkoGmgzD1hB1Qlv4Kt1Aw7vp1A3XNh9vC+KsiF8NWVjcE+EFNG2s2aharM=
+	t=1746627867; cv=none; b=rXJXQLtetLLEK8gv454Bh3mMSNf77CQzahZ3QRu2Th4/6j/4NSCjo2yB/z48aTX02DXOSbqPn+8NgcxmjLD1kDiyALS4xo2myqdlegiIxlF6csW18MZwEIXRZ+nOl+iVL7BDllhpGOrtsDt9fXotLPbecGOgxLqpzKjVaEbqaIg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746626556; c=relaxed/simple;
-	bh=u1WvrSapMzjyS9qZrw1hKIGsBWOqDhnGPCP10gYW6Cg=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=f9fTqDJlH0WNQ8rLUttBjOXjR/FG+1usXwWCkGb3ooZldeKpWVWXahTgRt6PpwNCRwIGlsEmtHOALQOBn5K9faeEsUhmIuxbYM+A4Q9l7hwUG8jNW2wOcH7Cdf9hwRRVyVsg+x78qlVH+bm/Mh/Ot6GJ3iNHlbI527tQBN+wvnI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=2LnBJlK4; arc=none smtp.client-ip=209.85.166.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	s=arc-20240116; t=1746627867; c=relaxed/simple;
+	bh=X2bf3rNZ57PQ7M/M+ioloYh+U/MM3pzb3vZ23H3l4kk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=RFspDa1ZtiLAgi6Qp6Jo+GYkQ9vQ8l650iMoTH0u6TYL3qwuRMBFy8YnP2VQ+RlZaBR283h8J8egJqzSXsKk+EHE9UryICwWMsNwa68U1LCohZgavWrSHzFEr7P5wVZe/B0sGYS09PdDDTfyVBu6ENyUySbKCUozmlunmBBtir4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MzXyA6bk; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="2LnBJlK4"
-Received: by mail-io1-f48.google.com with SMTP id ca18e2360f4ac-867355d9c4eso48223739f.0
-        for <dm-devel@lists.linux.dev>; Wed, 07 May 2025 07:02:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1746626553; x=1747231353; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=n/e69eX7rTdQU3DebRyniOro00nTR+2O7+QHGV+7EO0=;
-        b=2LnBJlK4bT8aIlSWgDTiSq2/M8OPZ55H+UH31h6vtjQhRJO1H+75L8CN+ldDexeTvf
-         vGIgwYlWcDestvqtuuK+F/KMzMgD7AV4bA9FlK9p5gjX27jrlzx8PEhWEE/kAwVEEmue
-         GkldGjRtBSMMd3DHIWsnGKcoo9R4bXUGmwqgtyVpXG4ATLCWx35M1/b9dvuztR9idtl1
-         gEzjVInUwmA+pqOnWtwq3ghA8MMprd73UJ+YdO2ialwgUs4SBRmN1tnB28/TNLB63QBq
-         BK2JUoWj5yOgdYOFJSLcgmfYjeSp5xGS087shs/CrJYy7uaB1Z9e8mh3M8NsP5Ypkn/n
-         2X4Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746626553; x=1747231353;
-        h=content-transfer-encoding:mime-version:date:message-id:subject
-         :references:in-reply-to:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=n/e69eX7rTdQU3DebRyniOro00nTR+2O7+QHGV+7EO0=;
-        b=C/u2PgilWAGfdudTcqp1ADB+SSDo+9OBwoWvk0veEnrgh4QJ4rr7LkdZtx1a3veamG
-         IIgRPL08FjWUlTzp8jQ1Jf5JHGyRR3kaw0ngDwHqNjR6JrdvRRG/k41eKi7BUduaXNMO
-         H7+V0TFtYsJjzrfbznKxcR6l6n2crBFgrS2sXt5S0cUXqPrMNxe76cilvYNQabtZVDAr
-         Qiq1ADaL0CHS3gZARHqftTFx0q8Xv15RkU2psMdb5eidWr6kZM7alzlxdDDIAVrgzF2t
-         67C+tKiGxF5Jjj7lBA+2lXvPeRc317FtejhJ8cwuofWLX090WgEmuJyMmlAt+dy962IQ
-         pRAQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWVBXZqYJNs4xEkq6zk3NNh+ZxVhB6uhFsQpsp1MNhrA6Rxo4nEC5YVq5OnDF2vEYiCHGAVXUBPaA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyocTAluaxcWyuABlbAMVZUKB6M0gS3d4h092GtEdHs0h57rVct
-	+3nxCJqi3K1xjXqrQS6JM13/7ufT/YtAnp3GJslA8LQILVyRa6BjJVxaoxK++oo=
-X-Gm-Gg: ASbGnctkeMB2jDTu8knLFA+Vw+nLddEBPPqfznjDpXKFx/lCwCtcbS2sm3aElX7lDmr
-	w34Dt1hw19NGtB4pvOasjfnBYJabUA6MRx0XPwNToBph3ekB4TveKbBAiALfgBSwntVxJNRkP6E
-	2PiZwZicuiSczEO4j5QQw1sjrnA9L7AgHbI2vzvy6XB8tvQFX8iM06WMyYlTPVoxEqXa1x5QjgM
-	6GVA43H0ENT6hKJn1RYDNSNyLIUr+5c2JfiyEfWSJRRrEwgELHh9UpGr7+dV1jlKBWaUsvBo+mb
-	ghAdRDYadOaG3Yj0CtRAfKC2hB1mhf8=
-X-Google-Smtp-Source: AGHT+IFKzirCN+Eb4LryiVuePRi35iU9q8ScKrI1anbroM0TMHPbhux4iOi4irCSUABdP/WxjlqB7w==
-X-Received: by 2002:a05:6602:6d0e:b0:85b:505a:7e01 with SMTP id ca18e2360f4ac-8674727e70dmr348656939f.5.1746626544084;
-        Wed, 07 May 2025 07:02:24 -0700 (PDT)
-Received: from [127.0.0.1] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4f9fc6bb606sm642485173.18.2025.05.07.07.02.22
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 07 May 2025 07:02:23 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, "Md. Haris Iqbal" <haris.iqbal@ionos.com>, 
- Jack Wang <jinpu.wang@ionos.com>, Coly Li <colyli@kernel.org>, 
- Kent Overstreet <kent.overstreet@linux.dev>, 
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
- Chris Mason <clm@fb.com>, Josef Bacik <josef@toxicpanda.com>, 
- David Sterba <dsterba@suse.com>, Andreas Gruenbacher <agruenba@redhat.com>, 
- Carlos Maiolino <cem@kernel.org>, Damien Le Moal <dlemoal@kernel.org>, 
- Naohiro Aota <naohiro.aota@wdc.com>, Johannes Thumshirn <jth@kernel.org>, 
- "Rafael J. Wysocki" <rafael@kernel.org>, Pavel Machek <pavel@kernel.org>, 
- slava@dubeyko.com, glaubitz@physik.fu-berlin.de, frank.li@vivo.com, 
- linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev, 
- linux-btrfs@vger.kernel.org, gfs2@lists.linux.dev, 
- linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, 
- linux-pm@vger.kernel.org
-In-Reply-To: <20250507120451.4000627-1-hch@lst.de>
-References: <20250507120451.4000627-1-hch@lst.de>
-Subject: Re: add more bio helpers v3
-Message-Id: <174662654265.1844963.5765833717643625363.b4-ty@kernel.dk>
-Date: Wed, 07 May 2025 08:02:22 -0600
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MzXyA6bk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1746627864;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=WxpCnoHta5JbzCje8yMA0JQ3FCc6l/GU3G3GKYtoeNc=;
+	b=MzXyA6bkJZgmVFX3+p2BIHB+g9uz/dMRSWPlQJsXxwPjpp1216+m6FsKv47NrVIxLkWx2f
+	j7dYin/jdY2YdMhzIDY46bs4XV6E0phqlJsowjGYGPVbmfRpNSwDDtk0y/bU8v7l/I79Ml
+	Cza+ngM4WLhLsMlx8mlDdKDgsV/f8PU=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-157--uTeupZ6NMavwtHZlMaKFA-1; Wed,
+ 07 May 2025 10:24:21 -0400
+X-MC-Unique: -uTeupZ6NMavwtHZlMaKFA-1
+X-Mimecast-MFC-AGG-ID: -uTeupZ6NMavwtHZlMaKFA_1746627860
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3BE9F1955E7A;
+	Wed,  7 May 2025 14:24:20 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A368A18001D8;
+	Wed,  7 May 2025 14:24:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 547EOHh73027451
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 7 May 2025 10:24:18 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 547EOHnj3027450;
+	Wed, 7 May 2025 10:24:17 -0400
+Date: Wed, 7 May 2025 10:24:17 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        Xose Vazquez Perez <xose.vazquez@gmail.com>,
+        Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH 0/6] multipath-tools: static analyzer fixes
+Message-ID: <aBttEeWlIFCuAE6-@redhat.com>
+References: <20250505163007.59352-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.14.3-dev-7b9b9
+In-Reply-To: <20250505163007.59352-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: qjBb7gRCHGsMtPhPZ8ntButtnPRoGz22yaiC06_qQf8_1746627860
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-
-On Wed, 07 May 2025 14:04:24 +0200, Christoph Hellwig wrote:
-> this series adds more block layer helpers to remove boilerplate code when
-> adding memory to a bio or to even do the entire synchronous I/O.
+On Mon, May 05, 2025 at 06:29:52PM +0200, Martin Wilck wrote:
+> Xose has kindly informed me about the warnings from Fedora's static
+> code analysis tool.
 > 
-> The main aim is to avoid having to convert to a struct page in the caller
-> when adding kernel direct mapping or vmalloc memory.
+> I'm sending a couple of related fixes here. Most of the warnings
+> appear to be false positives though, see below (a second look by
+> another eye pair would be appreciated).
+
+For all but patch 4/6:
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+
 > 
-> Changes since v2:
->  - rebase on top of the latest block for-next branch to resolve
->    conflicts with the bonuce buffering removal
+> Regards
+> Martin
 > 
-> [...]
-
-Applied, thanks!
-
-[01/19] block: add a bio_add_virt_nofail helper
-        commit: 850e210d5ad21b94b55b97d4d82b4cdeb0bb05df
-[02/19] block: add a bdev_rw_virt helper
-        commit: 10b1e59cdadabff16fc78eb2ca4c341b1502293c
-[03/19] block: add a bio_add_max_vecs helper
-        commit: 75f88659e47dc570bdebddf77d7a3cd5f0845612
-[04/19] block: add a bio_add_vmalloc helpers
-        commit: 8dd16f5e34693aa0aa6a4ed48427045008097e64
-[05/19] block: remove the q argument from blk_rq_map_kern
-        commit: af78428ed3f3eebad7be9d0463251046e9582cf6
-[06/19] block: pass the operation to bio_{map,copy}_kern
-        commit: fddbc51dc290f834f520ce89c00a0fce38260c16
-[07/19] block: simplify bio_map_kern
-        commit: 6ff54f456671415e101e671a7dfa1fe13a31bdb5
-[08/19] bcache: use bio_add_virt_nofail
-        commit: 23f5d69dfa993cb6d17e619fff5e623e76b9b17f
-[09/19] rnbd-srv: use bio_add_virt_nofail
-        commit: a216081323a1391991c9073fed2459265bfc7f5c
-[10/19] gfs2: use bdev_rw_virt in gfs2_read_super
-        commit: 65f8e62593e64f6991ece4f08ab9e147e62df488
-[11/19] zonefs: use bdev_rw_virt in zonefs_read_super
-        commit: b2f676efe601586360e5f7461f6d36981ac1e6c9
-[12/19] PM: hibernate: split and simplify hib_submit_io
-        commit: 0cb8c299f81591699e908d1a6ad2dba6df642e25
-[13/19] dm-bufio: use bio_add_virt_nofail
-        commit: 9134124ce1bac3d5228ee1b1fc7a879422ff74f6
-[14/19] dm-integrity: use bio_add_virt_nofail
-        commit: bd4e709b32ac932aee3b337969cbb1b57faf84bd
-[15/19] xfs: simplify xfs_buf_submit_bio
-        commit: 9dccf2aa6ed5fa6ee92c8d71868bf3762ae85bda
-[16/19] xfs: simplify xfs_rw_bdev
-        commit: d486bbecc90d86e0292071bd06322543f8f5f658
-[17/19] xfs: simplify building the bio in xlog_write_iclog
-        commit: 5ced480d4886b12e6a2058ac3ebd749b0ff14573
-[18/19] btrfs: use bdev_rw_virt in scrub_one_super
-        commit: 760aa1818b040c8ec6a1ee9cea1ea8cac0735ce3
-[19/19] hfsplus: use bdev_rw_virt in hfsplus_submit_bio
-        commit: 15c9d5f6235d66ebc130da9602b1cd7692bcf85d
-
-Best regards,
--- 
-Jens Axboe
-
-
+> On Sat, 2025-05-03 at 23:29 +0200, Xose Vazquez Perez wrote:
+> > Findings by static analyzers in Fedora 43 Critical Path Packages:
+> > https://marc.info/?l=fedora-devel-list&m=174582743823723
+> > 
+> > device-mapper-multipath-0.11.1-1.fc43:
+> > https://openscanhub.fedoraproject.org/task/51915/
+> > 
+> > device-mapper-multipath-0.11.1-1.fc43 List of Findings:
+> > https://openscanhub.fedoraproject.org/task/51915/log/device-mapper-multipath-0.11.1-1.fc43/scan-results.html
+> 
+> I'll leave the shellcheck errors in mpathconf to Ben.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def42]
+> > multipath-tools-0.11.1/kpartx/dasd.c:89:24: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘fd_dasd’
+> > multipath-tools-0.11.1/kpartx/dasd.c:69:1: enter_function: entry to ‘read_dasd_pt’
+> > ...
+> > multipath-tools-0.11.1/kpartx/dasd.c:134:20: branch_true: following ‘true’ branch (when ‘fd_dasd < 0’)...
+> > branch_true: ...to here
+> 
+> This one looks like a false positive to me. If fd_dasd < 0, it can't be leaked.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def45]
+> > multipath-tools-0.11.1/libmpathutil/parser.c:139:29: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘keyword’
+> 
+> False positive, too. VECTOR_SLOT won't return NULL here. 
+> We could add a test to make the compiler happy, but I don't quite see the point.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-457): [#def49]
+> > multipath-tools-0.11.1/libmultipath/alias.c:201:31: warning[-Wanalyzer-use-of-uninitialized-value]: use of uninitialized value ‘bdg’
+> 
+> False positive. bdg won't be NULL here.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-465): [#def50]
+> > multipath-tools-0.11.1/libmultipath/dmparser.c:31:12: warning[-Wanalyzer-deref-before-check]: check of ‘p’ for NULL after already dereferencing it
+> 
+> False positive. *dst is non-NULL when we call merge_words(). We must double-check
+> after calling realloc().
+> (That said, we should reimplement this using strbuf functions).
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def51]
+> > multipath-tools-0.11.1/libmultipath/dmparser.c:436:25: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pgp’
+> 
+> False positive. VECTOR_SLOT won't return NULL here. Same for the next 3 errors.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def55]
+> > multipath-tools-0.11.1/libmultipath/dmparser.c:501:33: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp’
+> 
+> Likewise. Same for the next 2 errors.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def58]
+> > multipath-tools-0.11.1/libmultipath/foreign/nvme.c:494:28: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘path’
+> 
+> The nvme_pathgroup is a member of struct nvme_path. nvme_pg_to_path() doesn't return NULL. Same for the next 2 errors in nvme.c
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def62]
+> > multipath-tools-0.11.1/libmultipath/pgpolicies.c:191:17: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘pp1’
+> 
+> Again, false positives; VECTOR_SLOT() doesn't return NULL here.
+> Same for the next 3 errors.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-401): [#def66]
+> > multipath-tools-0.11.1/libmultipath/print.c:920:16: warning[-Wanalyzer-malloc-leak]: leak of ‘alloc_path_layout()’
+> 
+> False positive. Strange one - gcc doesn't understand its own __attribute__((cleanup))?
+> Or am I blind? Same for the next one.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-126): [#def70]
+> multipath-tools-0.11.1/libmultipath/uevent.c:122:9: warning[-Wanalyzer-out-of-bounds]: stack-based buffer over-read
+> 
+> This one is somewhat harder because it involves list handling macros, but I believe that our code is correct and that this is a false positive, too.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def69]
+> > multipath-tools-0.11.1/libmultipath/sysfs.c:309:22: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘open(&pathbuf, 0)’
+> 
+> Again, false positive; there's a cleanup function for fd.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def71]
+> > multipath-tools-0.11.1/libmultipath/valid.c:208:34: warning[-Wanalyzer-file-leak]: leak of FILE ‘fopen(&mountinfo, "r")’
+> 
+> False positive, gcc doesn't understand the cleanup_fclose().
+> Same for the next error.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-415): [#def73]
+> > multipath-tools-0.11.1/multipathd/fpin_handlers.c:508:17: warning[-Wanalyzer-double-free]: double-‘free’ of ‘els_marginal_list_head.next + -2056’
+> 
+> I don't see an error in this code. Looks like another false positive to me.
+> 
+> > Error: GCC_ANALYZER_WARNING: [#def74]
+> > multipath-tools-0.11.1/multipathd/fpin_handlers.c:624:23: warning[-Wanalyzer-fd-use-without-check]: ‘read’ on possibly invalid file descriptor ‘fd’
+> 
+> False positive, too. fd == -1 is checked beforehand.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-688): [#def75]
+> > multipath-tools-0.11.1/multipathd/main.c:3286:21: warning[-Wanalyzer-null-argument]: use of NULL ‘new’ where non-null expected
+> 
+> Similar to other false positives above, VECTOR_SLOT() won't return NULL in a  loop like this.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-775): [#def77]
+> > multipath-tools-0.11.1/multipathd/main.c:3973:12: warning[-Wanalyzer-fd-leak]: leak of file descriptor ‘dup2(open("/dev/null", 2), 0)’
+> 
+> Yet another false positive, the fd is closed in the cleanup handler. Same for the next 3 errors.
+> 
+> > Error: GCC_ANALYZER_WARNING (CWE-476): [#def81]
+> multipath-tools-0.11.1/multipathd/multipathc.c:97:30: warning[-Wanalyzer-null-dereference]: dereference of NULL ‘kw’
+> 
+> Another case of VECTOR_SLOT() false positive. Same for the next error.
+> 
+> Regards
+> Martin
+> 
+> Martin Wilck (6):
+>   kpartx_id: fix shellcheck reported errors
+>   kpartx: fix file descriptor leak
+>   libmpathpersist: fix memory leak in mpath_prout_rel()
+>   libmpathutil: silence compiler warning in vector_del_slot()
+>   libmultipath: fix undefined behavior in 31-bit shift
+>   libmultipath: prioritizers/iet: fix possible NULL dereference
+> 
+>  kpartx/kpartx.c                     | 14 +++++++-------
+>  kpartx/kpartx_id                    |  8 ++++----
+>  libmpathpersist/mpath_persist_int.c | 12 ++++++------
+>  libmpathutil/vector.c               | 16 ++++++++--------
+>  libmultipath/nvme/nvme-ioctl.c      |  2 +-
+>  libmultipath/prioritizers/iet.c     |  3 +++
+>  6 files changed, 29 insertions(+), 26 deletions(-)
+> 
+> -- 
+> 2.49.0
 
