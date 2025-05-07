@@ -1,132 +1,120 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B359B28E5E4
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 19:06:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2287202F83;
+	Wed,  7 May 2025 21:03:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746644788; cv=none; b=L2sP+InwFvegGeKW2De/mmsfQiyKbnNRnWr/fgLUROvW95OGUfWkKYzoz2+ltefl3DlVPNxbgdhQMsU0QUJM1pW1WeEZUQsFaLi6R3nxl/sEihHYS9f58eQWsAcZdGkyXxPErHHrlF8KfvcTexwVjeCzxdIgAj1muUjEv4sx8G8=
+	t=1746651792; cv=none; b=tSgSR3YHPOkbeE9L15qP7uQEIWMX73s7j/CRnykYic2NibDPGKUDZTkzHfiIcsAQ0+emMv3i8NWmGkiyQSeFejcnnRPZvIjRaWhFxehtTFYDE4Oz9U7E1mtAgXJD8gk2RWnnoFlSJtXFNmBi1kvBhjHuTUL/U7+qUMySzyXro5g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746644788; c=relaxed/simple;
-	bh=bD+j6w6R3vYXgauuBdZEd7il0MP/jZOjut+5ByGIHko=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XUf+t5e/nppK54q7gGK/omnl/LTd+TREwhaw1eEV1QehnTf3pve+rCB8cgo1hOC7heiTZBYIujsaWTIzFXe/+4I1IDPmd+Fua5iyFgrjYvElM4h4fGRo3sNNXmwmMJHelaAR9OoyQ+dWBsamua559QxvQXqtw3IqXr6Umq3NPUk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UBAuli/+; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1746651792; c=relaxed/simple;
+	bh=cnPOQ8rH8mGEWg2SZAMmFPn+K66GqaSykHvHWUjRJFM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=kwQ9scGayCQ05N3YqjBmMMRM0npvbcH7vLMMxiXOJ7F7KX0wknWPeBKkre1f5TqD0vnleB15iBTXTXwtewWa1TmgvlQaCe2r2105qeceG3seMu9CLHROnRwXlY3RWJ4nH5m/UXdjSg9aAVIcbrDfv0nZD4r/Nq2zMciBGCyczH8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ou5UvFB7; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UBAuli/+"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-39c266c2dd5so211321f8f.3
-        for <dm-devel@lists.linux.dev>; Wed, 07 May 2025 12:06:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1746644785; x=1747249585; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=iU1p6sFcIy4Z7KFWtjJZ0LnZr7IjT3YMG55w7eMnnpc=;
-        b=UBAuli/+I2Fl12yEoQvDI4B9i3kf0S8UK1jUMtK3/EFxvadQqDzBWb9cggKv7EkxZh
-         ua5onJ2C1re6BBnSqY4jWe+Cxx+n3yICfMw9+Rj0uwR42LsDztijiJwT9PnuTmpptBGG
-         gJ0BzBSz79UHm6ms+PIAcld7NIX5t2gBws/AKlL2SD/kmINAZ9FrK+pvBIfms4+HV4Js
-         iUwa5M3QlA/mEiJdV+aYO4YcISK59T6bk6H0u3G87tyIsIc45S5sVJnxZ7EJYIxmra35
-         EgKaSEF9MnRcLKvMuUyl6ckzXjifydsDH3igsQpNFWR9hUUJw/lS1dfqzmoOEmVFJt11
-         aMMA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746644785; x=1747249585;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=iU1p6sFcIy4Z7KFWtjJZ0LnZr7IjT3YMG55w7eMnnpc=;
-        b=C0MdYaPnWIWqQXBvNZGzSnxX6PRxP0JyVDUrgy4ZyRcY4tFV78GcenBBvzsApKFne4
-         cJkeguGarM7CEUkVzSqn62eBMM7lUci6sAYc0piEUg0l0/Pn67oNR10zziGHKu+5Wsar
-         c2yr7cL1IBuJWNMIwTk9Njycf57jQQBrtb9LJEsbtnWIKfzS2n7GlvfiKFl41AeWHPM1
-         OEfS7lbLb001VoOfnredwxmXSYm0rffIa0VZT4uhUhFJT/lI93oEC3NmZi61aiu1552Z
-         s0oJTc5s11oA6Nuy6yMvdtBr+zaJF0RRiFk0DsKWzch3uFselJsPlnoceq55DAvxWpQ0
-         v1Nw==
-X-Forwarded-Encrypted: i=1; AJvYcCVlbyk1220PJFQX0zcVRE9ShkYyhW4okXlG7mhIpgcWkXHE+FY04JVPKvbOlesz9I6jBCO7o0KyAA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwW3hY8rxJmi7j7ZD6mQbjoDUy8nEzIJNP+TJNDj6iZPyujV9ej
-	Jh3FVNNAfNo3F9KhH8EEgR9UyWKXODn6JOZu5cgLhFkXgbByTF4vGlhpDyLlveQ=
-X-Gm-Gg: ASbGncthDJrjWOOZhU7ruyHENnKKiNRtjeXwGGsJ4TbLt84xS7V0iF2i2ClakvfE2Ee
-	DquAanusxIkSKq4zHeNXBTqp5AQwPKCTOeXxXXXnU4Dl4FkNObHUCc3/sVJaDafY/UuWyIvPXDg
-	7nLPxLMgsrJBK7MmY4IEBwtAHSE3YQkqC+Az4cRV6Fmaest2pkVdcuVTPV0cMLrpREwrgXZA0DL
-	AkyQ2lGYbKXLLW7WpPaPQ5NF2NnuRM1hmvDkksgbXReJOh44xhPiRCCMsM9ehz0GnB/0uQb/M+w
-	MvzrbHOdIEOcGnurmA3LNSVlyYJgqJe8TfyzvUvcRmY3Nad/v+nQN5Kw4+1+YvwZXhxvUt9gNGh
-	4y4XlsttO3Lx3WRmGZ/FMPJByfAnJ
-X-Google-Smtp-Source: AGHT+IGnrO6axW02JM+JF7x+VIjw5tHDmT1k2I/dmYHjGGPNCECVxidcUZwq+gxsz+nZHNFoh9EgWw==
-X-Received: by 2002:a05:6000:2ab:b0:3a0:83b1:b3c1 with SMTP id ffacd0b85a97d-3a0ba0aa126mr263400f8f.15.1746644785150;
-        Wed, 07 May 2025 12:06:25 -0700 (PDT)
-Received: from localhost (p200300de3740fd00677a2a06a3663993.dip0.t-ipconnect.de. [2003:de:3740:fd00:677a:2a06:a366:3993])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3a0b8bb1f37sm829028f8f.84.2025.05.07.12.06.24
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 07 May 2025 12:06:24 -0700 (PDT)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	dm-devel@lists.linux.dev
-Subject: [PATCH v2 8/8] libmpathutil: remove VECTOR_DEFAULT_SIZE macro
-Date: Wed,  7 May 2025 21:05:52 +0200
-Message-ID: <20250507190552.209637-9-mwilck@suse.com>
-X-Mailer: git-send-email 2.49.0
-In-Reply-To: <20250507190552.209637-1-mwilck@suse.com>
-References: <20250507190552.209637-1-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ou5UvFB7"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E59BAC4CEE2;
+	Wed,  7 May 2025 21:03:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1746651792;
+	bh=cnPOQ8rH8mGEWg2SZAMmFPn+K66GqaSykHvHWUjRJFM=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=ou5UvFB7TRZFqaxnYiEakdi8Tv4V4TzoEj9Wbs7Q232VF867LOvRSZU+HZuD0Bq29
+	 6CsCTPAn0pECDaosSJX8x976KW3ktLd9AEIM0HbZDqa6j9FdJY0JVbrPH5Nv3bO1hF
+	 iIRu+OKZ1opelRfc+PFgGG2aRNfJhh4De1IHrOez/LdSHTTOSeQKEui3LTnMMeRTT9
+	 W+5W3K5rrPfVhLUgD3gPmbJZPXu0JaLwoj23F/peyg6pNFb6IhrHsA/7+Eet9shIt4
+	 Sng0fra5pNs4VfCOHaFQ+hSm5RXYO+syELa8jv0hYssg/oKu0kM6h7bFr8uzfaXdN3
+	 ajieBlH8ExtxQ==
+Date: Wed, 7 May 2025 14:03:10 -0700
+From: "Darrick J. Wong" <djwong@kernel.org>
+To: Zhang Yi <yi.zhang@huaweicloud.com>
+Cc: Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org,
+	linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
+	linux-kernel@vger.kernel.org, tytso@mit.edu,
+	john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
+	shinichiro.kawasaki@wdc.com, brauner@kernel.org,
+	yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
+	yangerkun@huawei.com
+Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
+Message-ID: <20250507210310.GG25675@frogsfrogsfrogs>
+References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
+ <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
+ <20250505132208.GA22182@lst.de>
+ <20250505142945.GJ1035866@frogsfrogsfrogs>
+ <c7d8d0c3-7efa-4ee6-b518-f8b09ec87b73@huaweicloud.com>
+ <20250506043907.GA27061@lst.de>
+ <64c8b62a-83ba-45be-a83e-62b6ad8d6f22@huaweicloud.com>
+ <20250506121102.GA21905@lst.de>
+ <a39a6612-89ac-4255-b737-37c7d16b3185@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <a39a6612-89ac-4255-b737-37c7d16b3185@huaweicloud.com>
 
-We always add or remove a single element in vector_add_slot() and
-vector_remove_slot(). Use of the VECTOR_DEFAULT_SIZE macro suggests that
-its value can be changed, but this is not the case.
+On Wed, May 07, 2025 at 03:33:23PM +0800, Zhang Yi wrote:
+> On 2025/5/6 20:11, Christoph Hellwig wrote:
+> > On Tue, May 06, 2025 at 07:16:56PM +0800, Zhang Yi wrote:
+> >> Sorry, but I don't understand your suggestion. The
+> >> STATX_ATTR_WRITE_ZEROES_UNMAP attribute only indicate whether the bdev
+> >> and the block device that under the specified file support unmap write
+> >> zeroes commoand. It does not reflect whether the bdev and the
+> >> filesystems support FALLOC_FL_WRITE_ZEROES. The implementation of
+> >> FALLOC_FL_WRITE_ZEROES doesn't fully rely on the unmap write zeroes
+> >> commoand now, users simply refer to this attribute flag to determine
+> >> whether to use FALLOC_FL_WRITE_ZEROES when preallocating a file.
+> >> So, STATX_ATTR_WRITE_ZEROES_UNMAP and FALLOC_FL_WRITE_ZEROES doesn't
+> >> have strong relations, why do you suggested to put this into the ext4
+> >> and bdev patches that adding FALLOC_FL_WRITE_ZEROES?
+> > 
+> > So what is the point of STATX_ATTR_WRITE_ZEROES_UNMAP?
+> 
+> My idea is not to strictly limiting the use of FALLOC_FL_WRITE_ZEROES to
+> only bdev or files where bdev_unmap_write_zeroes() returns true. In
+> other words, STATX_ATTR_WRITE_ZEROES_UNMAP and FALLOC_FL_WRITE_ZEROES
+> are not consistent, they are two independent features. Even if some
+> devices STATX_ATTR_WRITE_ZEROES_UNMAP are not set, users should still be
+> allowed to call fallcoate(FALLOC_FL_WRITE_ZEROES). This is because some
+> devices and drivers currently cannot reliably ascertain whether they
+> support the unmap write zero command; however, certain devices, such as
+> specific cloud storage devices, do support it. Users of these devices
+> may also wish to use FALLOC_FL_WRITE_ZEROES to expedite the zeroing
+> process.
+> 
+> Therefore, I think that the current point of
+> STATX_ATTR_WRITE_ZEROES_UNMAP (possibly STATX_WRITE_ZEROES_UNMAP) should
+> be to just indicate whether a bdev or file supports the unmap write zero
+> command (i.e., whether bdev_unmap_write_zeroes() returns true). If we
+> use standard SCSI and NVMe storage devices, and the
+> STATX_ATTR_WRITE_ZEROES_UNMAP attribute is set, users can be assured
+> that FALLOC_FL_WRITE_ZEROES is fast and can choose to use
+> fallocate(FALLOC_FL_WRITE_ZEROES) immediately.
+> 
+> Would you prefer to make STATX_ATTR_WRITE_ZEROES_UNMAP and
+> FALLOC_FL_WRITE_ZEROES consistent, which means
+> fallcoate(FALLOC_FL_WRITE_ZEROES) will return -EOPNOTSUPP if the block
+> device doesn't set STATX_ATTR_WRITE_ZEROES_UNMAP ?
+> 
+> If so, I'd suggested we need to:
+> 1) Remove STATX_ATTR_WRITE_ZEROES_UNMAP since users can check the
+>    existence by calling fallocate(FALLOC_FL_WRITE_ZEROES) directly, this
+>    statx flag seems useless.
+> 2) Make the BLK_FEAT_WRITE_ZEROES_UNMAP sysfs interface to RW, allowing
+>    users to adjust the block device's support state according to the
+>    real situation.
 
-Remove the macro.
+Sounds fine to me... ;)
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmpathutil/vector.c | 4 ++--
- libmpathutil/vector.h | 3 +--
- 2 files changed, 3 insertions(+), 4 deletions(-)
+--D
 
-diff --git a/libmpathutil/vector.c b/libmpathutil/vector.c
-index 6ad5dd5..34a8512 100644
---- a/libmpathutil/vector.c
-+++ b/libmpathutil/vector.c
-@@ -45,7 +45,7 @@ vector_alloc_slot(vector v)
- 	if (!v)
- 		return false;
- 
--	new_allocated = v->allocated + VECTOR_DEFAULT_SIZE;
-+	new_allocated = v->allocated + 1;
- 	new_slot = realloc(v->slot, sizeof (void *) * new_allocated);
- 	if (!new_slot)
- 		return false;
-@@ -115,7 +115,7 @@ vector_del_slot(vector v, int slot)
- 	for (i = slot + 1; i < VECTOR_SIZE(v); i++)
- 		v->slot[i - 1] = v->slot[i];
- 
--	v->allocated -= VECTOR_DEFAULT_SIZE;
-+	v->allocated--;
- 
- 	if (v->allocated <= 0) {
- 		free(v->slot);
-diff --git a/libmpathutil/vector.h b/libmpathutil/vector.h
-index 171ab6a..0a5b32e 100644
---- a/libmpathutil/vector.h
-+++ b/libmpathutil/vector.h
-@@ -32,8 +32,7 @@ struct vector_s {
- };
- typedef struct vector_s *vector;
- 
--#define VECTOR_DEFAULT_SIZE 1
--#define VECTOR_SIZE(V)   ((V) ? ((V)->allocated) / VECTOR_DEFAULT_SIZE : 0)
-+#define VECTOR_SIZE(V)   ((V) ? (V)->allocated : 0)
- #define VECTOR_SLOT(V,E) (((V) && (E) < VECTOR_SIZE(V) && (E) >= 0) ? (V)->slot[(E)] : NULL)
- #define VECTOR_LAST_SLOT(V)   (((V) && VECTOR_SIZE(V) > 0) ? (V)->slot[(VECTOR_SIZE(V) - 1)] : NULL)
- 
--- 
-2.49.0
-
+> Thanks,
+> Yi.
+> 
+> 
