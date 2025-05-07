@@ -1,137 +1,116 @@
-Received: from mail.tnxip.de (mail.tnxip.de [49.12.77.104])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADE012744E
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 10:46:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.77.104
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 375931FF7B4;
+	Wed,  7 May 2025 12:04:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746614779; cv=none; b=S6ZyqwjnhKX4ZMbAkNYvwa3UY5rRPWd0njUjZXjt8vmocsiNCjGbnh6ZQkydXJCrQK0+R7uyPWe2L7hzkNVtZYzfn156WIHJp9hunLMXFjl4YYAxBhCUCPBDW+JVJl0gQvMsSRLT5oPFt1PYzgjtBbdK3CGoaenHSXYDwxVGwKs=
+	t=1746619497; cv=none; b=RsdeOCfsd4EoiVeRIEwvKvv+q50A4guYt9KvNtBnQzbOpUsONNWbLTKoUbcEVb2ypKeTES6caPo0y5ESGuth1hVyZSUOkPxoxY0d2c1RWe5nxnB1FaXMK2NMKHzS0dv4RTFX2KdX+C1HcgfEi3ZZQ1smH3kzgkBktEIAWMSZc+0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746614779; c=relaxed/simple;
-	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
-	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=DfZ1/EseBdK3N8fq6xFrjRH+6uAHJDojYG71nSX5V0CcWRE4LiCDnosHwoLpp0Yy3x7lxZbA2GAdPW4AifunxDJAysTIe1JU3MQbffAsAWOFKFKbqecPAqpwKwhbci3etEN6wCZAUQ9z7icNP6AqxUa4CiwOLytcKS480kU4dRk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tnxip.de; spf=pass smtp.mailfrom=tnxip.de; dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=HwbA/OB4; dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=llRUPB0F; dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=HOx0i4t0; dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=gL1uNmqP; arc=none smtp.client-ip=49.12.77.104
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tnxip.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=tnxip.de
+	s=arc-20240116; t=1746619497; c=relaxed/simple;
+	bh=S7C0i6guyQUxOmCmzpSvqnFdBd5hRF8ZNROLA+/7kxY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JRFPh7arbif3yah10F5m9BZHqHASvXad6V40pn1Ls/3hESoAuO4lj5QNf9COL6944mnXn4otRhfgEzQQJEBGnvMiAhGOa0Nfp0g040VSpVB1bwjoqX99DsHmYaf4nuJlcQIpvcJWu48TXUXBubV92upi7et1tIltHO5bZoXkD2g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=A9TWos8G; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="HwbA/OB4";
-	dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="llRUPB0F";
-	dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="HOx0i4t0";
-	dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="gL1uNmqP"
-Received: from gw.tnxip.de (unknown [IPv6:fdc7:1cc3:ec03:1:236:8155:1bb8:b14])
-	by mail.tnxip.de (Postfix) with ESMTPS id 8D28E208AB;
-	Wed,  7 May 2025 12:41:01 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=tnxip.de; s=mail-vps;
-	t=1746614461;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
-	b=HwbA/OB4lW0OT7ut6s0HKiM1Fskjgx/3ByfDhdibxQuYNJzet33U0lBhulJGy3kRXkz3Gf
-	rD2c+SS5zTP60gBpXfI0f+Ii2UlkxS6wDUeJ9ubW4NiDe8HbiTfXlg9MySTFNs5igmNglA
-	L6b6GdU2W8n17wI1qkWvwhl/I/qHu9U=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=tnxip.de;
-	s=mail-vps-ed; t=1746614461;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
-	b=llRUPB0FZjrKpwguz+p8gTtGaGJyS/Yb2sdQapCs32mkCwT86GGDaUWZbtVcyUqZy8BYn/
-	LLdvQiP/fjjx3EAA==
-Received: from [192.168.1.99] (_gateway [192.168.1.10])
-	by gw.tnxip.de (Postfix) with ESMTPSA id 0597EF000000000000C76;
-	Wed, 07 May 2025 12:40:55 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=tnxip.de; s=mail-gw;
-	t=1746614461;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
-	b=HOx0i4t0kkGiiycNPDlRy4QCNy+6ssfwiQl4VmleuBD/Wjdwovp38i6hyEjpbDYFp/GWUH
-	6lcmwFmwSKvBAeyrtUgU8E65fNdEqqSYIlT0avfatmGYuH/hArz0c7CNXQDaZx7u+U1qzw
-	Kw6xgaAf0ClT8mi25b3ccUY7Q9YJ8p0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=tnxip.de;
-	s=mail-gw-ed; t=1746614461;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
-	b=gL1uNmqPRzDMXeZylqp3rb3n5bR4tp4X9hlYQ6+tdxlwn0yXzO/Xm4m/t0YPzV8bmTI6Rl
-	cWg6V0GbjOmmIvCg==
-Message-ID: <fc8148d9-4b9f-4c13-9924-2f9b0eced194@tnxip.de>
-Date: Wed, 7 May 2025 12:40:54 +0200
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="A9TWos8G"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:In-Reply-To:References;
+	bh=taTa50vCOqf4qXYa/4iG8HTZJGZUASEUn4x1pmkgTG0=; b=A9TWos8GWPhEHAZOpDq5FqK2Ni
+	wmHmUL7vq5tnXVsJAPlg2Fd3H9Lyc3vEC3ayp0PZ0pQcxwbZCyOUYrBt9eNGl/RAPXFBg0bRkKXi0
+	iuL8IqEVadvqhfYRBsbbPGCTeb0Ab3N3iyFYBp9Ai/eJNUYqN0kDTYTzEQCEWgIeDf5khCiE+MA6R
+	O52BIR//+QAbHZXgMEJ6gb6UG9lhMnh8/PT5xZXP13vn0u2Q5R4GnOhLAV3yZKjntb2cM18o8EksU
+	Vv7KVXVQt+ANVEI5gW15AkwboYZR+caE7YC8AWsetDxrPZQQUzxg2rlSd+H1f3HZfmvhXoQYfoxMj
+	wacMh52w==;
+Received: from [2001:4bb8:2cc:5a47:1fe7:c9d0:5f76:7c02] (helo=localhost)
+	by bombadil.infradead.org with esmtpsa (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uCdW9-0000000FJ3e-424a;
+	Wed, 07 May 2025 12:04:54 +0000
+From: Christoph Hellwig <hch@lst.de>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org,
+	"Md. Haris Iqbal" <haris.iqbal@ionos.com>,
+	Jack Wang <jinpu.wang@ionos.com>,
+	Coly Li <colyli@kernel.org>,
+	Kent Overstreet <kent.overstreet@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Chris Mason <clm@fb.com>,
+	Josef Bacik <josef@toxicpanda.com>,
+	David Sterba <dsterba@suse.com>,
+	Andreas Gruenbacher <agruenba@redhat.com>,
+	Carlos Maiolino <cem@kernel.org>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Naohiro Aota <naohiro.aota@wdc.com>,
+	Johannes Thumshirn <jth@kernel.org>,
+	"Rafael J. Wysocki" <rafael@kernel.org>,
+	Pavel Machek <pavel@kernel.org>,
+	slava@dubeyko.com,
+	glaubitz@physik.fu-berlin.de,
+	frank.li@vivo.com,
+	linux-bcache@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-btrfs@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	linux-pm@vger.kernel.org
+Subject: add more bio helpers v3
+Date: Wed,  7 May 2025 14:04:24 +0200
+Message-ID: <20250507120451.4000627-1-hch@lst.de>
+X-Mailer: git-send-email 2.47.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Betterbird (Linux)
-Content-Language: en-US, de-DE
-To: bmarzins@redhat.com, dm-devel@lists.linux.dev
-From: =?UTF-8?Q?Malte_Schr=C3=B6der?= <malte.schroeder@tnxip.de>
-Subject: LVM RAID1 regression in 6.15-rc5, bisected
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Hi,
+Hi all,
 
-kernel 6.15-rc5 fails to access lvs which use mirroring (lvcreate -m1).
-Last working release is -rc4. Reverting
-5a2a6c428190f945c5cbf5791f72dbea83e97f66 fixes the issue.
+this series adds more block layer helpers to remove boilerplate code when
+adding memory to a bio or to even do the entire synchronous I/O.
 
-Output of "lvs" when broken:
+The main aim is to avoid having to convert to a struct page in the caller
+when adding kernel direct mapping or vmalloc memory.
 
-  /dev/mapper/vg_nvme-wine_games: open failed: No such file or directory
-  Expected raid segment type but got NULL instead.
-  WARNING: RaidLV vg_nvme/wine_games needs to be refreshed!  See
-character 'r' at position 9 in the RaidLV's attributes and also its
-SubLV(s) with option '-a'.
-  Expected raid segment type but got NULL instead.
-  LV          VG      Attr       LSize   Pool Origin Data%  Meta%  Move
-Log Cpy%Sync Convert
-  civ4pitboss vg_nvme rwi---r--- 
-15.00g                                                    
-  lv_bcfs0    vg_nvme -wi-ao----
-768.00g                                                    
-  lv_bcfs1    vg_nvme -wi-ao----
-768.00g                                                    
-  lv_swap0    vg_nvme -wi-ao----  
-8.00g                                                    
-  lv_swap1    vg_nvme -wi-ao----  
-8.00g                                                    
-  mariadb     vg_nvme rwi---r--- 
-32.00g                                                    
-  win10_games vg_nvme rwi---r--- 
-40.00g                                                    
-  wine_games  vg_nvme rwi-XXr-r-  15.00g           
+Changes since v2:
+ - rebase on top of the latest block for-next branch to resolve
+   conflicts with the bonuce buffering removal
 
+Changes since v1:
+ - typo fixes
+ - improve commit messages and kerneldoc comments
+ - move bio_add_virt_nofail out of line
+ - make the number of bio_vecs calculation helper more generic
+ - add another vmalloc helper for the common case
 
-Output of "lvs" with 5a2a6c428190f945c5cbf5791f72dbea83e97f66 reverted:
-
-  LV          VG      Attr       LSize   Pool Origin Data%  Meta%  Move
-Log Cpy%Sync Convert
-  civ4pitboss vg_nvme rwi-a-r--- 
-15.00g                                    100.00          
-  lv_bcfs0    vg_nvme -wi-ao----
-768.00g                                                    
-  lv_bcfs1    vg_nvme -wi-ao----
-768.00g                                                    
-  lv_swap0    vg_nvme -wi-ao----  
-8.00g                                                    
-  lv_swap1    vg_nvme -wi-ao----  
-8.00g                                                    
-  mariadb     vg_nvme rwi-aor--- 
-32.00g                                    100.00          
-  win10_games vg_nvme rwi-a-r--- 
-40.00g                                    100.00          
-  wine_games  vg_nvme rwi-a-r--- 
-15.00g                                    100.00          
-
-
-Hope this helps.
-
-Regards
-
-Malte
-
+Diffstat:
+ block/bio.c                   |  101 +++++++++++++++++++++++++++++++++++++++++
+ block/blk-map.c               |   92 +++++++++----------------------------
+ drivers/block/pktcdvd.c       |    2 
+ drivers/block/rnbd/rnbd-srv.c |    7 --
+ drivers/block/ublk_drv.c      |    3 -
+ drivers/block/virtio_blk.c    |    4 -
+ drivers/md/bcache/super.c     |    3 -
+ drivers/md/dm-bufio.c         |    2 
+ drivers/md/dm-integrity.c     |   16 ++----
+ drivers/nvme/host/core.c      |    2 
+ drivers/scsi/scsi_ioctl.c     |    2 
+ drivers/scsi/scsi_lib.c       |    3 -
+ fs/btrfs/scrub.c              |   10 ----
+ fs/gfs2/ops_fstype.c          |   24 +++------
+ fs/hfsplus/wrapper.c          |   46 +++---------------
+ fs/xfs/xfs_bio_io.c           |   30 ++++--------
+ fs/xfs/xfs_buf.c              |   43 +++--------------
+ fs/xfs/xfs_log.c              |   32 ++-----------
+ fs/zonefs/super.c             |   34 ++++---------
+ include/linux/bio.h           |   25 +++++++++-
+ include/linux/blk-mq.h        |    4 -
+ kernel/power/swap.c           |  103 ++++++++++++++++++------------------------
+ 22 files changed, 270 insertions(+), 318 deletions(-)
