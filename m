@@ -1,117 +1,137 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from mail.tnxip.de (mail.tnxip.de [49.12.77.104])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52F0E22128E
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 08:23:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADE012744E
+	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 10:46:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=49.12.77.104
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746606195; cv=none; b=AZtrcKu3xnKhqYl9W0zuodbCoOVlcrdaehZbWCC3QhG5nycfXIqwyk2NDhpXBDDg9ul2XYSW2bxDKk4p6LWeolA51+oEzMdbCTFq9b1Q51F/KRPlGmadjNV/s2on4LsK2ENSDDzPZcqBNhI7pxVbL+qQKXkhYfkRTGxQwGUhBm8=
+	t=1746614779; cv=none; b=S6ZyqwjnhKX4ZMbAkNYvwa3UY5rRPWd0njUjZXjt8vmocsiNCjGbnh6ZQkydXJCrQK0+R7uyPWe2L7hzkNVtZYzfn156WIHJp9hunLMXFjl4YYAxBhCUCPBDW+JVJl0gQvMsSRLT5oPFt1PYzgjtBbdK3CGoaenHSXYDwxVGwKs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746606195; c=relaxed/simple;
-	bh=dKQSYssCqjab+VThR2A6t9EL5/fdsI5w0NftenKqgO8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ibWIb95PO3EaJJ/ByiG3lHgsKX15j1qGqKZaC6Dc4LKEDm/jpb38ip7Lkg/HFIzkJ0LX9mApPhyOL4ZVg3PloSyxrne0uuvQKjJaLcEEaom6lCYY1wQjBO+attNr0xXVFuOZrC4byyMXm1Zm86HoDCfW6j7r2CewVNK0dMfY4MU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZspD32RCxz4f3kvq
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 16:22:43 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.112])
-	by mail.maildlp.com (Postfix) with ESMTP id 5447A1A0E15
-	for <dm-devel@lists.linux.dev>; Wed,  7 May 2025 16:23:09 +0800 (CST)
-Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP1 (Coremail) with SMTP id cCh0CgAXfHxqGBto+dv_LQ--.31348S3;
-	Wed, 07 May 2025 16:23:08 +0800 (CST)
-Message-ID: <6fc62631-fb6f-4207-badb-1964b20fa89a@huaweicloud.com>
-Date: Wed, 7 May 2025 16:23:06 +0800
+	s=arc-20240116; t=1746614779; c=relaxed/simple;
+	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
+	h=Message-ID:Date:MIME-Version:To:From:Subject:Content-Type; b=DfZ1/EseBdK3N8fq6xFrjRH+6uAHJDojYG71nSX5V0CcWRE4LiCDnosHwoLpp0Yy3x7lxZbA2GAdPW4AifunxDJAysTIe1JU3MQbffAsAWOFKFKbqecPAqpwKwhbci3etEN6wCZAUQ9z7icNP6AqxUa4CiwOLytcKS480kU4dRk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tnxip.de; spf=pass smtp.mailfrom=tnxip.de; dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=HwbA/OB4; dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=llRUPB0F; dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=HOx0i4t0; dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b=gL1uNmqP; arc=none smtp.client-ip=49.12.77.104
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tnxip.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=tnxip.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="HwbA/OB4";
+	dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="llRUPB0F";
+	dkim=pass (1024-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="HOx0i4t0";
+	dkim=permerror (0-bit key) header.d=tnxip.de header.i=@tnxip.de header.b="gL1uNmqP"
+Received: from gw.tnxip.de (unknown [IPv6:fdc7:1cc3:ec03:1:236:8155:1bb8:b14])
+	by mail.tnxip.de (Postfix) with ESMTPS id 8D28E208AB;
+	Wed,  7 May 2025 12:41:01 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=tnxip.de; s=mail-vps;
+	t=1746614461;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
+	b=HwbA/OB4lW0OT7ut6s0HKiM1Fskjgx/3ByfDhdibxQuYNJzet33U0lBhulJGy3kRXkz3Gf
+	rD2c+SS5zTP60gBpXfI0f+Ii2UlkxS6wDUeJ9ubW4NiDe8HbiTfXlg9MySTFNs5igmNglA
+	L6b6GdU2W8n17wI1qkWvwhl/I/qHu9U=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=tnxip.de;
+	s=mail-vps-ed; t=1746614461;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
+	b=llRUPB0FZjrKpwguz+p8gTtGaGJyS/Yb2sdQapCs32mkCwT86GGDaUWZbtVcyUqZy8BYn/
+	LLdvQiP/fjjx3EAA==
+Received: from [192.168.1.99] (_gateway [192.168.1.10])
+	by gw.tnxip.de (Postfix) with ESMTPSA id 0597EF000000000000C76;
+	Wed, 07 May 2025 12:40:55 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=tnxip.de; s=mail-gw;
+	t=1746614461;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
+	b=HOx0i4t0kkGiiycNPDlRy4QCNy+6ssfwiQl4VmleuBD/Wjdwovp38i6hyEjpbDYFp/GWUH
+	6lcmwFmwSKvBAeyrtUgU8E65fNdEqqSYIlT0avfatmGYuH/hArz0c7CNXQDaZx7u+U1qzw
+	Kw6xgaAf0ClT8mi25b3ccUY7Q9YJ8p0=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=tnxip.de;
+	s=mail-gw-ed; t=1746614461;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=JWATYdGUi08rRW7zEx6g7PkfpocjtZURQETGGVg3PSU=;
+	b=gL1uNmqPRzDMXeZylqp3rb3n5bR4tp4X9hlYQ6+tdxlwn0yXzO/Xm4m/t0YPzV8bmTI6Rl
+	cWg6V0GbjOmmIvCg==
+Message-ID: <fc8148d9-4b9f-4c13-9924-2f9b0eced194@tnxip.de>
+Date: Wed, 7 May 2025 12:40:54 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH v4 07/11] fs: statx add write zeroes unmap attribute
-To: "Darrick J. Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>
-Cc: dhowells@redhat.com, brauner@kernel.org, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
- linux-kernel@vger.kernel.org, tytso@mit.edu, john.g.garry@oracle.com,
- bmarzins@redhat.com, chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
- yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
- yangerkun@huawei.com
-References: <20250421021509.2366003-1-yi.zhang@huaweicloud.com>
- <20250421021509.2366003-8-yi.zhang@huaweicloud.com>
- <20250505132208.GA22182@lst.de> <20250505142945.GJ1035866@frogsfrogsfrogs>
- <20250506050239.GA27687@lst.de> <20250506053654.GA25700@frogsfrogsfrogs>
- <20250506054722.GA28781@lst.de>
- <c3105509-9d63-4fa2-afaf-5b508ddeeaca@huaweicloud.com>
- <20250506121012.GA21705@lst.de> <20250506155515.GL1035866@frogsfrogsfrogs>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <20250506155515.GL1035866@frogsfrogsfrogs>
+User-Agent: Betterbird (Linux)
+Content-Language: en-US, de-DE
+To: bmarzins@redhat.com, dm-devel@lists.linux.dev
+From: =?UTF-8?Q?Malte_Schr=C3=B6der?= <malte.schroeder@tnxip.de>
+Subject: LVM RAID1 regression in 6.15-rc5, bisected
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-CM-TRANSID:cCh0CgAXfHxqGBto+dv_LQ--.31348S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7uw1ktr18Gr17CFy8Kw48Zwb_yoW8CFWDpF
-	WjgF4UGFWUKry3Jw1kuw1Igr15ZFn5GFy3C39Ykr18Zws0qr1kKF95W3ZYkF9ruryrAa1U
-	ta9xK3sxWws3A37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+Content-Transfer-Encoding: 8bit
 
-On 2025/5/6 23:55, Darrick J. Wong wrote:
-> On Tue, May 06, 2025 at 02:10:12PM +0200, Christoph Hellwig wrote:
->> On Tue, May 06, 2025 at 07:25:06PM +0800, Zhang Yi wrote:
->>> +       if (request_mask & STATX_WRITE_ZEROES_UNMAP &&
->>> +           bdev_write_zeroes_unmap(bdev))
->>> +               stat->result_mask |= STATX_WRITE_ZEROES_UNMAP;
->>
->> That would be my expectation.  But then again this area seems to
->> confuse me a lot, so maybe we'll get Christian or Dave to chim in.
-> 
-> Um... does STATX_WRITE_ZEROES_UNMAP protect a field somewhere?
-> It might be nice to expose the request alignment granularity/max
-> size/etc.
+Hi,
 
-I think that simply returning the support state is sufficient at the
-moment. __blkdev_issue_write_zeroes() will send write zeroes through
-multiple iterations, and there are no specific restrictions on the
-parameters provided by users.
+kernel 6.15-rc5 fails to access lvs which use mirroring (lvcreate -m1).
+Last working release is -rc4. Reverting
+5a2a6c428190f945c5cbf5791f72dbea83e97f66 fixes the issue.
 
-> Or does this flag exist solely to support discovering that
-> FALLOC_FL_WRITE_ZEROES is supported?  In which case, why not discover
-> its existence by calling fallocate(fd, WRITE_ZEROES, 0, 0) like the
-> other modes?
-> 
+Output of "lvs" when broken:
 
-Current STATX_WRITE_ZEROES_UNMAP and FALLOC_FL_WRITE_ZEROES are
-inconsistent, we allow users to call fallocate(FALLOC_FL_WRITE_ZEROES) on
-files that STATX_WRITE_ZEROES_UNMAP is not set. Users can check whether
-the device supports unmap write zeroes through STATX_WRITE_ZEROES_UNMAP
-and then decide to call fallocate(FALLOC_FL_WRITE_ZEROES) if it is
-supported. Please see this explanation for details.
+  /dev/mapper/vg_nvme-wine_games: open failed: No such file or directory
+  Expected raid segment type but got NULL instead.
+  WARNING: RaidLV vg_nvme/wine_games needs to be refreshed!  See
+character 'r' at position 9 in the RaidLV's attributes and also its
+SubLV(s) with option '-a'.
+  Expected raid segment type but got NULL instead.
+  LV          VG      Attr       LSize   Pool Origin Data%  Meta%  Move
+Log Cpy%Sync Convert
+  civ4pitboss vg_nvme rwi---r--- 
+15.00g                                                    
+  lv_bcfs0    vg_nvme -wi-ao----
+768.00g                                                    
+  lv_bcfs1    vg_nvme -wi-ao----
+768.00g                                                    
+  lv_swap0    vg_nvme -wi-ao----  
+8.00g                                                    
+  lv_swap1    vg_nvme -wi-ao----  
+8.00g                                                    
+  mariadb     vg_nvme rwi---r--- 
+32.00g                                                    
+  win10_games vg_nvme rwi---r--- 
+40.00g                                                    
+  wine_games  vg_nvme rwi-XXr-r-  15.00g           
 
-  https://lore.kernel.org/linux-fsdevel/20250421021509.2366003-1-yi.zhang@huaweicloud.com/T/#mc1618822bc27d486296216fc1643d5531fee03e1
 
-However, removing STATX_WRITE_ZEROES_UNMAP also seems good to me(Perhaps
-it would be better.).It means we do not allow to call
-fallocate(FALLOC_FL_WRITE_ZEROES) if the device does not explicitly
-support unmap write zeroes.
+Output of "lvs" with 5a2a6c428190f945c5cbf5791f72dbea83e97f66 reverted:
 
-Thanks,
-Yi.
+  LV          VG      Attr       LSize   Pool Origin Data%  Meta%  Move
+Log Cpy%Sync Convert
+  civ4pitboss vg_nvme rwi-a-r--- 
+15.00g                                    100.00          
+  lv_bcfs0    vg_nvme -wi-ao----
+768.00g                                                    
+  lv_bcfs1    vg_nvme -wi-ao----
+768.00g                                                    
+  lv_swap0    vg_nvme -wi-ao----  
+8.00g                                                    
+  lv_swap1    vg_nvme -wi-ao----  
+8.00g                                                    
+  mariadb     vg_nvme rwi-aor--- 
+32.00g                                    100.00          
+  win10_games vg_nvme rwi-a-r--- 
+40.00g                                    100.00          
+  wine_games  vg_nvme rwi-a-r--- 
+15.00g                                    100.00          
+
+
+Hope this helps.
+
+Regards
+
+Malte
 
