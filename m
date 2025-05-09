@@ -1,68 +1,69 @@
 Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BABB23D2AF
-	for <dm-devel@lists.linux.dev>; Fri,  9 May 2025 13:54:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 572222AC17
+	for <dm-devel@lists.linux.dev>; Fri,  9 May 2025 14:08:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746798859; cv=none; b=mou1qNFnhljqkazc8IL4HI8Qia69F5MnmxcY1tow6vyAEBnIKDMhBLgqP8PL3n+5wpS97tsUaCi3pgrrcwjvQqDRg03J3PhneR0PHNdGoLTATwklerP6ZluPS/tSOeaBobo7EW7VdkyjGe2hYeFhZlUbnMaAstWaUdOHE5ViJjc=
+	t=1746799709; cv=none; b=uCn+kJ/PGIbicSRx3O/JvJKP4g/TbwuQnKK88HFEIVNW8fh26VjMdG1CVD62P38eO2dzS9LH7OuYU/K154Y2r7iFXYHE+QAFIdEpXkVIwEdn6M/fQbfxjWVEkW0cMRYDzml2DEzN3uBH/pjUZ2jP3cAlnW50DTwImuwVMwsHZ74=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746798859; c=relaxed/simple;
-	bh=mse/VOX+IFZwIbSRx1rH5VQyKCBLbQakAg9R+em8NGg=;
+	s=arc-20240116; t=1746799709; c=relaxed/simple;
+	bh=TrJVjyYWrcM8W85KJcWLYymtyMA8GZScxiQRUKB3mdY=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=QbozmAkc1cLu/uHzJENF6IvFlDbQxpPMoT02BPj86o+cHUERrzZx5MWOBndik2uzcGYheL0vdgkr+cjDXMCYBp6aFaaEJ1EXnSi9VCcJzwTPbqr+BNcRhxvsRExA7gj+o3+4nQLCs+vAqGJuX8Wy5u+B/pSPiJzXdPw/FCxrkX4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=HwFMgQnT; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=HwFMgQnT; arc=none smtp.client-ip=195.135.223.131
+	 Content-Type:MIME-Version; b=Xun+ObtVbzubrFImNpvHL2yFhAYd41kPq1uVcuTtNBM50pvJgLLDVc+S+m7YKrZ165fsDbY2+JWDnEIa+LwX5Ymjq6uTOP68x47+9c1cN1toaOm0VEo/OZkQi2Vg4hGDcK4fTEeMHiLJ9FyeHyRkjmp9Aebf7+KIM88rxCPaoj4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=HbdRyD9F; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=OzoqUsuA; arc=none smtp.client-ip=195.135.223.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="HwFMgQnT";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="HwFMgQnT"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="HbdRyD9F";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="OzoqUsuA"
 Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 9C8651F38A;
-	Fri,  9 May 2025 13:54:14 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 377111F38A;
+	Fri,  9 May 2025 14:08:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746798854; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1746799705; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mse/VOX+IFZwIbSRx1rH5VQyKCBLbQakAg9R+em8NGg=;
-	b=HwFMgQnTwRwwBTi0KyD2RGxzYofluxgzqaOavl6tOXnraCRB2ThBXTcfrGobj6fXQaxp5X
-	9fUUK6fG9Uk7XkqyIjFQu0QD9d4yTZxeE0RQanI75V4LH3rpu/eu+O2LCzREcyUZgpMyYe
-	4Y3WXiw6eeCBUzCmrVdTmgG4axAX6K4=
+	bh=FznH2d3CssSuIvZrnbelbNsWzxDuIHXnFjbVL+VrU3E=;
+	b=HbdRyD9Fa9cdbwiVz/vZwvcMAYV2CgDw6+bQCiw+AiddekdGw9O99Vv7cS0zSe1LCrPvDv
+	nj2XxaN2gH8kWEHLtuDxxZdJ5Aa2k5/mgRzIU4E9JxQ5O4DCeHW6813Py3CUF+gzE5Zylz
+	F8sZksqfZuWyyrAgsM3WcgiTan5iqjU=
 Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=HwFMgQnT
+	dkim=pass header.d=suse.com header.s=susede1 header.b=OzoqUsuA
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746798854; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1746799704; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mse/VOX+IFZwIbSRx1rH5VQyKCBLbQakAg9R+em8NGg=;
-	b=HwFMgQnTwRwwBTi0KyD2RGxzYofluxgzqaOavl6tOXnraCRB2ThBXTcfrGobj6fXQaxp5X
-	9fUUK6fG9Uk7XkqyIjFQu0QD9d4yTZxeE0RQanI75V4LH3rpu/eu+O2LCzREcyUZgpMyYe
-	4Y3WXiw6eeCBUzCmrVdTmgG4axAX6K4=
+	bh=FznH2d3CssSuIvZrnbelbNsWzxDuIHXnFjbVL+VrU3E=;
+	b=OzoqUsuA4fvYCQAA/KJGslcvmSBAdwzy2YeqlOtHbeXnDrsxZUiNXpyzDdrepgyxrUxGQh
+	lV0FlwZ/AOP/ZQX739hTmM35v+jEhHJpEXREZUWVf8LH4fZPQWwEIMI8h3UMkqukzgGy7T
+	SufNzGZHyhpmJ5NrZRe/NcyEk3Nl3WU=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5D5C41399F;
-	Fri,  9 May 2025 13:54:14 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id F17E31399F;
+	Fri,  9 May 2025 14:08:23 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id whWbFAYJHmhKQgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 09 May 2025 13:54:14 +0000
-Message-ID: <69290f5c57f084ea7169a25fadeb7aa51d40c511.camel@suse.com>
-Subject: Re: [PATCH] multipath-tools: update Path Selector descriptions on
- the man page
+	id dlRZOVcMHmhqRgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 09 May 2025 14:08:23 +0000
+Message-ID: <085c156c31fcd2fc5da4e889642bd6186c677a7c.camel@suse.com>
+Subject: Re: [PATCH] multipath-tools: replace round-robin path selector with
+ the default for NFINIDAT/InfiniBox
 From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, arnony@infinidat.com
 Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Fri, 09 May 2025 15:54:13 +0200
-In-Reply-To: <20250509112826.160900-1-xose.vazquez@gmail.com>
-References: <20250509112826.160900-1-xose.vazquez@gmail.com>
+	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>, 
+ John Meneghini <jmeneghi@redhat.com>
+Date: Fri, 09 May 2025 16:08:23 +0200
+In-Reply-To: <20250509134459.226640-1-xose.vazquez@gmail.com>
+References: <20250509134459.226640-1-xose.vazquez@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.56.1 
@@ -73,134 +74,109 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 9C8651F38A
+X-Rspamd-Queue-Id: 377111F38A
 X-Spam-Flag: NO
 X-Spam-Score: -3.01
 X-Spam-Level: 
 X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
+	BAYES_HAM(-3.00)[99.99%];
 	SUSPICIOUS_RECIPS(1.50)[];
 	NEURAL_HAM_LONG(-1.00)[-1.000];
 	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
 	NEURAL_HAM_SHORT(-0.20)[-1.000];
 	MIME_GOOD(-0.10)[text/plain];
 	MX_GOOD(-0.01)[];
-	TO_DN_ALL(0.00)[];
 	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	FREEMAIL_TO(0.00)[gmail.com];
-	ARC_NA(0.00)[];
 	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FREEMAIL_TO(0.00)[gmail.com,infinidat.com];
 	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	TO_DN_SOME(0.00)[];
 	FUZZY_BLOCKED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
 	RCVD_TLS_ALL(0.00)[];
 	DKIM_TRACE(0.00)[suse.com:+];
-	RCPT_COUNT_THREE(0.00)[4];
 	RCVD_COUNT_TWO(0.00)[2];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
 	FROM_EQ_ENVFROM(0.00)[];
 	FROM_HAS_DN(0.00)[];
-	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_FIVE(0.00)[6];
 	MID_RHS_MATCH_FROM(0.00)[];
 	TAGGED_RCPT(0.00)[];
 	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
 	ASN(0.00)[asn:25478, ipnet:::/0, country:RU];
 	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:dkim,suse.com:mid]
+	DBL_BLOCKED_OPENRESOLVER(0.00)[linux.dev:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,infinidat.com:email,marc.info:url,opensvc.com:email,suse.com:email,suse.com:dkim,suse.com:mid]
 X-Rspamd-Action: no action
 
-On Fri, 2025-05-09 at 13:28 +0200, Xose Vazquez Perez wrote:
+On Fri, 2025-05-09 at 15:44 +0200, Xose Vazquez Perez wrote:
+> round-robin is a basic selector, and only works well under ideal
+> conditions,
+>=20
+> A nvme benchmark, round-robin vs queue-depth, shows how bad it is:
+> https://marc.info/?l=3Dlinux-kernel&m=3D171931850925572
+> https://marc.info/?l=3Dlinux-kernel&m=3D171931852025575
+> https://github.com/johnmeneghini/iopolicy/?tab=3Dreadme-ov-file#sample-da=
+ta
+> https://people.redhat.com/jmeneghi/ALPSS_2023/NVMe_QD_Multipathing.pdf
+
+All these are about native nvme multipath. None is about dm-multipath.
+
+> The same happens for scsi.
+
+Please support this claim with actual numbers. I'm not saying that it's
+wrong (it makes sense that John's argument=C2=A0"the round-robin path
+selector is inefficient in cases where there is a difference in latency
+between paths" applies to all implementations), but you can't present
+numbers for one technology and simply apply them to a different
+technology without providing any evidence for the latter.
+
+I'd accept this statement in a weaker form, like "It is reasonable to
+assume that the same effects would be measured with dm-multipath over
+SCSI devices, too".
+
+>=20
 > Cc: Martin Wilck <mwilck@suse.com>
 > Cc: Benjamin Marzinski <bmarzins@redhat.com>
 > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 > Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
-> =C2=A0multipath/multipath.conf.5.in | 23 +++++++++++++----------
-> =C2=A01 file changed, 13 insertions(+), 10 deletions(-)
+> Should global keywords be banned in the devices section, or deleted
+> from hwtable ???
+> dev_loss
+> fast_io_fail
+> max_sectors_kb
+> ...
 >=20
-> diff --git a/multipath/multipath.conf.5.in
-> b/multipath/multipath.conf.5.in
-> index d0f6c6ac..9884df93 100644
-> --- a/multipath/multipath.conf.5.in
-> +++ b/multipath/multipath.conf.5.in
-> @@ -197,22 +197,25 @@ kernel multipath target:
-> =C2=A0.RS
-> =C2=A0.TP 12
-> =C2=A0.I "round-robin 0"
-> -Loop through every path in the path group, sending the same amount
-> of I/O to
-> -each. Some aspects of behavior can be controlled with the
-> attributes:
-> -\fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.
-> +Choose the path for the next bunch of I/O based on a rotational
-> distribution,
+> They interfere when two, or more, different arrays are connected to
+> the same host.
+> ---
+> =C2=A0libmultipath/hwtable.c | 4 ----
+> =C2=A01 file changed, 4 deletions(-)
+>=20
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 081d119c..3ade3669 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -1125,11 +1125,7 @@ static struct hwentry default_hw[] =3D {
+> =C2=A0		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_PRIO,
+> =C2=A0		.pgfailback=C2=A0=C2=A0=C2=A0 =3D 30,
+> =C2=A0		.prio_name=C2=A0=C2=A0=C2=A0=C2=A0 =3D PRIO_ALUA,
+> -		.selector=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "round-robin 0",
+> -		.rr_weight=C2=A0=C2=A0=C2=A0=C2=A0 =3D RR_WEIGHT_PRIO,
+> =C2=A0		.no_path_retry =3D NO_PATH_RETRY_FAIL,
+> -		.minio=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 1,
+> -		.minio_rq=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 1,
+> =C2=A0		.fast_io_fail=C2=A0 =3D 15,
+> =C2=A0	},
+> =C2=A0	/*
 
-"rotational distribution" sounds weird. "by looping through every path
-in the path group" is easier to understand.
+This code is from 55da608 ("libmultipath: update INFINIDAT builtin
+config"), signed-off by=C2=A0arnony@infinidat.com. We usually don't change
+defaults from explicit vendor recommendations without consent from the
+vendor. I've added Arnon to cc, maybe he wants to comment on your
+suggestion.
 
-> +sending \fBthe same number of I/Os\fR to each path. Some aspects of
-> behavior can be
-> +controlled with the attributes: \fIrr_min_io\fR, \fIrr_min_io_rq\fR
-> and \fIrr_weight\fR.
-> =C2=A0.TP
-> =C2=A0.I "queue-length 0"
-> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O
-> based on the amount
-> -of outstanding I/O to the path.
-> +(Since 2.6.31 kernel) Choose the path for the next bunch of I/O
-> based on \fBthe lowest
-> +number of outstanding in-flight I/Os\fR to the path.
-
-I suggest using "I/O requests" rather than "I/Os".
-
-> =C2=A0.TP
-> =C2=A0.I "service-time 0"
-> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O
-> based on the amount
-> -of outstanding I/O to the path and its relative throughput.
-> +(Since 2.6.31 kernel) Choose the path for the next bunch of I/O
-> based on \fBthe
-> +lowest total size (in bytes) of outstanding in-flight I/Os\fR to the
-
-same as above, or use "in-flight I/O".
-
-> path. If
-> +\fIrelative_throughput\fR argument is defined for each path, it's
-> also used to
-> +calculate the best service time.
-
-This is misleading, as multipath-tools currently don't support path
-weights, except for round-robin.
-
-> =C2=A0.TP
-> =C2=A0.I "historical-service-time 0"
-> -(Since 5.8 kernel) Choose the path for the next bunch of I/O based
-> on the
-> -estimation of future service time based on the history of previous
-> I/O submitted
-> -to each path.
-> +(Since 5.8 kernel) Choose the path for the next bunch of I/O with
-> \fBa dinamyc
-
-Typo.
-
-> +algorithm based on the historical service time and the number
-> outstanding
-> +in-flight I/Os\fR to the path. It can be tuning with
-
-See above wrt "I/Os". Also, use "tuned" ...
-
-> \fIbase_weight\fR and
-> +\fIthreshold_multiplier\fR arguments.
-> =C2=A0.TP
-> =C2=A0The default is: \fBservice-time 0\fR
-> =C2=A0.RE
-
-... but again, this is misleading. As the trailing "0" implies,
-multipath-tools currently doesn't support passing parameters to path
-selector algorithms. In the multipath.conf man page, we shouldn't
-mention features that we don't support.
-
-Regards
+Regards,
 Martin
