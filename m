@@ -1,69 +1,67 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 572222AC17
-	for <dm-devel@lists.linux.dev>; Fri,  9 May 2025 14:08:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A13920DD72
+	for <dm-devel@lists.linux.dev>; Fri,  9 May 2025 14:19:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746799709; cv=none; b=uCn+kJ/PGIbicSRx3O/JvJKP4g/TbwuQnKK88HFEIVNW8fh26VjMdG1CVD62P38eO2dzS9LH7OuYU/K154Y2r7iFXYHE+QAFIdEpXkVIwEdn6M/fQbfxjWVEkW0cMRYDzml2DEzN3uBH/pjUZ2jP3cAlnW50DTwImuwVMwsHZ74=
+	t=1746800376; cv=none; b=u+iJNLHpQVArh/fMqM+hWC1V3CF6jCSczNvN/38KhdMblrpFZJPf3wKVIERwI7qCPwNuCQ1k9OPerNmUAllpDsMwF6pzlfvTlCwyBfBvMp14MLmURrf2TOdv+vslsnXtWgbHjmrDjC3EYijWF/CuVPGVRjAV1beixRtFcRuKmnI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746799709; c=relaxed/simple;
-	bh=TrJVjyYWrcM8W85KJcWLYymtyMA8GZScxiQRUKB3mdY=;
+	s=arc-20240116; t=1746800376; c=relaxed/simple;
+	bh=nCjK81dhh6SbIzg1eJE7Ln1OIx0mw2F8M/Bo72xGB9Y=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Xun+ObtVbzubrFImNpvHL2yFhAYd41kPq1uVcuTtNBM50pvJgLLDVc+S+m7YKrZ165fsDbY2+JWDnEIa+LwX5Ymjq6uTOP68x47+9c1cN1toaOm0VEo/OZkQi2Vg4hGDcK4fTEeMHiLJ9FyeHyRkjmp9Aebf7+KIM88rxCPaoj4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=HbdRyD9F; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=OzoqUsuA; arc=none smtp.client-ip=195.135.223.131
+	 Content-Type:MIME-Version; b=cRMe0/G8Hk1JR5wM2gFbbDmMRjmDO1DqZmuGC4R3o8fxQsWyWdUh/br9zLMm08R/HPwWiW2+hBO05sjEw6AbjGNvDHKTJlxKuWWTCTnVJ7iBDd0hQ6uwOPhR6FG4F/8ql80NKM4wzqC4X2MIgkH6KfeOaCN7Y4bwkDEs+UyZ+qk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=hRM4x6TO; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=hRM4x6TO; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="HbdRyD9F";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="OzoqUsuA"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="hRM4x6TO";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="hRM4x6TO"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 377111F38A;
-	Fri,  9 May 2025 14:08:24 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 192532115E;
+	Fri,  9 May 2025 14:19:32 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746799705; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1746800372; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=FznH2d3CssSuIvZrnbelbNsWzxDuIHXnFjbVL+VrU3E=;
-	b=HbdRyD9Fa9cdbwiVz/vZwvcMAYV2CgDw6+bQCiw+AiddekdGw9O99Vv7cS0zSe1LCrPvDv
-	nj2XxaN2gH8kWEHLtuDxxZdJ5Aa2k5/mgRzIU4E9JxQ5O4DCeHW6813Py3CUF+gzE5Zylz
-	F8sZksqfZuWyyrAgsM3WcgiTan5iqjU=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=OzoqUsuA
+	bh=63PDrJsSlTOrASLg85QCJCBTYaIDJ7NtDSOsY+t76o4=;
+	b=hRM4x6TOU1XDlyLrpW1BtLVqsTppWGQSffB+VZexl485bXtyBq5hbVR1xMNQV4dmPM1gay
+	QKjuzORuCxVcwGL8GVA+35eiE7UReUVk4ZXZrFQUVuKglDLg+3IsbRhSxMPXMM7Fzn13l7
+	/r+XS42EZ1FPa+ZeKh8YaXYJgZC2NFM=
+Authentication-Results: smtp-out1.suse.de;
+	none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1746799704; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1746800372; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=FznH2d3CssSuIvZrnbelbNsWzxDuIHXnFjbVL+VrU3E=;
-	b=OzoqUsuA4fvYCQAA/KJGslcvmSBAdwzy2YeqlOtHbeXnDrsxZUiNXpyzDdrepgyxrUxGQh
-	lV0FlwZ/AOP/ZQX739hTmM35v+jEhHJpEXREZUWVf8LH4fZPQWwEIMI8h3UMkqukzgGy7T
-	SufNzGZHyhpmJ5NrZRe/NcyEk3Nl3WU=
+	bh=63PDrJsSlTOrASLg85QCJCBTYaIDJ7NtDSOsY+t76o4=;
+	b=hRM4x6TOU1XDlyLrpW1BtLVqsTppWGQSffB+VZexl485bXtyBq5hbVR1xMNQV4dmPM1gay
+	QKjuzORuCxVcwGL8GVA+35eiE7UReUVk4ZXZrFQUVuKglDLg+3IsbRhSxMPXMM7Fzn13l7
+	/r+XS42EZ1FPa+ZeKh8YaXYJgZC2NFM=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id F17E31399F;
-	Fri,  9 May 2025 14:08:23 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id DF7B11399F;
+	Fri,  9 May 2025 14:19:31 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id dlRZOVcMHmhqRgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 09 May 2025 14:08:23 +0000
-Message-ID: <085c156c31fcd2fc5da4e889642bd6186c677a7c.camel@suse.com>
-Subject: Re: [PATCH] multipath-tools: replace round-robin path selector with
- the default for NFINIDAT/InfiniBox
+	id GfT+NPMOHmhrSgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 09 May 2025 14:19:31 +0000
+Message-ID: <83ecaf89daa16c74872b3b6b51a5e7fbf637270c.camel@suse.com>
+Subject: Re: [PATCH] multipath-tools: fix misspellings
 From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, arnony@infinidat.com
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>, 
- John Meneghini <jmeneghi@redhat.com>
-Date: Fri, 09 May 2025 16:08:23 +0200
-In-Reply-To: <20250509134459.226640-1-xose.vazquez@gmail.com>
-References: <20250509134459.226640-1-xose.vazquez@gmail.com>
+	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
+Date: Fri, 09 May 2025 16:19:30 +0200
+In-Reply-To: <20250509125444.222611-1-xose.vazquez@gmail.com>
+References: <20250509125444.222611-1-xose.vazquez@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.56.1 
@@ -73,68 +71,73 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 377111F38A
 X-Spam-Flag: NO
-X-Spam-Score: -3.01
+X-Spam-Score: -2.80
 X-Spam-Level: 
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
 	SUSPICIOUS_RECIPS(1.50)[];
 	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
 	NEURAL_HAM_SHORT(-0.20)[-1.000];
 	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FREEMAIL_TO(0.00)[gmail.com,infinidat.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FREEMAIL_TO(0.00)[gmail.com];
 	ARC_NA(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
 	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
 	FROM_EQ_ENVFROM(0.00)[];
 	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[6];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	ASN(0.00)[asn:25478, ipnet:::/0, country:RU];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[linux.dev:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,infinidat.com:email,marc.info:url,opensvc.com:email,suse.com:email,suse.com:dkim,suse.com:mid]
-X-Rspamd-Action: no action
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	TO_DN_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,linux.dev:email,opensvc.com:email,suse.com:email,suse.com:mid]
 
-On Fri, 2025-05-09 at 15:44 +0200, Xose Vazquez Perez wrote:
-> round-robin is a basic selector, and only works well under ideal
-> conditions,
+Hello Xose,
+
+On Fri, 2025-05-09 at 14:54 +0200, Xose Vazquez Perez wrote:
+> codespell:
+> ./tests/mapinfo.c:964: ouput =3D=3D> output
+> ./libmultipath/devmapper.h:118: paramters =3D=3D> parameters
+> ./libmpathutil/uxsock.c:69: everone =3D=3D> everyone
+
+As you may know, a spell checker is part of our regular GitHub CI [1].
+This checker has found a large amount of spelling errors in our code
+base when we first tried it. We therefore decided to restrict it to
+user-visible parts of the code, i.e. error messages, man pages, READMEs
+etc.
+
+While there's nothing wrong with your patch per se, I am hesitant to
+apply it, because if we start fixing spelling errors in comments, we
+should be consequent and=C2=A0eliminate all spelling mistakes, which would
+cause a large number of code changes that are irrelevant to
+functionality. That, in turn, would make it more difficult to assess
+future code changes for regressions and bug fixes.
+
+I'd like to continue following a policy of small changes. That means
+that we fix things like indentation, formatting, whitespace, and
+spelling only in those places of the code which we actually make
+changes for.
+
+This is just my personal preference of course. I'm open for discussion.
+
+Regards
+Martin
+
+[1] https://github.com/opensvc/multipath-tools/actions/workflows/spelling.y=
+ml
+
 >=20
-> A nvme benchmark, round-robin vs queue-depth, shows how bad it is:
-> https://marc.info/?l=3Dlinux-kernel&m=3D171931850925572
-> https://marc.info/?l=3Dlinux-kernel&m=3D171931852025575
-> https://github.com/johnmeneghini/iopolicy/?tab=3Dreadme-ov-file#sample-da=
-ta
-> https://people.redhat.com/jmeneghi/ALPSS_2023/NVMe_QD_Multipathing.pdf
-
-All these are about native nvme multipath. None is about dm-multipath.
-
-> The same happens for scsi.
-
-Please support this claim with actual numbers. I'm not saying that it's
-wrong (it makes sense that John's argument=C2=A0"the round-robin path
-selector is inefficient in cases where there is a difference in latency
-between paths" applies to all implementations), but you can't present
-numbers for one technology and simply apply them to a different
-technology without providing any evidence for the latter.
-
-I'd accept this statement in a weaker form, like "It is reasonable to
-assume that the same effects would be measured with dm-multipath over
-SCSI devices, too".
-
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> SUMMARY:
+> everone=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1
+> ouput=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 1
+> paramters=C2=A0=C2=A0=C2=A0=C2=A0 1
 >=20
 > Cc: Martin Wilck <mwilck@suse.com>
 > Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -142,41 +145,55 @@ SCSI devices, too".
 > Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
-> Should global keywords be banned in the devices section, or deleted
-> from hwtable ???
-> dev_loss
-> fast_io_fail
-> max_sectors_kb
-> ...
+> =C2=A0libmpathutil/uxsock.c=C2=A0=C2=A0=C2=A0 | 2 +-
+> =C2=A0libmultipath/devmapper.h | 2 +-
+> =C2=A0tests/mapinfo.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 | 2 +-
+> =C2=A03 files changed, 3 insertions(+), 3 deletions(-)
 >=20
-> They interfere when two, or more, different arrays are connected to
-> the same host.
-> ---
-> =C2=A0libmultipath/hwtable.c | 4 ----
-> =C2=A01 file changed, 4 deletions(-)
->=20
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 081d119c..3ade3669 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1125,11 +1125,7 @@ static struct hwentry default_hw[] =3D {
-> =C2=A0		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_PRIO,
-> =C2=A0		.pgfailback=C2=A0=C2=A0=C2=A0 =3D 30,
-> =C2=A0		.prio_name=C2=A0=C2=A0=C2=A0=C2=A0 =3D PRIO_ALUA,
-> -		.selector=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "round-robin 0",
-> -		.rr_weight=C2=A0=C2=A0=C2=A0=C2=A0 =3D RR_WEIGHT_PRIO,
-> =C2=A0		.no_path_retry =3D NO_PATH_RETRY_FAIL,
-> -		.minio=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 1,
-> -		.minio_rq=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D 1,
-> =C2=A0		.fast_io_fail=C2=A0 =3D 15,
-> =C2=A0	},
+> diff --git a/libmpathutil/uxsock.c b/libmpathutil/uxsock.c
+> index 59c47170..02b387d0 100644
+> --- a/libmpathutil/uxsock.c
+> +++ b/libmpathutil/uxsock.c
+> @@ -66,7 +66,7 @@ int ux_socket_listen(const char *name)
+> =C2=A0	}
+> =C2=A0
 > =C2=A0	/*
-
-This code is from 55da608 ("libmultipath: update INFINIDAT builtin
-config"), signed-off by=C2=A0arnony@infinidat.com. We usually don't change
-defaults from explicit vendor recommendations without consent from the
-vendor. I've added Arnon to cc, maybe he wants to comment on your
-suggestion.
-
-Regards,
-Martin
+> -	 * Socket needs to have rw permissions for everone.
+> +	 * Socket needs to have rw permissions for everyone.
+> =C2=A0	 * SO_PEERCRED makes sure that only root can modify things.
+> =C2=A0	 */
+> =C2=A0	if (name[0] !=3D '@' &&
+> diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
+> index 4aeefad1..c0f7aa0d 100644
+> --- a/libmultipath/devmapper.h
+> +++ b/libmultipath/devmapper.h
+> @@ -115,7 +115,7 @@ typedef struct libmp_map_info {
+> =C2=A0 *
+> =C2=A0 * This function obtains the requested information for the device-
+> mapper map
+> =C2=A0 * identified by the input parameters.
+> - * If non-NULL, the name, uuid, and dmi output paramters may be
+> filled in for
+> + * If non-NULL, the name, uuid, and dmi output parameters may be
+> filled in for
+> =C2=A0 * any return value besides DMP_NOT_FOUND and will always be filled
+> in for
+> =C2=A0 * return values other than DMP_NOT_FOUND and DMP_ERR.
+> =C2=A0 * The other parameters are only filled in if the return value is
+> DMP_OK.
+> diff --git a/tests/mapinfo.c b/tests/mapinfo.c
+> index 36511607..399e16e7 100644
+> --- a/tests/mapinfo.c
+> +++ b/tests/mapinfo.c
+> @@ -961,7 +961,7 @@ static void test_mapinfo_bad_target_type_03(void
+> **state)
+> =C2=A0			=C2=A0=C2=A0 (mapid_t) { .str =3D "foo", },
+> =C2=A0			=C2=A0=C2=A0 (mapinfo_t) { .dmi =3D &dmi, .name =3D name,
+> .uuid =3D uuid });
+> =C2=A0	assert_int_equal(rc, DMP_NO_MATCH);
+> -	/* make sure that the ouput was filled in */
+> +	/* make sure that the output was filled in */
+> =C2=A0	assert_memory_equal(&dmi, &MPATH_DMI_01, sizeof(dmi));
+> =C2=A0	assert_true(!strcmp(name, MPATH_NAME_01));
+> =C2=A0	assert_true(!strcmp(uuid, MPATH_UUID_01));
