@@ -1,137 +1,102 @@
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45E0F25E820
-	for <dm-devel@lists.linux.dev>; Fri,  9 May 2025 21:45:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB5CA1E25E8
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 01:28:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746827109; cv=none; b=OfvYhyXhbYBj57Yi2UlazVktK5TZdkLmptjGySGwvlfLSgdDrTEA2z+3ZFWljj08q6AEJr3IKrCfGxhV7gRpbi1L2/U2aXvCVBDdaRwK+WUxm8MrVc/+vvVe3Vs2bS5X7IElkdx7OPB7E7FtI9VKkaVV9zXjHzg/8iITzW/8UYU=
+	t=1747013287; cv=none; b=ksiDQB4Lo7Lf0yQFheWscyyaBv+7ahXcbZ00SeLuW0JDoeHUN1H4263a0oIGky4m2SEpGcYYcMnpo5Wcqsw4PTY5uXEbhekazayNgfahysic/v9m2ft3FB7n6s7JAQmJuGXB41pIA3fEJOPUuaXh2/rJlLsO9hBIYJx5dOTnRwg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746827109; c=relaxed/simple;
-	bh=VF0CdObRzHySUu3yjZ1cxH8DYGUG2cPDiSNF+qdMjsc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=PjrolIRABzba6Mswwxw4z2R8K46qNqjDVwByuXwvmcZdN22+JUh68EEi7WJ8OCbAV0qCoghGOZtopaktVn99LJaCidPysTeXYg1TipEahRpQmaBLi3qbNOCcQZDjMsvLhrEgQgksT5Y/fnEEJQHyeC48WjvOmUWVnLu3flAjwYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iJsZR8mx; arc=none smtp.client-ip=209.85.128.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iJsZR8mx"
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-43d72b749dcso2689365e9.1
-        for <dm-devel@lists.linux.dev>; Fri, 09 May 2025 14:45:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1746827105; x=1747431905; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=Iv1ZCWwCIvPIj6v3lUckMwJPub3FEAxnMV1+b1cBjE4=;
-        b=iJsZR8mxj+91m4XWK98eN8OiQ0Oj8l/GbdE9Vomvq6dbaxm9DtDoVU+4cGf9hbpnAI
-         6Lq4MwsqqBwBVCHgQ3y5a4Hh2txs/VAsrcZKdA1qpDfu+0gyUMFJoqhHOqyJr7f/Auc2
-         BLLrzqzKtjGK9JqJrnI2eMPwU9DQcXFSxZsCGUpocWS3L4/5JiXlK4kq+NbFilpZ3rQk
-         WKUIheIeZ4RaD9tQZONuReydwXNCXaahWlayAy0dVQPw8uO5yl7i5GtaYpT72Eg5VJNe
-         Ebh3Z77GgW/Kg/0jEN8gWzBXkonVNqLCXXe1mTgJ6WWK6PQPv/+bCyuhCqFxCVXbfmBU
-         Padw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1746827105; x=1747431905;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=Iv1ZCWwCIvPIj6v3lUckMwJPub3FEAxnMV1+b1cBjE4=;
-        b=id2m9dF7kzINR/WVm5AAPjQ8E7ppbHOF0FhuJxa2w/4ZWJDEjoJ9ZJK8Xi5hL9XN27
-         Ht99KR8SNoQe8VZr6dBH+AJ2InKqulB5GdcJQ+dzAKQKZ8zK6vYjSPHYAdCYhYRx4dlq
-         Y5E1v9JqMyx8BHx3TJh5BtZ98IZ9+8t1qzCY5vmSvTQN7+KNpo/UwZY9zUubmmD6yT6U
-         FiVcKCcG4FTahaHAm223PvsZMCvPwqZ4Qa/Ome3VMc5EqL0pbvWrAHS5TvIBJTbAiCVG
-         lj/Mwy+RPnRyRlUuIf7OZK3RPzOXRcFlXNuaxQyvYyEtCxEf6IBUJ+4AaQG0/yjX8iui
-         OgTw==
-X-Forwarded-Encrypted: i=1; AJvYcCVEvh5KB4lQSyb6FdBEYY/DmK/U206Ap7rCRWwq+DOH1Vh8TlKM28b/Drtvgjt4LGHjLEF0vOP4pg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyZvL+3O65RBEdSYDgEHawVVkRoUayOaCChfZFEipGa/fD7QMOw
-	/2Bw0zclKVecge3niDNqzwG/X2gRHN2e/Gznt1ziRpk3pp8Ay6g=
-X-Gm-Gg: ASbGncuZWj7WlG0YmE2sMMRTs5Pxo9fyGbV5aVK9YqKFVIvq7fVW9JgoadxoVt+Eh1i
-	Cr6WUAh0/C9hKk8HQWSG0LFyJL4FKWYy1XjsgAIpjrqdA6cBzOXimU3H7Xm+rMj59wTH+SQ7b/L
-	yrznmiq1e9pLy3NfNYEGRQQ2cWPNWTAN2G/UfhgRG1cLqjvsxYRsBoeWg0gPFt+45ApHB8GfOSy
-	1WuIsthxpdCDtgEuS4zwPOr4kKjzQBWwp1HpQCPTT55++yyiqlKvRCP/JudGeo6res6FcQuYNdd
-	/g+epawIL6MSkQXf7QHQC0eIKdDjmxu75xXGBFeIi5vppd8bjD3R/ipxYODBxE4bX+fUJUC1DDI
-	b8gvBtmrIGKabdIbGdic=
-X-Google-Smtp-Source: AGHT+IHghzgSf0eq7SKU4qcyQmPTHjj4PCz4WfNMlzgw1tkSvri9YOhkL/Bp67Ac0g4QVZTrGB7HtQ==
-X-Received: by 2002:a05:6000:1ac9:b0:3a0:89df:3b91 with SMTP id ffacd0b85a97d-3a1f64408acmr1528648f8f.7.1746827105199;
-        Fri, 09 May 2025 14:45:05 -0700 (PDT)
-Received: from localhost (236.red-80-39-130.dynamicip.rima-tde.net. [80.39.130.236])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a1f58ecaeasm4396507f8f.28.2025.05.09.14.45.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 May 2025 14:45:03 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2] multipath-tools: update Path Selector descriptions on the man page
-Date: Fri,  9 May 2025 23:45:02 +0200
-Message-ID: <20250509214502.334826-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.49.0
+	s=arc-20240116; t=1747013287; c=relaxed/simple;
+	bh=GKPCrWIEUucXkdH2KT+WHWhcfLII+k+fcCarYpr3v28=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=SBuH6yQ3SJzfTeFhwGTBZgA/4GFIpB4/cI+YzOGoTiWbToRqykC5wiL/co37cxy48aIhXad+wW88MGtkeBgOIq4Tr5R/f5BT6ppZ5/4MuliwypQYehCyaTqg3fQRgwEuMGLpFoj/klTo/D12I1KCKjyYM6rjWCkxkgoLuU+S0gQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Zwhmn6dGZz4f3jXl
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:27:37 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 980581A0FC3
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:28:02 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgCnC2CdTiFoNFCWMA--.55093S5;
+	Mon, 12 May 2025 09:28:02 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: hch@lst.de,
+	xni@redhat.com,
+	colyli@kernel.org,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	song@kernel.org,
+	yukuai3@huawei.com
+Cc: linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com,
+	johnny.chenyi@huawei.com
+Subject: [PATCH RFC md-6.16 v3 01/19] md/md-bitmap: add {start, end}_discard in bitmap_operations
+Date: Mon, 12 May 2025 09:19:09 +0800
+Message-Id: <20250512011927.2809400-2-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
+References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgCnC2CdTiFoNFCWMA--.55093S5
+X-Coremail-Antispam: 1UD129KBjvdXoW7XFykKF45Aw13JFyxuF4Durg_yoWfCrg_C3
+	y09Fy0gFyrWr9Ykr13Xw4FvrWqqw48GF1DWFyFgFWrZFn3Aw18Cr929ws5tr1xZFyUAa43
+	tryUWr17Xw4qgjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUIcSsGvfJTRUUUbkxFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k26cxKx2IYs7xG
+	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUGwA2048vs2IY02
+	0Ec7CjxVAFwI0_Gr0_Xr1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28EF7xv
+	wVC0I7IYx2IY67AKxVW7JVWDJwA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8Jr0_Cr1UM2
+	8EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s0DM2AI
+	xVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xIIjxv20x
+	vE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr1lF7xv
+	r2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2IY04
+	v7MxkF7I0En4kS14v26r1q6r43MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j
+	6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7
+	AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE
+	2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcV
+	C2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2Kfnx
+	nUUI43ZEXa7VUjrHUDUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-v2:
-at Martin's suggestion:
-- change round-robin description
-- replace "I/Os" with "I/O requests"
-- fix "dinamyc" typo
-- remove all path selectors parameters
+From: Yu Kuai <yukuai3@huawei.com>
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Prepare to support discard in new md bitmap.
+
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
-BTW, service-'time' is a very confusing name.
----
- multipath/multipath.conf.5.in | 21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
+ drivers/md/md-bitmap.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index d0f6c6ac..f1158f7d 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -197,22 +197,23 @@ kernel multipath target:
- .RS
- .TP 12
- .I "round-robin 0"
--Loop through every path in the path group, sending the same amount of I/O to
--each. Some aspects of behavior can be controlled with the attributes:
--\fIrr_min_io\fR, \fIrr_min_io_rq\fR and \fIrr_weight\fR.
-+Choose the path for the next bunch of I/O by looping through every path in the
-+path group, sending \fBthe same number of I/O requests\fR to each path. Some
-+aspects of behavior can be controlled with the attributes: \fIrr_min_io\fR,
-+\fIrr_min_io_rq\fR and \fIrr_weight\fR.
- .TP
- .I "queue-length 0"
--(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on the amount
--of outstanding I/O to the path.
-+(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe lowest
-+number of outstanding in-flight I/O requests\fR to the path.
- .TP
- .I "service-time 0"
--(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on the amount
--of outstanding I/O to the path and its relative throughput.
-+(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe
-+lowest total size (in bytes) of outstanding in-flight I/O requests\fR to the path.
- .TP
- .I "historical-service-time 0"
--(Since 5.8 kernel) Choose the path for the next bunch of I/O based on the
--estimation of future service time based on the history of previous I/O submitted
--to each path.
-+(Since 5.8 kernel) Choose the path for the next bunch of I/O with \fBa dynamic
-+algorithm based on the historical service time and the number of outstanding
-+in-flight I/O requests\fR to the path.
- .TP
- The default is: \fBservice-time 0\fR
- .RE
+diff --git a/drivers/md/md-bitmap.h b/drivers/md/md-bitmap.h
+index d3d50629af91..c3fc051c88e9 100644
+--- a/drivers/md/md-bitmap.h
++++ b/drivers/md/md-bitmap.h
+@@ -94,6 +94,11 @@ struct bitmap_operations {
+ 			  unsigned long sectors);
+ 	void (*endwrite)(struct mddev *mddev, sector_t offset,
+ 			 unsigned long sectors);
++	int (*start_discard)(struct mddev *mddev, sector_t offset,
++			     unsigned long sectors);
++	void (*end_discard)(struct mddev *mddev, sector_t offset,
++			    unsigned long sectors);
++
+ 	bool (*start_sync)(struct mddev *mddev, sector_t offset,
+ 			   sector_t *blocks, bool degraded);
+ 	void (*end_sync)(struct mddev *mddev, sector_t offset, sector_t *blocks);
 -- 
-2.49.0
+2.39.2
 
