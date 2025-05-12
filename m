@@ -1,98 +1,154 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A613255F51
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 13:41:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 285C69475
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 13:46:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747057301; cv=none; b=aVFmGg3L2mSRrwJ4SJyih4Gd3x3V+EqimN/oq2AFmG2xyYTHkC9TmOIOD3vqiq5g1Y5hJfA6L5T6wmQbCZFIt9/sf8Jw+UK4nBvnhADTGiDErAtN6X9OpcFxzcbCIf4bi7uMvVuCYAw7oV+D4Bg17gXS4sCegQmtuk3VAeR9k9o=
+	t=1747057580; cv=none; b=f0o+oIx4eY2BQU7WjCD5YxpVG7KiWc+2YYodntb++IR7dvFOGO04zvbsVfyQBmk8zumCZ7Oc7tXmgJkNiMO0R1718u7+TTHvxRcIzTgYUNH5ZDcqSpg7zUkCtrAUBqZ7D+c1Qji43bgwzafPM8wgybNS8lDNHF49Ia5mE6yYWmY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747057301; c=relaxed/simple;
-	bh=MRkWQPYb0VD2RHdEFzP8GefKj7cVuZINANlg7F9SD9s=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=HykJtDQ01WjMzZF0I7x8Iy/dhIyb+Tfqxa451Sf7JmtppG3QAhgAtjeWXNWqRiFgOO9RdK1eHFxvsQeRVFOUAHTg+1c82LwpK7QR9kBgkxydy+fKVclNjoOP2mwFOr4OKY8ybM10u57G0xIGW5LzzKWWt/4tNkyUNOTXuohI/YY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4Zx13k3mWgzYQtwl
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 21:41:38 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id CCB3C1A018D
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 21:41:37 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP4 (Coremail) with SMTP id gCh0CgCnCl+Q+iFo693IMA--.57717S3;
-	Mon, 12 May 2025 21:41:37 +0800 (CST)
-Subject: Re: [PATCH RFC md-6.16 v3 00/19] md: introduce a new lockless bitmap
-To: Christoph Hellwig <hch@lst.de>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: xni@redhat.com, colyli@kernel.org, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, song@kernel.org, linux-kernel@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
- yangerkun@huawei.com, johnny.chenyi@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
- <20250512052118.GA1796@lst.de>
- <6aeecf3e-2f24-7d30-8462-c8d30b197740@huaweicloud.com>
- <20250512132750.GD31781@lst.de>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <934fdd89-3963-98d5-b450-f36024aa47b2@huaweicloud.com>
-Date: Mon, 12 May 2025 21:41:36 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.9.1
+	s=arc-20240116; t=1747057580; c=relaxed/simple;
+	bh=S3vdn7L5S6SPD/rZyZJ5bYNPICWxvSGryBhKvA6XtNo=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=QEi7jA0cp5xEiKOoVpA/bXpmcnPRmSTzV6mJLAA5M3ypRtsysSwjYwpkXZ8zxKX132NHAZc9hdrLrBAgF+ij2F4JSOBUS72etL8sT/QibSohJAmUk0qRs/d1thOwexbpVumJp2Ns40CK4/wnGmhkWb137gFyZnANKKaufdWjEx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GRKBKgVf; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GRKBKgVf"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747057576;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=6Q4vZQjuJqJokWhgIQZZUGV+LeF/CF+vN6EkzqG+T0Y=;
+	b=GRKBKgVf3axGkhdgcXdGeSEk9REQ/+drlaIY4nAQcKf1jX85KJD5IxR6g6DyZYtMPcUZk+
+	qxabqoVK31uPtgxFg9POIS5GLAMUgTfszv76tyCRYzVL29byQt4uozNq8T2EHh6OhDxb/g
+	nZnXf7nBzpZFa0/WG6e+aBaUPVM5OxI=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-630-S3OV2PxyPHuLia8MSaP0TA-1; Mon,
+ 12 May 2025 09:46:13 -0400
+X-MC-Unique: S3OV2PxyPHuLia8MSaP0TA-1
+X-Mimecast-MFC-AGG-ID: S3OV2PxyPHuLia8MSaP0TA_1747057572
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 323FD1800873;
+	Mon, 12 May 2025 13:46:12 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D83EE18003FC;
+	Mon, 12 May 2025 13:46:09 +0000 (UTC)
+Date: Mon, 12 May 2025 15:46:06 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+cc: Kevin Wolf <kwolf@redhat.com>, dm-devel@lists.linux.dev, hreitz@redhat.com, 
+    snitzer@kernel.org, bmarzins@redhat.com, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
+ paths
+In-Reply-To: <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
+Message-ID: <8e009e40-a1d2-5eea-3930-f81446b16722@redhat.com>
+References: <20250429165018.112999-1-kwolf@redhat.com> <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250512132750.GD31781@lst.de>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCnCl+Q+iFo693IMA--.57717S3
-X-Coremail-Antispam: 1UD129KBjvdXoW7GryxAFWrWFWUWr4UXF1rtFb_yoWfWFgEvF
-	y3KFyxG39rZw4SvanFgF1DZrZ8Ww17ZFy5A395Gas3Jw4UGa4xGF4vk392qa45tFsakrs8
-	ZFWYqry5XwsxCjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUbfAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k26cxKx2IYs7xG
-	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8w
-	A2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j
-	6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
-	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
-	I7IYx2IY67AKxVWUGVWUXwAv7VC2z280aVAFwI0_Gr0_Cr1lOx8S6xCaFVCjc4AY6r1j6r
-	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
-	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v26r1q6r43MxAIw28IcxkI7V
-	AKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCj
-	r7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6x
-	IIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAI
-	w20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Gr0_Cr1lIxAIcVC2z280aVCY1x
-	0267AKxVWxJr0_GcJvcSsGvfC2KfnxnUUI43ZEXa7VUbHa0JUUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: multipart/mixed; boundary="-1463811712-608219467-1747057571=:2446783"
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Hi,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-ÔÚ 2025/05/12 21:27, Christoph Hellwig Ð´µÀ:
-> On Mon, May 12, 2025 at 04:40:02PM +0800, Yu Kuai wrote:
->> I don't have such plan for now, actually I tend to remove bitmap file,
->> once llbitmap is ready with lightweight overhead, I expect perforamce
->> can be better than old bitmap with bitmap file.
->>
->> If there are cases that llbitmap performace is still much worse than
->> none bitmap, and bitmap file can reduce the gap, we'll probable think
->> about bitmap file again.
+---1463811712-608219467-1747057571=:2446783
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+
+Hi
+
+
+On Thu, 8 May 2025, Martin Wilck wrote:
+
+> Hello Kevin,
 > 
-> I'd really love to see this replace the old code as soon as possible.
-> But can we simply drop support for users with the bitmap in a file
-> in the file system (no matter how much I dislike that use case..)?
+> [I'm sorry for the previous email. It seems that I clicked "send" in
+> the wrong window].
 > 
-
-Do you mean drop it now?
-
-AFAIK, bitmap file in a file system is problem the only case for now, I
-don't see any users pass in a raw disk in this case, because bitmap file
-is at most 128k by default.
-
-Thanks,
-Kuai
-
-> .
+> On Tue, 2025-04-29 at 18:50 +0200, Kevin Wolf wrote:
+> > Multipath cannot directly provide failover for ioctls in the kernel
+> > because it doesn't know what each ioctl means and which result could
+> > indicate a path error. Userspace generally knows what the ioctl it
+> > issued means and if it might be a path error, but neither does it
+> > know
+> > which path the ioctl took nor does it necessarily have the privileges
+> > to
+> > fail a path using the control device.
 > 
+> Thanks for this effort.
+> 
+> I have some remarks about your approach. The most important one is that
+> the DM_MPATH_PROBE_PATHS_CMD ioctl appears to be a dangerous command.
+> It sends IO to possibly broken paths and waits for it to complete. In
+> the common error case of a device not responding, this might cause the
+> code to hang for a long time in the kernel ioctl code path, in
+> uninterruptible sleep (note that these probing commands will be queued
+
+Normal reads and writes would also hang in an uninterruptible sleep if a 
+path stops responding.
+
+> after other possibly hanging IO). In the pastÂ we have put a lot of
+> effort into other code paths in multipath-tools and elsewhere to avoid
+> this kind of hang to the extent possible. It seems to me that your set
+> re-introduces this risk.
+> 
+> Apart from that, minor observations are that in patch 2/2 you don't
+> check whether the map is in queueing state, and I don't quite
+> understand why you only check paths in the map's active path group
+> without attempting a PG failover in the case where all paths in the
+> current PG fail.
+> 
+> I am wondering whether the DM_MPATH_PROBE_PATHS_CMD ioctl is necessary
+> at all. Rather than triggering explicit path probing, you could have
+> dm-mpath "handle" IO errors by failing the active path for "path
+> errors". That would be similar to my patch set from 2021 [1], but it
+> would avoid the extra IO and thus the additional risk of hanging in the
+> kernel.
+
+What exactly do you mean? You say "you could have dm-mpath 'handle' IO 
+errors by failing the active path for "path errors".
+
+Christoph doesn't want dm-mpath can't look at the error code - so dm-mpath 
+doesn't know if path error occured or not. qemu could look at the error 
+code, but qemu doesn't know which path did the SG_IO go through - so it 
+can't instruct qemu to fail that path.
+
+One of the possibility that we discussed was to add a path-id to SG_IO, so 
+that dm-mpath would mark which path did the SG_IO go through and qemu 
+could instruct dm-mpath to fail that path. But we rejected it as being 
+more complicated than the current approach.
+
+> Contrary to my set, you wouldn't attempt retries in the kernel, but
+> leave this part to qemu instead, like in the current set. That would
+> avoid Christoph's main criticism that "Failing over SG_IO does not make
+> sense" [2].
+> 
+> Doing the failover in qemu has the general disadvantage that qemu has
+> no notion about the number of available and/or healthy paths; it can
+> thus only guess the reasonable number of retries for any given I/O. But
+> that's unavoidable, given that the idea to do kernel-level failover on
+> SG_IO is rejected.
+> 
+> Please let me know your thoughts.
+> 
+> Best Regards
+> Martin
+> 
+> [1] https://lore.kernel.org/all/20210628151558.2289-1-mwilck@suse.com/
+> [2] https://lore.kernel.org/all/20210701075629.GA25768@lst.de/
+
+Mikulas
+---1463811712-608219467-1747057571=:2446783--
 
