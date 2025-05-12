@@ -1,28 +1,28 @@
 Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D44D1E520E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C44B1E520C
 	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 01:28:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747013292; cv=none; b=ocTCFx+MGfTuCaTSTAuNyFxpoy+9Alv0/yIH2Uk9GOs/JLGAbZmTXkfPYlmf6aKLUfgAt15C1Zgzz0Cbuwll8acpg9bgMax1PLqNQ65h9YlsKaqmWKomD3d/0LLgOnWHYbH8bUu1k/a+Wxxn1G2ea2YtletdnvtCJ3t4SxWFrkQ=
+	t=1747013292; cv=none; b=P/l9JRIXGe4I5BzvtUqjdPnv8pKrC/f77ga+hKmMopqFj/r04MWvgEeXb3Vkn6TESFuKwH5vJ5TBQ5ZVJRSQ9QwDEufzHOTBjaYismmzIQSb8DkzqUo2R5m65stxB43m9CfiRWFzrDPVLXicHjSmgYbvu0iXFQE2pFSz1y+XFmQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1747013292; c=relaxed/simple;
-	bh=p+03Fj+eOCZMY+6F/S00LYfxCvcAdfwOKOf5RiktbXo=;
+	bh=5u/VTQgT10rVteQE3bLcRKRug+hOln5hZySpZiNE76o=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=J0rjPSO5rdJQQfAbC60Dskx8N/d/WqB3r4oGsIi+OthejjIKq6YaLTSf4982U44jxtDvcfnmG43qhLdpAeS2AZXxmd0sz4viTOOjmCpDEZmIb94i5bY1JWoDSKQPh2Vzmoc1sMVDeiloebxU+k64r9pVmLFdGP/rYIgOhE3hz00=
+	 MIME-Version; b=G0Ikd3VN3ObfjdWTcXXfGdBwQT9AMAjfBY42dX117rzZ3O73I6nhQtfrkm59PqDVVT2fEwmpyGt9oTDthYdCPxEFhbdcVVvIbd7HYyye/knVM2ZHq4FJ2npqfNH9KPxmqVjbc4aNjH2kcNCaLT7zydlK4m0duYTVV1w/wnhF9UE=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Zwhms71vMz4f3jXd
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:27:41 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTP id 4Zwhmt48wtz4f3jXg
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:27:42 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id A72721A1BAC
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:28:06 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 425B71A018D
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:28:07 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgCnC2CdTiFoNFCWMA--.55093S12;
-	Mon, 12 May 2025 09:28:06 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgCnC2CdTiFoNFCWMA--.55093S13;
+	Mon, 12 May 2025 09:28:07 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: hch@lst.de,
 	xni@redhat.com,
@@ -39,9 +39,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com
-Subject: [PATCH RFC md-6.16 v3 08/19] md/md-bitmap: add a new helper blocks_synced() in bitmap_operations
-Date: Mon, 12 May 2025 09:19:16 +0800
-Message-Id: <20250512011927.2809400-9-yukuai1@huaweicloud.com>
+Subject: [PATCH RFC md-6.16 v3 09/19] md: add a new recovery_flag MD_RECOVERY_LAZY_RECOVER
+Date: Mon, 12 May 2025 09:19:17 +0800
+Message-Id: <20250512011927.2809400-10-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
 References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
@@ -52,10 +52,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCnC2CdTiFoNFCWMA--.55093S12
-X-Coremail-Antispam: 1UD129KBjvJXoW7ZrWDWFW8XFy7Wr17WryUJrb_yoW8tF13pa
-	yDJasxA3yjgrWjqF1UJayDuFyFq39rJrWxKFyfu34ruF95Kr9rWFWrJayUtF1UKF1avasx
-	Z3Z8t3yUCr1FgrJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgCnC2CdTiFoNFCWMA--.55093S13
+X-Coremail-Antispam: 1UD129KBjvJXoWxGry5JF1rWF1xAFyDCF17Jrb_yoW5Gr1kpa
+	yxAF93CrWUAFWfZ3yUt3WDWFW5Zw10qryqyFy3uas5JF90kFn3ZF1UW3W7JrWDJa9aqa12
+	qw1DJFsrZF1F9w7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -74,58 +74,72 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-Currently, raid456 must perform a whole array initial recovery to build
-initail xor data, then IO to the array won't have to read all the blocks
-in underlying disks.
-
-This behavior will affect IO performance a lot, and nowadays there are
-huge disks and the initial recovery can take a long time. Hence llbitmap
-will support lazy initial recovery in following patches. This helper is
-used to check if data blocks is synced or not, if not then IO will still
-have to read all blocks.
+This flag is used by llbitmap in later patches to skip raid456 initial
+recover and delay building initial xor data to first write.
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md-bitmap.h | 1 +
- drivers/md/raid5.c     | 6 ++++++
- 2 files changed, 7 insertions(+)
+ drivers/md/md.c | 12 +++++++++++-
+ drivers/md/md.h |  2 ++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/md-bitmap.h b/drivers/md/md-bitmap.h
-index 13be2a10801a..4e27f5f793b7 100644
---- a/drivers/md/md-bitmap.h
-+++ b/drivers/md/md-bitmap.h
-@@ -99,6 +99,7 @@ struct bitmap_operations {
- 	void (*end_discard)(struct mddev *mddev, sector_t offset,
- 			    unsigned long sectors);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index c23ee9c19cf9..a5dd7a403ea5 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -9133,6 +9133,14 @@ static sector_t md_sync_position(struct mddev *mddev, enum sync_action action)
+ 				start = rdev->recovery_offset;
+ 		rcu_read_unlock();
  
-+	bool (*blocks_synced)(struct mddev *mddev, sector_t offset);
- 	sector_t (*skip_sync_blocks)(struct mddev *mddev, sector_t offset);
- 	bool (*start_sync)(struct mddev *mddev, sector_t offset,
- 			   sector_t *blocks, bool degraded);
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 7e66a99f29af..e5d3d8facb4b 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -3748,6 +3748,7 @@ static int want_replace(struct stripe_head *sh, int disk_idx)
- static int need_this_block(struct stripe_head *sh, struct stripe_head_state *s,
- 			   int disk_idx, int disks)
- {
-+	struct mddev *mddev = sh->raid_conf->mddev;
- 	struct r5dev *dev = &sh->dev[disk_idx];
- 	struct r5dev *fdev[2] = { &sh->dev[s->failed_num[0]],
- 				  &sh->dev[s->failed_num[1]] };
-@@ -3762,6 +3763,11 @@ static int need_this_block(struct stripe_head *sh, struct stripe_head_state *s,
- 		 */
- 		return 0;
- 
-+	/* The initial recover is not done, must read everything */
-+	if (mddev->bitmap_ops && mddev->bitmap_ops->blocks_synced &&
-+	    !mddev->bitmap_ops->blocks_synced(mddev, sh->sector))
-+		return 1;
++		/*
++		 * If there are no spares, and raid456 lazy initial recover is
++		 * requested.
++		 */
++		if (test_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery) &&
++		    start == MaxSector)
++			start = 0;
 +
- 	if (dev->toread ||
- 	    (dev->towrite && !test_bit(R5_OVERWRITE, &dev->flags)))
- 		/* We need this block to directly satisfy a request */
+ 		/* If there is a bitmap, we need to make sure all
+ 		 * writes that started before we added a spare
+ 		 * complete before we start doing a recovery.
+@@ -9697,6 +9705,7 @@ static bool md_choose_sync_action(struct mddev *mddev, int *spares)
+ 	if (mddev->recovery_cp < MaxSector) {
+ 		set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+ 		clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
++		clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
+ 		return true;
+ 	}
+ 
+@@ -9706,7 +9715,7 @@ static bool md_choose_sync_action(struct mddev *mddev, int *spares)
+ 	 * re-add.
+ 	 */
+ 	*spares = remove_and_add_spares(mddev, NULL);
+-	if (*spares) {
++	if (*spares || test_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery)) {
+ 		clear_bit(MD_RECOVERY_SYNC, &mddev->recovery);
+ 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
+ 		clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+@@ -10029,6 +10038,7 @@ void md_reap_sync_thread(struct mddev *mddev)
+ 	clear_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
+ 	clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
++	clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
+ 	/*
+ 	 * We call mddev->cluster_ops->update_size here because sync_size could
+ 	 * be changed by md_update_sb, and MD_RECOVERY_RESHAPE is cleared,
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 99f6c7a92b48..0c89bf0e8e4f 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -667,6 +667,8 @@ enum recovery_flags {
+ 	MD_RECOVERY_RESHAPE,
+ 	/* remote node is running resync thread */
+ 	MD_RESYNCING_REMOTE,
++	/* raid456 lazy initial recover */
++	MD_RECOVERY_LAZY_RECOVER,
+ };
+ 
+ enum md_ro_state {
 -- 
 2.39.2
 
