@@ -1,137 +1,103 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B4A52949FD
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 13:02:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8245A255227
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 13:21:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747054928; cv=none; b=iRopCGQKF1YXMOE34rvX9MEs1rjimGJmcUBO8em0TjVeiU33o5FjlqerDkk+iEJejyGmucg8Qe3pjhh6EqoIH2XJO95wOFKK2iWpIg4+zYw6TrbHrAX6B8hncjg89h2+valHkWfwXLX0vgicX6bVwbK6ZpSsfusJmUfoDgNB2vY=
+	t=1747056080; cv=none; b=sAjRe8643jEVXikOq8GCbdUEY3/hUOVKRfjIupRIw57kOerA2kVsjRUjFBhk6c48oU57s3Vn5wBthuzmXQzHz+66TMXIb8PanxBqN2XgWv4a/9VdVBO1Gp6ppxKM9CEof22r9HzSWSprjHZIHd6NhstIJ+cNyRDw2+pXJrteqFo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747054928; c=relaxed/simple;
-	bh=Tm6LBNBicejdH9HcSdeE5PgNMGg9RENzhzd2gVC7dH0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=CrVtGH9Tgv6r3aQzf973Zf4Z1XKKo/6mZjx9oKK9U94ZE4bhjS1i87gfzsBJaFFs4Z5RCZntFwXYMzU4WfAvUgImgiW0thxSFD9mjxt9uYQNezXWooSfTq/q2u4oizmcsbfmZNEjpK9EyXA+BZFMvsNzaVaVoJct9u6K38mgffk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=XuCmPz+R; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=XuCmPz+R; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1747056080; c=relaxed/simple;
+	bh=Nl2F08/8WQ+ffGyrqcnI0bdqvXZIy+A5o/03/Nn6Bj4=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=C1koCHKGYs6OBnNYf5MhzOD91NK1V2pHAvEERrBHx5AMtotKyv3EyTmw4/OCfqKHndQxezILQTlDJNU93wAt9bgyvGgUMfJZK14Hn/GRclcmgKq/EPFN3almGEbKAhZf5sWrY3XIXvjnOEhXXUFxSCNvsKq5cI3dm+sDDGme+3w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NM1ore0Y; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="XuCmPz+R";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="XuCmPz+R"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 7A6CB1F387;
-	Mon, 12 May 2025 13:02:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747054923; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NM1ore0Y"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747056077;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Tm6LBNBicejdH9HcSdeE5PgNMGg9RENzhzd2gVC7dH0=;
-	b=XuCmPz+RwlIJUhHoxkcWzJWDFvojkH0bmfdvEo3uMlj1BLeM2x2I4lBOToP7HIKDwC5B0v
-	u3tCXv3HR+ZsBfrRaFeRAjIwUmJIwO94gFD8OvlqxICNbIyvChnHPLQ9N4k85+3uoa7/a6
-	dKd7+vVz4m99A8TDdAikL5MV88hfo3o=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=XuCmPz+R
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747054923; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Tm6LBNBicejdH9HcSdeE5PgNMGg9RENzhzd2gVC7dH0=;
-	b=XuCmPz+RwlIJUhHoxkcWzJWDFvojkH0bmfdvEo3uMlj1BLeM2x2I4lBOToP7HIKDwC5B0v
-	u3tCXv3HR+ZsBfrRaFeRAjIwUmJIwO94gFD8OvlqxICNbIyvChnHPLQ9N4k85+3uoa7/a6
-	dKd7+vVz4m99A8TDdAikL5MV88hfo3o=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=EtFIZos0JqMF/7UbE2bWwHzO0kbBrp+t9Q2IfwA7m5s=;
+	b=NM1ore0YLlPQxHjWR6TA8ldIZ9vKIRj7SDFPVAfJUVhY6V1ZmdpQ3GqvkXKbtxvhwH3v3y
+	tbBkfa7mmsgtM6dMccOug7UmOUoRnDL5qCwMDtZOAieCJBy0/E6RcwVwovG7M5fdiK0fzy
+	2hoV9FSG6D61zeBz1QdvuAcKHzk//6U=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-371-esPKA_uuO9iOOkDygTFvsg-1; Mon,
+ 12 May 2025 09:21:14 -0400
+X-MC-Unique: esPKA_uuO9iOOkDygTFvsg-1
+X-Mimecast-MFC-AGG-ID: esPKA_uuO9iOOkDygTFvsg_1747056073
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4C29F137D2;
-	Mon, 12 May 2025 13:02:03 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id Qof+EEvxIWg3HAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 12 May 2025 13:02:03 +0000
-Message-ID: <1bcf98dc882d8c8b84c7172bef038721c4fa816c.camel@suse.com>
-Subject: Re: [PATCH v2] multipath-tools: update Path Selector descriptions
- on the man page
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Mon, 12 May 2025 15:02:02 +0200
-In-Reply-To: <20250509214502.334826-1-xose.vazquez@gmail.com>
-References: <20250509214502.334826-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E93011955D79;
+	Mon, 12 May 2025 13:21:12 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4E3B419560A3;
+	Mon, 12 May 2025 13:21:10 +0000 (UTC)
+Date: Mon, 12 May 2025 15:21:06 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: =?ISO-8859-15?Q?Malte_Schr=F6der?= <malte.schroeder@tnxip.de>
+cc: Bart Van Assche <bvanassche@acm.org>, bmarzins@redhat.com, 
+    dm-devel@lists.linux.dev
+Subject: Re: LVM RAID1 regression in 6.15-rc5, bisected
+In-Reply-To: <c09e5298-4824-4b0c-8fc8-0be33975da17@acm.org>
+Message-ID: <4a159e7a-4d0d-181a-9853-8ec952b68172@redhat.com>
+References: <fc8148d9-4b9f-4c13-9924-2f9b0eced194@tnxip.de> <c09e5298-4824-4b0c-8fc8-0be33975da17@acm.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Rspamd-Queue-Id: 7A6CB1F387
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	TO_DN_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FREEMAIL_TO(0.00)[gmail.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid,suse.com:dkim,linux.dev:email,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Spam-Score: -3.01
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: HvBgky5SSYs_RuML9df5mmcSVwN3QAkvb81Dk76MXa8_1747056073
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; BOUNDARY="-1463811712-811534987-1747055841=:2446783"
+Content-ID: <743836db-3b6d-941b-9ea7-a6c3b4872069@redhat.com>
 
-On Fri, 2025-05-09 at 23:45 +0200, Xose Vazquez Perez wrote:
-> v2:
-> at Martin's suggestion:
-> - change round-robin description
-> - replace "I/Os" with "I/O requests"
-> - fix "dinamyc" typo
-> - remove all path selectors parameters
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-811534987-1747055841=:2446783
+Content-Type: text/plain; CHARSET=ISO-8859-15
+Content-Transfer-Encoding: 8BIT
+Content-ID: <464687b4-49f1-06e3-ac15-dd9ae9fbfa5d@redhat.com>
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-> ---
-> BTW, service-'time' is a very confusing name.
 
-AFAICT the thinking is that I/O will be sent to the queue in which the
-expected "time" until it's "serviced" is lowest, and I believe that
-most people have an intuitive understanding of that meaning. In any
-case, this name has stood for decades and won't change, neither in the
-kernel nor in multipath-tools.
+On Wed, 7 May 2025, Bart Van Assche wrote:
 
-Regards,
-Martin
+> On 5/7/25 3:40 AM, Malte Schröder wrote:
+> > kernel 6.15-rc5 fails to access lvs which use mirroring (lvcreate -m1).
+> > Last working release is -rc4. Reverting
+> > 5a2a6c428190f945c5cbf5791f72dbea83e97f66 fixes the issue.
+> 
+> From commit f1aff4bc199cb92c055668caed65505e3b4d2656 in Linus' master
+> branch:
+> 
+> Fixes: 5a2a6c428190 ("dm: always update the array size in realloc_argv on
+> success")
+> 
+> Bart.
+
+Hi
+
+Malte. do you see some kernel crashes in the log? The commit 
+5a2a6c428190f945c5cbf5791f72dbea83e97f66 could cause crashes, however I 
+don't see how could it cause misbehavior (it is reading beyond the end of 
+the allocated memory).
+
+How many device mapper devices are there in total?
+
+Does the commit f1aff4bc199cb92c055668caed65505e3b4d2656 fix it for you?
+
+Mikulas
+---1463811712-811534987-1747055841=:2446783--
+
