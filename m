@@ -1,28 +1,28 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 309431E9B3D
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 01:28:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B8831E520F
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 01:28:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747013295; cv=none; b=JoQAGjLK6VO5sa0pERvLA6zJzZyc/4Prr1+ai6gqWv5bnFwZLO/l06/mpJ+RmiVayALYefIYzIhtTM9nmXd+SaLj4pQq3PbloofQgO080pnsuBSyAf+3oXoJy04A9Uegn1UusZ3HTrjhhA4Yr5n65nfEnbqa9QkxtngEAxOmCNQ=
+	t=1747013296; cv=none; b=KN94ByOdtDmUrOFgstHLgyM3r1DnXh7zQIcvmbpv7+DY6vaqiAqZ8RUPu8gurtJ0lQj9fO7HKNeBAE7JBl60EuHxYjhtRvZiwF6Wh2z5E1/zXQ/hwGl9oJ1yFgYtjPPDV99/WQL1Xxyfa6nJEpS5Evcx81GFNVXIj9RyGYznUHs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747013295; c=relaxed/simple;
-	bh=ELvkmyOJBVEyNAiLctJDaPZmLafbprHc9jlgLasppsQ=;
+	s=arc-20240116; t=1747013296; c=relaxed/simple;
+	bh=6lQLbigT0kljTaoLCqvvkTdaRkHHixs/2bFGqCRhK40=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=IsYay9OHYDAYRykGg5VxbuYdD4mLaxFmlvAKjcUloGgcGdZQismcERs5HUXm2f6TPQGkMSvN86ef3AP1JnTgyOMc/6HKsc9VYlSTKIk55aDNPrOslIE3em8r//g6KTt8KYv20zLC46jN+6drQcPdLQnFWD2rvQ+23M6qhqcxmy0=
+	 MIME-Version; b=LRHYZ7BVQf8/Vox3F8YR+WcOZF8gXo2FCbVZTdXx1WCpC11QwYkuo9r3mXgYvm8pMOOITmyhNtPrjTtimjdBn+hYGzXYA3Dhhrhz4ZhlDIrxLbwhPYdS8+9ApildVz6j6s3Z0HOOl/Yp9fqgj6n8xecLBOarSucMPVk+8rWcagE=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Zwhn20lQWz4f3jtW
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:27:50 +0800 (CST)
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4Zwhmw46K8z4f3lV7
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:27:44 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 8E2AF1A106C
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:28:09 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id B89531A1079
+	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 09:28:10 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgCnC2CdTiFoNFCWMA--.55093S17;
-	Mon, 12 May 2025 09:28:09 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgCnC2CdTiFoNFCWMA--.55093S19;
+	Mon, 12 May 2025 09:28:10 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: hch@lst.de,
 	xni@redhat.com,
@@ -39,9 +39,9 @@ Cc: linux-kernel@vger.kernel.org,
 	yi.zhang@huawei.com,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com
-Subject: [PATCH RFC md-6.16 v3 13/19] md/md-llbitmap: implement APIs for page level dirty bits synchronization
-Date: Mon, 12 May 2025 09:19:21 +0800
-Message-Id: <20250512011927.2809400-14-yukuai1@huaweicloud.com>
+Subject: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to dirty bits and clear bits
+Date: Mon, 12 May 2025 09:19:23 +0800
+Message-Id: <20250512011927.2809400-16-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
 References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
@@ -52,10 +52,10 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgCnC2CdTiFoNFCWMA--.55093S17
-X-Coremail-Antispam: 1UD129KBjvJXoWxAry8tF1DXF43JF18Cr4DJwb_yoW5XF15pF
-	WxXr15Gr45tF1xWw43ArW7AFyrtr4kt39agasak34F9F1jkrZagF4xCFyDZw4UWrn5GFnr
-	Aan8Cw1fGw48XF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+X-CM-TRANSID:gCh0CgCnC2CdTiFoNFCWMA--.55093S19
+X-Coremail-Antispam: 1UD129KBjvJXoWxtw1kKw1DCry8Jr45WFW5Awb_yoWxZF43pF
+	43Xw15Kr45J34Fq3y7Jr97ZF15tr4kJwnFqF93A34rGr1UArZ8KF48GFy0yw18ur93WFn8
+	Aw4Ykry5Cw4fWrDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
 	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
 	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
@@ -74,88 +74,239 @@ X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-IO fast path will set bits to dirty, and those dirty bits will be cleared
-by daemon after IO is done. llbitmap_barrier is used to synchronize between
-IO path and daemon;
-
-IO path:
- 1) try to grab a reference, if succeed, set expire time after 5s and
- return;
- 2) if failed to grab a reference, wait for daemon to finish clearing dirty
- bits;
-
-Daemon(Daemon will be waken up every daemon_sleep seconds):
-For each page:
- 1) check if page expired, if not skip this page; for expired page:
- 2) suspend the page and wait for inflight write IO to be done;
- 3) change dirty page to clean;
- 4) resume the page;
+Include following APIs:
+ - llbitmap_startwrite
+ - llbitmap_endwrite
+ - llbitmap_start_discard
+ - llbitmap_end_discard
+ - llbitmap_unplug
+ - llbitmap_flush
 
 Signed-off-by: Yu Kuai <yukuai3@huawei.com>
 ---
- drivers/md/md-llbitmap.c | 46 ++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 46 insertions(+)
+ drivers/md/md-llbitmap.c | 206 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 206 insertions(+)
 
 diff --git a/drivers/md/md-llbitmap.c b/drivers/md/md-llbitmap.c
-index 315a4eb7627c..994ca0be3d17 100644
+index 4b54aa6fbe40..71234c0ae160 100644
 --- a/drivers/md/md-llbitmap.c
 +++ b/drivers/md/md-llbitmap.c
-@@ -435,6 +435,14 @@ static void llbitmap_write_page(struct llbitmap *llbitmap, int idx)
- 	}
+@@ -784,6 +784,68 @@ static int llbitmap_read_sb(struct llbitmap *llbitmap)
+ 	return ret;
  }
  
-+static void active_release(struct percpu_ref *ref)
++static void llbitmap_pending_timer_fn(struct timer_list *t)
 +{
-+	struct llbitmap_barrier *barrier =
-+		container_of(ref, struct llbitmap_barrier, active);
++	struct llbitmap *llbitmap = from_timer(llbitmap, t, pending_timer);
 +
-+	wake_up(&barrier->wait);
-+}
-+
- static int llbitmap_cache_pages(struct llbitmap *llbitmap)
- {
- 	int nr_pages = (llbitmap->chunks + BITMAP_SB_SIZE + PAGE_SIZE - 1) / PAGE_SIZE;
-@@ -562,3 +570,41 @@ static enum llbitmap_state llbitmap_state_machine(struct llbitmap *llbitmap,
- 
- 	return state;
- }
-+
-+static void llbitmap_raise_barrier(struct llbitmap *llbitmap, int page_idx)
-+{
-+	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
-+
-+retry:
-+	if (likely(percpu_ref_tryget_live(&barrier->active))) {
-+		WRITE_ONCE(barrier->expire, jiffies + BARRIER_IDLE * HZ);
++	if (work_busy(&llbitmap->daemon_work)) {
++		pr_warn("daemon_work not finished\n");
++		set_bit(BITMAP_DAEMON_BUSY, &llbitmap->flags);
 +		return;
 +	}
 +
-+	wait_event(barrier->wait, !percpu_ref_is_dying(&barrier->active));
-+	goto retry;
++	queue_work(md_llbitmap_io_wq, &llbitmap->daemon_work);
 +}
 +
-+static void llbitmap_release_barrier(struct llbitmap *llbitmap, int page_idx)
++static void md_llbitmap_daemon_fn(struct work_struct *work)
 +{
-+	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
++	struct llbitmap *llbitmap =
++		container_of(work, struct llbitmap, daemon_work);
++	unsigned long start;
++	unsigned long end;
++	bool restart;
++	int idx;
 +
-+	percpu_ref_put(&barrier->active);
++	if (llbitmap->mddev->degraded)
++		return;
++
++retry:
++	start = 0;
++	end = min(llbitmap->chunks, PAGE_SIZE - BITMAP_SB_SIZE) - 1;
++	restart = false;
++
++	for (idx = 0; idx < llbitmap->nr_pages; idx++) {
++		struct llbitmap_barrier *barrier = &llbitmap->barrier[idx];
++
++		if (idx > 0) {
++			start = end + 1;
++			end = min(end + PAGE_SIZE, llbitmap->chunks - 1);
++		}
++
++		if (!test_bit(LLPageFlush, &barrier->flags) &&
++		    time_before(jiffies, barrier->expire)) {
++			restart = true;
++			continue;
++		}
++
++		llbitmap_suspend(llbitmap, idx);
++		llbitmap_state_machine(llbitmap, start, end, BitmapActionDaemon);
++		llbitmap_resume(llbitmap, idx);
++	}
++
++	/*
++	 * If the daemon took a long time to finish, retry to prevent missing
++	 * clearing dirty bits.
++	 */
++	if (test_and_clear_bit(BITMAP_DAEMON_BUSY, &llbitmap->flags))
++		goto retry;
++
++	/* If some page is dirty but not expired, setup timer again */
++	if (restart)
++		mod_timer(&llbitmap->pending_timer,
++			  jiffies + llbitmap->mddev->bitmap_info.daemon_sleep * HZ);
 +}
 +
-+static void llbitmap_suspend(struct llbitmap *llbitmap, int page_idx)
-+{
-+	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
+ static int llbitmap_create(struct mddev *mddev)
+ {
+ 	struct llbitmap *llbitmap;
+@@ -870,3 +932,147 @@ static void llbitmap_destroy(struct mddev *mddev)
+ 	kfree(llbitmap);
+ 	mutex_unlock(&mddev->bitmap_info.mutex);
+ }
 +
-+	percpu_ref_kill(&barrier->active);
-+	wait_event(barrier->wait, percpu_ref_is_zero(&barrier->active));
++static int llbitmap_startwrite(struct mddev *mddev, sector_t offset,
++			       unsigned long sectors)
++{
++	struct llbitmap *llbitmap = mddev->bitmap;
++	unsigned long start = offset >> llbitmap->chunkshift;
++	unsigned long end = (offset + sectors - 1) >> llbitmap->chunkshift;
++	int page_start = (start + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++	int page_end = (end + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++
++	llbitmap_state_machine(llbitmap, start, end, BitmapActionStartwrite);
++
++
++	while (page_start <= page_end) {
++		llbitmap_raise_barrier(llbitmap, page_start);
++		page_start++;
++	}
++
++	return 0;
 +}
 +
-+static void llbitmap_resume(struct llbitmap *llbitmap, int page_idx)
++static void llbitmap_endwrite(struct mddev *mddev, sector_t offset,
++			      unsigned long sectors)
 +{
-+	struct llbitmap_barrier *barrier = &llbitmap->barrier[page_idx];
++	struct llbitmap *llbitmap = mddev->bitmap;
++	unsigned long start = offset >> llbitmap->chunkshift;
++	unsigned long end = (offset + sectors - 1) >> llbitmap->chunkshift;
++	int page_start = (start + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++	int page_end = (end + BITMAP_SB_SIZE) >> PAGE_SHIFT;
 +
-+	barrier->expire = LONG_MAX;
-+	percpu_ref_resurrect(&barrier->active);
-+	wake_up(&barrier->wait);
++	while (page_start <= page_end) {
++		llbitmap_release_barrier(llbitmap, page_start);
++		page_start++;
++	}
++}
++
++static int llbitmap_start_discard(struct mddev *mddev, sector_t offset,
++				  unsigned long sectors)
++{
++	struct llbitmap *llbitmap = mddev->bitmap;
++	unsigned long start = DIV_ROUND_UP(offset, llbitmap->chunksize);
++	unsigned long end = (offset + sectors - 1) >> llbitmap->chunkshift;
++	int page_start = (start + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++	int page_end = (end + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++
++	llbitmap_state_machine(llbitmap, start, end, BitmapActionDiscard);
++
++	while (page_start <= page_end) {
++		llbitmap_raise_barrier(llbitmap, page_start);
++		page_start++;
++	}
++
++	return 0;
++}
++
++static void llbitmap_end_discard(struct mddev *mddev, sector_t offset,
++				 unsigned long sectors)
++{
++	struct llbitmap *llbitmap = mddev->bitmap;
++	unsigned long start = DIV_ROUND_UP(offset, llbitmap->chunksize);
++	unsigned long end = (offset + sectors - 1) >> llbitmap->chunkshift;
++	int page_start = (start + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++	int page_end = (end + BITMAP_SB_SIZE) >> PAGE_SHIFT;
++
++	while (page_start <= page_end) {
++		llbitmap_release_barrier(llbitmap, page_start);
++		page_start++;
++	}
++}
++
++static void llbitmap_unplug_fn(struct work_struct *work)
++{
++	struct llbitmap_unplug_work *unplug_work =
++		container_of(work, struct llbitmap_unplug_work, work);
++	struct llbitmap *llbitmap = unplug_work->llbitmap;
++	struct blk_plug plug;
++	int i;
++
++	blk_start_plug(&plug);
++
++	for (i = 0; i < llbitmap->nr_pages; i++) {
++		if (!test_bit(LLPageDirty, &llbitmap->barrier[i].flags) ||
++		    !test_and_clear_bit(LLPageDirty, &llbitmap->barrier[i].flags))
++			continue;
++
++		llbitmap_write_page(llbitmap, i);
++	}
++
++	blk_finish_plug(&plug);
++	md_super_wait(llbitmap->mddev);
++	complete(unplug_work->done);
++}
++
++static bool llbitmap_dirty(struct llbitmap *llbitmap)
++{
++	int i;
++
++	for (i = 0; i < llbitmap->nr_pages; i++)
++		if (test_bit(LLPageDirty, &llbitmap->barrier[i].flags))
++			return true;
++
++	return false;
++}
++
++static void llbitmap_unplug(struct mddev *mddev, bool sync)
++{
++	DECLARE_COMPLETION_ONSTACK(done);
++	struct llbitmap *llbitmap = mddev->bitmap;
++	struct llbitmap_unplug_work unplug_work = {
++		.llbitmap = llbitmap,
++		.done = &done,
++	};
++
++	if (!llbitmap_dirty(llbitmap))
++		return;
++
++	INIT_WORK_ONSTACK(&unplug_work.work, llbitmap_unplug_fn);
++	queue_work(md_llbitmap_unplug_wq, &unplug_work.work);
++	wait_for_completion(&done);
++	destroy_work_on_stack(&unplug_work.work);
++}
++
++static void llbitmap_flush(struct mddev *mddev)
++{
++	struct llbitmap *llbitmap = mddev->bitmap;
++	struct blk_plug plug;
++	int i;
++
++	for (i = 0; i < llbitmap->nr_pages; i++)
++		set_bit(LLPageFlush, &llbitmap->barrier[i].flags);
++
++	timer_delete_sync(&llbitmap->pending_timer);
++	queue_work(md_llbitmap_io_wq, &llbitmap->daemon_work);
++	flush_work(&llbitmap->daemon_work);
++
++	blk_start_plug(&plug);
++	for (i = 0; i < llbitmap->nr_pages; i++) {
++		/* mark all bits as dirty */
++		bitmap_fill(llbitmap->barrier[i].dirty, llbitmap->bits_per_page);
++		llbitmap_write_page(llbitmap, i);
++	}
++	blk_finish_plug(&plug);
++	md_super_wait(llbitmap->mddev);
 +}
 -- 
 2.39.2
