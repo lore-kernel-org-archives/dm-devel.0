@@ -1,240 +1,211 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6504935976
-	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 06:30:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E7A1DF49
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 06:32:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747117860; cv=none; b=gyrwy214vMx/BRPdoL8r09uhsS9itHuqpznYqFjran43PfKkvSb/+PVqU3MngOFcbLd4jH10+PQNalnUHd/XB5GPuTnIQj+rCtVGPI4e8PBTmTjO9PMtdEzEuRP28hb/UbZtdL7O1BQ8Ge1NICZ/WkitNO4FsAoxXO6uqDs43t0=
+	t=1747117935; cv=none; b=G0K2UgqWhNakWjk468yem5UQue2gAYMolmjTH/uOxllQC/66tfHpsqjFUPf24o0BuBEupjrcjFBSOhWGfXxZenb67zSoaNp9Ph8ZssyKUqFlg9KNPu0BzoYnMBiE+68xflNkPmv8s7IBSQ5qtpXkjDnCyK4FvzZQynWNiRj989M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747117860; c=relaxed/simple;
-	bh=aZBL4GBTXVH/XcCa0nhyLI3hav2EGhWlligqqBckACI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Z0kf5M6t9Gc4V1qACFEdK9i2D4t3XXCUDRXBwax7EmwCFD4dIKUKeyXholXSd6EBSYLSktHNiAnGDJw408UlVmP0AryQVfR+OfJNN4XKhkpkHVXI2d00VZoar82z2ZB18ot82JP3v9L19UikyPl/vy3LJ4C4M/DKZCtly0qgAuA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=lQQxuheK; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=ZC6wYFni; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=lQQxuheK; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=ZC6wYFni; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="lQQxuheK";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="ZC6wYFni";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="lQQxuheK";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="ZC6wYFni"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 78B9D211A2;
-	Tue, 13 May 2025 06:30:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747117856; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=j2cbLjWTSbGNj0XNwnqUpsQPLn+Rd8LAjJ9qDnJPUSs=;
-	b=lQQxuheKUsh61PzojAfA/oIL3zgzDtf9NU2OKg1r+UM6VhaRNvSr3FJ6EfGwQFvIWpJ42n
-	GWmQOliYUb1t92w42FHjXguq/x0NyOO82Zj/FEAdIldoR+OSxw5yZldLlO3VlaClAC3lOI
-	dVfNUD5v/ue+KZqbqBZZo/ZdtTf3ico=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747117856;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=j2cbLjWTSbGNj0XNwnqUpsQPLn+Rd8LAjJ9qDnJPUSs=;
-	b=ZC6wYFniyoAzOK84hHfcGLeWQai9U4b5O8PdmByr5eNNuDR2og2II1wmBzBq8MEG0bvDSk
-	nv5ZtibE6C3+sFAg==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=lQQxuheK;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=ZC6wYFni
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747117856; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=j2cbLjWTSbGNj0XNwnqUpsQPLn+Rd8LAjJ9qDnJPUSs=;
-	b=lQQxuheKUsh61PzojAfA/oIL3zgzDtf9NU2OKg1r+UM6VhaRNvSr3FJ6EfGwQFvIWpJ42n
-	GWmQOliYUb1t92w42FHjXguq/x0NyOO82Zj/FEAdIldoR+OSxw5yZldLlO3VlaClAC3lOI
-	dVfNUD5v/ue+KZqbqBZZo/ZdtTf3ico=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747117856;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=j2cbLjWTSbGNj0XNwnqUpsQPLn+Rd8LAjJ9qDnJPUSs=;
-	b=ZC6wYFniyoAzOK84hHfcGLeWQai9U4b5O8PdmByr5eNNuDR2og2II1wmBzBq8MEG0bvDSk
-	nv5ZtibE6C3+sFAg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 12360137E8;
-	Tue, 13 May 2025 06:30:56 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id jpDpASDnImgSRwAAD6G6ig
-	(envelope-from <hare@suse.de>); Tue, 13 May 2025 06:30:56 +0000
-Message-ID: <ecff74ca-f3a5-4848-8836-54f1d7810aca@suse.de>
-Date: Tue, 13 May 2025 08:30:55 +0200
+	s=arc-20240116; t=1747117935; c=relaxed/simple;
+	bh=3yotUE15OjKyTjOt8m0Lp6s6pl4db2xWWDxfsxZI3Vw=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=bhlQeWgw1mmpQ8MlDk8BKJGCbNtLW94L2GbokIdSxh3n6VkdW26IVG3j1LtOu9f3iuLHJ5ymqjfSO8PgQKn4KTJLRO/vMqakKVPfkRJKrnVz8BsY5SeVYdXJ9c+MWohSqjABlDKIRxxNrLeoVOvI68k08kGcxuS4n1fEgo8M9aM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=none smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZxRTH2CNgz4f3jkJ
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 14:31:47 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id CCE0E1A1565
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 14:32:06 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgCH619k5yJoKIEPMQ--.1039S3;
+	Tue, 13 May 2025 14:32:06 +0800 (CST)
+Subject: Re: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to
+ dirty bits and clear bits
+To: Yu Kuai <yukuai1@huaweicloud.com>, Christoph Hellwig <hch@lst.de>
+Cc: xni@redhat.com, colyli@kernel.org, agk@redhat.com, snitzer@kernel.org,
+ mpatocka@redhat.com, song@kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, johnny.chenyi@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
+ <20250512011927.2809400-16-yukuai1@huaweicloud.com>
+ <20250512051722.GA1667@lst.de>
+ <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com>
+ <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de>
+ <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com>
+Date: Tue, 13 May 2025 14:32:04 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-To: Kevin Wolf <kwolf@redhat.com>, Martin Wilck <mwilck@suse.com>
-Cc: dm-devel@lists.linux.dev, hreitz@redhat.com, mpatocka@redhat.com,
- snitzer@kernel.org, bmarzins@redhat.com, linux-kernel@vger.kernel.org
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <aCIRUwt5BueQmlMZ@redhat.com>
+In-Reply-To: <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 78B9D211A2
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[8];
-	MIME_TRACE(0.00)[0:+];
-	ASN(0.00)[asn:25478, ipnet:::/0, country:RU];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email,suse.de:dkim,suse.de:mid];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received,2a07:de40:b281:104:10:150:64:97:from];
-	DKIM_TRACE(0.00)[suse.de:+]
-X-Rspamd-Action: no action
+X-CM-TRANSID:gCh0CgCH619k5yJoKIEPMQ--.1039S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxCFW8XFyDGFyUuw4Dtw43ZFb_yoWrWFWrpF
+	Z0q3WYkr45JFWaq340yry7AF1rKa1vgr9rJryrGwna9FyYyrnIqF4vkFyFywn8ursxCF9r
+	Zwn5tr98CryfXr7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUB014x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26rxl
+	6s0DM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v26rxl6s
+	0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMcIj6xII
+	jxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_Jr0_Gr
+	1lF7xvr2IY64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I0E8cxan2IY
+	04v7Mxk0xIA0c2IEe2xFo4CEbIxvr21lc7CjxVAaw2AFwI0_Jw0_GFyl42xK82IYc2Ij64
+	vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8G
+	jcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MIIYrxkI7VAKI48JMIIF0xvE2I
+	x0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK
+	8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I
+	0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjfUonmRUUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On 5/12/25 17:18, Kevin Wolf wrote:
-> Am 08.05.2025 um 15:51 hat Martin Wilck geschrieben:
->> Hello Kevin,
+Hi,
+
+在 2025/05/12 21:36, Yu Kuai 写道:
+> Hi,
+> 
+> 在 2025/05/12 21:30, Christoph Hellwig 写道:
+>> On Mon, May 12, 2025 at 03:26:41PM +0200, Christoph Hellwig wrote:
+>>>> 1) bitmap bio must be done before this bio can be issued;
+>>>> 2) bitmap bio will be added to current->bio_list, and wait for this bio
+>>>> to be issued;
+>>>>
+>>>> Do you have a better sulution to this problem?
+>>>
+>>> A bew block layer API that bypasses bio_list maybe?  I.e. export
+>>> __submit_bio with a better name and a kerneldoc detailing the narrow
+>>> use case.
 >>
->> [I'm sorry for the previous email. It seems that I clicked "send" in
->> the wrong window].
+>> That won't work as we'd miss a lot of checks, cgroup handling, etc.
 >>
->> On Tue, 2025-04-29 at 18:50 +0200, Kevin Wolf wrote:
->>> Multipath cannot directly provide failover for ioctls in the kernel
->>> because it doesn't know what each ioctl means and which result could
->>> indicate a path error. Userspace generally knows what the ioctl it
->>> issued means and if it might be a path error, but neither does it
->>> know
->>> which path the ioctl took nor does it necessarily have the privileges
->>> to
->>> fail a path using the control device.
+>> But maybe a flag to skip the recursion avoidance?
+> 
+> I think this can work, and this can also improve performance. I'll look
+> into this.
+
+So, I did a quick test with old internal bitmap and make sure following
+patch can work.
+
+However, for bitmap file case, bio is issued from submit_bh(), I'll have
+to change buffer_head code and I'm not sure if we want to do that.
+
+Thanks,
+Kuai
+
+diff --git a/block/blk-core.c b/block/blk-core.c
+index b862c66018f2..66ced5769694 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -745,7 +745,7 @@ void submit_bio_noacct_nocheck(struct bio *bio)
+          * to collect a list of requests submited by a ->submit_bio 
+method while
+          * it is active, and then process them after it returned.
+          */
+-       if (current->bio_list)
++       if (current->bio_list && !bio_flagged(bio, BIO_STACKED_META))
+                 bio_list_add(&current->bio_list[0], bio);
+         else if (!bdev_test_flag(bio->bi_bdev, BD_HAS_SUBMIT_BIO))
+                 __submit_bio_noacct_mq(bio);
+diff --git a/drivers/md/md-bitmap.c b/drivers/md/md-bitmap.c
+index 431a3ab2e449..e0cb210a4ea4 100644
+--- a/drivers/md/md-bitmap.c
++++ b/drivers/md/md-bitmap.c
+@@ -1257,35 +1257,6 @@ static void __bitmap_unplug(struct bitmap *bitmap)
+                 md_bitmap_file_kick(bitmap);
+  }
+
+-struct bitmap_unplug_work {
+-       struct work_struct work;
+-       struct bitmap *bitmap;
+-       struct completion *done;
+-};
+-
+-static void md_bitmap_unplug_fn(struct work_struct *work)
+-{
+-       struct bitmap_unplug_work *unplug_work =
+-               container_of(work, struct bitmap_unplug_work, work);
+-
+-       __bitmap_unplug(unplug_work->bitmap);
+-       complete(unplug_work->done);
+-}
+-
+-static void bitmap_unplug_async(struct bitmap *bitmap)
+-{
+-       DECLARE_COMPLETION_ONSTACK(done);
+-       struct bitmap_unplug_work unplug_work;
+-
+-       INIT_WORK_ONSTACK(&unplug_work.work, md_bitmap_unplug_fn);
+-       unplug_work.bitmap = bitmap;
+-       unplug_work.done = &done;
+-
+-       queue_work(md_bitmap_wq, &unplug_work.work);
+-       wait_for_completion(&done);
+-       destroy_work_on_stack(&unplug_work.work);
+-}
+-
+  static void bitmap_unplug(struct mddev *mddev, bool sync)
+  {
+         struct bitmap *bitmap = mddev->bitmap;
+@@ -1293,10 +1264,7 @@ static void bitmap_unplug(struct mddev *mddev, 
+bool sync)
+         if (!bitmap)
+                 return;
+
+-       if (sync)
+-               __bitmap_unplug(bitmap);
+-       else
+-               bitmap_unplug_async(bitmap);
++       __bitmap_unplug(bitmap);
+  }
+
+  static void md_bitmap_set_memory_bits(struct bitmap *bitmap, sector_t 
+offset, int needed);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 32b997dfe6f4..179eabd6e038 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -1050,6 +1050,7 @@ void md_super_write(struct mddev *mddev, struct 
+md_rdev *rdev,
+         __bio_add_page(bio, page, size, 0);
+         bio->bi_private = rdev;
+         bio->bi_end_io = super_written;
++       bio_set_flag(bio, BIO_STACKED_META);
+
+         if (test_bit(MD_FAILFAST_SUPPORTED, &mddev->flags) &&
+             test_bit(FailFast, &rdev->flags) &&
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index f38425338c3f..88164cdae6aa 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -300,6 +300,7 @@ enum {
+         BIO_REMAPPED,
+         BIO_ZONE_WRITE_PLUGGING, /* bio handled through zone write 
+plugging */
+         BIO_EMULATES_ZONE_APPEND, /* bio emulates a zone append 
+operation */
++       BIO_STACKED_META,       /* bio is metadata from stacked device */
+         BIO_FLAG_LAST
+  };
+
+> 
+> Thanks,
+> Kuai
+> 
 >>
->> Thanks for this effort.
+>> .
 >>
->> I have some remarks about your approach. The most important one is that
->> the DM_MPATH_PROBE_PATHS_CMD ioctl appears to be a dangerous command.
->> It sends IO to possibly broken paths and waits for it to complete. In
->> the common error case of a device not responding, this might cause the
->> code to hang for a long time in the kernel ioctl code path, in
->> uninterruptible sleep (note that these probing commands will be queued
->> after other possibly hanging IO). In the past we have put a lot of
->> effort into other code paths in multipath-tools and elsewhere to avoid
->> this kind of hang to the extent possible. It seems to me that your set
->> re-introduces this risk.
 > 
-> That's a fair point. I don't expect this code to be fully final, another
-> thing that isn't really optimal (as mentioned in the comment message) is
-> that we're not probing paths in parallel, potentially adding up timeouts
-> from multiple paths.
+> .
 > 
-> I don't think this is a problem of the interface, though, but we can
-> improve the implementation keeping the same interface.
-> 
-> Maybe I'm missing something, but I think the reason why it has to be
-> uninterruptible is just that submit_bio_wait() has the completion on the
-> stack? So I suppose we could just kmalloc() some state, submit all the
-> bios, let the completion callback free it, and then we can just stop
-> waiting early (i.e. wait_for_completion_interruptible/killable) and let
-> the requests complete on their own in the background.
-> 
-> Would this address your concerns or is there another part to it?
-> 
-Not really. There are two issues which ultimately made us move away
-from read I/O as path checkers:
 
-- Spurious timeouts due to blocked or congested submission
-- Error handling delays and stalls
-
-When using normal read/write functions for path checking you are
-subjected to normal I/O processing rules, ie I/O is inserted
-at the end of the submission queue. If the system is busy the
-path checker will time out prematurely without ever having reached
-the target. One could avoid that by extending the timeout, but that
-would make the path checker unreliable.
-
-But the real issue is error handling. Path checker are precisely there
-to check if the path is healthy, and as such _will_ be subjected
-to error handling (or might even trigger error handling itself).
-The thing about error handling is that you can only return affected
-commands once error handling is complete, as only then you can be
-sure that no DMA is pending on the buffers and one can free/re-use
-the associated pages.
-On SCSI error handling can be an _extremely_ lengthy affair
-(we had reports for over one hour), and the last thing you want is
-to delay your path checker for that time.
-
-(And besides, I didn't even mention the third problem with I/O-based
-path checkers, namely that the check entirely the wrong thing; we
-are not interested whether we can do I/O, we are interested in whether
-we can send commands. In the light of eg ALUA these are two very
-different things.)
-
->> Apart from that, minor observations are that in patch 2/2 you don't
->> check whether the map is in queueing state, and I don't quite
->> understand why you only check paths in the map's active path group
->> without attempting a PG failover in the case where all paths in the
->> current PG fail.
-> 
-> Ben already fixed up the missing check.
-> 
-> Not attempting PG failover was also his suggestion, on the basis that it
-> would be additional work for no real benefit when you can only submit
-> requests for the current PG anyway. If userspace retries the SG_IO, it
-> will already pick a different PG, so having the kernel do the same
-> doesn't really improve anything.
-> 
-Precisely.
-
-I think the best way forward here is to have a 'post_ioctl' handler
-(much like we have a pre_ioctl handler nowadays).
-This would check the return code from the ioctl, and invalidate the
-current path if there was an I/O error.
-That way the user can resubmit the ioctl, until all paths are exhausted.
-For that to work we need to agree on two error codes, one for
-'path failed, retry' and one for 'path failed, no retry possible'.
-Resetting path status will be delegated to multipathd, but then that's
-its main task anyway.
-
-Cheers,
-
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
