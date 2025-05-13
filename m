@@ -1,247 +1,134 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 849401E5718
-	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 07:06:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5FBB213FEE
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 07:14:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747119996; cv=none; b=VS7xmZvc3FfA7H+kb69OHs0D7gVkiC6x5BKTFNYCUJ3YXSf37aZRwYE4NDiVoJs6c/Cbjh92UqdypbrD8LSk39G5iGBw0crr2evR6lU8+45ZNug5iyZE+1XsNw5uPlJBb8E7fyTQ9Y3poXQqFTTRZmi6IIEVidmLKbVpps3PAls=
+	t=1747120454; cv=none; b=GEhq/PJgrK7IYf0DZNjX7NkIx6jcgxAANM9cpozzQuBDcO3PpUEcQP+t4dDwOXiTMgY5HmdG/6+7VC7Unnolf+3aicj7K8Ly9DPlr7twrO2lSwdAEhO1grWun7NWHVp2Ak8aaWzg1B3osMIUUkuyACCGJ6LhmQy6IdTlmot5MLM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747119996; c=relaxed/simple;
-	bh=HrY8RXQw+0LoYZLU9N77Uq02JLsXugCfMucRRJyH5LQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=QhgoZdbEspw2D1rtFektfe1qU8SSNI5Ma7BzT/jeNPSI5QVxq1xU4cYjl8VpvuzUNwuw/XWSsC6FFlqGhcAb01ab75oIeZmNK4Eih+S2aZ5Iwv7gwCbeEJxb+8kzF0bhvGy5XrELg7O71qdcqhwyY99fJYk7iJM26xkhK7HRLgk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=bKSqtD8M; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=bKSqtD8M; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="bKSqtD8M";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="bKSqtD8M"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 91E932119D;
-	Tue, 13 May 2025 07:06:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747119992; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=E4RNMeAGwPkYmbKq0c3z5PMFjKyvJtYRCxiTSBCv/aM=;
-	b=bKSqtD8MjCEm030QMcGkVEzSveBlUpyIUZrpXPxgYGa3R1qfDbeLYB8splD9c26SUFr8WI
-	4mKM228sn7mbbklJANpSnBchocjH9SIBZUrhpdxUFF76X54AfG9GqNC7Te9hJZ2dWeXLOj
-	CNHkWEeg+zUfIhV+U7jQMQuuQbMX3Jo=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=bKSqtD8M
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747119992; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=E4RNMeAGwPkYmbKq0c3z5PMFjKyvJtYRCxiTSBCv/aM=;
-	b=bKSqtD8MjCEm030QMcGkVEzSveBlUpyIUZrpXPxgYGa3R1qfDbeLYB8splD9c26SUFr8WI
-	4mKM228sn7mbbklJANpSnBchocjH9SIBZUrhpdxUFF76X54AfG9GqNC7Te9hJZ2dWeXLOj
-	CNHkWEeg+zUfIhV+U7jQMQuuQbMX3Jo=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4BA8B1365D;
-	Tue, 13 May 2025 07:06:32 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id zH7jEHjvImhNUwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 13 May 2025 07:06:32 +0000
-Message-ID: <1767e6d3757f824039b4f799157d262a8dd74ced.camel@suse.com>
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-From: Martin Wilck <mwilck@suse.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Christoph Hellwig
- <hch@infradead.org>
-Cc: Kevin Wolf <kwolf@redhat.com>, dm-devel@lists.linux.dev,
- hreitz@redhat.com, 	snitzer@kernel.org, bmarzins@redhat.com,
- linux-kernel@vger.kernel.org
-Date: Tue, 13 May 2025 09:06:31 +0200
-In-Reply-To: <8e009e40-a1d2-5eea-3930-f81446b16722@redhat.com>
-References: <20250429165018.112999-1-kwolf@redhat.com>
-		 <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
-		 <8e009e40-a1d2-5eea-3930-f81446b16722@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+	s=arc-20240116; t=1747120454; c=relaxed/simple;
+	bh=K3drLE2Oi+IvVbndZqChwht2avF2P5gnpQVpowPrJUE=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=DBGH+2zq03Hhqc71N7rvFLTHd2UHyMj7xUPinUT0lcoBhBzrOmxFln1yKLvg0X1BpAvLBk5oXZF7A+7Tu39uOw/Ni3NWm4p3qppvTn303ZzymoQPxn34omFGgYOlqav/Dd5CA+rjWqr6JPaYh4dIuPlC+kBCHvlhsQzlcrD+khI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZxSPj4lPrz4f3jt8
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 15:13:45 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 2E8601A12C2
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 15:14:05 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgAXe1878SJofX8SMQ--.8827S3;
+	Tue, 13 May 2025 15:14:05 +0800 (CST)
+Subject: Re: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to
+ dirty bits and clear bits
+To: Christoph Hellwig <hch@lst.de>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: xni@redhat.com, colyli@kernel.org, agk@redhat.com, snitzer@kernel.org,
+ mpatocka@redhat.com, song@kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, johnny.chenyi@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
+ <20250512011927.2809400-16-yukuai1@huaweicloud.com>
+ <20250512051722.GA1667@lst.de>
+ <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com>
+ <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de>
+ <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com>
+ <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com>
+ <20250513064803.GA1508@lst.de>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <87a53ae0-c4d6-adff-8272-c49d63bf30db@huaweicloud.com>
+Date: Tue, 13 May 2025 15:14:03 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 91E932119D
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[8];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:mid,suse.com:dkim];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Rspamd-Action: no action
+In-Reply-To: <20250513064803.GA1508@lst.de>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgAXe1878SJofX8SMQ--.8827S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7Cr48Ww4xJryDGrWDZry7Jrb_yoW8WF45pr
+	WrKan7Grs8GrsFqF1xZa43WFyrKFWvvrZ8JayrW3WrGw4jvrn5XF4rKFySy3ZrAr1kG3Wv
+	qr1ftrn8Ca1UZaUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x
+	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
+	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcV
+	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
+	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
+	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUd-B_UUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hello Mikulas,
+Hi,
 
-On Mon, 2025-05-12 at 15:46 +0200, Mikulas Patocka wrote:
-> Hi
->=20
->=20
-> On Thu, 8 May 2025, Martin Wilck wrote:
->=20
-> > Hello Kevin,
-> >=20
-> > [I'm sorry for the previous email. It seems that I clicked "send"
-> > in
-> > the wrong window].
-> >=20
-> > On Tue, 2025-04-29 at 18:50 +0200, Kevin Wolf wrote:
-> > > Multipath cannot directly provide failover for ioctls in the
-> > > kernel
-> > > because it doesn't know what each ioctl means and which result
-> > > could
-> > > indicate a path error. Userspace generally knows what the ioctl
-> > > it
-> > > issued means and if it might be a path error, but neither does it
-> > > know
-> > > which path the ioctl took nor does it necessarily have the
-> > > privileges
-> > > to
-> > > fail a path using the control device.
-> >=20
-> > Thanks for this effort.
-> >=20
-> > I have some remarks about your approach. The most important one is
-> > that
-> > the DM_MPATH_PROBE_PATHS_CMD ioctl appears to be a dangerous
-> > command.
-> > It sends IO to possibly broken paths and waits for it to complete.
-> > In
-> > the common error case of a device not responding, this might cause
-> > the
-> > code to hang for a long time in the kernel ioctl code path, in
-> > uninterruptible sleep (note that these probing commands will be
-> > queued
->=20
-> Normal reads and writes would also hang in an uninterruptible sleep
-> if a=20
-> path stops responding.
+ÔÚ 2025/05/13 14:48, Christoph Hellwig Ð´µÀ:
+> On Tue, May 13, 2025 at 02:32:04PM +0800, Yu Kuai wrote:
+>> However, for bitmap file case, bio is issued from submit_bh(), I'll have
+>> to change buffer_head code and I'm not sure if we want to do that.
+> 
+> Don't bother with the old code, I'm still hoping we can replace it with
+> your new code ASAP.
 
-Right. That's why multipathd uses TEST UNIT READY if supported by the
-storage, and either aio or separate I/O threads to avoid the main
-thread being blocked, and generally goes to great lengths to make sure
-that misbehaving storage hardware can cause no freeze.
+Agreed :)
+> 
+>> +       BIO_STACKED_META,       /* bio is metadata from stacked device */
+> 
+> I don't think that is the right name and description.  The whole point
+> of the recursion avoidance is to to supported stacked devices by
+> reducing the stack depth.  So we clearly need to document why that
+> is not desirable for some very specific cases like reading in metadata
+> needed to process a write I/O.  We should also ensure it doesn't
+> propagate to lover stacked devices.
+> 
+> In fact I wonder if a better interfaces would be one to stash away
+> current->bio_list and then restore it after the call, as that would
+> enforce all that.
 
-The way I read Kevin's code, you'd queue up additional IO in the same
-context that had submitted the original failing IO. I realize that qemu
-uses asynchronous IO, but AFAIK the details depend on the qemu options
-for the individual VM, and it isn't clear to me whether or not
-DM_MPATH_PROBE_PATHS_CMD can bring the entire VM to halt.
+Yes, following change can work as well.
 
-> >  [...]
-> >=20
-> > I am wondering whether the DM_MPATH_PROBE_PATHS_CMD ioctl is
-> > necessary
-> > at all. Rather than triggering explicit path probing, you could
-> > have
-> > dm-mpath "handle" IO errors by failing the active path for "path
-> > errors". That would be similar to my patch set from 2021 [1], but
-> > it
-> > would avoid the extra IO and thus the additional risk of hanging in
-> > the
-> > kernel.
->=20
-> What exactly do you mean? You say "you could have dm-mpath 'handle'
-> IO=20
-> errors by failing the active path for "path errors".
+Just wonder, if the array is created by another array, and which is
+created by another array ...  In this case, the stack depth can be
+huge. :(  This is super weird case, however, should we keep the old code
+in this case?
 
-What I meant was that dm-mpath could call fail_path() in case of an
-error, using a similar mechanism to the block IO code path.
+Thanks,
+Kuai
 
-> Christoph doesn't want dm-mpath can't look at the error code - so dm-
-> mpath=20
-> doesn't know if path error occured or not.=C2=A0
+  static void bitmap_unplug(struct mddev *mddev, bool sync)
+  {
+         struct bitmap *bitmap = mddev->bitmap;
++       struct bio_list *bio_list = NULL;
 
-My impression from the previous discussion was that Christoph mainly
-objected to SG_IO requests being retried in the kernel [1], not so much
-to the inspection of the error code by device mapper.
+         if (!bitmap)
+                 return;
 
-I may have misunderstood this of course. Adding Christoph into the loop
-so that he can clarify what he meant.=20
+-       if (sync)
+-               __bitmap_unplug(bitmap);
+-       else
+-               bitmap_unplug_async(bitmap);
++       if (current->bio_list) {
++               bio_list = current->bio_list;
++               current->bio_list = NULL;
++       }
++
++       __bitmap_unplug(bitmap);
++
++       current->bio_list = bio_list;
+  }
 
-> qemu could look at the error=20
-> code, but qemu doesn't know which path did the SG_IO go through - so
-> it=20
-> can't instruct qemu to fail that path.
->=20
-> One of the possibility that we discussed was to add a path-id to
-> SG_IO, so=20
-> that dm-mpath would mark which path did the SG_IO go through and qemu
-> could instruct dm-mpath to fail that path. But we rejected it as
-> being=20
-> more complicated than the current approach.
-
-If we discuss extending SG_IO itself, it might be easier to have it
-store the blkstatus_t somewhere in the sg_io_hdr. More about that idea
-in my reply to Kevin.
-
-Regards,
-Martin
-
-[1] https://lore.kernel.org/all/20210701075629.GA25768@lst.de/
-
-
-> > Contrary to my set, you wouldn't attempt retries in the kernel, but
-> > leave this part to qemu instead, like in the current set. That
-> > would
-> > avoid Christoph's main criticism that "Failing over SG_IO does not
-> > make
-> > sense" [2].
-> >=20
-> > Doing the failover in qemu has the general disadvantage that qemu
-> > has
-> > no notion about the number of available and/or healthy paths; it
-> > can
-> > thus only guess the reasonable number of retries for any given I/O.
-> > But
-> > that's unavoidable, given that the idea to do kernel-level failover
-> > on
-> > SG_IO is rejected.
-> >=20
-> > Please let me know your thoughts.
-> >=20
-> > Best Regards
-> > Martin
-> >=20
-> > [1]
-> > https://lore.kernel.org/all/20210628151558.2289-1-mwilck@suse.com/
-> > [2] https://lore.kernel.org/all/20210701075629.GA25768@lst.de/
->=20
-> Mikulas
+> .
+> 
 
