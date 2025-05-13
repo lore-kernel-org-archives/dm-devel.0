@@ -1,151 +1,61 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC6561EA7DF
-	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 06:32:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BA4A32C8B
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 06:48:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747117936; cv=none; b=mgl58V+4vmqmyKZfARe2COwqvnttWpqY/9pz0PJJps2yet3fWvbtJRFnUY0JeXYJrbhFNlvq42SLTlljUEFfZyjJ2K+qHqx5vSOhnheLc5+OtwRAj3WQWNlS9YfnrMj+9IBorxYhXGJjVm6hj1fyWmI+XIzZ5lGPmzhpfxkBsgk=
+	t=1747118889; cv=none; b=sgLqB8gO7IVxoXFozNyAifxOqvoIO64v0l/ixCscnGjvxdwDF9zK0Zf9VJe2VDz0+uSXY47UskoomkbdriwTvbaH+C3iaU/ia70fmHtFnlVRYARySz/oS8koTeGm7v3XSeeTbdCvV4ioQbNNU3yNXCnVBr/dDDqhWLFljL++4ks=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747117936; c=relaxed/simple;
-	bh=IZl1YQRTJNwVCr/kLAahPYK27pMJDP5N3BnT/1OGfmA=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=j4uGcM4qr0xHoQKU5L4j46KFwHSVXNrk+/vJSUvljpzF6mJR82tKIJIZVs0ZYya4a9oOCze8+0oWawVzipni2sEGfxMaEC7OWTGzjvEott3n0I/hc31DFGCokMKLgQ2w2npBbSoM5epPTsWNr7quq2L5rs5QRX9ydTwgFCHKOUg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=yPv77/uJ; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=vQyvztrZ; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=yPv77/uJ; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=vQyvztrZ; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="yPv77/uJ";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="vQyvztrZ";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="yPv77/uJ";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="vQyvztrZ"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 0BF602119D;
-	Tue, 13 May 2025 06:32:13 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747117933; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g6JbC6wkC/8KlkNKMqPXFLnKJmHN0ICj7kZnD9u1AoA=;
-	b=yPv77/uJtYvhJ/jzS/MgPS4rSu9UtvAivTuMD44D7zxPGsp8UeOp9X57dkXDJLyTTuGG/5
-	O+7RLOyaogApCs2v1ALHjLwZOg1c2d50uYztLEl0Tfhpe+ilZ/WMf0pH1LXOrQtaBvmCL0
-	13w4ux7XJhLcqyYx627jzXYCqUy6rsU=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747117933;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g6JbC6wkC/8KlkNKMqPXFLnKJmHN0ICj7kZnD9u1AoA=;
-	b=vQyvztrZbOvBEpC7YZM2oYGm7Ue8QdYVKsgdKpr6MUG66dU7ZqJdMzcqR1IloKfvLJHJne
-	D4OuSfd51TXuiQCw==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747117933; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g6JbC6wkC/8KlkNKMqPXFLnKJmHN0ICj7kZnD9u1AoA=;
-	b=yPv77/uJtYvhJ/jzS/MgPS4rSu9UtvAivTuMD44D7zxPGsp8UeOp9X57dkXDJLyTTuGG/5
-	O+7RLOyaogApCs2v1ALHjLwZOg1c2d50uYztLEl0Tfhpe+ilZ/WMf0pH1LXOrQtaBvmCL0
-	13w4ux7XJhLcqyYx627jzXYCqUy6rsU=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747117933;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=g6JbC6wkC/8KlkNKMqPXFLnKJmHN0ICj7kZnD9u1AoA=;
-	b=vQyvztrZbOvBEpC7YZM2oYGm7Ue8QdYVKsgdKpr6MUG66dU7ZqJdMzcqR1IloKfvLJHJne
-	D4OuSfd51TXuiQCw==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id B5626137E8;
-	Tue, 13 May 2025 06:32:12 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id iz6xKmznImh2RwAAD6G6ig
-	(envelope-from <hare@suse.de>); Tue, 13 May 2025 06:32:12 +0000
-Message-ID: <d2a7fa68-1890-4367-a2ac-59ec220779bd@suse.de>
-Date: Tue, 13 May 2025 08:32:12 +0200
+	s=arc-20240116; t=1747118889; c=relaxed/simple;
+	bh=4PLJJYQclSDJxAPd/I6fUc+pgL+dM5fCx2w9Ok0+7DQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=cm/lCh8bzDkex3zMuOlk5gF0RrVf9qRjUEpIt4assXzwdd/5/kVSYXO+dcb6Ph6xBbhAL/C0n5BtBjbmnJ23+DafxiWsqwGsH3lZ5owvsb5TbOVnAZqjLPZ/S/WFmPKvW3v3dvQ/+tvRd04Jyt5OK5Cte+f6D0XyOPEFpPNTSdE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 6783168BEB; Tue, 13 May 2025 08:48:03 +0200 (CEST)
+Date: Tue, 13 May 2025 08:48:03 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Christoph Hellwig <hch@lst.de>, xni@redhat.com, colyli@kernel.org,
+	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+	song@kernel.org, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
+	yi.zhang@huawei.com, yangerkun@huawei.com, johnny.chenyi@huawei.com,
+	"yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to
+ dirty bits and clear bits
+Message-ID: <20250513064803.GA1508@lst.de>
+References: <20250512011927.2809400-1-yukuai1@huaweicloud.com> <20250512011927.2809400-16-yukuai1@huaweicloud.com> <20250512051722.GA1667@lst.de> <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com> <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de> <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com> <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Kevin Wolf <kwolf@redhat.com>, Martin Wilck <mwilck@suse.com>,
- dm-devel@lists.linux.dev, hreitz@redhat.com, mpatocka@redhat.com,
- snitzer@kernel.org, bmarzins@redhat.com, linux-kernel@vger.kernel.org
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com> <aCLe5UT2kfzI96TQ@infradead.org>
- <0340c51e-6f89-4799-b2f1-19c785a19ff2@suse.de>
- <aCLjPLCztuXhgpnA@infradead.org>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <aCLjPLCztuXhgpnA@infradead.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[9];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:mid,suse.de:email]
-X-Spam-Score: -4.30
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On 5/13/25 08:14, Christoph Hellwig wrote:
-> On Tue, May 13, 2025 at 08:09:45AM +0200, Hannes Reinecke wrote:
->> On 5/13/25 07:55, Christoph Hellwig wrote:
->>> On Mon, May 12, 2025 at 05:18:43PM +0200, Kevin Wolf wrote:
->>>> Yes, it's a bit unfortunate, but we have to work with what we have. QEMU
->>>> doesn't even necessarily know that it's dealing with a multipath device,
->>>> so it just has to blindly try the ioctl and see if it works.
->>>
->>> Why is qemu even using SG_IO to start with?
->>>
->> To be able to forward SCSI commands.
-> 
-> Why?
-> 
-Reservations and stuff.
-There are customer who use GPFS ...
+On Tue, May 13, 2025 at 02:32:04PM +0800, Yu Kuai wrote:
+> However, for bitmap file case, bio is issued from submit_bh(), I'll have
+> to change buffer_head code and I'm not sure if we want to do that.
 
-But yes, I know. We are working on it; it should be possible to hook in
-the generic block reservation code here.
+Don't bother with the old code, I'm still hoping we can replace it with
+your new code ASAP. 
 
-Cheers,
+> +       BIO_STACKED_META,       /* bio is metadata from stacked device */
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+I don't think that is the right name and description.  The whole point
+of the recursion avoidance is to to supported stacked devices by
+reducing the stack depth.  So we clearly need to document why that
+is not desirable for some very specific cases like reading in metadata
+needed to process a write I/O.  We should also ensure it doesn't
+propagate to lover stacked devices.
+
+In fact I wonder if a better interfaces would be one to stash away
+current->bio_list and then restore it after the call, as that would
+enforce all that.
