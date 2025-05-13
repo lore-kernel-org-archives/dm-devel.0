@@ -1,118 +1,184 @@
-Received: from 003.mia.mailroute.net (003.mia.mailroute.net [199.89.3.6])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7F861FC3
-	for <dm-devel@lists.linux.dev>; Mon, 12 May 2025 23:11:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.6
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD2FD2EAE5
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 01:10:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747091467; cv=none; b=m9MnIoQq2wJVMoy0cUHmVaGXNfalI0ssZhN+FboH2dWPucEWe8EllZX3DHNizvRs9WqERnwPKyGaUCAaz7KDv1dCtcMTVlrAjnKvrat2AEOoFzy1oK2jRe7p8DpZ0zHky2N58LiyUwgPVS8cgTPtVPIAbHzKqDAnEiQ+Jz0S9tU=
+	t=1747098617; cv=none; b=LOR3qDJY8Z9Abm65Lez2I285tp4bqcLgWJqx9BNVVGNBCgQRS0LvJPL4YsaE4k0io9glCiAm1E1K6H+OQC5unkDx43C3JguCo7XbuKuUoAWlw65ExFneQUJzxkf9rJX4haKZXMjUSyC/1+3d4w+KmOfbyw52SeBuNGWj5qvrLR0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747091467; c=relaxed/simple;
-	bh=Qi13CNnogSbiS0dFpoJs1L8dGQ8hx35ryntd8HTljlY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sCHENQNM+nSVWfDuMelTK3YkNOf0qfmG6E1AmmzsRUz+KGJcr+O2YjLK4MJYBDRnIQ8VAh5s/x09iTyRjb3UUkUqAOExdxBc7isqfDlPxC0joK2MQ/3inR9S6RV1wVAZ4h0OnupMGyzPcF9nvptWV2cwbFiUm+smLditV2uhnWE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=3uBiRbiu; arc=none smtp.client-ip=199.89.3.6
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1747098617; c=relaxed/simple;
+	bh=6V/LYEoV1AzqjI1x8xTXpmqQW0dDP/puEe4n6vi1bBA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=FUO48QjUaGeOQCZ1XHcuwC6QfsfrK/iI+SXoDyq8RnbmTTSR23m/UV3uJvgS6slKv0Y+dDKA5Vq1Co3IpUoqsmTG/wxkXNFwHFNhJ2B8KGs+FmqrtbLlW5vs+MRH9KBUWSMcgj0DB0p1PUTW8UWNYXz05cKIffTe6pix0qRmpuE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ma3il/0+; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="3uBiRbiu"
-Received: from localhost (localhost [127.0.0.1])
-	by 003.mia.mailroute.net (Postfix) with ESMTP id 4ZxFhm4GzZzltKl3;
-	Mon, 12 May 2025 23:11:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:mime-version:x-mailer:message-id:date
-	:date:subject:subject:from:from:received:received; s=mr01; t=
-	1747091463; x=1749683464; bh=T76eC6rzEDzp+jk5pgTixlWxfUSKmqgWwnP
-	nn4N4UDo=; b=3uBiRbiuDppP2DUCfctwbg066QhdUqVJO/PuPdQ+sLkpHXrFi4A
-	Tu6sKqZiTkLwaEQiejZu+YOVSp/x8z4PB91hJi+6mWAdV7xKAps7bZWZirDSCkTH
-	tk5ijq5DVsUv/sSrHVg4ULq5HHFQvfV/3fNKq56K7eWWX4XQSKhOAyHXwat9fcDN
-	8qeJ3B3G0kHRLWQIAVG7UcMdOQ90BzUJLWBccWeiaTv7d22ZqNYyf1/BzcQpbw9o
-	jtreYNpD9j/OYivk2lAOTYNdTPSpxl31mNgBeJhH8D5YH1vn9Gmq9Gnr1+ZW5mPO
-	zFjOC8YmGAunY1RLu4sJRjZmwNDmk6tgP8w==
-X-Virus-Scanned: by MailRoute
-Received: from 003.mia.mailroute.net ([127.0.0.1])
- by localhost (003.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id zyykAH9Bp9mF; Mon, 12 May 2025 23:11:03 +0000 (UTC)
-Received: from bvanassche.mtv.corp.google.com (unknown [104.135.204.82])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ma3il/0+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747098613;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Pakuarw/8VaPWixePjLs+3flWE2XXEwMhdC1GkdeOHU=;
+	b=Ma3il/0+0kXElzSRMPsjRsoXFo/A0pzrYpgpRMFlNPG67ZzNb6RxGOiogCjD29zRm+TfRa
+	hAoRjdIf7ZfVMZr7mXOkIXDUev8PICwHewXKmQeNZT4o4+CRDX/kuTGbYzqu9z7MTSGXAq
+	42ZfzGVW9FoysCkXRKq6aF4PTds6mIc=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-627-A2KCh03kPO6tQOYucZzwcg-1; Mon,
+ 12 May 2025 21:10:12 -0400
+X-MC-Unique: A2KCh03kPO6tQOYucZzwcg-1
+X-Mimecast-MFC-AGG-ID: A2KCh03kPO6tQOYucZzwcg_1747098611
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 003.mia.mailroute.net (Postfix) with ESMTPSA id 4ZxFhh22BMzlsxF1;
-	Mon, 12 May 2025 23:10:58 +0000 (UTC)
-From: Bart Van Assche <bvanassche@acm.org>
-To: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
-Cc: dm-devel@lists.linux.dev,
-	Bart Van Assche <bvanassche@acm.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Pankaj Raghav <p.raghav@samsung.com>
-Subject: [PATCH] dm-zone: Use bdev_*() helper functions where applicable
-Date: Mon, 12 May 2025 16:10:27 -0700
-Message-ID: <20250512231027.251751-1-bvanassche@acm.org>
-X-Mailer: git-send-email 2.49.0.1045.g170613ef41-goog
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2C87C180036F
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 01:10:11 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 085CE19560A3;
+	Tue, 13 May 2025 01:10:10 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id 44ADBE2449; Mon, 12 May 2025 21:10:10 -0400 (EDT)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo indexer: don't read request structure after enqueuing
+Date: Mon, 12 May 2025 21:10:10 -0400
+Message-ID: <75b89986ce2b958cabc20214cc3a95d3b06669bc.1747098268.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: X-r38Mj0IgQytTHi2UCuXjaedKG3XcybQPu7QeEXXXk_1747098611
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Improve code readability by using bdev_is_zone_start() and
-bdev_offset_from_zone_start() where applicable. No functionality
-has been changed.
+The function get_volume_page_protected may place a request on
+a queue for another thread to process asynchronously. When this
+happens, the volume should not read the request from the original
+thread. This can not currently cause problems, due to the way
+request processing is handled, but it is not safe in general.
 
-This patch includes a subset of a patch from Pankaj Raghav.
-
-See also https://lore.kernel.org/linux-block/20220923173618.6899-11-p.rag=
-hav@samsung.com/.
-
-Cc: Damien Le Moal <dlemoal@kernel.org>
-Cc: Pankaj Raghav <p.raghav@samsung.com>
-Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+Reviewed-by: Ken Raeburn <raeburn@redhat.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
 ---
- drivers/md/dm-table.c | 4 ++--
- drivers/md/dm-zone.c  | 6 +++---
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ drivers/md/dm-vdo/indexer/volume.c | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 6b23e777e10e..4e2a5fe8986f 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -257,7 +257,7 @@ static int device_area_is_invalid(struct dm_target *t=
-i, struct dm_dev *dev,
- 	if (bdev_is_zoned(bdev)) {
- 		unsigned int zone_sectors =3D bdev_zone_sectors(bdev);
-=20
--		if (start & (zone_sectors - 1)) {
-+		if (!bdev_is_zone_start(bdev, start)) {
- 			DMERR("%s: start=3D%llu not aligned to h/w zone size %u of %pg",
- 			      dm_device_name(ti->table->md),
- 			      (unsigned long long)start,
-@@ -274,7 +274,7 @@ static int device_area_is_invalid(struct dm_target *t=
-i, struct dm_dev *dev,
- 		 * devices do not end up with a smaller zone in the middle of
- 		 * the sector range.
- 		 */
--		if (len & (zone_sectors - 1)) {
-+		if (!bdev_is_zone_start(bdev, len)) {
- 			DMERR("%s: len=3D%llu not aligned to h/w zone size %u of %pg",
- 			      dm_device_name(ti->table->md),
- 			      (unsigned long long)len,
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 20edd3fabbab..7e184ffba252 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -423,9 +423,9 @@ void dm_zone_endio(struct dm_io *io, struct bio *clon=
-e)
- 	 */
- 	if (clone->bi_status =3D=3D BLK_STS_OK &&
- 	    bio_op(clone) =3D=3D REQ_OP_ZONE_APPEND) {
--		sector_t mask =3D bdev_zone_sectors(disk->part0) - 1;
--
--		orig_bio->bi_iter.bi_sector +=3D clone->bi_iter.bi_sector & mask;
-+		orig_bio->bi_iter.bi_sector +=3D
-+			bdev_offset_from_zone_start(disk->part0,
-+						    clone->bi_iter.bi_sector);
+diff --git a/drivers/md/dm-vdo/indexer/volume.c b/drivers/md/dm-vdo/indexer/volume.c
+index 655453bb276b..425b3a74f4db 100644
+--- a/drivers/md/dm-vdo/indexer/volume.c
++++ b/drivers/md/dm-vdo/indexer/volume.c
+@@ -754,10 +754,11 @@ static int get_volume_page_protected(struct volume *volume, struct uds_request *
+ 				     u32 physical_page, struct cached_page **page_ptr)
+ {
+ 	struct cached_page *page;
++	unsigned int zone_number = request->zone_number;
+ 
+ 	get_page_from_cache(&volume->page_cache, physical_page, &page);
+ 	if (page != NULL) {
+-		if (request->zone_number == 0) {
++		if (zone_number == 0) {
+ 			/* Only one zone is allowed to update the LRU. */
+ 			make_page_most_recent(&volume->page_cache, page);
+ 		}
+@@ -767,7 +768,7 @@ static int get_volume_page_protected(struct volume *volume, struct uds_request *
  	}
-=20
- 	return;
+ 
+ 	/* Prepare to enqueue a read for the page. */
+-	end_pending_search(&volume->page_cache, request->zone_number);
++	end_pending_search(&volume->page_cache, zone_number);
+ 	mutex_lock(&volume->read_threads_mutex);
+ 
+ 	/*
+@@ -787,8 +788,7 @@ static int get_volume_page_protected(struct volume *volume, struct uds_request *
+ 		 * the order does not matter for correctness as it does below.
+ 		 */
+ 		mutex_unlock(&volume->read_threads_mutex);
+-		begin_pending_search(&volume->page_cache, physical_page,
+-				     request->zone_number);
++		begin_pending_search(&volume->page_cache, physical_page, zone_number);
+ 		return UDS_QUEUED;
+ 	}
+ 
+@@ -797,7 +797,7 @@ static int get_volume_page_protected(struct volume *volume, struct uds_request *
+ 	 * "search pending" state in careful order so no other thread can mess with the data before
+ 	 * the caller gets to look at it.
+ 	 */
+-	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++	begin_pending_search(&volume->page_cache, physical_page, zone_number);
+ 	mutex_unlock(&volume->read_threads_mutex);
+ 	*page_ptr = page;
+ 	return UDS_SUCCESS;
+@@ -849,6 +849,7 @@ static int search_cached_index_page(struct volume *volume, struct uds_request *r
+ {
+ 	int result;
+ 	struct cached_page *page = NULL;
++	unsigned int zone_number = request->zone_number;
+ 	u32 physical_page = map_to_physical_page(volume->geometry, chapter,
+ 						 index_page_number);
+ 
+@@ -858,18 +859,18 @@ static int search_cached_index_page(struct volume *volume, struct uds_request *r
+ 	 * invalidation by the reader thread, before the reader thread has noticed that the
+ 	 * invalidate_counter has been incremented.
+ 	 */
+-	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++	begin_pending_search(&volume->page_cache, physical_page, zone_number);
+ 
+ 	result = get_volume_page_protected(volume, request, physical_page, &page);
+ 	if (result != UDS_SUCCESS) {
+-		end_pending_search(&volume->page_cache, request->zone_number);
++		end_pending_search(&volume->page_cache, zone_number);
+ 		return result;
+ 	}
+ 
+ 	result = uds_search_chapter_index_page(&page->index_page, volume->geometry,
+ 					       &request->record_name,
+ 					       record_page_number);
+-	end_pending_search(&volume->page_cache, request->zone_number);
++	end_pending_search(&volume->page_cache, zone_number);
+ 	return result;
+ }
+ 
+@@ -882,6 +883,7 @@ int uds_search_cached_record_page(struct volume *volume, struct uds_request *req
+ {
+ 	struct cached_page *record_page;
+ 	struct index_geometry *geometry = volume->geometry;
++	unsigned int zone_number = request->zone_number;
+ 	int result;
+ 	u32 physical_page, page_number;
+ 
+@@ -905,11 +907,11 @@ int uds_search_cached_record_page(struct volume *volume, struct uds_request *req
+ 	 * invalidation by the reader thread, before the reader thread has noticed that the
+ 	 * invalidate_counter has been incremented.
+ 	 */
+-	begin_pending_search(&volume->page_cache, physical_page, request->zone_number);
++	begin_pending_search(&volume->page_cache, physical_page, zone_number);
+ 
+ 	result = get_volume_page_protected(volume, request, physical_page, &record_page);
+ 	if (result != UDS_SUCCESS) {
+-		end_pending_search(&volume->page_cache, request->zone_number);
++		end_pending_search(&volume->page_cache, zone_number);
+ 		return result;
+ 	}
+ 
+@@ -917,7 +919,7 @@ int uds_search_cached_record_page(struct volume *volume, struct uds_request *req
+ 			       &request->record_name, geometry, &request->old_metadata))
+ 		*found = true;
+ 
+-	end_pending_search(&volume->page_cache, request->zone_number);
++	end_pending_search(&volume->page_cache, zone_number);
+ 	return UDS_SUCCESS;
+ }
+ 
+-- 
+2.48.1
+
