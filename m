@@ -1,107 +1,112 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E59A11712
-	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 09:29:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7492221D3F4
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 09:32:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747128560; cv=none; b=da5jmTyDnKdNS76Tz0KE4KGhvE3aG8MtjkvWR7U6pWIyZSzPGp2LhUZ+jlhtTETXLkXtBNKCWuc0pePspTk2IWVnnUx7p4P5jJfKGZqW2VK9ztv4MFUnvs/wBlphxr4aI4FDq/r0fprWFyWBPtYzC2BG0q9Eb/wz4DZJz5GOsnI=
+	t=1747128744; cv=none; b=FKovYqW4londsRW+bu4qEH8SIuoxNPnyYHh5lKFVzohoXvb7nNhoNDfDzutLYOEOY6b8z61JSX3mS6AuaIfKHLygix6tyfzoF+kwNveM42QJSPJJ+VCEdeFD1zhLKVoRMJBm24e55Uk43rLG4A+7KCpoYHk8B8Epub07t+Oa1eY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747128560; c=relaxed/simple;
-	bh=8O7CUj/TgXcdonn9vBDT5qTqdIn+fJHSMgChw4LhMjQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=jbwEV/7sHA0oGobKqFpwQtCVkqp/AWK2S/hkRok0FjAXtsjKQZG24clQQNEhsAFqTS4ZuXGr3VN+A0sZH6/mbnzj7wQ5hq0oXBiLVlrcDnUc49X3QMtncYICxSjuwR+EknQhsU1OG8qq/lfKOtig8IwPC2ZaDmNHL6097MvYLiU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=GrJRbHKU; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="GrJRbHKU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1747128558;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=93t4tFkIyPCogX7UwUqjdNFHzcw9/x4QgZzmXcOPlSo=;
-	b=GrJRbHKU1oO/aD8byXRE0G+QePoOuJvNAy41Tq92ZRUVEYgBMtn65aHZ52aaihvZRrHXjd
-	qm75rIZcHfJO2VdGpiHvR+xBcU68Ul2zQvuYZrSAQMmiLSFKUlAGPdI3o4SQg0eb6dNdbh
-	tvJJ/AB2SouUhTEHriebwA1QGuaIuIE=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-280-D5izl036PjW_6LLqymc3TA-1; Tue,
- 13 May 2025 05:29:17 -0400
-X-MC-Unique: D5izl036PjW_6LLqymc3TA-1
-X-Mimecast-MFC-AGG-ID: D5izl036PjW_6LLqymc3TA_1747128555
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7F5F51955DB2;
-	Tue, 13 May 2025 09:29:15 +0000 (UTC)
-Received: from redhat.com (unknown [10.45.224.238])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7E8BD1953B82;
-	Tue, 13 May 2025 09:29:12 +0000 (UTC)
-Date: Tue, 13 May 2025 11:29:09 +0200
-From: Kevin Wolf <kwolf@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev,
-	hreitz@redhat.com, mpatocka@redhat.com, snitzer@kernel.org,
-	bmarzins@redhat.com, linux-kernel@vger.kernel.org,
-	pbonzini@redhat.com
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-Message-ID: <aCMQ5S-gI6vZJxmq@redhat.com>
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com>
- <aCLe5UT2kfzI96TQ@infradead.org>
+	s=arc-20240116; t=1747128744; c=relaxed/simple;
+	bh=nNrYIQy1skPi5qstR5qKheiozyvtxRrmAYWX6yKF368=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=bsD3Vg8bwq1Ix5tUrxRypX5wjqFtPNpPsQ2Vs6cy2qmtuL9/Py2tyfNjoW9m2KoMWRQazbUHHoa95nP3OncnXckFijubsoARzXERB5hfR6OnrRnULuqkCokVwTxibu1/W6kUA86Nyn9x6+n4+ip4bgmKBP/fN4mBVAl9D8pQlKE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4ZxWT84P59z4f3jt8
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 17:31:56 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 24CB91A0AA0
+	for <dm-devel@lists.linux.dev>; Tue, 13 May 2025 17:32:16 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgDHKl+eESNoLyocMQ--.9820S3;
+	Tue, 13 May 2025 17:32:16 +0800 (CST)
+Subject: Re: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to
+ dirty bits and clear bits
+To: Christoph Hellwig <hch@lst.de>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: xni@redhat.com, colyli@kernel.org, agk@redhat.com, snitzer@kernel.org,
+ mpatocka@redhat.com, song@kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
+ yangerkun@huawei.com, johnny.chenyi@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20250512011927.2809400-1-yukuai1@huaweicloud.com>
+ <20250512011927.2809400-16-yukuai1@huaweicloud.com>
+ <20250512051722.GA1667@lst.de>
+ <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com>
+ <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de>
+ <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com>
+ <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com>
+ <20250513064803.GA1508@lst.de>
+ <87a53ae0-c4d6-adff-8272-c49d63bf30db@huaweicloud.com>
+ <20250513074304.GA2696@lst.de>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <d5ae7af0-dd73-7d6b-f520-c25e411f8f06@huaweicloud.com>
+Date: Tue, 13 May 2025 17:32:13 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aCLe5UT2kfzI96TQ@infradead.org>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+In-Reply-To: <20250513074304.GA2696@lst.de>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgDHKl+eESNoLyocMQ--.9820S3
+X-Coremail-Antispam: 1UD129KBjvdXoW7Jr18CF4xJrW5ZFyxArW8JFb_yoWkZrb_ur
+	9a9ay7C3srGF1kAayIgFs0qFZ7Gw48Wa47Xa9YqF42g3s8Xa98uFWvy3sxua40yw40y3W3
+	Wr97Xw12k3ZF9jkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUIcSsGvfJTRUUUbfAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k26cxKx2IYs7xG
+	6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8w
+	A2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j
+	6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r
+	4UM4x0Y48IcVAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2kI
+	c2xKxwCYjI0SjxkI62AI1cAE67vIY487MxkF7I0En4kS14v26r1q6r43MxAIw28IcxkI7V
+	AKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCj
+	r7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCIc40Y0x0EwIxGrwCI42IY6x
+	IIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAI
+	w20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x
+	0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUbGQ6JUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Am 13.05.2025 um 07:55 hat Christoph Hellwig geschrieben:
-> On Mon, May 12, 2025 at 05:18:43PM +0200, Kevin Wolf wrote:
-> > Yes, it's a bit unfortunate, but we have to work with what we have. QEMU
-> > doesn't even necessarily know that it's dealing with a multipath device,
-> > so it just has to blindly try the ioctl and see if it works.
+Hi,
+
+ÔÚ 2025/05/13 15:43, Christoph Hellwig Ð´µÀ:
+> On Tue, May 13, 2025 at 03:14:03PM +0800, Yu Kuai wrote:
+>> Yes, following change can work as well.
+>>
+>> Just wonder, if the array is created by another array, and which is
+>> created by another array ...  In this case, the stack depth can be
+>> huge. :(  This is super weird case, however, should we keep the old code
+>> in this case?
 > 
-> Why is qemu even using SG_IO to start with?
+> Yeah, that's a good question.  Stacking multiple arrays using bitmaps
+> on top of each other is weird.  But what if other block remappers
+> starting to use this for other remapping and they are stacked?  That
+> seems much more likely unfotunately, so maybe we can't go down this
+> route after all, sorry for leading you to it.
 
-How else would you do SCSI passthrough?
+I was thinking about record a stack dev depth in mddev to handle the
+weird case inside raid. Is there other stack device have the same
+problem? AFAIK, some dm targets like dm-crypt are using workqueue
+to handle all IO.
 
-Ok, from your replies to Hannes I understand an implicit message, you
-wouldn't. But I don't think that's really an answer, at least not for
-all users.
+I'm still interested because this can improve first write latency.
 
-Yes, I'll give you that in the long term, we might be able to move some
-passthrough users away from it by using more specific interfaces like
-for persistent reservations (though see below). But for example, it's
-also used for vendor-specific commands and I don't see how Linux could
-ever provide more specific interfaces than SG_IO for those.
+> 
+> So instead just write a comment documenting why you switch to a
+> different stack using the workqueue.
 
-But it's even about more than just accessing commands that aren't
-otherwise accessible. Mapping a SCSI response from the device to a
-single errno and back into SCSI status for the guest isn't lossless.
-QEMU's scsi-block device actually started off using normal I/O for reads
-and writes and using SG_IO only for things that aren't covered by normal
-I/O. But then those had to be changed to SG_IO, too, so that the guest
-would actually see the full SCSI status. Things the commit message
-mentions are unit attention codes and handling RESERVATION CONFLICT
-correctly (which made me unsure above if the more specific interface for
-reservations could actually be used to fully get rid of SG_IO). For more
-context, I'm adding Paolo who actually made that change back then. He
-may remember the concrete bug(s) this fixed.
+Ok, I'll add comment if we keep using the workqueue.
 
-So if you want the guest device to behave mostly the same as your host
-device, I don't really see any way around SCSI passthrough and therefore
-SG_IO.
+Thanks,
+Kuai
 
-Kevin
+> .
+> 
 
