@@ -1,196 +1,142 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3DC118DB37
-	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 17:37:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35562E55B
+	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 20:50:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747244245; cv=none; b=cHoX8iyDkYsMHoLkb+00FGcPvIwpSbc3pUebRFQ85/sEq5K8YJhM1cxeN1wDMkKNpPGY+DzLzdJqI+IFj5sQ+hpPO/Ib7L1vRYNrw0t7QE/d181kQDq5vlEpdrK7n6ozT/Hz4sL5b2wgifPgSbHekSdAit7VK9WhKohma4u+o+0=
+	t=1747255853; cv=none; b=aKoGaXOgKa1XNhVAG32yM15wbjlSAvFqR6c0en34NnE0Q5JoSrpTO7uOtz3RCnf/LCmOoWPnj9lJwmscrWMg1Wdczn7Lvf0DVVtrY5Aqfg8XNG4+qgqXeZ9LitCgS9OJgiZtPI/lzV/aGxX1GyATP92kLAdGk6FoXa6X3vxmNyo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747244245; c=relaxed/simple;
-	bh=JKexnO2Q2BnjLLOK348ei8IMpNVZwDl9P/ySv6Fj1VQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=MmELmrHfd2YudRZ89UFr/c8wZBAHCSlSasGjlQGg4Niixj1fR+TM7jF1XFIWIH2tDjqSRqEa96bL+m4Acc8wwDRwQPHBkCTZfTBZtyjtD2kod6a3qa5CAL2KslisgXXUi1Ky12lRDj0KzVW3DqvWi+627YbjXl9ynh7BckzIK6o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=MUtYkgFS; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=MUtYkgFS; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1747255853; c=relaxed/simple;
+	bh=hMP8MvNBqDJ5FhH5B1imFxBEcSPE9JQFPioEMEaZYF0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GQ39dpmYzgpv5pr5M87p+7meuBZDcThAOXt9f9kby3MrHAwdzVi9XN751fnOqIeQR9EenkD4l0SEqQoy4fF70ALBeoZJUfCKftxgRgdzvHGDPqSyVJL2d7nY1sBiPySGvAieEs4ceyhuC6PSi9ENcR9ani4jwJK5LC/asctK0WU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=SagxdIQk; arc=none smtp.client-ip=199.89.3.7
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="MUtYkgFS";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="MUtYkgFS"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="SagxdIQk"
+Received: from localhost (localhost [127.0.0.1])
+	by 004.mia.mailroute.net (Postfix) with ESMTP id 4ZyQTx11dTzlt4DD;
+	Wed, 14 May 2025 20:50:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:mime-version:x-mailer:message-id:date
+	:date:subject:subject:from:from:received:received; s=mr01; t=
+	1747255843; x=1749847844; bh=zOWuZicnPbUQJD+E1wOUKcwavvOnGqtoI7U
+	5x88pFb4=; b=SagxdIQksmR8iNkWJVUOVoA3BweJ++qv0D07sEv+6qs4KNCkjVb
+	m0dG2HF6zxx83KK5Y+kMZc2imsiwmryFbNXIrTB0ngZocOd/BqF63eWTLbMQRnC6
+	K1KXLaOk7h+7AtuWLrg15mE1dQVtr8RMaDWaF/RHZxhd4u4wxF/kur1TrASvZkAS
+	O/vc+Z+e7SC7fJW0XlLAN9rhSn54uVRojOaHgREFfUXdiBzaDsjpXYlJoctxyhiq
+	jY8A9uB6SrwMHEzJbefduDN3hjEg2oB1FdWtX5CIOBudfCy2EfuMMNDvnrKF6NDf
+	XkCkNb8GQ7QvUIyUbBmKyL4trlhH48Srcjw==
+X-Virus-Scanned: by MailRoute
+Received: from 004.mia.mailroute.net ([127.0.0.1])
+ by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id ZR0a7-iTDlrN; Wed, 14 May 2025 20:50:43 +0000 (UTC)
+Received: from bvanassche.mtv.corp.google.com (unknown [104.135.204.82])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id BC53B1F399;
-	Wed, 14 May 2025 17:37:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747244240; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=JKexnO2Q2BnjLLOK348ei8IMpNVZwDl9P/ySv6Fj1VQ=;
-	b=MUtYkgFSFubfI/dh4y74gZVNMsj+IryboAYMp56IqA/xCVpXmswAlnTFOmWVtg/dH5rKwf
-	WbKYDingBGEUIEa6UAMKnm4T+Dxn5DPl2nZpICQc5pKc0768p4x8YJ66edeV89gePsFnRf
-	9mxTmBRlHSZAMPX84ilWElLOGqadi0o=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1747244240; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=JKexnO2Q2BnjLLOK348ei8IMpNVZwDl9P/ySv6Fj1VQ=;
-	b=MUtYkgFSFubfI/dh4y74gZVNMsj+IryboAYMp56IqA/xCVpXmswAlnTFOmWVtg/dH5rKwf
-	WbKYDingBGEUIEa6UAMKnm4T+Dxn5DPl2nZpICQc5pKc0768p4x8YJ66edeV89gePsFnRf
-	9mxTmBRlHSZAMPX84ilWElLOGqadi0o=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 63FE413306;
-	Wed, 14 May 2025 17:37:20 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id z0lPFtDUJGgyUAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 14 May 2025 17:37:20 +0000
-Message-ID: <50beb356b4dc000446fd186ab754c87f386eaeae.camel@suse.com>
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christoph Hellwig
-	 <hch@infradead.org>
-Cc: Kevin Wolf <kwolf@redhat.com>, dm-devel@lists.linux.dev,
- hreitz@redhat.com, 	mpatocka@redhat.com, snitzer@kernel.org,
- linux-kernel@vger.kernel.org, 	pbonzini@redhat.com, Hannes Reinecke
- <hare@suse.com>
-Date: Wed, 14 May 2025 19:37:19 +0200
-In-Reply-To: <aCTDiHMuMncwdp_X@redhat.com>
-References: <20250429165018.112999-1-kwolf@redhat.com>
-	 <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
-	 <aCIRUwt5BueQmlMZ@redhat.com> <aCLe5UT2kfzI96TQ@infradead.org>
-	 <aCMQ5S-gI6vZJxmq@redhat.com> <aCQiz88HksKg791Z@infradead.org>
-	 <aCTDiHMuMncwdp_X@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.1 
+	(Authenticated sender: bvanassche@acm.org)
+	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4ZyQTr4DPszm2jWv;
+	Wed, 14 May 2025 20:50:39 +0000 (UTC)
+From: Bart Van Assche <bvanassche@acm.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Bart Van Assche <bvanassche@acm.org>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Pankaj Raghav <p.raghav@samsung.com>
+Subject: [PATCH v2] dm-zone: Use bdev_*() helper functions where applicable
+Date: Wed, 14 May 2025 13:50:33 -0700
+Message-ID: <20250514205033.2108129-1-bvanassche@acm.org>
+X-Mailer: git-send-email 2.49.0.1045.g170613ef41-goog
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[10];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+Content-Transfer-Encoding: quoted-printable
 
-Hello Ben, hello Christoph,
+Improve code readability by using bdev_is_zone_aligned() and
+bdev_offset_from_zone_start() where applicable. No functionality
+has been changed.
 
-On Wed, 2025-05-14 at 12:23 -0400, Benjamin Marzinski wrote:
-> On Tue, May 13, 2025 at 09:57:51PM -0700, Christoph Hellwig wrote:
-> >=20
-> > SG_IO is fine and the only way for SCSI passthrough.=C2=A0 But doing
-> > SCSI passthrough through md-multipath just doesn't work.=C2=A0 SCSI
-> > isn't
-> > built for layering, and ALUA and it's vendor-specific variants and
-> > alternatives certainly isn't.=C2=A0 If you try that you're playing with
-> > fire and is not chance of ever moving properly.
->=20
-> Could you be a bit more specific. All multipath is doing here is
-> forwarding the ioctls to an underlying scsi device, and passing back
-> up
-> the result. Admittedly, it doesn't always make sense to pass the
-> ioctl
-> on from the multipath device to just one scsi device. Persistent
-> Reservations are perfect example of this, and that's why QEMU doesn't
-> use DMs ioctl passthrough code to handle them.=C2=A0
+This patch is a reworked version of a patch from Pankaj Raghav.
 
-I'd go one step further. Christoph is right to say that what we're
-currently doing in qemu =E2=80=93 passing through every command except the
-PRIN/PROUT to a multipath device =E2=80=93 is a dangerous thing to do.
+See also https://lore.kernel.org/linux-block/20220923173618.6899-11-p.rag=
+hav@samsung.com/.
 
-Passthrough from a dm-multipath device to a SCSI device makes sense
-only for a small subset of the SCSI command set. Basically just for the
-regular IO commands like the various READ and WRITE variants and the
-occasional UNMAP. However, in practice these commands account for 99.y%
-percent of the actual commands sent to devices. The fact that customers
-have been running these setups in large deployments over many years
-suggests that, if other commands ever get passed through to member
-devices, it has rarely had fatal consequences.
+Cc: Damien Le Moal <dlemoal@kernel.org>
+Cc: Pankaj Raghav <p.raghav@samsung.com>
+Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+---
 
-Nobody would seriously consider sending ALUA commands to the multipath
-devices. TUR and REQUEST SENSE are other examples for commands that
-can't be reasonably passed through to random member devices of a
-multipath map. There are certainly many more examples. I guess it would
-make sense to review the command set and add some filtering in the qemu
-passthrough code.
+Changes compared to v1: introduced a new function bdev_is_zone_aligned().
 
-AFAIK the only commands that we really need to pass through (except the
-standard ones) are the reservation commands, which get special handling
-by qemu anyway. @Ben, @Kevin, are you aware of anything else?
+ drivers/md/dm-table.c  | 4 ++--
+ drivers/md/dm-zone.c   | 6 +++---
+ include/linux/blkdev.h | 7 +++++++
+ 3 files changed, 12 insertions(+), 5 deletions(-)
 
-So: admittedly we're using a framework for passing through any command,
-where we actually need to pass through only a tiny subset of commands.
-Thinking about it this way, it really doesn't look like the perfect
-tool for the job, and we may want to look into a different approach for
-the future.
-
-> Also, when you have ALUA
-> setups, not all the scsi devices are equal. But multipath isn't
-> naievely
-> assuming that they are. It's only passing ioctls to the highest
-> priority
-> activated paths, just like it does for IO, and multipath is in charge
-> of
-> handling explicit alua devices. This hasn't proved to be problematic
-> in
-> practice.
->=20
-> The reality of the situation is that customers have been using this
-> for
-> a while, and the only issue that they run into is that multipath
-> can't
-> tell when a SG_IO has failed due to a retryable error. Currently,
-> they're left with waiting for multipathd's preemptive path checking
-> to
-> fail the path so they can retry down a new one. The purpose of this
-> patchset and Martin's previous one is to handle this problem. If
-> there
-> are unavoidable critical problems that you see with this setup, it
-> would
-> be really helpful to know what they are.
-
-I'd also be interested in understanding this better. As noted above,
-I'm aware that passing through everything is dangerous and wrong in
-principle. But in practice, we haven't observed anything serious except
-(as Ben already said) the failure to do path failover in the SG_IO code
-path, which both this patch set and my set from the past are intended
-to fix.
-
-While I am open for looking for better alternatives, I still hope that
-we can find an agreement for a short/mid-term solution that would allow
-us to serve our customers who currently use SCSI passthrough setups.=20
-That would not just benefit us (the enterprise distros), because it
-would also help us fund upstream contributions.
-
-
-Regards
-Martin
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 6b23e777e10e..2fd190579655 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -257,7 +257,7 @@ static int device_area_is_invalid(struct dm_target *t=
+i, struct dm_dev *dev,
+ 	if (bdev_is_zoned(bdev)) {
+ 		unsigned int zone_sectors =3D bdev_zone_sectors(bdev);
+=20
+-		if (start & (zone_sectors - 1)) {
++		if (!bdev_is_zone_aligned(bdev, start)) {
+ 			DMERR("%s: start=3D%llu not aligned to h/w zone size %u of %pg",
+ 			      dm_device_name(ti->table->md),
+ 			      (unsigned long long)start,
+@@ -274,7 +274,7 @@ static int device_area_is_invalid(struct dm_target *t=
+i, struct dm_dev *dev,
+ 		 * devices do not end up with a smaller zone in the middle of
+ 		 * the sector range.
+ 		 */
+-		if (len & (zone_sectors - 1)) {
++		if (!bdev_is_zone_aligned(bdev, len)) {
+ 			DMERR("%s: len=3D%llu not aligned to h/w zone size %u of %pg",
+ 			      dm_device_name(ti->table->md),
+ 			      (unsigned long long)len,
+diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+index 20edd3fabbab..7e184ffba252 100644
+--- a/drivers/md/dm-zone.c
++++ b/drivers/md/dm-zone.c
+@@ -423,9 +423,9 @@ void dm_zone_endio(struct dm_io *io, struct bio *clon=
+e)
+ 	 */
+ 	if (clone->bi_status =3D=3D BLK_STS_OK &&
+ 	    bio_op(clone) =3D=3D REQ_OP_ZONE_APPEND) {
+-		sector_t mask =3D bdev_zone_sectors(disk->part0) - 1;
+-
+-		orig_bio->bi_iter.bi_sector +=3D clone->bi_iter.bi_sector & mask;
++		orig_bio->bi_iter.bi_sector +=3D
++			bdev_offset_from_zone_start(disk->part0,
++						    clone->bi_iter.bi_sector);
+ 	}
+=20
+ 	return;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 9a1f0ee40b56..5b863c163d3c 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1442,6 +1442,13 @@ static inline bool bdev_is_zone_start(struct block=
+_device *bdev,
+ 	return bdev_offset_from_zone_start(bdev, sector) =3D=3D 0;
+ }
+=20
++/* Check whether @sector is a multiple of the zone size. */
++static inline bool bdev_is_zone_aligned(struct block_device *bdev,
++					sector_t sector)
++{
++	return bdev_is_zone_start(bdev, sector);
++}
++
+ /**
+  * bdev_zone_is_seq - check if a sector belongs to a sequential write zo=
+ne
+  * @bdev:	block device to check
