@@ -1,80 +1,33 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A22F11C860E
-	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 06:39:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 228A91F791C
+	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 06:48:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747204776; cv=none; b=V0UW32WMAqpf0451EhrWaMig1T6ZA6Z3ePmmeTv5FV9Kq4TumuhnMv2msILsJoU5ru9wTt6u7CLK1Jqzn5h4OEJiCi2Pg+TemigOlxzio9ij4ijt0zqouT5hG4UDAOUtI9/XHPPuXlMv9NpuReMQ+wSbWMrymt9HBPh+ruEtjYc=
+	t=1747205306; cv=none; b=iQgis04cTVwdNehnj1WQs303jeEjBsDxtc6fk/NpQhLI6W+ULPotQCgG+VwVkz4WBHkganrD9UmnWOKCQD/lw/AFUquVI7K548XSlBm8Wm8uME0UJ/hla//Oa7Bqj0exB4Kl1AwaAu+MBrn1LHbTbpbNQnJar/hyWRC1m4VhJcw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747204776; c=relaxed/simple;
-	bh=t+I9jepCTpJL8tyV3dOboQAZCLRWhrYhIPZr5m8t808=;
+	s=arc-20240116; t=1747205306; c=relaxed/simple;
+	bh=qNSymnRe/EM6hXUuvpNROO4Xr/XcC9VXTixj1vfG2Kc=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=OvqoJxgdY/z7SNHtp0cXqfsZvDfyJcNPwBb/yHs0+D9Tyscbga3TMLvw1mrsPvSblFS5gekNj6fpch8I4Cj3jie/MSwvjAY5qH9L3EbcPemFaOm+rmPxAyXt5A6Ubc67ome1GJA7eRQRjyMY0DXju31vV2nA9osaAqsrKGxP7kA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=1DrrCWys; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=M6KEQfAy; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=1DrrCWys; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=M6KEQfAy; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	 In-Reply-To:Content-Type; b=h7hcQlPKeA+1qLpRGA97ja9E5Hl9fgudBWYJx8OEAMOR+en3ZPgu9Fh+B1g9/9emE2lMTFsvNiyTckZvnUPWbLCU4Nva3WWFv4B9oV5RVPXxhkIGozTJ6laB0YqX8u02grmdepGzVxLcoGKNsMumw+2OHHkqLekEnTmeiS+lQSU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KOCYidnA; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="1DrrCWys";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="M6KEQfAy";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="1DrrCWys";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="M6KEQfAy"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id D0A1D1F793;
-	Wed, 14 May 2025 06:39:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747204766; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=t0kF4dO/+KxJMqI/h3j7CUouKL+W5cmBwxlegzo07i8=;
-	b=1DrrCWys1+JN1yBIJncm+kcW7DfWTTRCAEUXbiv1K+lcDKnvdlpGh68U3hVV1LKyClp6aG
-	KtCtWmA2/MXFIZMPt8HOJyN/no5HOyiwnkJWyLXjQuMuz1j9HMab+IaHVXe1MtTCKxssdF
-	KQpXmgAkHm15HBofyURIvb6UTRG5MEM=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747204766;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=t0kF4dO/+KxJMqI/h3j7CUouKL+W5cmBwxlegzo07i8=;
-	b=M6KEQfAyo+8S/KYWgukPNV970s1dpMk/NrXWUfBbq+LNepfQ61k2gxRG0rlWOwYM9xG7Kj
-	iqHaRAxIOl05rlCQ==
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1747204766; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=t0kF4dO/+KxJMqI/h3j7CUouKL+W5cmBwxlegzo07i8=;
-	b=1DrrCWys1+JN1yBIJncm+kcW7DfWTTRCAEUXbiv1K+lcDKnvdlpGh68U3hVV1LKyClp6aG
-	KtCtWmA2/MXFIZMPt8HOJyN/no5HOyiwnkJWyLXjQuMuz1j9HMab+IaHVXe1MtTCKxssdF
-	KQpXmgAkHm15HBofyURIvb6UTRG5MEM=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1747204766;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=t0kF4dO/+KxJMqI/h3j7CUouKL+W5cmBwxlegzo07i8=;
-	b=M6KEQfAyo+8S/KYWgukPNV970s1dpMk/NrXWUfBbq+LNepfQ61k2gxRG0rlWOwYM9xG7Kj
-	iqHaRAxIOl05rlCQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 0C2D1137E8;
-	Wed, 14 May 2025 06:39:25 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id IQm8OJ06JGjZcQAAD6G6ig
-	(envelope-from <hare@suse.de>); Wed, 14 May 2025 06:39:25 +0000
-Message-ID: <37bb9993-baaa-4dc8-b5d4-e66201e4a462@suse.de>
-Date: Wed, 14 May 2025 08:39:25 +0200
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KOCYidnA"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B4E75C4CEE9;
+	Wed, 14 May 2025 06:48:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1747205305;
+	bh=qNSymnRe/EM6hXUuvpNROO4Xr/XcC9VXTixj1vfG2Kc=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=KOCYidnAii8b67XyTBUvAyTWFYABDB/mgj7U1PIJG+leuMYdkwueu9cks3X+2uyaJ
+	 vrzL2/Pc0lXn6uCJGz7y0+o3mEc7uT8WOCAs1Dk1S7AYqeGgutNN7NO5+8GlbAcJZx
+	 EBL/JiKokwcVIy2qnMYCOie4XiJqiZ8IACO8fZQOLH6H99B/U6MfJ7knTPzeCvKESb
+	 0kJaHdmomWd7X9w1uMRU1uINB0iJBROg4V9j9kayP+OpbngmUVtMZKXFDKAHv5vYxh
+	 G2eZ/Dc4cMD19vgqvxr9lKG8q2cLI+/5weytov16w7tUK+6CCe7t5wbAZ9kjYG0Eaf
+	 lLZOESdk95huA==
+Message-ID: <4afed853-9c4d-487d-91be-509c6eb81939@kernel.org>
+Date: Wed, 14 May 2025 15:48:21 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -82,85 +35,93 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-To: Benjamin Marzinski <bmarzins@redhat.com>,
- Christoph Hellwig <hch@infradead.org>
-Cc: Kevin Wolf <kwolf@redhat.com>, Martin Wilck <mwilck@suse.com>,
- dm-devel@lists.linux.dev, hreitz@redhat.com, mpatocka@redhat.com,
- snitzer@kernel.org, linux-kernel@vger.kernel.org
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com> <aCLe5UT2kfzI96TQ@infradead.org>
- <0340c51e-6f89-4799-b2f1-19c785a19ff2@suse.de>
- <aCLjPLCztuXhgpnA@infradead.org>
- <d2a7fa68-1890-4367-a2ac-59ec220779bd@suse.de>
- <aCLrbz3bRLwUbA8p@infradead.org> <aCNzf7MJa-hLQpmv@redhat.com>
+Subject: Re: [PATCH] dm-zone: Use bdev_*() helper functions where applicable
+To: Bart Van Assche <bvanassche@acm.org>,
+ Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
+Cc: dm-devel@lists.linux.dev, Pankaj Raghav <p.raghav@samsung.com>
+References: <20250512231027.251751-1-bvanassche@acm.org>
+From: Damien Le Moal <dlemoal@kernel.org>
 Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <aCNzf7MJa-hLQpmv@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[9];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:mid,suse.de:email]
-X-Spam-Score: -4.30
+Organization: Western Digital Research
+In-Reply-To: <20250512231027.251751-1-bvanassche@acm.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On 5/13/25 18:29, Benjamin Marzinski wrote:
-> On Mon, May 12, 2025 at 11:49:19PM -0700, Christoph Hellwig wrote:
->> On Tue, May 13, 2025 at 08:32:12AM +0200, Hannes Reinecke wrote:
->>> Reservations and stuff.
->>
->> They should use the kernel persistent reservation API.
+On 5/13/25 08:10, Bart Van Assche wrote:
+> Improve code readability by using bdev_is_zone_start() and
+> bdev_offset_from_zone_start() where applicable. No functionality
+> has been changed.
 > 
-> Currently QEMU isn't sending Persistent Reservation requests to
-> multipath devices at all. It's sending those directly to the underlying
-> scsi devices. The issue here is with all the other SCSI commands that
-> users want to send to their SCSI passthrough device that is actually a
-> multipath device on top of a number of SCSI paths. They expect to
-> get back the actual sense and status information, so QEMU needs to
-> send them via SG_IOs.
+> This patch includes a subset of a patch from Pankaj Raghav.
 > 
-> Without reading that sense and status information in kernel, the
-> multipath target can't know if it needs to fail a path and retry the
-> ioctl down a different path. QEMU can read this information, but it
-> doesn't know what path the multipath device send the ioctl down. This
-> patch just gives users a way to check the paths in the active pathgroup
-> (which all should be able to handle IO) and fail those that can't.
-> While QEMU is the driver of this, it's completely general functionality.
+> See also https://lore.kernel.org/linux-block/20220923173618.6899-11-p.raghav@samsung.com/.
 > 
-Ouch.
-Different reservations on different paths? Really?
-How do you manage to keep the reservations up-to-date?
+> Cc: Damien Le Moal <dlemoal@kernel.org>
+> Cc: Pankaj Raghav <p.raghav@samsung.com>
+> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+> ---
+>  drivers/md/dm-table.c | 4 ++--
+>  drivers/md/dm-zone.c  | 6 +++---
+>  2 files changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 6b23e777e10e..4e2a5fe8986f 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -257,7 +257,7 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+>  	if (bdev_is_zoned(bdev)) {
+>  		unsigned int zone_sectors = bdev_zone_sectors(bdev);
+>  
+> -		if (start & (zone_sectors - 1)) {
+> +		if (!bdev_is_zone_start(bdev, start)) {
+>  			DMERR("%s: start=%llu not aligned to h/w zone size %u of %pg",
+>  			      dm_device_name(ti->table->md),
+>  			      (unsigned long long)start,
+> @@ -274,7 +274,7 @@ static int device_area_is_invalid(struct dm_target *ti, struct dm_dev *dev,
+>  		 * devices do not end up with a smaller zone in the middle of
+>  		 * the sector range.
+>  		 */
+> -		if (len & (zone_sectors - 1)) {
+> +		if (!bdev_is_zone_start(bdev, len)) {
 
-My recommendation is to use the _same_ reservation on all paths,
-precisely to avoid having to re-do reservations on path failure.
-And for that scenario the kernel persistent reservation API
-would work fine.
+This is odd. While the calculation is the same, this checks that the length is
+zone aligned. Changing this to testing if length is a zone start sector makes it
+hard to understand. So maybe add a synonym helper for that to avoid such odd
+naming/code ? E.g.:
 
-Cheers,
+/*
+ * Check if val is aligned to the device zone size.
+ */
+static inline bool bdev_is_zone_aligned(struct block_device *bdev, sector_t val)
+{
+	return bdev_is_zone_start(bdev, val);
+}
 
-Hannes
+Other than this, this looks good to me.
+
+>  			DMERR("%s: len=%llu not aligned to h/w zone size %u of %pg",
+>  			      dm_device_name(ti->table->md),
+>  			      (unsigned long long)len,
+> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
+> index 20edd3fabbab..7e184ffba252 100644
+> --- a/drivers/md/dm-zone.c
+> +++ b/drivers/md/dm-zone.c
+> @@ -423,9 +423,9 @@ void dm_zone_endio(struct dm_io *io, struct bio *clone)
+>  	 */
+>  	if (clone->bi_status == BLK_STS_OK &&
+>  	    bio_op(clone) == REQ_OP_ZONE_APPEND) {
+> -		sector_t mask = bdev_zone_sectors(disk->part0) - 1;
+> -
+> -		orig_bio->bi_iter.bi_sector += clone->bi_iter.bi_sector & mask;
+> +		orig_bio->bi_iter.bi_sector +=
+> +			bdev_offset_from_zone_start(disk->part0,
+> +						    clone->bi_iter.bi_sector);
+>  	}
+>  
+>  	return;
+> 
+
+
 -- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+Damien Le Moal
+Western Digital Research
