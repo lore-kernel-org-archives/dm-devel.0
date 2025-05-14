@@ -1,49 +1,34 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 769B11EB36;
-	Wed, 14 May 2025 04:57:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC3A33EA98
+	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 05:17:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747198673; cv=none; b=OOKhqkoOd8/hVsUByPaT+5JmzGjhh13wxAVf8JEGBXq2k5dFGPNkavPvgyA7MB1fJg1uRGB8ZQEn26P4++e60vFE2RC7CK6XsuRq2M3jCgj8fb89rVPPjQz2BNtYi0BPIWMgQOiWSfAPxA5EL4oKrIY0mU82U+w5+ApmbBWrd58=
+	t=1747199874; cv=none; b=LHM3IuOCEEs6CyGv2ymQW2ueHkkVqQ9yReuZVo5quxahxLJi8kq+m1qtWP732zPNG2grVlS5UoDCMLJufvs3uQ6tbsILuIhcsHes8yMbru+FEMqFqOyY7hyBqtCYCZM0u3rsyxxCLnPD7WU2L5pl1xoXY6r5B7pZRIgVOz9972A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747198673; c=relaxed/simple;
-	bh=dwk99c4ze/v5i5wZOUZMiW/juvBRI1Dowh87fegHPPU=;
+	s=arc-20240116; t=1747199874; c=relaxed/simple;
+	bh=B8/PYLnIVwapTuCP6BmW6RrckGy6HOia+4hp75e9Px8=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Eyl5QRDdAPe7byoKc3IktzIvd2fMpjhCqJYo/Zt1JaI7jgpCqEo6QL9CWouDJEi/t3R5skBrIsh4vdxTIiw2Sx7HR82g0vbdvz/vy8jqlBae77JrFxSwgSP+Zcj6EfaaI+UOGKeL+XRwcfTYN0G6X+Hx/Ahj2Xmio+KV89VRo0Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=mlWc47Ks; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mlWc47Ks"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=lOR/QFdLKjSv2hRskxp+GEMjKu5nrg0KkEjjkdDExL8=; b=mlWc47KsXRwAHvCgjdqBUmQKvS
-	sM5pSRiAmJC3KJxrKUz57vLhhO0efr9bLIay48sdM2W2yPxeUyi/x9rb3RxWm8EQCcpazv+HfIh+h
-	idYadG6vDCPr9oUbdjmJSvRw1Xj5pnEtpHc3tWOyTTBIiPR31j16wSe/loBYLYqyCu1HfoDL3V5c/
-	PyCNW3S10YotXJziTsp/1PqsbiM/Xsxr4tEOD/9wcfeWdi4apflyJ3RPztCCgiQdLCK3uowEG+kAm
-	QHRtJ6QCklSO28jcyN55LDkV85RYsnWTSVVApTthNnx9kXxxBzPZkrMPPBR3QH7rlgO8VKa9F7spp
-	gslrNHfg==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1uF4Bj-0000000E2Ar-3yQb;
-	Wed, 14 May 2025 04:57:51 +0000
-Date: Tue, 13 May 2025 21:57:51 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Kevin Wolf <kwolf@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Martin Wilck <mwilck@suse.com>,
-	dm-devel@lists.linux.dev, hreitz@redhat.com, mpatocka@redhat.com,
-	snitzer@kernel.org, bmarzins@redhat.com,
-	linux-kernel@vger.kernel.org, pbonzini@redhat.com
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-Message-ID: <aCQiz88HksKg791Z@infradead.org>
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com>
- <aCLe5UT2kfzI96TQ@infradead.org>
- <aCMQ5S-gI6vZJxmq@redhat.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=WZCQS4kEG7Hqva9kKoD83vlzFA86tP3zncfF6DtZnrSbQ/ecb3UQXjGAdB9RIMVX1wg1NyiGNcJiIcEO8O6WqFHMnqDX3mWSnHRhZtqqtXYs0Ogcu2CHH1W/CbcQAXJsMGoV0gFXDeabEfPgCtPEO98WaYOIZ/9vbBhE1IYYMJU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 798E068AA6; Wed, 14 May 2025 07:17:47 +0200 (CEST)
+Date: Wed, 14 May 2025 07:17:47 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Christoph Hellwig <hch@lst.de>, xni@redhat.com, colyli@kernel.org,
+	agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+	song@kernel.org, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
+	yi.zhang@huawei.com, yangerkun@huawei.com, johnny.chenyi@huawei.com,
+	"yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: [PATCH RFC md-6.16 v3 15/19] md/md-llbitmap: implement APIs to
+ dirty bits and clear bits
+Message-ID: <20250514051747.GA24503@lst.de>
+References: <20250512051722.GA1667@lst.de> <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com> <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de> <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com> <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com> <20250513064803.GA1508@lst.de> <87a53ae0-c4d6-adff-8272-c49d63bf30db@huaweicloud.com> <20250513074304.GA2696@lst.de> <d5ae7af0-dd73-7d6b-f520-c25e411f8f06@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -52,27 +37,27 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <aCMQ5S-gI6vZJxmq@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+In-Reply-To: <d5ae7af0-dd73-7d6b-f520-c25e411f8f06@huaweicloud.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Tue, May 13, 2025 at 11:29:09AM +0200, Kevin Wolf wrote:
-> Am 13.05.2025 um 07:55 hat Christoph Hellwig geschrieben:
-> > On Mon, May 12, 2025 at 05:18:43PM +0200, Kevin Wolf wrote:
-> > > Yes, it's a bit unfortunate, but we have to work with what we have. QEMU
-> > > doesn't even necessarily know that it's dealing with a multipath device,
-> > > so it just has to blindly try the ioctl and see if it works.
-> > 
-> > Why is qemu even using SG_IO to start with?
-> 
-> How else would you do SCSI passthrough?
-> 
-> Ok, from your replies to Hannes I understand an implicit message, you
-> wouldn't. But I don't think that's really an answer, at least not for
-> all users.
+On Tue, May 13, 2025 at 05:32:13PM +0800, Yu Kuai wrote:
+> I was thinking about record a stack dev depth in mddev to handle the
+> weird case inside raid. Is there other stack device have the same
+> problem? AFAIK, some dm targets like dm-crypt are using workqueue
+> to handle all IO.
 
-SG_IO is fine and the only way for SCSI passthrough.  But doing
-SCSI passthrough through md-multipath just doesn't work.  SCSI isn't
-built for layering, and ALUA and it's vendor-specific variants and
-alternatives certainly isn't.  If you try that you're playing with
-fire and is not chance of ever moving properly.
+I guess anything that might have to read in metadata to serve a
+data I/O.  bcache, dm-snapshot and dm-thinkp would be candidates for
+that, but I haven't checked the implementation.
+
+> I'm still interested because this can improve first write latency.
+>
+>>
+>> So instead just write a comment documenting why you switch to a
+>> different stack using the workqueue.
+>
+> Ok, I'll add comment if we keep using the workqueue.
+
+Maybe do that for getting the new bitmap code in ASAP and then
+revisit the above separately?
 
