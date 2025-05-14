@@ -1,142 +1,153 @@
-Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35562E55B
-	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 20:50:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C743213E71
+	for <dm-devel@lists.linux.dev>; Wed, 14 May 2025 21:21:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747255853; cv=none; b=aKoGaXOgKa1XNhVAG32yM15wbjlSAvFqR6c0en34NnE0Q5JoSrpTO7uOtz3RCnf/LCmOoWPnj9lJwmscrWMg1Wdczn7Lvf0DVVtrY5Aqfg8XNG4+qgqXeZ9LitCgS9OJgiZtPI/lzV/aGxX1GyATP92kLAdGk6FoXa6X3vxmNyo=
+	t=1747257673; cv=none; b=L2wvzKhyEifsmLcxTUdhrJwGhgJMRuu+sXn0LsmczIRWPenPKaUA0OMZluP6PRDxHrrPUbKTSTw0egREg5omTgVxfZGXTWmNkiflcDGCQ3BbkkCiqEB3QA+TVEHbo69Yb6duGuhiE23mTZKw5Te4MhN1a/HvWkvxmDsSAjWUSAo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747255853; c=relaxed/simple;
-	bh=hMP8MvNBqDJ5FhH5B1imFxBEcSPE9JQFPioEMEaZYF0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GQ39dpmYzgpv5pr5M87p+7meuBZDcThAOXt9f9kby3MrHAwdzVi9XN751fnOqIeQR9EenkD4l0SEqQoy4fF70ALBeoZJUfCKftxgRgdzvHGDPqSyVJL2d7nY1sBiPySGvAieEs4ceyhuC6PSi9ENcR9ani4jwJK5LC/asctK0WU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=SagxdIQk; arc=none smtp.client-ip=199.89.3.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1747257673; c=relaxed/simple;
+	bh=g92IOEz/RjN3ycXG20CvI981r6yj0rJaWCkLUZq+oGM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=ghXBn3qNaKd7m3zEZSuap7yj6znCPjCSjpp/uulOVY5acadjPJksfvQDL1RAbKveaJdIm1bZ/gBzw0qIsENAsFCHTLMnEATpAMf45pxulQScI99MFvK58RJmKY0cvkKMTyjLMRG8b7vp+LpT46Gltm8/qY5v8GUOsYcUtC77ZyA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Rp72ydfk; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Rp72ydfk; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="SagxdIQk"
-Received: from localhost (localhost [127.0.0.1])
-	by 004.mia.mailroute.net (Postfix) with ESMTP id 4ZyQTx11dTzlt4DD;
-	Wed, 14 May 2025 20:50:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:mime-version:x-mailer:message-id:date
-	:date:subject:subject:from:from:received:received; s=mr01; t=
-	1747255843; x=1749847844; bh=zOWuZicnPbUQJD+E1wOUKcwavvOnGqtoI7U
-	5x88pFb4=; b=SagxdIQksmR8iNkWJVUOVoA3BweJ++qv0D07sEv+6qs4KNCkjVb
-	m0dG2HF6zxx83KK5Y+kMZc2imsiwmryFbNXIrTB0ngZocOd/BqF63eWTLbMQRnC6
-	K1KXLaOk7h+7AtuWLrg15mE1dQVtr8RMaDWaF/RHZxhd4u4wxF/kur1TrASvZkAS
-	O/vc+Z+e7SC7fJW0XlLAN9rhSn54uVRojOaHgREFfUXdiBzaDsjpXYlJoctxyhiq
-	jY8A9uB6SrwMHEzJbefduDN3hjEg2oB1FdWtX5CIOBudfCy2EfuMMNDvnrKF6NDf
-	XkCkNb8GQ7QvUIyUbBmKyL4trlhH48Srcjw==
-X-Virus-Scanned: by MailRoute
-Received: from 004.mia.mailroute.net ([127.0.0.1])
- by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id ZR0a7-iTDlrN; Wed, 14 May 2025 20:50:43 +0000 (UTC)
-Received: from bvanassche.mtv.corp.google.com (unknown [104.135.204.82])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Rp72ydfk";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Rp72ydfk"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4ZyQTr4DPszm2jWv;
-	Wed, 14 May 2025 20:50:39 +0000 (UTC)
-From: Bart Van Assche <bvanassche@acm.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Bart Van Assche <bvanassche@acm.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Pankaj Raghav <p.raghav@samsung.com>
-Subject: [PATCH v2] dm-zone: Use bdev_*() helper functions where applicable
-Date: Wed, 14 May 2025 13:50:33 -0700
-Message-ID: <20250514205033.2108129-1-bvanassche@acm.org>
-X-Mailer: git-send-email 2.49.0.1045.g170613ef41-goog
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 9318A1F38A;
+	Wed, 14 May 2025 21:21:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1747257669; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=g92IOEz/RjN3ycXG20CvI981r6yj0rJaWCkLUZq+oGM=;
+	b=Rp72ydfkcN4z0I4Gtsv4LlYyinjVhtVgizd0Ooygt0qklQeDd5NBO7KulX97ZkmqQ5NfV1
+	E571KctsqpSJEGOnmjJJFUtnrSFy56H3F5yTam96uYAd+b7JKzioKjoyNo+H+xWwc5DkpY
+	7hdnfJcofQbNtfbND2hxFQ/a/b9rJ1c=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1747257669; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=g92IOEz/RjN3ycXG20CvI981r6yj0rJaWCkLUZq+oGM=;
+	b=Rp72ydfkcN4z0I4Gtsv4LlYyinjVhtVgizd0Ooygt0qklQeDd5NBO7KulX97ZkmqQ5NfV1
+	E571KctsqpSJEGOnmjJJFUtnrSFy56H3F5yTam96uYAd+b7JKzioKjoyNo+H+xWwc5DkpY
+	7hdnfJcofQbNtfbND2hxFQ/a/b9rJ1c=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 463B5137E8;
+	Wed, 14 May 2025 21:21:09 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 75orD0UJJWibCwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 14 May 2025 21:21:09 +0000
+Message-ID: <cc2ec011cf286cb5d119f2378ecbd7b818e46769.camel@suse.com>
+Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
+ paths
+From: Martin Wilck <mwilck@suse.com>
+To: Kevin Wolf <kwolf@redhat.com>, Christoph Hellwig <hch@infradead.org>, 
+ Benjamin Marzinski
+	 <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, hreitz@redhat.com, mpatocka@redhat.com, 
+	snitzer@kernel.org, linux-kernel@vger.kernel.org
+Date: Wed, 14 May 2025 23:21:08 +0200
+In-Reply-To: <d51d6f85b5728648fe9c584f9cb3acee12c4873f.camel@suse.com>
+References: <20250429165018.112999-1-kwolf@redhat.com>
+			 <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
+			 <aCIRUwt5BueQmlMZ@redhat.com>
+	 <d51d6f85b5728648fe9c584f9cb3acee12c4873f.camel@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RCPT_COUNT_SEVEN(0.00)[8];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FUZZY_BLOCKED(0.00)[rspamd.com];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Score: -4.30
 
-Improve code readability by using bdev_is_zone_aligned() and
-bdev_offset_from_zone_start() where applicable. No functionality
-has been changed.
+On Tue, 2025-05-13 at 10:00 +0200, Martin Wilck wrote:
 
-This patch is a reworked version of a patch from Pankaj Raghav.
+>=20
 
-See also https://lore.kernel.org/linux-block/20220923173618.6899-11-p.rag=
-hav@samsung.com/.
+> > If you think it does, is there another reason why you didn't try
+> > this
+> > before?
+>=20
+> It didn't occur to me back then that we could fail paths without
+> retrying in the kernel.
+>=20
+> Perhaps we could have the sg driver pass the blk_status_t (which is
+> available on the sg level) to device mapper somehow in the sg_io_hdr
+> structure? That way we could entirely avoid the layering violation
+> between SCSI and dm. Not sure if that would be acceptible to
+> Christoph,
+> as blk_status_t is supposed to be exclusive to the kernel. Can we
+> find
+> a way to make sure it's passed to DM, but not to user space?
 
-Cc: Damien Le Moal <dlemoal@kernel.org>
-Cc: Pankaj Raghav <p.raghav@samsung.com>
-Signed-off-by: Bart Van Assche <bvanassche@acm.org>
----
+I have to correct myself. I was confused by my old patches which
+contain special casing for SG_IO. The current upstream code does of
+course not support special-casing SG_IO in any way. device-mapper
+neither looks at the ioctl `cmd` value nor at any arguments, and has
+only the Unix error code to examine when the ioctl returns. The device
+mapper layer has access to *less* information than the user space
+process that issued the ioctl. Adding hooks to the sg driver wouldn't
+buy us anything in this situation.
 
-Changes compared to v1: introduced a new function bdev_is_zone_aligned().
+If we can't change this, we can't fail paths in the SG_IO error code
+path, end of story.
 
- drivers/md/dm-table.c  | 4 ++--
- drivers/md/dm-zone.c   | 6 +++---
- include/linux/blkdev.h | 7 +++++++
- 3 files changed, 12 insertions(+), 5 deletions(-)
+With Kevin's patch 1/2 applied, it would in principle be feasible to
+special-case SG_IO, handle it in the dm-multipath, retrieve the
+blk_status_t somehow, and possibly initiate path failover. This way
+we'd at least keep the generic dm layer clean of SCSI specific code.
+But still, the end result would look very similar attempt from 2021 and
+would therefore lead us nowhere, probably.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 6b23e777e10e..2fd190579655 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -257,7 +257,7 @@ static int device_area_is_invalid(struct dm_target *t=
-i, struct dm_dev *dev,
- 	if (bdev_is_zoned(bdev)) {
- 		unsigned int zone_sectors =3D bdev_zone_sectors(bdev);
-=20
--		if (start & (zone_sectors - 1)) {
-+		if (!bdev_is_zone_aligned(bdev, start)) {
- 			DMERR("%s: start=3D%llu not aligned to h/w zone size %u of %pg",
- 			      dm_device_name(ti->table->md),
- 			      (unsigned long long)start,
-@@ -274,7 +274,7 @@ static int device_area_is_invalid(struct dm_target *t=
-i, struct dm_dev *dev,
- 		 * devices do not end up with a smaller zone in the middle of
- 		 * the sector range.
- 		 */
--		if (len & (zone_sectors - 1)) {
-+		if (!bdev_is_zone_aligned(bdev, len)) {
- 			DMERR("%s: len=3D%llu not aligned to h/w zone size %u of %pg",
- 			      dm_device_name(ti->table->md),
- 			      (unsigned long long)len,
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 20edd3fabbab..7e184ffba252 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -423,9 +423,9 @@ void dm_zone_endio(struct dm_io *io, struct bio *clon=
-e)
- 	 */
- 	if (clone->bi_status =3D=3D BLK_STS_OK &&
- 	    bio_op(clone) =3D=3D REQ_OP_ZONE_APPEND) {
--		sector_t mask =3D bdev_zone_sectors(disk->part0) - 1;
--
--		orig_bio->bi_iter.bi_sector +=3D clone->bi_iter.bi_sector & mask;
-+		orig_bio->bi_iter.bi_sector +=3D
-+			bdev_offset_from_zone_start(disk->part0,
-+						    clone->bi_iter.bi_sector);
- 	}
-=20
- 	return;
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 9a1f0ee40b56..5b863c163d3c 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1442,6 +1442,13 @@ static inline bool bdev_is_zone_start(struct block=
-_device *bdev,
- 	return bdev_offset_from_zone_start(bdev, sector) =3D=3D 0;
- }
-=20
-+/* Check whether @sector is a multiple of the zone size. */
-+static inline bool bdev_is_zone_aligned(struct block_device *bdev,
-+					sector_t sector)
-+{
-+	return bdev_is_zone_start(bdev, sector);
-+}
-+
- /**
-  * bdev_zone_is_seq - check if a sector belongs to a sequential write zo=
-ne
-  * @bdev:	block device to check
+I'm still not too fond of DM_MPATH_PROBE_PATHS_CMD, but I can't offer a
+better solution at this time. If the side issues are fixed, it will be
+an improvement over the current upstream, situation where we can do no
+path failover at all.
+
+In the long term,=C2=A0we should evaluate alternatives. If my conjecture in
+my previous post is correct we need only PRIN/PROUT commands, there
+might be a better solution than scsi-block for our customers. Using
+regular block IO should actually also improved performance.
+
+Regards
+Martin
