@@ -1,115 +1,189 @@
-Received: from mail-pf1-f175.google.com (mail-pf1-f175.google.com [209.85.210.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 781DF191
-	for <dm-devel@lists.linux.dev>; Thu, 15 May 2025 13:38:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.175
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D7E27263F
+	for <dm-devel@lists.linux.dev>; Thu, 15 May 2025 14:30:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747316297; cv=none; b=a1Zct0dXSYmDC00619xth+213uungE6hdvHfV4kXviqIQQmPR9vzxOhknWxylmZSf3RmMB+hiCIeQIqM7+68yA6yvITWut5pSYx7ONorJ+SGAFrlBdToFU781FodwbL6rt5kMFIlvsvTB5JBWktAErnCih+5+n5hlrrGOOsFd6Q=
+	t=1747319406; cv=none; b=TDbZCZLmhaffGshbicALHfhleJLVzGUY4uBS+pYQ9sZjdtr4ivMVqQGaF02Gae3r9Q5IztchcDA3Z8VA/F116NNKXZDVLXwkvQOhgpfEUPnZRNmYzArcgH1OUeZ8UbP00kNkdaWqVZtgSA/csm/RBSJnTy5bOnGRCB9Gjjf1CFw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747316297; c=relaxed/simple;
-	bh=PXKxDhViUIcxC3KUkZHCixiArZ3XlYY3kxB+rdl/gio=;
-	h=Date:From:To:CC:Subject:In-Reply-To:References:Message-ID:
-	 MIME-Version:Content-Type; b=CiPxyqpbqK+85WkTZb51/EkXM2DnkUwKpEWRmo6v4zTEImoM6Bx9dsoDja46W5lX0jgT2CE9g6zRq6wv+M+ly1VHSHTJPoXgA5vbolY5ZRAes3h5o6yvTtZP5L9SPhwEtEj+RprGbr+60iEjjcuAmIgUBRu65foWVSmnOdrb5a4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=GFBXqx9k; arc=none smtp.client-ip=209.85.210.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1747319406; c=relaxed/simple;
+	bh=CKVCE6FYRwGO1ZYByo3D3Sl20e3L0LNJOmAsdbP2pZQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=lq4GjkN/0m5H/91oTgqVT1iRmK8xBi83WYzixcPOsDDokHGorruLiXiJTH4pIUzo9xBYj8K5MYwOse0zKIiL2pmTBwybC1Nfc/zTH4Vy9/7Mdv+jvxu6ESjX8UopUPFNCCjLL/ouTuDSOTpWaT1vxKolN4A4AWUnDfmSWCegHFI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IWQSm0/p; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="GFBXqx9k"
-Received: by mail-pf1-f175.google.com with SMTP id d2e1a72fcca58-74019695377so736026b3a.3
-        for <dm-devel@lists.linux.dev>; Thu, 15 May 2025 06:38:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1747316296; x=1747921096; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:references
-         :in-reply-to:user-agent:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=qVf819sirg3kVreUfa/4iH86ct1h9QFKS6LDxRK2VpM=;
-        b=GFBXqx9kq+0iXXB1/fbBxFu+6sYjgx7B+f09flPBFGpC1nWpPXWnvyE+p1dtAAOOWy
-         qBjesekwHbIxa0jvtvxkzrN8neSpEYRP4HGkhA8YkYFwM+knUWXT15A0wCO1wIzQR3MO
-         86CNXAJCOyk+qEA7rIN8C+WyqzCt/yDIEILeQANyIZ9M3z8mck+YGmB/FyhuxW83Sfj4
-         3pvabHrwyi0vPGwJMG5SI7s87h0a/BMxC3gCHp2i6IEQ1gCTyUHWl3DNo8shce0+GiWk
-         NbcDsrnte3SsA/sIAcy5QCqV9M/NproynWCEkx//8CiDJ/3h1rxdSQferOSqB5hUFKse
-         OHOw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1747316296; x=1747921096;
-        h=content-transfer-encoding:mime-version:message-id:references
-         :in-reply-to:user-agent:subject:cc:to:from:date:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=qVf819sirg3kVreUfa/4iH86ct1h9QFKS6LDxRK2VpM=;
-        b=onUUJgiblVZSyzXa4L+IuMCQHc5hGt6gVuGTtZWxScrYC0Vcd7WX75w4LYpBeaU1af
-         Xiv5ZeRYA/YOkPxb8HIm9azn3TMyPxR/v63+4HFWASTbUkgxluxpJfR/cOXxdjeZgR9u
-         BsyryMq6eScrd/Wci361GHsOa8BFzZKYXwl+lITWvBipft2XAGJ5o6TOxR1gMf8U96Ss
-         9iM8853bCiL9reCNFFec1bNUVYwGOlszIEZy4IKUuLxXWibAfU3Tqlm5Z9d/ttLKRAeR
-         GHptHgk0hFi75/LXCaYxkasRw4eWoGYgS846FxKY+s4vAgpOP49aoHD88ejK5If9V3sT
-         odGw==
-X-Forwarded-Encrypted: i=1; AJvYcCV29LLueltMY5ELgx5EzzU5I0NRcgZjvIYIlUbezScghat+WmB3ZmjA/dbgpBz72MDoMazkXFGriw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwsAZSpvrOfySPPX+D3Xa30Pju3icslJMQ6PCSxaVkfacv3Z/65
-	zN0IO5b0akVUZrhz95evBd8ex8VD553SSnu13abTMo+S2Xm5+Hj/
-X-Gm-Gg: ASbGncsbql37z8YQWAoT6vq8L66bF21TRjGoRIYAALBTrs5D3DTRu48aBEGAJXQiIcb
-	lOcSbtF+zyyV24ZmNdYIt+2+QzQWWk6Ft0yyzspabzgP5j84FYqJy+LEF3gzkLjd7dTPwkmTzo+
-	5s/8X9kxyYfCJp1EfvJ83MFQTCAoG6fuOKlalP44vaXddDpSEoSiqbw40QBLdAibec9oq4IMa35
-	+64f32nXS/G5KohY6HR06+FLkcxrUfO37m9LnK5D6pz15+snkwIHL5nkysoPN4OV9FQfLz3rQ2g
-	sYYU3V+mE9a8hRoTO5N8LFtH4mY2CwM+gtNk3FmB0NGqrQYYccg=
-X-Google-Smtp-Source: AGHT+IHmq4AYLXRLdQqbBREfC/3/3V7ZOrM9bmoGqUjVhH9gyGLkXnYBF9r5Lq+r6xdwPiaWMnweUw==
-X-Received: by 2002:a05:6a20:1611:b0:215:dfd0:fd21 with SMTP id adf61e73a8af0-215ff191342mr12229403637.34.1747316295630;
-        Thu, 15 May 2025 06:38:15 -0700 (PDT)
-Received: from [127.0.0.1] ([103.56.52.49])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-74237a3dbfesm11552273b3a.138.2025.05.15.06.38.14
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 15 May 2025 06:38:15 -0700 (PDT)
-Date: Thu, 15 May 2025 21:38:06 +0800
-From: Yu Kuai <yukuai1994@gmail.com>
-To: Christoph Hellwig <hch@lst.de>, Yu Kuai <yukuai1@huaweicloud.com>
-CC: xni@redhat.com, colyli@kernel.org, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, song@kernel.org, linux-kernel@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yi.zhang@huawei.com,
- yangerkun@huawei.com, johnny.chenyi@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-Subject: =?US-ASCII?Q?Re=3A_=5BPATCH_RFC_md-6=2E16_v3_15/19=5D_md/md-llbitma?=
- =?US-ASCII?Q?p=3A_implement_APIs_to_dirty_bits_and_clear_bits?=
-User-Agent: Thunderbird for Android
-In-Reply-To: <20250514051747.GA24503@lst.de>
-References: <20250512051722.GA1667@lst.de> <0de7efeb-6d4a-2fa5-ed14-e2c0bec0257b@huaweicloud.com> <20250512132641.GC31781@lst.de> <20250512133048.GA32562@lst.de> <69dc5ab6-542d-dcc2-f4ec-0a6a8e49b937@huaweicloud.com> <03f64fc7-4e57-2f32-bffc-04836a9df790@huaweicloud.com> <20250513064803.GA1508@lst.de> <87a53ae0-c4d6-adff-8272-c49d63bf30db@huaweicloud.com> <20250513074304.GA2696@lst.de> <d5ae7af0-dd73-7d6b-f520-c25e411f8f06@huaweicloud.com> <20250514051747.GA24503@lst.de>
-Message-ID: <7B4FF58E-BCF5-4997-8006-CEC5A3EDEB85@gmail.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IWQSm0/p"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747319404;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+NrlNTj4ACN9JV0fl+09/+98WwJkRHgkTF51TDbdMmk=;
+	b=IWQSm0/pp5uQ8otV6xOXAGKh4FqZMrjxWxe3S9mcAfuzXzDm9FACZHL8l8qinjdzCURHJY
+	laR9zjDxpL3TNJmCQg7r/WXDXn21FcKjObn2LeZlIXAJ9F3gosmcZnogHLJs8xwmGU5mDP
+	F1i/FGaCHRkH4zNCQQBlCs6ARLGBkTA=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-586-2qdRxWsmMXeNt08w91mfFw-1; Thu,
+ 15 May 2025 10:30:00 -0400
+X-MC-Unique: 2qdRxWsmMXeNt08w91mfFw-1
+X-Mimecast-MFC-AGG-ID: 2qdRxWsmMXeNt08w91mfFw_1747319399
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4A7301955DAB;
+	Thu, 15 May 2025 14:29:59 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BA290195608D;
+	Thu, 15 May 2025 14:29:58 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 54FETvCV4120496
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 15 May 2025 10:29:57 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 54FETtva4120495;
+	Thu, 15 May 2025 10:29:55 -0400
+Date: Thu, 15 May 2025 10:29:54 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Paolo Bonzini <pbonzini@redhat.com>, Christoph Hellwig <hch@infradead.org>,
+        Kevin Wolf <kwolf@redhat.com>, dm-devel@lists.linux.dev,
+        Hanna Czenczek <hreitz@redhat.com>,
+        Mikulas Patocka <mpatocka@redhat.com>, snitzer@kernel.org,
+        "Kernel Mailing List, Linux" <linux-kernel@vger.kernel.org>,
+        Hannes Reinecke <hare@suse.com>
+Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
+ paths
+Message-ID: <aCX6Ys9mOc441ydA@redhat.com>
+References: <20250429165018.112999-1-kwolf@redhat.com>
+ <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
+ <aCIRUwt5BueQmlMZ@redhat.com>
+ <aCLe5UT2kfzI96TQ@infradead.org>
+ <aCMQ5S-gI6vZJxmq@redhat.com>
+ <aCQiz88HksKg791Z@infradead.org>
+ <aCTDiHMuMncwdp_X@redhat.com>
+ <50beb356b4dc000446fd186ab754c87f386eaeae.camel@suse.com>
+ <CABgObfaEiMN=YANk02EWini+jAXU1MxSvo8_jYWaMiu3ds7hgQ@mail.gmail.com>
+ <2f0fc8ef7d04c590893bd6d54a6c0c842c4b21d7.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <2f0fc8ef7d04c590893bd6d54a6c0c842c4b21d7.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Hi
+On Thu, May 15, 2025 at 12:34:13PM +0200, Martin Wilck wrote:
+> On Thu, 2025-05-15 at 04:53 +0200, Paolo Bonzini wrote:
+> > Il mer 14 mag 2025, 13:37 Martin Wilck <mwilck@suse.com> ha scritto:
+> > > 
+> > > I'd go one step further. Christoph is right to say that what we're
+> > > currently doing in qemu – passing through every command except the
+> > > PRIN/PROUT to a multipath device – is a dangerous thing to do.
+> > > 
+> > > Passthrough from a dm-multipath device to a SCSI device makes sense
+> > > only for a small subset of the SCSI command set. Basically just for
+> > > the
+> > > regular IO commands like the various READ and WRITE variants and
+> > > the
+> > > occasional UNMAP. The fact that customers
+> > > have been running these setups in large deployments over many years
+> > > suggests that, if other commands ever get passed through to member
+> > > devices, it has rarely had fatal consequences.
+> > > 
+> > > Nobody would seriously consider sending ALUA commands to the
+> > > multipath
+> > > devices. TUR and REQUEST SENSE are other examples for commands that
+> > > can't be reasonably passed through to random member devices of a
+> > > multipath map.
+> > 
+> > Yes, as usual things are a bit more complicated. First, a handful of
+> > commands are special (REQUEST SENSE would be for HBAs that don't use
+> > auto sense, but that is fortunately not something you encounter).
+> > Second, there's already a filter in the kernel in
+> > drivers/scsi/scsi_ioctl.c for commands that are allowed without
+> > CAP_SYS_RAWIO. QEMU is subject to that so the commands you'll see are
+> > mostly I/O, INQUIRY, TUR, MODE SENSE/SELECT and that's it.
+> 
+> Thanks for mentioning this.
+> 
+> However, I suppose that depends on the permissions with which the qemu
+> process is started, no? Wouldn't qemu need CAP_SYS_RAWIO for PCI
+> passthrough as well? 
+> 
+> I admit that I'm confused by the many indirections in qemu's scsi-block
+> code flow. AFAICS qemu forwards everything except PRIN/PROUT to the
+> kernel block device in "scsi-block" mode. Correct me if I'm wrong.
+> 
+> Anwyway, let's not forget that we're talking about the kernel here.
+> While qemu is the main target application for this feature is created,
+> any application can use it, and it may or may not run with
+> CAP_SYS_RAWIO.
 
-=E4=BA=8E 2025=E5=B9=B45=E6=9C=8814=E6=97=A5 GMT+08:00 13:17:47=EF=BC=8CCh=
-ristoph Hellwig <hch@lst=2Ede> =E5=86=99=E9=81=93=EF=BC=9A
->On Tue, May 13, 2025 at 05:32:13PM +0800, Yu Kuai wrote:
->> I was thinking about record a stack dev depth in mddev to handle the
->> weird case inside raid=2E Is there other stack device have the same
->> problem? AFAIK, some dm targets like dm-crypt are using workqueue
->> to handle all IO=2E
->
->I guess anything that might have to read in metadata to serve a
->data I/O=2E  bcache, dm-snapshot and dm-thinkp would be candidates for
->that, but I haven't checked the implementation=2E
->
->> I'm still interested because this can improve first write latency=2E
->>
->>>
->>> So instead just write a comment documenting why you switch to a
->>> different stack using the workqueue=2E
->>
->> Ok, I'll add comment if we keep using the workqueue=2E
->
->Maybe do that for getting the new bitmap code in ASAP and then
->revisit the above separately?
->
->
+Maybe I'm missing your issue, but QEMU is just using DM's existing ioctl
+forwarding code, which was already designed for general use, and I don't
+see any capability issues with this patchset itself. If the caller has
+the capability to issue this ioctl, they already have the capability to
+do reads to the device directly, which will cause any unusable paths to
+be failed, exactly like the ioctl does. The only difference it that the
+user has no way to know how many reads they would need to issue to the
+multipath device directly to force it to try all the paths. This gives
+any application the ability to verify the paths just like doing enough
+IO to the multipath device would, but it guarantees that it will use the
+minimum IO.
 
-Sure, sorry that I am in a business travel suddenly=2E I will get back to
- this ASAP I return=2E
+-Ben
+ 
+> > Any command that the kernel doesn't filter would be rejected, or
+> > handled specially in the case of PR commands (PR commands use a
+> > separate privileged helper to send them down to the device; the
+> > helper
+> > also knows about multipath and uses the userspace libmpathpersist if
+> > it receives a dm-mpath file descriptor via SCM_RIGHTS).
+> > 
+> > > AFAIK the only commands that we really need to pass through (except
+> > > the standard ones) are the reservation commands, which get special
+> > > handling
+> > > by qemu anyway. @Ben, @Kevin, are you aware of anything else?
+> > 
+> > .Of the ones that aren't simple I/O, mode parameters and TUR are the
+> > important cases. A TUR failure would be handled by the ioctl that
+> > Kevin proposed here by forcing a path switch. Mode parameters might
+> > not be shared(*) and would need to be sent down all the paths in that
+> > case; that can be fixed in userspace if necessary.
+> 
+> Passing TUR from a multipath device to a random member doesn't make
+> much sense to me. qemu would need to implement some logic to determine
+> whether the map has any usable paths.
+> 
+> > > I'd also be interested in understanding this better. As noted
+> > > above,
+> > > I'm aware that passing through everything is dangerous and wrong in
+> > > principle. But in practice, we haven't observed anything serious
+> > > except
+> > > (as Ben already said) the failure to do path failover in the SG_IO
+> > > code
+> > > path, which both this patch set and my set from the past are
+> > > intended
+> > > to fix.
+> > 
+> > Yes, the kernel filter is a PITA in the normal single path case but
+> > here it helps not doing something overly wrong.
+> 
+> This seems coincidental to me. Filtering by permissions and filtering
+> for commands that make sense on multipath devices are orthogonal
+> problems.
+> 
+> Regards,
+> Martin
 
-Thanks
-Kuai
