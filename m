@@ -1,69 +1,66 @@
-Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1DE0F1DFDE
-	for <dm-devel@lists.linux.dev>; Fri, 16 May 2025 12:57:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 772C4157E99
+	for <dm-devel@lists.linux.dev>; Fri, 16 May 2025 16:00:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747400231; cv=none; b=Abd5lHKv6lwlA0m7mXpr+XSeiLJ4W12n3g9hEfCnmqXF+czOCc9KXajIe9joB36pTLLGWvixPmhdylqhTNlLKgbVEBbwNiuIk/k7Bp5M9ymRcsuC6GHdIfgXQ4cknqnq9yH9cj//tFlfbOCVFJF0fhjQhOWSxmBzMGZphfaSz2U=
+	t=1747411249; cv=none; b=J+vw9NNVBb1BSmuUg+vzTRvhYCkxYtGFKkpyFhlD4OpYgIAEhvJi9x8PDNoTe+7JAKZ9YLfqMKojzxigdeM/OYPaCEtcY/3C+8ULz5p6uv/jI/UFD8GbLPfOtl1WTOyOP69ZMIm4fPUWwb+gv3A3AAt/smbiuY0YLcOCI25mtVs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747400231; c=relaxed/simple;
-	bh=nxwVYZEot3ZvklTuhuVs0w0AE9F6GHodIv0IxaYP+vQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=WNi6oseLL+xny8Z/wNAjns6bd4VWbH2/FOhCClOUN4VkdXVOPp6m3GLiR/YEtMvlrDowcKP5EYT/m11yCGSnOG/8d+FKUbQnFU1lUY0YUZOjA3AyafhPtR52SlHUZoGfqusx/Q2o6VMCFhpU+QHjRfEJJEEfFRerlO3ZuvtZB8k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=pankajraghav.com; spf=pass smtp.mailfrom=pankajraghav.com; dkim=pass (2048-bit key) header.d=pankajraghav.com header.i=@pankajraghav.com header.b=1Dhdwz7y; arc=none smtp.client-ip=80.241.56.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=pankajraghav.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=pankajraghav.com
+	s=arc-20240116; t=1747411249; c=relaxed/simple;
+	bh=doVMENvPfbidyznr0fjGyM+N8FMzTAOdKkvrvzAQGvY=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=lLaOUpRZmGRRMD/0jXIHOw2DGm7fU+1ukLkHpSFLHPATZ7wBwjTyAfPhetG7Q5WiazJjYi0cnoVFsDiR5o4RWw5nzO8mNRRkOk9CKxgwqr1pxYAqGkGBUYsBDMQRNxxDIegK3RiifZUTcBJ3WRUaDd75M2KgMpKcYAaiHAaCZoM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AhOEdWVU; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=pankajraghav.com header.i=@pankajraghav.com header.b="1Dhdwz7y"
-Received: from smtp202.mailbox.org (smtp202.mailbox.org [10.196.197.202])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4ZzRtT4VLnz9tKZ;
-	Fri, 16 May 2025 14:57:05 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=pankajraghav.com;
-	s=MBO0001; t=1747400225;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AhOEdWVU"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747411246;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=THn6E50DS9Qud9iyvxS3CqKZepivbtdlHTOmUUOFMWc=;
-	b=1Dhdwz7yqacA2jfQN66Qi+LXU1+0l13Fxr2onEIWD86UPegibqrjfkTgt+q0Awz/RTkfld
-	ygYcGcTcb32XPIiJuYZISUSDaeN+K6QWNvf5gL97h2gSyLP2R26KGTIp8TeFnHugLVh5Ty
-	Y+7S/+3bqz5TzloF/2DcIhpKpTsDS6VfQuNgrdWzNJDxdXyQf4xUAEdK6fCiMdB9aXMfFt
-	E961kA+1U/QljCnbvjNHcFHOt/XlZE3SV7lXIaI8UcVnQJZJ81KBviMqwXkThXp6ZojlDI
-	I++XlDE8UnWWr0whm7R5RIlLcE5mwPMmH+Bonav1gO4nYJje1d0Vi1x15u064w==
-Date: Fri, 16 May 2025 14:56:43 +0200
-From: "Pankaj Raghav (Samsung)" <kernel@pankajraghav.com>
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
-	Damien Le Moal <dlemoal@kernel.org>, Pankaj Raghav <p.raghav@samsung.com>
-Subject: Re: [PATCH v2] dm-zone: Use bdev_*() helper functions where
- applicable
-Message-ID: <4auwqhrenu7abik7lpswz3ivhcevn7jjb44fgsskb6pyxizwcj@lvolofdjqkhz>
-References: <20250514205033.2108129-1-bvanassche@acm.org>
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=04dvSvadinv+H6MbwZewI9064tz274ETH+8sGkt3VIo=;
+	b=AhOEdWVUzS9oYEvQBQxsPK+OxxxOt4B7pCQMzZVbLexWsgj2bJ0EHcm96sCQFliaXda88X
+	mflH1Z2AAD5/tGm/+XaGwBWPbJOYRxVdFn2QcIsM20qd0p1RvqEsSV544La4SDFnr3LuYT
+	ZaFLKwUZk8rC+du8SpHOo8mGzyFI9oE=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-154-v46JiDbaNJ-IgSmZmkSXBA-1; Fri,
+ 16 May 2025 12:00:41 -0400
+X-MC-Unique: v46JiDbaNJ-IgSmZmkSXBA-1
+X-Mimecast-MFC-AGG-ID: v46JiDbaNJ-IgSmZmkSXBA_1747411240
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6EE75195609E;
+	Fri, 16 May 2025 16:00:40 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 815C019560AE;
+	Fri, 16 May 2025 16:00:38 +0000 (UTC)
+Date: Fri, 16 May 2025 18:00:33 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Yu Kuai <yukuai3@huawei.com>, Song Liu <song@kernel.org>
+cc: zkabelac@redhat.com, linux-raid@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: LVM2 test breakage
+Message-ID: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250514205033.2108129-1-bvanassche@acm.org>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On Wed, May 14, 2025 at 01:50:33PM -0700, Bart Van Assche wrote:
-> Improve code readability by using bdev_is_zone_aligned() and
-> bdev_offset_from_zone_start() where applicable. No functionality
-> has been changed.
-> 
-> This patch is a reworked version of a patch from Pankaj Raghav.
-> 
-> See also https://lore.kernel.org/linux-block/20220923173618.6899-11-p.raghav@samsung.com/.
-> 
-> Cc: Damien Le Moal <dlemoal@kernel.org>
-> Cc: Pankaj Raghav <p.raghav@samsung.com>
-> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
-> ---
-Looks good,
-Reviewed-by: Pankaj Raghav <p.raghav@samsung.com>
+Hi
+
+The commit e879a0d9cb086c8e52ce6c04e5bfa63825a6213c breaks the test 
+shell/lvcreate-large-raid.sh in the lvm2 testsuite.
+
+The breakage is caused by removing the line "read_bio->bi_opf = op | 
+do_sync;"
+
+Mikulas
+
