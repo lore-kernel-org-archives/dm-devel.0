@@ -1,85 +1,96 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B1C63145323;
-	Fri, 16 May 2025 06:00:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB84F481C4
+	for <dm-devel@lists.linux.dev>; Fri, 16 May 2025 11:35:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747375221; cv=none; b=PbaCnrnC0VNt0zk/JoqUKC3PrPVtzhQoSn5i4N4Ce4/CB3+pf/h3ARC5UFHPWlUPP4TwbLK4jYjDsywQq3VuSQtDKbmSP5rBvhoXqBZ3q8euSXmk6bPiMvNN+Qy1+KeFb/Eg0PDUMISSn9ZY4Amo2EbtUKBzY9hTTBjbgyN4HNE=
+	t=1747395354; cv=none; b=d0I7cDw4m5GJJrwREQX28N8NjwEn4uy1CU6H1dFO6/BC5gLGx1SYisbUWDqZHl1ntz/6S9PNMEG9WTbzyncq4fEjGXx3G7op6Hmddbz7n6hWwocxRWjP0litnBNSloGFQELjztjTsabGZhf6+0QIC0xIdgs044pBNioLBsZ0E/k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747375221; c=relaxed/simple;
-	bh=jRcCQqKoajgCHcqKZL2fKVR9zn8kYTEKLbF6ph3kb9s=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=I6VSauzHnOeKJGTAYIz2vtWIYdqQCljtPEXbTDpPa++EQcCriuyhftuk9P6AeeBH0z0n/aBfqaI3aI3GcbtESVyPzWniEr/KXcGcfm4p4C2888BD5sGMVxP9NfeeKrG9xiEApVBzzLoMGZfawytOwarIHCHz5SuFscDWO9swaLU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=W6r+kAM3; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1747395354; c=relaxed/simple;
+	bh=KkGNtxIJLlF/QicJH4xpvHo9W2vIPVm4pezlZZv16LQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=jBbnhOG+CnIU/MU1rHSBj+dOosK/AbYnjrWKWR29sHaLkd5TZ4VpGUNQh+e3qNCA0TAR1ZMhwVIarYPCV/tQCaWSMgQSsJuV5sFLtk2KPgqoKZ2aDPPs+qzlYOWJ1f1zRmaDizn59+bYEU5X97hmKa3tPBOQiY/pBfls6iCHHk8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KW8FMUBl; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="W6r+kAM3"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=tMkAG2SFACdyzL8iUB+Wxh6SJJ+34J1Qx1KU18J0p3Y=; b=W6r+kAM3drfZk7z4FiEyTqXGFI
-	OxPSN+0oTLerhucmtXvIp5AGqSP8Uvx0I9gq2toJ4ceOjhz7qpFE+MLAs9kDey6PorkOLeNK2yDRr
-	tfAGBIBdkiWUF9VAztyncBX/uNpYOgk3gwEsIpOsQo89sQsJiVsVylWGs4IUr/olWnjweBPX8d6JT
-	BzjVdH5QbCgiXTQDu/i/c4uu3668SH3OXLKyQGlNQneOIvT7NwMZj8h6kibCK8ZJa2c1TOMk2yMOX
-	TAqQGT25siJz2NolUgJ0qJZ5kJnI+kzZGGCjh2e7U33i7m+M4wGHeGEL4O5nn7gaFA52T62/R7PZp
-	7uK8hPdw==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1uFo7F-00000002Xly-0cgy;
-	Fri, 16 May 2025 06:00:17 +0000
-Date: Thu, 15 May 2025 23:00:17 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Kevin Wolf <kwolf@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>, Christoph Hellwig <hch@infradead.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
-	hreitz@redhat.com, mpatocka@redhat.com, snitzer@kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-Message-ID: <aCbUcdew393RZIkV@infradead.org>
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com>
- <d51d6f85b5728648fe9c584f9cb3acee12c4873f.camel@suse.com>
- <cc2ec011cf286cb5d119f2378ecbd7b818e46769.camel@suse.com>
- <aCW95f8RGpLJZwSA@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KW8FMUBl"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747395351;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C5l1IYC9pd5QVCIVLSP2w/lABP27hCP+0t91dbvZ0C8=;
+	b=KW8FMUBl3G/15vUWVvCC1E96fW3uRwNUmI96YPrgo4HbpTOoZahh7hEihAmD/uNk6R68vk
+	W9tqZGG5fTdPak3UQFESa3jelt70hPUfvF2u6qR7hDRF/Rc5wNAQSSJXVQybJfi3dOAx1T
+	2eyMNb+dIvNZbjn1+W9sBJNWtAYEq1U=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-PU8jsaZVPIOdwxlPYcL0_w-1; Fri,
+ 16 May 2025 07:35:48 -0400
+X-MC-Unique: PU8jsaZVPIOdwxlPYcL0_w-1
+X-Mimecast-MFC-AGG-ID: PU8jsaZVPIOdwxlPYcL0_w_1747395347
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1FDEA195609D;
+	Fri, 16 May 2025 11:35:47 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D638F1956094;
+	Fri, 16 May 2025 11:35:43 +0000 (UTC)
+Date: Fri, 16 May 2025 13:35:39 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
+    Kevin Wolf <kwolf@redhat.com>, Hanna Czenczek <hreitz@redhat.com>, 
+    Martin Wilck <martin.wilck@suse.com>, Paolo Bonzini <pbonzini@redhat.com>, 
+    Christoph Hellwig <hch@infradead.org>, Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] dm-mpath: Don't grab work_mutex while probing paths
+In-Reply-To: <20250516015530.4146175-1-bmarzins@redhat.com>
+Message-ID: <a6bbd5ee-492e-7a19-d884-52485e412a63@redhat.com>
+References: <20250516015530.4146175-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aCW95f8RGpLJZwSA@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 04MkDdetSyZwY8uL8pv390ssGhZifZ_7HjDuOy-w4aE_1747395347
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Thu, May 15, 2025 at 12:11:49PM +0200, Kevin Wolf wrote:
-> If you're talking about SG_IO in dm-mpath, then PRIN/PROUT commands are
-> actually the one thing that we don't need. libmpathpersist sends the
-> commands to the individual path devices, so dm-mpath will never see
-> those. It's mostly about getting the full results on the SCSI level for
-> normal I/O commands.
-> 
-> There has actually been a patch series on qemu-devel last year (that I
-> haven't found the time to review properly yet) that would add explicit
-> persistent reservation operations to QEMU's block layer that could then
-> be used with the emulated scsi-hd device. On the backend, it only
-> implemented it for iscsi, but I suppose we could implement it for
-> file-posix, too (using the same libmpathpersist code as for
-> passthrough). If that works, maybe at least some users can move away
-> from SCSI passthrough.
 
-Please call into the kernel PR code instead of hacking up more of
-this, which will just run into problems again.
 
-> The thing that we need to make sure, though, is that the emulated status
-> we can expose to the guest is actually good enough. That Paolo said that
-> the problem with reservation conflicts was mostly because -EBADE wasn't
-> a thing yet gives me some hope that at least this wouldn't be a problem
-> any more today.
+On Thu, 15 May 2025, Benjamin Marzinski wrote:
 
-And if you need more information we can add that to the kernel PR API.
+> @@ -2077,35 +2095,55 @@ static int probe_path(struct pgpath *pgpath)
+>  static int probe_active_paths(struct multipath *m)
+>  {
+>  	struct pgpath *pgpath;
+> -	struct priority_group *pg;
+> +	struct priority_group *pg = NULL;
+>  	unsigned long flags;
+>  	int r = 0;
+>  
+> -	mutex_lock(&m->work_mutex);
+> -
+>  	spin_lock_irqsave(&m->lock, flags);
+
+Hi
+
+I suggest replacing spin_lock_irqsave/spin_unlock_irqrestore with 
+spin_lock_irq/spin_unlock_irq here and in some other places where it is 
+known that interrupts are enabled (for example __map_bio, 
+process_queued_bios, multipath_ctr, flush_multipath_work, 
+multipath_resume, multipath_status, multipath_prepare_ioctl, ...).
+
+I accepted this patch, so you can send the spinlock changes in a follow-up 
+patch.
+
+Mikulas
 
