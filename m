@@ -1,98 +1,86 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B3C1772626
-	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 01:12:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F6DE1E0B86;
+	Mon, 19 May 2025 05:32:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747617133; cv=none; b=btyYP9aE9M2rhlI3imbxdAioeRkxxVa7m76BASz2KQWp0O9sMr9oYV+Jog6qrB2cnehXF93kv40XME1+8H5LCGaWWyu4Rcnwo1QGvPo9UnPGy/xqLVkwC/CGPbsyTDmcpcNVL5OtOynfe52cleNeDm9C1iO5yH6OhF/ihy4Xeb4=
+	t=1747632740; cv=none; b=f1sHgrybV4Qk+ykF+o4iy9oazHOBnttHsLAENqyyAIwcPNxdJugxRCuTxqVKyRo7OlTsQe4Um3jExul/HfLQMNDq8pBSqxMCV8+kcSsZWjuz1VWcz0nEWuj3HdJ0kL5O7XsimOcHT0SMY0fYFQ6r7KtLhzXuk3cV8tMhqbFhmco=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747617133; c=relaxed/simple;
-	bh=kQobhRj/AHgQmEaBzba9+ivgn+2GOUh9qmydYNXPg/I=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=ZFd4IavCVlTMMzPWLeoZSKjR5PAV8L1NjF0FObPJ/CgZzRI0EsJRWoVwhR11fx9qCcBrPgYAw9CaUS+POeHWjQnw3SRWBHaQEShcgz5JG7xRLBXkTAMPN3G93lIb/YsLaQjeSRlHfps4wPIUDpFrgJBtzaDyAo9ftSa0qBqYtNA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTP id 4b10510Rfmz4f3jQS
-	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 09:11:33 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 7AD601A01A5
-	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 09:11:59 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP4 (Coremail) with SMTP id gCh0CgB32l5dhSpoC9ZTMw--.24507S3;
-	Mon, 19 May 2025 09:11:59 +0800 (CST)
-Subject: Re: LVM2 test breakage
-To: Mikulas Patocka <mpatocka@redhat.com>, Song Liu <song@kernel.org>
-Cc: zkabelac@redhat.com, linux-raid@vger.kernel.org,
- dm-devel@lists.linux.dev, "yukuai (C)" <yukuai3@huawei.com>
-References: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <98ac5772-9931-17fd-1fc4-18d2c737b079@huaweicloud.com>
-Date: Mon, 19 May 2025 09:11:57 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.9.1
+	s=arc-20240116; t=1747632740; c=relaxed/simple;
+	bh=jWYI5g+vVLiBOzrfAXt/iaQKvkvYcWBSghpAXs28Q3U=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=q7KFArxSEsVLrsplWN8In3u+asRkTF6jAMwT5qJEMF3sx4PngNWLhNgNGkEASHogzGxdYtR/8C1bj+A13j0ZZWvpO+IXOecALvDHG8A/e5tboKYx9miPOkuvSf8wQWR2oYf01YY0mGBxRFtTtkr3omUWWdh3fxf4Q76E33siTas=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=iUouCGxF; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="iUouCGxF"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=IEsfDykr8+4fWC+m7DpvjtvuBBE7sgNCtd1n2wYel9k=; b=iUouCGxFog+mPPutazH6N0pUPC
+	Qr3eyxBur/7ohGjygeXPb4BBiG5JlNP1Y3KBG25V1lLRrDAOwUzG9deUNGeziJ1sw7YHXwv5dXGI/
+	idbgsmxcpnH5izAZUmaMQmG5y+oqFNfdngLCdSX+KU9r9KxE9XYqA1YDOSkJts56NE+liDH6kUHcg
+	ImqHueG8Hgeu/TYOggPLmRxlGy4Y2tGescukkaiYbUaC7WYrAtJUT3blUZ81dJtquxjLmTEFDUvVN
+	Q1laRD1UgMiz8BVSWKHm7eRKbiyg8xyQAkOblwDLkEMwmZlIYRR35C4iqyv2lr2e7f8TCEAidkosl
+	HNuKvKAA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uGt6n-000000081xS-19vB;
+	Mon, 19 May 2025 05:32:17 +0000
+Date: Sun, 18 May 2025 22:32:17 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Kevin Wolf <kwolf@redhat.com>,
+	Martin Wilck <mwilck@suse.com>, dm-devel@lists.linux.dev,
+	hreitz@redhat.com, mpatocka@redhat.com, snitzer@kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
+ paths
+Message-ID: <aCrCYbvOJs44Kj5a@infradead.org>
+References: <20250429165018.112999-1-kwolf@redhat.com>
+ <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
+ <aCIRUwt5BueQmlMZ@redhat.com>
+ <d51d6f85b5728648fe9c584f9cb3acee12c4873f.camel@suse.com>
+ <cc2ec011cf286cb5d119f2378ecbd7b818e46769.camel@suse.com>
+ <aCW95f8RGpLJZwSA@redhat.com>
+ <aCbUcdew393RZIkV@infradead.org>
+ <aCdifWdCQCR3Nqb0@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgB32l5dhSpoC9ZTMw--.24507S3
-X-Coremail-Antispam: 1UD129KBjvdXoW7Gw4UCF1rCw4ruF45ArW5ZFb_yoWxCFb_GF
-	WjyrZ2ga1kGr4xZF1YkF1Y9Fs3Ga1Iv34xJrW0qF12q3savrW5GrWxGr95Zr18Aw18J3W5
-	W3yUK348Gry7JjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUb4AYFVCjjxCrM7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E6xAIw20E
-	Y4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28CjxkF64kEwV
-	A0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x02
-	67AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I
-	0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
-	x7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
-	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AK
-	xVWUAVWUtwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F4
-	0E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_JF0_Jw1l
-	IxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxV
-	AFwI0_Jr0_Gr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j
-	6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Jr0_GrUvcSsGvfC2KfnxnUUI43ZEXa7IU1veHD
-	UUUUU==
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <aCdifWdCQCR3Nqb0@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Hi,
+On Fri, May 16, 2025 at 12:06:21PM -0400, Benjamin Marzinski wrote:
+> I've run into SCSI arrays that always act like they were called with the
+> ALL_TG_PT flag set (or perhaps they were just configured that way, I
+> never could get a straight answer about that).
 
-ÔÚ 2025/05/17 0:00, Mikulas Patocka Ð´µÀ:
-> Hi
+Hmm, that's pretty strange.
+
+> libmpathpersist accepts
+> this flag, and only sends one registration per initiator & target device
+> when it's set, instead of one per initator & target port.
+
+With "this flag" you mean ALL_TG_PT?
+
+> dm-multipath
+> currently doesn't have the knowledge necessary to figure out which
+> devices it needs to send reservations to, even if the kernel PR API
+> supported this.
 > 
-> The commit e879a0d9cb086c8e52ce6c04e5bfa63825a6213c breaks the test
-> shell/lvcreate-large-raid.sh in the lvm2 testsuite.
-> 
-> The breakage is caused by removing the line "read_bio->bi_opf = op |
-> do_sync;"
-> 
+> But I supposed it could just send the registration normally down one
+> path and if that works, it could just ignore the existing key when it
+> sends the registration down all the other paths.
 
-Sorry that I don't undertand here, before the patch:
-
-op = bio_op(bio);
-do_sync = bio->bi_opf & REQ_SYNC;
-read_bio->bi_opf = op | do_sync
-
-after the patch:
-
-read_bio = bio_alloc_clone(, bio, ...)
-  read_bio->bi_opf = bio->bi_opf
-
-So, after the patch, other than bio_op() and REQ_SYNC, other bio flags
-are keeped, I don't see problem for now, I'll run the test later.
-
-Thanks,
-Kuai
-
-> Mikulas
-> 
-> 
-> .
-> 
+We could add support for a similar flag to the kernel PR API.  The
+problem is to figure out how to discover support for it.  What does
+the library do for that currently?
 
