@@ -1,108 +1,110 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2D5026F447
-	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 10:06:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D279426B08D
+	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 10:08:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747649181; cv=none; b=nfrHiLeQLO3aROL6wCSr8GZ5CN5dOUh/Rgcq7yp8Mp4J+B4lt7w7ha9AAF9ovL0xpaUrcu2nTwSeJT3x1ZJ3WGX42iWk8thKjPWy/jp1HWY2UPnLys7t1vuDStzbilxsrZd8hREJMlo5jFFYkkJClDSAkTPl5vr3MLjAjXT0liQ=
+	t=1747649301; cv=none; b=Y6XogUtwnO+TYgdk2i/CV2lj7mRBWQo+GA88YkTqySVsWvL6hUeRXqV4zKzrYhqoOER2YZWGeEioo0Ckmnq4aLkWIG3QuRzXwnrdWiITXPsq56wIjwnbxgME25zHuyrHe457qyDXJrKSiG1hKM2SHbeVfcPZlth7Dn/SJQVb6KY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747649181; c=relaxed/simple;
-	bh=WY4pVtTTZhYVG9r0kI5X0a3ASMeqcPFq3H1auY5Ce1o=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=nHQ19YdN7/Nd2g77mWn3IEoZCp9BWvPJbb4VN7EAKbRg2lUqWPZ+igkPt8Vajf64J9ayvk7Q26AhtOHpYgoskHdCYZh3IYZN3QbrenM6JaHIYWJX4dB9PQqvouBL/mTJy9//mZVtkR0yvrkwmUvVb10P7HUUbho494cFkIPcQEs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VEI4OGWh; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1747649301; c=relaxed/simple;
+	bh=/ECLeYrOgI/xDXJqLIJBFm1gkKGHXqMUme8qnKZ33zo=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=IC4Rnc49efqEurJnAXZmvbxx5NhlYk5Kzq29AYY6zNMS0iZZw0gwwwuZXFEIToamwKVpfJZibpsJMLIG3Ni+BvD5c8vR1ZFZU3eiaZyXUcMneorKVejZSAgmtXwXyI3hp81ZNre0P00mz83gnJzsqUnZvz3PCXYd34y2zUkZobM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NuACAd16; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VEI4OGWh"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NuACAd16"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1747649178;
+	s=mimecast20190719; t=1747649298;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=J8y8RvBhJowtfwrg+WUxnhDmoJuUc4fa/9tDJ52ajU4=;
-	b=VEI4OGWhVcPu1+Hqota+aciSypAR4uv5MZkJV0WumyvJKUTsXvAeijv+DPMNM14hppqdNU
-	S9Orw5ywWg2nUivgaqerPwW5iigyAP80omkWmPhJybY392JVA9oBEcuUMKw81H1nT02z6v
-	oYrYvCofteRDY5LYZCIRH5hFNzprNRI=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=IPCWJVLkMaK8tJBnLZWlRM4mAht6WCbmUPQhsUB/SN0=;
+	b=NuACAd16U3OzvvUVNT9y5Ob0g5ILz2WflCTi/Zz7WMs/aKTx4a1Y/HYhtsAXkK7loFzIzA
+	XvEjVxldrOKEfXj5HSXOkmnmJmzVUY/iXGq5H2n/cT8hnkEARSbTYgTpf9eh5l98zkgbtb
+	t0bw4YI1cg2g+ZYDQq5k9H+h0nej7TE=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-595-qVK8RXgdOuq2NyqG4Brs0Q-1; Mon,
- 19 May 2025 06:06:13 -0400
-X-MC-Unique: qVK8RXgdOuq2NyqG4Brs0Q-1
-X-Mimecast-MFC-AGG-ID: qVK8RXgdOuq2NyqG4Brs0Q_1747649172
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-591-26_iXpUjNqa6fpI5tjrpoQ-1; Mon,
+ 19 May 2025 06:08:15 -0400
+X-MC-Unique: 26_iXpUjNqa6fpI5tjrpoQ-1
+X-Mimecast-MFC-AGG-ID: 26_iXpUjNqa6fpI5tjrpoQ_1747649294
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 24F0F19560AF;
-	Mon, 19 May 2025 10:06:12 +0000 (UTC)
-Received: from redhat.com (unknown [10.44.34.97])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C9AD030001AB;
-	Mon, 19 May 2025 10:06:08 +0000 (UTC)
-Date: Mon, 19 May 2025 12:06:05 +0200
-From: Kevin Wolf <kwolf@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
-	hreitz@redhat.com, mpatocka@redhat.com, snitzer@kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 0/2] dm mpath: Interface for explicit probing of active
- paths
-Message-ID: <aCsCjVQa0pqWP6AT@redhat.com>
-References: <20250429165018.112999-1-kwolf@redhat.com>
- <47dd225b433b0df585a25084a2e793344eeda239.camel@suse.com>
- <aCIRUwt5BueQmlMZ@redhat.com>
- <d51d6f85b5728648fe9c584f9cb3acee12c4873f.camel@suse.com>
- <cc2ec011cf286cb5d119f2378ecbd7b818e46769.camel@suse.com>
- <aCW95f8RGpLJZwSA@redhat.com>
- <aCbUcdew393RZIkV@infradead.org>
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 70AAA1955DB3;
+	Mon, 19 May 2025 10:08:13 +0000 (UTC)
+Received: from [10.22.80.45] (unknown [10.22.80.45])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2D31619560AA;
+	Mon, 19 May 2025 10:08:10 +0000 (UTC)
+Date: Mon, 19 May 2025 12:08:05 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Yu Kuai <yukuai1@huaweicloud.com>
+cc: Song Liu <song@kernel.org>, zkabelac@redhat.com, 
+    linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
+    "yukuai (C)" <yukuai3@huawei.com>
+Subject: Re: LVM2 test breakage
+In-Reply-To: <98ac5772-9931-17fd-1fc4-18d2c737b079@huaweicloud.com>
+Message-ID: <04231d91-cf1f-a932-f24f-996f888f0dd7@redhat.com>
+References: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com> <98ac5772-9931-17fd-1fc4-18d2c737b079@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aCbUcdew393RZIkV@infradead.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Type: multipart/mixed; BOUNDARY="-1463811712-405131181-1747649064=:2639866"
+Content-ID: <54736a2e-0a8d-ab01-1763-d3a6667d38f6@redhat.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-Am 16.05.2025 um 08:00 hat Christoph Hellwig geschrieben:
-> On Thu, May 15, 2025 at 12:11:49PM +0200, Kevin Wolf wrote:
-> > If you're talking about SG_IO in dm-mpath, then PRIN/PROUT commands are
-> > actually the one thing that we don't need. libmpathpersist sends the
-> > commands to the individual path devices, so dm-mpath will never see
-> > those. It's mostly about getting the full results on the SCSI level for
-> > normal I/O commands.
-> > 
-> > There has actually been a patch series on qemu-devel last year (that I
-> > haven't found the time to review properly yet) that would add explicit
-> > persistent reservation operations to QEMU's block layer that could then
-> > be used with the emulated scsi-hd device. On the backend, it only
-> > implemented it for iscsi, but I suppose we could implement it for
-> > file-posix, too (using the same libmpathpersist code as for
-> > passthrough). If that works, maybe at least some users can move away
-> > from SCSI passthrough.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+---1463811712-405131181-1747649064=:2639866
+Content-Type: text/plain; CHARSET=ISO-2022-JP
+Content-ID: <9e4fb12c-d9b5-f586-8dde-c019a1a09af5@redhat.com>
+
+
+
+On Mon, 19 May 2025, Yu Kuai wrote:
+
+> Hi,
 > 
-> Please call into the kernel PR code instead of hacking up more of
-> this, which will just run into problems again.
+> 在 2025/05/17 0:00, Mikulas Patocka 写道:
+> > Hi
+> > 
+> > The commit e879a0d9cb086c8e52ce6c04e5bfa63825a6213c breaks the test
+> > shell/lvcreate-large-raid.sh in the lvm2 testsuite.
+> > 
+> > The breakage is caused by removing the line "read_bio->bi_opf = op |
+> > do_sync;"
+> > 
+> 
+> Sorry that I don't undertand here, before the patch:
+> 
+> op = bio_op(bio);
+> do_sync = bio->bi_opf & REQ_SYNC;
+> read_bio->bi_opf = op | do_sync
+> 
+> after the patch:
+> 
+> read_bio = bio_alloc_clone(, bio, ...)
+>  read_bio->bi_opf = bio->bi_opf
+> 
+> So, after the patch, other than bio_op() and REQ_SYNC, other bio flags
+> are keeped, I don't see problem for now, I'll run the test later.
+> 
+> Thanks,
+> Kuai
 
-I agree that using kernel code is preferable to doing things behind the
-kernel's back.
+The problem is caused by the REQ_RAHEAD flag - bios with this flag may 
+fail anytime. I presume that the bug is caused by raid1 mishandling this 
+failure.
 
-However, libmpathpersist is the official interface for doing these
-things with multipath devices, so I think the necessary work to make
-this happen should primarily be done in the library (and possibly the
-kernel if the existing interfaces aren't good enough).
-
-QEMU could directly call the kernel when qemu-pr-helper isn't in use.
-I don't know enough about how libmpathpersist works internally to tell
-if running it this way would be a good idea for multipath devices. Can
-multipathd still do its job with reservations being made behind its
-back? (It would probably be good to allow this eventually, but is it the
-case today?)
-
-Kevin
+Mikulas
+---1463811712-405131181-1747649064=:2639866--
 
