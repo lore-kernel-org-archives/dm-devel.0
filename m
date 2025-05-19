@@ -1,117 +1,119 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 969DF1DFFD
-	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 12:15:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C768A7E1
+	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 12:34:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747656920; cv=none; b=koqdUBHLpXW/LKkxPVnqQMtCsIKtemVH4Hg2BXmYE+VJbcUZtZCBe+LuJLe/iJNZS+L/Z6GE9cVdCT9zfY/3leDp2Cj8d77I9x62DgDGHWKqJuXOjRSQuCnWrWN0Vz20Wvl/OkQoM6cTUEssb5At6uhWZxw21j+33ZebuNQC5LI=
+	t=1747658065; cv=none; b=oh+M4iec1d86zZLP8Lh13F06G+9UBskL3e3yaR0VqCpkV+otZqSJABK9nNCBnaefPZVmwhnxXAscgp/evl4TBqL0JkODIJcqORO/I5hbsfvxSOYtLftAc4BX4pv52k55oYhzI6O2MiHVBNI7P9JRgbb2r1lsvry38ePduWsTRg8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747656920; c=relaxed/simple;
-	bh=4kk67u0XGB0R4MzlZ/xRoRuUr+uiYX+/l3Pdihk1zZo=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=NU8dAI2rH+cZLefqTexQTwS5gE0FXTy4KYwrMMh8iymRV0fo+03VqBbYs20BBY7qOtfe3Sx0XjUlZpfE60O5JLcO0xWq4qtI220PjABKDBg0oW9HW5y5/Pz2zO4aDwEj3b0ZGtpE/6pRjZFyaoHO4T6iaEgpACr3jBg1fMPuNeY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E7K4/FhO; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E7K4/FhO"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1747656917;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=OFvItQUkD7Tf2Ef8tnYlfmQt5ZH1dAKyaC+l+C/WeUc=;
-	b=E7K4/FhOdJnc+hIma40GvIsHoPdcc4EatH82n1g9+u5pWCB72EP8adPOqJOT5Z5R0acge5
-	H8YjBu3ssEaqSaFdVKO1b23IxdDjp1UE/fcj65nvbm9cEXxMdY1hNMYmPWS0jubnj/jY7v
-	RIv68UQFUJrpBwZ9oGxM1ViUUd5/vtQ=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-86-ZeJ-5dhzOASUcN43MxgAPw-1; Mon,
- 19 May 2025 08:15:16 -0400
-X-MC-Unique: ZeJ-5dhzOASUcN43MxgAPw-1
-X-Mimecast-MFC-AGG-ID: ZeJ-5dhzOASUcN43MxgAPw_1747656915
-Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 96AF518001D5;
-	Mon, 19 May 2025 12:15:14 +0000 (UTC)
-Received: from [10.22.80.45] (unknown [10.22.80.45])
-	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BE61719560AB;
-	Mon, 19 May 2025 12:15:12 +0000 (UTC)
-Date: Mon, 19 May 2025 14:15:10 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Yu Kuai <yukuai1@huaweicloud.com>
-cc: Song Liu <song@kernel.org>, zkabelac@redhat.com, 
-    linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-    "yukuai (C)" <yukuai3@huawei.com>
+	s=arc-20240116; t=1747658065; c=relaxed/simple;
+	bh=KQQKp69JHvvXB3hLcTxxKr3F0kDjIO365FK4eLm5ea8=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=r4Iru3qhk+0AkfAvFPaSrEFwj6le1dUVpMyIXzEVmFiKPZRPylwm4ejI4DaNnEpilNEe6qDXg3pquzB5AFf5zfBnWCb8WgCAnW4Hq6Qy82mbBJoKt/tpIoYrZ6hTy+sZXAjtq4khq+i+PoRNj3h5/oHL5MQrACxAX0n3+/jSB6w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4b1HDt5jbVzKHLvX
+	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 20:34:22 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 5B0BA1A07BB
+	for <dm-devel@lists.linux.dev>; Mon, 19 May 2025 20:34:21 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgD3Wl9LJStooruDMw--.31954S3;
+	Mon, 19 May 2025 20:34:21 +0800 (CST)
 Subject: Re: [PATCH] md/raid1,raid10: don't pass down the REQ_RAHEAD flag
-In-Reply-To: <b560f87d-0072-91be-2a87-43f3510737d1@huaweicloud.com>
-Message-ID: <068abc04-ffe4-e2df-95e8-9812031f6222@redhat.com>
-References: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com> <98ac5772-9931-17fd-1fc4-18d2c737b079@huaweicloud.com> <04231d91-cf1f-a932-f24f-996f888f0dd7@redhat.com> <c561484d-f056-2531-8fd6-27be0dabca05@redhat.com> <10db5f49-0662-49da-9535-75aded725950@huaweicloud.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
+Cc: Song Liu <song@kernel.org>, zkabelac@redhat.com,
+ linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <34fa755d-62c8-4588-8ee1-33cb1249bdf2@redhat.com>
+ <98ac5772-9931-17fd-1fc4-18d2c737b079@huaweicloud.com>
+ <04231d91-cf1f-a932-f24f-996f888f0dd7@redhat.com>
+ <c561484d-f056-2531-8fd6-27be0dabca05@redhat.com>
+ <10db5f49-0662-49da-9535-75aded725950@huaweicloud.com>
  <b560f87d-0072-91be-2a87-43f3510737d1@huaweicloud.com>
+ <617a9d67-9671-f2aa-5188-0755b5b87972@redhat.com>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <3298da41-c82a-b803-f38d-264defded2a2@huaweicloud.com>
+Date: Mon, 19 May 2025 20:34:19 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
+In-Reply-To: <617a9d67-9671-f2aa-5188-0755b5b87972@redhat.com>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgD3Wl9LJStooruDMw--.31954S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7KrW7JF17ZrWDGFW5Xw1UWrg_yoW8WF4kpw
+	17W3Za9r4kAr92kwnIvw42qa4vk3y5Ga1UAryrCrW0kw1jgFZ3A3yIqa1F9r98Kw1vkw1j
+	vr4UW3yDWFn5tFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvK14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lc7I2V7IY0VAS07AlzVAY
+	IcxG8wCY1x0262kKe7AKxVWUAVWUtwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkEbV
+	WUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67AF
+	67kF1VAFwI0_JF0_Jw1lIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJVWUCwCI42
+	IY6xIIjxv20xvEc7CjxVAFwI0_Jr0_Gr1lIxAIcVCF04k26cxKx2IYs7xG6r1j6r1xMIIF
+	0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYxBIdaVFxh
+	VjvjDU0xZFpf9x0JUBVbkUUUUU=
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
+Hi,
 
-
-On Mon, 19 May 2025, Yu Kuai wrote:
-
-> Hi,
+在 2025/05/19 20:05, Mikulas Patocka 写道:
 > 
-> Please ignore the last reply, I misunderstand your commit message, I
-> thought you said dm-raid, actually you said mdraid, and it's correct,
-> if read_bio faild raid1/10 will set badblocks which is not expected.
 > 
-> Then for reada head IO, I still think don't kill REQ_RAHEAD for
-> underlying disks is better, what do you think about skip handling IO
-> error for ead ahead IO?
+> On Mon, 19 May 2025, Yu Kuai wrote:
 > 
-> diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
-> index 657d481525be..b8b4fead31f3 100644
-> --- a/drivers/md/raid1.c
-> +++ b/drivers/md/raid1.c
-> @@ -380,7 +380,10 @@ static void raid1_end_read_request(struct bio *bio)
->                 /* This was a fail-fast read so we definitely
->                  * want to retry */
->                 ;
-> -       else {
-> +       else if (bio->bi_opf & REQ_RAHEAD) {
-> +               /* don't handle readahead error, which can fail at anytime. */
-> +               uptodate = 1;
-> +       } else {
->                 /* If all other devices have failed, we want to return
->                  * the error upwards rather than fail the last device.
->                  * Here we redefine "uptodate" to mean "Don't want to retry"
-> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-> index dce06bf65016..4d51aaf3b39b 100644
-> --- a/drivers/md/raid10.c
-> +++ b/drivers/md/raid10.c
-> @@ -399,6 +399,9 @@ static void raid10_end_read_request(struct bio *bio)
->                  * wait for the 'master' bio.
->                  */
->                 set_bit(R10BIO_Uptodate, &r10_bio->state);
-> +       } else if (bio->bi_opf & REQ_RAHEAD) {
-> +               /* don't handle readahead error, which can fail at anytime. */
-> +               uptodate = 1;
->         } else {
->                 /* If all other devices that store this block have
->                  * failed, we want to return the error upwards rather
+>> Hi,
+>>
+>> 在 2025/05/19 19:19, Yu Kuai 写道:
+>>>> The commit e879a0d9cb08 ("md/raid1,raid10: don't ignore IO flags") breaks
+>>>> the lvm2 test shell/lvcreate-large-raid.sh. The commit changes raid1 and
+>>>> raid10 to pass down all the flags from the incoming bio. The problem is
+>>>> when we pass down the REQ_RAHEAD flag - bios with this flag may fail
+>>>> anytime and md-raid is not prepared to handle this failure.
+>>>
+>>> Can dm-raid handle this falg? At least from md-raid array, for read
+>>> ahead IO, it doesn't make sense to kill that flag.
+>>>
+>>> If we want to fall back to old behavior, can we kill that flag from
+>>> dm-raid?
+>>
+>> Please ignore the last reply, I misunderstand your commit message, I
+>> thought you said dm-raid, actually you said mdraid, and it's correct,
+>> if read_bio faild raid1/10 will set badblocks which is not expected.
+>>
+>> Then for reada head IO, I still think don't kill REQ_RAHEAD for
+>> underlying disks is better, what do you think about skip handling IO
+>> error for ead ahead IO?
 > 
-> Thanks,
-> Kuai
+> I presume that md-raid will report an error and kick the disk out of the
+> array if a bio with REQ_RAHEAD fails - could this be the explanation of
+> this bug?
 
-I confirm that this patch fixes the test.
+This is right if the rdev is set FailFast. However, by default if bio
+failed, raid1/raid10 will record badblocks first, and retry the read
+untill all underlying disks faild, then read_balance() will finally
+found there is no avaliable disk to read and return error.
 
-Tested-by: Mikulas Patocka <mpatocka@redhat.com>
+BTW, I still need to figure out how to run this test to see what really
+happened.
 
-Mikulas
+Thanks,
+Kuai
+
+> 
+> Mikulas
+> 
 
