@@ -1,92 +1,117 @@
-Received: from mail-pj1-f45.google.com (mail-pj1-f45.google.com [209.85.216.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2ABB13D8A0
-	for <dm-devel@lists.linux.dev>; Wed, 21 May 2025 15:04:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45B8F22CBC6
+	for <dm-devel@lists.linux.dev>; Wed, 21 May 2025 18:57:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747839886; cv=none; b=vAfKg3siXNQjPWkaGkUVBcS1cKzVWkAz9D88z+4hnJomHuscx9Dm+HCZPArUpRAJPOO9qVdkx0FkE+0+Tk1wFYpma+RSmsrzjfAUVz5KgHVdY1QFq2TeRE0vLgzxK6K/g6zhVjAJBa/x/gYTXVKQQWAeswPW5zkW3eIIo2e9OE4=
+	t=1747853852; cv=none; b=C5iS95wLZ9y/DhO55ZNkE/7E78SvwKVurKIyGAdJdjqNae7x3tbrRQOhMr6lqciIl3g49y+LSo5TagfjW2xybdspws8NxGEPq2LjxGucXPwLPkFRpyHsgKvDuZSmK55CuKXCIcAJtZLkniQjrYL9ySaYZ3zzEtYVAkhwG2pmjgA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747839886; c=relaxed/simple;
-	bh=q9tHTExnf3cNbpfcUNsJ4hfobtVJGEmcSXBRXYS0vUU=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=ZSJrG+AkS/+9HnZge97CDly2KHCp/aqqLBySBOsxdfo28tgHmfDm55wfpXbcS7odnNUYVcbuq+8Cxu0JAHeKpZr3uSRuMOpLeZlhph6fnNCWJ5Rv29JLXafUnnyc8DjaS9gDgTEFuIkOoWUH+VCpbUB9doR/1XUZANpTB4kQZ20=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jBI0dzn1; arc=none smtp.client-ip=209.85.216.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1747853852; c=relaxed/simple;
+	bh=k2elYg8hDgZT2hWIWlT2Vld7InAVkC2ziHcimQmJalY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=rUlcGLTpBWuKFNaN32nEJ8cWOt8NaphV9ostIlyqTPCiy+i3yL5n5WwLL2kzx96MHQhLEO52ZQobm2bff6EtIGBl+qS+9aemfEklsejnSCQvEb/kL12PCzYlbFMhFr4tdiNKEKqNaYmqzaQX4AYCqjlmz7lvGwMbCFINFGlj8bc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HRa6LXm+; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jBI0dzn1"
-Received: by mail-pj1-f45.google.com with SMTP id 98e67ed59e1d1-3081fe5987eso5762698a91.3
-        for <dm-devel@lists.linux.dev>; Wed, 21 May 2025 08:04:44 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1747839884; x=1748444684; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-disposition:mime-version
-         :message-id:subject:cc:to:from:date:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=q9tHTExnf3cNbpfcUNsJ4hfobtVJGEmcSXBRXYS0vUU=;
-        b=jBI0dzn13Mi2rrLJ2fN/hFNlfMclpiLxPvAWYHwCR0umni3+THfL2ouNwOucG8gZkp
-         eMFEI/3+Ax56MdeUC3X3jCNjiCrxyRTXCgWPm17te9BtGqArCt+O5hEkqr7LMWMAlTyI
-         eZLy2U7DLSePX+Ze6twq0oOnWfs6XQ/Oiqy6SlPUFfD3uoLq0YRnJAB6FNRHjyt8DyOI
-         JAptMXe3JvyfYFYfoY23baPuF1w3MZPchp15ptUcqCYhx1spmBmc5v5VGrBV2/BjwDe+
-         wXRyRe0rezVCb71dbsE7kkEdahq8AwDw6K4g0bpfZA1tftX5GywPa073+F/cGHsBTBUI
-         xFog==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HRa6LXm+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1747853850;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=zZX3oSNR/OiJ1Y9Pq6xf64GYTpDGG51TH1sjZ6Ombb8=;
+	b=HRa6LXm+H53C8xKLnsICndAz1NrlsQRQFxcqwniwNzsuWauvGEoahcC/pspUUOmiBahyY5
+	3+IvH9kzPnFLKf9vqn6Wc8cOsam8MFAPr/s/DgJiHzVrGrK4zQADZjGi77Aw1kQLpuTxv9
+	mYcMcdlmHrBtoJUxJvCa4nYD/+6JQec=
+Received: from mail-qk1-f200.google.com (mail-qk1-f200.google.com
+ [209.85.222.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-223-XxeoT9h9OZ-PDUN6kHYlfA-1; Wed, 21 May 2025 14:57:29 -0400
+X-MC-Unique: XxeoT9h9OZ-PDUN6kHYlfA-1
+X-Mimecast-MFC-AGG-ID: XxeoT9h9OZ-PDUN6kHYlfA_1747853848
+Received: by mail-qk1-f200.google.com with SMTP id af79cd13be357-7c5e2a31f75so2233826985a.1
+        for <dm-devel@lists.linux.dev>; Wed, 21 May 2025 11:57:28 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1747839884; x=1748444684;
-        h=content-transfer-encoding:content-disposition:mime-version
-         :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=q9tHTExnf3cNbpfcUNsJ4hfobtVJGEmcSXBRXYS0vUU=;
-        b=q1Ojzvbo7qewYIeRf/+4Q4fLJwJufuG6xKhOSDXWQLZ3Kd4eXcZYPeUOyGBCW3ltcm
-         yvpumWstZ09X8Kn4s+OomX1YVFi3PXkPrF795hhQ6dzUNHcLGBSZ1fJsejCOOr5MS0+2
-         gL2aepj3PCAajUegTw5uKGAQLarybMTGtQqvj5HE9e1IJcOrwhGkiEyOuJLqOPsMK9/f
-         elHLiGNMuInxj8VpA23OOsGYedSHcG3DNpixY4gZ0jIXj6hUi0OTiKSYOnvq+zDCk/od
-         QHsbJBqmxfYZdgEaNpvQJXhib8rlpbIZW/qP2j/m1z8/iO7L6T6tEYFAoA71bQq7Alk7
-         up5g==
-X-Gm-Message-State: AOJu0YxRpkSru9+8VQzJt0PEghbF1Try/S3QAIgsuGeVvlAxJqlh74V2
-	3tWo7tI1rEDsIx6RHCsH/qLd9TCFb1RLfQJaIyiQgNfhyR73c0hJtGIi
-X-Gm-Gg: ASbGncsNwEshRxYEe0bmnbHrAAO9oJERx+EGK5YwBa3vOD2VDkxmhJeUGowkKyOfUrt
-	/Bd8LcESpHBiw9JrvXlwGwnYa6YL4RV8tsEyLmV1jOEaOHxuYtgBu8gp98KF/z0Fp7iIdaEjD5N
-	Suo+KGb8v+KzKCbjvBoqcwZyNfOO5coomZ7WoSjcIZftpJqToZLKmUroZRk/JEDFMFJLs2llXd/
-	/nde94PxVmZwGEBQ7wiafCGyRwTQoSqKdKS+5NLEp5vmHec5RYLX+3gew4vv1JNH9DdnTbAz2SF
-	WJ61VZeAbP3s90cZHZqWS7o9Lvqd32JN9c/MNAL+G0aANsFZY4oJXleGS+/PbWkTmcMUpyNM9pp
-	qaaw67UZSYM1Ctw==
-X-Google-Smtp-Source: AGHT+IEjGUTqHb5NWIMvtvGZkJbc7R1HW0J1hE1aCq3tEY5gctFQ+ulCehqVQi+uXSiUTqWJAMnJIQ==
-X-Received: by 2002:a17:90b:3f8f:b0:310:8d51:c427 with SMTP id 98e67ed59e1d1-3108d51c444mr6066662a91.0.1747839883716;
-        Wed, 21 May 2025 08:04:43 -0700 (PDT)
-Received: from visitorckw-System-Product-Name ([140.113.216.168])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-30f36366219sm3768202a91.6.2025.05.21.08.04.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 May 2025 08:04:43 -0700 (PDT)
-Date: Wed, 21 May 2025 23:04:40 +0800
-From: Kuan-Wei Chiu <visitorckw@gmail.com>
-To: Matthew Sakai <msakai@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
-	jserv@ccns.ncku.edu.tw
-Subject: Potential heapify performance issue in dm-vdo
-Message-ID: <aC3riPZ6GV/dlr7Y@visitorckw-System-Product-Name>
+        d=1e100.net; s=20230601; t=1747853848; x=1748458648;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=zZX3oSNR/OiJ1Y9Pq6xf64GYTpDGG51TH1sjZ6Ombb8=;
+        b=J0/V0N1IXx21D6z+HR8pu3u3nl0eMktezBInA3tn6yOMiEBl+XEZX+H9+NSu2F+l1X
+         SkPiHFdhJvE/F0gnXGSYcRfxPsRFu6/x2OZznJmprA8hxlH6OilAU5i6HL8nzhY0PN3a
+         fLB2U+yOAWCtPpMrHGWsL2qUO+XJsBzu8+g/orJsjX2By28ump1rIG/4RhZWwAkVS6Bf
+         Mk6hAvkT9RR9Fakpute4KMQCu723lBsjfxgf/1l0kLBJ8mEATGNPfgs/suHfK4QgNexA
+         GP4GrsPRo7uTWC0fQACDPBpGjR9xQZQiHOuhoPUYX/pVa+uJjGKV2TGcVTBmZOMU17l8
+         jb6Q==
+X-Gm-Message-State: AOJu0YzRqL/o/hw+Dnz+kzhYZgp0squNJDONHFb16cKb+d3zFJdetL9r
+	9V0CfDslgsbW3EfOLiyJk9JcPRJjkjuiSZ96cNgCOq5u+2Qoo37yfikUrC4gZYyLjqaHhcHslqq
+	loRkVZbHMUJPK+kvlxk7EuOH3dNYfaVI9mdxMXv/QxNtax/PlzENiR/j/QA4C
+X-Gm-Gg: ASbGncuHSa7ttIeu1vrX5vR60HI4PJpQGaYmU4d1IWV7ra1mlAWL+o+9GJa+EFjlPdv
+	z2HakqOWYT7qYlKDInuDeEepUTpESl3Xwc/5IeuAQaLxNKTiWwh+Pfgf9Qhhoqes0jNGiFXN24i
+	ohWZq4xdED1x5lhD8mGEUiQizZeTXW+UdD2Uo6+jHjMVk9FMJ+MiJefTmhEPRjiUl7P/MJ1xfoB
+	8VwOCEPSUoaHTXfWtO421+BagzJmJXEsOZ8d2L1D/7oVDmVMoRZJ4UdPwsNVnY+04nNhkHP0Yb4
+	W3+32veRt3mq1pJVNaHJBfP/dHFVuc7KEjOJdanIeFB3bXi58cHQR46Qrtg=
+X-Received: by 2002:a05:620a:3194:b0:7c5:4cb7:ac97 with SMTP id af79cd13be357-7cd47efff63mr3121621985a.1.1747853848077;
+        Wed, 21 May 2025 11:57:28 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFnvoFRahZcZi6WjpnTrtmy9zuSJztpTCLgI9ec8JwApSBatPo0Ayv6017ChDQEfE2ZP9lO6g==
+X-Received: by 2002:a05:620a:3194:b0:7c5:4cb7:ac97 with SMTP id af79cd13be357-7cd47efff63mr3121619885a.1.1747853847768;
+        Wed, 21 May 2025 11:57:27 -0700 (PDT)
+Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-7cd467dae90sm912153585a.46.2025.05.21.11.57.27
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 21 May 2025 11:57:27 -0700 (PDT)
+Message-ID: <9501613e-e8e5-4734-aa2f-ca3a3e4ca990@redhat.com>
+Date: Wed, 21 May 2025 14:57:26 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: Potential heapify performance issue in dm-vdo
+To: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ jserv@ccns.ncku.edu.tw
+References: <aC3riPZ6GV/dlr7Y@visitorckw-System-Product-Name>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <aC3riPZ6GV/dlr7Y@visitorckw-System-Product-Name>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: orqVa1ahcp_Y9glbSw_5QdpjA2I3D2skCM5UPGVQ7_o_1747853848
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-Hi Matthew,
 
-Recently noticed that the current heapify method in min_heap.h may
-degrade performance when the heap contains many compare-equal elements,
-compared to the previous version.
 
-In detail, the new heapify reduces the number of comparisons by about
-50% when all elements are distinct. However, when all elements are
-equal, the comparison count can degrade from O(1) to O(log n).
+On 5/21/25 11:04 AM, Kuan-Wei Chiu wrote:
+> Hi Matthew,
+> 
+> Recently noticed that the current heapify method in min_heap.h may
+> degrade performance when the heap contains many compare-equal elements,
+> compared to the previous version.
+> 
+> In detail, the new heapify reduces the number of comparisons by about
+> 50% when all elements are distinct. However, when all elements are
+> equal, the comparison count can degrade from O(1) to O(log n).
+> 
+> I don't have enough domain knowledge of dm-vdo, so I'd like to ask
+> whether it uses heaps with many compare-equal elements. If so, I'll
+> work on fixing the issue.
+> 
+> Regards,
+> Kuan-Wei
 
-I don't have enough domain knowledge of dm-vdo, so I'd like to ask
-whether it uses heaps with many compare-equal elements. If so, I'll
-work on fixing the issue.
+Hi Kuan-Wei,
 
-Regards,
-Kuan-Wei
+dm-vdo uses heapify for two different operations, but in both cases we 
+define heap elements that can never be equal to each other. So I think 
+this is not an issue for dm-vdo. (We have not noticed any issues with 
+this in our regular testing, either.)
+
+Matt
+
