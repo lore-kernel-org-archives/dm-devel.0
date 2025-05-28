@@ -1,110 +1,99 @@
-Received: from mail-il1-f170.google.com (mail-il1-f170.google.com [209.85.166.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 259861F17EB
-	for <dm-devel@lists.linux.dev>; Tue, 27 May 2025 23:43:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3C331C4A0A
+	for <dm-devel@lists.linux.dev>; Wed, 28 May 2025 02:01:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1748389435; cv=none; b=dhZt76JasZbYVPIaYfdYXk4fMLjhNaxPTP6mUdmvU7dKo43Aero9h1h3RjA6VaF2doGfCO5AudCOHUcdtmcOUaT4TkG8TeqhxHX/ONyKJp9FgCE+wuCgYIx/dA9PGal47gEXMlYxXRVgBrAdDhRLdpM57GP3D1v8NuyNxJ1+80A=
+	t=1748397682; cv=none; b=XrQU0dABjYaEJalIiEkMlVkTXiNUMGPrjcXl9Gk9OAPgdDLbqrLnmYNisFnEaMFanzWwjzRUQcqlxkU2Be8+M4NRNImRvokr9bxsUEcpYiE4p3MY1VfUq7XHCUmf86SsZHYO++a4WhQ2HHrCrGl2B+CT9pk9TX0L+z/Y1BA1d2Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1748389435; c=relaxed/simple;
-	bh=f08em9DA6QU6JbQhqbKs8TXBg5LZ+UoUHjXE6+ZDNPI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=NZl4IHrFPFnM25XAtFJAf6AgukrthNYPhG1Ut2idCvufCVQqOjyepMUZm7j/Jl3bl+XmJStS+uJ2XG+EB9PVaBRrwCF5tkES0tVxQc+V0ompmO5QzOMWgXKQ83CUcxWm0R49NhUMWIIPydfGslzfoG5W+vbLR+40vZYuMdi939k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=apymLiCy; arc=none smtp.client-ip=209.85.166.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1748397682; c=relaxed/simple;
+	bh=LiEhLnLcjhOfpv7G4HYc5Uhcen0AF6vhvUb1MqWtuhw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=MBYsPSSmxPsdxd3HqbaBnxF7S6194guEOXhcDXkeekYG2soVYVVQ1pVg5NFqK3f2vF9bLrB2FtoEIPnf9Y7F2zeicjBfVUFYPWtQ+7qM3ojh1vcC7E6m2W47pAhOyp6c5VjK5TvhqLgDE1/LI7DMhJ5O5neEExwABuWixd5yqn8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FHXwEoFS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="apymLiCy"
-Received: by mail-il1-f170.google.com with SMTP id e9e14a558f8ab-3da73df6b6bso11042835ab.3
-        for <dm-devel@lists.linux.dev>; Tue, 27 May 2025 16:43:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1748389433; x=1748994233; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=f08em9DA6QU6JbQhqbKs8TXBg5LZ+UoUHjXE6+ZDNPI=;
-        b=apymLiCyClNqV1DIDMVePVxaS21hXZE3sMW12oRi3xANiFw7cXCa7n199xLIUUH/Tu
-         J16DetL+NdAo5QzH+pVYtx8I/6bM+CrBgKxDaiqdU0QFTODmAF7SUN12V4c88aLpJ+AC
-         Z4Ny+9SGMnknoJwWXaNZ9qDNNBw0vdowEls1uZ76ZMpucg2njTlclKNarHr7pKda9MlM
-         rBrvuuVJAPFNAAS+10YK4K6D6JbWvlZtLwhghps7eCmc0//T6aYjYGlxOfG5F8+r9i7w
-         fkH6mzl5zk5Qh29lYLRRRyJiDzEgIzPZwfynVe77kDm4C1ZaSVMTONqxyY5K73OGY/mI
-         6W2Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1748389433; x=1748994233;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=f08em9DA6QU6JbQhqbKs8TXBg5LZ+UoUHjXE6+ZDNPI=;
-        b=E+Qm1z7VgHl5A9gbb1YVn5KjjLRvhn+jBenvluHb6QDXnoReoKP6379B+ZO9Ux9lxK
-         Tz4MR0K9htCbPWmz37PR+L7CsfiOs2NT4Gf+a1q17eAgbjGM+SPCHwrM2Wd/2/AIETp7
-         MlLk23hbimsVszoD/vQSVGiJSS1MnmBIWEERKSA+/2wp5ZEHsQyzsBhNhinGztUaWNvT
-         kJ8HHFc4MefgR4ADoTyfmF4jjVfx80bV2W/jguy9Lpq+8xK4RTYHhX0QsjHWYctWDcq5
-         rb7iiYsy3JLutPxgPTg8TkqfgkJccLhz6RTNULpyWc2xRmRKE3rcfFyOY3M4F+iOF9zJ
-         0/DQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXdis22E7sXaH3K6jqbVB0msV6KpxdEZkS3I9VtFl4YfqxusVrwIG5tGULiPsuLvtQ1PnH4ozCOBw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzcpBSLoKUtW5+PvJSV+yhbr/Bpg65HvCpHbqlcjS1zD5hhPPqI
-	LEXcm6YbpTGPvqVtQj4TZzHpWnAtbv6uZww7eOoPOrK3oL5T6F2oGzKF9xoDkeA1bv06EAR9RF/
-	TIvcPIe+2qVVKr1Gy2FvH/kJHJC6obP0=
-X-Gm-Gg: ASbGnct/zLarbzLu/m2U8lyGam3/KLzDhnGSuBWuRHOhQR6YvbJE58ycjCjfxI8NHjA
-	Ssq4Rtb2sfW9g9VjbloOXNutJjg/0QmG7HtWX8DduAJ74xAOo1nlPrkD75CIKUYPXn3I4SWfRWc
-	W48zI6s1SuPMDA6f9FzEu304zyBnkrsLo=
-X-Google-Smtp-Source: AGHT+IFNQN4+WL6glmxs8lAJDLu8MmuG4dogdioqikdxkZTzmQFS3OIBQSPDH+mrcAEyBGGegg4u6eiOYwHdcptWq+8=
-X-Received: by 2002:a05:6e02:348f:b0:3dc:76ad:7990 with SMTP id
- e9e14a558f8ab-3dc9b706abbmr145701725ab.15.1748389433167; Tue, 27 May 2025
- 16:43:53 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FHXwEoFS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1748397679;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ao6sTs8m2z97o8QNuHCaE0vaf3bzSI7A1sevarQzpr4=;
+	b=FHXwEoFSS4qgZRFyqh5ejTYtO4yguAPbIhTcFX/lGTMJ6vjf0xBMYFic9ULo749ku76bwC
+	f3YlTJYklMAByABE1HjZPkdljzTe4JVXPLz/O468AFYDCt+jpMgkbSmGTQogZKzIVZX/yP
+	ZfLJdCxhsiRtDws/jdnt1Rt/+t/7eoA=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-484-6pBdqZvmMVyj-Xbst1DtEw-1; Tue,
+ 27 May 2025 22:01:17 -0400
+X-MC-Unique: 6pBdqZvmMVyj-Xbst1DtEw-1
+X-Mimecast-MFC-AGG-ID: 6pBdqZvmMVyj-Xbst1DtEw_1748397677
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9D92719560AA;
+	Wed, 28 May 2025 02:01:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 33A8819560AA;
+	Wed, 28 May 2025 02:01:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 54S21EpJ930225
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 27 May 2025 22:01:14 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 54S21Enk930224;
+	Tue, 27 May 2025 22:01:14 -0400
+Date: Tue, 27 May 2025 22:01:14 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH] multipathd: always reset checker interval for failed
+ paths
+Message-ID: <aDZuageAzJxJHCeC@redhat.com>
+References: <20250522002623.611830-1-bmarzins@redhat.com>
+ <baa4713be2b579189fd40d3a6e4b8aca897baef9.camel@suse.com>
+ <4b4107e368e68588dd21d3d386b7f84babc5ed1f.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20240130091300.2968534-1-tj@kernel.org> <20240130091300.2968534-7-tj@kernel.org>
- <CAL+tcoCKqs1m4bAWTWv9aoQKs7ZpC5PXtMS2ooi6xEB6CbxN1w@mail.gmail.com> <aDYKoA8lpX_Zxrhh@slm.duckdns.org>
-In-Reply-To: <aDYKoA8lpX_Zxrhh@slm.duckdns.org>
-From: Jason Xing <kerneljasonxing@gmail.com>
-Date: Wed, 28 May 2025 07:43:16 +0800
-X-Gm-Features: AX0GCFsb4ySh9tHeNVChD-RPYFuj3Sh8LOL_jgy3hcYZQuZgVtS4GposQzjOWkg
-Message-ID: <CAL+tcoCjaq=CxXdFtCqF4LdwCfenrHi7Nu-XHm+u--phuoC+EA@mail.gmail.com>
-Subject: Re: [PATCH 6/8] net: tcp: tsq: Convert from tasklet to BH workqueue
-To: Tejun Heo <tj@kernel.org>
-Cc: torvalds@linux-foundation.org, mpatocka@redhat.com, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, msnitzer@redhat.com, 
-	ignat@cloudflare.com, damien.lemoal@wdc.com, bob.liu@oracle.com, 
-	houtao1@huawei.com, peterz@infradead.org, mingo@kernel.org, 
-	netdev@vger.kernel.org, allen.lkml@gmail.com, kernel-team@meta.com, 
-	Eric Dumazet <edumazet@google.com>, "David S. Miller" <davem@davemloft.net>, 
-	David Ahern <dsahern@kernel.org>, Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <4b4107e368e68588dd21d3d386b7f84babc5ed1f.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: XUDOQHE-6Fbgc4EvnY93rzMy8nYEsTKjoYQQ1q-ZglQ_1748397677
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Wed, May 28, 2025 at 2:55=E2=80=AFAM Tejun Heo <tj@kernel.org> wrote:
->
-> Hello,
->
-> On Sun, May 25, 2025 at 11:51:55AM +0800, Jason Xing wrote:
-> > Sorry to revive the old thread! I noticed this change because I've
-> > been doing an investigation around TSQ recently. I'm very cautious
-> > about the change in the core/sensitive part of the networking area
-> > because it might affect some corner cases beyond our limited test,
-> > even though I've tested many rounds and no regression results
-> > (including the latency between tcp_wfree and tcp_tsq_handler) show up.
-> > My main concern is what the exact benefit/improvement it could bring
-> > with the change applied since your BH workqueue commit[1] says the
-> > tasklet mechanism has some flaws. I'd like to see if I can
-> > reproduce/verify it.
->
-> There won't be any behavioral benefits. It's mostly that it'd be great to
-> get rid of tasklets with something which is more generic, so if BH workqu=
-eue
-> doesn't regress, we want to keep moving users to BH workqueue until all
-> tasklet users are gone and then remove tasklet.
+On Fri, May 23, 2025 at 01:04:15PM +0200, Martin Wilck wrote:
+> On Fri, 2025-05-23 at 13:00 +0200, Martin Wilck wrote:
+> > On Wed, 2025-05-21 at 20:26 -0400, Benjamin Marzinski wrote:
+> > > The are multiple places in the code that can set pp->state to
+> > > PATH_DOWN without resetting pp->checkint, most obviously when
+> > > a path is failed by update_multipath(). When this happens the
+> > > path will continue to be checked at its previous interval,
+> > > instead of switching back to conf->checkint. Fix these cases
+> > > by always resetting the pp->checkint to conf->checkint when
+> > > updating the state of a failed path.
+> > > 
+> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > Reviewed-by: Martin Wilck <mwilck@suse.com>
+> 
+> Although this patch has no fixes: tag, I'll consider it for the stable
+> branches. Objections?
 
-I see. So far I haven't see any side effect especially with testing
-bulk transfer/multi-thread transfer, so if you're willing to repost it
-after the merge window, please feel free to add:
+Yeah. It makes sense for the stable branches.
 
-Reviewed-by: Jason Xing <kerneljasonxing@gmail.com>
+-Ben
 
-Thanks,
-Jason
+> 
+> Martin
+
