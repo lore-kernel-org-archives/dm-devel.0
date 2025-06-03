@@ -1,123 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5649823BCFA
-	for <dm-devel@lists.linux.dev>; Tue,  3 Jun 2025 16:05:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19F7FC2E0
+	for <dm-devel@lists.linux.dev>; Tue,  3 Jun 2025 16:53:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1748966709; cv=none; b=bQnf5yFm2NDVzOPGd5oacjLtYPTgJgPu29aWIMd2zrMfLrtMVksvvbUKGPEFeJP+pMW6Q+QwejzV1/50NpfzqD5hjZ1SWrYOWcsc8NwNPu9z7gdEmZBW953XYYTZeKQJ0R3wElnF1J+eOJfgBFkNC2e4/Nt1X85OYYlZoqAYVzU=
+	t=1748969608; cv=none; b=Vwr6B6U3rzgVG8MzaosWt2FbfnL24vN9Ry56O6+31kRDOxEResPHKJOC6gw1L2w8sdh+fAq9MWWTrycXxgKxTCHvsa64+Zl6LBZkQm4I1ArTlZcEEL+piItzmx8UDynr+KAy3ZoaofD9AU9kRazjuusgivfR/4XK+VoT2i43uhE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1748966709; c=relaxed/simple;
-	bh=6SLg1LoecvyaYu9Rd5wHx1iN2y7a9ABtUIdQFNmof6A=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=fLasbTUHyf/Tyr3ruqpIdRMBjs/NcumOd4BY+KLT5XtHkg6bEtsjh54zWOPrgTWJRqBfI1BWbzLozRnHkPt2oQdLdjdCZImpE0Uiw3Dw2dkrc2MgbrKUlMQ3CxPdkw4lrrwCxirSqAKWequYuhJh+O4aKX5fHdfJFkozVN2KV+A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cf4sN4h1; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1748969608; c=relaxed/simple;
+	bh=n9ZByok2skatzCCBLvdB2Peth4kN2044JVS7cs/1nYc=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=FrufKPxEpJS+32u18iuFS56+ojnuXFmc64oJc13JVuAw94+/2xzjf3mG4oEeByRDTa2616zIu52RyEEHM1S0HtAioqyD/jVaIWlsNEjhtjOrua9MI7P8+SOEv4S6KRyoo19MirPy4GVhRPdXqspJFzFXUsT1O+oT5PsQ6lRIvic=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JweXXwjZ; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cf4sN4h1"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JweXXwjZ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1748966706;
+	s=mimecast20190719; t=1748969605;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Dv4uiohT3zsDhl5+kF9GraoHQsrkUtnLiCJh35rXhqs=;
-	b=cf4sN4h14mNqhS+rk1TsCvA4uM56iQ7lLYxRw+wyuSSaAV4gWKVGjjN9RhQHIVFQDoeVaf
-	bMGapllMQvMEH7F7lIb6DIzCxsEeu6m538NXgCnASVP27fdz4RaE/CtsSnVrkqUoTe0dmu
-	SriV72yUYSjMR2L+U3ykvbfQGTBOQnE=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=ZRRc7bc/3E3mCLSG2+ZVbV7MXgDorb7IM7mVVzQuAEc=;
+	b=JweXXwjZ4e7lNLQ8piLaVd3Y2MamTPR5rowDFMGjyH6GFuKHuJnkLlkdPKPmiyp1HHn0DM
+	vHSwM7UXgV+qJNSFclpbvH+jzfcfuOc2RWX43pIGd7wAtVt6SkqdMDVvXb8wVihWnk3OXF
+	KipcVOIBFpipdgSZo5K1+Z/zWmgwjc8=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-594-MmjOQFv5PuWQ-9nkr--T6w-1; Tue,
- 03 Jun 2025 12:05:05 -0400
-X-MC-Unique: MmjOQFv5PuWQ-9nkr--T6w-1
-X-Mimecast-MFC-AGG-ID: MmjOQFv5PuWQ-9nkr--T6w_1748966704
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-251-gO_3xQ2jOdiWyStR_GQoxA-1; Tue,
+ 03 Jun 2025 12:53:24 -0400
+X-MC-Unique: gO_3xQ2jOdiWyStR_GQoxA-1
+X-Mimecast-MFC-AGG-ID: gO_3xQ2jOdiWyStR_GQoxA_1748969603
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E725419560AD;
-	Tue,  3 Jun 2025 16:05:03 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 61D541800242;
-	Tue,  3 Jun 2025 16:05:02 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 553G50qD2101530
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 3 Jun 2025 12:05:01 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 553G50k22101529;
-	Tue, 3 Jun 2025 12:05:00 -0400
-Date: Tue, 3 Jun 2025 12:05:00 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: John Garry <john.g.garry@oracle.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>,
-        dm-devel@lists.linux.dev, hch@lst.de
-Subject: Re: [PATCH] dm-table: check BLK_FEAT_ATOMIC_WRITES inside limits_lock
-Message-ID: <aD8dLP5d-fvI-D-B@redhat.com>
-References: <20250530145032.1491277-1-bmarzins@redhat.com>
- <d9d13fea-e75f-4fa4-86c8-dc7053a553b9@oracle.com>
- <aD3QccNaBXLQ2xPP@redhat.com>
- <9f8cb209-00c4-4596-b6df-3bf5ed2f1505@oracle.com>
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9CB8F18001D6;
+	Tue,  3 Jun 2025 16:53:23 +0000 (UTC)
+Received: from [10.22.80.20] (unknown [10.22.80.20])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1EDE018003FC;
+	Tue,  3 Jun 2025 16:53:21 +0000 (UTC)
+Date: Tue, 3 Jun 2025 18:53:17 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: dm-devel@lists.linux.dev
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm-mirror: fix a tiny race condition
+Message-ID: <7a6f9601-931e-ea00-9aa7-af0d3b1b3ba7@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <9f8cb209-00c4-4596-b6df-3bf5ed2f1505@oracle.com>
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: JtydDcLmOMfTuJJAuOmupvm5hTf0z_lZYneaLUsEYSo_1748966704
+X-Mimecast-MFC-PROC-ID: HJ8sSOA4DpE_empHMEG0gg7R57-7B3f4TM9cELnwoRg_1748969603
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 
-On Tue, Jun 03, 2025 at 08:57:32AM +0100, John Garry wrote:
-> On 02/06/2025 17:25, Benjamin Marzinski wrote:
-> > On Mon, Jun 02, 2025 at 11:08:46AM +0100, John Garry wrote:
-> > > On 30/05/2025 15:50, Benjamin Marzinski wrote:
-> > > 
-> > > +
-> > > 
-> > > > dm_set_device_limits() should check q->limits.features for
-> > > > BLK_FEAT_ATOMIC_WRITES while holding q->limits_lock, like it does for
-> > > > the rest of the queue limits.
-> > > > 
-> > > > Fixes: b7c18b17a173 ("dm-table: Set BLK_FEAT_ATOMIC_WRITES for target queue limits")
-> > > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > 
-> > > In itself, the change seems fine, but I have doubts whether it's preferred
-> > > to even grab the q->limits_lock outside block layer / its helpers.
-> > 
-> > I'm pretty sure Mikulas added the q->limits_lock around DM's queue
-> > limits accesses as the result of a discussion with some block layer
-> > developers.
-> 
-> Do you have a pointer for that?
+There's a tiny race condition in dm-mirror. The functions queue_bio and
+write_callback grab a spinlock, add a bio to the list, drop the spinlock
+and wake up the mirrord thread that processes bios in the list.
 
-https://lore.kernel.org/dm-devel/ee66a4f2-ecc4-68d2-4594-a0bcba7ffe9c@redhat.com/
+It may be possible that the mirrord thread processes the bio just after
+spin_unlock_irqrestore is called, before wakeup_mirrord. This spurious
+wake-up is normally harmless, however if the device mapper device is
+unloaded just after the bio was processed, it may be possible that
+wakeup_mirrord(ms) uses invalid "ms" pointer.
 
-Specifically, in that thread Ming Lei suggests it here:
-https://lore.kernel.org/dm-devel/Z9t709DZs-Flq1qS@fedora/
-and Jens agrees.
+Fix this bug by moving wakeup_mirrord inside the spinlock.
 
--Ben
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-> 
-> > 
-> > > 
-> > > And, apart from this, if the bottom device limits change later, do we
-> > > actually trigger a top device limits evaluation update?
-> > 
-> > DM will obviously re-evaluate the limits if you reload the table. In
-> > some cases, DM will also disable features if turns out that they aren't
-> > supported when it actually tries to use them. Dumb question: Is there
-> > much chance of a SCSI device's atomic write support changing while it's
-> > in-use?
-> 
-> No, I would not think so.
-> 
-> thanks,
-> John
+---
+ drivers/md/dm-raid1.c |    5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+Index: linux-2.6/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid1.c	2025-04-14 16:01:58.000000000 +0200
++++ linux-2.6/drivers/md/dm-raid1.c	2025-06-02 14:51:19.000000000 +0200
+@@ -133,10 +133,9 @@ static void queue_bio(struct mirror_set
+ 	spin_lock_irqsave(&ms->lock, flags);
+ 	should_wake = !(bl->head);
+ 	bio_list_add(bl, bio);
+-	spin_unlock_irqrestore(&ms->lock, flags);
+-
+ 	if (should_wake)
+ 		wakeup_mirrord(ms);
++	spin_unlock_irqrestore(&ms->lock, flags);
+ }
+ 
+ static void dispatch_bios(void *context, struct bio_list *bio_list)
+@@ -646,9 +645,9 @@ static void write_callback(unsigned long
+ 	if (!ms->failures.head)
+ 		should_wake = 1;
+ 	bio_list_add(&ms->failures, bio);
+-	spin_unlock_irqrestore(&ms->lock, flags);
+ 	if (should_wake)
+ 		wakeup_mirrord(ms);
++	spin_unlock_irqrestore(&ms->lock, flags);
+ }
+ 
+ static void do_write(struct mirror_set *ms, struct bio *bio)
 
