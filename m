@@ -1,233 +1,163 @@
-Received: from smtp-relay-internal-0.canonical.com (smtp-relay-internal-0.canonical.com [185.125.188.122])
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CA5A11DE2BD
-	for <dm-devel@lists.linux.dev>; Fri,  6 Jun 2025 04:26:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 147B578F54
+	for <dm-devel@lists.linux.dev>; Fri,  6 Jun 2025 15:16:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749184004; cv=none; b=Li0VHfNVq1kqIKcXpAjsNEu8bKK+/EYXlvGCcKR/CkXT79ZDh2aYQfV1hVwCi16qJXBkfVWJoOiAfCBaIssaxCds30leNchLHdH/fcRtVYfWDwl9V7BFxgRtjsBi/i560rxq6HT/qthB2HH1huSb/F3GyTOcuRZE+eMbxRgk2JQ=
+	t=1749223005; cv=none; b=FA0Ey+o2u7X6mEtzN/WA+Acu/iGkD89avvx9HBLS7mdxwoSv6/wcm5q+weB0nEvkhV3xcSK4cwqWTNxgiM3ShRpdeNXd62mf3/ehjiE25qcd/FPq2JGRuCKgBRz23B4QC0vZ+6QCRh+ilSU2lD50m03VTEvezGt+FtNbsqfyM9Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749184004; c=relaxed/simple;
-	bh=cWuUzMQrRikTedC+8BemvQNT+3iv593RC0/jf0iZ6iQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=qGlVDFTt1Xi0wqrZxIWEddf+NBmrcyvYQ6QhoMxKgWCH6sIvHVZy6bwVThWnZx4IR1v/xDxD7g9UYlofZecuhT6SBgA0OftrEeC5gzmxbrfzs77f232zOYygwc//yIb7oW/ffD+4fsz4+oSBnzV/jfHXh+3GiQEwacPa2nMomTw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=EY1NKP7b; arc=none smtp.client-ip=185.125.188.122
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
+	s=arc-20240116; t=1749223005; c=relaxed/simple;
+	bh=bMcoQZ8/56NkiSi6ldpCU2xHO/U+BegQxxASRAkiQqY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ZewevKGJpm37mmEMHsykCOOLE6EmYWigZXQeT7rt/bPR6ppjSPdfDE/wR4W4Q5v7lJqqhQq5+lDV7yma3Y+8t93ZDoY9ebAIE87EGvtuJZNGgaPkg/PQ7tycSv0DCsnuP/5I3RQc8aZYq+6zt+YYun4PsffgV6waSuJnrxnGoz8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=Y6GTTxAI; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="EY1NKP7b"
-Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com [209.85.218.70])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-relay-internal-0.canonical.com (Postfix) with ESMTPS id CEA883FB5C
-	for <dm-devel@lists.linux.dev>; Fri,  6 Jun 2025 04:19:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1749183545;
-	bh=+wMYBBFkSbWZrpXCoi5Cxs7EDx9xZmombyc0Bgui1iI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type;
-	b=EY1NKP7blmXW3Rt/DqpAFIuZIL7yed/UdqQSpZme9sTkbn+2yp3as9c8e/i62K4dc
-	 PCd8Xdddc0MFdg5VjEzIDM+iv+Ais9cTY9zt83U/2s4GYszSy/kRXxILh1H2pUdhS7
-	 STEvRB3tG6GRbmfYzupcc5dPQDxFMTVXphMlT04e1CGLSk69/z1NmP6CnzEnI0HH7r
-	 ktruqDZ38LORZ4c9RHCRfkO99LU86WVImqU8UyS8hzUI1ADNEdRFGvDuBUxj3nZK88
-	 Xv3rYuPWEzFDC7NaqkneDxLt82AQGFFIorbE6FD2WwzKulMiUQQJ18PGDEPZnXeGKJ
-	 EPRaEsBqS5xQA==
-Received: by mail-ej1-f70.google.com with SMTP id a640c23a62f3a-acbbb0009aeso132785466b.1
-        for <dm-devel@lists.linux.dev>; Thu, 05 Jun 2025 21:19:05 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1749183545; x=1749788345;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=+wMYBBFkSbWZrpXCoi5Cxs7EDx9xZmombyc0Bgui1iI=;
-        b=v1vnTNpQbhhXOYZsNEtxeGLsBMAeygsHm/iVJU2fPZg3gAnrEXF2ihGTixueqiACwB
-         km6c29rmctwf40h/+PUScDLwUCYDKW//woCY7p3eJRaoRvESjHxXf3sh0XijeJ5cYQ8J
-         FXSHfi9b7XBCZpkWUIA6dVtxmtFY9+ctR7cO0t3dfXta+Pib64OT95FrpnmTkjWbrbQF
-         GiR9IYaZTtL+MtM1E93xihM5Kle/BVpTjIdhsf7DdvkNKBAwxRm5WccH5xBvKke/e5+W
-         nIfzVLi3/g4xi5r38Wt/XMWgQDEoRs1WdR6cKc/5nlJK9HjExyHjWbFLIT5QZZBZPpu6
-         BwnA==
-X-Gm-Message-State: AOJu0YzG2aHNlX5tsZkFNtg5I0bokz1tC30PsmOTg2J8lPOdZXIhKIJz
-	Bnsv6NpIXoo429wd/YYL3CfHwsBRgiXP6r/vIPcvPHPxypT1iJF0i0eZGJ/WoJdev+muiADH9L9
-	gYsnMhoMMiX6gHxqkM3zeD68FmC+OW0x1Q4A2+JL/yR7PyxC2GYSfJcYAS6XmmACK1AcHKACm1F
-	0NqGqaef8YO8TZrZYLqO0L9CC7M+9BQamD+Anig7EPfKXAs6yYwH0=
-X-Gm-Gg: ASbGnctJHoGw/1b1KJR/p1zplt+5K4yO/JtmodOXVuHx4rCv5IuvxL48VAd10ysiwr1
-	Jqh7/4xrznEdJ2Y5O9FlMrJcf8xmzK7GCsTAcltVa6RTnS6ZaNlIoHKI+ENFhCRCOle7Ejw==
-X-Received: by 2002:a17:907:7f25:b0:aca:95e7:9977 with SMTP id a640c23a62f3a-ade1a922851mr154908766b.28.1749183545359;
-        Thu, 05 Jun 2025 21:19:05 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEPv1/R687GFCs9CX+wBXDkeM92N1XeSKXDWUvABJvOpoDGt7dbfZqxUJxg69+yANkYx4KUOYsl5GhNSPk/yqY=
-X-Received: by 2002:a17:907:7f25:b0:aca:95e7:9977 with SMTP id
- a640c23a62f3a-ade1a922851mr154906066b.28.1749183544839; Thu, 05 Jun 2025
- 21:19:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="Y6GTTxAI"
+Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 556DRAn9032703;
+	Fri, 6 Jun 2025 15:16:32 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=SznduB
+	7uZbB2TupeB0XlulVyY8Rgk+W8Ehae2oY7ceE=; b=Y6GTTxAIFQWQlF31NbTc5E
+	T0ZUbm+qQx39BmBDGD1J+qVov1GCE2WXdnG7URSUetlJ1S2/LXCvwWcP3NXZS0xZ
+	nwSuj1iXhNfBq9uJJUZEE8C0gMio+1KEAhlM5QtU/frwOtwypW/ps77Dw53FZ6Cw
+	bVa6Tj5KujgvWkSRKLEJLqmO+VkQM60HU1heFx32saFcYlo66J0sm3b/gAkD4hWH
+	bzhuvrAWHmZKpD9E/6UatVpHV1tJXm181X7NoHS+dNEddYL+48e+qH9tzARQ+eLK
+	nK7lb/8fiXt8+MYEG2iyqxw9YAbNUgoG8oB42qVbLU1jhYz6dh5+6fuNHgwKERZg
+	==
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47332yru34-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 06 Jun 2025 15:16:32 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 556BdQkI024914;
+	Fri, 6 Jun 2025 15:16:31 GMT
+Received: from smtprelay06.dal12v.mail.ibm.com ([172.16.1.8])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 470dkmsxsf-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 06 Jun 2025 15:16:31 +0000
+Received: from smtpav02.wdc07v.mail.ibm.com (smtpav02.wdc07v.mail.ibm.com [10.39.53.229])
+	by smtprelay06.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 556FGUL421234430
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 6 Jun 2025 15:16:31 GMT
+Received: from smtpav02.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id A7D7158059;
+	Fri,  6 Jun 2025 15:16:30 +0000 (GMT)
+Received: from smtpav02.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id AA04958058;
+	Fri,  6 Jun 2025 15:16:24 +0000 (GMT)
+Received: from [9.67.149.38] (unknown [9.67.149.38])
+	by smtpav02.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Fri,  6 Jun 2025 15:16:24 +0000 (GMT)
+Message-ID: <041186c7-a249-4564-979c-3e480aadaa23@linux.ibm.com>
+Date: Fri, 6 Jun 2025 20:46:22 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <CAPza5qfw-ExyCFnWa5JoUE7eUsk_es8yx=H0YDFcY-=J8OtHpQ@mail.gmail.com>
- <aCNYxyaGNBuKTqX3@gardel-login> <CAPza5qdAogcH8T9aFPCXs+=gSVAY48Z4TUGxz1Pm0ZENRZjVcA@mail.gmail.com>
- <aae34fa0-9b39-43a9-a784-352aa29ed02f@redhat.com>
-In-Reply-To: <aae34fa0-9b39-43a9-a784-352aa29ed02f@redhat.com>
-From: Chengen Du <chengen.du@canonical.com>
-Date: Fri, 6 Jun 2025 12:18:53 +0800
-X-Gm-Features: AX0GCFtRt-JAXJTJ9NAatcma5YawwHnTgmjPAbwoPZuEMLJfzgmvWFj1zHa9OEk
-Message-ID: <CAPza5qfpXRe4mOwfz3Kdy-35rhjPa-cakmna3eA4RJM5YHcfqA@mail.gmail.com>
-Subject: Re: [systemd-devel] [Discussion][device-mapper] Enabling Block Device
- Access Locking in systemd
-To: Zdenek Kabelac <zkabelac@redhat.com>, Lennart Poettering <lennart@poettering.net>
-Cc: dm-devel@lists.linux.dev, linux-lvm@lists.linux.dev, 
-	christophe.varoqui@opensvc.com, systemd-devel@lists.freedesktop.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH RFC 3/4] dm-stripe: limit chunk_sectors to the stripe size
+To: John Garry <john.g.garry@oracle.com>, agk@redhat.com, snitzer@kernel.org,
+        mpatocka@redhat.com, song@kernel.org, yukuai3@huawei.com, hch@lst.de,
+        axboe@kernel.dk
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+        linux-raid@vger.kernel.org, linux-block@vger.kernel.org,
+        ojaswin@linux.ibm.com, martin.petersen@oracle.com
+References: <20250605150857.4061971-1-john.g.garry@oracle.com>
+ <20250605150857.4061971-4-john.g.garry@oracle.com>
+Content-Language: en-US
+From: Nilay Shroff <nilay@linux.ibm.com>
+In-Reply-To: <20250605150857.4061971-4-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-GUID: zfauzWNZU7Fhnw5fbhqBnJ3WZz4ZokBJ
+X-Proofpoint-ORIG-GUID: zfauzWNZU7Fhnw5fbhqBnJ3WZz4ZokBJ
+X-Authority-Analysis: v=2.4 cv=SO9CVPvH c=1 sm=1 tr=0 ts=68430650 cx=c_pps a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17 a=IkcTkHD0fZMA:10 a=6IFa9wvqVegA:10 a=yPCof4ZbAAAA:8 a=H49iAnPEzUvt3JwDqx0A:9 a=QEXdDO2ut3YA:10
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNjA2MDEzMiBTYWx0ZWRfXzHp/c9A8vlDS ayOHWFRgdS0HJWnzKg+fvUE3XNFE5d8qw35o3/l8GuKe9CFK7YTWYq6ljJk2VBoraFptL4IEVse itmjoeBC9QZ0SXvcY3YuFwXz1GniImC2TewbiPzjf0mA6KrSHdfuMU7T4INGzTkVEO1UlL7mgIi
+ iHcpkPgrqzDIIKbM/sZFXiZbQbmhV/BYbK36gJ4TL7tqVwIiHsBErpSJobu+H3aGm0dPH3DDG9o HcmjLM9PMa7PNEtLSWzBfP8dyiyCmg2GVYyWsyJXP2ERYnbQCLnOt2awPIVfjMDDjFooQgNsrXg xrYC+aCMYl46wrDarZEHCCl25LPx4KQtWgKwk7ZpNcTGBtBjY7F7mdraAj+Kz7/DUhTpmXi/YLz
+ z1/BOl1I1fEee4heF5fqJ9pzrXJmjjg+Nc9sX8mUs5A47wQjRBnM4w0UZbHN6Y0kO+CL5yMR
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.0.736,FMLib:17.12.80.40
+ definitions=2025-06-06_05,2025-06-05_01,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0
+ impostorscore=0 phishscore=0 priorityscore=1501 adultscore=0
+ mlxlogscore=999 clxscore=1011 spamscore=0 lowpriorityscore=0 bulkscore=0
+ mlxscore=0 suspectscore=0 classifier=spam authscore=0 authtc=n/a authcc=
+ route=outbound adjust=0 reason=mlx scancount=1 engine=8.19.0-2505280000
+ definitions=main-2506060132
 
-Hi Zdenek,
 
-Thank you for your feedback on this issue.
-Your input has been valuable in moving the discussion forward.
 
-On Wed, Jun 4, 2025 at 5:06=E2=80=AFPM Zdenek Kabelac <zkabelac@redhat.com>=
- wrote:
->
-> Dne 04. 06. 25 v 5:33 Chengen Du napsal(a):
-> > Hi DM developers,
-> >
-> > On Tue, May 13, 2025 at 10:35=E2=80=AFPM Lennart Poettering
-> > <lennart@poettering.net> wrote:
-> >>
-> >> On Di, 13.05.25 16:08, Chengen Du (chengen.du@canonical.com) wrote:
-> >>
-> >>> Hi,
-> >>>
-> >>> Apologies for including everyone in this message, but I=E2=80=99d lik=
-e to bring
-> >>> your attention to a fix [1], which may require your input.
-> >>
-> >> As mentioned in my comments there: we can certainly enable the locking
-> >> stuff again for DM block devices too, but only if DM maintainers sign
-> >> off that this is OK. Hence ping the DM people about this, otherwise we
-> >> won't move on this.
-> >>
-> >>> To mitigate such issues, systemd-udevd normally acquires a LOCK_SH|LO=
-CK_NB
-> >>> using flock on the main block device before processing.
-> >>> However, commit #e918a1b5a94f (udev: exclude device-mapper from block
-> >>> device ownership event locking) disabled this behavior for device-map=
-per
-> >>> devices, which appears to be the root cause of the boot hang with enc=
-rypted
-> >>> swap.
-> >>
-> >> iirc dm for some reason is allergic to us taking a bsd lock, because
-> >> they don't want us to hold an fd open while the udev rules run
-> >> (because bsd locking implies holding an fd open as long as the lock is
-> >> kept).
-> >>
-> >> But only the DM people can shed some light on this. if they are fine
-> >> these days if we relax this then we can certainly cover their stuff
-> >> via the locking, too.
-> >
-> > Apologies for reaching out again, but may I kindly ask for your input
-> > on this issue?
-> > Your assistance would be greatly appreciated to help move things forwar=
-d.
->
->
-> Hi
->
-> We have overlooked the issue which seems to have origins most likely in t=
-he
-> lost uevents due to switch from initramfs to rootfs and should be possibl=
-y
-> addressed by a new socket flag.
->
-> But anyway let's looks at the current locking mechanism.
->
-> So for lvm2 to be able to 'deactivate' DM device - such device must NOT b=
-e
-> opened - so taking a lock on an open descriptor to deactivate DM device i=
-s
-> likely not going to work.
->
-> lvm2 however could be possibly enhanced to at least grab these bsd locks =
-maybe
-> when processing PV - that does not looks like a problematic part.
->
-> But adding bsd locks when processing DM  (active LVs) looks like not so
-> trivial task - there are DM devices which are  'private' to DM stack itse=
-lf
-> (i.e.   cached raid LV  - for a single  public  DM device - there might b=
-e
-> tens of 'private' DM devices associated in a device tree - and for none o=
-f
-> these devices lvm2 expects anyone using them - so any 'device stack tree'
-> manipulation basically aborts when an unexpected user is there  (public
-> availability of these 'private' devices is however useful thing for vario=
-us
-> 'recovery/debugging' reasons - so there is very good reason all devices a=
-re
-> present in users's /dev/ directory - but administrator should not blindly=
- open
-> them)
->
-> For protection against udev access to these private devices - were have
-> originally used some uevent flags - those however were not 'permanent' as=
- if
-> udev was restarted with the clear database - all this info was lost  (lik=
-e one
-> of the reason we asked in the past for this DM exception).  Later on we a=
-dded
-> UUID -suffix solution - but this is not yet 'decorating' all device types=
- -
-> and although we now try to add them - it's not a simple task - so likely =
-some
-> nearby future version of lvm2 could be better - and in such a case - if t=
-his
-> newer  version of lvm2 would be in the system - and there would be no acc=
-ess
-> to any device with UUID '-suffix' from udev tools chain - we can possibly
-> reconsider this DM exception and see whether we can make it work somehow.
->
-> Yet - for locking itself - I'd probably see some usage of separate lockin=
-g dir
-> in /run  as more usable approach - as the case where device needs to be
-> 'removed/instantiated/....' cannot be 'lock protected' if the device itse=
-lf
-> must be held open.
+On 6/5/25 8:38 PM, John Garry wrote:
+> Currently we use min io size as the chunk size when deciding on the limit
+> of atomic write size.
+> 
+> Using min io size is not reliable, as this may be mutated when stacking
+> the bottom device limits.
+> 
+> The block stacking limits will rely on chunk_sectors in future, so set
+> this value (to the chunk size).
+> 
+> Introduce a flag - DM_TARGET_STRIPED - and check this in
+> dm_set_device_limits() when setting this limit.
+> 
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>  drivers/md/dm-stripe.c        | 3 ++-
+>  drivers/md/dm-table.c         | 4 ++++
+>  include/linux/device-mapper.h | 3 +++
+>  3 files changed, 9 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index a7dc04bd55e5..c30df6715149 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -466,7 +466,8 @@ static struct target_type stripe_target = {
+>  	.name   = "striped",
+>  	.version = {1, 7, 0},
+>  	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
+> -		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO,
+> +		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO |
+> +		    DM_TARGET_STRIPED,
+>  	.module = THIS_MODULE,
+>  	.ctr    = stripe_ctr,
+>  	.dtr    = stripe_dtr,
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 24a857ff6d0b..4f1f7173740c 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -430,6 +430,10 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+>  		return 0;
+>  	}
+>  
+> +	/* For striped types, limit the chunk_sectors to the chunk size */
+> +	if (dm_target_supports_striped(ti->type))
+> +		limits->chunk_sectors = len >> SECTOR_SHIFT;
+> +
+I think here "len" refers to the total size of dm target and not the 
+chunk sectors. So we need to modify this and take into account chunk sectors..
+We can get chunk sectors, for example, like this:
 
-I actually considered this approach earlier.
-We could achieve the same goal by introducing a file under the /run
-directory and using it as a target for flock.
-One potential challenge might be reaching consensus on the file name format=
-.
-While this method may not be as straightforward as using the main
-block device, it could help address the issue of deactivating a block
-device that's being held open.
-I'm not an expert in this area, so perhaps Lennart could provide more
-informed insights.
+	struct stripe_c *sc = ti->private;
+	limits->chunk_sectors = sc->chunk_size;
 
->
-> But as a short term solution - we would rather need to see the actual exa=
-ct
-> problem which seems to be missing this locking - as is could be possibly
-> something unrelated to this locking...
+But again struct stripe_c is private to dm-stripe.c and so we can't access it
+here directly in dm-table.c Better we add a new callback function for dm target
+type under struct target_type and then use that callback to get chunk sector. 
 
-The issue we're aiming to resolve currently lies within systemd.
-During the boot process, the system may hang while waiting for the
-encrypted swap device node.
-This appears to be caused by the absence of block device access
-locking for device-mapper devices during udev event processing.
-This problem could potentially be addressed by reintroducing locking
-during udev processing, as systemd already wraps operations using
-systemd-makefs, which implements the necessary locking logic.
-I understand that additional work may be required on the lvm2 side
-before block device access locking can be fully considered.
-One of the main concerns with this proposed fix is that the main
-device may be opened if a BSD lock is held during udev processing.
+struct target_type stripe_target = {
+        ...
+        .chunk_sectors = stripe_chunk_sectors,
+        ...
+}
 
->
->
-> Regards
->
-> Zdenek
->
+Thanks,
+--Nilay
+
