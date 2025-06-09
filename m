@@ -1,171 +1,144 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2048C1A2C25
-	for <dm-devel@lists.linux.dev>; Fri,  6 Jun 2025 15:24:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF3280B
+	for <dm-devel@lists.linux.dev>; Mon,  9 Jun 2025 15:20:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749223484; cv=none; b=VdZi3YIOgoB3gB/JBcX9nw/EfPw6ScoxqcOq4nKduNbF9MSYwaJUPn+cp8M17aomPbj2MHoGFF8GhH5V5poNEIj9aqZ7Gv8N67MOHCr9CJGUluRMyUTayRXwGAk466pDa4xE2ax2vvuIb+W6al5nKZj4djJWBiq1bgyVoW9ptkk=
+	t=1749482408; cv=none; b=p4JXiVnnt43QjajnVPNi8pdYquStoi5QGufFk1PANA30g2wkQ3otSGi+mJMn29lFp6V+DloFpwedq80ySTbCUTdOFY6ZlEV6LbTGNpS3ZX/x4M0jHZvTzQLVwioFQlbApryDx8juqsGHrtTkoLb7y/6nUfWaqeR+gyuLpzkP2Nw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749223484; c=relaxed/simple;
-	bh=PGxsIoF6XolSXA0yz6NNwiZhEBrLUkM+cSRlgFa4b6w=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=uTXYY1Oho2cy8ILEaty3hIwJ0+F32SISvOMunlaUSs5lAk46ZJMpPPTmLLl7tzunpEoDIQgf2cy2TtF15+B2Ju4y5a/o5mBcDSn5+U07DPS/0LQGFRmpr7PRpYCML0l57KN6VgOrgxOlh1wrlJtQOqE4Axo+tr8uM2Pap7PtJkY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=QlKmfyvd; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1749482408; c=relaxed/simple;
+	bh=DbYVzzhSqIADIaQMs6OG1P3hPZjhzCK8znSCdbbc6U4=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=ZGlVh4+/iqWK59OFyqCi994ULz3WIAbG0XGU++iTGdj5CCbmRh2wplr0b0FEO5DBuWXl09hNfXnFspEcA5+z8ol+pfA5TWCFHo/1MXGZagHMy2JPvcph9T/tlZ+tWRit1ER5yZiF+GzvXZeFUEVB/smzJ/y9jHQB7UlTarXY4U8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UAoW8/lt; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="QlKmfyvd"
-Received: from pps.filterd (m0360083.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 556CZAZx030304;
-	Fri, 6 Jun 2025 15:23:27 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=71jYEz
-	zkLLgoJ5VbvpTNuDtlu7S8OnwL/GqbGzUT0bA=; b=QlKmfyvdBBpIXkO+fbv8Mo
-	J0bAIS6e1OzWCyU/1M9HwXsjCnh17zKX2ajFv4XpfH5cCcpy3myaefUBzboG4wSn
-	XErxht2lDnaMHsSWoQOLlyw2vYkPfCSmSMZoOGijkLyBANQ1x56I9xKhcNJFQq6k
-	NFiTzfQTLU84F5FWYsv8hwL/nt1OG03Adt+L1MgDdKX3qqnEnkNkUqb+17nYgnxF
-	roAo8ss3uOe9fqUBW/jYr4QpchLdd9dTYu2jkOLaYOuruE4mH46TUWosBN40p7fX
-	RzIWp7Qf9RYLgaAEhxZOi7xbQJ3VYtYt9KBW/9oNcD1WlVVI9hXcdbK5L3gPtwmA
-	==
-Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 471gf07ahu-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 06 Jun 2025 15:23:26 +0000 (GMT)
-Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
-	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 556F0mVN024768;
-	Fri, 6 Jun 2025 15:23:25 GMT
-Received: from smtprelay04.dal12v.mail.ibm.com ([172.16.1.6])
-	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 470dkmsyj7-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 06 Jun 2025 15:23:25 +0000
-Received: from smtpav02.wdc07v.mail.ibm.com (smtpav02.wdc07v.mail.ibm.com [10.39.53.229])
-	by smtprelay04.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 556FNOXA26280540
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 6 Jun 2025 15:23:24 GMT
-Received: from smtpav02.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 2DFC05805E;
-	Fri,  6 Jun 2025 15:23:24 +0000 (GMT)
-Received: from smtpav02.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id F282258059;
-	Fri,  6 Jun 2025 15:23:17 +0000 (GMT)
-Received: from [9.67.149.38] (unknown [9.67.149.38])
-	by smtpav02.wdc07v.mail.ibm.com (Postfix) with ESMTP;
-	Fri,  6 Jun 2025 15:23:17 +0000 (GMT)
-Message-ID: <94718ca7-edb8-4e87-9b2d-586dcbd42690@linux.ibm.com>
-Date: Fri, 6 Jun 2025 20:53:16 +0530
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UAoW8/lt"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1749482404;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5mlAQYytM8B2b5zdqsGWE01G/dEOVGIx1BTCzzndcRo=;
+	b=UAoW8/lt7/rwamezExRJnAZ7y01c3PJ6lkCV4EB0dyRtVd63EilZFgdaV9QTpbyBNS+hsS
+	a/rAXpkc4/oJ9KdaRi7t6K8CiyvcLzIFMq0XWRnMl3/B5qSnpsco3oMTJtlMjDK4P6Cqcq
+	PzIUYbSPJr81RmW6UBRaGaIUQj/lYBQ=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-482-tR-w92DaNcuUZOIUi-Gaag-1; Mon,
+ 09 Jun 2025 11:20:01 -0400
+X-MC-Unique: tR-w92DaNcuUZOIUi-Gaag-1
+X-Mimecast-MFC-AGG-ID: tR-w92DaNcuUZOIUi-Gaag_1749482399
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D8F71180028C;
+	Mon,  9 Jun 2025 15:19:58 +0000 (UTC)
+Received: from [10.22.80.249] (unknown [10.22.80.249])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8F53719560A3;
+	Mon,  9 Jun 2025 15:19:54 +0000 (UTC)
+Date: Mon, 9 Jun 2025 17:19:51 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: John Garry <john.g.garry@oracle.com>
+cc: agk@redhat.com, snitzer@kernel.org, song@kernel.org, yukuai3@huawei.com, 
+    hch@lst.de, nilay@linux.ibm.com, axboe@kernel.dk, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
+    linux-block@vger.kernel.org, ojaswin@linux.ibm.com, 
+    martin.petersen@oracle.com
+Subject: Re: [PATCH RFC 3/4] dm-stripe: limit chunk_sectors to the stripe
+ size
+In-Reply-To: <20250605150857.4061971-4-john.g.garry@oracle.com>
+Message-ID: <e7e147a8-f22e-e420-1497-5b31be9ab4e3@redhat.com>
+References: <20250605150857.4061971-1-john.g.garry@oracle.com> <20250605150857.4061971-4-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC 4/4] block: use chunk_sectors when evaluating stacked
- atomic write limits
-To: John Garry <john.g.garry@oracle.com>, agk@redhat.com, snitzer@kernel.org,
-        mpatocka@redhat.com, song@kernel.org, yukuai3@huawei.com, hch@lst.de,
-        axboe@kernel.dk
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
-        linux-raid@vger.kernel.org, linux-block@vger.kernel.org,
-        ojaswin@linux.ibm.com, martin.petersen@oracle.com
-References: <20250605150857.4061971-1-john.g.garry@oracle.com>
- <20250605150857.4061971-5-john.g.garry@oracle.com>
-Content-Language: en-US
-From: Nilay Shroff <nilay@linux.ibm.com>
-In-Reply-To: <20250605150857.4061971-5-john.g.garry@oracle.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Authority-Analysis: v=2.4 cv=Pq2TbxM3 c=1 sm=1 tr=0 ts=684307ee cx=c_pps a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17 a=IkcTkHD0fZMA:10 a=6IFa9wvqVegA:10 a=VwQbUJbxAAAA:8 a=VnNF1IyMAAAA:8 a=yPCof4ZbAAAA:8 a=FRLcGKbqzZ5yKL8xwJUA:9
- a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNjA2MDEzMiBTYWx0ZWRfXzd0EnRca5xVc 0uGyd1wyuBCUmYmpt3lJF8TqD/n7XVAFr1kakUSre9tzJhRqudUpqHO+5QVDAvNe2hTDshZLEBC UqkWesWm+fWT/FK0H+WAPly3a+73oagO18tDW9PW0MeIkQ30V62RPbkWuxJMwTaLgDTjUc+Cnad
- k+7cpcbuIkklaySQwf9dyyqkVW5vig03DayEyXRm5xP2a75SjyyokLgSScofh5PdoKsnQ0Vj+tW Fy1/QTR3wxfS+6RnbpcjQqAI8+9N4IFvg4iXcbSassLW35fdGusim5vjpiPrwEXCAXYpOa/OZV/ 6wA7JscWzdD1aKzwGbfO9/L64ijPCayCdArfFA1zQ23Dw7IfZjTy3uC06dYFqBNiKIu4Hg72V7a
- uP7/c2FS2oQvvcuL/93L1Vl8LBm+9b74sIT5ybVegVYDSP7exd9mj3uqjm8QjqG89MYlJr63
-X-Proofpoint-GUID: 8j7_MUFoHJHOYQoVUE6ahr8RJfFrSiP3
-X-Proofpoint-ORIG-GUID: 8j7_MUFoHJHOYQoVUE6ahr8RJfFrSiP3
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.0.736,FMLib:17.12.80.40
- definitions=2025-06-06_05,2025-06-05_01,2025-03-28_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 impostorscore=0
- lowpriorityscore=0 clxscore=1015 malwarescore=0 mlxlogscore=999
- phishscore=0 bulkscore=0 spamscore=0 suspectscore=0 priorityscore=1501
- mlxscore=0 adultscore=0 classifier=spam authscore=0 authtc=n/a authcc=
- route=outbound adjust=0 reason=mlx scancount=1 engine=8.19.0-2505280000
- definitions=main-2506060132
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
 
 
-On 6/5/25 8:38 PM, John Garry wrote:
-> The atomic write unit max is limited by any stack device stripe size.
+On Thu, 5 Jun 2025, John Garry wrote:
+
+> Currently we use min io size as the chunk size when deciding on the limit
+> of atomic write size.
 > 
-> It is required that the atomic write unit is a power-of-2 factor of the
-> stripe size.
+> Using min io size is not reliable, as this may be mutated when stacking
+> the bottom device limits.
 > 
-> Currently we use io_min limit to hold the stripe size, and check for a
-> io_min <= SECTOR_SIZE when deciding if we have a striped stacked device.
+> The block stacking limits will rely on chunk_sectors in future, so set
+> this value (to the chunk size).
 > 
-> Nilay reports that this causes a problem when the physical block size is
-> greater than SECTOR_SIZE [0].
-> 
-> Furthermore, io_min may be mutated when stacking devices, and this makes
-> it a poor candidate to hold the stripe size. Such an example would be
-> when the io_min is less than the physical block size.
-> 
-> Use chunk_sectors to hold the stripe size, which is more appropriate.
-> 
-> [0] https://lore.kernel.org/linux-block/888f3b1d-7817-4007-b3b3-1a2ea04df771@linux.ibm.com/T/#mecca17129f72811137d3c2f1e477634e77f06781
+> Introduce a flag - DM_TARGET_STRIPED - and check this in
+> dm_set_device_limits() when setting this limit.
 > 
 > Signed-off-by: John Garry <john.g.garry@oracle.com>
 > ---
->  block/blk-settings.c | 8 +++++---
->  1 file changed, 5 insertions(+), 3 deletions(-)
+>  drivers/md/dm-stripe.c        | 3 ++-
+>  drivers/md/dm-table.c         | 4 ++++
+>  include/linux/device-mapper.h | 3 +++
+>  3 files changed, 9 insertions(+), 1 deletion(-)
 > 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index a000daafbfb4..5b0f1a854e81 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -594,11 +594,13 @@ static bool blk_stack_atomic_writes_boundary_head(struct queue_limits *t,
->  static bool blk_stack_atomic_writes_head(struct queue_limits *t,
->  				struct queue_limits *b)
->  {
-> +	unsigned int chunk_size = t->chunk_sectors << SECTOR_SHIFT;
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index a7dc04bd55e5..c30df6715149 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -466,7 +466,8 @@ static struct target_type stripe_target = {
+>  	.name   = "striped",
+>  	.version = {1, 7, 0},
+>  	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
+> -		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO,
+> +		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO |
+> +		    DM_TARGET_STRIPED,
+>  	.module = THIS_MODULE,
+>  	.ctr    = stripe_ctr,
+>  	.dtr    = stripe_dtr,
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index 24a857ff6d0b..4f1f7173740c 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -430,6 +430,10 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
+>  		return 0;
+>  	}
+>  
+> +	/* For striped types, limit the chunk_sectors to the chunk size */
+> +	if (dm_target_supports_striped(ti->type))
+> +		limits->chunk_sectors = len >> SECTOR_SHIFT;
 > +
->  	if (b->atomic_write_hw_boundary &&
->  	    !blk_stack_atomic_writes_boundary_head(t, b))
->  		return false;
->  
-> -	if (t->io_min <= SECTOR_SIZE) {
-> +	if (!t->chunk_sectors) {
->  		/* No chunk sectors, so use bottom device values directly */
->  		t->atomic_write_hw_unit_max = b->atomic_write_hw_unit_max;
->  		t->atomic_write_hw_unit_min = b->atomic_write_hw_unit_min;
-> @@ -617,12 +619,12 @@ static bool blk_stack_atomic_writes_head(struct queue_limits *t,
->  	 * aligned with both limits, i.e. 8K in this example.
->  	 */
->  	t->atomic_write_hw_unit_max = b->atomic_write_hw_unit_max;
-> -	while (t->io_min % t->atomic_write_hw_unit_max)
-> +	while (chunk_size % t->atomic_write_hw_unit_max)
->  		t->atomic_write_hw_unit_max /= 2;
->  
->  	t->atomic_write_hw_unit_min = min(b->atomic_write_hw_unit_min,
->  					  t->atomic_write_hw_unit_max);
-> -	t->atomic_write_hw_max = min(b->atomic_write_hw_max, t->io_min);
-> +	t->atomic_write_hw_max = min(b->atomic_write_hw_max, chunk_size);
->  
->  	return true;
->  }
 
-This works well with my NVMe disk which supports atomic writes however the only
-concern is what if in case t->chunk_sectors is also defined for NVMe disk? 
-I see that nvme_set_chunk_sectors() initializes the chunk_sectors for NVMe. 
-The value which is assigned to lim->chunk_sectors in nvme_set_chunk_sectors()
-represents "noiob" (i.e. Namespace Optimal I/O Boundary). My disk has "noiob" 
-set to zero but in case if it's non-zero then would it break the above logic
-for NVMe atomic writes?
+len is already in sectors, so why do we shift it right?
 
-Thanks,
---Nilay
+Could this logic be moved to the function stripe_io_hints, so that we 
+don't have to add a new flag for that and that we don't have to modify the 
+generic dm code?
 
+Mikulas
+
+>  	mutex_lock(&q->limits_lock);
+>  	/*
+>  	 * BLK_FEAT_ATOMIC_WRITES is not inherited from the bottom device in
+> diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+> index cb95951547ab..a863523b69ee 100644
+> --- a/include/linux/device-mapper.h
+> +++ b/include/linux/device-mapper.h
+> @@ -309,6 +309,9 @@ struct target_type {
+>  #define DM_TARGET_ATOMIC_WRITES		0x00000400
+>  #define dm_target_supports_atomic_writes(type) ((type)->features & DM_TARGET_ATOMIC_WRITES)
+>  
+> +#define DM_TARGET_STRIPED		0x00000800
+> +#define dm_target_supports_striped(type) ((type)->features & DM_TARGET_STRIPED)
+> +
+>  struct dm_target {
+>  	struct dm_table *table;
+>  	struct target_type *type;
+> -- 
+> 2.31.1
+> 
 
