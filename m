@@ -1,56 +1,70 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5E1915E96
-	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 03:29:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDF251D61A3
+	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 04:00:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749612589; cv=none; b=aVOSGWRL8zUhBpA3+4nY1ZhLvSwaKKYI+Kb+WrVvvwnLTlpwb1vqX7W7oT1W0UNbipX/JYGt5pwcrGn8w8z2E2RbtIjfNKuYoVJuBCLeZfVDcy2lpP+q34zLRub351QbZdSmemeSdWDmTQPJuKIrdSVsuJWOjoXhBCZ2uBMLwqM=
+	t=1749614431; cv=none; b=cmh4vf2KMW9Qu2K7J4hxrjkpzhMoQNC8DjfgtXnUMuz1PONPX2UMep5NPiNqypBkjPQCQcbKgQNcEsYJva8UyGRVuH3ImzqoaNaMGp3872iaCMnpQNccLuH4wXoVT2mU3wp0EW3860aBulsl+byo+DEnhwm3b4rbEZvgoVvoOPM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749612589; c=relaxed/simple;
-	bh=DjCG7g3BwGNbtfVTti9LGnthnA3mnvZLeNvVG22rYnM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=a30tT7FXdNbLhO9o/b3XIdK9lX4VU8I/Ts4dDjh2q/dlsda7htg9/aTxKmm/NiCR2DvVpjM/IofR7hKN6dBgckDtZn5jI+jr6gno2UG1lEzE8GUEzucMkpFTdPvhSyi0XPogSaC708Oz0Z++QfLOEMNaW1lm/1QRVqQccUiR/+g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=eESh/9mm; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1749614431; c=relaxed/simple;
+	bh=m+k6EZmyv9k88y1mHqlxCIry56OlHgyAsTSPtnTotI0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=dIeIHP8DGXfrBj9K8VxvqzFqsZtFQwjmAWa01a21453Nea9JvbSELx0g6JUBaG373su+jRfF6qI29CE+3l+yw8yxEGf4nHIwMyRTxyGY8tRwLm0Xd+828uG5OLb3MFPr9siPCQp8nP/Tm5D1KPELeSQrEuvkDDLJulL/XtnLJBE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=oyPur5Cs; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="eESh/9mm"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=DjCG7g3BwGNbtfVTti9LGnthnA3mnvZLeNvVG22rYnM=; b=eESh/9mmp9WQC4V0hTmwxOH2om
-	Np0bc/qvytbCJhaYCK/cUYd8mHUfIO7LSgJqTjw391D4oxSaBjHvjDazwkqcuU3ZRVj+ma3q1ecfW
-	GofETauJJcpQUsL3Am/3gpZdUlxHQsKq4EERhtS1zy3Soa6WJUNRia7J6YfRCGV8oUXmjiWZhmVf/
-	SP4GyePSJLNIrZ3DxACKYHLPKzIaGnFYrcl5Vm7t2eUVPazRoTBUmwn5/QHnC4m5tOxTQvkhdj4N0
-	sRxRm0eWmD5BWD71YvkhnSMmf7dtJRfnXIzGpvoe+GFqhmlKL+LEi9cswiu6WgSvLjqXDWfCC+/CT
-	jsosjilQ==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1uPC9s-00000008jtE-20hb;
-	Wed, 11 Jun 2025 03:29:48 +0000
-Date: Tue, 10 Jun 2025 20:29:48 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 2/2] dm: Simplify dm_io_complete()
-Message-ID: <aEj4LI1KZtzJ-9Mr@infradead.org>
-References: <20250611011457.92309-1-dlemoal@kernel.org>
- <20250611011457.92309-3-dlemoal@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="oyPur5Cs"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F107EC4CEEE;
+	Wed, 11 Jun 2025 04:00:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1749614430;
+	bh=m+k6EZmyv9k88y1mHqlxCIry56OlHgyAsTSPtnTotI0=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=oyPur5CsZIl9+clcu0uteWdkxjjvETiAKoR48jwALy3UCjS+Mx+UjnYPikxA1hoFE
+	 wYTKp+wU6NGwBBYd5MYdessKEOPnqLLshfVcU4jVw3uRAygaBhDMD2mJsIvkaW6cJM
+	 J0kCTOUtIVMLpELrQH3XK5sHOvqo1CIsCkmQd2Tp1PzGKVkbnQJCreI9XZTi08MSAk
+	 5mtX6GbhIXFfo58+Xt8vjkakQDr82ubjwZ8QN3cHfixLp81+Myy7VvobcrmtWZZIfD
+	 jADYn+pwZ4LRTbITWUzMx7rrNYr8I4dEgj2r4CpE3P7jL1G0bIPh0JJ80YB55yyfHI
+	 NBPoPOcOBwM3g==
+Message-ID: <62be55ad-a52e-49b4-90ec-a1f6bcf04550@kernel.org>
+Date: Wed, 11 Jun 2025 12:58:44 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250611011457.92309-3-dlemoal@kernel.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 2/2] dm: Check for forbidden splitting of emulated zone
+ append operations
+To: Christoph Hellwig <hch@infradead.org>
+Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+References: <20250611011340.92226-1-dlemoal@kernel.org>
+ <20250611011340.92226-3-dlemoal@kernel.org> <aEj3-S0aJWU5iEVg@infradead.org>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <aEj3-S0aJWU5iEVg@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Not sure if there is much of a point in second guessing the compiler
-with the explicit inline statement (t'll probably inline anyway),
-but the logic change looks good:
+On 6/11/25 12:28 PM, Christoph Hellwig wrote:
+> On Wed, Jun 11, 2025 at 10:13:40AM +0900, Damien Le Moal wrote:
+>> @@ -1322,6 +1323,7 @@ void dm_accept_partial_bio(struct bio *bio, unsigned int n_sectors)
+>>  	BUG_ON(dm_tio_flagged(tio, DM_TIO_IS_DUPLICATE_BIO));
+>>  	BUG_ON(op_is_zone_mgmt(bio_op(bio)));
+>>  	BUG_ON(bio_op(bio) == REQ_OP_ZONE_APPEND);
+>> +	BUG_ON(bio_flagged(bio, BIO_EMULATES_ZONE_APPEND));
+>>  	BUG_ON(bio_sectors > *tio->len_ptr);
+>>  	BUG_ON(n_sectors > bio_sectors);
+> 
+> Shouldn't all these be WARN_ON_ONCE and error return instead?
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Yes, I would prefer that, but that would be a more involved cleanup.
+I can switch to doing that instead of this simple check.
+
+
+-- 
+Damien Le Moal
+Western Digital Research
