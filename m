@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 390092253F3
-	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 06:09:12 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C53561A28D
+	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 06:11:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749622154; cv=none; b=S2GkpyDUOyGURR3I10Kp2DYnnqR+RA0f2IwavtJKLKKsAsOaQrD8UEJa9wD9mIg4F0Vu20ksA5dv0hzcE+OxmLusBfk83q7vt7uS3gbuSbgpQIhHRNifIispZvLV3nzaJNQa7uprRKPmspEIJdDRnSzMy05Hz69ta/TfSnePuUc=
+	t=1749622265; cv=none; b=n3WnzifVtS4ll62u0O4p5tTPwXC2bSHAKcpx/jVhBcEGksDH5GE89JauNWhRLbJlQ9LifGS5glhLLYKblPUaKtIvjVg2rwHhotGZwSNy/jnvYHzKW/6+bRTYb1Wn4/1/B+pkJPwoKq3pXOhKQIvvjvlLoelvTShRBKbCzARzyg8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749622154; c=relaxed/simple;
-	bh=8sMku4WxahX1FuZlVCqNoL8+EPGRsyZn1w622Xjs6Cw=;
+	s=arc-20240116; t=1749622265; c=relaxed/simple;
+	bh=gCYqfeP01dFMugvs6vUFmJxrlEq0uOra2uN2zZsgAuI=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FJUJv56jJyu2dskYfDlIXCTE8uM0UJTD9iTUIU+tYSzto5nw30IDbgwltnytQ1P4TwtDhPaFEh3jtxuO5BlaOt35RbvRu7Kl8UxWwEEA8RQaADlnYoWUtK8maBcEDEaKFqUd0KIGttw/J1/oiYYCzvdpL8bvo7hoNLh2oVxuceY=
+	 Content-Type:Content-Disposition:In-Reply-To; b=sXop7vIRVXZSxSjZAl3AhfE3oEFYgb0dXe07FiCr4fMG/Q1I4hMi/IDj2N8ymkodW8HsMxHfx1KvjvgVpmr4mVLIZPEz8IZnenh8Je4gPG9+9ShX+ErzIA5sYpr2SXF4L3RM2AqqQ6ymj9yztox/4CHrFXcBmQ4yqmB+O6STqoI=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 9CE2368AA6; Wed, 11 Jun 2025 08:09:00 +0200 (CEST)
-Date: Wed, 11 Jun 2025 08:09:00 +0200
+	id 3722468AA6; Wed, 11 Jun 2025 08:10:59 +0200 (CEST)
+Date: Wed, 11 Jun 2025 08:10:58 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Zhang Yi <yi.zhang@huaweicloud.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -28,10 +28,9 @@ Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
 	shinichiro.kawasaki@wdc.com, brauner@kernel.org,
 	martin.petersen@oracle.com, yi.zhang@huawei.com,
 	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH 01/10] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to
- queue limits features
-Message-ID: <20250611060900.GA4613@lst.de>
-References: <20250604020850.1304633-1-yi.zhang@huaweicloud.com> <20250604020850.1304633-2-yi.zhang@huaweicloud.com>
+Subject: Re: [PATCH 09/10] block: add FALLOC_FL_WRITE_ZEROES support
+Message-ID: <20250611061058.GB4613@lst.de>
+References: <20250604020850.1304633-1-yi.zhang@huaweicloud.com> <20250604020850.1304633-10-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -40,27 +39,25 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250604020850.1304633-2-yi.zhang@huaweicloud.com>
+In-Reply-To: <20250604020850.1304633-10-yi.zhang@huaweicloud.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Wed, Jun 04, 2025 at 10:08:41AM +0800, Zhang Yi wrote:
-> +static ssize_t queue_write_zeroes_unmap_show(struct gendisk *disk, char *page)
+On Wed, Jun 04, 2025 at 10:08:49AM +0800, Zhang Yi wrote:
+> @@ -856,6 +856,13 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
+>  	/* Fail if we don't recognize the flags. */
+>  	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
+>  		return -EOPNOTSUPP;
+> +	/*
+> +	 * Don't allow writing zeroes if the device does not enable the
+> +	 * unmap write zeroes operation.
+> +	 */
+> +	if (!bdev_write_zeroes_unmap(bdev) &&
+> +	    (mode & FALLOC_FL_WRITE_ZEROES))
 
-..
+Cosmetic nitpick, but I'd turn the check around to check the mode first
+as that's easier to read.  The whole check also fits onto a single line:
 
-> +static int queue_write_zeroes_unmap_store(struct gendisk *disk,
-> +		const char *page, size_t count, struct queue_limits *lim)
-
-We're probably getting close to wanting macros for the sysfs
-flags, similar to the one for the features (QUEUE_SYSFS_FEATURE).
-
-No need to do this now, just thinking along.
-
-> +/* supports unmap write zeroes command */
-> +#define BLK_FEAT_WRITE_ZEROES_UNMAP	((__force blk_features_t)(1u << 17))
-
-
-Should this be exposed through sysfs as a read-only value?
+	if ((mode & FALLOC_FL_WRITE_ZEROES) && !bdev_write_zeroes_unmap(bdev))
 
 Otherwise looks good:
 
