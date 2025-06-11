@@ -1,91 +1,56 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8AC922615
-	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 01:16:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73B866BFCE
+	for <dm-devel@lists.linux.dev>; Wed, 11 Jun 2025 03:28:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749604606; cv=none; b=UGyHJeZzZprNeH+QCmgY453nO9qlzXwZdgRshhhy/0eayoSoBUJaNUq0zXnf1kg9hd8dkh0A/jvAmrLHSxSA9XnPF71uBSFMASR0AqYq92osTzeFdYreDTLskL2Iche4PczdFjvqexkZ3pqZ66tu84gOFUEa72wKctA+fOb/rzE=
+	t=1749612500; cv=none; b=K2m6BvoKIrRdsVX1va3j5zdCTb+s4Hqhu8lLtHP+zt6MzTOjqxeW4dtY4KMNkOZkfltTnTgZ7e7GGPZrGCg+84Kgr6l/4XzcQvo7GHhFxvPzHUlmSxjYltbP7/pndSAtbeFgAbdgaG5AhflF8q9O+MpUtseJtr8+4BNr44WD6lQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749604606; c=relaxed/simple;
-	bh=OwCF8/6fv4ZP9Dq2KVssJWBGZkWZHCyKE3EUw9lo7rc=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lohXvuDvgYchrITjfw4BxEB+aD3OiE6WZj8TyYkGscKv7lMk4BF44Q7YdQcWB/w7kP4nhHeAa7y4HRbkLlOSYkhiqPlzywMPQ5mGxlu/LB7e0vNbo3x7Zl/oBbRxKsEikuFVuxm3BOcClbob4GEnm/pMh3eQfJ5SNNpZfELvZmk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=OFBjn0IN; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1749612500; c=relaxed/simple;
+	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Qd3F+Lcp4xM+3xhoduiZesc66O0ePealaddGhPWH5ere2BP2gRjZ6nj2eNK4x2PUa8/EZXxjw3DyCreIg/jVZZ2F9UwSmg1y7DOKLuskC/1tSX4PnRG53tAGGvDJNMGYkbMGwR3J2FD35mD9vX8m6sDSUh+iuxDAhKJEMoCSZNs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=ygSUmC4N; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="OFBjn0IN"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id BEB30C4CEF1;
-	Wed, 11 Jun 2025 01:16:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1749604606;
-	bh=OwCF8/6fv4ZP9Dq2KVssJWBGZkWZHCyKE3EUw9lo7rc=;
-	h=From:To:Subject:Date:In-Reply-To:References:From;
-	b=OFBjn0INAtkDH/UMxH1GqXqb6FV2zhZA3EGEmSRC0VeERGgwZgjuSyQrBvG/heGOk
-	 w9yOMvf9VD+/2aedeWeOVH1dT4UcqS4d4TJClE2LZ99FXAMKZQtfHlxJ9xoRCPzrYh
-	 BZ3heHHyF6v9k3gJuPuIW4UzBORdYGFxLTahkbmwCnfmPXhAoB3PV2auFeGnQm2p5Q
-	 r7YKT587HPkizhlu1kZGxZAMmz6/6OEauU0zfAXFSkAkz/gpXeCVenwEZ2rP5RcJyA
-	 O7ZdcgJqScXgs0PlVKNCtBkjX3oMhg0nRVSaUa+mm7d5YUIPmhovg7KUWGaOuervfj
-	 cg5HPQS89WImg==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@kernel.org>,
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="ygSUmC4N"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=ygSUmC4N1w1zZDKVn2pld7GDF9
+	aaPEMGCavV5BRdavV4ww7YbZKp8EcA/K7ivENSk884qH9N4vTJqKkyOzBKTHxOW1N6Nydq1SCWKY/
+	p8ARWmpLNVVtTZtLbQltET+wns/P472Hf3t+xhGoy5aXckS5QQ6yzvkHFt7m/vmYfp/gKZj2+HeFg
+	g4KomOGgXr4krqlzzY70gzuFS9IibBy06/btshfzj5MrNXjqePjWTm+OVgLEbyiSpRHQttLS4HVZB
+	AQbxNZc8kspgcpj/h6Y6vm0YYQ7ee+NklgKFILVdx/16bRoX8uOak/FoeHuUq55aM5eHEvow2uolz
+	4GAebIlA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uPC8Q-00000008jn4-00XZ;
+	Wed, 11 Jun 2025 03:28:18 +0000
+Date: Tue, 10 Jun 2025 20:28:17 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 2/2] dm: Simplify dm_io_complete()
-Date: Wed, 11 Jun 2025 10:14:57 +0900
-Message-ID: <20250611011457.92309-3-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.49.0
-In-Reply-To: <20250611011457.92309-1-dlemoal@kernel.org>
-References: <20250611011457.92309-1-dlemoal@kernel.org>
+Subject: Re: [PATCH 1/2] dm: dm-crypt: Prevent splitting of emulated zone
+ append operations
+Message-ID: <aEj30bm46WDi3sFl@infradead.org>
+References: <20250611011340.92226-1-dlemoal@kernel.org>
+ <20250611011340.92226-2-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250611011340.92226-2-dlemoal@kernel.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-The local variable first_requeue is not needed since it is always equal
-to dm_io_flagged(io, DM_IO_WAS_SPLIT). Call __dm_io_complete() passing
-this value directly and remove first_requeue.
+Looks good:
 
-Also declare dm_io_complete() as inline to make sure it is inlined in
-its single call site, thus avoiding the cost of a function call.
-
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- drivers/md/dm.c | 11 ++---------
- 1 file changed, 2 insertions(+), 9 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f1da8fde549c..21920991ab28 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1024,10 +1024,8 @@ static void dm_wq_requeue_work(struct work_struct *work)
-  *
-  * 2) io->orig_bio points to new cloned bio which matches the requeued dm_io.
-  */
--static void dm_io_complete(struct dm_io *io)
-+static inline void dm_io_complete(struct dm_io *io)
- {
--	bool first_requeue;
--
- 	/*
- 	 * Only dm_io that has been split needs two stage requeue, otherwise
- 	 * we may run into long bio clone chain during suspend and OOM could
-@@ -1036,12 +1034,7 @@ static void dm_io_complete(struct dm_io *io)
- 	 * Also flush data dm_io won't be marked as DM_IO_WAS_SPLIT, so they
- 	 * also aren't handled via the first stage requeue.
- 	 */
--	if (dm_io_flagged(io, DM_IO_WAS_SPLIT))
--		first_requeue = true;
--	else
--		first_requeue = false;
--
--	__dm_io_complete(io, first_requeue);
-+	__dm_io_complete(io, dm_io_flagged(io, DM_IO_WAS_SPLIT));
- }
- 
- /*
--- 
-2.49.0
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 
