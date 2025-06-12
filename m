@@ -1,105 +1,253 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 662F0279795;
-	Thu, 12 Jun 2025 15:03:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4964A23E229
+	for <dm-devel@lists.linux.dev>; Thu, 12 Jun 2025 16:57:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749740628; cv=none; b=WzfBwLkBLUuOb5Vzqax3mCt1WPq+AHFtgQ5jAPtGv+/DbBveZXLvoarIOr5IghKmsUU4VxEtzdD8/kUeVokcX6IDnaqnQaG3mH39Jk81WmiLc3cI4F97Goe1QshcNJRKg6Ku1ghl185An1MbBBEta9/kSbM6F2hsRLZ3rD92NIo=
+	t=1749747468; cv=none; b=snE33WIkPpZWE1jEdzTY8Uq/AHRR2nQ2CU2T0jVkjFCIUCNxsYDlUcUk80+jEzi9sCJgatAA08LBr220x6AIVImGCu7SSwFJIXwauDJl7r9lO94sOPrW7MbV3dZNHHe3L5Dr//Jgwf/2yI+RSRPbouJ7mHNksax8USVwpl3Rmo8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749740628; c=relaxed/simple;
-	bh=ONyFbl7eR0QXU3CRaThaUkea18g1Bd2HJqzSu8H2F5E=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=nVwdg6vIKF1xXsMiRSIRaSzB79GN8FbI2279dR5cLXr4bZVv0UIU/i789xnTwkcMjU6ud8IPiiocrIjnabH8BvyyuiQf5hjjvmx+ygS6MpJYiWjKjyvJ5fBBg7+m5lQglVPKeM+ZPG43Lsnk4v8F6rpnFGFU46wxjIHEWRM3IUw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=m74s/H9b; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1749747468; c=relaxed/simple;
+	bh=QSG7D5Ee+lqB7uIngTksC2+r3e40S16X7xs0+Vyolpw=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=fuyH6EoLLbqrRDLsF3xBhbTMaSVu+n2jWeN1iuu6AjNDZjA+z3fM8Oj+OHbtcZP3112xBTU45xI3+12EROfCcRcKk0BZQJlyXZWLwHFgi3kzKpCQbhrr0mQaT2JlbfdsPQ4Qv5Wy+m5b45F25+dvjV4JkBca+qQ+bDJ2rE2shvI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=P3C/SMzG; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="m74s/H9b"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C65BDC4CEEB;
-	Thu, 12 Jun 2025 15:03:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1749740627;
-	bh=ONyFbl7eR0QXU3CRaThaUkea18g1Bd2HJqzSu8H2F5E=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=m74s/H9bViol79YmIelbep7cXyzEw47hdktzg1MN6vCsg0S24VQ/KqSDwpigubKeE
-	 i41PpwJYbao8dKkGyE2Qqe80rDBt1KLstr08lFXyM7NrBpY5+1GLMitIsyHPH9pCI1
-	 RYqA94+q4srgJ820hmzPT2j5D4utw51hYyphDzfmQ9/qugstzZiKxhOn3D8GrAvQ8j
-	 X4Jo/C2BGR8LyZw47KY7cK2I3lFCTccQP4dr8up2k8RWnzpbNifNYM9Yn3+F7UHZR0
-	 qapgcqmD42kiSJv9F9eFn76HvvhT8koJ4G37SFjrSwz0usnG0i9ighP1aKYvjTYnul
-	 8U9pYzGL/Kbhg==
-Date: Thu, 12 Jun 2025 08:03:47 -0700
-From: "Darrick J. Wong" <djwong@kernel.org>
-To: Zhang Yi <yi.zhang@huaweicloud.com>
-Cc: Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org,
-	linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org, tytso@mit.edu,
-	john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
-	shinichiro.kawasaki@wdc.com, brauner@kernel.org,
-	martin.petersen@oracle.com, yi.zhang@huawei.com,
-	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH 01/10] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to
- queue limits features
-Message-ID: <20250612150347.GK6138@frogsfrogsfrogs>
-References: <20250604020850.1304633-1-yi.zhang@huaweicloud.com>
- <20250604020850.1304633-2-yi.zhang@huaweicloud.com>
- <20250611060900.GA4613@lst.de>
- <343f7f06-9bf6-442f-8e77-0a774203ec3f@huaweicloud.com>
- <20250612044744.GA12828@lst.de>
- <41c21e20-5439-4157-ad73-6f133df42d28@huaweicloud.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="P3C/SMzG"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1749747465;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=O8RJTG+npCgJlg7Z/HdtOQxD67RTMJOSk9i98l6Xl/c=;
+	b=P3C/SMzG0FJzjheccJ8mGya0V95OdPIZ985F/Ty2h2JWWlvZXdT5Qr0Xy9bks22P2FlHHd
+	0BDsQ/1OeHVfoFx/oT+KPL0ojSIat/r8hcQtcNP8fJLD04p6f2m8+xH9lNXRFih5S7G+Vz
+	LouBi6dOTctR9bs2VhEyI9QrA7/RElM=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-670-OAXpt8UsPryVjKMYBUTIOA-1; Thu,
+ 12 Jun 2025 12:57:40 -0400
+X-MC-Unique: OAXpt8UsPryVjKMYBUTIOA-1
+X-Mimecast-MFC-AGG-ID: OAXpt8UsPryVjKMYBUTIOA_1749747458
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 528EF19560B3;
+	Thu, 12 Jun 2025 16:57:37 +0000 (UTC)
+Received: from [10.22.80.249] (unknown [10.22.80.249])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2875E180045C;
+	Thu, 12 Jun 2025 16:57:31 +0000 (UTC)
+Date: Thu, 12 Jun 2025 18:57:26 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
+    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
+    dm-devel@lists.linux.dev
+Subject: =?UTF-8?Q?Re=3A_=5BRFC_v2_00=2F11=5D_dm-pcache_=E2=80=93_pers?=
+ =?UTF-8?Q?istent-memory_cache_for_block_devices?=
+In-Reply-To: <20250605142306.1930831-1-dongsheng.yang@linux.dev>
+Message-ID: <dc019764-5128-526e-d8ea-effa78e37b39@redhat.com>
+References: <20250605142306.1930831-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <41c21e20-5439-4157-ad73-6f133df42d28@huaweicloud.com>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-On Thu, Jun 12, 2025 at 07:20:45PM +0800, Zhang Yi wrote:
-> On 2025/6/12 12:47, Christoph Hellwig wrote:
-> > On Wed, Jun 11, 2025 at 03:31:21PM +0800, Zhang Yi wrote:
-> >>>> +/* supports unmap write zeroes command */
-> >>>> +#define BLK_FEAT_WRITE_ZEROES_UNMAP	((__force blk_features_t)(1u << 17))
-> >>>
-> >>>
-> >>> Should this be exposed through sysfs as a read-only value?
-> >>
-> >> Uh, are you suggesting adding another sysfs interface to expose
-> >> this feature?
-> > 
-> > That was the idea.  Or do we have another way to report this capability?
-> > 
+Hi
+
+
+On Thu, 5 Jun 2025, Dongsheng Yang wrote:
+
+> Hi Mikulas and all,
 > 
-> Exposing this feature looks useful, but I think adding a new interface
-> might be somewhat redundant, and it's also difficult to name the new
-> interface. What about extend this interface to include 3 types? When
-> read, it exposes the following:
+> This is *RFC v2* of the *pcache* series, a persistent-memory backed cache.
+> Compared with *RFC v1* 
+> <https://lore.kernel.org/lkml/20250414014505.20477-1-dongsheng.yang@linux.dev/>  
+> the most important change is that the whole cache has been *ported to
+> the Device-Mapper framework* and is now exposed as a regular DM target.
 > 
->  - none     : the device doesn't support BLK_FEAT_WRITE_ZEROES_UNMAP.
->  - enabled  : the device supports BLK_FEAT_WRITE_ZEROES_UNMAP, but the
->               BLK_FLAG_WRITE_ZEROES_UNMAP_DISABLED is not set.
->  - disabled : the device supports BLK_FEAT_WRITE_ZEROES_UNMAP, and the
->               BLK_FLAG_WRITE_ZEROES_UNMAP_DISABLED is set.
+> Code:
+>     https://github.com/DataTravelGuide/linux/tree/dm-pcache
 > 
-> Users can write '0' and '1' to disable and enable this operation if it
-> is not 'none', thoughts?
-
-Perhaps it should reuse the enumeration pattern elsewhere in sysfs?
-For example,
-
-# cat /sys/block/sda/queue/scheduler
-none [mq-deadline]
-# echo none > /sys/block/sda/queue/scheduler
-# cat /sys/block/sda/queue/scheduler
-[none] mq-deadline
-
-(Annoying that this seems to be opencoded wherever it appears...)
-
---D
-
-> Best regards,
-> Yi.
+> Full RFC v2 test results:
+>     https://datatravelguide.github.io/dtg-blog/pcache/pcache_rfc_v2_result/results.html
 > 
+>     All 962 xfstests cases passed successfully under four different
+> pcache configurations.
 > 
+>     One of the detailed xfstests run:
+>         https://datatravelguide.github.io/dtg-blog/pcache/pcache_rfc_v2_result/test-results/02-._pcache.py_PcacheTest.test_run-crc-enable-gc-gc0-test_script-xfstests-a515/debug.log
+> 
+> Below is a quick tour through the three layers of the implementation,
+> followed by an example invocation.
+> 
+> ----------------------------------------------------------------------
+> 1. pmem access layer
+> ----------------------------------------------------------------------
+> 
+> * All reads use *copy_mc_to_kernel()* so that uncorrectable media
+>   errors are detected and reported.
+> * All writes go through *memcpy_flushcache()* to guarantee durability
+>   on real persistent memory.
+
+You could also try to use normal write and clflushopt for big writes - I 
+found out that for larger regions it is better - see the function 
+memcpy_flushcache_optimized in dm-writecache. Test, which way is better.
+
+> ----------------------------------------------------------------------
+> 2. cache-logic layer (segments / keys / workers)
+> ----------------------------------------------------------------------
+> 
+> Main features
+>   - 16 MiB pmem segments, log-structured allocation.
+>   - Multi-subtree RB-tree index for high parallelism.
+>   - Optional per-entry *CRC32* on cached data.
+
+Would it be better to use crc32c because it has hardware support in the 
+SSE4.2 instruction set?
+
+>   - Background *write-back* worker and watermark-driven *GC*.
+>   - Crash-safe replay: key-sets are scanned from *key_tail* on start-up.
+> 
+> Current limitations
+>   - Only *write-back* mode implemented.
+>   - Only FIFO cache invalidate; other (LRU, ARC...) planned.
+> 
+> ----------------------------------------------------------------------
+> 3. dm-pcache target integration
+> ----------------------------------------------------------------------
+> 
+> * Table line  
+>     `pcache <pmem_dev> <origin_dev> writeback <true|false>`
+> * Features advertised to DM:
+>   - `ti->flush_supported = true`, so *PREFLUSH* and *FUA* are honoured
+>     (they force all open key-sets to close and data to be durable).
+> * Not yet supported:
+>   - Discard / TRIM.
+>   - dynamic `dmsetup reload`.
+
+If you don't support it, you should at least try to detect that the user 
+did reload and return error - so that there won't be data corruption in 
+this case.
+
+But it would be better to support table reload. You can support it by a 
+similar mechanism to "__handover_exceptions" in the dm-snap.c driver.
+
+> Runtime controls
+>   - `dmsetup message <dev> 0 gc_percent <0-90>` adjusts the GC trigger.
+> 
+> Status line reports super-block flags, segment counts, GC threshold and
+> the three tail/head pointers (see the RST document for details).
+
+Perhaps these are not real bugs (I didn't analyze it thoroughly), but 
+there are some GFP_NOWAIT and GFP_KERNEL allocations.
+
+GFP_NOWAIT can fail anytime (for example, if the machine receives too many 
+network packets), so you must handle the error gracefully.
+
+GFP_KERNEL allocation may recurse back into the I/O path through swapping 
+or file writeback, thus they may cause deadlocks. You should use 
+GFP_KERNEL in the target constructor or destructor because there is no I/O 
+to be processed in this time, but they shouldn't be used in the I/O 
+processing path.
+
+I see that when you get ENOMEM, you retry the request in 100ms - putting 
+arbitrary waits in the code is generally bad practice - this won't work if 
+the user is swapping to the dm-pcache device. It may be possible that 
+there is no memory free, thus retrying won't help and it will deadlock.
+
+I suggest to use mempools to guarantee forward progress in out-of-memory 
+situation. A mempool_alloc(GFP_IO) will never return NULL, it will just 
+wait until some other process frees some entry into the mempool.
+
+Generally, a convention among device mapper targets is that the have a few 
+fixed parameters first, then there is a number of optional parameters and 
+then there are optional parameters (either in "parameter:123" or 
+"parameter 123" format). You should follow this convention, so that it can 
+be easily extended with new parameters later.
+
+The __packed attribute causes performance degradation on risc machines 
+without hardware support for unaligned accesses - the compiled will 
+generate byte-by-byte accesses - I suggest to not use it and instead make 
+sure that the members in the structures are naturally aligned (and 
+inserting explicit padding if needed).
+
+The function "memcpy_flushcache" in arch/x86/include/asm/string_64.h is 
+optimized for 4, 8 and 16-byte accesess (because that's what dm-writecache 
+uses) - I suggest to add more optimizations to it for constant sizes that 
+fit the usage pattern of dm-pcache,
+
+I see that you are using "queue_delayed_work(cache_get_wq(cache), 
+&cache->writeback_work, 0);" and "queue_delayed_work(cache_get_wq(cache), 
+&cache->writeback_work, delay);" - the problem here is that if the entry 
+is already queued with a delay and you attempt to queue it again with zero 
+again, this new queue attempt will be ignored - I'm not sure if this is 
+intended behavior or not.
+
+req_complete_fn: this will never run with interrupts disabled, so you can 
+replace spin_lock_irqsave/spin_unlock_irqrestore with 
+spin_lock_irq/spin_unlock_irq.
+
+backing_dev_bio_end: there's a bug in this function - it may be called 
+both with interrupts disabled and interrupts enabled, so you should not 
+use spin_lock/spin_unlock. You should be called 
+spin_lock_irqsave/spin_unlock_irqrestore.
+
+queue_work(BACKING_DEV_TO_PCACHE - i would move it inside the spinlock - 
+see the commit 829451beaed6165eb11d7a9fb4e28eb17f489980 for a similar 
+problem.
+
+bio_map - bio vectors can hold arbitrarily long entries - if the "base" 
+variable is not from vmalloc, you can just add it one bvec entry.
+"backing_req->kmem.bvecs = kcalloc" - you can use kmalloc_array instead of 
+kcalloc, there's no need to zero the value.
+
+> +                if (++wait_count >= PCACHE_WAIT_NEW_CACHE_COUNT)
+> +                        return NULL;
+> +
+> +                udelay(PCACHE_WAIT_NEW_CACHE_INTERVAL);
+> +                goto again;
+
+This is not good practice to insert arbitrary waits (here, the wait is 
+burning CPU power, which makes it even worse). You should add the process 
+to a wait queue and wake up the queue.
+
+See the functions writecache_wait_on_freelist and writecache_free_entry 
+for an example, how to wait correctly.
+
+> +static int dm_pcache_map_bio(struct dm_target *ti, struct bio *bio)
+> +{
+> +     struct pcache_request *pcache_req = dm_per_bio_data(bio, sizeof(struct pcache_request));
+> +     struct dm_pcache *pcache = ti->private;
+> +     int ret;
+> +
+> +     pcache_req->pcache = pcache;
+> +     kref_init(&pcache_req->ref);
+> +     pcache_req->ret = 0;
+> +     pcache_req->bio = bio;
+> +     pcache_req->off = (u64)bio->bi_iter.bi_sector << SECTOR_SHIFT;
+> +     pcache_req->data_len = bio->bi_iter.bi_size;
+> +     INIT_LIST_HEAD(&pcache_req->list_node);
+> +     bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
+
+This looks suspicious because you store the original bi_sector to
+pcache_req->off and then subtract the target offset from it. Shouldn't
+"bio->bi_iter.bi_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);"
+be before "pcache_req->off = (u64)bio->bi_iter.bi_sector << 
+SECTOR_SHIFT;"?
+
+Generally, the code doesn't seem bad. After reworking the out-of-memory 
+handling and replacing arbitrary waits with wait queues, I can merge it.
+
+Mikulas
+
