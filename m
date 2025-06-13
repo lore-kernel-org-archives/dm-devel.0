@@ -1,131 +1,116 @@
-Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED5BE293C44;
-	Fri, 13 Jun 2025 19:19:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1349328DB64
+	for <dm-devel@lists.linux.dev>; Fri, 13 Jun 2025 23:08:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749842389; cv=none; b=K58kenm948/DSiNeI/ZhDATPRzhHykeJgRnErX6HjeUj98nakmuUPI12S3+80bfeFLt9zxd2dppzKdP0ZsIuVeWKMhnijM2m++DbEXH7POEtls2PDaWmGdqoRcVpU1HZVx/vBaryR6djM1HGC/A9s5me4nDzB3k0Lc0yCrP3BJ8=
+	t=1749856140; cv=none; b=gop5Yw8T+lCP3CH21bLag2wNNXFep16nzFck6Aoe6rFzfWfNQ9bVTYCA7BLSvBpHoy7rN4q9sduOvx2qs5P4BnAr2l0BF/DfnQQX374OcadyN9/lOBCQQkuQ3wLj52rdzZzmtSALr5nfBVCOU16oIgenl1NI48fn3VQKUhIJ+Y4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749842389; c=relaxed/simple;
-	bh=n2BDf5mMcnBKVe5dxBtOScq6uwxcfsr7fsdeqTPatNI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=PTIIv8565Wc56uQdYw3neNYmye1dcFfMIwiHf4gZHu7oaCPmCQl74Z+3jIV4fkThJAmpkos74UXum4BuwYXlCr3mXmMXCxvCvYO7bsBNfMplMrKj7n35/NwjJ8EJuQlO5DffWmdqDBJdbbwvZEc5fEKPCOdMlxtvC10KRqNbtc0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=RqsPkmAd; arc=none smtp.client-ip=90.155.50.34
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1749856140; c=relaxed/simple;
+	bh=OKB3ZxSZeMo1L8dPxpTpWCd6gUeuVuMUM2JO7e2Ut74=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=ggwShBJel5aE68dRvmQObllW+mxTTKYfCsWMuGQ676Z0xhWFHvS9kE6WwcCgiYmG0D61+eh+sNPYuqXxbSgNMnjkQWmdvHBwO7q4mKfXWovbd4zxJjl1vMS8L2JzTD8l5cmWy7INHD2yULtpg+yI/7IYefXTvUrLFb0BzxBUSp0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ch7bd4/2; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="RqsPkmAd"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=casper.20170209; h=Content-Transfer-Encoding:MIME-Version:
-	Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:Content-ID:
-	Content-Description:In-Reply-To:References;
-	bh=TkOFbauvzCXJHwA0lhC4SCDt9ja1fwf0WBrjpXqNJPQ=; b=RqsPkmAdtdKYrHJLBDSu5+zm+h
-	uGK0oV1C7UKQcWF7PYpK95kJcT/1RnytI1KUhlGTFrVrQdB6m4raUZqXs8EK0e00ac+LklOHgOX8K
-	pExcWT57uG4i6BComDySKqGVTtxLa+2cASmaZDQ+68gDauE9yRnqVP62IoU8+N3OT9EULlK6mywWx
-	YdR+C6/Ddd9+H8Mg2MRBOlmdlRbZ7xKajKu3EOKwbLHk8OvIOSubcE3+cvPcMgeZDpgOr7VcpZGtX
-	ExrMRKPvsAUPx8UASeASX80OHiJG4OLxReWR4FDnZlAXq602zGhFKfUVbG/xwJV6xBvvrVYanqwXX
-	nC2UpO7g==;
-Received: from willy by casper.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1uQ9wH-0000000DIaz-381b;
-	Fri, 13 Jun 2025 19:19:45 +0000
-From: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-To: Coly Li <colyli@kernel.org>
-Cc: "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-	linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: [PATCH] bcache: Use a folio
-Date: Fri, 13 Jun 2025 20:19:39 +0100
-Message-ID: <20250613191942.3169727-1-willy@infradead.org>
-X-Mailer: git-send-email 2.49.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ch7bd4/2"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1749856136;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=2lGgdJuxbKccQ9wiEEvN7KAMFUSGxinKm+oI23MWqj0=;
+	b=Ch7bd4/2glKgaAeSbxnk804Yg0QbPPhshYWHS7jsthh7qezphoI80vvx+3b7pvVORJvDCf
+	KixAen7figkwlSPj43hI1ET+1RAUv3GI8wvsltWBBqCWEdpfpqmLWa0y3eGoSAo+/hckQT
+	N28F6jM5TxAcqH8eisrLM6UpH4aruSM=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-558-AOQLWesqO12LBEoiN1jdFg-1; Fri,
+ 13 Jun 2025 19:08:55 -0400
+X-MC-Unique: AOQLWesqO12LBEoiN1jdFg-1
+X-Mimecast-MFC-AGG-ID: AOQLWesqO12LBEoiN1jdFg_1749856134
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8857B195608B
+	for <dm-devel@lists.linux.dev>; Fri, 13 Jun 2025 23:08:54 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E230B180045C;
+	Fri, 13 Jun 2025 23:08:53 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 55DN8q1b2838277
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 13 Jun 2025 19:08:52 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 55DN8qPs2838276;
+	Fri, 13 Jun 2025 19:08:52 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-table: fix checking for rq stackable devices
+Date: Fri, 13 Jun 2025 19:08:52 -0400
+Message-ID: <20250613230852.2838268-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Wr9V7HkcNe41YA8CCBkWWmbnrA0d1dFU7-Y836CpdvY_1749856134
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Retrieve a folio from the page cache instead of a page.  Removes a
-hidden call to compound_head().  Then be sure to call folio_put()
-instead of put_page() to release it.  That doesn't save any calls
-to compound_head(), just moves them around.
+Due to the semantics of iterate_devices(), the current code allows a
+request-based dm table as long as it includes one request-stackable
+device. It is supposed to only allow tables where there are no
+non-request-stackable devices.
 
-Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/md/bcache/super.c | 22 +++++++++++-----------
- 1 file changed, 11 insertions(+), 11 deletions(-)
+ drivers/md/dm-table.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-index 1efb768b2890..83c786a5cc47 100644
---- a/drivers/md/bcache/super.c
-+++ b/drivers/md/bcache/super.c
-@@ -168,14 +168,14 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
- {
- 	const char *err;
- 	struct cache_sb_disk *s;
--	struct page *page;
-+	struct folio *folio;
- 	unsigned int i;
- 
--	page = read_cache_page_gfp(bdev->bd_mapping,
--				   SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
--	if (IS_ERR(page))
-+	folio = mapping_read_folio_gfp(bdev->bd_mapping,
-+			SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
-+	if (IS_ERR(folio))
- 		return "IO error";
--	s = page_address(page) + offset_in_page(SB_OFFSET);
-+	s = folio_address(folio) + offset_in_folio(folio, SB_OFFSET);
- 
- 	sb->offset		= le64_to_cpu(s->offset);
- 	sb->version		= le64_to_cpu(s->version);
-@@ -272,7 +272,7 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
- 	*res = s;
- 	return NULL;
- err:
--	put_page(page);
-+	folio_put(folio);
- 	return err;
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 9f95f77687ef..d91207b2d77f 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -898,17 +898,17 @@ static bool dm_table_supports_dax(struct dm_table *t,
+ 	return true;
  }
  
-@@ -1366,7 +1366,7 @@ static CLOSURE_CALLBACK(cached_dev_free)
- 	mutex_unlock(&bch_register_lock);
+-static int device_is_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
+-				  sector_t start, sector_t len, void *data)
++static int device_is_not_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
++				      sector_t start, sector_t len, void *data)
+ {
+ 	struct block_device *bdev = dev->bdev;
+ 	struct request_queue *q = bdev_get_queue(bdev);
  
- 	if (dc->sb_disk)
--		put_page(virt_to_page(dc->sb_disk));
-+		folio_put(virt_to_folio(dc->sb_disk));
+ 	/* request-based cannot stack on partitions! */
+ 	if (bdev_is_partition(bdev))
+-		return false;
++		return true;
  
- 	if (dc->bdev_file)
- 		fput(dc->bdev_file);
-@@ -2215,7 +2215,7 @@ void bch_cache_release(struct kobject *kobj)
- 		free_fifo(&ca->free[i]);
+-	return queue_is_mq(q);
++	return !queue_is_mq(q);
+ }
  
- 	if (ca->sb_disk)
--		put_page(virt_to_page(ca->sb_disk));
-+		folio_put(virt_to_folio(ca->sb_disk));
+ static int dm_table_determine_type(struct dm_table *t)
+@@ -1004,7 +1004,7 @@ static int dm_table_determine_type(struct dm_table *t)
  
- 	if (ca->bdev_file)
- 		fput(ca->bdev_file);
-@@ -2592,7 +2592,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
- 	if (!holder) {
- 		ret = -ENOMEM;
- 		err = "cannot allocate memory";
--		goto out_put_sb_page;
-+		goto out_put_sb_folio;
+ 	/* Non-request-stackable devices can't be used for request-based dm */
+ 	if (!ti->type->iterate_devices ||
+-	    !ti->type->iterate_devices(ti, device_is_rq_stackable, NULL)) {
++	    ti->type->iterate_devices(ti, device_is_not_rq_stackable, NULL)) {
+ 		DMERR("table load rejected: including non-request-stackable devices");
+ 		return -EINVAL;
  	}
- 
- 	/* Now reopen in exclusive mode with proper holder */
-@@ -2666,8 +2666,8 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
- 
- out_free_holder:
- 	kfree(holder);
--out_put_sb_page:
--	put_page(virt_to_page(sb_disk));
-+out_put_sb_folio:
-+	folio_put(virt_to_folio(sb_disk));
- out_blkdev_put:
- 	if (bdev_file)
- 		fput(bdev_file);
 -- 
-2.47.2
+2.48.1
 
