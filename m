@@ -1,116 +1,131 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1349328DB64
-	for <dm-devel@lists.linux.dev>; Fri, 13 Jun 2025 23:08:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FA6433062
+	for <dm-devel@lists.linux.dev>; Sat, 14 Jun 2025 04:48:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749856140; cv=none; b=gop5Yw8T+lCP3CH21bLag2wNNXFep16nzFck6Aoe6rFzfWfNQ9bVTYCA7BLSvBpHoy7rN4q9sduOvx2qs5P4BnAr2l0BF/DfnQQX374OcadyN9/lOBCQQkuQ3wLj52rdzZzmtSALr5nfBVCOU16oIgenl1NI48fn3VQKUhIJ+Y4=
+	t=1749876514; cv=none; b=dzVv6Uzf4brui5nC+wKLAPBO7SRlsEzem2ZWLzZpyNjX/Yo536Pp/9awDKrUmL4kvzi/ZuJhzV+WBDAuBGWW5JEWsoNe43DgH2Vz/D5HfQjjmPBirB8EBNVDxSvTJYr/OZ4W+FW/wLNDKdFYTv26IprG6fl1wUs5GRkEsOYfJxQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1749856140; c=relaxed/simple;
-	bh=OKB3ZxSZeMo1L8dPxpTpWCd6gUeuVuMUM2JO7e2Ut74=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=ggwShBJel5aE68dRvmQObllW+mxTTKYfCsWMuGQ676Z0xhWFHvS9kE6WwcCgiYmG0D61+eh+sNPYuqXxbSgNMnjkQWmdvHBwO7q4mKfXWovbd4zxJjl1vMS8L2JzTD8l5cmWy7INHD2yULtpg+yI/7IYefXTvUrLFb0BzxBUSp0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ch7bd4/2; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ch7bd4/2"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1749856136;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=2lGgdJuxbKccQ9wiEEvN7KAMFUSGxinKm+oI23MWqj0=;
-	b=Ch7bd4/2glKgaAeSbxnk804Yg0QbPPhshYWHS7jsthh7qezphoI80vvx+3b7pvVORJvDCf
-	KixAen7figkwlSPj43hI1ET+1RAUv3GI8wvsltWBBqCWEdpfpqmLWa0y3eGoSAo+/hckQT
-	N28F6jM5TxAcqH8eisrLM6UpH4aruSM=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-558-AOQLWesqO12LBEoiN1jdFg-1; Fri,
- 13 Jun 2025 19:08:55 -0400
-X-MC-Unique: AOQLWesqO12LBEoiN1jdFg-1
-X-Mimecast-MFC-AGG-ID: AOQLWesqO12LBEoiN1jdFg_1749856134
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8857B195608B
-	for <dm-devel@lists.linux.dev>; Fri, 13 Jun 2025 23:08:54 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E230B180045C;
-	Fri, 13 Jun 2025 23:08:53 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 55DN8q1b2838277
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 13 Jun 2025 19:08:52 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 55DN8qPs2838276;
-	Fri, 13 Jun 2025 19:08:52 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm-table: fix checking for rq stackable devices
-Date: Fri, 13 Jun 2025 19:08:52 -0400
-Message-ID: <20250613230852.2838268-1-bmarzins@redhat.com>
+	s=arc-20240116; t=1749876514; c=relaxed/simple;
+	bh=lygWowa6guLMhQzlm7uWnDHP6s+JxGl/+Zxvm0cojAU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Xb0CwOOum4CbZMen1P0TwwNbbS7PT1LItKYBP1CKmNqAgRbRuXs8t5Y9dIyQcINwhYS4lpBX5RE3JyWeeZvkQWCnSJO0RpLvmWVRucXFIc8HBkQdd+lNXIpMn6Lm6xL9I5ubJNnguP4isz+VksLiNOw11vMskbnuqBzD1U2mxaU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4bK3gK3mPZzYQvBM
+	for <dm-devel@lists.linux.dev>; Sat, 14 Jun 2025 12:48:29 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 7F32D1A0AEC
+	for <dm-devel@lists.linux.dev>; Sat, 14 Jun 2025 12:48:28 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP4 (Coremail) with SMTP id gCh0CgBXvGAa_0xoKqTaPQ--.42646S3;
+	Sat, 14 Jun 2025 12:48:28 +0800 (CST)
+Message-ID: <3d749264-6fdd-458f-a3a8-35d2320193b3@huaweicloud.com>
+Date: Sat, 14 Jun 2025 12:48:26 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Wr9V7HkcNe41YA8CCBkWWmbnrA0d1dFU7-Y836CpdvY_1749856134
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 01/10] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to
+ queue limits features
+To: "Darrick J. Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>
+Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+ linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, tytso@mit.edu,
+ john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com,
+ shinichiro.kawasaki@wdc.com, brauner@kernel.org, martin.petersen@oracle.com,
+ yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com,
+ yangerkun@huawei.com
+References: <20250604020850.1304633-1-yi.zhang@huaweicloud.com>
+ <20250604020850.1304633-2-yi.zhang@huaweicloud.com>
+ <20250611060900.GA4613@lst.de>
+ <343f7f06-9bf6-442f-8e77-0a774203ec3f@huaweicloud.com>
+ <20250612044744.GA12828@lst.de>
+ <41c21e20-5439-4157-ad73-6f133df42d28@huaweicloud.com>
+ <20250612150347.GK6138@frogsfrogsfrogs>
+ <3569a77f-1f38-4764-b1e3-d0075775c7bb@huaweicloud.com>
+ <20250613055630.GA9119@lst.de> <20250613145433.GF6134@frogsfrogsfrogs>
+Content-Language: en-US
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <20250613145433.GF6134@frogsfrogsfrogs>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:gCh0CgBXvGAa_0xoKqTaPQ--.42646S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7Kr15uw47uryUJF4kCryxGrg_yoW8tF47pF
+	yjgFyxKrWDtF1UA3s5Aa10gF1Fq3y3Ga4xCrn7Wryku3s8WrnrWFs2g343XFyxC3s3Wa1j
+	vayxC3sI9ayvvaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvjb4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Cr0_Gr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I
+	0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
+	x7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
+	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7CjxVAaw2AF
+	wI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
+	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r4a6rW5
+	MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I
+	0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWU
+	JVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjxUIa
+	0PDUUUU
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-Due to the semantics of iterate_devices(), the current code allows a
-request-based dm table as long as it includes one request-stackable
-device. It is supposed to only allow tables where there are no
-non-request-stackable devices.
+On 2025/6/13 22:54, Darrick J. Wong wrote:
+> On Fri, Jun 13, 2025 at 07:56:30AM +0200, Christoph Hellwig wrote:
+>> On Fri, Jun 13, 2025 at 11:15:41AM +0800, Zhang Yi wrote:
+>>> Yeah, this solution looks good to me. However, we currently have only
+>>> two selections (none and unmap). What if we keep it as is and simply
+>>> hide this interface if BLK_FEAT_WRITE_ZEROES_UNMAP is not set, making
+>>> it visible only when the device supports this feature? Something like
+>>> below:
+>>
+>> I really hate having all kinds of different interfaces for configurations.
+> 
+> I really hate the open-coded string parsing nonsense that is sysfs. ;)
+> 
+>> Maybe we should redo this similar to the other hardware/software interfaces
+>> and have a hw_ limit that is exposed by the driver and re-only in
+>> sysfs, and then the user configurable one without _hw.  Setting it to
+>> zero disables the feature.
+> 
+> Yeah, that fits the /sys/block/foo/queue model better.
+> 
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/dm-table.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+OK, well. Please let me confirm, are you both suggesting adding
+max_hw_write_zeores_unmap_sectors and max_write_zeroes_unmap_sectors to
+the queue_limits instead of adding BLK_FEAT_WRITE_ZEROES_UNMAP to the
+queue_limits->features. Something like the following.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 9f95f77687ef..d91207b2d77f 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -898,17 +898,17 @@ static bool dm_table_supports_dax(struct dm_table *t,
- 	return true;
- }
- 
--static int device_is_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
--				  sector_t start, sector_t len, void *data)
-+static int device_is_not_rq_stackable(struct dm_target *ti, struct dm_dev *dev,
-+				      sector_t start, sector_t len, void *data)
- {
- 	struct block_device *bdev = dev->bdev;
- 	struct request_queue *q = bdev_get_queue(bdev);
- 
- 	/* request-based cannot stack on partitions! */
- 	if (bdev_is_partition(bdev))
--		return false;
-+		return true;
- 
--	return queue_is_mq(q);
-+	return !queue_is_mq(q);
- }
- 
- static int dm_table_determine_type(struct dm_table *t)
-@@ -1004,7 +1004,7 @@ static int dm_table_determine_type(struct dm_table *t)
- 
- 	/* Non-request-stackable devices can't be used for request-based dm */
- 	if (!ti->type->iterate_devices ||
--	    !ti->type->iterate_devices(ti, device_is_rq_stackable, NULL)) {
-+	    ti->type->iterate_devices(ti, device_is_not_rq_stackable, NULL)) {
- 		DMERR("table load rejected: including non-request-stackable devices");
- 		return -EINVAL;
- 	}
--- 
-2.48.1
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 378d3a1a22fc..14394850863c 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -376,7 +376,9 @@ struct queue_limits {
+        unsigned int            max_hw_discard_sectors;
+        unsigned int            max_user_discard_sectors;
+        unsigned int            max_secure_erase_sectors;
+-       unsigned int            max_write_zeroes_sectors;
++       unsigned int            max_hw_write_zeroes_sectors;
++       unsigned int            max_hw_write_zeores_unmap_sectors;
++       unsigned int            max_write_zeroes_unmap_sectors;
+        unsigned int            max_hw_zone_append_sectors;
+        unsigned int            max_zone_append_sectors;
+        unsigned int            discard_granularity;
+
+Besides, we should also rename max_write_zeroes_sectors to
+max_hw_write_zeroes_sectors since it is a hardware limitation reported
+by the driver.  If the device supports unmap write zeroes,
+max_hw_write_zeores_unmap_sectors should be equal to
+max_hw_write_zeroes_sectors, otherwise it should be 0.
+
+Right?
+
+Best regards,
+Yi.
 
