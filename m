@@ -1,77 +1,71 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF0322882DE
-	for <dm-devel@lists.linux.dev>; Mon, 16 Jun 2025 02:30:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4DFC17BA6
+	for <dm-devel@lists.linux.dev>; Mon, 16 Jun 2025 05:39:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750041040; cv=none; b=qoNB/d9WUnYoNvuQR5QoUA6zWXOAmzRRFmsyv4qnrlTQCUv85D6jRhT7GdXGy9tY9iswjsA4ZR8EPBEfCMJH1+XER8kjjyNn026O+qeFMlKN9qC6E10vQRM37yrycMXNkOnzjIg31Qf2EjWRVEle31nXOx72I0aZQ67zRtWM8S8=
+	t=1750052348; cv=none; b=CsMF+iBauI5bireJp78RCYN/rDgEjAkredQq0Qa6HmsFFoI+gVPfHB2Ar+LIl0H/sVee3uhYjLWXjUc3BQUb4vT7HpkSwlPmb4vlpjvxPMK0ahPooZ9f5yuAu/iP+NJk03B5N2uUl1KrhbDrAkSCKBGE7ZmFsMfAIMd9k+8tnsk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750041040; c=relaxed/simple;
-	bh=lvuFPRsOwj2wVjKZ9MACsb3On+CRneeuQcaW1aHBkpo=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:References:
-	 In-Reply-To:Content-Type; b=kt+eQqua79sUQ1JHT/6Frh4bAeeFRqWTwoeWJuLPTtbmFA9gM4gwD137r9W+718d8sOrhN0FlkLXgpcZuKmi8jB/FZRK1pCLAc9e3Tv4aHTFAHjatOfXwGSNgG6qs9whKb1QgvsRzdrcjBlPsLR055Ss9pVJ27ETPH68UzWzSoo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=X2eHhsE6; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="X2eHhsE6"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E1310C4CEE3;
-	Mon, 16 Jun 2025 02:30:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750041037;
-	bh=lvuFPRsOwj2wVjKZ9MACsb3On+CRneeuQcaW1aHBkpo=;
-	h=Date:Subject:From:To:References:In-Reply-To:From;
-	b=X2eHhsE6DJhOkaB4o5cGuJl1wp4gB8e4qcWqR7Y24dEdBBNiVJA9kPeKF9wio9vmQ
-	 An3FiuttfToGYLtF7QGQjdPEQsGKq27pv08eL99kDphtop2nPjn35Q1OhZvDuOcApp
-	 uuYv+Uuk0C8WjtjaldouB4MUf6J7T3frpt8RTXyutOQEMF14NpS98tpRm5BlrGWZlP
-	 1q/WBkgZHzBQrwEV4VNC6/Gz43gPlzkQmLs7HHp88OIY9ErIdKyEmF5K5BHOX6CWzv
-	 TC3Qlp44dmXVYbwjIzTYlH3E4rqtnjOAg/4xUPvfsAgH4Mv11/okIBQpN0liZFCdOd
-	 GeNgT5sJHpcKQ==
-Message-ID: <bb351a12-8b58-418d-bd14-a48364cd55d1@kernel.org>
-Date: Mon, 16 Jun 2025 11:30:36 +0900
+	s=arc-20240116; t=1750052348; c=relaxed/simple;
+	bh=STav/yxP0DU2hAiPDTbOJaqsMjK8vZu+DSN1dLJfplU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=X0v+q+/HIwonc+NGvd4+Od2HqaurFez+dwnGFDTKgzJiBDl8mF75R2YORCgt3qtZiXPGe8agq9uD7P31vH3W2r0Wi4E7EVe3Wfq/rrKpJOZgMAGaTISSu6czXEU/XkXudIBKkbZw2gQakOeMfBBNIDXTi6KPKoRjpTWJKPdmSOk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 2C15E68BFE; Mon, 16 Jun 2025 07:39:02 +0200 (CEST)
+Date: Mon, 16 Jun 2025 07:39:01 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Zhang Yi <yi.zhang@huaweicloud.com>
+Cc: "Darrick J. Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>,
+	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
+	linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org,
+	tytso@mit.edu, john.g.garry@oracle.com, bmarzins@redhat.com,
+	chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
+	brauner@kernel.org, martin.petersen@oracle.com, yi.zhang@huawei.com,
+	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
+Subject: Re: [PATCH 01/10] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to
+ queue limits features
+Message-ID: <20250616053901.GA1533@lst.de>
+References: <20250604020850.1304633-2-yi.zhang@huaweicloud.com> <20250611060900.GA4613@lst.de> <343f7f06-9bf6-442f-8e77-0a774203ec3f@huaweicloud.com> <20250612044744.GA12828@lst.de> <41c21e20-5439-4157-ad73-6f133df42d28@huaweicloud.com> <20250612150347.GK6138@frogsfrogsfrogs> <3569a77f-1f38-4764-b1e3-d0075775c7bb@huaweicloud.com> <20250613055630.GA9119@lst.de> <20250613145433.GF6134@frogsfrogsfrogs> <3d749264-6fdd-458f-a3a8-35d2320193b3@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/2] Fix dm-crypt handling of emulated zone append
-From: Damien Le Moal <dlemoal@kernel.org>
-To: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>
-References: <20250611011340.92226-1-dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20250611011340.92226-1-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <3d749264-6fdd-458f-a3a8-35d2320193b3@huaweicloud.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On 6/11/25 10:13, Damien Le Moal wrote:
-> Mike, Mikulas,
+On Sat, Jun 14, 2025 at 12:48:26PM +0800, Zhang Yi wrote:
+> >> Maybe we should redo this similar to the other hardware/software interfaces
+> >> and have a hw_ limit that is exposed by the driver and re-only in
+> >> sysfs, and then the user configurable one without _hw.  Setting it to
+> >> zero disables the feature.
+> > 
+> > Yeah, that fits the /sys/block/foo/queue model better.
+> > 
 > 
-> dm-crypt splitting a regular write used for emulating a zone append
-> operation breaks the writeen sector return for zone append, causing all
-> sorts of issues (e.g. corruptions) with file systems using the zone
-> append operation (btrfs, xfs). The first patch addresses this issue.
-> The second patch adds a check to detect if a DM target attempts to split
-> such BIO.
-> 
-> Damien Le Moal (2):
->   dm: dm-crypt: Prevent splitting of emulated zone append operations
->   dm: Check for forbidden splitting of emulated zone append operations
+> OK, well. Please let me confirm, are you both suggesting adding
+> max_hw_write_zeores_unmap_sectors and max_write_zeroes_unmap_sectors to
+> the queue_limits instead of adding BLK_FEAT_WRITE_ZEROES_UNMAP to the
+> queue_limits->features. Something like the following.
 
-Ping ?
+Yes.
 
-This is a bug fix. Can we get these queued for 6.16-rc ?
-Thank you.
+> Besides, we should also rename max_write_zeroes_sectors to
+> max_hw_write_zeroes_sectors since it is a hardware limitation reported
+> by the driver.  If the device supports unmap write zeroes,
+> max_hw_write_zeores_unmap_sectors should be equal to
+> max_hw_write_zeroes_sectors, otherwise it should be 0.
 
-> 
->  drivers/md/dm-crypt.c | 12 ++++++++++++
->  drivers/md/dm.c       |  6 ++++--
->  2 files changed, 16 insertions(+), 2 deletions(-)
-> 
+We've only done the hw names when we allow and overwrite or cap based
+on other values.  So far we've not done any of that to
+max_write_zeroes_sectors.
 
-
--- 
-Damien Le Moal
-Western Digital Research
