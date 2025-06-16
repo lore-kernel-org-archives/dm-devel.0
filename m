@@ -1,38 +1,45 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5B56156228;
-	Mon, 16 Jun 2025 06:19:33 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87E2B2BF017;
+	Mon, 16 Jun 2025 14:27:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750054774; cv=none; b=awNituYnq8ywRXiI1LA9RvhLvftSZXmqEW0WIql4RBnLJPfrjr2RHyJEVKXG9G89xWg/5Sl/G+ng/TNmRvr7zCy9Rm0SPnJ5uCcP4MpgiajX7Bjz7KLzvVWialou8HTrfOEX+i2XSeWr8zRcLikw2szXT1Mfp6I1uB//aTAPnOA=
+	t=1750084034; cv=none; b=QlTEYjWFshZrhgyt721Elx/2ph+WlmteXr4KNEZcFRrnJxxOojV0FfLoh1nyoFg7j/v4pDSwq5Ixsmxu1kylM9MCdShD+I0Ndw/SWy/30Q3YqU4jo3D+mqdvNA5oRazeLl/amei47LAlQBtg73NnaLAQTlirZF9LpAsr/iSuqk4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750054774; c=relaxed/simple;
-	bh=PwoDpo6CtYxteSGqWYWEaQGKGibhDwIXR2Zxa4oPxo4=;
+	s=arc-20240116; t=1750084034; c=relaxed/simple;
+	bh=27LBzjkFKC0MWbPlUQj6Tt4KZ0Jk3l3sGSDRRlvA7Qg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=E2nu6nMSMWQdR/B12F7bnCY0KcnGevSmN8oU8V9SQNK1sxyh5q18oSLWdownLvTLC2a5h1aGvN8bWWmOV4TRyfcuNYHQj7aSv1w5RFGr8WaH5EnWUjlROh0FAFWZy67jYDj9QgoJCSCt/vPxPn7aaRIrRozAA1WJeJmw8dPiOD0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ioQACaDt; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=rhqpd05+UhJQEADLxrAhSAapzJgcZXVebK45QjJlK94hmpzaxc/fRZnN1M+UsdySERbhtToGCRSGHuq2yXg8dOWjHKsYdGubF7GDLKyqY2pQM1jqKSFKYHebLQBfn+XXsfp8Lu8fSZCWo8O6STI+N98YHF3lZQKLUc8b5uMMA4s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=NTVakR5S; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ioQACaDt"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id DD9A6C4CEEA;
-	Mon, 16 Jun 2025 06:19:32 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="NTVakR5S"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6F3D8C4CEEA;
+	Mon, 16 Jun 2025 14:27:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750054773;
-	bh=PwoDpo6CtYxteSGqWYWEaQGKGibhDwIXR2Zxa4oPxo4=;
+	s=k20201202; t=1750084034;
+	bh=27LBzjkFKC0MWbPlUQj6Tt4KZ0Jk3l3sGSDRRlvA7Qg=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=ioQACaDtrf3y5MSDYBB7beyei/Vf5Psf0PmG2W/6PAFfGejuiV8RaOyCLSSuWGEnf
-	 9Xa16tOdt//OkKWvozRLPHK2W7glD0TJ2wnrlTHI33ITFRZHfhpfup2agZlDWZuzkw
-	 OQQ9hxmULMzh3FDxPvsH+2j0vD4PdlrhCVj8rLujmzzy7d77hGbO2dltXzy8H19MPw
-	 KThXIKMngxKGTJuWOs/rju4X1Q/uSNrN9JRKbEwLEY2ilpsAo14lilzNvFihD9Z+HN
-	 Dckt5rfuHIjOzC0zekz7OxJ16l539kCTlZ9WLzpEoxDAMd+m7Ogdm1fXXtE7GSJ6NQ
-	 OteQY296MQNmA==
-Date: Mon, 16 Jun 2025 14:19:30 +0800
-From: Coly Li <colyli@kernel.org>
-To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
-Cc: linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] bcache: Use a folio
-Message-ID: <4h542zrzxd2cdetymvw7txrgdpony452cxej26msqprcfpu23h@kxgiywm76dwt>
-References: <20250613191942.3169727-1-willy@infradead.org>
+	b=NTVakR5SXYu6c0BR4in/xtNji5OdDLRcOb+1S6kRPnlTkxHPWFuXHEYB2XKVOnV5V
+	 XKW8fuD7PUAxa0hc9pOLobc3bi0uPxw+HNln+mqm/IAkPNktMrm+/b1hQwe4msPHOt
+	 /RBrG+An7Q7/xCH/oFBha8sLE7asffKwinvo7s0gsMMJkwqWOFFVu1jWoUz0qVEXqh
+	 8nYbEvxVezT7bLn6rjAKCURMMss27siUxZLadBGHlsr1LHHNUVo8hPE4huYEBXn5E5
+	 fAacJRg0Mlzep6Qt2V5d4o+LEnwopKyEIQ5mGnZXFdLg6Twux+PSTbq1SyQ5q+r4bW
+	 c85QZmNSdOsqg==
+Date: Mon, 16 Jun 2025 16:27:07 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Zhang Yi <yi.zhang@huaweicloud.com>, linux-fsdevel@vger.kernel.org, 
+	linux-ext4@vger.kernel.org, linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, hch@lst.de, tytso@mit.edu, djwong@kernel.org, 
+	john.g.garry@oracle.com, bmarzins@redhat.com, chaitanyak@nvidia.com, 
+	shinichiro.kawasaki@wdc.com, yi.zhang@huawei.com, chengzhihao1@huawei.com, yukuai3@huawei.com, 
+	yangerkun@huawei.com
+Subject: Re: [PATCH 00/10] fallocate: introduce FALLOC_FL_WRITE_ZEROES flag
+Message-ID: <20250616-wasser-replizieren-c47bcfaa418a@brauner>
+References: <20250604020850.1304633-1-yi.zhang@huaweicloud.com>
+ <yq17c1k74jd.fsf@ca-mkp.ca.oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -41,100 +48,25 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20250613191942.3169727-1-willy@infradead.org>
+In-Reply-To: <yq17c1k74jd.fsf@ca-mkp.ca.oracle.com>
 
-On Fri, Jun 13, 2025 at 08:19:39PM +0800, Matthew Wilcox (Oracle) wrote:
-> Retrieve a folio from the page cache instead of a page.  Removes a
-> hidden call to compound_head().  Then be sure to call folio_put()
-> instead of put_page() to release it.  That doesn't save any calls
-> to compound_head(), just moves them around.
+On Mon, Jun 09, 2025 at 09:47:13PM -0400, Martin K. Petersen wrote:
 > 
-> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
-
-Hi Matthew,
-
-Overall the patch is fine to me. I will reply you after doing some basic testing.
-
-Thanks.
-
-Coly Li
-
-
-> ---
->  drivers/md/bcache/super.c | 22 +++++++++++-----------
->  1 file changed, 11 insertions(+), 11 deletions(-)
+> Zhang,
 > 
-> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
-> index 1efb768b2890..83c786a5cc47 100644
-> --- a/drivers/md/bcache/super.c
-> +++ b/drivers/md/bcache/super.c
-> @@ -168,14 +168,14 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
->  {
->  	const char *err;
->  	struct cache_sb_disk *s;
-> -	struct page *page;
-> +	struct folio *folio;
->  	unsigned int i;
->  
-> -	page = read_cache_page_gfp(bdev->bd_mapping,
-> -				   SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
-> -	if (IS_ERR(page))
-> +	folio = mapping_read_folio_gfp(bdev->bd_mapping,
-> +			SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
-> +	if (IS_ERR(folio))
->  		return "IO error";
-> -	s = page_address(page) + offset_in_page(SB_OFFSET);
-> +	s = folio_address(folio) + offset_in_folio(folio, SB_OFFSET);
->  
->  	sb->offset		= le64_to_cpu(s->offset);
->  	sb->version		= le64_to_cpu(s->version);
-> @@ -272,7 +272,7 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
->  	*res = s;
->  	return NULL;
->  err:
-> -	put_page(page);
-> +	folio_put(folio);
->  	return err;
->  }
->  
-> @@ -1366,7 +1366,7 @@ static CLOSURE_CALLBACK(cached_dev_free)
->  	mutex_unlock(&bch_register_lock);
->  
->  	if (dc->sb_disk)
-> -		put_page(virt_to_page(dc->sb_disk));
-> +		folio_put(virt_to_folio(dc->sb_disk));
->  
->  	if (dc->bdev_file)
->  		fput(dc->bdev_file);
-> @@ -2215,7 +2215,7 @@ void bch_cache_release(struct kobject *kobj)
->  		free_fifo(&ca->free[i]);
->  
->  	if (ca->sb_disk)
-> -		put_page(virt_to_page(ca->sb_disk));
-> +		folio_put(virt_to_folio(ca->sb_disk));
->  
->  	if (ca->bdev_file)
->  		fput(ca->bdev_file);
-> @@ -2592,7 +2592,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
->  	if (!holder) {
->  		ret = -ENOMEM;
->  		err = "cannot allocate memory";
-> -		goto out_put_sb_page;
-> +		goto out_put_sb_folio;
->  	}
->  
->  	/* Now reopen in exclusive mode with proper holder */
-> @@ -2666,8 +2666,8 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
->  
->  out_free_holder:
->  	kfree(holder);
-> -out_put_sb_page:
-> -	put_page(virt_to_page(sb_disk));
-> +out_put_sb_folio:
-> +	folio_put(virt_to_folio(sb_disk));
->  out_blkdev_put:
->  	if (bdev_file)
->  		fput(bdev_file);
-> -- 
-> 2.47.2
+> > Changes since RFC v4:
+> >  - Rebase codes on 6.16-rc1.
+> >  - Add a new queue_limit flag, and change the write_zeroes_unmap sysfs
+> >    interface to RW mode. User can disable the unmap write zeroes
+> >    operation by writing '0' to it when the operation is slow.
+> >  - Modify the documentation of write_zeroes_unmap sysfs interface as
+> >    Martin suggested.
+> >  - Remove the statx interface.
+> >  - Make the bdev and ext4 don't allow to submit FALLOC_FL_WRITE_ZEROES
+> >    if the block device does not enable the unmap write zeroes operation,
+> >    it should return -EOPNOTSUPP.
 > 
+> This looks OK to me as long as the fs folks agree on the fallocate()
+> semantics.
+
+That looks overall fine. Should I queue this up in the vfs tree?
