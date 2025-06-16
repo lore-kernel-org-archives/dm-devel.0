@@ -1,71 +1,140 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4DFC17BA6
-	for <dm-devel@lists.linux.dev>; Mon, 16 Jun 2025 05:39:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5B56156228;
+	Mon, 16 Jun 2025 06:19:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750052348; cv=none; b=CsMF+iBauI5bireJp78RCYN/rDgEjAkredQq0Qa6HmsFFoI+gVPfHB2Ar+LIl0H/sVee3uhYjLWXjUc3BQUb4vT7HpkSwlPmb4vlpjvxPMK0ahPooZ9f5yuAu/iP+NJk03B5N2uUl1KrhbDrAkSCKBGE7ZmFsMfAIMd9k+8tnsk=
+	t=1750054774; cv=none; b=awNituYnq8ywRXiI1LA9RvhLvftSZXmqEW0WIql4RBnLJPfrjr2RHyJEVKXG9G89xWg/5Sl/G+ng/TNmRvr7zCy9Rm0SPnJ5uCcP4MpgiajX7Bjz7KLzvVWialou8HTrfOEX+i2XSeWr8zRcLikw2szXT1Mfp6I1uB//aTAPnOA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750052348; c=relaxed/simple;
-	bh=STav/yxP0DU2hAiPDTbOJaqsMjK8vZu+DSN1dLJfplU=;
+	s=arc-20240116; t=1750054774; c=relaxed/simple;
+	bh=PwoDpo6CtYxteSGqWYWEaQGKGibhDwIXR2Zxa4oPxo4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=X0v+q+/HIwonc+NGvd4+Od2HqaurFez+dwnGFDTKgzJiBDl8mF75R2YORCgt3qtZiXPGe8agq9uD7P31vH3W2r0Wi4E7EVe3Wfq/rrKpJOZgMAGaTISSu6czXEU/XkXudIBKkbZw2gQakOeMfBBNIDXTi6KPKoRjpTWJKPdmSOk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 2C15E68BFE; Mon, 16 Jun 2025 07:39:02 +0200 (CEST)
-Date: Mon, 16 Jun 2025 07:39:01 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Zhang Yi <yi.zhang@huaweicloud.com>
-Cc: "Darrick J. Wong" <djwong@kernel.org>, Christoph Hellwig <hch@lst.de>,
-	linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
-	linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org,
-	tytso@mit.edu, john.g.garry@oracle.com, bmarzins@redhat.com,
-	chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
-	brauner@kernel.org, martin.petersen@oracle.com, yi.zhang@huawei.com,
-	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH 01/10] block: introduce BLK_FEAT_WRITE_ZEROES_UNMAP to
- queue limits features
-Message-ID: <20250616053901.GA1533@lst.de>
-References: <20250604020850.1304633-2-yi.zhang@huaweicloud.com> <20250611060900.GA4613@lst.de> <343f7f06-9bf6-442f-8e77-0a774203ec3f@huaweicloud.com> <20250612044744.GA12828@lst.de> <41c21e20-5439-4157-ad73-6f133df42d28@huaweicloud.com> <20250612150347.GK6138@frogsfrogsfrogs> <3569a77f-1f38-4764-b1e3-d0075775c7bb@huaweicloud.com> <20250613055630.GA9119@lst.de> <20250613145433.GF6134@frogsfrogsfrogs> <3d749264-6fdd-458f-a3a8-35d2320193b3@huaweicloud.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=E2nu6nMSMWQdR/B12F7bnCY0KcnGevSmN8oU8V9SQNK1sxyh5q18oSLWdownLvTLC2a5h1aGvN8bWWmOV4TRyfcuNYHQj7aSv1w5RFGr8WaH5EnWUjlROh0FAFWZy67jYDj9QgoJCSCt/vPxPn7aaRIrRozAA1WJeJmw8dPiOD0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ioQACaDt; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ioQACaDt"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DD9A6C4CEEA;
+	Mon, 16 Jun 2025 06:19:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1750054773;
+	bh=PwoDpo6CtYxteSGqWYWEaQGKGibhDwIXR2Zxa4oPxo4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=ioQACaDtrf3y5MSDYBB7beyei/Vf5Psf0PmG2W/6PAFfGejuiV8RaOyCLSSuWGEnf
+	 9Xa16tOdt//OkKWvozRLPHK2W7glD0TJ2wnrlTHI33ITFRZHfhpfup2agZlDWZuzkw
+	 OQQ9hxmULMzh3FDxPvsH+2j0vD4PdlrhCVj8rLujmzzy7d77hGbO2dltXzy8H19MPw
+	 KThXIKMngxKGTJuWOs/rju4X1Q/uSNrN9JRKbEwLEY2ilpsAo14lilzNvFihD9Z+HN
+	 Dckt5rfuHIjOzC0zekz7OxJ16l539kCTlZ9WLzpEoxDAMd+m7Ogdm1fXXtE7GSJ6NQ
+	 OteQY296MQNmA==
+Date: Mon, 16 Jun 2025 14:19:30 +0800
+From: Coly Li <colyli@kernel.org>
+To: "Matthew Wilcox (Oracle)" <willy@infradead.org>
+Cc: linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] bcache: Use a folio
+Message-ID: <4h542zrzxd2cdetymvw7txrgdpony452cxej26msqprcfpu23h@kxgiywm76dwt>
+References: <20250613191942.3169727-1-willy@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <3d749264-6fdd-458f-a3a8-35d2320193b3@huaweicloud.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20250613191942.3169727-1-willy@infradead.org>
 
-On Sat, Jun 14, 2025 at 12:48:26PM +0800, Zhang Yi wrote:
-> >> Maybe we should redo this similar to the other hardware/software interfaces
-> >> and have a hw_ limit that is exposed by the driver and re-only in
-> >> sysfs, and then the user configurable one without _hw.  Setting it to
-> >> zero disables the feature.
-> > 
-> > Yeah, that fits the /sys/block/foo/queue model better.
-> > 
+On Fri, Jun 13, 2025 at 08:19:39PM +0800, Matthew Wilcox (Oracle) wrote:
+> Retrieve a folio from the page cache instead of a page.  Removes a
+> hidden call to compound_head().  Then be sure to call folio_put()
+> instead of put_page() to release it.  That doesn't save any calls
+> to compound_head(), just moves them around.
 > 
-> OK, well. Please let me confirm, are you both suggesting adding
-> max_hw_write_zeores_unmap_sectors and max_write_zeroes_unmap_sectors to
-> the queue_limits instead of adding BLK_FEAT_WRITE_ZEROES_UNMAP to the
-> queue_limits->features. Something like the following.
+> Signed-off-by: Matthew Wilcox (Oracle) <willy@infradead.org>
 
-Yes.
+Hi Matthew,
 
-> Besides, we should also rename max_write_zeroes_sectors to
-> max_hw_write_zeroes_sectors since it is a hardware limitation reported
-> by the driver.  If the device supports unmap write zeroes,
-> max_hw_write_zeores_unmap_sectors should be equal to
-> max_hw_write_zeroes_sectors, otherwise it should be 0.
+Overall the patch is fine to me. I will reply you after doing some basic testing.
 
-We've only done the hw names when we allow and overwrite or cap based
-on other values.  So far we've not done any of that to
-max_write_zeroes_sectors.
+Thanks.
 
+Coly Li
+
+
+> ---
+>  drivers/md/bcache/super.c | 22 +++++++++++-----------
+>  1 file changed, 11 insertions(+), 11 deletions(-)
+> 
+> diff --git a/drivers/md/bcache/super.c b/drivers/md/bcache/super.c
+> index 1efb768b2890..83c786a5cc47 100644
+> --- a/drivers/md/bcache/super.c
+> +++ b/drivers/md/bcache/super.c
+> @@ -168,14 +168,14 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
+>  {
+>  	const char *err;
+>  	struct cache_sb_disk *s;
+> -	struct page *page;
+> +	struct folio *folio;
+>  	unsigned int i;
+>  
+> -	page = read_cache_page_gfp(bdev->bd_mapping,
+> -				   SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
+> -	if (IS_ERR(page))
+> +	folio = mapping_read_folio_gfp(bdev->bd_mapping,
+> +			SB_OFFSET >> PAGE_SHIFT, GFP_KERNEL);
+> +	if (IS_ERR(folio))
+>  		return "IO error";
+> -	s = page_address(page) + offset_in_page(SB_OFFSET);
+> +	s = folio_address(folio) + offset_in_folio(folio, SB_OFFSET);
+>  
+>  	sb->offset		= le64_to_cpu(s->offset);
+>  	sb->version		= le64_to_cpu(s->version);
+> @@ -272,7 +272,7 @@ static const char *read_super(struct cache_sb *sb, struct block_device *bdev,
+>  	*res = s;
+>  	return NULL;
+>  err:
+> -	put_page(page);
+> +	folio_put(folio);
+>  	return err;
+>  }
+>  
+> @@ -1366,7 +1366,7 @@ static CLOSURE_CALLBACK(cached_dev_free)
+>  	mutex_unlock(&bch_register_lock);
+>  
+>  	if (dc->sb_disk)
+> -		put_page(virt_to_page(dc->sb_disk));
+> +		folio_put(virt_to_folio(dc->sb_disk));
+>  
+>  	if (dc->bdev_file)
+>  		fput(dc->bdev_file);
+> @@ -2215,7 +2215,7 @@ void bch_cache_release(struct kobject *kobj)
+>  		free_fifo(&ca->free[i]);
+>  
+>  	if (ca->sb_disk)
+> -		put_page(virt_to_page(ca->sb_disk));
+> +		folio_put(virt_to_folio(ca->sb_disk));
+>  
+>  	if (ca->bdev_file)
+>  		fput(ca->bdev_file);
+> @@ -2592,7 +2592,7 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+>  	if (!holder) {
+>  		ret = -ENOMEM;
+>  		err = "cannot allocate memory";
+> -		goto out_put_sb_page;
+> +		goto out_put_sb_folio;
+>  	}
+>  
+>  	/* Now reopen in exclusive mode with proper holder */
+> @@ -2666,8 +2666,8 @@ static ssize_t register_bcache(struct kobject *k, struct kobj_attribute *attr,
+>  
+>  out_free_holder:
+>  	kfree(holder);
+> -out_put_sb_page:
+> -	put_page(virt_to_page(sb_disk));
+> +out_put_sb_folio:
+> +	folio_put(virt_to_folio(sb_disk));
+>  out_blkdev_put:
+>  	if (bdev_file)
+>  		fput(bdev_file);
+> -- 
+> 2.47.2
+> 
