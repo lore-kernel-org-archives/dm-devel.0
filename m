@@ -1,112 +1,167 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F37F01C84DC;
-	Fri, 20 Jun 2025 04:09:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D384221FCE
+	for <dm-devel@lists.linux.dev>; Fri, 20 Jun 2025 08:04:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750392549; cv=none; b=mNaNul+R9H5mbl2uSmaybSjk7/1LY1cRqTthLVVBvjGY2uU6IhHyJJoy4QVAjoHeqB0Wb7DLbZJ9E5EQLDzbg9UJTKn0qiWKY5CXc1A/zHWWHrSciVcGzcN3A3cBG7mS3AZUFIpgp+sIFqiuHeuKRUfhY5aZUDTfin0ggJ/9jgc=
+	t=1750406658; cv=none; b=r+ipuGqRWI5l7CWJ2U38D2qwbIavlbanIG6A5PtX2vSgV2ZNVTiQQcGvZQDW81iBJA2qie0yS+/Ckj1BlXRbDtt7yjSJtE7j/Df+r+yuqoLAT0vzFKLiXHhJ1xuYOqtn7BsHmI5AhXqsrAHdDzc7AmBUaFSme2s6446rLHDvUTQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750392549; c=relaxed/simple;
-	bh=IF+c+8Vgyqqs9u7zdJIo9De/8DeCfWzEHq84Tml5TVA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=W+Y0xOPAzFKgbDIT1TjduCgcI2a1n9T5BjVu3hVhZNpOcVyX/JO3YdwzBLcGnB7intb9SfpCYylzHI0i9ZrjPjv4jfYZXb/LRJBw/ykCNhWjKRDUX+v6YIqb8/yAlL8VJAJ/i2i+aoyM9W6kWZu5oZ4wRPfRkCjHVzNPi+lR+Dk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=Rk4V47vi; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1750406658; c=relaxed/simple;
+	bh=n/3fIWHZfJzhOTujA53DP7keuhAqVyp7k3fLFkQyb3A=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=hML5SqhPetUDJ4DC4ee0yiZTanJVX/9VHWSyPoxVDXu6BsSkB3IUZOkHtc73BaNY64a5Gv/2h/hS3+kDOpYnfwZH62Vq1C6joqaVaZiIje0RPNuufa+ZATnQWc3kGhlQXeTBLkdvUGDI6ZkyGSnkw2ZAmwLYW32ulY8zvzJCup0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Fyy2jqYQ; arc=none smtp.client-ip=209.85.208.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="Rk4V47vi"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
-	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=1xGA506aP6+xhVBW2zr6ks0RSktth8+x0ATXW3hSPDU=; b=Rk4V47viyQe+eMkGB04fqX09zM
-	nmbedD8z3YJWaqpaksk9PrOUK84JaNsXNuMaptoAcp9Nar1TYJGDSpvB0fR3iTg4+Q0kAQqzVxk1N
-	N1OclYG51tju/uqmK+WJQ/hVOwDT1gP+d9IcD3Z1uvQRxP0DQLiME81fErZtk0O198809BTW2nYmv
-	bmLfhJCi8AvwKYvf6XrGzr0hUS3z64rzL+93p+Od65LwkwFZMCQH3DxvcEClGhEgd0YlRBVftwNel
-	WFpYWQxxoz7qdBmwIaguBRBocuBFzhbApBW3O8XD7NtTPnyg5WB81Jd1eEtqFLYDr1oklciySCQlS
-	fDx42ruA==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1uSSoU-000TUt-1S;
-	Fri, 20 Jun 2025 12:09:03 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Fri, 20 Jun 2025 12:09:02 +0800
-Date: Fri, 20 Jun 2025 12:09:02 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Milan Broz <gmazyland@gmail.com>
-Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
-Subject: dm-crypt: Extend state buffer size in crypt_iv_lmk_one
-Message-ID: <aFTe3kDZXCAzcwNq@gondor.apana.org.au>
-References: <f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Fyy2jqYQ"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-607c2b96b29so2710127a12.1
+        for <dm-devel@lists.linux.dev>; Fri, 20 Jun 2025 01:04:16 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1750406655; x=1751011455; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=XxgHvAza9lzucEyGfJBYSkwi+l6FJLLetBFw6IaVvqg=;
+        b=Fyy2jqYQtPkJZY1cMJqQEjfXN42KB7NUd3lWIIJPYemGoJbEUbxsDIL05kprcxGMmH
+         qUATU30CABTw27Dq2IIrmdRe4aXTZeT6vQe4KLFh/VXVrElWNZO8TBtciFmgkKosizHe
+         RgGwDdtArnaT38pHJplUscRzl6xVdZ8xayYErrqUAR2X8VKngKt7XyyEovx0YaDipw6X
+         xPTGad/BUvHQBqFDhivhxaLqvudd9jUG79UBe5kcNOcBfR3M9wjvvuon4qh6CFM7YTl7
+         6U4aEkjGAppGiC2ZFdlGrDA+YCkmyJyM9wRahXlKMBeh1HvQE2vot1Sl+2oaEOiv1RiD
+         jxoQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1750406655; x=1751011455;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=XxgHvAza9lzucEyGfJBYSkwi+l6FJLLetBFw6IaVvqg=;
+        b=lsKC4+i9dB6TJy+erQWj4zVsKdQtIV9vD6vJ3OibIWgyXYJUgyQkDaezn5umDmC6ua
+         jR4iNsDyDGWPWhxEr4cUOvXcB90FcyifRc5g1NPrUlSKbbu+kdGnJ+C/j1Jy1tW5J9lm
+         lr/CRn+f95cQDrA4JI8umFLwIJLebirIcl1HNOk1nku1xjvHSviIrsZZa59xbyzdt9oo
+         jWlnfVl5SVcdR9yCQ/XhiLSJ4k/LBWzl/Alg2zM+mcTE2wLAmGSlCNASHnPZIrsjLlaa
+         iBLKhOZKMyFKr4TWHV+errjKV5/BHQwR2x8NUVjfRsWcc6GeJ52MHaLTdXzgCyoe9ASI
+         aRiA==
+X-Forwarded-Encrypted: i=1; AJvYcCWM13D+OGZ4THQTNbnJZ54olTMSgv1q17lRvWkw4H4JxzmU6zldx5fmmRTror+byATBvchYpdDmCQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyViKXM61T2Y//OTjdU0+Aqmn+kSTYlwqGYvSajjm3h3Qe2YBKb
+	xO9NxfbQeXT+IjkT9UcObIl+lGBFACSmdm09YBNWX8vs2dXfKDUJ6+df
+X-Gm-Gg: ASbGncs0W0RFVgC1H7DBxzw6QDiZn2BEWhx4sJWLtabyCquiiLqfBWM1mYhSX+2e7c6
+	0vo1UmHFxgTK4RQGP5+qChGcpa37vUGt5hIBYO/iDufnlwFuXePB7r76FXk80/UItFs8fviWofp
+	6AmVMS4Iz4mVANyz69mnEVKko8ssnPmuOgPP7XbhA1/R/7WvYj9Tz5KE9e6nWNwFlNbaC3G5oJP
+	3+ljOvrTujxcMsnkjHtJMEUtmgGZKCZcENKQnIbP5/fh5md7KgGfqYH+cW/8MmHlSPd7N7tqO/4
+	07VzYCa4i9SQvoxrTTR0oVgULUNEIWU7AC56IrS/A1v9MELqUO0m4TJadQH0mQZBuZv6CusZf9H
+	B8cvmTRN1SDlQ0pVHxMoD
+X-Google-Smtp-Source: AGHT+IE5fWGab2EWf6qV2gM2GyKNO3qx+p6jv8lprhcHKBfTDR0H8lDSkJ2uHgsoe6k0mhzzfgsDhw==
+X-Received: by 2002:a05:6402:4316:b0:5f3:f04b:5663 with SMTP id 4fb4d7f45d1cf-60a1cd31008mr1709094a12.24.1750406654469;
+        Fri, 20 Jun 2025 01:04:14 -0700 (PDT)
+Received: from [192.168.8.101] (78-80-16-228.customers.tmcz.cz. [78.80.16.228])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-60a18cbadb6sm1027090a12.62.2025.06.20.01.04.13
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 20 Jun 2025 01:04:14 -0700 (PDT)
+Message-ID: <afeb759d-0f6d-4868-8242-01157f144662@gmail.com>
+Date: Fri, 20 Jun 2025 10:04:12 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: dm-crypt: Extend state buffer size in crypt_iv_lmk_one
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
+References: <f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com>
+ <aFTe3kDZXCAzcwNq@gondor.apana.org.au>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+In-Reply-To: <aFTe3kDZXCAzcwNq@gondor.apana.org.au>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Thu, Jun 19, 2025 at 11:17:37PM +0200, Milan Broz wrote:
->
-> : Call Trace:
-> :  crypto_shash_export+0x65/0xc0
-> :  crypt_iv_lmk_one+0x106/0x1a0 [dm_crypt]
+Hi,
 
-Thanks for the report.  The problem is that crypt_iv_lmk_one is
-calling crypto_shash_export using a buffer that is less than the
-size as returned by crypto_shash_statesize.
+On 6/20/25 6:09 AM, Herbert Xu wrote:
+> The output buffer size of of crypto_shash_export is returned by
+> crypto_shash_statesize.  Alternatively HASH_MAX_STATESIZE may be
+> used for stack buffers.
+> 
+> Fixes: 8cf4c341f193 ("crypto: md5-generic - Use API partial block handling")
+> Reported-by: Milan Broz <gmazyland@gmail.com>
+> Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
 
-The easiest fix is to expand the buffer to HASH_MAX_STATESIZE:
+Yes, that fixes the issue, thanks!
 
----8<---
-The output buffer size of of crypto_shash_export is returned by
-crypto_shash_statesize.  Alternatively HASH_MAX_STATESIZE may be
-used for stack buffers.
+Tested-by: Milan Broz <gmazyland@gmail.com>
 
-Fixes: 8cf4c341f193 ("crypto: md5-generic - Use API partial block handling")
-Reported-by: Milan Broz <gmazyland@gmail.com>
-Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+Mikulas, I think this should go through DM tree, could you send it for 6.16?
+The full patch is here
+https://lore.kernel.org/linux-crypto/aFTe3kDZXCAzcwNq@gondor.apana.org.au/T/#u
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 9dfdb63220d7..cb4617df7356 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -517,7 +517,10 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- {
- 	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
- 	SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
--	struct md5_state md5state;
-+	union {
-+		struct md5_state md5state;
-+		u8 state[HASH_MAX_STATESIZE];
-+	} u;
- 	__le32 buf[4];
- 	int i, r;
- 
-@@ -548,13 +551,13 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- 		return r;
- 
- 	/* No MD5 padding here */
--	r = crypto_shash_export(desc, &md5state);
-+	r = crypto_shash_export(desc, &u.md5state);
- 	if (r)
- 		return r;
- 
- 	for (i = 0; i < MD5_HASH_WORDS; i++)
--		__cpu_to_le32s(&md5state.hash[i]);
--	memcpy(iv, &md5state.hash, cc->iv_size);
-+		__cpu_to_le32s(&u.md5state.hash[i]);
-+	memcpy(iv, &u.md5state.hash, cc->iv_size);
- 
- 	return 0;
- }
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 9dfdb63220d7..cb4617df7356 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -517,7 +517,10 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
+>   {
+>   	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
+>   	SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
+> -	struct md5_state md5state;
+> +	union {
+> +		struct md5_state md5state;
+> +		u8 state[HASH_MAX_STATESIZE];
+> +	} u;
+
+I am ok with it, as this is an obscure IV case for old devices compatibility,
+but I would kind of expected the algorithm state struct is self-contained...
+
+...
+
+Thanks,
+Milan
+
