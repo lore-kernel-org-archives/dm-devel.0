@@ -1,155 +1,181 @@
-Received: from abb.hmeau.com (abb.hmeau.com [144.6.53.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8E921E492D;
-	Mon, 23 Jun 2025 11:11:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=144.6.53.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFAAD242D6A
+	for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 11:55:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750677120; cv=none; b=dPbF/G2ty1ifhJ9QZcKqnKuCJJDtupLL4PXSON3yzUuNJ/SmG4hoS/5GnUlk5S5ki3C9Z1jDrsmFbQWQqxPD5INKUydm4JDbBuawx3EZWcW16OiHWG6Ky//JIlbRBwq91P6/Uol0dyAp6P9aSpCLvy7g57dzyGpJEi9hky8V8Z4=
+	t=1750679710; cv=none; b=DCxgJwovHexYa2j7hcf5kHCednoUn4yGQPbaajA2TgvdpDrsj/snnT0akM5v6fI/uMih5of1xwOSB9WdWWV2tOEKZ1LGugEHyqQbP78UeeC8ZUEp2uvmI96S9Wk3MZMWlUdtG0cu9+Y1S4fTfiTBhFIlxM/Q/VMNm5w5Ml9RD7A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750677120; c=relaxed/simple;
-	bh=IPMrlSrNNdRttYlCpxufd8/aaOWYvAdxOpWLktQesUg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=O6r5l02uqA70x0+YHh9rOZSjqI7s1mD7WGBliOc5ccD3K48cDUX4mMo2XE3oAX0+vzGgXtssXglN2LDcHhtNmaE2ta7s1L0h71r8kVCCxa3x4lGsPuzVnhfs6WBUje/Rgged8v1d+GdC9ffhFZ08dphwRJJ0xLg4O+DFg5e9xX0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=CkljQLoB; arc=none smtp.client-ip=144.6.53.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1750679710; c=relaxed/simple;
+	bh=DBoHB3g5lCybxegUqBfzOCEqqnq81NacHLbyicWWd6c=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=an3ksEfITsbsD4jaoKciHpDoASVjpPl+FFNjVFMH03s0/bb19Y8LGrp5FD11jGpUmw2LMP57iRNLDibVcmZmCX2t98sFX99cmaLcVBeOCah7SoXgL0WszgnYmeFWwGazvK9NJOju7YbkUJi7k7glCLvth4gAxu44LgERHLJAOtI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C4bomE8Q; arc=none smtp.client-ip=209.85.208.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="CkljQLoB"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
-	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=1CgKfi34HOfaueYZqtEP5U71y4ZdtDUkIBvSaw1ptvM=; b=CkljQLoBUvY6OTigxJ2FN1bF8C
-	xdZnfQFBdHTo6Z5YgdxQovBE0mCDD6g3GSkjFAbCr3KiuOm3E+3mG2mW1lPKv0DZwRyq61qaRc5aV
-	DJH9eJnt1MXNLNAjtLn+amVeR27NtTzbr04cErmem1b6QE2Mzv2jF1qJf04L+RYc9OW0i5YFumugS
-	wDeicWRr9dL7F9BeChJsInh59u74oNn9l+6ZDnL10pjk5T1EJ8s+zK2Z1wgUV+uPkzYB8u2QdhlJY
-	48lHuv/1RtV1TZ0Gig4CJFHsDf+k+J69u3rgrAtN2MVVV1Z0eK2y4JEOenBP+NukXXKvF58UwkkJf
-	qYIen89Q==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1uTeq9-000HYJ-2l;
-	Mon, 23 Jun 2025 19:11:51 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Mon, 23 Jun 2025 19:11:50 +0800
-Date: Mon, 23 Jun 2025 19:11:50 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>,
-	"linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	dm-devel@lists.linux.dev
-Subject: [v2 PATCH] dm-crypt: Extend state buffer size in crypt_iv_lmk_one
-Message-ID: <aFk2diodY0QhmZS8@gondor.apana.org.au>
-References: <f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com>
- <aFTe3kDZXCAzcwNq@gondor.apana.org.au>
- <afeb759d-0f6d-4868-8242-01157f144662@gmail.com>
- <cc21e81d-e03c-a8c8-e32c-f4e52ce18891@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C4bomE8Q"
+Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-60497d07279so8757410a12.3
+        for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 04:55:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1750679707; x=1751284507; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=g07DgH9mtTRbBYxoH6YLsPXyTQbQTUkM8ZR4WkVgW+Y=;
+        b=C4bomE8Q/Eu9Nou5L3De4PVSjKUtUboem6htMyjzXsG3C+dEcAjYaNApv9Ep8IWzoc
+         thPLHHZGY8lqJUP8TsuxUVJYf9H2fjWY+f/bsaCzTuhG6RNjlijrH8DDZTbent5oUYNE
+         JgChzR4ov171Yz8o0z0guR8Y3bOTq6J0hKmPfxgRzm2HhCigoOk8aXQ2qOxpdyzhXv8P
+         iqlPNFtv2P1Q08FpouUK0oUFQE1PYio0ivl9bXnR9ZOqFG1v9baocQaYO7mTHghSVWXm
+         xoNrKYJUMY/B8DZ/fRNVKmdVmARH4KhxJvgAdDnOQ91J1eHIGv5YPCGOQpOjod0uVPar
+         aK5Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1750679707; x=1751284507;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=g07DgH9mtTRbBYxoH6YLsPXyTQbQTUkM8ZR4WkVgW+Y=;
+        b=DSeFzmL9gQjHjlvZJ9zbuI5rRtLbm2vetAdEAR6XXln/RDNfeX+NLW6sSKkklBMXtq
+         ViKmRDEpYpriNayZ3n/fC6kdjX1s0TG3I4wsCNHkDcHFnYX7OTsfG1Msi8+ImO122LkC
+         bVn9abl0nVhzxnYAjOxZBV0K3VGuWcBnbUsfMXBXQHH/je4Km0/mHnEob0huXxzkRuOV
+         eieuMDFK7uMDAWMy6fmBzxdUffVw41ZGnUuKZfA8NDca8DrHI7ezSZeZwaSNnqmVf2XD
+         9M2SZ+tZjDYBqNBD+IIUbHFhkoN1o+7Jv3OELVFbN2VknurFNItTrpd3NBF7svuuOll3
+         1Qjg==
+X-Forwarded-Encrypted: i=1; AJvYcCXaT0yIslKx1heLET2wpIvurjXXj6vd5mY0tC0eZgMtL9X7k80ahybNrCjIdNaEYiqYb/D26g3eVQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Ywqw9i62WVaLpNU/8P8EwtkbsrmkGWvOvnOCYPhZCNezzact+Ww
+	1VW99XgKovkUreV+gu5xpzObQ31ewuqqg7jW/l1uR8tHfk1QSKoxSUBk
+X-Gm-Gg: ASbGncszxLyPLOEau2jiXWaWbEkRbqaFKKwmNtQFDKGj0oIQa8zrhd+ISsR4MKiUVkC
+	Jvkuz8g6OqOjjn839p7z+Hk2lC8XyWNPAbJInvMZ/Ky/LvizSmrPaLghcgnGSauG8LIJewFsXKp
+	Cc24Xkp40eg/sJHtwNQjetyAH4lvAgWRS2g/jL7r3xjoL9vZvODaksuF9yl5PkM546gUVAcN39Q
+	sMKi91TG2sKI/+o3p7gnwpPvdDTp6OnBWu0nKOeDgWfaFWug/7FDo3KHGhauLpHULW8FX4iXgBD
+	J7pmS+14KV3EVE4AQ9VJdNuJ3UqhNaCjjlxjF2tYSp7InXKQ7GQRk3EuhNbO2xQEsGcGSq/uIpU
+	z7SxaTPMWNQ==
+X-Google-Smtp-Source: AGHT+IHJpwaMwrE4rRYDyw8cW4+8w6qw9qyp0n9KYAAdbHCw5hP6f1+4kgIVyn561TUeZ6KsOALsoA==
+X-Received: by 2002:a17:907:7214:b0:ade:7bd:e0ec with SMTP id a640c23a62f3a-ae057fa0dfemr1182353166b.56.1750679706698;
+        Mon, 23 Jun 2025 04:55:06 -0700 (PDT)
+Received: from [147.251.42.106] (fosforos.fi.muni.cz. [147.251.42.106])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ae0541bb5c3sm692303566b.129.2025.06.23.04.55.05
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 23 Jun 2025 04:55:06 -0700 (PDT)
+Message-ID: <27689dcc-3018-472f-9db1-efba8f9d52d1@gmail.com>
+Date: Mon, 23 Jun 2025 13:55:05 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <cc21e81d-e03c-a8c8-e32c-f4e52ce18891@redhat.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [v2 PATCH] dm-crypt: Extend state buffer size in crypt_iv_lmk_one
+To: Herbert Xu <herbert@gondor.apana.org.au>,
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: "linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ dm-devel@lists.linux.dev
+References: <f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com>
+ <aFTe3kDZXCAzcwNq@gondor.apana.org.au>
+ <afeb759d-0f6d-4868-8242-01157f144662@gmail.com>
+ <cc21e81d-e03c-a8c8-e32c-f4e52ce18891@redhat.com>
+ <aFk2diodY0QhmZS8@gondor.apana.org.au>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+In-Reply-To: <aFk2diodY0QhmZS8@gondor.apana.org.au>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Mon, Jun 23, 2025 at 11:40:39AM +0200, Mikulas Patocka wrote:
->
-> 345 bytes on the stack - I think it's too much, given the fact that it 
-> already uses 345 bytes (from SHASH_DESC_ON_STACK) and it may be called in 
-> a tasklet context. I'd prefer a solution that allocates less bytes.
+On 6/23/25 1:11 PM, Herbert Xu wrote:
+> On Mon, Jun 23, 2025 at 11:40:39AM +0200, Mikulas Patocka wrote:
+>>
+>> 345 bytes on the stack - I think it's too much, given the fact that it
+>> already uses 345 bytes (from SHASH_DESC_ON_STACK) and it may be called in
+>> a tasklet context. I'd prefer a solution that allocates less bytes.
+>>
+>> I don't see the beginning of this thread, so I'd like to ask what's the
+>> problem here, what algorithm other than md5 is used here that causes the
+>> buffer overflow?
 > 
-> I don't see the beginning of this thread, so I'd like to ask what's the 
-> problem here, what algorithm other than md5 is used here that causes the 
-> buffer overflow?
+> The md5 export size has increased due to the partial block API
+> thus triggering the overflow.
+> 
+> How about this patch?
 
-The md5 export size has increased due to the partial block API
-thus triggering the overflow.
+For v2:
 
-How about this patch?
+Tested-by: Milan Broz <gmazyland@gmail.com>
 
----8<---
-Add a macro CRYPTO_MD5_STATESIZE for the Crypto API export state
-size of md5 and use that in dm-crypt instead of relying on the
-size of struct md5_state (the latter is currently undergoing a
-transition and may shrink).
+Just for the context, the patch fixes OOPS on 32bit (but 64bit should overflow struct too):
 
-Fixes: 8cf4c341f193 ("crypto: md5-generic - Use API partial block handling")
-Reported-by: Milan Broz <gmazyland@gmail.com>
-Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+: Oops: Oops: 0000 [#1] SMP
+: CPU: 1 UID: 0 PID: 12 Comm: kworker/u16:0 Not tainted 6.16.0-rc2+ #993 PREEMPT(full)
+: Hardware name: VMware, Inc. VMware Virtual Platform/440BX Desktop Reference Platform, BIOS 6.00 11/12/2020
+: Workqueue: kcryptd-254:0-1 kcryptd_crypt [dm_crypt]
+: EIP: __crypto_shash_export+0xf/0x90
+: Code: 4a c1 c7 40 20 a0 b4 4a c1 81 cf 0e 00 04 08 89 78 50 e9 2b ff ff ff 8d 74 26 00 55 89 e5 57 56 53 89 c3 89 d6 8b 00 8b 40 14 <8b> 50 fc f6 40 13 01 74 04 4a 2b 50 14 85 c9 74 10 89 f2 89 d8 ff
+: EAX: 303a3435 EBX: c3007c90 ECX: 00000000 EDX: c3007c38
+: ESI: c3007c38 EDI: c3007c90 EBP: c3007bfc ESP: c3007bf0
+: DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068 EFLAGS: 00010216
+: CR0: 80050033 CR2: 303a3431 CR3: 04fbe000 CR4: 00350e90
+: Call Trace:
+:  crypto_shash_export+0x65/0xc0
+:  crypt_iv_lmk_one+0x106/0x1a0 [dm_crypt]
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 9dfdb63220d7..17157c4216a5 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -517,7 +517,10 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- {
- 	struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
- 	SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
--	struct md5_state md5state;
-+	union {
-+		struct md5_state md5state;
-+		u8 state[CRYPTO_MD5_STATESIZE];
-+	} u;
- 	__le32 buf[4];
- 	int i, r;
- 
-@@ -548,13 +551,13 @@ static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
- 		return r;
- 
- 	/* No MD5 padding here */
--	r = crypto_shash_export(desc, &md5state);
-+	r = crypto_shash_export(desc, &u.md5state);
- 	if (r)
- 		return r;
- 
- 	for (i = 0; i < MD5_HASH_WORDS; i++)
--		__cpu_to_le32s(&md5state.hash[i]);
--	memcpy(iv, &md5state.hash, cc->iv_size);
-+		__cpu_to_le32s(&u.md5state.hash[i]);
-+	memcpy(iv, &u.md5state.hash, cc->iv_size);
- 
- 	return 0;
- }
-diff --git a/include/crypto/hash.h b/include/crypto/hash.h
-index 6f6b9de12cd3..db294d452e8c 100644
---- a/include/crypto/hash.h
-+++ b/include/crypto/hash.h
-@@ -202,6 +202,8 @@ struct shash_desc {
- #define HASH_REQUEST_CLONE(name, gfp) \
- 	hash_request_clone(name, sizeof(__##name##_req), gfp)
- 
-+#define CRYPTO_HASH_STATESIZE(coresize, blocksize) (coresize + blocksize + 1)
-+
- /**
-  * struct shash_alg - synchronous message digest definition
-  * @init: see struct ahash_alg
-diff --git a/include/crypto/md5.h b/include/crypto/md5.h
-index 198b5d69b92f..28ee533a0507 100644
---- a/include/crypto/md5.h
-+++ b/include/crypto/md5.h
-@@ -2,6 +2,7 @@
- #ifndef _CRYPTO_MD5_H
- #define _CRYPTO_MD5_H
- 
-+#include <crypto/hash.h>
- #include <linux/types.h>
- 
- #define MD5_DIGEST_SIZE		16
-@@ -15,6 +16,9 @@
- #define MD5_H2	0x98badcfeUL
- #define MD5_H3	0x10325476UL
- 
-+#define CRYPTO_MD5_STATESIZE \
-+	CRYPTO_HASH_STATESIZE(MD5_STATE_SIZE, MD5_HMAC_BLOCK_SIZE)
-+
- extern const u8 md5_zero_message_hash[MD5_DIGEST_SIZE];
- 
- struct md5_state {
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+...
+
+The bisect was
+
+efd62c85525e212705368b24eb90ef10778190f5 is the first bad commit
+commit efd62c85525e212705368b24eb90ef10778190f5 (HEAD)
+Author: Herbert Xu <herbert@gondor.apana.org.au>
+Date:   Fri Apr 18 10:59:04 2025 +0800
+
+     crypto: md5-generic - Use API partial block handling
+
+     Use the Crypto API partial block handling.
+
+Milan
+
