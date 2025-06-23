@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F7711B423B
-	for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 05:40:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B0541C6FF3
+	for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 05:40:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750657213; cv=none; b=qdD2NNr7wgdDDY855iwpGrBcyodfhMWzsdLo7ZNHUMBGUFtaT3PEi5fTnrtPZfFK4+f5fdRMOn1Yelr3TsAhbMHuInSFz2QDSlpgDsE0s4FZbTp6uUCWM9fst53ONSpjauK6/C/1cfWokGQZ9+DhFFFl45tIZGGqfMYkCpFZrcg=
+	t=1750657229; cv=none; b=WYJyxZsvmkf2LowYSg6Zj5rg3XoyxifL39M1cRClB+ZlhCXC2I7anTgrwJ8H+oJ5hku19QKMr9aVMxFKlavNgTBk5s9Nh6iVcj7CDrvOdUfDySkM6Eb3vzdQRBKCeLpxI3qoNoovNR/n1puEgGVRmySzfDJFPd4WJiD2nE3pS6g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750657213; c=relaxed/simple;
+	s=arc-20240116; t=1750657229; c=relaxed/simple;
 	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=bmb0Fa6EGckTocHgz/b9kTJ6+D4Rm4+O/81MOVUwUTZTj00bgIORHsb4ZNngyzvzkUvoJ8ORLevxaO6FfDtY4PPoe/ExUOr6JxvEfB81karVA4lWOXRFXrxTExsy6ycee1IxJSqNON7E2uyFiv/6PEfbXJ20VlNbovBFHuW3hcg=
+	 Content-Type:Content-Disposition:In-Reply-To; b=gee6Kfh/A1JpPHhVbXbqnLEQI9ZvDdV6WwkcN4Vp2Jle45i7dxdZrDMo6+v5u3JOuLpAP1ASGX7ZFiUYlySKsTsIodl0mpRDR9GN0LbZgKqMHzoZbAAN+E94AgjBLBAnu1LKT+GPn8lk8bjJeJyI8Fy9fK5ebjxozIoZDcjRH6w=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 0523068B05; Mon, 23 Jun 2025 07:40:08 +0200 (CEST)
-Date: Mon, 23 Jun 2025 07:40:07 +0200
+	id 73BE7227A87; Mon, 23 Jun 2025 07:40:24 +0200 (CEST)
+Date: Mon, 23 Jun 2025 07:40:23 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Zhang Yi <yi.zhang@huaweicloud.com>
 Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
@@ -28,10 +28,10 @@ Cc: linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org,
 	shinichiro.kawasaki@wdc.com, brauner@kernel.org,
 	martin.petersen@oracle.com, yi.zhang@huawei.com,
 	chengzhihao1@huawei.com, yukuai3@huawei.com, yangerkun@huawei.com
-Subject: Re: [PATCH v2 2/9] nvme: set max_hw_wzeroes_unmap_sectors if
- device supports DEAC bit
-Message-ID: <20250623054007.GB29955@lst.de>
-References: <20250619111806.3546162-1-yi.zhang@huaweicloud.com> <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
+Subject: Re: [PATCH v2 3/9] nvmet: set WZDS and DRB if device enables unmap
+ write zeroes operation
+Message-ID: <20250623054023.GC29955@lst.de>
+References: <20250619111806.3546162-1-yi.zhang@huaweicloud.com> <20250619111806.3546162-4-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -40,7 +40,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
+In-Reply-To: <20250619111806.3546162-4-yi.zhang@huaweicloud.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
 Looks good:
