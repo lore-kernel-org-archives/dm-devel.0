@@ -1,149 +1,104 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C34B228D8F8
-	for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 15:44:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 952A87E1
+	for <dm-devel@lists.linux.dev>; Mon, 23 Jun 2025 16:14:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750693495; cv=none; b=ArfxvUfbimw/3duHP7zpIBKe+lVxvbADdyLhd1VCl+8/HveFqlYSiRU+/s+uu8tEbsrzXNozbeULx7GTKHmxjBdPehF+6LeLxb2UBCXfqXAt7NHIv9F9V2SJBNYGeUqdyXbzHkpierh8iKheXRBGrNbgc4x1ANBO60HJ2Cx3ykI=
+	t=1750695246; cv=none; b=t4tbC0xIaNQvypjWYDqIuKXS6EukNOXQJrwql2RmYxyrqEKa0JEbnrHkrUgOi8fp2OfaU6vNCK4JRtFYgWr08VY3WUuSO7ZdXX2CTyUR6CYiR4C98dtCYuD/C1Nz5Qn3KK54uAkuFNo1z78phu9uQdI7q9EWRxXE1nf9RCjjifc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750693495; c=relaxed/simple;
-	bh=xpceu6O9/iaGGM6aYrTG9Tm8YfqvzSyfIDk1CwxKkIk=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=kWtcttC1lv/L0CEQ+cVHBRk/XbNhwRz8dQaFzhjVSUhqSYMNnAJ9Mr44I3WEy43lTvf8pxfKhM0BsER6ldbc8gjHqLVLO0sZkZ3R6vOzk0uoMoA7kopZZ5AkwJp4iEOq/r5sEsMCvgQ3ILZ/BfEdSSevpfJtwQDvspBK0wHjcvo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RFzP4GCH; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1750695246; c=relaxed/simple;
+	bh=3Sa5EOwpju+0LAzYgx8+FeaoYLm/agC4WHNmeeSuZAg=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=G4V6/cCsv68Vt/+v+OMFVmA9fQsFb+FfFmbf2ygnP102oAQm0uXNSt3WrT4osLe/IY77KtmrFlMry5q3lByLRNjWZ4JOliVxI6995EF5AyzdZJOKKaTZVmbik265Xn4dz0WdRapmlsP8mADDVnHXZ43ix/1kKXxXKk/P5URdXtY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WPIb+OUC; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RFzP4GCH"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WPIb+OUC"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1750693492;
+	s=mimecast20190719; t=1750695243;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=86+/icADUCbUkF3tmg9HPlCuAVBHbY7w9EvHN0nfTDs=;
-	b=RFzP4GCHJ2uL7UH729GfZDNa0oz3qPQFDdWgYWlP5zExY37C4QqqycsP2lCYwPHrdhlQpP
-	Sqnq+Wsf7jtvhtXxI2jYAoDHxPVVfLaRBDKd/qCzmAmNLRIjGA8+E5POdUc4o2gQAtnTu6
-	QNbmDg+9Rv7AJNu/Oc33RDEoJFPvidU=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=+aTUkMGaFDRbYAlRbF2fLl6fkJQpm6AHyN7LIlCCB8M=;
+	b=WPIb+OUCpqUL9eHVb6FWbE3RY/pMhudYI1ZYmPfTyXCXl+BB9FR3f8wuJ+Fn9qWzuygOsU
+	5jdlMaALO2Sw02DRnlFBghHYOQnUxuP/U5and7c8bLLsJFLDlLAHA+lZ0oerI3y1TBB5g9
+	6m/tCQgX9N+q1ifzgUrTDZw6bI6sKA0=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-378-3gsAmtYYP8OdfIHzELmfYQ-1; Mon,
- 23 Jun 2025 11:44:48 -0400
-X-MC-Unique: 3gsAmtYYP8OdfIHzELmfYQ-1
-X-Mimecast-MFC-AGG-ID: 3gsAmtYYP8OdfIHzELmfYQ_1750693487
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-629-6VQhg-2dMECPYXMlYbhnLw-1; Mon,
+ 23 Jun 2025 12:13:58 -0400
+X-MC-Unique: 6VQhg-2dMECPYXMlYbhnLw-1
+X-Mimecast-MFC-AGG-ID: 6VQhg-2dMECPYXMlYbhnLw_1750695237
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 842BB1955E77;
-	Mon, 23 Jun 2025 15:44:46 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D8FEE18011EF;
+	Mon, 23 Jun 2025 16:13:56 +0000 (UTC)
 Received: from [10.22.80.93] (unknown [10.22.80.93])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4FC9A19560AB;
-	Mon, 23 Jun 2025 15:44:45 +0000 (UTC)
-Date: Mon, 23 Jun 2025 17:44:41 +0200 (CEST)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7929D180045C;
+	Mon, 23 Jun 2025 16:13:54 +0000 (UTC)
+Date: Mon, 23 Jun 2025 18:13:51 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>
-Subject: Re: [PATCH 1/2] dm: dm-crypt: Prevent splitting of emulated zone
- append operations
-In-Reply-To: <b5f54f1e-bd70-1003-a94f-fb6b8e131b4c@redhat.com>
-Message-ID: <959e29bd-a303-a3a0-13a9-ab4506fbac25@redhat.com>
-References: <20250611011340.92226-1-dlemoal@kernel.org> <20250611011340.92226-2-dlemoal@kernel.org> <b5f54f1e-bd70-1003-a94f-fb6b8e131b4c@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Heinz Mauelshagen <heinzm@redhat.com>, 
+    Herbert Xu <herbert@gondor.apana.org.au>, Milan Broz <gmazyland@gmail.com>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+Subject: [git pull] device mapper fixes for 6.16
+Message-ID: <4ac30b56-92f5-c33c-1270-864fd5ceee90@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: I-gaepQlinmNo4ITYivi8qKhNjQsiT4gmNkSrCzrzRY_1750693487
+X-Mimecast-MFC-PROC-ID: 1GW8_Gi5gBoB8uCDmRoIU6mCOpPnkjP6hV8nwIHDjQA_1750695237
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
+Hi Linus
 
+The following changes since commit 86731a2a651e58953fc949573895f2fa6d456841:
 
-On Mon, 23 Jun 2025, Mikulas Patocka wrote:
+  Linux 6.16-rc3 (2025-06-22 13:30:08 -0700)
 
-> Applied, thanks.
-> 
-> Mikulas
+are available in the Git repository at:
 
-Applied and reverted :)
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.16/dm-fixes
 
-I've just realized that this patch won't work because the value 
-get_max_request_size is changeable by the user - it's in the file 
-/sys/module/dm_crypt/parameters/max_write_size. So, if there is some large 
-value when you create the device and later the user sets smaller value, 
-dm-crypt will still split emulated zone append bios.
+for you to fetch changes up to db53805156f1e0aa6d059c0d3f9ac660d4ef3eb4:
 
-I suggest to set the limit limits->max_hw_sectors to BIO_MAX_VECS << 
-PAGE_SHIFT (that's the maximum allowable value for dm-crypt) and then 
-modify dm-crypt to not split bios that have the flag 
-BIO_EMULATES_ZONE_APPEND.
+  dm-raid: fix variable in journal device check (2025-06-23 16:42:37 +0200)
 
+Please, pull, thanks
 Mikulas
 
-> On Wed, 11 Jun 2025, Damien Le Moal wrote:
-> 
-> > For a zoned dm-crypt device, the native support for zone append
-> > operations (REQ_OP_ZONE_APPEND) is not enabled and instead dm-crypt
-> > relies on the emulation done by the block layer using regular write
-> > operations. This still requires to properly return the written sector as
-> > the BIO sector of the original BIO. However, this can be done correctly
-> > only and only if there is a single clone BIO used for processing the
-> > original zone append operation issued by the user. If the size of a zone
-> > append operation is larger than dm-crypt max_write_size, then the
-> > orginal BIO will be split and processed as a chain of regular write
-> > operations. Such chaining result in an incorrect written sector being
-> > returned to the zone append issuer using the original BIO sector.
-> > This in turn results in file system data corruptions using xfs or btrfs.
-> > 
-> > Fix this by modifying crypt_io_hints() to cap the max_hw_sectors limit
-> > for the dm-crypt device to the max_write_size limit. As this limit also
-> > caps the device max_zone_append_sectors limit, this forces the caller to
-> > issue zone append operations smaller than this limit, thus moving the
-> > splitting of large append operations to the caller instead of the
-> > incorrect internal splitting.
-> > 
-> > This change does not have any effect on the size of BIOs received by
-> > dm-crypt since the block layer does not automatically splits BIOs for
-> > BIO-based devices. So there is no impact on the performance of regular
-> > read and write operations.
-> > 
-> > Fixes: f211268ed1f9 ("dm: Use the block layer zone append emulation")
-> > Cc: stable@vger.kernel.org
-> > Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
-> > ---
-> >  drivers/md/dm-crypt.c | 12 ++++++++++++
-> >  1 file changed, 12 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> > index 9dfdb63220d7..7b1e88781a82 100644
-> > --- a/drivers/md/dm-crypt.c
-> > +++ b/drivers/md/dm-crypt.c
-> > @@ -3730,6 +3730,18 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
-> >  		max_t(unsigned int, limits->physical_block_size, cc->sector_size);
-> >  	limits->io_min = max_t(unsigned int, limits->io_min, cc->sector_size);
-> >  	limits->dma_alignment = limits->logical_block_size - 1;
-> > +
-> > +	/*
-> > +	 * For zoned devices, we cannot split write operations used to emulate
-> > +	 * zone append operations. And since all write requests are going to be
-> > +	 * split on get_max_request_size(cc, true) size, apply this limit to the
-> > +	 * maximum hardware I/O size so that we have a cap on the
-> > +	 * max_zone_append_sectors limit when the zone limits are validated by
-> > +	 * the block layer.
-> > +	 */
-> > +	if (ti->emulate_zone_append)
-> > +		limits->max_hw_sectors = min(limits->max_hw_sectors,
-> > +					     get_max_request_size(cc, true));
-> >  }
-> >  
-> >  static struct target_type crypt_target = {
-> > -- 
-> > 2.49.0
-> > 
-> 
+----------------------------------------------------------------
+- dm-crypt: fix a crash on 32-bit machines
+
+- dm-raid: replace "rdev" with correct loop variable name "r"
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCaFl3iRQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbcRMAP92ueTp0NFJr9dJne79HbhpJkBAS+b+
+25/qycKPv2XDfwD/c3/e3sBOhTIK8PohFR7lR62NepdfrOFVaaKubmNUlAU=
+=FD8P
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Heinz Mauelshagen (1):
+      dm-raid: fix variable in journal device check
+
+Herbert Xu (1):
+      dm-crypt: Extend state buffer size in crypt_iv_lmk_one
+
+ drivers/md/dm-crypt.c | 11 +++++++----
+ drivers/md/dm-raid.c  |  2 +-
+ include/crypto/hash.h |  2 ++
+ include/crypto/md5.h  |  4 ++++
+ 4 files changed, 14 insertions(+), 5 deletions(-)
 
