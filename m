@@ -1,161 +1,197 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-177.mta1.migadu.com (out-177.mta1.migadu.com [95.215.58.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D6FE79F2
-	for <dm-devel@lists.linux.dev>; Tue, 24 Jun 2025 01:05:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E6532505A9
+	for <dm-devel@lists.linux.dev>; Tue, 24 Jun 2025 07:34:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750727130; cv=none; b=IyxkN01evrjc4PttgJDxuSbdu2WuI8scuXMv+9UEtJO9zScc63jeuU0OYhxtsOabpqKXjo8w4xxIyAv4KRbRrI223vj1RnDk6guz7mCEcCr8QsZoOBPNjKJmY3beNzvPTIvctd/vUVw+fxSP745XqwJsJxppoOhe1pyuNej2nLk=
+	t=1750750461; cv=none; b=bmqy+mzNDfqB+A1E4QAEST2FHhsBPg7DGpxXMn1GY71ZeieuX5VMzlDBhW4PpX4NJKwEaIbywhStNqM/4qKWiZnSEIDrviEbRYCtwyecVneF+ZSHNfluuGKELbGqWON1vLVf9vfeqSLZJlp6bK3vli9U0YhQLnChTU6yME7mXd4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750727130; c=relaxed/simple;
-	bh=JTNtcHDxzRfWPJvGfc8jOjsOYa09Nx6ktFMuZ9N8aJ8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Ua+ILBar3RbMGZvpy5OnJMS9iQmm+zfDHUMkeENWEfq8U4uBLec96NWR8POEgBkOaJcs1YXTmQlZmCDO5pwoUNj7Gm8CJ85Un7z/maayAZTuk0p0EugHHp32AM7v/hNIBKJbNVlF3C3HsRlyK4SAd71lnTmaw5dDkwq8RO9IYsU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=s+VWiDrd; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1750750461; c=relaxed/simple;
+	bh=YTXRCkvu7qSZ/EDO3CbMr8KTG59gWoO+OL9yjRDnS20=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=TcyjLw8WPUJtMHi5csog2H1hYASLyhOGi/8BksyezCoZ+ee0nSOoMWZZEYuxGhnd+N3ZQygP8sR8kCmO9mD/gNu74hckELTnvJ+UyvYgKNfqFFCATJ5cwEJ76bZ8Yet/c+HueFWYbhxyzUXoY1QZhYC+rId9LSWkNWDaZ3prbro=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=WBp45qX8; arc=none smtp.client-ip=95.215.58.177
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="s+VWiDrd"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 90F1BC4CEEA;
-	Tue, 24 Jun 2025 01:05:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750727130;
-	bh=JTNtcHDxzRfWPJvGfc8jOjsOYa09Nx6ktFMuZ9N8aJ8=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=s+VWiDrdzsAC4KGJSMdi1CwW4fi2ckCQKPbD8GJZLOJGYhKGNhQ1Kg1UFOyxluBJA
-	 0PhT0iCWuC1zzPL+XU4+wvYWhaNxI5/NMrgBBv+iCWfgBSHW783V9cTl7+s5xjHVUW
-	 Zx72I+duwIihdw9V1d5X5ydJazk5gxKK5TLxglHdbL6iLOrmHQbblLGIwI5ofu7dw9
-	 FaNFjcNewUV0VxtDQn5oOxdPE2cEGBJ4+CZU+xUCrcYQAJJYfXDZigkutERQw0Ois0
-	 g5qdk1oCRSucJ1y2fy9+P4WnV4Nah5GJ3DQ83OVU0MsTMpda3LWt6NEYOlCHpdjeBU
-	 Dzc9vHdI3jy0g==
-Message-ID: <9e3e723f-dde8-4ea7-a606-275ee779d7ec@kernel.org>
-Date: Tue, 24 Jun 2025 10:03:25 +0900
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="WBp45qX8"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1750750456;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1YQ6o0gaAmTShG6pgXKTsFdI+bf++XYLB8FSp+/GC1c=;
+	b=WBp45qX8iJNubO30r1BQXDfA0jQdD7M633OBgLxIHab96qkHzFetiMrytfqmQimesVXVbV
+	LUfl7fUDW4cbjGluGqFUWP7sd+cZAT/XKDWVl+BNxJkgKDKpRPd4pD4wXZDWL+7JbPmRnb
+	7Eu4QjtBkplKUap9Lj+keOR1FhgA2MU=
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+To: mpatocka@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	axboe@kernel.dk,
+	hch@lst.de,
+	dan.j.williams@intel.com,
+	Jonathan.Cameron@Huawei.com
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-cxl@vger.kernel.org,
+	nvdimm@lists.linux.dev,
+	dm-devel@lists.linux.dev,
+	Dongsheng Yang <dongsheng.yang@linux.dev>
+Subject: [PATCH v1 01/11] dm-pcache: add pcache_internal.h
+Date: Tue, 24 Jun 2025 07:33:48 +0000
+Message-ID: <20250624073359.2041340-2-dongsheng.yang@linux.dev>
+In-Reply-To: <20250624073359.2041340-1-dongsheng.yang@linux.dev>
+References: <20250624073359.2041340-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/2] dm: dm-crypt: Prevent splitting of emulated zone
- append operations
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>
-References: <20250611011340.92226-1-dlemoal@kernel.org>
- <20250611011340.92226-2-dlemoal@kernel.org>
- <b5f54f1e-bd70-1003-a94f-fb6b8e131b4c@redhat.com>
- <959e29bd-a303-a3a0-13a9-ab4506fbac25@redhat.com>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <959e29bd-a303-a3a0-13a9-ab4506fbac25@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-On 6/24/25 12:44 AM, Mikulas Patocka wrote:
-> 
-> 
-> On Mon, 23 Jun 2025, Mikulas Patocka wrote:
-> 
->> Applied, thanks.
->>
->> Mikulas
-> 
-> Applied and reverted :)
-> 
-> I've just realized that this patch won't work because the value 
-> get_max_request_size is changeable by the user - it's in the file 
-> /sys/module/dm_crypt/parameters/max_write_size. So, if there is some large 
-> value when you create the device and later the user sets smaller value, 
-> dm-crypt will still split emulated zone append bios.
+Consolidate common PCACHE helpers into a new header so that subsequent
+patches can include them without repeating boiler-plate.
 
-Indeed. Good catch.
+- Logging macros with unified prefix and location info.
+- Common constants (KB/MB helpers, metadata replica count, CRC seed).
+- On-disk metadata header definition and CRC helper.
+- Sequence-number comparison that handles wrap-around.
+- pcache_meta_find_latest() to pick the newest valid metadata copy.
 
-> I suggest to set the limit limits->max_hw_sectors to BIO_MAX_VECS << 
-> PAGE_SHIFT (that's the maximum allowable value for dm-crypt) and then 
-> modify dm-crypt to not split bios that have the flag 
-> BIO_EMULATES_ZONE_APPEND.
+Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
+---
+ drivers/md/dm-pcache/pcache_internal.h | 116 +++++++++++++++++++++++++
+ 1 file changed, 116 insertions(+)
+ create mode 100644 drivers/md/dm-pcache/pcache_internal.h
 
-I think we simply need to do a limit update when the user modifies the write
-limit through sysfs. That will prevent things from going out of sync if the
-user ever modifies the limit.
-
-Of note is that this patch turns out to be more than just about zone append
-emulation. We absolutely need it for any write request (for emulating zone
-append or regular writes) to avoid the accept partial return which would
-trigger issuing another BIO. In this case, we are at risk of deadlocking with
-queue freeze on blk_queue_enter() in the submission path. So this patch, and
-another one forcing splitting of all write BIOs to zoned DM devices is needed
-to avoid this deadlock.
-
-I will send a v2 with the additional patch and a better commit message for this
-patch explaining this.
-
-> 
-> Mikulas
-> 
->> On Wed, 11 Jun 2025, Damien Le Moal wrote:
->>
->>> For a zoned dm-crypt device, the native support for zone append
->>> operations (REQ_OP_ZONE_APPEND) is not enabled and instead dm-crypt
->>> relies on the emulation done by the block layer using regular write
->>> operations. This still requires to properly return the written sector as
->>> the BIO sector of the original BIO. However, this can be done correctly
->>> only and only if there is a single clone BIO used for processing the
->>> original zone append operation issued by the user. If the size of a zone
->>> append operation is larger than dm-crypt max_write_size, then the
->>> orginal BIO will be split and processed as a chain of regular write
->>> operations. Such chaining result in an incorrect written sector being
->>> returned to the zone append issuer using the original BIO sector.
->>> This in turn results in file system data corruptions using xfs or btrfs.
->>>
->>> Fix this by modifying crypt_io_hints() to cap the max_hw_sectors limit
->>> for the dm-crypt device to the max_write_size limit. As this limit also
->>> caps the device max_zone_append_sectors limit, this forces the caller to
->>> issue zone append operations smaller than this limit, thus moving the
->>> splitting of large append operations to the caller instead of the
->>> incorrect internal splitting.
->>>
->>> This change does not have any effect on the size of BIOs received by
->>> dm-crypt since the block layer does not automatically splits BIOs for
->>> BIO-based devices. So there is no impact on the performance of regular
->>> read and write operations.
->>>
->>> Fixes: f211268ed1f9 ("dm: Use the block layer zone append emulation")
->>> Cc: stable@vger.kernel.org
->>> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
->>> ---
->>>  drivers/md/dm-crypt.c | 12 ++++++++++++
->>>  1 file changed, 12 insertions(+)
->>>
->>> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
->>> index 9dfdb63220d7..7b1e88781a82 100644
->>> --- a/drivers/md/dm-crypt.c
->>> +++ b/drivers/md/dm-crypt.c
->>> @@ -3730,6 +3730,18 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
->>>  		max_t(unsigned int, limits->physical_block_size, cc->sector_size);
->>>  	limits->io_min = max_t(unsigned int, limits->io_min, cc->sector_size);
->>>  	limits->dma_alignment = limits->logical_block_size - 1;
->>> +
->>> +	/*
->>> +	 * For zoned devices, we cannot split write operations used to emulate
->>> +	 * zone append operations. And since all write requests are going to be
->>> +	 * split on get_max_request_size(cc, true) size, apply this limit to the
->>> +	 * maximum hardware I/O size so that we have a cap on the
->>> +	 * max_zone_append_sectors limit when the zone limits are validated by
->>> +	 * the block layer.
->>> +	 */
->>> +	if (ti->emulate_zone_append)
->>> +		limits->max_hw_sectors = min(limits->max_hw_sectors,
->>> +					     get_max_request_size(cc, true));
->>>  }
->>>  
->>>  static struct target_type crypt_target = {
->>> -- 
->>> 2.49.0
->>>
->>
-> 
-
-
+diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
+new file mode 100644
+index 000000000000..4d3b55a22638
+--- /dev/null
++++ b/drivers/md/dm-pcache/pcache_internal.h
+@@ -0,0 +1,116 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++#ifndef _PCACHE_INTERNAL_H
++#define _PCACHE_INTERNAL_H
++
++#include <linux/delay.h>
++#include <linux/crc32c.h>
++
++#define pcache_err(fmt, ...)							\
++	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
++#define pcache_info(fmt, ...)							\
++	pr_info("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
++#define pcache_debug(fmt, ...)							\
++	pr_debug("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
++
++#define PCACHE_KB			(1024ULL)
++#define PCACHE_MB			(1024 * PCACHE_KB)
++
++/* Maximum number of metadata indices */
++#define PCACHE_META_INDEX_MAX		2
++
++#define PCACHE_CRC_SEED			0x3B15A
++/*
++ * struct pcache_meta_header - PCACHE metadata header structure
++ * @crc: CRC checksum for validating metadata integrity.
++ * @seq: Sequence number to track metadata updates.
++ * @version: Metadata version.
++ * @res: Reserved space for future use.
++ */
++struct pcache_meta_header {
++	__u32 crc;
++	__u8  seq;
++	__u8  version;
++	__u16 res;
++};
++
++/*
++ * pcache_meta_crc - Calculate CRC for the given metadata header.
++ * @header: Pointer to the metadata header.
++ * @meta_size: Size of the metadata structure.
++ *
++ * Returns the CRC checksum calculated by excluding the CRC field itself.
++ */
++static inline u32 pcache_meta_crc(struct pcache_meta_header *header, u32 meta_size)
++{
++	return crc32c(PCACHE_CRC_SEED, (void *)header + 4, meta_size - 4);
++}
++
++/*
++ * pcache_meta_seq_after - Check if a sequence number is more recent, accounting for overflow.
++ * @seq1: First sequence number.
++ * @seq2: Second sequence number.
++ *
++ * Determines if @seq1 is more recent than @seq2 by calculating the signed
++ * difference between them. This approach allows handling sequence number
++ * overflow correctly because the difference wraps naturally, and any value
++ * greater than zero indicates that @seq1 is "after" @seq2. This method
++ * assumes 8-bit unsigned sequence numbers, where the difference wraps
++ * around if seq1 overflows past seq2.
++ *
++ * Returns:
++ *   - true if @seq1 is more recent than @seq2, indicating it comes "after"
++ *   - false otherwise.
++ */
++static inline bool pcache_meta_seq_after(u8 seq1, u8 seq2)
++{
++	return (s8)(seq1 - seq2) > 0;
++}
++
++/*
++ * pcache_meta_find_latest - Find the latest valid metadata.
++ * @header: Pointer to the metadata header.
++ * @meta_size: Size of each metadata block.
++ *
++ * Finds the latest valid metadata by checking sequence numbers. If a
++ * valid entry with the highest sequence number is found, its pointer
++ * is returned. Returns NULL if no valid metadata is found.
++ */
++static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_header *header,
++					u32 meta_size, u32 meta_max_size,
++					void *meta_ret)
++{
++	struct pcache_meta_header *meta, *latest = NULL;
++	u32 i, seq_latest = 0;
++	void *meta_addr;
++
++	meta = meta_ret;
++
++	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
++		meta_addr = (void *)header + (i * meta_max_size);
++		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
++			pcache_err("hardware memory error when copy meta");
++			return ERR_PTR(-EIO);
++		}
++
++		/* Skip if CRC check fails */
++		if (meta->crc != pcache_meta_crc(meta, meta_size))
++			continue;
++
++		/* Update latest if a more recent sequence is found */
++		if (!latest || pcache_meta_seq_after(meta->seq, seq_latest)) {
++			seq_latest = meta->seq;
++			latest = (void *)header + (i * meta_max_size);
++		}
++	}
++
++	if (latest) {
++		if (copy_mc_to_kernel(meta_ret, latest, meta_size)) {
++			pcache_err("hardware memory error");
++			return ERR_PTR(-EIO);
++		}
++	}
++
++	return latest;
++}
++
++#endif /* _PCACHE_INTERNAL_H */
 -- 
-Damien Le Moal
-Western Digital Research
+2.43.0
+
