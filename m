@@ -1,79 +1,72 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0833307498;
-	Wed, 25 Jun 2025 06:17:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7E394307498;
+	Wed, 25 Jun 2025 06:18:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750832264; cv=none; b=Ma7mt2sX7aCVWwqhn5yZaQXQILNXGxXh8QZ8nHB0ujkFgRLb0I56GKmZjq8Ti08VEgtel6rG4GJozeIwp1NyjSUYBGDFUOdr+YhSdcUfbwa7g+xKGsG5Qe5g41zvAEVu8fU44rFxA3YPLeutZTBrj03UZCsmwF0qTuQ9OVTi4bI=
+	t=1750832294; cv=none; b=lPf+qrfJklRP0H4BSPENqYfUb9WGk0uTh3lJjoI32x66y26V3Spy0ILHx2MGgNuMAqQlkrn27gqUqVvXum5sSFWEFgh2HhmZ2EnUTn4SW0eXwvmTrdjB3okaStHVFNaVMSdwTcVnkBip9bGnZct3jmz/YiIwfaoSqx+9uZzpFvc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750832264; c=relaxed/simple;
-	bh=n7QaiHu9HqfZ6NlbIgVKBfzgepFUcUlELNtjXtJqMUw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=AV3oo1BZZ7lnd3HSes0/VELskdynVsGkbs4xnnx8PvIR+JfHf9+9DfU8i3E7mdzZu7gaXHwZ9qubDYyVUdKWo02iN2ZF90nzqt6eycY1Z+nIwxWdz0jmvmvCXwWxaVH8FP5ZdmMKxJMn6BbaeBW8BwYTW7/NCjyxqxUxm8aHww4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=XvwguelY; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1750832294; c=relaxed/simple;
+	bh=mlWCt80N2mswh3zRw2yp8sxsDCPCNvuJ0E4ZXu352p4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=aK31WgoUuB8GvLk8GbLNjzuKnJuP3tRS0qrzCNEyVBnnaYYr4HEwM1dpmYG+W4yH1P74SpR7LGYW4uXqR/jUJH1B7iWvIsK0SuskyMUUm9qzXKWMPd0xDllAxf2KXmd15WI+pqnMKdjW10wBpSGR36qsSfqyb0baQepKfTJNos8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=FicnKg+k; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="XvwguelY"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 78B54C4CEEA;
-	Wed, 25 Jun 2025 06:17:43 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750832264;
-	bh=n7QaiHu9HqfZ6NlbIgVKBfzgepFUcUlELNtjXtJqMUw=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=XvwguelYHfu+9XfpqPhpmY8bQxrrVI2XT1fjbgb132SGqVvqxG0KoFtOARf8IYyUT
-	 Yd2rFADdeJN3fw8cMBhItvCBlhDUgp7qjMiiNE0T96xideqlFkCUt8zdriH68pueOn
-	 PbrEk/2VY/c1sbFtE91IGFUTCwbZGuQKAj5g+3TfxFNLj06bC/KZT04AH5DU9pqX9q
-	 AQK+mAU89WgvtNxHDcqd6Vxxb7+9L5tbaLygLqDekYBXT54/NJFrDlRpzts0ommJ+g
-	 AZ/sQWPek+cLFcMNN5yOBCQxz2OcyfmqGyPjItZTKoj758PaFEhmE8+6542DepJeEP
-	 SICZ4ZDxg2vQQ==
-Message-ID: <0e94af0a-3a85-49ba-a7fa-bbbf9f29ec51@kernel.org>
-Date: Wed, 25 Jun 2025 15:15:39 +0900
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="FicnKg+k"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=JoWhCOAVXdzr1ER6ZF50SXK4IRK+D9okETFOKLlE0Ac=; b=FicnKg+kuBt6VuPLcJzdJ8FMRR
+	N9oFOw5nNHBq9jJkAhP+fTt8f9L4TE26AXmOXQRsT7PsJi1S5LhSmMfRn1U8oul9rK3yKeKsZPSuY
+	zLYHnnCx7QS5WOySPZPzR9V6LSogxB/I1nCtqW8bswL0hj1JhieNF0RD5ojqyLSZR9TG5R1K1wUwA
+	Z7UOMv5yRZN8/W52z1BRaQeXqViQC8uu01I75OvlV6FC96uQ6DR6+Sqc2b1OUE0y9G/7mYCTU8jBL
+	fZkQol7pxX+aUi8ixZSKVy6oUpK5yT/wYKh9cX9+e4D/YUQN0zTvJ5dN7cweSQ7RXbqOsACihHpd7
+	H54tToGg==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uUJSW-00000007eEd-3pQE;
+	Wed, 25 Jun 2025 06:18:12 +0000
+Date: Tue, 24 Jun 2025 23:18:12 -0700
+From: Christoph Hellwig <hch@infradead.org>
+To: Damien Le Moal <dlemoal@kernel.org>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-block@vger.kernel.org,
+	Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v2 1/4] block: Introduce bio_needs_zone_write_plugging()
+Message-ID: <aFuUpLwmUWWwOmeB@infradead.org>
+References: <20250625055908.456235-1-dlemoal@kernel.org>
+ <20250625055908.456235-2-dlemoal@kernel.org>
+ <aFuTYxdeAzG1iSl9@infradead.org>
+ <576bb6dd-18b1-4c78-b848-51577d99b124@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 2/4] dm: Always split write BIOs to zoned device limits
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>, Bart Van Assche <bvanassche@acm.org>
-References: <20250625055908.456235-1-dlemoal@kernel.org>
- <20250625055908.456235-3-dlemoal@kernel.org> <aFuT_X8GdNwRU9AF@infradead.org>
-From: Damien Le Moal <dlemoal@kernel.org>
-Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <aFuT_X8GdNwRU9AF@infradead.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <576bb6dd-18b1-4c78-b848-51577d99b124@kernel.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-On 6/25/25 3:15 PM, Christoph Hellwig wrote:
-> On Wed, Jun 25, 2025 at 02:59:06PM +0900, Damien Le Moal wrote:
->> Any zoned DM target that requires zone append emulation will use the
->> block layer zone write plugging. In such case, DM target drivers must
->> not split BIOs using dm_accept_partial_bio() as doing so can potentially
->> lead to deadlocks with queue freeze operations. Regular write operations
->> used to emulate zone append operations also cannot be split by the
->> target driver as that would result in an invalid writen sector value
->> return using the BIO sector.
->>
->> In order for zoned DM target drivers to avoid such incorrect BIO
->> splitting, we must ensure that large BIOs are split before being passed
->> to the map() function of the target, thus guaranteeing that the
->> limits for the mapped device are not exceeded.
->>
->> dm-crypt and dm-flakey are the only target drivers supporting zoned
->> devices and using dm_accept_partial_bio().
+On Wed, Jun 25, 2025 at 03:14:51PM +0900, Damien Le Moal wrote:
+> On 6/25/25 3:12 PM, Christoph Hellwig wrote:
+> > On Wed, Jun 25, 2025 at 02:59:05PM +0900, Damien Le Moal wrote:
+> >> +bool bio_needs_zone_write_plugging(struct bio *bio)
+> > 
+> > Can you use this in blk_zone_plug_bio instead of duplicating the logic?
 > 
-> Is there any good way to catch usage dm_accept_partial_bio on zone
-> devices so that issues like this don't get reintroduced later?
+> I thought about doing that, but we would still need to again do the switch/case
+> on the bio op. But the checks before that could go into a common static helper.
+> 
+> > I also wonder if we should only it it, as despite looking quite complex
+> 
+> This does not parse...
 
-patch 4 does that. Though with the heavy BUG_ON() hammer. That can be cleaned
-up later though.
+The "only it" above should be "inline", -ENOTENOUGHCOFFEE
 
-
--- 
-Damien Le Moal
-Western Digital Research
