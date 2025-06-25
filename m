@@ -1,90 +1,86 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from 003.mia.mailroute.net (003.mia.mailroute.net [199.89.3.6])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DFA71519B9
-	for <dm-devel@lists.linux.dev>; Wed, 25 Jun 2025 16:33:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 040E12D3206
+	for <dm-devel@lists.linux.dev>; Wed, 25 Jun 2025 16:35:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.6
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750869215; cv=none; b=beXJ860ceJPZU+sccFomBprAvPAwaMfwHq8uks9gdXvtdqBEGMDaJxPDCJUvS8OITBPEv2eP8V7mOusjYgYg/UMIe65sH0Thr0+5KlhumRSHBnqkWd1hJ2VpOf40Eu482wuEu2YykuZBW5yNQcmip3TqSg0Hu1EZcUq0K29hnBE=
+	t=1750869306; cv=none; b=fdGGJ8S+7CzXJEyRRA4nK9F0e4X3ev9z/HwWsY3Za2qOvlMr9QzWuFMU6tY3gmTL3P0/r3sudv94nh87PIP1tuZw9tcq1OQJJyu06WeWYH+R2T7clLUEVGude/NvzItPreYprJ+BEdWrUp6rBv1y4mNDZjBykLojsrGIO8azeCI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750869215; c=relaxed/simple;
-	bh=w8HamvXIfF70c1Jlwsqol6xTtkLLfkKWH8FsKxJjU2o=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Nn9tSd7vxg3cng5Wjg4GJ1uHAOWqX/ms1o2Fb3NZ8aaaFqDezmXdYV5bxVLP6Xx0oekMAp3/ZOXyPFzASh3n93kby6SlBVCPxCWNhLcqBB5VoV8iNn46un9OgLJJa1dU3lnAGl9M1sdZ/uvD96qXdqE+RkWvX79PPykDZCpCKUs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AZf5ReaF; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1750869306; c=relaxed/simple;
+	bh=uSU+CVRzDhuBCrylHIKqb/5LynTGVouo2ht+0eBU3mk=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=Vr3gx1OKaz4d2EEKF7PTo7fbYUCizo+GKm1WCJ+7+bYuCIYIyJwEn3Lfv3k6DRQ6cFyhJNBiHRuy36BWMeAc0P5I4XRj9yhKDY3DaTkiWOc+BZg/bS4oPplVzvmDYPxblwnKUdVnC+eTGz5ucliv7Z8O+PyT01NPVnOCm949d/U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=TArdKjsv; arc=none smtp.client-ip=199.89.3.6
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AZf5ReaF"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1750869213;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=amCEsrQtfa1hXwyWRd1ZdiWEeRbV3sK8Ec08uUHcKsw=;
-	b=AZf5ReaFSu5vdIjK9uYj+Ex+chfMC8tebCnzpET2aac/u4vrBFKo5518LjngkKNVweODE8
-	mZSGOMDyBq2ShQC9bpVlSbcWD2FIM47WJdf18tRCl1t90FqQ1Fys5EKHHGMcd07MunhVQO
-	ZML68d1FDK6uTOA/UsLMGFt9/JkFq7o=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-12-4k-j-2ifMhKxIGTS_sbVDg-1; Wed,
- 25 Jun 2025 12:33:27 -0400
-X-MC-Unique: 4k-j-2ifMhKxIGTS_sbVDg-1
-X-Mimecast-MFC-AGG-ID: 4k-j-2ifMhKxIGTS_sbVDg_1750869206
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="TArdKjsv"
+Received: from localhost (localhost [127.0.0.1])
+	by 003.mia.mailroute.net (Postfix) with ESMTP id 4bS6qQ1LDqzlgqyQ;
+	Wed, 25 Jun 2025 16:34:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1750869296; x=1753461297; bh=6TsA/MXe2+bDQ40v8gre2JKK
+	Le1cqMtu6plLxc69bWY=; b=TArdKjsvDF9MxIEMy1QZ7AbtmsUkdsJoNpep1fCc
+	jzMEWJ5NE3wyC2/GX8Yic7uLwV3L4bfnW34Rp0hmfBmE+/PD+EF6Ec6NUW1TVrMP
+	CyinjmTdFx8JlJJY8aa5YqUeTFPtWu3eWkVikFvQ0qKW84jMtje2LIM1gX+3qpAE
+	2s3+GtCfftzl0e4kuR2qrCqEMyJ9N2ox1J8JiHr9S+WfiZBvlks+1iDE16rFuF9f
+	3Mik/9SRs2344xvxDQnnj0bHHVr/OkT6inRWjm3QiHZWwI8VZGflcTQc0JKLeJfZ
+	fR27Sx2P8YeXf1nY8ay0/dVmAqfSBZcTWR9aTh7+rYpZ7Q==
+X-Virus-Scanned: by MailRoute
+Received: from 003.mia.mailroute.net ([127.0.0.1])
+ by localhost (003.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id mBI3-OVvIk-e; Wed, 25 Jun 2025 16:34:56 +0000 (UTC)
+Received: from [100.66.154.22] (unknown [104.135.204.82])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8D11318862E6;
-	Wed, 25 Jun 2025 16:33:10 +0000 (UTC)
-Received: from [10.22.80.93] (unknown [10.22.80.93])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E95EA195E761;
-	Wed, 25 Jun 2025 16:33:07 +0000 (UTC)
-Date: Wed, 25 Jun 2025 18:33:03 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Damien Le Moal <dlemoal@kernel.org>
-cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, 
-    dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>, 
-    Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v2 3/4] dm: dm-crypt: Do not split write operations with
- zoned targets
-In-Reply-To: <40690cc0-e941-4db1-904c-a5d60718d852@kernel.org>
-Message-ID: <917d9f55-6ee2-c5c7-b6a5-fe188ad42590@redhat.com>
-References: <20250625055908.456235-1-dlemoal@kernel.org> <20250625055908.456235-4-dlemoal@kernel.org> <96831fd8-da1e-771f-7d19-8087d29f2af1@redhat.com> <07d71ad1-a6de-474b-bee4-a64180284802@kernel.org> <5c9898e1-3fae-d271-b0b8-a23371d22cb0@redhat.com>
- <40690cc0-e941-4db1-904c-a5d60718d852@kernel.org>
+	(Authenticated sender: bvanassche@acm.org)
+	by 003.mia.mailroute.net (Postfix) with ESMTPSA id 4bS6qK02vQzlgqVH;
+	Wed, 25 Jun 2025 16:34:52 +0000 (UTC)
+Message-ID: <654fed1e-ce53-4386-a966-97c50931e9b5@acm.org>
+Date: Wed, 25 Jun 2025 09:34:51 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 3/5] dm: Always split write BIOs to zoned device limits
+To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+ Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>
+References: <20250625093327.548866-1-dlemoal@kernel.org>
+ <20250625093327.548866-4-dlemoal@kernel.org>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <20250625093327.548866-4-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
+On 6/25/25 2:33 AM, Damien Le Moal wrote:
+> +	/*
+> +	 * Mapped devices that require zone append emulation will use the block
+> +	 * layer zone write plugging. In such case, we must split any large BIO
+> +	 * to the mapped device limits to avoid potential deadlocks with queue
+> +	 * freeze operations.
+> +	 */
+> +	if (!dm_emulate_zone_append(md))
+> +		return false;
+> +	return bio_needs_zone_write_plugging(bio) || bio_straddles_zones(bio);
 
+Changing the dm_emulate_zone_append() call into a
+disk_need_zone_resources() call or a disk->zone_wplugs_hash test
+probably would make the intention of the if-statement more clear.
 
-On Wed, 25 Jun 2025, Damien Le Moal wrote:
+Additionally, bio_needs_zone_write_plugging() already tests
+disk->zone_wplugs_hash. Isn't the dm_emulate_zone_append() call
+superfluous because of this?
 
-> >> Do you have a specific example in mind ?
-> > 
-> > What happens if a bio that is larger than "BIO_MAX_VECS << PAGE_SHIFT" 
-> > enters dm_split_and_process_bio? Where will the bio be split? I don't see 
-> > it, but maybe I'm missing something.
-> 
-> See patch 3 of the v3 I sent: dm_zone_bio_needs_split() and
-> dm_split_and_process_bio() have been modified to always endup with need_split ==
-> true for zone write BIOs, and that causes a call to bio_split_to_limits(). So
-> dm-crypt will always see BIOs that are smaller than limits->max_hw_sectors,
-> which is set to BIO_MAX_VECS << PAGE_SECTORS_SHIFT in dm-crypt io_hint. So
-> dm-crypt can never see a write BIO that is larger than BIO_MAX_VECS << PAGE_SHIFT.
+Thanks,
 
-OK.
-
-I acked the patches and I suppose that they will be sent through the block 
-layer tree.
-
-Or - should I send them through the device mapper tree?
-
-Mikulas
-
+Bart.
