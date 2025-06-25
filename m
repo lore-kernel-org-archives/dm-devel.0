@@ -1,48 +1,33 @@
-Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BF142D5439
-	for <dm-devel@lists.linux.dev>; Wed, 25 Jun 2025 16:42:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 536C0202C46;
+	Wed, 25 Jun 2025 23:36:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750869748; cv=none; b=tFt86ZDPLXWniBdMv6XVoSuGVNOmzLX6oKOEGIocJFK8pu3H5yykHS8+C4ZRRndvN77MBw5aDqcdUmEF8ZIL9g4W9VkpQjA9Q6xMaHA2hHp10DBJjX3l0D0EycbH8CBL7xTwUv9Ote7bQV59uglhmy+8V0z5rFPqkMEwsutNNbQ=
+	t=1750894593; cv=none; b=dG+c1k9y6aUhpZDgYFJZ32V8+DML/1SyCbQaFe15DDY1SOwoiMaM/OB8L4Ti1GSKe6C/JiOLA/rnmDF1asVPqjBRB9sdbFaa1uH0kRIlrFDodGuYnSiO0ZtE3r+hMEM8OUhnG+KYSRN1JxjzzmHvCKDF3Pt4kecEcg5qch8rLnw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750869748; c=relaxed/simple;
-	bh=Vs+aa4gJBkLb003tTeHsMHpeR6ie6rbTwrPUl+a/bDM=;
+	s=arc-20240116; t=1750894593; c=relaxed/simple;
+	bh=dHeAbvNT7Gg/RURyvYMojUzvoQTP7FyN/Rb6GKk74j0=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=kNzBBIN1CBfNRipYyWKIb+3PZNaHQWrmeDguET7Ck9+KaMzPP1UohKVb+JQ7/iPDgXaTayJZU3kbretAmtfe+vlExSFKA4W3/tA75seL5H3MqNUYRbaCsdMssKn4txLJUJ3O7c2SE1cKYAS0JQaZFCwsh/9Bsag0L/btQpCdQqY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=phNmOFzd; arc=none smtp.client-ip=199.89.3.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	 In-Reply-To:Content-Type; b=En+oDomFkwjrLiDuLewjckTnGoQS75LQ7BaZY9NUhBzdbCB55oEXyEl1A4u0VFsF1fy1VzcBfgcD/ACGEahXonRFogH0kVxRoLFVjjD6nJxQeLgx1tNUeDBg0hNGHaotG/ds5WugIoKgjRtQ51IdR4JaKMdFEGf4ubWnN0pME/Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ZqJvWHmT; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="phNmOFzd"
-Received: from localhost (localhost [127.0.0.1])
-	by 004.mia.mailroute.net (Postfix) with ESMTP id 4bS7012PLqzm0pK4;
-	Wed, 25 Jun 2025 16:42:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1750869743; x=1753461744; bh=UDD0vMX18jwFgJtkFla1A7Lk
-	hKWY1E4DqsARkQZpma0=; b=phNmOFzdLYmEz2qImXmfH3DEpYui3Rj6/9SdKAIf
-	D98kZLL1sIae3iZG5+tTe9WETfD2eEEpEriJHiB+2fPm1NgEgQuaMHU0UWG/Ngyo
-	hLhFxyNGpy2iLV1gY6ZoHxvDbgp9xA/7O/FSElNzDE+myAli6OAOUFS1T47xM8rU
-	yfpTBEtPLTuI19HaEuqx3Ps9hPG97r+Mi2P0KqXHSuuLbuJ180MHEmRsPRE+JaRb
-	NN40on4oTzvPNBzLw1bZFFa6z4Nf8Z20G5ulncnaYuoVxa6/YgPTCrtVR73EtRUz
-	zWyArfAO12pXRwWoE2TfJebMkZ88auoqTNcQZ8H2S1Dybw==
-X-Virus-Scanned: by MailRoute
-Received: from 004.mia.mailroute.net ([127.0.0.1])
- by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id VntgxNwd3UIN; Wed, 25 Jun 2025 16:42:23 +0000 (UTC)
-Received: from [100.66.154.22] (unknown [104.135.204.82])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4bS6zv5XtKzm0jwB;
-	Wed, 25 Jun 2025 16:42:18 +0000 (UTC)
-Message-ID: <e9a291a0-a8d5-4358-a28b-4c8f91d45942@acm.org>
-Date: Wed, 25 Jun 2025 09:42:17 -0700
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ZqJvWHmT"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0CA06C4CEEA;
+	Wed, 25 Jun 2025 23:36:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1750894592;
+	bh=dHeAbvNT7Gg/RURyvYMojUzvoQTP7FyN/Rb6GKk74j0=;
+	h=Date:Subject:To:References:From:In-Reply-To:From;
+	b=ZqJvWHmTaunm+wRfs6HiSWfatW7LaEXt5HT/Ss/EEnxvsOImugEDCN98sK2MqPjkx
+	 7832Xwdr2RhI9l1B6a2Rx2mtqoIhBVpp0pkFwECGtg6yOzMczWbFsn9GpSupSZkMAw
+	 lPae0ub6+sQWfQgimwdEBOLsrfL6InpdlfCf+63K0QWleZusx2edKiREKQcFioBEsW
+	 nj8SahK3H3FlRd8a2pM6C5tV0SJw3lVWjAqaruG4U1UsUVIblbjakgP4vIJYlX7Dnr
+	 6ciOtnWmIUZ0WTg8BKDNzpcSa/1l0eF/vQMk10nAV5wagWOS0RwP+gvAD+zal/P7HT
+	 RKg/y3EFa9mQg==
+Message-ID: <d0ae85c4-8fd7-49e2-96b1-a08f01154cf2@kernel.org>
+Date: Thu, 26 Jun 2025 08:36:30 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -50,27 +35,52 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 4/5] dm: dm-crypt: Do not partially accept write BIOs
- with zoned targets
-To: Damien Le Moal <dlemoal@kernel.org>, linux-block@vger.kernel.org,
+Subject: Re: [PATCH v3 1/5] block: Make REQ_OP_ZONE_FINISH a write operation
+To: Bart Van Assche <bvanassche@acm.org>, linux-block@vger.kernel.org,
  Jens Axboe <axboe@kernel.dk>, dm-devel@lists.linux.dev,
  Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>
 References: <20250625093327.548866-1-dlemoal@kernel.org>
- <20250625093327.548866-5-dlemoal@kernel.org>
+ <20250625093327.548866-2-dlemoal@kernel.org>
+ <3f292307-30ac-442c-a694-5fc3560036a4@acm.org>
 Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <20250625093327.548866-5-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <3f292307-30ac-442c-a694-5fc3560036a4@acm.org>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
-On 6/25/25 2:33 AM, Damien Le Moal wrote:
-> Fix this by modifying get_max_request_size() to always return the size
-> of the BIO to avoid it being split with dm_accpet_partial_bio() in
-                                           ^^^^^^^^^^^^^^^^^^^^^^^
-Two letters got swapped in this function name ...
+On 6/26/25 01:29, Bart Van Assche wrote:
+> On 6/25/25 2:33 AM, Damien Le Moal wrote:
+>> diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+>> index 3d1577f07c1c..930daff207df 100644
+>> --- a/include/linux/blk_types.h
+>> +++ b/include/linux/blk_types.h
+>> @@ -350,11 +350,11 @@ enum req_op {
+>>   	/* Close a zone */
+>>   	REQ_OP_ZONE_CLOSE	= (__force blk_opf_t)11,
+>>   	/* Transition a zone to full */
+>> -	REQ_OP_ZONE_FINISH	= (__force blk_opf_t)12,
+>> +	REQ_OP_ZONE_FINISH	= (__force blk_opf_t)13,
+>>   	/* reset a zone write pointer */
+>> -	REQ_OP_ZONE_RESET	= (__force blk_opf_t)13,
+>> +	REQ_OP_ZONE_RESET	= (__force blk_opf_t)15,
+>>   	/* reset all the zone present on the device */
+>> -	REQ_OP_ZONE_RESET_ALL	= (__force blk_opf_t)15,
+>> +	REQ_OP_ZONE_RESET_ALL	= (__force blk_opf_t)17,
+>>   
+>>   	/* Driver private requests */
+>>   	REQ_OP_DRV_IN		= (__force blk_opf_t)34,
+> 
+> Since we are renumbering operation types, how about also
+> renumbering REQ_OP_ZONE_OPEN and/or REQ_OP_ZONE_CLOSE? Neither operation
+> modifies data on the storage medium nor any write pointers so these
+> operations shouldn't be considered as write operations, isn't it?
 
-Otherwise this patch looks good to me.
+Open and close change the zone condition and act on the drive count of
+explicitly open zone resources which impacts the ability to write to zones. So I
+would rather consider these also write operations given the changes they imply.
 
-Thanks,
 
-Bart.
+-- 
+Damien Le Moal
+Western Digital Research
