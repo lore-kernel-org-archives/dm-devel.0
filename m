@@ -1,56 +1,73 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8109723AD;
-	Wed, 25 Jun 2025 06:16:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81ACB23AD;
+	Wed, 25 Jun 2025 06:16:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750832198; cv=none; b=nyXP1Ey01XmS/R6WMWnEMuIPLnhTqN38lckTGElYvmzk8kXGBrjtpv541KmXKAQW5+f/9ionixNzfTxyWcFnRYQTpgLh2p9QJ1hj+ga45BMBve82qtIPulJ2cMENiklEWShN5NmR9iwX8MoDgP6wR8qClLbH1Tcn6YTquxIN5h8=
+	t=1750832216; cv=none; b=UauZcDXuwMTssFGI3RRkfMoZ4RQGt5j5kSS6Iqm1gggpit7LYSQse9bIgn2xQyC7axmqvJZjh+5Xu5QDqGrJD8xIBAYoZWcceTbJ31FY5qK5zPLgPEeX12kctIJpU+eGt1Vk7eDNkP3E1TFN0fgJzEoGGuOqCzqpcKHOnkxY5oU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750832198; c=relaxed/simple;
-	bh=7TRycBsPvUgHgY02m8aQShUfMB9Nfj334qF1+1Uk7q8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=TcDRhw1nqf1YOKvk0OqvH4i4MwBb3b7fJJqD8bTzCbfqCJfFIk4TObe0x4B/MtYAqgwp8IlJ55cl+1ukTr0xrvKpkBr/wdcDbYiUklLL8/sXmoMeOrVtu/E1QFuFeoKyq59mb2161t2eVjKKyMLtpyHarDuoLuMzspGaAkSXT3s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=tNiZDiXm; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1750832216; c=relaxed/simple;
+	bh=+pfjAdG6ySqdoLNCepBHlTtdox4YwE9jFZJZXYaBdX8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=Uew1V+zYVKGzApOcGlVKLfAajMS40haSsX2tXLh1gASCefJypS1PyZVXM/S/jL9F5y7rNINnoOifANwDPYvS0VSE6uMxRvBtJ6eNHfy0hjeTh558IwCTuufFRo/aCYpOWQpRqyal6g97BMfChCCx5w9Jjmtk+q3Ep7BJLPneSVQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HSdMd24D; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="tNiZDiXm"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=7TRycBsPvUgHgY02m8aQShUfMB9Nfj334qF1+1Uk7q8=; b=tNiZDiXmKmt78ttIujWAICMznt
-	L8+g3dFldnhejKZEp82HpaDuLTYU+gt2JdlnsUWgtFtcDQd5jIW/AHV1IJGafs6pIi9SnZi5bYFJ8
-	EJCEI40MDajKcr2bYQNt98PgS7Rr+1ZpcUiLgzYzHHgypCTpoIYtOjmEhD0Ya0UZsvyRjuYyMl8TA
-	T6l/O3z2skh0kajIu+GB6Oq4XS0tJ98Dl3KbQvuHKdTrChJO/SGS1UI54dJpGxAOgI22u/jTiznT3
-	7KIdkSHdhrha7SSUSXYGpoSw/o/e47ERPnCrT3D70+5MnhhR9oDeAD2iSBDIn7ZTYLbJJMvr8rb6b
-	ooivpNBQ==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1uUJQz-00000007e4F-0UmQ;
-	Wed, 25 Jun 2025 06:16:37 +0000
-Date: Tue, 24 Jun 2025 23:16:37 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Bart Van Assche <bvanassche@acm.org>
-Subject: Re: [PATCH v2 4/4] dm: Check for forbidden splitting of zone write
- operations
-Message-ID: <aFuURUCOC_xfDc2U@infradead.org>
-References: <20250625055908.456235-1-dlemoal@kernel.org>
- <20250625055908.456235-5-dlemoal@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HSdMd24D"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 19ECDC4CEEA;
+	Wed, 25 Jun 2025 06:16:54 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1750832216;
+	bh=+pfjAdG6ySqdoLNCepBHlTtdox4YwE9jFZJZXYaBdX8=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=HSdMd24DmdubH1wmo3e9NLXSdWZCUfEYadTSCHJgnJ9KNakzb4nVlY3xCpmvnoMVE
+	 S2kpFWk8toez+RXzQz8K+k3tp73HQfgIBeBaaV/gYGSGAzXmfCdJRBJrdcWDsbv4P4
+	 3pk3neUqENF6/t3XoFMkd3h9/F7DGBjdhP3hN1qZXOCQlzGtQVMFdS9Vnz5qDsnj9M
+	 dboONweuHRiZ7PRbXtXl6Fe8LeUqp3+2OK7jUvscrdDzwxEszQKjIpGoOFjFEljntd
+	 6nygj5yrvHrIOReo6bZMmh9ZQj+NmTFrwn0mgT47L+3yWSdfHdKvOhmtrYPr9KNBo1
+	 KSVs/7RiD1mCQ==
+Message-ID: <576bb6dd-18b1-4c78-b848-51577d99b124@kernel.org>
+Date: Wed, 25 Jun 2025 15:14:51 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20250625055908.456235-5-dlemoal@kernel.org>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 1/4] block: Introduce bio_needs_zone_write_plugging()
+To: Christoph Hellwig <hch@infradead.org>
+Cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>, Bart Van Assche <bvanassche@acm.org>
+References: <20250625055908.456235-1-dlemoal@kernel.org>
+ <20250625055908.456235-2-dlemoal@kernel.org> <aFuTYxdeAzG1iSl9@infradead.org>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <aFuTYxdeAzG1iSl9@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Ah, I guess that addressed my comment for patch 2..
+On 6/25/25 3:12 PM, Christoph Hellwig wrote:
+> On Wed, Jun 25, 2025 at 02:59:05PM +0900, Damien Le Moal wrote:
+>> +bool bio_needs_zone_write_plugging(struct bio *bio)
+> 
+> Can you use this in blk_zone_plug_bio instead of duplicating the logic?
 
+I thought about doing that, but we would still need to again do the switch/case
+on the bio op. But the checks before that could go into a common static helper.
+
+> I also wonder if we should only it it, as despite looking quite complex
+
+This does not parse...
+
+> it should compile down to just a few instructions and is used in the
+> I/O fast path.
+> 
+> 
+
+
+-- 
+Damien Le Moal
+Western Digital Research
