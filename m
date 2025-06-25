@@ -1,108 +1,171 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00EA92DFA2F;
-	Wed, 25 Jun 2025 09:35:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0006028314A
+	for <dm-devel@lists.linux.dev>; Wed, 25 Jun 2025 10:19:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750844139; cv=none; b=Ek6SdOwmF8zQtG+etyNh3fi4UkBgdXXUiEtCsBnU/Fqgc1qhFTXNCXgDbez5lJK/Kjkpg/sc0raiKfVGYEyDDuVoiOB8Z1oYyF02BL0WKKatu+AtnzR6t7TSNURVUGSYD1LHBLwiG6vhZVFkouT804JIc4CtGgyv7nKdxNIayGI=
+	t=1750846782; cv=none; b=TCdyVgGS6xUrwJ9N4t8b0vLhyptCVuX8patJP6fG9ulfcii4yhbGWSk6KsHCH//JSvcXJ6MTUuJkk4aytVGfsHJVHKquJluEicid+MTlZTEGgFKCu7QILwJAMnCIL/EGihr13s0L+WLxJSME6CAcaHBMFJvMsRzZYPxNmnd5b80=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750844139; c=relaxed/simple;
-	bh=Ib8xlgtRgLHP3I0038y8eG6QJibB5hQxTpwY4tpZGic=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=MoPl3aBUYM6v1TIZiNNflqBHEm4cYBFNA7ZPv3Q/tiFAwYe+2CNVyX+Umfrfs/Qfgnz+msqP1MMeB85tLKbi1/cYNJiBZLbhwOxUWfEN2hoE8iosEp5IFFdwBr04PfL2oRudetXi0BYWGk0eI0SE48z6fHrpjDqh5Cb/2vPzO2g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Z+kt2kxb; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1750846782; c=relaxed/simple;
+	bh=F9Yp4Km4Po8Qk+zYTHq/Fo07YWgePTjVVDu986I9eLU=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=Bkd7xTZ4eiW0AHOiSjicyzAZ7X8D1grPHNlz4jpEGIEsoMTiYysikCoS5i7FsaLtM/Wvt8DXA43PASFN+meGJrhKvZAG6LRyxYgw5IBTnsqqSypoQZ0jzrl+C78/gdJkH+54r71fSiQZSd0OoVVFgWwDTMQ4Ml9k/PGfyz39f6s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UcmfGaDg; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Z+kt2kxb"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B9FB4C4CEF1;
-	Wed, 25 Jun 2025 09:35:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750844137;
-	bh=Ib8xlgtRgLHP3I0038y8eG6QJibB5hQxTpwY4tpZGic=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=Z+kt2kxb6cnQng7iIpIyfzFqKajufUWPiwytblVXYEhuaUmgS9lXPjuNYMLrpLLet
-	 GI7Cmx4RzllbvyjKLSssXsTYxlyLdhZbPPyblXV1T0wft1Z/gB7W2rk+D2jTeiAAIO
-	 9R3aHZtAVtRJxrZ9ixdib+VZthJDZjtUUnPK98iK0JEomFIwCtj/CDnVivCkv5pDWZ
-	 xIvAzwY1oc3glHu6ZWtqzum37ldUqJdVbvJ4uaAAMCNxoNrArWd2Q3CmlYqSYauPe5
-	 PIdPllduJLrc3DQ/b9fgazzvB2Hf4To6XhMcs+j8X1L7sUXWnCVUPikwXPakue+ECJ
-	 Fl83BzjVFygMg==
-From: Damien Le Moal <dlemoal@kernel.org>
-To: linux-block@vger.kernel.org,
-	Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH v3 5/5] dm: Check for forbidden splitting of zone write operations
-Date: Wed, 25 Jun 2025 18:33:27 +0900
-Message-ID: <20250625093327.548866-6-dlemoal@kernel.org>
-X-Mailer: git-send-email 2.49.0
-In-Reply-To: <20250625093327.548866-1-dlemoal@kernel.org>
-References: <20250625093327.548866-1-dlemoal@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UcmfGaDg"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1750846779;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=OTRxlZxi5WWMsK/7J+mowdYaMdPCwqxdIYaFviqlRQ0=;
+	b=UcmfGaDgYD11YuWe4Yb2Ni29CwtSl68nKAM1YC6IaqdT0Mf4UklpZooOOfB16q1hSYcpJq
+	L/hly0lUOkTa03PdOeCYee9PZEdDk3B0pbDB/4b/29vT8218vZxHM3f/KJZgMZQRBVA1iV
+	lVdPK/DhSjkGYXBVGzqF1IZJtmDQkEc=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-470-dRH-90DFPO-fnWx_HsWD0w-1; Wed,
+ 25 Jun 2025 06:19:34 -0400
+X-MC-Unique: dRH-90DFPO-fnWx_HsWD0w-1
+X-Mimecast-MFC-AGG-ID: dRH-90DFPO-fnWx_HsWD0w_1750846773
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82BD5180028F;
+	Wed, 25 Jun 2025 10:19:32 +0000 (UTC)
+Received: from [10.22.80.93] (unknown [10.22.80.93])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 37B023000221;
+	Wed, 25 Jun 2025 10:19:29 +0000 (UTC)
+Date: Wed, 25 Jun 2025 12:19:25 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Damien Le Moal <dlemoal@kernel.org>
+cc: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, 
+    dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>, 
+    Bart Van Assche <bvanassche@acm.org>
+Subject: Re: [PATCH v2 3/4] dm: dm-crypt: Do not split write operations with
+ zoned targets
+In-Reply-To: <20250625055908.456235-4-dlemoal@kernel.org>
+Message-ID: <96831fd8-da1e-771f-7d19-8087d29f2af1@redhat.com>
+References: <20250625055908.456235-1-dlemoal@kernel.org> <20250625055908.456235-4-dlemoal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-DM targets must not split zone append and write operations using
-dm_accept_partial_bio() as doing so is forbidden for zone append BIOs,
-breaks zone append emulation using regular write BIOs and potentially
-creates deadlock situations with queue freeze operations.
 
-Modify dm_accept_partial_bio() to add missing BUG_ON() checks for all
-these cases, that is, check that the BIO is a write or write zeroes
-operation. This change packs all the zone related checks together under
-a static_branch_unlikely(&zoned_enabled) and done only if the target is
-a zoned device.
 
-Fixes: f211268ed1f9 ("dm: Use the block layer zone append emulation")
-Cc: stable@vger.kernel.org
-Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
----
- drivers/md/dm.c | 17 +++++++++++++----
- 1 file changed, 13 insertions(+), 4 deletions(-)
+On Wed, 25 Jun 2025, Damien Le Moal wrote:
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f1e63c1808b4..f82457e7eed1 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1286,8 +1286,9 @@ static size_t dm_dax_recovery_write(struct dax_device *dax_dev, pgoff_t pgoff,
- /*
-  * A target may call dm_accept_partial_bio only from the map routine.  It is
-  * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_* zone management
-- * operations, REQ_OP_ZONE_APPEND (zone append writes) and any bio serviced by
-- * __send_duplicate_bios().
-+ * operations, zone append writes (native with REQ_OP_ZONE_APPEND or emulated
-+ * with write BIOs flagged with BIO_EMULATES_ZONE_APPEND) and any bio serviced
-+ * by __send_duplicate_bios().
-  *
-  * dm_accept_partial_bio informs the dm that the target only wants to process
-  * additional n_sectors sectors of the bio and the rest of the data should be
-@@ -1320,11 +1321,19 @@ void dm_accept_partial_bio(struct bio *bio, unsigned int n_sectors)
- 	unsigned int bio_sectors = bio_sectors(bio);
- 
- 	BUG_ON(dm_tio_flagged(tio, DM_TIO_IS_DUPLICATE_BIO));
--	BUG_ON(op_is_zone_mgmt(bio_op(bio)));
--	BUG_ON(bio_op(bio) == REQ_OP_ZONE_APPEND);
- 	BUG_ON(bio_sectors > *tio->len_ptr);
- 	BUG_ON(n_sectors > bio_sectors);
- 
-+	if (static_branch_unlikely(&zoned_enabled) &&
-+	    unlikely(bdev_is_zoned(bio->bi_bdev))) {
-+		enum req_op op = bio_op(bio);
-+
-+		BUG_ON(op_is_zone_mgmt(op));
-+		BUG_ON(op == REQ_OP_WRITE);
-+		BUG_ON(op == REQ_OP_WRITE_ZEROES);
-+		BUG_ON(op == REQ_OP_ZONE_APPEND);
-+	}
-+
- 	*tio->len_ptr -= bio_sectors - n_sectors;
- 	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
- 
--- 
-2.49.0
+> Read and write operations issued to a dm-crypt target may be split
+> according to the dm-crypt internal limits defined by the max_read_size
+> and max_write_size module parameters (default is 128 KB). The intent is
+> to improve processing time of large BIOs by splitting them into smaller
+> operations that can be parallelized on different CPUs.
+> 
+> For zoned dm-crypt targets, this BIO splitting is still done but without
+> the parallel execution to ensure that the issuing order of write
+> operations to the underlying devices remains sequential. However, the
+> splitting itself causes other problems:
+> 
+> 1) Since dm-crypt relies on the block layer zone write plugging to
+>    handle zone append emulation using regular write operations, the
+>    reminder of a split write BIO will always be plugged into the target
+>    zone write plugged. Once the on-going write BIO finishes, this
+>    reminder BIO is unplugged and issued from the zone write plug work.
+>    If this reminder BIO itself needs to be split, the reminder will be
+>    re-issued and plugged again, but that causes a call to a
+>    blk_queue_enter(), which may block if a queue freeze operation was
+>    initiated. This results in a deadlock as DM submission still holds
+>    BIOs that the queue freeze side is waiting for.
+> 
+> 2) dm-crypt relies on the emulation done by the block layer using
+>    regular write operations for processing zone append operations. This
+>    still requires to properly return the written sector as the BIO
+>    sector of the original BIO. However, this can be done correctly only
+>    and only if there is a single clone BIO used for processing the
+>    original zone append operation issued by the user. If the size of a
+>    zone append operation is larger than dm-crypt max_write_size, then
+>    the orginal BIO will be split and processed as a chain of regular
+>    write operations. Such chaining result in an incorrect written sector
+>    being returned to the zone append issuer using the original BIO
+>    sector.  This in turn results in file system data corruptions using
+>    xfs or btrfs.
+> 
+> Fix this by modifying get_max_request_size() to always return the size
+> of the BIO to avoid it being split with dm_accpet_partial_bio() in
+> crypt_map(). get_max_request_size() is renamed to
+> get_max_request_sectors() to clarify the unit of the value returned
+> and its interface is changed to take a struct dm_target pointer and a
+> pointer to the struct bio being processed. In addition to this change,
+> to ensure that crypt_alloc_buffer() works correctly, set the dm-crypt
+> device max_hw_sectors limit to be at most
+> BIO_MAX_VECS << PAGE_SECTORS_SHIFT (1 MB with a 4KB page architecture).
+> This forces DM core to split write BIOs before passing them to
+> crypt_map(), and thus guaranteeing that dm-crypt can always accept an
+> entire write BIO without needing to split it.
+> 
+> This change does not have any effect on the read path of dm-crypt. Read
+> operations can still be split and the BIO fragments processed in
+> parallel. There is also no impact on the performance of the write path
+> given that all zone write BIOs were already processed inline instead of
+> in parallel.
+> 
+> This change also does not affect in any way regular dm-crypt block
+> devices.
+> 
+> Fixes: f211268ed1f9 ("dm: Use the block layer zone append emulation")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> ---
+>  drivers/md/dm-crypt.c | 49 ++++++++++++++++++++++++++++++++++---------
+>  1 file changed, 39 insertions(+), 10 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 17157c4216a5..4e80784d1734 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -253,17 +253,35 @@ MODULE_PARM_DESC(max_read_size, "Maximum size of a read request");
+>  static unsigned int max_write_size = 0;
+>  module_param(max_write_size, uint, 0644);
+>  MODULE_PARM_DESC(max_write_size, "Maximum size of a write request");
+> -static unsigned get_max_request_size(struct crypt_config *cc, bool wrt)
+> +
+> +static unsigned get_max_request_sectors(struct dm_target *ti, struct bio *bio)
+>  {
+> +	struct crypt_config *cc = ti->private;
+>  	unsigned val, sector_align;
+> -	val = !wrt ? READ_ONCE(max_read_size) : READ_ONCE(max_write_size);
+> -	if (likely(!val))
+> -		val = !wrt ? DM_CRYPT_DEFAULT_MAX_READ_SIZE : DM_CRYPT_DEFAULT_MAX_WRITE_SIZE;
+> -	if (wrt || cc->used_tag_size) {
+> -		if (unlikely(val > BIO_MAX_VECS << PAGE_SHIFT))
+> -			val = BIO_MAX_VECS << PAGE_SHIFT;
+> -	}
+> -	sector_align = max(bdev_logical_block_size(cc->dev->bdev), (unsigned)cc->sector_size);
+> +	bool wrt = op_is_write(bio_op(bio));
+> +
+> +	if (wrt) {
+> +		/*
+> +		 * For zoned devices, splitting write operations creates the
+> +		 * risk of deadlocking queue freeze operations with zone write
+> +		 * plugging BIO work when the reminder of a split BIO is
+> +		 * issued. So always allow the entire BIO to proceed.
+> +		 */
+> +		if (ti->emulate_zone_append)
+> +			return bio_sectors(bio);
+
+The overrun may still happen (if the user changes the dm table while some 
+bio is in progress) and if it happens, you should terminate the bio with 
+DM_MAPIO_KILL (like it was in my original patch).
+
+Mikulas
 
