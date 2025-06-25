@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6722D1F099A;
-	Wed, 25 Jun 2025 06:01:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A27C1F099A;
+	Wed, 25 Jun 2025 06:01:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750831276; cv=none; b=LmUdRKMnN2YtZDSfRpPxkJPTguTSdT9uUc/c/dUI5bTty1b1nHFPyYOorEUY/ukPqQO2cPsWSMqyRL2og/vgk5HubHjWxtoRYnhNRmJgcaJIjddiQHniSVCs0q4NExM0A3XtNs76nceMHUtzKA8lSTt0j/tT0rk6RIb8t+pAWRo=
+	t=1750831277; cv=none; b=bgR5vxiL1MeSf/l06oYOY+E10NPggZtIL2/cBjk91VRZT2zkjuAjJVi+4O06180JcWuENhHqmJb+kaeODnCOJg16UE63dtMrKbu90vkqZl/GFKQQToR2XZ9U2RhfY2TGvxn6kTVdG0Ro3w/eipLARQ7qkifbH0cQjYVivg5ZY6k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750831276; c=relaxed/simple;
-	bh=vD1cVnNdJh2PrIEVgUDoGwZ9nquNk/4+wpY5bDJISlc=;
+	s=arc-20240116; t=1750831277; c=relaxed/simple;
+	bh=q0JQi5XN8DmSu3fI3YG7oNzMm0nm3cvz3AvdPvLXxJA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=MYEBV9C/yaF5TvMuhaSBeqIginyGRB0RjfQEaH3Svb5Ra2HbRZMw44EtE/YGFLJPvVFkJwS4c90WtmpJTUcQL9ELt1CgoTVyq5i20SfBqsKll8ehFIqAvMYcQ02b0ekYlrJ5mQL5hpCzotYo64EqkHNqxGwcZuYyWbWRIVrqxps=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=CQtzcjAn; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=p8MrTgQRiPp9rp5ElgmqYQYQ+23eKfuDn9p+DtidoflrVoRGxiKJl0jWkQcRrPSiJml33b2yaUJgs6YkSJHF4YR0S3qX0Kt3VB2IR3u4jXgP6FVlgkO+nLs0YsR6lvy0lZ7S5RHRwwTgpEw0ciXrPkvz0551u/AGC51BC86WIeo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Bf66deqp; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="CQtzcjAn"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1A1FDC4CEEE;
-	Wed, 25 Jun 2025 06:01:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Bf66deqp"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 784CEC4CEEA;
+	Wed, 25 Jun 2025 06:01:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750831274;
-	bh=vD1cVnNdJh2PrIEVgUDoGwZ9nquNk/4+wpY5bDJISlc=;
+	s=k20201202; t=1750831277;
+	bh=q0JQi5XN8DmSu3fI3YG7oNzMm0nm3cvz3AvdPvLXxJA=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=CQtzcjAnQHkBpzkFeAt3ulh2bZpc7+nlvM3hT1pNCmdW8lxxojZgANmZva0CAwsyy
-	 KdmvStzRcm1QAxSm2RrvcNJPwVDpxVId30BLS6UDUhep2QKDNboJN5aKEKGYoXHuL6
-	 A3RceT/bnxIz2rHJJVzJdOruREozKWTBCWK7FEEPxFzHUrgfbw564Mpag82qjTDSy1
-	 DQAX8iUc8//3EQTLJcFeoEjuomtVDHsp1jPP/oOX2bgmHmteEm3SENRYPO29KUKbo6
-	 3fUYL+UAyfkNmmuRrYuukpDr2Lsx/b0Yse1Fb9zI7t5S0CgQxw7izFU5ujc00++2WR
-	 EYPS5aPunsDAQ==
+	b=Bf66deqpXNwfpYA9jKGXtiIhllXlefbobk37n/MugrKhU6k55uaIhxcKwg1m3jDza
+	 gG3yqMyBX8ToXv8C1w/1LYpkgVtI6vwd239GkWKGFcz/7nOWyaIgP0p7nVtDsYzxj/
+	 3Ba5SESNJZWTyrWe63rqCre7+hofqDn/67oBth4E95k6yFL3kaYltPXHnTXkUvs8r6
+	 RM/St5vbvAoVnrCV1gysbvNcbPZ8sXc3wF+IYqL/Idi8nbDc2vFd6YElNKvu2gfufI
+	 QsvA2kAiDvmCbxAkh/av340+6ynjT0Cz2nViFJ64EMvLuj6D7dkf16pJzvq0Asfyi7
+	 VF6xabWiCFkTQ==
 From: Damien Le Moal <dlemoal@kernel.org>
 To: linux-block@vger.kernel.org,
 	Jens Axboe <axboe@kernel.dk>,
@@ -33,9 +33,9 @@ To: linux-block@vger.kernel.org,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>
 Cc: Bart Van Assche <bvanassche@acm.org>
-Subject: [PATCH v2 1/4] block: Introduce bio_needs_zone_write_plugging()
-Date: Wed, 25 Jun 2025 14:59:05 +0900
-Message-ID: <20250625055908.456235-2-dlemoal@kernel.org>
+Subject: [PATCH v2 3/4] dm: dm-crypt: Do not split write operations with zoned targets
+Date: Wed, 25 Jun 2025 14:59:07 +0900
+Message-ID: <20250625055908.456235-4-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.49.0
 In-Reply-To: <20250625055908.456235-1-dlemoal@kernel.org>
 References: <20250625055908.456235-1-dlemoal@kernel.org>
@@ -47,99 +47,146 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-In preparation for fixing device mapper zone write handling, introduce
-the helper function bio_needs_zone_write_plugging() to test if a BIO
-requires handling through zone write plugging. This function returns
-true for any write operation to a zoned block device. For zone append
-opertions, true is returned only if the device requires zone append
-emulation with regular writes.
+Read and write operations issued to a dm-crypt target may be split
+according to the dm-crypt internal limits defined by the max_read_size
+and max_write_size module parameters (default is 128 KB). The intent is
+to improve processing time of large BIOs by splitting them into smaller
+operations that can be parallelized on different CPUs.
+
+For zoned dm-crypt targets, this BIO splitting is still done but without
+the parallel execution to ensure that the issuing order of write
+operations to the underlying devices remains sequential. However, the
+splitting itself causes other problems:
+
+1) Since dm-crypt relies on the block layer zone write plugging to
+   handle zone append emulation using regular write operations, the
+   reminder of a split write BIO will always be plugged into the target
+   zone write plugged. Once the on-going write BIO finishes, this
+   reminder BIO is unplugged and issued from the zone write plug work.
+   If this reminder BIO itself needs to be split, the reminder will be
+   re-issued and plugged again, but that causes a call to a
+   blk_queue_enter(), which may block if a queue freeze operation was
+   initiated. This results in a deadlock as DM submission still holds
+   BIOs that the queue freeze side is waiting for.
+
+2) dm-crypt relies on the emulation done by the block layer using
+   regular write operations for processing zone append operations. This
+   still requires to properly return the written sector as the BIO
+   sector of the original BIO. However, this can be done correctly only
+   and only if there is a single clone BIO used for processing the
+   original zone append operation issued by the user. If the size of a
+   zone append operation is larger than dm-crypt max_write_size, then
+   the orginal BIO will be split and processed as a chain of regular
+   write operations. Such chaining result in an incorrect written sector
+   being returned to the zone append issuer using the original BIO
+   sector.  This in turn results in file system data corruptions using
+   xfs or btrfs.
+
+Fix this by modifying get_max_request_size() to always return the size
+of the BIO to avoid it being split with dm_accpet_partial_bio() in
+crypt_map(). get_max_request_size() is renamed to
+get_max_request_sectors() to clarify the unit of the value returned
+and its interface is changed to take a struct dm_target pointer and a
+pointer to the struct bio being processed. In addition to this change,
+to ensure that crypt_alloc_buffer() works correctly, set the dm-crypt
+device max_hw_sectors limit to be at most
+BIO_MAX_VECS << PAGE_SECTORS_SHIFT (1 MB with a 4KB page architecture).
+This forces DM core to split write BIOs before passing them to
+crypt_map(), and thus guaranteeing that dm-crypt can always accept an
+entire write BIO without needing to split it.
+
+This change does not have any effect on the read path of dm-crypt. Read
+operations can still be split and the BIO fragments processed in
+parallel. There is also no impact on the performance of the write path
+given that all zone write BIOs were already processed inline instead of
+in parallel.
+
+This change also does not affect in any way regular dm-crypt block
+devices.
 
 Fixes: f211268ed1f9 ("dm: Use the block layer zone append emulation")
 Cc: stable@vger.kernel.org
 Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
 ---
- block/blk-zoned.c      | 40 ++++++++++++++++++++++++++++++++++++++++
- include/linux/blkdev.h |  9 +++++++++
- 2 files changed, 49 insertions(+)
+ drivers/md/dm-crypt.c | 49 ++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 39 insertions(+), 10 deletions(-)
 
-diff --git a/block/blk-zoned.c b/block/blk-zoned.c
-index 55e64ca869d7..9d38b94cad0d 100644
---- a/block/blk-zoned.c
-+++ b/block/blk-zoned.c
-@@ -1129,6 +1129,46 @@ static void blk_zone_wplug_handle_native_zone_append(struct bio *bio)
- 	disk_put_zone_wplug(zwplug);
- }
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 17157c4216a5..4e80784d1734 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -253,17 +253,35 @@ MODULE_PARM_DESC(max_read_size, "Maximum size of a read request");
+ static unsigned int max_write_size = 0;
+ module_param(max_write_size, uint, 0644);
+ MODULE_PARM_DESC(max_write_size, "Maximum size of a write request");
+-static unsigned get_max_request_size(struct crypt_config *cc, bool wrt)
++
++static unsigned get_max_request_sectors(struct dm_target *ti, struct bio *bio)
+ {
++	struct crypt_config *cc = ti->private;
+ 	unsigned val, sector_align;
+-	val = !wrt ? READ_ONCE(max_read_size) : READ_ONCE(max_write_size);
+-	if (likely(!val))
+-		val = !wrt ? DM_CRYPT_DEFAULT_MAX_READ_SIZE : DM_CRYPT_DEFAULT_MAX_WRITE_SIZE;
+-	if (wrt || cc->used_tag_size) {
+-		if (unlikely(val > BIO_MAX_VECS << PAGE_SHIFT))
+-			val = BIO_MAX_VECS << PAGE_SHIFT;
+-	}
+-	sector_align = max(bdev_logical_block_size(cc->dev->bdev), (unsigned)cc->sector_size);
++	bool wrt = op_is_write(bio_op(bio));
++
++	if (wrt) {
++		/*
++		 * For zoned devices, splitting write operations creates the
++		 * risk of deadlocking queue freeze operations with zone write
++		 * plugging BIO work when the reminder of a split BIO is
++		 * issued. So always allow the entire BIO to proceed.
++		 */
++		if (ti->emulate_zone_append)
++			return bio_sectors(bio);
++
++		val = min_not_zero(READ_ONCE(max_write_size),
++				   DM_CRYPT_DEFAULT_MAX_WRITE_SIZE);
++	} else {
++		val = min_not_zero(READ_ONCE(max_read_size),
++				   DM_CRYPT_DEFAULT_MAX_READ_SIZE);
++	}
++
++	if (wrt || cc->used_tag_size)
++		val = min(val, BIO_MAX_VECS << PAGE_SHIFT);
++
++	sector_align = max(bdev_logical_block_size(cc->dev->bdev),
++			   (unsigned)cc->sector_size);
+ 	val = round_down(val, sector_align);
+ 	if (unlikely(!val))
+ 		val = sector_align;
+@@ -3496,7 +3514,7 @@ static int crypt_map(struct dm_target *ti, struct bio *bio)
+ 	/*
+ 	 * Check if bio is too large, split as needed.
+ 	 */
+-	max_sectors = get_max_request_size(cc, bio_data_dir(bio) == WRITE);
++	max_sectors = get_max_request_sectors(ti, bio);
+ 	if (unlikely(bio_sectors(bio) > max_sectors))
+ 		dm_accept_partial_bio(bio, max_sectors);
  
-+/**
-+ * bio_needs_zone_write_plugging - Check if a BIO needs to be handled with zone
-+ *				   write plugging
-+ * @bio: The BIO being submitted
-+ *
-+ * Return true whenever @bio execution needs to be handled through zone
-+ * write plugging. Return false otherwise.
-+ */
-+bool bio_needs_zone_write_plugging(struct bio *bio)
-+{
-+	enum req_op op = bio_op(bio);
-+
-+	if (!bdev_is_zoned(bio->bi_bdev) || !op_is_write(op))
-+		return false;
-+
-+	/* Already handled ? */
-+	if (bio_flagged(bio, BIO_ZONE_WRITE_PLUGGING))
-+		return false;
-+
-+	/* Ignore empty flush */
-+	if (op_is_flush(bio->bi_opf) && !bio_sectors(bio))
-+		return false;
+@@ -3733,6 +3751,17 @@ static void crypt_io_hints(struct dm_target *ti, struct queue_limits *limits)
+ 		max_t(unsigned int, limits->physical_block_size, cc->sector_size);
+ 	limits->io_min = max_t(unsigned int, limits->io_min, cc->sector_size);
+ 	limits->dma_alignment = limits->logical_block_size - 1;
 +
 +	/*
-+	 * Regular writes and write zeroes need to be handled through zone
-+	 * write plugging. Zone append operations only need zone write plugging
-+	 * if they are emulated.
++	 * For zoned dm-crypt targets, there will be no internal splitting of
++	 * write BIOs to avoid exceeding BIO_MAX_VECS vectors per BIO. But
++	 * without respecting this limit, crypt_alloc_buffer() will trigger a
++	 * BUG(). Avoid this by forcing DM core to split write BIOs to this
++	 * limit.
 +	 */
-+	switch (op) {
-+	case REQ_OP_ZONE_APPEND:
-+		return bdev_emulates_zone_append(bio->bi_bdev);
-+	case REQ_OP_WRITE:
-+	case REQ_OP_WRITE_ZEROES:
-+		return true;
-+	default:
-+		return false;
-+	}
-+}
-+EXPORT_SYMBOL_GPL(bio_needs_zone_write_plugging);
-+
- /**
-  * blk_zone_plug_bio - Handle a zone write BIO with zone write plugging
-  * @bio: The BIO being submitted
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index c2b3ddea8b6d..d455057bfaa3 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -848,6 +848,9 @@ static inline unsigned int disk_nr_zones(struct gendisk *disk)
- {
- 	return disk->nr_zones;
++	if (ti->emulate_zone_append)
++		limits->max_hw_sectors = min(limits->max_hw_sectors,
++					     BIO_MAX_VECS << PAGE_SECTORS_SHIFT);
  }
-+
-+bool bio_needs_zone_write_plugging(struct bio *bio);
-+
- bool blk_zone_plug_bio(struct bio *bio, unsigned int nr_segs);
  
- /**
-@@ -877,6 +880,12 @@ static inline unsigned int disk_nr_zones(struct gendisk *disk)
- {
- 	return 0;
- }
-+
-+static inline bool bio_needs_zone_write_plugging(struct bio *bio)
-+{
-+	return false;
-+}
-+
- static inline bool blk_zone_plug_bio(struct bio *bio, unsigned int nr_segs)
- {
- 	return false;
+ static struct target_type crypt_target = {
 -- 
 2.49.0
 
