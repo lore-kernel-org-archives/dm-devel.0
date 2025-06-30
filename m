@@ -1,171 +1,120 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 846E228F531
-	for <dm-devel@lists.linux.dev>; Mon, 30 Jun 2025 15:34:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4EEC28C878
+	for <dm-devel@lists.linux.dev>; Mon, 30 Jun 2025 15:45:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751297690; cv=none; b=ps6+2EcUTyVT1EADj5neXNNk1xcaVKnP4l68qHoGPw3eOjJTSm2UuJ73IQk6ai2qtPYgK3qs3sClUNJTe2HPqi3FDCpQcNCMNDIPmzgHC5nhSzkexP/2O2i2PVj4eC24EOGOnlhl+pql4iW/34C0DAhG7XeqiYhK8WY0whcRByY=
+	t=1751298336; cv=none; b=lBnq/LQasj281oHtA+4AwyXlLvh1cgh6v6XuTjsnc7llQ4ONVuEBmzDM8NMYQBQsN1tF+jJNbI5+504qEOkTe8EEuGTDZOagklfRP7JbxDVOgibrbwxFDqCmIyWoQ18Nlsdc2mETO7v4gltYNmau1viYowcd/RYnSXc09O0JZzE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751297690; c=relaxed/simple;
-	bh=MW1Gne1Zwi8y4oD60txAi7ElrC6nlqtAiai4A8jL9PM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=jduLpYmJOXiR9KFaI11IkMgR+UTob2MYnfQeO/zhjiOSwomApd92n/+OOz9qX6vCxe6DJNorhw06esq351h4EDt1lDbI701TXl1vjD4BERJYofrhlvS69AMy2cSOLb/5lXgpKVCog7UFD2otnGWUE6hopWMs16lywGH9EeN0HyI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QB3Edjnc; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QB3Edjnc; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1751298336; c=relaxed/simple;
+	bh=ALmsu4DpCtGbbhmY3nVRw1xg+2esadVAR3daySXJWtg=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=VUwG28EZvcqEr7ETHboSJmpHyndAwJqaHQ7xbVm8bB7V/LTlaMguFBzyQZSxrnmuiJ9JphubKbR1Vw/1rsnpy17b7tmIy4tfteLlRw1weuGR1R1b6+ayXbXGppbxDMY/23VPEuP9528C/Ynjc/T5XMpMaGscDYTu352sU5ofRxw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TG2KMl31; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QB3Edjnc";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QB3Edjnc"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 740581F444;
-	Mon, 30 Jun 2025 15:34:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1751297686; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TG2KMl31"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1751298333;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=MW1Gne1Zwi8y4oD60txAi7ElrC6nlqtAiai4A8jL9PM=;
-	b=QB3EdjncRe/xML1KP4+BlMHUB6b63kFJJsnLdk6jeDMPHt9BQ76ShqoozBHO8Leu9KBrMr
-	qZRm2Azm6UMFvMtQVavqGMzBLeOjX/OUL5Mwb6+T0Ml/7mhbYc/hQBZFQidwZGPzz4bSS6
-	uZ8ARR9r75I+r8HgRI12I72RUeerb3U=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=QB3Edjnc
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1751297686; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MW1Gne1Zwi8y4oD60txAi7ElrC6nlqtAiai4A8jL9PM=;
-	b=QB3EdjncRe/xML1KP4+BlMHUB6b63kFJJsnLdk6jeDMPHt9BQ76ShqoozBHO8Leu9KBrMr
-	qZRm2Azm6UMFvMtQVavqGMzBLeOjX/OUL5Mwb6+T0Ml/7mhbYc/hQBZFQidwZGPzz4bSS6
-	uZ8ARR9r75I+r8HgRI12I72RUeerb3U=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=ihrgL7XLc9K6vXziileToqhZtOGRjkRkc3jWqhOJ//8=;
+	b=TG2KMl31uahSMg5BCM0BOmQT5Rf8+0eIKOMoCWYv8VQnfduIINIhmLO7WerrzpdABKtCbE
+	TkINENSdFiIo2ZVSminixqqLxoMT+3ixwdS0sVjiN4V+D7TqBobGIu4d3fj4Yx2OgQpUeI
+	b5qyj7oeSzfHtKgNBobM7OeH0SEGz7c=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-375-4pFzU12FOIqSwJaSEVD59A-1; Mon,
+ 30 Jun 2025 11:45:30 -0400
+X-MC-Unique: 4pFzU12FOIqSwJaSEVD59A-1
+X-Mimecast-MFC-AGG-ID: 4pFzU12FOIqSwJaSEVD59A_1751298328
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4435213983;
-	Mon, 30 Jun 2025 15:34:46 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id sLc6D5auYmiECAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 30 Jun 2025 15:34:46 +0000
-Message-ID: <f117058d6b87c00ac0c37e83ca1a977a582e903f.camel@suse.com>
-Subject: Re: [PATCH] multipath-tools: replace FSF licences boilerplate with
- a SPDX-License-Identifier
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Hannes Reinecke <hare@suse.de>, Benjamin Marzinski
- <bmarzins@redhat.com>,  Christophe Varoqui
- <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Mon, 30 Jun 2025 17:34:45 +0200
-In-Reply-To: <20250624125506.7708-1-xose.vazquez@gmail.com>
-References: <20250624125506.7708-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EF5091978F63;
+	Mon, 30 Jun 2025 15:45:27 +0000 (UTC)
+Received: from [10.22.80.10] (unknown [10.22.80.10])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 41AF31800285;
+	Mon, 30 Jun 2025 15:45:23 +0000 (UTC)
+Date: Mon, 30 Jun 2025 17:45:18 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
+    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
+    dm-devel@lists.linux.dev
+Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v1_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
+ =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
+In-Reply-To: <43e84a3e-f574-4c97-9f33-35fcb3751e01@linux.dev>
+Message-ID: <f0c46aba-9756-5f05-a843-51bc4898a313@redhat.com>
+References: <20250624073359.2041340-1-dongsheng.yang@linux.dev> <8d383dc6-819b-2c7f-bab5-2cd113ed9ece@redhat.com> <7ff7c4fc-d830-41c9-ab94-a198d3d9a3b5@linux.dev> <43e84a3e-f574-4c97-9f33-35fcb3751e01@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_BLOCKED(0.00)[rspamd.com];
-	TO_DN_ALL(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	MIME_TRACE(0.00)[0:+];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	ARC_NA(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TAGGED_RCPT(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.de:email]
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Rspamd-Queue-Id: 740581F444
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Score: -3.01
+Content-Type: multipart/mixed; boundary="-1463811712-2042544932-1751298327=:274049"
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On Tue, 2025-06-24 at 14:55 +0200, Xose Vazquez Perez wrote:
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+---1463811712-2042544932-1751298327=:274049
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-Thanks!
 
-> ---
-> Missing:
->=20
-> util.c: maybe GPL-2.0-or-later ???
-> libmpathutil/util.c: * License: LGPL-2.1-or-later
-> libmpathutil/util.c: * Code copied from busybox (GPLv2 or later)
->=20
-> ambiguous, only "GPL" !!!
-> libmultipath/prioritizers/alua.c: * This file is released under the
-> GPL.
-> libmultipath/prioritizers/alua_rtpg.c: * This file is released under
-> the GPL.
-> libmultipath/prioritizers/alua_rtpg.h: * This file is released under
-> the GPL.
-> libmultipath/prioritizers/alua_spc3.h: * This file is released under
-> the GPL.
-> libmultipath/prioritizers/hds.c: * This file is released under the
-> GPL.
-> libmultipath/prioritizers/weightedpath.c: *=C2=A0 This file is released
-> under the GPL
 
-Please check my previous assessment again [1]:
+On Mon, 30 Jun 2025, Dongsheng Yang wrote:
 
-IMO "GPL" without version should be interpreted as "any version of the
-GPL". As these parts of the code are combined with other code that's
-licensed under GPL-2.0-only or GPL-2.0-or-later, we should assume that
-the respective stricter variant applies to the combination(s).
+> Hi Mikulas,
+> 
+>     The reason why we don’t release the spinlock here is that if we do, the
+> subtree could change.
+> 
+> For example, in the `fixup_overlap_contained()` function, we may need to split
+> a certain `cache_key`, and that requires allocating a new `cache_key`.
+> 
+> If we drop the spinlock at this point and then re-acquire it after the
+> allocation, the subtree might already have been modified, and we cannot safely
+> continue with the split operation.
 
-The "default" license of the multipath-tools project is assumed to be
-the license of the first files that were added to Greg KH's udev.git
-repo [2], which was LGPL 2.0. We're assuming that files that don't
-include an explicit license statement inherit the LGPL-2.0 license from
-this first commit in the project.
+Yes, I understand this.
 
-As you noted, libmpathutil/util.c includes code snippets that
-were originally released with different licenses (albeit compatible
-ones). We should thus assume that the file itself is under the
-strictest of these licenses, which is GPL-2.0-or-later, AFAICS.
+>     In this case, we would have to restart the entire subtree search and walk.
+> But the new walk might require more memory—or less,
+> 
+> so it's very difficult to know in advance how much memory will be needed
+> before acquiring the spinlock.
+> 
+>     So allocating memory inside a spinlock is actually a more direct and
+> feasible approach. `GFP_NOWAIT` fails too easily, maybe `GFP_ATOMIC` is more
+> appropriate.
 
-However, while I think these interpretations are plausible, I Am Not A
-Layer and I wouldn't want to add license headers to files that
-currently don't have one. I appreciate that your patch doesn't attempt
-to do that.
+Even GFP_ATOMIC can fail. And it is not appropriate to return error and 
+corrupt data when GFP_ATOMIC fails.
 
-Regards,
-Martin
+> What do you think?
 
-[1] https://lore.kernel.org/dm-devel/1523313462.3525.65.camel@suse.com/
-[2] https://git.kernel.org/pub/scm/linux/hotplug/udev.git/commit/?id=3D04a0=
-91d47e32d6480b99424e41db093b013dfaf5
+If you need memory, you should drop the spinlock, allocate the memory 
+(with mempool_alloc(GFP_NOIO)), attach the allocated memory to "struct 
+pcache_request" and retry the request (call pcache_cache_handle_req 
+again).
+
+When you retry the request, there are these possibilities:
+* you don't need the memory anymore - then, you just free it
+* you need the amount of memory that was allocated - you just proceed 
+  while holding the spinlock
+* you need more memory than what you allocated - you drop the spinlock, 
+  free the memory, allocate a larger memory block and retry again
+
+Mikulas
+---1463811712-2042544932-1751298327=:274049--
+
