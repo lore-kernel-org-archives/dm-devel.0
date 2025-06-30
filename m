@@ -1,137 +1,119 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D5DAF2749EB
-	for <dm-devel@lists.linux.dev>; Mon, 30 Jun 2025 13:24:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CB623A1B6
+	for <dm-devel@lists.linux.dev>; Mon, 30 Jun 2025 13:31:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751289873; cv=none; b=sVHDzuyE8dkUKiw9dHExClg1NHWHQmcYpfBeL1psOUmdDzFqp69xja1sL8Z8vPoHybGsl7fVyHAl48s989mQoKiknT9gkJdHMEyN7VYBCbHbNNQzHTdJdjFrp3hlqdONIW9DnF/BgEWAhEG9npZEitqUiIHO8EwMw0pbQ5S0jq4=
+	t=1751290266; cv=none; b=cQs+eHZZkl3Uabp6iG+O1yUExGU6GikJEB7lAAZgnFBWoSoFS9jA+XlFtW4FWnMZkDElQR2Q3bfMuT8pY9NeBmrV2pH32WNIg/xhXdOGMNEzUsZZI0eDmhQywMbVNi4uhlCw9hdVLXCT+Uqhw563kYwpJyt4LsqJPyaknlfZFxs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751289873; c=relaxed/simple;
-	bh=dZN89L/e6+4tOMpVRmkPF6ZEaU2uLKLsk1mtkblfkS4=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=VNZ28GbEvzM/CK2AerrholO3MYZWzxPH5EFpMMpcNdfcaRhXxdi38oTaafAkd+4rvRijpgtYrIlqkcM55VtYgkSQ6tlRL0k/8NSz6vdNusjpFKbfNLxsLdI6KC9sIcBs0xJHYWw12WTXv1aQRsJWZywHdFK0j1RlxjDTivfjrcE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EN7PA+1R; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1751290266; c=relaxed/simple;
+	bh=0/FZCiLaRndiTPePRIo/GUOxbR20fxMdpfov79uN7uQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=NWa84m2UEiMJtYq42CsHsRU/J7TNO4ngGGkV4y1ahiytAA+ib9TWuy6eWEl+Mafgwt3jYT6kAPbLjjc9J5J3O+po/LHD1xdkyyTsB5L2MXbULXmk7sEOV/HfPYywyWU039yFV0FM5BYT6eY+TnnubMDyd1RNdjLY2wv3vz41vZk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=d0DYH4zV; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EN7PA+1R"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="d0DYH4zV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1751289870;
+	s=mimecast20190719; t=1751290263;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=MnLCh2mvNGtS+98yTsotxoOlCqzk92Hh/4U+z8+AeVk=;
-	b=EN7PA+1RNbYpsgeVqT4Vdp6NJHgOK5DAOyL1Z6Om2tgX+J4ZN/55FINhxt2sabbYdSKwly
-	X698pgzM9ZYmbHMOMbPacpfFN3ieqyXPm37gPswdjk4cxNmFVRisYy4x66ONDvEGe1rWQI
-	BBbeOQqyQMMRAbmPcv4vJ+8HK4LhvNM=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Jz9RQCLVSvMznWWKk2eRSrkkyI7/meflTI0QApH5lD4=;
+	b=d0DYH4zV/wtw8RFwzLsERABJKh15VOTgW8VzsVvz5QkxiEruVw7PYgys0rGaFAN/6fQLoQ
+	2mkbp14yAnTThcWTOKDzLl1K1M9DjAgT1XVF08hLXqzks2wqJaI7j1TznG0o1xnyPWlsyO
+	eTVrpP0N1mI3tzBAdheTloA+szYBGSE=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-518-owYbA4jQPKGS9qDdu4wJ6A-1; Mon,
- 30 Jun 2025 09:24:28 -0400
-X-MC-Unique: owYbA4jQPKGS9qDdu4wJ6A-1
-X-Mimecast-MFC-AGG-ID: owYbA4jQPKGS9qDdu4wJ6A_1751289868
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-130-VVFOYvEXNZqE0X_VvTDHeQ-1; Mon,
+ 30 Jun 2025 09:31:00 -0400
+X-MC-Unique: VVFOYvEXNZqE0X_VvTDHeQ-1
+X-Mimecast-MFC-AGG-ID: VVFOYvEXNZqE0X_VvTDHeQ_1751290255
 Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EC31B193F069;
-	Mon, 30 Jun 2025 13:24:27 +0000 (UTC)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B148B190FBC6;
+	Mon, 30 Jun 2025 13:30:54 +0000 (UTC)
 Received: from [10.22.80.10] (unknown [10.22.80.10])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 557F9195609D;
-	Mon, 30 Jun 2025 13:24:26 +0000 (UTC)
-Date: Mon, 30 Jun 2025 15:24:22 +0200 (CEST)
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 20F3E195609D;
+	Mon, 30 Jun 2025 13:30:50 +0000 (UTC)
+Date: Mon, 30 Jun 2025 15:30:48 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: [PATCH 2/2] dm-mpath: don't print the "loaded" message if registering
- fails
-Message-ID: <b5c123af-f7d4-14b6-5d2f-40fa9d970eb9@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
+    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
+    dm-devel@lists.linux.dev
+Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v1_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
+ =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
+In-Reply-To: <20250624073359.2041340-1-dongsheng.yang@linux.dev>
+Message-ID: <8d383dc6-819b-2c7f-bab5-2cd113ed9ece@redhat.com>
+References: <20250624073359.2041340-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: RIgmVa917g-3tmtzqo9kijEsqUgm1Ml-n4oiS0_D9VU_1751289868
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
 
-If dm_register_path_selector, don't print the "version X loaded" message.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
----
- drivers/md/dm-ps-historical-service-time.c |    4 +++-
- drivers/md/dm-ps-queue-length.c            |    4 +++-
- drivers/md/dm-ps-round-robin.c             |    4 +++-
- drivers/md/dm-ps-service-time.c            |    4 +++-
- 4 files changed, 12 insertions(+), 4 deletions(-)
+On Tue, 24 Jun 2025, Dongsheng Yang wrote:
 
-Index: linux-dm/drivers/md/dm-ps-queue-length.c
-===================================================================
---- linux-dm.orig/drivers/md/dm-ps-queue-length.c
-+++ linux-dm/drivers/md/dm-ps-queue-length.c
-@@ -260,8 +260,10 @@ static int __init dm_ql_init(void)
- {
- 	int r = dm_register_path_selector(&ql_ps);
- 
--	if (r < 0)
-+	if (r < 0) {
- 		DMERR("register failed %d", r);
-+		return r;
-+	}
- 
- 	DMINFO("version " QL_VERSION " loaded");
- 
-Index: linux-dm/drivers/md/dm-ps-round-robin.c
-===================================================================
---- linux-dm.orig/drivers/md/dm-ps-round-robin.c
-+++ linux-dm/drivers/md/dm-ps-round-robin.c
-@@ -220,8 +220,10 @@ static int __init dm_rr_init(void)
- {
- 	int r = dm_register_path_selector(&rr_ps);
- 
--	if (r < 0)
-+	if (r < 0) {
- 		DMERR("register failed %d", r);
-+		return r;
-+	}
- 
- 	DMINFO("version " RR_VERSION " loaded");
- 
-Index: linux-dm/drivers/md/dm-ps-historical-service-time.c
-===================================================================
---- linux-dm.orig/drivers/md/dm-ps-historical-service-time.c
-+++ linux-dm/drivers/md/dm-ps-historical-service-time.c
-@@ -541,8 +541,10 @@ static int __init dm_hst_init(void)
- {
- 	int r = dm_register_path_selector(&hst_ps);
- 
--	if (r < 0)
-+	if (r < 0) {
- 		DMERR("register failed %d", r);
-+		return r;
-+	}
- 
- 	DMINFO("version " HST_VERSION " loaded");
- 
-Index: linux-dm/drivers/md/dm-ps-service-time.c
-===================================================================
---- linux-dm.orig/drivers/md/dm-ps-service-time.c
-+++ linux-dm/drivers/md/dm-ps-service-time.c
-@@ -341,8 +341,10 @@ static int __init dm_st_init(void)
- {
- 	int r = dm_register_path_selector(&st_ps);
- 
--	if (r < 0)
-+	if (r < 0) {
- 		DMERR("register failed %d", r);
-+		return r;
-+	}
- 
- 	DMINFO("version " ST_VERSION " loaded");
- 
+> Hi Mikulas,
+> 	This is V1 for dm-pcache, please take a look.
+> 
+> Code:
+>     https://github.com/DataTravelGuide/linux tags/pcache_v1
+> 
+> Changelogs from RFC-V2:
+> 	- use crc32c to replace crc32
+> 	- only retry pcache_req when cache full, add pcache_req into defer_list,
+> 	  and wait cache invalidation happen.
+> 	- new format for pcache table, it is more easily extended with
+> 	  new parameters later.
+> 	- remove __packed.
+> 	- use spin_lock_irq in req_complete_fn to replace
+> 	  spin_lock_irqsave.
+> 	- fix bug in backing_dev_bio_end with spin_lock_irqsave.
+> 	- queue_work() inside spinlock.
+> 	- introduce inline_bvecs in backing_dev_req.
+> 	- use kmalloc_array for bvecs allocation.
+> 	- calculate ->off with dm_target_offset() before use it.
+
+Hi
+
+The out-of-memory handling still doesn't seem right.
+
+If the GFP_NOWAIT allocation doesn't succeed (which may happen anytime, 
+for example it happens when the machine is receiving network packets 
+faster than the swapper is able to swap out data), create_cache_miss_req 
+returns NULL, the caller changes it to -ENOMEM, cache_read returns 
+-ENOMEM, -ENOMEM is propagated up to end_req and end_req will set the 
+status to BLK_STS_RESOURCE. So, it may randomly fail I/Os with an error.
+
+Properly, you should use mempools. The mempool allocation will wait until 
+some other process frees data into the mempool.
+
+If you need to allocate memory inside a spinlock, you can't do it reliably 
+(because you can't sleep inside a spinlock and non-sleepng memory 
+allocation may fail anytime). So, in this case, you should drop the 
+spinlock, allocate the memory from a mempool with GFP_NOIO and jump back 
+to grab the spinlock - and now you holding the allocated object, so you 
+can use it while you hold the spinlock.
+
+
+Another comment:
+set_bit/clear_bit use atomic instructions which are slow. As you already 
+hold a spinlock when calling them, you don't need the atomicity, so you 
+can replace them with __set_bit and __clear_bit.
+
+Mikulas
 
