@@ -1,94 +1,100 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2AC5A2417E6
-	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 09:33:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81051285079
+	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 14:08:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751448825; cv=none; b=vEncMhXNMRyZW3Jb9xTW9CIGpnGw+4zd9x6i02GMpSbqBkETubaGVZMQKxE2mIW6XPJYpEj0yR+mOcUTcP8gPlF3eZd42kLgiaS4xUWVpk90rMW/R9VJ3+m+4PvuAU5mK3yjGGnFOo5+qmG0J+EN6mQ0ybcmZoppEV5qLWel7+E=
+	t=1751465339; cv=none; b=KKZpjfFqTs8S/LkL2iHVwKU4oWmCL/BSuqDSHdfEC+e0jehDZqF8mI0M+33o91MCIm1NaDGpEZPhXZU55eSouYAzYGASxyRlSzb4kw7miWqMolF87GTUb+HMhHKMhDVBo6h91OdVHGVhUs3FY9cREK8rqr1j0EYOnJEY1a2lVhE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751448825; c=relaxed/simple;
-	bh=b9CRuRPjH8bn+fiDF02AF7R2oNXbNMiUBSe4EfhH6DA=;
-	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=EVXAG1LlWxtYhMplZvG0vS7tsbYEsSSO0LmchtDD04+fIl1DOciKViaU3/WTh0vHuPYWtgxffG3p8A7QKTsgCXN+TqFnx1+yNfFI8G5cbmiB7x3N+vfBV5twQZ9fiIzfz8PLGRW+8fy4neGzK92jjF8cGvpzFUDn757ptNgN1cM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4bXF863D6wzYQtLC
-	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 17:33:42 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.252])
-	by mail.maildlp.com (Postfix) with ESMTP id 528E61A0A0F
-	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 17:33:41 +0800 (CST)
-Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP3 (Coremail) with SMTP id _Ch0CgBnxyT0_GRoOT2hAQ--.44744S3;
-	Wed, 02 Jul 2025 17:33:41 +0800 (CST)
-Subject: Re: [PATCH v2 3/5] md/raid10: set chunk_sectors limit
-To: John Garry <john.g.garry@oracle.com>, agk@redhat.com, snitzer@kernel.org,
- mpatocka@redhat.com, song@kernel.org, hch@lst.de, nilay@linux.ibm.com,
- axboe@kernel.dk
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, linux-block@vger.kernel.org,
- ojaswin@linux.ibm.com, martin.petersen@oracle.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20250618083737.4084373-1-john.g.garry@oracle.com>
- <20250618083737.4084373-4-john.g.garry@oracle.com>
-From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <13b0be8a-298d-e2eb-aae4-f37273ab2ee2@huaweicloud.com>
-Date: Wed, 2 Jul 2025 17:33:40 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
- Thunderbird/60.9.1
+	s=arc-20240116; t=1751465339; c=relaxed/simple;
+	bh=udkqrQvnVo4RtQQvYPowipcr8LIhibLJYAbEXhqyk8U=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=En2T8VWEU3QwOmnLYF2XmVJDzLETlvi19jqHh1BqesMPv4oL0j/MHbqidgJNimwsrjP29XnJXTuMNI9k+OHEtHySnn4Nss+xlKTvI3HiDS946qnvvCIAFeifSiH3skJv0+hhnrldUt/846bgNOCU8WJmTStjU7HuBW8keUkt+OU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fa1AZ7M4; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fa1AZ7M4"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1751465336;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=NmpFPS9LBgw3dn2ZELfQ3w9zSUQEM1HAAcc1XXF6Vsk=;
+	b=fa1AZ7M4/Lo2ERnsBz0zdDX3fqErkRXsXGxDWgWnACT9qeHgLTVKYrtkbU/L47EAcFsdXY
+	dJQwhl4JhyJl5GUjRVR0zoVyO3aiDWjw/+vAfbJjgzVcCr6NCr6Hdk8eOQsDndYd0117CR
+	eVVTcNzEAaQfkrAi6Csj0nYD0wtUGUw=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-269-0pp4VaZ_NCCwBAuKhDJQvw-1; Wed,
+ 02 Jul 2025 10:08:55 -0400
+X-MC-Unique: 0pp4VaZ_NCCwBAuKhDJQvw-1
+X-Mimecast-MFC-AGG-ID: 0pp4VaZ_NCCwBAuKhDJQvw_1751465334
+Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D19718089B8;
+	Wed,  2 Jul 2025 14:08:54 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AB1E41956087;
+	Wed,  2 Jul 2025 14:08:53 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 562E8qoW3641587
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 2 Jul 2025 10:08:52 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 562E8pDg3641586;
+	Wed, 2 Jul 2025 10:08:51 -0400
+Date: Wed, 2 Jul 2025 10:08:51 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] multipathd: cli_reinstate(): avoid reinstated paths
+ being failed again
+Message-ID: <aGU9c-nUF5PiaZ3k@redhat.com>
+References: <20250701220933.156676-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250618083737.4084373-4-john.g.garry@oracle.com>
-Content-Type: text/plain; charset=gbk; format=flowed
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:_Ch0CgBnxyT0_GRoOT2hAQ--.44744S3
-X-Coremail-Antispam: 1UD129KBjvdXoWruFy8WFWxKr1rAFWUGr4rXwb_yoWfZrcEga
-	4fZF13Xr1I9r1I9w1jkF1SkrW5X348WFn7ZFy3Kr45X3WrWF18CFyj934rCa1YyFy2qF1q
-	yrs7ua1FyF1kZjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
-	9fnUUIcSsGvfJTRUUUbaxYFVCjjxCrM7AC8VAFwI0_Gr0_Xr1l1xkIjI8I6I8E6xAIw20E
-	Y4v20xvaj40_Wr0E3s1l1IIY67AEw4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28CjxkF64kEwV
-	A0rcxSw2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x02
-	67AKxVW8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I
-	0E14v26rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
-	x7xfMcIj6xIIjxv20xvE14v26r106r15McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
-	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7I2V7IY0VAS
-	07AlzVAYIcxG8wCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4
-	IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1r
-	MI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUJV
-	WUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF04k26cxKx2IYs7xG6r1j
-	6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1UYx
-	BIdaVFxhVjvjDU0xZFpf9x07UQ6p9UUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+In-Reply-To: <20250701220933.156676-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 1unmdIPqG2MHxod085sE4gSplj5TuXC_37qucOWpFCU_1751465334
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-ÔÚ 2025/06/18 16:37, John Garry Ð´µÀ:
-> Same as done for raid0, set chunk_sectors limit to appropriately set the
-> atomic write size limit.
+On Wed, Jul 02, 2025 at 12:09:33AM +0200, Martin Wilck wrote:
+> After manually failing some paths and then reinstating them, the
+> following pattern of events has been observed:
 > 
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
-> ---
->   drivers/md/raid10.c | 1 +
->   1 file changed, 1 insertion(+)
+> [1535664.790944] localhost multipathd[26335]: mpathc: reinstate path 8:48 (operator)
+> [1535664.791422] localhost multipathd[26335]: mpathc: devmap event #4
+> [1535664.793140] localhost kernel: device-mapper: multipath: 254:6: Reinstating path 8:48.
+> [1535665.219024] localhost multipathd[26335]: mpathc: reload [0 125829120 multipath 1 queue_if_no_path 1 alua 2 1 queue-length 0 2 1 8:144 1 8:240 1 queue-length 0 2 1 8:48 1 65:80 1]
+> [1535665.290268] localhost multipathd[26335]: sync_map_state: failing sdd state 2 dmstate 2
+> [1535665.292442] localhost kernel: device-mapper: multipath: 254:6: Failing path 8:48.
+> [1535669.291320] localhost multipathd[26335]: sdd: tur state = up
+> [1535669.291531] localhost multipathd[26335]: mpathc: sdd - tur checker reports path is up
+> [1535669.291531] localhost multipathd[26335]: 8:48: reinstated
 > 
+> We see that sdd (8:48) is first reinstated, then failed again during
+> the reload operation, and finally reinstated in the checker.
+> 
+> This happens because multipathd doesn't update the internal path state when it
+> calls dm_reinstate_path(). If sync_map_state() is called, it will see the path
+> in PATH_DOWN state and fail the path again.
+> 
+> Fix it by setting pp->state to PATH_UNCHECKED.
+> 
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
 
-Reviewed-by: Yu Kuai <yukuai3@huawei.com>
-
-> diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-> index b74780af4c22..97065bb26f43 100644
-> --- a/drivers/md/raid10.c
-> +++ b/drivers/md/raid10.c
-> @@ -4004,6 +4004,7 @@ static int raid10_set_queue_limits(struct mddev *mddev)
->   	md_init_stacking_limits(&lim);
->   	lim.max_write_zeroes_sectors = 0;
->   	lim.io_min = mddev->chunk_sectors << 9;
-> +	lim.chunk_sectors = mddev->chunk_sectors;
->   	lim.io_opt = lim.io_min * raid10_nr_stripes(conf);
->   	lim.features |= BLK_FEAT_ATOMIC_WRITES;
->   	err = mddev_stack_rdev_limits(mddev, &lim, MDDEV_STACK_INTEGRITY);
-> 
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
