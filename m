@@ -1,100 +1,113 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81051285079
-	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 14:08:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F30E30AAB1
+	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 14:53:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751465339; cv=none; b=KKZpjfFqTs8S/LkL2iHVwKU4oWmCL/BSuqDSHdfEC+e0jehDZqF8mI0M+33o91MCIm1NaDGpEZPhXZU55eSouYAzYGASxyRlSzb4kw7miWqMolF87GTUb+HMhHKMhDVBo6h91OdVHGVhUs3FY9cREK8rqr1j0EYOnJEY1a2lVhE=
+	t=1751467984; cv=none; b=RwEdkR+LK8t/BhOHV17ERIpG6tyW0gtu3s82I0Dfhl7aJAyj0sK859OXEFUfAHjj2B/l/9H/jfKKQ62j6jtm8iemP1hLCgs9RUhobXNhzSJ+th2wMntoSOok+D8A3qLcYsx5xOwRnBTEQIu5Oz9SnYWBBLmbwHIUV3MSTAzn4Uc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751465339; c=relaxed/simple;
-	bh=udkqrQvnVo4RtQQvYPowipcr8LIhibLJYAbEXhqyk8U=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=En2T8VWEU3QwOmnLYF2XmVJDzLETlvi19jqHh1BqesMPv4oL0j/MHbqidgJNimwsrjP29XnJXTuMNI9k+OHEtHySnn4Nss+xlKTvI3HiDS946qnvvCIAFeifSiH3skJv0+hhnrldUt/846bgNOCU8WJmTStjU7HuBW8keUkt+OU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fa1AZ7M4; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1751467984; c=relaxed/simple;
+	bh=1czxn8sEJrwh8Sb5DBYJzEDLgBogkTU+8+YFGNfJ5p0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=GjzP8e9p/TSGEsVT8Of99A9tz/RdVkcYs8n42+THCk1YgCM4Y2W6JxQITypjd5f/4Gro9XskM/hDLXLsJKuTmbdgYe2Vq84qNvlyuhywiUqLnEJCso7r6+P/WGpcYo1LfEfKELGPzumkxAUrS7Ayz4Psc33AI5JWUZRuvvehMuA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SvqP/UrX; arc=none smtp.client-ip=209.85.221.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fa1AZ7M4"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1751465336;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=NmpFPS9LBgw3dn2ZELfQ3w9zSUQEM1HAAcc1XXF6Vsk=;
-	b=fa1AZ7M4/Lo2ERnsBz0zdDX3fqErkRXsXGxDWgWnACT9qeHgLTVKYrtkbU/L47EAcFsdXY
-	dJQwhl4JhyJl5GUjRVR0zoVyO3aiDWjw/+vAfbJjgzVcCr6NCr6Hdk8eOQsDndYd0117CR
-	eVVTcNzEAaQfkrAi6Csj0nYD0wtUGUw=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-269-0pp4VaZ_NCCwBAuKhDJQvw-1; Wed,
- 02 Jul 2025 10:08:55 -0400
-X-MC-Unique: 0pp4VaZ_NCCwBAuKhDJQvw-1
-X-Mimecast-MFC-AGG-ID: 0pp4VaZ_NCCwBAuKhDJQvw_1751465334
-Received: from mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.15])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D19718089B8;
-	Wed,  2 Jul 2025 14:08:54 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AB1E41956087;
-	Wed,  2 Jul 2025 14:08:53 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 562E8qoW3641587
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 2 Jul 2025 10:08:52 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 562E8pDg3641586;
-	Wed, 2 Jul 2025 10:08:51 -0400
-Date: Wed, 2 Jul 2025 10:08:51 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH] multipathd: cli_reinstate(): avoid reinstated paths
- being failed again
-Message-ID: <aGU9c-nUF5PiaZ3k@redhat.com>
-References: <20250701220933.156676-1-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SvqP/UrX"
+Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-3a6f24ef3acso739043f8f.3
+        for <dm-devel@lists.linux.dev>; Wed, 02 Jul 2025 07:53:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1751467981; x=1752072781; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=B8C1E8Kh1L5DFNA7napP8JtAHjrocXALarLTItHCHto=;
+        b=SvqP/UrXYgg2LcN9ZSobzEH3eHZhgmopSE2WiBGiykuyy2vaIjX+VPFv9Cwljy0Fys
+         i23n2zDBymEL6Y/wZCsnkg7cs1v+oTOf7DrUrCYMAUo3jn7fr8gEgje7dINKs3+B6xBs
+         K9koI7Vf/5VKhKmviiFd9L+ELDGrHNwXNd6x2vMHrilHxKVTCQmNQ26KKWW4S/IFDA4t
+         /WwtnVpyU1+HZ8W4kJCbF5W8m+rfLqRplNNOYoVHT6F1MwGPvTEmS4aXGCREFvgHlZFi
+         /yq5jN/2jz5So4G8tE+tPemVBwOHOKxx5ahpmYbI6Gp0QqXLeotG21pWwpe544tRprrV
+         Yf1w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1751467981; x=1752072781;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=B8C1E8Kh1L5DFNA7napP8JtAHjrocXALarLTItHCHto=;
+        b=vROTzg4dgPvx6fuZCoVbYf9yDXoOgmEoNYAl4mRMdkQ0zs3/P/aPKHQlnaDVtycPTH
+         9iFuB9LrDx20qU8P04vLud9rDVZt9i3K+ja/yXUIarlsx2GrXyqBBKGzLRruWAdqwhNk
+         HvQ0xtEnLDAKNoOPoql7BmxrL3d9zuMhV2Dku0ncE/wNDarlk/FVDPFp8TD9WkTW4WkY
+         amzxMzDEhrHwyyMkEjivGDD4BnfaZbmSI5+H+FUej0aFCPpVi4i/OSnSgduQ0uARHqip
+         6YtyiNuy2Tn6oKSnulQ4b50W40qqK7qrr54ujS8oThd4plLtm8CbQ1NIEPkTb2WqoksT
+         YV8g==
+X-Forwarded-Encrypted: i=1; AJvYcCVDkedI01UyutmqAk/mlMEHEnYO82wG45g7AF7k8M1WQEnP54a0scgYG2eSAsO8aik6sKHT5s1OtQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyRmZAOph90uAhfOQDOsvOncvdxZ7D49wTtmtzeZYKJ8cWMd7au
+	kQWuLSAJ5tLMuMzN6Z2JQnipqjdBmszBPB1TIpwjd9XIaWSW8LyQhjs=
+X-Gm-Gg: ASbGncsgF23b3SfurBZdiYNg5hHQTvH4/CvxaiWCeitMHbwhcNWuI66Iit9Xe9uIiH9
+	7SmzhEYXGU7GB0KpjY7xjBLQxOS9vufXmoVEsOBrrP3e8TgLUJI8li9O8ifxtWqjFvqdaqkZR4Z
+	M6M2emYq25cOhG5HOcjP/XEdJoyVXS00+CG8AdUj8nXAngWPB1ca7Tstr+crOVF1KYiwNYCdQoM
+	dh+Cb+jU7Pj/mWD35hYTd3FLErlQWIllU0jw2R+g7vggEvV5AtuBQ76YtQnQLJiyLCQUd6Ml1Mc
+	n6FylxE8/ZwiCprhG5fRK45Qa2T6es5yNRB96WzM/vBRInDdp8XFmJmXtLW+RgVkr8Js6/B8yUN
+	ecyaxUcH/miI3UZv+bvB+JVMtpdbk3mqTVKe/
+X-Google-Smtp-Source: AGHT+IH4laCVXPr/SteN0flcUwv3S6OQeC8QokqUDPtVMA1RE2+4mclykQ5QpdIgf8frNAotPxD63g==
+X-Received: by 2002:a05:6000:2b08:b0:3a5:2ee8:ee1d with SMTP id ffacd0b85a97d-3b20067a0d0mr619223f8f.16.1751467980930;
+        Wed, 02 Jul 2025 07:53:00 -0700 (PDT)
+Received: from localhost (148.red-80-39-52.staticip.rima-tde.net. [80.39.52.148])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a892e52ca4sm16393120f8f.58.2025.07.02.07.52.59
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 02 Jul 2025 07:53:00 -0700 (PDT)
+Message-ID: <c5c09220-4174-4912-8884-46b0ff936eb8@gmail.com>
+Date: Wed, 2 Jul 2025 16:52:59 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250701220933.156676-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.15
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 1unmdIPqG2MHxod085sE4gSplj5TuXC_37qucOWpFCU_1751465334
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Subject: Re: [PATCH] md: dm-ps-*: delete version strings
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ DM-DEVEL ML <dm-devel@lists.linux.dev>
+References: <20250625111918.219963-1-xose.vazquez@gmail.com>
+ <3480a823-c12a-81d4-5293-fc2052bf25bc@redhat.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <3480a823-c12a-81d4-5293-fc2052bf25bc@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Wed, Jul 02, 2025 at 12:09:33AM +0200, Martin Wilck wrote:
-> After manually failing some paths and then reinstating them, the
-> following pattern of events has been observed:
-> 
-> [1535664.790944] localhost multipathd[26335]: mpathc: reinstate path 8:48 (operator)
-> [1535664.791422] localhost multipathd[26335]: mpathc: devmap event #4
-> [1535664.793140] localhost kernel: device-mapper: multipath: 254:6: Reinstating path 8:48.
-> [1535665.219024] localhost multipathd[26335]: mpathc: reload [0 125829120 multipath 1 queue_if_no_path 1 alua 2 1 queue-length 0 2 1 8:144 1 8:240 1 queue-length 0 2 1 8:48 1 65:80 1]
-> [1535665.290268] localhost multipathd[26335]: sync_map_state: failing sdd state 2 dmstate 2
-> [1535665.292442] localhost kernel: device-mapper: multipath: 254:6: Failing path 8:48.
-> [1535669.291320] localhost multipathd[26335]: sdd: tur state = up
-> [1535669.291531] localhost multipathd[26335]: mpathc: sdd - tur checker reports path is up
-> [1535669.291531] localhost multipathd[26335]: 8:48: reinstated
-> 
-> We see that sdd (8:48) is first reinstated, then failed again during
-> the reload operation, and finally reinstated in the checker.
-> 
-> This happens because multipathd doesn't update the internal path state when it
-> calls dm_reinstate_path(). If sync_map_state() is called, it will see the path
-> in PATH_DOWN state and fail the path again.
-> 
-> Fix it by setting pp->state to PATH_UNCHECKED.
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
+On 6/30/25 3:19 PM, Mikulas Patocka wrote:
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+ >> On Wed, 25 Jun 2025, Xose Vazquez Perez wrote:
+ >> [...]>> diff --git a/drivers/md/dm-ps-service-time.c b/drivers/md/dm-ps-service-time.c
+>> index 969d31c40272..cbb0ac63bb7a 100644
+>> --- a/drivers/md/dm-ps-service-time.c
+>> +++ b/drivers/md/dm-ps-service-time.c
+>> @@ -20,7 +20,6 @@
+>>   #define ST_MAX_RELATIVE_THROUGHPUT	100
+>>   #define ST_MAX_RELATIVE_THROUGHPUT_SHIFT	7
+>>   #define ST_MAX_INFLIGHT_SIZE	((size_t)-1 >> ST_MAX_RELATIVE_THROUGHPUT_SHIFT)
+>> -#define ST_VERSION	"0.3.0"
+>>   
+>>   struct selector {
+>>   	struct list_head valid_paths;
+>> @@ -344,7 +343,7 @@ static int __init dm_st_init(void)
+>>   	if (r < 0)
+>>   		DMERR("register failed %d", r);
+>>   
+>> -	DMINFO("version " ST_VERSION " loaded");
+>> +	DMINFO(" loaded");
+>>   
+>>   	return r;
+>>   }
+>> -- 
+>> 2.50.0
 
+> I think this isn't needed. The version doesn't do any harm.
+
+Wrong information is provided to the user.
+The code is modified, but the version remains the same.
+
+Usually MODULE_VERSION has the same problem in the kernel tree.
