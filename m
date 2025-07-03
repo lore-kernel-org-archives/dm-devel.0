@@ -1,113 +1,174 @@
-Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F30E30AAB1
-	for <dm-devel@lists.linux.dev>; Wed,  2 Jul 2025 14:53:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44ED22367DE
+	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 03:35:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751467984; cv=none; b=RwEdkR+LK8t/BhOHV17ERIpG6tyW0gtu3s82I0Dfhl7aJAyj0sK859OXEFUfAHjj2B/l/9H/jfKKQ62j6jtm8iemP1hLCgs9RUhobXNhzSJ+th2wMntoSOok+D8A3qLcYsx5xOwRnBTEQIu5Oz9SnYWBBLmbwHIUV3MSTAzn4Uc=
+	t=1751513751; cv=none; b=km2XN2UnkPjbz326JUowxH+ax9+ER9rZagP6YwY9oR316rTQlyeAvTZS8GiGgqZwvSH4VeIrxPsS68YhlS5fKBbf477SO6LgK0Hj5PJDJj7QujeXrroLNM0L55ohjbCNneJUuTadFbyf6DFogyy+AylwOOyx6ckG1+oxqRr5Fts=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751467984; c=relaxed/simple;
-	bh=1czxn8sEJrwh8Sb5DBYJzEDLgBogkTU+8+YFGNfJ5p0=;
+	s=arc-20240116; t=1751513751; c=relaxed/simple;
+	bh=aAiZg72MzhU/nwICqHjkhrX5X7yDG6hB2keLduoAXfU=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=GjzP8e9p/TSGEsVT8Of99A9tz/RdVkcYs8n42+THCk1YgCM4Y2W6JxQITypjd5f/4Gro9XskM/hDLXLsJKuTmbdgYe2Vq84qNvlyuhywiUqLnEJCso7r6+P/WGpcYo1LfEfKELGPzumkxAUrS7Ayz4Psc33AI5JWUZRuvvehMuA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SvqP/UrX; arc=none smtp.client-ip=209.85.221.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SvqP/UrX"
-Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-3a6f24ef3acso739043f8f.3
-        for <dm-devel@lists.linux.dev>; Wed, 02 Jul 2025 07:53:02 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1751467981; x=1752072781; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=B8C1E8Kh1L5DFNA7napP8JtAHjrocXALarLTItHCHto=;
-        b=SvqP/UrXYgg2LcN9ZSobzEH3eHZhgmopSE2WiBGiykuyy2vaIjX+VPFv9Cwljy0Fys
-         i23n2zDBymEL6Y/wZCsnkg7cs1v+oTOf7DrUrCYMAUo3jn7fr8gEgje7dINKs3+B6xBs
-         K9koI7Vf/5VKhKmviiFd9L+ELDGrHNwXNd6x2vMHrilHxKVTCQmNQ26KKWW4S/IFDA4t
-         /WwtnVpyU1+HZ8W4kJCbF5W8m+rfLqRplNNOYoVHT6F1MwGPvTEmS4aXGCREFvgHlZFi
-         /yq5jN/2jz5So4G8tE+tPemVBwOHOKxx5ahpmYbI6Gp0QqXLeotG21pWwpe544tRprrV
-         Yf1w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1751467981; x=1752072781;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=B8C1E8Kh1L5DFNA7napP8JtAHjrocXALarLTItHCHto=;
-        b=vROTzg4dgPvx6fuZCoVbYf9yDXoOgmEoNYAl4mRMdkQ0zs3/P/aPKHQlnaDVtycPTH
-         9iFuB9LrDx20qU8P04vLud9rDVZt9i3K+ja/yXUIarlsx2GrXyqBBKGzLRruWAdqwhNk
-         HvQ0xtEnLDAKNoOPoql7BmxrL3d9zuMhV2Dku0ncE/wNDarlk/FVDPFp8TD9WkTW4WkY
-         amzxMzDEhrHwyyMkEjivGDD4BnfaZbmSI5+H+FUej0aFCPpVi4i/OSnSgduQ0uARHqip
-         6YtyiNuy2Tn6oKSnulQ4b50W40qqK7qrr54ujS8oThd4plLtm8CbQ1NIEPkTb2WqoksT
-         YV8g==
-X-Forwarded-Encrypted: i=1; AJvYcCVDkedI01UyutmqAk/mlMEHEnYO82wG45g7AF7k8M1WQEnP54a0scgYG2eSAsO8aik6sKHT5s1OtQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyRmZAOph90uAhfOQDOsvOncvdxZ7D49wTtmtzeZYKJ8cWMd7au
-	kQWuLSAJ5tLMuMzN6Z2JQnipqjdBmszBPB1TIpwjd9XIaWSW8LyQhjs=
-X-Gm-Gg: ASbGncsgF23b3SfurBZdiYNg5hHQTvH4/CvxaiWCeitMHbwhcNWuI66Iit9Xe9uIiH9
-	7SmzhEYXGU7GB0KpjY7xjBLQxOS9vufXmoVEsOBrrP3e8TgLUJI8li9O8ifxtWqjFvqdaqkZR4Z
-	M6M2emYq25cOhG5HOcjP/XEdJoyVXS00+CG8AdUj8nXAngWPB1ca7Tstr+crOVF1KYiwNYCdQoM
-	dh+Cb+jU7Pj/mWD35hYTd3FLErlQWIllU0jw2R+g7vggEvV5AtuBQ76YtQnQLJiyLCQUd6Ml1Mc
-	n6FylxE8/ZwiCprhG5fRK45Qa2T6es5yNRB96WzM/vBRInDdp8XFmJmXtLW+RgVkr8Js6/B8yUN
-	ecyaxUcH/miI3UZv+bvB+JVMtpdbk3mqTVKe/
-X-Google-Smtp-Source: AGHT+IH4laCVXPr/SteN0flcUwv3S6OQeC8QokqUDPtVMA1RE2+4mclykQ5QpdIgf8frNAotPxD63g==
-X-Received: by 2002:a05:6000:2b08:b0:3a5:2ee8:ee1d with SMTP id ffacd0b85a97d-3b20067a0d0mr619223f8f.16.1751467980930;
-        Wed, 02 Jul 2025 07:53:00 -0700 (PDT)
-Received: from localhost (148.red-80-39-52.staticip.rima-tde.net. [80.39.52.148])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3a892e52ca4sm16393120f8f.58.2025.07.02.07.52.59
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 02 Jul 2025 07:53:00 -0700 (PDT)
-Message-ID: <c5c09220-4174-4912-8884-46b0ff936eb8@gmail.com>
-Date: Wed, 2 Jul 2025 16:52:59 +0200
+	 In-Reply-To:Content-Type; b=rP3x7ENl+MzP7CcMHIkTRJ05oHHO+/d2u0mKLGU/jI/rPcRDAuDGTd+NDD83wYMB4uA2xi8gDQMwo8UxHYDrgvZ3/WX5pwh8Z6h3lo34dzyNhgSrDA0xMf3wECCgey5hRr+zirRdxo4uXTzaQ4ctji5ystQmuFaiy5/f9M4r9cE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4bXj8f6YqhzYQv1R
+	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 11:35:46 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.252])
+	by mail.maildlp.com (Postfix) with ESMTP id C20541A10FD
+	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 11:35:45 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP3 (Coremail) with SMTP id _Ch0CgBHpySN+mVo3w_yAQ--.57305S3;
+	Thu, 03 Jul 2025 11:35:43 +0800 (CST)
+Message-ID: <99010bfd-c968-49c7-b62b-c72b38722c1b@huaweicloud.com>
+Date: Thu, 3 Jul 2025 11:35:41 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH] md: dm-ps-*: delete version strings
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- DM-DEVEL ML <dm-devel@lists.linux.dev>
-References: <20250625111918.219963-1-xose.vazquez@gmail.com>
- <3480a823-c12a-81d4-5293-fc2052bf25bc@redhat.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <3480a823-c12a-81d4-5293-fc2052bf25bc@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 0/9] fallocate: introduce FALLOC_FL_WRITE_ZEROES flag
+To: Christian Brauner <brauner@kernel.org>
+Cc: linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, hch@lst.de,
+ tytso@mit.edu, djwong@kernel.org, john.g.garry@oracle.com,
+ bmarzins@redhat.com, chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
+ martin.petersen@oracle.com, yi.zhang@huawei.com, chengzhihao1@huawei.com,
+ yukuai3@huawei.com, yangerkun@huawei.com, linux-fsdevel@vger.kernel.org,
+ linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-scsi@vger.kernel.org
+References: <20250619111806.3546162-1-yi.zhang@huaweicloud.com>
+ <20250623-woanders-allabendlich-f87ae2d9c704@brauner>
+Content-Language: en-US
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <20250623-woanders-allabendlich-f87ae2d9c704@brauner>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:_Ch0CgBHpySN+mVo3w_yAQ--.57305S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxZF45tr1Duw4ftrWrZw1kZrb_yoWrtw15pa
+	yUJFZ8KF4DJr17J397uF109F15Zws3Ar15Ka1rKw1kZrWYqrnagFWIga4UXasrCr93Ww1x
+	ZFsFya4q9ay7AFDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
+	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
+	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
+	s2-5UUUUU==
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-On 6/30/25 3:19 PM, Mikulas Patocka wrote:
+On 2025/6/23 18:46, Christian Brauner wrote:
+> On Thu, 19 Jun 2025 19:17:57 +0800, Zhang Yi wrote:
+>> From: Zhang Yi <yi.zhang@huawei.com>
+>>
+>> Changes since v1:
+>>  - Rebase codes on 6.16-rc2.
+>>  - Use max_{hw|user}_wzeroes_unmap_sectors queue limits instead of
+>>    BLK_FEAT_WRITE_ZEROES_UNMAP feature to represent the status of the
+>>    unmap write zeroes operation as Christoph and Darrick suggested. This
+>>    redoes the first 5 patches, so remove all the reviewed-by tags,
+>>    please review them again.
+>>  - Simplify the description of FALLOC_FL_WRITE_ZEROES in patch 06 as
+>>    Darrick suggested.
+>>  - Revise the check order of FALLOC_FL_WRITE_ZEROES in patch 08 as
+>>    Christoph suggested.
+>> Changes since RFC v4:
+>>  - Rebase codes on 6.16-rc1.
+>>  - Add a new queue_limit flag, and change the write_zeroes_unmap sysfs
+>>    interface to RW mode. User can disable the unmap write zeroes
+>>    operation by writing '0' to it when the operation is slow.
+>>  - Modify the documentation of write_zeroes_unmap sysfs interface as
+>>    Martin suggested.
+>>  - Remove the statx interface.
+>>  - Make the bdev and ext4 don't allow to submit FALLOC_FL_WRITE_ZEROES
+>>    if the block device does not enable the unmap write zeroes operation,
+>>    it should return -EOPNOTSUPP.
+>> Changes sicne RFC v3:
+>>  - Rebase codes on 6.15-rc2.
+>>  - Add a note in patch 1 to indicate that the unmap write zeros command
+>>    is not always guaranteed as Christoph suggested.
+>>  - Rename bdev_unmap_write_zeroes() helper and move it to patch 1 as
+>>    Christoph suggested.
+>>  - Introduce a new statx attribute flag STATX_ATTR_WRITE_ZEROES_UNMAP as
+>>    Christoph and Christian suggested.
+>>  - Exchange the order of the two patches that modified
+>>    blkdev_fallocate() as Christoph suggested.
+>> Changes since RFC v2:
+>>  - Rebase codes on next-20250314.
+>>  - Add support for nvme multipath.
+>>  - Add support for NVMeT with block device backing.
+>>  - Clear FALLOC_FL_WRITE_ZEROES if dm clear
+>>    limits->max_write_zeroes_sectors.
+>>  - Complement the counterpart userspace tools(util-linux and xfs_io)
+>>    and tests(blktests and xfstests), please see below for details.
+>> Changes since RFC v1:
+>>  - Switch to add a new write zeroes operation, FALLOC_FL_WRITE_ZEROES,
+>>    in fallocate, instead of just adding a supported flag to
+>>    FALLOC_FL_ZERO_RANGE.
+>>  - Introduce a new flag BLK_FEAT_WRITE_ZEROES_UNMAP to the block
+>>    device's queue limit features, and implement it on SCSI sd driver,
+>>    NVMe SSD driver and dm driver.
+>>  - Implement FALLOC_FL_WRITE_ZEROES on both the ext4 filesystem and
+>>    block device (bdev).
+>>
+>> [...]
+> 
+> If needed, the branch can be declared stable and thus be used as base
+> for other work.
+> 
+> ---
+> 
+> Applied to the vfs-6.17.fallocate branch of the vfs/vfs.git tree.
+> Patches in the vfs-6.17.fallocate branch should appear in linux-next soon.
+> 
+> Please report any outstanding bugs that were missed during review in a
+> new review to the original patch series allowing us to drop it.
+> 
+> It's encouraged to provide Acked-bys and Reviewed-bys even though the
+> patch has now been applied. If possible patch trailers will be updated.
+> 
+> Note that commit hashes shown below are subject to change due to rebase,
+> trailer updates or similar. If in doubt, please check the listed branch.
+> 
+> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+> branch: vfs-6.17.fallocate
 
- >> On Wed, 25 Jun 2025, Xose Vazquez Perez wrote:
- >> [...]>> diff --git a/drivers/md/dm-ps-service-time.c b/drivers/md/dm-ps-service-time.c
->> index 969d31c40272..cbb0ac63bb7a 100644
->> --- a/drivers/md/dm-ps-service-time.c
->> +++ b/drivers/md/dm-ps-service-time.c
->> @@ -20,7 +20,6 @@
->>   #define ST_MAX_RELATIVE_THROUGHPUT	100
->>   #define ST_MAX_RELATIVE_THROUGHPUT_SHIFT	7
->>   #define ST_MAX_INFLIGHT_SIZE	((size_t)-1 >> ST_MAX_RELATIVE_THROUGHPUT_SHIFT)
->> -#define ST_VERSION	"0.3.0"
->>   
->>   struct selector {
->>   	struct list_head valid_paths;
->> @@ -344,7 +343,7 @@ static int __init dm_st_init(void)
->>   	if (r < 0)
->>   		DMERR("register failed %d", r);
->>   
->> -	DMINFO("version " ST_VERSION " loaded");
->> +	DMINFO(" loaded");
->>   
->>   	return r;
->>   }
->> -- 
->> 2.50.0
+Hi Christian,
 
-> I think this isn't needed. The version doesn't do any harm.
+I noticed that this patch series doesn't appear to be merged into this
+branch. Just wondering if it might have been missed?
 
-Wrong information is provided to the user.
-The code is modified, but the version remains the same.
+Best regards,
+Yi.
 
-Usually MODULE_VERSION has the same problem in the kernel tree.
+> 
+> [1/9] block: introduce max_{hw|user}_wzeroes_unmap_sectors to queue limits
+>       https://git.kernel.org/vfs/vfs/c/2695a9b086fd
+> [2/9] nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit
+>       https://git.kernel.org/vfs/vfs/c/bf07c1180194
+> [3/9] nvmet: set WZDS and DRB if device enables unmap write zeroes operation
+>       https://git.kernel.org/vfs/vfs/c/a6c7ab5adcba
+> [4/9] scsi: sd: set max_hw_wzeroes_unmap_sectors if device supports SD_ZERO_*_UNMAP
+>       https://git.kernel.org/vfs/vfs/c/92372ed1cc88
+> [5/9] dm: clear unmap write zeroes limits when disabling write zeroes
+>       https://git.kernel.org/vfs/vfs/c/e383d550e716
+> [6/9] fs: introduce FALLOC_FL_WRITE_ZEROES to fallocate
+>       https://git.kernel.org/vfs/vfs/c/1ed1b5df86ec
+> [7/9] block: factor out common part in blkdev_fallocate()
+>       https://git.kernel.org/vfs/vfs/c/96433508c8c0
+> [8/9] block: add FALLOC_FL_WRITE_ZEROES support
+>       https://git.kernel.org/vfs/vfs/c/2b4e5f9b3eb9
+> [9/9] ext4: add FALLOC_FL_WRITE_ZEROES support
+>       https://git.kernel.org/vfs/vfs/c/51954e469396
+
