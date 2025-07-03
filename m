@@ -1,174 +1,223 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44ED22367DE
-	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 03:35:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751513751; cv=none; b=km2XN2UnkPjbz326JUowxH+ax9+ER9rZagP6YwY9oR316rTQlyeAvTZS8GiGgqZwvSH4VeIrxPsS68YhlS5fKBbf477SO6LgK0Hj5PJDJj7QujeXrroLNM0L55ohjbCNneJUuTadFbyf6DFogyy+AylwOOyx6ckG1+oxqRr5Fts=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751513751; c=relaxed/simple;
-	bh=aAiZg72MzhU/nwICqHjkhrX5X7yDG6hB2keLduoAXfU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=rP3x7ENl+MzP7CcMHIkTRJ05oHHO+/d2u0mKLGU/jI/rPcRDAuDGTd+NDD83wYMB4uA2xi8gDQMwo8UxHYDrgvZ3/WX5pwh8Z6h3lo34dzyNhgSrDA0xMf3wECCgey5hRr+zirRdxo4uXTzaQ4ctji5ystQmuFaiy5/f9M4r9cE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4bXj8f6YqhzYQv1R
-	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 11:35:46 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.252])
-	by mail.maildlp.com (Postfix) with ESMTP id C20541A10FD
-	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 11:35:45 +0800 (CST)
-Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP3 (Coremail) with SMTP id _Ch0CgBHpySN+mVo3w_yAQ--.57305S3;
-	Thu, 03 Jul 2025 11:35:43 +0800 (CST)
-Message-ID: <99010bfd-c968-49c7-b62b-c72b38722c1b@huaweicloud.com>
-Date: Thu, 3 Jul 2025 11:35:41 +0800
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF6082561D1
+	for <dm-devel@lists.linux.dev>; Thu,  3 Jul 2025 11:46:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1751543219; cv=fail; b=lcvaysoVA7hXto5uqdvn5bEbD63vbiCg6ArxeJjg3mKolF6cSE8c8byqxtqrnTlcPIbxX49EjmjmsOJZtCPDEqQkvWpi/JOF01xaE03Qnhb+M+kzP1Z70uoxMgX5smFqQKMSPpTnpIV+JShnryMCoGUrJPImxsaX4Y009qrndK0=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1751543219; c=relaxed/simple;
+	bh=tYb97xYS6SvY4DR1UD8j0VDm6KYBcSdgzWKlXc6cpQ4=;
+	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=MAmTiRJ+oRpoHtYkljb7DQMEDaj7dS2B8m4DcxAFIAl+4W91F+h4+qwRW1kR98KELUi/A7ui4TOWe+F9x3RDvgGFyvdBxKskLYBk+FMAWflrzFLCLP+a/aoJM8/hN4bOBDUIyBLemMSdpRjH8SVZbojDdS7p7LBJ7ecor7KWyfk=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=b1CY72Tm; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=iq7jt6do; arc=fail smtp.client-ip=205.220.177.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="b1CY72Tm";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="iq7jt6do"
+Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 5639Yp2L015470;
+	Thu, 3 Jul 2025 11:46:38 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=corp-2025-04-25; bh=Q7Nx7dZHJ1ycB/kV
+	ikBOr5UaA8lcNMJf2uw4UN2h/K0=; b=b1CY72TmIb5sPLFlvYhQZ/u1wqx9J7j3
+	na29FK7wWY0EUVHAHgpm8tRp4PzizPJTcRO40Zy4bSEJXvllYLHPHEUftg54FG59
+	dRV1rwvffd22ZgzkBq7nbq75py23esA+xPLPljRllaAogrugm3MT2Rz9dUKAQteB
+	WN2wYoAx4BNuQUsf5NjnSU05w6mBH0C4vE7mWv5VlCDiskfNGTKul+Qi9O5Lvvtg
+	AdhOUGz0+IVgfk7PpAEeErH+NF50WuqnRe10FFO59D79XpwI5tzO4+x2P0EVJqyB
+	sRC0C1CxfBdUGNJxkSmEvEcPDeffkG8TB02p/e5qwZyrtVPjJmVAJQ==
+Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 47j766gw63-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 03 Jul 2025 11:46:38 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 563B8euq027527;
+	Thu, 3 Jul 2025 11:46:37 GMT
+Received: from nam12-dm6-obe.outbound.protection.outlook.com (mail-dm6nam12on2067.outbound.protection.outlook.com [40.107.243.67])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 47j6ucgj1q-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 03 Jul 2025 11:46:36 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=IFbEJs5G3c4Bl6LyZ0Rz444xJVTSv0DKRKqKB0HUBl+Xyweyz5x986c3nKLM1svYSJZiPU4o+r+wk6DZR9BKca2XayL2wHRaGGEBPlSon0FAvCXK4KbiY5g3STEak2zrTZz826bUOWugTLO1JrSBCh/Eg+pjNcb+RELRurrPu0qIyPGEzD8SPoJKCxbXA24vfujSSI/l8fJxsgo/Hcyg3/bgAeASRPTRhMtCjs5lgTLC9wD8eg3DhW4q3LHWkG4SdGXVG/gZ8bNaqfRGR4tnbM7DBQqUa87UVpJftpC3/3yirdyjahQTH9/1vZGe8nBDY2yDojFekbkS92QDBTPezg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=Q7Nx7dZHJ1ycB/kVikBOr5UaA8lcNMJf2uw4UN2h/K0=;
+ b=yIRS46ANTieAPnoZ486QCciCHmWPymt2+448uiEfXDlfM1FHTnAyzjlzv1soPr7PU4e12Ce8KaOloO/liQ0e1YzoimjD740cKvhFzuIid2Cg+1rxdy2cFSYt6mPYF6ViamJCMKpjKbyj69XGzM2kGlbipcfykJNI4kpzTKt4a8liXmsq3+tjC3VYEWv7gukZASXMuyifFPdBW2MYitTfjeYYvyJAxkeyam27Edx2/9HVQkQKMCiaily1/eRYrA2zss20/AiwprNdWkPh3WztndQY2+c1LJF6FTpZj2TEF2IMHBaiRBIiYg/aHruhhF75orMN283N+moSUvm66mHWaQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=Q7Nx7dZHJ1ycB/kVikBOr5UaA8lcNMJf2uw4UN2h/K0=;
+ b=iq7jt6doXW1A2ahA/6jCxUZUsA4FKVpjWUPjilcjcUrHPWGNM0AVbuTtyDN6r1O5pcaUB9DKu+IfLZem7Q/38rvbETDwEOSZIN2CUuFeAtAUnCt18PW0/u0ZDdoCwkSANetq8iTRPqpxChP9lG+iyjf7TGteYXYW10LiLLSeJmQ=
+Received: from MN2PR10MB4320.namprd10.prod.outlook.com (2603:10b6:208:1d5::16)
+ by PH3PPF262994532.namprd10.prod.outlook.com (2603:10b6:518:1::78f) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8880.26; Thu, 3 Jul
+ 2025 11:46:33 +0000
+Received: from MN2PR10MB4320.namprd10.prod.outlook.com
+ ([fe80::42ec:1d58:8ba8:800c]) by MN2PR10MB4320.namprd10.prod.outlook.com
+ ([fe80::42ec:1d58:8ba8:800c%3]) with mapi id 15.20.8880.027; Thu, 3 Jul 2025
+ 11:46:33 +0000
+From: John Garry <john.g.garry@oracle.com>
+To: axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+        song@kernel.org, yukuai3@huawei.com, hch@lst.de, nilay@linux.ibm.com
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+        linux-raid@vger.kernel.org, linux-block@vger.kernel.org,
+        ojaswin@linux.ibm.com, martin.petersen@oracle.com,
+        John Garry <john.g.garry@oracle.com>
+Subject: [PATCH v3 0/5] block/md/dm: set chunk_sectors from stacked dev stripe size
+Date: Thu,  3 Jul 2025 11:46:08 +0000
+Message-ID: <20250703114613.9124-1-john.g.garry@oracle.com>
+X-Mailer: git-send-email 2.43.5
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: AM0PR02CA0215.eurprd02.prod.outlook.com
+ (2603:10a6:20b:28f::22) To MN2PR10MB4320.namprd10.prod.outlook.com
+ (2603:10b6:208:1d5::16)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 0/9] fallocate: introduce FALLOC_FL_WRITE_ZEROES flag
-To: Christian Brauner <brauner@kernel.org>
-Cc: linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, hch@lst.de,
- tytso@mit.edu, djwong@kernel.org, john.g.garry@oracle.com,
- bmarzins@redhat.com, chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com,
- martin.petersen@oracle.com, yi.zhang@huawei.com, chengzhihao1@huawei.com,
- yukuai3@huawei.com, yangerkun@huawei.com, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org
-References: <20250619111806.3546162-1-yi.zhang@huaweicloud.com>
- <20250623-woanders-allabendlich-f87ae2d9c704@brauner>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <20250623-woanders-allabendlich-f87ae2d9c704@brauner>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-CM-TRANSID:_Ch0CgBHpySN+mVo3w_yAQ--.57305S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxZF45tr1Duw4ftrWrZw1kZrb_yoWrtw15pa
-	yUJFZ8KF4DJr17J397uF109F15Zws3Ar15Ka1rKw1kZrWYqrnagFWIga4UXasrCr93Ww1x
-	ZFsFya4q9ay7AFDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: MN2PR10MB4320:EE_|PH3PPF262994532:EE_
+X-MS-Office365-Filtering-Correlation-Id: 0b8cc504-39eb-46a4-de69-08ddba274239
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;ARA:13230040|7416014|376014|1800799024|366016;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?4h9Z4lzJptpFf27DdddQquuvEf96zNKFtFIFiz6HgVNrPCQmxnmUlKU9IQm3?=
+ =?us-ascii?Q?KiUBW87KuQd2Nw65ckq4t0Zs9RLNmJZ5d0EVjxGtJ9V8L55uYyupbYoY0na+?=
+ =?us-ascii?Q?RP5Mfsc+M3gihkzODEsIeZ7gtMU9Jmx96OzqkD7OEBkotJMnhRpqhO7w1GId?=
+ =?us-ascii?Q?ltcRuvT/G5uwBuNc+reugh6qXct2y4o2uOAJBJyiJW3GF87QGEGqrZvmKLZC?=
+ =?us-ascii?Q?RFhBSo6ALPaKHFml3TUJbd1wwxiU99jztx/bdHC0yLXftV4jOnYwjS/BNmK8?=
+ =?us-ascii?Q?SMkhJXiQ3dEl/S9sJxFwvqPxpLBUKgAHgtSDuojziQr73KroUgdH1vqzgjph?=
+ =?us-ascii?Q?Di6kIdacbRybAXFjN9fXOj6DhKNy0tUXEevyGJjrLgmsONMPz5RacFkHCwUf?=
+ =?us-ascii?Q?H7PdvVr8ewBQrEaCrTRvaEHMrHETJwh+e3pS1hGL8C0OX420m/hsaJZCWVnp?=
+ =?us-ascii?Q?EvKzpnm1lRFHlISNEIYPffDB2AOo1AYyOFrHQoe5VnD5MQwMzk7z3Sj3noyx?=
+ =?us-ascii?Q?Z+uiExwFRMAqq8zLZtlT/oxfqFBtbrKpOV8oF4YzaR/lQMPiTqdP8K+P1DBk?=
+ =?us-ascii?Q?18pQjzcOYkDYhrEaXSMalVvOKBvxZ+XvnBTYzrefOKG5jEBxjOAXrtlhrh3W?=
+ =?us-ascii?Q?7dgcoClwkdxmCB9IAHFRfmqpICoi94R+U31Hkbybi3w/I8qJonNh3OpqSa2a?=
+ =?us-ascii?Q?rpyyrUngUQeKVfEQT/foqL1dlH8mpjFpY0rtiY0qZT0UP0RIwsex1hSeN/FO?=
+ =?us-ascii?Q?oSE6Ip1oDe4R/MDVraTHYW4b04riUjdeZAQ96jEb5DoBaZ5rgm6Bou2RJKHz?=
+ =?us-ascii?Q?97Rxqs9ez2nG6oj/mKHOFfxs5z2+Cri2d9X8JXjhk3b+twJlFhmDqdX1AlxV?=
+ =?us-ascii?Q?VnNUNd1+OJGg7NuW6QDYjnCMTPenPkQmQqz27FBxyutcsKMTm8wAlqnKlBAa?=
+ =?us-ascii?Q?8gW3enAh48r+D9IFldePWHESH+PXZTatGWz7x6GQwfcvTGI1bW46edi5wPWn?=
+ =?us-ascii?Q?GmWo12aME5dxGoy8DVTPGF92NmgonL7HC7hkBJbQ1Um282Wq0PA8gn7EwSTp?=
+ =?us-ascii?Q?fT6D3qVg4YAwXFYDcUwKYGNVnbFZV1QyyXDR33KCMrZvOh56KZH8Cd/RHvF/?=
+ =?us-ascii?Q?w7AT5i2MiWIHOK6RpiTO0hCmnWBj74rqYzKskOl0waXkP7ugGF3wNz2jQWFQ?=
+ =?us-ascii?Q?W62fh1/Rj52Qbr+VAgLJMRZQEgqvyQYrgJ7daecKlVSrDxS9fIVmX3GDRVOJ?=
+ =?us-ascii?Q?/EObDoABUwk9QhsJc+UtE/HqZYu4MiEZz7HJfAlIgFuWIr8QJFS9Y2bqCYOt?=
+ =?us-ascii?Q?gi+LD2ZZVWc95U+o8UJ4yWiYV9GCK3QQkoASmASIuH01nHLekUxtxG67cX7/?=
+ =?us-ascii?Q?ZvLSLe0JUDTMm9BHpm7R6KdVLkb0SUTqnq8BK8sIKUDHhYG5xNtjLnYs1saP?=
+ =?us-ascii?Q?pBJgty2SXAg=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:MN2PR10MB4320.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(1800799024)(366016);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?Vu0nPCVB5ob1ZHqt3zUHOt3y/zl2KITlfDlpVfyyxIby569As2fycqtthRMC?=
+ =?us-ascii?Q?oxkV0XCXbq2BzdiGbqqp1swNRxFHDtCFb7gVdG6uQuTNeWQSoQGgGVYKeUhb?=
+ =?us-ascii?Q?7SUf4/SzfWFjq9DZcFV95j8y2vkWAMq/WARLg31oFuajvAICr9AOURVF7uc+?=
+ =?us-ascii?Q?69Wj8T3/PkitcTewLZB340FjYwz7UPsEr5aVgVwHlOLSv6BXiDAFBNMbnYgq?=
+ =?us-ascii?Q?BJbF76VdTbZCzAFl5BdNlxm9c4upfFUk53ex/BfoiX0yYK2Y/Q6oIjSEaJyB?=
+ =?us-ascii?Q?lbyZxUPK3gNyjJqipbs0Rx0A/vBZMe47OzeNeSmP0AISc17wfB2k1G4cpD5P?=
+ =?us-ascii?Q?FIYt3Act/pEtwaV73qXZ26rSuKkdHseUl4BrIALMOet7T9ifRJz/rvapAx5k?=
+ =?us-ascii?Q?j45wgJzrG+vm/DJGbpbiGG107YIdY6y3mlf2M8AdlFGJA0ZVqzt7744mxGq6?=
+ =?us-ascii?Q?CYu7umGspPGA+EHeZrijLVoii6Zaor7HcKaORYYaTRjEOxdgqWZQdvAM3P1p?=
+ =?us-ascii?Q?oC5oZVM7ZKQg79JnSm/JY1fKfWFfVzwTZ73UKOE/4fKuKHzk3YsniwMlRTI8?=
+ =?us-ascii?Q?x32esEgWDCBC5d95EuF6BR9yd9XMXF4wbvOAOR8xFsnA4DuLwRW9wlMZVQS4?=
+ =?us-ascii?Q?hA4aaKlSdUvSMGaIzHlQuYRpxy3HDNChBOk1rx3FkQbOtINcbaQwdbbgaABQ?=
+ =?us-ascii?Q?10sA6HmyyJ07vhegJkoISeaUq+Z/6Rti0Tt0Hbj6H0gky829MqfOe3/Ek/xL?=
+ =?us-ascii?Q?U+SxLwxl9fmGN8jW+EqITSgFYVmznplMzj/X/kOYkOYh6RcPAgMKOYxVtQ35?=
+ =?us-ascii?Q?fogk3sQZ+F/Ox5s6WVhr/VbiBrFMY56zubJybl+O9gR9+IrPAK3UkJefl/3t?=
+ =?us-ascii?Q?5FWI3+Ks/ECUKPWegDfrfqkZBOEw7dOGDd4kzv/qpgPQGbx+VXAM/Ikda7PC?=
+ =?us-ascii?Q?xyhmEtYt/bC29WxFaQmp5gfkKxSGbFmPCVe2Yz7qpwhzdWbsqegOI/DlYrn9?=
+ =?us-ascii?Q?agkkQ7EaGazge03v4dO51N4lhaIes5t64ticpZ9A6BEEYTpAaF295GHxDte0?=
+ =?us-ascii?Q?jLm+AyYPO3fDVOkdOJ0Fe2Z0zcbrnPG0W7gJjB8YoHArk2qZBsAKRvo9lQ5F?=
+ =?us-ascii?Q?Wn89yEbdI0g/Xv0aevXG9aVYiv+zoZYQqnPD2h1UZ3zB4JonktFmdft9Z+bd?=
+ =?us-ascii?Q?U7eGLTVoookGqhmHriOG+tw8gtBcD8CMXaV2XpqyVTRROu2bkwplLa3Cpt0a?=
+ =?us-ascii?Q?RSCF0IvUZaAgW4MOOOMBWLsdjBiIX4osDuSlDjFKhycUDVYiAsowXS8alaAF?=
+ =?us-ascii?Q?lXl+9jyGNkLISi0+hEY93fgz7TaGhCUQxukY+jTSo21WNPTcmWpv2xXiktU7?=
+ =?us-ascii?Q?NuEugE8JjA43D9rBWFZABL7PS0Mdqnpp+RxEmhm9HJRo8KT1Oc1Xaxlp74aC?=
+ =?us-ascii?Q?+00EVAPSpgdrTNGzpJLrO8EFrbSnILF5EvPHRC/sAXP6LNBvr/b+nRB1iQfd?=
+ =?us-ascii?Q?LnXhwbYSzn5XSmuRGAY8wtHEJjihvYQ7o9SKyoKcQ8MRr2bwlF7VoB9lR/kP?=
+ =?us-ascii?Q?99l/cr97rqinQxEvtVqgZTwG+TgOQJ5tnLWuGMTj4CIwse9JMXjptsMZbg2m?=
+ =?us-ascii?Q?pQ=3D=3D?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	hQE61Wif3IKi7MBHf6r8lGDUncH5VbqJLSRIsu8UNDseM97Dt/8hAoSiksaxofzI+aq4ADVmBq+9pjVReac4xBQC7/Sn/7JuhEaeE8osBmJl/EM7yyKFL6YSSsy8AicW1chTcZsmPrvMb4CCg81usTUGr8tO6p1GvKBRGnZ9WuER5OIqqQ8SpX/CoeGs2s43HKUqJfEu2uVDs8LqIp3kha5r2L3mwPwBCKuX4uMszvHU5aIWA+1SckYN3PCLRVFW1S2npYJrXDuqZ12s4R0m3l0ChcFw3l1fol7Bzr9tPpGqTo02Ql0VZtXVhe3piig3rZdxQWU4lk/uMM5UfB/v9Iqky0dqcbssJGBDCaSVWb9lwM4pIU7+nvBvELMgrDQGGUk2/4ySsQA0cf9oUMjIcqMRi1dJxx8p/yz3/hoU0pPP96/aV2Sz3LJef6ywDkf3pg6xXTjKE4uaBTx7nEShHKk2zijaWZbL5NZfyewvv1KrpsjT0O+EKGEVtnuTXOHpTfvcYtom5bthApmap0MnvlclSwHM13EKzIMlQuoWeWlidCqUFAGdAjwnixBmvAR8420J48ivZjG6H5JnrEkccIN7u8wYCr0djOvm4Fo0SOY=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 0b8cc504-39eb-46a4-de69-08ddba274239
+X-MS-Exchange-CrossTenant-AuthSource: MN2PR10MB4320.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 03 Jul 2025 11:46:33.5591
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: MEL63/hPUAQn2TPjg+bYPC0mENHXrVPsTHGqhS+Vv/lBSIKEZrD/sufn7SbZilttE4ASDq4Pj+NQGO47ZQjZIQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH3PPF262994532
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.7,FMLib:17.12.80.40
+ definitions=2025-07-03_03,2025-07-02_04,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0 spamscore=0
+ mlxlogscore=999 malwarescore=0 mlxscore=0 adultscore=0 bulkscore=0
+ suspectscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2505160000 definitions=main-2507030097
+X-Proofpoint-GUID: B8fmzvBanUaM3Nv7YqHidXDkFBl6GmzL
+X-Proofpoint-ORIG-GUID: B8fmzvBanUaM3Nv7YqHidXDkFBl6GmzL
+X-Authority-Analysis: v=2.4 cv=b82y4sGx c=1 sm=1 tr=0 ts=68666d9e cx=c_pps a=XiAAW1AwiKB2Y8Wsi+sD2Q==:117 a=XiAAW1AwiKB2Y8Wsi+sD2Q==:17 a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=wKuvFiaSGQ0qltdbU6+NXLB8nM8=:19
+ a=Ol13hO9ccFRV9qXi2t6ftBPywas=:19 a=xqWC_Br6kY4A:10 a=Wb1JkmetP80A:10 a=GoEa3M9JfhUA:10 a=VwQbUJbxAAAA:8 a=VnNF1IyMAAAA:8 a=U5J2MVZqgsNsGrsRRvEA:9
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzAzMDA5OCBTYWx0ZWRfX6eZFMR78gxlK BG8gusui1Zg6Qaa2TikRyDUvR4KjcE3LoMvZ3XypqhfM9mL9dm1L4PwGdghAeKtIv7y2Gaau6XY mfF39uyOPnZRdLxIywYAtprNvSSglWl6bxck8Avb0Zb5iaDaBoelESoK40eajcD6iBz7cMFHHDe
+ q54BbIu3YdoxD/1W8dO7xlK6uw7TrVJkc6z+zHZ7u6lr6SzZY74IZXsxbuLBfLe442Lnpl5ZlKu chkbxEa9FerO4Udvzr6T3cKj+03cf3L/kczOAKE3qRXmZ2fDsbDAOt+C2K5RIRfwqGNfAZwELvH 0ZPPURE2EuKCIaTuQsB4YjyY+PgYeLcgi3uVDt5gySfXNF+E8Jt0NYoPPDt2SBZDMyEnCUrv9kC
+ aznDjcUWstr8bOh8AcvIoCs+r8BwgiPddmzDKuf68bJbDKJAy4jhA1x+qtDHFCUe9btjCxCp
 
-On 2025/6/23 18:46, Christian Brauner wrote:
-> On Thu, 19 Jun 2025 19:17:57 +0800, Zhang Yi wrote:
->> From: Zhang Yi <yi.zhang@huawei.com>
->>
->> Changes since v1:
->>  - Rebase codes on 6.16-rc2.
->>  - Use max_{hw|user}_wzeroes_unmap_sectors queue limits instead of
->>    BLK_FEAT_WRITE_ZEROES_UNMAP feature to represent the status of the
->>    unmap write zeroes operation as Christoph and Darrick suggested. This
->>    redoes the first 5 patches, so remove all the reviewed-by tags,
->>    please review them again.
->>  - Simplify the description of FALLOC_FL_WRITE_ZEROES in patch 06 as
->>    Darrick suggested.
->>  - Revise the check order of FALLOC_FL_WRITE_ZEROES in patch 08 as
->>    Christoph suggested.
->> Changes since RFC v4:
->>  - Rebase codes on 6.16-rc1.
->>  - Add a new queue_limit flag, and change the write_zeroes_unmap sysfs
->>    interface to RW mode. User can disable the unmap write zeroes
->>    operation by writing '0' to it when the operation is slow.
->>  - Modify the documentation of write_zeroes_unmap sysfs interface as
->>    Martin suggested.
->>  - Remove the statx interface.
->>  - Make the bdev and ext4 don't allow to submit FALLOC_FL_WRITE_ZEROES
->>    if the block device does not enable the unmap write zeroes operation,
->>    it should return -EOPNOTSUPP.
->> Changes sicne RFC v3:
->>  - Rebase codes on 6.15-rc2.
->>  - Add a note in patch 1 to indicate that the unmap write zeros command
->>    is not always guaranteed as Christoph suggested.
->>  - Rename bdev_unmap_write_zeroes() helper and move it to patch 1 as
->>    Christoph suggested.
->>  - Introduce a new statx attribute flag STATX_ATTR_WRITE_ZEROES_UNMAP as
->>    Christoph and Christian suggested.
->>  - Exchange the order of the two patches that modified
->>    blkdev_fallocate() as Christoph suggested.
->> Changes since RFC v2:
->>  - Rebase codes on next-20250314.
->>  - Add support for nvme multipath.
->>  - Add support for NVMeT with block device backing.
->>  - Clear FALLOC_FL_WRITE_ZEROES if dm clear
->>    limits->max_write_zeroes_sectors.
->>  - Complement the counterpart userspace tools(util-linux and xfs_io)
->>    and tests(blktests and xfstests), please see below for details.
->> Changes since RFC v1:
->>  - Switch to add a new write zeroes operation, FALLOC_FL_WRITE_ZEROES,
->>    in fallocate, instead of just adding a supported flag to
->>    FALLOC_FL_ZERO_RANGE.
->>  - Introduce a new flag BLK_FEAT_WRITE_ZEROES_UNMAP to the block
->>    device's queue limit features, and implement it on SCSI sd driver,
->>    NVMe SSD driver and dm driver.
->>  - Implement FALLOC_FL_WRITE_ZEROES on both the ext4 filesystem and
->>    block device (bdev).
->>
->> [...]
-> 
-> If needed, the branch can be declared stable and thus be used as base
-> for other work.
-> 
-> ---
-> 
-> Applied to the vfs-6.17.fallocate branch of the vfs/vfs.git tree.
-> Patches in the vfs-6.17.fallocate branch should appear in linux-next soon.
-> 
-> Please report any outstanding bugs that were missed during review in a
-> new review to the original patch series allowing us to drop it.
-> 
-> It's encouraged to provide Acked-bys and Reviewed-bys even though the
-> patch has now been applied. If possible patch trailers will be updated.
-> 
-> Note that commit hashes shown below are subject to change due to rebase,
-> trailer updates or similar. If in doubt, please check the listed branch.
-> 
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
-> branch: vfs-6.17.fallocate
+This value in io_min is used to configure any atomic write limit for the
+stacked device. The idea is that the atomic write unit max is a
+power-of-2 factor of the stripe size, and the stripe size is available
+in io_min.
 
-Hi Christian,
+Using io_min causes issues, as:
+a. it may be mutated
+b. the check for io_min being set for determining if we are dealing with
+a striped device is hard to get right, as reported in [0].
 
-I noticed that this patch series doesn't appear to be merged into this
-branch. Just wondering if it might have been missed?
+This series now sets chunk_sectors limit to share stripe size.
 
-Best regards,
-Yi.
+[0] https://lore.kernel.org/linux-block/888f3b1d-7817-4007-b3b3-1a2ea04df771@linux.ibm.com/T/#mecca17129f72811137d3c2f1e477634e77f06781
 
-> 
-> [1/9] block: introduce max_{hw|user}_wzeroes_unmap_sectors to queue limits
->       https://git.kernel.org/vfs/vfs/c/2695a9b086fd
-> [2/9] nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit
->       https://git.kernel.org/vfs/vfs/c/bf07c1180194
-> [3/9] nvmet: set WZDS and DRB if device enables unmap write zeroes operation
->       https://git.kernel.org/vfs/vfs/c/a6c7ab5adcba
-> [4/9] scsi: sd: set max_hw_wzeroes_unmap_sectors if device supports SD_ZERO_*_UNMAP
->       https://git.kernel.org/vfs/vfs/c/92372ed1cc88
-> [5/9] dm: clear unmap write zeroes limits when disabling write zeroes
->       https://git.kernel.org/vfs/vfs/c/e383d550e716
-> [6/9] fs: introduce FALLOC_FL_WRITE_ZEROES to fallocate
->       https://git.kernel.org/vfs/vfs/c/1ed1b5df86ec
-> [7/9] block: factor out common part in blkdev_fallocate()
->       https://git.kernel.org/vfs/vfs/c/96433508c8c0
-> [8/9] block: add FALLOC_FL_WRITE_ZEROES support
->       https://git.kernel.org/vfs/vfs/c/2b4e5f9b3eb9
-> [9/9] ext4: add FALLOC_FL_WRITE_ZEROES support
->       https://git.kernel.org/vfs/vfs/c/51954e469396
+Based on 0d519bb0de3b ("brd: fix sleeping function called from invalid
+context in brd_insert_page()")
+
+This series fixes issues for v6.16, but it's prob better to have this in
+v6.17 at this stage.
+
+Differences to v2:
+- Add RB tags (thanks!)
+
+Differences to RFC:
+- sanitize chunk_sectors for atomic write limits
+- set chunk_sectors in stripe_io_hints()
+
+John Garry (5):
+  block: sanitize chunk_sectors for atomic write limits
+  md/raid0: set chunk_sectors limit
+  md/raid10: set chunk_sectors limit
+  dm-stripe: limit chunk_sectors to the stripe size
+  block: use chunk_sectors when evaluating stacked atomic write limits
+
+ block/blk-settings.c   | 60 ++++++++++++++++++++++++++----------------
+ drivers/md/dm-stripe.c |  1 +
+ drivers/md/raid0.c     |  1 +
+ drivers/md/raid10.c    |  1 +
+ 4 files changed, 40 insertions(+), 23 deletions(-)
+
+-- 
+2.43.5
 
