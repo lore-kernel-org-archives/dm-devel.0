@@ -1,32 +1,32 @@
-Received: from out-187.mta1.migadu.com (out-187.mta1.migadu.com [95.215.58.187])
+Received: from out-179.mta1.migadu.com (out-179.mta1.migadu.com [95.215.58.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF76F27E7E3
-	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 06:58:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.187
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9373427B4FA
+	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 06:58:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751871519; cv=none; b=mGymRiflcSP1je1I116Vyff0jMxxIlgD3oQpt7RpTIqqjwR/r2OBN2oMGroMM4OwS+ZX8E3eKL4hmXQRAv0mYFYK1YTPEOYH8n8TpyIT2o22OHo7VdY4WSHusIiQZMzhgnz/+er3YwE9KF65pSHD8RH/kO31hlLtaCCxfzSNg9s=
+	t=1751871521; cv=none; b=mnmDfz1rlHXHltizBMGCwkIVkjBpB0G+8G4PBxj1mKKOxS4bZfXn3bE2bD3NniQANkHugPhDDzjM4RYz86sZRLfEYaYWvwCyazhZDeodAaq5AhDJohmlzQ7HfOLFG79eYKKVNsG3+gbXHXFlvErXzlolpSUjE8iMhCI8Imiivq8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751871519; c=relaxed/simple;
-	bh=FATaHSYkQKTtWt9pSwK+X/lCfYVbu/ZC1K1hdRMeA8E=;
+	s=arc-20240116; t=1751871521; c=relaxed/simple;
+	bh=nQ27ss6uuj7zGLk4y5usMHiKjTG+dxY0h6Sv6Y1n7ME=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=g20RuuXZzJaLnWdSOnY4DCnNO9t2b9R8hRXSTXdaUVkq/AlL5daHSnN0soq+qZEQdLwuN96bkuOCelPOW0KgI+F5o5Q0FWOGYQe2eN1/SvYnOovTWS7QffvffIugwcsWbxxZrp9VkR5ZGA2Hr7akiFY4gnaBehnu9ikpPGu0jPc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=Qde3l70b; arc=none smtp.client-ip=95.215.58.187
+	 MIME-Version:Content-Type; b=JWJkQEOMGjagO+eQ89vPM8sDNiDSn2qElunmJjd6uCmaAPB3niPT60lEvvjbck0GuC19daiQ6BOwMhvnm/kdZ6Twdwpyz3IkgD1ewI7vHF3QlFlKscT7QH5UDoazfSvkihKSXQwZIlg1Zj96QACMSKgoNyk+vqSY8Ll4mr4D/TM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=HtSbRZXC; arc=none smtp.client-ip=95.215.58.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="Qde3l70b"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="HtSbRZXC"
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1751871512;
+	t=1751871516;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mnhGELqlFAoDw+QfbOprESKx0FUv4r2hl6H/rVUFq1U=;
-	b=Qde3l70bsXDB6SHohpwBCvapDvpFCkGzPDf48e8NJHyK+dybmEZBbFqKCQ8Ixpl6Q4v1Ji
-	q6PMd87lC433+/tvgupyaX8WOTZRDz4fYZCnjhwzfKPR0aoiyGOxpkoCgtbriOR/VN8iF3
-	OA/vZ+rZJMFlEmF7LnYwCwBbKXb9yXk=
+	bh=3PUlpPDbpi7y0jf3mT7+hL815VHO/SWrZUy4nVvLaZI=;
+	b=HtSbRZXCmuNlaeUheFiSEX2UoNhEbiyRPISplmVcTE0LTHqCaYf8ibUJyccG7+wLlqkWSR
+	wjSSR24WI9lHAyMRdUnkBJxsmADc0G7HYoLZUfzq4dxT6tinxpykLdRV7VzBXg3tItcRyh
+	iPLlv8wmhao7W3AmuMMQNGhcb2lE1no=
 From: Dongsheng Yang <dongsheng.yang@linux.dev>
 To: mpatocka@redhat.com,
 	agk@redhat.com,
@@ -41,9 +41,9 @@ Cc: linux-block@vger.kernel.org,
 	nvdimm@lists.linux.dev,
 	dm-devel@lists.linux.dev,
 	Dongsheng Yang <dongsheng.yang@linux.dev>
-Subject: [PATCH v2 01/11] dm-pcache: add pcache_internal.h
-Date: Mon,  7 Jul 2025 06:57:59 +0000
-Message-ID: <20250707065809.437589-2-dongsheng.yang@linux.dev>
+Subject: [PATCH v2 02/11] dm-pcache: add backing device management
+Date: Mon,  7 Jul 2025 06:58:00 +0000
+Message-ID: <20250707065809.437589-3-dongsheng.yang@linux.dev>
 In-Reply-To: <20250707065809.437589-1-dongsheng.yang@linux.dev>
 References: <20250707065809.437589-1-dongsheng.yang@linux.dev>
 Precedence: bulk
@@ -52,147 +52,498 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-Consolidate common PCACHE helpers into a new header so that subsequent
-patches can include them without repeating boiler-plate.
+This patch introduces *backing_dev.{c,h}*, a self-contained layer that
+handles all interaction with the *backing block device* where cache
+write-back and cache-miss reads are serviced.  Isolating this logic
+keeps the core dm-pcache code free of low-level bio plumbing.
 
-- Logging macros with unified prefix and location info.
-- Common constants (KB/MB helpers, metadata replica count, CRC seed).
-- On-disk metadata header definition and CRC helper.
-- Sequence-number comparison that handles wrap-around.
-- pcache_meta_find_latest() to pick the newest valid metadata copy.
+* Device setup / teardown
+  - Opens the target with `dm_get_device()`, stores `bdev`, file and
+    size, and initialises a dedicated `bioset`.
+  - Gracefully releases resources via `backing_dev_stop()`.
+
+* Request object (`struct pcache_backing_dev_req`)
+  - Two request flavours:
+    - REQ-type – cloned from an upper `struct bio` issued to
+      dm-pcache; trimmed and re-targeted to the backing LBA.
+    - KMEM-type – maps an arbitrary kernel memory buffer
+      into a freshly built.
+  - Private completion callback (`end_req`) propagates status to the
+    upper layer and handles resource recycling.
+
+* Submission & completion path
+  - Lock-protected submit queue + worker (`req_submit_work`) let pcache
+    push many requests asynchronously, at the same time, allow caller
+    to submit backing_dev_req in atomic context.
+  - End-io handler moves finished requests to a completion list processed
+    by `req_complete_work`, ensuring callbacks run in process context.
+  - Direct-submit option for non-atomic context.
+
+* Flush
+  - `backing_dev_flush()` issues a flush to persist backing-device data.
 
 Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
 ---
- drivers/md/dm-pcache/pcache_internal.h | 117 +++++++++++++++++++++++++
- 1 file changed, 117 insertions(+)
- create mode 100644 drivers/md/dm-pcache/pcache_internal.h
+ drivers/md/dm-pcache/backing_dev.c | 345 +++++++++++++++++++++++++++++
+ drivers/md/dm-pcache/backing_dev.h |  93 ++++++++
+ 2 files changed, 438 insertions(+)
+ create mode 100644 drivers/md/dm-pcache/backing_dev.c
+ create mode 100644 drivers/md/dm-pcache/backing_dev.h
 
-diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
+diff --git a/drivers/md/dm-pcache/backing_dev.c b/drivers/md/dm-pcache/backing_dev.c
 new file mode 100644
-index 000000000000..d427e534727c
+index 000000000000..29b9988f372b
 --- /dev/null
-+++ b/drivers/md/dm-pcache/pcache_internal.h
-@@ -0,0 +1,117 @@
-+/* SPDX-License-Identifier: GPL-2.0-or-later */
-+#ifndef _PCACHE_INTERNAL_H
-+#define _PCACHE_INTERNAL_H
++++ b/drivers/md/dm-pcache/backing_dev.c
+@@ -0,0 +1,345 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++#include <linux/blkdev.h>
 +
-+#include <linux/delay.h>
-+#include <linux/crc32c.h>
++#include "../dm-core.h"
++#include "pcache_internal.h"
++#include "cache_dev.h"
++#include "backing_dev.h"
++#include "cache.h"
++#include "dm_pcache.h"
 +
-+#define pcache_err(fmt, ...)							\
-+	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-+#define pcache_info(fmt, ...)							\
-+	pr_info("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-+#define pcache_debug(fmt, ...)							\
-+	pr_debug("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-+
-+#define PCACHE_KB			(1024ULL)
-+#define PCACHE_MB			(1024 * PCACHE_KB)
-+
-+/* Maximum number of metadata indices */
-+#define PCACHE_META_INDEX_MAX		2
-+
-+#define PCACHE_CRC_SEED			0x3B15A
-+/*
-+ * struct pcache_meta_header - PCACHE metadata header structure
-+ * @crc: CRC checksum for validating metadata integrity.
-+ * @seq: Sequence number to track metadata updates.
-+ * @version: Metadata version.
-+ * @res: Reserved space for future use.
-+ */
-+struct pcache_meta_header {
-+	__u32 crc;
-+	__u8  seq;
-+	__u8  version;
-+	__u16 res;
-+};
-+
-+/*
-+ * pcache_meta_crc - Calculate CRC for the given metadata header.
-+ * @header: Pointer to the metadata header.
-+ * @meta_size: Size of the metadata structure.
-+ *
-+ * Returns the CRC checksum calculated by excluding the CRC field itself.
-+ */
-+static inline u32 pcache_meta_crc(struct pcache_meta_header *header, u32 meta_size)
++static void backing_dev_exit(struct pcache_backing_dev *backing_dev)
 +{
-+	return crc32c(PCACHE_CRC_SEED, (void *)header + 4, meta_size - 4);
++	mempool_exit(&backing_dev->req_pool);
++	kmem_cache_destroy(backing_dev->backing_req_cache);
 +}
 +
-+/*
-+ * pcache_meta_seq_after - Check if a sequence number is more recent, accounting for overflow.
-+ * @seq1: First sequence number.
-+ * @seq2: Second sequence number.
-+ *
-+ * Determines if @seq1 is more recent than @seq2 by calculating the signed
-+ * difference between them. This approach allows handling sequence number
-+ * overflow correctly because the difference wraps naturally, and any value
-+ * greater than zero indicates that @seq1 is "after" @seq2. This method
-+ * assumes 8-bit unsigned sequence numbers, where the difference wraps
-+ * around if seq1 overflows past seq2.
-+ *
-+ * Returns:
-+ *   - true if @seq1 is more recent than @seq2, indicating it comes "after"
-+ *   - false otherwise.
-+ */
-+static inline bool pcache_meta_seq_after(u8 seq1, u8 seq2)
++static void req_submit_fn(struct work_struct *work);
++static void req_complete_fn(struct work_struct *work);
++static int backing_dev_init(struct dm_pcache *pcache)
 +{
-+	return (s8)(seq1 - seq2) > 0;
-+}
++	struct pcache_backing_dev *backing_dev = &pcache->backing_dev;
++	int ret;
 +
-+/*
-+ * pcache_meta_find_latest - Find the latest valid metadata.
-+ * @header: Pointer to the metadata header.
-+ * @meta_size: Size of each metadata block.
-+ *
-+ * Finds the latest valid metadata by checking sequence numbers. If a
-+ * valid entry with the highest sequence number is found, its pointer
-+ * is returned. Returns NULL if no valid metadata is found.
-+ */
-+static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_header *header,
-+					u32 meta_size, u32 meta_max_size,
-+					void *meta_ret)
-+{
-+	struct pcache_meta_header *meta, *latest = NULL;
-+	u32 i, seq_latest = 0;
-+	void *meta_addr;
-+
-+	meta = meta_ret;
-+
-+	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
-+		meta_addr = (void *)header + (i * meta_max_size);
-+		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
-+			pcache_err("hardware memory error when copy meta");
-+			return ERR_PTR(-EIO);
-+		}
-+
-+		/* Skip if CRC check fails, which means corrupted */
-+		if (meta->crc != pcache_meta_crc(meta, meta_size))
-+			continue;
-+
-+		/* Update latest if a more recent sequence is found */
-+		if (!latest || pcache_meta_seq_after(meta->seq, seq_latest)) {
-+			seq_latest = meta->seq;
-+			latest = (void *)header + (i * meta_max_size);
-+		}
++	backing_dev->backing_req_cache = KMEM_CACHE(pcache_backing_dev_req, 0);
++	if (!backing_dev->backing_req_cache) {
++		ret = -ENOMEM;
++		goto err;
 +	}
 +
-+	if (!latest)
++	ret = mempool_init_slab_pool(&backing_dev->req_pool, 128, backing_dev->backing_req_cache);
++	if (ret)
++		goto cache_destroy;
++
++	INIT_LIST_HEAD(&backing_dev->submit_list);
++	INIT_LIST_HEAD(&backing_dev->complete_list);
++	spin_lock_init(&backing_dev->submit_lock);
++	spin_lock_init(&backing_dev->complete_lock);
++	INIT_WORK(&backing_dev->req_submit_work, req_submit_fn);
++	INIT_WORK(&backing_dev->req_complete_work, req_complete_fn);
++
++	return 0;
++cache_destroy:
++	kmem_cache_destroy(backing_dev->backing_req_cache);
++err:
++	return ret;
++}
++
++int backing_dev_start(struct dm_pcache *pcache)
++{
++	struct pcache_backing_dev *backing_dev = &pcache->backing_dev;
++	int ret;
++
++	ret = backing_dev_init(pcache);
++	if (ret)
++		return ret;
++
++	backing_dev->dev_size = bdev_nr_sectors(backing_dev->dm_dev->bdev);
++
++	return 0;
++}
++
++void backing_dev_stop(struct dm_pcache *pcache)
++{
++	struct pcache_backing_dev *backing_dev = &pcache->backing_dev;
++
++	flush_work(&backing_dev->req_submit_work);
++	flush_work(&backing_dev->req_complete_work);
++
++	/* There should be no inflight backing_dev_request */
++	BUG_ON(!list_empty(&backing_dev->submit_list));
++	BUG_ON(!list_empty(&backing_dev->complete_list));
++
++	backing_dev_exit(backing_dev);
++}
++
++/* pcache_backing_dev_req functions */
++void backing_dev_req_end(struct pcache_backing_dev_req *backing_req)
++{
++	struct pcache_backing_dev *backing_dev = backing_req->backing_dev;
++
++	if (backing_req->end_req)
++		backing_req->end_req(backing_req, backing_req->ret);
++
++	switch (backing_req->type) {
++	case BACKING_DEV_REQ_TYPE_REQ:
++		if (backing_req->req.upper_req)
++			pcache_req_put(backing_req->req.upper_req, backing_req->ret);
++		break;
++	case BACKING_DEV_REQ_TYPE_KMEM:
++		if (backing_req->kmem.bvecs != backing_req->kmem.inline_bvecs)
++			kfree(backing_req->kmem.bvecs);
++		break;
++	default:
++		BUG();
++	}
++
++	mempool_free(backing_req, &backing_dev->req_pool);
++}
++
++static void req_complete_fn(struct work_struct *work)
++{
++	struct pcache_backing_dev *backing_dev = container_of(work, struct pcache_backing_dev, req_complete_work);
++	struct pcache_backing_dev_req *backing_req;
++	LIST_HEAD(tmp_list);
++
++	spin_lock_irq(&backing_dev->complete_lock);
++	list_splice_init(&backing_dev->complete_list, &tmp_list);
++	spin_unlock_irq(&backing_dev->complete_lock);
++
++	while (!list_empty(&tmp_list)) {
++		backing_req = list_first_entry(&tmp_list,
++					    struct pcache_backing_dev_req, node);
++		list_del_init(&backing_req->node);
++		backing_dev_req_end(backing_req);
++	}
++}
++
++static void backing_dev_bio_end(struct bio *bio)
++{
++	struct pcache_backing_dev_req *backing_req = bio->bi_private;
++	struct pcache_backing_dev *backing_dev = backing_req->backing_dev;
++	unsigned long flags;
++
++	backing_req->ret = bio->bi_status;
++
++	spin_lock_irqsave(&backing_dev->complete_lock, flags);
++	list_move_tail(&backing_req->node, &backing_dev->complete_list);
++	queue_work(BACKING_DEV_TO_PCACHE(backing_dev)->task_wq, &backing_dev->req_complete_work);
++	spin_unlock_irqrestore(&backing_dev->complete_lock, flags);
++}
++
++static void req_submit_fn(struct work_struct *work)
++{
++	struct pcache_backing_dev *backing_dev = container_of(work, struct pcache_backing_dev, req_submit_work);
++	struct pcache_backing_dev_req *backing_req;
++	LIST_HEAD(tmp_list);
++
++	spin_lock(&backing_dev->submit_lock);
++	list_splice_init(&backing_dev->submit_list, &tmp_list);
++	spin_unlock(&backing_dev->submit_lock);
++
++	while (!list_empty(&tmp_list)) {
++		backing_req = list_first_entry(&tmp_list,
++					    struct pcache_backing_dev_req, node);
++		list_del_init(&backing_req->node);
++		submit_bio_noacct(&backing_req->bio);
++	}
++}
++
++void backing_dev_req_submit(struct pcache_backing_dev_req *backing_req, bool direct)
++{
++	struct pcache_backing_dev *backing_dev = backing_req->backing_dev;
++
++	if (direct) {
++		submit_bio_noacct(&backing_req->bio);
++		return;
++	}
++
++	spin_lock(&backing_dev->submit_lock);
++	list_add_tail(&backing_req->node, &backing_dev->submit_list);
++	queue_work(BACKING_DEV_TO_PCACHE(backing_dev)->task_wq, &backing_dev->req_submit_work);
++	spin_unlock(&backing_dev->submit_lock);
++}
++
++static void bio_map(struct bio *bio, void *base, size_t size)
++{
++	struct page *page;
++	unsigned int offset;
++	unsigned int len;
++
++	if (!is_vmalloc_addr(base)) {
++		page = virt_to_page(base);
++		offset = offset_in_page(base);
++
++		BUG_ON(!bio_add_page(bio, page, size, offset));
++		return;
++	}
++
++	flush_kernel_vmap_range(base, size);
++	while (size) {
++		page = vmalloc_to_page(base);
++		offset = offset_in_page(base);
++		len = min_t(size_t, PAGE_SIZE - offset, size);
++
++		BUG_ON(!bio_add_page(bio, page, len, offset));
++		size -= len;
++		base += len;
++	}
++}
++
++static struct pcache_backing_dev_req *req_type_req_alloc(struct pcache_backing_dev *backing_dev,
++							struct pcache_backing_dev_req_opts *opts)
++{
++	struct pcache_request *pcache_req = opts->req.upper_req;
++	struct pcache_backing_dev_req *backing_req;
++	struct bio *orig = pcache_req->bio;
++	int ret;
++
++	backing_req = mempool_alloc(&backing_dev->req_pool, GFP_NOIO);
++	if (!backing_req)
 +		return NULL;
 +
-+	if (copy_mc_to_kernel(meta_ret, latest, meta_size)) {
-+		pcache_err("hardware memory error");
-+		return ERR_PTR(-EIO);
-+	}
++	memset(backing_req, 0, sizeof(struct pcache_backing_dev_req));
 +
-+	return latest;
++	ret = bio_init_clone(backing_dev->dm_dev->bdev, &backing_req->bio, orig, GFP_NOIO);
++	if (ret)
++		goto err_free_req;
++
++	backing_req->type = BACKING_DEV_REQ_TYPE_REQ;
++	backing_req->backing_dev = backing_dev;
++
++	return backing_req;
++
++err_free_req:
++	mempool_free(backing_req, &backing_dev->req_pool);
++	return NULL;
 +}
 +
-+#endif /* _PCACHE_INTERNAL_H */
++static u32 get_n_vecs(void *data, u32 len)
++{
++	if (!is_vmalloc_addr(data))
++		return 1;
++
++	return DIV_ROUND_UP(len, PAGE_SIZE);
++}
++
++static struct pcache_backing_dev_req *kmem_type_req_alloc(struct pcache_backing_dev *backing_dev,
++						struct pcache_backing_dev_req_opts *opts)
++{
++	struct pcache_backing_dev_req *backing_req;
++	u32 n_vecs = get_n_vecs(opts->kmem.data, opts->kmem.len);
++
++	backing_req = mempool_alloc(&backing_dev->req_pool, GFP_NOIO);
++	if (!backing_req)
++		return NULL;
++
++	memset(backing_req, 0, sizeof(struct pcache_backing_dev_req));
++
++	if (n_vecs > BACKING_DEV_REQ_INLINE_BVECS) {
++		backing_req->kmem.bvecs = kmalloc_array(n_vecs, sizeof(struct bio_vec), GFP_NOIO);
++		if (!backing_req->kmem.bvecs)
++			goto err_free_req;
++	} else {
++		backing_req->kmem.bvecs = backing_req->kmem.inline_bvecs;
++	}
++
++	backing_req->kmem.n_vecs = n_vecs;
++	backing_req->type = BACKING_DEV_REQ_TYPE_KMEM;
++	backing_req->backing_dev = backing_dev;
++
++	return backing_req;
++
++err_free_req:
++	mempool_free(backing_req, &backing_dev->req_pool);
++	return NULL;
++}
++
++struct pcache_backing_dev_req *backing_dev_req_alloc(struct pcache_backing_dev *backing_dev,
++						struct pcache_backing_dev_req_opts *opts)
++{
++	if (opts->type == BACKING_DEV_REQ_TYPE_REQ)
++		return req_type_req_alloc(backing_dev, opts);
++
++	if (opts->type == BACKING_DEV_REQ_TYPE_KMEM)
++		return kmem_type_req_alloc(backing_dev, opts);
++
++	return NULL;
++}
++
++static void req_type_req_init(struct pcache_backing_dev_req *backing_req,
++			struct pcache_backing_dev_req_opts *opts)
++{
++	struct pcache_request *pcache_req = opts->req.upper_req;
++	struct bio *clone;
++	u32 off = opts->req.req_off;
++	u32 len = opts->req.len;
++
++	clone = &backing_req->bio;
++	BUG_ON(off & SECTOR_MASK);
++	BUG_ON(len & SECTOR_MASK);
++	bio_trim(clone, off >> SECTOR_SHIFT, len >> SECTOR_SHIFT);
++
++	clone->bi_iter.bi_sector = (pcache_req->off + off) >> SECTOR_SHIFT;
++	clone->bi_private = backing_req;
++	clone->bi_end_io = backing_dev_bio_end;
++
++	INIT_LIST_HEAD(&backing_req->node);
++	backing_req->end_req     = opts->end_fn;
++
++	pcache_req_get(pcache_req);
++	backing_req->req.upper_req	= pcache_req;
++	backing_req->req.bio_off	= off;
++}
++
++static void kmem_type_req_init(struct pcache_backing_dev_req *backing_req,
++			struct pcache_backing_dev_req_opts *opts)
++{
++	struct pcache_backing_dev *backing_dev = backing_req->backing_dev;
++	struct bio *backing_bio;
++
++	bio_init(&backing_req->bio, backing_dev->dm_dev->bdev, backing_req->kmem.bvecs,
++			backing_req->kmem.n_vecs, opts->kmem.opf);
++
++	backing_bio = &backing_req->bio;
++	bio_map(backing_bio, opts->kmem.data, opts->kmem.len);
++
++	backing_bio->bi_iter.bi_sector = (opts->kmem.backing_off) >> SECTOR_SHIFT;
++	backing_bio->bi_private = backing_req;
++	backing_bio->bi_end_io = backing_dev_bio_end;
++
++	INIT_LIST_HEAD(&backing_req->node);
++	backing_req->end_req	= opts->end_fn;
++	backing_req->priv_data	= opts->priv_data;
++}
++
++void backing_dev_req_init(struct pcache_backing_dev_req *backing_req,
++			struct pcache_backing_dev_req_opts *opts)
++{
++	if (opts->type == BACKING_DEV_REQ_TYPE_REQ)
++		return req_type_req_init(backing_req, opts);
++
++	if (opts->type == BACKING_DEV_REQ_TYPE_KMEM)
++		return kmem_type_req_init(backing_req, opts);
++
++	BUG();
++}
++
++struct pcache_backing_dev_req *backing_dev_req_create(struct pcache_backing_dev *backing_dev,
++						struct pcache_backing_dev_req_opts *opts)
++{
++	struct pcache_backing_dev_req *backing_req;
++
++	backing_req = backing_dev_req_alloc(backing_dev, opts);
++	if (!backing_req)
++		return NULL;
++
++	backing_dev_req_init(backing_req, opts);
++
++	return backing_req;
++}
++
++void backing_dev_flush(struct pcache_backing_dev *backing_dev)
++{
++	blkdev_issue_flush(backing_dev->dm_dev->bdev);
++}
+diff --git a/drivers/md/dm-pcache/backing_dev.h b/drivers/md/dm-pcache/backing_dev.h
+new file mode 100644
+index 000000000000..2115ebbff49e
+--- /dev/null
++++ b/drivers/md/dm-pcache/backing_dev.h
+@@ -0,0 +1,93 @@
++/* SPDX-License-Identifier: GPL-2.0-or-later */
++#ifndef _BACKING_DEV_H
++#define _BACKING_DEV_H
++
++#include <linux/device-mapper.h>
++
++#include "pcache_internal.h"
++
++struct pcache_backing_dev_req;
++typedef void (*backing_req_end_fn_t)(struct pcache_backing_dev_req *backing_req, int ret);
++
++#define BACKING_DEV_REQ_TYPE_REQ		1
++#define BACKING_DEV_REQ_TYPE_KMEM		2
++
++#define BACKING_DEV_REQ_INLINE_BVECS		4
++
++struct pcache_request;
++struct pcache_backing_dev_req {
++	u8				type;
++	struct bio			bio;
++	struct pcache_backing_dev	*backing_dev;
++
++	void				*priv_data;
++	backing_req_end_fn_t		end_req;
++
++	struct list_head		node;
++	int				ret;
++
++	union {
++		struct {
++			struct pcache_request		*upper_req;
++			u32				bio_off;
++		} req;
++		struct {
++			struct bio_vec	inline_bvecs[BACKING_DEV_REQ_INLINE_BVECS];
++			struct bio_vec	*bvecs;
++			u32		n_vecs;
++		} kmem;
++	};
++};
++
++struct pcache_backing_dev {
++	struct pcache_cache		*cache;
++
++	struct dm_dev			*dm_dev;
++	struct kmem_cache		*backing_req_cache;
++	mempool_t			req_pool;
++
++	struct list_head		submit_list;
++	spinlock_t			submit_lock;
++	struct work_struct		req_submit_work;
++
++	struct list_head		complete_list;
++	spinlock_t			complete_lock;
++	struct work_struct		req_complete_work;
++
++	u64				dev_size;
++};
++
++struct dm_pcache;
++int backing_dev_start(struct dm_pcache *pcache);
++void backing_dev_stop(struct dm_pcache *pcache);
++
++struct pcache_backing_dev_req_opts {
++	u32 type;
++	union {
++		struct {
++			struct pcache_request *upper_req;
++			u32 req_off;
++			u32 len;
++		} req;
++		struct {
++			void *data;
++			blk_opf_t opf;
++			u32 len;
++			u64 backing_off;
++		} kmem;
++	};
++
++	backing_req_end_fn_t	end_fn;
++	void			*priv_data;
++};
++
++void backing_dev_req_submit(struct pcache_backing_dev_req *backing_req, bool direct);
++void backing_dev_req_end(struct pcache_backing_dev_req *backing_req);
++struct pcache_backing_dev_req *backing_dev_req_create(struct pcache_backing_dev *backing_dev,
++						struct pcache_backing_dev_req_opts *opts);
++struct pcache_backing_dev_req *backing_dev_req_alloc(struct pcache_backing_dev *backing_dev,
++						struct pcache_backing_dev_req_opts *opts);
++void backing_dev_req_init(struct pcache_backing_dev_req *backing_req,
++			struct pcache_backing_dev_req_opts *opts);
++void backing_dev_flush(struct pcache_backing_dev *backing_dev);
++#endif /* _BACKING_DEV_H */
 -- 
 2.43.0
 
