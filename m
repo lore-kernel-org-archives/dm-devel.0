@@ -1,127 +1,147 @@
-Received: from out-170.mta0.migadu.com (out-170.mta0.migadu.com [91.218.175.170])
+Received: from out-189.mta1.migadu.com (out-189.mta1.migadu.com [95.215.58.189])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CFED0272811
-	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 06:25:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 922012797AB
+	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 06:58:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.189
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751869515; cv=none; b=UWowMZaa6eh5O5SGSVHcbyGFzkhMN123jPThTfbaTAfH4xar+25r2kKODg6o/r1uqL9JnKlUXfR7bwd8/kA3k/KOkX8fMgcGSRr8TnivOzJ5sTD2LuV1sxprfawZ0NMpeWIN7o/PLAWQmNI/QpQZgfW+ArMfEZJeVkoaojNuE4E=
+	t=1751871514; cv=none; b=PafgJAcVFM8cAX+pZ2ECyUQYCz0WFOhoOvwW0Fa6VD7slt1S0uG24qUfyVKQJapQEnbPSIy3IhzXRYrI4dRqwGjrxHV3S/T5ICBRamQd6qiV5VXGMIPp6Q58pHj1cmIPfVP1wR45n5xTx5xehgavft/kj2w3Hb04kbIVqL1/Ovs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751869515; c=relaxed/simple;
-	bh=L1OJFZePJC7bm+TGpqgXhtHPxDrMC7hzgIqvLtOGIeE=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=tUVTy6UtAm3El6OWILBt0yZPV4Mw3BKQweNmSrTUsg8ktN8HSENa7awJzVx1g7nLIXog21p3J5W0F+aa4P8sKIZrc0o8sF5l7VjEBfFGUsVnmcX3kiVbj0WPyPGCBshsuxnOIHXDjculuzAWH1Y06P2+CMdtL4Z+YTqiLuVF1co=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=V48NXUfD; arc=none smtp.client-ip=91.218.175.170
+	s=arc-20240116; t=1751871514; c=relaxed/simple;
+	bh=XsoAPqueJwzPmnl/cybEaV8AbzQ/KW8Zqt0xVFUUP7g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=rPSLt3JzY94AO46lrv3TDvE7Q7hN7fuxWo+v6AiIF/C0od9rHrHe/HPAo+4eFsw+GqbUnq3P122oZtFNXtQBAZjzTtvvLkDO6+xgWVqirZGff9ighdHLbclnUa55I3zE444c+PRAh7CDSjUA1pLjOVSbfmTaQXsqHBub5ktNS1U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=fhsVqF0m; arc=none smtp.client-ip=95.215.58.189
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="V48NXUfD"
-Message-ID: <e9386b67-9c4c-415e-91d8-511ac8d0ded5@linux.dev>
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="fhsVqF0m"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1751869512;
+	t=1751871506;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=vMXBEkTsI7ndCSL5SBx4dyxJbRzHSLL2t1hoBK/+038=;
-	b=V48NXUfDPPkP9rAIAXNmboO99SKyX46T3QjGrGoD26aoCtb56O84XZ5u2CUocciZ5cZgKX
-	zYi4I92NJiUt4flXdDJyO6ANnjhIZ26H0hh0waeLkBTHIX46PKCmqaWcj1jZFi8WOVgWBB
-	lTbQeUoOwYdcBQ+/XGCIGJrnT4gVUfQ=
-Date: Mon, 7 Jul 2025 14:25:06 +0800
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=//U6eJF/3Stqol0hp8qR+vLcRjhLZhuFUjDSy/i/3Fs=;
+	b=fhsVqF0m6vOp5kwyDLWFzMAyLbliNRIah5IUO11AjvghlyL+uslQfPvoT3g3qvaIyTpsuf
+	3tL3ntfvV7U2zr2smWauv4f4AtiR2OCy1O0fHOlwQqb2Jr+Ht95vAIua4w4hJNw8Ed7VpD
+	1fyiawszVRPBzEeDBv6jKtXql9pt+do=
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+To: mpatocka@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	axboe@kernel.dk,
+	hch@lst.de,
+	dan.j.williams@intel.com,
+	Jonathan.Cameron@Huawei.com
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-cxl@vger.kernel.org,
+	nvdimm@lists.linux.dev,
+	dm-devel@lists.linux.dev,
+	Dongsheng Yang <dongsheng.yang@linux.dev>
+Subject: [PATCH v2 00/11] dm-pcache – persistent-memory cache for block devices
+Date: Mon,  7 Jul 2025 06:57:58 +0000
+Message-ID: <20250707065809.437589-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH v1 02/11] dm-pcache: add backing device management
-To: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-Cc: mpatocka@redhat.com, agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk,
- hch@lst.de, dan.j.williams@intel.com, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-cxl@vger.kernel.org,
- nvdimm@lists.linux.dev, dm-devel@lists.linux.dev
-References: <20250624073359.2041340-1-dongsheng.yang@linux.dev>
- <20250624073359.2041340-3-dongsheng.yang@linux.dev>
- <20250701145650.00004e72@huawei.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <20250701145650.00004e72@huawei.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
+Hi Mikulas,
+	This is V2 for dm-pcache, please take a look.
 
-在 7/1/2025 9:56 PM, Jonathan Cameron 写道:
-> On Tue, 24 Jun 2025 07:33:49 +0000
-> Dongsheng Yang <dongsheng.yang@linux.dev> wrote:
->
->> This patch introduces *backing_dev.{c,h}*, a self-contained layer that
->> handles all interaction with the *backing block device* where cache
->> write-back and cache-miss reads are serviced.  Isolating this logic
->> keeps the core dm-pcache code free of low-level bio plumbing.
->>
->> * Device setup / teardown
->>    - Opens the target with `dm_get_device()`, stores `bdev`, file and
->>      size, and initialises a dedicated `bioset`.
->>    - Gracefully releases resources via `backing_dev_stop()`.
->>
->> * Request object (`struct pcache_backing_dev_req`)
->>    - Two request flavours:
->>      - REQ-type – cloned from an upper `struct bio` issued to
->>        dm-pcache; trimmed and re-targeted to the backing LBA.
->>      - KMEM-type – maps an arbitrary kernel memory buffer
->>        into a freshly built.
->>    - Private completion callback (`end_req`) propagates status to the
->>      upper layer and handles resource recycling.
->>
->> * Submission & completion path
->>    - Lock-protected submit queue + worker (`req_submit_work`) let pcache
->>      push many requests asynchronously, at the same time, allow caller
->>      to submit backing_dev_req in atomic context.
->>    - End-io handler moves finished requests to a completion list processed
->>      by `req_complete_work`, ensuring callbacks run in process context.
->>    - Direct-submit option for non-atomic context.
->>
->> * Flush
->>    - `backing_dev_flush()` issues a flush to persist backing-device data.
->>
->> Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
->> ---
->>   drivers/md/dm-pcache/backing_dev.c | 292 +++++++++++++++++++++++++++++
->>   drivers/md/dm-pcache/backing_dev.h |  88 +++++++++
->>   2 files changed, 380 insertions(+)
->>   create mode 100644 drivers/md/dm-pcache/backing_dev.c
->>   create mode 100644 drivers/md/dm-pcache/backing_dev.h
->> +
->> +struct pcache_backing_dev_req *backing_dev_req_create(struct pcache_backing_dev *backing_dev,
->> +						struct pcache_backing_dev_req_opts *opts)
->> +{
->> +	if (opts->type == BACKING_DEV_REQ_TYPE_REQ)
->> +		return req_type_req_create(backing_dev, opts);
->> +	else if (opts->type == BACKING_DEV_REQ_TYPE_KMEM)
->>
-> returned in earlier branch so go with simpler
->
-> 	if (opts->type..)
+Code:
+    https://github.com/DataTravelGuide/linux tags/pcache_v2
 
-Hi Jonathan,
+Changelogs
 
-This looks good, I am willing to do this change.
+V2 from V1:
+	- introduce req_alloc() and req_init() in backing_dev.c, then we
+	  can do req_alloc() before holding spinlock and do req_init()
+	  in subtree_walk().
+	- introduce pre_alloc_key and pre_alloc_req in walk_ctx, that
+	  means we can pre-allocate cache_key or backing_dev_request
+	  before subtree walking.
+	- use mempool_alloc() with NOIO for the allocation of cache_key
+	  and backing_dev_req.
+	- some coding style changes from comments of Jonathan.
 
+V1 from RFC-V2:
+	- use crc32c to replace crc32
+	- only retry pcache_req when cache full, add pcache_req into defer_list,
+	  and wait cache invalidation happen.
+	- new format for pcache table, it is more easily extended with
+	  new parameters later.
+	- remove __packed.
+	- use spin_lock_irq in req_complete_fn to replace
+	  spin_lock_irqsave.
+	- fix bug in backing_dev_bio_end with spin_lock_irqsave.
+	- queue_work() inside spinlock.
+	- introduce inline_bvecs in backing_dev_req.
+	- use kmalloc_array for bvecs allocation.
+	- calculate ->off with dm_target_offset() before use it.
 
-Thanx
+Dongsheng Yang (11):
+  dm-pcache: add pcache_internal.h
+  dm-pcache: add backing device management
+  dm-pcache: add cache device
+  dm-pcache: add segment layer
+  dm-pcache: add cache_segment
+  dm-pcache: add cache_writeback
+  dm-pcache: add cache_gc
+  dm-pcache: add cache_key
+  dm-pcache: add cache_req
+  dm-pcache: add cache core
+  dm-pcache: initial dm-pcache target
 
-Dongsheng
+ .../admin-guide/device-mapper/dm-pcache.rst   | 201 ++++
+ MAINTAINERS                                   |   8 +
+ drivers/md/Kconfig                            |   2 +
+ drivers/md/Makefile                           |   1 +
+ drivers/md/dm-pcache/Kconfig                  |  17 +
+ drivers/md/dm-pcache/Makefile                 |   3 +
+ drivers/md/dm-pcache/backing_dev.c            | 345 +++++++
+ drivers/md/dm-pcache/backing_dev.h            |  93 ++
+ drivers/md/dm-pcache/cache.c                  | 432 +++++++++
+ drivers/md/dm-pcache/cache.h                  | 616 ++++++++++++
+ drivers/md/dm-pcache/cache_dev.c              | 299 ++++++
+ drivers/md/dm-pcache/cache_dev.h              |  70 ++
+ drivers/md/dm-pcache/cache_gc.c               | 170 ++++
+ drivers/md/dm-pcache/cache_key.c              | 900 ++++++++++++++++++
+ drivers/md/dm-pcache/cache_req.c              | 840 ++++++++++++++++
+ drivers/md/dm-pcache/cache_segment.c          | 293 ++++++
+ drivers/md/dm-pcache/cache_writeback.c        | 279 ++++++
+ drivers/md/dm-pcache/dm_pcache.c              | 466 +++++++++
+ drivers/md/dm-pcache/dm_pcache.h              |  65 ++
+ drivers/md/dm-pcache/pcache_internal.h        | 117 +++
+ drivers/md/dm-pcache/segment.c                |  61 ++
+ drivers/md/dm-pcache/segment.h                |  73 ++
+ 22 files changed, 5351 insertions(+)
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-pcache.rst
+ create mode 100644 drivers/md/dm-pcache/Kconfig
+ create mode 100644 drivers/md/dm-pcache/Makefile
+ create mode 100644 drivers/md/dm-pcache/backing_dev.c
+ create mode 100644 drivers/md/dm-pcache/backing_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache.c
+ create mode 100644 drivers/md/dm-pcache/cache.h
+ create mode 100644 drivers/md/dm-pcache/cache_dev.c
+ create mode 100644 drivers/md/dm-pcache/cache_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache_gc.c
+ create mode 100644 drivers/md/dm-pcache/cache_key.c
+ create mode 100644 drivers/md/dm-pcache/cache_req.c
+ create mode 100644 drivers/md/dm-pcache/cache_segment.c
+ create mode 100644 drivers/md/dm-pcache/cache_writeback.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.h
+ create mode 100644 drivers/md/dm-pcache/pcache_internal.h
+ create mode 100644 drivers/md/dm-pcache/segment.c
+ create mode 100644 drivers/md/dm-pcache/segment.h
 
-> Or use a switch statement if you expect to get more entries in this over time.
->
->> +		return kmem_type_req_create(backing_dev, opts);
->> +
->> +	return NULL;
->> +}
->> +
->> +void backing_dev_flush(struct pcache_backing_dev *backing_dev)
->> +{
->> +	blkdev_issue_flush(backing_dev->dm_dev->bdev);
->> +}
->
+-- 
+2.43.0
+
