@@ -1,135 +1,115 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E40197E9
-	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 13:30:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB2E91DC9A3
+	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 20:16:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751895061; cv=none; b=pcVL86d/l8nYbZWOW2BUeUOCwvkEMAUW+J49LnxGTZ3pRgemoY7cAo350X36+dBUr0JLIawSS9fVXySC0qZWDYoW7Bee9mdd4k96X7CohjhyCD9JjvpyZdwb5zSY3Oykrw4OLG1RGKMr7cGxb3ndiSrHbG7bapRhpaswt2voxuY=
+	t=1751919398; cv=none; b=iI0MB4JPMCj9b2S5ol+Zj11KIFm6jdF+TDtkpCcObpw10GVrC+C+x2lPxoXVrBFesVMDd+uoDf/nCMo6HDqGKT2kqDpjdxdsza3GM19tkECPewJG4nqv11/CwjxarboWPDbzo/sEzHNKm5v7Ff2uZQfiyZ2L0mG2k/tghz35qIs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751895061; c=relaxed/simple;
-	bh=xBjE/UBMddtMjC6s1UlAwo90Iwc9hfoweuDB2jXNeY8=;
+	s=arc-20240116; t=1751919398; c=relaxed/simple;
+	bh=jYEw+dpQOLsLhqtci6KxjAhEKrOUjQnuRdygwxBmALc=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=BSiOWwSECHGwApWCvZCKN0lzjrUH1IuzvAQV09FjR0aU1tpfek3aU8F5o89wbl0qKLifZpS/AKTZFFHc6GI77+Y3AyU5xG/JtrRUVQRD5zaOpYbNfN5MBK6WqPNHzI6sOqhmzlg9t+QL17FCOYseBQ++BOOWKMjw1IzkPT9OPF8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KR2OxNi6; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=XwB73Y3/R7XyAZJEb6Z84SBtJs+GmGvrCL9qjlSo7Qqz/e73V8/ASMcUanCr9qX3nmm4OyCQDse8xLRCvAwarniYI6rySolvjRc+k47BFdy+uX4/eLS0L6UCsKmK4d4UEsR50cclX5IctOOdrY381t0zRbEC7hiJn5Prndxt39k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Q/34JVyg; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KR2OxNi6"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Q/34JVyg"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1751895058;
+	s=mimecast20190719; t=1751919394;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hMnpmS0EvbUJoQqEOMauX1CsW81Rtd60WmomIhdc/0M=;
-	b=KR2OxNi6kwfiMJLhBKmBFjfyACMNz+3U3o5U90rVBaA+/aVbkrqlzdlbzkNxoi1cEKi5YY
-	GmPJHCGpMcWMHjo2CcY9FHYst3IwKnuHhihodrDKTlTZHthAqJowsYXxORfC64mk5CDjt3
-	lUle5LTYa0m1nhKiTUlqUi26kX6dmzo=
-Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=acOOSG4Qq2nv4W4b3/Nnbhcn7CmsttwwzAN835fhnjc=;
+	b=Q/34JVyg4JXhiOeJgdF51a81Mr+I/8CexS38Ei+GsNCGkkFqVyVaQOOPYNYh9737UbsBXe
+	OWgsFY/zxmZx9R8strL5JKn4eCA2tc7vOS94unByMeMZDHKzUGep/lvfJv+ktUmHZTWYCs
+	HIJ+hdu9lmw6aWMHNRThyckt7tkUCQY=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-651-RydbDWoQP4-8dj5CHHii3w-1; Mon,
- 07 Jul 2025 09:30:55 -0400
-X-MC-Unique: RydbDWoQP4-8dj5CHHii3w-1
-X-Mimecast-MFC-AGG-ID: RydbDWoQP4-8dj5CHHii3w_1751895054
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-473-YFZl0pC0NLq_XoKGDL9m0w-1; Mon,
+ 07 Jul 2025 16:16:31 -0400
+X-MC-Unique: YFZl0pC0NLq_XoKGDL9m0w-1
+X-Mimecast-MFC-AGG-ID: YFZl0pC0NLq_XoKGDL9m0w_1751919390
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6F96F1955EC3;
-	Mon,  7 Jul 2025 13:30:54 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 349701801208;
+	Mon,  7 Jul 2025 20:16:29 +0000 (UTC)
 Received: from [10.22.80.10] (unknown [10.22.80.10])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CA3D019560AF;
-	Mon,  7 Jul 2025 13:30:52 +0000 (UTC)
-Date: Mon, 7 Jul 2025 15:30:45 +0200 (CEST)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 54B6E19560AB;
+	Mon,  7 Jul 2025 20:16:24 +0000 (UTC)
+Date: Mon, 7 Jul 2025 22:16:19 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Dongsheng Yang <dongsheng.yang@linux.dev>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    John Garry <john.g.garry@oracle.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm-stripe: fix a possible integer overflow
-In-Reply-To: <862bc5bb-13fb-41bb-85c9-84411ad9dda3@linux.dev>
-Message-ID: <1216b028-f216-1bb8-6b0e-dcf2b4411494@redhat.com>
-References: <0f1d0d2d-8840-a256-d628-39e074f021c1@redhat.com> <862bc5bb-13fb-41bb-85c9-84411ad9dda3@linux.dev>
+cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
+    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
+    dm-devel@lists.linux.dev
+Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v2_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
+ =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
+In-Reply-To: <20250707065809.437589-1-dongsheng.yang@linux.dev>
+Message-ID: <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
+References: <20250707065809.437589-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: g3_czfXq5XdjTUnOXOiEs5IQf6vkjACm2f4xgn3Sw3E_1751895054
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="-1463811712-965631769-1751895054=:458491"
-
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-965631769-1751895054=:458491
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
 
 
 On Mon, 7 Jul 2025, Dongsheng Yang wrote:
 
-> 
-> 在 7/7/2025 6:39 PM, Mikulas Patocka 写道:
-> > There's a possible integer overflow in stripe_io_hints if we have too
-> > large chunk size. Test if the overflow happened, and if it did, don't set
-> > limits->io_min and limits->io_opt;
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> > 
-> > ---
-> >   drivers/md/dm-stripe.c |   10 +++++++---
-> >   1 file changed, 7 insertions(+), 3 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-stripe.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-stripe.c	2025-07-06 15:02:23.000000000
-> > +0200
-> > +++ linux-2.6/drivers/md/dm-stripe.c	2025-07-07 12:32:49.000000000 +0200
-> > @@ -456,10 +456,14 @@ static void stripe_io_hints(struct dm_ta
-> >   			    struct queue_limits *limits)
-> >   {
-> >   	struct stripe_c *sc = ti->private;
-> > -	unsigned int chunk_size = sc->chunk_size << SECTOR_SHIFT;
-> > +	unsigned int io_min = sc->chunk_size << SECTOR_SHIFT;
-> > +	unsigned int io_opt = io_min * sc->stripes;
-> >   -	limits->io_min = chunk_size;
-> > -	limits->io_opt = chunk_size * sc->stripes;
-> > +	if (io_min >> SECTOR_SHIFT == sc->chunk_size &&
-> > +	    io_opt / sc->stripes == io_min) {
-> > +		limits->io_min = io_min;
-> > +		limits->io_opt = io_opt;
-> > +	}
-> 
-> 
 > Hi Mikulas,
+> 	This is V2 for dm-pcache, please take a look.
 > 
->     What about using check_xxx_overflow() ? something like:
+> Code:
+>     https://github.com/DataTravelGuide/linux tags/pcache_v2
 > 
+> Changelogs
 > 
->     if (check_shl_overflow(sc->chunk_size, SECTOR_SHIFT, &io_min))
->         return;
-> 
-> 
->     if (check_mul_overflow(io_min, sc->stripes, &io_opt))
->         return;
-> 
->     limits->io_min = io_min;
->     limits->io_opt = io_opt;
-> 
-> >   }
-> >     static struct target_type stripe_target = {
-> > 
-> > 
+> V2 from V1:
+> 	- introduce req_alloc() and req_init() in backing_dev.c, then we
+> 	  can do req_alloc() before holding spinlock and do req_init()
+> 	  in subtree_walk().
+> 	- introduce pre_alloc_key and pre_alloc_req in walk_ctx, that
+> 	  means we can pre-allocate cache_key or backing_dev_request
+> 	  before subtree walking.
+> 	- use mempool_alloc() with NOIO for the allocation of cache_key
+> 	  and backing_dev_req.
+> 	- some coding style changes from comments of Jonathan.
 
-Yes, that's a good idea.
+Hi
 
-I changed the patch to use these macros.
+mempool_alloc with GFP_NOIO never fails - so you don't have to check the 
+returned value for NULL and propagate the error upwards.
+
+"backing_req->kmem.bvecs = kmalloc_array(n_vecs, sizeof(struct bio_vec), 
+GFP_NOIO)" - this call may fail and you should handle the error gracefully 
+(i.e. don't end the bio with an error). Would it be possible to trim the 
+request to BACKING_DEV_REQ_INLINE_BVECS vectors and retry it? 
+Alternativelly, you can create a mempool for the largest possible n_vecs 
+and allocate from this mempool if kmalloc_array fails.
+
+I'm sending two patches for dm-pcache - the first patch adds the include 
+file linux/bitfield.h - it is needed in my config. The second patch makes 
+slab caches per-module rather than per-device, if you have them 
+per-device, there are warnings about duplicate cache names.
+
+
+BTW. What kind of persistent memory do you use? (afaik Intel killed the 
+Optane products and I don't know of any replacement)
+
+Some times ago I created a filesystem for persistent memory - see 
+git://leontynka.twibright.com/nvfs.git - I'd be interested if you can test 
+it on your persistent memory implementation.
 
 Mikulas
----1463811712-965631769-1751895054=:458491--
 
