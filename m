@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6301A1C5D55
-	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 20:17:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8AEA2AC17
+	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 20:17:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751919442; cv=none; b=V0ydfGM1YdCDXN27gOycx9QK233vqeOKu6jm6kwLbVZ48sE9wo2uZdi2Mf1gy0IbrRA8GLBsRowZ9R8sQjbMIcfhSA9iVkDabLGhNwRM1RbnHqsfsGDJIIFC/1G0VmVXKZ7+Zp6uxKZ/xPNqUzSUCBpzZ8PaiMVBCWv/qRDp0b0=
+	t=1751919476; cv=none; b=c4Kec9uaKz4Qb3Ve+TFt8HzPffXKhyRSOERfRvKiixX9yC/5vAW9FamcIviphN4aviH2mxtTUlzbDTjgpUWrac0CyQMS5b82ybRtYbzyW5sdZs852JffAkxusSyMH5oz6EMsmftXl8RXOK1h1F1GCY9B3wIXmwjF4/5S8He3WqQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751919442; c=relaxed/simple;
-	bh=yVuF5SHEUHaijuyW5z50NHMhrRqptIlGfxfOOA3VROs=;
+	s=arc-20240116; t=1751919476; c=relaxed/simple;
+	bh=aIXBmAdWUwNlGVlHhAhauhgJJoZEEe0OuaCVWCLeJUw=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=hEGH6/9ziY/8ydoKZAqz/fIDwBPaffMkTZRYJuRPWjiIiG3DSzbKP0tV07PXJIJsnBsgHpzj3tDOHGjZSKlJKzp6byizR2VtfK6GHkWhJ3WD9xaszMaL1fmb8zJmMONEiMppvDcRM/xhvuQi7UtRIkZlrNt9sUD1glb9LUP8Wsc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jOdJdaB8; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=HOiXgVdEA791SpPRc0IGDEjo1aMXGVTOY/PE+/mhjSPkC9iOm5V+IyldK065H5Uru0qy4DZ8BlTzrnYVnFt6JIFkHCCOF/HmEvtpF2MmzcPcT9Nn8x7VQ3QUANxbYvy8spwRBO1UTl+KXuCMltJG/VXW6+0fleNbONE4o3sxJus=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NAwAZh3E; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jOdJdaB8"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NAwAZh3E"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1751919440;
+	s=mimecast20190719; t=1751919473;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=seUUrM/ASxkxzQylj5TXoU27K7t34g1fgNXZf6f6gGU=;
-	b=jOdJdaB8y1Ec1s/sENh1KpfI+iDMsaF4j7QHeGx00wEy7kuSc5dq0dShPrwOePOMwfljO8
-	bi7LAfRXLuWP3exL2UN7vWh5YyDbCArJthscmarJo7sWZ+YnIY26/4xDkTtAmzUr4VwcY0
-	U3Se6bRu6N3hggWNzyB7oGhbjmtMkHc=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=KYg1WwBoipu4g1+Nb1g7zf334y5ktP9aU+f/eEdv4ak=;
+	b=NAwAZh3EKUENf8bSIIBjo9PMJbv3hqyPIF7mc1Hy2h7VD4ogJjccfFjhA1QPZpiybUvqOn
+	k79jZIkDdWjRhlTkDPI212os65AXXBc0DEiknpWwI/4qbesszGGMw7Lvu8d3+0XHlPsMQf
+	v7HVQ3MpCGhR35iKaznUhfAtSO1KRM4=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-371-NWAj8BxYPlqQ-MyBAbF5mQ-1; Mon,
- 07 Jul 2025 16:17:17 -0400
-X-MC-Unique: NWAj8BxYPlqQ-MyBAbF5mQ-1
-X-Mimecast-MFC-AGG-ID: NWAj8BxYPlqQ-MyBAbF5mQ_1751919435
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-pwmFryWdO7Gl0WP12CXBbQ-1; Mon,
+ 07 Jul 2025 16:17:52 -0400
+X-MC-Unique: pwmFryWdO7Gl0WP12CXBbQ-1
+X-Mimecast-MFC-AGG-ID: pwmFryWdO7Gl0WP12CXBbQ_1751919470
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 572251944A8D;
-	Mon,  7 Jul 2025 20:17:15 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ADDB71800287;
+	Mon,  7 Jul 2025 20:17:49 +0000 (UTC)
 Received: from [10.22.80.10] (unknown [10.22.80.10])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4114F195608F;
-	Mon,  7 Jul 2025 20:17:11 +0000 (UTC)
-Date: Mon, 7 Jul 2025 22:17:07 +0200 (CEST)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2C83718003FC;
+	Mon,  7 Jul 2025 20:17:45 +0000 (UTC)
+Date: Mon, 7 Jul 2025 22:17:42 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Dongsheng Yang <dongsheng.yang@linux.dev>
 cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
@@ -52,7 +52,7 @@ cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de,
 Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v2_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
  =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
 In-Reply-To: <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
-Message-ID: <80ada691-ffee-f0ce-64df-9b0117cd9845@redhat.com>
+Message-ID: <621900fd-1b17-cab3-5c4a-a12631440cd3@redhat.com>
 References: <20250707065809.437589-1-dongsheng.yang@linux.dev> <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -61,24 +61,184 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-pcache/segment.h |    1 +
- 1 file changed, 1 insertion(+)
+ drivers/md/dm-pcache/backing_dev.c |   14 +++-----------
+ drivers/md/dm-pcache/backing_dev.h |    1 -
+ drivers/md/dm-pcache/cache.h       |    1 -
+ drivers/md/dm-pcache/cache_key.c   |   13 ++-----------
+ drivers/md/dm-pcache/dm_pcache.c   |   28 +++++++++++++++++++++++++++-
+ drivers/md/dm-pcache/dm_pcache.h   |    3 +++
+ 6 files changed, 35 insertions(+), 25 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-pcache/segment.h
+Index: linux-2.6/drivers/md/dm-pcache/backing_dev.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/segment.h	2025-07-06 15:13:52.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/segment.h	2025-07-06 15:14:17.000000000 +0200
-@@ -3,6 +3,7 @@
- #define _PCACHE_SEGMENT_H
+--- linux-2.6.orig/drivers/md/dm-pcache/backing_dev.h	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/backing_dev.h	2025-07-07 12:14:27.000000000 +0200
+@@ -43,7 +43,6 @@ struct pcache_backing_dev {
+ 	struct pcache_cache		*cache;
  
- #include <linux/bio.h>
-+#include <linux/bitfield.h>
+ 	struct dm_dev			*dm_dev;
+-	struct kmem_cache		*backing_req_cache;
+ 	mempool_t			req_pool;
  
- #include "pcache_internal.h"
+ 	struct list_head		submit_list;
+Index: linux-2.6/drivers/md/dm-pcache/cache.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-pcache/cache.h	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/cache.h	2025-07-07 12:14:48.000000000 +0200
+@@ -102,7 +102,6 @@ struct pcache_cache_subtree {
+ struct pcache_cache_tree {
+ 	struct pcache_cache		*cache;
+ 	u32				n_subtrees;
+-	struct kmem_cache		*key_cache;
+ 	mempool_t			key_pool;
+ 	struct pcache_cache_subtree	*subtrees;
+ };
+Index: linux-2.6/drivers/md/dm-pcache/dm_pcache.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-pcache/dm_pcache.c	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/dm_pcache.c	2025-07-07 12:23:13.000000000 +0200
+@@ -9,6 +9,9 @@
+ #include "cache.h"
+ #include "dm_pcache.h"
  
++struct kmem_cache *backing_req_cache;
++struct kmem_cache *key_cache;
++
+ void pcache_defer_reqs_kick(struct dm_pcache *pcache)
+ {
+ 	struct pcache_cache *cache = &pcache->cache;
+@@ -451,13 +454,36 @@ static struct target_type dm_pcache_targ
+ 
+ static int __init dm_pcache_init(void)
+ {
+-	return dm_register_target(&dm_pcache_target);
++	int r;
++	backing_req_cache = KMEM_CACHE(pcache_backing_dev_req, 0);
++	if (!backing_req_cache) {
++		r = -ENOMEM;
++		goto err0;
++	}
++	key_cache = KMEM_CACHE(pcache_cache_key, 0);
++	if (!key_cache) {
++		r = -ENOMEM;
++		goto err1;
++	}
++	r = dm_register_target(&dm_pcache_target);
++	if (r)
++		goto err2;
++	return 0;
++
++err2:
++	kmem_cache_destroy(key_cache);
++err1:
++	kmem_cache_destroy(backing_req_cache);
++err0:
++	return r;
+ }
+ module_init(dm_pcache_init);
+ 
+ static void __exit dm_pcache_exit(void)
+ {
+ 	dm_unregister_target(&dm_pcache_target);
++	kmem_cache_destroy(key_cache);
++	kmem_cache_destroy(backing_req_cache);
+ }
+ module_exit(dm_pcache_exit);
+ 
+Index: linux-2.6/drivers/md/dm-pcache/backing_dev.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-pcache/backing_dev.c	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/backing_dev.c	2025-07-07 12:21:27.000000000 +0200
+@@ -11,7 +11,6 @@
+ static void backing_dev_exit(struct pcache_backing_dev *backing_dev)
+ {
+ 	mempool_exit(&backing_dev->req_pool);
+-	kmem_cache_destroy(backing_dev->backing_req_cache);
+ }
+ 
+ static void req_submit_fn(struct work_struct *work);
+@@ -21,15 +20,9 @@ static int backing_dev_init(struct dm_pc
+ 	struct pcache_backing_dev *backing_dev = &pcache->backing_dev;
+ 	int ret;
+ 
+-	backing_dev->backing_req_cache = KMEM_CACHE(pcache_backing_dev_req, 0);
+-	if (!backing_dev->backing_req_cache) {
+-		ret = -ENOMEM;
+-		goto err;
+-	}
+-
+-	ret = mempool_init_slab_pool(&backing_dev->req_pool, 128, backing_dev->backing_req_cache);
++	ret = mempool_init_slab_pool(&backing_dev->req_pool, 128, backing_req_cache);
+ 	if (ret)
+-		goto cache_destroy;
++		goto err;
+ 
+ 	INIT_LIST_HEAD(&backing_dev->submit_list);
+ 	INIT_LIST_HEAD(&backing_dev->complete_list);
+@@ -39,8 +32,7 @@ static int backing_dev_init(struct dm_pc
+ 	INIT_WORK(&backing_dev->req_complete_work, req_complete_fn);
+ 
+ 	return 0;
+-cache_destroy:
+-	kmem_cache_destroy(backing_dev->backing_req_cache);
++
+ err:
+ 	return ret;
+ }
+Index: linux-2.6/drivers/md/dm-pcache/cache_key.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-pcache/cache_key.c	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/cache_key.c	2025-07-07 12:22:17.000000000 +0200
+@@ -836,15 +836,9 @@ int cache_tree_init(struct pcache_cache
+ 	cache_tree->cache = cache;
+ 	cache_tree->n_subtrees = n_subtrees;
+ 
+-	cache_tree->key_cache = KMEM_CACHE(pcache_cache_key, 0);
+-	if (!cache_tree->key_cache) {
+-		ret = -ENOMEM;
+-		goto err;
+-	}
+-
+-	ret = mempool_init_slab_pool(&cache_tree->key_pool, 1024, cache_tree->key_cache);
++	ret = mempool_init_slab_pool(&cache_tree->key_pool, 1024, key_cache);
+ 	if (ret)
+-		goto destroy_key_cache;
++		goto err;
+ 
+ 	/*
+ 	 * Allocate and initialize the subtrees array.
+@@ -868,8 +862,6 @@ int cache_tree_init(struct pcache_cache
+ 
+ key_pool_exit:
+ 	mempool_exit(&cache_tree->key_pool);
+-destroy_key_cache:
+-	kmem_cache_destroy(cache_tree->key_cache);
+ err:
+ 	return ret;
+ }
+@@ -896,5 +888,4 @@ void cache_tree_exit(struct pcache_cache
+ 	}
+ 	kvfree(cache_tree->subtrees);
+ 	mempool_exit(&cache_tree->key_pool);
+-	kmem_cache_destroy(cache_tree->key_cache);
+ }
+Index: linux-2.6/drivers/md/dm-pcache/dm_pcache.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-pcache/dm_pcache.h	2025-07-07 12:00:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-pcache/dm_pcache.h	2025-07-07 12:19:42.000000000 +0200
+@@ -32,6 +32,9 @@ struct dm_pcache {
+ 	atomic_t			state;
+ };
+ 
++extern struct kmem_cache *backing_req_cache;
++extern struct kmem_cache *key_cache;
++
+ static inline bool pcache_is_stopping(struct dm_pcache *pcache)
+ {
+ 	return (atomic_read(&pcache->state) == PCACHE_STATE_STOPPING);
 
