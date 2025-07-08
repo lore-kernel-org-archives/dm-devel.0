@@ -1,244 +1,175 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8AEA2AC17
-	for <dm-devel@lists.linux.dev>; Mon,  7 Jul 2025 20:17:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 945B8220F4C
+	for <dm-devel@lists.linux.dev>; Tue,  8 Jul 2025 12:27:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751919476; cv=none; b=c4Kec9uaKz4Qb3Ve+TFt8HzPffXKhyRSOERfRvKiixX9yC/5vAW9FamcIviphN4aviH2mxtTUlzbDTjgpUWrac0CyQMS5b82ybRtYbzyW5sdZs852JffAkxusSyMH5oz6EMsmftXl8RXOK1h1F1GCY9B3wIXmwjF4/5S8He3WqQ=
+	t=1751977666; cv=none; b=tyRM11fRAaHZYlz7TKoADJjo5quTPCx4pfqtV+FwQ6/ugwXX547Uhsm8xXZM10ZOwNAU4Gz4LVLcjuoFn++WUJ/II7UgAMO9Z1LVJlrGE69md5BlG1LJ1NL7j49ERqbJLlqdHxcvEd9ACfWA7nFT3LGHa1DQQ8K8VsBFApcxijc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751919476; c=relaxed/simple;
-	bh=aIXBmAdWUwNlGVlHhAhauhgJJoZEEe0OuaCVWCLeJUw=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=HOiXgVdEA791SpPRc0IGDEjo1aMXGVTOY/PE+/mhjSPkC9iOm5V+IyldK065H5Uru0qy4DZ8BlTzrnYVnFt6JIFkHCCOF/HmEvtpF2MmzcPcT9Nn8x7VQ3QUANxbYvy8spwRBO1UTl+KXuCMltJG/VXW6+0fleNbONE4o3sxJus=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NAwAZh3E; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1751977666; c=relaxed/simple;
+	bh=EPrH0MQpypzbX+tCkpS73VGBROjayzO6K1EBpuHehvM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=srKbKj/6gK8FMnZjb81TN/m5sUKGwnInzk3L90HZ3DQZlMTEma3RlAHsE5OMf8HMqWSzHdB5R03K92v+IFqaBt5av2JbYa4FErgtce2zenw/P+vXnkzO4JunlXvKbhPqZG/gy5myiQOwmWwxLi8zVZzKsnrCh/AxZnlwPfI3oVM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=URUl/7YP; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NAwAZh3E"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1751919473;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=KYg1WwBoipu4g1+Nb1g7zf334y5ktP9aU+f/eEdv4ak=;
-	b=NAwAZh3EKUENf8bSIIBjo9PMJbv3hqyPIF7mc1Hy2h7VD4ogJjccfFjhA1QPZpiybUvqOn
-	k79jZIkDdWjRhlTkDPI212os65AXXBc0DEiknpWwI/4qbesszGGMw7Lvu8d3+0XHlPsMQf
-	v7HVQ3MpCGhR35iKaznUhfAtSO1KRM4=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-pwmFryWdO7Gl0WP12CXBbQ-1; Mon,
- 07 Jul 2025 16:17:52 -0400
-X-MC-Unique: pwmFryWdO7Gl0WP12CXBbQ-1
-X-Mimecast-MFC-AGG-ID: pwmFryWdO7Gl0WP12CXBbQ_1751919470
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ADDB71800287;
-	Mon,  7 Jul 2025 20:17:49 +0000 (UTC)
-Received: from [10.22.80.10] (unknown [10.22.80.10])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2C83718003FC;
-	Mon,  7 Jul 2025 20:17:45 +0000 (UTC)
-Date: Mon, 7 Jul 2025 22:17:42 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Dongsheng Yang <dongsheng.yang@linux.dev>
-cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
-    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
-    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
-    dm-devel@lists.linux.dev
-Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v2_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
- =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
-In-Reply-To: <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
-Message-ID: <621900fd-1b17-cab3-5c4a-a12631440cd3@redhat.com>
-References: <20250707065809.437589-1-dongsheng.yang@linux.dev> <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="URUl/7YP"
+Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 568CEl0U025616;
+	Tue, 8 Jul 2025 12:27:33 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=nO4MbO
+	xSSz/KXFgOZDOLTWbrtwC85UMkZ6xwwBiH7YI=; b=URUl/7YPtfI7ppj/NzacnZ
+	6PHP55hvLCXwDVKnsWKxiQL6f15LfZcfH/4WbdjNUAADr4tYmn/yP5ZbDeiRs0vY
+	4TesGAN6cZFxPNeS8ErWcAy/4cZ/plt8wlTj9YjWs8S3IDJXuBrrf5d5EQuhR7sN
+	0VKqIYC/UiDMNAUU4sWUqgnhDnKQPE29IWmo5tMecp7U1x7cIYuq0dwA+zw5nr2o
+	vrmlrdcfrTi5MTUKUogYiMGYlMdm1IL5oZ7HLd6N/zkZQOgYZ3owbhWKRU6Xuozs
+	rawmFUvv+pEtQ9h6gmU+2yC80HPhbNjBw1NVihvYfmkFZie+NA97pba3Bq3guhKQ
+	==
+Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47ptfyq84n-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 08 Jul 2025 12:27:33 +0000 (GMT)
+Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
+	by ppma12.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 5689qGlE021561;
+	Tue, 8 Jul 2025 12:27:32 GMT
+Received: from smtprelay04.wdc07v.mail.ibm.com ([172.16.1.71])
+	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 47qectk2ve-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Tue, 08 Jul 2025 12:27:32 +0000
+Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
+	by smtprelay04.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 568CRVlu56754484
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 8 Jul 2025 12:27:31 GMT
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 47CA25805C;
+	Tue,  8 Jul 2025 12:27:31 +0000 (GMT)
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 556C358054;
+	Tue,  8 Jul 2025 12:27:25 +0000 (GMT)
+Received: from [9.109.244.163] (unknown [9.109.244.163])
+	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Tue,  8 Jul 2025 12:27:25 +0000 (GMT)
+Message-ID: <51e56dcf-6a64-42d1-b488-7043f880026e@linux.ibm.com>
+Date: Tue, 8 Jul 2025 17:57:23 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 6/6] block: use chunk_sectors when evaluating stacked
+ atomic write limits
+To: John Garry <john.g.garry@oracle.com>, agk@redhat.com, snitzer@kernel.org,
+        mpatocka@redhat.com, song@kernel.org, yukuai3@huawei.com, hch@lst.de,
+        axboe@kernel.dk, cem@kernel.org
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+        linux-raid@vger.kernel.org, linux-block@vger.kernel.org,
+        ojaswin@linux.ibm.com, martin.petersen@oracle.com,
+        akpm@linux-foundation.org, linux-xfs@vger.kernel.org,
+        djwong@kernel.org
+References: <20250707131135.1572830-1-john.g.garry@oracle.com>
+ <20250707131135.1572830-7-john.g.garry@oracle.com>
+Content-Language: en-US
+From: Nilay Shroff <nilay@linux.ibm.com>
+In-Reply-To: <20250707131135.1572830-7-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Authority-Analysis: v=2.4 cv=crubk04i c=1 sm=1 tr=0 ts=686d0eb5 cx=c_pps a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17 a=IkcTkHD0fZMA:10 a=Wb1JkmetP80A:10 a=VwQbUJbxAAAA:8 a=VnNF1IyMAAAA:8 a=yPCof4ZbAAAA:8 a=yJhl33u1EdvM2cd53HsA:9
+ a=QEXdDO2ut3YA:10
+X-Proofpoint-ORIG-GUID: oFeuZO25s8jZhY9N7Q4_OwOi2QA0LlNs
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzA4MDEwMiBTYWx0ZWRfX9R+zUyptV1ib dvpjJ1NMO7XTm6M8VTrCdpuBTeYomqz3kec2VbCmalMuDWeMjXGDM1Ea865m1vzqCd4fSgenqdw Dg/m9c4T5haZvlwRC8/MJXLWvi+QRL2mTwEjyh+6hndAcz0lxOH4CiydXntm+fIuggviehN1wB6
+ 0xeqAJcAZ/daSQAAQYqWSYmaTpS2XgaLZfDyo5MG/S3pQ+MzXp2sbqXxKnLUkgiDwpKYkZltt7W 2lmN2aiosg4kuXiHKzBbxrv3aDCIL2U9LEAw99I4/qGpJ75FAnS741HCZFlTI5GucFq5djrT+U0 de3qYa1CTkA3ROi86knjPZpwcmDHhhAzC/Lp1Y7KeKlQnRnWCQL5wk5EZ1LI9jGAQeWKqUHjMxk
+ wQo2HSmRgYvR9QQkuYKf3SD48nJR/ZmAOxeYEOqS/zKmi5nNsT3OwqLaus1B1WN0K2APTPek
+X-Proofpoint-GUID: oFeuZO25s8jZhY9N7Q4_OwOi2QA0LlNs
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.7,FMLib:17.12.80.40
+ definitions=2025-07-08_03,2025-07-07_01,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxscore=0 mlxlogscore=999
+ priorityscore=1501 adultscore=0 suspectscore=0 lowpriorityscore=0
+ clxscore=1011 impostorscore=0 malwarescore=0 spamscore=0 bulkscore=0
+ phishscore=0 classifier=spam authscore=0 authtc=n/a authcc= route=outbound
+ adjust=0 reason=mlx scancount=1 engine=8.19.0-2505280000
+ definitions=main-2507080102
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
----
- drivers/md/dm-pcache/backing_dev.c |   14 +++-----------
- drivers/md/dm-pcache/backing_dev.h |    1 -
- drivers/md/dm-pcache/cache.h       |    1 -
- drivers/md/dm-pcache/cache_key.c   |   13 ++-----------
- drivers/md/dm-pcache/dm_pcache.c   |   28 +++++++++++++++++++++++++++-
- drivers/md/dm-pcache/dm_pcache.h   |    3 +++
- 6 files changed, 35 insertions(+), 25 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-pcache/backing_dev.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/backing_dev.h	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/backing_dev.h	2025-07-07 12:14:27.000000000 +0200
-@@ -43,7 +43,6 @@ struct pcache_backing_dev {
- 	struct pcache_cache		*cache;
- 
- 	struct dm_dev			*dm_dev;
--	struct kmem_cache		*backing_req_cache;
- 	mempool_t			req_pool;
- 
- 	struct list_head		submit_list;
-Index: linux-2.6/drivers/md/dm-pcache/cache.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/cache.h	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/cache.h	2025-07-07 12:14:48.000000000 +0200
-@@ -102,7 +102,6 @@ struct pcache_cache_subtree {
- struct pcache_cache_tree {
- 	struct pcache_cache		*cache;
- 	u32				n_subtrees;
--	struct kmem_cache		*key_cache;
- 	mempool_t			key_pool;
- 	struct pcache_cache_subtree	*subtrees;
- };
-Index: linux-2.6/drivers/md/dm-pcache/dm_pcache.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/dm_pcache.c	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/dm_pcache.c	2025-07-07 12:23:13.000000000 +0200
-@@ -9,6 +9,9 @@
- #include "cache.h"
- #include "dm_pcache.h"
- 
-+struct kmem_cache *backing_req_cache;
-+struct kmem_cache *key_cache;
-+
- void pcache_defer_reqs_kick(struct dm_pcache *pcache)
- {
- 	struct pcache_cache *cache = &pcache->cache;
-@@ -451,13 +454,36 @@ static struct target_type dm_pcache_targ
- 
- static int __init dm_pcache_init(void)
- {
--	return dm_register_target(&dm_pcache_target);
-+	int r;
-+	backing_req_cache = KMEM_CACHE(pcache_backing_dev_req, 0);
-+	if (!backing_req_cache) {
-+		r = -ENOMEM;
-+		goto err0;
-+	}
-+	key_cache = KMEM_CACHE(pcache_cache_key, 0);
-+	if (!key_cache) {
-+		r = -ENOMEM;
-+		goto err1;
-+	}
-+	r = dm_register_target(&dm_pcache_target);
-+	if (r)
-+		goto err2;
-+	return 0;
-+
-+err2:
-+	kmem_cache_destroy(key_cache);
-+err1:
-+	kmem_cache_destroy(backing_req_cache);
-+err0:
-+	return r;
- }
- module_init(dm_pcache_init);
- 
- static void __exit dm_pcache_exit(void)
- {
- 	dm_unregister_target(&dm_pcache_target);
-+	kmem_cache_destroy(key_cache);
-+	kmem_cache_destroy(backing_req_cache);
- }
- module_exit(dm_pcache_exit);
- 
-Index: linux-2.6/drivers/md/dm-pcache/backing_dev.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/backing_dev.c	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/backing_dev.c	2025-07-07 12:21:27.000000000 +0200
-@@ -11,7 +11,6 @@
- static void backing_dev_exit(struct pcache_backing_dev *backing_dev)
- {
- 	mempool_exit(&backing_dev->req_pool);
--	kmem_cache_destroy(backing_dev->backing_req_cache);
- }
- 
- static void req_submit_fn(struct work_struct *work);
-@@ -21,15 +20,9 @@ static int backing_dev_init(struct dm_pc
- 	struct pcache_backing_dev *backing_dev = &pcache->backing_dev;
- 	int ret;
- 
--	backing_dev->backing_req_cache = KMEM_CACHE(pcache_backing_dev_req, 0);
--	if (!backing_dev->backing_req_cache) {
--		ret = -ENOMEM;
--		goto err;
--	}
--
--	ret = mempool_init_slab_pool(&backing_dev->req_pool, 128, backing_dev->backing_req_cache);
-+	ret = mempool_init_slab_pool(&backing_dev->req_pool, 128, backing_req_cache);
- 	if (ret)
--		goto cache_destroy;
-+		goto err;
- 
- 	INIT_LIST_HEAD(&backing_dev->submit_list);
- 	INIT_LIST_HEAD(&backing_dev->complete_list);
-@@ -39,8 +32,7 @@ static int backing_dev_init(struct dm_pc
- 	INIT_WORK(&backing_dev->req_complete_work, req_complete_fn);
- 
- 	return 0;
--cache_destroy:
--	kmem_cache_destroy(backing_dev->backing_req_cache);
-+
- err:
- 	return ret;
- }
-Index: linux-2.6/drivers/md/dm-pcache/cache_key.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/cache_key.c	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/cache_key.c	2025-07-07 12:22:17.000000000 +0200
-@@ -836,15 +836,9 @@ int cache_tree_init(struct pcache_cache
- 	cache_tree->cache = cache;
- 	cache_tree->n_subtrees = n_subtrees;
- 
--	cache_tree->key_cache = KMEM_CACHE(pcache_cache_key, 0);
--	if (!cache_tree->key_cache) {
--		ret = -ENOMEM;
--		goto err;
--	}
--
--	ret = mempool_init_slab_pool(&cache_tree->key_pool, 1024, cache_tree->key_cache);
-+	ret = mempool_init_slab_pool(&cache_tree->key_pool, 1024, key_cache);
- 	if (ret)
--		goto destroy_key_cache;
-+		goto err;
- 
- 	/*
- 	 * Allocate and initialize the subtrees array.
-@@ -868,8 +862,6 @@ int cache_tree_init(struct pcache_cache
- 
- key_pool_exit:
- 	mempool_exit(&cache_tree->key_pool);
--destroy_key_cache:
--	kmem_cache_destroy(cache_tree->key_cache);
- err:
- 	return ret;
- }
-@@ -896,5 +888,4 @@ void cache_tree_exit(struct pcache_cache
- 	}
- 	kvfree(cache_tree->subtrees);
- 	mempool_exit(&cache_tree->key_pool);
--	kmem_cache_destroy(cache_tree->key_cache);
- }
-Index: linux-2.6/drivers/md/dm-pcache/dm_pcache.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-pcache/dm_pcache.h	2025-07-07 12:00:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm-pcache/dm_pcache.h	2025-07-07 12:19:42.000000000 +0200
-@@ -32,6 +32,9 @@ struct dm_pcache {
- 	atomic_t			state;
- };
- 
-+extern struct kmem_cache *backing_req_cache;
-+extern struct kmem_cache *key_cache;
-+
- static inline bool pcache_is_stopping(struct dm_pcache *pcache)
- {
- 	return (atomic_read(&pcache->state) == PCACHE_STATE_STOPPING);
+On 7/7/25 6:41 PM, John Garry wrote:
+> The atomic write unit max value is limited by any stacked device stripe
+> size.
+> 
+> It is required that the atomic write unit is a power-of-2 factor of the
+> stripe size.
+> 
+> Currently we use io_min limit to hold the stripe size, and check for a
+> io_min <= SECTOR_SIZE when deciding if we have a striped stacked device.
+> 
+> Nilay reports that this causes a problem when the physical block size is
+> greater than SECTOR_SIZE [0].
+> 
+> Furthermore, io_min may be mutated when stacking devices, and this makes
+> it a poor candidate to hold the stripe size. Such an example (of when
+> io_min may change) would be when the io_min is less than the physical
+> block size.
+> 
+> Use chunk_sectors to hold the stripe size, which is more appropriate.
+> 
+> [0] https://lore.kernel.org/linux-block/888f3b1d-7817-4007-b3b3-1a2ea04df771@linux.ibm.com/T/#mecca17129f72811137d3c2f1e477634e77f06781
+> 
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>  block/blk-settings.c | 58 ++++++++++++++++++++++++++------------------
+>  1 file changed, 35 insertions(+), 23 deletions(-)
+> 
+> diff --git a/block/blk-settings.c b/block/blk-settings.c
+> index 761c6ccf5af7..3259cfac5d0d 100644
+> --- a/block/blk-settings.c
+> +++ b/block/blk-settings.c
+> @@ -597,41 +597,52 @@ static bool blk_stack_atomic_writes_boundary_head(struct queue_limits *t,
+>  	return true;
+>  }
+>  
+> -
+> -/* Check stacking of first bottom device */
+> -static bool blk_stack_atomic_writes_head(struct queue_limits *t,
+> -				struct queue_limits *b)
+> +static void blk_stack_atomic_writes_chunk_sectors(struct queue_limits *t)
+>  {
+> -	if (b->atomic_write_hw_boundary &&
+> -	    !blk_stack_atomic_writes_boundary_head(t, b))
+> -		return false;
+> +	unsigned int chunk_sectors = t->chunk_sectors, chunk_bytes;
+>  
+> -	if (t->io_min <= SECTOR_SIZE) {
+> -		/* No chunk sectors, so use bottom device values directly */
+> -		t->atomic_write_hw_unit_max = b->atomic_write_hw_unit_max;
+> -		t->atomic_write_hw_unit_min = b->atomic_write_hw_unit_min;
+> -		t->atomic_write_hw_max = b->atomic_write_hw_max;
+> -		return true;
+> -	}
+> +	if (!chunk_sectors)
+> +		return;
+> +
+> +	/*
+> +	 * If chunk sectors is so large that its value in bytes overflows
+> +	 * UINT_MAX, then just shift it down so it definitely will fit.
+> +	 * We don't support atomic writes of such a large size anyway.
+> +	 */
+> +	if ((unsigned long)chunk_sectors << SECTOR_SHIFT > UINT_MAX)
+> +		chunk_bytes = chunk_sectors;
+> +	else
+> +		chunk_bytes = chunk_sectors << SECTOR_SHIFT;
+>  
+
+Can we use check_shl_overflow() here for checking overflow? Otherwise,
+changes look good to me. I've also tested it using my NVMe disk which
+supports up to 256kb of atomic writes. 
+
+Reviewed-by: Nilay Shroff <nilay@linux.ibm.com>
+Tested-by: Nilay Shroff <nilay@linux.ibm.com>
 
