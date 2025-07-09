@@ -1,212 +1,452 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC29120E6
-	for <dm-devel@lists.linux.dev>; Wed,  9 Jul 2025 01:39:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752025179; cv=fail; b=owHBwNAfVYMr08YGJEwPm0omPzqvvd9LF+REBytIFnaXj9caSISVPatQfJ3r9djTw0HvrokuJ8eioXtM2cGm/AGJz1EO9QN2A7oKMcKem1X7xD7YURO0EFwrRhB3k34nLCWeFg+5+71Qho/C/UWDHvIcXtaE17+tQODR36KTfo8=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752025179; c=relaxed/simple;
-	bh=eaxmfT2KLyEL71pGJzSXqApsVbPQeaDki9aXbo3ACs8=;
-	h=To:Cc:Subject:From:In-Reply-To:Message-ID:References:Date:
-	 Content-Type:MIME-Version; b=JMw/pRxhc472ENyG20FLnaKPMjC1zbkzm8GjbeJbLKubjHBxcqMd+lnD/bwgtSLksAKAFfOaTxHu6uA3fMKhbJJ8mTEPqNBDJIXaenE8ueCmQOt0tP1ydo301zHLA6ORdL3/tr3qxd1+XRnOUB+UNaJj+xc56FM8juXRX1sDYb0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=qLgBBT6r; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=E7f6+Zrp; arc=fail smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A9B226E175;
+	Wed,  9 Jul 2025 06:48:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1752043729; cv=none; b=dD3KQGt9jG1LayD8I5c0pBrauZSRdFROtLSlRR5D1YNpg7ILD0bKZh798Sw7GtG3nX74GrWS4yclRIaOJ7MgDbS+Z66AzqefYz6/dqu9XRqww70HGSIIC07gOJ8jyfOI7vb1/YrJdYLsB8eN8MZVpZSOc72RSwtYOkQl0mn9ZXw=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1752043729; c=relaxed/simple;
+	bh=Ag+c6KYhWSBNEs+mWeKzZMKQWqZ1Xik3C77KWIEMK+g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RfnUKkJhLkM4D66Tf6W+DMGmzsXEcyid3gvF1p+GJ7yL6ez1pZl9NTO+SPUDz6H2Ly2JPdSwEyxLMHpXmw3jKVY9gpA7XxXoIm//UFkkiv08AqZI2GHdZEV8TkbgpULRPuUENm99vyu8Rwpihbit49nfQYJ+JqjySMJr4oiWfkc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=riywWTCh; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="qLgBBT6r";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="E7f6+Zrp"
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 5691ZrCn026370;
-	Wed, 9 Jul 2025 01:39:24 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-type:date:from:in-reply-to:message-id:mime-version
-	:references:subject:to; s=corp-2025-04-25; bh=ITiTjyqhozRO/KzMPO
-	fn7/B7726GddYAf98kYhZcP1E=; b=qLgBBT6rjo6eSSnpQMvO7Pau3h6GtIFPS5
-	tXkF1mjO6tTA2JY2geRjhuQY1OZRlXjLzq7TiNz7vGZWXs9B9mNv25bh7ZnMPCcB
-	Cwfs74Mm7eolJKgXzf57mZU3w5+N0uY2CJmXBJnImKIMQJ/yS2z0HzYlBnldKO1d
-	BFmiq9dGriDvj4zCvW/elvmSTC95192nyUfIYAHGEyxUSgzN34WqzLUgPZ1A4Ufr
-	uODteoGDWnwMZzzQ1Ajfx/7aZUzg+ahxD8q1T9bGZu/Gz2vFB/KyvkirdgvYOeYJ
-	4mQgR/YeSRb4X90dW3/nhAWy5PVO+M5l1JzkrRTSYXtf+vPXdJIQ==
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 47sepq00eq-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 09 Jul 2025 01:39:24 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 56912D79021402;
-	Wed, 9 Jul 2025 01:39:23 GMT
-Received: from nam10-bn7-obe.outbound.protection.outlook.com (mail-bn7nam10on2045.outbound.protection.outlook.com [40.107.92.45])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 47ptgaay7e-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 09 Jul 2025 01:39:23 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=yyYDmdWORicLWOw5+EG0byGPqPyoyCZ/lK273DJRykEOGeRdHCRXT04oqIqY0/d+hhwOXK9FvBJjdmJn5lDJ3voYa4MjHnMKu74fRpKxJK9pjNPI3DM3ino9T221pKz6RAMmc256JNMSUbZ5Z6yJlsHJxlpi6Sq6NCdkZEyS2SJpgGA4eMoCxErUfmdoUN1dtUWK9CIUVWDDUc5mVj9fImVHLe50g1kdnJ4uHnNxZP6lrsN+WzqKGeBwJhdfz7V5kxHd04awZ2CIJvKaMlU6k0JQDLl0YY5a78zx+ZahZiztmrByVXCkceEdt/xLehrXnuPSHi9MsLCjL+FgY3Ebyg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=ITiTjyqhozRO/KzMPOfn7/B7726GddYAf98kYhZcP1E=;
- b=cWpdI6+Kje6uEWAt5FLXDbkV9Gcf3YyRb3A+mf6JHi7+5R0MMIDEZIlHHWqH69Hm1ipTkcmzRgriWTLg0m21Bxsneoj3km4JpFVL33OJZ0lw6odUUicjp0YGsXypOiltLbsksYc6wEzCwi7x1ZV0YKMEd5naVFYxe/Sz3sbAI5wp7X05tQqUwj9DaApzvIEp7AdoAI/hiiQM3y1z7RErf3ulEkic/2A6B3BgCK491Q3vxNsqNbIVtHlX4xGhhGmTSFF2WiBqDVIH8yi1IDvcuMw+bQEJnUdPbmfMCTyV6UYx421bvseVPKWN2Fk8hNnHRUYWzvs4jHNevcl/mxYHlA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=ITiTjyqhozRO/KzMPOfn7/B7726GddYAf98kYhZcP1E=;
- b=E7f6+Zrp8wolUdOLJYpRVVby6ajTCk8KOsc3P//FIPEQ+AIM5EzocAvt9Uq6c9OhrVEJH2jokGTssXFj10qWiKWe9qeGIP7rs/KDjmd1OnjRfTCKmDKx2AZzuNtWPnEb9ON6wLyCwIVv4FvbuPQk9Zg5BOAG0H4ul16EFx8TX+8=
-Received: from CH0PR10MB5338.namprd10.prod.outlook.com (2603:10b6:610:cb::8)
- by SA1PR10MB7832.namprd10.prod.outlook.com (2603:10b6:806:3a9::19) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8901.23; Wed, 9 Jul
- 2025 01:39:13 +0000
-Received: from CH0PR10MB5338.namprd10.prod.outlook.com
- ([fe80::5cca:2bcc:cedb:d9bf]) by CH0PR10MB5338.namprd10.prod.outlook.com
- ([fe80::5cca:2bcc:cedb:d9bf%5]) with mapi id 15.20.8901.024; Wed, 9 Jul 2025
- 01:39:13 +0000
-To: John Garry <john.g.garry@oracle.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, <axboe@kernel.dk>, <agk@redhat.com>,
-        <snitzer@kernel.org>, <song@kernel.org>, <yukuai3@huawei.com>,
-        <hch@lst.de>, <nilay@linux.ibm.com>, <dm-devel@lists.linux.dev>,
-        <linux-kernel@vger.kernel.org>, <linux-raid@vger.kernel.org>,
-        <linux-block@vger.kernel.org>, <ojaswin@linux.ibm.com>,
-        <martin.petersen@oracle.com>
-Subject: Re: [PATCH v3 5/5] block: use chunk_sectors when evaluating stacked
- atomic write limits
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-In-Reply-To: <803d0903-2382-4219-b81e-9d676bd5de1f@oracle.com> (John Garry's
-	message of "Thu, 3 Jul 2025 17:01:00 +0100")
-Organization: Oracle Corporation
-Message-ID: <yq1a55edu8i.fsf@ca-mkp.ca.oracle.com>
-References: <20250703114613.9124-1-john.g.garry@oracle.com>
-	<20250703114613.9124-6-john.g.garry@oracle.com>
-	<b7bd63a0-7aa6-2fb3-0a2b-23285b9fc5fc@redhat.com>
-	<f7f342de-1087-47f6-a0c1-e41574abe985@oracle.com>
-	<8b5e009a-9e2a-4542-69fb-fc6d47287255@redhat.com>
-	<803d0903-2382-4219-b81e-9d676bd5de1f@oracle.com>
-Date: Tue, 08 Jul 2025 21:39:11 -0400
-Content-Type: text/plain
-X-ClientProxiedBy: PH7PR10CA0014.namprd10.prod.outlook.com
- (2603:10b6:510:23d::16) To CH0PR10MB5338.namprd10.prod.outlook.com
- (2603:10b6:610:cb::8)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="riywWTCh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 15012C4CEF0;
+	Wed,  9 Jul 2025 06:48:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1752043729;
+	bh=Ag+c6KYhWSBNEs+mWeKzZMKQWqZ1Xik3C77KWIEMK+g=;
+	h=From:To:Cc:Subject:Date:From;
+	b=riywWTChcf6NUy5fVCYsq/2yGvozvkwm1txAk1gs8JWnKUCK88CnHLUVh+q5wm4MX
+	 9B6Uk8diqWNI27Mym1uNLe0boTYKAfSZUrRu/ql70p4TUermjIyWdNOpZ6hs1kf8j8
+	 mv3gp4W+T6FtdN1FuqrscI4F1zEOBH2UA0MHJlZL/VC90fRh9n6ezRIV3ZN9hAyhOT
+	 RensXiI6ZrRVpQ4wB7B4C4nfwvItaq4AXOo4pM6pFtXlgDkqv8PowW1Yk69NseRGCu
+	 3TdlX89JCbYsInB3qitKVX1/8o8c6EyzRgJ3u5G4D3EW6Hc22by8ssR633SuSp5zuS
+	 OcCqCHA735dAg==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org,
+	Gilad Ben-Yossef <gilad@benyossef.com>,
+	Ard Biesheuvel <ardb@kernel.org>,
+	"Jason A . Donenfeld" <Jason@zx2c4.com>,
+	Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH] dm-verity: remove support for asynchronous hashes
+Date: Tue,  8 Jul 2025 23:45:12 -0700
+Message-ID: <20250709064512.67551-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: CH0PR10MB5338:EE_|SA1PR10MB7832:EE_
-X-MS-Office365-Filtering-Correlation-Id: b68625fc-9d32-4902-b8b9-08ddbe8968c0
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|7416014|376014|366016|1800799024;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?TVEjaWpJWs3Z56q8s/N4VN1hlEaGVPZXJz35ZtuuUJbEaMN1GIN2m/5PLCIk?=
- =?us-ascii?Q?FhrSipaJDdYVQEQZN8J7+fWXRHRVFaLhmaKgyNaekjfjkhqw0kwHCKIgqTQQ?=
- =?us-ascii?Q?0MVXhSwDUlwHaQ1L4c+XgRSx0jP/oJkc6MMx04SjpJJyGvz2mQDpP8GFEG9x?=
- =?us-ascii?Q?DPv1viGFFb3uI1S/pUe8S+MszXiqnq99Vz0lJeiDIAZPtC+/sbuwhnAxhfSa?=
- =?us-ascii?Q?1+R6UPut2GhTD/RkLM4j8UVc88it+vZyVbVr64lr5s1xQ/kaEdAeI95tOF6K?=
- =?us-ascii?Q?/V1I2blb9p5WUVh/E4dO9KzGnL7TdqEYocm1jPhm+yIZuXOC3bCADe9Q+OCk?=
- =?us-ascii?Q?lniKYV10bck+tQnvIjOKrz9N6gryiLCgwDyTcsQKOILJLbAh0OJBYmmyLDwW?=
- =?us-ascii?Q?gKjd7UaLlcYk4AUir4jijLfC7GTNfsvL1QoRBxsZsgDS5NdOnA/D8IfiUQMi?=
- =?us-ascii?Q?EqosLHAu0HNcxXHY3I/GcjBd/U3/t/baid9hFBQQXgx24v8EGkOth9DskyOs?=
- =?us-ascii?Q?OU68TTcxHmvCw6Pg+LiuonINAz2th8WIYBeNG1UamJawNLLZBfSjbP/NJpme?=
- =?us-ascii?Q?QUHxSCC4+P2YQXmyR5BRZVPt8gGzdpdi3E9DurruOAU+Nf0+kujyT/rWISW/?=
- =?us-ascii?Q?HPUktSwy8G4l9EVYXaV+KXkLJzDIWxbHDJP04iI/BMN5dcmj9fBZNfYSaSvc?=
- =?us-ascii?Q?u/J45dH55Pj4gjLyu80djLM9PUGGjZpJmhU9V/Ltdrwn0KKM0hA9MiLArQzZ?=
- =?us-ascii?Q?4oEPlPkWVZrSoy80k1Dh+Ybm4x8Iuv72q16L5/bKT3moFJuaHOoBsbrVF9RV?=
- =?us-ascii?Q?YW+Gq7T0Iw+5UtLsYHhNDuXoLxZ4l2K6JvpfX6eMHZS2FruH/+2YPFaLvEL+?=
- =?us-ascii?Q?aiq7dwYiuiQFVo/IG45R2gmM17rcKdX0MYKJ30ENm18aRERr10RbjzXWYCsh?=
- =?us-ascii?Q?H5bA91UrLaO0gs4fjQT1NfZDcC1P/0SFSM5m0hJgE2xDRptuWsPYhAi8aDTE?=
- =?us-ascii?Q?NMRKaTfS3SXAIIBDNEis8nzZnSpf7DAoGiXvgB0buraXlxADrY2Cpe9Y59aO?=
- =?us-ascii?Q?IcDQ/jWeQih7n4KAnXTFofu23IGm94tj36NVvHeuZhYn5Fiy/rRnr5kfp1fH?=
- =?us-ascii?Q?blSBj8ssYxxF904o55IUbOe/wwc4QwI1QslUSeVtWHSTN3yN0MEbWysUl+Nj?=
- =?us-ascii?Q?cMGFYUgJ//hl627B1YqSvjjS8n54O0JJwxUwRuuspHg21Xj7rqAIJERf1T4G?=
- =?us-ascii?Q?Nqz3QMLCSIM5zucYqMKp3ImgcWfvEhvsF7VisedxYjJSyi13/4wvxLdmTaTp?=
- =?us-ascii?Q?wdPzWwvD+e5PxRDymBEFwfSzzFZsu5Y5iDkAHzzCRu9EqeO9zml+RBpKDKKU?=
- =?us-ascii?Q?x5meegCDk4I1AK2F++l8W3Eibe4pt2Ebn9RSlgplDvIbWZzjbrB2sUd36r68?=
- =?us-ascii?Q?xnM0ASXWnTg=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CH0PR10MB5338.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(366016)(1800799024);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?ZkGWhfnqlluqIhKgE/BRyLNzqGKPTwyVnFmOUl9FRddRK7jBVilcly7XJ2jk?=
- =?us-ascii?Q?taIvtaxLxsKQ2sVrtLjGa0Bh3vHO43MfVo9HWuuxCRQ7fL/2nL/81mWePQgq?=
- =?us-ascii?Q?h6w8mQBeQcHaogUSvFhzpbz4yiR748vFvtkUX4BFveboEmWvc4ER3LQ9B1Gy?=
- =?us-ascii?Q?+zNbbwtXW57KovJGh9RVJ0lqBifsy57Wqjs5ExjKSZLAFjkCmH96J8nqxlip?=
- =?us-ascii?Q?e5VQKecq9kvgH7JuY3VVX/iI51bCT8/DgwChVGCd1qHk9GJcKyopCXcDbHYE?=
- =?us-ascii?Q?Ec/CQBZMk+kPjF4ie1pxLom/n6sLfScFpu0kBlZzjldVOMQRI+Dv8htqv4SL?=
- =?us-ascii?Q?YhgKnfXBVvQKLBrkj+5GGGkne3rRS3ONRMB660lWxvlYgO5XcAkjgA9vKQjn?=
- =?us-ascii?Q?hL3PPgccGmYY79M+6Oqu6eYm+l68243Md5aLX4rFiJFiZFTrP2fdckpfU9kA?=
- =?us-ascii?Q?f132LpdGtcbR8qfzd0UNXGozv0wsqeeLCKjzTkVSQr5Sm8XViDQihKOx/TpA?=
- =?us-ascii?Q?TS2GnbJVYr2P9V8fkwoXqOM2+GnCdOKy3EwwvubLt5gVSZ4Y84ag8i73gqQz?=
- =?us-ascii?Q?tl0DdNOLyuuo+oXwCZ/14jNWCd9hWH13XpLcVbuj8n+wyuEIAEl2d+zqc92h?=
- =?us-ascii?Q?5WgasPx1I2vGGv7O2iho5xcVXJnDU8OfKdW+Hxtju6GgJZPsjOS2xMSugNA3?=
- =?us-ascii?Q?MV1uNpAhvR8OEeLGIPFBGDq/KELTlSsnyU8BUZvXtEz13ioCoD6RvqWRWkz0?=
- =?us-ascii?Q?IE4ICrNLS1fsz6CjF0wtnKpZPVsPWdFzrwVB41UeNkvOATxxO9i3qDAZaFN6?=
- =?us-ascii?Q?7Cs9JLG6JlWLFdqvEr2CuVsCzaPAxbeJxKP+UnmF5n5OaA2TATqBlw1TsQpZ?=
- =?us-ascii?Q?nNOCKgYp3krReig7bTiFP9JG0VPnCzPq9dGFFV7t5/Tg4tWj6VoMfpUGCzxF?=
- =?us-ascii?Q?Sz72FrW8AHG46KK6Vu+qdfA+yOKI0FTxyRpIlPN7ik8aJSP5y8MrKLEZIUKG?=
- =?us-ascii?Q?Isl/FocNYfMT2SlkKuko2p8F3ubOt5bt2405cS2L3ob+koLtGv5sGFVKnrSW?=
- =?us-ascii?Q?fBCJ+UtOnxuvKMcrhpzdQyig3YbsF/hzSKjVOB4BRSE6IlKRR9Da3bpcZTib?=
- =?us-ascii?Q?P58ew2MjkVuIhKzrg3C/191c2tE2fcx5o9MjeryDZezo91DP88UgM8p/XqGt?=
- =?us-ascii?Q?KriydwytkT5wSZsEVlbFENQt8Nfw7k5tYZHL8EQkUkrQ06XwDqynpj5U3hm6?=
- =?us-ascii?Q?F4bVdjdtb+IpFYkR+j1oTSJWcxaR4x3LfEqBbV+1GaY78rOq8S5oezYZ8Kmg?=
- =?us-ascii?Q?gWU2vr8UzWB1OFVRHHt9f26D7gUKzZxWpvHjODXHcTp9wYPiISBGUGdJVf8f?=
- =?us-ascii?Q?YtEHwLH+vCOJiJhRwP306G4zoG5scBhSMstHRgg8A/hoxp8yB7FzEyhtkCRr?=
- =?us-ascii?Q?LkaoyIPM3+0nEdY94Kj+7LgeDSACNvXczCB9k1MbBiulhRmGVCdArODzzurI?=
- =?us-ascii?Q?PwlYCkf5+8KT8o5VQo/cuGvVJPi3+DvT/RqFWe+30QYbidyg8FmdkousE9lI?=
- =?us-ascii?Q?F8V/BOtfMZ+mhH8p1fmr/3C158+cath/nL13oLAxSN50zyqgaSwFuWt39UrV?=
- =?us-ascii?Q?nw=3D=3D?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	3IeeuGHFwDt/8hYW/G07FdEqPdrtkpZ8TxvHn7DEDUIxYdgOWrfNJaTy1AT3HaKBYa2A8h/GR6xwCCNCDEJ9r3q4nHnwepuTNpyzQwYw+icWgG/qdrkcOzR6swlAiySk1GAAPcm896pLIvnEc3EBITwS7K+uuC+IIByQXczQVUCkFPg+jNiI7pfDOgVRAhcYk4mfbIqXLwpWwaNI6GeQQ+IOYqyiZNJpfBtJIkYgJ46w+TDjDlp66cvZQdfQ++Wod56svlzqN7kQXD7yfJzUn1AI5F7jl+Y2mCOLjefVVCefxtn6jJk0au6lT4EpbflyBTqyv4BaSxlVtAKPbV+taM2LM5CCPtOdHvMoj07tlN9/JxjOuRV+xiHwRz04a2qXaPE5RVVyA3etwOl0VIZtize35qpG8URwIFnGys4z0fStYs7+ATBAr3yZRYhzCzLxF1D+hihCWZ4y5d432KdvmHqtO28KjBq2pz/FId34Tc2uYv8vPG9av9QCiUgvjeM0ki3Qzf+2YgXHX05Mc2twrlL3T3Iwqo9ZbdvazttjO4GAxUvzd1+TVUlLApkDv3QrCEJmX2LlaiKkRJ30b4/T5irhznvMJVsaFc8kV/LrI8g=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b68625fc-9d32-4902-b8b9-08ddbe8968c0
-X-MS-Exchange-CrossTenant-AuthSource: CH0PR10MB5338.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Jul 2025 01:39:13.5028
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: b7xYUD33KKlKdRbLLLFHK2jES6JvUyWuWZKDIK/a1kskkGUD5Oox9up0OHFB9E3/sathUSdydYQQW8Xyb+8FYKSR1X3/iyKQRF8tLr8mS3M=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA1PR10MB7832
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.7,FMLib:17.12.80.40
- definitions=2025-07-09_01,2025-07-08_01,2025-03-28_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0 adultscore=0 suspectscore=0
- mlxlogscore=919 phishscore=0 malwarescore=0 mlxscore=0 bulkscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2505160000
- definitions=main-2507090013
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzA5MDAxMyBTYWx0ZWRfXwNPmY9iJG/pV PD+5QoPrA6Kzo42ie9KsivuhZL/g2OqWU1m4BOvKyPpO32r7E9zuNfhswXig460wTElrcr8ABV+ d0pskrq6QA2GhtDkoruxBWbu/YHrGHjq5FzkcdtcYyauXWHpagkuZSvmqOUuafUUAnqE7DDPwLr
- fF75ZBAOeoCn/vF03EzWR6ionULW4pbsKrPABEUPRii8I5GzLYN7rkEUxJXbtvJqUMqC7U8xsLl 4A9SvATsps29RSr8gReJ1VR9vPfIQde5rU6S1/WNGTXGhop0pacIXg0j02t3sqIDTJeW0jMkk2X bM3Y44zuS9nGkZw53lSuGRRhfblZc0t57w2d4SIvtdZQiaMfJE6leh2qCGRXuIsLzaAues4FqgL
- j3tmmiWOq4hTC+amvB1WAC7SE+Gao6d04Oo5sHG6sEvXKnMfi6yKZkChR6U4cziE8xiA3mpw
-X-Authority-Analysis: v=2.4 cv=J8yq7BnS c=1 sm=1 tr=0 ts=686dc84c cx=c_pps a=OOZaFjgC48PWsiFpTAqLcw==:117 a=OOZaFjgC48PWsiFpTAqLcw==:17 a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=wKuvFiaSGQ0qltdbU6+NXLB8nM8=:19
- a=Ol13hO9ccFRV9qXi2t6ftBPywas=:19 a=xqWC_Br6kY4A:10 a=Wb1JkmetP80A:10 a=GoEa3M9JfhUA:10 a=l43HSHfcXPU9cvbv6dEA:9
-X-Proofpoint-ORIG-GUID: g-vGH5TiSIKkeJuSUjS1uBgAdA_5WxnB
-X-Proofpoint-GUID: g-vGH5TiSIKkeJuSUjS1uBgAdA_5WxnB
+Content-Transfer-Encoding: 8bit
 
+The support for asynchronous hashes in dm-verity has outlived its
+usefulness.  It adds significant code complexity and opportunity for
+bugs.  I don't know of anyone using it practice.  (The original
+submitter of the code possibly was, but that was 8 years ago.)  Data I
+recently collected for en/decryption shows that using off-CPU crypto
+"accelerators" is consistently much slower than the CPU
+(https://lore.kernel.org/r/20250704070322.20692-1-ebiggers@kernel.org/),
+even on CPUs that lack dedicated cryptographic instructions.  Similar
+results are likely to be seen for hashing.
 
-John,
+I already removed support for asynchronous hashes from fsverity two
+years ago, and no one ever complained.
 
-> For io_min/opt, maybe reduce to a factor of the stripe size / width
-> (and which fits in a unsigned int).
->
-> I am not sure if it is even sane to have such huge values in io_min
-> and the bottom disk io_min should be used directly instead.
+Moreover, neither dm-verity, fsverity, nor fscrypt has ever actually
+used the asynchronous crypto algorithms in a truly asynchronous manner.
+The lack of interest in such optimizations provides further evidence
+that it's only the CPU-based crypto that actually matters.
 
-The intent for io_min was to convey the physical_block_size in the case
-of an individual drive. And for it to be set to the stripe chunk size in
-stacking scenarios that would otherwise involve read-modify-write (i.e.
-RAID5 and RAID6).
+Historically, it's also been common for people to forget to enable the
+optimized SHA-256 code, which could contribute to an off-CPU crypto
+engine being perceived as more useful than it really is.  In 6.16 I
+fixed that: the optimized SHA-256 code is now enabled by default.
 
-io_opt was meant to communicate the stripe width. Reporting very large
-values for io_opt is generally counterproductive since we can't write
-multiple gigabytes in a single operation anyway.
+Therefore, let's drop the support for asynchronous hashes in dm-verity.
 
-logical <= physical <= io_min <= io_opt <= max_sectors <= max_hw_sectors
+Tested with verity-compat-test.
 
+Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+---
+ drivers/md/dm-verity-target.c | 175 +++++-----------------------------
+ drivers/md/dm-verity.h        |  20 ++--
+ 2 files changed, 30 insertions(+), 165 deletions(-)
+
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 81186bded1ce7..f94d0b6bd6ba0 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -17,11 +17,10 @@
+ #include "dm-verity-fec.h"
+ #include "dm-verity-verify-sig.h"
+ #include "dm-audit.h"
+ #include <linux/module.h>
+ #include <linux/reboot.h>
+-#include <linux/scatterlist.h>
+ #include <linux/string.h>
+ #include <linux/jump_label.h>
+ #include <linux/security.h>
+ 
+ #define DM_MSG_PREFIX			"verity"
+@@ -59,13 +58,10 @@ static unsigned int dm_verity_use_bh_bytes[4] = {
+ 
+ module_param_array_named(use_bh_bytes, dm_verity_use_bh_bytes, uint, NULL, 0644);
+ 
+ static DEFINE_STATIC_KEY_FALSE(use_bh_wq_enabled);
+ 
+-/* Is at least one dm-verity instance using ahash_tfm instead of shash_tfm? */
+-static DEFINE_STATIC_KEY_FALSE(ahash_enabled);
+-
+ struct dm_verity_prefetch_work {
+ 	struct work_struct work;
+ 	struct dm_verity *v;
+ 	unsigned short ioprio;
+ 	sector_t block;
+@@ -116,104 +112,25 @@ static sector_t verity_position_at_level(struct dm_verity *v, sector_t block,
+ 					 int level)
+ {
+ 	return block >> (level * v->hash_per_block_bits);
+ }
+ 
+-static int verity_ahash_update(struct dm_verity *v, struct ahash_request *req,
+-				const u8 *data, size_t len,
+-				struct crypto_wait *wait)
+-{
+-	struct scatterlist sg;
+-
+-	if (likely(!is_vmalloc_addr(data))) {
+-		sg_init_one(&sg, data, len);
+-		ahash_request_set_crypt(req, &sg, NULL, len);
+-		return crypto_wait_req(crypto_ahash_update(req), wait);
+-	}
+-
+-	do {
+-		int r;
+-		size_t this_step = min_t(size_t, len, PAGE_SIZE - offset_in_page(data));
+-
+-		flush_kernel_vmap_range((void *)data, this_step);
+-		sg_init_table(&sg, 1);
+-		sg_set_page(&sg, vmalloc_to_page(data), this_step, offset_in_page(data));
+-		ahash_request_set_crypt(req, &sg, NULL, this_step);
+-		r = crypto_wait_req(crypto_ahash_update(req), wait);
+-		if (unlikely(r))
+-			return r;
+-		data += this_step;
+-		len -= this_step;
+-	} while (len);
+-
+-	return 0;
+-}
+-
+-/*
+- * Wrapper for crypto_ahash_init, which handles verity salting.
+- */
+-static int verity_ahash_init(struct dm_verity *v, struct ahash_request *req,
+-				struct crypto_wait *wait, bool may_sleep)
+-{
+-	int r;
+-
+-	ahash_request_set_tfm(req, v->ahash_tfm);
+-	ahash_request_set_callback(req,
+-		may_sleep ? CRYPTO_TFM_REQ_MAY_SLEEP | CRYPTO_TFM_REQ_MAY_BACKLOG : 0,
+-		crypto_req_done, (void *)wait);
+-	crypto_init_wait(wait);
+-
+-	r = crypto_wait_req(crypto_ahash_init(req), wait);
+-
+-	if (unlikely(r < 0)) {
+-		if (r != -ENOMEM)
+-			DMERR("crypto_ahash_init failed: %d", r);
+-		return r;
+-	}
+-
+-	if (likely(v->salt_size && (v->version >= 1)))
+-		r = verity_ahash_update(v, req, v->salt, v->salt_size, wait);
+-
+-	return r;
+-}
+-
+-static int verity_ahash_final(struct dm_verity *v, struct ahash_request *req,
+-			      u8 *digest, struct crypto_wait *wait)
+-{
+-	int r;
+-
+-	if (unlikely(v->salt_size && (!v->version))) {
+-		r = verity_ahash_update(v, req, v->salt, v->salt_size, wait);
+-
+-		if (r < 0) {
+-			DMERR("%s failed updating salt: %d", __func__, r);
+-			goto out;
+-		}
+-	}
+-
+-	ahash_request_set_crypt(req, NULL, digest, 0);
+-	r = crypto_wait_req(crypto_ahash_final(req), wait);
+-out:
+-	return r;
+-}
+-
+ int verity_hash(struct dm_verity *v, struct dm_verity_io *io,
+ 		const u8 *data, size_t len, u8 *digest, bool may_sleep)
+ {
++	struct shash_desc *desc = &io->hash_desc;
+ 	int r;
+ 
+-	if (static_branch_unlikely(&ahash_enabled) && !v->shash_tfm) {
+-		struct ahash_request *req = verity_io_hash_req(v, io);
+-		struct crypto_wait wait;
+-
+-		r = verity_ahash_init(v, req, &wait, may_sleep) ?:
+-		    verity_ahash_update(v, req, data, len, &wait) ?:
+-		    verity_ahash_final(v, req, digest, &wait);
++	desc->tfm = v->shash_tfm;
++	if (unlikely(v->initial_hashstate == NULL)) {
++		/* version 0: salt at end */
++		r = crypto_shash_init(desc) ?:
++		    crypto_shash_update(desc, data, len) ?:
++		    crypto_shash_update(desc, v->salt, v->salt_size) ?:
++		    crypto_shash_final(desc, digest);
+ 	} else {
+-		struct shash_desc *desc = verity_io_hash_req(v, io);
+-
+-		desc->tfm = v->shash_tfm;
++		/* version 1: salt at beginning */
+ 		r = crypto_shash_import(desc, v->initial_hashstate) ?:
+ 		    crypto_shash_finup(desc, data, len, digest);
+ 	}
+ 	if (unlikely(r))
+ 		DMERR("Error hashing block: %d", r);
+@@ -1090,16 +1007,11 @@ static void verity_dtr(struct dm_target *ti)
+ 	kfree(v->initial_hashstate);
+ 	kfree(v->root_digest);
+ 	kfree(v->zero_digest);
+ 	verity_free_sig(v);
+ 
+-	if (v->ahash_tfm) {
+-		static_branch_dec(&ahash_enabled);
+-		crypto_free_ahash(v->ahash_tfm);
+-	} else {
+-		crypto_free_shash(v->shash_tfm);
+-	}
++	crypto_free_shash(v->shash_tfm);
+ 
+ 	kfree(v->alg_name);
+ 
+ 	if (v->hash_dev)
+ 		dm_put_device(ti, v->hash_dev);
+@@ -1155,11 +1067,12 @@ static int verity_alloc_zero_digest(struct dm_verity *v)
+ 	v->zero_digest = kmalloc(v->digest_size, GFP_KERNEL);
+ 
+ 	if (!v->zero_digest)
+ 		return r;
+ 
+-	io = kmalloc(sizeof(*io) + v->hash_reqsize, GFP_KERNEL);
++	io = kmalloc(sizeof(*io) + crypto_shash_descsize(v->shash_tfm),
++		     GFP_KERNEL);
+ 
+ 	if (!io)
+ 		return r; /* verity_dtr will free zero_digest */
+ 
+ 	zero_data = kzalloc(1 << v->data_dev_block_bits, GFP_KERNEL);
+@@ -1322,74 +1235,37 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
+ }
+ 
+ static int verity_setup_hash_alg(struct dm_verity *v, const char *alg_name)
+ {
+ 	struct dm_target *ti = v->ti;
+-	struct crypto_ahash *ahash;
+-	struct crypto_shash *shash = NULL;
+-	const char *driver_name;
++	struct crypto_shash *shash;
+ 
+ 	v->alg_name = kstrdup(alg_name, GFP_KERNEL);
+ 	if (!v->alg_name) {
+ 		ti->error = "Cannot allocate algorithm name";
+ 		return -ENOMEM;
+ 	}
+ 
+-	/*
+-	 * Allocate the hash transformation object that this dm-verity instance
+-	 * will use.  The vast majority of dm-verity users use CPU-based
+-	 * hashing, so when possible use the shash API to minimize the crypto
+-	 * API overhead.  If the ahash API resolves to a different driver
+-	 * (likely an off-CPU hardware offload), use ahash instead.  Also use
+-	 * ahash if the obsolete dm-verity format with the appended salt is
+-	 * being used, so that quirk only needs to be handled in one place.
+-	 */
+-	ahash = crypto_alloc_ahash(alg_name, 0,
+-				   v->use_bh_wq ? CRYPTO_ALG_ASYNC : 0);
+-	if (IS_ERR(ahash)) {
++	shash = crypto_alloc_shash(alg_name, 0, 0);
++	if (IS_ERR(shash)) {
+ 		ti->error = "Cannot initialize hash function";
+-		return PTR_ERR(ahash);
+-	}
+-	driver_name = crypto_ahash_driver_name(ahash);
+-	if (v->version >= 1 /* salt prepended, not appended? */) {
+-		shash = crypto_alloc_shash(alg_name, 0, 0);
+-		if (!IS_ERR(shash) &&
+-		    strcmp(crypto_shash_driver_name(shash), driver_name) != 0) {
+-			/*
+-			 * ahash gave a different driver than shash, so probably
+-			 * this is a case of real hardware offload.  Use ahash.
+-			 */
+-			crypto_free_shash(shash);
+-			shash = NULL;
+-		}
+-	}
+-	if (!IS_ERR_OR_NULL(shash)) {
+-		crypto_free_ahash(ahash);
+-		ahash = NULL;
+-		v->shash_tfm = shash;
+-		v->digest_size = crypto_shash_digestsize(shash);
+-		v->hash_reqsize = sizeof(struct shash_desc) +
+-				  crypto_shash_descsize(shash);
+-		DMINFO("%s using shash \"%s\"", alg_name, driver_name);
+-	} else {
+-		v->ahash_tfm = ahash;
+-		static_branch_inc(&ahash_enabled);
+-		v->digest_size = crypto_ahash_digestsize(ahash);
+-		v->hash_reqsize = sizeof(struct ahash_request) +
+-				  crypto_ahash_reqsize(ahash);
+-		DMINFO("%s using ahash \"%s\"", alg_name, driver_name);
++		return PTR_ERR(shash);
+ 	}
++	v->shash_tfm = shash;
++	v->digest_size = crypto_shash_digestsize(shash);
++	DMINFO("%s using \"%s\"", alg_name, crypto_shash_driver_name(shash));
+ 	if ((1 << v->hash_dev_block_bits) < v->digest_size * 2) {
+ 		ti->error = "Digest size too big";
+ 		return -EINVAL;
+ 	}
+ 	return 0;
+ }
+ 
+ static int verity_setup_salt_and_hashstate(struct dm_verity *v, const char *arg)
+ {
+ 	struct dm_target *ti = v->ti;
++	SHASH_DESC_ON_STACK(desc, v->shash_tfm);
+ 
+ 	if (strcmp(arg, "-") != 0) {
+ 		v->salt_size = strlen(arg) / 2;
+ 		v->salt = kmalloc(v->salt_size, GFP_KERNEL);
+ 		if (!v->salt) {
+@@ -1400,12 +1276,11 @@ static int verity_setup_salt_and_hashstate(struct dm_verity *v, const char *arg)
+ 		    hex2bin(v->salt, arg, v->salt_size)) {
+ 			ti->error = "Invalid salt";
+ 			return -EINVAL;
+ 		}
+ 	}
+-	if (v->shash_tfm) {
+-		SHASH_DESC_ON_STACK(desc, v->shash_tfm);
++	if (v->version) {
+ 		int r;
+ 
+ 		/*
+ 		 * Compute the pre-salted hash state that can be passed to
+ 		 * crypto_shash_import() for each block later.
+@@ -1679,11 +1554,12 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		ti->error = "Cannot allocate workqueue";
+ 		r = -ENOMEM;
+ 		goto bad;
+ 	}
+ 
+-	ti->per_io_data_size = sizeof(struct dm_verity_io) + v->hash_reqsize;
++	ti->per_io_data_size = sizeof(struct dm_verity_io) +
++			       crypto_shash_descsize(v->shash_tfm);
+ 
+ 	r = verity_fec_ctr(v);
+ 	if (r)
+ 		goto bad;
+ 
+@@ -1786,14 +1662,11 @@ static int verity_preresume(struct dm_target *ti)
+ 
+ 	v = ti->private;
+ 	bdev = dm_disk(dm_table_get_md(ti->table))->part0;
+ 	root_digest.digest = v->root_digest;
+ 	root_digest.digest_len = v->digest_size;
+-	if (static_branch_unlikely(&ahash_enabled) && !v->shash_tfm)
+-		root_digest.alg = crypto_ahash_alg_name(v->ahash_tfm);
+-	else
+-		root_digest.alg = crypto_shash_alg_name(v->shash_tfm);
++	root_digest.alg = crypto_shash_alg_name(v->shash_tfm);
+ 
+ 	r = security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_ROOTHASH, &root_digest,
+ 				       sizeof(root_digest));
+ 	if (r)
+ 		return r;
+diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+index 8cbb57862ae19..d6a0e912f2e18 100644
+--- a/drivers/md/dm-verity.h
++++ b/drivers/md/dm-verity.h
+@@ -37,15 +37,14 @@ struct dm_verity {
+ 	struct dm_dev *data_dev;
+ 	struct dm_dev *hash_dev;
+ 	struct dm_target *ti;
+ 	struct dm_bufio_client *bufio;
+ 	char *alg_name;
+-	struct crypto_ahash *ahash_tfm; /* either this or shash_tfm is set */
+-	struct crypto_shash *shash_tfm; /* either this or ahash_tfm is set */
++	struct crypto_shash *shash_tfm;
+ 	u8 *root_digest;	/* digest of the root block */
+ 	u8 *salt;		/* salt: its size is salt_size */
+-	u8 *initial_hashstate;	/* salted initial state, if shash_tfm is set */
++	u8 *initial_hashstate;	/* salted initial state, if version >= 1 */
+ 	u8 *zero_digest;	/* digest for a zero block */
+ #ifdef CONFIG_SECURITY
+ 	u8 *root_digest_sig;	/* signature of the root digest */
+ 	unsigned int sig_size;	/* root digest signature size */
+ #endif /* CONFIG_SECURITY */
+@@ -59,11 +58,10 @@ struct dm_verity {
+ 	unsigned char levels;	/* the number of tree levels */
+ 	unsigned char version;
+ 	bool hash_failed:1;	/* set if hash of any block failed */
+ 	bool use_bh_wq:1;	/* try to verify in BH wq before normal work-queue */
+ 	unsigned int digest_size;	/* digest size for the current hash algorithm */
+-	unsigned int hash_reqsize; /* the size of temporary space for crypto */
+ 	enum verity_mode mode;	/* mode for handling verification errors */
+ 	enum verity_mode error_mode;/* mode for handling I/O errors */
+ 	unsigned int corrupted_errs;/* Number of errors for corrupted blocks */
+ 
+ 	struct workqueue_struct *verify_wq;
+@@ -98,23 +96,17 @@ struct dm_verity_io {
+ 
+ 	u8 real_digest[HASH_MAX_DIGESTSIZE];
+ 	u8 want_digest[HASH_MAX_DIGESTSIZE];
+ 
+ 	/*
+-	 * This struct is followed by a variable-sized hash request of size
+-	 * v->hash_reqsize, either a struct ahash_request or a struct shash_desc
+-	 * (depending on whether ahash_tfm or shash_tfm is being used).  To
+-	 * access it, use verity_io_hash_req().
++	 * Temporary space for hashing.  This is variable-length and must be at
++	 * the end of the struct.  struct shash_desc is just the fixed part;
++	 * it's followed by a context of size crypto_shash_descsize(shash_tfm).
+ 	 */
++	struct shash_desc hash_desc;
+ };
+ 
+-static inline void *verity_io_hash_req(struct dm_verity *v,
+-				       struct dm_verity_io *io)
+-{
+-	return io + 1;
+-}
+-
+ static inline u8 *verity_io_real_digest(struct dm_verity *v,
+ 					struct dm_verity_io *io)
+ {
+ 	return io->real_digest;
+ }
+
+base-commit: 846e9e999dd36ce5898d302d674e441e72c3a8cf
 -- 
-Martin K. Petersen
+2.50.1
+
