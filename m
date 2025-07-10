@@ -1,153 +1,107 @@
-Received: from out-177.mta0.migadu.com (out-177.mta0.migadu.com [91.218.175.177])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7A282E5B2A
-	for <dm-devel@lists.linux.dev>; Thu, 10 Jul 2025 10:59:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6CBF772636
+	for <dm-devel@lists.linux.dev>; Thu, 10 Jul 2025 15:04:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752145198; cv=none; b=BhA9LIEGdUt/OFv+vLTzyG39zqkQeszVKH2PzDKm/g+gXOw2AG8BSX8XYJ+eelHEj9LoclOL1X+UjeJwl/JlqKBiR4pq3xfo8RiWutYnIBDH1oWEbgadRUaaQSfGChoOcNKXCXV0mh0rzQ53pGi4ZlxVzCpEHtBy9cwe6C6dAOo=
+	t=1752159847; cv=none; b=BHQXg+vk09+o9Uz6Qxi+Vcq6oiWtXe5oRfFbBEDaTh/dkV137XcdY96vydBKEDhkN/aNIK4OtrNWHJfl0Qg+LlZQyO9ux9bJEE09R7SWJyNS95pwTckHFkbwvtHcd63vitSSNGKT2S692IylpgAhR6B4foTHH+vBe3Hs0RY2ZTg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752145198; c=relaxed/simple;
-	bh=4DFOJCCsvI24QKbrJDm/aFnyarYSoJI2WT5J2wb9AVM=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=UjOxaaAM7c5tsuwLyXdX0REaoUfhL0K4yEOpU43ZBrmYi1zxNYuFjI/41QffgkzaP/8lQXQYT7dkY8KmzgQQrqnbTaAt88/DNRqP06Aml/cV32Yfhi1BPbgqs8gkQ5mHnRtmSgG0i+cXGr8DZoZzGh379dfkaSOP/dpSRat0xMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=JTkO1R1x; arc=none smtp.client-ip=91.218.175.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1752159847; c=relaxed/simple;
+	bh=kttiDqozO+WQNGP1tvbnqpD9ilF2IK07GUI4Ye+djuA=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=RJx2Q6Pq558VbTFA112rb1PtZZ7SEdYzkhMikjt1RyNKzkNHEppVmabt8f3Kc0cxWsbFS1nt+DgcpXll1IWVxPBtXI9fUJJRNyQhGpZFGNDagyIHjMor1CXn/hIAq5FWx0Jx2B/bp3ZG54h2JtRRWcOtCoy/qZZaWdtIfRi/yQQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gqaAs8UI; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="JTkO1R1x"
-Message-ID: <41d1245c-8a7f-4c5a-ba84-8e7e33b896b2@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1752145191;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gqaAs8UI"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1752159843;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=KtJpoUInX8ucjkyFAiUJkj/ubfAu8PdaUF9qEnnOSvU=;
-	b=JTkO1R1xjDfTuBgYIJDFm3myKaXQxfj7KA99JQhTwFwRfJfdlMfVqNb/32AJd5hVEQc+/y
-	ikDzG1CMPk+cf8GKLXp/oLnpGKCdp7YDNo5FxvVniKBGn3a8Zm+sh5S0I4Llam3Gk8JIy6
-	rXWG6A9C3kEzH2Wcxqp1WgkQkckbLIs=
-Date: Thu, 10 Jul 2025 18:59:40 +0800
+	bh=TQGHAobwwa27OfNzUbQzcEFwWIUKV1Qc4DtxoIyeEUQ=;
+	b=gqaAs8UIIfVko4K9SnxECkkHuOkLrOe1MrCp4+uKpUe+fBz051soqTX9DfHFmTmWVT4KZG
+	4zFIxEX+rfqD9nTyTD2644cVXziOvFdaMMR34aOvO0/RHMYv8S9/bcCL43fXumhoxOH8CO
+	bEJWWWER3BCh86ORBIgI4SWhTxSahrU=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-692-vU9GuSbkM7K9mnx_sH6I4Q-1; Thu,
+ 10 Jul 2025 11:04:00 -0400
+X-MC-Unique: vU9GuSbkM7K9mnx_sH6I4Q-1
+X-Mimecast-MFC-AGG-ID: vU9GuSbkM7K9mnx_sH6I4Q_1752159836
+Received: from mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.40])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D62511956075;
+	Thu, 10 Jul 2025 15:03:55 +0000 (UTC)
+Received: from [10.22.80.10] (unknown [10.22.80.10])
+	by mx-prod-int-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6330F19560A3;
+	Thu, 10 Jul 2025 15:03:50 +0000 (UTC)
+Date: Thu, 10 Jul 2025 17:03:43 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: John Garry <john.g.garry@oracle.com>
+cc: agk@redhat.com, snitzer@kernel.org, song@kernel.org, yukuai3@huawei.com, 
+    hch@lst.de, nilay@linux.ibm.com, axboe@kernel.dk, cem@kernel.org, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+    linux-raid@vger.kernel.org, linux-block@vger.kernel.org, 
+    ojaswin@linux.ibm.com, martin.petersen@oracle.com, 
+    akpm@linux-foundation.org, linux-xfs@vger.kernel.org, djwong@kernel.org
+Subject: Re: [PATCH v5 5/6] dm-stripe: limit chunk_sectors to the stripe
+ size
+In-Reply-To: <20250709100238.2295112-6-john.g.garry@oracle.com>
+Message-ID: <5e2bbd34-e112-c15a-37ea-f97cbede910c@redhat.com>
+References: <20250709100238.2295112-1-john.g.garry@oracle.com> <20250709100238.2295112-6-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v2_00/11=5D_dm-pcache_=E2=80=93_persistent?=
- =?UTF-8?Q?-memory_cache_for_block_devices?=
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de,
- dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, dm-devel@lists.linux.dev
-References: <20250707065809.437589-1-dongsheng.yang@linux.dev>
- <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com>
- <e50ef45e-4c1a-4874-8d5f-9ca86f9a532c@linux.dev>
-In-Reply-To: <e50ef45e-4c1a-4874-8d5f-9ca86f9a532c@linux.dev>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.40
 
 
-在 7/9/2025 5:45 PM, Dongsheng Yang 写道:
->
-> 在 7/8/2025 4:16 AM, Mikulas Patocka 写道:
->>
->> On Mon, 7 Jul 2025, Dongsheng Yang wrote:
->>
->>> Hi Mikulas,
->>>     This is V2 for dm-pcache, please take a look.
->>>
->>> Code:
->>>      https://github.com/DataTravelGuide/linux tags/pcache_v2
->>>
->>> Changelogs
->>>
->>> V2 from V1:
->>>     - introduce req_alloc() and req_init() in backing_dev.c, then we
->>>       can do req_alloc() before holding spinlock and do req_init()
->>>       in subtree_walk().
->>>     - introduce pre_alloc_key and pre_alloc_req in walk_ctx, that
->>>       means we can pre-allocate cache_key or backing_dev_request
->>>       before subtree walking.
->>>     - use mempool_alloc() with NOIO for the allocation of cache_key
->>>       and backing_dev_req.
->>>     - some coding style changes from comments of Jonathan.
->> Hi
->>
->> mempool_alloc with GFP_NOIO never fails - so you don't have to check the
->> returned value for NULL and propagate the error upwards.
->
->
-> Hi Mikulas:
->
->    I noticed that the implementation of mempool_alloc—it waits for 5 
-> seconds and retries when allocation fails.
->
-> With this in mind, I propose that we handle -ENOMEM inside defer_req() 
-> using a similar mechanism. something like this commit:
->
->
-> https://github.com/DataTravelGuide/linux/commit/e6fc2e5012b1fe2312ed7dd02d6fbc2d038962c0 
->
->
->
-> Here are two key reasons why:
->
-> (1) If we manage -ENOMEM in defer_req(), we don’t need to modify every 
-> lower-level allocation to use mempool to avoid failures—for example,
->
-> cache_key, backing_req, and the kmem.bvecs you mentioned. More 
-> importantly, there’s no easy way to prevent allocation failure in some 
-> places—for instance, bio_init_clone() could still return -ENOMEM.
->
-> (2) If we use a mempool, it will block and wait indefinitely when 
-> memory is unavailable, preventing the process from exiting.
->
-> But with defer_req(), the user can still manually stop the pcache 
-> device using dmsetup remove, releasing some memory if user want.
->
->
-> What do you think?
 
+On Wed, 9 Jul 2025, John Garry wrote:
 
-BTW, I added a test case for NOMEM scenario by using failslab:
+> Same as done for raid0, set chunk_sectors limit to appropriately set the
+> atomic write size limit.
+> 
+> Setting chunk_sectors limit in this way overrides the stacked limit
+> already calculated based on the bottom device limits. This is ok, as
+> when any bios are sent to the bottom devices, the block layer will still
+> respect the bottom device chunk_sectors.
+> 
+> Reviewed-by: Nilay Shroff <nilay@linux.ibm.com>
+> Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>  drivers/md/dm-stripe.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+> index a7dc04bd55e5..5bbbdf8fc1bd 100644
+> --- a/drivers/md/dm-stripe.c
+> +++ b/drivers/md/dm-stripe.c
+> @@ -458,6 +458,7 @@ static void stripe_io_hints(struct dm_target *ti,
+>  	struct stripe_c *sc = ti->private;
+>  	unsigned int chunk_size = sc->chunk_size << SECTOR_SHIFT;
+>  
+> +	limits->chunk_sectors = sc->chunk_size;
+>  	limits->io_min = chunk_size;
+>  	limits->io_opt = chunk_size * sc->stripes;
+>  }
+> -- 
+> 2.43.5
 
+Hi
 
-https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data/pcache_failslab.sh
+This will conflict with the current dm code in linux-dm.git. Should I fix 
+up the conflict and commit it through the linux-dm git?
 
->
-> Thanx
->
-> Dongsheng
->
->>
->> "backing_req->kmem.bvecs = kmalloc_array(n_vecs, sizeof(struct bio_vec),
->> GFP_NOIO)" - this call may fail and you should handle the error 
->> gracefully
->> (i.e. don't end the bio with an error). Would it be possible to trim the
->> request to BACKING_DEV_REQ_INLINE_BVECS vectors and retry it?
->> Alternativelly, you can create a mempool for the largest possible n_vecs
->> and allocate from this mempool if kmalloc_array fails.
->>
->> I'm sending two patches for dm-pcache - the first patch adds the include
->> file linux/bitfield.h - it is needed in my config. The second patch 
->> makes
->> slab caches per-module rather than per-device, if you have them
->> per-device, there are warnings about duplicate cache names.
->>
->>
->> BTW. What kind of persistent memory do you use? (afaik Intel killed the
->> Optane products and I don't know of any replacement)
->>
->> Some times ago I created a filesystem for persistent memory - see
->> git://leontynka.twibright.com/nvfs.git - I'd be interested if you can 
->> test
->> it on your persistent memory implementation.
->>
->> Mikulas
->>
->
+Mikulas
+
