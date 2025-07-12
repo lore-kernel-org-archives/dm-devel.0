@@ -1,139 +1,112 @@
-Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com [209.85.221.44])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA3401F0E29
-	for <dm-devel@lists.linux.dev>; Sat, 12 Jul 2025 20:14:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C317A22A808
+	for <dm-devel@lists.linux.dev>; Sat, 12 Jul 2025 22:11:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752351300; cv=none; b=TLP9NrgSphoXifC5JHBfm0usBkckKr+v5GXV/pWKSqKOrmFnqDAYcOH78f4M0CgNadzfASyMjF0l8/Uikvzp6FwHJcRfE5UV0UyAp9seMBqeKLM2U82YGD3q4l86zRw+jo9R/sIiWV8m58Sh5oFudL8/j4oG64gqQ/1GgtqtT4w=
+	t=1752358296; cv=none; b=HWwuvLaF7SBKftETD0iEmzyujMgq0sfmawEZYWi4vzeQMz4Q8uWFOeMYXkqbQr9IjPTwA9v1xk6Y43M0Rt3gvaGvsqpOU7tLL8Edt2JhSnjInUJmNbb0zIyIubeHd749hGhQctJ0cqIAwre9gMNY/Z5aW7OyXmuQu3dibTzW8i4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752351300; c=relaxed/simple;
-	bh=Az09RGSg/CWES0TEpg5AmHj9cs8SpA23n3ISythda1E=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=PfoDq5fXE9XeiIZ5zjFCHjFPcM1Sx9WkgKnb0BxW1vtmdxUKBBRFNfdZrvVMBneZIFioMhr5shHtb7QEF0S0IE/VeomGdmZ/SPwS/rxuNuRvhyyrNdAwdpPLBtiZgCyqLfPlBMD7FKYqXhXqgUe0Y4+rYm/UDTJtcoPTlxKYljY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kLMdHBsi; arc=none smtp.client-ip=209.85.221.44
+	s=arc-20240116; t=1752358296; c=relaxed/simple;
+	bh=Ae8NoXwXSlJEHjBfj9+SvAwqq53ABo/o138ibg61o/8=;
+	h=Message-ID:Date:MIME-Version:Subject:Cc:References:From:
+	 In-Reply-To:Content-Type; b=RxocBS8lxMz/9+RArsNL70z8mEyRBbT0IHXFljGRllsLWJmHnTkqJTJXtKxww/Vm2F7+0sSdKPMLjpHDG0pML92XtPfwAFIAgW/fT9igSI8B8jvmf45t5xhOQBiYbMhYt9h9SEHn8IHAzZxmt3XnO+diqnt/GDtDk0D1ITkzpBA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=X9Tfw0it; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kLMdHBsi"
-Received: by mail-wr1-f44.google.com with SMTP id ffacd0b85a97d-3a524caf77eso395413f8f.3
-        for <dm-devel@lists.linux.dev>; Sat, 12 Jul 2025 13:14:57 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="X9Tfw0it"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-456077f0e6eso478765e9.1
+        for <dm-devel@lists.linux.dev>; Sat, 12 Jul 2025 15:11:34 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1752351296; x=1752956096; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=c2H/5n9iiow4hm4TqJZcD/kc8dTmrePwwyGHqrCmV0Q=;
-        b=kLMdHBsi7tQOvUKAmB9WsoXqV31PctLehmPl/3KhnXFgF5ArBGMgLPZLSFd0NI6N9l
-         m+HlGkPe7+wL3iZOB4vIeMIrmr78gtftvxKy8AKqIwZeK7+s7+wcT9b0B84s4Fntn/Jg
-         C6koHdUGgXAOUHrnYugWmuu8pgKrS4lrvG6953ij4IxlFKy6rPMR+RpJ/znNIWXwM93n
-         +pJRSJ5YuMXRvED/2KMgSAeyGTVVSByFKRCvq9zOXoJJVN2vcmQ90DgEp/7P1Q35GUok
-         gZVz8LjxpAMbrZKvRg5HP038TdEQ9v43T8/jvBZftpuz5LD5xXUU4RiJ/XEXZEraj7cn
-         EGTA==
+        d=gmail.com; s=20230601; t=1752358293; x=1752963093; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=rIEQX44X/NeDZwLNKmN4YY266j4thbPs2H0dkeS01cM=;
+        b=X9Tfw0itYG+dK1k8da6X3WPvRg033dvWsSSTL23Wx9d7y08LEaJ1foCgDvc+2lhpib
+         5MAzg+iIuagg2rk3T3tYPAJgorCZmQdMLQpxks9buZiwXdlAlTCFvOiSpFHLJVNqp11O
+         UvAzLIxicezdfbkIGUE2iJgHc/LTTmVoldlmEYnuGhMQPcrBnRmxsdxrqFck/3GRA784
+         84YGnoIzQz7qQKFA9xdSpRd32cokUsIN+un8hAJhu+pbCykflhFuBp0wSzsO5er6B/LI
+         CMngv0qO98tQnOV4jIcR+XOFx48Yn36JscOqfq4VGb0awPymIKjWoy1NSzYlVAPGIyWL
+         1uBw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752351296; x=1752956096;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=c2H/5n9iiow4hm4TqJZcD/kc8dTmrePwwyGHqrCmV0Q=;
-        b=nJfOqIXWpDJC+9EI5O4J9whDxNs1I0ryXastcGYq4xdBwjPsgQoKsEG15X9yWiQR0i
-         juVHf3tMAGbe3TypbMLZ8ih1SclMejbUjJkjqim3wtn7LLGYrn4btdrsJ5HHla/03az+
-         AM88LwfzWcHJ8HN/1LhCXoHyRfyGmf8CbtO5e+bdy8I+Vbfh5x3cLkMTCqW6KciZmVO2
-         thZAi5sCtRJ99Yzx87zGv0qwDAdsIItzBo+BhpW2q5DbmYI5odCHG20tMLDxztfKaQUY
-         Cg6COuVor+yUp1BUh+Qd16xUtgxvUpbWwrVEs4mjXy3XUS/2n6xfdYmAPwj5CNU6aydW
-         tc2A==
-X-Forwarded-Encrypted: i=1; AJvYcCXVV38rG29za3/1mQp7sVvUkabhj15pNDw+oGROkZ56TRXzZmuLk3MOp91c3S9gxc+vHBXMhdLovA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw9Tt0a7rTAtXuJyca/h2WTY8O8o2Ursvduvm00633Pe3JbeChG
-	b2n/k3wAECNYoT87GXLjDLK/kDG8T2xGYDdwe1gThvVtY0vkrYcyIVA=
-X-Gm-Gg: ASbGncv0yT8g6EDygJKynYJ7pfcF2dvZe/Vg7XEYR8JLrkC9hd/b7njm1eXoPKN0RKW
-	/m3GuD8n8kjIiB6rhvj/ZX3A15gBjUgnb8aGcS7DSZnlVwfy4sum3Y6zmIAQLKJ1VaZnXS1RZOK
-	DANEEkyxqLuX3FZMp2TObcjRy/yPsyI62YFSP0/X/XkHRaRxhUZTTe3T10rkF9cbGbkCL7HXP5t
-	fZu+sI1fJ25C6amkkmC9lRHhT39DbyesZ0LPDy+7v1CfSzhaSeU31aMPytmI0IEgeN8vTwFQZYT
-	nvYXEauzBqcphB/Ijiffag5EXAmqL0O9H+Pnm5rgTnO9pnyCRLIOnp54uN3BDsQ4pLxvtcYB6ar
-	ue46ZlKxI7MYdetkJG59EfZN0VWCYPdQihywjIp9LMW19La8O+X/NAY4mSVxDyg==
-X-Google-Smtp-Source: AGHT+IHuIeAbzXw6/mJbD5MNQ/jWc3Nq/FoekJkkho10xMl4GNlABZqE63Wt9bw//KAWlR5mHOVVzA==
-X-Received: by 2002:a5d:63c3:0:b0:3a4:e0ad:9aa5 with SMTP id ffacd0b85a97d-3b5f18e6cccmr2246206f8f.11.1752351295969;
-        Sat, 12 Jul 2025 13:14:55 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1752358293; x=1752963093;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:subject:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=rIEQX44X/NeDZwLNKmN4YY266j4thbPs2H0dkeS01cM=;
+        b=A3wwJXfhOOz7bUfTZftcAWc8QAIywihT2KqlK5t00KOvgFfcRc9hU8rzYDjNyCB4jd
+         Wo9zD3pHLw0qByeMhMVAY1SYTk4mWVf4URAdzKSTzWX3j4ZqHu0bpmwVgTRruRfzeRr2
+         1jxjk8wOovn27GMigv0g/z/5MBjTUmP8iPOSG2F01q6RISGWooVdy1c9tQXYvoHUsUDl
+         v68rmIKg1EHv28vux5zMyhgpqlgqhFcFLoC++KUb5HtR4g54fJ5PrvD6JESkINZOYeEx
+         YxkQlkNp1wwsMm3okcZTLB1UB3a5bfuGxsMDhjvl7QW7VUqaZhO+U4HQus4RO/cYKkyr
+         ZANQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVhPtZbk772nY+3DBR+kDf52VCARCbbaDa+m4ns6Wr002U76QNX7itVC81VwEJkMuIR5jYed+ZBQQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwbjnacqH8OaigQ9Vk6ekcaPZZyY8HCEcQ41RYkRsR5fB+NkWh3
+	W5OD7PU5YeLHqVzMBydVUe+gGB/P2J8COu6LYqUXyQd4MEJ+5WaJwpo=
+X-Gm-Gg: ASbGncvguN5b/qM/471DvtCCT1MbKquUC8r0ICwbRV/OBF0ra8Mgieb3zXg1trX41tb
+	mms9X/wMM85Fl9xj5796Sjoeycq8wYpFEH2+uHiqgimmDLyLZfa3SpnwLxcz/H95NAeBLgBoJdy
+	RYeHO1SJ5sO4uf6yJ7oKgn2S7RlHB/8a7BVe/lXd4u6wA5mjYS+KLYWt+Dmin08IhYaD1BGREsG
+	U5wx0Vyy/DjlEz/z81Z7ni/oMbadgeCnifD1D4SLw9dm4vLqjZU8xlyuaabq+p0uQ7sSMoYGbSE
+	IT0P/0zBuyzSR2ccqhU2tOwfPuJ4Hjy8L0YJMZagT+IuXtaVAkrmWjMt/fMJhj5g+licj8CMsJo
+	R8ss0S+xwtsBVHOc4v+ry6BKP3mpVrluewtRF3Jfv7lv3zCNP8Ya32e9AEfv+ymkh7sLBYfJb
+X-Google-Smtp-Source: AGHT+IH6BHzG3H2KccIJu8rf1vckh5EEY0odAEa8FuernOJ/eh7pAdASrImw9HeMXjAV1lg5R54kSA==
+X-Received: by 2002:a05:600c:4f52:b0:43d:fa58:81d2 with SMTP id 5b1f17b1804b1-454f4286ee1mr26157335e9.9.1752358292709;
+        Sat, 12 Jul 2025 15:11:32 -0700 (PDT)
 Received: from localhost (182.red-80-39-24.staticip.rima-tde.net. [80.39.24.182])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-454d5032fc0sm121475465e9.2.2025.07.12.13.14.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 12 Jul 2025 13:14:55 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Stefan Haberland <sth@linux.ibm.com>,
-	Nigel Hislop <hislop_nigel@emc.com>,
-	Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
-	Heiko Carstens <hca@linux.ibm.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	Hannes Reinecke <hare@suse.de>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	S390-ML <linux-s390@vger.kernel.org>,
-	DM-DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: fix default blacklist of s390 devices
-Date: Sat, 12 Jul 2025 22:14:53 +0200
-Message-ID: <20250712201454.215404-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.50.1
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-454d5032e9esm125825635e9.3.2025.07.12.15.11.31
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sat, 12 Jul 2025 15:11:32 -0700 (PDT)
+Message-ID: <76bde3f1-0f06-46fc-8e0a-729e6629024c@gmail.com>
+Date: Sun, 13 Jul 2025 00:11:30 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Subject: Re: [PATCH] multipath-tools: fix default blacklist of s390 devices
+Cc: Stefan Haberland <sth@linux.ibm.com>, Nigel Hislop
+ <hislop_nigel@emc.com>,
+ Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
+ Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>,
+ Alexander Gordeev <agordeev@linux.ibm.com>,
+ Christian Borntraeger <borntraeger@linux.ibm.com>,
+ Sven Schnelle <svens@linux.ibm.com>, Hannes Reinecke <hare@suse.de>,
+ Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ S390-ML <linux-s390@vger.kernel.org>, DM-DEVEL-ML
+ <dm-devel@lists.linux.dev>, Nigel Hislop <hislop_nigel@dell.com>
+References: <20250712201454.215404-1-xose.vazquez@gmail.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <20250712201454.215404-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Each blacklist only their own devices.
+On 7/12/25 10:14 PM, Xose Vazquez Perez wrote:
 
-Cc: Stefan Haberland <sth@linux.ibm.com>
-Cc: Nigel Hislop <hislop_nigel@emc.com>
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Heiko Carstens <hca@linux.ibm.com>
-Cc: Vasily Gorbik <gor@linux.ibm.com>
-Cc: Alexander Gordeev <agordeev@linux.ibm.com>
-Cc: Christian Borntraeger <borntraeger@linux.ibm.com>
-Cc: Sven Schnelle <svens@linux.ibm.com>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: S390-ML <linux-s390@vger.kernel.org>
-Cc: DM-DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
-DASD devices been blacklisted twice, since:
-https://github.com/opensvc/multipath-tools/commit/a6ff4f957c78bd15c49278ad359671a705eaf4b5
-In the current code:
-https://github.com/opensvc/multipath-tools/blob/de16cf82c5263fc148118be56ebf44c8f0ee60b8/libmultipath/blacklist.c#L233
----
- libmultipath/hwtable.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+>   libmultipath/hwtable.c | 4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 081d119c..4ca4245c 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -687,7 +687,7 @@ static struct hwentry default_hw[] = {
+>   		/* PAV DASD FBA */
+>   		.vendor        = "IBM",
+>   		.product       = "S/390 DASD FBA",
+> -		.bl_product    = "S/390",
+> +		.bl_product    = "S/390 DASD FBA",
+>   		.uid_attribute = "ID_UID",
+>   		.no_path_retry = NO_PATH_RETRY_QUEUE,
+>   		.pgpolicy      = MULTIBUS,
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 081d119c..4ca4245c 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -677,7 +677,7 @@ static struct hwentry default_hw[] = {
- 		/* PAV DASD ECKD */
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD ECKD",
--		.bl_product    = "S/390",
-+		.bl_product    = "S/390 DASD ECKD",
- 		.uid_attribute = "ID_UID",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = MULTIBUS,
-@@ -687,7 +687,7 @@ static struct hwentry default_hw[] = {
- 		/* PAV DASD FBA */
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD FBA",
--		.bl_product    = "S/390",
-+		.bl_product    = "S/390 DASD FBA",
- 		.uid_attribute = "ID_UID",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.pgpolicy      = MULTIBUS,
--- 
-2.50.1
+Is PAV really supported on FBA devices ???
+And other than 3390 and 3380(3390 model 2/3 in track-compatibility mode) ECKD types ?
 
+Source, z/vm docs: https://www.vm.ibm.com/storman/pav/pav2.html#2001
+
+Thanks.
