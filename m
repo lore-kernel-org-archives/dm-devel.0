@@ -1,136 +1,182 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 363B41991B6
-	for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 12:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB7E31922F4
+	for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 15:43:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752496864; cv=none; b=MgvHHauaiX0zXOvahL2F9WUxdIt0mPcEKFL2dDRxM9FVXppDJ3EvB9QVC7x4duhWJYQRnAZUDz7AcwHStMf++kPkQG6HBpItlYggWGg7pqdC/VnvT0zpmSytiXOn6QXZ8+EPvYmupZb5rfN6eP077P4C4qg8hun+VEPgQsrPDp0=
+	t=1752507841; cv=none; b=WqZ/ebKuu0//TYLRLkfiOsR7gAbRSdqRdhZdmFHWrJ34gZW+PpRvVDmc8a+rfJE6YdH3QZSTB74lbCk5lyZT3e7RRVPrslkja2GXkQTGj7ttBFTae45tRIqm5RuGNUHIiH93e8lnFbS55JL1R98eduzoJ+MgUDy7BZVz7iglOAo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752496864; c=relaxed/simple;
-	bh=gLlxaBFAjAXm8IAoonxaRI3yf3e97ScXgTzdsSqiLPs=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=TVT9yz70osUC0IJ1ZUJLUvua7ODOzwJeFAvlhuXv/htR4A7Zbvm8vxBXTzKQGJ8D6n8v3ROLfb73BJBXOU4V+z6KJYKaWw6HPFnl1zzHWM7DuIrZZbKDZcurieGE/sg/AIdNyxmlx0eAUaZCcHz5IqBXvE6bapOghVpAK5SL3tE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=iE198p78; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1752507841; c=relaxed/simple;
+	bh=NHZTk1MbSwuX2TC/cvr03+rgfi9Vzg5JE+R5y6MRDO0=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=DKi7h27g/H7b3Qkun7TritaEbmzbe4Fegb+xj9RHq2zuS+1pn6bb3l+Odprua6EaNYRIODdXUg2RZWwK44eC7aAOjIQHyAkE3fWjCbcjVhnOqiYoENrRUh1Bv+cxWa+pgJe6y5B5c9MwKuaVlKv4ZFXMPxcFxqXMQbhLvfU8qts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EaeMwWLF; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="iE198p78"
-Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 56E7Mdxg012723;
-	Mon, 14 Jul 2025 12:40:58 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=gLlxaB
-	FAjAXm8IAoonxaRI3yf3e97ScXgTzdsSqiLPs=; b=iE198p78QtElS8A55QtzyG
-	FcU6dBQZxTvmxbawfEhPOTRl3FSeo/AdQcO6VnAnoZAVHS96E9FVnJNoTxeGnEya
-	zttQHGQgTYnxKdvNyLTS5OVoPupramSYdilBUnJXbuyu/uJpYnyupy+kmnsUkKfK
-	iamhzvE8WzjJ24UMBHzWxrRGlae9Xs9sOMWLoSmd6QqXpWXo3O7u3Qjr6tscIfjV
-	vfUJh6p6ihVzNI98mphwqGXDUmlkWyB9ah4K8/Z6i02ysSYKsA8+TN7V+LvU1PI7
-	9CfMdPhEFixa96QJhcuZqlJW9tWWTVjB6MCDmRmtH0XIvXh+eOfbYrwY8lC7UrOA
-	==
-Received: from pps.reinject (localhost [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47ufeesprd-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 14 Jul 2025 12:40:58 +0000 (GMT)
-Received: from m0356517.ppops.net (m0356517.ppops.net [127.0.0.1])
-	by pps.reinject (8.18.0.8/8.18.0.8) with ESMTP id 56ECWvkN029228;
-	Mon, 14 Jul 2025 12:40:57 GMT
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47ufeespr8-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 14 Jul 2025 12:40:57 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 56E8VxbY031904;
-	Mon, 14 Jul 2025 12:40:56 GMT
-Received: from smtprelay03.fra02v.mail.ibm.com ([9.218.2.224])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 47v21tx3nk-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 14 Jul 2025 12:40:56 +0000
-Received: from smtpav05.fra02v.mail.ibm.com (smtpav05.fra02v.mail.ibm.com [10.20.54.104])
-	by smtprelay03.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 56ECeq5J48890148
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Mon, 14 Jul 2025 12:40:52 GMT
-Received: from smtpav05.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 6F2AA20043;
-	Mon, 14 Jul 2025 12:40:52 +0000 (GMT)
-Received: from smtpav05.fra02v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id A531920040;
-	Mon, 14 Jul 2025 12:40:51 +0000 (GMT)
-Received: from [9.111.33.153] (unknown [9.111.33.153])
-	by smtpav05.fra02v.mail.ibm.com (Postfix) with ESMTP;
-	Mon, 14 Jul 2025 12:40:51 +0000 (GMT)
-Message-ID: <22ddcdeb-7cd3-4d26-9ac7-25570ac0fef3@linux.ibm.com>
-Date: Mon, 14 Jul 2025 14:40:51 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EaeMwWLF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1752507838;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=pioZSV5t4QyWHRN8AGbngDT1fEVjtAAoah29uzJwYZQ=;
+	b=EaeMwWLFhGTQB53OA3KHht9Ayl59eAVnD76ue4nBC75yOzgDBuVsoNLPSgqExD5rkqeAh2
+	YD2wjcqbxUCT0XOOKVwvxRxDg0j+iDCHJRY9iDi9pZfSkh6Q9T4yQuBZ85sOktCvLLg4M5
+	+LN+dn7Rgb+HCSfJCgl3wwunaZU17lQ=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-274-A2zzeiPKMzuFj4_W3vNnnQ-1; Mon,
+ 14 Jul 2025 11:43:55 -0400
+X-MC-Unique: A2zzeiPKMzuFj4_W3vNnnQ-1
+X-Mimecast-MFC-AGG-ID: A2zzeiPKMzuFj4_W3vNnnQ_1752507833
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 530631800343;
+	Mon, 14 Jul 2025 15:43:52 +0000 (UTC)
+Received: from [10.22.80.10] (unknown [10.22.80.10])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D81B5180035E;
+	Mon, 14 Jul 2025 15:43:47 +0000 (UTC)
+Date: Mon, 14 Jul 2025 17:43:42 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: agk@redhat.com, snitzer@kernel.org, axboe@kernel.dk, hch@lst.de, 
+    dan.j.williams@intel.com, Jonathan.Cameron@Huawei.com, 
+    linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+    linux-cxl@vger.kernel.org, nvdimm@lists.linux.dev, 
+    dm-devel@lists.linux.dev
+Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v2_00=2F11=5D_dm-pcache_=E2=80=93_pe?=
+ =?UTF-8?Q?rsistent-memory_cache_for_block_devices?=
+In-Reply-To: <e50ef45e-4c1a-4874-8d5f-9ca86f9a532c@linux.dev>
+Message-ID: <1ff2da54-60dd-9719-eb55-386ff32ae421@redhat.com>
+References: <20250707065809.437589-1-dongsheng.yang@linux.dev> <85b5cb31-b272-305f-8910-c31152485ecf@redhat.com> <e50ef45e-4c1a-4874-8d5f-9ca86f9a532c@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] multipath-tools: fix default blacklist of s390 devices
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Nigel Hislop <hislop_nigel@emc.com>,
-        Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
-        Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>,
-        Alexander Gordeev <agordeev@linux.ibm.com>,
-        Christian Borntraeger <borntraeger@linux.ibm.com>,
-        Sven Schnelle <svens@linux.ibm.com>, Hannes Reinecke <hare@suse.de>,
-        Martin Wilck <mwilck@suse.com>,
-        Benjamin Marzinski <bmarzins@redhat.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        S390-ML <linux-s390@vger.kernel.org>,
-        DM-DEVEL-ML <dm-devel@lists.linux.dev>
-References: <20250712201454.215404-1-xose.vazquez@gmail.com>
-Content-Language: en-US
-From: Stefan Haberland <sth@linux.ibm.com>
-In-Reply-To: <20250712201454.215404-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzE0MDA3MiBTYWx0ZWRfXxLO55zMArkbp EXsmPa0mIx3PB9wFOM9vG8d6Yk+5BjAuGoWyzM75G9XNrBftxVwkIgCQSdWjajN+M5KpBBGes+U 45ANSAmwzH8jLR3WQrxOQPgaUAQj9O6HEqnHavPkXve+oiTuYvCgAXPznCpAbqLiHWRfqshVw95
- 9Tb/uBt1noYL/+Wl41XMvnmCRGpr7U/2NmqKa0CP/Q28qxKzvqgCSyrH5OfiwoQwPTLNcx/MZCJ OtLk2/6RooCeJa0jDpBauYaDTHzOSEEt+3STSl2z3fPFsF317dkJWUYHOrM+ErFSJspnQBlmY2M 2H+B87Aq4ropkzLpN+vhmzfyrG779P8ihgt9GUj7l32CQZzOgPqpxGjVIq4/4NUn/A84ejbEMUY
- sCQvletfVGAXx7x4Ak6uDMK2d2BHTmHQCC1BgLVcHfpSp2j3lk5Rh8nK7g4IkqVAUdevzc5q
-X-Proofpoint-ORIG-GUID: LyUoVM0SW5z_bPzjpsXEZmV6mG3qrilt
-X-Authority-Analysis: v=2.4 cv=C9/pyRP+ c=1 sm=1 tr=0 ts=6874fada cx=c_pps a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17 a=IkcTkHD0fZMA:10 a=Wb1JkmetP80A:10 a=NEAV23lmAAAA:8 a=VnNF1IyMAAAA:8 a=G0_B3m8xAAAA:8 a=3Up_VBsHAAAA:8 a=iox4zFpeAAAA:8
- a=20KFwNOVAAAA:8 a=J4EkDXhdAAAA:8 a=VwQbUJbxAAAA:8 a=pGLkceISAAAA:8 a=9iZY6TRnBY2AT0LN0igA:9 a=QEXdDO2ut3YA:10 a=gBgTPrObzSPeouD7eQ2s:22 a=p-kn8v_atdPrL5O0KNWa:22 a=WzC6qhA0u3u7Ye7llzcV:22 a=XV5PuULvsUy3P8kbSbK6:22
-X-Proofpoint-GUID: U6Uam8mJM5UTNDjbX0aOmTfLxmS4s1TU
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.7,FMLib:17.12.80.40
- definitions=2025-07-14_01,2025-07-14_01,2025-03-28_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 malwarescore=0 phishscore=0
- impostorscore=0 spamscore=0 suspectscore=0 priorityscore=1501
- lowpriorityscore=0 mlxlogscore=999 bulkscore=0 adultscore=0 clxscore=1011
- mlxscore=0 classifier=spam authscore=0 authtc=n/a authcc= route=outbound
- adjust=0 reason=mlx scancount=1 engine=8.19.0-2505280000
- definitions=main-2507140072
+Content-Type: multipart/mixed; BOUNDARY="-1463811712-660552650-1752506079=:673007"
+Content-ID: <1c6a656d-7cb0-02e3-f428-fcf371e66565@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+---1463811712-660552650-1752506079=:673007
+Content-Type: text/plain; CHARSET=UTF-8
+Content-Transfer-Encoding: 8BIT
+Content-ID: <604db260-a208-1612-a6e0-250e4a0b7b66@redhat.com>
 
 
-Am 12.07.25 um 22:14 schrieb Xose Vazquez Perez:
-> Each blacklist only their own devices.
->
-> Cc: Stefan Haberland <sth@linux.ibm.com>
-> Cc: Nigel Hislop <hislop_nigel@emc.com>
-> Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-> Cc: Heiko Carstens <hca@linux.ibm.com>
-> Cc: Vasily Gorbik <gor@linux.ibm.com>
-> Cc: Alexander Gordeev <agordeev@linux.ibm.com>
-> Cc: Christian Borntraeger <borntraeger@linux.ibm.com>
-> Cc: Sven Schnelle <svens@linux.ibm.com>
-> Cc: Hannes Reinecke <hare@suse.de>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: S390-ML <linux-s390@vger.kernel.org>
-> Cc: DM-DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> DASD devices been blacklisted twice, since:
-> https://github.com/opensvc/multipath-tools/commit/a6ff4f957c78bd15c49278ad359671a705eaf4b5
-> In the current code:
-> https://github.com/opensvc/multipath-tools/blob/de16cf82c5263fc148118be56ebf44c8f0ee60b8/libmultipath/blacklist.c#L233
-> ---
 
-Reviewed-by: Stefan Haberland <sth@linux.ibm.com>
+On Wed, 9 Jul 2025, Dongsheng Yang wrote:
+
+> 
+> 在 7/8/2025 4:16 AM, Mikulas Patocka 写道:
+> > 
+> > On Mon, 7 Jul 2025, Dongsheng Yang wrote:
+> > 
+> > > Hi Mikulas,
+> > > 	This is V2 for dm-pcache, please take a look.
+> > > 
+> > > Code:
+> > >      https://github.com/DataTravelGuide/linux tags/pcache_v2
+> > > 
+> > > Changelogs
+> > > 
+> > > V2 from V1:
+> > > 	- introduce req_alloc() and req_init() in backing_dev.c, then we
+> > > 	  can do req_alloc() before holding spinlock and do req_init()
+> > > 	  in subtree_walk().
+> > > 	- introduce pre_alloc_key and pre_alloc_req in walk_ctx, that
+> > > 	  means we can pre-allocate cache_key or backing_dev_request
+> > > 	  before subtree walking.
+> > > 	- use mempool_alloc() with NOIO for the allocation of cache_key
+> > > 	  and backing_dev_req.
+> > > 	- some coding style changes from comments of Jonathan.
+> > Hi
+> > 
+> > mempool_alloc with GFP_NOIO never fails - so you don't have to check the
+> > returned value for NULL and propagate the error upwards.
+> 
+> 
+> Hi Mikulas:
+> 
+>    I noticed that the implementation of mempool_alloc—it waits for 5 seconds
+> and retries when allocation fails.
+
+No, this is incorrect observation.
+
+mempool_alloc will add the current process to a wait queue:
+  prepare_to_wait(&pool->wait, &wait, TASK_UNINTERRUPTIBLE);
+then, it will execute the wait:
+  io_schedule_timeout(5*HZ);
+and then remove the current process from a wait queue:
+  finish_wait(&pool->wait, &wait);
+
+but the io_schedule_timeout function will wait at most 5 seconds - it 
+doesn't wait exactly 5 seconds. If some other piece of code frees some 
+data into the mempool, it executes:
+  wake_up(&pool->wait);
+so that the process that is waiting in io_schedule_timeout(5*HZ) is woken 
+up immediatelly.
+
+See this comment in mempool_alloc:
+        /*
+         * FIXME: this should be io_schedule().  The timeout is there as a
+         * workaround for some DM problems in 2.6.18.
+         */
+        io_schedule_timeout(5*HZ);
+
+- the timeout is actually a workaround for some buggy code in device 
+mapper where the code allocated more and more entries from the mempool 
+without freeing them. I fixed this bug many years ago. But people 
+shouldn't add more buggy code that depends on this timeout.
+
+> With this in mind, I propose that we handle -ENOMEM inside defer_req() using a
+> similar mechanism. something like this commit:
+> 
+> 
+> https://github.com/DataTravelGuide/linux/commit/e6fc2e5012b1fe2312ed7dd02d6fbc2d038962c0
+> 
+> 
+> Here are two key reasons why:
+> 
+> (1) If we manage -ENOMEM in defer_req(), we don’t need to modify every
+> lower-level allocation to use mempool to avoid failures—for example,
+> 
+> cache_key, backing_req, and the kmem.bvecs you mentioned. More importantly,
+> there’s no easy way to prevent allocation failure in some places—for instance,
+> bio_init_clone() could still return -ENOMEM.
+> 
+> (2) If we use a mempool, it will block and wait indefinitely when memory is
+> unavailable, preventing the process from exiting.
+
+Mempool will wait until some other code frees some data into the mempool. 
+So, as long as your code can make forward progress and finish some 
+requests and free their data into the mempool, it should work properly.
+
+On the other hand, non-mempool GFP_NOIO allocations can wait indefinitely.
+
+> But with defer_req(), the user can still manually stop the pcache device using
+> dmsetup remove, releasing some memory if user want.
+> 
+> What do you think?
+
+I think that you should go back to version 2 (that had mempools) and 
+change the non-mempool allocation "backing_req->kmem.bvecs = 
+kmalloc_array(n_vecs, sizeof(struct bio_vec), GFP_NOIO);" to use a 
+mempool.
+
+> Thanx
+> 
+> Dongsheng
+
+Mikulas
+---1463811712-660552650-1752506079=:673007--
 
