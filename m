@@ -1,41 +1,41 @@
-Received: from out-174.mta0.migadu.com (out-174.mta0.migadu.com [91.218.175.174])
+Received: from out-179.mta0.migadu.com (out-179.mta0.migadu.com [91.218.175.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF0BB244669
-	for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 10:41:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C2E3E245003
+	for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 10:41:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752489669; cv=none; b=e9tQj1lshzGLKcYABj+4FTLSMj6szCS6x+nm7pWJEmp4Ef6965K2stbkFsHfVbE/yDHNj66T7JdM1m/KxbccI0MerDSq+wpHgWdp59Mzl72pWt3kd8oZL+j5FlY6ZqWRDllpJdClOCr67zZLSTE2EgXC45rIoJlQLkmqXtd6KFs=
+	t=1752489671; cv=none; b=RvPXVeclUPTItj6QLSgD8rUCRIWGG31YdjEVUxRdWnKHgZ2vgbmU07ZAmDZsLu4dFz/EaPUw0POZ3mULEzeVF93q+hUr2WmSECt0ug4HUGCx6LVs4cISNgIgjiorEWEKH633t3lF7upOCzhGhE5gllKuaqjfWDtzuY+Lfsx6GCg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752489669; c=relaxed/simple;
-	bh=gfYGlIa3q6Cxt+5G8c36fWtU+F2lq/+eb1IQhXvjy/k=;
+	s=arc-20240116; t=1752489671; c=relaxed/simple;
+	bh=lSYg45Yhl+/XJ9Xyhp6MzXltkSAgowiF8QPXGp6UU+0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=EICq2evhZ1YcKfFJD4DX49LdLTrWeV27lgC6yBFgiE8QPgKMsXEM1fGe4BVgHQngRdeXXxYSuPNvyO7Ll19KXxXPV21zhJUAwj36wzwJyJLn6lmUYhiaOhMKeBnBrRfs5+zge6RTIQYJdlay7Qlhd/t6UV2Ry4n9LePfKySAsaI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=bTnZlv8E; arc=none smtp.client-ip=91.218.175.174
+	 MIME-Version:Content-Type; b=iwySiCryjDSC/ifvqOnYhTSNH3/v/vDdSTLssYfV2UjI0a777aEG64WyGQ1S60ykCbA1cSH7zFjF1aJXO+lbavCEnqfeNSjSYap++Gu+P/KTCxMHe4GOQNLOOcSOIhRoITPrkRupbnkAa3pBqi0QVMYc30gW7Azta8H1bRtrewg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=Sn+N61f0; arc=none smtp.client-ip=91.218.175.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="bTnZlv8E"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="Sn+N61f0"
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1752489665;
+	t=1752489667;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=YnKAoIQmFsR7nirIrIgno2ER/Rfjs1D/387n39R95PM=;
-	b=bTnZlv8EsPMXfRIevAwayapjptLG/lmCeE8oOkBTIhlKB8yRCLONYdf5MjumG/XC7vM1Bg
-	ibFkskbrdol9h2Mfv3Ls9ddLes13Uw3H0xjT/Wu7UKTHV42NzYs8l6SxnmplL0K1QOsFdG
-	Y7lgbxWWxfOlskdc3sRNFwmx6Mx5hjE=
+	bh=B4b1j7aRbbtr+Qpa+97KDO5u0wR5NoSEDsbjmBBgy1o=;
+	b=Sn+N61f0PFyR5VajW7JmycrutMUVNtGgt2QTNfG3i+tOqUj/CtBliA5vJAvgQ1qWQO3efe
+	PDFy8hwJhsewtDhXCUHwJL5reE1YU6Fqr+UHVFi8wcgYreQE7DMc7oc4pRRXhhy9jIk5uc
+	OactaxhJV5qglqBUDZBhzcz/G7U5YJY=
 From: Dongsheng Yang <dongsheng.yang@linux.dev>
 To: mpatocka@redhat.com,
 	agk@redhat.com,
 	snitzer@kernel.org
 Cc: dm-devel@lists.linux.dev,
 	Dongsheng Yang <dongsheng.yang@linux.dev>
-Subject: [PATCH v3 06/11] dm-pcache: add cache_writeback
-Date: Mon, 14 Jul 2025 10:40:37 +0000
-Message-ID: <20250714104043.1800910-7-dongsheng.yang@linux.dev>
+Subject: [PATCH v3 07/11] dm-pcache: add cache_gc
+Date: Mon, 14 Jul 2025 10:40:38 +0000
+Message-ID: <20250714104043.1800910-8-dongsheng.yang@linux.dev>
 In-Reply-To: <20250714104043.1800910-1-dongsheng.yang@linux.dev>
 References: <20250714104043.1800910-1-dongsheng.yang@linux.dev>
 Precedence: bulk
@@ -48,331 +48,208 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-Introduce cache_writeback.c, which implements the asynchronous write-back
-path for pcache.  The new file is responsible for detecting dirty data,
-organising it into an in-memory tree, issuing bios to the backing block
-device, and advancing the cache’s *dirty tail* pointer once data has
-been safely persisted.
+Introduce cache_gc.c, a self-contained engine that reclaims cache
+segments whose data have already been flushed to the backing device.
+Running in the cache workqueue, the GC keeps segment usage below the
+user-configurable *cache_gc_percent* threshold.
 
-* Dirty-state detection
-  - `__is_cache_clean()` reads the kset header at `dirty_tail`, checks
-    magic and CRC, and thus decides whether there is anything to flush.
+* need_gc() – decides when to trigger GC by checking:
+  - *dirty_tail* vs *key_tail* position,
+  - kset integrity (magic + CRC),
+  - bitmap utilisation against the gc-percent threshold.
 
-* Write-back scheduler
-  - `cache_writeback_work` is queued on the cache task-workqueue and
-    re-arms itself at `PCACHE_CACHE_WRITEBACK_INTERVAL`.
-  - Uses an internal spin-protected `writeback_key_tree` to batch keys
-    belonging to the same stripe before IO.
+* Per-key reclamation
+  - Decodes each key in the target kset (`cache_key_decode()`).
+  - Drops the segment reference with `cache_seg_put()`, allowing the
+    segment to be invalidated once all keys are gone.
+  - When the reference count hits zero the segment is cleared from
+    `seg_map`, making it immediately reusable by the allocator.
 
-* Key processing
-  - `cache_kset_insert_tree()` decodes each key inside the on-media
-    kset, allocates an in-memory key object, and inserts it into the
-    writeback_key_tree.
-  - `cache_key_writeback()` builds a *KMEM-type* backing request that
-    maps the persistent-memory range directly into a WRITE bio and
-    submits it with `submit_bio_noacct()`.
-  - After all keys from the writeback_key_tree have been flushed,
-    `backing_dev_flush()` issues a single FLUSH to ensure durability.
-
-* Tail advancement
-  - Once a kset is written back, `cache_pos_advance()` moves
-    `cache->dirty_tail` by the exact on-disk size and the new position is
-    persisted via `cache_encode_dirty_tail()`.
-  - When the `PCACHE_KSET_FLAGS_LAST` flag is seen, the write-back
-    engine switches to the next segment indicated by `next_cache_seg_id`.
+* Scheduling
+  - `pcache_cache_gc_fn()` loops until no more work is needed, then
+    re-queues itself after *PCACHE_CACHE_GC_INTERVAL*.
 
 Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
 ---
- drivers/md/dm-pcache/cache_writeback.c | 281 +++++++++++++++++++++++++
- 1 file changed, 281 insertions(+)
- create mode 100644 drivers/md/dm-pcache/cache_writeback.c
+ drivers/md/dm-pcache/cache_gc.c | 170 ++++++++++++++++++++++++++++++++
+ 1 file changed, 170 insertions(+)
+ create mode 100644 drivers/md/dm-pcache/cache_gc.c
 
-diff --git a/drivers/md/dm-pcache/cache_writeback.c b/drivers/md/dm-pcache/cache_writeback.c
+diff --git a/drivers/md/dm-pcache/cache_gc.c b/drivers/md/dm-pcache/cache_gc.c
 new file mode 100644
-index 000000000000..f761322890ba
+index 000000000000..a122d95c8f46
 --- /dev/null
-+++ b/drivers/md/dm-pcache/cache_writeback.c
-@@ -0,0 +1,281 @@
++++ b/drivers/md/dm-pcache/cache_gc.c
+@@ -0,0 +1,170 @@
 +// SPDX-License-Identifier: GPL-2.0-or-later
-+
-+#include <linux/bio.h>
-+
 +#include "cache.h"
 +#include "backing_dev.h"
 +#include "cache_dev.h"
 +#include "dm_pcache.h"
 +
-+static void writeback_ctx_end(struct pcache_cache *cache, int ret)
++/**
++ * cache_key_gc - Releases the reference of a cache key segment.
++ * @cache: Pointer to the pcache_cache structure.
++ * @key: Pointer to the cache key to be garbage collected.
++ *
++ * This function decrements the reference count of the cache segment
++ * associated with the given key. If the reference count drops to zero,
++ * the segment may be invalidated and reused.
++ */
++static void cache_key_gc(struct pcache_cache *cache, struct pcache_cache_key *key)
 +{
-+	if (ret && !cache->writeback_ctx.ret) {
-+		pcache_dev_err(CACHE_TO_PCACHE(cache), "writeback error: %d", ret);
-+		cache->writeback_ctx.ret = ret;
-+	}
-+
-+	if (!atomic_dec_and_test(&cache->writeback_ctx.pending))
-+		return;
-+
-+	if (!cache->writeback_ctx.ret) {
-+		backing_dev_flush(cache->backing_dev);
-+
-+		mutex_lock(&cache->dirty_tail_lock);
-+		cache_pos_advance(&cache->dirty_tail, cache->writeback_ctx.advance);
-+		cache_encode_dirty_tail(cache);
-+		mutex_unlock(&cache->dirty_tail_lock);
-+	}
-+	queue_delayed_work(cache_get_wq(cache), &cache->writeback_work, 0);
++	cache_seg_put(key->cache_pos.cache_seg);
 +}
 +
-+static void writeback_end_req(struct pcache_backing_dev_req *backing_req, int ret)
-+{
-+	struct pcache_cache *cache = backing_req->priv_data;
-+
-+	mutex_lock(&cache->writeback_lock);
-+	writeback_ctx_end(cache, ret);
-+	mutex_unlock(&cache->writeback_lock);
-+}
-+
-+static inline bool is_cache_clean(struct pcache_cache *cache, struct pcache_cache_pos *dirty_tail)
++static bool need_gc(struct pcache_cache *cache, struct pcache_cache_pos *dirty_tail, struct pcache_cache_pos *key_tail)
 +{
 +	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
 +	struct pcache_cache_kset_onmedia *kset_onmedia;
-+	u32 to_copy;
-+	void *addr;
++	void *dirty_addr, *key_addr;
++	u32 segs_used, segs_gc_threshold, to_copy;
 +	int ret;
 +
-+	addr = cache_pos_addr(dirty_tail);
-+	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->wb_kset_onmedia_buf;
++	dirty_addr = cache_pos_addr(dirty_tail);
++	key_addr = cache_pos_addr(key_tail);
++	if (dirty_addr == key_addr) {
++		pcache_dev_debug(pcache, "key tail is equal to dirty tail: %u:%u\n",
++				dirty_tail->cache_seg->cache_seg_id,
++				dirty_tail->seg_off);
++		return false;
++	}
 +
-+	to_copy = min(PCACHE_KSET_ONMEDIA_SIZE_MAX, PCACHE_SEG_SIZE - dirty_tail->seg_off);
-+	ret = copy_mc_to_kernel(kset_onmedia, addr, to_copy);
++	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->gc_kset_onmedia_buf;
++
++	to_copy = min(PCACHE_KSET_ONMEDIA_SIZE_MAX, PCACHE_SEG_SIZE - key_tail->seg_off);
++	ret = copy_mc_to_kernel(kset_onmedia, key_addr, to_copy);
 +	if (ret) {
 +		pcache_dev_err(pcache, "error to read kset: %d", ret);
-+		return true;
++		return false;
 +	}
 +
-+	/* Check if the magic number matches the expected value */
++	/* Check if kset_onmedia is corrupted */
 +	if (kset_onmedia->magic != PCACHE_KSET_MAGIC) {
-+		pcache_dev_debug(pcache, "dirty_tail: %u:%u magic: %llx, not expected: %llx\n",
-+				dirty_tail->cache_seg->cache_seg_id, dirty_tail->seg_off,
-+				kset_onmedia->magic, PCACHE_KSET_MAGIC);
-+		return true;
++		pcache_dev_debug(pcache, "gc error: magic is not as expected. key_tail: %u:%u magic: %llx, expected: %llx\n",
++					key_tail->cache_seg->cache_seg_id, key_tail->seg_off,
++					kset_onmedia->magic, PCACHE_KSET_MAGIC);
++		return false;
 +	}
 +
-+	/* Verify the CRC checksum for data integrity */
++	/* Verify the CRC of the kset_onmedia */
 +	if (kset_onmedia->crc != cache_kset_crc(kset_onmedia)) {
-+		pcache_dev_debug(pcache, "dirty_tail: %u:%u crc: %x, not expected: %x\n",
-+				dirty_tail->cache_seg->cache_seg_id, dirty_tail->seg_off,
-+				cache_kset_crc(kset_onmedia), kset_onmedia->crc);
-+		return true;
++		pcache_dev_debug(pcache, "gc error: crc is not as expected. crc: %x, expected: %x\n",
++					cache_kset_crc(kset_onmedia), kset_onmedia->crc);
++		return false;
 +	}
 +
-+	return false;
-+}
-+
-+void cache_writeback_exit(struct pcache_cache *cache)
-+{
-+	cancel_delayed_work_sync(&cache->writeback_work);
-+	cache_tree_exit(&cache->writeback_key_tree);
-+}
-+
-+int cache_writeback_init(struct pcache_cache *cache)
-+{
-+	int ret;
-+
-+	ret = cache_tree_init(cache, &cache->writeback_key_tree, 1);
-+	if (ret)
-+		goto err;
-+
-+	atomic_set(&cache->writeback_ctx.pending, 0);
-+
-+	/* Queue delayed work to start writeback handling */
-+	queue_delayed_work(cache_get_wq(cache), &cache->writeback_work, 0);
-+
-+	return 0;
-+err:
-+	return ret;
-+}
-+
-+static int cache_key_writeback(struct pcache_cache *cache, struct pcache_cache_key *key)
-+{
-+	struct pcache_backing_dev_req *writeback_req;
-+	struct pcache_backing_dev_req_opts writeback_req_opts = { 0 };
-+	struct pcache_cache_pos *pos;
-+	void *addr;
-+	u32 seg_remain;
-+	u64 off;
-+
-+	if (cache_key_clean(key))
-+		return 0;
-+
-+	pos = &key->cache_pos;
-+
-+	seg_remain = cache_seg_remain(pos);
-+	BUG_ON(seg_remain < key->len);
-+
-+	addr = cache_pos_addr(pos);
-+	off = key->off;
-+
-+	writeback_req_opts.type = BACKING_DEV_REQ_TYPE_KMEM;
-+	writeback_req_opts.end_fn = writeback_end_req;
-+	writeback_req_opts.priv_data = cache;
-+
-+	writeback_req_opts.kmem.data = addr;
-+	writeback_req_opts.kmem.opf = REQ_OP_WRITE;
-+	writeback_req_opts.kmem.len = key->len;
-+	writeback_req_opts.kmem.backing_off = off;
-+
-+	writeback_req = backing_dev_req_create(cache->backing_dev, &writeback_req_opts);
-+	if (!writeback_req)
-+		return -ENOMEM;
-+
-+	atomic_inc(&cache->writeback_ctx.pending);
-+	backing_dev_req_submit(writeback_req, true);
-+
-+	return 0;
-+}
-+
-+static int cache_wb_tree_writeback(struct pcache_cache *cache, u32 advance)
-+{
-+	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
-+	struct pcache_cache_tree *cache_tree = &cache->writeback_key_tree;
-+	struct pcache_cache_subtree *cache_subtree;
-+	struct rb_node *node;
-+	struct pcache_cache_key *key;
-+	int ret = 0;
-+	u32 i;
-+
-+	cache->writeback_ctx.ret = 0;
-+	cache->writeback_ctx.advance = advance;
-+	atomic_set(&cache->writeback_ctx.pending, 1);
-+
-+	for (i = 0; i < cache_tree->n_subtrees; i++) {
-+		cache_subtree = &cache_tree->subtrees[i];
-+
-+		node = rb_first(&cache_subtree->root);
-+		while (node) {
-+			key = CACHE_KEY(node);
-+			node = rb_next(node);
-+
-+			ret = cache_key_writeback(cache, key);
-+			if (ret) {
-+				pcache_dev_err(pcache, "writeback error: %d\n", ret);
-+				cache_tree_clear(cache_tree);
-+				goto out;
-+			}
-+			cache_key_delete(key);
-+		}
++	segs_used = bitmap_weight(cache->seg_map, cache->n_segs);
++	segs_gc_threshold = cache->n_segs * pcache_cache_get_gc_percent(cache) / 100;
++	if (segs_used < segs_gc_threshold) {
++		pcache_dev_debug(pcache, "segs_used: %u, segs_gc_threshold: %u\n", segs_used, segs_gc_threshold);
++		return false;
 +	}
-+out:
-+	writeback_ctx_end(cache, ret);
 +
-+	return ret;
++	return true;
 +}
 +
-+static int cache_kset_insert_tree(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
-+{
-+	struct pcache_cache_key_onmedia *key_onmedia;
-+	struct pcache_cache_subtree *cache_subtree;
-+	struct pcache_cache_key *key;
-+	int ret;
-+	u32 i;
-+
-+	/* Iterate through all keys in the kset and write each back to storage */
-+	for (i = 0; i < kset_onmedia->key_num; i++) {
-+		key_onmedia = &kset_onmedia->data[i];
-+
-+		key = cache_key_alloc(&cache->writeback_key_tree);
-+		if (!key)
-+			return -ENOMEM;
-+
-+		ret = cache_key_decode(cache, key_onmedia, key);
-+		if (ret) {
-+			cache_key_put(key);
-+			return ret;
-+		}
-+
-+		cache_subtree = get_subtree(&cache->writeback_key_tree, key->off);
-+		spin_lock(&cache_subtree->tree_lock);
-+		ret = cache_key_insert(&cache->writeback_key_tree, key, true);
-+		spin_unlock(&cache_subtree->tree_lock);
-+		if (ret) {
-+			cache_key_put(key);
-+			goto clear_tree;
-+		}
-+	}
-+	return 0;
-+clear_tree:
-+	cache_tree_clear(&cache->writeback_key_tree);
-+	return ret;
-+}
-+
-+static void last_kset_writeback(struct pcache_cache *cache,
-+		struct pcache_cache_kset_onmedia *last_kset_onmedia)
++/**
++ * last_kset_gc - Advances the garbage collection for the last kset.
++ * @cache: Pointer to the pcache_cache structure.
++ * @kset_onmedia: Pointer to the kset_onmedia structure for the last kset.
++ */
++static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
 +{
 +	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
-+	struct pcache_cache_segment *next_seg;
++	struct pcache_cache_segment *cur_seg, *next_seg;
 +
-+	pcache_dev_debug(pcache, "last kset, next: %u\n", last_kset_onmedia->next_cache_seg_id);
++	cur_seg = cache->key_tail.cache_seg;
 +
-+	next_seg = &cache->segments[last_kset_onmedia->next_cache_seg_id];
++	next_seg = &cache->segments[kset_onmedia->next_cache_seg_id];
 +
-+	mutex_lock(&cache->dirty_tail_lock);
-+	cache->dirty_tail.cache_seg = next_seg;
-+	cache->dirty_tail.seg_off = 0;
-+	cache_encode_dirty_tail(cache);
-+	mutex_unlock(&cache->dirty_tail_lock);
++	mutex_lock(&cache->key_tail_lock);
++	cache->key_tail.cache_seg = next_seg;
++	cache->key_tail.seg_off = 0;
++	cache_encode_key_tail(cache);
++	mutex_unlock(&cache->key_tail_lock);
++
++	pcache_dev_debug(pcache, "gc advance kset seg: %u\n", cur_seg->cache_seg_id);
++
++	spin_lock(&cache->seg_map_lock);
++	clear_bit(cur_seg->cache_seg_id, cache->seg_map);
++	spin_unlock(&cache->seg_map_lock);
 +}
 +
-+void cache_writeback_fn(struct work_struct *work)
++void pcache_cache_gc_fn(struct work_struct *work)
 +{
-+	struct pcache_cache *cache = container_of(work, struct pcache_cache, writeback_work.work);
++	struct pcache_cache *cache = container_of(work, struct pcache_cache, gc_work.work);
 +	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
-+	struct pcache_cache_pos dirty_tail;
++	struct pcache_cache_pos dirty_tail, key_tail;
 +	struct pcache_cache_kset_onmedia *kset_onmedia;
-+	u32 delay;
++	struct pcache_cache_key_onmedia *key_onmedia;
++	struct pcache_cache_key *key;
 +	int ret;
++	int i;
 +
-+	mutex_lock(&cache->writeback_lock);
-+	if (atomic_read(&cache->writeback_ctx.pending))
-+		goto unlock;
++	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->gc_kset_onmedia_buf;
 +
-+	if (pcache_is_stopping(pcache))
-+		goto unlock;
++	while (true) {
++		if (pcache_is_stopping(pcache) || atomic_read(&cache->gc_errors))
++			return;
 +
-+	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->wb_kset_onmedia_buf;
++		/* Get new tail positions */
++		mutex_lock(&cache->dirty_tail_lock);
++		cache_pos_copy(&dirty_tail, &cache->dirty_tail);
++		mutex_unlock(&cache->dirty_tail_lock);
 +
-+	mutex_lock(&cache->dirty_tail_lock);
-+	cache_pos_copy(&dirty_tail, &cache->dirty_tail);
-+	mutex_unlock(&cache->dirty_tail_lock);
++		mutex_lock(&cache->key_tail_lock);
++		cache_pos_copy(&key_tail, &cache->key_tail);
++		mutex_unlock(&cache->key_tail_lock);
 +
-+	if (is_cache_clean(cache, &dirty_tail)) {
-+		delay = PCACHE_CACHE_WRITEBACK_INTERVAL;
-+		goto queue_work;
++		if (!need_gc(cache, &dirty_tail, &key_tail))
++			break;
++
++		if (kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) {
++			/* Don't move to the next segment if dirty_tail has not moved */
++			if (dirty_tail.cache_seg == key_tail.cache_seg)
++				break;
++
++			last_kset_gc(cache, kset_onmedia);
++			continue;
++		}
++
++		for (i = 0; i < kset_onmedia->key_num; i++) {
++			struct pcache_cache_key key_tmp = { 0 };
++
++			key_onmedia = &kset_onmedia->data[i];
++
++			key = &key_tmp;
++			cache_key_init(&cache->req_key_tree, key);
++
++			ret = cache_key_decode(cache, key_onmedia, key);
++			if (ret) {
++				/* return without re-arm gc work, and prevent future
++				 * gc, because we can't retry the partial-gc-ed kset
++				 */
++				atomic_inc(&cache->gc_errors);
++				pcache_dev_err(pcache, "failed to decode cache key in gc\n");
++				return;
++			}
++
++			cache_key_gc(cache, key);
++		}
++
++		pcache_dev_debug(pcache, "gc advance: %u:%u %u\n",
++			key_tail.cache_seg->cache_seg_id,
++			key_tail.seg_off,
++			get_kset_onmedia_size(kset_onmedia));
++
++		mutex_lock(&cache->key_tail_lock);
++		cache_pos_advance(&cache->key_tail, get_kset_onmedia_size(kset_onmedia));
++		cache_encode_key_tail(cache);
++		mutex_unlock(&cache->key_tail_lock);
 +	}
 +
-+	if (kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) {
-+		last_kset_writeback(cache, kset_onmedia);
-+		delay = 0;
-+		goto queue_work;
-+	}
-+
-+	ret = cache_kset_insert_tree(cache, kset_onmedia);
-+	if (ret) {
-+		delay = PCACHE_CACHE_WRITEBACK_INTERVAL;
-+		goto queue_work;
-+	}
-+
-+	ret = cache_wb_tree_writeback(cache, get_kset_onmedia_size(kset_onmedia));
-+	if (ret) {
-+		delay = PCACHE_CACHE_WRITEBACK_INTERVAL;
-+		goto queue_work;
-+	}
-+
-+	delay = 0;
-+queue_work:
-+	queue_delayed_work(cache_get_wq(cache), &cache->writeback_work, delay);
-+unlock:
-+	mutex_unlock(&cache->writeback_lock);
++	queue_delayed_work(cache_get_wq(cache), &cache->gc_work, PCACHE_CACHE_GC_INTERVAL);
 +}
 -- 
 2.43.0
