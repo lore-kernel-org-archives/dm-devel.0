@@ -1,71 +1,65 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE69B248869
-	for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 23:58:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F6E52882B7
+	for <dm-devel@lists.linux.dev>; Tue, 15 Jul 2025 01:35:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752537529; cv=none; b=S9RBYeGpdNkd9WOOAuw9OMWiOysvxe90NHbkkxD+9UJoj3Y1YcIY6iWl6kmwL33QbAPuHQeTZGA+qaA7gAUkUuJGikiMf7FJdrbY9zwkzaNFlXfB4q8/yNQfOcYw1GonrixtlbbpboUnkRyZYh0DTkRYV8ZUMrJTHCGvBGHPRaQ=
+	t=1752543330; cv=none; b=SVdm+vRaMZPshnMxtmKKQHh/U1axlh9Ba7vjVh2nc46tSR5CRt/JUh0+xqZRShJVfUyJ1t35dUJCfmuuYEM7pi907YpSWsseYu/mcqymoSfmMgMOwdu48ZTeV4MHsMVCWhqPxkeMl0GkB47aRAiIMAbuDZfzoocmpYm23GJ0A8k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752537529; c=relaxed/simple;
-	bh=wyNznoKhJPzBpps0P3eH/mjBHnJXLyAjNFEdAR1ch2M=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=kwc9fPJXRx7OeaHUaITwnQlkVZ0NoB1OM4G1gfwjCv+dwCOwW/RrlGHiJzd1uTG6xRNDR0ttNPRlVoc6VFTX/uMbBCopPW3IVEY9l939nJ8gjl7AtD0Rs5NFPqYzuYg7P9Anm/67yKxj1ypQ6XFIFwSxcFtHLCSOz8ebgMPh2RE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VMUrStFJ; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1752543330; c=relaxed/simple;
+	bh=DirssM/qiyECs+ZxPsgzPOCIKRmGradbgmdXcGo10pM=;
+	h=Message-ID:Date:MIME-Version:Cc:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=mT7zfmPmCsx18ongJSDptt6aJ9i+YnWU0JID3kwyQI4QFgnXCTPSQkKtVowX7IOJen68yB530wlFV5djPf3snjrt2+WhXzRGA14bSw4sgfm5KZCmOXN0EpXUoLoNU3VGfBrDnykpHt8pdPA8pvFRWKHEQbBAT8nZ+958KghlpkU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JyZt/eqO; arc=none smtp.client-ip=209.85.214.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VMUrStFJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1752537526;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XFHkkkUss5JwFnv8W5cQ4tbVdnVJDNuS4+t47VQvGiQ=;
-	b=VMUrStFJbYLOty/qviMBvJMYx3M3wfDcWXg/l8Zwc3TCTDnvrE0uPLNb+QlPro/Y5zFwOo
-	EVW5qRLEFKuZ/+xn+Zzgzhae51RV+/Tf8YaAoQ5sJeFwn8o0IBmnE68JLjWGTLenongxR4
-	d6R2ONIixlqjA56dqitC0l3TPqQv2VE=
-Received: from mail-qv1-f70.google.com (mail-qv1-f70.google.com
- [209.85.219.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-436-yRA4A1MWM1aeH5c-eExBTw-1; Mon, 14 Jul 2025 19:58:45 -0400
-X-MC-Unique: yRA4A1MWM1aeH5c-eExBTw-1
-X-Mimecast-MFC-AGG-ID: yRA4A1MWM1aeH5c-eExBTw_1752537525
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-6fab979413fso87606976d6.2
-        for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 16:58:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JyZt/eqO"
+Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-237e6963f63so28968675ad.2
+        for <dm-devel@lists.linux.dev>; Mon, 14 Jul 2025 18:35:29 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1752543328; x=1753148128; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:cc:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=kWqU4b5GJwzvnOMkfXSAT9qnGHhw/SUAFqCu4AE8WQU=;
+        b=JyZt/eqOfhV/aqh9lBKI2Yc5fIGj8dJo9d2IbxZ3QHaeqjouGOS/YSSmBKuw/W30nx
+         dNq7faOiX/J43+9Uj18afG3Hf23uScRG7jrdI9Aa8bz6+yOAO9Ghs8NzhTUmaE1xoIHc
+         uhrhnuSEmxfJ6VAuzp31KMywQkE84Jb2QDtkYx2jbw5hOCv07lx3QfO185ALMM9tF/Nb
+         056wvSBk/Od+zFkX3W4FmH0L32WJIj0YcwXpMmse+Xzw2Y+jqF7TdjBEGVfNx1jBcNuO
+         8VIop8PvTGdqWWoYX2Uze1cP0AO1j7KOUewhvddrueAdGwy2n2I7nL8kc888BSvhEd3S
+         LFOw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752537525; x=1753142325;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
+        d=1e100.net; s=20230601; t=1752543328; x=1753148128;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:to:subject:cc:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=XFHkkkUss5JwFnv8W5cQ4tbVdnVJDNuS4+t47VQvGiQ=;
-        b=cSywUqfmIe4qqtTo1aA96/pRpleyKKaYY7iBwAM1YXzHOFyWguFp+lwCk/0yKyvCXk
-         zYvMP3FkpkucJx5EdFArlbEUay3emVjvakvj1fHma4SzQ3pCXRO/zx/qEedXiF+uM895
-         8w/BGninosMxD+cA2V/18PqMgU44voId10wjUA56cy9e+NbO5HUT36Vnc4BoFDOkja3+
-         cpL/0ncdCVpiSeyNl735nfN6TnsxMW35Jq4O2DNnMik9ab9DPuGWS0zHRVkwTz0OoWsp
-         gJp2DmxShqAAiJnmPjRl4pf4SfuKisZuqj19uhoE+FyudZg4XBT6y+zFnNa16NGSmWaI
-         Hkqg==
-X-Gm-Message-State: AOJu0Yyd2+Ac3D1lfS3IP6brK8saXDCQX2PHc/rjMre6bOxrLttrlflA
-	maaOc2hRjeMnQJ/qsaALH+NTDlTJwkR/nbECrLmO/gDlkChxXL0okth6hK9rL0whGJOHXXnMnGS
-	jCB8AJsp7moAvboWmMtp8vpmkj7mX3T95op05pVI+RNhtljy6TL5tBfzLfzq+
-X-Gm-Gg: ASbGnctV2q+mvraaVVPa1mJUZJbqz2pOkQNXazCp2BDQW1ad6tTNCzjs8Jwlb6nU0Gb
-	AEyb0FblBbxjSq/AEDFXNwYUOX201e37nCQRJ9p2uaicQy8I4Gz7hm9toCTRMWOVQf7+uXr9u3g
-	qrHX57dXe23e9xrnOiHydJq8D+G4yX+niNZaIOBlsYEzH6CfsZevOIZOYLcMj4G857Ius0Trg4M
-	40x4JgzEnimrCVKxqKUbc5JMC8tpqu1MyXRw1SEQU/H461Q4ROZrd9lXQOLOLm4Mx5CWG2v8AG6
-	HoHL3RfZfm7+gjbZAp4HGDaCTo65Kth53wqGMCJ3sc41B4ATHM3CEH4fQO2PERoiJsrCU8jBp44
-	blUbz1do0aVg=
-X-Received: by 2002:a05:6214:cae:b0:704:881d:3102 with SMTP id 6a1803df08f44-704a359715emr196556316d6.12.1752537524491;
-        Mon, 14 Jul 2025 16:58:44 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IE3rDonvvz61ptZSSrUxkyVcuBWZovP7KyZ4TVoOo4uwkWajHlvicczIRePCbuzrPO/L3eraQ==
-X-Received: by 2002:a05:6214:cae:b0:704:881d:3102 with SMTP id 6a1803df08f44-704a359715emr196556066d6.12.1752537523968;
-        Mon, 14 Jul 2025 16:58:43 -0700 (PDT)
-Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7049799e8a9sm52151036d6.10.2025.07.14.16.58.43
+        bh=kWqU4b5GJwzvnOMkfXSAT9qnGHhw/SUAFqCu4AE8WQU=;
+        b=Iz5SZPO+6zqPIk3+Fhgwp4tRfizAZHKJWUSa2KziRF3C7By99TkIFAykIuenoqPGFJ
+         7KQ+yuZcsUN6OAtxYnde5h+TXnDddBI/p3qkj3XpP9o3zT1JGJqg1R37O8sHDFmZ5BiS
+         q4mvmrfTDbcMi+GhUFAMRBdl2HCIPznyIuSLftQ+zhWxPKLy6krpQkPon3c5ySY6GbIp
+         gVcdHpUAGEiv8lsEiy8IdfRL0YZZiBl7Dr8Pfyenk6DvTkOCPsS6jx+XmYLIlyZseOxg
+         A9KbVK2b6EIkqoYM5epjsXnLedPOIdPc/R3V4sbCGx7nu2qGat+1tCp36qBLx1eDVukU
+         u8EA==
+X-Forwarded-Encrypted: i=1; AJvYcCXonMPPDLuYoSWTlATNvHx5Y9gNKzvHyJxqN7be3ui4OlpmfvFsDn/be1ldVbbqcN+JV/4MwLVxzw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yycjk+MLI7h7u/UTmUXWKXEUJ+QJHYzSVJxqLK99zj8+InYnalp
+	EdhddF3lO2MftANLHZlWq5loBnqPKbAmYJ9yNuV5E+ap4IVxhvIEcuQH
+X-Gm-Gg: ASbGncuAbcKSLfvuvYMVliSYuoWIT+gTWoXeJCsFK4RAiP5WkgL6YVY9fZ/B57hUNaP
+	0WsHFKrx/GH9QZUANo2/D4E97PK6lgiecMenUdy4/rt35GFmZ749CxGa3pCXHVkkzzlNtx4E8wL
+	HFFbF7WueQriFFEb1cFd2PJl2Hwy8+w/CvDMqgc1MMEo5V/TdQhPhk7t2n0syVgDHaP7poW65V0
+	JKXsOWn6WP8MBRNga76mgWI20XIdflQ0Vtd6ci2/mjTDOIy4MyPzCaHooECfH/OrglhLeQjTquj
+	sDwyuc4rv0me8Ttz4o45ehim3/y1UqzPQg6kjVkTOzXJzGhd/a4kBiPbtIkjvneUk7hZG89aX00
+	H1JnhF3qO8JAhtATba8TitGVrkG5KFWP1ww==
+X-Google-Smtp-Source: AGHT+IHVvu1Myyf/p5AZNRKIaeRyNcKdGWZQBlbrWkXNlWKeq2HAAdsjdVVls1Dm9jFU3glmnLRX8w==
+X-Received: by 2002:a17:902:e544:b0:23c:8f17:644c with SMTP id d9443c01a7336-23dee29622cmr226727975ad.35.1752543328542;
+        Mon, 14 Jul 2025 18:35:28 -0700 (PDT)
+Received: from [10.189.144.225] ([43.224.245.249])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-23de4334005sm99598725ad.158.2025.07.14.18.35.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 14 Jul 2025 16:58:43 -0700 (PDT)
-Message-ID: <e8a0f6d3-b830-448a-a86d-2c37840a4104@redhat.com>
-Date: Mon, 14 Jul 2025 19:58:42 -0400
+        Mon, 14 Jul 2025 18:35:28 -0700 (PDT)
+Message-ID: <17dbffb9-ded6-4605-a7bb-b6f2624313ed@gmail.com>
+Date: Tue, 15 Jul 2025 09:35:21 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -73,46 +67,69 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] vdo: omit need_resched() before cond_resched()
-To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev
-References: <a9f43714-17a3-041d-fae4-bdbb79311f3b@redhat.com>
-From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <a9f43714-17a3-041d-fae4-bdbb79311f3b@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 7E2KMO5PY96ssAd2r7DsGojRhe2FwLXwzOt8eYYuBVg_1752537525
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
+Cc: shengyong2021@gmail.com, shengyong1@xiaomi.com, agk@redhat.com,
+ snitzer@kernel.org, nhuck@google.com, dm-devel@lists.linux.dev,
+ linux-kernel@vger.kernel.org, Wang Shuai <wangshuai12@xiaomi.com>
+Subject: Re: [PATCH] dm-bufio: fix sched in atomic context
+To: Mikulas Patocka <mpatocka@redhat.com>
+References: <20250710064855.239572-1-shengyong1@xiaomi.com>
+ <673ddfed-d874-9ffe-c2fe-a741e8fc69f1@redhat.com>
+Content-Language: en-US, fr-CH
+From: Sheng Yong <shengyong2021@gmail.com>
+In-Reply-To: <673ddfed-d874-9ffe-c2fe-a741e8fc69f1@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-
-On 7/14/25 12:27 PM, Mikulas Patocka wrote:
-> There's no need to call need_resched() because cond_resched() will do
-> nothing if need_resched() returns false.
+On 7/15/25 01:17, Mikulas Patocka wrote:
 > 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
-Reviewed-by: Matthew Sakai <msakai@redhat.com>
-
-> ---
->   drivers/md/dm-vdo/funnel-workqueue.c |    3 +--
->   1 file changed, 1 insertion(+), 2 deletions(-)
 > 
-> Index: linux-2.6/drivers/md/dm-vdo/funnel-workqueue.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-vdo/funnel-workqueue.c	2024-03-30 20:07:03.000000000 +0100
-> +++ linux-2.6/drivers/md/dm-vdo/funnel-workqueue.c	2025-07-14 18:17:59.000000000 +0200
-> @@ -252,8 +252,7 @@ static void service_work_queue(struct si
->   		 * This speeds up some performance tests; that "other work" might include other VDO
->   		 * threads.
->   		 */
-> -		if (need_resched())
-> -			cond_resched();
-> +		cond_resched();
->   	}
->   
->   	run_finish_hook(queue);
+> On Thu, 10 Jul 2025, Sheng Yong wrote:
+> 
+>> From: Sheng Yong <shengyong1@xiaomi.com>
+>>
+[..]
+>>
+>> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+>> index ec84ba5e93e5..caf6ae9a8b52 100644
+>> --- a/drivers/md/dm-bufio.c
+>> +++ b/drivers/md/dm-bufio.c
+>> @@ -2742,7 +2742,9 @@ static unsigned long __evict_a_few(unsigned long nr_buffers)
+>>   		__make_buffer_clean(b);
+>>   		__free_buffer_wake(b);
+>>   
+>> +		dm_bufio_unlock(c);
+>>   		cond_resched();
+>> +		dm_bufio_lock(c);
+>>   	}
+>>   
+>>   	dm_bufio_unlock(c);
+>> -- 
+>> 2.43.0
+> 
+> Hi
+> 
+> I accepted this patch. I changed it to:
+> 
+> -               cond_resched();
+> +               if (need_resched()) {
+> +                       dm_bufio_unlock(c);
+> +                       cond_resched();
+> +                       dm_bufio_lock(c);
+> +               }
+>          }
+> 
+>          dm_bufio_unlock(c);
+> 
+> so that we are not hammering on the dm bufio lock when scheduling is not
+> needed.
+
+Hi, Mikulas,
+
+Thank you for the update. It looks good to me.
+
+thanks,
+Yong
+> 
+> Mikulas
 > 
 
