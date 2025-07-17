@@ -1,338 +1,123 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 692AE2F0C43
-	for <dm-devel@lists.linux.dev>; Thu, 17 Jul 2025 15:08:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86AA726AE4
+	for <dm-devel@lists.linux.dev>; Thu, 17 Jul 2025 15:18:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752764908; cv=none; b=o/EP9VFLBh2M2EkLbIp6N+C8FJWjVC0+EUDo9UIJ8MkA7CnsaElE4OgyEhUFrquVIhHqL9VmFZ8l045TOCosIyDXAkmBFYOmcQdD8OlSDZVOGPZ46q5ibS0Oz5AvTzdlnBxHKFQWpF4WC6rIjXhZB/Gyu6+TdQPT59lWhc0EFZc=
+	t=1752765491; cv=none; b=pvr4S6BLBZV/pXOq09FQlqFHuJ9wa6JcSus41Sh0q4Uhh4PeWQbcWw8eMH2xZKKRujwmM7O+sGoQzXkkyK5zr0W4uzT5RKoh2P2CyYko+EHxqHojsIKI1UgtzXlNmqalo8+wLXNVmsQ4H+L/c9NqaqihDSc/A9IVk3N7TtzRTnw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752764908; c=relaxed/simple;
-	bh=SdTF45f2CqE+tJlq5vr+z6KonmFUYs+YWBuzNlYQyGw=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=dcYf/4MmXPlcwjI3SgmTKPGgZAdWPy1F2t8lHZAqrLsHAYI7wV5Is+mmm7042rZSL0k0CFhDOOCe34kPSW2TB/lb+K2k6CS0jCNas4S6/hP3VowlWAmicdBYuOuFiuc+GRqr8Q7h/gCy8fn0i733b2OH9lKqvyV6DIUz98DT694=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fS1vUpmh; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1752765491; c=relaxed/simple;
+	bh=iFSBrwv1TbSOx/vvsQuD9W3iV6kqDQrTbHO2R3cfZLI=;
+	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
+	 Message-ID:Content-Type; b=JuSdsWdDbt5WQYnnurO+vTngjt6tbWTkPgqUB5NTT1mpjoAGPrXAGjbcR6SjX6NQsJP0v+FtfVEMAc+x3yuCK87TrFxei0nOgG6MkdZcShe+som7iPSVr6gbqZOCqG8n26iaz7IEgpiZpw4YBSgc6zEpgcq7mnHWEBQ4nXPkZeI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=rCV1f4CX; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fS1vUpmh"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1752764905;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=nn1Bxakyg/nAOoFSayQZ3wcICLe556aV8nn9mfsonsk=;
-	b=fS1vUpmhqlNr7gA35AOPqTwH3dbytUwGsy40qxBaC+rwaJ3cZHeh7zgnLsSJgsS13TR5tb
-	lAxcncLX/Vp2Af+AP7APbETdhFYho36Pl22+VBXfVOEKJYBbSy2pmgVxQZadXaoGBA6sd+
-	YeIQmMhZc24RgyiFDRUgHp7LCMUK4BI=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-661-ECgbPyj9PreFMC3WpWPJXQ-1; Thu,
- 17 Jul 2025 11:08:20 -0400
-X-MC-Unique: ECgbPyj9PreFMC3WpWPJXQ-1
-X-Mimecast-MFC-AGG-ID: ECgbPyj9PreFMC3WpWPJXQ_1752764899
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9D3E51956046;
-	Thu, 17 Jul 2025 15:08:18 +0000 (UTC)
-Received: from [10.22.80.10] (unknown [10.22.80.10])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EA9671966663;
-	Thu, 17 Jul 2025 15:08:16 +0000 (UTC)
-Date: Thu, 17 Jul 2025 17:08:11 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Eran Messeri <eranm@google.com>
-cc: Mike Snitzer <snitzer@kernel.org>, Alasdair Kergon <agk@redhat.com>, 
-    ebiggers@google.com, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm-verity: Rename bh-related fields
-In-Reply-To: <20250717111750.1423232-1-eranm@google.com>
-Message-ID: <ce7553fe-320c-33e2-6e94-c597d0aa2205@redhat.com>
-References: <20250717111750.1423232-1-eranm@google.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="rCV1f4CX"
+Received: from pps.filterd (m0360083.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 56H8xPxf026978;
+	Thu, 17 Jul 2025 15:18:05 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:reply-to:subject:to; s=pp1;
+	 bh=vaA/jPd9BMYcIbkQnvJiQmco3UvFFgfnc/uXiJ4paxY=; b=rCV1f4CXvzOx
+	e1H1UBT8R8yicVTrVDsFLZH2GTK3qvmLuv+v8HuQ4c+2tx71PhUtQK95xhusd270
+	M0Ml5Y4dANFfMlT3b/i7HRYpbPLw3OcGxNPz//f7Go0OOx+6yXcMaAbXkX85hLiI
+	kQtZ15+rLtoy1KWpE9zpcqV6SpEVnXaS46l7ck7Rqpl8qmtMMf+ol8aguh9KkS0W
+	V5tDopWauhZBmiNeAYA+bRpFltednqvQ7Xx0VfQwwr0UFja9dSIxDpL+NutMAGMc
+	gvPTtFb8I5DAoQdyb6c6cW1icp+GacMVRv/ll5pqmraJmhr+vcRA+hlTwidRJdiY
+	RhezmLgByQ==
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47uf7dbvve-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 17 Jul 2025 15:18:05 +0000 (GMT)
+Received: from m0360083.ppops.net (m0360083.ppops.net [127.0.0.1])
+	by pps.reinject (8.18.0.8/8.18.0.8) with ESMTP id 56HEwgdK020702;
+	Thu, 17 Jul 2025 15:18:05 GMT
+Received: from ppma21.wdc07v.mail.ibm.com (5b.69.3da9.ip4.static.sl-reverse.com [169.61.105.91])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 47uf7dbvv9-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 17 Jul 2025 15:18:05 +0000 (GMT)
+Received: from pps.filterd (ppma21.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma21.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 56HCr87p025788;
+	Thu, 17 Jul 2025 15:18:03 GMT
+Received: from smtprelay02.dal12v.mail.ibm.com ([172.16.1.4])
+	by ppma21.wdc07v.mail.ibm.com (PPS) with ESMTPS id 47v31pvw2v-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 17 Jul 2025 15:18:03 +0000
+Received: from smtpav05.wdc07v.mail.ibm.com (smtpav05.wdc07v.mail.ibm.com [10.39.53.232])
+	by smtprelay02.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 56HFI2W72490984
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 17 Jul 2025 15:18:02 GMT
+Received: from smtpav05.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 2B92158066;
+	Thu, 17 Jul 2025 15:18:02 +0000 (GMT)
+Received: from smtpav05.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 55D8B58065;
+	Thu, 17 Jul 2025 15:18:01 +0000 (GMT)
+Received: from ltc.linux.ibm.com (unknown [9.5.196.140])
+	by smtpav05.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Thu, 17 Jul 2025 15:18:01 +0000 (GMT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: f2ShLZawCjmBS39UkeA47vrK42I4TOeK-EJbcyIrxwE_1752764899
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Date: Thu, 17 Jul 2025 17:18:00 +0200
+From: Harald Freudenberger <freude@linux.ibm.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dengler@linux.ibm.com, ifranzki@linux.ibm.com, agk@redhat.com,
+        snitzer@kernel.org, linux-s390@vger.kernel.org,
+        dm-devel@lists.linux.dev, herbert@gondor.apana.org.au,
+        Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH v4 2/2] dm-integrity: introduce ahash support for the
+ internal hash
+Reply-To: freude@linux.ibm.com
+Mail-Reply-To: freude@linux.ibm.com
+In-Reply-To: <50a28342-9d3c-b4e4-de13-40304eabb8b1@redhat.com>
+References: <50a28342-9d3c-b4e4-de13-40304eabb8b1@redhat.com>
+Message-ID: <7c019761106ce58f2e833c38d2a77063@linux.ibm.com>
+X-Sender: freude@linux.ibm.com
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: k4sHELeTaAV1tc-jPFvZyczy6WZVbMny
+X-Authority-Analysis: v=2.4 cv=LoGSymdc c=1 sm=1 tr=0 ts=6879142d cx=c_pps a=GFwsV6G8L6GxiO2Y/PsHdQ==:117 a=GFwsV6G8L6GxiO2Y/PsHdQ==:17 a=kj9zAlcOel0A:10 a=Wb1JkmetP80A:10 a=xhkaElq_hg_zilitdiYA:9 a=CjuIK1q_8ugA:10
+X-Proofpoint-GUID: pFRjF0OzQnpeh798dwO3FiuLQohwBWb0
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzE3MDEzNCBTYWx0ZWRfX38cQGmNrUFwp O1LV7UydeMqeS+MC88QMzc95626bZYIzjXwfZQZhRzWrgd2UpC5puPpesyK4hL6fQz88lifaC5c 0qTYSNzDXXaYp8XOp3g5Kl6OmkEJF0lCmEIAHsUqrtjgCPRdH7+4KIRlcQyCgk5iTFKzpZFVQjb
+ KjtBpAdgTLTzU66cK7V1PtrP6v7zDNhF6+JO5a73tilVMVoP4Bh8199ghEKAzazZNMfwTgigD4Y B0xIo9WjWpaiRyOjhHVLMjYUNNKeNyW9NIi3t8ndtywACFdHn1VX2pm8ljr67ftAcekM5LU7+j4 UARSomG8Ry5tyOYKJUSnZlvoesLlHUIN0zOiQ0Fmp2VKuldkyblcnR5rLM9tk94LjgCiAAlslFy
+ bkSGTnVsJb/I8Mcm6JHrHOFUElxIsCd7DcGdj3UbI+XKzKZdT1BkKC9gF0Kn2vnby2hAPMDr
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.9,FMLib:17.12.80.40
+ definitions=2025-07-17_01,2025-07-17_02,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0
+ lowpriorityscore=0 spamscore=0 malwarescore=0 impostorscore=0
+ clxscore=1011 phishscore=0 mlxlogscore=608 priorityscore=1501
+ suspectscore=0 mlxscore=0 adultscore=0 classifier=spam authscore=0
+ authtc=n/a authcc= route=outbound adjust=0 reason=mlx scancount=1
+ engine=8.19.0-2505280000 definitions=main-2507170134
 
-Hi
+Hi Mikulas
 
-I wouldn't do this - these sorts of changes will cause problems when 
-backporting bugfixes to the stable kernel branches.
+I just want to inform you that I picked up my phmac / dm-integrity work
+again after the phmac implementation is about to be merged into the next
+mainline kernel 6.17 :-) It has been a long long time to get the phmac
+integrated with all the pre-requirements...
 
-Mikulas
+There where some issues with running a kernel with your ahash patch
+causing a wired kernel crash. However, I'll set up my development
+environment now and then let's see if these crashes still occur and
+maybe investigate and fix them.
 
-
-
-On Thu, 17 Jul 2025, Eran Messeri wrote:
-
-> Rename the "in_bh" / "use_bh" fields to indicate the work is done
-> in-line, not in the "bottom half" (as a synonym to softirq). In
-> certain situations (e.g. dm-verity on top of a loopback device)
-> the verification will not be done in a softirq context but in a
-> task context.
+On 2025-02-05 21:23, Mikulas Patocka wrote:
+> Introduce ahash support for the "internal hash" algorithm.
 > 
-> There are no functional changes to the code.
+> Rework the dm-integrity code to be able to run the "internal hash"
+> either with a synchronous ("shash") or asynchronous ("ahash") hash
+> algorithm implementation.
 > 
-> Signed-off-by: Eran Messeri <eranm@google.com>
-> ---
->  drivers/md/dm-verity-target.c | 85 ++++++++++++++++++++---------------
->  drivers/md/dm-verity.h        | 10 +++--
->  2 files changed, 55 insertions(+), 40 deletions(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 66a00a8ccb39..be9f6d9fccf4 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -29,7 +29,7 @@
->  #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
->  
->  #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
-> -#define DM_VERITY_USE_BH_DEFAULT_BYTES	8192
-> +#define DM_VERITY_DEFAULT_MAX_INLINE_SIZE	8192
->  
->  #define DM_VERITY_MAX_CORRUPTED_ERRS	100
->  
-> @@ -49,16 +49,16 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
->  
->  module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
->  
-> -static unsigned int dm_verity_use_bh_bytes[4] = {
-> -	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_NONE
-> -	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_RT
-> -	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_BE
-> +static unsigned int dm_verity_max_inline_size_bytes[4] = {
-> +	DM_VERITY_DEFAULT_MAX_INLINE_SIZE,	// IOPRIO_CLASS_NONE
-> +	DM_VERITY_DEFAULT_MAX_INLINE_SIZE,	// IOPRIO_CLASS_RT
-> +	DM_VERITY_DEFAULT_MAX_INLINE_SIZE,	// IOPRIO_CLASS_BE
->  	0				// IOPRIO_CLASS_IDLE
->  };
->  
-> -module_param_array_named(use_bh_bytes, dm_verity_use_bh_bytes, uint, NULL, 0644);
-> +module_param_array_named(use_bh_bytes, dm_verity_max_inline_size_bytes, uint, NULL, 0644);
->  
-> -static DEFINE_STATIC_KEY_FALSE(use_bh_wq_enabled);
-> +static DEFINE_STATIC_KEY_FALSE(inline_verification_enabled);
->  
->  struct dm_verity_prefetch_work {
->  	struct work_struct work;
-> @@ -236,13 +236,14 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
->  
->  	verity_hash_at_level(v, block, level, &hash_block, &offset);
->  
-> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->in_bh) {
-> +	if (static_branch_unlikely(&inline_verification_enabled) &&
-> +	    !io->may_sleep) {
->  		data = dm_bufio_get(v->bufio, hash_block, &buf);
->  		if (IS_ERR_OR_NULL(data)) {
->  			/*
-> -			 * In tasklet and the hash was not in the bufio cache.
-> -			 * Return early and resume execution from a work-queue
-> -			 * to read the hash from disk.
-> +			 * In atomic context and the hash was not in the bufio
-> +			 * cache. Return early and resume execution from a
-> +			 * work-queue to read the hash from disk.
->  			 */
->  			return -EAGAIN;
->  		}
-> @@ -286,10 +287,12 @@ static int verity_verify_level(struct dm_verity *v, struct dm_verity_io *io,
->  		if (likely(memcmp(verity_io_real_digest(v, io), want_digest,
->  				  v->digest_size) == 0))
->  			aux->hash_verified = 1;
-> -		else if (static_branch_unlikely(&use_bh_wq_enabled) && io->in_bh) {
-> +		else if (static_branch_unlikely(&inline_verification_enabled) &&
-> +			 !io->may_sleep) {
->  			/*
-> -			 * Error handling code (FEC included) cannot be run in a
-> -			 * tasklet since it may sleep, so fallback to work-queue.
-> +			 * Error handling code (FEC included) cannot be run in
-> +			 * atomic context since it may sleep,
-> +			 * so fallback to work-queue.
->  			 */
->  			r = -EAGAIN;
->  			goto release_ret_r;
-> @@ -405,10 +408,11 @@ static int verity_handle_data_hash_mismatch(struct dm_verity *v,
->  					    struct bio *bio, sector_t blkno,
->  					    u8 *data)
->  {
-> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->in_bh) {
-> +	if (static_branch_unlikely(&inline_verification_enabled) &&
-> +	    !io->may_sleep) {
->  		/*
-> -		 * Error handling code (FEC included) cannot be run in the
-> -		 * BH workqueue, so fallback to a standard workqueue.
-> +		 * Error handling code (FEC included) cannot be run in atomic
-> +		 * context so fallback to a standard workqueue.
->  		 */
->  		return -EAGAIN;
->  	}
-> @@ -445,7 +449,8 @@ static int verity_verify_io(struct dm_verity_io *io)
->  	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
->  	unsigned int b;
->  
-> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->in_bh) {
-> +	if (static_branch_unlikely(&inline_verification_enabled) &&
-> +	    !io->may_sleep) {
->  		/*
->  		 * Copy the iterator in case we need to restart
->  		 * verification in a work-queue.
-> @@ -546,7 +551,8 @@ static void verity_finish_io(struct dm_verity_io *io, blk_status_t status)
->  	bio->bi_end_io = io->orig_bi_end_io;
->  	bio->bi_status = status;
->  
-> -	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
-> +	if (!static_branch_unlikely(&inline_verification_enabled) ||
-> +	    io->may_sleep)
->  		verity_fec_finish_io(io);
->  
->  	if (unlikely(status != BLK_STS_OK) &&
-> @@ -574,17 +580,22 @@ static void verity_work(struct work_struct *w)
->  {
->  	struct dm_verity_io *io = container_of(w, struct dm_verity_io, work);
->  
-> -	io->in_bh = false;
-> +	io->may_sleep = true;
->  
->  	verity_finish_io(io, errno_to_blk_status(verity_verify_io(io)));
->  }
->  
-> -static void verity_bh_work(struct work_struct *w)
-> +static void verity_verify_inline(struct work_struct *w)
->  {
-> -	struct dm_verity_io *io = container_of(w, struct dm_verity_io, bh_work);
-> +	struct dm_verity_io *io = container_of(w, struct dm_verity_io, inline_work);
->  	int err;
->  
-> -	io->in_bh = true;
-> +	/*
-> +	 * Set may_sleep to false here regardless of the context for simplicity.
-> +	 * This ensures that we do not try to read missing hashes in contexts
-> +	 * where we should not block.
-> +	 */
-> +	io->may_sleep = false;
->  	err = verity_verify_io(io);
->  	if (err == -EAGAIN || err == -ENOMEM) {
->  		/* fallback to retrying with work-queue */
-> @@ -596,10 +607,10 @@ static void verity_bh_work(struct work_struct *w)
->  	verity_finish_io(io, errno_to_blk_status(err));
->  }
->  
-> -static inline bool verity_use_bh(unsigned int bytes, unsigned short ioprio)
-> +static inline bool verity_should_verify_inline(unsigned int bytes, unsigned short ioprio)
->  {
->  	return ioprio <= IOPRIO_CLASS_IDLE &&
-> -		bytes <= READ_ONCE(dm_verity_use_bh_bytes[ioprio]) &&
-> +		bytes <= READ_ONCE(dm_verity_max_inline_size_bytes[ioprio]) &&
->  		!need_resched();
->  }
->  
-> @@ -617,13 +628,13 @@ static void verity_end_io(struct bio *bio)
->  		return;
->  	}
->  
-> -	if (static_branch_unlikely(&use_bh_wq_enabled) && io->v->use_bh_wq &&
-> -		verity_use_bh(bytes, ioprio)) {
-> +	if (static_branch_unlikely(&inline_verification_enabled) && io->v->verify_inline &&
-> +		verity_should_verify_inline(bytes, ioprio)) {
->  		if (in_hardirq() || irqs_disabled()) {
-> -			INIT_WORK(&io->bh_work, verity_bh_work);
-> -			queue_work(system_bh_wq, &io->bh_work);
-> +			INIT_WORK(&io->inline_work, verity_verify_inline);
-> +			queue_work(system_bh_wq, &io->inline_work);
->  		} else {
-> -			verity_bh_work(&io->bh_work);
-> +			verity_verify_inline(&io->inline_work);
->  		}
->  	} else {
->  		INIT_WORK(&io->work, verity_work);
-> @@ -805,7 +816,7 @@ static void verity_status(struct dm_target *ti, status_type_t type,
->  			args++;
->  		if (v->validated_blocks)
->  			args++;
-> -		if (v->use_bh_wq)
-> +		if (v->verify_inline)
->  			args++;
->  		if (v->signature_key_desc)
->  			args += DM_VERITY_ROOT_HASH_VERIFICATION_OPTS;
-> @@ -845,7 +856,7 @@ static void verity_status(struct dm_target *ti, status_type_t type,
->  			DMEMIT(" " DM_VERITY_OPT_IGN_ZEROES);
->  		if (v->validated_blocks)
->  			DMEMIT(" " DM_VERITY_OPT_AT_MOST_ONCE);
-> -		if (v->use_bh_wq)
-> +		if (v->verify_inline)
->  			DMEMIT(" " DM_VERITY_OPT_TASKLET_VERIFY);
->  		sz = verity_fec_status_table(v, sz, result, maxlen);
->  		if (v->signature_key_desc)
-> @@ -1023,8 +1034,8 @@ static void verity_dtr(struct dm_target *ti)
->  
->  	kfree(v->signature_key_desc);
->  
-> -	if (v->use_bh_wq)
-> -		static_branch_dec(&use_bh_wq_enabled);
-> +	if (v->verify_inline)
-> +		static_branch_dec(&inline_verification_enabled);
->  
->  	kfree(v);
->  
-> @@ -1194,8 +1205,8 @@ static int verity_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
->  			continue;
->  
->  		} else if (!strcasecmp(arg_name, DM_VERITY_OPT_TASKLET_VERIFY)) {
-> -			v->use_bh_wq = true;
-> -			static_branch_inc(&use_bh_wq_enabled);
-> +			v->verify_inline = true;
-> +			static_branch_inc(&inline_verification_enabled);
->  			continue;
->  
->  		} else if (verity_is_fec_opt_arg(arg_name)) {
-> @@ -1526,7 +1537,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
->  		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
->  		dm_bufio_alloc_callback, NULL,
-> -		v->use_bh_wq ? DM_BUFIO_CLIENT_NO_SLEEP : 0);
-> +		v->verify_inline ? DM_BUFIO_CLIENT_NO_SLEEP : 0);
->  	if (IS_ERR(v->bufio)) {
->  		ti->error = "Cannot initialize dm-bufio";
->  		r = PTR_ERR(v->bufio);
-> diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-> index 6d141abd965c..1a5233c92e54 100644
-> --- a/drivers/md/dm-verity.h
-> +++ b/drivers/md/dm-verity.h
-> @@ -58,7 +58,7 @@ struct dm_verity {
->  	unsigned char levels;	/* the number of tree levels */
->  	unsigned char version;
->  	bool hash_failed:1;	/* set if hash of any block failed */
-> -	bool use_bh_wq:1;	/* try to verify in BH wq before normal work-queue */
-> +	bool verify_inline:1;	/* try to verify inline before normal work-queue */
->  	unsigned int digest_size;	/* digest size for the current hash algorithm */
->  	enum verity_mode mode;	/* mode for handling verification errors */
->  	enum verity_mode error_mode;/* mode for handling I/O errors */
-> @@ -88,11 +88,15 @@ struct dm_verity_io {
->  
->  	sector_t block;
->  	unsigned int n_blocks;
-> -	bool in_bh;
-> +	/*
-> +	 * Keeps track of whether the request is being processed in
-> +	 * the kworker or inline.
-> +	 */
-> +	bool may_sleep;
->  	bool had_mismatch;
->  
->  	struct work_struct work;
-> -	struct work_struct bh_work;
-> +	struct work_struct inline_work;
->  
->  	u8 real_digest[HASH_MAX_DIGESTSIZE];
->  	u8 want_digest[HASH_MAX_DIGESTSIZE];
-> -- 
-> 2.50.0.727.gbf7dc18ff4-goog
-> 
-
+...
