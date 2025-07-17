@@ -1,62 +1,146 @@
-Received: from crustead.live (unknown [185.240.86.77])
+Received: from esa2.hgst.iphmx.com (esa2.hgst.iphmx.com [68.232.143.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A14CE381BA
-	for <dm-devel@lists.linux.dev>; Thu, 17 Jul 2025 00:50:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.240.86.77
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C072189513
+	for <dm-devel@lists.linux.dev>; Thu, 17 Jul 2025 02:33:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=68.232.143.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752713452; cv=none; b=Q6Mrg7PuzHr6rdE79S+28HnK2bXGwBpkmj7cSOszNLqsMqrzE+HNlzILts3biktRv6a6IZN8K7V6WkNboH+yMPk2odzkXyaYkOc66B5zpjukvEH0LJA5NbF3+sjF/SUCWirOJXb4NuAKWQWxPGDC5PR/hGfVlYqIpB8tZU7j1xE=
+	t=1752719585; cv=none; b=BJ1u4oIK5vWdtn+3XfuFYWjCF5U9mtdGkQ0XxiQeNeiefCgXsWHjKgr0qGo4IMmXSkxUkTIcP/eE4cpMb6sewDB9bE7YBwOEzJ0qj9yll7FuaC2a7gQdVjETFQvcOwmZVxqdu3mhsxsBUJWrdvLaeominPf5BHKJmezPUbOVPzY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752713452; c=relaxed/simple;
-	bh=YkeXptbKk1aL+Eckbf34QyKNtNNAnTcbB0UAwwnln1A=;
-	h=To:Subject:Date:From:Message-ID:MIME-Version:Content-Type; b=I6Sw3nQ9DTVWsQ3jzNja0MCnJDIvQt04G8JNdfS28AfVA2/nlUzKmboJcPbvzwFMcAOdNJEJazIFsrYUNWa5lYdds9/MxbJ6KsN7T0avR7EnxWFfSXK04LNmXeyFJlNIACFRmBoGt0i4A/LUPe1jnL1kNS1ccdt6CN34Y5hz+Ms=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=crustead.live; spf=pass smtp.mailfrom=crustead.live; dkim=pass (1024-bit key) header.d=crustead.live header.i=@crustead.live header.b=K5b+dUay; arc=none smtp.client-ip=185.240.86.77
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=crustead.live
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=crustead.live
+	s=arc-20240116; t=1752719585; c=relaxed/simple;
+	bh=UF/u13h4hxPxP58t3GXA14Lp9KMsTs7NAjm+nMLSmsM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JSRNSCO9Ojn/zpTR7u4A5+omhG8R0g8xdWg8nG/HyXJ+QggHwsyDkUJLM16ekLJx4VdfFuUu50PPWbjMokip0r+dTOvryoeaCER04qWIn9l+D19XqyWFidKiDBX0YFRkJhz0P6gMXAMP6AQ1uyMVCujRmTmNnNLn+jwSRCA6UPw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=p6Q2pj9o; arc=none smtp.client-ip=68.232.143.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=crustead.live header.i=@crustead.live header.b="K5b+dUay"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=crustead.live; s=mail; h=Content-Type:MIME-Version:Message-ID:Reply-To:From
-	:Date:Subject:To:Sender:Cc:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:In-Reply-To:References:List-Id:List-Help:List-Unsubscribe:
-	List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=YkeXptbKk1aL+Eckbf34QyKNtNNAnTcbB0UAwwnln1A=; b=K5b+dUayLE9fDMGhDmJDaxF4zm
-	D15Fu4wVNtsy8h8conOdbqM+x4oLmWTOOyA51Y7CCRAXWLS8lDN2Y/KL1tS4tRPZiU0p72GjWFIGi
-	6fpU3xWZNE5h6BvJDfJ+QpH2eQgaXrm7LGjr2mlQlMz4If3ixDR6E37O0r7SzUOg3QtA=;
-Received: from admin by crustead.live with local (Exim 4.90_1)
-	(envelope-from <support@crustead.live>)
-	id 1ubv46-000FS4-Ur
-	for dm-devel@lists.linux.dev; Wed, 16 Jul 2025 05:52:26 +0000
-To: dm-devel@lists.linux.dev
-Subject: MDC Vendor/ Supplier Registration
-Date: Wed, 16 Jul 2025 05:52:26 +0000
-From: Makati Development Corporation <support@crustead.live>
-Reply-To: vendorprocurement@mdcph.com
-Message-ID: <a893fa9dc3026715cf1b9632d45269e3@crustead.live>
+	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="p6Q2pj9o"
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
+  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
+  t=1752719583; x=1784255583;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=UF/u13h4hxPxP58t3GXA14Lp9KMsTs7NAjm+nMLSmsM=;
+  b=p6Q2pj9owY3KXk2WVOOv0t4uE49LGHccIiWOG6nnrUVpmgBQvAL2h2im
+   z3CteDThquQFXrgRUZs6kOVoXIALp+AaFCA8r4bSx6nXtoAku+EvvOrwk
+   UFlrYiHLQDc1Y0652EwwmqO9pkn/BcFdaEuOY7mmCRL9BAKSdpdu1089+
+   xeMKKN1vNfGfS5/kbNr0EiKdgPPnIMokuVXLkzEgujk7wq4S+vOF2fcqA
+   gcqHDyOfz+vYsYqotRAf200vlhpCRBKeM04AFCrYbpHHk3th3+/17OOfz
+   9Uk8Mfac1XavUvYelomBZ4p8MUdRgJ4U5wbwBqliobxfE8LKVjuSopQXj
+   Q==;
+X-CSE-ConnectionGUID: I3Ih4NRDTVKMtpNpeM0GVg==
+X-CSE-MsgGUID: znd2/jffS/a+xbFYkzCQvg==
+X-IronPort-AV: E=Sophos;i="6.16,317,1744041600"; 
+   d="scan'208";a="95156138"
+Received: from h199-255-45-14.hgst.com (HELO uls-op-cesaep01.wdc.com) ([199.255.45.14])
+  by ob1.hgst.iphmx.com with ESMTP; 17 Jul 2025 10:32:56 +0800
+IronPort-SDR: 68785236_/l4za74sl0g4BNZt1SqVlmPgLS0PjtwTRQYYWlBSMbLF191
+ vOtkuRCubNY0Gx4zjWUpGkPPDyopIHONinQJ9KA==
+Received: from uls-op-cesaip01.wdc.com ([10.248.3.36])
+  by uls-op-cesaep01.wdc.com with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 16 Jul 2025 18:30:31 -0700
+WDCIronportException: Internal
+Received: from wdap-jiufci53qv.ad.shared (HELO shinmob.flets-east.jp) ([10.224.173.117])
+  by uls-op-cesaip01.wdc.com with ESMTP; 16 Jul 2025 19:32:56 -0700
+From: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+To: linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Cc: Damien Le Moal <dlemoal@kernel.org>,
+	Jens Axboe <axboe@kernel.dk>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Subject: [PATCH for-next] dm: split write BIOs on zone boundaries when zone append is not emulated
+Date: Thu, 17 Jul 2025 11:32:55 +0900
+Message-ID: <20250717023255.15111-1-shinichiro.kawasaki@wdc.com>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Greetings,
+Since commit f70291411ba2 ("block: Introduce
+bio_needs_zone_write_plugging()"), blk_mq_submit_bio() no longer splits
+write BIOs to comply with the requirements of zoned block devices. This
+change applies to write BIOs issued by zoned DM targets. Following this
+modification, it is expected that DM targets themselves split write BIOs
+for zoned block devices.
 
-We are excited to announce that Makati Development Corporation Vendor & Supplier Registration is now open.
+Commit 2df7168717b7 ("dm: Always split write BIOs to zoned device
+limits") updates the device-mapper driver to perform splits for the
+write BIOs. However, it did not address the cases where DM targets do
+not emulate zone append, such as in the cases of dm-linear or dm-flakey.
+For these targets, when the write BIOs span across zone boundaries, they
+trigger WARN_ON_ONCE(bio_straddles_zones(bio)) in
+blk_zone_wplug_handle_write(). This results in I/O errors. The errors
+are reproduced by running blktests test case zbd/004 using zoned
+dm-linear or dm-flakey devices.
 
-If you would like to be considered as one of our valued partners, just share the following details:
+To avoid the I/O errors, handle the write BIOs regardless whether DM
+targets emulate zone append or not, so that all write BIOs are split at
+zone boundaries. For that purpose, drop the check for zone append
+emulation in dm_zone_bio_needs_split(). Its argument 'md' is no longer
+used then drop it also.
 
-* Company profile
+Fixes: 2df7168717b7 ("dm: Always split write BIOs to zoned device limits")
+Cc: stable@vger.kernel.org
+Signed-off-by: Shin'ichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+---
+ drivers/md/dm.c | 17 ++++++-----------
+ 1 file changed, 6 insertions(+), 11 deletions(-)
 
-* Contact Person or company representative
-
-Please send your reply to: vendorprocurement@mdcph.com
-
-Looking forward to building something great together.
-
-Warm regards,
-Vendor Procurement & Contracts
-Shared Services Centre | Makati Development Corporation
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index ca889328fdfe..a64809f04241 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1785,8 +1785,7 @@ static void init_clone_info(struct clone_info *ci, struct dm_io *io,
+ }
+ 
+ #ifdef CONFIG_BLK_DEV_ZONED
+-static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
+-					   struct bio *bio)
++static inline bool dm_zone_bio_needs_split(struct bio *bio)
+ {
+ 	/*
+ 	 * Special case the zone operations that cannot or should not be split.
+@@ -1802,13 +1801,10 @@ static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
+ 	}
+ 
+ 	/*
+-	 * Mapped devices that require zone append emulation will use the block
+-	 * layer zone write plugging. In such case, we must split any large BIO
+-	 * to the mapped device limits to avoid potential deadlocks with queue
+-	 * freeze operations.
++	 * When mapped devices use the block layer zone write plugging, we must
++	 * split any large BIO to the mapped device limits to avoid potential
++	 * deadlocks with queue freeze operations.
+ 	 */
+-	if (!dm_emulate_zone_append(md))
+-		return false;
+ 	return bio_needs_zone_write_plugging(bio) || bio_straddles_zones(bio);
+ }
+ 
+@@ -1932,8 +1928,7 @@ static blk_status_t __send_zone_reset_all(struct clone_info *ci)
+ }
+ 
+ #else
+-static inline bool dm_zone_bio_needs_split(struct mapped_device *md,
+-					   struct bio *bio)
++static inline bool dm_zone_bio_needs_split(struct bio *bio)
+ {
+ 	return false;
+ }
+@@ -1960,7 +1955,7 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+ 
+ 	is_abnormal = is_abnormal_io(bio);
+ 	if (static_branch_unlikely(&zoned_enabled)) {
+-		need_split = is_abnormal || dm_zone_bio_needs_split(md, bio);
++		need_split = is_abnormal || dm_zone_bio_needs_split(bio);
+ 	} else {
+ 		need_split = is_abnormal;
+ 	}
+-- 
+2.50.1
 
