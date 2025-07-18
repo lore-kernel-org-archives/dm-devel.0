@@ -1,177 +1,107 @@
-Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 807251DF261
-	for <dm-devel@lists.linux.dev>; Fri, 18 Jul 2025 18:07:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62C092046B3
+	for <dm-devel@lists.linux.dev>; Fri, 18 Jul 2025 20:54:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752862026; cv=none; b=IgowNyKy4EPI0f7qTUfvk7jzsI1kJeW0IWCS9ZAEzaHFlJj4lg3vrMJWyyNa4cjAc9s3RyuNAhS3GZMQytfzVADTwsKdsVoZ55/3dMBGLpQ17Z3EB4Tw65DEM2+F5vBXHicBUqKRnRoVeQ7MvN33B6F5d90s2AZc4NAe++IW0MM=
+	t=1752872097; cv=none; b=oRSG7z5Y+JP7C5hhILih+RLgIuvoNAyJeba6cnnzHGApK8OIx2G+SnU+OANJV3CHxJV4YKyCJ+TPCKgzBHNz2lPyR2WSHndKEkYFaoG8lY3Ir24caNrzZxVBrm5K2DQWPgrYNMKcBHLzDqfWdgCSB1+m1qdJqTNEpzJS39+mVKM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752862026; c=relaxed/simple;
-	bh=jfBOAKqRqCPb86pqlwG51uTwqEkmrZ3uVDa3ES3eKNQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=uTrefaHMJEzcDiBhOKREA/NvH28L5ezOXBldC/XangBXzzD/EMeKGqJymmSOjq5tLozUR+YQOetkNbpmjwUrfduvznfK9qhG04HJLGTvOH1I27gZ4lMGck5Q7bFqYDWONLsQS4f9V33LyIRdDBkNsrFYUOCFlF2BAbwznCApOA8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=yE1Uczrj; arc=none smtp.client-ip=209.85.208.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1752872097; c=relaxed/simple;
+	bh=/v9WWF6F6utjgz9JGBDPXJxOIe4C/8Qw9JemRuRmy20=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=g1RWKP3Li/WvkG5CD/vIIjN8HEfxrIY/gFmrG1DEYbWdMgh372dF1nwDcuvYtvLROIQQxvVabN0RZmpp+VVr5TAjJGvXoYfGISrGxhacmRzSG8QNTLA2cR912QlxKr0Y3V7m+o0kwzNfKypYCseH1vIWBKMGwVOkNa15q/WJSJs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j3Pu9HIB; arc=none smtp.client-ip=209.85.221.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="yE1Uczrj"
-Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-611d32903d5so1503a12.0
-        for <dm-devel@lists.linux.dev>; Fri, 18 Jul 2025 11:07:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j3Pu9HIB"
+Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-3a52878d37aso288020f8f.2
+        for <dm-devel@lists.linux.dev>; Fri, 18 Jul 2025 13:54:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1752862023; x=1753466823; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=Sl4zXK5L4PLgrJ/KWcvnxJQsvGAy50yod1UnBHSEmFk=;
-        b=yE1Uczrj+HCRVwWcmuvKACIvQKktY0m6WEXnDzNrT8VbAgg3qx5+YfdS5pYd+tKFiU
-         7NWl8RnOukwXj8yhY06dG/HI6qXYeAI4PPWVcEKS86ub8ciEzoc6gqbBg07yW+24IOFM
-         fMzSEMhqnyUBl3s6c42TKXiaStAdpzRNNHHb4a8Um/xV5pyKTLiMRHPnfOAKRAsssW1E
-         ONACW6hnwxUnQzDB6us36dvWlRtE1nREvaDBT3EEvKfsA1KDHVStuoMY2OM0rtPuP/SD
-         o9RHJF7C4p42STmN8hwx5HBAMUYKas7Xdhzv6dS/lexeqAK5DDduqobe5EcqZOXpt/m+
-         G/JQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1752862023; x=1753466823;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+        d=gmail.com; s=20230601; t=1752872094; x=1753476894; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=Sl4zXK5L4PLgrJ/KWcvnxJQsvGAy50yod1UnBHSEmFk=;
-        b=tTA1DwFnoWq7k97bxZLLUk+GXRgAxSCZPF9/FGULxg6tXZhxe6QAczhwpIGoqq10ov
-         DX7ZljcgrwlAX3vo22oyp3fs6xgFvpYcOlNbuELD3rKoYmVqJMSshQx6TUzF/k3noLBy
-         MpbhgfQGr5al7Vj68WP4i/9iERvqxx7cbQn/6jhdGyyENgIubt+Hr4Z9xgv4BeHuLc6G
-         jmGKROpAJV8roZBRs+ppnHHr3etoEsqOZF7/VGUEBcUCoQCpX/L2Apxk2Q0W85qiX5Er
-         fTbWUrd+UaG3Cx3MwkR/34O/d0rzrsiD12Y+/athTFlzFRZ1HoZzj4lGJDwN1P+w9EHK
-         uD9Q==
-X-Gm-Message-State: AOJu0YwHp9I9bD+Is9Sbn7Oao2+ZkjHvuBTAuP1YpWVGUF3mJ0LIbYHw
-	Yu3hJkU6ASG8CG3E/h1lFxyko1z6HjUOhvWBu96CBseHzQruvVcW0U2cBnm+GMzBmhLJAkMf5Te
-	GhDEU0PIQc/i9xkRqFCH9/pQIuysYaeb1gyJDZBFbqC95SHeDxNL2vJLgc+Y=
-X-Gm-Gg: ASbGncvEZawT6hENzgX4vvsfOhKqgnLk8+NKL3Tqetedc0wTjiJi2tABNdLak0ol3aI
-	BdVlftXO5+aFxfEriSXHqymUfY5NNfi406Au52y59zOwuSbCY/+85Xa5WLaQBtDL37AivxVCsAF
-	65TFjmZNzMsXK9bAHR5QJ58+1Wsa+UopRzVwmkBXNS6H5mYOxcMEcqoBGj5emAFBCpi5XMZETni
-	OYMz0FzYgOg7B8ikWXIO8A9awR2OC4hoORORQ==
-X-Google-Smtp-Source: AGHT+IHKLo1s8cFHkfx1p4Mgnh8+HXRdvi8Sdxc/EsEL2N/Vcx0fwlzJXZZ6Pvvx7gEBousvHXN8gjtlz7P4jDEEkNw=
-X-Received: by 2002:a05:6402:22f2:b0:607:bd2:4757 with SMTP id
- 4fb4d7f45d1cf-612e73e9450mr2531a12.1.1752862022381; Fri, 18 Jul 2025 11:07:02
- -0700 (PDT)
+        bh=DIjz4BPZJqOIM9QQ4fdBf3Y2eXQwrnGfHoI2Y40n68s=;
+        b=j3Pu9HIBLHmz11onyzZ3xk04U97HCaV+INW2ate1ahId3K4zL/Sf7TtaGzmoi0yjuV
+         KE9d9jMxkFip18mcYPJs+HodZSaFPmDFhq5b/W5VYkpXxsZ53qOBRPiFFHWzG5K4VFNd
+         fZ866hJxCFQyFV6mK/er+kJ62hCE44LONZVq6XifHhpXxmWqjEhRgd6FmfAlUyZwlosP
+         UcteIN8vJfS+izCBg2Xek+I2uY2isczqjLvIRUOsMp4UCH7HGaIRzcHxNwwYajjUswtJ
+         2xE3soZEsbymp2RxXO5VvG/Z1z5num1wkdLjFxGIYmtb3GHhRMeifxx0TxXrDn2kuSZ2
+         SkQw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1752872094; x=1753476894;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=DIjz4BPZJqOIM9QQ4fdBf3Y2eXQwrnGfHoI2Y40n68s=;
+        b=vuBcBLG/r86/rV6kyHfQUVKqz205N0YyNmvF2ta1X6bH64YXAe9PDjQdsOEKiCuEY/
+         l7eohxm+EVWp/fLk6Qu0liOuI7sDSZxk+t7l+Z5PbdZ3oXEhSV99zVTKtHkgUVEDzhJy
+         WZHUWR53zUxwoNYZq/6L803021t9iuHQbAyTGqxxa+u0ZxKMMS828FuAcGE+NQJS8m7B
+         G1ahziS0V9sEyZ9XAPsqPnD2IDNZNaxJiq+Q5u0kJ/gJE7jWycrwOcK6AZNvsHXlf5Or
+         KYZZD7O9TVDPoPhZ0btpZDZojBk4IuOlpETHlXFK3kuc/nG0QNZv0b4hMfSu3gTHwSpw
+         PX+w==
+X-Forwarded-Encrypted: i=1; AJvYcCUVcR7zI80exjzoNhhKnWxjz4rioreOOYiaS4igcwMrlAbgNxfCKLv/vgL5g1TLiUBhFZ94aw5dQg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyIogNwdixt2TSq2qScj6wQYVTg7Dkd01Yu0gZeUjHGaFPIoWtO
+	mwdJTzmkB4BPevE4VVPKia8VZnECvjsMTYV7rKBCJxiwp7szhgG3Ivc=
+X-Gm-Gg: ASbGncu4/t46tXAB+w45wQS7NgS8fwfI6TuhAJWP2TdJ3YtjI5rYgtehXGG8ST1R7Rs
+	2UzAA6KT0uCCQWMysy4spaFzreWnM4lz/bYXM0W3XK15N1j3AZFgc175ZFqb3BkPh/DuzqvxF9E
+	q6++duJ0wJru3klAe2kyEKHsaKocWFpIQFkdw4Uhw0sI97+ioF53tWFpo8gAiwFmegcEcCD6FwO
+	QEqUK/cPAv6eJJWrpnI06PBJ+czqvIHEZ/ONUywhpjFXOJec4A3V1+ZmdXIgKarSZhJlceSrdw4
+	E8/vaMBAXD+b4kUxVHAzKlAjujkJ8IUGeuoBXSbpflmuoy7Hh3/joYlpZNCLQ4Kf3m3SgHSl8kF
+	5s2tSdr6sI0GQjFGOOtgczeHr2FQurEUZptzDXxBEbOCjkRW7ynX9oM6bW4cvdB2xgw==
+X-Google-Smtp-Source: AGHT+IFjtNzhZVpFDZWJ7RTeQG+bUKsioxGzYlerosV0A+WYUA92JBe3a3yqDV9rsPpz0H4sieMqNA==
+X-Received: by 2002:a05:600c:a218:b0:43b:c825:6cde with SMTP id 5b1f17b1804b1-4562e4fd51dmr30617885e9.3.1752872093235;
+        Fri, 18 Jul 2025 13:54:53 -0700 (PDT)
+Received: from localhost (179.red-80-39-133.dynamicip.rima-tde.net. [80.39.133.179])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3b61ca31394sm2840353f8f.37.2025.07.18.13.54.51
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 18 Jul 2025 13:54:51 -0700 (PDT)
+Message-ID: <2c83b76c-46cc-4632-a930-d023c7d3d7b0@gmail.com>
+Date: Fri, 18 Jul 2025 22:54:50 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <CAJhEC06nnd5kMSqkP8P_WoXOE1doMryt7R8JYpsm77bS6NF53A@mail.gmail.com>
- <CALjSBEuq=fpKRfRJ_95ja_HDFum49AASa9mT9wMRrdm4zSwSAA@mail.gmail.com>
-In-Reply-To: <CALjSBEuq=fpKRfRJ_95ja_HDFum49AASa9mT9wMRrdm4zSwSAA@mail.gmail.com>
-From: Robert Pang <robertpang@google.com>
-Date: Fri, 18 Jul 2025 11:06:49 -0700
-X-Gm-Features: Ac12FXwVRvnLv0H-L84xOBDAOwdPb5KYb3OgBJpA0AyscQHuiBvi-co-RLcN5cY
-Message-ID: <CAJhEC04Rw5yxY-zh4kmsDO+ScjzLAqoO1wWMDUV=t_TdK2paPA@mail.gmail.com>
-Subject: Re: Question about dm-cache promotion decision in dm-cache-policy-smq.c
- (commit b29d498)
-To: Ming Hung Tsai <mtsai@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Subject: Re: [PATCH] multipath-tools: fix default blacklist of s390 devices
+To: Stefan Haberland <sth@linux.ibm.com>
+Cc: Nigel Hislop <hislop_nigel@emc.com>,
+ Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
+ Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>,
+ Alexander Gordeev <agordeev@linux.ibm.com>,
+ Christian Borntraeger <borntraeger@linux.ibm.com>,
+ Sven Schnelle <svens@linux.ibm.com>, Hannes Reinecke <hare@suse.de>,
+ Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ S390-ML <linux-s390@vger.kernel.org>, DM-DEVEL-ML
+ <dm-devel@lists.linux.dev>, Nigel Hislop <hislop_nigel@dell.com>
+References: <20250712201454.215404-1-xose.vazquez@gmail.com>
+ <76bde3f1-0f06-46fc-8e0a-729e6629024c@gmail.com>
+ <d5e08375-211d-405b-9a00-f44c857cedac@linux.ibm.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <d5e08375-211d-405b-9a00-f44c857cedac@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hi Ming-Hung,
+On 7/14/25 2:38 PM, Stefan Haberland wrote:
 
-Thanks for clarifying the cache decision and the rationale behind
-using max() in update_promote_levels(). That helped me understand the
-whole min() vs. max() effect on the latter read/write_promote_level I
-was wondering about.
+>> Is PAV really supported on FBA devices ???
+>> And other than 3390 and 3380(3390 model 2/3 in track-compatibility mode) ECKD types ?
+> 
+> Currently there is no support in the driver for PAV with FBA devices.
+> But the devices itself are capable of PAV.
 
-Regarding promotion decisions, I read about dm-cache's slow approach
-to promoting candidates, as described in [1]. What are your thoughts
-on good dm-cache setup and configuration to achieve optimal cache
-performance?
+If there is no PAV support for FBA devices on Linux, and it looks like it won't be
+implemented even in the distant future. The detection code, and the device, could
+be deleted from multipath-tools:
+https://github.com/opensvc/multipath-tools/blob/de16cf82c5263fc148118be56ebf44c8f0ee60b8/libmultipath/hwtable.c#L688-L697
+https://github.com/opensvc/multipath-tools/blob/de16cf82c5263fc148118be56ebf44c8f0ee60b8/libmultipath/discovery.c#L1674-L1685
 
-Thanks,
-Robert Pang
+Is PAV supported on 9343/9345 (cutype/devtype) ECKD devices?
 
-[1] https://www.redhat.com/en/blog/improving-read-performance-dm-cache
 
-On Tue, Jul 15, 2025 at 8:59=E2=80=AFAM Ming Hung Tsai <mtsai@redhat.com> w=
-rote:
->
-> On Sat, Jul 12, 2025 at 5:14=E2=80=AFAM Robert Pang <robertpang@google.co=
-m> wrote:
-> >
-> > Hi,
-> >
-> > I'm currently investigating how dm-cache makes promotion decisions and
-> > have a question regarding a specific line in the
-> > update_promote_levels() function within dm-cache-policy-smq.c.
-> >
-> > Specifically, I'm looking at line [1] in the code snippet below:
-> >
-> > static void update_promote_levels(struct smq_policy *mq)
-> > {
-> >   /*
-> >   * If there are unused cache entries then we want to be really
-> >   * eager to promote.
-> >   */
-> >   unsigned int threshold_level =3D allocator_empty(&mq->cache_alloc) ?
-> >   default_promote_level(mq) : (NR_HOTSPOT_LEVELS / 2u);
-> >
-> >   /* line [1] */
-> >   threshold_level =3D max(threshold_level, NR_HOTSPOT_LEVELS);
-> >   ...
-> >
-> >   mq->read_promote_level =3D NR_HOTSPOT_LEVELS - threshold_level;
-> >   mq->write_promote_level =3D (NR_HOTSPOT_LEVELS - threshold_level);
-> > }
-> >
-> > My understanding is that NR_HOTSPOT_LEVELS is defined as 64, and
-> > default_promote_level() returns a value between 1 and 8. If this is
-> > correct, then threshold_level (before line [1]) would always be less
-> > than or equal to NR_HOTSPOT_LEVELS (e.g., 8 or 32). Consequently,
-> > max(threshold_level, NR_HOTSPOT_LEVELS) would always evaluate to
-> > NR_HOTSPOT_LEVELS, effectively setting threshold_level to 64
-> > regardless of its initial calculation.
-> >
-> > I've traced line [1] back to commit b29d498 ("dm cache: significant
-> > rework to leverage dm-bio-prison-v2") [2]. It seems like the line's
-> > purpose is to cap threshold_level to prevent underflow in the
-> > subsequent subtractions for read_promote_level and
-> > write_promote_level.
-> >
-> > Given this intended purpose and the typical behavior of min() and
-> > max() functions, shouldn't line [1] instead be:
-> >
-> >   threshold_level =3D min(threshold_level, NR_HOTSPOT_LEVELS);
-> >
-> > This would ensure threshold_level doesn't exceed NR_HOTSPOT_LEVELS,
-> > while still allowing its initial calculated value to be used if it's
-> > lower.
-> >
-> > Could someone please clarify if my interpretation of this logic is
-> > correct, or if I'm missing something?
-> >
-> > Best regards
-> > Robert Pang
-> >
-> > [1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-tree/drivers/md/dm-cache-policy-smq.c#n1057
-> > [2] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-commit/?id=3Db29d498
-> >
->
-> Hi,
->
-> Currently, dm-cache makes promotion decisions based on short-term
-> access patterns. The read/write_promote_level determines how
-> frequently a missed block must be accessed before it is promoted. If
-> we modify line [1] to use min(threshold_level, NR_HOTSPOT_LEVELS), it
-> would increase the read/write_promote_level, making the cache less
-> responsive to varying IO patterns. That may be why commit b29d498
-> changed the behavior.
->
-> I=E2=80=99ve noticed this ambiguity before, just haven=E2=80=99t submitte=
-d a patch to
-> clean it up. The default_promote_level() might have been kept as a
-> reminder of the older approach.
->
->
-> Thanks,
-> Ming-Hung Tsai
->
+Thanks.
