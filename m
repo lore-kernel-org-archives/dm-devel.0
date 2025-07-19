@@ -1,135 +1,129 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D357F9E8
-	for <dm-devel@lists.linux.dev>; Sat, 19 Jul 2025 12:36:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A19A6101FF
+	for <dm-devel@lists.linux.dev>; Sat, 19 Jul 2025 13:46:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1752928590; cv=none; b=bPleQvOI36KHo9fAAd7IMDkfZMygXzsAWJSw5ELNTT7PPMatzaQKQxFeZdc8rUkbckl/ogXxL+CYbdOJkFo+l741m9/R5F95WL0IXLkEZmEVJW4meKTgqQRXASoHfq/orE7QWlQATGrbfABXxHCtFma9s/+NuFiYqE0J3RRzBEg=
+	t=1752932784; cv=none; b=KeNnkrU6Qebk09zFTPPro7lPaFUdUGkq06Yrn8fk1wHVabMrBexenR4ItkfhkEr/gUxEuDZ8D1SwgT92e8g02N0KFUbCRTZgbyZh3mkkF5i+ppWkkG1WCIcfSoAkRlDqOVwEtfEMp3nU/rH4YqA+ZNnonrF9cPUeNthbx8QVizs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1752928590; c=relaxed/simple;
-	bh=+NkniJyGclh1BYCT5mLiytY3Lvljeh3VUUyk9cZ4Bd8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=ce8gQgFddAGIO3WrXMObTgaNAXiLGdbH7nLY5pvNHlIQNxCqJQ6Ew7R4Li1JY60jpAEOyBXwv/ip5nviAmopharp0fZ2kQstMZZaAXdKCun5BuIuklQXqHUhLZdWTQkUZllgbq82BuI3W2XWECwcNGRs2Guhg4EKyzrgauUhB/Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=M5+mQXkC; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=dikt135d; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1752932784; c=relaxed/simple;
+	bh=DjzqGzUlo/sIT2JaiMrDdXX5dhs5Yx23SsPHmVKfofo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=HQkK4Zjggn+r+LF/We7QDKJYXbne11MxiROhyK4wC0nOSDWpb09mvopGFJtSDkvwsY4ZdQKDgxP9HtdYWVLj2YzDym1rynz4DHgqg+bWxOOHBiTBSkGLBV1g7P97TZOvJHArcKvF2+tRRS96J+IP6Gkc/RH9/m5KuHVaeHvIhyA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gwiuIikd; arc=none smtp.client-ip=209.85.221.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="M5+mQXkC";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="dikt135d"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id EE8E11F457;
-	Sat, 19 Jul 2025 12:36:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1752928580; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=+NkniJyGclh1BYCT5mLiytY3Lvljeh3VUUyk9cZ4Bd8=;
-	b=M5+mQXkC00+0uCpvOxU4jOyxPD+vIDTMzdXvP3AU21dg5Vf+83kjo7yIvmNyx4Y3CMj0D0
-	zFufLxSuTKaLW9n3GI2jHB0ICEiR8XMsC1NXVbIR2BejkFLqRysTv5GBBKRkpu6eoqE1yC
-	PN9/hee0wKxNW2AOToOe9H0Dd+qIiFc=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=dikt135d
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1752928579; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=+NkniJyGclh1BYCT5mLiytY3Lvljeh3VUUyk9cZ4Bd8=;
-	b=dikt135dj7YNz3Gqv46Tt0HXLmLo5p23K6ucd1qi0XIxoCmv+jxwanFlnXDl1+6rh7nvRT
-	1HndJjXivYNthosUbwbAxjzmopqMne0cHCnu1vCC1mCA9eJXcFXPtS1Jsg7xfUP38DyaeX
-	vqjZ0UXknbhREP7AasGROdaIQaBq2/g=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id CAB26136A8;
-	Sat, 19 Jul 2025 12:36:19 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id CFLxL0ORe2hjcwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Sat, 19 Jul 2025 12:36:19 +0000
-Message-ID: <6a471dd066c3297a2b1fa11631cb4e69bc91876e.camel@suse.com>
-Subject: Re: [PATCH] multipath-tools: fix licence identifier
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM-DEVEL ML <dm-devel@lists.linux.dev>
-Date: Sat, 19 Jul 2025 14:36:18 +0200
-In-Reply-To: <20250630215213.86166-1-xose.vazquez@gmail.com>
-References: <20250630215213.86166-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gwiuIikd"
+Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-3a4e62619afso314099f8f.1
+        for <dm-devel@lists.linux.dev>; Sat, 19 Jul 2025 06:46:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1752932781; x=1753537581; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=mHg5YvItvmX572ShvjvkOAwdnvh5M+a6tgw6nkYQPfY=;
+        b=gwiuIikdeFauZawHg30hQdUFtS8G/kwZwKPjl6IpL4asiQtUQ9J6nM/kRHDD32PgeJ
+         2CYhi9lWTCtird5569QJWcq3z2buweFQu5tTvCWoX32vfX45FnHnRoHD7mFNWWR6MnU5
+         z/C2NS59FPhYnajT+6bGAI4UigaIXs9OCQ20sVowsWa+Mumrjr0M42z3y6vZY/1L3RDI
+         idXo91mAX5H1AeWqduuBVzDZ5Fl2W68iok0H/uKYWtOBArJupvlPV8xzdR0j35leUWhw
+         6WJcmNGWseNx/aLsYQdMOVLIkp+Acv4gB3OhfmDjMJTtA3MAqrrviSKmu9An4Uu7eFwy
+         HrCg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1752932781; x=1753537581;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=mHg5YvItvmX572ShvjvkOAwdnvh5M+a6tgw6nkYQPfY=;
+        b=Xivz1UFL3/jk8I+o2ekcgtUMdW3+fcUun12AeQLggY97k20w4jcVQa5c3ZKgG2gaeM
+         YHnXxBd2IFMvHm+gDPMY9VCklatmM5jHdWHeLCGok6XdI6zP05o9USqSOJPhWMIE259l
+         FUsk1mWvG1muPxg4cRuImoUMQINk0SbIkeTenTLmQWZzw7V1qHxuz6ln+59MYfSr9767
+         rd1p4YByKccumCpsM6eQn6V+lj7oLtOPzcJNuSdvABGhy+SxNQkAv5+oTGZRe3xuHUtm
+         /6/RHeEXNAJtRrKe6amLKyw0yI/xwz7fbdnMeN1n0yHbFXNw7GN1tO0OZ3i4rzSFQobE
+         mJzA==
+X-Forwarded-Encrypted: i=1; AJvYcCVzquGQfo+cuR4hmuiXZLsZ9+rsusqPHRkjgm5Ojvj8aqMm1VqxVFLxCfgi6bCt7A38OE/onw9sdQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx/WQ4cokLr+ILjb00Jx+rnQFrSXYfKqfsuvlBIaV2PlYEEwwfz
+	dv/8DuUiuQeTKEHmf8thD1eS+1LlkL1syH61Ry2jvqcej7VKiUWpTH8=
+X-Gm-Gg: ASbGncvNLlbWavL9JFP8B2dCynsFMq+kNXjyOEOSfACJSY0QF4RUJCC9Pizd5RVK7jM
+	jo5z92xHjUo7u7jodB7qDRHVpkGnFaeUgNSKFvE/RRLQuoeZAjS0sBS+Pyu9kZzfmI6NZTrRrA+
+	K+vUw5lO2gOLTSUWH+8gLIuxJzbjbgi/6YwD8tNaD1FZICxdDNQvoX7YNDnUX40FkwkqnNoBoDP
+	INCLHB83mfyDRZv2R4tytZ+4lHWUNW4peHdiAMIE2ryfSxN5oKIw5UhGx2ndBB98OKfB4YDezK4
+	YOm5TntFr5X2R4N63JI9TbGyZptnxx/kJkTMZohvNGTFkGSQ+AnX1BGBfca/rQ4GWJK911AWSnh
+	5pTbyqziDD74ahxPt7zg0vJruvMkZUDQKzbwrcg5lzY8M5hh/CXINrdSOZXS3Tu79HQ==
+X-Google-Smtp-Source: AGHT+IHJqkICjwjj4UeIVLdGFt/DJFe0i2365dtr+EpU6Sfit/vU9mDnwJT2eThsTkixMejgmYenIA==
+X-Received: by 2002:a05:6000:43c9:b0:3a4:dc42:a0c2 with SMTP id ffacd0b85a97d-3b60dd4da51mr3277301f8f.1.1752932780664;
+        Sat, 19 Jul 2025 06:46:20 -0700 (PDT)
+Received: from localhost (179.red-80-39-133.dynamicip.rima-tde.net. [80.39.133.179])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3b61ca4d807sm4853763f8f.73.2025.07.19.06.46.20
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 19 Jul 2025 06:46:20 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Stefan Haberland <sth@linux.ibm.com>,
+	Nigel Hislop <hislop_nigel@emc.com>,
+	Nigel Hislop <hislop_nigel@dell.com>,
+	Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
+	Heiko Carstens <hca@linux.ibm.com>,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	Alexander Gordeev <agordeev@linux.ibm.com>,
+	Christian Borntraeger <borntraeger@linux.ibm.com>,
+	Sven Schnelle <svens@linux.ibm.com>,
+	Hannes Reinecke <hare@suse.de>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	S390-ML <linux-s390@vger.kernel.org>,
+	DM-DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH v2] multipath-tools: add a comment about DASD arrays vendors
+Date: Sat, 19 Jul 2025 15:46:18 +0200
+Message-ID: <20250719134619.331400-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	ARC_NA(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	TO_DN_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_TRACE(0.00)[suse.com:+];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:dkim,suse.com:email,linux.dev:email,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Rspamd-Queue-Id: EE8E11F457
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Score: -3.01
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-On Mon, 2025-06-30 at 23:52 +0200, Xose Vazquez Perez wrote:
-> Also location and SLI tag: https://spdx.org/licenses/
->=20
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+vendorid for DASD devices is always identified as "IBM". But EMC, HDS (HITACHI),
+or any other PAV (STK (StorageTek), AM1 (Amdahl) ???) array vendor, are also
+supported.
 
-> ---
-> =C2=A0libmpathcmd/mpath_fill_sockaddr.c | 2 +-
-> =C2=A01 file changed, 1 insertion(+), 1 deletion(-)
->=20
-> diff --git a/libmpathcmd/mpath_fill_sockaddr.c
-> b/libmpathcmd/mpath_fill_sockaddr.c
-> index 750ef3ee..61ef377b 100644
-> --- a/libmpathcmd/mpath_fill_sockaddr.c
-> +++ b/libmpathcmd/mpath_fill_sockaddr.c
-> @@ -1,6 +1,6 @@
-> +// SPDX-License-Identifier: LGPL-2.1-or-later
-> =C2=A0/*
-> =C2=A0 * Copyright (c) 2025 SUSE LLC
-> - * SPDX-license-identifier: LGPL-2.1-or-newer
-> =C2=A0 */
-> =C2=A0
-> =C2=A0static size_t mpath_fill_sockaddr__(struct sockaddr_un *addr, const
-> char *name)
+v2 - remove list of vendors from the comment
+
+Cc: Stefan Haberland <sth@linux.ibm.com>
+Cc: Nigel Hislop <hislop_nigel@emc.com>
+Cc: Nigel Hislop <hislop_nigel@dell.com>
+Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
+Cc: Heiko Carstens <hca@linux.ibm.com>
+Cc: Vasily Gorbik <gor@linux.ibm.com>
+Cc: Alexander Gordeev <agordeev@linux.ibm.com>
+Cc: Christian Borntraeger <borntraeger@linux.ibm.com>
+Cc: Sven Schnelle <svens@linux.ibm.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: S390-ML <linux-s390@vger.kernel.org>
+Cc: DM-DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/discovery.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index c4bc6df6..c78e8b33 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -1669,6 +1669,7 @@ ccw_sysfs_pathinfo (struct path *pp, const struct vector_s *hwtable)
+ 	if (!parent)
+ 		return PATHINFO_FAILED;
+ 
++	// Identified as IBM, but any other PAV array vendor is also supported
+ 	sprintf(pp->vendor_id, "IBM");
+ 
+ 	condlog(3, "%s: vendor = %s", pp->dev, pp->vendor_id);
+-- 
+2.50.1
