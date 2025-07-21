@@ -1,164 +1,142 @@
-Received: from mail-pg1-f170.google.com (mail-pg1-f170.google.com [209.85.215.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1627F21421A
-	for <dm-devel@lists.linux.dev>; Mon, 21 Jul 2025 17:28:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A198A7260A
+	for <dm-devel@lists.linux.dev>; Mon, 21 Jul 2025 18:07:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753118933; cv=none; b=bpKkxwlT1v03e1HkyNxZfnCCRWoe8uft5yoUQLQdPRSUoVmoQCFljxpcCDvUuQDXQRli+XUOgSm3j6U/4zcr0BSiwmYq2bI2/z7crJSNJg+9fw0E9NLEKq/xhcjxpyCdlypUsAf+fgZRIsv5IeAx7zV/90c5euen+gQ8z5huB1k=
+	t=1753121238; cv=none; b=aYy5y/+MP2lbPzcyzsqd9DzFXbZV7nQP+20zg5Ozbsjmi9Sg+aSiNZbNZ/OFWwDj6jHCaBI7pyQV2ZkjYbpMRicQ38wDIOBmeuiAmBzUa4o7IV9UZsJDTGQkfh2NPEhJ3Y9xAso0teit2WkW0MuLGJVln+8CV3Dxw40VFZ5Ra2k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753118933; c=relaxed/simple;
-	bh=iR7rxQGYBdkqDIrf6TwL2CvOEG/ndPYTLhHynHJxuvY=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Cc:Content-Type; b=AiviqUpQoRvQ55CfbQlDwV24n6lTDvWXx+fTKd7Nn8NDUd2UPubczuzwoM9ClHlLkyGYOY2z1VvAkHxHxqUZQpGmSBgBMpKYQKc3fa9ez86aFaIAe+S47UbVGdME+nhzJSL+gzxzIylCyNsMl6Z72oAaqatjvHMgBvPRWkJoBw8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=h4wR86hC; arc=none smtp.client-ip=209.85.215.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1753121238; c=relaxed/simple;
+	bh=dlqR+BoOjh7xIC5sm38NYSlz6u98/wT8p0xRQirI60k=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=tAP913gTBq3OQP3GKET4ZoDkyRd9PmJua3q3COuvdACGZTTf0mUqjdhbSHSI/8xA+zFTN6TEv8yiFxVXn4okTeKr2xcchS0No2GQGtAz+MZWuBZTnupo2qpZJYZLgajmo9c/9EeqMyZqIVr4Zyqcv/pXLJQ/d79k9t33ymHRXlQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Bq/dj7Ly; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="h4wR86hC"
-Received: by mail-pg1-f170.google.com with SMTP id 41be03b00d2f7-b31f0ef5f7aso2370596a12.3
-        for <dm-devel@lists.linux.dev>; Mon, 21 Jul 2025 10:28:51 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753118931; x=1753723731; darn=lists.linux.dev;
-        h=cc:to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=n03uIK1M5rvvptuPRnX/++iHtWfKS7iSWsrH9sK3zmk=;
-        b=h4wR86hCmUmP5BFOUMZkl539EP+b8xPNFNyFBJ5qE4HGcl7PrsFprNrH0vKAko3MCy
-         sll7UTiQnAiLVVAftGES5qqbmOjzuaCN98R7rtc4kVSyYrxw2+Mis7RUMjeD6r3OBtZ/
-         ujr4UfSQzaiU3N0TMvT52qnuN2Dj3oss8hbxmOeSqZPNEaG37Lqtl0n2yzSzZtYvfdP8
-         ywrpSho+7xkpCP3cPcd01KwNtwkJNMrHgFQwoAuKRU1FrXX8SSOdINnXJgVsnPHx8sih
-         qebjhxvx2Ks3+kG7uu5azv5FeTFtfc5hfQcnMRmmXPYDBbNe3BI2X8JW5zhQd3Bng+/G
-         iCsQ==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Bq/dj7Ly"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1753121235;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=nJFty5E+nnrr4B1iKN/IzI9unKAMyqZjIf2ryJjc/GA=;
+	b=Bq/dj7LyNt8fa1Ur2Zk6XfdShxctesyg2R5As33SwCu5n185ce+zXHg0TMQ1UDDlzEXQ4w
+	MqqFw7KoCrKlYbBVYbYAAJED+Ek51I0cnr7xyeAh/Y+OyaR8gDTvu5WxiLgISjqyJ84xWe
+	TbFfda1a/EYDdY2u4exS/SZiR7Usyd0=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-258-9ZEu1PLvP2-7WxAV06g0ZQ-1; Mon, 21 Jul 2025 14:07:12 -0400
+X-MC-Unique: 9ZEu1PLvP2-7WxAV06g0ZQ-1
+X-Mimecast-MFC-AGG-ID: 9ZEu1PLvP2-7WxAV06g0ZQ_1753121232
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-6fb520a74c8so75881126d6.1
+        for <dm-devel@lists.linux.dev>; Mon, 21 Jul 2025 11:07:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753118931; x=1753723731;
-        h=cc:to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=n03uIK1M5rvvptuPRnX/++iHtWfKS7iSWsrH9sK3zmk=;
-        b=dWadInUJ8wpSTfdTjwrnx6sSDKKMGts91i70LiZoLGO/wOZ5GQkxP2qUcJQt+w3EZZ
-         18US/BS8ABq5E1YvX2bhotdtGn8Ra5uKWFwQfnuUffqVM/hpL/sLu8s0G0pEp5BAGQHz
-         BQZ1EmMvwFVW+gUPkjwckFYogjiMx63MRisvCbaDwW0TnKx+cQD8NyUbRrHtkm/qo6C9
-         EWm6sHRg+x9wuTMoj0NzYT841Xw0gI5Ob1zTqmTba0cWPVb4OVG8EGybcRKhlEDoWQGl
-         n1+q2WY2OGcMstXJ2g9JA5kw9i8AGD4pf5uTLYQvG4x1MrU7KTOuofWxOPzhBiBaSp10
-         5gpA==
-X-Gm-Message-State: AOJu0Yz110IlFEd1vc9UZs9dtxz9X8aVXlHPi+XPFb6a5j5hd+WEgS/e
-	rYnYlgL3l5uzWa4ybzR3juDCIS6jRL7suPL6jSYZ1E9ovsK2J1btPh1ABqtM2g96r8TH19MBz95
-	4UJSRsW6VMO+eUNFqWQZiFuBljNzyBN/ISThI/ZlELw==
-X-Gm-Gg: ASbGncvxNQmrk+AkSQ6InGvtwpA6Q/k0T3Agqo4ML0/W6Jps7SMhE2vE7F+zj4winZ3
-	mRDgtQgUM0UsyvbM5nPVIHgfvj5FO5qHb4TsxqPvpveMmFaZcLB7Gye4w2DLQM8GSsdiptWb/2B
-	jK8BdeO8ij7SwrZN3RLX6riVdzv/6Ur4s8BUlPgvgRZKrAZLIOct3mtGqsO933r1Kfzoy52+E0C
-	YXv9DrnKxv/eA==
-X-Google-Smtp-Source: AGHT+IEkrzxHlkwVyokHzITS9by/9Eqt2w0YUwulfytua11qKL4qkMBVHy9XnICoi4jQUFXDUgRJZZz8ALYbLa/t5wI=
-X-Received: by 2002:a17:90b:3e47:b0:315:cbe0:13b3 with SMTP id
- 98e67ed59e1d1-31c9f399399mr27542290a91.7.1753118931006; Mon, 21 Jul 2025
- 10:28:51 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1753121232; x=1753726032;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=nJFty5E+nnrr4B1iKN/IzI9unKAMyqZjIf2ryJjc/GA=;
+        b=cXl8wYVOzaODaOpVQos2tqFLxQ/VP8Roew8M/ZkOVU8HnbPMei8TDssq/8oXMbnwpU
+         jkxRcl5b3KdciN/SiJGUGHbisJAMflA5szJlP5VnQWFNCNw9DotlMRrJSI8Ffv9r/2dL
+         08iKTjBDtcxEj/4KL4xSH3LVy9nBtfIiW4dMjXi092pCSSH9q7hueWsCTpQL892Ewdt1
+         tNSfE9cLltot5fKatK7psLXWHRGM6kukLoUvPXLH7OXDaDakDSPf8xBvIUEwBs208CJ6
+         6yWR4Pk1LAP/28/q+Uz3FXGPlECWFo9oPNotSItbRMrwS9xY8y0d2lwOkDIsPinUWC8C
+         h1Cg==
+X-Forwarded-Encrypted: i=1; AJvYcCW8QM5/rmK0GtOnTfGQ7Ggng5WqnEBVGq3sHaO9eVw8khaH7OGOWoCCnX87a+xNjlTHtxwu7HNV7A==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz77Pi3VHDZ7cjCqEBeNYnPHgnKyASdEAqEe0mSm4QEBlHcoJqi
+	xVIlIh6dnQIlNqO6UTrXO8DxvQhlMjfResXQW0p4dLh9akpvBjlrPQ1bbU/Qe6I/erlAL1PgyM2
+	LPDv4wV3pmDkeFcAXG1hymwV264nQbtSMtllfqETayWuZcMnIxep7eDTcZyR0v3l/bDyq
+X-Gm-Gg: ASbGncsTKErLip3W0fw/kUL4qbJsj+FjI2EFEYkCnujMhkBuvwyRUbIE8o4I9Ra7IIA
+	P+uXl82weu4Btd4+rQIIQQ7YqQjPk8GXq6sZJxmOHgxpKjXRdGBQoMYNtRCm/gVlO58RaAo3LId
+	JgRp/i98Ga3DcxwjXnki+gSR7cw3CAfFW2g8dXimwIvKk3ySbhRvHypgHN50o5U3WHHj0uNlcp5
+	AwMl2oF1ITwlbgFFmuOwT4JCbYTO6L6m/Z4EGBTuUVHthHCSvcjKt/Yq/YsEVmaKID3EfZV4A6/
+	4ZASrqiggNJ5fAj6yISWSVfK0OtwMhakbcmBzmcdf3qfINMqztn6fCaedFLLth7McFhYTVhfv8s
+	2sFwadc3yk+8=
+X-Received: by 2002:a05:6214:8104:b0:704:f7d8:7031 with SMTP id 6a1803df08f44-704f7d88977mr235049616d6.51.1753121232270;
+        Mon, 21 Jul 2025 11:07:12 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGt1vCOLLkmjUd4KuD6sqe3n8n7/UacUmVWPgHP23ityP0gOA/0UaTnvpsRw2e76gWT+2Hklg==
+X-Received: by 2002:a05:6214:8104:b0:704:f7d8:7031 with SMTP id 6a1803df08f44-704f7d88977mr235049276d6.51.1753121231685;
+        Mon, 21 Jul 2025 11:07:11 -0700 (PDT)
+Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7051b8c04fdsm41654566d6.15.2025.07.21.11.07.11
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 21 Jul 2025 11:07:11 -0700 (PDT)
+Message-ID: <03f74406-2df3-407e-b440-c364c182ad78@redhat.com>
+Date: Mon, 21 Jul 2025 14:07:10 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: Funda Wang <fundawang@gmail.com>
-Date: Tue, 22 Jul 2025 01:28:33 +0800
-X-Gm-Features: Ac12FXyBl6r07W0d-qxzqBeLxqRAjSLAViDgbgrNj_y0qe1jNqYYjOgBY_VLCUs
-Message-ID: <CAOfq2QS2rh7_+rbqeDMa1gjEFht2QThnLqfes_kzwt02uafbvg@mail.gmail.com>
-Subject: [PATCH] multipath-tools test: add missing include for stdint.h
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com, mwilck@suse.com
-Content-Type: multipart/mixed; boundary="00000000000021d65e063a73cfd6"
+User-Agent: Mozilla Thunderbird
+Subject: Re: LVM testsuite failure with VDO
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: zkabelac@redhat.com, dm-devel@lists.linux.dev
+References: <11d4215f-06b4-84a2-29ab-a558c25c6331@redhat.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <11d4215f-06b4-84a2-29ab-a558c25c6331@redhat.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: uqTUYngoPXcUQOpkp3lWd8U81B9fMxAIyphu1crbaec_1753121232
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
---00000000000021d65e063a73cfd6
-Content-Type: multipart/alternative; boundary="00000000000021d65c063a73cfd4"
 
---00000000000021d65c063a73cfd4
-Content-Type: text/plain; charset="UTF-8"
+On 7/21/25 5:29 AM, Mikulas Patocka wrote:
+> Hi
+> 
+> When I install VDO tools version 8.3.1.1 on Debian Sid and I run the LVM
+> testsuite, I get failure in these tests:
+> 
+> shell/lvchange-vdo.sh
+> shell/lvconvert-thin-from-thick.sh
+> shell/lvconvert-thin-vdo.sh
+> shell/lvconvert-vdo-raid.sh
+> shell/lvcreate-vdo.sh
+> shell/profiles-vdo.sh
+> shell/vgsplit-vdo.sh
+> 
+> There are these syslog messages:
+> 
+> | [ 0:00.988] [2498.650738] <6> 2025-07-18 20:00:38  device-mapper: vdo0:lvm: table line: V4 /dev/dm-2 1310720 4096 32768 16380 deduplication on compression on maxDiscard 1 ack 1 bio 4 bioRotationInterval 64 cpu 2 hash 1 logical 1 physical 1
+> | [ 0:00.988] [2498.652339] <6> 2025-07-18 20:00:38  device-mapper: vdo0:lvm: loading device '252:3'
+> | [ 0:00.988] [2498.652867] <6> 2025-07-18 20:00:38  device-mapper: vdo0:lvm: zones: 1 logical, 1 physical, 1 hash; total threads: 12
+> | [ 0:00.988] [2498.686527] <3> 2025-07-18 20:00:38  device-mapper: vdo: vdo0:journalQ: A logical size of 584704 blocks was specified, but that differs from the 584729 blocks configured in the vdo super block
+> | [ 0:00.988] [2498.688822] <3> 2025-07-18 20:00:38  device-mapper: vdo0:lvm: Could not start VDO device. (VDO error 1473, message Cannot load metadata from device)
+> | [ 0:00.988] [2498.890909] <6> 2025-07-18 20:00:38  device-mapper: vdo0:lvm: vdo_status_to_errno: mapping internal status code 1473 (VDO_PARAMETER_MISMATCH: VDO Status: Parameters have conflicting values) to EIO
+> | [ 0:00.988] [2499.077804] <3> 2025-07-18 20:00:38  device-mapper: table: 252:3: vdo: Cannot load metadata from device (-EIO)
+> | [ 0:00.988] [2499.078890] <3> 2025-07-18 20:00:38  device-mapper: ioctl: error adding target to table
+> 
+> When I use the version 8.3.0.73 on Fedora Rawhide, VDO tests don't fail.
+> 
+> Do you have some idea how to debug it and why is it failing with the "A
+> logical size of 584704 blocks was specified, but that differs the 584729
+> blocks" message?
 
-When building multipath-tools with cmocka 1.1.8. it produces following
-error when make test:
+This has to be a userspace problem, right?
+The difference between versions 8.3.1.1 and 8.3.0.73 is very small, just 
+an update to the acceptable inputs to vdoformat:
+https://github.com/dm-vdo/vdo/commit/0ec7597b60e5e6c2c33dfea057ac38bf157acffb
 
-In file included from test-log.c:6:
-test-log.c: In function '__wrap_dlog':
-test-log.c:24:20: error: 'uintptr_t' undeclared (first use in this function)
-   24 |         expected = mock_ptr_type(char *);
-      |                    ^~~~~~~~~~~~~
-test-log.c:10:1: note: 'uintptr_t' is defined in header '<stdint.h>'; did
-you forget to '#include <stdint.h>'?
-    9 | #include "debug.h"
-  +++ |+#include <stdint.h>
-   10 |
-test-log.c:24:20: note: each undeclared identifier is reported only once
-for each function it appears in
-   24 |         expected = mock_ptr_type(char *);
-      |                    ^~~~~~~~~~~~~
-test-log.c:24:20: error: expected ')' before '_mock'
-   24 |         expected = mock_ptr_type(char *);
-      |                    ^~~~~~~~~~~~~
-test-log.c:24:20: note: to match this '('
-   24 |         expected = mock_ptr_type(char *);
-      |                    ^~~~~~~~~~~~~
-make[1]: *** [Makefile:74: test-log.o] Error 1
-rm parser.o.wrap dmevents.o.wrap hwtable.o.wrap uevent.o.wrap
-blacklist.o.wrap util.o.wrap
-make[1]: Leaving directory
-'/home/lkp/rpmbuild/BUILD/multipath-tools-0.9.5/tests'
-make: *** [Makefile:121: test] Error 2
-error: Bad exit status from /var/tmp/rpm-tmp.7qc9Bd (%check)
+The logical size of the device is not even specified on the table line, 
+either. My best guess is that lvm is using the output of vdoformat to 
+set the device size, and the change here means that lvm is no longer 
+calculating the correct value for the device in this case? Zdenek may 
+have more insight.
 
-The attached patch solved this issue. Thanks.
+I haven't seen any issue like this in our own tests using lvm, but I 
+think we probably haven't run this specific suite before.
 
-GitHub pull request: https://github.com/opensvc/multipath-tools/pull/117
+Matt
 
---00000000000021d65c063a73cfd4
-Content-Type: text/html; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+> Mikulas
 
-<div dir=3D"ltr">When building multipath-tools with cmocka 1.1.8. it produc=
-es following error when make test:<div><br></div><div>In file included from=
- test-log.c:6:<br>test-log.c: In function &#39;__wrap_dlog&#39;:<br>test-lo=
-g.c:24:20: error: &#39;uintptr_t&#39; undeclared (first use in this functio=
-n)<br>=C2=A0 =C2=A024 | =C2=A0 =C2=A0 =C2=A0 =C2=A0 expected =3D mock_ptr_t=
-ype(char *);<br>=C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0^~~~~~~~~~~~~<br>test-log.c:10:1: note: &=
-#39;uintptr_t&#39; is defined in header &#39;&lt;stdint.h&gt;&#39;; did you=
- forget to &#39;#include &lt;stdint.h&gt;&#39;?<br>=C2=A0 =C2=A0 9 | #inclu=
-de &quot;debug.h&quot;<br>=C2=A0 +++ |+#include &lt;stdint.h&gt;<br>=C2=A0 =
-=C2=A010 | <br>test-log.c:24:20: note: each undeclared identifier is report=
-ed only once for each function it appears in<br>=C2=A0 =C2=A024 | =C2=A0 =
-=C2=A0 =C2=A0 =C2=A0 expected =3D mock_ptr_type(char *);<br>=C2=A0 =C2=A0 =
-=C2=A0 | =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0^~~~~~~~~~~~~<br>test-log.c:24:20: error: expected &#39;)&#39; before &#=
-39;_mock&#39;<br>=C2=A0 =C2=A024 | =C2=A0 =C2=A0 =C2=A0 =C2=A0 expected =3D=
- mock_ptr_type(char *);<br>=C2=A0 =C2=A0 =C2=A0 | =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0^~~~~~~~~~~~~<br>test-log.c:24=
-:20: note: to match this &#39;(&#39;<br>=C2=A0 =C2=A024 | =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 expected =3D mock_ptr_type(char *);<br>=C2=A0 =C2=A0 =C2=A0 | =
-=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0^~~~~~=
-~~~~~~~<br>make[1]: *** [Makefile:74: test-log.o] Error 1<br>rm parser.o.wr=
-ap dmevents.o.wrap hwtable.o.wrap uevent.o.wrap blacklist.o.wrap util.o.wra=
-p<br>make[1]: Leaving directory &#39;/home/lkp/rpmbuild/BUILD/multipath-too=
-ls-0.9.5/tests&#39;<br>make: *** [Makefile:121: test] Error 2<br>error: Bad=
- exit status from /var/tmp/rpm-tmp.7qc9Bd (%check)</div><div><br></div><div=
->The attached patch solved this issue. Thanks.</div><div><br></div><div>Git=
-Hub pull request:=C2=A0<a href=3D"https://github.com/opensvc/multipath-tool=
-s/pull/117">https://github.com/opensvc/multipath-tools/pull/117</a></div></=
-div>
 
---00000000000021d65c063a73cfd4--
---00000000000021d65e063a73cfd6
-Content-Type: application/octet-stream; 
-	name="multipath-tools-add-missing-include-for-cmocka.patch"
-Content-Disposition: attachment; 
-	filename="multipath-tools-add-missing-include-for-cmocka.patch"
-Content-Transfer-Encoding: base64
-Content-ID: <f_mdddogz00>
-X-Attachment-Id: f_mdddogz00
 
-RnJvbSAxMGUxMDEwYmZjN2Y2ODNkZGFjNjY4MGYzMzQ5MWM2YjU5YTE4NDFmIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBGdW5kYSBXYW5nIDxmdW5kYXdhbmdAeWVhaC5uZXQ+CkRhdGU6
-IE1vbiwgMjEgSnVsIDIwMjUgMTE6MjY6MDggKzA4MDAKU3ViamVjdDogW1BBVENIXSBtdWx0aXBh
-dGgtdG9vbHMgdGVzdDogYWRkIG1pc3NpbmcgaW5jbHVkZSBmb3Igc3RkaW50LmgKCi0tLQogdGVz
-dHMvdGVzdC1sb2cuYyB8IDEgKwogMSBmaWxlIGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspCgpkaWZm
-IC0tZ2l0IGEvdGVzdHMvdGVzdC1sb2cuYyBiL3Rlc3RzL3Rlc3QtbG9nLmMKaW5kZXggNjM1MTY5
-OTk0Li40ZjY2OTk1NjggMTAwNjQ0Ci0tLSBhL3Rlc3RzL3Rlc3QtbG9nLmMKKysrIGIvdGVzdHMv
-dGVzdC1sb2cuYwpAQCAtMiw2ICsyLDcgQEAKICNpbmNsdWRlIDxzdGRkZWYuaD4KICNpbmNsdWRl
-IDxzdGRhcmcuaD4KICNpbmNsdWRlIDxzdGRpby5oPgorI2luY2x1ZGUgPHN0ZGludC5oPgogI2lu
-Y2x1ZGUgPHN0cmluZy5oPgogI2luY2x1ZGUgPGNtb2NrYS5oPgogI2luY2x1ZGUgImxvZy5oIgo=
---00000000000021d65e063a73cfd6--
+
