@@ -1,240 +1,290 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26DEF2DAFA6
-	for <dm-devel@lists.linux.dev>; Mon, 21 Jul 2025 14:09:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753106989; cv=fail; b=texWtpL/dl5gcgWjh2aoLvbS6Hz76abx1wpJ5SWqdy0EBfbGYoTsM+GRsxn9bNQIR9N/wQJkzWYM3H+ZF7pC4UHbzf92E4nVQjRX54HMtE3xyV9RlzBrFceX3DIwGRDp3vPNM/qnyfhajH5NaS4EbzyRpo7PNcyNAkiGMxVTcfI=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753106989; c=relaxed/simple;
-	bh=Bwc5zoijoZ6D4wSC6AolGeK58rmkb2l0IAlmRI1tzu8=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=n43O2E0jGMnp3aV60lqu9VCluPhL9jVEY9qlM0Vo9aXPxD29Js4sj4Vzq3ahNc9S0UHo2skEvsQXBLo2z/escBzSVu4mq/nepuyRWG0J39OaXLchf9izm+6WugVNPCj6IsJFOQoRHiaW4N/df0bqjesUW0iNGXm5S/Tr1+z0Zz8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=Kt7wV6Fy; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=WzdytRKa; arc=fail smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F5FA1E32D3;
+	Mon, 21 Jul 2025 17:16:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1753118194; cv=none; b=KLOX8iRF9J/GcspMePSCRKNDfhH+vo5v3/0tZ0Qnt37Liki/1xhZfczgcHfSNSJZbHalfog7JkyPTI3P+gWuloUy5FsfLbGu2klN71j7VYeKnHW2h0yVtP5Atvv/wewxLbDNErzqpy3s3tzJMYkmrRSDcyVCZXCXE39lE0Rq3Y8=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1753118194; c=relaxed/simple;
+	bh=1GT4lWwNp8stNHLex+5QlywJON0Cd9VdZN+XvmXNm9A=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=u5NtPCMlozArXiDUldXYH3caouMJUXEhnjK+2UA2rwezSAH9mqXJXnK+rRTIdCQi9/mNH3XCHtMJuzUF720V7JnES+x2ej4MI5QWC1UKV08LDf7lcJzH8urjtAJe7X/nkeTp0o70wapIrqJUywuodtGTZF7p1PSELe0wYBOXaQ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=tbkhZT2F; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="Kt7wV6Fy";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="WzdytRKa"
-Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 56LCMkwC012787;
-	Mon, 21 Jul 2025 14:09:31 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2025-04-25; bh=1VQXk/FH7ApQmp9mEb2ziM8btpES7e6KB+byO9JGXPA=; b=
-	Kt7wV6Fy3Fo0A8EhXY98SPIUH+eGd10C1HVwRoPMjK4nSU/3L4qRQeyboOLd+Abt
-	u0X6tTNkZvoupyzmeZd2W4n8FRUKvvhc/Cj7WKUNrLUZAhdghzAWm+/1KuMsaUja
-	UxgX3w9UrUSGcxPK3IpSg2D5BmZriee8Hxxx/n2YgcG5HsZ9lk9eb0aKd/ZKItts
-	TIOP2jjXOjnNW+eE42lYAZB4xwmZUz8WGpl582MnQuoxwFuDa2QuoqIY5oGcmaOB
-	rnWtDT5m5tRqRA0OxEzQV89Ma/XvkE/+nGHwIyOCRR/EPJ1f3KpdH+SGBGupGsK8
-	HZIW3jDQwp79pmsSN3VMPA==
-Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4805gpjsfp-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Mon, 21 Jul 2025 14:09:31 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 56LDEflm005877;
-	Mon, 21 Jul 2025 14:09:30 GMT
-Received: from bn8pr05cu002.outbound.protection.outlook.com (mail-eastus2azon11011052.outbound.protection.outlook.com [52.101.57.52])
-	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4801t83fdr-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Mon, 21 Jul 2025 14:09:30 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=BuBeOtlBlAtBmLEGdImGfS3MTpWweV536h7F1VtvSOP28hrABOsn+8LOnuvUgo+k71iImiGm3F4rovTAlRCWmd50zjsb63mY2KGzSi6X08/T32TdF4rLk30fB+9ge0IVNCfZymuIEfsw8dFjs/zmwUhUkBVAqCFcu1Lqa9KQnZveADoC1tCZjKYiSn7eJQJJFO/ks2FDmkMrHN2FX92doE9V2AeZS9/EGVaAFUmmS3IqGWDIheh/jP7Jf/7ccdFr+XmpXJ9ziWC5grRWSe6C1hw4m3acQgNk0JjUKmFrRWEk1vqQ7X5R31+NITUgJTKu/yiGVDhIF8CDM4tFD28Q5w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=1VQXk/FH7ApQmp9mEb2ziM8btpES7e6KB+byO9JGXPA=;
- b=lQaWdN53mhROpXBqtaWI7eF+oJ48mq+cSXxfbLWNQYPdgLvMojmo9wyU7AT2L+6qZljuhgtHGJ77h+xf3k+XENYSHv4KCKaxpcxc1wP7TeaF5K2NEwrMOuO7nPjYB4mDD5K9YZGM4qQqeapC8snPH90vuU8x0B+QuiUkLsjTSNQsj5K+2C57l9hVg4ndt6FFrEKV84yR96QaoU6w7noI5sAdMWs6PBEzWRFTPi3AVfEXYva6MqfOQK+AWJES4e7jNAlK7y7ovAogsm/204NpV6NwOYHbSc0ZQOtexmPg9vFdV3hN/s2k/JocGuWN3d5n/f8yLdap1AcSMLy1kxhA0w==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=1VQXk/FH7ApQmp9mEb2ziM8btpES7e6KB+byO9JGXPA=;
- b=WzdytRKaxh3gnRlLxFsD+finuaiGfR57jYo+SM5HJIpQGz0kq8SJzZiw619F1AcZjlEEn13lAZpfmmuBtnh4KUSUHyTkNjR26UEqMH9gWLNxg7IH9oW0tzRiI3UKaRa/1MXIPqcYQZYNmICp/NIQdD9dkTmGPRe5GDMakr6N33g=
-Received: from MN2PR10MB4320.namprd10.prod.outlook.com (2603:10b6:208:1d5::16)
- by PH7PR10MB6457.namprd10.prod.outlook.com (2603:10b6:510:1ec::10) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8857.28; Mon, 21 Jul
- 2025 14:09:27 +0000
-Received: from MN2PR10MB4320.namprd10.prod.outlook.com
- ([fe80::42ec:1d58:8ba8:800c]) by MN2PR10MB4320.namprd10.prod.outlook.com
- ([fe80::42ec:1d58:8ba8:800c%7]) with mapi id 15.20.8943.029; Mon, 21 Jul 2025
- 14:09:27 +0000
-Message-ID: <cad33609-9a92-444b-9ff5-5f5a68598866@oracle.com>
-Date: Mon, 21 Jul 2025 15:09:24 +0100
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 5/5] block: use chunk_sectors when evaluating stacked
- atomic write limits
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, axboe@kernel.dk, agk@redhat.com,
-        snitzer@kernel.org, song@kernel.org, yukuai3@huawei.com, hch@lst.de,
-        nilay@linux.ibm.com, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-        linux-block@vger.kernel.org, ojaswin@linux.ibm.com
-References: <20250703114613.9124-1-john.g.garry@oracle.com>
- <20250703114613.9124-6-john.g.garry@oracle.com>
- <b7bd63a0-7aa6-2fb3-0a2b-23285b9fc5fc@redhat.com>
- <f7f342de-1087-47f6-a0c1-e41574abe985@oracle.com>
- <8b5e009a-9e2a-4542-69fb-fc6d47287255@redhat.com>
- <803d0903-2382-4219-b81e-9d676bd5de1f@oracle.com>
- <yq1a55edu8i.fsf@ca-mkp.ca.oracle.com>
-Content-Language: en-US
-From: John Garry <john.g.garry@oracle.com>
-Organization: Oracle Corporation
-In-Reply-To: <yq1a55edu8i.fsf@ca-mkp.ca.oracle.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: LO4P123CA0296.GBRP123.PROD.OUTLOOK.COM
- (2603:10a6:600:196::13) To MN2PR10MB4320.namprd10.prod.outlook.com
- (2603:10b6:208:1d5::16)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="tbkhZT2F"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F036CC4CEED;
+	Mon, 21 Jul 2025 17:16:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1753118194;
+	bh=1GT4lWwNp8stNHLex+5QlywJON0Cd9VdZN+XvmXNm9A=;
+	h=From:To:Cc:Subject:Date:From;
+	b=tbkhZT2FNanibBwM9Q3Dp4dkbsYM77XTmHz5Db6bUAgTGFruCprlZTixHQqEB746h
+	 VUmUAZtLybbkJ99nPPZnq5Jw5ghPMRv7Qi2cW4+PmxxE9d7A+roA3bWT0k89LvXTu0
+	 FFhtMSyZoo/CZpDZuC+06PvBVss81jGMRS7R6PH4+j24kV+EGgUM4ghRVhiVV3fN7H
+	 IbGMbc1h0cD3HNWZUQrqtzWeZfanR83THL+ic1lUXDo2muIELIvkA/bOwynY0KcFWb
+	 b3GVEIQ+CLC9In2S5cnhpVMeUT1KxvGUqfus4gkaxDc+abCMV5/a2ZJOiHQDqjUs8d
+	 8eqyxlEriqTXA==
+From: Yu Kuai <yukuai@kernel.org>
+To: corbet@lwn.net,
+	agk@redhat.co,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	hch@lst.de,
+	song@kernel.org,
+	hare@suse.de
+Cc: linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	yukuai3@huawei.com,
+	yangerkun@huawei.com,
+	yi.zhang@huawei.com,
+	johnny.chenyi@huawei.com
+Subject: [PATCH v4 00/11] md/llbitmap: md/md-llbitmap: introduce a new lockless bitmap
+Date: Tue, 22 Jul 2025 01:15:46 +0800
+Message-ID: <20250721171557.34587-1-yukuai@kernel.org>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: MN2PR10MB4320:EE_|PH7PR10MB6457:EE_
-X-MS-Office365-Filtering-Correlation-Id: 7da283d1-27ad-42c3-9f53-08ddc86033bd
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|7416014|376014|1800799024;
-X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?K0srWWRLREpDbFEwZjdseXFrQVJycFJnaXBEaVFQT0xjTVA1T09pSDA3NkEz?=
- =?utf-8?B?cWtVeXROZXkrWkNDSFptb25XaTdqSWxtdXFrL1VpVGZFMEI3Um9FZDFEMGRp?=
- =?utf-8?B?MmtxVzl1MTZsampDQWNoQlllYm8zemtnbnM0UXRDa0ZQeEZ1eDRGb1pvZ0VY?=
- =?utf-8?B?K2F4TFA3S3FWU2FyN1l1VnJsRHF1WjdzQm1RbVhvTWxieFRiZkxLMVhmZnBj?=
- =?utf-8?B?SVhNeUlHYUM4bjBTRzFqRXhJcnM0dUJ4RGw3V1RheEpwWmJTcXBWcXd5RW00?=
- =?utf-8?B?by9MSklodzVXd2srRlRBdjBCNCt6NktoT0ZoeUNpWHJEVS9aenlJem1zd1U4?=
- =?utf-8?B?K2hFOUh4alpzQjl5dkFwRm9Ob2E1SFlYeERpdUNTb003cFlJcWx1M3JnVFBr?=
- =?utf-8?B?ZC9jaUxKQ3pUZ3Q2Wnp0NG84MHlKaEhsQUx6TFBHenRjWnZMZVpUWlZxa2FO?=
- =?utf-8?B?OGN4NUZnMlp1UHRFYjF4OEpoQWpic2dIZjN4TFFqOFpzaDY4VkZ4Slk5a2x1?=
- =?utf-8?B?eUI2VC80WkU4SitEdFc4ZE45RzFGbW82cDQ5SFA2VkhvVGpMRzU3RU0rODN3?=
- =?utf-8?B?c3l5SCtZL0pUZDNLM2FXM21qY3B4NmhJUnlmaXVvdFdjZHJNNHNieE4wRzY3?=
- =?utf-8?B?MHV1akZwTGN2aTUxeGJCSVV6eTRaK09kNDdaQVdIMzAwbmh2cEQxT25jajFw?=
- =?utf-8?B?aFNYd0NBUXkwVE9PYXVmd1NJbnJUWjVLbXRweGdpZzdtbDA5REV6cXZydWd4?=
- =?utf-8?B?UldaTHZmbXZlcUZOd1hCdE5jbGd4eEw3dDd6eWZhVXZZWWJpVC9wOFRNanRU?=
- =?utf-8?B?akNFMHhibXQ3Z0swaDJsSEU0WS83b0tka01LcU1NMU9TaGNENUFpUlBPV25V?=
- =?utf-8?B?S0RoVWM5RGRiOStsMXhPS01zUC9ncm9TRWRaNjlFMU1xTDBHRVZQWWJXZVVo?=
- =?utf-8?B?S0w2YnJhZ0tPbzVDUVEyMUtqWk5YNzYvNEpDS3h2czA1aXkyNnc3dUQ2bXdC?=
- =?utf-8?B?NnUwTTY4WTYzZHdwRHVRajlKMndEc3hzYzRyS3NoVUlGSjRpditLQUl1bmFI?=
- =?utf-8?B?elV5NTdFa0lrelhOMHJFOHRYWlhUejNCMkZ2SnN6SzlubHVTVFo5UXNpTHdq?=
- =?utf-8?B?dStFempYUjF1UjNrTHN6M2krV3hqYVFldzZDRGpOK0ZBTFJjdGpvR2FPcUEz?=
- =?utf-8?B?dHZ2c2d3UHdnMnJkOEJXV2dnQ0dHRnhkSENQclVnNkFoRnJGcWVGalkzYmUr?=
- =?utf-8?B?cThOTFZMR2NYMWtNZW1MQzhLd2NNUG9YRS9XSStZNm1ROXJqbGNxMTFzc0V2?=
- =?utf-8?B?amwvRUU0L1NTMUdsdjVmRGxXNFVsWUtna1RwTTBPakJMRG9VUzhyTk5sT3Bl?=
- =?utf-8?B?cFg0YmhvSldoeXVDWUdYS3hIeWYxS0RkWGhGL1I0RFgxVHNlRjBHTXp4QTBt?=
- =?utf-8?B?Nk51Wk8zdFFUR1VKalZCRVNjR2Y1YlJOWmxnQTBleHYzZjcyU1E0MXFBbEc3?=
- =?utf-8?B?VFFrd0loRzRXZzhya093N2pnNWlKUG9UWHBQMTJiREt1NmtROVBjendTQzJw?=
- =?utf-8?B?MDM3N1hMcGhVWWtyT1NmNVRwSW92UDhpQUVqYmtZNUJraEtTQlBIcjBQVkVT?=
- =?utf-8?B?ZVdZWjFXUllvaFlHeFYvakQ0WTQzakFJWHVQYTlkOVp4VlJrUEFoaCtGcXVR?=
- =?utf-8?B?eW5La1FxT2Jpa1VTcFd4MzJYTkt4R0poQ1JpMjkvZnd3Yi9aeW12Y0luM1Nr?=
- =?utf-8?B?bHFrTmZCMjVyUmhlZVk2U0dLUlJVbGV6eDM4QnZHMjVmc0tMVFZJSlNhdjB1?=
- =?utf-8?B?cnVobndSNFArQ1FyeFBLZkpzRUx4Y1FqU1hENUNud28rVlQrc05DUmNnbm5G?=
- =?utf-8?B?VEgrR1c4d3phNDVsUlRBNThUNVNCRWlSUll1UnNlTkRsQU9LcHV5Rmo5Z2hT?=
- =?utf-8?Q?ak6/yVYA2mA=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:MN2PR10MB4320.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(7416014)(376014)(1800799024);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?YmVrQktVbE1tcmZxa2IwMStLcjNsRWNWZFJLTTBhbFFML0F6R2g3UHJrNlBx?=
- =?utf-8?B?RjhRVVlJMHJXL0pZcXRVOFQ5L3p4TXRpZ1J3VktxTy9FT3NEbTVRdWtmZEN0?=
- =?utf-8?B?NU93RWg5eXdYdVFHTGtyV0d6THlxLzdXRjRIWUhLSWdCRCtXdThxZ2E1eS9H?=
- =?utf-8?B?ODBab2w5bWl2c2JGWkxZRXhXbnpQTEg2a3RiOGx1ajFXVE1VMGZBSTRTSHhJ?=
- =?utf-8?B?c2RkeDNJcy9rUFdXajhWUWMzSFYvdU1XU2I5dlA5ZkV2bzRaN0VCQVRVK2wy?=
- =?utf-8?B?OFJET0xESUNaV2kvbDdzcVRCT2pXVjQ2M04rV2NMMWVhcjhrbXpEZjJhRU9r?=
- =?utf-8?B?OE52L21PY1Q0RG0zclQzRDFPZlpYWE9FQjVoSGxuQ0lpWGFJR3JIUlB2RHVG?=
- =?utf-8?B?dVVoSzZUVE1QWEduMzVIZHhJdkxhNFk2KzJtWkdSRXdDTWlzc3J2NjVEN1RO?=
- =?utf-8?B?V2VGUm1kbktwd2lyOFVtWFFndUJVd1MrczVaQ2M5dVpXVGkxNE5lVHBrWFBx?=
- =?utf-8?B?bjJRMTJKZ0VGRW9xUjBuUWtvRXdGbVpSaURvNndlRm5pWUl2L1R0UnhsR204?=
- =?utf-8?B?b25OSWRXVFFpbGlRYXZiK0V3M1ZlaTJZM1NvRkhBK1hibkFnSlBjVlV3ZkJs?=
- =?utf-8?B?WmJVcVhHSXN1dHJYWmNwbjRuaEZhcnJSYjNRTmFueUJ5NXg1TWhpbUtFMTMw?=
- =?utf-8?B?UHo5ZFh5d0xFODg2eGs4d1ZpbER5QjhsMUlmVmNuOFhhTDY2MEUvZEp6QW0v?=
- =?utf-8?B?cnRJMTRQL2plWWZXU2VpZ05jUzJIQm8ySkgxbEltR1BJbkh6RmRIQjhZVWtW?=
- =?utf-8?B?YU9lSkJpM04wTnJGUWFIQzI1SlozRkx1QXdoY01BOXVCZVpSSGZGYWZxRlZs?=
- =?utf-8?B?dEUrQkkzNGxUSjhIZGYzN1FYOTRyWGQ0OXV0aUJJb2pXakdFV0xveWJBVXJq?=
- =?utf-8?B?eTFBaloybmluNUwxZ0gxam44NVFuMFNXTVBlTG56WENxaUlGVXptUSs3aVZr?=
- =?utf-8?B?TkZhSHh1Sk0vWVhrVGlBWUVjdWpmTytqcGVVcUlOcGtaK0ppck5XUTlPVC9z?=
- =?utf-8?B?TGV4UXdJQS8rMmV4ZXlKNy9WOHg0OXJMN0doNDdXOEpreVRDZDdoSitvSnFC?=
- =?utf-8?B?ZnZ5M0FPLzFuSUVlaDhFRHJlTklFY0dTeEJZY25KcDF1bnpFRFQvempHcDV4?=
- =?utf-8?B?clUxVU94YjZBK0hzVlNXN2s5anhwRFhUQms0dnRpVkp6MC8yUHMySjMvYWZQ?=
- =?utf-8?B?WGxXbnJvYUN3cFpxWkw2MTZ4cTBxQVAra0liSlpSL2Exb0p5dzRyUFJEcjJu?=
- =?utf-8?B?dG1DOEVLRVNDZ0NNUDdvdzNub0U5ZFZMS0JLR2FrL0dWM2hyckxFTU9ydUxa?=
- =?utf-8?B?Z2ZzVlBFbmFTRU12L3UyZENsdmgrZmhGV3BZZWV5QVhhU3Y3S2tLaVg1SUps?=
- =?utf-8?B?SnhuZk05SEcvRkNEL1RXbllXMjltNXJ6WTRZWm8zeURETENaeUtsNmF2MkJK?=
- =?utf-8?B?cG9ISXBYMWVkc24xbHhXcU00ZFpQaEl0MG9vdDg5UTBpQm00VE5QbThMMHRz?=
- =?utf-8?B?b2RVcUpMM3N0d0E5UmVXWkgyUXArV0ZsNzk1M1RHRDdsK2JZQkJ1dTdVL3lG?=
- =?utf-8?B?c3ZUNjlsTHpGbjhSNG5LMGJNeHlHK3lYUUxBaGN5TDAwTnN4dDkybWdabmQ1?=
- =?utf-8?B?VU5NcEZQS3o2L0VvdHVvcDBOc1FyU2VhRUNWTVFyV1Avd0hjQVBUTzVLTEd6?=
- =?utf-8?B?U1ZUb2x5MStaaldWdXNYTEVnUHE3cWJIQVFrbjNod1VRRjlrQkd2NTdtRDQx?=
- =?utf-8?B?QTJObWFpYlpwUHB5UUQ3Yi9GeC9pbGNCWFdleU1qcVlTeXYrYU1CSnowTVFJ?=
- =?utf-8?B?eW5EQng0eXI1V21wZ3RoZGhOMWlsdXVhVHVNSmtMcnB2YWRpNGdOaW5JdWhI?=
- =?utf-8?B?SDFTdnBXVk1oQW1pd1V1cmtpdVFMSGEwMzJ6ampkVnYvRkJxUndxVkdrMDFK?=
- =?utf-8?B?K0twTWpPaGtERjNTVlJ5Y0tXYW5aLzBUcmRYQTdpVWZNT0p5SitOWU8vNEtS?=
- =?utf-8?B?MWRuL1o2WmpJV21tQ2NWQVFWamRPUytSUFVnclJ1K1JPenQzM0xLN2ZBS09z?=
- =?utf-8?B?SEZTbkFPSmJ1SnZodFA5T1JsTTltZkVpTG1BeGE5V0xtUWFKQnhBWnlEZ3hU?=
- =?utf-8?B?VGc9PQ==?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	JhcaORLO/Ydfb5jQMbIeEqCyKQPxZPe2FLmF11fx4SJVPVXBlsr4vLnCZgam6AKnutYFDwjkLtqySMDJwmlv3yUY62l+IzW+/YOE/RaurCJm0JLl1O60H1gUtRBhK9ssbWmLJGpmcjfS92r8iMqT6ppeYhIRs+md+H++Vav3/87OS44+4d2eGwXnCVMIE+o/Jg0f6x6EhFRDRrTLUoZ6C2oFlfYzw01YejGOr6S5q0z6YpOKZN8IUi+XAUdwJHWjwZp3oD7CaOfu3QJdKOSTDouPi30lNlSjAKl4rjEyIwe5ionpr9gqimonzvE22y2cJ/R05CJmjWyqznaK01VXe89kPXop2HZzEXQ0jwrRguSHB9PssMeOmQ9EPj+1daxvH4THphOsShwr/7TaqvCvhyMgJOms5dkR4nJPTen1GQKyLqv/rQh5CzkcnuNpSWnOv/LhGbySMGYY99jlFN9HJ6oXSWdbWOVzxh/XKbF9OLePnrt57A6d74s4rXTY8rEeI6S80jXVgD3EpqexW4R3VDuqP6vmB8SWy9BCkziK4zZ5ctrCBYH1gPgaEzMIIWu3t8vsE4U7jajRKak64kPvkpK/RRn+0UYZ/TnCF7vXHaY=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7da283d1-27ad-42c3-9f53-08ddc86033bd
-X-MS-Exchange-CrossTenant-AuthSource: MN2PR10MB4320.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 21 Jul 2025 14:09:26.9961
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: rEwVhtlKqVNv1eh24MxgdqnsN5TW3gTRiyxil479RW5hl+j6QfHDaRDvv4uK8numGG9B9pZTuECrSUGPQfW76w==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH7PR10MB6457
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.9,FMLib:17.12.80.40
- definitions=2025-07-21_04,2025-07-21_01,2025-03-28_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0 mlxlogscore=999
- bulkscore=0 phishscore=0 adultscore=0 suspectscore=0 spamscore=0
- mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.12.0-2505160000 definitions=main-2507210126
-X-Authority-Analysis: v=2.4 cv=TfGWtQQh c=1 sm=1 tr=0 ts=687e4a1b cx=c_pps
- a=XiAAW1AwiKB2Y8Wsi+sD2Q==:117 a=XiAAW1AwiKB2Y8Wsi+sD2Q==:17
- a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19
- a=wKuvFiaSGQ0qltdbU6+NXLB8nM8=:19 a=Ol13hO9ccFRV9qXi2t6ftBPywas=:19
- a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10 a=Wb1JkmetP80A:10 a=GoEa3M9JfhUA:10
- a=KwV4qE7swklyai2pZOUA:9 a=QEXdDO2ut3YA:10
-X-Proofpoint-GUID: rCLFML8hsN0vcdkeYedUPCjrimpbH4Qk
-X-Proofpoint-ORIG-GUID: rCLFML8hsN0vcdkeYedUPCjrimpbH4Qk
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzIxMDEyNSBTYWx0ZWRfXyg2jszdFzT0O
- 0qds/okNEmzFzB3R4BjVFLSznsEF40zbQd8NYVecBvvG8l+JuCoMJjCLgLk4WEOervI8ibPHlIe
- f2se8z124TQNSuNrFeesVdIIbMpL+zqj8qrbXCleHQj1FRfYC0h3fcEVU9Ycqjd8SZftzyNQfvP
- Tg7lp0fR32ucYpbbZV8G30bG4aOis+bJp41L5rAlITC5GFRkbGhse1Hksfo7q29Dxhj69jAmgIp
- Z8Y1DTlhNFmUbPgtgo2Gy737CFkC7798gR4AblCbgUbGlQrTmOLvzeFGi7HlMvu1jOym47vC7YK
- +ybLC35pIIAne6M+zwBlfg/AvaQvkwigZvM1JTuj3bTvzghYzHX0II4TTTCgVDHTxRgtVstgJ0O
- ZvwlVUuUwt73+sIJpcnyQgOutq1Q2XNxkSq3vNuX7eFTSQfvOBrESqEpttemW0UH6HrQkh7e
+Content-Transfer-Encoding: 8bit
 
-On 09/07/2025 02:39, Martin K. Petersen wrote:
-> The intent for io_min was to convey the physical_block_size in the case
-> of an individual drive. And for it to be set to the stripe chunk size in
-> stacking scenarios that would otherwise involve read-modify-write (i.e.
-> RAID5 and RAID6).
-> 
-> io_opt was meant to communicate the stripe width. Reporting very large
-> values for io_opt is generally counterproductive since we can't write
-> multiple gigabytes in a single operation anyway.
-> 
-> logical <= physical <= io_min <= io_opt <= max_sectors <= max_hw_sectors
+From: Yu Kuai <yukuai3@huawei.com>
 
-Does pbs need to be a power-of-2?
+Changes from v3:
+ - fix redundant setting mddev->bitmap_id in patch 6;
+ - add explanation of bitmap attributes in Documentation;
+ - add llbitmap/barrier_idle in patch 11;
+ - add some comments in patch 11;
+Changes from v2:
+ - add comments about KOBJECT_CHANGE uevent in patch 6;
+ - convert llbitmap_suspend() to llbitmap_suspend_timeout() in patch 11;
+ - add some comments in patch 11;
+ - add review tag:
+  - patch 3,4,5,9 from Hannes
+Changes from v1:
+ - explain md_bitmap_fn in commit message, patch 3;
+ - handle the case CONFIG_MD_BITMAP is disabled, patch 4;
+ - split patch 7 from v1 into patch 5 + 6;
+ - rewrite bitmap_type_store, patch 5;
+ - fix dm-raid regerssion that md-bitmap sysfs entries should not be
+ created under mddev kobject, patch 6
+ - merge llbitmap patches into one patch, with lots of cleanups;
+ - add review tag:
+  - patch 1,2,7,8,9,10 from Christoph
+  - patch 1,2,7,8,10 from Hannes
+  - patch 1,2,3,7 from Xiao
 
-The block queue limits and splitting code seems to rely on that, but it 
-is not policed AFAICS.
+v3: https://lore.kernel.org/linux-raid/20250718092336.3346644-1-yukuai1@huaweicloud.com/
+v2: https://lore.kernel.org/all/20250707165202.11073-12-yukuai@kernel.org/
+v1: https://lore.kernel.org/all/20250524061320.370630-1-yukuai1@huaweicloud.com/
+RFC: https://lore.kernel.org/all/20250512011927.2809400-1-yukuai1@huaweicloud.com/
 
-The stacking code seems to just want it to be a multiple of lbs, which 
-itself must be a power-of-2.
+Branch for review:
+https://git.kernel.org/pub/scm/linux/kernel/git/yukuai/linux.git/log/?h=yukuai/md-llbitmap-v4
 
-Thanks,
-John
+#### Background
+
+Redundant data is used to enhance data fault tolerance, and the storage
+method for redundant data vary depending on the RAID levels. And it's
+important to maintain the consistency of redundant data.
+
+Bitmap is used to record which data blocks have been synchronized and which
+ones need to be resynchronized or recovered. Each bit in the bitmap
+represents a segment of data in the array. When a bit is set, it indicates
+that the multiple redundant copies of that data segment may not be
+consistent. Data synchronization can be performed based on the bitmap after
+power failure or readding a disk. If there is no bitmap, a full disk
+synchronization is required.
+
+#### Key Features
+
+ - IO fastpath is lockless, if user issues lots of write IO to the same
+ bitmap bit in a short time, only the first write have additional overhead
+ to update bitmap bit, no additional overhead for the following writes;
+ - support only resync or recover written data, means in the case creating
+ new array or replacing with a new disk, there is no need to do a full disk
+ resync/recovery;
+
+#### Key Concept
+
+##### State Machine
+
+Each bit is one byte, contain 6 difference state, see llbitmap_state. And
+there are total 8 differenct actions, see llbitmap_action, can change state:
+
+llbitmap state machine: transitions between states
+
+|           | Startwrite | Startsync | Endsync | Abortsync|
+| --------- | ---------- | --------- | ------- | -------  |
+| Unwritten | Dirty      | x         | x       | x        |
+| Clean     | Dirty      | x         | x       | x        |
+| Dirty     | x          | x         | x       | x        |
+| NeedSync  | x          | Syncing   | x       | x        |
+| Syncing   | x          | Syncing   | Dirty   | NeedSync |
+
+|           | Reload   | Daemon | Discard   | Stale     |
+| --------- | -------- | ------ | --------- | --------- |
+| Unwritten | x        | x      | x         | x         |
+| Clean     | x        | x      | Unwritten | NeedSync  |
+| Dirty     | NeedSync | Clean  | Unwritten | NeedSync  |
+| NeedSync  | x        | x      | Unwritten | x         |
+| Syncing   | NeedSync | x      | Unwritten | NeedSync  |
+
+Typical scenarios:
+
+1) Create new array
+All bits will be set to Unwritten by default, if --assume-clean is set,
+all bits will be set to Clean instead.
+
+2) write data, raid1/raid10 have full copy of data, while raid456 doesn't and
+rely on xor data
+
+2.1) write new data to raid1/raid10:
+Unwritten --StartWrite--> Dirty
+
+2.2) write new data to raid456:
+Unwritten --StartWrite--> NeedSync
+
+Because the initial recover for raid456 is skipped, the xor data is not build
+yet, the bit must set to NeedSync first and after lazy initial recover is
+finished, the bit will finially set to Dirty(see 5.1 and 5.4);
+
+2.3) cover write
+Clean --StartWrite--> Dirty
+
+3) daemon, if the array is not degraded:
+Dirty --Daemon--> Clean
+
+For degraded array, the Dirty bit will never be cleared, prevent full disk
+recovery while readding a removed disk.
+
+4) discard
+{Clean, Dirty, NeedSync, Syncing} --Discard--> Unwritten
+
+5) resync and recover
+
+5.1) common process
+NeedSync --Startsync--> Syncing --Endsync--> Dirty --Daemon--> Clean
+
+5.2) resync after power failure
+Dirty --Reload--> NeedSync
+
+5.3) recover while replacing with a new disk
+By default, the old bitmap framework will recover all data, and llbitmap
+implement this by a new helper, see llbitmap_skip_sync_blocks:
+
+skip recover for bits other than dirty or clean;
+
+5.4) lazy initial recover for raid5:
+By default, the old bitmap framework will only allow new recover when there
+are spares(new disk), a new recovery flag MD_RECOVERY_LAZY_RECOVER is add
+to perform raid456 lazy recover for set bits(from 2.2).
+
+##### Bitmap IO
+
+##### Chunksize
+
+The default bitmap size is 128k, incluing 1k bitmap super block, and
+the default size of segment of data in the array each bit(chunksize) is 64k,
+and chunksize will adjust to twice the old size each time if the total number
+bits is not less than 127k.(see llbitmap_init)
+
+##### READ
+
+While creating bitmap, all pages will be allocated and read for llbitmap,
+there won't be read afterwards
+
+##### WRITE
+
+WRITE IO is divided into logical_block_size of the array, the dirty state
+of each block is tracked independently, for example:
+
+each page is 4k, contain 8 blocks; each block is 512 bytes contain 512 bit;
+
+| page0 | page1 | ... | page 31 |
+|       |
+|        \-----------------------\
+|                                |
+| block0 | block1 | ... | block 8|
+|        |
+|         \-----------------\
+|                            |
+| bit0 | bit1 | ... | bit511 |
+
+>From IO path, if one bit is changed to Dirty or NeedSync, the corresponding
+subpage will be marked dirty, such block must write first before the IO is
+issued. This behaviour will affect IO performance, to reduce the impact, if
+multiple bits are changed in the same block in a short time, all bits in this
+block will be changed to Dirty/NeedSync, so that there won't be any overhead
+until daemon clears dirty bits.
+
+##### Dirty Bits syncronization
+
+IO fast path will set bits to dirty, and those dirty bits will be cleared
+by daemon after IO is done. llbitmap_page_ctl is used to synchronize between
+IO path and daemon;
+
+IO path:
+ 1) try to grab a reference, if succeed, set expire time after 5s and return;
+ 2) if failed to grab a reference, wait for daemon to finish clearing dirty
+ bits;
+
+Daemon(Daemon will be waken up every daemon_sleep seconds):
+For each page:
+ 1) check if page expired, if not skip this page; for expired page:
+ 2) suspend the page and wait for inflight write IO to be done;
+ 3) change dirty page to clean;
+ 4) resume the page;
+
+Performance Test:
+Simple fio randwrite test to build array with 20GB ramdisk in my VM:
+
+|                      | none      | bitmap    | llbitmap  |
+| -------------------- | --------- | --------- | --------- |
+| raid1                | 13.7MiB/s | 9696KiB/s | 19.5MiB/s |
+| raid1(assume clean)  | 19.5MiB/s | 11.9MiB/s | 19.5MiB/s |
+| raid10               | 21.9MiB/s | 11.6MiB/s | 27.8MiB/s |
+| raid10(assume clean) | 27.8MiB/s | 15.4MiB/s | 27.8MiB/s |
+| raid5                | 14.0MiB/s | 11.6MiB/s | 12.9MiB/s |
+| raid5(assume clean)  | 17.8MiB/s | 13.4MiB/s | 13.9MiB/s |
+
+For raid1/raid10 llbitmap can be better than none bitmap with background
+initial resync, and it's the same as none bitmap without it.
+
+Noted that llbitmap performance improvement for raid5 is not obvious,
+this is due to raid5 has many other performance bottleneck, perf
+results still shows that bitmap overhead will be much less.
+
+Yu Kuai (11):
+  md: add a new parameter 'offset' to md_super_write()
+  md: factor out a helper raid_is_456()
+  md/md-bitmap: support discard for bitmap ops
+  md: add a new mddev field 'bitmap_id'
+  md/md-bitmap: add a new sysfs api bitmap_type
+  md/md-bitmap: delay registration of bitmap_ops until creating bitmap
+  md/md-bitmap: add a new method skip_sync_blocks() in bitmap_operations
+  md/md-bitmap: add a new method blocks_synced() in bitmap_operations
+  md: add a new recovery_flag MD_RECOVERY_LAZY_RECOVER
+  md/md-bitmap: make method bitmap_ops->daemon_work optional
+  md/md-llbitmap: introduce new lockless bitmap
+
+ Documentation/admin-guide/md.rst |   86 +-
+ drivers/md/Kconfig               |   11 +
+ drivers/md/Makefile              |    1 +
+ drivers/md/md-bitmap.c           |   15 +-
+ drivers/md/md-bitmap.h           |   45 +-
+ drivers/md/md-llbitmap.c         | 1598 ++++++++++++++++++++++++++++++
+ drivers/md/md.c                  |  288 ++++--
+ drivers/md/md.h                  |   20 +-
+ drivers/md/raid5.c               |    6 +
+ 9 files changed, 1963 insertions(+), 107 deletions(-)
+ create mode 100644 drivers/md/md-llbitmap.c
+
+-- 
+2.43.0
+
