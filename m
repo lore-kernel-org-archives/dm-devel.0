@@ -1,120 +1,121 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57CC52E541F
-	for <dm-devel@lists.linux.dev>; Wed, 23 Jul 2025 15:04:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFF0F28688F
+	for <dm-devel@lists.linux.dev>; Thu, 24 Jul 2025 14:40:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753283080; cv=none; b=aZlc0vh9PT/SEea0OYFzwCkwlHuE2Buy6okcOzKrrhWJa6nGSm11r22WMD6Olek5GA0sXPGrxG9RoflwT8+J2VMCqUeOqLtoXzHmBKRkR8RDGWM7GrOnbTz521HGUG0G2UjHMzu6zxly1yrFW9Zzos5Iu+pM8hSH5ZXF9nDF4go=
+	t=1753368042; cv=none; b=JPXz3gjUbhn/krTaVI9IdNna+G0PBEQtfHsg1fNHl2Le8iQAZKUoEhvdIdhC4qUgOpEX8ByfgmCNlNwN5EjKLK+yIq0FRSjkKN67ItRz9aZf+KM+YD8vZy28NB/FI3PlxIOfyER455T7LfdaYpbNtgHrUYtiVEeT5WfOLTSooaA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753283080; c=relaxed/simple;
-	bh=/H5GbxGJJZZzGKcvSsck5fe6+s0EM04EqEYZVrIk6kw=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=i0C4QZ9oFj4xwgCKmVtZV/CSpObQWfU0bc8u/18yc+kNLufsrtfmBhH+aAxKAgpO2Q0h7G9+/dRLiw2496n+EUMHdu5Vt3aHigPEP5SkVTGJ27I1i9qCJfjySvs2J68Dv+IK4pwu6lcgw1PEbvmk2FPv9qZBZSb9pT986xv+j9o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AaaTJ4Yw; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1753368042; c=relaxed/simple;
+	bh=57lOd1JZ7a4Rq2tPeSY7qHYO52MW0nszJeiflVv1lOc=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=EHBQExnywthgcPoqLr99ZETRLEH0gXgf3Ne0UoLscWRm0Ypj51qWixpm+4M1StUY3cN7nbB7VU7ZC7jpd3dVZRAC25wCC+Amy0Bxai0KN0YNXgu33mJ1GQPTY87DmSIOeD3u2yAV2nMffVlzJtel2v91Vu4s7M29hTKKJucsuLc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PkUQRe/F; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AaaTJ4Yw"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PkUQRe/F"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753283077;
+	s=mimecast20190719; t=1753368039;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=DZjsPHcbjaw2inUuNB1CT+Uzxu3E3fm7t1NY+uni2n0=;
-	b=AaaTJ4YwvQbmeesMY06p03CVIkWA0Y46brtgzFhCLiiMIqAahZQMzLUYF3CmltRtbHxIIG
-	RG/zic2UVTxLWYf+c5sqNyJp5vgU9YnhBKJJ+NMFTbsNVq1WuqzSsiB7xwOdHocQTc+53V
-	B5MwBPQeAuTNLOWQJk5GE3wj2ZrW6f4=
-Received: from mail-wm1-f71.google.com (mail-wm1-f71.google.com
- [209.85.128.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-648-FODnf53hP-2r4iCVbQpUPg-1; Wed, 23 Jul 2025 11:04:35 -0400
-X-MC-Unique: FODnf53hP-2r4iCVbQpUPg-1
-X-Mimecast-MFC-AGG-ID: FODnf53hP-2r4iCVbQpUPg_1753283074
-Received: by mail-wm1-f71.google.com with SMTP id 5b1f17b1804b1-4538f375e86so62565985e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 23 Jul 2025 08:04:35 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753283074; x=1753887874;
-        h=content-transfer-encoding:in-reply-to:organization:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=DZjsPHcbjaw2inUuNB1CT+Uzxu3E3fm7t1NY+uni2n0=;
-        b=H+jh+Wk8YikxZsvoblr79dpBdl2gQSVGrgbPkXUEyIKhCVJGHMTZMpIBS8zFbaGJWT
-         kwG3GjGi+me9EJHdwnGasKzy4YsqUeuAnPW552tPKa2peFSjRKnLSOCtQdo27XSuX07B
-         bIAwUyfZ1ntQZg67UF8FQJtN3guWb4udNz08q0AD7WIgt8K4SFgca0nBcelGmqhHTs3X
-         6bifhdIbAaqkuU2yD9A82iPwmd82x76tRZG47/LOgIuSa2VKhzVHsMeyG/BcHC+0TV9Z
-         xNrX0xagkTI+c1l7oECdVGfeVjzxEu6IjG0SS+zugMhJ7Jmsrb74RdACMrngBt3VgSlE
-         9cyQ==
-X-Gm-Message-State: AOJu0YxvRW6PjcTOcn8Oc6samYUd4KL5aGm4qYiVjXAIf3zbsvw48KsT
-	4BbNUZcOlD0xJHPteS8/QI/+ogFnmOgrMFHqsM+LHSzdADjoNY9SUF6uDQnfrEGUx2NtmazC0vg
-	PbyHqCI6ResCVMjoJF/aE7xG8gH0y0+5ZWpMtqHMVyh9w8ZQOvXKawLamoGDz
-X-Gm-Gg: ASbGncvP7VoFbVI+PuMEB7n6Ntg+ugFUOj9EkxmMECROGVuanb82CEHi91/W4/UBfdL
-	OJYpNdgfIHLzNw1IjDO4lWw+DbOlVBGaK75Mf/BIptIXlPwVib/Fv863gKjwmoNVbWgU/Yl8Yuf
-	UVCglHCFz+5nV1xxRkX2JoXTbRevNPa04G9OuyGxf3lc07KmuKSACwTLIDHLD9xjdbElvgvKiAh
-	XU7Nl30F1/ywwkfFxsYCUTxQd1fdYGrHLBPw7yQE+4CiiO6aatUOArGiu64eT+0CTVA8BTdh/BI
-	8zA8LcZ7bOxYlvuPSE0yiphtj+m7GxP0tZmGDCE+
-X-Received: by 2002:a5d:64cf:0:b0:3a4:d83a:eb4c with SMTP id ffacd0b85a97d-3b768f14c43mr2557744f8f.57.1753283074148;
-        Wed, 23 Jul 2025 08:04:34 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IF5W+P1JBNzeAJIdVOXDC26/kxoJu1UeSFYyuV4WFPMonWWqRK2rOosK1TNXBkPXy0c4sWdGg==
-X-Received: by 2002:a5d:64cf:0:b0:3a4:d83a:eb4c with SMTP id ffacd0b85a97d-3b768f14c43mr2557673f8f.57.1753283073316;
-        Wed, 23 Jul 2025 08:04:33 -0700 (PDT)
-Received: from [10.43.17.17] ([85.93.96.130])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3b61ca4d74asm16393250f8f.63.2025.07.23.08.04.32
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 23 Jul 2025 08:04:32 -0700 (PDT)
-Message-ID: <863f390c-428d-47e4-8d29-5b056961d08b@redhat.com>
-Date: Wed, 23 Jul 2025 17:04:32 +0200
+	bh=HhM/GT6t5SOa29Ew2UrFOO/jGtEVRMmkxpx+0rBbbvk=;
+	b=PkUQRe/FUC1qvJ+l3Ac+1dlBVSbsI/e4IHkMP2Xqcx8fY+qx0Lik3oZE7OJ/uVqCqDmhiM
+	7KUzFgDNjrntDavNjSWxGO93xkrRF98Pny1Fnrmp+Nv1AW4nyTfOr2V+Nlk15Xh21vvz/F
+	7hBCM0X2mM2F2s1HYp9d9eIp9nrmdW0=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-685-vkwsahbsPJSV2t6uAng1bA-1; Thu,
+ 24 Jul 2025 10:40:34 -0400
+X-MC-Unique: vkwsahbsPJSV2t6uAng1bA-1
+X-Mimecast-MFC-AGG-ID: vkwsahbsPJSV2t6uAng1bA_1753368032
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 52741180044F;
+	Thu, 24 Jul 2025 14:40:32 +0000 (UTC)
+Received: from [10.22.80.24] (unknown [10.22.80.24])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 430DB1800298;
+	Thu, 24 Jul 2025 14:40:29 +0000 (UTC)
+Date: Thu, 24 Jul 2025 16:40:25 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Harald Freudenberger <freude@linux.ibm.com>
+cc: dengler@linux.ibm.com, Eric Biggers <ebiggers@kernel.org>, 
+    linux-s390@vger.kernel.org, dm-devel@lists.linux.dev, 
+    herbert@gondor.apana.org.au, ifranzki@linux.ibm.com, agk@redhat.com, 
+    snitzer@kernel.org, gmazyland@gmail.com
+Subject: Re: [PATCH v5 0/2] dm-integrity: Implement asynch digest support
+In-Reply-To: <20250722133832.319226-1-freude@linux.ibm.com>
+Message-ID: <5fc734af-a2c1-b7bb-85fb-cba6b8722c13@redhat.com>
+References: <20250722133832.319226-1-freude@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: LVM testsuite failure with VDO
-To: Matthew Sakai <msakai@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev
-References: <11d4215f-06b4-84a2-29ab-a558c25c6331@redhat.com>
- <03f74406-2df3-407e-b440-c364c182ad78@redhat.com>
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Organization: RedHat
-In-Reply-To: <03f74406-2df3-407e-b440-c364c182ad78@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: sig3GcCxPDIbrqTP7Z6zkCXTxf-6oJSMfKNRVD1sDPg_1753283074
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US, cs
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-Dne 21. 07. 25 v 20:07 Matthew Sakai napsal(a):
-> 
-> On 7/21/25 5:29 AM, Mikulas Patocka wrote:
->> Hi
->>
->> When I install VDO tools version 8.3.1.1 on Debian Sid and I run the LVM
->> testsuite, I get failure in these tests:
->>
-> 
-> This has to be a userspace problem, right?
-> The difference between versions 8.3.1.1 and 8.3.0.73 is very small, just an 
-> update to the acceptable inputs to vdoformat:
-> https://github.com/dm-vdo/vdo/commit/0ec7597b60e5e6c2c33dfea057ac38bf157acffb
-> 
 
+
+On Tue, 22 Jul 2025, Harald Freudenberger wrote:
+
+> Support for ahashes in dm-integrity.
+> 
+> Changelog:
+> 
+> v1: First implementation. Tested with crc32, sha256, hmac-sha256 and
+>     the s390 specific implementations for hmac-sha256 and protected
+>     key phmac-sha256. Also ran with some instrumented code (in the digest
+>     implementation) to verify that in fact now the code runs asynchronous.
+> v2: Support shash and ahash. Based on Mikulas' idea about implementing
+>     ahash support similar to dm-verity this version now adds support
+>     for ahash but does not replace the shash support. For more details
+>     see the text of the patch header.
+> v3: The line to store the digestsize into the new internal variable
+>     did not make it into the patch set which was sent out. So now
+>     this important code piece is also there. Also rebuilded, sparse
+>     checked and tested to make sure the patches are ok.
+> v4: Thanks to Mikulas a total new implementation of the ahash support
+>     for the dm-integrity layer :-)
+> v5: Slight rework around the allocation and comparing of ahash and
+>     shash algorithm.
+>     V5 has been tested with the new introduced ahash phmac which is a
+>     protected key ("hardware key") version of a hmac for s390. As of now
+>     phmac is only available in Herbert Xu's cryptodev-2.6 kernel tree
+>     but will be merged into mainline with the next merge window for
+>     the 6.17 development kernel.
+> 
+> Mikulas Patocka (2):
+>   dm-integrity: use internal variable for digestsize
+>   dm-integrity: introduce ahash support for the internal hash
+> 
+>  drivers/md/dm-integrity.c | 370 +++++++++++++++++++++++++++-----------
+>  1 file changed, 265 insertions(+), 105 deletions(-)
+> 
+> 
+> base-commit: 89be9a83ccf1f88522317ce02f854f30d6115c41
+> --
+> 2.43.0
+> 
 
 Hi
 
-So the issue was buried within the vdo_reader code trying to parse VDO 
-metadata and the use of 32b arch for user-space on 64bit kernel (as VDO kernel 
-part is only supported on 64b kernels).
+Eric Biggers recently removed ahash support from dm-verity - see this 
+commit:
+https://kernel.googlesource.com/pub/scm/linux/kernel/git/device-mapper/linux-dm/+/f43309c6743257244f11f14d31c297ee6a410ded
 
-Fixed in upstream lvm with this commit:
+Should I revert Eric's patch? - would you need dm-verity with asynchronous 
+hashes on zseries too?
 
-https://gitlab.com/lvmteam/lvm2/-/commit/af42fa8553216f24120c23a855a53bd3cc85b61c
+Is this patch series needed for performance (does it perform better than 
+the in-cpu instructions)? Or is it need because of better security (the 
+keys are hidden in the hardware)?
 
-Regards
-
-Zdenek
+Mikulas
 
