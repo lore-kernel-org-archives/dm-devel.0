@@ -1,61 +1,61 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10B5E1F5842
-	for <dm-devel@lists.linux.dev>; Sat, 26 Jul 2025 03:59:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B09B1F2BAD
+	for <dm-devel@lists.linux.dev>; Sat, 26 Jul 2025 03:59:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753502348; cv=none; b=PZxVenVCxyXil0TWQNjAdH08fC66aehIedqhLrZs+3JwYTZ0PnjpZIaMeNrhQmnBAoE0VdHCAQFn82pFgk2wBABBhYdLc58U14xodks+ebIgfcE87PzW/GhjNSGSypA87TdGrMsSAAyq1zaBKZ5p/lqhL18S7WiRJ4+C3O+qwLk=
+	t=1753502349; cv=none; b=CDKD1NuKJ9AYsgslpLE0lt9xuPcse/RSXAR9VKf58mdRqALyrnfn7YiGubTh+8yAzQOAueKi4Oo2fmB86urrX4d9XBumddAevwn5BLOkw89SqQ2867y7hvANX2+BkIqBSkP3G4Qw1Y30YqU9meTa3iCCUyYIS3RO5tqx+8cXQhI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753502348; c=relaxed/simple;
-	bh=aTryiAziBcI2qvH11O3xNYhnX6L6xK2zim4e8EhOz3M=;
+	s=arc-20240116; t=1753502349; c=relaxed/simple;
+	bh=gLfBnO3QXL0UlTE5DUewkJquzSMSSaG7EitRilnu2kE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=jYXZraTGD+i4EHiBcR5LOSLotcSCvTPHMUqPETC5SLG1lRY1pNQ77y/QxZr0sccbw0j+JvtlG1AYrF+20tTPra0S2keFuXRbf9XSzOZ05imjA1BNQ5ZUP2pgNOh6KqErHmBAQZwrwmqZedNZYrtRwKlhdS8QsU7wMoSjIBONGbI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i0t1bQrO; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:content-type; b=HqKBDJzJ7DsLXkbk+y6+dKZQTkptYGZ8eBTFh68NcrC44sI4VJP4mx9ERerGO5UIehiuSeDZ831wCn8c19bArqTrrRpWHNrT3QSzyUaFISoD8Qfc8ckaVTLuo1C0b1TuWo4nI2XpTq2uxhTD92dCcr3RGm/GI1WZsNfeYY64hWQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QgYQInlV; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i0t1bQrO"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QgYQInlV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753502346;
+	s=mimecast20190719; t=1753502345;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=3Ac6MVsB5pWv8peS0TK8Y54DFzum/R0/VtPdEOW4BKw=;
-	b=i0t1bQrOP9WmopL0zG4pKIF6QYRyyJVntbdjaGlh/OQUzTDSTwyrU2UfR1i0FUfqc/5CC2
-	0AB65LwLmQVCK4JH3anquRZBk5Ri9R6ZzcgVORB7KBdd0Ij/Fj2mU4XIh2I/tQa6u5fWpG
-	XhHp2+WGoRtzG6tKqNIpT7ClnWEiB64=
+	bh=NDtu+mXPqSeeUk96UM6QMXuTwoQ0JMx0Alg4yB5VB38=;
+	b=QgYQInlVFryXvWTCRWPTTiXm6vNf6MJ7ZhAQYd5/IHEcOcQDG6RG2L8EjtRrCNaBRZlAIN
+	1ixHx0ufYeETJ6saKeruynJVC4s9zU4MsmZsyp6x2uXx2azMTH3ZGPB2DodcKtBgc3u0Pe
+	wR/iRQoZpq7Yq9EDpYNeUL4TuKEgeA0=
 Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-350-qkXWxz-tOXmBA4OA1T6deQ-1; Fri,
- 25 Jul 2025 23:59:01 -0400
-X-MC-Unique: qkXWxz-tOXmBA4OA1T6deQ-1
-X-Mimecast-MFC-AGG-ID: qkXWxz-tOXmBA4OA1T6deQ_1753502340
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-17-n58B0lSDNqWVCAmcTfTXeA-1; Fri,
+ 25 Jul 2025 23:58:59 -0400
+X-MC-Unique: n58B0lSDNqWVCAmcTfTXeA-1
+X-Mimecast-MFC-AGG-ID: n58B0lSDNqWVCAmcTfTXeA_1753502339
 Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 496D018007E1;
-	Sat, 26 Jul 2025 03:59:00 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F3F001800115;
+	Sat, 26 Jul 2025 03:58:58 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 170B71800D8A;
-	Sat, 26 Jul 2025 03:59:00 +0000 (UTC)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BF5621800D86;
+	Sat, 26 Jul 2025 03:58:58 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 56Q3wwlE363369
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 56Q3wv26363337
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 25 Jul 2025 23:58:59 -0400
+	Fri, 25 Jul 2025 23:58:57 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 56Q3wwMa363368;
-	Fri, 25 Jul 2025 23:58:58 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 56Q3wvaK363336;
+	Fri, 25 Jul 2025 23:58:57 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 14/14] libmpathpersist: Don't always fail registrations for retryable errors
-Date: Fri, 25 Jul 2025 23:58:55 -0400
-Message-ID: <20250726035855.363290-15-bmarzins@redhat.com>
+Subject: [PATCH 06/14] multipathd: unregister PR key when path is restored if necessary
+Date: Fri, 25 Jul 2025 23:58:47 -0400
+Message-ID: <20250726035855.363290-7-bmarzins@redhat.com>
 In-Reply-To: <20250726035855.363290-1-bmarzins@redhat.com>
 References: <20250726035855.363290-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -66,156 +66,148 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: ah3u95EcRl8umKqK_rmWXi5YA351fvboK49u4EGbw-8_1753502340
+X-Mimecast-MFC-PROC-ID: PtKek9yhEx18BzimaNuYsUa39A7s7v5A5ZDcNruUOYg_1753502339
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
 
-When libmpathpersist registers a key, it's possible that a path fails
-between when it checks the path's status, and when it tries to do the
-registrations on the path. In this case, the registration will fail with
-a retryable error. If the registration was allowed to succeed,
-multipathd would update the now failed path's key when it came back
-online, and everything would work correctly. However it is possible for
-a registration to fail with a retryable error on a path that is still
-usable.
+It is possible that a path was unavailable and either the registered PR
+key was removed or the registered PR key was changed and then that new
+key was preempted. In both of these situations, this path will still
+have a registered key (just not one that matches mpp->reservation_key)
+but it should not have one. If the path becomes usable again in this
+state, it may allow the multipath device to access storage that it
+shouldn't be allowed to access.
 
-Libmpathpersist needs to avoid the case where it does not update the
-key of a usable path. Otherwise the path might be able to write to
-storage it shouldn't be allowed to. Or it could fail writing to storage
-that it should be allowed to write to. So if a registration would
-succeed except for retryable errors, libmpathpersist now rechecks all
-those paths to see if they are still usable. If they are, then it fails
-the registration as before. If they are not, then the registration
-succeeds.
-
-Also, rename can_retry to had_success, since it is used for checking
-more than retries now.
+To deal with this, track if a multipath device ever had a registered PR
+key. If so, and the device no longer has a registered key, explicitly
+clear the key when paths get restored.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathpersist/mpath_persist_int.c | 70 ++++++++++++++++++++++++++---
- 1 file changed, 63 insertions(+), 7 deletions(-)
+ libmultipath/structs.h |  2 ++
+ multipathd/main.c      | 46 ++++++++++++++++++++++++++++++++----------
+ 2 files changed, 37 insertions(+), 11 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
-index d3c1a789..d5e441ef 100644
---- a/libmpathpersist/mpath_persist_int.c
-+++ b/libmpathpersist/mpath_persist_int.c
-@@ -325,6 +325,48 @@ void preempt_missing_path(struct multipath *mpp, uint8_t *key, uint8_t *sa_key,
- 			mpp->wwid);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 97093675..a206a7d1 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -524,6 +524,8 @@ struct multipath {
+ 	int prflag;
+ 	int prhold;
+ 	int all_tg_pt;
++	bool ever_registered_pr;
++
+ 	struct gen_multipath generic_mp;
+ 	bool fpin_must_reload;
+ };
+diff --git a/multipathd/main.c b/multipathd/main.c
+index c1ed1488..cb00c1f8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2638,7 +2638,8 @@ update_path_state (struct vectors * vecs, struct path * pp)
+ 
+ 		/* newstate == PATH_UP || newstate == PATH_GHOST */
+ 
+-		if (pp->mpp->prflag != PR_UNSET) {
++		if (pp->mpp->prflag != PR_UNSET ||
++		    pp->mpp->ever_registered_pr) {
+ 			int prflag = pp->mpp->prflag;
+ 			/*
+ 			 * Check Persistent Reservation.
+@@ -4246,6 +4247,7 @@ static void check_prhold(struct multipath *mpp, struct path *pp)
+ 
+ void set_pr(struct multipath *mpp)
+ {
++	mpp->ever_registered_pr = true;
+ 	mpp->prflag = PR_SET;
+ }
+ 
+@@ -4256,23 +4258,28 @@ void unset_pr(struct multipath *mpp)
+ 	mpp->sa_flags = 0;
  }
  
 +/*
-+ * If libmpathpersist fails at updating the key on a path with a retryable
-+ * error, it has probably failed. But there is a chance that the path is
-+ * still usable. To make sure a path isn't active without a key, when it
-+ * should have one, or with a key, when it shouldn't have one, check if
-+ * the path is still usable. If it is, we must fail the registration.
++ * Returns MPATH_PR_SUCCESS unless if fails to read the PR keys. If
++ * MPATH_PR_SUCCESS is returned, mpp->prflag will be either PR_SET or
++ * PR_UNSET.
 + */
-+static int check_failed_paths(struct multipath *mpp,
-+			      struct threadinfo *thread, int count)
-+{
-+	int i, j, k;
-+	int ret;
-+	struct pathgroup *pgp;
-+	struct path *pp;
-+	struct config *conf;
-+
-+	for (i = 0; i < count; i++) {
-+		if (thread[i].param.status != MPATH_PR_RETRYABLE_ERROR)
-+			continue;
-+		vector_foreach_slot (mpp->pg, pgp, j) {
-+			vector_foreach_slot (pgp->paths, pp, k) {
-+				if (strncmp(pp->dev, thread[i].param.dev,
-+					    FILE_NAME_SIZE) == 0)
-+					goto match;
-+			}
-+		}
-+		/* no match. This shouldn't ever happen. */
-+		condlog(0, "%s: Error: can't find path %s", mpp->wwid,
-+			thread[i].param.dev);
-+		continue;
-+match:
-+		conf = get_multipath_config();
-+		ret = pathinfo(pp, conf, DI_CHECKER);
-+		put_multipath_config(conf);
-+		/* If pathinfo fails, or if the path is active, return error */
-+		if (ret != PATHINFO_OK || pp->state == PATH_UP ||
-+		    pp->state == PATH_GHOST)
-+			return MPATH_PR_OTHER;
-+	}
-+	return MPATH_PR_SUCCESS;
-+}
-+
- static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 			   unsigned int rq_type,
- 			   struct prout_param_descriptor * paramp, int noisy)
-@@ -333,8 +375,9 @@ static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 	int i, j, k;
- 	struct pathgroup *pgp = NULL;
- 	struct path *pp = NULL;
--	bool can_retry = false;
-+	bool had_success = false;
- 	bool need_retry = false;
-+	bool retryable_error = false;
- 	int active_pathcount=0;
- 	int rc;
- 	int count=0;
-@@ -438,16 +481,20 @@ static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 		 */
- 		if (thread[i].param.status == MPATH_PR_RESERV_CONFLICT)
- 			need_retry = true;
-+		else if (thread[i].param.status == MPATH_PR_RETRYABLE_ERROR)
-+			retryable_error = true;
- 		else if (thread[i].param.status == MPATH_PR_SUCCESS)
--			can_retry = true;
-+			had_success = true;
- 		else if (status == MPATH_PR_SUCCESS)
- 			status = thread[i].param.status;
+ static int update_map_pr(struct multipath *mpp, struct path *pp)
+ {
+ 	int noisy=0;
+ 	struct prin_resp resp;
+ 	unsigned int i;
+-	int ret = MPATH_PR_OTHER, isFound;
++	int ret, isFound;
+ 	bool was_set = (mpp->prflag == PR_SET);
+ 
+ 	/* If pr is explicitly unset, it must be manually set */
+ 	if (mpp->prflag == PR_UNSET)
+-		return MPATH_PR_SKIP;
++		return MPATH_PR_SUCCESS;
+ 
+ 	if (!get_be64(mpp->reservation_key)) {
+ 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
+ 		unset_pr(mpp);
+ 		condlog(was_set ? 2 : 4, "%s: reservation_key not set in multipath.conf", mpp->alias);
+-		return MPATH_PR_SKIP;
++		return MPATH_PR_SUCCESS;
  	}
--	if (need_retry && can_retry && rq_servact == MPATH_PROUT_REG_SA &&
-+	if (need_retry && had_success && rq_servact == MPATH_PROUT_REG_SA &&
- 	    status == MPATH_PR_SUCCESS) {
- 		condlog(3, "%s: ERROR: initiating pr out retry", mpp->wwid);
-+		retryable_error = false;
- 		for (i = 0; i < count; i++) {
--			if (thread[i].param.status != MPATH_PR_RESERV_CONFLICT) {
-+			/* retry retryable errors and conflicts */
-+			if (thread[i].param.status != MPATH_PR_RESERV_CONFLICT && thread[i].param.status != MPATH_PR_RETRYABLE_ERROR) {
- 				thread[i].param.status = MPATH_PR_SKIP;
- 				continue;
- 			}
-@@ -474,7 +521,9 @@ static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
- 					condlog(3, "%s: failed to join thread while retrying %d",
- 						mpp->wwid, i);
- 				}
--				if (status == MPATH_PR_SUCCESS)
-+				if (thread[i].param.status == MPATH_PR_RETRYABLE_ERROR)
-+					retryable_error = true;
-+				else if (status == MPATH_PR_SUCCESS)
- 					status = thread[i].param.status;
- 			}
- 		}
-@@ -483,10 +532,17 @@ static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
  
- 	pthread_attr_destroy(&attr);
- 	if (need_retry)
--		status = MPATH_PR_RESERV_CONFLICT;
-+		return MPATH_PR_RESERV_CONFLICT;
-+	if (status != MPATH_PR_SUCCESS)
-+		return status;
-+	/* If you had retryable errors on all paths, fail the registration */
-+	if (!had_success)
-+		return MPATH_PR_OTHER;
-+	if (retryable_error)
-+		status = check_failed_paths(mpp, thread, count);
- 	if (status == MPATH_PR_SUCCESS)
- 		preempt_missing_path(mpp, paramp->key, paramp->sa_key, noisy);
--	return (status == MPATH_PR_RETRYABLE_ERROR) ? MPATH_PR_OTHER : status;
-+	return status;
+ 	memset(&resp, 0, sizeof(resp));
+@@ -4320,6 +4327,7 @@ static void mpath_pr_event_handle(struct path *pp)
+ 	struct multipath *mpp = pp->mpp;
+ 	int ret;
+ 	struct prout_param_descriptor param;
++	bool clear_reg = false;
+ 
+ 	if (pp->bus != SYSFS_BUS_SCSI) {
+ 		unset_pr(mpp);
+@@ -4331,20 +4339,36 @@ static void mpath_pr_event_handle(struct path *pp)
+ 
+ 	check_prhold(mpp, pp);
+ 
+-	if (mpp->prflag != PR_SET)
+-		return;
++	if (mpp->prflag != PR_SET) {
++		if (!mpp->ever_registered_pr)
++			return;
++		/*
++		 * This path may have been unusable and either the
++		 * registration was cleared or the registered
++		 * key was switched and then that new key was preempted.
++		 * In either case, this path should not have a registration
++		 * but it might still have one, just with a different
++		 * key than mpp->reservation_key is currently set to.
++		 * clear it to be sure.
++		 */
++		clear_reg = true;
++	}
+ 
+ 	memset(&param, 0, sizeof(param));
+ 
+-	param.sa_flags = mpp->sa_flags;
+-	memcpy(param.sa_key, &mpp->reservation_key, 8);
+-	param.num_transportid = 0;
++	if (!clear_reg) {
++		param.sa_flags = mpp->sa_flags;
++		memcpy(param.sa_key, &mpp->reservation_key, 8);
++		param.num_transportid = 0;
++	}
+ 
+-	condlog(3, "device %s:%s", pp->dev, pp->mpp->wwid);
++	condlog(3, "%s registration for device %s:%s",
++		clear_reg ? "Clearing" : "Setting", pp->dev, pp->mpp->wwid);
+ 
+ 	ret = prout_do_scsi_ioctl(pp->dev, MPATH_PROUT_REG_IGN_SA, 0, 0, &param, 0);
+ 	if (ret != MPATH_PR_SUCCESS )
+ 	{
+-		condlog(0,"%s: Reservation registration failed. Error: %d", pp->dev, ret);
++		condlog(0, "%s: %s reservation registration failed. Error: %d",
++			clear_reg ? "Clearing" : "Setting", pp->dev, ret);
+ 	}
  }
- 
- static int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
 -- 
 2.48.1
 
