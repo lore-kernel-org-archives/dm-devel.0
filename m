@@ -1,124 +1,207 @@
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E18AA1799F
-	for <dm-devel@lists.linux.dev>; Mon, 28 Jul 2025 08:04:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB1B1221557
+	for <dm-devel@lists.linux.dev>; Mon, 28 Jul 2025 10:11:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753689858; cv=none; b=Q4+UnMP1dJO8TitmcZ4YfhT204SLDw7AOU/hAImXK84MJiiH8AvT5eZOIaDCAgODMr9Pzbnmn/tiwPgRTzLrawTqini9UkpRkmpAjgRYAX2QeS74u8Ix8Y2B0FgMc/mIsFZdjWQs1Z4oGNjdUfQPIdOuA3B0MGS2uBOi60tXeY4=
+	t=1753697481; cv=none; b=Nko5qhxGIM67Ib5uOK3yQ+qhpiiYgmR74E9uRnjC0tW9A+LmX7xniE6v/1nBMBXbbsKanCsiQn+8jpBzXZ+dlZrPOM+5iRUDTU/UBeYxbLBNeNRmDrT+bCP9sUsY3Jrf+LJByG51s4H6DIDrpBS5rVaQe+zRz0QbblZ0DxJlANI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753689858; c=relaxed/simple;
-	bh=X3FcJGNi1771H+bhzkQh2dupvCAeQOQeCkmxUCNewdY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rY9o8FwWlPnkUekZCFnJDeW/ok1h3vDoOZlGffRXjEc8FIsK6QCu3ZlhUzYcYTpbcRsRSbE0X1MdERohDmiWRVKEKxszehobMGwQD1SHpif3C26nXSsITAWdhcHZ5oMeJ1NFVzD5uJ4lBmnFppBECOTrCGerPoHeunKhz1Vwrws=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XztiSSO+; arc=none smtp.client-ip=209.85.128.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1753697481; c=relaxed/simple;
+	bh=2AHT2HrXCidfiMYyXCgWDganUiockFMnX41WbtEaC5A=;
+	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
+	 Message-ID:Content-Type; b=D5Iklo9eSEpZQGxtR01V1Ta5xsTkX6P9pU1H1AvXjqXONMGCvSwHvk0J0W1MPbl2jRi3Rac6M/jdnOpnTB/LanrCIYh+rvxr3/bMFGjUmpamgGSB04l+/55jsw+Yq8qMkJfDjynl8wzKMs7PJSPDwjHjFVm080E3U1nBp9U6b48=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=DrbHBFNd; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XztiSSO+"
-Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-456127b9958so1915595e9.3
-        for <dm-devel@lists.linux.dev>; Mon, 28 Jul 2025 01:04:16 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1753689855; x=1754294655; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=6Rfl4zoPYgsJxm54cGr0T9gnt9MDwo/H86NN6qM2CEI=;
-        b=XztiSSO+3I/Pw16rK0IHs9GMArZkFvyys+vaXCQY25hPcZyeyhTtxrQYDUuMoBiR/k
-         yTd7yCm+EKkBTtqrjRiyx6JFwbNAkXgJqdVJAtBpqpS1hi9WPCoUpEnFXNsiwW+gKldD
-         FD2H0BqENjxAvw5L/MXv7GtJDlUpXafsXAzkMmuoDhqiVO0m6vqaXmuD2NRcBWLvuQSm
-         b95EnmSiWW/dbVY6fvFmZlX32hw1k+mEM76Tjr4xfnyYKHP2/KC7pFqn5bpvaenbgFXj
-         DKWB8LfpouEL2iQ9P3rQ9EyuDphDwuanHPNXrUBSdVh0l7vtc0pc0nWqCXHj2KP28Ysh
-         QAVg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753689855; x=1754294655;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=6Rfl4zoPYgsJxm54cGr0T9gnt9MDwo/H86NN6qM2CEI=;
-        b=BwlALWH2AdkV363cYB9aEtAMYase2VA/JAfAnYt5ko/VSgl/EAEtS8TdeKPm2l8F+k
-         D2ybv1diIIDhiQ5kuNFmKuis4dIcoKAcrZKDJuMwUzTw2pQok5ADLcAAiwAJ4axehZGI
-         IJDZJmJYQhmtVyuGdHjUcSMJMaA67jNpQY7yeq6bD0a6qmB54uFTore6G9PkSvYlzG3G
-         vHsFl2apU8W8Wg+HiAhzeeb/Crxsl82y7Pmhz6Ka5jNs6b+l+jMGyIgQo2SlSNAMlY6u
-         h19ZU+TjuznnR2JuUPSuDFZoxD0gCf0dtzr8RL4Uz80DU1oPtJtqD74T3JJ+blaeUUL8
-         Yw/g==
-X-Forwarded-Encrypted: i=1; AJvYcCXvwMVZJguzZFNFyZnYB05guqaVyyox6Ig+s4mJnBdM6x1qfTjiRTQ65d4HbD8XIu4co67iThCwdA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxgRj2fu4QsxuYk5aZMe9buusfO+Yv8+5lOEZ4/sAhMcYw5TFF7
-	PHT/pWH94Kh3JQudY9U4jCW87gjcecDb7KFEymuegeA6YN1R3y5bCSM=
-X-Gm-Gg: ASbGncude3qyMxsI6arBmPIO3cGLTtgVPghtc/IVUS7MtqoQAXu6SZxB1ycn2STajAz
-	sA/jD6ns8pC93RK9qqkyKnCX5X3QKCIqtgHujaXHIxkt3mYwFzROYpKj6n9MJUHXwQSR8mAfNeJ
-	CdS6QmLJcXPjS9X9ZPQyCRwEkerze6tuaYPAkRxR+4CNtNpeXnnH0fnPsOWnVgs3Vobo6H9IBvn
-	p5HYcm8fhXJ2Uaj7YZvhNcRLuqb4lda/bq1Dga2XrEQ/tncBJK/ohnYFyNTDzZy81snFJs4FY1I
-	/3SJXWV6AXA7IIhjJ5Ccc4wvWTZVPOuax44tVXyJZZTsiZYzUvP0EfwQeEMLOJm1dQ5f5+l1a6d
-	65ySaNhJ2VYy/0M0gLnT/zpXUuG90S3gdG3b33rWT8o5rELQ/D1ZxKbOaFzx3hWY=
-X-Google-Smtp-Source: AGHT+IHDT/M39U1uzcosoSvrAMxYGTt+l+vTCTQk2giK6Yjl2ZbMgtpTCpz7e9rkH3eXXJaiji7LBA==
-X-Received: by 2002:a05:600c:4f06:b0:451:dee4:cd07 with SMTP id 5b1f17b1804b1-4587bf739ecmr22339825e9.0.1753689854737;
-        Mon, 28 Jul 2025 01:04:14 -0700 (PDT)
-Received: from localhost (222.red-88-5-235.dynamicip.rima-tde.net. [88.5.235.222])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4587054f338sm142519275e9.13.2025.07.28.01.04.14
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 28 Jul 2025 01:04:14 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM-DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: fix hwtable comments
-Date: Mon, 28 Jul 2025 10:04:11 +0200
-Message-ID: <20250728080411.347752-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.50.1
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="DrbHBFNd"
+Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 56SAA33A017128;
+	Mon, 28 Jul 2025 10:11:08 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:reply-to:subject:to; s=pp1;
+	 bh=H1F2kzGZo9TRtbmeci8Fz7YLA9FgA/VxbaR20eVIzNg=; b=DrbHBFNdck76
+	HRcjzEPBmtvfRAMNXoWfsxuYAEY64na5UK/jWLT0vvY5pXF/0d1p8m67CPJ+9xJ+
+	XG51isuvEdwP554KbP6P6DeM10vzCI7YRLlaBBiWmMyo1KkvrwJOlniW378w/Zym
+	l8ikc8pA5CZk9044wRyqigsbTgGnbHIJkTENLONEFM5mO0IYqjfq0CV8Vtk4wanq
+	lzrhRmtONHymYkcgEJu2AWk2X6DfLemDZM4nElqQ+oNeLahvSDDb5HfWwlcdbFjS
+	6Ikp6x5Rlvc4wa0ZlINy9LLazlIUdyPjXSlVGB89bnVJT/tMCscdk8q3c4Ss9UEr
+	TAmBBLqlzA==
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 484qfqgbkp-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 28 Jul 2025 10:11:08 +0000 (GMT)
+Received: from m0353729.ppops.net (m0353729.ppops.net [127.0.0.1])
+	by pps.reinject (8.18.1.12/8.18.0.8) with ESMTP id 56SAB7b1023636;
+	Mon, 28 Jul 2025 10:11:07 GMT
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 484qfqgbkm-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 28 Jul 2025 10:11:07 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 56S69WCH015929;
+	Mon, 28 Jul 2025 10:11:06 GMT
+Received: from smtprelay04.wdc07v.mail.ibm.com ([172.16.1.71])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 485aumd7af-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 28 Jul 2025 10:11:06 +0000
+Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
+	by smtprelay04.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 56SAB5P230868170
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 28 Jul 2025 10:11:05 GMT
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 4AE8A5805A;
+	Mon, 28 Jul 2025 10:11:05 +0000 (GMT)
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 6E3AC58054;
+	Mon, 28 Jul 2025 10:11:04 +0000 (GMT)
+Received: from ltc.linux.ibm.com (unknown [9.5.196.140])
+	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Mon, 28 Jul 2025 10:11:04 +0000 (GMT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Date: Mon, 28 Jul 2025 12:11:04 +0200
+From: Harald Freudenberger <freude@linux.ibm.com>
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dengler@linux.ibm.com,
+        linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+        herbert@gondor.apana.org.au, ifranzki@linux.ibm.com, agk@redhat.com,
+        snitzer@kernel.org, gmazyland@gmail.com
+Subject: Re: [PATCH v5 0/2] dm-integrity: Implement asynch digest support
+Reply-To: freude@linux.ibm.com
+Mail-Reply-To: freude@linux.ibm.com
+In-Reply-To: <20250725173811.GA3642931@google.com>
+References: <20250722133832.319226-1-freude@linux.ibm.com>
+ <5fc734af-a2c1-b7bb-85fb-cba6b8722c13@redhat.com>
+ <56aa9892c7825a443f8a6153e17b4c46@linux.ibm.com>
+ <20250725173811.GA3642931@google.com>
+Message-ID: <dbe165f661d11a4bed8d7c806a9eeb5e@linux.ibm.com>
+X-Sender: freude@linux.ibm.com
+Content-Type: text/plain; charset=US-ASCII;
+ format=flowed
+Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzI4MDA3MiBTYWx0ZWRfXwqu73ZBGZUae
+ DK9P0ZHGW9paO8KkpgZuQEUR9EQoMzrZHrwau372Db2xBceMS2OFSVxehL5YRZtEvh9vEmNAR5D
+ KsVWRapLOboSdH+P4BoK33AQ3lkYTRqxF8TyDbWgxvwlLenXVAsTtdOGidbEYvnBUu3F3KEjYFV
+ jRPvuaVU/zynVGVffDuzg5gy1yLVX2OBBROZsm5XlkAMdCiasOyGEY3fJEs5B3DxxN/fRFt2UvU
+ Nh2raPXbJLDIRJtpMQRwr/UkD5Xr0nBO/bwNL2Hmg2hsskqYg9DRVJm7q2MmHhNPiQlu6A5Tgaq
+ ssG7StPaOKqD8ikxiL6GXQUxdSDW/hzw3nTeML/PtvjkQwYjYWlAP819uQ0QMNa099AIs4j3EVG
+ zpf8Dy5SRlYnuhsyo50q9C3n2ub+JaH7mlHw7jpwquQR8Usow3QfE5M7wnQvucwtNqLvuKJL
+X-Authority-Analysis: v=2.4 cv=Je28rVKV c=1 sm=1 tr=0 ts=68874cbc cx=c_pps
+ a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
+ a=kj9zAlcOel0A:10 a=Wb1JkmetP80A:10 a=Oh2cFVv5AAAA:8 a=VwQbUJbxAAAA:8
+ a=VnNF1IyMAAAA:8 a=dOe7xV1rp7CYrx8qEOIA:9 a=CjuIK1q_8ugA:10
+ a=7KeoIwV6GZqOttXkcoxL:22
+X-Proofpoint-GUID: vdzAylm_eHkhCexEmjXY4_VXgCRBMkq0
+X-Proofpoint-ORIG-GUID: 0J_ccrVgstyRVBDm6p183kwP9zFbtnc1
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.9,FMLib:17.12.80.40
+ definitions=2025-07-28_03,2025-07-24_01,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ mlxlogscore=965 clxscore=1015 lowpriorityscore=0 spamscore=0 adultscore=0
+ suspectscore=0 bulkscore=0 malwarescore=0 priorityscore=1501 phishscore=0
+ mlxscore=0 impostorscore=0 classifier=spam authscore=0 authtc=n/a authcc=
+ route=outbound adjust=0 reason=mlx scancount=1 engine=8.19.0-2505280000
+ definitions=main-2507280072
 
-- use "VSP" for the whole family, too many variants
-- identify Quantum models
+On 2025-07-25 19:38, Eric Biggers wrote:
+> On Fri, Jul 25, 2025 at 10:14:30AM +0200, Harald Freudenberger wrote:
+>> On 2025-07-24 16:40, Mikulas Patocka wrote:
+>> > On Tue, 22 Jul 2025, Harald Freudenberger wrote:
+>> >
+>> > > Support for ahashes in dm-integrity.
+>> > >
+>> > > Changelog:
+>> > >
+>> > > v1: First implementation. Tested with crc32, sha256, hmac-sha256 and
+>> > >     the s390 specific implementations for hmac-sha256 and protected
+>> > >     key phmac-sha256. Also ran with some instrumented code (in the
+>> > > digest
+>> > >     implementation) to verify that in fact now the code runs
+>> > > asynchronous.
+>> > > v2: Support shash and ahash. Based on Mikulas' idea about implementing
+>> > >     ahash support similar to dm-verity this version now adds support
+>> > >     for ahash but does not replace the shash support. For more details
+>> > >     see the text of the patch header.
+>> > > v3: The line to store the digestsize into the new internal variable
+>> > >     did not make it into the patch set which was sent out. So now
+>> > >     this important code piece is also there. Also rebuilded, sparse
+>> > >     checked and tested to make sure the patches are ok.
+>> > > v4: Thanks to Mikulas a total new implementation of the ahash support
+>> > >     for the dm-integrity layer :-)
+>> > > v5: Slight rework around the allocation and comparing of ahash and
+>> > >     shash algorithm.
+>> > >     V5 has been tested with the new introduced ahash phmac which is a
+>> > >     protected key ("hardware key") version of a hmac for s390. As of
+>> > > now
+>> > >     phmac is only available in Herbert Xu's cryptodev-2.6 kernel tree
+>> > >     but will be merged into mainline with the next merge window for
+>> > >     the 6.17 development kernel.
+>> > >
+>> > > Mikulas Patocka (2):
+>> > >   dm-integrity: use internal variable for digestsize
+>> > >   dm-integrity: introduce ahash support for the internal hash
+>> > >
+>> > >  drivers/md/dm-integrity.c | 370
+>> > > +++++++++++++++++++++++++++-----------
+>> > >  1 file changed, 265 insertions(+), 105 deletions(-)
+>> > >
+>> > >
+>> > > base-commit: 89be9a83ccf1f88522317ce02f854f30d6115c41
+>> > > --
+>> > > 2.43.0
+>> > >
+>> >
+>> > Hi
+>> >
+>> > Eric Biggers recently removed ahash support from dm-verity - see this
+>> > commit:
+>> > https://kernel.googlesource.com/pub/scm/linux/kernel/git/device-mapper/linux-dm/+/f43309c6743257244f11f14d31c297ee6a410ded
+>> >
+>> > Should I revert Eric's patch? - would you need dm-verity with
+>> > asynchronous
+>> > hashes on zseries too?
+>> >
+>> > Is this patch series needed for performance (does it perform better than
+>> > the in-cpu instructions)? Or is it need because of better security (the
+>> > keys are hidden in the hardware)?
+>> >
+>> > Mikulas
+>> 
+>> I've seen this. Well as of now we don't need dm-verity. However, I'll 
+>> check
+>> our plans and let you know within the next days.
+>> 
+>> Thanks
+> 
+> Isn't your use case the "s390 specific protected key hash phmac"
+> (https://lore.kernel.org/linux-crypto/20250617134440.48000-1-freude@linux.ibm.com/)?
+> dm-verity uses an unkeyed hash, so that isn't applicable there.
+> 
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM-DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Yes, I've also found this out. For our purpose it is enough to have
+dm-integrity with phmac support - dm-verity is fine with the 
+(synchronous)
+s390 sha implementations and so no need for asynchronous support.
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 4ca4245c..a9991865 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -470,7 +470,7 @@ static struct hwentry default_hw[] = {
- 	 * Maintainer: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
- 	 */
- 	{
--		/* USP-V, HUS VM, VSP, VSP G1X00 and VSP GX00 families / HPE XP */
-+		/* USP-V, HUS VM, and VSP Series / HPE XP */
- 		.vendor        = "(HITACHI|HP|HPE)",
- 		.product       = "^OPEN-",
- 		.pgpolicy      = GROUP_BY_PRIO,
-@@ -1327,7 +1327,7 @@ static struct hwentry default_hw[] = {
- 	 * Quantum
- 	 */
- 	{
--		/* StorNext family */
-+		/* StorNext QX/QXS Series */
- 		.vendor        = "Quantum",
- 		.product       = "(StorNext QX|QXS)",
- 		.bl_product    = "cvfsctl",
-@@ -1337,7 +1337,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 18,
- 	},
- 	{
--		/* F-Series */
-+		/* F/H Series */
- 		.vendor        = "QUANTUM",
- 		.product       = "^(F|P|H)[24]",
- 		.pgpolicy      = GROUP_BY_PRIO,
--- 
-2.50.1
+> BTW, did you consider a lib/crypto/ API for phmac?  I suspect it could
+> be much simpler than the asynchronous hash based version.
 
+This is an option for the future. However, as of now I did not 
+investigate
+in how to exactly implement this as a lib. Maybe a work item for the 
+next
+months...
+
+> 
+> - Eric
+
+Thanks for your feedback and hints
+Harald Freudenberger
