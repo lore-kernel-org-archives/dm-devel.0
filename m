@@ -1,277 +1,159 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EA531F3BA9
-	for <dm-devel@lists.linux.dev>; Sat, 26 Jul 2025 03:59:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 615601F3B89
+	for <dm-devel@lists.linux.dev>; Mon, 28 Jul 2025 05:37:49 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753502351; cv=none; b=VadR2uQgjD9hgUqVxiRLo6+tOopCiTQF2/qR13Vt2TXQAl208OgcAI7t9vUnDteO4YYHYMt/ke8JJSY2zTJllq6FVACRYczSowE95bVuP0sAaMwWMO2C3Z59lx873SRbKXjaekIP9NUUylC6ic9WEVpw1DiZkDLcgRFx7uzAWLA=
+	t=1753681071; cv=none; b=k1g3Q8Fy64A7Lmc4t3rCYKXG5k8rcI5VRBKUzv35MnGP7uHRkUPKq/x+T3xc/Bc8c27ZLY9Oqp3d9moH+/UptP1XRbta6yDcvJafodsjA5fCzww5D5mtCJjQu7t6pdPG11G8ribs9X/Ssk4Z+viyerdMjDy2wm8a0t70lfDqYco=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753502351; c=relaxed/simple;
-	bh=x6Oib3Vo3SW2UDak79eS5lDyQNES0mXN/DnjiHK4tJA=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=NAJnFrL9GfB/+Pj/6+AmXqjn5QdL61BMbMOVXl8MedMOfkApZJzJr77f0AEZjlzdeWT0Q9oR3DatMzB6e1JIc1r6qYByklThSf/7NxyHY3COngddw4SJO/FfusJ71CaqiNFCJkE+4l17xeyeU/+hROCv0iJB9XXmhVdRHZHbI5M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gnZhuomR; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1753681071; c=relaxed/simple;
+	bh=F6+QWuSBv4x0flC5kCOLgZCDZBDLrrJSNad59jJWIXM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=R2gOy+eVefjY/q8WLzEcmFpci/1K1wObwUyVupkSLEziRBm3joDciQbf/BreMhvvG9kxo04U+xWbiJ262j/oImm0hQlZxX2AL9G8WpPnifh179NcWC+/1tjwAbfcMNePqUPDqsXPv/5qPFitiRanphCfL4OCUXchZsQ/QbUkrHk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AkbJbE3c; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gnZhuomR"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AkbJbE3c"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753502345;
+	s=mimecast20190719; t=1753681068;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=vCfLp3OfKxUOW5HEEunO8jxjc1lfmc2YDyv77RvVYCs=;
-	b=gnZhuomRb+2q2Mb3EqUTGp+t9EE7BfQyqApEvZW28hTr25ORQPZ8Blj8xqics2pIlV/EAf
-	U7q0jhr41iklCi72eMm3haiIZ7Jar8+yuZZfarT2iU3LHHCCkq7C4FHu326JPN7CVFvfh6
-	XOPsSm84/h6IitqnWvnjeCGS0dh6Agw=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-YiXv0-UNN6CaD3M4dTjx0Q-1; Fri,
- 25 Jul 2025 23:59:01 -0400
-X-MC-Unique: YiXv0-UNN6CaD3M4dTjx0Q-1
-X-Mimecast-MFC-AGG-ID: YiXv0-UNN6CaD3M4dTjx0Q_1753502338
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9822A18001E0;
-	Sat, 26 Jul 2025 03:58:58 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5162B30001B3;
-	Sat, 26 Jul 2025 03:58:58 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 56Q3wvjf363321
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 25 Jul 2025 23:58:57 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 56Q3wv1F363320;
-	Fri, 25 Jul 2025 23:58:57 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 02/14] libmpathpersist: move update_map_pr to multipathd
-Date: Fri, 25 Jul 2025 23:58:43 -0400
-Message-ID: <20250726035855.363290-3-bmarzins@redhat.com>
-In-Reply-To: <20250726035855.363290-1-bmarzins@redhat.com>
-References: <20250726035855.363290-1-bmarzins@redhat.com>
+	bh=A3ZcHukYN2mERp1bM6H5ADsDeN+lEekE5S6YNzRDaYg=;
+	b=AkbJbE3c29U7fglk28WJpwF34hsrYQ7Rlv6+oiQFnY9nbf1aFOecoE6mstdm9kcicxusjw
+	86cQMg6g8ij81PlOulY6QprQV68Y8ClSrNNdqcYZf5aDFhQ7lHI8P9teVlaMJWDqlIafsa
+	BgFLP/F3MoGBiFrn+ePPMxo7rBy7uOI=
+Received: from mail-lf1-f69.google.com (mail-lf1-f69.google.com
+ [209.85.167.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-78-kDcXjXcQN0KjXH-UnnF2Bw-1; Mon, 28 Jul 2025 01:37:46 -0400
+X-MC-Unique: kDcXjXcQN0KjXH-UnnF2Bw-1
+X-Mimecast-MFC-AGG-ID: kDcXjXcQN0KjXH-UnnF2Bw_1753681065
+Received: by mail-lf1-f69.google.com with SMTP id 2adb3069b0e04-553b70a3592so2215560e87.2
+        for <dm-devel@lists.linux.dev>; Sun, 27 Jul 2025 22:37:46 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1753681065; x=1754285865;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=A3ZcHukYN2mERp1bM6H5ADsDeN+lEekE5S6YNzRDaYg=;
+        b=iK+iF76ixepFeWOsmGL/VdyIIIK7bdGhi+1mMuQqqe1OGgmaF++s4Vr3q4tBCOeg9U
+         hFVTi4MOXgFDs06jaJuqkPBcTZYkCe+u38Jea9k0DkYpZ0lBAY1z2we/eU60/eedasMN
+         qgwZLgunFNkTXvlJKNKnmyHaEr7+VdsZEB1j1z0Y3hWq9jSR/m7W+mzIN7QStyeWghCv
+         UttX/tu6ePNFb0TWOKIfwJLDOSfuL9DvOV5LGIN9EBMhSgMlk8zp61wIFlxI2ksTJluI
+         UE2bdAmeWEaFmUJmeMZosLkYBSuNi9UU4HBtI6hv7he39stdW4Rph1KGRD1ntIuseu9c
+         v2Iw==
+X-Forwarded-Encrypted: i=1; AJvYcCW3ZPoDVVMugl1MMug1qsV6fBQ8Dbx0b54at3nLwaG4O8k048joUy1neCm1z0lWdaNpuCqyDz4UZQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy/CSH0e9GEN2GC8KM0uxNeGS3aOXxbZEtG0Uo+wjGIeZxyJAu2
+	xXwkDV1R0j3YX1Cc63XkSkQkjkhSCINtCepdb4gM0nQc8ckcYMXFE45zNuNQDhOvV/OjWh1huKH
+	AAr+Qgz89sWfF9zJp8a2n9OipXb9xHTuLzVLI8+r0JnHuA0e167PXI7AIwD8fsL0rKd/2/1wgAF
+	3VXi5WdN7ZLoArfO1235P9LKNLSljI447XkAY=
+X-Gm-Gg: ASbGnctwgVP2pLjWKUVvFNK+AJ2kxu4vGJw6IbpDgjAnnzVcX/mBbKHkNmlY/IJffzJ
+	iapQt7J0zF/rCnQZ2D1D+wy9rQ/HY156rl182nKBgRaX2UHLdABuuURyTJZyzPQw0Y44rOKlxyX
+	ugm7f16NgXT7Dac1tTiVD79A==
+X-Received: by 2002:a05:6512:3b27:b0:553:2311:e1f6 with SMTP id 2adb3069b0e04-55b5f5108e1mr2258765e87.49.1753681065133;
+        Sun, 27 Jul 2025 22:37:45 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFI50RUEgVEsbUPURKdr+Af1xURU2ypwa5U8DXHcP3qcvjYhyT8ZEOIfYPgmUHjIs80WfcHSAg+EtTcDwffmoI=
+X-Received: by 2002:a05:6512:3b27:b0:553:2311:e1f6 with SMTP id
+ 2adb3069b0e04-55b5f5108e1mr2258750e87.49.1753681064683; Sun, 27 Jul 2025
+ 22:37:44 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+References: <20250707012711.376844-1-yukuai1@huaweicloud.com>
+In-Reply-To: <20250707012711.376844-1-yukuai1@huaweicloud.com>
+From: Xiao Ni <xni@redhat.com>
+Date: Mon, 28 Jul 2025 13:37:32 +0800
+X-Gm-Features: Ac12FXySLN7PhCOHMXZw9NiWDQhg8QHeiGJTOKoWSPWjL40hTbHCR75P9KZGKo0
+Message-ID: <CALTww2_nfqeoR+h6rLCtCvr3Gh-b-tqpDhg4QimaZcC9AbUsnA@mail.gmail.com>
+Subject: Re: [PATCH v5 00/15] md/md-bitmap: introduce CONFIG_MD_BITMAP
+To: Yu Kuai <yukuai1@huaweicloud.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, song@kernel.org, 
+	yukuai3@huawei.com, dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, yi.zhang@huawei.com, yangerkun@huawei.com, 
+	johnny.chenyi@huawei.com
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: lRKdq9zIM6NNbysSPb1CsjATBNusKBcVTgZnBXCo3zE_1753502338
+X-Mimecast-MFC-PROC-ID: 4GnDJfrV8UxM7cBF5L9BtIXJCWyuULuBO04ibmUEK9k_1753681065
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-multipathd is now the only program that calls update_map_pr(), so move
-it there, and make it static. There are no other code changes.
+On Mon, Jul 7, 2025 at 9:36=E2=80=AFAM Yu Kuai <yukuai1@huaweicloud.com> wr=
+ote:
+>
+> From: Yu Kuai <yukuai3@huawei.com>
+>
+> Changes in v5:
+>  - rebase on the top of md-6.17;
+>  - fix compile problem if md-mod is build as module;
+>  - fix two problems for lvm2 dm-raid tests, patch 5,13
+>  - other cleanups;
+> Changes in v4:
+>  - rebase on the top of other patchset;
+> Changes in v3:
+>  - update commit message.
+> Changes in v2:
+>  - don't export apis, and don't support build md-bitmap as module
+>
+> Due to known performance issues with md-bitmap and the unreasonable
+> implementations like following:
+>
+>  - self-managed pages, bitmap_storage->filemap;
+>  - self-managed IO submitting like filemap_write_page();
+>  - global spin_lock
+>  ...
+>
+> I have decided not to continue optimizing based on the current bitmap
+> implementation, and plan to invent a new lock-less bitmap. And a new
+> kconfig option is a good way for isolation.
+>
+> However, we still encourage anyone who wants to continue optimizing the
+> current implementation
+>
+> Yu Kuai (15):
+>   md/raid1: change r1conf->r1bio_pool to a pointer type
+>   md/raid1: remove struct pool_info and related code
+>   md/md-bitmap: remove the parameter 'init' for bitmap_ops->resize()
+>   md/md-bitmap: merge md_bitmap_group into bitmap_operations
+>   md/md-bitmap: add a new parameter 'flush' to bitmap_ops->enabled
+>   md/md-bitmap: add md_bitmap_registered/enabled() helper
+>   md/md-bitmap: handle the case bitmap is not enabled before
+>     start_sync()
+>   md/md-bitmap: handle the case bitmap is not enabled before end_sync()
+>   md/raid1: check bitmap before behind write
+>   md/raid1: check before referencing mddev->bitmap_ops
+>   md/raid10: check before referencing mddev->bitmap_ops
+>   md/raid5: check before referencing mddev->bitmap_ops
+>   md/dm-raid: check before referencing mddev->bitmap_ops
+>   md: check before referencing mddev->bitmap_ops
+>   md/md-bitmap: introduce CONFIG_MD_BITMAP
+>
+>  drivers/md/Kconfig      |  18 +++++
+>  drivers/md/Makefile     |   3 +-
+>  drivers/md/dm-raid.c    |  18 +++--
+>  drivers/md/md-bitmap.c  |  74 +++++++++---------
+>  drivers/md/md-bitmap.h  |  62 ++++++++++++++-
+>  drivers/md/md-cluster.c |   2 +-
+>  drivers/md/md.c         | 112 +++++++++++++++++++--------
+>  drivers/md/md.h         |   4 +-
+>  drivers/md/raid1-10.c   |   2 +-
+>  drivers/md/raid1.c      | 163 +++++++++++++++++++---------------------
+>  drivers/md/raid1.h      |  22 +-----
+>  drivers/md/raid10.c     |  49 ++++++------
+>  drivers/md/raid5.c      |  30 ++++----
+>  13 files changed, 330 insertions(+), 229 deletions(-)
+>
+> --
+> 2.39.2
+>
+>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmpathpersist/libmpathpersist.version |  1 -
- libmpathpersist/mpath_persist_int.c     | 75 -------------------------
- libmpathpersist/mpath_persist_int.h     |  1 -
- multipathd/main.c                       | 75 +++++++++++++++++++++++++
- 4 files changed, 75 insertions(+), 77 deletions(-)
-
-diff --git a/libmpathpersist/libmpathpersist.version b/libmpathpersist/libmpathpersist.version
-index b31237db..7f47ea99 100644
---- a/libmpathpersist/libmpathpersist.version
-+++ b/libmpathpersist/libmpathpersist.version
-@@ -40,5 +40,4 @@ __LIBMPATHPERSIST_INT_2.0.0 {
- 	mpath_alloc_prin_response;
- 	prin_do_scsi_ioctl;
- 	prout_do_scsi_ioctl;
--	update_map_pr;
- };
-diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
-index afd19bef..c6b2e788 100644
---- a/libmpathpersist/mpath_persist_int.c
-+++ b/libmpathpersist/mpath_persist_int.c
-@@ -806,78 +806,3 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
- 	}
- 	return ret;
- }
--
--int update_map_pr(struct multipath *mpp, struct path *pp)
--{
--	int noisy=0;
--	struct prin_resp *resp;
--	unsigned int i;
--	int ret = MPATH_PR_OTHER, isFound;
--	bool was_set = (mpp->prflag == PR_SET);
--
--	/* If pr is explicitly unset, it must be manually set */
--	if (mpp->prflag == PR_UNSET)
--		return MPATH_PR_SKIP;
--
--	if (!get_be64(mpp->reservation_key))
--	{
--		/* Nothing to do. Assuming pr mgmt feature is disabled*/
--		mpp->prflag = PR_UNSET;
--		condlog(was_set ? 2 : 4, "%s: reservation_key not set in multipath.conf", mpp->alias);
--		return MPATH_PR_SKIP;
--	}
--
--	resp = mpath_alloc_prin_response(MPATH_PRIN_RKEY_SA);
--	if (!resp)
--	{
--		condlog(0,"%s : failed to alloc resp in update_map_pr", mpp->alias);
--		return MPATH_PR_OTHER;
--	}
--
--	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, resp, noisy);
--	if (ret != MPATH_PR_SUCCESS )
--	{
--		if (ret == MPATH_PR_ILLEGAL_REQ)
--			mpp->prflag = PR_UNSET;
--		condlog(0,"%s : pr in read keys service action failed Error=%d", mpp->alias, ret);
--		goto out;
--	}
--	mpp->prflag = PR_UNSET;
--
--	if (resp->prin_descriptor.prin_readkeys.additional_length == 0 )
--	{
--		condlog(was_set ? 1 : 3, "%s: No key found. Device may not be registered. ", mpp->alias);
--		goto out;
--	}
--
--	condlog(3, "%s: Multipath reservation_key: 0x%" PRIx64 " ", mpp->alias,
--		get_be64(mpp->reservation_key));
--
--	isFound =0;
--	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
--	{
--		if (libmp_verbosity >= 3) {
--			condlog(3, "%s: PR IN READKEYS[%d] reservation key:",
--				mpp->alias, i);
--			dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i * 8], 8, 1);
--		}
--
--		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i * 8], 8)) {
--			condlog(3, "%s: reservation key found in pr in readkeys response", mpp->alias);
--			isFound =1;
--		}
--	}
--
--	if (isFound)
--	{
--		mpp->prflag = PR_SET;
--		condlog(was_set ? 3 : 2, "%s: key found. prflag set.",
--			mpp->alias);
--	} else
--		condlog(was_set ? 1 : 3, "%s: key not found. prflag unset.",
--			mpp->alias);
--
--out:
--	free(resp);
--	return ret;
--}
-diff --git a/libmpathpersist/mpath_persist_int.h b/libmpathpersist/mpath_persist_int.h
-index 7b32c1e2..ed7b46f7 100644
---- a/libmpathpersist/mpath_persist_int.h
-+++ b/libmpathpersist/mpath_persist_int.h
-@@ -20,6 +20,5 @@ int prin_do_scsi_ioctl(char * dev, int rq_servact, struct prin_resp * resp, int
- int prout_do_scsi_ioctl( char * dev, int rq_servact, int rq_scope,
- 			 unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy);
- void dumpHex(const char* , int len, int no_ascii);
--int update_map_pr(struct multipath *mpp, struct path *pp);
- 
- #endif /* MPATH_PERSIST_INT_H_INCLUDED */
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d22425f6..fd0c0dba 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -4248,6 +4248,81 @@ static void check_prhold(struct multipath *mpp, struct path *pp)
- 		mpp->prhold = PR_SET;
- }
- 
-+static int update_map_pr(struct multipath *mpp, struct path *pp)
-+{
-+	int noisy=0;
-+	struct prin_resp *resp;
-+	unsigned int i;
-+	int ret = MPATH_PR_OTHER, isFound;
-+	bool was_set = (mpp->prflag == PR_SET);
-+
-+	/* If pr is explicitly unset, it must be manually set */
-+	if (mpp->prflag == PR_UNSET)
-+		return MPATH_PR_SKIP;
-+
-+	if (!get_be64(mpp->reservation_key))
-+	{
-+		/* Nothing to do. Assuming pr mgmt feature is disabled*/
-+		mpp->prflag = PR_UNSET;
-+		condlog(was_set ? 2 : 4, "%s: reservation_key not set in multipath.conf", mpp->alias);
-+		return MPATH_PR_SKIP;
-+	}
-+
-+	resp = mpath_alloc_prin_response(MPATH_PRIN_RKEY_SA);
-+	if (!resp)
-+	{
-+		condlog(0,"%s : failed to alloc resp in update_map_pr", mpp->alias);
-+		return MPATH_PR_OTHER;
-+	}
-+
-+	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, resp, noisy);
-+	if (ret != MPATH_PR_SUCCESS )
-+	{
-+		if (ret == MPATH_PR_ILLEGAL_REQ)
-+			mpp->prflag = PR_UNSET;
-+		condlog(0,"%s : pr in read keys service action failed Error=%d", mpp->alias, ret);
-+		goto out;
-+	}
-+	mpp->prflag = PR_UNSET;
-+
-+	if (resp->prin_descriptor.prin_readkeys.additional_length == 0 )
-+	{
-+		condlog(was_set ? 1 : 3, "%s: No key found. Device may not be registered. ", mpp->alias);
-+		goto out;
-+	}
-+
-+	condlog(3, "%s: Multipath reservation_key: 0x%" PRIx64 " ", mpp->alias,
-+		get_be64(mpp->reservation_key));
-+
-+	isFound =0;
-+	for (i = 0; i < resp->prin_descriptor.prin_readkeys.additional_length/8; i++ )
-+	{
-+		if (libmp_verbosity >= 3) {
-+			condlog(3, "%s: PR IN READKEYS[%d] reservation key:",
-+				mpp->alias, i);
-+			dumpHex((char *)&resp->prin_descriptor.prin_readkeys.key_list[i * 8], 8, 1);
-+		}
-+
-+		if (!memcmp(&mpp->reservation_key, &resp->prin_descriptor.prin_readkeys.key_list[i * 8], 8)) {
-+			condlog(3, "%s: reservation key found in pr in readkeys response", mpp->alias);
-+			isFound =1;
-+		}
-+	}
-+
-+	if (isFound)
-+	{
-+		mpp->prflag = PR_SET;
-+		condlog(was_set ? 3 : 2, "%s: key found. prflag set.",
-+			mpp->alias);
-+	} else
-+		condlog(was_set ? 1 : 3, "%s: key not found. prflag unset.",
-+			mpp->alias);
-+
-+out:
-+	free(resp);
-+	return ret;
-+}
-+
- static void mpath_pr_event_handle(struct path *pp)
- {
- 	struct multipath *mpp = pp->mpp;
--- 
-2.48.1
+The patch set looks good to me.
+Reviewed-by: Xiao Ni <xni@redhat.com>
 
