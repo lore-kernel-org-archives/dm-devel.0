@@ -1,129 +1,108 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C39582F24
-	for <dm-devel@lists.linux.dev>; Thu, 31 Jul 2025 14:21:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 938E323AE83
+	for <dm-devel@lists.linux.dev>; Thu, 31 Jul 2025 16:05:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753971709; cv=none; b=Bo4mYfAvX6qN3+YFffpPILm5hA2peDkPJbgLqy2/TRoJk34zTWmyDh0Zq0oQIjlMbFALUjfkl9DxYQ2HydFmOsP/lyZL6Ax0dH4OWHs0IhmhcENN1ZW6Lhpdssl2zgukq6yPB/QiKCYRanlL0nAL16PfZy6LCyz3d9nyvzEkc94=
+	t=1753977907; cv=none; b=SjEoE8smTRI+tNFc6Dsz1uFxPfthEFH8Ii2QJLBb9iNgddT8IXoojF9eWnVxcqiPEib9Ak/ETsz3fwXlythVmbf9fQ8X1FYmQtrveXtiz1PYFBLxMHxTjxORA170ixI2Q3s7ckBCKMwHOj/XduhA/NG8z4CaMZ5hlVAhLtUPa1c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753971709; c=relaxed/simple;
-	bh=Wxid77PNquvoKax5+b6T38t8BZwa3TGA331BESNnOG4=;
+	s=arc-20240116; t=1753977907; c=relaxed/simple;
+	bh=Nc8SWZTAq/UpWPkTfmwHadwssmBRLEUoZ+XZI0u6YBo=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=BbSJiX8p3izjkXGoMdxMIsK5yte3AiB4UztQ7JLGeo7nOzDja4680HY0dz5yxOmmHNoqeUo6TEpRes/NGGefseJWdNogM4p2zxkTN2PZipyQgKj5txo73WELtRr84WdqkjTol6+pEDYe3JlWkRORN0slFTDtg4/Pdrq77VKCXPo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OqxIpzHe; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=e0jR7VaIskccl1OfAr9aCC5DjIA750f8akNKuVwbpK8CJytW+XxrhFzX28Kwq9gv45mKM6Jx/WFFEXbyATQNGde+pfmq6ygOlcOePyc+vrH96xJFYnpcBtmw1xfBTtnfz0ARX6erHCcBfXldrQAE+HvW05QDjOq+SW/cnnxzjqo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WtMXjyf3; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OqxIpzHe"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WtMXjyf3"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1753971706;
+	s=mimecast20190719; t=1753977904;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mpeZMbt4KO8kjMIsLjUpUcEmRgZRnDhDF3zL7JFRIg0=;
-	b=OqxIpzHeMEUSaFs2PpprXacbad/masa/4JXdxbxxWmc9wXFbtLFZha15Kp70nN9bQ/7VhT
-	zyk76fu+XWDvZRSIfooKlT2oxNgtpmkP83RtMPi160JkPrGRTCsK4orgYQAOtRDyUIPiEH
-	rrPNlgs+DZHMOqxzV6QPVQKbZ2I8ldM=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=eenJY43nVvSwgrWRGp1MKP/+Tdz8QfA1JfKS9B0ELyk=;
+	b=WtMXjyf3ajVuxm53MUr77eMNmPc/stm9V022i/7iKkFmnkd8qhzdoT9Cnx4fUw/3NPPZT4
+	Eq1WIqUhGUN5O/Ku65oFEPeJN6AG+gCUk0vd6jkGEGAvOtmwVoHG0zN1bbUUpDVLsim4Gu
+	0Dy6ZAtzFqZbccYs1Bxy4EqTeqFoR/A=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-255-fiBNlxWUO0iW-78Fmbh0XA-1; Thu,
- 31 Jul 2025 10:21:41 -0400
-X-MC-Unique: fiBNlxWUO0iW-78Fmbh0XA-1
-X-Mimecast-MFC-AGG-ID: fiBNlxWUO0iW-78Fmbh0XA_1753971700
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-522-McPU3v2kPP2oaRm-GaichA-1; Thu,
+ 31 Jul 2025 12:05:02 -0400
+X-MC-Unique: McPU3v2kPP2oaRm-GaichA-1
+X-Mimecast-MFC-AGG-ID: McPU3v2kPP2oaRm-GaichA_1753977901
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 87FC51800365;
-	Thu, 31 Jul 2025 14:21:40 +0000 (UTC)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 913241956094;
+	Thu, 31 Jul 2025 16:05:01 +0000 (UTC)
 Received: from [10.22.80.24] (unknown [10.22.80.24])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E90B81800359;
-	Thu, 31 Jul 2025 14:21:38 +0000 (UTC)
-Date: Thu, 31 Jul 2025 16:21:32 +0200 (CEST)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 808E91800B6D;
+	Thu, 31 Jul 2025 16:04:59 +0000 (UTC)
+Date: Thu, 31 Jul 2025 18:04:52 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: LongPing Wei <weilongping@oppo.com>
 cc: dm-devel@lists.linux.dev, guoweichao@oppo.com, snitzer@kernel.org
-Subject: Re: [PATCH] dm-thin: update the documentation.
-In-Reply-To: <20250731085326.1976997-1-weilongping@oppo.com>
-Message-ID: <4a7df7ac-fc33-dfc1-19f1-b056b6c92ac2@redhat.com>
-References: <20250731085326.1976997-1-weilongping@oppo.com>
+Subject: Re: [PATCH] dm: set DM_TARGET_PASSES_CRYPTO feature for dm-thin
+In-Reply-To: <72f54b80-2e66-4692-a635-0882e9d11631@oppo.com>
+Message-ID: <99a2ab74-55f3-5609-c887-e6c2d5df6228@redhat.com>
+References: <20250730061718.1966686-1-weilongping@oppo.com> <0d84258e-daa5-2f96-78e3-ac52b8d35452@redhat.com> <6db292e9-dea9-42a6-ab96-298481cc70c2@oppo.com> <f66ace1c-3112-a3c9-5c43-efdbbf82d765@redhat.com> <72f54b80-2e66-4692-a635-0882e9d11631@oppo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 9os6nsrS7UKiKuYur9h1T3WF3e4Ka2ejPsUF6kM66j0_1753971700
+X-Mimecast-MFC-PROC-ID: 86_-EFzd0QgY_wOpg5zScdeFSij0gNvI2QBfQjzM3gw_1753977901
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-Applied, thanks.
+
+
+On Wed, 30 Jul 2025, LongPing Wei wrote:
+
+> Hi, Mikulas
+> 
+> For example:
+> 
+> F2FS/EXT4
+> ----
+> dm-thin
+> ----
+> dm-thin-pool
+> ----
+> pool data
+> 
+> 1. There is a block of testfile in F2FS/EXT4.
+> 2. The offset of this block is n.
+> 3. The position in the dm-thin device is m.
+> 4. The position in the pool data is x.
+> 
+> The IV is only be affectted by offset in file and the ino of this file.
+> 
+> Even if we change m by defrag or change x by COW, IV won't changed.
+> 
+> The upper layer will only read the decrypted blocks with the same key and
+> continous IV in one bio.
+> 
+> If the upper layer read the full chunk with mixed blocks for GC purpose, key
+> and IV won't be passed in. Then the upper layer just get the encrypted blocks.
+> 
+> LongPing Wei
+
+Yes - so if the IV is calculated from inode and offset, it seems safe to 
+support it on dm-thin. So, I accepted the patch (and increased the target 
+version).
+
+BTW. what happens if someone uses FALLOC_FL_COLLAPSE_RANGE or 
+FALLOC_FL_INSERT_RANGE on a file with inline encryption? That changes file 
+offsets of existing data, so it should be disallowed when using inline 
+encryption - but I don't see a test for this in the functions 
+ext4_collapse_range and ext4_insert_range.
 
 Mikulas
-
-
-On Thu, 31 Jul 2025, LongPing Wei wrote:
-
-> 1. convert KB/MB/GB to KiB/MiB/GiB;
-> 2. change the number of sectors for 128MiB from 256000 to 262144 as
-> 256000 sectors is neither 128 MB nor 128 MiB.
-> 
-> Signed-off-by: LongPing Wei <weilongping@oppo.com>
-> ---
->  .../device-mapper/thin-provisioning.rst          | 16 ++++++++--------
->  1 file changed, 8 insertions(+), 8 deletions(-)
-> 
-> diff --git a/Documentation/admin-guide/device-mapper/thin-provisioning.rst b/Documentation/admin-guide/device-mapper/thin-provisioning.rst
-> index bafebf79da4b..b2fa49a5608a 100644
-> --- a/Documentation/admin-guide/device-mapper/thin-provisioning.rst
-> +++ b/Documentation/admin-guide/device-mapper/thin-provisioning.rst
-> @@ -80,11 +80,11 @@ less sharing than average you'll need a larger-than-average metadata device.
->  
->  As a guide, we suggest you calculate the number of bytes to use in the
->  metadata device as 48 * $data_dev_size / $data_block_size but round it up
-> -to 2MB if the answer is smaller.  If you're creating large numbers of
-> +to 2MiB if the answer is smaller.  If you're creating large numbers of
->  snapshots which are recording large amounts of change, you may find you
->  need to increase this.
->  
-> -The largest size supported is 16GB: If the device is larger,
-> +The largest size supported is 16GiB: If the device is larger,
->  a warning will be issued and the excess space will not be used.
->  
->  Reloading a pool table
-> @@ -107,13 +107,13 @@ Using an existing pool device
->  
->  $data_block_size gives the smallest unit of disk space that can be
->  allocated at a time expressed in units of 512-byte sectors.
-> -$data_block_size must be between 128 (64KB) and 2097152 (1GB) and a
-> -multiple of 128 (64KB).  $data_block_size cannot be changed after the
-> +$data_block_size must be between 128 (64KiB) and 2097152 (1GiB) and a
-> +multiple of 128 (64KiB).  $data_block_size cannot be changed after the
->  thin-pool is created.  People primarily interested in thin provisioning
-> -may want to use a value such as 1024 (512KB).  People doing lots of
-> -snapshotting may want a smaller value such as 128 (64KB).  If you are
-> +may want to use a value such as 1024 (512KiB).  People doing lots of
-> +snapshotting may want a smaller value such as 128 (64KiB).  If you are
->  not zeroing newly-allocated data, a larger $data_block_size in the
-> -region of 256000 (128MB) is suggested.
-> +region of 262144 (128MiB) is suggested.
->  
->  $low_water_mark is expressed in blocks of size $data_block_size.  If
->  free space on the data device drops below this level then a dm event
-> @@ -291,7 +291,7 @@ i) Constructor
->        error_if_no_space:
->  	Error IOs, instead of queueing, if no space.
->  
-> -    Data block size must be between 64KB (128 sectors) and 1GB
-> +    Data block size must be between 64KiB (128 sectors) and 1GiB
->      (2097152 sectors) inclusive.
->  
->  
-> -- 
-> 2.34.1
-> 
 
