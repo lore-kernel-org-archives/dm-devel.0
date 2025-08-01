@@ -1,219 +1,181 @@
-Received: from OS8PR02CU002.outbound.protection.outlook.com (mail-japanwestazon11012015.outbound.protection.outlook.com [40.107.75.15])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87A2B23AD
-	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 01:31:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.75.15
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754011881; cv=fail; b=srSVqQnlKzASss0iY/Dzd1ZZQ5I9CM9hUgs/zUGoy0Wq3MF1ZvqxSq+CB4X1K6p6oIZ0c2oqcvrpL9YhW3l8SvjkQZbgPFeMLOnGB16RU80UUBqbyDDyZXtdD/p7uReU1EG/LlcWc6NFkRaLfgLwjPP0LagTwBjmY7OCXwBjAK0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754011881; c=relaxed/simple;
-	bh=rGL7CDuNGUUd1zqNrfNX7q5ICIxwLKk30j493uTNo10=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=UjxfsOx+F2WNfyLlV6jVu4BxPraY/U24OgjSAY7ZkiM+pgU0PmCuJloWtKRZKVugd/32or6DNB94F0ieOGdzVpgc/7wc8OAzIE5g2GDWQlJuuJ6YnzaJZLbuDq0xtvA8fOxtk6FrUluF6fcAz1VmLbtIwWmVg68hZx/mmeL/sQw=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com; spf=pass smtp.mailfrom=oppo.com; dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b=K08cI6qJ; arc=fail smtp.client-ip=40.107.75.15
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=oppo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oppo.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=oppo.com header.i=@oppo.com header.b="K08cI6qJ"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=K45WDfzX+yTcm3VSdLZnBBLHuRm/3bxPB4JUHchf8a1C+WjIAli762GjkwUaPLhdnLEwAfVBBBZNm8kdI6e7BJvQN6fQRXMyaujTIoQM+qFXW9GEigY3VoIm0eBrToOGULRjppkFjM0iu+tXqG3ab1pxIMI/PfE6ZM5Dy3djaadzAA29iN1jG6451ltG208WB3/xz/zggzwkFItKxNjVH1/vdFL5sjMgeZ8jAXPw0R5G8q4e1OywOlQd+OYFqwA9pjBfKjgA9Zw+/oOdv0pwffZh35RBfCnoUdl+SIjaLCONUy/KZUDM41tL6g0YBMwgS5mSYZupY8qkZMZU+ORQcQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=1Ygdj1e1Gh+XkX51+O7mQrIsl62Jp+Le9JYjFRVZkMc=;
- b=vKqY4lM5Crrbmsyr/k+Vptcq4kJgcW+TxOP6nVOPmYQw5sqes6pPSJ9g1Ktq7pbclftAABZUpf80QcoN63nYqIlgwF9SCNARAveRTzQ83du6IzCSTDbul58+8X6peSp1yJwxAOkFDkh+GikQ6HQ89AnZcYDMQnmNA1EH/WaDoajTigjRtIJlfRrg3cAzo2wp7rlEAN2xhT/zmoHaQ00X873GXeBak0R3XIqCl/opQPBtvHaUmX/GLrZV6NfkuDJLI4TWHqzqj9pd+6BgUCNJi6npE4oqai8rb0l4GDpN6wfyMkgEjdya08+dAUEzYzvuRH5ptmdb+l6Hx3CJvQz6/w==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oppo.com; dmarc=pass action=none header.from=oppo.com;
- dkim=pass header.d=oppo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oppo.com; s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=1Ygdj1e1Gh+XkX51+O7mQrIsl62Jp+Le9JYjFRVZkMc=;
- b=K08cI6qJ49CnoYIKslYkqHJElcxAiS+r41bIkiFviNeH3LHrTsApV/kwtewh44TahQjQvEwd2StHdIdHtU9pNy7540REA0zSU4hUk40YOd+FXirFAKU4QNhlZ6i+63W7hcwWQhtqvYF3hBb3ySQ2YgIuDmriovd9TXi9BMEo22o=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=oppo.com;
-Received: from PS1PPFE5C9D9891.apcprd02.prod.outlook.com (2603:1096:308::2ae)
- by KL1PR02MB7664.apcprd02.prod.outlook.com (2603:1096:820:122::5) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8989.16; Fri, 1 Aug
- 2025 01:31:16 +0000
-Received: from PS1PPFE5C9D9891.apcprd02.prod.outlook.com
- ([fe80::e3d8:6cd4:4818:db76]) by PS1PPFE5C9D9891.apcprd02.prod.outlook.com
- ([fe80::e3d8:6cd4:4818:db76%5]) with mapi id 15.20.8964.024; Fri, 1 Aug 2025
- 01:31:16 +0000
-Message-ID: <66308a97-f2c3-4f6d-83fa-2fa202b0e473@oppo.com>
-Date: Fri, 1 Aug 2025 09:31:12 +0800
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm: set DM_TARGET_PASSES_CRYPTO feature for dm-thin
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, guoweichao@oppo.com, snitzer@kernel.org,
- Eric Biggers <ebiggers@kernel.org>
-References: <20250730061718.1966686-1-weilongping@oppo.com>
- <0d84258e-daa5-2f96-78e3-ac52b8d35452@redhat.com>
- <6db292e9-dea9-42a6-ab96-298481cc70c2@oppo.com>
- <f66ace1c-3112-a3c9-5c43-efdbbf82d765@redhat.com>
- <72f54b80-2e66-4692-a635-0882e9d11631@oppo.com>
- <99a2ab74-55f3-5609-c887-e6c2d5df6228@redhat.com>
- <20250731183020.GA1312@quark>
-From: LongPing Wei <weilongping@oppo.com>
-In-Reply-To: <20250731183020.GA1312@quark>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: SI2P153CA0022.APCP153.PROD.OUTLOOK.COM (2603:1096:4:190::8)
- To PS1PPFE5C9D9891.apcprd02.prod.outlook.com (2603:1096:308::2ae)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C1BF6376
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 02:00:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1754013649; cv=none; b=YqGzRILn83LFh3ipTvPAKO0sJ2UK0B/fRfnsYhquB5zx9IprbhtpqZFGgkt+xtGxSUvCWbvNcMWlt1F0nY8GntNYr8hkaTxg2ZoNJWH0LI7zMXHOjTmOGHc7mbuaa+9SKkr3pjN0EvQoWS4aEqaInpA16h39hJjXUcOJ69cMH8w=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1754013649; c=relaxed/simple;
+	bh=uUgBHxk1XWPT9uqTiGzegsSuOWtCEXVRytWcBEnLKxo=;
+	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
+	 In-Reply-To:Content-Type; b=DxEfhcPfZe05uOpAbroz7kgogpFqNkMZWsmlfXOTrCj6FdAQgCHPU8xUJg/Rgma5HO1+3Jvxdsi55aXrExgSsDInj2gl9KhQO98A+cfXBdXjERDhwcarKf1HnIcUMQWZYg/CqZUjodlEdtEVSTUuDcwlfOBy+iveAtuKROFgr4k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4btTgc5rWCzKHMXL
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 10:00:44 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id BB9751A1129
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 10:00:43 +0800 (CST)
+Received: from [10.174.179.143] (unknown [10.174.179.143])
+	by APP4 (Coremail) with SMTP id gCh0CgC3MxTJH4xo6bCnCA--.58432S3;
+	Fri, 01 Aug 2025 10:00:43 +0800 (CST)
+Subject: Re: [PATCH v4 11/11] md/md-llbitmap: introduce new lockless bitmap
+To: Yu Kuai <yukuai@kernel.org>, corbet@lwn.net, agk@redhat.co,
+ snitzer@kernel.org, mpatocka@redhat.com, hch@lst.de, song@kernel.org,
+ hare@suse.de
+Cc: linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, yangerkun@huawei.com,
+ yi.zhang@huawei.com, johnny.chenyi@huawei.com,
+ "yukuai (C)" <yukuai3@huawei.com>
+References: <20250721171557.34587-1-yukuai@kernel.org>
+ <20250721171557.34587-12-yukuai@kernel.org>
+From: Yu Kuai <yukuai1@huaweicloud.com>
+Message-ID: <f282237e-be12-b178-0e25-3a73bd20d77c@huaweicloud.com>
+Date: Fri, 1 Aug 2025 10:00:41 +0800
+User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
+ Thunderbird/60.9.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: PS1PPFE5C9D9891:EE_|KL1PR02MB7664:EE_
-X-MS-Office365-Filtering-Correlation-Id: 11763d0f-ccab-456e-8b03-08ddd09b1b5f
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|376014|1800799024|366016;
-X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?eStlVlMrdGRtdmp0OFI4bXkzS2Znekd6Vkxnd214cHp0M200WnhxdHgwL1ZC?=
- =?utf-8?B?MDkyVkgzNlJ2Y2lCQXhEZXhpL0owckFOVGNJakZ6eW85WERGSmk2dzVrOW1G?=
- =?utf-8?B?eGowVGdCZ3FPNUVPTE5zdGYyelF3RFlSTXUxY2kwUDFnZmZDYU5OQkRzZDBa?=
- =?utf-8?B?d01IK21XRm5VTUFCbGNxamNabTBuZkxsOGhxUlgzMURYTzI1TlptckhWTC9Z?=
- =?utf-8?B?bUY2VktzVHhwZlk1VzBJTi9CQVpGalk2L2ZpM1ZmMHFJaHk1L1kyYisvTEIz?=
- =?utf-8?B?b1pBbFhWaHdldGlndmwyVWhtNjM0T0FZRWF2cWhtdndrVW5OTkorbmFNYXdX?=
- =?utf-8?B?QlN0OUVKbUIreC80bGNjN2NWRzZGMWRPU0lnNW01eDVBenZoSm1mN1kvQU10?=
- =?utf-8?B?KzQvYnZMQTFBN2s1bWhod0pMZmF0cDkrYW9oVVBvZnBubUhqUEovc0hqdE1m?=
- =?utf-8?B?VlZaZ0s5bGZ6a1VwTlRkekFkbTI5RGxBZS9SSDdNUTZXWWtGR2JwS2hkclp2?=
- =?utf-8?B?OGlsSmtxM1IyN2RITkFsMldIR3pwbmZhcE9MblZreCtCdWYxL0FaVWxqaG91?=
- =?utf-8?B?YVdqSENBZC8ybEFWNzBtSUlMVjU3c2crUldYbE9XK2RyZFU0c09pNHA3QlZI?=
- =?utf-8?B?TlB1M1labWV0Q1lxOGRlTzJDWnhpYUtQNTBqR3VkRjZBK2NrY0lZQmVCZ01K?=
- =?utf-8?B?VDNncDk0VzNPblZhV0dITWFiWGpNd0Jzd1NDYzZMa2cwaE1COEYxcm5teWdw?=
- =?utf-8?B?bTV4Sjh6RWdpby9qTFBwL3VIL3FZRnY1THVxM2RWc1NYbWQrUkFPeHlwSU15?=
- =?utf-8?B?bDlzSHpMWFkxNWNPdys3eDZwTXdpSS9odE9MRFJySzcrVytRcU5GNmRlU3lG?=
- =?utf-8?B?SFFER0VlOUJuTnJYVCtwWkhRdVB3T3JMVHNweG4rWU84RkxtdTAzaGdIL1Jk?=
- =?utf-8?B?VDcwRlRBSUJGdHJDTW5Qd0I4ZTg1aTM3MVdLVmdYWWNYTE1pOXRwVjB6ZWZ2?=
- =?utf-8?B?VDJrVnRPWFV6VWhtRDRwUkNnRWxOSzBSTFo1elpPYVRMd09BQXlIUm5CM04v?=
- =?utf-8?B?VEN2V01rRlFPMXBudzBXeUVvZk41dU9tcDg3eHBZaHVYL0hHRGtsM3ZGRmd5?=
- =?utf-8?B?VHE1aVp3ODNOTGFHd3JOZ3VJNDhsWGZPak5CekpEbTNHcU53ajZJeDZCYXF6?=
- =?utf-8?B?SXp4V1ZvTDBtQ3Y5Y1dvUHh2YS9rcHFRT0l3eUg5ckF5M3RDQjg5UGdSMlpI?=
- =?utf-8?B?UDNOYmt0TFoxRngzREQxTEVlN3pWVS94UWdyV3BXajIxZmlKeFNVUEFTVVYr?=
- =?utf-8?B?eUVjR0J4KzNCOHgvSXpqdUhuYWNtbXNNUktHMnBGQndRK2RvMnB4VGRacnF5?=
- =?utf-8?B?WG1SaXREV1lTRVVwZjZUSjR4U0VjZkVBTXNUbkNNa09rSHlzcTlqaVhXODRW?=
- =?utf-8?B?V3F2dTlMdlppUDNHMHZ4RlQ0MXROQUU4RW5tcThmdUo1SmVaa1RtOWQ3ZVl6?=
- =?utf-8?B?c3lvemZ5UjAvMTdvMnAraEI2Z2pMakg1eWlORjlCNTVQOW5KSnJQOHdORWRZ?=
- =?utf-8?B?SkpuVkt5a3VzWVVNRUN6NmV3Zmp3Tmt1SUJST2lVaTlCVzUzVEx5MTd6V0Y1?=
- =?utf-8?B?L1J6ZURvVDhqc3dPdFBDbFlNbkZQZ1Y2dy9UUHNLQVMzbU01K2VnQXZzRGpx?=
- =?utf-8?B?bEJpWldOMC9oenhHQ1gxejVyVS82S2QrY00yRUFQNXNOVkhCK2xQcHZUUGxp?=
- =?utf-8?B?Vmk4RWNyL2dtd0dOWVpLWkVoZWRjTkk5dHdwMGZ4b2xENzZlZ0FlNmhmMlZZ?=
- =?utf-8?B?Vy82ck9kSlVUUEZ6YnBGOU1HRHpUS0Jna2tsbldRdUk1c3dtUXRhbGQyQ21S?=
- =?utf-8?B?aVBnRmNaMlB2em45VzArQWJJVjBadVJva0dlZnRlS2hURlp5Kzl3N0JaSjBZ?=
- =?utf-8?Q?4HApPZWeEpg=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PS1PPFE5C9D9891.apcprd02.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(1800799024)(366016);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?N3pGR0twQWlZMzc0VzhZTURiZEMvUnBBL3MyR0xkLzZEMzBVUkRyMDBJQ1dt?=
- =?utf-8?B?b0IrWWVlcmEzY054VlNkZm5pZUp5UGdUdG5pbGp2Nks0Sjl6d2kzMEJmTThG?=
- =?utf-8?B?WWZEQTdCR1ZuL0x0SVFVMm8wWVVJTWxqMW5GWWpweXd0c0lLSFp0WlczTzU3?=
- =?utf-8?B?OWJWNm5IdUtzRzJBVmQrclRnb1lHWklFZHZ6YUd3M0VzM3RDcVFwYWtibkNW?=
- =?utf-8?B?L21EYmJ3ZWZvZHZmdjFzVHdiWDJuRTJtOEZGbmpUMjViUW5zTGRJZ1E1c212?=
- =?utf-8?B?UG51YU93K3E4VzczU2ZYVW9SUUpqRXBnbHZDTmJ0cG5HS3FzVFRBUml1NzN2?=
- =?utf-8?B?UmFLTk56UzZFTlZPY0dNYXdLQTdYUjZxM0pNa1owUlVkRjdHL0VpYU1ubG03?=
- =?utf-8?B?L3h6Z2xLeVllei9wbExxNnBKem5JUEV0NzlHWFNTWjZwR3pBaUx6ZTFaaFQ4?=
- =?utf-8?B?dVdrTmFGcmNpQ2x6SnF1cE5mdE0rajJCaCt1UTZ4ajhzTzR2dmhWbnBWR0NZ?=
- =?utf-8?B?cmpWVnR0d0JFcVN0REtBakFqbXhVcnVLdHlSK3MwMXVDOEg0dGZ0M2dqdCtM?=
- =?utf-8?B?Zk5pZG4xVzZldnpsRnR3Mkc4TlN5RDh1b0lSeC9Qc1k2a3JHcmF3RUFhbGRF?=
- =?utf-8?B?SFo5dENFcHRGK0pnS3p2am1oL1Qya1I4dUtDN1hESkZ3ejlOeGVpTEZ2ZkJs?=
- =?utf-8?B?dUo3eitMeU5VWFlNY2tkYVBhczJGYkNWZmRmSjlrNjI3WXUyQXRsRkRnWlpS?=
- =?utf-8?B?QUoyM3l0QkJGb05EZTR4ZGJ0THFNUHEvL3lSbnlEUGYrVi9HNG9raTBpMjVi?=
- =?utf-8?B?Vktod0V2Q1VMV2w1VUxFYWxlT0ZSOGFpOWhwZkVvaTBDZStwaHRKY21sUEJp?=
- =?utf-8?B?ejlnVi9XU0RaQTlIVmYrU0VPaVg2T0hERERFZ2FPaHF0QzV1d3YxT0dmcjNl?=
- =?utf-8?B?MGFnSzVZWjhqeFIyNjVicmpYWi9wTHUyVUtUcjdxVHpRTVZlTmREYUI0VzN0?=
- =?utf-8?B?RlFTVGRDTUdnUGNpQU9SU2VFSWUyOEVwakRFRlplclBOQmMzTnNhTnNQcmgw?=
- =?utf-8?B?TC9BTnFNVCtvdEYyNVJodzFrSmtHSUNZR2RORE41NS95cDZuMHUrNUQzUVc3?=
- =?utf-8?B?d3lFaitFTGZNTnFqNEFXRjZIUXBMSkdHcHpvcUwrTEFWaGlEcHBjcVpYenlx?=
- =?utf-8?B?TEpuTnFaWkYwUUxLVmZlREJKblNJYUtjcUxhK1RaWEtyaVBZbENnbEtjdzR2?=
- =?utf-8?B?TlRhUlZYYWYzaXJCYUN2NitjVVRvY3ljd0VzYUVaMStRd1Y0c2lMU0pJRVhs?=
- =?utf-8?B?U3RjRWFUMVg3OURTeXFTWWdBN2NlSVlpa0ROM3JsV2hOZzRXSjkyY0tWQnhQ?=
- =?utf-8?B?S1MvUUMvZ0FROWtqRks0MUY2UVRzRVcvRis5S1dlVEpnRzgyLzNFUUVBMXhE?=
- =?utf-8?B?Qzd5QjhPVlFEK1ptb3YvVi83UEkyWHAxRjRLZkduVHdyaHQ2RDNsMjNTS3FO?=
- =?utf-8?B?bGtBZm1ldmRocTN2Z2c4dE1kb3VFMWZFcTVOcU9jaGpBbEhjUDhyU29wd0lH?=
- =?utf-8?B?Rzg5Q21Kcy9CTGwwb0dZQXBCWEN0aUdZTHVFRUNYcUN1MFIrSkJ3Z0pxVTRk?=
- =?utf-8?B?ZzZJV2ZaREd4Nlo1YTcvNjRVd2ZPeTJtZjdLMVViWXlOSEJhV1pnRWx5YjBl?=
- =?utf-8?B?OTQzSHJQS0F0MDg4bm1uOHhDMEErVWtFdXIxb2hHSkRJNk9xN3l5TkdMWWly?=
- =?utf-8?B?bFJSS0R5ZnFXRkNkY2tuSjdjNitHaGc0NkdlU1Z0eHJtbUZtVW5vNWQxRWlP?=
- =?utf-8?B?VXVTeG9JTWpMU1p5QWVwU3hZNEw2Zk13MEF2c1ZzajZZY3RRcHpjRFgxWlZt?=
- =?utf-8?B?Q2tDdmdVdjMvV0RGWkljZUdPdnFDaWIyK0xJWHJUZE5pd0RUK3BGU1RjbExr?=
- =?utf-8?B?V09wV0hCNU1keEw3VENLU0YySHNWV2NBY3NKY253eExxRy9VdmdiZkM2V28z?=
- =?utf-8?B?TVRVRWZZcFJ5SVAzLzdnZkUxVnRHMWRrTEx5c0NLQXJaellxK2tDQ2hOS2U1?=
- =?utf-8?B?UE1pNGJQbTZNVm9xVVlKOHdNNEFGYWtMYTlUNUt0UGMzVHdvNHdyM1Nkc09O?=
- =?utf-8?Q?n5KXTRCP8fuoEl0M96wEJKBHp?=
-X-OriginatorOrg: oppo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 11763d0f-ccab-456e-8b03-08ddd09b1b5f
-X-MS-Exchange-CrossTenant-AuthSource: PS1PPFE5C9D9891.apcprd02.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 01 Aug 2025 01:31:15.7689
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: f1905eb1-c353-41c5-9516-62b4a54b5ee6
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: qul+v1VykKCulKSkrA+uwttARoiv+J8S4fMAupqozfmCf/wkaNjSUYKxVkJhb8VrUW5CuG0gWO+TV6iZ8L2m9Q==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: KL1PR02MB7664
+In-Reply-To: <20250721171557.34587-12-yukuai@kernel.org>
+Content-Type: text/plain; charset=gbk; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgC3MxTJH4xo6bCnCA--.58432S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxJF43uw4UGF1UGFWrurW3KFg_yoW5Zw47pF
+	WIvF9xKayfJr1rXw17Xrn5ZFZ5XrWkKwsIqFn7A345WrnF9rnIkrWrGFWUJw4rZwn8JFs5
+	ta15Krs8KF1DuFDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Ib4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7Mxk0xIA0c2IE
+	e2xFo4CEbIxvr21lc7CjxVAaw2AFwI0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4I
+	kC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWU
+	WwC2zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr
+	0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWU
+	JVWUCwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJb
+	IYCTnIWIevJa73UjIFyTuYvjxUFku4UUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On 8/1/2025 2:30 AM, Eric Biggers wrote:
-> On Thu, Jul 31, 2025 at 06:04:52PM +0200, Mikulas Patocka wrote:
->>
->>
->> On Wed, 30 Jul 2025, LongPing Wei wrote:
->>
->>> Hi, Mikulas
->>>
->>> For example:
->>>
->>> F2FS/EXT4
->>> ----
->>> dm-thin
->>> ----
->>> dm-thin-pool
->>> ----
->>> pool data
->>>
->>> 1. There is a block of testfile in F2FS/EXT4.
->>> 2. The offset of this block is n.
->>> 3. The position in the dm-thin device is m.
->>> 4. The position in the pool data is x.
->>>
->>> The IV is only be affectted by offset in file and the ino of this file.
->>>
->>> Even if we change m by defrag or change x by COW, IV won't changed.
->>>
->>> The upper layer will only read the decrypted blocks with the same key and
->>> continous IV in one bio.
->>>
->>> If the upper layer read the full chunk with mixed blocks for GC purpose, key
->>> and IV won't be passed in. Then the upper layer just get the encrypted blocks.
->>>
->>> LongPing Wei
->>
->> Yes - so if the IV is calculated from inode and offset, it seems safe to
->> support it on dm-thin. So, I accepted the patch (and increased the target
->> version).
->>
->> BTW. what happens if someone uses FALLOC_FL_COLLAPSE_RANGE or
->> FALLOC_FL_INSERT_RANGE on a file with inline encryption? That changes file
->> offsets of existing data, so it should be disallowed when using inline
->> encryption - but I don't see a test for this in the functions
->> ext4_collapse_range and ext4_insert_range.
-> 
-> This seems to be a question about fscrypt, not about inline encryption
-> per se.  FALLOC_FL_COLLAPSE_RANGE and FALLOC_FL_INSERT_RANGE fail with
-> EOPNOTSUPP on encrypted files, as is documented in
-> Documentation/filesystems/fscrypt.rst.  For ext4, the check happens at
-> the beginning of ext4_fallocate().
-> 
-> - Eric
-Hi, Mikulas
+Hi,
 
-For f2fs, the check happens at the beginning of f2fs_allocate() just 
-like ext4.
+ÔÚ 2025/07/22 1:15, Yu Kuai Ð´µÀ:
+> +static int llbitmap_read_sb(struct llbitmap *llbitmap)
+> +{
+> +	struct mddev *mddev = llbitmap->mddev;
+> +	unsigned long daemon_sleep;
+> +	unsigned long chunksize;
+> +	unsigned long events;
+> +	struct page *sb_page;
+> +	bitmap_super_t *sb;
+> +	int ret = -EINVAL;
+> +
+> +	if (!mddev->bitmap_info.offset) {
+> +		pr_err("md/llbitmap: %s: no super block found", mdname(mddev));
+> +		return -EINVAL;
+> +	}
+> +
+> +	sb_page = llbitmap_read_page(llbitmap, 0);
+> +	if (IS_ERR(sb_page)) {
+> +		pr_err("md/llbitmap: %s: read super block failed",
+> +		       mdname(mddev));
 
-LongPing Wei
+There should return -EIO directly here.
+> +		ret = -EIO;
+> +		goto out;
+
+And the out tag can be removed.
+
+Thanks,
+Kuai
+
+> +	}
+> +
+> +	sb = kmap_local_page(sb_page);
+> +	if (sb->magic != cpu_to_le32(BITMAP_MAGIC)) {
+> +		pr_err("md/llbitmap: %s: invalid super block magic number",
+> +		       mdname(mddev));
+> +		goto out_put_page;
+> +	}
+> +
+> +	if (sb->version != cpu_to_le32(BITMAP_MAJOR_LOCKLESS)) {
+> +		pr_err("md/llbitmap: %s: invalid super block version",
+> +		       mdname(mddev));
+> +		goto out_put_page;
+> +	}
+> +
+> +	if (memcmp(sb->uuid, mddev->uuid, 16)) {
+> +		pr_err("md/llbitmap: %s: bitmap superblock UUID mismatch\n",
+> +		       mdname(mddev));
+> +		goto out_put_page;
+> +	}
+> +
+> +	if (mddev->bitmap_info.space == 0) {
+> +		int room = le32_to_cpu(sb->sectors_reserved);
+> +
+> +		if (room)
+> +			mddev->bitmap_info.space = room;
+> +		else
+> +			mddev->bitmap_info.space = mddev->bitmap_info.default_space;
+> +	}
+> +	llbitmap->flags = le32_to_cpu(sb->state);
+> +	if (test_and_clear_bit(BITMAP_FIRST_USE, &llbitmap->flags)) {
+> +		ret = llbitmap_init(llbitmap);
+> +		goto out_put_page;
+> +	}
+> +
+> +	chunksize = le32_to_cpu(sb->chunksize);
+> +	if (!is_power_of_2(chunksize)) {
+> +		pr_err("md/llbitmap: %s: chunksize not a power of 2",
+> +		       mdname(mddev));
+> +		goto out_put_page;
+> +	}
+> +
+> +	if (chunksize < DIV_ROUND_UP(mddev->resync_max_sectors,
+> +				     mddev->bitmap_info.space << SECTOR_SHIFT)) {
+> +		pr_err("md/llbitmap: %s: chunksize too small %lu < %llu / %lu",
+> +		       mdname(mddev), chunksize, mddev->resync_max_sectors,
+> +		       mddev->bitmap_info.space);
+> +		goto out_put_page;
+> +	}
+> +
+> +	daemon_sleep = le32_to_cpu(sb->daemon_sleep);
+> +	if (daemon_sleep < 1 || daemon_sleep > MAX_SCHEDULE_TIMEOUT / HZ) {
+> +		pr_err("md/llbitmap: %s: daemon sleep %lu period out of range",
+> +		       mdname(mddev), daemon_sleep);
+> +		goto out_put_page;
+> +	}
+> +
+> +	events = le64_to_cpu(sb->events);
+> +	if (events < mddev->events) {
+> +		pr_warn("md/llbitmap :%s: bitmap file is out of date (%lu < %llu) -- forcing full recovery",
+> +			mdname(mddev), events, mddev->events);
+> +		set_bit(BITMAP_STALE, &llbitmap->flags);
+> +	}
+> +
+> +	sb->sync_size = cpu_to_le64(mddev->resync_max_sectors);
+> +	mddev->bitmap_info.chunksize = chunksize;
+> +	mddev->bitmap_info.daemon_sleep = daemon_sleep;
+> +
+> +	llbitmap->barrier_idle = DEFAULT_BARRIER_IDLE;
+> +	llbitmap->chunksize = chunksize;
+> +	llbitmap->chunks = DIV_ROUND_UP(mddev->resync_max_sectors, chunksize);
+> +	llbitmap->chunkshift = ffz(~chunksize);
+> +	ret = llbitmap_cache_pages(llbitmap);
+> +
+> +out_put_page:
+> +	__free_page(sb_page);
+> +out:
+> +	kunmap_local(sb);
+> +	return ret;
+> +}
+
