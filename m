@@ -1,126 +1,314 @@
-Received: from out-170.mta0.migadu.com (out-170.mta0.migadu.com [91.218.175.170])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F1FEAD4B
-	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 05:42:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7746D1F4199
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 07:10:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754026924; cv=none; b=WZGfTd2beMN3X2n9iCHnim7or4T7qAkGQpyMtbSONsVppoTyTtzpV3gQU5DX1qsLqhLAH+S3PlRoIO1ZSK+B/N2tINIcb1dnnqgdbVGtWgS+ndjQZAI7unydwmEQT5wxxtl8Mi6OU91A7VpGiNRtN7YZCZUFEzS+omFldnkO1jQ=
+	t=1754032252; cv=none; b=NqmykxRUjnQw6fXecjR78xugK2q32aZydcBIEzVjv+mfojEl4K02h1o/eLHC8tYDd0aO8Axdp9lSnXbsNuWrowGthx4XeObIk8i2rZeaasxpv9EKS7v4bzvgyx+3LK4uRovzze8Bil4jvdPoazO6W5GNVdRQGqKXyhMKFJiH1UI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754026924; c=relaxed/simple;
-	bh=QtNMJzR8+E+gN4yagg145cDiFICgfOEwTqoLilWz+Q0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Z1VAw9nPbX2oHKMYZ7OJ1zpiRvpXfas7fZJPkzc7qfgQeznpm2w2I46j6r3isFFpGjl47CqqQEBCAQaZ1CLMUVrP1mxkKCUygDiUhwB2OwnF5e1w2pp2pBmRCD0HE0d7wedZL8lmknqbCqgF5Vci2f7/DFKKmrR0sLSI4oO73Oc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=O30NkWE/; arc=none smtp.client-ip=91.218.175.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="O30NkWE/"
-Message-ID: <f3f46ed0-7f03-4fc7-a9a7-676cfa6bb0db@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1754026920;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=RjANslNMpJUtHlBZ534AVKc13ShWwk4s3Z8TjHLkN+Q=;
-	b=O30NkWE/xKgr7RlgL3EuxMR/hT0OBKF1y6yqY6pDkJj4ojxKVTnNXlko7t83qk5aDbXg4A
-	OlqZPuBhGyTLHzvCCjZMCADWeP9V8/BzMxyM8DaQY8dak3TOtdMpFalHkMHalKlSRSlUzi
-	jsryEv4qzebwwUSeQRHGXXZoz3eyOGc=
-Date: Fri, 1 Aug 2025 13:41:54 +0800
+	s=arc-20240116; t=1754032252; c=relaxed/simple;
+	bh=7/sDg98iPiQhFw3Kv7etiKvHqwmX1JWt/rPb0IDIMkU=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=BWjLKmN/U+x8bxD2GDPHbWqKrKXGMbM8HmKe/uD8UNWWw2TV2xgY3s3iHZ46UCdlc0uYYhnKQhtfYNl6CEtNjzkaxSla3546eh+fzCWlc5m19LTEXNBJZQmqGQncrTdWfWMGoXIYpZrC5vesNVqcBjyz0kGpWq5SGl86wf+egD8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4btcYM2fVBzKHMlK
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 15:10:47 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 4FC7F1A15A8
+	for <dm-devel@lists.linux.dev>; Fri,  1 Aug 2025 15:10:46 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgDHjxByaIxoqAzACA--.18978S4;
+	Fri, 01 Aug 2025 15:10:44 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: hch@lst.de,
+	corbet@lwn.net,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	linan122@huawei.com,
+	xni@redhat.com,
+	hare@suse.de
+Cc: linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com,
+	johnny.chenyi@huawei.com
+Subject: [PATCH v5 00/11] md/llbitmap: md/md-llbitmap: introduce a new lockless bitmap
+Date: Fri,  1 Aug 2025 15:03:35 +0800
+Message-Id: <20250801070346.4127558-1-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: =?UTF-8?Q?Re=3A_=5BPATCH_v4_00/11=5D_dm-pcache_=E2=80=93_persistent?=
- =?UTF-8?Q?-memory_cache_for_block_devices?=
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev,
- cengku@gmail.com
-References: <20250715133332.1764715-1-dongsheng.yang@linux.dev>
- <af28999e-8002-0320-3aaf-f9eb0768884c@redhat.com>
- <f5cfbcd9-e1ac-4412-8ebf-801fb53fa46f@linux.dev>
- <28811c13-6b6b-593b-83ba-47747517988f@redhat.com>
- <43fa642d-4eeb-4bd8-9d2d-31aaf6bd2486@linux.dev>
- <5792087a-e70f-d03a-9f9e-3d4107fa3b12@redhat.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <5792087a-e70f-d03a-9f9e-3d4107fa3b12@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+X-CM-TRANSID:gCh0CgDHjxByaIxoqAzACA--.18978S4
+X-Coremail-Antispam: 1UD129KBjvJXoWxKryrKr1rKF18ArWkuw45ZFb_yoWfXw1Dp3
+	yavrn3Grs8Jr4IgwsrA342qFyrtw4kJr9rtr1rJ34F9w1qkrn8Za18Way0v34UGry7GF1j
+	qFs0qr97GF1q9FJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
+	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
+	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
+	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
+	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjTRNJ5oDUUUU
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
+From: Yu Kuai <yukuai3@huawei.com>
 
-在 8/1/2025 12:17 AM, Mikulas Patocka 写道:
->
-> On Tue, 29 Jul 2025, Dongsheng Yang wrote:
->
->>>>> Just a suggestion for performance improvement: when you hold a
->>>>> spinlock a you need to allocate some memory, you must drop the
->>>>> spinlock, allocate it with GFP_NOIO, reacquire the spinlock and
->>>>> recheck the state. You can improve this logic by allocating with
->>>>> mempool_alloc(GFP_NOWAIT) while you hold the spinlock (GFP_NOWAIT
->>>>> will not sleep, so it's allowed), and fallback to dropping the
->>>>> spinlock only if the GFP_NOWAIT allocation fails.
->>>> Sounds a good suggestion, I will try it in V5.
->>> Yes. When you implement it, don't forget to test the code path that drops
->>> the spinlock and uses mempool_alloc(GFP_NOIO), so that it doesn't bitrot
->>> over time.
->>
->> Sure, the failslab case can cover this path:
->>
->> https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data/pcache_failslab.sh
->>
->>
->> Dongsheng
-> failslab doesn't test mempool allocation failures - see the function
-> mempool_alloc_noprof:
->
-> it tries to allocate using
-> 	element = pool->alloc(gfp_temp, pool->pool_data);
-> if it fails (the failure may be caused by failslab), it goes down this
-> path
->          spin_lock_irqsave(&pool->lock, flags);
->          if (likely(pool->curr_nr)) {
->                  element = remove_element(pool);
->                  spin_unlock_irqrestore(&pool->lock, flags);
->                  /* paired with rmb in mempool_free(), read comment there */
->                  smp_wmb();
->                  /*
->                   * Update the allocation stack trace as this is more useful
->                   * for debugging.
->                   */
->                  kmemleak_update_trace(element);
->                  return element;
->          }
->
-> so, it will not simulate a situation where the mempool is depleted.
+Changes from v4:
+ - fix dm-raid regerssion in patch 6, skip creating bitmap attributes
+ under mddev gendisk which is NULL;
+ - some minor cleanups and error handling fixes in patch 11;
+ - add review tag:
+  - patch 1-10 from Li Nan
+  - patch 4,5,6,8 from Xiao
+  - patch 6 from Hannes
+Changes from v3:
+ - fix redundant setting mddev->bitmap_id in patch 6;
+ - add explanation of bitmap attributes in Documentation;
+ - add llbitmap/barrier_idle in patch 11;
+ - add some comments in patch 11;
+Changes from v2:
+ - add comments about KOBJECT_CHANGE uevent in patch 6;
+ - convert llbitmap_suspend() to llbitmap_suspend_timeout() in patch 11;
+ - add some comments in patch 11;
+ - add review tag:
+  - patch 3,4,5,9 from Hannes
+Changes from v1:
+ - explain md_bitmap_fn in commit message, patch 3;
+ - handle the case CONFIG_MD_BITMAP is disabled, patch 4;
+ - split patch 7 from v1 into patch 5 + 6;
+ - rewrite bitmap_type_store, patch 5;
+ - fix dm-raid regerssion that md-bitmap sysfs entries should not be
+ created under mddev kobject, patch 6
+ - merge llbitmap patches into one patch, with lots of cleanups;
+ - add review tag:
+  - patch 1,2,7,8,9,10 from Christoph
+  - patch 1,2,7,8,10 from Hannes
+  - patch 1,2,3,7 from Xiao
 
+v4: https://lore.kernel.org/all/20250721171557.34587-1-yukuai@kernel.org/
+v3: https://lore.kernel.org/linux-raid/20250718092336.3346644-1-yukuai1@huaweicloud.com/
+v2: https://lore.kernel.org/all/20250707165202.11073-12-yukuai@kernel.org/
+v1: https://lore.kernel.org/all/20250524061320.370630-1-yukuai1@huaweicloud.com/
+RFC: https://lore.kernel.org/all/20250512011927.2809400-1-yukuai1@huaweicloud.com/
 
-Yes. During my manual testing, I set mempool's min_nr to 0, triggered 
-the `GFP_NOIO` path with `failslab`, and inserted some debug messages to 
-confirm that the execution really went through that path.
+#### Background
 
-I then automated the same procedure in dtg-tests: before failslab test 
-it applies a patch to change `min_nr`, runs the test and checks `dmesg` 
-for the expected debug output, and finally reverts the patch.
+Redundant data is used to enhance data fault tolerance, and the storage
+method for redundant data vary depending on the RAID levels. And it's
+important to maintain the consistency of redundant data.
 
->
-> It may be worthwhile to extend failslab, so that it makes mempool_alloc
-> randomly return NULL for non-sleeping allocations (i.e. allocations
-> without __GFP_DIRECT_RECLAIM) and submit the patch to failslab
-> maintainers.
+Bitmap is used to record which data blocks have been synchronized and which
+ones need to be resynchronized or recovered. Each bit in the bitmap
+represents a segment of data in the array. When a bit is set, it indicates
+that the multiple redundant copies of that data segment may not be
+consistent. Data synchronization can be performed based on the bitmap after
+power failure or readding a disk. If there is no bitmap, a full disk
+synchronization is required.
 
-Indeed, if `mempool` were to support the `fault_inject` feature, the 
-whole process would be much simpler.
+#### Key Features
 
-If I come up with a good way to add that support, I’ll send out a patch.
+ - IO fastpath is lockless, if user issues lots of write IO to the same
+ bitmap bit in a short time, only the first write have additional overhead
+ to update bitmap bit, no additional overhead for the following writes;
+ - support only resync or recover written data, means in the case creating
+ new array or replacing with a new disk, there is no need to do a full disk
+ resync/recovery;
 
+#### Key Concept
 
-Thanx
+##### State Machine
 
->
-> Mikulas
->
+Each bit is one byte, contain 6 difference state, see llbitmap_state. And
+there are total 8 differenct actions, see llbitmap_action, can change state:
+
+llbitmap state machine: transitions between states
+
+|           | Startwrite | Startsync | Endsync | Abortsync|
+| --------- | ---------- | --------- | ------- | -------  |
+| Unwritten | Dirty      | x         | x       | x        |
+| Clean     | Dirty      | x         | x       | x        |
+| Dirty     | x          | x         | x       | x        |
+| NeedSync  | x          | Syncing   | x       | x        |
+| Syncing   | x          | Syncing   | Dirty   | NeedSync |
+
+|           | Reload   | Daemon | Discard   | Stale     |
+| --------- | -------- | ------ | --------- | --------- |
+| Unwritten | x        | x      | x         | x         |
+| Clean     | x        | x      | Unwritten | NeedSync  |
+| Dirty     | NeedSync | Clean  | Unwritten | NeedSync  |
+| NeedSync  | x        | x      | Unwritten | x         |
+| Syncing   | NeedSync | x      | Unwritten | NeedSync  |
+
+Typical scenarios:
+
+1) Create new array
+All bits will be set to Unwritten by default, if --assume-clean is set,
+all bits will be set to Clean instead.
+
+2) write data, raid1/raid10 have full copy of data, while raid456 doesn't and
+rely on xor data
+
+2.1) write new data to raid1/raid10:
+Unwritten --StartWrite--> Dirty
+
+2.2) write new data to raid456:
+Unwritten --StartWrite--> NeedSync
+
+Because the initial recover for raid456 is skipped, the xor data is not build
+yet, the bit must set to NeedSync first and after lazy initial recover is
+finished, the bit will finially set to Dirty(see 5.1 and 5.4);
+
+2.3) cover write
+Clean --StartWrite--> Dirty
+
+3) daemon, if the array is not degraded:
+Dirty --Daemon--> Clean
+
+For degraded array, the Dirty bit will never be cleared, prevent full disk
+recovery while readding a removed disk.
+
+4) discard
+{Clean, Dirty, NeedSync, Syncing} --Discard--> Unwritten
+
+5) resync and recover
+
+5.1) common process
+NeedSync --Startsync--> Syncing --Endsync--> Dirty --Daemon--> Clean
+
+5.2) resync after power failure
+Dirty --Reload--> NeedSync
+
+5.3) recover while replacing with a new disk
+By default, the old bitmap framework will recover all data, and llbitmap
+implement this by a new helper, see llbitmap_skip_sync_blocks:
+
+skip recover for bits other than dirty or clean;
+
+5.4) lazy initial recover for raid5:
+By default, the old bitmap framework will only allow new recover when there
+are spares(new disk), a new recovery flag MD_RECOVERY_LAZY_RECOVER is add
+to perform raid456 lazy recover for set bits(from 2.2).
+
+##### Bitmap IO
+
+##### Chunksize
+
+The default bitmap size is 128k, incluing 1k bitmap super block, and
+the default size of segment of data in the array each bit(chunksize) is 64k,
+and chunksize will adjust to twice the old size each time if the total number
+bits is not less than 127k.(see llbitmap_init)
+
+##### READ
+
+While creating bitmap, all pages will be allocated and read for llbitmap,
+there won't be read afterwards
+
+##### WRITE
+
+WRITE IO is divided into logical_block_size of the array, the dirty state
+of each block is tracked independently, for example:
+
+each page is 4k, contain 8 blocks; each block is 512 bytes contain 512 bit;
+
+| page0 | page1 | ... | page 31 |
+|       |
+|        \-----------------------\
+|                                |
+| block0 | block1 | ... | block 8|
+|        |
+|         \-----------------\
+|                            |
+| bit0 | bit1 | ... | bit511 |
+
+>From IO path, if one bit is changed to Dirty or NeedSync, the corresponding
+subpage will be marked dirty, such block must write first before the IO is
+issued. This behaviour will affect IO performance, to reduce the impact, if
+multiple bits are changed in the same block in a short time, all bits in this
+block will be changed to Dirty/NeedSync, so that there won't be any overhead
+until daemon clears dirty bits.
+
+##### Dirty Bits syncronization
+
+IO fast path will set bits to dirty, and those dirty bits will be cleared
+by daemon after IO is done. llbitmap_page_ctl is used to synchronize between
+IO path and daemon;
+
+IO path:
+ 1) try to grab a reference, if succeed, set expire time after 5s and return;
+ 2) if failed to grab a reference, wait for daemon to finish clearing dirty
+ bits;
+
+Daemon(Daemon will be waken up every daemon_sleep seconds):
+For each page:
+ 1) check if page expired, if not skip this page; for expired page:
+ 2) suspend the page and wait for inflight write IO to be done;
+ 3) change dirty page to clean;
+ 4) resume the page;
+
+Performance Test:
+Simple fio randwrite test to build array with 20GB ramdisk in my VM:
+
+|                      | none      | bitmap    | llbitmap  |
+| -------------------- | --------- | --------- | --------- |
+| raid1                | 13.7MiB/s | 9696KiB/s | 19.5MiB/s |
+| raid1(assume clean)  | 19.5MiB/s | 11.9MiB/s | 19.5MiB/s |
+| raid10               | 21.9MiB/s | 11.6MiB/s | 27.8MiB/s |
+| raid10(assume clean) | 27.8MiB/s | 15.4MiB/s | 27.8MiB/s |
+| raid5                | 14.0MiB/s | 11.6MiB/s | 12.9MiB/s |
+| raid5(assume clean)  | 17.8MiB/s | 13.4MiB/s | 13.9MiB/s |
+
+For raid1/raid10 llbitmap can be better than none bitmap with background
+initial resync, and it's the same as none bitmap without it.
+
+Noted that llbitmap performance improvement for raid5 is not obvious,
+this is due to raid5 has many other performance bottleneck, perf
+results still shows that bitmap overhead will be much less.
+
+Yu Kuai (11):
+  md: add a new parameter 'offset' to md_super_write()
+  md: factor out a helper raid_is_456()
+  md/md-bitmap: support discard for bitmap ops
+  md: add a new mddev field 'bitmap_id'
+  md/md-bitmap: add a new sysfs api bitmap_type
+  md/md-bitmap: delay registration of bitmap_ops until creating bitmap
+  md/md-bitmap: add a new method skip_sync_blocks() in bitmap_operations
+  md/md-bitmap: add a new method blocks_synced() in bitmap_operations
+  md: add a new recovery_flag MD_RECOVERY_LAZY_RECOVER
+  md/md-bitmap: make method bitmap_ops->daemon_work optional
+  md/md-llbitmap: introduce new lockless bitmap
+
+ Documentation/admin-guide/md.rst |   86 +-
+ drivers/md/Kconfig               |   11 +
+ drivers/md/Makefile              |    1 +
+ drivers/md/md-bitmap.c           |   15 +-
+ drivers/md/md-bitmap.h           |   45 +-
+ drivers/md/md-llbitmap.c         | 1596 ++++++++++++++++++++++++++++++
+ drivers/md/md.c                  |  299 ++++--
+ drivers/md/md.h                  |   20 +-
+ drivers/md/raid5.c               |    6 +
+ 9 files changed, 1964 insertions(+), 115 deletions(-)
+ create mode 100644 drivers/md/md-llbitmap.c
+
+-- 
+2.39.2
+
