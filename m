@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFAA51F55FA;
-	Sun,  3 Aug 2025 21:18:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09F181EDA3A;
+	Sun,  3 Aug 2025 21:19:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754255889; cv=none; b=soxjmpDpKnwwDTjiOT+gdaG7QPPYM4xGacHqFChFAziV4cwo7hjn5vjyuoutiAgf5dvtz8qslc3BhpLy+OfYNtE36URU+F5uvWkjgC77SuFN+K9rWn8/sruDJ3hjPV9VTSeWhMlTOfV2FuaCUh82SVh+CgiT7AfcZTdbWgrNb08=
+	t=1754255947; cv=none; b=GxzUj4zGb7YbN01NeuEPlg0oLqaDHhZWi8kn2UJtccEsupx7y0l902RXewgikSJ4SWH+9RPIiNCsjpusXUsDcKPNl3z7JMsEHSngso+VeEGitaEQj7KCpg9w+cFhNJNZ4o25INTjntRk5TU3Z073Uz1HMzn59vAeIIsCIuv1x8s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754255889; c=relaxed/simple;
-	bh=Qbbq3+g1EZe6nVZezWXBk+vWyWaAXozTFL4B2ag0EYw=;
+	s=arc-20240116; t=1754255947; c=relaxed/simple;
+	bh=Fkf4wf3fk8d6tqq9k8H3QsuDGvB23tNyp9U7+U50A6w=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ZrAeS/sWyxT3MQjTDrVqcaVxetY946B4n7iMbpTQ19CFYlq0G2eRVni1UjXZbJ6wPwJdPoAGdViUw7JBtSc0IK3JNnkeCbvnhocUYgMhjZ9++q7IpkdoFWXY0B46cUi6mcEK9DLPyw77SU/8WEe2ZZeXnUxa+J4NyfSVikon+H8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=evXShSK0; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=pmcUaSsug7WKmJncmlfo10HNaM2D7/CM/2c/np8Ls+ulPiidUyPDUixqSLyOxHYzZYIiwWKDyPMmgyURECCTnYe80XjSY6a4uGpUEAK4Ll2onBADRMqSF2UyYEwvN9ptz2OuNhQJqDjT6Wv06oygF2hlVycjECO+SJBZx1brFIQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sNkLQj6V; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="evXShSK0"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8144DC4CEF0;
-	Sun,  3 Aug 2025 21:18:07 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sNkLQj6V"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B8A2CC4CEEB;
+	Sun,  3 Aug 2025 21:19:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1754255889;
-	bh=Qbbq3+g1EZe6nVZezWXBk+vWyWaAXozTFL4B2ag0EYw=;
+	s=k20201202; t=1754255946;
+	bh=Fkf4wf3fk8d6tqq9k8H3QsuDGvB23tNyp9U7+U50A6w=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=evXShSK0nkQJ5eWE2IU+/+F3RE1EXix1n3wo0ZwOIDRYKmpPvZe6E8F8AzNslbF5p
-	 7lwWsGb0kZ4oVbDKxiDDkeMRwp/NAwp4NQ2lqgNAT68DlB6H25cakLukOv56WFig8P
-	 zDEu5YKcsHmOiLro3U1/6RDTQjxpSGmqRFNVnMpqmTffi0aTAN6G7lZJfIoq2vdGm3
-	 1FYYiCGTw1IUA2UGfwtfJDHBZ7OSuns5BIOLFF997RV11dW6Cdhmt6+eZs5ouR7V3r
-	 H7Q4XjvdpIBIfGQJBGDLSdMwxRfUdLXBnYgwPn+NxGiUpRlUKiFDekGl3TDqOWjN6Y
-	 9GZ4SG6zeEHiw==
+	b=sNkLQj6VwT9vq2zb3omSo2g3rcxqRjDYRE9AOnvLq3QhQAWqrLso01BccLeNAuGjt
+	 mjzvk802b24CCmyAFA6h+xjU5BJcKx9IFvSambzineNOCnLPnZtCYhkNPx41PRUeDT
+	 zCtfBmvogif1bYxtrIYdv3mbwsuXL1PFg4rvhnRwzLy6LuBsOudC/vi+MMDYZ8GAWm
+	 XZmcff3XUF5+YOK7gzNqIiP1M9BUgIAOheNhxDNJrG58q2Zj5fn906xbm7YA/6U+Gi
+	 mD0G7igAHt4SBC/hQ5bHfycRPd1gHvR5rTWv7S2kWTy4j2HrUhbKCOMKWaN+MfJ3KE
+	 9HP/NaoX8hH0Q==
 From: Sasha Levin <sashal@kernel.org>
 To: patches@lists.linux.dev,
 	stable@vger.kernel.org
@@ -38,12 +38,12 @@ Cc: John Garry <john.g.garry@oracle.com>,
 	agk@redhat.com,
 	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.16 13/35] dm-stripe: limit chunk_sectors to the stripe size
-Date: Sun,  3 Aug 2025 17:17:13 -0400
-Message-Id: <20250803211736.3545028-13-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.15 12/34] dm-stripe: limit chunk_sectors to the stripe size
+Date: Sun,  3 Aug 2025 17:18:14 -0400
+Message-Id: <20250803211836.3546094-12-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
-In-Reply-To: <20250803211736.3545028-1-sashal@kernel.org>
-References: <20250803211736.3545028-1-sashal@kernel.org>
+In-Reply-To: <20250803211836.3546094-1-sashal@kernel.org>
+References: <20250803211836.3546094-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -52,7 +52,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
-X-stable-base: Linux 6.16
+X-stable-base: Linux 6.15.9
 Content-Transfer-Encoding: 8bit
 
 From: John Garry <john.g.garry@oracle.com>
@@ -128,10 +128,10 @@ minimal risk of introducing regressions.
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index a7dc04bd55e5..5bbbdf8fc1bd 100644
+index a1b7535c508a..8f61030d3b2d 100644
 --- a/drivers/md/dm-stripe.c
 +++ b/drivers/md/dm-stripe.c
-@@ -458,6 +458,7 @@ static void stripe_io_hints(struct dm_target *ti,
+@@ -459,6 +459,7 @@ static void stripe_io_hints(struct dm_target *ti,
  	struct stripe_c *sc = ti->private;
  	unsigned int chunk_size = sc->chunk_size << SECTOR_SHIFT;
  
