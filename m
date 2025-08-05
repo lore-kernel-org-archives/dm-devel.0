@@ -1,71 +1,45 @@
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from forward200b.mail.yandex.net (forward200b.mail.yandex.net [178.154.239.157])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4881A2E36FE
-	for <dm-devel@lists.linux.dev>; Tue,  5 Aug 2025 10:35:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A7762566
+	for <dm-devel@lists.linux.dev>; Tue,  5 Aug 2025 10:44:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.154.239.157
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754390161; cv=none; b=RojmBh09gkXzBT84QRCZtksvrIMR53NNTkh/p4ChTbbbzZtTCYIYptZXf+3UEwnA/QsQS/141TmYg/R/udl+pna0O9Gy7vD5QZJhME2nH0csMKWE2FA7nX0AE6rZf/Bu2RNKAqSmQDDwPKTP08v+FaUnIxgAaBYqrxnBqTR9Y10=
+	t=1754390662; cv=none; b=fVquu2gqizwvaGZnIyx6p+76tJa7qjmBKpF/F2mYUTq6V7rIPrD+v5BH5aw0eRx08UH5ECt3TVeCqA9z9LI6FISaMoQjyd058fnO6d12SB0/pugSf32cr71rVHEhIPNc86GP3paCO4/pZPdLY7d+HjoYmVL0W4Fqy0//kRCsY1A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754390161; c=relaxed/simple;
-	bh=BWu84x0cWP79aNFOb8kqbVQPodLfd6OzEw0sPUI9np4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=i6l5SeaJNuyPW03duoxJZ0tTq8x2jVJUCUIXFcUAhvP2foamC0Uf3/vcjtVPzbXTGY/0Gm5DWgKs/EPfuKcRti493idozio2phf5qVfI/s62sGNiGogsk4+wViF9yyuQTloBcvKMrurR/lpxOoccnYn4B4HyVxFefcYvbo8tHtE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=afG5UcDX; arc=none smtp.client-ip=209.85.128.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1754390662; c=relaxed/simple;
+	bh=AAdDhzzjpuAWruuzzgwQPcwId7SA9SGU/Lf6UjIGHRk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Kq085XoiieBmdv5zEbMIDkRJvBqZsJlk4/uSOyGRffN94hP+hKOIoHGRXsxuBx+Zhj1ugPXHNTOfSX6zOsjgAiDebdEzGeTTbD+6gvDdDqeJGmOW+3izUfkLcjpgJYrYRJEc4vOyz159nslYRz0rUqK/nX70p0BBEca2LIuf8F8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru; spf=pass smtp.mailfrom=yandex.ru; dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b=WIDQRTR4; arc=none smtp.client-ip=178.154.239.157
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yandex.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="afG5UcDX"
-Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-459d55ba939so833345e9.3
-        for <dm-devel@lists.linux.dev>; Tue, 05 Aug 2025 03:35:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1754390157; x=1754994957; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZxiiPKDVyJwytpTjofFAz5PbAuNOLZ+nABWUYDRrVZ0=;
-        b=afG5UcDX3BBwGlaYkS6LXQKXrQNsxlLUNEc9d24vFNhJuc+u7K+V/ey8IC5itcdNuC
-         ZFc8NDonmcQmdt690540eSsU0919UrQwQAB86QcD4NR5QMA6jDjprwWMYCCXPr6tlI/b
-         EHgpUVdDtNAAAU/AFluX/WJ6a48Wupto/5uUe5tuTR6/2w39THXAxQD3k8cEdiU3iugA
-         FMpMVXC3BT8Sd7K5hWvQUYDNJukv7AHJal/GyyeXcykTGZCbdQOtAyVO4QZNCB59QXKc
-         T0kLc/ziBodILLymtLXyoApqcyBKz8GoqxltEyUawPhtF3AyKM6mSAlWBMMOYhozumvy
-         gXmA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1754390157; x=1754994957;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=ZxiiPKDVyJwytpTjofFAz5PbAuNOLZ+nABWUYDRrVZ0=;
-        b=iM6jbt+ZmkuF7c5iDVi4lLB57l1TfhJCV6DGfAW6fWgoSuuE4iRWxYIYPHA+zoFxb/
-         hPiEUTFYNLO+U3rqUB5SvPVz4jawDH9MJuP+F90uB70amjoys17QizLt8cnXaub7Olpj
-         fkxqSDAlA00vsKWg7XUmNGOvr5aqyOTA+O7rLT+F4bX+wygwAUj3J+/cLN5thiPOsPvh
-         2L7TOX58JqIWL5y2XpHYzQZMEqf8LwX50aepTcGXNhveHgCvmtZsyJNOynTIN9p9Lk4p
-         cvCOIRP281OKKPtk1JTRZA8jao9SS0e6f6BK/nuZLXFkDX00Ah5vBnrjj+eioYtizts2
-         pGiw==
-X-Forwarded-Encrypted: i=1; AJvYcCU+yG6y8UctoxRBITRH+dNF1H+A7zdv6sTkFDNl8WjXri++b7pzzqVHGsj+7Do3su17xJY6ltSWDA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy6nIRtZ8k5Xc42R5bp5tT9MgpLV0wG+BvaxqMPjSmdI2+w7eOc
-	GrkAqvAe+EPPkJLlrmjF2FKMl4e5MT69v8HMeeUW6KLva9/30jl4wzU=
-X-Gm-Gg: ASbGncsjAwqRmrG3at5PYPdcFdaDdVqw1CeRSGG6lM1jQfnPwFa7JNoiksAH+J4Wqzr
-	S12/8Aj5JEUJJg3ITtl7Wx/slMN1G7PMythpbzW71via19UFoKmNrX0Ld0J4JG403QxQfqi2A1G
-	77rfv4BXKCmHqMmBUlHFe5fZ+bjm/8Mspy6peWfp/EyOofaz6DPmbr07WKBabFq5bxnt5CtS4Fg
-	vkZvGexQHHJokKsTyCekWtMLBXCGjdmnvtbfEYbBQFx/v2hOQ+Qq4Dmm0SjnulEM+l4Dpy1CX/n
-	N3h7ST1yI3bVvsUEe0ef1TuCYrocnZtOdfjpD2sK9vB4oVYmpfU90XqAPW280KyGw49tTpQgHI+
-	EmMJ/l4lruvByRsVzVA3aguwgj4FqCCoLnDPeCrm4AOU0fMaljZiNorYDTSU=
-X-Google-Smtp-Source: AGHT+IH5qXfKPlteimSpz+Uds6aMoxjTeYHNQQ8UvYhdQidX3ZNGrUbydm2iEPISeL/qUThz+JNJqQ==
-X-Received: by 2002:a05:600c:8716:b0:458:bc3f:6a93 with SMTP id 5b1f17b1804b1-458bc3f6cbbmr45178115e9.2.1754390157323;
-        Tue, 05 Aug 2025 03:35:57 -0700 (PDT)
-Received: from localhost (67.red-80-39-24.staticip.rima-tde.net. [80.39.24.67])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4589edf5638sm201770605e9.4.2025.08.05.03.35.56
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 05 Aug 2025 03:35:56 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: add Seagate Lyve to hwtable
-Date: Tue,  5 Aug 2025 12:35:55 +0200
-Message-ID: <20250805103555.197783-1-xose.vazquez@gmail.com>
+	dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b="WIDQRTR4"
+Received: from forward101b.mail.yandex.net (forward101b.mail.yandex.net [IPv6:2a02:6b8:c02:900:1:45:d181:d101])
+	by forward200b.mail.yandex.net (Yandex) with ESMTPS id BCB4580E36
+	for <dm-devel@lists.linux.dev>; Tue, 05 Aug 2025 13:36:09 +0300 (MSK)
+Received: from mail-nwsmtp-smtp-production-main-87.sas.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-87.sas.yp-c.yandex.net [IPv6:2a02:6b8:c23:2f3c:0:640:7ca0:0])
+	by forward101b.mail.yandex.net (Yandex) with ESMTPS id 8C71DC0107;
+	Tue, 05 Aug 2025 13:36:01 +0300 (MSK)
+Received: by mail-nwsmtp-smtp-production-main-87.sas.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id 0adw0e9M58c0-B3PldoND;
+	Tue, 05 Aug 2025 13:36:01 +0300
+X-Yandex-Fwd: 1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail;
+	t=1754390161; bh=Arv0eeqJJyWd5SVB68jbPF1oe6YKqGhuaMTw7VHusNA=;
+	h=Message-ID:Date:Cc:Subject:To:From;
+	b=WIDQRTR4YUkV3tu0u8ezvMh2Kxky1OhKjloKRGtdIz6Fz8G9PjIHPbrSFneJttbES
+	 B7F+JaIYxWPKGwuvoxGvg4ig8huMM9KDv+fdsPkZTXxHfLJ4G4IsyDKEPL4054nzVy
+	 Ad3OrmZeE4FQBZFfb9MFlVmP26rDl/2KprKh7N9I=
+Authentication-Results: mail-nwsmtp-smtp-production-main-87.sas.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
+From: Dmitry Antipov <dmantipov@yandex.ru>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Dmitry Antipov <dmantipov@yandex.ru>
+Subject: [PATCH] dm: ima: more strlen() drops
+Date: Tue,  5 Aug 2025 13:35:41 +0300
+Message-ID: <20250805103541.490377-1-dmantipov@yandex.ru>
 X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -73,41 +47,158 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Config on page #30:
-https://www.seagate.com/content/dam/seagate/pdfs/content/seagate/us/en/manuals/software/lyve-mobile-array-cli/lyve-mobile-array-cli-en_US.pdf
+Following commit ebbd17695e9e ("dm: ima: avoid extra calls to
+strlen()"), convert 'dm_ima_alloc_and_copy_capacity_str()' to
+return the number of characters emitted by 'scnprintf()' and
+simplify the users accordingly. Compile tested only.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Dmitry Antipov <dmantipov@yandex.ru>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ drivers/md/dm-ima.c | 40 ++++++++++++++++------------------------
+ 1 file changed, 16 insertions(+), 24 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 48ec449e..3f2d3895 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1300,6 +1300,15 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		// Lyve Rackmount Receiver
-+		.vendor        = "SEAGATE",
-+		.product       = "STJX",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * AccelStor
- 	 */
+diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
+index 8b50c908c6f4..f5c0ecc7cb0b 100644
+--- a/drivers/md/dm-ima.c
++++ b/drivers/md/dm-ima.c
+@@ -157,10 +157,8 @@ static int dm_ima_alloc_and_copy_capacity_str(struct mapped_device *md, char **c
+ 	if (!(*capacity_str))
+ 		return -ENOMEM;
+ 
+-	scnprintf(*capacity_str, DM_IMA_DEVICE_BUF_LEN, "current_device_capacity=%llu;",
+-		  capacity);
+-
+-	return 0;
++	return scnprintf(*capacity_str, DM_IMA_DEVICE_BUF_LEN, "current_device_capacity=%llu;",
++			 capacity);
+ }
+ 
+ /*
+@@ -371,18 +369,18 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap)
+ {
+ 	char *device_table_data, *dev_name = NULL, *dev_uuid = NULL, *capacity_str = NULL;
+ 	char active[] = "active_table_hash=";
+-	unsigned int active_len = strlen(active), capacity_len = 0;
++	unsigned int active_len = strlen(active);
+ 	unsigned int l = 0;
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int r;
++	int capacity_len;
+ 
+ 	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN, GFP_KERNEL, noio);
+ 	if (!device_table_data)
+ 		return;
+ 
+-	r = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (r)
++	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
++	if (capacity_len < 0)
+ 		goto error;
+ 
+ 	memcpy(device_table_data + l, DM_IMA_VERSION_STR, md->ima.dm_version_str_len);
+@@ -445,8 +443,7 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap)
+ 	}
+ 
+ 	if (nodata) {
+-		r = dm_ima_alloc_and_copy_name_uuid(md, &dev_name, &dev_uuid, noio);
+-		if (r)
++		if (dm_ima_alloc_and_copy_name_uuid(md, &dev_name, &dev_uuid, noio))
+ 			goto error;
+ 
+ 		l = scnprintf(device_table_data, DM_IMA_DEVICE_BUF_LEN,
+@@ -454,7 +451,6 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap)
+ 			      DM_IMA_VERSION_STR, dev_name, dev_uuid);
+ 	}
+ 
+-	capacity_len = strlen(capacity_str);
+ 	memcpy(device_table_data + l, capacity_str, capacity_len);
+ 	l += capacity_len;
+ 
+@@ -483,18 +479,17 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all)
+ 	unsigned int device_active_len = strlen(device_active_str);
+ 	unsigned int device_inactive_len = strlen(device_inactive_str);
+ 	unsigned int remove_all_len = strlen(remove_all_str);
+-	unsigned int capacity_len = 0;
+ 	unsigned int l = 0;
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int r;
++	int capacity_len;
+ 
+ 	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN*2, GFP_KERNEL, noio);
+ 	if (!device_table_data)
+ 		goto exit;
+ 
+-	r = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (r) {
++	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
++	if (capacity_len < 0) {
+ 		kfree(device_table_data);
+ 		goto exit;
+ 	}
+@@ -570,7 +565,6 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all)
+ 	memcpy(device_table_data + l, remove_all ? "y;" : "n;", 2);
+ 	l += 2;
+ 
+-	capacity_len = strlen(capacity_str);
+ 	memcpy(device_table_data + l, capacity_str, capacity_len);
+ 	l += capacity_len;
+ 
+@@ -602,20 +596,20 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all)
+  */
+ void dm_ima_measure_on_table_clear(struct mapped_device *md, bool new_map)
+ {
+-	unsigned int l = 0, capacity_len = 0;
++	unsigned int l = 0;
+ 	char *device_table_data = NULL, *dev_name = NULL, *dev_uuid = NULL, *capacity_str = NULL;
+ 	char inactive_str[] = "inactive_table_hash=";
+ 	unsigned int inactive_len = strlen(inactive_str);
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int r;
++	int capacity_len;
+ 
+ 	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN, GFP_KERNEL, noio);
+ 	if (!device_table_data)
+ 		return;
+ 
+-	r = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (r)
++	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
++	if (capacity_len < 0)
+ 		goto error1;
+ 
+ 	memcpy(device_table_data + l, DM_IMA_VERSION_STR, md->ima.dm_version_str_len);
+@@ -650,7 +644,6 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md, bool new_map)
+ 			      DM_IMA_VERSION_STR, dev_name, dev_uuid);
+ 	}
+ 
+-	capacity_len = strlen(capacity_str);
+ 	memcpy(device_table_data + l, capacity_str, capacity_len);
+ 	l += capacity_len;
+ 
+@@ -703,7 +696,7 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md)
+ 	char *old_device_data = NULL, *new_device_data = NULL, *combined_device_data = NULL;
+ 	char *new_dev_name = NULL, *new_dev_uuid = NULL, *capacity_str = NULL;
+ 	bool noio = true;
+-	int r, len;
++	int len;
+ 
+ 	if (dm_ima_alloc_and_copy_device_data(md, &new_device_data,
+ 					      md->ima.active_table.num_targets, noio))
+@@ -716,8 +709,7 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md)
+ 	if (!combined_device_data)
+ 		goto error;
+ 
+-	r = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (r)
++	if (dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio) < 0)
+ 		goto error;
+ 
+ 	old_device_data = md->ima.active_table.device_metadata;
 -- 
 2.50.1
 
