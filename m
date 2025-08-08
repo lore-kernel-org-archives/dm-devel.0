@@ -1,43 +1,42 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D017145329;
-	Fri,  8 Aug 2025 15:31:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7447A145329;
+	Fri,  8 Aug 2025 15:31:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754667060; cv=none; b=mlClohpUVylKRh2toPu6GUDh+J8sHaopRoNQNtNa3JfBKppAMZmy8oACTMhFCtkU7LBOE+03QM5k+6Gr77cMMmyD+fqIh5UPB+wZMmMtukZa5dSL7XySBVmdGZxlqiaa/eN1besuBP/ADgCX8RK0E57OhOsaHm2H/HU3Lf7L1hw=
+	t=1754667064; cv=none; b=Iib6JFZHgDjf8gFVtOk7fj/KT+RwXXry9M3SN0l6hRwBIB7EBV0i2JtRhmiHDbT+l9AF2X9zfVDNZjI3ePSre2oTi0AsBYiiuR2kG613go3ejK1qBwLDIgIgtLeSpHAThRMCsulMVkqJc5N/s5ijomxgSypNd3byAYtG61NeKm0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754667060; c=relaxed/simple;
-	bh=DxzlDCi4qQcmnDW8qwHvFCDPnAYgxTVD/uGeUdZo+SE=;
+	s=arc-20240116; t=1754667064; c=relaxed/simple;
+	bh=ST4oh74nXSw2f0tanvoma6I/+x9/jUIiZOYhL7iEFTM=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=lHENROwO1uiq3dBpFzK9FDesI0n4lrkBtzl09dr3ehYn5ixyb8l70B7dpSHs7dBJSSicuMxnutAKno1vHLqP6oLQomlbH3e+kUHRxfOC6d76ChiN/6jtCyGfrb0I2wxUr5bh1/hoYTdKcM8ex2IaH0P2dZcQuOIHB36//nc/m9I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eJTvQP94; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=cXqiDBsCDAdb7nuO3jdYVnbeYJP8aqd8Zr6R83gmg0NcODWw771hPnpPOH513I3Pk/2SsU5H/yqsMgLqxSqWeTgbaPx2NJyPaq6f74O7Wf3SuBlU7naqBc/h0CiBL6U6yvVxGlzYF7++68c/BGsXwayHvp0Rl1KLzU+QTqubpik=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Jc2ubues; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eJTvQP94"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 961CAC4CEF4;
-	Fri,  8 Aug 2025 15:30:58 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Jc2ubues"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DEC35C4CEED;
+	Fri,  8 Aug 2025 15:31:02 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1754667060;
-	bh=DxzlDCi4qQcmnDW8qwHvFCDPnAYgxTVD/uGeUdZo+SE=;
+	s=k20201202; t=1754667064;
+	bh=ST4oh74nXSw2f0tanvoma6I/+x9/jUIiZOYhL7iEFTM=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=eJTvQP94vnwo62/RByVdF0cMERMtj0KxfUBhVY6HG7gf4fmqk7O7Bnn/726sjb+KY
-	 7CiIuF/0s9DSqZCPF9hC07UjHIgGUE0bZsPnm/g+TbbofDO3j7xBnqdj1kNSoNpW+g
-	 Fss12Sou2zXBH36a5zDNSO6AMT++Cn83ppuSN8fXpOliZGytRNd5DMhs+k9taIJA/u
-	 KW8RP8UYiHBoVbXWedpHqLTr9iP3uTsNJkXCGiQsq8Ngmdvfio4mdm8PJdzupXryIU
-	 9mRGWu/j5IFPkwZr70FJwJ4PTdRXSsadBSFHf1jRuuJv3uotNea9tNodYmv6nf7ujN
-	 ID2Ya7HjiJ0/Q==
+	b=Jc2ubuesfByhEv5TceChFPJpOeMvEh5a/vvP1Hks4g/4i7FkXXcI+x/szCf0/D21R
+	 z5M1pB5uofUj1vo4ELMwPYt3rEf9nnOtEOSEUnaBedtDx6DnApp3D3faSN5Ih2iYVv
+	 apClDgmAlBgNo2Pva8Aoz5zOrrvhDKoeOCvp7RyueP78DpM0oqsLGvzq+tRXGKk33H
+	 n2ZBaT+I66mobVpxWh2yO69hjyNtkKvEUPYD2g78efgYVCvAsQt29+jD9BhKGBTYSE
+	 UgLeb41gVIDq1Rsk1kw2pBIWrZLK8UoHBG1kIYiNrPJYlLzNyXX3nn3N6v3pGb0Yei
+	 p4ZSKAWaN3+Uw==
 From: Sasha Levin <sashal@kernel.org>
 To: patches@lists.linux.dev,
 	stable@vger.kernel.org
-Cc: Purva Yeshi <purvayeshi550@gmail.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
 	agk@redhat.com,
 	snitzer@kernel.org,
 	dm-devel@lists.linux.dev
-Subject: [PATCH AUTOSEL 6.16-5.10] md: dm-zoned-target: Initialize return variable r to avoid uninitialized use
-Date: Fri,  8 Aug 2025 11:30:42 -0400
-Message-Id: <20250808153054.1250675-2-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 6.16-5.10] dm-mpath: don't print the "loaded" message if registering fails
+Date: Fri,  8 Aug 2025 11:30:44 -0400
+Message-Id: <20250808153054.1250675-4-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
 In-Reply-To: <20250808153054.1250675-1-sashal@kernel.org>
 References: <20250808153054.1250675-1-sashal@kernel.org>
@@ -52,23 +51,12 @@ X-Patchwork-Hint: Ignore
 X-stable-base: Linux 6.16
 Content-Transfer-Encoding: 8bit
 
-From: Purva Yeshi <purvayeshi550@gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-[ Upstream commit 487767bff572d46f7c37ad846c4078f6d6c9cc55 ]
+[ Upstream commit 6e11952a6abc4641dc8ae63f01b318b31b44e8db ]
 
-Fix Smatch-detected error:
-drivers/md/dm-zoned-target.c:1073 dmz_iterate_devices()
-error: uninitialized symbol 'r'.
+If dm_register_path_selector, don't print the "version X loaded" message.
 
-Smatch detects a possible use of the uninitialized variable 'r' in
-dmz_iterate_devices() because if dmz->nr_ddevs is zero, the loop is
-skipped and 'r' is returned without being set, leading to undefined
-behavior.
-
-Initialize 'r' to 0 before the loop. This ensures that if there are no
-devices to iterate over, the function still returns a defined value.
-
-Signed-off-by: Purva Yeshi <purvayeshi550@gmail.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
@@ -77,84 +65,135 @@ LLM Generated explanations, may be completely bogus:
 
 **Backport Status: YES**
 
-This commit should be backported to stable kernel trees. Here's my
-extensive analysis:
+This commit is a clear candidate for backporting to stable kernel trees.
+Here's my extensive analysis:
 
-## Analysis of the Bug
+## Bug Analysis
 
-The commit fixes a genuine uninitialized variable bug in
-`dmz_iterate_devices()` function in drivers/md/dm-zoned-target.c:1073.
-The bug occurs when:
+The commit fixes a logic error in the error handling of four device-
+mapper path selector modules. Looking at the code changes:
 
-1. The variable `r` is declared but not initialized at line 1065
-2. If `dmz->nr_ddevs` is 0, the for loop at line 1067 is never entered
-3. The function returns `r` at line 1073, which contains garbage data
+1. **Original buggy behavior**: When `dm_register_path_selector()` fails
+   (returns r < 0), the code would:
+   - Print "register failed" error message
+   - **Continue to print "version X loaded" message**
+   - Return the error code
 
-This is a clear programming error that can lead to undefined behavior.
-The function could return any arbitrary value when there are no devices
-to iterate over.
+2. **Fixed behavior**: When registration fails:
+   - Print "register failed" error message
+   - **Return immediately with the error code**
+   - Skip the misleading "loaded" message
 
 ## Why This Should Be Backported
 
-1. **Real Bug Fix**: This fixes an actual bug that can cause
-   unpredictable behavior. An uninitialized return value can lead to:
-   - Incorrect error handling by callers
-   - Potential system instability
-   - Unpredictable behavior in device mapper operations
+1. **Clear Bug Fix**: This is a straightforward bug fix that corrects
+   misleading log messages. When module registration fails, it
+   incorrectly reports success with "version X loaded".
 
-2. **Small and Contained Fix**: The fix is minimal - just initializing
-   `r` to 0. This follows the pattern used in other similar
-   iterate_devices implementations like `dm-cache-target.c:3438` where
-   `int r = 0;` is properly initialized.
+2. **Small and Contained**: The fix is minimal - just adding an early
+   return statement in four similar init functions:
+   - `dm_hst_init()` in dm-ps-historical-service-time.c
+   - `dm_ql_init()` in dm-ps-queue-length.c
+   - `dm_rr_init()` in dm-ps-round-robin.c
+   - `dm_st_init()` in dm-ps-service-time.c
 
-3. **No Side Effects**: The change has no architectural impact or side
-   effects. It simply ensures the function returns a defined value (0)
-   when there are no devices to iterate, which is the expected behavior.
+3. **No Side Effects**: The change only affects error path behavior and
+   logging. It doesn't introduce new functionality or change any
+   successful operation paths.
 
-4. **Affects Users**: While the condition (nr_ddevs == 0) might be rare,
-   it's still a possible configuration that could affect users of dm-
-   zoned devices. The undefined behavior could manifest in various ways
-   depending on what's in memory.
+4. **User-Visible Issue**: This fixes a user-visible problem where
+   system logs would incorrectly indicate a module loaded successfully
+   when it actually failed.
 
-5. **Static Analysis Finding**: This was caught by Smatch static
-   analysis, indicating it's a real code quality issue that should be
-   fixed.
+5. **Consistent Pattern**: All four files have the identical bug and
+   identical fix, showing this is a systematic issue that should be
+   addressed.
 
-6. **Follows Stable Rules**: The fix is:
-   - Obviously correct
-   - Fixes a real bug (uninitialized variable use)
-   - Minimal risk of regression
-   - Small change (1 line)
-   - No new features or architectural changes
+6. **Low Risk**: The change is trivial - adding an early return on
+   error. There's virtually no risk of regression since:
+   - It only changes behavior when registration already failed
+   - The function already returns the error code at the end
+   - This just makes it return earlier without printing the misleading
+     message
 
-## Technical Context
+7. **Affects Core Subsystem**: Device-mapper is a critical storage
+   subsystem, and accurate error reporting is important for system
+   administrators debugging storage issues.
 
-Looking at the code structure, `nr_ddevs` is set from `argc` in line
-858, which must be at least 1 based on the check at line 835. However,
-there could be error paths or future code changes that might result in
-this function being called with nr_ddevs == 0, making this defensive
-programming important.
+The commit perfectly fits stable kernel criteria: it's a small, obvious
+fix for a real bug that affects users (through misleading log messages),
+with minimal risk of introducing new problems.
 
-The fix aligns with how other device mapper targets handle their
-iterate_devices functions, where the return value is properly
-initialized before use.
+ drivers/md/dm-ps-historical-service-time.c | 4 +++-
+ drivers/md/dm-ps-queue-length.c            | 4 +++-
+ drivers/md/dm-ps-round-robin.c             | 4 +++-
+ drivers/md/dm-ps-service-time.c            | 4 +++-
+ 4 files changed, 12 insertions(+), 4 deletions(-)
 
- drivers/md/dm-zoned-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-zoned-target.c b/drivers/md/dm-zoned-target.c
-index 5da3db06da10..9da329078ea4 100644
---- a/drivers/md/dm-zoned-target.c
-+++ b/drivers/md/dm-zoned-target.c
-@@ -1062,7 +1062,7 @@ static int dmz_iterate_devices(struct dm_target *ti,
- 	struct dmz_target *dmz = ti->private;
- 	unsigned int zone_nr_sectors = dmz_zone_nr_sectors(dmz->metadata);
- 	sector_t capacity;
--	int i, r;
-+	int i, r = 0;
+diff --git a/drivers/md/dm-ps-historical-service-time.c b/drivers/md/dm-ps-historical-service-time.c
+index b49e10d76d03..2c8626a83de4 100644
+--- a/drivers/md/dm-ps-historical-service-time.c
++++ b/drivers/md/dm-ps-historical-service-time.c
+@@ -541,8 +541,10 @@ static int __init dm_hst_init(void)
+ {
+ 	int r = dm_register_path_selector(&hst_ps);
  
- 	for (i = 0; i < dmz->nr_ddevs; i++) {
- 		capacity = dmz->dev[i].capacity & ~(zone_nr_sectors - 1);
+-	if (r < 0)
++	if (r < 0) {
+ 		DMERR("register failed %d", r);
++		return r;
++	}
+ 
+ 	DMINFO("version " HST_VERSION " loaded");
+ 
+diff --git a/drivers/md/dm-ps-queue-length.c b/drivers/md/dm-ps-queue-length.c
+index e305f05ad1e5..eb543e6431e0 100644
+--- a/drivers/md/dm-ps-queue-length.c
++++ b/drivers/md/dm-ps-queue-length.c
+@@ -260,8 +260,10 @@ static int __init dm_ql_init(void)
+ {
+ 	int r = dm_register_path_selector(&ql_ps);
+ 
+-	if (r < 0)
++	if (r < 0) {
+ 		DMERR("register failed %d", r);
++		return r;
++	}
+ 
+ 	DMINFO("version " QL_VERSION " loaded");
+ 
+diff --git a/drivers/md/dm-ps-round-robin.c b/drivers/md/dm-ps-round-robin.c
+index d1745b123dc1..66a15ac0c22c 100644
+--- a/drivers/md/dm-ps-round-robin.c
++++ b/drivers/md/dm-ps-round-robin.c
+@@ -220,8 +220,10 @@ static int __init dm_rr_init(void)
+ {
+ 	int r = dm_register_path_selector(&rr_ps);
+ 
+-	if (r < 0)
++	if (r < 0) {
+ 		DMERR("register failed %d", r);
++		return r;
++	}
+ 
+ 	DMINFO("version " RR_VERSION " loaded");
+ 
+diff --git a/drivers/md/dm-ps-service-time.c b/drivers/md/dm-ps-service-time.c
+index 969d31c40272..f8c43aecdb27 100644
+--- a/drivers/md/dm-ps-service-time.c
++++ b/drivers/md/dm-ps-service-time.c
+@@ -341,8 +341,10 @@ static int __init dm_st_init(void)
+ {
+ 	int r = dm_register_path_selector(&st_ps);
+ 
+-	if (r < 0)
++	if (r < 0) {
+ 		DMERR("register failed %d", r);
++		return r;
++	}
+ 
+ 	DMINFO("version " ST_VERSION " loaded");
+ 
 -- 
 2.39.5
 
