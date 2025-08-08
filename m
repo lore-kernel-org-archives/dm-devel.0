@@ -1,42 +1,39 @@
 Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDB802E371F
-	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 06:17:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 37391221F13
+	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 07:34:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754633868; cv=none; b=Z7dYd17g+M5kf4Rhlqjrf5uVGZ60H2HfJOmSZihqKtLfuQZniQDk76/tzdtaZYRYHU7RegUxAirQyHTfbAEZ7R/C3GfXzTSTFk+zsoptkUxq4EqyNj2jfqttq2XC6iw6WOqwMNjt97bw9HkuCnFl+c6QHgtf5a7PK70wG1slNpc=
+	t=1754638470; cv=none; b=dMR9uVZv9bu+WgBx241qXyXX+DtwIBTw2AzPznA49NMq3syPXOYx8BIuWBuF1H5ABLFlPIuXmcfcDUff5zezK7ddBPKOtMnF8BFXAXgbMPNJgFAaZTf28idgZQtq+F/UPUlSZ++Z1gMtFEaOmS8Qy/nvopg97gDzSft5DwY3R+U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754633868; c=relaxed/simple;
-	bh=cmAsMBvdaiFIRBmsQgKW2WADeetWcA/YHbrfYBriZuU=;
+	s=arc-20240116; t=1754638470; c=relaxed/simple;
+	bh=mHA71hlwwplMD+0gYZPE6uPJrM2UMYmAtMyRfhMKcVg=;
 	h=Subject:To:Cc:References:From:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=P6DO6d+YEOXGJsbVwfqOGZAYRI4ekYGDBN5SVN6zzbk+gsjQYa7bQkryw4OjjE6vxy8aO6VgrL/0JNmjoyv12/r6GhsRNWxSpizQGb8v52aa1FZWhsUbVdbumFMKk6p/NvD4EvxwmTRW0N2lju9Yl0zMBst/86pG+qxHxxAPJgE=
+	 In-Reply-To:Content-Type; b=mN4NhlGGf4XruOb5H1QW4VxXdCsm42PZTaqblDd6YGBIy3i0bfEeK/EPWA8/i6GNnfphWHHywlcLAb3iP+U8hJxyp3WIaMhhxE9o8wkrHQiEyc04TnKhfFjaxE2q82kCpqw6cRDfXy43v4+ooVEYmo2bApVIvZ8XPRUlRybYX+8=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4byv2s6fz4zYQtsG
-	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 14:17:41 +0800 (CST)
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4bywlQ5XfmzYQtps
+	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 15:34:26 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 8B9471A0DA7
-	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 14:17:40 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 6A96D1A1BDD
+	for <dm-devel@lists.linux.dev>; Fri,  8 Aug 2025 15:34:25 +0800 (CST)
 Received: from [10.174.179.143] (unknown [10.174.179.143])
-	by APP4 (Coremail) with SMTP id gCh0CgAHzw+ClpVox_zaCw--.65529S3;
-	Fri, 08 Aug 2025 14:17:40 +0800 (CST)
-Subject: Re: [PATCH v5 11/11] md/md-llbitmap: introduce new lockless bitmap
-To: Xiao Ni <xni@redhat.com>, Yu Kuai <yukuai1@huaweicloud.com>
-Cc: hch@lst.de, corbet@lwn.net, song@kernel.org, agk@redhat.com,
- snitzer@kernel.org, mpatocka@redhat.com, linan122@huawei.com, hare@suse.de,
- linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, yi.zhang@huawei.com,
- yangerkun@huawei.com, johnny.chenyi@huawei.com,
- "yukuai (C)" <yukuai3@huawei.com>
-References: <20250801070346.4127558-1-yukuai1@huaweicloud.com>
- <20250801070346.4127558-12-yukuai1@huaweicloud.com>
- <CALTww2-FTgDn9pD-Gmh8YKT-fU1ykk_QbB9J2KO8xQzrkAa_Bg@mail.gmail.com>
+	by APP4 (Coremail) with SMTP id gCh0CgC3MxR_qJVogQjhCw--.38019S3;
+	Fri, 08 Aug 2025 15:34:25 +0800 (CST)
+Subject: Re: [PATCH v2] block: fix kobject double initialization in add_disk
+To: Zheng Qixing <zhengqixing@huaweicloud.com>, axboe@kernel.dk
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ yi.zhang@huawei.com, yangerkun@huawei.com, houtao1@huawei.com,
+ zhengqixing@huawei.com, lilingfeng3@huawei.com, nilay@linux.ibm.com,
+ dm-devel@lists.linux.dev, mpatocka@redhat.com, snitzer@kernel.org,
+ Alasdair Kergon <agk@redhat.com>, "yukuai (C)" <yukuai3@huawei.com>
+References: <20250808053609.3237836-1-zhengqixing@huaweicloud.com>
 From: Yu Kuai <yukuai1@huaweicloud.com>
-Message-ID: <e7902d0b-713f-f245-733b-33fd23262496@huaweicloud.com>
-Date: Fri, 8 Aug 2025 14:17:38 +0800
+Message-ID: <03fe1a9c-ad5d-5417-9797-25fff9459e03@huaweicloud.com>
+Date: Fri, 8 Aug 2025 15:34:23 +0800
 User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:60.0) Gecko/20100101
  Thunderbird/60.9.1
 Precedence: bulk
@@ -45,192 +42,155 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <CALTww2-FTgDn9pD-Gmh8YKT-fU1ykk_QbB9J2KO8xQzrkAa_Bg@mail.gmail.com>
-Content-Type: text/plain; charset=utf-8; format=flowed
+In-Reply-To: <20250808053609.3237836-1-zhengqixing@huaweicloud.com>
+Content-Type: text/plain; charset=gbk; format=flowed
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgAHzw+ClpVox_zaCw--.65529S3
-X-Coremail-Antispam: 1UD129KBjvJXoW3WF1kWFy8Cr43JFWUXryxKrg_yoW7Ary8pF
-	WxW3WUGr45JryrXr1UXr97ZF95trs7JwnFqrZ3Aa4rGr1qyrs3Kry8GFyUC34kur97GF1D
-	Za15Gry3uw4rWrDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+X-CM-TRANSID:gCh0CgC3MxR_qJVogQjhCw--.38019S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxXr47Wr1Duw15WFW8try7ZFb_yoWrZw1Dpr
+	W5Jw47K3y8Kr4xW3y7A3W7ZFyxWws5Wr1xCrs3Kr9avrZIvrnIga1UGFy8ZF48Jr93uF4I
+	qF4jqFZ8Kr18GrDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUBF14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
 	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
 	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
 	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
 	W8JwACjcxG0xvEwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2Y2ka
-	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x
+	0xkIwI1lc7I2V7IY0VAS07AlzVAYIcxG8wCY1x0262kKe7AKxVWUtVW8ZwCF04k20xvY0x
 	0EwIxGrwCFx2IqxVCFs4IE7xkEbVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E
-	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcV
+	7480Y4vE14v26r106r1rMI8E67AF67kF1VAFwI0_Jw0_GFylIxkGc2Ij64vIr41lIxAIcV
 	C0I7IYx2IY67AKxVWUJVWUCwCI42IY6xIIjxv20xvEc7CjxVAFwI0_Gr0_Cr1lIxAIcVCF
 	04k26cxKx2IYs7xG6r1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7
-	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0pRHUDLUUUUU=
+	CjxVAFwI0_Gr0_Gr1UYxBIdaVFxhVjvjDU0xZFpf9x0JUZYFZUUUUU=
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-Hi, Xiao
++CC device mappper, since this is a regerssion in this driver.
 
-åœ¨ 2025/08/07 11:57, Xiao Ni å†™é“:
->> +/* set all the bits in the subpage as dirty */
->> +static void llbitmap_infect_dirty_bits(struct llbitmap *llbitmap,
->> +                                      struct llbitmap_page_ctl *pctl,
->> +                                      unsigned int block, unsigned int offset)
->> +{
->> +       bool level_456 = raid_is_456(llbitmap->mddev);
->> +       unsigned int io_size = llbitmap->io_size;
->> +       int pos;
->> +
->> +       for (pos = block * io_size; pos < (block + 1) * io_size; pos++) {
->> +               if (pos == offset)
->> +                       continue;
-> It looks like it doesn't need to pass the argument offset to this
-> function. The pctl->state[offset] must be BitDirty or BitNeedSync. So
-> the following switch/case can skip it. So it can save hundreds
-> comparing pos with offset here.
+ÔÚ 2025/08/08 13:36, Zheng Qixing Ð´µÀ:
+> From: Zheng Qixing <zhengqixing@huawei.com>
 > 
-Ok.
->> +
->> +               switch (pctl->state[pos]) {
->> +               case BitUnwritten:
->> +                       pctl->state[pos] = level_456 ? BitNeedSync : BitDirty;
->> +                       break;
->> +               case BitClean:
->> +                       pctl->state[pos] = BitDirty;
->> +                       break;
->> +               };
->> +       }
->> +
->> +}
->> +static void llbitmap_write(struct llbitmap *llbitmap, enum llbitmap_state state,
->> +                          loff_t pos)
->> +{
->> +       unsigned int idx;
->> +       unsigned int offset;
-> How about change offset to bit?
-
-Yes, and the follong name about bit.
->> +static void llbitmap_write_page(struct llbitmap *llbitmap, int idx)
->> +{
->> +       struct page *page = llbitmap->pctl[idx]->page;
->> +       struct mddev *mddev = llbitmap->mddev;
->> +       struct md_rdev *rdev;
->> +       int bit;
-> It's better to change name "bit" to "block"
->> +static int llbitmap_init(struct llbitmap *llbitmap)
->> +{
->> +       struct mddev *mddev = llbitmap->mddev;
->> +       sector_t blocks = mddev->resync_max_sectors;
->> +       unsigned long chunksize = MIN_CHUNK_SIZE;
->> +       unsigned long chunks = DIV_ROUND_UP(blocks, chunksize);
->> +       unsigned long space = mddev->bitmap_info.space << SECTOR_SHIFT;
->> +       int ret;
->> +
->> +       while (chunks > space) {
->> +               chunksize = chunksize << 1;
->> +               chunks = DIV_ROUND_UP(blocks, chunksize);
->> +       }
->> +
->> +       llbitmap->barrier_idle = DEFAULT_BARRIER_IDLE;
->> +       llbitmap->chunkshift = ffz(~chunksize);
->> +       llbitmap->chunksize = chunksize;
->> +       llbitmap->chunks = chunks;
->> +       mddev->bitmap_info.daemon_sleep = DEFAULT_DAEMON_SLEEP;
->> +
->> +       ret = llbitmap_cache_pages(llbitmap);
->> +       if (ret)
->> +               return ret;
->> +
->> +       llbitmap_state_machine(llbitmap, 0, llbitmap->chunks - 1, BitmapActionInit);
->> +       return 0;
->> +}
-> There is a problem, if array is created with --assume-clean, it
-> doesn't need to start sync. And it doesn't have the chance to sync
-> llbitmap superblock to member disks. So it can't get the right bitmap
-> superblock information which is calculated here after a power off. It
-> needs to sync the superblock here.
+> Device-mapper can call add_disk() multiple times for the same gendisk
+> due to its two-phase creation process (dm create + dm load). This leads
+> to kobject double initialization errors when the underlying iSCSI devices
+> become temporarily unavailable and then reappear.
 > 
-Yes, you're right. The mdraid bitmap metadata is written by mdadm,
-dm-raid  bitmap metadata is write in kernel by md_update_sb(), llbitmap
-is missing a call to llbitmap_write_sb() after initializing, if
-md_update_sb() is never triggered, the bitmap metadata will be lost.
-
->> +
->> +static int llbitmap_create(struct mddev *mddev)
->> +{
->> +       struct llbitmap *llbitmap;
->> +       int ret;
->> +
->> +       ret = llbitmap_check_support(mddev);
->> +       if (ret)
->> +               return ret;
->> +
->> +       llbitmap = kzalloc(sizeof(*llbitmap), GFP_KERNEL);
->> +       if (!llbitmap)
->> +               return -ENOMEM;
->> +
->> +       llbitmap->mddev = mddev;
->> +       llbitmap->io_size = bdev_logical_block_size(mddev->gendisk->part0);
->> +       llbitmap->blocks_per_page = PAGE_SIZE / llbitmap->io_size;
->> +
->> +       timer_setup(&llbitmap->pending_timer, llbitmap_pending_timer_fn, 0);
->> +       INIT_WORK(&llbitmap->daemon_work, md_llbitmap_daemon_fn);
->> +       atomic_set(&llbitmap->behind_writes, 0);
->> +       init_waitqueue_head(&llbitmap->behind_wait);
->> +
->> +       mutex_lock(&mddev->bitmap_info.mutex);
->> +       mddev->bitmap = llbitmap;
->> +       ret = llbitmap_read_sb(llbitmap);
->> +       mutex_unlock(&mddev->bitmap_info.mutex);
->> +       if (ret)
->> +               goto err_out;
->> +
->> +       return 0;
->> +
->> +err_out:
->> +       kfree(llbitmap);
-> mddev->bitmap = NULL. If not,
-> md_run->md_bitmap_destroy->llbitmap_destroy will free it again.
-Yes.
-
+> However, if the first add_disk() call fails and is retried, the queue_kobj
+> gets initialized twice, causing:
 > 
->> +static void llbitmap_start_write(struct mddev *mddev, sector_t offset,
->> +                                unsigned long sectors)
->> +{
->> +       struct llbitmap *llbitmap = mddev->bitmap;
->> +       unsigned long start = offset >> llbitmap->chunkshift;
->> +       unsigned long end = (offset + sectors - 1) >> llbitmap->chunkshift;
->> +       int page_start = (start + BITMAP_DATA_OFFSET) >> PAGE_SHIFT;
->> +       int page_end = (end + BITMAP_DATA_OFFSET) >> PAGE_SHIFT;
->> +
->> +       llbitmap_state_machine(llbitmap, start, end, BitmapActionStartwrite);
->> +
->> +
-> Two lines here, just need one.
->> +/*
->> + * Force to write all bitmap pages to disk, called when stopping the array, or
->> + * every daemon_sleep seconds when sync_thread is running.
->> + */
->> +static void __llbitmap_flush(struct mddev *mddev)
->> +{
->> +       struct llbitmap *llbitmap = mddev->bitmap;
->> +       struct blk_plug plug;
->> +       int i;
->> +
->> +       blk_start_plug(&plug);
->> +       for (i = 0; i < llbitmap->nr_pages; i++) {
->> +               struct llbitmap_page_ctl *pctl = llbitmap->pctl[i];
->> +
->> +               /* mark all bits as dirty */
-> "mark all blocks as dirty" is better?
+> kobject: kobject (ffff88810c27bb90): tried to init an initialized object,
+> something is seriously wrong.
+>   Call Trace:
+>    <TASK>
+>    dump_stack_lvl+0x5b/0x80
+>    kobject_init.cold+0x43/0x51
+>    blk_register_queue+0x46/0x280
+>    add_disk_fwnode+0xb5/0x280
+>    dm_setup_md_queue+0x194/0x1c0
+>    table_load+0x297/0x2d0
+>    ctl_ioctl+0x2a2/0x480
+>    dm_ctl_ioctl+0xe/0x20
+>    __x64_sys_ioctl+0xc7/0x110
+>    do_syscall_64+0x72/0x390
+>    entry_SYSCALL_64_after_hwframe+0x76/0x7e
 > 
->> +static void llbitmap_write_sb(struct llbitmap *llbitmap)
->> +{
->> +       int nr_bits = DIV_ROUND_UP(BITMAP_DATA_OFFSET, llbitmap->io_size);
-> s/nr_bits/nr_blocks/g
+> Fix this by separating kobject initialization from sysfs registration:
+>   - Initialize queue_kobj early during gendisk allocation
+>   - add_disk() only adds the already-initialized kobject to sysfs
+>   - del_gendisk() removes from sysfs but doesn't destroy the kobject
+>   - Final cleanup happens when the disk is released
 > 
+> Fixes: 2bd85221a625 ("block: untangle request_queue refcounting from sysfs")
+> Reported-by: Li Lingfeng <lilingfeng3@huawei.com>
+> Closes: https://lore.kernel.org/all/83591d0b-2467-433c-bce0-5581298eb161@huawei.com/
+> Signed-off-by: Zheng Qixing <zhengqixing@huawei.com>
+> ---
+>   block/blk-sysfs.c | 12 +++++-------
+>   block/blk.h       |  1 +
+>   block/genhd.c     |  2 ++
+>   3 files changed, 8 insertions(+), 7 deletions(-)
 > 
-> 
+> diff --git a/block/blk-sysfs.c b/block/blk-sysfs.c
+> index 396cded255ea..c5cf79a20842 100644
+> --- a/block/blk-sysfs.c
+> +++ b/block/blk-sysfs.c
+> @@ -847,7 +847,7 @@ static void blk_queue_release(struct kobject *kobj)
+>   	/* nothing to do here, all data is associated with the parent gendisk */
+>   }
+>   
+> -static const struct kobj_type blk_queue_ktype = {
+> +const struct kobj_type blk_queue_ktype = {
+>   	.default_groups = blk_queue_attr_groups,
+>   	.sysfs_ops	= &queue_sysfs_ops,
+>   	.release	= blk_queue_release,
+> @@ -875,15 +875,14 @@ int blk_register_queue(struct gendisk *disk)
+>   	struct request_queue *q = disk->queue;
+>   	int ret;
+>   
+> -	kobject_init(&disk->queue_kobj, &blk_queue_ktype);
+>   	ret = kobject_add(&disk->queue_kobj, &disk_to_dev(disk)->kobj, "queue");
+>   	if (ret < 0)
+> -		goto out_put_queue_kobj;
+> +		return ret;
+>   
+>   	if (queue_is_mq(q)) {
+>   		ret = blk_mq_sysfs_register(disk);
+>   		if (ret)
+> -			goto out_put_queue_kobj;
+> +			goto out_del_queue_kobj;
+>   	}
+>   	mutex_lock(&q->sysfs_lock);
+>   
+> @@ -934,8 +933,8 @@ int blk_register_queue(struct gendisk *disk)
+>   	mutex_unlock(&q->sysfs_lock);
+>   	if (queue_is_mq(q))
+>   		blk_mq_sysfs_unregister(disk);
+> -out_put_queue_kobj:
+> -	kobject_put(&disk->queue_kobj);
+> +out_del_queue_kobj:
+> +	kobject_del(&disk->queue_kobj);
+>   	return ret;
+>   }
+>   
+> @@ -986,5 +985,4 @@ void blk_unregister_queue(struct gendisk *disk)
+>   		elevator_set_none(q);
+>   
+>   	blk_debugfs_remove(disk);
+> -	kobject_put(&disk->queue_kobj);
+>   }
+> diff --git a/block/blk.h b/block/blk.h
+> index 0a2eccf28ca4..46f566f9b126 100644
+> --- a/block/blk.h
+> +++ b/block/blk.h
+> @@ -29,6 +29,7 @@ struct elevator_tags;
+>   /* Max future timer expiry for timeouts */
+>   #define BLK_MAX_TIMEOUT		(5 * HZ)
+>   
+> +extern const struct kobj_type blk_queue_ktype;
+>   extern struct dentry *blk_debugfs_root;
+>   
+>   struct blk_flush_queue {
+> diff --git a/block/genhd.c b/block/genhd.c
+> index c26733f6324b..9bbc38d12792 100644
+> --- a/block/genhd.c
+> +++ b/block/genhd.c
+> @@ -1303,6 +1303,7 @@ static void disk_release(struct device *dev)
+>   	disk_free_zone_resources(disk);
+>   	xa_destroy(&disk->part_tbl);
+>   
+> +	kobject_put(&disk->queue_kobj);
+>   	disk->queue->disk = NULL;
+>   	blk_put_queue(disk->queue);
+>   
+> @@ -1486,6 +1487,7 @@ struct gendisk *__alloc_disk_node(struct request_queue *q, int node_id,
+>   	INIT_LIST_HEAD(&disk->slave_bdevs);
+>   #endif
+>   	mutex_init(&disk->rqos_state_mutex);
+> +	kobject_init(&disk->queue_kobj, &blk_queue_ktype);
+>   	return disk;
+>   
+>   out_erase_part0:
 > 
 
-Thanks again for the review!
-Kuai
+LGTM
+Reviewed-by: Yu Kuai <yukuai3@huawei.com>
 
