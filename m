@@ -1,74 +1,118 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B90B981724
-	for <dm-devel@lists.linux.dev>; Sat,  9 Aug 2025 11:37:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 155021D5ADC
+	for <dm-devel@lists.linux.dev>; Sun, 10 Aug 2025 11:30:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754739429; cv=none; b=dIP0/9uO5xGOFLGxn0GWyk1W44rls9s6IUE2xiLo/3sjd2Ec91+uxll+GamTCMvDOLP93YbAowDa3cW89QqRMzZXFGLDau0BJErOZFhqFymapFIlWAY5AyItS8glTwofRBXV4CCrsoi/EoiCWMpH8LBK8I6qv0B7flaAZkpkV9w=
+	t=1754825440; cv=none; b=bjznhg1xPOzmTM+YTnOrPkb2emQDEunk6iCC5hRVinxq/C57Mumz8ktQxwhOXUQjI5bBs2Etoy+NRyVPzqzi0tlenUZ6ZgkOznKoJFQILt/ZXzZyrRGgFFwjcneaNHDR4l1dgUoeXC/gUvq0LIzMqklpkSlB9zfeirdiQViBb0s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754739429; c=relaxed/simple;
-	bh=LdJofZ5ShRUrVsjbg1D/vDlO2pfiQu/0iaJWcXgl0yI=;
-	h=From:Subject:To:Cc:References:Message-ID:Date:MIME-Version:
-	 In-Reply-To:Content-Type; b=m2Mp2DeyfW0wnJlz/R2m4+KNwYmIGK0TDdX+c5XDjQr2gR5xqW08UZX5m9IC8FeLXU2d5sv5TPa9+7m1iBx0Pmc7Yx5j27Imm/1qmelLxlRXh2FHW8LsoS4Xad56TaBsk2mII7MOMpdq8VvDGd8j/Hcv5c9rqFEabBWKVnxevyY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4bzf4k5RCKzKHMcC
-	for <dm-devel@lists.linux.dev>; Sat,  9 Aug 2025 19:36:54 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id E22171A018D
-	for <dm-devel@lists.linux.dev>; Sat,  9 Aug 2025 19:36:53 +0800 (CST)
-Received: from [10.174.177.163] (unknown [10.174.177.163])
-	by APP4 (Coremail) with SMTP id gCh0CgC3fg_SMpdo0SplDA--.26099S2;
-	Sat, 09 Aug 2025 19:36:53 +0800 (CST)
-From: Hou Tao <houtao@huaweicloud.com>
-Subject: Re: [PATCH] dm: ima: more strlen() drops
-To: Dmitry Antipov <dmantipov@yandex.ru>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev
-References: <20250805103541.490377-1-dmantipov@yandex.ru>
-Message-ID: <eb8129bb-bef8-8481-8c03-555e5744e390@huaweicloud.com>
-Date: Sat, 9 Aug 2025 19:36:50 +0800
-User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:78.0) Gecko/20100101
- Thunderbird/78.6.0
+	s=arc-20240116; t=1754825440; c=relaxed/simple;
+	bh=hQFUiJVkuiVnyTmM+Fv5SEJ+oeDwsytX/0vH1GdXtNY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=C1sImK5/92vWijJr1vFopjveMWplZm8NIBB+Kt3F8VxCTWT2KLCA9kyvtuPzWYGYgZxMoBxlpVSg4hhDD9flqKjpWyUMu+DrUq5qZFKKAI/qXpzS//wzVLJnLSUqwJdyXwSJWa1Np75HUKIuUHE4ReFZmgf8OkY9HZ78voHLHiU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Mnq/xueD; arc=none smtp.client-ip=209.85.214.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Mnq/xueD"
+Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-2402b5396cdso21713835ad.2
+        for <dm-devel@lists.linux.dev>; Sun, 10 Aug 2025 04:30:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1754825438; x=1755430238; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=SHl5buntrPd4REBXQ/H/Xwm8L4W6B7MQuY5lUwVZl88=;
+        b=Mnq/xueDCx6K7/sHG5IyJseeDZwAkn2OAdQ0t0QBiNB6Y95ls5Srnq1xG4B0qNRbMo
+         4Za7gV72ZDFNDLpZyfkqiQ9op/Q/+bJr13pPSmzkjbxVVpj+DPiXO2Rw4dtNPFeZo9B3
+         EVfSpToWU+Sv80T9Gb4An5KNCRP/UmdhKYZBBMAv4zgAAJ5N4ZpomDxPtRkOBU8obKU9
+         QQnOLXbZzJfH4DJzF36aimzrv3QQkF4A0D0s0/VI45OjvrzvjTf0kROiuMktbycJGvX5
+         UMTO5uruG8cyH6Bpc2AyYL5Y65ppqvDCKqDTDtH21pZY977lwaqQT1BvG8/dEqVqWfFc
+         B+TQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1754825438; x=1755430238;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=SHl5buntrPd4REBXQ/H/Xwm8L4W6B7MQuY5lUwVZl88=;
+        b=b9W2hcx+pH7XiLH2im2ZuES+tHM0rtDDdjuTvu9OpgzIKcomhYqKttfUFnj5sBv8k6
+         UNbHTSP8Ipr19c9KOYbUNAaYHYdAMtgHgSGb/aQtYbTFrG8IQKXHWi3zO1q3UEjR4XtH
+         uyskf7ZIQKuVxwuP20K5mwvRWDRaA/cbteqEf1iNBvOCHvJCgyLECYAbtea0+JAxqr8R
+         l4JKuFIBlNdzX/yQqNVPVZQ2HnjOJC03nvTJVD/q5EUb9uh19kymKk0/GVrMYFSH3fDS
+         Fa04SrjkHFiaOwwuHNoJ9Q1IgGJ9lcaA6x9eWNcEWcUk1KqKe/du0ND4j8pMB5UGYMPO
+         zeHw==
+X-Gm-Message-State: AOJu0YwGmZ/YpUS2Oh3OJNUSXl2dkceWLk5Ro6JAxMsQgphWxF7JTOo+
+	eLnAb+Lep1GZY7tzyDpY46feaIE3mkGK2jxlDQZdY+HKLCXEWImp8J3m
+X-Gm-Gg: ASbGncugvJohb1n71bHDPapXVHBv3I2b2WWRHTpAy9d790phtru+YPf8V3jLjX0JGKD
+	gYL64wftvJJvC/t/nAmMW/49eVer971t5ZPQQG7dpdUqYG0elneMW44ickLGltynjDpOCekxTx+
+	+WNw4ld/MyjpBrcUqvoRRmp+OEtW/pPeOqR1neDYdE13z0t6ffxM9MKgNrx2H5AEVT1Xyphkq6k
+	2FDilEX4d+3z+7r+8ubKFt8lJxRQ2awAMGSwiuLJlPMy0/eR+RK6bFPC2vnMFaZfZtdKzW07DvE
+	S6Y8m9P5x3jj5zJXx8sMq+m7X8LU+3aMrH414MR9AlAOmpIeC9q/oPMC4aUPICze4pLuG7E+R1h
+	JiFq4p4795VAGa799jReP4Md5ASZdQZFSDoCxgSy1M8FGhDTnT/KDoyoftl40
+X-Google-Smtp-Source: AGHT+IEddxsLOd/KSWuIkQ8MPbH9RPfw7fHsY7z+FeE8UayyoT0bDzrRE1sn5q+TZ+gTV5c17FWunQ==
+X-Received: by 2002:a17:903:41c7:b0:242:b315:ddaf with SMTP id d9443c01a7336-242c1fdc0a3mr168124875ad.7.1754825438182;
+        Sun, 10 Aug 2025 04:30:38 -0700 (PDT)
+Received: from shubham-HP-Pavilion-Laptop-15-eg3xxx.. ([117.250.157.213])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-241d1ef5934sm247615075ad.21.2025.08.10.04.30.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 10 Aug 2025 04:30:37 -0700 (PDT)
+From: Shubham Sharma <slopixelz@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	corbet@lwn.net,
+	msakai@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Shubham Sharma <slopixelz@gmail.com>
+Subject: [PATCH] docs: device-mapper :Fix typos in delay.rst and vdo-design.rst
+Date: Sun, 10 Aug 2025 17:00:08 +0530
+Message-ID: <20250810113008.27381-1-slopixelz@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250805103541.490377-1-dmantipov@yandex.ru>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Content-Language: en-US
-X-CM-TRANSID:gCh0CgC3fg_SMpdo0SplDA--.26099S2
-X-Coremail-Antispam: 1UD129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
-	VFW2AGmfu7bjvjm3AaLaJ3UjIYCTnIWjp_UUUYI7kC6x804xWl14x267AKxVWUJVW8JwAF
-	c2x0x2IEx4CE42xK8VAvwI8IcIk0rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII
-	0Yj41l84x0c7CEw4AK67xGY2AK021l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xv
-	wVC0I7IYx2IY6xkF7I0E14v26F4j6r4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7
-	xvwVC2z280aVCY1x0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40E
-	FcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr
-	0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xFo4CEbIxv
-	r21l42xK82IYc2Ij64vIr41l4c8EcI0Ec7CjxVAaw2AFwI0_JF0_Jw1l4I8I3I0E4IkC6x
-	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
-	zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
-	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
-	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjxUzsqWUUUUU
-X-CM-SenderInfo: xkrx3t3r6k3tpzhluzxrxghudrp/
+Content-Transfer-Encoding: 8bit
 
+Fixed the following typos in device-mapper documentation:
+- explicitely -> explicitly
+- approriate -> appropriate
 
+Signed-off-by: Shubham Sharma <slopixelz@gmail.com>
+---
+ Documentation/admin-guide/device-mapper/delay.rst      | 2 +-
+ Documentation/admin-guide/device-mapper/vdo-design.rst | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-On 8/5/2025 6:35 PM, Dmitry Antipov wrote:
-> Following commit ebbd17695e9e ("dm: ima: avoid extra calls to
-> strlen()"), convert 'dm_ima_alloc_and_copy_capacity_str()' to
-> return the number of characters emitted by 'scnprintf()' and
-> simplify the users accordingly. Compile tested only.
->
-> Signed-off-by: Dmitry Antipov <dmantipov@yandex.ru>
-
-Reviewed-by: Hou Tao <houtao1@huawei.com>
+diff --git a/Documentation/admin-guide/device-mapper/delay.rst b/Documentation/admin-guide/device-mapper/delay.rst
+index 4d667228e744..982136160d6f 100644
+--- a/Documentation/admin-guide/device-mapper/delay.rst
++++ b/Documentation/admin-guide/device-mapper/delay.rst
+@@ -18,7 +18,7 @@ Table line has to either have 3, 6 or 9 arguments:
+    to write and flush operations on optionally different write_device with
+    optionally different sector offset
+ 
+-9: same as 6 arguments plus define flush_offset and flush_delay explicitely
++9: same as 6 arguments plus define flush_offset and flush_delay explicitly
+    on/with optionally different flush_device/flush_offset.
+ 
+ Offsets are specified in sectors.
+diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
+index 3cd59decbec0..faa0ecd4a5ae 100644
+--- a/Documentation/admin-guide/device-mapper/vdo-design.rst
++++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
+@@ -600,7 +600,7 @@ lock and return itself to the pool.
+ All storage within vdo is managed as 4KB blocks, but it can accept writes
+ as small as 512 bytes. Processing a write that is smaller than 4K requires
+ a read-modify-write operation that reads the relevant 4K block, copies the
+-new data over the approriate sectors of the block, and then launches a
++new data over the appropriate sectors of the block, and then launches a
+ write operation for the modified data block. The read and write stages of
+ this operation are nearly identical to the normal read and write
+ operations, and a single data_vio is used throughout this operation.
+-- 
+2.43.0
 
