@@ -1,150 +1,111 @@
-Received: from mail-il1-f227.google.com (mail-il1-f227.google.com [209.85.166.227])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D73CB26FA4B
-	for <dm-devel@lists.linux.dev>; Mon, 11 Aug 2025 05:40:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.227
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92A0C2C3278
+	for <dm-devel@lists.linux.dev>; Mon, 11 Aug 2025 11:22:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754890836; cv=none; b=BRNdHtnz363+BUxWYXLXeHA245kI+JjnTlnbzR249dd7+I/0aKZBJsfgaOXN+Vee+W8H9hFkiW+nW+b7cIto18fJInCYp669s0FqbYwCm2HLqZeSWFlTB/D78vZWqTeYe+bYoSSw8UEBcjYGVBOjHmhy0r/+V7wBHXRArG8vPxo=
+	t=1754911354; cv=none; b=eKI5a8qt5vTOiJTEG7WrITxLtFBC5R7q13xeHvYrb3IZr2TT4XZ7LYewMVpcKWTWDHl/uTTyWq7iQHssePpWBOL+/PCtAq7rtHT+RXcO5GC8HYSadZLRybCZPOMVrdyvcupV/Lk9KFi3d4Com75s2fursi/rTMQetbsaemXGwKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754890836; c=relaxed/simple;
-	bh=X+DIeX+XsZPowEusZeMzAlLnoQlmyKNcBOTFUWpiNsE=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ipAeOwGJXCywMS+f3nIGz8/x92R0JwCx2g4CWbAVN5YtAuscIxr+2RmysBF7awr/pLtVzpuQFcB0mlRx4xdr7LOzHhrfwVJ7BPS5GsbcnCOPJKh+/ZR/AR15LoV3wmqrvpgop4Hq06abD9FIDZkdhiJKrIpa9zJijniRM25mwGA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com; spf=fail smtp.mailfrom=broadcom.com; dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b=W0gedSst; arc=none smtp.client-ip=209.85.166.227
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=broadcom.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=broadcom.com
+	s=arc-20240116; t=1754911354; c=relaxed/simple;
+	bh=yH9o/+7iQTtEc5jc6WfYbooYmTC+iDCsKE/1zeYeYwQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=gZUiDcCRtVnj8e0qIgJ0i1dZdLWyairqPSZ4RfB/yBLm9Uidk+0FzGyR5d60h8R98wZ3RHAN66PBk8TWvY03wjr6q1wd03BfcZKiVNtZ594G9Z16CqvdTAx6gYFAcPHMRbKrI8uyc9hDPEJCy0sm5oa6nVrdbx/46CZus+jV8wI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QD3mXGAq; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=broadcom.com header.i=@broadcom.com header.b="W0gedSst"
-Received: by mail-il1-f227.google.com with SMTP id e9e14a558f8ab-3e53c490c22so4811365ab.0
-        for <dm-devel@lists.linux.dev>; Sun, 10 Aug 2025 22:40:34 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1754890834; x=1755495634;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:dkim-signature
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=fpH6x8rZ+rgBdQ7TOKJbwRYB5Ad7cxy49v5qCgwdE24=;
-        b=dmyu56LMd0khndrfso25/YcbcDvaXmbjc0+KpGNlQvtpI83gGo0YpgroYvLgwfZwkx
-         QYoxVSTsA2b6rWPFdFxG3j2JJphM1BuUKrGxpXKbvunZbcny39x8HzhODy7X483mK7I7
-         0mrGoULsRuPwoGar0Sm84i50iCAtAuDV8+ANqxvkz4AgrpI8NdhPdUzOjDV17Uo3IsQG
-         K+DHlV3lsFNO1NhPCayMAguSG247H9IAfUjOILqFhi/+IcPayzdPEWsRqu4lSk4qETVH
-         qqWZqKdKc+tpEEr1r2hARq6JFRWgJwi/wZFVHf4V+/Uh4siKe6Qy9YKsn74WsJLlkMZQ
-         WE/g==
-X-Forwarded-Encrypted: i=1; AJvYcCXWgxiI7pq8/tx6ShrhMcCav39MIxVXUgR6+Azkofai+GMbJhDRzmQaPlo3p9rXeDwXm0janEk8pA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwhQ3eIk35dRIx1fFJBYyq85nDYeLj+xSVCsdrLhY3dW48iCfkY
-	2zYo7Luty5l1Zc7aQJ/7H2VNAkuV8tjfEL9dY5c+hn8xklQWycxGrS41DxRxBWb7z+B++n5Ezae
-	xxoYA3r7fkK+ugR38OwG+Esxtdt1DlfAmVEQeLrZ6S46zOcNVB3cfQ/KRgRgvVDcxmvn+ya+txE
-	9CJ8InUKIpBQJQsbj/P/IMZOZTVczeP1k/16yxdjRc+0p3jqw0MsHA/rs4S1/pnmQgwF+NMRAea
-	Dx20ZX6I6XFhTsFk4qM
-X-Gm-Gg: ASbGncughDadA2AlOU0BXIqFiIFmodfVtWgQjxXyX+u21blbRecohx6LMMPpr1Y+ar3
-	JuFnLsaUcjA2cjD5J2LBlUSa0igoVflV6/4tSSjQpg+T36wT7lG5TT9BbzOPUoyKiaa10nWtSfQ
-	fQaICjzT9dgur0WrzR1lJle0ZO9XK71KYPYg79pk/YIkhzLsBTP3vyaBD724+crSFYtTuu8JYnW
-	fliW6zSp078o1bhloWO2yz5nZzKIoKW0Pxtp1PJDJxv0W0h9Ctkjax9T6bdqwyHWsglm9ewsdDn
-	gS7dpTBkbMWFCb21oulhuQgvgVY0C5usPKqLa2Op1pu9xOUT9Al/3GtxwlT4qffygT8V0peP3SW
-	OO8UYVuTIuptopSKa6HnhVRQTMEy1yGtXrGzdKgSrPygN2HHgBLdQ4Lwu78uDc4hiDuFu+Nk0u3
-	ID
-X-Google-Smtp-Source: AGHT+IHKHMCpFrCZKpF1SwkWTIziFfzWYqbbOr5W7t2nzmyOk4i2usuT7haoasTCEXm9mtMmTRaLTIhc0bpF
-X-Received: by 2002:a05:6e02:1aa4:b0:3e2:77d9:f8fc with SMTP id e9e14a558f8ab-3e533aff877mr190796575ab.10.1754890833927;
-        Sun, 10 Aug 2025 22:40:33 -0700 (PDT)
-Received: from smtp-us-east1-p01-i01-si01.dlp.protect.broadcom.com (address-144-49-247-0.dlp.protect.broadcom.com. [144.49.247.0])
-        by smtp-relay.gmail.com with ESMTPS id e9e14a558f8ab-3e533cc0fb8sm5850155ab.30.2025.08.10.22.40.32
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Sun, 10 Aug 2025 22:40:33 -0700 (PDT)
-X-Relaying-Domain: broadcom.com
-X-CFilter-Loop: Reflected
-Received: by mail-qv1-f70.google.com with SMTP id 6a1803df08f44-7074bad04efso91412556d6.1
-        for <dm-devel@lists.linux.dev>; Sun, 10 Aug 2025 22:40:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=broadcom.com; s=google; t=1754890832; x=1755495632; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=fpH6x8rZ+rgBdQ7TOKJbwRYB5Ad7cxy49v5qCgwdE24=;
-        b=W0gedSstviPOXCB0LraoiOFbnBZbz3eRVpTpnLpsatk5E6J27b5HrOWiRsRbDqSST2
-         FTadIR5vxuQ9je+5jaYHycmXWjGSylTRAh4XkjY/vfhU0AmO8eqitsV5rAlSEZn/dAkX
-         lgtn9/uvzX6uVdUL74hzYRcUFMgZv5oufvJRM=
-X-Forwarded-Encrypted: i=1; AJvYcCUnKwff6Lzc71GRsV3QWCXS+RLWxlqY3y2S9KmCkCz1HqxuNjk6MvQiJMTz+0YSVKMWh6F7yjTCow==@lists.linux.dev
-X-Received: by 2002:ad4:5d63:0:b0:6fa:abd2:f2bb with SMTP id 6a1803df08f44-7099b97d506mr154030646d6.8.1754890831934;
-        Sun, 10 Aug 2025 22:40:31 -0700 (PDT)
-X-Received: by 2002:ad4:5d63:0:b0:6fa:abd2:f2bb with SMTP id 6a1803df08f44-7099b97d506mr154030466d6.8.1754890831489;
-        Sun, 10 Aug 2025 22:40:31 -0700 (PDT)
-Received: from shivania.lvn.broadcom.net ([192.19.161.250])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7077ce44849sm150544766d6.84.2025.08.10.22.40.29
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 10 Aug 2025 22:40:31 -0700 (PDT)
-From: Shivani Agarwal <shivani.agarwal@broadcom.com>
-To: stable@vger.kernel.org,
-	gregkh@linuxfoundation.org
-Cc: bcm-kernel-feedback-list@broadcom.com,
-	linux-kernel@vger.kernel.org,
-	ajay.kaher@broadcom.com,
-	alexey.makhalov@broadcom.com,
-	tapas.kundu@broadcom.com,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	dm-devel@lists.linux.dev,
-	Ming Lei <ming.lei@redhat.com>,
-	Mike Snitzer <snitzer@redhat.com>,
-	Shivani Agarwal <shivani.agarwal@broadcom.com>
-Subject: [PATCH 2/2 v5.10] dm rq: don't queue request to blk-mq during DM suspend
-Date: Sun, 10 Aug 2025 22:27:02 -0700
-Message-Id: <20250811052702.145189-3-shivani.agarwal@broadcom.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20250811052702.145189-1-shivani.agarwal@broadcom.com>
-References: <20250811052702.145189-1-shivani.agarwal@broadcom.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QD3mXGAq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1754911351;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=FwVUSFRZ0F7GHgPHZ+J3/Ax+Q+cwf/vSatx/cEwvjzI=;
+	b=QD3mXGAqBBI/1KrTZe6ZMvDWKdBs9KI0/JJGKfkyfBOeV/PU0NWHYkIUOJPNyoLonFL7yC
+	iT7HPPThPWLmkaGWL4HXu24l7l62esA6IyjRewRu47VhaGsBkZ352zDgPRozKbk0FvnJMZ
+	jC0QHZ7Xid3EHQxkUH4D1iGvO8ghliY=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-685-k73NodGxOoSyNSYeShpbMA-1; Mon,
+ 11 Aug 2025 07:22:28 -0400
+X-MC-Unique: k73NodGxOoSyNSYeShpbMA-1
+X-Mimecast-MFC-AGG-ID: k73NodGxOoSyNSYeShpbMA_1754911347
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 02A9F1800370;
+	Mon, 11 Aug 2025 11:22:27 +0000 (UTC)
+Received: from [10.22.80.50] (unknown [10.22.80.50])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7812219560B4;
+	Mon, 11 Aug 2025 11:22:24 +0000 (UTC)
+Date: Mon, 11 Aug 2025 13:22:18 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Shubham Sharma <slopixelz@gmail.com>
+cc: agk@redhat.com, snitzer@kernel.org, corbet@lwn.net, msakai@redhat.com, 
+    dm-devel@lists.linux.dev, linux-doc@vger.kernel.org, 
+    linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] docs: device-mapper :Fix typos in delay.rst and
+ vdo-design.rst
+In-Reply-To: <20250810113008.27381-1-slopixelz@gmail.com>
+Message-ID: <b03394a2-eca7-6c39-6ab8-d3a7ae1c7233@redhat.com>
+References: <20250810113008.27381-1-slopixelz@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-DetectorID-Processed: b00c1d49-9d2e-4205-b15f-d015386d3d5e
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-From: Ming Lei <ming.lei@redhat.com>
+Applied, thanks.
 
-commit b4459b11e84092658fa195a2587aff3b9637f0e7 upstream.
+Mikulas
 
-DM uses blk-mq's quiesce/unquiesce to stop/start device mapper queue.
 
-But blk-mq's unquiesce may come from outside events, such as elevator
-switch, updating nr_requests or others, and request may come during
-suspend, so simply ask for blk-mq to requeue it.
 
-Fixes one kernel panic issue when running updating nr_requests and
-dm-mpath suspend/resume stress test.
+On Sun, 10 Aug 2025, Shubham Sharma wrote:
 
-Cc: stable@vger.kernel.org
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-[Shivani: Modified to apply on 5.10.y]
-Signed-off-by: Shivani Agarwal <shivani.agarwal@broadcom.com>
----
- drivers/md/dm-rq.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 7762bde40963..a6ea77432e34 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -490,6 +490,14 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
- 	struct mapped_device *md = tio->md;
- 	struct dm_target *ti = md->immutable_target;
- 
-+	/*
-+	 * blk-mq's unquiesce may come from outside events, such as
-+	 * elevator switch, updating nr_requests or others, and request may
-+	 * come during suspend, so simply ask for blk-mq to requeue it.
-+	 */
-+	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)))
-+		return BLK_STS_RESOURCE;
-+
- 	if (unlikely(!ti)) {
- 		int srcu_idx;
- 		struct dm_table *map;
--- 
-2.40.4
+> Fixed the following typos in device-mapper documentation:
+> - explicitely -> explicitly
+> - approriate -> appropriate
+> 
+> Signed-off-by: Shubham Sharma <slopixelz@gmail.com>
+> ---
+>  Documentation/admin-guide/device-mapper/delay.rst      | 2 +-
+>  Documentation/admin-guide/device-mapper/vdo-design.rst | 2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Documentation/admin-guide/device-mapper/delay.rst b/Documentation/admin-guide/device-mapper/delay.rst
+> index 4d667228e744..982136160d6f 100644
+> --- a/Documentation/admin-guide/device-mapper/delay.rst
+> +++ b/Documentation/admin-guide/device-mapper/delay.rst
+> @@ -18,7 +18,7 @@ Table line has to either have 3, 6 or 9 arguments:
+>     to write and flush operations on optionally different write_device with
+>     optionally different sector offset
+>  
+> -9: same as 6 arguments plus define flush_offset and flush_delay explicitely
+> +9: same as 6 arguments plus define flush_offset and flush_delay explicitly
+>     on/with optionally different flush_device/flush_offset.
+>  
+>  Offsets are specified in sectors.
+> diff --git a/Documentation/admin-guide/device-mapper/vdo-design.rst b/Documentation/admin-guide/device-mapper/vdo-design.rst
+> index 3cd59decbec0..faa0ecd4a5ae 100644
+> --- a/Documentation/admin-guide/device-mapper/vdo-design.rst
+> +++ b/Documentation/admin-guide/device-mapper/vdo-design.rst
+> @@ -600,7 +600,7 @@ lock and return itself to the pool.
+>  All storage within vdo is managed as 4KB blocks, but it can accept writes
+>  as small as 512 bytes. Processing a write that is smaller than 4K requires
+>  a read-modify-write operation that reads the relevant 4K block, copies the
+> -new data over the approriate sectors of the block, and then launches a
+> +new data over the appropriate sectors of the block, and then launches a
+>  write operation for the modified data block. The read and write stages of
+>  this operation are nearly identical to the normal read and write
+>  operations, and a single data_vio is used throughout this operation.
+> -- 
+> 2.43.0
+> 
 
