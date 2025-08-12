@@ -1,193 +1,196 @@
-Received: from SEYPR02CU001.outbound.protection.outlook.com (mail-koreacentralazon11013064.outbound.protection.outlook.com [40.107.44.64])
+Received: from out-172.mta0.migadu.com (out-172.mta0.migadu.com [91.218.175.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D0963FB1B
-	for <dm-devel@lists.linux.dev>; Tue, 12 Aug 2025 02:18:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.44.64
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754965111; cv=fail; b=DEH1CJ81jLn6fJkxu0lTNk8tWYOm5u+FhvKYmoDn6OktFz2RUXEfBBJ9WiWvvRn61UZYEauykA+1IrUKU9ZJ0z2X6D0pUzI4jCT7/TdMGJlCF9AMAggEhOkGO5qyOt0DJbPKNb081pEpJHv/Iz8BgAd5AISa1cYzKNO1diXkRbM=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754965111; c=relaxed/simple;
-	bh=DfL2+wuu9UxgTVj1a0SR2IyoDoiylboEzSonAKQZIUw=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=Psy02M8I5WyijNTrj/YyMxHwUv5yEyKEJ4SQHW9ISEFXzUfkn1vckYFfQrnUvr28GcJGlLfLz0AZQf1F4xSKjDKdVciZ8hhF0Wu3rw+kgJK6meLXx057QEpnRQ6mp/HzinnWQOypZruk1Ec7R6Ri/lQFKC4almg4xPjXoovb0Ew=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com; spf=pass smtp.mailfrom=vivo.com; dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b=Z2gdiqwC; arc=fail smtp.client-ip=40.107.44.64
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=vivo.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=vivo.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 286F3225A59
+	for <dm-devel@lists.linux.dev>; Tue, 12 Aug 2025 08:25:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.172
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1754987110; cv=none; b=BmmfmDn++2641ydWp1Eirn1UVUcLj/h6m5rp3r8UKUw/9KYsVwIk7H7U1P5LFh5/baTwokSbCWRcyxGAoc383GLTbN5P1ccvsP9cxzCBzoTyOp22bNMitITUKNr58NT1sQMKxQ9MPnYObblZi8Z1ktPil98UrJGwAstkB7QqbDE=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1754987110; c=relaxed/simple;
+	bh=veWOL+23ukAaJT7DekKnBSzKNQjf9kfiWtrXdFG0pmU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=nnAxO8J/pPbE5OBiSs6ILBJYjsZR0sn7IPRxhR9y77kwdFetpZtDbmPXkaZYNZofpBUaAk2WN+32vXyuyr6YW8ICftUYPxiYh2WroaUYkCIuCYVoi6Dl4hRdJxAyUu8EMurRp0t7YOPAJfZx5hnNIvPBD2hv49GyASLfhrrBAtM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=QbPW/SAG; arc=none smtp.client-ip=91.218.175.172
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=vivo.com header.i=@vivo.com header.b="Z2gdiqwC"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=IRUiTGY/AKtAkLk5s76/CB/GmvRUeYqDPAeFN+N/dGfuEcEV8VfmGxnnFCNxtZfDd2rnJ7IeWCV5c0Ufx5hdAGEom9cNCafyGRV4zjUexDuP2XcGs7xY7wvCQEwkhD6+3SgMIAX1Zakgkqsxq0sIzwSqb96UAGcNPwY1bHX49AYG8WOSMAajUAr37cIh10QyRLmiInGZWUP9SwBturtkkQFeq0i8pr2GDynJgLnn/jwyxjrVDXG2/0IqrvmWXqtXXBb1Kt9KZInztdvMosVXlW8MhO4mb0TuRK73sRJ15dEaHKD5xgdm27vfMTgatl1mZ9/923VT8LiDRVELNXK8Lw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=DfL2+wuu9UxgTVj1a0SR2IyoDoiylboEzSonAKQZIUw=;
- b=kVsGp0kJfCMQYFgW8SI2843L2r53G2xyvmOiUpc/qeWNVKnT8qlYFAHeR821PLZWkClTUu05RBhqWxsI5w9YkTQlORyznwvWiVMNSnsGq5g84n2M5tRtlbxOqrRU0SU6MuxnE8rap79Z4/3cvUJPdqcMDG8MTKpmItWyYlbca4RENTA3x8p/fhjgJXRSwJ56qKacCiBwZnbcHI4HfK/3vcayEi0W01/d0QGU1eZU7kxKvYtiaQu8CT8B7RfTRMBCTf7/UxvtjWWwUDoiISnrAWxgq00bhIRaFZBGJPLtbMJXf0ObqXOJYkrSpAty4lltiO+IwVRCad3ATCPPIiAp0g==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=vivo.com; dmarc=pass action=none header.from=vivo.com;
- dkim=pass header.d=vivo.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=vivo.com; s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=DfL2+wuu9UxgTVj1a0SR2IyoDoiylboEzSonAKQZIUw=;
- b=Z2gdiqwCvD/kHEIOHgIw8H1bLX7iyBlxItgOE2DyKFNun85IrsENaB5ue/vJiP6sfzmrWDWz8YRG2R142cTb94vAAnAOmflNw2rA77BAZlnkOo+5NUy7dacMPblOQyjuK/0NRLpqkWgvbvaGPPYAoF5rE4MjUN1bZMwP6op3X5NdY8SJ8BDg8xV5HDqJbfyZq7QzylvjPwIRoXXM25CsW0Q+vdnq/C4DitPmBkqy5ciJiM1vkaMul+C6DFgsxUqbMdlmTVi1dGjv7ytSb37WGMW0mklmtQnhAJe2SsxG7CDnOr2nDrunG4p4nvdRURu9PoSQXUMnc9gVj3eBVx6Qug==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=vivo.com;
-Received: from SI2PR06MB5140.apcprd06.prod.outlook.com (2603:1096:4:1af::9) by
- SG2PR06MB5334.apcprd06.prod.outlook.com (2603:1096:4:1d5::5) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.9009.21; Tue, 12 Aug 2025 02:18:26 +0000
-Received: from SI2PR06MB5140.apcprd06.prod.outlook.com
- ([fe80::468a:88be:bec:666]) by SI2PR06MB5140.apcprd06.prod.outlook.com
- ([fe80::468a:88be:bec:666%4]) with mapi id 15.20.9009.018; Tue, 12 Aug 2025
- 02:18:25 +0000
-Message-ID: <81f495fe-508c-4f7e-8a69-1738343c5a58@vivo.com>
-Date: Tue, 12 Aug 2025 10:18:23 +0800
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 2/3] dm bufio: remove redundant __GFP_NOWARN
-Content-Language: en-US
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- "open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>,
- open list <linux-kernel@vger.kernel.org>
-References: <20250811123638.550822-1-rongqianfeng@vivo.com>
- <20250811123638.550822-3-rongqianfeng@vivo.com>
- <649a5bf8-309b-8128-b3f9-971d3a0bb350@redhat.com>
- <bae5bba3-a73e-4a5d-80f8-e1506d0a302e@vivo.com>
- <4fe735d7-736c-7bbb-173a-1bee27bbe92b@redhat.com>
-From: Qianfeng Rong <rongqianfeng@vivo.com>
-In-Reply-To: <4fe735d7-736c-7bbb-173a-1bee27bbe92b@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: SG2PR01CA0177.apcprd01.prod.exchangelabs.com
- (2603:1096:4:28::33) To SI2PR06MB5140.apcprd06.prod.outlook.com
- (2603:1096:4:1af::9)
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="QbPW/SAG"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1754987103;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=/pUy1089LIoq09fWSMh72l+7ou4njoi/W3xc6RHTrp0=;
+	b=QbPW/SAGRrS9GPm/UVpOS+kzrsa8O0FYJoPgRjmxEvYF62L0BQaatA1mONqPArqUkLLszl
+	flOGG/vOD2led8mEz9d5NJ0VZlyMmXMOtMjzY9avjuOIfePJbyoXn8KHqrpqP0sN5RR8Wg
+	3cLS0xuECXnTaj3e5N+HEvFc7sxKbUE=
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+To: mpatocka@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org
+Cc: dm-devel@lists.linux.dev,
+	cengku@gmail.com,
+	Dongsheng Yang <dongsheng.yang@linux.dev>
+Subject: [PATCH v5 00/11] dm-pcache – persistent-memory cache for block devices
+Date: Tue, 12 Aug 2025 08:24:51 +0000
+Message-ID: <20250812082452.2041767-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SI2PR06MB5140:EE_|SG2PR06MB5334:EE_
-X-MS-Office365-Filtering-Correlation-Id: d700198e-67c1-4ff7-dd9d-08ddd94684cf
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|1800799024|366016|376014;
-X-Microsoft-Antispam-Message-Info:
-	=?utf-8?B?RHlucE1jZWM3ZnJob0VPWDhXcm8ybEhueUlLWU12c1dMbEcrc0tEV3laVkFE?=
- =?utf-8?B?enJNZ2ZoQzRBMnRwS3lNZEJkS1BrQXRzMXRSVXlmMDMySG1seXgxQXZNYzRU?=
- =?utf-8?B?SWYra2lPMDhOa01JWFVRWHkxK3RadUt6SVFzKzZKQkNna01EMlBLUDJ5U2hk?=
- =?utf-8?B?bVRqb3g2NEFpeFAyV3ZWcnpGOVVkU0dRWXVtRU9VNy81dkZXYW1lSzBMUzVQ?=
- =?utf-8?B?VEZKRnB0RE1wR1kvMGxCSyt1R0FqK2tKSGJ0RlQ5alFhczgzczRvSisrK1Ny?=
- =?utf-8?B?L2hEMFdkNnA3QitKbkxUYWFZbEVjVWU1NnlPb1lBWlBTRCs4MVp2dG9ncnRS?=
- =?utf-8?B?M2dIb0dmTnJNTDJwcDAxdVVNSGRCMHJuUEc2TTFmaFcrUm5nRFY4ekw2cU01?=
- =?utf-8?B?cG5KRm9SQWR0alkzREV6RzA3Ty9TSytKQkYxLzlxWi9STDJwRWdBSGtJVllu?=
- =?utf-8?B?MDJBbWxlekplam5BZmljaE9nMTJXbTBLb0dhZ0FmOHlMUXpSOFh5eWVyUDln?=
- =?utf-8?B?dzJsUFcrMDlaOFgrcWtwTlBLbHlpRHQ1TERFOWIwNTBWT0h6QjBjM0NHTkgv?=
- =?utf-8?B?Qkdzbi8yRkdoTjAyQks3UEtpZEhRdGRqYTdROFBGd0lCNzhleWlOcXVvZ0Ix?=
- =?utf-8?B?TjdpaTBRdDR6N2QyRlpwUGVMZzkzc3Q3Zjh2cHdFelpMdkpsa05NY1ovalpp?=
- =?utf-8?B?eFh2ZTZlQmFrQ20yRzllOGlrdjk1dGFhb01IVmZ4cTlTbGlGYUZJbENXU1J5?=
- =?utf-8?B?VE1sY05kWlJGUDladDZ2UlA4c2ZvOWNYNlc2ZVRGSlhuUVNkdDhqSTZPTy94?=
- =?utf-8?B?NW1iZlJ4UTdtV1hQRGlPYmNySHg4SFhkRnExOXBwR002aW5IOXpTU3pCby9I?=
- =?utf-8?B?NHpVb2Q1TjdUYk13VjYzLzR1M00vWEFrRU9qQVQ4TmZ5MW9jZjF5b0laK2lM?=
- =?utf-8?B?SVRwRGRwOXhEVE1WMU55OC9rRDE4Uy9LOXFEWmJoWDEzaXNoRnFqZXNBQlcv?=
- =?utf-8?B?eXMxaVE2ekNyQ1NjaUc2bkFhMTAxakZ1b3BBVjlvUldDUVlyVTNmakhWZy82?=
- =?utf-8?B?VWhyaXZuN1YyRldrNENsazNTRVVyUzAvQVhRM05ycWg1OVJGU0g3bnN0U2pB?=
- =?utf-8?B?WnV4UjFQelF1S0xpblUreHV3bllVNGdZbmpyM0ViY3lxM2o0RklSVk9jNnEr?=
- =?utf-8?B?TFpsY1Q4UnE3M2x1enlydGdqVjV5YlVjamZnMlY0bjJNZnR6TXNiQ2s5dHlG?=
- =?utf-8?B?WHdGbGtpbDM1U0hhOVdEMTRiM21TRTNiQ1NLdUlvT2luYzBsMmRvWGpUb2Rt?=
- =?utf-8?B?SE5kRlN5RFRET0RsdE03aHEyM1phTHRnc1ZrZHFHK2N2YXQyZTk5cnJTRVFS?=
- =?utf-8?B?Q3gxY1RlQUhaSjM1cDA0enh5bXVxTTJ0elBnUitGb3ZCSVptc3UxY0JZQlFx?=
- =?utf-8?B?ZUVqVHl6R1Foa2grSlo1bHE5WnY2OFRCUm5pRGU5UzV6ZlkzbWp2N3paKy8v?=
- =?utf-8?B?SG5Vd2toZERQaEdSRzE4S0FzWjRNM25qY3o0cDNtT0xLQVQvaUpsVFBkZS9u?=
- =?utf-8?B?SmROSFJiem8wTzFqd0FLRXRqaFd6a2h1aEpTcnd0Z3QyZi9IZHRMeXJiczFP?=
- =?utf-8?B?b1p0QXZ5cUZBek5YbjUwdllKUjdwZWVFNXhoZ1MvcjlZNm9GUDQvejZlNGJy?=
- =?utf-8?B?eFhXVVFzMnFFUDd6cE02cFlYWGdkaWVicHJ5ZkV3YU1LTmVoSitJejZmdXl5?=
- =?utf-8?B?M0lldDJWUnVvVzNQS1BiUjdTNWJtTG1mODY2YXNPT04yd3lwQXhVck05bTNz?=
- =?utf-8?B?SU5yV1Jmd1JnbFJXbWQxZGt1TWtUMnpId1RDSTB4alhDMHoyaGE1N1B3ZnpV?=
- =?utf-8?B?U0dSV1JpSkswditVVVRQcFlKdTdKV1UzMXNLYjR4S1VmYXFtc3BCK0JLaUVK?=
- =?utf-8?Q?ODIqpt8Q2rs=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SI2PR06MB5140.apcprd06.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(376014);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?Y3ZYLytCTE8wc2x3eTB2RzBiRkxhNmVIWVJOWkd3YUkvcFdMOVpMbFh2ayt5?=
- =?utf-8?B?NHJidFVSbFN0NHJsNlc1emVETC92TzhNcTVCcGJmc2tZV3NSVVMxVUlBQXIy?=
- =?utf-8?B?ZUhXMjkvbC9Ea3ZET1B1bWphL0lhOVBDRWZCQytIWCtUNklndmZXbEM1RlFh?=
- =?utf-8?B?azJvTW5OR0UvNmZkcHV5TnFCWTliejk0b1lUQU1Nd213NHM5dWpYWEZIR3My?=
- =?utf-8?B?My93Z01GZE5JbEhKNE0zWUhieWpzUGduWEorWHM1UitjVHBmVUNYY2I0ck43?=
- =?utf-8?B?QXZkb0pobnRBRyswN3pid2JYNTJnanRxSmFIYW16WE4zamVFMUNGelJaSEo0?=
- =?utf-8?B?MnNrak1aSnduZUFmZG92aS9HdTlUSzBsTjZrbGpzR1JKdTE2YktLK1VWSEhk?=
- =?utf-8?B?MFJzeDBpVWI3SWlVMEpCRVJ5M0xUZlA0MTIrWWpBZE1OYm1uWjF6cjBXS05z?=
- =?utf-8?B?ZmZEOXlsS3dOenRhQ3lJc3krYmNZVG0zZXdKRmZzbENVVG1BR040eFliTHg5?=
- =?utf-8?B?QmVIYWE4ZjR3Wi9hSmNYTWhnZDZWeFhnTEQ4NWtrWmNka0JnUVUyY29NUVl3?=
- =?utf-8?B?bWp3aUlWNVh6Tk5PUXhWOUxUUDBJNEpxc1QyVGk4K0k5WlpDTWIyN2JEUVVn?=
- =?utf-8?B?VFNvMThoaFlRS1RyVndFbVl3ZWN3YTFaanJqR0hlcUxhb3BOZ28vTjNMc1NI?=
- =?utf-8?B?R0hDTFVsclpJL1d6a0xpTk1XQUpaMUFVcDVuTmx2R21aR2RxbENIcVNSSFRM?=
- =?utf-8?B?SCtvak51SVcxUlBLamFLejdOdTFMSC9WNU1FSENqS0YwczhlcUt4Z1BKZkNG?=
- =?utf-8?B?WDU0Mlkwd0RubjZDcWhoRGp2c1o0NEpCdC9oSnhIeDNuSGs2L0c4ZnZsamJn?=
- =?utf-8?B?YjQ1d0J2dFpkVG9RQVp5ZFpmWVpINmZJcmtNdmJMZHFpcWVJN1gxUzB4bTVM?=
- =?utf-8?B?MkIxM0loRzIybFo3Zmp6bGtvL0ZRVjlScmJpTEx1Wm5iK0pRQm9OQytKbURW?=
- =?utf-8?B?MXJmTGp4VkM1N3NlREtvY21pandrQTFqUkFTZk11ZnF3am1VS1o4eFVZeGU2?=
- =?utf-8?B?OU1UOU56WkdmZGlQa2VBK3dTZTV2c1AxSldVWkI0U3hRNjdMNEg4MzBXVzRE?=
- =?utf-8?B?enZkdVZncFV4aUZzZTVRQlcvTENKZm1JTWVxam85REtWdFZMTkVsMUFPcm9R?=
- =?utf-8?B?eXZWTWFBOVpkK0lKbVRsUFJEQndTcitNUkRuUS83Z3ViSFErZWNZMFhhcHBX?=
- =?utf-8?B?UDRqT3pNenY4MXlwV2s0OTR6TGtWS053cngvRVk1a25LRlhWN3F2dDYxY2lT?=
- =?utf-8?B?U2FEbFRuQXhFZVhQN2hEL3lTOFVaL3VsRWljaE1FUmg2MThiZTlWa2MrZHZP?=
- =?utf-8?B?U0pVdnNXM1JhYzRzOXkxTnBPaWY4cGdDYkNXbVp2Zzl2MENKc0x6ak5wTDBP?=
- =?utf-8?B?d0pRQ0dmRWRkU0JBVWpRY21EbVgxMTZ0bjBkdjFvR0hwaTdpaU5mSDhiTHJv?=
- =?utf-8?B?QmI5Q0R2RUxqd0VKN3E0NXlIcktlMkY2Y3FEWHBCaFd2UWROS2NFcjJxdDFm?=
- =?utf-8?B?c3VFdlRSeCtpSE1ZMm8zN091bEQ4cDJ1dm95NHYxUTh6TVcrNEFoY2l3N0hV?=
- =?utf-8?B?V0hRTHBjVDV4RXY3eHdqRzQycVRRWG9kWDQvcHdzc0FITkhNbGxUMjlGZFhu?=
- =?utf-8?B?YXhsL2JqSXlHNUtVUXMxVERCNUdSdUJHQ1puSCthUWN2VnBaNjlXUzFTUHQ2?=
- =?utf-8?B?QW5Bd252WlhaL28yVlo1TUlIR2t4Q1hHUk4vNTMveFZDTndBUS9TKzNCaCtN?=
- =?utf-8?B?VTc2ZjRMQWsvM2RwcCswNXQ3MTZlaHNJSzgzS3pKd1RjZmRONWxLeW9NWUQr?=
- =?utf-8?B?dWJHM2o3YkduZWl2aUt2NXJ4Y2tBSWpZWGdreUEvR1RyWUtDRkdITjdxNWla?=
- =?utf-8?B?aWNpSFZpbDRCUDFDZTBBR082T3BUcVo1bWJCSTdLN2ZDazVDeEdFdVJ5Y045?=
- =?utf-8?B?MDBReExOanZWOHkyOXlQeTJKc0pkZFVVb2c4c1pyeTdwUSthSktNbE9ZUC9p?=
- =?utf-8?B?Wml6WDBITHFuVFhvbWE4OFVwUkdxUVdJYVNkbEZpMmxSdlBsbkEyaWdDNWFl?=
- =?utf-8?Q?ZNHwPJiHbgUzT2FPdQ5Gbzia/?=
-X-OriginatorOrg: vivo.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: d700198e-67c1-4ff7-dd9d-08ddd94684cf
-X-MS-Exchange-CrossTenant-AuthSource: SI2PR06MB5140.apcprd06.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 12 Aug 2025 02:18:25.7910
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 923e42dc-48d5-4cbe-b582-1a797a6412ed
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: NdHdQwp1MHApdsAa5sdfbNqOERCymzkOB5BF/vBotDwC8lcDVc5eNHuboNkpLPNV9JUU/8LfES70292VnjzlUg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SG2PR06MB5334
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
+Hi Mikulas,
+	This is V5 for dm-pcache, please consider merging.
 
-在 2025/8/11 23:10, Mikulas Patocka 写道:
->
-> On Mon, 11 Aug 2025, Qianfeng Rong wrote:
->
->> 在 2025/8/11 20:44, Mikulas Patocka 写道:
->>> Hi
->>>
->>> I think that GFP_NOWAIT already includes __GFP_NORETRY too. So, should we
->>> drop __GFP_NORETRY as well?
->> GFP_NOWAIT does not include __GFP_NORETRY:
->> #define GFP_NOWAIT (__GFP_KSWAPD_RECLAIM | __GFP_NOWARN)
->>
->> GFP_NOWAIT tells the memory manager to only wake up kswapd to perform
->> memory reclamation, not to perform direct memory reclaim.  Even if the
->> request fails, no error message is printed.
->>
->> Best regards,
->> Qianfeng
-> Yes, but if GFP_NOWAIT allocation can't sleep, it can't retry - thus
-> GFP_NOWAIT should imply __GFP_NORETRY.
->
-> Mikulas
-I strongly agree with your perspective, but I'm uncertain whether
-GFP_NOWAIT should include __GFP_NORETRY, or if we should add a
-note stating GFP_NOWAIT/GFP_ATOMIC should not be combined with
-__GFP_NORETRY since it becomes redundant in atomic contexts.  I'll
-raise this issue to see if others have insights.
+	As you requested, I've squashed these patches into a single patch, based
+  on v6.16. If you find anything that needs tweaking while merging, feel
+  free to modify it directly. I can also send a rebased version on top of the linux-dm branch if you
+  prefer.
+  
+  This patch has gone through quite a bit of testing on my side. I can
+  share the highlights. Once you merge this patch into the linux-dm branch,
+  I’ll keep running ongoing tests against dm-6.18.
+  
+  1. dtg-tests for pcache[1]: 
+  	- Includes `dmsetup` management operations, including failure/exception scenarios.
+	- Failslab tests (covering the NOWAIT → NOIO fallback path you mentioned).
+	- `fail_make_request` fault-injection tests.
+	- Backing device delay tests.
+	- xfstests (group `generic/rw`) under different parameters.
+  
+  2. Striped pmem as the cache_dev[2]: ran the same dtg-tests suite with a
+  striped pmem configuration.
+  
+  3. KASAN and memleak modes[3]: all of the above tests were also executed
+  with KASAN and memory leak detection enabled.
+  
+  4. Coverage with gcov: I used gcov to gather code coverage during the
+  test runs[4].
+	- The results show 100% function coverage and 90%+ line coverage. The
+	remaining uncovered code is mostly `BUG()` lines and a few hard-to-simulate error paths.
+	- In the coverage report you can see the code path for `mempool_alloc`
+	with `GFP_NOIO` is exercised and covered.
 
-Best regards,
-Qianfeng
+[1]: https://datatravelguide.github.io/dtg-blog/pcache/pcache_v5_result_virtio/results.html
+[2]: https://datatravelguide.github.io/dtg-blog/pcache/pcache_v5_result_ram/results.html
+[3]: https://datatravelguide.github.io/dtg-blog/pcache/pcache_v5_result_kasan/results.html
+[4]: https://datatravelguide.github.io/dtg-blog/pcache/pcache_cov_v5/dm-pcache/index.html
+
+Changelogs
+
+V5 from V4:
+	- Fix `get_n_vecs()` bug when the buffer isn’t page-aligned; use
+	- `bio_add_max_vecs()` instead.
+	- Use `kvcalloc()` for allocations larger than 32,768 bytes.
+	- For mempool allocations, try `GFP_NOWAIT` first; if that fails, fall back to `GFP_NOIO`.
+
+V4 from V3:
+	- go back to use mempool for allocation of cache_key and
+	  backing_dev_req.
+
+	- introduce backing_bvec_cache and backing_dev->bvec_pool to
+	  allocate bvecs for backing_dev_req. Currently, the obj_size of
+	  bvec_cache is max size of bvecs. The bvecs are allocated only for
+	  write‑back backing_dev_req requests, and only a limited number of writeback requests
+	  are allocated at the same time, so the resulting memory overhead should
+	  not be too severe.
+
+	  If in the futer we found that this implementation results in unacceptable memory waste,
+	  we can optimize it by switching to a multi‑level slab design.
+
+	- remove ret-value checking for bio_init_clone() as there should
+	  not be REQ_INTEGRITY in bio bi_opf, so bio_init_clone() never
+	  fail.
+
+	- remove ret-value checking for backing_dev_req_alloc() and
+	  cache_key_alloc().
+
+V3 from V2:
+	- rebased against linux-dm dm-6.17
+	- add missing include file bitfiled.h (Mikulas)
+	- move kmem_cache from per-device to per-module (Mikulas)
+	- fix a memleak in error path found by failslab testing
+	- retry pcache_request in defer_req() when memory allocation
+	  fail.
+
+V2 from V1:
+	- introduce req_alloc() and req_init() in backing_dev.c, then we
+	  can do req_alloc() before holding spinlock and do req_init()
+	  in subtree_walk().
+	- introduce pre_alloc_key and pre_alloc_req in walk_ctx, that
+	  means we can pre-allocate cache_key or backing_dev_request
+	  before subtree walking.
+	- use mempool_alloc() with NOIO for the allocation of cache_key
+	  and backing_dev_req.
+	- some coding style changes from comments of Jonathan.
+
+V1 from RFC-V2:
+	- use crc32c to replace crc32
+	- only retry pcache_req when cache full, add pcache_req into defer_list,
+	  and wait cache invalidation happen.
+	- new format for pcache table, it is more easily extended with
+	  new parameters later.
+	- remove __packed.
+	- use spin_lock_irq in req_complete_fn to replace
+	  spin_lock_irqsave.
+	- fix bug in backing_dev_bio_end with spin_lock_irqsave.
+	- queue_work() inside spinlock.
+	- introduce inline_bvecs in backing_dev_req.
+	- use kmalloc_array for bvecs allocation.
+	- calculate ->off with dm_target_offset() before use it.
+
+Dongsheng Yang (1):
+  dm-pcache: add persistent cache target in device-mapper
+
+ .../admin-guide/device-mapper/dm-pcache.rst   | 201 ++++
+ MAINTAINERS                                   |   8 +
+ drivers/md/Kconfig                            |   2 +
+ drivers/md/Makefile                           |   1 +
+ drivers/md/dm-pcache/Kconfig                  |  17 +
+ drivers/md/dm-pcache/Makefile                 |   3 +
+ drivers/md/dm-pcache/backing_dev.c            | 374 ++++++++
+ drivers/md/dm-pcache/backing_dev.h            | 100 ++
+ drivers/md/dm-pcache/cache.c                  | 445 +++++++++
+ drivers/md/dm-pcache/cache.h                  | 632 +++++++++++++
+ drivers/md/dm-pcache/cache_dev.c              | 299 ++++++
+ drivers/md/dm-pcache/cache_dev.h              |  70 ++
+ drivers/md/dm-pcache/cache_gc.c               | 170 ++++
+ drivers/md/dm-pcache/cache_key.c              | 888 ++++++++++++++++++
+ drivers/md/dm-pcache/cache_req.c              | 835 ++++++++++++++++
+ drivers/md/dm-pcache/cache_segment.c          | 293 ++++++
+ drivers/md/dm-pcache/cache_writeback.c        | 258 +++++
+ drivers/md/dm-pcache/dm_pcache.c              | 497 ++++++++++
+ drivers/md/dm-pcache/dm_pcache.h              |  67 ++
+ drivers/md/dm-pcache/pcache_internal.h        | 117 +++
+ drivers/md/dm-pcache/segment.c                |  61 ++
+ drivers/md/dm-pcache/segment.h                |  74 ++
+ 22 files changed, 5412 insertions(+)
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-pcache.rst
+ create mode 100644 drivers/md/dm-pcache/Kconfig
+ create mode 100644 drivers/md/dm-pcache/Makefile
+ create mode 100644 drivers/md/dm-pcache/backing_dev.c
+ create mode 100644 drivers/md/dm-pcache/backing_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache.c
+ create mode 100644 drivers/md/dm-pcache/cache.h
+ create mode 100644 drivers/md/dm-pcache/cache_dev.c
+ create mode 100644 drivers/md/dm-pcache/cache_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache_gc.c
+ create mode 100644 drivers/md/dm-pcache/cache_key.c
+ create mode 100644 drivers/md/dm-pcache/cache_req.c
+ create mode 100644 drivers/md/dm-pcache/cache_segment.c
+ create mode 100644 drivers/md/dm-pcache/cache_writeback.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.h
+ create mode 100644 drivers/md/dm-pcache/pcache_internal.h
+ create mode 100644 drivers/md/dm-pcache/segment.c
+ create mode 100644 drivers/md/dm-pcache/segment.h
+
+-- 
+2.43.0
 
