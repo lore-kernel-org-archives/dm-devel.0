@@ -1,36 +1,35 @@
 Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 858B125A623
-	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 02:50:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8D7426CE3B
+	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 02:52:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755053442; cv=none; b=LheAjC2lY8A1AzAAN0LTvww8PpaIxPmCIUZdT3QHTMFadMjjwTHX1BxqxHmmhbYzssiA0unEnvBv8TDnTesSUE1E5TbZmm9/aVz+Ze8dwVtYegEpxcCuMkJX8vhZr8wSxmEzdeA4fMZdbqcpH/n5HTemAFkRvIRQbdRPJCZmXIc=
+	t=1755053536; cv=none; b=rSiDeuoiyN/OKXzQZs+g2LOtHXjm+R2MfqUwexc4JvqffBDq8ieyumsyUQ6qkTbeZ7P0LtnDbakQmDRPLPrJ2QSif9yDHVOIruHRA+Sgr2YV4AwZA5YGxDccN+vvAE4F/6+7qG3OMo4iGiH5I7c/IX1AYTFy/cGyMdgPX4u9KL8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755053442; c=relaxed/simple;
-	bh=65xTXBS7eGQ2OVVFDS+gtYw/5G72uYv1DJdogCLu8CU=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=r3r9UV5Z1EGynvzcOi6wSz9r5qv7lmYfCwRk+02dK0p8rslCFg9dGEx9p0o4AAa30HrOva5CBYu252oovwfSjcxpPxSgZbKQuO/6MvCMRiqzaGSzMap4EW/H4jGAOgq5i6z2bzQ4XiKeSmHtaAbxnyBHoXNld2z8OanufUbKHGU=
+	s=arc-20240116; t=1755053536; c=relaxed/simple;
+	bh=pWPtEhrfKrsC9K7/YtHpy6pZ1rJYAEdnHYMeXUEPRCk=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=E+8PP62KRu7juyV1WAqKzRKLcyfciE+VMEmd6wq4wgsjQ99tj8bMcHki5O2pF6ySIiJm2bt7LnPahQH/gLzfbDT2UoCyzbhxRTpnrIZonSqKFLXfMo/r8MQXLTgAEkBUM824nDMPlvq20NSVAQRWPZQCkfcEJeIIuYK3CH9IOTA=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.93.142])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4c1tCf4k1jzKHMmM
-	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 10:50:38 +0800 (CST)
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4c1tFV0X8VzKHMXy
+	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 10:52:14 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id DF7931A018D
-	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 10:50:37 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 512201A018D
+	for <dm-devel@lists.linux.dev>; Wed, 13 Aug 2025 10:52:13 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDHjxB2_ZtofKcBDg--.14943S4;
-	Wed, 13 Aug 2025 10:50:37 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgBHwhLQ_ZtoAscBDg--.14424S5;
+	Wed, 13 Aug 2025 10:52:13 +0800 (CST)
 From: Zhang Yi <yi.zhang@huaweicloud.com>
 To: linux-fsdevel@vger.kernel.org,
 	linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-nvme@lists.infradead.org,
-	linux-scsi@vger.kernel.org,
-	linux-xfs@vger.kernel.org
+	linux-scsi@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org,
 	hch@lst.de,
 	tytso@mit.edu,
 	djwong@kernel.org,
@@ -44,10 +43,12 @@ Cc: linux-kernel@vger.kernel.org,
 	chengzhihao1@huawei.com,
 	yukuai3@huawei.com,
 	yangerkun@huawei.com
-Subject: [PATCH xfsprogs v2] xfs_io: add FALLOC_FL_WRITE_ZEROES support
-Date: Wed, 13 Aug 2025 10:42:50 +0800
-Message-Id: <20250813024250.2504126-1-yi.zhang@huaweicloud.com>
+Subject: [PATCH blktests v2 1/3] scsi/010: add unmap write zeroes tests
+Date: Wed, 13 Aug 2025 10:44:19 +0800
+Message-Id: <20250813024421.2507446-2-yi.zhang@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20250813024421.2507446-1-yi.zhang@huaweicloud.com>
+References: <20250813024421.2507446-1-yi.zhang@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,125 +56,142 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDHjxB2_ZtofKcBDg--.14943S4
-X-Coremail-Antispam: 1UD129KBjvJXoWxur17Jw1kCF1rXw15JF15twb_yoW5Xr1Up3
-	9rXF1UKa45Xry7WayfGws7WFn8Wws2kr1fJr4xWr1UZ3W5AFyxKFn8G3Z5X3s7WFWxCa1U
-	JFnIqFy5G3WSy3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
-	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
-	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
-	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
-	2Ix0cI8IcVAFwI0_Jrv_JF1lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
-	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
-	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
-	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
-	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
-	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
-	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
-	nIWIevJa73UjIFyTuYvjTR_OzsDUUUU
+X-CM-TRANSID:gCh0CgBHwhLQ_ZtoAscBDg--.14424S5
+X-Coremail-Antispam: 1UD129KBjvJXoWxAF13tFy3tr43Ww1kXrWfuFg_yoWrArW3pr
+	y0kFZYgrW8XrsrJrs5Cay7Wr13AanYyry7Way7Jryj93ykZr17urs7KFWjqa1fGryfCw40
+	qay5XFWSkr1Dt37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmmb4IE77IF4wAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUGw
+	A2048vs2IY020Ec7CjxVAFwI0_Gr0_Xr1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxS
+	w2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxV
+	W8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v2
+	6rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMc
+	Ij6xIIjxv20xvE14v26r126r1DMcIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_
+	Jr0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I
+	0E8cxan2IY04v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCa
+	FVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_Jr
+	Wlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j
+	6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVWxJVW8Jr1lIxAIcVCF04k26cxKx2IYs7xG6r
+	1j6r1xMIIF0xvEx4A2jsIE14v26r1j6r4UMIIF0xvEx4A2jsIEc7CjxVAFwI0_Gr0_Gr1U
+	YxBIdaVFxhVjvjDU0xZFpf9x0piRRR_UUUUU=
 X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
 From: Zhang Yi <yi.zhang@huawei.com>
 
-The Linux kernel (since version 6.17) supports FALLOC_FL_WRITE_ZEROES in
-fallocate(2). Add support for FALLOC_FL_WRITE_ZEROES support to the
-fallocate utility by introducing a new 'fwzero' command in the xfs_io
-tool.
+Test block device unmap write zeroes sysfs interface with various SCSI
+debug devices. /sys/block/<disk>/queue/write_zeroes_unmap_max_hw_bytes
+should equal to the write_zeroes_max_bytes if the SCSI device enable the
+WRITE SAME command with unmap functionality, and it should return 0
+otherwise. /sys/block/<disk>/queue/write_zeroes_unmap_max_bytes should
+be equal to write_zeroes_unmap_max_hw_bytes by default, and we can
+disable write zeroes support by setting it to zero.
 
-Link: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=278c7d9b5e0c
 Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
 ---
-v1->v2:
- - Minor description modification to align with the kernel.
+ tests/scsi/010     | 84 ++++++++++++++++++++++++++++++++++++++++++++++
+ tests/scsi/010.out |  2 ++
+ 2 files changed, 86 insertions(+)
+ create mode 100755 tests/scsi/010
+ create mode 100644 tests/scsi/010.out
 
- io/prealloc.c     | 36 ++++++++++++++++++++++++++++++++++++
- man/man8/xfs_io.8 |  6 ++++++
- 2 files changed, 42 insertions(+)
-
-diff --git a/io/prealloc.c b/io/prealloc.c
-index 8e968c9f..9a64bf53 100644
---- a/io/prealloc.c
-+++ b/io/prealloc.c
-@@ -30,6 +30,10 @@
- #define FALLOC_FL_UNSHARE_RANGE 0x40
- #endif
- 
-+#ifndef FALLOC_FL_WRITE_ZEROES
-+#define FALLOC_FL_WRITE_ZEROES 0x80
-+#endif
+diff --git a/tests/scsi/010 b/tests/scsi/010
+new file mode 100755
+index 0000000..c5152a4
+--- /dev/null
++++ b/tests/scsi/010
+@@ -0,0 +1,84 @@
++#!/bin/bash
++# SPDX-License-Identifier: GPL-3.0+
++# Copyright (C) 2025 Huawei.
++#
++# Test block device unmap write zeroes sysfs interface with various scsi
++# devices.
 +
- static cmdinfo_t allocsp_cmd;
- static cmdinfo_t freesp_cmd;
- static cmdinfo_t resvsp_cmd;
-@@ -41,6 +45,7 @@ static cmdinfo_t fcollapse_cmd;
- static cmdinfo_t finsert_cmd;
- static cmdinfo_t fzero_cmd;
- static cmdinfo_t funshare_cmd;
-+static cmdinfo_t fwzero_cmd;
- 
- static int
- offset_length(
-@@ -377,6 +382,27 @@ funshare_f(
- 	return 0;
- }
- 
-+static int
-+fwzero_f(
-+	int		argc,
-+	char		**argv)
-+{
-+	xfs_flock64_t	segment;
-+	int		mode = FALLOC_FL_WRITE_ZEROES;
++. tests/scsi/rc
++. common/scsi_debug
 +
-+	if (!offset_length(argv[1], argv[2], &segment)) {
-+		exitcode = 1;
-+		return 0;
-+	}
++DESCRIPTION="test unmap write zeroes sysfs interface with scsi devices"
++QUICK=1
 +
-+	if (fallocate(file->fd, mode, segment.l_start, segment.l_len)) {
-+		perror("fallocate");
-+		exitcode = 1;
-+		return 0;
-+	}
-+	return 0;
++requires() {
++	_have_scsi_debug
 +}
 +
- void
- prealloc_init(void)
- {
-@@ -489,4 +515,14 @@ prealloc_init(void)
- 	funshare_cmd.oneline =
- 	_("unshares shared blocks within the range");
- 	add_command(&funshare_cmd);
++setup_test_device() {
++	if ! _configure_scsi_debug "$@"; then
++		return 1
++	fi
 +
-+	fwzero_cmd.name = "fwzero";
-+	fwzero_cmd.cfunc = fwzero_f;
-+	fwzero_cmd.argmin = 2;
-+	fwzero_cmd.argmax = 2;
-+	fwzero_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
-+	fwzero_cmd.args = _("off len");
-+	fwzero_cmd.oneline =
-+	_("zeroes space and eliminates holes by allocating and submitting write zeroes");
-+	add_command(&fwzero_cmd);
- }
-diff --git a/man/man8/xfs_io.8 b/man/man8/xfs_io.8
-index b0dcfdb7..0a673322 100644
---- a/man/man8/xfs_io.8
-+++ b/man/man8/xfs_io.8
-@@ -550,6 +550,12 @@ With the
- .B -k
- option, use the FALLOC_FL_KEEP_SIZE flag as well.
- .TP
-+.BI fwzero " offset length"
-+Call fallocate with FALLOC_FL_WRITE_ZEROES flag as described in the
-+.BR fallocate (2)
-+manual page to allocate and zero blocks within the range by submitting write
-+zeroes.
-+.TP
- .BI zero " offset length"
- Call xfsctl with
- .B XFS_IOC_ZERO_RANGE
++	if [[ ! -f /sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_hw_bytes ]]; then
++		_exit_scsi_debug
++		SKIP_REASONS+=("kernel does not support unmap write zeroes sysfs interface")
++		return 1
++	fi
++}
++
++test() {
++	echo "Running ${TEST_NAME}"
++
++	# disable WRITE SAME with unmap
++	if ! setup_test_device lbprz=0; then
++		return 1
++	fi
++
++	umap_hw_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_hw_bytes")"
++	umap_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes")"
++	if [[ $umap_hw_bytes -ne 0 || $umap_bytes -ne 0 ]]; then
++		echo "Test disable WRITE SAME with unmap failed."
++	fi
++	_exit_scsi_debug
++
++	# enable WRITE SAME(16) with unmap
++	if ! setup_test_device lbprz=1 lbpws=1; then
++		return 1
++	fi
++
++	zero_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_max_bytes")"
++	umap_hw_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_hw_bytes")"
++	umap_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes")"
++	if [[ $umap_hw_bytes -ne $zero_bytes || $umap_bytes -ne $zero_bytes ]]; then
++		echo "Test enable WRITE SAME(16) with unmap failed."
++	fi
++
++	echo 0 > "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes"
++	umap_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes")"
++	if [[ $umap_bytes -ne 0 ]]; then
++		echo "Test manually disable WRITE SAME(16) with unmap failed."
++	fi
++	_exit_scsi_debug
++
++	# enable WRITE SAME(10) with unmap
++	if ! setup_test_device lbprz=1 lbpws10=1; then
++		return 1
++	fi
++
++	zero_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_max_bytes")"
++	umap_hw_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_hw_bytes")"
++	umap_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes")"
++	if [[ $umap_hw_bytes -ne $zero_bytes || $umap_bytes -ne $zero_bytes ]]; then
++		echo "Test enable WRITE SAME(10) with unmap failed."
++	fi
++
++	echo 0 > "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes"
++	umap_bytes="$(cat "/sys/block/${SCSI_DEBUG_DEVICES[0]}/queue/write_zeroes_unmap_max_bytes")"
++	if [[ $umap_bytes -ne 0 ]]; then
++		echo "Test manually disable WRITE SAME(10) with unmap failed."
++	fi
++	_exit_scsi_debug
++
++	echo "Test complete"
++}
+diff --git a/tests/scsi/010.out b/tests/scsi/010.out
+new file mode 100644
+index 0000000..6581d5e
+--- /dev/null
++++ b/tests/scsi/010.out
+@@ -0,0 +1,2 @@
++Running scsi/010
++Test complete
 -- 
 2.39.2
 
