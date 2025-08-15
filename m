@@ -1,101 +1,83 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B01122C17A1
-	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 15:26:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 603812F9C34;
+	Fri, 15 Aug 2025 17:20:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755271578; cv=none; b=DLwlT0LcsCcVIYZkKMe2Jr+avcEEB0DtgUhix0O45RRy5/7qJhz3CBfcnaUIgBgBTcWKLfdZ6hIGV781YK2JKgT8vjgz9sd2Usmc56AcIy6eDF95TJNQJRw0SiuFhrao37YAEOo9fE/8NXav75TqhDFm3CTIfvdGzVgyx+mG3os=
+	t=1755278415; cv=none; b=DsL9/0YRmzz+E3+lqQIpRGZcbe84DewUB5XkC9PJVNqPUBlOPkVr6nfp4+wZ+VMv1leoa/JMOLDw8W1P6oy7472KFC0oxtNlHWIAyOK8OzDjIfcZDavh3iC9AJlApgjI3KMLKH7zWUPWVpMjicHLRLumhKDd1TqAu48u5WudA24=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755271578; c=relaxed/simple;
-	bh=1qJWDpzdCyAu0Pdvv7uxCLOhIB0a2UclUOXa4ckCQGw=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=dMsCfJUDHtFxy3wb0TNSSRabqJfb1nJRgCh/pRi2bhEsfpByZWkpthe+yho2PLfCZ31G/upG/oF5dS831S2HLAH9PMo3n/o/QmMj+ZabXhglDSNa448qfbDgFMh+DkUenA6MuItYsmbK17b1tiilrVOlBHHH0nBgMdA2KddQRU4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eZR9fbHm; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1755278415; c=relaxed/simple;
+	bh=SUiiRJ3yGxoPXaH8M9+QdGkFHbB1hKcd3L5XOGPaRZs=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=riM4ShgymNlBkS3uUJcCO4E+pspHQ0tFA+Am/JjEBVMO19O5MDMXRMA+gDRs3LxdEjxDvX8uBTL+H/CALCVuO1Ut6EsxNHIz01QBbsk+FqO7w2keTP18R9duZLyuxcxPoXeKEUqzjiyjFUazhb89KGwczo3JwgjH2lZoEdaPyRg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=V8uHfd0g; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eZR9fbHm"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1755271574;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=xqjjyKEuzrRtWKhNC1YdtIomtSy7pyEQe4b8oSCwkZ0=;
-	b=eZR9fbHmmGswoMXKpJyFUNW/0P6dE9VgMy4kDAGWENjCs7/Ht8ULNr/jws8Ri3FDNWSe9u
-	eYH04La3m9xzPzc3sD2gfjjzH6hdkkhw+3mu9l962Fgj1TSQ2tHKsp1qqx0s82c0OsIYsV
-	+Ay5SuT4mtxdiHWXxQH+IsZk2lAk3g4=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-221-eXeddd2jPRq_627cBWF9gg-1; Fri,
- 15 Aug 2025 11:26:12 -0400
-X-MC-Unique: eXeddd2jPRq_627cBWF9gg-1
-X-Mimecast-MFC-AGG-ID: eXeddd2jPRq_627cBWF9gg_1755271570
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BC2A6180035C;
-	Fri, 15 Aug 2025 15:26:10 +0000 (UTC)
-Received: from [10.22.80.50] (unknown [10.22.80.50])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B5ED830001A6;
-	Fri, 15 Aug 2025 15:26:07 +0000 (UTC)
-Date: Fri, 15 Aug 2025 17:26:03 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Bagas Sanjaya <bagasdotme@gmail.com>
-cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 
-    Linux Documentation <linux-doc@vger.kernel.org>, 
-    Linux Device Mapper <dm-devel@lists.linux.dev>, 
-    Matthew Sakai <msakai@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
-    "J. corwin Coburn" <corwin@hurlbutnet.net>
-Subject: Re: [PATCH] dm-vdo: Promote dm-vdo title to title heading
-In-Reply-To: <20250815080313.25132-1-bagasdotme@gmail.com>
-Message-ID: <44c7bffa-63c4-5aeb-0b58-f2b16da34331@redhat.com>
-References: <20250815080313.25132-1-bagasdotme@gmail.com>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="V8uHfd0g"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
+	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
+	bh=3MCf5e3TI9cJ7IsBDtDWvT98184OzmB18hpxzAlH6qg=; b=V8uHfd0gfbvQ6jKOkxOoO1tyld
+	jCM8kisINijPGiH2Q+s4+emo0250pJLnRFpxWQ8foiaJgRb+9IjrjIssFRRaG2ydTvH+e4XtnEaN1
+	wFajiuoOOTQ6jp64gNTaGL62DF0EII7qtkz6yi8k+r/aoQvqXuIrRyiuOvuSkE5T7tWD+6oPpilZL
+	kJgMmbbZ+06A6SzUR544IzoCNcjv7QEuKuaY8P5NpwO3R2ddLPEjvOplbJJDoHOCrIiHw++WlIU+q
+	GQnPUyInMaGff5jz6MHX5SVv5Om8YhkMU0lREJeVkM3G+3BIBWCcDcDgHO9I1c+apudNP8p82/3HG
+	6tcVmf3w==;
+Received: from [50.53.25.54] (helo=[192.168.254.17])
+	by bombadil.infradead.org with esmtpsa (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1umy68-000000036Uf-45oy;
+	Fri, 15 Aug 2025 17:20:13 +0000
+Message-ID: <d4a6bf68-3348-49b7-a9fc-d84c8e416b4f@infradead.org>
+Date: Fri, 15 Aug 2025 10:20:11 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 0/3] Documentation fixes for dm-pcache
+To: Bagas Sanjaya <bagasdotme@gmail.com>,
+ Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+ Linux Documentation <linux-doc@vger.kernel.org>,
+ Linux Device Mapper <dm-devel@lists.linux.dev>
+Cc: Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+References: <20250815075622.23953-2-bagasdotme@gmail.com>
+Content-Language: en-US
+From: Randy Dunlap <rdunlap@infradead.org>
+In-Reply-To: <20250815075622.23953-2-bagasdotme@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Applied, thanks.
-
-Mikulas
 
 
-
-On Fri, 15 Aug 2025, Bagas Sanjaya wrote:
-
-> dm-vdo docs currently has no explicit title heading but instead there
-> are multiple section headings as top-level heading. As such, these
-> sections are rendered as titles and inflates number of entries in the
-> toctree index.
+On 8/15/25 12:56 AM, Bagas Sanjaya wrote:
+> Hi,
 > 
-> Promote the first section heading ("dm-vdo") to title heading.
+> Here are docs fixes for dm-pcache as reported in linux-next ([1], [2]).
 > 
-> Fixes: 04bf7ac646ab ("dm: add documentation for dm-vdo target")
-> Signed-off-by: Bagas Sanjaya <bagasdotme@gmail.com>
-> ---
->  Documentation/admin-guide/device-mapper/vdo.rst | 1 +
->  1 file changed, 1 insertion(+)
+> Enjoy!
 > 
-> diff --git a/Documentation/admin-guide/device-mapper/vdo.rst b/Documentation/admin-guide/device-mapper/vdo.rst
-> index a14e6d3e787c91..8a67b320a97b58 100644
-> --- a/Documentation/admin-guide/device-mapper/vdo.rst
-> +++ b/Documentation/admin-guide/device-mapper/vdo.rst
-> @@ -1,5 +1,6 @@
->  .. SPDX-License-Identifier: GPL-2.0-only
->  
-> +======
->  dm-vdo
->  ======
->  
-> -- 
-> An old man doll... just what I always wanted! - Clara
+> [1]: https://lore.kernel.org/linux-next/20250815130543.3112144e@canb.auug.org.au/
+> [2]: https://lore.kernel.org/linux-next/20250815131115.45518c74@canb.auug.org.au/
 > 
+> Bagas Sanjaya (3):
+>   dm-pcache: Remove unnecessary line breaks
+>   dm-pcache: Use bullet list for data_crc constructor argument
+>   Documentation: device-mapper: Add dm-pcache docs to toctree index
+> 
+>  .../admin-guide/device-mapper/dm-pcache.rst       | 15 ++++-----------
+>  Documentation/admin-guide/device-mapper/index.rst |  1 +
+>  2 files changed, 5 insertions(+), 11 deletions(-)
 
+
+LGTM. Thanks.
+
+Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
+-- 
+~Randy
