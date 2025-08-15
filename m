@@ -1,65 +1,63 @@
-Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com [209.85.215.171])
+Received: from mail-pf1-f174.google.com (mail-pf1-f174.google.com [209.85.210.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6239329D28F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B911B299A83
 	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 07:56:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.171
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755244608; cv=none; b=P/Zak5atgBCCUkYCleRZ6y3j+V5gJeGp+GvXKzsorMygAzZBpuMagrKpsw/ddHFCegsW+i9fdb5UpRTc/RajwZu/QjDG46GOTaJQKI0U5FhyQrF0Zw8bp0Ky8Y3KVyNeN3MOUocwTk3zvjDm7B/1kLUF1OHYpb6Jv9rKFbfXSBA=
+	t=1755244609; cv=none; b=QuAn1xFgtf8tS7N7CEYT6ZuZwdB9uNpzKAbNswLDM9pHUJMNvqOJmlwo2fUZesmZPtLJFiZbIcpB4TFoou78erBJRm37FIf8EQd+6b6fPdltXqc3JSSJHHkImCdFS6rleqexIwAS+1tkeRhSgz+vnSAmqce2Oj7Z56N4BFcMfUc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755244608; c=relaxed/simple;
-	bh=BSdi2w3mGBfqx7vQ62yyAGKSjWZXG1QSCbm15ZVydcE=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=FqmUZR1e+0dhv7hG8W+ExJauS/TbQducVKViYfSQfnndFd07bgRpeSyHFbZdoVBX2rF9c9IEltbT8AX7QS40YIfKbjG5tIgOObSV2TLtQ+XvaTtSxYz2U8gA141u5opXn1fdgZ2UEGlP+Dky8PyLmRIvx6QSL1vFhdnVsqtat2A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cx90txLE; arc=none smtp.client-ip=209.85.215.171
+	s=arc-20240116; t=1755244609; c=relaxed/simple;
+	bh=oiW7TuWfQe9Z1HQMPOLyGiMF8f38lxC9MCTawN7ptP0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=VWKxloOZ2YH2SMNAUQG7pBJZvEfowM6xR/Am2SNy0ysYW0bTg6MAowg0/McQb/7UbVGF4jjaEpRt2h7mzYHt/4rQkHC7MmE4bp/mq9D1MOcU15i3+dUNsMUnzDA2Cbcn7qAsT8tLsWMa1m4pGkZH3k6AlfglpyhjQCeo+3h3TY0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NN+8vyhV; arc=none smtp.client-ip=209.85.210.174
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cx90txLE"
-Received: by mail-pg1-f171.google.com with SMTP id 41be03b00d2f7-b4717330f9eso1214315a12.1
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NN+8vyhV"
+Received: by mail-pf1-f174.google.com with SMTP id d2e1a72fcca58-76e2e8e2d2dso1057007b3a.1
         for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 00:56:47 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755244606; x=1755849406; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=4SqBwk/eT0E+fNoZp9YX9tGh8FiPKp3ALbCTa/kbWN8=;
-        b=cx90txLE1mZ3EWtGMbAPwrO6dVntcDhQgsdTQepu6gGuL3y8ZnpsSo15E+uDakEW3a
-         1PaSiD2MXAV82mld2TvqfemaNmZ3t9G0Nvc4OSGQyIE2BhIzQETPhxkRaPZ1IRqPQjqX
-         W+rMWIzQnOrrMEkvtwwzpYw4J0rHTajdOEhhF9SW0oCK9lk0L0cG0eFhDaeqE5MKWptV
-         IC9948/enzvK3eAL9G+DQzj/Ag9lPdY1nw1CBsdDRVs+8EOIl3Pod2xFlV49Vh8HskkI
-         dQCDla+M8bDJj2nLYP18PT3aeFtSzd3ZlNd42LRPYfh4gYNyrjyhnQVhfZdgosFRXv5U
-         XDkA==
+        d=gmail.com; s=20230601; t=1755244607; x=1755849407; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=HMTg+nOkj+dnHJbIiU5pkF76kd2wHW96OO62FUl4QQU=;
+        b=NN+8vyhV5my9cHUupJyOSDm2+qcMOFFqyGXPS4a6JBx9YHP/uv/veFj9JmdTdpRBnM
+         T9UlFu/mzlQMIvXgqbMt6ftaZHXeDf9nBccDHlCOQH6V4Ic1MiY1JcYU6u0uu1nC1Kig
+         CQSbHwTSQdC1f1UEfwOsl6nTTyBL5nzN+exdwQxVJNK5TLzGEu+TJn78fS4WM/tkzCmP
+         2UfB5DXQJkNzcSxZAbkKqJeuzgvm26EbXu2pFlVWv064MpLRqnkqtTN0S5Id9tLayfUe
+         BF7mod4Bb+GSU4948U1kWOR3IFIGMU+KaQNq6MePoY0atCxbUt3HUiaYGU3qw1u9sT/U
+         JiCg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755244606; x=1755849406;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=4SqBwk/eT0E+fNoZp9YX9tGh8FiPKp3ALbCTa/kbWN8=;
-        b=CxYlZ4M6ByIAy2Fr7/DHyl7xNQzBQBiAb61TwR5+aD4sYI+7zguSkf9XMRUbZyf0m5
-         9Z7sttU2zWqtxO/1A4K8//sRgHeZcVVhFvw65ehhY6TfWuZPNzjDOFhXxczveB7fKLsP
-         aoJp58dwybPvJWR8lP0vDhKa+ymrh6UlqHg1mPKHk7QGXy77gR/42NHA2jRaj56npTkt
-         arnJrRvulIH+otJ4wkJmQV3GBbHaQuGaKk1SVbtiZERQ9DUZW3E1EozBb1PW8y7OKEZZ
-         mJ2RZfBX2P+YBr5o3ZxwlgXPANgdMe7YgC8DSBacol+UcYUrQByGLBzuhb2wLpWLzE7Z
-         iSCA==
-X-Forwarded-Encrypted: i=1; AJvYcCXLNLcnReMCRLkw5/DUl+S2edad7uelg0JsnVOKl0t1piLBoI8QSpPSedjAjmI1nE51IMbpcLhh+g==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxvZcS+8W3Y5/4AWJtCTAWOdptcvmCKPcFHc+mZjn2TutKayhci
-	UILv+1DgFUFDrnKvK0HiIYcjYzAw7YrivNhDMjFhLGqRgU4b244J6EN0
-X-Gm-Gg: ASbGncu7+H0M2o9MYZSpJ5qjCnKCOCwOUWwCVK6HX0PRwfUhh4kZeLUNrlDCklmumrJ
-	l+OS4dOc29ccvzEv1I8L61KRiYMtZgPfiCFkJGKySYi3VrGIMhmhpfyTyh2xNWQsLk+yACSgh0f
-	ZBePtUseY3WCzrRPCSr+T/uM23BWDpPd5o+E/NqHa0/VKVxiCloW7Qzzxs7pnY36bIlx7QZ5Bx4
-	BWA2KglFanYOpcPqdIiQiHS/u/X4TF3q1Bh9wVhYSWfTwS3dGepchebUzJabssgdxHKxYcI4TwK
-	QG5Kl5l+0FzDtBLba5b7o8qH7t6nZiXoP+L2KRV2yikf5fID/TqkvpUp5ttHgjyrdzlsFLU43eD
-	5K8dyA79jGe83XKMb6DyKLQ==
-X-Google-Smtp-Source: AGHT+IF9ucjW/KtwwO3q2uYVf9EFn3Mg/zyi7hUeanmOPhSmnzBBOZt2Q3XjmVtqygSPlYAgPovRow==
-X-Received: by 2002:a17:902:d488:b0:234:a139:11fb with SMTP id d9443c01a7336-2446d8b1f78mr16115555ad.27.1755244606499;
-        Fri, 15 Aug 2025 00:56:46 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1755244607; x=1755849407;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=HMTg+nOkj+dnHJbIiU5pkF76kd2wHW96OO62FUl4QQU=;
+        b=QH4u7XW5cHokRs/jfsrLA6fNgBIYtHsZI1NNl36hBn8rg3TwYQkuyU/OQTp79sIke+
+         EO5azvcxyZLvtr9yAVR9GHRag0Cbs+6qMCL1/UyAacB186ODBKgSuL4dJRHyDoZQ6ekR
+         T3lBRGAoRMhFE0vJQJ1OyZCmxacB3kVnWS+m4DCqyq38ygsJNfM5QlWMQdDbafA+DwbM
+         crZJfXWaYg1yUXT8wXp0ojpcKqfqGZwhpUJdrxDlUY5zhOnPf52aCBMM8REqIhSqT2E4
+         XOYFazei6GgzDMaORrvOl8miaUONdHdUpHcZPXumn/KEl5gmr48YHM3TDXgwc2N4TECe
+         zzug==
+X-Forwarded-Encrypted: i=1; AJvYcCXbfUTfEOT4IQRY3GTQnj3xnsNkykz8U0cVHZr29FnqTb0xNVrvoEm/GaiJXroCPFMsLSlG9VL89w==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yxp9xdfL1vl23T8aQQ5cqPQmsuBbgQb2+9EE9tKQ1zgvcX+Vk2X
+	mdojts3QdRaybg/A9APmAHh8J3fVrYRC54Ge53cfaiHl6rFiJsroCsPfZhnVX/Ct
+X-Gm-Gg: ASbGnctd//eG/PEqeGRD3x4R985d/ID6tPOmcSWvpwUCGaVaQ0NkvkPuj+dtJLS4PdP
+	sMOGpUYDUZNUlaqtL8RqCbkltgLWI6bYCxZY5ISjVlTzxV5l0kI7qd23oRWTGEIdQXEkydeZop8
+	Nwe/xYDZFpZ3lyrYU5226eRRKs+iu7U9mMyU2nmHAjSTqJEOjEBuxRpoVwRerPc/FpwqCUSs6PO
+	1We6p04/OyMUGH8fA9F1c5qUDYeJtyHmMY1+50gqnYtYtWv/0HVrprS33sdfDXlTHBa5WXza1CE
+	FwchG0NWZpQZ6NEkNh6DQr0HZiNduelEuBUikDDwPaQirr8DHSq/manUYNtFeGOSuO7/1HT3fZs
+	O+xEEEB4OYohk884OY/FhbsY8rBP9eXzU
+X-Google-Smtp-Source: AGHT+IFnhmNbusWTe/NOS4pC1bhuI319agqnjyX52xFJvTnt58N0geNwlNtco1oTbthm6m7oN0gKbQ==
+X-Received: by 2002:a05:6a00:228c:b0:76e:1f87:222e with SMTP id d2e1a72fcca58-76e446ab211mr1706302b3a.3.1755244607021;
+        Fri, 15 Aug 2025 00:56:47 -0700 (PDT)
 Received: from archie.me ([103.124.138.155])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2446d54f8b9sm8483715ad.130.2025.08.15.00.56.44
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-76e452b6b48sm590217b3a.52.2025.08.15.00.56.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 15 Aug 2025 00:56:45 -0700 (PDT)
+        Fri, 15 Aug 2025 00:56:46 -0700 (PDT)
 Received: by archie.me (Postfix, from userid 1000)
-	id 3A2C142D95C7; Fri, 15 Aug 2025 14:56:41 +0700 (WIB)
+	id 01D924278709; Fri, 15 Aug 2025 14:56:40 +0700 (WIB)
 From: Bagas Sanjaya <bagasdotme@gmail.com>
 To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
 	Linux Documentation <linux-doc@vger.kernel.org>,
@@ -69,58 +67,41 @@ Cc: Dongsheng Yang <dongsheng.yang@linux.dev>,
 	Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Bagas Sanjaya <bagasdotme@gmail.com>,
-	Stephen Rothwell <sfr@canb.auug.org.au>
-Subject: [PATCH 2/3] dm-pcache: Use bullet list for data_crc constructor argument
-Date: Fri, 15 Aug 2025 14:56:15 +0700
-Message-ID: <20250815075622.23953-4-bagasdotme@gmail.com>
+	Bagas Sanjaya <bagasdotme@gmail.com>
+Subject: [PATCH 0/3] Documentation fixes for dm-pcache
+Date: Fri, 15 Aug 2025 14:56:13 +0700
+Message-ID: <20250815075622.23953-2-bagasdotme@gmail.com>
 X-Mailer: git-send-email 2.50.1
-In-Reply-To: <20250815075622.23953-2-bagasdotme@gmail.com>
-References: <20250815075622.23953-2-bagasdotme@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1798; i=bagasdotme@gmail.com; h=from:subject; bh=BSdi2w3mGBfqx7vQ62yyAGKSjWZXG1QSCbm15ZVydcE=; b=owGbwMvMwCX2bWenZ2ig32LG02pJDBnznq+fdHNXPKfJo/Se5TdDNSUC+2WSz+Q9dHljJ3fI2 t1r67ajHaUsDGJcDLJiiiyTEvmaTu8yErnQvtYRZg4rE8gQBi5OAZjID0FGhs4d39cL3bu/wzi4 Rtt8jb25+P0ktTNhU/1spt44sqC+7yQjwye7tXwp126sCzNKE+rjfPnGNjSFc8K6u2rXVz/M87/ 5jgEA
+X-Developer-Signature: v=1; a=openpgp-sha256; l=763; i=bagasdotme@gmail.com; h=from:subject; bh=oiW7TuWfQe9Z1HQMPOLyGiMF8f38lxC9MCTawN7ptP0=; b=owGbwMvMwCX2bWenZ2ig32LG02pJDBnznq83ueyr1ftSQOqt3pKUn/7RbddSDTu/venUPTsnt 33+U50VHaUsDGJcDLJiiiyTEvmaTu8yErnQvtYRZg4rE8gQBi5OAZjI1DSG/6XzBBm9phecKmGf 9GlDXu+5M3dvO9lzcwhP6HJ6czZS/RLDf+87wjdfmXAWc0h8+RPS9FJLi+/6hoOLpkXzlEju5Gz KYgcA
 X-Developer-Key: i=bagasdotme@gmail.com; a=openpgp; fpr=701B806FDCA5D3A58FFB8F7D7C276C64A5E44A1D
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Sphinx reports indentation warnings on data_crc argument description:
+Hi,
 
-Documentation/admin-guide/device-mapper/dm-pcache.rst:44: ERROR: Unexpected indentation. [docutils]
-Documentation/admin-guide/device-mapper/dm-pcache.rst:46: WARNING: Block quote ends without a blank line; unexpected unindent. [docutils]
+Here are docs fixes for dm-pcache as reported in linux-next ([1], [2]).
 
-Fix the warning by using proper bullet list syntax.
+Enjoy!
 
-Fixes: 6fb8fbbaf147 ("dm-pcache: add persistent cache target in device-mapper")
-Reported-by: Stephen Rothwell <sfr@canb.auug.org.au>
-Closes: https://lore.kernel.org/linux-next/20250815131115.45518c74@canb.auug.org.au/
-Signed-off-by: Bagas Sanjaya <bagasdotme@gmail.com>
----
- Documentation/admin-guide/device-mapper/dm-pcache.rst | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+[1]: https://lore.kernel.org/linux-next/20250815130543.3112144e@canb.auug.org.au/
+[2]: https://lore.kernel.org/linux-next/20250815131115.45518c74@canb.auug.org.au/
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-pcache.rst b/Documentation/admin-guide/device-mapper/dm-pcache.rst
-index ecd015be798243..02cea738ae131b 100644
---- a/Documentation/admin-guide/device-mapper/dm-pcache.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-pcache.rst
-@@ -40,9 +40,10 @@ Constructor
- ``cache_mode``              Optional, Only ``writeback`` is accepted at the moment.
- 
- ``data_crc``                Optional, default to ``false``
--                            ``true``  – store CRC32 for every cached entry and
--                                      verify on reads
--                            ``false`` – skip CRC (faster)
-+
-+                            * ``true``  – store CRC32 for every cached entry and
-+                              verify on reads
-+                            * ``false`` – skip CRC (faster)
- =========================  ====================================================
- 
- Example
+Bagas Sanjaya (3):
+  dm-pcache: Remove unnecessary line breaks
+  dm-pcache: Use bullet list for data_crc constructor argument
+  Documentation: device-mapper: Add dm-pcache docs to toctree index
+
+ .../admin-guide/device-mapper/dm-pcache.rst       | 15 ++++-----------
+ Documentation/admin-guide/device-mapper/index.rst |  1 +
+ 2 files changed, 5 insertions(+), 11 deletions(-)
+
+
+base-commit: 6fb8fbbaf147fe4153177320ee354c457605800a
 -- 
 An old man doll... just what I always wanted! - Clara
 
