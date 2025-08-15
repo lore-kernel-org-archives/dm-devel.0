@@ -1,112 +1,155 @@
-Received: from mail-pg1-f180.google.com (mail-pg1-f180.google.com [209.85.215.180])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1202A1B87C0
-	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 08:03:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A7E42E762F
+	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 09:29:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755245001; cv=none; b=jLHj68FA6KFt40m+/Y8Bg0C4Zs+eycmv/7Oa+UK4MphySjkR7WgPwHSgyb0xQbMPI/ydpwTh7lco6mkW7fY8nzNHkCqH17fwstJET8fQ9Bw0onFpwW1zzGJ38IVRKu5ZA4jMwcof2Tj5KYyqW7a2u1uRtxxgW+k3J8kLFVZKaxQ=
+	t=1755250168; cv=none; b=pindTKzikUYFrX9AlXaROzKPUtJcA14ACHuuHW356d+8kwTnLSePO4+HBpSbwz+p7U0csJDX3OjC95+tsSAIpr+sO3cEYmVBbN0SfCGvO7qnf/BXhFUhdR+z+d/UwD/UJKQa4QJ586X7nqgUfjP5vCBe53pdJLEwiH7xTDkktOE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755245001; c=relaxed/simple;
-	bh=qyzLs/0CDjVeqzhntZR/bU1gU8V1Hv1zEYSr2oMjvt0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=r/IzBWg09gJAtkSP4NZpu7n3l60s0Iptblkwz09xmmDURJrkvkxQNqZUSMpG7P5FpmVWwk7QHlTIdDlJ/UCo22XBUAoiVKOYxYCsJ+2xlHFcScPwJv1WGZ2xYLAU/6LO4sZptVgeLJkMcrXUfitzH6LOGBn9x8O6WZqm+o7roVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=T4KacIMU; arc=none smtp.client-ip=209.85.215.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="T4KacIMU"
-Received: by mail-pg1-f180.google.com with SMTP id 41be03b00d2f7-b471740e488so1643788a12.1
-        for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 01:03:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755244998; x=1755849798; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=sxpExqIp6ahjSppu7+evxPdtuZCZlQ03AYV1e06qBjk=;
-        b=T4KacIMUCz4Hcfn9utFOvDUoG3cull7BxyyarCz9yBVnpHy1xiOY+gKNUBouXOwt8q
-         kp8/w8JDMcKN4zxu51VOhGmcLUxyEK5S1KGEOoROI844Ai3qoZPTExMYxbije+YDZ/gU
-         XNqhKkc26+tw2490eWBwUmCt53dutDwGsG4kVYkc5nHlxECYLuzEYDEIC2s7KSAeYCwd
-         95HFrTj7r0eh9724WSt9MuXJQe8RIoba6XBxEhUJNfEag0BYwqvtHMuZHpJ4PoJJJqnK
-         iJ8zFEgrCyeZ22ZlG72rJsAhnmUKtEL+IrrMPiOmQLb/hZqgnEut3J1TfsM0B7D55OS7
-         ss0g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755244998; x=1755849798;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=sxpExqIp6ahjSppu7+evxPdtuZCZlQ03AYV1e06qBjk=;
-        b=NNFxl9o+23xyFatIyd0vyD1DSGCqtMN5iou6N1A+x45Yv7WeZF6DsIyYo3zrvfxY7+
-         vkim3IEPDmwwyMgpe7l94pOOm3a2VI6iF9S6ElL4dqqBS5kFxpZOJdu69+79NWaSFws3
-         xqhYtdXn2OFb12Q7sPhsN70Fc6l8BhEivqMm1ae8MQ1GZX1jhU5A73AoufPb2FFNTlDb
-         YIWCIr/1nRCwO/VaHPPHrh3zAN/BJi4txTDb7OG68e6AjE/SWUD3Z5/MLEnuP2TZYse/
-         9nSrayYFh/grKbx/Og78kP+rAM69TTHNkajFLD4Bi8hzffD8UY+dYK4iypoRUxya0Jjt
-         jRDg==
-X-Forwarded-Encrypted: i=1; AJvYcCVdoaqd04yfaHnB0JsRyYhp8172iG0k3tRjpUtrgv3aDuJp0fRTVGJfuymQf9/HIzWaErjmjNnT0Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxA7/y7X2na+/DIxhN3qX9aQ+9bU2Kwqh5GQiDAVdouT8FBeGND
-	3rwNcejZjjSbd1Y7kicxWZizMcm62o0P7rvG9DHbWctjYqOS4rwKpSG7
-X-Gm-Gg: ASbGncscegi9i9sGYKckNISHSuO2HKl/upKjH8FKOlFvoynnKapwqvwJE6LjwXk/5cD
-	DEf6YkrqzETNd3Zp0TyOR2F3T6LF9QqRRHaULcBBoOtTkAUq8Bokv7GypKkrHq0DoweOgTbD53Z
-	FaksyrbmEMAQBfENYRE1D8742d8VkGMz9gZYxQ/JCgHtDzaNNqQc2IcdpGcyG+9Ts5AMfBuvlic
-	aAzDCnyzrLDAWIBLsSBTE1n9mxafKwuJ6fnG0tDR9WUYDoHL5JfPopVcyIMwueI1WWTiULOv9xV
-	jzuu69sTJpj3XmQJGvrreOyMVbLfCGEbUnGESevGtgSVWH/Q8M9MQax9bVAFFLoPWNgZbb7g48j
-	yP45vLQyepyS0+C9rwPQTgA==
-X-Google-Smtp-Source: AGHT+IEC/iECvqFVBZ/+AEQhSpvCcYT2CGj6Zpm39HK2GsyEvn3tILjlf0yUe0BJhhZakucB/H8rvQ==
-X-Received: by 2002:a17:903:3bc6:b0:220:c164:6ee1 with SMTP id d9443c01a7336-2446d8f17c0mr18321535ad.32.1755244998248;
-        Fri, 15 Aug 2025 01:03:18 -0700 (PDT)
-Received: from archie.me ([103.124.138.155])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2446d517e18sm8527155ad.74.2025.08.15.01.03.17
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 15 Aug 2025 01:03:17 -0700 (PDT)
-Received: by archie.me (Postfix, from userid 1000)
-	id 706E34278709; Fri, 15 Aug 2025 15:03:15 +0700 (WIB)
-From: Bagas Sanjaya <bagasdotme@gmail.com>
-To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	Linux Documentation <linux-doc@vger.kernel.org>,
-	Linux Device Mapper <dm-devel@lists.linux.dev>
-Cc: Matthew Sakai <msakai@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	"J. corwin Coburn" <corwin@hurlbutnet.net>,
-	Bagas Sanjaya <bagasdotme@gmail.com>
-Subject: [PATCH] dm-vdo: Promote dm-vdo title to title heading
-Date: Fri, 15 Aug 2025 15:03:13 +0700
-Message-ID: <20250815080313.25132-1-bagasdotme@gmail.com>
-X-Mailer: git-send-email 2.50.1
+	s=arc-20240116; t=1755250168; c=relaxed/simple;
+	bh=r4kBBAeTtHpjU3Hx+uyH4afcr1dE8EblvGZWI3m+Pgk=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=p1HaOLGbEUBplmvVJYSYQ0nRicIKKNXdpuP1Q+mXvBGY0gPjo8i9nLj5EqZ7/mLumj2r7BnM+uDkXO8ZU0SzKDhqLlRI2VRwO5VMYyr4l6T+wRbT6ex/Y09f48C0Unoa0NTOdw2gN3KEi9ZJHu4X/a5t8O7QUSDcRlfC39wUEwQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.235])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4c3Gyr45W9zYQvFP
+	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 17:29:24 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 2DAB61A08BF
+	for <dm-devel@lists.linux.dev>; Fri, 15 Aug 2025 17:29:23 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP4 (Coremail) with SMTP id gCh0CgBn4hLv_Z5o+WUFDw--.56836S3;
+	Fri, 15 Aug 2025 17:29:21 +0800 (CST)
+Message-ID: <a0eda581-ae6c-4b49-8b4f-7bb039b17487@huaweicloud.com>
+Date: Fri, 15 Aug 2025 17:29:19 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=928; i=bagasdotme@gmail.com; h=from:subject; bh=qyzLs/0CDjVeqzhntZR/bU1gU8V1Hv1zEYSr2oMjvt0=; b=owGbwMvMwCX2bWenZ2ig32LG02pJDBnzXnza/uOJzUa/EyW7WcQu8z+U6Pm63lXgk2Tzwt9ny tZsXnN3TUcpC4MYF4OsmCLLpES+ptO7jEQutK91hJnDygQyhIGLUwAmcvkaI8NHmbJjLYekOLQ7 jh13FWDjkr0Z8lLsvegilqs/BIoPnp7J8IdbYLev7du93m5NmU+KW415//w5U5z8c16379H603d FD7EAAA==
-X-Developer-Key: i=bagasdotme@gmail.com; a=openpgp; fpr=701B806FDCA5D3A58FFB8F7D7C276C64A5E44A1D
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH util-linux v2] fallocate: add FALLOC_FL_WRITE_ZEROES
+ support
+To: "Darrick J. Wong" <djwong@kernel.org>
+Cc: linux-fsdevel@vger.kernel.org, linux-block@vger.kernel.org,
+ dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
+ linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-api@vger.kernel.org, hch@lst.de, tytso@mit.edu, bmarzins@redhat.com,
+ chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com, brauner@kernel.org,
+ martin.petersen@oracle.com, yi.zhang@huawei.com, chengzhihao1@huawei.com,
+ yukuai3@huawei.com, yangerkun@huawei.com
+References: <20250813024015.2502234-1-yi.zhang@huaweicloud.com>
+ <20250814165218.GQ7942@frogsfrogsfrogs>
+Content-Language: en-US
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <20250814165218.GQ7942@frogsfrogsfrogs>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:gCh0CgBn4hLv_Z5o+WUFDw--.56836S3
+X-Coremail-Antispam: 1UD129KBjvJXoWxJF1fZw1kZF45Xr18tFW8WFg_yoW5CFWUpa
+	y5AF18tr48KF17G3s7Za1ku3WFyws2yrWxWrW0qr1kZrnxWF1UKF4DWr1FgF97Xr1kCa1j
+	vr4SvFya9F1UAFJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
+	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
+	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
+	s2-5UUUUU==
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-dm-vdo docs currently has no explicit title heading but instead there
-are multiple section headings as top-level heading. As such, these
-sections are rendered as titles and inflates number of entries in the
-toctree index.
+Thank you for your review comments!
 
-Promote the first section heading ("dm-vdo") to title heading.
+On 2025/8/15 0:52, Darrick J. Wong wrote:
+> On Wed, Aug 13, 2025 at 10:40:15AM +0800, Zhang Yi wrote:
+>> From: Zhang Yi <yi.zhang@huawei.com>
+>>
+>> The Linux kernel (since version 6.17) supports FALLOC_FL_WRITE_ZEROES in
+>> fallocate(2). Add support for FALLOC_FL_WRITE_ZEROES to the fallocate
+>> utility by introducing a new option -w|--write-zeroes.
+>>
+>> Link: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=278c7d9b5e0c
+>> Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+>> ---
+>> v1->v2:
+>>  - Minor description modification to align with the kernel.
+>>
+>>  sys-utils/fallocate.1.adoc | 11 +++++++++--
+>>  sys-utils/fallocate.c      | 20 ++++++++++++++++----
+>>  2 files changed, 25 insertions(+), 6 deletions(-)
+>>
+>> diff --git a/sys-utils/fallocate.1.adoc b/sys-utils/fallocate.1.adoc
+>> index 44ee0ef4c..0ec9ff9a9 100644
+>> --- a/sys-utils/fallocate.1.adoc
+>> +++ b/sys-utils/fallocate.1.adoc
+>> @@ -12,7 +12,7 @@ fallocate - preallocate or deallocate space to a file
+> 
+> <snip all the long lines>
+> 
+>> +*-w*, *--write-zeroes*::
+>> +Zeroes space in the byte range starting at _offset_ and continuing
+>> for _length_ bytes. Within the specified range, blocks are
+>> preallocated for the regions that span the holes in the file. After a
+>> successful call, subsequent reads from this range will return zeroes,
+>> subsequent writes to that range do not require further changes to the
+>> file mapping metadata.
+> 
+> "...will return zeroes and subsequent writes to that range..." ?
+> 
 
-Fixes: 04bf7ac646ab ("dm: add documentation for dm-vdo target")
-Signed-off-by: Bagas Sanjaya <bagasdotme@gmail.com>
----
- Documentation/admin-guide/device-mapper/vdo.rst | 1 +
- 1 file changed, 1 insertion(+)
+Yeah.
 
-diff --git a/Documentation/admin-guide/device-mapper/vdo.rst b/Documentation/admin-guide/device-mapper/vdo.rst
-index a14e6d3e787c91..8a67b320a97b58 100644
---- a/Documentation/admin-guide/device-mapper/vdo.rst
-+++ b/Documentation/admin-guide/device-mapper/vdo.rst
-@@ -1,5 +1,6 @@
- .. SPDX-License-Identifier: GPL-2.0-only
- 
-+======
- dm-vdo
- ======
- 
--- 
-An old man doll... just what I always wanted! - Clara
+>> ++
+>> +Zeroing is done within the filesystem by preferably submitting write
+> 
+> I think we should say less about what the filesystem actually does to
+> preserve some flexibility:
+> 
+> "Zeroing is done within the filesystem. The filesystem may use a
+> hardware accelerated zeroing command, or it may submit regular writes.
+> The behavior depends on the filesystem design and available hardware."
+> 
+
+Sure.
+
+>> zeores commands, the alternative way is submitting actual zeroed data,
+>> the specified range will be converted into written extents. The write
+>> zeroes command is typically faster than write actual data if the
+>> device supports unmap write zeroes, the specified range will not be
+>> physically zeroed out on the device.
+>> ++
+>> +Options *--keep-size* can not be specified for the write-zeroes
+>> operation.
+>> +
+>>  include::man-common/help-version.adoc[]
+>>  
+>>  == AUTHORS
+[..]
+>> @@ -429,6 +438,9 @@ int main(int argc, char **argv)
+>>  			else if (mode & FALLOC_FL_ZERO_RANGE)
+>>  				fprintf(stdout, _("%s: %s (%ju bytes) zeroed.\n"),
+>>  								filename, str, length);
+>> +			else if (mode & FALLOC_FL_WRITE_ZEROES)
+>> +				fprintf(stdout, _("%s: %s (%ju bytes) write zeroed.\n"),
+> 
+> "write zeroed" is a little strange, but I don't have a better
+> suggestion. :)
+> 
+
+Hmm... What about simply using "zeroed", the same to FALLOC_FL_ZERO_RANGE?
+Users should be aware of the parameters they have passed to fallocate(),
+so they should not use this print for further differentiation.
+
+Thanks,
+Yi.
 
