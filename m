@@ -1,100 +1,133 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from out-187.mta1.migadu.com (out-187.mta1.migadu.com [95.215.58.187])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33C5C3218DA
-	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 12:46:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C471F340DA9
+	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 14:03:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.187
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755521204; cv=none; b=mbyn7f5xKAnF3VvlqWXAUlmO/59DWq0j5RyYPmvv3JhmdpWg1Rk/JowOo21rYqpdBdk29+CgJ6B/KWYwFJhXJ3I0fCN6/7REcH/V8ek4CN+VfNvA+MJyCEp4MrmK4H/ABQmD0cdCVKzAIqiq6+xkTfc3OpEU5JdODBbTxQKDImk=
+	t=1755525841; cv=none; b=oZzB9Wbc1Ed/a6Q1KGx4U6UTADNiiByC7SXfsKmVcAKMJhTKTHDFH2sZ6ZcJ/+n1K7vFtTKGyiWAleJMSc/56bdyBlzpYyUQ7hJLQtCE8bpjZ1apIprzXyuHAsVpZrATG9s5fXEMyZ3ezI+QQ5AJEg+occDaaSM1IoalUJX0grk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755521204; c=relaxed/simple;
-	bh=WBE0oMuxITUJ1wAIUo8hptcNZSWMAQKOt9B68thTXxM=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=nLuzUc5K0pGFbDgONKnFU28pQd0ElSeI/ma4WWpcc+8klx3SpLC91iunIaI8O8VsB9qvuimxb0We7/nETSniu28buSzUQ2NerFeqy+5Yz6jgyRY8HJWnVooUD7W526RtZ7FVmkItUQx4l4BLkIr51XdAwLQ3xc8sj0HOtGCGr+I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I3mE2KUE; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1755525841; c=relaxed/simple;
+	bh=+DfxPZ1R/zjM5fIhmIiWa0k5drJdSvtQ7HDrwBKT9kw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ozVoVPU5tHjWkX+SxI+hBxFnZUDNv/vihnEJ+EqShwefAhbfhq5wEmK/trvoBF47HhzLOOHG1oVoja3+AP/f8sBLUKqOFsXRQ2Ur7JAp6sYofYxZgM3gleX2N+ZQMBUh94xBbES+PJ9CENhPK4Y4IN/t+4xRyzYm2V9tyT1Vjec=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=CxdHcVe8; arc=none smtp.client-ip=95.215.58.187
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I3mE2KUE"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1755521202;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="CxdHcVe8"
+Message-ID: <bc4e1712-7993-4c40-9fae-dc2f4f22d01d@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1755525836;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ykp6TYO+Yx365LX4B5MEyBlO6P2k6QpmJSVG6GYd+L4=;
-	b=I3mE2KUEHq4m9ghajv4bUxGk7Ld5k9g2skOJdLLuMjY9b4hcIFYipX/7b/AlAU/DAySRxF
-	bN+HgfJAFVgubRtsCIHFphjirLAwOHAI00SqpDY85KVuAhJNdqv7yD60fa9NtDSXxRnkaQ
-	SJ0SnPZTKCHJBaV0uSZ53BVygsPMKe0=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-266-rcH_eymTO3KS6iSh8-N0-A-1; Mon,
- 18 Aug 2025 08:46:39 -0400
-X-MC-Unique: rcH_eymTO3KS6iSh8-N0-A-1
-X-Mimecast-MFC-AGG-ID: rcH_eymTO3KS6iSh8-N0-A_1755521198
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A129118002C9;
-	Mon, 18 Aug 2025 12:46:37 +0000 (UTC)
-Received: from [10.22.80.227] (unknown [10.22.80.227])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 06CE719560AD;
-	Mon, 18 Aug 2025 12:46:35 +0000 (UTC)
-Date: Mon, 18 Aug 2025 14:46:32 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Christoph Hellwig <hch@lst.de>
-cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, 
-    linux-block@vger.kernel.org
-Subject: Re: [PATCH] dm error: mark as DM_TARGET_PASSES_INTEGRITY
-In-Reply-To: <20250818045821.1483488-1-hch@lst.de>
-Message-ID: <03731de6-fb74-3564-ccbe-25dbd3df9508@redhat.com>
-References: <20250818045821.1483488-1-hch@lst.de>
+	bh=ww3sE7KkuWqqLnURQZy+bp1BepXGDe/GmdOTj4U5UeA=;
+	b=CxdHcVe8rsVOn1LcbJ2E0Dee7pT6mZhSaIV75ew2pRTRnsQLtj8DQgNyeMPKKKj3uDrL7F
+	BEaAF7iN1I9LOLFs+oW+fPT6YG9aPxZPDi5STl7abJF0xVKIDULvY1Ps4qFJ1iqUe+D63o
+	Bc3YynM0BWKdQC/0rabmnQ2cUyBUrXM=
+Date: Mon, 18 Aug 2025 22:03:52 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+Subject: Re: [bug report] dm-pcache: add persistent cache target in
+ device-mapper
+To: Dan Carpenter <dan.carpenter@linaro.org>
+Cc: dm-devel@lists.linux.dev
+References: <aKL33O_yChKJ-4_G@stanley.mountain>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <aKL33O_yChKJ-4_G@stanley.mountain>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-Applied, thanks.
 
-Mikulas
+在 8/18/2025 5:52 PM, Dan Carpenter 写道:
+> Hello Dongsheng Yang,
+>
+> Commit 6fb8fbbaf147 ("dm-pcache: add persistent cache target in
+> device-mapper") from Aug 12, 2025 (linux-next), leads to the
+> following Smatch static checker warning:
+>
+> 	drivers/md/dm-pcache/cache_req.c:60 cache_data_alloc()
+> 	error: uninitialized symbol 'to_alloc'.
 
 
-On Mon, 18 Aug 2025, Christoph Hellwig wrote:
+Hi Dan,
 
-> Mark dm error as DM_TARGET_PASSES_INTEGRITY so that it can be stacked on
-> top of PI capable devices.  The claim is strictly speaking as lie as dm
-> error fails all I/O and doesn't pass anything on, but doing the same for
-> integrity I/O work just fine :)
-> 
-> This helps to make about two dozen xfstests test cases pass on PI capable
-> devices.
-> 
-> Signed-off-by: Christoph Hellwig <hch@lst.de>
-> ---
->  drivers/md/dm-target.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-> index 2af5a9514c05..8fede41adec0 100644
-> --- a/drivers/md/dm-target.c
-> +++ b/drivers/md/dm-target.c
-> @@ -263,7 +263,8 @@ static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
->  static struct target_type error_target = {
->  	.name = "error",
->  	.version = {1, 7, 0},
-> -	.features = DM_TARGET_WILDCARD | DM_TARGET_ZONED_HM,
-> +	.features = DM_TARGET_WILDCARD | DM_TARGET_ZONED_HM |
-> +		DM_TARGET_PASSES_INTEGRITY,
->  	.ctr  = io_err_ctr,
->  	.dtr  = io_err_dtr,
->  	.map  = io_err_map,
-> -- 
-> 2.47.2
-> 
-> 
+     Thanx for your report, I did fix it in my local tree, and testing 
+is running now. If all tests pass, I will send the patch out tomorrow.
 
+
+Thanx
+
+Dongsheng
+
+>
+> drivers/md/dm-pcache/cache_req.c
+>      36 static int cache_data_alloc(struct pcache_cache *cache, struct pcache_cache_key *key)
+>      37 {
+>      38         struct pcache_cache_data_head *data_head;
+>      39         struct pcache_cache_pos *head_pos;
+>      40         struct pcache_cache_segment *cache_seg;
+>      41         u32 seg_remain;
+>      42         u32 allocated = 0, to_alloc;
+>      43         int ret = 0;
+>      44
+>      45         preempt_disable();
+>      46         data_head = get_data_head(cache);
+>      47 again:
+>      48         if (!data_head->head_pos.cache_seg) {
+>      49                 seg_remain = 0;
+>
+> to_alloc isn't initialized on this path.
+>
+>      50         } else {
+>      51                 cache_pos_copy(&key->cache_pos, &data_head->head_pos);
+>      52                 key->seg_gen = key->cache_pos.cache_seg->gen;
+>      53
+>      54                 head_pos = &data_head->head_pos;
+>      55                 cache_seg = head_pos->cache_seg;
+>      56                 seg_remain = cache_seg_remain(head_pos);
+>      57                 to_alloc = key->len - allocated;
+>      58         }
+>      59
+> --> 60         if (seg_remain > to_alloc) {
+>                                  ^^^^^^^^
+>
+>      61                 /* If remaining space in segment is sufficient for the cache key, allocate it. */
+>      62                 cache_pos_advance(head_pos, to_alloc);
+>      63                 allocated += to_alloc;
+>      64                 cache_seg_get(cache_seg);
+>      65         } else if (seg_remain) {
+>      66                 /* If remaining space is not enough, allocate the remaining space and adjust the cache key length. */
+>      67                 cache_pos_advance(head_pos, seg_remain);
+>      68                 key->len = seg_remain;
+>      69
+>      70                 /* Get for key: obtain a reference to the cache segment for the key. */
+>      71                 cache_seg_get(cache_seg);
+>      72                 /* Put for head_pos->cache_seg: release the reference for the current head's segment. */
+>      73                 cache_seg_put(head_pos->cache_seg);
+>      74                 head_pos->cache_seg = NULL;
+>      75         } else {
+>      76                 /* Initialize a new data head if no segment is available. */
+>      77                 ret = cache_data_head_init(cache);
+>      78                 if (ret)
+>      79                         goto out;
+>      80
+>      81                 goto again;
+>      82         }
+>      83
+>      84 out:
+>      85         preempt_enable();
+>      86
+>      87         return ret;
+>      88 }
+>
+> regards,
+> dan carpenter
