@@ -1,84 +1,113 @@
-Received: from mail-pl1-f172.google.com (mail-pl1-f172.google.com [209.85.214.172])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C6572741B5
-	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 19:05:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AD65A270EC3
+	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 19:49:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755543921; cv=none; b=X8QD6edWnNROjrJZgxwtogMOph8/I6x0ITZKQEfGE26+igz4x47oSEyMynkdE07zCf8K5+d47PNdj3qttXRatSt2kk3RUrP3yLIvoKJVGfDBiPjsmX6wZajt8CRmkLNPQvHluswLhcWDbUS+fU9VsKvbfMPRBet0OaVbg0PJmDo=
+	t=1755546574; cv=none; b=qsOy4nhJqiiIGTLxyR0h+oY+X29G2njP8WCOJTCIqCsPQ9ptNNrk8Sfn853DIxiZQ9zFYXyItYV78RpriNcN3MVklFRux+5jwg8X7mCj9HzxEOblx9O94bjACnwITxgODAqGjTzJo5iakaJRwJOpx/IjppdNg5Yv+hVSyUJNF/Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755543921; c=relaxed/simple;
-	bh=TDuSJfdJGZwMOqpDTf8mdGyg0USAJVP6Wu3Zh4cN8Sg=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Content-Type; b=Hzc6gy3Abu1ukknddmbCJZpi5vqDxADc+o3PkW2FzwStlvsXEzXp2k+te8ZiO7Jk21lzaCs0sZjKGXq7+7sdHNI1OJzygepz/jOftJIkmGtP6j5WlDWPIpsGsHjpOArbe5I5pjf0850YBAq9uYGzmt59ERMR3E3WFMK1AqtoijE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Egobqbvz; arc=none smtp.client-ip=209.85.214.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1755546574; c=relaxed/simple;
+	bh=cprxfOc+eVtACcryEFDk+QBR8PINRf8kj+GwKv/0Lao=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=V9YeqsTmIFW1zoeDKdKnSi7Jl1uIM56sNvRqCubtkL+98MYot3VsGqePvB4WSkNlNTfGvsphgTlepe1MGbek6qN7gFBtPunXEBeMrViwtbE7ee38rjnCaSPi9eRRsh2oVtnFJaIpjRCva/4jDSnOLGYLcpHL3qo3b9FkcqObZlQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Oqr15B9m; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Egobqbvz"
-Received: by mail-pl1-f172.google.com with SMTP id d9443c01a7336-2449788923eso6196215ad.2
-        for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 12:05:20 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755543919; x=1756148719; darn=lists.linux.dev;
-        h=to:subject:message-id:date:from:mime-version:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=TDuSJfdJGZwMOqpDTf8mdGyg0USAJVP6Wu3Zh4cN8Sg=;
-        b=EgobqbvzOz/MtNeZysadTCxDme24yr+hiUTk83peLNMOp9PZiZEkJnOEFgnBVs/rfe
-         M+RMhXSHfbi37fIEMH++Woq7+o22AzORZB/C4JYlkVSCXOy7QEMRr2JsgloWl5hDqQw7
-         /vpS1oXiMJV+hHIu32SuPoTlbaY+rVXF4GV7zeIGj6FqkL/N46UTfBy15aA7QEsMyPrw
-         ahSc5Bbb7Gbc20GTnXO8dLU9SSBpWjDNl8A1e4+2OaaAEZxtzJ2j9cLkhIoVKfSqxefq
-         OsYXndKTZwo2XjqefbMbK646ljv7KVgk+E1FhmQoxiXdt6Pg4tXVFJvDPuS4UrUy6c9a
-         Gb7Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755543919; x=1756148719;
-        h=to:subject:message-id:date:from:mime-version:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=TDuSJfdJGZwMOqpDTf8mdGyg0USAJVP6Wu3Zh4cN8Sg=;
-        b=RLbv0+62mcsXbk5PMnpZextdHfHEFdeLgrTEs2qdt2Sh61gBOOB3t1Q01JmwPR/YzT
-         2vGcUVfWaUN5zuqIfN3UWzxcvOj0ALKSFEEMPzbofWssd/k7i1i244icqPhe423RSAU/
-         /0cakRv5I4pt33RP+lcuC0KdOrpwEzt/OQDf7hmRXJo6yJHULRqBN/tq3EXrOOXd1mRq
-         o+bW7ggGxYeiOYldqG7QWII9BOxu+6bPHZHk0NKQTSoOgBX3gwNV4yPQx5skP0rbA5u3
-         kzVwD7YSOk3Jr1C+mkY8CXtYpr6kkJ+r3fAsgL5wu6UHFTksdCM30mrFvzAAdgyOh66V
-         x9LQ==
-X-Gm-Message-State: AOJu0Yymgup9uxZLu8DiXuePWdBI3Z2JOp0nPgiddB0TRuXARiL+fGx1
-	GyISOSfLEf+jwYlwiuPHP6IYV+9L3EKa7q9GYlizhy7lDj/FEAuwkHoECT3Iqj72U6Mp5Y5Azrt
-	WlzEiyysLL292cJ8aegkxedUsajOWtlY5XA4pDKg=
-X-Gm-Gg: ASbGncuzQsU0ElmvVLaIVCHbdpERn9ZRDIUVpzVEhYpc5bErQBeWb4schPaUtDDq03D
-	liemqjaSZ8dB5JpEMs4SCVrZaTZOFTWKBJD8uxrbbQMbncoBwzMdGLIGgoXQkGTK03cYfUG4+5T
-	wuB+vbxGMrxTVteIbq2/snOP5QAl7IGMMfmwqYAhYu+iKSlj032E6vtfQbOZCq/j5sQ4G6/FO41
-	xRllvo3
-X-Google-Smtp-Source: AGHT+IGk6Ar/JktlYXwHF2sK23VglInX0GaLFGzf2hAgzc8nC6ja8iZgjq1GJgf4orkSdY9h48/eNFFHOYLE2BZp3+Q=
-X-Received: by 2002:a17:903:1a26:b0:243:3b4:3ac8 with SMTP id
- d9443c01a7336-2449cff0430mr4577215ad.50.1755543919347; Mon, 18 Aug 2025
- 12:05:19 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Oqr15B9m"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1755546571;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2RiY+4IGQeTE+5ct8Gxi/it/2AEj7Q2K6a7U9csc5po=;
+	b=Oqr15B9mTJ2Fkr2QE0wgANb7n+2YH9oDw3iMSkvWDd4A+wMqDrnQVT03QKZItxP8XtBMYz
+	LTvU2C2zA863AUXY33jRAQsklGI9ZzNUdxygqTtwkwR5/SetEmyMYuw8aTGh7BFxhirzNH
+	xbJ+OiIMo4IXaGc+7NxRBPIFSqG3Ph4=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-263-HL0xeEWbM3aMD2FSLau9mQ-1; Mon,
+ 18 Aug 2025 15:49:27 -0400
+X-MC-Unique: HL0xeEWbM3aMD2FSLau9mQ-1
+X-Mimecast-MFC-AGG-ID: HL0xeEWbM3aMD2FSLau9mQ_1755546566
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0AAC51956086;
+	Mon, 18 Aug 2025 19:49:26 +0000 (UTC)
+Received: from [10.22.80.227] (unknown [10.22.80.227])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4B5E0195419F;
+	Mon, 18 Aug 2025 19:49:22 +0000 (UTC)
+Date: Mon, 18 Aug 2025 21:49:13 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Harald Freudenberger <freude@linux.ibm.com>
+cc: Herbert Xu <herbert@gondor.apana.org.au>, 
+    "David S. Miller" <davem@davemloft.net>, 
+    Eric Biggers <ebiggers@kernel.org>, dengler@linux.ibm.com, 
+    linux-s390@vger.kernel.org, dm-devel@lists.linux.dev, 
+    ifranzki@linux.ibm.com, agk@redhat.com, snitzer@kernel.org, 
+    gmazyland@gmail.com
+Subject: Re: [PATCH v5 0/2] dm-integrity: Implement asynch digest support
+In-Reply-To: <7e1362bfc8180f3cef4dd9f8c0f0ff02@linux.ibm.com>
+Message-ID: <320f8393-179f-aba9-de8b-d08f98c0b7c1@redhat.com>
+References: <20250722133832.319226-1-freude@linux.ibm.com> <5fc734af-a2c1-b7bb-85fb-cba6b8722c13@redhat.com> <56aa9892c7825a443f8a6153e17b4c46@linux.ibm.com> <20250725173811.GA3642931@google.com> <dbe165f661d11a4bed8d7c806a9eeb5e@linux.ibm.com>
+ <51dc2ccd-c06d-e719-9568-35a8d3a1010f@redhat.com> <7e1362bfc8180f3cef4dd9f8c0f0ff02@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-From: John Rinehart <johnrichardrinehart@gmail.com>
-Date: Mon, 18 Aug 2025 12:05:08 -0700
-X-Gm-Features: Ac12FXyUWUdhDQgXfk3uFgisI3jeJIkGKIm1vi9zAxg2sorQJ-s4B63jzwIck2Q
-Message-ID: <CAGc5Yo9DFwyzNMtv5hochwhpqY3Pv6uqkqshUTOo++LAbs=jgw@mail.gmail.com>
-Subject: dm-cache-statistics and DMEMIT
-To: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-I'm using dm-cache in writeback mode and I'm trying to figure out how
-I can see the cache stats in "real-time" (poll every second). Like, I
-want to poll for the values in this data structure:
-https://github.com/torvalds/linux/blob/be48bcf004f9d0c9207ff21d0edb3b42f253829e/drivers/md/dm-cache-target.c#L283-L295.
 
-But, I'm at a loss for how to do that.
 
-There are also these DMEMIT messages that I'm really interested in
-printing to dmesg or subscribing to, or whatever, but I don't know how
-to access them (CONFIG_DM_DEBUG didn't do anything useful - which
-makes sense after reading the source a bit):
-https://github.com/torvalds/linux/blob/be48bcf004f9d0c9207ff21d0edb3b42f253829e/drivers/md/dm-cache-target.c#L3184-L3197.
+On Thu, 14 Aug 2025, Harald Freudenberger wrote:
 
-Can you help a brother out?
+> On 2025-07-28 23:24, Mikulas Patocka wrote:
+> > On Mon, 28 Jul 2025, Harald Freudenberger wrote:
+> > 
+> > > > > > > Mikulas Patocka (2):
+> > > > > > >   dm-integrity: use internal variable for digestsize
+> > > > > > >   dm-integrity: introduce ahash support for the internal hash
+> > > > > > >
+> > > > > > >  drivers/md/dm-integrity.c | 370
+> > > > > > > +++++++++++++++++++++++++++-----------
+> > > > > > >  1 file changed, 265 insertions(+), 105 deletions(-)
+> > 
+> > Hi
+> > 
+> > I reviewed the code and unfortunatelly I found out that it is buggy (I
+> > didn't notice the bugs before, when I was working on it).
+> > 
+> > integrity_ahash_sector_checksum uses sg_set_buf and sg_set_buf needs
+> > directly mapped memory. It doesn't work with vmalloc memory and it doesn't
+> > work with memory obtained from kmap.
+> > 
+> > The result buffer may be vmallocated memory (if we have
+> > CONFIG_VMAP_STACK).
+> > 
+> > I'd like to ask the maintainers of crypto-api - Herbert or David - what if
+> > I pass vmalloc-allocated memory (or possibly stack memory) as "result" to
+> > ahash_request_set_crypt(req, sg, result, nbytes);? Is it legal or not?
+> > 
+> > Mikulas
+> 
+> Hi Mikulas, what is the state of the dm-itegrity asynch digest support?
+> If you have a newer version or maybe if you need some more code coverage,
+> I do offer some worktime for this and a s390 machine...
+> 
+> Thanks for your work
+> Harald
 
-Thanks!
+Hi
 
--- John Rinehart
+I'm trying to find a way how to implement it without bloating the code too 
+much. Maybe I'll have it this week (if it passes the tests).
+
+Mikulas
+
