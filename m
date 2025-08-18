@@ -1,93 +1,130 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB0B918A6DB
-	for <dm-devel@lists.linux.dev>; Sun, 17 Aug 2025 19:49:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AF7A1E0B9C
+	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 01:43:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755460186; cv=none; b=u4Qdh47gE0XzKzWGW6S59MImziedR0kGZDU9VWvJdL+u6d5kQSneG4j1DNsZa3Bj3EqnWw21KfEa0DAMo0Qf0tt5N41g7fJeQx7m3Cd9HWF19Dn1+aLT1ImOcFEKOT1TFeWhh9rDVqEhy1qYPX00GSIbluAub8yrzJaxiAucxMo=
+	t=1755481385; cv=none; b=lrn7sTpYck7FmAbdYUUOnPkSYLUMuuW4QQfv6UWGI+ISUu3AQO5reQQALqvpASKDK0ZKbMNiP9OqRNlO8BBXf/U8NhMotAchNI4q4zvxitppRE8oo8cUm/w16q22cX0CMGzccaOiJmi7KFjmqrnrTeubDKl2+hWkohJ3uaGb7lo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755460186; c=relaxed/simple;
-	bh=4dPB9987j+f29VjAxK3KHofCF1n0ALa032h7JMh3n/c=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=NpNZJa8/HRSmsKvc446xcKM+d1lgjfui+HBv3wZlf9JbqZEajYaZXmzIddkAHyJUrwbGJloVXw4IWW/uI517uv1poHb1Ml3lbS1xdU5wt7StYPeOOy0qMjOb6ZJzbfFMEoKaCKf3Tb+UB4gyo+iJ5glkKW5psUT4MXzE7rMJrOA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KxkNhTpo; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KxkNhTpo"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1755460182;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=9OPWpj3DC8NZc1yZ24CVADfv/jibxleiCU9+442vbxU=;
-	b=KxkNhTpolbdG4OLYlPxBFyhqIAsR+cKXiLQxG5OBD0P9c1M3CzHL+BLmdAyk+AVYzCbku1
-	KdEmXkCBEsWY8tLPiREmtO/kGWGQTKz2BZrTsOOgcA2hshe0/3ZI+SuJZ9ND7idsvD4kEY
-	MOJhoQSUkSicXLfjJyd0mTtmnHzw4vg=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-156-VNNtUMX_NpyI7tVauT61Xg-1; Sun,
- 17 Aug 2025 15:49:40 -0400
-X-MC-Unique: VNNtUMX_NpyI7tVauT61Xg-1
-X-Mimecast-MFC-AGG-ID: VNNtUMX_NpyI7tVauT61Xg_1755460180
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EB5A51800451;
-	Sun, 17 Aug 2025 19:49:39 +0000 (UTC)
-Received: from fedora.redhat.com (unknown [10.47.238.126])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 682331800282;
-	Sun, 17 Aug 2025 19:49:38 +0000 (UTC)
-From: Alex Kalenyuk <akalenyu@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com
-Subject: [PATCH] Take undef enum into account for correct array index comparison
-Date: Sun, 17 Aug 2025 22:49:23 +0300
-Message-ID: <20250817194923.307911-1-akalenyu@redhat.com>
+	s=arc-20240116; t=1755481385; c=relaxed/simple;
+	bh=3BrdEm9YWQ4b9T8dYVemL7Ff85aMXjPNNHmqsSoFDS4=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=AHuXauyjdqm03PrhzFmrBDLpKQ8SsuysC1NY1ltTB/7bv2XMzR9QMi5FswXnv/P3iUuQ7z0O9SfoWvSEo9b72xSvo0116sijP5WgfBMZ8THoOl3Jqr/BEFexyBYHmorMBCZVxExBior2HwHSNWV+NVmJz724kyXs9fBvv3/cBYc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4c4wTK6yfpzYQv63
+	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 09:43:01 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 8D34B1A07BB
+	for <dm-devel@lists.linux.dev>; Mon, 18 Aug 2025 09:43:00 +0800 (CST)
+Received: from [10.174.179.80] (unknown [10.174.179.80])
+	by APP4 (Coremail) with SMTP id gCh0CgAHgxMfhaJo6Ns1EA--.15154S3;
+	Mon, 18 Aug 2025 09:42:57 +0800 (CST)
+Message-ID: <95a4a94b-7aa0-4e3c-a386-7692dde66a4f@huaweicloud.com>
+Date: Mon, 18 Aug 2025 09:42:55 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: knqMLbf4mdc3Z3z08J21-Bx4TpSObh6Q1rZPhot5tk0_1755460180
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH blktests v2 0/3] blktest: add unmap write zeroes tests
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+ "linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
+ "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
+ "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+ hch <hch@lst.de>, "tytso@mit.edu" <tytso@mit.edu>,
+ "djwong@kernel.org" <djwong@kernel.org>,
+ "bmarzins@redhat.com" <bmarzins@redhat.com>,
+ "chaitanyak@nvidia.com" <chaitanyak@nvidia.com>,
+ "brauner@kernel.org" <brauner@kernel.org>,
+ "martin.petersen@oracle.com" <martin.petersen@oracle.com>,
+ "yi.zhang@huawei.com" <yi.zhang@huawei.com>,
+ "chengzhihao1@huawei.com" <chengzhihao1@huawei.com>,
+ "yukuai3@huawei.com" <yukuai3@huawei.com>,
+ "yangerkun@huawei.com" <yangerkun@huawei.com>
+References: <20250813024421.2507446-1-yi.zhang@huaweicloud.com>
+ <7dswufawxmyqblokjesulhdexqld3bx7sycgmylbaeqs43ougk@25rseyqm3beg>
+Content-Language: en-US
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+In-Reply-To: <7dswufawxmyqblokjesulhdexqld3bx7sycgmylbaeqs43ougk@25rseyqm3beg>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:gCh0CgAHgxMfhaJo6Ns1EA--.15154S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7WFy3tFy8uFWrXr15tr1rXrb_yoW8tw15pr
+	W5Xa4Dtws8GrWDJa4vvayq9Fy3Jws7Zry7A3Z5tr18Cr15ZFyfWrZ8Xw4aga17KrnxGw1I
+	v3W2gryS93WUJ3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
+	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
+	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
+	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
+	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
+	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
+	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
+	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
+	s2-5UUUUU==
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-Previously this would compare to the wrong index
-since the enum has an additional UNDEF entry
+On 8/17/2025 2:14 PM, Shinichiro Kawasaki wrote:
+> On Aug 13, 2025 / 10:44, Zhang Yi wrote:
+>> From: Zhang Yi <yi.zhang@huawei.com>
+>>
+>> Change since v2:
+>>  - Modify the sysfs interfaces according to the kernel implementation.
+>>  - Determine whether the kernel supports it by directly checking the
+>>    existence of the sysfs interface, instead of using device_requries(). 
+>>  - Drop _short_dev() helper and directly use _real_dev() to acquire dm
+>>    path.
+>>  - Check the return value of setup_test_device().
+>>  - Fix the '"make check'" errors.
+>>
+>>
+>> The Linux kernel (since version 6.17)[1] supports FALLOC_FL_WRITE_ZEROES
+>> in fallocate(2) and add max_{hw|user}_wzeroes_unmap_sectors parameters
+>> to the block device queue limit. These tests test those block device
+>> unmap write zeroes sysfs interface
+>>
+>>         /sys/block/<disk>/queue/write_zeroes_max_bytes
+>>         /sys/block/<disk>/queue/write_zeroes_unmap_max_hw_bytes
+>>
+>> with various SCSI/NVMe/device-mapper devices.
+>>
+>> The value of /sys/block//queue/write_zeroes_unmap_max_hw_bytes should be
+>> equal to a nonzero value of /sys/block//queue/write_zeroes_max_bytes if
+>> the block device supports the unmap write zeroes command; otherwise, it
+>> should return 0. We can also disable unmap write zeroes command by
+>> setting /sys/block/<disk>/queue/write_zeroes_max_bytes to 0.
+>>
+>>  - scsi/010 test SCSI devices.
+>>  - dm/003 test device mapper stacked devices.
+>>  - nvme/065 test NVMe devices.
+>>
+>> [1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=278c7d9b5e0c
+> 
+> I applied this v2 series. Of note is that I amended the 2nd and 3rd patches to
+> fix the shellcheck warnings below. Anyway, thanks for the patches!
+> 
+> $ make check
+> shellcheck -x -e SC2119 -f gcc check common/* \
+>         tests/*/rc tests/*/[0-9]*[0-9] src/*.sh
+> common/rc:679:7: note: Double quote to prevent globbing and word splitting. [SC2086]
+> tests/nvme/065:44:7: warning: Quote this to prevent word splitting. [SC2046]
+> tests/nvme/065:44:7: note: Useless echo? Instead of 'echo $(cmd)', just use 'cmd'. [SC2005]
+> make: *** [Makefile:21: check] Error 1
 
-Signed-off-by: Alex Kalenyuk <akalenyu@redhat.com>
----
- libmultipath/dict.c | 2 ++
- 1 file changed, 2 insertions(+)
+Sorry for missing these warnings, and thank you for fixing them! :-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index a06a6138..2e820b2e 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -550,6 +550,7 @@ static int snprint_def_partition_delim(struct config *conf, struct strbuf *buff,
- }
- 
- static const char * const find_multipaths_optvals[] = {
-+	[FIND_MULTIPATHS_UNDEF] = "undef",
- 	[FIND_MULTIPATHS_OFF] = "off",
- 	[FIND_MULTIPATHS_ON] = "on",
- 	[FIND_MULTIPATHS_STRICT] = "strict",
-@@ -793,6 +794,7 @@ declare_def_snprint(allow_usb_devices, print_yes_no)
- 
- 
- static const char * const flush_on_last_del_optvals[] = {
-+	[FLUSH_UNDEF] = "undef",
- 	[FLUSH_NEVER] = "never",
- 	[FLUSH_ALWAYS] = "always",
- 	[FLUSH_UNUSED] = "unused",
--- 
-2.50.1
+Thanks.
+Yi.
 
