@@ -1,121 +1,99 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86B0B2DE70C
-	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 16:49:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CB7342E92DF;
+	Thu, 21 Aug 2025 20:09:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755794997; cv=none; b=HxHJYGRRq145bNCpbYe+aNtscYCaEMCX+pzwS8GLg+Je9Bj4q1FlkZcJSFX8r+LX7rdBk2sus1noBPsvgcqIZhhfPO1eqyFMxRxLfork3UixCob9VV3LL4GKEwT2ceg2gDSIog+RR6XHjhcyKrdH9bVe3VU/WggZNWO5dENVI7o=
+	t=1755806995; cv=none; b=PmiyMocEt+tdDHpO5V39k4f+k6uz0fDQwmqDMQ7UPNFsFnJUxcB1Jz0Fm/uuNT/2CHHbyxkobxGdYeS+9xLH/AIl2/5Z/nQ1UNOH+VW8BBK8rjr7ReA8xkJJKLfh6YRTJqpGDmteMPS/COV0NhF73/J98MC0R8aLacqAwN5c4fI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755794997; c=relaxed/simple;
-	bh=j1HPu+xf82+sSceY4BTW4wlDho9OJP75SC6covMR4QQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GYZpmeNmQpjq7GkZq5Xs6FEumrLS5GTHQgVnGlE/tR+acS+7khnswW0xMHFutY60mEtSoeJ143NfO+/LlJOkj0H8kM7QJrtgRoeQa0Wmx642WrmhLv2ejzxnuu00mDFuq3wEhzXJIb9kNPX0hE68JAAWSt64bPLkOWKMSrh3B3Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bLsyd+p+; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1755806995; c=relaxed/simple;
+	bh=9X3pFBb5yxZaxNWnSnAqLVpPYIODHpVZUQNs5W1xLws=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=hMeRhgegxschXsB68+5HmJvmlS8vq10qNQxTFgp/bo4dtoCKvauWg/zchpQxYfrYxfjPucQFf5CnlqwT3yKmE0ThmxnSkWEoZa7/KaP18xLkGMH67fc4S72VRylR3/CbyqhywQ5oPdCo0zinmApzy9PDc0y2n4vU3YP0oGoZoaI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JdFOX/mf; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bLsyd+p+"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-45b46158e11so957375e9.0
-        for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 09:49:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755794994; x=1756399794; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=f7t2f88agrRS1B1iAJwzfiSnfOHeW10+a3UdQ2eynTw=;
-        b=bLsyd+p+OQT8SVkETG8P1X/1tSi+3+70mvLLFp0mnAtr9oRpj+YX55UB/qZssah3na
-         lE1p+ydxg4qHj8ZglLIhBr+faOP8yzURIlRjnA6pDc8El/3fkDhjL1Uky1BKq33L3Xvs
-         LdhjW1sep4dCvETB7JRxzuiZvOD7rHoCzSmnrp5K2q449SZ1AXX5IooOrQ9ltMQ8EpBX
-         W7a1hwTse/k4BR1lF82486Aoza2HhK1sdGMexwKHyV3fZtssc0Y0LXy3t72NeFtlPt7M
-         N0o0jv64HLEOk40OGSJg1wgej960lBwowoYkhSgLSRA7JtrzhWmnqp5iPv3m/SoncxTX
-         AQvA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755794994; x=1756399794;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=f7t2f88agrRS1B1iAJwzfiSnfOHeW10+a3UdQ2eynTw=;
-        b=OAKKFIH2nIRB6EMdMglNwJ5Orz9YyyjlsrCNDdWYQXR352MqDfwmew8sosuRoEhkMv
-         N2JRrfBW8FW6rLYW7GEYuRDu6orWXOl0XKxoFFc9y0wJ3QO4fd/3mGRiEZ7b8bBzeIJ+
-         HGBIefp/pHpnjODqD+iUzFFHIuRsdAMm4mHuR8OjajfaUgPntXYmByXIOS4Q3UHgorwJ
-         wlPeO22zamtcN7PgjgFVio0gvPyHQRhVc51E7iVa0LhQjZM4nb4yQ3JHDt9FQWxntI6M
-         j8LL5r8E39u2QP0QCuGgPklNC5FTiJut/4dVEeltY58N9BXpnq5zIezaRWW/mtnnvqmG
-         at3A==
-X-Forwarded-Encrypted: i=1; AJvYcCWNeqq6KAIYoBBxqijDXWqpbjK8eLnvOMrzv5BW1F0trcC/SgL7DqAjB9Q/vTcrfb0TQNdJbAirZA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwnYbBCzEM0RdKO8AstUpLmtqhavK17pyVm4iOJPMQjfuFaDsKD
-	7Hp48/EpIprklFIFYUTeFAsNd30ZU8vQpIcMJcEMatXo3ZgWzQ6wlgw=
-X-Gm-Gg: ASbGncu/GgnFT/bqf8/GLNoKOFHBQBfn0Qtg/SgfLKTkZMuW0mMQdr9Z5rh60frkEcd
-	qmXWzsNz4T8dzM+YQiOT0fJegzDQNUbbXX6PcNsyDp3YD98b6+mZPLVpZXfjIINi0exYvMJUGe1
-	qpNxhO7X5AzANtSq+uM/k5tkyQdEKWxJeEQqW8bZUIps9za7js0ZbNEpkloCJmkKn0I3KeC/1bK
-	6wC/5qQZvfOGxyRO1IKF+zsfXykSg64675ZQXWUFl7a0hLozOvy3L2j8Pjw7gAGvJNi124N/hiR
-	3VE5BPuekMGK/W1nWrXinmQ3Z0pqPZjifZ5sgrEp3eGpwhrwQrSPFLAleDEfIxA3Hd0Z7eIdgXW
-	bSh2UGI6Pv9Yvk1ZOygtMAwg9OTwBUKUniqyzK7GuCnmfF/N3ORS2GqyLStvp
-X-Google-Smtp-Source: AGHT+IEFCzGcsgNZSCK8jgQNmnNP6XuCcbIjfi+E7Ny9nmr/AplG4StiUki6eZCbqEcqFRU22rFM4Q==
-X-Received: by 2002:a05:600c:a16:b0:459:ddd6:1cbf with SMTP id 5b1f17b1804b1-45b4d74b053mr15281275e9.0.1755794993528;
-        Thu, 21 Aug 2025 09:49:53 -0700 (PDT)
-Received: from localhost (67.red-80-39-24.staticip.rima-tde.net. [80.39.24.67])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45b50dea2b9sm3562025e9.15.2025.08.21.09.49.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 21 Aug 2025 09:49:53 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Daniel Wagner <dwagner@suse.de>,
-	Daniel Wagner <wagi@monom.org>,
-	BLOCK-ML <linux-block@vger.kernel.org>,
-	NVME-ML <linux-nvme@lists.infradead.org>,
-	SCSI-ML <linux-scsi@vger.kernel.org>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] nvme-cli: add 80-nvmf-storage_arrays.rules
-Date: Thu, 21 Aug 2025 18:49:51 +0200
-Message-ID: <20250821164952.148153-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.51.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JdFOX/mf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 22892C116B1;
+	Thu, 21 Aug 2025 20:09:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1755806995;
+	bh=9X3pFBb5yxZaxNWnSnAqLVpPYIODHpVZUQNs5W1xLws=;
+	h=From:Date:Subject:To:Cc:From;
+	b=JdFOX/mfDbIQ4jJZRYctMjsd9kcO8VOdjkqvXxfOZkDRiGK7qWxgqbFF+RgkS0VjB
+	 jMLG2bajHVipdTdErvzyc6AImebvpsFSb/CU6hJu+IkjigMIkbq0MLbC9bsGl+BMDR
+	 0UQIu+vPh67XOXtFdX0A77xq3ty5dlgwNnK77x/D22n1rWexa1xEfDT2C6YPmrMVxv
+	 naz2iWOfjrUom4ZSsmM3O0l/DqQOlVt0G8Nv5Iw1RJut0L+4mZPC5WKT4Nx03e914S
+	 L0XY1IcZNZcMOBvsDNwAwOBnTPIlyeO18DjudVLf4yqidYVcVbgk/o1yKRMekW472C
+	 Z6cebRuo/oYHA==
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Thu, 21 Aug 2025 13:09:24 -0700
+Subject: [PATCH] dm-pcache: Fix 64-bit division for 32-bit platforms in
+ get_kset_id()
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20250821-dm-pcache-fix-32-bit-div-err-v1-1-cab5448f44e6@kernel.org>
+X-B4-Tracking: v=1; b=H4sIAPN8p2gC/x3MSwqEMBBF0a1IjX0QY/xuRRzYSak1aFsqIoK49
+ w4OD1zuTZFVOFKf3aR8SpTfllDkGfl12haGhGSyxlamtQXCF7uf/MqY5UJp8ZEDQU6wKtxs6q7
+ izjWto7TYlVP17ofxef5bJVWPbgAAAA==
+X-Change-ID: 20250821-dm-pcache-fix-32-bit-div-err-4f0695e94784
+To: Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>, 
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, patches@lists.linux.dev, 
+ Nathan Chancellor <nathan@kernel.org>
+X-Mailer: b4 0.15-dev
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1477; i=nathan@kernel.org;
+ h=from:subject:message-id; bh=9X3pFBb5yxZaxNWnSnAqLVpPYIODHpVZUQNs5W1xLws=;
+ b=owGbwMvMwCUmm602sfCA1DTG02pJDBnLawV37YvdYx/S4D694MafI7Nv6DZMv/9v79mFslxR+
+ e+5U55ndpSyMIhxMciKKbJUP1Y9bmg45yzjjVOTYOawMoEMYeDiFICJLGhnZLh1QLaNJ2Hpe7bJ
+ mxdnNn4LrjylHqZZI92a3cj2Tdzt7mWG/05qvTkOHftvCNwuS+l87h1+bfsfu8o9+t7t/W4Lcvb
+ r8QAA
+X-Developer-Key: i=nathan@kernel.org; a=openpgp;
+ fpr=2437CB76E544CB6AB3D9DFD399739260CB6CB716
 
-Missing from previous patch.
+When building for a 32-bit platform (such as ARCH=i386 allmodconfig),
+there is a modpost error:
 
-Cc: Daniel Wagner <dwagner@suse.de>
-Cc: Daniel Wagner <wagi@monom.org>
-Cc: BLOCK-ML <linux-block@vger.kernel.org>
-Cc: NVME-ML <linux-nvme@lists.infradead.org>
-Cc: SCSI-ML <linux-scsi@vger.kernel.org>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+  ERROR: modpost: "__umoddi3" [drivers/md/dm-pcache/dm-pcache.ko] undefined!
+
+Hacking up the driver Makefile to allow building into the kernel shows
+that the division comes from get_kset_id(), which is inlined into
+cache_key_append() in cache_key.c.
+
+Use the helper div_u64_rem() to avoid emitting a libcall on 32-bit targets.
+
+Fixes: fd5cc4922bef ("dm-pcache: add persistent cache target in device-mapper")
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
 ---
- meson.build  | 1 +
- nvme.spec.in | 1 +
- 2 files changed, 2 insertions(+)
+ drivers/md/dm-pcache/cache.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/meson.build b/meson.build
-index 3afd8ba3..8c0877e1 100644
---- a/meson.build
-+++ b/meson.build
-@@ -270,6 +270,7 @@ udev_files = [
-   '71-nvmf-hpe.rules',
-   '71-nvmf-netapp.rules',
-   '71-nvmf-vastdata.rules',
-+  '80-nvmf-storage_arrays.rules',
- ]
+diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
+index b3b361cc406e..b10e721ab1b7 100644
+--- a/drivers/md/dm-pcache/cache.h
++++ b/drivers/md/dm-pcache/cache.h
+@@ -373,7 +373,9 @@ static inline void *get_key_head_addr(struct pcache_cache *cache)
  
- foreach file : udev_files
-diff --git a/nvme.spec.in b/nvme.spec.in
-index 5f7645d7..fa921f81 100644
---- a/nvme.spec.in
-+++ b/nvme.spec.in
-@@ -36,6 +36,7 @@ touch %{buildroot}@SYSCONFDIR@/nvme/hostid
- @UDEVRULESDIR@/71-nvmf-hpe.rules
- @UDEVRULESDIR@/71-nvmf-netapp.rules
- @UDEVRULESDIR@/71-nvmf-vastdata.rules
-+@UDEVRULESDIR@/80-nvmf-storage_arrays.rules
- @DRACUTRILESDIR@/70-nvmf-autoconnect.conf
- @SYSTEMDDIR@/nvmf-connect@.service
- @SYSTEMDDIR@/nvmefc-boot-connections.service
--- 
-2.51.0
+ static inline u32 get_kset_id(struct pcache_cache *cache, u64 off)
+ {
+-	return (off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT) % cache->n_ksets;
++	u32 rem;
++	div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT, cache->n_ksets, &rem);
++	return rem;
+ }
+ 
+ static inline struct pcache_cache_kset *get_kset(struct pcache_cache *cache, u32 kset_id)
+
+---
+base-commit: fd5cc4922bef4b3c3cd0452f38dcfd066322e9a9
+change-id: 20250821-dm-pcache-fix-32-bit-div-err-4f0695e94784
+
+Best regards,
+--  
+Nathan Chancellor <nathan@kernel.org>
 
