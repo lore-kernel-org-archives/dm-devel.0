@@ -1,102 +1,217 @@
-Received: from out-188.mta1.migadu.com (out-188.mta1.migadu.com [95.215.58.188])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C1B81A76DE
-	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 02:33:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.188
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 666D42853EE
+	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 06:40:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755743617; cv=none; b=CksruApAsK48J5yelHJfsSlYcPnXk7eFzRUVK5xccXlhiPsHo4EFwWTLSGMNi8BaUbVMJXKDxbaxle9BEhFZigf4n6I0wwMEr70JcAePa70DZ5Df2N0l9OHguXSEK2fCVtlEr1NK2bqYWT59WFhX7bolH+tu179C6Tqz7Zp8HM8=
+	t=1755758459; cv=none; b=T/DBCUk+Kk1HLJZk1HGqral67ApJKppUemUMvjjkXWxP8YO3PWsXUJ0NUvh1+xdB2PiJz51VazlWyVih7JIuJ9MJ6vw8M5cACP30fw1T78y9aIphYuz9e99BpiUCTTMjmWCBjMZ7MJrjZ4wy8n2FRJS7KANTneXE35NVy8cPIJs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755743617; c=relaxed/simple;
-	bh=cpjCVyc9vf/cCtYteEwMV42vdH0/pMIPJSUWh6QnjjY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=pNXJyikEkEQw1dcl7FHzRWXN6S8yYEwRmyM0VCvt8Mo0TGStCcYPnHmR8/YvRIZk+FuThHl86ExZ36tceh0/E2DXF0Z41S2LjkX1JpU7PSNzOU3OLrAOun9pY4pUT40DZKeEQVyPCi4bNaZNLlBgr+id2ndxADRls1T+OSLgRB0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=arwpOvD2; arc=none smtp.client-ip=95.215.58.188
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="arwpOvD2"
-Message-ID: <7305bd03-13f9-42a8-a57c-f0c9808df250@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1755743609;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=NoZ0Pd3eoIIGJXgDKPP3hkQsdE/YBEaWMHrGd6crnEc=;
-	b=arwpOvD2FMQfSuulaX7i2QVbExOAJ9p6AI5LNKyGTKQTzgqpNGe9I65CFcwv7nAQLyfNVP
-	5CogIit/iXe0DreWAIZF7+jb6DumXMhxhCcKB+KK6wqI0UQIzFTEMKEo4KTSrSC7K0uLLc
-	e8iqeYiarP7QLAFY0x3xl8+zldLG46Q=
-Date: Thu, 21 Aug 2025 10:33:18 +0800
+	s=arc-20240116; t=1755758459; c=relaxed/simple;
+	bh=3XaR4vmSB7jpSEvMaAX61qPKgqAZ/1lwztzPFQxpWpA=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=jYBUvNUgOrSeLhHrUAb/ubs8L120tBgWb33rEGJPiFD/Z5EJbif/FeAV4eLn/7BcvpNDXH4oZVPMzMnqGs86wzlhhPwbeRF22RO8X99QKeEuu/yspN08GtZ9McOd9TLGgRF+a1I3bJdN95Bre7POnK9AWfH8aariUq4I0K4IBwg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.93.142])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4c6tWB0ZxfzKHNZH
+	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 14:21:26 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 8964B1A0DD8
+	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 14:21:25 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgAHzw_duqZoIKmhEQ--.35680S4;
+	Thu, 21 Aug 2025 14:21:24 +0800 (CST)
+From: Zhang Yi <yi.zhang@huaweicloud.com>
+To: linux-fsdevel@vger.kernel.org,
+	linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org,
+	hch@lst.de,
+	tytso@mit.edu,
+	djwong@kernel.org,
+	bmarzins@redhat.com,
+	chaitanyak@nvidia.com,
+	shinichiro.kawasaki@wdc.com,
+	brauner@kernel.org,
+	martin.petersen@oracle.com,
+	yi.zhang@huawei.com,
+	yi.zhang@huaweicloud.com,
+	chengzhihao1@huawei.com,
+	yukuai3@huawei.com,
+	yangerkun@huawei.com
+Subject: [PATCH util-linux v4] fallocate: add FALLOC_FL_WRITE_ZEROES support
+Date: Thu, 21 Aug 2025 14:13:07 +0800
+Message-Id: <20250821061307.1770368-1-yi.zhang@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: RFC Request: NVMe backend support in dm-pcache
-To: Giovanni Francesco <gioflux@gmail.com>, dm-devel@lists.linux.dev
-References: <CBAE8F39-7448-43F1-AA8D-1F4457530970@gmail.com>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <CBAE8F39-7448-43F1-AA8D-1F4457530970@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+X-CM-TRANSID:gCh0CgAHzw_duqZoIKmhEQ--.35680S4
+X-Coremail-Antispam: 1UD129KBjvJXoWxtFW7XFyDWFyUCryrKF15Arb_yoWxAr48pF
+	W5tF18K3yrWw4xGwn7Za1kWw15Zws5Wr45CrZ2grykAr13Wa17Ka1vgryFgasrXFWkCa15
+	Xr1avry3ur48AaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26F1j6w1UM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_JrI_JrylYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
+	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
+	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
+	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
+	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjTRRBT5DUUUU
+X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-Hi,
+From: Zhang Yi <yi.zhang@huawei.com>
 
-     Thanx for your information. Yes, pcache currently only allow pmem 
-to be cache_dev.
+The Linux kernel (since version 6.17) supports FALLOC_FL_WRITE_ZEROES in
+fallocate(2). Add support for FALLOC_FL_WRITE_ZEROES to the fallocate
+utility by introducing a new option -w|--write-zeroes.
 
+Link: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=278c7d9b5e0c
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: "Darrick J. Wong" <djwong@kernel.org>
+---
+v3->v4:
+ - Fix a minor grammatical mistake.
+v2->v3:
+ - Say less about what the filesystem actually implements as Darrick
+   suggested and clarify the reason why "--keep-size" cannot be used
+   together in the man page.
+ - Modify the verbose output message.
+v1->v2:
+ - Minor description modification to align with the kernel.
 
-(1) I would suggest you to do some testing on pmem firstly.
+ sys-utils/fallocate.1.adoc | 11 +++++++++--
+ sys-utils/fallocate.c      | 20 ++++++++++++++++----
+ 2 files changed, 25 insertions(+), 6 deletions(-)
 
-You can use memmap kernel option to emulate pmem device:
+diff --git a/sys-utils/fallocate.1.adoc b/sys-utils/fallocate.1.adoc
+index 44ee0ef4c..69602f01c 100644
+--- a/sys-utils/fallocate.1.adoc
++++ b/sys-utils/fallocate.1.adoc
+@@ -12,7 +12,7 @@ fallocate - preallocate or deallocate space to a file
+ 
+ == SYNOPSIS
+ 
+-*fallocate* [*-c*|*-p*|*-z*] [*-o* _offset_] *-l* _length_ [*-n*] _filename_
++*fallocate* [*-c*|*-p*|*-z*|*-w*] [*-o* _offset_] *-l* _length_ [*-n*] _filename_
+ 
+ *fallocate* *-d* [*-o* _offset_] [*-l* _length_] _filename_
+ 
+@@ -28,7 +28,7 @@ The exit status returned by *fallocate* is 0 on success and 1 on failure.
+ 
+ The _length_ and _offset_ arguments may be followed by the multiplicative suffixes KiB (=1024), MiB (=1024*1024), and so on for GiB, TiB, PiB, EiB, ZiB, and YiB (the "iB" is optional, e.g., "K" has the same meaning as "KiB") or the suffixes KB (=1000), MB (=1000*1000), and so on for GB, TB, PB, EB, ZB, and YB.
+ 
+-The options *--collapse-range*, *--dig-holes*, *--punch-hole*, *--zero-range* and *--posix* are mutually exclusive.
++The options *--collapse-range*, *--dig-holes*, *--punch-hole*, *--zero-range*, *--write-zeroes* and *--posix* are mutually exclusive.
+ 
+ *-c*, *--collapse-range*::
+ Removes a byte range from a file, without leaving a hole. The byte range to be collapsed starts at _offset_ and continues for _length_ bytes. At the completion of the operation, the contents of the file starting at the location __offset__+_length_ will be appended at the location _offset_, and the file will be _length_ bytes smaller. The option *--keep-size* may not be specified for the collapse-range operation.
+@@ -76,6 +76,13 @@ Option *--keep-size* can be specified to prevent file length modification.
+ +
+ Available since Linux 3.14 for ext4 (only for extent-based files) and XFS.
+ 
++*-w*, *--write-zeroes*::
++Zeroes space in the byte range starting at _offset_ and continuing for _length_ bytes. Within the specified range, written blocks are preallocated for the regions that span the holes in the file. After a successful call, subsequent reads from this range will return zeroes and subsequent writes to that range do not require further changes to the file mapping metadata.
+++
++Zeroing is done within the filesystem. The filesystem may use a hardware-accelerated zeroing command or may submit regular writes. The behavior depends on the filesystem design and the available hardware.
+++
++Options *--keep-size* cannot be specified for the write-zeroes operation because allocating written blocks beyond the inode size is not permitted.
++
+ include::man-common/help-version.adoc[]
+ 
+ == AUTHORS
+diff --git a/sys-utils/fallocate.c b/sys-utils/fallocate.c
+index 13bf52915..afd615537 100644
+--- a/sys-utils/fallocate.c
++++ b/sys-utils/fallocate.c
+@@ -40,7 +40,7 @@
+ #if defined(HAVE_LINUX_FALLOC_H) && \
+     (!defined(FALLOC_FL_KEEP_SIZE) || !defined(FALLOC_FL_PUNCH_HOLE) || \
+      !defined(FALLOC_FL_COLLAPSE_RANGE) || !defined(FALLOC_FL_ZERO_RANGE) || \
+-     !defined(FALLOC_FL_INSERT_RANGE))
++     !defined(FALLOC_FL_INSERT_RANGE) || !defined(FALLOC_FL_WRITE_ZEROES))
+ # include <linux/falloc.h>	/* non-libc fallback for FALLOC_FL_* flags */
+ #endif
+ 
+@@ -65,6 +65,10 @@
+ # define FALLOC_FL_INSERT_RANGE		0x20
+ #endif
+ 
++#ifndef FALLOC_FL_WRITE_ZEROES
++# define FALLOC_FL_WRITE_ZEROES		0x80
++#endif
++
+ #include "nls.h"
+ #include "strutils.h"
+ #include "c.h"
+@@ -94,6 +98,7 @@ static void __attribute__((__noreturn__)) usage(void)
+ 	fputs(_(" -o, --offset <num>   offset for range operations, in bytes\n"), out);
+ 	fputs(_(" -p, --punch-hole     replace a range with a hole (implies -n)\n"), out);
+ 	fputs(_(" -z, --zero-range     zero and ensure allocation of a range\n"), out);
++	fputs(_(" -w, --write-zeroes   write zeroes and ensure allocation of a range\n"), out);
+ #ifdef HAVE_POSIX_FALLOCATE
+ 	fputs(_(" -x, --posix          use posix_fallocate(3) instead of fallocate(2)\n"), out);
+ #endif
+@@ -304,6 +309,7 @@ int main(int argc, char **argv)
+ 	    { "dig-holes",      no_argument,       NULL, 'd' },
+ 	    { "insert-range",   no_argument,       NULL, 'i' },
+ 	    { "zero-range",     no_argument,       NULL, 'z' },
++	    { "write-zeroes",   no_argument,       NULL, 'w' },
+ 	    { "offset",         required_argument, NULL, 'o' },
+ 	    { "length",         required_argument, NULL, 'l' },
+ 	    { "posix",          no_argument,       NULL, 'x' },
+@@ -312,8 +318,8 @@ int main(int argc, char **argv)
+ 	};
+ 
+ 	static const ul_excl_t excl[] = {	/* rows and cols in ASCII order */
+-		{ 'c', 'd', 'i', 'p', 'x', 'z'},
+-		{ 'c', 'i', 'n', 'x' },
++		{ 'c', 'd', 'i', 'p', 'w', 'x', 'z'},
++		{ 'c', 'i', 'n', 'w', 'x' },
+ 		{ 0 }
+ 	};
+ 	int excl_st[ARRAY_SIZE(excl)] = UL_EXCL_STATUS_INIT;
+@@ -323,7 +329,7 @@ int main(int argc, char **argv)
+ 	textdomain(PACKAGE);
+ 	close_stdout_atexit();
+ 
+-	while ((c = getopt_long(argc, argv, "hvVncpdizxl:o:", longopts, NULL))
++	while ((c = getopt_long(argc, argv, "hvVncpdizwxl:o:", longopts, NULL))
+ 			!= -1) {
+ 
+ 		err_exclusive_options(c, longopts, excl, excl_st);
+@@ -353,6 +359,9 @@ int main(int argc, char **argv)
+ 		case 'z':
+ 			mode |= FALLOC_FL_ZERO_RANGE;
+ 			break;
++		case 'w':
++			mode |= FALLOC_FL_WRITE_ZEROES;
++			break;
+ 		case 'x':
+ #ifdef HAVE_POSIX_FALLOCATE
+ 			posix = 1;
+@@ -429,6 +438,9 @@ int main(int argc, char **argv)
+ 			else if (mode & FALLOC_FL_ZERO_RANGE)
+ 				fprintf(stdout, _("%s: %s (%ju bytes) zeroed.\n"),
+ 								filename, str, length);
++			else if (mode & FALLOC_FL_WRITE_ZEROES)
++				fprintf(stdout, _("%s: %s (%ju bytes) written as zeroes.\n"),
++								filename, str, length);
+ 			else
+ 				fprintf(stdout, _("%s: %s (%ju bytes) allocated.\n"),
+ 								filename, str, length);
+-- 
+2.39.2
 
-https://docs.pmem.io/persistent-memory/getting-started-guide/creating-development-environments/linux-environments/linux-memmap
-
-Then you can try dm-pcache, to see is that what you want.
-
-Of course, if you want to do some performance compare, remember to use 
-pmem for bcache too, /dev/pmem0 is also working to be cache device for 
-bcache.
-
-
-(2) I would suggest you add more io pattern in you testing script:
-
-iodepth=1, numjobs=1 for latency when workload is not heavy but it want 
-ack from device ASAP. That's important in lots of latency sensitive 
-application.
-
-iodepth=1, numjobs=32 or 16. multiple application are running on a large 
-disk.
-
-
-(3) LRU is already on the TODO list 
-in Documentation/admin-guide/device-mapper/dm-pcache.rst
-
-
-(4) NVME backend is not impossible, but my current high-priority task is 
-to stabilize dm-pcache and ensure it runs well in the pmem scenario. 
-Then, consideration may be given to the nvme backend.
-
-
-Thanx
-
-Dongsheng
-
-在 8/21/2025 3:15 AM, Giovanni Francesco 写道:
-> Hello,
->
-> I would like to ask for consideration of adding NVMe disk support to the caching layer in `dm-pcache`. At present, `cache_dev` only supports `pmem`.
->
->  From my perspective, extending `pcache` to support NVMe devices (along with an LRU-based eviction policy) could make it a strong alternative to `bcache` in certain use cases. For example, `pcache` appears to work without requiring the backing storage devices to be reformatted, which I see as a practical advantage.
->
-> For my home server workloads, I experimented with `lvmcache`, but I found both writeback and read performance unsatisfactory compared to what I was hoping for. My test notes and benchmarks are available here for anyone interested:
-> https://github.com/TheLinuxGuy/ugreen-nas/tree/main/experiments-bench
->
-> Would adding NVMe support (and potentially configurable caching policies like LRU) be of interest to the project? I am happy to assist with testing or provide more detailed feedback from my benchmarks if that would be useful.
->
-> Thanks for your time and consideration.
-> Giovanni
