@@ -1,229 +1,102 @@
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-188.mta1.migadu.com (out-188.mta1.migadu.com [95.215.58.188])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 471582BE651
-	for <dm-devel@lists.linux.dev>; Wed, 20 Aug 2025 21:32:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C1B81A76DE
+	for <dm-devel@lists.linux.dev>; Thu, 21 Aug 2025 02:33:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.188
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755725580; cv=none; b=Wgz+7xtei4nPJhBJKEEEkLWlYx3GLmJKoopMLjMxzZVXR8cJkz98vao88d7t5OcH05jGDoE3jpeEBODK3TdzJu4a5GeqgHL9MvyiUutKaL6N+TBHydfA5e2HTmlJikshXSmgQnJPdFtlVPcG0A/6upBYAZ9/HX3waMngEfuPxFA=
+	t=1755743617; cv=none; b=CksruApAsK48J5yelHJfsSlYcPnXk7eFzRUVK5xccXlhiPsHo4EFwWTLSGMNi8BaUbVMJXKDxbaxle9BEhFZigf4n6I0wwMEr70JcAePa70DZ5Df2N0l9OHguXSEK2fCVtlEr1NK2bqYWT59WFhX7bolH+tu179C6Tqz7Zp8HM8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755725580; c=relaxed/simple;
-	bh=PoKQrv5do0Psn+aFwt6iUyMzmLElXRyjydzGPV6DSVc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=SJgPcnzGlkI7E18oyusikqTk66iXEYPmV9eHjRQVq68rQB8VYEm4JbkSulvkAyPNXZUarMFPLeovi1mqQzVzmtG0krL3Dl9148OXaj2WLIAi7NmEx+0R/583haz36LPolRAzVBRZbQ8NsyWwwytDlfITHqCBtXHvOz6k7CO1mo8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mOeNmBbg; arc=none smtp.client-ip=209.85.221.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1755743617; c=relaxed/simple;
+	bh=cpjCVyc9vf/cCtYteEwMV42vdH0/pMIPJSUWh6QnjjY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=pNXJyikEkEQw1dcl7FHzRWXN6S8yYEwRmyM0VCvt8Mo0TGStCcYPnHmR8/YvRIZk+FuThHl86ExZ36tceh0/E2DXF0Z41S2LjkX1JpU7PSNzOU3OLrAOun9pY4pUT40DZKeEQVyPCi4bNaZNLlBgr+id2ndxADRls1T+OSLgRB0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=arwpOvD2; arc=none smtp.client-ip=95.215.58.188
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mOeNmBbg"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-3b9e4140f38so55441f8f.3
-        for <dm-devel@lists.linux.dev>; Wed, 20 Aug 2025 14:32:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1755725576; x=1756330376; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=oBgF4OquzXHZJ3H0RI6thUlJhwBomlwAaCvZIMnO3U0=;
-        b=mOeNmBbgZ2QiBrIJez/yTQh9WlWRLgsT5fRmLTIK9tkSKOU3kQVfdqXf/8GCjug1to
-         7telX1YmRY8wWkpiUB/U4UUSNx9qBYFtLGJIfKiwFmS2xlKVnzRi6Q4OxaOdyE8NNKny
-         HiD5zPz28aXrF4vgmhrUrjucG9t+Di1yKckFlfAN3n9+LnDLbk5e6JjAzEZPtONjUIl1
-         n8i1mFUNjfkZmZTCOJ80hDZBu4Yi3+BKG4KXw87chNHMloOzuW1Yt2zfMJdeqW9jD/KK
-         zJ/ZxsrsdjHAHvub0skD/xaAkWCFFYkkuExPID1IKWQ+zGISvxXpz1xyKAomllLiTpnp
-         gvQw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1755725576; x=1756330376;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=oBgF4OquzXHZJ3H0RI6thUlJhwBomlwAaCvZIMnO3U0=;
-        b=fZQ1L21u+TtzmudbaemlrozSCW/Vrhq49fz27KccgxBbXyNtGvXji6po+1UFqFAdUT
-         VE57AHE0yxVAamSHkFXt364OgxKEkzS5CnW4xqdQ78seHAWQ4uCSGblR5b46++EgbgaJ
-         TjGJnCMSLFlEmoWb9jhtfobEGee2oyEIAUHXsEh76SEDkd1uUD3MfZcVvzYRfkuNaTq1
-         DPxC4t9NfjSvWkSx8+M9e3EzbA6ATdDgQJthNSaD33IfXhdFBP/pm/8zKYIKM7XKJj8C
-         ws9P+I3h7P5lM8pzoDZ6Ct6z7Jd3mcmIksYBECYUEIL6zx9OzHXMhFPXD01HmKw541yb
-         cXmA==
-X-Forwarded-Encrypted: i=1; AJvYcCUSxEEE7FGqJ39nRIdN4FrhY1WhH+2U0cW+i5EnyGKnBOLIeridENOC341JuiIfaP8MmK/hv98DLw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxcPlB/iF5mRaC/HTBTdI2u6dUL/vn/rTj6KpNBgK+0xYf1LKwt
-	OzXI6LQNOJxWwmk+OoRhq0yGxavJ8QWt04cgbYYbZAhupqchUvfvwaM=
-X-Gm-Gg: ASbGncti9GxHY7vC02uHYnssid0rSA2eBAHW3vlc4B1Ep7SrnGK+ABU8x3LaznDxkCY
-	DD0Bm3wWv/SW5q62UOOA6Np6e/Q1GjghwX4RaJZb0qOL5TppWDS6ttqdx6ofzUYnWpBAybj6mMQ
-	eVZ1N07pgS0ziMPm0Nq9U9GfyGsjlS2f8jeeVMh9LcOey65aGuR0S1KHrkySNlixRgHWZ0/w4fW
-	UZNypoms74weCJuFLoBj+dA8efxn/nnObeDnjsIRfXqv9Fe3GglK3ZG0Z1AJEe+IfONc/OhJ3hs
-	qkJat9JOS61rGh25cTmPS/w+D4+BsU13G3/hK1pjXvUvqlCkovpFl0xBxOj4QSs+JsSGUbOWFbJ
-	f/HwJ+dtS0HuBqq4/326lFTxlgiFa0LeKJGowvuAGy31A2lDsei/6G6DFtkv6XPHlk8Vzj0o=
-X-Google-Smtp-Source: AGHT+IFpaHt+QNsQklADoGadGLHhabEswBSBpdvkzZPtjH45BGr00qhJfUN625Zw9+3cWWc9heSYhA==
-X-Received: by 2002:a05:600c:4f83:b0:459:db79:2102 with SMTP id 5b1f17b1804b1-45b4d86bfd7mr76075e9.7.1755725576267;
-        Wed, 20 Aug 2025 14:32:56 -0700 (PDT)
-Received: from localhost (67.red-80-39-24.staticip.rima-tde.net. [80.39.24.67])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45b47c54c8fsm47614545e9.16.2025.08.20.14.32.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 20 Aug 2025 14:32:55 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Wayne Berthiaume <Wayne.Berthiaume@dell.com>,
-	Vasuki Manikarnike <vasuki.manikarnike@hpe.com>,
-	Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
-	Martin George <marting@netapp.com>,
-	NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
-	Zou Ming <zouming.zouming@huawei.com>,
-	Li Xiaokeng <lixiaokeng@huawei.com>,
-	Randy Jennings <randyj@purestorage.com>,
-	Jyoti Rani <jrani@purestorage.com>,
-	Brian Bunker <brian@purestorage.com>,
-	Uday Shankar <ushankar@purestorage.com>,
-	Chaitanya Kulkarni <kch@nvidia.com>,
-	Sagi Grimberg <sagi@grimberg.me>,
-	Keith Busch <kbusch@kernel.org>,
-	Christoph Hellwig <hch@lst.de>,
-	Marco Patalano <mpatalan@redhat.com>,
-	"Ewan D. Milne" <emilne@redhat.com>,
-	John Meneghini <jmeneghi@redhat.com>,
-	Daniel Wagner <dwagner@suse.de>,
-	Daniel Wagner <wagi@monom.org>,
-	Hannes Reinecke <hare@suse.de>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	BLOCK-ML <linux-block@vger.kernel.org>,
-	NVME-ML <linux-nvme@lists.infradead.org>,
-	SCSI-ML <linux-scsi@vger.kernel.org>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v3] nvme-cli: nvmf-autoconnect: udev-rule: add a file for new arrays
-Date: Wed, 20 Aug 2025 23:32:53 +0200
-Message-ID: <20250820213254.220715-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.50.1
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="arwpOvD2"
+Message-ID: <7305bd03-13f9-42a8-a57c-f0c9808df250@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1755743609;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=NoZ0Pd3eoIIGJXgDKPP3hkQsdE/YBEaWMHrGd6crnEc=;
+	b=arwpOvD2FMQfSuulaX7i2QVbExOAJ9p6AI5LNKyGTKQTzgqpNGe9I65CFcwv7nAQLyfNVP
+	5CogIit/iXe0DreWAIZF7+jb6DumXMhxhCcKB+KK6wqI0UQIzFTEMKEo4KTSrSC7K0uLLc
+	e8iqeYiarP7QLAFY0x3xl8+zldLG46Q=
+Date: Thu, 21 Aug 2025 10:33:18 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+Subject: Re: RFC Request: NVMe backend support in dm-pcache
+To: Giovanni Francesco <gioflux@gmail.com>, dm-devel@lists.linux.dev
+References: <CBAE8F39-7448-43F1-AA8D-1F4457530970@gmail.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <CBAE8F39-7448-43F1-AA8D-1F4457530970@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-One file per vendor, or device, is a bit excessive for two-four rules.
+Hi,
 
-
-If possible, select round-robin (>=5.1), or queue-depth (>=6.11).
-round-robin is a basic selector, and only works well under ideal conditions.
-
-A nvme benchmark, round-robin vs queue-depth, shows how bad it is:
-https://marc.info/?l=linux-kernel&m=171931850925572
-https://marc.info/?l=linux-kernel&m=171931852025575
-https://github.com/johnmeneghini/iopolicy/?tab=readme-ov-file#sample-data
-https://people.redhat.com/jmeneghi/ALPSS_2023/NVMe_QD_Multipathing.pdf
+     Thanx for your information. Yes, pcache currently only allow pmem 
+to be cache_dev.
 
 
-[ctrl_loss_tmo default value is 600 (ten minutes)]
+(1) I would suggest you to do some testing on pmem firstly.
+
+You can use memmap kernel option to emulate pmem device:
+
+https://docs.pmem.io/persistent-memory/getting-started-guide/creating-development-environments/linux-environments/linux-memmap
+
+Then you can try dm-pcache, to see is that what you want.
+
+Of course, if you want to do some performance compare, remember to use 
+pmem for bcache too, /dev/pmem0 is also working to be cache device for 
+bcache.
 
 
-v3:
- - add Fujitsu/ETERNUS AB/HB
- - add Hitachi/VSP
+(2) I would suggest you add more io pattern in you testing script:
 
-v2:
- - fix ctrl_loss_tmo commnent
- - add Infinidat/InfiniBox
+iodepth=1, numjobs=1 for latency when workload is not heavy but it want 
+ack from device ASAP. That's important in lots of latency sensitive 
+application.
 
-
-Cc: Wayne Berthiaume <Wayne.Berthiaume@dell.com>
-Cc: Vasuki Manikarnike <vasuki.manikarnike@hpe.com>
-Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
-Cc: Martin George <marting@netapp.com>
-Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
-Cc: Zou Ming <zouming.zouming@huawei.com>
-Cc: Li Xiaokeng <lixiaokeng@huawei.com>
-Cc: Randy Jennings <randyj@purestorage.com>
-Cc: Jyoti Rani <jrani@purestorage.com>
-Cc: Brian Bunker <brian@purestorage.com>
-Cc: Uday Shankar <ushankar@purestorage.com>
-Cc: Chaitanya Kulkarni <kch@nvidia.com>
-Cc: Sagi Grimberg <sagi@grimberg.me>
-Cc: Keith Busch <kbusch@kernel.org>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Marco Patalano <mpatalan@redhat.com>
-Cc: Ewan D. Milne <emilne@redhat.com>
-Cc: John Meneghini <jmeneghi@redhat.com>
-Cc: Daniel Wagner <dwagner@suse.de>
-Cc: Daniel Wagner <wagi@monom.org>
-Cc: Hannes Reinecke <hare@suse.de>
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: BLOCK-ML <linux-block@vger.kernel.org>
-Cc: NVME-ML <linux-nvme@lists.infradead.org>
-Cc: SCSI-ML <linux-scsi@vger.kernel.org>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
-
-This will be the last iteration of this patch, there are no more NVMe storage
-array manufacturers.
+iodepth=1, numjobs=32 or 16. multiple application are running on a large 
+disk.
 
 
-Maybe these rules should be merged into this new file. ???
-71-nvmf-hpe.rules.in
-71-nvmf-netapp.rules.in
-71-nvmf-vastdata.rules.in
+(3) LRU is already on the TODO list 
+in Documentation/admin-guide/device-mapper/dm-pcache.rst
 
----
- .../80-nvmf-storage_arrays.rules.in           | 48 +++++++++++++++++++
- 1 file changed, 48 insertions(+)
- create mode 100644 nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in
 
-diff --git a/nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in b/nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in
-new file mode 100644
-index 00000000..ac5df797
---- /dev/null
-+++ b/nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in
-@@ -0,0 +1,48 @@
-+##### Storage arrays
-+
-+#### Set iopolicy for NVMe-oF
-+### iopolicy: numa (default), round-robin (>=5.1), or queue-depth (>=6.11)
-+
-+## Dell EMC
-+# PowerMax
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="EMC PowerMax"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="EMC PowerMax"
-+# PowerStore
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="dellemc-powerstore"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="dellemc-powerstore"
-+
-+## Fujitsu
-+# ETERNUS AB/HB
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Fujitsu ETERNUS AB/HB Series"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Fujitsu ETERNUS AB/HB Series"
-+
-+## Hitachi Vantara
-+# VSP
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="HITACHI SVOS-RF-System"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="HITACHI SVOS-RF-System"
-+
-+## Huawei
-+# OceanStor
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Huawei-XSG1"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Huawei-XSG1"
-+
-+## IBM
-+# FlashSystem (RamSan)
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="FlashSystem"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="FlashSystem"
-+# FlashSystem (Storwize/SVC)
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="IBM*214"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="IBM*214"
-+
-+## Infinidat
-+# InfiniBox
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="InfiniBox"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="InfiniBox"
-+
-+## Pure
-+# FlashArray
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Pure Storage FlashArray"
-+ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Pure Storage FlashArray"
-+
-+
-+##### EOF
--- 
-2.50.1
+(4) NVME backend is not impossible, but my current high-priority task is 
+to stabilize dm-pcache and ensure it runs well in the pmem scenario. 
+Then, consideration may be given to the nvme backend.
 
+
+Thanx
+
+Dongsheng
+
+在 8/21/2025 3:15 AM, Giovanni Francesco 写道:
+> Hello,
+>
+> I would like to ask for consideration of adding NVMe disk support to the caching layer in `dm-pcache`. At present, `cache_dev` only supports `pmem`.
+>
+>  From my perspective, extending `pcache` to support NVMe devices (along with an LRU-based eviction policy) could make it a strong alternative to `bcache` in certain use cases. For example, `pcache` appears to work without requiring the backing storage devices to be reformatted, which I see as a practical advantage.
+>
+> For my home server workloads, I experimented with `lvmcache`, but I found both writeback and read performance unsatisfactory compared to what I was hoping for. My test notes and benchmarks are available here for anyone interested:
+> https://github.com/TheLinuxGuy/ugreen-nas/tree/main/experiments-bench
+>
+> Would adding NVMe support (and potentially configurable caching policies like LRU) be of interest to the project? I am happy to assist with testing or provide more detailed feedback from my benchmarks if that would be useful.
+>
+> Thanks for your time and consideration.
+> Giovanni
