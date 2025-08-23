@@ -1,118 +1,127 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E8C01FBE83
-	for <dm-devel@lists.linux.dev>; Sat, 23 Aug 2025 04:37:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A2E419F135;
+	Sat, 23 Aug 2025 05:27:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1755923845; cv=none; b=rl5y6Nm66I7XcVRTayFz8jUBhOkzDuIKIwkbOOyfELL3fDRjNcWgKS+SFdMkr0/mcOlTajqajcHPsBN6tb7fFDkiTgh9njaMx1oma5NyxfzOgIC+QwUS2GwZCs9OPvNh9n1niHzuwJZNhKZ3DE6n1NMCuuEwbJnE3NxQuKEc0g8=
+	t=1755926880; cv=none; b=hI/ydkjaPsYtcpg4kdEM2HTaHFUr4IXH2CjJk9cW1g1tVsxm3i7mQpoRXZQg/E786n0NfbL4xEKYSPwjPwqRA26Mu0SgKri7xICVfW1U2uwAh1eHxuNCRKWin0jfMU0xGd+sZD1wWij+7Bnp1KyZvfWB224u1lWuCUjNuLJ9XjM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1755923845; c=relaxed/simple;
-	bh=jOsk/0E2M1AqmaAoj/SNM6dDuTwerjrCn1XIBMFUI0c=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=kcGMvpi90KCSLquOd0RohopuACJBmLJ5HvCkYQCvmd7TOwkDzo+tk5vFmmgrXRC6rGv4CfFT+EqF9OU2ZAA0n4SPwjKkNbd68/5I0IkCeZMcOixd06Qm7BAYLpDQm8CvYsUCGEjyvtIcdjMNurWBHLJtPPTDP4iO/TKCV4IzcDg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4c84680JgrzKHN9M
-	for <dm-devel@lists.linux.dev>; Sat, 23 Aug 2025 12:37:20 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 9158D1A1532
-	for <dm-devel@lists.linux.dev>; Sat, 23 Aug 2025 12:37:19 +0800 (CST)
-Received: from [10.174.179.80] (unknown [10.174.179.80])
-	by APP4 (Coremail) with SMTP id gCh0CgBHERJ9Ralopph+Eg--.26768S3;
-	Sat, 23 Aug 2025 12:37:19 +0800 (CST)
-Message-ID: <bf778cf7-6ae5-4f57-a40c-fbae5cbe00a7@huaweicloud.com>
-Date: Sat, 23 Aug 2025 12:37:17 +0800
+	s=arc-20240116; t=1755926880; c=relaxed/simple;
+	bh=+fImkWUgacin2LSzWHOkqtqjjNvlT3yYhpgVrHNgVg0=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=B5IaQ5j44J+qyvrHpzZqtRYJEusZJ4KQkn/GyVThelX502zDA4QL8gKBUahLJsq+Z0Mi6k3HrGDViM7I2qbrqDIWFXlUa1P4TshL9yRSRwGkZRJmlIRAkA11UO6S0S7U+GqIFqWWdRjeju/z/iJs5knjoMEusUDUAFIu3ZcJRKU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IXn1jbMz; arc=none smtp.client-ip=10.30.226.201
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IXn1jbMz"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 537B8C4CEE7;
+	Sat, 23 Aug 2025 05:27:58 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1755926879;
+	bh=+fImkWUgacin2LSzWHOkqtqjjNvlT3yYhpgVrHNgVg0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=IXn1jbMzld+vE1HJyoRCdzBCg4GcYpRUPyzrcRFDcIj/m3PrJvLDvozXB0OOGlpet
+	 mM44oqPnN4Cq6hfsYkrbP9uXsmDTvuBGDOA/y8KDF6DXENZ7iSE6BD26MdXxc/XJaC
+	 5ti3q7tnFBULKx8eVnk1qq9DlDISNhak35x7x2OxFTSItOHfHBSCHvLG6B0YavZhus
+	 0/eknHbzJrNvQ+ZDJQBsWNPkxu8Lvz8HVTxPAwYEKmbPLbEsm8MbMaaDz6CljSbO9Q
+	 ng7r3+qm3M1j3Ti+5JTsZYFSdTL5/Mridb7+7f7+eHi6hDO79hY7MnoIOySQo9N6QE
+	 PGLuK+xi7B2Fw==
+Date: Fri, 22 Aug 2025 22:27:55 -0700
+From: Nathan Chancellor <nathan@kernel.org>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+Cc: Zheng Gu <cengku@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev, patches@lists.linux.dev
+Subject: Re: [PATCH] dm-pcache: Fix 64-bit division for 32-bit platforms in
+ get_kset_id()
+Message-ID: <20250823052755.GB4056405@ax162>
+References: <20250821-dm-pcache-fix-32-bit-div-err-v1-1-cab5448f44e6@kernel.org>
+ <2f5aa331-aa47-4e81-9bb3-65c771b39913@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 1/9] block: introduce
- max_{hw|user}_wzeroes_unmap_sectors to queue limits
-To: John Garry <john.g.garry@oracle.com>, linux-fsdevel@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-block@vger.kernel.org,
- dm-devel@lists.linux.dev, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org
-Cc: linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, hch@lst.de,
- tytso@mit.edu, djwong@kernel.org, bmarzins@redhat.com,
- chaitanyak@nvidia.com, shinichiro.kawasaki@wdc.com, brauner@kernel.org,
- martin.petersen@oracle.com, yi.zhang@huawei.com, chengzhihao1@huawei.com,
- yukuai3@huawei.com, yangerkun@huawei.com
-References: <20250619111806.3546162-1-yi.zhang@huaweicloud.com>
- <20250619111806.3546162-2-yi.zhang@huaweicloud.com>
- <803a2183-a0bb-4b7a-92f1-afc5097630d2@oracle.com>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <803a2183-a0bb-4b7a-92f1-afc5097630d2@oracle.com>
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgBHERJ9Ralopph+Eg--.26768S3
-X-Coremail-Antispam: 1UD129KBjvJXoW7CF1Utr4furyDGrW7CryxAFb_yoW8Zw4xpF
-	y8uryIq34rJFs29w4Utw1UuFyFy3yru345Gr9rJ3Z3A3ykCrnIgF45u3ZFgFW7XrWrGw18
-	t3WYyFZxZr4UZ37anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+In-Reply-To: <2f5aa331-aa47-4e81-9bb3-65c771b39913@linux.dev>
 
-On 8/21/2025 8:55 PM, John Garry wrote:
-> On 19/06/2025 12:17, Zhang Yi wrote:
->>   }
->> @@ -333,6 +335,12 @@ int blk_validate_limits(struct queue_limits *lim)
->>       if (!lim->max_segments)
->>           lim->max_segments = BLK_MAX_SEGMENTS;
->>   +    if (lim->max_hw_wzeroes_unmap_sectors &&
->> +        lim->max_hw_wzeroes_unmap_sectors != lim->max_write_zeroes_sectors)
->> +        return -EINVAL;
+Hi Dongsheng,
+
+On Fri, Aug 22, 2025 at 02:53:42PM +0800, Dongsheng Yang wrote:
 > 
-> JFYI, I noticed that I am failing this check in raid0_set_limits() -> queue_limits_set() -> queue_limits_commit_update() -> blk_validate_limits() for v6.17-rc2
-> 
-> The raid0 array consists of NVMe partitions. Here lim->max_hw_wzeroes_unmap_sectors = 4096 and lim->max_write_zeroes_sectors = 0 values for the failure, above.
-> 
-> john@raspberrypi:~ $ cat /sys/block/nvme0n1/queue/write_zeroes_max_bytes
-> 2097152
-> john@raspberrypi:~ $ cat /sys/block/nvme0n1/queue/write_zeroes_unmap_max_bytes
-> 2097152
-> john@raspberrypi:~ $ cat
-> /sys/block/nvme0n1/queue/write_zeroes_unmap_max_hw_bytes
-> 2097152
-> john@raspberrypi:~ $
+> 在 8/22/2025 4:09 AM, Nathan Chancellor 写道:
+> > When building for a 32-bit platform (such as ARCH=i386 allmodconfig),
+> > there is a modpost error:
+> > 
+> >    ERROR: modpost: "__umoddi3" [drivers/md/dm-pcache/dm-pcache.ko] undefined!
+> > 
+> > Hacking up the driver Makefile to allow building into the kernel shows
+> > that the division comes from get_kset_id(), which is inlined into
+> > cache_key_append() in cache_key.c.
+> > 
+> > Use the helper div_u64_rem() to avoid emitting a libcall on 32-bit targets.
+> > 
+> > Fixes: fd5cc4922bef ("dm-pcache: add persistent cache target in device-mapper")
+> > Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+> > ---
+> >   drivers/md/dm-pcache/cache.h | 4 +++-
+> >   1 file changed, 3 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
+> > index b3b361cc406e..b10e721ab1b7 100644
+> > --- a/drivers/md/dm-pcache/cache.h
+> > +++ b/drivers/md/dm-pcache/cache.h
+> > @@ -373,7 +373,9 @@ static inline void *get_key_head_addr(struct pcache_cache *cache)
+> >   static inline u32 get_kset_id(struct pcache_cache *cache, u64 off)
+> >   {
+> > -	return (off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT) % cache->n_ksets;
+> > +	u32 rem;
+> > +	div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT, cache->n_ksets, &rem);
+> > +	return rem;
+> >   }
 > 
 > 
-
-Thank you for checking on this!
-
-The problem is that raid0_set_limits() only sets max_write_zeroes_sectors
-without synchronously setting max_hw_wzeroes_unmap_sectors. It appears
-that all stacked drivers that call blk_set_stacking_limits() to
-initialize stacked limits but independently adjust
-max_write_zeroes_sectors are problematic, including all md drivers and
-drbd. These drivers need to update max_hw_wzeroes_unmap_sectors as well, I
-will send out a fix soon.
-
-Thanks,
-Yi.
-
+> Hi Nathan,
 > 
->> +    lim->max_wzeroes_unmap_sectors = min(lim->max_hw_wzeroes_unmap_sectors,
->> +            lim->max_user_wzeroes_unmap_sectors);
->> +
->>       lim->max_discard_sectors =
->>           min(lim->max_hw_discard_sectors, lim->max_user_discard_sectors);
->>   @@ -418,10 +426,11 @@ int blk_set_default_limits(struct queue_limits *lim)
+> Thanx for your fix. It looks good to me.
+> 
+> Just one nit about the variable name. I prefer kset_id to rem.
 
+Thanks, seems entirely reasonable, thanks for sending the diff!
+
+> Mikulas, if this looks good to you, could you apply this change to dm-6.18?
+> 
+> diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
+> index b3b361cc406e..f005c9d9a7aa 100644
+> --- a/drivers/md/dm-pcache/cache.h
+> +++ b/drivers/md/dm-pcache/cache.h
+> @@ -373,7 +373,11 @@ static inline void *get_key_head_addr(struct
+> pcache_cache *cache)
+> 
+>  static inline u32 get_kset_id(struct pcache_cache *cache, u64 off)
+>  {
+> -       return (off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT) % cache->n_ksets;
+> +       u32 kset_id;
+> +
+> +       div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT, cache->n_ksets,
+> &kset_id);
+> +
+> +       return kset_id;
+>  }
+> 
+>  static inline struct pcache_cache_kset *get_kset(struct pcache_cache
+> *cache, u32 kset_id)
+> 
+> > re
+> >   static inline struct pcache_cache_kset *get_kset(struct pcache_cache *cache, u32 kset_id)
+> > 
+> > ---
+> > base-commit: fd5cc4922bef4b3c3cd0452f38dcfd066322e9a9
+> > change-id: 20250821-dm-pcache-fix-32-bit-div-err-4f0695e94784
+> > 
+> > Best regards,
+> > --
+> > Nathan Chancellor <nathan@kernel.org>
+> > 
