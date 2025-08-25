@@ -1,188 +1,142 @@
-Received: from NAM11-BN8-obe.outbound.protection.outlook.com (mail-bn8nam11on2073.outbound.protection.outlook.com [40.107.236.73])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE56B238C23
-	for <dm-devel@lists.linux.dev>; Mon, 25 Aug 2025 17:10:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.107.236.73
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756141804; cv=fail; b=Qbxcn0nhRzE+XnIgkQ4vZngCpREXNB0QgIBFVJSH0PuCv+h3MRDYoNH84LWMWs5tLTG5UukM/ieUEQOmMxDxe/WNRIvrP4VUVEd9RKk0tN5YEQFz2IQJnlXojCUaciuYFwfR7jRM62aVoPml/p/VIWGxXpQDvK5L3+XRr3z0/a0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756141804; c=relaxed/simple;
-	bh=sxXKhapIaxQDa52oviD1tgih2rWc2qyQ5+eT/5muzvY=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=CoOA+0pSCcjrY4gBfpITGp4sIppp7FBcCC4TybZx6NqbLjDYTy3gyX2sjYEVgkOId+0x7wYvcQ+SlV2YYF/uC+uh8LHyWwSGyOXpCGfJoab2kXV8y3dmv8VvVY3spKQ+WgoF0sOEPaRn02ZYy3unK3p+Fgay6atftsFxEE91+dU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com; spf=fail smtp.mailfrom=nvidia.com; dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b=nCXrFcyH; arc=fail smtp.client-ip=40.107.236.73
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=nvidia.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8AB01B87C0
+	for <dm-devel@lists.linux.dev>; Mon, 25 Aug 2025 19:56:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1756151775; cv=none; b=ZKX1kanhVJIAjkYX+knOJoP6owrsr68Lf5xfnBDW8iAYG1uDY//zYtmwmgELhMDTjA++kGwPj3tW+t82U/n3qRhDs56upkxrohJU8t5yisFT8UmkAmo3eZAZpSZ6WZOYmYZvgNpyV18nTSmlgCShiZeN0SDCUi56MannmhNIh7o=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1756151775; c=relaxed/simple;
+	bh=ciuRy9MTxTjq0LlXggj0YCRE5SSxYQDdPdEj+0jceXc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=to1+nLdcKJlrW1GWcAJjBrggKk9hd/UhUur/1P3bXrUQOG4hfk7ffZb4Wr7mYsiBVzipbGCATdQaLQrb/zADA8UVZ/HhNR6/zjT5ROfwrpmtX+c3VoHHlMOrmf938lj1kM3vfOYCxd9HeQeo6QzO4N4M3F8xHgjQCj1xBetJ1pQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TDeETIdg; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b="nCXrFcyH"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=UHD77SMSqB6tnjbX8MCtTKovrhkuhWaSMH3r/JjTYJGRzMOQR+1wAkNgOT9ul97ORvEaCmWucbF16cNZMZ4cFH0NcXV4wvaMg85nTJibQQx/DZ6oG85jUU+/CQnsmwoQO/wxexkArSKiSAw43d18jd/ONk7YE1lkvRJN1HEYPaC1iqYQ5/Hi4C3D8A9a7XlrskEO4UaAWQVj4dEiheiBojPv3ORxZgT853Xx5JF1r9GxrdSrLuE0vriBWc7dl0aCR7cEhDba9y97bDgt0OYUgCLsKD4KfJQersLlyUc0B8nntuWbxHL/oEoMiYljVZo5IS0FpBdjBo2FMYkG69rdyQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=sxXKhapIaxQDa52oviD1tgih2rWc2qyQ5+eT/5muzvY=;
- b=ukTgxdj7HUSp07PVWIzyUj7TzvPjPM8d1LVwaOK4/2AE/KbOyMOJVo2bysRJfSfUA7ibTT4mzYNxHkZV0bxVRJ3IoNZ2xgbCOrpk9VM2dr8skBEZYOugGUQmUT9qpgvyV+RTNWL6bR3IhIXfLvimxqg9RSJHI8t+kmefGSv5n4qCsykwJDBE2RJPh8UNkfjTHAQWmOJ9gqfZwxzVXQJlPi5l4VBzcO/yUujlorGAyN2CKC2R8zAEdteNFr/A4lYXPoIVbgUNoFmlEr4uW5a7y/O/KxYlQW6sgDUpO/Mdyie9pC1e/ohbdVT5uawh2DnN1djxhhsBSIANukWb0bqjHA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
- dkim=pass header.d=nvidia.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=sxXKhapIaxQDa52oviD1tgih2rWc2qyQ5+eT/5muzvY=;
- b=nCXrFcyHN6XXPTBk1PfFPY4mFm9dgqMM74FVTzN6ariDaSv60WDDM9IB1yOW5dfC9vnieupepGrqOkDx1eL2hlHJETWBX0XTW2SzFPT8rko0lRLAT5SAYnLNn451Ek5xIJ6RInWUDD+UR/g/mo7gVNBQTGfqAQGo+hcBtnLY7SBIjpF7W/5UKDwVIcORO0hDkSDzcbrf+FeekJQax9WEYm7qameuoVkjWyIDgYbmoWm9TGr0Uoq4pzFblq5jvGss0UquE6wkl9YF23tptc05ZWTM+uraEEP5/aD42thzKQR+y4uWBi0rxRILLFP/pJ9/uVIpVj/4iMGyAJ8LPezArw==
-Received: from LV3PR12MB9404.namprd12.prod.outlook.com (2603:10b6:408:219::9)
- by IA1PR12MB8309.namprd12.prod.outlook.com (2603:10b6:208:3fe::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9052.20; Mon, 25 Aug
- 2025 17:09:57 +0000
-Received: from LV3PR12MB9404.namprd12.prod.outlook.com
- ([fe80::57ac:82e6:1ec5:f40b]) by LV3PR12MB9404.namprd12.prod.outlook.com
- ([fe80::57ac:82e6:1ec5:f40b%6]) with mapi id 15.20.9052.014; Mon, 25 Aug 2025
- 17:09:57 +0000
-From: Chaitanya Kulkarni <chaitanyak@nvidia.com>
-To: Zhang Yi <yi.zhang@huaweicloud.com>, "linux-fsdevel@vger.kernel.org"
-	<linux-fsdevel@vger.kernel.org>, "linux-block@vger.kernel.org"
-	<linux-block@vger.kernel.org>, "dm-devel@lists.linux.dev"
-	<dm-devel@lists.linux.dev>, "linux-nvme@lists.infradead.org"
-	<linux-nvme@lists.infradead.org>, "linux-scsi@vger.kernel.org"
-	<linux-scsi@vger.kernel.org>
-CC: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"hch@lst.de" <hch@lst.de>, "tytso@mit.edu" <tytso@mit.edu>,
-	"djwong@kernel.org" <djwong@kernel.org>, "bmarzins@redhat.com"
-	<bmarzins@redhat.com>, "shinichiro.kawasaki@wdc.com"
-	<shinichiro.kawasaki@wdc.com>, "brauner@kernel.org" <brauner@kernel.org>,
-	"martin.petersen@oracle.com" <martin.petersen@oracle.com>,
-	"yi.zhang@huawei.com" <yi.zhang@huawei.com>, "chengzhihao1@huawei.com"
-	<chengzhihao1@huawei.com>, "yukuai3@huawei.com" <yukuai3@huawei.com>,
-	"yangerkun@huawei.com" <yangerkun@huawei.com>
-Subject: Re: [PATCH util-linux v4] fallocate: add FALLOC_FL_WRITE_ZEROES
- support
-Thread-Topic: [PATCH util-linux v4] fallocate: add FALLOC_FL_WRITE_ZEROES
- support
-Thread-Index: AQHcEmPY/WKOqtdP+0ShKRLb44JB77RzoWEA
-Date: Mon, 25 Aug 2025 17:09:57 +0000
-Message-ID: <819d6b7c-fa0f-4b87-9285-00963a04175c@nvidia.com>
-References: <20250821061307.1770368-1-yi.zhang@huaweicloud.com>
-In-Reply-To: <20250821061307.1770368-1-yi.zhang@huaweicloud.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-user-agent: Mozilla Thunderbird
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=nvidia.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: LV3PR12MB9404:EE_|IA1PR12MB8309:EE_
-x-ms-office365-filtering-correlation-id: b39f5c9b-4f53-4060-d27e-08dde3fa37ad
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|366016|7416014|376014|1800799024|10070799003|38070700018;
-x-microsoft-antispam-message-info:
- =?utf-8?B?WEtYKzR1eFdKRmVVTU00YmJuYWdQM0J3VkhOMjBTUTdpQjJidW02OUFwNHBo?=
- =?utf-8?B?K0poRWU5MW5TZXhhejZBb1AxZm9UNm9jMVhXcXRFeno3d2tTOTZodlJXenVH?=
- =?utf-8?B?NmJmUEduVlkyQjVxNmdtak1zYkFvMUp0N1c1UktzM0RkazAvQitWNS96amhB?=
- =?utf-8?B?OHpLZkdUZE9ZYlNVUGRMK2tNR2hWTGZNQnVhWmxsVjlVUmI4bkx4czg4TnBB?=
- =?utf-8?B?bG8vd1p6azZITVd3R2M5WHpWRk54Qi95SlN1MEVhek9Pai8yMGFxRmx1d0FN?=
- =?utf-8?B?cFppV1VQTnBZMWhkbTNaalZzWWtWeE9iblFaaDRueldPS1ZLTWtwVW44WkEz?=
- =?utf-8?B?cDdaSXBUUVBPdm0zWGVUMTh0M1BQZlNleFJZMzVLcXF3OHk4cWNmOElsT1Q2?=
- =?utf-8?B?UWduWTNCN3pOaTNIYWJZMk9uTWN3bHZSSUNVdGEvU05SQk5obVFlYkdkK0V2?=
- =?utf-8?B?OUpXd2xWTFpSazFvcnpPcktmalBOTStNRjVXQ2ZVTHhuaXltRmRVSmttdEF6?=
- =?utf-8?B?SEQ3MHBhVmZ2bTV3Mk8waVROQWpsdzBJUG9GSnNkeTI0OXNQVGFCbjFtZitw?=
- =?utf-8?B?WDRkdktGWTAvalVJQTUrODgvNi9KS0FjOXRqV3pTQ2REeE9yYkxJTTJBemFC?=
- =?utf-8?B?T1l3QnhNZGpSMGJIRHROVmlDWFdLcjZxd1RrbTlPTzdIZEdIM2VEcmFjb0FY?=
- =?utf-8?B?b1U0ajZKODNjSnZBSXc0UmZTZll0SnFVM2NmTjZiU3lqU2E2NlVnNmdYRUZW?=
- =?utf-8?B?SG1sMis1a3BON0V6RDZ3RllZb09RV2hUVDdiMVg2WU5TR2Z0QXY4NEhzVjdF?=
- =?utf-8?B?Z3EvSndWYURQWEJIKzBVSlNtbFRwOXFISEk1cThIN1B0d0tmN0IvQW42STBn?=
- =?utf-8?B?OHdnMDU0UnB6d0plR1JOTGMyTVVWeEVlTlBabDg5RkJ6cEdnck4rQjJEMW5j?=
- =?utf-8?B?aXo5cGN0ODhqRk5VUjBNT3ZQM3h6M2h0dEZXQUNDdHpSQmplVDIvbDdKcmd1?=
- =?utf-8?B?M0J1c1F3K1g5N0dSczAzRnZ6QkZncWdJcWsyY0Frck96NHJxbzdZNXFubzVG?=
- =?utf-8?B?MElObFJlZWRPUlJqZ2tOcjJpT3VyY1R0MnVhQ21YUW0reFIzTTVmWE9JNDZP?=
- =?utf-8?B?czVtY3VSeEVSby9vaVEzcUo3U2duLzNvSDNqWWJ4Q3pDNTczNzNzSzVpekZD?=
- =?utf-8?B?RHgzVWVPQ0pPTUk0RU9LdTg3UjFjNzhLem85ZWgrRXNpaWg0N0tjS2FaRVlD?=
- =?utf-8?B?Tk1qWUZzMjVrSDFSV3hDQmI1QmtLN0V2d0x3a1VQOUlkVXdNdzI4dkZ4ZVdh?=
- =?utf-8?B?a291cXRZNFJCZlVmVkt4NFNFeWNzRE5ka01NWEVwOTUyd2ZQcjRJRnA1Mzl6?=
- =?utf-8?B?SFQvWjRTOWhHaVloNmN0Qk9sMU5EQ2IwZS9oVEg5SUZabEkzcTZMVDk3UGFW?=
- =?utf-8?B?VzJwR3FWTWRhODVCbitjRUgwUHFnZkE1Ykl1VGxFbjRHZ0VLdFNFczJyV1F1?=
- =?utf-8?B?THp1bENXYi9sSk9tRGppeFpUeE1Pdk1MQm1aZjdIV0N6VytyNWhaVmk4aFNC?=
- =?utf-8?B?Wm5tTmZqRmRJVmJkYXVFK2F5c0QvTWtSajFCMjc3K0dtZEdyNHRtb0J1T3cv?=
- =?utf-8?B?UHQ1RnVtbVI4eFBxS0JydmVJaWt1Uzk5L1F2eTliOEpRRmhOV0k5SVJGa2JB?=
- =?utf-8?B?MkVkV0ZDcEF6d3RDejNJaDNFT3JSS0RFMkFuN0RuODAzOEpCK05DNmdxQXpk?=
- =?utf-8?B?QzlwRnJCeUF5QmoxcHFWVFFFL3ZFbkpPZEJKSnpkM0Z2VlJKV0dDY1ZtZWdK?=
- =?utf-8?B?UW43MGRNYmdmdEFHODNUQVVXSGFPZjl5UFVKdDdXSWF2dnBvaGQ1Mnc0NWtm?=
- =?utf-8?B?b0syWXNtWU93MVRHM2J6d0JTSHlrZ0c0bTlMRzBLTGZwc09YOXZPU2ZPVGwz?=
- =?utf-8?B?WUdySXdITW5LNFBna2xLSUxSZUxoSHdYbXlCc3Q5WmsvREVJVDREUnJteTRl?=
- =?utf-8?Q?gDZjx/dKF5V6wVAe0ufe0UeqitDdY8=3D?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:LV3PR12MB9404.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(7416014)(376014)(1800799024)(10070799003)(38070700018);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?MFVFZUlPWnVnRmNCYi92dFJZK013cDVwN0cvZlNuZFF0YXJJKzd6bFhFOWUw?=
- =?utf-8?B?eUdZZXFKL0l6VW1xZEpPekxKTEQ5aTJKRnRJNHh4RlJGVGFWUUFSUDE2a0E4?=
- =?utf-8?B?YUdQbWhiaitSTXZESG45Y0F2NWNZNDFyV0ZvaG5HdktUeC8zb1VXV1pzdHpn?=
- =?utf-8?B?bjBmdFVTN2lXWm9USmVEdGpwNVlXV0Y0ZDMrK1VEeHB3QWRyRkh5aldlMlJE?=
- =?utf-8?B?dVNsNUNxQXM4VVNNd3BaRkQwbmpDTmpEMFZjbnZLWnlpSm5ZWHNTUmRXSE1o?=
- =?utf-8?B?N3FzVzdKUGcrNlN6MCsvaHlkTG5TT1Q3cTE2c1Q0djJQU0NTajlFdXVQNms1?=
- =?utf-8?B?VkM1KzZnRm1FemNJckpibVZzVStGMmM4TmtOb0x5SmNwVHJhTFhocHBBNFRH?=
- =?utf-8?B?MEdSMy9NbmIxQjhBL09QRnBNT3RXN0FsSzRmWUtDR1pVL291QjBZYU1sNUVu?=
- =?utf-8?B?VThJWW5pOUJLU3hFdDVVVE5uOUhhaEZHOC9tckJTM0lWV0RMRUFXdGpUS0xE?=
- =?utf-8?B?eVU5L0l2QmE3emFzM3pGUUtrTSt1R1R3Kzd4RTdpRHVMTi9BZGFVcEI2QW4x?=
- =?utf-8?B?VnkxRTg4Tjl2dFpreVJoRjVoajN4Rndva0VGYnRrMXQySkxqdDJtNGFZa0FD?=
- =?utf-8?B?aEJtdlp3WWVSUUc2emJsM1U0bW5Ub2lKQnRIVURteW1uSWtObDRXUFdIeEZZ?=
- =?utf-8?B?bzNJMlpENXkzbDNSZmVFbG03SUhZU3lsQ1oydFZlanprY2xTaXdsTWMyVWFM?=
- =?utf-8?B?ZGtkNEFOOXd4SUFtb2VmRWFkWjlvVjNrT05LbXFYQllJbDJ6YTRTQU1vWlFj?=
- =?utf-8?B?R1hjcWkzK1FvdFNJaXRtUUUwazArdDBNSDYyM1JrSkxTZDcweHI3S25GWWVP?=
- =?utf-8?B?MXpUWEFkL3lBMlFYMVRJeVl4M1ZUREVZZFBOVW83SkxQdnJKNjUwL2lwOUFN?=
- =?utf-8?B?dDdOeEx3Z0VveStlYjh3MUN5bEk3cGE5WmlYSjhJd2RwemQwcysyTzN2Ynpv?=
- =?utf-8?B?WHVBUEh3djFpS2JQakFIMThFZjB5SjVaN1NITUhVYWM3djhObVVWUTBCazRX?=
- =?utf-8?B?LzhHOVlFTllWZ292MFVHclFjWTJXYW9sQkE2VmlXME9mM0o3MmN2Ulhsc0kw?=
- =?utf-8?B?NUNpUUJrZkVmZ2l3ZWU4SWRTK1FvTWNhV211c2VzeG5melJhTFcvWmdaaFpX?=
- =?utf-8?B?L29ldEtFMWdrdU5vNVlSRHU5c09UVEY4TlN5UkwzZnVSZnlKbmw5TTRCRXhp?=
- =?utf-8?B?dmZWVVE0d0tZeCsxSjNIUWR6WFhjb0p6T0ZsTkpvSmZRWG5mUElyYWRRQldy?=
- =?utf-8?B?Vmc4S1I0SXh2L0JPVDFyU1JCaFRDWEp4TzZOQVNCSEttaHNWcjFXRlljd1JV?=
- =?utf-8?B?NE9tQmdKejdSd1haT1cwTXpLakRHSWdvNTBXNGp5SG9yZzJ2YmNlaEZJY1RN?=
- =?utf-8?B?WW8rRDZpcUZET29MWVY4WkNwZG1TZlNUelZ4WU5lYzZGM0tQSXRWcUFlOVBQ?=
- =?utf-8?B?bUFuSHVCK2d6aTh6VEtBOEhJVFppQVBNSTdmMW9neWJuMVVqWkp4aEpYN2FU?=
- =?utf-8?B?R1laQUpuT3pnWTdxUDRIRGZXVlhxZUh1cHZwTnZscjdIWnNtOEswSFBqVnJR?=
- =?utf-8?B?Yk05a3Z5TW9rRnoxWHU0L204ejFIdVgvNjlvZmlTNVJRMXdORUsxNEZzZ1Fh?=
- =?utf-8?B?UFVaQUVzanpNQmh2bkFqeExlYVF1MmNtZXFQUzlSZVFlTVk5a3crelY3Ynkw?=
- =?utf-8?B?YTdUMGpYRlg5ZmlOOTF3NDlOaVd0dzBMTUtIK1lxQW9TR1dPcDI3cXNMMWNR?=
- =?utf-8?B?YkFzak01YU8yKzIvdFF1VGFaeHA5ZFpvOVlBUUFBU1JZc2c1RUpONUY3Sm9h?=
- =?utf-8?B?SnhQMU1HL0NEb05hS25LSkpqQ2Vuek9zeGdlcHF4MW00ZWgyYlNnRHZJQmQ1?=
- =?utf-8?B?RnNYblZ0WUlMbTZvYVB3MitWRWQ3eFVVdlpndjBDVWZZdFFJaTVyczVBSEI1?=
- =?utf-8?B?UWVnL2dwcFY2dEo0ZExuNWcza2dUUjVCWHU1eTVIamV3Ri9xY01wV2FONWNN?=
- =?utf-8?B?NGVmb0NyV2NmWFNiZlhoa0l3OGkvSWtwLzhpOFcwaDJIY0RrOU1uS21ZWU4w?=
- =?utf-8?B?MWVrMzhFSm1JczJLam5wUnh5OWFxK0cxOXJPNHNWOUE2aW1udEUrNncrWFVI?=
- =?utf-8?Q?UmMhWpnEgJQExEwgwBj+XWVG1wx82YXTrKnN2BYIh3IL?=
-Content-Type: text/plain; charset="utf-8"
-Content-ID: <EBAEC0015E5EF44C9C5FFF61DB483B19@namprd12.prod.outlook.com>
-Content-Transfer-Encoding: base64
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TDeETIdg"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1756151771;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=dNFV/B1n+79cEJpL/K6sYYid8+75GM7OljIw1+W7GtA=;
+	b=TDeETIdgQU90gzSEgHdc+VSV4KMyOllCARG6A6ii8ZwMT/9UfD5+XygL4qqJf0w2Tp9mcb
+	7P4K3cs2zvnzcWScuKLp7CLEWs/UvKxXWmyVCG+E5gH85ZnKr6wQZLRPzM8xbSZ65d5/ME
+	3Fttwqc1J/s0SPYkqatP5d43bG2tfPc=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-655-0L7VoO5sP0SF3KYKxuR47A-1; Mon,
+ 25 Aug 2025 15:56:10 -0400
+X-MC-Unique: 0L7VoO5sP0SF3KYKxuR47A-1
+X-Mimecast-MFC-AGG-ID: 0L7VoO5sP0SF3KYKxuR47A_1756151769
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C622B180044F;
+	Mon, 25 Aug 2025 19:56:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3540B1955F24;
+	Mon, 25 Aug 2025 19:56:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 57PJu668221678
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 25 Aug 2025 15:56:06 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 57PJu6w0221677;
+	Mon, 25 Aug 2025 15:56:06 -0400
+Date: Mon, 25 Aug 2025 15:56:06 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH 00/15] Improve mpathpersist's unavailable path handling
+Message-ID: <aKy_1vEm47lEDEGa@redhat.com>
+References: <20250710181100.3997759-1-bmarzins@redhat.com>
+ <592b5f59-cc88-4315-8a67-95421cdb3545@suse.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-OriginatorOrg: Nvidia.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: LV3PR12MB9404.namprd12.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b39f5c9b-4f53-4060-d27e-08dde3fa37ad
-X-MS-Exchange-CrossTenant-originalarrivaltime: 25 Aug 2025 17:09:57.1725
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 43083d15-7273-40c1-b7db-39efd9ccc17a
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: wFfMg8FElI5uU6Js6wV0rCz7gEkXl+qW4Wg1ItIsiRoOHKu7YV8H8pkN/okJCpIkF8/5ABQY9olhNW/i6AcpZw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA1PR12MB8309
+In-Reply-To: <592b5f59-cc88-4315-8a67-95421cdb3545@suse.de>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 3ZCWjLjNqwjZCN2V0kVXGGNLmu8Jf5mtFyT5R1W_-lc_1756151769
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-T24gOC8yMC8yNSAyMzoxMywgWmhhbmcgWWkgd3JvdGU6DQo+IEZyb206IFpoYW5nIFlpPHlpLnpo
-YW5nQGh1YXdlaS5jb20+DQo+DQo+IFRoZSBMaW51eCBrZXJuZWwgKHNpbmNlIHZlcnNpb24gNi4x
-Nykgc3VwcG9ydHMgRkFMTE9DX0ZMX1dSSVRFX1pFUk9FUyBpbg0KPiBmYWxsb2NhdGUoMikuIEFk
-ZCBzdXBwb3J0IGZvciBGQUxMT0NfRkxfV1JJVEVfWkVST0VTIHRvIHRoZSBmYWxsb2NhdGUNCj4g
-dXRpbGl0eSBieSBpbnRyb2R1Y2luZyBhIG5ldyBvcHRpb24gLXd8LS13cml0ZS16ZXJvZXMuDQo+
-DQo+IExpbms6aHR0cHM6Ly9naXQua2VybmVsLm9yZy9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQv
-dG9ydmFsZHMvbGludXguZ2l0L2NvbW1pdC8/aWQ9Mjc4YzdkOWI1ZTBjDQo+IFNpZ25lZC1vZmYt
-Ynk6IFpoYW5nIFlpPHlpLnpoYW5nQGh1YXdlaS5jb20+DQo+IFJldmlld2VkLWJ5OiAiRGFycmlj
-ayBKLiBXb25nIjxkandvbmdAa2VybmVsLm9yZz4NCg0KTG9va3MgZ29vZC4NCg0KUmV2aWV3ZWQt
-Ynk6IENoYWl0YW55YSBLdWxrYXJuaSA8a2NoQG52aWRpYS5jb20+DQoNCi1jaw0KDQoNCg==
+On Mon, Aug 25, 2025 at 08:38:38AM +0200, Hannes Reinecke wrote:
+> On 7/10/25 20:10, Benjamin Marzinski wrote:
+> > A problem that mpathpersist has with making SCSI Persistent Resevations
+> > to a multipath device work like they do to individual SCSI devices is
+> > that some of the paths to a multipath device might be down or missing
+> > when the mpathpersist commands are run. Multipath handles registering a
+> > new key pretty well. If paths are unavailable at the time of the
+> > command, the key is registered when they later become available.  But if
+> > the multipath device is also holding a reservation on one of its paths,
+> > things get trickier.
+> > 
+> > If a persistent reservation is being held by an unsuable path of a
+> > multipath device (the path can either be down or completely removed),
+> > libmpathpersist can't change it just by forwarding the regular
+> > persistent reservation commands. This can cause problems both for the
+> > RELEASE command and the REGISTER and REGISTER AND IGNORE commands if
+> > they are used to change from one key to another. If the path holding the
+> > reservation is unavailable, the reservation won't be released or have
+> > its key changed, as expected. I wish the problem of having a reservation
+> > key changed while it is holding the reservation was simply a theoretical
+> > one, but there are enterprise users of multipath that need this
+> > capability.
+> > 
+> > This patchset deals with both of these problems. libmpathpersist always
+> > had code to handle releasing a reservation held by an unavailable path,
+> > but the existing method is broken. It relies on poorly supported
+> > optional features of SCSI Persistent Reservations: the READ FULL STATUS
+> > command and specifying Initiator Ports with the REGISTER command
+> > (SIP_C). Also, fixing its current issues would additionally require
+> > supporting the All Target Ports option (ATP_C). This existing workaround
+> > has been redesigned to use the PREEMPT command instead. Key changes
+> > where the path holding the reservation is unavailable were not
+> > previously handled by libmpathpersist. This patchset also handles them
+> > using the PREEMPT command.
+> > 
+> I wish we had a testcase for all of that. Persistent reservation
+> handling is tricky at the best of times, but throwing in multipathing
+> it really gets into the arcane knowledge area.
+> Ben, do you have something which we could turn into some blktest
+> scenarios?
+
+It wouldn't be hard to use the LIO target to setup these scenarios, and
+verify that mpathpersist is handling them. The bigger issue is that I'm
+still occassionally running into new ones. I've got a couple more
+patches to send to deal with them, but what this actually wants (and
+what I plan to write after I think I've handled all the issues) is a
+test that will write to the devices while randomly failing and restoring
+paths and doing various PR commands, both to check that commands succeed
+and fail when expected given the state of the devices when they were
+run, and that we don't end up with active paths that either don't have
+reservations when they should, or do have them when they shouldn't.
+
+I can look at adding something like that to blktest.
+
+-Ben
+
+> 
+> Cheers,
+> 
+> Hannes
+> -- 
+> Dr. Hannes Reinecke                  Kernel Storage Architect
+> hare@suse.de                                +49 911 74053 688
+> SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+> HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+
