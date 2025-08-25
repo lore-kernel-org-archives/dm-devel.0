@@ -1,89 +1,82 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8946A2AF00
-	for <dm-devel@lists.linux.dev>; Mon, 25 Aug 2025 13:28:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C6002FA0EE
+	for <dm-devel@lists.linux.dev>; Mon, 25 Aug 2025 14:24:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756128537; cv=none; b=tuYPGMa+dN5W+FpY1WNjgYBduCPB6LDkSzu2lHifsvoQH1l2qFX+Lmi5QT85V/VXb24Bn5I0JOQ5wsMTygCtIjU6keZgv5qiAJXHwxLHylE0UtboO/5ifocnH7/5TQbu6rnkZS9f4d/ZKfwFqwrS6AUPE+qoZpTReZSfcw46Pkk=
+	t=1756131852; cv=none; b=o54KKVir60MbY5UAgQ4YZQhSo4VUPaJocW7wqPp7mZYNZ3IwVlJwcpNKzovfCZHHswkoQEzSFfbmW/inbqRZpkLzVmF9ap7oNwfaMQa/US+FRzWxIb8gCeP8q7+HurCHj7eXslCHqjbvv+xQxrYxOhmvJGYSYUAEznTRxinubtU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756128537; c=relaxed/simple;
-	bh=glxL903XYse6spc6RSJ/TnBV9+4a6cesqqG3KZ6BNnU=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=UkkiSP347+dqg4wcYU2br6mKP2ItsxY15BDC3nLa0r9qEr3N/a1EUPax64D7Bpnosuv88ijUBdO1otIK/Oqt/CgFxwT6S1tlx7LMuR1jXGYfp+3Exsy+yovbMoibOGY3ewWWbf7kaDKr3UcH5bOKRkqZ+crPN27eA/yxBNwYW3k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RYu3AqBm; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1756131852; c=relaxed/simple;
+	bh=WPBddgLey9pT/GRLVVYQv6CKwTpR05IvPRR6tDEm754=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=NhqnoyRWRe8WkHZ94egwMnYULYFuOF7gDniyZ9O1YYGCb+HNDPo1GSO+DfVu4aIVL9X6SwNl7glX8hY93TSOwxg6TpAiNI1H9N05YlCrxciicry+DlmqnqKZf6nB55KvetDHAn52zmXjhmWuYt0qJ3a9bF4zkiPJpEgO/tInQ1M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DT/Yy9xN; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RYu3AqBm"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DT/Yy9xN"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1756128534;
+	s=mimecast20190719; t=1756131849;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=HfB1ubHeDiRSQTP9+9v/Hpvr15wT5Rq18S+uFfbKNPk=;
-	b=RYu3AqBmFlJUNyTiiwCm2z6AoK7FmW/CQW7+VN/D2PvoJrk+xYt+xziXS+Y2fvgA1aRYJY
-	DPLjydSMKOKAzHpCGOhkuKcVPCUhxv2L0uloQxKNFpwCEb4s4s0VKGp4cQBW8t4fHh4wuZ
-	/XbFsM0npUdAtRXvGwmGwHlilFJq1FQ=
-Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=hbi+N9tPCrSZAWCYN1lvYMMlCjbhpcnbqzeTr5r1hDA=;
+	b=DT/Yy9xNY5kPx4wTwaHHrDv1PpGcXQLeOK4EYcsp0qyibl1CBEeSxt+kwZnnUQd48tlcdZ
+	kl0Rw3yV8N1bwYgkXJQyNhuW+xRwtbrMWW/4nL7vgmbp3vj3LlHNgZ2BTwPdxNPCFzNUnm
+	1OYlm/vlqPVtj6wPmE5uUYsyRcGlIko=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-321-mvmJJHIcNjKFsTN1paBn3A-1; Mon,
- 25 Aug 2025 09:28:51 -0400
-X-MC-Unique: mvmJJHIcNjKFsTN1paBn3A-1
-X-Mimecast-MFC-AGG-ID: mvmJJHIcNjKFsTN1paBn3A_1756128530
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-404-PU-9G2edNou1F9Ni7AJpyw-1; Mon,
+ 25 Aug 2025 10:24:05 -0400
+X-MC-Unique: PU-9G2edNou1F9Ni7AJpyw-1
+X-Mimecast-MFC-AGG-ID: PU-9G2edNou1F9Ni7AJpyw_1756131844
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0AB6D19560B3;
-	Mon, 25 Aug 2025 13:28:50 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 71309180034A;
+	Mon, 25 Aug 2025 14:24:04 +0000 (UTC)
 Received: from [10.22.80.227] (unknown [10.22.80.227])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1CE1730001A5;
-	Mon, 25 Aug 2025 13:28:47 +0000 (UTC)
-Date: Mon, 25 Aug 2025 15:28:40 +0200 (CEST)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 71BDE1800290;
+	Mon, 25 Aug 2025 14:24:02 +0000 (UTC)
+Date: Mon, 25 Aug 2025 16:23:59 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Nathan Chancellor <nathan@kernel.org>
-cc: Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>, 
-    dm-devel@lists.linux.dev, patches@lists.linux.dev
-Subject: Re: [PATCH] dm-pcache: Fix 64-bit division for 32-bit platforms in
- get_kset_id()
-In-Reply-To: <20250821-dm-pcache-fix-32-bit-div-err-v1-1-cab5448f44e6@kernel.org>
-Message-ID: <f9793847-deb5-67ba-c875-927fadbc2cf0@redhat.com>
-References: <20250821-dm-pcache-fix-32-bit-div-err-v1-1-cab5448f44e6@kernel.org>
+To: Herbert Xu <herbert@gondor.apana.org.au>, 
+    "David S. Miller" <davem@davemloft.net>
+cc: Harald Freudenberger <freude@linux.ibm.com>, linux-crypto@vger.kernel.org, 
+    dm-devel@lists.linux.dev
+Subject: crypto ahash requests on the stack
+Message-ID: <94b8648b-5613-d161-3351-fee1f217c866@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Ft0FKoSHY170JJmhtvAVOS5a5bohCRFFb5Ir8kItcPY_1756128530
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
+Hi
 
+I'd like to ask about this condition in crypto_ahash_digest:
+	if (ahash_req_on_stack(req) && ahash_is_async(tfm))
+		return -EAGAIN;
 
-On Thu, 21 Aug 2025, Nathan Chancellor wrote:
+Can it be removed? Or, is there some reason why you can't have 
+asynchronous requests on the stack (such as inability of doing DMA to 
+virtually mapped stack)?
 
-> When building for a 32-bit platform (such as ARCH=i386 allmodconfig),
-> there is a modpost error:
-> 
->   ERROR: modpost: "__umoddi3" [drivers/md/dm-pcache/dm-pcache.ko] undefined!
-> 
-> Hacking up the driver Makefile to allow building into the kernel shows
-> that the division comes from get_kset_id(), which is inlined into
-> cache_key_append() in cache_key.c.
-> 
-> Use the helper div_u64_rem() to avoid emitting a libcall on 32-bit targets.
-> 
-> Fixes: fd5cc4922bef ("dm-pcache: add persistent cache target in device-mapper")
-> Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+Or, should I just clear the flag CRYPTO_TFM_REQ_ON_STACK in my code?
 
-Thanks.
+I'm modifying dm-integrity to use asynchronous API so that Harald 
+Freudenberger can use it on mainframes (the reason is that his 
+implementation only provides asynchronous API) and I would prefer to place 
+ahash requests on the stack (and wait for them before the function exits).
 
-I folded it into the existing dm-pcache commit.
+The commit 04bfa4c7d5119ca38f8133bfdae7957a60c8b221 says that we should 
+clone the request with HASH_REQUEST_CLONE, but that is not usable in 
+dm-integrity, because dm-integrity must work even when the system is out 
+of memory.
 
 Mikulas
 
