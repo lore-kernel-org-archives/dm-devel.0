@@ -1,159 +1,154 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45691281378
-	for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 07:50:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9062E242D6B
+	for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 08:44:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756194638; cv=none; b=tyY95aDDSYcT8z/n0YfCD1X7bSxZe/WToN7D+RUgfhbphZwIk8Jg4/1dmHRrm19RYXAyswuu+aFzao/NZQJ4rVrhRit8Rogq1r2ukHFBrk8iK70VQp7uCcnZMdF8Y9HxzFZleQ8pZAkOox+Ye+hjU0emWtJ8Y1EMbXE9AzPceOc=
+	t=1756197866; cv=none; b=I2/NkGyCJe3ybiGhVANwT19xqAqBjSEE5y1aev7XYSGyNDgqfwoQxEivMu4lgaG7y0jPpsjSvPw2FM254iu9+wgHGsLZ0B1jkg9waLcjZIQzOMQjkoCTyqADJZiRyeGWNVAXkAOqRove4AN9CXtH0IKBaIcJ1maRAuyVivwvBC8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756194638; c=relaxed/simple;
-	bh=rVjtlyBnUsQbm8iALS+qPonkUkUxTt9CHpXRn2a5krk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=oy5K9iRPZpKekfDHXP1xEzCc+xjhSekcB6Oqfcb0kOSTbCwIAjNe3DdwiUY+C8d2xaH9RYTkoaMQ0WFHk7OnRcWXiv7AEqxy9l5IDo2hk7sy/ohIofJr7ozynigXQ9PHmoc+behRmG3mAKi1CEW8UFnled1OtXgO7qW7d7x6zCI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4cB0Fn0BVvzYQvWf
-	for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 15:50:37 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 8E9FE1A1B8E
-	for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 15:50:35 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgDnMY5IZ61oTGJbAQ--.24858S6;
-	Tue, 26 Aug 2025 15:50:35 +0800 (CST)
-From: Zheng Qixing <zhengqixing@huaweicloud.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	axboe@kernel.dk,
-	ming.lei@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	yukuai3@huawei.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com,
-	houtao1@huawei.com,
-	zhengqixing@huawei.com
-Subject: [PATCH-next 2/2] dm: fix NULL pointer dereference in __dm_suspend()
-Date: Tue, 26 Aug 2025 15:42:04 +0800
-Message-Id: <20250826074204.390111-3-zhengqixing@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20250826074204.390111-1-zhengqixing@huaweicloud.com>
-References: <20250826074204.390111-1-zhengqixing@huaweicloud.com>
+	s=arc-20240116; t=1756197866; c=relaxed/simple;
+	bh=hAPW4n1rZORimCRJ6MnYQWh54Fb4RQY6vQpFjr8xES8=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=U90VpAgG66yVy6FRGidy9nuCQbaUioM8bH6W7RqXM0UxyH9aM3M6XXiNHx5QomDSnfT9FrN/0qSyPJzz67nDqCrWkdGJMAjgfttLPx83tA/yHR/yrJMUA+eJna8Zi65lngCqAgpc4SsHldszpReyUCERm2ajIjjolpQx9tCf1Q0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=NStzNXbX; arc=none smtp.client-ip=209.85.208.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NStzNXbX"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-61c38da6a0bso3744515a12.1
+        for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 01:44:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1756197863; x=1756802663; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=JYxovt/f6+kOeHTG3tgsmbcYeHtDzOn2OP0+2FSa7jA=;
+        b=NStzNXbXKzAQGmnAIR9WwAnLlTSyyUXgM74Feq2ISRoNAmfyDnR7W38CficxSEL/29
+         uAKncfPQUMiMrNN7/V5aWZiIVAZDupgHeupi7/4uCBhAy3zXlmwXBX9byb/zWpVwX0PS
+         6tMw9FcBpfdRj+LpCDVOHKprk86wExK/Gbi8a6JCZCAVv1iVSqmEBzAOhMRUYPnB3q+2
+         4nqmsNB1xt/DXoCyGrxKets6/+XG5BxrXmtsGM1fRIIE7Ge0AdU1ysbZIhu8ae2IWdKs
+         +hSQUCLTyJGXDb9HqWvCoz9Kbwy7jbqmQd8FqXnwH7wnbc0y41vP6vgY8VCebbjlzst3
+         1iWw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1756197863; x=1756802663;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=JYxovt/f6+kOeHTG3tgsmbcYeHtDzOn2OP0+2FSa7jA=;
+        b=WUScDdKFcoIrmsAsYe3kKWu6yKm4lcjJKg+vSTs8Bmq58//TBGE2btuipvGX01x1wZ
+         +1TfPzqAZnN+jhARFylRqOBeZhM3sw46hlZiw/Guz36E9+PnYRosZRQxmZQcwEKcVSTY
+         ZzJUe1aMzC4ZMfjL3mNozkNQqDIQGPp4qDR7m3kPjskI7Ues5ma2DTwOy6lHJRLpzBX/
+         pv4lIjWxehMRptB6rt/Ixy5Gz1sgWNH/lgpr68rsJCFMWgW9OpLCk18m4/r3OBdFAIL9
+         L6PnomNt9oMkveL/Rs6axbvR3WXijtSMm10/w6vctdq5pf8tyuKxI8HMhe5loQx3CKiW
+         Trig==
+X-Forwarded-Encrypted: i=1; AJvYcCUHKH4B3AJ3lJjXKYM23dJAIiIuwpXxHF6yDfwq3uC6z/k96sBMrW61+oq6hBH1WflXvZ0Nytqu9A==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwrDFdh2pTd32v4sJP2o/u6B2uU04bIeJ8qsqY/Lg5wKHwfR8i+
+	nGxSW17kfvIiUJF2ftgqcHo1hK4TwL48QF8dddq6suDyRe4X3pjnMjVO/c4ucb+i/Oo/7mUYXHy
+	5tF1GawI=
+X-Gm-Gg: ASbGncutft5C6vRtn5hbTbFWWOJEwyKJK+BQ4kFd5UjD4bblLtIesM8fTHJrqH64PVh
+	5ZfYJiVPxlodLWNPXieE/N1D+NGJlB/XSMwdvTq1Sbd0Sh/UEyabJP6QSs1UBNwyg84cd4O9BoF
+	g3lxg/PmB9A0quPST3PS50OWpzKitzblCjO6dTm4oK+nl6PFT6EcDqGI8MOK9Ej+ocIQrEtshX5
+	Bt4CPogxajf5d/enAA81bGfg4y+q2khvzh4qUBqniTOvJXR3re5D2Po93SL8wP8u8gYZ5KQQ5WE
+	7ObNX7mrqSCDzeTpiS8MISfmh9z/1UR2DP0u0ZOo7DN3qDDCldy3FA0u2I54IxSgkW0e1YkF1pR
+	OAAl4UwfqWXig77/1Iiy6aTKYMFjU1sfkZ5gJ6eMoG6M7MGc+JAyrn4tE7gm9Wduo5oSBTBiNPX
+	95li83d5F74z7XT8avg7zYaf+q/MLjgnLTIt7ZbVTYk3dDq81zGLK18GQ=
+X-Google-Smtp-Source: AGHT+IHdLMa5ftkeYdUf5T+epFSTsE7Z5t0GquoXBKOezH1ACNTxmFNWx26BIKLJ6d1b7LKjKAKtIw==
+X-Received: by 2002:a05:6402:2552:b0:61c:9852:bbb0 with SMTP id 4fb4d7f45d1cf-61c9852bed2mr688443a12.19.1756197862824;
+        Tue, 26 Aug 2025 01:44:22 -0700 (PDT)
+Received: from ?IPv6:2003:f9:7f15:4e00:f2e:2331:5e9d:fe56? (p200300f97f154e000f2e23315e9dfe56.dip0.t-ipconnect.de. [2003:f9:7f15:4e00:f2e:2331:5e9d:fe56])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-61c78e49c90sm2565433a12.45.2025.08.26.01.44.22
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 26 Aug 2025 01:44:22 -0700 (PDT)
+Message-ID: <c4abd405c8ba0f28f9e98212ff0cac8c85789bcd.camel@suse.com>
+Subject: Re: [PATCH 09/15] limpathpersist: redesign failed release workaround
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
+ development <dm-devel@lists.linux.dev>
+Date: Tue, 26 Aug 2025 10:44:22 +0200
+In-Reply-To: <aK0FIY7cVE_LxNMg@redhat.com>
+References: <20250710181100.3997759-1-bmarzins@redhat.com>
+	 <20250710181100.3997759-10-bmarzins@redhat.com>
+	 <dc941be94accce6ed554eac92f833cbb8e69263b.camel@suse.com>
+	 <aK0FIY7cVE_LxNMg@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgDnMY5IZ61oTGJbAQ--.24858S6
-X-Coremail-Antispam: 1UD129KBjvJXoWxXr4xCry8Wr4ktryftrW7twb_yoW5AFWxpa
-	ySgFW5Kw4kWr4vvw4Utayj9Fy2ya93K3y7CryfGr13uw4ayryrJF18tasrXryIkrZ3Ary3
-	WF4jqws8Ww18taUanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUPFb4IE77IF4wAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUXw
-	A2048vs2IY020Ec7CjxVAFwI0_Xr0E3s1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxS
-	w2x7M28EF7xvwVC0I7IYx2IY67AKxVW7JVWDJwA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxV
-	W8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v2
-	6rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMc
-	Ij6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_
-	Jr0_Gr1lF7xvr2IYc2Ij64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7CjxVAaw2AFwI
-	0_Jw0_GFyl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4xG
-	67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26r1q6r43MI
-	IYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2IY6xkF7I0E
-	14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv67AKxVWUJV
-	W8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCTnIWIevJa73UjIFyTuYvjxUFSdy
-	UUUUU
-X-CM-SenderInfo: x2kh0wptl0x03j6k3tpzhluzxrxghudrp/
 
-From: Zheng Qixing <zhengqixing@huawei.com>
+On Mon, 2025-08-25 at 20:51 -0400, Benjamin Marzinski wrote:
+> On Sun, Aug 24, 2025 at 05:26:50PM +0200, Martin Wilck wrote:
+>=20
+> >=20
+> > > +	/*
+> > > +	 * Cannot free the reservation because the path that is
+> > > holding it
+> > > +	 * is not usable. Workaround this by:
+> > > +	 * 1. Suspending the device
+> > > +	 * 2. Preempting the reservation to move it to a usable
+> > > path
+> > > +	 *=C2=A0=C2=A0=C2=A0 (this removes the registered keys on all paths
+> > > except
+> > > the
+> > > +	 *=C2=A0=C2=A0=C2=A0 preempting one. Since the device is suspended,=
+ no
+> > > IO
+> > > can
+> > > +	 *=C2=A0=C2=A0=C2=A0 go to these unregistered paths and fail).
+> > > +	 * 3. Releasing the reservation on the path that now
+> > > holds
+> > > it.
+> > > +	 * 4. Resuming the device (since it no longer matters
+> > > that
+> > > most of
+> > > +	 *=C2=A0=C2=A0=C2=A0 that paths no longer have a registered key)
+> > > +	 * 5. Reregistering keys on all the paths
+> > > +	 */
+> > > +
+> > > +	if (!dm_simplecmd_noflush(DM_DEVICE_SUSPEND, mpp->alias,
+> > > 0))
+> > > {
+> > > +		condlog(0, "%s: release: failed to suspend dm
+> > > device.",
+> >=20
+> > Why do you use dm_simplecmd_noflush() here? Shouldn't queued IO be
+> > flushed from the dm device to avoid it being sent to paths that are
+> > going to be unregistered?
+> >=20
+>=20
+> I'm pretty certain that DM will still flush all the IO from the
+> target
+> to DM core before suspending, even with dm_simplecmd_noflush() set.
+> In
+> request based multipath, queued IOs are never stored in the target.
+> In
+> bio based multipath, they are, but they will get flushed back up to
+> DM
+> core when suspending and queued there. No IO should happen through
+> the
+> target after the suspend, until the resume. dm_simplecmd_noflush()
+> just
+> keeps multipath from failing any IO that it had queueing, and it's
+> only
+> really necessary when we resize the device, because if we shrink the
+> device, outstanding IO might be outside the new bounds.
 
-There is a race condition between dm device suspend and table load that
-can lead to null pointer dereference. The issue occurs when suspend is
-invoked before table load completes:
+OK, thanks for the clarification. I guess I've never fully understood
+the way queueing works in dm.
 
-BUG: kernel NULL pointer dereference, address: 0000000000000054
-Oops: 0000 [#1] PREEMPT SMP PTI
-CPU: 6 PID: 6798 Comm: dmsetup Not tainted 6.6.0-g7e52f5f0ca9b #62
-Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.1-2.fc37 04/01/2014
-RIP: 0010:blk_mq_wait_quiesce_done+0x0/0x50
-Call Trace:
-  <TASK>
-  blk_mq_quiesce_queue+0x2c/0x50
-  dm_stop_queue+0xd/0x20
-  __dm_suspend+0x130/0x330
-  dm_suspend+0x11a/0x180
-  dev_suspend+0x27e/0x560
-  ctl_ioctl+0x4cf/0x850
-  dm_ctl_ioctl+0xd/0x20
-  vfs_ioctl+0x1d/0x50
-  __se_sys_ioctl+0x9b/0xc0
-  __x64_sys_ioctl+0x19/0x30
-  x64_sys_call+0x2c4a/0x4620
-  do_syscall_64+0x9e/0x1b0
+What about queueing in the path devices?=C2=A0We'll be removing registratio=
+n
+keys, so IO sent by the SCSI layer may end up with RESERVATION CONFLICT
+errors. To my understanding, without the DM_NOFLUSH_FLAG the kernel
+will freeze the queue and flush everything, as if the device was closed
+during shutdown. If DM_NOFLUSH_FLAG is set, this won't happen. What's
+preventing the SCSI layer from sending IO while we're modifying the
+registrations?
 
-The issue can be triggered as below:
-
-T1 						T2
-dm_suspend					table_load
-__dm_suspend					dm_setup_md_queue
-						dm_mq_init_request_queue
-						blk_mq_init_allocated_queue
-						=> q->mq_ops = set->ops; (1)
-dm_stop_queue / dm_wait_for_completion
-=> q->tag_set NULL pointer!	(2)
-						=> q->tag_set = set; (3)
-
-Fix this by checking if a valid table (map) exists before performing
-request-based suspend and waiting for target I/O. When map is NULL,
-skip these table-dependent suspend steps.
-
-Even when map is NULL, no I/O can reach any target because there is
-no table loaded; I/O submitted in this state will fail early in the
-DM layer. Skipping the table-dependent suspend logic in this case
-is safe and avoids NULL pointer dereferences.
-
-Fixes: c4576aed8d85 ("dm: fix request-based dm's use of dm_wait_for_completion")
-Signed-off-by: Zheng Qixing <zhengqixing@huawei.com>
----
- drivers/md/dm.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 7222f20c1a83..66dd5f6ce778 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2908,7 +2908,7 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
- {
- 	bool do_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
- 	bool noflush = suspend_flags & DM_SUSPEND_NOFLUSH_FLAG;
--	int r;
-+	int r = 0;
- 
- 	lockdep_assert_held(&md->suspend_lock);
- 
-@@ -2960,7 +2960,7 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
- 	 * Stop md->queue before flushing md->wq in case request-based
- 	 * dm defers requests to md->wq from md->queue.
- 	 */
--	if (dm_request_based(md)) {
-+	if (map && dm_request_based(md)) {
- 		dm_stop_queue(md->queue);
- 		set_bit(DMF_QUEUE_STOPPED, &md->flags);
- 	}
-@@ -2972,7 +2972,8 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
- 	 * We call dm_wait_for_completion to wait for all existing requests
- 	 * to finish.
- 	 */
--	r = dm_wait_for_completion(md, task_state);
-+	if (map)
-+		r = dm_wait_for_completion(md, task_state);
- 	if (!r)
- 		set_bit(dmf_suspended_flag, &md->flags);
- 
--- 
-2.39.2
-
+Martin
