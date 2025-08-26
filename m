@@ -1,202 +1,354 @@
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from leontynka.twibright.com (leontynka.twibright.com [109.81.181.203])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AD3D327790
-	for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 10:06:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CC98352FDF;
+	Tue, 26 Aug 2025 14:16:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=109.81.181.203
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756202816; cv=none; b=RxYjb23D7o5PT+UWlBNmF1N+wS/O83B2BwTvtyYQGWg6cY30g09p7FWDfYsf0q0oT2dotZPneW2DM306sa6btbjfQYoDbr/EoZ0Jmt2RaJBwTsIky+uZCKCuMPmClnoJXAK1sLaq4Tk2UuwXb/BKo86wRR8uAtpR0yH95q2GFUQ=
+	t=1756217786; cv=none; b=o2QmPGbf4wyJeDjq77tEjSccQMTfDPG8Xa7rhRqnos7QfWaJyei07SAQfJvyCxrVVemBLdSQakvkXeUxfu5lABI9XEij4+05D3R9Rs6gyavOVRdC5DliMrLUWv3V7pgepDxsxKp8m1lneRUNJcFz85YG5nvSVvgKniU57cvao9I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756202816; c=relaxed/simple;
-	bh=kSALoAwdCKz+nK2FwHDubf9u15bf545HFdovlwL8WDI=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=i2KeJ7eKE8OYnxy0sNmwzPieTBht2NmSeFi6dyxZfjgjX9qV7EqBA11hoiX4XsH+esRIKm4aOjmEjRnomfImqAeISfRzx9inGSoTwfq0MaBvkz68a1T/4DsisHg3FeHXyQdPX58fQln3qR+5YniNwaYE48De+NfP5NTIJQPJv/s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=b63awyP1; arc=none smtp.client-ip=209.85.208.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="b63awyP1"
-Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-61c325a4d83so4254409a12.0
-        for <dm-devel@lists.linux.dev>; Tue, 26 Aug 2025 03:06:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1756202812; x=1756807612; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=EAuyXUcQEeDKmWGTTGHBQSLpRMNF32uk9FFhSqGRwPE=;
-        b=b63awyP1MSPVw5nQrDE1v06XwYTyB3mbPLilmIIq9j3XeIAkvUtvHXRVlBqRzZ2FFK
-         tN6OIbR/ZGAwseb5nE9N7fGfITyL3rSBnF3m1hotZCXqLzF/I+MSpWXQUJwSSuNUu3Ah
-         gJ+z544sdAUjCDfCba2Lw4jklDeMvMUFtP/v3aTFQZHSEKT0QQpn+K+K+QEjGRFe9Fjc
-         LRJpuzy1IQlJrRFRDYVHFIBaUyJPvntKmSF/XgKjKJiIRaSYL+c0kx1HCBYW56GCP21W
-         47FZhEsAdZWTVqQ/7nwo3ZnR4vDA00OeDeSgYDR98t/KSr61QbCrI0Feyw0GPVPqVMH/
-         38rg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1756202812; x=1756807612;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=EAuyXUcQEeDKmWGTTGHBQSLpRMNF32uk9FFhSqGRwPE=;
-        b=N9oGUMh5cWEVI/Ccc0ZPNFuVE6g+ap5qFa1SlNQkI9DbKSxZ3283stdAhD5zD52gX8
-         6lp8++X62QYIhk0rZHiCWzeVA0Ft4HZr2gsQJIXeRX6yCKoOnqUJow6MAofgMlv3DkMN
-         w698eYDixwaFjkVhdvI+XosghFE4Gl6QdimLflG9Wkov9t5hheQmkJEOARak2YtRptJm
-         ps7u02/A0KrT+BABxlJ69bVYu1ugsV/3qOEQpk5Inqs7pmOrL7K2rU6xySGNoRZ0khX4
-         F5JxnPKQkQyF1ojTjoXOeJTpMvwSjv+t5be8jZxepLK61fXpE9ukged40cH+MspK9y4F
-         boow==
-X-Forwarded-Encrypted: i=1; AJvYcCXrWVLp9SzSQtWFu6IF3huGSSzUNqfo5lP1yOuIamYbdnV/mHKUUcenEsDjHXTv+rGUFszWweq+Vg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyAh9jm7WYgzvgnjguwBuKFOTtYVySEAN+kE6GfjXtB7VRGdiyG
-	XUyhx9lUgN5BtwNV2TsMbvFiZYuEEEqc5VTF7pvNMNW/iG4Ec5Cz/h7ziKMq+C7MNlnXaL7B7FW
-	ObXuWX3g=
-X-Gm-Gg: ASbGnctzQkPOLVXog1C7pVSf5PIjlqc3+1UCAjiSlzd+qftTJk3DZb0a16rtK/9vRR/
-	p1u8QfYRZ2Zrz83h8HQS0t7Q3/35JFI524KpR/rhk66US2eAdozjeHv8HXIqdaCGl8GJ9QiUR6s
-	9LsmWQ4ie45qMyx8XvM1Bdozh60aDkmzi8/YoKNm+M0gAg17nVA8KKUI53fKcXjx6nv9aoPAfIC
-	zzii/tS2A8PXnX6/3MDKVEZkccIswdb4o/+VFZHvwtw5y7X5HjQaZeVFhsnwwVGcx/FcFXR6mTt
-	PU6FN9eWUiILIRZJ5IsL0cnzT+db4NUuUYh5qneE7mWugAv4Q5tXErJojmw8+rm6Xzjg0Mzxyrm
-	YQqfSxGOMC+Gs240IML6EJED78GDlGB6orMi6DuVhTICix8YXrt3OAU/WBuYMC19Vv66zMA33lf
-	K7g5dI+zcRzdANm20ljNgrkzzlzNvzCPs8JV0IqsHiIN/5FTxKfregSR0=
-X-Google-Smtp-Source: AGHT+IGRaAfiRhTuNuv2+dxtBFHYI6uRJPsM7Edj1PcNvNp6LIRRM1mjRx/eIzZcJBLax/ljWjjmpQ==
-X-Received: by 2002:a17:906:6a0f:b0:afa:2672:8c49 with SMTP id a640c23a62f3a-afe28fd037amr1323458166b.18.1756202811893;
-        Tue, 26 Aug 2025 03:06:51 -0700 (PDT)
-Received: from ?IPv6:2003:f9:7f15:4e00:f2e:2331:5e9d:fe56? (p200300f97f154e000f2e23315e9dfe56.dip0.t-ipconnect.de. [2003:f9:7f15:4e00:f2e:2331:5e9d:fe56])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-afeb167670esm54649666b.112.2025.08.26.03.06.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 26 Aug 2025 03:06:51 -0700 (PDT)
-Message-ID: <5261990d40414f56f2476226e0997d728b81648e.camel@suse.com>
-Subject: Re: [PATCH 09/15] limpathpersist: redesign failed release workaround
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Tue, 26 Aug 2025 12:06:50 +0200
-In-Reply-To: <c4abd405c8ba0f28f9e98212ff0cac8c85789bcd.camel@suse.com>
-References: <20250710181100.3997759-1-bmarzins@redhat.com>
-		 <20250710181100.3997759-10-bmarzins@redhat.com>
-		 <dc941be94accce6ed554eac92f833cbb8e69263b.camel@suse.com>
-		 <aK0FIY7cVE_LxNMg@redhat.com>
-	 <c4abd405c8ba0f28f9e98212ff0cac8c85789bcd.camel@suse.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	s=arc-20240116; t=1756217786; c=relaxed/simple;
+	bh=dn2NfWACofZ69eOD3sNRkPRFohsh/ayFLZUSR3XeEBY=;
+	h=Message-ID:Date:From:To:Cc:Subject:References:MIME-Version:
+	 Content-Type; b=evJpigB+K/SyELGN7iKmWLL3MwS60nNo7Xom2DJNBJoiCCpJNFgzzzB0NcZQ15z+eu4TqlMVDOCwj8slVopCTOch8ePGarw3R979QDt/MjLjRxIis0/gHu693HaMm33i7L7nstMSrQcUXzEORDdjLP5Wb5mxPHNG0isMMq9rsV4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com; spf=fail smtp.mailfrom=redhat.com; arc=none smtp.client-ip=109.81.181.203
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=redhat.com
+Received: from zen ([192.168.128.17] helo=debian.vm)
+	by leontynka.twibright.com with smtp (Exim 4.96)
+	(envelope-from <mpatocka@redhat.com>)
+	id 1uqu9W-008Vs1-0f;
+	Tue, 26 Aug 2025 15:55:59 +0200
+Received: by debian.vm (sSMTP sendmail emulation); Tue, 26 Aug 2025 15:55:57 +0200
+Message-ID: <20250826135557.707275415@debian4.vm>
+User-Agent: quilt/0.68
+Date: Tue, 26 Aug 2025 15:55:00 +0200
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Harald Freudenberger <freude@linux.ibm.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>,
+ "David S. Miller" <davem@davemloft.net>,
+ Eric Biggers <ebiggers@kernel.org>,
+ dengler@linux.ibm.com,
+ linux-s390@vger.kernel.org,
+ dm-devel@lists.linux.dev,
+ ifranzki@linux.ibm.com,
+ agk@redhat.com,
+ snitzer@kernel.org,
+ gmazyland@gmail.com,
+ Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 7/7] dm-integrity: enable asynchronous hash interface
+References: <20250826135453.012446010@debian4.vm>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 
-On Tue, 2025-08-26 at 10:44 +0200, Martin Wilck wrote:
-> On Mon, 2025-08-25 at 20:51 -0400, Benjamin Marzinski wrote:
-> > On Sun, Aug 24, 2025 at 05:26:50PM +0200, Martin Wilck wrote:
-> >=20
-> > >=20
-> > > > +	/*
-> > > > +	 * Cannot free the reservation because the path that
-> > > > is
-> > > > holding it
-> > > > +	 * is not usable. Workaround this by:
-> > > > +	 * 1. Suspending the device
-> > > > +	 * 2. Preempting the reservation to move it to a
-> > > > usable
-> > > > path
-> > > > +	 *=C2=A0=C2=A0=C2=A0 (this removes the registered keys on all pat=
-hs
-> > > > except
-> > > > the
-> > > > +	 *=C2=A0=C2=A0=C2=A0 preempting one. Since the device is suspende=
-d,
-> > > > no
-> > > > IO
-> > > > can
-> > > > +	 *=C2=A0=C2=A0=C2=A0 go to these unregistered paths and fail).
-> > > > +	 * 3. Releasing the reservation on the path that now
-> > > > holds
-> > > > it.
-> > > > +	 * 4. Resuming the device (since it no longer matters
-> > > > that
-> > > > most of
-> > > > +	 *=C2=A0=C2=A0=C2=A0 that paths no longer have a registered key)
-> > > > +	 * 5. Reregistering keys on all the paths
-> > > > +	 */
-> > > > +
-> > > > +	if (!dm_simplecmd_noflush(DM_DEVICE_SUSPEND, mpp-
-> > > > >alias,
-> > > > 0))
-> > > > {
-> > > > +		condlog(0, "%s: release: failed to suspend dm
-> > > > device.",
-> > >=20
-> > > Why do you use dm_simplecmd_noflush() here? Shouldn't queued IO
-> > > be
-> > > flushed from the dm device to avoid it being sent to paths that
-> > > are
-> > > going to be unregistered?
-> > >=20
-> >=20
-> > I'm pretty certain that DM will still flush all the IO from the
-> > target
-> > to DM core before suspending, even with dm_simplecmd_noflush() set.
-> > In
-> > request based multipath, queued IOs are never stored in the target.
-> > In
-> > bio based multipath, they are, but they will get flushed back up to
-> > DM
-> > core when suspending and queued there. No IO should happen through
-> > the
-> > target after the suspend, until the resume. dm_simplecmd_noflush()
-> > just
-> > keeps multipath from failing any IO that it had queueing, and it's
-> > only
-> > really necessary when we resize the device, because if we shrink
-> > the
-> > device, outstanding IO might be outside the new bounds.
->=20
-> OK, thanks for the clarification. I guess I've never fully understood
-> the way queueing works in dm.
->=20
-> What about queueing in the path devices?=C2=A0We'll be removing
-> registration
-> keys, so IO sent by the SCSI layer may end up with RESERVATION
-> CONFLICT
-> errors. To my understanding, without the DM_NOFLUSH_FLAG the kernel
-> will freeze the queue and flush everything, as if the device was
-> closed
-> during shutdown. If DM_NOFLUSH_FLAG is set, this won't happen. What's
-> preventing the SCSI layer from sending IO while we're modifying the
-> registrations?
+This commit enables the asynchronous hash interface in dm-integrity.
 
-I just re-read commit 2e93ccc1933d ("[PATCH] dm: suspend: add noflush
-pushback"), which explains that the noflush flag is mainly meant for
-handling queue_if_no_path situations, in particular being able to
-reload a queueing multipath map with new paths when all paths have
-failed. That's exactly what you wrote, queueing IO in generic dm rather
-than in the target in order to facilitate map reloads.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-integrity.c |  196 ++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 162 insertions(+), 34 deletions(-)
 
-Here we're looking at a very different situation. RESERVATION CONFLICT
-errors won't cause queueing, because the kernel doesn't classify them
-as path errors.=C2=A0If we need to preempt a reservation held by another
-host, we'd rather not send IO to the device yet. If we have a
-reservation we want to give up, we should make sure to have all
-outstanding IO sent to the storage beforehand. In other situations like
-just registering keys without reservations being present, flushing
-won't be necessary, but it won't hurt either, AFAICS.
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2025-08-25 18:17:21.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2025-08-25 22:08:31.000000000 +0200
+@@ -224,6 +224,7 @@ struct dm_integrity_c {
+ 	int failed;
+ 
+ 	struct crypto_shash *internal_shash;
++	struct crypto_ahash *internal_ahash;
+ 	unsigned int internal_hash_digestsize;
+ 
+ 	struct dm_target *ti;
+@@ -1636,8 +1637,8 @@ static void integrity_end_io(struct bio
+ 	dec_in_flight(dio);
+ }
+ 
+-static void integrity_sector_checksum(struct dm_integrity_c *ic, sector_t sector,
+-				      const char *data, unsigned offset, char *result)
++static void integrity_sector_checksum_shash(struct dm_integrity_c *ic, sector_t sector,
++					    const char *data, unsigned offset, char *result)
+ {
+ 	__le64 sector_le = cpu_to_le64(sector);
+ 	SHASH_DESC_ON_STACK(req, ic->internal_shash);
+@@ -1689,14 +1690,84 @@ failed:
+ 	get_random_bytes(result, ic->tag_size);
+ }
+ 
++static void integrity_sector_checksum_ahash(struct dm_integrity_c *ic, sector_t sector,
++					    struct page *page, unsigned offset, char *result)
++{
++	__le64 sector_le = cpu_to_le64(sector);
++	HASH_REQUEST_ON_STACK(req, ic->internal_ahash);
++	DECLARE_CRYPTO_WAIT(wait);
++	struct scatterlist sg[3], *s = sg;
++	int r;
++	unsigned int digest_size;
++	unsigned int nbytes = 0;
++
++	might_sleep();
++
++	req->base.flags &= ~CRYPTO_TFM_REQ_ON_STACK;
++	ahash_request_set_callback(req, 0, crypto_req_done, &wait);
++
++	if (ic->sb->flags & cpu_to_le32(SB_FLAG_FIXED_HMAC)) {
++		sg_init_table(sg, 3);
++		sg_set_buf(s, (const __u8 *)&ic->sb->salt, SALT_SIZE);
++		nbytes += SALT_SIZE;
++		s++;
++	} else {
++		sg_init_table(sg, 2);
++	}
++
++	if (likely(!is_vmalloc_addr(&sector_le))) {
++		sg_set_buf(s, &sector_le, sizeof(sector_le));
++	} else {
++		struct page *sec_page = vmalloc_to_page(&sector_le);
++		unsigned int sec_off = offset_in_page(&sector_le);
++		sg_set_page(s, sec_page, sizeof(sector_le), sec_off);
++	}
++	s++;
++	nbytes += sizeof(sector_le);
++
++	sg_set_page(s, page, ic->sectors_per_block << SECTOR_SHIFT, offset);
++	nbytes += ic->sectors_per_block << SECTOR_SHIFT;
++
++	ahash_request_set_crypt(req, sg, result, nbytes);
++
++	r = crypto_wait_req(crypto_ahash_digest(req), &wait);
++	if (unlikely(r)) {
++		dm_integrity_io_error(ic, "crypto_ahash_digest", r);
++		goto failed;
++	}
++
++	digest_size = ic->internal_hash_digestsize;
++	if (unlikely(digest_size < ic->tag_size))
++		memset(result + digest_size, 0, ic->tag_size - digest_size);
++
++	return;
++
++failed:
++	/* this shouldn't happen anyway, the hash functions have no reason to fail */
++	get_random_bytes(result, ic->tag_size);
++}
++
++static void integrity_sector_checksum(struct dm_integrity_c *ic, sector_t sector,
++				      const char *data, unsigned offset, char *result)
++{
++	if (likely(ic->internal_shash != NULL))
++		integrity_sector_checksum_shash(ic, sector, data, offset, result);
++	else
++		integrity_sector_checksum_ahash(ic, sector, (struct page *)data, offset, result);
++}
++
+ static void *integrity_kmap(struct dm_integrity_c *ic, struct page *p)
+ {
+-	return kmap_local_page(p);
++	if (likely(ic->internal_shash != NULL))
++		return kmap_local_page(p);
++	else
++		return p;
+ }
+ 
+ static void integrity_kunmap(struct dm_integrity_c *ic, const void *ptr)
+ {
+-	kunmap_local(ptr);
++	if (likely(ic->internal_shash != NULL))
++		kunmap_local(ptr);
+ }
+ 
+ static void *integrity_identity(struct dm_integrity_c *ic, void *data)
+@@ -1705,7 +1776,10 @@ static void *integrity_identity(struct d
+ 	BUG_ON(offset_in_page(data));
+ 	BUG_ON(!virt_addr_valid(data));
+ #endif
+-	return data;
++	if (likely(ic->internal_shash != NULL))
++		return data;
++	else
++		return virt_to_page(data);
+ }
+ 
+ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checksum)
+@@ -2623,32 +2697,58 @@ static void dm_integrity_inline_recheck(
+ 	bio_endio(bio);
+ }
+ 
++static inline bool dm_integrity_check(struct dm_integrity_c *ic, struct dm_integrity_io *dio)
++{
++	struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
++	unsigned pos = 0;
++
++	while (dio->bio_details.bi_iter.bi_size) {
++		char digest[HASH_MAX_DIGESTSIZE];
++		struct bio_vec bv = bio_iter_iovec(bio, dio->bio_details.bi_iter);
++		char *mem = integrity_kmap(ic, bv.bv_page);
++		integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, mem, bv.bv_offset, digest);
++		if (unlikely(crypto_memneq(digest, dio->integrity_payload + pos,
++				min(ic->internal_hash_digestsize, ic->tag_size)))) {
++			integrity_kunmap(ic, mem);
++			dm_integrity_free_payload(dio);
++			INIT_WORK(&dio->work, dm_integrity_inline_recheck);
++			queue_work(ic->offload_wq, &dio->work);
++			return false;
++		}
++		integrity_kunmap(ic, mem);
++		pos += ic->tuple_size;
++		bio_advance_iter_single(bio, &dio->bio_details.bi_iter, ic->sectors_per_block << SECTOR_SHIFT);
++	}
++
++	return true;
++}
++
++static void dm_integrity_inline_async_check(struct work_struct *w)
++{
++	struct dm_integrity_io *dio = container_of(w, struct dm_integrity_io, work);
++	struct bio *bio = dm_bio_from_per_bio_data(dio, sizeof(struct dm_integrity_io));
++	struct dm_integrity_c *ic = dio->ic;
++
++	if (likely(dm_integrity_check(ic, dio)))
++		bio_endio(bio);
++}
++
+ static int dm_integrity_end_io(struct dm_target *ti, struct bio *bio, blk_status_t *status)
+ {
+ 	struct dm_integrity_c *ic = ti->private;
+ 	if (ic->mode == 'I') {
+ 		struct dm_integrity_io *dio = dm_per_bio_data(bio, sizeof(struct dm_integrity_io));
+-		if (dio->op == REQ_OP_READ && likely(*status == BLK_STS_OK)) {
+-			unsigned pos = 0;
++		if (dio->op == REQ_OP_READ && likely(*status == BLK_STS_OK) && likely(dio->bio_details.bi_iter.bi_size != 0)) {
+ 			if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING) &&
+ 			    unlikely(dio->integrity_range_locked))
+-				goto skip_check;
+-			while (dio->bio_details.bi_iter.bi_size) {
+-				char digest[HASH_MAX_DIGESTSIZE];
+-				struct bio_vec bv = bio_iter_iovec(bio, dio->bio_details.bi_iter);
+-				char *mem = integrity_kmap(ic, bv.bv_page);
+-				integrity_sector_checksum(ic, dio->bio_details.bi_iter.bi_sector, mem, bv.bv_offset, digest);
+-				if (unlikely(crypto_memneq(digest, dio->integrity_payload + pos,
+-						min(ic->internal_hash_digestsize, ic->tag_size)))) {
+-					integrity_kunmap(ic, mem);
+-					dm_integrity_free_payload(dio);
+-					INIT_WORK(&dio->work, dm_integrity_inline_recheck);
+-					queue_work(ic->offload_wq, &dio->work);
++			    	goto skip_check;
++			if (likely(ic->internal_shash != NULL)) {
++				if (unlikely(!dm_integrity_check(ic, dio)))
+ 					return DM_ENDIO_INCOMPLETE;
+-				}
+-				integrity_kunmap(ic, mem);
+-				pos += ic->tuple_size;
+-				bio_advance_iter_single(bio, &dio->bio_details.bi_iter, ic->sectors_per_block << SECTOR_SHIFT);
++			} else {
++				INIT_WORK(&dio->work, dm_integrity_inline_async_check);
++				queue_work(ic->offload_wq, &dio->work);
++				return DM_ENDIO_INCOMPLETE;
+ 			}
+ 		}
+ skip_check:
+@@ -4229,27 +4329,49 @@ nomem:
+ 	return -ENOMEM;
+ }
+ 
+-static int get_mac(struct crypto_shash **hash, struct alg_spec *a, char **error,
+-		   char *error_alg, char *error_key)
++static int get_mac(struct crypto_shash **shash, struct crypto_ahash **ahash,
++		   struct alg_spec *a, char **error, char *error_alg, char *error_key)
+ {
+ 	int r;
+ 
+ 	if (a->alg_string) {
+-		*hash = crypto_alloc_shash(a->alg_string, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
+-		if (IS_ERR(*hash)) {
++		if (ahash) {
++			*ahash = crypto_alloc_ahash(a->alg_string, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
++			if (IS_ERR(*ahash)) {
++				*ahash = NULL;
++				goto try_shash;
++			}
++
++			if (a->key) {
++				r = crypto_ahash_setkey(*ahash, a->key, a->key_size);
++				if (r) {
++					*error = error_key;
++					return r;
++				}
++			} else if (crypto_ahash_get_flags(*ahash) & CRYPTO_TFM_NEED_KEY) {
++				*error = error_key;
++				return -ENOKEY;
++			}
++
++			return 0;
++		}
++
++try_shash:
++		*shash = crypto_alloc_shash(a->alg_string, 0, CRYPTO_ALG_ALLOCATES_MEMORY);
++		if (IS_ERR(*shash)) {
+ 			*error = error_alg;
+-			r = PTR_ERR(*hash);
+-			*hash = NULL;
++			r = PTR_ERR(*shash);
++			*shash = NULL;
+ 			return r;
+ 		}
+ 
+ 		if (a->key) {
+-			r = crypto_shash_setkey(*hash, a->key, a->key_size);
++			r = crypto_shash_setkey(*shash, a->key, a->key_size);
+ 			if (r) {
+ 				*error = error_key;
+ 				return r;
+ 			}
+-		} else if (crypto_shash_get_flags(*hash) & CRYPTO_TFM_NEED_KEY) {
++		} else if (crypto_shash_get_flags(*shash) & CRYPTO_TFM_NEED_KEY) {
+ 			*error = error_key;
+ 			return -ENOKEY;
+ 		}
+@@ -4709,7 +4831,7 @@ static int dm_integrity_ctr(struct dm_ta
+ 		buffer_sectors = 1;
+ 	ic->log2_buffer_sectors = min((int)__fls(buffer_sectors), 31 - SECTOR_SHIFT);
+ 
+-	r = get_mac(&ic->internal_shash, &ic->internal_hash_alg, &ti->error,
++	r = get_mac(&ic->internal_shash, &ic->internal_ahash, &ic->internal_hash_alg, &ti->error,
+ 		    "Invalid internal hash", "Error setting internal hash key");
+ 	if (r)
+ 		goto bad;
+@@ -4717,8 +4839,12 @@ static int dm_integrity_ctr(struct dm_ta
+ 		ic->internal_hash = true;
+ 		ic->internal_hash_digestsize = crypto_shash_digestsize(ic->internal_shash);
+ 	}
++	if (ic->internal_ahash) {
++		ic->internal_hash = true;
++		ic->internal_hash_digestsize = crypto_ahash_digestsize(ic->internal_ahash);
++	}
+ 
+-	r = get_mac(&ic->journal_mac, &ic->journal_mac_alg, &ti->error,
++	r = get_mac(&ic->journal_mac, NULL, &ic->journal_mac_alg, &ti->error,
+ 		    "Invalid journal mac", "Error setting journal mac key");
+ 	if (r)
+ 		goto bad;
+@@ -5240,6 +5366,8 @@ static void dm_integrity_dtr(struct dm_t
+ 
+ 	if (ic->internal_shash)
+ 		crypto_free_shash(ic->internal_shash);
++	if (ic->internal_ahash)
++		crypto_free_ahash(ic->internal_ahash);
+ 	free_alg(&ic->internal_hash_alg);
+ 
+ 	if (ic->journal_crypt)
+@@ -5256,7 +5384,7 @@ static void dm_integrity_dtr(struct dm_t
+ 
+ static struct target_type integrity_target = {
+ 	.name			= "integrity",
+-	.version		= {1, 13, 0},
++	.version		= {1, 14, 0},
+ 	.module			= THIS_MODULE,
+ 	.features		= DM_TARGET_SINGLETON | DM_TARGET_INTEGRITY,
+ 	.ctr			= dm_integrity_ctr,
 
-I am not sure whether it makes sense to try sending PRIN or PROUT
-commands to maps in queueing state. Depending on the nature of the
-errors that caused the paths to fail, we may or may not be able to send
-this type of commands. PRIN/PROUT must still work for devices in
-STANDBY state, but there are other situations where they wouldn't work,
-or would even hang.
-
-I tend to think that sending PRIN or PROUT commands to queueing devices
-is an extreme corner case. Perhaps we should just refuse to do this=20
-(realizing that we can't avoid a device entering queueing mode while
-we're processing PR commands, but that's an even more extreme corner
-case).
-
-If we can assume that the device is not queueing, it might actually be
-better leave the NOFLUSH flag clear, making sure that the queue is=20
-frozen and all IO is actually flushed before changing PR keys or
-reservations.
-
-Am I getting something wrong here?
-
-Martin
