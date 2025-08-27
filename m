@@ -1,156 +1,132 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F5352EE61F
-	for <dm-devel@lists.linux.dev>; Wed, 27 Aug 2025 19:52:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 975F330E0C5
+	for <dm-devel@lists.linux.dev>; Wed, 27 Aug 2025 21:52:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756324360; cv=none; b=Irr6QoItF+uChQUJDJTooRh30fWc57K2JW5awrpCKp8BhPZM4nbJCNoR1eMJwKLaYOahPpGQCma9pVqcu4nok2MzC7F8SuweqKqfTMe2ZNdB9yzoq1zVXz76bfA+8jfHhqM1mBqv3Vy9CKNrIN8Wo8hOCP0vsoIP1/akmaRqHE4=
+	t=1756331526; cv=none; b=I/chCp7ifb2UwwcwJrXWi19J0hWrnRrmOpWb9g8fu99TUUDYXznXSVhLLzX1i8jXmo9Vb/bS552OKRieztUeVgoR9O8fAhvrqYcl08btj0IeSuztX7LHpPYGOiL32YuQ0Iez3EH5NvGEBJZSx4Af7U2l3iCc95HUKh9mtxS+JyU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756324360; c=relaxed/simple;
-	bh=GzkCU6GZ1+wTXl574q6zyExrBjY/roc+Bwn6opG/9lc=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Vo8L448B+fDPKiFTyqkqbVS1VI9Y281/oUS62xWFVWMDY2JRjB7/iyu1yjFgxIhFatq2RrUvTbY2t6/CtiZPgiz94JWc2viEZT4IZGBJHwNMFLVkUz/YP/G2fToudSSMmXQkaOoaM6xckCTJ1LkVMTb6ZcNvHMGC1tJ9NYfYVy8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=glRBMb0D; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=jjN7anHt; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1756331526; c=relaxed/simple;
+	bh=7MhEe9Qx+MhhPsvUqS34YdpaHn9qVoXMVNVWABwNZfA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=an+L+MCw+/DAEHrdTMErctTWnMy5gUkauBbhTm3QzwgH0a9IKl5xP2FIFujkqhM468akicQDmoo5oFFJK1Wtnbf0mDK7A4FoAPWVkh5VJKJthnMNV2IBuqFgL0WT510flTSL2RCA9248Y+gTWgoWuiUhto7qnXt+v7nteycDU+g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Mecfj6Uk; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="glRBMb0D";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="jjN7anHt"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id E7D802011E;
-	Wed, 27 Aug 2025 19:52:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1756324356; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Mecfj6Uk"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1756331523;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=PFjUhe9yLmtYwTID+lsmcjtC1tjrv0oVqEHiDeb6CF8=;
-	b=glRBMb0D3oyXYqZilGfeaVetGVCtejmJALI4CspzlL47RyXgYKzY22vMA8tQVf+nj6a4u5
-	kFYg7/k3dLBpAZsypA8ddorYEOOwJPtb/32ddDxCvONsJ19JzudyM+f9VV3JhLj3u0lLf+
-	zzf2w0+DCGZWDAiBKKkBEnOul1OfRhw=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=jjN7anHt
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1756324355; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=PFjUhe9yLmtYwTID+lsmcjtC1tjrv0oVqEHiDeb6CF8=;
-	b=jjN7anHtnVmTN0gN0oNSrESPlLfmUy6fs9Pulh0jCqbGuhs3VnYEuPh6zQMLUKsqyArSKv
-	AXrLzLktQMmjpV43tW/a8EC+CePs/4b6Ksd6MzlgTtvVcOe51oBS6KXp4hzD3J+/9r9Dre
-	mS85MuNs+o5QL+hRlR0GcQtfYNR3oGk=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=0MV09FhzMIF8Ui9xrCM0Bui7E6jEybYpp51C5kSRmrI=;
+	b=Mecfj6UkQ2SE9pzNMlJlPKOx87TzCRDqPuWkygBFbIS0P7JZQccTXsTlsgqwowcI7K+xuI
+	GyTXdFTKc/i8RBJ/3LNWmwHO9PZSn8qSYPcok/zKmGKM5RqZQKgFdix+qHrUODjnMd2BVO
+	/RX1iFVkdayaKVLrvwVAj+x0DM2k6s8=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-220-KkFmcprhOI--aTUidTr60g-1; Wed,
+ 27 Aug 2025 17:52:00 -0400
+X-MC-Unique: KkFmcprhOI--aTUidTr60g-1
+X-Mimecast-MFC-AGG-ID: KkFmcprhOI--aTUidTr60g_1756331517
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 51D0413867;
-	Wed, 27 Aug 2025 19:52:35 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id OgMPEgNir2g2XAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 27 Aug 2025 19:52:35 +0000
-Message-ID: <9804a889fe213a0cdab885baee37da7cd6c5e8c1.camel@suse.com>
-Subject: Re: [PATCH v3] nvme-cli: nvmf-autoconnect: udev-rule: add a file
- for new arrays
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Wayne Berthiaume <Wayne.Berthiaume@dell.com>, Vasuki Manikarnike	
- <vasuki.manikarnike@hpe.com>, Matthias Rudolph	
- <Matthias.Rudolph@hitachivantara.com>, Martin George <marting@netapp.com>, 
- NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>, Zou Ming
- <zouming.zouming@huawei.com>, Li Xiaokeng	 <lixiaokeng@huawei.com>, Randy
- Jennings <randyj@purestorage.com>, Jyoti Rani	 <jrani@purestorage.com>,
- Brian Bunker <brian@purestorage.com>, Uday Shankar	
- <ushankar@purestorage.com>, Chaitanya Kulkarni <kch@nvidia.com>, Sagi
- Grimberg	 <sagi@grimberg.me>, Keith Busch <kbusch@kernel.org>, Christoph
- Hellwig	 <hch@lst.de>, Marco Patalano <mpatalan@redhat.com>, "Ewan D.
- Milne"	 <emilne@redhat.com>, John Meneghini <jmeneghi@redhat.com>, Daniel
- Wagner	 <dwagner@suse.de>, Daniel Wagner <wagi@monom.org>, Hannes Reinecke
- <hare@suse.de>,  Benjamin Marzinski	 <bmarzins@redhat.com>, Christophe
- Varoqui <christophe.varoqui@opensvc.com>,  BLOCK-ML
- <linux-block@vger.kernel.org>, NVME-ML <linux-nvme@lists.infradead.org>,
- SCSI-ML	 <linux-scsi@vger.kernel.org>, DM_DEVEL-ML
- <dm-devel@lists.linux.dev>
-Date: Wed, 27 Aug 2025 21:52:34 +0200
-In-Reply-To: <20250820213254.220715-1-xose.vazquez@gmail.com>
-References: <20250820213254.220715-1-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C289A195608E;
+	Wed, 27 Aug 2025 21:51:55 +0000 (UTC)
+Received: from [10.22.88.109] (unknown [10.22.88.109])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 552111955F24;
+	Wed, 27 Aug 2025 21:51:49 +0000 (UTC)
+Message-ID: <ccb441d0-7603-4e96-b59a-d69ee6a95e6d@redhat.com>
+Date: Wed, 27 Aug 2025 17:51:48 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Rspamd-Queue-Id: E7D802011E
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-5.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	DWL_DNSWL_MED(-2.00)[suse.com:dkim];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	TO_DN_ALL(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	TAGGED_RCPT(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	R_RATELIMIT(0.00)[to_ip_from(RL8gn1pxsi5paq6ucqz1qzjyqe)];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_TWELVE(0.00)[28]
-X-Spam-Score: -5.01
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3] nvme-cli: nvmf-autoconnect: udev-rule: add a file for
+ new arrays
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Wayne Berthiaume <Wayne.Berthiaume@dell.com>,
+ Vasuki Manikarnike <vasuki.manikarnike@hpe.com>,
+ Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
+ Martin George <marting@netapp.com>,
+ NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
+ Zou Ming <zouming.zouming@huawei.com>, Li Xiaokeng <lixiaokeng@huawei.com>,
+ Randy Jennings <randyj@purestorage.com>, Jyoti Rani <jrani@purestorage.com>,
+ Brian Bunker <brian@purestorage.com>, Uday Shankar
+ <ushankar@purestorage.com>, Chaitanya Kulkarni <kch@nvidia.com>,
+ Sagi Grimberg <sagi@grimberg.me>, Keith Busch <kbusch@kernel.org>,
+ Christoph Hellwig <hch@lst.de>, Marco Patalano <mpatalan@redhat.com>,
+ "Ewan D. Milne" <emilne@redhat.com>, Daniel Wagner <dwagner@suse.de>,
+ Daniel Wagner <wagi@monom.org>, Hannes Reinecke <hare@suse.de>,
+ Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ BLOCK-ML <linux-block@vger.kernel.org>,
+ NVME-ML <linux-nvme@lists.infradead.org>,
+ SCSI-ML <linux-scsi@vger.kernel.org>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20250820213254.220715-1-xose.vazquez@gmail.com>
+Content-Language: en-US
+From: John Meneghini <jmeneghi@redhat.com>
+Organization: RHEL Core Storge Team
+In-Reply-To: <20250820213254.220715-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-On Wed, 2025-08-20 at 23:32 +0200, Xose Vazquez Perez wrote:
-> One file per vendor, or device, is a bit excessive for two-four
-> rules.
->=20
->=20
-> If possible, select round-robin (>=3D5.1), or queue-depth (>=3D6.11).
-> round-robin is a basic selector, and only works well under ideal
-> conditions.
->=20
+I'm sorry but Red Hat will not approve any upstream change like this that modifies the policy for OTHER VENDORS stuff.
+
+You can't simply change the IO policy for all of these arrays.  Many vendors have no autoconnect/udev-rules because they don't want one.  They want to use the default ctrl_loss_tmo and the default iopolicy (numa)... you can't just change this for them.
+
+If you want people to migrate their udev rules out of separate files and into a single autoconnect file like this then you'll have to get them to agree.
+
+When I look upstream I see exactly 3 vendors who have a udev-rule for their iopolicy.
+
+nvme-cli(master) > ls -1 nvmf-autoconnect/udev-rules/71*
+nvmf-autoconnect/udev-rules/71-nvmf-hpe.rules.in
+nvmf-autoconnect/udev-rules/71-nvmf-netapp.rules.in
+nvmf-autoconnect/udev-rules/71-nvmf-vastdata.rules.in
+
+I suggest that you get these three vendors to agree to move their policy into a single 71-nvmf-mulitpath-policy.rules.in file, and then leave everyone else's stuff alone.
+
+In the future, vendors who want to add a multipath-policy rule can then use the new file instead of adding their own.
+
+/John
+
+On 8/20/25 5:32 PM, Xose Vazquez Perez wrote:
+> One file per vendor, or device, is a bit excessive for two-four rules.
+> 
+> 
+> If possible, select round-robin (>=5.1), or queue-depth (>=6.11).
+> round-robin is a basic selector, and only works well under ideal conditions.
+> 
 > A nvme benchmark, round-robin vs queue-depth, shows how bad it is:
-> https://marc.info/?l=3Dlinux-kernel&m=3D171931850925572
-> https://marc.info/?l=3Dlinux-kernel&m=3D171931852025575
-> https://github.com/johnmeneghini/iopolicy/?tab=3Dreadme-ov-file#sample-da=
-ta
+> https://marc.info/?l=linux-kernel&m=171931850925572
+> https://marc.info/?l=linux-kernel&m=171931852025575
+> https://github.com/johnmeneghini/iopolicy/?tab=readme-ov-file#sample-data
 > https://people.redhat.com/jmeneghi/ALPSS_2023/NVMe_QD_Multipathing.pdf
->=20
->=20
+> 
+> 
 > [ctrl_loss_tmo default value is 600 (ten minutes)]
->=20
->=20
+
+You can't remove this because vendors have ctrl_loss_tmo set to -1 on purpose.
+
 > v3:
-> =C2=A0- add Fujitsu/ETERNUS AB/HB
-> =C2=A0- add Hitachi/VSP
->=20
+>   - add Fujitsu/ETERNUS AB/HB
+>   - add Hitachi/VSP
+> 
 > v2:
-> =C2=A0- fix ctrl_loss_tmo commnent
-> =C2=A0- add Infinidat/InfiniBox
->=20
->=20
+>   - fix ctrl_loss_tmo commnent
+>   - add Infinidat/InfiniBox
+> 
+> 
 > Cc: Wayne Berthiaume <Wayne.Berthiaume@dell.com>
 > Cc: Vasuki Manikarnike <vasuki.manikarnike@hpe.com>
 > Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
@@ -181,28 +157,22 @@ ta
 > Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 > ---
->=20
-> This will be the last iteration of this patch, there are no more NVMe
-> storage
+> 
+> This will be the last iteration of this patch, there are no more NVMe storage
 > array manufacturers.
->=20
->=20
+> 
+> 
 > Maybe these rules should be merged into this new file. ???
 > 71-nvmf-hpe.rules.in
 > 71-nvmf-netapp.rules.in
 > 71-nvmf-vastdata.rules.in
->=20
+> 
 > ---
-> =C2=A0.../80-nvmf-storage_arrays.rules.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 48
-> +++++++++++++++++++
-> =C2=A01 file changed, 48 insertions(+)
-> =C2=A0create mode 100644 nvmf-autoconnect/udev-rules/80-nvmf-
-> storage_arrays.rules.in
->=20
-> diff --git a/nvmf-autoconnect/udev-rules/80-nvmf-
-> storage_arrays.rules.in b/nvmf-autoconnect/udev-rules/80-nvmf-
-> storage_arrays.rules.in
+>   .../80-nvmf-storage_arrays.rules.in           | 48 +++++++++++++++++++
+>   1 file changed, 48 insertions(+)
+>   create mode 100644 nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in
+> 
+> diff --git a/nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in b/nvmf-autoconnect/udev-rules/80-nvmf-storage_arrays.rules.in
 > new file mode 100644
 > index 00000000..ac5df797
 > --- /dev/null
@@ -211,78 +181,49 @@ ta
 > +##### Storage arrays
 > +
 > +#### Set iopolicy for NVMe-oF
-> +### iopolicy: numa (default), round-robin (>=3D5.1), or queue-depth
-> (>=3D6.11)
+> +### iopolicy: numa (default), round-robin (>=5.1), or queue-depth (>=6.11)
 > +
 > +## Dell EMC
 > +# PowerMax
-> +ACTION=3D=3D"add|change", SUBSYSTEM=3D=3D"nvme-subsystem",
-> ATTR{subsystype}=3D=3D"nvm", ATTR{iopolicy}=3D"round-robin",
-> ATTR{model}=3D=3D"EMC PowerMax"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="EMC PowerMax"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="EMC PowerMax"
+> +# PowerStore
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="dellemc-powerstore"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="dellemc-powerstore"
+> +
+> +## Fujitsu
+> +# ETERNUS AB/HB
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Fujitsu ETERNUS AB/HB Series"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Fujitsu ETERNUS AB/HB Series"
+> +
+> +## Hitachi Vantara
+> +# VSP
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="HITACHI SVOS-RF-System"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="HITACHI SVOS-RF-System"
+> +
+> +## Huawei
+> +# OceanStor
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Huawei-XSG1"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Huawei-XSG1"
+> +
+> +## IBM
+> +# FlashSystem (RamSan)
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="FlashSystem"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="FlashSystem"
+> +# FlashSystem (Storwize/SVC)
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="IBM*214"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="IBM*214"
+> +
+> +## Infinidat
+> +# InfiniBox
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="InfiniBox"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="InfiniBox"
+> +
+> +## Pure
+> +# FlashArray
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="round-robin", ATTR{model}=="Pure Storage FlashArray"
+> +ACTION=="add|change", SUBSYSTEM=="nvme-subsystem", ATTR{subsystype}=="nvm", ATTR{iopolicy}="queue-depth", ATTR{model}=="Pure Storage FlashArray"
+> +
+> +
+> +##### EOF
 
-Do you have a specific reason to add the model match after the
-assignment? It isn't wrong AFAIK, but highly unusual and confusing.
-
-> +ACTION=3D=3D"add|change", SUBSYSTEM=3D=3D"nvme-subsystem",=C2=B7
-> ATTR{subsystype}=3D=3D"nvm", ATTR{iopolicy}=3D"queue-depth",
-> ATTR{model}=3D=3D"EMC PowerMax"
-
-I am assuming the idea here is that if queue-depth is unsupported, the
-second command will fail, and thus round-robin will be selected?
-I am not sure if that's a good idea.=20
-
-The "best" iopolicy doesn't depend on the storage array in use.
-It depends on what the kernel supports, the workload, and the user
-preferences.
-
-I suggest using something like this instead:
-
-ENV{.NVME_IOPOLICY}!=3D"?*", ENV{.NVME_IOPOLICY}=3D"queue-depth"
-
-This allows users to add a early rule file 00-nvme-policy.rules
-to override the default:
-
-ACTION=3D=3D"add|change", SUBSYSTEM=3D=3D"nvme-subsystem", ENV{.NVME_IOPOLI=
-CY}=3D"round-robin"
-
-
-Then you could simply do this:
-
-
-ACTION!=3D"add|change",=C2=A0GOTO=3D"iopolicy_end"
-SUBSYSTEM!=3D"nvme-subsystem", GOTO=3D"iopolicy_end"
-ATTR{subsystype}!=3D"nvm", GOTO=3D"iopolicy_end"
-
-ATTR{model}=3D=3D"dellemc-powerstore", ATTR{iopolicy}=3D"$env{NVME_IOPOLICY=
-}"
-# other models ...
-
-LABEL=3D"iopolicy_end"
-
-
-Anyway, I dislike the idea of maintaining a potentially ever-growing
-list of storage models with special policies in generic udev rules.
-Udev rules=20
-
-*If* we want to pursue model-specific settings, we should rather use
-the systemd hwdb [1] for that purpose. For example,
-
-
-ACTION=3D=3D"add|change", SUBSYSTEM=3D=3D"nvme-subsystem", ATTR{subsystype}=
-=3D=3D"nvm", \
-    ENV{.NVME_IOPOLICY}!=3D"?*", \
-    IMPORT{builtin}=3D"hwdb nvme_subsys:$attr{model}
-
-# .NVME_IOPOLICY would be set by hwdb if a match was found
-ENV{.NVME_IOPOLICY}=3D=3D"?*", ATTR{iopolicy}=3D"$env{.NVME_IOPOLICY}"
-
-
-Vendors could then just put their preference into the hwdb.
-
-But first of all I'd be curious why this setting would be=C2=A0
-model-specific in the first place.
-
-Regards
-Martin
-
-[1] https://man7.org/linux/man-pages/man7/hwdb.7.html
