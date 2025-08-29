@@ -1,28 +1,27 @@
 Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D71EE2BD5BD
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CD0829BDB5
 	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 08:13:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756455202; cv=none; b=hKAPG3TuP/cDa90rOvnQRyBlfLGK1FxCKcBzbHGUKk6kbCkxHCy5Oo2rP7pW7u403g9x1liIwGUnf7zffAQ3WGox63OllhyCvWKRpm19KBsHEHnDLRuHZe4T2n1oS7FtPl+GqH30uXbGMzejsPscW+43u9Wzl8eKQB1q9XoKh7Q=
+	t=1756455202; cv=none; b=kAXymEzCTVT5iBX8kQ+b8NgoO4NcROkiynE2lZ1UWlKXHSFHLhyGxtEHY5I87bzyFFEhnmYQwym+t3KWT/3RmHFANW3tcX6Nba8UauF6NKzUUyNjCd3wnG6yjfVRIYpAGtduLhJD55nVnzawGDxP58tBJ/b81sZwnC5M9Q3zVG0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1756455202; c=relaxed/simple;
-	bh=b0E9QQ+KD2k/UPoJgRbRysxykR2WPDllt/B2Y0Glm1c=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=kvBGOwY3O0Jw++TsIwd8IpQiP3B05DjPM/A99ha+TT/rxbINdcOD1IYo92AdG6c4cTIHJkk5UXjWli+pPi0QXnzzIQGb/9Ws80hQFo6DbVKryjRL9w07Rs3+uGoVt+9ua7fCKB93hSZloKboq8hInbYHVs63IJCxfZ7PaXlYbyE=
+	bh=A0V8NrU+/d9oOJrAnfiuCrLAa4Kzy73YPCwn4yCQios=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=upH7rTl69QzRs8myKvDxUCi3rklNLyOd7XfJsB6GksII7nt7M/J0Yd8g/EpfC+pkPK/jxbKrrtQetcLVdC4tNGCFOhalaTSPyca6aFW0govQvwQpAU+pCU/1MIEymQKVOaLOsY6uwQdIZNZoZn1hN3OGRgJ7m63Xq8sm2P5nAUQ=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
 Received: from mail.maildlp.com (unknown [172.19.163.216])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4cCrcY2G32zKHNL8
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:17 +0800 (CST)
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4cCrcQ4Xt3zKHNHR
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:10 +0800 (CST)
 Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 0B9521A1E05
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:17 +0800 (CST)
+	by mail.maildlp.com (Postfix) with ESMTP id 5968A1A1A2A
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:10 +0800 (CST)
 Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgB3wY0RYbFohAO2Ag--.45648S13;
-	Fri, 29 Aug 2025 16:13:16 +0800 (CST)
+	by APP4 (Coremail) with SMTP id gCh0CgB3wY0RYbFohAO2Ag--.45648S4;
+	Fri, 29 Aug 2025 16:13:08 +0800 (CST)
 From: Yu Kuai <yukuai1@huaweicloud.com>
 To: hch@infradead.org,
 	xni@redhat.com,
@@ -44,12 +43,10 @@ Cc: linux-doc@vger.kernel.org,
 	yangerkun@huawei.com,
 	johnny.chenyi@huawei.com,
 	hailan@yukuai.org.cn
-Subject: [PATCH v7 md-6.18 09/11] md: add a new recovery_flag MD_RECOVERY_LAZY_RECOVER
-Date: Fri, 29 Aug 2025 16:04:24 +0800
-Message-Id: <20250829080426.1441678-10-yukuai1@huaweicloud.com>
+Subject: [PATCH v7 md-6.18 00/11] md/llbitmap: md/md-llbitmap: introduce a new lockless bitmap
+Date: Fri, 29 Aug 2025 16:04:15 +0800
+Message-Id: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
 X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
-References: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -57,181 +54,143 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgB3wY0RYbFohAO2Ag--.45648S13
-X-Coremail-Antispam: 1UD129KBjvJXoW3Jr4kXF4xGr4kGFW8tFWxtFb_yoW7Aw47pa
-	yIyF98Cr4DJFWfZrZrt3WDWFWrZw18KrWqyFyfW3ykJF98trnxZF1UWFy3JrWDJa9ava12
-	qw1DJFW7uF15uw7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
-	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
-	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVWUCVW8JwCI
-	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
-	4lIxAIcVC2z280aVAFwI0_Gr0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
-	daVFxhVjvjDU0xZFpf9x0pRQJ5wUUUUU=
+X-CM-TRANSID:gCh0CgB3wY0RYbFohAO2Ag--.45648S4
+X-Coremail-Antispam: 1UD129KBjvJXoWxKr1rGF45Cr4rXF4fXF1kXwb_yoW7Xr4Upa
+	9aqr43CwsxJr4fWa17J342vFyrKan5XrZrKr1fG3yF93yqyrn8Ga1SgF4ru34DGryfWF9F
+	qr45ArnrKryj9FJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU9Y14x267AKxVW5JVWrJwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26w1j6s0DM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4U
+	JVWxJr1l84ACjcxK6I8E87Iv67AKxVW0oVCq3wA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_Gc
+	CE3s1le2I262IYc4CY6c8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E
+	2Ix0cI8IcVAFwI0_Jr0_Jr4lYx0Ex4A2jsIE14v26r1j6r4UMcvjeVCFs4IE7xkEbVWUJV
+	W8JwACjcxG0xvY0x0EwIxGrwACjI8F5VA0II8E6IAqYI8I648v4I1lFIxGxcIEc7CjxVA2
+	Y2ka0xkIwI1lc7CjxVAaw2AFwI0_GFv_Wryl42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
+	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
+	zVAF1VAY17CE14v26r4a6rW5MIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
+	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
+	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r4j6r4UJbIYCT
+	nIWIevJa73UjIFyTuYvjTRNJ5oDUUUU
 X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
 From: Yu Kuai <yukuai3@huawei.com>
 
-This flag is used by llbitmap in later patches to skip raid456 initial
-recover and delay building initial xor data to first write.
+Changes from v6:
+ - fix special case in degraded mode in patch 11, also add description
+ about this case;
+ - fix some typos in patch 11;
+Changes from v5:
+ - fix wrong place to check is blocks are synced in patch 8; (Xiao)
+ - raid5 is using recover to build initial xor data, fix that unexpected
+ resync is triggered, patch 9 and patch 11; (Myself by test)
+ - flush bitmap after it's initialized the first time, patch 11; (Xiao)
+ - some coding style, patch 11; (Xiao)
+Changes from v4:
+ - fix dm-raid regerssion in patch 6, skip creating bitmap attributes
+ under mddev gendisk which is NULL;
+ - some minor cleanups and error handling fixes in patch 11;
+ - add review tag:
+  - patch 1-10 from Li Nan
+  - patch 4,5,6,8 from Xiao
+  - patch 6 from Hannes
+Changes from v3:
+ - fix redundant setting mddev->bitmap_id in patch 6;
+ - add explanation of bitmap attributes in Documentation;
+ - add llbitmap/barrier_idle in patch 11;
+ - add some comments in patch 11;
+Changes from v2:
+ - add comments about KOBJECT_CHANGE uevent in patch 6;
+ - convert llbitmap_suspend() to llbitmap_suspend_timeout() in patch 11;
+ - add some comments in patch 11;
+ - add review tag:
+  - patch 3,4,5,9 from Hannes
+Changes from v1:
+ - explain md_bitmap_fn in commit message, patch 3;
+ - handle the case CONFIG_MD_BITMAP is disabled, patch 4;
+ - split patch 7 from v1 into patch 5 + 6;
+ - rewrite bitmap_type_store, patch 5;
+ - fix dm-raid regerssion that md-bitmap sysfs entries should not be
+ created under mddev kobject, patch 6
+ - merge llbitmap patches into one patch, with lots of cleanups;
+ - add review tag:
+  - patch 1,2,7,8,9,10 from Christoph
+  - patch 1,2,7,8,10 from Hannes
+  - patch 1,2,3,7 from Xiao
 
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
----
- drivers/md/md.c    | 47 +++++++++++++++++++++++++++++++++++++++++++++-
- drivers/md/md.h    |  2 ++
- drivers/md/raid5.c | 19 +++++++++++++++----
- 3 files changed, 63 insertions(+), 5 deletions(-)
+v4: https://lore.kernel.org/all/20250721171557.34587-1-yukuai@kernel.org/
+v3: https://lore.kernel.org/linux-raid/20250718092336.3346644-1-yukuai1@huaweicloud.com/
+v2: https://lore.kernel.org/all/20250707165202.11073-12-yukuai@kernel.org/
+v1: https://lore.kernel.org/all/20250524061320.370630-1-yukuai1@huaweicloud.com/
+RFC: https://lore.kernel.org/all/20250512011927.2809400-1-yukuai1@huaweicloud.com/
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 7196e7f6b2a4..199843356449 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -9199,6 +9199,39 @@ static sector_t md_sync_max_sectors(struct mddev *mddev,
- 	}
- }
- 
-+/*
-+ * If lazy recovery is requested and all rdevs are in sync, select the rdev with
-+ * the higest index to perfore recovery to build initial xor data, this is the
-+ * same as old bitmap.
-+ */
-+static bool mddev_select_lazy_recover_rdev(struct mddev *mddev)
-+{
-+	struct md_rdev *recover_rdev = NULL;
-+	struct md_rdev *rdev;
-+	bool ret = false;
-+
-+	rcu_read_lock();
-+	rdev_for_each_rcu(rdev, mddev) {
-+		if (rdev->raid_disk < 0)
-+			continue;
-+
-+		if (test_bit(Faulty, &rdev->flags) ||
-+		    !test_bit(In_sync, &rdev->flags))
-+			break;
-+
-+		if (!recover_rdev || recover_rdev->raid_disk < rdev->raid_disk)
-+			recover_rdev = rdev;
-+	}
-+
-+	if (recover_rdev) {
-+		clear_bit(In_sync, &recover_rdev->flags);
-+		ret = true;
-+	}
-+
-+	rcu_read_unlock();
-+	return ret;
-+}
-+
- static sector_t md_sync_position(struct mddev *mddev, enum sync_action action)
- {
- 	sector_t start = 0;
-@@ -9230,6 +9263,14 @@ static sector_t md_sync_position(struct mddev *mddev, enum sync_action action)
- 				start = rdev->recovery_offset;
- 		rcu_read_unlock();
- 
-+		/*
-+		 * If there are no spares, and raid456 lazy initial recover is
-+		 * requested.
-+		 */
-+		if (test_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery) &&
-+		    start == MaxSector && mddev_select_lazy_recover_rdev(mddev))
-+			start = 0;
-+
- 		/* If there is a bitmap, we need to make sure all
- 		 * writes that started before we added a spare
- 		 * complete before we start doing a recovery.
-@@ -9791,6 +9832,7 @@ static bool md_choose_sync_action(struct mddev *mddev, int *spares)
- 
- 		set_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
- 		clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-+		clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
- 		return true;
- 	}
- 
-@@ -9799,6 +9841,7 @@ static bool md_choose_sync_action(struct mddev *mddev, int *spares)
- 		remove_spares(mddev, NULL);
- 		set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
- 		clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-+		clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
- 		return true;
- 	}
- 
-@@ -9808,7 +9851,7 @@ static bool md_choose_sync_action(struct mddev *mddev, int *spares)
- 	 * re-add.
- 	 */
- 	*spares = remove_and_add_spares(mddev, NULL);
--	if (*spares) {
-+	if (*spares || test_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery)) {
- 		clear_bit(MD_RECOVERY_SYNC, &mddev->recovery);
- 		clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
- 		clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
-@@ -10021,6 +10064,7 @@ void md_check_recovery(struct mddev *mddev)
- 			}
- 
- 			clear_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-+			clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
- 			clear_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
- 			clear_bit(MD_SB_CHANGE_PENDING, &mddev->sb_flags);
- 
-@@ -10131,6 +10175,7 @@ void md_reap_sync_thread(struct mddev *mddev)
- 	clear_bit(MD_RECOVERY_RESHAPE, &mddev->recovery);
- 	clear_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
- 	clear_bit(MD_RECOVERY_CHECK, &mddev->recovery);
-+	clear_bit(MD_RECOVERY_LAZY_RECOVER, &mddev->recovery);
- 	/*
- 	 * We call mddev->cluster_ops->update_size here because sync_size could
- 	 * be changed by md_update_sb, and MD_RECOVERY_RESHAPE is cleared,
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 4fa5a3e68a0c..7b6357879a84 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -667,6 +667,8 @@ enum recovery_flags {
- 	MD_RECOVERY_RESHAPE,
- 	/* remote node is running resync thread */
- 	MD_RESYNCING_REMOTE,
-+	/* raid456 lazy initial recover */
-+	MD_RECOVERY_LAZY_RECOVER,
- };
- 
- enum md_ro_state {
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index 672ab226e43c..5112658ef5f6 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -4705,10 +4705,21 @@ static void analyse_stripe(struct stripe_head *sh, struct stripe_head_state *s)
- 			}
- 		} else if (test_bit(In_sync, &rdev->flags))
- 			set_bit(R5_Insync, &dev->flags);
--		else if (sh->sector + RAID5_STRIPE_SECTORS(conf) <= rdev->recovery_offset)
--			/* in sync if before recovery_offset */
--			set_bit(R5_Insync, &dev->flags);
--		else if (test_bit(R5_UPTODATE, &dev->flags) &&
-+		else if (sh->sector + RAID5_STRIPE_SECTORS(conf) <=
-+			 rdev->recovery_offset) {
-+			/*
-+			 * in sync if:
-+			 *  - normal IO, or
-+			 *  - resync IO that is not lazy recovery
-+			 *
-+			 * For lazy recovery, we have to mark the rdev without
-+			 * In_sync as failed, to build initial xor data.
-+			 */
-+			if (!test_bit(STRIPE_SYNCING, &sh->state) ||
-+			    !test_bit(MD_RECOVERY_LAZY_RECOVER,
-+				      &conf->mddev->recovery))
-+				set_bit(R5_Insync, &dev->flags);
-+		} else if (test_bit(R5_UPTODATE, &dev->flags) &&
- 			 test_bit(R5_Expanded, &dev->flags))
- 			/* If we've reshaped into here, we assume it is Insync.
- 			 * We will shortly update recovery_offset to make
+Redundant data is used to enhance data fault tolerance, and the storage
+method for redundant data vary depending on the RAID levels. And it's
+important to maintain the consistency of redundant data.
+
+Bitmap is used to record which data blocks have been synchronized and which
+ones need to be resynchronized or recovered. Each bit in the bitmap
+represents a segment of data in the array. When a bit is set, it indicates
+that the multiple redundant copies of that data segment may not be
+consistent. Data synchronization can be performed based on the bitmap after
+power failure or readding a disk. If there is no bitmap, a full disk
+synchronization is required.
+
+Due to known performance issues with md-bitmap and the unreasonable
+implementations:
+
+ - self-managed IO submitting like filemap_write_page();
+ - global spin_lock
+
+I have decided not to continue optimizing based on the current bitmap
+implementation, this new bitmap is invented without locking from IO fast
+path and can be used with fast disks.
+
+For designs and details, see patch 11;
+
+Performance Test:
+Simple fio randwrite test to build array with 20GB ramdisk in my VM:
+
+|                      | none      | bitmap    | llbitmap  |
+| -------------------- | --------- | --------- | --------- |
+| raid1                | 13.7MiB/s | 9696KiB/s | 19.5MiB/s |
+| raid1(assume clean)  | 19.5MiB/s | 11.9MiB/s | 19.5MiB/s |
+| raid10               | 21.9MiB/s | 11.6MiB/s | 27.8MiB/s |
+| raid10(assume clean) | 27.8MiB/s | 15.4MiB/s | 27.8MiB/s |
+| raid5                | 14.0MiB/s | 11.6MiB/s | 12.9MiB/s |
+| raid5(assume clean)  | 17.8MiB/s | 13.4MiB/s | 13.9MiB/s |
+
+For raid1/raid10 llbitmap can be better than none bitmap with background
+initial resync, and it's the same as none bitmap without it.
+
+Noted that llbitmap performance improvement for raid5 is not obvious,
+this is due to raid5 has many other performance bottleneck, perf
+results still shows that bitmap overhead will be much less.
+
+Yu Kuai (11):
+  md: add a new parameter 'offset' to md_super_write()
+  md: factor out a helper raid_is_456()
+  md/md-bitmap: support discard for bitmap ops
+  md: add a new mddev field 'bitmap_id'
+  md/md-bitmap: add a new sysfs api bitmap_type
+  md/md-bitmap: delay registration of bitmap_ops until creating bitmap
+  md/md-bitmap: add a new method skip_sync_blocks() in bitmap_operations
+  md/md-bitmap: add a new method blocks_synced() in bitmap_operations
+  md: add a new recovery_flag MD_RECOVERY_LAZY_RECOVER
+  md/md-bitmap: make method bitmap_ops->daemon_work optional
+  md/md-llbitmap: introduce new lockless bitmap
+
+ Documentation/admin-guide/md.rst |   86 +-
+ drivers/md/Kconfig               |   11 +
+ drivers/md/Makefile              |    1 +
+ drivers/md/md-bitmap.c           |   15 +-
+ drivers/md/md-bitmap.h           |   45 +-
+ drivers/md/md-llbitmap.c         | 1625 ++++++++++++++++++++++++++++++
+ drivers/md/md.c                  |  332 ++++--
+ drivers/md/md.h                  |   20 +-
+ drivers/md/raid5.c               |   34 +-
+ 9 files changed, 2046 insertions(+), 123 deletions(-)
+ create mode 100644 drivers/md/md-llbitmap.c
+
 -- 
 2.39.2
 
