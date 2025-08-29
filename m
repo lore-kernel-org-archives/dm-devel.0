@@ -1,114 +1,119 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 570FD29993F
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 08:13:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E24625DB12
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 09:14:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756455207; cv=none; b=bCk/RxAAWL7EVwyRBsMtMhDJqfA5mrU20Ut43Mqzk0uuwrTfXzVMRPXU9mVvG00CaOkODsP00PSKJNyqT6TrBvJ3fyTPaS2xnSZILCl5wEU4ZRyYoWOHzbzcbbJDn5Z5tWSwMKNrYXOVnN6K1e1a+sEYVX26SOQd8fhtA5f67QY=
+	t=1756458876; cv=none; b=d6O196/mp9qLGLVmEX2X9lWYHcXXM+5Tq5bvUgs9Rf+aEorOc5QadFCVMMBr3Iw3WYvdonZYMcCR3a/sF0aj9ghCLJFY0H7Km4cxJGxBg3QCJajpcTJZUI073G3Gi+oCSCAo9/AmoAJ0OPxi226FA4QFD8DH4Bt/vGptnVELewA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756455207; c=relaxed/simple;
-	bh=dpUl4hCBK7//dMfJfKDAztTA1OHzY5NA+c4xSwXqoTk=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=XB/XJSyFFBAdeyxdy5N8ANMmUju5fgQyY1QdKySjGUT5NcfLQvesALIcQlLcV4d5NRvcVwLFX1flGYErSx4dILo9XkFDCRgaMMKQoJcPZV4yedGvz0h6hgh8Ua/I5zJx4HG4qIl4TZEiTY6QM1SWnvAYztcSXkgCiBVvZH2nmTQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.235])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4cCrcb1n6xzYQvjW
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:19 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id BE2FF1A12ED
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:17 +0800 (CST)
-Received: from huaweicloud.com (unknown [10.175.104.67])
-	by APP4 (Coremail) with SMTP id gCh0CgB3wY0RYbFohAO2Ag--.45648S14;
-	Fri, 29 Aug 2025 16:13:17 +0800 (CST)
-From: Yu Kuai <yukuai1@huaweicloud.com>
-To: hch@infradead.org,
-	xni@redhat.com,
-	colyli@kernel.org,
-	linan122@huawei.com,
-	corbet@lwn.net,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	song@kernel.org,
-	yukuai3@huawei.com,
-	hare@suse.de
-Cc: linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org,
-	yukuai1@huaweicloud.com,
-	yi.zhang@huawei.com,
-	yangerkun@huawei.com,
-	johnny.chenyi@huawei.com,
-	hailan@yukuai.org.cn
-Subject: [PATCH v7 md-6.18 10/11] md/md-bitmap: make method bitmap_ops->daemon_work optional
-Date: Fri, 29 Aug 2025 16:04:25 +0800
-Message-Id: <20250829080426.1441678-11-yukuai1@huaweicloud.com>
-X-Mailer: git-send-email 2.39.2
-In-Reply-To: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
-References: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
+	s=arc-20240116; t=1756458876; c=relaxed/simple;
+	bh=RY+3NnRstDYbzbbFs7/rt+mSR0o2mzbtiTuvdStYB9I=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=r9sAEy9KF5jhZSgF90Mci1w6Nhc8QIdcZN3+KbZef4U9mAsNE8VPAi9aK7nLrCjoVQTmMe15Qx1hER6WRNCSitnwttrQT1Nqabm12wG9q8NBaksUo0ZZTYbivbJASxGEYvllgTka2Qv7lrEcRjGMMsaiIa56uQ17jC4aTlHnvxE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=ldueaK88; arc=none smtp.client-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="ldueaK88"
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-45b77f59bd8so8797465e9.0
+        for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 02:14:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1756458873; x=1757063673; darn=lists.linux.dev;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=A05W48MAXCFx7fKJxj1G5Bqe90+G93RXAaVC4nTixYE=;
+        b=ldueaK88bviTzN/wqXf9zUZ+I2ptcD7806sEDFDLnGl4mv5+uLsayGUBScSafSOM7h
+         cKwNhUx0+qhQmJO0vQS05Y52AI9peO6yeC6WVhxPHKJ2p3tkT4HtXNkpkf4qC3nSeEjN
+         RDU1XDUoloMXSj1zD03P9JmFdByXbwf3JXsyHVKWJCjqTptYZyQQnkGVEs883VMUfyjg
+         QyLJQlLu0Z9/TGdXqrsUozwe/i8x5E284uhA+P6/R9tAZjGBpxR065c6rYGQSbNtJ+Bi
+         o7Z71f69bSdq/+B+1ofwVk3AjRTIJaHcTC32vlsOHiKPuSM1WcaXCQcergE6OQYI908F
+         YCQg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1756458873; x=1757063673;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=A05W48MAXCFx7fKJxj1G5Bqe90+G93RXAaVC4nTixYE=;
+        b=ZeIVBgWgnu3wJrMciVXWAbOqu+HgjLs42fQ9KgLXnDgLldPmFPqfwWQfaXRpe2PjQi
+         3pMQuB6ZTR4E0SCUqfIZuvw2ds3t4nLkoxclL/RmRqNXakLlP5xILSAE5ObKoIJFgpC+
+         T5gmPrOql5bqIRJIme9luoitmioCSg1WqAwl2DbFT8chB2bg0M+/mCfJiwmg3f2QEUig
+         VCsNHHdKhZYY2ZN6SC/c62PeffGS3DAOcCO/YwjtrkEiIwPHU4L78ak5AFol9QC2kh+7
+         LdboHMVTezOED+LD0ZxaFBD/KlLyBRvvpiYs1sgYFb8pzVnwmLT9a7+w62nBJYnptuHK
+         8UNA==
+X-Gm-Message-State: AOJu0Yx8QU7VlLTgRSuk3jdBHeT05pd45i3jxRByARWdAPIU5b9o6l1I
+	GZYm5wI8y3EkAI4ht0SGPrbYO5CPXYKzN5YLNUUA+qg/p6z9RY/NZiINwRr2Vn+3l+k=
+X-Gm-Gg: ASbGncsPlG9hp3MVFOIPVqyKFwGwRBBnAl7wFEjqGeMbhTOjjPrPmbvLxkv/b4IpBNo
+	cQ8rgk6id5Ec38LK20mPZbHiuBfdT7EUAYIn56B6eRitshukopef3Py6iqyt4q3kbvVlJaoFHlT
+	jqB6eqNoBVS2YZGydPcjQVHRbPJ7xo9dO+XHWxadx1ZVpqhQXqjHpXxqS85fyVVhu+PtP89x8RW
+	vbDJmcJaN1I36BFx3p/qd2cHX3Jr3JwXFlQt7wZgO4aTl/XD2Il+SAxUu9zWcv8QkzuzliQngP/
+	CFcDVQAvKqQXNSrDpJbBFoEPMFHXH3UPF/kyUmuekTAvoeNwOXrhK84b9PqxoQ2eC6knlInP9vX
+	TDoTSNmSS+cQD9llzn36jckXV5Z5lith9DDE3qqT2SM0XPfWu
+X-Google-Smtp-Source: AGHT+IGm/sWd58l8hKgRVb2XDsJWIUEY1gDzLJkE5su9EQmmtXCtVFL4BtM7719ofv4vV9HdFxsEUA==
+X-Received: by 2002:a05:6000:1786:b0:3ce:bf23:3c15 with SMTP id ffacd0b85a97d-3cebf2345e6mr2758169f8f.26.1756458872653;
+        Fri, 29 Aug 2025 02:14:32 -0700 (PDT)
+Received: from localhost ([196.207.164.177])
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3cf33adf170sm2743293f8f.33.2025.08.29.02.14.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 29 Aug 2025 02:14:32 -0700 (PDT)
+Date: Fri, 29 Aug 2025 12:14:28 +0300
+From: Dan Carpenter <dan.carpenter@linaro.org>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+Cc: dm-devel@lists.linux.dev
+Subject: Re: [bug report] dm-pcache: add persistent cache target in
+ device-mapper
+Message-ID: <aLFvdA9clSu_i-DC@stanley.mountain>
+References: <aLE9JjiTzKmeKzsN@stanley.mountain>
+ <824ba1cc-be92-47ae-9b81-a7e94f600010@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgB3wY0RYbFohAO2Ag--.45648S14
-X-Coremail-Antispam: 1UD129KBjvJXoWrtFyUGryxCry7KF47Zw4xZwb_yoW8JrWrpa
-	9xWw15ZrWUAaya93W7XFykuFyF9ayktFWqyFWxAw13Was8Wrn8Gr4fKFyqyr98Cr1F9Fnx
-	AF1FvryrJ3W8trJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUmS14x267AKxVWrJVCq3wAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
-	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2048vs2IY020E87I2jVAFwI0_JF0E3s1l82xGYI
-	kIc2x26xkF7I0E14v26ryj6s0DM28lY4IEw2IIxxk0rwA2F7IY1VAKz4vEj48ve4kI8wA2
-	z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F
-	4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x0267AKxVW0oVCq
-	3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7
-	IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4U
-	M4x0Y48IcxkI7VAKI48JM4x0x7Aq67IIx4CEVc8vx2IErcIFxwACI402YVCY1x02628vn2
-	kIc2xKxwCY1x0262kKe7AKxVW8ZVWrXwCF04k20xvY0x0EwIxGrwCFx2IqxVCFs4IE7xkE
-	bVWUJVW8JwC20s026c02F40E14v26r1j6r18MI8I3I0E7480Y4vE14v26r106r1rMI8E67
-	AF67kF1VAFwI0_GFv_WrylIxkGc2Ij64vIr41lIxAIcVC0I7IYx2IY67AKxVW8JVW5JwCI
-	42IY6xIIjxv20xvEc7CjxVAFwI0_Gr1j6F4UJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF
-	4lIxAIcVC2z280aVAFwI0_Gr0_Cr1lIxAIcVC2z280aVCY1x0267AKxVW8Jr0_Cr1UYxBI
-	daVFxhVjvjDU0xZFpf9x0pRQJ5wUUUUU=
-X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
+In-Reply-To: <824ba1cc-be92-47ae-9b81-a7e94f600010@linux.dev>
 
-From: Yu Kuai <yukuai3@huawei.com>
+On Fri, Aug 29, 2025 at 02:03:36PM +0800, Dongsheng Yang wrote:
+> 
+> 在 8/29/2025 1:39 PM, Dan Carpenter 写道:
+> > Hello Dongsheng Yang,
+> > 
+> > Commit 1d57628ff95b ("dm-pcache: add persistent cache target in
+> > device-mapper") from Aug 12, 2025 (linux-next), leads to the
+> > following Smatch static checker warning:
+> > 
+> > 	drivers/md/dm-pcache/cache_segment.c:263 cache_seg_gen_increase()
+> > 	warn: sleeping in atomic context
+> 
+> 
+> Hi Dan,
+> 
+>     Thanx for your report, I will send out the patch after my testing
+> finished.
+> 
+> BTW, can you share the Smatch checking command or script? I want to add
+> 
+> Smatch check in my testing suit if possible, I did not found this kind of
+> problem with simple:
+> 
+> make CHECK="smatch -p=kernel" C=1 M=drivers/md/dm-pcache
+> 
 
-daemon_work() will be called by daemon thread, on the one hand, daemon
-thread doesn't have strict wake-up time; on the other hand, too much
-work are put to daemon thread, like handle sync IO, handle failed
-or specail normal IO, handle recovery, and so on. Hence daemon thread
-may be too busy to clear dirty bits in time.
+It requires several rebuilds of the cross function database...  Everytime
+you rebuild then it does:
 
-Make bitmap_ops->daemon_work() optional and following patches will use
-separate async work to clear dirty bits for the new bitmap.
+First build: cache_data_alloc() disables preemption calls cache_seg_put()
+Second build: cache_seg_put() calls cache_seg_invalidate()
+Third build: cache_seg_invalidate() calls cache_seg_gen_increase()
 
-Signed-off-by: Yu Kuai <yukuai3@huawei.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Reviewed-by: Hannes Reinecke <hare@suse.de>
-Reviewed-by: Li Nan <linan122@huawei.com>
----
- drivers/md/md.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Rebuilding the databse takes hours and hours.
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 199843356449..3a3a3fdecfbd 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -9997,7 +9997,7 @@ static void unregister_sync_thread(struct mddev *mddev)
-  */
- void md_check_recovery(struct mddev *mddev)
- {
--	if (md_bitmap_enabled(mddev, false))
-+	if (md_bitmap_enabled(mddev, false) && mddev->bitmap_ops->daemon_work)
- 		mddev->bitmap_ops->daemon_work(mddev);
- 
- 	if (signal_pending(current)) {
--- 
-2.39.2
+~/path/to/smatch/smatch_scripts/build_kernel_data.sh
+
+regards,
+dan carpenter
 
