@@ -1,141 +1,228 @@
-Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45EB42727F0
-	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 07:35:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6588229AB1A
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 08:13:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756452940; cv=none; b=UEqfIB1g6pOmj+tW/rTnQIUgLlnmume4COw34WNBZyd3s3kxT4YIBnU7kmiooVnbsJ3bMXuEANxOVyST9Z26qjwkdgyiWOxlUM+sV+NeJD1G4oeuFPzXa83SR2SDlJ5ncP28D6IILhWJNAKHFqEWuW3c//LlN9FJCxltcA5oF5A=
+	t=1756455201; cv=none; b=D4fwc4P9cBitfBQUX3buBhKfgoR6GYeWnRG2uEe4vXMPv4YKKv9XVfubmphWJlX60shs8tdRLNsp2G8pFEmM7z4HhZfOKn3W0QKEy0j3VkGNhgKaKPP1i3pDrZRGL82yhVR4Uga2/meObcNBzEagoH+ddmwMrL79Qridc4LxXd0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756452940; c=relaxed/simple;
-	bh=7MQHvHE0M7z8IzLWyKW3Lyo3zYk/f71o4/hAi460hV8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=XJk18BzRaxMhi5EhQIsFGxyjvnC0HTzAmUY6liu1rdxccHe+OERq6DOnBtd5LtSylJTme6ZIkfU0G3BElq+ITCvif3uEhBi7yN4gI+EGMdtacycRnqkc84vEBNNoiXpiH3N5hccZ410WkNn0PSRFf5OMlfQw9r4CcuqJbI7pz/o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=JJD2o8ik; arc=none smtp.client-ip=209.85.218.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="JJD2o8ik"
-Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-afec56519c8so291305666b.2
-        for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 00:35:37 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1756452936; x=1757057736; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=7MQHvHE0M7z8IzLWyKW3Lyo3zYk/f71o4/hAi460hV8=;
-        b=JJD2o8ikk9gtiLqhwew9zjHiiCUtl4wIx/Wq8T2kE21I10R0lbdb6TCxJ3f5Zd6NCC
-         NZe5K/WUwTNAKlDGIANfpwijcHGr+1Qr4zfKJ3PooRrtmsotRrKFB03VE4ZWn5bMm5AM
-         rTvxev2KIRgXVc1jQDLfijBHgKFBkzplKk/WeYf5BQgzw613GFxXNKR0/0rQTb2GlWHg
-         a/1As0jTOrYZl+J1vJcM0xPbyfTdt1oVTJNqPs/D8dTFL+afbjrzb3+m2Lnrq1WfZy4e
-         UvGWmw25TmejDLY9m68a8v9tx9L4n/vEB8Eiu1C2r767PPVx0zBFkADJMGCoCvgneiRh
-         GgUQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1756452936; x=1757057736;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=7MQHvHE0M7z8IzLWyKW3Lyo3zYk/f71o4/hAi460hV8=;
-        b=luulpXuK9yUJEL/F70T3D/2oidm5wajcKDlrK5uuyQE8e+p7QORp6K8flHUjHs0zOK
-         6CuJQLL18HMayhM9LUKkv7hseMK3nHOYozm43+IHw/CXJOiO3h+o4dqyPVwKBPWGyXEo
-         b1UwEuVGlrICNM+KuQo6Gs4ltBAR4w4nEFjbfFaLUsh+YcTcVIbq9mFKBB/AA0ALoxDZ
-         LiCFNPcsHUzpbBrBpu2oZoEvJV5oo/RgFtQN8s5AaHIxYfZxx1ajTUd/x++CxP+OllNq
-         WN9bNA2a6RQrU6kvsOtgd2Sc7pr6QErM3NLn4fXqwEsCOj+ox6/0GToWpU4cLP8fRCNN
-         XjEw==
-X-Forwarded-Encrypted: i=1; AJvYcCUCO9ked9bobT3M0F9YSwcn21CErQNHKDFEYygmG7kRMxkpeuEeMo1zSlt4b75/PQauHLls7xFJow==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy3ZsZ6w1Gqm24RjzrYJDVqSnNo1CasuzfyeD8vPSAQ+DAQyLBU
-	sgcybAffcTmxBDyFgzOK1+dYYiNlZ1i6rZ30cyNxp+Iw3bGyHx9/ikoGtGDrgwFSwzR1at3E7N3
-	QcqhsL70=
-X-Gm-Gg: ASbGnctdTH3RfHWVRl+WvL31d1Z1l7mG14Ichc9Sp380i2DVA12q31tHwYeet2/TmNg
-	KyR8sgtSbjYkrAhQ1l1g4N7ZR1bbi67fbELRqF0k4C3fORPMKaV8TPZa+T0Rlfv6hWpPMhlZZqu
-	PyAgLCXi85+z7bHa5J+yY1HZEftNKxv0w46K3sWhrfipkOyb93p5FCT5VL9lc+ktu70h+yp5Nd3
-	2q3vo2HvysNgSA6XkmQh0GNGlmiZzYaDWH0WX6184+vgWc0naOEsVI7RlvWL76jacz8K3N57Kvt
-	1ZAcc9JPzEhoAMLfjCSUfmDNXGCN/pDLNq+8fl/LvyDbMxCVVgrYP4rf1nwlGMOJfgVCxb+A8NM
-	u3WH3mZcyJLjyVdSyRz27RIl+oSTCtwiOx5n0e0pF7AKkH1ub3KP13skN6Nc8h4kStm5c+QqiSr
-	LwjHUsWFstzXP7S5Ls43XWR5FgS2OXtywR2ziA+yvSfsgz+JyybXGdabsP9hNeqg3Hmw==
-X-Google-Smtp-Source: AGHT+IFg1p7I6BHHE+RQo5tm4mN1WQWSBtU/ZLWZU79qOOt1fEK/orup2G0xSKRgnleOeL7PLzB8vA==
-X-Received: by 2002:a17:907:dac:b0:ae3:f524:b51 with SMTP id a640c23a62f3a-afe28ffcee8mr2624957066b.10.1756452936417;
-        Fri, 29 Aug 2025 00:35:36 -0700 (PDT)
-Received: from ?IPv6:2003:f9:7f15:4e00:f2e:2331:5e9d:fe56? (p200300f97f154e000f2e23315e9dfe56.dip0.t-ipconnect.de. [2003:f9:7f15:4e00:f2e:2331:5e9d:fe56])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-afefc7edb6fsm142840666b.18.2025.08.29.00.35.36
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 29 Aug 2025 00:35:36 -0700 (PDT)
-Message-ID: <0c7528d6a18a639583669454d9a06799de8fa681.camel@suse.com>
-Subject: Re: [PATCH 12/14] libmpatpersist: update reservation key before
- checking paths
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Fri, 29 Aug 2025 09:35:35 +0200
-In-Reply-To: <aLEgiGGxvEySW397@redhat.com>
-References: <20250726035855.363290-1-bmarzins@redhat.com>
-	 <20250726035855.363290-13-bmarzins@redhat.com>
-	 <aad385f3a960df921765001f35f1a6f3cf39edb7.camel@suse.com>
-	 <aLEgiGGxvEySW397@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	s=arc-20240116; t=1756455201; c=relaxed/simple;
+	bh=xmOLclWHLymNJPq2KBcCgkTRP1hfYxI+YF9sV8VqEr0=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=IcLjeepO6+MkwgUUJ3OgAU7j+dqlBBjmQnRjBubzb9VA4ejsHWlpld+s9yasxUhNeJ8Z9nHjWgx0DXOLfvIXlAJRMSquVYJASCt+RnH47H9XklXqyKDYyc75tp8R1IAViuqjK5ePlqaDKR0l+9VEL4FR3zVNEJtRu95yeQT+Cts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.216])
+	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4cCrcS4BYmzYQvd2
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:12 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.128])
+	by mail.maildlp.com (Postfix) with ESMTP id 1DB9B1A1DCF
+	for <dm-devel@lists.linux.dev>; Fri, 29 Aug 2025 16:13:11 +0800 (CST)
+Received: from huaweicloud.com (unknown [10.175.104.67])
+	by APP4 (Coremail) with SMTP id gCh0CgB3wY0RYbFohAO2Ag--.45648S5;
+	Fri, 29 Aug 2025 16:13:10 +0800 (CST)
+From: Yu Kuai <yukuai1@huaweicloud.com>
+To: hch@infradead.org,
+	xni@redhat.com,
+	colyli@kernel.org,
+	linan122@huawei.com,
+	corbet@lwn.net,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	song@kernel.org,
+	yukuai3@huawei.com,
+	hare@suse.de
+Cc: linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	yukuai1@huaweicloud.com,
+	yi.zhang@huawei.com,
+	yangerkun@huawei.com,
+	johnny.chenyi@huawei.com,
+	hailan@yukuai.org.cn
+Subject: [PATCH v7 md-6.18 01/11] md: add a new parameter 'offset' to md_super_write()
+Date: Fri, 29 Aug 2025 16:04:16 +0800
+Message-Id: <20250829080426.1441678-2-yukuai1@huaweicloud.com>
+X-Mailer: git-send-email 2.39.2
+In-Reply-To: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
+References: <20250829080426.1441678-1-yukuai1@huaweicloud.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:gCh0CgB3wY0RYbFohAO2Ag--.45648S5
+X-Coremail-Antispam: 1UD129KBjvJXoW3Jr4kXF1DAFWDKr43KrWxZwb_yoW7CF4Dpa
+	yIvFyfJrWayrW2qw17JFWDua4Fq34DKrZ7Kry3C34xu3W7KrykKF15XFy8Xr98uF9xCFs8
+	Xw4jkFW7uF1IgrJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUmvb4IE77IF4wAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28IrcIa0xkI8VA2jI8067AKxVWUGw
+	A2048vs2IY020Ec7CjxVAFwI0_Gr0_Xr1l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxS
+	w2x7M28EF7xvwVC0I7IYx2IY67AKxVWDJVCq3wA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxV
+	W8Jr0_Cr1UM28EF7xvwVC2z280aVAFwI0_GcCE3s1l84ACjcxK6I8E87Iv6xkF7I0E14v2
+	6rxl6s0DM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40Ex7xfMc
+	Ij6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x0Yz7v_
+	Jr0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7M4IIrI8v6xkF7I
+	0E8cxan2IY04v7MxkF7I0En4kS14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCa
+	FVCjc4AY6r1j6r4UMI8I3I0E5I8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_Jr
+	Wlx4CE17CEb7AF67AKxVW8ZVWrXwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j
+	6r1xMIIF0xvE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr
+	0_JF4lIxAIcVC2z280aVAFwI0_Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUv
+	cSsGvfC2KfnxnUUI43ZEXa7sRMv31JUUUUU==
+X-CM-SenderInfo: 51xn3trlr6x35dzhxuhorxvhhfrp/
 
-On Thu, 2025-08-28 at 23:37 -0400, Benjamin Marzinski wrote:
-> On Mon, Aug 25, 2025 at 06:36:18PM +0200, Martin Wilck wrote:
-> > On Fri, 2025-07-25 at 23:58 -0400, Benjamin Marzinski wrote:
-> > > There is a race condition when changing reservation keys where a
-> > > failed
-> > > path could come back online after libmpathpersist checks the
-> > > paths,
-> > > but
-> > > before it updates the reservation key. In this case, the path
-> > > would
-> > > come
-> > > up and get reregistered with the old key by multipathd, and
-> > > libmpathpersist would not update its key, because the path was
-> > > down
-> > > when it checked.
-> > >=20
-> > > To fix this, check the paths after updating the key, so any path
-> > > that
-> > > comes up after getting checked will use the updated key.
-> >=20
-> > In do_mpath_persistent_reserve_out(), you call update_prkey_flags()
-> > before checking for MPATH_PR_SYNTAX_ERROR. Perhaps you should check
-> > the
-> > key parameters first?
->=20
-> We could, but the way the code currently is, if you called
-> update_prkey_flags() earlier, you can't fail those
-> MPATH_PR_SYNTAX_ERROR
-> checks.
->=20
-> You can only call update_prkey_flags() if rq_servact is
-> MPATH_PROUT_REG_IGN_SA or MPATH_PROUT_REG_SA, so we only need to look
-> at
-> the True branch of the outermost if statement in those
-> MPATH_PR_SYNTAX_ERROR checks. We also cannot fail those checks if
-> unregistering is true, so we only care about the case were
-> paramp->sa_key is non-zero. And when we call update_prkey_flags(), we
-> also copy the value of paramp->sa_key to mpp->reservation_key, so it
-> too
-> must be non-zero. This means that can't fail the checks since they
-> check if mpp->reservation_key is zero or not equal to paramp->sa_key.
->=20
-> But it doesn't hury anything to move the update_prkey_flags() call to
-> after those checks either. So I'm fine with either solving this by
-> adding an explanation of why we don't need to worry about failing
-> these
-> checks if we updated the key to the comments above the checks, or by
-> just moving the update_prkey_flags() call to after them. Do you have
-> a
-> preference?
+From: Yu Kuai <yukuai3@huawei.com>
 
-I gather that the conditional would become more complicated when we
-move the code. A comment with an explanation will do the job.
+The parameter is always set to 0 for now, following patches will use
+this helper to write llbitmap to underlying disks, allow writing
+dirty sectors instead of the whole page.
 
-Martin
+Also rename md_super_write to md_write_metadata since there is nothing
+super-block specific.
+
+Signed-off-by: Yu Kuai <yukuai3@huawei.com>
+Reviewed-by: Xiao Ni <xni@redhat.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Hannes Reinecke <hare@suse.de>
+Reviewed-by: Li Nan <linan122@huawei.com>
+---
+ drivers/md/md-bitmap.c |  3 ++-
+ drivers/md/md.c        | 52 +++++++++++++++++++++++++-----------------
+ drivers/md/md.h        |  5 ++--
+ 3 files changed, 36 insertions(+), 24 deletions(-)
+
+diff --git a/drivers/md/md-bitmap.c b/drivers/md/md-bitmap.c
+index 5f62f2fd8f3f..b157119de123 100644
+--- a/drivers/md/md-bitmap.c
++++ b/drivers/md/md-bitmap.c
+@@ -485,7 +485,8 @@ static int __write_sb_page(struct md_rdev *rdev, struct bitmap *bitmap,
+ 			return -EINVAL;
+ 	}
+ 
+-	md_super_write(mddev, rdev, sboff + ps, (int)min(size, bitmap_limit), page);
++	md_write_metadata(mddev, rdev, sboff + ps, (int)min(size, bitmap_limit),
++			  page, 0);
+ 	return 0;
+ }
+ 
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 61a659820779..74f876497c09 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -1038,15 +1038,26 @@ static void super_written(struct bio *bio)
+ 		wake_up(&mddev->sb_wait);
+ }
+ 
+-void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+-		   sector_t sector, int size, struct page *page)
+-{
+-	/* write first size bytes of page to sector of rdev
+-	 * Increment mddev->pending_writes before returning
+-	 * and decrement it on completion, waking up sb_wait
+-	 * if zero is reached.
+-	 * If an error occurred, call md_error
+-	 */
++/**
++ * md_write_metadata - write metadata to underlying disk, including
++ * array superblock, badblocks, bitmap superblock and bitmap bits.
++ * @mddev:	the array to write
++ * @rdev:	the underlying disk to write
++ * @sector:	the offset to @rdev
++ * @size:	the length of the metadata
++ * @page:	the metadata
++ * @offset:	the offset to @page
++ *
++ * Write @size bytes of @page start from @offset, to @sector of @rdev, Increment
++ * mddev->pending_writes before returning, and decrement it on completion,
++ * waking up sb_wait. Caller must call md_super_wait() after issuing io to all
++ * rdev. If an error occurred, md_error() will be called, and the @rdev will be
++ * kicked out from @mddev.
++ */
++void md_write_metadata(struct mddev *mddev, struct md_rdev *rdev,
++		       sector_t sector, int size, struct page *page,
++		       unsigned int offset)
++{
+ 	struct bio *bio;
+ 
+ 	if (!page)
+@@ -1064,7 +1075,7 @@ void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+ 	atomic_inc(&rdev->nr_pending);
+ 
+ 	bio->bi_iter.bi_sector = sector;
+-	__bio_add_page(bio, page, size, 0);
++	__bio_add_page(bio, page, size, offset);
+ 	bio->bi_private = rdev;
+ 	bio->bi_end_io = super_written;
+ 
+@@ -1674,8 +1685,8 @@ super_90_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
+ 	if ((u64)num_sectors >= (2ULL << 32) && rdev->mddev->level >= 1)
+ 		num_sectors = (sector_t)(2ULL << 32) - 2;
+ 	do {
+-		md_super_write(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
+-		       rdev->sb_page);
++		md_write_metadata(rdev->mddev, rdev, rdev->sb_start,
++				  rdev->sb_size, rdev->sb_page, 0);
+ 	} while (md_super_wait(rdev->mddev) < 0);
+ 	return num_sectors;
+ }
+@@ -2323,8 +2334,8 @@ super_1_rdev_size_change(struct md_rdev *rdev, sector_t num_sectors)
+ 	sb->super_offset = cpu_to_le64(rdev->sb_start);
+ 	sb->sb_csum = calc_sb_1_csum(sb);
+ 	do {
+-		md_super_write(rdev->mddev, rdev, rdev->sb_start, rdev->sb_size,
+-			       rdev->sb_page);
++		md_write_metadata(rdev->mddev, rdev, rdev->sb_start,
++				  rdev->sb_size, rdev->sb_page, 0);
+ 	} while (md_super_wait(rdev->mddev) < 0);
+ 	return num_sectors;
+ 
+@@ -2833,18 +2844,17 @@ void md_update_sb(struct mddev *mddev, int force_change)
+ 			continue; /* no noise on spare devices */
+ 
+ 		if (!test_bit(Faulty, &rdev->flags)) {
+-			md_super_write(mddev,rdev,
+-				       rdev->sb_start, rdev->sb_size,
+-				       rdev->sb_page);
++			md_write_metadata(mddev, rdev, rdev->sb_start,
++					  rdev->sb_size, rdev->sb_page, 0);
+ 			pr_debug("md: (write) %pg's sb offset: %llu\n",
+ 				 rdev->bdev,
+ 				 (unsigned long long)rdev->sb_start);
+ 			rdev->sb_events = mddev->events;
+ 			if (rdev->badblocks.size) {
+-				md_super_write(mddev, rdev,
+-					       rdev->badblocks.sector,
+-					       rdev->badblocks.size << 9,
+-					       rdev->bb_page);
++				md_write_metadata(mddev, rdev,
++						  rdev->badblocks.sector,
++						  rdev->badblocks.size << 9,
++						  rdev->bb_page, 0);
+ 				rdev->badblocks.size = 0;
+ 			}
+ 
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 081152c8de1f..cadd9bc99938 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -908,8 +908,9 @@ void md_account_bio(struct mddev *mddev, struct bio **bio);
+ void md_free_cloned_bio(struct bio *bio);
+ 
+ extern bool __must_check md_flush_request(struct mddev *mddev, struct bio *bio);
+-extern void md_super_write(struct mddev *mddev, struct md_rdev *rdev,
+-			   sector_t sector, int size, struct page *page);
++void md_write_metadata(struct mddev *mddev, struct md_rdev *rdev,
++		       sector_t sector, int size, struct page *page,
++		       unsigned int offset);
+ extern int md_super_wait(struct mddev *mddev);
+ extern int sync_page_io(struct md_rdev *rdev, sector_t sector, int size,
+ 		struct page *page, blk_opf_t opf, bool metadata_op);
+-- 
+2.39.2
 
