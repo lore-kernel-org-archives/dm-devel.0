@@ -1,82 +1,85 @@
-Received: from out-178.mta0.migadu.com (out-178.mta0.migadu.com [91.218.175.178])
+Received: from out-183.mta0.migadu.com (out-183.mta0.migadu.com [91.218.175.183])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D47AE38DF9
-	for <dm-devel@lists.linux.dev>; Mon,  1 Sep 2025 05:42:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1CEA81E9B3F
+	for <dm-devel@lists.linux.dev>; Mon,  1 Sep 2025 06:25:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.183
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756705352; cv=none; b=GEMm7Yg9vltwfo9NM8i/uGkj4JO0NRO0+540Fhnbl2Eq95dmuiNcXMK0kkYPjGJiF4JodMmtbkW4Ic4EAiuqSF4XH1cQNtwcEUnKG7hw0YDJDbBhi/CyDbrQ82mdt9xBLGMoIEOe4N9ZVRAgdwzKaTVFgRYL1ouQQZ+1wcoHkmk=
+	t=1756707919; cv=none; b=VslFfP3S+kQuEmzevKdy/uzMrKoDkI5TDEdzLBIvZfNM0aBRDFoGqIEGVUpK+/K4BQgatsqsW6W4B+gViKLfV/sj6Vja8yP2nqkwmcNeI8on8dHKzmP7TztxQRrG8EA2/7SBHVsSJJF6TOnqD8iBFLEUxBaV0adNwz2Zu4tu2K8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756705352; c=relaxed/simple;
-	bh=0RmImEI/zsojxTlzdx670jQ/bQXJF+PeYgP68T1Zzl0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=j3FIf9u+XoJdzf+Q7e5TkQHN29WK07PmltT10qThZ9w1AWf1jZpFYqUldAPEXVL3zTAxsZZU69Rcq/5A7+d5VRHQ6mbG/q9zqdGsFZfy+vT65i/rwTXGfSskrGRYXhcC1osAgqfcR6FAHQqqODp3IfOQsqScezK+Kvp8agcWY3M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=fobqIGgo; arc=none smtp.client-ip=91.218.175.178
+	s=arc-20240116; t=1756707919; c=relaxed/simple;
+	bh=jI9CKQB8DDMeM+unhLN0OWUkR8ka844WoswqOiks8oY=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=G7DSa2e7r+iQqcDg8YzysjCUq1yBC86150LZCFjFa2bSWA1+Hi4IHyRrSob2XpA3PQf5oktH0uYQ2zVQG6Kk17Lwhdu2nDzGR1Su7+XXofK48TxEAfP8IUJu5/JTLJEu7MZeIKMBQgMWRErsQOkBzX3OueJfQZH0YYG43tXQVyc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=RB/+3aVh; arc=none smtp.client-ip=91.218.175.183
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="fobqIGgo"
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="RB/+3aVh"
+Message-ID: <eae2404f-1244-44a3-b0a2-c5393a508765@linux.dev>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1756705345;
+	t=1756707915;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=tF3H+0p98IZaEamYehpxAY7Z2Wh91ZdW1d/TuRcXo3E=;
-	b=fobqIGgoD64iAUo2VyMbmcaItHnvsVQskOkgt3kEiWjXCFIfdz0Q4Wx6Y62um0/jMB1mN9
-	OmTgkNAPs+V2I5N+9M6OZJy/9LG06sk2oKfa9aKGf9H3YxF7Nn+RmRcbChHH8jlucront+
-	JcUfV4gI+dfxbixy+Qrx48dYIlAMmT4=
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-To: mpatocka@redhat.com,
-	agk@redhat.com,
-	snitzer@kernel.org
-Cc: dm-devel@lists.linux.dev,
-	Dongsheng Yang <dongsheng.yang@linux.dev>
-Subject: [PATCH] dm-pcache: cleanup: fix coding style report by checkpatch.pl
-Date: Mon,  1 Sep 2025 05:42:18 +0000
-Message-ID: <20250901054218.2635583-1-dongsheng.yang@linux.dev>
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sOnv63QjSjHPCjFRfUrvkssYp2uqZNRCr8swyPDNqYM=;
+	b=RB/+3aVh7OPnHwVSqw6gIAgQnLty3S/V04KeZ13/8Yx8seVLagHzzVZovDal9H5q9vrjnz
+	beR/blaBywUfzvSDfeivAR+AHswPQ7qXoljLyqKcO5/2KtMdszswZ56VAZdLHJ3/3j7OkL
+	ZeMBkkKRYgAXhaJdqtMhofzGMdL6LNQ=
+Date: Mon, 1 Sep 2025 14:25:08 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Subject: Re: [PATCH] dm-pcache: use int type to store negative error codes
+To: Qianfeng Rong <rongqianfeng@vivo.com>, Zheng Gu <cengku@gmail.com>,
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20250829133748.104119-1-rongqianfeng@vivo.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <20250829133748.104119-1-rongqianfeng@vivo.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
-A patch from a few days ago fixed the division issue on 32-bit machines,
-but it introduced a coding style problem.
 
-WARNING: Missing a blank line after declarations
-+       u32 rem;
-+       div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT,
-	cache->n_ksets, &rem);
+在 8/29/2025 9:37 PM, Qianfeng Rong 写道:
+> Change the 'ret' variable from u32 to int to store negative error codes or
+> zero returned by cache_kset_close().
+>
+> Storing the negative error codes in unsigned type, doesn't cause an issue
+> at runtime but it's ugly. Additionally, assigning negative error codes to
+> unsigned type may trigger a GCC warning when the -Wsign-conversion flag
+> is enabled.
+>
+> No effect on runtime.
+>
+> Signed-off-by: Qianfeng Rong <rongqianfeng@vivo.com>
 
-total: 0 errors, 1 warnings, 634 lines checked
 
-Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
----
- drivers/md/dm-pcache/cache.h | 8 +++++---
- 1 file changed, 5 insertions(+), 3 deletions(-)
+Looks good to me.
 
-diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
-index b10e721ab1b7..f005c9d9a7aa 100644
---- a/drivers/md/dm-pcache/cache.h
-+++ b/drivers/md/dm-pcache/cache.h
-@@ -373,9 +373,11 @@ static inline void *get_key_head_addr(struct pcache_cache *cache)
- 
- static inline u32 get_kset_id(struct pcache_cache *cache, u64 off)
- {
--	u32 rem;
--	div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT, cache->n_ksets, &rem);
--	return rem;
-+	u32 kset_id;
-+
-+	div_u64_rem(off >> PCACHE_CACHE_SUBTREE_SIZE_SHIFT, cache->n_ksets, &kset_id);
-+
-+	return kset_id;
- }
- 
- static inline struct pcache_cache_kset *get_kset(struct pcache_cache *cache, u32 kset_id)
--- 
-2.43.0
 
+Thanx
+
+> ---
+>   drivers/md/dm-pcache/cache_req.c | 3 ++-
+>   1 file changed, 2 insertions(+), 1 deletion(-)
+>
+> diff --git a/drivers/md/dm-pcache/cache_req.c b/drivers/md/dm-pcache/cache_req.c
+> index bd5cace7de71..27f94c1fa968 100644
+> --- a/drivers/md/dm-pcache/cache_req.c
+> +++ b/drivers/md/dm-pcache/cache_req.c
+> @@ -805,7 +805,8 @@ static int cache_write(struct pcache_cache *cache, struct pcache_request *pcache
+>   int cache_flush(struct pcache_cache *cache)
+>   {
+>   	struct pcache_cache_kset *kset;
+> -	u32 i, ret;
+> +	int ret;
+> +	u32 i;
+>   
+>   	for (i = 0; i < cache->n_ksets; i++) {
+>   		kset = get_kset(cache, i);
