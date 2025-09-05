@@ -1,130 +1,90 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AB2F31B834
-	for <dm-devel@lists.linux.dev>; Fri,  5 Sep 2025 15:16:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A0AD26B764
+	for <dm-devel@lists.linux.dev>; Fri,  5 Sep 2025 21:07:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757085402; cv=none; b=gkB/H/0yeujhXDW+hiSbA2AhlBdhFq+ijANH7qj5EBJ1VfZQ3pFgmEjTxewYT3ZMIqWzmjAF5pJHrtY54QP5MdlOAAvkhyILLJLOsCO+q+i/JwgcudJi6XwjS93lo9RWUgppqwoLLERkKDIixTqFbMSM6kn1v0LAmc56ilyGSec=
+	t=1757106448; cv=none; b=G85Pjx/09zr0eYiiF6GOh0ZUZ2AZhcBkDhYqptyKBZwHgyeEtcKegtpwfjaLWBT3TZ1+W261m39B0LIviBcOJl0mDTPYyT68SSn6loexnz94Mh2yr80K+utRDCGO83tfoLwpTPZzjs8maxP0ncor5CCioxtFB1+JQBxGNGoTd2o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757085402; c=relaxed/simple;
-	bh=KiRGpNUUMIDMEkc7B3GWZkLyE3LPPxFzAzvs9wTj6UQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=MgX6N8OgR0bdEoB4TrtmwIDQtXd+emc3woNQNDl8SdGTm9bHekLqAMCOQ6SIXAY508/OXVyWFVqmpEbt7Fzaejmdbh41gri4EKY5WIQ8q+URWUo/0G0OMyAPWrQH0B5/4K8F5xg80/IZNtub92U/T9NmXBmZ36S2E+hJL8H1oNE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RkiQ4u/l; arc=none smtp.client-ip=209.85.128.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1757106448; c=relaxed/simple;
+	bh=7FpIJEhXd1T8Sv62bJ9ggO/XO5KCM2ATj++2W8ysdm8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=U7KUoUbsheXla+giloz6B/GsPY1LsxcjopF7s5Lw/w6Rx5Whxbv1JdvfdnbVn5fSgunuFArOsvsZx7j4aNcK9OK5MvMYBR3qgHYDVl+rikuPw8umStjVV3MgnY4as/w5Eg0fLU/yQ2zszE4fnKdH6gCB/kmjuFtmZx5jnXEV6k4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DjUlsYda; arc=none smtp.client-ip=209.85.128.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RkiQ4u/l"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-45b89c07bb2so548265e9.0
-        for <dm-devel@lists.linux.dev>; Fri, 05 Sep 2025 08:16:40 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DjUlsYda"
+Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-45b8b25296fso15852595e9.2
+        for <dm-devel@lists.linux.dev>; Fri, 05 Sep 2025 14:07:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757085399; x=1757690199; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=7cquwYb3RAsWIGCvRwuFIMC2iF1JAGWJ6TBeuQ7eO4o=;
-        b=RkiQ4u/lpTX5DGvk8n327tA8NTrbXdBwtwT5lW1BHeFmZy6adFEWGBwB5YAvGune/x
-         aIttEBe2mRPuJwpqsmjf+5MS+vFV/6mtCi882OF0qVmryT7lJoyymk3X1nRskxC7JVs/
-         wNcHTb2QFnJmo/sB2Aj3uTdqbOh5OwvEhpaRWMFV6Zm7HkddiU6djM1OoHe5zNNqk7hD
-         h/7MWALRY751ynZX/3ODoMkYgh7qVCSn7ht6JjGhc3+gSCMtCW0YjAL5GTC4NvGtaBHP
-         CTIt3prWo9xEttcpVDP+Xk8Twrj4xSqHEZb6ncJXq0J/1PhaZcjAfXRZM2DbBoVYRw0w
-         v9zQ==
+        d=suse.com; s=google; t=1757106444; x=1757711244; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=yfw9AXDS5Y3NDt/Hd6U+3C/Vl7qbssBCJBXWNmFTpd4=;
+        b=DjUlsYdaoGQODQbyofbCI7ef7a7eIMttxWCRSwndiH+7QOJo9SM0fPepT1FIlkSje+
+         HDKDi/dX7y8DvxvajDDl1krHy86l6dKIlMiqEpvhS8kklUhM3STPrApEwzLezFngvIoA
+         oxihbItbBK8ukARYvOM2vPGepr1O8ZmVlleCPw7daDN9kqtRSmqyitvRtCrtA8FX+KBh
+         1otR/q38BeShtlDuQvAnempt+PK8CwvOY3hPhx0tSxx2aQS/mtU9Q4BQnsK7GMGIY+KV
+         Yz6M6hjz29qPq+lxvm1ymxsoGVs8GcyUGVLz1h7pKYS9Q2cCNvMzYuKoVnjkWg+iLnn2
+         /f4Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757085399; x=1757690199;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=7cquwYb3RAsWIGCvRwuFIMC2iF1JAGWJ6TBeuQ7eO4o=;
-        b=p78T9v2rLdggvUvNli2MgICmtoCEVSdX1eCXb1uzd+z889+P38hMfQPkCm4xT94bvO
-         UBO0ZfjMBq1gMAfl9S3ahAHl+FWC1UhU2eqCtsEW6NiLiATH8obMqEEG/KHCQtGRDUg2
-         6P50zWh7zn9GogSy2pvgNCMcR3nh9ivBH7sEaqe867y3gmtimLQtcUxBni4TJy6XTve3
-         ZlNfLi4QxtnFgYm5NuuyHDYZZ158PzJ9Df1jfKLYp2MpYwXs80IHVVJewmvdTSOD+dqX
-         0+/duTTm6LwMrmo+DH4CiJmz4MgF0+OuC5b/R/J7hWLjLqQKnR/qvrmUkG5KtVLlU3jZ
-         faAg==
-X-Forwarded-Encrypted: i=1; AJvYcCWZ16ZanG6xvoLu6rA5L7GgGlw9/MXMYAGsL7WXAgw0B45bwdd+ATsdwY1w53puy7M/vEGYkkoQLA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxEShYhuq21OMnuyItSAeTNX0oZB8Bfj+EsrIuYT/zmUjQAjvtp
-	S6VTOhm3m5wXegs/DVId+vu0m7CTVIBBEG8BD3++IU9+ClQ8tUmuOujRafBd2t4=
-X-Gm-Gg: ASbGncuadAni2FLdoyMZGBDWH3kEHHPKnjdPQPePW1JmpFbX76KsOr1cP/tHaFcpOBk
-	kuiwasbCC+HL30UZQcbJeQF8+w8JH2v+p01YHlitM2VC5FYzBLwC965BjYtevc8pWXxn2Nl0ujy
-	1/LS6hSWIfn/KiRREruEAyCusRyTLCHZDm267N2kytKEtxeVFjINZUheoNRYeevdhdruIMW1JSd
-	qjah1gYoD8jNBFiBz1Mvy/FAFQOjbYqnV6z/fohM6nzD5eAKFyP7TboYVb/Mb5CKelExg/H7vml
-	P6s2iDGMt5e0rNrlU2rkbOIAxfGIgdyXeHtUJKeKm4cBc5438z/YvS10RKByGU0/6t1VQhJKPwf
-	jeapO7d9dKX5fTYBjXVF6HRtnxGP8onH7oBYOC8oJqOl8ciEfYeBB7piZjg==
-X-Google-Smtp-Source: AGHT+IHXnFl0dMBbh01MvtJAkbiToqNIs/bYOKeiBJrzoDB0zgi+pY+EQEr8v9U42jXRi4tNupWHJQ==
-X-Received: by 2002:adf:f8c1:0:b0:3e2:ac0:8c5e with SMTP id ffacd0b85a97d-3e20ac091a4mr2034916f8f.4.1757085398831;
-        Fri, 05 Sep 2025 08:16:38 -0700 (PDT)
-Received: from localhost (6.red-88-6-255.staticip.rima-tde.net. [88.6.255.6])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45c447244c4sm136466935e9.6.2025.09.05.08.16.37
+        d=1e100.net; s=20230601; t=1757106444; x=1757711244;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=yfw9AXDS5Y3NDt/Hd6U+3C/Vl7qbssBCJBXWNmFTpd4=;
+        b=XN1w9FvGm/O7YU+jYZFjLuPS8guytAhmYdpdy5PfcJ88BtJ9VMc7uunKot+Mr0JsiF
+         Fz3HnyQA1BiPWDli9DEH96yLYBZ0y0Gbwnel4erWLCO0oj302der4J0/stVicl6sQLlS
+         vR/E/2tLt+gzNd3J0ZtRtwpdeTWlBian3igJ6KFng4hrktaAaeqqGj9rJVePvH1znvaZ
+         Y1uncbnTGOAehj5hSmg8uvDaS47l1NdklfcNhCo3RCiM04IMBYcGM7wL/7BDe7AaIRVN
+         jbjQI0aP6VI+oKTFuUtQy9vFdTfhilJzMpgrWgTW1M4uyBF1HrK4YoWwvYgLBOl//abB
+         2gEA==
+X-Forwarded-Encrypted: i=1; AJvYcCWH61APmee59WurlL6CMdNNsdaIhXMfViFSECC5uqG8rOWU4hW3tDJhPK5mCdiNkdUF4+MdEk8t/Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwntZ0Mpg9TWUOEOSDfYt+ctUkmTJY4Rd8pvM3Dtmc+zoW7mreb
+	+vL2v4zyA/ij7TsdVCBPvzjvQBQ6M+0JsEXh77hA4nPXkJINcy5aNf3XWzTxZQtOom4=
+X-Gm-Gg: ASbGnctsTPd4/YXXh4yh/Pk8irXLEeDxKYE95F2UO+sPI/WQteDMyYgZHIGOVwvEgBh
+	gh9Xk29n9ts8z0eBORJCLWQgZpy7UGhqmOXgW6xWq6Lnq96PIZim0GygQmyWkVx0wvStscRNInY
+	CICKBu++4lphdg27/9yt/gmHUtGDx/fc/D7N8vam3GDK9PhxtrEFhbTu5pbFdjO11v3l0e55jce
+	rubq1Xlwxpb7IxqnEQmiZgHO/3x8Fk+5zmikv2V8sis8ejfUn4ulJivuF4v91NVMmfd1jGEQVtD
+	k3Xq5lqLS6tDT3yxwOav8m2+oP6jhp8Z6qK8yfgZpvUISMftdCxJEvL0kS/WLGCEIW0wGHLHpXP
+	Y+XADGzyKwjtclOsJd3g7FpDhFkkOx7MIqIJbb33n80Q4LxuVTOAj3pNV0tgCd1mJbOqBa0u6Pr
+	uX5/HNGaREPbU=
+X-Google-Smtp-Source: AGHT+IEVhHYvEOgToLUIdtZuwmvJ1c9DndyhCsX70wBTZInsZrDhUino5rj4eFI9WNqKOtaCWdbdOg==
+X-Received: by 2002:a05:600c:4e92:b0:45d:dc66:500c with SMTP id 5b1f17b1804b1-45dddec7e90mr2011935e9.19.1757106444233;
+        Fri, 05 Sep 2025 14:07:24 -0700 (PDT)
+Received: from localhost (p200300f97f1e2d0062fae9454b512ce6.dip0.t-ipconnect.de. [2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-45dd0601516sm46992975e9.4.2025.09.05.14.07.23
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 05 Sep 2025 08:16:38 -0700 (PDT)
-Message-ID: <c4e4e746-71c4-4a9e-b20e-6e57ef222ff5@gmail.com>
-Date: Fri, 5 Sep 2025 17:16:36 +0200
+        Fri, 05 Sep 2025 14:07:24 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH 0/2] multipath-tools 0.12.0 - late minor fixes
+Date: Fri,  5 Sep 2025 23:07:12 +0200
+Message-ID: <20250905210714.167202-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH] multipath-tools: remove checker from Huawei OceanStor
- NVMe
-To: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM-DEVEL ML <dm-devel@lists.linux.dev>
-References: <20250321084649.16093-1-xose.vazquez@gmail.com>
- <3c601bea9fdb45b7a284faa9023eef33de014e9b.camel@suse.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <3c601bea9fdb45b7a284faa9023eef33de014e9b.camel@suse.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-On 3/21/25 11:52 AM, Martin Wilck wrote:
+Two minor fixes that resulted from a coverity scan.
 
-> On Fri, 2025-03-21 at 09:46 +0100, Xose Vazquez Perez wrote:
->> A keep alive timer is implemented in the NVMe-oF protocol by default,
->> which acts like a path checker.
->> Therefore, change path_checker to default, "none" for NVMe arrays.
-  > I'm not sure about this. NVMe keep-alive will check the connection to
-> the NVMe controller, while our path checker is designed to check the
-> availability of a given NVMe namespace, which is only almost the same.
-> 
-> With the "none" checker, multipathd will simply trust the sysfs state.
-> We have seen issues in the past (e.g. with the LIO target) where even
-> use of the TUR checker resulted in paths being reinstated by multipathd
-> even though they weren't actually usable, causing them to toggle back
-> and forth between UP and DOWN state. I can imagine this happening for
-> NVMe, too.
-> 
-> Does it do any harm to keep the directio checker enabled for NVMe as an
-> extra safety guard?
-> 
-> Most people will be using native kernel multipath for NMVe these days.
-> I consider dm-multipath on NVMe as a feature in maintenance mode, and
-> I'd prefer applying only necessary bug fixes in the area.
+Martin Wilck (2):
+  libmultipath: fix missing return value check in snprint_devices()
+  libmultipath/foreign/nvme: fix return value check in get_ctrl_blkdev()
 
-Relevant info to support it at: https://github.com/opensvc/multipath-tools/commit/fbe89f4
+ libmultipath/foreign/nvme.c | 2 +-
+ libmultipath/print.c        | 3 ++-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
->> Cc: Martin Wilck <mwilck@suse.com>
->> Cc: Benjamin Marzinski <bmarzins@redhat.com>
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>   libmultipath/hwtable.c | 1 -
->>   1 file changed, 1 deletion(-)
->>
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index cf39a50d..862bfdaa 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -1100,7 +1100,6 @@ static struct hwentry default_hw[] = {
->>   		/* OceanStor NVMe */
->>   		.vendor        = "NVM[eE]",
->>   		.product       = "Huawei-XSG1",
->> -		.checker_name  = DIRECTIO,
->>   		.no_path_retry = 12,
->>   	},
->>   	/*
-> 
+-- 
+2.51.0
+
