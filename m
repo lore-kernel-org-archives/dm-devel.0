@@ -1,73 +1,74 @@
-Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F33972727E3
-	for <dm-devel@lists.linux.dev>; Fri,  5 Sep 2025 21:07:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE9142EB5DF
+	for <dm-devel@lists.linux.dev>; Fri,  5 Sep 2025 21:07:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757106449; cv=none; b=CHTER946fkO4BkyBNL3+PdOH8o1x/DkDwuQzkv/Wp98ZBhrREnHb98UiwnZiv+dvQSKSeazmnqz51+Y/5Zaj/1RsrPV7B5rwfDDjeN216P1KO03y7AYDzUJj+CrDdJV+kEvyWlN0O6VLIgdRfhYuVoTFHvoCuo+j3WbLz2SXLJk=
+	t=1757106450; cv=none; b=HRxPyRIkQVYQkDnJHLGLorEEX84lWG0UBOkfI0ANALYMUA1IqPnAlexnnbSN/qtnMFzC+TNOBZI5w4rseO3KVxQcKxmGs4+2OHeemNmZZJqK3B0ooVhVvXnxbW5IbPyYwxGGH7JkmgvbOGQgVvqGcSCRLbc1jei+sNqd4ryj7+s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757106449; c=relaxed/simple;
-	bh=BSSeaek05ROw+3idKrWChjI3a1s0JjmG9WAZJj4szwg=;
+	s=arc-20240116; t=1757106450; c=relaxed/simple;
+	bh=sf6XLt+OaC3Lo1EFOAxx2fCLtiE5iewKokxbCFZp94c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pHPmAw6HBlafAKlHOgzIlJqnrcHiiD7qq2ltzzL+ohYlIKf/1Fl/wyMhj8XXETJwWhIXDX2z4piaw05xqf+w5hoc+BkjoDyGPi0U8goj6xTva9MechripfCsgdESJmbzsgqdr0qqw5JSUKYtMcSq11ujLlzakRUivmBifVkZfJU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=CiLt2fUV; arc=none smtp.client-ip=209.85.221.43
+	 MIME-Version; b=pzTpo1L+8iOqczmQSJCxN7+p+6l3rxO70Bc+w96G1KZuLB4eq7DohqJ5CpXPNBWZAYc/28j68N+AmFlC9+CHH7C6F8qtloIW+HUsX8AuYJbe7xrSfwTowu73NjA6NPUK9gIlP4VVzT9a37HbM+kwBecM31UHpSk90+u4ivID/T0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=N3j7SgpE; arc=none smtp.client-ip=209.85.128.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="CiLt2fUV"
-Received: by mail-wr1-f43.google.com with SMTP id ffacd0b85a97d-3df35a67434so1487048f8f.3
-        for <dm-devel@lists.linux.dev>; Fri, 05 Sep 2025 14:07:26 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="N3j7SgpE"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-45dddd98d8aso820315e9.3
+        for <dm-devel@lists.linux.dev>; Fri, 05 Sep 2025 14:07:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1757106445; x=1757711245; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1757106446; x=1757711246; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=STl1T+45A9ik6vBMxejWRVjEerrZM/erem8IehYunXw=;
-        b=CiLt2fUVkSNVkISdLksAXEbQ42eKZn8vIFGvBvQCpttbm8jocqyVekWa2gSkAZujEt
-         6fstLPiwEV+1p+5np0wOMmTWMRngWkI8Ejj1dpjSwdiZOyE52+ovb/x7PNkxV6SqSwb9
-         W832scKEfmSZBNDvKGJ55sot6gyJiBZVYTSxZwLfmTP/Ay2quRXJuh+K7sTZj7lQRW8W
-         cpTBFdszmu7KrGf78VJ6kmlRCFiv/yeLC0w+y30LPNasg9u8FXHdfkyMqRSS2g9NFhd+
-         GqvfbOF2uYolfOaqV+InyHom3BUdxHEVhZI3J2S3rf5PcfTl8Y1ZxL3mnsW+GfJeAKzm
-         3ltg==
+        bh=a4mXFavxNHvlDq6dn+Rz+nunMLmMl3BVIYSm7p4qkC4=;
+        b=N3j7SgpEn7RZTjhSHEtCd368B/6seSo41pyDavL10QIw/GYRwS7RsHsxsjzTp8nJAd
+         ZAr66vkT9rnXMI1nox1SvNIOqVHFjgUSLoVw005H6ox12zOgZe75AyplE8RQE6wk1ohB
+         I2r4z4jJ/cEqHRJ23bB+oZ9EO//PGrUF7b/QQ5nrR6LNRQZHK67JfGcUYaHyIgmGZRj3
+         ZVxoMpz5ueKFT0D9ORfehi86F2ER+y/YrekSlGpOFDG05PcCnVVPjnIVSHB8puwapj37
+         /AAHX1lmOgHQZVH2MxSqJw7PTCxYTnXDJf33UtIhtGYS1JDHSyikNkdgxJRGA83tq4lw
+         fCtA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757106445; x=1757711245;
+        d=1e100.net; s=20230601; t=1757106446; x=1757711246;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=STl1T+45A9ik6vBMxejWRVjEerrZM/erem8IehYunXw=;
-        b=FFfpDMF08CKMubuPHdxhhjdlQkmLh2UlauMxYV7w4OZ0JSZesWnksdMipw/JQb/4Z9
-         GrussLqrz+ZpWFTSwvUSduufm7CnaCxCdUmEjRPn3Bo5PaqI/guyAqFzresxVGegg8Vj
-         3Xthp50LakVldSMg9BO7hXWCJ1OcGl1jSlFg2QtR6lMjgSfnA1/ZbJJiFT0Ai0ttTDms
-         rzTJ1pVhp6BXrSkRYLZUZPGV/PR7+Uy8F2RhOU1uJjrsqGM3U0YTFhxroezDlCqItl9g
-         zD+yz69gI8cv3fdPjpOjgKV+AhmwaPXQxyJWsxseC6JCfAMDt4eGQMF6aPSbXMa4ssLo
-         54Bg==
-X-Forwarded-Encrypted: i=1; AJvYcCXk95Hg++ftXjYoilo8XalVIObZfkzBjT2+VSL3HLuWBkJP62hIhjLxJkyHHtRPyr0mI/+/yrwuwQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyd/zVTdY3sTyEBeGskEq8SzZRxtE6B3CYcIRGNyqoX+6V8XCwe
-	OsFSGNPQ9Fct3KwJYpPnIDygaro1Bcknm2D1wCXyn/yCKG0I2Z4qwfU0nx9hAhNNyJ4=
-X-Gm-Gg: ASbGncuYjekLk2KgmlL+df6MDYCEfMU/ZNOhgyTcOJ7qlhTfG+F4WJMWW/AWMnHpPpO
-	uszQjRUKwo6R+WV1OebebyF3ohJFL0UekXxXpZLx3FbW+exG7r/4RINVDMw0I4HeyOhLhCavBXl
-	Ur675H263RceLH2ZBNr4cbGWZrkeIAuVuiQFW4SlUvyWC4sTrWDY6bvRbRga5rpZBbb7SBNnS+T
-	YaHUKG4NkpdzP9l6ypSSVBdEUcCk6sfsZP9pUYiW18C1HgJl07Qefj4qUJovLF4aRW5iYe6nDhY
-	LzgPbfWA+yM0yEvGWowz34sxKL3udQXNf2onduDXIKNexwMlWdbcomZUVi4bxA83KzacHptX8uz
-	C+JK7f+cJOeW3kD5JFiP6c5AE+FAI8BqzzcoV7I7YN5ii4LILJlp8b6d70pilaS8XkYPZEprmhQ
-	EBnhdYP5hXDNWSHWDHLhDu6g==
-X-Google-Smtp-Source: AGHT+IEF8rHhE4ot/gRo56OWsyYfM4jC9aPj2WauD4JlZkF3kGcqnM9tdtn5mlzwsI3VMD7uG3yXfQ==
-X-Received: by 2002:a05:6000:200b:b0:3e4:957d:d00 with SMTP id ffacd0b85a97d-3e4957d0f50mr2474104f8f.58.1757106445168;
-        Fri, 05 Sep 2025 14:07:25 -0700 (PDT)
+        bh=a4mXFavxNHvlDq6dn+Rz+nunMLmMl3BVIYSm7p4qkC4=;
+        b=SDctwO8nGUe+RxrcqTVnzrmlXayCpsdqqXz/eUrFDOjkl6P3dPIF2Bp7P9Da4t2S6F
+         Qghyf6hpXycTsPrgoi3sI7GwjqysFsdOgACRZjBLxm6Ytg5+v9qGwS5YJp8db4eFi2/W
+         fog+gsOhygah35hoLpuIkazYG+a81JtShs1jj419sJOgwV+TPuHc23JiqfKbgT+GvuW0
+         SZ9350zToke+9ZieEMANOCKi3Lc/PoIXcUZeb/ZHXPE2gOy6+wumR0R2jLE7T0Q1v+iB
+         giNvGa5TAslRUaScQMysQwRELozKBrCN9D55UTwjXmKTIAOsiwjtXvr04ZWc1RPEN6o6
+         JCOg==
+X-Forwarded-Encrypted: i=1; AJvYcCXoJj0Qsmj/60fjMoh4LAxv0XiXV5iMcOAPb4mva2MUfEG/4qyXWeHt0NOoHEqnmZRFSO/aVTlqag==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy2YNcrEdfLutSjLEOZJfk8GV4KjO1+Y4+bxLXV4UCh5cAQGnVt
+	C7rY/P8f6Ssku+xTbyRWBrvjP03Y7UYK8E04Sw5tMdsNQAHRxBjmioXfuw+2HMvb6DSrD03Wec6
+	8gVsZ
+X-Gm-Gg: ASbGncvzp0KVxxHplgDTsyvJSsZrEAA3niTory+KEL2tpZr3imd8ORlsmQQNPRpyyYO
+	ukP+lM1shmOjJJjTCuw95+ZHnl1z/+J8Fk1v3qzqOuf8Mk8yaIQ2DBKSgeRKKhV0G1X6ilwZcQQ
+	oH9+mefH6Hogga9kSzBU3y5fSpq0onVu0FPmH9K5x4P3xEMtVNoHfI0gp1rGSvEbQUs5ueKFgiN
+	diCSUDGiJbIZANyz8adwpTKvYrQX8hiiy/J94gzfdjL7BL4MOnV8H25BPlEor2DzG2sEtwQSfWq
+	lBrmLHqRbiMDTGVIvrhMJy9otKAyiKaWwekmTzKtSjREQAgAnoNcL464Cl6JOSJfR30Oxqp2SN1
+	yC+KjIngNmarOzJQArcXiiWNc4u2c0zICRNqpwPwk92V6z73IVAdPKaTgFflLmbjrzYqUGnT7qB
+	zZDQEQRhnxVio=
+X-Google-Smtp-Source: AGHT+IGg9+Cl1PrfxB1u30kczFTx+lL4HF863Q/M7Ft8DbnO8aCFbSPZ+8GHj42zoACeR0uSUx1hSA==
+X-Received: by 2002:a05:600c:1c0d:b0:45b:9961:9c01 with SMTP id 5b1f17b1804b1-45ddde832ebmr2550685e9.16.1757106446038;
+        Fri, 05 Sep 2025 14:07:26 -0700 (PDT)
 Received: from localhost (p200300f97f1e2d0062fae9454b512ce6.dip0.t-ipconnect.de. [2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3e06dbde2d2sm8899668f8f.12.2025.09.05.14.07.24
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-3d1007c0dc8sm31135478f8f.53.2025.09.05.14.07.25
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 05 Sep 2025 14:07:24 -0700 (PDT)
+        Fri, 05 Sep 2025 14:07:25 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH 1/2] libmultipath: fix missing return value check in snprint_devices()
-Date: Fri,  5 Sep 2025 23:07:13 +0200
-Message-ID: <20250905210714.167202-2-mwilck@suse.com>
+Subject: [PATCH 2/2] libmultipath/foreign/nvme: fix return value check in get_ctrl_blkdev()
+Date: Fri,  5 Sep 2025 23:07:14 +0200
+Message-ID: <20250905210714.167202-3-mwilck@suse.com>
 X-Mailer: git-send-email 2.51.0
 In-Reply-To: <20250905210714.167202-1-mwilck@suse.com>
 References: <20250905210714.167202-1-mwilck@suse.com>
@@ -79,28 +80,29 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Coverity scan defect #488155.
+Only a negative return value from udev_enumerate_add_match_subsystem()
+indicates an error.
 
-Fixes: d041258 ("libmultipath: snprint_devices(): use udev_enumerate")
+Fixes: 7b47762 ("libmultipath: nvme: fix path detection for kernel 4.16")
+
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/print.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ libmultipath/foreign/nvme.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 019ae56..a7306f0 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -1993,7 +1993,8 @@ int snprint_devices(struct config *conf, struct strbuf *buff,
- 	enm = udev_enumerate_new(udev);
- 	if (!enm)
- 		return 1;
--	udev_enumerate_add_match_subsystem(enm, "block");
-+	if ((r = udev_enumerate_add_match_subsystem(enm, "block")) < 0)
-+		goto out;
- 
- 	if ((r = append_strbuf_str(buff, "available block devices:\n")) < 0)
+diff --git a/libmultipath/foreign/nvme.c b/libmultipath/foreign/nvme.c
+index 0d19303..4cbdf60 100644
+--- a/libmultipath/foreign/nvme.c
++++ b/libmultipath/foreign/nvme.c
+@@ -536,7 +536,7 @@ struct udev_device *get_ctrl_blkdev(const struct context *ctx,
+ 	pthread_cleanup_push(_udev_enumerate_unref, enm);
+ 	if (udev_enumerate_add_match_parent(enm, ctrl) < 0)
  		goto out;
+-	if (udev_enumerate_add_match_subsystem(enm, "block"))
++	if (udev_enumerate_add_match_subsystem(enm, "block") < 0)
+ 		goto out;
+ 
+ 	if (udev_enumerate_scan_devices(enm) < 0) {
 -- 
 2.51.0
 
