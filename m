@@ -1,149 +1,181 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E14563594A
-	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 14:01:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A0212C17B3
+	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 14:12:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757426513; cv=none; b=DsRY8Uj3UCQbkvAKoJaIK16lqVNraMm71o0fZnlMPy2dmd9Sh0xB0T07tJK3Bq5PPe+pVgX6K25/dxqESsabVuW6fjZvxYB5GlyxZQK2qphS7n0dffg6xn0MHXs6TX9B2GetGAyg7imVsiw2qS9a6ssr0ejW31WiG/Tw72FnOMw=
+	t=1757427167; cv=none; b=ofhcNL2dmxruAlubQbPO18iBdq94k1Nj8ZEPwR1pJsnfmr/jokB0iHlYJcCZ9WlqVqUYfBoA9Q1W67f2YTWM5OP9dEtiAJAMa/Rq4WXOdUcUGihFFZzjwiDShkscbFSLz+4f1bw1LpGhyujZzt9dRuOaJ9AIJgrbs3uLrF2K/8c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757426513; c=relaxed/simple;
-	bh=6C8ElmIub2k6lXzmOHY17p3WD3C4rHjaFNGjotn9Iys=;
-	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
-	 Message-ID:Content-Type; b=Hrdy9KuRM1VmNpm26NCV2hvcs1lhWoTa4lcFE8hLHaFtKETceK5YlxWWhTa930kMmkMM3fcjT9Qh+N1u9H0k+DwfQO4LTIiBNzJretqv5Z5R15loT2QNKo9l7pUeMWtV5EBdffZbDPn9JdPTwM+hABQ9tD8ngK2FHc/AuYEHALs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=Szr7zFLT; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1757427167; c=relaxed/simple;
+	bh=FUGUHbmTlUk8TQfWfWrdMH175CzOHUSDBWw86JAA1Kw=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=gVbRpCVrp7CLMV15QI/9LzYV1VAKIBwU1jsXgA+ApzO2fhewV0e/fBzkpvSZQ/YSCBN6sNUoAgvJ8YNIYYUrriRtRpWkE4sHASOdIBx9z38Y1nmc4hRQthYbmgNvxfN3ztbWID7KoNHQ6YBGHnIoILv8eqrq32Ir3PIpfX+SUJs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CTsF4mxb; arc=none smtp.client-ip=209.85.208.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="Szr7zFLT"
-Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 589A5L2S024558;
-	Tue, 9 Sep 2025 14:01:49 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:reply-to:subject:to; s=pp1;
-	 bh=1oB99sJa5huwmIPGBsMPYS4KUtbgh5PZNH5HS+WEX84=; b=Szr7zFLTqw+6
-	QXaZtWVn0jyCkKeO20+TXfEBa2n9T7FbdF+PG+e0How8UlKbLRaDepw0uUQVImJC
-	6JCJeiSTC43U+a/6+4He+uMk7Mpgs/cPfuC6RbDJXE+gck7HQnj/Wl+9e3kz86Sw
-	2i1xHtI+OoeJoQPk64BHWIAkJHOUKr0h0lUNI8wACLRlKYTOQW833jAQHJWJ64Gw
-	4kaTvYQ+N12i7buzdeSs0vnXnezFrWi2MCa1aUiQh2BGHzDP6r9nDU8n8oWD8pzX
-	xujYs/uRKpqd4noZa433XjKzUQXyLQs9QDCibUIh/xX8PCEO90m4Ym9bD6jIJDO/
-	8Du70zLPdA==
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 490cmwr82j-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 09 Sep 2025 14:01:49 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 589Cr7IG011428;
-	Tue, 9 Sep 2025 14:01:47 GMT
-Received: from smtprelay05.wdc07v.mail.ibm.com ([172.16.1.72])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 490y9ubpnu-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 09 Sep 2025 14:01:47 +0000
-Received: from smtpav06.dal12v.mail.ibm.com (smtpav06.dal12v.mail.ibm.com [10.241.53.105])
-	by smtprelay05.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 589E1ktx29622880
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 9 Sep 2025 14:01:46 GMT
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 492A658065;
-	Tue,  9 Sep 2025 14:01:46 +0000 (GMT)
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 02F1658055;
-	Tue,  9 Sep 2025 14:01:46 +0000 (GMT)
-Received: from ltc.linux.ibm.com (unknown [9.5.196.140])
-	by smtpav06.dal12v.mail.ibm.com (Postfix) with ESMTP;
-	Tue,  9 Sep 2025 14:01:45 +0000 (GMT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CTsF4mxb"
+Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-6188b5ad681so7613829a12.0
+        for <dm-devel@lists.linux.dev>; Tue, 09 Sep 2025 07:12:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1757427164; x=1758031964; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
+        bh=3ctfjE+pKRwd5zF4FXaQW3t/vZs+ySfwFN+6YFF61/s=;
+        b=CTsF4mxbMG/4UiYTjla+MfUo92SZVaA7dpaHQV9O2jTERKl19p0tkxZ2kmno9h9djY
+         jsLkmDwodInAJD/zXit9nEcQYjHeh+9CKThBMdmNEP8h3TiQcZoNQuhsoz0iiA04iofw
+         Q+rz3IkKh7+cBZ+F2ds0EnDMioC26p3L70/xiNocpEBAVLP/DRHWQFRWgV09L1uQAcwb
+         oQUtU1kA5uWXCshE1rvphi9B+eUvEHoSv3HRTywZiPEXKGnM17vNydXE4OWUw4K+KdDg
+         MxtFDb5yiBGCPVU85cKmW2Os/A4E+CySVSEWsuwy6gRsoBm7k90Txt/JB1TbQmg/MNUB
+         U6Tg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1757427164; x=1758031964;
+        h=content-transfer-encoding:in-reply-to:autocrypt:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=3ctfjE+pKRwd5zF4FXaQW3t/vZs+ySfwFN+6YFF61/s=;
+        b=HZ0HeuRp47YrfKPh0+91cFWEySiZ5oYIKy0Szg8tXZaTURuYtLljN/bDT7d/DdlibZ
+         W++/wg+Cckw2p0iyoKQrHfeXro8eoQ5lk9zwJZYg+LS9I2YUKKZZE5wAGM3ve7j1bIcF
+         7DX8YXskNjxSBmxVoIvjOMz3Vmm28G0XPEdZzrNTpDLS8yqpaVep2u8KIwZbWp5lPwm2
+         lPTUFpRMTcno5d2ktO8McXuN99444jpurYRmWbf92VdNthNEtQ8v07hxgd4/QVY4qJgu
+         02k0T7oFIq8BnaF604kv13P+dP1je/Xi5cJUOSNv2Y4n4n8lLJwRTvmSh4Pg8D4A9Ios
+         LARQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUpNkDoJA8lUdoq53tWev6e2FrYrIiinqjA4nXvfuW3I4C/QEKwM0CQSQxxUDJX0jC2FI8Ke1DZ/Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwH3fL4e405mlBHgsCXK2w9bIca4AuyFzxROvWPJCAEVlgDpWNw
+	IwjCs6vQqkPrVMA0TxDeCQo6ncZAyvm4aRfOtTH/WcOBhIHosyWruuoM
+X-Gm-Gg: ASbGncuCfko5haQeF6C47kLdni7bHeMd2rfWZo3ul0W6TY1clZQgDHpKUDh+sYBnyXS
+	Bv3ZqP2sp4uiGSi4AS5z6gJm7bNjkcLp2PfIQ4vaioM6Q9RnoxLvNxwybq1eINHPcJWBpBBuOEJ
+	roLlKdFWqGqzqa1xPr0IaGo5v5NGegl7IfR1EkxcuCQF99Bnsd+zm3bwS3mue87jZjjhXEZLkQT
+	Yr2So3HB9r+nyXNe+AHmSR6TzlCqvizovwKMbPCLCyxsNoakkvX+Oy7E8BDP8OH0UxUdf4zUUYD
+	lyCNrza5VCeAe5A6fkkoe1wKDko9js19ebpu51JYbVIKI3GUDIc2SxqykVgndv1YIH9ihSwPhqE
+	OVJXKq1IT4KHOIBeP/lUiNSt+PBwyxqKiHbjVatVxDwoqKkyR
+X-Google-Smtp-Source: AGHT+IFo0uq6VNSOptACqaP1uIiI4hzg0CWa7RBqBAinrZ7LRh6LwZhjeHLCNofDQz5RJV+0GvfH/Q==
+X-Received: by 2002:a05:6402:34d3:b0:628:62d0:fdab with SMTP id 4fb4d7f45d1cf-62862d10569mr6682485a12.11.1757427164100;
+        Tue, 09 Sep 2025 07:12:44 -0700 (PDT)
+Received: from [192.168.2.22] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-62bfef6752esm1329347a12.12.2025.09.09.07.12.42
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 09 Sep 2025 07:12:43 -0700 (PDT)
+Message-ID: <446ea303-0da0-40a1-8cc7-6faab9f9d22c@gmail.com>
+Date: Tue, 9 Sep 2025 16:12:42 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Date: Tue, 09 Sep 2025 16:01:45 +0200
-From: Harald Freudenberger <freude@linux.ibm.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>,
-        "David S. Miller"
- <davem@davemloft.net>, linux-crypto@vger.kernel.org,
-        dm-devel@lists.linux.dev
-Subject: Re: crypto ahash requests on the stack
-Reply-To: freude@linux.ibm.com
-Mail-Reply-To: freude@linux.ibm.com
-In-Reply-To: <94b8648b-5613-d161-3351-fee1f217c866@redhat.com>
-References: <94b8648b-5613-d161-3351-fee1f217c866@redhat.com>
-Message-ID: <b20529cc85868607dbec25489daa0404@linux.ibm.com>
-X-Sender: freude@linux.ibm.com
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 0/7] dm-integrity: asynchronous hash support
+To: freude@linux.ibm.com
+Cc: Ingo Franzki <ifranzki@linux.ibm.com>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Herbert Xu <herbert@gondor.apana.org.au>,
+ "David S. Miller" <davem@davemloft.net>, Eric Biggers <ebiggers@kernel.org>,
+ dengler@linux.ibm.com, linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+ agk@redhat.com, snitzer@kernel.org
+References: <20250908131642.385445532@debian4.vm>
+ <3a6b6f8f-5205-459c-810a-2425aae92fc8@linux.ibm.com>
+ <e1e420d5-dc00-14d0-fdef-635d6ef70811@redhat.com>
+ <bb68f9d6-8180-4291-9e6b-33bbdcef780f@linux.ibm.com>
+ <3184e0b1-571f-4cf7-94ef-acca41c12b02@gmail.com>
+ <b01c92bd-e00a-4c8f-803b-20d6a7db2ec3@linux.ibm.com>
+ <bd535ddb-b9b0-4404-81ba-4e6f526429d5@gmail.com>
+ <76c330493c036317755838d2dfce2de0@linux.ibm.com>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+Autocrypt: addr=gmazyland@gmail.com; keydata=
+ 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
+In-Reply-To: <76c330493c036317755838d2dfce2de0@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-GUID: -cGbKbW65Ijn3sOW-2H-PdPXwUu7De5y
-X-Proofpoint-ORIG-GUID: -cGbKbW65Ijn3sOW-2H-PdPXwUu7De5y
-X-Authority-Analysis: v=2.4 cv=J52q7BnS c=1 sm=1 tr=0 ts=68c0334d cx=c_pps
- a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
- a=kj9zAlcOel0A:10 a=yJojWOMRYYMA:10 a=QsnAe65qxYrXraXQVr8A:9
- a=CjuIK1q_8ugA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwOTA2MDAyNSBTYWx0ZWRfXxSXhp31a0PP6
- FvfupsUrAhsrXseEdbgfxKlJCYJH5/oKv2ltqNyHbdOZ867ikbGg4wVR5igiBwl8DG2cLE1iT2A
- 3zoo9Mg4zCqo7Fc3mU614U0eiGITYeFAAmTbCEESjh5jJ3Hcqwk6QOOTH+9CK/uB/R1arAGEpTd
- bGI3Ffw1FQstYYjEII4DblPFVhTqtGtVFFJqyzmZfsc2hNqF8LEAi+8Vmz7uXPukQv2CDFkXNDa
- lJ5Mbm6kqNCk37FBCN6e6ge0ueezDzUUXp2jpGkwjxG/Qhy5zxAoE68HITp0E56cAJt+CbhQ9Yc
- hMMnT4N4PkDlCqUkC7zC710gXhO/W/29jOwTlGaYrcmCSg9NC1+pmWAn3w/p8q/sweW0129TeO0
- lVCXbAnH
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1117,Hydra:6.1.9,FMLib:17.12.80.40
- definitions=2025-09-09_02,2025-09-08_02,2025-03-28_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- impostorscore=0 clxscore=1011 suspectscore=0 spamscore=0 phishscore=0
- bulkscore=0 adultscore=0 malwarescore=0 priorityscore=1501
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.19.0-2507300000 definitions=main-2509060025
 
-On 2025-08-25 16:23, Mikulas Patocka wrote:
-> Hi
+On 9/9/25 3:51 PM, Harald Freudenberger wrote:
+> On 2025-09-09 14:15, Milan Broz wrote:
+>> On 9/9/25 1:50 PM, Ingo Franzki wrote:
+>>> On 09.09.2025 13:47, Milan Broz wrote:
+>>>> On 9/9/25 1:18 PM, Ingo Franzki wrote:
+>>>>>> Please, revert my patches and run the same test on a clean
+>>>>>> 6.17.0-rc5 just
+>>>>>> to verify that the patches do not introduce the bug.
+>>>>>
+>>>>> With your patches reverted the combined mode fails the same way as
+>>>>> with your patches.
+>>>>> So they did not introduce the bug.
+>>>>
+>>>> Please report it as cryptsetup issue with a reproducer so we can
+>>>> later check it.
+>>>
+>>> I don't think its a cryptsetup bug, its rather that dm-crypt is
+>>> missing something to deal with async HMAC ciphers.
+>>> The point is that PHMAC is a async-only cipher, with no sync variant.
+>>
+>> I know, but there is no tracker for dm-crypt and what I like to have
+>> some kind of upstream CI testing for PHMAC/PAES
+>> even without mainframe hw (we already talked about a fake cipher
+>> module).
 > 
-> I'd like to ask about this condition in crypto_ahash_digest:
-> 	if (ahash_req_on_stack(req) && ahash_is_async(tfm))
-> 		return -EAGAIN;
-> 
-> Can it be removed? Or, is there some reason why you can't have
-> asynchronous requests on the stack (such as inability of doing DMA to
-> virtually mapped stack)?
-> 
-> Or, should I just clear the flag CRYPTO_TFM_REQ_ON_STACK in my code?
-> 
-> I'm modifying dm-integrity to use asynchronous API so that Harald
-> Freudenberger can use it on mainframes (the reason is that his
-> implementation only provides asynchronous API) and I would prefer to 
-> place
-> ahash requests on the stack (and wait for them before the function 
-> exits).
-> 
-> The commit 04bfa4c7d5119ca38f8133bfdae7957a60c8b221 says that we should
-> clone the request with HASH_REQUEST_CLONE, but that is not usable in
-> dm-integrity, because dm-integrity must work even when the system is 
-> out
-> of memory.
-> 
-> Mikulas
+> Let me think about this a bit... You are suggesting a test kernel module
+> for
+> e.g. x64 which acts like the phmac/paes implementation in a asynchronous
+> way.
+> I'll discuss this with Ingo.
 
-The problem with this 'on the stack' is also with the buffer addresses.
-The asynch implementations get scatterlists. By playing around there,
-I found out that the addresses in scatterlists are checked:
+Just for the context - we do not need a real implementation, only something
+that pretends the alg with that name exists so we can check all options.
 
-scatterlist.h:
+In reality we just cloned SHA ans AES modules and renamed them - we do not
+care that keys is not wrapped, we use it directly here. This allows us
+to prepare a test script that can run in our CI without mainframe HW.
+(These modules are compiled on the CI builder and loaded to the kernel.)
 
-static inline void sg_set_buf(struct scatterlist *sg, const void *buf,
-			      unsigned int buflen)
-{
-#ifdef CONFIG_DEBUG_SG
-	BUG_ON(!virt_addr_valid(buf));
-#endif
-	sg_set_page(sg, virt_to_page(buf), buflen, offset_in_page(buf));
-}
+If cryptd() can be used here, we can trivially add async path testing.
+It will not be perfect, but still better than nothing.
 
-and virt_addr_valid(x) fails on stack addresses (!). I talked with the
-s390 subsystem maintainer and he confirms this. So stack addresses can't
-be used for scatterlists even when there is no DMA involved.
+That's all, no real magic :)
 
-Harald Freudenberger
+Milan
+
