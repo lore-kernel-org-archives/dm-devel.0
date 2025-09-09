@@ -1,136 +1,147 @@
-Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B0832750E3
-	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 18:27:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E59AA33437D
+	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 18:58:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757442427; cv=none; b=etTxQ3Qp5bktX1KywOGhbq6NRtthuZhzJ4Y0MnYF+Vh8OytaJ9OxCQkpMN/jV4D5YVl1ooE/xL0fElcHDK48XxN10so94Nj+nOZdO5tOzzggEYyb964WZvJL9DC/fFGQ3dcparl/UxMAJ4MllWQJtg63ok2Y2Jq51FOshU9KHjY=
+	t=1757444296; cv=none; b=dMJSuW+Em9LOoCA3huU8SpRZas95RKXd3vMkyRkLMZh6vw+3ig7LGlETXz6imfTgAR+hnkCimoNyBgUy+Ti0wR6iKyRn+gVivXylJd33vTU/vf3YTVqJoGXTE8gRLzfZtU+S00Qgs8y8cOY3VZWjvB8ekpt1x61/pcfyBPgvo3k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757442427; c=relaxed/simple;
-	bh=rpbdHd3WaoK5cdh7o809UiKQeSa9jDi1qGqgFENfd/U=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JHGHYP0pkdkw8c8C4n2q7t2ba6lrT05Q1YV/vlj9l7RLjaPvZrOoYPHbKcIJDa5Qba8rRigk5tm4xaBv6iEaeytqhKgLr0jTyCV51LMyog/d/frvG9uPrgAyUJFlOLatEmUaEOdWYPf0I/lUJjbTAIUuMWyWlkYCG1AH4tv8kBk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=jimSMqXl; arc=none smtp.client-ip=199.89.3.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1757444296; c=relaxed/simple;
+	bh=yAU1xs4OMymWHOKYKdpxggNYhkm00IDst2AdLJtu3nI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=QbK17nwRnqJzo0weG/wZrFBfTuk2Mxb7OFpy2lyTb0my1iAz4QF2oTJtKC4bK1o8W25AFa0OqaAOan9WHgdeIcF/Jrn3R0yymaKz0uw+DZEIZhJCj5A9zL4nNVcdZPGYYcwhN58Jg+ar8YExaDOe2R5wz/nN9sESZa78OibTWXg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KhaElix8; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="jimSMqXl"
-Received: from localhost (localhost [127.0.0.1])
-	by 004.mia.mailroute.net (Postfix) with ESMTP id 4cLsjb237Xzm174F;
-	Tue,  9 Sep 2025 18:26:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:mime-version:x-mailer:message-id:date
-	:date:subject:subject:from:from:received:received; s=mr01; t=
-	1757442417; x=1760034418; bh=Vi6Z22Lv+oo5sNCFQnB7iFn27Ygp5Pv6yiY
-	uVGhDZ0s=; b=jimSMqXldkIgR3OJuWOg5SrhFqqfwu0dDXNWCHf/MJhENZp+mL6
-	28/ySKQgkYBcGDEElYDVbvGsvhmdXtoenjxm8VJePKk1+TIWQRWM4yjkCXYBvheM
-	ywN6liId/WAbd9NhGu8ulApfSq5wmcbdg2lW2cSij+ei77xQBMW0apz8SMx8dZ1n
-	WBpqIeoE8YmSZVcBaLTl02UsOheki4IvTUD9qKM7P28aUKvBafTFQqN0SBNY7+mE
-	PEenaCooumkzRISLFUqTvMo7y1FJJ7H5InGEqIgIDAUwxcSSxWV6WGs70GK8pfkc
-	mhwdo7smZzSWxDOmQrsAUb4WHbc71aKbH+A==
-X-Virus-Scanned: by MailRoute
-Received: from 004.mia.mailroute.net ([127.0.0.1])
- by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id ALqiw2EQTjYm; Tue,  9 Sep 2025 18:26:57 +0000 (UTC)
-Received: from bvanassche.mtv.corp.google.com (unknown [104.135.204.82])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4cLsjV1Ntnzm1749;
-	Tue,  9 Sep 2025 18:26:53 +0000 (UTC)
-From: Bart Van Assche <bvanassche@acm.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Bart Van Assche <bvanassche@acm.org>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>
-Subject: [PATCH] dm: Preserve the order of REQ_PREFLUSH writes
-Date: Tue,  9 Sep 2025 11:26:40 -0700
-Message-ID: <20250909182641.3496300-1-bvanassche@acm.org>
-X-Mailer: git-send-email 2.51.0.384.g4c02a37b29-goog
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KhaElix8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1757444292;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=tEeTKl2Am8ceYqmZeJXkbvM2lrOEYBAJICAMqquNxT8=;
+	b=KhaElix8GRkh2YfSzfMpvGuw1RdR1u/Vhu3OEhjxJ6GdzFRNtvphkBf2MEnfRd6aH+2yx4
+	MY9ZskqJbCBmU2wsy967gfcoSF2jH8aOXQWQ1m1kdK//iczgfg0owdMV1EFEaoZLBiPO2s
+	v59bPJgqtSON5Mi7RBXvJ0RSjLKHu8s=
+Received: from mail-qv1-f71.google.com (mail-qv1-f71.google.com
+ [209.85.219.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-376-peOqEuObM2G1xMUeZyQrvg-1; Tue, 09 Sep 2025 14:58:11 -0400
+X-MC-Unique: peOqEuObM2G1xMUeZyQrvg-1
+X-Mimecast-MFC-AGG-ID: peOqEuObM2G1xMUeZyQrvg_1757444291
+Received: by mail-qv1-f71.google.com with SMTP id 6a1803df08f44-7224cb09e84so129003196d6.1
+        for <dm-devel@lists.linux.dev>; Tue, 09 Sep 2025 11:58:11 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1757444291; x=1758049091;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=tEeTKl2Am8ceYqmZeJXkbvM2lrOEYBAJICAMqquNxT8=;
+        b=g37g8hInSP77S1oWY3BrFYbDR+abjOIzNFZJdzpoXhIZaA7/Tpi64i00fvZDtOA3Qr
+         6KFI9FJ6R9fW5H3D2ZgSRW0ENUD+JkY3/nJMZedRIHBZA5+C3rusmolukmsNYMUT37rp
+         tX/pMVAhKZplhdRPHdMs2KgLL2ibItYpoOinqs9jhCurL631Pw2V8PG3KvoeO1463RtX
+         4fJOu8rC5zH8lCsbeDnGU1p5bwcmvMR5TQTFni2hZpjz07a6Nz3sXQmkaWmqsSvZcDR8
+         u4mQo+qtcG4YcsPZzo1sPpkEbH/jtdHVQZ6HRQvQVa6PHpRYfeKT4wJTMLLR6KTZI9w0
+         DZIw==
+X-Gm-Message-State: AOJu0YxXagfWNBtniTMnng95oWMIyDHACPWJdcb6bWrhPy/AV91iloJg
+	ldU/9AtCcCX0bQeYTUNupMggUaquiI4RLYZqncaavMijVbvmtHb08f+km/6/OOubBL3fVZxLVJa
+	lufkBRZHhjLNnT9R4QjKWwgXfFZ/RCX4Hx+kaUSjSdRPE7+f/ZIza42bilJvP
+X-Gm-Gg: ASbGncsiKlp7ItPUWMeNklS3yoIHDQGbwHGRuPOIvH2SJ2R4sfEWmfy2OpcfogSCWuH
+	JPZegIys00IFSmFzVepC10hVzsTZVnbYHRN1UVSm57cS4wNAl+de3FnCs3slUQf9hdopswrBFVM
+	q/MHLxdgD2sBD1gmYe5chd09opAJ7pMPUBk3Z3L6+qnA1ZEOWiRXovHzrs8bjrRPUvLu5itk7Hc
+	uA5XNR7CGha9ypfuYZaWH9O1Q/R2a0RhCT+CdjOFvkGZcpkORAXxmg893ZLIzysBtR0AkKBlDU1
+	HoIA1DuW6rgHkhUCAVPrjszaYQVOoRw5jMjo8N3SWrMLs13PV+pKLXfy9JCoDZZ4tK+OjZJbYz1
+	AqIWCyzSJHdnI
+X-Received: by 2002:ad4:5fc5:0:b0:707:6cf8:5963 with SMTP id 6a1803df08f44-72bbf3fb0b1mr167451186d6.9.1757444290719;
+        Tue, 09 Sep 2025 11:58:10 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFhF+OsEgNK7/8p/dRDiQRMr/orPC3+MXuUsFgulrWFnDz5gzikw27aQ/Tlem1vSIuP46h3SA==
+X-Received: by 2002:ad4:5fc5:0:b0:707:6cf8:5963 with SMTP id 6a1803df08f44-72bbf3fb0b1mr167450966d6.9.1757444290315;
+        Tue, 09 Sep 2025 11:58:10 -0700 (PDT)
+Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-720ada83b25sm146538706d6.27.2025.09.09.11.58.09
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 09 Sep 2025 11:58:09 -0700 (PDT)
+Message-ID: <340645fa-5c6b-4b28-bd56-63088d4705da@redhat.com>
+Date: Tue, 9 Sep 2025 14:58:09 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/1] dm-vdo: Refactor VDO_ASSERT usage in
+ start_restoring_volume functions
+To: Ivan Abramov <i.abramov@mt-integration.ru>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ lvc-project@linuxtesting.org
+References: <20250908222410.223574-1-i.abramov@mt-integration.ru>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20250908222410.223574-1-i.abramov@mt-integration.ru>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: GegfEs4Y5ke3PrTIpINssik4wAz7XSBRk0tIbkItslA_1757444291
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Splitting a bio into an empty flush bio and a non-flush data bio is
-only necessary if there are multiple underlying devices. Do not split
-REQ_PREFLUSH bios if there is only one underlying device. This patch
-preserves the order of REQ_PREFLUSH writes if there is only one
-underlying device and if multiple writes are queued. This patch fixes
-a write error observed with zoned storage devices and with write
-pipelining enabled.
+On 9/8/25 6:24 PM, Ivan Abramov wrote:
+> There's an incorrect VDO_ASSERT macro usage in
+> start_restoring volume_index() and start_restoring_volume_sub_index(),
+> since assert's return value is not used anywhere.
+> 
+> Thus, use VDO_ASSERT_LOG_ONLY macro in such cases.
+> 
+> Found by Linux Verification Center (linuxtesting.org) with SVACE.
+> 
+> Signed-off-by: Ivan Abramov <i.abramov@mt-integration.ru>
+> ---
+>   drivers/md/dm-vdo/indexer/volume-index.c | 8 ++------
+>   1 file changed, 2 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/indexer/volume-index.c b/drivers/md/dm-vdo/indexer/volume-index.c
+> index 12f954a0c532..99608f14400a 100644
+> --- a/drivers/md/dm-vdo/indexer/volume-index.c
+> +++ b/drivers/md/dm-vdo/indexer/volume-index.c
+> @@ -832,11 +832,9 @@ static int start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
+>   		decode_u32_le(buffer, &offset, &header.first_list);
+>   		decode_u32_le(buffer, &offset, &header.list_count);
+>   
+> -		result = VDO_ASSERT(offset == sizeof(buffer),
+> +		VDO_ASSERT_LOG_ONLY(offset == sizeof(buffer),
+>   				    "%zu bytes decoded of %zu expected", offset,
+>   				    sizeof(buffer));
+> -		if (result != VDO_SUCCESS)
+> -			result = UDS_CORRUPT_DATA;
 
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Damien Le Moal <dlemoal@kernel.org>
-Signed-off-by: Bart Van Assche <bvanassche@acm.org>
----
- drivers/md/dm.c | 16 ++++++++++------
- 1 file changed, 10 insertions(+), 6 deletions(-)
+This is not a correct fix so we should not take this.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 66dd5f6ce778..d0791eef21f7 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -490,9 +490,13 @@ u64 dm_start_time_ns_from_clone(struct bio *bio)
- }
- EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
-=20
--static inline bool bio_is_flush_with_data(struct bio *bio)
-+static inline bool bio_is_flush_with_data(struct mapped_device *md,
-+					  struct bio *bio)
- {
--	return ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size);
-+	guard(rcu)();
-+
-+	return bio->bi_opf & REQ_PREFLUSH && bio->bi_iter.bi_size &&
-+	       ((struct dm_table *)rcu_dereference(md->map))->num_targets > 1;
- }
-=20
- static inline unsigned int dm_io_sectors(struct dm_io *io, struct bio *b=
-io)
-@@ -501,7 +505,7 @@ static inline unsigned int dm_io_sectors(struct dm_io=
- *io, struct bio *bio)
- 	 * If REQ_PREFLUSH set, don't account payload, it will be
- 	 * submitted (and accounted) after this flush completes.
- 	 */
--	if (bio_is_flush_with_data(bio))
-+	if (bio_is_flush_with_data(io->md, bio))
- 		return 0;
- 	if (unlikely(dm_io_flagged(io, DM_IO_WAS_SPLIT)))
- 		return io->sectors;
-@@ -976,7 +980,7 @@ static void __dm_io_complete(struct dm_io *io, bool f=
-irst_stage)
- 	if (requeued)
- 		return;
-=20
--	if (bio_is_flush_with_data(bio)) {
-+	if (bio_is_flush_with_data(md, bio)) {
- 		/*
- 		 * Preflush done for flush with data, reissue
- 		 * without REQ_PREFLUSH.
-@@ -1715,7 +1719,7 @@ static void dm_queue_poll_io(struct bio *bio, struc=
-t dm_io *io)
- }
-=20
- /*
-- * Select the correct strategy for processing a non-flush bio.
-+ * Select the correct strategy for processing a bio.
-  */
- static blk_status_t __split_and_process_bio(struct clone_info *ci)
- {
-@@ -1996,7 +2000,7 @@ static void dm_split_and_process_bio(struct mapped_=
-device *md,
- 	}
- 	init_clone_info(&ci, io, map, bio, is_abnormal);
-=20
--	if (bio->bi_opf & REQ_PREFLUSH) {
-+	if (bio->bi_opf & REQ_PREFLUSH && ci.map->num_targets > 1) {
- 		__send_empty_flush(&ci);
- 		/* dm_io_complete submits any data associated with flush */
- 		goto out;
+This assertion (and the one below) should only fail if the stored 
+metadata has been corrupted, but in that case we definitely need to 
+return the error and fail the load.
+
+You are correct that we don't seem to use this result, but the correct 
+fix is to return UDS_CORRUPT_DATA when this assertion fails.
+
+Matt
+
+
+>   		if (memcmp(header.magic, MAGIC_START_5, MAGIC_SIZE) != 0) {
+>   			return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
+> @@ -924,11 +922,9 @@ static int start_restoring_volume_index(struct volume_index *volume_index,
+>   		offset += MAGIC_SIZE;
+>   		decode_u32_le(buffer, &offset, &header.sparse_sample_rate);
+>   
+> -		result = VDO_ASSERT(offset == sizeof(buffer),
+> +		VDO_ASSERT_LOG_ONLY(offset == sizeof(buffer),
+>   				    "%zu bytes decoded of %zu expected", offset,
+>   				    sizeof(buffer));
+> -		if (result != VDO_SUCCESS)
+> -			result = UDS_CORRUPT_DATA;
+>   
+>   		if (memcmp(header.magic, MAGIC_START_6, MAGIC_SIZE) != 0)
+>   			return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
+
