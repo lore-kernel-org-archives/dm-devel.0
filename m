@@ -1,155 +1,116 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from ksmg01.maxima.ru (ksmg01.mt-integration.ru [81.200.124.38])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EF0D350D79
-	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 19:23:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36DB832CF8A
+	for <dm-devel@lists.linux.dev>; Tue,  9 Sep 2025 20:23:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=81.200.124.38
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757445792; cv=none; b=QaHTTFkwNK0iflCu/c5X4tcm1L4w7uNXebCrLY4eR/gyAKuRg+gWUtK6TxzALdBKlA8oIiFIuBMslbf/YrcxtQsiVIBcNXYkMm0T+iVKuQ7pKQggIu0brXQBmfgZsX6BIr1qOuCF6W2M22vf5ZH+VpWPBu6EINS47l+nDmF5HqQ=
+	t=1757449385; cv=none; b=hm+x8Tdysv33Wxm0beiTnXyypcVFVB9DkM1bXq3zRcsyiCmqUcwbHiOc95LORD+5NK6SJlicQnS3eC+mRLIqShPa/UZQ2hrvAykHaGi/EF1WOK0Mzfu/xk6jjKlad622+m4VDoBCJ4DB28/imn4acgf0UJS53lGLgZMnQfOKTDQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757445792; c=relaxed/simple;
-	bh=Dr41Tcqata/raqAboRNakNManKKV7R8cd3/aEJ1vBTY=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=JLiocYsc+bx/OWWPJdGfqVYEzuFQDU8aCzBls5aXRyWEdL/+hdVXZKYLbvsM+lOCcmlpxbKuBKogWXtXzAwyu/yeooXm04G8LNCmnQIAZ3Kq2Ti4teD2To1fnoGSWTbijj4iXF8/E3rvYw6Jj01GZ8RXK8o20tCbPmlWXqu8e8w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=afKHlGNk; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1757449385; c=relaxed/simple;
+	bh=BYhxr7WXO3V9EC/HncPZSfJFIrFL9VZ+O4zvQGpV458=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=ElSQXD5N++JWzjgxLFVynh7vaTprT1EKL7TzwhLQvrmOKlG72ZQiQS2g1D7sSji1i/jW/5qJI3OboSXqJ6OPXVkoaX7SCnPs3UJULgoyHd+q71CitqeCX2Epz2nt+dKGPKWf9RWcuU3r8fK7gV+erIC0eyMIhK0hm3sHglmh9iY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mt-integration.ru; spf=pass smtp.mailfrom=mt-integration.ru; dkim=pass (2048-bit key) header.d=mt-integration.ru header.i=@mt-integration.ru header.b=fjcVFYFb; arc=none smtp.client-ip=81.200.124.38
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mt-integration.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mt-integration.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="afKHlGNk"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1757445789;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=KaahEf6JZRZ6NZ6hGjJioziPQJonllTKnhQkCCQ9Zy0=;
-	b=afKHlGNk4Pnxa3W4skjN5v4/8YOjgS/LpUQ8gk0qjqSRqtutlBCq87RbsLDIr4YtLYsyws
-	LinqYF5cs2LJ2B88aFuegGUfgrzHvDn0rKYfqH1GHccqkP6iGgdk0lAw7wiDBmX42hDwVg
-	Ynyc0ZRGyw5nzRsJnJfC+wTFhfESEd8=
-Received: from mail-qk1-f198.google.com (mail-qk1-f198.google.com
- [209.85.222.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-411-vNK7gwP6P_yEIOTui1rcPw-1; Tue, 09 Sep 2025 15:23:08 -0400
-X-MC-Unique: vNK7gwP6P_yEIOTui1rcPw-1
-X-Mimecast-MFC-AGG-ID: vNK7gwP6P_yEIOTui1rcPw_1757445788
-Received: by mail-qk1-f198.google.com with SMTP id af79cd13be357-806f812a0aaso1496862785a.3
-        for <dm-devel@lists.linux.dev>; Tue, 09 Sep 2025 12:23:08 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757445787; x=1758050587;
-        h=content-transfer-encoding:in-reply-to:references:cc:to:from
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=KaahEf6JZRZ6NZ6hGjJioziPQJonllTKnhQkCCQ9Zy0=;
-        b=YvV00j4/gYWV2X3uQGLyg1HffZYDzOWp1OglQQNmK0yAlibNZxZxwzqiDRUMjl5kH6
-         2E4lEhwATjLxlr+afkVsJVH6+TA7bGXCtwosBAv+FkO6bdnDo+976n8/fp1DpoOuDzIs
-         1cRBd5ZkOX4lcadgXqq1e31SE2RMxToppLA5GJbXZXhHnRyPlqhxUG+FJpPjIcdU4VB4
-         UB2BWr5Q6dHfeYMxSE0aVTzoniCQ62QJ9Y5QurPhwqE1cvtLZxCRn2mC+7noVUeWJfEh
-         X6KulrN6eFlV6yrHGY5dRxpoVNC4Ux61B6xabCAqqZQbVeXav62gb+J7GOmiOKiCylay
-         i9QQ==
-X-Gm-Message-State: AOJu0Yxj4OvJT2JM2iiKf1kI3oNRCbHHofcHSYwkE6tu9ZIeKJUEJ8+o
-	/nTttyA6QeM6FXXj9k+ItCsavhHZTRHma0zYxKnCVlZpsWEl1Qo5RVqO06wyMV0vG2n2sjh4Ul6
-	UPdcajqDX9f3cqRrSe9412q6yozZB8/4rxdKWNuCuWIUlF1n6nVpP+3ZqxzJj
-X-Gm-Gg: ASbGnctGwyh+nrIFY/5YIatC1COGUDwjNLbJRw+koB4pstzz4A7U9YeHB5LQdd+yZz4
-	R14otRa31SYI28EKRZC1gMWAMPdwEAV9tv25c0m1dQb0NI1cv+te9JITp9+0nqvuP4Z/ldwAvOk
-	AVf4kvDj67JN9pum1oiuj1UIKFrIrGeGX8fxFFa6f63NHYQLw/PvIXxszix9sJ51iMV3hpQWjMD
-	MtQkI560CQ93oApuWCU+BxMEpXZoQj88u1IAxuAaYZ5b/tPgjFz5DOxeaVvCn0M2Z6Mtv9qmfOq
-	7+3X1dWqsFhIGAL8aLzaPbl21Ff351s7/rFdYWMeMoMTmRuay4qHJg4zx261lN1UpukILwj6h54
-	xJHQpEhJBBcam
-X-Received: by 2002:a05:620a:28c4:b0:7f9:1f6b:67fa with SMTP id af79cd13be357-813be440672mr1186303385a.11.1757445787475;
-        Tue, 09 Sep 2025 12:23:07 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IHLY5kexLTwmeWexP1KElG9GzegYJmUBuptStZfbFZ+i//+RQxgQVoBsSR7G6dKU9Eld5w6MQ==
-X-Received: by 2002:a05:620a:28c4:b0:7f9:1f6b:67fa with SMTP id af79cd13be357-813be440672mr1186300685a.11.1757445786985;
-        Tue, 09 Sep 2025 12:23:06 -0700 (PDT)
-Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-81d97fdcc6fsm14133085a.42.2025.09.09.12.23.06
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 09 Sep 2025 12:23:06 -0700 (PDT)
-Message-ID: <1788ec12-c362-440a-b63e-fc720bd5a18d@redhat.com>
-Date: Tue, 9 Sep 2025 15:23:06 -0400
+	dkim=pass (2048-bit key) header.d=mt-integration.ru header.i=@mt-integration.ru header.b="fjcVFYFb"
+Received: from ksmg01.maxima.ru (localhost [127.0.0.1])
+	by ksmg01.maxima.ru (Postfix) with ESMTP id 8270CC0017;
+	Tue,  9 Sep 2025 23:22:52 +0300 (MSK)
+DKIM-Filter: OpenDKIM Filter v2.11.0 ksmg01.maxima.ru 8270CC0017
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mt-integration.ru;
+	s=sl; t=1757449372; bh=9CNyxPMJq3Zjq2fgFiUckrKdjDPPEBiRclmaAGhSoxk=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version:Content-Type:From;
+	b=fjcVFYFbF+aCVvsbHqGUjvopyaFIWnVw8ru7B2uGWNetFU+XJMFCRY/UF1Xr21n74
+	 DnBce0XEeBpONuB1GQDBVhWA6TzRPMyHz8d29VywKl5IDE6eDN8e/QGxraxUscljaz
+	 u0D4OM3Qn5D3B4sieqlFP9ymsAOGGHZ/V2YNd79FC+XgpvvLqIA5GKcXdEPs5yykSZ
+	 FJXasKm95RmJsBaktM5UVl0YOjTq44SBVa/3cpdn/PUFcYrIU6dc1LVtzXYs40tXAg
+	 Hm08IgphGQ+z6yJ+bTxpGUS0lS5CW7DHhZcrGSRHof1Ik+d0PFRn3km+w/XKxzNmji
+	 LXK7NNfDy7uIw==
+Received: from ksmg01.maxima.ru (autodiscover.maxima.ru [81.200.124.61])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(Client did not present a certificate)
+	by ksmg01.maxima.ru (Postfix) with ESMTPS;
+	Tue,  9 Sep 2025 23:22:52 +0300 (MSK)
+Received: from db126-1-abramov-14-d-mosos.mti-lab.com (172.25.20.118) by
+ mmail-p-exch01.mt.ru (81.200.124.61) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1544.25; Tue, 9 Sep 2025 23:22:52 +0300
+From: Ivan Abramov <i.abramov@mt-integration.ru>
+To: Matthew Sakai <msakai@redhat.com>
+CC: Ivan Abramov <i.abramov@mt-integration.ru>, Mike Snitzer
+	<snitzer@kernel.org>, "J. corwin Coburn" <corwin@hurlbutnet.net>,
+	<dm-devel@lists.linux.dev>, Thomas Jaskiewicz <tom@jaskiewicz.us>,
+	<linux-kernel@vger.kernel.org>, <lvc-project@linuxtesting.org>
+Subject: [PATCH v2 1/1] Return error on corrupted metadata in start_restoring_volume functions
+Date: Tue, 9 Sep 2025 23:22:38 +0300
+Message-ID: <20250909202242.355086-1-i.abramov@mt-integration.ru>
+X-Mailer: git-send-email 2.39.5
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/1] dm-vdo: Refactor VDO_ASSERT usage in
- start_restoring_volume functions
-From: Matthew Sakai <msakai@redhat.com>
-To: Ivan Abramov <i.abramov@mt-integration.ru>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- lvc-project@linuxtesting.org
-References: <20250908222410.223574-1-i.abramov@mt-integration.ru>
- <340645fa-5c6b-4b28-bd56-63088d4705da@redhat.com>
-In-Reply-To: <340645fa-5c6b-4b28-bd56-63088d4705da@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: QB3AZN_Bjg4ebO6zlMm8tBSZ6TuwcOecbuffquHLpXQ_1757445788
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: mmail-p-exch02.mt.ru (81.200.124.62) To
+ mmail-p-exch01.mt.ru (81.200.124.61)
+X-KSMG-AntiPhishing: NotDetected
+X-KSMG-AntiSpam-Auth: dmarc=none header.from=mt-integration.ru;spf=none smtp.mailfrom=mt-integration.ru;dkim=none
+X-KSMG-AntiSpam-Envelope-From: i.abramov@mt-integration.ru
+X-KSMG-AntiSpam-Info: LuaCore: 66 0.3.66 fc5dda3b6b70d34b3701db39319eece2aeb510fb, {rep_avail}, {Tracking_phishing_log_reg_50_60}, {Tracking_uf_ne_domains}, {Tracking_from_domain_doesnt_match_to}, mt-integration.ru:7.1.1;ksmg01.maxima.ru:7.1.1;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;127.0.0.199:7.1.2;81.200.124.61:7.1.2, FromAlignment: s, ApMailHostAddress: 81.200.124.61
+X-KSMG-AntiSpam-Interceptor-Info: scan successful
+X-KSMG-AntiSpam-Lua-Profiles: 196145 [Sep 09 2025]
+X-KSMG-AntiSpam-Method: none
+X-KSMG-AntiSpam-Rate: 0
+X-KSMG-AntiSpam-Status: not_detected
+X-KSMG-AntiSpam-Version: 6.1.1.11
+X-KSMG-AntiVirus: Kaspersky Secure Mail Gateway, version 2.1.1.8310, bases: 2025/09/09 16:41:00 #27803217
+X-KSMG-AntiVirus-Status: NotDetected, skipped
+X-KSMG-LinksScanning: NotDetected
+X-KSMG-Message-Action: skipped
+X-KSMG-Rule-ID: 7
 
+The return values of VDO_ASSERT calls that validate metadata are not acted
+upon.
 
+Return UDS_CORRUPT_DATA in case of an error.
 
-On 9/9/25 2:58 PM, Matthew Sakai wrote:
-> On 9/8/25 6:24 PM, Ivan Abramov wrote:
->> There's an incorrect VDO_ASSERT macro usage in
->> start_restoring volume_index() and start_restoring_volume_sub_index(),
->> since assert's return value is not used anywhere.
->>
->> Thus, use VDO_ASSERT_LOG_ONLY macro in such cases.
->>
->> Found by Linux Verification Center (linuxtesting.org) with SVACE.
->>
->> Signed-off-by: Ivan Abramov <i.abramov@mt-integration.ru>
->> ---
->>   drivers/md/dm-vdo/indexer/volume-index.c | 8 ++------
->>   1 file changed, 2 insertions(+), 6 deletions(-)
->>
->> diff --git a/drivers/md/dm-vdo/indexer/volume-index.c b/drivers/md/dm- 
->> vdo/indexer/volume-index.c
->> index 12f954a0c532..99608f14400a 100644
->> --- a/drivers/md/dm-vdo/indexer/volume-index.c
->> +++ b/drivers/md/dm-vdo/indexer/volume-index.c
->> @@ -832,11 +832,9 @@ static int 
->> start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
->>           decode_u32_le(buffer, &offset, &header.first_list);
->>           decode_u32_le(buffer, &offset, &header.list_count);
->> -        result = VDO_ASSERT(offset == sizeof(buffer),
->> +        VDO_ASSERT_LOG_ONLY(offset == sizeof(buffer),
->>                       "%zu bytes decoded of %zu expected", offset,
->>                       sizeof(buffer));
->> -        if (result != VDO_SUCCESS)
->> -            result = UDS_CORRUPT_DATA;
-> 
-> This is not a correct fix so we should not take this.
-> 
-> This assertion (and the one below) should only fail if the stored 
-> metadata has been corrupted, but in that case we definitely need to 
-> return the error and fail the load.
-> 
-> You are correct that we don't seem to use this result, but the correct 
-> fix is to return UDS_CORRUPT_DATA when this assertion fails.
+Found by Linux Verification Center (linuxtesting.org) with SVACE.
 
-Replying to myself, feel free to correct this patch, or I can probably 
-get to posting a proper fix later in the week.
+Fixes: a4eb7e255517 ("dm vdo: implement the volume index")
+Signed-off-by: Ivan Abramov <i.abramov@mt-integration.ru>
+---
+v2: Change approach as per Matthew Sakai's <msakai@redhat.com> suggestion.
+Change subject and description accordingly. Also add Fixes tag.
 
-> Matt
-> 
-> 
->>           if (memcmp(header.magic, MAGIC_START_5, MAGIC_SIZE) != 0) {
->>               return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
->> @@ -924,11 +922,9 @@ static int start_restoring_volume_index(struct 
->> volume_index *volume_index,
->>           offset += MAGIC_SIZE;
->>           decode_u32_le(buffer, &offset, &header.sparse_sample_rate);
->> -        result = VDO_ASSERT(offset == sizeof(buffer),
->> +        VDO_ASSERT_LOG_ONLY(offset == sizeof(buffer),
->>                       "%zu bytes decoded of %zu expected", offset,
->>                       sizeof(buffer));
->> -        if (result != VDO_SUCCESS)
->> -            result = UDS_CORRUPT_DATA;
->>           if (memcmp(header.magic, MAGIC_START_6, MAGIC_SIZE) != 0)
->>               return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
-> 
+ drivers/md/dm-vdo/indexer/volume-index.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-vdo/indexer/volume-index.c b/drivers/md/dm-vdo/indexer/volume-index.c
+index 12f954a0c532..afb062e1f1fb 100644
+--- a/drivers/md/dm-vdo/indexer/volume-index.c
++++ b/drivers/md/dm-vdo/indexer/volume-index.c
+@@ -836,7 +836,7 @@ static int start_restoring_volume_sub_index(struct volume_sub_index *sub_index,
+ 				    "%zu bytes decoded of %zu expected", offset,
+ 				    sizeof(buffer));
+ 		if (result != VDO_SUCCESS)
+-			result = UDS_CORRUPT_DATA;
++			return UDS_CORRUPT_DATA;
+ 
+ 		if (memcmp(header.magic, MAGIC_START_5, MAGIC_SIZE) != 0) {
+ 			return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
+@@ -928,7 +928,7 @@ static int start_restoring_volume_index(struct volume_index *volume_index,
+ 				    "%zu bytes decoded of %zu expected", offset,
+ 				    sizeof(buffer));
+ 		if (result != VDO_SUCCESS)
+-			result = UDS_CORRUPT_DATA;
++			return UDS_CORRUPT_DATA;
+ 
+ 		if (memcmp(header.magic, MAGIC_START_6, MAGIC_SIZE) != 0)
+ 			return vdo_log_warning_strerror(UDS_CORRUPT_DATA,
+-- 
+2.39.5
 
