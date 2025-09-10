@@ -1,144 +1,94 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C60D02571A1
-	for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 17:45:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 354012D948A
+	for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 19:42:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757526336; cv=none; b=aYuJGn4JdjO9V0Ztpj35BIxlvAczdDmRU2RNHscNdXV1b6NIXnPL6ogU0CW/If3EHieWLW29q/wpwTBLmOIYSevoPrGlXUAulz5Ge8vWVFNws4bJwP9T+NBjW6N/vaUhppWfInrl9MoGwOnVwNWbWC4mdflfu3vOfUt1bgl7eC8=
+	t=1757533339; cv=none; b=cUTpvf/AN8urFZnRdKNFfYCZ3CO9KpYfHdAmek11YBeQ3jqCg5hT8n+Kmxggmu6Qp/tbRkw6nqvgZxS9P6zvDnX2bMl74ezjdKQ9n99qPvkPvZkQ+N7qWSOi1KNEhZmzZmsqD2TztXGCsk5U2Q+7schR0VDJNRQeUKRMtsCz2xc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757526336; c=relaxed/simple;
-	bh=dNOWI7gSBAR/8CDRKSX9BtwfzV+PfFdf0Quy3tkARWQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=TOM1pD3ytwPKWa49/iajDtHx3+d9BSXJlTWqZDBMTF0MCXVK4z1aqFs5yzsRphI4radRTSf8mN8DXRI7rjuWJ4V0fsj+XOORCxnDpUc1wHAvSGaQMMmuSZOLv2St8D0rvE7q3D6ubiWb9C1yM1oFG00nwX2IdG4Tma8LPu8VP3A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jTwJ2DOz; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1757533339; c=relaxed/simple;
+	bh=Q2xLzOtW1n0IRoSSdF1kmhg7xdneqEAHtNNLSu4XddA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=bEBNuPg8bHOh58S2uT5Rg40OFZVW+nNPVLQit6V1H7LSWTc2J2PT1vYIweUfEHpuZmBIH/zKMHFK5McDcYpoEjtOQEAAeGAnBxgvrKjKMX/wb9SILnjNo+UB3ju8IKniqHMLiA/raGYQ/RasxKyijQVLH++3aXzmR1A6Kw3iSUw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=azmNtlQB; arc=none smtp.client-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jTwJ2DOz"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1757526333;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=WlcFe5oCmvjN1h1Es6PI20V1rT7RlTmmj6wUjzqcp7M=;
-	b=jTwJ2DOzYqOwz4IhU3sO8Z/4mmb6el50DzR8ptdhSG5Z33V/33rNOs/7Vh6wfCLKoWg3Az
-	3TuXvKB3mZV/Usn5y+dLViHnyr92z9nZ+GksaRUBIwLDPOJXPe7k20mcyeoIgD77h977mQ
-	1VrNI3ffXJnJRK6izGCZdspv5QC8/oo=
-Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
- [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-526-7e9VmO5WM_6ea1MDyOVAqA-1; Wed, 10 Sep 2025 13:45:32 -0400
-X-MC-Unique: 7e9VmO5WM_6ea1MDyOVAqA-1
-X-Mimecast-MFC-AGG-ID: 7e9VmO5WM_6ea1MDyOVAqA_1757526331
-Received: by mail-wm1-f72.google.com with SMTP id 5b1f17b1804b1-45a15f10f31so5887445e9.0
-        for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 10:45:32 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="azmNtlQB"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-45b9bc2df29so10200885e9.0
+        for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 12:42:17 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1757533336; x=1758138136; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=AtbBQqTC0UbJS9G0wguwXe70pun0sA8T4xOQlPBLnXk=;
+        b=azmNtlQB7HEzkB2URTSut9q/ZcOnP77CnX/ZxQ6oN/n7G/Ii2dOMxpnbhW0Rten+a+
+         4TiIrBskjF4hgEVS+GvozjUADl3IXLTsPd32uPOTj/a7prHaNhQSYbJKG75LxNJftu6H
+         QSVClAE/6v/CZT+5aOejnw2wL6K/8OvkrSApC+4YeJI9SgDJ2jlVHBdVlbjHROfTrTty
+         QbCB4uWLhulAvXQKy0P0iU0VZeLix8eqyZFgXZKvrI2cKVtcYpzZrpNO37NlbSnQPeHN
+         wZGwGiSRonthXLM1GtE4JhYWq5aJX1iI8tkMncAUAq7JB4z+agS/u4/+DXiy74LPW122
+         hUIg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757526331; x=1758131131;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=WlcFe5oCmvjN1h1Es6PI20V1rT7RlTmmj6wUjzqcp7M=;
-        b=MlPvNw8q5eO4NvtcEUpXWsCcLAcz9p62h5r4gXMBhZOYvg16S4p/iDKATH2HagWzoH
-         NuSDlv0hKdSOUUy262YWHZksKQ4P9GzggJtQUoY0x+KOqT/5QmtzcqYYaqFv29uVyz/J
-         ulX2yZVt1k0cQnAoZzRqIc1sN5iE4rYDZP94Mc0/1AvELcpu+PZ/u7UTOgJrJEHPwMZa
-         blop6c6j7wwnWTmuxmd42FDGdjZ71Tr9FxKI6JsTj2PjGeg/kRnzVUdDyFWMMkufiCKW
-         K5XlRMXrC3feTcpy9cVQX33++u8vo0qMU291z7aOLQ5Wc1wZaRUzMX6nyHh9d/UNZ+k6
-         4N9A==
-X-Forwarded-Encrypted: i=1; AJvYcCWV+EJaglSH0y90YK1ARU0+XVItbC8J+e+p5POu8hG43u+J2UhxDuTTamYFeHuS2AFIyLafdzkQ9g==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxktdRshGPQU4j1n1bOMw6DkeRDX+dcBfKhv79hZsKFTErNydj8
-	ubWmz0yGlv2nSPMAS5FrDMUUCcH62/AMi1mglu4FYxPyZKwPS9BLB7bIEHLyimaKiApY2h/Tb5m
-	j3n9tUCZD1ySkkoGwLAWAMq04UZRSJ67HrZagpUUNgVG5QTsQ+d2NMLVc+umcMmMVjq3rZfA=
-X-Gm-Gg: ASbGncvUB5KBNoeSpLoFFpyX6GGWmsOLm68124dBGfj5eiK7OMZME1JJVa5lOT9Xyvq
-	ATGrt1HMweA8fCFyrkyNkOFt/PIouSJKlhKwAMCvOJo6p6B2EFxRMrQ/a/hiyWaXG0PJift67jH
-	bWo/jwJjvLVpNkqjzfElZM58lIZuGophWiQLMwm3MWxEAuWVrcIZvbR2qIvLUpMVNgeW/WCikvm
-	atiigTd2PcV0VrCoi3kU6pkIj+31xH6XjdczjKqJgTmGQBzRE+EcyU5HmFYAhNtuCfnsF9g5MTp
-	vC8b3BVgTY44P4Ze9lpz+TyD7BSAO4Js2bKYN8MnpaTE5683P5asDzyGhw==
-X-Received: by 2002:a05:600c:c098:b0:45c:b501:795c with SMTP id 5b1f17b1804b1-45dfd5e3da8mr3261825e9.10.1757526330522;
-        Wed, 10 Sep 2025 10:45:30 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IFMyl7SOy3kBxxrDvaG0ZHwpCo+23n3nT2GR9WmBKsR0hHAuXPPpMwuMAjIh8YD03Q6O8LuqA==
-X-Received: by 2002:a05:600c:c098:b0:45c:b501:795c with SMTP id 5b1f17b1804b1-45dfd5e3da8mr3261595e9.10.1757526329906;
-        Wed, 10 Sep 2025 10:45:29 -0700 (PDT)
-Received: from redhat.com (128.19.187.81.in-addr.arpa. [81.187.19.128])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45df81d20d2sm35623175e9.8.2025.09.10.10.45.29
+        d=1e100.net; s=20230601; t=1757533336; x=1758138136;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=AtbBQqTC0UbJS9G0wguwXe70pun0sA8T4xOQlPBLnXk=;
+        b=sdt+qbLWov0gJaFc1EIBlQ5KW/BnuhZNBBe2Y65b9SwuDp0fQHveALrf23k4dQiY+x
+         Xc9/XrDjLIaE75prm5LuE06/Pp/yI5Q77xuDRy69SEQN03mr2UOTh8m0pwqEh/dX4mGw
+         N7YhYkjLB6oUstFBexIOYiTG3Zp79Fa66QwHGedpr6jtJza/qtU2GICo0FrcgPZPoY+s
+         pIGqESQx8p2uRbP5fGZAlxMDWsDOcq1cyWk6jG4D+AYh2tRjyp7q6rTwxJsyn9MEFM+c
+         9+n3ZgkssXuQw45ACMVVw6yo+2AehyVdSUc6JwFo1IFmag+65sOBplamHfWMgtMECIwg
+         0Yog==
+X-Forwarded-Encrypted: i=1; AJvYcCXspMfEnr5ed2WBNcZ85QQ9kpEn++V+Bakf2QF19v/8ccmGXX0IVieJEX0Uj2w8q8znTBDX7I2jQQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YygDZTIf+98EnEmYhmiZVwNMk4qeZX6ex3fvwuEBv0c+d4ENKT0
+	qopiYsJXtKJtPpSNsM9fGiMVSx7GiO6zq9vc0r0DFI8KQNe/g0Jt3uo=
+X-Gm-Gg: ASbGncvA8lIEUfvvllCfFZJp/OUyaTfkrB8TkKi97Pw5q0PN1wDZy9PtQ7PtLUN/eUe
+	bDUgOAPb2GWc+5UTI1eLLrgcZXYkzZ8QhBda4zfIsFZGyMtuTkB56+q0V7fWN0zpajEQNUoZXBQ
+	pdHd37h4RA5/xFz/mxO99DRR9D9hUAnzXU7W7bhrBZDyQAUSvysG9kkqa2ldWCPffsiM/6Tjsjs
+	AmhdOB8h2arPYLlC0RDtFhjEUPJLhZtEzKEnSfF6jr2IiiK2pDb5ciH3d6TjJKfBp8/1DD7KkiT
+	VkI9ouLANYu306VWqwaAT8giELdMazHz4a0XdbHyai2v6L2L0Zm7zxa2H2TERKnZcKza0UNSoMh
+	r1vH4xT0dyzZJIgMVJVZdGF2ki8kZu6rYnIzyOa1+bEUtWcYLa0I3IhVvSvLg
+X-Google-Smtp-Source: AGHT+IEDpwxWCDd0WhelVNutJx3LxN0uC7yWQLIvbTW242qHzmsCPqpgl9T9y+KysI6GGRt9N98hlA==
+X-Received: by 2002:a05:600c:c4a5:b0:45b:71fc:75cb with SMTP id 5b1f17b1804b1-45df909a155mr14030185e9.5.1757533336037;
+        Wed, 10 Sep 2025 12:42:16 -0700 (PDT)
+Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45df81c72c7sm39505265e9.4.2025.09.10.12.42.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Sep 2025 10:45:29 -0700 (PDT)
-Date: Wed, 10 Sep 2025 18:45:27 +0100
-From: "Bryn M. Reeves" <bmr@redhat.com>
-To: Robert Beckett <bob.beckett@collabora.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel <dm-devel@lists.linux.dev>,
-	linux-block <linux-block@vger.kernel.org>,
-	kernel <kernel@collabora.com>
-Subject: Re: deadlock when swapping to encrypted swapfile
-Message-ID: <aMG5N4nG58GHrE7K@redhat.com>
-References: <1992a9545eb.1ec14bf0659281.6434647558731823661@collabora.com>
- <2d517844-b7bf-3930-e811-e073ec347d4a@redhat.com>
- <1992f628105.2bf0303b1373545.4844645742991812595@collabora.com>
- <a7872ca2-be14-0720-190c-c03d4ddf7a5d@redhat.com>
- <199343ab2a7.11b1e13e161813.4990067961195858029@collabora.com>
+        Wed, 10 Sep 2025 12:42:14 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 0/3] multipath-tools: add new devices to hwtable
+Date: Wed, 10 Sep 2025 21:41:56 +0200
+Message-ID: <20250910194205.145919-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <199343ab2a7.11b1e13e161813.4990067961195858029@collabora.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: X5SWJoMgcVb7dwLVjGRbGl80x0bt8fesZq6vh8sG_6E_1757526331
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-On Wed, Sep 10, 2025 at 04:24:46PM +0100, Robert Beckett wrote:
-> I see that dm-loop is very old at this point. Do you know the rationale for rejection?
-> was there any hope to get it included with more work?
-> If the main objection was regarding file spans that they can't gurantee persist, maybe a new fallocate based
-> contrace with the filesystems could aleviate the worries? 
+Xose Vazquez Perez (3):
+ multipath-tools: add Acronis Cyber Infrastructure to hwtable
+ multipath-tools: add EqualLogic PS to hwtable
+ multipath-tools: add QSAN to hwtable
 
-Right: I first wrote it back in 2006. When it fimally made it onto a
-mailing list in 2008 the concerns were basically threefold: "why is DM
-reinventing everything?", the borrowing of the S_SWAPFILE flag to keep
-the file mapping stable while dm-loop goes behind the filesystem's
-back, and the greedy population of the extent table (lazily filling the
-extent table reduces start up time and the amount of pinned memory, but
-has the drawback that the target needs to allocate memory for unmapped
-extents while it is running, reintroducing the possibility of deadlock
-in low memory situations).
+ libmultipath/hwtable.c | 33 +++++++++++++++++++++++++++++++++
+ 1 file changed, 33 insertions(+)
 
-Most of the interesting discussions happened in this thread after Jens
-posted an RFC patch taking a similar approach for /dev/loop:
-
-  https://lkml.iu.edu/hypermail/linux/kernel/0801.1/0716.html
-
-This used a prio tree instead of a simple table and binary search.
-
-There have been various different approaches proposed down the years but
-none have made it to mainline to date. I wrote one in 2011 that
-refactored drivers/block/loop.c so that it could be reused by
-device-mapper: that seemed like it might be more acceptable upstream but
-we didn't pursue it at the time (it also removes the main benefit for
-your case, since it uses the regular loop.c machinery for IO).
-
-The version Mikulas posted is most closely related to a version I was
-working on in 2008-9:
-
-  https://www.sourceware.org/pub/dm/patches/2.6-unstable/editing/patches-2.6.31/dm-loop.patch
-
-Which is the one discussed in the thread above - I think roughly the
-same objections exist today.
-
-(historical note - dmsetup still has code to generate dm-loop tables if
-symlinked to the name 'dmlosetup' or 'losetup':
-
-  # dmlosetup 
-  dmlosetup: Please specify loop_device.
-  Usage:
-  
-  dmlosetup [-d|-a] [-e encryption] [-o offset] [-f|loop_device] [file]
-  
-  Couldn't process command line)
-
-Regards,
-Bryn.
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+-- 
+2.51.0
 
