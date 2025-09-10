@@ -1,119 +1,152 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B68D82D8DAA
-	for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 19:42:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C3913FE7
+	for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 22:58:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757533346; cv=none; b=m0e8Ne1hg0U8DHtjPii4vktopG7qyZRGz/IrCsKrMAnjqC/AL3Qwslgv8hCucSsUzVLPLS1MBbbyI9KyhO4VZmHmdaBGQsFL3AWXujVh3rh03zC3O47Rwwahc7P1JxiTnrRSJabRdCywfncnws2/kDvm4ehEaxKutFSYkA3b/GQ=
+	t=1757545100; cv=none; b=FQ9PcytCSv5BEGKfoCH03qS5/65IPGsLkTOW4YpZFPKZYOyEaVbpt92IDpR8GzKbqMbdrptc16d89G+c9Elzz2hCx3OlN3AXy1gjeSZSDLPevu0zZFpRpYRftJILfKj7WTbWsARqBbcMY/flGVD2guesjUMn9Am/fIvN23yHj4Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757533346; c=relaxed/simple;
-	bh=ME80zHgOaAVwkx4tjj9Xww+oOgwGcuaB5do5GjZA6pA=;
+	s=arc-20240116; t=1757545100; c=relaxed/simple;
+	bh=YJyLXTKyA8TdPbarLrSA6auNX7+A8ObtIb8sABfiVo8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ud9WCyia+88w8y1Ha6+Xt/7a2ySGasYuoYh883PioIy32hq4JCLuO3FqTdO5t3k7FUT529j9+ggfeHinPocFdn8HMC7EcuVbU9nc83yAt43JLxEKBjhDCBFVXDqExQxBYSArZQL+Bfn1goK16H2s57Q4vXHJ+P/5ZsD7Yqm4zvk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=We4QugTj; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 MIME-Version:content-type; b=TyE8LBfE8nxQJo1h+7azzTWBHFNAKb+TTG/Ajw4E5pw6HHIcobWalMCv42W2e3kc5MapUDd67l3rD5EUouX1VkqXWyWrLInpqMB4sol7hLwrZkqR9vKrpTeeOWAAJGqoNpydw2Cl1jv84oMKRuW79k8hjKb3XpBG1XIuOf0G7BA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WufZw+4d; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="We4QugTj"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-45dec4289f0so1671705e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 12:42:24 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757533343; x=1758138143; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=eorexIkUM3X9pJjoHXtxVsQXMCaesHbb1QaHvf0aKVI=;
-        b=We4QugTj46j5+HDKLj7uVp0mYZgKDYJMxZyE5otPSk8ThX8JieFktbqB7thWgeojxE
-         8i7FzhXWFoTDwoBLqLZ4Gwp4k66rI+oJp7vc0CNDefvYrOPrbFqnLxsxtuZ1oz1Wth9n
-         gH2was/ZIo64RgrP65fdJ+tQw5craMgTgAm6ojkKqy1givdMEdwbocvLpQsF5VqxMDaD
-         ANKmc1AZjpYE0gO3uuHzZ1UEhV95ZTEndx/ZYWModv9kxGb9LIvgo+noJyOd8W0o8g/J
-         lj29RIBXp6yM7Mbx05zWFrkYQc2/TEvZn8875OcobiO+sjeithkR11rRDhcYrsN3zlcA
-         nkyQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757533343; x=1758138143;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=eorexIkUM3X9pJjoHXtxVsQXMCaesHbb1QaHvf0aKVI=;
-        b=mhyvkNxA1sUFNH9Mej0qv0vWYg6Yc+GktVmy/vHKmyXu31mIrTx6fYgV0SqITwRPqe
-         cZtZXTd9NA1W2RVVtZalsS4TMRoJq98o07iC+XOxd+Q5HbDWllI7pX2Lo2KyJfO5fZ79
-         L6yUXF9GNi95/oXcSTGsiak03u1E5v0vf8iXkNds36kWRe3OKc2dIsWVSmyoZnWpM6lV
-         jqtq1v7uLg1YR+do18h2/AGicBpvVjXZRzlaTVpDm7Ym3fOEnSVxzSrfJPdLJJsr9r22
-         5A6XlSB1OwR2uPu/9hx705eVbnZ0DZAmOj2ftN5NX89l4x5P58GQR0lsEeGOyqeFtl9w
-         7iGg==
-X-Forwarded-Encrypted: i=1; AJvYcCVZDBZgNPuFlaK6AQu+jbyL1mqpi+2VNrS+FoDNCa5z9YkM3BS6Uhzj9W/9GWdbKj8UdA8EGOPI7w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxCalRPO3SI2szz9JchWOeVrOdhHzXOwrnywpZuTEU/kQod6QCk
-	DYHfLKb1J9zzyzmZg9Vbujo4CiUpMP67Dr0pQX78hMV899GaY6++uN4=
-X-Gm-Gg: ASbGncvizugbShmKsRyIwjgGoHF4+e//fDpcx1JrRIoy64Xe/ggMkJ5TUwYP+rycUO7
-	DTvvrtQJMOXG7wB6X94F4CjXmlRBFLEkp/uNWf1LtK8PGo29L6L8EG+pkjZWeppJXIiTjI6dRy+
-	t/sDy7Bt3x/9cmcuVchWs6tu/WEJ7C0JtFYn6htFuUWAekNPIAzH3UCiM53Cim87bHVYg2xQo67
-	y6+8UZMl1+VHCqh1ijbq/brr1oYk5hNmQ2LTa8wuDh2SahgyHJtXA31uInG/IAPhjuPkBcRg1G3
-	iYPa6BMksXVZWBsQno8M7/mV4/sKWRRTS5hkXjY0/zLrrFT94610V5o19oO/8z4b2dHf7MLccX5
-	azwEm9OSrM3kd+NvOeF9PrBuWq3YYMNo+zuVXnscbP8m2P6kf2X85ag2q4iBqTIrOV14cs38=
-X-Google-Smtp-Source: AGHT+IHTgld25PKNSxA24FN0t8rONWVAn5jDpkub37uNhkKUmQkcFEQvvkeHHIH9Ahlrijaa+4eFQg==
-X-Received: by 2002:a5d:5f96:0:b0:3c9:774f:6484 with SMTP id ffacd0b85a97d-3e642027566mr6794278f8f.5.1757533342883;
-        Wed, 10 Sep 2025 12:42:22 -0700 (PDT)
-Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-45df81c72e0sm44719525e9.3.2025.09.10.12.42.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 10 Sep 2025 12:42:21 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 3/3] multipath-tools: add QSAN to hwtable
-Date: Wed, 10 Sep 2025 21:41:59 +0200
-Message-ID: <20250910194205.145919-4-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20250910194205.145919-1-xose.vazquez@gmail.com>
-References: <20250910194205.145919-1-xose.vazquez@gmail.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WufZw+4d"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1757545097;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vMS9X8T8/YOc5xYBFnDhcb1cFqxfJyr9GOn9MUcHOrs=;
+	b=WufZw+4dFYgOWq2NtU/bQS41YCa1+L57mQVj5qdy5nlb3WccgtgMnc+CsN7Al04MUVxpE9
+	WCqYq40G0AjXFdywLTqyywwuQmR/yEs9bGiJ/8ovp55HBdpdgFQ7aHuxuQVkvD8w+5oKTY
+	f9nXhUjv7OxwEvCmuPg7mdYKTm8vKkQ=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-219-u6sLRWT6PAOoY2eTRju0Pg-1; Wed,
+ 10 Sep 2025 18:58:15 -0400
+X-MC-Unique: u6sLRWT6PAOoY2eTRju0Pg-1
+X-Mimecast-MFC-AGG-ID: u6sLRWT6PAOoY2eTRju0Pg_1757545095
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AF3051955F3D;
+	Wed, 10 Sep 2025 22:58:14 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 586DB19560B8;
+	Wed, 10 Sep 2025 22:58:14 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 58AMwDiQ829866
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 10 Sep 2025 18:58:13 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 58AMwDKI829865;
+	Wed, 10 Sep 2025 18:58:13 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 2/2] libmpathpersist: handle preempting all registrants reservations
+Date: Wed, 10 Sep 2025 18:58:12 -0400
+Message-ID: <20250910225812.829847-3-bmarzins@redhat.com>
+In-Reply-To: <20250910225812.829847-1-bmarzins@redhat.com>
+References: <20250910225812.829847-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: bvcillFMKeRBEuAj0Fh8zkeh228ijiIz2qhYaH_Rgsw_1757545095
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Source #13/15: https://www.qsan.com/data/dl_files/qs_wp_iSCSI-MPIO-in-Linux%20(en).pdf
+All Registrants reservations (types 7 and 8) are held by key 0x0. When
+preempting one, all registrations are cleared, except for the one on the
+path that issued the PREEMPT. libmpathpersist needs to handle this just
+like the other cases of self-preemption, so that all the paths of the
+preempting multipath device have their registrations restored while the
+device is suspended.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/hwtable.c | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ libmpathpersist/mpath_persist_int.c | 31 +++++++++++++++++++++++++----
+ 1 file changed, 27 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 80e76fed..d9723f87 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1393,6 +1393,18 @@ static struct hwentry default_hw[] = {
- 		.flush_on_last_del = FLUSH_ALWAYS,
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 	},
-+	/*
-+	 * QSAN
-+	 */
-+	{
-+		// XF / XCubeFAS / XCubeSAN / XN / XCubeNXT Series
-+		.vendor        = "^Qsan",
-+		.product       = ".*",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.no_path_retry = 30,
-+		.prio_args     = "exclusive_pref_bit",
-+	},
- 	/*
- 	 * EOL
- 	 */
+diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
+index 9f301859..ab3d70cd 100644
+--- a/libmpathpersist/mpath_persist_int.c
++++ b/libmpathpersist/mpath_persist_int.c
+@@ -569,8 +569,9 @@ static int mpath_prout_reg(struct multipath *mpp,int rq_servact, int rq_scope,
+  * is suspended before issuing the preemption, and the keys are reregistered
+  * before resuming it.
+  */
+-static int preempt_self(struct multipath *mpp, int rq_servact, int rq_scope,
+-			unsigned int rq_type, int noisy, bool do_release)
++static int do_preempt_self(struct multipath *mpp, struct be64 sa_key,
++			   int rq_servact, int rq_scope, unsigned int rq_type,
++			   int noisy, bool do_release)
+ {
+ 	int status, rel_status = MPATH_PR_SUCCESS;
+ 	struct path *pp = NULL;
+@@ -583,7 +584,7 @@ static int preempt_self(struct multipath *mpp, int rq_servact, int rq_scope,
+ 	}
+ 
+ 	memcpy(paramp.key, &mpp->reservation_key, 8);
+-	memcpy(paramp.sa_key, &mpp->reservation_key, 8);
++	memcpy(paramp.sa_key, &sa_key, 8);
+ 	status = mpath_prout_common(mpp, rq_servact, rq_scope, rq_type,
+ 				    &paramp, noisy, &pp);
+ 	if (status != MPATH_PR_SUCCESS) {
+@@ -619,6 +620,21 @@ fail_resume:
+ 	return (rel_status != MPATH_PR_SUCCESS) ? rel_status : status;
+ }
+ 
++static int preempt_self(struct multipath *mpp, int rq_servact, int rq_scope,
++			unsigned int rq_type, int noisy, bool do_release)
++{
++	return do_preempt_self(mpp, mpp->reservation_key, rq_servact, rq_scope,
++			       rq_type, noisy, do_release);
++}
++
++static int preempt_all(struct multipath *mpp, int rq_servact, int rq_scope,
++		       unsigned int rq_type, int noisy)
++{
++	struct be64 zerokey = {0};
++	return do_preempt_self(mpp, zerokey, rq_servact, rq_scope, rq_type,
++			       noisy, false);
++}
++
+ static int mpath_prout_rel(struct multipath *mpp,int rq_servact, int rq_scope,
+ 			   unsigned int rq_type,
+ 			   struct prout_param_descriptor * paramp, int noisy)
+@@ -889,8 +905,15 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
+ 		break;
+ 	case MPATH_PROUT_PREE_SA:
+ 	case MPATH_PROUT_PREE_AB_SA:
+-		if (reservation_key_matches(mpp, paramp->sa_key, noisy) == YNU_YES)
++		if (reservation_key_matches(mpp, paramp->sa_key, noisy) == YNU_YES) {
+ 			preempting_reservation = true;
++			if (memcmp(paramp->sa_key, &zerokey, 8) == 0) {
++				/* all registrants case */
++				ret = preempt_all(mpp, rq_servact, rq_scope,
++						  rq_type, noisy);
++				break;
++			}
++		}
+ 		/* if we are preempting ourself */
+ 		if (memcmp(paramp->sa_key, paramp->key, 8) == 0) {
+ 			ret = preempt_self(mpp, rq_servact, rq_scope, rq_type,
 -- 
-2.51.0
+2.50.1
 
