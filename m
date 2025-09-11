@@ -1,86 +1,69 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83458303C85
-	for <dm-devel@lists.linux.dev>; Wed, 10 Sep 2025 22:58:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 32AEA4503B;
+	Thu, 11 Sep 2025 04:46:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757545102; cv=none; b=AYwTioelRThuyB1WgYAzywNPaxQf+y58QWygkMAg5BBIjOJRIsI+O41lHbCvuUQsf+houMSPnu4yZmcE6qcom9AOf7UJ+6ULB5sMfQBQt7n3Ik4rky4snliU9GiIfyMfhz2jES3iKdwPU0jcs7ksNfrRb3+EjjhfJgD8we3nHUY=
+	t=1757566018; cv=none; b=fQU5Vu3MLTY174+L+eif39UOvGPY2s5UWZ8IdZdR4Bnu6e0iAEFmU2jGUCCSXibQfhrCfpV4YTl+lgwONbHTTOiAhtzLv8JYjJ+bOQtRzEraYpKSPmCjA+BMETUyvpakfgLKr9TjDSTu3hGJwH6l0VZBxRVjU0O33r+1ycoqfKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757545102; c=relaxed/simple;
-	bh=ayPptgbA4ZbnDOXyYv38ci/nJAV4YLUMUx6lQClMaUA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=fh61KFT60RJ6wRKd8wD3+PAGFSIk4n+5oHOPAOtbp6SDFruThkA/h16a081A7NMvXDUQnO09G5xKjd+atUo6t6i52p+z0Ni8BfSm1vS9NsWU/kxsO6H4ZygZ/Ayku1fm92WzCSV5dkguI9h1xLltEa4XOE/z/+yBZ+heyhM5t38=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MItDoD+V; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1757566018; c=relaxed/simple;
+	bh=+AaezXRAaXomHaC2FC9YNy6Kl9xfSCRU4DimubtKqqI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=iWOxHfDtDYgO1eZLqoWDaNvQkoqqSV5radtbIczQ9tU2ycAtPoCLFP7GLGepe+6l2OLnz36KcbvOxbjxmaSY8ggXJn3ymRwi/fFbM5m2Uu6zu/ZiTxfhIJesYoVKv0QXEBQ+8H48XK3x19IrA+cnABXIkmdeXb9U5RRf76+N+Gs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=jALFbp11; arc=none smtp.client-ip=180.181.231.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MItDoD+V"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1757545099;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=WhtMV3oL7DcVA3eBymO6SMxsHSf9gwjcpT9CRa792Dw=;
-	b=MItDoD+VKXxzyeVIW7woIDAHNI9XxZkGozuAOqNNyWQFt9fUMlPW0IWz1X5FX0ceCA9jdg
-	L84It7bH4oRxYfEE1u+CX1avA+iRTNJqmszoAjAXN5i/X4Wj3G0seR5vXILMRTBhzgLuU0
-	ltrq904kWnnMrphTGBUUA4MM8oMq5Zk=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-350-auVGnSCeMi2-kwNKw8-gpA-1; Wed,
- 10 Sep 2025 18:58:16 -0400
-X-MC-Unique: auVGnSCeMi2-kwNKw8-gpA-1
-X-Mimecast-MFC-AGG-ID: auVGnSCeMi2-kwNKw8-gpA_1757545095
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CA7281800365;
-	Wed, 10 Sep 2025 22:58:14 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5F433180035E;
-	Wed, 10 Sep 2025 22:58:14 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 58AMwCYM829858
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 10 Sep 2025 18:58:12 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 58AMwC6o829857;
-	Wed, 10 Sep 2025 18:58:12 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 0/2] libmpathpersist: two final fixes
-Date: Wed, 10 Sep 2025 18:58:10 -0400
-Message-ID: <20250910225812.829847-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="jALFbp11"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
+	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+	List-Post:List-Owner:List-Archive;
+	bh=kgQJEDzVoS/E6CHGtCTx6K8B0soRWlIV0PKYS2W5y8M=; b=jALFbp11Y/yk/R/HIkEEPcy/M2
+	wg25mFk/EU4Q+D1QJTMkCx02A6G7TtTxrdCoXMPFr2hbOEu7J3DwTeVgoBzGyZF2bMUiS1zFA4+KB
+	z2CfMF7JJMwP0cSaq2LWYuESaXPCvm6m45IlwB/Y3ip7aZfxLgigFXT3pei3QSrgbNcKot41lBvUq
+	LYChecFkwXZZ/szakn3fxBOZWeXzZDmwYpfLTCT7tbzFUKjmruuXlt/lH0t0q8Hu80VKD9kvdQqih
+	FfSMWPLxvYyXJl6Hp7XQNR9AfICkMVigOehmPHSkaDvOrDa3EkWoLb7Q31ntNGVaArmgfvOzwu1OJ
+	Ok1ceILQ==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1uwYxK-004R1U-0Z;
+	Thu, 11 Sep 2025 12:46:43 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 11 Sep 2025 12:46:42 +0800
+Date: Thu, 11 Sep 2025 12:46:42 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Harald Freudenberger <freude@linux.ibm.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: crypto ahash requests on the stack
+Message-ID: <aMJUMo9CtPi1Z62N@gondor.apana.org.au>
+References: <94b8648b-5613-d161-3351-fee1f217c866@redhat.com>
+ <b20529cc85868607dbec25489daa0404@linux.ibm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: KryNLD23rCf7ncNv93AjWwXLeCaeAjVdJ4faCngH_LE_1757545095
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <b20529cc85868607dbec25489daa0404@linux.ibm.com>
 
-These patches take care of a corner case where changing a registered key
-can race with a path getting restored and a make peempting work
-correctly with All Registrants type reservations.
+On Tue, Sep 09, 2025 at 04:01:45PM +0200, Harald Freudenberger wrote:
+>
+> The problem with this 'on the stack' is also with the buffer addresses.
+> The asynch implementations get scatterlists. By playing around there,
+> I found out that the addresses in scatterlists are checked:
 
-Benjamin Marzinski (2):
-  libmpathpersist: handle updating key race condition
-  libmpathpersist: handle preempting all registrants reservations
+Right.  If we ever move to iov_iter this could be supported but
+for now dynamic allocation is fine.
 
- libmpathpersist/mpath_persist_int.c | 31 +++++++++++++++++++++++++----
- libmultipath/prkey.c                | 16 +++++++++++++--
- libmultipath/structs.h              |  1 +
- multipathd/main.c                   | 12 ++++++++++-
- 4 files changed, 53 insertions(+), 7 deletions(-)
-
+Thanks,
 -- 
-2.50.1
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
