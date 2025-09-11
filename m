@@ -1,113 +1,150 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 34BF43705AA
-	for <dm-devel@lists.linux.dev>; Thu, 11 Sep 2025 17:57:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F3822F49E5
+	for <dm-devel@lists.linux.dev>; Thu, 11 Sep 2025 23:03:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757613453; cv=none; b=DRODj5SN+vkhg+cmZUzT47cKSK/pAVOEOQc4YccXlX0ebusNpwsdqls9/aoPkLGGx8CYVBe5ItkaGtO0UUN0I+qLkPjGNvJ3JjuKl4WSpEYzYy4ihkdk0r3jmf1CKJ1u8nhmDyyoBQ183B82ConcgWvsusUVI+L5y6EGYsbpw1s=
+	t=1757631833; cv=none; b=jFKkD90Oh/LfZn7ygDJ6y8xgbx+927sR6JQKQ0pdCdOB833Ha2ENhKmZhJaNGWwswyVdKRh2Igpe7pCaffOapD/XJfSiX30RNTtMhCcUhGCjxiYgjQIhQ154HqKvoRBdTvoLcbijh0tBzWxksF+2Fb/Ji7UU2dd9kVuDEeb9h38=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757613453; c=relaxed/simple;
-	bh=ALKi7Epw60xFH+eiBppEbmRRayO8CPry2d/tIxZgO2Y=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=dhiLDlVc199Nll/JxdrYLJFsMU+Z/+4EeoYNE+pD0Tha1q9kpxFr639a8Y9zV1d8coJKAvmPuO9u3Tf8tjVagoXioW1uMRJMVGJ6wfavmMs3lvyKnTs1UbyNFCRmjl9GSl/br9jZkLb/gqDQ41AkaInDsWTozeEu/9dCSTf8C0g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QAEmZ16S; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1757631833; c=relaxed/simple;
+	bh=EYuTurq2ZVkh18AXuaEYbFntOqHluv+ypBw1ZLq69Wk=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=f5Uyqgeyisc+Z+SZIM96qfS1p84857InAmamxcS8zP7auTUVAA6OuGWI5h7Zck9WHlNkz38t5+hW61dIddYady7fuQZ9XICUG8QtUt7TMWBjlS7cvtXY6PydffC6s3J+qCJ1QYckbpigpqdEY2Hh8g+HD/zjV+X3Hi/Wudw2egk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=kZAuF8IU; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QAEmZ16S"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1757613451;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ZL2s6gwJnpP69LQbRmflbJhSMI6o2Gc8xTWaaCoibak=;
-	b=QAEmZ16Sbe8Aavsb8749eQGgq1AvwIk2rQJKllaFo/BtKtnmuYD2gJSzlxGQ3ogOYYkGdH
-	BwAySQ1Dgfu6SgUAqIQjS8xl6L/RlNNN35hZdbKcD1blIQqzfXNgxNuAFBSeh8xhBqRCWE
-	5+shHyR2U9JxvrBksyzHLKRyQx3n86M=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-359-25TvytukOx-_KPDZTeawgA-1; Thu,
- 11 Sep 2025 13:57:25 -0400
-X-MC-Unique: 25TvytukOx-_KPDZTeawgA-1
-X-Mimecast-MFC-AGG-ID: 25TvytukOx-_KPDZTeawgA_1757613444
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E23C2180057C;
-	Thu, 11 Sep 2025 17:57:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9007319560B1;
-	Thu, 11 Sep 2025 17:57:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 58BHvMj7858204
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 11 Sep 2025 13:57:22 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 58BHvMNK858203;
-	Thu, 11 Sep 2025 13:57:22 -0400
-Date: Thu, 11 Sep 2025 13:57:22 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Martin Wilck <mwilck@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH 3/3] multipath-tools: add QSAN to hwtable
-Message-ID: <aMMNgi_w9YsneYKj@redhat.com>
-References: <20250910194205.145919-1-xose.vazquez@gmail.com>
- <20250910194205.145919-4-xose.vazquez@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="kZAuF8IU"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E6864C4CEF0;
+	Thu, 11 Sep 2025 23:03:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1757631832;
+	bh=EYuTurq2ZVkh18AXuaEYbFntOqHluv+ypBw1ZLq69Wk=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+	b=kZAuF8IUqqipBO26dkXQqCMBEMBc7EDkcQ+ZIOkoVmQWnv4JVU/keApBjeq/EWLgg
+	 Q1TRxswu7DdMjvMFKkBEUgI7DU9KRJ3kzdjw09Fqh6NUK9Fl8TuCM0OLRAdQ+NeyBO
+	 j0U3Lihb/TLj2lVE+2kPWfso5LuHG6595cS2Zm+C4y1Q4dcRuawf7ruLQPLBN/vBbQ
+	 WqFIRcTJV+5OYh4dkF+yDnkpoFnDj8am9un728YU0dgejJu3rD+BwUIU5pqwy84WMl
+	 aU3EGnl2FDeT3tUGHAXfDtWacWrEC0b+MugNDEfo/rviM+3bQ6xxdYTkZCuNfa1Rig
+	 gyCD11eJeRmMA==
+Message-ID: <4f959ea8-b3c2-402d-9777-48abdc488ba7@kernel.org>
+Date: Fri, 12 Sep 2025 08:03:50 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20250910194205.145919-4-xose.vazquez@gmail.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: JxnSbbc5P8b4nyE1WABfZ4Qy6-_yquLm1ljvd0Zq5IM_1757613444
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2] dm: Preserve the order of REQ_PREFLUSH writes
+To: Bart Van Assche <bvanassche@acm.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Alasdair Kergon <agk@redhat.com>
+References: <20250910172742.187645-1-bvanassche@acm.org>
+Content-Language: en-US
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <20250910172742.187645-1-bvanassche@acm.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Wed, Sep 10, 2025 at 09:41:59PM +0200, Xose Vazquez Perez wrote:
-> Source #13/15: https://www.qsan.com/data/dl_files/qs_wp_iSCSI-MPIO-in-Linux%20(en).pdf
+On 9/11/25 02:27, Bart Van Assche wrote:
+> The dm core splits REQ_PREFLUSH bios that have data into two bios.
+> First, a REQ_PREFLUSH bio with no data is submitted to all underlying
+> dm devices. Next, the REQ_PREFLUSH flag is cleared and the same bio is
+> resubmitted. This approach is essential if there are multiple underlying
+> devices to provide correct REQ_PREFLUSH semantics.
+
+The same can be said if there is a single underlying device.
+
+> Splitting a bio into an empty flush bio and a non-flush data bio is
+> not necessary if there is only a single underlying device. Hence this
+> patch that does not split REQ_PREFLUSH bios if there is only one
+> underlying device.
+
+Why is it not necessary ? You are not giving any justification/explanation of
+that here, which makes your patch impossible to review.
+
+I suspect it is because this will be handled by the flush machinery during the
+submit_bio() to the underlying device ? But if that is the case, why is it a
+problem with multiple devices ? The same block layer flush machinery will handle
+that preflush write for all devices.
+
 > 
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+> This patch preserves the order of REQ_PREFLUSH writes if there is only
+> one underlying device and if one or more write bios have been queued
+> past the REQ_PREFLUSH bio before the REQ_PREFLUSH bio is processed.
+> 
+> Cc: Mike Snitzer <snitzer@kernel.org>
+> Cc: Damien Le Moal <dlemoal@kernel.org>
+> Signed-off-by: Bart Van Assche <bvanassche@acm.org>
 > ---
->  libmultipath/hwtable.c | 12 ++++++++++++
->  1 file changed, 12 insertions(+)
 > 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 80e76fed..d9723f87 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1393,6 +1393,18 @@ static struct hwentry default_hw[] = {
->  		.flush_on_last_del = FLUSH_ALWAYS,
->  		.no_path_retry = NO_PATH_RETRY_QUEUE,
->  	},
-> +	/*
-> +	 * QSAN
-> +	 */
-> +	{
-> +		// XF / XCubeFAS / XCubeSAN / XN / XCubeNXT Series
-> +		.vendor        = "^Qsan",
-> +		.product       = ".*",
-> +		.pgpolicy      = GROUP_BY_PRIO,
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.no_path_retry = 30,
-> +		.prio_args     = "exclusive_pref_bit",
-> +	},
->  	/*
->  	 * EOL
+> Changes compared to v1:
+>  - Made the patch description more detailed.
+>  - Removed the reference to write pipelining from the patch description.
+> 
+>  drivers/md/dm.c | 16 ++++++++++------
+>  1 file changed, 10 insertions(+), 6 deletions(-)
+> 
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index 66dd5f6ce778..d0791eef21f7 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -490,9 +490,13 @@ u64 dm_start_time_ns_from_clone(struct bio *bio)
+>  }
+>  EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
+>  
+> -static inline bool bio_is_flush_with_data(struct bio *bio)
+> +static inline bool bio_is_flush_with_data(struct mapped_device *md,
+> +					  struct bio *bio)
+>  {
+> -	return ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size);
+> +	guard(rcu)();
+> +
+> +	return bio->bi_opf & REQ_PREFLUSH && bio->bi_iter.bi_size &&
+> +	       ((struct dm_table *)rcu_dereference(md->map))->num_targets > 1;
+>  }
+>  
+>  static inline unsigned int dm_io_sectors(struct dm_io *io, struct bio *bio)
+> @@ -501,7 +505,7 @@ static inline unsigned int dm_io_sectors(struct dm_io *io, struct bio *bio)
+>  	 * If REQ_PREFLUSH set, don't account payload, it will be
+>  	 * submitted (and accounted) after this flush completes.
 >  	 */
-> -- 
-> 2.51.0
+> -	if (bio_is_flush_with_data(bio))
+> +	if (bio_is_flush_with_data(io->md, bio))
+>  		return 0;
+>  	if (unlikely(dm_io_flagged(io, DM_IO_WAS_SPLIT)))
+>  		return io->sectors;
+> @@ -976,7 +980,7 @@ static void __dm_io_complete(struct dm_io *io, bool first_stage)
+>  	if (requeued)
+>  		return;
+>  
+> -	if (bio_is_flush_with_data(bio)) {
+> +	if (bio_is_flush_with_data(md, bio)) {
+>  		/*
+>  		 * Preflush done for flush with data, reissue
+>  		 * without REQ_PREFLUSH.
+> @@ -1715,7 +1719,7 @@ static void dm_queue_poll_io(struct bio *bio, struct dm_io *io)
+>  }
+>  
+>  /*
+> - * Select the correct strategy for processing a non-flush bio.
+> + * Select the correct strategy for processing a bio.
+>   */
+>  static blk_status_t __split_and_process_bio(struct clone_info *ci)
+>  {
+> @@ -1996,7 +2000,7 @@ static void dm_split_and_process_bio(struct mapped_device *md,
+>  	}
+>  	init_clone_info(&ci, io, map, bio, is_abnormal);
+>  
+> -	if (bio->bi_opf & REQ_PREFLUSH) {
+> +	if (bio->bi_opf & REQ_PREFLUSH && ci.map->num_targets > 1) {
+>  		__send_empty_flush(&ci);
+>  		/* dm_io_complete submits any data associated with flush */
+>  		goto out;
 
+
+-- 
+Damien Le Moal
+Western Digital Research
