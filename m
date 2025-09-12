@@ -1,136 +1,214 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0839A28DC4
-	for <dm-devel@lists.linux.dev>; Fri, 12 Sep 2025 18:21:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A21FB223316
+	for <dm-devel@lists.linux.dev>; Fri, 12 Sep 2025 19:56:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757701317; cv=none; b=Hd71mIO+1JrT7JT0t4boSrmMGOe6Doj+fpW5dvz0ece5n1RFdUf4DBXpdDDW4W7L6Oxnxn859aV/GND7jd9b1G6Q2tegsPqViCwLfn703TOpE5b5lPuj2JlFuzR442DoxFV6mxeva8t/YmNqFrJw29+WPukdQVJIINW9kfSuaFY=
+	t=1757706993; cv=none; b=giYigt9zb6/aucKiQufA28OYuIAEjsNVQyxiYJLpgPOcGH8OLRudYVl1Tg4mBs3N7owWeUECmH/DUFHqPiBCZQJgbtDlnYvjzJnEgOIShrLeRcIoB/J7dE9syGOAo3JchfvyQtW0SfLcLomBPG6DZ9a9saGjc0Bph4flrPhRs9I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757701317; c=relaxed/simple;
-	bh=NMeUAJJ2t0j7WslPNUedttzj6X4H7z4BTO0KWTmRzew=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Z/8MvZjw8BjxNoVWcfbv+SPIJB1eHkmSUdqGOAc2OqwDVZEYlGDnm/UssHrsNn3nh7emDw0NK94VbkMA45J0cXlzcm7Zc9RpLWuubrvMp8IuwsTqc0tZifoUCvb4A5rUY3v/gKO0oQzIXrhY1XDLGBt2FdzLaeDE+dDuGnENqCc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=moA6xRHH; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1757706993; c=relaxed/simple;
+	bh=811gpV0VcoaZvLoueciwYTRWNqXys3/JPLp/qSw8uKk=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=EEoM1OotwVC2xWLgaCWLSX1bEpZ9im+5UUoIIzafYJBu+stC5uRuUC2FOkk7lFe2tOB8cH0FBXvR+LELi683bfhLan2ehvA2e6GJKLKF2CGa4+kjkVuhnHGm6vOzVP6JZlPcAODwTVQWB0u+b7HPDfQ92+bWxxXVp7jythrG9a0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HUoP+CXK; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="moA6xRHH"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-3d9e0a6aa4aso190422f8f.0
-        for <dm-devel@lists.linux.dev>; Fri, 12 Sep 2025 11:21:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757701314; x=1758306114; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=7durCQ3OajROyXU7AAbi113LyXq37EOO0GE60QYsz64=;
-        b=moA6xRHHXQLt0p2uReeUdRLeE3kycFvBU48YziYi2hy48uIjwC291fLeDMK7tLQxSY
-         tEDIn3vPb1+f1Pg108jGQsGVeRpLuP0OGmYknNHf3JBJuSUhfpJXiRiwW//NSJGJkdgA
-         yINlyG24OpUMv3K5NFNgWr5kTrU4sOrTXkOM/97DvX2GJPvXhhgS+zNBqpkW37DXKTnl
-         kF6t2IXxAh1HC4m4SsiYf8k3zPALSQxt+YkL+t1MUKLHfHfZszvxOFVdyJTfUOeArOPC
-         LSeHLSMIwRRoS6HoHnt1IdcqRcXL3nFrAoKiR31T/2JW2px0qWGQs/IcpFLuhGfFtLQY
-         FP9A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757701314; x=1758306114;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=7durCQ3OajROyXU7AAbi113LyXq37EOO0GE60QYsz64=;
-        b=GIKSuSoi7VBNKtd//zUVFZA7pAqhGQKTCAzkpIJ1iZFN5rdVZbySyL/HR9PBhFKIqZ
-         a8+rkz/25M2YGB46I8zFwIn9Zg7KYLDe8zjVUqTJWKbjrBNviSOF7XZ5xJQrLuVSbABZ
-         juY25146eBaT8zPj8DsIzCR35UCEUiDAHi6B1wXWG4/LxKvHASWLpKCZaj0sEfNDY8rq
-         5FQtpedwasjRr6bNydjWbuvXY2L3RwtPFHP0YBfKi5r333uGaVGvYm9gfzzico9CtlSp
-         0YL4/l76cyGyQp9uzbhdvUta/1Hnxw3PqmYLR9b4wmbfBJchWWRYJA/iNb+JoFpCbA4M
-         m5HQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWYN5adV2Mn+BJRuNHgrwnPnqoRCs6zgypZTrJyROpqbuIzySHzfaTKxX/LpsrSF3eDeewkoVU+5Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyOBGMPf4deSPAf7n1HJaLvt2ATQgCdeWIt16kYMOzVQoXvD6dY
-	nXBZso37gScx/7HVUoweK+SE6nUwcHQcLMHpZVjx5yIxZ+zHX2cdKn0=
-X-Gm-Gg: ASbGncsnL06VuO9hfEHMrfk4ycZ5dJPNxIxP8eQmV7ows+P1nd4sSFJJHMxDGX8Z6Sa
-	b3PEKGKa5ijCcsydYb2aK478T3qifyDFVt+5TAHMkzpgtlNtAZYmgDu6+xP1BNdySQHEh7TrtD1
-	C9aXLLhM26iPb7Ti9uo0/WNx3Frw6n9jnNWdlFNa/6whr/u5Y5noMJeyrURmuC6/D9vZo6NM98t
-	KQmvgMciAfHeYnfV18/KrJg1W8OAUoy/K8XqFyoeSHLYbW1XQ2gS2x3tDbTQZo3w6ET7k/lp1yp
-	ESLBpvslwsBba+XkDYsD+noDvsQMJMQae1wetP1gSgDs7EbiP2mbAoTD51Sq9d/4r2yCt3CALVX
-	ZwvE21QKtvjsGT2E7mGXW6AFMKG9YpOt2ZRGKOeugi69zzXEU67BbGsZqKDn6
-X-Google-Smtp-Source: AGHT+IHHEK8gRVh3JjzDP+E+5efQYXp2z3oLSo9ALDHjHdLd7SQ6MV4EsWVmuc2IcfuCx6xY6SYBTA==
-X-Received: by 2002:a05:600c:1d22:b0:45d:d57b:69bc with SMTP id 5b1f17b1804b1-45f215c6e70mr16274655e9.8.1757701313779;
-        Fri, 12 Sep 2025 11:21:53 -0700 (PDT)
-Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e7607e2d43sm7378194f8f.59.2025.09.12.11.21.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 12 Sep 2025 11:21:52 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: add new info to multipath.conf.5
-Date: Fri, 12 Sep 2025 20:21:49 +0200
-Message-ID: <20250912182150.116717-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.51.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HUoP+CXK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1757706990;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=CW4OX8AHx4KZ0p3Lol64x0M/g949wN1HFJynmmUtx4k=;
+	b=HUoP+CXKssVF8o5B0fyiTASYYt90isQVnE4b3OHrIhIsr/cTwFcF5eyRJFJFaNvi94cgCR
+	GYWq8mSdV/grRVoogEiofZmcxyvnJDalOWMmcgRwPaf1m2sz/BghhaqJO4ro3jTl/cYlPy
+	eZSyc3Bp+X86pTmtLvx3sNcmRMVFJJo=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-675-4OfPNCQ_OIO4QWqduOoAtg-1; Fri,
+ 12 Sep 2025 15:56:29 -0400
+X-MC-Unique: 4OfPNCQ_OIO4QWqduOoAtg-1
+X-Mimecast-MFC-AGG-ID: 4OfPNCQ_OIO4QWqduOoAtg_1757706988
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2E4131953943;
+	Fri, 12 Sep 2025 19:56:28 +0000 (UTC)
+Received: from [10.45.224.45] (unknown [10.45.224.45])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3E85A300021A;
+	Fri, 12 Sep 2025 19:56:26 +0000 (UTC)
+Date: Fri, 12 Sep 2025 21:56:23 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Bart Van Assche <bvanassche@acm.org>
+cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>, 
+    Damien Le Moal <dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>
+Subject: [PATCH v3] dm: optimize REQ_PREFLUSH with data when using the linear
+ target
+In-Reply-To: <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com>
+Message-ID: <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com>
+References: <20250910172742.187645-1-bvanassche@acm.org> <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: bSOmZOKCo4Qz2r3Q3iyUdCkP9pMTytcBQ_YEOwtpQM8_1757706988
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Document the static vendor tags for nvme, and dasd devices. And product tag for
-the latter.
-And fix NVMe example (s/NVMe/NVME)
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+
+On Thu, 11 Sep 2025, Mikulas Patocka wrote:
+
+> 
+> 
+> On Wed, 10 Sep 2025, Bart Van Assche wrote:
+> 
+> > The dm core splits REQ_PREFLUSH bios that have data into two bios.
+> > First, a REQ_PREFLUSH bio with no data is submitted to all underlying
+> > dm devices. Next, the REQ_PREFLUSH flag is cleared and the same bio is
+> > resubmitted. This approach is essential if there are multiple underlying
+> > devices to provide correct REQ_PREFLUSH semantics.
+> > 
+> > Splitting a bio into an empty flush bio and a non-flush data bio is
+> > not necessary if there is only a single underlying device. Hence this
+> > patch that does not split REQ_PREFLUSH bios if there is only one
+> > underlying device.
+> > 
+> > This patch preserves the order of REQ_PREFLUSH writes if there is only
+> > one underlying device and if one or more write bios have been queued
+> > past the REQ_PREFLUSH bio before the REQ_PREFLUSH bio is processed.
+> > 
+> > Cc: Mike Snitzer <snitzer@kernel.org>
+> > Cc: Damien Le Moal <dlemoal@kernel.org>
+> > Signed-off-by: Bart Van Assche <bvanassche@acm.org>
+> > ---
+> > 
+> > Changes compared to v1:
+> >  - Made the patch description more detailed.
+> >  - Removed the reference to write pipelining from the patch description.
+> 
+> Hi
+> 
+> I think that the problem here is that not all targets handle a PREFLUSH 
+> bio with data (for example, dm-integrity doesn't handle it correctly; it 
+> assumes that the PREFLUSH bio is empty).
+> 
+> I suggest that the logic should be changed to test that 
+> "t->flush_bypasses_map == true" (that will rule out targets that don't 
+> support flush optimization) and "dm_table_get_devices returns just one 
+> device" - if both of these conditions are true, you can send the PREFLUSH 
+> bio with data to the one device that dm_table_get_devices returned.
+> 
+> It will also optimize the case when you have multiple dm-linear targets 
+> with just one underlying device.
+> 
+> Mikulas
+
+Here I'm sending a patch that implements this logic. Please test it.
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+If the table has only linear targets and there is just one underlying
+device, we can optimize REQ_PREFLUSH with data - we don't have to split
+it to two bios - a flush and a write. We can pass it to the linear target
+directly.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- multipath/multipath.conf.5.in | 14 ++++++++++++--
- 1 file changed, 12 insertions(+), 2 deletions(-)
+ drivers/md/dm-core.h |    1 +
+ drivers/md/dm.c      |   21 +++++++++++++--------
+ 2 files changed, 14 insertions(+), 8 deletions(-)
 
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index f1158f7d..3c9ae097 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -6,7 +6,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
- .
--.TH MULTIPATH.CONF 5 2024-08-15 Linux
-+.TH MULTIPATH.CONF 5 2025-09-12 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -1653,9 +1653,19 @@ The \fIdevice\fR subsection recognizes the following attributes:
- .TP 17
- .B vendor
- (Mandatory) Regular expression to match the vendor name.
-+.RS
-+.TP
-+For DASD devices, it is the fixed label: \fBIBM\fR
-+.TP
-+For NVMe devices, it is the fixed label: \fBNVME\fR
-+.RE
- .TP
- .B product
- (Mandatory) Regular expression to match the product name.
-+.RS
-+.TP
-+For DASD devices, it is the fixed label: \fBS/390 DASD ECKD\fR
-+.RE
- .TP
- .B revision
- Regular expression to match the product revision. If not specified, any
-@@ -2030,7 +2040,7 @@ the foreign library name in square brackets, as in this example:
- .P
- .EX
- # multipath -ll
--uuid.fedcba98-3579-4567-8765-123456789abc [nvme]:nvme4n9 NVMe,Some NVMe controller,FFFFFFFF
-+uuid.fedcba98-3579-4567-8765-123456789abc [nvme]:nvme4n9 NVME,Some NVMe controller,FFFFFFFF
- size=167772160 features='n/a' hwhandler='ANA' wp=rw
- |-+- policy='n/a' prio=50 status=optimized
- | `- 4:38:1    nvme4c38n1 0:0     n/a   optimized    live
--- 
-2.51.0
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2025-08-15 17:28:23.000000000 +0200
++++ linux-2.6/drivers/md/dm.c	2025-09-12 15:29:08.000000000 +0200
+@@ -490,18 +490,13 @@ u64 dm_start_time_ns_from_clone(struct b
+ }
+ EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
+ 
+-static inline bool bio_is_flush_with_data(struct bio *bio)
+-{
+-	return ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size);
+-}
+-
+ static inline unsigned int dm_io_sectors(struct dm_io *io, struct bio *bio)
+ {
+ 	/*
+ 	 * If REQ_PREFLUSH set, don't account payload, it will be
+ 	 * submitted (and accounted) after this flush completes.
+ 	 */
+-	if (bio_is_flush_with_data(bio))
++	if (io->requeue_flush_with_data)
+ 		return 0;
+ 	if (unlikely(dm_io_flagged(io, DM_IO_WAS_SPLIT)))
+ 		return io->sectors;
+@@ -590,6 +585,7 @@ static struct dm_io *alloc_io(struct map
+ 	io = container_of(tio, struct dm_io, tio);
+ 	io->magic = DM_IO_MAGIC;
+ 	io->status = BLK_STS_OK;
++	io->requeue_flush_with_data = false;
+ 
+ 	/* one ref is for submission, the other is for completion */
+ 	atomic_set(&io->io_count, 2);
+@@ -976,11 +972,12 @@ static void __dm_io_complete(struct dm_i
+ 	if (requeued)
+ 		return;
+ 
+-	if (bio_is_flush_with_data(bio)) {
++	if (unlikely(io->requeue_flush_with_data)) {
+ 		/*
+ 		 * Preflush done for flush with data, reissue
+ 		 * without REQ_PREFLUSH.
+ 		 */
++		io->requeue_flush_with_data = false;
+ 		bio->bi_opf &= ~REQ_PREFLUSH;
+ 		queue_io(md, bio);
+ 	} else {
+@@ -1996,11 +1993,19 @@ static void dm_split_and_process_bio(str
+ 	}
+ 	init_clone_info(&ci, io, map, bio, is_abnormal);
+ 
+-	if (bio->bi_opf & REQ_PREFLUSH) {
++	if (unlikely((bio->bi_opf & REQ_PREFLUSH) != 0)) {
++		if (map->flush_bypasses_map) {
++			struct list_head *devices = dm_table_get_devices(map);
++			if (devices->next == devices->prev)
++				goto send_preflush_with_data;
++		}
++		if (bio->bi_iter.bi_size)
++			io->requeue_flush_with_data = true;
+ 		__send_empty_flush(&ci);
+ 		/* dm_io_complete submits any data associated with flush */
+ 		goto out;
+ 	}
++send_preflush_with_data:
+ 
+ 	if (static_branch_unlikely(&zoned_enabled) &&
+ 	    (bio_op(bio) == REQ_OP_ZONE_RESET_ALL)) {
+Index: linux-2.6/drivers/md/dm-core.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-core.h	2025-07-06 15:02:23.000000000 +0200
++++ linux-2.6/drivers/md/dm-core.h	2025-09-12 15:19:36.000000000 +0200
+@@ -291,6 +291,7 @@ struct dm_io {
+ 	struct dm_io *next;
+ 	struct dm_stats_aux stats_aux;
+ 	blk_status_t status;
++	bool requeue_flush_with_data;
+ 	atomic_t io_count;
+ 	struct mapped_device *md;
+ 
 
