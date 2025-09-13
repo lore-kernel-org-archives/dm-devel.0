@@ -1,74 +1,73 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E9D82EC573
-	for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 13:02:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFEE32EB844
+	for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 13:02:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757768552; cv=none; b=Qi2BdbsFMd4gnZBKXO9xworMNdi3sIIIyVsXazN1SZmiD0VuJyl4eaXkO89foe3yF7ogTwgdjTYvp+Pp0HpVXCEL/4LHz3g8DtnTxUmFspBwjZJDYJxvbMqiEvh6rsX6F6QGMHHA2VceK0kTTKe4UYqbE+hxzRtKIGOcsaeG00A=
+	t=1757768553; cv=none; b=eQQqfdQkyB00ldNLn4w8/eReSBMSDKNqb6GslnYlj2kGUEZbGeaWaiQHVINA8SihRg76zxVg60kyQ6Xak3kT3gZ8qF4S9tKcR9vA+oRH78z4KcwXcl4ztbsgi+A14znK0LvjAGgJYfAZ4lXGwuCfwZumBpd9qvNMLp3rUKK5tg4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757768552; c=relaxed/simple;
-	bh=rQG9HTe33s5ZbpNOnpPgtyXHMgfM6a3j1vhugraGac0=;
+	s=arc-20240116; t=1757768553; c=relaxed/simple;
+	bh=XU0EI8oagnZJE6wPXpuJaU8l+IXHBC8OQv1e1K2S6Ls=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=IXUvScSguROvmGQXG9GKhBhsM9lKniMxwMYL8xlSfIVcwLwmUAnOGvbjFjtkpDJdyTOCMOW04t7yCvtVS9t8geEWTNMrjTex5fD0eUTsi2QIOd2ArklVMolDGgiJoon0uPW1pOx1eWjQXW/1EQsEEnBYw/wM4zQ6fS+cAcPWRD0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k4k7FML6; arc=none smtp.client-ip=209.85.221.45
+	 MIME-Version; b=ivHoMtNQDt1EKeG8g/9l/8pCgHPXCgUqQlP7BDZT52E2R648qGinUWBh8/Lf5/f1XGW0C9LfhUtRBrMeAZ8wZ6gVl9YL2rvqRzSlyMPPZ97WcCigqAPZDMI+1sS4q863DbEOYG6ZgZIpO/G7hHT85V8VhtJBXI+iHTCpNzV4qX4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=k+Bt0mk0; arc=none smtp.client-ip=209.85.221.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k4k7FML6"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-3e81d32c0c5so10586f8f.0
-        for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 06:02:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="k+Bt0mk0"
+Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-3ce208c7505so453188f8f.2
+        for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 06:02:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1757768549; x=1758373349; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1757768550; x=1758373350; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=iApmt86QFvbIhA4B6XX3hU+Kqm7WocByEhnAmHWIsys=;
-        b=k4k7FML6IrJ3FPtselcv3/vYCZNUPACl6j6yYcu8W4JTKhkLLMeOmCbsGwn8TrLBT+
-         PYz2n41JQ+67ebv276nNEk+upiHM1zAw42uJUk6IFVERM+RaG8Xnq4JA8dppnyl02PEJ
-         c2zmveXDnQNe8Bky5pMOmq5v1/wad1Ki/8eynmvXfALGmQOdPpdjFxLonf5HTBhaUHyX
-         gDnO+pUzFzydCwwdalAH/Di4oQ+JxGECSALiysA2daFpJojavxdYUQLf/UsrkdqRG7C4
-         1/tOUASzl0pdR8YBTz3CHO0IOpaBbXS09/GbLLq8CHsrt6aKjvLVWgKRZ1KA9rQyqTY+
-         2DTg==
+        bh=cn7FddPEqSsjiB+JjmKxJKNohyvsuwB4BsJ7EQNnwDQ=;
+        b=k+Bt0mk0FshJDwLo2OYJmDVI+4jh6gKK8hbp2BhxK4woMfA1dpqCuK8l3MSyCN9ZFB
+         dHj+s6C988vIl/TvMu5u7AROlUggZzcf9oG/LqwDyqDzrFxPYe1CeUdSvZnFINMvr7Nk
+         E7VGtIvaI/r1+yrKRGzZNu3RPDXNSArUvNJOSvvwTKkK80F+uiy6K4Cr8B+pb2HQXFtW
+         QMucEonKBHvYe6Tkjj2fLuhJIrySU/xOIIlH6b4Vipko/k/A4v3tga/h/EVjO/tYbcW1
+         fA3iLsTHAcrT77sKSv9He2SgDu/sWjkNTKa3227Nv0hxelKIbCE6bcv+/y9QKZShtwWj
+         sG7w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1757768549; x=1758373349;
+        d=1e100.net; s=20230601; t=1757768550; x=1758373350;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=iApmt86QFvbIhA4B6XX3hU+Kqm7WocByEhnAmHWIsys=;
-        b=Um4KVL3UGLONQwDVi6fTK+gzBWWnlH9u3a8nV0s++lYMx0goAWocA62qKnElprfNiC
-         TZKB12NVhS6wfgSv9NZT8O/fO7yrrW5ufln/41EkW7F1N8WhG9/kXompY163b926TPtH
-         PcuqKzePbUyikSmMNtgbRlpSfgCQjh4YajafSqBtPuPb4cpz0mf9GKn8kSmkho+yUiv2
-         11wRSDncRi8vUyxzveZK84S+Us5mNHwqFIVYMpbJp2HsC9sw7wWEEMHL3NXlzliy+jTB
-         +zS6mwrDiVeH0sqEsK12jcaXCCfxSZxNwX5XcFyRyBh+c4chygnGFUu2K6AdgRM4undE
-         1bIQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXNocJreXnDtukisXOrYyH1/eDDH/JTRstxhwiilV9TcN0fmGKz4CbKj1Blp62+62PFuKhPRKX2LQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz6CRlkYxDwDOjp9lBupp6fbNEfNnWf8VxLWEm4TO3byNozdz9i
-	UHmJkeujbVe5bvjTLhTm1dVP3rmE8DEUdAglgeQFAdkqL7c69/9xhHE=
-X-Gm-Gg: ASbGncvKyKSq8/17c94luEwMtLJljtw/aYtf+7gyYjT2AdDovLQ0VGeNqnWi7ZPMuWZ
-	F8d1qpgInWO+dgYXq6nvFKcEtvfLvoqblH6YNza8E06i+mC7zbMkaksNw7VuOWEj4V5vAOyQOzO
-	+1Ldzjhj9jLVirzyD7c0P6aGw3kbZL/MVymNunz6KT+0HJ9XWZwQvzxfVefM7PaQuo0ioQJBTii
-	+3pQPjAYNkN4S/Eq9Qwd/6B0juWmxgwdmsxDvQVo6DqFypwqiMRBNtU2F3NlSYz2OBdSWtTVYqt
-	CN5g2sIzszINFWQ8XRrpo2Rw745cGiPEgv9eYAvaxzYhLBhKVynqsYoxOoiza4rpFdgqBSzZBU+
-	mO//CgtnYc9Zme/mtDvgouS2cD5bACY4P7HJtShbAX7FNrfY5T+h+WeEzAzirfExSqXbPUDY=
-X-Google-Smtp-Source: AGHT+IFxg7DjaIOwDtV5y6+LgtaiLV4vV65WhmBSNJ6s8MXhac1dkW0Sxs3azWQRhc0g1eyEnfrXvQ==
-X-Received: by 2002:a05:6000:2481:b0:3e7:41bf:e631 with SMTP id ffacd0b85a97d-3e765a51edemr2972689f8f.6.1757768548594;
-        Sat, 13 Sep 2025 06:02:28 -0700 (PDT)
+        bh=cn7FddPEqSsjiB+JjmKxJKNohyvsuwB4BsJ7EQNnwDQ=;
+        b=ZBSQAlbGjrkuIrgDFiSMoE+VcRI193Qf3CsimYETWG1nXzqpEinmogqujCJnMAwiLu
+         pMsobkeoiWzFwAwbhWFVQnG6KccgFFX0wV8ZSDQ2JYjtXy8sucMB8lABQNrc+MMibriT
+         HFP5RPlf5QrK0OioA5qNXP4+j7TQDkN/xoNY8+Q6HHOFeK4aHZaR3xNxlReCS/i7PApP
+         wnI6Wsm5ayE7Qe5MjNl4Vd1EcZRexqto7m/1NAUs54uR/nRF7YGBYlES7Q3Q+7zImDCR
+         DW6ClQvp/ltymcP5J+zsi7lJhqUWZMEJhFHngQHKUYoTRIvCikL4Gk1pR8ILABNNagwt
+         Hjlg==
+X-Forwarded-Encrypted: i=1; AJvYcCU/7FlsSbw3YTSg8JxM5WdKrPuQqeuykIMkhQ553qXSDP3CWJuFDOxjxyZf/10znkF/bHHLqfCEuQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz8YS2R4cptViwSniifHXozQ209tMiIBBl78FP+ySunUFk6e4Lc
+	ZrC3/2/l3FsOrAwDouEHy+kAbp92X3XHIhjerO4hS42Fuig3upj5wkE=
+X-Gm-Gg: ASbGncv4k78SEIpheFjqKTYUmt5uT2E4MMjen6nHF/JMbxLgNevtnWZTvAZ52cO9Uaq
+	dj/kooNwDdvZpKMsFWOtusCAHMGJ+3KH2WBYbSznHK0/5Cz92QK6R5zBYOXDdP45RZP7kC0yyQp
+	UusW053UVFsD+iBZLyP1NrGHfA4ZS5Yp6zYLwWNqliz1pF37040zklvCHiK2x34PFCqIDEwqYiZ
+	YkTYntDJVRgM6qDh+SSAwGWPOTsS8fc5T5z2nSeyA4tK46oCpbR21xkO3VfgAKXG5TwW1FO5hqJ
+	/KUAn3OUCYPirA90Xknmw32xLhM4oqE4L6TRBIleSbMhN2l3NuIJnyRDbNPRt6YHrQUp+13CeVd
+	tIXyjcSuVSeLfzPg2tTLQxAuFS+yftWrYUPX9cqbrLTGTxdql0hvtbtC3HcQQ
+X-Google-Smtp-Source: AGHT+IHIGkQ5Qcji12O5HzBskXzDACIR3biZZqHljTgc4oEpXtQtgAatKEmDmAsWViDZuuDL6a4+8w==
+X-Received: by 2002:a05:6000:186a:b0:3e7:52fe:80af with SMTP id ffacd0b85a97d-3e765a25841mr2627583f8f.11.1757768549940;
+        Sat, 13 Sep 2025 06:02:29 -0700 (PDT)
 Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e86602a7d5sm2775257f8f.62.2025.09.13.06.02.27
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e760775880sm10385971f8f.2.2025.09.13.06.02.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 13 Sep 2025 06:02:28 -0700 (PDT)
+        Sat, 13 Sep 2025 06:02:29 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Hannes Reinecke <hare@suse.de>,
 	Martin Wilck <mwilck@suse.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2 1/4] multipath-tools: remove checker from Huawei OceanStor NVMe
-Date: Sat, 13 Sep 2025 15:02:13 +0200
-Message-ID: <20250913130221.35073-2-xose.vazquez@gmail.com>
+Subject: [PATCH 2/4] multipath-tools: add HITACHI VSP NVMe to hwtable
+Date: Sat, 13 Sep 2025 15:02:14 +0200
+Message-ID: <20250913130221.35073-3-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.51.0
 In-Reply-To: <20250913130221.35073-1-xose.vazquez@gmail.com>
 References: <20250913130221.35073-1-xose.vazquez@gmail.com>
@@ -81,39 +80,32 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Based on info from fbe89f4. It was deleted from default NVMe config:
-"hwtable: set 'none' as default checker for NVMe
-
-We shouldn't be using the directio checker for NVMe, as this might
-cause spurious path failures under high load.
-As the 'state' attribute provides reliable information about the link
-status it's sufficient to just check this and don't call any
-path checkers."
-
-v2: add info from fbe89f4
-
-Cc: Hannes Reinecke <hare@suse.de>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 1 -
- 1 file changed, 1 deletion(-)
+ libmultipath/hwtable.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index d9723f87..399545ae 100644
+index 399545ae..fb446856 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -1121,7 +1121,6 @@ static struct hwentry default_hw[] = {
- 		/* OceanStor NVMe */
- 		.vendor        = "NVME",
- 		.product       = "Huawei-XSG1",
--		.checker_name  = DIRECTIO,
- 		.no_path_retry = 12,
+@@ -510,6 +510,12 @@ static struct hwentry default_hw[] = {
+ 		.checker_name  = DIRECTIO,
+ 		.detect_checker = DETECT_CHECKER_OFF,
  	},
++	{
++		// VSP NVMe
++		.vendor        = "NVME",
++		.product       = "HITACHI SVOS-RF-System",
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++	},
  	/*
+ 	 * IBM
+ 	 */
 -- 
 2.51.0
 
