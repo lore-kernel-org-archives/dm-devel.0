@@ -1,114 +1,106 @@
-Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CF3C7494
-	for <dm-devel@lists.linux.dev>; Fri, 12 Sep 2025 20:52:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E08E2EB844
+	for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 13:02:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757710326; cv=none; b=A89M4GsQ4vW6vLiX9P6ca583qvDJgCxCJPEWyt23j1njjsC4z1Juf7m9TDIhCiGZkl95QG4A6hPjsehb7so/7oeeJBieoNiikcZreeDreQY5SmWm2iMmHrKy/r7T1U6JseJ8Ys9pY1tfWTARssu6xqtuPHdQgQMafz0SHLOkOi0=
+	t=1757768550; cv=none; b=Fo0E6EoJZemsi7ZWyQ5mpo22HfoOdn/6sEJYsmOUXoxiE4F2y2/TPLVkaZRr4myPYEJAPGe1XU2Lux6uK48VWoDFLLxS2+jh2nYqFwlxp/Y/rFnuj4SdDR06xgVhgyVOMphhHtqBwPf9Hts8ba9+ySCLUCvuT3B3HPfwdnPqo7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757710326; c=relaxed/simple;
-	bh=X6/S3HTyjC5lqnZgkbNhOQQqfHl9wAkxFVkvwpcpqis=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=hIgp6Hr2B60kU7hCfQTAjDCdX6mee5x13frUeWCYlE56Mx7VVKqvhdzJzrSdwiKtZe16lw0+gxlodfXl+5v71LaKOltgg262S7jdHV72Hv8eok2ctMvgHMCtUCPkBJxvFzoFqwn6Egn4r1cW3DC+A9+KNWZ8dYbtf53XhTn59qk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=YPehN50K; arc=none smtp.client-ip=199.89.3.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1757768550; c=relaxed/simple;
+	bh=+YwBCDMHfW76wx9MAg+Griq8J/yH7OjY+7p7S0dJ0VY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=O44z6JSiNKEAsarg05hYjYtX+mZSylpDN3qUICoUFT+qkx7oNMOEdPS2w3/gXK6NQT21PLuc9hozfyoQwYBVbrGQZBb+sVel7KbTJhUGiYik+g8IZNS7ooD3UPch8OqK68DuTQjYXljki/gU64f9GjjOIOf4gRTjgLmLbgF9k4w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cQF/CqRD; arc=none smtp.client-ip=209.85.128.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="YPehN50K"
-Received: from localhost (localhost [127.0.0.1])
-	by 004.mia.mailroute.net (Postfix) with ESMTP id 4cNmnb3rn6zm0yQq;
-	Fri, 12 Sep 2025 20:52:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1757710322; x=1760302323; bh=7iQgCfJ6CaYSs6qWcDMsyOLT
-	p/Irx4bCOYV/eM0pR/U=; b=YPehN50Kn/m02CpSj0TAtXE6HhQzXOx6eaL3+XJi
-	C6Jk6qQ8NYH0+z7YMPs9p5OSYwKyNKEDC1cItgAyztBr5ZCRUXnVyoNSV8Ab4wwR
-	esQRxtpsiuVUjtz26CuGB+wEVU90RqMWnOveLW1dNn1Ilnt8OKdYUCUmXPQ6D0wa
-	Vd+YjeaKcZQRO7fNF/yLdDRm4SQmjv2Mo4JYzgcMRY69hNU7D+UgDOZLsa1ZfR7h
-	1VDmDZOlXgveTxbWGpGZ6g4CWbYv78GQvv0deNn8v5UUCrIub/PD2L2xeeah9vgw
-	nYf/FgEysSTg2iDHNEityCcjZjDtH2Q7Vo//vBHdvmpYWA==
-X-Virus-Scanned: by MailRoute
-Received: from 004.mia.mailroute.net ([127.0.0.1])
- by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id 8vAgC-iFE0aK; Fri, 12 Sep 2025 20:52:02 +0000 (UTC)
-Received: from [100.66.154.22] (unknown [104.135.204.82])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4cNmnW2kftzm0yQC;
-	Fri, 12 Sep 2025 20:51:58 +0000 (UTC)
-Message-ID: <c29b0abc-2443-4cc4-9c2a-a41e6770bb96@acm.org>
-Date: Fri, 12 Sep 2025 13:51:57 -0700
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cQF/CqRD"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-45de4ebe79eso4119785e9.0
+        for <dm-devel@lists.linux.dev>; Sat, 13 Sep 2025 06:02:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1757768547; x=1758373347; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=9z1e3bLd5rIQFxR6N4eoH2aUokSnikVaSoff5sLfYUI=;
+        b=cQF/CqRD2FHK6oii/WFyTOUUEH0zkFRAaroVm5GTWTVzNRF1yxfvFZpw8VIqntF2VE
+         gpmQwhYwxK3RJlvJTKWi04UKr6ZIog0+4zspQNMoWRhnjzbttKBTUyKuWLTw8gsY+3ZG
+         IdLVwNrZIwJtDUqRkpqf8TjpA9McmZYjRhELYI1kWoY2Pg89MgUsXb+zTOjvn69bJkXJ
+         iEFFR1qlyq697WXAKVkBsDh/8bbU+AMIoZuqC/xxVk3m6l2LPCnCLxZpcMoo3zfcpbbg
+         8et6OfmKlBP9yXMeacSw+3Xopzl8ePgTYFCzFKL3DCMIpsJM/IMo0LaXzehcsHeqqr4r
+         jkoQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1757768547; x=1758373347;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=9z1e3bLd5rIQFxR6N4eoH2aUokSnikVaSoff5sLfYUI=;
+        b=q5Rmsli1g1+BVYjJ9/+GA/BibT+RvwgXe4NQs+MPqE4PIIlqgSU8TrQ+ZBR8RyJ7RT
+         zuY3B4txuVM0QMwQEadb56kWvoqpH84/aTw3XuoJR9SWs2f4dzgWqW6geL5072OoX8qW
+         98C96jnjZesL5/+Xy0dF1taVYcZDldp4xwKpGJw+MGZrFmUWI/npDT/6Uc7uwXJ/Hk4M
+         BUy8i2h2qlKm27NExhr+J0MCZsbdhJhNA1ZcCgxxtcrOHnJRkel1/5Qc/hG0Vq8IFWD9
+         A55pdlNeJRKdTv7U+ikKQc/1D4gKuE9UD8EX6q7vvRO9SWmAim/xXKBTa1F46r4MGB41
+         D8LQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWXUSjBw4yxDNTs+T5HizJls+gUTzkhQnKQ0pDy4XcI1YgXuBbVvEaAM5hcui4D2iptGM1xMux11A==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyd/LrLatCdj6yDUpWLsgnqYU6VCGqGQLWDIA2In/JwOTpwNunb
+	+SqQ2xMlVJZNNxB/Zrqc/W1l5JCTUnJBXnaAvRZt76idt8w/w4O5yUs=
+X-Gm-Gg: ASbGncuAwtYU29mC/fTl+HO93PydGXOv0f54bzne5V8XsxafD+LRIDOdUbZ1BEP+9wg
+	4r3DIT5m+gTOY08FnT/C6laLiY7Dp3oNfHD8ctW4PmwAXLqjm7eshgBri25NCd3wbBBsafmzCK8
+	mvfsKlwXCrOVgBartlHShmntm0CANLR9d03Q0BXTbliwEJiU/aN2Sja5BkCD2MInJUbiVogKHi6
+	nBQJh85/0z0wVu1NdE1a1sIXCFnYe85spi5ogI/iwNUwP3uidG/yANZllSI6uTr/+gv0TydlZXI
+	AjcVqhzgszFxwaewCyB28lNqh87yyNOcf1Df9sY8DPkrCAUoyEV1yei0K5kPjKJnYwPznUHQ0Uh
+	6iDuBfid+mI6YqWiJYu92eEPDJRngP9MghxyRIInKQkbTMSmRlLWNPg4AOcWI5fiIcBpCq1Y=
+X-Google-Smtp-Source: AGHT+IHvWx5DL1hSXbUKMcvdUh8mwK1mywM2bjTA9AJk2ntMVco59K9H+ZvQAsBuH5d0OQd09refWw==
+X-Received: by 2002:a05:600c:8b86:b0:45d:d57b:69c0 with SMTP id 5b1f17b1804b1-45f21201b02mr26849415e9.5.1757768546244;
+        Sat, 13 Sep 2025 06:02:26 -0700 (PDT)
+Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3e7d9844d24sm4421859f8f.46.2025.09.13.06.02.25
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 13 Sep 2025 06:02:25 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Steven Schremmer <Steve.Schremmer@netapp.com>,
+	NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 0/4] multipath-tools: add new NVMe devices to hwtable
+Date: Sat, 13 Sep 2025 15:02:12 +0200
+Message-ID: <20250913130221.35073-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3] dm: optimize REQ_PREFLUSH with data when using the
- linear target
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Damien Le Moal <dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>
-References: <20250910172742.187645-1-bvanassche@acm.org>
- <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com>
- <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-On 9/12/25 12:56 PM, Mikulas Patocka wrote:
-> If the table has only linear targets and there is just one underlying
-> device, we can optimize REQ_PREFLUSH with data - we don't have to split
-> it to two bios - a flush and a write. We can pass it to the linear target
-> directly.
+Even if they work with the generic NVME config. It is convenient to have
+them as an independent config to tweak their options, compare dm-multipath
+against the NVMe subsystem, ...
 
-Thanks! Since this patch works fine on my test setup:
+Only two of them are missing ("Fujitsu ETERNUS AB/HB Series" and "NetApp E-Series")
+as requested by its vendor: https://marc.info/?t=165256933900004
 
-Tested-by: Bart Van Assche <bvanassche@acm.org>
+Xose Vazquez Perez (4):
+ multipath-tools: remove checker from Huawei OceanStor NVMe
+ multipath-tools: add HITACHI VSP NVMe to hwtable
+ multipath-tools: add Infinidat InfiniBox NVMe to hwtable
+ multipath-tools: add VASTData Block Subsystem NVMe to hwtable
 
-> @@ -1996,11 +1993,19 @@ static void dm_split_and_process_bio(str
->   	}
->   	init_clone_info(&ci, io, map, bio, is_abnormal);
->   
-> -	if (bio->bi_opf & REQ_PREFLUSH) {
-> +	if (unlikely((bio->bi_opf & REQ_PREFLUSH) != 0)) {
-> +		if (map->flush_bypasses_map) {
+ libmultipath/hwtable.c | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
 
-How map->flush_bypasses_map makes submitting REQ_PREFLUSH bios that have
-data safe is nontrivial so it's probably a good idea to explain this in
-a comment.
+Cc: Steven Schremmer <Steve.Schremmer@netapp.com>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+-- 
+2.51.0
 
-> +			struct list_head *devices = dm_table_get_devices(map);
-> +			if (devices->next == devices->prev)
-> +				goto send_preflush_with_data;
-
-Should it be explained in a comment that devices->next == devices->prev
-checks whether there are either no elements or one element in the list
-and that we know that the devices list is not empty?
-
-> +		}
-> +		if (bio->bi_iter.bi_size)
-> +			io->requeue_flush_with_data = true;
->   		__send_empty_flush(&ci);
->   		/* dm_io_complete submits any data associated with flush */
->   		goto out;
->   	}
-> +send_preflush_with_data:
->   
->   	if (static_branch_unlikely(&zoned_enabled) &&
->   	    (bio_op(bio) == REQ_OP_ZONE_RESET_ALL)) {
-
-Isn't it recommended to leave a blank line above goto labels rather than
-below?
-
-Thanks,
-
-Bart.
