@@ -1,76 +1,90 @@
-Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C64A629D279;
-	Tue, 16 Sep 2025 03:59:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE7EA29BDB8
+	for <dm-devel@lists.linux.dev>; Tue, 16 Sep 2025 09:39:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1757995200; cv=none; b=HlkYY79NV5t7H1LMooL+mcmCncEvs5DCILZ1DDbi9eoEV2RUpsnoJ51/BgH7ksMQQXqBXY0N9UJqd1tpm1RnWq1hSEHlW4uIGheBjGDn2mlPMODXEpZib8FQrJcRTBvbut/Ml0VLpHCJSJJo2k7NSnGUk93TTJskkP0zhDr6XAM=
+	t=1758015546; cv=none; b=l9CWA+ZmfvacHnPS57Dwlc4ARrgC6P1XSitJOzefOjm1KoGB98cD0mMgpOYeNyzAowRIa+OfHekj8IsEj7pGExgFJSuBdjtqvPNnfN7JwHxtEYqwMYhmis1XBgP2UOOuLFiBc1qXiiCwcHxHKA7of3vdylfAwtf5Ud83sXd/LH8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1757995200; c=relaxed/simple;
-	bh=rRR+h2Of2ec2W/pKONpv4dnqtbBWLA0qnIeYqw6yMm4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Mp8Js2a8Q6e2PVB9RNKCCKfaYVPjjLGbb/nCtLf8RXpZtYczh+HNQOEaMmLCe1bbu2aHCXHwOKlhSNEoI3avNzHmEUuEuIN5rHvVzU7H9/7Vl0Ddm7xUceaUx0wwysdiXUoQ16G3Xjc1yIVjdzceAycdo5kqLfhHhTi1DFdC7Mo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=p7cf7XAQ; arc=none smtp.client-ip=180.181.231.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1758015546; c=relaxed/simple;
+	bh=R0uwPGa83ZpYae4xZ0SduB8kHlb7ZBIMwhpgMLRydbQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=YOzq7hRvOqf8LwuNRdAf9Cl7OcGX3MMNYAQjLDUpWhNvdWQHeopAizsahAuprNzRHepdWmt4L1+bGhIIRSKzzzdVmv8tuUclLOCwzOqQrSjZzTWUI2haqbnbcXTlX/QCU6v74Y+ZhaCWHqrFpUpG+iVih6BmED0n3wRkHvTNNlI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gQ05O4Lw; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="p7cf7XAQ"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
-	s=formenos; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:
-	Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=2vUTPFHm75Ea9EOz3VvhkjFKSeOEWnsMrsXTTXp82iQ=; b=p7cf7XAQdZSW7R99LRwdY6ci/B
-	bvMTd0KbdZI8A9qhA32xqKqlUjyT0HhgY6fxA6fTa6c06wL7YmbyKPp3Q2fCmk9wF4VjRPMya/0dX
-	jztddGiu4DAznRFkYEEvQCsOMcnrnKkdjE4rjcFxh/zK3SMUwK4cfGAwQ2Jzxvfoha7tfpKJaDyno
-	mgCC59Yc5Mc8A+Vr6NSgWIWpfybaAt2zQ9d6e8MwisO/Y6MgLHUzpE6adXOPRoZScgeut7RISoXdU
-	0xozuZKiGbT74UERqcfPERjjpoNAn4cBjRQeQ5tx5W10VMvmVZelMwlExx97IyS/gKarSk0VcYQYH
-	ina4lyZA==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1uyMbi-005lGP-2i;
-	Tue, 16 Sep 2025 11:59:52 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Tue, 16 Sep 2025 11:59:51 +0800
-Date: Tue, 16 Sep 2025 11:59:51 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>,
-	dm-devel@lists.linux.dev
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gQ05O4Lw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1758015543;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rSStT8Zp3K/EWMu0sfVLJU+MTJRncyCaOgk0YFgesc0=;
+	b=gQ05O4LwIA2e09qTmJLoa6OQKNcz0jvpj1pNhq7I93WXUeBVQTc0lYSVIFkLWenoFRgFKY
+	0nQntJtGRpwlFEJKB8HAG6xviVbe3vwPjwH4Ugp4YM7hcenwmHZTb2LCHe39DslAr7fPrR
+	CwXJ4iR+6tkpZ2UwgVXN6xJfYoLofBY=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-112-VeM79TzgOTKN1sR3s7qG_g-1; Tue,
+ 16 Sep 2025 05:38:59 -0400
+X-MC-Unique: VeM79TzgOTKN1sR3s7qG_g-1
+X-Mimecast-MFC-AGG-ID: VeM79TzgOTKN1sR3s7qG_g_1758015538
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 89BED1800577;
+	Tue, 16 Sep 2025 09:38:58 +0000 (UTC)
+Received: from [10.45.225.219] (unknown [10.45.225.219])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D5E81800447;
+	Tue, 16 Sep 2025 09:38:57 +0000 (UTC)
+Date: Tue, 16 Sep 2025 11:38:51 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+cc: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, 
+    dm-devel@lists.linux.dev
 Subject: Re: [v2 PATCH 1/2] crypto: ahash - Allow async stack requests when
  specified
-Message-ID: <aMjgt0tHK2JZD1B9@gondor.apana.org.au>
-References: <cover.1757396389.git.herbert@gondor.apana.org.au>
- <9d6b10c1405137ab1d09471897536f830649364f.1757396389.git.herbert@gondor.apana.org.au>
- <f1b90764-b2f4-ff90-f4c4-a3ddc04a15f6@redhat.com>
+In-Reply-To: <aMjgt0tHK2JZD1B9@gondor.apana.org.au>
+Message-ID: <c6255881-b075-1621-4268-ff126ad89576@redhat.com>
+References: <cover.1757396389.git.herbert@gondor.apana.org.au> <9d6b10c1405137ab1d09471897536f830649364f.1757396389.git.herbert@gondor.apana.org.au> <f1b90764-b2f4-ff90-f4c4-a3ddc04a15f6@redhat.com> <aMjgt0tHK2JZD1B9@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f1b90764-b2f4-ff90-f4c4-a3ddc04a15f6@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-On Mon, Sep 15, 2025 at 05:06:51PM +0200, Mikulas Patocka wrote:
+
+
+On Tue, 16 Sep 2025, Herbert Xu wrote:
+
+> On Mon, Sep 15, 2025 at 05:06:51PM +0200, Mikulas Patocka wrote:
+> > 
+> > Would it be possible to export the function crypto_ahash_stack_req_ok, so 
+> > that I could know up-front whether having a request on the stack will 
+> > succeed or not?
+> > 
+> > Perhaps the function crypto_ahash_stack_req_ok could take "struct 
+> > crypto_ahash *" argument rather than "struct ahash_request, *" so that I 
+> > would know in advance whether it makes sense to try to build the request 
+> > on the stack or not.
 > 
-> Would it be possible to export the function crypto_ahash_stack_req_ok, so 
-> that I could know up-front whether having a request on the stack will 
-> succeed or not?
+> I think the pain point is the use of SG lists.  If we could convert
+> them to something like iov's then you should be able to supply stack
+> memory unconditionally.
 > 
-> Perhaps the function crypto_ahash_stack_req_ok could take "struct 
-> crypto_ahash *" argument rather than "struct ahash_request, *" so that I 
-> would know in advance whether it makes sense to try to build the request 
-> on the stack or not.
+> Cheers,
 
-I think the pain point is the use of SG lists.  If we could convert
-them to something like iov's then you should be able to supply stack
-memory unconditionally.
+On architectures without automatic DMA/cache coherency, you must make sure 
+that you do not write to a cacheline simultaneously using DMA and CPU. 
+This would be hard to guarantee if the crypto request is on the stack 
+because it may share a cacheline with many other local variables.
 
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+Mikulas
+
