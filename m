@@ -1,143 +1,143 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE5172FF164
-	for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 11:08:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 186AA2F3C1A
+	for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 11:15:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758193690; cv=none; b=rxdUBqmh6e+Q2pMg/uLBO+Y/E8LQqkas8MgWjPUEFzp7ITWDV3EZFsvo8Ah9KnJW8JidYNZSNSyDA7gL+fhd9N8wOiGc9B1E3DDf3Kb0YwmOFHJ4272UoIYIxCLEjuZBrJDz2cE07fwR/URZPzcNJQ/6qqJr+NS6G5WSxuoZIvw=
+	t=1758194139; cv=none; b=ehkf/RLe+fKPAQMo8njTsKFngQLqM+Esdv/XEuPoROw0VbJah9cYWMp7M0VNsz211pabkX5HRzSxobE6iW/ERwX+lGvX+JWWW0SPGE71Q5iyadqaHgWuCJz+gS50Y7bERCN0Zivr+EqSms+JLQv2tW0/DVqo7D3x1WKNLalaf2Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758193690; c=relaxed/simple;
-	bh=qBFWlAzQl4WkssVO7PVWWZdcucXWBXEiPT7NX2RDoG8=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ipZo9OsOG/oTzKGpqsbKD1ABqxOmvNjOiK9iNl6N6VUeTg30FuItTxXi0jN1GhqBB2Hv7R+7ENQAsXldYhbV0Y0TYo3GLfGdN/sdSleb0OykKditPZP5pLG2frpdzgbM0mUvhJ33NbWGcb5Yd3Uh7JBDxRxOtUBzpXZ3aL7lO5o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WWnNt3az; arc=none smtp.client-ip=209.85.128.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1758194139; c=relaxed/simple;
+	bh=7KKvXrlbZFt+9FdjRsuUJ4Nm5l1egFw8YPXxf6CfoWI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=YTV6+qMhmYvh/MwYiUdLpIVif9lQjprjev1fP0o+kdzh1RMhlbPrQHLQ1TjA0Ijs0/NNODfgS/TA6rSxev5fTmP3vNkdXusilUlANGLgxhdXgeCRGd9cZBOALqHkyVaeq87aGM4cqv6KekQtsxsNV086VA/cA09DlgkEDc7c2gQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hZbOeiwu; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WWnNt3az"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-45f2cc29fd8so1230335e9.2
-        for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 04:08:08 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1758193687; x=1758798487; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=OEf+IUjwmWIL0hpi34Cdy1I96SmkD8AQLyEkUuI2pOE=;
-        b=WWnNt3azprh+eDnbalPtA5ej+Hynu+W4TKkBBRXTwvXEORUrALdZl9L8QPVwdhI3YF
-         grv0DTtqpiyxSP44+Ru1GLvfmJWA4sHnQtYkOazTyCMb3xaRjzUMB1episuQtIUhAzfU
-         kV/AzJTOu2y3Tk2NMf3+3ZHKydMfAzEC59AWdWX1I9/+DROmz5H/hnVsIsV5t3Sdklag
-         hlT43PsWEss0cC4H5q6lbxHzFOi9smVWOqgRYWu1VmEq9NePK4yxEyYzdryyMD5Ts7pZ
-         WiN1r9ojvqU41Zkb2rzaHwt9QitJky3crmm4RP63xUeybKJhWPTPI0vMLevbwMOywh1u
-         DKfA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758193687; x=1758798487;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=OEf+IUjwmWIL0hpi34Cdy1I96SmkD8AQLyEkUuI2pOE=;
-        b=fJdGtWvMrVsR6UzgYlsOJhKPmcavZbexKYziaqmz21oOJHunA5giuXUmiFK04HBFCc
-         pxNxnfAd2y3EoXvFqSU2ZLKsmGa0IIVyihDmbL4fnAbmDuq5CjpG3/h2V7JR/HJx8VU1
-         zu0Cugf5SVux24rdNE3zCy8xmtqfx0pguf1VoqfFIA7FD/9PM9kNShlaxDdJGIOykC3T
-         TxuqbJ6xHbBMAg2uuJ2yYMWnd123y2roHPmreM3mSZlrhcg06u38DOJD4dBMltitAlsq
-         XuE+7WzpHBOnu1830FKpqZCVlL1QyF0hGa3oEwKVytsgKunB/bphzYzEjM4HzZ6HKLr6
-         t6gg==
-X-Forwarded-Encrypted: i=1; AJvYcCXYaXDioVmv1HNRWMV4BDiDfBiaVPBpT2ZtNVHfAmt50B1CqZpmLMwKioc3eltWo5WEXNd3eavISg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx567C6Iadj6rnSHwg16vAV6h9NzVMPLyR+6tUHb4V1wNUqCMy8
-	VuvSS7ucFN/njGlFMfgzc11goztpNiOvFWsnC6jX7Lshm9aIJz4jNvw=
-X-Gm-Gg: ASbGncvzE4SNKYyA42EpBRdv0TPG2PR0xMgTkR8K0VQyQpGDT2RRnhwesok3zCZicK7
-	JpfThMACQCkA78YJ+ntajIy36p9cZnmQo4hTuYsqGMxBh5qDEEe+TyjNsjaijUwwH2CeSESlQys
-	RQH6BdxhaUclQp8FTqGaMPNdhiIlCw9WHMlEKRdsKj0Q0SOcq2hfuYCnd/lmYGi7tigPMZ1miZv
-	umPlEzlD3fuf4lH/cIcw5m1Ef2lU1XvIKaz0x3DGmkBCWAmz2K8tsuIfyqjQHUmWiIeX0rpkC5U
-	XWG+9OekjH4EeXNhde1ch8o/3Gfy4QETd++jXzRafbdt8scuPO8U4Cjlk+PE8lolvvPJU2E2ETf
-	KiOo1+OrOjytihKPTvtekOoYA5j23xQLsLs2NN+v1wxmYVI5kLhltt7mc8WyW6MhV0co76HuY0q
-	z5FaQ=
-X-Google-Smtp-Source: AGHT+IG8uQ3JjV3c0JDUkJsmmZ5+Lv5LjpuACGts+kzj2aaW6csSLFxbCMV6mf47lZ74hxUJe+Z+zw==
-X-Received: by 2002:a05:6000:1449:b0:3e5:5261:7ffa with SMTP id ffacd0b85a97d-3ecdfa4fe0dmr2262639f8f.9.1758193686882;
-        Thu, 18 Sep 2025 04:08:06 -0700 (PDT)
-Received: from localhost (85.red-80-39-42.staticip.rima-tde.net. [80.39.42.85])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3ee074121b2sm3215090f8f.27.2025.09.18.04.08.05
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 18 Sep 2025 04:08:05 -0700 (PDT)
-Message-ID: <c97167e3-efb8-4a77-9882-662594b77654@gmail.com>
-Date: Thu, 18 Sep 2025 13:08:04 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hZbOeiwu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1758194137;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Y2cSt5j8tcsGSBbSxcGw0vImv8sfDBWg/1vktrdVzzM=;
+	b=hZbOeiwuKpGtk9kYw0zlFMaHD0heu0py6s/flJAQKtlupAhq5i6VWvyhl8Es+ALGeNbiq/
+	H5KuuSC1wWgnjxkr6SW5VkK6AyxEDyiYYgUciQZeyrwk2wSjShAyha/FbgLzNPdkW43jfE
+	nJ2pcmpS7NGpbIRV2NkE6NyegRpSvHA=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-635-UYijh1sjNtCETZ2pnVnb6A-1; Thu,
+ 18 Sep 2025 07:15:34 -0400
+X-MC-Unique: UYijh1sjNtCETZ2pnVnb6A-1
+X-Mimecast-MFC-AGG-ID: UYijh1sjNtCETZ2pnVnb6A_1758194133
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A0E7F1800576;
+	Thu, 18 Sep 2025 11:15:32 +0000 (UTC)
+Received: from [10.45.225.219] (unknown [10.45.225.219])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD10D1800446;
+	Thu, 18 Sep 2025 11:15:30 +0000 (UTC)
+Date: Thu, 18 Sep 2025 13:15:25 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
+cc: Bart Van Assche <bvanassche@acm.org>, 
+    "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, 
+    Mike Snitzer <snitzer@kernel.org>, Damien Le Moal <dlemoal@kernel.org>, 
+    Alasdair Kergon <agk@redhat.com>
+Subject: Re: [PATCH v4] dm: optimize REQ_PREFLUSH with data when using the
+ linear target
+In-Reply-To: <qxeldko7kx763qu7aj7bei5gikwczyzlihaqpdxq3affkmcbz3@v32xuyu3ls5a>
+Message-ID: <8e0be106-fcae-e566-8891-4272f6f0c738@redhat.com>
+References: <20250910172742.187645-1-bvanassche@acm.org> <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com> <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com> <c29b0abc-2443-4cc4-9c2a-a41e6770bb96@acm.org> <274476e9-357b-5346-2316-6a6dc2971dfc@redhat.com>
+ <qxeldko7kx763qu7aj7bei5gikwczyzlihaqpdxq3affkmcbz3@v32xuyu3ls5a>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 1/3] multipath-tools: add Acronis Cyber Infrastructure to
- hwtable
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Martin Wilck <mwilck@suse.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM_DEVEL-ML <dm-devel@lists.linux.dev>
-References: <20250910194205.145919-1-xose.vazquez@gmail.com>
- <20250910194205.145919-2-xose.vazquez@gmail.com>
- <aMMNV-_0nX0gOdXM@redhat.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <aMMNV-_0nX0gOdXM@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: _XtpUU0UEf4eHQ_pZtvRXk1tsurK5bXABhNixDj-iHw_1758194133
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 9/11/25 7:56 PM, Benjamin Marzinski wrote:
 
-> On Wed, Sep 10, 2025 at 09:41:57PM +0200, Xose Vazquez Perez wrote:
->> Source: https://dl.acronis.com/u/software-defined/html/AcronisCyberInfrastructure_3_5_users_guide_en-US/accessing-iscsi/accessing-iscsi-targets-from-linux.html
->>
->> Cc: Martin Wilck <mwilck@suse.com>
->> Cc: Benjamin Marzinski <bmarzins@redhat.com>
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>   libmultipath/hwtable.c | 15 +++++++++++++++
->>   1 file changed, 15 insertions(+)
->>
->> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
->> index 1a78c36d..12e10577 100644
->> --- a/libmultipath/hwtable.c
->> +++ b/libmultipath/hwtable.c
->> @@ -1371,6 +1371,21 @@ static struct hwentry default_hw[] = {
->>   		.pgpolicy      = GROUP_BY_SERIAL,
->>   		.no_path_retry = 30,
->>   	},
->> +	/*
->> +	 * Acronis
->> +	 */
->> +	{
->> +		// Cyber Infrastructure
->> +		.vendor        = "VSTORAGE",
->> +		.product       = "VSTOR-DISK",
->> +		.prio_name     = PRIO_ALUA,
->> +		.pgpolicy      = GROUP_BY_NODE_NAME,
->> +		.detect_prio   = DETECT_PRIO_OFF,
->> +		.features      = "2 pg_init_retries 50",
->> +		.pgfailback    = -FAILBACK_FOLLOWOVER,
+
+On Thu, 18 Sep 2025, Shinichiro Kawasaki wrote:
+
+> On Sep 15, 2025 / 17:42, Mikulas Patocka wrote:
+> [...]
+> > If the table has only linear targets and there is just one underlying
+> > device, we can optimize REQ_PREFLUSH with data - we don't have to split
+> > it to two bios - a flush and a write. We can pass it to the linear target
+> > directly.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Tested-by: Bart Van Assche <bvanassche@acm.org>
+> > 
+> > ---
+> >  drivers/md/dm-core.h |    1 +
+> >  drivers/md/dm.c      |   31 +++++++++++++++++++++++--------
+> >  2 files changed, 24 insertions(+), 8 deletions(-)
+> > 
+> > Index: linux-2.6/drivers/md/dm.c
+> > ===================================================================
+> > --- linux-2.6.orig/drivers/md/dm.c	2025-09-15 17:30:25.000000000 +0200
+> > +++ linux-2.6/drivers/md/dm.c	2025-09-15 17:35:47.000000000 +0200
+> [...]
+> > @@ -976,11 +972,12 @@ static void __dm_io_complete(struct dm_i
+> >  	if (requeued)
+> >  		return;
+> >  
+> > -	if (bio_is_flush_with_data(bio)) {
+> > +	if (unlikely(io->requeue_flush_with_data)) {
 > 
-> I'm not sure about the pgfailback setting. the FAILBACK_FOLLOWOVER mode
-> is not something that is really needed for a specific array type. It
-> works like FAILOVER_IMMEDIATE, but it's designed to work so that if
-> multiple nodes are using the same multipath device, and one of them
-> loses access to the highest priority pathgroup but the others don't,
-> multipath won't keep switching pathgroups back and forth. The nodes that
-> can see the higher priority pathgroup won't automatically switch back to
-> it, since they weren't the ones that switched away from it. So the
-> setting is more for a specific use case, and not a specific array type.
+> Hello Mikluas,
 > 
-> On the other hand, it is what the vendor tested, and with a single
-> machine accessing the multipath device, you usually only switch away
-> from the highest priority pathgroup because you lost access to all the
-> paths in it. So it usually won't get stuck on a lower priority pathgroup
-> while a higher priority one is usable, although that could happen.
+> Last night, I ran my fio test for zoned block devices using linux-next kernel
+> with the tag "next-20250917" and dm-crypt on QEMU ZNS drive. Then I observed
+> KASAN slab-use-after-free [1]. It happend at "__dm_io_complete+0x866/0x960",
+> which points to the line above added by this patch. It looks like 'io' is freed
+> before the reference to io->requeue_flush_with_data. I checked the function
+> __dm_io_complete(), and found that free_io(io) is called just before the line
+> of KASAN. It looks weird for me to access io->requeue_flush_with_data after
+> freeing io. Do you think this is the cause of the KASAN?
 > 
-> Thoughts?
+>   961                 dm_end_io_acct(io);
+>   962         }
+>   963         free_io(io);    <-------------------------------- free io here?
+>   964         smp_wmb();
+>   965         this_cpu_dec(*md->pending_io)
+>   966
+>   967         /* nudge anyone waiting on suspend queue */
+>   968         if (unlikely(wq_has_sleeper(&md->wait)))
+>   969                 wake_up(&md->wait);
+>   970
+>   971         /* Return early if the original bio was requeued */
+>   972         if (requeued)
+>   973                 return;
+>   974
+>   975         if (unlikely(io->requeue_flush_with_data)) {  <---- KASAN suaf
+>   976                 /*
+>   977                  * Preflush done for flush with data, reissue
+>   978                  * without REQ_PREFLUSH.
+> 
+> I ran the fio test under the same condition several times, but I'm failing to
+> recreate the KASAN so far. This KASAN looks very rare.
+> 
+> [1]
 
-Yes, it is a weird value for pgfailback. But it's in two docs from
-different vendors:
-https://dl.acronis.com/u/software-defined/html/AcronisCyberInfrastructure_3_5_users_guide_en-US/accessing-iscsi/accessing-iscsi-targets-from-linux.html
-and https://docs.virtuozzo.com/pdf/virtuozzo_hybrid_infrastructure_6_2_users_guide.pdf
+Hi
 
-I don't even know who the real manufacturer is.
+Thanks for testing it. I fixed it, I folded the fix into the existing 
+patch. You can get it here:
+
+https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
+
+Mikulas
+
