@@ -1,143 +1,148 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 186AA2F3C1A
-	for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 11:15:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3E19CA52
+	for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 13:49:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758194139; cv=none; b=ehkf/RLe+fKPAQMo8njTsKFngQLqM+Esdv/XEuPoROw0VbJah9cYWMp7M0VNsz211pabkX5HRzSxobE6iW/ERwX+lGvX+JWWW0SPGE71Q5iyadqaHgWuCJz+gS50Y7bERCN0Zivr+EqSms+JLQv2tW0/DVqo7D3x1WKNLalaf2Q=
+	t=1758203343; cv=none; b=I+XR2KmPPMa7vqFp4ZXGF5TsCwVZ0TjjcWKq2GhOE4vhB8Fv5ngoprD0ory+B4knV0j1J+So3d/6jChMps8u2wtKaLTa81Gk+iqbqVpQ6UHSgmajUGM9X05RUgNCaHWAEuYIUzsE6URA+rvpVt0RFWEyZj4hpJNy5TrmDCA/e5k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758194139; c=relaxed/simple;
-	bh=7KKvXrlbZFt+9FdjRsuUJ4Nm5l1egFw8YPXxf6CfoWI=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=YTV6+qMhmYvh/MwYiUdLpIVif9lQjprjev1fP0o+kdzh1RMhlbPrQHLQ1TjA0Ijs0/NNODfgS/TA6rSxev5fTmP3vNkdXusilUlANGLgxhdXgeCRGd9cZBOALqHkyVaeq87aGM4cqv6KekQtsxsNV086VA/cA09DlgkEDc7c2gQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hZbOeiwu; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1758203343; c=relaxed/simple;
+	bh=FAth7ZYw0bF0MS2aisxKvKibyCQoWr5Qe2Ky9Q5qySw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=RV1AHmITPUk527A8JzTI68L+kpq3vj2hyk6fedc+0i4CrGR7iURvez0t0OwaLV6mgxOjWqLj5N8xNvm2ccqOXkHdlaCiTB2NOPuKtUa9zCBLB8LUt9/Z2E4OcHukM8MtWHoTNeo/4Ka2DlPEqP47MKtZG6B8x1JeamP+t0QsBRo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X4+KXyp7; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hZbOeiwu"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X4+KXyp7"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758194137;
+	s=mimecast20190719; t=1758203339;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Y2cSt5j8tcsGSBbSxcGw0vImv8sfDBWg/1vktrdVzzM=;
-	b=hZbOeiwuKpGtk9kYw0zlFMaHD0heu0py6s/flJAQKtlupAhq5i6VWvyhl8Es+ALGeNbiq/
-	H5KuuSC1wWgnjxkr6SW5VkK6AyxEDyiYYgUciQZeyrwk2wSjShAyha/FbgLzNPdkW43jfE
-	nJ2pcmpS7NGpbIRV2NkE6NyegRpSvHA=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=QZ0NSgnWvyoB3fm+mi5BZQR6S6ktKbEEGKzPWcq34Oo=;
+	b=X4+KXyp7zXmJES9yfmQ8ZEH0Xb/pSkY8aviIhRehsO7j1EVGjnsXp6uEheqRea/lFCdRPQ
+	r8D1Q17lyrikDtOkm0V0qaG6vE/cCfSer6gBfM+mbC140Lo/cKgZI0XrTENdv6SPjCcNJh
+	OlWnJo5o4NZPbBYuUjTAqeS4fGiR6yg=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-635-UYijh1sjNtCETZ2pnVnb6A-1; Thu,
- 18 Sep 2025 07:15:34 -0400
-X-MC-Unique: UYijh1sjNtCETZ2pnVnb6A-1
-X-Mimecast-MFC-AGG-ID: UYijh1sjNtCETZ2pnVnb6A_1758194133
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-287-VEbkz268PtSNe4EfVQZOLQ-1; Thu,
+ 18 Sep 2025 09:48:58 -0400
+X-MC-Unique: VEbkz268PtSNe4EfVQZOLQ-1
+X-Mimecast-MFC-AGG-ID: VEbkz268PtSNe4EfVQZOLQ_1758203338
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A0E7F1800576;
-	Thu, 18 Sep 2025 11:15:32 +0000 (UTC)
-Received: from [10.45.225.219] (unknown [10.45.225.219])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD10D1800446;
-	Thu, 18 Sep 2025 11:15:30 +0000 (UTC)
-Date: Thu, 18 Sep 2025 13:15:25 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-cc: Bart Van Assche <bvanassche@acm.org>, 
-    "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, 
-    Mike Snitzer <snitzer@kernel.org>, Damien Le Moal <dlemoal@kernel.org>, 
-    Alasdair Kergon <agk@redhat.com>
-Subject: Re: [PATCH v4] dm: optimize REQ_PREFLUSH with data when using the
- linear target
-In-Reply-To: <qxeldko7kx763qu7aj7bei5gikwczyzlihaqpdxq3affkmcbz3@v32xuyu3ls5a>
-Message-ID: <8e0be106-fcae-e566-8891-4272f6f0c738@redhat.com>
-References: <20250910172742.187645-1-bvanassche@acm.org> <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com> <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com> <c29b0abc-2443-4cc4-9c2a-a41e6770bb96@acm.org> <274476e9-357b-5346-2316-6a6dc2971dfc@redhat.com>
- <qxeldko7kx763qu7aj7bei5gikwczyzlihaqpdxq3affkmcbz3@v32xuyu3ls5a>
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C7F7219560B0
+	for <dm-devel@lists.linux.dev>; Thu, 18 Sep 2025 13:48:57 +0000 (UTC)
+Received: from o.redhat.com (unknown [10.45.225.144])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 71B531955F2D;
+	Thu, 18 Sep 2025 13:48:56 +0000 (UTC)
+From: Heinz Mauelshagen <heinzm@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: mpatocka@redhat.com,
+	Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm raid: use proper md_ro_state enumerators
+Date: Thu, 18 Sep 2025 15:48:40 +0200
+Message-ID: <e14e3358a3b0acc015c01c61e6471e622a2dbe8f.1758201368.git.heinzm@redhat.com>
+In-Reply-To: <cover.1758201368.git.heinzm@redhat.com>
+References: <cover.1758201368.git.heinzm@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: _XtpUU0UEf4eHQ_pZtvRXk1tsurK5bXABhNixDj-iHw_1758194133
+X-Mimecast-MFC-PROC-ID: h6JU1sjzJgmukhY-j5OaI0pfq-dsvvuu_809Pqf2B_I_1758203338
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
+The dm-raid code was using hardcoded integer values to represent the read-only/read-write state
+of RAID arrays instead of the proper enumeration constants defined in the md_ro_state enumerator type.
 
+Changes:
 
-On Thu, 18 Sep 2025, Shinichiro Kawasaki wrote:
+- Replace hardcoded integers with the appropriate md_ro_state enumerator values
 
-> On Sep 15, 2025 / 17:42, Mikulas Patocka wrote:
-> [...]
-> > If the table has only linear targets and there is just one underlying
-> > device, we can optimize REQ_PREFLUSH with data - we don't have to split
-> > it to two bios - a flush and a write. We can pass it to the linear target
-> > directly.
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Tested-by: Bart Van Assche <bvanassche@acm.org>
-> > 
-> > ---
-> >  drivers/md/dm-core.h |    1 +
-> >  drivers/md/dm.c      |   31 +++++++++++++++++++++++--------
-> >  2 files changed, 24 insertions(+), 8 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm.c	2025-09-15 17:30:25.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm.c	2025-09-15 17:35:47.000000000 +0200
-> [...]
-> > @@ -976,11 +972,12 @@ static void __dm_io_complete(struct dm_i
-> >  	if (requeued)
-> >  		return;
-> >  
-> > -	if (bio_is_flush_with_data(bio)) {
-> > +	if (unlikely(io->requeue_flush_with_data)) {
-> 
-> Hello Mikluas,
-> 
-> Last night, I ran my fio test for zoned block devices using linux-next kernel
-> with the tag "next-20250917" and dm-crypt on QEMU ZNS drive. Then I observed
-> KASAN slab-use-after-free [1]. It happend at "__dm_io_complete+0x866/0x960",
-> which points to the line above added by this patch. It looks like 'io' is freed
-> before the reference to io->requeue_flush_with_data. I checked the function
-> __dm_io_complete(), and found that free_io(io) is called just before the line
-> of KASAN. It looks weird for me to access io->requeue_flush_with_data after
-> freeing io. Do you think this is the cause of the KASAN?
-> 
->   961                 dm_end_io_acct(io);
->   962         }
->   963         free_io(io);    <-------------------------------- free io here?
->   964         smp_wmb();
->   965         this_cpu_dec(*md->pending_io)
->   966
->   967         /* nudge anyone waiting on suspend queue */
->   968         if (unlikely(wq_has_sleeper(&md->wait)))
->   969                 wake_up(&md->wait);
->   970
->   971         /* Return early if the original bio was requeued */
->   972         if (requeued)
->   973                 return;
->   974
->   975         if (unlikely(io->requeue_flush_with_data)) {  <---- KASAN suaf
->   976                 /*
->   977                  * Preflush done for flush with data, reissue
->   978                  * without REQ_PREFLUSH.
-> 
-> I ran the fio test under the same condition several times, but I'm failing to
-> recreate the KASAN so far. This KASAN looks very rare.
-> 
-> [1]
+- Add the missing MD_RDONLY setting in the post_suspend function
 
-Hi
+This improves code clarity and maintainability by using the defined enumeration constants
+rather than magic numbers, ensuring the code properly conforms to the established API interface.
 
-Thanks for testing it. I fixed it, I folded the fix into the existing 
-patch. You can get it here:
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+---
+ drivers/md/dm-raid.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git/log/?h=for-next
-
-Mikulas
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 79ea85d18e24..6cdfd7ca998c 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3247,7 +3247,7 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	rs_reset_inconclusive_reshape(rs);
+ 
+ 	/* Start raid set read-only and assumed clean to change in raid_resume() */
+-	rs->md.ro = 1;
++	rs->md.ro = MD_RDONLY;
+ 	rs->md.in_sync = 1;
+ 
+ 	/* Has to be held on running the array */
+@@ -3385,7 +3385,7 @@ static enum sync_state decipher_sync_action(struct mddev *mddev, unsigned long r
+ 	/* The MD sync thread can be done with io or be interrupted but still be running */
+ 	if (!test_bit(MD_RECOVERY_DONE, &recovery) &&
+ 	    (test_bit(MD_RECOVERY_RUNNING, &recovery) ||
+-	     (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery)))) {
++	     (md_is_rdwr(mddev) && test_bit(MD_RECOVERY_NEEDED, &recovery)))) {
+ 		if (test_bit(MD_RECOVERY_RESHAPE, &recovery))
+ 			return st_reshape;
+ 
+@@ -3775,11 +3775,11 @@ static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 		} else
+ 			return -EINVAL;
+ 	}
+-	if (mddev->ro == 2) {
++	if (mddev->ro == MD_AUTO_READ) {
+ 		/* A write to sync_action is enough to justify
+ 		 * canceling read-auto mode
+ 		 */
+-		mddev->ro = 0;
++		mddev->ro = MD_RDWR;
+ 		if (!mddev->suspended)
+ 			md_wakeup_thread(mddev->sync_thread);
+ 	}
+@@ -3858,6 +3858,7 @@ static void raid_postsuspend(struct dm_target *ti)
+ 		 */
+ 		md_stop_writes(&rs->md);
+ 		mddev_suspend(&rs->md, false);
++		rs->md.ro = MD_RDONLY;
+ 	}
+ }
+ 
+@@ -3968,7 +3969,7 @@ static void rs_update_sbs(struct raid_set *rs)
+ 	int ro = mddev->ro;
+ 
+ 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
+-	mddev->ro = 0;
++	mddev->ro = MD_RDWR;
+ 	md_update_sb(mddev, 1);
+ 	mddev->ro = ro;
+ }
+@@ -4125,7 +4126,7 @@ static void raid_resume(struct dm_target *ti)
+ 		WARN_ON_ONCE(rcu_dereference_protected(mddev->sync_thread,
+ 						       lockdep_is_held(&mddev->reconfig_mutex)));
+ 		clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
+-		mddev->ro = 0;
++		mddev->ro = MD_RDWR;
+ 		mddev->in_sync = 0;
+ 		md_unfrozen_sync_thread(mddev);
+ 		mddev_unlock_and_resume(mddev);
+-- 
+2.51.0
 
