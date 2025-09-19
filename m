@@ -1,192 +1,218 @@
-Received: from esa4.hgst.iphmx.com (esa4.hgst.iphmx.com [216.71.154.42])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 150AC2264AD
-	for <dm-devel@lists.linux.dev>; Fri, 19 Sep 2025 02:47:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=216.71.154.42
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758250035; cv=fail; b=cKnQ8gxVVo8xDRzzbxCQWhv+kjrdbXB9tuYsjIsOqYksGpjCFfxfmd7FSVjA8uTtwsAEhl3f4IxAOwVcnnYOZuKI4gczKR0LlM56sYMHsHDU7F6E+S9dGq+eMnvI2zx8qixxXx5Hq0K1KGM83R+hgTy3mKQpMZvce93TqQ68Lqs=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758250035; c=relaxed/simple;
-	bh=h2/pDAonld5NmxB4ZU03Fa61MC16Ut7iRxNMNAODOfI=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=XO3YRdp5A3nVerB3elFGEJ8odnfpWo954psxTUxN+zQltYEkitiw/bmJpDqLdKDja5eQ5NXepf1L3MDowHX2dpjrC3WHYiAbX+MVEtBCQSOG0ynAgJH8yvFnitwh6E7nnsjcsZ2AElFNBYrl9Cb0Ewt9cgMeM69Bm0tPPsC7F/g=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com; spf=pass smtp.mailfrom=wdc.com; dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b=GCqaTtUs; dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b=nLP455or; arc=fail smtp.client-ip=216.71.154.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wdc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wdc.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4AD8C253958
+	for <dm-devel@lists.linux.dev>; Fri, 19 Sep 2025 06:53:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1758264805; cv=none; b=Ngnmxl0LJ0VOEI9l3N8ijpPpyjXly6aOd7ofRtUe+f2lbKtmb3ewXdjbPLsbFntKixxpys+9MZKlOETBVQ8bglGUZUA2keCt6ZUk+/HOC2ubCN9vIcQZRrvlYpL90G2ja/5f1jLS3nJLsGaup+bCW5fWs1ldkjaKY+oojGgRwIk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1758264805; c=relaxed/simple;
+	bh=6mu5r/20fn8IJXO2AldBdlWVvRnI63AzYbfukrUgu9E=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=PYset6JawFuX2nn0ltcGGA2TzYaU1t0ZQ+wkGLxfcZEUqtr6zxhm4Igo7AhAtCEvrMMifwQLzqri5uKS/iz7JolnYHz1rKSXi1ECW+J5nFhE2SeeUmZZjQTyl94L/fhnoMLKBeE50TEvZCbwiOOneEdkhdcmJ3hPtBfPdi1/IWw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=JfY3wa8n; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=wdc.com header.i=@wdc.com header.b="GCqaTtUs";
-	dkim=pass (1024-bit key) header.d=sharedspace.onmicrosoft.com header.i=@sharedspace.onmicrosoft.com header.b="nLP455or"
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple;
-  d=wdc.com; i=@wdc.com; q=dns/txt; s=dkim.wdc.com;
-  t=1758250034; x=1789786034;
-  h=from:to:cc:subject:date:message-id:references:
-   in-reply-to:content-id:content-transfer-encoding:
-   mime-version;
-  bh=h2/pDAonld5NmxB4ZU03Fa61MC16Ut7iRxNMNAODOfI=;
-  b=GCqaTtUsLLAUxnIjHL5bGAMSbc5FA7WZowhdnsJHOT4OzbxN+/RYeWSw
-   W6UzSOgaeQp0HVZK8lDM39GXj5r/uRGarphraV6sCBgKcRoPfBz4HJ4Zl
-   627UKTizWo49Tm/HJOFzsj7co4ohPXulDsJdNtOZl7HZOE9t8GSVcyVuf
-   s0MIEQs6G8S1c4NiiDb/OOInRCDo9SPcvMxFw5gSzLHLswntKrMrBmMgn
-   rVzrqvbNztAE5bgzMl22tLCQn9+Uw+g4lCbHsJpR3vz+CYZSRGbV5lH/I
-   nxbtBTCOz8p1TP5P1uYjZOY8nmJgyDb9OSgu/9b6j3YM3KsjQyqG4YmGu
-   w==;
-X-CSE-ConnectionGUID: WBdQ4UpNQlif5QT2hvZEeQ==
-X-CSE-MsgGUID: +tXu19FkRN6jVMKrMWOaaQ==
-X-IronPort-AV: E=Sophos;i="6.18,276,1751212800"; 
-   d="scan'208";a="121191775"
-Received: from mail-northcentralusazon11010045.outbound.protection.outlook.com (HELO CH1PR05CU001.outbound.protection.outlook.com) ([52.101.193.45])
-  by ob1.hgst.iphmx.com with ESMTP; 19 Sep 2025 10:47:12 +0800
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=tpMK+ljb9OSRkIexbB0WBo1Ypy82FwphdWFqlLUNdJtwbSOEE52gZDcWurdcmfDdUOON5NhUalSNGdRdSzVu/PTCUAIHjfJShB+X4Rq3qUvYTRhLpIZzRcv/LYSPyBT6RuHPukQtRsFm7weWyx9tbz96h4AAcyjBcn5OKDaeSzUJJ6id3BIY0CgcYIbR5G4Bpr79lMD11+kKJCCh6k3wGH//ps8BXJ4i5PYmDqCVcIFbuN5VkiIlQm3PrYb/AcnW9kg0Lqpy2CGOSV6D+b5uurJGFMc1NLfYSCwS6wIM32qWErU7DdGrIeFftjFOdgyvo4z1ZstrmKST4WrkdVACKw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=h2/pDAonld5NmxB4ZU03Fa61MC16Ut7iRxNMNAODOfI=;
- b=N56fkqAvw3/mVVVg2WVlOTtk4SVMBQ6NNsDvexnI9f//kR7Vde2zsulRKZFs58rlyeEdGMKbDnDNGTnFM1ix4NVBcfiMSaNvcKzuzGB3kqeHHtIXRCYwHGuUxDU655ZJafVtZNvN+WqcE+oSvG5aOSvEvMu4/MDrEZyX0lum0CLQQ0I5mC8tEaNXT0ZlNTVi1nwYzjqhAoU5IUhK7BjVwY4UIEENzFbdAUhKZpi4+lLktAvzzAoB+2xmsB8pJcSuv7n9SY6IYIAuOQ4bip2Jj6Ij68yo2yEGbrsX6y4baRoPuZ5r2YNEt2V2WPO5Z0HdPCCe5sy1DIEQf/u4acwIZg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=wdc.com; dmarc=pass action=none header.from=wdc.com; dkim=pass
- header.d=wdc.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=sharedspace.onmicrosoft.com; s=selector2-sharedspace-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=h2/pDAonld5NmxB4ZU03Fa61MC16Ut7iRxNMNAODOfI=;
- b=nLP455orFY8v3aFJ/DLHkwIK+H4tcY2OINiHN+G9Y2eBYfnRrB2isv5HGAOaKup0Q7aGvq4nITfQXovVs0Y+PVg0ANcs0DgB6wwg4JS0+7kqYkcL6jPR2J0/Yy8KeMWPYFvcONV77QuXrdRh24+kRO5qU1YwpyZYUZ2hgXioSC0=
-Received: from SN7PR04MB8532.namprd04.prod.outlook.com (2603:10b6:806:350::6)
- by CO6PR04MB7476.namprd04.prod.outlook.com (2603:10b6:303:ac::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9137.13; Fri, 19 Sep
- 2025 02:47:10 +0000
-Received: from SN7PR04MB8532.namprd04.prod.outlook.com
- ([fe80::4e14:94e7:a9b3:a4d4]) by SN7PR04MB8532.namprd04.prod.outlook.com
- ([fe80::4e14:94e7:a9b3:a4d4%7]) with mapi id 15.20.9115.022; Fri, 19 Sep 2025
- 02:47:10 +0000
-From: Shinichiro Kawasaki <shinichiro.kawasaki@wdc.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-CC: Bart Van Assche <bvanassche@acm.org>, "dm-devel@lists.linux.dev"
-	<dm-devel@lists.linux.dev>, Mike Snitzer <snitzer@kernel.org>, Damien Le Moal
-	<dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>
-Subject: Re: [PATCH v4] dm: optimize REQ_PREFLUSH with data when using the
- linear target
-Thread-Topic: [PATCH v4] dm: optimize REQ_PREFLUSH with data when using the
- linear target
-Thread-Index: AQHcKD8r2U1k6WeCp0+vmpTt9bP2nrSYypGAgAEEU4A=
-Date: Fri, 19 Sep 2025 02:47:09 +0000
-Message-ID: <dtyybrzcofyqzxdcnilxtglak3zk3h5ynjb23bdwf2vbg6ebzz@wapaafu2covv>
-References: <20250910172742.187645-1-bvanassche@acm.org>
- <55e3a5e7-8e4e-3e78-1f36-4bd4300974ae@redhat.com>
- <bbd7cb48-a13c-0077-af7b-39c849c9f6c0@redhat.com>
- <c29b0abc-2443-4cc4-9c2a-a41e6770bb96@acm.org>
- <274476e9-357b-5346-2316-6a6dc2971dfc@redhat.com>
- <qxeldko7kx763qu7aj7bei5gikwczyzlihaqpdxq3affkmcbz3@v32xuyu3ls5a>
- <8e0be106-fcae-e566-8891-4272f6f0c738@redhat.com>
-In-Reply-To: <8e0be106-fcae-e566-8891-4272f6f0c738@redhat.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=wdc.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SN7PR04MB8532:EE_|CO6PR04MB7476:EE_
-x-ms-office365-filtering-correlation-id: 5864c788-9d18-4171-cac6-08ddf726d47c
-wdcipoutbound: EOP-TRUE
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|366016|1800799024|376014|19092799006|38070700021;
-x-microsoft-antispam-message-info:
- =?us-ascii?Q?2fqPC2UNzEHie/mU/J3I4VSdSJl6OSyfIuW//c1xh8vGKX+L7Re+c4zlRPFh?=
- =?us-ascii?Q?oSxVE58+zeingFvhPVISv3wgOplmPRFINhmzfahKgCweDe3gQ8XG7jgmvZQL?=
- =?us-ascii?Q?sxWTaAse0NJU2t45PbU371fUR7fu0oUhXmWrqEflb9pqyqI3kHMRqfX9abr3?=
- =?us-ascii?Q?TvaFIQV0SYZSrEsZ+P9y+jxE8czt7FrOe4G9vPHIFVSPv7AkvngjfjOuya9s?=
- =?us-ascii?Q?K/gPTdgU48sYOsrt+i2IIesrOj4ZY68tR3P4VfJ8AkLRN47Ll0K1XU0Ov1UD?=
- =?us-ascii?Q?XFhoijvG09mWQq5ldh+RBOsvSuxxDd+TTDP2y1UOZ7wBkqvGqmKLZxvvKFdz?=
- =?us-ascii?Q?Sx1RXpZbNdhXhUmIZhicZo1NWEX+vF3bGzt0biTDJ+cX9sbfrzALa5d9cJW4?=
- =?us-ascii?Q?082iAq7MKnPuHuLHYOTX7bYU6RNgEv+eRj1cKZS5z0FPe+krXWf4EwYYON+E?=
- =?us-ascii?Q?z8l1RIalQhIsAcUAXi748cGpYO1m72QmVzsl3DzX45pi3zul6+N/odmfQsyo?=
- =?us-ascii?Q?ntx1cgmQFQIjkT1dQhW8a/YyDUsU4TncmhzB0LmIq0MV/nY551oTuMH7TA0k?=
- =?us-ascii?Q?QKx4u7taVzp2Q4MHG7uYnF8L0V9Ar0crqOM4xfZ/KhW9Lz0pGQCtdQNhX/Vx?=
- =?us-ascii?Q?2oWhb1lqszDnyUAwInxqaCRFE0ev+LLJZIJng0y1xVCFATRNOwhcxCmP2ekm?=
- =?us-ascii?Q?/6a1u8gkDuWHCTItFTKctmVhKSeT/ADA+O+0+IV3COftq+0CrjwkdFH9DCju?=
- =?us-ascii?Q?JUQs3CukcwERjuqMhX94ukS93R6GOEEMXCQFGeredsgUPLjID6OYVqg07iFf?=
- =?us-ascii?Q?qkpL1vlCbrbWTLVgFArx5v5XmVztTILeoJVX6gY86KuytacNH7c/alew3nQp?=
- =?us-ascii?Q?cPEjwBZjTdPZSdq/SBVrQfOFbMzbx2z3YsrR0zUjhUxkh0fc28CfGlfH2jo0?=
- =?us-ascii?Q?Mq6/imZv528JNI3F7tOlINOWXyQz52ZuRKFA45JTK6S6/aX8oySDF1m5owbH?=
- =?us-ascii?Q?Iaze4whviXLDQtcdfXTcSUsSJvygrawTZ/gifLaJaCGPqJKVD6OP2maMOEXN?=
- =?us-ascii?Q?fgcg8atO1hhH0bFjhW03hYPEWB4P2jkjy3uDnbAxg7ZgeR9jBFp2WOEzmZh0?=
- =?us-ascii?Q?bHbEcz672cd2CShvS6ssTSmkuNkuSvib3L13of5aBAczyiIoOGj745N5Y5eQ?=
- =?us-ascii?Q?XO/cMBGWTKIP73MU45JATsbQnMfdT0yxfhKt3qku88lOKrrVZRKlhWfZTc9B?=
- =?us-ascii?Q?hrkcfG+9vJnc6do0JOZTPMSew7DZzgCZU5BPRFXyaIFXySWKr1SuBpb42tRi?=
- =?us-ascii?Q?HAmkpkToUubCF6GGZ6/Oj5ek8kygq8HABG7dw4V2wnGCgPXs/UxvbzRP79c8?=
- =?us-ascii?Q?jW24/RMctzKf7dXKO8NC1VyWvXLIdSraXUAyBSKbPr11Ww/3ELL0mA+XVZ85?=
- =?us-ascii?Q?I/QvjwOHg7bDtkH7xnwSymSu7sBfCdYUlAcIPmhXQJSomJwBDfAB7iUrcTI8?=
- =?us-ascii?Q?Iz7EQp5wqmHFrvM=3D?=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SN7PR04MB8532.namprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014)(19092799006)(38070700021);DIR:OUT;SFP:1101;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?us-ascii?Q?Lon5zqUmtG6md1iG6tRTdoc1ca8Syiv/kpmepZT3/VxuvMp6NwsRn60YWMLS?=
- =?us-ascii?Q?A5Zj/06ay82OMyrA9oXIcUwCZG4KKhQColPbeopl++YUYNhn0d9S7DlC6Yn+?=
- =?us-ascii?Q?mbt6Wh0oHbfzS9gpXCEiYnBMkRWleQANS93yoTEs/qHaoeAGQN/pKwpXo8wv?=
- =?us-ascii?Q?J8/44LtJ3AOiheF75qrQEhH4fIXNs6FKoRUIC/1Uq09lPSeAhGYxUsA36p0Z?=
- =?us-ascii?Q?Ys+c+348YacYm5RikQTJfiCVYMMdgPxMgqOdki58kffedbwFmppOsNWzF4li?=
- =?us-ascii?Q?u+28EMvFM8J+y7yPllrBs1pNrvyNXjsS5e+pEyZKlEnidGI2TaWCywcTkrVO?=
- =?us-ascii?Q?pu/8jfO6ItLdR+zbiOE3Of8PYBoe2qXHWibQp8MPVRhAQi8E6Z5g6NJKlmCy?=
- =?us-ascii?Q?seX2VRCt+2e2E4lON+eP2ZIBVDa//2pO+kuZTECODfIPQ8Gl6ablEqRqewLg?=
- =?us-ascii?Q?9DWuQ/JIxJQ6zp7QQiDURgx79lTkdJCzzcFyoFi3n5zHS+kbK3kKmkO8TD/0?=
- =?us-ascii?Q?NFvCy+Ikud3hvarYJBujskJy/yqcVE5UrGU76jrKxNWbfgVtlAKTAVgMXQH2?=
- =?us-ascii?Q?K8mB21GAoeYEWTIuPgSerx4LsvyBid+K6te/10GW3WtEBk8u0vD3X2x1OCXN?=
- =?us-ascii?Q?QXHgqVuLE+LvI/AJlmpW8leKgysA/TASky3AbOt/Wyh3TQc0bpxHUtWqc5m6?=
- =?us-ascii?Q?f03kDIBkBciiocr5hQ78rCTC1szdjgXtNVDy8pn1uxU3QlmJFzhq8yMRhZbS?=
- =?us-ascii?Q?ozPU8fYpibnpxIhsUR+iVp+TriMUmO5qYNZd/IjSs4WB8yn0GAyFY6Ocv5to?=
- =?us-ascii?Q?zMR90WfFjZZVK+ek/JzEo54B0zYcRJs5jAhnTOlavRL6w4jjV+Q4r18CPH2l?=
- =?us-ascii?Q?6G0hr5EUz8sllVG1PNJP4scNYjBuGF5IO7PjPdTBBiXPjOM2SSYFulBzbOpZ?=
- =?us-ascii?Q?dSySjE/wsM37tZwJXniwQD3j6LwU+uM8tvZDxUcVSOvZpUeflowMMUXJcmYD?=
- =?us-ascii?Q?l+8YmUXsnHW9DK3hQVjw6VrV/jUqIThC1ojT+6tYwvZy1L8mOnQ0fnbzTreH?=
- =?us-ascii?Q?oVIMi/Uk72yKe3K404IxrNMWh6Tt9iOpgEmWhhlEBja/T/rPkzqjUgJdEZa8?=
- =?us-ascii?Q?3D7z+HpEiwilMgHqcmyW50C2TnhqSaDlfblBv/ZMEZH7u39WeoFIm+XMhh3Z?=
- =?us-ascii?Q?bKCnSNb2cqGAPzSdwu05aJmitP5JGn+101nsyU56hfAOL82uA0M+ek0414nE?=
- =?us-ascii?Q?nQpFyFKMOUGoqi0AMLTUuCmm4AnXfJ3eDs7yeshViJcEIfYLToT6vkifFpgw?=
- =?us-ascii?Q?cdwfnkhnZn4cLkzr4JNVe7fCOd7BvteMIIeF594ZgDxFna++ZGPSx4BqBNc3?=
- =?us-ascii?Q?Nr7XdJhtZN6RbxSrKBQSKs+5K8/hnpt1ERmaFLanCj7fFiFUpikOXhNGG6gi?=
- =?us-ascii?Q?hjbX75iEhdLIhkAeeiePpZ1okBcrwuZU5MU0mCzh9Q0OrpJbjn5ncxOuAcXo?=
- =?us-ascii?Q?kK547E0b8CI7vk5/pBYEMEIdGJwqE05E06OcEjyJgyW+blXboMmJxr6NJsyy?=
- =?us-ascii?Q?qSxxbklov5lTqVkskF+10ZpIBqzFIkHcfEkpL5K5RoD444LiWvlhDdrI7eGp?=
- =?us-ascii?Q?bQ=3D=3D?=
-Content-Type: text/plain; charset="us-ascii"
-Content-ID: <ECB190779BEEA94A88782AD80DADB36C@namprd04.prod.outlook.com>
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="JfY3wa8n"
+Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 58IMEfl8011938;
+	Fri, 19 Sep 2025 06:53:18 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=9+2B8H
+	BlspqcBDCE1e33XLQoChBnf6tm8BUUbd6SXXg=; b=JfY3wa8nbutWOU27yuTKRk
+	4pyXbCjrTf1cuI413lCi8RU4rQRbPw2LAX6IH/byICCA4+ujzSy5fPmo8DMSwZqn
+	KpIiCu7qO54R3qg/iz4wYZ4tdBLzbo8ukwRzBECl32qhjDdbaW5Qt6uVWsrlxQtE
+	1dmyBSUVATU4US+TDGBI+KAATHtnrXFgAa+o1t3LEV18mK6P/VayeAQDCVSgw7Lv
+	2MqzaIwQQUzEtRvlsBz9QXabgJjwGoDMmnJC6q2ovoi6LIkpw7AfN0TEO3HbSGAP
+	QgCg2TQWr1fdBisc68sAfiRhA1t047moORerTpy2+f6qmcxvZC4tU4ybmtYSt43Q
+	==
+Received: from pps.reinject (localhost [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 497g4jeyw4-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 19 Sep 2025 06:53:17 +0000 (GMT)
+Received: from m0356517.ppops.net (m0356517.ppops.net [127.0.0.1])
+	by pps.reinject (8.18.1.12/8.18.0.8) with ESMTP id 58J6kQP4016183;
+	Fri, 19 Sep 2025 06:53:16 GMT
+Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 497g4jeyw1-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 19 Sep 2025 06:53:16 +0000 (GMT)
+Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
+	by ppma12.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 58J4mJ56005981;
+	Fri, 19 Sep 2025 06:53:15 GMT
+Received: from smtprelay04.fra02v.mail.ibm.com ([9.218.2.228])
+	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 495jxujuv6-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 19 Sep 2025 06:53:15 +0000
+Received: from smtpav01.fra02v.mail.ibm.com (smtpav01.fra02v.mail.ibm.com [10.20.54.100])
+	by smtprelay04.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 58J6rB8S19989122
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 19 Sep 2025 06:53:11 GMT
+Received: from smtpav01.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id B201D20043;
+	Fri, 19 Sep 2025 06:53:11 +0000 (GMT)
+Received: from smtpav01.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 7419620040;
+	Fri, 19 Sep 2025 06:53:11 +0000 (GMT)
+Received: from [9.111.165.4] (unknown [9.111.165.4])
+	by smtpav01.fra02v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 19 Sep 2025 06:53:11 +0000 (GMT)
+Message-ID: <ed4eba43-9d13-4875-a264-233879733bfb@linux.ibm.com>
+Date: Fri, 19 Sep 2025 08:53:11 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	ryNPgnDelX/If42wWvBXfGbw2mDfkhzVHo2PTFDZshPL4nkmglQKuJ5EJsZ1lv5Kbhho6X26IAGX4wACaz/fD0+lVxj83RnkBPKfOb833yTYeq7hrlBJMX1YH0wmA+uX7hwBUP+Ejv+o1U9TDJwbTXIpNQxJsTMcjQR3MdIqfsFeQpiE9zgpU8YOHyDABQi53xd5e5+ZgFrcq8RCgl0J4oIO7C5xj2g+9zTr3+9aCU336wfp3xoQVhKlsoOG3E0c0nCZxLFBJGrs9PHW90ePfilJa+mDVyLkKgJ3wqpkBxWXPKfZ9QlQT0IUug3QB3BsMLStDbq+eul3vyiGKiLTVAUv15NlW0SBFtsaa4owXfTtHVnVujuUwJdtclYkFeffRly/wqGZWd8Q7bIUlpETdxQRcCsQe5SOQNLXWdDKFuRLHBpkiOUg+OJ/v5QJO76tSvrhbR/TaY1sYnTmrZPZV8ERzUHZ761IsrT2rfc6OqfShpwZ2l/A592+1GuWPSazUw2avDIMzfSwz7w19fCizrFuyIQmVHfCGfKdqPRJpVBIbbrOZStut1Svc3lCq2x9u0E54h6J+7acfSrGnK+tKuCPOExj+S8yP9/rz9CsHWtCzbjelrCjSlBmMl+zjEvi
-X-OriginatorOrg: wdc.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SN7PR04MB8532.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 5864c788-9d18-4171-cac6-08ddf726d47c
-X-MS-Exchange-CrossTenant-originalarrivaltime: 19 Sep 2025 02:47:10.2133
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: b61c8803-16f3-4c35-9b17-6f65f441df86
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: b7NK7sz0FctgnGkBQ/Tk8SjeSKalO24788cU1fWGoQKfBXVelVucF7hVmSLQEYix+VZlIcjbZwhGuoX+wPT5JpEnf5zPzXgRMYc7dy9/Guw=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CO6PR04MB7476
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 0/7] dm-integrity: asynchronous hash support
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>,
+        "David S. Miller" <davem@davemloft.net>,
+        Eric Biggers <ebiggers@kernel.org>, dengler@linux.ibm.com,
+        linux-s390@vger.kernel.org, dm-devel@lists.linux.dev, agk@redhat.com,
+        snitzer@kernel.org, Milan Broz <gmazyland@gmail.com>,
+        freude@linux.ibm.com
+References: <20250908131642.385445532@debian4.vm>
+ <3a6b6f8f-5205-459c-810a-2425aae92fc8@linux.ibm.com>
+ <e1e420d5-dc00-14d0-fdef-635d6ef70811@redhat.com>
+ <bb68f9d6-8180-4291-9e6b-33bbdcef780f@linux.ibm.com>
+ <8cb59ed5-1c9a-49de-beee-01eda52ad618@linux.ibm.com>
+ <1af710ec-0f23-2522-d715-e683b9e557d8@redhat.com>
+ <f799d7ab97470f2529b8dcb5566fd673@linux.ibm.com>
+Content-Language: en-US, de-DE
+From: Ingo Franzki <ifranzki@linux.ibm.com>
+In-Reply-To: <f799d7ab97470f2529b8dcb5566fd673@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-TM-AS-GCONF: 00
+X-Authority-Analysis: v=2.4 cv=Qf5mvtbv c=1 sm=1 tr=0 ts=68ccfddd cx=c_pps
+ a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
+ a=IkcTkHD0fZMA:10 a=yJojWOMRYYMA:10 a=p0WdMEafAAAA:8 a=VnNF1IyMAAAA:8
+ a=O-Iw-kRxmlZWIl0LCTAA:9 a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
+X-Proofpoint-ORIG-GUID: OU8-asROO__vzBoI1aD_ZwN-ZIF3k9js
+X-Proofpoint-GUID: TXVOcf43IzvITQu72NmMkL7l_uXoOXGq
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwOTE2MDIwNCBTYWx0ZWRfX1gRzfphqFSbT
+ DVEmRft/CtF/Wlmnt7gRogtUPrRv5dOAoJo1vKVKGlCNfbF+vrqO3diOcBxW6xMuqpl51Ob6Zoe
+ B0t97DD6vtXkoiLKE7AdLsUaWCvFsboZCiUfnkePQo4rpTi6b18M1/OBrtYvwg0LINNINQLxc8N
+ j73qNiU7TBfVDh4Qzvq9QbFezTQIzJzP+cI46bBg2IamMbhCh5j6X4NumhqfV79sC6gdzLt9M4a
+ f9kOOYp+RnirG+TyGDfbR3cOd1L4NPGBR81Ns5TrQrUZO9r+3tmUs/l95Jvnq28/4ImliOwGIpf
+ 8bac5QKhCSXOsVCrJjB6iWifSkn5FZhxDL4CzELWtUGJpQj6D+esec0cezQxq0GqbrY+HfXlmHC
+ 7+RIZ0KZ
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1117,Hydra:6.1.9,FMLib:17.12.80.40
+ definitions=2025-09-18_03,2025-09-19_01,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ spamscore=0 clxscore=1015 phishscore=0 suspectscore=0 adultscore=0
+ priorityscore=1501 malwarescore=0 bulkscore=0 impostorscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.19.0-2507300000 definitions=main-2509160204
 
-On Sep 18, 2025 / 13:15, Mikulas Patocka wrote:
-[...]
-> Thanks for testing it. I fixed it, I folded the fix into the existing=20
-> patch. You can get it here:
->=20
-> https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.gi=
-t/log/?h=3Dfor-next
+On 18.09.2025 17:00, Harald Freudenberger wrote:
+> On 2025-09-11 17:58, Mikulas Patocka wrote:
+>> On Thu, 11 Sep 2025, Ingo Franzki wrote:
+>>
+>>> >> So, it looks like a dm-crypt bug.
+>>> >>
+>>> >> Please, revert my patches and run the same test on a clean 6.17.0-rc5 just
+>>> >> to verify that the patches do not introduce the bug.
+>>> >
+>>> > With your patches reverted the combined mode fails the same way as with your patches.
+>>> > So they did not introduce the bug.
+>>>
+>>> Mikulas, do you have any idea what could be causing this errors?
+>>> Is it that dm-crypt is not properly dealing with async-only HMAC ciphers?
+>>> Async-only encryption ciphers seem to work fine in dm-crypt, since LUKS with PAES (but no integrity) works fine, and PAES is an async-onky cipher.
+>>> LUKS with sync-HMAC ciphers (e.g. clear key HMAC) also works fine, even in combination with PAES.
+>>
+>> Yes, I think that it's a problem with async HMAC. The bug is probably
+>> either in dm-crypt or in the crypto library.
+>>
+>> Do you have some other (non-dm-crypt-related) workload that uses the
+>> async authentication, so that we can determine whether the bug is in
+>> dm-crypt or crypto?
+>>
+>> Otherwise, would it be possible to give us a virtual machine on the
+>> mainframe to debug this issue?
+>>
+>> Mikulas
+> 
+> So here is now an out-of-tree kernel module build which offers a pseudo phmac-sha256
+> for testing and debugging purpose. In the end this is just a asynch (ahash) wrapper
+> around the hmac-sha256 shash crypto subsystem implementation. It should compile and
+> be usable on all platforms (s390, x64, arm, ...).
+> 
+> I ran dm-integrity tests with this and all worked fine. Ingo ran dm-crypt tests
+> where he combined aes-cbc encryption with phmac-sha256 integrity and saw hangs
+> on cryptsetup open. He also reported that these issues are different to what he
+> saw with the 'real' phmac in combination with aes encryption. A short glimpse gives
+> me the impression that there is a job blocking the system's workqueue. However, I
+> could not find any indication that the pseudo phmac is not working properly.
 
-Mikulas, thank you for fixing it. I found that the blktests block/008 can
-reproduce the KASAN suaf in stable manner using dm-linear on null_blk. Usin=
-g
-this reproducer, I confirmed that the fix avoids the KASAN suaf :)=
+Here is what I did (after insmod'ing the pseudo phmac cipher).
+I did this on a s390x system, but it should behave the same on x86.
+
+# cryptsetup luksFormat --type luks2 --integrity phmac-sha256 --integrity-key-size 256  /dev/loop0
+# cryptsetup luksOpen /dev/loop0 int-loop
+
+Note: To use the above cryptsetup commands with phmac you might need the code from this cryptsetup PR, otherwise it won't accept phmac as integrity algorithm: https://gitlab.com/cryptsetup/cryptsetup/-/merge_requests/693
+
+The luksOpen step hangs forever and the following messages are shown in syslog after a while:
+
+Sep 19 02:43:29 fedora systemd-udevd[500]: dm-1: Worker [2720] processing SEQNUM=1272 is taking a long time
+Sep 19 02:45:29 fedora systemd-udevd[500]: dm-1: Worker [2720] processing SEQNUM=1272 killed
+
+Still the luksOpen keeps hanging, and a lot of kworkers are hanging around as well: 
+
+# ps -ef
+...
+root        2679    1987  2 02:42 pts/0    00:00:04 cryptsetup luksOpen /dev/loop0 int-loop
+root        2712       2  0 02:42 ?        00:00:00 [kworker/R-kdmflush/251:0]
+root        2713       2  0 02:42 ?        00:00:00 [kworker/R-dm-integrity-metadata]
+root        2714       2  0 02:42 ?        00:00:00 [kworker/R-dm-integrity-wait]
+root        2715       2  0 02:42 ?        00:00:00 [kworker/R-dm-integrity-offload]
+root        2716       2  0 02:42 ?        00:00:00 [kworker/R-dm-integrity-commit]
+root        2717       2  0 02:42 ?        00:00:00 [kworker/R-dm-integrity-writer]
+root        2718     500  0 02:42 ?        00:00:00 (udev-worker)
+root        2719     500  0 02:42 ?        00:00:00 (udev-worker)
+root        2720     500  0 02:42 ?        00:00:00 [(udev-worker)]
+root        2726       2  0 02:42 ?        00:00:00 [kworker/R-kdmflush/251:1]
+root        2727       2  0 02:42 ?        00:00:00 [kworker/R-kcryptd_io-251:1-1]
+root        2728       2  0 02:42 ?        00:00:00 [kworker/R-kcryptd-251:1-1]
+root        2729       2  0 02:42 ?        00:00:00 [dmcrypt_write/251:1]
+...
+
+# dmsetup table
+int-loop: 0 351128 crypt capi:authenc(phmac(sha256),xts(aes))-plain64 :96:logon:cryptsetup:239c87ad-8c23-4cdb-943f-947737e9cf5c-d0 0 251:0 0 2 integrity:32:aead integrity_key_size:32
+int-loop_dif: 0 351128 integrity 7:0 32768 32 J 6 interleave_sectors:32768 buffer_sectors:128 journal_sectors:3168 journal_watermark:50 commit_time:10000 fix_padding
+
+# lsblk
+NAME           MAJ:MIN RM   SIZE RO TYPE  MOUNTPOINTS
+loop0            7:0    0   200M  0 loop
+└─int-loop_dif 251:0    0 171.4M  0 crypt
+
+
+> 
+> For instructions on how to build and use the module see the README in the tgz archive.
+> 
+> Thanks to all
+> Harald Freudenberger
+> 
+> 
+
+
+-- 
+Ingo Franzki
+eMail: ifranzki@linux.ibm.com  
+Tel: ++49 (0)7031-16-4648
+Linux on IBM Z Development, Schoenaicher Str. 220, 71032 Boeblingen, Germany
+
+IBM Deutschland Research & Development GmbH
+Vorsitzender des Aufsichtsrats: Gregor Pillen
+Geschäftsführung: David Faller
+Sitz der Gesellschaft: Böblingen / Registergericht: Amtsgericht Stuttgart, HRB 243294
+IBM DATA Privacy Statement: https://www.ibm.com/privacy/us/en/
