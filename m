@@ -1,73 +1,71 @@
-Received: from mail-ed1-f45.google.com (mail-ed1-f45.google.com [209.85.208.45])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7754B2E2DC1
-	for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 18:27:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0F1E4315A
+	for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 18:38:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758565627; cv=none; b=cQApFUHCig609Ynt6S2cj9Abu5WAE8J0mG8j06soe3yOUsakVETWgNMpcoOYETQFdRxnDJxjztAt4JS1+Xks371RR8VikMGGB050nLR3PxadPy1YjMw5iyZVhVkqOFjXWrHR0VSLbd8op1ybQFRLuqPB4ZebVzEsim11LcSsYxU=
+	t=1758566308; cv=none; b=WU23a8ha2QUTH6/qIzxjFpx+Ja2iB9X3/4W76fTkHxj4ou44eJsXCleIzFD0uJuOJL8BANH+IJLTKujit9baRk2B58zQ/DIetNbqbRFDMIXqvaam6JrLZ/Yic0ntdQUw9YIERbD5WKGEj/ZCGxgEPptr7GUR5X2wehOMYCs37HI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758565627; c=relaxed/simple;
-	bh=LSU+dRLVJnsvEGo8gd8mJUOa3KCyWa+HP6P0sWz5lR0=;
+	s=arc-20240116; t=1758566308; c=relaxed/simple;
+	bh=WRYQ5I5irsGAeW2WbpT+hsJl7WyFRDyDulp9iEadMUc=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=OkhO+04ToZuItWW0YNue+z4PFm340PjWeI7uZdjwS40b3b65niauOB6M4RbgKBw/d6Ad7RNRDc5fF1ccqSPTSB68lwp297DNCG7IeOS87SE3Fi4fhba87XmlcgqB5FCrVfdnmwgeN9CEaq2Z0PVmzxMpSQ+FVaN9hXFuHYezlB4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=NVqMs8b5; arc=none smtp.client-ip=209.85.208.45
+	 Content-Type:MIME-Version; b=ZLfMpilsWezw1VIdv5OGZ/bU4myfVgpXUp4GrWJV02fjcF3Bur3u7teb6+XxHpAJ7BOh+vhHR5aZUVNakM15IInm9cvcWSambjPB3uPqmqlUjk0O7FH5Cm+PysJyQv7A80AFGuhGqHETAw/kNqqEWsMx5+0Pc4EqrpYS/e286z4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=fxXHfPnL; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=PQvhi1Jy; arc=none smtp.client-ip=195.135.223.131
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NVqMs8b5"
-Received: by mail-ed1-f45.google.com with SMTP id 4fb4d7f45d1cf-62ec5f750f7so7996046a12.3
-        for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 11:27:05 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1758565624; x=1759170424; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=LSU+dRLVJnsvEGo8gd8mJUOa3KCyWa+HP6P0sWz5lR0=;
-        b=NVqMs8b5tos3u4+34bwTN2ltKZUT1+9wwiXcILxJ31Sm04hHdgldTIY1/p9nqngO7c
-         bmoV3abNAa27chwyjwKxZZOmt3wMZnpc7utW2ydXB22chhR+5u5RqRGaVHRW+t7FEyLA
-         SgJKCfq6OojSXynovpcTNV1UKSs8J8ALuwvC6qePz+1Nj/M7JpY87Qql1S7EEoeE7MV2
-         +fAsNjAs+a/XqM7lIjD701TOxCJtfF70tHIxzdvp6XSdhFTg/UO7EwrFjAn+A4rAd734
-         ialhu0eGz7TCg1qay7fIGZVyU93XZChReUOVEk20oxDNHZLRaEx+fp1T83lklbFb8jRW
-         jyjw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758565624; x=1759170424;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=LSU+dRLVJnsvEGo8gd8mJUOa3KCyWa+HP6P0sWz5lR0=;
-        b=b3NCWouHxyT3U6pgqAIC9ozVeF8v95SIZpKgj+eaMaVgrVCjqKrq2qy+MbJfRyGfIn
-         lHHB4QHjWZ3IcQQGuq93K5LudPKzJAqItDGy2eUZ5nju4q76OL99MQSmZ5ZlTurXSRJE
-         1x66ImWqWqWdRHQwj3hHPS2tW5HShrdfjIn6N87y811iKLj0vpAy12ue8WTrl+fxnsU2
-         N/FXjpsY5enGz/zv6t9qCHlS8bC/xbx1v0F8egaGzwUyPo6O7c1yiOXvFFSbgiXTa93E
-         TvuGzj/jtX5qU0oKQFR7VPjFrN5mmaL16sdyz8x6kDm/G+01rwlwmTq2GaS2UnAbQX2c
-         0+wA==
-X-Gm-Message-State: AOJu0Yz58dX6s6KW0TN+hBzJyJQVQKjhYeipGPTqYS2kgAOjOvngpV6c
-	XD8sF3Wt6OTf5Tm00h4NE3GTmhywbkF/LL/bvbVE0nttg7eeqBN8joXmBpJr1UcIxbHVc9doWor
-	BcK45tf0=
-X-Gm-Gg: ASbGncslz2ylvyxPsdD+DmK8TUjpyyktb0RVoR6sKI0WUC7KNn/IhszaLyb3K63dEVd
-	iI8XKRdaXgDSx8VefrTcaHG4dZuFRtRT1hlAWFkyzcFssATJ0vAP4lxJHMXS7/07O7ae/ooiX27
-	w38lFxXyG7G2RHqiWQ+8jKf2qSAqjCJh+DtRaJ4Vlo98JJ4V9kbv4n6ZakFEswqHvS8HMsEJg4J
-	cacx63i+epLE+/ZSNRv3ur7gDhTd8wK9t2X6eQzXIWwRz3dpz2OGgvqEuezyBvIFwZePtcp1KU4
-	vgFB/qrPDm+ZMc/TMO2WGc4N+U0ADR1umKXVu7H3SuVWAimemhQ3qSDf5Q73whEW1mmCkZK7m+C
-	CAGErdme/LIyEdQKNMgD4aKOTsVRiAxuvOjjWO+Q4ZZ+yshdRU//r1bX27VE9mQAjGpm0PP7Zlc
-	7M93bDQ3nZrK5M3LBvo1n9jPY1h23HhRi3hmiXYdCtJhDPAiIKKufPoqEd37/13YDu2JYN
-X-Google-Smtp-Source: AGHT+IFevLUjuu7ioVB8rF7utXvFfkb10KzDe2SMqvXarKucFTdFP8/rRg7QNz7fPEikaNGe5xTW0g==
-X-Received: by 2002:a05:6402:13cc:b0:632:a8c1:f78f with SMTP id 4fb4d7f45d1cf-632a8c1fbe6mr5252645a12.18.1758565623668;
-        Mon, 22 Sep 2025 11:27:03 -0700 (PDT)
-Received: from ?IPv6:2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6? (p200300f97f1e2d0062fae9454b512ce6.dip0.t-ipconnect.de. [2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-62fa5f41594sm9362918a12.48.2025.09.22.11.27.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 22 Sep 2025 11:27:03 -0700 (PDT)
-Message-ID: <45d7bc1fa6f94f924fa9d1abc33e520f0e1b97ad.camel@suse.com>
-Subject: Re: [PATCH 0/2] libmpathpersist: two final fixes
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Mon, 22 Sep 2025 20:27:02 +0200
-In-Reply-To: <20250910225812.829847-1-bmarzins@redhat.com>
-References: <20250910225812.829847-1-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="fxXHfPnL";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="PQvhi1Jy"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id E25B71F828;
+	Mon, 22 Sep 2025 18:38:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1758566304; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/elph46VYiUsqKN06NKKBjFfP9BlyvchDxmF3n8m9G0=;
+	b=fxXHfPnLd4ZGR9RAplBjpl2lcDsAiqXS/g9zj5G+b2o5Br7czZpHZ3x5IxZugLzhtVW921
+	MQFhYswyC50obVmbhGQV/MOHRckB0qHTFKzIuq1iHkyPbjqDsMM42SnWePfNWQPPZ54Zn9
+	1fRDw9jSjb9oWN44V/3lJ5pu5O7XDGs=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1758566303; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/elph46VYiUsqKN06NKKBjFfP9BlyvchDxmF3n8m9G0=;
+	b=PQvhi1JyxLrS5MyvD7kbH7sOaGox5qthdyBadqSwu3gVjDyoF5vVhO7/h42lR+UKini7Xy
+	GAsSw87nNGXS5EzVc9ct0TR0eLZ2j7hzHs3/m9J/If1g42eWuHGAjS7joUdeVFlq//dGlh
+	xTgW3FNXs6vrmSmu/E/2DP89nt+Ec/A=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id BE28D1388C;
+	Mon, 22 Sep 2025 18:38:23 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id m4jTLJ+X0WggXQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 22 Sep 2025 18:38:23 +0000
+Message-ID: <c5f6f6b7957683f0d4a73d9162d05ab31b16e080.camel@suse.com>
+Subject: Re: [PATCH 1/3] multipath-tools: add Acronis Cyber Infrastructure
+ to hwtable
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Xose Vazquez Perez
+	 <xose.vazquez@gmail.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, DM_DEVEL-ML
+	 <dm-devel@lists.linux.dev>
+Date: Mon, 22 Sep 2025 20:38:23 +0200
+In-Reply-To: <aMMNV-_0nX0gOdXM@redhat.com>
+References: <20250910194205.145919-1-xose.vazquez@gmail.com>
+	 <20250910194205.145919-2-xose.vazquez@gmail.com>
+	 <aMMNV-_0nX0gOdXM@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.56.2 
@@ -77,28 +75,119 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_TO(0.00)[redhat.com,gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid]
+X-Spam-Flag: NO
+X-Spam-Score: -2.80
 
-On Wed, 2025-09-10 at 18:58 -0400, Benjamin Marzinski wrote:
-> These patches take care of a corner case where changing a registered
-> key
-> can race with a path getting restored and a make peempting work
-> correctly with All Registrants type reservations.
+On Thu, 2025-09-11 at 13:56 -0400, Benjamin Marzinski wrote:
+> On Wed, Sep 10, 2025 at 09:41:57PM +0200, Xose Vazquez Perez wrote:
+> > Source:
+> > https://dl.acronis.com/u/software-defined/html/AcronisCyberInfrastructu=
+re_3_5_users_guide_en-US/accessing-iscsi/accessing-iscsi-targets-from-linux=
+.html
+> >=20
+> > Cc: Martin Wilck <mwilck@suse.com>
+> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> > Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> > ---
+> > =C2=A0libmultipath/hwtable.c | 15 +++++++++++++++
+> > =C2=A01 file changed, 15 insertions(+)
+> >=20
+> > diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> > index 1a78c36d..12e10577 100644
+> > --- a/libmultipath/hwtable.c
+> > +++ b/libmultipath/hwtable.c
+> > @@ -1371,6 +1371,21 @@ static struct hwentry default_hw[] =3D {
+> > =C2=A0		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_SERIAL,
+> > =C2=A0		.no_path_retry =3D 30,
+> > =C2=A0	},
+> > +	/*
+> > +	 * Acronis
+> > +	 */
+> > +	{
+> > +		// Cyber Infrastructure
+> > +		.vendor=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "VSTORAGE",
+> > +		.product=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "VSTOR-DISK",
+> > +		.prio_name=C2=A0=C2=A0=C2=A0=C2=A0 =3D PRIO_ALUA,
+> > +		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D GROUP_BY_NODE_NAME,
+> > +		.detect_prio=C2=A0=C2=A0 =3D DETECT_PRIO_OFF,
+> > +		.features=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "2 pg_init_retries 50",
+> > +		.pgfailback=C2=A0=C2=A0=C2=A0 =3D -FAILBACK_FOLLOWOVER,
 >=20
-> Benjamin Marzinski (2):
-> =C2=A0 libmpathpersist: handle updating key race condition
-> =C2=A0 libmpathpersist: handle preempting all registrants reservations
+> I'm not sure about the pgfailback setting. the FAILBACK_FOLLOWOVER
+> mode
+> is not something that is really needed for a specific array type. It
+> works like FAILOVER_IMMEDIATE, but it's designed to work so that if
+> multiple nodes are using the same multipath device, and one of them
+> loses access to the highest priority pathgroup but the others don't,
+> multipath won't keep switching pathgroups back and forth. The nodes
+> that
+> can see the higher priority pathgroup won't automatically switch back
+> to
+> it, since they weren't the ones that switched away from it. So the
+> setting is more for a specific use case, and not a specific array
+> type.
 >=20
-> =C2=A0libmpathpersist/mpath_persist_int.c | 31 +++++++++++++++++++++++++-=
--
-> --
-> =C2=A0libmultipath/prkey.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 16 +++++++++++++--
-> =C2=A0libmultipath/structs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 1 +
-> =C2=A0multipathd/main.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 12 +++++++++=
-+-
-> =C2=A04 files changed, 53 insertions(+), 7 deletions(-)
+> On the other hand, it is what the vendor tested, and with a single
+> machine accessing the multipath device, you usually only switch away
+> from the highest priority pathgroup because you lost access to all
+> the
+> paths in it.
 
-For the series:
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Not necessarily. path_group_prio_update() calculates the average of the
+path priorities in the group. With ALUA and groups of 6+ paths, an
+optimized group with one healthy path will have a lower prio (8) than a
+non-optimized group with all healthy paths (10). In such a case it
+could happen that multipathd switches to the non-optimized group and
+never switches back.
+
+I would suggest setting FAILBACK_IMMEDIATE instead. It's well
+documented that FOLLOWOVER is only for cluster environments.
+
+Regards
+Martin
+
+>  So it usually won't get stuck on a lower priority pathgroup
+> while a higher priority one is usable, although that could happen.=20
+
+
+
+
+>=20
+> Thoughts?
+>=20
+> -Ben
+>=20
+> > +		.flush_on_last_del =3D FLUSH_ALWAYS,
+> > +		.no_path_retry =3D NO_PATH_RETRY_QUEUE,
+> > +	},
+> > =C2=A0	/*
+> > =C2=A0	 * EOL
+> > =C2=A0	 */
+> > --=20
+> > 2.51.0
