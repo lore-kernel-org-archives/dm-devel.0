@@ -1,428 +1,221 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8196238C07;
-	Mon, 22 Sep 2025 12:27:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C51AC307ACD;
+	Mon, 22 Sep 2025 12:40:55 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758544056; cv=none; b=iljcX4cGJz4Gx9OYxCBOQVUytZqkxBFox9lLSY4iXtutzt5v24GO6uYxRdN+XkRRhR9nVSUUFPmARrQqvn7wJGlzKQnFYBViwz1ts56H+1gNTFc+MuMblI3S53UpaZk/gTE7a3PBVt67E202Crq+S20e2xIIlz9Yltq+CDXjt1U=
+	t=1758544855; cv=none; b=XKabR2jmyjU66wq2kLx7+Vbc5ZW5TiuToLVlNoe+Tt+SIhrSLLNlPcsI+cxu97IQIS21iAXA0YxlaFccJWMJ/uT3EajDodGSTRgLjh1VvXfCjVVwigHtDMpnD6HX+WakQ9eaQSxG7IGAYwFh5BnyelNHV8VLUzp3EUAdXVIh3L0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758544056; c=relaxed/simple;
-	bh=2M21V/xsLcrSqigAVqcKHpm03u8tIM/EYLujZWD0gIM=;
-	h=Subject:To:Cc:From:Date:In-Reply-To:Message-ID:MIME-Version:
-	 Content-Type; b=MmoYxoqgmxaAlMpMqm0uJUKoO0w0mmp3PFCW+7dBDF5Ii2DBvczffE6YCYIxSjPFz2gTeLd78RA0XKAUDAtbA6qpKkNc4BvGN6Y+ONv4Vk8QTia2DWjGRwRFGZyynrrgA43fTRC9b7TCMCvhrj9FNeOOykzZjemXsj690CgopZ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=eVGZ4LJc; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1758544855; c=relaxed/simple;
+	bh=9EnrkUTRC3WbuAFf4lnbSzwEyBeWACdeCsxOYAwx2mg=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=YoODE7SQlq0b/mvro9GxWmFCpwAn2KfQfPcH2vjpUvw4PnyeXCuLQHnC1txz84oUZPyyM07j0sAYTRS+rZ56vWu6bJfhmLPCSofLFLosvmCPqU1FVmBLM4Hn011EUYsMCpjLGhqcEPyhrpo5TwgjICEB1+nnqaGGGVCGx2zAV8M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=ozGcCAjU; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="eVGZ4LJc"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 98C39C4CEF7;
-	Mon, 22 Sep 2025 12:27:35 +0000 (UTC)
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="ozGcCAjU"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 133B5C4CEF0;
+	Mon, 22 Sep 2025 12:40:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1758544056;
-	bh=2M21V/xsLcrSqigAVqcKHpm03u8tIM/EYLujZWD0gIM=;
-	h=Subject:To:Cc:From:Date:In-Reply-To:From;
-	b=eVGZ4LJctEvshZs0C8q8ZYmQahvKd0T+PVsMcEWSGH7mahyT8M9WmoT4AhQwjFila
-	 9PBgMB28ZBPsZcegUe5QOh1+A9HTqEBLR62mtbnpEsgez22QL15g75GQcMD5ZqEnu/
-	 zR7cVHGzBEvYrPMSV1Vuq/557yJpw3QiocTx00RA=
-Subject: Patch "minmax: make generic MIN() and MAX() macros available everywhere" has been added to the 6.6-stable tree
-To: David.Laight@ACULAB.COM,David.Laight@aculab.com,Rodrigo.Siqueira@amd.com,Xinhui.Pan@amd.com,agk@redhat.com,airlied@gmail.com,akpm@linux-foundation.org,alexander.deucher@amd.com,alexandre.torgue@foss.st.com,amd-gfx@lists.freedesktop.org,andriy.shevchenko@linux.intel.com,anton.ivanov@cambridgegreys.com,arnd@kernel.org,artur.paszkiewicz@intel.com,bp@alien8.de,christian.koenig@amd.com,clm@fb.com,daniel@ffwll.ch,dave.hansen@linux.intel.com,davem@davemloft.net,dm-devel@lists.linux.dev,dmitry.torokhov@gmail.com,dri-devel@lists.freedesktop.org,dsahern@kernel.org,dsterba@suse.com,edumazet@google.com,evan.quan@amd.com,farbere@amazon.com,gregkh@linuxfoundation.org,harry.wentland@amd.com,hdegoede@redhat.com,hpa@zytor.com,ilpo.jarvinen@linux.intel.com,james.morse@arm.com,jdelvare@suse.com,jejb@linux.ibm.com,jernej.skrabec@gmail.com,joabreu@synopsys.com,johannes@sipsolutions.net,josef@toxicpanda.com,keescook@chromium.org,krzysztof.kozlowski@linaro.org,kuba@kernel.org,linus.walleij@linaro.org,linux-arm-kernel@lists.infradead.org,linux-mm@kvack.org,linux-staging@lists.linux.dev,linux-stm32@st-md-mailman.stormreply.com,linux-sunxi@lists.linux.dev,linux-um@lists.infradead.org,linux@rasmusvillemoes.dk,linux@roeck-us.net,lorenzo.stoakes@oracle.com,luc.vanoostenryck@gmail.com,luto@kernel.org,maarten.lankhorst@linux.intel.com,mailhol.vincent@wanadoo.fr,malattia@linux.it,markgross@kernel.org,martin.petersen@oracle.com,mchehab@kernel.org,mcoquelin.stm32@gmail.com,mhiramat@kernel.org,minchan@kernel.org,mingo@redhat.com,mkl@pengutronix.de,mripard@kernel.org,pabeni@redhat.com,peterz@infradead.org,pmladek@suse.com,qiuxu.zhuo@intel.com,richard@nod.at,rostedt@goodmis.org,rric@kernel.org,sakari.ailus@linux.intel.com,samuel@sholland.org,senozhatsky@chromium.org,shuah@kernel.org,snitzer@kernel.org,sunpeng.li@amd.com,tglx@linutronix.de,tony.luck@intel.com,torvalds@linux-foundation.org,tzimmermann@suse.de,wad@chromium.org,wens@csie.org,wg@grandegger.com,x86@kernel.org
-Cc: <stable-commits@vger.kernel.org>
-From: <gregkh@linuxfoundation.org>
-Date: Mon, 22 Sep 2025 14:27:00 +0200
-In-Reply-To: <20250922103241.16213-5-farbere@amazon.com>
-Message-ID: <2025092200-reverb-stumble-8578@gregkh>
+	s=korg; t=1758544855;
+	bh=9EnrkUTRC3WbuAFf4lnbSzwEyBeWACdeCsxOYAwx2mg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=ozGcCAjUuLnf1RgOGckV6AH965oAp/K1TY2eSbmKl/C4fNB3qo4dlWtmlSINDjjOP
+	 knEuUlp18RwYdjWTm6QWnSR+v+UHtYkNhp60v4aYebb3MOmMXSuvvJNHmE5LFQXLaU
+	 0/BlWu+1DnvN/JJh+naIMq1n1GDWeuu66LQM7q98=
+Date: Mon, 22 Sep 2025 14:40:48 +0200
+From: Greg KH <gregkh@linuxfoundation.org>
+To: David.Laight@aculab.com, Rodrigo.Siqueira@amd.com, Xinhui.Pan@amd.com,
+	agk@redhat.com, airlied@gmail.com, akpm@linux-foundation.org,
+	alexander.deucher@amd.com, alexandre.torgue@foss.st.com,
+	amd-gfx@lists.freedesktop.org, andriy.shevchenko@linux.intel.com,
+	anton.ivanov@cambridgegreys.com, arnd@kernel.org,
+	artur.paszkiewicz@intel.com, bp@alien8.de, christian.koenig@amd.com,
+	clm@fb.com, daniel@ffwll.ch, dave.hansen@linux.intel.com,
+	davem@davemloft.net, dm-devel@lists.linux.dev,
+	dmitry.torokhov@gmail.com, dri-devel@lists.freedesktop.org,
+	dsahern@kernel.org, dsterba@suse.com, edumazet@google.com,
+	evan.quan@amd.com, farbere@amazon.com, harry.wentland@amd.com,
+	hdegoede@redhat.com, hpa@zytor.com, ilpo.jarvinen@linux.intel.com,
+	james.morse@arm.com, jdelvare@suse.com, jejb@linux.ibm.com,
+	jernej.skrabec@gmail.com, joabreu@synopsys.com,
+	johannes@sipsolutions.net, josef@toxicpanda.com,
+	keescook@chromium.org, krzysztof.kozlowski@linaro.org,
+	kuba@kernel.org, linus.walleij@linaro.org,
+	linux-arm-kernel@lists.infradead.org, linux-mm@kvack.org,
+	linux-staging@lists.linux.dev,
+	linux-stm32@st-md-mailman.stormreply.com,
+	linux-sunxi@lists.linux.dev, linux-um@lists.infradead.org,
+	linux@rasmusvillemoes.dk, linux@roeck-us.net,
+	lorenzo.stoakes@oracle.com, luc.vanoostenryck@gmail.com,
+	luto@kernel.org, maarten.lankhorst@linux.intel.com,
+	mailhol.vincent@wanadoo.fr, malattia@linux.it, markgross@kernel.org,
+	martin.petersen@oracle.com, mchehab@kernel.org,
+	mcoquelin.stm32@gmail.com, mhiramat@kernel.org, minchan@kernel.org,
+	mingo@redhat.com, mkl@pengutronix.de, mripard@kernel.org,
+	pabeni@redhat.com, peterz@infradead.org, pmladek@suse.com,
+	qiuxu.zhuo@intel.com, richard@nod.at, rostedt@goodmis.org,
+	rric@kernel.org, sakari.ailus@linux.intel.com, samuel@sholland.org,
+	senozhatsky@chromium.org, shuah@kernel.org, snitzer@kernel.org,
+	sunpeng.li@amd.com, tglx@linutronix.de, tony.luck@intel.com,
+	torvalds@linux-foundation.org, tzimmermann@suse.de,
+	wad@chromium.org, wens@csie.org, wg@grandegger.com, x86@kernel.org
+Cc: stable-commits@vger.kernel.org
+Subject: Re: Patch "minmax: make generic MIN() and MAX() macros available
+ everywhere" has been added to the 6.6-stable tree
+Message-ID: <2025092209-owl-whisking-03e3@gregkh>
+References: <20250922103241.16213-5-farbere@amazon.com>
+ <2025092200-reverb-stumble-8578@gregkh>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=ANSI_X3.4-1968
-Content-Transfer-Encoding: 8bit
-X-stable: commit
-X-Patchwork-Hint: ignore
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <2025092200-reverb-stumble-8578@gregkh>
 
+On Mon, Sep 22, 2025 at 02:27:00PM +0200, gregkh@linuxfoundation.org wrote:
+>=20
+> This is a note to let you know that I've just added the patch titled
+>=20
+>     minmax: make generic MIN() and MAX() macros available everywhere
+>=20
+> to the 6.6-stable tree which can be found at:
+>     http://www.kernel.org/git/?p=3Dlinux/kernel/git/stable/stable-queue.g=
+it;a=3Dsummary
+>=20
+> The filename of the patch is:
+>      minmax-make-generic-min-and-max-macros-available-everywhere.patch
+> and it can be found in the queue-6.6 subdirectory.
+>=20
+> If you, or anyone else, feels it should not be added to the stable tree,
+> please let <stable@vger.kernel.org> know about it.
+>=20
+>=20
+> >From prvs=3D353d6d59a=3Dfarbere@amazon.com Mon Sep 22 12:35:15 2025
+> From: Eliav Farber <farbere@amazon.com>
+> Date: Mon, 22 Sep 2025 10:32:30 +0000
+> Subject: minmax: make generic MIN() and MAX() macros available everywhere
+> To: <richard@nod.at>, <anton.ivanov@cambridgegreys.com>, <johannes@sipsol=
+utions.net>, <dave.hansen@linux.intel.com>, <luto@kernel.org>, <peterz@infr=
+adead.org>, <tglx@linutronix.de>, <mingo@redhat.com>, <bp@alien8.de>, <x86@=
+kernel.org>, <hpa@zytor.com>, <tony.luck@intel.com>, <qiuxu.zhuo@intel.com>=
+, <james.morse@arm.com>, <mchehab@kernel.org>, <rric@kernel.org>, <harry.we=
+ntland@amd.com>, <sunpeng.li@amd.com>, <Rodrigo.Siqueira@amd.com>, <alexand=
+er.deucher@amd.com>, <christian.koenig@amd.com>, <Xinhui.Pan@amd.com>, <air=
+lied@gmail.com>, <daniel@ffwll.ch>, <evan.quan@amd.com>, <maarten.lankhorst=
+@linux.intel.com>, <mripard@kernel.org>, <tzimmermann@suse.de>, <jdelvare@s=
+use.com>, <linux@roeck-us.net>, <linus.walleij@linaro.org>, <dmitry.torokho=
+v@gmail.com>, <wens@csie.org>, <jernej.skrabec@gmail.com>, <samuel@sholland=
+=2Eorg>, <agk@redhat.com>, <snitzer@kernel.org>, <dm-devel@lists.linux.dev>=
+, <mailhol.vincent@wanadoo.fr>, <wg@grandegger.com>, <mkl@pengutronix.de>, =
+<davem@davemloft.net>, <edu
+>  mazet@google.com>, <kuba@kernel.org>, <pabeni@redhat.com>, <alexandre.to=
+rgue@foss.st.com>, <joabreu@synopsys.com>, <mcoquelin.stm32@gmail.com>, <kr=
+zysztof.kozlowski@linaro.org>, <malattia@linux.it>, <hdegoede@redhat.com>, =
+<ilpo.jarvinen@linux.intel.com>, <markgross@kernel.org>, <artur.paszkiewicz=
+@intel.com>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>, <sakari.ai=
+lus@linux.intel.com>, <gregkh@linuxfoundation.org>, <clm@fb.com>, <josef@to=
+xicpanda.com>, <dsterba@suse.com>, <luc.vanoostenryck@gmail.com>, <rostedt@=
+goodmis.org>, <mhiramat@kernel.org>, <pmladek@suse.com>, <andriy.shevchenko=
+@linux.intel.com>, <linux@rasmusvillemoes.dk>, <senozhatsky@chromium.org>, =
+<minchan@kernel.org>, <akpm@linux-foundation.org>, <dsahern@kernel.org>, <s=
+huah@kernel.org>, <keescook@chromium.org>, <wad@chromium.org>, <farbere@ama=
+zon.com>, <David.Laight@ACULAB.COM>, <arnd@kernel.org>, <linux-um@lists.inf=
+radead.org>, <linux-kernel@vger.kernel.org>, <linux-edac@vger.kernel.org>, =
+<amd-gfx@lists.freedeskto
+>  p.org>, <dri-devel@lists.freedesktop.org>, <linux-hwmon@vger.kernel.org>=
+, <linux-input@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>, <l=
+inux-sunxi@lists.linux.dev>, <linux-media@vger.kernel.org>, <linux-can@vger=
+=2Ekernel.org>, <netdev@vger.kernel.org>, <linux-stm32@st-md-mailman.stormr=
+eply.com>, <platform-driver-x86@vger.kernel.org>, <linux-scsi@vger.kernel.o=
+rg>, <linux-staging@lists.linux.dev>, <linux-btrfs@vger.kernel.org>, <linux=
+-sparse@vger.kernel.org>, <linux-trace-kernel@vger.kernel.org>, <linux-mm@k=
+vack.org>, <linux-kselftest@vger.kernel.org>, <bpf@vger.kernel.org>, <stabl=
+e@vger.kernel.org>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Laight <David.L=
+aight@aculab.com>, Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+> Message-ID: <20250922103241.16213-5-farbere@amazon.com>
+>=20
+> From: Linus Torvalds <torvalds@linux-foundation.org>
+>=20
+> [ Upstream commit 1a251f52cfdc417c84411a056bc142cbd77baef4 ]
+>=20
+> This just standardizes the use of MIN() and MAX() macros, with the very
+> traditional semantics.  The goal is to use these for C constant
+> expressions and for top-level / static initializers, and so be able to
+> simplify the min()/max() macros.
+>=20
+> These macro names were used by various kernel code - they are very
+> traditional, after all - and all such users have been fixed up, with a
+> few different approaches:
+>=20
+>  - trivial duplicated macro definitions have been removed
+>=20
+>    Note that 'trivial' here means that it's obviously kernel code that
+>    already included all the major kernel headers, and thus gets the new
+>    generic MIN/MAX macros automatically.
+>=20
+>  - non-trivial duplicated macro definitions are guarded with #ifndef
+>=20
+>    This is the "yes, they define their own versions, but no, the include
+>    situation is not entirely obvious, and maybe they don't get the
+>    generic version automatically" case.
+>=20
+>  - strange use case #1
+>=20
+>    A couple of drivers decided that the way they want to describe their
+>    versioning is with
+>=20
+> 	#define MAJ 1
+> 	#define MIN 2
+> 	#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN)
+>=20
+>    which adds zero value and I just did my Alexander the Great
+>    impersonation, and rewrote that pointless Gordian knot as
+>=20
+> 	#define DRV_VERSION "1.2"
+>=20
+>    instead.
+>=20
+>  - strange use case #2
+>=20
+>    A couple of drivers thought that it's a good idea to have a random
+>    'MIN' or 'MAX' define for a value or index into a table, rather than
+>    the traditional macro that takes arguments.
+>=20
+>    These values were re-written as C enum's instead. The new
+>    function-line macros only expand when followed by an open
+>    parenthesis, and thus don't clash with enum use.
+>=20
+> Happily, there weren't really all that many of these cases, and a lot of
+> users already had the pattern of using '#ifndef' guarding (or in one
+> case just using '#undef MIN') before defining their own private version
+> that does the same thing. I left such cases alone.
+>=20
+> Cc: David Laight <David.Laight@aculab.com>
+> Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Signed-off-by: Eliav Farber <farbere@amazon.com>
+> Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> ---
+>  arch/um/drivers/mconsole_user.c                                       | =
+   2=20
+>  drivers/edac/skx_common.h                                             | =
+   1=20
+>  drivers/gpu/drm/amd/display/modules/hdcp/hdcp_ddc.c                   | =
+   2=20
+>  drivers/gpu/drm/amd/pm/powerplay/hwmgr/ppevvmath.h                    | =
+  14 ++++-
 
-This is a note to let you know that I've just added the patch titled
+Oops, nope, this patch breaks the amd driver's build :(
 
-    minmax: make generic MIN() and MAX() macros available everywhere
+I'll drop this patch and stop here on this patch series.  Please fix
+this up and resend the remaining ones after it builds properly.
 
-to the 6.6-stable tree which can be found at:
-    http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
+thanks,
 
-The filename of the patch is:
-     minmax-make-generic-min-and-max-macros-available-everywhere.patch
-and it can be found in the queue-6.6 subdirectory.
-
-If you, or anyone else, feels it should not be added to the stable tree,
-please let <stable@vger.kernel.org> know about it.
-
-
-From prvs=353d6d59a=farbere@amazon.com Mon Sep 22 12:35:15 2025
-From: Eliav Farber <farbere@amazon.com>
-Date: Mon, 22 Sep 2025 10:32:30 +0000
-Subject: minmax: make generic MIN() and MAX() macros available everywhere
-To: <richard@nod.at>, <anton.ivanov@cambridgegreys.com>, <johannes@sipsolutions.net>, <dave.hansen@linux.intel.com>, <luto@kernel.org>, <peterz@infradead.org>, <tglx@linutronix.de>, <mingo@redhat.com>, <bp@alien8.de>, <x86@kernel.org>, <hpa@zytor.com>, <tony.luck@intel.com>, <qiuxu.zhuo@intel.com>, <james.morse@arm.com>, <mchehab@kernel.org>, <rric@kernel.org>, <harry.wentland@amd.com>, <sunpeng.li@amd.com>, <Rodrigo.Siqueira@amd.com>, <alexander.deucher@amd.com>, <christian.koenig@amd.com>, <Xinhui.Pan@amd.com>, <airlied@gmail.com>, <daniel@ffwll.ch>, <evan.quan@amd.com>, <maarten.lankhorst@linux.intel.com>, <mripard@kernel.org>, <tzimmermann@suse.de>, <jdelvare@suse.com>, <linux@roeck-us.net>, <linus.walleij@linaro.org>, <dmitry.torokhov@gmail.com>, <wens@csie.org>, <jernej.skrabec@gmail.com>, <samuel@sholland.org>, <agk@redhat.com>, <snitzer@kernel.org>, <dm-devel@lists.linux.dev>, <mailhol.vincent@wanadoo.fr>, <wg@grandegger.com>, <mkl@pengutronix.de>, <davem@davemloft.net>, <edumazet@google.com>, <kuba@kernel.org>, <pabeni@redhat.com>, <alexandre.torgue@foss.st.com>, <joabreu@synopsys.com>, <mcoquelin.stm32@gmail.com>, <krzysztof.kozlowski@linaro.org>, <malattia@linux.it>, <hdegoede@redhat.com>, <ilpo.jarvinen@linux.intel.com>, <markgross@kernel.org>, <artur.paszkiewicz@intel.com>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>, <sakari.ailus@linux.intel.com>, <gregkh@linuxfoundation.org>, <clm@fb.com>, <josef@toxicpanda.com>, <dsterba@suse.com>, <luc.vanoostenryck@gmail.com>, <rostedt@goodmis.org>, <mhiramat@kernel.org>, <pmladek@suse.com>, <andriy.shevchenko@linux.intel.com>, <linux@rasmusvillemoes.dk>, <senozhatsky@chromium.org>, <minchan@kernel.org>, <akpm@linux-foundation.org>, <dsahern@kernel.org>, <shuah@kernel.org>, <keescook@chromium.org>, <wad@chromium.org>, <farbere@amazon.com>, <David.Laight@ACULAB.COM>, <arnd@kernel.org>, <linux-um@lists.infradead.org>, <linux-kernel@vger.kernel.org>, <linux-edac@vger.kernel.org>, <amd-gfx@lists.freedesktop.org>, <dri-devel@lists.freedesktop.org>, <linux-hwmon@vger.kernel.org>, <linux-input@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>, <linux-sunxi@lists.linux.dev>, <linux-media@vger.kernel.org>, <linux-can@vger.kernel.org>, <netdev@vger.kernel.org>, <linux-stm32@st-md-mailman.stormreply.com>, <platform-driver-x86@vger.kernel.org>, <linux-scsi@vger.kernel.org>, <linux-staging@lists.linux.dev>, <linux-btrfs@vger.kernel.org>, <linux-sparse@vger.kernel.org>, <linux-trace-kernel@vger.kernel.org>, <linux-mm@kvack.org>, <linux-kselftest@vger.kernel.org>, <bpf@vger.kernel.org>, <stable@vger.kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Laight <David.Laight@aculab.com>, Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-Message-ID: <20250922103241.16213-5-farbere@amazon.com>
-
-From: Linus Torvalds <torvalds@linux-foundation.org>
-
-[ Upstream commit 1a251f52cfdc417c84411a056bc142cbd77baef4 ]
-
-This just standardizes the use of MIN() and MAX() macros, with the very
-traditional semantics.  The goal is to use these for C constant
-expressions and for top-level / static initializers, and so be able to
-simplify the min()/max() macros.
-
-These macro names were used by various kernel code - they are very
-traditional, after all - and all such users have been fixed up, with a
-few different approaches:
-
- - trivial duplicated macro definitions have been removed
-
-   Note that 'trivial' here means that it's obviously kernel code that
-   already included all the major kernel headers, and thus gets the new
-   generic MIN/MAX macros automatically.
-
- - non-trivial duplicated macro definitions are guarded with #ifndef
-
-   This is the "yes, they define their own versions, but no, the include
-   situation is not entirely obvious, and maybe they don't get the
-   generic version automatically" case.
-
- - strange use case #1
-
-   A couple of drivers decided that the way they want to describe their
-   versioning is with
-
-	#define MAJ 1
-	#define MIN 2
-	#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN)
-
-   which adds zero value and I just did my Alexander the Great
-   impersonation, and rewrote that pointless Gordian knot as
-
-	#define DRV_VERSION "1.2"
-
-   instead.
-
- - strange use case #2
-
-   A couple of drivers thought that it's a good idea to have a random
-   'MIN' or 'MAX' define for a value or index into a table, rather than
-   the traditional macro that takes arguments.
-
-   These values were re-written as C enum's instead. The new
-   function-line macros only expand when followed by an open
-   parenthesis, and thus don't clash with enum use.
-
-Happily, there weren't really all that many of these cases, and a lot of
-users already had the pattern of using '#ifndef' guarding (or in one
-case just using '#undef MIN') before defining their own private version
-that does the same thing. I left such cases alone.
-
-Cc: David Laight <David.Laight@aculab.com>
-Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Eliav Farber <farbere@amazon.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- arch/um/drivers/mconsole_user.c                                       |    2 
- drivers/edac/skx_common.h                                             |    1 
- drivers/gpu/drm/amd/display/modules/hdcp/hdcp_ddc.c                   |    2 
- drivers/gpu/drm/amd/pm/powerplay/hwmgr/ppevvmath.h                    |   14 ++++-
- drivers/gpu/drm/radeon/evergreen_cs.c                                 |    2 
- drivers/hwmon/adt7475.c                                               |   24 +++++-----
- drivers/media/dvb-frontends/stv0367_priv.h                            |    3 +
- drivers/net/fjes/fjes_main.c                                          |    4 -
- drivers/nfc/pn544/i2c.c                                               |    2 
- drivers/platform/x86/sony-laptop.c                                    |    1 
- drivers/scsi/isci/init.c                                              |    6 --
- drivers/staging/media/atomisp/pci/hive_isp_css_include/math_support.h |    5 --
- include/linux/minmax.h                                                |    2 
- kernel/trace/preemptirq_delay_test.c                                  |    2 
- lib/btree.c                                                           |    1 
- lib/decompress_unlzma.c                                               |    2 
- mm/zsmalloc.c                                                         |    2 
- tools/testing/selftests/mm/mremap_test.c                              |    2 
- tools/testing/selftests/seccomp/seccomp_bpf.c                         |    2 
- 19 files changed, 41 insertions(+), 38 deletions(-)
-
---- a/arch/um/drivers/mconsole_user.c
-+++ b/arch/um/drivers/mconsole_user.c
-@@ -71,7 +71,9 @@ static struct mconsole_command *mconsole
- 	return NULL;
- }
- 
-+#ifndef MIN
- #define MIN(a,b) ((a)<(b) ? (a):(b))
-+#endif
- 
- #define STRINGX(x) #x
- #define STRING(x) STRINGX(x)
---- a/drivers/edac/skx_common.h
-+++ b/drivers/edac/skx_common.h
-@@ -45,7 +45,6 @@
- #define I10NM_NUM_CHANNELS	MAX(I10NM_NUM_DDR_CHANNELS, I10NM_NUM_HBM_CHANNELS)
- #define I10NM_NUM_DIMMS		MAX(I10NM_NUM_DDR_DIMMS, I10NM_NUM_HBM_DIMMS)
- 
--#define MAX(a, b)	((a) > (b) ? (a) : (b))
- #define NUM_IMC		MAX(SKX_NUM_IMC, I10NM_NUM_IMC)
- #define NUM_CHANNELS	MAX(SKX_NUM_CHANNELS, I10NM_NUM_CHANNELS)
- #define NUM_DIMMS	MAX(SKX_NUM_DIMMS, I10NM_NUM_DIMMS)
---- a/drivers/gpu/drm/amd/display/modules/hdcp/hdcp_ddc.c
-+++ b/drivers/gpu/drm/amd/display/modules/hdcp/hdcp_ddc.c
-@@ -25,7 +25,9 @@
- 
- #include "hdcp.h"
- 
-+#ifndef MIN
- #define MIN(a, b) ((a) < (b) ? (a) : (b))
-+#endif
- #define HDCP_I2C_ADDR 0x3a	/* 0x74 >> 1*/
- #define KSV_READ_SIZE 0xf	/* 0x6803b - 0x6802c */
- #define HDCP_MAX_AUX_TRANSACTION_SIZE 16
---- a/drivers/gpu/drm/amd/pm/powerplay/hwmgr/ppevvmath.h
-+++ b/drivers/gpu/drm/amd/pm/powerplay/hwmgr/ppevvmath.h
-@@ -22,12 +22,18 @@
-  */
- #include <asm/div64.h>
- 
--#define SHIFT_AMOUNT 16 /* We multiply all original integers with 2^SHIFT_AMOUNT to get the fInt representation */
-+enum ppevvmath_constants {
-+	/* We multiply all original integers with 2^SHIFT_AMOUNT to get the fInt representation */
-+	SHIFT_AMOUNT	= 16,
- 
--#define PRECISION 5 /* Change this value to change the number of decimal places in the final output - 5 is a good default */
-+	/* Change this value to change the number of decimal places in the final output - 5 is a good default */
-+	PRECISION	=  5,
- 
--#define SHIFTED_2 (2 << SHIFT_AMOUNT)
--#define MAX (1 << (SHIFT_AMOUNT - 1)) - 1 /* 32767 - Might change in the future */
-+	SHIFTED_2	= (2 << SHIFT_AMOUNT),
-+
-+	/* 32767 - Might change in the future */
-+	MAX		= (1 << (SHIFT_AMOUNT - 1)) - 1,
-+};
- 
- /* -------------------------------------------------------------------------------
-  * NEW TYPE - fINT
---- a/drivers/gpu/drm/radeon/evergreen_cs.c
-+++ b/drivers/gpu/drm/radeon/evergreen_cs.c
-@@ -33,8 +33,10 @@
- #include "evergreen_reg_safe.h"
- #include "cayman_reg_safe.h"
- 
-+#ifndef MIN
- #define MAX(a,b)                   (((a)>(b))?(a):(b))
- #define MIN(a,b)                   (((a)<(b))?(a):(b))
-+#endif
- 
- #define REG_SAFE_BM_SIZE ARRAY_SIZE(evergreen_reg_safe_bm)
- 
---- a/drivers/hwmon/adt7475.c
-+++ b/drivers/hwmon/adt7475.c
-@@ -22,23 +22,23 @@
- #include <linux/util_macros.h>
- 
- /* Indexes for the sysfs hooks */
--
--#define INPUT		0
--#define MIN		1
--#define MAX		2
--#define CONTROL		3
--#define OFFSET		3
--#define AUTOMIN		4
--#define THERM		5
--#define HYSTERSIS	6
--
-+enum adt_sysfs_id {
-+	INPUT		= 0,
-+	MIN		= 1,
-+	MAX		= 2,
-+	CONTROL		= 3,
-+	OFFSET		= 3,	// Dup
-+	AUTOMIN		= 4,
-+	THERM		= 5,
-+	HYSTERSIS	= 6,
- /*
-  * These are unique identifiers for the sysfs functions - unlike the
-  * numbers above, these are not also indexes into an array
-  */
-+	ALARM		= 9,
-+	FAULT		= 10,
-+};
- 
--#define ALARM		9
--#define FAULT		10
- 
- /* 7475 Common Registers */
- 
---- a/drivers/media/dvb-frontends/stv0367_priv.h
-+++ b/drivers/media/dvb-frontends/stv0367_priv.h
-@@ -25,8 +25,11 @@
- #endif
- 
- /* MACRO definitions */
-+#ifndef MIN
- #define MAX(X, Y) ((X) >= (Y) ? (X) : (Y))
- #define MIN(X, Y) ((X) <= (Y) ? (X) : (Y))
-+#endif
-+
- #define INRANGE(X, Y, Z) \
- 	((((X) <= (Y)) && ((Y) <= (Z))) || \
- 	(((Z) <= (Y)) && ((Y) <= (X))) ? 1 : 0)
---- a/drivers/net/fjes/fjes_main.c
-+++ b/drivers/net/fjes/fjes_main.c
-@@ -14,9 +14,7 @@
- #include "fjes.h"
- #include "fjes_trace.h"
- 
--#define MAJ 1
--#define MIN 2
--#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN)
-+#define DRV_VERSION "1.2"
- #define DRV_NAME	"fjes"
- char fjes_driver_name[] = DRV_NAME;
- char fjes_driver_version[] = DRV_VERSION;
---- a/drivers/nfc/pn544/i2c.c
-+++ b/drivers/nfc/pn544/i2c.c
-@@ -126,8 +126,6 @@ struct pn544_i2c_fw_secure_blob {
- #define PN544_FW_CMD_RESULT_COMMAND_REJECTED 0xE0
- #define PN544_FW_CMD_RESULT_CHUNK_ERROR 0xE6
- 
--#define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
--
- #define PN544_FW_WRITE_BUFFER_MAX_LEN 0x9f7
- #define PN544_FW_I2C_MAX_PAYLOAD PN544_HCI_I2C_LLC_MAX_SIZE
- #define PN544_FW_I2C_WRITE_FRAME_HEADER_LEN 8
---- a/drivers/platform/x86/sony-laptop.c
-+++ b/drivers/platform/x86/sony-laptop.c
-@@ -757,7 +757,6 @@ static union acpi_object *__call_snc_met
- 	return result;
- }
- 
--#define MIN(a, b)	(a > b ? b : a)
- static int sony_nc_buffer_call(acpi_handle handle, char *name, u64 *value,
- 		void *buffer, size_t buflen)
- {
---- a/drivers/scsi/isci/init.c
-+++ b/drivers/scsi/isci/init.c
-@@ -65,11 +65,7 @@
- #include "task.h"
- #include "probe_roms.h"
- 
--#define MAJ 1
--#define MIN 2
--#define BUILD 0
--#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN) "." \
--	__stringify(BUILD)
-+#define DRV_VERSION "1.2.0"
- 
- MODULE_VERSION(DRV_VERSION);
- 
---- a/drivers/staging/media/atomisp/pci/hive_isp_css_include/math_support.h
-+++ b/drivers/staging/media/atomisp/pci/hive_isp_css_include/math_support.h
-@@ -31,11 +31,6 @@
- /* A => B */
- #define IMPLIES(a, b)        (!(a) || (b))
- 
--/* for preprocessor and array sizing use MIN and MAX
--   otherwise use min and max */
--#define MAX(a, b)            (((a) > (b)) ? (a) : (b))
--#define MIN(a, b)            (((a) < (b)) ? (a) : (b))
--
- #define ROUND_DIV(a, b)      (((b) != 0) ? ((a) + ((b) >> 1)) / (b) : 0)
- #define CEIL_DIV(a, b)       (((b) != 0) ? ((a) + (b) - 1) / (b) : 0)
- #define CEIL_MUL(a, b)       (CEIL_DIV(a, b) * (b))
---- a/include/linux/minmax.h
-+++ b/include/linux/minmax.h
-@@ -277,6 +277,8 @@ static inline bool in_range32(u32 val, u
-  * Use these carefully: no type checking, and uses the arguments
-  * multiple times. Use for obvious constants only.
-  */
-+#define MIN(a,b) __cmp(min,a,b)
-+#define MAX(a,b) __cmp(max,a,b)
- #define MIN_T(type,a,b) __cmp(min,(type)(a),(type)(b))
- #define MAX_T(type,a,b) __cmp(max,(type)(a),(type)(b))
- 
---- a/kernel/trace/preemptirq_delay_test.c
-+++ b/kernel/trace/preemptirq_delay_test.c
-@@ -34,8 +34,6 @@ MODULE_PARM_DESC(cpu_affinity, "Cpu num
- 
- static struct completion done;
- 
--#define MIN(x, y) ((x) < (y) ? (x) : (y))
--
- static void busy_wait(ulong time)
- {
- 	u64 start, end;
---- a/lib/btree.c
-+++ b/lib/btree.c
-@@ -43,7 +43,6 @@
- #include <linux/slab.h>
- #include <linux/module.h>
- 
--#define MAX(a, b) ((a) > (b) ? (a) : (b))
- #define NODESIZE MAX(L1_CACHE_BYTES, 128)
- 
- struct btree_geo {
---- a/lib/decompress_unlzma.c
-+++ b/lib/decompress_unlzma.c
-@@ -37,7 +37,9 @@
- 
- #include <linux/decompress/mm.h>
- 
-+#ifndef MIN
- #define	MIN(a, b) (((a) < (b)) ? (a) : (b))
-+#endif
- 
- static long long INIT read_int(unsigned char *ptr, int size)
- {
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -119,8 +119,6 @@
- #define ISOLATED_BITS	5
- #define MAGIC_VAL_BITS	8
- 
--#define MAX(a, b) ((a) >= (b) ? (a) : (b))
--
- #define ZS_MAX_PAGES_PER_ZSPAGE	(_AC(CONFIG_ZSMALLOC_CHAIN_SIZE, UL))
- 
- /* ZS_MIN_ALLOC_SIZE must be multiple of ZS_ALIGN */
---- a/tools/testing/selftests/mm/mremap_test.c
-+++ b/tools/testing/selftests/mm/mremap_test.c
-@@ -22,7 +22,9 @@
- #define VALIDATION_DEFAULT_THRESHOLD 4	/* 4MB */
- #define VALIDATION_NO_THRESHOLD 0	/* Verify the entire region */
- 
-+#ifndef MIN
- #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-+#endif
- 
- struct config {
- 	unsigned long long src_alignment;
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -60,7 +60,9 @@
- #define SKIP(s, ...)	XFAIL(s, ##__VA_ARGS__)
- #endif
- 
-+#ifndef MIN
- #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
-+#endif
- 
- #ifndef PR_SET_PTRACER
- # define PR_SET_PTRACER 0x59616d61
-
-
-Patches currently in stable-queue which might be from farbere@amazon.com are
-
-queue-6.6/minmax-don-t-use-max-in-situations-that-want-a-c-constant-expression.patch
-queue-6.6/minmax-make-generic-min-and-max-macros-available-everywhere.patch
-queue-6.6/minmax-fix-up-min3-and-max3-too.patch
-queue-6.6/minmax-add-a-few-more-min_t-max_t-users.patch
-queue-6.6/minmax-improve-macro-expansion-and-type-checking.patch
-queue-6.6/minmax-avoid-overly-complicated-constant-expressions-in-vm-code.patch
-queue-6.6/minmax-simplify-min-max-clamp-implementation.patch
-queue-6.6/minmax-simplify-and-clarify-min_t-max_t-implementation.patch
+greg k-h
