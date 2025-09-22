@@ -1,52 +1,53 @@
-Received: from fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com [35.158.23.94])
+Received: from fra-out-005.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-005.esa.eu-central-1.outbound.mail-perimeter.amazon.com [63.176.194.123])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87263287510;
-	Mon, 22 Sep 2025 10:33:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=35.158.23.94
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88DBA288C34;
+	Mon, 22 Sep 2025 10:33:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=63.176.194.123
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758537199; cv=none; b=NfLQGWTEyB7xGhwg6JjJtHotWSSaj5DaW+SYiFwJY3D676hDQVUuyKJL2wC+ykqDbstEjzSFDg1Y1ZzszxIyelXpVA0h3xyBL51Mr5bMqcQ6CH9D/rmZJLwDsUqYA+UHXRhiwYubHu1WeIAvaUXaMyaryLwiQ3omYEX/qJ2I1nE=
+	t=1758537231; cv=none; b=CQ2ZsH68THraKmzWTKGRKhzOfdG2nj5iUn3nkc6Efpocxy4SOZtaJYsonAKs9se0xpb8Oh5LzQ195kLXwdNGysdhRjrRuCYVJvMP04FWSKbrJJtVbvlQ3F9IPCfeazI2JnKYVBf7LEM/kkwRbmUbUBe6Q9wv4P2mRuN4yZq+3/w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758537199; c=relaxed/simple;
-	bh=PixZFZmWcKwq1euE7Zl54sLIl2MpNNci4XMpny8p56I=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version:Content-Type; b=gb/0j+hthW2h65oaO06FtlVGAEn1a4bZlCmA0uwihHEkKG37ZpNEgkA3Fn7gyDZUiHH/v7BDH9kdp7fAZ3wEvnVFHITS/n0MDIsiG45c8uB4n97H07EYsGowWzRnYlztvBPHP6LKnneR5jC1O+mV+IWzhER2AAB9h9DOv0Kyy3M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=HZ8j1fpf; arc=none smtp.client-ip=35.158.23.94
+	s=arc-20240116; t=1758537231; c=relaxed/simple;
+	bh=A+IcinsUPplpTzCw6bFraeFn95/K4R021huOT94tqo0=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=L9652TDJ676E2s7uG9hF4cbw23tcYE129VU03lAiZUgSsfjqAba9Mz8564SK7wEg5AQfUYa5KSbdrA48rxr5WMyUKrKAHIOQ9BzQEDCHt/hVqkar8umkrmRC63KevyMLfbnYrVejTiqnJDazepuszb+b1KK0OvhRmtPcIPunJKk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=k71H0sR1; arc=none smtp.client-ip=63.176.194.123
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="HZ8j1fpf"
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="k71H0sR1"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
   d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1758537198; x=1790073198;
-  h=from:to:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=zVSnvTXkXiuh+OW/uVNUL4x1ADt15TY9E6leiyfAL50=;
-  b=HZ8j1fpfp/NtePMdMaW0FcYOCEYlQQp0vb3mDknGOZpJnZIPkI5bE+TV
-   fRzVPNGgZ2WU2PgI9wUgC136V/fTJTxHh4EOuRhKg3CJzo7t7FV1nIPZO
-   F6hVzIw41izSt/kSYjXqBxBzX5wRRf9MIzOzM+j/QWSbwWS12XeiT4CYe
-   Og0hpgkknNDbR6ZsmvhBz5/uovypzqA/wwGS6y3+JjW/7M/twEREgeuip
-   +f3oN6Y/kPEBCPVCLDTSBHdosI1RdpKd9QnWw+x2o+CFSJargqxrCTsKv
-   2JRLXxSOGxEr2xvROnRI14veGIhsUpdHbL00gDjgdi4xS1qFLW3BVazNS
-   g==;
-X-CSE-ConnectionGUID: SA7Bpc9VQgG1HmOijFiFuw==
-X-CSE-MsgGUID: 7eapTz9/SuG/x2ufntC2mg==
+  t=1758537230; x=1790073230;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=ripGF9rqnm7tHR7M3YpLJcXn9QY6D+OUp0N8RCNiC7M=;
+  b=k71H0sR1YoSloADnqk0cBl7q/5HSFN+i9oBfEi5m5YkpYw/Hmtfhr4IZ
+   D0mebTZ7SuNmqhRu2/SUtD/lQJebe86eJsJolV4FU6psgPfAY3/WGqyOC
+   0pbC0FxJfDqX7zaZz7YY5ewFNKtdPp0B+/2HtjqQ74ux1dG1eBtF6Dgy7
+   bCRAVyLoiEYj12y7SOg4sjp1UCtjw87omkofbrdfO0ni0PEzAw+8CyOVK
+   HpK3YDlpq0CtJgu5+f8qy8UbplAVCoqvICIH+nJMuDfH+WhqjBGJrQhaV
+   XyRu9En4RvCkdOUiZkhHgh8fXNOdt2zlAAVQ8wUz0OVLxpiC3/KsVADqo
+   Q==;
+X-CSE-ConnectionGUID: EfS0ySD4QuiodgYBvLgJ0Q==
+X-CSE-MsgGUID: iJ0xXlIjTmGXhiqi3oxuFw==
 X-IronPort-AV: E=Sophos;i="6.18,284,1751241600"; 
-   d="scan'208";a="2478632"
-Received: from ip-10-6-6-97.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.6.97])
-  by internal-fra-out-008.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Sep 2025 10:33:14 +0000
-Received: from EX19MTAEUA002.ant.amazon.com [54.240.197.232:4640]
- by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.10.226:2525] with esmtp (Farcaster)
- id c0c65c16-13cf-4fa2-a5a8-1f23642ff95a; Mon, 22 Sep 2025 10:33:14 +0000 (UTC)
-X-Farcaster-Flow-ID: c0c65c16-13cf-4fa2-a5a8-1f23642ff95a
+   d="scan'208";a="2475964"
+Received: from ip-10-6-3-216.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.3.216])
+  by internal-fra-out-005.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 22 Sep 2025 10:33:39 +0000
+Received: from EX19MTAEUC002.ant.amazon.com [54.240.197.228:14817]
+ by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.23.64:2525] with esmtp (Farcaster)
+ id 574fc1fc-5740-4523-a02e-399120b77f10; Mon, 22 Sep 2025 10:33:39 +0000 (UTC)
+X-Farcaster-Flow-ID: 574fc1fc-5740-4523-a02e-399120b77f10
 Received: from EX19D018EUA004.ant.amazon.com (10.252.50.85) by
- EX19MTAEUA002.ant.amazon.com (10.252.50.126) with Microsoft SMTP Server
+ EX19MTAEUC002.ant.amazon.com (10.252.51.245) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
- Mon, 22 Sep 2025 10:33:13 +0000
+ Mon, 22 Sep 2025 10:33:39 +0000
 Received: from dev-dsk-farbere-1a-46ecabed.eu-west-1.amazon.com
  (172.19.116.181) by EX19D018EUA004.ant.amazon.com (10.252.50.85) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Mon, 22 Sep 2025
- 10:32:49 +0000
+ 10:33:13 +0000
 From: Eliav Farber <farbere@amazon.com>
 To: <richard@nod.at>, <anton.ivanov@cambridgegreys.com>,
 	<johannes@sipsolutions.net>, <dave.hansen@linux.intel.com>,
@@ -89,10 +90,14 @@ To: <richard@nod.at>, <anton.ivanov@cambridgegreys.com>,
 	<linux-sparse@vger.kernel.org>, <linux-trace-kernel@vger.kernel.org>,
 	<linux-mm@kvack.org>, <linux-kselftest@vger.kernel.org>,
 	<bpf@vger.kernel.org>, <stable@vger.kernel.org>
-Subject: [PATCH 00/15 v6.6.y] Backport minmax.h updates from v6.17-rc7
-Date: Mon, 22 Sep 2025 10:32:26 +0000
-Message-ID: <20250922103241.16213-1-farbere@amazon.com>
+CC: Linus Torvalds <torvalds@linux-foundation.org>, Lorenzo Stoakes
+	<lorenzo.stoakes@oracle.com>, David Laight <David.Laight@aculab.com>
+Subject: [PATCH 01/15 6.6.y] minmax: avoid overly complicated constant expressions in VM code
+Date: Mon, 22 Sep 2025 10:32:27 +0000
+Message-ID: <20250922103241.16213-2-farbere@amazon.com>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20250922103241.16213-1-farbere@amazon.com>
+References: <20250922103241.16213-1-farbere@amazon.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -104,77 +109,79 @@ Content-Type: text/plain
 X-ClientProxiedBy: EX19D039UWB002.ant.amazon.com (10.13.138.79) To
  EX19D018EUA004.ant.amazon.com (10.252.50.85)
 
-This series backports 15 patches to update minmax.h in the 6.6.y branch,
-aligning it with v6.17-rc7.
+From: Linus Torvalds <torvalds@linux-foundation.org>
 
-The ultimate goal is to synchronize all longterm branches so that they
-include the full set of minmax.h changes.
+[ Upstream commit 3a7e02c040b130b5545e4b115aada7bacd80a2b6 ]
 
-The key motivation is to bring in commit d03eba99f5bf ("minmax: allow
-min()/max()/clamp() if the arguments have the same signedness"), which
-is missing in older kernels.
+The minmax infrastructure is overkill for simple constants, and can
+cause huge expansions because those simple constants are then used by
+other things.
 
-In mainline, this change enables min()/max()/clamp() to accept mixed
-argument types, provided both have the same signedness. Without it,
-backported patches that use these forms may trigger compiler warnings,
-which escalate to build failures when -Werror is enabled.
+For example, 'pageblock_order' is a core VM constant, but because it was
+implemented using 'min_t()' and all the type-checking that involves, it
+actually expanded to something like 2.5kB of preprocessor noise.
 
-David Laight (7):
-  minmax.h: add whitespace around operators and after commas
-  minmax.h: update some comments
-  minmax.h: reduce the #define expansion of min(), max() and clamp()
-  minmax.h: use BUILD_BUG_ON_MSG() for the lo < hi test in clamp()
-  minmax.h: move all the clamp() definitions after the min/max() ones
-  minmax.h: simplify the variants of clamp()
-  minmax.h: remove some #defines that are only expanded once
+And when that simple constant was then used inside other expansions:
 
-Linus Torvalds (8):
-  minmax: avoid overly complicated constant expressions in VM code
-  minmax: simplify and clarify min_t()/max_t() implementation
-  minmax: add a few more MIN_T/MAX_T users
-  minmax: make generic MIN() and MAX() macros available everywhere
-  minmax: simplify min()/max()/clamp() implementation
-  minmax: don't use max() in situations that want a C constant
-    expression
-  minmax: improve macro expansion and type checking
-  minmax: fix up min3() and max3() too
+  #define pageblock_nr_pages      (1UL << pageblock_order)
+  #define pageblock_start_pfn(pfn)  ALIGN_DOWN((pfn), pageblock_nr_pages)
 
- arch/um/drivers/mconsole_user.c               |   2 +
- arch/x86/mm/pgtable.c                         |   2 +-
- drivers/edac/sb_edac.c                        |   4 +-
- drivers/edac/skx_common.h                     |   1 -
- .../drm/amd/display/modules/hdcp/hdcp_ddc.c   |   2 +
- .../drm/amd/pm/powerplay/hwmgr/ppevvmath.h    |  14 +-
- drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c        |   2 +-
- drivers/gpu/drm/drm_color_mgmt.c              |   2 +-
- drivers/gpu/drm/radeon/evergreen_cs.c         |   2 +
- drivers/hwmon/adt7475.c                       |  24 +-
- drivers/input/touchscreen/cyttsp4_core.c      |   2 +-
- drivers/irqchip/irq-sun6i-r.c                 |   2 +-
- drivers/md/dm-integrity.c                     |   6 +-
- drivers/media/dvb-frontends/stv0367_priv.h    |   3 +
- .../net/can/usb/etas_es58x/es58x_devlink.c    |   2 +-
- .../net/ethernet/stmicro/stmmac/stmmac_main.c |   2 +-
- drivers/net/fjes/fjes_main.c                  |   4 +-
- drivers/nfc/pn544/i2c.c                       |   2 -
- drivers/platform/x86/sony-laptop.c            |   1 -
- drivers/scsi/isci/init.c                      |   6 +-
- .../pci/hive_isp_css_include/math_support.h   |   5 -
- fs/btrfs/tree-checker.c                       |   2 +-
- include/linux/compiler.h                      |   9 +
- include/linux/minmax.h                        | 228 +++++++++++-------
- include/linux/pageblock-flags.h               |   2 +-
- kernel/trace/preemptirq_delay_test.c          |   2 -
- lib/btree.c                                   |   1 -
- lib/decompress_unlzma.c                       |   2 +
- lib/vsprintf.c                                |   2 +-
- mm/zsmalloc.c                                 |   2 -
- net/ipv4/proc.c                               |   2 +-
- net/ipv6/proc.c                               |   2 +-
- tools/testing/selftests/mm/mremap_test.c      |   2 +
- tools/testing/selftests/seccomp/seccomp_bpf.c |   2 +
- 34 files changed, 202 insertions(+), 146 deletions(-)
+and we then use that inside a 'max()' macro:
 
+	case ISOLATE_SUCCESS:
+		update_cached = false;
+		last_migrated_pfn = max(cc->zone->zone_start_pfn,
+			pageblock_start_pfn(cc->migrate_pfn - 1));
+
+the end result was that one statement expanding to 253kB in size.
+
+There are probably other cases of this, but this one case certainly
+stood out.
+
+I've added 'MIN_T()' and 'MAX_T()' macros for this kind of "core simple
+constant with specific type" use.  These macros skip the type checking,
+and as such need to be very sparingly used only for obvious cases that
+have active issues like this.
+
+Reported-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Link: https://lore.kernel.org/all/36aa2cad-1db1-4abf-8dd2-fb20484aabc3@lucifer.local/
+Cc: David Laight <David.Laight@aculab.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Eliav Farber <farbere@amazon.com>
+---
+ include/linux/minmax.h          | 7 +++++++
+ include/linux/pageblock-flags.h | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/minmax.h b/include/linux/minmax.h
+index 2ec559284a9f..a7ef65f78933 100644
+--- a/include/linux/minmax.h
++++ b/include/linux/minmax.h
+@@ -270,4 +270,11 @@ static inline bool in_range32(u32 val, u32 start, u32 len)
+ #define swap(a, b) \
+ 	do { typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while (0)
+ 
++/*
++ * Use these carefully: no type checking, and uses the arguments
++ * multiple times. Use for obvious constants only.
++ */
++#define MIN_T(type,a,b) __cmp(min,(type)(a),(type)(b))
++#define MAX_T(type,a,b) __cmp(max,(type)(a),(type)(b))
++
+ #endif	/* _LINUX_MINMAX_H */
+diff --git a/include/linux/pageblock-flags.h b/include/linux/pageblock-flags.h
+index e83c4c095041..a4bf7f0989b2 100644
+--- a/include/linux/pageblock-flags.h
++++ b/include/linux/pageblock-flags.h
+@@ -41,7 +41,7 @@ extern unsigned int pageblock_order;
+  * Huge pages are a constant size, but don't exceed the maximum allocation
+  * granularity.
+  */
+-#define pageblock_order		min_t(unsigned int, HUGETLB_PAGE_ORDER, MAX_ORDER)
++#define pageblock_order		MIN_T(unsigned int, HUGETLB_PAGE_ORDER, MAX_ORDER)
+ 
+ #endif /* CONFIG_HUGETLB_PAGE_SIZE_VARIABLE */
+ 
 -- 
 2.47.3
 
