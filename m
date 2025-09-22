@@ -1,221 +1,192 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f67.google.com (mail-wr1-f67.google.com [209.85.221.67])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C51AC307ACD;
-	Mon, 22 Sep 2025 12:40:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A6822DC79F
+	for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 16:53:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.67
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758544855; cv=none; b=XKabR2jmyjU66wq2kLx7+Vbc5ZW5TiuToLVlNoe+Tt+SIhrSLLNlPcsI+cxu97IQIS21iAXA0YxlaFccJWMJ/uT3EajDodGSTRgLjh1VvXfCjVVwigHtDMpnD6HX+WakQ9eaQSxG7IGAYwFh5BnyelNHV8VLUzp3EUAdXVIh3L0=
+	t=1758559991; cv=none; b=YtmJD7T1UsWWbPjl22NPo6kSAkftBd8720SDtkl4/6KgxMj/v7YbGgZND4y1TeH6udKCHgTK+5Ujq3/esrG/EnRPww5kJYbuzurCPENdMXUHFNF3+N6wFqdrW2JwEjOWz3v40SPmybK6ozCrUzq6oeclQaox4cDjRptDv9LqS+Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758544855; c=relaxed/simple;
-	bh=9EnrkUTRC3WbuAFf4lnbSzwEyBeWACdeCsxOYAwx2mg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=YoODE7SQlq0b/mvro9GxWmFCpwAn2KfQfPcH2vjpUvw4PnyeXCuLQHnC1txz84oUZPyyM07j0sAYTRS+rZ56vWu6bJfhmLPCSofLFLosvmCPqU1FVmBLM4Hn011EUYsMCpjLGhqcEPyhrpo5TwgjICEB1+nnqaGGGVCGx2zAV8M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=ozGcCAjU; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1758559991; c=relaxed/simple;
+	bh=W6n1AvvLBJe+fEEqXmMYZvfGH5HmokzDtbyXdFSHqRQ=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Hmub/OLm9eNCXOHxePDT2XC6ZqymXtzX5GvyaKMPqK+ZSD8boOR+imhC+zHQmKC/z4cBtU81W0ZClBx3kLdKPN3+08j74YggDj9Jy3gYV9dAXBUQBgz3AMaDsjFTt/DKbN1QVY3na1vvLBKGPTcB6qHfW6XXBXWJ6dyGTZi+cMQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=aVrVzef+; arc=none smtp.client-ip=209.85.221.67
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="ozGcCAjU"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 133B5C4CEF0;
-	Mon, 22 Sep 2025 12:40:53 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1758544855;
-	bh=9EnrkUTRC3WbuAFf4lnbSzwEyBeWACdeCsxOYAwx2mg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=ozGcCAjUuLnf1RgOGckV6AH965oAp/K1TY2eSbmKl/C4fNB3qo4dlWtmlSINDjjOP
-	 knEuUlp18RwYdjWTm6QWnSR+v+UHtYkNhp60v4aYebb3MOmMXSuvvJNHmE5LFQXLaU
-	 0/BlWu+1DnvN/JJh+naIMq1n1GDWeuu66LQM7q98=
-Date: Mon, 22 Sep 2025 14:40:48 +0200
-From: Greg KH <gregkh@linuxfoundation.org>
-To: David.Laight@aculab.com, Rodrigo.Siqueira@amd.com, Xinhui.Pan@amd.com,
-	agk@redhat.com, airlied@gmail.com, akpm@linux-foundation.org,
-	alexander.deucher@amd.com, alexandre.torgue@foss.st.com,
-	amd-gfx@lists.freedesktop.org, andriy.shevchenko@linux.intel.com,
-	anton.ivanov@cambridgegreys.com, arnd@kernel.org,
-	artur.paszkiewicz@intel.com, bp@alien8.de, christian.koenig@amd.com,
-	clm@fb.com, daniel@ffwll.ch, dave.hansen@linux.intel.com,
-	davem@davemloft.net, dm-devel@lists.linux.dev,
-	dmitry.torokhov@gmail.com, dri-devel@lists.freedesktop.org,
-	dsahern@kernel.org, dsterba@suse.com, edumazet@google.com,
-	evan.quan@amd.com, farbere@amazon.com, harry.wentland@amd.com,
-	hdegoede@redhat.com, hpa@zytor.com, ilpo.jarvinen@linux.intel.com,
-	james.morse@arm.com, jdelvare@suse.com, jejb@linux.ibm.com,
-	jernej.skrabec@gmail.com, joabreu@synopsys.com,
-	johannes@sipsolutions.net, josef@toxicpanda.com,
-	keescook@chromium.org, krzysztof.kozlowski@linaro.org,
-	kuba@kernel.org, linus.walleij@linaro.org,
-	linux-arm-kernel@lists.infradead.org, linux-mm@kvack.org,
-	linux-staging@lists.linux.dev,
-	linux-stm32@st-md-mailman.stormreply.com,
-	linux-sunxi@lists.linux.dev, linux-um@lists.infradead.org,
-	linux@rasmusvillemoes.dk, linux@roeck-us.net,
-	lorenzo.stoakes@oracle.com, luc.vanoostenryck@gmail.com,
-	luto@kernel.org, maarten.lankhorst@linux.intel.com,
-	mailhol.vincent@wanadoo.fr, malattia@linux.it, markgross@kernel.org,
-	martin.petersen@oracle.com, mchehab@kernel.org,
-	mcoquelin.stm32@gmail.com, mhiramat@kernel.org, minchan@kernel.org,
-	mingo@redhat.com, mkl@pengutronix.de, mripard@kernel.org,
-	pabeni@redhat.com, peterz@infradead.org, pmladek@suse.com,
-	qiuxu.zhuo@intel.com, richard@nod.at, rostedt@goodmis.org,
-	rric@kernel.org, sakari.ailus@linux.intel.com, samuel@sholland.org,
-	senozhatsky@chromium.org, shuah@kernel.org, snitzer@kernel.org,
-	sunpeng.li@amd.com, tglx@linutronix.de, tony.luck@intel.com,
-	torvalds@linux-foundation.org, tzimmermann@suse.de,
-	wad@chromium.org, wens@csie.org, wg@grandegger.com, x86@kernel.org
-Cc: stable-commits@vger.kernel.org
-Subject: Re: Patch "minmax: make generic MIN() and MAX() macros available
- everywhere" has been added to the 6.6-stable tree
-Message-ID: <2025092209-owl-whisking-03e3@gregkh>
-References: <20250922103241.16213-5-farbere@amazon.com>
- <2025092200-reverb-stumble-8578@gregkh>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="aVrVzef+"
+Received: by mail-wr1-f67.google.com with SMTP id ffacd0b85a97d-3ecdf2b1751so2707727f8f.0
+        for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 09:53:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1758559987; x=1759164787; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=nbHGAdx5apiEXQwr7XyFud1pln4eauLA8K2tpzvmqu4=;
+        b=aVrVzef+8QRVP5Y/mQKdsn4pjuOJIW1kMiCpq7O2FQQXmWxuhaCJyplx12/sEzJkcc
+         /SFCvDWPXq2fji9zIqDQ9zsJpuY36EdeC9mk7sbdEdL77PlsmHJ+mtlUQjB7KPhnvHGz
+         qCxYlolTJberjzQJDvvwqf0utEdZBZXrF4v5JXiwEqYtKCaIyQCKi3pJOe24KfgkOjGR
+         sU56nIGaanyd9WeCsHY8cTPLeqvT5uk867DKMFXzztgITvMX3ACsUFZ3NxRLygAtBC0y
+         0w7hnkm9u3w+Z/VJRmHu3LmeUdd8f9vOyO/PnXOctLCgsuh7HxFQi7aZtjhD7Z9r2Nam
+         wS0g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1758559987; x=1759164787;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=nbHGAdx5apiEXQwr7XyFud1pln4eauLA8K2tpzvmqu4=;
+        b=W61u/wt19iu4IWaI7e1ylA9E8roktaIZS45UuIGrjCuSg6Io6o6Ge/CQ+iQDFVVag3
+         VUu6EofS6sEM9Yf0pPzqtkxfu3US+qBm+ek103LRPJfWqL+wulOv47WtJmmb7Y9Sw7sm
+         KEAR6momK3dn7xJlDS7kl43xpLRzDcYPzCeH1w/Rwf/GayKzBUXWrpCLjpfBbf99usNq
+         5Vk0XVhx+DHZTTrlLKngMgKmixJSZ1kZRqVylWq6vZ4b92IzFBWjnDzNGPhBdd/N5vYp
+         YzFtgiKfThGK7bDQy8gs1PMlKok8EyJEKO+bGrmt+8fO6u/JtDhSYExSjHfx/Bu/oAtJ
+         Ra2w==
+X-Gm-Message-State: AOJu0YzZD8TXWL+1tt+BM9h9zETCv9Al/JU3pJLZmCOAR8a1YbaZmUX9
+	G0cOfY6F+sML8E4TraOLhz0LpH38iHu6U9dhc+K24Zk5MAzCCJZtB7yo3Gj5otjR/QY=
+X-Gm-Gg: ASbGncsqJi8Lq+Lu9s3heVsMHg339Q+GpU7WEjA93eHdDrrJlIg2tQEZwin6LgPZocE
+	qmDI61lIhaTrTZmpZwW3btY0sDgUDRXVRpunB0FYzb4VHiaAYH4xn6hVGhrNvIAyDs60TyfqhOa
+	gLh1GwFG449ms3qlcsj5h6QanHvn3LADy+GUgchFYjpkqreQtu0frQdRPV2TVb/yFxWu+iYM5Fv
+	UxkotXmYEV06ugjxDfN2U/F+/2pJuVWvheJR/vtoNv4WBj9G7LIunj8Yp8zwRl36elrIkqDZxuK
+	BOTsXy6bc8Sjgu5s48yOhV49XvknfDNOmFS2fWRbh5MnIk7zf5fDne+ILzGNsxgw50QX/adfyuR
+	m1n/rlNqytaedBNYOvraGCszDo8jFRPOWCyitRPrkA127CChn0VA2eJ8zCReofrxgIpf6lKsuRL
+	5On0BXSDS2mgHdrJhf35X6Z0JXvxPO40onyKqpMxVLWYInzsQKjU+hISgo+A==
+X-Google-Smtp-Source: AGHT+IF3ZMo1r/kRvBdcytCdm9yuAgHXKykJ2cv6O2ifUVkBdREAvEXZRHSzNxmk/7Nkypwvetr5sg==
+X-Received: by 2002:a05:6000:18a4:b0:3e5:190b:b04e with SMTP id ffacd0b85a97d-3ee84171bcdmr8679517f8f.37.1758559986713;
+        Mon, 22 Sep 2025 09:53:06 -0700 (PDT)
+Received: from ?IPv6:2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6? (p200300f97f1e2d0062fae9454b512ce6.dip0.t-ipconnect.de. [2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-3ee0fbfedd6sm20829515f8f.60.2025.09.22.09.53.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 22 Sep 2025 09:53:06 -0700 (PDT)
+Message-ID: <82a83835794202de7fe4f2093802d51df888a50d.camel@suse.com>
+Subject: Re: [PATCH 2/2] libmpathpersist: handle preempting all registrants
+ reservations
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Mon, 22 Sep 2025 18:53:05 +0200
+In-Reply-To: <20250910225812.829847-3-bmarzins@redhat.com>
+References: <20250910225812.829847-1-bmarzins@redhat.com>
+	 <20250910225812.829847-3-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <2025092200-reverb-stumble-8578@gregkh>
 
-On Mon, Sep 22, 2025 at 02:27:00PM +0200, gregkh@linuxfoundation.org wrote:
+On Wed, 2025-09-10 at 18:58 -0400, Benjamin Marzinski wrote:
+> All Registrants reservations (types 7 and 8) are held by key 0x0.
+> When
+> preempting one, all registrations are cleared, except for the one on
+> the
+> path that issued the PREEMPT. libmpathpersist needs to handle this
+> just
+> like the other cases of self-preemption, so that all the paths of the
+> preempting multipath device have their registrations restored while
+> the
+> device is suspended.
 >=20
-> This is a note to let you know that I've just added the patch titled
->=20
->     minmax: make generic MIN() and MAX() macros available everywhere
->=20
-> to the 6.6-stable tree which can be found at:
->     http://www.kernel.org/git/?p=3Dlinux/kernel/git/stable/stable-queue.g=
-it;a=3Dsummary
->=20
-> The filename of the patch is:
->      minmax-make-generic-min-and-max-macros-available-everywhere.patch
-> and it can be found in the queue-6.6 subdirectory.
->=20
-> If you, or anyone else, feels it should not be added to the stable tree,
-> please let <stable@vger.kernel.org> know about it.
->=20
->=20
-> >From prvs=3D353d6d59a=3Dfarbere@amazon.com Mon Sep 22 12:35:15 2025
-> From: Eliav Farber <farbere@amazon.com>
-> Date: Mon, 22 Sep 2025 10:32:30 +0000
-> Subject: minmax: make generic MIN() and MAX() macros available everywhere
-> To: <richard@nod.at>, <anton.ivanov@cambridgegreys.com>, <johannes@sipsol=
-utions.net>, <dave.hansen@linux.intel.com>, <luto@kernel.org>, <peterz@infr=
-adead.org>, <tglx@linutronix.de>, <mingo@redhat.com>, <bp@alien8.de>, <x86@=
-kernel.org>, <hpa@zytor.com>, <tony.luck@intel.com>, <qiuxu.zhuo@intel.com>=
-, <james.morse@arm.com>, <mchehab@kernel.org>, <rric@kernel.org>, <harry.we=
-ntland@amd.com>, <sunpeng.li@amd.com>, <Rodrigo.Siqueira@amd.com>, <alexand=
-er.deucher@amd.com>, <christian.koenig@amd.com>, <Xinhui.Pan@amd.com>, <air=
-lied@gmail.com>, <daniel@ffwll.ch>, <evan.quan@amd.com>, <maarten.lankhorst=
-@linux.intel.com>, <mripard@kernel.org>, <tzimmermann@suse.de>, <jdelvare@s=
-use.com>, <linux@roeck-us.net>, <linus.walleij@linaro.org>, <dmitry.torokho=
-v@gmail.com>, <wens@csie.org>, <jernej.skrabec@gmail.com>, <samuel@sholland=
-=2Eorg>, <agk@redhat.com>, <snitzer@kernel.org>, <dm-devel@lists.linux.dev>=
-, <mailhol.vincent@wanadoo.fr>, <wg@grandegger.com>, <mkl@pengutronix.de>, =
-<davem@davemloft.net>, <edu
->  mazet@google.com>, <kuba@kernel.org>, <pabeni@redhat.com>, <alexandre.to=
-rgue@foss.st.com>, <joabreu@synopsys.com>, <mcoquelin.stm32@gmail.com>, <kr=
-zysztof.kozlowski@linaro.org>, <malattia@linux.it>, <hdegoede@redhat.com>, =
-<ilpo.jarvinen@linux.intel.com>, <markgross@kernel.org>, <artur.paszkiewicz=
-@intel.com>, <jejb@linux.ibm.com>, <martin.petersen@oracle.com>, <sakari.ai=
-lus@linux.intel.com>, <gregkh@linuxfoundation.org>, <clm@fb.com>, <josef@to=
-xicpanda.com>, <dsterba@suse.com>, <luc.vanoostenryck@gmail.com>, <rostedt@=
-goodmis.org>, <mhiramat@kernel.org>, <pmladek@suse.com>, <andriy.shevchenko=
-@linux.intel.com>, <linux@rasmusvillemoes.dk>, <senozhatsky@chromium.org>, =
-<minchan@kernel.org>, <akpm@linux-foundation.org>, <dsahern@kernel.org>, <s=
-huah@kernel.org>, <keescook@chromium.org>, <wad@chromium.org>, <farbere@ama=
-zon.com>, <David.Laight@ACULAB.COM>, <arnd@kernel.org>, <linux-um@lists.inf=
-radead.org>, <linux-kernel@vger.kernel.org>, <linux-edac@vger.kernel.org>, =
-<amd-gfx@lists.freedeskto
->  p.org>, <dri-devel@lists.freedesktop.org>, <linux-hwmon@vger.kernel.org>=
-, <linux-input@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>, <l=
-inux-sunxi@lists.linux.dev>, <linux-media@vger.kernel.org>, <linux-can@vger=
-=2Ekernel.org>, <netdev@vger.kernel.org>, <linux-stm32@st-md-mailman.stormr=
-eply.com>, <platform-driver-x86@vger.kernel.org>, <linux-scsi@vger.kernel.o=
-rg>, <linux-staging@lists.linux.dev>, <linux-btrfs@vger.kernel.org>, <linux=
--sparse@vger.kernel.org>, <linux-trace-kernel@vger.kernel.org>, <linux-mm@k=
-vack.org>, <linux-kselftest@vger.kernel.org>, <bpf@vger.kernel.org>, <stabl=
-e@vger.kernel.org>
-> Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Laight <David.L=
-aight@aculab.com>, Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-> Message-ID: <20250922103241.16213-5-farbere@amazon.com>
->=20
-> From: Linus Torvalds <torvalds@linux-foundation.org>
->=20
-> [ Upstream commit 1a251f52cfdc417c84411a056bc142cbd77baef4 ]
->=20
-> This just standardizes the use of MIN() and MAX() macros, with the very
-> traditional semantics.  The goal is to use these for C constant
-> expressions and for top-level / static initializers, and so be able to
-> simplify the min()/max() macros.
->=20
-> These macro names were used by various kernel code - they are very
-> traditional, after all - and all such users have been fixed up, with a
-> few different approaches:
->=20
->  - trivial duplicated macro definitions have been removed
->=20
->    Note that 'trivial' here means that it's obviously kernel code that
->    already included all the major kernel headers, and thus gets the new
->    generic MIN/MAX macros automatically.
->=20
->  - non-trivial duplicated macro definitions are guarded with #ifndef
->=20
->    This is the "yes, they define their own versions, but no, the include
->    situation is not entirely obvious, and maybe they don't get the
->    generic version automatically" case.
->=20
->  - strange use case #1
->=20
->    A couple of drivers decided that the way they want to describe their
->    versioning is with
->=20
-> 	#define MAJ 1
-> 	#define MIN 2
-> 	#define DRV_VERSION __stringify(MAJ) "." __stringify(MIN)
->=20
->    which adds zero value and I just did my Alexander the Great
->    impersonation, and rewrote that pointless Gordian knot as
->=20
-> 	#define DRV_VERSION "1.2"
->=20
->    instead.
->=20
->  - strange use case #2
->=20
->    A couple of drivers thought that it's a good idea to have a random
->    'MIN' or 'MAX' define for a value or index into a table, rather than
->    the traditional macro that takes arguments.
->=20
->    These values were re-written as C enum's instead. The new
->    function-line macros only expand when followed by an open
->    parenthesis, and thus don't clash with enum use.
->=20
-> Happily, there weren't really all that many of these cases, and a lot of
-> users already had the pattern of using '#ifndef' guarding (or in one
-> case just using '#undef MIN') before defining their own private version
-> that does the same thing. I left such cases alone.
->=20
-> Cc: David Laight <David.Laight@aculab.com>
-> Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-> Signed-off-by: Eliav Farber <farbere@amazon.com>
-> Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->  arch/um/drivers/mconsole_user.c                                       | =
-   2=20
->  drivers/edac/skx_common.h                                             | =
-   1=20
->  drivers/gpu/drm/amd/display/modules/hdcp/hdcp_ddc.c                   | =
-   2=20
->  drivers/gpu/drm/amd/pm/powerplay/hwmgr/ppevvmath.h                    | =
-  14 ++++-
+> =C2=A0libmpathpersist/mpath_persist_int.c | 31 +++++++++++++++++++++++++-=
+-
+> --
+> =C2=A01 file changed, 27 insertions(+), 4 deletions(-)
+>=20
+> diff --git a/libmpathpersist/mpath_persist_int.c
+> b/libmpathpersist/mpath_persist_int.c
+> index 9f301859..ab3d70cd 100644
+> --- a/libmpathpersist/mpath_persist_int.c
+> +++ b/libmpathpersist/mpath_persist_int.c
+> @@ -569,8 +569,9 @@ static int mpath_prout_reg(struct multipath
+> *mpp,int rq_servact, int rq_scope,
+> =C2=A0 * is suspended before issuing the preemption, and the keys are
+> reregistered
+> =C2=A0 * before resuming it.
+> =C2=A0 */
+> -static int preempt_self(struct multipath *mpp, int rq_servact, int
+> rq_scope,
+> -			unsigned int rq_type, int noisy, bool
+> do_release)
+> +static int do_preempt_self(struct multipath *mpp, struct be64
+> sa_key,
+> +			=C2=A0=C2=A0 int rq_servact, int rq_scope, unsigned
+> int rq_type,
+> +			=C2=A0=C2=A0 int noisy, bool do_release)
+> =C2=A0{
+> =C2=A0	int status, rel_status =3D MPATH_PR_SUCCESS;
+> =C2=A0	struct path *pp =3D NULL;
+> @@ -583,7 +584,7 @@ static int preempt_self(struct multipath *mpp,
+> int rq_servact, int rq_scope,
+> =C2=A0	}
+> =C2=A0
+> =C2=A0	memcpy(paramp.key, &mpp->reservation_key, 8);
+> -	memcpy(paramp.sa_key, &mpp->reservation_key, 8);
+> +	memcpy(paramp.sa_key, &sa_key, 8);
+> =C2=A0	status =3D mpath_prout_common(mpp, rq_servact, rq_scope,
+> rq_type,
+> =C2=A0				=C2=A0=C2=A0=C2=A0 &paramp, noisy, &pp);
+> =C2=A0	if (status !=3D MPATH_PR_SUCCESS) {
+> @@ -619,6 +620,21 @@ fail_resume:
+> =C2=A0	return (rel_status !=3D MPATH_PR_SUCCESS) ? rel_status :
+> status;
+> =C2=A0}
+> =C2=A0
+> +static int preempt_self(struct multipath *mpp, int rq_servact, int
+> rq_scope,
+> +			unsigned int rq_type, int noisy, bool
+> do_release)
+> +{
+> +	return do_preempt_self(mpp, mpp->reservation_key,
+> rq_servact, rq_scope,
+> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type, noisy, do_release);
+> +}
+> +
+> +static int preempt_all(struct multipath *mpp, int rq_servact, int
+> rq_scope,
+> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 unsigned int rq_type, int noisy)
+> +{
+> +	struct be64 zerokey =3D {0};
+> +	return do_preempt_self(mpp, zerokey, rq_servact, rq_scope,
+> rq_type,
+> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 noisy, false);
+> +}
+> +
+> =C2=A0static int mpath_prout_rel(struct multipath *mpp,int rq_servact, in=
+t
+> rq_scope,
+> =C2=A0			=C2=A0=C2=A0 unsigned int rq_type,
+> =C2=A0			=C2=A0=C2=A0 struct prout_param_descriptor * paramp,
+> int noisy)
+> @@ -889,8 +905,15 @@ int do_mpath_persistent_reserve_out(vector
+> curmp, vector pathvec, int fd,
+> =C2=A0		break;
+> =C2=A0	case MPATH_PROUT_PREE_SA:
+> =C2=A0	case MPATH_PROUT_PREE_AB_SA:
+> -		if (reservation_key_matches(mpp, paramp->sa_key,
+> noisy) =3D=3D YNU_YES)
+> +		if (reservation_key_matches(mpp, paramp->sa_key,
+> noisy) =3D=3D YNU_YES) {
+> =C2=A0			preempting_reservation =3D true;
+> +			if (memcmp(paramp->sa_key, &zerokey, 8) =3D=3D
+> 0) {
 
-Oops, nope, this patch breaks the amd driver's build :(
 
-I'll drop this patch and stop here on this patch series.  Please fix
-this up and resend the remaining ones after it builds properly.
+Don't you need to check if pr_type is 7 or 8 here?
 
-thanks,
-
-greg k-h
+> +				/* all registrants case */
+> +				ret =3D preempt_all(mpp, rq_servact,
+> rq_scope,
+> +						=C2=A0 rq_type, noisy);
+> +				break;
+> +			}
+> +		}
+> =C2=A0		/* if we are preempting ourself */
+> =C2=A0		if (memcmp(paramp->sa_key, paramp->key, 8) =3D=3D 0) {
+> =C2=A0			ret =3D preempt_self(mpp, rq_servact,
+> rq_scope, rq_type,
