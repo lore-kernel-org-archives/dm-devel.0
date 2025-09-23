@@ -1,127 +1,111 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD24A2550AD
-	for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 22:55:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E2551AD24;
+	Tue, 23 Sep 2025 03:47:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758581716; cv=none; b=NwbJbC9n7CScKF6XduiNWvwqqqaElMBAg45ZkJP3cUU+ioWZuXR6p9pCEEKQyxv61D7jCGZCJuGKk23MaqsNeQEayQF0X8g5ebvtcJnVefX0X4+6HKz2LEqGuMqJvNLv8Uv0X8Yrng603QJhD+EGMPfIyXJ1HYkr72p0EPJkId0=
+	t=1758599259; cv=none; b=EKpPmwgea3ui8V1NUsQQGyQp8y8467oMATtPqc54WPomQttFNeuXoO/qtOQAt4bufV2M4bqr/RsBWssYwgQGWrpTyWMkmSwC9IKsd//a9ygHMDufNRHQwoaO5nvUeo4zBgF2hfIF6jONbBbvPwWsyJFWh8ENwStEJO3Al/am4Yc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758581716; c=relaxed/simple;
-	bh=omU0LPcvZcpvDck7l/rLsbhDELBh44DuC2lgOpJFU+E=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=n90XebsFVn3Hk0JaS8z1k9G5MMvpRicGcUBdX8vPnPTzfS0wtoL2RjYvkTbrlJ6lkGNgXLfuv0K2P4/TPnqM4VskrXH9uzsegOLx3zF0I7/NmL0LjNyjXvRdQRDyDEfuFxOkwrEY/PDcPNZsAHO9KL0uF4Zi87aWk8wnhQ2F5sc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SlOJrHZV; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1758599259; c=relaxed/simple;
+	bh=VhdoVNBgm6X5qYz6gn0vHAYfUBuCXLK7xB+54qTojnU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=a559vM/ARstNx625t4iMtCBIBKvMmaCzwxNjq7BuNBJzqWNFBWJhjMPw+0qWJTS9n8pVrP6L1Hy17nUEN2FbPh6TkZP28s5H+1xJYZvVavjCZaPYfw7qXmUVop9YpA8u8rQ5fHkQfX8e3GyLEb8LzWZa/I4f8tr9mB6NYAflvmo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=hq9SgPV1; arc=none smtp.client-ip=180.181.231.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SlOJrHZV"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1758581713;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=7joYkCWeR7XTrbWx2V7Juhy/Sme3gQFNu5nybJuBQTM=;
-	b=SlOJrHZVdfvh2rdippq1L8f7uBwUbhv5p6Jyow1jTUDpKwk5VdUsUmu0hYUT3Yuq4kfl4w
-	5HSy1O8aXjN5JjpNV2a2dju0gKeoL4XNSmoCiN0bASgDjc+WhFG4lEx2sKYg0C2/7/AjWM
-	Bwte+gIukfHT5r4VQ5PPddlHxQO0SG0=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-15-ZzVjrCsJPA6Sk5S-0PMJQQ-1; Mon,
- 22 Sep 2025 18:55:12 -0400
-X-MC-Unique: ZzVjrCsJPA6Sk5S-0PMJQQ-1
-X-Mimecast-MFC-AGG-ID: ZzVjrCsJPA6Sk5S-0PMJQQ_1758581711
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6A5C71800562
-	for <dm-devel@lists.linux.dev>; Mon, 22 Sep 2025 22:55:11 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 0D6703000198;
-	Mon, 22 Sep 2025 22:55:10 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 6037910EFAD; Mon, 22 Sep 2025 18:55:10 -0400 (EDT)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Bruce Johnston <bjohnsto@redhat.com>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH v2] dm vdo: Update code to use mem_is_zero
-Date: Mon, 22 Sep 2025 18:55:10 -0400
-Message-ID: <043a3190cd33bbfbe803a360a9571429480a71d2.1758581465.git.msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="hq9SgPV1"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:MIME-Version:References:Message-ID:Subject:Cc:To:
+	From:Date:cc:to:subject:message-id:date:from:reply-to;
+	bh=FGYTrCooQJBuf7my5KhHNwL4DZ/TWFdIhPLkYZYv7Q4=; b=hq9SgPV1CgQITcaGyUKSE7TfV/
+	vEVwmNYT4PlcL2yDjL7pEypDWtmat2hfF5RJEJqcawdjlh268T6NCg7Vx/okBOgxYnWvIbIzftB7W
+	dwX5wFiGirC7J6CGDmJtO4USoKi3K7oClz6Rw0dIUqjgHOu7Gvev3025bFtRDWsM0tKKEylsgVM8K
+	Q2d9XoyJz9ISBi3laZE3eAXl9Cu3XcYIcJqCno/2P5+HuOdAmSkA/P7yXxqeTHWin2mmQz9SOlR/d
+	00WyxQmnoEpYTVp1knrAe6rTvUW+hyd0s6KVUHGgoH/z2FiQk6FVlzsazmE5YW3GsPXv9gpsku9in
+	RA6DV38w==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1v0tzy-007ZOl-1g;
+	Tue, 23 Sep 2025 11:47:27 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Tue, 23 Sep 2025 11:47:26 +0800
+Date: Tue, 23 Sep 2025 11:47:26 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>,
+	Harald Freudenberger <freude@linux.ibm.com>,
+	Ingo Franzki <ifranzki@linux.ibm.com>, linux-crypto@vger.kernel.org,
+	Eric Biggers <ebiggers@kernel.org>, dengler@linux.ibm.com,
+	linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+	agk@redhat.com, snitzer@kernel.org,
+	Milan Broz <gmazyland@gmail.com>
+Subject: Re: [PATCH] crypto/authenc: don't return -EBUSY when enqueuing the
+ hash request
+Message-ID: <aNIYTm6neC3lC6dP@gondor.apana.org.au>
+References: <20250908131642.385445532@debian4.vm>
+ <3a6b6f8f-5205-459c-810a-2425aae92fc8@linux.ibm.com>
+ <e1e420d5-dc00-14d0-fdef-635d6ef70811@redhat.com>
+ <bb68f9d6-8180-4291-9e6b-33bbdcef780f@linux.ibm.com>
+ <8cb59ed5-1c9a-49de-beee-01eda52ad618@linux.ibm.com>
+ <1af710ec-0f23-2522-d715-e683b9e557d8@redhat.com>
+ <f799d7ab97470f2529b8dcb5566fd673@linux.ibm.com>
+ <e26aedc6-7132-46c3-78f3-a3582b1c4f9a@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: ziD2gneWrWCancjgksVaPqtETePNAoloPNNhdJwgWY4_1758581711
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <e26aedc6-7132-46c3-78f3-a3582b1c4f9a@redhat.com>
 
-From: Bruce Johnston <bjohnsto@redhat.com>
+On Mon, Sep 22, 2025 at 09:08:42PM +0200, Mikulas Patocka wrote:
+>
+> When we return -EBUSY from encryption routines, the caller is supposed to
+> sleep until it receives -EINPROGRESS in the callback method.
+> 
+> However when using authenc with asynchronous hash, the hash function may 
+> return -EBUSY. In this case, the crypto API never calls the caller with 
+> -EINPROGRESS and it causes deadlock in dm-crypt.
+> 
+> Fix this by turning -EBUSY into -EINPROGRESS.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
+> 
+> ---
+>  crypto/authenc.c |   10 ++++++++--
+>  1 file changed, 8 insertions(+), 2 deletions(-)
+> 
+> Index: linux-2.6/crypto/authenc.c
+> ===================================================================
+> --- linux-2.6.orig/crypto/authenc.c	2025-09-22 20:32:02.000000000 +0200
+> +++ linux-2.6/crypto/authenc.c	2025-09-22 20:35:38.000000000 +0200
+> @@ -146,8 +146,11 @@ static int crypto_authenc_genicv(struct
+>  				   authenc_geniv_ahash_done, req);
+>  
+>  	err = crypto_ahash_digest(ahreq);
+> -	if (err)
+> +	if (err) {
+> +		if (err == -EBUSY)
+> +			err = -EINPROGRESS;
+>  		return err;
+> +	}
 
-Remove function that would check if data was all zeroes. Use the
-built-in kernel function mem_is_zero() instead.
+If authenc gets EBUSY from the ahash, then the ahash is responsible
+for sending an EINPROGRESS notification.  I just checked the authenc
+code and it does pass the notification back up to the caller (which
+is dm-crypt).
 
-Signed-off-by: Bruce Johnston <bjohnsto@redhat.com>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/data-vio.c | 17 +++--------------
- 1 file changed, 3 insertions(+), 14 deletions(-)
+So if EINPROGRESS is not being received, then it's a bug in the
+ahash layer or the underlying ahash algorithm.
 
-diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
-index 810002747091..262e11581f2d 100644
---- a/drivers/md/dm-vdo/data-vio.c
-+++ b/drivers/md/dm-vdo/data-vio.c
-@@ -17,6 +17,7 @@
- #include <linux/minmax.h>
- #include <linux/sched.h>
- #include <linux/spinlock.h>
-+#include <linux/string.h>
- #include <linux/wait.h>
- 
- #include "logger.h"
-@@ -509,18 +510,6 @@ static void launch_data_vio(struct data_vio *data_vio, logical_block_number_t lb
- 	vdo_enqueue_completion(completion, VDO_DEFAULT_Q_MAP_BIO_PRIORITY);
- }
- 
--static bool is_zero_block(char *block)
--{
--	int i;
--
--	for (i = 0; i < VDO_BLOCK_SIZE; i += sizeof(u64)) {
--		if (*((u64 *) &block[i]))
--			return false;
--	}
--
--	return true;
--}
--
- static void copy_from_bio(struct bio *bio, char *data_ptr)
- {
- 	struct bio_vec biovec;
-@@ -572,7 +561,7 @@ static void launch_bio(struct vdo *vdo, struct data_vio *data_vio, struct bio *b
- 		 * we acknowledge the bio.
- 		 */
- 		copy_from_bio(bio, data_vio->vio.data);
--		data_vio->is_zero = is_zero_block(data_vio->vio.data);
-+		data_vio->is_zero = mem_is_zero(data_vio->vio.data, VDO_BLOCK_SIZE);
- 		data_vio->write = true;
- 	}
- 
-@@ -1459,7 +1448,7 @@ static void modify_for_partial_write(struct vdo_completion *completion)
- 		copy_from_bio(bio, data + data_vio->offset);
- 	}
- 
--	data_vio->is_zero = is_zero_block(data);
-+	data_vio->is_zero = mem_is_zero(data, VDO_BLOCK_SIZE);
- 	data_vio->read = false;
- 	launch_data_vio_logical_callback(data_vio,
- 					 continue_data_vio_with_block_map_slot);
+Which phmac implementation was this?
+
+Cheers,
 -- 
-2.48.1
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
