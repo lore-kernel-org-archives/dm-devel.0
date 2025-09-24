@@ -1,225 +1,255 @@
-Received: from mail-pl1-f171.google.com (mail-pl1-f171.google.com [209.85.214.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7219C27F73A
-	for <dm-devel@lists.linux.dev>; Tue, 23 Sep 2025 23:34:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ED9713AD26;
+	Wed, 24 Sep 2025 10:20:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758670445; cv=none; b=ff6VpgkeyRZU6ZLbAV4Twqa3YSpAhf9xbdYTVVXcz3/YkH/j+BPMKlembbkwtSUrvzssdGQbKy6+kJouSRqurprzUx1+QLFDVx9C5MZxBh7WHlQjiquPYLhYVnjRIvpqmpCM7uIHNqZsGsglTwGwftG9DRvfdIlucqp18Mc8CWw=
+	t=1758709243; cv=none; b=ZQr7AVuKrgdornZ4eTj4y8IqxgypgSi0/DJQxBNR45GMvvr9tVegRr4XK/hXYWteZUybEjsJY3WWzZayl/RqkFBRc37N+X0NqmB1Hj8a6Q6hM09nIMgUIBs1d1v2QsKoMqfoNIDebP6tq6I93oaAH9zbMfqztcxcMXRgq7EcOY8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758670445; c=relaxed/simple;
-	bh=tzGNr5tc8B8Ld0kRgIv+MJEz651NB3hkWLuafy30GFY=;
-	h=To:From:Subject:Message-ID:Date:MIME-Version:Content-Type; b=ga6yuJUghiNkiV8zWLb/jWk6iYymg+AWB3HQfEDCDNmE73F9slrzJvgmtursQt9u94Dz5Zg+QxgvsZDQ40pzz+4H5Wd0x/3XxCjgKIP+H5dQR8V9syiB8kthIx38EOdC6N8S/M05+sJdG0pbvJ5mmBex/H2hGfSTcZlul+0ftI0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VZDEqrLS; arc=none smtp.client-ip=209.85.214.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1758709243; c=relaxed/simple;
+	bh=LVV2NvvF+vioWPmu1UXdWU3H6i1G1l4VoKlgHI0kGsE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=mn7hQuGqeMrhbkymltfYhjFyMgReeMY4c5Y84Ro+OZ7neIcVKXMQM5xnvF0slbmP7FZWHYR6kM5E+CbsqoRCO0GHkjeAwXA3/vX9RvkHI7WlTprA/gqH0/Md7zfbRaoR2xznu6aGjU0XqhXSFw5stfr8pXWBcsFnffGXz4ltmso=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b=BJ4YYyQ/; arc=none smtp.client-ip=180.181.231.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VZDEqrLS"
-Received: by mail-pl1-f171.google.com with SMTP id d9443c01a7336-26983b5411aso44136185ad.1
-        for <dm-devel@lists.linux.dev>; Tue, 23 Sep 2025 16:34:03 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1758670442; x=1759275242; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:user-agent:date:message-id
-         :subject:from:to:from:to:cc:subject:date:message-id:reply-to;
-        bh=uAwUMBRWQFs5D+LrCLiaLjrqty0fmM24DwH1gcfxuC0=;
-        b=VZDEqrLSDurUmYS/TB3Hb8VPF/9tJQN0uKH+23h7wJqbErvhfQA5F4auWXeKKrKetR
-         SX9n8niyRF/IN/V/gsLu+t/jHcUv/ve5UH8B9p/eqbrCADFqbzf4D1Pjkp+uI7AskwHJ
-         /8S7nvM8vjgLU3cNqMbUitSBI/gXz2Dw1Zwg/e5sytTj6u6/G241S/4BS8t8dVflxZHR
-         7H6istKaqEDSVHyAcZiC0YWOeug607oBiqEq0VSwFpKo287GWi0Y+JgmkoYDTPoOTw63
-         jxwEzwwfAWNvRqrkxhuNACMMbt3SCVilvPzfqrr46m31ShjWjgrEYtg0pXAoNtBNAfH8
-         89wg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758670442; x=1759275242;
-        h=content-transfer-encoding:mime-version:user-agent:date:message-id
-         :subject:from:to:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=uAwUMBRWQFs5D+LrCLiaLjrqty0fmM24DwH1gcfxuC0=;
-        b=ZMrpccKqAID6Gz9wCnEekVgUXBYPxHj8XskbjXcc2OUzZA2LP1q8fpV1HHscQlXQ0n
-         YVYwhow2fW3fcSEar8BjQTseOn+qTqV1Wz079XOtBjd//I2dOxqNOn2zdoesDNLnb2cu
-         nY3Z4Wjt+NXt8gSysrK6JAXibwMnnYATY5Nj90ykNhxUtdBI7/A8Ny/YTe9D4UbHtCJ4
-         sX1pfbi1IoWlqUBFfRCK1uyu0LW11Rfb6iOngHJQKd5PybVQSR9CAppYV5Hxg7Q/E921
-         GnH+pLDry8+0AAXUadl1fjTJvjbeQyTmG2VggyaVTfpDNsd8EfysTF3+04fciMJ3NlDk
-         /Mbw==
-X-Gm-Message-State: AOJu0YyktpHS3schDlOLta50q9Ah6fStQECcAeDOoQWojdjRXE12/f6Z
-	eDZ44kvL7Q+/gZBSfcbqRqC5H+VJscAamEZ0Guok+/49B17wRtRKaiio0SsPvA==
-X-Gm-Gg: ASbGnctpXNkiJRfF3a5+rNO7j336NX+bWVlEs2lEXrX5fnltW2TTLc/bGl+FEFb5+T4
-	qksYxkSXbZ09Acl3WLarVWbxNwO3emaN2oIPUZaDzsAHyI8Avmj4wNCkTH9JwPi+TSe9RXrY73l
-	6ZsAiUuPzkLqzdAgp+/nsEBzCjrH1MXK2/EBievRydukbtWomr8FLxVvfSJTlUZtBc4/FAVTki5
-	K9kq5M/LmPjj297xUkliSakHcGxJZRVcbfppFhmFeK5IkmUMggAXWBaR0LiVlWBCTDme00Bg65M
-	DPVdmdyr5RU6/NH5jdksTz3vp8UCkt1SiFawBTM9decMcgF9Y5dAqNF/31LkqbnvnPwKtw+uWfe
-	920jpRKu+S/LL7Xjj1XvCofnik8Vx
-X-Google-Smtp-Source: AGHT+IFG5ZtzKIjigDeZ8/QQgrLNYvISX3NCpOahuXASiqphH+KvTkmuQGHJRHOTY7sQlJP0TXRMaA==
-X-Received: by 2002:a17:902:ccd1:b0:264:a34c:c62 with SMTP id d9443c01a7336-27cc8f051afmr45274675ad.61.1758670442316;
-        Tue, 23 Sep 2025 16:34:02 -0700 (PDT)
-Received: from [192.168.100.150] ([177.50.1.87])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2698016c265sm172013405ad.49.2025.09.23.16.34.00
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 23 Sep 2025 16:34:01 -0700 (PDT)
-To: dm-devel@lists.linux.dev
-From: Augusto <augusto7743@gmail.com>
-Subject: BTRFS issues using dm-cache writeback
-Message-ID: <596a2005-32b5-78e8-d069-c2634e360a89@gmail.com>
-Date: Tue, 23 Sep 2025 20:33:58 -0300
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101
- Firefox/128.0 SeaMonkey/2.53.21
+	dkim=pass (2048-bit key) header.d=hmeau.com header.i=@hmeau.com header.b="BJ4YYyQ/"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=hmeau.com;
+	s=formenos; h=In-Reply-To:MIME-Version:References:Message-ID:Subject:Cc:To:
+	From:Date:cc:to:subject:message-id:date:from:reply-to;
+	bh=K+k6uJ+sNIukMY3StZvmVXWRfasU4I8UQNtgnzOy4tA=; b=BJ4YYyQ/d0ieKrD/TjqtfNyHa6
+	Y/WmwX6Lt+k9XN4H3HA5vTp9BV/tqTlRqA25dIBL6XYzd4MXG9zayLRrOKH/nUoXjrcNZ31qXm84q
+	FcQGZ5RjoDTy4oWjUnLIe1I0ZjkPGGTvVeLpiC7DK5HDxwffUyBclkx6a+A++FE5m94gIDl1+2DOQ
+	OO8vZS3WiPNFXAZ1DEZUJK7LYqyoG5Wl0UCNwENFz69opfhODGqTkQIh+ENIjD9acnsRWSYe6sXNn
+	98ZTLjAjgSQYgtxB07aXIhFLx7YlVaNvcq1CMTG6vLyu+BNrx5ZfS9pWU+GCJ1qXrKwF2rRTmRKEe
+	oV7379rw==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1v1Mbh-007vGB-2H;
+	Wed, 24 Sep 2025 18:20:18 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Wed, 24 Sep 2025 18:20:17 +0800
+Date: Wed, 24 Sep 2025 18:20:17 +0800
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>,
+	Harald Freudenberger <freude@linux.ibm.com>,
+	Ingo Franzki <ifranzki@linux.ibm.com>, linux-crypto@vger.kernel.org,
+	Eric Biggers <ebiggers@kernel.org>, dengler@linux.ibm.com,
+	linux-s390@vger.kernel.org, dm-devel@lists.linux.dev,
+	agk@redhat.com, snitzer@kernel.org,
+	Milan Broz <gmazyland@gmail.com>
+Subject: [PATCH] crypto: authenc - Correctly pass EINPROGRESS back up to the
+ caller
+Message-ID: <aNPF4bjo6FbvujIx@gondor.apana.org.au>
+References: <3a6b6f8f-5205-459c-810a-2425aae92fc8@linux.ibm.com>
+ <e1e420d5-dc00-14d0-fdef-635d6ef70811@redhat.com>
+ <bb68f9d6-8180-4291-9e6b-33bbdcef780f@linux.ibm.com>
+ <8cb59ed5-1c9a-49de-beee-01eda52ad618@linux.ibm.com>
+ <1af710ec-0f23-2522-d715-e683b9e557d8@redhat.com>
+ <f799d7ab97470f2529b8dcb5566fd673@linux.ibm.com>
+ <e26aedc6-7132-46c3-78f3-a3582b1c4f9a@redhat.com>
+ <aNIYTm6neC3lC6dP@gondor.apana.org.au>
+ <194f9d1e-b6b0-54c7-6eb8-37ac0c0c1f9d@redhat.com>
+ <aNK6IMzUgslPVi3x@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <aNK6IMzUgslPVi3x@gondor.apana.org.au>
 
-Hello.
-Thanks for reading my email.
-I am an novice Linux user.
-I had contacted an dm-cache developer to say about issues using BTRFS 
-with writeback cache.
-He had replied to me send an message to dm-devel@lists.linux.dev
-If here not was the correct area to say it please excuse me.
+When authenc is invoked with MAY_BACKLOG, it needs to pass EINPROGRESS
+notifications back up to the caller when the underlying algorithm
+returns EBUSY synchronously.
 
-Writeback cache does damage in file system being an expected behavior, 
-but in BTRFS is an serious problem even.
-Partial writen in ext4 not does fatal damage, but does it in BTRFS.
-Any partial writen in BTRFS does the parent transid error being in some 
-times an fatal error not allowing mount or to do any fix.
-I when using the OS for an long time without doing an dm writeback flush 
-run the command below
-sudo btrfs check --readonly --force --mode original --progress /dev/sda5
-If is showed the parent transid error will be done in sequence the 
-command below to writecache flush
-sudo /usr/sbin/dmsetup message /dev/mapper/rc-wb_sda5 0 flush
-running again the btrfs check command will show not errors.
+However, if the EBUSY comes from the second part of an authenc call,
+i.e., it is asynchronous, both the EBUSY and the subsequent EINPROGRESS
+notification must not be passed to the caller.
 
-I believe is possible an solution to avoid that issue in BTRFS.
-If the error happen when is done an partial writen to disk the solution 
-maybe for example :
-- In dm-writeback cache with 256 MB size was done write of 2 files of 
-128 MB so the writeback cache is full.
-- Another file is in queue being 64 MB size.
-- The writeback need free 64 MB so the first file will be partially sent 
-to disk and so does the damage in file system.
-- To avoid that issue the dm-cache writecache module will free cache 
-memory sent files with complete file size to disk. If need free 64 MB 
-wil be sent do disk all files with complete size in that case the file 
-of 128 MB.
+Implement this by passing a mask to the function that starts the
+second half of authenc and using it to determine whether EBUSY
+and EINPROGRESS should be passed to the caller.
 
-If that issue is related with BTRFS need an fix for that file system to 
-avoid issues when using writeback cache.
-I use BTRFS with writeback cache before of 2022 and continue happeing 
-that issue.
-For me is how if BTRFS developers not has information about that type of 
-issue are happening. Thus need to be reported.
+This was a deficiency in the original implementation of authenc
+because it was not expected to be used with MAY_BACKLOG.
 
-dm-cache writeback avoiding any partial writen to disk avoid any 
-possibilty of damage in the file system.
-I not see any command or option to enable it in dm-cache module.
+Reported-by: Ingo Franzki <ifranzki@linux.ibm.com>
+Reported-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 180ce7e81030 ("crypto: authenc - Add EINPROGRESS check")
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
 
-Please excuse if my explanation not was enough good. I am novice Linux user.
-OS Ubuntu 24.04.1 and kernel 6.14
-The disk was partitioned for the OS in three partitions being
-sda3 = OS
-sda4 = /home
-sda5 = /opt
-the writeback cache are the rc-wb_sda3 , rc-wb_sda4 and rc-wb_sda5
-rd0 , rd1 and rd2 are block devices
-I have used multiple settings and "combos" in the fstab for BTRFS and 
-not is possible avoid issues. I not see that issue being related with 
-any settings in fstab.
-Please I not want post question or support using btrfs or dm-cache 
-module. I only want report the issue with BTRFS and writeback cache and 
-so wait an fix or solution to avoid that problem in dm-cache and BTRFS 
-future versions.
-I wish to you an nice week and good luck in your path in that world. 
-Have an blessed week.
-Thanks very much for reading that message.
-
-Below are commands used in terminal and outputs.
-
-==== lsblk ====
-
-NAME           MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
-sda              8:0    0 931,5G  0 disk
-├─sda1           8:1    0     8M  0 part
-├─sda2           8:2    0   586M  0 part /boot
-├─sda3           8:3    0  11,4G  0 part
-│ └─rc-wb_sda3 252:0    0  11,4G  0 dm   /
-├─sda4           8:4    0   977M  0 part
-│ └─rc-wb_sda4 252:1    0   977M  0 dm   /home
-└─sda5           8:5    0    20G  0 part
-   └─rc-wb_sda5 252:2    0    20G  0 dm   /opt
-sdb              8:16   0 931,5G  0 disk
-├─sdb1           8:17   0     8M  0 part
-├─sdb2           8:18   0 585,6M  0 part
-├─sdb3           8:19   0  17,2G  0 part
-├─sdb4           8:20   0 890,3G  0 part /BTRFS
-├─sdb5           8:21   0    12G  0 part
-└─sdb6           8:22   0  11,4G  0 part
-sr0             11:0    1  1024M  0 rom
-zram0          250:0    0     3G  0 disk [SWAP]
-rd0            251:0    0   128M  0 disk
-└─rc-wb_sda3   252:0    0  11,4G  0 dm   /
-rd1            251:1    0   256M  0 disk
-└─rc-wb_sda4   252:1    0   977M  0 dm   /home
-rd2            251:2    0    16M  0 disk
-└─rc-wb_sda5   252:2    0    20G  0 dm   /opt
-
-==== mount ====
-
-sysfs on /sys type sysfs (rw,nosuid,nodev,noexec,relatime)
-proc on /proc type proc (rw,nosuid,nodev,noexec,relatime)
-udev on /dev type devtmpfs 
-(rw,nosuid,relatime,size=3988400k,nr_inodes=997100,mode=755,inode64)
-devpts on /dev/pts type devpts 
-(rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000)
-tmpfs on /run type tmpfs 
-(rw,nosuid,nodev,noexec,relatime,size=806428k,mode=755,inode64)
-/dev/mapper/rc-wb_sda3 on / type btrfs 
-(rw,noatime,nodiratime,lazytime,max_inline=0,compress-force=zlib:9,nossd,space_cache=v2,commit=6,subvolid=256,subvol=/@)
-securityfs on /sys/kernel/security type securityfs 
-(rw,nosuid,nodev,noexec,relatime)
-tmpfs on /dev/shm type tmpfs (rw,nosuid,nodev,inode64)
-tmpfs on /run/lock type tmpfs 
-(rw,nosuid,nodev,noexec,relatime,size=5120k,inode64)
-cgroup2 on /sys/fs/cgroup type cgroup2 
-(rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot)
-pstore on /sys/fs/pstore type pstore (rw,nosuid,nodev,noexec,relatime)
-bpf on /sys/fs/bpf type bpf (rw,nosuid,nodev,noexec,relatime,mode=700)
-systemd-1 on /proc/sys/fs/binfmt_misc type autofs 
-(rw,relatime,fd=32,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=3959)
-debugfs on /sys/kernel/debug type debugfs (rw,nosuid,nodev,noexec,relatime)
-mqueue on /dev/mqueue type mqueue (rw,nosuid,nodev,noexec,relatime)
-hugetlbfs on /dev/hugepages type hugetlbfs 
-(rw,nosuid,nodev,relatime,pagesize=2M)
-tracefs on /sys/kernel/tracing type tracefs 
-(rw,nosuid,nodev,noexec,relatime)
-configfs on /sys/kernel/config type configfs 
-(rw,nosuid,nodev,noexec,relatime)
-fusectl on /sys/fs/fuse/connections type fusectl 
-(rw,nosuid,nodev,noexec,relatime)
-tmpfs on /tmp type tmpfs (rw,nosuid,nodev,relatime,inode64)
-tmpfs on /var/crash type tmpfs (rw,nosuid,nodev,relatime,inode64)
-tmpfs on /var/log type tmpfs (rw,nosuid,nodev,relatime,inode64)
-/dev/mapper/rc-wb_sda4 on /home type btrfs 
-(rw,noatime,nodiratime,lazytime,max_inline=0,compress-force=zlib:9,nossd,space_cache=v2,commit=6,subvolid=5,subvol=/)
-/dev/mapper/rc-wb_sda5 on /opt type btrfs 
-(rw,noatime,nodiratime,lazytime,max_inline=0,compress-force=zlib:9,nossd,space_cache=v2,commit=6,subvolid=5,subvol=/)
-/dev/sda2 on /boot type ext2 (rw,relatime)
-/dev/sdb4 on /BTRFS type btrfs 
-(rw,noatime,nodiratime,lazytime,max_inline=0,compress-force=zlib:9,nossd,nospace_cache,commit=360,subvolid=5,subvol=/)
-binfmt_misc on /proc/sys/fs/binfmt_misc type binfmt_misc 
-(rw,nosuid,nodev,noexec,relatime)
-tmpfs on /run/user/1000 type tmpfs 
-(rw,nosuid,nodev,relatime,size=806424k,nr_inodes=201606,mode=700,uid=1000,gid=1000,inode64)
-gvfsd-fuse on /run/user/1000/gvfs type fuse.gvfsd-fuse 
-(rw,nosuid,nodev,relatime,user_id=1000,group_id=1000)
-portal on /run/user/1000/doc type fuse.portal 
-(rw,nosuid,nodev,relatime,user_id=1000,group_id=1000)
-
-==== dmsetup table ====
-
-rc-wb_sda3: 0 24000512 writecache s 8:3 251:0 4096 0
-rc-wb_sda4: 0 2000896 writecache s 8:4 251:1 4096 0
-rc-wb_sda5: 0 42000384 writecache s 8:5 251:2 4096 0
+diff --git a/crypto/authenc.c b/crypto/authenc.c
+index a723769c8777..ac679ce2cb95 100644
+--- a/crypto/authenc.c
++++ b/crypto/authenc.c
+@@ -37,7 +37,7 @@ struct authenc_request_ctx {
+ 
+ static void authenc_request_complete(struct aead_request *req, int err)
+ {
+-	if (err != -EINPROGRESS)
++	if (err != -EINPROGRESS && err != -EBUSY)
+ 		aead_request_complete(req, err);
+ }
+ 
+@@ -107,27 +107,42 @@ static int crypto_authenc_setkey(struct crypto_aead *authenc, const u8 *key,
+ 	return err;
+ }
+ 
+-static void authenc_geniv_ahash_done(void *data, int err)
++static void authenc_geniv_ahash_finish(struct aead_request *req)
+ {
+-	struct aead_request *req = data;
+ 	struct crypto_aead *authenc = crypto_aead_reqtfm(req);
+ 	struct aead_instance *inst = aead_alg_instance(authenc);
+ 	struct authenc_instance_ctx *ictx = aead_instance_ctx(inst);
+ 	struct authenc_request_ctx *areq_ctx = aead_request_ctx(req);
+ 	struct ahash_request *ahreq = (void *)(areq_ctx->tail + ictx->reqoff);
+ 
+-	if (err)
+-		goto out;
+-
+ 	scatterwalk_map_and_copy(ahreq->result, req->dst,
+ 				 req->assoclen + req->cryptlen,
+ 				 crypto_aead_authsize(authenc), 1);
++}
+ 
+-out:
++static void authenc_geniv_ahash_done(void *data, int err)
++{
++	struct aead_request *req = data;
++
++	if (!err)
++		authenc_geniv_ahash_finish(req);
+ 	aead_request_complete(req, err);
+ }
+ 
+-static int crypto_authenc_genicv(struct aead_request *req, unsigned int flags)
++/*
++ * Used when the ahash request was invoked in the async callback context
++ * of the previous skcipher request.  Eat any EINPROGRESS notifications.
++ */
++static void authenc_geniv_ahash_done2(void *data, int err)
++{
++	struct aead_request *req = data;
++
++	if (!err)
++		authenc_geniv_ahash_finish(req);
++	authenc_request_complete(req, err);
++}
++
++static int crypto_authenc_genicv(struct aead_request *req, unsigned int mask)
+ {
+ 	struct crypto_aead *authenc = crypto_aead_reqtfm(req);
+ 	struct aead_instance *inst = aead_alg_instance(authenc);
+@@ -136,6 +151,7 @@ static int crypto_authenc_genicv(struct aead_request *req, unsigned int flags)
+ 	struct crypto_ahash *auth = ctx->auth;
+ 	struct authenc_request_ctx *areq_ctx = aead_request_ctx(req);
+ 	struct ahash_request *ahreq = (void *)(areq_ctx->tail + ictx->reqoff);
++	unsigned int flags = aead_request_flags(req) & ~mask;
+ 	u8 *hash = areq_ctx->tail;
+ 	int err;
+ 
+@@ -143,7 +159,8 @@ static int crypto_authenc_genicv(struct aead_request *req, unsigned int flags)
+ 	ahash_request_set_crypt(ahreq, req->dst, hash,
+ 				req->assoclen + req->cryptlen);
+ 	ahash_request_set_callback(ahreq, flags,
+-				   authenc_geniv_ahash_done, req);
++				   mask ? authenc_geniv_ahash_done2 :
++					  authenc_geniv_ahash_done, req);
+ 
+ 	err = crypto_ahash_digest(ahreq);
+ 	if (err)
+@@ -159,12 +176,11 @@ static void crypto_authenc_encrypt_done(void *data, int err)
+ {
+ 	struct aead_request *areq = data;
+ 
+-	if (err)
+-		goto out;
+-
+-	err = crypto_authenc_genicv(areq, 0);
+-
+-out:
++	if (err) {
++		aead_request_complete(areq, err);
++		return;
++	}
++	err = crypto_authenc_genicv(areq, CRYPTO_TFM_REQ_MAY_SLEEP);
+ 	authenc_request_complete(areq, err);
+ }
+ 
+@@ -199,11 +215,18 @@ static int crypto_authenc_encrypt(struct aead_request *req)
+ 	if (err)
+ 		return err;
+ 
+-	return crypto_authenc_genicv(req, aead_request_flags(req));
++	return crypto_authenc_genicv(req, 0);
++}
++
++static void authenc_decrypt_tail_done(void *data, int err)
++{
++	struct aead_request *req = data;
++
++	authenc_request_complete(req, err);
+ }
+ 
+ static int crypto_authenc_decrypt_tail(struct aead_request *req,
+-				       unsigned int flags)
++				       unsigned int mask)
+ {
+ 	struct crypto_aead *authenc = crypto_aead_reqtfm(req);
+ 	struct aead_instance *inst = aead_alg_instance(authenc);
+@@ -214,6 +237,7 @@ static int crypto_authenc_decrypt_tail(struct aead_request *req,
+ 	struct skcipher_request *skreq = (void *)(areq_ctx->tail +
+ 						  ictx->reqoff);
+ 	unsigned int authsize = crypto_aead_authsize(authenc);
++	unsigned int flags = aead_request_flags(req) & ~mask;
+ 	u8 *ihash = ahreq->result + authsize;
+ 	struct scatterlist *src, *dst;
+ 
+@@ -230,7 +254,9 @@ static int crypto_authenc_decrypt_tail(struct aead_request *req,
+ 
+ 	skcipher_request_set_tfm(skreq, ctx->enc);
+ 	skcipher_request_set_callback(skreq, flags,
+-				      req->base.complete, req->base.data);
++				      mask ? authenc_decrypt_tail_done :
++					     req->base.complete,
++				      mask ? req : req->base.data);
+ 	skcipher_request_set_crypt(skreq, src, dst,
+ 				   req->cryptlen - authsize, req->iv);
+ 
+@@ -241,12 +267,11 @@ static void authenc_verify_ahash_done(void *data, int err)
+ {
+ 	struct aead_request *req = data;
+ 
+-	if (err)
+-		goto out;
+-
+-	err = crypto_authenc_decrypt_tail(req, 0);
+-
+-out:
++	if (err) {
++		aead_request_complete(req, err);
++		return;
++	}
++	err = crypto_authenc_decrypt_tail(req, CRYPTO_TFM_REQ_MAY_SLEEP);
+ 	authenc_request_complete(req, err);
+ }
+ 
+@@ -273,7 +298,7 @@ static int crypto_authenc_decrypt(struct aead_request *req)
+ 	if (err)
+ 		return err;
+ 
+-	return crypto_authenc_decrypt_tail(req, aead_request_flags(req));
++	return crypto_authenc_decrypt_tail(req, 0);
+ }
+ 
+ static int crypto_authenc_init_tfm(struct crypto_aead *tfm)
+-- 
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
