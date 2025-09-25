@@ -1,430 +1,296 @@
-Received: from mail-wm1-f67.google.com (mail-wm1-f67.google.com [209.85.128.67])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FC85265623
-	for <dm-devel@lists.linux.dev>; Wed, 24 Sep 2025 19:12:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.67
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6819C313533
+	for <dm-devel@lists.linux.dev>; Thu, 25 Sep 2025 18:13:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758741152; cv=none; b=rvdYVpw/v0RUbApSN54mxS5JqvVNBnYzYRcm7llJcxCqg22yE/N4JJg4pfhg6/J+KJuQFUzyJZbBJRVScB25ZZJiOXcMcIrR9E5KsnwMNHzhoB8JfvqTUhrXSMiZdPznIR8D+lN/0jEKrxM5ZqZz0ys3TRpcW2j8jjkrsgsAnrI=
+	t=1758824020; cv=none; b=Hjf7GJZ1qLu59OjoNDdMdE7Juftkmon0PQxpOXUJjUYYPNq2WpizhBaueaYSS4huioOx45ILry7fO5XVOUDXTomG2+fmwj46GToOZnFcXGrsbnP8lDtpBHA0Z5g39TVguyQaU+BD90FnUqGD+uJB6TIJBCs7r4yszGzCPYsqQrk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758741152; c=relaxed/simple;
-	bh=Q1k1B8HVrNeuRqHteWjz8GG9OYPp7pr6DeaEtYmjZcw=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=s+GoJ6pV0E7VPxMhuqV7M2Ko1tsOU5HHNcx3i4PEiRU/oFzZ0FsKH4J2IRPPCCffoNg3Ts8yWgbHrxjKt3Jq3eW3iuGb0HxL+i+fvd5uIqrk2AQSlzHdniPd3CWJyeZvP30MYnxVCo8ah7Y4XYTbB/HSXRpagmkUO3/yAmM+w80=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UfKb6UGh; arc=none smtp.client-ip=209.85.128.67
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1758824020; c=relaxed/simple;
+	bh=EgldI8roOF9zz8BIjpnmxqoSKkQH5KFLGv9YNmShrQc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=YOFwVM87iA3IQinHFpZu72Qr26fJFpRfPIzuwtqfE/iWtPkLbNE7Rt2iFzbQhXU1qL6qkAtjhqwiDjqJhii49aZTbY7WItqOGfKxbUrl4Vpr22KbhYu2Lx/kX+zbfeeNROOUOEGyczOUs+6CWX8Qyw5pRhz47dMV7XTrWycYynE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VC4Gtf17; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UfKb6UGh"
-Received: by mail-wm1-f67.google.com with SMTP id 5b1f17b1804b1-46b303f755aso1259305e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 24 Sep 2025 12:12:29 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1758741148; x=1759345948; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=KGtLQyC7eqIBUSNLtnd8ZpU9HLgq/WnTVVFid7ZqZ/M=;
-        b=UfKb6UGhibTmjCHSzphUnmdK14Fn5CGtEaw4toYiB1sCbfLru/kVIYnx5lZe1rAyEs
-         ksWGyOD4JeMCCQhm/P83pg+ZdJEioWjuFvjGOCm+2jQGOjhxb+bzdJqC5kPVa1r7VKBv
-         3Ggrhps+eVKZQpOoMSXYJmdYvGCODUbKqKsbrss8np812kK7fyEKqiHe+Fe51woxhdXY
-         c0/9M/F9JwWKf4DMXtufFSGwfMcO4e7UH2R1nZ/y6Q3VPqcTA0kr3p92ZkoKu4jGJ/rA
-         B8PXzR4eX1+eAooTMnse46/G7korw+ymrhGd1aT1nT5YoCA9JF1hV/86uC5DNfpUDWMN
-         qYpw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1758741148; x=1759345948;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=KGtLQyC7eqIBUSNLtnd8ZpU9HLgq/WnTVVFid7ZqZ/M=;
-        b=cl8H7wuELIFeqwR98TBOD8rKWoS40EaEvK02goglWCx7yWzZZ96B/H0AmQ49w6EeQb
-         8zu1LBEhkC5/m0dzTFQ5iFbJCsFsYYeosVemAv86xThtERy/1jGnNOED+us0zt2mFtfs
-         N3iIyatJHxBpM+JuZHbouZSAQbgLYrsijXLJqNjZHGSaNSxZwZVaWPQ+hojkoRBUUupC
-         Onq/Q42mzix/YvUcq8yOxBuPZS0c/9Ytt6lNx7mbRIJ0YR3YFiOEz/VmuchXDsFAEfE/
-         IDu1h50KWRRlw9iEKzxDmk140gAYqjFVRgfw6AbpjnVj8xZ9qDpUAgomDs8damqMxq2g
-         sTeA==
-X-Gm-Message-State: AOJu0YxFrz3XlV1eT5AUToYSLG8+Dph8kxqVvjHzbS8ZMO5lCjWn8UnM
-	Ai3/W2BIJ1/KDVUGttYhE6baU+w1hC5BT5cxKngIY3qalZkc+EJYXM3Tr9BmdVTAlP+hsgoT9Dv
-	eOsCknrrzbA==
-X-Gm-Gg: ASbGnctFY/73IxhFgSfkzA91eFfv1fQYnLLstYtMqkAYdaMypoW8Wz5iPGuegEVHB8Q
-	kL5uMUecRxguav94EA0PZJ4CmyWIjm44lBKj0WDv6EHwKQ/hI2SG/mLmQT00Zu4cbWEGFNtkcAk
-	tRqONg9w/lUtp9aGAVYS+3WP7Xo47mHmo7p1I3+WtByUUusJv2rFMo6hQMC+1sXW2oyCscq89Lg
-	AhfXIN+b/e5Teghqv8tS93AJVUIMItUuvEAEaNLdJ99IZDpGL3P1ikvXX6JMpte597DL/0g0tW8
-	ODAOt6cxfknFUayVfi/3BpsAlCtKHdqISbyEEvt8/7S8TatuVDHnuIzXMaRxJJUUl/A6DdvGC8T
-	HCLLwgB33wXxWP+Ajrv8ZfDFn7SSHrriEmePJFH4ll/tLqXLh/6iwIG6qVLDdfJAl0lhzJR0xA8
-	+7um0gk+RVBG3dnagvj9hYXoryvV01Il6S7r8oD5h6xixuVRc6S32fzwoIJw==
-X-Google-Smtp-Source: AGHT+IHasWYmm/TsBfOXt7HX8CeRriWSPw8RK9dk9eTNB12mtbXCy5vgp1urUsBVvTyUHHRgbFFWWQ==
-X-Received: by 2002:a05:600c:190c:b0:46c:7397:fb03 with SMTP id 5b1f17b1804b1-46e329a8211mr12068505e9.8.1758741147450;
-        Wed, 24 Sep 2025 12:12:27 -0700 (PDT)
-Received: from ?IPv6:2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6? (p200300f97f1e2d0062fae9454b512ce6.dip0.t-ipconnect.de. [2003:f9:7f1e:2d00:62fa:e945:4b51:2ce6])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-46e32bd164fsm2960235e9.1.2025.09.24.12.12.26
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Sep 2025 12:12:27 -0700 (PDT)
-Message-ID: <7a57bdf8bac354ac3548728afa1d72141fe900c9.camel@suse.com>
-Subject: Re: [PATCH 4/4] libmpathpersist: Fix unregistering while holding
- the reservation
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Wed, 24 Sep 2025 21:12:26 +0200
-In-Reply-To: <20250923221252.1411687-5-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VC4Gtf17"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1758824016;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=UEAQZ4ggrhcfEKzW/MFGDo7emmf8LVAuksaoMrpxafM=;
+	b=VC4Gtf17Wus3byiV08WTh1OIiK7GE/7WSpZakr3P+w7KfuGfr9NJHM//swQb5Rxw/NtSKZ
+	svE7FDoWW/JCWdp0nSXA44ouG3uuVg8yByenZO4qhFkOvuT8sajZg30aMUcVs4oO7zK4CH
+	aY3ubwb+0Mhg4w17ijoJBQVs9Mvo/W4=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-172-4XNs5m3_Ow-kf-wMWSaAzA-1; Thu,
+ 25 Sep 2025 14:13:33 -0400
+X-MC-Unique: 4XNs5m3_Ow-kf-wMWSaAzA-1
+X-Mimecast-MFC-AGG-ID: 4XNs5m3_Ow-kf-wMWSaAzA_1758824012
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 57AF818004D4;
+	Thu, 25 Sep 2025 18:13:32 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DB3DF1956095;
+	Thu, 25 Sep 2025 18:13:31 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 58PIDUdW1502048
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 25 Sep 2025 14:13:30 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 58PIDUsn1502047;
+	Thu, 25 Sep 2025 14:13:30 -0400
+Date: Thu, 25 Sep 2025 14:13:30 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH 2/4] libmpathpersist: Handle RESERVE with reservation
+ held by failed path
+Message-ID: <aNWGSh_HLIUlK8HF@redhat.com>
 References: <20250923221252.1411687-1-bmarzins@redhat.com>
-	 <20250923221252.1411687-5-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+ <20250923221252.1411687-3-bmarzins@redhat.com>
+ <21dec62792f95a257aafbe254b42dbbd2815d13f.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <21dec62792f95a257aafbe254b42dbbd2815d13f.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: rNYSUPBFclYEDq2XOx2LTKyVOc9XGMcDxsJ2iBlSyuE_1758824012
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2025-09-23 at 18:12 -0400, Benjamin Marzinski wrote:
-> There were two problems with how libmpathpersist handled
-> unregistering
-> a key while holding the reseravation (which should also release the
-> reservation).
-> 1. If the path holding the reservation is not unregistered first,
-> there
-> =C2=A0=C2=A0 will be unregistered paths, while a reservation is still hel=
-d,
-> which
-> =C2=A0=C2=A0 would cause IO to those paths to fail, when it shouldn't.
-> 2. If the path that holds the reservation is down, libmpathpersist
-> was
-> =C2=A0=C2=A0 not clearing the resrvation, since the there were no registe=
-red
-> keys
-> =C2=A0=C2=A0 it could use for the PREEMPT command workaround
->=20
-> To fix these, libmpathpersist now releases the reservation first when
-> trying to unregister a key that is holding the reservation.
-> mpath_prout_rel() has a new option so that if it needs to self
-> preempt
-> to clear the reservation, it won't re-register the paths when called
-> as part of unregistering a key. Also, instead of checking if the
-> device
-> is currently holding a reservation using mpp->reservation_key in
-> check_holding_reservation() (which will already be set to 0 when
-> called
-> as part of unregistering a key), pass in the key to check.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0libmpathpersist/mpath_persist_int.c | 101 +++++++++++++++++++------=
--
-> --
-> =C2=A01 file changed, 70 insertions(+), 31 deletions(-)
->=20
-> diff --git a/libmpathpersist/mpath_persist_int.c
-> b/libmpathpersist/mpath_persist_int.c
-> index 9c71011f..f130f5f5 100644
-> --- a/libmpathpersist/mpath_persist_int.c
-> +++ b/libmpathpersist/mpath_persist_int.c
-> @@ -564,18 +564,23 @@ static int mpath_prout_reg(struct multipath
-> *mpp,int rq_servact, int rq_scope,
-> =C2=A0	return status;
-> =C2=A0}
-> =C2=A0
-> +enum preempt_work {
-> +	PREE_WORK_NONE,
-> +	PREE_WORK_REL,
-> +	PREE_WORK_REL_UNREG,
-> +};
-> =C2=A0/*
-> =C2=A0 * Called to make a multipath device preempt its own reservation
-> (and
-> - * optionally release the reservation). Doing this causes the
-> reservation
-> - * keys to be removed from all the device paths except that path
-> used to issue
-> - * the preempt, so they need to be restored. To avoid the chance
-> that IO
-> - * goes to these paths when they don't have a registered key, the
-> device
-> - * is suspended before issuing the preemption, and the keys are
-> reregistered
-> - * before resuming it.
-> + * optional extra work). Doing this causes the reservation keys to
-> be removed
-> + * from all the device paths except that path used to issue the
-> preempt, so
-> + * they may need to be restored. To avoid the chance that IO goes to
-> these
-> + * paths when they don't have a registered key and a reservation
-> exists, the
-> + * device is suspended before issuing the preemption, and the keys
-> are
-> + * reregistered (or the reservation is released) before resuming it.
-> =C2=A0 */
-> =C2=A0static int do_preempt_self(struct multipath *mpp, struct be64
-> sa_key,
-> =C2=A0			=C2=A0=C2=A0 int rq_servact, int rq_scope, unsigned
-> int rq_type,
-> -			=C2=A0=C2=A0 int noisy, bool do_release)
-> +			=C2=A0=C2=A0 int noisy, enum preempt_work work)
-> =C2=A0{
-> =C2=A0	int status, rel_status =3D MPATH_PR_SUCCESS;
-> =C2=A0	struct path *pp =3D NULL;
-> @@ -596,7 +601,7 @@ static int do_preempt_self(struct multipath *mpp,
-> struct be64 sa_key,
-> =C2=A0		goto fail_resume;
-> =C2=A0	}
-> =C2=A0
-> -	if (do_release) {
-> +	if (work !=3D PREE_WORK_NONE) {
-> =C2=A0		memset(&paramp, 0, sizeof(paramp));
-> =C2=A0		memcpy(paramp.key, &mpp->reservation_key, 8);
-> =C2=A0		rel_status =3D prout_do_scsi_ioctl(pp->dev,
-> MPATH_PROUT_REL_SA,
-> @@ -604,15 +609,26 @@ static int do_preempt_self(struct multipath
-> *mpp, struct be64 sa_key,
-> =C2=A0		if (rel_status !=3D MPATH_PR_SUCCESS)
-> =C2=A0			condlog(0, "%s: release on alternate path
-> failed.",
-> =C2=A0				mpp->wwid);
-> +		else if (work =3D=3D PREE_WORK_REL_UNREG) {
-> +			/* unregister the last path */
-> +			rel_status =3D prout_do_scsi_ioctl(pp->dev,
-> +						=09
-> MPATH_PROUT_REG_IGN_SA,
-> +							 rq_scope,
-> rq_type,
-> +							 &paramp,
-> noisy);
-> +			if (rel_status !=3D MPATH_PR_SUCCESS)
-> +				condlog(0, "%s: final self preempt
-> unregister failed,",
-> +					mpp->wwid);
-> +		}
-> +	}
-> +	if (work !=3D PREE_WORK_REL_UNREG) {
-> +		memset(&paramp, 0, sizeof(paramp));
-> +		memcpy(paramp.sa_key, &mpp->reservation_key, 8);
-> +		status =3D mpath_prout_reg(mpp,
-> MPATH_PROUT_REG_IGN_SA, rq_scope,
-> +					 rq_type, &paramp, noisy);
-> +		if (status !=3D MPATH_PR_SUCCESS)
-> +			condlog(0, "%s: self preempt failed to
-> reregister paths.",
-> +				mpp->wwid);
-> =C2=A0	}
-> -
-> -	memset(&paramp, 0, sizeof(paramp));
-> -	memcpy(paramp.sa_key, &mpp->reservation_key, 8);
-> -	status =3D mpath_prout_reg(mpp, MPATH_PROUT_REG_IGN_SA,
-> rq_scope,
-> -				 rq_type, &paramp, noisy);
-> -	if (status !=3D MPATH_PR_SUCCESS)
-> -		condlog(0, "%s: self preempt failed to reregister
-> paths.",
-> -			mpp->wwid);
-> =C2=A0
-> =C2=A0fail_resume:
-> =C2=A0	if (!dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias,
-> udev_flags)) {
-> @@ -625,10 +641,10 @@ fail_resume:
-> =C2=A0}
-> =C2=A0
-> =C2=A0static int preempt_self(struct multipath *mpp, int rq_servact, int
-> rq_scope,
-> -			unsigned int rq_type, int noisy, bool
-> do_release)
-> +			unsigned int rq_type, int noisy, enum
-> preempt_work work)
-> =C2=A0{
-> =C2=A0	return do_preempt_self(mpp, mpp->reservation_key,
-> rq_servact, rq_scope,
-> -			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type, noisy, do_release);
-> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type, noisy, work);
-> =C2=A0}
-> =C2=A0
-> =C2=A0static int preempt_all(struct multipath *mpp, int rq_servact, int
-> rq_scope,
-> @@ -636,7 +652,7 @@ static int preempt_all(struct multipath *mpp, int
-> rq_servact, int rq_scope,
-> =C2=A0{
-> =C2=A0	struct be64 zerokey =3D {0};
-> =C2=A0	return do_preempt_self(mpp, zerokey, rq_servact, rq_scope,
-> rq_type,
-> -			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 noisy, false);
-> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 noisy, PREE_WORK_NONE);
-> =C2=A0}
-> =C2=A0
-> =C2=A0static int reservation_key_matches(struct multipath *mpp, uint8_t
-> *key,
-> @@ -661,18 +677,21 @@ static int reservation_key_matches(struct
-> multipath *mpp, uint8_t *key,
-> =C2=A0	return YNU_NO;
-> =C2=A0}
-> =C2=A0
-> -static bool check_holding_reservation(struct multipath *mpp,
-> unsigned int *type)
-> +static bool check_holding_reservation(struct multipath *mpp, uint8_t
-> *curr_key,
-> +				=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 unsigned int *type)
-> =C2=A0{
-> -	if (get_be64(mpp->reservation_key) &&
-> +	uint64_t zerokey =3D 0;
-> +	if (memcmp(curr_key, &zerokey, 8) !=3D 0 &&
-> =C2=A0	=C2=A0=C2=A0=C2=A0 get_prhold(mpp->alias) =3D=3D PR_SET &&
-> -	=C2=A0=C2=A0=C2=A0 reservation_key_matches(mpp, (uint8_t *)&mpp-
-> >reservation_key, type) =3D=3D YNU_YES)
-> +	=C2=A0=C2=A0=C2=A0 reservation_key_matches(mpp, curr_key, type) =3D=3D =
-YNU_YES)
-> =C2=A0		return true;
-> =C2=A0	return false;
-> =C2=A0}
-> =C2=A0
-> -static int mpath_prout_rel(struct multipath *mpp,int rq_servact, int
-> rq_scope,
-> +static int mpath_prout_rel(struct multipath *mpp, int rq_servact,
-> int rq_scope,
-> =C2=A0			=C2=A0=C2=A0 unsigned int rq_type,
-> -			=C2=A0=C2=A0 struct prout_param_descriptor * paramp,
-> int noisy)
-> +			=C2=A0=C2=A0 struct prout_param_descriptor *paramp,
-> int noisy,
-> +			=C2=A0=C2=A0 bool *unregistered)
-> =C2=A0{
-> =C2=A0	int i, j;
-> =C2=A0	struct pathgroup *pgp =3D NULL;
-> @@ -685,6 +704,8 @@ static int mpath_prout_rel(struct multipath
-> *mpp,int rq_servact, int rq_scope,
-> =C2=A0	bool all_threads_failed;
-> =C2=A0	unsigned int res_type;
-> =C2=A0
-> +	if (unregistered)
-> +		*unregistered =3D false;
-> =C2=A0	if (!mpp)
-> =C2=A0		return MPATH_PR_DMMP_ERROR;
-> =C2=A0
-> @@ -762,7 +783,8 @@ static int mpath_prout_rel(struct multipath
-> *mpp,int rq_servact, int rq_scope,
-> =C2=A0		return status;
-> =C2=A0	}
-> =C2=A0
-> -	if (!check_holding_reservation(mpp, &res_type)) {
-> +	if (!check_holding_reservation(mpp, (uint8_t *)&mpp-
-> >reservation_key,
-> +				=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 &res_type)) {
-> =C2=A0		condlog(2, "%s: Releasing key not holding
-> reservation.", mpp->wwid);
-> =C2=A0		return MPATH_PR_SUCCESS;
-> =C2=A0	}
-> @@ -785,7 +807,10 @@ static int mpath_prout_rel(struct multipath
-> *mpp,int rq_servact, int rq_scope,
-> =C2=A0	 * 4. Reregistering keys on all the paths
-> =C2=A0	 * 5. Resuming the device
-> =C2=A0	 */
-> -	return preempt_self(mpp, MPATH_PROUT_PREE_SA, rq_scope,
-> rq_type, noisy, true);
-> +	if (unregistered)
-> +		*unregistered =3D true;
-> +	return preempt_self(mpp, MPATH_PROUT_PREE_SA, rq_scope,
-> rq_type, noisy,
-> +			=C2=A0=C2=A0=C2=A0 unregistered ? PREE_WORK_REL_UNREG :
-> PREE_WORK_REL);
+On Wed, Sep 24, 2025 at 08:02:41PM +0200, Martin Wilck wrote:
+> On Tue, 2025-09-23 at 18:12 -0400, Benjamin Marzinski wrote:
+> > Issuing a RESERVE on a device that already holds the reservation
+> > should
+> > succeed, as long as the type is the same. But if the path that holds
+> > the
+> > reservation is unavailable, mpathpersist fails, since it gets a
+> > reservation conflict on all available paths. To deal with this, if
+> > the
+> > multipath device has failed paths, and the key holding the
+> > reservation
+> > matches the multipath device's key, and multipathd says that it is
+> > holding the reservation, assume the reservation is held by a failed
+> > path
+> > and claim the RESERVE succeeded, even though none of the actual scsi
+> > commands did
+> 
+> Can we really trust multipathd? What if the PR had been preemtped by
+> another host?
 
-This is hard to understand and possibly error-prone in the future.
+We also check that key that multipath is using for this device is that
+key that is currently holding the reservation (by issuing a
+READ RESERVATION command).
 
-You use the pointer "unregistered" as a boolean, which looks like a
-typo (missing "*") in the first place. It turns out that it's
-intentional, and that (unregistered !=3D NULL) indicates that this code
-was called from the MPATH_PROUT_REG_IGN_SA case in
-do_mpath_persistent_reserve_out() (as opposed to the MPATH_PROUT_REL_SA
-case).
+So we know that the key that we are using to grab the reservation is the
+key for this multipath device. The scsi device also says that this is
+the key that is currently holding the reservation. And multipathd says
+that the device should be holding the reservation. The multipathd check
+is just a safety check to deal with the remote possiblity that another
+node is also using the same key.
 
-Could you write this in a somewhat more obvious way, please; perhaps by
-passing a preempt_work parameter to mpath_prout_rel()?
+-Ben
+ 
+> > 
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmpathpersist/mpath_persist_int.c | 47 +++++++++++++++++++++++----
+> > --
+> >  1 file changed, 37 insertions(+), 10 deletions(-)
+> > 
+> > diff --git a/libmpathpersist/mpath_persist_int.c
+> > b/libmpathpersist/mpath_persist_int.c
+> > index 476c3433..33c9e57a 100644
+> > --- a/libmpathpersist/mpath_persist_int.c
+> > +++ b/libmpathpersist/mpath_persist_int.c
+> > @@ -200,7 +200,7 @@ static void *mpath_prout_pthread_fn(void *p)
+> >  static int
+> >  mpath_prout_common(struct multipath *mpp, int rq_servact, int
+> > rq_scope,
+> >  		   unsigned int rq_type, struct
+> > prout_param_descriptor *paramp,
+> > -		   int noisy, struct path **pptr)
+> > +		   int noisy, struct path **pptr, bool
+> > *failed_paths)
+> >  {
+> >  	int i, j, ret;
+> >  	struct pathgroup *pgp = NULL;
+> > @@ -213,6 +213,8 @@ mpath_prout_common(struct multipath *mpp, int
+> > rq_servact, int rq_scope,
+> >  			if (!((pp->state == PATH_UP) || (pp->state
+> > == PATH_GHOST))) {
+> >  				condlog(1, "%s: %s path not up.
+> > Skip",
+> >  					mpp->wwid, pp->dev);
+> > +				if (failed_paths)
+> > +					*failed_paths = true;
+> >  				continue;
+> >  			}
+> >  
+> > @@ -247,6 +249,8 @@ mpath_prout_common(struct multipath *mpp, int
+> > rq_servact, int rq_scope,
+> >  			}
+> >  			if (ret != MPATH_PR_RETRYABLE_ERROR)
+> >  				return ret;
+> > +			if (failed_paths)
+> > +				*failed_paths = true;
+> >  		}
+> >  	}
+> >  	if (found)
+> > @@ -333,7 +337,7 @@ void preempt_missing_path(struct multipath *mpp,
+> > uint8_t *key, uint8_t *sa_key,
+> >  	memcpy(paramp.key, sa_key, 8);
+> >  	memcpy(paramp.sa_key, key, 8);
+> >  	status = mpath_prout_common(mpp, MPATH_PROUT_PREE_SA,
+> > rq_scope,
+> > -				    rq_type, &paramp, noisy, NULL);
+> > +				    rq_type, &paramp, noisy, NULL,
+> > NULL);
+> >  	if (status != MPATH_PR_SUCCESS)
+> >  		condlog(0, "%s: register: pr preempt command
+> > failed.", mpp->wwid);
+> >  }
+> > @@ -586,7 +590,7 @@ static int do_preempt_self(struct multipath *mpp,
+> > struct be64 sa_key,
+> >  	memcpy(paramp.key, &mpp->reservation_key, 8);
+> >  	memcpy(paramp.sa_key, &sa_key, 8);
+> >  	status = mpath_prout_common(mpp, rq_servact, rq_scope,
+> > rq_type,
+> > -				    &paramp, noisy, &pp);
+> > +				    &paramp, noisy, &pp, NULL);
+> >  	if (status != MPATH_PR_SUCCESS) {
+> >  		condlog(0, "%s: self preempt command failed.", mpp-
+> > >wwid);
+> >  		goto fail_resume;
+> > @@ -769,20 +773,25 @@ static int mpath_prout_rel(struct multipath
+> > *mpp,int rq_servact, int rq_scope,
+> >  	return preempt_self(mpp, MPATH_PROUT_PREE_SA, rq_scope,
+> > rq_type, noisy, true);
+> >  }
+> >  
+> > -static int reservation_key_matches(struct multipath *mpp, uint8_t
+> > *key, int noisy)
+> > +static int reservation_key_matches(struct multipath *mpp, uint8_t
+> > *key,
+> > +				   unsigned int *type)
+> >  {
+> >  	struct prin_resp resp = {{{.prgeneration = 0}}};
+> >  	int status;
+> >  
+> > -	status = mpath_prin_activepath(mpp, MPATH_PRIN_RRES_SA,
+> > &resp, noisy);
+> > +	status = mpath_prin_activepath(mpp, MPATH_PRIN_RRES_SA,
+> > &resp, 0);
+> >  	if (status != MPATH_PR_SUCCESS) {
+> >  		condlog(0, "%s: pr in read reservation command
+> > failed.", mpp->wwid);
+> >  		return YNU_UNDEF;
+> >  	}
+> >  	if (!resp.prin_descriptor.prin_readresv.additional_length)
+> >  		return YNU_NO;
+> > -	if (memcmp(key, resp.prin_descriptor.prin_readresv.key, 8)
+> > == 0)
+> > +	if (memcmp(key, resp.prin_descriptor.prin_readresv.key, 8)
+> > == 0) {
+> > +		if (type)
+> > +			*type =
+> > resp.prin_descriptor.prin_readresv.scope_type &
+> > +				MPATH_PR_TYPE_MASK;
+> >  		return YNU_YES;
+> > +	}
+> >  	return YNU_NO;
+> >  }
+> >  
+> > @@ -799,11 +808,20 @@ static void set_ignored_key(struct multipath
+> > *mpp, uint8_t *curr_key,
+> >  		return;
+> >  	if (get_prhold(mpp->alias) == PR_UNSET)
+> >  		return;
+> > -	if (reservation_key_matches(mpp, curr_key, 0) == YNU_NO)
+> > +	if (reservation_key_matches(mpp, curr_key, NULL) == YNU_NO)
+> >  		return;
+> >  	memcpy(key, curr_key, 8);
+> >  }
+> >  
+> > +static bool check_holding_reservation(struct multipath *mpp,
+> > unsigned int *type)
+> > +{
+> > +	if (get_be64(mpp->reservation_key) &&
+> > +	    get_prhold(mpp->alias) == PR_SET &&
+> > +	    reservation_key_matches(mpp, (uint8_t *)&mpp-
+> > >reservation_key, type) == YNU_YES)
+> > +		return true;
+> > +	return false;
+> > +}
+> > +
+> >  int do_mpath_persistent_reserve_out(vector curmp, vector pathvec,
+> > int fd,
+> >  				    int rq_servact, int rq_scope,
+> > unsigned int rq_type,
+> >  				    struct prout_param_descriptor
+> > *paramp, int noisy)
+> > @@ -815,6 +833,7 @@ int do_mpath_persistent_reserve_out(vector curmp,
+> > vector pathvec, int fd,
+> >  	struct config *conf;
+> >  	bool unregistering, preempting_reservation = false;
+> >  	bool updated_prkey = false;
+> > +	bool failed_paths = false;
+> >  
+> >  	ret = mpath_get_map(curmp, fd, &mpp);
+> >  	if (ret != MPATH_PR_SUCCESS)
+> > @@ -906,7 +925,7 @@ int do_mpath_persistent_reserve_out(vector curmp,
+> > vector pathvec, int fd,
+> >  		break;
+> >  	case MPATH_PROUT_PREE_SA:
+> >  	case MPATH_PROUT_PREE_AB_SA:
+> > -		if (reservation_key_matches(mpp, paramp->sa_key,
+> > noisy) == YNU_YES) {
+> > +		if (reservation_key_matches(mpp, paramp->sa_key,
+> > NULL) == YNU_YES) {
+> >  			preempting_reservation = true;
+> >  			if (memcmp(paramp->sa_key, &zerokey, 8) ==
+> > 0) {
+> >  				/* all registrants case */
+> > @@ -923,10 +942,18 @@ int do_mpath_persistent_reserve_out(vector
+> > curmp, vector pathvec, int fd,
+> >  		}
+> >  		/* fallthrough */
+> >  	case MPATH_PROUT_RES_SA:
+> > -	case MPATH_PROUT_CLEAR_SA:
+> > +	case MPATH_PROUT_CLEAR_SA: {
+> > +		unsigned int res_type;
+> >  		ret = mpath_prout_common(mpp, rq_servact, rq_scope,
+> > rq_type,
+> > -					 paramp, noisy, NULL);
+> > +					 paramp, noisy, NULL,
+> > &failed_paths);
+> > +		if (rq_servact == MPATH_PROUT_RES_SA &&
+> > +		    ret != MPATH_PR_SUCCESS && failed_paths &&
+> > +		    check_holding_reservation(mpp, &res_type) &&
+> > +		    res_type == rq_type)
+> > +			/* The reserve failed, but multipathd says
+> > we hold it */
+> > +			ret = MPATH_PR_SUCCESS;
+> 
+> I'd prefer splitting up the case statement here, as the code for
+> MPATH_PROUT_RES_SA is now pretty different from the other cases.
+> 
+> Martin
 
-
-> =C2=A0}
-> =C2=A0
-> =C2=A0/*
-> @@ -828,7 +853,7 @@ int do_mpath_persistent_reserve_out(vector curmp,
-> vector pathvec, int fd,
-> =C2=A0	select_reservation_key(conf, mpp);
-> =C2=A0	put_multipath_config(conf);
-> =C2=A0
-> -	memcpy(&oldkey, &mpp->reservation_key, 8);
-> +	oldkey =3D mpp->reservation_key;
-> =C2=A0	unregistering =3D (memcmp(&zerokey, paramp->sa_key, 8) =3D=3D 0);
-> =C2=A0	if (mpp->prkey_source =3D=3D PRKEY_SOURCE_FILE &&
-> =C2=A0	=C2=A0=C2=A0=C2=A0 (rq_servact =3D=3D MPATH_PROUT_REG_IGN_SA ||
-> @@ -905,7 +930,21 @@ int do_mpath_persistent_reserve_out(vector
-> curmp, vector pathvec, int fd,
-> =C2=A0	{
-> =C2=A0	case MPATH_PROUT_REG_SA:
-> =C2=A0	case MPATH_PROUT_REG_IGN_SA:
-> -		ret=3D mpath_prout_reg(mpp, rq_servact, rq_scope,
-> rq_type, paramp, noisy);
-> +		if (unregistering && check_holding_reservation(mpp,
-> (uint8_t *)&oldkey, &rq_type)) {
-> +			bool unregistered =3D false;
-> +			struct be64 newkey =3D mpp->reservation_key;
-> +			/* temporarily restore reservation key */
-> +			mpp->reservation_key =3D oldkey;
-> +			ret =3D mpath_prout_rel(mpp,
-> MPATH_PROUT_REL_SA, rq_scope,
-> +					=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type, paramp,
-> noisy,
-> +					=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 &unregistered);
-> +			mpp->reservation_key =3D newkey;
-> +			if (ret =3D=3D MPATH_PR_SUCCESS &&
-> !unregistered)
-> +				ret =3D mpath_prout_reg(mpp,
-> rq_servact, rq_scope,
-> +						=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type,
-> paramp, noisy);
-
-I comment stating that mpp->reservation_key is zero here and that
-mpath_prout_reg() actually unregisters the key would help readers of
-this code.
-
-Regards
-Martin
-
-> +		} else
-> +			ret =3D mpath_prout_reg(mpp, rq_servact,
-> rq_scope,
-> +					=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 rq_type, paramp,
-> noisy);
-> =C2=A0		break;
-> =C2=A0	case MPATH_PROUT_PREE_SA:
-> =C2=A0	case MPATH_PROUT_PREE_AB_SA:
-> @@ -921,7 +960,7 @@ int do_mpath_persistent_reserve_out(vector curmp,
-> vector pathvec, int fd,
-> =C2=A0		/* if we are preempting ourself */
-> =C2=A0		if (memcmp(paramp->sa_key, paramp->key, 8) =3D=3D 0) {
-> =C2=A0			ret =3D preempt_self(mpp, rq_servact,
-> rq_scope, rq_type,
-> -					=C2=A0=C2=A0 noisy, false);
-> +					=C2=A0=C2=A0 noisy, PREE_WORK_NONE);
-> =C2=A0			break;
-> =C2=A0		}
-> =C2=A0		/* fallthrough */
-> @@ -932,14 +971,14 @@ int do_mpath_persistent_reserve_out(vector
-> curmp, vector pathvec, int fd,
-> =C2=A0					 paramp, noisy, NULL,
-> &failed_paths);
-> =C2=A0		if (rq_servact =3D=3D MPATH_PROUT_RES_SA &&
-> =C2=A0		=C2=A0=C2=A0=C2=A0 ret !=3D MPATH_PR_SUCCESS && failed_paths &&
-> -		=C2=A0=C2=A0=C2=A0 check_holding_reservation(mpp, &res_type) &&
-> +		=C2=A0=C2=A0=C2=A0 check_holding_reservation(mpp, paramp->key,
-> &res_type) &&
-> =C2=A0		=C2=A0=C2=A0=C2=A0 res_type =3D=3D rq_type)
-> =C2=A0			/* The reserve failed, but multipathd says
-> we hold it */
-> =C2=A0			ret =3D MPATH_PR_SUCCESS;
-> =C2=A0		break;
-> =C2=A0	}
-> =C2=A0	case MPATH_PROUT_REL_SA:
-> -		ret =3D mpath_prout_rel(mpp, rq_servact, rq_scope,
-> rq_type, paramp, noisy);
-> +		ret =3D mpath_prout_rel(mpp, rq_servact, rq_scope,
-> rq_type, paramp, noisy, NULL);
-> =C2=A0		break;
-> =C2=A0	default:
-> =C2=A0		return MPATH_PR_OTHER;
