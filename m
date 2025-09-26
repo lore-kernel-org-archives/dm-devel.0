@@ -1,92 +1,108 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51AE523E229;
-	Fri, 26 Sep 2025 16:17:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7322F2F83C2
+	for <dm-devel@lists.linux.dev>; Fri, 26 Sep 2025 17:29:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758903430; cv=none; b=kSxFlyMkLQNiosv1uJRsNUnJ2OSIpsJkBoKd/EjNhAUny63boJ/e49y9vTRoW2pDTYOCSKCffPr0L+7vM7VdRag4rKvm8ztpVPIjp96paIRuAnqI+TgLSV4Q5sc7/idG6WCOmMhwH0SK5DPQQF93kuOgcD9AwEOlmSk8v2+ZBRU=
+	t=1758907742; cv=none; b=HzC++OskjrUn5WK7WRnlCvcPEM4b1WAspRx1LT9dqCzxRZ8XhdYKOVx/vkKHlYE3YXFh3gB+V7TA5THrux/uDGgau8aH1FNYYtD/Zc7ffP4hDRxJLDpQGKfjWAVFSFdkijbusu0TT2RUpgEUKcjg74AiBN+RCPbkLjAwsHdC4QI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758903430; c=relaxed/simple;
-	bh=xAvuKcyN7VL20OsOj8SivIeSbwW9mQxLg5NRd0fpFk8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eGv0Vz0Vx8GyVabfKnvATZF1CiOBMZ4e3g1JLkvhNTn7sSmgatObNGS5iT9D7yZkv/NAH/0QvRsUwhDVSKhOTNuoaDCRc7H1RpluEn7YGB6VlFHwmA0v9PvYawOkIbLCRHxNhHmB/7uiZL+ZaxPL0hLEaVAhJFIMyDegIyn7grA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=rufHO2J8; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1758907742; c=relaxed/simple;
+	bh=iBTzbS/EqHaKJgiVzYc5pgQUjvWb5U8+oG1zlvpTC9c=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=f/2UmxvZn19mtT5VZP1m7dsNqp12QkaGd8DssetRLtEPOEUxnlShLzJdp0HMZh37bmYl84NnLIm7QhY1NrqMDY7DIqLYrw/Za3tepTZK0YGLIvCH/KVga/75snXpus4o0ILBATFhXSm+GC1nG9gWVVjmxfmN3VAT1vdMdGZQ8l8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EFsycKQ3; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="rufHO2J8"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 95DD2C4CEF4;
-	Fri, 26 Sep 2025 16:17:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1758903429;
-	bh=xAvuKcyN7VL20OsOj8SivIeSbwW9mQxLg5NRd0fpFk8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=rufHO2J8Kf49HehauJy20J2cU/8t/ZwKm/ZGO5xLG0pY4wEgr8zOB85LuNcAPzsT4
-	 XY+IU+onIPmPjU5SXmvbASpS96j5/uM6SsLR1V4srzsTYuoYOP9n2JQMwyBujwQzTg
-	 TQ7znSmYdI0Pzq6FJZMQfpnHFrwGxxuIU1mcARCSNEGCwHhq8lWPtbNuZJeOuKkMk1
-	 4r//iMHYPNe3her2n1gdv3J/ehu08tbMwi5KUOVFBZ31IHPnkYhnmjIrpRYDDDChyy
-	 w+ET3VtFh/he60+tFoFFf8VE1/vLp/Vxux/vgGQf7vWINBdLlRhlETS0j6oiNMFzOy
-	 3ekOJreE6B5/Q==
-Date: Fri, 26 Sep 2025 10:17:07 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
-	snitzer@kernel.org, linux-block@vger.kernel.org,
-	ebiggers@google.com
-Subject: Re: [RFC PATCH] dm-crypt: allow unaligned bio_vecs for direct io
-Message-ID: <aNa8g0IZuQZvA93v@kbusch-mbp>
-References: <20250918161642.2867886-1-kbusch@meta.com>
- <aMxnzIavwnJmdAz1@kbusch-mbp>
- <f3d06d99-638d-99a5-03e3-686b544d97ac@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EFsycKQ3"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1758907739;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=FIuq8SQaNWWMmmafrjqFHW5fK98++NjM6qA+/BCjz94=;
+	b=EFsycKQ38gMu5UsWIvxoX6RSt2WpYjhKSvCR+8PrhRHDFgSXlbulssB34Y0ygJwR83qxhb
+	QXkGr4XhZ73s1P/+0d7IhFDpsqTcBlqpeaExe3GcTqPnz3E9bwCKr4a/Bh3CWt1qhyotFY
+	O9avDktaxyOx654ylg1LSk9F4hldUsk=
+Received: from mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-509-JtOLnY7LPlu1kGvgsYrDtg-1; Fri,
+ 26 Sep 2025 13:28:57 -0400
+X-MC-Unique: JtOLnY7LPlu1kGvgsYrDtg-1
+X-Mimecast-MFC-AGG-ID: JtOLnY7LPlu1kGvgsYrDtg_1758907736
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-02.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7BD82195608D;
+	Fri, 26 Sep 2025 17:28:56 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2AF4230001B7;
+	Fri, 26 Sep 2025 17:28:55 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 58QHSs9u1548364
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 26 Sep 2025 13:28:54 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 58QHSsmE1548363;
+	Fri, 26 Sep 2025 13:28:54 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH v2 0/4] libmultipath: Yet Another PR patchset
+Date: Fri, 26 Sep 2025 13:28:50 -0400
+Message-ID: <20250926172854.1548351-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f3d06d99-638d-99a5-03e3-686b544d97ac@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: V1eXmaArKOv_8PkHGx1PLHuJ7FjpndAXXoPtZuTq3EU_1758907736
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Fri, Sep 26, 2025 at 04:19:58PM +0200, Mikulas Patocka wrote:
-> 
-> I'd like to ask - how much does it help performance? How many percent 
-> faster does your application run?
+This patchset handles 4 separate issues:
+1. The self-preemption workaround for changing keys using REGISTER AND
+   IGNORE, while the path holding the reservation was down was broken
+   by a recent commit.
+2. mpathpersist was failing a RESERVE command issued on a multipath
+   device that held a reservation, when the holding path was down.
+   Issuing an identical reserve on a device that holds a reservation
+   is supposed to succeed, and multipathd has enough information to
+   know the device is actually holding the reservation. So if
+   multipathd says that the device is holding the reservation, it
+   should not fail, even if the path holding the reservation is down.
+3. mpathpersist was not clearing the reservation when the key holding
+   it was unregistered, if the path holding the reservation was down.
+4. When unregistering a key that holds a reservation, depending on the
+   order that the paths got unregistered, there was a window where
+   IO going to the device could fail. This should not happen because
+   the reservation should be removed and the key should be unregistered
+   atomically.
 
-The best info I have from the storage team I'm working with is this
-reduces their application's memory bandwidth utilization by a little
-over 10%.
+Changes in V2:
+0004: reworked how the unregister infromation is passed to an from
+      mpath_prout_rel() to make it less confusing, at Martin's
+      suggestion.
 
-> Another question - what if the user uses preadv or pwritev with direct I/O 
-> and uses more than 4 sg lists? Will this be rejected in the upper layers, 
-> or will it reach dm-crypt and return -EINVAL? 
+Feel free to reformat my patches. I forgot to do that first. Sorry.
 
-I believe it would reach dm-crypt with this patch.
+Benjamin Marzinski (4):
+  libmpathpersist: Fix REGISTER AND IGNORE while holding a reservation
+  libmpathpersist: Handle RESERVE with reservation held by failed path
+  libmpathpersist: use check_holding_reservation in mpath_prout_rel
+  libmpathpersist: Fix unregistering while holding the reservation
 
-If you tried today, it should get rejected by the upper layers for
-unalignement. But there are some changes pending in the 6.18 block tree
-that defer the alignment detection to later such that dm-crypt may have
-to deal with this and fail the IO (unless something higher splits the
-bio to its queue limits first), so sounds like I should sort that out.
+ libmpathpersist/mpath_persist.h     |   3 +
+ libmpathpersist/mpath_persist_int.c | 204 ++++++++++++++++++----------
+ 2 files changed, 134 insertions(+), 73 deletions(-)
 
-Regarding the 4 scatterlist limit, we're using 4k sized logical blocks.
-The incoming data typically has an offset crossing a page boundary, so
-needs 2 pages for each block. Just 2 scatterlists would do the trick.
+-- 
+2.50.1
 
-If we really want to remove all software constraints here, then we could
-increase the pre-allocated scatterlist size, or dynamically allocate an
-approrpiate scatter gather table per-io. I guess we'd have to expand the
-list somewhere if this needs to work with aead, too.
-
-> Note that returning error 
-> from dm-crypt may be quite problematic, because it would kick the leg out 
-> of RAID, if there were RAID above dm-crypt. I think that we should return 
-> BLK_STS_NOTSUPP, because that would be ignored by RAID.
-
-Thanks, I'll try this out.
-
-> I am considering committing this for the kernel 6.19 (it's too late to add 
-> it to the 6.18 merge window).
-
-No problem, I don't want to rush this. Your reply is at least
-encouraging enough for me to sort out more than just "plaint64" with
-this proposal.
