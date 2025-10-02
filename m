@@ -1,116 +1,185 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com [52.28.197.132])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC6AD1531C8
-	for <dm-devel@lists.linux.dev>; Wed,  1 Oct 2025 03:35:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 172B323C4E3;
+	Thu,  2 Oct 2025 18:01:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.28.197.132
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759289733; cv=none; b=gKIJoyfqaTv/wCiaCyn/JWDpbsJyY64JroLfFXKuoSPHVCCi9O91qRv/A1JBgJ+P1d1njgetZFPyjLDKTt96asqwxXvnhqKdi4aAh4xdWL4G7OHcVn4OiB6AkPkYR25gwYvEnC0EBmdCkoRFqRtECRkTxuwwFc7dlWzFL7kadTc=
+	t=1759428070; cv=none; b=dxrnXGUDktMu4w3HYFRaAJVrD8Ybbl9FdnQEs21PkKWJNqzf8luzFpMI0KvyPTWw9F/JY6tSwL6FIFc4y/8VEglNzJGavMMIyWEWllzPAsd6EvOc2oE8T5SsBF319xjI+BjeRXX3R/Ld0aXhLJ5Xh29MSi3W+Vq1E/MwBicO4HM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759289733; c=relaxed/simple;
-	bh=o6OBh0N/5Xr+V3gpD/WZpp0daEZRhX3/X5Ch6CBc94s=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=Oh819b0DDEo7ejBws8ksaiLLLMsvX0ME9Klc6bnNk49tXU7XvoTmBk2z+Ny6Lj9BGUft3aPHae+M8LtrFOkHI2KpXik2kduUy4lF2CouqmqRHSwI6BHVXVwWI87tY5mEQdHCYSUZ6rRT5mWCCGxNZJmkpSenmI69alh95u4FljY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BC3X055c; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1759428070; c=relaxed/simple;
+	bh=oLmFh7pEq2+c7mvuShVbrMHlXVn53x8NKSecVFXj5vU=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version:Content-Type; b=f4fIYA83BI2wGrYJ7worLi9WQz3Bhsz4SbxY5D+1s8OQyVOyjN7hj7ASkZkL3EqWvkRpvkFM0wMkd/44MnlbXB5j+LtD9QyZb9ERHjdbrKKQWZ622GxZssym2rXB8//uw7Wq15sUROmLkS/u5ptZZ5LOqjVURAgfkp5h/IQ+Aq8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=ifOX4dUt; arc=none smtp.client-ip=52.28.197.132
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BC3X055c"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1759289729;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=YIoBoA2AyJe7H0xylN4l7ibVZQhdfyhMSP3AYM0h8QU=;
-	b=BC3X055c3PJqQtIfovcO5262H5f0n2GkcJiZfy8Vnq+nIShrAVFNamfA9o0GWSmuZs2LKQ
-	ThAlyxEU/Ymy43tc42RCyX9CEMSzVmxr8s/kl9anmY5Fb/pzfy7oQW4wh+0btrSZJBQmz+
-	ukFJnN/Kb/VoV2jlLfCoAWKNZabkOPw=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-263-EhAe42EMN9qM8VTySpQUIg-1; Tue,
- 30 Sep 2025 23:35:27 -0400
-X-MC-Unique: EhAe42EMN9qM8VTySpQUIg-1
-X-Mimecast-MFC-AGG-ID: EhAe42EMN9qM8VTySpQUIg_1759289727
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C5FCC1800447;
-	Wed,  1 Oct 2025 03:35:26 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 755ED1800576;
-	Wed,  1 Oct 2025 03:35:26 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5913ZPkB1760923
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 30 Sep 2025 23:35:25 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5913ZOjU1760922;
-	Tue, 30 Sep 2025 23:35:24 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH] multipathd: Fix tracking of old PR key
-Date: Tue, 30 Sep 2025 23:35:24 -0400
-Message-ID: <20251001033524.1760914-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="ifOX4dUt"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1759428068; x=1790964068;
+  h=from:to:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=epU/uuRCc6FYveB1XcTu+0zfQVVGTvdnWiBQH/N2XKE=;
+  b=ifOX4dUtJIhTrl2yrP126dexft5DtHXGu50OaTxfaRkefWlEU+A68X9n
+   l4XAWHvEe9Gj11NvBwF+o3dI3SHBt8nVmdKlTyRGlDd/K18Ntf42nElCo
+   3D9I98U5Ca2BExji2Ur/mqd0qPU8g7hQknhgylh09Z8gjw8AfKq8Ibo7r
+   atDYBwNQwHGIOczNrOYN1qtF8/+uNdNqeqPCPKiXjyJjaiPQcrlWUoAvA
+   Rbxn0z69mTR0usoZSszfKyjlj+1T4hoAciOqdREYbSAgVVATAk3iuu56h
+   9qAlbljfIFelpIzAR3JMm0Qvkefl0Zhp3JZjAsGOQSkoXaMFOnlwPRioV
+   Q==;
+X-CSE-ConnectionGUID: 4wc7erOoTsG+zcDi3lQiWg==
+X-CSE-MsgGUID: 2gKb5OADRGepv9G3AIxECQ==
+X-IronPort-AV: E=Sophos;i="6.18,310,1751241600"; 
+   d="scan'208";a="2922661"
+Received: from ip-10-6-3-216.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.3.216])
+  by internal-fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Oct 2025 18:00:57 +0000
+Received: from EX19MTAEUA001.ant.amazon.com [54.240.197.233:16626]
+ by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.22.27:2525] with esmtp (Farcaster)
+ id 6ebc8389-d59d-4539-8dfb-efa782bd8e1d; Thu, 2 Oct 2025 18:00:57 +0000 (UTC)
+X-Farcaster-Flow-ID: 6ebc8389-d59d-4539-8dfb-efa782bd8e1d
+Received: from EX19D018EUA004.ant.amazon.com (10.252.50.85) by
+ EX19MTAEUA001.ant.amazon.com (10.252.50.50) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
+ Thu, 2 Oct 2025 18:00:52 +0000
+Received: from dev-dsk-farbere-1a-46ecabed.eu-west-1.amazon.com
+ (172.19.116.181) by EX19D018EUA004.ant.amazon.com (10.252.50.85) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Thu, 2 Oct 2025
+ 18:00:42 +0000
+From: Eliav Farber <farbere@amazon.com>
+To: <gregkh@linuxfoundation.org>, <kenneth.feng@amd.com>,
+	<alexander.deucher@amd.com>, <christian.koenig@amd.com>, <airlied@gmail.com>,
+	<simona@ffwll.ch>, <linus.walleij@linaro.org>, <dmitry.torokhov@gmail.com>,
+	<tglx@linutronix.de>, <wens@csie.org>, <jernej.skrabec@gmail.com>,
+	<samuel@sholland.org>, <agk@redhat.com>, <snitzer@kernel.org>,
+	<mpatocka@redhat.com>, <clm@fb.com>, <dsterba@suse.com>,
+	<luc.vanoostenryck@gmail.com>, <pmladek@suse.com>, <rostedt@goodmis.org>,
+	<andriy.shevchenko@linux.intel.com>, <linux@rasmusvillemoes.dk>,
+	<senozhatsky@chromium.org>, <akpm@linux-foundation.org>,
+	<lijo.lazar@amd.com>, <asad.kamal@amd.com>, <kevinyang.wang@amd.com>,
+	<David.Laight@ACULAB.COM>, <amd-gfx@lists.freedesktop.org>,
+	<dri-devel@lists.freedesktop.org>, <linux-kernel@vger.kernel.org>,
+	<linux-input@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>,
+	<linux-sunxi@lists.linux.dev>, <dm-devel@lists.linux.dev>,
+	<linux-btrfs@vger.kernel.org>, <linux-sparse@vger.kernel.org>,
+	<stable@vger.kernel.org>, <farbere@amazon.com>
+Subject: [PATCH v3 00/11 6.1.y] Backport minmax.h updates from v6.17-rc7
+Date: Thu, 2 Oct 2025 18:00:18 +0000
+Message-ID: <20251002180036.33738-1-farbere@amazon.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: UTF4xnB4Prd4R2NvDihAO5qXDITviDUuUHsn3HQNCSI_1759289727
-X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+X-ClientProxiedBy: EX19D036UWC003.ant.amazon.com (10.13.139.214) To
+ EX19D018EUA004.ant.amazon.com (10.252.50.85)
 
-When libmpathpersist is in the process of changing a registered key,
-multipathd needs to remember both the old and new values of the key to
-deal with a race between limpathpersist updating the key and multipathd
-restoring a failed path. It was supposed to stop remembering the old
-value when libmpathpersist was done changing the key and issued a
-"setprstatus" command. However, clearing the old key was done in
-set_pr(), which only gets called by cli_setprstatus() when registering a
-new device, not when changing the key on a registered device. Also,
-set_pr() is called by update_map_pr().  This means that multipathd was
-forgetting the key when it shouldn't and not when it should. Fix this
-to only forget the key when cli_setprstatus() is called, and always
-then.
+This series backports 13 patches to update minmax.h in the 6.1.y branch,
+aligning it with v6.17-rc7.
 
-Fixes: 1aeffa9e ("libmpathpersist: handle updating key race condition")
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/cli_handlers.c | 1 +
- multipathd/main.c         | 1 -
- 2 files changed, 1 insertion(+), 1 deletion(-)
+The ultimate goal is to synchronize all longterm branches so that they
+include the full set of minmax.h changes (6.12.y and 6.6.y were already
+backported by me and are now ligned).
 
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 0c65e7d2..7f572fb4 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1293,6 +1293,7 @@ cli_setprstatus(void * v, struct strbuf *reply, void * data)
- 		set_pr(mpp);
- 		condlog(2, "%s: prflag set", param);
- 	}
-+	memset(&mpp->old_pr_key, 0, 8);
- 
- 	return 0;
- }
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d7642a0b..d11a8576 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -4250,7 +4250,6 @@ void set_pr(struct multipath *mpp)
- {
- 	mpp->ever_registered_pr = true;
- 	mpp->prflag = PR_SET;
--	memset(&mpp->old_pr_key, 0, 8);
- }
- 
- void unset_pr(struct multipath *mpp)
+The key motivation is to bring in commit d03eba99f5bf ("minmax: allow
+min()/max()/clamp() if the arguments have the same signedness"), which
+is missing in older kernels.
+
+In mainline, this change enables min()/max()/clamp() to accept mixed
+argument types, provided both have the same signedness. Without it,
+backported patches that use these forms may trigger compiler warnings,
+which escalate to build failures when -Werror is enabled.
+
+Changes in v3:
+- v2 included 13 patches:
+  https://lore.kernel.org/stable/20250929183358.18982-1-farbere@amazon.com/
+- First 2 were accepted and are part of 6.1.155.
+- 3rd caused build in drivers/md/ to fail:
+
+In file included from ./include/linux/container_of.h:5,
+                 from ./include/linux/list.h:5,
+                 from ./include/linux/wait.h:7,
+                 from ./include/linux/mempool.h:8,
+                 from ./include/linux/bio.h:8,
+                 from drivers/md/dm-bio-record.h:10,
+                 from drivers/md/dm-integrity.c:9:
+drivers/md/dm-integrity.c: In function ‘integrity_metadata’:
+drivers/md/dm-integrity.c:131:105: error: ISO C90 forbids variable length array ‘checksums_onstack’ [-Werror=vla]
+  131 | #define MAX_TAG_SIZE                    (JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR - offsetof(struct journal_entry, last_bytes[MAX_SECTORS_PER_BLOCK]))
+      |                                                                                                         ^~~~~~~~~~~~~
+./include/linux/build_bug.h:78:56: note: in definition of macro ‘__static_assert’
+   78 | #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
+      |                                                        ^~~~
+./include/linux/minmax.h:56:9: note: in expansion of macro ‘static_assert’
+   56 |         static_assert(__types_ok(x, y, ux, uy),         \
+      |         ^~~~~~~~~~~~~
+./include/linux/minmax.h:41:31: note: in expansion of macro ‘__is_noneg_int’
+   41 |          __is_noneg_int(x) || __is_noneg_int(y))
+      |                               ^~~~~~~~~~~~~~
+./include/linux/minmax.h:56:23: note: in expansion of macro ‘__types_ok’
+   56 |         static_assert(__types_ok(x, y, ux, uy),         \
+      |                       ^~~~~~~~~~
+./include/linux/minmax.h:61:9: note: in expansion of macro ‘__careful_cmp_once’
+   61 |         __careful_cmp_once(op, x, y, __UNIQUE_ID(x_), __UNIQUE_ID(y_))
+      |         ^~~~~~~~~~~~~~~~~~
+./include/linux/minmax.h:92:25: note: in expansion of macro ‘__careful_cmp’
+   92 | #define max(x, y)       __careful_cmp(max, x, y)
+      |                         ^~~~~~~~~~~~~
+drivers/md/dm-integrity.c:1797:40: note: in expansion of macro ‘max’
+ 1797 |                 char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+      |                                        ^~~
+drivers/md/dm-integrity.c:131:89: note: in expansion of macro ‘offsetof’
+  131 | #define MAX_TAG_SIZE                    (JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR - offsetof(struct journal_entry, last_bytes[MAX_SECTORS_PER_BLOCK]))
+      |                                                                                         ^~~~~~~~
+drivers/md/dm-integrity.c:1797:73: note: in expansion of macro ‘MAX_TAG_SIZE’
+ 1797 |                 char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+      |                                                                         ^~~~~~~~~~~~
+
+- The build was fixed in the second patch of this series.
+
+Changes in v2:
+- v1 included 19 patches:
+  https://lore.kernel.org/stable/20250924202320.32333-1-farbere@amazon.com/
+- First 6 were pushed to the stable-tree.
+- 7th cauded amd driver's build to fail.
+- This change fixes it.
+- Modified files:
+   drivers/gpu/drm/amd/amdgpu/amdgpu.h
+   drivers/gpu/drm/amd/pm/swsmu/smu11/sienna_cichlid_ppt.c
+   drivers/gpu/drm/amd/pm/swsmu/smu13/smu_v13_0_0_ppt.c
+   drivers/gpu/drm/amd/pm/swsmu/smu13/smu_v13_0_7_ppt.c
+
+David Laight (7):
+  minmax.h: add whitespace around operators and after commas
+  minmax.h: update some comments
+  minmax.h: reduce the #define expansion of min(), max() and clamp()
+  minmax.h: use BUILD_BUG_ON_MSG() for the lo < hi test in clamp()
+  minmax.h: move all the clamp() definitions after the min/max() ones
+  minmax.h: simplify the variants of clamp()
+  minmax.h: remove some #defines that are only expanded once
+
+Linus Torvalds (4):
+  minmax: simplify min()/max()/clamp() implementation
+  minmax: don't use max() in situations that want a C constant
+    expression
+  minmax: improve macro expansion and type checking
+  minmax: fix up min3() and max3() too
+
+ drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c   |   2 +-
+ drivers/input/touchscreen/cyttsp4_core.c |   2 +-
+ drivers/irqchip/irq-sun6i-r.c            |   2 +-
+ drivers/md/dm-integrity.c                |   2 +-
+ fs/btrfs/tree-checker.c                  |   2 +-
+ include/linux/compiler.h                 |   9 +
+ include/linux/minmax.h                   | 222 +++++++++++++----------
+ lib/vsprintf.c                           |   2 +-
+ 8 files changed, 143 insertions(+), 100 deletions(-)
+
 -- 
-2.50.1
+2.47.3
 
