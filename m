@@ -1,167 +1,224 @@
-Received: from fra-out-003.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-003.esa.eu-central-1.outbound.mail-perimeter.amazon.com [3.72.182.33])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79DF72F3624;
-	Fri,  3 Oct 2025 12:18:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=3.72.182.33
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82F671C6B4
+	for <dm-devel@lists.linux.dev>; Fri,  3 Oct 2025 14:10:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759493905; cv=none; b=NEmvZCRNygXd2FJwMutEBX+JqjQgiy6+HbJugvO5eTj4rsf/yo6EZ3brM9XrD91IFPRSaCAm50gQ6XcXJBG18D3Q40BU+Lj8ED2NsGtE43E87cZDffyGSvf/+ap8EiUw+5nxH0wNwf0kF1kbE+LSw7ibH7bnz+rGpLoMnKGq/aA=
+	t=1759500621; cv=none; b=RmzSJO4nN2d1q0lJufmGSJrLBcp5llUqZRTdZ2mSVqf58hNL9O3oA/Qeh9zrfsENHcM1SDMeuF7s64VXqbh59SUcaZ76Oxyor4K/ZCY6C4T4VW265bHNWHO+eTUP6+OIBA6riD/5IFVQU8Lqv70Jp0W+AfvRa9VintztAkDVRr0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759493905; c=relaxed/simple;
-	bh=V2L3IilwofpV6SrsfVTvut5ipDXkokIOm+dTBT4i7eQ=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Q/Wq3br4U05de8cGHc8Pg6A92D5TyHnXScO1jtEnLHxKzHx2/kATywWB697Js191USCmNUZZF317G/BP0rnBVA8EWSQ5vbSCtR1E3RbPeSeThN0tcU1CgRX2yT5G2NI8KjgFF8h1OxBY+Un1OUAgZwk/OAEUFcjnzs/lWtqK1uQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=qCpedAj8; arc=none smtp.client-ip=3.72.182.33
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
+	s=arc-20240116; t=1759500621; c=relaxed/simple;
+	bh=WJIm4ZTekmonlosaD0lFOeIeFsOIR4sAGmdfyRQmA7A=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=Seq0UkxiwR1Yd9TrVn+yFnH/omgS9dey0GoOjbZ3neTHj5tC9A293/qye6Aytx/SpI1PquGohytYXbV5EVrPVIcL0nD3U6sxTTcnRHuZRV4yXSVH1U8WNZ8qrrSacEx6myBfBRN5FwIgrUS5LwjrqQfa/EVtHuMMiHf8LQGWqTU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IumnivV1; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="qCpedAj8"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1759493903; x=1791029903;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=k0dUe76w+6n5/NfsPbyefGVCom+xh3GGcFcV3Olhmks=;
-  b=qCpedAj8he5UldXG79EquSdxqSX3Mc8V9TW0rFqBQWrx358wvGn0oyb4
-   GbzfiRgbu7eIQco9lJuwrhX9zLdpEhQiElaa7DACE9vRm1bQ2f0Erggzo
-   6UvtoFUog3cTZsAAX7r+18+rHDRng+0pEFkPO+EzlmmilFshdEgZxSjNQ
-   TdmbgeXemN6u76LIBSvddk4D/tJvqtoWUBeiO7Yh7VF0Sr1WPvF+YI4v5
-   MMthC2J/peQWbpr2UJfcmycm+jMAyAPF09eCe6Boylzkvfn4J2V6WwHs2
-   l4+rxsn6B9ytv33W+jU001XOIthnDOlzxhxHJ+07mXsRr+uji4/8nwHv6
-   w==;
-X-CSE-ConnectionGUID: iHjhxUPQRHe2B4gOSiKoaw==
-X-CSE-MsgGUID: DWm3LlXiQW+twGunnV0KdA==
-X-IronPort-AV: E=Sophos;i="6.18,312,1751241600"; 
-   d="scan'208";a="3061377"
-Received: from ip-10-6-11-83.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.11.83])
-  by internal-fra-out-003.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Oct 2025 12:18:13 +0000
-Received: from EX19MTAEUB002.ant.amazon.com [54.240.197.224:28099]
- by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.19.222:2525] with esmtp (Farcaster)
- id 30f3960f-1ebe-474e-89a0-a1458ac740d9; Fri, 3 Oct 2025 12:18:13 +0000 (UTC)
-X-Farcaster-Flow-ID: 30f3960f-1ebe-474e-89a0-a1458ac740d9
-Received: from EX19D018EUA004.ant.amazon.com (10.252.50.85) by
- EX19MTAEUB002.ant.amazon.com (10.252.51.59) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
- Fri, 3 Oct 2025 12:18:13 +0000
-Received: from dev-dsk-farbere-1a-46ecabed.eu-west-1.amazon.com
- (172.19.116.181) by EX19D018EUA004.ant.amazon.com (10.252.50.85) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Fri, 3 Oct 2025
- 12:18:01 +0000
-From: Eliav Farber <farbere@amazon.com>
-To: <gregkh@linuxfoundation.org>, <kenneth.feng@amd.com>,
-	<alexander.deucher@amd.com>, <christian.koenig@amd.com>, <airlied@gmail.com>,
-	<simona@ffwll.ch>, <linus.walleij@linaro.org>, <dmitry.torokhov@gmail.com>,
-	<tglx@linutronix.de>, <wens@csie.org>, <jernej.skrabec@gmail.com>,
-	<samuel@sholland.org>, <agk@redhat.com>, <snitzer@kernel.org>,
-	<mpatocka@redhat.com>, <clm@fb.com>, <dsterba@suse.com>,
-	<luc.vanoostenryck@gmail.com>, <pmladek@suse.com>, <rostedt@goodmis.org>,
-	<andriy.shevchenko@linux.intel.com>, <linux@rasmusvillemoes.dk>,
-	<senozhatsky@chromium.org>, <akpm@linux-foundation.org>,
-	<lijo.lazar@amd.com>, <asad.kamal@amd.com>, <kevinyang.wang@amd.com>,
-	<David.Laight@ACULAB.COM>, <amd-gfx@lists.freedesktop.org>,
-	<dri-devel@lists.freedesktop.org>, <linux-kernel@vger.kernel.org>,
-	<linux-input@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>,
-	<linux-sunxi@lists.linux.dev>, <dm-devel@lists.linux.dev>,
-	<linux-btrfs@vger.kernel.org>, <linux-sparse@vger.kernel.org>,
-	<stable@vger.kernel.org>, <farbere@amazon.com>
-CC: Arnd Bergmann <arnd@kernel.org>, Christoph Hellwig <hch@infradead.org>,
-	Dan Carpenter <dan.carpenter@linaro.org>, "Jason A. Donenfeld"
-	<Jason@zx2c4.com>, Jens Axboe <axboe@kernel.dk>, Lorenzo Stoakes
-	<lorenzo.stoakes@oracle.com>, Mateusz Guzik <mjguzik@gmail.com>, "Matthew
- Wilcox" <willy@infradead.org>, Pedro Falcato <pedro.falcato@gmail.com>
-Subject: [PATCH v4 11/11 6.1.y] minmax.h: remove some #defines that are only expanded once
-Date: Fri, 3 Oct 2025 12:15:20 +0000
-Message-ID: <20251003121520.8176-12-farbere@amazon.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20251003121520.8176-1-farbere@amazon.com>
-References: <20251003121520.8176-1-farbere@amazon.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IumnivV1"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1759500614;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=sY9qTu6zv/BZbTEQhVr3CtzTWvRCwcCo2GBBQ6QUbYg=;
+	b=IumnivV1JhILJ26xLxjqayLrT3OdxD5RSlG8Z2qZCAsi2Vdbzz91YXxcKc5ttd2ac2hU4X
+	YWpabsDwcML3b+fymSDGILO3n/x8NP6rj6DbGescZIIdDUsSYSqT88iSTvoHCJYFt9kwmZ
+	qDEY2ZpLHiEMYkhNbbswIdEl7uiSRjc=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-643-WS2gTV5HMP2idvlsRZrfdg-1; Fri,
+ 03 Oct 2025 10:10:11 -0400
+X-MC-Unique: WS2gTV5HMP2idvlsRZrfdg-1
+X-Mimecast-MFC-AGG-ID: WS2gTV5HMP2idvlsRZrfdg_1759500609
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35E441800447;
+	Fri,  3 Oct 2025 14:10:08 +0000 (UTC)
+Received: from [10.45.225.152] (unknown [10.45.225.152])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A6CDC1800982;
+	Fri,  3 Oct 2025 14:10:02 +0000 (UTC)
+Date: Fri, 3 Oct 2025 16:09:55 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Bagas Sanjaya <bagasdotme@gmail.com>, Bruce Johnston <bjohnsto@redhat.com>, 
+    Dmitry Antipov <dmantipov@yandex.ru>, 
+    Dongsheng Yang <dongsheng.yang@linux.dev>, 
+    Heinz Mauelshagen <heinzm@redhat.com>, Christoph Hellwig <hch@lst.de>, 
+    Ivan Abramov <i.abramov@mt-integration.ru>, 
+    Qianfeng Rong <rongqianfeng@vivo.com>, 
+    Shubham Sharma <slopixelz@gmail.com>, Soham Metha <sohammetha01@gmail.com>, 
+    Xichao Zhao <zhao.xichao@vivo.com>, Zheng Qixing <zhengqixing@huawei.com>, 
+    Alasdair Kergon <agk@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+Subject: [git pull] device mapper changes for 6.18
+Message-ID: <b85c04ba-3708-82b2-72b0-63d026c4d7c0@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: EX19D035UWB003.ant.amazon.com (10.13.138.85) To
- EX19D018EUA004.ant.amazon.com (10.252.50.85)
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: GRQPidpxKVdZmk22IIJsT6wgDGUONNWdu3fI5VFD-Pw_1759500609
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-From: David Laight <David.Laight@ACULAB.COM>
+Hi Linus
 
-[ Upstream commit 2b97aaf74ed534fb838d09867d09a3ca5d795208 ]
+The following changes since commit c17b750b3ad9f45f2b6f7e6f7f4679844244f0b9:
 
-The bodies of __signed_type_use() and __unsigned_type_use() are much the
-same size as their names - so put the bodies in the only line that expands
-them.
+  Linux 6.17-rc2 (2025-08-17 15:22:10 -0700)
 
-Similarly __signed_type() is defined separately for 64bit and then used
-exactly once just below.
+are available in the Git repository at:
 
-Change the test for __signed_type from CONFIG_64BIT to one based on gcc
-defined macros so that the code is valid if it gets used outside of a
-kernel build.
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-6.18/dm-changes
 
-Link: https://lkml.kernel.org/r/9386d1ebb8974fbabbed2635160c3975@AcuMS.aculab.com
-Signed-off-by: David Laight <david.laight@aculab.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: Arnd Bergmann <arnd@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Dan Carpenter <dan.carpenter@linaro.org>
-Cc: Jason A. Donenfeld <Jason@zx2c4.com>
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-Cc: Mateusz Guzik <mjguzik@gmail.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Pedro Falcato <pedro.falcato@gmail.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Eliav Farber <farbere@amazon.com>
----
- include/linux/minmax.h | 14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
+for you to fetch changes up to 55dcfdf8af9c38cce6f5b2058d3b58dde25e5020:
 
-diff --git a/include/linux/minmax.h b/include/linux/minmax.h
-index 2bbdd5b5e07e..eaaf5c008e4d 100644
---- a/include/linux/minmax.h
-+++ b/include/linux/minmax.h
-@@ -46,10 +46,8 @@
-  * comparison, and these expressions only need to be careful to not cause
-  * warnings for pointer use.
-  */
--#define __signed_type_use(ux) (2 + __is_nonneg(ux))
--#define __unsigned_type_use(ux) (1 + 2 * (sizeof(ux) < 4))
- #define __sign_use(ux) (is_signed_type(typeof(ux)) ? \
--	__signed_type_use(ux) : __unsigned_type_use(ux))
-+	(2 + __is_nonneg(ux)) : (1 + 2 * (sizeof(ux) < 4)))
- 
- /*
-  * Check whether a signed value is always non-negative.
-@@ -57,7 +55,7 @@
-  * A cast is needed to avoid any warnings from values that aren't signed
-  * integer types (in which case the result doesn't matter).
-  *
-- * On 64-bit any integer or pointer type can safely be cast to 'long'.
-+ * On 64-bit any integer or pointer type can safely be cast to 'long long'.
-  * But on 32-bit we need to avoid warnings about casting pointers to integers
-  * of different sizes without truncating 64-bit values so 'long' or 'long long'
-  * must be used depending on the size of the value.
-@@ -66,12 +64,12 @@
-  * them, but we do not use s128 types in the kernel (we do use 'u128',
-  * but they are handled by the !is_signed_type() case).
-  */
--#ifdef CONFIG_64BIT
--  #define __signed_type(ux) long
-+#if __SIZEOF_POINTER__ == __SIZEOF_LONG_LONG__
-+#define __is_nonneg(ux) statically_true((long long)(ux) >= 0)
- #else
--  #define __signed_type(ux) typeof(__builtin_choose_expr(sizeof(ux) > 4, 1LL, 1L))
-+#define __is_nonneg(ux) statically_true( \
-+	(typeof(__builtin_choose_expr(sizeof(ux) > 4, 1LL, 1L)))(ux) >= 0)
- #endif
--#define __is_nonneg(ux) statically_true((__signed_type(ux))(ux) >= 0)
- 
- #define __types_ok(ux, uy) \
- 	(__sign_use(ux) & __sign_use(uy))
--- 
-2.47.3
+  dm raid: use proper md_ro_state enumerators (2025-09-23 14:51:04 +0200)
+
+Please, pull, thanks
+Mikulas
+
+----------------------------------------------------------------
+dm docs: fix typos
+
+dm, dm-ima, dm-bufio, dm-vdo, dm-raid: small refactoring
+
+dm-error: mark it with DM_TARGET_PASSES_INTEGRITY
+
+dm-pcache: a new target for read/write caching on persistent memory
+
+dm-request-based: fix NULL pointer dereference and quiesce_depth out of sync
+
+dm-linear: optimize REQ_PREFLUSH
+
+dm-vdo: return error on corrupted metadata
+
+dm-integrity: support asynchronous hash interface
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCaN/T8RQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbdPWAP9JEpnq09RzwneB/FdCE2WsjInsAaas
+eYqKrkgoatVzOwEAoqEzYb9IUrKMZbFPdWzEA1aXUBCH+UAKhm+G9WG5Vw0=
+=dCXi
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Bagas Sanjaya (1):
+      dm-vdo: Promote dm-vdo title to title heading
+
+Bruce Johnston (1):
+      dm vdo: Update code to use mem_is_zero
+
+Christoph Hellwig (1):
+      dm error: mark as DM_TARGET_PASSES_INTEGRITY
+
+Dmitry Antipov (1):
+      dm-ima: more strlen() drops
+
+Dongsheng Yang (3):
+      dm-pcache: add persistent cache target in device-mapper
+      dm-pcache: remove ctrl_lock for pcache_cache_segment
+      dm-pcache: cleanup: fix coding style report by checkpatch.pl
+
+Heinz Mauelshagen (1):
+      dm raid: use proper md_ro_state enumerators
+
+Ivan Abramov (1):
+      dm vdo: return error on corrupted metadata in start_restoring_volume functions
+
+Mikulas Patocka (10):
+      dm-ima: drop a useless argument
+      dm: optimize REQ_PREFLUSH with data when using the linear target
+      dm-integrity: use internal variable for digestsize
+      dm-integrity: replace bvec_kmap_local with kmap_local_page
+      dm-integrity: introduce integrity_kmap and integrity_kunmap
+      dm-integrity: allocate the recalculate buffer with kmalloc
+      dm-integrity: add the "offset" argument
+      dm-integrity: rename internal_hash
+      dm-integrity: enable asynchronous hash interface
+      dm-integrity: prefer synchronous hash interface
+
+Qianfeng Rong (3):
+      dm: use vmalloc_array() to simplify code
+      dm bufio: remove redundant __GFP_NOWARN
+      dm-pcache: use int type to store negative error codes
+
+Shubham Sharma (1):
+      docs: device-mapper: fix typos in delay.rst and vdo-design.rst
+
+Soham Metha (1):
+      docs: device-mapper: fixed spelling mistakes in documentation
+
+Xichao Zhao (1):
+      dm: fix "writen"->"written"
+
+Zheng Qixing (2):
+      dm: fix queue start/stop imbalance under suspend/load/resume races
+      dm: fix NULL pointer dereference in __dm_suspend()
+
+ Documentation/admin-guide/device-mapper/delay.rst  |   8 +-
+ .../admin-guide/device-mapper/dm-pcache.rst        | 202 +++++
+ Documentation/admin-guide/device-mapper/index.rst  |   1 +
+ .../admin-guide/device-mapper/vdo-design.rst       |   2 +-
+ Documentation/admin-guide/device-mapper/vdo.rst    |   1 +
+ MAINTAINERS                                        |   8 +
+ drivers/md/Kconfig                                 |   2 +
+ drivers/md/Makefile                                |   1 +
+ drivers/md/dm-bufio.c                              |  10 +-
+ drivers/md/dm-cache-policy-smq.c                   |   2 +-
+ drivers/md/dm-core.h                               |   2 +
+ drivers/md/dm-ima.c                                |  70 +-
+ drivers/md/dm-integrity.c                          | 359 ++++++---
+ drivers/md/dm-log-writes.c                         |   2 +-
+ drivers/md/dm-pcache/Kconfig                       |  17 +
+ drivers/md/dm-pcache/Makefile                      |   3 +
+ drivers/md/dm-pcache/backing_dev.c                 | 374 +++++++++
+ drivers/md/dm-pcache/backing_dev.h                 | 127 +++
+ drivers/md/dm-pcache/cache.c                       | 445 +++++++++++
+ drivers/md/dm-pcache/cache.h                       | 635 +++++++++++++++
+ drivers/md/dm-pcache/cache_dev.c                   | 303 +++++++
+ drivers/md/dm-pcache/cache_dev.h                   |  70 ++
+ drivers/md/dm-pcache/cache_gc.c                    | 170 ++++
+ drivers/md/dm-pcache/cache_key.c                   | 888 +++++++++++++++++++++
+ drivers/md/dm-pcache/cache_req.c                   | 836 +++++++++++++++++++
+ drivers/md/dm-pcache/cache_segment.c               | 305 +++++++
+ drivers/md/dm-pcache/cache_writeback.c             | 261 ++++++
+ drivers/md/dm-pcache/dm_pcache.c                   | 497 ++++++++++++
+ drivers/md/dm-pcache/dm_pcache.h                   |  67 ++
+ drivers/md/dm-pcache/pcache_internal.h             | 117 +++
+ drivers/md/dm-pcache/segment.c                     |  61 ++
+ drivers/md/dm-pcache/segment.h                     |  74 ++
+ drivers/md/dm-raid.c                               |  13 +-
+ drivers/md/dm-region-hash.c                        |   2 +-
+ drivers/md/dm-switch.c                             |   4 +-
+ drivers/md/dm-target.c                             |   3 +-
+ drivers/md/dm-thin.c                               |   4 +-
+ drivers/md/dm-vdo/data-vio.c                       |  17 +-
+ drivers/md/dm-vdo/indexer/volume-index.c           |   4 +-
+ drivers/md/dm.c                                    |  45 +-
+ 40 files changed, 5830 insertions(+), 182 deletions(-)
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-pcache.rst
+ create mode 100644 drivers/md/dm-pcache/Kconfig
+ create mode 100644 drivers/md/dm-pcache/Makefile
+ create mode 100644 drivers/md/dm-pcache/backing_dev.c
+ create mode 100644 drivers/md/dm-pcache/backing_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache.c
+ create mode 100644 drivers/md/dm-pcache/cache.h
+ create mode 100644 drivers/md/dm-pcache/cache_dev.c
+ create mode 100644 drivers/md/dm-pcache/cache_dev.h
+ create mode 100644 drivers/md/dm-pcache/cache_gc.c
+ create mode 100644 drivers/md/dm-pcache/cache_key.c
+ create mode 100644 drivers/md/dm-pcache/cache_req.c
+ create mode 100644 drivers/md/dm-pcache/cache_segment.c
+ create mode 100644 drivers/md/dm-pcache/cache_writeback.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.c
+ create mode 100644 drivers/md/dm-pcache/dm_pcache.h
+ create mode 100644 drivers/md/dm-pcache/pcache_internal.h
+ create mode 100644 drivers/md/dm-pcache/segment.c
+ create mode 100644 drivers/md/dm-pcache/segment.h
 
