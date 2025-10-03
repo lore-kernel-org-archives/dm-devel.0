@@ -1,53 +1,52 @@
-Received: from fra-out-013.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-013.esa.eu-central-1.outbound.mail-perimeter.amazon.com [63.178.132.221])
+Received: from fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com (fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com [52.28.197.132])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2736728369A;
-	Thu,  2 Oct 2025 18:04:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=63.178.132.221
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 930B71FBEA8;
+	Fri,  3 Oct 2025 12:15:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.28.197.132
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759428267; cv=none; b=B1Fi4dIR5Ao2tc+BgNLN4Ij4BfPF2DDa3nG9lLdcGQMWAZiVjBmMO50TpKYxUWzS7aLDp8pKgVeCNx2wS/nDyg8EeyG6kks0+QdIIaNuY+cPn2c+fNeHAjDdbSCG2WkunDt6RSFhiKT3cBxGjtFYsffH44D++HCsaRPQDQBFIEk=
+	t=1759493750; cv=none; b=p/rePTJ2sXIMQAVP7q+wHNrufLTPSQGAXG84KSFrZeffjO1uT/+59jBp2CdQ4s1QP39F+2NIODVmsFcGw5FGYTni7jGVyVnct6EntKncw8HCKeQB9IcywTIT4gs+xvKSpg+/9Nj2CbXOALi7AVCg+a4vVPjtSvAdqyBEPerZQNA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759428267; c=relaxed/simple;
-	bh=V2L3IilwofpV6SrsfVTvut5ipDXkokIOm+dTBT4i7eQ=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Yc/WX9BOR5s80PDHHJWORcOc2MZ9h6tbS+kT0YTw9pJNWRDRXNAUrQAszw60LYdElCe+HqAv1rTnGfIyS35Oy0bQIM1PoA7WLESeGaSp0R8J6uxChMRKaAHrMCiuz/JkVn86G/TkhhkkF7kkiIZZzlEWdwOlptl+6ymHqwXcWTI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=owZuNTJW; arc=none smtp.client-ip=63.178.132.221
+	s=arc-20240116; t=1759493750; c=relaxed/simple;
+	bh=SJe2rHrAFT6PQJFK/pfWaqj/OaCoe/TpfXOutLdWcBk=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version:Content-Type; b=hVFxXU8fuCqELSYGqj0G6wshxWYc0f8cqeiVoeKt301bTvQPS5RAMjwO7WW1HpPPixzNPh0xQVpDtIQz9rNiXHusmrVU1ezeRa26ZlCU4JaoCY4TSAm8wEWZT9BDGCnm5xkJXGLlfU/gwkgIZabNC0AgfwFBNZhet3Howfnf5c0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=g1jMfv6R; arc=none smtp.client-ip=52.28.197.132
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="owZuNTJW"
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="g1jMfv6R"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
   d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1759428265; x=1790964265;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=k0dUe76w+6n5/NfsPbyefGVCom+xh3GGcFcV3Olhmks=;
-  b=owZuNTJWhOjLKPQLmoJglMgVxoVKVqtkayiSPYPFn3cqaCZsa/YP5n8G
-   OTM9W+XgmOVSULQKJXIBjvBTJI2XlvX7e71wuRN6+nl1wiNg7xItLagNB
-   RVlr43FMwd7kIoo6LEskSCvrhu2vFfcqjhH2l4fJ7FstC5RCC89I/dojt
-   1w1KULzkFAAh2xRBRSxmC2ocrs9L7bkTcqI0klDwMJBSJ48LZlkBrcZok
-   k46+91roUN1MqugVtMmlFjelUSKSDoXp7HlogyvnrX4x6M5XyOuHxhxxp
-   gFhH5mdXpgkyGUMjpuz1fn3pnP3tud3+g521VfD4WS9l/eyREavfxSX7W
+  t=1759493748; x=1791029748;
+  h=from:to:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=TqblJqfbXrrmCzEUxWga4pPKLpbgkCtwFBWjaGRMyg4=;
+  b=g1jMfv6RXKpxS8/YAVnSGM4I8wZQbjJkqJCL6gSYAD6OwcL5n0QTg4DM
+   U/k6tS5buwdfjYSTaMCG1idnhKlEDak8be6mOikcYehgaBLPUMp2hF+TS
+   qaDKWlSenVf0kwOUbiiDV4Ee1aVBUqK1tg9nrGUuEm/yRx6KIdaFqBlPh
+   mNQZheG8nST2ErSB0A7Rgw+n6NyNkV8MUWj0I3UsuRre0T6CL566QKuDu
+   5+SHvYRaXryuEOzjqKXITnFL3Bwd/jwvYUzxfSn934edrDmo2XsoxsWdS
+   NFFxc6cpQ9BvG3P0ilBcA/zv22o5R7u9QIQwYcMv+iTF7zLag2GGsvH1h
    A==;
-X-CSE-ConnectionGUID: KYP+mIxcS+qh8swRIg8aqg==
-X-CSE-MsgGUID: 3iUG7CuKRNa+UdIi4LLhFw==
-X-IronPort-AV: E=Sophos;i="6.18,310,1751241600"; 
-   d="scan'208";a="2924326"
+X-CSE-ConnectionGUID: MPRaiQ9mQMGHc/f2hmpJPw==
+X-CSE-MsgGUID: EATtKZGOSduCjCv28xmVFQ==
+X-IronPort-AV: E=Sophos;i="6.18,312,1751241600"; 
+   d="scan'208";a="2957925"
 Received: from ip-10-6-6-97.eu-central-1.compute.internal (HELO smtpout.naws.eu-central-1.prod.farcaster.email.amazon.dev) ([10.6.6.97])
-  by internal-fra-out-013.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Oct 2025 18:04:23 +0000
-Received: from EX19MTAEUC001.ant.amazon.com [54.240.197.225:28750]
- by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.1.16:2525] with esmtp (Farcaster)
- id 50a0473f-3493-43fb-a202-fb586031f523; Thu, 2 Oct 2025 18:04:23 +0000 (UTC)
-X-Farcaster-Flow-ID: 50a0473f-3493-43fb-a202-fb586031f523
+  by internal-fra-out-011.esa.eu-central-1.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Oct 2025 12:15:38 +0000
+Received: from EX19MTAEUB001.ant.amazon.com [54.240.197.234:5820]
+ by smtpin.naws.eu-central-1.prod.farcaster.email.amazon.dev [10.0.21.15:2525] with esmtp (Farcaster)
+ id 965d80e9-c758-4875-b5c1-af6f5c12ff0a; Fri, 3 Oct 2025 12:15:38 +0000 (UTC)
+X-Farcaster-Flow-ID: 965d80e9-c758-4875-b5c1-af6f5c12ff0a
 Received: from EX19D018EUA004.ant.amazon.com (10.252.50.85) by
- EX19MTAEUC001.ant.amazon.com (10.252.51.193) with Microsoft SMTP Server
+ EX19MTAEUB001.ant.amazon.com (10.252.51.28) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20;
- Thu, 2 Oct 2025 18:04:23 +0000
+ Fri, 3 Oct 2025 12:15:37 +0000
 Received: from dev-dsk-farbere-1a-46ecabed.eu-west-1.amazon.com
  (172.19.116.181) by EX19D018EUA004.ant.amazon.com (10.252.50.85) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Thu, 2 Oct 2025
- 18:04:10 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.20; Fri, 3 Oct 2025
+ 12:15:27 +0000
 From: Eliav Farber <farbere@amazon.com>
 To: <gregkh@linuxfoundation.org>, <kenneth.feng@amd.com>,
 	<alexander.deucher@amd.com>, <christian.koenig@amd.com>, <airlied@gmail.com>,
@@ -65,103 +64,127 @@ To: <gregkh@linuxfoundation.org>, <kenneth.feng@amd.com>,
 	<linux-sunxi@lists.linux.dev>, <dm-devel@lists.linux.dev>,
 	<linux-btrfs@vger.kernel.org>, <linux-sparse@vger.kernel.org>,
 	<stable@vger.kernel.org>, <farbere@amazon.com>
-CC: Arnd Bergmann <arnd@kernel.org>, Christoph Hellwig <hch@infradead.org>,
-	Dan Carpenter <dan.carpenter@linaro.org>, "Jason A. Donenfeld"
-	<Jason@zx2c4.com>, Jens Axboe <axboe@kernel.dk>, Lorenzo Stoakes
-	<lorenzo.stoakes@oracle.com>, Mateusz Guzik <mjguzik@gmail.com>, "Matthew
- Wilcox" <willy@infradead.org>, Pedro Falcato <pedro.falcato@gmail.com>
-Subject: [PATCH v3 11/11 6.1.y] minmax.h: remove some #defines that are only expanded once
-Date: Thu, 2 Oct 2025 18:00:29 +0000
-Message-ID: <20251002180036.33738-12-farbere@amazon.com>
+Subject: [PATCH v4 00/11 6.1.y] Backport minmax.h updates from v6.17-rc7
+Date: Fri, 3 Oct 2025 12:15:09 +0000
+Message-ID: <20251003121520.8176-1-farbere@amazon.com>
 X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20251002180036.33738-1-farbere@amazon.com>
-References: <20251002180036.33738-1-farbere@amazon.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: EX19D040UWA001.ant.amazon.com (10.13.139.22) To
+X-ClientProxiedBy: EX19D032UWA004.ant.amazon.com (10.13.139.56) To
  EX19D018EUA004.ant.amazon.com (10.252.50.85)
 
-From: David Laight <David.Laight@ACULAB.COM>
+This series backports 11 patches to update minmax.h in the 6.1.y branch,
+aligning it with v6.17-rc7.
 
-[ Upstream commit 2b97aaf74ed534fb838d09867d09a3ca5d795208 ]
+The ultimate goal is to synchronize all longterm branches so that they
+include the full set of minmax.h changes (6.12.y and 6.6.y were already
+backported by me and are now aligned).
 
-The bodies of __signed_type_use() and __unsigned_type_use() are much the
-same size as their names - so put the bodies in the only line that expands
-them.
+The key motivation is to bring in commit d03eba99f5bf ("minmax: allow
+min()/max()/clamp() if the arguments have the same signedness"), which
+is missing in older kernels.
 
-Similarly __signed_type() is defined separately for 64bit and then used
-exactly once just below.
+In mainline, this change enables min()/max()/clamp() to accept mixed
+argument types, provided both have the same signedness. Without it,
+backported patches that use these forms may trigger compiler warnings,
+which escalate to build failures when -Werror is enabled.
 
-Change the test for __signed_type from CONFIG_64BIT to one based on gcc
-defined macros so that the code is valid if it gets used outside of a
-kernel build.
+Changes in v4:
+- Just swap the order of the first 2 patches in this chain, because
+  commit cb04e8b1d2f2 ("minmax: don't use max() in situations that want
+  a C constant expression") should come before commit dc1c8034e31b
+  ("minmax: simplify min()/max()/clamp() implementation").
 
-Link: https://lkml.kernel.org/r/9386d1ebb8974fbabbed2635160c3975@AcuMS.aculab.com
-Signed-off-by: David Laight <david.laight@aculab.com>
-Cc: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
-Cc: Arnd Bergmann <arnd@kernel.org>
-Cc: Christoph Hellwig <hch@infradead.org>
-Cc: Dan Carpenter <dan.carpenter@linaro.org>
-Cc: Jason A. Donenfeld <Jason@zx2c4.com>
-Cc: Jens Axboe <axboe@kernel.dk>
-Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
-Cc: Mateusz Guzik <mjguzik@gmail.com>
-Cc: Matthew Wilcox <willy@infradead.org>
-Cc: Pedro Falcato <pedro.falcato@gmail.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Eliav Farber <farbere@amazon.com>
----
- include/linux/minmax.h | 14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
+Changes in v3:
+- v2 included 13 patches:
+  https://lore.kernel.org/stable/20250929183358.18982-1-farbere@amazon.com/
+- First 2 were accepted and are part of 6.1.155.
+- 3rd caused build in drivers/md/ to fail:
 
-diff --git a/include/linux/minmax.h b/include/linux/minmax.h
-index 2bbdd5b5e07e..eaaf5c008e4d 100644
---- a/include/linux/minmax.h
-+++ b/include/linux/minmax.h
-@@ -46,10 +46,8 @@
-  * comparison, and these expressions only need to be careful to not cause
-  * warnings for pointer use.
-  */
--#define __signed_type_use(ux) (2 + __is_nonneg(ux))
--#define __unsigned_type_use(ux) (1 + 2 * (sizeof(ux) < 4))
- #define __sign_use(ux) (is_signed_type(typeof(ux)) ? \
--	__signed_type_use(ux) : __unsigned_type_use(ux))
-+	(2 + __is_nonneg(ux)) : (1 + 2 * (sizeof(ux) < 4)))
- 
- /*
-  * Check whether a signed value is always non-negative.
-@@ -57,7 +55,7 @@
-  * A cast is needed to avoid any warnings from values that aren't signed
-  * integer types (in which case the result doesn't matter).
-  *
-- * On 64-bit any integer or pointer type can safely be cast to 'long'.
-+ * On 64-bit any integer or pointer type can safely be cast to 'long long'.
-  * But on 32-bit we need to avoid warnings about casting pointers to integers
-  * of different sizes without truncating 64-bit values so 'long' or 'long long'
-  * must be used depending on the size of the value.
-@@ -66,12 +64,12 @@
-  * them, but we do not use s128 types in the kernel (we do use 'u128',
-  * but they are handled by the !is_signed_type() case).
-  */
--#ifdef CONFIG_64BIT
--  #define __signed_type(ux) long
-+#if __SIZEOF_POINTER__ == __SIZEOF_LONG_LONG__
-+#define __is_nonneg(ux) statically_true((long long)(ux) >= 0)
- #else
--  #define __signed_type(ux) typeof(__builtin_choose_expr(sizeof(ux) > 4, 1LL, 1L))
-+#define __is_nonneg(ux) statically_true( \
-+	(typeof(__builtin_choose_expr(sizeof(ux) > 4, 1LL, 1L)))(ux) >= 0)
- #endif
--#define __is_nonneg(ux) statically_true((__signed_type(ux))(ux) >= 0)
- 
- #define __types_ok(ux, uy) \
- 	(__sign_use(ux) & __sign_use(uy))
+In file included from ./include/linux/container_of.h:5,
+                 from ./include/linux/list.h:5,
+                 from ./include/linux/wait.h:7,
+                 from ./include/linux/mempool.h:8,
+                 from ./include/linux/bio.h:8,
+                 from drivers/md/dm-bio-record.h:10,
+                 from drivers/md/dm-integrity.c:9:
+drivers/md/dm-integrity.c: In function ‘integrity_metadata’:
+drivers/md/dm-integrity.c:131:105: error: ISO C90 forbids variable length array ‘checksums_onstack’ [-Werror=vla]
+  131 | #define MAX_TAG_SIZE                    (JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR - offsetof(struct journal_entry, last_bytes[MAX_SECTORS_PER_BLOCK]))
+      |                                                                                                         ^~~~~~~~~~~~~
+./include/linux/build_bug.h:78:56: note: in definition of macro ‘__static_assert’
+   78 | #define __static_assert(expr, msg, ...) _Static_assert(expr, msg)
+      |                                                        ^~~~
+./include/linux/minmax.h:56:9: note: in expansion of macro ‘static_assert’
+   56 |         static_assert(__types_ok(x, y, ux, uy),         \
+      |         ^~~~~~~~~~~~~
+./include/linux/minmax.h:41:31: note: in expansion of macro ‘__is_noneg_int’
+   41 |          __is_noneg_int(x) || __is_noneg_int(y))
+      |                               ^~~~~~~~~~~~~~
+./include/linux/minmax.h:56:23: note: in expansion of macro ‘__types_ok’
+   56 |         static_assert(__types_ok(x, y, ux, uy),         \
+      |                       ^~~~~~~~~~
+./include/linux/minmax.h:61:9: note: in expansion of macro ‘__careful_cmp_once’
+   61 |         __careful_cmp_once(op, x, y, __UNIQUE_ID(x_), __UNIQUE_ID(y_))
+      |         ^~~~~~~~~~~~~~~~~~
+./include/linux/minmax.h:92:25: note: in expansion of macro ‘__careful_cmp’
+   92 | #define max(x, y)       __careful_cmp(max, x, y)
+      |                         ^~~~~~~~~~~~~
+drivers/md/dm-integrity.c:1797:40: note: in expansion of macro ‘max’
+ 1797 |                 char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+      |                                        ^~~
+drivers/md/dm-integrity.c:131:89: note: in expansion of macro ‘offsetof’
+  131 | #define MAX_TAG_SIZE                    (JOURNAL_SECTOR_DATA - JOURNAL_MAC_PER_SECTOR - offsetof(struct journal_entry, last_bytes[MAX_SECTORS_PER_BLOCK]))
+      |                                                                                         ^~~~~~~~
+drivers/md/dm-integrity.c:1797:73: note: in expansion of macro ‘MAX_TAG_SIZE’
+ 1797 |                 char checksums_onstack[max((size_t)HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
+      |                                                                         ^~~~~~~~~~~~
+
+- The build was fixed in the second patch of this series.
+
+Changes in v2:
+- v1 included 19 patches:
+  https://lore.kernel.org/stable/20250924202320.32333-1-farbere@amazon.com/
+- First 6 were pushed to the stable-tree.
+- 7th cauded amd driver's build to fail.
+- This change fixes it.
+- Modified files:
+   drivers/gpu/drm/amd/amdgpu/amdgpu.h
+   drivers/gpu/drm/amd/pm/swsmu/smu11/sienna_cichlid_ppt.c
+   drivers/gpu/drm/amd/pm/swsmu/smu13/smu_v13_0_0_ppt.c
+
+David Laight (7):
+  minmax.h: add whitespace around operators and after commas
+  minmax.h: update some comments
+  minmax.h: reduce the #define expansion of min(), max() and clamp()
+  minmax.h: use BUILD_BUG_ON_MSG() for the lo < hi test in clamp()
+  minmax.h: move all the clamp() definitions after the min/max() ones
+  minmax.h: simplify the variants of clamp()
+  minmax.h: remove some #defines that are only expanded once
+
+Linus Torvalds (4):
+  minmax: don't use max() in situations that want a C constant
+    expression
+  minmax: simplify min()/max()/clamp() implementation
+  minmax: improve macro expansion and type checking
+  minmax: fix up min3() and max3() too
+
+ drivers/gpu/drm/amd/pm/swsmu/smu_cmn.c   |   2 +-
+ drivers/input/touchscreen/cyttsp4_core.c |   2 +-
+ drivers/irqchip/irq-sun6i-r.c            |   2 +-
+ drivers/md/dm-integrity.c                |   2 +-
+ fs/btrfs/tree-checker.c                  |   2 +-
+ include/linux/compiler.h                 |   9 +
+ include/linux/minmax.h                   | 222 +++++++++++++----------
+ lib/vsprintf.c                           |   2 +-
+ 8 files changed, 143 insertions(+), 100 deletions(-)
+
 -- 
 2.47.3
 
