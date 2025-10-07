@@ -1,122 +1,127 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A58B92288F7
-	for <dm-devel@lists.linux.dev>; Mon,  6 Oct 2025 17:09:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B006223E334
+	for <dm-devel@lists.linux.dev>; Tue,  7 Oct 2025 20:23:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759770558; cv=none; b=G88qLzYsl0DiR5lpgCcXKbnUkiTSnAcL+yxmhEpzXLTtTp3SoX3Ywf2Zl4bP9+4DjFHvxZX5EcdTLKmasyQ4JrRKKLeiJkErXAvUWounhgcOLotjbO5iZOf3bTC6nYDrVlcynaImBdyk5eEFvbNRKvHJP3RvfZsvfD9XJBWFLRg=
+	t=1759868602; cv=none; b=I9g/jGsFGd6SVgiDhFap9h+IjXvKbHH9KSsMjIjIwv4rwGcowwoq2r5u7XqdlLVoRNCE2qePbAtXMO/9/kxY0bnzc3hXbEJvTDJWnZiXiYoWT8UP4jS9EYaMRu63KF+oxvd5A5L0ySXe4lRyBN2u+E38cMxi6p7gqufKTxSpN40=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759770558; c=relaxed/simple;
-	bh=EHbh5Ojug1wn86jBpQLBydVPmGaaamsph63UQl//K/A=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=mcPiJlYfuveJgeVDgOvka0aqctY5aBqb4fv9xnOvMY/hAtdTvjQ+OSEEXSjJvojZ8yWOkLdJhEdrlEcVVR4DW7tAZMg8cWG4sw9ihn0jCHfY+4t1wWqeTiKitu4p9H5hxgtIHHKUP7KLw3Fee1PBZmFiBefXq08WEWo/qheUDcU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PP56Erky; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1759868602; c=relaxed/simple;
+	bh=ufXCxfnNxxDWMxVJ4pLJKc466T+OYY/1PMnonChpNgU=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=auLlskBynD8ieajvAhnrPbWRpyzIrmFe73/imvy1RLcztliv9EntCNuhKv+YDxLqBVzVmEU9Mn9e2+gLD1WOuCekPVq6dpsuvWnMtlifLBkuasB7U8WfmASIvfFFLNTzeu0jW04yIm/NXKU+MwbHugIsGEqHmXuM+pSIBuoz9rA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=W9k0I5xZ; arc=none smtp.client-ip=209.85.128.46
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PP56Erky"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1759770555;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Uzd9/+sBmeri/eiC74yzta2lcdQtJM6lGT8mgT7YcDY=;
-	b=PP56ErkyefjU4FJ7tIrOakNXbCagRP8Nd4QivzIZbqKLY5K1/fLBxUVuYvh31zjjOoOIdx
-	K+fb3t+82vWFoWKQaXIqr7+ER/Oqchl/65txfv5Rzgjl4gSF+HjWFooB0q4Nr4HgmGZz71
-	F0lIArEu0RObRvmUsFR+AScQFT8FJHk=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-677-biw_u5hMOrmToGqFun0eOg-1; Mon,
- 06 Oct 2025 13:09:10 -0400
-X-MC-Unique: biw_u5hMOrmToGqFun0eOg-1
-X-Mimecast-MFC-AGG-ID: biw_u5hMOrmToGqFun0eOg_1759770549
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35E281800365;
-	Mon,  6 Oct 2025 17:09:09 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 965B01956056;
-	Mon,  6 Oct 2025 17:09:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 596H97LD1994484
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 6 Oct 2025 13:09:07 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 596H96iV1994483;
-	Mon, 6 Oct 2025 13:09:06 -0400
-Date: Mon, 6 Oct 2025 13:09:06 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Martin Wilck <mwilck@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v2 1/3] multipath-tools: add Acronis Cyber Infrastructure
- to hwtable
-Message-ID: <aOP3sjzUgFU4n8-k@redhat.com>
-References: <20251004210122.109288-1-xose.vazquez@gmail.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="W9k0I5xZ"
+Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-46e37d10ed2so58639905e9.2
+        for <dm-devel@lists.linux.dev>; Tue, 07 Oct 2025 13:23:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1759868591; x=1760473391; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=ufXCxfnNxxDWMxVJ4pLJKc466T+OYY/1PMnonChpNgU=;
+        b=W9k0I5xZpT9yGMK4Y6PeNASDcyl1pdUCngdQwv7r9tsfrn175l28NW4n5f4IT/E2aG
+         t13EHdL7Nny671towIshuJzB0WkhH/+JCcsz/4px/SBjMQz7CT+pDDjHnfIBT1HhGf1t
+         QZSGC7Vb3Ju3ryAh2aFjtBsedgbLv6k/7Trr/fuaAy9q9C2yV7h37w9d/aonDWS3OLdS
+         p5r3Gg3rN0iZF8RGkqhcQc3lihRrFtrSgRvRmCOjXUDBbRs5EfMEI43AJ71ldqNaJSXJ
+         BwECFTaTGS2bqZHMCfjGdqMM5Me6OioULmicDcgHPMDges6QseAs3JwAaiaNVOlEVFlD
+         dfMw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1759868591; x=1760473391;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=ufXCxfnNxxDWMxVJ4pLJKc466T+OYY/1PMnonChpNgU=;
+        b=uU2mSDvFyHXsvALnwyttTJ3CDr8VZJbUGNTfKwxbnHu4EYgdFi8+G21bxSX6FaW1ta
+         61vs3H4+vMB1t2D69yU1A6tqodSIsUcSEILvL40u7khkx6mXGOz7YZZgoyRjficAK4JB
+         h0v5XvdEvYDcHXPMEpg/VW4wp/xByAtwFuMI1B4goBCMZ5Rky/u1MW8txB7IuLWiGX10
+         nqFLtOSjGtafdG1zMeigkIgvYzgylRBO0zLMym0rV3xw2VxvqYjTrNQVoo1W29OWNg7N
+         eQWZqGGe7tw5q/KVG8lkprrT6z5R01kiXmih2NA8uXxqo51FeHNcnvk/CKd50i9A/4e5
+         xjSw==
+X-Gm-Message-State: AOJu0YzTeIQrnxJyNRyYWWzyGzg2xZKoKpxGmvzVtxEGi59D+cRcDmLN
+	pf/w5Y6IY4APv++5NLrVtEK38x0Sq3hz8mJRXAKACMeANDIM6ULp+9Wu5NSAwSNGFy4=
+X-Gm-Gg: ASbGncuWbl5aQWOo/8cKYa6786tjONumqRC6+OaMT/mDeXdv+0nQ3Hf/FGm7wWSQv2l
+	XpjnVO1tmk41KqwGqBhbKnNrNWiFJ6wOefIy66uVAOfb12TtSuFaaYRzGnjPad1+w85kfUcV4R3
+	QltzixK8C+z/nqwqAV4BeQ6cuTrfgcD0D3UnEvcPqBJFuvPn025FNfoqS5v0FhTxSvu4JQioIW8
+	Akz79iNXDBi9mQyOecAyd3CuGaWecuwT23JWh6IDDiNVuBM9ezBNrOE4k2i3cmtKcjejJFVFG/O
+	La7HD12dPT1aRstFrdtduY+P0k2y5nStuP3LO8eT5kqMoKgl6YW2If8Y/MY+HZjE8JVCmCcjgmi
+	/4lyIaNDdNLI/kNC4DW6giwXbnJ+ETBgaKE8oD2QZMtiF0Gs/Q8tZecB8Vd19efhUCnjfRBMn8Z
+	epHCM2Kok3jnIRXBsc6s6y0jHhLZ0a6YNcXGgjxPkutXXiW9nYCd1sPW3tzm1nbBtpGpLPKrOBW
+	nYX3EsWW4UZySJ9+w==
+X-Google-Smtp-Source: AGHT+IFBggWsXRAm/EQoOw21YtoCTNzPUbjTZhgmRXa235FXyoFVyqRt4tzQkQOEBCrD1l/L1FNleQ==
+X-Received: by 2002:a05:600c:198f:b0:46e:38cc:d3e2 with SMTP id 5b1f17b1804b1-46fa9af3125mr6330005e9.22.1759868591426;
+        Tue, 07 Oct 2025 13:23:11 -0700 (PDT)
+Received: from ?IPv6:2003:f9:7f04:900:e894:a50a:fc99:6ee7? (p200300f97f040900e894a50afc996ee7.dip0.t-ipconnect.de. [2003:f9:7f04:900:e894:a50a:fc99:6ee7])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4255d8f4ab0sm26898705f8f.52.2025.10.07.13.23.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 07 Oct 2025 13:23:10 -0700 (PDT)
+Message-ID: <113e928d9b68ed3b0ba5bd0b0ae87315890f94cf.camel@suse.com>
+Subject: Re: [PATCH 0/4] libmultipath: Yet Another PR patchset
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Tue, 07 Oct 2025 22:23:09 +0200
+In-Reply-To: <20250923221252.1411687-1-bmarzins@redhat.com>
+References: <20250923221252.1411687-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20251004210122.109288-1-xose.vazquez@gmail.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: wZfWlD6Pgi58Wd5fKwDd8UDR-KUc_UkZfQQW6_Q-R4g_1759770549
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-On Sat, Oct 04, 2025 at 11:01:22PM +0200, Xose Vazquez Perez wrote:
-> Sources:
-> https://dl.acronis.com/u/software-defined/html/AcronisCyberInfrastructure_3_5_users_guide_en-US/accessing-iscsi/accessing-iscsi-targets-from-linux.html
-> https://docs.virtuozzo.com/pdf/virtuozzo_hybrid_infrastructure_6_2_users_guide.pdf
-> 
-> v2: replace -FAILBACK_FOLLOWOVER with -FAILBACK_IMMEDIATE
+On Tue, 2025-09-23 at 18:12 -0400, Benjamin Marzinski wrote:
+> This patchset handles 4 separate issues:
+> 1. The self-preemption workaround for changing keys using REGISTER
+> AND
+> =C2=A0=C2=A0 IGNORE, while the path holding the reservation was down was =
+broken
+> =C2=A0=C2=A0 by a recent commit.
+> 2. mpathpersist was failing a RESERVE command issued on a multipath
+> =C2=A0=C2=A0 device that held a reservation, when the holding path was do=
+wn.
+> =C2=A0=C2=A0 Issuing an identical reserve on a device that holds a reserv=
+ation
+> =C2=A0=C2=A0 is supposed to succeed, and multipathd has enough informatio=
+n to
+> =C2=A0=C2=A0 know the device is actually holding the reservation. So if
+> =C2=A0=C2=A0 multipathd says that the device is holding the reservation, =
+it
+> =C2=A0=C2=A0 should not fail, even if the path holding the reservation is=
+ down.
+> 3. mpathpersist was not clearing the reservation when the key holding
+> =C2=A0=C2=A0 it was unregistered, if the path holding the reservation was=
+ down.
+> 4. When unregistering a key that holds a reservation, depending on
+> the
+> =C2=A0=C2=A0 order that the paths got unregistered, there was a window wh=
+ere
+> =C2=A0=C2=A0 IO going to the device could fail. This should not happen be=
+cause
+> =C2=A0=C2=A0 the reservation should be removed and the key should be
+> unregistered
+> =C2=A0=C2=A0 atomically.
+>=20
+> Benjamin Marzinski (4):
+> =C2=A0 libmpathpersist: Fix REGISTER AND IGNORE while holding a
+> reservation
+> =C2=A0 libmpathpersist: Handle RESERVE with reservation held by failed
+> path
+> =C2=A0 libmpathpersist: use check_holding_reservation in mpath_prout_rel
+> =C2=A0 libmpathpersist: Fix unregistering while holding the reservation
+>=20
+> =C2=A0libmpathpersist/mpath_persist_int.c | 199 +++++++++++++++++--------=
+-
+> --
+> =C2=A01 file changed, 125 insertions(+), 74 deletions(-)
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-> 
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
->  libmultipath/hwtable.c | 15 +++++++++++++++
->  1 file changed, 15 insertions(+)
-> 
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> index 1a78c36d..f8bbf02d 100644
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -1371,6 +1371,21 @@ static struct hwentry default_hw[] = {
->  		.pgpolicy      = GROUP_BY_SERIAL,
->  		.no_path_retry = 30,
->  	},
-> +	/*
-> +	 * Acronis
-> +	 */
-> +	{
-> +		// Cyber Infrastructure
-> +		.vendor        = "VSTORAGE",
-> +		.product       = "VSTOR-DISK",
-> +		.prio_name     = PRIO_ALUA,
-> +		.pgpolicy      = GROUP_BY_NODE_NAME,
-> +		.detect_prio   = DETECT_PRIO_OFF,
-> +		.features      = "2 pg_init_retries 50",
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
-> +		.flush_on_last_del = FLUSH_ALWAYS,
-> +		.no_path_retry = NO_PATH_RETRY_QUEUE,
-> +	},
->  	/*
->  	 * EOL
->  	 */
-> -- 
-> 2.51.0
-
+For the series:=C2=A0
+Reviewed-by: Martin Wilck <mwilck@suse.com>
