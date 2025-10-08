@@ -1,139 +1,110 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8515719EEC2
-	for <dm-devel@lists.linux.dev>; Tue,  7 Oct 2025 20:25:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 181B11FFC48
+	for <dm-devel@lists.linux.dev>; Wed,  8 Oct 2025 17:54:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759868741; cv=none; b=geGbeFG1Wd2hZP2lFDkyGgag8B9+InK0Mz9uFFy69W8CzVH+q35WqJW+arVIOmTmjVrXsf7XWFO2x21PP2wMBUwb38DDvNQS5Rl1cCRAE51sjBG3QywnklDMoLiKuyfYmmBZ6iJFBRrNogjLfYzS/puVtPeRDy2LuF+KE7T2k4M=
+	t=1759946094; cv=none; b=C9yKH1u4P2rdE8ppP3nCwVvSjejYVQMFcyS9GwvjAzOwSGwJd3YC+cih+udlgCIBJiq8IgqIZDYVxO2h1wqbLk25zohypXeFAXlDWHD0YYr4A79ctXKlUvmrIEU6tmgpK7peD10qyme8sksecXT9yBsTbUuPUm5UClBUKf5/cvs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759868741; c=relaxed/simple;
-	bh=gAhl2fL7Ng5NzNupk8rci70PhsIpyzeJAXPIb9Sxij8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=o8ALjVo4CeyPN26Oe6hUksv7rQ6M6SdeZiug+hY95h1/yxEJ+90YsPmXQSSzFOvY7EVejOKBaUoNQ/NcSjg9aZJJ7DByJMrn2gfcsQEiZ3yDelFdUO8vW3gbC8Ok1lqlpaMAZ3IvwbQKFoTkNIVHTLEBAsWDYtPEp82yXhXxLWs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=C98z3aY0; arc=none smtp.client-ip=209.85.221.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1759946094; c=relaxed/simple;
+	bh=1WUetKlauk9q6CO44k+lrfotpDff1uajdkaAQjZEFho=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=VmXraLfQN6/0D/2Z93xYfiM52q9KX03m/iRGqy82/PfEv6q+b8TKvnkDiP1foJKkO5NkrRQr0qUl6DfuFsBDwe5zkqWRaXNcuPpKj3iDx3pK1Ri7JNQJpHVMWj2z6MHwf85Lm/ykxL2HSaMEKRlLfTdmlZIXYGA2oT9kCRm8e7g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kMLbTOrN; arc=none smtp.client-ip=209.85.167.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="C98z3aY0"
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-3f1aff41e7eso5134533f8f.0
-        for <dm-devel@lists.linux.dev>; Tue, 07 Oct 2025 13:25:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kMLbTOrN"
+Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-57bd482dfd2so127098e87.2
+        for <dm-devel@lists.linux.dev>; Wed, 08 Oct 2025 10:54:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1759868737; x=1760473537; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=gAhl2fL7Ng5NzNupk8rci70PhsIpyzeJAXPIb9Sxij8=;
-        b=C98z3aY0LnN+zOQHIfbzNkoubCY4AwokTeGC7ou+vXK/7yJPqf0x8Y8slWgx3tXXec
-         Mth2lLMkZy87YLD4EK3c9Y62s/kDpAVr1TwV1/7Q1PsBi852TRp7VuaOjzNx2bkATy6J
-         6ARxWEbOOrqsek1qh5D1ypxGEwc69eR8xeoWnpGsXPiLXBev++BEr3znRmmDWGiKJh5a
-         EFGmLKiNuPwGgcmGa5bNfWEy19gL0sq/IzytqDC1SSfAEJJB5PteObsxeYh7ykCGNNbL
-         57iVHXUJi3NjA7onkCI/YVaay/DIdZ6ze3mn/XsSkWrYTIeHTvFSWe/VC8MwbF1aRRik
-         APaQ==
+        d=gmail.com; s=20230601; t=1759946091; x=1760550891; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=2+NzArl50yruflBXWfUivTM4ljt6tZKIzBIR3VQtiao=;
+        b=kMLbTOrN9Hdlp1+sqQdZIAXPg+vURqBmCHLju87hgvOxDY2tGhXud10KFspJq/WzsE
+         9/CBR5j0ZakfFb3gxH6OFM5JE3vOucEsuGRUAyO88QrCsOg4bEgoykiNBh6hvek5jZut
+         sg095h8FBV2yNEdGF7JQYMmbE0gSxFlwzHhu7SIPCbCp/Tz7M8QukV0+tFyPcOyakNzH
+         /VIG3Tn6BoN3bjpMKlEA28J6z3bcWwscLjYZXB+7c2tIweD+LYNicFUn4AsuuWZbK26R
+         j909Q8mbxJRZRhpyiX3pzkgI4cLGwxxwSxJ6khOvGAbh8YAOXNkkmxmS9HJRaePgz1sm
+         ZvNQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1759868737; x=1760473537;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-message-state
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=gAhl2fL7Ng5NzNupk8rci70PhsIpyzeJAXPIb9Sxij8=;
-        b=f1h3IA+czheeUEunFdlfMjoXZsXdZxWDLcbBLHcPRK6x3/c8VMYm9G6TtyWA7JG2vV
-         0g9hYLIY8kPpTjPjrpm8O3TUaHLfLS2m8B2dshnzHwgOr+/EjN9fzOciQDtGgbgG6R5T
-         IpU3xwkpmSISwPc2h3DHG1263FVelj7Sox4wCckTtvO/yY1WUf6dyKO3kV6DkkcYszvy
-         9kJ0o4XSnU30Pr7BCKJmrQYDbW4nTUYkbt91geYoFaLDlNjMbYErnOLgb2wPtZVTGHTn
-         zUYhvw5sl5wAN1zQX0tuKMBEe1K//VuU/hg5WTLPEvzOMHDr+kVOyJ4pyb+S2Je3JX3l
-         0VMw==
-X-Gm-Message-State: AOJu0Ywl0u7/HtjHxTnBix5PSt4+lriH/dq1eSKrNoCgqANcqqkOT4vC
-	uiO0QnDAfD9LafQRl3yPBFKZNj883fynzUz6uBcG2FCBmZ26AQzJ/gyBv1EfWd2x6Ys1XJrjH5A
-	OjFWV
-X-Gm-Gg: ASbGncsEDcy77QWMPjsgFIKnLjC+zgYJXebQxsu88xjbbmFMouKfNy2Y2Kk0xFNyU+g
-	rAr+CPrO6bVTDH8A2xjOCdMhzjuBCVQ8j6guvw7JGvn65MMlig/lxDuxce0svRwf96E3I0wRo76
-	HZpRPCGiNtyxaeoPw++WMI3zwO3RrLKUXdI24O29CwT8uPb4c/AOXx71qGLPMMBGsMxMZ+5hKBT
-	IFvOX71svX5r6kd9Ptw077N7/W4xjw0LCcktcUtU0truJXMiofEPVWcYMLl/5T/THDh7zHCG/de
-	x8irxBG+7aJy5FFL0a9OXVDjPvUlIIXECGleJ47OZ95ZYA01IS/HlVBA/p1iSrsk8UFNVvhMLwc
-	crPDQts4Qr+jRi/8Ui3+iLGh5+LsC19B4+9bAMWGYQkhR+x1tshMzQ4Fn1D570oIceyTSoZTd6F
-	ZQjEOVqKU8aIMCVwSZ9VYTNe0TpmiSKybxHteYnxL+Hd571VPbt7BXcVozkWYANlSQyh/08xpxX
-	ysU+Y7Frzxn6W2jdw==
-X-Google-Smtp-Source: AGHT+IF+NOOCkfTMK3vRWOBiAroAIbV+ERXckIPmOQbAaFSndCY7LxwpoTBvC+/Ng1uwePpjCEdmKA==
-X-Received: by 2002:a05:6000:2303:b0:3ec:dfe5:17d0 with SMTP id ffacd0b85a97d-42666ac42d9mr357459f8f.9.1759868736771;
-        Tue, 07 Oct 2025 13:25:36 -0700 (PDT)
-Received: from ?IPv6:2003:f9:7f04:900:e894:a50a:fc99:6ee7? (p200300f97f040900e894a50afc996ee7.dip0.t-ipconnect.de. [2003:f9:7f04:900:e894:a50a:fc99:6ee7])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4255d8a6b8bsm26705191f8f.4.2025.10.07.13.25.36
+        d=1e100.net; s=20230601; t=1759946091; x=1760550891;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=2+NzArl50yruflBXWfUivTM4ljt6tZKIzBIR3VQtiao=;
+        b=oo+Jp+XG1GV0lUBBy4LjMP0AmkgyKKT1Vrkoojl896HF0D6juNiIAklKE4iGazd+uW
+         NjfuWbgavjFvoegtyTgb/sdNIqcIqO6tCISl+/FPP+rADMcN+KP/xNRyp6Oq+jN9ghsP
+         /CB2e5StKyoA6M4Y22aC0CZiRtfmenHHGrxqSwWuoGoynQ5eY+4HI0Koaf2GIE8B0dR8
+         HyD7SQpqex5sG+PSg7Lebp1UZ8E/E5NN//Ga/uo0UROMgSVoT2L0SXi4v43i5GLN/SFw
+         +zpQMs6lHxNNf5mRGD1CLNERl/kuhjpzlrkIwDEj8ehvHMe4ZgRI/6HJBfIkYPR4w+3R
+         QR+A==
+X-Forwarded-Encrypted: i=1; AJvYcCXY9vnUkSIk9eqYoO9EsyHjlThLCMGzejSXo+mMwvk7UNh0doTtMzvDYkEwMkPnZuF+TOUjZRfgoA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxiG9Oow0iXhmpTINq+r/YjT7whIMQxwj2YKU10bM3kEv1WxA0p
+	N/JqV2R3FGDXmarJEkjH76NM3VvAztG57hIZQjFAa5j3Ag2rvsiR5WqL
+X-Gm-Gg: ASbGncvwi5fJhMsX6xa9gQTDgeVdWmbn6MEicGaGlO2gJPf6WKZ7JN/hYWpxrVFISWB
+	6fHkwUh1WByzt04ep3FXtAad/hX3u2tJqhrKaANEuQfGgnMi4SZcivGAxeB9po4K6XjdllweMbo
+	BnNJbUBpD2jUrlSeTZsKqltJwCMh7vbwSVe3V2vkPRr/gP6mkTgdiEkKunTKXfOiLtNnxGEG0cO
+	DAP8gC63smJofAgE17B2WN++Jmsle6bHPTSgF/TAjIt4UH89iXbwB4tHBzilsxFxEvHHjS/VQLz
+	3h1037rik3aVCEfC3vLeUeTgPeKGv6ChFxtWb76t4zCnjsOPayE7rLz7o21+BHy1sTaN6Fh9uNA
+	L3r9NDjDs2i11juncvbhjQNLRcDDzozpBKu9jBZwDFoUTDE/47K0=
+X-Google-Smtp-Source: AGHT+IHM0NlTwwUD2u4rFj4QdyCJdyEFBmUvYHEYRI/8BI361StlcHHVYHMrg98b5LX7XSOPdJfm6w==
+X-Received: by 2002:a05:6512:15a5:b0:580:e43b:a3b9 with SMTP id 2adb3069b0e04-5906d88a399mr1136485e87.18.1759946090902;
+        Wed, 08 Oct 2025 10:54:50 -0700 (PDT)
+Received: from localhost.localdomain ([2001:9b1:d5a0:a500::24b])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5907ad9e010sm204634e87.64.2025.10.08.10.54.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 07 Oct 2025 13:25:36 -0700 (PDT)
-Message-ID: <95b25bad422df745e816b92e0918076ef3fda623.camel@suse.com>
-Subject: Re: [PATCH v2 0/4] libmultipath: Yet Another PR patchset
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 07 Oct 2025 22:25:35 +0200
-In-Reply-To: <20250926172854.1548351-1-bmarzins@redhat.com>
-References: <20250926172854.1548351-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+        Wed, 08 Oct 2025 10:54:50 -0700 (PDT)
+From: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>,
+	Christoph Hellwig <hch@lst.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	DMML <dm-devel@lists.linux.dev>,
+	Uladzislau Rezki <urezki@gmail.com>
+Subject: [PATCH] dm-ebs: Mark full buffer dirty even on partial write
+Date: Wed,  8 Oct 2025 19:54:48 +0200
+Message-ID: <20251008175448.342614-1-urezki@gmail.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2025-09-26 at 13:28 -0400, Benjamin Marzinski wrote:
-> This patchset handles 4 separate issues:
-> 1. The self-preemption workaround for changing keys using REGISTER
-> AND
-> =C2=A0=C2=A0 IGNORE, while the path holding the reservation was down was =
-broken
-> =C2=A0=C2=A0 by a recent commit.
-> 2. mpathpersist was failing a RESERVE command issued on a multipath
-> =C2=A0=C2=A0 device that held a reservation, when the holding path was do=
-wn.
-> =C2=A0=C2=A0 Issuing an identical reserve on a device that holds a reserv=
-ation
-> =C2=A0=C2=A0 is supposed to succeed, and multipathd has enough informatio=
-n to
-> =C2=A0=C2=A0 know the device is actually holding the reservation. So if
-> =C2=A0=C2=A0 multipathd says that the device is holding the reservation, =
-it
-> =C2=A0=C2=A0 should not fail, even if the path holding the reservation is=
- down.
-> 3. mpathpersist was not clearing the reservation when the key holding
-> =C2=A0=C2=A0 it was unregistered, if the path holding the reservation was=
- down.
-> 4. When unregistering a key that holds a reservation, depending on
-> the
-> =C2=A0=C2=A0 order that the paths got unregistered, there was a window wh=
-ere
-> =C2=A0=C2=A0 IO going to the device could fail. This should not happen be=
-cause
-> =C2=A0=C2=A0 the reservation should be removed and the key should be
-> unregistered
-> =C2=A0=C2=A0 atomically.
->=20
-> Changes in V2:
-> 0004: reworked how the unregister infromation is passed to an from
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 mpath_prout_rel() to make it less confusin=
-g, at Martin's
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 suggestion.
->=20
-> Feel free to reformat my patches. I forgot to do that first. Sorry.
->=20
-> Benjamin Marzinski (4):
-> =C2=A0 libmpathpersist: Fix REGISTER AND IGNORE while holding a
-> reservation
-> =C2=A0 libmpathpersist: Handle RESERVE with reservation held by failed
-> path
-> =C2=A0 libmpathpersist: use check_holding_reservation in mpath_prout_rel
-> =C2=A0 libmpathpersist: Fix unregistering while holding the reservation
->=20
-> =C2=A0libmpathpersist/mpath_persist.h=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=
-=A0 3 +
-> =C2=A0libmpathpersist/mpath_persist_int.c | 204 ++++++++++++++++++-------=
--
-> --
-> =C2=A02 files changed, 134 insertions(+), 73 deletions(-)
+When performing a read-modify-write(RMW) operation, any modification
+to a buffered block must cause the entire buffer to be marked dirty.
 
-For the set:
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Marking only a subrange as dirty is incorrect because the underlying
+device block size(ubs) defines the minimum read/write granularity. A
+lower device can perform I/O only on regions which are fully aligned
+and sized to ubs.
+
+This change ensures that write-back operations always occur in full
+ubs-sized chunks, matching the intended emulation semantics of the
+EBS target.
+
+Signed-off-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+---
+ drivers/md/dm-ebs-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+index 6abb31ca9662..b354e74a670e 100644
+--- a/drivers/md/dm-ebs-target.c
++++ b/drivers/md/dm-ebs-target.c
+@@ -103,7 +103,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
+ 			} else {
+ 				flush_dcache_page(bv->bv_page);
+ 				memcpy(ba, pa, cur_len);
+-				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
++				dm_bufio_mark_buffer_dirty(b);
+ 			}
+ 
+ 			dm_bufio_release(b);
+-- 
+2.47.3
 
