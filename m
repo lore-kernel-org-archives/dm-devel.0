@@ -1,169 +1,109 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A79154654
-	for <dm-devel@lists.linux.dev>; Fri, 10 Oct 2025 11:20:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADEF010957
+	for <dm-devel@lists.linux.dev>; Fri, 10 Oct 2025 12:37:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760095241; cv=none; b=k50XAeVRgb4aY5JzYn2hnByWbrBntw8iOBw4aRSIPKUt6TNzsU6dRCaK7xWt7C+ZGGzUM4N/WuZGcLD/r+qmGMdSWTDoezhLkwwWaYcNoZnxq3jTi+YfC+nBYDKwsV1+HkrNyqIvb6YQqk32sPB1DJD9IpTJI3UVtfIV7SlP0cY=
+	t=1760099862; cv=none; b=cG2wRYJZldrwqTpicvxxkYVziKG62cZs15+b0iejG73P3EkPdxi3resLHtbaaMzH/rhqELxHsyt2ObXWYrsfZ2VVyAmGkVxfh9lqDAfXM83wKHk9lGv36AzTywgG3Uz5O9WyAqwwdOBOrEVhOy7Yx2JaghLV6PzTsBuV1+NcfWk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760095241; c=relaxed/simple;
-	bh=XW6CIUmDS3xM4zA7HAzYZGzFBodrwSWD6yJxIMRjDyM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=hJ6TsNEj4NEBgTb470NyGop3nIQBMKv8Cl/rMSPvmUY4Cgg62Knagcn1ltvlYRMWgYF5QUHGKKvyNUmuUGHkLv4GEeVI4mDhdUYPf4q82RBz8413432oR1SIPoWPMJeH0jFPzxatvIxmxUYJw/7whtfrX7k+aMt41bSG7braAo0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=qcHuyocK; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=qcHuyocK; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1760099862; c=relaxed/simple;
+	bh=TfBIy/SKVb0Z6jQhZa4s/xhG7OTbNdDw42tVx25P37A=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ozd3ocluT14woPv2+DHwwR6z7De8Z99/8Q+cRHy606zIdxmu2F1Rc1VxnzkuBZXPOFf5GN/NT+Czhk2Gaz6c0Fx4dzYwzKKJ+gwczjTDQ3Zmvpt9h5BpIRqhq1zSoCqrSLopCykZTIn6I1rvos5hyvbl98Db09L93wmkA4tTntE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YBtyhGMX; arc=none smtp.client-ip=209.85.128.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="qcHuyocK";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="qcHuyocK"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 92C601F822;
-	Fri, 10 Oct 2025 11:20:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1760095235; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=SMYcuMjzBwYxy+VyH+GBkUW3ngNF49j09A5ou/rCk1Y=;
-	b=qcHuyocKFI3ckcfEaXP1gfOmX91UaXM5axrtsxm+SzYJCk31xJVAR/fi+ItxLtkSVOC/jh
-	2g6J+IWeuhLX58Wsy7oUHDpc8O7Fw2ZpXHCGDLDUXN2adE2sfmwBC/BlzOlnbj2Sue4ciH
-	y3yL8CaOoaQ8RBGfNAHkOGJPwut+p9U=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=qcHuyocK
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1760095235; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=SMYcuMjzBwYxy+VyH+GBkUW3ngNF49j09A5ou/rCk1Y=;
-	b=qcHuyocKFI3ckcfEaXP1gfOmX91UaXM5axrtsxm+SzYJCk31xJVAR/fi+ItxLtkSVOC/jh
-	2g6J+IWeuhLX58Wsy7oUHDpc8O7Fw2ZpXHCGDLDUXN2adE2sfmwBC/BlzOlnbj2Sue4ciH
-	y3yL8CaOoaQ8RBGfNAHkOGJPwut+p9U=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 724DA1375D;
-	Fri, 10 Oct 2025 11:20:35 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id KozeGgPs6Gj5XwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 10 Oct 2025 11:20:35 +0000
-Message-ID: <cd074f884f847ed291c2e720657668d6a0523f8f.camel@suse.com>
-Subject: Re: [PATCH 2/2] multipath-tools: add mandoc check to man pages
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Date: Fri, 10 Oct 2025 13:20:35 +0200
-In-Reply-To: <20251010092211.57426-2-xose.vazquez@gmail.com>
-References: <20251010092211.57426-1-xose.vazquez@gmail.com>
-	 <20251010092211.57426-2-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YBtyhGMX"
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-46e34c691a8so3767685e9.0
+        for <dm-devel@lists.linux.dev>; Fri, 10 Oct 2025 05:37:40 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1760099859; x=1760704659; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=isgputJ+zMtcTIZfVwH0ybuoh0/xjkHg3Gxs9bs71Pk=;
+        b=YBtyhGMXfL7ONgCO8O2W9fyo87GM4UhjIdoaOLDGvapkhebZoDQj0o8fjdXblP9yVD
+         ZNe68ZtMcbR+t0Tp+IdwWIl4rZYgQ0Bj1xoPkQSNOx0aBO7VITzPsUKSBF+/+r+I6ED2
+         blk2zpQ0RkJRevy00kubRF4Wg41VCGDyw4cyGdtPZR19Vi7TedButKNG+81eOXV1D19e
+         oaYHT++QO8Uxp0FbDtf42DbHmohArfRSi9cJOqwjpci9rPjKL/D5vCdRJiz12zR3KSSq
+         Gufki85oPt8KSuwOMgjBmH0NgWQuc2yiRbIVAAnKBdEd5l0EdbNc8iQg7F/IQtTYoKdy
+         9Ijw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1760099859; x=1760704659;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=isgputJ+zMtcTIZfVwH0ybuoh0/xjkHg3Gxs9bs71Pk=;
+        b=OX/pA7xx4czY5Fu+jhD3pJ8e5D5U7Cb1yAIRNF5ySD+Hhs7GHJijvl8Bq0xPnnn3y3
+         BDwQqn8RWo4fSM3AlwGaK600GBsxd7cTxicFPnS4sge5yY5mtqChEl2fLAjnualiIe0I
+         ZJOd61fngfMlGgl0KeLPMcz83IaMqfh+W1FZMMnhJy5c0UGMb/de9VLZudYBg7ycekI9
+         9u2qEz39sMfVHsvLiH7tZyX5IjbRFj911jDK0xpLOemhn5Dqt2h3flQpaMD9QQBjxDCc
+         1IpjPAReMStESlP1bxX8o5h7Ji30UnMtI5wQTnSh1afWmFC8RGaDAaHm2Y47A31nvFOl
+         DuHw==
+X-Forwarded-Encrypted: i=1; AJvYcCWLsEqlLTMlwZnhiUF0I/xe2YGnasQYkG+Cu574iatJ5oEeDkn14wqBAzPIk3+/wXf+THW4uYutGg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyw3xWIK7nN1JshjyXPZ8tVuKXm8VGUpNoaDF8E6r3TBD5ajxG+
+	NJ/W51tuyfgRkiunCHvRhQeNfGG9+zI5nfc4CRI6T4bpQM6aQEMvSEE=
+X-Gm-Gg: ASbGncvXramKo0VdiZqUudnbEzDAzaPIfYN4EB9PRO7OQAYStdTvnyddNFEAHbUmkTE
+	IK8lzj/LkyRNzo7oKBKUhob5oc9cOjcgEB/0skZRFvmSZ/LDTAzDPRNPM7MnhZj0GJpk+LikmM/
+	v5G8Vnr27rb9joLUH6T7iso5ZgGpyzFeS1MNxIC6ZIlq36eEBHbVz40Pp7XQ7Ft+p7GVc2mf8iq
+	F4SVFN6ikkl27gOOAQoCcE0FFIP/7BprMA8WR6nUIlt9zY1fxrY1ks9A1lvylaDfJo3B+a8z4qC
+	4fBu/913OvWM0KrcJ8dWYh9TDn/SuQHvTreUgmZHCP6Y5XX0EljZPV2KzDQfoQD4I3tjfLtXvWK
+	CpNKAaHPF2c887uHxMfD5DZMqrxtZS9RNgtliYcrjoQaLAMJaAJnzvLZvXrxy5zqZQ4Jc7hIhMp
+	QFTXS+gLngaA==
+X-Google-Smtp-Source: AGHT+IE4L0EuP2Z2Hs4kriKTMqwEoWcgOkmqQdc1/TOCWZW59lj33u4eElOtKp5N80VcHCSNG5UaAQ==
+X-Received: by 2002:a05:600c:310c:b0:46e:301c:d187 with SMTP id 5b1f17b1804b1-46fa9b1060amr47383945e9.5.1760099858697;
+        Fri, 10 Oct 2025 05:37:38 -0700 (PDT)
+Received: from localhost (120.red-80-39-141.dynamicip.rima-tde.net. [80.39.141.120])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-426ce5e8309sm3981029f8f.50.2025.10.10.05.37.38
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 10 Oct 2025 05:37:38 -0700 (PDT)
+Message-ID: <a2923472-331c-43ea-9ba2-f7208b9869c9@gmail.com>
+Date: Fri, 10 Oct 2025 14:37:37 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Rspamd-Queue-Id: 92C601F822
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_DN_ALL(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FREEMAIL_TO(0.00)[gmail.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received,2a07:de40:b281:104:10:150:64:97:from];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:dkim,suse.com:mid,suse.com:email]
-X-Spam-Score: -3.01
+Subject: Re: [PATCH 1/2] multipath-tools: fix mandoc errors in man pages
+To: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20251010092211.57426-1-xose.vazquez@gmail.com>
+ <0580f369a7102ae07aaa2c23fd4bd9165cbafd35.camel@suse.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <0580f369a7102ae07aaa2c23fd4bd9165cbafd35.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Fri, 2025-10-10 at 11:22 +0200, Xose Vazquez Perez wrote:
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> =C2=A0kpartx/kpartx.8=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 1 +
-> =C2=A0libmpathpersist/mpath_persistent_reserve_in.3=C2=A0 | 1 +
-> =C2=A0libmpathpersist/mpath_persistent_reserve_out.3 | 1 +
-> =C2=A0mpathpersist/mpathpersist.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 5 +++--
-> =C2=A0multipath/multipath.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 | 5 +++--
-> =C2=A0multipath/multipath.conf.5.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 5 +++-=
--
-> =C2=A0multipathd/multipathc.8=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 | 1 +
-> =C2=A0multipathd/multipathd.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0 | 5 +++--
-> =C2=A08 files changed, 16 insertions(+), 8 deletions(-)
->=20
-> diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-> index ef8051a5..2a55c96b 100644
-> --- a/kpartx/kpartx.8
-> +++ b/kpartx/kpartx.8
-> @@ -2,6 +2,7 @@
-> =C2=A0.\" Make sure there are no errors with:
-> =C2=A0.\" groff -z -wall -b -e -t kpartx/kpartx.8
-> =C2=A0.\" man --warnings -E UTF-8 -l -Tutf8 -Z=C2=A0 kpartx/kpartx.8 >
-> /dev/null
-> +.\" mandoc -W all -T lint kpartx/kpartx.8
+On 10/10/25 1:20 PM, Martin Wilck wrote:
 
-Nack. We don't need this in every man page. Actually, we don't need the
-other command lines mentioned in the man pages, either. While looking
-at this, I realize that the "groff" command line is wrong. AFAICT it
-should be=20
+> I believe our man pages have more serious issues; for example, we use
+> so deep indentation in multipath.conf.5 that the page is hardly
+> readable on narrow terminals.
 
-   groff -man -z -wall -b -e -t -Tutf8 $MANPAGE_FILE
+I do not think so:
 
-But really, it makes no sense to me to have these reminders in every
-man page. If we want to keep our man pages in order (which is of course
-a worthwhile goal), we should rather write a GitHub workflow to check
-them. That would be a helpful contribution.
+export LC_ALL=en_US.UTF-8 MANROFFSEQ="" MANWIDTH=80
+man ./multipath/multipath.conf.5.in
 
-I would still question whether our man pages need to pass 3 different
-commands. AFAICS the "groff" and "man" commands are basically
-equivalent anyway, as "man" simply calls "groff" for the parsing and
-formatting. Wrt mandoc in general, see my reply to patch 1/2.
+It is displayed correctly, except for these three lines:
 
-Regards,
-Martin
+sed -n 430p  ./multipath/multipath.conf.5.in
+Regex can be of the form \fI"host_wwnn:host_wwpn:target_wwnn:target_wwpn"\fR
+
+sed -n 432p  ./multipath/multipath.conf.5.in
+"%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
+
+sed -n 2043p  ./multipath/multipath.conf.5.in
+uuid.fedcba98-3579-4567-8765-123456789abc [nvme]:nvme4n9 NVME,Some NVMe controller,FFFFFFFF
+
+
+groff only shows warnings, with "-man -Tutf8", for the first ones:
+groff -man -Tutf8 -z ./multipath/multipath.conf.5.in
+troff:./multipath/multipath.conf.5.in:430: warning [p 5, 10.5i]: cannot adjust line
+troff:./multipath/multipath.conf.5.in:432: warning [p 5, 11.3i]: cannot break line
