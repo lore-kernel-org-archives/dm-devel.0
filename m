@@ -1,314 +1,111 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lj1-f175.google.com (mail-lj1-f175.google.com [209.85.208.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E51AE30EF87
-	for <dm-devel@lists.linux.dev>; Tue, 14 Oct 2025 07:56:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0345A2FC007
+	for <dm-devel@lists.linux.dev>; Tue, 14 Oct 2025 14:47:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760428616; cv=none; b=OSotz5aRV48LR8uXtjGtDHUVNahyBaDuzcULNr0TrA5rQUIaDOcecRazBpRbH8AXvMek/LI3snHrO0dtE6z87tjdC6BSKTfg4lJ9M1hD4ja8zsZ0nEaGUkGTwB5IMkJ7PV7x8j1setxPuGxSKZAFDLcZiJZyc4KAtcDsrcwHt6w=
+	t=1760453257; cv=none; b=PAEdSPtCIcr49C+ZBhhihcbmZ6FZC4BOHIMb2Fl85LSGcu6/Pvr1R7AMvj2bG5h/6/SuayY/VfXnmp3bzP/bahmyIk4sXviTxt/LydXFHLVTwXXGP5K4uWRuXyfyrzMsClJ30JdkkCG6GySpyxmrv1R49Cv33IM+qEgq3moIkQw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760428616; c=relaxed/simple;
-	bh=HqlST6K2De28+6l86LJo5BPQeNoDe1k9DAGZfoveF4w=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=rTuwv5PEEHdqoQpbmOJhJM6R1K3So431Be8XMvwSmWv/K+eAhLx5bqyw+cI0qE8NVnfK1WpO21nDlU3Yzd3Rn2gnr3ZQJ5JcrGjv9cIEIcITsfiLKDvie31N+Ldzt4KswOXf9+VFzB8KCIgSRcvlDy8VTVZ/xXgkWdaudxDtQc8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GSQr/gEj; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1760453257; c=relaxed/simple;
+	bh=1WUetKlauk9q6CO44k+lrfotpDff1uajdkaAQjZEFho=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mc08JrQSCbBtBABj1FHyo9fgcGVZURwCoUwqsJxqB+cNS56kxojTP7mO4A8Wj+7XW+9ur1Vg46HyuK8AKF+n4hChrHTmqOtugB3JABqFqASNIqcGMlemkDx8EysGCOeQSjP14UslueAl/9xsnjVpIePzp6C7pXb3FAaoHUk0l+k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ldVhgppd; arc=none smtp.client-ip=209.85.208.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GSQr/gEj"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 769C6C4CEF9
-	for <dm-devel@lists.linux.dev>; Tue, 14 Oct 2025 07:56:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1760428615;
-	bh=HqlST6K2De28+6l86LJo5BPQeNoDe1k9DAGZfoveF4w=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=GSQr/gEjSLEE8HrING1QOEHhOH9lHU3UO5BIesuRsBCbPZvRZ8CrKcQVvv9pAimI2
-	 nlg8v2/+bDFq8wPnLSq3rEJMl9d5yXyGMgtbhdTwoRP+nWeS1mcHlTbkY35YzCBhkU
-	 K+FORe1eXEeS0F+xBiHdEvZ8BHYY0zd7LVY1ifsPCoPMm2a51ipjodnSUeubkJatDT
-	 flBG7Lp9bTtcvBwJytLxP3VQdvKXy3zjnIrcsOOxRkk3syG9hoFH71UY0r0CHVFs/y
-	 OBYI4Twf0RT83u/RaAx59CFGCC+AndGUaXfDPPcARalB/h20oRBUyRyps3+m1mD+17
-	 LCJ6h8wbhzk/g==
-Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-36c9859b036so3151444fac.0
-        for <dm-devel@lists.linux.dev>; Tue, 14 Oct 2025 00:56:55 -0700 (PDT)
-X-Gm-Message-State: AOJu0YwXU8qABg6cCV9OXQO6q8DgH9OWl2HvFn/1YJOu6on4XhTdOLF+
-	BYUWp8ZOj5Oo373mpAh/tJ/PNEdGQM3MR2BZwWNJgnEaKW7ZFW3ovR4fMZtJ7rK+IE46uXeJhTh
-	SZikMUW4hBR08xnrWJNHnMZhOpPkdR5s=
-X-Google-Smtp-Source: AGHT+IF7XbVsQ4RGuMoC5pI3a1fn4/FBEUKQy5vF6YknAaziROGF/og9vUmOmyPE5c4FCDw3ng1vnNzWT4gAVDBPBSs=
-X-Received: by 2002:a05:6871:82a:b0:343:486f:3280 with SMTP id
- 586e51a60fabf-3c11a14bb64mr10509658fac.18.1760428614763; Tue, 14 Oct 2025
- 00:56:54 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ldVhgppd"
+Received: by mail-lj1-f175.google.com with SMTP id 38308e7fff4ca-37634d352dfso42051981fa.3
+        for <dm-devel@lists.linux.dev>; Tue, 14 Oct 2025 07:47:35 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1760453254; x=1761058054; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=2+NzArl50yruflBXWfUivTM4ljt6tZKIzBIR3VQtiao=;
+        b=ldVhgppdepFtveFg1ylbwutYIYyAAqHDhTrqbta1NtDCQCWcxZaA4RHOBqt9nW23Ha
+         WrHLbiyravExOaFu9SCAmrb/Kdze6srORmhB3FloxXBk9CmXA4EQkHa/Z7mGyrNE9zrK
+         sSWa+PEFNnjlFNWo/17a6edTpyYc0hjQ4GyJPkqGNHOOVyMAC8yPg+qv5+3FlfjBEMcV
+         2VH3MWLiH8B0zWdUp57s1qBY60oLtaqJ8acuhXCGjAmNYW7G547bt/85UDaE6t0LeHnw
+         4UBoZ2MN2995NisZ/D+EsiQvO8UsYdnAVZbQ0ZbOY9Fc6THcvmgxJJgBw9oP9+u3amfq
+         RHLA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1760453254; x=1761058054;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=2+NzArl50yruflBXWfUivTM4ljt6tZKIzBIR3VQtiao=;
+        b=des2YrMCs/IHja5Pi5dhE1FDPCQIemlrqSVZESGqdsodgUtZPc3WYueIz5YcFrcT4j
+         un4zzz5iYcOUyoD6cTAMKlA2BlOBAAZyHIkWYEERfFJSV8uoaRe0Lq3SL5WsP3mMZdtI
+         Ye5wAo2Kl1FZp2OygkIbpY8y0UvvdoFaIpdSdiMdqG9yajErvjOpyDgM1Buw2o0Fgzt5
+         IQFA3GeYnqor72BLcHdgzkFVpWn+5epKusELKi/RxsOgmp4nV3YJdtX2mowFK8ehLgTF
+         uJDamwpItKKf1zM0Ei2GURbRJj9Ioq5p5zl7Ew8Li/5qLLElkeDujxRQmrry/gDwOhDm
+         QcIA==
+X-Forwarded-Encrypted: i=1; AJvYcCWp298tbHqUcWnyoSv+bYC4ZhWArF9Xx1t9lNXRnKusezQecmfoxO51qjvqGBIuwW3w8a+eWz0EtQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzFeZKtEHGe+HQlxvK7Y9eRavIZptPNJdAzXU8AbiCEdNaa4Sy9
+	0WXZ7EvOp+uydDMisvS6mx7aGMe56qMmUON7ZOrAIK8/gGLVpS3kRkSZ
+X-Gm-Gg: ASbGnct3kdHSgxdwu59V2j8h6JAEyyXFga9vnTeMiWqqa0GggydhBdt3Esmzxp2lNGc
+	0Ubh/TaZaVT8qdtCglONkdYT5GUcB6oHa2nYU+5ndcWrresbPdDly0I5ore02izzW/Rad/QLdhh
+	2TsifyG/ylFAyvDo3hzDpgCEGURNNYtVgFFCA6bZZPOVMWEGbX89erWW3YUd09KXyeapZlVEH6J
+	UwWl63cqOXximqgeOoBcUuksN8s/vUBGMyj14cxvaBB4MEguL1iX9XmP0BRyxWf7eENOwkj6Cym
+	ic5evSHSvHj+m9VLmLOjZRZlLA5ci0Tz7zs14KAH3vYFlhhEB9iy5jSP8ezXLesJJ0dhALov4qv
+	WT7lf95jbs9cp4ouZbsDICxVWOk2mgBRiQHsg61E+hJAWEQ==
+X-Google-Smtp-Source: AGHT+IFK4F5kk10SxvIDhTT4eCmKcDyB2K6FviG7CeDm523qbnVyJMoPw+sUVAfd7ZSWE53ZffFc/A==
+X-Received: by 2002:a05:6512:b89:b0:581:9295:1b02 with SMTP id 2adb3069b0e04-5906dd532a0mr6183384e87.27.1760453253740;
+        Tue, 14 Oct 2025 07:47:33 -0700 (PDT)
+Received: from localhost.localdomain ([2001:9b1:d5a0:a500::24b])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5908820d8cfsm5311007e87.57.2025.10.14.07.47.32
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 14 Oct 2025 07:47:33 -0700 (PDT)
+From: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>
+Cc: Mike Snitzer <snitzer@redhat.com>,
+	Christoph Hellwig <hch@lst.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	DMML <dm-devel@lists.linux.dev>,
+	Uladzislau Rezki <urezki@gmail.com>
+Subject: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial write
+Date: Tue, 14 Oct 2025 16:47:31 +0200
+Message-ID: <20251014144731.164120-1-urezki@gmail.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20251011181042.81455-1-ebiggers@kernel.org>
-In-Reply-To: <20251011181042.81455-1-ebiggers@kernel.org>
-From: Ard Biesheuvel <ardb@kernel.org>
-Date: Tue, 14 Oct 2025 09:56:41 +0200
-X-Gmail-Original-Message-ID: <CAMj1kXHigpu+V3qHyLO8+KrqH84LL1bUNjN4d9eO8v9pXbqOUQ@mail.gmail.com>
-X-Gm-Features: AS18NWCteqVh0EC00vi9zR8Tz_iV1k3vUpKzxEZHpLyrD1V6UjP13a2YQSE5aUI
-Message-ID: <CAMj1kXHigpu+V3qHyLO8+KrqH84LL1bUNjN4d9eO8v9pXbqOUQ@mail.gmail.com>
-Subject: Re: [PATCH] dm-crypt: Use MD5 library instead of crypto_shash
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, linux-crypto@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-On Sat, 11 Oct 2025 at 20:12, Eric Biggers <ebiggers@kernel.org> wrote:
->
-> The lmk IV mode, which dm-crypt supports for Loop-AES compatibility,
-> involves an MD5 computation.  Update its implementation to use the MD5
-> library API instead of crypto_shash.  This has many benefits, such as:
->
-> - Simpler code.  Notably, much of the error-handling code is no longer
->   needed, since the library functions can't fail.
->
-> - Reduced stack usage.  crypt_iv_lmk_one() now allocates only 112 bytes
->   on the stack instead of 520 bytes.
->
-> - The library functions are strongly typed, preventing bugs like
->   https://lore.kernel.org/r/f1625ddc-e82e-4b77-80c2-dc8e45b54848@gmail.com
->
-> - Slightly improved performance, as the library provides direct access
->   to the MD5 code without unnecessary overhead such as indirect calls.
->
-> To preserve the existing behavior of lmk support being disabled when the
-> kernel is booted with "fips=1", make crypt_iv_lmk_ctr() check
-> fips_enabled itself.  Previously it relied on crypto_alloc_shash("md5")
-> failing.  (I don't know for sure that lmk *actually* needs to be
-> disallowed in FIPS mode; this just preserves the existing behavior.)
->
-> Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+When performing a read-modify-write(RMW) operation, any modification
+to a buffered block must cause the entire buffer to be marked dirty.
 
-Acked-by: Ard Biesheuvel <ardb@kernel.org>
+Marking only a subrange as dirty is incorrect because the underlying
+device block size(ubs) defines the minimum read/write granularity. A
+lower device can perform I/O only on regions which are fully aligned
+and sized to ubs.
 
-> ---
->  drivers/md/Kconfig    |  1 +
->  drivers/md/dm-crypt.c | 76 ++++++++++++-------------------------------
->  2 files changed, 22 insertions(+), 55 deletions(-)
->
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index 104aa53550905..dcd232a2ca244 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -297,10 +297,11 @@ config DM_CRYPT
->         depends on (TRUSTED_KEYS || TRUSTED_KEYS=n)
->         select CRC32
->         select CRYPTO
->         select CRYPTO_CBC
->         select CRYPTO_ESSIV
-> +       select CRYPTO_LIB_MD5 # needed by lmk IV mode
->         help
->           This device-mapper target allows you to create a device that
->           transparently encrypts the data on it. You'll need to activate
->           the ciphers you're going to use in the cryptoapi configuration.
->
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 5ef43231fe77f..04a553529dc27 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -19,10 +19,11 @@
->  #include <linux/blk-integrity.h>
->  #include <linux/crc32.h>
->  #include <linux/mempool.h>
->  #include <linux/slab.h>
->  #include <linux/crypto.h>
-> +#include <linux/fips.h>
->  #include <linux/workqueue.h>
->  #include <linux/kthread.h>
->  #include <linux/backing-dev.h>
->  #include <linux/atomic.h>
->  #include <linux/scatterlist.h>
-> @@ -118,11 +119,10 @@ struct iv_benbi_private {
->         int shift;
->  };
->
->  #define LMK_SEED_SIZE 64 /* hash + 0 */
->  struct iv_lmk_private {
-> -       struct crypto_shash *hash_tfm;
->         u8 *seed;
->  };
->
->  #define TCW_WHITENING_SIZE 16
->  struct iv_tcw_private {
-> @@ -463,14 +463,10 @@ static int crypt_iv_null_gen(struct crypt_config *cc, u8 *iv,
->
->  static void crypt_iv_lmk_dtr(struct crypt_config *cc)
->  {
->         struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
->
-> -       if (lmk->hash_tfm && !IS_ERR(lmk->hash_tfm))
-> -               crypto_free_shash(lmk->hash_tfm);
-> -       lmk->hash_tfm = NULL;
-> -
->         kfree_sensitive(lmk->seed);
->         lmk->seed = NULL;
->  }
->
->  static int crypt_iv_lmk_ctr(struct crypt_config *cc, struct dm_target *ti,
-> @@ -481,26 +477,24 @@ static int crypt_iv_lmk_ctr(struct crypt_config *cc, struct dm_target *ti,
->         if (cc->sector_size != (1 << SECTOR_SHIFT)) {
->                 ti->error = "Unsupported sector size for LMK";
->                 return -EINVAL;
->         }
->
-> -       lmk->hash_tfm = crypto_alloc_shash("md5", 0,
-> -                                          CRYPTO_ALG_ALLOCATES_MEMORY);
-> -       if (IS_ERR(lmk->hash_tfm)) {
-> -               ti->error = "Error initializing LMK hash";
-> -               return PTR_ERR(lmk->hash_tfm);
-> +       if (fips_enabled) {
-> +               ti->error = "LMK support is disabled due to FIPS";
-> +               /* ... because it uses MD5. */
-> +               return -EINVAL;
->         }
->
->         /* No seed in LMK version 2 */
->         if (cc->key_parts == cc->tfms_count) {
->                 lmk->seed = NULL;
->                 return 0;
->         }
->
->         lmk->seed = kzalloc(LMK_SEED_SIZE, GFP_KERNEL);
->         if (!lmk->seed) {
-> -               crypt_iv_lmk_dtr(cc);
->                 ti->error = "Error kmallocing seed storage in LMK";
->                 return -ENOMEM;
->         }
->
->         return 0;
-> @@ -512,11 +506,11 @@ static int crypt_iv_lmk_init(struct crypt_config *cc)
->         int subkey_size = cc->key_size / cc->key_parts;
->
->         /* LMK seed is on the position of LMK_KEYS + 1 key */
->         if (lmk->seed)
->                 memcpy(lmk->seed, cc->key + (cc->tfms_count * subkey_size),
-> -                      crypto_shash_digestsize(lmk->hash_tfm));
-> +                      MD5_DIGEST_SIZE);
->
->         return 0;
->  }
->
->  static int crypt_iv_lmk_wipe(struct crypt_config *cc)
-> @@ -527,99 +521,71 @@ static int crypt_iv_lmk_wipe(struct crypt_config *cc)
->                 memset(lmk->seed, 0, LMK_SEED_SIZE);
->
->         return 0;
->  }
->
-> -static int crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
-> -                           struct dm_crypt_request *dmreq,
-> -                           u8 *data)
-> +static void crypt_iv_lmk_one(struct crypt_config *cc, u8 *iv,
-> +                            struct dm_crypt_request *dmreq, u8 *data)
->  {
->         struct iv_lmk_private *lmk = &cc->iv_gen_private.lmk;
-> -       SHASH_DESC_ON_STACK(desc, lmk->hash_tfm);
-> -       union {
-> -               struct md5_state md5state;
-> -               u8 state[CRYPTO_MD5_STATESIZE];
-> -       } u;
-> +       struct md5_ctx ctx;
->         __le32 buf[4];
-> -       int i, r;
->
-> -       desc->tfm = lmk->hash_tfm;
-> -
-> -       r = crypto_shash_init(desc);
-> -       if (r)
-> -               return r;
-> +       md5_init(&ctx);
->
-> -       if (lmk->seed) {
-> -               r = crypto_shash_update(desc, lmk->seed, LMK_SEED_SIZE);
-> -               if (r)
-> -                       return r;
-> -       }
-> +       if (lmk->seed)
-> +               md5_update(&ctx, lmk->seed, LMK_SEED_SIZE);
->
->         /* Sector is always 512B, block size 16, add data of blocks 1-31 */
-> -       r = crypto_shash_update(desc, data + 16, 16 * 31);
-> -       if (r)
-> -               return r;
-> +       md5_update(&ctx, data + 16, 16 * 31);
->
->         /* Sector is cropped to 56 bits here */
->         buf[0] = cpu_to_le32(dmreq->iv_sector & 0xFFFFFFFF);
->         buf[1] = cpu_to_le32((((u64)dmreq->iv_sector >> 32) & 0x00FFFFFF) | 0x80000000);
->         buf[2] = cpu_to_le32(4024);
->         buf[3] = 0;
-> -       r = crypto_shash_update(desc, (u8 *)buf, sizeof(buf));
-> -       if (r)
-> -               return r;
-> +       md5_update(&ctx, (u8 *)buf, sizeof(buf));
->
->         /* No MD5 padding here */
-> -       r = crypto_shash_export(desc, &u.md5state);
-> -       if (r)
-> -               return r;
-> -
-> -       for (i = 0; i < MD5_HASH_WORDS; i++)
-> -               __cpu_to_le32s(&u.md5state.hash[i]);
-> -       memcpy(iv, &u.md5state.hash, cc->iv_size);
-> -
-> -       return 0;
-> +       cpu_to_le32_array(ctx.state.h, ARRAY_SIZE(ctx.state.h));
-> +       memcpy(iv, ctx.state.h, cc->iv_size);
->  }
->
->  static int crypt_iv_lmk_gen(struct crypt_config *cc, u8 *iv,
->                             struct dm_crypt_request *dmreq)
->  {
->         struct scatterlist *sg;
->         u8 *src;
-> -       int r = 0;
->
->         if (bio_data_dir(dmreq->ctx->bio_in) == WRITE) {
->                 sg = crypt_get_sg_data(cc, dmreq->sg_in);
->                 src = kmap_local_page(sg_page(sg));
-> -               r = crypt_iv_lmk_one(cc, iv, dmreq, src + sg->offset);
-> +               crypt_iv_lmk_one(cc, iv, dmreq, src + sg->offset);
->                 kunmap_local(src);
->         } else
->                 memset(iv, 0, cc->iv_size);
-> -
-> -       return r;
-> +       return 0;
->  }
->
->  static int crypt_iv_lmk_post(struct crypt_config *cc, u8 *iv,
->                              struct dm_crypt_request *dmreq)
->  {
->         struct scatterlist *sg;
->         u8 *dst;
-> -       int r;
->
->         if (bio_data_dir(dmreq->ctx->bio_in) == WRITE)
->                 return 0;
->
->         sg = crypt_get_sg_data(cc, dmreq->sg_out);
->         dst = kmap_local_page(sg_page(sg));
-> -       r = crypt_iv_lmk_one(cc, iv, dmreq, dst + sg->offset);
-> +       crypt_iv_lmk_one(cc, iv, dmreq, dst + sg->offset);
->
->         /* Tweak the first block of plaintext sector */
-> -       if (!r)
-> -               crypto_xor(dst + sg->offset, iv, cc->iv_size);
-> +       crypto_xor(dst + sg->offset, iv, cc->iv_size);
->
->         kunmap_local(dst);
-> -       return r;
-> +       return 0;
->  }
->
->  static void crypt_iv_tcw_dtr(struct crypt_config *cc)
->  {
->         struct iv_tcw_private *tcw = &cc->iv_gen_private.tcw;
->
-> base-commit: 8bd9238e511d02831022ff0270865c54ccc482d6
-> --
-> 2.51.0
->
->
+This change ensures that write-back operations always occur in full
+ubs-sized chunks, matching the intended emulation semantics of the
+EBS target.
+
+Signed-off-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+---
+ drivers/md/dm-ebs-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+index 6abb31ca9662..b354e74a670e 100644
+--- a/drivers/md/dm-ebs-target.c
++++ b/drivers/md/dm-ebs-target.c
+@@ -103,7 +103,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
+ 			} else {
+ 				flush_dcache_page(bv->bv_page);
+ 				memcpy(ba, pa, cur_len);
+-				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
++				dm_bufio_mark_buffer_dirty(b);
+ 			}
+ 
+ 			dm_bufio_release(b);
+-- 
+2.47.3
+
