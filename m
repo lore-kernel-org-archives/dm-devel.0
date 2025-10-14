@@ -1,30 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D871C21CC43;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C84F63009E2;
 	Tue, 14 Oct 2025 21:17:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760476627; cv=none; b=J1zJ0mNAUGpL2TGMSa9w2k67buLYvBXGKiK2JO8lZ9CU/J+ukUAv9fly4156UubdDL5HQuzgl3SZuOOtD/LCG6KSLtb8cb++PjJOtaftIQFvZvVwvxDAigbRJcyNL+za5H60EYqQfQyM+bK/mslrFY3iGa49doBWTZEwq2uBezc=
+	t=1760476627; cv=none; b=t9+/tiWEMM7GMcamMxSygqsq9zKz1iOM4WDJua1PuZTKta4HaN2XZXWCmLoh+v65Ja3aCMEiqTR0upw9JnfqKYU0VFqSsWUxIDXrfa6dcTS44UIedEXB7DUtBiUEgRn1ihMnpnfsYlBPcFArIhjLni5wyp3h70j/VjId45e1aMM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1760476627; c=relaxed/simple;
-	bh=cOc6bdNLU9i1kl8mzGCiKJ+jldix6+oZ7CV/WClwJqo=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rC/6RFqdknFpzVpXM4d4kXWdPfYmAxYDu/ANNtIgTsaFQEC9iggTUBrg/JFYOE3EXH48Ux348rOzPwiwM7WiytOTuSu34qBUDN/gklLlxDYB4Ilqj8SHWQu8PFx+2Kc0+ZB/SdWoENIz9RojtmPFv6LNeyIydgbRyMKP7gHRRcM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=cpUWAhvC; arc=none smtp.client-ip=10.30.226.201
+	bh=/i7aSqN4aWWRt6aoz8xnAbh6lHeBAxTQgGxD3x2T3Ho=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=DBFpQWK/DUtUSKnTw1yL5+yonS46fF1qmJfT+THu7OjxwYmNqQmC+C70BnApOUYEGSykR8afqvz/eCVULaosl5SWzu8LKkPDdda9vKqfbTfSFuovAvtFcr03KWtXQBSbs7cILRhLKXuS3MpJbf2MM8JUhMjgby7bKi0vvGqRHLM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DRpmXK4v; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="cpUWAhvC"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0E97BC4CEE7;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DRpmXK4v"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 84D84C4CEF9;
 	Tue, 14 Oct 2025 21:17:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=k20201202; t=1760476626;
-	bh=cOc6bdNLU9i1kl8mzGCiKJ+jldix6+oZ7CV/WClwJqo=;
-	h=From:To:Cc:Subject:Date:From;
-	b=cpUWAhvC3bDC+QlkoVJnYrvPLkLW0Uuru0OsZnGj71/8Xecv9pEiHIDpEdGMy+DSZ
-	 YfhI0xW2aubrcjahHP/Fh9HopGN2mzct7mxfmsLCS8KTmeQPdqy9fOYlJRqazOt45R
-	 KndYRES24haadfwNtSOwSqboOdHuFMWQ9YgfrcEY4WfdD3HlxDSkT5VaQsforx71B8
-	 b3TOG0Li2+1GmyQJE56+NoLO5D0qatALdnMmtMWmjC/dUEeiP9Wrec189hERNsFw/K
-	 dpERMSaNbYEkG5R5sBI+8HMA+I3NvHA1KJ3qwJuMoSW6OtUEt1N2pg1cptOXgd65z3
-	 RWVkEcQW+TD6g==
+	bh=/i7aSqN4aWWRt6aoz8xnAbh6lHeBAxTQgGxD3x2T3Ho=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=DRpmXK4vYJ6PD4sPnjY3u5+vFc0x3g6Lh8TdAGalSovPaLf/qm3L1YfHTZQXk1iR0
+	 R5kLu+1MJXJH/FoaT3TtuXTHXisAcvDQwIsIZsd8uOAq2HTuyAUxbFs/X9OWtYtv4p
+	 /FBLNUZ45sdQz/9mUk474MTiiXMPYwK9skqY3QZdV0TTrmswAWe3HNabZ06WjKxixZ
+	 75Ig9aHaw2VGfH3vlxGMfF5JFrYlpKYWDW8tLmZofjbB7tClXUN8hCz+3nbCqcCUXs
+	 I5DFupsBW7rgUfdGqIUkbttyq9+D8fe+HHvIH1mm8Ks1eONYzL5sudoky+/9B4D4M7
+	 8Qcc1F+UO4WdQ==
 From: Eric Biggers <ebiggers@kernel.org>
 To: dm-devel@lists.linux.dev,
 	Alasdair Kergon <agk@redhat.com>,
@@ -33,10 +34,12 @@ To: dm-devel@lists.linux.dev,
 Cc: linux-crypto@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 0/4] Optimize dm-verity using 2-way interleaved SHA-256 hashing
-Date: Tue, 14 Oct 2025 14:16:53 -0700
-Message-ID: <20251014211657.113603-1-ebiggers@kernel.org>
+Subject: [PATCH 1/4] dm-verity: remove log message with shash driver name
+Date: Tue, 14 Oct 2025 14:16:54 -0700
+Message-ID: <20251014211657.113603-2-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.51.0
+In-Reply-To: <20251014211657.113603-1-ebiggers@kernel.org>
+References: <20251014211657.113603-1-ebiggers@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -45,35 +48,43 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This series makes dm-verity take advantage of the 2-way interleaved
-SHA-256 hashing code that was added in 6.18.  fsverity already does
-this; this brings the same optimization to dm-verity.  This increases
-SHA-256 hashing throughput by up to 98% on x86_64 and 70% on arm64.
+I added this log message in commit bbf6a566920e ("dm verity: log the
+hash algorithm implementation"), to help people debug issues where they
+forgot to enable the architecture-optimized SHA-256 code in their
+kconfig or accidentally enabled a slow hardware offload driver (such as
+QCE) that overrode the faster CPU-accelerated code.  However:
 
-To make this possible, this series makes dm-verity use the SHA-256
-library when the hash algorithm is SHA-256 (which it usually is).  That
-actually provides a ~2% performance improvement by itself, in addition
-to the larger improvement from interleaved hashing on x86_64 and arm64.
+- The crypto layer now always enables the architecture-optimized SHA-1,
+  SHA-256, and SHA-512 code.  Moreover, for simplicity the driver name
+  is now fixed at "sha1-lib", "sha256-lib", etc.
 
-As usual, I verified that 'verity-compat-test' still passes.
+- dm-verity now uses crypto_shash instead of crypto_ahash, preventing
+  the mistake of accidentally using a slow driver such as QCE.
 
-This series is targeting linux-dm/for-next.
+Therefore, this log message generally no longer provides useful
+information.  Remove it.
 
-Eric Biggers (4):
-  dm-verity: remove log message with shash driver name
-  dm-verity: use SHA-256 library for SHA-256
-  dm-verity: reduce scope of real and wanted digests
-  dm-verity: use 2-way interleaved SHA-256 hashing when supported
+Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+---
+ drivers/md/dm-verity-target.c | 1 -
+ 1 file changed, 1 deletion(-)
 
- drivers/md/Kconfig            |   1 +
- drivers/md/dm-verity-fec.c    |  21 ++--
- drivers/md/dm-verity-fec.h    |   5 +-
- drivers/md/dm-verity-target.c | 203 +++++++++++++++++++++++++---------
- drivers/md/dm-verity.h        |  52 +++++----
- 5 files changed, 196 insertions(+), 86 deletions(-)
-
-
-base-commit: 3a8660878839faadb4f1a6dd72c3179c1df56787
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 66a00a8ccb398..20ddf560d22e3 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1250,11 +1250,10 @@ static int verity_setup_hash_alg(struct dm_verity *v, const char *alg_name)
+ 		ti->error = "Cannot initialize hash function";
+ 		return PTR_ERR(shash);
+ 	}
+ 	v->shash_tfm = shash;
+ 	v->digest_size = crypto_shash_digestsize(shash);
+-	DMINFO("%s using \"%s\"", alg_name, crypto_shash_driver_name(shash));
+ 	if ((1 << v->hash_dev_block_bits) < v->digest_size * 2) {
+ 		ti->error = "Digest size too big";
+ 		return -EINVAL;
+ 	}
+ 	return 0;
 -- 
 2.51.0
 
