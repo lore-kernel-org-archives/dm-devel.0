@@ -1,194 +1,129 @@
-Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com [209.85.208.178])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5657B2638BC
-	for <dm-devel@lists.linux.dev>; Mon, 20 Oct 2025 12:33:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.178
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64DF4225D6
+	for <dm-devel@lists.linux.dev>; Mon, 20 Oct 2025 12:48:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760963637; cv=none; b=JEnzvLw/dKQXXAXQhQQTO4Pdw0vQGbMfrYv11RX3CoQbKbe2NS9FMXoTIe4di9wRdTtL7l9aUjpxCCPacAzEMYf/mZFVwwi+EfZ051D+uZbsdKO1I6nZyX7wUSt8TNldR6lbPt2M6fcpQZISU8eBVHGz4ckLjIUgzp3kRl2p0rU=
+	t=1760964507; cv=none; b=Arf/l3zFI1lu3F0OvdQN93Hy+DQgTzwasADBo1qTPOt6TW3R3/bUN4/Nf1Nzds5MdoC8kLNhUbrOdHogtmGvuQMoMGhea3NogqsEI8p42vNQWubviuA7ymR7HcdxlI+dX5W3wl3W3k0HvgUuaKxmutXn87GsdVTMQTBqO+4WVV0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760963637; c=relaxed/simple;
-	bh=rU8uVYLcF2AhmiLNNzi2LEgzFWs3egZ8KWbc8nmZbuM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=AgiVfqg3WfvrU3hKlUm/4kFEDDyopFKRSyZXZZ7jx88l5OI9DdXVmqAbepYjxainwGfFvT7uUIROclq1FArgLLkJ+nbYt6OrA8wi/An9AZvH9hl1EspkSTuwKY38ra/+T3BD5M1WHSQK75pKJcuDvfNWKtF6rKsQ1BmTFKjcdrQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=l9Ky5NwD; arc=none smtp.client-ip=209.85.208.178
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1760964507; c=relaxed/simple;
+	bh=+qf+TjXxCiR0qhVf7qManTV2DzqIOclaw3kvS4WkbAw=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=m6cBCX3Ph+AM+9ERW2agBaDjuVCL+Faj1dyOTcG+Q/IZxWs1maeOH0JJen+lwhSfoYl9cvcgMS19IN3xbDFKwNyFks0mEgT95L4Zgt/BH/Z4xVezwNMO5oQJuKXbcKXkeK90PmumUhV4bAEnFGG6FFdTXWvdba1RCONGMK0ZQk4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jM6ODrYa; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l9Ky5NwD"
-Received: by mail-lj1-f178.google.com with SMTP id 38308e7fff4ca-3717780ea70so47068921fa.1
-        for <dm-devel@lists.linux.dev>; Mon, 20 Oct 2025 05:33:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1760963633; x=1761568433; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=5NVhDovZUT94TwG8yM18Fjy7iq+ALMqR310W9PkiJtA=;
-        b=l9Ky5NwDy1wqxXhhtpxl5fTBvcqtSFJll2ElhxVip7Zrj9TTKEtmfbnx7d2Kq14fpa
-         yFKEXhTrchFrnTDdafp+TN1tFF2UtIc1eeyMq1AhsCJSyPEAQzm5aUP44V2mM3rIo520
-         TJQNWI4qqh+rHCOKRrUWjcc+NUmJRMFCqFEKI1cqUjkav6wONdWuSYxyqHKm+CSLjzOu
-         4XKp7p1O3VRmaZc99dZUUYaVm5MiRsYS3Il1rGQmRKVH/9OpGKEmkxJZSTUESjL74MLh
-         htjhGJEtLQThfLl1iAAGdSZPuTHtQ4EsbHvJC4WdxBqvGdbdz/M2s/wksShZWeZANtYr
-         kB5w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760963633; x=1761568433;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=5NVhDovZUT94TwG8yM18Fjy7iq+ALMqR310W9PkiJtA=;
-        b=YI8V21SxLDkcsUt3dtYC+fUGvN282yZH9LOgLCFccKnsj1/hGRGhheZftbVGp25bxW
-         bcOpZzrBt4TUel2gH3KkOQbENVDsBF1qt5D0m1OEW9Lb4im36GdqugvLB0sSXk9piUmF
-         Lu1aQJQUoxoeEAIvNW0dBbORkKWfP1j5onJZzAuiX5mMyEGPbxjBB0cY7OT8yul0B/DY
-         QN+V3mT9Zj3H4aoZ3RM7ka61e9nsE1RnQmFvd46yP3LH/Sk0jYNTu7Vpt0G3jvu+ErIN
-         7C3vmsQ42iaHkQhjKv6b0MVrFwsDhk6gbBL6AMQ/cWG3mj5kiF436iEwhoYB/Y2UDrCi
-         DpFQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXAOn3UXmBgnoJRtCy7NWJPjyc+mcWzEue7a1VzavDcGnG5wZy6JBkkwlU01KTtmkPu2Y3XBXizOQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwBooPOIV2/G9WcJQ/Mn+sYMhG0CbgfuT8dlwkgqfanpaw8n+3J
-	fpi0yyhHqoRFEteij3yDLULU3u+ih7QbGJb5AM5DuWLpOFicGZkj9bjI
-X-Gm-Gg: ASbGncsfdeiId1mldmgPqZ7WDvujWR9as+t4vI6EbR3EXw74YdYqGwLA1yGph6pPnvD
-	qaxAbE1ZCVi4goFWhaPSYdZxa06ACkYyhbqRNeC9/bzTO6hx3en2xhv0wIdrbv5l1hYuGBuv7nc
-	fhaRd3vhcO2mw6ifNciw5YbugHZxPqRKFxX03UEYOMO8MEfJHPTGkCn7XNJXrPXVq1QmXFK0BY7
-	VuvkOp8rJjaVfXch3ma72p0aK7zzZlgsJbS/rAflUz3Te+lJG/hSgEHASC6S3zVpmSYDQkt/eTC
-	PhePuDt3c3OZvcRhC8/0Krp5Kmw077L2w76dqQ+l6mLPYYziitPr8oDG8Xapjbg03g5W2TeBrzu
-	ZhfGGj0kHIIc707F1iw2hDI6FQGVHZFIFUzzGpA6UMO47DCkC0dqlwhl5bx8pIuMzSNV0i7yEDZ
-	FdjTVt
-X-Google-Smtp-Source: AGHT+IEHmugvulxBOoF5zYCC89SrkirMs/0QQ7fiUfyd2YWN72j+Jt3IPDQcNBZxXduznnLGhxQC3Q==
-X-Received: by 2002:a2e:9fc9:0:b0:336:72be:3339 with SMTP id 38308e7fff4ca-377979feb62mr45322971fa.28.1760963633075;
-        Mon, 20 Oct 2025 05:33:53 -0700 (PDT)
-Received: from localhost.localdomain ([2001:9b1:d5a0:a500::24b])
-        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-377a90e2555sm20278271fa.0.2025.10.20.05.33.52
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 20 Oct 2025 05:33:52 -0700 (PDT)
-From: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	DMML <dm-devel@lists.linux.dev>
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	Mike Snitzer <snitzer@redhat.com>,
-	Christoph Hellwig <hch@lst.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Uladzislau Rezki <urezki@gmail.com>
-Subject: [PATCH v2] dm-ebs: Mark full buffer dirty even on partial write
-Date: Mon, 20 Oct 2025 14:33:50 +0200
-Message-ID: <20251020123350.2671495-1-urezki@gmail.com>
-X-Mailer: git-send-email 2.47.3
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jM6ODrYa"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1760964504;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=AT1ICbYdC6I6dRAB8zElo0gTfdZGTrpQstLYEHePEfo=;
+	b=jM6ODrYahp70wd54PMjNs+Qzu3uNiG3GDjC3zBgsRGo9RrVEXPP6kkIUPIbB7HiOulBtlg
+	Rk0883LX9rV+9UauzMWR5SFsbnanGfvUAWnyAmD04LQuin6hmJVchcuTHT2DpwiF9LNhaP
+	YUfXHYWqoqpVg/wZ+A5eB5KMzFMdQJ4=
+Received: from mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-693-a5XKjd30OVCMkzi3lUktBA-1; Mon,
+ 20 Oct 2025 08:48:20 -0400
+X-MC-Unique: a5XKjd30OVCMkzi3lUktBA-1
+X-Mimecast-MFC-AGG-ID: a5XKjd30OVCMkzi3lUktBA_1760964499
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-04.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 16C9A19541AA;
+	Mon, 20 Oct 2025 12:48:19 +0000 (UTC)
+Received: from [10.44.32.107] (unknown [10.44.32.107])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 650FA3000218;
+	Mon, 20 Oct 2025 12:48:16 +0000 (UTC)
+Date: Mon, 20 Oct 2025 14:48:13 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
+cc: Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>, 
+    Andrew Morton <akpm@linux-foundation.org>, 
+    Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, 
+    LKML <linux-kernel@vger.kernel.org>
+Subject: [PATCH] dm-bufio: align write boundary on bdev_logical_block_size
+In-Reply-To: <20251020123350.2671495-1-urezki@gmail.com>
+Message-ID: <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com>
+References: <20251020123350.2671495-1-urezki@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-When performing a read-modify-write(RMW) operation, any modification
-to a buffered block must cause the entire buffer to be marked dirty.
 
-Marking only a subrange as dirty is incorrect because the underlying
-device block size(ubs) defines the minimum read/write granularity. A
-lower device can perform I/O only on regions which are fully aligned
-and sized to ubs.
 
-This change ensures that write-back operations always occur in full
-ubs-sized chunks, matching the intended emulation semantics of the
-EBS target.
+On Mon, 20 Oct 2025, Uladzislau Rezki (Sony) wrote:
 
-As for user space visible impact, submitting sub-ubs and misaligned
-I/O for devices which are tuned to ubs sizes only, will reject such
-requests, therefore it can lead to losing data. Example:
+> When performing a read-modify-write(RMW) operation, any modification
+> to a buffered block must cause the entire buffer to be marked dirty.
+> 
+> Marking only a subrange as dirty is incorrect because the underlying
+> device block size(ubs) defines the minimum read/write granularity. A
+> lower device can perform I/O only on regions which are fully aligned
+> and sized to ubs.
 
-1) Create a 8K nvme device in qemu by adding
+Hi
+
+I think it would be better to fix this in dm-bufio, so that other dm-bufio 
+users would also benefit from the fix. Please try this patch - does it fix 
+it?
+
+Mikulas
+
+
+
+From: Mikulas Patocka <mpatocka@redhat.com>
+
+There may be devices with logical block size larger than 4k. Fix
+dm-bufio, so that it will align I/O on logical block size. This commit
+fixes I/O errors on the dm-ebs target on the top of emulated nvme device
+with 8k logical block size created with qemu parameters:
 
 -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
 
-2) Setup dm-ebs to emulate 512B to 8K mapping
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
-urezki@pc638:~/bin$ cat dmsetup.sh
-
-lower=/dev/nvme0n1
-len=$(blockdev --getsz "$lower")
-
-echo "0 $len ebs $lower 0 1 16" | dmsetup create nvme-8k
-urezki@pc638:~/bin$
-
-offset 0, ebs=1 and ubs=16(in sectors).
-
-3) Create an ext4 filesystem(default 4K block size)
-
-urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
-mke2fs 1.47.0 (5-Feb-2023)
-Discarding device blocks: done
-Creating filesystem with 2072576 4k blocks and 518144 inodes
-Filesystem UUID: bd0b6ca6-0506-4e31-86da-8d22c9d50b63
-Superblock backups stored on blocks:
-        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
-
-Allocating group tables: done
-Writing inode tables: done
-Creating journal (16384 blocks): done
-Writing superblocks and filesystem accounting information: mkfs.ext4: Input/output error while writing out and closing file system
-urezki@pc638:~/bin$ dmesg
-
-<snip>
-[ 1618.875449] buffer_io_error: 1028 callbacks suppressed
-[ 1618.875456] Buffer I/O error on dev dm-0, logical block 0, lost async page write
-[ 1618.875527] Buffer I/O error on dev dm-0, logical block 1, lost async page write
-[ 1618.875602] Buffer I/O error on dev dm-0, logical block 2, lost async page write
-[ 1618.875620] Buffer I/O error on dev dm-0, logical block 3, lost async page write
-[ 1618.875639] Buffer I/O error on dev dm-0, logical block 4, lost async page write
-[ 1618.894316] Buffer I/O error on dev dm-0, logical block 5, lost async page write
-[ 1618.894358] Buffer I/O error on dev dm-0, logical block 6, lost async page write
-[ 1618.894380] Buffer I/O error on dev dm-0, logical block 7, lost async page write
-[ 1618.894405] Buffer I/O error on dev dm-0, logical block 8, lost async page write
-[ 1618.894427] Buffer I/O error on dev dm-0, logical block 9, lost async page write
-<snip>
-
-Many I/O errors because the lower 8K device rejects sub-ubs/misaligned
-requests.
-
-with a patch:
-
-urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
-mke2fs 1.47.0 (5-Feb-2023)
-Discarding device blocks: done
-Creating filesystem with 2072576 4k blocks and 518144 inodes
-Filesystem UUID: 9b54f44f-ef55-4bd4-9e40-c8b775a616ac
-Superblock backups stored on blocks:
-        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
-
-Allocating group tables: done
-Writing inode tables: done
-Creating journal (16384 blocks): done
-Writing superblocks and filesystem accounting information: done
-
-urezki@pc638:~/bin$ sudo mount /dev/dm-0 /mnt/
-urezki@pc638:~/bin$ ls -al /mnt/
-total 24
-drwxr-xr-x  3 root root  4096 Oct 17 15:13 .
-drwxr-xr-x 19 root root  4096 Jul 10 19:42 ..
-drwx------  2 root root 16384 Oct 17 15:13 lost+found
-urezki@pc638:~/bin$
-
-After this change: mkfs completes; mount succeeds.
-
-v1 -> v2:
- - reflect a user space visible impact in the commit message.
-
-Signed-off-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
 ---
- drivers/md/dm-ebs-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-bufio.c |    9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-index 6abb31ca9662..b354e74a670e 100644
---- a/drivers/md/dm-ebs-target.c
-+++ b/drivers/md/dm-ebs-target.c
-@@ -103,7 +103,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
- 			} else {
- 				flush_dcache_page(bv->bv_page);
- 				memcpy(ba, pa, cur_len);
--				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
-+				dm_bufio_mark_buffer_dirty(b);
- 			}
+Index: linux-2.6/drivers/md/dm-bufio.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-bufio.c	2025-10-13 21:42:47.000000000 +0200
++++ linux-2.6/drivers/md/dm-bufio.c	2025-10-20 14:40:32.000000000 +0200
+@@ -1374,7 +1374,7 @@ static void submit_io(struct dm_buffer *
+ {
+ 	unsigned int n_sectors;
+ 	sector_t sector;
+-	unsigned int offset, end;
++	unsigned int offset, end, align;
  
- 			dm_bufio_release(b);
--- 
-2.47.3
+ 	b->end_io = end_io;
+ 
+@@ -1388,9 +1388,10 @@ static void submit_io(struct dm_buffer *
+ 			b->c->write_callback(b);
+ 		offset = b->write_start;
+ 		end = b->write_end;
+-		offset &= -DM_BUFIO_WRITE_ALIGN;
+-		end += DM_BUFIO_WRITE_ALIGN - 1;
+-		end &= -DM_BUFIO_WRITE_ALIGN;
++		align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev));
++		offset &= -align;
++		end += align - 1;
++		end &= -align;
+ 		if (unlikely(end > b->c->block_size))
+ 			end = b->c->block_size;
+ 
 
