@@ -1,157 +1,187 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from szxga02-in.huawei.com (szxga02-in.huawei.com [45.249.212.188])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADB8B34B43C
-	for <dm-devel@lists.linux.dev>; Wed, 22 Oct 2025 14:12:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF903183CA6
+	for <dm-devel@lists.linux.dev>; Thu, 23 Oct 2025 01:12:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.188
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761142331; cv=none; b=JFz5pste0BniIwTrbmeObfovim80ffowHLAnq8RW3D2cGdqI6Dg4c0FoBvlzZQZuOeWSuPikaolRDOhTZ+48Yhbo95AIlkaXhS/ALApHvS7IPlKnREDa/bw7yf8rilaanz1f+cTpKTe4SdjKs6h3Mt+xkaDWQ3sj/FfeXNBJgI4=
+	t=1761181946; cv=none; b=nlckw1ccfxeVDVLgI607W7qVqO9yZsJdar/+7N+spApoeOyTLBgkUr29E5DYWUKFg1ZDB+xeBBclNwuW5yVty84lp02B6wBZaLjIC88JEXu/eoAAdx65RosXEuxmhkUrcELp7Lw9+cES7ddETx9s4USkR6Tk5HZmNxSxiOnw70A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761142331; c=relaxed/simple;
-	bh=Sc9A960i0gy6IrMjcasg2sOYXZ+mEfp8kz1Jsm+nUPA=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=DJci1VpCmTj4Zuy/yrprtX/V/bq01b7z3s8IWNrBgkLAruB7n7HdvXyUe0+YbATSus3kgoyGGZhzmas2NrljDRyvrSjV1QfUWfEf3/T72HykarUIKiogrTQIMjvMRk5/hhl6NM8E0ccryT57YFEuUb/wBZuYYh1X+DrhM5lTF6Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=SOCjXIZA; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=VEHD8W9H; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="SOCjXIZA";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="VEHD8W9H"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 75B3A21211;
-	Wed, 22 Oct 2025 14:11:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1761142323; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Sc9A960i0gy6IrMjcasg2sOYXZ+mEfp8kz1Jsm+nUPA=;
-	b=SOCjXIZAyzzoogP7X+MJJdIPr3pVbwjJS3KVdZDUVjRK1HuKmsKrNDne5tLwSm39GA3/WK
-	lwJlVkaXdaouv74l81sIcBqhcbfb7b1cQ3ylTWbP+suv5I9gUj15/tsDYMgKOG3Acc0QWj
-	tLTN92shABcAaWCI/tqW5Myw/RKlQiA=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1761142319; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Sc9A960i0gy6IrMjcasg2sOYXZ+mEfp8kz1Jsm+nUPA=;
-	b=VEHD8W9HzpEMZx+CmHK5pgb38W2j3O3cJovtpVxFDMR5kXDlOkOOMNu92zoTPxeJs92VVC
-	rTBfvUWIHjI4e2UqlTF8tzd/1CzCxpCPWn4TZK6reuT5fKeOt7YYkgghQKVGqYpmxVPdpq
-	48CKfX2+qfTG9LKkJsXYO/RYl7dTVP8=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 48A4E13A29;
-	Wed, 22 Oct 2025 14:11:59 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id R9WtEC/m+Gh/EwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 22 Oct 2025 14:11:59 +0000
-Message-ID: <a186416aa03bb995b2f04fdb47315c1d12a87cab.camel@suse.com>
-Subject: Re: [PATCH] dm: Fix deadlock when reloading a multipath table
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Bart Van Assche <bart.vanassche@sandisk.com>, Mikulas Patocka
-	 <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	dm-devel@lists.linux.dev, linux-block@vger.kernel.org
-Date: Wed, 22 Oct 2025 16:11:58 +0200
-In-Reply-To: <aPfcAfn6gsgNLwC7@redhat.com>
-References: <20251009030431.2895495-1-bmarzins@redhat.com>
-	 <ed792d72a1ca47937631af6e12098d9a20626bcf.camel@suse.com>
-	 <aOg2Yul2Di4Ymom-@redhat.com>
-	 <e407b683dceb9516b54cede5624baa399f8fa638.camel@suse.com>
-	 <aPfcAfn6gsgNLwC7@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.1 
+	s=arc-20240116; t=1761181946; c=relaxed/simple;
+	bh=O64Yq66qJDpc8J8LeSuQwNaK+3idPMz8P2/JjKWHg5s=;
+	h=Message-ID:Date:MIME-Version:Subject:To:CC:References:From:
+	 In-Reply-To:Content-Type; b=QztSii/qKZjSn8BknP/JgEsHrbgCb98SmP55JKFqQP0yIQS3EUl0GyMjlPFqI3o1/gu8EVjYhZcG17fBUTKjUR63hvLTegb7TqnAMdUBO+Jzls6KOTbmR8gIm1YNm4i6f/gFohWxLetAP4aUm+KGUio7atan11kJICeC/pnrT94=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=45.249.212.188
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+Received: from mail.maildlp.com (unknown [172.19.88.194])
+	by szxga02-in.huawei.com (SkyGuard) with ESMTP id 4csSfQ2nhGznfp4;
+	Thu, 23 Oct 2025 09:11:26 +0800 (CST)
+Received: from kwepemj200013.china.huawei.com (unknown [7.202.194.25])
+	by mail.maildlp.com (Postfix) with ESMTPS id 790891402D0;
+	Thu, 23 Oct 2025 09:12:14 +0800 (CST)
+Received: from [10.174.179.155] (10.174.179.155) by
+ kwepemj200013.china.huawei.com (7.202.194.25) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1544.11; Thu, 23 Oct 2025 09:12:13 +0800
+Message-ID: <c8d7ae0f-bddd-41ff-bd93-ad340c8a20bc@huawei.com>
+Date: Thu, 23 Oct 2025 09:12:13 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[6];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid]
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
+User-Agent: =?UTF-8?B?TW96aWxsYSBUaHVuZGVyYmlyZCDmtYvor5XniYg=?=
+Subject: Re: [PATCH 5.10.y] dm: fix NULL pointer dereference in __dm_suspend()
+To: Greg KH <gregkh@linuxfoundation.org>
+CC: Sasha Levin <sashal@kernel.org>, <stable@vger.kernel.org>, Zheng Qixing
+	<zhengqixing@huawei.com>, Mikulas Patocka <mpatocka@redhat.com>,
+	<dm-devel@lists.linux.dev>, yangerkun <yangerkun@huawei.com>, "zhangyi (F)"
+	<yi.zhang@huawei.com>, Hou Tao <houtao1@huawei.com>
+References: <2025101316-favored-pulsate-a811@gregkh>
+ <20251014030334.3868139-1-sashal@kernel.org>
+ <cdadc001-3c0e-4152-8b05-08eb79fb528b@huawei.com>
+ <2025102252-abrasive-glamorous-465b@gregkh>
+ <1767bec2-b660-42b2-b828-b221e0896eba@huawei.com>
+ <2025102212-pouring-embellish-95fc@gregkh>
+ <28a7f62d-ae81-4629-864c-a0c1ecf98ee9@huawei.com>
+ <2025102231-outlying-lapel-6159@gregkh>
+From: Li Lingfeng <lilingfeng3@huawei.com>
+In-Reply-To: <2025102231-outlying-lapel-6159@gregkh>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: kwepems100001.china.huawei.com (7.221.188.238) To
+ kwepemj200013.china.huawei.com (7.202.194.25)
 
-On Tue, 2025-10-21 at 15:16 -0400, Benjamin Marzinski wrote:
-> On Fri, Oct 10, 2025 at 12:19:51PM +0200, Martin Wilck wrote:
-> > On Thu, 2025-10-09 at 18:25 -0400, Benjamin Marzinski wrote:
-> >=20
-> >=20
-> > > I did check to see if holding it for the entire suspend would
-> > > cause
-> > > issues, but I didn't see any case where it would. If I missed a=20
-> > > case where __noflush_suspending() should only return true if we
-> > > are
-> > > actually in the process of suspending, I can easily update that
-> > > function to do that.
-> >=20
-> > If this is necessary, I agree that the flag an related function
-> > should
-> > be renamed. But there are already generic DM flags to indicate that
-> > a
-> > queue is suspend*ed*. Perhaps, instead of changing the semantics of
-> > DMF_NOFLUSH_SUSPENDING, it would make more sense to test=C2=A0
-> >=20
-> > =C2=A0 (__noflush_suspending || test_bit(DMF_BLOCK_IO_FOR_SUSPEND)
-> >=20
-> > in dm_swap_table()?
->=20
-> Won't we ALWAYS be suspended when we are in dm_swap_table()? We do
-> need
-> to refresh the limits in some cases (the cases where multipath-tools
-> currently reloads the table without setting noflush). What we need to
-> know is "is this table swap happening in a noflush suspend, where
-> userspace understands that it can't modify the device table in a way
-> that would change the limits". For multipath, this is almost always
-> the
-> case.=20
 
-Ok, getting it now. The semantics of the flag are changed from "device
-is noflush-suspending" to "device is either noflush-suspending or
-noflush-suspended". It isn't easy to express this in a simple flag
-name. I'm fine with not renaming the flag, if a comment is added that
-explains the semantics clearly.
+在 2025/10/22 17:20, Greg KH 写道:
+> On Wed, Oct 22, 2025 at 05:10:36PM +0800, Li Lingfeng wrote:
+>> 在 2025/10/22 16:45, Greg KH 写道:
+>>> On Wed, Oct 22, 2025 at 04:21:33PM +0800, Li Lingfeng wrote:
+>>>> Hi,
+>>>>
+>>>> 在 2025/10/22 16:10, Greg KH 写道:
+>>>>> On Wed, Oct 22, 2025 at 04:01:04PM +0800, Li Lingfeng wrote:
+>>>>>> Hi,
+>>>>>>
+>>>>>> 在 2025/10/14 11:03, Sasha Levin 写道:
+>>>>>>> From: Zheng Qixing <zhengqixing@huawei.com>
+>>>>>>>
+>>>>>>> [ Upstream commit 8d33a030c566e1f105cd5bf27f37940b6367f3be ]
+>>>>>>>
+>>>>>>> There is a race condition between dm device suspend and table load that
+>>>>>>> can lead to null pointer dereference. The issue occurs when suspend is
+>>>>>>> invoked before table load completes:
+>>>>>>>
+>>>>>>> BUG: kernel NULL pointer dereference, address: 0000000000000054
+>>>>>>> Oops: 0000 [#1] PREEMPT SMP PTI
+>>>>>>> CPU: 6 PID: 6798 Comm: dmsetup Not tainted 6.6.0-g7e52f5f0ca9b #62
+>>>>>>> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.16.1-2.fc37 04/01/2014
+>>>>>>> RIP: 0010:blk_mq_wait_quiesce_done+0x0/0x50
+>>>>>>> Call Trace:
+>>>>>>>       <TASK>
+>>>>>>>       blk_mq_quiesce_queue+0x2c/0x50
+>>>>>>>       dm_stop_queue+0xd/0x20
+>>>>>>>       __dm_suspend+0x130/0x330
+>>>>>>>       dm_suspend+0x11a/0x180
+>>>>>>>       dev_suspend+0x27e/0x560
+>>>>>>>       ctl_ioctl+0x4cf/0x850
+>>>>>>>       dm_ctl_ioctl+0xd/0x20
+>>>>>>>       vfs_ioctl+0x1d/0x50
+>>>>>>>       __se_sys_ioctl+0x9b/0xc0
+>>>>>>>       __x64_sys_ioctl+0x19/0x30
+>>>>>>>       x64_sys_call+0x2c4a/0x4620
+>>>>>>>       do_syscall_64+0x9e/0x1b0
+>>>>>>>
+>>>>>>> The issue can be triggered as below:
+>>>>>>>
+>>>>>>> T1 						T2
+>>>>>>> dm_suspend					table_load
+>>>>>>> __dm_suspend					dm_setup_md_queue
+>>>>>>> 						dm_mq_init_request_queue
+>>>>>>> 						blk_mq_init_allocated_queue
+>>>>>>> 						=> q->mq_ops = set->ops; (1)
+>>>>>>> dm_stop_queue / dm_wait_for_completion
+>>>>>>> => q->tag_set NULL pointer!	(2)
+>>>>>>> 						=> q->tag_set = set; (3)
+>>>>>>>
+>>>>>>> Fix this by checking if a valid table (map) exists before performing
+>>>>>>> request-based suspend and waiting for target I/O. When map is NULL,
+>>>>>>> skip these table-dependent suspend steps.
+>>>>>>>
+>>>>>>> Even when map is NULL, no I/O can reach any target because there is
+>>>>>>> no table loaded; I/O submitted in this state will fail early in the
+>>>>>>> DM layer. Skipping the table-dependent suspend logic in this case
+>>>>>>> is safe and avoids NULL pointer dereferences.
+>>>>>>>
+>>>>>>> Fixes: c4576aed8d85 ("dm: fix request-based dm's use of dm_wait_for_completion")
+>>>>>>> Cc: stable@vger.kernel.org
+>>>>>>> Signed-off-by: Zheng Qixing <zhengqixing@huawei.com>
+>>>>>>> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>>>>>>> [ omitted DMF_QUEUE_STOPPED flag setting and braces absent in 5.15 ]
+>>>>>>> Signed-off-by: Sasha Levin <sashal@kernel.org>
+>>>>>>> ---
+>>>>>>>      drivers/md/dm.c | 7 ++++---
+>>>>>>>      1 file changed, 4 insertions(+), 3 deletions(-)
+>>>>>>>
+>>>>>>> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+>>>>>>> index 0868358a7a8d2..b51281ce15d4c 100644
+>>>>>>> --- a/drivers/md/dm.c
+>>>>>>> +++ b/drivers/md/dm.c
+>>>>>>> @@ -2457,7 +2457,7 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+>>>>>>>      {
+>>>>>>>      	bool do_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
+>>>>>>>      	bool noflush = suspend_flags & DM_SUSPEND_NOFLUSH_FLAG;
+>>>>>>> -	int r;
+>>>>>>> +	int r = 0;
+>>>>>>>      	lockdep_assert_held(&md->suspend_lock);
+>>>>>>> @@ -2509,7 +2509,7 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+>>>>>>>      	 * Stop md->queue before flushing md->wq in case request-based
+>>>>>>>      	 * dm defers requests to md->wq from md->queue.
+>>>>>>>      	 */
+>>>>>>> -	if (dm_request_based(md))
+>>>>>>> +	if (map && dm_request_based(md))
+>>>>>>>      		dm_stop_queue(md->queue);
+>>>>>> It seems that before commit 80bd4a7aab4c ("blk-mq: move the srcu_struct
+>>>>>> used for quiescing to the tagset") was merged, blk_mq_wait_quiesce_done()
+>>>>>> would not attempt to access q->tag_set, so in dm_stop_queue() this kind
+>>>>>> of race condition would not cause a null pointer dereference. The change
+>>>>>> may not be necessary for 5.10, but adding it doesn’t appear to cause any
+>>>>>> issues either.
+>>>>>>>      	flush_workqueue(md->wq);
+>>>>>>> @@ -2519,7 +2519,8 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
+>>>>>>>      	 * We call dm_wait_for_completion to wait for all existing requests
+>>>>>>>      	 * to finish.
+>>>>>>>      	 */
+>>>>>>> -	r = dm_wait_for_completion(md, task_state);
+>>>>>>> +	if (map)
+>>>>>>> +		r = dm_wait_for_completion(md, task_state);
+>>>>>> The fix tag c4576aed8d85 ("dm: fix request-based dm's use of
+>>>>>> dm_wait_for_completion") seems to correspond to the modification of
+>>>>>> dm_wait_for_completion().
+>>>>>>>      	if (!r)
+>>>>>>>      		set_bit(dmf_suspended_flag, &md->flags);
+>>>>>> Perhaps adding another fix tag would be more appropriate?
+>>>>> Those tags come directly from the original commit.
+>>>> Thanks for the clarification. Since the patch has already been merged into
+>>>> the mainline tree, we can't update the commit there. I was just wondering
+>>>> if it would be acceptable to add an additional “Fixes” tag when applying
+>>>> it to the stable branch, before merging.
+>>> I can, if needed, can you please provide that line?
+>> Fixes: 80bd4a7aab4c ("blk-mq: move the srcu_struct used for quiescing to the
+>> tagset")
+> This is odd, that is a 6.2 commit, yet this is being asked to be added
+> to 5.10.y.  So what help is this going to provide?
+>
+> confused,
+>
+> greg k-h
+Apologies, I didn't notice the version of this patch. Indeed, this patch
+was not included in 5.10, and 5.10 is not affected by this issue. Perhaps
+we could add the new fix tag to the stable branch patches starting from 
+6.2?
 
-> >=20
-> > I find Bart's approach very attractive; freezing might not be
-> > necessary
-> > at all in that case. We'dd just need to avoid a race where paths
-> > get
-> > reinstated while the operation that would normally have required a
-> > freeze is ongoing.
->=20
-> I agree. Even just the timing out of freezes, his
-> "[PATCH 2/3] block: Restrict the duration of sysfs attribute changes"
-> would be enough to keep this from deadlocking the system.
->=20
+Thanks,
+Lingfeng
 
-OK, let's see how it goes. Given your explanations, I'm ok with your
-patch, too.
-
-Martin
