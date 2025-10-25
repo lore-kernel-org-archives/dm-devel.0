@@ -1,109 +1,163 @@
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0F13267714
-	for <dm-devel@lists.linux.dev>; Sat, 25 Oct 2025 05:26:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A764E2580F2;
+	Sat, 25 Oct 2025 16:17:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761370008; cv=none; b=JxUt55EWeY3uIQta0ez6Xj5ui3Srqg4GGeJkOHozn1I4QUPHilMi6oO318ZVUoBP4eRWIPm45PBwpepYEcHYIslYDcZdTRsAa0iwz8ez8rnWoIIqTgGdiZrj4xL/MNYVOa/tEk+tuqZj+y1admS4EnCNVaxn5JOrCqxfBXuZIzk=
+	t=1761409031; cv=none; b=jxLYrFTKcshRdbJKf569jOvCHl/DGuN19ZfwjgQnh7ArJgxjfWCr1sH01KCTa+VHqfO2wRIl94ht/EREhXBxihtF3HbAC2R91ts0noxylayrQRe1w8SQT4YmA8Y448No0D7GPn5hNnnq99IVNkSztN/AbHtTtZEZfBDvQ64AeoY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761370008; c=relaxed/simple;
-	bh=/zQwfhMEJhTOa5/FV1euV1Dku1nFTDlTsbnBQjlqjDQ=;
+	s=arc-20240116; t=1761409031; c=relaxed/simple;
+	bh=bsvbG9dLqg+qAvdA5HwP2X+E8jus+zRuRiICPdAvgd8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GtO/NLMGHzvXqAruYTjMXfrJP/xzT2AXafzYAT4u/pVfXsiTWqIiTvt6VZJ7uebGuIiBU1ixR4ft5LCWpUIUD4upGAkaBU1Psq4i5h/UGWzCq/lfncz3Yuzmxf1k97DBtW0fQQPihuN6rTY1MzPuUVXktwjHGMD4MUuDqc4t5SE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JP9LRKrF; arc=none smtp.client-ip=209.85.208.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 MIME-Version:Content-Type; b=PeYM++fcx84SzR/6b8omh/5EGMLeCT2wu5xqUv1vKsV0cXzuBC1qqBvs7ycDdjEqODoP6P39zXGxTtHzoWjbEox+Oo0maZ32cxGqSYH32hnhCR+bdv6G000ERvVui/RWgdBK7CQLnlzxpMxqRHxXfr9LLOnX59FkRQqI3kAVlUc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=jpSj6+xe; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JP9LRKrF"
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-63c31c20b64so4945460a12.1
-        for <dm-devel@lists.linux.dev>; Fri, 24 Oct 2025 22:26:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1761370005; x=1761974805; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=mV8buuSZQP0rHOq5S4b8K+cOmbjRvDVQwA71gPDHBAE=;
-        b=JP9LRKrFUu+tsGy0esuaoYE2yDegJdOOwqNi1CDdQQ+sC3zBYEe+PUXzP3Vq7o9lX4
-         L/8wQ5+hbiYrm/UdbSQKOu8NHvjAcZbBEs3JqR5YABN/yLjgacjxFaAnowTrabzgY3IX
-         0jd2o0va91UKiExAE36Ffl/9UDuJfCbF7LxubR9tR9eKsuCGByLTk45U9VGQ/o0BjLE2
-         y0K9BYqkt20w1inCU/raYVo+66zIjlhX8lP/lJt+pN6X6uRxA5orgk3ROhh4oQSUZfyJ
-         WjsoxCxlKUMwAjD1uxv95K4/L8VW5OLM0peMgETqXOFgGqzj/AVAgth6Pz7Vy4RK5w4b
-         PX2Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1761370005; x=1761974805;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=mV8buuSZQP0rHOq5S4b8K+cOmbjRvDVQwA71gPDHBAE=;
-        b=AHpx//uIFclRkcdS/Tq0o1NuJSn+NKwer7YF5s2vt+Y9kFcIjKLshhz7l/uhalwvwW
-         decgeDUtQvbPXdYbB7QG9gqenUyBYuiOC0vQrocBxIri3aGp4icwOJ3pjKntltbPoosz
-         2SUiPz5VYu0Y/rDTK1qpE4tehQfA1HexuaEH0jKOhckzBX76lWJAyL8h7S+AaCThWSCX
-         WlkMx4BTCUR8C6zqDiXoXL2i3nplBjHzYJ/XRXG8jY0aOCKpi70UvlHMdYc/fhf2athU
-         6PYKNyzf2ui1Ue0xt1C5MAbFrWd780wD53hlEHMgKWkUT4SFeHPW6u3h2Om36Y/LGnlB
-         yYXg==
-X-Forwarded-Encrypted: i=1; AJvYcCWSoUOKsXt5FvxkRjaDV9oE/rK9/GZ/DMqiwspIn87GdXLvNjcF7Gpcak+zYbljIUAV4JeU9uvEUw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyDYhvgETvyZNf47qn44hxjxKlyVR5I+bXmNh8LpG2LOjPew7OK
-	46Eeh8PyXeDNEBiql+38hlcpY6EO4ykHvMkxNL5iZFNtPH7JDCBkJCUM
-X-Gm-Gg: ASbGncvQeuhPb4+9UBs8/9sr6EjkJkx5f4Qu4RHdUSDFvAzyiyJmgiCXVGxG5p9y0TE
-	xRIJsn17+bxj1+o6gjY1WtP+kq4WozxLIbL88w2uK+51/oC6MlrArn/1/5g0PF6TClRQysoASvE
-	xZt9ePc8xo51IajXlFLum8RC7GAYlqll6X6wGV/y7RlvYpIjCR3Tr0jBQ6qBIAwupiSl/e3b9R4
-	WMFX/Yn5JJbOfO3eaoIYJKhRd0Y221bDE6W0QCoWVrc9RnwLNIk7N7Md0kacfMyDCKDy0t03vis
-	TQrYnrSl9NjXpEGeGjuenLtvav657aVfTQ8VcmCl9ILjjyxIAsG8tJK6C1/WDvlz022U1Xg+CXS
-	tGP6olpp8xANJtO6zyg3I9+tY/oHwzjT2gPUsYOZOX1QM4XEbcrLccMCQUXna0qjnPoI0FhXmHX
-	41B5l6UMWdOT8=
-X-Google-Smtp-Source: AGHT+IHk4JGeekekahtUg2k/EhAC9kyrxVTGjCsIExfHrDtgIcN62P8FCtHZWZXypDamfyJkpyvf/Q==
-X-Received: by 2002:a05:6402:40d5:b0:628:5b8c:64b7 with SMTP id 4fb4d7f45d1cf-63c1f64ec00mr33191598a12.6.1761370005212;
-        Fri, 24 Oct 2025 22:26:45 -0700 (PDT)
-Received: from localhost ([212.73.77.104])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-63e7ef96105sm880960a12.19.2025.10.24.22.26.42
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 24 Oct 2025 22:26:44 -0700 (PDT)
-From: Askar Safin <safinaskar@gmail.com>
-To: safinaskar@gmail.com
-Cc: Dell.Client.Kernel@dell.com,
-	brauner@kernel.org,
-	dm-devel@lists.linux.dev,
-	ebiggers@kernel.org,
-	gmazyland@gmail.com,
-	kix@kix.es,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-crypto@vger.kernel.org,
-	linux-lvm@lists.linux.dev,
-	linux-mm@kvack.org,
-	linux-pm@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	lvm-devel@lists.linux.dev,
-	mzxreary@0pointer.de,
-	nphamcs@gmail.com,
-	pavel@ucw.cz,
-	rafael@kernel.org,
-	ryncsn@gmail.com,
-	torvalds@linux-foundation.org
-Subject: Re: dm bug: hibernate to swap located on dm-integrity doesn't work (how to get data redundancy for swap?)
-Date: Sat, 25 Oct 2025 08:26:37 +0300
-Message-ID: <20251025052637.422902-1-safinaskar@gmail.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20251024163142.376903-1-safinaskar@gmail.com>
-References: <20251024163142.376903-1-safinaskar@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="jpSj6+xe"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3F087C4CEF5;
+	Sat, 25 Oct 2025 16:17:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1761409031;
+	bh=bsvbG9dLqg+qAvdA5HwP2X+E8jus+zRuRiICPdAvgd8=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=jpSj6+xeLhK1VfY3RWyr5yQyTw8TcQoDXnMoCmuZRQzNLgqMWvOb/LLQFdMVISWzn
+	 DOnLPEA2dwZ6n5coTzVT/bpgk82G9l1eVz3npCf/Sg/mn08YSxlWZRbrSi9cA1o9b8
+	 bxxdp2HX33UEN1Qfa/EpLVg3OvBEe1qx0gGVs0FZH2Lgde+FHJJYqzlBpftrnIf7Bq
+	 VopMYixGXKI+HC37sMaOIXQ6UpQ8pIIA+K5FwFfF9S+Eb4vsHSJbNDUkADb9jUszKq
+	 o2O8gbRglK/MHwXvSRmKnWiqrkPJgcy7ftG3SZgWc09m0rnbh0kKW867WOjQLPf9mI
+	 A1X8pabXTlgfw==
+From: Sasha Levin <sashal@kernel.org>
+To: patches@lists.linux.dev,
+	stable@vger.kernel.org
+Cc: Christoph Hellwig <hch@lst.de>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Sasha Levin <sashal@kernel.org>,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	dm-devel@lists.linux.dev
+Subject: [PATCH AUTOSEL 6.17-6.12] dm error: mark as DM_TARGET_PASSES_INTEGRITY
+Date: Sat, 25 Oct 2025 11:56:48 -0400
+Message-ID: <20251025160905.3857885-177-sashal@kernel.org>
+X-Mailer: git-send-email 2.51.0
+In-Reply-To: <20251025160905.3857885-1-sashal@kernel.org>
+References: <20251025160905.3857885-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-stable: review
+X-Patchwork-Hint: Ignore
+X-stable-base: Linux 6.17.5
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Askar Safin <safinaskar@gmail.com>:
-> Here is output of this script on master:
-> https://zerobin.net/?68ef6601ab203a11#7zBZ44AaVKmvRq161MJaOXIXY/5Hiv+hRUxWoqyZ7uE=
-[...]
-> Also, you will find backtrace in logs above. Disregard it. I think this
-> is just some master bug, which is unrelated to our dm-integrity bug.
+From: Christoph Hellwig <hch@lst.de>
 
-That WARNING in logs is unrelated bug, which happens always when I hibernate.
-I reported it here: https://lore.kernel.org/regressions/20251025050812.421905-1-safinaskar@gmail.com/
+[ Upstream commit 499cbe0f2fb0641cf07a1a8ac9f7317674295fea ]
 
+Mark dm error as DM_TARGET_PASSES_INTEGRITY so that it can be stacked on
+top of PI capable devices.  The claim is strictly speaking as lie as dm
+error fails all I/O and doesn't pass anything on, but doing the same for
+integrity I/O work just fine :)
+
+This helps to make about two dozen xfstests test cases pass on PI capable
+devices.
+
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+
+LLM Generated explanations, may be completely bogus:
+
+YES
+
+- What changes: The patch adds `DM_TARGET_PASSES_INTEGRITY` to the error
+  target’s feature bits, so the `error` target advertises that it
+  “passes integrity” (even though it kills all I/O). In the upstream
+  diff this is the sole functional change: `drivers/md/dm-target.c`
+  updates `.features` to include `DM_TARGET_PASSES_INTEGRITY` alongside
+  existing flags.
+  - Upstream change site: drivers/md/dm-target.c (error target
+    `.features` line).
+  - In stable trees like v5.4, the analogous site is `drivers/md/dm-
+    target.c:150`, where `.features = DM_TARGET_WILDCARD` currently
+    lacks the integrity pass-through bit.
+
+- Why it matters: Device-mapper only allows integrity-enabled I/O to be
+  cloned/mapped through a target if it either implements integrity
+  itself or passes integrity through:
+  - Clone-path gate: drivers/md/dm.c:1369–1376. If a bio has integrity
+    and the target does not have `DM_TARGET_INTEGRITY` or
+    `DM_TARGET_PASSES_INTEGRITY`, `clone_bio()` returns `-EIO`, failing
+    the I/O.
+  - Table registration gate: drivers/md/dm-table.c:1207 requires all
+    targets in the table to pass integrity for the DM device to register
+    an integrity profile; otherwise integrity stacking is disabled for
+    the mapped device.
+  - As a result, today stacking `dm-error` atop a PI-capable device can
+    fail or silently disable integrity, which breaks real workloads and,
+    as the commit notes, about two dozen xfstests on PI devices.
+
+- Correctness and safety: Marking the `error` target as “passes
+  integrity” unblocks the two integrity gates above without changing the
+  target’s behavior for data:
+  - `io_err_map()` still returns `DM_MAPIO_KILL` (drivers/md/dm-
+    target.c), so the request never reaches lower devices.
+  - When integrity is present, the DM core will clone the integrity
+    payload (drivers/md/dm.c:1369–1398) and then, because the target
+    kills the I/O, `free_tio()` will `bio_put()` the clone, freeing the
+    integrity payload (drivers/md/dm.c:633–647). No leaks, no functional
+    change in outcomes (I/O still fails with error), only removal of
+    spurious integrity gating.
+  - Other simple pass-through targets already set this flag (e.g., `dm-
+    linear`, `dm-mpath`, `dm-stripe`, `dm-delay`): drivers/md/dm-
+    linear.c:220, drivers/md/dm-mpath.c:2009, drivers/md/dm-
+    stripe.c:490, drivers/md/dm-delay.c:362. Aligning `dm-error`
+    improves consistency.
+
+- Scope and risk:
+  - Minimal, single-bit feature change, confined to the `dm-error`
+    target.
+  - No architectural changes; no user-visible behavior change except
+    allowing integrity-enabled stacking where it previously errored or
+    disabled integrity.
+  - Security neutral; performance impact negligible (a short-lived
+    integrity clone that is immediately freed on kill).
+
+- Backport notes:
+  - The feature bit `DM_TARGET_PASSES_INTEGRITY` exists in stable series
+    (include/linux/device-mapper.h:241–242), and the `error` target
+    currently lacks it (drivers/md/dm-target.c:150 in v5.4).
+  - Upstream diff also shows a `.version` bump and additional callbacks
+    in newer kernels; for stable backports you can keep the version as-
+    is and only add the feature bit. The functional fix is just the
+    feature addition.
+  - No dependencies on other recent changes.
+
+Given it fixes real failures with PI-capable devices, is tiny and self-
+contained, and aligns `dm-error` with other DM targets’ integrity
+behavior, this is a good candidate for stable backport.
+
+ drivers/md/dm-target.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 2af5a9514c05e..8fede41adec00 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -263,7 +263,8 @@ static long io_err_dax_direct_access(struct dm_target *ti, pgoff_t pgoff,
+ static struct target_type error_target = {
+ 	.name = "error",
+ 	.version = {1, 7, 0},
+-	.features = DM_TARGET_WILDCARD | DM_TARGET_ZONED_HM,
++	.features = DM_TARGET_WILDCARD | DM_TARGET_ZONED_HM |
++		DM_TARGET_PASSES_INTEGRITY,
+ 	.ctr  = io_err_ctr,
+ 	.dtr  = io_err_dtr,
+ 	.map  = io_err_map,
 -- 
-Askar Safin
+2.51.0
+
