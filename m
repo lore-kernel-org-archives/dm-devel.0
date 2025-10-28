@@ -1,169 +1,159 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-lj1-f173.google.com (mail-lj1-f173.google.com [209.85.208.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90D6E2E8B84
-	for <dm-devel@lists.linux.dev>; Mon, 27 Oct 2025 08:42:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A0282DF148
+	for <dm-devel@lists.linux.dev>; Tue, 28 Oct 2025 08:47:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761554552; cv=none; b=U0gVPpE9aJzfZGNTol/MePUfKrEwUQdPfWrBxcxKvdOqtZrYt4gB3ZA6cagyoBjf3D84izDeuCA8zKZjO9+gOLtHD7zouCRkD4dWrNuUAjwrbQgTD0K2XzXcpDGBHEDwuyBVyRO6ZcBqq/QgjSl7ZtPLSeWCj1HFRbHjfoCXuxU=
+	t=1761641267; cv=none; b=Cci3uAf/36iMCu+148b+zMHQy+8JFnMdjdy+zvyM8JJ6qmhkMWnUtcqJqVs/vFuieLXk+OeZTHmN5uo//79W71+rGzD8PtzguRqyR6s6N8v6rZ2AF1MnMYghEB4AK7wNj4J+7F+auPaP5YcEwihBYU4K2e5FKTPZyvPrJ6NvnYU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761554552; c=relaxed/simple;
-	bh=UG8pE67BLGZgv3QifxWbYYEqvT3PKB5usDKrFSSOST8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=P4BJfC8oQM2DxJRbqPYLBPZ8C1OfGLrGR8xEW4FPqGvjGCsaL4N/YSnH9V4Cix2JHfkMRZL7/Z23YD83SxhMF5EiVUJGiutHWNXJglf2EP8g1feYvSV2j+x1EtuEuTp1MPLn47bkNXWzK/wSt7qVO9aJUvtS3B6y95HikaC50IU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XqjB7C5L; arc=none smtp.client-ip=209.85.218.41
+	s=arc-20240116; t=1761641267; c=relaxed/simple;
+	bh=r9yRyupvds6l2O39gsnYYAgVBhowuzrjd1estJhrb0U=;
+	h=From:Date:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Kh4sYS5UkDe9Cupbiwm4gQUyHv6rxa5YRHhoNJzPiXk/nNWqCzNgJYFWwbX65ji/6yUkjHpxLezL04iJwb5xLR5jo2EHYq66MALLr7j284xx+QUBAZLz0chwNwXkZoaGhCgcWLKtoTnOTjtH9x6RYuVtcDNMXDMPLAiRcYId/DY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RVRq5dO+; arc=none smtp.client-ip=209.85.208.173
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XqjB7C5L"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-b6d3340dc2aso1014020666b.0
-        for <dm-devel@lists.linux.dev>; Mon, 27 Oct 2025 01:42:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RVRq5dO+"
+Received: by mail-lj1-f173.google.com with SMTP id 38308e7fff4ca-378e603f7e4so48706221fa.0
+        for <dm-devel@lists.linux.dev>; Tue, 28 Oct 2025 01:47:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1761554549; x=1762159349; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=iFlBtrits7DNlZ6h+mgbiMIVvWdiVqZSUXzsme0rVO8=;
-        b=XqjB7C5LPWP8v1O/LtOb5hVcvm2qj2SwzTlChqtPtUMgZnlgH7ucavK5B+v298j23q
-         P5ylsNi50aUBQYmuNKKY6wZ4u9kIX0bcAACuu0uTZP5gNgrmWeHF9RS3SYUNiYrsV9hi
-         jw68LB5qBHL1oLTJmdGeTXAsGqQwaIu723ASZZ5/Y+ef7M0N8iGUmntdnlMsdoN3UyX+
-         v9CaEMsZkGhGjg2W1LDb5WvG5jG7tPpnO9bNs0m7vQ5pCkLT++JcW27nKLMOOcIovJ0C
-         axu2Wh/gaNpRO8t8ialftmU/opYgETRhk+vGssGoXw/vpDJiQj2phGwTey//KCNSKnFo
-         1sVg==
+        d=gmail.com; s=20230601; t=1761641263; x=1762246063; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:date:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=vRLc0auh5JUbiEVtJ5AkHNMy18AHU8gRSkIPhMjaAHY=;
+        b=RVRq5dO+93xKyzYnk0D/iHD8EWRyvYH17XVaykad2tgmAqLlzhxCvr0VKXlFfx8b3d
+         ZqTj7tRrp6q9aVVXYjh5gVCYpjWm7HE4GDzLSkvtieUhEGkzyTqjSLv4HLMBvFFCQBSN
+         07Pe+vtPI0UCJbXuFCjBMS0dWIvG90KLjDrnrsQXXIPr1FwlLSHPqxciKNVygH83wRna
+         76gMU4VA4XqB3LuAjQAQWqFf9TW2IfknsUVeN+22GNZwr9iNJfkpCXHPXjjzfiG69XRt
+         xyTbyLrLyai+Dd7IW8QrkCkpyxZSWi5rwWirOwoRwxgT05bojeWXvolrmGoobAlLDXuP
+         ilQA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1761554549; x=1762159349;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=iFlBtrits7DNlZ6h+mgbiMIVvWdiVqZSUXzsme0rVO8=;
-        b=wX7vxx5ERZjpPxdlHCSzlXIr7etstbV/zyKrPiBMcoJTCtHtaW9dx9wYJ9tdSVEwyL
-         rUO0AVAyQABqpu+A+aoPrq2GTRFIpLrAngNuuIoK1VP+1I4xWUd/vzP90eud2cFrZ5QY
-         dNaY51wXY9PEavEEzrGyxcl2fY9HIfbsN/Mhjkg/JwVVDFCuesP9/yY4Q6jd5hC/+bL9
-         UWKSrUdzBqPPmu+gv+TJxO4yeUr10kWkWUg3dGKFaekVal0EiaYULU/K6seWi+b+H7pl
-         Kc7+5mZZmgAw/oRbT5dytrRRfEfIJe+YXVhSvFwSHXxLlzjOtWnTYBcaX7qgTRM7ybUf
-         s+AA==
-X-Forwarded-Encrypted: i=1; AJvYcCXkkZGPRrvSiM5WSqJ9Z89beeVsSunBsUTbEsTNIqDoZcFIH2ZLqBAFS+WvjhQSyU5UglkHiqWh7w==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw7y+lZKSKjV0IqIrsC8z5DLKGiYUfLNBfkGTKTg620k7dBMZ0x
-	y2zV9lEi3iZbxJR0orCCUmWxxMXDdQtdRBLy7laGLs3nArR7d55/wH6F
-X-Gm-Gg: ASbGnctJG91qHdJNIAFHiLeu/hPRUjCqZcWBCIm6Ta09ONBc/JyIveZUsb2AtsIHhbv
-	0fpdiZRXPnyP1vfYlFT50T65Mcw0oCESjuXzk7ENwukH/iFqAcuU7734qWBiDt/81VhKlBYl5+C
-	mAHHCCgjmHe2Wzsc/FBdSFCPjZQIfVBKUAETr+QKRWioF2Q0KcVOv6swjsjZkk2JrHe7Is1Y8cN
-	1ZMQzT0rPfjpl1tDf8tScFZbnZgXQ07wIu5M9906D1EAa/5xPqCnc5iwT0XwKyu9yfiNRCgXz4M
-	9KzhptcR646QIjdL6yWP8Nywl6ZbeIg3kJlnhuI4yDK6JeuEniaExrpLLW7Xb0Nd46khNOxcsNu
-	mg+q7Lj7ohJf7XfGcZHoTmpNniE0DNF6n3Qq+669chzYnZDYE3IWWkppXX6PLXPCMWKru2/mbwb
-	EY
-X-Google-Smtp-Source: AGHT+IHNDWdV6nOLEUPb8BsKdy1fTa79zHhvllKqWIEzW+JrO9Bj5NMu8vYte0D/T+VD4YYNH0vo+A==
-X-Received: by 2002:a17:907:1c85:b0:b64:6cc7:6ac7 with SMTP id a640c23a62f3a-b6d6bb9083emr1215693866b.22.1761554548711;
-        Mon, 27 Oct 2025 01:42:28 -0700 (PDT)
-Received: from localhost ([212.73.77.104])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b6d853696aesm704277666b.30.2025.10.27.01.42.26
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 27 Oct 2025 01:42:28 -0700 (PDT)
-From: Askar Safin <safinaskar@gmail.com>
-To: mpatocka@redhat.com
-Cc: Dell.Client.Kernel@dell.com,
-	brauner@kernel.org,
-	dm-devel@lists.linux.dev,
-	ebiggers@kernel.org,
-	kix@kix.es,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-crypto@vger.kernel.org,
-	linux-lvm@lists.linux.dev,
-	linux-mm@kvack.org,
-	linux-pm@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	lvm-devel@lists.linux.dev,
-	milan@mazyland.cz,
-	mzxreary@0pointer.de,
-	nphamcs@gmail.com,
-	pavel@ucw.cz,
-	rafael@kernel.org,
-	ryncsn@gmail.com,
-	safinaskar@gmail.com,
-	torvalds@linux-foundation.org
-Subject: Re: [PATCH] pm-hibernate: flush block device cache when hibernating
-Date: Mon, 27 Oct 2025 11:42:20 +0300
-Message-ID: <20251027084220.2064289-1-safinaskar@gmail.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <03e58462-5045-e12f-9af6-be2aaf19f32c@redhat.com>
-References: <03e58462-5045-e12f-9af6-be2aaf19f32c@redhat.com>
+        d=1e100.net; s=20230601; t=1761641263; x=1762246063;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:date:from:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=vRLc0auh5JUbiEVtJ5AkHNMy18AHU8gRSkIPhMjaAHY=;
+        b=VEJeShzkED96y9CXiE6SbUgK1ShSRjhwPqeidaGKRFJPCXOwz54RLcimbPthlYkyZM
+         JiJluxRs4M4DptizovdNfzH5/rnVp/tMdhLKsBNIiFL/tGBRJLZ61wXUBzaxFfSu43R5
+         cpaER8enioRFmfPlU2i8zZxf26tKoF/4SWXRqQy9Zs2EpArG6hHChfqk/S3tG5K+9hOZ
+         DgB6St8MGw4fm1jlmzdQZgjd5Dt0+nCvw75qV6fru/+jOgshoFCLCwyzKx/HySOq1pLY
+         jZqGA8f63PQzp76vzyKQ4okn8Lr4b6Fd1LKUHO9PVHwYBiE1zrMAcYO4B4YJc7X8XDP7
+         1FuA==
+X-Forwarded-Encrypted: i=1; AJvYcCUNkWHxhuB5lxhF8ZGFC6LwbqKy45jKysPNUna3dLaDdHhTIB5Y4NiZMCtNZep9zqTfimIDPqh+AQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyD0ac/v0tFi/oulwvyWKFWPU5DtYZ+TPNZmYIn5cZRbj9WA5Wn
+	e/WxuQ6mxA9m/M/SyLnHFDMPmca7IlAGYkLFOUgGxLrrrHJoS+F6LWNa
+X-Gm-Gg: ASbGncvnXvqeDSSTpzrGBPo1ecPF9ofeE/ULPq0oBmpefljActTGXrHzDouxkNODU6Z
+	+y6WckgwDHIlPsNve83HnKAYG0rGM9GsrxlUhwgWvZpudwyKRMuAy9gwnS7vJJeKDI+9V5/qrml
+	2tp78gCD2YhSBPM7xWTDAEHSMnlYbnXIgdHxrDR6OB+rAzgxmQkw8oT89gndS/4qBVyDc0HKALQ
+	lvsApWbqshuYbIQlp3sHxoZSYIKl/KWVDsIT9QTiVc5y/sv7Mn04vffQe1E203Tdw0h+VthNsy+
+	D67fspfa7lL0h4aqWIu8q8o/1Obh100YGA7a5olNN1Oy8c9Ah4cHKuteFUoKre2UIGEZZEKfiMg
+	TEJF32sM9BidQ+XQmaKonly7eUtwIR/62Kuvx+F4WeKM=
+X-Google-Smtp-Source: AGHT+IEdfnNRUozr4xhoAo4HjYXDAefDjAlsaDl5RblosO0jl3zzldZ8dEMI2G4Tp89Dq4IeKHLxhw==
+X-Received: by 2002:a05:651c:551:b0:378:cff9:93f with SMTP id 38308e7fff4ca-379076d81f5mr8932271fa.12.1761641262989;
+        Tue, 28 Oct 2025 01:47:42 -0700 (PDT)
+Received: from milan ([2001:9b1:d5a0:a500::24b])
+        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-378ee0da49fsm24829691fa.44.2025.10.28.01.47.42
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 28 Oct 2025 01:47:42 -0700 (PDT)
+From: Uladzislau Rezki <urezki@gmail.com>
+X-Google-Original-From: Uladzislau Rezki <urezki@milan>
+Date: Tue, 28 Oct 2025 09:47:40 +0100
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Uladzislau Rezki (Sony)" <urezki@gmail.com>,
+	Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>,
+	LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH] dm-bufio: align write boundary on bdev_logical_block_size
+Message-ID: <aQCDLBie3fGwMDW2@milan>
+References: <20251020123350.2671495-1-urezki@gmail.com>
+ <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com>
 
-Mikulas Patocka <mpatocka@redhat.com>:
+Hello!
+
+Sorry i have missed you email for unknown reason to me. It is
+probably because you answered to email with different subject
+i sent initially.
+
+> 
+> On Mon, 20 Oct 2025, Uladzislau Rezki (Sony) wrote:
+> 
+> > When performing a read-modify-write(RMW) operation, any modification
+> > to a buffered block must cause the entire buffer to be marked dirty.
+> > 
+> > Marking only a subrange as dirty is incorrect because the underlying
+> > device block size(ubs) defines the minimum read/write granularity. A
+> > lower device can perform I/O only on regions which are fully aligned
+> > and sized to ubs.
+> 
 > Hi
 > 
-> Does this patch fix it?
+> I think it would be better to fix this in dm-bufio, so that other dm-bufio 
+> users would also benefit from the fix. Please try this patch - does it fix 
+> it?
 > 
-> Mikulas
+If it solves what i describe i do not mind :)
+
 > 
 > 
 > From: Mikulas Patocka <mpatocka@redhat.com>
 > 
-> There was reported failure that hibernation doesn't work with 
-> dm-integrity. The reason for the failure is that the hibernation code 
-> doesn't issue the FLUSH bio - the data still sits in the dm-integrity 
-> cache and they are lost when poweroff happens.
-
-I tested this patch in Qemu on current master (43e9ad0c55a3). Also I
-applied Mario's patch
-https://lore.kernel.org/linux-pm/20251026033115.436448-1-superm1@kernel.org/ .
-It is needed, otherwise you get WARNING when you try to hibernate.
-
-The patch doesn't work.
-
-Here is script I used for reproduction:
-https://zerobin.net/?66669be7d2404586#xWufhCq7zCoOk3LJcJCj7W4k3vYT3U4vhGutTN3p8m0= .
-It is the same script as in previous letter. I just added some
-"integritysetup status /dev/mapper/..." calls.
-
-Here are results:
-https://zerobin.net/?2331637d633d20c5#EmyhxiHLDmoZT1jBVbe/q9iJKhDEw4n+Bwr5mAcaOpM= .
-
-File names mean the same as in previous letter, i. e.:
-
-> "log-def-1" is output of first Qemu invocation (i. e. first boot) with
-> default integritysetup options. "log-def-2" is second Qemu invocation
-> (i. e. when we try to resume).
+> There may be devices with logical block size larger than 4k. Fix
+> dm-bufio, so that it will align I/O on logical block size. This commit
+> fixes I/O errors on the dm-ebs target on the top of emulated nvme device
+> with 8k logical block size created with qemu parameters:
 > 
-> log-bit-{1,2} is same thing, but with "--integrity-bitmap-mode" added to
-> "integritysetup format" and "integritysetup open".
+> -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
 > 
-> log-no-{1,2} is same, but with "--integrity-no-journal".
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
 > 
-> log-nodm-{1,2} is same, but without dm-integrity at all, i. e. we create
-> swap directly on partition.
+> ---
+>  drivers/md/dm-bufio.c |    9 +++++----
+>  1 file changed, 5 insertions(+), 4 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm-bufio.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm-bufio.c	2025-10-13 21:42:47.000000000 +0200
+> +++ linux-2.6/drivers/md/dm-bufio.c	2025-10-20 14:40:32.000000000 +0200
+> @@ -1374,7 +1374,7 @@ static void submit_io(struct dm_buffer *
+>  {
+>  	unsigned int n_sectors;
+>  	sector_t sector;
+> -	unsigned int offset, end;
+> +	unsigned int offset, end, align;
+>  
+>  	b->end_io = end_io;
+>  
+> @@ -1388,9 +1388,10 @@ static void submit_io(struct dm_buffer *
+>  			b->c->write_callback(b);
+>  		offset = b->write_start;
+>  		end = b->write_end;
+> -		offset &= -DM_BUFIO_WRITE_ALIGN;
+> -		end += DM_BUFIO_WRITE_ALIGN - 1;
+> -		end &= -DM_BUFIO_WRITE_ALIGN;
+> +		align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev));
+> +		offset &= -align;
+> +		end += align - 1;
+> +		end &= -align;
+>  		if (unlikely(end > b->c->block_size))
+>  			end = b->c->block_size;
+>  
+> 
+I will check it and get back soon.
 
-Results are somewhat better than without the patch. Without the patch
-we don't even try to resume in default mode. "blkid" simply reports
-"swap" instead of "swsuspend". With patch "blkid" reports "swsuspend", and
-so we try to resume. But then in the middle of resuming we get this:
+Thank you.
 
-[    1.008223] PM: Image loading progress:  70%
-[    1.017478] PM: Image loading progress:  80%
-[    1.027069] PM: Image loading progress:  90%
-[    1.029653] PM: hibernation: Read 36196 kbytes in 0.49 seconds (73.86 MB/s)
-[    1.030146] PM: Error -1 resuming
-[    1.030322] PM: hibernation: Failed to load image, recovering.
-
-(See link above for full logs.)
-
-Very similar thing happens in "--integrity-no-journal" mode in the middle of
-resuming:
-
-[    0.531245] device-mapper: integrity: dm-0: Checksum failed at sector 0x6e70
-[    0.531600] PM: Error -84 resuming
-[    0.531799] PM: hibernation: Failed to load image, recovering.
-
-The patch doesn't change anything in "--integrity-bitmap-mode" mode:
-we still are able to resume, but then get integrity errors when we do
-"cat /dev/mapper/swap > /dev/null".
-
--- 
-Askar Safin
+--
+Uladzislau Rezki
