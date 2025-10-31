@@ -1,52 +1,49 @@
-Received: from sender3-pp-f112.zoho.com (sender3-pp-f112.zoho.com [136.143.184.112])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 34560320A06
-	for <dm-devel@lists.linux.dev>; Thu, 30 Oct 2025 12:36:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.184.112
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761827775; cv=pass; b=uO8EqXgdqBxeeJOpiVawx0dWCTfhvuJzt071AlivgkTrnF+rqtXwCcIwNR8xyqtrrD0jwiVxmSny9QiNFuCGlvt/xetc43gY4PP8ZUQexhTA5CocZdqB/tWKldOPTXMMJOQX/BQXNXdESslYc4ublMYLNhFqcIcg5bJZ+kRq2Rw=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761827775; c=relaxed/simple;
-	bh=Dy5mN+mUFblKRdym21OGi3qMkGEXzXCYj1i7hdWWqEI=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=h3lv0ZY/1MNvKGamS9HRHZH8/xzl/jFTfQxK/S9o/upKR0XiJc3b2enxXbPe1rRH11p2Dw3LADq2CFx1S4yOvraZtP1RBEfPm4Azz0jfSmLCYzo8kyo6KiHALtdRcph6U48/kWqguXFihdydADHUNJTnRZ9fbeI3agtYw5aFjQU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=C3/tzCxp; arc=pass smtp.client-ip=136.143.184.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 978FD25BEE8;
+	Fri, 31 Oct 2025 06:16:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1761891415; cv=none; b=LaBFpjhKguE2A7uSBEb4dVx8sSL4SfWimh3hbf41UtSkpZ2JTOxSjJpVzMbw6XYblB3oRCmL7WBL2NzqY4DLfziEZyibXUQFJm/GW2ZGJ0i6jDty6xpWBi4tSmF1SLcqk19TpEIeMDq/yNxD2T7N4u3AquAoa8igtVXDgLPUf24=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1761891415; c=relaxed/simple;
+	bh=7GvVW4uZiDm+Tw9/lHA4zIrauzC8lt+7kjJjVl6Nmh0=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=lQ/BPajWOkDK/ge6KHINq8yw2dgCldLqsRNblszWEBicRFb2IVcuOImsbVOZRgKFx7f/KMM9BmPiNLxzOhT4d15tAWZ1H9ZX85DbU1VV0NyhVJKvBvvmjWiwB/iY9QKSqaR2JW16gaN6o2etSMb4q9LgTQaUJsQL5N27K3aTGjc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ADhIOAk3; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="C3/tzCxp"
-ARC-Seal: i=1; a=rsa-sha256; t=1761827623; cv=none; 
-	d=zohomail.com; s=zohoarc; 
-	b=TbSb1YlBAqvuJNzw2m0h1L6cC0avHo92zOyyebPOKmUkkDslt7WLgkboeADd8WoHIuonxgnwlSI3FnXnzXtUv/dN1HKKeRh4ToUIn4ZlARCzcYOX7cXBXqnJmePc+bG6kNWjh9M6tYEKtDOoMvQOJwZY42fvmQMGOUXG8I7AHxQ=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1761827623; h=Content-Transfer-Encoding:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
-	bh=PspWpmNa95LwydSNmRMQC/seSofntuwNeQ9ulpO4Bz4=; 
-	b=A93ySmNYN8R0g+nKDK3ZuGNqct6/BwSBVECUA5EhaaD4/dpn8vEZq2R2xF4kgJB+wi7TIjVcswzSCqlUckkMitNvbWZniFsH167BoFPOnDPE/tXgXQcnqVV/8JlmJMT1EVUkLJZkyfqP+fziyDbVgGsE8r31D2ad2cRdvnSWcmo=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-	dkim=pass  header.i=linux.beauty;
-	spf=pass  smtp.mailfrom=me@linux.beauty;
-	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1761827623;
-	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:In-Reply-To:References:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
-	bh=PspWpmNa95LwydSNmRMQC/seSofntuwNeQ9ulpO4Bz4=;
-	b=C3/tzCxpyTv97TuZ2tjFYYjwtvSw5Ih4f21z5LYyrJ2NVTlH4OKV8OZzBcet+PVo
-	J4ZRhblVLeMMIrNQ4MtvEjtYFbJIvhqA5iXyb+xZjr7Jj4e7x3xDnZua3CGIBMHt9SR
-	NkLSPojxBDhVrtB1phA0jZxirlEnjfBD1ldpn2+0=
-Received: by mx.zohomail.com with SMTPS id 1761827620954398.4862490820956;
-	Thu, 30 Oct 2025 05:33:40 -0700 (PDT)
-From: Li Chen <me@linux.beauty>
-To: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Dongsheng Yang <dongsheng.yang@linux.dev>,
-	Zheng Gu <cengku@gmail.com>
-Subject: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in pcache_meta_find_latest()
-Date: Thu, 30 Oct 2025 20:33:21 +0800
-Message-ID: <20251030123323.967081-4-me@linux.beauty>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ADhIOAk3"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 95E61C4CEF1;
+	Fri, 31 Oct 2025 06:16:53 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1761891415;
+	bh=7GvVW4uZiDm+Tw9/lHA4zIrauzC8lt+7kjJjVl6Nmh0=;
+	h=From:To:Subject:Date:From;
+	b=ADhIOAk3iHBYRPIDhHIJjRfXk6JxkMJw0eZF/SzWIlcPcsZ/YgeHV7UISZCt8MENk
+	 0PVhOU+HjBCos0FR0+6Z177Q9VZXrZNnTQIjCRjlFC/GVA+nn2MD8jEuCELMCqDzvY
+	 3tRDqADSx1LiUZqU7vtIM14dYrOmKXEeHG9fsPamPXCs7jcGh3Tpv8jxSltWtfGfvK
+	 LJNHu2zMa18ez6uDTPDK8WaANNs7ZmsS1hBqyjihnKyJ5juo9YrUwAGd8+H8YtDT3f
+	 R44DBY1xYY8Trh2ZqwXdFMNbc/7UCDpfoCXvNZjS7z7PChUkOdXN6TpYYlsZLE/TgQ
+	 bJjJOFxVLu+vw==
+From: Damien Le Moal <dlemoal@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	linux-block@vger.kernel.org,
+	linux-nvme@lists.infradead.org,
+	Keith Busch <keith.busch@wdc.com>,
+	Christoph Hellwig <hch@lst.de>,
+	dm-devel@lists.linux.dev,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	"Martin K . Petersen" <martin.petersen@oracle.com>,
+	linux-scsi@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	Carlos Maiolino <cem@kernel.org>,
+	linux-btrfs@vger.kernel.org,
+	David Sterba <dsterba@suse.com>
+Subject: [PATCH 00/13] Introduce cached report zones
+Date: Fri, 31 Oct 2025 15:12:54 +0900
+Message-ID: <20251031061307.185513-1-dlemoal@kernel.org>
 X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20251030123323.967081-1-me@linux.beauty>
-References: <20251030123323.967081-1-me@linux.beauty>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -54,63 +51,64 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-ZohoMailClient: External
 
-From: Li Chen <chenl311@chinatelecom.cn>
+The patch series implements a cached report zones using information from
+the block layer zone write plugs and a new zone condition tracking. This
+avoids having to execute slow report zones commands on the device when
+for instance mounting file systems, which can significantly speed things
+up, especially in setups with multiple SMR HDDs (e.g. a RAID volume).
 
-Before this change pcache_meta_find_latest() was copying each
-slot directly into meta_ret while scanning. If no valid slot
-was found and the function returned NULL, meta_ret still held
-whatever was last copied (possibly CRC-bad). Later users
-(e.g. cache_segs_init) could mistakenly trust that data.
+The first patch improves zone resource updates. The following 3 patches
+cleanup and improve handling of zone reports and of other zone
+management operations. From patch 5 to 10, cached report zones in
+implemented and made available to users with a new ioctl() command.
 
-Allocate a temporary buffer instead and only populate meta_ret after a
-valid/latest header is found. If no valid header exists we return NULL
-without touching meta_ret.
+Finally, patches 12 and 13 introduce the use of cached report zones in
+the mount operation of XFS and BTRFS.
 
-Also add __free(kvfree) so the temporary buffer is always freed, and
-include the needed headers.
+These patches are against Jen's for-next tree.
 
-Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
----
- drivers/md/dm-pcache/pcache_internal.h | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+Damien Le Moal (13):
+  block: freeze queue when updating zone resources
+  block: cleanup blkdev_report_zones()
+  block: handle zone management operations completions
+  block: introduce disk_report_zone()
+  block: reorganize struct blk_zone_wplug
+  block: use zone condition to determine conventional zones
+  block: track zone conditions
+  block: introduce blkdev_get_zone_info()
+  block: introduce blkdev_report_zones_cached()
+  block: introduce BLKREPORTZONESV2 ioctl
+  block: add zone write plug condition to debugfs zone_wplugs
+  btrfs: use blkdev_report_zones_cached()
+  xfs: use blkdev_report_zones_cached()
 
-diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
-index b7a3319d2bd3e..ac28f9dd2986f 100644
---- a/drivers/md/dm-pcache/pcache_internal.h
-+++ b/drivers/md/dm-pcache/pcache_internal.h
-@@ -4,6 +4,8 @@
- 
- #include <linux/delay.h>
- #include <linux/crc32c.h>
-+#include <linux/slab.h>
-+#include <linux/cleanup.h>
- 
- #define pcache_err(fmt, ...)							\
- 	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-@@ -79,14 +81,17 @@ static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_head
- 					u32 meta_size, u32 meta_max_size,
- 					void *meta_ret)
- {
--	struct pcache_meta_header *meta, *latest = NULL;
-+	struct pcache_meta_header *latest = NULL;
-+	struct pcache_meta_header *meta __free(kvfree);
- 	u32 i, seq_latest = 0;
--	void *meta_addr;
- 
--	meta = meta_ret;
-+	meta = kvzalloc(meta_size, GFP_KERNEL);
-+	if (!meta)
-+		return ERR_PTR(-ENOMEM);
- 
- 	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
--		meta_addr = (void *)header + (i * meta_max_size);
-+		void *meta_addr = (void *)header + (i * meta_max_size);
-+
- 		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
- 			pcache_err("hardware memory error when copy meta");
- 			return ERR_PTR(-EIO);
+ block/blk-zoned.c                 | 762 ++++++++++++++++++++++++------
+ block/blk.h                       |  14 +
+ block/ioctl.c                     |   1 +
+ drivers/block/null_blk/null_blk.h |   3 +-
+ drivers/block/null_blk/zoned.c    |   4 +-
+ drivers/block/ublk_drv.c          |   4 +-
+ drivers/block/virtio_blk.c        |  11 +-
+ drivers/block/zloop.c             |   4 +-
+ drivers/md/dm-zone.c              |  54 ++-
+ drivers/md/dm.h                   |   3 +-
+ drivers/nvme/host/core.c          |   5 +-
+ drivers/nvme/host/multipath.c     |   4 +-
+ drivers/nvme/host/nvme.h          |   2 +-
+ drivers/nvme/host/zns.c           |  10 +-
+ drivers/scsi/sd.h                 |   2 +-
+ drivers/scsi/sd_zbc.c             |  17 +-
+ fs/btrfs/zoned.c                  |  11 +-
+ fs/xfs/xfs_zone_alloc.c           |   2 +-
+ include/linux/blkdev.h            |  44 +-
+ include/linux/device-mapper.h     |  10 +-
+ include/uapi/linux/blkzoned.h     |  36 +-
+ include/uapi/linux/fs.h           |   2 +-
+ 22 files changed, 746 insertions(+), 259 deletions(-)
+
+
+base-commit: ba6a8208cc205c6545c610b5863ea89466fc486a
 -- 
 2.51.0
 
