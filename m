@@ -1,179 +1,420 @@
-Received: from mout.web.de (mout.web.de [212.227.17.11])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C79B629E0FD
-	for <dm-devel@lists.linux.dev>; Fri, 31 Oct 2025 19:33:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B49A30E0F5
+	for <dm-devel@lists.linux.dev>; Fri, 31 Oct 2025 19:36:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1761939229; cv=none; b=JXaKXvozCEDbhRljZu/brnY0SQd1opmtRIpNH8Fh3DvcAehvVKVz+Y4dKyww+749Ey3yB3o79ZY4O/2bgchi2jmmTpzzp6Gy8ltlhzX8TjXjWB2JOcc7TJBUpxbdAVSpqXkPqENWtvWwohcYMQdjsX7PeKI+OhtMTjGziTsoBrw=
+	t=1761939378; cv=none; b=YH5wsiENQGytZ7yHCwcSAxcw4YzrkFoMtUU30BZJ5CAfNfHM15lljgsc5XlPvgx6J96s2O3ZHxzzbaNbuuxKZQalT8YI+LnmveQoWr1WiO/oKiyfH0N1+nYW26H7yPHPjLcJ/bz+AX6bqnju5LDohKyKssfABCKbStjb3+j/XtU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1761939229; c=relaxed/simple;
-	bh=frbC0Rw+OL5ZdWRRastnAgdLYqpTGEnueEh2MgFN/WU=;
-	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=IkTu+6m5RZJ3GsdfduCDnnKYRnKCGZpDwe38/KsYP9REDRYOv7wQqYlW8S18LeC/tw1E6Kn9JYfv5lWAKs0d2o1ufsk3+PpldPy6Xhs1IDrCw9i9/RIbI4yW+9eg4Bc7ZDJL+PU9txcDkaXObPQISAqrRRDuxNRitsu91FGZlvc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b=GHNI5cU9; arc=none smtp.client-ip=212.227.17.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
+	s=arc-20240116; t=1761939378; c=relaxed/simple;
+	bh=H/9Q/SuHFGZNhRHpuuEMQwt0VedY4qpXj+Tt3Yiz6/Q=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=eeZV75Cqh0Mw2pASCSyMC1w9H3i0D7UyiJjo/UcWlQshM8Cq4m4Piw9npfuuFd8QzZEpFNdmoP0GsySIyNM8VsDZMNV8RC3XKk20g5gk4PBouGw3EMOn5kSpIwjR7OaAiaoTrSFxh8D9TPP/nFkOppMdpJIjp1goPb2FcujoPak=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XRU/RD4Q; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b="GHNI5cU9"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=web.de;
-	s=s29768273; t=1761939207; x=1762544007; i=markus.elfring@web.de;
-	bh=sNhnZJkJaoKiwMBEiyuw8YB21zIlkECWE59Cg04Ftcs=;
-	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:To:Cc:From:
-	 Subject:Content-Type:Content-Transfer-Encoding:cc:
-	 content-transfer-encoding:content-type:date:from:message-id:
-	 mime-version:reply-to:subject:to;
-	b=GHNI5cU92bRQoY/p5gzDv+qsjh1W+hfiDAAERQ0V1SjOKqX386HAkVoPg2pqcT7l
-	 7bgJyk5nP4gHmw2g0UWenkC4G2h+nj9CBfgcGltfx/oMSQogFDD2FT31QN3o92cff
-	 Qkm37C2uQifngXNVAV4LAHh6+vR50TMoSs9JBO9PbCpcLUdoVutGTjomq6dgzrYcB
-	 4Y4PdlRz5VK+AIFf8vcsGN4QqwNX1jkvt52BzkrZFUag9dq8Z1OsrPWgT/noZhtfh
-	 TGea91V9POZcLIheOzT+NVcCElAgfqFDqXpa2K9Cqwqetzk75+yTQ0WQikmyh7WN8
-	 sJXidy2QnmHmPv3+mA==
-X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
-Received: from [192.168.178.29] ([94.31.69.206]) by smtp.web.de (mrweb106
- [213.165.67.124]) with ESMTPSA (Nemesis) id 1MTOli-1vgVNy41Ii-00Imgl; Fri, 31
- Oct 2025 20:33:27 +0100
-Message-ID: <b803a5a1-c2bf-4aad-9527-198e8a8046ca@web.de>
-Date: Fri, 31 Oct 2025 20:33:24 +0100
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XRU/RD4Q"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1761939375;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Hs8WAha7zUb9hjupyXXbSI5TRA2qjGP9C7xrWD4lf7E=;
+	b=XRU/RD4Qlii3HgW7cHculrrV8I8Z7x5dbcp7P9JKitIv4D2jbYgqDSYoQVUZu8CTerfI4A
+	XhpIqWnW2ohhU5XQyiepir1gCRZeQH/z9nJS4uJeV0S9aWqQNiK4WOxObbrYB/Xiwr6hHF
+	T8C5TwQWkbAAfKsCfiBEks91I5o16qc=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-77-pxx5Wq6vOeu_hBgBjrPreQ-1; Fri,
+ 31 Oct 2025 15:36:09 -0400
+X-MC-Unique: pxx5Wq6vOeu_hBgBjrPreQ-1
+X-Mimecast-MFC-AGG-ID: pxx5Wq6vOeu_hBgBjrPreQ_1761939367
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9970E18002C1;
+	Fri, 31 Oct 2025 19:36:06 +0000 (UTC)
+Received: from [10.45.225.163] (unknown [10.45.225.163])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4C2C430001A1;
+	Fri, 31 Oct 2025 19:35:59 +0000 (UTC)
+Date: Fri, 31 Oct 2025 20:35:56 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Askar Safin <safinaskar@gmail.com>
+cc: Dell.Client.Kernel@dell.com, brauner@kernel.org, dm-devel@lists.linux.dev, 
+    ebiggers@kernel.org, kix@kix.es, linux-block@vger.kernel.org, 
+    linux-btrfs@vger.kernel.org, linux-crypto@vger.kernel.org, 
+    linux-lvm@lists.linux.dev, linux-mm@kvack.org, linux-pm@vger.kernel.org, 
+    linux-raid@vger.kernel.org, lvm-devel@lists.linux.dev, agk@redhat.com, 
+    msnitzer@redhat.com, milan@mazyland.cz, mzxreary@0pointer.de, 
+    nphamcs@gmail.com, pavel@ucw.cz, rafael@kernel.org, ryncsn@gmail.com, 
+    torvalds@linux-foundation.org
+Subject: [RFC PATCH 2/2] swsusp: make it possible to hibernate to device
+ mapper devices
+In-Reply-To: <de1f0036-84f9-2923-2c0a-620e702d850b@redhat.com>
+Message-ID: <b32d0701-4399-9c5d-ecc8-071162df97a7@redhat.com>
+References: <03e58462-5045-e12f-9af6-be2aaf19f32c@redhat.com> <20251027084220.2064289-1-safinaskar@gmail.com> <de1f0036-84f9-2923-2c0a-620e702d850b@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-To: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
- Heinz Mauelshagen <heinzm@redhat.com>, Josef Bacik <jbacik@fb.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Ross Zwisler <ross.zwisler@linux.intel.com>, Zach Brown <zab@zabbo.net>
-Content-Language: en-GB, de-DE
-Cc: LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org,
- Miaoqian Lin <linmq006@gmail.com>
-From: Markus Elfring <Markus.Elfring@web.de>
-Subject: [PATCH] dm-log-writes: Use pointers from memcpy() calls for
- assignments in two functions
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-X-Provags-ID: V03:K1:a0SbjzaEosKsewhHcTQSTvju80PLjDDKewfmjob+EKf1OB+CJMM
- nhaV0kUEw+RYn3oY8lHoC1A5U5ui09bALFPnqfKUWcB24OPuzEHTI6tMUdXNN6pY8fUw/eB
- HQlqiAkEWq6qlfCcX45Zzg+EL3/G4UTfQhb7sDiYSX6ut7QULy6ThfoQ843CHaHU20tA50b
- P0FcyAbIu32yCChe66aVA==
-X-Spam-Flag: NO
-UI-OutboundReport: notjunk:1;M01:P0:S+KXkM3HboU=;snc5tIfW3PATdxdqb8p4QGbXP6+
- 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
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-From: Markus Elfring <elfring@users.sourceforge.net>
-Date: Fri, 31 Oct 2025 20:20:56 +0100
+Hi
 
-A pointer was assigned to a variable in two function implementations.
-The same pointer was used for the destination parameter of a memcpy() call=
-.
-This function is documented in the way that the same value is returned.
-Thus convert separate statements into a direct variable assignment for
-the return value from a memory copy action.
+Askar Safin requires swap and hibernation on the dm-integrity device mapper
+target because he needs to protect his data.
 
-The source code was transformed by using the Coccinelle software.
+This hits two problems:
+1. The kernel doesn't send the flush bio to the hibernation device after
+   writing the image and before powering off - this is easy to fix
+2. The dm-integrity target keeps parts of the device in-memory - it keeps
+   a journal and a dm-bufio cache in memory. If we hibernate and resume,
+   the content of memory no longer matches the data on the hibernate
+   partition and that may cause spurious errors - this is hard to fix
 
-Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
-=2D--
- drivers/md/dm-log-writes.c | 6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+We cannot use register_pm_notifier - the problem is that device mapper
+devices may depend on each other, forming a directed acyclic graph, and
+we need to suspend them in the order of the graph. PM notifiers have no
+notion of the graph - they have priority, but mapping the priorities to
+the device dependency graph would be hard.
 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index 7bb7174f8f4f..b450bdadfaf2 100644
-=2D-- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -232,8 +232,7 @@ static int write_metadata(struct log_writes_c *lc, voi=
-d *entry,
- 		goto error;
- 	}
-=20
--	ptr =3D kmap_local_page(page);
--	memcpy(ptr, entry, entrylen);
-+	ptr =3D memcpy(kmap_local_page(page), entry, entrylen);
- 	if (datalen)
- 		memcpy(ptr + entrylen, data, datalen);
- 	memset(ptr + entrylen + datalen, 0,
-@@ -287,8 +286,7 @@ static int write_inline_data(struct log_writes_c *lc, =
-void *entry,
- 				goto error_bio;
- 			}
-=20
--			ptr =3D kmap_local_page(page);
--			memcpy(ptr, data, pg_datalen);
-+			ptr =3D memcpy(kmap_local_page(page), data, pg_datalen);
- 			if (pg_sectorlen > pg_datalen)
- 				memset(ptr + pg_datalen, 0, pg_sectorlen - pg_datalen);
- 			kunmap_local(ptr);
-=2D-=20
-2.51.1
+So I added a new method "hibernate" to struct block_device_operations. If
+the method is NULL, the device doesn't need special treatment during
+hibernation. If the method is non-NULL, the method is called on the swap
+device where we are suspending - the method will clear in-memory
+structures (in the case of dm-integrity, it will flush the journal and
+invalidate the dm-bufio cache), so that when the machine is resumed, the
+driver won't use stale data. Finally, the "hibernate" method calls itself
+on subordinate devices, so that complex stack of device mapper devices is
+handled correctly.
+
+Hibernation is allowed only on targets that have DM_TARGET_HIBERNATE.
+Hibernation on other targets is rejected because it may cause data
+corruption. Previously, the kernel would allow hibernation on any DM
+device, causing potential data corruption if the in-memory metadata
+doesn't match the content of the swap device.
+
+I am submitting this patch as a request for comment - I'd like to know if
+you consider this approach correct or not. If you would like to solve the
+hibernation problem in some other way, let me know.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reported-by: Askar Safin <safinaskar@gmail.com>
+Link: https://lore.kernel.org/dm-devel/a48a37e3-2c22-44fb-97a4-0e57dc20421a@gmail.com/T/
+
+---
+ drivers/md/dm-crypt.c         |    2 -
+ drivers/md/dm-integrity.c     |   42 ++++++++++++++++++++++++++++++++++++++-
+ drivers/md/dm-linear.c        |    2 -
+ drivers/md/dm-stripe.c        |    3 +-
+ drivers/md/dm.c               |   45 ++++++++++++++++++++++++++++++++++++++++++
+ include/linux/blkdev.h        |   12 +++++++++++
+ include/linux/device-mapper.h |    6 +++++
+ kernel/power/hibernate.c      |    4 +++
+ kernel/power/power.h          |    2 +
+ kernel/power/swap.c           |   20 ++++++++++++++++++
+ 10 files changed, 134 insertions(+), 4 deletions(-)
+
+Index: linux-2.6/include/linux/blkdev.h
+===================================================================
+--- linux-2.6.orig/include/linux/blkdev.h
++++ linux-2.6/include/linux/blkdev.h
+@@ -1676,6 +1676,11 @@ struct block_device_operations {
+ 	 * driver.
+ 	 */
+ 	int (*alternative_gpt_sector)(struct gendisk *disk, sector_t *sector);
++
++	/*
++	 * This invalidates the device cache when hibernating.
++	 */
++	int (*hibernate)(struct gendisk *disk);
+ };
+ 
+ #ifdef CONFIG_COMPAT
+@@ -1875,4 +1880,11 @@ static inline int bio_split_rw_at(struct
+ 
+ #define DEFINE_IO_COMP_BATCH(name)	struct io_comp_batch name = { }
+ 
++static inline int bdev_hibernate(struct block_device *bdev)
++{
++	if (!bdev->bd_disk->fops->hibernate)
++		return 0;
++	return bdev->bd_disk->fops->hibernate(bdev->bd_disk);
++}
++
+ #endif /* _LINUX_BLKDEV_H */
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c
++++ linux-2.6/drivers/md/dm-integrity.c
+@@ -4053,6 +4053,45 @@ static void dm_integrity_io_hints(struct
+ 	limits->max_integrity_segments = USHRT_MAX;
+ }
+ 
++static int dm_integrity_hibernate(struct dm_target *ti)
++{
++	struct dm_integrity_c *ic = ti->private;
++	int r;
++
++	timer_delete_sync(&ic->autocommit_timer);
++
++	if (ic->recalc_wq)
++		drain_workqueue(ic->recalc_wq);		/* !!! FIXME */
++
++	if (ic->mode == 'B')
++		cancel_delayed_work_sync(&ic->bitmap_flush_work);
++
++	queue_work(ic->commit_wq, &ic->commit_work);
++	drain_workqueue(ic->commit_wq);
++
++	if (ic->mode == 'J') {
++		queue_work(ic->writer_wq, &ic->writer_work);
++		drain_workqueue(ic->writer_wq);
++		dm_integrity_flush_buffers(ic, true);
++		init_journal(ic, ic->free_section,
++			     ic->journal_sections - ic->free_section, ic->commit_seq);
++		if (ic->free_section) {
++			init_journal(ic, 0, ic->free_section,
++				     next_commit_seq(ic->commit_seq));
++		}
++	}
++
++	dm_bufio_client_reset(ic->bufio);
++
++	if (ic->meta_dev) {
++		r = bdev_hibernate(ic->meta_dev->bdev);
++		if (r)
++			return r;
++	}
++
++	return 0;
++}
++
+ static void calculate_journal_section_size(struct dm_integrity_c *ic)
+ {
+ 	unsigned int sector_space = JOURNAL_SECTOR_DATA;
+@@ -5414,7 +5453,7 @@ static struct target_type integrity_targ
+ 	.name			= "integrity",
+ 	.version		= {1, 14, 0},
+ 	.module			= THIS_MODULE,
+-	.features		= DM_TARGET_SINGLETON | DM_TARGET_INTEGRITY,
++	.features		= DM_TARGET_SINGLETON | DM_TARGET_INTEGRITY | DM_TARGET_HIBERNATE,
+ 	.ctr			= dm_integrity_ctr,
+ 	.dtr			= dm_integrity_dtr,
+ 	.map			= dm_integrity_map,
+@@ -5424,6 +5463,7 @@ static struct target_type integrity_targ
+ 	.status			= dm_integrity_status,
+ 	.iterate_devices	= dm_integrity_iterate_devices,
+ 	.io_hints		= dm_integrity_io_hints,
++	.hibernate		= dm_integrity_hibernate,
+ };
+ 
+ static int __init dm_integrity_init(void)
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c
++++ linux-2.6/drivers/md/dm.c
+@@ -3439,6 +3439,50 @@ out:
+ 	return ret;
+ }
+ 
++static int __dm_hibernate(struct dm_target *ti, struct dm_dev *dev,
++			  sector_t start, sector_t len, void *data)
++{
++	return bdev_hibernate(dev->bdev);
++}
++
++static int dm_blk_hibernate(struct gendisk *disk)
++{
++	struct mapped_device *md = disk->private_data;
++	int srcu_idx;
++	struct dm_table *map;
++	int r = 0;
++
++	map = dm_get_live_table(md, &srcu_idx);
++	if (unlikely(!map))
++		goto out;
++
++	for (unsigned int i = 0; i < map->num_targets; i++) {
++		struct dm_target *ti = dm_table_get_target(map, i);
++
++		if (!dm_target_supports_hibernate(ti->type)) {
++			r = -EOPNOTSUPP;
++			goto out;
++		}
++
++		if (ti->type->hibernate) {
++			r = ti->type->hibernate(ti);
++			if (r)
++				goto out;
++		}
++
++		if (ti->type->iterate_devices) {
++			r = ti->type->iterate_devices(ti, __dm_hibernate, NULL);
++			if (r)
++				goto out;
++		}
++	}
++
++out:
++	dm_put_live_table(md, srcu_idx);
++
++	return r;
++}
++
+ struct dm_pr {
+ 	u64	old_key;
+ 	u64	new_key;
+@@ -3768,6 +3812,7 @@ static const struct block_device_operati
+ 	.getgeo = dm_blk_getgeo,
+ 	.report_zones = dm_blk_report_zones,
+ 	.get_unique_id = dm_blk_get_unique_id,
++	.hibernate = dm_blk_hibernate,
+ 	.pr_ops = &dm_pr_ops,
+ 	.owner = THIS_MODULE
+ };
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h
++++ linux-2.6/include/linux/device-mapper.h
+@@ -142,6 +142,8 @@ typedef int (*dm_iterate_devices_fn) (st
+ typedef void (*dm_io_hints_fn) (struct dm_target *ti,
+ 				struct queue_limits *limits);
+ 
++typedef int (*dm_hibernate_fn) (struct dm_target *ti);
++
+ /*
+  * Returns:
+  *    0: The target can handle the next I/O immediately.
+@@ -219,6 +221,7 @@ struct target_type {
+ 	dm_busy_fn busy;
+ 	dm_iterate_devices_fn iterate_devices;
+ 	dm_io_hints_fn io_hints;
++	dm_hibernate_fn hibernate;
+ 	dm_dax_direct_access_fn direct_access;
+ 	dm_dax_zero_page_range_fn dax_zero_page_range;
+ 	dm_dax_recovery_write_fn dax_recovery_write;
+@@ -309,6 +312,9 @@ struct target_type {
+ #define DM_TARGET_ATOMIC_WRITES		0x00000400
+ #define dm_target_supports_atomic_writes(type) ((type)->features & DM_TARGET_ATOMIC_WRITES)
+ 
++#define DM_TARGET_HIBERNATE		0x00000800
++#define dm_target_supports_hibernate(type) ((type)->features & DM_TARGET_HIBERNATE)
++
+ struct dm_target {
+ 	struct dm_table *table;
+ 	struct target_type *type;
+Index: linux-2.6/kernel/power/hibernate.c
+===================================================================
+--- linux-2.6.orig/kernel/power/hibernate.c
++++ linux-2.6/kernel/power/hibernate.c
+@@ -832,6 +832,10 @@ int hibernate(void)
+ 	if (error)
+ 		goto Exit;
+ 
++	error = notify_swap_device();
++	if (error)
++		goto Thaw;
++
+ 	lock_device_hotplug();
+ 	/* Allocate memory management structures */
+ 	error = create_basic_memory_bitmaps();
+Index: linux-2.6/kernel/power/power.h
+===================================================================
+--- linux-2.6.orig/kernel/power/power.h
++++ linux-2.6/kernel/power/power.h
+@@ -68,6 +68,8 @@ extern int hibernation_snapshot(int plat
+ extern int hibernation_restore(int platform_mode);
+ extern int hibernation_platform_enter(void);
+ 
++extern int notify_swap_device(void);
++
+ #ifdef CONFIG_STRICT_KERNEL_RWX
+ /* kernel/power/snapshot.c */
+ extern void enable_restore_image_protection(void);
+Index: linux-2.6/kernel/power/swap.c
+===================================================================
+--- linux-2.6.orig/kernel/power/swap.c
++++ linux-2.6/kernel/power/swap.c
+@@ -1591,6 +1591,9 @@ int swsusp_check(bool exclusive)
+ 			error = hib_submit_io_sync(REQ_OP_WRITE | REQ_SYNC | REQ_FUA,
+ 						swsusp_resume_block,
+ 						swsusp_header);
++
++			/* Flush device-mapper related metadata */
++			bdev_hibernate(file_bdev(hib_resume_bdev_file));
+ 		} else {
+ 			error = -EINVAL;
+ 		}
+@@ -1630,6 +1633,23 @@ void swsusp_close(void)
+ 	fput(hib_resume_bdev_file);
+ }
+ 
++int notify_swap_device(void)
++{
++	int error;
++
++	error = swsusp_swap_check();
++	if (error)
++		return error;
++
++	error = bdev_hibernate(file_bdev(hib_resume_bdev_file));
++	if (error)
++		pr_err("Swap is on unsupported device\n");
++
++	swsusp_close();
++
++	return error;
++}
++
+ /**
+  *      swsusp_unmark - Unmark swsusp signature in the resume device
+  */
+Index: linux-2.6/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-crypt.c
++++ linux-2.6/drivers/md/dm-crypt.c
+@@ -3770,7 +3770,7 @@ static struct target_type crypt_target =
+ 	.module = THIS_MODULE,
+ 	.ctr    = crypt_ctr,
+ 	.dtr    = crypt_dtr,
+-	.features = DM_TARGET_ZONED_HM,
++	.features = DM_TARGET_ZONED_HM | DM_TARGET_HIBERNATE,
+ 	.report_zones = crypt_report_zones,
+ 	.map    = crypt_map,
+ 	.status = crypt_status,
+Index: linux-2.6/drivers/md/dm-linear.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-linear.c
++++ linux-2.6/drivers/md/dm-linear.c
+@@ -204,7 +204,7 @@ static struct target_type linear_target
+ 	.version = {1, 5, 0},
+ 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
+ 		    DM_TARGET_ZONED_HM | DM_TARGET_PASSES_CRYPTO |
+-		    DM_TARGET_ATOMIC_WRITES,
++		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_HIBERNATE,
+ 	.report_zones = linear_report_zones,
+ 	.module = THIS_MODULE,
+ 	.ctr    = linear_ctr,
+Index: linux-2.6/drivers/md/dm-stripe.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-stripe.c
++++ linux-2.6/drivers/md/dm-stripe.c
+@@ -471,7 +471,8 @@ static struct target_type stripe_target
+ 	.name   = "striped",
+ 	.version = {1, 7, 0},
+ 	.features = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_NOWAIT |
+-		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO,
++		    DM_TARGET_ATOMIC_WRITES | DM_TARGET_PASSES_CRYPTO |
++		    DM_TARGET_HIBERNATE,
+ 	.module = THIS_MODULE,
+ 	.ctr    = stripe_ctr,
+ 	.dtr    = stripe_dtr,
 
