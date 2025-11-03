@@ -1,116 +1,165 @@
-Received: from frasgout.his.huawei.com (frasgout.his.huawei.com [185.176.79.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72F592FC029
-	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 11:38:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.176.79.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6A5C21CC55
+	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 11:41:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762169890; cv=none; b=hlW2MGARHEUZfiIC8aG6LrOndpT0jJKDDS2ESTLd+dERgMpD6avIHVnSEUzvIrDAMwkXjwE2D4v+hF2FurzKXD4VlaFUgC2skDgurJyCq+7OKUzDIOtO5hJpsVGewUvJp/QeIjFyjYsg7NtI1ZAN1IvVGmY0ccVevUMpxKn29TY=
+	t=1762170072; cv=none; b=E4sepImc7neJvisVfdP3BwWOaZPXVlJcUK9nIOelBpWQDAqvm5/KM9IrxGqKWg488UkZ4XaYF8bxjmBqXjM1c6Usj+SmF7xr6vkN+YHYP8vURDNbzVYS7hh42o8o8VJMwTuMZCJ4p604P4dva+wU7L39ofzE4+mCp2qB1G5+Rdc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762169890; c=relaxed/simple;
-	bh=pLhcJQ+cQULFH93MVEe/lkcPignc/5wKPaXvCi80ymU=;
-	h=Date:From:To:CC:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=YuS++gT6lovwyO09OYBsH7rzZS6ZYe+O0U5wb6wcKEvKH6WPstUL/Ue6P3GwYnNkGhpKgnogaXhNfelp2Plqyp/FWYfrHn+frjfB44WXH5zvEbuDNvP8tjoTxwJtXoNsLbO8AJMNaJgSU0eywf83luSseDTESzHKWQpF5lQCJfQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=185.176.79.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
-Received: from mail.maildlp.com (unknown [172.18.186.216])
-	by frasgout.his.huawei.com (SkyGuard) with ESMTPS id 4d0V2M62JmzHnGjc;
-	Mon,  3 Nov 2025 19:38:03 +0800 (CST)
-Received: from dubpeml100005.china.huawei.com (unknown [7.214.146.113])
-	by mail.maildlp.com (Postfix) with ESMTPS id 2CA7F140370;
-	Mon,  3 Nov 2025 19:38:05 +0800 (CST)
-Received: from localhost (10.203.177.15) by dubpeml100005.china.huawei.com
- (7.214.146.113) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.11; Mon, 3 Nov
- 2025 11:38:04 +0000
-Date: Mon, 3 Nov 2025 11:38:03 +0000
-From: Jonathan Cameron <jonathan.cameron@huawei.com>
-To: Li Chen <me@linux.beauty>
-CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>, Dongsheng Yang
-	<dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>
-Subject: Re: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in
- pcache_meta_find_latest()
-Message-ID: <20251103113803.00001448@huawei.com>
-In-Reply-To: <20251030123323.967081-4-me@linux.beauty>
-References: <20251030123323.967081-1-me@linux.beauty>
-	<20251030123323.967081-4-me@linux.beauty>
-X-Mailer: Claws Mail 4.3.0 (GTK 3.24.42; x86_64-w64-mingw32)
+	s=arc-20240116; t=1762170072; c=relaxed/simple;
+	bh=gfpe9Ieic29WTye2FdoDQKnv5AsbD6Y4O3iq/F0+2TI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=En3qBGv51ZQBhoY2BvBhFdm2kp7QG2hGOMnEJaky4NsmrCaXtjplQs3ZBgv868WVcGOAgw7RyKB98Ne2VBuM5l3sax4ebz207xOf0ABCcyZUsK/gxzoIMA5JhPrBdH9xsoG5O/ftwgBgKq32plzdC6BZ368oKhH8RVdDX7fqGmI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=GnFiK307; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=9p9ERH+N; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=YuFfkVS2; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=eVgOC0V+; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="GnFiK307";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="9p9ERH+N";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="YuFfkVS2";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="eVgOC0V+"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id D4A8921AB9;
+	Mon,  3 Nov 2025 11:41:08 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1762170069; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
+	b=GnFiK307v7gxVOjgWFv1HYihI+pG6DC96tu0uRuXx4qG/OQ7qAW5FVJvZtciJlrKJBs0g8
+	vcJri/+w8gVTF6VHb8WWB9ATK5NP63bK4vstc5ZsA3T0z+LxIiGG+g6l58pOznRbhGVtfC
+	eimnZfBs1dNsjSM6C6rJ5lSIgBfV+Jc=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1762170069;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
+	b=9p9ERH+NwU7FfwNdPvPTBVG+SV8IA5r5NNLDMghKrIyMiC1pNx1OLsZrvrNaHqb5whoQO0
+	WpNP3UaDYQBqvMCw==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1762170068; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
+	b=YuFfkVS2fEHkPyeK99I8W84VK0ccnnPc7sGWb/mc+wutKzLjsAycsUmDPQbjCpPST0qI39
+	3zOEPbnkExrvpd0fOkZy373V9yJPZ8/xQNvMlMX0KjE3dW5ZMFA05M9dpWwXmIzoPYTA4z
+	h3hoAo25XQbj3OFpuqtyCicoUpDr+IU=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1762170068;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
+	b=eVgOC0V+VD1WpGHlNvIvty3FVY9x8yXwFz9zf3nrKqc+/7fYR3FH0n4zIXEDA8HXcY/zk+
+	/5+HiV1Hq+FpfjDQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id AD9511364F;
+	Mon,  3 Nov 2025 11:41:08 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id oyvmKdSUCGkSLwAAD6G6ig
+	(envelope-from <hare@suse.de>); Mon, 03 Nov 2025 11:41:08 +0000
+Message-ID: <8947e877-cd53-4f1d-989c-bdde311c00e9@suse.de>
+Date: Mon, 3 Nov 2025 12:41:08 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: lhrpeml500010.china.huawei.com (7.191.174.240) To
- dubpeml100005.china.huawei.com (7.214.146.113)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 03/13] block: handle zone management operations
+ completions
+To: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+ linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
+ Keith Busch <keith.busch@wdc.com>, Christoph Hellwig <hch@lst.de>,
+ dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ "Martin K . Petersen" <martin.petersen@oracle.com>,
+ linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
+ Carlos Maiolino <cem@kernel.org>, linux-btrfs@vger.kernel.org,
+ David Sterba <dsterba@suse.com>
+References: <20251031061307.185513-1-dlemoal@kernel.org>
+ <20251031061307.185513-4-dlemoal@kernel.org>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20251031061307.185513-4-dlemoal@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[15];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:mid,suse.de:email]
+X-Spam-Flag: NO
+X-Spam-Score: -4.30
+X-Spam-Level: 
 
-On Thu, 30 Oct 2025 20:33:21 +0800
-Li Chen <me@linux.beauty> wrote:
-
-> From: Li Chen <chenl311@chinatelecom.cn>
+On 10/31/25 07:12, Damien Le Moal wrote:
+> The functions blk_zone_wplug_handle_reset_or_finish() and
+> blk_zone_wplug_handle_reset_all() both modify the zone write pointer
+> offset of zone write plugs that are the target of a reset, reset all or
+> finish zone management operation. However, these functions do this
+> modification before the BIO is executed. So if the zone operation fails,
+> the modified zone write pointer offsets become invalid.
 > 
-> Before this change pcache_meta_find_latest() was copying each
-> slot directly into meta_ret while scanning. If no valid slot
-> was found and the function returned NULL, meta_ret still held
-> whatever was last copied (possibly CRC-bad). Later users
-> (e.g. cache_segs_init) could mistakenly trust that data.
+> Avoid this by modifying the zone write pointer offset of a zone write
+> plug that is the target of a zone management operation when the
+> operation completes. To do so, modify blk_zone_bio_endio() to call the
+> new function blk_zone_mgmt_bio_endio() which in turn calls the functions
+> blk_zone_reset_all_bio_endio(), blk_zone_reset_bio_endio() or
+> blk_zone_finish_bio_endio() depending on the operation of the completed
+> BIO, to modify a zone write plug write pointer offset accordingly.
+> These functions are called only if the BIO execution was successful.
 > 
-> Allocate a temporary buffer instead and only populate meta_ret after a
-> valid/latest header is found. If no valid header exists we return NULL
-> without touching meta_ret.
-> 
-> Also add __free(kvfree) so the temporary buffer is always freed, and
-> include the needed headers.
-> 
-> Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
-> ---
->  drivers/md/dm-pcache/pcache_internal.h | 13 +++++++++----
->  1 file changed, 9 insertions(+), 4 deletions(-)
-> 
-> diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
-> index b7a3319d2bd3e..ac28f9dd2986f 100644
-> --- a/drivers/md/dm-pcache/pcache_internal.h
-> +++ b/drivers/md/dm-pcache/pcache_internal.h
-> @@ -4,6 +4,8 @@
->  
->  #include <linux/delay.h>
->  #include <linux/crc32c.h>
-> +#include <linux/slab.h>
-> +#include <linux/cleanup.h>
->  
->  #define pcache_err(fmt, ...)							\
->  	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-> @@ -79,14 +81,17 @@ static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_head
->  					u32 meta_size, u32 meta_max_size,
->  					void *meta_ret)
->  {
-> -	struct pcache_meta_header *meta, *latest = NULL;
-> +	struct pcache_meta_header *latest = NULL;
-> +	struct pcache_meta_header *meta __free(kvfree);
->  	u32 i, seq_latest = 0;
-> -	void *meta_addr;
->  
-> -	meta = meta_ret;
-> +	meta = kvzalloc(meta_size, GFP_KERNEL);
-See the guidance notes in cleanup.h  THis hsould be
+Hmm.
+Question remains: what _is_ the status of a write pointer once a
+zone management operation is in flight?
+I would argue it's turning into a Schroedinger state, and so we
+cannot make any assumptions here.
+In particular we cannot issue any other write I/O to that zone once
+the operation is in flight, and so it becomes meaningless if we set
+the write pointer before or after the zone operation.
+Once the operation fails we have to issue a 'report write pointer'
+command anyway as I'd be surprised if we could assume that a failure
+in a zone management command would leave the write pointer unmodified.
+So I would assume that zone write plugging already blocks the zone
+while an zone management command is in flight.
+But if it does, why do we need this patch?
 
-	struct pcache_meta_header *meta __free(kvfree) =
-		kvzalloc(meta_size, GFP_KERNEL);
+Cheers,
 
-That is the constructor and destructor must be together. Inline variable
-declarations are fine for this one type of use.
-
-> +	if (!meta)
-> +		return ERR_PTR(-ENOMEM);
->  
->  	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
-> -		meta_addr = (void *)header + (i * meta_max_size);
-> +		void *meta_addr = (void *)header + (i * meta_max_size);
-> +
->  		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
->  			pcache_err("hardware memory error when copy meta");
->  			return ERR_PTR(-EIO);
-
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
