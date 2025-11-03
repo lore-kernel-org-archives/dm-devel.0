@@ -1,94 +1,111 @@
-Received: from 004.mia.mailroute.net (004.mia.mailroute.net [199.89.3.7])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EBE430BF63
-	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 15:49:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.7
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BB3C313E2B
+	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 15:53:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762184962; cv=none; b=he4PnTS96kY4SNIHsYI5BAWx8m5b+KISuskr56wBZoC1xsQAr6ZCyd3W+SAksBI4I+wni7+sfM4h3q7X+s+LYTsyMbLDIgjMFfPUW8EJTUXDUU29rzyRHpVZ6752FxOrqT308P1ehb/zZZfpU36eeVBX2e+9szcGwxUkLNJjQAI=
+	t=1762185234; cv=none; b=KlKC+iNKlJPaZtSEtxqk2CLeqNc45n/jahYsJmZogqVjdbr1Chuhvw13WFphx0cNzdBMDIiHXZfYOm6HawE7yl0gKzRI+yNWZwsbOpFemFyXi99ZDl2bLwg7B189z0/7OCaHVXXVsuTG0FMhdFsPjsbINB0+IqDc+BW1jt9C7t0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762184962; c=relaxed/simple;
-	bh=3H+4higPbUdrQOgNTHiHoV0OkYE8XUs1kez79VSzRho=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=lwx04wnbXmApF/jfD7x0Eme/it0s3xelY+zBRHRzH0MmnAgsYTdIr7Xt07xtDQh5FD/GG20hjA7Z43kO+Zg001gcXZaLdWKLkXGe75GAaZNyCQlbTFr/dLfCH+8yfw0ZiBQ4xhV4j60FRnuuhVFLcFRB5ZSllT5lrHty/d2gVk4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=02WulxwH; arc=none smtp.client-ip=199.89.3.7
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
+	s=arc-20240116; t=1762185234; c=relaxed/simple;
+	bh=qrT9BCtX5Q+ZrBSV86ofie64KLKL7GM3W7AojJFifCE=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=rtK8V6AXYQrkMfR+/0ktEQFUsuIkMFdQN4uIsQFFaxuC0aav6prGet85sDmXOm8VIPvKFxYnEsBxjmzDTBTi47m7MuBNT0r3WrE2Q1L9yvQ5MVYH5P9q3rVzyHZaR3x4Tk24HCdAN0jq58iVwwR7Q6tv7ilBDQDr3SVhZV6Vleg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kd4PVMLb; arc=none smtp.client-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="02WulxwH"
-Received: from localhost (localhost [127.0.0.1])
-	by 004.mia.mailroute.net (Postfix) with ESMTP id 4d0bcB4tb7zmV4CC;
-	Mon,  3 Nov 2025 15:49:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
-	content-transfer-encoding:content-type:content-type:in-reply-to
-	:from:from:content-language:references:subject:subject
-	:user-agent:mime-version:date:date:message-id:received:received;
-	 s=mr01; t=1762184952; x=1764776953; bh=8+ZnI63ovUK1I7wBR7LkOuvP
-	2rrk7ZSWPowftFD0GXY=; b=02WulxwHEs8MyMtxjIJK7WJgs5zSkdrxPgnr2hXx
-	Aj005502n0zYHgaxpfkmmjClPgnX6gUyoxFaDwxk/Doj40Hfrb3CNbroypmkbuVH
-	oh1nrA6ZvRZzyhWG9Z2d8CrHuMfEigfkF+p9SvtXWYcG7RhtLid/jt6uhxiUM53w
-	f/NqvFt5I+kELSkk5RUYvh8uv9EbKfLuJx/g4QgtkSDGZkZpg8bT6N1cK9C15+nz
-	Iltvy47MrGSKu0OD2BQOMF03X2osqY2VJc+HLXrgk6HENnG7wlgDCSb8gKsc2DzQ
-	vX4OSfRMzF5y4fsgXJMIq15aGGyQwdBwwQ79htaeSFmw3A==
-X-Virus-Scanned: by MailRoute
-Received: from 004.mia.mailroute.net ([127.0.0.1])
- by localhost (004.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
- id aMFMxo0XxxXk; Mon,  3 Nov 2025 15:49:12 +0000 (UTC)
-Received: from [192.168.51.14] (c-73-231-117-72.hsd1.ca.comcast.net [73.231.117.72])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	(Authenticated sender: bvanassche@acm.org)
-	by 004.mia.mailroute.net (Postfix) with ESMTPSA id 4d0bbt0fDwzm5mQ7;
-	Mon,  3 Nov 2025 15:48:57 +0000 (UTC)
-Message-ID: <95c729d6-fd73-4480-af1c-68075b31cd1d@acm.org>
-Date: Mon, 3 Nov 2025 07:48:54 -0800
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kd4PVMLb"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-474975af41dso34418915e9.2
+        for <dm-devel@lists.linux.dev>; Mon, 03 Nov 2025 07:53:52 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1762185231; x=1762790031; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=fLey69Q1yRBIRmkA9w/tF6nJaEmvXdViphT1MNeupw4=;
+        b=kd4PVMLbdRQpONULwEuR0i8NtQkxC8OJdP29AMh+QGV01j7kmPyLFDAUnlU/idDbmc
+         Cqvp5qKnXaFeFsHlz8mUZc0PvvoUqenkob5g4Qw1CJRI8IJhrpPkjb3y2kWCZi8bR+wU
+         /Wss9k6b5a7mr+XpVHyaVc5Tfk79g0QBL2/qm/SvEt3Hz9mIQJrc4S483uDIy+R38sbZ
+         SJ8lKC+hkL5gX8Kmp8FIyArd/n8YHaEt5iJpPiRaZBpp5XmyYWTXk1zhxQ42sjhdHyld
+         x608EVaOWFNK1+BFqoGEl/5z7Nl/STIy2JGyMYgNwq5CtjDOqQiQ92ekfKaAgrmia+n1
+         3IjQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1762185231; x=1762790031;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=fLey69Q1yRBIRmkA9w/tF6nJaEmvXdViphT1MNeupw4=;
+        b=VChKhb10Y9argNTXbZVqS0U+k2eu2+wII7IT55TXFoYs31kpqs1NC+5xJXtBml+2ns
+         P0o+QVarBKda0mcHzgdtbbOqfbPh6LwQLP7ttaZjb8kG7LBUUtvURQypf1Y0a5+9zKcL
+         CTYatTW5f/EuR3DmqqmrgPXcSHDvhJJXi7MOuKmFOEZtVBQgby5e4m9yhZ1vmX6qoFjt
+         nWlzk46ChNt/Ya9bobKH/NxAVBxp0RsINhS6UHLoc/LZPKbqOEZrkG03Sawxl881LUe9
+         lSXoA5h57OJ6tir1h+L4AL+lnc3Y2tUpY2uXSEePK3lxc/YUpupHa52kOrWz2gDf+Rnz
+         cdOg==
+X-Forwarded-Encrypted: i=1; AJvYcCXHc8/sBexxYdxTtaFC40sYVEYsSSe2YJduVWyo0SGMDrk2xrv5Ddf9JApNcy8XCKwqs+7zwEZwjA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxXJonWiXgbxMCf/xDrlvmNXEzcdClMASLZtKkRKErnFYR1Wx4L
+	/sAEniDxVhMz2Ef2qQTG6IN6trKbL+yDbsr2cQuP2yRH7rUZjrWplTBh
+X-Gm-Gg: ASbGncvwFeUtWij6OrlLFqvbQXwVIglGteavElM2rff0L3bRiZhbCFkjVxB7Ha7KbRT
+	jl1TcMTr0IXBSuqwT82uHujFKI41VJLUr8rCMQTZzPws6beN34Y1LX0W9Yfr9qKn/SHgWnkWDLd
+	ZoTqLfuKK5XzlPoeku19+DXLFm88irTNRPJSiiVHcAeqquNa0rN3LGa7Uq2+UMgMwlI2TBanTet
+	Bv03b7QJ8WK5M4Q2kkKWD2uRhxIZ2AyEp+vhtNeJfGKeFOOVnKH9MdAiYEflA0nGEBzeJmQd/5W
+	nXNVBfw9F1GnlU9jpbPjdU3+fs1BTEu0x1QsyJ+ac9E1+LaLVaA/CQ90JBicaFbqdu7yv4RigeJ
+	yIZmwZ7dNdMxy001YHxuvxndqrW73a+wHdacnrpSG0/C+gyvz6dRxAgwmezipjvrzszAMGdJd
+X-Google-Smtp-Source: AGHT+IGy41LT8aj0/Xvj0W53yZvKvDn5c9ABQJxOklSZONmqbPHs8HNDAqrjQAZba3bO5xPU/Rodqg==
+X-Received: by 2002:a05:600c:3511:b0:470:bcc4:b07c with SMTP id 5b1f17b1804b1-477308a8f36mr118541675e9.37.1762185230454;
+        Mon, 03 Nov 2025 07:53:50 -0800 (PST)
+Received: from localhost ([212.73.77.104])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4773c48de65sm161908635e9.1.2025.11.03.07.53.48
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 03 Nov 2025 07:53:50 -0800 (PST)
+From: Askar Safin <safinaskar@gmail.com>
+To: mpatocka@redhat.com
+Cc: Dell.Client.Kernel@dell.com,
+	agk@redhat.com,
+	brauner@kernel.org,
+	dm-devel@lists.linux.dev,
+	ebiggers@kernel.org,
+	kix@kix.es,
+	linux-block@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	linux-crypto@vger.kernel.org,
+	linux-lvm@lists.linux.dev,
+	linux-mm@kvack.org,
+	linux-pm@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	lvm-devel@lists.linux.dev,
+	milan@mazyland.cz,
+	msnitzer@redhat.com,
+	mzxreary@0pointer.de,
+	nphamcs@gmail.com,
+	pavel@ucw.cz,
+	rafael@kernel.org,
+	ryncsn@gmail.com,
+	safinaskar@gmail.com,
+	torvalds@linux-foundation.org
+Subject: Re: [PATCH 1/2] pm-hibernate: flush disk cache when suspending
+Date: Mon,  3 Nov 2025 18:53:45 +0300
+Message-ID: <20251103155345.1153213-1-safinaskar@gmail.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
+References: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 07/13] block: track zone conditions
-To: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
- linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
- Keith Busch <keith.busch@wdc.com>, Christoph Hellwig <hch@lst.de>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
- Carlos Maiolino <cem@kernel.org>, linux-btrfs@vger.kernel.org,
- David Sterba <dsterba@suse.com>
-References: <20251031061307.185513-1-dlemoal@kernel.org>
- <20251031061307.185513-8-dlemoal@kernel.org>
- <40c87475-7d5a-4792-b2a6-3eeb8406f9be@acm.org>
- <93215b7c-80bd-4860-8a77-42cdd4db1ec6@kernel.org>
-Content-Language: en-US
-From: Bart Van Assche <bvanassche@acm.org>
-In-Reply-To: <93215b7c-80bd-4860-8a77-42cdd4db1ec6@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 11/2/25 10:05 PM, Damien Le Moal wrote:
-> On 11/1/25 06:17, Bart Van Assche wrote:
->> On 10/30/25 11:13 PM, Damien Le Moal wrote:
->>> Implement tracking of the runtime changes to zone conditions using
->>> the new cond field in struct blk_zone_wplug. The size of this structure
->>> remains 112 Bytes as the new field replaces the 4 Bytes padding at the
->>> end of the structure. For zones that do not have a zone write plug, the
->>> zones_cond array of a disk is used to track changes to zone conditions,
->>> e.g. when a zone reset, reset all or finish operation is executed.
->>
->> Why is it necessary to track the condition of sequential zones that do
->> not have a zone write plug? Please explain what the use cases are.
+Mikulas Patocka <mpatocka@redhat.com>:
+> [PATCH 1/2] pm-hibernate: flush disk cache when suspending
 > 
-> Because zones that do not have a zone write plug can be empty OR full.
+> There was reported failure that suspend doesn't work with dm-integrity.
+> The reason for the failure is that the suspend code doesn't issue the
+> FLUSH bio - the data still sits in the dm-integrity cache and they are
+> lost when poweroff happens.
 
-Why does the block layer have to track this information? Filesystems can
-easily derive this information from the filesystem metadata information,
-isn't it?
+Thank you! I hope I will test this within 2 weeks.
 
-Thanks,
-
-Bart.
+-- 
+Askar Safin
