@@ -1,111 +1,121 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BB3C313E2B
-	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 15:53:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70BB8314B90
+	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 16:10:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762185234; cv=none; b=KlKC+iNKlJPaZtSEtxqk2CLeqNc45n/jahYsJmZogqVjdbr1Chuhvw13WFphx0cNzdBMDIiHXZfYOm6HawE7yl0gKzRI+yNWZwsbOpFemFyXi99ZDl2bLwg7B189z0/7OCaHVXXVsuTG0FMhdFsPjsbINB0+IqDc+BW1jt9C7t0=
+	t=1762186236; cv=none; b=kAcIGvO1txLNqZjp0QrHPLP6wZnHCp/xLpGenmTV/8jWI+I9Ihi/ilV4mZO2NyUCx5ihvKwyafKq96lOj7erfAl++rJNUUOeYU879eanyHGcH7amP+XiE9szz0VGmkysobnseiespKfF73XIag9B0Q6YNE4IRN6GFAZl0d4oluQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762185234; c=relaxed/simple;
-	bh=qrT9BCtX5Q+ZrBSV86ofie64KLKL7GM3W7AojJFifCE=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=rtK8V6AXYQrkMfR+/0ktEQFUsuIkMFdQN4uIsQFFaxuC0aav6prGet85sDmXOm8VIPvKFxYnEsBxjmzDTBTi47m7MuBNT0r3WrE2Q1L9yvQ5MVYH5P9q3rVzyHZaR3x4Tk24HCdAN0jq58iVwwR7Q6tv7ilBDQDr3SVhZV6Vleg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kd4PVMLb; arc=none smtp.client-ip=209.85.128.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1762186236; c=relaxed/simple;
+	bh=hcEECQpZnZYS+rrOjcFLuMdTrw1oSE8F4CuJwKX2TsQ=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=M9Sq4KzxBDqhfWhlO2w7COCo3qae/TgLT5FiIgG4oPWiWwlXVD4Dk6fAXLc99OJLeHsqMLWEkM/BBBbwBzVvwvataxNRnnR/PkHsgKqyGPzHSvxu2sQnJj0RnZEYLGuknccEutMe1Leq8dfUpb+oz+Jk5Ly2E2XZell3c2w4nm4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eRmaZfx9; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kd4PVMLb"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-474975af41dso34418915e9.2
-        for <dm-devel@lists.linux.dev>; Mon, 03 Nov 2025 07:53:52 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1762185231; x=1762790031; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=fLey69Q1yRBIRmkA9w/tF6nJaEmvXdViphT1MNeupw4=;
-        b=kd4PVMLbdRQpONULwEuR0i8NtQkxC8OJdP29AMh+QGV01j7kmPyLFDAUnlU/idDbmc
-         Cqvp5qKnXaFeFsHlz8mUZc0PvvoUqenkob5g4Qw1CJRI8IJhrpPkjb3y2kWCZi8bR+wU
-         /Wss9k6b5a7mr+XpVHyaVc5Tfk79g0QBL2/qm/SvEt3Hz9mIQJrc4S483uDIy+R38sbZ
-         SJ8lKC+hkL5gX8Kmp8FIyArd/n8YHaEt5iJpPiRaZBpp5XmyYWTXk1zhxQ42sjhdHyld
-         x608EVaOWFNK1+BFqoGEl/5z7Nl/STIy2JGyMYgNwq5CtjDOqQiQ92ekfKaAgrmia+n1
-         3IjQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762185231; x=1762790031;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=fLey69Q1yRBIRmkA9w/tF6nJaEmvXdViphT1MNeupw4=;
-        b=VChKhb10Y9argNTXbZVqS0U+k2eu2+wII7IT55TXFoYs31kpqs1NC+5xJXtBml+2ns
-         P0o+QVarBKda0mcHzgdtbbOqfbPh6LwQLP7ttaZjb8kG7LBUUtvURQypf1Y0a5+9zKcL
-         CTYatTW5f/EuR3DmqqmrgPXcSHDvhJJXi7MOuKmFOEZtVBQgby5e4m9yhZ1vmX6qoFjt
-         nWlzk46ChNt/Ya9bobKH/NxAVBxp0RsINhS6UHLoc/LZPKbqOEZrkG03Sawxl881LUe9
-         lSXoA5h57OJ6tir1h+L4AL+lnc3Y2tUpY2uXSEePK3lxc/YUpupHa52kOrWz2gDf+Rnz
-         cdOg==
-X-Forwarded-Encrypted: i=1; AJvYcCXHc8/sBexxYdxTtaFC40sYVEYsSSe2YJduVWyo0SGMDrk2xrv5Ddf9JApNcy8XCKwqs+7zwEZwjA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxXJonWiXgbxMCf/xDrlvmNXEzcdClMASLZtKkRKErnFYR1Wx4L
-	/sAEniDxVhMz2Ef2qQTG6IN6trKbL+yDbsr2cQuP2yRH7rUZjrWplTBh
-X-Gm-Gg: ASbGncvwFeUtWij6OrlLFqvbQXwVIglGteavElM2rff0L3bRiZhbCFkjVxB7Ha7KbRT
-	jl1TcMTr0IXBSuqwT82uHujFKI41VJLUr8rCMQTZzPws6beN34Y1LX0W9Yfr9qKn/SHgWnkWDLd
-	ZoTqLfuKK5XzlPoeku19+DXLFm88irTNRPJSiiVHcAeqquNa0rN3LGa7Uq2+UMgMwlI2TBanTet
-	Bv03b7QJ8WK5M4Q2kkKWD2uRhxIZ2AyEp+vhtNeJfGKeFOOVnKH9MdAiYEflA0nGEBzeJmQd/5W
-	nXNVBfw9F1GnlU9jpbPjdU3+fs1BTEu0x1QsyJ+ac9E1+LaLVaA/CQ90JBicaFbqdu7yv4RigeJ
-	yIZmwZ7dNdMxy001YHxuvxndqrW73a+wHdacnrpSG0/C+gyvz6dRxAgwmezipjvrzszAMGdJd
-X-Google-Smtp-Source: AGHT+IGy41LT8aj0/Xvj0W53yZvKvDn5c9ABQJxOklSZONmqbPHs8HNDAqrjQAZba3bO5xPU/Rodqg==
-X-Received: by 2002:a05:600c:3511:b0:470:bcc4:b07c with SMTP id 5b1f17b1804b1-477308a8f36mr118541675e9.37.1762185230454;
-        Mon, 03 Nov 2025 07:53:50 -0800 (PST)
-Received: from localhost ([212.73.77.104])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4773c48de65sm161908635e9.1.2025.11.03.07.53.48
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 03 Nov 2025 07:53:50 -0800 (PST)
-From: Askar Safin <safinaskar@gmail.com>
-To: mpatocka@redhat.com
-Cc: Dell.Client.Kernel@dell.com,
-	agk@redhat.com,
-	brauner@kernel.org,
-	dm-devel@lists.linux.dev,
-	ebiggers@kernel.org,
-	kix@kix.es,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-crypto@vger.kernel.org,
-	linux-lvm@lists.linux.dev,
-	linux-mm@kvack.org,
-	linux-pm@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	lvm-devel@lists.linux.dev,
-	milan@mazyland.cz,
-	msnitzer@redhat.com,
-	mzxreary@0pointer.de,
-	nphamcs@gmail.com,
-	pavel@ucw.cz,
-	rafael@kernel.org,
-	ryncsn@gmail.com,
-	safinaskar@gmail.com,
-	torvalds@linux-foundation.org
-Subject: Re: [PATCH 1/2] pm-hibernate: flush disk cache when suspending
-Date: Mon,  3 Nov 2025 18:53:45 +0300
-Message-ID: <20251103155345.1153213-1-safinaskar@gmail.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
-References: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eRmaZfx9"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1762186233;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=FL9HmwdZD0MRguLtDcdVu1gP15j2MVs0YK7L0sC7zis=;
+	b=eRmaZfx9Lw3n1tokqqkF3ZVnT58xupVQ9wWj3tU5YeGspHrUVUIMUECO0daRqnHoZg0hp4
+	0aTvkGRqxqUeOetYnI+fSLJCAjyxzhg6WjKI2Xtppkt4N+zDgb3ua/x1IAGkc8OlvzO8uI
+	UpChjGMAXlOyEesz+eE7CoURXfQegbU=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-298-Ja4YJYB_MMKjHiKZqOES1Q-1; Mon,
+ 03 Nov 2025 11:10:30 -0500
+X-MC-Unique: Ja4YJYB_MMKjHiKZqOES1Q-1
+X-Mimecast-MFC-AGG-ID: Ja4YJYB_MMKjHiKZqOES1Q_1762186227
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 565381956095;
+	Mon,  3 Nov 2025 16:10:27 +0000 (UTC)
+Received: from [10.45.225.163] (unknown [10.45.225.163])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DAD571800451;
+	Mon,  3 Nov 2025 16:10:23 +0000 (UTC)
+Date: Mon, 3 Nov 2025 17:10:15 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Markus Elfring <Markus.Elfring@web.de>
+cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
+    Heinz Mauelshagen <heinzm@redhat.com>, Josef Bacik <jbacik@fb.com>, 
+    Mike Snitzer <snitzer@kernel.org>, 
+    Ross Zwisler <ross.zwisler@linux.intel.com>, Zach Brown <zab@zabbo.net>, 
+    LKML <linux-kernel@vger.kernel.org>, kernel-janitors@vger.kernel.org, 
+    Miaoqian Lin <linmq006@gmail.com>
+Subject: Re: [PATCH] dm-log-writes: Use pointers from memcpy() calls for
+ assignments in two functions
+In-Reply-To: <b803a5a1-c2bf-4aad-9527-198e8a8046ca@web.de>
+Message-ID: <85eba740-899c-6884-93b4-aa441436db97@redhat.com>
+References: <b803a5a1-c2bf-4aad-9527-198e8a8046ca@web.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-Mikulas Patocka <mpatocka@redhat.com>:
-> [PATCH 1/2] pm-hibernate: flush disk cache when suspending
+Hi
+
+I think that the code is more readable as it is.
+
+Putting two function calls on one line doesn't make it easier to read.
+
+Mikulas
+
+
+On Fri, 31 Oct 2025, Markus Elfring wrote:
+
+> From: Markus Elfring <elfring@users.sourceforge.net>
+> Date: Fri, 31 Oct 2025 20:20:56 +0100
 > 
-> There was reported failure that suspend doesn't work with dm-integrity.
-> The reason for the failure is that the suspend code doesn't issue the
-> FLUSH bio - the data still sits in the dm-integrity cache and they are
-> lost when poweroff happens.
+> A pointer was assigned to a variable in two function implementations.
+> The same pointer was used for the destination parameter of a memcpy() call.
+> This function is documented in the way that the same value is returned.
+> Thus convert separate statements into a direct variable assignment for
+> the return value from a memory copy action.
+> 
+> The source code was transformed by using the Coccinelle software.
+> 
+> Signed-off-by: Markus Elfring <elfring@users.sourceforge.net>
+> ---
+>  drivers/md/dm-log-writes.c | 6 ++----
+>  1 file changed, 2 insertions(+), 4 deletions(-)
+> 
+> diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+> index 7bb7174f8f4f..b450bdadfaf2 100644
+> --- a/drivers/md/dm-log-writes.c
+> +++ b/drivers/md/dm-log-writes.c
+> @@ -232,8 +232,7 @@ static int write_metadata(struct log_writes_c *lc, void *entry,
+>  		goto error;
+>  	}
+>  
+> -	ptr = kmap_local_page(page);
+> -	memcpy(ptr, entry, entrylen);
+> +	ptr = memcpy(kmap_local_page(page), entry, entrylen);
+>  	if (datalen)
+>  		memcpy(ptr + entrylen, data, datalen);
+>  	memset(ptr + entrylen + datalen, 0,
+> @@ -287,8 +286,7 @@ static int write_inline_data(struct log_writes_c *lc, void *entry,
+>  				goto error_bio;
+>  			}
+>  
+> -			ptr = kmap_local_page(page);
+> -			memcpy(ptr, data, pg_datalen);
+> +			ptr = memcpy(kmap_local_page(page), data, pg_datalen);
+>  			if (pg_sectorlen > pg_datalen)
+>  				memset(ptr + pg_datalen, 0, pg_sectorlen - pg_datalen);
+>  			kunmap_local(ptr);
+> -- 
+> 2.51.1
+> 
 
-Thank you! I hope I will test this within 2 weeks.
-
--- 
-Askar Safin
