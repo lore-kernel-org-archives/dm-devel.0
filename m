@@ -1,80 +1,33 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A6A5C21CC55
-	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 11:41:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4630308F0A;
+	Mon,  3 Nov 2025 12:59:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762170072; cv=none; b=E4sepImc7neJvisVfdP3BwWOaZPXVlJcUK9nIOelBpWQDAqvm5/KM9IrxGqKWg488UkZ4XaYF8bxjmBqXjM1c6Usj+SmF7xr6vkN+YHYP8vURDNbzVYS7hh42o8o8VJMwTuMZCJ4p604P4dva+wU7L39ofzE4+mCp2qB1G5+Rdc=
+	t=1762174794; cv=none; b=fLP31nl57cnQbZgOL/E9WExW58JtGPnO32Lu4iOoUzsb/hIouDpO5L31vlWMN++1epCvPMgB5ZXMdVxs2UgufK6BYZEDSbbiwtemDOQLFVTnogogLuOWAQJ0Acm0AIqssi+Qu1stCy2u+Nnbu0xBW3AIBrYYTbgoUHWok8OSL3M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762170072; c=relaxed/simple;
-	bh=gfpe9Ieic29WTye2FdoDQKnv5AsbD6Y4O3iq/F0+2TI=;
+	s=arc-20240116; t=1762174794; c=relaxed/simple;
+	bh=mg14JfajU5W0qY3xKlC1LzugPqDhaogBLa+MoPCu9po=;
 	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=En3qBGv51ZQBhoY2BvBhFdm2kp7QG2hGOMnEJaky4NsmrCaXtjplQs3ZBgv868WVcGOAgw7RyKB98Ne2VBuM5l3sax4ebz207xOf0ABCcyZUsK/gxzoIMA5JhPrBdH9xsoG5O/ftwgBgKq32plzdC6BZ368oKhH8RVdDX7fqGmI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=GnFiK307; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=9p9ERH+N; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=YuFfkVS2; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=eVgOC0V+; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	 In-Reply-To:Content-Type; b=cat0t2zspx+mDnpH/nH8Rl4euS3z+6bYz0Aj0pCHq5b8ltnlN+rqcmEE3tJmKrcFQqJukdN4QysJ2hlQ+J8Z2HyoKWlw2WhNh0WIN0z5EiZHRC4UgtUgOv9BJVlaoxhj2aOSxGesT1nQ+IdAwinZVuaawQ+aqFJmUMKLcY6Y5uw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Tfzuyc0w; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="GnFiK307";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="9p9ERH+N";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="YuFfkVS2";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="eVgOC0V+"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id D4A8921AB9;
-	Mon,  3 Nov 2025 11:41:08 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1762170069; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
-	b=GnFiK307v7gxVOjgWFv1HYihI+pG6DC96tu0uRuXx4qG/OQ7qAW5FVJvZtciJlrKJBs0g8
-	vcJri/+w8gVTF6VHb8WWB9ATK5NP63bK4vstc5ZsA3T0z+LxIiGG+g6l58pOznRbhGVtfC
-	eimnZfBs1dNsjSM6C6rJ5lSIgBfV+Jc=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1762170069;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
-	b=9p9ERH+NwU7FfwNdPvPTBVG+SV8IA5r5NNLDMghKrIyMiC1pNx1OLsZrvrNaHqb5whoQO0
-	WpNP3UaDYQBqvMCw==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1762170068; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
-	b=YuFfkVS2fEHkPyeK99I8W84VK0ccnnPc7sGWb/mc+wutKzLjsAycsUmDPQbjCpPST0qI39
-	3zOEPbnkExrvpd0fOkZy373V9yJPZ8/xQNvMlMX0KjE3dW5ZMFA05M9dpWwXmIzoPYTA4z
-	h3hoAo25XQbj3OFpuqtyCicoUpDr+IU=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1762170068;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hnWHmC0GhHJr8yhikrEe9iwl7aeuCKJ/Kg1kvJIiWy0=;
-	b=eVgOC0V+VD1WpGHlNvIvty3FVY9x8yXwFz9zf3nrKqc+/7fYR3FH0n4zIXEDA8HXcY/zk+
-	/5+HiV1Hq+FpfjDQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id AD9511364F;
-	Mon,  3 Nov 2025 11:41:08 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id oyvmKdSUCGkSLwAAD6G6ig
-	(envelope-from <hare@suse.de>); Mon, 03 Nov 2025 11:41:08 +0000
-Message-ID: <8947e877-cd53-4f1d-989c-bdde311c00e9@suse.de>
-Date: Mon, 3 Nov 2025 12:41:08 +0100
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Tfzuyc0w"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2FAC8C4CEE7;
+	Mon,  3 Nov 2025 12:59:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1762174794;
+	bh=mg14JfajU5W0qY3xKlC1LzugPqDhaogBLa+MoPCu9po=;
+	h=Date:Subject:To:References:From:In-Reply-To:From;
+	b=Tfzuyc0w0PG8B9qeo4EY1e6oWHR35RGpaPLMhqntB/ik1LckO74VHTfp82JdQfC9k
+	 0XUUezUYERCKbPcEpQY508qcq5lLukAr+xy/HgvMMnFHFrhxq+AwL0mtcl8g3ynIYb
+	 FsW8Nr3O/XJikCmQBNqdHGt7OEq0tEcBuNdvdKHO7YvkkFHuIcD0/uRGGFqYSqR9u1
+	 Pd7ZRjdZfeTJpyRPVCSwWFC4B9ujnv6yxK+/mq21WfNfEkreGE0imhdNkpA+pHbXy/
+	 TECb2JVsfxse8iQFM6majHDvwTu6aCy7dgtulG1U5hG4HAxVR6J6cFHyAK4kOVvqY9
+	 uSZasy7Ak7n8g==
+Message-ID: <32f2f32a-eafd-43ef-a599-fc4784fdf492@kernel.org>
+Date: Mon, 3 Nov 2025 21:59:49 +0900
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -84,7 +37,7 @@ MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
 Subject: Re: [PATCH 03/13] block: handle zone management operations
  completions
-To: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+To: Hannes Reinecke <hare@suse.de>, Jens Axboe <axboe@kernel.dk>,
  linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
  Keith Busch <keith.busch@wdc.com>, Christoph Hellwig <hch@lst.de>,
  dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
@@ -95,71 +48,74 @@ To: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
  David Sterba <dsterba@suse.com>
 References: <20251031061307.185513-1-dlemoal@kernel.org>
  <20251031061307.185513-4-dlemoal@kernel.org>
+ <8947e877-cd53-4f1d-989c-bdde311c00e9@suse.de>
 Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20251031061307.185513-4-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	RCPT_COUNT_TWELVE(0.00)[15];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:mid,suse.de:email]
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
+From: Damien Le Moal <dlemoal@kernel.org>
+Organization: Western Digital Research
+In-Reply-To: <8947e877-cd53-4f1d-989c-bdde311c00e9@suse.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On 10/31/25 07:12, Damien Le Moal wrote:
-> The functions blk_zone_wplug_handle_reset_or_finish() and
-> blk_zone_wplug_handle_reset_all() both modify the zone write pointer
-> offset of zone write plugs that are the target of a reset, reset all or
-> finish zone management operation. However, these functions do this
-> modification before the BIO is executed. So if the zone operation fails,
-> the modified zone write pointer offsets become invalid.
-> 
-> Avoid this by modifying the zone write pointer offset of a zone write
-> plug that is the target of a zone management operation when the
-> operation completes. To do so, modify blk_zone_bio_endio() to call the
-> new function blk_zone_mgmt_bio_endio() which in turn calls the functions
-> blk_zone_reset_all_bio_endio(), blk_zone_reset_bio_endio() or
-> blk_zone_finish_bio_endio() depending on the operation of the completed
-> BIO, to modify a zone write plug write pointer offset accordingly.
-> These functions are called only if the BIO execution was successful.
-> 
-Hmm.
-Question remains: what _is_ the status of a write pointer once a
-zone management operation is in flight?
-I would argue it's turning into a Schroedinger state, and so we
-cannot make any assumptions here.
-In particular we cannot issue any other write I/O to that zone once
-the operation is in flight, and so it becomes meaningless if we set
-the write pointer before or after the zone operation.
-Once the operation fails we have to issue a 'report write pointer'
-command anyway as I'd be surprised if we could assume that a failure
-in a zone management command would leave the write pointer unmodified.
-So I would assume that zone write plugging already blocks the zone
-while an zone management command is in flight.
-But if it does, why do we need this patch?
+On 11/3/25 20:41, Hannes Reinecke wrote:
+> On 10/31/25 07:12, Damien Le Moal wrote:
+>> The functions blk_zone_wplug_handle_reset_or_finish() and
+>> blk_zone_wplug_handle_reset_all() both modify the zone write pointer
+>> offset of zone write plugs that are the target of a reset, reset all or
+>> finish zone management operation. However, these functions do this
+>> modification before the BIO is executed. So if the zone operation fails,
+>> the modified zone write pointer offsets become invalid.
+>>
+>> Avoid this by modifying the zone write pointer offset of a zone write
+>> plug that is the target of a zone management operation when the
+>> operation completes. To do so, modify blk_zone_bio_endio() to call the
+>> new function blk_zone_mgmt_bio_endio() which in turn calls the functions
+>> blk_zone_reset_all_bio_endio(), blk_zone_reset_bio_endio() or
+>> blk_zone_finish_bio_endio() depending on the operation of the completed
+>> BIO, to modify a zone write plug write pointer offset accordingly.
+>> These functions are called only if the BIO execution was successful.
+>>
+> Hmm.
+> Question remains: what _is_ the status of a write pointer once a
+> zone management operation is in flight?
 
-Cheers,
+On the device, it will be unchanged until the command completes, or rather, one
+can only see it that way since the drive will serialize such command with report
+zones.
 
-Hannes
+> I would argue it's turning into a Schroedinger state, and so we
+> cannot make any assumptions here.
+
+Let me try to skin that cat below :)
+
+> In particular we cannot issue any other write I/O to that zone once
+> the operation is in flight, and so it becomes meaningless if we set
+> the write pointer before or after the zone operation.
+> Once the operation fails we have to issue a 'report write pointer'
+> command anyway as I'd be surprised if we could assume that a failure
+> in a zone management command would leave the write pointer unmodified.
+> So I would assume that zone write plugging already blocks the zone
+> while an zone management command is in flight.
+> But if it does, why do we need this patch?
+
+There is no such "blocking" done, the user is free to issue a zone reset while
+writes are n flight, and most likely get write errors as a result such bad practice.
+
+For this patch, the assumption is that a failed zone reset or zone finish leaves
+the zone write pointer untouched. All the drives I know do that. So it is better
+to not modify the zone write plug write pointer offset until we complete the
+command.
+
+But granted, that is not always true since the failure may happen *after* the
+drive completed the command (e.g. the HBA loses the connection with the drive
+before signaling the completion or something like that). In such case, it would
+not matter when the update is done. And for zone reset all commands, all bets
+are off since the command may fail half-way through all the zones that need a reset.
+
+But in the end, logically speaking, it makes more sense to update things when we
+get a success result instead of assuming we will always succeed. This has also
+the benefit of leaving the zone write plugs in place for eventual error recovery
+if needed.
+
 -- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+Damien Le Moal
+Western Digital Research
