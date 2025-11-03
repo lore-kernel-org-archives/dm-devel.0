@@ -1,165 +1,116 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from frasgout.his.huawei.com (frasgout.his.huawei.com [185.176.79.56])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B16DE2FB09E
-	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 11:17:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72F592FC029
+	for <dm-devel@lists.linux.dev>; Mon,  3 Nov 2025 11:38:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.176.79.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762168660; cv=none; b=HCQupohZ//y+z4nOPAXfSVsEiVR0R86KYF0/d8bvW603vhLfFL2r6GyiQz810XR+Liu1Ah1b5xjcsEzdPJahc6RrkRy1XjKWHUoFQJol1iENGECYjrpUx5KEXGIYh5DNCZK5G6xOB7WhjqGwb5M1thsrK00RjicIbLnpThV8EsY=
+	t=1762169890; cv=none; b=hlW2MGARHEUZfiIC8aG6LrOndpT0jJKDDS2ESTLd+dERgMpD6avIHVnSEUzvIrDAMwkXjwE2D4v+hF2FurzKXD4VlaFUgC2skDgurJyCq+7OKUzDIOtO5hJpsVGewUvJp/QeIjFyjYsg7NtI1ZAN1IvVGmY0ccVevUMpxKn29TY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762168660; c=relaxed/simple;
-	bh=PYnKimL9C1poOiobYUKOydyLJTnMwWi2JZnxzXATDuM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=J2jYlwDMD8axXwT1cwCdsGs9PlhfIrAPpmel68lI+jn3veF03AU5XMliyM1b7FJlNEURpQcs8G+N3eUlY6vONI4MXcGNLApONHXMSG4OtFNieckjxn0leMB6GxcY8PQLMJNse8TVG3e23iwxoKw7+FK5276lhnM2O6pqX+6OiQQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=T2cmJCIR; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=+ywv+G+I; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=JLFk3m1B; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=smTMsLHl; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="T2cmJCIR";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="+ywv+G+I";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="JLFk3m1B";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="smTMsLHl"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id C6F381F7C4;
-	Mon,  3 Nov 2025 11:17:35 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1762168656; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wXdUrem8sAALhKYjhxC1IdzSmgHyEFcuHW/uUtjlUkg=;
-	b=T2cmJCIRgxBlnxDE/4DEgrC44Mp8J4CbeDdXVLsvzErSYwpxv1e7SS9z/ebdXMlg+AFRe2
-	6QqiB+Atv7giockwqpI/DEfJ+iraRcfQx2V2qKQbf1J22/LBHPD7cB8jiJuA1F08RIcuJF
-	L6B32Sqkig6yl1a3hb9ISbhT+YXPq+Q=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1762168656;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wXdUrem8sAALhKYjhxC1IdzSmgHyEFcuHW/uUtjlUkg=;
-	b=+ywv+G+I+N8WRsaR9jhITdzsbsWuHyWbLQLLa5bEIJgYeFKceP5okYKZpfDyD67vki6mh8
-	TvrMq68jY7I/e2Bg==
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=JLFk3m1B;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=smTMsLHl
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1762168655; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wXdUrem8sAALhKYjhxC1IdzSmgHyEFcuHW/uUtjlUkg=;
-	b=JLFk3m1BFdhbpsdgNDhBxUPPrqZfj+kRMuEpjFe76iccVqA2rt0eaR4B++T/DvHD/sxC4T
-	lk9Z2q+0ZkWrdpby8fZ19mmC+COpCswHwmqglyC5ZneIZ1gK1A06YGMwRzDj7Iu62M2/fW
-	pHWZHodm3CcnBBAJHknPW/n/JDrPN7Q=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1762168655;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wXdUrem8sAALhKYjhxC1IdzSmgHyEFcuHW/uUtjlUkg=;
-	b=smTMsLHlYxbtlOno0P19mCJID/OAAdJfc3z9zU/JRXUMKLU3eSbBKujVSgeZL0LX3kk0DX
-	ni+ksW/UiuUefIDw==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 8B4DC139A9;
-	Mon,  3 Nov 2025 11:17:35 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 7SxCIU+PCGkdGAAAD6G6ig
-	(envelope-from <hare@suse.de>); Mon, 03 Nov 2025 11:17:35 +0000
-Message-ID: <6511ddae-86c4-448d-8879-0567965ff257@suse.de>
-Date: Mon, 3 Nov 2025 12:17:35 +0100
+	s=arc-20240116; t=1762169890; c=relaxed/simple;
+	bh=pLhcJQ+cQULFH93MVEe/lkcPignc/5wKPaXvCi80ymU=;
+	h=Date:From:To:CC:Subject:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=YuS++gT6lovwyO09OYBsH7rzZS6ZYe+O0U5wb6wcKEvKH6WPstUL/Ue6P3GwYnNkGhpKgnogaXhNfelp2Plqyp/FWYfrHn+frjfB44WXH5zvEbuDNvP8tjoTxwJtXoNsLbO8AJMNaJgSU0eywf83luSseDTESzHKWQpF5lQCJfQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; arc=none smtp.client-ip=185.176.79.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
+Received: from mail.maildlp.com (unknown [172.18.186.216])
+	by frasgout.his.huawei.com (SkyGuard) with ESMTPS id 4d0V2M62JmzHnGjc;
+	Mon,  3 Nov 2025 19:38:03 +0800 (CST)
+Received: from dubpeml100005.china.huawei.com (unknown [7.214.146.113])
+	by mail.maildlp.com (Postfix) with ESMTPS id 2CA7F140370;
+	Mon,  3 Nov 2025 19:38:05 +0800 (CST)
+Received: from localhost (10.203.177.15) by dubpeml100005.china.huawei.com
+ (7.214.146.113) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.11; Mon, 3 Nov
+ 2025 11:38:04 +0000
+Date: Mon, 3 Nov 2025 11:38:03 +0000
+From: Jonathan Cameron <jonathan.cameron@huawei.com>
+To: Li Chen <me@linux.beauty>
+CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>, Dongsheng Yang
+	<dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>
+Subject: Re: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in
+ pcache_meta_find_latest()
+Message-ID: <20251103113803.00001448@huawei.com>
+In-Reply-To: <20251030123323.967081-4-me@linux.beauty>
+References: <20251030123323.967081-1-me@linux.beauty>
+	<20251030123323.967081-4-me@linux.beauty>
+X-Mailer: Claws Mail 4.3.0 (GTK 3.24.42; x86_64-w64-mingw32)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 01/13] block: freeze queue when updating zone resources
-To: Damien Le Moal <dlemoal@kernel.org>, Jens Axboe <axboe@kernel.dk>,
- linux-block@vger.kernel.org, linux-nvme@lists.infradead.org,
- Keith Busch <keith.busch@wdc.com>, Christoph Hellwig <hch@lst.de>,
- dm-devel@lists.linux.dev, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- "Martin K . Petersen" <martin.petersen@oracle.com>,
- linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
- Carlos Maiolino <cem@kernel.org>, linux-btrfs@vger.kernel.org,
- David Sterba <dsterba@suse.com>
-References: <20251031061307.185513-1-dlemoal@kernel.org>
- <20251031061307.185513-2-dlemoal@kernel.org>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20251031061307.185513-2-dlemoal@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Spam-Level: 
-X-Spam-Flag: NO
-X-Rspamd-Queue-Id: C6F381F7C4
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_TWELVE(0.00)[15];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.de:dkim,suse.de:mid,suse.de:email];
-	URIBL_BLOCKED(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.de:dkim,suse.de:mid,suse.de:email];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	DKIM_TRACE(0.00)[suse.de:+]
-X-Spam-Score: -4.51
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: lhrpeml500010.china.huawei.com (7.191.174.240) To
+ dubpeml100005.china.huawei.com (7.214.146.113)
 
-On 10/31/25 07:12, Damien Le Moal wrote:
-> Modify disk_update_zone_resources() to freeze the device queue before
-> updating the number of zones, zone capacity and other zone related
-> resources. The locking order resulting from the call to
-> queue_limits_commit_update_frozen() is preserved, that is, the queue
-> limits lock is first taken by calling queue_limits_start_update() before
-> freezing the queue, and the queue is unfrozen after executing
-> queue_limits_commit_update(), which replaces the call to
-> queue_limits_commit_update_frozen().
+On Thu, 30 Oct 2025 20:33:21 +0800
+Li Chen <me@linux.beauty> wrote:
+
+> From: Li Chen <chenl311@chinatelecom.cn>
 > 
-> This change ensures that there are no in-flights I/Os when the zone
-> resources are updated due to a zone revalidation.
+> Before this change pcache_meta_find_latest() was copying each
+> slot directly into meta_ret while scanning. If no valid slot
+> was found and the function returned NULL, meta_ret still held
+> whatever was last copied (possibly CRC-bad). Later users
+> (e.g. cache_segs_init) could mistakenly trust that data.
 > 
-> Fixes: 0b83c86b444a ("block: Prevent potential deadlock in blk_revalidate_disk_zones()")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Damien Le Moal <dlemoal@kernel.org>
+> Allocate a temporary buffer instead and only populate meta_ret after a
+> valid/latest header is found. If no valid header exists we return NULL
+> without touching meta_ret.
+> 
+> Also add __free(kvfree) so the temporary buffer is always freed, and
+> include the needed headers.
+> 
+> Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
 > ---
->   block/blk-zoned.c | 19 ++++++++++++++-----
->   1 file changed, 14 insertions(+), 5 deletions(-)
+>  drivers/md/dm-pcache/pcache_internal.h | 13 +++++++++----
+>  1 file changed, 9 insertions(+), 4 deletions(-)
 > 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+> diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
+> index b7a3319d2bd3e..ac28f9dd2986f 100644
+> --- a/drivers/md/dm-pcache/pcache_internal.h
+> +++ b/drivers/md/dm-pcache/pcache_internal.h
+> @@ -4,6 +4,8 @@
+>  
+>  #include <linux/delay.h>
+>  #include <linux/crc32c.h>
+> +#include <linux/slab.h>
+> +#include <linux/cleanup.h>
+>  
+>  #define pcache_err(fmt, ...)							\
+>  	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
+> @@ -79,14 +81,17 @@ static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_head
+>  					u32 meta_size, u32 meta_max_size,
+>  					void *meta_ret)
+>  {
+> -	struct pcache_meta_header *meta, *latest = NULL;
+> +	struct pcache_meta_header *latest = NULL;
+> +	struct pcache_meta_header *meta __free(kvfree);
+>  	u32 i, seq_latest = 0;
+> -	void *meta_addr;
+>  
+> -	meta = meta_ret;
+> +	meta = kvzalloc(meta_size, GFP_KERNEL);
+See the guidance notes in cleanup.h  THis hsould be
 
-Cheers,
+	struct pcache_meta_header *meta __free(kvfree) =
+		kvzalloc(meta_size, GFP_KERNEL);
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+That is the constructor and destructor must be together. Inline variable
+declarations are fine for this one type of use.
+
+> +	if (!meta)
+> +		return ERR_PTR(-ENOMEM);
+>  
+>  	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
+> -		meta_addr = (void *)header + (i * meta_max_size);
+> +		void *meta_addr = (void *)header + (i * meta_max_size);
+> +
+>  		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
+>  			pcache_err("hardware memory error when copy meta");
+>  			return ERR_PTR(-EIO);
+
