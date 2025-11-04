@@ -1,62 +1,132 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from sender4-pp-f112.zoho.com (sender4-pp-f112.zoho.com [136.143.188.112])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74A7E2D660D
-	for <dm-devel@lists.linux.dev>; Tue,  4 Nov 2025 12:03:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762257796; cv=none; b=aow9LAiknrbEPDyqf9BtndFGtGwaNHNUVlFMItVZ16L+I5HijmxLLPkxdYGfunBgFM+QDtiiwkaGTQZA/19eVlEi+qsallHuzPNDOuTX/nDd47Ykv4IwYtfd5UEhEb5kpXBHHvAmVViji3ZWBWQyEM5+L7c2BSavXbr40oDcGDU=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762257796; c=relaxed/simple;
-	bh=QS40qdRp3eQcP2yb01uL6R/pw61ly5auhn8DQ2oVhbM=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ixqWDPV83oE76DNFow1S8MGPbZ3J5zXq47rt1sSn/smegodm3HjLm9R9NJKvwBTk1Mn6yILTRVOn+Y/5mlxU15QoVfWUjp/IeI5JKkbX5TZlSGwQST2fgLseFqtkeZ10TApUQmkS7eQ3/VACp+Ab7qVa53QUKnhOIeynW4wRHtk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id AA5B6227A88; Tue,  4 Nov 2025 13:03:09 +0100 (CET)
-Date: Tue, 4 Nov 2025 13:03:09 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Damien Le Moal <dlemoal@kernel.org>
-Cc: Chaitanya Kulkarni <chaitanyak@nvidia.com>,
-	Bart Van Assche <bvanassche@acm.org>, Jens Axboe <axboe@kernel.dk>,
-	"linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
-	"linux-nvme@lists.infradead.org" <linux-nvme@lists.infradead.org>,
-	Christoph Hellwig <hch@lst.de>,
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	"Martin K . Petersen" <martin.petersen@oracle.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
-	Carlos Maiolino <cem@kernel.org>,
-	"linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>,
-	David Sterba <dsterba@suse.com>,
-	"linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>,
-	Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCH 07/13] block: track zone conditions
-Message-ID: <20251104120309.GA16283@lst.de>
-References: <20251031061307.185513-1-dlemoal@kernel.org> <20251031061307.185513-8-dlemoal@kernel.org> <40c87475-7d5a-4792-b2a6-3eeb8406f9be@acm.org> <93215b7c-80bd-4860-8a77-42cdd4db1ec6@kernel.org> <95c729d6-fd73-4480-af1c-68075b31cd1d@acm.org> <6008fbc8-b556-46d9-98a5-a4622731d206@nvidia.com> <83b60505-64a4-40fe-aa50-02a56ca7ad8c@kernel.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC04123A9B3
+	for <dm-devel@lists.linux.dev>; Tue,  4 Nov 2025 12:19:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.112
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1762258788; cv=pass; b=i4AF9pae/YvffNPYBEwXSrqLI1KaVEg88ZSuX5NHhQyBxY73x7DOXDjki/bwP8uhAIatfPHGpsPBOTNQHhEkCGPtMMtTaG1FeZqa+BEq9apmXqHevKgBXjUgMBbNxYM9c5HkbQDlstHTIlnUrA0VfHLCOaLaTDWD/XSi2J3gQag=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1762258788; c=relaxed/simple;
+	bh=h5ZcPfEqMOwPuNRywWo0PRdQKYd5j/22Z8fnjsML0o8=;
+	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
+	 MIME-Version:Content-Type; b=r5jN4uNRdbN8z1oIlp4B0mtn262Z+lKLWHK6tWvYS45JFcPG7bOsg30JbQZB8qvZ4C/QWNrDrSNe4l2ZGiVP7OMs+gNAGpCf88OKU2A8uPxjFJ2XXdQwREqShwDAWyKVyvzSsILHel5TkXnXNoq+ejXLSIUSrrnArNMKqh24SJM=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=X2dxo9B9; arc=pass smtp.client-ip=136.143.188.112
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="X2dxo9B9"
+ARC-Seal: i=1; a=rsa-sha256; t=1762258786; cv=none; 
+	d=zohomail.com; s=zohoarc; 
+	b=An/qAk3ytJUIkd8Q5APL3xktI87t0fa/aTDj4lGDfLDxDAdNq3uGSicjFkctfyo/qn2vYKUVjWlWUGwOWDqrZsrVjviooKLVWovcz6fi9eSEtDC9YBKFxAUTXLkGpMscoM2f1dMjY/+NwIM/aYdtwq02X4McRkdmqlJixYPIDtY=
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
+	t=1762258786; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=TDb2puPoWZ4O9gbvaHCNjq9xOPxxImL+E7UZU/YNZjM=; 
+	b=oJoAcnKkMn7u6B7qQgZLlyQicrhz9aj1Ktf5+o8MUujLVJQoatK0gM33sohVIg4rSoUl2qOX1YLCtZpypgC/nJy+G5Qrlyw4ivHevwkdA6hG9xfUjX4QqpDxmSgxqesF/MrTDQS3P77OM6HpEeEwDvy6gtd68n4NE+Uu3kIX9vE=
+ARC-Authentication-Results: i=1; mx.zohomail.com;
+	dkim=pass  header.i=linux.beauty;
+	spf=pass  smtp.mailfrom=me@linux.beauty;
+	dmarc=pass header.from=<me@linux.beauty>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1762258786;
+	s=zmail; d=linux.beauty; i=me@linux.beauty;
+	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:References:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
+	bh=TDb2puPoWZ4O9gbvaHCNjq9xOPxxImL+E7UZU/YNZjM=;
+	b=X2dxo9B9duuYVoHX3IZOQiJzgt0XtbCsk17YCThUOUXSQgkThXMkeohxSfNJBQlH
+	WX6CVwaBpHVLDrKLcHe7KPCqUeILx+zwJ7Ha0OyEXdXrqD7dJE7iGZi7b/rxzAieMxb
+	8fsXiETWqOieZ68EWEOMJS9/jXzX1vU0an+0igN0=
+Received: from mail.zoho.com by mx.zohomail.com
+	with SMTP id 1762258784610216.74943677819874; Tue, 4 Nov 2025 04:19:44 -0800 (PST)
+Date: Tue, 04 Nov 2025 20:19:44 +0800
+From: Li Chen <me@linux.beauty>
+To: "Jonathan Cameron" <jonathan.cameron@huawei.com>
+Cc: "dm-devel" <dm-devel@lists.linux.dev>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"Dongsheng Yang" <dongsheng.yang@linux.dev>,
+	"Zheng Gu" <cengku@gmail.com>
+Message-ID: <19a4ecf1149.3c8a574d835968.4993900419375442453@linux.beauty>
+In-Reply-To: <20251103113803.00001448@huawei.com>
+References: <20251030123323.967081-1-me@linux.beauty>
+	<20251030123323.967081-4-me@linux.beauty> <20251103113803.00001448@huawei.com>
+Subject: Re: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in
+ pcache_meta_find_latest()
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <83b60505-64a4-40fe-aa50-02a56ca7ad8c@kernel.org>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Importance: Medium
+User-Agent: Zoho Mail
+X-Mailer: Zoho Mail
 
-On Tue, Nov 04, 2025 at 07:53:07AM +0900, Damien Le Moal wrote:
-> > In case current file systems store this, isn't that a code duplication for each
-> > fs ? perhaps having a central interface at block layer should help remove the
-> > code duplication ?
-> 
-> catch 22: You cannot ask the file system without first knowing the zone layout
-> and conditions of zone to check the file system metadata.
+Hi Jonathan,
 
-The file system also really needs to verify that it's view matches the
-hardware view at mount time, otherwise you'll run into really nasty
-cases later when they are out of sync due to a bug or corruption.
+ ---- On Mon, 03 Nov 2025 19:38:03 +0800  Jonathan Cameron <jonathan.camero=
+n@huawei.com> wrote ---=20
+ > On Thu, 30 Oct 2025 20:33:21 +0800
+ > Li Chen <me@linux.beauty> wrote:
+ >=20
+ > > From: Li Chen <chenl311@chinatelecom.cn>
+ > >=20
+ > > Before this change pcache_meta_find_latest() was copying each
+ > > slot directly into meta_ret while scanning. If no valid slot
+ > > was found and the function returned NULL, meta_ret still held
+ > > whatever was last copied (possibly CRC-bad). Later users
+ > > (e.g. cache_segs_init) could mistakenly trust that data.
+ > >=20
+ > > Allocate a temporary buffer instead and only populate meta_ret after a
+ > > valid/latest header is found. If no valid header exists we return NULL
+ > > without touching meta_ret.
+ > >=20
+ > > Also add __free(kvfree) so the temporary buffer is always freed, and
+ > > include the needed headers.
+ > >=20
+ > > Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
+ > > ---
+ > >  drivers/md/dm-pcache/pcache_internal.h | 13 +++++++++----
+ > >  1 file changed, 9 insertions(+), 4 deletions(-)
+ > >=20
+ > > diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pc=
+ache/pcache_internal.h
+ > > index b7a3319d2bd3e..ac28f9dd2986f 100644
+ > > --- a/drivers/md/dm-pcache/pcache_internal.h
+ > > +++ b/drivers/md/dm-pcache/pcache_internal.h
+ > > @@ -4,6 +4,8 @@
+ > > =20
+ > >  #include <linux/delay.h>
+ > >  #include <linux/crc32c.h>
+ > > +#include <linux/slab.h>
+ > > +#include <linux/cleanup.h>
+ > > =20
+ > >  #define pcache_err(fmt, ...)                            \
+ > >      pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__=
+)
+ > > @@ -79,14 +81,17 @@ static inline void __must_check *pcache_meta_find_=
+latest(struct pcache_meta_head
+ > >                      u32 meta_size, u32 meta_max_size,
+ > >                      void *meta_ret)
+ > >  {
+ > > -    struct pcache_meta_header *meta, *latest =3D NULL;
+ > > +    struct pcache_meta_header *latest =3D NULL;
+ > > +    struct pcache_meta_header *meta __free(kvfree);
+ > >      u32 i, seq_latest =3D 0;
+ > > -    void *meta_addr;
+ > > =20
+ > > -    meta =3D meta_ret;
+ > > +    meta =3D kvzalloc(meta_size, GFP_KERNEL);
+ > See the guidance notes in cleanup.h  THis hsould be
+ >=20
+ >     struct pcache_meta_header *meta __free(kvfree) =3D
+ >         kvzalloc(meta_size, GFP_KERNEL);
+ >=20
+ > That is the constructor and destructor must be together. Inline variable
+ > declarations are fine for this one type of use.
+
+I appreciate your suggestion very much.
+
+Regards,
+
+Li=E2=80=8B
 
