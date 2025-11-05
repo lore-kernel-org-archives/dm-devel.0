@@ -1,41 +1,41 @@
 Received: from sender3-pp-f112.zoho.com (sender3-pp-f112.zoho.com [136.143.184.112])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE5BE2E7178
-	for <dm-devel@lists.linux.dev>; Wed,  5 Nov 2025 08:48:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 453FB2ED161
+	for <dm-devel@lists.linux.dev>; Wed,  5 Nov 2025 08:48:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.184.112
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762332493; cv=pass; b=pSqu4lofylrUkz7DENxqs0okkSLgc3gXNJDmBEL19zZJuDgtQMSGV+V3lqp60I4TuFZ8ZEIsHAuVgXFQGUbun+GczpGF5I5A+CnnwhE/mxRFTrpfPV5EjIywCrq6uE7VnlxUGX0hGaaQIbvZRn+f0WOYiTLYhpRNKyFVTh+ezTE=
+	t=1762332506; cv=pass; b=rUMI4hO+6jDOmMjiilErw18JMPIbz6QF7xTzAzWnZ14VhHlSYPDtU15aEN+684dLlxLd0dpeyYSaitZqmPWGweRyTW+LMZUO8jYyZ6HOlxQmitm1T+H8UWygvTVAQS6Rhy2XntfnGvGkG99oHxcbYdE3QU5vF8JnQm42V7pSsq0=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762332493; c=relaxed/simple;
-	bh=R/TbI84eFp9kXjDw88iosgHhX0aGRc0fsZmAH+tj+3k=;
+	s=arc-20240116; t=1762332506; c=relaxed/simple;
+	bh=Pm4gfPGpEvl7urYYvAAc//M9O+0YLVRYbm6O0V4Wi5E=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=A1uv/ZOC7XxaLQQFQ52RLgW57VV/444NUZ9DjiAdJ2nXnxob7NFJJvas280MiFuQBwN9PyxZp4whcgoKgWqah4b0wxAU7kWPx/Mabn6hNqvd2dbbQtDBSmt1Zx/2m/RXVXS+lFWnjtQBQ4EEvc2a9K4fQCamU4f31+Eb+SHBv/c=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=Ruapu6zF; arc=pass smtp.client-ip=136.143.184.112
+	 MIME-Version; b=bMKxoNtALatPYVgxFbDb80i+k569EWnCXba37pfh2h36b7B1AhrWAOmosjD9aswDgpDu7t/p5qjasLE3+aAUUebdR5Jx0OuXhtjHH089slUrOhObqSskF23XY61XkFyyfXP01/EEFqvkNAEbc8jhM0u2uWo+D8H7VirHxnqb71k=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=YOVJZ3dw; arc=pass smtp.client-ip=136.143.184.112
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="Ruapu6zF"
-ARC-Seal: i=1; a=rsa-sha256; t=1762332467; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="YOVJZ3dw"
+ARC-Seal: i=1; a=rsa-sha256; t=1762332471; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=kWoQo5BdJD42/7cG3lCsHWFhsVYctDvr4Ozz1EM15SbZzCaQRUVncp1qzA1/vV0yRIBi4smKylYpyn7TyM/NHSMFS53dMi01R9hjbmS383ooJSJv+4UQP8dloA2uOgmGFSwXWsLXGDFErOFfSwQUPjoH9A0P5DWXW/J0DEilVr8=
+	b=GB/bfm/hhQEdLL32vdewOf2VFPFDHj8Q35Ir9rAtSa1vFPX+6sW8d7QjXD8I4OTCRA26VXzkffiL3A/6NSoMxy8MUW9t9CPYR6JUyw+70TRFUkHV7sPxIcQb7IUibXk+5xsVpJjFO+3BTkzdxnfUmiTUP7/jZjQrSzHiotdLAKM=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1762332467; h=Content-Transfer-Encoding:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
-	bh=bL264gMYmKx98ivmk0jTfYv5p7G6wPZT+qugzMLjMzI=; 
-	b=nQ4mheCmw/eXDEo5KJTk2FLYGAuCYfWODzPrQHLJSEDFtbopjy4FA9ANtYrxD1YEDT/3FVVrP7oshkFdge+XMoDVYAUlKU/0wN/DuZhUKQSxP0Q4aUGmgfJkZu4Bhhx5e+d8p00wtnSPYYbEosQcgbULQhxahejAk/we+y0x1rs=
+	t=1762332471; h=Content-Transfer-Encoding:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
+	bh=LWxPD1jqIGf0eGjGt5kSF5OaU2M0+DsfoZfQTI0FPb0=; 
+	b=Vtk2qXzOYFR4KtQm2y8RInkcEwlSuDOU4rXuMG+cxrE1n+aGWbzs/FOl1kFx0C4R/0pH+e6xVoa3LZ3yGzkFgYNfbesECq98P1jEMegnOGIlRqlknZA0n9RieSA/ODESbL/PVIOyIFIbrglX83YvZkfou3umgN1jQIyXm8dkuNg=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1762332467;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1762332471;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:In-Reply-To:References:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
-	bh=bL264gMYmKx98ivmk0jTfYv5p7G6wPZT+qugzMLjMzI=;
-	b=Ruapu6zFTd23g4HL8YN9g0WCIbV+Dk0rEYn9G3O1pIYG0DH/mWAPFoozkbQ7hdv/
-	61YQpgbzFDO6JtRrw1zjvPiAus1BQXZayy21tkbCxvfBQTasBYhvK1Bx2inIxRASj2K
-	tni5NuE7MltSeH9APtON9MoWPOpfWaF2Wq4J6E/M=
-Received: by mx.zohomail.com with SMTPS id 1762332464994471.04425031461585;
-	Wed, 5 Nov 2025 00:47:44 -0800 (PST)
+	bh=LWxPD1jqIGf0eGjGt5kSF5OaU2M0+DsfoZfQTI0FPb0=;
+	b=YOVJZ3dw/wWxX207nFOt/1I8vi/e55aKjBu+NCHKIR6sg42TsI6MgU/whjrAzAE3
+	3N9Ko6vxtmJYNHw4UTcrEv50N6Z3hG7VPxrfztPFGeQdmwitt3dI4bioAys4wbmPXUq
+	IECYEwjkWRYbbp0AyYVQoDpVmCpK6tOrAAYjfBNk=
+Received: by mx.zohomail.com with SMTPS id 1762332468517747.7914752177128;
+	Wed, 5 Nov 2025 00:47:48 -0800 (PST)
 From: Li Chen <me@linux.beauty>
 To: Kees Cook <kees@kernel.org>,
 	Nathan Chancellor <nathan@kernel.org>,
@@ -46,9 +46,9 @@ To: Kees Cook <kees@kernel.org>,
 	Dongsheng Yang <dongsheng.yang@linux.dev>,
 	Zheng Gu <cengku@gmail.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH 1/3] dm-pcache: allow built-in build and rename flush helper
-Date: Wed,  5 Nov 2025 16:46:52 +0800
-Message-ID: <20251105084733.3598704-2-me@linux.beauty>
+Subject: [PATCH 2/3] dm-pcache: reuse meta_addr in pcache_meta_find_latest
+Date: Wed,  5 Nov 2025 16:46:53 +0800
+Message-ID: <20251105084733.3598704-3-me@linux.beauty>
 X-Mailer: git-send-email 2.51.0
 In-Reply-To: <20251105084733.3598704-1-me@linux.beauty>
 References: <20251105084733.3598704-1-me@linux.beauty>
@@ -63,87 +63,27 @@ X-ZohoMailClient: External
 
 From: Li Chen <chenl311@chinatelecom.cn>
 
-CONFIG_BCACHE is tristate, so dm-pcache can also be built-in.
-Switch the Makefile to use obj-$(CONFIG_DM_PCACHE) so the target can be
-linked into vmlinux instead of always being a loadable module.
-
-Also rename cache_flush() to pcache_cache_flush() to avoid a global
-symbol clash with sunrpc/cache.c's cache_flush().
+pcache_meta_find_latest() already computes the metadata address as
+meta_addr. Reuse that instead of recomputing.
 
 Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
 ---
- drivers/md/dm-pcache/Makefile    | 2 +-
- drivers/md/dm-pcache/cache.c     | 2 +-
- drivers/md/dm-pcache/cache.h     | 2 +-
- drivers/md/dm-pcache/cache_req.c | 6 +++---
- 4 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/md/dm-pcache/pcache_internal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-pcache/Makefile b/drivers/md/dm-pcache/Makefile
-index 86776e4acad24..cedfd38854f63 100644
---- a/drivers/md/dm-pcache/Makefile
-+++ b/drivers/md/dm-pcache/Makefile
-@@ -1,3 +1,3 @@
- dm-pcache-y := dm_pcache.o cache_dev.o segment.o backing_dev.o cache.o cache_gc.o cache_writeback.o cache_segment.o cache_key.o cache_req.o
+diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
+index d427e534727ce..b7a3319d2bd3e 100644
+--- a/drivers/md/dm-pcache/pcache_internal.h
++++ b/drivers/md/dm-pcache/pcache_internal.h
+@@ -99,7 +99,7 @@ static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_head
+ 		/* Update latest if a more recent sequence is found */
+ 		if (!latest || pcache_meta_seq_after(meta->seq, seq_latest)) {
+ 			seq_latest = meta->seq;
+-			latest = (void *)header + (i * meta_max_size);
++			latest = meta_addr;
+ 		}
+ 	}
  
--obj-m += dm-pcache.o
-+obj-$(CONFIG_DM_PCACHE) += dm-pcache.o
-diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
-index d8e92367d9470..d516d49042272 100644
---- a/drivers/md/dm-pcache/cache.c
-+++ b/drivers/md/dm-pcache/cache.c
-@@ -411,7 +411,7 @@ void pcache_cache_stop(struct dm_pcache *pcache)
- {
- 	struct pcache_cache *cache = &pcache->cache;
- 
--	cache_flush(cache);
-+	pcache_cache_flush(cache);
- 
- 	cancel_delayed_work_sync(&cache->gc_work);
- 	flush_work(&cache->clean_work);
-diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
-index 1136d86958c8c..27613b56be54c 100644
---- a/drivers/md/dm-pcache/cache.h
-+++ b/drivers/md/dm-pcache/cache.h
-@@ -339,7 +339,7 @@ void cache_seg_put(struct pcache_cache_segment *cache_seg);
- void cache_seg_set_next_seg(struct pcache_cache_segment *cache_seg, u32 seg_id);
- 
- /* cache request*/
--int cache_flush(struct pcache_cache *cache);
-+int pcache_cache_flush(struct pcache_cache *cache);
- void miss_read_end_work_fn(struct work_struct *work);
- int pcache_cache_handle_req(struct pcache_cache *cache, struct pcache_request *pcache_req);
- 
-diff --git a/drivers/md/dm-pcache/cache_req.c b/drivers/md/dm-pcache/cache_req.c
-index 27f94c1fa968c..7854a30e07b7f 100644
---- a/drivers/md/dm-pcache/cache_req.c
-+++ b/drivers/md/dm-pcache/cache_req.c
-@@ -790,7 +790,7 @@ static int cache_write(struct pcache_cache *cache, struct pcache_request *pcache
- }
- 
- /**
-- * cache_flush - Flush all ksets to persist any pending cache data
-+ * pcache_cache_flush - Flush all ksets to persist any pending cache data
-  * @cache: Pointer to the cache structure
-  *
-  * This function iterates through all ksets associated with the provided `cache`
-@@ -802,7 +802,7 @@ static int cache_write(struct pcache_cache *cache, struct pcache_request *pcache
-  * the respective error code, preventing the flush operation from proceeding to
-  * subsequent ksets.
-  */
--int cache_flush(struct pcache_cache *cache)
-+int pcache_cache_flush(struct pcache_cache *cache)
- {
- 	struct pcache_cache_kset *kset;
- 	int ret;
-@@ -827,7 +827,7 @@ int pcache_cache_handle_req(struct pcache_cache *cache, struct pcache_request *p
- 	struct bio *bio = pcache_req->bio;
- 
- 	if (unlikely(bio->bi_opf & REQ_PREFLUSH))
--		return cache_flush(cache);
-+		return pcache_cache_flush(cache);
- 
- 	if (bio_data_dir(bio) == READ)
- 		return cache_read(cache, pcache_req);
 -- 
 2.51.0
 
