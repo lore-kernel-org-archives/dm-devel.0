@@ -1,309 +1,134 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9CDBB20322
-	for <dm-devel@lists.linux.dev>; Fri,  7 Nov 2025 01:08:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88D062BE020
+	for <dm-devel@lists.linux.dev>; Fri,  7 Nov 2025 03:10:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762477704; cv=none; b=f+RCgbMs/UvBpoLmJNMJMxEtbUXuhuO35E4386XDzWrlwvcnmUkuUPQVSJ+PW/8I++EvEYJeHVUm4qXtDH6b7o3l8J+FqKu+Rb270RPld8v38IB/h3eOPMsHwGRpn1xsvoHeiHwVc48+F2E71sh98Okqt0wFWR1Ecqr22+439mM=
+	t=1762485052; cv=none; b=nNaAMAtnnLlDIm+FSJ/dSpXTVzkuvCQ5dBXarMY0rHhCKo99836JV4qbRWQHGTY2jY2YdZTzTw9aRJZ6JITbpFzRqilq+vvFe1Nh9L9p+wGrXxaet324QwYmYe+sJIExeD13Gwl+hGEc0QQ0ScMYcTMemtCdZyotw1onaEB7+g4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762477704; c=relaxed/simple;
-	bh=Z0NB6Sc3ehJhAunK3XzqA24aLOX1JJDhdJtGvPWpJDg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=HcBiM+9Za4wH34BojAPbKkuIF0Cqo0ZnCZBapVwt2MXzoMRjL40YbVU311Exuq/ppet66yrlLbp565WM9oyrRQ598O46jBiRfXT3+cBsrIuDlCujQ+PNCms7M+H2bb4C5zxvVjSgzlQeoJp0pT+n8Zmjk65YnFeQgasp9xjwkMc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XN12XBoJ; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1762485052; c=relaxed/simple;
+	bh=bVndKLz4WWzdRbN8QqEEfQaLYG/SmxT81yy1UIm+xO8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:Cc:
+	 In-Reply-To:Content-Type; b=il4WobwdaCj0WK2NAlZAeFmmw7ak0LStnPjPr8iAP36838lGt0tuBNkz1QUGChnJC+NHOyqHlwXHO5h7T7ViqcKkg/hA6NjhFYzm3iqoJhLt4VLzVBUnSK4GtEd++aMFlsNsmKQJWAd7Y7wCNKDfvFK62BXXMHhJQexq44I1jtg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ok2ivbex; arc=none smtp.client-ip=209.85.216.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XN12XBoJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1762477701;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=IB6KVobDjxJ74eI37ppuiu8tpBV9RPfrUpp2mWT8qZ8=;
-	b=XN12XBoJ4Tw7eULlzZ/T0mExP5E/L5Ga6xiK9Mj3DOTZsFjHt/t5RCxCkhszBTQWRpof8W
-	tq6z+2rdtTJsezXiSdY86opKA45U1QhySYkjVfyIs63fbbVaZnjq7Oi0ewa+2t0D1qmWVE
-	7r+L1JN4JJn7jgxhQNsbo2wuOhU3Kcg=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-581-_GnZbCmIM0WbHOYGah75Jg-1; Thu,
- 06 Nov 2025 20:08:18 -0500
-X-MC-Unique: _GnZbCmIM0WbHOYGah75Jg-1
-X-Mimecast-MFC-AGG-ID: _GnZbCmIM0WbHOYGah75Jg_1762477697
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3DE2B1800447;
-	Fri,  7 Nov 2025 01:08:17 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E11223001E83;
-	Fri,  7 Nov 2025 01:08:16 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5A718FdU447879
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 6 Nov 2025 20:08:15 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5A718Es1447878;
-	Thu, 6 Nov 2025 20:08:14 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2] multipathd: Fix race while registering PR key
-Date: Thu,  6 Nov 2025 20:08:14 -0500
-Message-ID: <20251107010814.447870-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ok2ivbex"
+Received: by mail-pj1-f41.google.com with SMTP id 98e67ed59e1d1-3418ac74bffso240364a91.1
+        for <dm-devel@lists.linux.dev>; Thu, 06 Nov 2025 19:10:50 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1762485050; x=1763089850; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=i46Y/krdgcKkTJacghGNlzht3AVpERglOI1oMeQg+GM=;
+        b=Ok2ivbexj2HzgrjOVdGsTVPxDWov1aTVJszUcL9OYfri9Zqdi5zNqKPiW6vHaQXIS+
+         fzep4IQOP8zUS08+5Aii0jT6+YZi4UKh+SoLQug4Z94wvicHtD8UG0PybxqGmo5MeF9N
+         MfumDek+KWRhrnKOmd/ciaqlaBq2NHGX68/vxgET/5s9sFUQFaZAGIb0d9ercttQO3BL
+         hn1wkD00IyXSxfPNqVROCqP/MKpJi35j5q3DfIDMEu994rYTuHH2QxeG4MALavwiUYrw
+         MRlFRD/j7d0QfQaxGmYGjw6g9/n+oR3Ch6T8utSR7yRt5K6HBv783rFWQC5GripTiUuP
+         R9Sg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1762485050; x=1763089850;
+        h=content-transfer-encoding:in-reply-to:cc:from:content-language
+         :references:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=i46Y/krdgcKkTJacghGNlzht3AVpERglOI1oMeQg+GM=;
+        b=VFci2i6GWzJSeDFgNuUPQJQM36sw6o9qzn+I1Cvxc9UOG6RELTzzeJqbSbCOfo+F/p
+         G0S2Ey+pZTqmEeWYOJWcSp/ZtsOLJAz5k9CS2ao0OJwA4CUfrtWbACu6qln71uwE48wb
+         97SjtcmVF9rjJ9gYMMbStmst9MC+qqsl1iOuAaNu6q1xl8ZUl5q62e9OmwQpLwZLbRc7
+         WjTkoqwe9N0Ac16pGBg70ULYRkqaLpsPsUFahNuc1JuV2oPAEaFI0RFlzq7hpL7azNT0
+         4NuyySj0o8fnLhtSPk4ccDCy7Y1vKIpR3BZGr4Bs10Ut2yxkm42nm7IxoZKMBwVAM9ov
+         i5uQ==
+X-Forwarded-Encrypted: i=1; AJvYcCVkm/vrKLao/LuTlh8AuymuDJ6Vm4CfJ/AeGI/BWCByirIspwg4xOW5PMvXov253Rg5G7zUpMKRBg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyUi3in7YLc7GADN5BrudPQZeABwo3ue+8V0flswVI2DlFq02oZ
+	hs7M41pP4ggsCRWpJuMgZwbuko2SIlNvBhZiMoRsGY4Nnz6MBYDn/5hG
+X-Gm-Gg: ASbGnctPMK0PiOwJTvUYQay5cRpjY7hGLFcdg4ni2uvJNmhebmzW6ATRpPaifJNXsKM
+	gUKLNvIND1NbzX2RLd5/bGfa6UX5Do/l/G97ZXmTFezaVR9HPOhAT8VLCDxcGvKqpuPxQTBAAqC
+	HJovTE5sJn9jptOhSltPx5ls86mTSc8LiZ37vamJUBI9jNEPimwIhE8Z8mswCTnHzNfD0yERCZw
+	uCObOT/texCetojqT8Dw4yOuZxQ9QNJj2kOuD+mXTrOXNfnlVjA1kclp4GlfYqctPXDKhAjAHLt
+	KwSe9hjIb7qSlHUtyXHOht8/qY0itrbJvcgF56BFltqbWShKV4WO4HPNTksDPC0ow3UhzqX0EGN
+	qwU0RjJ9J6SgW3eWXesHlceuWya6QXI2nzn3n9K0ergDs7lKjho5dLMPknC1Fw3KkCyi78qqatI
+	WJWuOpHCxG3aLCTcasPjD0f2reycZGGb8hVg==
+X-Google-Smtp-Source: AGHT+IEKsZMxCivCN51cR3Bqtnd2JdA7jWtWCRkbHDz+7vwikOKSUG9YtkgV/st1M66Tqc7mIScgog==
+X-Received: by 2002:a17:90b:1cce:b0:33d:a0fd:257b with SMTP id 98e67ed59e1d1-3434c58a161mr1696621a91.36.1762485049696;
+        Thu, 06 Nov 2025 19:10:49 -0800 (PST)
+Received: from [10.189.138.37] ([43.224.245.241])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2965096b889sm43296915ad.14.2025.11.06.19.10.47
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 06 Nov 2025 19:10:49 -0800 (PST)
+Message-ID: <399dbfbb-401f-4e67-8794-efb7f09f0c78@gmail.com>
+Date: Fri, 7 Nov 2025 11:10:46 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: vkCcAgpUwTvbxs4-zTsM9juZNA0h8zcf-aHoBrV2RjI_1762477697
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/2] dm: BUG on REQ_ATOMIC in dm_accept_partial_bio()
+To: Mikulas Patocka <mpatocka@redhat.com>,
+ John Garry <john.g.garry@oracle.com>, agk@redhat.com, snitzer@kernel.org,
+ dm-devel@lists.linux.dev, michael.christie@oracle.com,
+ martin.petersen@oracle.com
+References: <6428d43a-ded8-c368-2057-39620bdf8546@redhat.com>
+Content-Language: en-US
+From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
+Cc: Yongpeng Yang <yangyongpeng@xiaomi.com>
+In-Reply-To: <6428d43a-ded8-c368-2057-39620bdf8546@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-When libmpathpersist registers a key, It first checks which paths are
-active, then registers the key on those paths, and then tells multipathd
-that the key has been registered, and it should start tracking it. If
-a path comes up after libmpathpersist checks for active paths, but before
-it tells multipathd that the key has been registered, multipathd will not
-register a key no that path (since it hasn't been told to that the device
-has a registered key yet). This can leave the device with a path that is
-missing a key.
+On 11/5/25 23:01, Mikulas Patocka wrote:
+> Any bio with REQ_ATOMIC flag set should never be split or partially
+> completed, so BUG_ON() on this scenario in dm_accept_partial_bio() (whose
+> intent is to allow partial completions).
+> 
+> Also, we must reject atomic bio to targets that don't support them,
+> otherwise this BUG could could be triggered by stray bios that have the
 
-To solve this, when multipathd is told that a key has been registered,
-it checks if there are the same number of registered keys as active
-paths.  If there aren't, it registers keys on all the paths (at least
-until the number of registered keys and active paths are equal). To
-avoid doing a bunch of unnecessary PR work, pr_register_active_paths()
-has a new option to track the number of active paths, and
-mpath_pr_event_handle() now takes the number of keys to expect. The
-first time it's called, when there is an unknown number of keys, if the
-number of keys it finds matches the number of active_paths, it and
-pr_register_active_paths() exit early, since there is no registering
-work to do.
+double could.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
+Yongpeng,
 
-Changes in v2:
-  - made update_map_pr() set nr_keys to 0 when it failed to get the keys
-    or when it unset prflag (to fix a bug found by Martin Wilck)
-
- multipathd/cli_handlers.c |  6 ++++-
- multipathd/main.c         | 57 ++++++++++++++++++++++++++++-----------
- multipathd/main.h         |  1 +
- 3 files changed, 48 insertions(+), 16 deletions(-)
-
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 7f572fb4..2812d01e 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -1291,7 +1291,11 @@ cli_setprstatus(void * v, struct strbuf *reply, void * data)
- 
- 	if (mpp->prflag != PR_SET) {
- 		set_pr(mpp);
--		condlog(2, "%s: prflag set", param);
-+		pr_register_active_paths(mpp, true);
-+		if (mpp->prflag == PR_SET)
-+			condlog(2, "%s: prflag set", param);
-+		else
-+			condlog(0, "%s: Failed to set prflag", param);
- 	}
- 	memset(&mpp->old_pr_key, 0, 8);
- 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d11a8576..4c86f31e 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -90,7 +90,8 @@
- #define MSG_SIZE 32
- 
- static unsigned int
--mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_needed);
-+mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_needed,
-+		      unsigned int nr_keys_wanted);
- 
- #define LOG_MSG(lvl, pp)					\
- do {								\
-@@ -629,19 +630,28 @@ flush_map_nopaths(struct multipath *mpp, struct vectors *vecs) {
- 	return true;
- }
- 
--static void
--pr_register_active_paths(struct multipath *mpp)
-+void pr_register_active_paths(struct multipath *mpp, bool check_nr_active)
- {
- 	unsigned int i, j, nr_keys = 0;
-+	unsigned int nr_active = 0;
- 	struct path *pp;
- 	struct pathgroup *pgp;
- 
-+	if (check_nr_active) {
-+		nr_active = count_active_paths(mpp);
-+		if (!nr_active)
-+			return;
-+	}
-+
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		vector_foreach_slot (pgp->paths, pp, j) {
- 			if (mpp->prflag == PR_UNSET)
- 				return;
--			if ((pp->state == PATH_UP) || (pp->state == PATH_GHOST))
--				nr_keys = mpath_pr_event_handle(pp, nr_keys);
-+			if (pp->state == PATH_UP || pp->state == PATH_GHOST) {
-+				nr_keys = mpath_pr_event_handle(pp, nr_keys, nr_active);
-+				if (check_nr_active && nr_keys == nr_active)
-+					return;
-+			}
- 		}
- 	}
- }
-@@ -729,7 +739,7 @@ fail:
- 
- 	sync_map_state(mpp, false);
- 
--	pr_register_active_paths(mpp);
-+	pr_register_active_paths(mpp, false);
- 
- 	if (VECTOR_SIZE(offline_paths) != 0)
- 		handle_orphaned_offline_paths(offline_paths);
-@@ -1319,7 +1329,7 @@ rescan:
- 		verify_paths(mpp);
- 		mpp->action = ACT_RELOAD;
- 		prflag = mpp->prflag;
--		mpath_pr_event_handle(pp, 0);
-+		mpath_pr_event_handle(pp, 0, 0);
- 	} else {
- 		if (!should_multipath(pp, vecs->pathvec, vecs->mpvec)) {
- 			orphan_path(pp, "only one path");
-@@ -1403,7 +1413,7 @@ rescan:
- 
- 	if (retries >= 0) {
- 		if ((mpp->prflag == PR_SET && prflag != PR_SET) || start_waiter)
--			pr_register_active_paths(mpp);
-+			pr_register_active_paths(mpp, false);
- 		condlog(2, "%s [%s]: path added to devmap %s",
- 			pp->dev, pp->dev_t, mpp->alias);
- 		return 0;
-@@ -2646,9 +2656,9 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 			 */
- 			condlog(2, "%s: checking persistent "
- 				"reservation registration", pp->dev);
--			mpath_pr_event_handle(pp, 0);
-+			mpath_pr_event_handle(pp, 0, 0);
- 			if (pp->mpp->prflag == PR_SET && prflag != PR_SET)
--				pr_register_active_paths(pp->mpp);
-+				pr_register_active_paths(pp->mpp, false);
- 		}
- 
- 		/*
-@@ -3309,7 +3319,7 @@ configure (struct vectors * vecs, enum force_reload_types reload_type)
- 	vector_foreach_slot(mpvec, mpp, i){
- 		if (remember_wwid(mpp->wwid) == 1)
- 			trigger_paths_udev_change(mpp, true);
--		pr_register_active_paths(mpp);
-+		pr_register_active_paths(mpp, false);
- 	}
- 
- 	/*
-@@ -4267,7 +4277,8 @@ void unset_pr(struct multipath *mpp)
-  *
-  * The number of found keys must be at least as large as *nr_keys,
-  * and if MPATH_PR_SUCCESS is returned and mpp->prflag is PR_SET after
-- * the call, *nr_keys will be set to the number of found keys.
-+ * the call, *nr_keys will be set to the number of found keys. Otherwise
-+ * it will be set to 0.
-  */
- static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *nr_keys)
- {
-@@ -4277,8 +4288,10 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
- 	bool was_set = (mpp->prflag == PR_SET);
- 
- 	/* If pr is explicitly unset, it must be manually set */
--	if (mpp->prflag == PR_UNSET)
-+	if (mpp->prflag == PR_UNSET) {
-+		*nr_keys = 0;
- 		return MPATH_PR_SUCCESS;
-+	}
- 
- 	if (!get_be64(mpp->reservation_key)) {
- 		/* Nothing to do. Assuming pr mgmt feature is disabled*/
-@@ -4286,6 +4299,7 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
- 		condlog(was_set ? 2 : 4,
- 			"%s: reservation_key not set in multipath.conf",
- 			mpp->alias);
-+		*nr_keys = 0;
- 		return MPATH_PR_SUCCESS;
- 	}
- 
-@@ -4297,6 +4311,7 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
- 			unset_pr(mpp);
- 		condlog(0, "%s : pr in read keys service action failed Error=%d",
- 			mpp->alias, ret);
-+		*nr_keys = 0;
- 		return ret;
- 	}
- 
-@@ -4335,22 +4350,32 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
- 		condlog(was_set ? 1 : 3,
- 			"%s: %u keys found. needed %u. prflag unset.",
- 			mpp->alias, nr_found, *nr_keys);
-+		*nr_keys = 0;
- 	}
- 
- 	return MPATH_PR_SUCCESS;
- }
- 
- /*
-- * This function is called with the number of registered keys that should be
-+ * This function is called with two numbers
-+ *
-+ * nr_keys_needed: the number of registered keys that should be
-  * seen for this device to know that the key has not been preempted while the
-  * path was getting registered. If 0 is passed in, update_mpath_pr is called
-  * before registering the key to figure out the number, assuming that at
-  * least one key must exist.
-  *
-+ * nr_keys_wanted: Only used if nr_keys_needed is 0, so we don't know how
-+ * many keys we currently have. If nr_keys_wanted in non-zero and the
-+ * number of keys found by the initial call to update_map_pr() matches it,
-+ * exit early, since we have all the keys we are expecting.
-+ *
-  * The function returns the number of keys that are registered or 0 if
-  * it's unknown.
-  */
--static unsigned int mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_needed)
-+static unsigned int
-+mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_needed,
-+		      unsigned int nr_keys_wanted)
- {
- 	struct multipath *mpp = pp->mpp;
- 	int ret;
-@@ -4366,6 +4391,8 @@ static unsigned int mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_
- 		nr_keys_needed = 1;
- 		if (update_map_pr(mpp, pp, &nr_keys_needed) != MPATH_PR_SUCCESS)
- 			return 0;
-+		if (nr_keys_wanted && nr_keys_wanted == nr_keys_needed)
-+			return nr_keys_needed;
- 	}
- 
- 	check_prhold(mpp, pp);
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 29b57e3d..6d60ee81 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -54,4 +54,5 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	       struct vectors *vecs);
- void set_pr(struct multipath *mpp);
- void unset_pr(struct multipath *mpp);
-+void pr_register_active_paths(struct multipath *mpp, bool check_active_nr);
- #endif /* MAIN_H_INCLUDED */
--- 
-2.50.1
+> REQ_ATOMIC set.
+> 
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>   drivers/md/dm.c |    9 +++++++--
+>   1 file changed, 7 insertions(+), 2 deletions(-)
+> 
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2025-10-13 21:42:47.000000000 +0200
+> +++ linux-2.6/drivers/md/dm.c	2025-11-05 14:43:32.000000000 +0100
+> @@ -1321,6 +1321,7 @@ void dm_accept_partial_bio(struct bio *b
+>   	BUG_ON(dm_tio_flagged(tio, DM_TIO_IS_DUPLICATE_BIO));
+>   	BUG_ON(bio_sectors > *tio->len_ptr);
+>   	BUG_ON(n_sectors > bio_sectors);
+> +	BUG_ON(bio->bi_opf & REQ_ATOMIC);
+>   
+>   	if (static_branch_unlikely(&zoned_enabled) &&
+>   	    unlikely(bdev_is_zoned(bio->bi_bdev))) {
+> @@ -1735,8 +1736,12 @@ static blk_status_t __split_and_process_
+>   	ci->submit_as_polled = !!(ci->bio->bi_opf & REQ_POLLED);
+>   
+>   	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
+> -	if (ci->bio->bi_opf & REQ_ATOMIC && len != ci->sector_count)
+> -		return BLK_STS_IOERR;
+> +	if (ci->bio->bi_opf & REQ_ATOMIC) {
+> +		if (unlikely(!dm_target_supports_atomic_writes(ti->type)))
+> +			return BLK_STS_IOERR;
+> +		if (unlikely(len != ci->sector_count))
+> +			return BLK_STS_IOERR;
+> +	}
+>   
+>   	setup_split_accounting(ci, len);
+>   
+> 
 
