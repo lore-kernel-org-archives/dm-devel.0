@@ -1,114 +1,81 @@
-Received: from out-187.mta1.migadu.com (out-187.mta1.migadu.com [95.215.58.187])
+Received: from sender4-pp-f112.zoho.com (sender4-pp-f112.zoho.com [136.143.188.112])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCB282E173B
-	for <dm-devel@lists.linux.dev>; Mon, 10 Nov 2025 11:19:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.187
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762773573; cv=none; b=LURo04FCWhWe+RtnXfX0uwWKe1NLhcbJ3Gs4KmU+pGcrzdNx2YXsJdNLyVTCeAOnt2JQKliQ2vxzWAYU6x8hswfauXso6nEUAJ8Jx0yRHZG9xGzZJRWhU7RYcFseuI1Nkj1veqvGFpGwlqaJ71c0EKfITmtFPbR2dJEcoFIi3S4=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762773573; c=relaxed/simple;
-	bh=9ZgikPugzcA7lSemy9YYqgvuQHJN0TCgzXGZe1SsZc0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=uGMw6/z2R1I8iq5lkfwWB8FpWmXaOByoS1v/u4boaUbJV5FT+L5MIP7EiTzAT98NXTSDX5UzDl8/hBTJE60PN7xDREN6ZWrI1Cu/keeI0cYZjAqBAK9aBiwp78bSFAJWEse+TjKaKr0pAxMq/djLhZeccBmgzu5KxzwJ2odf+yE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=cWW81H8B; arc=none smtp.client-ip=95.215.58.187
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C52A72F690D
+	for <dm-devel@lists.linux.dev>; Mon, 10 Nov 2025 12:32:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.112
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1762777966; cv=pass; b=DaNkSgt9qaPQGUbLnXaDzDdpdGteXd4smY4250nlstdP0ce8NpRQy89Uo2mIE4Suts5vF8viUzIfkVadcc705L8sGG0tFc3Vcg3OnE1OEm93PM/C2n4M22Xqhxq7re2fmk1MPzLcqTMKxrAKYoQY9V0Nt9vihEWWKcIfPn5pPrw=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1762777966; c=relaxed/simple;
+	bh=QKxElmVfoiOAXfnBwoTX9K1viGokBpnNvo3nFZSjAOY=;
+	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
+	 MIME-Version:Content-Type; b=D02Fp4ljKwYBd5WrRZq53nqvskqk9PNcUgpRJFsf83anh/B3hYp0I6rkhIeRNfiNWN2kyVEG/yfPJ1TMkhxW4aBIN7MEHl9Z1tmPI1DjIUu731BxPDTnb+3nsXDIj7YKB9GoSRS1UcgCZGesc0Ty96WQEPFpFBSSqaioJvFL3xE=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=RbriZDXL; arc=pass smtp.client-ip=136.143.188.112
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="cWW81H8B"
-Message-ID: <bd04f307-7f83-41f5-a1ad-afcd8d2a9237@linux.dev>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1762773567;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=iMOcbVruihWsGJTcS6Pxp0A++3NbHjIZvOX0ONskPMA=;
-	b=cWW81H8BPz/rAJ2CruCWlZPOAb8vmAlfaPluFWmcCj/P1Adl8ck6d2XWYtLj7ksYw93VFM
-	LV26jAy5vRVWeWDH2gVwClTsLcgCVNETbE+jF0HbEV8f2ntVyOjNm01NYp8eprMnVTdwgi
-	r5iIbMJXLQNJNdSSbHEd5q28TBAB2zM=
-Date: Mon, 10 Nov 2025 19:18:38 +0800
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="RbriZDXL"
+ARC-Seal: i=1; a=rsa-sha256; t=1762777962; cv=none; 
+	d=zohomail.com; s=zohoarc; 
+	b=gwnobjk4ALDFiUj4thJPDJhAOU540WBmZk28myUSmvKs2M1Oe90XiLpLeaIPu7P2lPzRsgz0iBZSGcWmkjuINZOhTg1YWCC3g8eanQPNpmFs7cUwTNGk69g4LI4qp0syvWkKMJfk0GRZ+KcDidxTwqkHEB5f5OIpR1daWxqw/2M=
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
+	t=1762777962; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=bJSbfoKTGDKNGAzBm563TFQcPM7duW0xlowY32Azhwo=; 
+	b=eGHo4XaAjw02UlJnxxmmq55GBkgVSotvNfF7zQYQl8sS5kokn2Mxqxk5jInWiJXP+Qa/8HoJK55I8EC5JdJ8Wc1tEmslvnXvNxUdvYwnsUAd1tqR4OhKEI8qpOvu9ihpuc3VShGda6VHLLshP5Vjxi7k1P0P28Q/mEfe2/htfms=
+ARC-Authentication-Results: i=1; mx.zohomail.com;
+	dkim=pass  header.i=linux.beauty;
+	spf=pass  smtp.mailfrom=me@linux.beauty;
+	dmarc=pass header.from=<me@linux.beauty>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1762777962;
+	s=zmail; d=linux.beauty; i=me@linux.beauty;
+	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:References:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
+	bh=bJSbfoKTGDKNGAzBm563TFQcPM7duW0xlowY32Azhwo=;
+	b=RbriZDXLEa+ZdFpMgx2Yxnk6gubnYkRZYpvkaFQw+XaIbnlduR5BIyL3JT1q6Jgv
+	jKKhS+84lXq/ENOkce51v7ca8OdcrHIfgXpZYeDxCBikLVBSRNrOk7puoB/YGh4cWo+
+	TPnevYuC9AxyxLTyRTLlyQXvlAqbtJu2t6v5ptKs=
+Received: from mail.zoho.com by mx.zohomail.com
+	with SMTP id 1762777961320919.5363909379608; Mon, 10 Nov 2025 04:32:41 -0800 (PST)
+Date: Mon, 10 Nov 2025 20:32:41 +0800
+From: Li Chen <me@linux.beauty>
+To: "Dongsheng Yang" <dongsheng.yang@linux.dev>
+Cc: "Kees Cook" <kees@kernel.org>, "Nathan Chancellor" <nathan@kernel.org>,
+	"Nicolas Schier" <nicolas.schier@linux.dev>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"linux-hardening" <linux-hardening@vger.kernel.org>,
+	"linux-kbuild" <linux-kbuild@vger.kernel.org>,
+	"Zheng Gu" <cengku@gmail.com>, "dm-devel" <dm-devel@lists.linux.dev>
+Message-ID: <19a6dc11358.18a71ad4233219.5584291515890233315@linux.beauty>
+In-Reply-To: <bd04f307-7f83-41f5-a1ad-afcd8d2a9237@linux.dev>
+References: <20251105084733.3598704-1-me@linux.beauty>
+ <20251105084733.3598704-4-me@linux.beauty> <bd04f307-7f83-41f5-a1ad-afcd8d2a9237@linux.dev>
+Subject: Re: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in
+ pcache_meta_find_latest()
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 3/3] dm-pcache: avoid leaking invalid metadata in
- pcache_meta_find_latest()
-To: Li Chen <me@linux.beauty>, Kees Cook <kees@kernel.org>,
- Nathan Chancellor <nathan@kernel.org>,
- Nicolas Schier <nicolas.schier@linux.dev>, linux-kernel@vger.kernel.org,
- linux-hardening@vger.kernel.org, linux-kbuild@vger.kernel.org,
- Zheng Gu <cengku@gmail.com>, dm-devel@lists.linux.dev
-References: <20251105084733.3598704-1-me@linux.beauty>
- <20251105084733.3598704-4-me@linux.beauty>
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <20251105084733.3598704-4-me@linux.beauty>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Importance: Medium
+User-Agent: Zoho Mail
+X-Mailer: Zoho Mail
 
-Hi Li,
+Hi Dongsheng,=20
 
-     It seems you sent the same patch again, shoud it be V2 instead?
+ ---- On Mon, 10 Nov 2025 19:18:38 +0800  Dongsheng Yang <dongsheng.yang@li=
+nux.dev> wrote ---=20
+ > Hi Li,
+ >=20
+ >      It seems you sent the same patch again, shoud it be V2 instead?
 
-Thanx
+Apologies for the duplicate patchset. I mistakenly included pcache in that =
+GCC plugin series.
+I will send the pcache v2 patchset tomorrow.
 
-在 11/5/2025 4:46 PM, Li Chen 写道:
-> From: Li Chen <chenl311@chinatelecom.cn>
->
-> Before this change pcache_meta_find_latest() was copying each
-> slot directly into meta_ret while scanning. If no valid slot
-> was found and the function returned NULL, meta_ret still held
-> whatever was last copied (possibly CRC-bad). Later users
-> (e.g. cache_segs_init) could mistakenly trust that data.
->
-> Allocate a temporary buffer instead and only populate meta_ret after a
-> valid/latest header is found. If no valid header exists we return NULL
-> without touching meta_ret.
->
-> Also add __free(kvfree) so the temporary buffer is always freed, and
-> include the needed headers.
->
-> Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
-> ---
->   drivers/md/dm-pcache/pcache_internal.h | 13 +++++++++----
->   1 file changed, 9 insertions(+), 4 deletions(-)
->
-> diff --git a/drivers/md/dm-pcache/pcache_internal.h b/drivers/md/dm-pcache/pcache_internal.h
-> index b7a3319d2bd3e..ac28f9dd2986f 100644
-> --- a/drivers/md/dm-pcache/pcache_internal.h
-> +++ b/drivers/md/dm-pcache/pcache_internal.h
-> @@ -4,6 +4,8 @@
->   
->   #include <linux/delay.h>
->   #include <linux/crc32c.h>
-> +#include <linux/slab.h>
-> +#include <linux/cleanup.h>
->   
->   #define pcache_err(fmt, ...)							\
->   	pr_err("dm-pcache: %s:%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-> @@ -79,14 +81,17 @@ static inline void __must_check *pcache_meta_find_latest(struct pcache_meta_head
->   					u32 meta_size, u32 meta_max_size,
->   					void *meta_ret)
->   {
-> -	struct pcache_meta_header *meta, *latest = NULL;
-> +	struct pcache_meta_header *latest = NULL;
-> +	struct pcache_meta_header *meta __free(kvfree);
->   	u32 i, seq_latest = 0;
-> -	void *meta_addr;
->   
-> -	meta = meta_ret;
-> +	meta = kvzalloc(meta_size, GFP_KERNEL);
-> +	if (!meta)
-> +		return ERR_PTR(-ENOMEM);
->   
->   	for (i = 0; i < PCACHE_META_INDEX_MAX; i++) {
-> -		meta_addr = (void *)header + (i * meta_max_size);
-> +		void *meta_addr = (void *)header + (i * meta_max_size);
-> +
->   		if (copy_mc_to_kernel(meta, meta_addr, meta_size)) {
->   			pcache_err("hardware memory error when copy meta");
->   			return ERR_PTR(-EIO);
+Regards,
+
+Li=E2=80=8B
+
