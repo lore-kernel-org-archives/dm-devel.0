@@ -1,74 +1,75 @@
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
+Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 412D6350A3F
-	for <dm-devel@lists.linux.dev>; Tue, 11 Nov 2025 11:59:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D71B33CE91
+	for <dm-devel@lists.linux.dev>; Tue, 11 Nov 2025 12:02:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762862381; cv=none; b=pXo5eGL+KgXSEGQwDJvVCMpMtDjSgolt6TkjrdlYtaq20ALe6oTTMOwm85rBCLv6WhikGAHkZ1a+8n+Adz65/6VCOk+HLN4z8qcuKMjTrs/fpyc2iZjob53jXe19gkpWArHGyTrDykvwSIXptUgaqBe914CtKbkP/XMQhzFMiq8=
+	t=1762862531; cv=none; b=OpB66Z3Kx322J534Nh69usixw5CmwJhr2M9e5SrRJMy4p16W/JS/4GsmpdDDggVi5kkIR/FvWKM5Iew8V+A/CN36v9XHyMNMPZgbm4RS5vbfYccclngxj+LaxNc8EO8ZR1nS8pYe1z1BIb5QJtJj7krwOOrQn5nZ1bF1Sg24b90=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762862381; c=relaxed/simple;
-	bh=vaD/T+qICtz8ZXm6BNMOW2lzNQTEC0dUE5JuBzFsCOc=;
+	s=arc-20240116; t=1762862531; c=relaxed/simple;
+	bh=/0DRRtX7csdRXeNMnDN50ZJiSioLzxz512VFjh4jXHk=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=SPrV/4BtfcVp/GEKqXcUYGthHmX4nCWGkgqESdz+knD2DUt6Dv/1PlKb7UgpcWZJHgvTnNH5+Gsd5RL0OrJ62b6YTbtoYszvGpebNuoXm1FeB/DrncChajwmM/ToVABXWNW59RfehW0nDVbNqW7RoLwFQndB1EfhlPlHosGhiq8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=USBd4fbL; arc=none smtp.client-ip=209.85.208.41
+	 Content-Type:MIME-Version; b=MxP+UxEYWcoFgwZYRlDQt9JhUgxgKEKdbNkpDeJOrTne8n8QZS7ldcwOv3UfHC05ypqKaCDYrVc3TqLVt+EPLrgsBWBxTzQN/Mapg8n4zABUEL/FWQugYTLrEq6FYLpEeALYsCS2znL7rKlkHk0y6igCQsy+DcITC0fOZCUlPas=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=g47Xi+VD; arc=none smtp.client-ip=209.85.218.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="USBd4fbL"
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-640aa1445c3so6295399a12.1
-        for <dm-devel@lists.linux.dev>; Tue, 11 Nov 2025 03:59:38 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="g47Xi+VD"
+Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-b5a8184144dso539432066b.1
+        for <dm-devel@lists.linux.dev>; Tue, 11 Nov 2025 04:02:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1762862377; x=1763467177; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1762862527; x=1763467327; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=foXs+A0tXIvOTIqlgy6mlErwwkTl3r2UTg3ln7Z/AkE=;
-        b=USBd4fbLp6BUqFfQfq1FrMOvcGHOGrQMe3Mn4EdltEpLq/J/h3z693IJI7rTdv0lkx
-         IVWbzoGNPeiiScB6tUWjV7OGZWFG34Qcqn8DZa24x3NkoD3GPHTF127Ntr1Wegb2ihTA
-         uwnRorTFOOpI2OsI3lMnu0DJxVB8PJMupNSjLp2CQa781leRB9eEY8aQKUdx+qlJh0f8
-         gG8J4qhtLly81jUE+b7SO7aBJ5JBltzcigactdqT4W+uTL1w7BiU32szZmg/T3gDuZKz
-         C27340kmcBPFxvgehGjsQpeIM60FeUID0jWzW1BPpgStuIu7c6qnt8bzwNWbpVbfevSN
-         yjDw==
+        bh=/0DRRtX7csdRXeNMnDN50ZJiSioLzxz512VFjh4jXHk=;
+        b=g47Xi+VDvUnlTQCe9zy183KRLD8rBxY+dUmbg7iZkfoK/iqFuIWJ/mcbU84gSEDdOJ
+         BsceY1Bjb35PB7NPm1Ddvgr/2JuMFuWdmdn/BX6e4v0sdIQYv+LRktfzeIjfy1ujzMuy
+         KOtxCgRTw6WadKM0+bjBK6kgtd6q0h4WQw2reRmB6lUpUvp/DRivf4+Fbp1zoW+L4l9C
+         Fk2zHou14tmZRntEZTpyAmjRqk/iNselqoKDYdSGVartMe6+gyq7MsdKlB4BoCZ1JiCq
+         A1ZZJvrZ9NF6XDlA82hrHpcnaC13wwXq52r1VmIsG3+9SkL2gU87VmvPWObxzx/9blO1
+         6rZQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1762862377; x=1763467177;
+        d=1e100.net; s=20230601; t=1762862527; x=1763467327;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=foXs+A0tXIvOTIqlgy6mlErwwkTl3r2UTg3ln7Z/AkE=;
-        b=H04mhj2XrEqVZemKvNE5pD1j6fmx/ANsZaAG1FfXm7beMP6R4J/V0XHZrIlunasDvj
-         A/ngLhfBZCNij5ET8cKVfxMIuaJ2iU6Hf5FfHnMqHtM1QQR6euASlBxwoYEBoHZKGFce
-         /ZRVVqLv8ZkdzeLP53nNzqw9hnqJz7+5ki1juCYBuG8WeJe+rYSFBrNcwzPs8sSlkC1b
-         A+A5NH++sJnkOByK1vWqiZJ1u41DJtwRJq4LbTeSNP9spQNVi8kzvCEzGY9tA8JOQttq
-         JcG7/MDS6xIlZYIGUV32nhFf0W1ZY8+KKseYn3sIjgDxupi2GRr8bSQKmAdwCy/+THMJ
-         ylhw==
-X-Gm-Message-State: AOJu0Yy+22hFcw7K07m/W4lhDi1YT64Wvfw8687E98nDhLdWA9j5H9p8
-	NvEm5rV3FOThFJgD5vO4vTx2hCoGsnYiRRLpP3as8ZXqP1vLYXFhDQkdvKCmUplFMDo7g4hEeuz
-	4o306
-X-Gm-Gg: ASbGncsaXBaEIbszz7IF0h1ksrJRSV8tDQSeoEPyyWewD7rVHDj5x4HIvuDB4fa0hRR
-	b+4qx1mXR0J10nB4C3Lm1A2sBa1Auf06D9+aLhpV9Kvi1mJtMIZVkpcscGLkxXyYNFdOk38KcU1
-	OOr6JrswWhEPpa2ZpBWqQgmnamx4QsSmyr5/MQQG3S6HmV70QMsreSES1DNTvQNFm44cyuJyXoQ
-	cd0pas2yx+NU46lWj03dBxcwlxkNvE0g7dsbKTVPKVRXgUooS4bo9iJhfoAl+jU+w/7wWvdLDoH
-	jUcvniiRglq6y9CN7yZVIR3i2ywVb81YKf9gLxahOk2QABPmRIQcXb6SzGgj1fsJgxQLQWcbpa4
-	qt8sO6Cljor2PUb8pd8/A0xuCVgju+AIim8TvlKuWE6R8D+f2yhC7bg4kCq81SvnHcseVm6W/nf
-	mWCLyH7SQwiYF1kU6/9qSkhRaZkOYqnIs77eYRComh1uqhjDatCl1ZgEX/qKxqwVoXfW6UuNdFY
-	h44FBQQE58LLSxtiwcS0SOh/X2IpMcZRl/+e9MCCJRcXhA=
-X-Google-Smtp-Source: AGHT+IFMB9+632D6cF9qRF7fUHrSNnsi0qnM4Zo/Vz7Xd7PeqC5knirFIdHUqRRcAyAC1HFjpMgo9g==
-X-Received: by 2002:a17:907:c25:b0:b6d:8ce4:ff18 with SMTP id a640c23a62f3a-b72e02b60cdmr1310248666b.9.1762862377432;
-        Tue, 11 Nov 2025 03:59:37 -0800 (PST)
+        bh=/0DRRtX7csdRXeNMnDN50ZJiSioLzxz512VFjh4jXHk=;
+        b=ie7ZIEqDtOJvcH3nR8p/iFmh/0Wo3Ueb7Y5NRbiPqIV/YKubluocTlICAaMiURGaVu
+         dI42xETQbwIgg080Mbe8ft6GiowE0seFq4UecO2nuxwTFDvgE3IDzQBx9KkuyqgeXKRb
+         34NO7SKQ/zCSUVsmPc+WKM5StgAMS0jqgvpCMiRzFz2bmWBlEt1C4sFHFBtbdqrJZWia
+         5ETLQ9i00dBDduBfSAap+uUfEeD0lu0k4gf9cBtvvfQGxCjRBSg+iU3XPbsp3bk0WCFc
+         /TU0lHPd9pRbcAD2Zd23rR+gVm5AUKcQRP9puyrQ3CBs+CYKKT08g2zsQDqXRik0+t6j
+         WTIw==
+X-Gm-Message-State: AOJu0Yy2nWpyYCNgyfooHNq8iyDl8MGylJL/ySGLCarlyojOWUehPtRJ
+	JOw4YVm0h68HzIXoENP94wWv3n7lDnOGPzSP9BlSCouJrSR8ZfWVqvZZQGD/OY7PWJkN0HaaBtJ
+	ASOQJ
+X-Gm-Gg: ASbGncu1ici8YrP6IjQTSFE5IxbeMsBAtkP8UOj6hsmtAT4PlZmCJ58pzk1t2ijelk8
+	1bzuJZyovMwYm/8F8FD1TDX/qX3L2empLmTCgAx9qY7TcB/uTcHiKqAchYW/+qS5qmRvPMfemmZ
+	fA0CYCdjKpn+749Q0PD1PDGt/vhewD2NQYuM2nyy4fAwJRi2T2Obis+l751rCGqtys5J4LlbPB0
+	LOP0Li9GiRZb287h/b15qxQNvfprcRPN6cXOVa6Ax4/TlG5QT/OFoV7cq9fPSrfqMXeb6/rFowL
+	smwBOIbtmt8g/X+uStRtmYXaDOWpw3vfmrWOl2frEQ4eqgmqLDnN9I16zp5fhBURlta3oaMUtEv
+	XvUrybt4F7n5wIbD+pt4xBdH9ZYdhkAvCHbB0DDe6HM6dXVJ4kOl0Kzmte4e+TxyMN49BfQr5yW
+	M5nLrVnFlMuaen75UovI1wyIUflCGifQ+I9AVNbb2FoYGDL4Z6t1gsjdabSlExwsmcOk+QzPyNt
+	Khae/vA0eFw+Zb4wdSAhTyOhu8cHCA6NDnmN6UtahghdJI=
+X-Google-Smtp-Source: AGHT+IFjWN/G5/ETDaKs61hVbd0B6hAAxyk9VJG0x8eh6Frgu/DGLDkAsWhYcg55wFcwJEsiRztJlw==
+X-Received: by 2002:a17:907:869f:b0:b40:6e13:1a7f with SMTP id a640c23a62f3a-b72e0377907mr1220268866b.27.1762862527147;
+        Tue, 11 Nov 2025 04:02:07 -0800 (PST)
 Received: from ?IPv6:2003:f9:7f04:900:e894:a50a:fc99:6ee7? (p200300f97f040900e894a50afc996ee7.dip0.t-ipconnect.de. [2003:f9:7f04:900:e894:a50a:fc99:6ee7])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b72bf9bd72bsm1336385766b.49.2025.11.11.03.59.37
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b72bc09629fsm1379704366b.0.2025.11.11.04.02.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 11 Nov 2025 03:59:37 -0800 (PST)
-Message-ID: <d5568bb0fca96dec88ca8fccfc68b2fa8191335f.camel@suse.com>
+        Tue, 11 Nov 2025 04:02:06 -0800 (PST)
+Message-ID: <e8caa2b5d707e8dbae143885ecb2334b6270ad95.camel@suse.com>
 Subject: Re: [PATCH] mpathpersist: Fix REPORT CAPABILITIES type mask output
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 11 Nov 2025 12:59:36 +0100
-In-Reply-To: <20251110215156.589437-1-bmarzins@redhat.com>
+Date: Tue, 11 Nov 2025 13:02:06 +0100
+In-Reply-To: <d5568bb0fca96dec88ca8fccfc68b2fa8191335f.camel@suse.com>
 References: <20251110215156.589437-1-bmarzins@redhat.com>
+	 <d5568bb0fca96dec88ca8fccfc68b2fa8191335f.camel@suse.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.58.1 
@@ -79,99 +80,55 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
-On Mon, 2025-11-10 at 16:51 -0500, Benjamin Marzinski wrote:
-> mpathpersist was incorrectly parsing the REPORT CAPABILITES service
-> action output. In reality, the type mask is two bytes where the type
-> information is stored in bits 7, 6, 5, 3, & 1 (0xea) of the first
-> byte
-> and bit 0 (0x01) of the second byte. libmpathpersist was treating
-> these
-> two bytes as a big endian 16 bit number, but mpathpersist was looking
-> for bits in that number as if it was little endian number.
+On Tue, 2025-11-11 at 12:59 +0100, Martin Wilck wrote:
+> On Mon, 2025-11-10 at 16:51 -0500, Benjamin Marzinski wrote:
+> > mpathpersist was incorrectly parsing the REPORT CAPABILITES service
+> > action output. In reality, the type mask is two bytes where the
+> > type
+> > information is stored in bits 7, 6, 5, 3, & 1 (0xea) of the first
+> > byte
+> > and bit 0 (0x01) of the second byte. libmpathpersist was treating
+> > these
+> > two bytes as a big endian 16 bit number, but mpathpersist was
+> > looking
+> > for bits in that number as if it was little endian number.
+> >=20
+> > Ideally, libmpathpersist would treat prin_capdescr.pr_type_mask as
+> > two bytes, like it does for the flags. But we already expose this
+> > as a 16 bit number, where we treated the input bytes as a big
+> > endian
+> > number. There's no great reason to mess with the libmpathpersist
+> > API,
+> > when we can just make mpathpersist treat this data like
+> > libmpathpersist
+> > provides it. So, fix mpathpersist to print the data out correctly.
+> >=20
+> > Also, instead of printing a 1 or a 0, it was printing the value of
+> > the
+> > flag. Fix that too.
+> >=20
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 >=20
-> Ideally, libmpathpersist would treat prin_capdescr.pr_type_mask as
-> two bytes, like it does for the flags. But we already expose this
-> as a 16 bit number, where we treated the input bytes as a big endian
-> number. There's no great reason to mess with the libmpathpersist API,
-> when we can just make mpathpersist treat this data like
-> libmpathpersist
-> provides it. So, fix mpathpersist to print the data out correctly.
+> LGTM, thanks.
 >=20
-> Also, instead of printing a 1 or a 0, it was printing the value of
-> the
-> flag. Fix that too.
+> The way libmpathpersist treats this field is totally counter-
+> intuitive,
+> but it has always been like that, and I agree we shouldn't change the
+> API now. However,=C2=A0it is not unlikely that other users of this API (i=
+f
+> any) also get the byte order wrong for pr_type_mask. Perhaps we
+> should
+> add a comment in mpath_persist.h. Could you add that?
 >=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-
-LGTM, thanks.
-
-The way libmpathpersist treats this field is totally counter-intuitive,
-but it has always been like that, and I agree we shouldn't change the
-API now. However,=C2=A0it is not unlikely that other users of this API (if
-any) also get the byte order wrong for pr_type_mask. Perhaps we should
-add a comment in mpath_persist.h. Could you add that?
-
-Also, while staring at the code in mpath_print_buf_readcap(), I noticed
-that the output for PTPL_C is also wrong (missing "& 0x01"). While at
-it, could you perhaps fix that, too?
-
-Regards,
-Martin
-
-> ---
-> =C2=A0mpathpersist/main.c | 23 +++++++++++++++++------
-> =C2=A01 file changed, 17 insertions(+), 6 deletions(-)
+> Also, while staring at the code in mpath_print_buf_readcap(), I
+> noticed
+> that the output for PTPL_C is also wrong (missing "& 0x01"). While at
+> it, could you perhaps fix that, too?
 >=20
-> diff --git a/mpathpersist/main.c b/mpathpersist/main.c
-> index 97fd5a43..5033ee8a 100644
-> --- a/mpathpersist/main.c
-> +++ b/mpathpersist/main.c
-> @@ -761,12 +761,23 @@ void mpath_print_buf_readcap( struct prin_resp
-> *pr_buff)
-> =C2=A0	{
-> =C2=A0		printf("=C2=A0=C2=A0=C2=A0 Support indicated in Type mask:\n");
-> =C2=A0
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[7], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x80);
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[6], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x40);
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[5], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x20);
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[3], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x8);
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[1], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x2);
-> -		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[8], pr_=
-buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x100);
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[7],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask &
-> +			=C2=A0 0x8000));
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[6],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask &
-> +			=C2=A0 0x4000));
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[5],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask &
-> +			=C2=A0 0x2000));
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[3],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask &
-> +			=C2=A0 0x800));
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[1],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask &
-> +			=C2=A0 0x200));
-> +		printf("=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 %s: %d\n", pr_type_strs[8],
-> +		=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 !!(pr_buff-
-> >prin_descriptor.prin_readcap.pr_type_mask & 0x1));
-> =C2=A0	}
-> =C2=A0}
-> =C2=A0
+> Regards,
+> Martin
+
+Please also add
+
+Fixes: ae4e8a6 ("mpathpersist: Add new utility for managing persistent
+reservation on dm multipath device")
