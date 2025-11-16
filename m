@@ -1,62 +1,62 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CC7614A60C
-	for <dm-devel@lists.linux.dev>; Sat, 15 Nov 2025 14:50:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0B181E2834
+	for <dm-devel@lists.linux.dev>; Sun, 16 Nov 2025 14:20:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763218216; cv=none; b=OHTE4xVqFUoEM8eSkqhEV3ljzUj8pq9OyC5/c883kTtjl3K1+F9FUOCax+Nh8B1nzDuLsKsV/etwcdaCGhQRfqIgruW/wNdEFOxPt7fx3UCumJD3QLHS5EYy0/867wELs6FD19QUWLbtyluHsYU8JlIt2bPGfw3MTDgA4vp/aOA=
+	t=1763302825; cv=none; b=ZG8LJ9J+JXuDrxXh2ixE4RuMSiRULpyVZ36yJsrb59NK+g9hWPZH/5RA2AMUHgS4BXz8L+SdM4CBrams0A9J2Ubcdw2IOQX0ngmvc50Xm03M0hSdlQHwn94MrPGcBMmxKHhRWDyFkP9LuyGA/zTmiHBE8dVIB/BP8778s5KFP00=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763218216; c=relaxed/simple;
-	bh=13A3T1fB/CHqFDIg7ZtoJhZoNfQ7i/sk+AMaQJTB2RU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=am2i+0clIPVO+FwBoLPWs+Ky1ch61U2DnVUgZn4IMid66Pld5h+4JJQVG61ZHBJxdECPfsVoomzNYjPCufLs2xR5aZ+At0qqql7+5EQjHQxwpu6ZRbar5cm6IhwA40oGmCOTKxagDlIWkFLYu7yioVIzctKCL9Tig0evqfzfOhE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=EBfyRyqf; arc=none smtp.client-ip=209.85.128.54
+	s=arc-20240116; t=1763302825; c=relaxed/simple;
+	bh=cSuH7JVctiky67bgUSIjWU0qNTRA0wXoD4/pDvq5bmM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BK1qSehVrFgCaTazex7Y2tKOLTUsro49wxl/19Qy35VDaMjJIbdr7m9Qy44hWi89LTa09SR8Lx0O5P9PdJIXWrdTfdVTdeaV5ROvSaQwTnZck3iGrtzQQigybhVZlQqzcYLTYIMzsWelSivLXClk0Eb2mdj07n9qJc6jKnZsuXA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PFEgeOZX; arc=none smtp.client-ip=209.85.128.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EBfyRyqf"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4779cd413b4so337565e9.2
-        for <dm-devel@lists.linux.dev>; Sat, 15 Nov 2025 06:50:14 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PFEgeOZX"
+Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-47797676c62so563915e9.1
+        for <dm-devel@lists.linux.dev>; Sun, 16 Nov 2025 06:20:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1763218213; x=1763823013; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1763302822; x=1763907622; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=+f2J98XjLVTlxUCnNogqe0eEc0sQ48Q+UtUL70XUoT4=;
-        b=EBfyRyqf7JzUYm8oAWhUGfo1z4nZ0ubIDxd8g+l/DV4YYfQGCxtyW4vhqQmR7K2dEV
-         IOpR+KIvfq7KXZOhKvlVJlHbqR2Ok5+vyIb190ViM/9ZB2tzubbv2R42qE8TZYqShIST
-         BrX6vZ00zlC1OeLceNNGNvxIx/dkohN0Lo4CpY39e5vNUJi3RfaQPmC4WwsS5AS+pryV
-         KhHQuj8jhpCMF2fdHi52VQDs56wIvO7j95CwxD9qucWUexEmfgQKNxuVLizCgdySC8iq
-         zuudHgUgClBcdDxWlkIBrVwHDmUsnr12MQ52Ty4Nz0lZGnriHXHkzhDZAXj8OARQLUjN
-         BT4g==
+        bh=muAb0DqJ6rA75Km0hljunPWDTyH5qd+hTTZJ15zgiG4=;
+        b=PFEgeOZXnmo7/N19CHZg536RIGWKCPAy6gMHwhG8GJeUwZs73eneDvgpAcieqD6XLB
+         Qm6zfOK1Ddtz4BnfkrwG1zBiBMI3rpH4dyCkp2CTXMSk8OtqFOytozl/wLzu7DjumpkX
+         daS5nrIgG6dmaZT01vcYiPsSJu7z5AwKMYkXleweN2g8GtdOB5pCSn8CTSD2bE+X5Bjf
+         ICZT4kKd5F5hkZFHi2pN3BP/vnrPOdtVxLgam4VhEbByYzSRsotZbTbKeXV+wLFxfWPR
+         AMlF8KJWItCYJL4tcy4MMaavEI/9FibSMDaS9A/ELHlZI3YF64CtW4P0roO32QxUd9NZ
+         XrNA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763218213; x=1763823013;
+        d=1e100.net; s=20230601; t=1763302822; x=1763907622;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=+f2J98XjLVTlxUCnNogqe0eEc0sQ48Q+UtUL70XUoT4=;
-        b=u6PG+2XE/3OGBHmx0gvF+pIYEQor9xdPiKvpiHREZDSFsxiGxPKD2c3xG4LcCJPWTb
-         z8APXquzy8MDOf8L4DrKnMC1UEqjwfdDKaeigSFm9GC5nghyJuxSH8MSJXfsqMXCUtMo
-         P4Hpgf6MYE3Adw/LfZOPkPsfygUauqgqQ4FW7oXIWELk96n1KIHc0CY8Vj8HZOJ3RZ87
-         Q4kAa+gkKOklbAiHPKkiHnlTm8y13Etax3osFpjbtloSBttVF4kp0T0UUcGZuF8PEsHw
-         Jgh+fSVdYj/PAL0pNWGiY3ViO+tlJAFCA1+yxwysy1+ioKiEjfCBjtVOi/aLhPZ2uCcZ
-         8wfQ==
-X-Forwarded-Encrypted: i=1; AJvYcCWD/7nddkfO5aHkWOCBUs1hY821/xxukP3fevqx4AviQFgbILN4GXSECxP6lhPPHQ5pnj7+QV8wIA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyHN3YhyTCdaBvf/Ro7y2ntqtmP5Tg/VHx3eTvrkRa4sZvrpwdL
-	fsa+y486kl5HBcja4tY900SzPpnPrInZSKIGUKHqvxIu2lAGrlDf38w=
-X-Gm-Gg: ASbGnctKlXa6FIuVpPekvLEZpXdUE0lXCeyKPkM1HhNGnRa2NXdxhj47yMQjrHI98D7
-	e0WXRNkkjIMU8CtPvnPDjnpbOoN3yhjCQGDp5i2oteZHqsT4mDSUGdUqhU9k5Wrr/MU32KItAGq
-	OmVKKm2UulUzzwO9J1XKy/JQL39LBpBMRp4jSzAYpKwQWIKYBP5DX6uy+G0NDGJgmqnM1mH/h2k
-	wgKM+glbqnXj0aI6964hJFYAXA1u74OBtiVrke5C58nCmkihA8gax+K5eF+fIpBLrlofj8Rx4qD
-	olFyH93ZRFwfukfCj0XxGPd73MC50vUXzcyTIf34QqVHWH3SvRJiEDk/mg/NLImKRuTvm3IGRfe
-	Dwa6XmFFXX02oA0YdnAAuKBjGAnG0z8hWVfMaCAq4rs0TK+x4WCfRNRm0334mSygcDsKnRjKCy4
-	f0qma+ukcTzs0uhnyr4FeHDx7joIWMwO28eoBAvQ==
-X-Google-Smtp-Source: AGHT+IEms82mcw0T5rP0G7xmFOsrfJEoqRkEXWqavmeG0jqD+TUSFEJ+ETfBpsLF21aVfosnsE45vg==
-X-Received: by 2002:a05:6000:2c05:b0:42b:4219:268 with SMTP id ffacd0b85a97d-42b593456d1mr3387383f8f.4.1763218212450;
-        Sat, 15 Nov 2025 06:50:12 -0800 (PST)
+        bh=muAb0DqJ6rA75Km0hljunPWDTyH5qd+hTTZJ15zgiG4=;
+        b=pd3bW8a0ZFTgFHN4HUljy56a6NyAWYmiO8BY+zNobdlfea9FAINSJ+1Djs0F5QUW3i
+         W7CJMH6RocNR0T0lTIkQXXC+yxs25VRFPm6Ie+T5osW01ETC8V9DPHFmpYdN5lDlTK2y
+         MnTdFrhPi7so64OfjEvL7V2m+imSNaOELZ9aOJAh6KOaeHMQlzSP0bGP6/r5BukeNXZk
+         PBIoyKFbPvQg6k3B0kfHxVP6wEyqbqBpStJmoMZvh328pYXGmUpFS3ybAoEwsOXZQvfN
+         rsWuyrP/1jM7X2dBMjXXhCyFY4qpXbiTzNNdd9s0Evo6pduNVPdfBm+EgG+9qimPH3uw
+         QPxg==
+X-Forwarded-Encrypted: i=1; AJvYcCWCHqgnSTg4jzIW+MM0159HTP7234RRcTieR8+VCMo3IfFE3hMu1ubDYYvqbxRjmkaVz6HFxhE3zg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwvNpAuWPuy7y7UgcJFyDk3DljvTbWf4wn+hNNE9ELTOecLg16h
+	PTJQBQKwHFHhjR9nPrkhH2aEf5TRsGLRJe4gM0x0FUPW6JenLRanD5c=
+X-Gm-Gg: ASbGncsqGUEsjoTfLrOrCpg8xL5y2ZfAys9RDMNvm0m/VrVU1GqtkyQ8eH4/J7NGgU0
+	bqNpFwGzYkojtktkM1+J4Y6XWG/X86fLwOoTTywrjrlctA8RfGiufAcl3HgC3gM1RGZqTWJ2MaT
+	1xdydcAik38CPv+5XWVxnYV8OWkVjWDv0cw7oVHQpsAE63W3gRW626X/Er0TD80QqBi1Ol7FX9E
+	Q8LjvwF8qqHXXOw0fxm5y7SgWRBCWw10V5XFovzlp1BuRdl/1leMAhATjMEKEKtTLTsTZJhhqeO
+	yH0QprsIzq4hyQwE3sSvF6QwpkJhGSHW2tz6M4AR9jZEEF+5LGWMOBtHBOdo0g5g47PnmFDVCFm
+	4Jn0Dnz7NceEXjBRjCVMKWow/iBVWVndYJbYBwD2jaStaQw/bHmoiDUaupXDAc2TKq6won2V/OX
+	I8dTgWF70FBrdKJc0rzTp8lMPR6OyGj02PT8KJQP1fPtOEyN9o2brBxIouZ/8=
+X-Google-Smtp-Source: AGHT+IHcBSVOtDeb0aGTZ88/4IY8Tr8xmjZmsf1s8vVCODTxHZr6FFXTwF3tLt9keotk+tsXMW6e2g==
+X-Received: by 2002:a05:6000:2884:b0:42b:13cb:41bf with SMTP id ffacd0b85a97d-42b5a9a33ebmr4500162f8f.9.1763302821710;
+        Sun, 16 Nov 2025 06:20:21 -0800 (PST)
 Received: from localhost (39.red-80-39-34.staticip.rima-tde.net. [80.39.34.39])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-42b53f206e2sm16355968f8f.41.2025.11.15.06.50.11
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-42b53f0b622sm20603997f8f.29.2025.11.16.06.20.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 15 Nov 2025 06:50:11 -0800 (PST)
+        Sun, 16 Nov 2025 06:20:21 -0800 (PST)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -64,9 +64,9 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: add Seagate Exos and Nytro series to hwtable
-Date: Sat, 15 Nov 2025 15:50:10 +0100
-Message-ID: <20251115145010.470404-1-xose.vazquez@gmail.com>
+Subject: [PATCH] multipath-tools: identify more Storwize models
+Date: Sun, 16 Nov 2025 15:20:19 +0100
+Message-ID: <20251116142020.346811-1-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.51.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -77,8 +77,7 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Config from, #102:
-https://www.seagate.com/content/dam/seagate/migrated-assets/www-content/support-content/raid-storage-systems/corvault/_shared/files/205042000-01-B_CORVAULT_SMG.pdf
+multipath is also supported by V3500 and V3700
 
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -86,29 +85,22 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ libmultipath/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 92523042..2734b78e 100644
+index 92523042..23187a83 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -1326,6 +1326,15 @@ static struct hwentry default_hw[] = {
- 		.prio_name     = PRIO_ALUA,
- 		.no_path_retry = 30,
+@@ -682,7 +682,7 @@ static struct hwentry default_hw[] = {
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
  	},
-+	{
-+		// Exos / Nytro series
-+		.vendor        = "SEAGATE",
-+		.product       = "^[456]",
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.prio_name     = PRIO_ALUA,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * AccelStor
- 	 */
+ 	{
+-		// Storwize V5000/V7000 lines / SAN Volume Controller (SVC)
++		// Storwize V3x00/V5000/V7000 lines / SAN Volume Controller (SVC)
+ 		// Flex System V7000 / FlashSystem V840/V9000 and 5x00/7x00/9x00/Cx00
+ 		.vendor        = "IBM",
+ 		.product       = "^2145",
 -- 
 2.51.1
 
