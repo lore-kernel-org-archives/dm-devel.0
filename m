@@ -1,189 +1,114 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9ED2F3191A7
-	for <dm-devel@lists.linux.dev>; Mon, 17 Nov 2025 20:49:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 605013093AE
+	for <dm-devel@lists.linux.dev>; Mon, 17 Nov 2025 20:53:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763412547; cv=none; b=QGVjUm0E8oUKdKTu4RnBQOFixOgYE/3CamLaNFK1YH1ot4v8I5gCICzedfiovHE1Mg8ITTBpN69Iy4tlyC7R8tvJqAWBmWCVC2//kCG3XsGWwJ44st1qRC2Geo5OKCRzRYrGVUwUPpF0ALxeu8It+EplXEKlGt31G5oh7hjuSfE=
+	t=1763412816; cv=none; b=eawzyq8hD81TSCPzG0xth8DmzGYSIi1fvzIw/7iWatwImBT62A5TD8TEYjAZfvqi0s6dzra6AnifjMM/1Yi95/JqTH2lr/yY3ZxkChg4F+tb8qP2wnvjl1o5Aqv2AsM53RL+KenRPsWh5ClADkOCg8k1bIgOdvaoXVRf6VLDAwA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763412547; c=relaxed/simple;
-	bh=ynQCbG6N/gXYZfkBDVHtvIWwpgnYwr6SxWbyOOzEM4A=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=URQcve7x1Ptjzd8oG/swynqi2znualh2MocgRBEiErSSVjH7B+kzaLd8JwRlcE3JKzafa6qVj4orjQAz8P+mici0hXFdq5t43SnmkF0MPIZAXsKenKYVCYWg9B7ze3oGdinN/fiIJF4CaBDYN/aFF7kS+RxWqeZoVaOxGoBhhq8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DKZuMudV; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1763412816; c=relaxed/simple;
+	bh=l809oBG5mQYDMyVhjlDcpwfxbwo2RhRDxHgp7AJ5AyQ=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=GZzLhFoH9UcIDTPhKhctbF6ipw21r427PTgbKLzykPKZFBJjoG0YBAyb60cxE9pDDNkPOBgZT4St9oVgL4bHfOWp4ozz9YmYMLasUaFP7pFF7HqPRiUNx0en8w7nEDMvEX3q5Wcg8s5ezxlXNvRfIjkDtYScy/K/UuGmkOlL/CY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=N8G8JJZ2; arc=none smtp.client-ip=209.85.214.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DKZuMudV"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763412544;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=cJlXniEMfLKYKm86uGte1tV2pA7hG9A9kTBTHOH60vo=;
-	b=DKZuMudVyfmO0+NZObZMHgunKT5ocB3wWaliSfgdo0kvrsdkkCIgHPZenRiX2bhqiorCGg
-	IxH/MAZjIgcBMuNGj3Wq0LrzI0yHFXBNrnYqIWj5x/uKEZNhWNFby+ppoST6AVO5womj/R
-	4lSK3m164LHkooUN3fX/YaA3HnLDO5s=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-501-dExqWat7PpSzWhB7KhKbbA-1; Mon,
- 17 Nov 2025 15:48:59 -0500
-X-MC-Unique: dExqWat7PpSzWhB7KhKbbA-1
-X-Mimecast-MFC-AGG-ID: dExqWat7PpSzWhB7KhKbbA_1763412538
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C574218AB40D;
-	Mon, 17 Nov 2025 20:48:57 +0000 (UTC)
-Received: from [10.44.32.60] (unknown [10.44.32.60])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CA1F3180049F;
-	Mon, 17 Nov 2025 20:48:54 +0000 (UTC)
-Date: Mon, 17 Nov 2025 21:48:49 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
-cc: Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>, 
-    Andrew Morton <akpm@linux-foundation.org>, 
-    Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, 
-    LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial
- write
-In-Reply-To: <20251117105945.10179-1-urezki@gmail.com>
-Message-ID: <fff990bc-6ff9-7b34-8e80-57078de40928@redhat.com>
-References: <20251117105945.10179-1-urezki@gmail.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="N8G8JJZ2"
+Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-2980343d9d1so9375ad.1
+        for <dm-devel@lists.linux.dev>; Mon, 17 Nov 2025 12:53:35 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1763412815; x=1764017615; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=l809oBG5mQYDMyVhjlDcpwfxbwo2RhRDxHgp7AJ5AyQ=;
+        b=N8G8JJZ2gWm+En7kQPgLnjfF+gf4UuguBTe1dGcgifWNY09814b/BpwEt5giaNVu8k
+         l0FO3xm6VvNXN8pvKfrcusVRcQshLiqpLufL03ie2obrgasfH+DWp9caglqikadvouv2
+         4+fsI53wdrMWPiyaEo3cCDU4pGM3SmP42FM6Q5C8Q7dgdGqAf4NHGUP9Mbc584ANpefX
+         on7g5MJNoGvitLNgMcKCOJJ7vpGXRI/+XGVZ0dgninflmVbxWv0wcm2uWNIjpG/sK/sr
+         z7awz4s65CBtfu7p+WHSlHhCcNA9bFaSlaBXYma4lPE/UvOoqRzMwIRp3/oaazNsxRei
+         vGyw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1763412815; x=1764017615;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=l809oBG5mQYDMyVhjlDcpwfxbwo2RhRDxHgp7AJ5AyQ=;
+        b=aV0yOm5USWooneTF6KLa7ArPUlA9rA/G9RqVACyYQKlm2I+Ki3Mzre2muxZd8FwVJt
+         SQDGtuh2pUi1HfShDg5DXnbx1KOSf4sfD1fuNvXM4zVlmBES5ma54OrXEtrD8J1SbCa0
+         n2WuBEGtBQ6x0HINW56q2Uan/pVBnxPXCCkxByrtLiATKza0EIJOdmfziLSLeemGrla+
+         NirDNHlvkHNUEcF5iMk/ePnP+EEWSfQk/A1PF4/cyIm3p8r2k3/dFFRfhWtPb0UD45Pz
+         5ag7A+N7oo/KJeAmuoOK6dRZXkJ3dIrEBNrFOAZxFhvnt+2dxqYafPPGOJccXXTuq6Oc
+         Dv9Q==
+X-Forwarded-Encrypted: i=1; AJvYcCV4lbonJPy8YJ4zDuJdNpCggX28PD7QeXDDRskifWK3Tw6tfxyfHP1WsdOxG+c+GUQeQ8rMCppm3g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyNB2KpbmleCRMAzViu/sxOOfd+u/atqYgvpyz8kq8AIv/hu9Yy
+	2YBcFNLI0f5qmT/X7uA1O/zPYfJk3KUC3oKIB/KAtokN5mHbvhfdBYl9PJbi4p/uy4yaKuO69nS
+	RHpjCLT+atN4OCZkKDX6r8gdf6aovGjvxKqm2rS26
+X-Gm-Gg: ASbGncvvYfnEY0GOfuR5BG3LGYeTcqxLAmYojER0bKlh+W1k7v5aXjvth80SOF3nEri
+	7dU9yzqeiyRPX/2JfvCt8VZAnLBvPgjHd3wiZNBEo0bFSaSkU11XMxWYiLVs79dk2U8x9Cn5TDa
+	4IUUShQfvnEDmPw2z1M8y8ni3NGIMEsB6xxkVzJsy5kHmuLkLQbwvqB+lkxYNJLVD17Gnjpv8rf
+	isEvl7ZE27IHSDamiPPlGlFxYGn4a9emz9jk0vWZGV9AYPkIcIIhIGPRE9vdh+YZoBoADgNoQNh
+	xGU=
+X-Google-Smtp-Source: AGHT+IGd89d9r2C7LyZGmpiBeJYOBCyZ6Rup9J4+WEvwGpqEFC0Aq6RUWWQLXJYU8QwpBv5v7mRymz1JPpz6m/t04a8=
+X-Received: by 2002:a05:7022:6b8b:b0:119:e56b:c1d9 with SMTP id
+ a92af1059eb24-11c766bab92mr22330c88.4.1763412814221; Mon, 17 Nov 2025
+ 12:53:34 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+References: <75ef45cb-4c00-4b27-87cd-3c2914f5dbcc@redhat.com>
+In-Reply-To: <75ef45cb-4c00-4b27-87cd-3c2914f5dbcc@redhat.com>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Mon, 17 Nov 2025 12:52:57 -0800
+X-Gm-Features: AWmQ_bl7UGdFPytPbPup-TaWyJPN2qNOlIruor8H-VJToEg1fiuqkL9AVdLke04
+Message-ID: <CABCJKuf=8svp8WbE7SOKJhFaWh_8iCXYc41tgu_1po7_AVz0qQ@mail.gmail.com>
+Subject: Re: [RFC PATCH] dm-verity: disable recursive forward error correction
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
+	Guangwu Zhang <guazhang@redhat.com>, Ondrej Kozina <okozina@redhat.com>, 
+	Milan Broz <gmazyland@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi
+Hi Mikulas,
 
-What is the logical_block_size of the underlying nvme device? - i.e. 
-what's the content of this file 
-/sys/block/nvme0n1/queue/logical_block_size in the virtual machine?
+On Fri, Nov 14, 2025 at 7:54=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+> Hi
+>
+> What do you think about this patch?
+>
+> There are two problems with the recursive correction:
+>
+> 1. It may cause denial-of-service. In fec_read_bufs, there is a loop that
+> has 253 iterations. For each iteration, we may call verity_hash_for_block
+> recursively. There is a limit of 4 nested recursions - that means that
+> there may be at most 253^4 (4 billion) iterations. Red Hat QE team
+> actually created an image that that pushes dm-verity to this limit - and
+> this image just makes the udev-worker process get stuck in the 'D' state.
+>
+> 2. It probably doesn't work. In fec_read_bufs we store data into the
+> variable "fio->bufs", but fio bufs is shared between recursive
+> invocations, if "verity_hash_for_block" invoked correction recursively, i=
+t
+> would overwrite partially filled fio->bufs.
+>
+> So, I'm suggesting to remove recursive correction at all. This patch
+> passed the cryptsetup testsuite. Does it pass your tests too?
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Reported-by: Guangwu Zhang <guazhang@redhat.com>
 
-Mikulas
+This looks reasonable to me. I only remember seeing recursive error
+correction trigger in a real system when someone attempts to use the
+wrong root hash, which is obviously not recoverable.
 
-On Mon, 17 Nov 2025, Uladzislau Rezki (Sony) wrote:
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
 
-> When performing a read-modify-write(RMW) operation, any modification
-> to a buffered block must cause the entire buffer to be marked dirty.
-> 
-> Marking only a subrange as dirty is incorrect because the underlying
-> device block size(ubs) defines the minimum read/write granularity. A
-> lower device can perform I/O only on regions which are fully aligned
-> and sized to ubs.
-> 
-> This change ensures that write-back operations always occur in full
-> ubs-sized chunks, matching the intended emulation semantics of the
-> EBS target.
-> 
-> As for user space visible impact, submitting sub-ubs and misaligned
-> I/O for devices which are tuned to ubs sizes only, will reject such
-> requests, therefore it can lead to losing data. Example:
-> 
-> 1) Create a 8K nvme device in qemu by adding
-> 
-> -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
-> 
-> 2) Setup dm-ebs to emulate 512B to 8K mapping
-> 
-> urezki@pc638:~/bin$ cat dmsetup.sh
-> 
-> lower=/dev/nvme0n1
-> len=$(blockdev --getsz "$lower")
-> 
-> echo "0 $len ebs $lower 0 1 16" | dmsetup create nvme-8k
-> urezki@pc638:~/bin$
-> 
-> offset 0, ebs=1 and ubs=16(in sectors).
-> 
-> 3) Create an ext4 filesystem(default 4K block size)
-> 
-> urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
-> mke2fs 1.47.0 (5-Feb-2023)
-> Discarding device blocks: done
-> Creating filesystem with 2072576 4k blocks and 518144 inodes
-> Filesystem UUID: bd0b6ca6-0506-4e31-86da-8d22c9d50b63
-> Superblock backups stored on blocks:
->         32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
-> 
-> Allocating group tables: done
-> Writing inode tables: done
-> Creating journal (16384 blocks): done
-> Writing superblocks and filesystem accounting information: mkfs.ext4: Input/output error while writing out and closing file system
-> urezki@pc638:~/bin$ dmesg
-> 
-> <snip>
-> [ 1618.875449] buffer_io_error: 1028 callbacks suppressed
-> [ 1618.875456] Buffer I/O error on dev dm-0, logical block 0, lost async page write
-> [ 1618.875527] Buffer I/O error on dev dm-0, logical block 1, lost async page write
-> [ 1618.875602] Buffer I/O error on dev dm-0, logical block 2, lost async page write
-> [ 1618.875620] Buffer I/O error on dev dm-0, logical block 3, lost async page write
-> [ 1618.875639] Buffer I/O error on dev dm-0, logical block 4, lost async page write
-> [ 1618.894316] Buffer I/O error on dev dm-0, logical block 5, lost async page write
-> [ 1618.894358] Buffer I/O error on dev dm-0, logical block 6, lost async page write
-> [ 1618.894380] Buffer I/O error on dev dm-0, logical block 7, lost async page write
-> [ 1618.894405] Buffer I/O error on dev dm-0, logical block 8, lost async page write
-> [ 1618.894427] Buffer I/O error on dev dm-0, logical block 9, lost async page write
-> <snip>
-> 
-> Many I/O errors because the lower 8K device rejects sub-ubs/misaligned
-> requests.
-> 
-> with a patch:
-> 
-> urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
-> mke2fs 1.47.0 (5-Feb-2023)
-> Discarding device blocks: done
-> Creating filesystem with 2072576 4k blocks and 518144 inodes
-> Filesystem UUID: 9b54f44f-ef55-4bd4-9e40-c8b775a616ac
-> Superblock backups stored on blocks:
->         32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
-> 
-> Allocating group tables: done
-> Writing inode tables: done
-> Creating journal (16384 blocks): done
-> Writing superblocks and filesystem accounting information: done
-> 
-> urezki@pc638:~/bin$ sudo mount /dev/dm-0 /mnt/
-> urezki@pc638:~/bin$ ls -al /mnt/
-> total 24
-> drwxr-xr-x  3 root root  4096 Oct 17 15:13 .
-> drwxr-xr-x 19 root root  4096 Jul 10 19:42 ..
-> drwx------  2 root root 16384 Oct 17 15:13 lost+found
-> urezki@pc638:~/bin$
-> 
-> After this change: mkfs completes; mount succeeds.
-> 
-> v1 -> v2:
->  - reflect a user space visible impact in the commit message.
-> 
-> Signed-off-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
-> ---
->  drivers/md/dm-ebs-target.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-> index 6abb31ca9662..b354e74a670e 100644
-> --- a/drivers/md/dm-ebs-target.c
-> +++ b/drivers/md/dm-ebs-target.c
-> @@ -103,7 +103,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
->  			} else {
->  				flush_dcache_page(bv->bv_page);
->  				memcpy(ba, pa, cur_len);
-> -				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
-> +				dm_bufio_mark_buffer_dirty(b);
->  			}
->  
->  			dm_bufio_release(b);
-> -- 
-> 2.47.3
-> 
-
+Sami
