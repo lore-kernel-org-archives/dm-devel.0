@@ -1,106 +1,193 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0B181E2834
-	for <dm-devel@lists.linux.dev>; Sun, 16 Nov 2025 14:20:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15D95275AFD
+	for <dm-devel@lists.linux.dev>; Mon, 17 Nov 2025 10:59:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763302825; cv=none; b=ZG8LJ9J+JXuDrxXh2ixE4RuMSiRULpyVZ36yJsrb59NK+g9hWPZH/5RA2AMUHgS4BXz8L+SdM4CBrams0A9J2Ubcdw2IOQX0ngmvc50Xm03M0hSdlQHwn94MrPGcBMmxKHhRWDyFkP9LuyGA/zTmiHBE8dVIB/BP8778s5KFP00=
+	t=1763377191; cv=none; b=iwphH0saBZjukK9EgEoIgtsPZS55Rm/JeODhWWKhgR/oayNrNkmR6lSCBkbaXACy5s0Djavjga4ujKJWcgJ6D9rpXlU7IJnuowbCEGeD71VRC8TZBGHp7DtHTkfl9O8B5atpHKIoh2WZl6ut8TW3dVoBYYWWNTczfZ2UPqUDRYI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763302825; c=relaxed/simple;
-	bh=cSuH7JVctiky67bgUSIjWU0qNTRA0wXoD4/pDvq5bmM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BK1qSehVrFgCaTazex7Y2tKOLTUsro49wxl/19Qy35VDaMjJIbdr7m9Qy44hWi89LTa09SR8Lx0O5P9PdJIXWrdTfdVTdeaV5ROvSaQwTnZck3iGrtzQQigybhVZlQqzcYLTYIMzsWelSivLXClk0Eb2mdj07n9qJc6jKnZsuXA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PFEgeOZX; arc=none smtp.client-ip=209.85.128.46
+	s=arc-20240116; t=1763377191; c=relaxed/simple;
+	bh=rU8uVYLcF2AhmiLNNzi2LEgzFWs3egZ8KWbc8nmZbuM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=IGqE2vXsSE/VS9KifIQk81O1bURW+rkdMJPCnNDfFavp/dQ/evyL/29wKRQnIWFCfiYwBH/73J0MwGKit59YPjmZ1nPl4wLziweb48gFaqvGIyFycYoqwUkKXdqFgHq9AVX5d9iFGcI1pQZ//zwInITZ0Hmp680cwsyUFBatBh8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=G0TmuFd/; arc=none smtp.client-ip=209.85.167.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PFEgeOZX"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-47797676c62so563915e9.1
-        for <dm-devel@lists.linux.dev>; Sun, 16 Nov 2025 06:20:23 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="G0TmuFd/"
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-591c9934e0cso5673144e87.0
+        for <dm-devel@lists.linux.dev>; Mon, 17 Nov 2025 02:59:49 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1763302822; x=1763907622; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1763377188; x=1763981988; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=muAb0DqJ6rA75Km0hljunPWDTyH5qd+hTTZJ15zgiG4=;
-        b=PFEgeOZXnmo7/N19CHZg536RIGWKCPAy6gMHwhG8GJeUwZs73eneDvgpAcieqD6XLB
-         Qm6zfOK1Ddtz4BnfkrwG1zBiBMI3rpH4dyCkp2CTXMSk8OtqFOytozl/wLzu7DjumpkX
-         daS5nrIgG6dmaZT01vcYiPsSJu7z5AwKMYkXleweN2g8GtdOB5pCSn8CTSD2bE+X5Bjf
-         ICZT4kKd5F5hkZFHi2pN3BP/vnrPOdtVxLgam4VhEbByYzSRsotZbTbKeXV+wLFxfWPR
-         AMlF8KJWItCYJL4tcy4MMaavEI/9FibSMDaS9A/ELHlZI3YF64CtW4P0roO32QxUd9NZ
-         XrNA==
+        bh=5NVhDovZUT94TwG8yM18Fjy7iq+ALMqR310W9PkiJtA=;
+        b=G0TmuFd/5QhNKEA53I3uZdsgvtoVj6rtNkCs+FGlrHIMdkWg9/laZUc7uzaeXnJxgB
+         0ZWtZwyXyld3LkNuBDRUltyakcGPIfi18DQO0kVFodDYY1XwGVy+734KJyy+OCmqxTNM
+         f0O/+8+dpSYrBKqjni3gfJEjtTpx/yVNwUVdnfkbdo9p3IqfA4EsXd/Gecm4r7Clu1HZ
+         T+Gfv9P9L3AeFyhsszPffSm9Fglkz3KwQBZyhW8YRM+pYSUqqOZRWXaJ6TdMMwUJszVy
+         nmVGWRKKRP1KqYTxABOYD1zaB6CMIKCiC/UWlZqRQO9tBwTDnEw1k/YD03/P8CkjTNnB
+         5MAg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763302822; x=1763907622;
+        d=1e100.net; s=20230601; t=1763377188; x=1763981988;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=muAb0DqJ6rA75Km0hljunPWDTyH5qd+hTTZJ15zgiG4=;
-        b=pd3bW8a0ZFTgFHN4HUljy56a6NyAWYmiO8BY+zNobdlfea9FAINSJ+1Djs0F5QUW3i
-         W7CJMH6RocNR0T0lTIkQXXC+yxs25VRFPm6Ie+T5osW01ETC8V9DPHFmpYdN5lDlTK2y
-         MnTdFrhPi7so64OfjEvL7V2m+imSNaOELZ9aOJAh6KOaeHMQlzSP0bGP6/r5BukeNXZk
-         PBIoyKFbPvQg6k3B0kfHxVP6wEyqbqBpStJmoMZvh328pYXGmUpFS3ybAoEwsOXZQvfN
-         rsWuyrP/1jM7X2dBMjXXhCyFY4qpXbiTzNNdd9s0Evo6pduNVPdfBm+EgG+9qimPH3uw
-         QPxg==
-X-Forwarded-Encrypted: i=1; AJvYcCWCHqgnSTg4jzIW+MM0159HTP7234RRcTieR8+VCMo3IfFE3hMu1ubDYYvqbxRjmkaVz6HFxhE3zg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwvNpAuWPuy7y7UgcJFyDk3DljvTbWf4wn+hNNE9ELTOecLg16h
-	PTJQBQKwHFHhjR9nPrkhH2aEf5TRsGLRJe4gM0x0FUPW6JenLRanD5c=
-X-Gm-Gg: ASbGncsqGUEsjoTfLrOrCpg8xL5y2ZfAys9RDMNvm0m/VrVU1GqtkyQ8eH4/J7NGgU0
-	bqNpFwGzYkojtktkM1+J4Y6XWG/X86fLwOoTTywrjrlctA8RfGiufAcl3HgC3gM1RGZqTWJ2MaT
-	1xdydcAik38CPv+5XWVxnYV8OWkVjWDv0cw7oVHQpsAE63W3gRW626X/Er0TD80QqBi1Ol7FX9E
-	Q8LjvwF8qqHXXOw0fxm5y7SgWRBCWw10V5XFovzlp1BuRdl/1leMAhATjMEKEKtTLTsTZJhhqeO
-	yH0QprsIzq4hyQwE3sSvF6QwpkJhGSHW2tz6M4AR9jZEEF+5LGWMOBtHBOdo0g5g47PnmFDVCFm
-	4Jn0Dnz7NceEXjBRjCVMKWow/iBVWVndYJbYBwD2jaStaQw/bHmoiDUaupXDAc2TKq6won2V/OX
-	I8dTgWF70FBrdKJc0rzTp8lMPR6OyGj02PT8KJQP1fPtOEyN9o2brBxIouZ/8=
-X-Google-Smtp-Source: AGHT+IHcBSVOtDeb0aGTZ88/4IY8Tr8xmjZmsf1s8vVCODTxHZr6FFXTwF3tLt9keotk+tsXMW6e2g==
-X-Received: by 2002:a05:6000:2884:b0:42b:13cb:41bf with SMTP id ffacd0b85a97d-42b5a9a33ebmr4500162f8f.9.1763302821710;
-        Sun, 16 Nov 2025 06:20:21 -0800 (PST)
-Received: from localhost (39.red-80-39-34.staticip.rima-tde.net. [80.39.34.39])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-42b53f0b622sm20603997f8f.29.2025.11.16.06.20.21
+        bh=5NVhDovZUT94TwG8yM18Fjy7iq+ALMqR310W9PkiJtA=;
+        b=o9ogPOSl3oOB83rcOYD1+6sjjIomgSOW7GOFafcB7ji0mhcQHbJVjZSl4ruk1Qq2p5
+         000/XTOmdtN8Wj7nxg8/4UpzkkXpeDK7LexLkC+q/j1SbvS+7ggXE430sjWFaTfuBXwg
+         LILLX6KtN6WoaVHPOCZuz3iG5kt1ytWrRWTX/PfmiJ3Cznx/wOx/6AXMqSq9DgyZGekf
+         20NF9Ri1dlLwbntGzpckOFKl/YNdZVesqZxbA/lRL9R9Ng+w83AbWGWZhSJV3Ug17C5W
+         5wi74SOSh0h5juH3hZ8Mboze/yyWOEIXMGvSo1gervLFkR4wO728k6xe1H+szdT/KKjr
+         /mzg==
+X-Forwarded-Encrypted: i=1; AJvYcCVJFQZAzRU3snNXuyM/tesP+43mHpZZse6hKN3MHJgmjbuCPlOeQT/JELYSiYcctqp6z33WhJ9hOQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx5lDDTl65Sw5JzPqXDTAYXI4ZpPwA1RcOF37KXZ2xolQkObx5r
+	W8uy/xD4yBr3IrB1ofbAu5QI56WfllnQCosf3DpkizCbrJtsDLJJKsf3
+X-Gm-Gg: ASbGncsLA+n3YaYvhbDwuGcaSQHyryKr5bbzbemluYXdDzJbjsirpJlDKh1/GH+aZX9
+	YlrcSU6xdmqaAfQpPwehNHvWbPveqEYIcHdwMSovCyBL4jL3B1AX0bI5HEYKd3QV0IsILigKRKu
+	HVMQjeH+ovyhf/3zTXR5W9EQMxDK9Y+zxQNsPpPieX4ImefsDe+S9vEDpSU9hrfsmegSZhujC9L
+	9Jcb/3+KT1j7+9QbZS2KJdmxW5hVnDZgJYFpKTxRHf2wZXCvluNtts5ltWj2VbOgvsLmMvBhUZ9
+	iSiMLm6ysH1EjX6jS3S9OMu1Zfm1c55+QVNCC7IZM8+Mr/pzXWOBeSW3+jEX1LND2TQ1ElB5q24
+	XdhfiGvujSrtW5fhp/V5XvjAPWUzfj1ylg+uwRfbkA7ZU+A2Wyr1toUvX3ZSuOzrfyuKvdA==
+X-Google-Smtp-Source: AGHT+IGarQgcheZEM1/QGJfcDisek79ClQ64kz+uPazDh9Gj4B7KdpfexapttsvBES1Aydqy9ysOyA==
+X-Received: by 2002:a05:6512:ad3:b0:594:3570:3572 with SMTP id 2adb3069b0e04-595841985demr3155242e87.1.1763377187823;
+        Mon, 17 Nov 2025 02:59:47 -0800 (PST)
+Received: from localhost.localdomain ([2001:9b1:d5a0:a500::24b])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5958040530fsm3135965e87.75.2025.11.17.02.59.46
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 16 Nov 2025 06:20:21 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: identify more Storwize models
-Date: Sun, 16 Nov 2025 15:20:19 +0100
-Message-ID: <20251116142020.346811-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.51.1
+        Mon, 17 Nov 2025 02:59:47 -0800 (PST)
+From: "Uladzislau Rezki (Sony)" <urezki@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	DMML <dm-devel@lists.linux.dev>
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Mike Snitzer <snitzer@redhat.com>,
+	Christoph Hellwig <hch@lst.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Uladzislau Rezki <urezki@gmail.com>
+Subject: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial write
+Date: Mon, 17 Nov 2025 11:59:45 +0100
+Message-ID: <20251117105945.10179-1-urezki@gmail.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-multipath is also supported by V3500 and V3700
+When performing a read-modify-write(RMW) operation, any modification
+to a buffered block must cause the entire buffer to be marked dirty.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Marking only a subrange as dirty is incorrect because the underlying
+device block size(ubs) defines the minimum read/write granularity. A
+lower device can perform I/O only on regions which are fully aligned
+and sized to ubs.
+
+This change ensures that write-back operations always occur in full
+ubs-sized chunks, matching the intended emulation semantics of the
+EBS target.
+
+As for user space visible impact, submitting sub-ubs and misaligned
+I/O for devices which are tuned to ubs sizes only, will reject such
+requests, therefore it can lead to losing data. Example:
+
+1) Create a 8K nvme device in qemu by adding
+
+-device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
+
+2) Setup dm-ebs to emulate 512B to 8K mapping
+
+urezki@pc638:~/bin$ cat dmsetup.sh
+
+lower=/dev/nvme0n1
+len=$(blockdev --getsz "$lower")
+
+echo "0 $len ebs $lower 0 1 16" | dmsetup create nvme-8k
+urezki@pc638:~/bin$
+
+offset 0, ebs=1 and ubs=16(in sectors).
+
+3) Create an ext4 filesystem(default 4K block size)
+
+urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
+mke2fs 1.47.0 (5-Feb-2023)
+Discarding device blocks: done
+Creating filesystem with 2072576 4k blocks and 518144 inodes
+Filesystem UUID: bd0b6ca6-0506-4e31-86da-8d22c9d50b63
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: mkfs.ext4: Input/output error while writing out and closing file system
+urezki@pc638:~/bin$ dmesg
+
+<snip>
+[ 1618.875449] buffer_io_error: 1028 callbacks suppressed
+[ 1618.875456] Buffer I/O error on dev dm-0, logical block 0, lost async page write
+[ 1618.875527] Buffer I/O error on dev dm-0, logical block 1, lost async page write
+[ 1618.875602] Buffer I/O error on dev dm-0, logical block 2, lost async page write
+[ 1618.875620] Buffer I/O error on dev dm-0, logical block 3, lost async page write
+[ 1618.875639] Buffer I/O error on dev dm-0, logical block 4, lost async page write
+[ 1618.894316] Buffer I/O error on dev dm-0, logical block 5, lost async page write
+[ 1618.894358] Buffer I/O error on dev dm-0, logical block 6, lost async page write
+[ 1618.894380] Buffer I/O error on dev dm-0, logical block 7, lost async page write
+[ 1618.894405] Buffer I/O error on dev dm-0, logical block 8, lost async page write
+[ 1618.894427] Buffer I/O error on dev dm-0, logical block 9, lost async page write
+<snip>
+
+Many I/O errors because the lower 8K device rejects sub-ubs/misaligned
+requests.
+
+with a patch:
+
+urezki@pc638:~/bin$ sudo mkfs.ext4 -F /dev/dm-0
+mke2fs 1.47.0 (5-Feb-2023)
+Discarding device blocks: done
+Creating filesystem with 2072576 4k blocks and 518144 inodes
+Filesystem UUID: 9b54f44f-ef55-4bd4-9e40-c8b775a616ac
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632
+
+Allocating group tables: done
+Writing inode tables: done
+Creating journal (16384 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+urezki@pc638:~/bin$ sudo mount /dev/dm-0 /mnt/
+urezki@pc638:~/bin$ ls -al /mnt/
+total 24
+drwxr-xr-x  3 root root  4096 Oct 17 15:13 .
+drwxr-xr-x 19 root root  4096 Jul 10 19:42 ..
+drwx------  2 root root 16384 Oct 17 15:13 lost+found
+urezki@pc638:~/bin$
+
+After this change: mkfs completes; mount succeeds.
+
+v1 -> v2:
+ - reflect a user space visible impact in the commit message.
+
+Signed-off-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
+ drivers/md/dm-ebs-target.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 92523042..23187a83 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -682,7 +682,7 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 	},
- 	{
--		// Storwize V5000/V7000 lines / SAN Volume Controller (SVC)
-+		// Storwize V3x00/V5000/V7000 lines / SAN Volume Controller (SVC)
- 		// Flex System V7000 / FlashSystem V840/V9000 and 5x00/7x00/9x00/Cx00
- 		.vendor        = "IBM",
- 		.product       = "^2145",
+diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+index 6abb31ca9662..b354e74a670e 100644
+--- a/drivers/md/dm-ebs-target.c
++++ b/drivers/md/dm-ebs-target.c
+@@ -103,7 +103,7 @@ static int __ebs_rw_bvec(struct ebs_c *ec, enum req_op op, struct bio_vec *bv,
+ 			} else {
+ 				flush_dcache_page(bv->bv_page);
+ 				memcpy(ba, pa, cur_len);
+-				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
++				dm_bufio_mark_buffer_dirty(b);
+ 			}
+ 
+ 			dm_bufio_release(b);
 -- 
-2.51.1
+2.47.3
 
