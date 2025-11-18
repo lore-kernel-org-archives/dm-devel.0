@@ -1,157 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D1C9834B434
-	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 11:16:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9568A2D0C89
+	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 11:39:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763464563; cv=none; b=ZIkEn38uaUKp+waQ2pepIYQoq2poZ1DC9MATO8XvjUVKrQ33WfZ2QSzXjSeJ44KHxCpiwTHl+cx6nliIsj4E5q2vBRt8f3gGjv0F8SV9jU669t+kcdXuyLirdS/5Qn85sOxMBFZZMD/o00uwFCoFNLA0o9o28VYnIHbkGT3z0aQ=
+	t=1763465951; cv=none; b=DiOnZeYWmC16IXSHVZiIL6C0Vzdi3V0Dt2FNk41TrnqgqBPiSWbasuXVhN58LbJm5Sbgp95Ja2yJYy/yxt1ydKja9HVfR7mOAimhFw/Rw8p7ojahbmKl2cFGSsdI8eXpqApt/YjhcIKwD/DG4g9pHvaVU7YadOQzLwZINTOD5eg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763464563; c=relaxed/simple;
-	bh=5yLnME0LlbgxxLujpU1BzaM+qzNRY2Kfdm8E4hEjHRE=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=drxR0YnALA1Gx0v2LwuXfMuKWNbOdJUI8rJENLEBAD95WlPSbQ8GLwLlumMoHM6sncWbOZkgKJjzuA3mAFgfF3gJEzPK6mMPsCw9pZhucS+7yF+FKsY+JQaOl3SEknRGuKtULxCzTqEv3vVyHvPnRvKqxYqc5S9kYlJGerQQNGQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LQ/UH9pA; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1763465951; c=relaxed/simple;
+	bh=lstkbu9jeYEj+mqjxq9BNsch8aP/MpxnagJpphhbA7I=;
+	h=From:Date:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=GYOE6UDBUbsOhX5cVno2/kZsLV5Yboo1Nj2C1YByyw0ffYMb3TlvIJUt22r9V5zUpKqz9PN4oFYY/+yWMh4XDCHJP0scDEWuDcLsB53izRo3uTuXzpEgPtObjsTPVtmGFR0ucG7t1GW3Nju1SOVQ4tUpIQQgS7N6BsTlh2ljWqk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WKLKx1H5; arc=none smtp.client-ip=209.85.167.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LQ/UH9pA"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763464559;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=MR+YH+HNVAHAnkmrcw7HbRjwMTN/VN/Lnq3xbWZfDls=;
-	b=LQ/UH9pAj9EI5VVV0ubP0h+oF2QjaFRxGY4cUyc7uoqFWHG3ZwIGd2m6qQ8oRHHMOfa32F
-	XXav48bSwBr6gDNdNh4eq3BbYidGpWzEfLVZ9IyZD2M2+IGIWRcmEOD0piDy+1DTq+Xp/y
-	hd2H/mcaT+GItjtVtdoh0ErvywVmmck=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-184-E3b6YvQtPviisoWKiCb9Gw-1; Tue,
- 18 Nov 2025 06:15:55 -0500
-X-MC-Unique: E3b6YvQtPviisoWKiCb9Gw-1
-X-Mimecast-MFC-AGG-ID: E3b6YvQtPviisoWKiCb9Gw_1763464554
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6E8A5180035F;
-	Tue, 18 Nov 2025 11:15:54 +0000 (UTC)
-Received: from [10.44.32.60] (unknown [10.44.32.60])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 36D9318004A3;
-	Tue, 18 Nov 2025 11:15:50 +0000 (UTC)
-Date: Tue, 18 Nov 2025 12:15:43 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-cc: "Uladzislau Rezki (Sony)" <urezki@gmail.com>, 
-    Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>, 
-    Andrew Morton <akpm@linux-foundation.org>, 
-    Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, 
-    LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH] dm-bufio: align write boundary on
- bdev_logical_block_size
-In-Reply-To: <aRvvSvyG8AK9hiCX@redhat.com>
-Message-ID: <3c6ecb98-d574-9d75-a23c-fbdfa09428bf@redhat.com>
-References: <20251020123350.2671495-1-urezki@gmail.com> <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com> <aRvvSvyG8AK9hiCX@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WKLKx1H5"
+Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-594285c6509so5563807e87.0
+        for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 03:39:09 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1763465948; x=1764070748; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:date:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=rlTQClVvmrzgofylmc+Uoi7ksLdBMhV5f6NzAqw9ixI=;
+        b=WKLKx1H5UK/WdfHzdfKtT//7Q4kIaToCenYhwrTRgrV9o7jJslnKYvrwyYTeIHvw6m
+         iP2vemw9XwXZkqfO7OLKTlkYHkdzRefvFoK7rJ6WRwiV4AgrOWWKrsZKj8r3Zsrwx52C
+         6QduyS3+I5dNf+UOImY6+rdvBKG29TLQBHkXQh7h7owmZR+lHAyDOAREadAkySWKpZCg
+         gKtk0zToUk4S+RTnxsSnNj2qZXVYOz8fGGGmPyJ/ceqF3odNHYgNCSPVuqW7iIC+zZLB
+         7c4soZ9w5iNJjbB/JPvnL2ocxUa/+za1iG695ryBerQ1kFWxTJrvSSgcvTeiUQkLF/Qx
+         NowA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1763465948; x=1764070748;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:date:from:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=rlTQClVvmrzgofylmc+Uoi7ksLdBMhV5f6NzAqw9ixI=;
+        b=h1+kQgUF2aka9UFFJ3ujJ7gTABt5dCn+H2zUcSW+DQBnjJuAUcvuO+s10Rf8kz01Ok
+         8WSi4BlU/brtYJWJDgl85mHuXtB5mmvDrrgUvMYAkmZgLu5aOb902V9I7ImSfAlJlaJE
+         zokgWS0cTE749iiizIvtARFeNlTSaRKUb7/Tkcorur9MSUXOxnYe2v8Lvk7F7IlqhBDt
+         h70rFtmFHuy4EM8C5bSU1j/qgYSd/ytFT2S3xnwim6a8ZqhrN/ftRuZPIIa/vE91zj9J
+         lvoN4g6nP24ebYUhnpIlg0w04PrvyJnHdTDdJ+yVMLqRpemM23K52bOIvv0pp4iZtfPG
+         vjoA==
+X-Forwarded-Encrypted: i=1; AJvYcCXlxQF8vUEYxKuQZUl5eiPMLpADyHuZlcMqeWp/oa2HfZeYqdkYFEBxxH9RBq3exSufKhh9LM+T5A==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzfWqHQxeG2wS3X8+Pks3oiTaPYkqNVBukDr76tt4/qg62MWAXa
+	foHU1S79CbkpEgiN8vQ7cq9d2aiyImDruxh2aM3Lt0zHLAqIM+EAAUPK
+X-Gm-Gg: ASbGncvQbJHSSC8U+zDzup7ZI5qIaMPVMTqFslxObjumHF8ek0tIy8Us16tFHTVnnI9
+	cZnBEmkFxb5/2gMkx+mwYX3FpmLxNqq6OC4FW80R0AVDkT4KTzf2L/ikArbwPEfi/hM6IaoLijn
+	yNclr1oH8bMR3+Zlov8psiT+vRST2rnproSGmR4zzpIb3FfAw6ydMoQPUgyA3+AeVk7KfenW3SM
+	lk4JuNn6Z80bJxsHvmkEtsbiPbyBzwWDqTMqVyZZtKj7yZsotz5mYnkqTkUm/zptDAVSF+s6Ihs
+	BjxSIwWHikaIgOG1ngwfSBtcvQ88dGesPr1QQtAuj/FFbLp6VFSSZg5B5X79mhHf+tybN8Op/XK
+	791nIzMk/L8gljE0sPx+0mGlsGoIFqWCPpmnyi1dwKrdZz7cF5mWt8muiiQdx3/f0uTQhPfZLHH
+	qRUOfxhfhrtIezc3gSzwSRGOT4i399Kg==
+X-Google-Smtp-Source: AGHT+IEKGD7PXMBcM20Woz6ev9FO4W8dNz70vLMNsY0OMuwWIAFzfu3DdhtYGT13nMWnijRMcLW3JQ==
+X-Received: by 2002:a05:6512:39cd:b0:594:4b55:d2dc with SMTP id 2adb3069b0e04-59584217be0mr5431052e87.47.1763465947450;
+        Tue, 18 Nov 2025 03:39:07 -0800 (PST)
+Received: from pc636 (host-90-233-212-127.mobileonline.telia.com. [90.233.212.127])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-595804004b5sm3919144e87.64.2025.11.18.03.39.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 18 Nov 2025 03:39:06 -0800 (PST)
+From: Uladzislau Rezki <urezki@gmail.com>
+X-Google-Original-From: Uladzislau Rezki <urezki@pc636>
+Date: Tue, 18 Nov 2025 12:39:03 +0100
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Uladzislau Rezki (Sony)" <urezki@gmail.com>,
+	Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>,
+	LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial
+ write
+Message-ID: <aRxa1wPMsJwBubjx@pc636>
+References: <20251117105945.10179-1-urezki@gmail.com>
+ <fff990bc-6ff9-7b34-8e80-57078de40928@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <fff990bc-6ff9-7b34-8e80-57078de40928@redhat.com>
 
+Hello, Mikulas!
 
-
-On Mon, 17 Nov 2025, Benjamin Marzinski wrote:
-
-> On Mon, Oct 20, 2025 at 02:48:13PM +0200, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Mon, 20 Oct 2025, Uladzislau Rezki (Sony) wrote:
-> > 
-> > > When performing a read-modify-write(RMW) operation, any modification
-> > > to a buffered block must cause the entire buffer to be marked dirty.
-> > > 
-> > > Marking only a subrange as dirty is incorrect because the underlying
-> > > device block size(ubs) defines the minimum read/write granularity. A
-> > > lower device can perform I/O only on regions which are fully aligned
-> > > and sized to ubs.
-> > 
-> > Hi
-> > 
-> > I think it would be better to fix this in dm-bufio, so that other dm-bufio 
-> > users would also benefit from the fix.
+> Hi
 > 
-> This looks to me like it should accomplish the same thing as
-> Uladzislau's patch. But I think there could still be problems with other
-> dm-bufio users, for devices where the blocksize is larger than 4k.
-
-Yes, but Uladzislau said that this patch doesn't work for him. So, I 
-suspect that he has "logical_block_size" set incorrectly.
-
-Mikulas
-
-> In dm_bufio_client_create() I think we want to make sure that block_size
-> is a multiple of bdev_logical_block_size(bdev), instead of 512b.
-> Otherwise block_to_sector() can return sectors that are not addressable
-> on the device. Unfortunatley, I don't think all users of dm-bufio will
-> pass in block_sizes that are larger than 4k (uds_make_bufio() in
-> dm-vdp/indexer/io-factory.c for instance).
+> What is the logical_block_size of the underlying nvme device? - i.e. 
+> what's the content of this file 
+> /sys/block/nvme0n1/queue/logical_block_size in the virtual machine?
 > 
-> -Ben
-> 
-> > Please try this patch - does it fix it?
-> > 
-> > Mikulas
-> > 
-> > 
-> > 
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > There may be devices with logical block size larger than 4k. Fix
-> > dm-bufio, so that it will align I/O on logical block size. This commit
-> > fixes I/O errors on the dm-ebs target on the top of emulated nvme device
-> > with 8k logical block size created with qemu parameters:
-> > 
-> > -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> > 
-> > ---
-> >  drivers/md/dm-bufio.c |    9 +++++----
-> >  1 file changed, 5 insertions(+), 4 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-bufio.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-bufio.c	2025-10-13 21:42:47.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm-bufio.c	2025-10-20 14:40:32.000000000 +0200
-> > @@ -1374,7 +1374,7 @@ static void submit_io(struct dm_buffer *
-> >  {
-> >  	unsigned int n_sectors;
-> >  	sector_t sector;
-> > -	unsigned int offset, end;
-> > +	unsigned int offset, end, align;
-> >  
-> >  	b->end_io = end_io;
-> >  
-> > @@ -1388,9 +1388,10 @@ static void submit_io(struct dm_buffer *
-> >  			b->c->write_callback(b);
-> >  		offset = b->write_start;
-> >  		end = b->write_end;
-> > -		offset &= -DM_BUFIO_WRITE_ALIGN;
-> > -		end += DM_BUFIO_WRITE_ALIGN - 1;
-> > -		end &= -DM_BUFIO_WRITE_ALIGN;
-> > +		align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev));
-> > +		offset &= -align;
-> > +		end += align - 1;
-> > +		end &= -align;
-> >  		if (unlikely(end > b->c->block_size))
-> >  			end = b->c->block_size;
-> >  
-> > 
-> 
+It is 512. Whereas a physical is bigger, i.e. my device can not perform
+I/O by 512 granularity.
 
+As for virtual machine, i just simulated the problem so people can set
+it up and check. The commit message describes how it can be reproduced.
+
+The dm-ebs target which i setup does ebs to ubs conversion, so the NVME
+driver gets BIOs are in size and aligned to ubs size. The ubs size
+corresponds to the underlying physical device I/O size.
+
+So your patch does not work if logical < physical. Therefore it does
+not help my project.
+
+--
+Uladzislau Rezki
