@@ -1,156 +1,73 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mail-m16.yeah.net (mail-m16.yeah.net [1.95.21.14])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C8DB2FBDEE
-	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 14:15:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D48B9366561
+	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 15:46:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=1.95.21.14
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763475358; cv=none; b=b1ZdGIy+YuST89uS4cx/emWI04omJH9enc8NBIo+mdFOHtG6abJUbDBbKkNaiArvvu5KlubVOMJH3qh+eShNKmiSxPijFHRhGWFCVOdw2e6PKB5Fa+6WGAdKSIGbFx1MVZa4ubDitBMotF+5mGqddE3cp6NxqFNoyy5zI94r6AM=
+	t=1763480780; cv=none; b=tdRWwI9BSA/U99841PUJLhBTUMH5BdozYFlJ2mwhHWBBidNKNNn/EMrGph+99ZWqgqGW0Crt5DEgvyCmXHkBXMJck55Hkt2RPFIGzVKcfkUErqvgo+T0rxuQUjedFJGBO4uX9AEJ6RTo98lAgOH06Dg1X6gcRLU6M+44/1qUA74=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763475358; c=relaxed/simple;
-	bh=3VanFUlwtJCYOKC06q6D9TNpy7f+Dce6HXVOIAC3gxA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=icSKA1dTryu9oD+2001bd98scI5C+AWcyi/X6zFhUETQltqO870PH7UuNk9kSC2mAubCRX0Ds8OXJ3fFuraUrD3BgbYfWk5vk3KQElGkE9MiZZbjIV/1kWW/pxFiMU7CT9jtjTz5/sPIzBqTaNR31Rx4hEHZvOvcrmlb8Z12k7k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=P4zQceOU; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1763480780; c=relaxed/simple;
+	bh=3Th9M0sKkO+y/7+L1BxYuFjBZmhAeLks+ySTS/k9WU8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=D/IFAGSKat10CHiCQO0/+Pd8egcKb2fg2TWjSnn9GMqOsOgnU+VpnCuahg7luqG3EKBZcNMNFUcu+QboJn5rEwN1G2XHRQSTx537J+GsYSOb8FJ9irES4tDEAhDE1NtzGtzkiKo1eIEvoofJDJCF7mlcVl5tdb/2KL4b4/YMoMA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yeah.net; spf=pass smtp.mailfrom=yeah.net; dkim=pass (1024-bit key) header.d=yeah.net header.i=@yeah.net header.b=adGNfqTC; arc=none smtp.client-ip=1.95.21.14
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yeah.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yeah.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="P4zQceOU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763475356;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=FLeb0aSO6ShBdk/++whJBy+ffTiwQTO0U5adLdiKgNQ=;
-	b=P4zQceOUg8X9KvijVolZwULoEqhVOEp5CG0JXIepIGLqyeLoDi9yUBrswcHaZOOPcMTacf
-	X18H8+qoU6diJoH/JAorollSLTeTGz97Om7UmA6QII4O6wSo44WlXEeBRKnd0IlYcjobkd
-	YvGcf1vpbp87XOEONVV9OLKhk62SsY0=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-642-MOQUcxvwOTqAxvQNmARXgA-1; Tue,
- 18 Nov 2025 09:15:52 -0500
-X-MC-Unique: MOQUcxvwOTqAxvQNmARXgA-1
-X-Mimecast-MFC-AGG-ID: MOQUcxvwOTqAxvQNmARXgA_1763475351
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C3A71956054;
-	Tue, 18 Nov 2025 14:15:51 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0A0AE3003754;
-	Tue, 18 Nov 2025 14:15:49 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5AIEFmT5888889
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 18 Nov 2025 09:15:48 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5AIEFmhJ888888;
-	Tue, 18 Nov 2025 09:15:48 -0500
-Date: Tue, 18 Nov 2025 09:15:48 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Uladzislau Rezki <urezki@gmail.com>, Alasdair Kergon <agk@redhat.com>,
-        DMML <dm-devel@lists.linux.dev>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>,
-        LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial
- write
-Message-ID: <aRx_lCimJco5BPKA@redhat.com>
-References: <20251117105945.10179-1-urezki@gmail.com>
- <fff990bc-6ff9-7b34-8e80-57078de40928@redhat.com>
- <aRxa1wPMsJwBubjx@pc636>
- <73556fc8-5fbf-37cb-26b9-7cdb88f69720@redhat.com>
+	dkim=pass (1024-bit key) header.d=yeah.net header.i=@yeah.net header.b="adGNfqTC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yeah.net;
+	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=4V
+	caZJrlXgCHaMN5GaIYyAIe1nIjom38ExYw09p+y/o=; b=adGNfqTC8kJLrMuRgL
+	C9qw1diDAp6PuArp3ob4N0WgSl82SDN+N9EL8Ki7bj1x6z64NvfMh5kEAdKzfsT2
+	VmJzkGPXTQA8gRd2ylbCDHWEqiwoKhJ167Lb2Ti7UZvB7L4lF3mJIcRN6AD/ywRm
+	4s5/75q8Txg5PkkaO3M3Ewd54=
+Received: from ubuntu.. (unknown [])
+	by gzsmtp3 (Coremail) with SMTP id M88vCgDXPyqElBxpDGk7Ag--.60695S2;
+	Tue, 18 Nov 2025 23:45:44 +0800 (CST)
+From: Aiden Ma <jiaheng_ma@yeah.net>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	Aiden Ma <jiaheng_ma@yeah.net>
+Subject: [PATCH] dm-verity: correct the name of verify wq
+Date: Tue, 18 Nov 2025 23:45:06 +0800
+Message-ID: <20251118154506.17647-1-jiaheng_ma@yeah.net>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <73556fc8-5fbf-37cb-26b9-7cdb88f69720@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:M88vCgDXPyqElBxpDGk7Ag--.60695S2
+X-Coremail-Antispam: 1Uf129KBjvdXoW7Gr13try7GrWDAr43Cry5XFb_yoWfWFgEk3
+	98Z34xuFWDWry2va45Ar1fCFyIvr1kXFn7ZFZxtrWay39rZryfAryDWrn3WF9ruw4j9ryD
+	CFW8KryjkwnFgjkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUvcSsGvfC2KfnxnUUI43ZEXa7IU8MqcUUUUUU==
+X-CM-SenderInfo: xmldxv5qjbzto61htxgoqh3/1tbiNAiwx2kclKiVJAAA3z
 
-On Tue, Nov 18, 2025 at 01:00:36PM +0100, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 18 Nov 2025, Uladzislau Rezki wrote:
-> 
-> > Hello, Mikulas!
-> > 
-> > > Hi
-> > > 
-> > > What is the logical_block_size of the underlying nvme device? - i.e. 
-> > > what's the content of this file 
-> > > /sys/block/nvme0n1/queue/logical_block_size in the virtual machine?
-> > > 
-> > It is 512. Whereas a physical is bigger, i.e. my device can not perform
-> > I/O by 512 granularity.
-> 
-> And what is physical block size? Is it 8192?
-> 
-> > As for virtual machine, i just simulated the problem so people can set
-> > it up and check. The commit message describes how it can be reproduced.
-> > 
-> > The dm-ebs target which i setup does ebs to ubs conversion, so the NVME
-> > driver gets BIOs are in size and aligned to ubs size. The ubs size
-> > corresponds to the underlying physical device I/O size.
-> > 
-> > So your patch does not work if logical < physical. Therefore it does
-> > not help my project.
-> 
-> Logical block size is the granularity at which the device can accept I/O. 
-> Physical block size is the block size on the medium.
-> 
-> If logical < physical, then the device performs read-modify-write cycle 
-> when writing blocks that are not aligned at physical block size.
-> 
-> So, your setup is broken, because it advertises logical block size 512, 
-> but it is not able to perform I/O at this granularity.
+The name of workqueue verify_wq should be "kverifyd", not "kverityd".
 
-This emulated nvme device is broken, but the question still remains,
-"should dm-ebs enfore writing at the alignment that was specified in its
-table line?" If you don't specify a ubs in the table line, it defaults
-to the logical block size. So, if you do specify a ubs, it stands to
-reason that you want IO at that alignment, instead of the logical-block
-size (perhaps because your device is broken, and advertises the wrong
-logical block size).  
+Signed-off-by: Aiden Ma <jiaheng_ma@yeah.net>
+---
+ drivers/md/dm-verity-target.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-So, I think that Uladzislau's patch makes sense, in addition to your
-own.
-
--Ben
- 
-> There is this piece of code in include/linux/blkdev.h:
-> #ifdef CONFIG_TRANSPARENT_HUGEPAGE
-> /*
->  * We should strive for 1 << (PAGE_SHIFT + MAX_PAGECACHE_ORDER)
->  * however we constrain this to what we can validate and test.
->  */
-> #define BLK_MAX_BLOCK_SIZE      SZ_64K
-> #else
-> #define BLK_MAX_BLOCK_SIZE      PAGE_SIZE
-> #endif
-> 
-> /* blk_validate_limits() validates bsize, so drivers don't usually need to */
-> static inline int blk_validate_block_size(unsigned long bsize)
-> {
->         if (bsize < 512 || bsize > BLK_MAX_BLOCK_SIZE || !is_power_of_2(bsize))
->                 return -EINVAL;
-> 
->         return 0;
-> }
-> 
-> What happens when you define CONFIG_TRANSPARENT_HUGEPAGE in your .config? 
-> Does it fix the problem with small logical block size for you?
-> 
-> Mikulas
-> 
-> > --
-> > Uladzislau Rezki
-> > 
-> 
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 66a00a8ccb39..e8f1300f5f25 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1549,7 +1549,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	 * will fall-back to using it for error handling (or if the bufio cache
+ 	 * doesn't have required hashes).
+ 	 */
+-	v->verify_wq = alloc_workqueue("kverityd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
++	v->verify_wq = alloc_workqueue("kverifyd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+ 	if (!v->verify_wq) {
+ 		ti->error = "Cannot allocate workqueue";
+ 		r = -ENOMEM;
+-- 
+2.43.0
 
