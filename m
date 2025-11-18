@@ -1,164 +1,119 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26EB31A0B15
-	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 17:46:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55F2D332ED9
+	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 18:03:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763487973; cv=none; b=HUx5rggQlHSwKx7efeG31Xiq2ucbzfXGjKXFcYHpHueVydFcrHvjHCaVuGnijq0MQer9r5jDUhAn25ya6dA3UtLzkuIsXYWpjRZpJ0YmYP5skJudm7UaDak/Eev+8ZiraDPFolKkEcAPlKSry63y6JfF7i3M8bESA1xzTQhmpDk=
+	t=1763489007; cv=none; b=HvVAA2ZLPYwCLEFyNkcBNniGgm6Gkdq70hRsGNgcgII8d4+XT2Ji+5gOtBn/aTpm6DZHtOULA5Eeo4Kbqyt/08OnsC3r3lFLmpaUZASpmcecL8FW0Hwb0lXpAX1nMLz9Vw5hvWAHjXUTBkcpYVRhp+SXFyxcUI3kQ2gGdHlayuE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763487973; c=relaxed/simple;
-	bh=Uq5tdJmE6Xub5JGG6Pj2iyTFU40wozpXyX01LkAU6oA=;
+	s=arc-20240116; t=1763489007; c=relaxed/simple;
+	bh=C4K1EuZ4y/hjarUGvfsykH0gCtQnE6wVx9ZAPj8Ch/8=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=XiZl9Z2FziMedPqfYRQRlU8PjlB30oQRkGB9rzG12dXFdNU77Vn2pPy2vyW15op01RZHdoMSJ7cvUtVrdtO68q71vD6iuohPAWv7gokRV9tG9S/F2B5peEAmBMtq3T8jXWWfoWTwws39ywb8d4a0G3c2u67+NAFQyMJ7Xr0pmpw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=IIN0vAVy; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=eVR9kv5gaIe6F3TqIpFgLHmULwApM+hoNSzeIM3aSkTjZ3OUENexZRkySDtRCx/h9xSgmxsf7YWFZa5uSXwwRiYAtuHTlMA97qhgia9fwNOWjjIOgI7NsGcazoA/+L+C5viEhQPUMTBR19Nipztl4moUZO/HhbhlmgPhbzlmlis=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hXKI+hDa; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="IIN0vAVy"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hXKI+hDa"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763487969;
+	s=mimecast20190719; t=1763489004;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=G8901ol403sdgwix9HvW+bPtTpZJsvQHfZY+Qf5mb54=;
-	b=IIN0vAVy9ZBdUvq8x1IWwHwRQPd+VD2UiLsoqFpWv7K386wNGGHq4106g3TaTMiAaH9V77
-	kqZnxhFBR+84xshsOyCXb3Mx5rtIMgfFbBSEpfiMtPDQ8dMoaQ4hijrefwqAoqyFayc9Lo
-	8ddb469hOOvNlYEy/8vf2sE/SHnRDeE=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=ZHOTMcsmyPt3trlLaZ8uRRSxzJpc5fFVJQlVHVyHh/8=;
+	b=hXKI+hDaMMPLUc5kWumuMnQsqcmuhrOXSdNxKZlFpPhG2iD1rc2m/hdUAZyVO65HPgdAXU
+	dFAc71lyXEESeu5PO21D8EbqtI6IsVd6mjlEgD5TfEaZEyu9BRuLc+/YhNa45x86vju9fe
+	re1IaA1ELmZAafbf47EeygiNsk1xcYI=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-540-2Pjm58uMOa-TN9bmlTAX6A-1; Tue,
- 18 Nov 2025 12:46:08 -0500
-X-MC-Unique: 2Pjm58uMOa-TN9bmlTAX6A-1
-X-Mimecast-MFC-AGG-ID: 2Pjm58uMOa-TN9bmlTAX6A_1763487967
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-163-dHTtsguIPbGqTXK78mOHyw-1; Tue,
+ 18 Nov 2025 13:03:20 -0500
+X-MC-Unique: dHTtsguIPbGqTXK78mOHyw-1
+X-Mimecast-MFC-AGG-ID: dHTtsguIPbGqTXK78mOHyw_1763488999
 Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5230F1800372;
-	Tue, 18 Nov 2025 17:46:07 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EC234195609D;
+	Tue, 18 Nov 2025 18:03:18 +0000 (UTC)
 Received: from [10.44.32.60] (unknown [10.44.32.60])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 75DF3180087C;
-	Tue, 18 Nov 2025 17:46:04 +0000 (UTC)
-Date: Tue, 18 Nov 2025 18:45:55 +0100 (CET)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BDD321800878;
+	Tue, 18 Nov 2025 18:03:16 +0000 (UTC)
+Date: Tue, 18 Nov 2025 19:03:12 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-cc: "Uladzislau Rezki (Sony)" <urezki@gmail.com>, 
-    Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>, 
-    Andrew Morton <akpm@linux-foundation.org>, 
-    Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>, 
-    LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [PATCH] dm-bufio: align write boundary on
- bdev_logical_block_size
-In-Reply-To: <aRvvSvyG8AK9hiCX@redhat.com>
-Message-ID: <faafd90d-e41c-dcfc-cc25-7f29ff4f958c@redhat.com>
-References: <20251020123350.2671495-1-urezki@gmail.com> <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com> <aRvvSvyG8AK9hiCX@redhat.com>
+To: Sami Tolvanen <samitolvanen@google.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    dm-devel@lists.linux.dev, Guangwu Zhang <guazhang@redhat.com>, 
+    Ondrej Kozina <okozina@redhat.com>, Milan Broz <gmazyland@gmail.com>
+Subject: Re: [RFC PATCH] dm-verity: disable recursive forward error
+ correction
+In-Reply-To: <CABCJKuf=8svp8WbE7SOKJhFaWh_8iCXYc41tgu_1po7_AVz0qQ@mail.gmail.com>
+Message-ID: <5ee412ad-799e-a570-5921-940661449d80@redhat.com>
+References: <75ef45cb-4c00-4b27-87cd-3c2914f5dbcc@redhat.com> <CABCJKuf=8svp8WbE7SOKJhFaWh_8iCXYc41tgu_1po7_AVz0qQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 7bnyboeFGgafuCELp_LYlTiOixJ6bEtuItLAfl3p-N0_1763488999
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="-1463811712-1303078282-1763488998=:1055457"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-1303078282-1763488998=:1055457
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
 
 
-On Mon, 17 Nov 2025, Benjamin Marzinski wrote:
+On Mon, 17 Nov 2025, Sami Tolvanen wrote:
 
-> On Mon, Oct 20, 2025 at 02:48:13PM +0200, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Mon, 20 Oct 2025, Uladzislau Rezki (Sony) wrote:
-> > 
-> > > When performing a read-modify-write(RMW) operation, any modification
-> > > to a buffered block must cause the entire buffer to be marked dirty.
-> > > 
-> > > Marking only a subrange as dirty is incorrect because the underlying
-> > > device block size(ubs) defines the minimum read/write granularity. A
-> > > lower device can perform I/O only on regions which are fully aligned
-> > > and sized to ubs.
-> > 
+> Hi Mikulas,
+> 
+> On Fri, Nov 14, 2025 at 7:54 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >
 > > Hi
-> > 
-> > I think it would be better to fix this in dm-bufio, so that other dm-bufio 
-> > users would also benefit from the fix.
+> >
+> > What do you think about this patch?
+> >
+> > There are two problems with the recursive correction:
+> >
+> > 1. It may cause denial-of-service. In fec_read_bufs, there is a loop that
+> > has 253 iterations. For each iteration, we may call verity_hash_for_block
+> > recursively. There is a limit of 4 nested recursions - that means that
+> > there may be at most 253^4 (4 billion) iterations. Red Hat QE team
+> > actually created an image that that pushes dm-verity to this limit - and
+> > this image just makes the udev-worker process get stuck in the 'D' state.
+> >
+> > 2. It probably doesn't work. In fec_read_bufs we store data into the
+> > variable "fio->bufs", but fio bufs is shared between recursive
+> > invocations, if "verity_hash_for_block" invoked correction recursively, it
+> > would overwrite partially filled fio->bufs.
+> >
+> > So, I'm suggesting to remove recursive correction at all. This patch
+> > passed the cryptsetup testsuite. Does it pass your tests too?
+> >
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > Reported-by: Guangwu Zhang <guazhang@redhat.com>
 > 
-> This looks to me like it should accomplish the same thing as
-> Uladzislau's patch. But I think there could still be problems with other
-> dm-bufio users, for devices where the blocksize is larger than 4k.
+> This looks reasonable to me. I only remember seeing recursive error
+> correction trigger in a real system when someone attempts to use the
+> wrong root hash, which is obviously not recoverable.
 > 
-> In dm_bufio_client_create() I think we want to make sure that block_size
-> is a multiple of bdev_logical_block_size(bdev), instead of 512b.
+> Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+> 
+> Sami
 
-I could add WARN_ON(block_size < bdev_logical_block_size(bdev)) to 
-dm_bufio_client_create. But I think it's too late in this development 
-cycle, I would add it after the next merge window closes, when I open a 
-new patch series for the kernel 6.20 (or 7.0).
+Thanks, OK.
 
-> Otherwise block_to_sector() can return sectors that are not addressable
-> on the device. Unfortunatley, I don't think all users of dm-bufio will
-> pass in block_sizes that are larger than 4k (uds_make_bufio() in
-> dm-vdp/indexer/io-factory.c for instance).
-> 
-> -Ben
-> 
-> > Please try this patch - does it fix it?
-> > 
-> > Mikulas
-
-I changed the patch below, so that it aligns write bios on 
-max3(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev), 
-bdev_physical_block_size(b->c->bdev)); - so that if physical block size is 
-greater than logical block size, the writes are aligned so that the device 
-doesn't do read-modify-write.
+I staged the patch for 6.19.
 
 Mikulas
-
-> > From: Mikulas Patocka <mpatocka@redhat.com>
-> > 
-> > There may be devices with logical block size larger than 4k. Fix
-> > dm-bufio, so that it will align I/O on logical block size. This commit
-> > fixes I/O errors on the dm-ebs target on the top of emulated nvme device
-> > with 8k logical block size created with qemu parameters:
-> > 
-> > -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
-> > 
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Cc: stable@vger.kernel.org
-> > 
-> > ---
-> >  drivers/md/dm-bufio.c |    9 +++++----
-> >  1 file changed, 5 insertions(+), 4 deletions(-)
-> > 
-> > Index: linux-2.6/drivers/md/dm-bufio.c
-> > ===================================================================
-> > --- linux-2.6.orig/drivers/md/dm-bufio.c	2025-10-13 21:42:47.000000000 +0200
-> > +++ linux-2.6/drivers/md/dm-bufio.c	2025-10-20 14:40:32.000000000 +0200
-> > @@ -1374,7 +1374,7 @@ static void submit_io(struct dm_buffer *
-> >  {
-> >  	unsigned int n_sectors;
-> >  	sector_t sector;
-> > -	unsigned int offset, end;
-> > +	unsigned int offset, end, align;
-> >  
-> >  	b->end_io = end_io;
-> >  
-> > @@ -1388,9 +1388,10 @@ static void submit_io(struct dm_buffer *
-> >  			b->c->write_callback(b);
-> >  		offset = b->write_start;
-> >  		end = b->write_end;
-> > -		offset &= -DM_BUFIO_WRITE_ALIGN;
-> > -		end += DM_BUFIO_WRITE_ALIGN - 1;
-> > -		end &= -DM_BUFIO_WRITE_ALIGN;
-> > +		align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev));
-> > +		offset &= -align;
-> > +		end += align - 1;
-> > +		end &= -align;
-> >  		if (unlikely(end > b->c->block_size))
-> >  			end = b->c->block_size;
-> >  
-> > 
-> 
+---1463811712-1303078282-1763488998=:1055457--
 
