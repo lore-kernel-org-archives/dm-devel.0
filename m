@@ -1,119 +1,122 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55F2D332ED9
-	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 18:03:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D0B152DA740
+	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 18:06:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763489007; cv=none; b=HvVAA2ZLPYwCLEFyNkcBNniGgm6Gkdq70hRsGNgcgII8d4+XT2Ji+5gOtBn/aTpm6DZHtOULA5Eeo4Kbqyt/08OnsC3r3lFLmpaUZASpmcecL8FW0Hwb0lXpAX1nMLz9Vw5hvWAHjXUTBkcpYVRhp+SXFyxcUI3kQ2gGdHlayuE=
+	t=1763489167; cv=none; b=iLoXV3ZiDkQjxrT0ME+eMehCI3PLeeqbkZGzhS+m1cJNb8vBltQkTyI433bd1YUtbFf2n8pO7xcAcbLS5JhfXF5H7oTjNzeD0EfcxVRcywB0quNH4VZYokG/W/hOl0/sT7919OdnMeMhGPMfSeUo3qBcEvYDaU763IGX4lR5Aqo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763489007; c=relaxed/simple;
-	bh=C4K1EuZ4y/hjarUGvfsykH0gCtQnE6wVx9ZAPj8Ch/8=;
+	s=arc-20240116; t=1763489167; c=relaxed/simple;
+	bh=8N6J17d7H470YIIh6eDqaL2RdiDO8UPb9gKIoUVpvco=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=eVR9kv5gaIe6F3TqIpFgLHmULwApM+hoNSzeIM3aSkTjZ3OUENexZRkySDtRCx/h9xSgmxsf7YWFZa5uSXwwRiYAtuHTlMA97qhgia9fwNOWjjIOgI7NsGcazoA/+L+C5viEhQPUMTBR19Nipztl4moUZO/HhbhlmgPhbzlmlis=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hXKI+hDa; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=tmPbovIJR0Xd1nWEVCZDx83o7A48ia0nhbdreafBjTLvfiY4djZu0q4Al6LIveLkFyKCXETGrFxk52fNG17AoE42Fms30q7I0SB0IZ0d+6i3Y+09WJmbuozaEA6WlUetaFZapRxaM0SbIAiXhlfaFRCDKgzY62FUjUSeYTdFwUM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WJPuTmcV; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hXKI+hDa"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WJPuTmcV"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763489004;
+	s=mimecast20190719; t=1763489163;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=ZHOTMcsmyPt3trlLaZ8uRRSxzJpc5fFVJQlVHVyHh/8=;
-	b=hXKI+hDaMMPLUc5kWumuMnQsqcmuhrOXSdNxKZlFpPhG2iD1rc2m/hdUAZyVO65HPgdAXU
-	dFAc71lyXEESeu5PO21D8EbqtI6IsVd6mjlEgD5TfEaZEyu9BRuLc+/YhNa45x86vju9fe
-	re1IaA1ELmZAafbf47EeygiNsk1xcYI=
+	bh=FoDTgmSGf3Eb8A5qG0tKIRWEcokVCtQv154v3oPpskI=;
+	b=WJPuTmcVHEz7fjAOZ24pjLW/8vnIHwuclM5IBTiS6FGSQo9kkDbxTPN42JDHsHdifoEOtD
+	VlfiO9rMgtLPIcJ1rdLj/6EXdIXbRikw3FxDkk2iC4/1fO35J7rM251AiWhOHU5cykuh+R
+	YKm8AxCfZMVpsqYZSHtW6Vcby/fiwmw=
 Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-163-dHTtsguIPbGqTXK78mOHyw-1; Tue,
- 18 Nov 2025 13:03:20 -0500
-X-MC-Unique: dHTtsguIPbGqTXK78mOHyw-1
-X-Mimecast-MFC-AGG-ID: dHTtsguIPbGqTXK78mOHyw_1763488999
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-244-mCY_IH3yNaeGGkNIXtnH7A-1; Tue,
+ 18 Nov 2025 13:06:01 -0500
+X-MC-Unique: mCY_IH3yNaeGGkNIXtnH7A-1
+X-Mimecast-MFC-AGG-ID: mCY_IH3yNaeGGkNIXtnH7A_1763489160
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EC234195609D;
-	Tue, 18 Nov 2025 18:03:18 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2364F19560B4;
+	Tue, 18 Nov 2025 18:06:00 +0000 (UTC)
 Received: from [10.44.32.60] (unknown [10.44.32.60])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BDD321800878;
-	Tue, 18 Nov 2025 18:03:16 +0000 (UTC)
-Date: Tue, 18 Nov 2025 19:03:12 +0100 (CET)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 54433180047F;
+	Tue, 18 Nov 2025 18:05:57 +0000 (UTC)
+Date: Tue, 18 Nov 2025 19:05:52 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Sami Tolvanen <samitolvanen@google.com>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    dm-devel@lists.linux.dev, Guangwu Zhang <guazhang@redhat.com>, 
-    Ondrej Kozina <okozina@redhat.com>, Milan Broz <gmazyland@gmail.com>
-Subject: Re: [RFC PATCH] dm-verity: disable recursive forward error
- correction
-In-Reply-To: <CABCJKuf=8svp8WbE7SOKJhFaWh_8iCXYc41tgu_1po7_AVz0qQ@mail.gmail.com>
-Message-ID: <5ee412ad-799e-a570-5921-940661449d80@redhat.com>
-References: <75ef45cb-4c00-4b27-87cd-3c2914f5dbcc@redhat.com> <CABCJKuf=8svp8WbE7SOKJhFaWh_8iCXYc41tgu_1po7_AVz0qQ@mail.gmail.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: Li Chen <me@linux.beauty>, Linux Device Mapper <dm-devel@lists.linux.dev>, 
+    Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, 
+    Zheng Gu <cengku@gmail.com>
+Subject: Re: [PATCH v2 0/3] dm-pcache: built-in support and metadata
+ hardening
+In-Reply-To: <520bf329-8e3b-4b27-9bd5-82092d501174@linux.dev>
+Message-ID: <881e9a2a-0a9e-dda4-1b2f-e208d942898a@redhat.com>
+References: <20251111121337.1063443-1-me@linux.beauty> <520bf329-8e3b-4b27-9bd5-82092d501174@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 7bnyboeFGgafuCELp_LYlTiOixJ6bEtuItLAfl3p-N0_1763488999
-X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="-1463811712-1303078282-1763488998=:1055457"
+Content-Type: multipart/mixed; boundary="-1463811712-1207307992-1763489159=:1055457"
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-1303078282-1763488998=:1055457
+
+---1463811712-1207307992-1763489159=:1055457
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8BIT
 
 
 
-On Mon, 17 Nov 2025, Sami Tolvanen wrote:
+On Thu, 13 Nov 2025, Dongsheng Yang wrote:
 
 > Hi Mikulas,
 > 
-> On Fri, Nov 14, 2025 at 7:54 AM Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >
-> > Hi
-> >
-> > What do you think about this patch?
-> >
-> > There are two problems with the recursive correction:
-> >
-> > 1. It may cause denial-of-service. In fec_read_bufs, there is a loop that
-> > has 253 iterations. For each iteration, we may call verity_hash_for_block
-> > recursively. There is a limit of 4 nested recursions - that means that
-> > there may be at most 253^4 (4 billion) iterations. Red Hat QE team
-> > actually created an image that that pushes dm-verity to this limit - and
-> > this image just makes the udev-worker process get stuck in the 'D' state.
-> >
-> > 2. It probably doesn't work. In fec_read_bufs we store data into the
-> > variable "fio->bufs", but fio bufs is shared between recursive
-> > invocations, if "verity_hash_for_block" invoked correction recursively, it
-> > would overwrite partially filled fio->bufs.
-> >
-> > So, I'm suggesting to remove recursive correction at all. This patch
-> > passed the cryptsetup testsuite. Does it pass your tests too?
-> >
-> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> > Reported-by: Guangwu Zhang <guazhang@redhat.com>
+>     Please consider taking these three patches.
 > 
-> This looks reasonable to me. I only remember seeing recursive error
-> correction trigger in a real system when someone attempts to use the
-> wrong root hash, which is obviously not recoverable.
+> Thanx
 > 
-> Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
-> 
-> Sami
+> Dongsheng
 
-Thanks, OK.
-
-I staged the patch for 6.19.
+OK, thanks. I accepted the patches and I staged them for the kernel 6.18.
 
 Mikulas
----1463811712-1303078282-1763488998=:1055457--
+
+
+> 在 11/11/2025 8:13 PM, Li Chen 写道:
+> > From: Li Chen <chenl311@chinatelecom.cn>
+> > 
+> > This three-patch series tidies dm-pcache’s build glue and tightens the
+> > metadata scan.
+> > 
+> > Patch 1 allow dm-pcache to be linked into vmlinux and avoids clashing with
+> > the sunrpc
+> > cache_flush() by using obj-$(CONFIG_DM_PCACHE) and renaming the helper
+> > across the tree.
+> > 
+> > Patch 2 drops a redundant recomputation of the metadata slot pointer while
+> > walking headers.
+> > 
+> > Patch 3 Ensure dm-pcache initializes cache_info from a zeroed state so
+> > metadata CRC
+> > failures can’t leak stale flags into the new-cache path.
+> > 
+> > Thanks for your review.
+> > 
+> > Li Chen (3):
+> >    dm-pcache: allow built-in build and rename flush helper
+> >    dm-pcache: reuse meta_addr in pcache_meta_find_latest
+> >    dm-pcache: zero cache_info before default init
+> > 
+> >   drivers/md/dm-pcache/Makefile          | 2 +-
+> >   drivers/md/dm-pcache/cache.c           | 4 ++--
+> >   drivers/md/dm-pcache/cache.h           | 2 +-
+> >   drivers/md/dm-pcache/cache_req.c       | 6 +++---
+> >   drivers/md/dm-pcache/pcache_internal.h | 2 +-
+> >   5 files changed, 8 insertions(+), 8 deletions(-)
+> > 
+> 
+---1463811712-1207307992-1763489159=:1055457--
 
