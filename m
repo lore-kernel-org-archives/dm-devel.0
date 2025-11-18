@@ -1,89 +1,191 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0C102D7DDD
-	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 18:42:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAF932DCF72
+	for <dm-devel@lists.linux.dev>; Tue, 18 Nov 2025 20:36:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763491338; cv=none; b=iThwBWRK5ydWUu4lzTbcCMsi/QmVIGGe26OQBkW+KEXOL816C5W/S8Rjv1dx2xR+sSnbEn+EaEKOaSMbg7A12Odu5GMaMnWMAhB3rnH6Rma09MA2wb+5z+P603BxAFJmjsjnSE2rr0mgpyPxmh1u4qCBjl3yhbDWIsAKa6TPKkQ=
+	t=1763498213; cv=none; b=hWwlaXhh+ISqnzxRwlqyyh/BBb9PeQvCD71Sh3QS9xDmXHESQGxBwAitArlj5bgNTTKJKGnYGartkIk+UaIEjCOuFDspoarm+fHNTdo0Ww5FlcLJBIURyCsN0nThANcW9GG2gI1gbgO7efnN+scxmqWyUne2NlewMC9Vd2Wc80I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763491338; c=relaxed/simple;
-	bh=4UuRYFeGAdoTlNxDNPqu6TSWsME75fBKGx3v9jRQ+Xs=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Frft+ZgSTimQIcufBlcRDdvVror0X9MyD7RzsC0jumyA6qoNEW0hIYU4rw0WnRgkaeQMNgLBU3ViirXRRGh4M94+SJPjLZtBvuRkVo7JxO8I/WN2DTNayGKESgoBmy1SegwhUyh3OTUk/yDDHza+SIjNw+J42ERKdEgW3fyLXnU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WIP0Cfz/; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1763498213; c=relaxed/simple;
+	bh=/BIQr0ofYn501Q+iBz7Eqq3F10Y3iICaRmo34Ir9F8w=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=eX6i/kEeZk7gFZ7M11AHm76GmaTIL2mGUYDi25/1/gO3lthZiOauoSKL7q4DLUj338HwLjrFRdXS+ebCREPZKl3hBmxol3PQ9zTSlQWOPvaUScK1gDs2M95BfWTCO7FvM8pQ9GSlT+xMZcimIllhIMegFlqqnPiICtWzE0YYr1c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Etzg+a1S; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WIP0Cfz/"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Etzg+a1S"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1763491335;
+	s=mimecast20190719; t=1763498210;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mAdgqjZmqkNrORjXsj1T2KhBd906JY3Ty/7X9IERoHQ=;
-	b=WIP0Cfz/PS9Pslgbkj9Kos5Oxb5GUbNBHTGF7VSxQEy1+5uy7wwiYI8gK9WMi1AJdHqIRK
-	xtLM1U1crZlu2F6jWanjI9yT/s5uIPDFcjcJ+4qcLIEY6XwCelanbScppzGeG3cFjA0o/J
-	oFGnJ1MvW3BDksdFu8aguobUJ6XsfGo=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=MrfjbXeDDlfi8M07MQMbkw+jAJU87ZrYxBghXs4a60M=;
+	b=Etzg+a1SnuhSBjfV0Ojq/rRpaQZ6WkHJ9wdWULK6vCbw5dS9T2i7ctS49sHF2WOw139szp
+	CR+M7r+r7HL6K7EYoUcC9J06yDyz9seuD+ELLGth5CCDdcPJXbQtH67ue5Kp6lr3zDVCP7
+	Uy24tZ9MeWU2Cmdw9Ijwv5+PtIP/KQI=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-632-lt5jG3vsO1CF1lJsK_i_JA-1; Tue,
- 18 Nov 2025 13:42:12 -0500
-X-MC-Unique: lt5jG3vsO1CF1lJsK_i_JA-1
-X-Mimecast-MFC-AGG-ID: lt5jG3vsO1CF1lJsK_i_JA_1763491331
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-534-rfqy3y1OOCW6p-vu3rnd4g-1; Tue,
+ 18 Nov 2025 15:36:37 -0500
+X-MC-Unique: rfqy3y1OOCW6p-vu3rnd4g-1
+X-Mimecast-MFC-AGG-ID: rfqy3y1OOCW6p-vu3rnd4g_1763498196
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F220D1956088;
-	Tue, 18 Nov 2025 18:42:10 +0000 (UTC)
-Received: from [10.44.32.60] (unknown [10.44.32.60])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D9CE2180049F;
-	Tue, 18 Nov 2025 18:42:08 +0000 (UTC)
-Date: Tue, 18 Nov 2025 19:42:04 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: John Garry <john.g.garry@oracle.com>
-cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev, 
-    michael.christie@oracle.com, martin.petersen@oracle.com
-Subject: Re: [PATCH 2/2] dm-crypt: enable DM_TARGET_ATOMIC_WRITES
-In-Reply-To: <22e40d78-8a14-4101-ba0b-58e94b494432@oracle.com>
-Message-ID: <702ec1b5-2995-1f3c-04a3-3a4372460b42@redhat.com>
-References: <e0b99d8e-1159-a489-6df3-648b21c4f091@redhat.com> <6b3582bb-1e50-4e7a-972f-a82f62f46e7c@oracle.com> <9d2816c3-fc01-44d0-a9ca-4129515bd0ca@oracle.com> <4ba947ac-969a-49da-193a-ea5cea43c14e@redhat.com>
- <22e40d78-8a14-4101-ba0b-58e94b494432@oracle.com>
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D96921831371;
+	Tue, 18 Nov 2025 20:36:16 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D5EEA180049F;
+	Tue, 18 Nov 2025 20:36:15 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5AIKaEIY899248
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 18 Nov 2025 15:36:14 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5AIKaEsM899247;
+	Tue, 18 Nov 2025 15:36:14 -0500
+Date: Tue, 18 Nov 2025 15:36:13 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "Uladzislau Rezki (Sony)" <urezki@gmail.com>,
+        Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Mike Snitzer <snitzer@redhat.com>, Christoph Hellwig <hch@lst.de>,
+        LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH] dm-bufio: align write boundary on bdev_logical_block_size
+Message-ID: <aRzYvYCLW66Zhcda@redhat.com>
+References: <20251020123350.2671495-1-urezki@gmail.com>
+ <cdb598ce-88ec-0c3c-8e4b-b557093bea92@redhat.com>
+ <aRvvSvyG8AK9hiCX@redhat.com>
+ <faafd90d-e41c-dcfc-cc25-7f29ff4f958c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: lNm81JClqbDPEU-cWppz66kMcoEiwVtD9MqATh_Wh4g_1763491331
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <faafd90d-e41c-dcfc-cc25-7f29ff4f958c@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-
-
-On Tue, 18 Nov 2025, John Garry wrote:
-
-> On 18/11/2025 17:09, Mikulas Patocka wrote:
-> > In crypt_io_hints - should I set "limits->atomic_write_hw_max",
-> > "limits->atomic_write_hw_unit_max" or both?
+On Tue, Nov 18, 2025 at 06:45:55PM +0100, Mikulas Patocka wrote:
+> 
+> 
+> On Mon, 17 Nov 2025, Benjamin Marzinski wrote:
+> 
+> > On Mon, Oct 20, 2025 at 02:48:13PM +0200, Mikulas Patocka wrote:
+> > > 
+> > > 
+> > > On Mon, 20 Oct 2025, Uladzislau Rezki (Sony) wrote:
+> > > 
+> > > > When performing a read-modify-write(RMW) operation, any modification
+> > > > to a buffered block must cause the entire buffer to be marked dirty.
+> > > > 
+> > > > Marking only a subrange as dirty is incorrect because the underlying
+> > > > device block size(ubs) defines the minimum read/write granularity. A
+> > > > lower device can perform I/O only on regions which are fully aligned
+> > > > and sized to ubs.
+> > > 
+> > > Hi
+> > > 
+> > > I think it would be better to fix this in dm-bufio, so that other dm-bufio 
+> > > users would also benefit from the fix.
 > > 
-> > I think that we haven't settled about that when we talked about it.
+> > This looks to me like it should accomplish the same thing as
+> > Uladzislau's patch. But I think there could still be problems with other
+> > dm-bufio users, for devices where the blocksize is larger than 4k.
+> > 
+> > In dm_bufio_client_create() I think we want to make sure that block_size
+> > is a multiple of bdev_logical_block_size(bdev), instead of 512b.
 > 
-> If you are going to set one then set both of them.
+> I could add WARN_ON(block_size < bdev_logical_block_size(bdev)) to 
+> dm_bufio_client_create. But I think it's too late in this development 
+> cycle, I would add it after the next merge window closes, when I open a 
+> new patch series for the kernel 6.20 (or 7.0).
 > 
-> I already tested this, so it's fine.
+> > Otherwise block_to_sector() can return sectors that are not addressable
+> > on the device. Unfortunatley, I don't think all users of dm-bufio will
+> > pass in block_sizes that are larger than 4k (uds_make_bufio() in
+> > dm-vdp/indexer/io-factory.c for instance).
+> > 
+> > -Ben
+> > 
+> > > Please try this patch - does it fix it?
+> > > 
+> > > Mikulas
 > 
-> Thanks,
-> John
+> I changed the patch below, so that it aligns write bios on 
+> max3(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev), 
+> bdev_physical_block_size(b->c->bdev)); - so that if physical block size is 
+> greater than logical block size, the writes are aligned so that the device 
+> doesn't do read-modify-write.
 
-Hi
+This will really only help if the bufio client block_size is a multiple
+of the underlying device's physical block size, and the device is
+aligned to the physical block size. Perhaps we should figure
+out the alignment in dm_bufio_client_create(), with something like:
 
-I committed those two patches - you can have look at linux-dm.git, branch 
-for-next.
+	c->align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(bdev));
+	if (block_size & -bdev_physical_block_size(bdev) &&
+	    bdev_alignment_offset(bdev) == 0)
+		c->align = bdev_physical_block_size(bdev);
 
-Mikulas
+I suppose pre-calculating this could cause problems if the underlying
+device was another dm device, and it switched tables in a way that
+changed its limits. I dunno if we care about that, however.
+
+-Ben 
+
+> Mikulas
+> 
+> > > From: Mikulas Patocka <mpatocka@redhat.com>
+> > > 
+> > > There may be devices with logical block size larger than 4k. Fix
+> > > dm-bufio, so that it will align I/O on logical block size. This commit
+> > > fixes I/O errors on the dm-ebs target on the top of emulated nvme device
+> > > with 8k logical block size created with qemu parameters:
+> > > 
+> > > -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
+> > > 
+> > > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > > Cc: stable@vger.kernel.org
+> > > 
+> > > ---
+> > >  drivers/md/dm-bufio.c |    9 +++++----
+> > >  1 file changed, 5 insertions(+), 4 deletions(-)
+> > > 
+> > > Index: linux-2.6/drivers/md/dm-bufio.c
+> > > ===================================================================
+> > > --- linux-2.6.orig/drivers/md/dm-bufio.c	2025-10-13 21:42:47.000000000 +0200
+> > > +++ linux-2.6/drivers/md/dm-bufio.c	2025-10-20 14:40:32.000000000 +0200
+> > > @@ -1374,7 +1374,7 @@ static void submit_io(struct dm_buffer *
+> > >  {
+> > >  	unsigned int n_sectors;
+> > >  	sector_t sector;
+> > > -	unsigned int offset, end;
+> > > +	unsigned int offset, end, align;
+> > >  
+> > >  	b->end_io = end_io;
+> > >  
+> > > @@ -1388,9 +1388,10 @@ static void submit_io(struct dm_buffer *
+> > >  			b->c->write_callback(b);
+> > >  		offset = b->write_start;
+> > >  		end = b->write_end;
+> > > -		offset &= -DM_BUFIO_WRITE_ALIGN;
+> > > -		end += DM_BUFIO_WRITE_ALIGN - 1;
+> > > -		end &= -DM_BUFIO_WRITE_ALIGN;
+> > > +		align = max(DM_BUFIO_WRITE_ALIGN, bdev_logical_block_size(b->c->bdev));
+> > > +		offset &= -align;
+> > > +		end += align - 1;
+> > > +		end &= -align;
+> > >  		if (unlikely(end > b->c->block_size))
+> > >  			end = b->c->block_size;
+> > >  
+> > > 
+> > 
 
