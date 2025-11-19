@@ -1,67 +1,89 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from mail-m16.yeah.net (mail-m16.yeah.net [1.95.21.17])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA1F12FD1B9
-	for <dm-devel@lists.linux.dev>; Wed, 19 Nov 2025 09:17:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09F7E24C676
+	for <dm-devel@lists.linux.dev>; Wed, 19 Nov 2025 14:01:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=1.95.21.17
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763543861; cv=none; b=TuQin5S/QUtOo/5GucU3X29rLOyIv8F8gXLu4AXyi4F6Y1mQpJOE3DiDxT9kLansytkGOcFIFV87NB1Uzsokzr3Db7bqAvehRMNVZEQk6Cv7EyN8nJRk+KQBkYGNADnCLPg7kl4JdaWOFiSHG4IDEnNs/fCrwZpxW66HUdSW854=
+	t=1763560901; cv=none; b=nNh/LWi5AtcRZ7A5Vy/Mzu1fR2hX+0FcOAD/arNeATRgOHlGd9daQG4p2STtOcfv8pOEvErwqG78loqBn6n68tCbbQ1YgGyOCBwjhfZn24palqIQvyVR8gr7DbqwSKY6jDiNQ0NguIMAE/K9HuutJkCdOMlWfsl/kaGWKIEyww8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763543861; c=relaxed/simple;
-	bh=PCxsZz67oVtvwKmCB5WysqdpcjmzGwWpc8IOgfPm9Y4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OJypruuqrf6KfvnFk3CfQGNnaFGSgrMEH1UFPvtX2miTs47NbJaugxCvaGjKgWPw1yJbAlvt8VpUjTQ+Dfh25cHm61Rk/6pYNmLswItO6LSSuVBxwe6vFoeFDjp9Y6goQO1cGm5PFnYvrccgzTzArEDsW7/4vkRu8ox8Vfphgc0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 63F446732A; Wed, 19 Nov 2025 10:17:35 +0100 (CET)
-Date: Wed, 19 Nov 2025 10:17:35 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Uladzislau Rezki <urezki@gmail.com>
-Cc: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Mike Snitzer <snitzer@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial
- write
-Message-ID: <20251119091735.GA25022@lst.de>
-References: <aRx_lCimJco5BPKA@redhat.com> <230baa83-cd79-f232-5fb8-1476115e1ae7@redhat.com> <20251119054635.GB19993@lst.de> <aR2DIXsymZWD9EvG@pc636> <20251119085328.GA24461@lst.de> <aR2GjRaNWrfHbDGQ@pc636> <20251119090010.GA24598@lst.de> <aR2HZWE-v-umP7jI@pc636> <20251119090530.GA24770@lst.de> <aR2KTzMkZ5ThtywW@pc636>
+	s=arc-20240116; t=1763560901; c=relaxed/simple;
+	bh=3bkD/dqUxIL3R/tNIJz0Ov8dvg5CHVIgpTUupVIUp4w=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=LwHoDy/7Il4WU8sQK+Egnyf/keHpY+E/0YiwgdFh2o9zi2OO9hQ2omtx8Xf6/kT7XgbzELZE4mCdW9Ga2VsJhfKbi5ThvXF63aY7RiYp+PzPKafZw3YvgPBcDV7yvJd9wqEUkC5G7rVjGgoC9lRHvyeTaUBKgXTVhJ7ooo1Ljew=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yeah.net; spf=pass smtp.mailfrom=yeah.net; dkim=pass (1024-bit key) header.d=yeah.net header.i=@yeah.net header.b=pDL/XsBu; arc=none smtp.client-ip=1.95.21.17
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yeah.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yeah.net
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=yeah.net header.i=@yeah.net header.b="pDL/XsBu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yeah.net;
+	s=s110527; h=Message-ID:Date:MIME-Version:Subject:To:From:
+	Content-Type; bh=tjP/inNVO0eKHWzbjkHmUo+NPNSu5NIK9DW339sskyU=;
+	b=pDL/XsBuiYyjJ7JbFRwFMNlVSujHBQx8jdjZF5H40/tL8Yy0pe3Pw5EuNg7QAt
+	yzVTX6hPP9N6pIgug/0fmVf5+6U5QaeZZbw4Irsic2O2aQRy20/Bhnq6y26fDUAJ
+	6fHAJXLUa9LfuCk8LN/860xcf6JPCDAe9WEyP1rgPAtLI=
+Received: from [IPV6:2409:8a20:4e25:c041:b388:e8c9:49e8:6a66] (unknown [])
+	by gzsmtp2 (Coremail) with SMTP id Ms8vCgD3_aWfzR1pC21ZAg--.45652S2;
+	Wed, 19 Nov 2025 22:01:03 +0800 (CST)
+Message-ID: <cbd80a43-abf2-4447-8311-a25a9b946b21@yeah.net>
+Date: Wed, 19 Nov 2025 22:01:03 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aR2KTzMkZ5ThtywW@pc636>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm-verity: correct the name of verify wq
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: agk@redhat.com, snitzer@kernel.org, dm-devel@lists.linux.dev
+References: <20251118154506.17647-1-jiaheng_ma@yeah.net>
+ <3192678d-7daa-4ecb-4c02-5c04c0c6fa52@redhat.com>
+Content-Language: en-US
+From: =?UTF-8?B?6IuP5q2n?= <jiaheng_ma@yeah.net>
+In-Reply-To: <3192678d-7daa-4ecb-4c02-5c04c0c6fa52@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:Ms8vCgD3_aWfzR1pC21ZAg--.45652S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW7XFyDuFWxGr43Kw1xAr1UWrg_yoW8Jry5pa
+	1vqF90kayftFWUCasxXF15uFyfCa45KrW2kFyavr18ZFnYkFy5ur1UtrW5urZ0yFykJay8
+	tF4rWw4UXa1qy3DanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07jHrWOUUUUU=
+X-CM-SenderInfo: xmldxv5qjbzto61htxgoqh3/1tbiNB88U2kdzZ9PAwAA3u
 
-On Wed, Nov 19, 2025 at 10:13:51AM +0100, Uladzislau Rezki wrote:
-> On Wed, Nov 19, 2025 at 10:05:30AM +0100, Christoph Hellwig wrote:
-> > On Wed, Nov 19, 2025 at 10:01:25AM +0100, Uladzislau Rezki wrote:
-> > > Again i rely on this.
-> > 
-> > I'm not sure what your random quoting of low-quality comments in
-> > kernel code is trying to prove here.
-> > 
-> > Any device that does not support the LBA/sector size correctly is
-> > not support by Linux.  We could in theory quirk it in the driver,
-> > but for that we'd need to known the vendor/model and a good argument
-> > why we can't fix the device reporting, as this should just be firmware.
-> > 
-> > Secrecy is not going to help with that.
-> > 
-> I will not resist.
-> 
-> I tried my best to explain the problem including description and steps
-> how to reproduce it in the commit message if someone wants to repeat it
-> in qemu with virtual nvme device.
+Oh, sorry — I thought it was a typo and was wondering how come no one 
+caught it.
 
-Again, the problem is that your device reports an incorrect block size.
+在 2025/11/19 01:11, Mikulas Patocka 写道:
+>
+> On Tue, 18 Nov 2025, Aiden Ma wrote:
+>
+>> The name of workqueue verify_wq should be "kverifyd", not "kverityd".
+>>
+>> Signed-off-by: Aiden Ma <jiaheng_ma@yeah.net>
+>> ---
+>>   drivers/md/dm-verity-target.c | 2 +-
+>>   1 file changed, 1 insertion(+), 1 deletion(-)
+>>
+>> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+>> index 66a00a8ccb39..e8f1300f5f25 100644
+>> --- a/drivers/md/dm-verity-target.c
+>> +++ b/drivers/md/dm-verity-target.c
+>> @@ -1549,7 +1549,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>>   	 * will fall-back to using it for error handling (or if the bufio cache
+>>   	 * doesn't have required hashes).
+>>   	 */
+>> -	v->verify_wq = alloc_workqueue("kverityd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+>> +	v->verify_wq = alloc_workqueue("kverifyd", WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+>>   	if (!v->verify_wq) {
+>>   		ti->error = "Cannot allocate workqueue";
+>>   		r = -ENOMEM;
+>> -- 
+>> 2.43.0
+> Hi
+>
+> The target is called "verity", not "verify", so I think that "kverityd" -
+> as "kernel-verity-daemon" is OK.
+>
+> Mikulas
 
-And you're being a complete dick ignoring this and not even telling
-us anything about the device.
