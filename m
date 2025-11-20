@@ -1,179 +1,105 @@
-Received: from mail-lj1-f177.google.com (mail-lj1-f177.google.com [209.85.208.177])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from 003.mia.mailroute.net (003.mia.mailroute.net [199.89.3.6])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFB80337B84
-	for <dm-devel@lists.linux.dev>; Thu, 20 Nov 2025 12:40:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FA5926F285
+	for <dm-devel@lists.linux.dev>; Thu, 20 Nov 2025 16:33:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=199.89.3.6
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763642439; cv=none; b=fuD4MGXZWGnTxuMM5ECydv35uB0LJOWRcqB0tzuCr0qL7OPH8exLoA+7LNNGUi0Cktb/+iKShVHQOOeiR1ALqqa+GX5JxatHsy5nd8A9M47Jrfx8bZBpFk889i3TUbHROLA8HOzla6B2J7gZglfme5DXWOPILbw1lathpU+COtk=
+	t=1763656420; cv=none; b=p9miAj7uWGFHd3zH8iObSM7DKCxYPrzxYgo8B65UnTRNt7y6D8BRbNm23brlAhkY8x13LeT00v/CImE7gdqv9I5E8MZbKvjTgmTWUGpI8MZ0LrZaptcFtsff65EjahQjhgMuJ99RaoYEMSrssRF+10OJa7WWo/OjDSAWhdIq4oU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763642439; c=relaxed/simple;
-	bh=HJ5OfsjGZ9ETLVDt5fQgOFn/ljFMtNgamwgQcYv3XPM=;
-	h=From:Date:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=PQbgJYh71oNIZVJtl0KYzkcoD9pwHH2ebIl41/rLZMxSYVeAqwd6sbYnSXCMR94Wql6/0g6KtQE3Bnd0kTdehUgP+CGtVrKHHhOjYMa56xK2zA+8AS8HTX0xKKg2wajy+zQwLLlG3+FWICabBpvAEN5W3qRC/+2zwrl80PEssgE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MphEXE3y; arc=none smtp.client-ip=209.85.208.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1763656420; c=relaxed/simple;
+	bh=Uk8oiRhwyXd5ZcG6zsKeCLCXFDz/8CNKG0ICHlHPBpg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=EZ3h26YZfvqMGIyDTYYMtNQMDhwrUg9fhnydqYEnTFG/Ub/kpkp9mI9CZMtVmTxrS02giW3IQ1L301Ss6BkW1kBagYZSpLqmeYZMA8fjDXmhwoKh1YgLHwnEbcbWz49xhSRR4BJf0je/z2fw1pE/yLPFm5IZVwsVlXnMCwAfz+w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org; spf=pass smtp.mailfrom=acm.org; dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b=4M95xeCu; arc=none smtp.client-ip=199.89.3.6
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=acm.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=acm.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MphEXE3y"
-Received: by mail-lj1-f177.google.com with SMTP id 38308e7fff4ca-37b996f6b28so6693701fa.3
-        for <dm-devel@lists.linux.dev>; Thu, 20 Nov 2025 04:40:36 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1763642435; x=1764247235; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:date:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=Rj43N+4U1YLZGmJlvK9URuZROac32VOsSVNQ3r7b8ZQ=;
-        b=MphEXE3y4uQp0nApvhtbY4mO3Agvmu9wTxK6EY9IAshYmw2ihJ2avX6F3gOlTRnddw
-         F5IPOlQ0AU/Ewtu6FSqX08eHpQ9Qgmo8tnJMOhh+VHAXff/xsUGdOkVOGvxfVunTzELz
-         /0/PVc/6MXfqA3eGQDk8YlvKjaJB43Jw/kLU7dKD+0vnEgZR3jCmxDxmRAFtaw1nfc41
-         EZBCB4l3s95Vg1Yzz0ODJMP42+73h7iiMVoTnk+dxtTdvmfFxwACMeCKbRZOaWeJI6pt
-         NVBKUlkM5qnWc0IpfAd2PnSZbgbtEk7wUZMEUMHCWWVh82a1xY15U+gW59oTYkzRGnlb
-         TgaQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763642435; x=1764247235;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:date:from:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=Rj43N+4U1YLZGmJlvK9URuZROac32VOsSVNQ3r7b8ZQ=;
-        b=JP5OwPf3QBX7Teohm1wPyIFti2WebDGaUo7MdPzyFStm6UZjfOLj3T0HTCwIp9D3GP
-         XkfolPmqPp8FUAn7FPh/cxJgck84CUoP/WsXSyVSSMtjMhMURAjfnnH0LRnnDzCwWZFM
-         35kQ+6KtLujJ68+8Ht4qII4f8W/zTPncsKGxD2wRVQQxH3+hnEmg9b6LmiqpRjL8HE/I
-         mDwkd7b7eEnlx/bdh/6P0qIqoDBntdtD7HX5Md6g0IpLKw7eCOpuBAbsnfijQTXKOC+w
-         P/N0k1F4vtkyzYfuxNvdZuSDNvzt5gEl+Sh51xoHnKTkWqLLm3jqIjfC2g/+FiKreBVS
-         JJUg==
-X-Forwarded-Encrypted: i=1; AJvYcCWMNQ0VbnPzcSqOKa2g1fB75Mo1Expoc8IqGfayohzU5G/o4XxuB5XeKHSNY6hLF32jB1hG0A2qBA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzgv7MM2CI/vvbGS2+4iIqsUvDzo9tgYNWmK2GAvxcS2TRoR7VZ
-	s7Ri2l6BelWkiJV+woPPYm8MZi0XemLhk69YF4usghDkuHfCtrSy4faE
-X-Gm-Gg: ASbGnctMKn2SnIDdJ1a9zd46VjKM7rCDWJ7NH9wU8LIOEpHL5R2h3+LvE3YhOMHeoY5
-	WTOcdN5kuR+crHLMj0aN64xIu0S64h9wHFDpuUKadJKvDUvYy1+inGa1IYFyGo1ToOzd6dg18tp
-	fGtXIC+qu8kUX8FIQKII6D1Ecqi7wubH9PT9nw/YiFin0v/scOyVZhbRO2Wztbprgu5kj+ES+15
-	5fQWVPBQonKBjPpXhbTFMBS10CzotFFq5XDv7qTJ0DUHuWutPQRoGU3jYuZ07pV3UPB+o8DNkSh
-	cQ86/EWGn9HGdxilws2PYjfY+mIo738nmmCyqBoHvjMf5bxMDY0mXtCc5cqihoStPZE2za9QfdO
-	zgJMttcTI557T1rDEGPDAsU5msD2Gdio/ytT4uze/q7mqHCrfVZMAHg/XXegg4LyChSne2Ozp5+
-	IkLC02Yv2CMW9D0fhilN8FUdDfhLdHpa19eVPelQti
-X-Google-Smtp-Source: AGHT+IHBl6BFzjfisuiTZNzkpedRmFFPCvgI3f9anngAJjJ5eJ+Li9Mx8i1lt0x6h8rHLby/oMwb/A==
-X-Received: by 2002:a05:6512:3d8b:b0:595:7e96:a709 with SMTP id 2adb3069b0e04-5969e2d29efmr820562e87.10.1763642434649;
-        Thu, 20 Nov 2025 04:40:34 -0800 (PST)
-Received: from pc636 (host-90-233-212-127.mobileonline.telia.com. [90.233.212.127])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5969db81b1dsm656473e87.23.2025.11.20.04.40.33
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 20 Nov 2025 04:40:34 -0800 (PST)
-From: Uladzislau Rezki <urezki@gmail.com>
-X-Google-Original-From: Uladzislau Rezki <urezki@pc636>
-Date: Thu, 20 Nov 2025 13:40:32 +0100
-To: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: Christoph Hellwig <hch@lst.de>, Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>, DMML <dm-devel@lists.linux.dev>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Mike Snitzer <snitzer@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-Subject: Re: [RESEND PATCH] dm-ebs: Mark full buffer dirty even on partial
- write
-Message-ID: <aR8MQOFX0pVldcUT@pc636>
-References: <20251117105945.10179-1-urezki@gmail.com>
- <fff990bc-6ff9-7b34-8e80-57078de40928@redhat.com>
- <aRxa1wPMsJwBubjx@pc636>
- <73556fc8-5fbf-37cb-26b9-7cdb88f69720@redhat.com>
- <aRx_lCimJco5BPKA@redhat.com>
- <230baa83-cd79-f232-5fb8-1476115e1ae7@redhat.com>
- <20251119054635.GB19993@lst.de>
- <bcd929c2-88b0-36e9-0e22-4bb0293300b5@redhat.com>
- <20251120062146.GA29990@lst.de>
- <aR8E2ZZtOi0RZt06@pc636>
+	dkim=pass (2048-bit key) header.d=acm.org header.i=@acm.org header.b="4M95xeCu"
+Received: from localhost (localhost [127.0.0.1])
+	by 003.mia.mailroute.net (Postfix) with ESMTP id 4dC3nY27x7zlvBYl;
+	Thu, 20 Nov 2025 16:33:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acm.org; h=
+	content-transfer-encoding:content-type:content-type:in-reply-to
+	:from:from:content-language:references:subject:subject
+	:user-agent:mime-version:date:date:message-id:received:received;
+	 s=mr01; t=1763656415; x=1766248416; bh=0HoYmzDaZ0wumgyy7MZbcCYd
+	ZR76j6x/bR926aw6ER0=; b=4M95xeCuScajClc4/BHTUgSlTT3gmkDqlJWaiX+X
+	fXtOJL02z5RXrWzsGiA5iYqF3wucg4xMla5Wv3yX62zbDSEDtH6Bo+G1ffJ3LTkO
+	EFxuJ4udmsLF7mi2tlLF9Uh/Xp3NMgi1GRNKfRLwFb8C2GkSwraniT1hmHUTft9E
+	+6ILcdy1oBuhYWPcxtXOIFKz369UQIovTNso7b5cmdoMZr7qSHhWqzeOwFVPK4wI
+	ZybRu/og9SSz8TUNtZj+Q3Iev9dARsk7R/ZrN5dFR6qmC3t8g28g/6RXOWUYXoEs
+	HPWUcWbxMFuthibDt7PtYe83WcTktP15Wnej2mXTYqEw/w==
+X-Virus-Scanned: by MailRoute
+Received: from 003.mia.mailroute.net ([127.0.0.1])
+ by localhost (003.mia [127.0.0.1]) (mroute_mailscanner, port 10029) with LMTP
+ id 0RhdljYi_Wut; Thu, 20 Nov 2025 16:33:35 +0000 (UTC)
+Received: from [100.119.48.131] (unknown [104.135.180.219])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: bvanassche@acm.org)
+	by 003.mia.mailroute.net (Postfix) with ESMTPSA id 4dC3nS1BFXzltH7K;
+	Thu, 20 Nov 2025 16:33:30 +0000 (UTC)
+Message-ID: <6bcc5168-c8ba-4cd7-8663-22cfb6ee1aee@acm.org>
+Date: Thu, 20 Nov 2025 08:33:29 -0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <aR8E2ZZtOi0RZt06@pc636>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm: fix failure when empty flush's bi_sector points
+ beyond the device end
+To: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Zdenek Kabelac <zkabelac@redhat.com>
+Cc: dm-devel@lists.linux.dev
+References: <f99a8124-4b72-e049-3265-908fc48b7148@redhat.com>
+Content-Language: en-US
+From: Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <f99a8124-4b72-e049-3265-908fc48b7148@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 20, 2025 at 01:08:57PM +0100, Uladzislau Rezki wrote:
-> On Thu, Nov 20, 2025 at 07:21:46AM +0100, Christoph Hellwig wrote:
-> > On Wed, Nov 19, 2025 at 06:26:13PM +0100, Mikulas Patocka wrote:
-> > > 
-> > > 
-> > > On Wed, 19 Nov 2025, Christoph Hellwig wrote:
-> > > 
-> > > > On Tue, Nov 18, 2025 at 06:21:56PM +0100, Mikulas Patocka wrote:
-> > > > > OK - I accepted Uladzislau's patch. As logical block size and physical 
-> > > > > block size seem to be unreliable, it's better to set the size in dm-ebs.
-> > > > 
-> > > > logical and physical block size are reliable.  Uladzislau just seems
-> > > > to have a completely broken device that needs fixing, because it will
-> > > 
-> > > He created a qemu-emulated NVMe device with physical and logical block 
-> > > size 8192 in a virtual machine. And logical block size was reported as 512 
-> > > in the guest kernel - so it is either a qemu bug or a kernel bug.
-> > 
-> > No, that's not the case.  If you use his command line you'll see a qemu
-> > device with 8192 logical blocks assuming you have support for large
-> > folios, or a completely unusuable device that claims to have 512
-> > byte blocks for compatibility, but also a capacity of zero so that no
-> > one can use it for anything but passthrough.
-> > 
-> > > in nvme_update_disk_info there is this piece of code:
-> > >         if (blk_validate_block_size(bs)) {
-> > >                 bs = (1 << 9);
-> > >                 valid = false;
-> > >         }
-> > 
-> > Yes, that's what I mentioned above.  The valid=false sets the capacity
-> > to zero, so you're not actually going to be able to use this device.
-> > 
-> > > So, the valid block size depends on whether CONFIG_TRANSPARENT_HUGEPAGE is 
-> > > defined, which is quite weird.
-> > 
-> > And also the page size, and none of that is too weird.  You need support
-> > efficiently allocating large order folios to support a
-> > block size > PAGE_SIZE and currently CONFIG_TRANSPARENT_HUGEPAGE is
-> > the guard for that.  There was some talk of lifting that, but that
-> > requires a bit of work.
-> > 
-> Could you please check below? Is the last one is correctly reported?
-> I have enabled the CONFIG_TRANSPARENT_HUGEPAGE option. If i specify,
-> 8192, 8192 first case, reports are what i set. Second variant 512, 8129
-> shows 512, 512:
+On 11/20/25 3:08 AM, Mikulas Patocka wrote:
+> An empty flush bio can have arbitrary bi_sector. The commit 2b1c6d7a890a
+> introduced a regression that device mapper would fail an empty flush bio
+> with -EIO if the sector pointed beyond the end of the device.
 > 
-> CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE=y
-> CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD=y
-> CONFIG_TRANSPARENT_HUGEPAGE=y
-> CONFIG_TRANSPARENT_HUGEPAGE_ALWAYS=y
-> # CONFIG_TRANSPARENT_HUGEPAGE_MADVISE is not set
-> # CONFIG_TRANSPARENT_HUGEPAGE_NEVER is not set
+> The commit introduced an optimization, that optimization would pass
+> flushes to __split_and_process_bio and __split_and_process_bio is not
+> prepared to handle empty bios. Fix this bug by passing only non-empty
+> flushes to __split_and_process_bio - non-empty flushes must have valid
+> bi_sector. Empty bios will go through __send_empty_flush, as they did
+> before the optimization.
 > 
-> -device nvme,drive=drv0,serial=foo,logical_block_size=8192,physical_block_size=8192
-> urezki@pc638:~$ sudo nvme list
-> Node                  Generic               SN                   Model                                    Namespace Usage                      Format           FW Rev
-> --------------------- --------------------- -------------------- ---------------------------------------- --------- -------------------------- ---------------- --------
-> /dev/nvme0n1          /dev/ng0n1            foo                  QEMU NVMe Ctrl                           1           8.49  GB /   8.49  GB      8 KiB +  0 B   10.0.6
-> urezki@pc638:~$ sudo cat /sys/block/nvme0n1/queue/logical_block_size
-> 8192
-> urezki@pc638:~$ sudo cat /sys/block/nvme0n1/queue/physical_block_size
-> 8192
-> urezki@pc638:~$
+> This problem can be reproduced by running the lvm2 test:
+> make check_local T=lvconvert-thin.sh LVM_TEST_PREFER_BRD=0
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Fixes: 2b1c6d7a890a ("dm: optimize REQ_PREFLUSH with data when using the linear target")
+> Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
+> 
+> ---
+>   drivers/md/dm.c |    2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2025-11-19 15:08:07.000000000 +0100
+> +++ linux-2.6/drivers/md/dm.c	2025-11-19 15:08:35.000000000 +0100
+> @@ -2005,7 +2005,7 @@ static void dm_split_and_process_bio(str
+>   		 * linear target or multiple linear targets pointing to the same
+>   		 * device), we can send the flush with data directly to it.
+>   		 */
+> -		if (map->flush_bypasses_map) {
+> +		if (bio->bi_iter.bi_size && map->flush_bypasses_map) {
+>   			struct list_head *devices = dm_table_get_devices(map);
+>   			if (devices->next == devices->prev)
+>   				goto send_preflush_with_data;
 > 
 > 
-> -device nvme,drive=drv0,serial=foo,logical_block_size=512,physical_block_size=8192
-> urezki@pc638:~$ sudo nvme list
-> Node                  Generic               SN                   Model                                    Namespace Usage                      Format           FW Rev
-> --------------------- --------------------- -------------------- ---------------------------------------- --------- -------------------------- ---------------- --------
-> /dev/nvme0n1          /dev/ng0n1            foo                  QEMU NVMe Ctrl                           1           8.49  GB /   8.49  GB    512   B +  0 B   10.0.6
-> urezki@pc638:~$ sudo cat /sys/block/nvme0n1/queue/physical_block_size
-> 512
-> urezki@pc638:~$ sudo cat /sys/block/nvme0n1/queue/logical_block_size
-> 512
-> urezki@pc638:~$
-> 
-It might be that qemu changes this, i will check.
 
-Christoph, but i assume it is valid case: logical=512B, physical=8192K.
-Could you please confirm?
-
-Thanks!
-
---
-Uladzislau Rezki
+Reviewed-by: Bart Van Assche <bvanassche@acm.org>
