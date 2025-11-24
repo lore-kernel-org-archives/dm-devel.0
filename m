@@ -1,62 +1,64 @@
-Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25390270EBA
-	for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 23:48:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 807A92765ED
+	for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 23:48:23 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764028103; cv=none; b=XrpXCYVQu3/y0ytyMDHfZjTumq6iiwpRvUDSCdy7OX5JETxoWArVkGv3f+1pUrkOKD0N+42/NgIHgdBymUkAgIyqUNDYrEXmU8dy0JCa62AABxX+gNntDME+9WYa8dmvqqUMRrh85/15cYbvGsutTykhOJdrc/5IkAaKEojk46I=
+	t=1764028105; cv=none; b=kgD+MEG5hpsboQHqLkbBprQV01CZm2W1X2bCbKhOfcnOMfZ4Zv/y/YwCkuWYPakfu/Xikbu+gPAPLiHu6h/idzbaWX7RUEtYKsVNGXy8AuFr/ziXC8SAsh6/wUp5G2iVFePcKHJ4PpxTFX0D6qY0vAsu1DSdWaxbQwOpMxMJ8xk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764028103; c=relaxed/simple;
-	bh=0HZiUPVVqiDv8ZEl67pEJba49nGpbGLpzJLHrHVWkJs=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=DHaWa/35A6msEPs1Lp2SgKn4V9aA0jdJz4bgQY12ZQq56zQvToMO8HsDRJuYBq7Csr9woK8FXIOKpXv4ovvhiISCPxXIcAgxQkQjgFmESdovFoQvU1abviiS3LWh8mrRHa91q2U+y6uQFmjUluYPFE45DBhieqIEl4UFVE71CeI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jaK7czRE; arc=none smtp.client-ip=209.85.214.180
+	s=arc-20240116; t=1764028105; c=relaxed/simple;
+	bh=O/JUDf1xQdyUKKqPMxOm/ySwho1/juV+ixb/yhr4OcA=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=PDboGCFA8WNoq4/K/fXZIZEUcHLP4J7T521TRshimn8F+YiIeahwSEcF8UB6bBopkjT1oNTRGYTnY9rzW2ypO7DNcNXJ6ogHXXRPvR7ysybY8nQYAqHhAuDF0lPlM3j9MffvNjnevpQhD8L4cqitX+biFL8mqbris4tcOHZaaMc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=i4zPyejK; arc=none smtp.client-ip=209.85.214.182
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jaK7czRE"
-Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-29555415c5fso53850355ad.1
-        for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 15:48:21 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="i4zPyejK"
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-29808a9a96aso56281875ad.1
+        for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 15:48:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764028101; x=1764632901; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=L8zwVcuAssRnEQZ8e7ewIMIsPfvOXMAA4RWGmHyZ+Rs=;
-        b=jaK7czRESMmIFZ5q7I9LftiD0cAgblOKnwtu4kDY3IOAbhLmzWEFVG86K+wcJyKcjD
-         p7ZjhWMGnEQ1Co5gO+AhtmnmrBNPkdKHqiunWJmB8incRf1BpLTNC7gpgr2PKI4qhGIu
-         Q1HbS6eQJ+sXyHrHoBvInj0k6H78Z8kn+0rJ5/Cv2/0IvXYllJrhudD8E+EIYUmNF3pP
-         n0owE2OJ9Z1yhwYFglEt/RkhF2IWb1bNsLzhCFA2E/v2stLrnI1hOc6j1vrAcx+T5zI3
-         q5sh8K5aHV6zVGprJb0osdYuzN2rxAdhn/aIfRjGo+FoQvHKuqsCaHk1IC+3XtFnZQ6/
-         lFxw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764028101; x=1764632901;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20230601; t=1764028103; x=1764632903; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=L8zwVcuAssRnEQZ8e7ewIMIsPfvOXMAA4RWGmHyZ+Rs=;
-        b=LK3Vj5qRj0l2ujPQ0D/tuV4rVwGQkVqPRvUCNIoQFXrA30gr346H+MPhW4iO6KaLAE
-         8buhPBT73IDhH1n7QoLT4yYjTpxeCp0DlLlUGNQvc80QdAjO+bC+rAy/9SaiaDfDCBox
-         /KddUNsqd/bFLTX6C55hDo6q/8xLoh4V+Ttr1nwyR5WAtWNkdbU+/rpJFBqGH7GBOYne
-         Z9aAocc6gIO8Lc3k++gZbuk0wHAlBLKcEWkj4uzTVQPGlBkB3hFAf/biIfVuwH6Zf5r2
-         xwvf9RUix5r0z0Sw6ESqiaLlc5KNTQ/lkkHzR1vAwVvCa3DZgOWu67ufVxINYRs2mIw3
-         4MFA==
-X-Forwarded-Encrypted: i=1; AJvYcCUzl3q+0SH5morNo16YIGmz11q0Hz+nMrmETPYKOqNYC/TqMsBn/pBZdUUZ7F52bBWOXQpPYOT9+A==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz8mKbACKlJWWK2fNA6FEbpeG7u6Mhd4CuDWJovA8C45DGcGs3e
-	5gMDYOx7YwQc5+gadLXS1STxJyW8XElp3mw13efvAsbrkmQunTQrk8k5
-X-Gm-Gg: ASbGncsH8cwZWFl0N29Jr0Iwo9suOjjMGM94YIk7xvGGvbQau1mUpYJSFUoMmkgVNmb
-	Za3yz2dylBiV0d6OxzKsfoI4W35/27ey8gVTV7gPPtHsL0Xvi5yYNwPRBDuxlnwPebDRPhfeBzT
-	HldVEqeoynTuocWqBooV+2HJhJTGcoD0HSX3znvxuynJgj4/jyOqamn4rCn+2jiXtWm+0Lnfq1M
-	CD4ijg2OXGeaLZ1xmn2UkivDdoi/gv/p24AECokSCsDw4qE2c8Gm2x1zam38w6Bd0JR7MkY4MXs
-	u9MaaDd1FnDg/4ZFMhdsSTwIM8ywJdPQyH5hJFe0UPQ20ZNYl53FLkLcsl3EF6uWt4/4tgI4X+P
-	OGwDTxfHDJaymgTGELmOpGUhk0xKUiBbUvkTbh8hZ128mXB/7QGiFm7TkxtHSD0CIuzFQbmi1b5
-	6e3bnQ0eNEfxOYJL5jM39q2+tsWX/4eMAsUu24VLDKV8Mo//s=
-X-Google-Smtp-Source: AGHT+IEWVgvs7HfQh1Jftv0/sg1EMetPp1p1pbe1p7lp0IBRgw/xws/S7S4QHSHoK5/x2kKFyy9WJQ==
-X-Received: by 2002:a05:7022:1093:b0:11a:2ec0:dd02 with SMTP id a92af1059eb24-11c9d85fed4mr7996088c88.33.1764028101157;
-        Mon, 24 Nov 2025 15:48:21 -0800 (PST)
+        bh=YcqbQ5S4JXXbau3fgh6ZbMU20qGzRcIfkGSPAKTqhkc=;
+        b=i4zPyejKCERx6+6qf/3CNV6bmxom7VZLsfJCKwXMHXUpY7KwJyDE50qDQcD37AJX/X
+         YoJD4SFlJLJGdCPXJH3h5u7JH8sKcULsTv3J6d9+SQ/pFWjsU4OtquILFJ40jUSoSzF6
+         bzp5uIraDVFFTIfKvOC4F4uJaxCesWHirdo3Gw2e1V9xcbe+2YiJLtxOwVBxD54lNcL1
+         zgrL93lcytumdXSmMylfsz+Rp2Fp0CuHBu3y84qftH+gpI4wmfBhDsrnx4hNu/Ts8032
+         jztp4ef8XYqbE1BYeBhDoAtlYbrHKPaiN8AmKU3OMGPIpCbfrw7D9esSkUdTWsyY0+3h
+         vNQg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1764028103; x=1764632903;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=YcqbQ5S4JXXbau3fgh6ZbMU20qGzRcIfkGSPAKTqhkc=;
+        b=vSvliGioO2kp4EAXRqNpglZ3v07plTxCVj2ocZaV/LKDLr44uuBQC/EtI/axBXv9fp
+         8Qu+RIMAEndpXJF2QQ03rTWBJ6Z+wMGQC90EDpG5guZvxhS9kkkrD37a1bJfBfTgvkxs
+         CZWUSIc4xOV7bb+EBZiLaDUrxqdbuhRoKWltEU3NR0/xqlTMQUqA9Oj3JhtQhngwsGFN
+         zHFztLP3YyPWQL6IhIA6aC0CtFz1Eb4ukJFsH9F084s9lYgB9qMU8lSE75OS2mJ+Q2W5
+         yBbFnHeGrL3+N4QtXa0ERqDBNa1MtyahoYDUVCC7Xf9j+ow3ZhV3CLI56ryf5g7fzPUE
+         DG2A==
+X-Forwarded-Encrypted: i=1; AJvYcCUtY8KdtFFrgMMm+sfhsV/XWBr5vTKNlzk6VjKzfLgSN2pq4zZIBQt+jT8X8ERIibX2/wqOmGRhuA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YziqsSQy7EdTZCIgjGdC9LQU5Jw21j5h33U0k6F0N7aQsBIRv5w
+	ZZdPTuODhUjTPDrehmgKLtZsT5wVga82+5ADuUMglhavFTgW7SadSz96
+X-Gm-Gg: ASbGncvBDH2IRv0EbkI+v0UrydL2x+NU/M3aC9cqr/ZXidEsoLY0mun5yK7xH6pFO4R
+	5KooAWYYd3GltHW913ib26/WrDLyKH5ZQETEL4g2dDDbJ/iLgJcu/6kzkW3aYE+PVeuKXxu2SL7
+	T+T2cZYA/0UZ94JgZTGBCiA8O4XBpdfvSAiCZaZ9wddLalgQ8L0xegnKaolTD3o+AjNgJniw4n5
+	vqjIHyR+DsomTRUSdWFwqkHT7oI1JDBGzBCjbln4CZ7CvIB5/RlTfcgsPoSZBBH6xgPHHSUcGn3
+	Bjg9a7ueDC8Jl/Egdp2bkLRSTl+ng26en985W6ifrEMt0NjzkRt3VpMsdtLPO/LvltNKdn6e40O
+	ZKnztet4j0lm+IgGUd3yPOsEYWCsnH1mFgZzUm6dRX1Y9Umsp8WLTZL1VFYztfOTe/XmK227FL9
+	d0DMPShhzty0nU9iYBHJClqKXfScKpIUi8Lv8kLt2cybz4pfg=
+X-Google-Smtp-Source: AGHT+IH9F80PvdpBpbojg7Y02KngkDHXsfXBdGLUzofDSvSvFO71NKJ3uHp3bN/w9c26If04NsQEQQ==
+X-Received: by 2002:a05:7022:d45:b0:11b:c1ab:bdd0 with SMTP id a92af1059eb24-11c9d863a0amr6183635c88.35.1764028102624;
+        Mon, 24 Nov 2025 15:48:22 -0800 (PST)
 Received: from localhost (ip70-175-132-216.oc.oc.cox.net. [70.175.132.216])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11c93db556csm74670928c88.1.2025.11.24.15.48.20
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11c93cd457dsm72215056c88.0.2025.11.24.15.48.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 24 Nov 2025 15:48:20 -0800 (PST)
+        Mon, 24 Nov 2025 15:48:22 -0800 (PST)
 From: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
 To: axboe@kernel.dk,
 	agk@redhat.com,
@@ -78,11 +80,15 @@ Cc: linux-block@vger.kernel.org,
 	linux-f2fs-devel@lists.sourceforge.net,
 	linux-xfs@vger.kernel.org,
 	bpf@vger.kernel.org,
-	Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
-Subject: [PATCH V3 0/6] block: ignore __blkdev_issue_discard() ret value
-Date: Mon, 24 Nov 2025 15:48:00 -0800
-Message-Id: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
+	Chaitanya Kulkarni <ckulkarnilinux@gmail.com>,
+	Johannes Thumshirn <johannes.thumshirn@wdc.com>,
+	"Martin K . Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH V3 1/6] block: ignore discard return value
+Date: Mon, 24 Nov 2025 15:48:01 -0800
+Message-Id: <20251124234806.75216-2-ckulkarnilinux@gmail.com>
 X-Mailer: git-send-email 2.40.0
+In-Reply-To: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
+References: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -91,79 +97,41 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi,
+__blkdev_issue_discard() always returns 0, making the error check
+in blkdev_issue_discard() dead code.
 
-__blkdev_issue_discard() only returns value 0, that makes post call
-error checking code dead. This patch series revmoes this dead code at
-all the call sites and adjust the callers.
+In function blkdev_issue_discard() initialize ret = 0, remove ret
+assignment from __blkdev_issue_discard(), rely on bio == NULL check to
+call submit_bio_wait(), preserve submit_bio_wait() error handling, and
+preserve -EOPNOTSUPP to 0 mapping.
 
-Please note that it doesn't change the return type of the function from
-int to void in this series, it will be done once this series gets merged
-smoothly.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
+Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+---
+ block/blk-lib.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-For f2fs and xfs I've ran following test which includes discard
-they produce same PASS and FAIL output with and without this patch
-series.
-
-  for-next (lblk-fnext)    discard-ret (lblk-discard)
-  ---------------------    --------------------------
-  FAIL f2fs/008            FAIL f2fs/008
-  FAIL f2fs/014            FAIL f2fs/014
-  FAIL f2fs/015            FAIL f2fs/015
-  PASS f2fs/017            PASS f2fs/017
-  PASS xfs/016             PASS xfs/016
-  PASS xfs/288             PASS xfs/288
-  PASS xfs/432             PASS xfs/432
-  PASS xfs/449             PASS xfs/449
-  PASS xfs/513             PASS xfs/513
-  PASS generic/033         PASS generic/033
-  PASS generic/038         PASS generic/038
-  PASS generic/098         PASS generic/098
-  PASS generic/224         PASS generic/224
-  PASS generic/251         PASS generic/251
-  PASS generic/260         PASS generic/260
-  PASS generic/288         PASS generic/288
-  PASS generic/351         PASS generic/351
-  PASS generic/455         PASS generic/455
-  PASS generic/457         PASS generic/457
-  PASS generic/470         PASS generic/470
-  PASS generic/482         PASS generic/482
-  PASS generic/500         PASS generic/500
-  PASS generic/537         PASS generic/537
-  PASS generic/608         PASS generic/608
-  PASS generic/619         PASS generic/619
-  PASS generic/746         PASS generic/746
-  PASS generic/757         PASS generic/757
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 3030a772d3aa..19e0203cc18a 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -87,11 +87,11 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ {
+ 	struct bio *bio = NULL;
+ 	struct blk_plug plug;
+-	int ret;
++	int ret = 0;
  
-For NVMeOF taret I've testing blktest with nvme_trtype=nvme_loop
-and all the testcases are passing.
-
- -ck
-
-Changes from V2:-
-
-1. Add Reviewed-by: tags.
-2. Split patch 2 into two separate patches dm and md.
-3. Condense __blkdev_issue_discard() parameters for in nvmet patch.
-4. Condense __blkdev_issue_discard() parameters for in f2fs patch.
-
-Chaitanya Kulkarni (6):
-  block: ignore discard return value
-  md: ignore discard return value
-  dm: ignore discard return value
-  nvmet: ignore discard return value
-  f2fs: ignore discard return value
-  xfs: ignore discard return value
-
- block/blk-lib.c                   |  6 +++---
- drivers/md/dm-thin.c              | 12 +++++-------
- drivers/md/md.c                   |  4 ++--
- drivers/nvme/target/io-cmd-bdev.c | 28 +++++++---------------------
- fs/f2fs/segment.c                 | 10 +++-------
- fs/xfs/xfs_discard.c              | 27 +++++----------------------
- fs/xfs/xfs_discard.h              |  2 +-
- 7 files changed, 26 insertions(+), 63 deletions(-)
-
+ 	blk_start_plug(&plug);
+-	ret = __blkdev_issue_discard(bdev, sector, nr_sects, gfp_mask, &bio);
+-	if (!ret && bio) {
++	__blkdev_issue_discard(bdev, sector, nr_sects, gfp_mask, &bio);
++	if (bio) {
+ 		ret = submit_bio_wait(bio);
+ 		if (ret == -EOPNOTSUPP)
+ 			ret = 0;
 -- 
 2.40.0
 
