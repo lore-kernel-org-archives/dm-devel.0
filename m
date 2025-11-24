@@ -1,95 +1,92 @@
-Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com [209.85.167.50])
+Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C871E13777E
-	for <dm-devel@lists.linux.dev>; Sat, 22 Nov 2025 22:47:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A04F298987
+	for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 02:57:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763851678; cv=none; b=gR1KZdptmr9aQp0xKPuBHgRho06nknfPBm0ETAYs5zoY5THhMQhAM65VFkrG7zwv5ShjjD4/PmtkVJ+HdDb7yVXbwSp5NMGZ7fRI/0GLlPDGNwoM7oreSvDfjNBt42k754xOKdoG4obRlANxAVA8J1ThFskM7MpEWulvznDJ+Lg=
+	t=1763953067; cv=none; b=ZZ2KumVokDHHwr0GV+yx0rYito8FWpdyygSOZAvPcyYoEio05xrAE/l9CzAmBwq9iDmAXSCisN4pTbpXqNEdKNNumEv2uyrhQWMrH5Re0EV3EqydSKTW0ird37py6WpPITfNjcxae9DkDLfulXkLr/yShqtxF/3jJJZ9uYy0kH8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763851678; c=relaxed/simple;
-	bh=mDmOqDRRV1GxRTkt03uYnfvm5YBI/u/mWZasnkUTwrI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Sq2LPAd0ubgfRrAEooKkCE0qDvR/tb0kNJQ6KKv2oVshUSPO3WP6bapCVHCikV82YaUY3x8aHSsDy2a7p4yzPc4k94BlikpQWBegOEuDMAEercFMKkBuBEpDSdKpZx6yNyEPmnbckfhrKORVcw5OmOgvBOVfTlg4tpU5717W2oo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=TvWAfVpb; arc=none smtp.client-ip=209.85.167.50
+	s=arc-20240116; t=1763953067; c=relaxed/simple;
+	bh=W39EvEsOKZnDPgVc3vjL1URC280/rs9OxMSKpDWz+C0=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=GBaHX6QiqeQg5/PWSEmxlN5jJKEwz0gtGup8IUV8AfTZd7YwazWkcxTZUH1+oCtOoPqoE2Q+02U7YqCGXm4xzNTg5OCbKpzPPb7YaLFOaXuQ5LQUulT59DVhAPLC4wb+d6wEv0YGDHGeobOlE8W2kGWJwRSizNhp1a4tXX6admY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XpWlbck3; arc=none smtp.client-ip=209.85.210.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="TvWAfVpb"
-Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-59583505988so4513586e87.1
-        for <dm-devel@lists.linux.dev>; Sat, 22 Nov 2025 14:47:55 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XpWlbck3"
+Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-7baf61be569so4528820b3a.3
+        for <dm-devel@lists.linux.dev>; Sun, 23 Nov 2025 18:57:45 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1763851674; x=1764456474; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1763953064; x=1764557864; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=mm9cJVhutkedd51ycbYwKmMqp19QwPFiX/ffFg8rVcg=;
-        b=TvWAfVpbGetCW1LYJUdJ7UPtX+M9OB8xLXx9HsZh5CVUZ1O8fbM+4TVPxG00sXvcf2
-         GTI6r8odIU/pgdn7sftlrF4Z8frboqXNWQ7VowyuEvnjeSZ8Et2S5vNi0lJrD5kYq0t1
-         wm3LRPgzKrBKgLvHIOKonPH5mClFHK3+EOcOFsY43bSmYgOtgokQT+yu87fchu7NB5zI
-         A+5GVCYwGS15szqIZZWSy24EJehlCkGN27vcBKJ/w/LcuAwR55OjQKMbPNjzOTyeLJA1
-         nBgXWTtedWeNRAMP/BAEE5NAV/S7SSCe+CBs+sm/Yh3lWO8bhBnxcRRXYcfcf1WRgqQP
-         utKQ==
+        bh=RkWhYF4f1lhsSHEbmYsrWUEDoM/XD4r0C+XpnxkiI8c=;
+        b=XpWlbck3jB+MEGaYnNpkPtKzPO1VwgUWMF34RM5vuIJ0j2+GtXXHuCMOqrX/JKo1cv
+         X9DcABM2+1/qcVS4og7fnI4t28VocYB5q678uteKzng4f3rPMbq1KYW8zVcUgYCyQ3GF
+         IOE6kPpYY6tWL2kbgm+ZkMQekqo30ii1w4UaHd5np1CTIJl7GwptpRkeuKvg0BaRdPt4
+         Uy53ZP2rRxwGVDR0b9Jr4hNR98UDvSnJBf7ds8nQ1hDXJsT9Z/PVi37xDCQqGQp81Im4
+         dYVYBJCCafg5MupNdJgKp+y0WfTE2FkJmt48hVRIhCbuI1uISjrT5lYq5DXZlyaiaxvO
+         eeqg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763851674; x=1764456474;
+        d=1e100.net; s=20230601; t=1763953064; x=1764557864;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=mm9cJVhutkedd51ycbYwKmMqp19QwPFiX/ffFg8rVcg=;
-        b=WupBeeX58pW8oX8PfUs4dgna1WnBCMTKw8FpciWGOPRw6ZroVJfVmdIB7gBs305/R2
-         DlMq0Vlmk0M9aKzHdEr09EAZonXLHO5i2vf7C/YZkTTVV/t2DKGILY+ZRu+rfmX9l8Yd
-         e8OdSOoTEqZlrhpwkgG7SxFcRZJuY0rBlaTVlsFQy4WVTrC6PgfJeCT3eErP8ZiZLY1x
-         v2tx2OOsMtXHX2cbqPZW3G1yb6n5Qr4/FwLl7NmlbKezmxX9bl4HFgnRS2/jSDBtO3nv
-         lzsFNowJryCQIV0vZuI4OqcSIgG/+x24ddms816KNQFpb1FPjOyhVYb7cuudbzD/rheS
-         no0Q==
-X-Forwarded-Encrypted: i=1; AJvYcCXHU2LGAmix6RVNqk7VwD+M+qRc08nywzfcEsIK6uHN6MyqgGH1XONlofLhDvEZ/tiwnJyhT2vJWA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyPRTzD1TjI/SGf6YE4sQcZKL4I9rSnQqtg4fi//vEOkay8lkjA
-	RiHc63QrG/vOC2isEzaTeQpDxTwjYkw2xeqii3CuJVEc94VdFesmYvsB
-X-Gm-Gg: ASbGnctPOjdl9biO6ppXK9kRVMXnEJOIBLZcCFzJaOAQS0x+mcWTkaOS/ivXhZrdr5r
-	XLr0cFXh9ojEVYEU8D8AxWyJPX94qiH1g2R5Gm5R1GUwyEDbBcJ1vuC1Fc5cjpVHmIlGsLd4R5l
-	cTJhKaeV9DNHFa87KTipG1aUhj6FCPoFLHyG1ue5xv727F9fDhmSkrJwuakTAyr03kYF31Sztrt
-	Muf2xKQgFHOD6SohT1/8RYLnJYAYa6seFgVilv1AJTX7KaF8axDDDdSxuI1WBFf5pL7/nJND9cS
-	dzgHTGPDFemVlTDe7h4WTar+B3Srl9OnPgKyuZX5EIexWJYHoE7S4xiZwlOYTMVFXJdAouSG/8y
-	cqBP+V6N6WYb8/pDCcmRDiajRx9+U1Uq4sV8Yc6OFiI77NhWWYtFtmQ2GT8APE9bf5hq3csUcr/
-	cnFVn9qhdTKQ==
-X-Google-Smtp-Source: AGHT+IG25dEQnHwaBToxpvBjTeZ/3RB3yCymIb0k9rzfOt31nS8ruDCrSu8IePguUMWt0EMXA9m5xw==
-X-Received: by 2002:a05:6512:308c:b0:596:a000:596 with SMTP id 2adb3069b0e04-596a0000a2bmr3428587e87.10.1763851673743;
-        Sat, 22 Nov 2025 14:47:53 -0800 (PST)
-Received: from localhost ([109.167.240.218])
-        by smtp.gmail.com with UTF8SMTPSA id 2adb3069b0e04-5969dbc5988sm2742367e87.78.2025.11.22.14.47.50
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sat, 22 Nov 2025 14:47:52 -0800 (PST)
-From: Askar Safin <safinaskar@gmail.com>
-To: mpatocka@redhat.com
-Cc: Dell.Client.Kernel@dell.com,
+        bh=RkWhYF4f1lhsSHEbmYsrWUEDoM/XD4r0C+XpnxkiI8c=;
+        b=kpqxC0YOXSNy30SFXaqxaiCTyOsTsm44QVuUPMM5kIsH13YsEppQ27pGtjU8SD8Ynn
+         MOFP1GQDsGa5iRGK43zHvEcPXwK3/TnRceg3/BRATHYBre5gn59yoMSik3OyxZFqVRjv
+         sbWG1681thJJDe6wk0oBj6NmlZQey/QwHer0025lZ5wAvcDKynUW805Ocu0bc+jxm+/I
+         diA0x33mT2unPRR+iVnzKRNeCcctCPHro6tOoX1rhzPT/8Fcis8kjVtfRqXbtJbo6zgc
+         p5KceWpoR4HDySUPnib+ME0LRQN3dhtebcxMsEA9bD0zPESv/TJ8Sos8pXf39x1k6z3U
+         efFw==
+X-Forwarded-Encrypted: i=1; AJvYcCXo9evXcC6Dg0v1sjrhlfPjer3tIvWoeGz4pw93fu/PDLRdxcGoBoW7gxPtk5rc8gy0TNT3OhFxXw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzBG/UYm2CNd4SGxhliY4p/NbPNKLXx8zbq/UIUGONu0ZhfViHO
+	ugbFkDocY0xqQtcxYR2caGGDMrmlVKQlcqhC0uYgJY6VN4ykfKMiHghN
+X-Gm-Gg: ASbGnctGFHxy/sRuadlY+pM3zllxSMEYrE9rhBaIxEPnJZzVFATQEoMFZu7Knk0lNU5
+	UVO5z6uM0mm+a4nNHurAbXeQ5nRCKRU6RmIZLkREEoJaG9aVvlcVxRawCYCtRR1r+5xz7H2C2y7
+	tYxBYPGZpQIdYedyTUz5H19PK6pqNTlh5OUlisF+FMSvbLGLY9UQaAjAOo07h6eTmG1PukUg45o
+	d+ayXS5khdZaUiiRxqxjT3eCccJA1kAy8CG3qceegA5Zr5zDtysFt/8uiVTevQFSHzxwNQju9f9
+	wCUoxITcmB+jA0fhp/HT3+CZ/bKJqRSYUu4neEBZizYC2azzkRVUuklxKt50esBst0I3eV7PxG7
+	QLFLxQdnDqN3OC99Bto06TtI+iEd0GWa+c0lafXs+7LrYY5ZEK0D0lpXX5aBwg8Z79nEJ1OCVQH
+	NqKAA0pCUDb8aNBQ47k06ZijRhfXD1vmOi/27nJuX9pGxAOIc=
+X-Google-Smtp-Source: AGHT+IH2vl9a4qHa0wFFFsUNbzMzey1IZwx6tJlzdt+jREZgI3T8WYYR2vo3qAu15ZJ2v/Ev109wPg==
+X-Received: by 2002:a05:701b:2803:b0:11b:2138:476a with SMTP id a92af1059eb24-11c9d8539eamr4726588c88.27.1763953064432;
+        Sun, 23 Nov 2025 18:57:44 -0800 (PST)
+Received: from localhost (ip70-175-132-216.oc.oc.cox.net. [70.175.132.216])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11c93e6dbc8sm65938624c88.10.2025.11.23.18.57.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 23 Nov 2025 18:57:44 -0800 (PST)
+From: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+To: axboe@kernel.dk,
 	agk@redhat.com,
-	brauner@kernel.org,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	song@kernel.org,
+	yukuai@fnnas.com,
+	hch@lst.de,
+	sagi@grimberg.me,
+	kch@nvidia.com,
+	jaegeuk@kernel.org,
+	chao@kernel.org,
+	cem@kernel.org
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
-	ebiggers@kernel.org,
-	kix@kix.es,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-crypto@vger.kernel.org,
-	linux-lvm@lists.linux.dev,
-	linux-mm@kvack.org,
-	linux-pm@vger.kernel.org,
 	linux-raid@vger.kernel.org,
-	lvm-devel@lists.linux.dev,
-	milan@mazyland.cz,
-	msnitzer@redhat.com,
-	mzxreary@0pointer.de,
-	nphamcs@gmail.com,
-	pavel@ucw.cz,
-	rafael@kernel.org,
-	ryncsn@gmail.com,
-	safinaskar@gmail.com,
-	torvalds@linux-foundation.org
-Subject: Re: [PATCH 1/2] pm-hibernate: flush disk cache when suspending
-Date: Sun, 23 Nov 2025 01:47:48 +0300
-Message-ID: <20251122224748.3724202-1-safinaskar@gmail.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
-References: <c44942f2-cf4d-04c2-908f-d16e2e60aae2@redhat.com>
+	linux-nvme@lists.infradead.org,
+	linux-f2fs-devel@lists.sourceforge.net,
+	linux-xfs@vger.kernel.org,
+	bpf@vger.kernel.org,
+	Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+Subject: [PATCH V2 1/5] block: ignore discard return value
+Date: Sun, 23 Nov 2025 18:57:33 -0800
+Message-Id: <20251124025737.203571-2-ckulkarnilinux@gmail.com>
+X-Mailer: git-send-email 2.40.0
+In-Reply-To: <20251124025737.203571-1-ckulkarnilinux@gmail.com>
+References: <20251124025737.203571-1-ckulkarnilinux@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -98,34 +95,38 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Mikulas Patocka <mpatocka@redhat.com>:
-> [PATCH 1/2] pm-hibernate: flush disk cache when suspending
-> 
-> There was reported failure that suspend doesn't work with dm-integrity.
-> The reason for the failure is that the suspend code doesn't issue the
-> FLUSH bio - the data still sits in the dm-integrity cache and they are
-> lost when poweroff happens.
+__blkdev_issue_discard() always returns 0, making the error check
+in blkdev_issue_discard() dead code.
 
-I tested this patchset (in Qemu). It works.
+In function blkdev_issue_discard() initialize ret = 0, remove ret
+assignment from __blkdev_issue_discard(), rely on bio == NULL check to
+call submit_bio_wait(), preserve submit_bio_wait() error handling, and
+preserve -EOPNOTSUPP to 0 mapping.
 
-Here is script I used for testing:
+Signed-off-by: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
+---
+ block/blk-lib.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-https://zerobin.net/?66669be7d2404586#xWufhCq7zCoOk3LJcJCj7W4k3vYT3U4vhGutTN3p8m0=
-
-Here are logs:
-
-https://zerobin.net/?5d4a2abbad751890#WMcQl4FAZC9KqcAuJU3TSVr7wuVnPFwI7dlinA9QHOo=
-
-Tested-By: Askar Safin <safinaskar@gmail.com>
-
-There was no any reason to wait for me. You could easily test using script above.
-
-Also: Linux shows this scary message when booting in Qemu:
-
-[    0.512581] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
-
-So, FUA is not supported? Does it mean that this patch is wrong, and works purely
-by chance?
-
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 3030a772d3aa..19e0203cc18a 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -87,11 +87,11 @@ int blkdev_issue_discard(struct block_device *bdev, sector_t sector,
+ {
+ 	struct bio *bio = NULL;
+ 	struct blk_plug plug;
+-	int ret;
++	int ret = 0;
+ 
+ 	blk_start_plug(&plug);
+-	ret = __blkdev_issue_discard(bdev, sector, nr_sects, gfp_mask, &bio);
+-	if (!ret && bio) {
++	__blkdev_issue_discard(bdev, sector, nr_sects, gfp_mask, &bio);
++	if (bio) {
+ 		ret = submit_bio_wait(bio);
+ 		if (ret == -EOPNOTSUPP)
+ 			ret = 0;
 -- 
-Askar Safin
+2.40.0
+
