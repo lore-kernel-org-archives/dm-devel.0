@@ -1,64 +1,64 @@
-Received: from mail-dl1-f47.google.com (mail-dl1-f47.google.com [74.125.82.47])
+Received: from mail-pl1-f177.google.com (mail-pl1-f177.google.com [209.85.214.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F6E92FB0B9
-	for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 23:48:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.82.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67A752765ED
+	for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 23:48:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764028107; cv=none; b=AJU0GSxoFlmRgrn+chDBnWaPU/ib3bQxYS9n8RsCbbRLupYPnoNQh3wCjhHiba34NQHgbV68Ses4/BUnXt4jYGjdWaIVMSfuAirR7IA6QVmZMliK8bmI1dwWZjQrc5rC/AjQb9TrBmC5YHrNWqgoVypGYkDHOgi667em6oMImzU=
+	t=1764028108; cv=none; b=WpTj2AFs8rjO+ypMnF3FWi7d8fRIo4FfHR7YAUbVGUBF4a7536dhbk8RWrBJn9SR9Zt5wwMKzE6jHhWuB4QK76ypczcduLvpTE5a/tdSvjCMjazOdioRHB/UTHGZ8R+6/BN0qVngTAf0oRZ4U1oG0zWtvus82xVEB4NTpLa2YkQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764028107; c=relaxed/simple;
-	bh=ZSqWbY8pVyhLaY6mUuy6f+COqFQf+G+FnHH6zSesNgY=;
+	s=arc-20240116; t=1764028108; c=relaxed/simple;
+	bh=LiJgbQPzVCy/nNKtdgxFtiNJpUa7IyMaSDSo31f8t5g=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=JBIqpTyz1zweSBuIHxwY5VFzRBpbCgfagO2DSXmCS9hojoTduqpCs1KrTnq2QZvz2bA3B3aybT+hvfDurLgma7gUhzcNl3rH/fmrJA2RUZ24ZlyIeWqk7IWlq+WrJfFE0cQg5gOr8u/H8q+5zkAeT/eZix6qSHxdWtUaSE74d14=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HW5Hu4Cx; arc=none smtp.client-ip=74.125.82.47
+	 MIME-Version; b=WbHyln55CEqw3dksK1oMLNNsgC+qsCRAqEGbTUA2oXoC9sqO6d9yV5v/18GVVCXSAuI137Blru1nsWv2fF/DaFH6t7CgGbl8ijpLr7zCG8GIN8+ieG+MKVZ2hnNyTRxCyPYvhFsAYIcyU6+9iuP3ES2I0K1Vlx7DF1CtsWOuznU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=M0+cZ+CW; arc=none smtp.client-ip=209.85.214.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HW5Hu4Cx"
-Received: by mail-dl1-f47.google.com with SMTP id a92af1059eb24-11b6bc976d6so6067022c88.0
-        for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 15:48:24 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="M0+cZ+CW"
+Received: by mail-pl1-f177.google.com with SMTP id d9443c01a7336-297e982506fso66618805ad.2
+        for <dm-devel@lists.linux.dev>; Mon, 24 Nov 2025 15:48:26 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764028104; x=1764632904; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1764028105; x=1764632905; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=9hEyetpjb5QpX08wjji0bcnEJUxus+pp0XTDG4Zkk6c=;
-        b=HW5Hu4CxomPFhOryLZTGb/CCrP9+wSMXlyOtiC9P/HJmF/RCxivx2rQ0DQuUpkSU4B
-         Uk3ju39QGPl7ProMnUikQ06nq9Sr4hCKkdSBb1hLUvkToqdgoAMeUDYbel+SqMIX+1jS
-         mswJ6bpxXJT9wvzFYv0UcfAbQfNyiYuROIpEYVaNoPTBs/e0mE/JWz9Ft1ebJhGBxR5T
-         7EZ5o56KuoI9O/cIl2DX8PVLYrX792gcgZ/aqBifDnW9Dg7ik3dgJGsWF5wOGbuG2Jh8
-         bL2KP2q26t/rRAdD9DuOib/h6qJJ2mCEAO0DGK8+PqkhsGrKtGe7l+TGvvU8qPcuwVWJ
-         tnzA==
+        bh=x5IpKKGvYwA44MA2SdIRqzoysh0eqDWrauHh/IuigN8=;
+        b=M0+cZ+CWSbAw/fyFTjwUROu2vGwjb+eD4cLI1mL1urPxCLA0qJx1i8+YTLAgmCXxdw
+         aBHho08yzyNfYIMSqc6ZgA5tjHkbyWGfYvFEANe0i7NrT33btXSfq9A7YqLHT/rfo6Vz
+         rqnyUv9/fHhoLWvHAD8CxbA6jzOm8viLvF0eSlOIViG2mdbCrdxJTKNFeEYiPuaL9lrU
+         I4l+OYj/JfxKE7mYqS6UL7PLr1K+olGjmwxymqQvCr1OOYRSr8iL9W6dNIO5rhRCpBDE
+         4sNxb+tgasDwuMFlMarVxPIIVYI/0x87GoEY1Bspquh8LNcXIWWVVUZcQx+yek1idCer
+         qrBw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764028104; x=1764632904;
+        d=1e100.net; s=20230601; t=1764028105; x=1764632905;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=9hEyetpjb5QpX08wjji0bcnEJUxus+pp0XTDG4Zkk6c=;
-        b=RZfSghnQ9NAMP1VpEOemWnU4y+sKKlaUT1AB82z3rw0tk4pa5t051KSFlHIdSfsjcf
-         oVtMyIHaVSrXTkp/I2AkLj4FV+wiNEjgS2RdTCwS9CFrpgm9vo6DxBCDOH+Q4RBuVhTb
-         en5DdrLxuYGN9gddIWB5Xc1Hx0zipTthO2Zh+OGHA/Aqihmph4pgBCNbfrhtbb3Z4AR4
-         82NlsgJIjfqIFZmdeAFwraRVHN9BuTkqsQW8HZVlyhOSfJF1+7q00t0Es36TTrwgu0pg
-         N1ikWCm6c+WLujdH+eS9pab5GzLYR3u1XnMlj4BSjBuPQSJ4TSGPGGuHcxPZshvWMH6I
-         UyZg==
-X-Forwarded-Encrypted: i=1; AJvYcCUx/SsOS19BKzjmn7WzHYpJbmU0dRfKSdf2ilF/tWor8F2/JUjJEw8EYggo8HitqjjvGmWK0tcAlQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz9jF4kvFwvxvROfpcytX/xIV7LyOQqJigf5/ENdTNs8/6u6xuv
-	DlPttnGKdi+Wq+KjLmoiI+dbrteCumycNyZYi6+eFORHH4SkFdBW18AN
-X-Gm-Gg: ASbGncuoKD0+Rcb16PHhwq/ZXVNCr2f38g0jkyXFZbze5z8kcirbUG7VeWRDY08ykY1
-	zqij23AVbG6pEYYD5rgU+3CKuMLhj5qEsnjynGzt4VuofkXkXptXysr/adnoZds5TiSpfLx1xRz
-	AwwM3LBmhxkB+kdRiD83o+RD3hZqItLDmAQkyp4MMEqkQ/i8XURlJDb5ADA1KLGkKdc9ptIA51X
-	mNRPT8XGMYHIWv7LEARHtmiJazAAJ5VnT6XTOeATR/ELuJo0ZZ3esx7oSw8kFlpdiYOrqqRh2GM
-	OeR0KH14/TVq7KMw5Lq3UFS8MZprFiJ5Xya+fWbexG4bl5070AasYQSXvx8w4dZq+JVJcg/S4fm
-	VtSeT/UKxWazjpOucUDEK5NxTcOVBsR+gGEEvwL3DAfRIcz5vO3cCLM34/l9ugHMUUb5d9UoGtJ
-	OT2ucfkfU/2DtbmfrBzGhbalnV4kFKOiwBBURnla8qe9aEN60=
-X-Google-Smtp-Source: AGHT+IG0os1yUTB1U8y0wFQR2JhU9wfG8RKwx2eS9+a2sORTH4Ie8rtwmUzrvPIYkCFTBjjRJcm4Ew==
-X-Received: by 2002:a05:7022:ec17:b0:11b:9386:a382 with SMTP id a92af1059eb24-11c9cabc4f0mr8878128c88.21.1764028103912;
-        Mon, 24 Nov 2025 15:48:23 -0800 (PST)
+        bh=x5IpKKGvYwA44MA2SdIRqzoysh0eqDWrauHh/IuigN8=;
+        b=ADlO9wufRpR79ywy78WCn/Fi+++U4+u8O1TR8teOjorOGXpX5K2Q+7TmiS1IXP4lTY
+         Key87LZJVFVYnDL4t8lR1PXglAuVufzaK8/Z27udUZzhk9rSRbOZYQdyg4w3Cng+K6J8
+         oKfZE93l1BW3KxmFTFxt579xc6/pBhSmEatK+s7BFwspa6B6RwQ7H6AppBxr46JwOdjr
+         rRGGDPZSTt1HXNYEdhyZkCsoz3hbdCH8Zu7loRV2Pg8B2wdrjS6IhFzYMS+Ah8qAHgZU
+         p4YILlDUVieahHDrU7vq6WZOKgXiQublXtWu/LiyMSqxRztaOMaxdzoHw9UnmsXSroZR
+         ldZQ==
+X-Forwarded-Encrypted: i=1; AJvYcCUjJdC017HKvJlReybsDNCEKpWN3bBHap5bAyGbY3fr7n9hqpCxJhjEn6OG5csE7tYdGUpYwQHhnA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx624861uT+xNn3KCDiVsc3WW2N/BY4yR7yX688gLopkh9m7td6
+	FgjnAgL3e1m9+JGy896OwRkzwFQ4JKgrcVuSD8Vuo8rb9nm8cD99jLSl
+X-Gm-Gg: ASbGncs9+6JVMQE/ViOcld1Z14e62glnGW6ermj8hfNDAmK4PBhQLzRx8gMmdmM1t90
+	r1dN5qjZ6RJkO1ag9BuSQst6ib0sjbuyecDIzKMFg8+XrcZziUEkBatEdPmOavrS11hiqtS22Wa
+	zHfBnyyUobbmiC4r8G4onud3Vi8CdgVb9ICb4Jgi7ml3Ta0MaHyuoykHyWPSAN/8rGgjHO70k79
+	Se4S6WQdK5LvqgqitSuLnSD0XLEf9vMJGMRvxen7xmwOGoO/YjDokpdVawfBuST7W50pKdxVTgx
+	4C+Ero8V66NTDmxt6hqwt9vXuFFDaK632yoJOtquKqQ3DTmayTOBSNi2Yhz9M4TLIPqMra23876
+	3gB1QNPUb5lg0T3veoNVut09bZB7+9uacPHHfltPAxhfB1M794NVuB330mk+uynYLH/11TZC+AH
+	RwU+4cem4vF35jCEMtbuBgAaU/MjF8FmQMkNyhSPHxd89lzSlP8jUZ1vta3A==
+X-Google-Smtp-Source: AGHT+IGUjnYuQU4uZ65RexnKMVsIkRo4SljblPDkF73f7cjoVp9uAJMvqcbsbNcZ8FiTC+XwEcc2Xg==
+X-Received: by 2002:a05:7022:6610:b0:11b:9386:a37b with SMTP id a92af1059eb24-11c9d870ef7mr10566206c88.42.1764028105314;
+        Mon, 24 Nov 2025 15:48:25 -0800 (PST)
 Received: from localhost (ip70-175-132-216.oc.oc.cox.net. [70.175.132.216])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11c93cd457dsm72215229c88.0.2025.11.24.15.48.23
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11c93de6d5csm50934572c88.4.2025.11.24.15.48.24
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 24 Nov 2025 15:48:23 -0800 (PST)
+        Mon, 24 Nov 2025 15:48:25 -0800 (PST)
 From: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
 To: axboe@kernel.dk,
 	agk@redhat.com,
@@ -83,9 +83,9 @@ Cc: linux-block@vger.kernel.org,
 	Chaitanya Kulkarni <ckulkarnilinux@gmail.com>,
 	"Martin K . Petersen" <martin.petersen@oracle.com>,
 	Johannes Thumshirn <johannes.thumshirn@wdc.com>
-Subject: [PATCH V3 2/6] md: ignore discard return value
-Date: Mon, 24 Nov 2025 15:48:02 -0800
-Message-Id: <20251124234806.75216-3-ckulkarnilinux@gmail.com>
+Subject: [PATCH V3 3/6] dm: ignore discard return value
+Date: Mon, 24 Nov 2025 15:48:03 -0800
+Message-Id: <20251124234806.75216-4-ckulkarnilinux@gmail.com>
 X-Mailer: git-send-email 2.40.0
 In-Reply-To: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
 References: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
@@ -97,35 +97,64 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-__blkdev_issue_discard() always returns 0, making all error checking at
-call sites dead code.
+__blkdev_issue_discard() always returns 0, making all error checking
+at call sites dead code.
 
-Simplify md to only check !discard_bio by ignoring the
-__blkdev_issue_discard() value.
+For dm-thin change issue_discard() return type to void, in
+passdown_double_checking_shared_status() remove the r assignment from
+return value of the issue_discard(), for end_discard() hardcode value of 
+r to 0 that matches only value returned from __blkdev_issue_discard().
 
 Reviewed-by: Martin K. Petersen <martin.petersen@oracle.com>
 Reviewed-by: Johannes Thumshirn <johannes.thumshirn@wdc.com>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
 ---
- drivers/md/md.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-thin.c | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 7b5c5967568f..aeb62df39828 100644
---- a/drivers/md/md.c
-+++ b/drivers/md/md.c
-@@ -9132,8 +9132,8 @@ void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev,
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index c84149ba4e38..77c76f75c85f 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -395,13 +395,13 @@ static void begin_discard(struct discard_op *op, struct thin_c *tc, struct bio *
+ 	op->bio = NULL;
+ }
+ 
+-static int issue_discard(struct discard_op *op, dm_block_t data_b, dm_block_t data_e)
++static void issue_discard(struct discard_op *op, dm_block_t data_b, dm_block_t data_e)
  {
- 	struct bio *discard_bio = NULL;
+ 	struct thin_c *tc = op->tc;
+ 	sector_t s = block_to_sectors(tc->pool, data_b);
+ 	sector_t len = block_to_sectors(tc->pool, data_e - data_b);
  
--	if (__blkdev_issue_discard(rdev->bdev, start, size, GFP_NOIO,
--			&discard_bio) || !discard_bio)
-+	__blkdev_issue_discard(rdev->bdev, start, size, GFP_NOIO, &discard_bio);
-+	if (!discard_bio)
- 		return;
+-	return __blkdev_issue_discard(tc->pool_dev->bdev, s, len, GFP_NOIO, &op->bio);
++	__blkdev_issue_discard(tc->pool_dev->bdev, s, len, GFP_NOIO, &op->bio);
+ }
  
- 	bio_chain(discard_bio, bio);
+ static void end_discard(struct discard_op *op, int r)
+@@ -1113,9 +1113,7 @@ static void passdown_double_checking_shared_status(struct dm_thin_new_mapping *m
+ 				break;
+ 		}
+ 
+-		r = issue_discard(&op, b, e);
+-		if (r)
+-			goto out;
++		issue_discard(&op, b, e);
+ 
+ 		b = e;
+ 	}
+@@ -1188,8 +1186,8 @@ static void process_prepared_discard_passdown_pt1(struct dm_thin_new_mapping *m)
+ 		struct discard_op op;
+ 
+ 		begin_discard(&op, tc, discard_parent);
+-		r = issue_discard(&op, m->data_block, data_end);
+-		end_discard(&op, r);
++		issue_discard(&op, m->data_block, data_end);
++		end_discard(&op, 0);
+ 	}
+ }
+ 
 -- 
 2.40.0
 
