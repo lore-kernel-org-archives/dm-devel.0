@@ -1,77 +1,76 @@
-Received: from mail-il1-f193.google.com (mail-il1-f193.google.com [209.85.166.193])
+Received: from mail-il1-f194.google.com (mail-il1-f194.google.com [209.85.166.194])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6EE81149C6F
-	for <dm-devel@lists.linux.dev>; Thu, 27 Nov 2025 23:24:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.193
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20BF73164AB
+	for <dm-devel@lists.linux.dev>; Thu, 27 Nov 2025 23:37:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.194
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764285868; cv=none; b=XBNQrJRQz4GV6h4LufwiiDXjJZ1F98hK+bpz1fSrtDwxZYOihxdh+Pat07WwyqoL9ukVfXH+p1T4T+4vONByY853JZRgR6NA+55BSFjbI2AfLvgXXLb6G7G0dBgmyWsKTTMI8KF7pzf1zKrwRdxBztWAmDdD1ePzbkRx/aJkVuE=
+	t=1764286633; cv=none; b=QM6c6NeUVwym7Aa91yiciJ2SVP6tG7VFcabfYOc/KQXR8y4Y/IJmzl1tNFgV6b3dzyCT6McWkTAbbzdtteEGd/BHTO1Wve98QxPj8itm4ChtM2SWSymRKIfkIVhaiWVLjczdveOx2wpDbud7a8EC93ZVQ5ldpZ0s1N239o61TUM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764285868; c=relaxed/simple;
-	bh=Zh1BUd1pl+O2Ics5ZSR6XMjSUAb+ZxamnBOr44eua3M=;
+	s=arc-20240116; t=1764286633; c=relaxed/simple;
+	bh=FyxrC//9kv91GWU9c3B28b7LTZcKfaxsXeXlA53GSyc=;
 	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=UViYnF9f+ElRTPxzJccJzPrF43xbAbW9LMH7QH0RTsCCHUoaJDOUz0pEnVLtNGcMDEPtwa0gvm1MM8oVlgubB/Rd0bJ8bLDKOjzio8oCmjG+QyqrioTv37Tv2qeg9NeC+V2aW2OCv4pT6B/7Sq1hCARPOR0VGj7QK3iGsJqCu8k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iNhilMhr; arc=none smtp.client-ip=209.85.166.193
+	 MIME-Version:Content-Type; b=oqdu2dt1XWSPy+Dh8kmDL+mcrfWqAa0RnfV6YWVNMBVcjP80I4m/v9h8ZtC4wayXa6svriLVIerpdKMi3KWzNPtodK3HuGBQLewpSjz8HA9iB+Emo1t3SE6taDkCQZaJ8GSB8oDQnQVEI+d14vO/13032A5nKCSdWjPz0OYbC1w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=WN6zQDD2; arc=none smtp.client-ip=209.85.166.194
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iNhilMhr"
-Received: by mail-il1-f193.google.com with SMTP id e9e14a558f8ab-43326c45389so580865ab.1
-        for <dm-devel@lists.linux.dev>; Thu, 27 Nov 2025 15:24:25 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WN6zQDD2"
+Received: by mail-il1-f194.google.com with SMTP id e9e14a558f8ab-4331b86f1c1so240455ab.3
+        for <dm-devel@lists.linux.dev>; Thu, 27 Nov 2025 15:37:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764285864; x=1764890664; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1764286631; x=1764891431; darn=lists.linux.dev;
         h=mime-version:references:in-reply-to:message-id:subject:cc:to:from
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=2KPEDOCb5mXuCIR0Wc+ytoxgYgWn7CfbT1FbFeR5YO4=;
-        b=iNhilMhr5zsxc26fZVVyvCCEq6t15tGmHwLwiHqJX6VepXg+fUVNISZqXegbLgADw1
-         XXd3pJRNMum0BZ6/0517QsjmsLV9HxN2t0nCrV2hUYb0ZgxQ+zydXOWETaf/GOyPGjBE
-         q5JiTDO/+Dj7R3R907gYacFrK1ViYIFIovn6px3g3SiFxRgkXwqf9Yz80m7ivLCvRyhA
-         tEmQ06w21Zf8/2zO2Q1BEEhqbvMTrGyYeIMrWrSQodLBWVhuuk1M5pJfIL4LbRc+i+RY
-         eEnoboGAPaayqiOCU4MWJdXw+3LQoxL6pJQiAGU9xTCFI3GCvsaTfBLm/IxQBGfFAjem
-         Ahng==
+        bh=Lk8iKAKQiPWWx1WeLeJvPjSrW4ytPNU/VipTWSO/YTo=;
+        b=WN6zQDD2eVK2O4684Q7h0oLNnaSNAe6UL54/5eLNr4eqam4EEm2CEW3MwZDGVbjvKe
+         YvtQ47+1IFXvA4As7ybtojAZO4CaN7DlGB/JfdAWqdF1IEMNpEZeshPYNGW/GbtWnpf1
+         IslJSU1cBHp4eLod1D0EjGl0u1pNg2IlS2t/v5rAgCUXXYf1yFn7JTF6XFmk7f6wrsJQ
+         52dIdE2F9hOd6Ozo86KaVeMCroCXKJwmJbtzQYy2KuarJXaim+Nz4ABN6NBt3TxeOHXn
+         Ale1Lengw4CE1nFdXnUdFwC8WFBOd9qPwXxSnuRrZrzPzWJ4V7b6YjDQQYgLHj8dzwHA
+         74PQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764285864; x=1764890664;
+        d=1e100.net; s=20230601; t=1764286631; x=1764891431;
         h=mime-version:references:in-reply-to:message-id:subject:cc:to:from
          :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=2KPEDOCb5mXuCIR0Wc+ytoxgYgWn7CfbT1FbFeR5YO4=;
-        b=E18wP5T+AsOCLXWGXAKE8map9tZLqBvAv2FFVr+uNwaD8FynW/mUmfPtgisdVH0Wx1
-         2Zz/+x6FOEaHYvpzsk+hcK8MV0OeTMGH+Qcy8PjL9f8vEjskMleb01IaHo62LnN/RZqO
-         cJCaSOPT0j85+cilTTOy06J4hCx9Lq8gFZzqFpHct96C0ncQRDZQuZFFCXFiBhSb1zuv
-         bsO2GnCW8Ccm3iJJZY4wrYuyPZRCYcWJnCSrBWhR2HuqvJvUZyEVxyHBBZv87GTRZUbi
-         8x9VtunPUBAVU7HrfZV61G/Z/JQJk1W0g3kNlWsxGZl9ZHpEddqMlieCg+k8bjl8F9j2
-         /LOg==
-X-Forwarded-Encrypted: i=1; AJvYcCWo7MhIBFjGEgEUF7toz5rTKHSJkVz9aEMDAkglCKxbBjYCk+Is04B0F0ZwaocJ321sNbdaqPQt5A==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwIclcj6lp09mXVyVtauQlkMGZYB8YLUqpFJg5z4z2Hf5nbyPS7
-	Yoq0OpCB6w6xl4uX3i9lBHbgIpbGUXfm2fD6amJEP1NAeyMsMIjJbWKz
-X-Gm-Gg: ASbGncuWJhwwMta9o1+18tHYeNNlvJW1DVFVl6wCpO0w0qScx/vMv9h6RE4pUikqDUl
-	i+4n8FVOcJahhM6X5YkvyEM3w2GnVv2jD27pzFqewiiVWj6veQ3YH54zbG6vHTpDvxFc6H6Pzmh
-	gB2Rxy7w5ezi/dKNySdsvLRyTBeaDWsFQiX5gA9Cy0BhgWAIrDakaxEZQMrl31AlLIBvH6n7dZc
-	BBaTUenQHYyT0W4BHcsQDxutzhtL/zq9faNFheNQydWoOs1iVuaiFuVPsh3GN6WCYyu6SQnWhhU
-	kZFrpKxmlkB4x6bFQPg4Td2t/YDkHJRqBGbuU00v0i8LCLmjSqnylkOZ6YRqd1fTFzQyXVhG8B6
-	p/LIMbN+Ns9kwUtTrQvU0T4MIgCekOdst6jUn0QN2MRnWvbmXglagemzMyvcdWy3EBEy0R3l8aO
-	IU1JQ8qRE=
-X-Google-Smtp-Source: AGHT+IF1FZ7gp0CgtAprc3JnWiifAK4jaouDoqm3H9RkUcsuikGC8VoAWjBDdMdey7zD3t5eiOJ0Rg==
-X-Received: by 2002:a05:6e02:188e:b0:433:2fe2:9d41 with SMTP id e9e14a558f8ab-435bc9beca3mr87373145ab.7.1764285864483;
-        Thu, 27 Nov 2025 15:24:24 -0800 (PST)
+        bh=Lk8iKAKQiPWWx1WeLeJvPjSrW4ytPNU/VipTWSO/YTo=;
+        b=u6n4G9b5sXQ1HEZojqGjehvvYuf0vuK8bm4KSWelSuB1OwSK3DP3SgrovEY4/fxriM
+         mMx/77zYKLVxeqt+bpiw/CTXZkE0uWHdeK0WR+WZaYHoU6Awq1urVmLuXGU+PpSaD5Uy
+         u40nTZGU/woWRzUR9SSOxEFbcQYxdyQeQhw4WWf2iGPjH3DdQcMPrSargNBawQLpFZiG
+         OkMIRGWvyv+r0vHPUxDnv+OR9apJlUPaU1NvfmpeoOUfvhu423kw6VjNhMBS7vOVqh4G
+         c/D3Q1mU9wirN4PBSCvLMyrZnav93cj4htdELPqLr5MedqI2PEqZDAXkk3ru4IDA87BP
+         5gZA==
+X-Forwarded-Encrypted: i=1; AJvYcCURhZwUvWWOTwcSvHWSdAS7MU3SJ7H+gUWQXI0w5Qv4AaLR2bXBkDdsrVtsj9jfph56vDQdq31N2g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxjxZXuQrMDno5HduFTeA23pgyj5KBCIJ9zpYLyZ4ciDdwWCzWH
+	0pzXO2OGQc8hYCjyxac7SIzb4jZWU5L0/ewXJ7v4Kfys43x1nfkjJWzs
+X-Gm-Gg: ASbGncsz2DYcO+07AnLcfM9tQgaZ1zFtT2Tv12jQQgvb6Ydv1+PWlWRDoj9lJ+5QSbB
+	5+4RsorVRWHHM2yRh27TXEbwwL7U2guJ7TU/rzL5GLJPnAFwRX1e/OK8FTS9wk7LBGRJrKTNuQu
+	IDlGpcBzTBku/wv9cxiRaGIIwoUl9aGG9Teu6Bt5WmjZkqbB0DFusnhkR+n3No1VuO1/lpA6jfy
+	ZOQO8QAhWiGM1skXQ/6OIYL0QpyA3aelRFyv6ce+DDNgGM8ckm1xZq3erT6/0+PeVqm4HjfnVFX
+	4I5zKYp3WKEueH71QIG5IfakyvbiEbGuzR6pZyiG/OSKKwwwRoTVcv+gRQaQq0DcXCM0O4mUia6
+	pDDnT3UyLoo5Xcgb4bHJ4SWMzQkGDtHwxzY9KmoTO+k1z+UQe/pwCyp6kqazvPoZLrKBGdNgUm9
+	n95oi6N4s=
+X-Google-Smtp-Source: AGHT+IGreBlJthqbMD1RAWCcqBxs8A6SNjHp+XNg4XupKhfTAUt2Dl+zj7BYsLX7N0vJY781hdNvXQ==
+X-Received: by 2002:a92:c247:0:b0:433:7818:d1c4 with SMTP id e9e14a558f8ab-435b8e474e6mr87255305ab.3.1764286630861;
+        Thu, 27 Nov 2025 15:37:10 -0800 (PST)
 Received: from kf-m2g5 ([2607:fb90:bf0b:8b65:e4a9:bd5:56d9:5426])
-        by smtp.gmail.com with ESMTPSA id e9e14a558f8ab-436b33b704dsm14654055ab.22.2025.11.27.15.24.23
+        by smtp.gmail.com with ESMTPSA id e9e14a558f8ab-436b85c5413sm14379825ab.27.2025.11.27.15.37.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 27 Nov 2025 15:24:23 -0800 (PST)
-Date: Thu, 27 Nov 2025 17:24:16 -0600
+        Thu, 27 Nov 2025 15:37:10 -0800 (PST)
+Date: Thu, 27 Nov 2025 17:37:02 -0600
 From: Aaron Rainbolt <arraybolt3@gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Milan Broz <gmazyland@gmail.com>, linux-mm@kvack.org,
- cryptsetup@lists.linux.dev, "dm-devel@lists.linux.dev"
- <dm-devel@lists.linux.dev>, linux-kernel@vger.kernel.org,
- adrelanos@whonix.org
+To: Milan Broz <gmazyland@gmail.com>
+Cc: linux-mm@kvack.org, cryptsetup@lists.linux.dev,
+ "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+ linux-kernel@vger.kernel.org, adrelanos@whonix.org, Mikulas Patocka
+ <mpatocka@redhat.com>
 Subject: Re: Hard system lock-ups when using encrypted swap and RAM is
  exhausted
-Message-ID: <20251127172323.7913c99f@kf-m2g5>
-In-Reply-To: <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com>
+Message-ID: <20251127173702.6c8a7ba2@kf-m2g5>
+In-Reply-To: <2b8b83fa-5cf5-4f97-b796-0c738ce3a548@gmail.com>
 References: <20251111231835.1232ad8f@kf-m2g5>
 	<2b8b83fa-5cf5-4f97-b796-0c738ce3a548@gmail.com>
-	<3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com>
 X-Mailer: Claws Mail 4.3.1 (GTK 3.24.41; x86_64-pc-linux-gnu)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -79,130 +78,200 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/signed; boundary="Sig_/r1E/HN.et+YE1IVFD_tEODW";
+Content-Type: multipart/signed; boundary="Sig_/.XCJlYJqF5QI/5Sz1Tc2Qnf";
  protocol="application/pgp-signature"; micalg=pgp-sha512
 
---Sig_/r1E/HN.et+YE1IVFD_tEODW
-Content-Type: text/plain; charset=US-ASCII
+--Sig_/.XCJlYJqF5QI/5Sz1Tc2Qnf
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, 27 Nov 2025 18:54:04 +0100 (CET)
-Mikulas Patocka <mpatocka@redhat.com> wrote:
+On Thu, 27 Nov 2025 08:59:13 +0100
+Milan Broz <gmazyland@gmail.com> wrote:
 
-> On Thu, 27 Nov 2025, Milan Broz wrote:
+> Hi,
 >=20
-> > Hi,
-> >=20
-> > On 11/12/25 6:18 AM, Aaron Rainbolt wrote: =20
-> > > Not sure if this is a memory management issue, a LUKS issue, or
-> > > both, so I wrote both mailing lists. =20
-> >=20
-> > It is not a LUKS issue; cryptsetup/LUKS activates the encrypted
-> > device, so it is only the kernel/dm-crypt handling IOs.
-> >=20
-> > Adding cc to dm-devel as this would be another combination
-> > device-mapper and encrypted swap that could cause issues...
-> >=20
-> > However, could you please specify exactly your storage
-> > configuration?
-> >=20
-> > From the subject, I expected you to have an encrypted swap, but it
-> > is not clear if there are other encrypted devices.
-> >=20
-> > Please paste at least lsblk, lsblk -f output, and also luksDump
-> > (or crypttab if it is not LUKS) for LUKS/dm-crypt configuration.
-> >=20
-> > Thanks,
-> > Milan
-> >=20
-> >  =20
-> > >=20
-> > > I'm seeing an issue with both the latest mainline kernel
-> > > (6.18-rc5) and Debian 13's 6.12 kernel package. When physical
-> > > memory fills up, the entire system locks up hard, as if it hit
-> > > rather severe thrashing, despite the fact that there appears to
-> > > be disk cache that can still be evicted, and there is ample
-> > > amounts of swap space remaining (gigabytes of it). This issue did
-> > > not occur with the 6.1 kernel in Debian 12. I'm seeing this occur
-> > > in very low-memory Debian VMs, with between 512 and 900 MB RAM,
-> > > running under VirtualBox and KVM. (I suspect, but have not
-> > > verified, that I'm seeing similar behavior under Xen as well.)
-> > > These VMs generally use a swappiness of 1, though I have seen a
-> > > lockup occur even with a swappiness of 60. The filesystem in use,
-> > > in case it matters, is ext4.
-> > >=20
-> > > To reproduce on a system running Linux 6.18-rc5, with :
-> > >=20
-> > > * Follow the steps from
-> > >    https://gitlab.com/cryptsetup/cryptsetup/-/wikis/FrequentlyAskedQu=
-estions,
-> > >    section "2.3 How do I set up encrypted swap?", but creating a
-> > >    swapfile rather than a swap partition. =20
+> On 11/12/25 6:18 AM, Aaron Rainbolt wrote:
+> > Not sure if this is a memory management issue, a LUKS issue, or
+> > both, so I wrote both mailing lists. =20
 >=20
-> Hi
+> It is not a LUKS issue; cryptsetup/LUKS activates the encrypted
+> device, so it is only the kernel/dm-crypt handling IOs.
 >=20
-> Encrypted swap file is not supposed to work. It uses the loop device
-> that routes the requests to a filesystem and the filesystem needs to
-> allocate memory to process requests.
+> Adding cc to dm-devel as this would be another combination
+> device-mapper and encrypted swap that could cause issues...
 >=20
-> So, this is what happened to you - the machine runs out of memory, it=20
-> needs to swap out some pages, dm-crypt encrypts the pages and
-> generates write bios, the write bios are directed to the loop device,
-> the loop device directs them to the filesystem, the filesystem
-> attempts to allocate more memory =3D> deadlock.
+> However, could you please specify exactly your storage configuration?
 >=20
-> I got the deadlock with 6.18-rc4 when I used dm-crypt on a file and I=20
-> didn't get the deadlock when I used dm-crypt on a SCSI block device.
-> That is expected behavior.
+>  From the subject, I expected you to have an encrypted swap, but it is
+> not clear if there are other encrypted devices.
+>
+> Please paste at least lsblk, lsblk -f output, and also luksDump
+> (or crypttab if it is not LUKS) for LUKS/dm-crypt configuration.
 
-Is it only expected behavior since some time after kernel 6.1, or has
-it always been expected behavior and encrypted swapfiles simply worked
-by accident with kernel 6.1? Is there any reasonable way to reserve
-some memory for in-kernel filesystem code (at least for some
-filesystems like ext4 in the event it's not feasible for all of them)
-that will ensure it has enough memory to handle I/O operations even if
-the system is completely out of memory from userspace's perspective?
-I'd be happy to try to contribute a fix if possible.
+Mikulas seems to have reproduced the issue already, but just in case
+it's still useful, here's the requested data, along with /etc/fstab.
+(/dev/sda2 is a BIOS boot partition.)
 
-With kernel 6.1, this was working reliably, and Kicksecure (a
-security-focused Debian derivative with a relatively sizable userbase)
-was using encrypted swapfiles by default. We never got any reports of
-lockups like we're seeing now with kernel 6.12. Whether this was
-intended to work or not before, it seemed to work very well, and this
-seems like a regression from our standpoint.
+-----
+
+[sysmaint ~]% lsblk   =20
+NAME   MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+loop0    7:0    0    4G  0 loop =20
+=E2=94=94=E2=94=80swap 254:0    0    4G  0 crypt [SWAP]
+sda      8:0    0  100G  0 disk =20
+=E2=94=9C=E2=94=80sda1   8:1    0  100M  0 part  /boot/efi
+=E2=94=9C=E2=94=80sda2   8:2    0    1M  0 part =20
+=E2=94=94=E2=94=80sda3   8:3    0 99.9G  0 part  /
+
+-----
+
+[sysmaint ~]% lsblk -f
+NAME   FSTYPE FSVER LABEL UUID                                 FSAVAIL FSUS=
+E% MOUNTPOINTS
+loop0  swap   1           0a06fb5a-39f5-4a89-b8a8-fdc2470ee0f3   =20
+=E2=94=94=E2=94=80swap swap   1     swap  f9aa44bb-2214-4a32-ac7e-34360b0f3=
+13b                [SWAP]
+sda   =20
+=E2=94=9C=E2=94=80sda1 vfat   FAT32 EFI   6907-5000                        =
+                   /boot/efi
+=E2=94=9C=E2=94=80sda2   =20
+=E2=94=94=E2=94=80sda3 ext4   1.0         26ada0c0-1165-4098-884d-aafd2220c=
+2c6   64.7G    29% /
+
+-----
+
+[sysmaint ~]% cat /etc/crypttab   =20
+# <target name> <source device>         <key file>      <options>
+swap /swapfile /dev/urandom swap,noearly
+
+-----
+
+[sysmaint ~]% cat /etc/fstab   =20
+# /etc/fstab - created by grml-debootstrap on Sun Nov  2 20:23:37 UTC 2025
+# Accessible filesystems, by reference, are maintained under '/dev/disk/'.
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info.
+#
+# After editing this file, run 'systemctl daemon-reload' to update systemd
+# units generated from this file.
+#
+/dev/disk/by-uuid/26ada0c0-1165-4098-884d-aafd2220c2c6 /  auto    defaults,=
+errors=3Dremount-ro,x-systemd.growfs 0   1  =20
+UUID=3D6907-5000  /boot/efi       vfat    umask=3D0077      0       1  =20
+proc           /proc        proc    defaults                      0   0  =20
+/dev/cdrom     /mnt/cdrom0  iso9660 ro,user,noauto                0   0  =20
+# some other examples:
+# /dev/sda2       none         swap    sw,pri=3D0             0   0  =20
+# /dev/hda1       /Grml        ext3    dev,suid,user,noauto 0  2
+# //1.2.3.4/pub   /smb/pub     cifs    user,noauto,uid=3Dgrml,gid=3Dgrml 0 =
+0=20
+# linux:/pub      /beer        nfs     defaults             0  0
+# tmpfs           /tmp         tmpfs   size=3D300M            0  0
+# /dev/sda5       none         swap    sw                   0  0
+/dev/mapper/swap none swap sw 0 0
 
 --
 Aaron
 
-> Note that the in-kernel OOM killer sometimes doesn't kill the
-> application and discards read-only program pages (which generates big
-> I/O churn and general system slowdown) - if you are hitting this
-> problem, I recommend installing userspace OOM killer, such as
-> earlyoom.
+> Thanks,
+> Milan
 >=20
-> Mikulas
+>=20
+> >=20
+> > I'm seeing an issue with both the latest mainline kernel (6.18-rc5)
+> > and Debian 13's 6.12 kernel package. When physical memory fills up,
+> > the entire system locks up hard, as if it hit rather severe
+> > thrashing, despite the fact that there appears to be disk cache
+> > that can still be evicted, and there is ample amounts of swap space
+> > remaining (gigabytes of it). This issue did not occur with the 6.1
+> > kernel in Debian 12. I'm seeing this occur in very low-memory
+> > Debian VMs, with between 512 and 900 MB RAM, running under
+> > VirtualBox and KVM. (I suspect, but have not verified, that I'm
+> > seeing similar behavior under Xen as well.) These VMs generally use
+> > a swappiness of 1, though I have seen a lockup occur even with a
+> > swappiness of 60. The filesystem in use, in case it matters, is
+> > ext4.
+> >=20
+> > To reproduce on a system running Linux 6.18-rc5, with :
+> >=20
+> > * Follow the steps from
+> >    https://gitlab.com/cryptsetup/cryptsetup/-/wikis/FrequentlyAskedQues=
+tions,
+> >    section "2.3 How do I set up encrypted swap?", but creating a
+> >    swapfile rather than a swap partition. I created an 8 GB swapfile
+> >    with fallocate. Reboot the system when done.
+> > * In a TTY, open a terminal multiplexer (or something you can abuse
+> > as one, Vim works well), and open two terminals. In one terminal,
+> > run `htop` so you can observe memory and swap usage.
+> > * In the `htop` terminal, sort by M_RESIDENT.
+> > * In the other terminal, create a new file `test.py`, that will
+> >    gradually fill memory at a relatively fast pace and print an
+> >    indicator that it's still alive. I used the following code for
+> > this:
+> >=20
+> >      import time
+> >=20
+> >      count =3D 0
+> >      mem_list =3D []
+> >      while True:
+> >          mem_list.append([x for x in range(2048)])
+> >          count +=3D 1
+> >          time.sleep(0.002)
+> >          print(count)
+> >=20
+> > * Run the script with `python3 test.py`.
+> > * While the script runs, observe the growing memory usage in `htop`.
+> >    Swap usage should start at or near 0, RAM usage will gradually
+> >    increase. Once RAM usage starts getting high, some data will
+> > start being swapped out as expected, but after a short while the
+> > whole VM will lock up despite there being gigabytes of swap left.
+> > (On my KVM VM, the last time htop updated its screen, it showed RAM
+> > usage of 712M/846M, and swap usage of 328M/7.40G. The python3
+> > process running the script was consuming 551M memory. The VM is
+> > entirely unresponsive. Incidentally, the python3 process also was in
+> >    uninterruptible sleep when htop last updated its screen, but that
+> >    could mean nothing since it might have come out of sleep between
+> > the last screen update and the VM lockup.)
+> >=20
+> > Under Bookworm with Linux 6.1, the Python script would occasionally
+> > freeze, but the VM would remain responsive, and the script would
+> > eventually resume. Even with kernel 6.12, both unencrypted
+> > swapfiles and swapfiles that are technically unencrypted but live
+> > on a LUKS volume both behave as expected. It's only swapfiles that
+> > are themselves encrypted that seem to trigger these lockups.
+> >=20
+> > I haven't looked at the code at all, but it seems like maybe memory
+> > LUKS needs available in order to operate is being consumed, thus
+> > making it impossible to swap anything in and out of the swapfile?
+> > That seems like it would cause these symptoms or similar, though I
+> > don't know.
+> >=20
+> > Let me know if I can provide any further information on the issue.
+> > I'm happy to bisect the kernel if it will help.
+> >=20
+> > --
+> > Aaron =20
 >=20
 
 
---Sig_/r1E/HN.et+YE1IVFD_tEODW
+--Sig_/.XCJlYJqF5QI/5Sz1Tc2Qnf
 Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEudh48PFXwyPDa0wGpwkWDXPHkQkFAmko3aAACgkQpwkWDXPH
-kQntQhAAxJBsISFb0MTNGHlS2xtdPK9zFeL3vVCaWdSpBfMH8BQFUZVbMYrBXEBQ
-JMalBPkjor4pOFJiDNIKWrir/Er67jbtlsY/nFvK5g+AOQ0CaiPcLiokv6Jfx1oR
-IFy8UNm82uoMamzv61zWwzv7BdEuVctYaGBpabJX876PqxrATeYLamEOE3Rx04h8
-7uFSdc3Oz3WK99/G09lAHXibZCD053Lo++JtumG7dN3p0CQ1YGWYYR9ApssYIeZq
-bFYjH2SIJf2V+4D8x5NUZAVVXfvv0QoyKk8WAyivo8jKP25wSbmOiUId8npo6JQM
-fsTNO5NOba5K6TZPzjfxEsHOT54qlQs/OKu2tzC37u2DVNUWwlZHs4Iqav8NlIZY
-ikYQcARj+6kvEJRgjhNaBxt40zEoT1uu5maBRLqHuM8alFmmr1IwJh+QuR5WRoXL
-qXFoRZoywlCZuVwrFUh/g3N+yfZXDZ04OIWxPMqkNaPwIyNOn6JXpm/tG1B/95Nn
-VU/2ZRadxceBuPrzbHnLnzSLD33wFpl8181IpRBMDTSHwCA5TMtvcJhuV6+aH12x
-3O1/CZ7YqyOHEHS2moKcwves7XCBqCeION5+nJoDEIgkmjOKkZx9CEBmc8v7T17v
-SXayP7eYNKLbBQfhV1pSJnt8j/n9zS7lfGTzZVN+cnWiNclF1Y4=
-=yBJC
+iQIzBAEBCgAdFiEEudh48PFXwyPDa0wGpwkWDXPHkQkFAmko4J4ACgkQpwkWDXPH
+kQmMIhAAvF1ssmiCQ+nw1++89u8VMQnbSRCywdjHphhTMKbxhnnwEsNiH55N1w6b
+5ssVxIvA2KrJ5+Ac3KVNr7h4o7t3hb5nEQL/MXWpfMISdyaBZR5n6GlG2Y/AIhJA
+dzv3yEyCSXCYvH+TIhe8l+eBzrEUeVJg7vh88Tmm7XwMawBuhPx4UxA25POEzh07
+rLwCy+o1AagTJJ7Ugvj+Ok9Oj5uZ8dMo68wWWDJuiLX5LXZ1Cvy2YGguco66xB6D
+YaHKTVrsKAo6C57vXVfoiISXepgHD9+2SVd8jJdA5O0SFc907ITPMCqD68QQcdWi
+jr2V1CKktd0HnzjuY2+IlOp1qVALUHmxhqULO6eNKaBDhSejwEamGeuWmBzUfv2f
+STm6PTrWBjI93laXCkWW1cCQWvwRubAte/IorJfvoj2P4j/pk1MrMb+19FFGeRCb
+rE1H12uJYP88PiZOxtdEdtnlBiR06pI4kOWVvjv6lHhlsTg9y3BUxyXPB8ydzNV8
+wDqkPQPnFkQSQ1kHpNYomcmBw8izoTojjglpL3ifcpeuWQFzMKWJ6PFpA/236e/k
+7WOpgp2FcF8ZuWaoGsq8n+QhTmac78P3LjYqBiEaq0KdaKRBppIkOTC6IJkVoe49
+2PK+nPjCpq6HzTzw6hCrNGmPn++2ryJkiJKuIdor38SRRhuV4EA=
+=snQJ
 -----END PGP SIGNATURE-----
 
---Sig_/r1E/HN.et+YE1IVFD_tEODW--
+--Sig_/.XCJlYJqF5QI/5Sz1Tc2Qnf--
