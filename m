@@ -1,88 +1,132 @@
-Received: from artoo.va1der.ca (artoo.va1der.ca [66.70.202.72])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55F101C861D;
-	Fri, 28 Nov 2025 01:00:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=66.70.202.72
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91FBE264619
+	for <dm-devel@lists.linux.dev>; Fri, 28 Nov 2025 06:16:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764291654; cv=none; b=gYhJuqmFar+l2AWp4TL7ZW6Lvf2aTxTH9hx7oOHSCrulUihpshakr2BiUomqThRk8OQWbnJB+7sKoGDKTkOfVl6B6MWv8R77ROdtCifTfCYzakgeB8mkgfCAgZrb2XDXCzishmt4JVScSRwctjzd6Z59GsC6zjKoclB3TXnEK8Q=
+	t=1764310563; cv=none; b=sjWKleHHaibaXWIsLAlHuZJFgIAJGtjFhYPZRxsnrmEjjPoOv/iXqF5BVLPP8mFw/ajfTZbE37FtfE/pVOzmDjPdFkGmzt+WXoIhYS8+69TOA5sSzNVmiNtPUdE9f+yOhpUVm7v7KpNIWxvq3lKFnEuD3CzhHG7FgBMIFk6lDbM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764291654; c=relaxed/simple;
-	bh=8ZMHeSGKTe7vN0wMOroGc/AYGvdF48EtzU7jpTtq5Vg=;
-	h=MIME-Version:Date:From:To:Cc:Subject:In-Reply-To:References:
-	 Message-ID:Content-Type; b=S1zxK69st30zURD25O7h5NsRQSueIt4ZcDXTL9MhCiqtPsbaNamR5F1E00P1jp3MIYl2QVhjJ3bNLJ4Yl6yZpKKczXuWTEpST68cUnauPyYlNsRA8aiE75JxtTjRayygKlBnFLSArymQa+zn7haMHIvcCWM/s/F7f8XuJ0sL7bM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=va1der.ca; spf=pass smtp.mailfrom=va1der.ca; dkim=pass (4096-bit key) header.d=va1der.ca header.i=@va1der.ca header.b=R31b8ACs; arc=none smtp.client-ip=66.70.202.72
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=va1der.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=va1der.ca
+	s=arc-20240116; t=1764310563; c=relaxed/simple;
+	bh=ffhTyij1ReNQCxTshYxvVfuBAAWHI7lGZdQHx3iN9O4=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To; b=tKn6SUnxXEAvG5TqPGayQIhg0trr9b273kTT2Bv+aU5JyBA+EHvpJCg8AypAIkKb9y5XlCGfri09u7BPKnoSc5TOFb93Awv2p4/vLbUX6yz6qMFrI0AgsjhTmffprvXyYcQRRzRvwOKBpjCbz8X03xj3T0sj3CrqKK+bSR/VcIU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org; spf=pass smtp.mailfrom=linaro.org; dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b=k3uHuvIu; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linaro.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linaro.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (4096-bit key) header.d=va1der.ca header.i=@va1der.ca header.b="R31b8ACs"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=va1der.ca;
- i=@va1der.ca; q=dns/txt; s=rsa4k; t=1764291083; h=mime-version : date
- : from : to : cc : subject : in-reply-to : references : message-id :
- content-type : content-transfer-encoding : from;
- bh=5ehl7XowOsgc/Hdy6CsvYc8pNeY/UToxQM+P3jbw8Rc=;
- b=R31b8ACshIZzZrktnZnDDJEipbXH60inGf6csxDL+9JH+B0UnTulOITG8jgdR/YsP4Mq6
- p5smPfxCWpQol1uZ+E9d7MofkrNx5eUbxbO7RUL0P2Nf9crsSg/Qdj/TzhlzmoLXFomns/G
- fULSPxW8wmxbqVEtSXEW8SKMTvWnEF/nmHh7H9+Ghn0IoNy16GBxpuIWJIF7SyWPS8xctUj
- BnETTMjtowC1XD6bqkRc93KASGl1VfL3ua1Kbr4EOne9cyT+VX45JKCwV5P2RahCPT4rz4e
- d0hCDz3JCwkqdq3rQVcyT/aLHqtWQD2Nwr3GGNVSfXvjgEJkOAP8ohk0X8FHZAB4MOXZ/i9
- VdZSc11M89rVguO87aXQgzMBUAu7A8XUMQICPkJKLpb0CSI8K9kSSutbvr4UTfBP++mj9Xo
- VYcBvV0CToKntXwH4U/rOXq/cULbuqZEp9bx8Rujcfb7J17rg4tXYiusGJ9FEFHkL4sOsrQ
- UkP9Kl2FOEc5RMeiPz59jYThMKQ/GU/PQFGfk/On9Cu73eGJDrx0UsceZKUhmqUb5Edcy5e
- eN7SyeD4jPCjMgen5ecrcJNFKczO/vpmhvsADg8bskVsE4BxNgVsNXEyari1UHmf/ItJgkv
- l/MzRLvaxSK7CZ4ibWFqafCpzQFMFi41oVAmW4exNnQdYE=
-Received: from artoo (artoo.va1der.ca [66.70.202.72])
-	by artoo.va1der.ca (Postfix) with ESMTPSA id 877083E5B31;
-	Thu, 27 Nov 2025 20:51:23 -0400 (AST)
+	dkim=pass (2048-bit key) header.d=linaro.org header.i=@linaro.org header.b="k3uHuvIu"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4777771ed1aso8369605e9.2
+        for <dm-devel@lists.linux.dev>; Thu, 27 Nov 2025 22:16:00 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google; t=1764310559; x=1764915359; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
+         :to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=GzOlZeoUbK5GrmA6UDcAo/pAL66N5+Wh7nDV2nIjmh4=;
+        b=k3uHuvIutdL4qU0XPjswJl5cwmJ0qj2XRxeWScGWEINTqm6UxhYYku7T5+cyXfBSJz
+         mrmkPrVjqvX6/TGvnjaWcQehs0yd9xbxmHkdQmsFdSjRXewQY1CmK/EDhbvlzm860P1v
+         7O4C2o+edHFqHoiHIbU+ZPnk0V99+yB4MAX1kx2YXMACgt3YJThPWPE14nMUtdSBhLrH
+         Dayxu+CW1/kttwTl+8G604H+kLgwJhBMySmv1qpVV7cDPc6/haUs7d/sUsFamKmf7k5J
+         9acbGzMGgq4t6iUzyoxsUH7VjNqTeIbv/5nFeL58106YcPdRSxFgX+VlQmEoxyZ9F0vw
+         7UoQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1764310559; x=1764915359;
+        h=in-reply-to:content-disposition:mime-version:message-id:subject:cc
+         :to:from:date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=GzOlZeoUbK5GrmA6UDcAo/pAL66N5+Wh7nDV2nIjmh4=;
+        b=OGPvvFmZm93SsrZ7XDSHATXvT92Qu2ppcHvL8A8eWGOjwM50cJfM+MUBE7qMgrG9OO
+         73clagHAF3TRMoZS/5+DeOZlpg5hygx9vD9S44VdW+oQAfwTnj/Px2eWCqSTi2HT8OHJ
+         IJ1ZdR1e6FACGwF/VGRO/QxWHi+U2hFQJZdrG7d11QzTu1FPj4B3KCc0uvhqzru72F/F
+         0pGirkVi9c7sg0ZdHsbT69juZaz69U1ToDE3YjxU+cQyt37/BUPwiHQ/qU+Oh1JDaug3
+         KaXsn2w/HlJZ4bmLNgqIJ0b+f6RVmkrv507TBpYOBls492rKjWZA7nu8AJo++aJvF3DV
+         hS6Q==
+X-Forwarded-Encrypted: i=1; AJvYcCW5sYbm5BMQkwvi0PVqcIFsGU5qgZ1XGayQ+W9LBsan+kDqfouQz2nuPxNHRTKhMBQhBNaHz9fr3g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxL2BZWl/XnAlWcHz7N8oZdEloLyXXk2svV4MfQGM5UMHRlGz3L
+	C5MeIZoeUzWTYwQiHzmnKIE3LrY33l5ScFEuj0dGEiRGur1M3R8EXTm4QPPpeMf+Hfc=
+X-Gm-Gg: ASbGncvvHCCogFtixQfIJP8mN956TemoR1d9jVIaX0HQ1ukvJ66fy6v0QNgfSkO9rNZ
+	b/1mjrDnGN0RnuZ/594VKx5A9nbzZRTkbaWkmk1B4mav0EnEpuwRVBZBffJFf+BfI4OiHt4q1lR
+	o3A/gv51NdxUAmYBPvIICNk+5PUuGwGP6+9AoKs9F+KsfwSZjtApv6ZyxkuOFdM0vbK79DSJX7L
+	XOQvASDPvpnfRW1pCTuiv+rjQobYj1E+d74Z60X/PTZZKSAVDz/cEaxxvVUkjyu8jJ3NQp/3P7Z
+	PBRFGMiRyASSGCCN02zU1R+Yr/s6Ta8rmkufuzqZnnQ9NAE8T/oJTlfXiMDNBHUeOADHCkZnr+h
+	x+e06DEVAGdLtYNHOtdDfeMeE9jJsAnWO+q/VEPCeo74I/qjaE4NRAqcv8ShoIlFOeCsmSpYwZu
+	N/0JdiikbMGyUCm/f7
+X-Google-Smtp-Source: AGHT+IFdIuL1+ag2sXfLUM/g00Zb6LkyXzXLVWwOpnWTkJoN0WxuvEW4Ox+Z1MnircVKNp0kAljDVQ==
+X-Received: by 2002:a05:600c:1c85:b0:471:9da:524c with SMTP id 5b1f17b1804b1-477c016eab5mr306888745e9.12.1764310558915;
+        Thu, 27 Nov 2025 22:15:58 -0800 (PST)
+Received: from localhost ([196.207.164.177])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-479040d81e4sm88057735e9.3.2025.11.27.22.15.57
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 27 Nov 2025 22:15:58 -0800 (PST)
+Date: Fri, 28 Nov 2025 09:15:54 +0300
+From: Dan Carpenter <dan.carpenter@linaro.org>
+To: oe-kbuild@lists.linux.dev, Keith Busch <kbusch@meta.com>,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	snitzer@kernel.org, hch@lst.de, axboe@kernel.dk,
+	ebiggers@kernel.org
+Cc: lkp@intel.com, oe-kbuild-all@lists.linux.dev,
+	Keith Busch <kbusch@kernel.org>
+Subject: Re: [PATCHv2 3/3] dm-crypt: dynamic scatterlist for many segments
+Message-ID: <202511281018.FNOzcP4r-lkp@intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Date: Thu, 27 Nov 2025 20:51:23 -0400
-From: Kurt Fitzner <kurt_cryptsetup@va1der.ca>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Aaron Rainbolt <arraybolt3@gmail.com>, Milan Broz <gmazyland@gmail.com>,
- linux-mm@kvack.org, cryptsetup@lists.linux.dev, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org, adrelanos@whonix.org
-Subject: Re: Hard system lock-ups when using encrypted swap and RAM is
- exhausted
-In-Reply-To: <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com>
-References: <20251111231835.1232ad8f@kf-m2g5>
- <2b8b83fa-5cf5-4f97-b796-0c738ce3a548@gmail.com>
- <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com>
-Message-ID: <804601778974c504d42f4423d335a94d@va1der.ca>
-X-Sender: kurt_cryptsetup@va1der.ca
-Content-Type: text/plain; charset=US-ASCII;
- format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20251124170903.3931792-4-kbusch@meta.com>
 
-On 2025-11-27 13:54, Mikulas Patocka wrote:
+Hi Keith,
 
-> Encrypted swap file is not supposed to work.
+kernel test robot noticed the following build warnings:
 
-Do you have a reference for this?  The concept of encrypted swap files 
-has been a valid workflow for a very long time.
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
 
-> So, this is what happened to you - the machine runs out of memory, it
-> needs to swap out some pages, dm-crypt encrypts the pages and generates
-> write bios, the write bios are directed to the loop device, the loop
-> device directs them to the filesystem, the filesystem attempts to 
-> allocate
-> more memory => deadlock.
+url:    https://github.com/intel-lab-lkp/linux/commits/Keith-Busch/block-remove-stacking-default-dma_alignment/20251125-051340
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+patch link:    https://lore.kernel.org/r/20251124170903.3931792-4-kbusch%40meta.com
+patch subject: [PATCHv2 3/3] dm-crypt: dynamic scatterlist for many segments
+config: i386-randconfig-141-20251127 (https://download.01.org/0day-ci/archive/20251128/202511281018.FNOzcP4r-lkp@intel.com/config)
+compiler: clang version 20.1.8 (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)
 
-If it's the filesystem trying to allocate memory on writes to a swap 
-file that is causing a memory allocation/swap race, then any write to a 
-swap file would engender the same result, regardless of encryption. The 
-encryption layer is redundant under the failure mode you propose.
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Reported-by: Dan Carpenter <dan.carpenter@linaro.org>
+| Closes: https://lore.kernel.org/r/202511281018.FNOzcP4r-lkp@intel.com/
 
-I can confirm I have put kernels up to and including 6.14 under heavy 
-memory stress and have never encountered anything that feels like a 
-memory allocation race.  All my systems have encrypted swap files.
+New smatch warnings:
+drivers/md/dm-crypt.c:1510 crypt_convert_block_skcipher() warn: was || intended here instead of &&?
 
-I can't speak toward later kernels, or any bugs that may or may not be 
-presesnt, but I know of nothing to suggest that encrypted swap files 
-remain anything other than an intended feature.
+vim +1510 drivers/md/dm-crypt.c
 
-     Kurt
+8f0009a225171c Milan Broz        2017-03-16  1499  	skcipher_request_set_crypt(req, sg_in, sg_out, cc->sector_size, iv);
+3a7f6c990ad04e Milan Broz        2008-02-08  1500  
+3a7f6c990ad04e Milan Broz        2008-02-08  1501  	if (bio_data_dir(ctx->bio_in) == WRITE)
+bbdb23b5d69521 Herbert Xu        2016-01-24  1502  		r = crypto_skcipher_encrypt(req);
+3a7f6c990ad04e Milan Broz        2008-02-08  1503  	else
+bbdb23b5d69521 Herbert Xu        2016-01-24  1504  		r = crypto_skcipher_decrypt(req);
+3a7f6c990ad04e Milan Broz        2008-02-08  1505  
+2dc5327d3acb33 Milan Broz        2011-01-13  1506  	if (!r && cc->iv_gen_ops && cc->iv_gen_ops->post)
+ef43aa38063a6b Milan Broz        2017-01-04  1507  		r = cc->iv_gen_ops->post(cc, org_iv, dmreq);
+ef43aa38063a6b Milan Broz        2017-01-04  1508  
+02664d2ac0d3cf Keith Busch       2025-11-24  1509  out:
+02664d2ac0d3cf Keith Busch       2025-11-24 @1510  	if (r == -EINPROGRESS && r == -EBUSY) {
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Presumably || was intended as the warning suggests since it can't be
+both.
+
+02664d2ac0d3cf Keith Busch       2025-11-24  1511  		kfree(dmreq->__sg_in);
+02664d2ac0d3cf Keith Busch       2025-11-24  1512  		kfree(dmreq->__sg_out);
+02664d2ac0d3cf Keith Busch       2025-11-24  1513  		dmreq->__sg_in = NULL;
+02664d2ac0d3cf Keith Busch       2025-11-24  1514  		dmreq->__sg_out = NULL;
+02664d2ac0d3cf Keith Busch       2025-11-24  1515  	}
+3a7f6c990ad04e Milan Broz        2008-02-08  1516  	return r;
+01482b7671d014 Milan Broz        2008-02-08  1517  }
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
+
