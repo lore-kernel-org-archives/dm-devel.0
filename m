@@ -1,317 +1,570 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yx1-f51.google.com (mail-yx1-f51.google.com [74.125.224.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99230207A0B
-	for <dm-devel@lists.linux.dev>; Mon,  1 Dec 2025 22:21:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 821F81CD2C
+	for <dm-devel@lists.linux.dev>; Mon,  1 Dec 2025 23:59:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764627688; cv=none; b=cGFTiovMAKwpp5OsNlhKgcaqEj8QH0cwqBOA9FaerwxREaaDNbsS9U6TwGdUWYPM7goFYn1Ythl2pcG9q8HeIqZv9fqHP6QcTN/W5paN873WOtcRwXis+FrBmxHEhtGmHjfGuglyIT1COuGUCYpZ5H8Rsjsp74wlVtbjmNQrl+w=
+	t=1764633571; cv=none; b=aF5Q9PVO4IOUAwj+zbUxO+MZfy/gWzvU7++FpyAm6ywccnljdsZ3G7htqI7x2tK28BFmju2r7hcZ6p33MDAook+Kai79VLfiDyzUIXpFjCMACWwXFuTGEsB8DSVQ5zqEcJod0Vsboe2LOK5C9Gz28humVOhgTBUtqEf7pIf/5nA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764627688; c=relaxed/simple;
-	bh=MFpn0A271Vky723N4Nz8nSAQkw/uS/GpyiO35DOAC5s=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=NAcOYxnLUCO30n9uWnKR1mbThUKEBIxfu6PQnKUkHgWcq+NG/NwY+AWEDLUPdz4+cxPcNOEK8WHvLHnhfpUKPLZCB7dPNy0CMDJmIqtVG4HJD2nq9U3Hfv5ArJj6YXueGw291nO5Xdo8775HJPzACKFHrpXT6hSJ5WNyyvAHIJY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XDdmiFBg; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1764633571; c=relaxed/simple;
+	bh=UGt6IpCBpo8ozza4HkQjmCfQT15qXL4QO0efQfElv+g=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Omot5gTq2rtHBEtJqOdfeWDtMtlsBJFkKaxgrxFrS72f4OquJewU3xAPN/XOxNH7D9+WP583GGij4Wt2N8PErMdr7wtX+A9yyK/IIB94VAUAFOpdAhYiST02GGKKz4HFhftMQacn6yv8RAUoo+n72AGhCS05nUWgbf4CTIyssnk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=bdabgpCA; arc=none smtp.client-ip=74.125.224.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XDdmiFBg"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1764627684;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=DL1x8mBNAUtKmvhRD/OZVpDYiBDYBCoE1YF3n5++hEo=;
-	b=XDdmiFBglK9ybBfQK1a6O+VllL7SuK36s3F0CZhkn/qTxxep0RzTO2shVPOA+RCQ0+dYgA
-	k6LVqUZaUUJi1eydUOq6uzc4dIw8laVI8k5qAz2f1jL4nv2Vi97jMJt0N/gUqpNgO0lHGO
-	cKhi/+pE8mvuePcdoyDZUQhd4t5Lnjg=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-362-iLNnKXknPOCCumefXvMfQg-1; Mon,
- 01 Dec 2025 17:21:23 -0500
-X-MC-Unique: iLNnKXknPOCCumefXvMfQg-1
-X-Mimecast-MFC-AGG-ID: iLNnKXknPOCCumefXvMfQg_1764627682
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2B7C31955F11;
-	Mon,  1 Dec 2025 22:21:22 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A9F32180047F;
-	Mon,  1 Dec 2025 22:21:21 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B1MLKVD1425181
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 1 Dec 2025 17:21:20 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B1MLJ821425180;
-	Mon, 1 Dec 2025 17:21:19 -0500
-Date: Mon, 1 Dec 2025 17:21:19 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Jiping Ma <jiping.ma2@windriver.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm-snapshot: fix 'scheduling while atomic' on real-time
- kernels
-Message-ID: <aS4U3zt_jUkpjLlR@redhat.com>
-References: <747444e7-6884-cc1b-a761-c1e3bb7b888f@redhat.com>
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="bdabgpCA"
+Received: by mail-yx1-f51.google.com with SMTP id 956f58d0204a3-64107188baeso4335464d50.3
+        for <dm-devel@lists.linux.dev>; Mon, 01 Dec 2025 15:59:29 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1764633568; x=1765238368; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=GUKsHCpubiKWQ2tOZNiZ9dmQDUX8wlWXJdrcCEg/lWA=;
+        b=bdabgpCAaFotc2e/XjI5zDGL0WovH4LuI/36BRYcEyohFfVbGus7iO3KGgvsitGHvG
+         ZvWB7E9YvMF3Sj3hd2R1wk5cfT0jKn3cHJYQLnuQRxwLJgm3R0DrQAjmbkR/XGLWRxAk
+         R3bgkdGD7YggCIwyQ4jfyqAznaW70dzWbAj7PVW5o6sGxIsQlggszZzopVk0SFrw8cLa
+         9hg7Cta7HuqRnGX56ZsWnGgrPIC0H7jJWThKsWjfe8W/ixcciDqCEDFqIy0PMhwlVkPI
+         HnO363A1Vh9Z7ptCk7Y/SHGfxyxLObRSEHR/WLjRuUs3GUbwv4DYINhrdCstrODJkJG8
+         W0zQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1764633568; x=1765238368;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=GUKsHCpubiKWQ2tOZNiZ9dmQDUX8wlWXJdrcCEg/lWA=;
+        b=Ke9JD519TcXn8dNWh0r9g6Z9Yld72Myy2oIBV+uVjXihdJ512J+ANECFtyHcXyNr6c
+         XBc8h4dWEoPuSxaDalf/+Onc1p0Dtty/iEFrVmLulUXjF3y2qdHRTE6ndadkyWVKgkdj
+         be8o/VtcA5k7N3H3E1W/Arioolf1Lt4Qewa8QFGpCU2LAravhQqXHNFSzBsKk5GCf54V
+         yT5F2YyC507Z0d9odegH+j/2F7bENACn40nFtH3Ujx/udJqWvyt/4+bwnsatibj5wvAJ
+         UqRiio4xy0B9NSrGOb21CQB7brT6uSwPeQ2x6cDxjtMhnXalboxi1o2vBFzSEnNAJHDv
+         BFPQ==
+X-Gm-Message-State: AOJu0Yyh+Sd8mXIwxU6VEUYJncW4ItwEM/J33IILSGMXGY4uG21A0bDG
+	UKCUVqIWO58t6BEDNcb+b6VEGTEofPf6Uz+ILSMzSdlrfeAbpDpxtaV2Iw+Owq7Cjud240aUI2y
+	CDowhWw+eJUxGt7PZC92LTnoHT0idYA7epjarz8JHJPOpA7V2jqfTI6seP6DNGn8lvQ4RpWyOEt
+	wU51VBmiSo5AFTCZiEe/kJ4BWJfwPXURAkVYK4qjPutnmxV80=
+X-Gm-Gg: ASbGnct6USceSVayuYqBSAqcWwX96w3KDPU515dy5L4lEaNkAKL+507uf2HvMuA5P/z
+	DN2pJXUgxJ9HREdRzh2gmipvwX8m0l3OVB5B5Yr/mEnseQ5Nwvg14oQhrBPwsnYDqvYlkbi9h3b
+	OPbJuZmmf+WR4aJg+z8ac7YospFszML6fs8BFd8nmPWRk/naDlM0o2apFAgkB4kMSdPnHrDylS/
+	G6eE9D4pUC+D7b+Q6150GzYI4xDxiQ/wFV50QsmsVVqqKB91OawTj8/ZIrCfxsMk0/WcPqHPvWH
+	8eo5EGvQveNp4lAqQezkqU3FGiFsnTMu+6XQ5l81caHiLEcPJ1ZaqJzG7QvVY7KbZ8BGN0sZxeK
+	q0j3tR9LkdNDX3nrgyxC8qcd7gYdWOykpf2RLhG7MaVKk+YIzE/n85O9sMcwSjLyDb+494E7Oq0
+	467CakOI0sdHfElGS+jp3SU69aYu8onSQZ5yX5oxsx1GSF40xQjrRwJVeVWxI+ok/ndkplJpseL
+	crfEuzgQPi5IvUluyNcbYx2Pu+GgXuutHFNlfO1E0fF
+X-Google-Smtp-Source: AGHT+IET66CUI1UUftr+nywQOA0SUPDPHGI3eE40LJ1U1fVIV7MKIMpDrLOgeubswfTa3IwJXQ0kTQ==
+X-Received: by 2002:a53:c043:0:20b0:641:f5bc:6962 with SMTP id 956f58d0204a3-64302b3f5afmr25604208d50.78.1764633567660;
+        Mon, 01 Dec 2025 15:59:27 -0800 (PST)
+Received: from brian--MacBookPro18.purestorage.com ([136.226.79.101])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-6433c0897dasm5564990d50.11.2025.12.01.15.59.26
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Mon, 01 Dec 2025 15:59:27 -0800 (PST)
+From: Brian Bunker <brian@purestorage.com>
+To: dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com,
+	mwilck@suse.com,
+	Brian Bunker <brian@purestorage.com>
+Subject: [PATCH] Release lock before scsi_remove_device and don't block
+Date: Mon,  1 Dec 2025 15:59:08 -0800
+Message-ID: <20251201235908.43162-1-brian@purestorage.com>
+X-Mailer: git-send-email 2.51.2
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <747444e7-6884-cc1b-a761-c1e3bb7b888f@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: gNP7_5ev7tOu7GN0Vjzo1TCRziST42aAaPWs6xP2Umo_1764627682
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Mon, Dec 01, 2025 at 10:13:10PM +0100, Mikulas Patocka wrote:
-> There is reported 'scheduling while atomic' bug when using dm-snapshot on
-> real-time kernels. The reason for the bug is that the hlist_bl code does
-> preempt_disable() when taking the lock and the kernel attempts to take
-> other spinlocks while holding the hlist_bl lock.
-> 
-> Fix this by converting a hlist_bl spinlock into a regular spinlock.
+Martin, I have added a couple of changes to the patch. Here is the diff
+from the v2 that I posted. I have made the scsi_remove_device a non-blocking
+call. I also release the lock before removing the device decreasing the
+potential for lock contention since what is done under the lock is minimal.
 
-This looks correct, but it will either cause an increase in the memory
-used, or a possible performance hit due to lock contention on a smaller
-number of hash buckets, depending on whether the number of hash buckets
-calculated by the device/chunk size is larger than the new, smaller
-calc_max_buckets() limit. Since calc_max_buckets() limits the memory use
-to 2MB, I suspect that for most devices, this will result in fewer
-buckets (a 2G cow device with a 16K chunk size on a 64bit machine would
-hit the calc_max_buckets() limit of 262144 buckets before.  Depending on
-how the kernel is configured, the limit is now likely half that, so cow
-devices of over 1G are likely to start having fewer buckets).  
+I definitely would prefer multipath-tools to be the mechanism for the purging.
+Any other option would be in competetion with multipath-tools in obtaining
+the path state and acting on it. A single point of control seems advantagous.
 
-I wonder if we should double the calc_max_buckets() memory limit, or
-perhaps play some #ifdef games so that only real-time kernels are
-effected by this change.
+There are two issues where multipath-tools is a victim. The first one is
+addressed in the recheck_wwid function. The second one however also leads
+to an unexpected I/O error when running I/O to the multipath device. There
+are issues in volume mobility between two arrays where the inquiry data changes
+and the resurrection of the path with its original inquiry data with the now
+incorrect inquiry data also leads to an I/O error. In this case multipath-tools
+is the victim of the kernel not being able to update inquiry data with either
+inquiry data changed unit attentions or rescans. If you needd more details
+please letme know.
 
--Ben
+There may be other reasons to have a purge of disconnected (orphaned sd
+devices) that we have not encountered. Having a way to purge them seems like
+a nice step forward.
 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> 
-> ---
->  drivers/md/dm-exception-store.h |    2 -
->  drivers/md/dm-snap.c            |   73 ++++++++++++++++++----------------------
->  2 files changed, 35 insertions(+), 40 deletions(-)
-> 
-> Index: linux-2.6/drivers/md/dm-exception-store.h
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-exception-store.h	2023-09-05 14:45:58.000000000 +0200
-> +++ linux-2.6/drivers/md/dm-exception-store.h	2025-12-01 16:46:21.000000000 +0100
-> @@ -29,7 +29,7 @@ typedef sector_t chunk_t;
->   * chunk within the device.
->   */
->  struct dm_exception {
-> -	struct hlist_bl_node hash_list;
-> +	struct hlist_node hash_list;
->  
->  	chunk_t old_chunk;
->  	chunk_t new_chunk;
-> Index: linux-2.6/drivers/md/dm-snap.c
-> ===================================================================
-> --- linux-2.6.orig/drivers/md/dm-snap.c	2025-11-30 21:47:53.000000000 +0100
-> +++ linux-2.6/drivers/md/dm-snap.c	2025-12-01 21:48:42.000000000 +0100
-> @@ -40,10 +40,15 @@ static const char dm_snapshot_merge_targ
->  #define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
->  					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
->  
-> +struct dm_hlist_head {
-> +	struct hlist_head head;
-> +	spinlock_t lock;
-> +};
-> +
->  struct dm_exception_table {
->  	uint32_t hash_mask;
->  	unsigned int hash_shift;
-> -	struct hlist_bl_head *table;
-> +	struct dm_hlist_head *table;
->  };
->  
->  struct dm_snapshot {
-> @@ -628,8 +633,8 @@ static uint32_t exception_hash(struct dm
->  
->  /* Lock to protect access to the completed and pending exception hash tables. */
->  struct dm_exception_table_lock {
-> -	struct hlist_bl_head *complete_slot;
-> -	struct hlist_bl_head *pending_slot;
-> +	spinlock_t *complete_slot;
-> +	spinlock_t *pending_slot;
->  };
->  
->  static void dm_exception_table_lock_init(struct dm_snapshot *s, chunk_t chunk,
-> @@ -638,20 +643,20 @@ static void dm_exception_table_lock_init
->  	struct dm_exception_table *complete = &s->complete;
->  	struct dm_exception_table *pending = &s->pending;
->  
-> -	lock->complete_slot = &complete->table[exception_hash(complete, chunk)];
-> -	lock->pending_slot = &pending->table[exception_hash(pending, chunk)];
-> +	lock->complete_slot = &complete->table[exception_hash(complete, chunk)].lock;
-> +	lock->pending_slot = &pending->table[exception_hash(pending, chunk)].lock;
->  }
->  
->  static void dm_exception_table_lock(struct dm_exception_table_lock *lock)
->  {
-> -	hlist_bl_lock(lock->complete_slot);
-> -	hlist_bl_lock(lock->pending_slot);
-> +	spin_lock_nested(lock->complete_slot, 1);
-> +	spin_lock_nested(lock->pending_slot, 2);
->  }
->  
->  static void dm_exception_table_unlock(struct dm_exception_table_lock *lock)
->  {
-> -	hlist_bl_unlock(lock->pending_slot);
-> -	hlist_bl_unlock(lock->complete_slot);
-> +	spin_unlock(lock->pending_slot);
-> +	spin_unlock(lock->complete_slot);
->  }
->  
->  static int dm_exception_table_init(struct dm_exception_table *et,
-> @@ -661,13 +666,15 @@ static int dm_exception_table_init(struc
->  
->  	et->hash_shift = hash_shift;
->  	et->hash_mask = size - 1;
-> -	et->table = kvmalloc_array(size, sizeof(struct hlist_bl_head),
-> +	et->table = kvmalloc_array(size, sizeof(struct dm_hlist_head),
->  				   GFP_KERNEL);
->  	if (!et->table)
->  		return -ENOMEM;
->  
-> -	for (i = 0; i < size; i++)
-> -		INIT_HLIST_BL_HEAD(et->table + i);
-> +	for (i = 0; i < size; i++) {
-> +		INIT_HLIST_HEAD(&et->table[i].head);
-> +		spin_lock_init(&et->table[i].lock);
-> +	}
->  
->  	return 0;
->  }
-> @@ -675,16 +682,17 @@ static int dm_exception_table_init(struc
->  static void dm_exception_table_exit(struct dm_exception_table *et,
->  				    struct kmem_cache *mem)
->  {
-> -	struct hlist_bl_head *slot;
-> +	struct dm_hlist_head *slot;
->  	struct dm_exception *ex;
-> -	struct hlist_bl_node *pos, *n;
-> +	struct hlist_node *pos;
->  	int i, size;
->  
->  	size = et->hash_mask + 1;
->  	for (i = 0; i < size; i++) {
->  		slot = et->table + i;
->  
-> -		hlist_bl_for_each_entry_safe(ex, pos, n, slot, hash_list) {
-> +		hlist_for_each_entry_safe(ex, pos, &slot->head, hash_list) {
-> +			hlist_del(&ex->hash_list);
->  			kmem_cache_free(mem, ex);
->  			cond_resched();
->  		}
-> @@ -700,7 +708,7 @@ static uint32_t exception_hash(struct dm
->  
->  static void dm_remove_exception(struct dm_exception *e)
->  {
-> -	hlist_bl_del(&e->hash_list);
-> +	hlist_del(&e->hash_list);
->  }
->  
->  /*
-> @@ -710,12 +718,11 @@ static void dm_remove_exception(struct d
->  static struct dm_exception *dm_lookup_exception(struct dm_exception_table *et,
->  						chunk_t chunk)
->  {
-> -	struct hlist_bl_head *slot;
-> -	struct hlist_bl_node *pos;
-> +	struct hlist_head *slot;
->  	struct dm_exception *e;
->  
-> -	slot = &et->table[exception_hash(et, chunk)];
-> -	hlist_bl_for_each_entry(e, pos, slot, hash_list)
-> +	slot = &et->table[exception_hash(et, chunk)].head;
-> +	hlist_for_each_entry(e, slot, hash_list)
->  		if (chunk >= e->old_chunk &&
->  		    chunk <= e->old_chunk + dm_consecutive_chunk_count(e))
->  			return e;
-> @@ -762,18 +769,17 @@ static void free_pending_exception(struc
->  static void dm_insert_exception(struct dm_exception_table *eh,
->  				struct dm_exception *new_e)
->  {
-> -	struct hlist_bl_head *l;
-> -	struct hlist_bl_node *pos;
-> +	struct hlist_head *l;
->  	struct dm_exception *e = NULL;
->  
-> -	l = &eh->table[exception_hash(eh, new_e->old_chunk)];
-> +	l = &eh->table[exception_hash(eh, new_e->old_chunk)].head;
->  
->  	/* Add immediately if this table doesn't support consecutive chunks */
->  	if (!eh->hash_shift)
->  		goto out;
->  
->  	/* List is ordered by old_chunk */
-> -	hlist_bl_for_each_entry(e, pos, l, hash_list) {
-> +	hlist_for_each_entry(e, l, hash_list) {
->  		/* Insert after an existing chunk? */
->  		if (new_e->old_chunk == (e->old_chunk +
->  					 dm_consecutive_chunk_count(e) + 1) &&
-> @@ -804,13 +810,13 @@ out:
->  		 * Either the table doesn't support consecutive chunks or slot
->  		 * l is empty.
->  		 */
-> -		hlist_bl_add_head(&new_e->hash_list, l);
-> +		hlist_add_head(&new_e->hash_list, l);
->  	} else if (new_e->old_chunk < e->old_chunk) {
->  		/* Add before an existing exception */
-> -		hlist_bl_add_before(&new_e->hash_list, &e->hash_list);
-> +		hlist_add_before(&new_e->hash_list, &e->hash_list);
->  	} else {
->  		/* Add to l's tail: e is the last exception in this slot */
-> -		hlist_bl_add_behind(&new_e->hash_list, &e->hash_list);
-> +		hlist_add_behind(&new_e->hash_list, &e->hash_list);
->  	}
->  }
->  
-> @@ -820,7 +826,6 @@ out:
->   */
->  static int dm_add_exception(void *context, chunk_t old, chunk_t new)
->  {
-> -	struct dm_exception_table_lock lock;
->  	struct dm_snapshot *s = context;
->  	struct dm_exception *e;
->  
-> @@ -833,17 +838,7 @@ static int dm_add_exception(void *contex
->  	/* Consecutive_count is implicitly initialised to zero */
->  	e->new_chunk = new;
->  
-> -	/*
-> -	 * Although there is no need to lock access to the exception tables
-> -	 * here, if we don't then hlist_bl_add_head(), called by
-> -	 * dm_insert_exception(), will complain about accessing the
-> -	 * corresponding list without locking it first.
-> -	 */
-> -	dm_exception_table_lock_init(s, old, &lock);
-> -
-> -	dm_exception_table_lock(&lock);
->  	dm_insert_exception(&s->complete, e);
-> -	dm_exception_table_unlock(&lock);
->  
->  	return 0;
->  }
-> @@ -873,7 +868,7 @@ static int calc_max_buckets(void)
->  	/* use a fixed size of 2MB */
->  	unsigned long mem = 2 * 1024 * 1024;
->  
-> -	mem /= sizeof(struct hlist_bl_head);
-> +	mem /= sizeof(struct dm_hlist_head);
->  
->  	return mem;
->  }
+I also made the man page more clear as to what is happening with the option.
+---
+ libmultipath/libmultipath.version |   1 +
+ libmultipath/sysfs.c              |  58 ++++++-
+ libmultipath/sysfs.h              |   2 +
+ multipath/multipath.conf.5.in     |  11 +-
+ multipathd/main.c                 | 250 +++++++++++++++++++++++-------
+ 5 files changed, 260 insertions(+), 62 deletions(-)
+
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 89ae2a3c..c435847f 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -239,6 +239,7 @@ global:
+ 	snprint_tgt_wwnn;
+ 	snprint_tgt_wwpn;
+ 	sysfs_attr_set_value;
++	sysfs_attr_set_value_nonblock;
+ 	sysfs_attr_get_value;
+ 	sysfs_get_asymmetric_access_state;
+ 
+diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
+index af27d107..2160d7fd 100644
+--- a/libmultipath/sysfs.c
++++ b/libmultipath/sysfs.c
+@@ -134,7 +134,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 	size = write(fd, value, value_len);
+ 	if (size < 0) {
+ 		size = -errno;
+-		condlog(3, "%s: write to %s failed: %s", __func__, 
++		condlog(3, "%s: write to %s failed: %s", __func__,
+ 			devpath, strerror(errno));
+ 	} else if (size < (ssize_t)value_len)
+ 		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
+@@ -144,6 +144,62 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 	return size;
+ }
+ 
++/*
++ * Non-blocking version of sysfs_attr_set_value for use with potentially
++ * blocking sysfs attributes (like SCSI "delete").
++ *
++ * Returns:
++ *   > 0: number of bytes written (success)
++ *   -EAGAIN: write would block, caller should retry or wait for completion
++ *   < 0: other error (negative errno)
++ */
++ssize_t sysfs_attr_set_value_nonblock(struct udev_device *dev, const char *attr_name,
++				      const char * value, size_t value_len)
++{
++	const char *syspath;
++	char devpath[PATH_MAX];
++	int fd = -1;
++	ssize_t size = -1;
++
++	if (!dev || !attr_name || !value || !value_len) {
++		condlog(1, "%s: invalid parameters", __func__);
++		return -EINVAL;
++	}
++
++	syspath = udev_device_get_syspath(dev);
++	if (!syspath) {
++		condlog(3, "%s: invalid udevice", __func__);
++		return -EINVAL;
++	}
++	if (safe_sprintf(devpath, "%s/%s", syspath, attr_name)) {
++		condlog(3, "%s: devpath overflow", __func__);
++		return -EOVERFLOW;
++	}
++
++	condlog(4, "open '%s' (non-blocking)", devpath);
++	/* Open with O_NONBLOCK to avoid blocking in open() or write() */
++	fd = open(devpath, O_WRONLY | O_NONBLOCK);
++	if (fd < 0) {
++		condlog(3, "%s: attribute '%s' cannot be opened: %s",
++			__func__, devpath, strerror(errno));
++		return -errno;
++	}
++	pthread_cleanup_push(cleanup_fd_ptr, &fd);
++
++	size = write(fd, value, value_len);
++	if (size < 0) {
++		size = -errno;
++		if (errno != EAGAIN)
++			condlog(3, "%s: write to %s failed: %s", __func__,
++				devpath, strerror(errno));
++	} else if (size < (ssize_t)value_len)
++		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
++			__func__, value_len, devpath, size);
++
++	pthread_cleanup_pop(1);
++	return size;
++}
++
+ int
+ sysfs_get_size (struct path *pp, unsigned long long * size)
+ {
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index 45f24c37..da2deaa3 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -10,6 +10,8 @@
+ int devt2devname (char *, int, const char *);
+ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
+ 			     const char * value, size_t value_len);
++ssize_t sysfs_attr_set_value_nonblock(struct udev_device *dev, const char *attr_name,
++				      const char * value, size_t value_len);
+ ssize_t sysfs_attr_get_value(struct udev_device *dev, const char *attr_name,
+ 			     char * value, size_t value_len);
+ ssize_t sysfs_bin_attr_get_value(struct udev_device *dev, const char *attr_name,
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index 1f806da8..84cd1a0a 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -1309,11 +1309,12 @@ The default is: \fBno\fR
+ .B purge_disconnected
+ If set to
+ .I yes
+-, multipathd will automatically remove paths that are in the disconnected state
+-by writing to the SCSI device's sysfs delete attribute. This triggers kernel-level
+-device removal. Paths are retried multiple times before being forcibly cleaned up
+-if the kernel removal fails. This option is useful for cleaning up stale paths
+-from storage arrays that have been disconnected or removed.
++, multipathd will automatically remove devices that are in a disconnected state.
++A path is considered disconnected when the TUR (Test Unit Ready) path checker
++receives the SCSI sense code "LOGICAL UNIT NOT SUPPORTED" (sense key 0x5,
++ASC/ASCQ 0x25/0x00). This typically indicates that the LUN has been unmapped
++or is no longer presented by the storage array. This option helps clean up
++stale device entries that would otherwise remain in the system.
+ .RS
+ .TP
+ The default is: \fBno\fR
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 0e7ed9b5..b105cd56 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1092,32 +1092,107 @@ check_path_wwid_change(struct path *pp)
+ 	return false;
+ }
+ 
++/*
++ * Information needed to delete a path via sysfs, copied while holding the lock
++ * so that the actual sysfs write can be done without holding vecs->lock.
++ */
++struct purge_path_info {
++	struct udev_device *udev;  /* Reference to udev device (refcounted) */
++	char dev_t[BLK_DEV_SIZE];  /* For logging */
++	char alias[WWID_SIZE];     /* mpp alias for logging */
++	struct path *pp;           /* Path pointer for updating purge_path flag */
++};
++
+ /*
+  * Attempt to delete a path by writing to the SCSI device's sysfs delete attribute.
+  * This triggers kernel-level device removal. The actual cleanup of the path structure
+  * from pathvec happens later when a uevent arrives (handled by uev_remove_path).
+  *
++ * This function does NOT require vecs->lock to be held, as it operates on copied data.
++ * Uses non-blocking I/O to avoid blocking in scsi_remove_device().
++ *
+  * Returns:
+- *   true  - sysfs write succeeded, uevent expected
+- *   false - sysfs write failed or device not found
++ *   true  - sysfs write succeeded or device already being deleted
++ *   false - sysfs write would block (EAGAIN), caller should retry
++ *
++ * Note: Errors other than EAGAIN are treated as success, because they typically
++ * indicate the device is already in SDEV_DEL or SDEV_CANCEL state, or the sysfs
++ * file doesn't exist (device already removed).
+  */
+ static bool
+-delete_path(struct path * pp)
++delete_path_sysfs(struct purge_path_info *info)
+ {
+-	struct udev_device *ud = udev_device_get_parent_with_subsystem_devtype(pp->udev,
++	struct udev_device *ud;
++	ssize_t ret;
++
++	if (!info->udev)
++		return true;  /* No device, treat as success */
++
++	ud = udev_device_get_parent_with_subsystem_devtype(info->udev,
+ 		"scsi", "scsi_device");
+ 
+-	if (ud) {
+-		if (sysfs_attr_set_value(ud, "delete", "1", strlen("1")) < 0) {
+-			condlog(1, "failed to remove path %s from %s",
+-				pp->dev_t, pp->mpp->alias);
+-			return false;
+-		}
+-		condlog(2, "removed path %s from %s", pp->dev_t, pp->mpp->alias);
+-		pp->purge_path = false;
++	if (!ud) {
++		/* No SCSI parent device, likely already removed */
++		condlog(4, "%s: no SCSI parent device found, likely already removed",
++			info->dev_t);
+ 		return true;
+ 	}
+-	return false;
++
++	ret = sysfs_attr_set_value_nonblock(ud, "delete", "1", strlen("1"));
++
++	if (ret == -EAGAIN) {
++		/* Write would block, caller should retry */
++		condlog(4, "%s: delete would block, will retry", info->dev_t);
++		return false;
++	}
++
++	if (ret < 0) {
++		/*
++		 * Other errors (ENOENT, EINVAL, etc.) typically mean the device
++		 * is already being deleted or is in SDEV_DEL/SDEV_CANCEL state.
++		 * Treat as success since the end result is what we want.
++		 */
++		condlog(3, "%s: sysfs delete returned %zd (%s), treating as success",
++			info->dev_t, ret, strerror((int)-ret));
++		return true;
++	}
++
++	/* Success */
++	condlog(2, "%s: initiated removal from %s", info->dev_t, info->alias);
++	return true;
++}
++
++/*
++ * Prepare purge info for a path while holding vecs->lock.
++ * Takes a reference on the udev device so it remains valid after unlocking.
++ * Returns true if info was successfully prepared, false otherwise.
++ */
++static bool
++prepare_purge_path_info(struct path *pp, struct purge_path_info *info)
++{
++	if (!pp->udev || !pp->mpp)
++		return false;
++
++	info->udev = udev_device_ref(pp->udev);
++	if (!info->udev)
++		return false;
++
++	strlcpy(info->dev_t, pp->dev_t, sizeof(info->dev_t));
++	strlcpy(info->alias, pp->mpp->alias, sizeof(info->alias));
++	info->pp = pp;
++	return true;
++}
++
++/*
++ * Clean up purge info after use.
++ */
++static void
++cleanup_purge_path_info(struct purge_path_info *info)
++{
++	if (info->udev) {
++		udev_device_unref(info->udev);
++		info->udev = NULL;
++	}
+ }
+ 
+ /*
+@@ -3346,6 +3421,7 @@ purgeloop (void *ap)
+ 	unsigned int devices_failed_total = 0;
+ 	unsigned int devices_pending_total = 0;
+ 	bool found_path_this_cycle = false;
++	bool cycle_complete_logged = false;
+ 	vecs = (struct vectors *)ap;
+ 
+ 	pthread_cleanup_push(rcu_unregister, NULL);
+@@ -3354,11 +3430,14 @@ purgeloop (void *ap)
+ 
+ 	while (1) {
+ 		bool path_handled = false;
++		struct purge_path_info purge_info = { .udev = NULL };
++		bool do_purge = false;
++		char dev_name[FILE_NAME_SIZE];
+ 
+ 		/*
+ 		 * Lock and search for one path that needs processing.
+-		 * We search from the beginning each time since the list
+-		 * may have changed while we didn't hold the lock.
++		 * Copy the necessary info while holding the lock, then
++		 * release the lock before doing any blocking sysfs operations.
+ 		 */
+ 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
+ 		lock(&vecs->lock);
+@@ -3374,44 +3453,96 @@ purgeloop (void *ap)
+ 			/* Increment timeout counter for this purge attempt */
+ 			pp->purge_retries++;
+ 
+-			if (delete_path(pp)) {
+-				/* Success: sysfs write succeeded, uevent expected */
+-				devices_purged_total++;
+-				pp->purge_retries = 0;
+-				condlog(3, "%s: path purge successful", pp->dev);
+-			} else if (pp->purge_retries >= PURGE_TIMEOUT_CYCLES) {
++			if (pp->purge_retries >= PURGE_TIMEOUT_CYCLES) {
+ 				/*
+ 				 * Timeout: path couldn't be deleted after multiple attempts.
+-				 * Force cleanup by calling ev_remove_path() to properly
+-				 * remove the path from its multipath device and handle
+-				 * all references correctly.
++				 * This likely means the device still exists in the kernel
++				 * (perhaps it came back online, or the delete is stuck).
++				 *
++				 * We should NOT force-remove it from multipathd's state,
++				 * as that would create a mismatch between multipathd's view
++				 * and the kernel's view of existing devices.
++				 *
++				 * Instead, clear the purge flag and stop trying. The path
++				 * will remain in multipathd. If it's truly disconnected,
++				 * it will be marked for purge again on the next check cycle.
+ 				 */
+-				condlog(1, "%s: purge timeout after %d attempts, forcing removal",
++				condlog(1, "%s: purge timeout after %d attempts, giving up. "
++					"Device may still exist in kernel.",
+ 					pp->dev, pp->purge_retries);
+-				if (ev_remove_path(pp, vecs, 1) & REMOVE_PATH_SUCCESS)
+-					devices_failed_total++;
+-				else {
+-					/*
+-					 * ev_remove_path failed to remove the path immediately.
+-					 * The path is now marked INIT_REMOVED and will be
+-					 * cleaned up when the map is reloaded or removed.
+-					 */
+-					condlog(1, "%s: failed to remove path, marked for later removal",
++				pp->purge_path = false;
++				pp->purge_retries = 0;
++				devices_failed_total++;
++			} else {
++				/*
++				 * Prepare info for sysfs deletion.
++				 * Copy all needed data while holding the lock.
++				 */
++				if (prepare_purge_path_info(pp, &purge_info)) {
++					do_purge = true;
++					strlcpy(dev_name, pp->dev, sizeof(dev_name));
++				} else {
++					/* Can't prepare info, will retry next cycle */
++					devices_pending_total++;
++					condlog(4, "%s: failed to prepare purge info, will retry",
+ 						pp->dev);
+-					devices_failed_total++;
+ 				}
+-			} else {
+-				/* Will retry on next cycle */
+-				devices_pending_total++;
+-				condlog(4, "%s: path purge failed, will retry (attempt %d/%d)",
+-					pp->dev, pp->purge_retries,
+-					PURGE_TIMEOUT_CYCLES);
+ 			}
+ 			break;
+ 		}
+ 
+ 		lock_cleanup_pop(vecs->lock);
+ 
++		/*
++		 * Now we've released the lock. Do the non-blocking sysfs operation
++		 * without holding vecs->lock.
++		 */
++		if (do_purge) {
++			bool success = delete_path_sysfs(&purge_info);
++
++			/*
++			 * Re-acquire lock to update path state.
++			 * The path might have been removed while we didn't hold the lock,
++			 * so we need to verify it still exists.
++			 */
++			pthread_cleanup_push(cleanup_lock, &vecs->lock);
++			lock(&vecs->lock);
++			pthread_testcancel();
++
++			/* Verify the path still exists in pathvec */
++			if (find_slot(vecs->pathvec, purge_info.pp) != -1) {
++				if (success) {
++					/* Success: sysfs write succeeded, uevent expected */
++					devices_purged_total++;
++					purge_info.pp->purge_path = false;
++					purge_info.pp->purge_retries = 0;
++					condlog(3, "%s: path purge successful", dev_name);
++				} else {
++					/* Will retry on next cycle */
++					devices_pending_total++;
++					condlog(4, "%s: path purge failed, will retry (attempt %d/%d)",
++						dev_name, purge_info.pp->purge_retries,
++						PURGE_TIMEOUT_CYCLES);
++				}
++			} else {
++				/*
++				 * Path was removed while we were doing sysfs write.
++				 * This is actually success - the path is gone, which is what we wanted.
++				 */
++				if (success) {
++					devices_purged_total++;
++					condlog(3, "%s: path removed during purge operation (counted as success)",
++						dev_name);
++				} else {
++					/* Path removed but our sysfs write failed - don't count it */
++					condlog(4, "%s: path removed during failed purge operation", dev_name);
++				}
++			}
++
++			lock_cleanup_pop(vecs->lock);
++			cleanup_purge_path_info(&purge_info);
++		}
++
+ 		/*
+ 		 * If we didn't find any path to process, we've completed a cycle.
+ 		 * Check if we should wait for more work or start a new cycle.
+@@ -3419,11 +3550,12 @@ purgeloop (void *ap)
+ 		if (path_handled)
+ 			found_path_this_cycle = true;
+ 		else {
+-			if (found_path_this_cycle) {
++			if (found_path_this_cycle && !cycle_complete_logged) {
+ 				/* Completed a cycle, log statistics */
+ 				condlog(2, "purge cycle %u complete: %u purged, %u failed, %u pending",
+ 					current_cycle, devices_purged_total,
+ 					devices_failed_total, devices_pending_total);
++				cycle_complete_logged = true;
+ 
+ 				/* Check if we need to retry pending paths */
+ 				if (devices_pending_total > 0) {
+@@ -3445,26 +3577,32 @@ purgeloop (void *ap)
+ 								&devices_failed_total,
+ 								&devices_pending_total,
+ 								&found_path_this_cycle);
++					cycle_complete_logged = false;
++					condlog(3, "starting purge cycle %u", current_cycle);
+ 					continue;
+ 				}
++
++				/* No pending paths, prepare for next cycle */
++				current_cycle++;
++				reset_purge_cycle_stats(&devices_purged_total,
++							&devices_failed_total,
++							&devices_pending_total,
++							&found_path_this_cycle);
++				cycle_complete_logged = false;
+ 			}
+ 
+ 			/* No paths to process, wait for signal */
+-			pthread_mutex_lock(&purge_mutex);
+-			while (!devices_to_purge) {
+-				condlog(3, "waiting on devices to purge");
+-				pthread_cond_wait(&purge_cond, &purge_mutex);
+-			}
+-			devices_to_purge = 0;
+-			pthread_mutex_unlock(&purge_mutex);
++			if (cycle_complete_logged) {
++				pthread_mutex_lock(&purge_mutex);
++				while (!devices_to_purge) {
++					condlog(3, "waiting on devices to purge");
++					pthread_cond_wait(&purge_cond, &purge_mutex);
++				}
++				devices_to_purge = 0;
++				pthread_mutex_unlock(&purge_mutex);
+ 
+-			/* Start a new cycle */
+-			current_cycle++;
+-			reset_purge_cycle_stats(&devices_purged_total,
+-						&devices_failed_total,
+-						&devices_pending_total,
+-						&found_path_this_cycle);
+-			condlog(3, "starting purge cycle %u", current_cycle);
++				condlog(3, "starting purge cycle %u", current_cycle);
++			}
+ 		}
+ 	}
+ 
+-- 
+2.51.2
 
