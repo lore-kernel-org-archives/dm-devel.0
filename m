@@ -1,165 +1,128 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A34951DDC35
-	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 01:00:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 166402AEE1
+	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 03:02:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764637217; cv=none; b=rQzNFUtGc0k7wWvmtCp7uK67RnVkWqNrkSFIPM7yaw3aVzIUVbrV+yoOQ3pAjWmIddNH5EhyZnxM5SE4o/z5Nuep3IpAlZIxcRgvQyLz6gzUpJcWZ0QAoZBLdhk7RhyODqQmMbJmmp66Jgz76/P0/kvKVcvqSd4z6sFvMGsPXOg=
+	t=1764644540; cv=none; b=SMxJ9www9MGPUGzz+PW0oF50UwpU/QCDEKVc+hF1ac9YL8wIGTLOkv4ZrlinzgWRuzALVLWMzMXVod2XAPdpudtG6M82MuyyA6vqUiCZ+iVGv4Lto++i8W7t9iJ2bKKFcs9edZwQktolN64oATD1G/GMDvsg60VsLmIJGBP9OqE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764637217; c=relaxed/simple;
-	bh=PxP6uKksKUzaWHty9yfcmnKTHhxY0xe7WiUUDcUvSbU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Y2MxU0IAgKUAI3HK8+KIV6JI4uKDkPN/zvNYtEWTAqGBD+whcQoOhbdWWN9bmP9cq4vXhSK5pu9du3WMQuH6IH3JEDJhPUJ8AfQg80B5ACmYcRUNdgH8pIfj5/jz0IEOzEQBlsSKXdfrME1G/zm7Uq1nwqD0p1MHCHt2P0hIrMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eXsI8m7m; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1764644540; c=relaxed/simple;
+	bh=VeVZJ9/D17TrpaHlWYebe4opwfRFN8Q7J94l5tj8tkk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=itRronUkIs7MHzLQmh7Crq+er4nu4r0ItepnKDzuOcBfPwYaqQ77OXyLWzbRK7B378GqgrwUWYZAdcPBQ/mkq9J5SE+rZ/23YFZ2Fqq53k5kkFWt5CnrWRFZpDFtsE0YY/pqv0X7LlNE6+1XMiozCyUgDZYz7yzstvUQp4bAtxI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Fm7N4Uh4; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eXsI8m7m"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Fm7N4Uh4"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1764637213;
+	s=mimecast20190719; t=1764644538;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=BSXRUI4rYX7v7e12DwZA3WuUIB5pISkkj3j3RLO+rQQ=;
-	b=eXsI8m7mwQFid6z6pdjXbH90NkbzhYLrO8SdzLcb5D4BEZ4ifbwir6YoVBzfyI1IkPYmrI
-	00L7j5vreXPX0q0ihcGbt4yfdylX511YWeUjiviiR3gxJbqUJ9kvW+qmPpgGct6nrPHxb0
-	agbNktPhFf4Anbaa4ebfVjiHBBXa9ns=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=R7AO2PFzp1HMCq/g3LZhd3h2oxvHrl2dPVtc6Ii129M=;
+	b=Fm7N4Uh4YWKbXoEbV1wHH+P1SdHeWq3lCGjoDxa8cR2J+118fD8f15P0+2RpvGrQ9Nkg4B
+	ljE2obs7lqvhTj9wKBwm5dGggGRgDsrzpxVDSv7XYKigqyNKnVB7VDVvhakrkl4Gds01w7
+	5zhEMKdrDAkID8esCIP2cwRCqn9mSFs=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-151-ZBixc-R5PgycTpzbf1ZMkw-1; Mon,
- 01 Dec 2025 20:00:07 -0500
-X-MC-Unique: ZBixc-R5PgycTpzbf1ZMkw-1
-X-Mimecast-MFC-AGG-ID: ZBixc-R5PgycTpzbf1ZMkw_1764637206
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-57-5aNCm9o4OEqEnX6aeTFqoQ-1; Mon,
+ 01 Dec 2025 22:02:16 -0500
+X-MC-Unique: 5aNCm9o4OEqEnX6aeTFqoQ-1
+X-Mimecast-MFC-AGG-ID: 5aNCm9o4OEqEnX6aeTFqoQ_1764644536
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 788E91955F2A;
-	Tue,  2 Dec 2025 01:00:05 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C5F02180009D;
+	Tue,  2 Dec 2025 03:02:15 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82B3A1955F24;
-	Tue,  2 Dec 2025 01:00:04 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5EF65195608E;
+	Tue,  2 Dec 2025 03:02:15 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B2103js1429478
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B232E8g1432989
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 1 Dec 2025 20:00:03 -0500
+	Mon, 1 Dec 2025 22:02:14 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B21029A1429477;
-	Mon, 1 Dec 2025 20:00:02 -0500
-Date: Mon, 1 Dec 2025 20:00:02 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B232E2I1432988;
+	Mon, 1 Dec 2025 22:02:14 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Cc: "James E . J . Bottomley" <James.Bottomley@hansenpartnership.com>,
-        "Martin K . Petersen" <martin.petersen@oracle.com>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <snitzer@kernel.org>, linux-scsi@vger.kernel.org,
-        dm-devel@lists.linux.dev
-Subject: Re: [PATCH] scsi: scsi_dh: Return error pointer in
- scsi_dh_attached_handler_name
-Message-ID: <aS46EpB6dijzABwA@redhat.com>
-References: <20251121234834.1035028-1-bmarzins@redhat.com>
- <94bce7593f2980cef43860044e5b662c3d3c0ec7.camel@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 3/4] multipathd: remember number of registered keys when ioctl fails
+Date: Mon,  1 Dec 2025 22:02:12 -0500
+Message-ID: <20251202030213.1432964-4-bmarzins@redhat.com>
+In-Reply-To: <20251202030213.1432964-1-bmarzins@redhat.com>
+References: <20251202030213.1432964-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <94bce7593f2980cef43860044e5b662c3d3c0ec7.camel@suse.com>
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 7xInzILLJtuS_WjfOlEhcTWS4pEHTs_BNoDEBB4k3G4_1764644536
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Thu, Nov 27, 2025 at 04:26:51PM +0100, Martin Wilck wrote:
-> On Fri, 2025-11-21 at 18:48 -0500, Benjamin Marzinski wrote:
-> > If scsi_dh_attached_handler_name() fails to allocate the handler
-> > name,
-> > dm-multipath (its only caller) assumes there is no attached device
-> > handler, and sets the device up incorrectly. Return an error pointer
-> > instead, so multipath can distinguish between failure and success
-> > where
-> > there is no attached device handler.
-> > 
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  drivers/md/dm-mpath.c  | 8 ++++++++
-> >  drivers/scsi/scsi_dh.c | 8 +++++---
-> >  2 files changed, 13 insertions(+), 3 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > index c18358271618..063dc526fe04 100644
-> > --- a/drivers/md/dm-mpath.c
-> > +++ b/drivers/md/dm-mpath.c
-> > @@ -950,6 +950,14 @@ static struct pgpath *parse_path(struct
-> > dm_arg_set *as, struct path_selector *ps
-> >  
-> >  	q = bdev_get_queue(p->path.dev->bdev);
-> >  	attached_handler_name = scsi_dh_attached_handler_name(q,
-> > GFP_KERNEL);
-> > +	if (IS_ERR(attached_handler_name)) {
-> > +		if (PTR_ERR(attached_handler_name) == -ENODEV)
-> > +			attached_handler_name = NULL;
-> 
-> What's the point of continuing here if we know that the SCSI device
-> doesn't exist?
+If prin_do_scsi_ioctl() fails in update_map_pr() for some reason other
+than Persistent Reservations not being supported, It shouldn't clear the
+number of registered keys, since there's no reason to think that it has
+changed. Similarly, if update_map_pr() fails in mpath_pr_event_handle(),
+don't assume that the nr_keys_needed was cleared. Just return whatever
+the value is now. This saves multipathd from doing pointless calls to
+update_map_pr(), if one of the paths is failing.
 
-we just know that it's not a SCSI device, so we clear
-attached_handler_name.  I suppose we could add another check to error
-out here if m->hw_handler_name is set. But if it is, the setup_scsi_dh()
-call just below will fail anyways, so there's not much difference.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
 
-But if you think adding that extra check makes things clearer, I'm fine
-with that.
-
--Ben
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 4c86f31e..a7650639 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -4278,7 +4278,9 @@ void unset_pr(struct multipath *mpp)
+  * The number of found keys must be at least as large as *nr_keys,
+  * and if MPATH_PR_SUCCESS is returned and mpp->prflag is PR_SET after
+  * the call, *nr_keys will be set to the number of found keys. Otherwise
+- * it will be set to 0.
++ * if mpp->prflag is PR_UNSET it will be set to 0. If MPATH_PR_SUCCESS
++ * is not returned and mpp->prflag is not PR_UNSET, nr_keys will not be
++ * changed.
+  */
+ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *nr_keys)
+ {
+@@ -4307,11 +4309,12 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
  
-> Thanks,
-> Martin
-> 
-> > +		else {
-> > +			r = PTR_ERR(attached_handler_name);
-> > +			goto bad;
-> > +		}
-> > +	}
-> >  	if (attached_handler_name || m->hw_handler_name) {
-> >  		INIT_DELAYED_WORK(&p->activate_path,
-> > activate_path_work);
-> >  		r = setup_scsi_dh(p->path.dev->bdev, m,
-> > &attached_handler_name, &ti->error);
-> > diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
-> > index 7b56e00c7df6..b9d805317814 100644
-> > --- a/drivers/scsi/scsi_dh.c
-> > +++ b/drivers/scsi/scsi_dh.c
-> > @@ -353,7 +353,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
-> >   *      that may have a device handler attached
-> >   * @gfp - the GFP mask used in the kmalloc() call when allocating
-> > memory
-> >   *
-> > - * Returns name of attached handler, NULL if no handler is attached.
-> > + * Returns name of attached handler, NULL if no handler is attached,
-> > or
-> > + * and error pointer if an error occurred.
-> >   * Caller must take care to free the returned string.
-> >   */
-> >  const char *scsi_dh_attached_handler_name(struct request_queue *q,
-> > gfp_t gfp)
-> > @@ -363,10 +364,11 @@ const char
-> > *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
-> >  
-> >  	sdev = scsi_device_from_queue(q);
-> >  	if (!sdev)
-> > -		return NULL;
-> > +		return ERR_PTR(-ENODEV);
-> >  
-> >  	if (sdev->handler)
-> > -		handler_name = kstrdup(sdev->handler->name, gfp);
-> > +		handler_name = kstrdup(sdev->handler->name, gfp) ? :
-> > +			       ERR_PTR(-ENOMEM);
-> >  	put_device(&sdev->sdev_gendev);
-> >  	return handler_name;
-> >  }
+ 	ret = prin_do_scsi_ioctl(pp->dev, MPATH_PRIN_RKEY_SA, &resp, 0);
+ 	if (ret != MPATH_PR_SUCCESS) {
+-		if (ret == MPATH_PR_ILLEGAL_REQ)
++		if (ret == MPATH_PR_ILLEGAL_REQ) {
+ 			unset_pr(mpp);
++			*nr_keys = 0;
++		}
+ 		condlog(0, "%s : pr in read keys service action failed Error=%d",
+ 			mpp->alias, ret);
+-		*nr_keys = 0;
+ 		return ret;
+ 	}
+ 
+@@ -4427,7 +4430,7 @@ retry:
+ 			clear_reg ? "Clearing" : "Setting", pp->dev, ret);
+ 	} else if (!clear_reg) {
+ 		if (update_map_pr(mpp, pp, &nr_keys_needed) != MPATH_PR_SUCCESS)
+-			return 0;
++			return nr_keys_needed;
+ 		if (mpp->prflag != PR_SET) {
+ 			memset(&param, 0, sizeof(param));
+ 			clear_reg = true;
+-- 
+2.50.1
 
