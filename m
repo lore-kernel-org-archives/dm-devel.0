@@ -1,49 +1,52 @@
 Received: from sender3-pp-f112.zoho.com (sender3-pp-f112.zoho.com [136.143.184.112])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D348623AB95
-	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 12:12:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C3EE31280D
+	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 12:12:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.184.112
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764677529; cv=pass; b=Kf7cNaN0CliyJUQ5LXffQi2CayOKgYv6l1M2LZxpaGnKPFYIN4++zGPrRxuIpVSFl5+9KhdT+iMNXQa5FhqzNkogB326NcISHr0bPLfz3TmfrvK0aH7cgGjCqwZHEN/tGPDBMr9+67bZDx2qGPIj6uG3ga4FqbH3ct/+q4/B3IE=
+	t=1764677545; cv=pass; b=Bq7QHn3lVYT9QY7cT1mP/s/1teKVfBKutv2ouseLTHPOcYKEFN1FB6ARb8FD79iPsNb+0/eSB/ZoX+gMzR8Qy2T2O1NFrlU4ksyiajVRTm7njkYds2BQ//1Tl2W4kEDDy8jrWR6OUSBa8pi4FhB/ox3q/0f+eaybdz1DJ57Fx2A=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764677529; c=relaxed/simple;
-	bh=uDBhQW/8n5CtKMELSsZI3Ge1KzTLlmmQPBlgZRypu6U=;
-	h=From:To:Subject:Date:Message-ID:MIME-Version; b=R5ve56qIr7tBPEsU9qqn/HxcVZzbmf7eZ+Zv8/etO4H6LrU1Ji0XNgONwZ6mE29dAPcUVQ0kFSuz9bAw8XJthRzP8Y17t7GlS6rBc356tiLoEtrxII+T65JZ+L/3jrINTD+lQAtWPxj9QQZel4d3l0En8DQYBiCWXW5NSMyVbeU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=O/9Bnxlj; arc=pass smtp.client-ip=136.143.184.112
+	s=arc-20240116; t=1764677545; c=relaxed/simple;
+	bh=TS6mDIsZor5eFsA8Qomc44SHWTWyqbcVSNNej0FQRFQ=;
+	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=NB2RbIiS3P9ehmtZfbQh9A8kgbxnA8Zkn51DvcjSVZDirETnBMAOfDdJQ0XgLRUAjfSYinuIdg66EItg+gWR6JCQvXWOaSALnJpXvXkjDwRs21ys7wokugj9B5f8/2ckD8ez4CPcu1+Y1BbfdDKaVZF1iFwEbuJRzcMDpSAwlsM=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=loP/if0E; arc=pass smtp.client-ip=136.143.184.112
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="O/9Bnxlj"
-ARC-Seal: i=1; a=rsa-sha256; t=1764677523; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="loP/if0E"
+ARC-Seal: i=1; a=rsa-sha256; t=1764677526; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=Rg+vjuLsljljLUsuUhQ3005P0L0L39lBt9M/6Bz4wa8NKZjcd2kvU9Wh24/sweXu7Mwcd7imOjX1rhXb8147Fum9NUPKYhxUCCd+ctQqX0wG9d7c2BTE3dnnOskDAevmb00wVHBW3foGeHjx0q5a35+AnLJoeu7f9bIrmyd4VfU=
+	b=Aa3a8Xjitv/DiomLV1hHZ6Co0GSZKjfnxKkHGmreHLwlw2+hJxhquIsOOA3bn9NMRTeMcTf+XmQYxeJArPRvqOA+AGmgk6sF0ArNZlA8wG1lOuqCt15JnBqGg4UfCYo5IPxTUkjzcMk86S+731WHaFewQW3viFidZdP1Hxs7WOs=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1764677523; h=Content-Transfer-Encoding:Date:Date:From:From:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
-	bh=JXiZNj8t20+eyvtQyKqneNbunN0RjZ+jePjtswDTiiw=; 
-	b=SpCf4Zx4C5n9cR07/jU/9R8EVTQaNL7uYbHwYJ47Ni23dSABeFTA+MwK6gS+KXr+ODDFQiCAMOZlorkA6zi8lBRO2rQFE6dUUxHI0/iXB1SlA8NMS9tnqG/zPxsVqWooTRocqaT+cLDTzZkBFmLqn4ncQNeentMe5wgGuKvz/Mo=
+	t=1764677526; h=Content-Transfer-Encoding:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
+	bh=vAsEvzdYup53HdslfNVkhOI9I6zIwVzd9GgWg/CjMWU=; 
+	b=O8Au0+oWzNfsyra5UsX8+rIUcYHuaOQi+NL9k5lj59HdTnpWSVjeiSjY9lyKVRFJc0nadZ8h0SfHAq7ZWnDsgcRUj4HhOA5KCLcJUZMnysLB39BTtokI7YXkafGd6/ZWVGCC40G5P5F3A94udGxKLtXeA8TPaeBXQtkB3zIc9cU=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764677523;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764677526;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
-	bh=JXiZNj8t20+eyvtQyKqneNbunN0RjZ+jePjtswDTiiw=;
-	b=O/9BnxljGkpMOAnbElFuY8LETMrNm3IuosNrajJqZhQZQK2ywDhVTnGC2MADKFTs
-	iZniMj1V7+WjtsLxUllrJIHyxq4Gitw17T9MR3thOi+Ch0ntpnDkzx6BqsISPjNAbNl
-	9+xX3U97dMwnhYjbzgZlSGZwAc9qOfSo2BigHQOE=
-Received: by mx.zohomail.com with SMTPS id 17646775229821022.9523785710982;
-	Tue, 2 Dec 2025 04:12:02 -0800 (PST)
+	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:In-Reply-To:References:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
+	bh=vAsEvzdYup53HdslfNVkhOI9I6zIwVzd9GgWg/CjMWU=;
+	b=loP/if0EwNtk5y7nYZ+RX4Q2sXafbK8TwjnrKChkdceuXmAMgwkADnzvQtFubMXB
+	v8sT/Stn+G7iLdHbGZQ8731jdwKZXD6aUvRbZZMw/6E416AtRkj6ftcLNJIJjFaTAYB
+	X/ZakgieJv8STxAs1Ekc2kqUEs9aRaUuUZkaLhHM=
+Received: by mx.zohomail.com with SMTPS id 1764677525155931.6215095890258;
+	Tue, 2 Dec 2025 04:12:05 -0800 (PST)
 From: Li Chen <me@linux.beauty>
 To: dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
 	Dongsheng Yang <dongsheng.yang@linux.dev>,
 	Zheng Gu <cengku@gmail.com>
-Subject: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence issues 
-Date: Tue,  2 Dec 2025 20:11:56 +0800
-Message-ID: <20251202121158.111092-1-me@linux.beauty>
+Subject: [PATCH 1/2] dm pcache: fix cache info indexing
+Date: Tue,  2 Dec 2025 20:11:57 +0800
+Message-ID: <20251202121158.111092-2-me@linux.beauty>
 X-Mailer: git-send-email 2.51.0
+In-Reply-To: <20251202121158.111092-1-me@linux.beauty>
+References: <20251202121158.111092-1-me@linux.beauty>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -55,59 +58,49 @@ X-ZohoMailClient: External
 
 From: Li Chen <chenl311@chinatelecom.cn>
 
-dm-pcache stores metadata (cache_info and segment_info) in 4K-aligned
-slots on the cache device, using sequence numbers and CRC to identify
-the latest valid copy.
+The on-media cache_info index used sizeof(struct) instead of the
+4K metadata stride, so gc_percent updates from dmsetup message
+were written between slots and lost after reboot. Use
+PCACHE_CACHE_INFO_SIZE in get_cache_info_addr() and align
+info_index with the slot returned by pcache_meta_find_latest().
 
-However, the cache_info and segment_info paths were computing their
-on-media index using sizeof(struct) instead of the 4K metadata stride.
-As a result:
+Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
+---
+ drivers/md/dm-pcache/cache.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-  * cache_info updates (including gc_percent set via a dmsetup message)
-    were written to invalid offsets between metadata slots and failed
-    to persist across table reloads or reboots.
-
-  * segment_info indexing became desynchronized, so rotation to the
-    "next" slot no longer matched the location returned by
-    pcache_meta_find_latest().
-
-The issue can be reproduced with:
-
-  dmsetup create pcache_vdb --table \
-    "0 $(blockdev --getsz /dev/vdb) pcache /dev/pmem0 /dev/vdb 4 \
-     cache_mode writeback data_crc false"
-
-  # Check default gc_percent (70)
-  dmsetup status pcache_vdb
-
-  # Change gc_percent to 10
-  dmsetup message pcache_vdb 0 "gc_percent 10"
-
-  # Verify change is active in memory
-  dmsetup status pcache_vdb
-
-  # Reboot the system...
-
-  # Without patch (gc_percent reverts to 70):
-  dmsetup status pcache_vdb
-
-  # With patch (gc_percent persists as 10):
-  dmsetup status pcache_vdb
-
-This series fixes the issue by deriving the metadata slot index from
-the pointer returned by pcache_meta_find_latest(), using the 4K stride
-(CACHE_INFO_SIZE / SEG_INFO_SIZE). This ensures that updates to
-cache_info and segment_info are written to valid slots and remain
-consistent with the on-media layout.
-
-Li Chen (2):
-  dm pcache: fix cache info indexing
-  dm pcache: fix segment info indexing
-
- drivers/md/dm-pcache/cache.c         | 13 ++++++++++---
- drivers/md/dm-pcache/cache_segment.c |  6 +++++-
- 2 files changed, 15 insertions(+), 4 deletions(-)
-
+diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+index 698697a7a73c..6d5001548628 100644
+--- a/drivers/md/dm-pcache/cache.c
++++ b/drivers/md/dm-pcache/cache.c
+@@ -8,9 +8,11 @@
+ 
+ struct kmem_cache *key_cache;
+ 
+-static inline struct pcache_cache_info *get_cache_info_addr(struct pcache_cache *cache)
++static inline struct pcache_cache_info *
++get_cache_info_addr(struct pcache_cache *cache)
+ {
+-	return cache->cache_info_addr + cache->info_index;
++	return (struct pcache_cache_info *)((char *)cache->cache_info_addr +
++						(size_t)cache->info_index * PCACHE_CACHE_INFO_SIZE);
+ }
+ 
+ static void cache_info_write(struct pcache_cache *cache)
+@@ -40,7 +42,12 @@ static int cache_info_init(struct pcache_cache *cache, struct pcache_cache_optio
+ 	if (IS_ERR(cache_info_addr))
+ 		return PTR_ERR(cache_info_addr);
+ 
+-	if (cache_info_addr) {
++    if (cache_info_addr) {
++		int index = ((char *)cache_info_addr - (char *)cache->cache_info_addr) /
++				PCACHE_CACHE_INFO_SIZE;
++
++		cache->info_index = (index + 1) % PCACHE_META_INDEX_MAX;
++
+ 		if (opts->data_crc !=
+ 				(cache->cache_info.flags & PCACHE_CACHE_FLAGS_DATA_CRC)) {
+ 			pcache_dev_err(pcache, "invalid option for data_crc: %s, expected: %s",
 -- 
 2.51.0
 
