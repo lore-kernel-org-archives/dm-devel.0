@@ -1,92 +1,99 @@
-Received: from sender3-pp-f112.zoho.com (sender3-pp-f112.zoho.com [136.143.184.112])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 986B531280C
-	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 12:12:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.184.112
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764677553; cv=pass; b=M5ssS6cXvFWuk1l8SYtG2Jwppr7g6Q9NBM4pmF5AcXuQ8zS7s2YWEau0Fz6RqtsmXjB9r4H674S4hcbkZdFQIWiAX0eQxJvSOhoYbySeK8lD2wFbBMwGo2rmyl9KvBL1PGc1Du6unGD8yQuG1st1ModV1u4N+9YENmBkfbxFV2o=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764677553; c=relaxed/simple;
-	bh=tcTO13kKW/JdRxqJLkFgCIopsa50aOCNy/R5ovgeuYw=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ltp9SzCX+N4Y2GTGjpfQMt6MNiwGfVDg33oOuZ6SI9JtV8Z9vT7o3vl+HUxwup9c6CBLvjNUhO8Owvk+krcNUiO7FKW26voPtXU9erx7TdPrcbJ4fVK2ylxOY9EoDKGvJJji0tin4O7ZyEU9ZMp63AQQldcG+n24INMadWSehi8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=hQDVJoP3; arc=pass smtp.client-ip=136.143.184.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA2962C026C
+	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 17:03:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1764695019; cv=none; b=Z5bxx8/MOsspx68nh8ru5BiHvu6T7T/N4aeH0I9jGZm1Pxbqejhw3u+0ml+LalpNK/ECIZUxGDw1NrZlxXWpYe6scF5AVsVR+IZ9ZWH92nGtNRIDsK6QQEdxIY9PHgdEp0BURJKQyS4inXtIe61KhzFFL8nVZPrM1TaEKPx90nA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1764695019; c=relaxed/simple;
+	bh=1/d1obDgDGUrozDCLxhkp7fRQx3TB6siqG+aUtbDHKA=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=g53l5MrQut8YKBegKiFE7NvEUDVjaHdn2i/IrdogIsw2Oj8Yj65JFn6VoM01SY6orCkPAe4j6grd7Y3+TusTm8IrCFHdjfiEyFjW7/8MEWWGA7DhE3a9Et2tUn76+mCUsl1rPX7yx5S07TZnYrauANADPaN3vtB4xIMwdLjx8IU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=V5lO8hiB; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="hQDVJoP3"
-ARC-Seal: i=1; a=rsa-sha256; t=1764677528; cv=none; 
-	d=zohomail.com; s=zohoarc; 
-	b=czjPwDvM0SWNOoWbfl0wY3VkWEh+4AZ1U1tDDEC6sQtr1lX8VQufJrvQ1FzxtXBlznGc7W8eo1R/hgC34jUggWGd6rulY9BHdJImq8/uyDQhXZ+FJBI3soETICrK7IVffFlSwI0HYDPcb/e7B9YmkuGEbODcMcdUn8FUHpPPfEw=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1764677528; h=Content-Transfer-Encoding:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
-	bh=/THr4U3rxJNaFh3h9M6B25ZG2LY68Uc4k3xBNPI30Ts=; 
-	b=ZBplEIfRE3cpDDJJLklTXOrDPu4vpOTZZhKWK2OqFQBVVnjRB5e+n5Uf1K1NbzcfMSDVRLrlrU5jm9yEHoOrL5VM8y9gqRig74Hwi1RD4SaUTAZu89QIygfuMCKS/gGnpGAqnZr4AqUPDT9x5F7hVV4y0U2L6F0dApwnFRXUg24=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-	dkim=pass  header.i=linux.beauty;
-	spf=pass  smtp.mailfrom=me@linux.beauty;
-	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764677528;
-	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:In-Reply-To:References:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
-	bh=/THr4U3rxJNaFh3h9M6B25ZG2LY68Uc4k3xBNPI30Ts=;
-	b=hQDVJoP3/ChXPHlGuz8WwMxddzC9+YSwY44nuprBid35UBi7TwzLKixHQFT5u1uT
-	3geZ/xCPeoopmGOs3Kpt3ZHw3kptkt1/RLHj/oJU3ZWA4HzHpu2HMIzqIiy9qHZLpHR
-	gGtTRoCFF3UHBQ1pmSRpD5WqpVUfHix+qtpHC/w4=
-Received: by mx.zohomail.com with SMTPS id 1764677526770286.1221850599361;
-	Tue, 2 Dec 2025 04:12:06 -0800 (PST)
-From: Li Chen <me@linux.beauty>
-To: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Dongsheng Yang <dongsheng.yang@linux.dev>,
-	Zheng Gu <cengku@gmail.com>
-Subject: [PATCH 2/2] dm pcache: fix segment info indexing
-Date: Tue,  2 Dec 2025 20:11:58 +0800
-Message-ID: <20251202121158.111092-3-me@linux.beauty>
-X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20251202121158.111092-1-me@linux.beauty>
-References: <20251202121158.111092-1-me@linux.beauty>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="V5lO8hiB"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1764695016;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9cnS1ntG4QnvTed6Zu3vNjJkvTx5JXwT00EvHNNevCI=;
+	b=V5lO8hiBxGlYXyI0OcFILKQ8hDBI0ea94WiqYGGnXCaBHhcfEpfK6FfXx7Kf3IKaE/35gL
+	IBrbrJGImTAmhePgVFJ39Az3z6yqHeHZn31AijrYakltmQEP8pqY/AZAk/SmZMmJxnteh1
+	bqawc51+1lUnyzXUsy4UxhEQ/730nrU=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-601-FAXfqkVKPvSJqeIcb0Ixjg-1; Tue,
+ 02 Dec 2025 12:03:33 -0500
+X-MC-Unique: FAXfqkVKPvSJqeIcb0Ixjg-1
+X-Mimecast-MFC-AGG-ID: FAXfqkVKPvSJqeIcb0Ixjg_1764695011
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 70CC71955F44;
+	Tue,  2 Dec 2025 17:03:31 +0000 (UTC)
+Received: from [10.44.33.72] (unknown [10.44.33.72])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C4A80195608E;
+	Tue,  2 Dec 2025 17:03:29 +0000 (UTC)
+Date: Tue, 2 Dec 2025 18:03:23 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Jiping Ma <jiping.ma2@windriver.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] dm-snapshot: fix 'scheduling while atomic' on real-time
+ kernels
+In-Reply-To: <aS4U3zt_jUkpjLlR@redhat.com>
+Message-ID: <4370a6f7-f472-7fc9-3fc1-a28646d8f37e@redhat.com>
+References: <747444e7-6884-cc1b-a761-c1e3bb7b888f@redhat.com> <aS4U3zt_jUkpjLlR@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-ZohoMailClient: External
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: QXPb-sokwsbKsmcWbMGsnpW331OIosA8sVKR_319UjA_1764695011
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-From: Li Chen <chenl311@chinatelecom.cn>
 
-Segment info indexing also used sizeof(struct) instead of the
-4K metadata stride, so info_index could point between slots and
-subsequent writes would advance incorrectly. Derive info_index
-from the pointer returned by the segment meta search using
-PCACHE_SEG_INFO_SIZE and advance to the next slot for future
-updates.
 
-Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
----
- drivers/md/dm-pcache/cache_segment.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+On Mon, 1 Dec 2025, Benjamin Marzinski wrote:
 
-diff --git a/drivers/md/dm-pcache/cache_segment.c b/drivers/md/dm-pcache/cache_segment.c
-index f0b58980806e..0b4bb08011ce 100644
---- a/drivers/md/dm-pcache/cache_segment.c
-+++ b/drivers/md/dm-pcache/cache_segment.c
-@@ -56,7 +56,11 @@ static int cache_seg_info_load(struct pcache_cache_segment *cache_seg)
- 		ret = -EIO;
- 		goto out;
- 	}
--	cache_seg->info_index = cache_seg_info_addr - cache_seg_info_addr_base;
-+
-+	cache_seg->info_index =
-+		((char *)cache_seg_info_addr - (char *)cache_seg_info_addr_base) /
-+		PCACHE_SEG_INFO_SIZE;
-+	cache_seg->info_index = (cache_seg->info_index + 1) % PCACHE_META_INDEX_MAX;
- out:
- 	mutex_unlock(&cache_seg->info_lock);
- 
--- 
-2.51.0
+> On Mon, Dec 01, 2025 at 10:13:10PM +0100, Mikulas Patocka wrote:
+> > There is reported 'scheduling while atomic' bug when using dm-snapshot on
+> > real-time kernels. The reason for the bug is that the hlist_bl code does
+> > preempt_disable() when taking the lock and the kernel attempts to take
+> > other spinlocks while holding the hlist_bl lock.
+> > 
+> > Fix this by converting a hlist_bl spinlock into a regular spinlock.
+> 
+> This looks correct, but it will either cause an increase in the memory
+> used, or a possible performance hit due to lock contention on a smaller
+> number of hash buckets, depending on whether the number of hash buckets
+> calculated by the device/chunk size is larger than the new, smaller
+> calc_max_buckets() limit. Since calc_max_buckets() limits the memory use
+> to 2MB, I suspect that for most devices, this will result in fewer
+> buckets (a 2G cow device with a 16K chunk size on a 64bit machine would
+> hit the calc_max_buckets() limit of 262144 buckets before.  Depending on
+> how the kernel is configured, the limit is now likely half that, so cow
+> devices of over 1G are likely to start having fewer buckets).  
+> 
+> I wonder if we should double the calc_max_buckets() memory limit, or
+> perhaps play some #ifdef games so that only real-time kernels are
+> effected by this change.
+> 
+> -Ben
+
+On 32-bit architectures, the vmalloc space is limited (to about 128MiB), 
+so I wouldn't increase the total limit.
+
+Mikulas
 
