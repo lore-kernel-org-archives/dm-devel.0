@@ -1,152 +1,113 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sender3-pp-f112.zoho.com (sender3-pp-f112.zoho.com [136.143.184.112])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57C591E1A17
-	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 10:01:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764669684; cv=none; b=Il3g+p7vTTo3NKamkgN8z4EMNoh/oVtL8y+7aJbi5SpWqfSP1/SQuCtXK7HbinkY3deUIXuGOvQlackCoKLdyb5Ovn8jTp2T6WSdI/j40Kz8nIwvn/FBExHkcM/h+rLxCgZNkYLHgM8vQeNy/hhtwXxYr4vRW7kGgSEpqdrn3oI=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764669684; c=relaxed/simple;
-	bh=g75fuIEuv02i2I+MfKjyOCeN+qfE44uSE8u4CzNLI+c=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Q9l+VY0TN75t76WezAQ8+ab2DUIdRHYI6zu4Cbp7TnwQAt3Feenkg7MOVwko2KcdEInDVME9vh1W1QDK+XMjK95NSSzQ22EqT4HZo/Glp6vthZcjSdcz6oAoGAcYiBgKpFO2ydAr80v+MKZNek8Pu/fzpf1mfKp41w+J5NHKkkw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=eiV2j131; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=eiV2j131; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D348623AB95
+	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 12:12:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.184.112
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1764677529; cv=pass; b=Kf7cNaN0CliyJUQ5LXffQi2CayOKgYv6l1M2LZxpaGnKPFYIN4++zGPrRxuIpVSFl5+9KhdT+iMNXQa5FhqzNkogB326NcISHr0bPLfz3TmfrvK0aH7cgGjCqwZHEN/tGPDBMr9+67bZDx2qGPIj6uG3ga4FqbH3ct/+q4/B3IE=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1764677529; c=relaxed/simple;
+	bh=uDBhQW/8n5CtKMELSsZI3Ge1KzTLlmmQPBlgZRypu6U=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version; b=R5ve56qIr7tBPEsU9qqn/HxcVZzbmf7eZ+Zv8/etO4H6LrU1Ji0XNgONwZ6mE29dAPcUVQ0kFSuz9bAw8XJthRzP8Y17t7GlS6rBc356tiLoEtrxII+T65JZ+L/3jrINTD+lQAtWPxj9QQZel4d3l0En8DQYBiCWXW5NSMyVbeU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=O/9Bnxlj; arc=pass smtp.client-ip=136.143.184.112
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="eiV2j131";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="eiV2j131"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 088905BCCC;
-	Tue,  2 Dec 2025 10:01:20 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1764669680; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8vD+AnXlN9xpHIATXrHZf9DVaVEOEEdD4LgSOwCuJu8=;
-	b=eiV2j131obPDneWm4QESb+44u8AeSV863R18UlK3Y+wwKrT4lWoqzAIb9ok6bUKCUWSUGd
-	WMANW29QBeeCSkPKXhWiye7FXbqOUeelhxPdl+d4XdN97aOzXj+4f9DU2HhmbmvmELvVlq
-	cjNaft4mzV1y70sX70E74dfdHP/xWfs=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1764669680; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8vD+AnXlN9xpHIATXrHZf9DVaVEOEEdD4LgSOwCuJu8=;
-	b=eiV2j131obPDneWm4QESb+44u8AeSV863R18UlK3Y+wwKrT4lWoqzAIb9ok6bUKCUWSUGd
-	WMANW29QBeeCSkPKXhWiye7FXbqOUeelhxPdl+d4XdN97aOzXj+4f9DU2HhmbmvmELvVlq
-	cjNaft4mzV1y70sX70E74dfdHP/xWfs=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id CA0AE3EA63;
-	Tue,  2 Dec 2025 10:01:19 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id tD2zL++4LmmkfgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 02 Dec 2025 10:01:19 +0000
-Message-ID: <5e67ffa808938d3aa93a14b272ef1450fa62b3ee.camel@suse.com>
-Subject: Re: [PATCH] scsi: scsi_dh: Return error pointer in
- scsi_dh_attached_handler_name
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: "James E . J . Bottomley" <James.Bottomley@hansenpartnership.com>, 
- "Martin K . Petersen" <martin.petersen@oracle.com>, Mikulas Patocka
- <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev
-Date: Tue, 02 Dec 2025 11:01:19 +0100
-In-Reply-To: <aS46EpB6dijzABwA@redhat.com>
-References: <20251121234834.1035028-1-bmarzins@redhat.com>
-	 <94bce7593f2980cef43860044e5b662c3d3c0ec7.camel@suse.com>
-	 <aS46EpB6dijzABwA@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="O/9Bnxlj"
+ARC-Seal: i=1; a=rsa-sha256; t=1764677523; cv=none; 
+	d=zohomail.com; s=zohoarc; 
+	b=Rg+vjuLsljljLUsuUhQ3005P0L0L39lBt9M/6Bz4wa8NKZjcd2kvU9Wh24/sweXu7Mwcd7imOjX1rhXb8147Fum9NUPKYhxUCCd+ctQqX0wG9d7c2BTE3dnnOskDAevmb00wVHBW3foGeHjx0q5a35+AnLJoeu7f9bIrmyd4VfU=
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
+	t=1764677523; h=Content-Transfer-Encoding:Date:Date:From:From:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To:Cc; 
+	bh=JXiZNj8t20+eyvtQyKqneNbunN0RjZ+jePjtswDTiiw=; 
+	b=SpCf4Zx4C5n9cR07/jU/9R8EVTQaNL7uYbHwYJ47Ni23dSABeFTA+MwK6gS+KXr+ODDFQiCAMOZlorkA6zi8lBRO2rQFE6dUUxHI0/iXB1SlA8NMS9tnqG/zPxsVqWooTRocqaT+cLDTzZkBFmLqn4ncQNeentMe5wgGuKvz/Mo=
+ARC-Authentication-Results: i=1; mx.zohomail.com;
+	dkim=pass  header.i=linux.beauty;
+	spf=pass  smtp.mailfrom=me@linux.beauty;
+	dmarc=pass header.from=<me@linux.beauty>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764677523;
+	s=zmail; d=linux.beauty; i=me@linux.beauty;
+	h=From:From:To:To:Subject:Subject:Date:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To:Cc;
+	bh=JXiZNj8t20+eyvtQyKqneNbunN0RjZ+jePjtswDTiiw=;
+	b=O/9BnxljGkpMOAnbElFuY8LETMrNm3IuosNrajJqZhQZQK2ywDhVTnGC2MADKFTs
+	iZniMj1V7+WjtsLxUllrJIHyxq4Gitw17T9MR3thOi+Ch0ntpnDkzx6BqsISPjNAbNl
+	9+xX3U97dMwnhYjbzgZlSGZwAc9qOfSo2BigHQOE=
+Received: by mx.zohomail.com with SMTPS id 17646775229821022.9523785710982;
+	Tue, 2 Dec 2025 04:12:02 -0800 (PST)
+From: Li Chen <me@linux.beauty>
+To: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Dongsheng Yang <dongsheng.yang@linux.dev>,
+	Zheng Gu <cengku@gmail.com>
+Subject: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence issues 
+Date: Tue,  2 Dec 2025 20:11:56 +0800
+Message-ID: <20251202121158.111092-1-me@linux.beauty>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Score: -4.26
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.26 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.16)[-0.818];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCPT_COUNT_SEVEN(0.00)[7];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+Content-Transfer-Encoding: 8bit
+X-ZohoMailClient: External
 
-On Mon, 2025-12-01 at 20:00 -0500, Benjamin Marzinski wrote:
-> On Thu, Nov 27, 2025 at 04:26:51PM +0100, Martin Wilck wrote:
-> > On Fri, 2025-11-21 at 18:48 -0500, Benjamin Marzinski wrote:
-> > > If scsi_dh_attached_handler_name() fails to allocate the handler
-> > > name,
-> > > dm-multipath (its only caller) assumes there is no attached
-> > > device
-> > > handler, and sets the device up incorrectly. Return an error
-> > > pointer
-> > > instead, so multipath can distinguish between failure and success
-> > > where
-> > > there is no attached device handler.
-> > >=20
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > ---
-> > > =C2=A0drivers/md/dm-mpath.c=C2=A0 | 8 ++++++++
-> > > =C2=A0drivers/scsi/scsi_dh.c | 8 +++++---
-> > > =C2=A02 files changed, 13 insertions(+), 3 deletions(-)
-> > >=20
-> > > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> > > index c18358271618..063dc526fe04 100644
-> > > --- a/drivers/md/dm-mpath.c
-> > > +++ b/drivers/md/dm-mpath.c
-> > > @@ -950,6 +950,14 @@ static struct pgpath *parse_path(struct
-> > > dm_arg_set *as, struct path_selector *ps
-> > > =C2=A0
-> > > =C2=A0	q =3D bdev_get_queue(p->path.dev->bdev);
-> > > =C2=A0	attached_handler_name =3D scsi_dh_attached_handler_name(q,
-> > > GFP_KERNEL);
-> > > +	if (IS_ERR(attached_handler_name)) {
-> > > +		if (PTR_ERR(attached_handler_name) =3D=3D -ENODEV)
-> > > +			attached_handler_name =3D NULL;
-> >=20
-> > What's the point of continuing here if we know that the SCSI device
-> > doesn't exist?
->=20
-> we just know that it's not a SCSI device, so we clear
-> attached_handler_name.=C2=A0 I suppose we could add another check to erro=
-r
-> out here if m->hw_handler_name is set. But if it is, the
-> setup_scsi_dh()
-> call just below will fail anyways, so there's not much difference.
->=20
-> But if you think adding that extra check makes things clearer, I'm
-> fine
-> with that.
+From: Li Chen <chenl311@chinatelecom.cn>
 
-Yes, I think so. We know it makes no sense to call setup_scsi_dh(), wo
-we shouldn't try.
+dm-pcache stores metadata (cache_info and segment_info) in 4K-aligned
+slots on the cache device, using sequence numbers and CRC to identify
+the latest valid copy.
 
-Martin
+However, the cache_info and segment_info paths were computing their
+on-media index using sizeof(struct) instead of the 4K metadata stride.
+As a result:
+
+  * cache_info updates (including gc_percent set via a dmsetup message)
+    were written to invalid offsets between metadata slots and failed
+    to persist across table reloads or reboots.
+
+  * segment_info indexing became desynchronized, so rotation to the
+    "next" slot no longer matched the location returned by
+    pcache_meta_find_latest().
+
+The issue can be reproduced with:
+
+  dmsetup create pcache_vdb --table \
+    "0 $(blockdev --getsz /dev/vdb) pcache /dev/pmem0 /dev/vdb 4 \
+     cache_mode writeback data_crc false"
+
+  # Check default gc_percent (70)
+  dmsetup status pcache_vdb
+
+  # Change gc_percent to 10
+  dmsetup message pcache_vdb 0 "gc_percent 10"
+
+  # Verify change is active in memory
+  dmsetup status pcache_vdb
+
+  # Reboot the system...
+
+  # Without patch (gc_percent reverts to 70):
+  dmsetup status pcache_vdb
+
+  # With patch (gc_percent persists as 10):
+  dmsetup status pcache_vdb
+
+This series fixes the issue by deriving the metadata slot index from
+the pointer returned by pcache_meta_find_latest(), using the 4K stride
+(CACHE_INFO_SIZE / SEG_INFO_SIZE). This ensures that updates to
+cache_info and segment_info are written to valid slots and remain
+consistent with the on-media layout.
+
+Li Chen (2):
+  dm pcache: fix cache info indexing
+  dm pcache: fix segment info indexing
+
+ drivers/md/dm-pcache/cache.c         | 13 ++++++++++---
+ drivers/md/dm-pcache/cache_segment.c |  6 +++++-
+ 2 files changed, 15 insertions(+), 4 deletions(-)
+
+-- 
+2.51.0
+
