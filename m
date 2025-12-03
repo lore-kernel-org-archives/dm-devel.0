@@ -1,130 +1,169 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from out-182.mta1.migadu.com (out-182.mta1.migadu.com [95.215.58.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A70672D3A6D
-	for <dm-devel@lists.linux.dev>; Tue,  2 Dec 2025 19:09:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F5ED296BBE
+	for <dm-devel@lists.linux.dev>; Wed,  3 Dec 2025 05:56:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.182
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764702560; cv=none; b=lmLXomQ2MvDozZLFQFQRcHNEljuZdNkz1n8AlseRjpoOr9ghPopGcTrQzT/EaPDay1mmI56qs7Hla5FWqgFf8sTTv+Dx9h6GHbP7EHuAae07Ezpq6nblrOKE/dYrplMtOhxPDpE7CrpxtUsmBDz1JH77lRLoIIkcaxXloqbJynE=
+	t=1764741402; cv=none; b=hMbrpNpUfsebGs7T2NvpU/z7OTvY040uQqtsGz3zNxnrhV8B2jkO5a/cvPDP/4Iq58lHhtzXeWAmnkCPt52kzdQ8XH+4SksoORlVXL4P27oECes6jINtwc5it51majY2fkwh02tPOmuzVK2K8z3GaKAq6pmkAn7z+q/n85euMjE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764702560; c=relaxed/simple;
-	bh=eic7VupvcAv7zXoBNTtQUGqrI/6Q//PRBLyrcFfdTiA=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=V6bcTtVACYRQyk0BPD4f/+081+rXPob09OE6SGAPo9ZAZVWKRUsZzMNnNeqOV9kHyCs9ntR3dbZH/sRVUOFhSLgEiVAJCKnmaN1rnWfr2f7RKvNK43rnTN5RZau1lP4hBfudvgHLdo1SHjS37vXZrNJhTkR5N93Xaj+X2+dhFRA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=L9C457rP; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1764741402; c=relaxed/simple;
+	bh=Os2TDhuJ1nj47jSNlABmdNpiyorG2hL6wq+Lfs2EIIo=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=cj7ddX0pa8H6k626BViJlyYcXS9+T5g3FlZU2U0BnOB9Iw44gS96mgrtjWDZ1tbpTfrrXOI2MOzWXrYHvjyfZSAWbHs7ThIH59Yj5EaUgbjRwEYl58OO1cnklCGa44CR0KWIIc3lBKJONVW48T1EYeLyrotd4g8ZYL44tJ1jj/E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=NSaFK2aI; arc=none smtp.client-ip=95.215.58.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="L9C457rP"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1764702557;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="NSaFK2aI"
+Message-ID: <65dbab10-a48a-4cfb-8c06-15011e54b1b5@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1764741385;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=eA7lZuWHkEtNy/vxk2znDzmB51SQTmNGp4hf3xxYoNo=;
-	b=L9C457rPNhgHGpC59nJS4Y2DjCI1Xe9PMPMNR0eRWM+Oc/RykRSNk2t+/tnHfxek6/q7FT
-	qdvOENOKWH8K9DKl0DXrWAvyUUHXP7axF6cHs1KVKzxqdx53SbTFbhDQFLdJovE7R2gmFG
-	enQQijHVuIpJ0ScnOHCcuP8g4D4TDMI=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-170-mU7jOhMiNjyzOXfgO3yRYA-1; Tue,
- 02 Dec 2025 14:09:14 -0500
-X-MC-Unique: mU7jOhMiNjyzOXfgO3yRYA-1
-X-Mimecast-MFC-AGG-ID: mU7jOhMiNjyzOXfgO3yRYA_1764702553
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5C4C819560AD;
-	Tue,  2 Dec 2025 19:09:12 +0000 (UTC)
-Received: from [10.44.33.72] (unknown [10.44.33.72])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8D20130001A4;
-	Tue,  2 Dec 2025 19:09:10 +0000 (UTC)
-Date: Tue, 2 Dec 2025 20:09:07 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Li Chen <me@linux.beauty>
-cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>
-Subject: Re: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence
- issues
-In-Reply-To: <20251202121158.111092-1-me@linux.beauty>
-Message-ID: <7a233190-82ae-b95c-1988-9b746ef6a8b1@redhat.com>
-References: <20251202121158.111092-1-me@linux.beauty>
+	bh=B4RTDwofKoIRzOfCGUCK/T/Jp4TS47BO2wvcnq17RHQ=;
+	b=NSaFK2aIV7/c0MVXk8WNp44utQhD3MRhQccMxkfBviBSiIOdNGj+04x9JxxVu374QS0jnd
+	3INyFPU3Cc4c0chXqM7DIBMw6Bp9baNeRV1ag35bpObHEH9ozH9mO+zaFQv7gFIuBQgYgR
+	ppZImi+lm7Gh0gStlK4pj94RbiezskI=
+Date: Wed, 3 Dec 2025 13:56:17 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+Subject: Re: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence
+ issues
+To: Li Chen <me@linux.beauty>, dm-devel@lists.linux.dev,
+ linux-kernel@vger.kernel.org, Zheng Gu <cengku@gmail.com>
+References: <20251202121158.111092-1-me@linux.beauty>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <20251202121158.111092-1-me@linux.beauty>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-Both patches accepted, thanks.
+Hi,
 
-Mikulas
+     Thanx for your patches, there are some comments inline.
+
+According to these comments, I propose an update base on your patch as [1].
+
+BTW, I added a test case for this problem in dtg-tests:
+
+https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data/pcache_misc_tests/case21_gc_percent_persistence_after_recreate.sh
+
+It update gc_percent online and recreate pcache device and check gc_percen
 
 
+[1]:
 
-On Tue, 2 Dec 2025, Li Chen wrote:
+diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+index 6d5001548628..4d6db733c9bd 100644
+--- a/drivers/md/dm-pcache/cache.c
++++ b/drivers/md/dm-pcache/cache.c
+@@ -42,12 +42,7 @@ static int cache_info_init(struct pcache_cache 
+*cache, struct pcache_cache_optio
+         if (IS_ERR(cache_info_addr))
+                 return PTR_ERR(cache_info_addr);
 
+-    if (cache_info_addr) {
+-               int index = ((char *)cache_info_addr - (char 
+*)cache->cache_info_addr) /
+-                               PCACHE_CACHE_INFO_SIZE;
+-
+-               cache->info_index = (index + 1) % PCACHE_META_INDEX_MAX;
+-
++       if (cache_info_addr) {
+                 if (opts->data_crc !=
+                                 (cache->cache_info.flags & 
+PCACHE_CACHE_FLAGS_DATA_CRC)) {
+                         pcache_dev_err(pcache, "invalid option for 
+data_crc: %s, expected: %s",
+@@ -56,6 +51,8 @@ static int cache_info_init(struct pcache_cache *cache, 
+struct pcache_cache_optio
+                         return -EINVAL;
+                 }
+
++               cache->info_index = ((char *)cache_info_addr - (char 
+*)cache->cache_info_addr) / PCACHE_CACHE_INFO_SIZE;
++
+                 return 0;
+         }
+
+diff --git a/drivers/md/dm-pcache/cache_segment.c 
+b/drivers/md/dm-pcache/cache_segment.c
+index 0b4bb08011ce..0a0016702ce7 100644
+--- a/drivers/md/dm-pcache/cache_segment.c
++++ b/drivers/md/dm-pcache/cache_segment.c
+@@ -60,7 +60,6 @@ static int cache_seg_info_load(struct 
+pcache_cache_segment *cache_seg)
+         cache_seg->info_index =
+                 ((char *)cache_seg_info_addr - (char 
+*)cache_seg_info_addr_base) /
+                 PCACHE_SEG_INFO_SIZE;
+-       cache_seg->info_index = (cache_seg->info_index + 1) % 
+PCACHE_META_INDEX_MAX;
+  out:
+         mutex_unlock(&cache_seg->info_lock);
+
+
+在 12/2/2025 8:11 PM, Li Chen 写道:
 > From: Li Chen <chenl311@chinatelecom.cn>
-> 
+>
 > dm-pcache stores metadata (cache_info and segment_info) in 4K-aligned
 > slots on the cache device, using sequence numbers and CRC to identify
 > the latest valid copy.
-> 
+>
 > However, the cache_info and segment_info paths were computing their
 > on-media index using sizeof(struct) instead of the 4K metadata stride.
 > As a result:
-> 
->   * cache_info updates (including gc_percent set via a dmsetup message)
->     were written to invalid offsets between metadata slots and failed
->     to persist across table reloads or reboots.
-> 
->   * segment_info indexing became desynchronized, so rotation to the
->     "next" slot no longer matched the location returned by
->     pcache_meta_find_latest().
-> 
+>
+>    * cache_info updates (including gc_percent set via a dmsetup message)
+>      were written to invalid offsets between metadata slots and failed
+>      to persist across table reloads or reboots.
+>
+>    * segment_info indexing became desynchronized, so rotation to the
+>      "next" slot no longer matched the location returned by
+>      pcache_meta_find_latest().
+>
 > The issue can be reproduced with:
-> 
->   dmsetup create pcache_vdb --table \
->     "0 $(blockdev --getsz /dev/vdb) pcache /dev/pmem0 /dev/vdb 4 \
->      cache_mode writeback data_crc false"
-> 
->   # Check default gc_percent (70)
->   dmsetup status pcache_vdb
-> 
->   # Change gc_percent to 10
->   dmsetup message pcache_vdb 0 "gc_percent 10"
-> 
->   # Verify change is active in memory
->   dmsetup status pcache_vdb
-> 
->   # Reboot the system...
-> 
->   # Without patch (gc_percent reverts to 70):
->   dmsetup status pcache_vdb
-> 
->   # With patch (gc_percent persists as 10):
->   dmsetup status pcache_vdb
-> 
+>
+>    dmsetup create pcache_vdb --table \
+>      "0 $(blockdev --getsz /dev/vdb) pcache /dev/pmem0 /dev/vdb 4 \
+>       cache_mode writeback data_crc false"
+>
+>    # Check default gc_percent (70)
+>    dmsetup status pcache_vdb
+>
+>    # Change gc_percent to 10
+>    dmsetup message pcache_vdb 0 "gc_percent 10"
+>
+>    # Verify change is active in memory
+>    dmsetup status pcache_vdb
+>
+>    # Reboot the system...
+>
+>    # Without patch (gc_percent reverts to 70):
+>    dmsetup status pcache_vdb
+>
+>    # With patch (gc_percent persists as 10):
+>    dmsetup status pcache_vdb
+>
 > This series fixes the issue by deriving the metadata slot index from
 > the pointer returned by pcache_meta_find_latest(), using the 4K stride
 > (CACHE_INFO_SIZE / SEG_INFO_SIZE). This ensures that updates to
 > cache_info and segment_info are written to valid slots and remain
 > consistent with the on-media layout.
-> 
+>
 > Li Chen (2):
->   dm pcache: fix cache info indexing
->   dm pcache: fix segment info indexing
-> 
->  drivers/md/dm-pcache/cache.c         | 13 ++++++++++---
->  drivers/md/dm-pcache/cache_segment.c |  6 +++++-
->  2 files changed, 15 insertions(+), 4 deletions(-)
-> 
-> -- 
-> 2.51.0
-> 
-> 
-
+>    dm pcache: fix cache info indexing
+>    dm pcache: fix segment info indexing
+>
+>   drivers/md/dm-pcache/cache.c         | 13 ++++++++++---
+>   drivers/md/dm-pcache/cache_segment.c |  6 +++++-
+>   2 files changed, 15 insertions(+), 4 deletions(-)
+>
