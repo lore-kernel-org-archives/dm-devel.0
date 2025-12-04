@@ -1,203 +1,126 @@
-Received: from out-188.mta1.migadu.com (out-188.mta1.migadu.com [95.215.58.188])
+Received: from out-172.mta0.migadu.com (out-172.mta0.migadu.com [91.218.175.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79B72398F85
-	for <dm-devel@lists.linux.dev>; Thu,  4 Dec 2025 01:38:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.188
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DDC4331A4D
+	for <dm-devel@lists.linux.dev>; Thu,  4 Dec 2025 02:57:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764812312; cv=none; b=e8ZSEScDut27KrGcMFtq+fAITqcK41ZzJyrodn0v23cDYKh1Fvsw2M0p4jbKRvEba7yAtdXsyJch8ge+pFrKz3Gf3zCLJ1lTpxLdH8xMY+v4sTqLyLcFns3hEQcnOVKWVayW1+vfJYgBCYTlk0eYc6B8c3AyYoF+m7ALmwxhtJg=
+	t=1764817052; cv=none; b=hKIh7NEYaKfqI+OOZ7ugQU7d0o/aVZO61YBFbKIA3wE9yFk0Cb3CO8gFy/KBvOkvHAFWcafOaGuCkM4xBFbMMAxFgvgD4YClklSljgDQuyM3Rqg0co7k7X+q+1jimNd6cPh9KlcuwcYJovwdHXBeKtRHZpyktdAFeUE2Pyj1B4Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764812312; c=relaxed/simple;
-	bh=VGzoktw1fKjqk3BbvPg4NUeTmP2JVhMYHO3s+wbDnT0=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:References:
-	 In-Reply-To:Content-Type; b=G8Dko87Bxnlfx/Gz3Y0osTH5ktlTGA4oWEiG3w9GXQ5m65/Yho+tGmbCSZj+GLzuoQlYlTIw6iTZ7dHIrotr9jN6Yimf/QfeGRNFBca579ocqU3mHhs+GSq9rv4rC3M7t8fwbFRcK2iato+k/yfxM0hhjmIRUX+FfDwdB7Tohjw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=Z+XZpesb; arc=none smtp.client-ip=95.215.58.188
+	s=arc-20240116; t=1764817052; c=relaxed/simple;
+	bh=k+WEUjny71nnWzgKExpsoomV3BSQqX8FjoueJjLMsbo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=D4Zwdq5UOLvOM/6XNPjrsBkPnYINhBR5IhE6JWNs/T/Yi+PONYLVxw3PZg44P/x92XkSjfPmbCjxRkacU/qCxZIVctlBDCy2oYzh77GvNONKMHilJ5ze9yPTz7OhuWhcNB7IKmtkX8GJDu8GGTYwjnPwq1lMuzUPa+dLIN0h2Bo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=dWncjoXa; arc=none smtp.client-ip=91.218.175.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="Z+XZpesb"
-Message-ID: <0af717b0-21c0-404d-82c1-94d9addd4ef5@linux.dev>
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="dWncjoXa"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1764812307;
+	t=1764817044;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1GzTEsWcDEVEnsOtjpN5c/7lOdCUFBAUkt8h3FDLarY=;
-	b=Z+XZpesb55fVdEZ392kXNCqRhRzGnxafocPRit8mVfXjRqca4xMb7D1LR7OgariMPJSkfx
-	ZtEH364S+fEWdPjZLrr4NVcAQMSVCgYgS4UawC+6OHlT4IyeN8czTobOq7SP5rn0zXP05X
-	uDGCjAeWOBTpE2jmDGQExnRoP6CMBIE=
-Date: Thu, 4 Dec 2025 09:38:17 +0800
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=iAxtUIh0JHdPgyNO++ncnhkCewtSmVk0aXdP/zfW/8M=;
+	b=dWncjoXavuYSYgej9EL0CMGv1jG2/3cxAVUCNlpr4fYB8UYnAi5RQvI4xSzFZmZqwORdxL
+	Mylt4EMkUY8EUCnHbYDDo0wLwLvLeQSeVcYGCgSgCJejF/ZJEjAEHuJxLbKWwIKMaHlTnD
+	4B1GkVUxpZI7LyXgvaJbXUfoyRTzBb8=
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+To: cengku@gmail.com,
+	dm-devel@lists.linux.dev,
+	chenl311@chinatelecom.cn,
+	mpatocka@redhat.com
+Cc: Dongsheng Yang <dongsheng.yang@linux.dev>
+Subject: [PATCH 1/3] dm-pcache: advance slot index before writing slot
+Date: Thu,  4 Dec 2025 02:53:04 +0000
+Message-ID: <20251204025323.2901775-1-dongsheng.yang@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence
- issues
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-From: Dongsheng Yang <dongsheng.yang@linux.dev>
-To: Li Chen <me@linux.beauty>, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org, Zheng Gu <cengku@gmail.com>
-References: <20251202121158.111092-1-me@linux.beauty>
- <65dbab10-a48a-4cfb-8c06-15011e54b1b5@linux.dev>
- <e6170c62-22b9-4d5d-bd97-006a4cecc0b7@linux.dev>
-In-Reply-To: <e6170c62-22b9-4d5d-bd97-006a4cecc0b7@linux.dev>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
+In dm-pcache, in order to ensure crash-consistency, a dual-copy scheme
+is used to alternately update metadata, and there is a slot index that
+records the current slot. However, in the write path the current
+implementation writes directly to the current slot indexed by slot
+index, and then advances the slot — which ends up overwriting the
+existing slot, violating the crash-consistency guarantee.
 
-在 12/4/2025 7:38 AM, Dongsheng Yang 写道:
->
-> 在 12/3/2025 1:56 PM, Dongsheng Yang 写道:
->> Hi,
->>
->>     Thanx for your patches, there are some comments inline.
->>
->> According to these comments, I propose an update base on your patch 
->> as [1].
->>
->> BTW, I added a test case for this problem in dtg-tests:
->>
->> https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data/pcache_misc_tests/case21_gc_percent_persistence_after_recreate.sh 
->>
->>
->> It update gc_percent online and recreate pcache device and check 
->> gc_percen
->>
->>
->> [1]:
->
->
-> ->info_index means next slot to write, so advancing it at init stage 
-> is correct
+This patch fixes that behavior, preventing metadata from being
+overwritten incorrectly.
 
+Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
+---
+ drivers/md/dm-pcache/cache.c         | 8 ++++----
+ drivers/md/dm-pcache/cache_segment.c | 8 ++++----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
 
-We need to think more thoroughly about the usage of the slot index. In 
-my original design, all slot indices represent the “current slot”. So at 
-initialization it is 0; if loading, we simply point it to the loaded 
-slot; and on write we advance afterwards. However, the problem now is 
-that in all write functions, they first write to the current slot, then 
-advance.
+diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+index 698697a7a73c..9289c016b7c9 100644
+--- a/drivers/md/dm-pcache/cache.c
++++ b/drivers/md/dm-pcache/cache.c
+@@ -21,10 +21,10 @@ static void cache_info_write(struct pcache_cache *cache)
+ 	cache_info->header.crc = pcache_meta_crc(&cache_info->header,
+ 						sizeof(struct pcache_cache_info));
+ 
++	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
++
+ 	memcpy_flushcache(get_cache_info_addr(cache), cache_info,
+ 			sizeof(struct pcache_cache_info));
+-
+-	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+ }
+ 
+ static void cache_info_init_default(struct pcache_cache *cache);
+@@ -93,10 +93,10 @@ void cache_pos_encode(struct pcache_cache *cache,
+ 	pos_onmedia.header.seq = seq;
+ 	pos_onmedia.header.crc = cache_pos_onmedia_crc(&pos_onmedia);
+ 
++	*index = (*index + 1) % PCACHE_META_INDEX_MAX;
++
+ 	memcpy_flushcache(pos_onmedia_addr, &pos_onmedia, sizeof(struct pcache_cache_pos_onmedia));
+ 	pmem_wmb();
+-
+-	*index = (*index + 1) % PCACHE_META_INDEX_MAX;
+ }
+ 
+ int cache_pos_decode(struct pcache_cache *cache,
+diff --git a/drivers/md/dm-pcache/cache_segment.c b/drivers/md/dm-pcache/cache_segment.c
+index f0b58980806e..ae57cc261422 100644
+--- a/drivers/md/dm-pcache/cache_segment.c
++++ b/drivers/md/dm-pcache/cache_segment.c
+@@ -26,11 +26,11 @@ static void cache_seg_info_write(struct pcache_cache_segment *cache_seg)
+ 	seg_info->header.seq++;
+ 	seg_info->header.crc = pcache_meta_crc(&seg_info->header, sizeof(struct pcache_segment_info));
+ 
++	cache_seg->info_index = (cache_seg->info_index + 1) % PCACHE_META_INDEX_MAX;
++
+ 	seg_info_addr = get_seg_info_addr(cache_seg);
+ 	memcpy_flushcache(seg_info_addr, seg_info, sizeof(struct pcache_segment_info));
+ 	pmem_wmb();
+-
+-	cache_seg->info_index = (cache_seg->info_index + 1) % PCACHE_META_INDEX_MAX;
+ 	mutex_unlock(&cache_seg->info_lock);
+ }
+ 
+@@ -129,10 +129,10 @@ static void cache_seg_ctrl_write(struct pcache_cache_segment *cache_seg)
+ 	cache_seg_gen.header.crc = pcache_meta_crc(&cache_seg_gen.header,
+ 						 sizeof(struct pcache_cache_seg_gen));
+ 
++	cache_seg->gen_index = (cache_seg->gen_index + 1) % PCACHE_META_INDEX_MAX;
++
+ 	memcpy_flushcache(get_cache_seg_gen_addr(cache_seg), &cache_seg_gen, sizeof(struct pcache_cache_seg_gen));
+ 	pmem_wmb();
+-
+-	cache_seg->gen_index = (cache_seg->gen_index + 1) % PCACHE_META_INDEX_MAX;
+ }
+ 
+ static void cache_seg_ctrl_init(struct pcache_cache_segment *cache_seg)
+-- 
+2.43.0
 
-Therefore I believe we should clarify that the meaning of the slot index 
-is “the current slot,” and stick to the original design. We only need to 
-modify the write functions: first perform the advance, and then write 
-into the correct slot.
-
->
->
-> Thanx
->
->>
->> diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
->> index 6d5001548628..4d6db733c9bd 100644
->> --- a/drivers/md/dm-pcache/cache.c
->> +++ b/drivers/md/dm-pcache/cache.c
->> @@ -42,12 +42,7 @@ static int cache_info_init(struct pcache_cache 
->> *cache, struct pcache_cache_optio
->>         if (IS_ERR(cache_info_addr))
->>                 return PTR_ERR(cache_info_addr);
->>
->> -    if (cache_info_addr) {
->> -               int index = ((char *)cache_info_addr - (char 
->> *)cache->cache_info_addr) /
->> -                               PCACHE_CACHE_INFO_SIZE;
->> -
->> -               cache->info_index = (index + 1) % PCACHE_META_INDEX_MAX;
->> -
->> +       if (cache_info_addr) {
->>                 if (opts->data_crc !=
->>                                 (cache->cache_info.flags & 
->> PCACHE_CACHE_FLAGS_DATA_CRC)) {
->>                         pcache_dev_err(pcache, "invalid option for 
->> data_crc: %s, expected: %s",
->> @@ -56,6 +51,8 @@ static int cache_info_init(struct pcache_cache 
->> *cache, struct pcache_cache_optio
->>                         return -EINVAL;
->>                 }
->>
->> +               cache->info_index = ((char *)cache_info_addr - (char 
->> *)cache->cache_info_addr) / PCACHE_CACHE_INFO_SIZE;
->> +
->>                 return 0;
->>         }
->>
->> diff --git a/drivers/md/dm-pcache/cache_segment.c 
->> b/drivers/md/dm-pcache/cache_segment.c
->> index 0b4bb08011ce..0a0016702ce7 100644
->> --- a/drivers/md/dm-pcache/cache_segment.c
->> +++ b/drivers/md/dm-pcache/cache_segment.c
->> @@ -60,7 +60,6 @@ static int cache_seg_info_load(struct 
->> pcache_cache_segment *cache_seg)
->>         cache_seg->info_index =
->>                 ((char *)cache_seg_info_addr - (char 
->> *)cache_seg_info_addr_base) /
->>                 PCACHE_SEG_INFO_SIZE;
->> -       cache_seg->info_index = (cache_seg->info_index + 1) % 
->> PCACHE_META_INDEX_MAX;
->>  out:
->>         mutex_unlock(&cache_seg->info_lock);
->>
->>
->> 在 12/2/2025 8:11 PM, Li Chen 写道:
->>> From: Li Chen <chenl311@chinatelecom.cn>
->>>
->>> dm-pcache stores metadata (cache_info and segment_info) in 4K-aligned
->>> slots on the cache device, using sequence numbers and CRC to identify
->>> the latest valid copy.
->>>
->>> However, the cache_info and segment_info paths were computing their
->>> on-media index using sizeof(struct) instead of the 4K metadata stride.
->>> As a result:
->>>
->>>    * cache_info updates (including gc_percent set via a dmsetup 
->>> message)
->>>      were written to invalid offsets between metadata slots and failed
->>>      to persist across table reloads or reboots.
->>>
->>>    * segment_info indexing became desynchronized, so rotation to the
->>>      "next" slot no longer matched the location returned by
->>>      pcache_meta_find_latest().
->>>
->>> The issue can be reproduced with:
->>>
->>>    dmsetup create pcache_vdb --table \
->>>      "0 $(blockdev --getsz /dev/vdb) pcache /dev/pmem0 /dev/vdb 4 \
->>>       cache_mode writeback data_crc false"
->>>
->>>    # Check default gc_percent (70)
->>>    dmsetup status pcache_vdb
->>>
->>>    # Change gc_percent to 10
->>>    dmsetup message pcache_vdb 0 "gc_percent 10"
->>>
->>>    # Verify change is active in memory
->>>    dmsetup status pcache_vdb
->>>
->>>    # Reboot the system...
->>>
->>>    # Without patch (gc_percent reverts to 70):
->>>    dmsetup status pcache_vdb
->>>
->>>    # With patch (gc_percent persists as 10):
->>>    dmsetup status pcache_vdb
->>>
->>> This series fixes the issue by deriving the metadata slot index from
->>> the pointer returned by pcache_meta_find_latest(), using the 4K stride
->>> (CACHE_INFO_SIZE / SEG_INFO_SIZE). This ensures that updates to
->>> cache_info and segment_info are written to valid slots and remain
->>> consistent with the on-media layout.
->>>
->>> Li Chen (2):
->>>    dm pcache: fix cache info indexing
->>>    dm pcache: fix segment info indexing
->>>
->>>   drivers/md/dm-pcache/cache.c         | 13 ++++++++++---
->>>   drivers/md/dm-pcache/cache_segment.c |  6 +++++-
->>>   2 files changed, 15 insertions(+), 4 deletions(-)
->>>
->>
->
