@@ -1,113 +1,145 @@
-Received: from out-174.mta1.migadu.com (out-174.mta1.migadu.com [95.215.58.174])
+Received: from out-188.mta0.migadu.com (out-188.mta0.migadu.com [91.218.175.188])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9978515665C
-	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 03:01:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F3B32E9EAD
+	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 03:05:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.188
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764903722; cv=none; b=g0WqmAV1kVT8AjchUnNsKkb0TqKeDl99jTVZXmUYkNevR5R3rC/3MaMoAiko6tyzC/pu/vqwwdtS1b/kMOLfCGy1BIrb5S8REXFqkmU8aHbVtaYGflgTAqtNa0A/7IT9mtNx7TUd+HfQ6mAhDzS+WO926k/dFy+1lac8x9L5rW4=
+	t=1764903916; cv=none; b=FLYIkW4hvLiy1VSs5Yo8n6KyCvcj6jOdrQ5gHUPiZvovb/P1z5ynWMwOO+b8ja03mGRj4keouTdCnlRu2BkMwHMcJDy8dEycrsYzcjBhCti88+5AtiOK+aH0wyux9xlxYQaMTBDsiAIBsdjLneOZaeLRqJkHvXDkVaUzn2cFDpg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764903722; c=relaxed/simple;
-	bh=90YGKqhHaOBH4N6YH6JxMllFQX3GgZi/ziQYIaAoROs=;
+	s=arc-20240116; t=1764903916; c=relaxed/simple;
+	bh=tFBvb3Z93rLF57rsDFKReQTNT6EkTcpEwxKj0ULTRqA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=uDf1hVFs1IxAO2qJMohzYaZIyTckjRHUpmERXPM3y+MvZyexEdPwzAaCjNQcusMmtnQUyk4jdut+HnwfP3ngIj5qNoJAP0KiXAyx0jcxVebs8GSw56ZOn5Uh1YEyHuifbD6dv+LddhYnSIN3XEQU/KIk+N5qSDrI86a17BB0J58=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=WJEg7yRs; arc=none smtp.client-ip=95.215.58.174
+	 In-Reply-To:Content-Type; b=Lwz2et+NA3WlMUikfB68aZcGabanI6OJcjUmEorF6wiUkSZ9g/UAa0kk7AOZAui03cXIWnKFuEwA+gItwDjGk78rHid9iBuHBHZgsGw7ZOs9PKPxVvVshRzKT1vkdZj9dLv6I7rGZ5H8KXlgLQFKuVsP7yEDWGcwxP+2ug5mD5w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=SO/gHYvt; arc=none smtp.client-ip=91.218.175.188
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="WJEg7yRs"
-Message-ID: <6686f762-5bf3-401a-b69d-a2876864b187@linux.dev>
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="SO/gHYvt"
+Message-ID: <61a94278-617b-4f93-b35e-83b44833d425@linux.dev>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1764903717;
+	t=1764903910;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=+1HMahJ48Zs/iCqL77hqJnycPlQvcUQd+UiVW1LmoDY=;
-	b=WJEg7yRs6Q7E9ndBSbrcZoozeiwT7M4yTtjpiQ6NKn/m3r+cGRhbJe1tRjvb6t/vxwJ2CF
-	bWmsLtAoQnCx9PkEpnfG43+OW2ynbcUNSCr/hslBo9XPy0rGfv8gOBGMQ059Ozpw4tsr2u
-	1Pi7S9xSD2REZ2DPVV2NhoJTxs4KTsI=
-Date: Fri, 5 Dec 2025 11:01:42 +0800
+	bh=w7jPE0SDiAGNQB1/jkz7GiztgUoMvHOECTH8EtPwEI8=;
+	b=SO/gHYvtIHKevY817D+RvvFYbcMe+Xo0xdNucgupjDcrTUiNEfjuwjPhqonEU6FFGxf3G3
+	soi9IRWjfgXlc0fQUrhvNosHopw+Yg7vKTvPnaJyeZnzRTtGKeCTXG+086nJfVkRsBicdO
+	P8LIrLn2MDW9WVSoFxTOrFGlg4n/3nM=
+Date: Fri, 5 Dec 2025 11:05:05 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 1/3] dm-pcache: advance slot index before writing slot
+Subject: Re: [PATCH 2/3] dm pcache: fix cache info indexing
 To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: cengku@gmail.com, dm-devel@lists.linux.dev, chenl311@chinatelecom.cn
 References: <20251204025323.2901775-1-dongsheng.yang@linux.dev>
- <bea8250d-fc7f-6bda-df57-2814e96fd05f@redhat.com>
+ <20251204025323.2901775-2-dongsheng.yang@linux.dev>
+ <e40cf2ec-d087-65f9-45a0-a47119c89ced@redhat.com>
 X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
 From: Dongsheng Yang <dongsheng.yang@linux.dev>
-In-Reply-To: <bea8250d-fc7f-6bda-df57-2814e96fd05f@redhat.com>
+In-Reply-To: <e40cf2ec-d087-65f9-45a0-a47119c89ced@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 X-Migadu-Flow: FLOW_OUT
 
 
-在 12/5/2025 12:13 AM, Mikulas Patocka 写道:
+在 12/5/2025 12:01 AM, Mikulas Patocka 写道:
 >
 > On Thu, 4 Dec 2025, Dongsheng Yang wrote:
 >
->> In dm-pcache, in order to ensure crash-consistency, a dual-copy scheme
->> is used to alternately update metadata, and there is a slot index that
->> records the current slot. However, in the write path the current
->> implementation writes directly to the current slot indexed by slot
->> index, and then advances the slot — which ends up overwriting the
->> existing slot, violating the crash-consistency guarantee.
+>> From: Li Chen <chenl311@chinatelecom.cn>
 >>
->> This patch fixes that behavior, preventing metadata from being
->> overwritten incorrectly.
+>> The on-media cache_info index used sizeof(struct) instead of the
+>> 4K metadata stride, so gc_percent updates from dmsetup message
+>> were written between slots and lost after reboot. Use
+>> PCACHE_CACHE_INFO_SIZE in get_cache_info_addr() and align
+>> info_index with the slot returned by pcache_meta_find_latest().
 >>
+>> Signed-off-by: Li Chen <chenl311@chinatelecom.cn>
 >> Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
 >> ---
->>   drivers/md/dm-pcache/cache.c         | 8 ++++----
->>   drivers/md/dm-pcache/cache_segment.c | 8 ++++----
->>   2 files changed, 8 insertions(+), 8 deletions(-)
+>>   drivers/md/dm-pcache/cache.c | 8 ++++++--
+>>   1 file changed, 6 insertions(+), 2 deletions(-)
 >>
 >> diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
->> index 698697a7a73c..9289c016b7c9 100644
+>> index 9289c016b7c9..bcc4e509aa69 100644
 >> --- a/drivers/md/dm-pcache/cache.c
 >> +++ b/drivers/md/dm-pcache/cache.c
->> @@ -21,10 +21,10 @@ static void cache_info_write(struct pcache_cache *cache)
->>   	cache_info->header.crc = pcache_meta_crc(&cache_info->header,
->>   						sizeof(struct pcache_cache_info));
+>> @@ -8,9 +8,11 @@
 >>   
->> +	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
->> +
->>   	memcpy_flushcache(get_cache_info_addr(cache), cache_info,
->>   			sizeof(struct pcache_cache_info));
->> -
->> -	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+>>   struct kmem_cache *key_cache;
+>>   
+>> -static inline struct pcache_cache_info *get_cache_info_addr(struct pcache_cache *cache)
+>> +static inline struct pcache_cache_info *
+>> +get_cache_info_addr(struct pcache_cache *cache)
+>>   {
+>> -	return cache->cache_info_addr + cache->info_index;
+>> +	return (struct pcache_cache_info *)((char *)cache->cache_info_addr +
+>> +						(size_t)cache->info_index * PCACHE_CACHE_INFO_SIZE);
 >>   }
 >>   
->>   static void cache_info_init_default(struct pcache_cache *cache);
-> I'm not sure whether this is bug or not
+>>   static void cache_info_write(struct pcache_cache *cache)
+>> @@ -49,6 +51,8 @@ static int cache_info_init(struct pcache_cache *cache, struct pcache_cache_optio
+>>   			return -EINVAL;
+>>   		}
+>>   
+>> +		cache->info_index = ((char *)cache_info_addr - (char *)cache->cache_info_addr) / PCACHE_CACHE_INFO_SIZE;
+>> +
+>>   		return 0;
+>>   	}
+>>   
+>> -- 
+>> 2.43.0
+> I already staged the patch below? Should I revert it and stage your new
+> patch?
 
 
-It's a bug, if in-place updating for slot happen, there is a potential 
-metadata corruption while powercut happening at the same time.
-
-
-so I will add
-
-Cc: stable@vger.kernel.org      # 6.18
-
-in V2.
-
-> - but memcpy_flushcache doesn't
-> guarantee that the cache will be flushed (despite it's name) or that
-> writes would be ordered.
->
-> You need pmem_wmb(). I see that you are using it at other places.
-
-
-Good catch, I will send v2 to add the missing pmem_wmb().
+Yes, please revert it, I will send a v2 patchset, please pick the v2 patch.
 
 
 Thanx
 
 >
 > Mikulas
+>
+>
+> diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+> index d8e92367d947..9554d1158450 100644
+> --- a/drivers/md/dm-pcache/cache.c
+> +++ b/drivers/md/dm-pcache/cache.c
+> @@ -8,9 +8,11 @@
+>
+>   struct kmem_cache *key_cache;
+>
+> -static inline struct pcache_cache_info *get_cache_info_addr(struct pcache_cache *cache)
+> +static inline struct pcache_cache_info *
+> +get_cache_info_addr(struct pcache_cache *cache)
+>   {
+> -       return cache->cache_info_addr + cache->info_index;
+> +       return (struct pcache_cache_info *)((char *)cache->cache_info_addr
+> +
+> +                                               (size_t)cache->info_index * PCACHE_CACHE_INFO_SIZE);
+>   }
+>
+>   static void cache_info_write(struct pcache_cache *cache)
+> @@ -40,7 +42,12 @@ static int cache_info_init(struct pcache_cache *cache,
+> struct pcache_cache_optio
+>          if (IS_ERR(cache_info_addr))
+>                  return PTR_ERR(cache_info_addr);
+>
+> -       if (cache_info_addr) {
+> +    if (cache_info_addr) {
+> +               int index = ((char *)cache_info_addr - (char *)cache->cache_info_addr) /
+> +                               PCACHE_CACHE_INFO_SIZE;
+> +
+> +               cache->info_index = (index + 1) % PCACHE_META_INDEX_MAX;
+> +
+>                  if (opts->data_crc !=
+>                                  (cache->cache_info.flags & PCACHE_CACHE_FLAGS_DATA_CRC)) {
+>                          pcache_dev_err(pcache, "invalid option for data_crc: %s, expected: %s",
+>
