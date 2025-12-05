@@ -1,124 +1,131 @@
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D53042741AB
-	for <dm-devel@lists.linux.dev>; Thu,  4 Dec 2025 21:31:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00224625
+	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 00:03:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764883917; cv=none; b=O5xseIYs7DAwxErYuUaN4T9ofS/Q47PQZGqALiG66XbMoKFHwImmd7UwB8CtulGYQNnnFJ1fNw6Oerueqwd6A26T1Bu0q2zc+lnI2tKc7scclVOxtNUyUXx9c7MRiihLtER3Jj6E8Bxs7wJfa3/8eHf/XS5JIvI5n5rFkdLhuyk=
+	t=1764893034; cv=none; b=r5TytPzhBj0ZJZz+HFGG06ENtzFUM3LTLGN7m1YFHEPUAs5BK+M3dyTaP6cVVDSVoKQnJeifGFITanA2X2PuVv78b8ynIHtatFq/lAtOYbu/AGJCfW5Oix7hDTXl7e4Vtec8zidJDHC2nQLsZ3/flc7Nj3+tJrY/DuE0ttMe0js=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764883917; c=relaxed/simple;
-	bh=NssZwv4PUEmyXVu3o9WkZp7kXvdy8PkTUWOhUS1cEBg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=BI02E1X/gZyQJT+8wkk9rR1gz6/XBeOqGRbCcpIcNcPe+GU2P7pKb9aUK3YZjw0Y32WAazhKNc5UzBukGcddufwpp1xJZ+2f8NLvEy4yiIDXcG3hr3eHgNRC1Hnu2JiCKwxm7P4SP4okvzwwjZopMzDSXJVOD5iLB+dorarwlTc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gxeTOmLb; arc=none smtp.client-ip=209.85.128.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1764893034; c=relaxed/simple;
+	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Q/aWzg4h4AuNmE8KYyUvwVg8NA6tj9SDOiGMqEPLQJwxs866WMy5dPI1GyvuMQvTvUU0/ukaV1v9krrsudmkGNMY4lQ4+C2+nnK7m+kvWWopF6Qw2NjDEHt5R2izecnthgM/tZZ2EVnXUw+AWavcMUYfaUxhdC1S1G6zRplup2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=IRe56zxg; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QYGUJrvz; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gxeTOmLb"
-Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-47789cd2083so9273655e9.2
-        for <dm-devel@lists.linux.dev>; Thu, 04 Dec 2025 13:31:51 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764883910; x=1765488710; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=e/iWqx9ViANsCsdYJUk5CadAuT1dZRwweaObbeAfeqA=;
-        b=gxeTOmLbS0LWfJtuZgzFyNaS2VnnnjDC5oMrQ/RryQe7tmGqbaHDTlnqSoX2zgV57g
-         rvVMuqn9e+OFJ2dkFPixxJPP+CWbGAzuKtJEy6LJ7Hk8IwLZ07Bb5oWHj1xife/GnM05
-         J9dpNB5Ob6kDU/IL26ormpEVw/ONLyLrUWd7sKvhdFeqg90LKW5GssuWAdePLYFxCn92
-         5Ap39lb6OfQQL4ZwENM22EaTilpWWt+dp/BoSEfMRDGxHoDcgatPB/vt1M5kBd+qOabV
-         Qn1dZI14PLtPGcfkEJLKhM4+Q7XtvEorwlgRRUcQMVAft9cGLKhf//EBe0WD6WNX4cQO
-         b+Bg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764883910; x=1765488710;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=e/iWqx9ViANsCsdYJUk5CadAuT1dZRwweaObbeAfeqA=;
-        b=aOOxMyocPX5A+6fJYmi1QDl9sqpPsn4X8CZU/kEXXUnHR6FlQsot7dUV0QYTzJm5lH
-         553IJUjr2OIkQ5LLjbyPXoqj+xxV98ZrIHiOBOToNNGlQvqR/ZdUn/Sy8Yxl08Ujla+U
-         MnEmzhhjB7YSBWP2RfYl/mu5ZJp09PiLlqKLScVilz3DabvlofmHiCATewWXrgdFUkE7
-         o/12Ngn6wqJY4QYtE4KzUN07jb2EsXPTD5vy25Kaa1ez1NuiI2TDFxaGqFTCGEOAjHMB
-         alFkRMwqspxoOTqYciE9xZAAzDxvfKp8K9bruhkWpXWN4LWPr/soj76+F7krj7bAas4B
-         uLNg==
-X-Gm-Message-State: AOJu0YwwarsCWZN/26Bq04Q+g1yg47koWVrhlCPEQxRjm6mgxHVcRSTs
-	4Ypx66LUHrTXwz23b0hJ+GhEdUQ3bBvV0HoIY3Yp0YcqaoLeRHX/DQwhEJk6Zsky
-X-Gm-Gg: ASbGnctpM7nOYFjaEFKZ4D13JlhcpXxr8a/b8tquGl3Ac+YbQfOldY8r2kyznFrmqMu
-	ZKRjaRBWucpNxJ3WzA+jeRMCRI0PNElEgykcBBPnlEskpreHfTAKEEy5JPNs2uyi3wYTsvrVYI8
-	O0U5Ttd+CJzggM2EpZ5mdJr7nFknGvskvvJvjg81R827qI7+3EFATgJTrfX5a2BdG4b0pbQRDlH
-	QAOwcecO7WJmXUsDiyzrPQSWVfIKOZ8NucMADf8CgY/K/5iTpKG6zE0HzZnB3Dq9HlXTTVdOkkJ
-	ndWO8ivzKDQ4YRgRweadFleuaTxF8iz92BCY+ylJ9oOZd4mwZFwLDTzomDBiz2OpHmUD7fUoncX
-	vIqAMC4f7jUZSF71QcteKb01E0W6yIZ9eBNsMoVrxtbhGXWCpEJRUE/sRC12R8tm5ufSdglKx8H
-	SH+g==
-X-Google-Smtp-Source: AGHT+IFH4BsC345ceUuX75LdeYFYMh2ozWn8+y1QltIkK58EIk+KBOTffWv70Z5yGWccFAmqxXHSjA==
-X-Received: by 2002:a05:600c:1c2a:b0:477:8985:4039 with SMTP id 5b1f17b1804b1-4792af1b697mr94233875e9.17.1764883909407;
-        Thu, 04 Dec 2025 13:31:49 -0800 (PST)
-Received: from zeus.lan ([79.112.74.166])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-42f7cbfee71sm4956708f8f.15.2025.12.04.13.31.48
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 04 Dec 2025 13:31:48 -0800 (PST)
-From: Itxaka <itxakaserrano@gmail.com>
-X-Google-Original-From: Itxaka <itxaka@kairos.io>
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com,
-	Itxaka <itxaka@kairos.io>
-Subject: [PATCH multipathd] Dont pthread_join twice
-Date: Thu,  4 Dec 2025 22:31:47 +0100
-Message-ID: <20251204213147.3625104-1-itxaka@kairos.io>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="IRe56zxg";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QYGUJrvz"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 9DF2033693;
+	Fri,  5 Dec 2025 00:03:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1764893029; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
+	b=IRe56zxgCMN5ZuFQ7mYgJJOi6FAxwuQjtymljMPkR64Ozr+obagpcFAfGGHfq8BjXc9YtJ
+	JdkSTUpoZ64+8XNuEHTWk5TxGUpm8akUhIALJso0DbD1uEael4F3Rj23nY0u4HD6e0xzJb
+	IQX7zJEGw7dbbUqEVLRKLDFf8qed444=
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=QYGUJrvz
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1764893028; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
+	b=QYGUJrvzXkof9E9EQeO3dNv510QVcBO23MsW7qt0iafCygXpUcewpWuoED5ZrfpckN9F8w
+	w0E/Puxl4J4Duc9+byMdoWcKdnLkOJBvUuQl1YDNZSp78WhBGS58ubgdHcDSQs3YayxQrP
+	uSgpe+b7KdUDhFlvP2Dbkn+ChgEr15g=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 797193EA63;
+	Fri,  5 Dec 2025 00:03:48 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id y3eGHGQhMmnAdgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 05 Dec 2025 00:03:48 +0000
+Message-ID: <1bd6b84b0391dad35ed1c56eee3f6ac04ea98a61.camel@suse.com>
+Subject: Re: [PATCH multipathd] Dont pthread_join twice
+From: Martin Wilck <mwilck@suse.com>
+To: Itxaka <itxakaserrano@gmail.com>, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, Itxaka <itxaka@kairos.io>
+Date: Fri, 05 Dec 2025 01:03:47 +0100
+In-Reply-To: <20251204213147.3625104-1-itxaka@kairos.io>
+References: <20251204213147.3625104-1-itxaka@kairos.io>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	FREEMAIL_TO(0.00)[gmail.com,lists.linux.dev];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.com:dkim,suse.com:mid];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Action: no action
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spam-Level: 
+X-Rspamd-Queue-Id: 9DF2033693
+X-Spam-Flag: NO
+X-Spam-Score: -4.51
 
-Currently it seems that urcu would already call pthread_join when
-calling call_rcu_data_free since a couple of years ago (since version
-v0.14.0)[0] so calling pthread_join on the just released one is
-problematic under musl systems. It seems like under glibc this has
-several checks in place before trying to dereference the thread but
-under musl it has nothing in place to validate so this causes a coredump
-on program shutdown.
+On Thu, 2025-12-04 at 22:31 +0100, Itxaka wrote:
+> Currently it seems that urcu would already call pthread_join when
+> calling call_rcu_data_free since a couple of years ago (since version
+> v0.14.0)[0] so calling pthread_join on the just released one is
+> problematic under musl systems. It seems like under glibc this has
+> several checks in place before trying to dereference the thread but
+> under musl it has nothing in place to validate so this causes a
+> coredump
+> on program shutdown.
+>=20
+> This is currently present in all version when compiled under musl,
+> running multipathd -d and sending a SIGTERM to it, you can see the
+> coredump happening at this point in the code.
+>=20
+> The patch just removes this uneeded extra call
+>=20
+> [0]
+> https://github.com/urcu/userspace-rcu/commit/1cf55ba47342156cdf25335264b9=
+774a16e0bb2d
+>=20
 
-This is currently present in all version when compiled under musl,
-running multipathd -d and sending a SIGTERM to it, you can see the
-coredump happening at this point in the code.
+Thanks! This looks ok to me.
 
-The patch just removes this uneeded extra call
+But this change you linked has been introduced in urcu 0.14.0, so we'll
+need a patch that depends on the urcu version.
 
-[0] https://github.com/urcu/userspace-rcu/commit/1cf55ba47342156cdf25335264b9774a16e0bb2d
-
-Signed-off-by: Itxaka <itxaka@kairos.io>
----
- multipathd/main.c | 4 ----
- 1 file changed, 4 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d11a8576..0573d8f2 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3739,18 +3739,14 @@ static struct call_rcu_data *mp_rcu_data;
- 
- static void cleanup_rcu(void)
- {
--	pthread_t rcu_thread;
--
- 	/* Wait for any pending RCU calls */
- 	rcu_barrier();
- 	if (mp_rcu_data != NULL) {
--		rcu_thread = get_call_rcu_thread(mp_rcu_data);
- 		/* detach this thread from the RCU thread */
- 		set_thread_call_rcu_data(NULL);
- 		synchronize_rcu();
- 		/* tell RCU thread to exit */
- 		call_rcu_data_free(mp_rcu_data);
--		pthread_join(rcu_thread, NULL);
- 	}
- 	rcu_unregister_thread();
- }
--- 
-2.52.0
-
+Martin
