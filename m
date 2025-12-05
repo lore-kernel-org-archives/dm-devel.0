@@ -1,131 +1,113 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-174.mta1.migadu.com (out-174.mta1.migadu.com [95.215.58.174])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00224625
-	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 00:03:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9978515665C
+	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 03:01:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764893034; cv=none; b=r5TytPzhBj0ZJZz+HFGG06ENtzFUM3LTLGN7m1YFHEPUAs5BK+M3dyTaP6cVVDSVoKQnJeifGFITanA2X2PuVv78b8ynIHtatFq/lAtOYbu/AGJCfW5Oix7hDTXl7e4Vtec8zidJDHC2nQLsZ3/flc7Nj3+tJrY/DuE0ttMe0js=
+	t=1764903722; cv=none; b=g0WqmAV1kVT8AjchUnNsKkb0TqKeDl99jTVZXmUYkNevR5R3rC/3MaMoAiko6tyzC/pu/vqwwdtS1b/kMOLfCGy1BIrb5S8REXFqkmU8aHbVtaYGflgTAqtNa0A/7IT9mtNx7TUd+HfQ6mAhDzS+WO926k/dFy+1lac8x9L5rW4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764893034; c=relaxed/simple;
-	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Q/aWzg4h4AuNmE8KYyUvwVg8NA6tj9SDOiGMqEPLQJwxs866WMy5dPI1GyvuMQvTvUU0/ukaV1v9krrsudmkGNMY4lQ4+C2+nnK7m+kvWWopF6Qw2NjDEHt5R2izecnthgM/tZZ2EVnXUw+AWavcMUYfaUxhdC1S1G6zRplup2k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=IRe56zxg; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QYGUJrvz; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1764903722; c=relaxed/simple;
+	bh=90YGKqhHaOBH4N6YH6JxMllFQX3GgZi/ziQYIaAoROs=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=uDf1hVFs1IxAO2qJMohzYaZIyTckjRHUpmERXPM3y+MvZyexEdPwzAaCjNQcusMmtnQUyk4jdut+HnwfP3ngIj5qNoJAP0KiXAyx0jcxVebs8GSw56ZOn5Uh1YEyHuifbD6dv+LddhYnSIN3XEQU/KIk+N5qSDrI86a17BB0J58=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=WJEg7yRs; arc=none smtp.client-ip=95.215.58.174
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="IRe56zxg";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QYGUJrvz"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 9DF2033693;
-	Fri,  5 Dec 2025 00:03:48 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1764893029; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="WJEg7yRs"
+Message-ID: <6686f762-5bf3-401a-b69d-a2876864b187@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1764903717;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
-	b=IRe56zxgCMN5ZuFQ7mYgJJOi6FAxwuQjtymljMPkR64Ozr+obagpcFAfGGHfq8BjXc9YtJ
-	JdkSTUpoZ64+8XNuEHTWk5TxGUpm8akUhIALJso0DbD1uEael4F3Rj23nY0u4HD6e0xzJb
-	IQX7zJEGw7dbbUqEVLRKLDFf8qed444=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=QYGUJrvz
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1764893028; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Zkdxa3DWeIY007Bh0K6ciyMBKOQf0h1nlnpbc98TiJ4=;
-	b=QYGUJrvzXkof9E9EQeO3dNv510QVcBO23MsW7qt0iafCygXpUcewpWuoED5ZrfpckN9F8w
-	w0E/Puxl4J4Duc9+byMdoWcKdnLkOJBvUuQl1YDNZSp78WhBGS58ubgdHcDSQs3YayxQrP
-	uSgpe+b7KdUDhFlvP2Dbkn+ChgEr15g=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 797193EA63;
-	Fri,  5 Dec 2025 00:03:48 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id y3eGHGQhMmnAdgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 05 Dec 2025 00:03:48 +0000
-Message-ID: <1bd6b84b0391dad35ed1c56eee3f6ac04ea98a61.camel@suse.com>
-Subject: Re: [PATCH multipathd] Dont pthread_join twice
-From: Martin Wilck <mwilck@suse.com>
-To: Itxaka <itxakaserrano@gmail.com>, dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com, Itxaka <itxaka@kairos.io>
-Date: Fri, 05 Dec 2025 01:03:47 +0100
-In-Reply-To: <20251204213147.3625104-1-itxaka@kairos.io>
-References: <20251204213147.3625104-1-itxaka@kairos.io>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	bh=+1HMahJ48Zs/iCqL77hqJnycPlQvcUQd+UiVW1LmoDY=;
+	b=WJEg7yRs6Q7E9ndBSbrcZoozeiwT7M4yTtjpiQ6NKn/m3r+cGRhbJe1tRjvb6t/vxwJ2CF
+	bWmsLtAoQnCx9PkEpnfG43+OW2ynbcUNSCr/hslBo9XPy0rGfv8gOBGMQ059Ozpw4tsr2u
+	1Pi7S9xSD2REZ2DPVV2NhoJTxs4KTsI=
+Date: Fri, 5 Dec 2025 11:01:42 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FREEMAIL_TO(0.00)[gmail.com,lists.linux.dev];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_TLS_ALL(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.com:dkim,suse.com:mid];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spam-Level: 
-X-Rspamd-Queue-Id: 9DF2033693
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
+Subject: Re: [PATCH 1/3] dm-pcache: advance slot index before writing slot
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: cengku@gmail.com, dm-devel@lists.linux.dev, chenl311@chinatelecom.cn
+References: <20251204025323.2901775-1-dongsheng.yang@linux.dev>
+ <bea8250d-fc7f-6bda-df57-2814e96fd05f@redhat.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: Dongsheng Yang <dongsheng.yang@linux.dev>
+In-Reply-To: <bea8250d-fc7f-6bda-df57-2814e96fd05f@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-On Thu, 2025-12-04 at 22:31 +0100, Itxaka wrote:
-> Currently it seems that urcu would already call pthread_join when
-> calling call_rcu_data_free since a couple of years ago (since version
-> v0.14.0)[0] so calling pthread_join on the just released one is
-> problematic under musl systems. It seems like under glibc this has
-> several checks in place before trying to dereference the thread but
-> under musl it has nothing in place to validate so this causes a
-> coredump
-> on program shutdown.
->=20
-> This is currently present in all version when compiled under musl,
-> running multipathd -d and sending a SIGTERM to it, you can see the
-> coredump happening at this point in the code.
->=20
-> The patch just removes this uneeded extra call
->=20
-> [0]
-> https://github.com/urcu/userspace-rcu/commit/1cf55ba47342156cdf25335264b9=
-774a16e0bb2d
->=20
 
-Thanks! This looks ok to me.
+在 12/5/2025 12:13 AM, Mikulas Patocka 写道:
+>
+> On Thu, 4 Dec 2025, Dongsheng Yang wrote:
+>
+>> In dm-pcache, in order to ensure crash-consistency, a dual-copy scheme
+>> is used to alternately update metadata, and there is a slot index that
+>> records the current slot. However, in the write path the current
+>> implementation writes directly to the current slot indexed by slot
+>> index, and then advances the slot — which ends up overwriting the
+>> existing slot, violating the crash-consistency guarantee.
+>>
+>> This patch fixes that behavior, preventing metadata from being
+>> overwritten incorrectly.
+>>
+>> Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
+>> ---
+>>   drivers/md/dm-pcache/cache.c         | 8 ++++----
+>>   drivers/md/dm-pcache/cache_segment.c | 8 ++++----
+>>   2 files changed, 8 insertions(+), 8 deletions(-)
+>>
+>> diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+>> index 698697a7a73c..9289c016b7c9 100644
+>> --- a/drivers/md/dm-pcache/cache.c
+>> +++ b/drivers/md/dm-pcache/cache.c
+>> @@ -21,10 +21,10 @@ static void cache_info_write(struct pcache_cache *cache)
+>>   	cache_info->header.crc = pcache_meta_crc(&cache_info->header,
+>>   						sizeof(struct pcache_cache_info));
+>>   
+>> +	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+>> +
+>>   	memcpy_flushcache(get_cache_info_addr(cache), cache_info,
+>>   			sizeof(struct pcache_cache_info));
+>> -
+>> -	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+>>   }
+>>   
+>>   static void cache_info_init_default(struct pcache_cache *cache);
+> I'm not sure whether this is bug or not
 
-But this change you linked has been introduced in urcu 0.14.0, so we'll
-need a patch that depends on the urcu version.
 
-Martin
+It's a bug, if in-place updating for slot happen, there is a potential 
+metadata corruption while powercut happening at the same time.
+
+
+so I will add
+
+Cc: stable@vger.kernel.org      # 6.18
+
+in V2.
+
+> - but memcpy_flushcache doesn't
+> guarantee that the cache will be flushed (despite it's name) or that
+> writes would be ordered.
+>
+> You need pmem_wmb(). I see that you are using it at other places.
+
+
+Good catch, I will send v2 to add the missing pmem_wmb().
+
+
+Thanx
+
+>
+> Mikulas
