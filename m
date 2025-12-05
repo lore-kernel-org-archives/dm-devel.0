@@ -1,120 +1,131 @@
-Received: from sender4-pp-f112.zoho.com (sender4-pp-f112.zoho.com [136.143.188.112])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D0AE33B6D2
-	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 09:13:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.112
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764925989; cv=pass; b=I42/ZMwCsNf9ChVpJ9MRqikmMljkU5AjntwYJoIkvw628d7ZfiJg/iS2nyWLbtrMZXJxxIQN+0WpBr8h2RRlAJYi6XjwMMAP3a15b5rqgzhE25YNay1/ftk7DHL36U3SMHAoaycmNR2vE4fAobd8JqtvCsOKuutfD/MJ3bUl7aQ=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764925989; c=relaxed/simple;
-	bh=ULew8p/F08fY3L8RFauOV+QPKUoh+bTWEg6sj8nOFkQ=;
-	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
-	 MIME-Version:Content-Type; b=Pg7a615jAuPJgQ72ELM+SkfOrzxYTGs1v17zsmZFGUoQ8Mub4UzLYZWJcsaUsQTwoVNbsZZqcljX7n7UzllYBNKQAlMZE6JLH+SDYlQjXWnzSmTWV/mDFS22hlkVBK0j3LyXqMYfNYzEMKyPi2104A85woMYxzproEQVri28ak4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=jfnphBZf; arc=pass smtp.client-ip=136.143.188.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFEDF3242BD
+	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 09:30:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1764927067; cv=none; b=tKgbvkdwO1nCwOBA8nkB60nMyXVoxE2bQOqpwULyf1T0YMbFL+xaezqM0cxaiFuG63AK9X40zcxZgMZ94Y9+Qi2soEwr8jgIXny8rIzZoNXZkxfrIBy3fpcBK3Ib3V+cpNLhsLJMkRFbrnMxw7CLrG7QHLtvv64juS0FjNY8zeQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1764927067; c=relaxed/simple;
+	bh=35Dop07KO1/5eiDd7xnZaRrtsydii9l/CNpS9LvIx4k=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=eEa0i/5/sh/RmKROvvFQwQ64egmvySzM98XUXXIk8C2HnQ51GQm6vqjvwR2e8/mUR+7JFAtyRhMUOIqUh5ZfNwOPIIEJkZr6NcAn87mw3VhXavkgHnVNUY05qSLwEz+sZh9ZIbb+NQtkOdey+0zQYOR6repcTNCF77UbMMupYZ0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=FCpnp1mW; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=FCpnp1mW; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="jfnphBZf"
-ARC-Seal: i=1; a=rsa-sha256; t=1764925975; cv=none; 
-	d=zohomail.com; s=zohoarc; 
-	b=TR8Qvt7k/PBWZJRmZdKNsJp/2SDaYSRmXuODn29nO2UTaRKI09TbdmjiSh6Okr3h1ebwB+YJFOPSDcAJj0yqM+078gfRjNg58oONKJH1vuPbAHPPICiD5Zi9BXffcilIBYz8ZR7aSJjwDOFi7hL1ojysw7CPdtKlc2vuZPFqVA0=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1764925975; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=s1oJrmXVhZ+A3EBGV2CCJMrhvFTh2aRSSmWM6tjYL8c=; 
-	b=k1IULXPIiQJlU+fd+x+uPcjzUaiobSSRjxN8piQIAzQ3kX9m+MqMRvj/7VHXhTYMSRr3qvqIUMvbAsIkCveVoGJMipLiLlGtu42f/1z0IisFRbU6+BR53zoCjCZK5XVeeltJifCoZ5i0qR3jM7frC0OmjY8kQf0dFCMR/f2+vxQ=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-	dkim=pass  header.i=linux.beauty;
-	spf=pass  smtp.mailfrom=me@linux.beauty;
-	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764925975;
-	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:References:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=s1oJrmXVhZ+A3EBGV2CCJMrhvFTh2aRSSmWM6tjYL8c=;
-	b=jfnphBZf+Nphic1fuPfkQJfm2evQtAiJFSQE19Q30CLwzYWy1LR/CzZf2f65g/jb
-	zc7x20R1Ok6EAPLQrZ2EQ43rNomT2FqH+lroU3efgRBIw5+ltFrNRkBi/kic4GNnuN8
-	BLYlKyeG6hIUdIxYI8KuYTghhBhqUcuGX4+uiAD0=
-Received: from mail.zoho.com by mx.zohomail.com
-	with SMTP id 17649259730321001.4593024631594; Fri, 5 Dec 2025 01:12:53 -0800 (PST)
-Date: Fri, 05 Dec 2025 17:12:53 +0800
-From: Li Chen <me@linux.beauty>
-To: "Dongsheng Yang" <dongsheng.yang@linux.dev>
-Cc: "dm-devel" <dm-devel@lists.linux.dev>,
-	"linux-kernel" <linux-kernel@vger.kernel.org>,
-	"Zheng Gu" <cengku@gmail.com>
-Message-ID: <19aedc9220c.286fe1e31299075.4407856642004547155@linux.beauty>
-In-Reply-To: <0af717b0-21c0-404d-82c1-94d9addd4ef5@linux.dev>
-References: <20251202121158.111092-1-me@linux.beauty>
- <65dbab10-a48a-4cfb-8c06-15011e54b1b5@linux.dev>
- <e6170c62-22b9-4d5d-bd97-006a4cecc0b7@linux.dev> <0af717b0-21c0-404d-82c1-94d9addd4ef5@linux.dev>
-Subject: Re: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence
- issues
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="FCpnp1mW";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="FCpnp1mW"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 78979336D3;
+	Fri,  5 Dec 2025 09:30:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1764927051; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=35Dop07KO1/5eiDd7xnZaRrtsydii9l/CNpS9LvIx4k=;
+	b=FCpnp1mW4J+IABlzfziiIRdkzvTarXCptZ94QI8H/ad3EqSoWvV9Y7rrCP0DRePgLMMJxG
+	gKgkGwr45Px+y6rmvpP6OwvPJ7c17scQbSbb39r5XiswgROt6oPxs/scyoKxdWpzO7b90O
+	yiggSuMe5/irQbMQteQmZXJgyMeVcG4=
+Authentication-Results: smtp-out1.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=FCpnp1mW
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1764927051; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=35Dop07KO1/5eiDd7xnZaRrtsydii9l/CNpS9LvIx4k=;
+	b=FCpnp1mW4J+IABlzfziiIRdkzvTarXCptZ94QI8H/ad3EqSoWvV9Y7rrCP0DRePgLMMJxG
+	gKgkGwr45Px+y6rmvpP6OwvPJ7c17scQbSbb39r5XiswgROt6oPxs/scyoKxdWpzO7b90O
+	yiggSuMe5/irQbMQteQmZXJgyMeVcG4=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 565373EA63;
+	Fri,  5 Dec 2025 09:30:51 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id tTkAFEumMml9cgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 05 Dec 2025 09:30:51 +0000
+Message-ID: <e8845dc35f86316f72a07b7c35b5b05c3eb33c54.camel@suse.com>
+Subject: Re: [PATCH v2] multipathd: Dont pthread_join twice
+From: Martin Wilck <mwilck@suse.com>
+To: Itxaka <itxakaserrano@gmail.com>, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, Itxaka <itxaka@kairos.io>
+Date: Fri, 05 Dec 2025 10:30:50 +0100
+In-Reply-To: <20251205082806.3649593-1-itxaka@kairos.io>
+References: <20251205082806.3649593-1-itxaka@kairos.io>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Importance: Medium
-User-Agent: Zoho Mail
-X-Mailer: Zoho Mail
+X-Spam-Flag: NO
+X-Spam-Score: -4.51
+X-Rspamd-Queue-Id: 78979336D3
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	FREEMAIL_TO(0.00)[gmail.com,lists.linux.dev];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:dkim,suse.com:email];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Level: 
 
-Hi Dongsheng,
+On Fri, 2025-12-05 at 09:28 +0100, Itxaka wrote:
+> Currently it seems that urcu would already call pthread_join when
+> calling call_rcu_data_free since a couple of years ago (since version
+> v0.14.0)[0] so calling pthread_join on the just released one is
+> problematic under musl systems. It seems like under glibc this has
+> several checks in place before trying to dereference the thread but
+> under musl it has nothing in place to validate so this causes a
+> coredump
+> on program shutdown.
+>=20
+> This is currently present in all version when compiled under musl,
+> running multipathd -d and sending a SIGTERM to it, you can see the
+> coredump happening at this point in the code.
+>=20
+> The patch runs only the old behaviour in urcu older than 0.14.0 to
+> maintain the same bahaviour. In higher versions its not neccesary so
+> we
+> skip it.
+>=20
+> [0]
+> https://github.com/urcu/userspace-rcu/commit/1cf55ba47342156cdf25335264b9=
+774a16e0bb2d
+>=20
+> Signed-off-by: Itxaka <itxaka@kairos.io>
 
- ---- On Thu, 04 Dec 2025 09:38:17 +0800  Dongsheng Yang <dongsheng.yang@li=
-nux.dev> wrote ---=20
- >=20
- > =E5=9C=A8 12/4/2025 7:38 AM, Dongsheng Yang =E5=86=99=E9=81=93:
- > >
- > > =E5=9C=A8 12/3/2025 1:56 PM, Dongsheng Yang =E5=86=99=E9=81=93:
- > >> Hi,
- > >>
- > >>     Thanx for your patches, there are some comments inline.
- > >>
- > >> According to these comments, I propose an update base on your patch=
-=20
- > >> as [1].
- > >>
- > >> BTW, I added a test case for this problem in dtg-tests:
- > >>
- > >> https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data=
-/pcache_misc_tests/case21_gc_percent_persistence_after_recreate.sh=20
- > >>
- > >>
- > >> It update gc_percent online and recreate pcache device and check=20
- > >> gc_percen
- > >>
- > >>
- > >> [1]:
- > >
- > >
- > > ->info_index means next slot to write, so advancing it at init stage=
-=20
- > > is correct
- >=20
- >=20
- > We need to think more thoroughly about the usage of the slot index. In=
-=20
- > my original design, all slot indices represent the =E2=80=9Ccurrent slot=
-=E2=80=9D. So at=20
- > initialization it is 0; if loading, we simply point it to the loaded=20
- > slot; and on write we advance afterwards. However, the problem now is=20
- > that in all write functions, they first write to the current slot, then=
-=20
- > advance.
- >=20
- > Therefore I believe we should clarify that the meaning of the slot index=
-=20
- > is =E2=80=9Cthe current slot,=E2=80=9D and stick to the original design.=
- We only need to=20
- > modify the write functions: first perform the advance, and then write=20
- > into the correct slot.
-=20
-Sounds good, thanks.
-
-Regards,
-
-Li=E2=80=8B
-
+Reviewed-by: Martin Wilck <mwilck@suse.com>
