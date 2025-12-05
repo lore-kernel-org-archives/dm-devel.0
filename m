@@ -1,131 +1,120 @@
-Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sender4-pp-f112.zoho.com (sender4-pp-f112.zoho.com [136.143.188.112])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3708338935
-	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 08:28:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.42
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764923302; cv=none; b=NCv0h4DTtWrkNizXLeGrYa3LJvyk7XzqbRfG5v5BDd23b1Q/d6CegOzBp3mr4iCKDcDstMW29/byRnFpK6ENGySNIb0ormTD2HivtFRZcr+IvoD7a5YRfqOYU5sW98CSQPB4aj9M+7TTRhkYU5J9rMcbsluxDN7DSGraWWeoMjs=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764923302; c=relaxed/simple;
-	bh=Wdqk/+AZgd3BVbTwZalMj0lsp1Fs3VqMII12mGYJT78=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=jDG1aH4eHi5loYeFperRkazV65xZo0dSl7coegpqmceTp488qIyZrXV2VLNJHvSrLS7AwusrouWKIg7TBiyUzhjzePQcpMHDgIFUBw/4U6oHOHlpy1YuZ97QReaoCxloVhnDyXNliGedMNU9zOdLknK1rIIMVYLQCq0wSvyA3oo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=SlFOlNBk; arc=none smtp.client-ip=209.85.221.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D0AE33B6D2
+	for <dm-devel@lists.linux.dev>; Fri,  5 Dec 2025 09:13:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.112
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1764925989; cv=pass; b=I42/ZMwCsNf9ChVpJ9MRqikmMljkU5AjntwYJoIkvw628d7ZfiJg/iS2nyWLbtrMZXJxxIQN+0WpBr8h2RRlAJYi6XjwMMAP3a15b5rqgzhE25YNay1/ftk7DHL36U3SMHAoaycmNR2vE4fAobd8JqtvCsOKuutfD/MJ3bUl7aQ=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1764925989; c=relaxed/simple;
+	bh=ULew8p/F08fY3L8RFauOV+QPKUoh+bTWEg6sj8nOFkQ=;
+	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
+	 MIME-Version:Content-Type; b=Pg7a615jAuPJgQ72ELM+SkfOrzxYTGs1v17zsmZFGUoQ8Mub4UzLYZWJcsaUsQTwoVNbsZZqcljX7n7UzllYBNKQAlMZE6JLH+SDYlQjXWnzSmTWV/mDFS22hlkVBK0j3LyXqMYfNYzEMKyPi2104A85woMYxzproEQVri28ak4=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=jfnphBZf; arc=pass smtp.client-ip=136.143.188.112
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="SlFOlNBk"
-Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-429ce7e79f8so1197761f8f.0
-        for <dm-devel@lists.linux.dev>; Fri, 05 Dec 2025 00:28:17 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1764923294; x=1765528094; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=6PCCiJ2KgknX76legxecoxGwC9s69M5akoKPjWJBK3k=;
-        b=SlFOlNBkXTjI65P1d3zMF1VSEpbGV/Ty6B/sRJjSb9vRu0NAEAqzOaw7xBZdNMQ663
-         R2spL8KngnrFTUbNBQT4mFVbfzSeYn1K1BG+OE5Wc447Rx+nv1F6V3vL6aGIjz9IIveO
-         7hbu6uhVytTpbAefewsXnXCBEpDzziSwp5R5pG/lldkvX+SqDvxBSTXkLv4rbJGOm9ue
-         iX1dvohgFf1nUsu+am96127Y4GY7vxpXht0qwSU9nb+tbjX5Ia7UGa8Gx9SX7Kqpanje
-         Qs0be6KvX+GgKo6s72CQUq63bgjlIxOsgOORNMfe7Ry2PJS1X5xfXa1D6Y1LvfFOEmoH
-         qcXA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1764923294; x=1765528094;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=6PCCiJ2KgknX76legxecoxGwC9s69M5akoKPjWJBK3k=;
-        b=HjrBomYlQjOMXcS6+TZqh8cvWo5c0JXM9rxTPW0Z8B3OKB9LItK7IquYTS0SJIiAsB
-         5rfqr0cbsMPVL9BH9NkvbUc5aMq+f3zT6qkoOZ8aSH7x1LB61WCR4xRuGgvM/T8WvtaX
-         25ZRAWcNSkMR2PIDLJTB6OEMQynzgRQPSi08Pb/NwQjrwVmdWITr9nJu/2etA/NDPiXG
-         ZosOrO8jdvI2zRWwCdgP0hMauFwPDuSpusVG9fjn0nBPA8qnwQY4yyH2LWopixOBDkkT
-         R9SqE7J/gNZDmnraFJXOBVZ20rjK7j1e4+vWRVA1KUlEtmdwPOu1QaErj+693ecks4ft
-         +Y7A==
-X-Gm-Message-State: AOJu0YzYmgsTUoY4LZ+1v9ynQNeQfvk5czTMjyvKxTsSL6Tpy9ok8pQH
-	fl5VqDH/ofYW9z0YysNQUnkB4n9vy2ZaoD/pBRE1dTu8tf6idz8rq8oKKvNUZNwA
-X-Gm-Gg: ASbGnctgF5JGP3/wSfdRiIDTPN6o7vwaLmmOzqs97Pm9rrXAANqEvVY6s5jSwpT7PqQ
-	2YZPwVE/97XDbiZNL/p0XokxEzWj1qNwTsPBx/HUiMewvWYT+6Ri692cMvN1LVI8VRk+88AsnN8
-	yjcFp4hdcrX5Te6v/MkoL5O8PmRgGYykJcxBCWFYqwd1qtQUE0vpfwzSr9oV2hM5j4uYrKLhtkO
-	iQNH1cbTu0NSDMTrpNbRqhV6UtorqBm755mDuWBui6URgjpa68r7+EWFT75R+zz1XMsyGoe9e7l
-	aI+T6NaNMSNad4yVo2r8BdF0DFVhXX+LQYQuJOkwakefeMYmyHgKOdbMjUca+0MeeV8wWbfTd17
-	PLTr4Gq/fXtIVDqSqXUy0Pqbe4enGTZk2tmWIaSJ+iVWICNXVqQcrrFMaWxWZv4rEnb9bCGqooQ
-	fSlA==
-X-Google-Smtp-Source: AGHT+IEI737peIgbyJzFyh89ut/xQIGyMP7MG+fyo6psND5iKiEmdzU6TqT9DhYmfyiED8U5ML5mFw==
-X-Received: by 2002:a5d:5f84:0:b0:42b:4247:b07e with SMTP id ffacd0b85a97d-42f79804086mr6036508f8f.25.1764923293642;
-        Fri, 05 Dec 2025 00:28:13 -0800 (PST)
-Received: from zeus.lan ([79.112.74.166])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-42f7cbff352sm7491010f8f.17.2025.12.05.00.28.12
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 05 Dec 2025 00:28:13 -0800 (PST)
-From: Itxaka <itxakaserrano@gmail.com>
-X-Google-Original-From: Itxaka <itxaka@kairos.io>
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com,
-	Itxaka <itxaka@kairos.io>
-Subject: [PATCH v2] multipathd: Dont pthread_join twice
-Date: Fri,  5 Dec 2025 09:28:06 +0100
-Message-ID: <20251205082806.3649593-1-itxaka@kairos.io>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="jfnphBZf"
+ARC-Seal: i=1; a=rsa-sha256; t=1764925975; cv=none; 
+	d=zohomail.com; s=zohoarc; 
+	b=TR8Qvt7k/PBWZJRmZdKNsJp/2SDaYSRmXuODn29nO2UTaRKI09TbdmjiSh6Okr3h1ebwB+YJFOPSDcAJj0yqM+078gfRjNg58oONKJH1vuPbAHPPICiD5Zi9BXffcilIBYz8ZR7aSJjwDOFi7hL1ojysw7CPdtKlc2vuZPFqVA0=
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
+	t=1764925975; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:References:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=s1oJrmXVhZ+A3EBGV2CCJMrhvFTh2aRSSmWM6tjYL8c=; 
+	b=k1IULXPIiQJlU+fd+x+uPcjzUaiobSSRjxN8piQIAzQ3kX9m+MqMRvj/7VHXhTYMSRr3qvqIUMvbAsIkCveVoGJMipLiLlGtu42f/1z0IisFRbU6+BR53zoCjCZK5XVeeltJifCoZ5i0qR3jM7frC0OmjY8kQf0dFCMR/f2+vxQ=
+ARC-Authentication-Results: i=1; mx.zohomail.com;
+	dkim=pass  header.i=linux.beauty;
+	spf=pass  smtp.mailfrom=me@linux.beauty;
+	dmarc=pass header.from=<me@linux.beauty>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1764925975;
+	s=zmail; d=linux.beauty; i=me@linux.beauty;
+	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:References:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
+	bh=s1oJrmXVhZ+A3EBGV2CCJMrhvFTh2aRSSmWM6tjYL8c=;
+	b=jfnphBZf+Nphic1fuPfkQJfm2evQtAiJFSQE19Q30CLwzYWy1LR/CzZf2f65g/jb
+	zc7x20R1Ok6EAPLQrZ2EQ43rNomT2FqH+lroU3efgRBIw5+ltFrNRkBi/kic4GNnuN8
+	BLYlKyeG6hIUdIxYI8KuYTghhBhqUcuGX4+uiAD0=
+Received: from mail.zoho.com by mx.zohomail.com
+	with SMTP id 17649259730321001.4593024631594; Fri, 5 Dec 2025 01:12:53 -0800 (PST)
+Date: Fri, 05 Dec 2025 17:12:53 +0800
+From: Li Chen <me@linux.beauty>
+To: "Dongsheng Yang" <dongsheng.yang@linux.dev>
+Cc: "dm-devel" <dm-devel@lists.linux.dev>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"Zheng Gu" <cengku@gmail.com>
+Message-ID: <19aedc9220c.286fe1e31299075.4407856642004547155@linux.beauty>
+In-Reply-To: <0af717b0-21c0-404d-82c1-94d9addd4ef5@linux.dev>
+References: <20251202121158.111092-1-me@linux.beauty>
+ <65dbab10-a48a-4cfb-8c06-15011e54b1b5@linux.dev>
+ <e6170c62-22b9-4d5d-bd97-006a4cecc0b7@linux.dev> <0af717b0-21c0-404d-82c1-94d9addd4ef5@linux.dev>
+Subject: Re: [PATCH 0/2] dm-pcache: fix metadata indexing and persistence
+ issues
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Importance: Medium
+User-Agent: Zoho Mail
+X-Mailer: Zoho Mail
 
-Currently it seems that urcu would already call pthread_join when
-calling call_rcu_data_free since a couple of years ago (since version
-v0.14.0)[0] so calling pthread_join on the just released one is
-problematic under musl systems. It seems like under glibc this has
-several checks in place before trying to dereference the thread but
-under musl it has nothing in place to validate so this causes a coredump
-on program shutdown.
+Hi Dongsheng,
 
-This is currently present in all version when compiled under musl,
-running multipathd -d and sending a SIGTERM to it, you can see the
-coredump happening at this point in the code.
+ ---- On Thu, 04 Dec 2025 09:38:17 +0800  Dongsheng Yang <dongsheng.yang@li=
+nux.dev> wrote ---=20
+ >=20
+ > =E5=9C=A8 12/4/2025 7:38 AM, Dongsheng Yang =E5=86=99=E9=81=93:
+ > >
+ > > =E5=9C=A8 12/3/2025 1:56 PM, Dongsheng Yang =E5=86=99=E9=81=93:
+ > >> Hi,
+ > >>
+ > >>     Thanx for your patches, there are some comments inline.
+ > >>
+ > >> According to these comments, I propose an update base on your patch=
+=20
+ > >> as [1].
+ > >>
+ > >> BTW, I added a test case for this problem in dtg-tests:
+ > >>
+ > >> https://github.com/DataTravelGuide/dtg-tests/blob/main/pcache.py.data=
+/pcache_misc_tests/case21_gc_percent_persistence_after_recreate.sh=20
+ > >>
+ > >>
+ > >> It update gc_percent online and recreate pcache device and check=20
+ > >> gc_percen
+ > >>
+ > >>
+ > >> [1]:
+ > >
+ > >
+ > > ->info_index means next slot to write, so advancing it at init stage=
+=20
+ > > is correct
+ >=20
+ >=20
+ > We need to think more thoroughly about the usage of the slot index. In=
+=20
+ > my original design, all slot indices represent the =E2=80=9Ccurrent slot=
+=E2=80=9D. So at=20
+ > initialization it is 0; if loading, we simply point it to the loaded=20
+ > slot; and on write we advance afterwards. However, the problem now is=20
+ > that in all write functions, they first write to the current slot, then=
+=20
+ > advance.
+ >=20
+ > Therefore I believe we should clarify that the meaning of the slot index=
+=20
+ > is =E2=80=9Cthe current slot,=E2=80=9D and stick to the original design.=
+ We only need to=20
+ > modify the write functions: first perform the advance, and then write=20
+ > into the correct slot.
+=20
+Sounds good, thanks.
 
-The patch runs only the old behaviour in urcu older than 0.14.0 to
-maintain the same bahaviour. In higher versions its not neccesary so we
-skip it.
+Regards,
 
-[0] https://github.com/urcu/userspace-rcu/commit/1cf55ba47342156cdf25335264b9774a16e0bb2d
-
-Signed-off-by: Itxaka <itxaka@kairos.io>
----
- multipathd/main.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
-
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d11a8576..b30b151f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3739,18 +3739,21 @@ static struct call_rcu_data *mp_rcu_data;
- 
- static void cleanup_rcu(void)
- {
--	pthread_t rcu_thread;
--
- 	/* Wait for any pending RCU calls */
- 	rcu_barrier();
- 	if (mp_rcu_data != NULL) {
-+#if (URCU_VERSION < 0x000E00)
-+	        pthread_t rcu_thread;
- 		rcu_thread = get_call_rcu_thread(mp_rcu_data);
-+#endif
- 		/* detach this thread from the RCU thread */
- 		set_thread_call_rcu_data(NULL);
- 		synchronize_rcu();
- 		/* tell RCU thread to exit */
- 		call_rcu_data_free(mp_rcu_data);
-+#if (URCU_VERSION < 0x000E00)
- 		pthread_join(rcu_thread, NULL);
-+#endif
- 	}
- 	rcu_unregister_thread();
- }
--- 
-2.52.0
+Li=E2=80=8B
 
