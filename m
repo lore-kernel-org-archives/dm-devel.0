@@ -1,143 +1,141 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6CF5B1F2BA4
-	for <dm-devel@lists.linux.dev>; Sat,  6 Dec 2025 01:00:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1241D19F137
+	for <dm-devel@lists.linux.dev>; Sat,  6 Dec 2025 11:36:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1764982827; cv=none; b=sNro05UZ0+w0aF3oo5/BHnVoQhmH6hevKxtLfhA86+63sFmsxovu9Zm6vsYhUd+lJrS6o+kjDOvfDMnJt9Vu84mQcnRAIcTCOKxd0shBOTROngpqSgIG1GpcACAVLScM7bt4aMxMGUQ54BoXXNmtLu/P9s29AivuMuCdAQwO9ac=
+	t=1765020997; cv=none; b=IPSXBDTXA37B5Jq18TN2oEEGLdyokUj7UKydDbJxAKxUqCkQOpJRy3NvyWsTVl4lD0TF6SXqAB7SL/21UgytQ1jv6puqDBerT4b0vfXVSTxxBFP3EvlNPWrkh+82X8niFxgO9ac3GSuqwTpXjSxc1V/JZeg7GsgaP7b4+VAQum4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1764982827; c=relaxed/simple;
-	bh=O9OGJs90B8jaJWOEsvr8omGjkuVilZIJM6X/eJ+o5ss=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=R+72JLKOoZaOn3TDj7LyRjbNn+sVw5Edz3VUcSVLd8nQpYPi17vn4Z23sWxjgAH0rQ5hQ505IShaGI+/p3lww1l5BY317ZbsptnyadZtE8SZGbkZlv+aUgdfk+1Hg6/OwHDBca+FtrmPOoUsMyJINdOLFzYAM9+30cJjDdeTtXc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MGnhb4ki; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1765020997; c=relaxed/simple;
+	bh=LbPWW0gk4AZ0y7k7ENs69V3jo3Jfvr3QStiSKbXZ/pI=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=d0vsro2PvCKW149YH3rkKWJAyee8W1K5b6y/eW1bvPXha1JNkP1jxSChbXCtnwWh9L0ka4+e7h+MT78nYzoaOeuzU0DvxAga7x6QOpVeFurqqRjnuiib3CfEh+Z1IOzx56ZW577+Dy70yEuSMji1a6KS4FhRID/pPhUTnJelTps=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=c8t8rFlm; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MGnhb4ki"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="c8t8rFlm"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1764982824;
+	s=mimecast20190719; t=1765020992;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=5w4UtrYE7AWo/3qHhRYQubzzzFodcpQGNINtBKnKQWY=;
-	b=MGnhb4kiXO6F7762kQ3+euvtyaLe3iCsGBzLojK6R1ytLDD1hPjZ7aKVI7mOhz70qqQNGV
-	81xHn810ObcGRicPd3G8xB7xBWQefSfGYFoASVig14eTKFh7fdzlfe1iYTvGW/tLhhCA43
-	LMzLc6LRaLNmGIHvGB1OOitlIJoEzrE=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=gyRi6lo6I1h4DFTcnWCwpPrxeT2M5QB1IyYjVi8ZYZI=;
+	b=c8t8rFlmKE2ycAmEySGFuwe5rBlNcmg2Bv1Pg0Kg67cv2zc4vHSblScIRFIV+YVnVnWuuw
+	E3AdtBWhIB5ONZ0rwrLDe0MRTM45EIY5fkdqyAdItt6rRvo29YTw05DGzEDqQmpXNhemNc
+	wO+pgX8vb8/VT47GjZ5dE3+pU+4XW04=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-643-OC-B9ONaMla49omkhCrVTA-1; Fri,
- 05 Dec 2025 20:00:19 -0500
-X-MC-Unique: OC-B9ONaMla49omkhCrVTA-1
-X-Mimecast-MFC-AGG-ID: OC-B9ONaMla49omkhCrVTA_1764982818
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-604-VfcZ1kcON0iyd15MPNOBiA-1; Sat,
+ 06 Dec 2025 06:36:29 -0500
+X-MC-Unique: VfcZ1kcON0iyd15MPNOBiA-1
+X-Mimecast-MFC-AGG-ID: VfcZ1kcON0iyd15MPNOBiA_1765020988
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2E5611956066;
-	Sat,  6 Dec 2025 01:00:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A740B19560B4;
-	Sat,  6 Dec 2025 01:00:17 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B610GfL1595234
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 5 Dec 2025 20:00:16 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B610F531595233;
-	Fri, 5 Dec 2025 20:00:15 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: "James E . J . Bottomley" <James.Bottomley@HansenPartnership.com>,
-        "Martin K . Petersen" <martin.petersen@oracle.com>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <snitzer@kernel.org>
-Cc: linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev,
-        Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2] scsi: scsi_dh: Return error pointer in scsi_dh_attached_handler_name
-Date: Fri,  5 Dec 2025 20:00:15 -0500
-Message-ID: <20251206010015.1595225-1-bmarzins@redhat.com>
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AE5B31956080;
+	Sat,  6 Dec 2025 11:36:27 +0000 (UTC)
+Received: from [10.44.33.72] (unknown [10.44.33.72])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9489D180045B;
+	Sat,  6 Dec 2025 11:36:25 +0000 (UTC)
+Date: Sat, 6 Dec 2025 12:36:18 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+cc: cengku@gmail.com, dm-devel@lists.linux.dev, chenl311@chinatelecom.cn
+Subject: Re: [PATCH 1/3] dm-pcache: advance slot index before writing slot
+In-Reply-To: <6686f762-5bf3-401a-b69d-a2876864b187@linux.dev>
+Message-ID: <d2d28180-417d-ea74-e338-94c2e0736e91@redhat.com>
+References: <20251204025323.2901775-1-dongsheng.yang@linux.dev> <bea8250d-fc7f-6bda-df57-2814e96fd05f@redhat.com> <6686f762-5bf3-401a-b69d-a2876864b187@linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: WZ4w5BbVkPhRS5oyw6KAvGVc3L3O7XUDZZ2YMz0bn84_1765020988
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="-1463811712-1968846627-1765020987=:1573356"
 
-If scsi_dh_attached_handler_name() fails to allocate the handler name,
-dm-multipath (its only caller) assumes there is no attached device
-handler, and sets the device up incorrectly. Return an error pointer
-instead, so multipath can distinguish between failure, success where
-there is no attached device handler, or when the path device is not
-a scsi device at all.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-1968846627-1765020987=:1573356
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
 
-Changes from v1:
-If scsi_dh_attached_handler_name() returns that the path device is not
-a scsi device (-ENODEV) but m->hw_hander_name is set, print an error
-message and clear it, like the code does when a hardware handler is set
-on a bio-based multipath device.
 
- drivers/md/dm-mpath.c  | 13 +++++++++++++
- drivers/scsi/scsi_dh.c |  8 +++++---
- 2 files changed, 18 insertions(+), 3 deletions(-)
+On Fri, 5 Dec 2025, Dongsheng Yang wrote:
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index c18358271618..65a3e93385c0 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -950,6 +950,19 @@ static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps
- 
- 	q = bdev_get_queue(p->path.dev->bdev);
- 	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-+	if (IS_ERR(attached_handler_name)) {
-+		if (PTR_ERR(attached_handler_name) == -ENODEV) {
-+			if (m->hw_handler_name) {
-+				DMERR("hardware handlers are only allowed for scsi devices");
-+				kfree(m->hw_handler_name);
-+				m->hw_handler_name = NULL;
-+			}
-+			attached_handler_name = NULL;
-+		} else {
-+			r = PTR_ERR(attached_handler_name);
-+			goto bad;
-+		}
-+	}
- 	if (attached_handler_name || m->hw_handler_name) {
- 		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
- 		r = setup_scsi_dh(p->path.dev->bdev, m, &attached_handler_name, &ti->error);
-diff --git a/drivers/scsi/scsi_dh.c b/drivers/scsi/scsi_dh.c
-index 7b56e00c7df6..b9d805317814 100644
---- a/drivers/scsi/scsi_dh.c
-+++ b/drivers/scsi/scsi_dh.c
-@@ -353,7 +353,8 @@ EXPORT_SYMBOL_GPL(scsi_dh_attach);
-  *      that may have a device handler attached
-  * @gfp - the GFP mask used in the kmalloc() call when allocating memory
-  *
-- * Returns name of attached handler, NULL if no handler is attached.
-+ * Returns name of attached handler, NULL if no handler is attached, or
-+ * and error pointer if an error occurred.
-  * Caller must take care to free the returned string.
-  */
- const char *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
-@@ -363,10 +364,11 @@ const char *scsi_dh_attached_handler_name(struct request_queue *q, gfp_t gfp)
- 
- 	sdev = scsi_device_from_queue(q);
- 	if (!sdev)
--		return NULL;
-+		return ERR_PTR(-ENODEV);
- 
- 	if (sdev->handler)
--		handler_name = kstrdup(sdev->handler->name, gfp);
-+		handler_name = kstrdup(sdev->handler->name, gfp) ? :
-+			       ERR_PTR(-ENOMEM);
- 	put_device(&sdev->sdev_gendev);
- 	return handler_name;
- }
--- 
-2.50.1
+> 
+> 在 12/5/2025 12:13 AM, Mikulas Patocka 写道:
+> > 
+> > On Thu, 4 Dec 2025, Dongsheng Yang wrote:
+> > 
+> > > In dm-pcache, in order to ensure crash-consistency, a dual-copy scheme
+> > > is used to alternately update metadata, and there is a slot index that
+> > > records the current slot. However, in the write path the current
+> > > implementation writes directly to the current slot indexed by slot
+> > > index, and then advances the slot — which ends up overwriting the
+> > > existing slot, violating the crash-consistency guarantee.
+> > > 
+> > > This patch fixes that behavior, preventing metadata from being
+> > > overwritten incorrectly.
+> > > 
+> > > Signed-off-by: Dongsheng Yang <dongsheng.yang@linux.dev>
+> > > ---
+> > >   drivers/md/dm-pcache/cache.c         | 8 ++++----
+> > >   drivers/md/dm-pcache/cache_segment.c | 8 ++++----
+> > >   2 files changed, 8 insertions(+), 8 deletions(-)
+> > > 
+> > > diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+> > > index 698697a7a73c..9289c016b7c9 100644
+> > > --- a/drivers/md/dm-pcache/cache.c
+> > > +++ b/drivers/md/dm-pcache/cache.c
+> > > @@ -21,10 +21,10 @@ static void cache_info_write(struct pcache_cache
+> > > *cache)
+> > >   	cache_info->header.crc = pcache_meta_crc(&cache_info->header,
+> > >   						sizeof(struct
+> > > pcache_cache_info));
+> > >   +	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+> > > +
+> > >   	memcpy_flushcache(get_cache_info_addr(cache), cache_info,
+> > >   			sizeof(struct pcache_cache_info));
+> > > -
+> > > -	cache->info_index = (cache->info_index + 1) % PCACHE_META_INDEX_MAX;
+> > >   }
+> > >     static void cache_info_init_default(struct pcache_cache *cache);
+> > I'm not sure whether this is bug or not
+> 
+> 
+> It's a bug, if in-place updating for slot happen, there is a potential
+> metadata corruption while powercut happening at the same time.
+> 
+> 
+> so I will add
+> 
+> Cc: stable@vger.kernel.org      # 6.18
+> 
+> in V2.
+> 
+> > - but memcpy_flushcache doesn't
+> > guarantee that the cache will be flushed (despite it's name) or that
+> > writes would be ordered.
+> > 
+> > You need pmem_wmb(). I see that you are using it at other places.
+> 
+> 
+> Good catch, I will send v2 to add the missing pmem_wmb().
+> 
+> 
+> Thanx
+
+OK. I staged all 3 patches and I'll send to Linus soon.
+
+Mikulas
+---1463811712-1968846627-1765020987=:1573356--
 
