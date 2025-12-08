@@ -1,47 +1,47 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A1012F1FE7
-	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 12:10:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D12930FF33
+	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 12:10:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765195844; cv=none; b=pyTiG0KpcNz3+3pK96FNG9hYozlesF/r68AJN/1eMGgCIA24cptn9gqkn+ruQ87CIwsMkHidqGVedEaABw6lhkXxKTx6e4zV2mTU30DU90Cxgj2oIjE5tG8nTPBzchqxQHzM0y7s8DclYi68ZJyrR8rkG582kDv7mP6CN56VMXY=
+	t=1765195849; cv=none; b=FHVlyAJouYw/M6kQwLrbZcCH+wT8LPd0LrLzMHSyZhIacmrHaGGg9KqOcj3aDQ0FJ+xh9oeWy1lFLWamPfOZAQc/8qRlH6hkkv6+R2fQRB+sqlBdlKtDM3faPquVm6rlG0iW8Oe2iwxKpEul8QM24OK81eVvzSyT0rSGxAcZmFA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765195844; c=relaxed/simple;
-	bh=6yNgwZD6RyqsZur17vkqMRg9mE/1zmq6b8V0MBZ/1ys=;
+	s=arc-20240116; t=1765195849; c=relaxed/simple;
+	bh=CqnLgM9bxGlrVxyPzoFh+1bkpkx8bpzOqL+eTMygvt0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XqzXzI2nEkoG36DfkYtHSMie3Y8HOPZltuO6cZM43rWztDClg4gAjCI9UFaqpGx5keIcsmMSha4NjpSjiN1bzs7LluNhNTBUUxNxQXgIVfZJ9/QgEDgZ4y+bshA+TZsOk0GMUpq860vff8bLLBO8lXS2gKFUDwHnzjCnoIjmXmg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=anCwXPjj; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=T5AgXiwxjvdDsbswXE07bvuRIt1oGlZtCrrfb7c7UzZD0ScjSCV9bzCgxtTj8ajxKAMxTajQGMbStZvvRikDqD3+/l9zNRe2dbtIYO4P/cU7dpwZdcH51ucIc8XC80059SFpKQ+R3g1IMvRB9QnwacO/dzX0ICVTBGlhDJtxWWU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=byYINqxZ; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="anCwXPjj"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="byYINqxZ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1765195842;
+	s=mimecast20190719; t=1765195846;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=jDJU7dKZfTVZdt88mgvhpQhy7QhmJF93sojddadeY3g=;
-	b=anCwXPjjMA2wjl5ZqlIMm7BdKk4H4kNDYaL0RcIWGPmBFve+imEFEeBqg5T9ZxMnCgUexB
-	/MxKACWL4cPlkBaHtJtwnjjKX+RYCCe5MkbBDrt+S5ms8h0kq18uQaRJNLKa+Le4KF75kY
-	DjRusBHfyGD6hg6jyiAwq1eGVE7QdsE=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+	bh=H4kcdoSw7LDS9+yf8C2Tt+DzBl7/RT2q80T0a13WnlE=;
+	b=byYINqxZxuyOgcqtPyZlDg8EAC6WhLHurM53weyiMLFNqsqX1wVSiBRVeJZtDQpTSxkWcW
+	ezEf9DofDs+DH2GMSwT5zwLf9nAHFDgr2NmE9UrTnmk+Yc34FNYdgmNBiXVWvnxTauRn09
+	3g63GwbFle/LQfnODDeA0dtCQXSPg3k=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-610-HrQtQ-lRM--ZhZ_11CK8ag-1; Mon,
- 08 Dec 2025 07:10:37 -0500
-X-MC-Unique: HrQtQ-lRM--ZhZ_11CK8ag-1
-X-Mimecast-MFC-AGG-ID: HrQtQ-lRM--ZhZ_11CK8ag_1765195835
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-618-NPV6KeqjMjW1Oqy3pjOVkA-1; Mon,
+ 08 Dec 2025 07:10:40 -0500
+X-MC-Unique: NPV6KeqjMjW1Oqy3pjOVkA-1
+X-Mimecast-MFC-AGG-ID: NPV6KeqjMjW1Oqy3pjOVkA_1765195839
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 133CE18002DE;
-	Mon,  8 Dec 2025 12:10:35 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 21E1B18001D7;
+	Mon,  8 Dec 2025 12:10:39 +0000 (UTC)
 Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.34.3])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8C8321956095;
-	Mon,  8 Dec 2025 12:10:30 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EC7F41956095;
+	Mon,  8 Dec 2025 12:10:35 +0000 (UTC)
 From: Andreas Gruenbacher <agruenba@redhat.com>
 To: Christoph Hellwig <hch@infradead.org>,
 	Jens Axboe <axboe@kernel.dk>,
@@ -53,9 +53,9 @@ Cc: Andreas Gruenbacher <agruenba@redhat.com>,
 	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org
-Subject: [RFC 02/12] bio: use bio_io_error more often
-Date: Mon,  8 Dec 2025 12:10:09 +0000
-Message-ID: <20251208121020.1780402-3-agruenba@redhat.com>
+Subject: [RFC 03/12] bio: add bio_set_errno
+Date: Mon,  8 Dec 2025 12:10:10 +0000
+Message-ID: <20251208121020.1780402-4-agruenba@redhat.com>
 In-Reply-To: <20251208121020.1780402-1-agruenba@redhat.com>
 References: <20251208121020.1780402-1-agruenba@redhat.com>
 Precedence: bulk
@@ -67,137 +67,86 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 
-Instead of setting bio->bi_status to BLK_STS_IOERR and calling
-bio_endio(bio), use the shorthand bio_io_error(bio).
+Add a bio_set_errno(bio, errno) helper that sets bio->bi_status to
+errno_to_blk_status(errno) if errno != 0.  Replace instances of this
+pattern in the code with a call to the new helper.
+
+The WRITE_ONCE() in bio_set_errno() ensures that the compiler won't
+reorder things in a weird way, but it isn't needed to prevent tearing
+because a single-byte field like bi_status cannot tear.
 
 Created with Coccinelle using the following semantic patch:
 
 @@
 struct bio *bio;
+expression errno;
 @@
-- bio->bi_status = BLK_STS_IOERR;
-- bio_endio(bio);
-+ bio_io_error(bio);
+- if (errno)
+-	bio->bi_status = errno_to_blk_status(errno);
++ bio_set_errno(bio, errno);
+
+@@
+struct bio *bio;
+expression errno;
+@@
+- if (unlikely(errno))
+-	bio->bi_status = errno_to_blk_status(errno);
++ bio_set_errno(bio, errno);
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- block/fops.c                  | 3 +--
- drivers/block/drbd/drbd_int.h | 3 +--
- drivers/md/bcache/bcache.h    | 3 +--
- drivers/md/bcache/request.c   | 6 ++----
- drivers/md/dm-mpath.c         | 3 +--
- drivers/md/dm-writecache.c    | 3 +--
- fs/f2fs/segment.c             | 3 +--
- 7 files changed, 8 insertions(+), 16 deletions(-)
+ drivers/block/drbd/drbd_req.c | 3 +--
+ drivers/nvdimm/pmem.c         | 3 +--
+ include/linux/bio.h           | 8 ++++++++
+ 3 files changed, 10 insertions(+), 4 deletions(-)
 
-diff --git a/block/fops.c b/block/fops.c
-index 5e3db9fead77..b4f911273289 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -221,8 +221,7 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
- 
- 		ret = blkdev_iov_iter_get_pages(bio, iter, bdev);
- 		if (unlikely(ret)) {
--			bio->bi_status = BLK_STS_IOERR;
--			bio_endio(bio);
-+			bio_io_error(bio);
- 			break;
- 		}
- 		if (iocb->ki_flags & IOCB_NOWAIT) {
-diff --git a/drivers/block/drbd/drbd_int.h b/drivers/block/drbd/drbd_int.h
-index f6d6276974ee..32639e8ea72a 100644
---- a/drivers/block/drbd/drbd_int.h
-+++ b/drivers/block/drbd/drbd_int.h
-@@ -1491,8 +1491,7 @@ static inline void drbd_submit_bio_noacct(struct drbd_device *device,
- 	__release(local);
- 	if (!bio->bi_bdev) {
- 		drbd_err(device, "drbd_submit_bio_noacct: bio->bi_bdev == NULL\n");
--		bio->bi_status = BLK_STS_IOERR;
--		bio_endio(bio);
-+		bio_io_error(bio);
- 		return;
- 	}
- 
-diff --git a/drivers/md/bcache/bcache.h b/drivers/md/bcache/bcache.h
-index 1d33e40d26ea..7ad7c778d8ff 100644
---- a/drivers/md/bcache/bcache.h
-+++ b/drivers/md/bcache/bcache.h
-@@ -940,8 +940,7 @@ static inline void closure_bio_submit(struct cache_set *c,
+diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
+index d15826f6ee81..bd4bc882cc5a 100644
+--- a/drivers/block/drbd/drbd_req.c
++++ b/drivers/block/drbd/drbd_req.c
+@@ -176,8 +176,7 @@ void start_new_tl_epoch(struct drbd_connection *connection)
+ void complete_master_bio(struct drbd_device *device,
+ 		struct bio_and_error *m)
  {
- 	closure_get(cl);
- 	if (unlikely(test_bit(CACHE_SET_IO_DISABLE, &c->flags))) {
--		bio->bi_status = BLK_STS_IOERR;
--		bio_endio(bio);
-+		bio_io_error(bio);
- 		return;
- 	}
- 	submit_bio_noacct(bio);
-diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
-index af345dc6fde1..acccecd061ea 100644
---- a/drivers/md/bcache/request.c
-+++ b/drivers/md/bcache/request.c
-@@ -1192,8 +1192,7 @@ void cached_dev_submit_bio(struct bio *bio)
+-	if (unlikely(m->error))
+-		m->bio->bi_status = errno_to_blk_status(m->error);
++	bio_set_errno(m->bio, m->error);
+ 	bio_endio(m->bio);
+ 	dec_ap_bio(device);
+ }
+diff --git a/drivers/nvdimm/pmem.c b/drivers/nvdimm/pmem.c
+index 05785ff21a8b..a2f8b5a85326 100644
+--- a/drivers/nvdimm/pmem.c
++++ b/drivers/nvdimm/pmem.c
+@@ -232,8 +232,7 @@ static void pmem_submit_bio(struct bio *bio)
+ 	if (bio->bi_opf & REQ_FUA)
+ 		ret = nvdimm_flush(nd_region, bio);
  
- 	if (unlikely((d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags)) ||
- 		     dc->io_disable)) {
--		bio->bi_status = BLK_STS_IOERR;
--		bio_endio(bio);
-+		bio_io_error(bio);
- 		return;
- 	}
+-	if (ret)
+-		bio->bi_status = errno_to_blk_status(ret);
++	bio_set_errno(bio, ret);
  
-@@ -1296,8 +1295,7 @@ void flash_dev_submit_bio(struct bio *bio)
- 	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
+ 	bio_endio(bio);
+ }
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 16c1c85613b7..38ebf03036cb 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -389,6 +389,14 @@ static inline void bio_wouldblock_error(struct bio *bio)
+ 	bio_endio(bio);
+ }
  
- 	if (unlikely(d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags))) {
--		bio->bi_status = BLK_STS_IOERR;
--		bio_endio(bio);
-+		bio_io_error(bio);
- 		return;
- 	}
- 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index aaf4a0a4b0eb..1424ef75d088 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -719,8 +719,7 @@ static void process_queued_bios(struct work_struct *work)
- 		r = __multipath_map_bio(m, bio, mpio);
- 		switch (r) {
- 		case DM_MAPIO_KILL:
--			bio->bi_status = BLK_STS_IOERR;
--			bio_endio(bio);
-+			bio_io_error(bio);
- 			break;
- 		case DM_MAPIO_REQUEUE:
- 			bio->bi_status = BLK_STS_DM_REQUEUE;
-diff --git a/drivers/md/dm-writecache.c b/drivers/md/dm-writecache.c
-index d8de4a3076a1..4f70e2673e4b 100644
---- a/drivers/md/dm-writecache.c
-+++ b/drivers/md/dm-writecache.c
-@@ -1877,8 +1877,7 @@ static void __writecache_writeback_pmem(struct dm_writecache *wc, struct writeba
- 		if (WC_MODE_FUA(wc))
- 			bio->bi_opf |= REQ_FUA;
- 		if (writecache_has_error(wc)) {
--			bio->bi_status = BLK_STS_IOERR;
--			bio_endio(bio);
-+			bio_io_error(bio);
- 		} else if (unlikely(!bio_sectors(bio))) {
- 			bio->bi_status = BLK_STS_OK;
- 			bio_endio(bio);
-diff --git a/fs/f2fs/segment.c b/fs/f2fs/segment.c
-index b45eace879d7..6444d572f0c7 100644
---- a/fs/f2fs/segment.c
-+++ b/fs/f2fs/segment.c
-@@ -4090,8 +4090,7 @@ int f2fs_inplace_write_data(struct f2fs_io_info *fio)
- 	if (fio->bio && *(fio->bio)) {
- 		struct bio *bio = *(fio->bio);
- 
--		bio->bi_status = BLK_STS_IOERR;
--		bio_endio(bio);
-+		bio_io_error(bio);
- 		*(fio->bio) = NULL;
- 	}
- 	return err;
++blk_status_t errno_to_blk_status(int errno);
++
++static inline void bio_set_errno(struct bio *bio, int errno)
++{
++	if (errno)
++		WRITE_ONCE(bio->bi_status, errno_to_blk_status(errno));
++}
++
+ /*
+  * Calculate number of bvec segments that should be allocated to fit data
+  * pointed by @iter. If @iter is backed by bvec it's going to be reused
 -- 
 2.51.0
 
