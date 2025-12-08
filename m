@@ -1,506 +1,121 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62BFE2D3EC7
-	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 21:12:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F74D2DE6FA
+	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 21:16:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765228368; cv=none; b=k6UKb0mDVHARI5veckYg9HECPzvpxtKToVvj8gwtsbzPrVDvJ5VzjZysldu9fZefTLfXrF453nfpXJ1P+Jf2hLrn12FWdA5grfpeth44QXEnxWeDU9frAZf2+fboFDhaopqZGqwsUaTnqTXrrQxUBOsqVK0VOVFh9DdkErq+MS8=
+	t=1765228620; cv=none; b=R5wJN5foexbiZtu7PY0UGZyKngUrGsVZ6Kw1o5DUa0mdoXnkAQYNFzPH51H0eLsrXNWZcBj+7aitRbc5gxSP/0CJoYE3HZulaUxHpRSS4nMPvGWnPc8+zS1HsH7RUBbqMTRg7aWeUXZ3k4E4jIPbKuVA04W+IfWfMtg2IV/K7B8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765228368; c=relaxed/simple;
-	bh=5Po590XePleYKoIZSz9PxkCWyaYEgAwpAvEYG6WQnDU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=DI+9i6fLiXm/Bn0tRrrTB++UoCIEGkZu2v44qMSSlSghRuYk6C1Wz+Wj1qJgtLwMrDUT/hX7mdBG2pYsU+Sf1RluhqqYslJV2JT45+++UluqWddn0MjpC0O2sl1tPrVeDEm98h4YYMI8S2E14LILLZIjTJw3649yPcZmFemvLcI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i4m3Q7eJ; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1765228620; c=relaxed/simple;
+	bh=5qGC2F3TSPuLPR1QccjvC8Wi8HoL2P4T2S8jzm5W6eg=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=B8TPrwu8W1eisdkqEMD6j8LdHGCqtk/tzt7yTnP6NRrKEuUMwi+f+xMZL0QEkczA4xnAEa1LNZJogsgjR0A24LGo2FUGcp2DJmk+Ke6UXEEdgdhTvjFVKHoZiqTedR9xGQ0GKlHt4egCXft73H3V7/Y9j2/eoil3QGG/xTGl32Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fQrGvnIw; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i4m3Q7eJ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fQrGvnIw"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1765228365;
+	s=mimecast20190719; t=1765228617;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=WusiRhj8LsOVAlEiNbvFMkoNu2Jzr5c4z+PZ22qgsJU=;
-	b=i4m3Q7eJyu7ib9YhIVYEyK1CPps9ye8iehogFKJRY8agMu4IvosYkhRnfm8bJsALTxJY6q
-	UtpGO0Y0BPuDazM4MLJodsbFRSD6tH8sAqnKyqXl1BgmYP6TgfsUMH2PtQNPZn3QBI2qMZ
-	oL8MKO42Zi6Lr6TYQZWn1xpfqPjGxo8=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-nnsXnT7XME6dmOIoS9ZVXA-1; Mon,
- 08 Dec 2025 16:12:42 -0500
-X-MC-Unique: nnsXnT7XME6dmOIoS9ZVXA-1
-X-Mimecast-MFC-AGG-ID: nnsXnT7XME6dmOIoS9ZVXA_1765228361
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6B47419560AD;
-	Mon,  8 Dec 2025 21:12:40 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2A9DA30001BB;
-	Mon,  8 Dec 2025 21:12:40 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B8LCc0b1710335
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 8 Dec 2025 16:12:38 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B8LCcC91710334;
-	Mon, 8 Dec 2025 16:12:38 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH v2] libmpathpersist: fix code for skipping multipathd path registration
-Date: Mon,  8 Dec 2025 16:12:38 -0500
-Message-ID: <20251208211238.1710326-1-bmarzins@redhat.com>
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3cjLyi8J1W1mVcyJajqeGZwTWZZ/xf0eZlzYpjjz4as=;
+	b=fQrGvnIwKxNknra5UAMXMpl5TbKtWArd3DCnkwBLb2siR4Jsh9bL2KPDW5izeAvqqSNcKD
+	d3TUqPvUYuWiTr5NYNcbvbM2ZsSli3k6Bn1TtIUbU///DsybCzZS377vXyII+Wu2wR11J5
+	YMWcl3y2j6vHXYnUzRWbGzWSpHeb/jM=
+Received: from mail-yw1-f197.google.com (mail-yw1-f197.google.com
+ [209.85.128.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-12-jELSk94iMCqVLWzqHrt8kQ-1; Mon, 08 Dec 2025 16:16:56 -0500
+X-MC-Unique: jELSk94iMCqVLWzqHrt8kQ-1
+X-Mimecast-MFC-AGG-ID: jELSk94iMCqVLWzqHrt8kQ_1765228616
+Received: by mail-yw1-f197.google.com with SMTP id 00721157ae682-78a9936470fso63933127b3.0
+        for <dm-devel@lists.linux.dev>; Mon, 08 Dec 2025 13:16:56 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1765228616; x=1765833416;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=3cjLyi8J1W1mVcyJajqeGZwTWZZ/xf0eZlzYpjjz4as=;
+        b=RCi5T0JVoLbrg99A5+8Jwkiiyzalgi+Vpv5hUMTLqV6AhUfvdIUds5FQl6xfpUbQNz
+         TiLSeSd0gxBEwMlRxgKejDB5Lq50y9ABC71kwOqV0HsHdUZN/T09QaYnXLSc/4B90WzT
+         lzltE9et8CzCdw2fmT8z8khPgCc8toe5OsDq/ZZsIxov44IO91I7UUN3LOKWMNh7kCwI
+         gUKVSIl9XTfJf5awEGP+toEdRHyCD/EUjifSzpw74s4NBEZ34XtJu0AKvlIT8Qq6uBUv
+         8ZY0x7dvFF+GKE4rJ74Ma30vpEJX+s+4r68hAusSaArm6j0AJrE6CzFKKqRm3W+6IA6C
+         FNUQ==
+X-Forwarded-Encrypted: i=1; AJvYcCV83AJR1CO9v/kk/3ZE5uHp0x50I9EhU/smM/q2wREJj2mssuJ6AvV8qxN8ze7ISq2QV9CUi32GYw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwHYWsS6wvDexh3IPbqvGcHaYPEKfHXTLvLxrv0GsHot2uqjj3g
+	d0xkb1jedMidT4Yc4p+D2smV9BbB6+3OJsTcq5HPU41QKgra/Wi07Rg7lJs1bFYqgeap2TojzVz
+	KeYmYtMmG+xCaI83dvcYitXDjlLlJ2cbV4eLaXGEg6u+d6H+Ly0WNv58CZQ3VoOBesd21bIqgwe
+	TADfnERCOobo9fwldN3WtUiu10RLfwX4GMT7Q=
+X-Gm-Gg: ASbGncv4fM9YpOX2afvJhdZIsz52Frn7j3NV2d3iL/gWuI0SR8T+n17qhc5dKaLrlDm
+	jW497BQjO3bo/XFYghyEXmiMyFp7DWuKcSBjdVt6Y0vux0YgSzW+Uke2UHSuqrh8yRC+F53oKmz
+	SAvx8KdY8MjfJX1Szp6W+peOZYr/2W/SmSawsKqS2KCBVeFDQtf7wGMveX/4WyDn/B
+X-Received: by 2002:a05:690c:4a02:b0:786:61f3:e4e with SMTP id 00721157ae682-78c33c74655mr90034697b3.54.1765228616030;
+        Mon, 08 Dec 2025 13:16:56 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFiCY42NqIRZgl6uVDR8LkykQzXJsYzMaVLpZgyirQa+mlv/Jyf+1nBV5OG4dbWD1DDVxjeGc24WpTFqReJ20Q=
+X-Received: by 2002:a05:690c:4a02:b0:786:61f3:e4e with SMTP id
+ 00721157ae682-78c33c74655mr90034377b3.54.1765228615599; Mon, 08 Dec 2025
+ 13:16:55 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+References: <20251208121020.1780402-1-agruenba@redhat.com> <20251208193724.GB4859@twin.jikos.cz>
+In-Reply-To: <20251208193724.GB4859@twin.jikos.cz>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Date: Mon, 8 Dec 2025 22:16:44 +0100
+X-Gm-Features: AQt7F2pWqhuOxBDn48p5d1W8IkDa9mkk1UO6HtSX6_QdJl4e-fg9m6lrjlZDn5M
+Message-ID: <CAHc6FU6vax1eNB-xrYLuZX5s-RLRhtctG7=3NO+h_GPj5o=W-Q@mail.gmail.com>
+Subject: Re: [RFC 00/12] bio cleanups
+To: dsterba@suse.cz
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, Chris Mason <clm@fb.com>, 
+	David Sterba <dsterba@suse.com>, Satya Tangirala <satyat@google.com>, linux-block@vger.kernel.org, 
+	linux-btrfs@vger.kernel.org, linux-raid@vger.kernel.org, 
+	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: F8lYtdJIRgQtfRkKNRPDEs980l4aRO2dxBKL-qpYOnA_1765228361
+X-Mimecast-MFC-PROC-ID: izmuLzX2xvsGW7jabNfWTIO0DkiI7EPU0N7dBIYAjSY_1765228616
 X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-When libmpathpersist notifies multipathd that a key has been registered,
-cli_setprstatus() calls pr_register_active_paths() with a flag to let it
-know that the paths are likely already registered, and it can skip
-re-registering them, as long as the number of active paths matches the
-number of registered keys. This shortcut can fail, causing multipathd to
-not register needed paths, if either a path becomes usable and another
-becomes unusable while libmpathpersist is running or if there already
-were registered keys for I_T Nexus's that don't correspond to path
-devices.
+On Mon, Dec 8, 2025 at 8:43=E2=80=AFPM David Sterba <dsterba@suse.cz> wrote=
+:
+> On Mon, Dec 08, 2025 at 12:10:07PM +0000, Andreas Gruenbacher wrote:
+> > With these changes, only a few direct assignments to bio->bi_status
+> > remain, in BTRFS and in MD, and SOME OF THOSE MAY BE UNSAFE.  Could the
+> > maintainers of those subsystems please have a look?
+>
+> The btrfs bits look good to me, we expect the same semantics, ie. not
+> overwrite existing error with 0. If there are racing writes to the
+> status like in btrfs_bio_end_io() we use cmpxchg() so we don't overwrite
+> it.
 
-To make this shortcut work in cases like that, this commit adds a new
-multipathd command "setprstatus map <map> pathlist <pathlist>", where
-<pathlist> is a quoted, comma separated list of scsi path devices.
-libmpathpersist will send out the list of paths it registered the key
-on. pr_register_active_paths() will skip calling mpath_pr_event_handle()
-for paths on that list.
+Really? I'm not talking about the status field in struct btrfs_bio but
+about the bi_status field in struct bio. The first mention of
+bi_status I can find in the btrfs code is right at the beginning of
+btrfs_bio_end_io():
 
-In order to deal with the possiblity of a preempt occuring while
-libmpathpersist was running, the code still needs to check that it has
-the expected number of keys.
+  bbio->bio.bi_status =3D status;
 
-Fixes: f7d6cd17 ("multipathd: Fix race while registering PR key")
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
+If status is ever BLK_STS_OK (0) here and bbio->bio is a chained bio,
+things are already not great.
 
-Was patch 4/4 of "multipath-tools: Yet Another PR fix"
-Changes in v2 (assuming we agree to use this patch at all):
-added a semi-colon after the "skip" label to make clang happy.
+I believe we should eliminate all direct assignments to bi_status and
+use bio_set_status() instead. I'm not familiar enough with the btrfs
+code to make that replacement for you, though.
 
- libmpathpersist/mpath_persist_int.c |  6 +--
- libmpathpersist/mpath_updatepr.c    | 48 +++++++++++++++++-----
- libmpathpersist/mpathpr.h           |  4 +-
- multipathd/callbacks.c              |  1 +
- multipathd/cli.c                    |  1 +
- multipathd/cli.h                    |  2 +
- multipathd/cli_handlers.c           | 39 ++++++++++++++++--
- multipathd/main.c                   | 62 +++++++++++++++++++----------
- multipathd/main.h                   |  3 +-
- multipathd/multipathd.8.in          |  6 +++
- 10 files changed, 133 insertions(+), 39 deletions(-)
+A cursory look at struct btrfs_bio suggests that those objects cannot
+be chained like plain old bios (bio_chain()). This means that
+cmpxchg() may actually work for catching the first error that occurs.
+For chained regular bios, cmpxchg() won't catch the first error, at
+least not if the length of the chain is greater than two.
 
-diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
-index 91c53419..14f7ba83 100644
---- a/libmpathpersist/mpath_persist_int.c
-+++ b/libmpathpersist/mpath_persist_int.c
-@@ -1001,12 +1001,12 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
- 	case MPATH_PROUT_REG_SA:
- 	case MPATH_PROUT_REG_IGN_SA:
- 		if (unregistering)
--			update_prflag(mpp->alias, 0);
-+			update_prflag(mpp, 0);
- 		else
--			update_prflag(mpp->alias, 1);
-+			update_prflag(mpp, 1);
- 		break;
- 	case MPATH_PROUT_CLEAR_SA:
--		update_prflag(mpp->alias, 0);
-+		update_prflag(mpp, 0);
- 		if (mpp->prkey_source == PRKEY_SOURCE_FILE)
- 			update_prkey(mpp->alias, 0);
- 		break;
-diff --git a/libmpathpersist/mpath_updatepr.c b/libmpathpersist/mpath_updatepr.c
-index bd8ed2be..bc9c79e2 100644
---- a/libmpathpersist/mpath_updatepr.c
-+++ b/libmpathpersist/mpath_updatepr.c
-@@ -20,8 +20,9 @@
- #include "uxsock.h"
- #include "mpathpr.h"
- #include "structs.h"
-+#include "strbuf.h"
- 
--static char *do_pr(char *alias, char *str)
-+static char *do_pr(char *alias, const char *str)
- {
- 	int fd;
- 	char *reply;
-@@ -51,24 +52,27 @@ static char *do_pr(char *alias, char *str)
- 	return reply;
- }
- 
--static int do_update_pr(char *alias, char *cmd, char *key)
-+static int do_update_pr(char *alias, char *cmd, const char *data)
- {
--	char str[256];
-+	STRBUF_ON_STACK(buf);
- 	char *reply = NULL;
- 	int ret = -1;
- 
--	if (key)
--		snprintf(str, sizeof(str), "%s map %s key %s", cmd, alias, key);
-+	if (data)
-+		print_strbuf(&buf, "%s map %s %s %s", cmd, alias,
-+			     strcmp(cmd, "setprkey") ? "pathlist" : "key",
-+			     data);
- 	else
--		snprintf(str, sizeof(str), "%s map %s", cmd, alias);
-+		print_strbuf(&buf, "%s map %s", cmd, alias);
- 
--	reply = do_pr(alias, str);
-+	reply = do_pr(alias, get_strbuf_str(&buf));
- 	if (reply) {
- 		if (strncmp(reply, "ok", 2) == 0)
- 			ret = 0;
- 		else
- 			ret = -1;
--		condlog(ret ? 0 : 4, "%s: message=%s reply=%s", alias, str, reply);
-+		condlog(ret ? 0 : 4, "%s: message=%s reply=%s", alias,
-+			get_strbuf_str(&buf), reply);
- 	}
- 
- 	free(reply);
-@@ -106,9 +110,31 @@ int get_prhold(char *mapname)
- 	return do_get_pr(mapname, "getprhold");
- }
- 
--int update_prflag(char *mapname, int set) {
--	return do_update_pr(mapname, (set)? "setprstatus" : "unsetprstatus",
--			    NULL);
-+int update_prflag(struct multipath *mpp, int set)
-+{
-+	STRBUF_ON_STACK(buf);
-+	int i, j;
-+	bool first = true;
-+	struct pathgroup *pgp = NULL;
-+	struct path *pp = NULL;
-+
-+	if (!set)
-+		return do_update_pr(mpp->alias, "unsetprstatus", NULL);
-+
-+	append_strbuf_str(&buf, "\"");
-+	vector_foreach_slot (mpp->pg, pgp, j) {
-+		vector_foreach_slot (pgp->paths, pp, i) {
-+			if (pp->state == PATH_UP || pp->state == PATH_GHOST) {
-+				if (first) {
-+					append_strbuf_str(&buf, pp->dev);
-+					first = false;
-+				} else
-+					print_strbuf(&buf, " %s", pp->dev);
-+			}
-+		}
-+	}
-+	append_strbuf_str(&buf, "\"");
-+	return do_update_pr(mpp->alias, "setprstatus", get_strbuf_str(&buf));
- }
- 
- int update_prhold(char *mapname, bool set)
-diff --git a/libmpathpersist/mpathpr.h b/libmpathpersist/mpathpr.h
-index 99d6b82f..adbfc865 100644
---- a/libmpathpersist/mpathpr.h
-+++ b/libmpathpersist/mpathpr.h
-@@ -1,12 +1,14 @@
- #ifndef MPATHPR_H_INCLUDED
- #define MPATHPR_H_INCLUDED
- 
-+#include "structs.h"
-+
- /*
-  * This header file contains symbols that are only used by
-  * libmpathpersist internally.
-  */
- 
--int update_prflag(char *mapname, int set);
-+int update_prflag(struct multipath *mpp, int set);
- int update_prkey_flags(char *mapname, uint64_t prkey, uint8_t sa_flags);
- int get_prflag(char *mapname);
- int get_prhold(char *mapname);
-diff --git a/multipathd/callbacks.c b/multipathd/callbacks.c
-index b6b57f45..1129855b 100644
---- a/multipathd/callbacks.c
-+++ b/multipathd/callbacks.c
-@@ -59,6 +59,7 @@ void init_handler_callbacks(void)
- 	set_unlocked_handler_callback(VRB_SHUTDOWN, HANDLER(cli_shutdown));
- 	set_handler_callback(VRB_GETPRSTATUS | Q1_MAP, HANDLER(cli_getprstatus));
- 	set_handler_callback(VRB_SETPRSTATUS | Q1_MAP, HANDLER(cli_setprstatus));
-+	set_handler_callback(VRB_SETPRSTATUS | Q1_MAP | Q2_PATHLIST, HANDLER(cli_setprstatus_list));
- 	set_handler_callback(VRB_UNSETPRSTATUS | Q1_MAP, HANDLER(cli_unsetprstatus));
- 	set_handler_callback(VRB_FORCEQ | Q1_DAEMON, HANDLER(cli_force_no_daemon_q));
- 	set_handler_callback(VRB_RESTOREQ | Q1_DAEMON, HANDLER(cli_restore_no_daemon_q));
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index d0e6cebc..0d679c86 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -227,6 +227,7 @@ load_keys (void)
- 	r += add_key(keys, "getprhold", VRB_GETPRHOLD, 0);
- 	r += add_key(keys, "setprhold", VRB_SETPRHOLD, 0);
- 	r += add_key(keys, "unsetprhold", VRB_UNSETPRHOLD, 0);
-+	r += add_key(keys, "pathlist", KEY_PATHLIST, 1);
- 
- 	if (r) {
- 		free_keys(keys);
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index 5a943a45..3e607389 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -62,6 +62,7 @@ enum {
- 	KEY_LOCAL		= 81,
- 	KEY_GROUP		= 82,
- 	KEY_KEY			= 83,
-+	KEY_PATHLIST		= 84,
- };
- 
- /*
-@@ -94,6 +95,7 @@ enum {
- 	Q2_LOCAL		= KEY_LOCAL << 16,
- 	Q2_GROUP		= KEY_GROUP << 16,
- 	Q2_KEY			= KEY_KEY << 16,
-+	Q2_PATHLIST		= KEY_PATHLIST << 16,
- 
- 	/* byte 3: qualifier 3 */
- 	Q3_FMT			= KEY_FMT << 24,
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 2812d01e..5770dcec 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -31,6 +31,7 @@
- #include "foreign.h"
- #include "strbuf.h"
- #include "cli_handlers.h"
-+#include <ctype.h>
- 
- static struct path *
- find_path_by_str(const struct vector_s *pathvec, const char *str,
-@@ -1276,8 +1277,8 @@ cli_getprstatus (void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_setprstatus(void * v, struct strbuf *reply, void * data)
-+static int do_setprstatus(void * v, struct strbuf *reply, void * data,
-+			  const struct vector_s *registered_paths)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1291,7 +1292,7 @@ cli_setprstatus(void * v, struct strbuf *reply, void * data)
- 
- 	if (mpp->prflag != PR_SET) {
- 		set_pr(mpp);
--		pr_register_active_paths(mpp, true);
-+		pr_register_active_paths(mpp, registered_paths);
- 		if (mpp->prflag == PR_SET)
- 			condlog(2, "%s: prflag set", param);
- 		else
-@@ -1302,6 +1303,38 @@ cli_setprstatus(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
-+static int
-+cli_setprstatus(void * v, struct strbuf *reply, void * data)
-+{
-+	return do_setprstatus(v, reply, data, NULL);
-+}
-+
-+static int
-+cli_setprstatus_list(void * v, struct strbuf *reply, void * data)
-+{
-+	int r;
-+	struct vector_s registered_paths = { .allocated = 0 };
-+	char *ptr = get_keyparam(v, KEY_PATHLIST);
-+
-+	while (isspace(*ptr))
-+		ptr++;
-+	while (*ptr) {
-+		if (!vector_alloc_slot(&registered_paths)) {
-+			r = -ENOMEM;
-+			goto out;
-+		}
-+		vector_set_slot(&registered_paths, ptr);
-+		while (*ptr && !isspace(*ptr))
-+			ptr++;
-+		while (isspace(*ptr))
-+			*ptr++ = '\0';
-+	}
-+	r = do_setprstatus(v, reply, data, &registered_paths);
-+out:
-+	vector_reset(&registered_paths);
-+	return r;
-+}
-+
- static int
- cli_unsetprstatus(void * v, struct strbuf *reply, void * data)
- {
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a7650639..f00444b4 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -630,28 +630,50 @@ flush_map_nopaths(struct multipath *mpp, struct vectors *vecs) {
- 	return true;
- }
- 
--void pr_register_active_paths(struct multipath *mpp, bool check_nr_active)
-+/*
-+ * If reg_paths in non-NULL, it is a vector of paths that libmpathpersist
-+ * registered. If the number of registered keys is smaller than the number
-+ * of registered paths, then likely a preempt that occurred while
-+ * libmpathpersist was registering the key. As long as there are still some
-+ * registered keys, treat the preempt as happening first, and make sure to
-+ * register keys on all the paths. If the number of registered keys is at
-+ * least as large as the number of registered paths, then no preempt happened,
-+ * and multipathd does not need to re-register the paths that libmpathpersist
-+ * handled
-+ */
-+void pr_register_active_paths(struct multipath *mpp,
-+			      const struct vector_s *reg_paths)
- {
--	unsigned int i, j, nr_keys = 0;
--	unsigned int nr_active = 0;
-+	unsigned int i, j, k, nr_keys = 0;
-+	unsigned int wanted_nr = VECTOR_SIZE(reg_paths);
- 	struct path *pp;
- 	struct pathgroup *pgp;
--
--	if (check_nr_active) {
--		nr_active = count_active_paths(mpp);
--		if (!nr_active)
--			return;
--	}
-+	char *pathname;
- 
- 	vector_foreach_slot (mpp->pg, pgp, i) {
- 		vector_foreach_slot (pgp->paths, pp, j) {
- 			if (mpp->prflag == PR_UNSET)
- 				return;
--			if (pp->state == PATH_UP || pp->state == PATH_GHOST) {
--				nr_keys = mpath_pr_event_handle(pp, nr_keys, nr_active);
--				if (check_nr_active && nr_keys == nr_active)
--					return;
-+			if (pp->state != PATH_UP && pp->state != PATH_GHOST)
-+				continue;
-+			if (wanted_nr && nr_keys) {
-+				vector_foreach_slot(reg_paths, pathname, k) {
-+					if (strcmp(pp->dev, pathname) == 0 ||
-+					    strcmp(pp->dev_t, pathname) == 0) {
-+						goto skip;
-+					}
-+				}
-+			}
-+			nr_keys = mpath_pr_event_handle(pp, nr_keys, wanted_nr);
-+			if (nr_keys && nr_keys < wanted_nr) {
-+				/*
-+				 * Incorrect number of registered keys. Need
-+				 * to register all devices
-+				 */
-+				wanted_nr = 0;
- 			}
-+skip:
-+			; /* a statement must follow a label on pre C23 clang */
- 		}
- 	}
- }
-@@ -739,7 +761,7 @@ fail:
- 
- 	sync_map_state(mpp, false);
- 
--	pr_register_active_paths(mpp, false);
-+	pr_register_active_paths(mpp, NULL);
- 
- 	if (VECTOR_SIZE(offline_paths) != 0)
- 		handle_orphaned_offline_paths(offline_paths);
-@@ -1413,7 +1435,7 @@ rescan:
- 
- 	if (retries >= 0) {
- 		if ((mpp->prflag == PR_SET && prflag != PR_SET) || start_waiter)
--			pr_register_active_paths(mpp, false);
-+			pr_register_active_paths(mpp, NULL);
- 		condlog(2, "%s [%s]: path added to devmap %s",
- 			pp->dev, pp->dev_t, mpp->alias);
- 		return 0;
-@@ -2658,7 +2680,7 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 				"reservation registration", pp->dev);
- 			mpath_pr_event_handle(pp, 0, 0);
- 			if (pp->mpp->prflag == PR_SET && prflag != PR_SET)
--				pr_register_active_paths(pp->mpp, false);
-+				pr_register_active_paths(pp->mpp, NULL);
- 		}
- 
- 		/*
-@@ -3319,7 +3341,7 @@ configure (struct vectors * vecs, enum force_reload_types reload_type)
- 	vector_foreach_slot(mpvec, mpp, i){
- 		if (remember_wwid(mpp->wwid) == 1)
- 			trigger_paths_udev_change(mpp, true);
--		pr_register_active_paths(mpp, false);
-+		pr_register_active_paths(mpp, NULL);
- 	}
- 
- 	/*
-@@ -4370,8 +4392,8 @@ static int update_map_pr(struct multipath *mpp, struct path *pp, unsigned int *n
-  *
-  * nr_keys_wanted: Only used if nr_keys_needed is 0, so we don't know how
-  * many keys we currently have. If nr_keys_wanted in non-zero and the
-- * number of keys found by the initial call to update_map_pr() matches it,
-- * exit early, since we have all the keys we are expecting.
-+ * number of keys found by the initial call to update_map_pr() is at least
-+ * as large as it, exit early, since we have all the keys we are expecting.
-  *
-  * The function returns the number of keys that are registered or 0 if
-  * it's unknown.
-@@ -4394,7 +4416,7 @@ mpath_pr_event_handle(struct path *pp, unsigned int nr_keys_needed,
- 		nr_keys_needed = 1;
- 		if (update_map_pr(mpp, pp, &nr_keys_needed) != MPATH_PR_SUCCESS)
- 			return 0;
--		if (nr_keys_wanted && nr_keys_wanted == nr_keys_needed)
-+		if (nr_keys_wanted && nr_keys_wanted <= nr_keys_needed)
- 			return nr_keys_needed;
- 	}
- 
-diff --git a/multipathd/main.h b/multipathd/main.h
-index 6d60ee81..85b533cd 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -54,5 +54,6 @@ int resize_map(struct multipath *mpp, unsigned long long size,
- 	       struct vectors *vecs);
- void set_pr(struct multipath *mpp);
- void unset_pr(struct multipath *mpp);
--void pr_register_active_paths(struct multipath *mpp, bool check_active_nr);
-+void pr_register_active_paths(struct multipath *mpp,
-+			      const struct vector_s *registered_paths);
- #endif /* MAIN_H_INCLUDED */
-diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
-index 7ffb8d4c..38a243e3 100644
---- a/multipathd/multipathd.8.in
-+++ b/multipathd/multipathd.8.in
-@@ -348,6 +348,12 @@ Restores configured queue_without_daemon mode.
- Enable persistent reservation management on $map.
- .
- .TP
-+.B setprstatus map|multipath $map pathlist $pathlist
-+Enable persistent reservation management on $map, and notify multipathd of
-+the paths that have been registered, so it doesn't attempt to re-register
-+them.
-+.
-+.TP
- .B unsetprstatus map|multipath $map
- Disable persistent reservation management on $map.
- .
--- 
-2.50.1
+Thanks,
+Andreas
 
