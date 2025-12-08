@@ -1,235 +1,221 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C894226E718
-	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 14:55:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A70701534EC
+	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 19:30:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765205720; cv=none; b=pG1i2d3Obbye21qduIOu3VbtS7GY0Erus/zFVaRkUb/CgzMoFSYmzw55kv+PRLAF3s5PllQvs5VQd7yd4N0VHvmnQzsPU5H+4SxHma/G/C/4kbcl5Ozdozb12jFQtLJuszdtvTybu+saHunih9nErTLnmyOSHN/PA7KbHKsEfcQ=
+	t=1765222220; cv=none; b=CPQMW7w8GIpH4XbTmJ5sYlfus926lt3cA9iG8103e8oxBuUqwcLvZb9RE+0JSO+V61Qk9pjyDeOXiZ9mpbsv5GYhngyVSTc17AIIXlND51oOYgyGlBK2E2dqssstYP7/WACTXPu03L+eQJAED1GdRNeF+HVarSWEcoC9HzEjlzw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765205720; c=relaxed/simple;
-	bh=Lby3N/LvNXg/lPxPewsGC0B1REkfd04hD1IgyMLVXPI=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=bWPhodzrsKzve/0VKn/HjgNpHl/K4IHCe1cmkLdWmyRiBCLxMyX+0iSRV/yBDFo7Sk0nlKG8cWAAG9g97wZQ1aNv5grLq5cExnXyIPLEsqdTwidBMzU/yOnWB00DvzKONgz3xPF+Qk+KskChXnQXs/tRvdEljqmAxnlVa5848BQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=bLVUMZbY; arc=none smtp.client-ip=209.85.128.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1765222220; c=relaxed/simple;
+	bh=nQvRRKid9XfwtE0AP1OBBErmAQ7XF8d/+g6EjsqQ0SU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=J5O9AZXiKoT9SwFLcWh1CNeeZKDZ99cSpd4QfmjLbwkFbheormurBM6CfqUmzg4ByKequmB7ZdFYjbR7Be8ebZlm04nanS9lvbH9VNXzrrukxMpEXS9TJfMuv+/lerYvVauo9wkxxupjDr4IQlmQPPk9q76mihTiKPud4veXWJk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HDubBlWP; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="bLVUMZbY"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4775ae77516so54541505e9.1
-        for <dm-devel@lists.linux.dev>; Mon, 08 Dec 2025 06:55:18 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1765205717; x=1765810517; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=EqLKuCGQ9azwOpP/+H90efkRJ5CKbKNQFgiysqtJSKE=;
-        b=bLVUMZbYQaJBW81i7Vr7kaL5ResMrDCH12cPqRFA0YppsEL9rtNSyKeSqV8K0Q07ZD
-         afqpchJkBKCju4zW1jZ/ZpfNpvodJCXqAGUO/DHouNh096m+PryVbkACqVS7a7jTIg11
-         XRgMAlJVKsdIOXcQBaba0o8SQu5nIY+CVY7WzpLxOOF3mWQhXLYEUoQjbtz1EtGrjIje
-         i0pn3zmLvp/6MytfzIxNBsHNlhRTDu3U+4hfbTjb6XJaf6kopozAAlqTtQXd58E1ghUb
-         ZjkjT2HT+11iyDtZjVM04HU0q+DBzBOe7x8RhY2C6LUmVEVeFenhG0Vas7K1igBKUEri
-         AhSw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1765205717; x=1765810517;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=EqLKuCGQ9azwOpP/+H90efkRJ5CKbKNQFgiysqtJSKE=;
-        b=ttsXV/YPgfypUNNAECfbBw6xaXgWdSPJ4KanvP7v6m26n+5u63XFpAFiQ1h106dQrW
-         /dHYna1DQjKcU8VPU5MymMHbeCnSPRKAH3WDkqa8y2nBPGsToFFBk5M0qNXwIB+2KNsM
-         7twD63hSm9odnWLmZ7CUiHeSyJ5vtIk75KjV58Ch+jfLgCjee7/nugTFhRe/IamQXBib
-         4LXucJT+EBq4ijxxBXDeXU6K+FWt0kwtYMMI0EkIIR/2yu7Iw4CUddfuDNORDKHUhcna
-         xXII3fH3tnX/iibj5YjAQ69yIwvtREFLDFURTktsebEZr2yf0gUI52eZjr720XTzxbmv
-         fjKA==
-X-Gm-Message-State: AOJu0YyCx97s3vH5eilugvyR60BoLYzDVuCYge2QFtytpAyj1VjgEi4w
-	wwd4rAkG1pXySUQjcjjLRoOYnY8ea5dG5b5vrLgzstiBv04rtSVTMaY4sIhiGY5pBYf1didchf6
-	yy7f7
-X-Gm-Gg: ASbGnctLDz1jyid7IItLPIVTxw/z2tOpam4IiygL20dayiDM84mFigoLmXETL4T3CQg
-	PgxQysffyAV9MkL/ddDJXhQdWnBZ1XtJi44WPmzFtFG2rGqRVcCVuL6aBK+DL/7BBI3kmC7wizZ
-	BPayqQytesI3D8zWpj6z5eHsphfrF3wkWGwEZcsSrfeJkXjQKMXi53J8wpuLoLpIeK044KvVLmQ
-	ybzPKCbA863RsOshgi9bopuQ50Uc8drKimQ+zbwhiaMh1VFYNzKJUNyTXEhmt4qeBS1qyNxaFNl
-	fp7gz+zV3YBFZbPvVxrx8MCKr34us+eoD1YsTTO+nrKXBdv1rN9Q02TTX8Q+80j5gfb5Wd60vaZ
-	zejUVHbcue+ICgxqpMLzGqDQ7ZZ3KtqKqA4cOEVX76Mn7hR9ZGhtKO7S8K4yBOMIJ/Cd+LZJK/7
-	bQJUJHr8hTHotJyMjv1qLkqsdBZ0nGOXMHKUs3rAaUKWYI4XhX/nGuFle6uq5mlb4twHQLpvnxF
-	vnbnMHfb70QtYbXZ0Xnlm/MH9CsS9Fqn+Xp7hDPlfYBdB8+RmvNl1rSgw==
-X-Google-Smtp-Source: AGHT+IFh/v4+RwcZBefd3ouCJsO7CkZGBhEcBnLhf8EN4K0+fAsUyCuoZySoCYo8GBiiYwsyhPB6CQ==
-X-Received: by 2002:a05:600c:8b65:b0:477:af07:dd21 with SMTP id 5b1f17b1804b1-47939e38315mr89069225e9.25.1765205717054;
-        Mon, 08 Dec 2025 06:55:17 -0800 (PST)
-Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-479310a6db3sm261171205e9.1.2025.12.08.06.55.16
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 08 Dec 2025 06:55:16 -0800 (PST)
-Message-ID: <b081fd2ef6176f0e1d9c34bcd1d2e0ebf237946e.camel@suse.com>
-Subject: Re: [PATCH 4/4] libmpathpersist: fix code for skipping multipathd
- path registration
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Mon, 08 Dec 2025 15:55:16 +0100
-In-Reply-To: <20251202030213.1432964-5-bmarzins@redhat.com>
-References: <20251202030213.1432964-1-bmarzins@redhat.com>
-	 <20251202030213.1432964-5-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HDubBlWP"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1765222217;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=IILdOtg9q1qS4u+Zz8CzXyjTQ/FxGm6zcSuR6vZ1UhI=;
+	b=HDubBlWPPdxwRC3HD4dhy1R0Kg42PtHHS5dca3hgu1sn8bTg/49LKGIGSCzFJ1g6RcgYSl
+	mkcGWtP1PtaBJ0Cu7ABPanF0G7l2BnN/WhNnoYPh6Gq4vZZKron2eKkiVKoG8CMokW1Jf+
+	jsLKGLyVrL3PkZ6h5gQyo+/o3u+Pt9E=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-369-LIEoMTP1PA2xa1oB62rppQ-1; Mon,
+ 08 Dec 2025 14:30:14 -0500
+X-MC-Unique: LIEoMTP1PA2xa1oB62rppQ-1
+X-Mimecast-MFC-AGG-ID: LIEoMTP1PA2xa1oB62rppQ_1765222213
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ECCE4195606D;
+	Mon,  8 Dec 2025 19:30:12 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5FA101800346;
+	Mon,  8 Dec 2025 19:30:12 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B8JUBif1705112
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 8 Dec 2025 14:30:11 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B8JUAhZ1705111;
+	Mon, 8 Dec 2025 14:30:10 -0500
+Date: Mon, 8 Dec 2025 14:30:10 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev,
+        Krishna Kant <krishna.kant@purestorage.com>
+Subject: Re: [PATCH v3] mulitpath-tools Add purge capability to
+ multipath-tools
+Message-ID: <aTcnQopkeSCc7AxI@redhat.com>
+References: <20251203161933.90318-1-brian@purestorage.com>
+ <aTHiDRgQ2A3rjaKS@redhat.com>
+ <8a93aa8d60eb620469c0e0f4dc535ddc8eb3c7b1.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <8a93aa8d60eb620469c0e0f4dc535ddc8eb3c7b1.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: khHQs5HHx-qTyAaNELgBkunH2s9p7dUdDKFPDrBDA6w_1765222213
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Mon, 2025-12-01 at 22:02 -0500, Benjamin Marzinski wrote:
-> When libmpathpersist notifies multipathd that a key has been
-> registered,
-> cli_setprstatus() calls pr_register_active_paths() with a flag to let
-> it
-> know that the paths are likely already registered, and it can skip
-> re-registering them, as long as the number of active paths matches
-> the
-> number of registered keys. This shortcut can fail, causing multipathd
-> to
-> not register needed paths, if either a path becomes usable and
-> another
-> becomes unusable while libmpathpersist is running or if there already
-> were registered keys for I_T Nexus's that don't correspond to path
-> devices.
->=20
-> To make this shortcut work in cases like that, this commit adds a new
-> multipathd command "setprstatus map <map> pathlist <pathlist>", where
-> <pathlist> is a quoted, comma separated list of scsi path devices.
-> libmpathpersist will send out the list of paths it registered the key
-> on. pr_register_active_paths() will skip calling
-> mpath_pr_event_handle()
-> for paths on that list.
->=20
-> In order to deal with the possiblity of a preempt occuring while
-> libmpathpersist was running, the code still needs to check that it
-> has
-> the expected number of keys.
->=20
-> Fixes: f7d6cd17 ("multipathd: Fix race while registering PR key")
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0libmpathpersist/mpath_persist_int.c |=C2=A0 6 +--
-> =C2=A0libmpathpersist/mpath_updatepr.c=C2=A0=C2=A0=C2=A0 | 48 +++++++++++=
-++++++------
-> =C2=A0libmpathpersist/mpathpr.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 |=C2=A0 4 +-
-> =C2=A0multipathd/callbacks.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 1 +
-> =C2=A0multipathd/cli.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 1 +
-> =C2=A0multipathd/cli.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +
-> =C2=A0multipathd/cli_handlers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 | 39 ++++++++++++++++--
-> =C2=A0multipathd/main.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 61 +++++++++=
-++++++++++--------
-> --
-> =C2=A0multipathd/main.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 3 +-
-> =C2=A0multipathd/multipathd.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0 |=C2=A0 6 +++
-> =C2=A010 files changed, 132 insertions(+), 39 deletions(-)
->=20
->=20
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index a7650639..2cd5c952 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -630,28 +630,49 @@ flush_map_nopaths(struct multipath *mpp, struct
-> vectors *vecs) {
-> =C2=A0	return true;
-> =C2=A0}
-> =C2=A0
-> -void pr_register_active_paths(struct multipath *mpp, bool
-> check_nr_active)
-> +/*
-> + * If reg_paths in non-NULL, it is a vector of paths that
-> libmpathpersist
-> + * registered. If the number of registered keys is smaller than the
-> number
-> + * of registered paths, then likely a preempt that occurred while
-> + * libmpathpersist was registering the key. As long as there are
-> still some
-> + * registered keys, treat the preempt as happening first, and make
-> sure to
-> + * register keys on all the paths. If the number of registered keys
-> is at
-> + * least as large as the number of registered paths, then no preempt
-> happened,
-> + * and multipathd does not need to re-register the paths that
-> libmpathpersist
-> + * handled
-> + */
-> +void pr_register_active_paths(struct multipath *mpp,
-> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 const struct vector_s *reg_paths)
-> =C2=A0{
-> -	unsigned int i, j, nr_keys =3D 0;
-> -	unsigned int nr_active =3D 0;
-> +	unsigned int i, j, k, nr_keys =3D 0;
-> +	unsigned int wanted_nr =3D VECTOR_SIZE(reg_paths);
-> =C2=A0	struct path *pp;
-> =C2=A0	struct pathgroup *pgp;
-> -
-> -	if (check_nr_active) {
-> -		nr_active =3D count_active_paths(mpp);
-> -		if (!nr_active)
-> -			return;
-> -	}
-> +	char *pathname;
-> =C2=A0
-> =C2=A0	vector_foreach_slot (mpp->pg, pgp, i) {
-> =C2=A0		vector_foreach_slot (pgp->paths, pp, j) {
-> =C2=A0			if (mpp->prflag =3D=3D PR_UNSET)
-> =C2=A0				return;
-> -			if (pp->state =3D=3D PATH_UP || pp->state =3D=3D
-> PATH_GHOST) {
-> -				nr_keys =3D mpath_pr_event_handle(pp,
-> nr_keys, nr_active);
-> -				if (check_nr_active && nr_keys =3D=3D
-> nr_active)
-> -					return;
-> +			if (pp->state !=3D PATH_UP && pp->state !=3D
-> PATH_GHOST)
-> +				continue;
-> +			if (wanted_nr && nr_keys) {
-> +				vector_foreach_slot(reg_paths,
-> pathname, k) {
-> +					if (strcmp(pp->dev,
-> pathname) =3D=3D 0 ||
-> +					=C2=A0=C2=A0=C2=A0 strcmp(pp->dev_t,
-> pathname) =3D=3D 0) {
-> +						goto skip;
-> +					}
-> +				}
-> +			}
-> +			nr_keys =3D mpath_pr_event_handle(pp, nr_keys,
-> wanted_nr);
-> +			if (nr_keys && nr_keys < wanted_nr) {
-> +				/*
-> +				 * Incorrect number of registered
-> keys. Need
-> +				 * to register all devices
-> +				 */
-> +				wanted_nr =3D 0;
-> =C2=A0			}
-> +skip:
+On Mon, Dec 08, 2025 at 01:27:32PM +0100, Martin Wilck wrote:
+> On Thu, 2025-12-04 at 14:33 -0500, Benjamin Marzinski wrote:
+> > On Wed, Dec 03, 2025 at 08:19:33AM -0800, Brian Bunker wrote:
+> 
+> > How about a simplifying the purge thread slightly. When the checker
+> > gets
+> > a path it is supposed to purge, it sets purge_path, just like now. I
+> > don't think we need to track purge_retries at all. When the purge
+> > loop
+> > is triggered, it locks the vecs lock, and finds a single path to
+> > purge,
+> > like now. The only info it needs to save is the udev device (with a
+> > new
+> > refcount taken like now) and a dup of pp->fd (You need this to
+> > guarantee
+> > that the devnode won't get reused if the device is deleted and a new
+> > one
+> > is re-added). You could also save the name, but
+> > udev_device_get_devnode() will get it for you.  Like I mentioned
+> > above,
+> > you need to have a pthread cleanup handler that gets run to clean
+> > these
+> > up if they are set and the thread is cancelled, just like how the
+> > vecs
+> > lock is handled. Then purgeloop() clears pp->purge_path, drops the
+> > vecs
+> > lock, does the sysfs delete, and cleans up the purge_info by calling
+> > pthread_cleanup_pop(). Finally it loops back to reacquiring the vecs
+> > lock and finding the next path to delete. I don't really see a value
+> > in
+> > all the stats tracking. If it goes through all the paths, and doesn't
+> > find one in need of purging, it waits, just like now.
+> 
+> I'd go one step further and suggest an approach similar to what we do
+> in the uevent handler, for which we have a separate list of uevents
+> that shares no data with the main multipath threads.
+> 
+> Roughly like this:
+> 
+> enum purge_state {
+>     PURGE_REQUESTED = 1,
+>     PURGE_DONE,
+>     PURGE_ERROR
+> };
+> 
+> struct path_to_purge {
+>         struct list_head queue;
+> 	struct udev_device *udev; /* one ref taken while on the list
+> */
+> 	int fd;                   /* dup of pp->fd */
+>         enum purge_state state;
+> };
+> 
+> // global list_head for the queue of paths to be purged.
+> static LIST_HEAD(purge_queue);
+> 
+> If multipathd detects a path to purge in the checker thread, it
+> allocates and adds a path_to_purge entry with state PURGE_REQUESTED to
+> the queue and triggers the purge thread e.g. with a pthreads condition
+> variable.
+> 
+> The purge thread then walks through the list (without modifying the
+> list itself), sends a delete request to the kernel and atomically sets
+> the state field to PURGE_DONE when successful.
+> 
+> multipathd's checker thread walks the list next time and removes
+> entries that have state != PURGE_REQUESTED, closing the fd and unref-
+> ing the struct udev. IOW the resource allocation/freeing for this list
+> and its elements would be handled by the checker alone. The checker
+> would not immediately drop internal references to the path; this would
+> be handled by the remove uevent handler as usual.
+> 
+> The purge thread would never write to the list, except to the state
+> attribute of list members (which we could protect from being freed via
+> RCU).
+> 
+> This would make the purge thread almost an independent process.
 
-This fails on Debian Sid with this error messsage:
+I'm a little confused about this design. Lets say a path gets removed
+while on this list. If the purgeloop doesn't modify the list, then how
+does the remove function know that it's safe to remove the item. The
+purgeloop could be in the process notifying sysfs right now, making use
+of the udev device. Similarly multipathd will change a path's udev
+device when it gets a new uevent. How does it know if it's safe to
+update the pointer on this list. Someone has to unref the purgeloops
+extra ref, and multipathd can't, once it's updated pp->udev and
+forgotten the old value. You might be able to solve this with more
+purge_states so that the purgeloop could signal that it's actually
+working on the device, but I'm pretty sure you'd need actual locking to
+avoid races here. Aside from the timing issue, we're adding multiple
+places where multipathd needs to go checking and modifying this list as
+part of other actions, which seems like it gets pretty fiddly.
 
-main.c:677:3: error: label at end of compound statement is a C23
-extension [-Werror,-Wc23-extensions]
-  677 |                 }
-      |           =20
+If we instead say that purgeloop is in charge of cleaning up the list,
+there would still need to be locking, because multipathd might want to
+take items off the list, if they become reconnected or removed before
+the thread gets around to purging.  In theory, you could just not modify
+the list in these cases, and just let the purgeloop run on those paths,
+but then you would be removing paths that have been reconnected, and
+possibly keeping a number of references to udev devices and fds for
+paths that are gone (assuming that deleting devices can actually block
+for a chunk of time). Also, multipathd would need to check the list so
+paths didn't get added multiple times, if the checker re-ran before the
+path was purged. Again, unless you were fine with keeping unnecessary
+extra references to the device.
 
+My original idea was to try to keep purgeloop from needing to grab the
+vecs lock, but I just kept coming up with extra complications that this
+would cause. So I settled on something where the normal multipath code
+just needs to set a path variable to communicate with the purgeloop, and
+the purgeloop just needs to hold the vecs lock while looking through the
+path list until it finds a device in need of purging.
 
-[1] https://github.com/openSUSE/multipath-tools/actions/runs/20031717354/jo=
-b/57442300023
+My other option make the purgeloop do much more work. The idea was that
+multipathd just put the pathname on a list when it found a disconnected
+path, and the purge loop would pull items off that list. This would
+still need locking, but you could probably do it with rcu locking.
+Alternatively, you could use sockets to send the pathnames to the
+purgeloop thread, to avoid locking and possibly make the purgeloop it's
+own process completely.
 
-Martin
+For each path, the purgeloop would
+
+1. open the path device (to make sure it didn't get deleted and reused)
+2. check the path holders to make sure it was part of a multipath device
+3. run a TUR check on the path to make sure that it was still
+   disconnected
+4. delete the path, if so.
+5. close the path device.
+
+This is completely disconnected from multipath, minus the pathname
+communication, and should be able to make the right decisions about
+paths that were removed or reconnected, without sharing any resources
+that need cleaing up. It just makes the purgeloop duplicate a bunch of
+work that multipathd already did.
+
+Thoughts? Am I misunderstanding your design?
+
+-Ben
+
+> Opinions?
+> 
+> Martin
 
