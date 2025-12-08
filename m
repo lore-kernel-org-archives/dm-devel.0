@@ -1,182 +1,154 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF7472EA15C
-	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 19:37:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AB6D2836AF
+	for <dm-devel@lists.linux.dev>; Mon,  8 Dec 2025 20:50:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765222651; cv=none; b=GUVxsvsF41pI0PzzEK7LJ2zWA0miuFq5KzJwmIqZkmvXYU+qbHC+uCuAScap+Zu0vX+CSZUuKAV6WU69zoCxA+6oxxB+ZSVnDCa846/b1iRfENU+FK4UpiXT/HFiPA7DmJ/oa6CJVhZEbjm/XZOA7OjeD6uo0NM70XynKmEgDWE=
+	t=1765227033; cv=none; b=VV2uPxMfssFdiOG+oL0zY7zqcTd05D3jCBxRMIChVesWZH1ikyBBYveDewqfWHx8U+IC2czISpKkgAPsFZ515+nUoxHFndcFQLPcgNg7kGzxVqf809d2zyVn5IUozr6VdqJHBD4HFtalySsf5BHbtWizaf4k5SoyhSXaZNkFejs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765222651; c=relaxed/simple;
-	bh=gQK+7RyWd4fLCsd8+R9rAeHUEMQigyHpOTbF2Ir48Qo=;
+	s=arc-20240116; t=1765227033; c=relaxed/simple;
+	bh=wAcpN5h7rtAz2VErwYAiFovK20w0n2Am1VYazi56kSE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=imMT1zWatQjn2WbLlO//Vzt1bimEHH3E2nzX5wvmm8KGs1dUOwEzuLjEvOI+083hFXXRwRL0gPypEqB24GwHniUUY+sKv/R6EDsrpUGYG8FjPMl7lxWlntI/kM9VJg1yXcg7psanpFla4AOegyE8ZTiCrPnHBr/sIqXtmpGMV24=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=JGDOUOZT; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=UvBVEVX8; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=02poafrG; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=DpEIhfJX; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	 In-Reply-To:Content-Type:Content-Disposition; b=VyJnqhC+DSDAqQkauGPLYcNeifFkYF+YwQBsfJNAFml7UFIK6rhnbr4p++jaxJT2ffR9NlbvXjuWo24amFAyPL0wCbxckGBg7xBsL6druunRKhxkXIZJB5jRoI7EbHu5QGPa/OvkkJMH398Lt0Cg8t3aDkKi4hebe8Noyh4rW+E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eeixR3eR; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="JGDOUOZT";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="UvBVEVX8";
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="02poafrG";
-	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="DpEIhfJX"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eeixR3eR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1765227030;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fXdSxUuVNvAnTj2HpQBWbpmM8ZL5VN5oP+Ey1YThz28=;
+	b=eeixR3eRQVHD+VQBhZvn4aYAnu1171zZhXtHgWubpAlEzeOFJiX11Xvg8mlhrYVp8vuhK/
+	X4cPYel2gqEQBgPK/Ly0kMjVj5VORXal8R5FNHGE47qItOfJVGntSBFwQf1Id5VkKWW7Nz
+	kpFJCpSRDzJK7zTluaNYCoZY8CsBPj8=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-668-RqQjNhj-OcieaS8QoIgECg-1; Mon,
+ 08 Dec 2025 15:50:27 -0500
+X-MC-Unique: RqQjNhj-OcieaS8QoIgECg-1
+X-Mimecast-MFC-AGG-ID: RqQjNhj-OcieaS8QoIgECg_1765227026
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 7F40B336FD;
-	Mon,  8 Dec 2025 19:37:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1765222646;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ph/2wB02ENlZ9Cri2yOqVQaH9c6qcR6gN0R35CFrWBQ=;
-	b=JGDOUOZTxLbsS7zahOmSgvnN9M6RRLqkmTIDz8gc4EimluBOMp1ydykY3fJRicg/0//wBG
-	6+wCvQudTg+0VyY68EvHIgS/yiBPvfCHON7ZsOH58LOVUCye+Xz5txNHaVm/AVPw9Ok/pu
-	jS7CA5EXdc1COl/is+fucF/ggBHUEQg=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1765222646;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ph/2wB02ENlZ9Cri2yOqVQaH9c6qcR6gN0R35CFrWBQ=;
-	b=UvBVEVX87fuIZubA/D3vvV2/qgB+1r7K9CSOlT2FUPuKZaQ1gmdqBa5xSdaPLEhwjYCdnD
-	dqsas4F7YrQqAkAA==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.cz header.s=susede2_rsa header.b=02poafrG;
-	dkim=pass header.d=suse.cz header.s=susede2_ed25519 header.b=DpEIhfJX
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1765222645;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ph/2wB02ENlZ9Cri2yOqVQaH9c6qcR6gN0R35CFrWBQ=;
-	b=02poafrGnXEKb2LWhcPL8gCo4L/9LeXnpLD3/BZscuhK2/bnCi+Fz57obMPUtKVWlG6AYA
-	z+jckoQkQcWLqNbuc1ar6dYxO+qd6WWdItp2PRDvgE0BPz8dUc96xrLnpCRXlpASA2A3qV
-	2mxrP8a/SbMvb4lW/Dv8iVeDJ13I7P4=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1765222645;
-	h=from:from:reply-to:reply-to:date:date:message-id:message-id:to:to:
-	 cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ph/2wB02ENlZ9Cri2yOqVQaH9c6qcR6gN0R35CFrWBQ=;
-	b=DpEIhfJXt0T1hTZTX8ThNWlf2e778teL9azLpBBUpi2XcSekG5WZ9MChJFn2IX5YAt6hH4
-	UAHoyDs0h3GKvMDA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4E4093EA63;
-	Mon,  8 Dec 2025 19:37:25 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id gkFAEvUoN2l/UwAAD6G6ig
-	(envelope-from <dsterba@suse.cz>); Mon, 08 Dec 2025 19:37:25 +0000
-Date: Mon, 8 Dec 2025 20:37:24 +0100
-From: David Sterba <dsterba@suse.cz>
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
-	Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>,
-	Satya Tangirala <satyat@google.com>, linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org, linux-raid@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [RFC 00/12] bio cleanups
-Message-ID: <20251208193724.GB4859@twin.jikos.cz>
-Reply-To: dsterba@suse.cz
-References: <20251208121020.1780402-1-agruenba@redhat.com>
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1B5BE18001D7;
+	Mon,  8 Dec 2025 20:50:26 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7826F1800451;
+	Mon,  8 Dec 2025 20:50:25 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5B8KoOM61709593
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 8 Dec 2025 15:50:24 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5B8KoNZk1709592;
+	Mon, 8 Dec 2025 15:50:23 -0500
+Date: Mon, 8 Dec 2025 15:50:23 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        device-mapper development <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH 4/4] libmpathpersist: fix code for skipping multipathd
+ path registration
+Message-ID: <aTc6DyGc8DWjhtxY@redhat.com>
+References: <20251202030213.1432964-1-bmarzins@redhat.com>
+ <20251202030213.1432964-5-bmarzins@redhat.com>
+ <44ac6212bf407913ed7bd6fff15dda195c7d9135.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+In-Reply-To: <44ac6212bf407913ed7bd6fff15dda195c7d9135.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: aXRs0fl5pQygMkk4kJ3FyRhCvufRFryqY9_7By6CvyM_1765227026
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <20251208121020.1780402-1-agruenba@redhat.com>
-User-Agent: Mutt/1.5.23.1-rc1 (2014-03-12)
-X-Spam-Flag: NO
-X-Spam-Score: -4.21
-X-Rspamd-Queue-Id: 7F40B336FD
-X-Spamd-Result: default: False [-4.21 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	HAS_REPLYTO(0.30)[dsterba@suse.cz];
-	R_DKIM_ALLOW(-0.20)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	FROM_HAS_DN(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	URIBL_BLOCKED(0.00)[suse.cz:dkim,suse.cz:replyto,twin.jikos.cz:mid];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.cz:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	REPLYTO_ADDR_EQ_FROM(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[11];
-	REPLYTO_DOM_NEQ_TO_DOM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[twin.jikos.cz:mid,suse.cz:dkim,suse.cz:replyto,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Level: 
+Content-Transfer-Encoding: 8bit
 
-On Mon, Dec 08, 2025 at 12:10:07PM +0000, Andreas Gruenbacher wrote:
-> Hello,
+On Mon, Dec 08, 2025 at 03:46:56PM +0100, Martin Wilck wrote:
+> On Mon, 2025-12-01 at 22:02 -0500, Benjamin Marzinski wrote:
+> > When libmpathpersist notifies multipathd that a key has been
+> > registered,
+> > cli_setprstatus() calls pr_register_active_paths() with a flag to let
+> > it
+> > know that the paths are likely already registered, and it can skip
+> > re-registering them, as long as the number of active paths matches
+> > the
+> > number of registered keys. This shortcut can fail, causing multipathd
+> > to
+> > not register needed paths, if either a path becomes usable and
+> > another
+> > becomes unusable while libmpathpersist is running or if there already
+> > were registered keys for I_T Nexus's that don't correspond to path
+> > devices.
+> > 
+> > To make this shortcut work in cases like that, this commit adds a new
+> > multipathd command "setprstatus map <map> pathlist <pathlist>", where
+> > <pathlist> is a quoted, comma separated list of scsi path devices.
+> > libmpathpersist will send out the list of paths it registered the key
+> > on. pr_register_active_paths() will skip calling
+> > mpath_pr_event_handle()
+> > for paths on that list.
+> > 
+> > In order to deal with the possiblity of a preempt occuring while
+> > libmpathpersist was running, the code still needs to check that it
+> > has
+> > the expected number of keys.
+> > 
+> > Fixes: f7d6cd17 ("multipathd: Fix race while registering PR key")
+> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  libmpathpersist/mpath_persist_int.c |  6 +--
+> >  libmpathpersist/mpath_updatepr.c    | 48 +++++++++++++++++------
+> >  libmpathpersist/mpathpr.h           |  4 +-
+> >  multipathd/callbacks.c              |  1 +
+> >  multipathd/cli.c                    |  1 +
+> >  multipathd/cli.h                    |  2 +
+> >  multipathd/cli_handlers.c           | 39 ++++++++++++++++--
+> >  multipathd/main.c                   | 61 +++++++++++++++++++--------
+> > --
+> >  multipathd/main.h                   |  3 +-
+> >  multipathd/multipathd.8.in          |  6 +++
+> >  10 files changed, 132 insertions(+), 39 deletions(-)
 > 
-> we are not quite careful enough about setting bio->bi_status in all
-> places (see BACKGROUND below).  This patch queue tries to fix this by
-> systematically eliminating the direct assignments to bi_status sprinkled
-> all throughout the code.  Please comment.
-> 
-> 
-> The first patch ("bio: rename bio_chain arguments") is an loosely
-> related cleanup.  The remaining changes are:
-> 
-> - Use bio_io_error() in more places.
-> 
-> - Add a bio_set_errno() helper for setting bi_status based on an errno.
->   Use this helper throughout the code.
-> 
-> - Add a bio_set_status() helper for setting bi_status to a blk_status_t
->   status code.  Use this helper in places in the code where it's
->   necessary, or at least useful without adding any overhead.
-> 
-> And on top of that, we have two more cleanups:
-> 
-> - Add a bio_endio_errno() helper that combines bio_set_errno() and
->   bio_endio().
-> 
-> - Add a bio_endio_status() helper that combines bio_set_status() and
->   bio_endio().
-> 
-> The patches are currently based on v6.18.
-> 
-> GIT tree:
-> https://git.kernel.org/pub/scm/linux/kernel/git/gfs2/linux-gfs2.git/log/?h=bio-cleanups
-> 
-> With these changes, only a few direct assignments to bio->bi_status
-> remain, in BTRFS and in MD, and SOME OF THOSE MAY BE UNSAFE.  Could the
-> maintainers of those subsystems please have a look?
+> I may be missing something, but this is quite a lot of additional
+> complexity just for the shortcut. Have you considered just not taking
+> the shortcut in the first place?
 
-The btrfs bits look good to me, we expect the same semantics, ie. not
-overwrite existing error with 0. If there are racing writes to the
-status like in btrfs_bio_end_io() we use cmpxchg() so we don't overwrite
-it.
+Yep. But that means that whenever you register a multipath device with
+mpathpersist, multipathd will (almost always pointlessly) re-register
+all the paths, just to make sure it doesn't hit these super rare corner
+cases. So this added complexity keeps multipathd from running unnecesary
+scsi PR commands, and should be quicker. All multipathd does is break
+the new cli message up into pathnames, and then has
+pr_register_active_paths() check the paths against the pathanames, and
+skip them if they match and the number of keys is as big as expected
+(and it needs to check the number of keys regardless of whether it uses
+the shortcut).
 
-> Once the remaining direct assignments to bi_status are gone, we may want
-> to think about "write protecting" bi_status to prevent unintended new
-> direct assignments from creeping back in.
+I thought briefly about pulling all the path registration work into
+multipathd, but it ends up making multipathd even more complex than this
+shortcut, while not saving much complexity from libmpathpersist. If we
+wanted to make multipathd handle all of libmpathpersists work, that
+would be a different story, but I'm still not sold on the idea of doing
+that.
 
-This makes sense, though I'm not sure if this takes into account the
-mentioned cmpxchg pattern:
+That being said, we can drop a chunk of code if we just force
+multipathd to automatically reregister the paths. So if you think that
+the reduced work is not worth the added complexity, I'm o.k. with
+pulling the shortcut out completely.
 
-	if (status != BLK_STS_OK)
-		cmpxchg(&bbio->status, BLK_STS_OK, status);
+-Ben
+ 
+> Martin
+
