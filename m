@@ -1,889 +1,103 @@
-Received: from mail-pj1-f53.google.com (mail-pj1-f53.google.com [209.85.216.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from lgeamrelo12.lge.com (lgeamrelo12.lge.com [156.147.23.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8854E286D72
-	for <dm-devel@lists.linux.dev>; Thu, 11 Dec 2025 23:46:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3F99632
+	for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 00:10:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=156.147.23.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765496773; cv=none; b=UodtrO5kLxhWG8M3OiBtnnHHVDBlul9GO8rb3PgnBit0GJmeh0lf9Tb19bjLy/yZZZC6R2usK8ttG8IU6JYYLeg1simj/3idjJYDt4S1euOPXQtm+2zcNGyLl/GhWuHcvNapT6gtQ3qdSpHyQoVjiEoBqYE6fzeu9sB0e7FyvGE=
+	t=1765498206; cv=none; b=e7IfdJ+vQLqVvQcqP87xHwHCBCKwsHnsNg0rNqpVucqs+2f7Gic1xA4UwKP1MLFrqbYv8U9V/Gfe4zkLLQIbu1B580lVkJWYsM427KKXWzmLO0NTK7nCfj/4IkCX1vkSHTfaMGXusnNwZqZCOYRs90xUZBZyrTT2D6RQKE6bcUI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765496773; c=relaxed/simple;
-	bh=7fPbwqf/2XHwlHkSi6x0gUrnvjbucbn4ioKPf8KSFKY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=nmDRiqo47WrC16X3dqxaQAmO2p4OrzU0knvE2ksDPLq16wCvKKdyDFH4rJV6j73/c/sgg7ncUKTaxJqWYbICAxTf8E9mIWzLTRO67soK9z6r126xLsOlKeLQi5SYdELI2Ixx16IkPJCpRtmny2eW8bHndZEw3j8ZqggNBwRz22U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=PL+gN5zg; arc=none smtp.client-ip=209.85.216.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="PL+gN5zg"
-Received: by mail-pj1-f53.google.com with SMTP id 98e67ed59e1d1-34abc7da414so225422a91.0
-        for <dm-devel@lists.linux.dev>; Thu, 11 Dec 2025 15:46:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1765496769; x=1766101569; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=tAYWVyaLhcmD0/h2zmKwu/18l/PZpMi7OeUQ/H3Wm50=;
-        b=PL+gN5zgJpkNQaS+pjWY096F80wFNt4ytt9c/xl6U22q3ogTVhQTT+tvwiProqy4N+
-         Evi6Q+dI4Wn42yfIPKV3rdO/vA03AbTdzYxAeHajLfJeZY7nYM8kYlRXmRSI5BXhnkxQ
-         /ub4eShyUa99qPxJeZ5Be+Ke++oGLZRzHyLJqQBCIT3ob34Jmb4OlCxSVXQZamEkcqfL
-         QSRPP4/InUWf7Y39rrGYAjPGmQ6/lJ7hV4S+0ohJ/FGj5waAO2RfbjqCVqZf2tPwtxZN
-         g8s8pQZlD9A2haAHzvMyQVztBij8QTtRX99+muhGmfeJSyj2G/CjpSDvEgmQkHZmx9Z1
-         Mblw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1765496769; x=1766101569;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=tAYWVyaLhcmD0/h2zmKwu/18l/PZpMi7OeUQ/H3Wm50=;
-        b=DB58CoKxEagnlKvRNJP9iPgEGCLqRyjnok3dhT9XNghhYxKWRvSWGwC/SAbDO+Hrj/
-         IuC6u9Yna3neO12SbcgfL/w9koGzCufMzXUMS24sEf1Myn55MIBRUTLwtxjzbQszJLH/
-         ULMVyLcCJCYTTvIEzo0fLP6A7W+dd5uJhXYiEcEAL3iTe7BSVblAezcBYe63Lg0HpBbK
-         KJT89S+rXT9S3GJ2rTkDCuGLw4jNxRlXDC9HGPi0GyiQ4DkPjSl0DLyFFjL45UYDr0uM
-         crgQUS1fBIxSFRMr4WcOjkae0+qmDJXRagoJlDiut9v8GCij1rkxYa3ihvwdGcmNzApI
-         vYyQ==
-X-Gm-Message-State: AOJu0YxnXUvmDkItLzrGX2xDxUD7NwcfDeRoFCQqh6ehSk4jXdPtDmOY
-	F/9awB1TAmf4S2twyKkqGGZPG6RmjDS4SBpsxUstc1qm7po+hrx2LfDKj1QGxTrDroSe+dKzdVB
-	/CvylWSepfSKuKgupPHG3ovfg89isyPxn25t+X9v0xNBo999Fc1U7KDTMYRAEiwmj0fqxFCnAY7
-	Iu94c+Nj12eEki4yumnmRj0IlmD+Hi7fLxHJE3Q1RhEilT0kE=
-X-Gm-Gg: AY/fxX6aNf1SFBfqk8rrN/5x4fu431h//UPLSIyyTF8DWuC2pqFCnucvtvFL9G9Fti2
-	a2f5x7mSJPyZQsssjPYjpE0bt6fp+PIc0vWlGofom8mTw+sSh+93es1K4Y01F5F1afu4kZoeyQ5
-	7mhoknTtR6zr/grBFcjYmo3vOy+QIBqDGldlmZn1i3gGfcp3HICkrdNRkakcvlY5Gw/VVlAmLR2
-	+l0p1DddHYt/pFrpBkivO9AHUBKU210fE6Ro0hb8rDW5JLseLvoGfL4/QpemPaYK62/cw8cWl/P
-	NiSk4H2wDf3Q/G2YbEpJtQBS8C4RLdoMNGGzUrQX18xvm+MUCGFotSAU3PglzxGV1uYCkAbF+FT
-	Yi4dnZCvAVrgnLZs82z7+CB+D8KniMsedy1fb6thbEayC0foVd8h8z/vZ4SLaTKdzaueOhP/JHm
-	axHLjQxJXleRwFldMfRLa5C1OEPHF3P4m7Wi/VdIDUgjMGXXSYg03zyOQKVKeH4fOV2ewxBsFGS
-	hfsc/5ppY2zWscGaR7z31urh/7YYZQioFAuLAZT4Wk=
-X-Google-Smtp-Source: AGHT+IFvzltafaNlk7R3Qo7SVaPwUcRQmrPTYE6Ne7i+44NZYbszfP1112CeCd0dxhn8e3jFzhWGag==
-X-Received: by 2002:a05:701b:241b:b0:119:e55a:9be7 with SMTP id a92af1059eb24-11f34bddaaamr183359c88.3.1765496768768;
-        Thu, 11 Dec 2025 15:46:08 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([136.226.79.78])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-11f2e2b4867sm11920594c88.6.2025.12.11.15.46.07
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Thu, 11 Dec 2025 15:46:08 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: dm-devel@lists.linux.dev,
-	bmarzins@redhat.com,
-	mwilck@suse.com
-Cc: Brian Bunker <brian@purestorage.com>,
-	Krishna Kant <krishna.kant@purestorage.com>
-Subject: [PATCH v5 1/1] mulitpath-tools Add purge capability to multipath-tools
-Date: Thu, 11 Dec 2025 15:45:59 -0800
-Message-ID: <20251211234559.26489-2-brian@purestorage.com>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20251211234559.26489-1-brian@purestorage.com>
-References: <20251211234559.26489-1-brian@purestorage.com>
+	s=arc-20240116; t=1765498206; c=relaxed/simple;
+	bh=DF1Bcoh/61vIbNIFn1JXislbbFqhU9RoYOjCn2b+kGk=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version:Content-Type; b=MdzZQfW580GknLvF2Tc0htCYm6ZeRbyg7szvEFhEkm/GFICT0x29zM6FIPwmdGfbuBMZg4tOKrTH19wlAy4uUeQRTHuerQnVMYkmefnxwlF2s2nKeo7WtaCp+ttSa1Vdo9bR2xCDi2mIbSzt294H1Liu+fcwMDxiVoSyA0779mk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com; spf=pass smtp.mailfrom=lge.com; arc=none smtp.client-ip=156.147.23.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lge.com
+Received: from unknown (HELO lgemrelse6q.lge.com) (156.147.1.121)
+	by 156.147.23.52 with ESMTP; 12 Dec 2025 09:10:00 +0900
+X-Original-SENDERIP: 156.147.1.121
+X-Original-MAILFROM: jaeyuel.im@lge.com
+Received: from unknown (HELO jaeyuelim-three.bee-live.svc.cluster.local) (10.185.60.88)
+	by 156.147.1.121 with ESMTP; 12 Dec 2025 09:09:59 +0900
+X-Original-SENDERIP: 10.185.60.88
+X-Original-MAILFROM: jaeyuel.im@lge.com
+From: jaeyuel.im@lge.com
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	loth.son@lge.com,
+	"jaeyuel.im" <jaeyuel.im@lge.com>
+Subject: [PATCH v2] dm init: ensure block device is ready before creating mapped device
+Date: Fri, 12 Dec 2025 00:09:55 +0000
+Message-Id: <20251212000955.171808-1-jaeyuel.im@lge.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-In the Linux kernel when volumes are disconnected, they are left behind
-to be re-enabled when the connection comes back. There are many cases
-where this behavior is not desirable.
+From: "jaeyuel.im" <jaeyuel.im@lge.com>
 
-The goal is to have paths appear when volumes are connected. This is
-handled by target initiated rescans and posting of unit attentions.
-Secondarily when volumes are disconnected at the target, paths should
-be removed.
+The current implementation of dm_init_init() uses early_lookup_bdev() to
+wait for the device node to appear. However, early_lookup_bdev() only
+verifies that the device node exists and returns the dev_t. It does not
+guarantee that the underlying block device structure is fully initialized
+and ready for I/O operations or to be opened.
 
-This was discussed here in a kernel patch:
-https://marc.info/?l=linux-scsi&m=164426722617834&w=2
+On certain platforms (e.g., embedded systems with specific storage
+drivers), this can lead to a race condition where dm_early_create()
+attempts to open the device immediately after early_lookup_bdev() returns,
+but fails because the device is not yet fully ready. This results in boot
+failures as the mapped device cannot be created.
 
-It was suggested there that userspace would be more advantageous in
-handling the device removal.
+This patch adds an additional check using blkdev_get_no_open() after
+early_lookup_bdev() returns. This ensures that the struct block_device is
+actually available and the device is ready to be opened, effectively
+preventing the race condition.
 
-An option was added to multipath-tools to purge devices that are
-disconnected at the target. A purge thread was implemented to handle
-the device removal when the path returns sense data (0x5/0x25/0x0) from
-the path checker. The option, purge_disconnected, is by default off but
-can be turned on by setting it to true.
+Changes in v2:
+- Pass autoload parameter for new blkdev_get_no_open()
 
-When enabled multipathd will log:
-Dec  4 16:25:54 init110-14 multipathd[1024]: sdmp: purging disconnected
-path
-...
-Dec  4 16:25:54 init110-14 multipathd[1024]: /dev/sdmp: triggered
-removal
-
-Signed-off-by: Brian Bunker <brian@purestorage.com>
-Signed-off-by: Krishna Kant <krishna.kant@purestorage.com>
+Signed-off-by: jaeyuel.im <jaeyuel.im@lge.com>
 ---
- libmultipath/checkers.c       |   2 +
- libmultipath/checkers.h       |   2 +
- libmultipath/checkers/tur.c   |  10 ++
- libmultipath/config.c         |   2 +
- libmultipath/config.h         |   3 +
- libmultipath/configure.c      |   1 +
- libmultipath/defaults.h       |   1 +
- libmultipath/dict.c           |  14 ++
- libmultipath/discovery.c      |   3 +-
- libmultipath/io_err_stat.c    |   1 +
- libmultipath/print.c          |   2 +
- libmultipath/propsel.c        |  16 ++
- libmultipath/propsel.h        |   1 +
- libmultipath/structs.h        |  14 ++
- libmultipath/sysfs.c          |   2 +-
- multipath/multipath.conf.5.in |  22 +++
- multipathd/main.c             | 287 +++++++++++++++++++++++++++++++++-
- 17 files changed, 374 insertions(+), 9 deletions(-)
+ drivers/md/dm-init.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index e2eda58d..bb6ad1ee 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -43,6 +43,7 @@ static const char *checker_state_names[PATH_MAX_STATE] = {
- 	[PATH_TIMEOUT] = "timeout",
- 	[PATH_REMOVED] = "removed",
- 	[PATH_DELAYED] = "delayed",
-+	[PATH_DISCONNECTED] = "disconnected",
- };
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index b37bbe762500..b3905e094ffc 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -296,10 +296,24 @@ static int __init dm_init_init(void)
+ 	for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
+ 		if (waitfor[i]) {
+ 			dev_t dev;
++			struct block_device *bdev;
  
- static LIST_HEAD(checkers);
-@@ -363,6 +364,7 @@ static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
- 	[CHECKER_MSGID_DOWN] = " reports path is down",
- 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
- 	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
-+	[CHECKER_MSGID_DISCONNECTED] = " no access to this device",
- };
- 
- const char *checker_message(const struct checker *c)
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index da91f499..903c3ebe 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -78,6 +78,7 @@ enum path_check_state {
- 	PATH_TIMEOUT,
- 	PATH_REMOVED,
- 	PATH_DELAYED,
-+	PATH_DISCONNECTED,
- 	PATH_MAX_STATE
- };
- 
-@@ -113,6 +114,7 @@ enum {
- 	CHECKER_MSGID_DOWN,
- 	CHECKER_MSGID_GHOST,
- 	CHECKER_MSGID_UNSUPPORTED,
-+	CHECKER_MSGID_DISCONNECTED,
- 	CHECKER_GENERIC_MSGTABLE_SIZE,
- 	CHECKER_FIRST_MSGID = 100,	/* lowest msgid for checkers */
- 	CHECKER_MSGTABLE_SIZE = 100,	/* max msg table size for checkers */
-diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-index 0010acf8..1bb9a992 100644
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -199,6 +199,16 @@ retry:
- 				return PATH_PENDING;
- 			}
- 		}
-+		else if (key == 0x5) {
-+			/* Illegal request */
-+			if (asc == 0x25 && ascq == 0x00) {
-+				/*
-+				 * LOGICAL UNIT NOT SUPPORTED
-+				 */
-+				*msgid = CHECKER_MSGID_DISCONNECTED;
-+				return PATH_DISCONNECTED;
-+			}
-+		}
- 		*msgid = CHECKER_MSGID_DOWN;
- 		return PATH_DOWN;
- 	}
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 8b424d18..2c66a788 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -470,6 +470,7 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
- 	merge_num(marginal_path_err_rate_threshold);
- 	merge_num(marginal_path_err_recheck_gap_time);
- 	merge_num(marginal_path_double_failed_time);
-+	merge_num(purge_disconnected);
- 
- 	snprintf(id, sizeof(id), "%s/%s", dst->vendor, dst->product);
- 	reconcile_features_with_options(id, &dst->features,
-@@ -517,6 +518,7 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
- 	merge_num(skip_kpartx);
- 	merge_num(max_sectors_kb);
- 	merge_num(ghost_delay);
-+	merge_num(purge_disconnected);
- 	merge_num(uid);
- 	merge_num(gid);
- 	merge_num(mode);
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 5b4ebf8c..618fa572 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -88,6 +88,7 @@ struct hwentry {
- 	int marginal_path_err_rate_threshold;
- 	int marginal_path_err_recheck_gap_time;
- 	int marginal_path_double_failed_time;
-+	int purge_disconnected;
- 	int skip_kpartx;
- 	int max_sectors_kb;
- 	int ghost_delay;
-@@ -130,6 +131,7 @@ struct mpentry {
- 	int marginal_path_err_rate_threshold;
- 	int marginal_path_err_recheck_gap_time;
- 	int marginal_path_double_failed_time;
-+	int purge_disconnected;
- 	int skip_kpartx;
- 	int max_sectors_kb;
- 	int ghost_delay;
-@@ -188,6 +190,7 @@ struct config {
- 	int marginal_path_err_rate_threshold;
- 	int marginal_path_err_recheck_gap_time;
- 	int marginal_path_double_failed_time;
-+	int purge_disconnected;
- 	int uxsock_timeout;
- 	int strict_timing;
- 	int retrigger_tries;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index baa13573..e4431d2f 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -355,6 +355,7 @@ int setup_map(struct multipath *mpp, char **params, struct vectors *vecs)
- 	select_max_sectors_kb(conf, mpp);
- 	select_ghost_delay(conf, mpp);
- 	select_flush_on_last_del(conf, mpp);
-+	select_purge_disconnected(conf, mpp);
- 
- 	sysfs_set_scsi_tmo(conf, mpp);
- 	marginal_pathgroups = conf->marginal_pathgroups;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 134b690a..d80dd7d4 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -58,6 +58,7 @@
- #define DEFAULT_ALL_TG_PT ALL_TG_PT_OFF
- #define DEFAULT_RECHECK_WWID RECHECK_WWID_OFF
- #define DEFAULT_AUTO_RESIZE AUTO_RESIZE_NEVER
-+#define DEFAULT_PURGE_DISCONNECTED PURGE_DISCONNECTED_OFF
- /* Enable no foreign libraries by default */
- #define DEFAULT_ENABLE_FOREIGN "NONE"
- 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index a06a6138..504b28b5 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -941,6 +941,16 @@ declare_hw_snprint(skip_kpartx, print_yes_no_undef)
- declare_mp_handler(skip_kpartx, set_yes_no_undef)
- declare_mp_snprint(skip_kpartx, print_yes_no_undef)
- 
-+declare_def_handler(purge_disconnected, set_yes_no_undef)
-+declare_def_snprint_defint(purge_disconnected, print_yes_no_undef,
-+	DEFAULT_PURGE_DISCONNECTED)
-+declare_ovr_handler(purge_disconnected, set_yes_no_undef)
-+declare_ovr_snprint(purge_disconnected, print_yes_no_undef)
-+declare_hw_handler(purge_disconnected, set_yes_no_undef)
-+declare_hw_snprint(purge_disconnected, print_yes_no_undef)
-+declare_mp_handler(purge_disconnected, set_yes_no_undef)
-+declare_mp_snprint(purge_disconnected, print_yes_no_undef)
-+
- declare_def_range_handler(remove_retries, 0, INT_MAX)
- declare_def_snprint(remove_retries, print_int)
- 
-@@ -2227,6 +2237,7 @@ init_keywords(vector keywords)
- 	install_keyword("retrigger_delay", &def_retrigger_delay_handler, &snprint_def_retrigger_delay);
- 	install_keyword("missing_uev_wait_timeout", &def_uev_wait_timeout_handler, &snprint_def_uev_wait_timeout);
- 	install_keyword("skip_kpartx", &def_skip_kpartx_handler, &snprint_def_skip_kpartx);
-+	install_keyword("purge_disconnected", &def_purge_disconnected_handler, &snprint_def_purge_disconnected);
- 	install_keyword("disable_changed_wwids", &deprecated_disable_changed_wwids_handler, &snprint_deprecated);
- 	install_keyword("remove_retries", &def_remove_retries_handler, &snprint_def_remove_retries);
- 	install_keyword("max_sectors_kb", &def_max_sectors_kb_handler, &snprint_def_max_sectors_kb);
-@@ -2310,6 +2321,7 @@ init_keywords(vector keywords)
- 	install_keyword("marginal_path_err_recheck_gap_time", &hw_marginal_path_err_recheck_gap_time_handler, &snprint_hw_marginal_path_err_recheck_gap_time);
- 	install_keyword("marginal_path_double_failed_time", &hw_marginal_path_double_failed_time_handler, &snprint_hw_marginal_path_double_failed_time);
- 	install_keyword("skip_kpartx", &hw_skip_kpartx_handler, &snprint_hw_skip_kpartx);
-+	install_keyword("purge_disconnected", &hw_purge_disconnected_handler, &snprint_hw_purge_disconnected);
- 	install_keyword("max_sectors_kb", &hw_max_sectors_kb_handler, &snprint_hw_max_sectors_kb);
- 	install_keyword("ghost_delay", &hw_ghost_delay_handler, &snprint_hw_ghost_delay);
- 	install_keyword("all_tg_pt", &hw_all_tg_pt_handler, &snprint_hw_all_tg_pt);
-@@ -2355,6 +2367,7 @@ init_keywords(vector keywords)
- 	install_keyword("marginal_path_double_failed_time", &ovr_marginal_path_double_failed_time_handler, &snprint_ovr_marginal_path_double_failed_time);
- 
- 	install_keyword("skip_kpartx", &ovr_skip_kpartx_handler, &snprint_ovr_skip_kpartx);
-+	install_keyword("purge_disconnected", &ovr_purge_disconnected_handler, &snprint_ovr_purge_disconnected);
- 	install_keyword("max_sectors_kb", &ovr_max_sectors_kb_handler, &snprint_ovr_max_sectors_kb);
- 	install_keyword("ghost_delay", &ovr_ghost_delay_handler, &snprint_ovr_ghost_delay);
- 	install_keyword("all_tg_pt", &ovr_all_tg_pt_handler, &snprint_ovr_all_tg_pt);
-@@ -2400,6 +2413,7 @@ init_keywords(vector keywords)
- 	install_keyword("marginal_path_err_recheck_gap_time", &mp_marginal_path_err_recheck_gap_time_handler, &snprint_mp_marginal_path_err_recheck_gap_time);
- 	install_keyword("marginal_path_double_failed_time", &mp_marginal_path_double_failed_time_handler, &snprint_mp_marginal_path_double_failed_time);
- 	install_keyword("skip_kpartx", &mp_skip_kpartx_handler, &snprint_mp_skip_kpartx);
-+	install_keyword("purge_disconnected", &mp_purge_disconnected_handler, &snprint_mp_purge_disconnected);
- 	install_keyword("max_sectors_kb", &mp_max_sectors_kb_handler, &snprint_mp_max_sectors_kb);
- 	install_keyword("ghost_delay", &mp_ghost_delay_handler, &snprint_mp_ghost_delay);
- 	install_sublevel_end();
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 31db8758..46274f3f 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -2482,7 +2482,8 @@ int pathinfo(struct path *pp, struct config *conf, int mask)
- 			    pp->state == PATH_UNCHECKED ||
- 			    pp->state == PATH_WILD)
- 				pp->chkrstate = pp->state = newstate;
--			if (pp->state == PATH_TIMEOUT)
-+			if (pp->state == PATH_TIMEOUT ||
-+			    pp->state == PATH_DISCONNECTED)
- 				pp->state = PATH_DOWN;
- 			if (pp->state == PATH_UP && !pp->size) {
- 				condlog(3, "%s: device size is 0, "
-diff --git a/libmultipath/io_err_stat.c b/libmultipath/io_err_stat.c
-index 64054c18..acb087b7 100644
---- a/libmultipath/io_err_stat.c
-+++ b/libmultipath/io_err_stat.c
-@@ -397,6 +397,7 @@ static void account_async_io_state(struct io_err_stat_path *pp, int rc)
- 	switch (rc) {
- 	case PATH_DOWN:
- 	case PATH_TIMEOUT:
-+	case PATH_DISCONNECTED:
- 		pp->io_err_nr++;
- 		break;
- 	case PATH_UNCHECKED:
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 0d44a5a9..8b09b174 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -541,6 +541,8 @@ snprint_chk_state (struct strbuf *buff, const struct path * pp)
- 		return append_strbuf_str(buff, "i/o timeout");
- 	case PATH_DELAYED:
- 		return append_strbuf_str(buff, "delayed");
-+	case PATH_DISCONNECTED:
-+		return append_strbuf_str(buff, "disconnected");
- 	default:
- 		return append_strbuf_str(buff, "undef");
- 	}
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 4c0fbcf3..9a17f1ed 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -1371,6 +1371,22 @@ out:
- 	return 0;
- }
- 
-+int select_purge_disconnected (struct config *conf, struct multipath * mp)
-+{
-+	const char *origin;
-+
-+	mp_set_mpe(purge_disconnected);
-+	mp_set_ovr(purge_disconnected);
-+	mp_set_hwe(purge_disconnected);
-+	mp_set_conf(purge_disconnected);
-+	mp_set_default(purge_disconnected, DEFAULT_PURGE_DISCONNECTED);
-+out:
-+	condlog(3, "%s: purge_disconnected = %s %s", mp->alias,
-+		(mp->purge_disconnected == PURGE_DISCONNECTED_ON)? "yes" : "no",
-+		origin);
-+	return 0;
-+}
-+
- int select_max_sectors_kb(struct config *conf, struct multipath * mp)
- {
- 	const char *origin;
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index 55930050..c6c937c3 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -39,6 +39,7 @@ int select_marginal_path_err_rate_threshold(struct config *conf, struct multipat
- int select_marginal_path_err_recheck_gap_time(struct config *conf, struct multipath *mp);
- int select_marginal_path_double_failed_time(struct config *conf, struct multipath *mp);
- int select_ghost_delay(struct config *conf, struct multipath * mp);
-+int select_purge_disconnected (struct config *conf, struct multipath * mp);
- void reconcile_features_with_options(const char *id, char **features,
- 				     int* no_path_retry,
- 				     int *retain_hwhandler);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 9247e74f..91397467 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -186,6 +186,18 @@ enum auto_resize_state {
- 	AUTO_RESIZE_GROW_SHRINK,
- };
- 
-+enum purge_disconnected_states {
-+	PURGE_DISCONNECTED_UNDEF = YNU_UNDEF,
-+	PURGE_DISCONNECTED_OFF = YNU_NO,
-+	PURGE_DISCONNECTED_ON = YNU_YES,
-+};
-+
-+enum path_disconnected_state {
-+	NOT_DISCONNECTED = 0,
-+	DISCONNECTED_NO_PURGE,
-+	DISCONNECTED_NEEDS_PURGE,
-+};
-+
- #define PROTOCOL_UNSET -1
- 
- enum scsi_protocol {
-@@ -382,6 +394,7 @@ struct path {
- 	int dmstate;
- 	int chkrstate;
- 	int oldstate;
-+	enum path_disconnected_state disconnected;
- 	int failcount;
- 	int priority;
- 	int pgindex;
-@@ -483,6 +496,7 @@ struct multipath {
- 	int ghost_delay;
- 	int ghost_delay_tick;
- 	int queue_mode;
-+	int purge_disconnected;
- 	unsigned int sync_tick;
- 	int checker_count;
- 	enum prio_update_type prio_update;
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index af27d107..538800d8 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -134,7 +134,7 @@ ssize_t sysfs_attr_set_value(struct udev_device *dev, const char *attr_name,
- 	size = write(fd, value, value_len);
- 	if (size < 0) {
- 		size = -errno;
--		condlog(3, "%s: write to %s failed: %s", __func__, 
-+		condlog(3, "%s: write to %s failed: %s", __func__,
- 			devpath, strerror(errno));
- 	} else if (size < (ssize_t)value_len)
- 		condlog(3, "%s: underflow writing %zu bytes to %s. Wrote %zd bytes",
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 3c9ae097..84cd1a0a 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -1306,6 +1306,22 @@ The default is: \fBno\fR
- .
- .
- .TP
-+.B purge_disconnected
-+If set to
-+.I yes
-+, multipathd will automatically remove devices that are in a disconnected state.
-+A path is considered disconnected when the TUR (Test Unit Ready) path checker
-+receives the SCSI sense code "LOGICAL UNIT NOT SUPPORTED" (sense key 0x5,
-+ASC/ASCQ 0x25/0x00). This typically indicates that the LUN has been unmapped
-+or is no longer presented by the storage array. This option helps clean up
-+stale device entries that would otherwise remain in the system.
-+.RS
-+.TP
-+The default is: \fBno\fR
-+.RE
-+.
-+.
-+.TP
- .B disable_changed_wwids
- (Deprecated) This option is not supported anymore, and will be ignored.
- .RE
-@@ -1602,6 +1618,8 @@ section:
- .TP
- .B skip_kpartx
- .TP
-+.B purge_disconnected
-+.TP
- .B max_sectors_kb
- .TP
- .B ghost_delay
-@@ -1797,6 +1815,8 @@ section:
- .TP
- .B skip_kpartx
- .TP
-+.B purge_disconnected
-+.TP
- .B max_sectors_kb
- .TP
- .B ghost_delay
-@@ -1881,6 +1901,8 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
- .TP
- .B skip_kpartx
- .TP
-+.B purge_disconnected
-+.TP
- .B max_sectors_kb
- .TP
- .B ghost_delay
-diff --git a/multipathd/main.c b/multipathd/main.c
-index d11a8576..83754cd9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -137,11 +137,14 @@ static enum force_reload_types reconfigure_pending = FORCE_RELOAD_NONE;
- pid_t daemon_pid;
- static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
- static pthread_cond_t config_cond;
--static pthread_t check_thr, uevent_thr, uxlsnr_thr, uevq_thr, dmevent_thr,
--	fpin_thr, fpin_consumer_thr;
--static bool check_thr_started, uevent_thr_started, uxlsnr_thr_started,
--	uevq_thr_started, dmevent_thr_started, fpin_thr_started,
--	fpin_consumer_thr_started;
-+static pthread_mutex_t purge_mutex = PTHREAD_MUTEX_INITIALIZER;
-+static pthread_cond_t purge_cond = PTHREAD_COND_INITIALIZER;
-+int devices_to_purge = 0;
-+static pthread_t check_thr, purge_thr, uevent_thr, uxlsnr_thr, uevq_thr,
-+	dmevent_thr, fpin_thr, fpin_consumer_thr;
-+static bool check_thr_started, purge_thr_started, uevent_thr_started,
-+	uxlsnr_thr_started, uevq_thr_started, dmevent_thr_started,
-+	fpin_thr_started, fpin_consumer_thr_started;
- static int pid_fd = -1;
- 
- static inline enum daemon_status get_running_state(bool *pending_reconfig)
-@@ -1089,6 +1092,109 @@ check_path_wwid_change(struct path *pp)
- 	return false;
- }
- 
-+/*
-+ * Information needed to delete a path via sysfs, copied while holding
-+ * the lock so that the actual sysfs write can be done without holding
-+ * vecs->lock.
-+ *
-+ * The duplicated fd prevents the kernel from reusing the device
-+ * name/H:C:T:L even if the device is removed and a new one appears.
-+ */
-+struct purge_path_info {
-+	struct udev_device *udev;  /* Reference to udev device (refcounted) */
-+	int fd;                    /* Duplicated fd to prevent device reuse */
-+};
-+
-+/*
-+ * Attempt to delete a path by writing to the SCSI device's sysfs delete
-+ * attribute. This triggers kernel-level device removal. The actual cleanup
-+ * of the path structure from pathvec happens later when a uevent arrives
-+ * (handled by uev_remove_path).
-+ *
-+ * This function does NOT require vecs->lock to be held, as it operates on
-+ * copied data. This function may block while writing to sysfs, which is
-+ * why it's called without holding any locks.
-+ */
-+static void
-+delete_path_sysfs(struct purge_path_info *info)
-+{
-+	struct udev_device *ud;
-+	const char *devname;
-+
-+	if (!info->udev)
-+		return;
-+
-+	devname = udev_device_get_devnode(info->udev);
-+	ud = udev_device_get_parent_with_subsystem_devtype(info->udev,
-+		"scsi", "scsi_device");
-+
-+	if (!ud) {
-+		condlog(3, "%s: failed to purge, no SCSI parent device found",
-+			devname);
-+		return;
-+	}
-+
-+	if (sysfs_attr_set_value(ud, "delete", "1", strlen("1")) < 0)
-+		condlog(3, "%s: failed to purge", devname);
-+	else
-+		condlog(2, "%s: purged", devname);
-+}
-+
-+/*
-+ * Prepare purge info for a path while holding vecs->lock.
-+ * Takes a reference on the udev device and duplicates the fd if
-+ * available. The duplicated fd prevents the kernel from reusing the
-+ * device, but if we can't get one (device already disconnected), we
-+ * proceed anyway since reuse is unlikely in that case.
-+ * Returns true if info was successfully prepared, false otherwise.
-+ */
-+static bool
-+prepare_purge_path_info(struct path *pp, struct purge_path_info *info)
-+{
-+	if (!pp->udev || !pp->mpp)
-+		return false;
-+
-+	info->udev = udev_device_ref(pp->udev);
-+	if (!info->udev)
-+		return false;
-+
-+	/*
-+	 * Try to dup the fd if available, but don't fail if we can't get
-+	 * one because the device is already disconnected.
-+	 */
-+	if (pp->fd >= 0) {
-+		info->fd = dup(pp->fd);
-+		if (info->fd < 0) {
-+			condlog(3, "%s: failed to dup fd: %s", pp->dev,
-+				strerror(errno));
-+			udev_device_unref(info->udev);
-+			info->udev = NULL;
-+			return false;
-+		}
-+	}
-+
-+	return true;
-+}
-+
-+/*
-+ * Clean up purge info after use.
-+ * This must be usable as a pthread cleanup handler.
-+ */
-+static void
-+cleanup_purge_path_info(void *arg)
-+{
-+	struct purge_path_info *info = arg;
-+
-+	if (info->fd >= 0) {
-+		close(info->fd);
-+		info->fd = -1;
-+	}
-+	if (info->udev) {
-+		udev_device_unref(info->udev);
-+		info->udev = NULL;
-+	}
-+}
-+
- /*
-  * uev_add_path can call uev_update_path, and uev_update_path can call
-  * uev_add_path
-@@ -2474,6 +2580,21 @@ get_new_state(struct path *pp)
- 	if (newstate == PATH_REMOVED)
- 		newstate = PATH_DOWN;
- 
-+	/*
-+	 * For PATH_DISCONNECTED, mark the path for purging if that feature
-+	 * is enabled. Whether or not purge is enabled, mark the path as
-+	 * down.
-+	 */
-+	if (newstate == PATH_DISCONNECTED) {
-+		if (pp->mpp->purge_disconnected == PURGE_DISCONNECTED_ON &&
-+		    pp->disconnected != DISCONNECTED_NEEDS_PURGE) {
-+			condlog(2, "%s: mark (%s) path for purge",
-+				pp->dev, checker_state_name(newstate));
-+			pp->disconnected = DISCONNECTED_NEEDS_PURGE;
-+		}
-+		newstate = PATH_DOWN;
-+	}
-+
- 	if (newstate == PATH_WILD || newstate == PATH_UNCHECKED) {
- 		condlog(2, "%s: unusable path (%s) - checker failed",
- 			pp->dev, checker_state_name(newstate));
-@@ -2545,7 +2666,18 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 		pp->tick = 1;
- 		return CHECK_PATH_SKIPPED;
- 	}
--	if (pp->recheck_wwid == RECHECK_WWID_ON &&
-+
-+	/*
-+	 * Recheck WWID if either:
-+	 * 1. recheck_wwid is explicitly enabled, OR
-+	 * 2. Path was previously disconnected (higher chance of change)
-+	 *
-+	 * This ensures we catch WWID changes even if users don't enable
-+	 * recheck_wwid, since disconnected paths are far more likely to
-+	 * have been replaced or reconfigured.
-+	 */
-+	if ((pp->recheck_wwid == RECHECK_WWID_ON ||
-+	     (pp->disconnected != NOT_DISCONNECTED && can_recheck_wwid(pp))) &&
- 	    (newstate == PATH_UP || newstate == PATH_GHOST) &&
- 	    ((pp->state != PATH_UP && pp->state != PATH_GHOST) ||
- 	     pp->dmstate == PSTATE_FAILED) &&
-@@ -2554,6 +2686,19 @@ update_path_state (struct vectors * vecs, struct path * pp)
- 		return handle_path_wwid_change(pp, vecs)? CHECK_PATH_REMOVED :
- 							  CHECK_PATH_SKIPPED;
- 	}
-+
-+	/*
-+	 * If path was previously disconnected and has now recovered to
-+	 * UP or GHOST, clear the disconnected state. This happens after
-+	 * the WWID recheck above, so we only clear it if the WWID is
-+	 * OK.
-+	 */
-+	if (pp->disconnected != NOT_DISCONNECTED &&
-+	    (newstate == PATH_UP || newstate == PATH_GHOST)) {
-+		condlog(2, "%s: path recovered from disconnected state",
-+			pp->dev);
-+		pp->disconnected = NOT_DISCONNECTED;
-+	}
- 	if ((newstate != PATH_UP && newstate != PATH_GHOST &&
- 	     newstate != PATH_PENDING) && (pp->state == PATH_DELAYED)) {
- 		/* If path state become failed again cancel path delay state */
-@@ -3022,6 +3167,21 @@ update_paths(struct vectors *vecs, int *num_paths_p, time_t start_secs)
- 	return CHECKER_FINISHED;
- }
- 
-+/*
-+ * Check if there are paths marked for purging.
-+ */
-+static bool
-+has_paths_to_purge(struct vectors *vecs)
-+{
-+	int i;
-+	struct path *pp;
-+
-+	vector_foreach_slot(vecs->pathvec, pp, i)
-+		if (pp->disconnected == DISCONNECTED_NEEDS_PURGE)
-+			return true;
-+	return false;
-+}
-+
- static void enable_pathgroups(struct multipath *mpp)
- {
- 	struct pathgroup *pgp;
-@@ -3125,6 +3285,7 @@ checkerloop (void *ap)
- 		int num_paths = 0, strict_timing;
- 		unsigned int ticks = 0;
- 		enum checker_state checker_state = CHECKER_STARTING;
-+		bool devs_to_purge = false;
- 
- 		if (set_config_state(DAEMON_RUNNING) != DAEMON_RUNNING)
- 			/* daemon shutdown */
-@@ -3168,8 +3329,10 @@ checkerloop (void *ap)
- 			if (checker_state == CHECKER_UPDATING_PATHS)
- 				checker_state = update_paths(vecs, &num_paths,
- 							     start_time.tv_sec);
--			if (checker_state == CHECKER_FINISHED)
-+			if (checker_state == CHECKER_FINISHED) {
-+				devs_to_purge = has_paths_to_purge(vecs);
- 				checker_finished(vecs, ticks);
-+			}
- 			lock_cleanup_pop(vecs->lock);
- 		}
- 
-@@ -3192,6 +3355,13 @@ checkerloop (void *ap)
- 					(long)diff_time.tv_sec);
- 		}
- 
-+		if (devs_to_purge) {
-+			pthread_mutex_lock(&purge_mutex);
-+			devices_to_purge = 1;
-+			pthread_cond_signal(&purge_cond);
-+			pthread_mutex_unlock(&purge_mutex);
-+		}
-+
- 		if (foreign_tick == 0) {
- 			conf = get_multipath_config();
- 			foreign_tick = conf->max_checkint;
-@@ -3229,6 +3399,100 @@ checkerloop (void *ap)
- 	return NULL;
- }
- 
-+/*
-+ * Purge thread: removes disconnected paths by writing to sysfs.
-+ *
-+ * This thread is signaled by the checker thread when paths in
-+ * DISCONNECTED_NEEDS_PURGE state are detected. It attempts to delete
-+ * these paths by writing "1" to their SCSI device's sysfs "delete"
-+ * attribute.
-+ *
-+ * The actual cleanup of path structures from pathvec happens
-+ * asynchronously when the kernel sends a remove uevent (handled by
-+ * uev_remove_path).
-+ *
-+ * To avoid holding vecs->lock for extended periods and starving other
-+ * threads, this function processes one path at a time: lock -> find one
-+ * path -> downgrade to NO_PURGE -> unlock -> delete -> repeat. If no
-+ * paths need purging, it waits for a signal.
-+ */
-+static void *
-+purgeloop (void *ap)
-+{
-+	struct vectors *vecs;
-+	unsigned int i;
-+	struct path *pp;
-+	vecs = (struct vectors *)ap;
-+
-+	pthread_cleanup_push(rcu_unregister, NULL);
-+	rcu_register_thread();
-+	mlockall(MCL_CURRENT | MCL_FUTURE);
-+
-+	while (1) {
-+		struct purge_path_info purge_info = { .udev = NULL, .fd = -1 };
-+		bool found = false;
-+
-+		/*
-+		 * Register cleanup handler first to ensure purge_info is
-+		 * always cleaned up, even if the thread is cancelled while
-+		 * holding the lock.
-+		 */
-+		pthread_cleanup_push(cleanup_purge_path_info, &purge_info);
-+		pthread_cleanup_push(cleanup_lock, &vecs->lock);
-+		lock(&vecs->lock);
-+		pthread_testcancel();
-+
-+		vector_foreach_slot (vecs->pathvec, pp, i) {
-+			if (pp->disconnected != DISCONNECTED_NEEDS_PURGE)
-+				continue;
+ 			DMINFO("waiting for device %s ...", waitfor[i]);
+ 			while (early_lookup_bdev(waitfor[i], &dev))
+ 				fsleep(5000);
 +
 +			/*
-+			 * Downgrade to NO_PURGE whether we succeed or fail.
-+			 * On success, we're purging it now.
-+			 * On failure, retrying is unlikely to help until
-+			 * the checker re-evaluates the path.
++			 * early_lookup_bdev() only checks if the device node exists and
++			 * returns the dev_t. It does not guarantee that the underlying
++			 * block device is fully initialized and ready to be opened. On
++			 * some platforms, this can lead to a race condition where
++			 * dm_early_create() fails because the device is not yet ready.
++			 * Ensure the block device is truly available by attempting to
++			 * get it.
 +			 */
-+			pp->disconnected = DISCONNECTED_NO_PURGE;
-+
-+			/* Try to prepare purge info for this path */
-+			if (prepare_purge_path_info(pp, &purge_info)) {
-+				found = true;
-+				condlog(2, "%s: purging disconnected path", pp->dev);
-+				break;
-+			} else {
-+				condlog(3, "%s: failed to prepare purge info", pp->dev);
-+				/* Continue looking for other purgeable paths */
-+			}
-+		}
-+
-+		lock_cleanup_pop(vecs->lock);
-+
-+		/*
-+		 * Now we've released the lock. Do the sysfs operation
-+		 * without holding vecs->lock. This may block.
-+		 */
-+		if (found)
-+			delete_path_sysfs(&purge_info);
-+		pthread_cleanup_pop(1);
-+
-+		/*
-+		 * If we didn't find a path to purge, wait for signal.
-+		 */
-+		if (!found) {
-+			pthread_mutex_lock(&purge_mutex);
-+			while (!devices_to_purge) {
-+				condlog(4, "purgeloop waiting for work");
-+				pthread_cond_wait(&purge_cond, &purge_mutex);
-+			}
-+			devices_to_purge = 0;
-+			pthread_mutex_unlock(&purge_mutex);
-+		}
-+	}
-+
-+	pthread_cleanup_pop(1);
-+	return NULL;
-+}
-+
- static int
- configure (struct vectors * vecs, enum force_reload_types reload_type)
- {
-@@ -3669,6 +3933,8 @@ static void cleanup_threads(void)
++			while (!(bdev = blkdev_get_no_open(dev, false)))
++				fsleep(5000);
++			blkdev_put_no_open(bdev);
+ 		}
+ 	}
  
- 	if (check_thr_started)
- 		pthread_cancel(check_thr);
-+	if (purge_thr_started)
-+		pthread_cancel(purge_thr);
- 	if (uevent_thr_started)
- 		pthread_cancel(uevent_thr);
- 	if (uxlsnr_thr_started)
-@@ -3685,6 +3951,8 @@ static void cleanup_threads(void)
- 
- 	if (check_thr_started)
- 		pthread_join(check_thr, NULL);
-+	if (purge_thr_started)
-+		pthread_join(purge_thr, NULL);
- 	if (uevent_thr_started)
- 		pthread_join(uevent_thr, NULL);
- 	if (uxlsnr_thr_started)
-@@ -3937,6 +4205,11 @@ child (__attribute__((unused)) void *param)
- 		goto failed;
- 	} else
- 		check_thr_started = true;
-+	if ((rc = pthread_create(&purge_thr, &misc_attr, purgeloop, vecs))) {
-+		condlog(0,"failed to create purge loop thread: %d", rc);
-+		goto failed;
-+	} else
-+		purge_thr_started = true;
- 	if ((rc = pthread_create(&uevq_thr, &misc_attr, uevqloop, vecs))) {
- 		condlog(0, "failed to create uevent dispatcher: %d", rc);
- 		goto failed;
 -- 
-2.52.0
+2.34.1
 
