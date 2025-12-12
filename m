@@ -1,161 +1,163 @@
-Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com [209.85.215.171])
+Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85CED2FCC17
-	for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 13:10:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F0193019D0
+	for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 18:22:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765545011; cv=none; b=FAzvXKw/T+TUyL5POSy69Qexc87POc5beCSc7Q7piNVYq16jp8tIpW/12wy4LiKw5OKhTpkv0BfxZRpqluOJFpa5th6ZP+fnqc8EoG2RjYq1fDh3vmayxJQPn020qF8QZlYpNOdv2ZqVXd7DHyfca/6t+b45qMtZArOituNl8bE=
+	t=1765563732; cv=none; b=ljlXumwjQxB0pWSEJT1s11Rv1O87BfnaBovcbp5nFszJHvMgioPLNAySEfa7rYTP3DQi0wQ1QrZEdiPc+AZf0e3NX605T/f2xkamXdr/nw6I4QlVsp4/4FBdc9AlI5oKQsDCUZa4YeCtzB0dNwoIANKrJ5vije/NefwquoqqBXw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765545011; c=relaxed/simple;
-	bh=akJBLzsjo9sqFsY9k0R///6KfF7oIt8Sdfys6s1/GcI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Frrit3lZzR/soXpETW42izdj3p3mmSfWTdEF/Pj7ma6fcKB+AzwDB2rgV0l15uW2gyNDTqR0TypRgQ2m7emEMZcrnZzfyWRmVGDuxRd5wth4SfJO7fQF39b4cdgxihA4B1edhW75n1NaSM31WYwjC3227LTwJy18KwEcx8KSZJ8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XP5MG1L3; arc=none smtp.client-ip=209.85.215.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1765563732; c=relaxed/simple;
+	bh=vpuUUIQ9k2laX5rFORpbrwD2mGb7OpMG7R0jZkuO8/A=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=AOq1swTiAF+NX+jCeX+h5siApQGJmHaAS5baEHiuyAy0QuaJgdz18SB+m1thLDl6hgD/tGTfhwe8IxCtLSScvfqmlPMhA4/OBti3P3+qngOaFW8WtNpv8EARF50C75QEIyp/3GIcm6P23ch/QCdMPNr2Q4g3QWPybUCIej4vHXE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=L1XwO5US; arc=none smtp.client-ip=209.85.218.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XP5MG1L3"
-Received: by mail-pg1-f171.google.com with SMTP id 41be03b00d2f7-bfb84c2fe5eso489565a12.1
-        for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 05:10:09 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="L1XwO5US"
+Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-b79f98adea4so235430766b.0
+        for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 10:22:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1765545009; x=1766149809; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=cYguud+i6xWCXjMtuaKPW6jl0otNSsyzkB0eJpHEhmA=;
-        b=XP5MG1L3t+NDcLoWFyhCcydvV7VanZr5Fd/6l3DwmJR5bA0CQu6p5SzJvGecyYUF2e
-         hXr0KVEGc1CxbfX2VIJnUsTpTqpXL4cK3U+hMcvGs73hpyBWEIITDAegCQg995Dvs1kX
-         P25XhYVH1GrcDHSl1GjBk5fZWjYbwmg2CVa69xIr1w4M0atnVe0hl/vlH3YmCpN7wZut
-         qA5kFMIVYPNP0PhiIlrUBYJSqXDU3tn4nKQoifxCC3LzZzU2ibrbTf4sIqoGxp/z7hi9
-         M4fNcD3G0ZBBdZeGtRxcxiLgVZIZOsrin3C7hVkMLvkwPdXSuFTAk8aqZxuRkLdw+osV
-         B4Ag==
+        d=linux-foundation.org; s=google; t=1765563727; x=1766168527; darn=lists.linux.dev;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=vEr4ZcKrKg9IpSmRzqy3w8OMMyNf/JsMRqWzFyXn948=;
+        b=L1XwO5USoaHT/fX//TjGCfLenFqJE2sbBJIHVk86jclKjXTKG0tP/th36xXqKpuA36
+         Z/eIKP2hFO2DnA10NDiCfnPwsqI3VjvxU6NvrC3hIc+90iBrdfV8u/ab6zKT551r/3Fm
+         o4MmcuUV3Xi2GL0jZxk9Zp2U0QdWASmaeRKX0=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1765545009; x=1766149809;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=1e100.net; s=20230601; t=1765563727; x=1766168527;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=cYguud+i6xWCXjMtuaKPW6jl0otNSsyzkB0eJpHEhmA=;
-        b=vFgSlc1xtr9+gOA3gStyJWDag26aWF3w1gkKW8ls4Y+1GCqOcF/SSTEDB8GxLeGydr
-         kchG/x2nbfsT5OVlWdekVlpvuc9V8ZPmhouBqLiVCfJ16fDGg9RWLuE0nHvKB/tTRkXU
-         L5m7vD9re5sYlAGiJD/z3xyxeMxTU0zs86ztVMXVgw8RhEKgrOezSBpDTHefqN/bIuIY
-         XhqdDnIdqPR9ZT3NiRaI5fsUkJLiQu7WWVIX2ofg5k6j3/4IMqC+yW5ctJpd9FSgrwnJ
-         vZm2ZsqVQ0ziJ6BRZW6/yYYxZFQ6cqndKSuWSY/wNwaChGnDqlk54A0xyqunawJRVYBt
-         ngJQ==
-X-Gm-Message-State: AOJu0YzZHqZNF1YULk3jRdd6V7gCb9juxL8rLI7yCbuighDM1mTMk3aM
-	tAY9Ly9sVSckX5nJD1ynWKR9vplPODcBuVdS0f/WUfNmONf61wO4jgm0
-X-Gm-Gg: AY/fxX7GJ+GyOp9G7qPFnPLU0ILgxardBBpReZ07cpbV26CQN8NfiT5rwnQ2MXFtz65
-	CDSNq0kDwXOxLo+Cb5uHMriZynaPe7tNjwcXFkep1Ig2LYM10e2BmsJul8t8ruGQCMFBrB/PzJ5
-	jwI3zgjsUYhBnNQSeVwNGX9nbhcxARz6SZA4LXBEC8jSFijmRNQaKLXCfX/TbGVZ0rjlDHzyozb
-	ZKels+Fo5GiogoR3Wg2N9qu8bE+XBsqZgfzEZD2wT9mvHth92+nJbW3wM7g80trwHn+Vi4soxCE
-	/L2ylC1KSx3UHWYd8wQIHefg3ohTH0acGttU1TTyS1u+9HsNuRxn9dKfl7zKs1tZtJ5p5MzwUtk
-	EzbdUlKVm0KtF1VW/b/n2iZmeK8A3vxwtlqvq5T2uTQFx/sDVpKkajQE3gA47CUzHz+xXxX/RW+
-	cMmDMUvEkOfJuaaFxpTaUEGFUetYVj7NvVLpYn8DrJkM2O4pmkgZWkY2+TCg==
-X-Google-Smtp-Source: AGHT+IHTArRW5xSyZnImfdnlDo+LmjEiM3z0Zt2EehnkGdqf+lWiVP8jsSySeGLQZ5Fkw/O/rPVpWw==
-X-Received: by 2002:a05:6a20:728e:b0:366:14b0:4b16 with SMTP id adf61e73a8af0-369aa740ecamr2276279637.33.1765545008562;
-        Fri, 12 Dec 2025 05:10:08 -0800 (PST)
-Received: from xiaomi-ThinkCentre-M760t.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-c0c2b9d81d2sm5132432a12.26.2025.12.12.05.10.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 12 Dec 2025 05:10:08 -0800 (PST)
-From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Yongpeng Yang <yangyongpeng@xiaomi.com>,
-	Yongpeng Yang <yangyongpeng.storage@outlook.com>
-Subject: [PATCH v3 1/1] dm-stripe: adjust max_hw_discard_sectors to avoid unnecessary discard bio splitting
-Date: Fri, 12 Dec 2025 21:09:55 +0800
-Message-ID: <20251212130955.466384-1-yangyongpeng.storage@gmail.com>
-X-Mailer: git-send-email 2.43.0
+        bh=vEr4ZcKrKg9IpSmRzqy3w8OMMyNf/JsMRqWzFyXn948=;
+        b=aKeyNqWyOMJlph3jKHTBzZBZJzl79ZyeULjKUkb0sVqmfG1+G23bq33W6a5vO56ekb
+         jHFaI2iu6vfOeF+Muf7xnwMPBNTunsTbpekmsjzIikAfK1GaaP0LAxAtoa+pyZsN9kBj
+         M4DZDWuvtWujwYGYdhXhA6mjqPvUfBJfI9EHE92wu7+39fCr++MX/sNsm4dgknH2Ydyk
+         TaRi6SJHbIh8FfWzrUpJTPpOqtL5Sg6n6mQ5bpM/dRZnRcGx/PD7P86Sahlc4tyF8xId
+         qTOELjvLCBTthEgGv0Hb2ekAMc8nf+lBYoVn+gW7PSBnUZ38D1pNF4+nPFG551hRul5o
+         WKiA==
+X-Forwarded-Encrypted: i=1; AJvYcCVoykh39zv5aM6zWmq6COOQapEPZyO8shlawV6ghxjcEviLFFhrNs7N5GghZg/B2Jsf7vO0V9ifNg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyQVI6rqRX1HR2f8kwx/dyzZ1ZNaQlH3Qn88NnTK9qVGapKxXH1
+	MDdvjri5LykYwkDujTI3B6kuFp8umowo4oX1aj90XTigtlNxI35UgH0fmlvhelPvTVSg3+DAYwf
+	ujlTXlPkXHQ==
+X-Gm-Gg: AY/fxX4LV++pnGW3vjLO55PQNr0cKRwnv03bHStJacKgFKaKhNb9vubh8EiLb1WMEMi
+	rWPXxmDLPctsBF6qPNXiBMhhADEqAnttyuB8gNouksOHo1JHnaCSuCzH+r3shHbakCZrTwLBqjY
+	uRwUlrgJIuicQXUXAx2tsJy/gQGPt0GKnz7RaZQwgTlm/chQ/66xRerHogqO6rs1VKGX2stOajz
+	Iy6sF/Ed75+R0mZfuGfhH38I8P6L1uis41zRCypbSCRpqv6ZSkZKr+aysW/vx80Xla2CAVfhspA
+	MxgwBiQ+hIb1zLZsDJT37ZxYSRO3Xk7+2YV7YeymghUjhMbJrEocyptejQVix1x0ZNdNPBb0mw9
+	chwOvrWMSQKG9hIubleJjQUKFNh/CJUl2dISoEZMTiK3bpfugI2z1K8lLkD8rgMVWQT8DB43mbi
+	o2y7TH4OkgIh60CrddKosw/68m4N7Rs8VdNOIxbxLMzVBe3ZU+HxUun1qI0+GtbkxhAFbXQU0=
+X-Google-Smtp-Source: AGHT+IG5ceHUqfHyY4r7XHuNCeKgJi2GZQ9va2PSra/7Q9eRFa2CGzzKgcsC+zY1L26ZGfrpfKciPw==
+X-Received: by 2002:a17:907:7f23:b0:b72:588:2976 with SMTP id a640c23a62f3a-b7d23d1390bmr266425466b.60.1765563727509;
+        Fri, 12 Dec 2025 10:22:07 -0800 (PST)
+Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com. [209.85.218.41])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-64982040d14sm6037430a12.5.2025.12.12.10.22.06
+        for <dm-devel@lists.linux.dev>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 12 Dec 2025 10:22:07 -0800 (PST)
+Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-b728a43e410so240887466b.1
+        for <dm-devel@lists.linux.dev>; Fri, 12 Dec 2025 10:22:06 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AJvYcCWJlNG5Fy+7KjuDYgEmhjEcVZigQAWHz6229YZ/xCHEzfAiEymHmTvHG5RW0cb1ZIo/cZqwqFge/g==@lists.linux.dev
+X-Received: by 2002:a17:907:9496:b0:b71:854:4e49 with SMTP id
+ a640c23a62f3a-b7d23d042e7mr355463566b.56.1765563725883; Fri, 12 Dec 2025
+ 10:22:05 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+References: <2b7fa07e-cf1c-73a7-d1eb-5d6082e08b29@redhat.com>
+ <CAHk-=wi4ckGEFjHhMHcSoWidgd+URdorcdt5KCP6rQvP_DDS5g@mail.gmail.com>
+ <CAHk-=wjkgKyDHDpXJR7_fQ3AT3gohukyAGuxqOCU1yyiRradHw@mail.gmail.com> <b9a10a71-92a3-8e47-b842-46a30b1af82e@redhat.com>
+In-Reply-To: <b9a10a71-92a3-8e47-b842-46a30b1af82e@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Date: Sat, 13 Dec 2025 06:21:49 +1200
+X-Gmail-Original-Message-ID: <CAHk-=wh-LQTLhD-vOqHfhb3cyust1aeU4UPmTyGkaD5kgDFLzg@mail.gmail.com>
+X-Gm-Features: AQt7F2ov-My23MuUg1NoMrEjgwVq5DPsPWaVF_02EkT45IRLZHr7BlJdi3fpaEE
+Message-ID: <CAHk-=wh-LQTLhD-vOqHfhb3cyust1aeU4UPmTyGkaD5kgDFLzg@mail.gmail.com>
+Subject: Re: [git pull] device mapper changes for 6.19
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
-From: Yongpeng Yang <yangyongpeng@xiaomi.com>
+On Fri, 12 Dec 2025 at 05:56, Mikulas Patocka <mpatocka@redhat.com> wrote:
+>
+> I rebased it just before sending it because the kernel test robot found
+> grammatical errors in two commit messages.
 
-Currently, the max_hw_discard_sectors of a stripe target is set to the
-minimum max_hw_discard_sectors among all sub devices. When the discard
-bio is larger than max_hw_discard_sectors, this may cause the stripe
-device to split discard bios unnecessarily, because the value of
-max_hw_discard_sectors affects max_discard_sectors, which equal to
-min(max_hw_discard_sectors, max_user_discard_sectors).
+That really isn't a strong enough reason to then rebase things late.
 
-For example:
-root@vm:~# echo '0 33554432 striped 2 256 /dev/vdd 0 /dev/vde 0' | dmsetup create stripe_dev
-root@vm:~# cat /sys/block/dm-1/queue/discard_max_bytes
-536870912
-root@vm:~# cat /sys/block/dm-1/slaves/vdd/queue/discard_max_bytes
-536870912
-root@vm:~# blkdiscard -o 0 -l 1073741824 -p 1073741824 /dev/mapper/stripe_dev
+Rebasing is for *important* things, or for early development. Not for
+the merge window, or at least not without explaining why the tree
+contains a lot of very recent changes.
 
-dm-1 is the stripe device, and its discard_max_bytes is equal to
-each sub device’s discard_max_bytes. Since the requested discard
-length exceeds discard_max_bytes, the block layer splits the discard bio:
+> What's your preferred time frame for submitting the device mapper pull
+> request? One week since the merge window starts? Or less than one week?
 
-block_bio_queue: 252,1 DS 0 + 2097152 [blkdiscard]
-block_split: 252,1 DS 0 / 1048576 [blkdiscard]
-block_rq_issue: 253,48 DS 268435456 () 0 + 524288 be,0,4 [blkdiscard]
-block_bio_queue: 253,64 DS 524288 + 524288 [blkdiscard]
+The code should be ready *BEFORE* the merge window starts. Not "one
+week after". Not one *HOUR* after.
 
-However, both vdd and vde can actually handle a discard bio of 536870912
-bytes, so this split is not necessary.
+Lots of people send me their pull requests the week before. This time
+around I had something like 35 pull requests ready to go for the merge
+window in my inbox when I released 3.18.
 
-This patch updates the stripe target’s q->limits.max_hw_discard_sectors
-to be the minimum max_hw_discard_sectors of the sub devices multiplied
-by the # of stripe devices, and max_hw_discard_sectors must round down to
-chunk size multiply # of stripe devices to avoid issue discard bio to sub
-devices which is larger than max_hw_discard_sectors.
+Other people wait for the actual release, so then on the first Monday
+of the merge window that number had roughly doubled, and that's fairly
+normal.
 
-This patch enables the stripe device to handle larger discard bios
-without incurring unnecessary splitting.
+Does it *have* to come in that early? No. We have two weeks partly to
+be able to be flexible. But those two weeks are *not* for development.
 
-Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
----
-v3:
-- Rounding stipe device's max_hw_discard_sectors down to a multiple of
-chunk_size.
-- Drop sc->max_discard_sectors code.
-v2:
-- When an overflow occurs, assign (UINT_MAX >> SECTOR_SHIFT) to
-limits->max_hw_discard_sectors.
----
- drivers/md/dm-stripe.c | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+They are for me and "it takes time to merge", and they are for other
+developers for "my goldfish ate my favorite stick bug, and now I'm
+devastated and an emotional wreck, and it took me some time to get
+over it".
 
-diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
-index 1461dc740dae..8a872f5d633e 100644
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -456,7 +456,7 @@ static void stripe_io_hints(struct dm_target *ti,
- 			    struct queue_limits *limits)
- {
- 	struct stripe_c *sc = ti->private;
--	unsigned int io_min, io_opt;
-+	unsigned int io_min, io_opt, max_hw_discard_sectors = limits->max_hw_discard_sectors;
- 
- 	limits->chunk_sectors = sc->chunk_size;
- 
-@@ -465,6 +465,14 @@ static void stripe_io_hints(struct dm_target *ti,
- 		limits->io_min = io_min;
- 		limits->io_opt = io_opt;
- 	}
-+	if (max_hw_discard_sectors >= sc->chunk_size) {
-+		if (!check_mul_overflow(max_hw_discard_sectors, sc->stripes, &max_hw_discard_sectors)) {
-+			max_hw_discard_sectors = rounddown(max_hw_discard_sectors,
-+					sc->chunk_size * sc->stripes);
-+			limits->max_hw_discard_sectors = max_hw_discard_sectors;
-+		} else
-+			limits->max_hw_discard_sectors = UINT_MAX >> SECTOR_SHIFT;
-+	}
- }
- 
- static struct target_type stripe_target = {
--- 
-2.43.0
+So people have other things going on in their lives than just kernel
+development, and two weeks gives some buffer for that.
 
+And sometimes there's some trees that have dependencies where there's
+a few "I need to go after that other tree" kinds of things, and the
+two weeks gives some flexibility in that sense.
+
+That last case used to be particularly true back when Andrew Morton
+didn't use git, so his series depended on other peoples git trees and
+couldn't use stable git branches where two or more trees shared some
+common history.
+
+But even with all those reasons for two weeks, the merge window is for
+things that were ready *before* the merge window started.
+
+Sure, late commits happen because maybe there were fixes that still
+came in and people notice them and want to deal with fixes asap,  and
+there might be a "one more thing" there, but the merge window is NOT
+for new development.
+
+And not for random late rebases that aren't explained. When I see lots
+of recent commits, that just makes me go "what the heck happened
+here?" exactly because that should *not* be happening. It should have
+been ready to go.
+
+And as always - you can *explain* things. The merge message should
+have explanations for what the pull contains, but there can also be
+notes about why something was slightly off. Like explaining why some
+unusual late rebase happened.
+
+But note the "unusual". It shouldn't be the pattern.
+
+Basically, if a pull request comes in during the second week, you
+should have a *reason* for it that you also explain. If it's too
+personal to explain in public, feel free to just send me a separate
+private email.
+
+Things happen. We have rules, but at the same time very few rules are
+black and white. Kernel development is supposed to be pretty flexible
+- outside of the "no regression" rules, pretty much all other rules
+can be bent.
+
+But when the rules are bent, they should at least be explained.
+
+            Linus
