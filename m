@@ -1,99 +1,119 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17CCB340A76;
-	Tue, 16 Dec 2025 23:07:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D80E3314AE
+	for <dm-devel@lists.linux.dev>; Tue, 16 Dec 2025 23:29:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765926422; cv=none; b=OsmaHGTe8s/zTdNraNMZxRX1xVvv7xK9sXt+qQXjZRW+Pa61DLb17TnF6+KhlbZ2Oyauk3tYaDyCHIuQYOrlOsn18gepuNpkPg2kyyG42B5C5dP9ky/g/O7DLCGhIwgmEDJhdDbFH1vwpL6ksZsh4jp23kpZcYoXOeo6W7a1WbQ=
+	t=1765927749; cv=none; b=sEz485H7if26DB/FuVza3VBktfJ6DfRvq76MC/r2BGVVtkxaZ+mayvdaXX+NZkQY5XUBs9nh1ZycJI2zNsYYeJukE2wtHXya1cC7o9QWy7Smf9us6EUzm/XIgOJyvynYpuDS8FR4BQUnoxdQjEUc3r25PqDZFocDcdwTqDCtPy0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765926422; c=relaxed/simple;
-	bh=TePe5x8bc2SCbRZ9v/pRAuE0G51ZeD7YUoqCgC3LQ48=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QbM2HDdtoo/nEtfe5GSahjj2EcTxyo2zJaJEK9eKoK8+smxDZtG9zYqvuPCW4MstkPQ3rpTkviq5FEEBu5E+isHNQIvftaV/vGsXsjGz7YXIWVCjbYwIZYtytM6YEf7p037BZbkCXSM29zEuwkH3hVNk3FPGCzLy2aAgzK5PznI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Jf+OSPkj; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1765927749; c=relaxed/simple;
+	bh=MNqx/is4AzUDjVk7L2SJgdiKvF3YRpFxAxooqW8iQII=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=ju/3nhW5Ji5f2X6zYsq8hRG20STzj7LxYIpPKF0BM5gAONfCM/8pjIWAQGB5tbvH9/8OFOcYuScNdASdNWUY+6OcRCgfIegHQANnurK359PHnXgLHfBBfBAMiRZcSIXsg1Wf6LNUoxb4Gp6aAaRBcE06JQc04cV2XzYC10FGA+o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=LALMBc75; arc=none smtp.client-ip=209.85.128.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Jf+OSPkj"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 65E8BC113D0;
-	Tue, 16 Dec 2025 23:07:01 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1765926421;
-	bh=TePe5x8bc2SCbRZ9v/pRAuE0G51ZeD7YUoqCgC3LQ48=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=Jf+OSPkjYsWOffttmTCaFsgPSvn8S1UkZ0ZTWN7qhrUtFwtsE7KEaJI7He2rO7dpi
-	 eVBKwqrGnoDvrAdu6Z8Nov9Dp3GBV6AKUxIYfLWvBvuASgG/qssJnfUWCWdv5DegSU
-	 /vJf8SYDq+WBlFrMedeD8drUEiWPwL2Df+aFwCdN+N8tdN8S4emcvALs+Aaufc1TOW
-	 X1TrhfpWSp0ulyEtEfzTviJslWaKLLgTBNEKRiawhQ+gWGwXxKAvQ0ixUvrrb6jjhl
-	 DuD7sxcvse1MPBERmTRu+K/V579PUKXSewDUbl7l3BkQ2c5lXD5zRMEPG79JvXv1xu
-	 IJIK0WuD3cbkA==
-From: Eric Biggers <ebiggers@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Sami Tolvanen <samitolvanen@google.com>,
-	Eran Messeri <eranm@google.com>,
-	linux-kernel@vger.kernel.org,
-	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 7/7] dm-verity: allow REED_SOLOMON to be 'm' if DM_VERITY is 'm'
-Date: Tue, 16 Dec 2025 15:06:14 -0800
-Message-ID: <20251216230614.51779-8-ebiggers@kernel.org>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20251216230614.51779-1-ebiggers@kernel.org>
-References: <20251216230614.51779-1-ebiggers@kernel.org>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="LALMBc75"
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-47774d3536dso269725e9.0
+        for <dm-devel@lists.linux.dev>; Tue, 16 Dec 2025 15:29:05 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1765927744; x=1766532544; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=MNqx/is4AzUDjVk7L2SJgdiKvF3YRpFxAxooqW8iQII=;
+        b=LALMBc75FEHflQ2ghL2qV3pinNpH2feVj1B3ReZT51/qNo7bL8ooi8mB7ZRYq4dszL
+         7cV1FEvk7VYUYdREN/jzXdvBkkeQlMCREU01CqnEUZrtj4ebs1mte+wfJBa7q3IOuwdU
+         YKctJuGgGg8ms0KwPaRoVK/+lot9xteR2Yxh7b5MgtLhZ7cS5rlarOqSxprJn9cg2hp5
+         EaY/Z+2Cia4hSOIIAD4mpi2SIP3chZWOPrh23y2u6qeBA2MnBkusph4Ged+M803D0tZd
+         IWBfeNHbG8pAJXr03goKpQ/QVwnaQB6+JctOKDHBl1pvQRtH7aLg5DVk4utl8/gkbWiB
+         NfOw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1765927744; x=1766532544;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=MNqx/is4AzUDjVk7L2SJgdiKvF3YRpFxAxooqW8iQII=;
+        b=xCWBNCP6LM2ww3a4IwKpTadbYjWqAy63lPwXZ0PVuKveUaMxMiqGUb1Jk0ZkMM+ttJ
+         7EQpt099WLT2S0O4dQCRoTG//hRZ5YGCQSkhYMKo4/a8CKMXj08YQLEv9IrsE2ffpSN8
+         jwkPXyujiFyTCtB3QePDkitWDqYrxT5nQ2zMoutu+0+N7aeqJ+59U8QYHzTIqSSB6q1U
+         8P5vlkmtadEf+fDUn2ssOG62tDmZssLSAMPgcbXAV37ddLPzDYdN5QCCqhC80jA4za2p
+         EZOr8MvEtU52Um51njpZ5ULdAFAjx2WGkjRiIu4g4htxQZdHE13JliQLc3Aidyr/rwKh
+         Bdog==
+X-Gm-Message-State: AOJu0YzBf4RudCuDA+/sGQPJYdPdqLPq5lcLUBJPyxHee1+wWq/GOt8B
+	I09SILVhSimXJ9iUBh8yKe2MOM8S494TbKzzGstOpm6fxuWws0uBHGt+ayu1hg83mNvojLrosep
+	AoYcb
+X-Gm-Gg: AY/fxX6lekO5r0SHUVLNPfxKnuDCwxBANWuGO/29YJ8l47sBdJsYESa+Ugh+Jo+NdMV
+	7mKkFpseAloKe2TK0FK8VCuVrc7K1CZ+jlvnqNxP219/+Dm3KNKgORlXdTS/UIC0XgFB5g2RZ/2
+	XmBMh9KmPhqoSLzShoesN/q++7AMckzve10gyAdON4p062NR1xkOPNoZ5c1Qjvei30qRcWkFtIu
+	8CEvI0cpZsE5vKsoBpej7HiBWSI4mPzOiUyXq/y+yLVZtzgVUQ5i4PhTnQ2ZGPO08iMu1roZlYL
+	tCq2mRyIJ0tMhokImO80Uv7S6ufnEeWeu9a6jn4luqqruwez4qobiGaDYPHOT/nx2sP7mSipIIm
+	GLbG2Ro7+rGWbLW9qWHrmLrYlPnOOuHV/8LRqpmvONAGbZLGTh/O4t+fICBRPiyP9Dw9wg8QJY+
+	JFD+MRgpkDZgKdVW8qcfgt1CN3IDse+OIw20bkabv8XefGVMixCh+bdROKoMIIhDmR/nTIBv0Ti
+	NOiKis724NRUy7RjYYBWL91ks15yJt7HHMiWaoSNvWIPlF6nMLjF6VySg==
+X-Google-Smtp-Source: AGHT+IGETgZKXztkUhsbbNcHCv7TFxgV0dgD1foI7Um/QuINOkqTCGVAnyfkeg74e9/a3MRhu69c5Q==
+X-Received: by 2002:a05:600c:6208:b0:46f:a2ba:581f with SMTP id 5b1f17b1804b1-47a8f2c9fa3mr177448615e9.16.1765927743668;
+        Tue, 16 Dec 2025 15:29:03 -0800 (PST)
+Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-47bd9154168sm18568805e9.7.2025.12.16.15.29.03
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 16 Dec 2025 15:29:03 -0800 (PST)
+Message-ID: <1664f321b49bd159c6c45f457fe436b65d4e38aa.camel@suse.com>
+Subject: Re: [PATCH v3] libmpathpersist: fix code for skipping multipathd
+ path registration
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+Date: Wed, 17 Dec 2025 00:29:02 +0100
+In-Reply-To: <20251215202958.1995896-1-bmarzins@redhat.com>
+References: <20251215202958.1995896-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-The dm-verity kconfig options make the common mistake of selecting a
-dependency from a bool "sub-option" rather than the main tristate
-option.  This unnecessarily forces the dependency to built-in ('y').
+On Mon, 2025-12-15 at 15:29 -0500, Benjamin Marzinski wrote:
+> When libmpathpersist notifies multipathd that a key has been
+> registered,
+> cli_setprstatus() calls pr_register_active_paths() with a flag to let
+> it
+> know that the paths are likely already registered, and it can skip
+> re-registering them, as long as the number of active paths matches
+> the
+> number of registered keys. This shortcut can fail, causing multipathd
+> to
+> not register needed paths, if either a path becomes usable and
+> another
+> becomes unusable while libmpathpersist is running or if there already
+> were registered keys for I_T Nexus's that don't correspond to path
+> devices.
+>=20
+> To make this shortcut work in cases like that, this commit adds a new
+> multipathd command "setprstatus map <map> pathlist <pathlist>", where
+> <pathlist> is a quoted, whitespace separated list of scsi path
+> devices.
+> libmpathpersist will send out the list of paths it registered the key
+> on. pr_register_active_paths() will skip calling
+> mpath_pr_event_handle()
+> for paths on that list.
+>=20
+> In order to deal with the possiblity of a preempt occuring while
+> libmpathpersist was running, the code still needs to check that it
+> has
+> the expected number of keys.
+>=20
+> Fixes: f7d6cd17 ("multipathd: Fix race while registering PR key")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Fix this by moving the selections of REED_SOLOMON and REED_SOLOMON_DEC8
-into DM_VERITY, conditional on DM_VERITY_FEC.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-This allows REED_SOLOMON to be 'm' if DM_VERITY is 'm'.
-
-Signed-off-by: Eric Biggers <ebiggers@kernel.org>
----
- drivers/md/Kconfig | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index 239c1744a926..c58a9a8ea54e 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -547,10 +547,12 @@ config DM_VERITY
- 	depends on BLK_DEV_DM
- 	select CRYPTO
- 	select CRYPTO_HASH
- 	select CRYPTO_LIB_SHA256
- 	select DM_BUFIO
-+	select REED_SOLOMON if DM_VERITY_FEC
-+	select REED_SOLOMON_DEC8 if DM_VERITY_FEC
- 	help
- 	  This device-mapper target creates a read-only device that
- 	  transparently validates the data on one underlying device against
- 	  a pre-generated tree of cryptographic checksums stored on a second
- 	  device.
-@@ -596,12 +598,10 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
- 	  If unsure, say N.
- 
- config DM_VERITY_FEC
- 	bool "Verity forward error correction support"
- 	depends on DM_VERITY
--	select REED_SOLOMON
--	select REED_SOLOMON_DEC8
- 	help
- 	  Add forward error correction support to dm-verity. This option
- 	  makes it possible to use pre-generated error correction data to
- 	  recover from corrupted blocks.
- 
--- 
-2.52.0
-
+Git clang-format applied a few minor changes, and I needed to add
+a spelling exception. I'll apply to my queue branch with these changes.
