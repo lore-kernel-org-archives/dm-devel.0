@@ -1,94 +1,58 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 578A92248B8;
-	Tue, 16 Dec 2025 00:53:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 663B7335577;
+	Tue, 16 Dec 2025 07:57:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765846434; cv=none; b=q8/Mm7GDbXzjAkRTVflLAZ8WRv2Snc18xLZh0FIviS8flrNG/MukvpyZhmUZqAuh+c7BP8nnSKBdnIMutKl39fxugqXYpgwSELb2LH3faUEJvFsHwDGlK9adkocgQrnq7NYblARkxyWF6h6pgwpCb0cxmU5LcERBPeV54tEygMM=
+	t=1765871830; cv=none; b=OCnRfY3QANRhp4r13Csctv/nbS6VHrxBbwgfK98DoDyoDZrxHAZsMCJIg3XK1rSm+J1e5IjHjSuTbgWLvGEXMPJWxYxaDCdv4oHCsJ1Q6+CUhWWD1NhXxPFk98SEgNl7+33zJBv+D2VTohU9WM+IeAdcEDDuzvZd3+r5M1WDgBA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765846434; c=relaxed/simple;
-	bh=KVybdq2V+565NkdvIZa4ZXWTv3pqp1aoH6+zdj49hO8=;
-	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
-	 In-Reply-To:To:Cc; b=bf8mRoQ7zsQjtb0IfCgHW+HyQBGnAkjRbgikNHRGtyDQEoXRXFcwuJM6G4GHmqlSAVWYnOtryD/TsjD07UQ7yU0BXe8HW39Y78PgiOD41jvU731Q1jojwTFQ0Oj49i95WNRiacsqKteoSeF2ieOZ0KLac/+xoXjdRA/3N0W66n0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gZff/+3l; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1765871830; c=relaxed/simple;
+	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=J0BC05SzZeAw7nV+JDJNsM68TLChnBjhppMNUdFc1oOYhDSBfIH5AJyXHS8V8kZ12afgba1IKRqSHH0NakahPMqDkGny8jXix10jG6YA5JAWk/MxzNvkB8mjjOKnLbXrnTvA1WgsoM5ewrcR1WadDjPzA09pAJNvOLvj1jv4OWc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=z49jf/LE; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gZff/+3l"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E73A2C4CEF5;
-	Tue, 16 Dec 2025 00:53:53 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1765846434;
-	bh=KVybdq2V+565NkdvIZa4ZXWTv3pqp1aoH6+zdj49hO8=;
-	h=Subject:From:Date:References:In-Reply-To:To:Cc:From;
-	b=gZff/+3lrh30ypg/VcLwZ8dRm0LNcxTDJ/Mx1GXevfJSAU6NFwEpZdQTp2J6ONVPd
-	 +AdQwfUX76x71Y4SSX4BrmlVOasK87yGpCFZvB1HBuGm/PeH/V5Btry53nccgykKoy
-	 cKJIgtKxyNg36L/XJwFtJVik0BkDLCKZZsThmyoAh69+GI3eGTSaNGgT4AHRavSmvs
-	 e1OsiNZlUvbzr8wq30dL8qzKmfmUNRbLCypjy/Au26sc+kebX+Vx41y8he60N8SSKU
-	 WSgGgtuAnEq0r69RkNJjQF2xDDdsmEzO9kJeBl5zFdG0TBSXZiEjaJMFdUgIjABEwy
-	 snfQFZiawb5Hw==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 3B6D0380AAFA;
-	Tue, 16 Dec 2025 00:50:46 +0000 (UTC)
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="z49jf/LE"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=M7NmYC/Iylm9myghHwqILim55SAUt9QrM+UZYk0eJlw=; b=z49jf/LEoh8WLHEy1OF2xWQuGy
+	xFMQAkCl1YWpjlFk4tKgrRGvCwD5uCnDzMXXX4r908YDR1mVg/lfZXL308kyMudBQ6GLqfS6guQ5H
+	mUQgqhvzOZFm97m3eG1WZFQ8t81JSRFMBCGAUXORIpz6OBPsuS/25w07C0lFP7USZlGbUCFy/Ucuc
+	+oSAcSWjCVVTl0sIGFzhArA5KCkBUqbBzKPicNOjf/QYM9F8PI63Upi/CMYziOrWgmo3j57mZbtpV
+	slLoawwORNQWpQc2yDnvrhmox+HydbpkJ4i3NCHbIxXkE4b44RoQRKLxqPB/UFNAOtrKbZAdYC3F0
+	rG54Qe5Q==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1vVPvb-00000004su1-1wfx;
+	Tue, 16 Dec 2025 07:57:03 +0000
+Date: Mon, 15 Dec 2025 23:57:03 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Andreas Gruenbacher <agruenba@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>,
+	Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>,
+	linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org,
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: Re: [RFC 01/12] bio: rename bio_chain arguments
+Message-ID: <aUEQz49wCNHeT8Dw@infradead.org>
+References: <20251208121020.1780402-1-agruenba@redhat.com>
+ <20251208121020.1780402-2-agruenba@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Subject: Re: [f2fs-dev] [PATCH V3 0/6] block: ignore __blkdev_issue_discard()
- ret value
-From: patchwork-bot+f2fs@kernel.org
-Message-Id: 
- <176584624503.387072.9496719293644511831.git-patchwork-notify@kernel.org>
-Date: Tue, 16 Dec 2025 00:50:45 +0000
-References: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
-In-Reply-To: <20251124234806.75216-1-ckulkarnilinux@gmail.com>
-To: Chaitanya Kulkarni <ckulkarnilinux@gmail.com>
-Cc: axboe@kernel.dk, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
- song@kernel.org, yukuai@fnnas.com, hch@lst.de, sagi@grimberg.me,
- kch@nvidia.com, jaegeuk@kernel.org, chao@kernel.org, cem@kernel.org,
- dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-f2fs-devel@lists.sourceforge.net, linux-block@vger.kernel.org,
- bpf@vger.kernel.org, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20251208121020.1780402-2-agruenba@redhat.com>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Hello:
+Looks good:
 
-This series was applied to jaegeuk/f2fs.git (dev)
-by Mikulas Patocka <mpatocka@redhat.com>:
-
-On Mon, 24 Nov 2025 15:48:00 -0800 you wrote:
-> Hi,
-> 
-> __blkdev_issue_discard() only returns value 0, that makes post call
-> error checking code dead. This patch series revmoes this dead code at
-> all the call sites and adjust the callers.
-> 
-> Please note that it doesn't change the return type of the function from
-> int to void in this series, it will be done once this series gets merged
-> smoothly.
-> 
-> [...]
-
-Here is the summary with links:
-  - [f2fs-dev,V3,1/6] block: ignore discard return value
-    (no matching commit)
-  - [f2fs-dev,V3,2/6] md: ignore discard return value
-    (no matching commit)
-  - [f2fs-dev,V3,3/6] dm: ignore discard return value
-    https://git.kernel.org/jaegeuk/f2fs/c/f4412c7d5a5a
-  - [f2fs-dev,V3,4/6] nvmet: ignore discard return value
-    (no matching commit)
-  - [f2fs-dev,V3,5/6] f2fs: ignore discard return value
-    (no matching commit)
-  - [f2fs-dev,V3,6/6] xfs: ignore discard return value
-    (no matching commit)
-
-You are awesome, thank you!
--- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/patchwork/pwbot.html
-
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 
