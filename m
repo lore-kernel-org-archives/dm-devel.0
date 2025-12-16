@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60C76340A43;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17CCB340A76;
 	Tue, 16 Dec 2025 23:07:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765926421; cv=none; b=LC88BvYxEpnR2GsuMMI5AzVx/EWkz/msfow1OAit2Z5icMHy7kO9T/pOeQ0TJaErQ+No8tqCdNUgHN7KJ0wgRDGo8VignGm1ytwN+Z9izIdw+Nxkqrpuv0g/0kkmWOlEJQUTz9INcLlHcqc7KJbd7Cs6d/LMoDJBMFOFVBNH1jk=
+	t=1765926422; cv=none; b=OsmaHGTe8s/zTdNraNMZxRX1xVvv7xK9sXt+qQXjZRW+Pa61DLb17TnF6+KhlbZ2Oyauk3tYaDyCHIuQYOrlOsn18gepuNpkPg2kyyG42B5C5dP9ky/g/O7DLCGhIwgmEDJhdDbFH1vwpL6ksZsh4jp23kpZcYoXOeo6W7a1WbQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765926421; c=relaxed/simple;
-	bh=trE6zxe2FEt8zzo/9pQ/qzrWtmL8xbEEnJ2pQ4Ti32w=;
+	s=arc-20240116; t=1765926422; c=relaxed/simple;
+	bh=TePe5x8bc2SCbRZ9v/pRAuE0G51ZeD7YUoqCgC3LQ48=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=R/R6eXFsIoBpk8FE9DYDenBXcG+a4Unty9UB46ZZd5HY7eiE8xqehda+3hD0oaMkrzUG9crd49yq7Uvmlu0dpjnDYlX+X95vTUT04t93Adha9UAJ2Mu9kcYVcfjCexY2uHZDjq+EuYPrPZ5k3if4fXVtnPm/c36gbR253WBchII=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=mzT6qM8r; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=QbM2HDdtoo/nEtfe5GSahjj2EcTxyo2zJaJEK9eKoK8+smxDZtG9zYqvuPCW4MstkPQ3rpTkviq5FEEBu5E+isHNQIvftaV/vGsXsjGz7YXIWVCjbYwIZYtytM6YEf7p037BZbkCXSM29zEuwkH3hVNk3FPGCzLy2aAgzK5PznI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Jf+OSPkj; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="mzT6qM8r"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 01D98C16AAE;
-	Tue, 16 Dec 2025 23:07:00 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Jf+OSPkj"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 65E8BC113D0;
+	Tue, 16 Dec 2025 23:07:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=k20201202; t=1765926421;
-	bh=trE6zxe2FEt8zzo/9pQ/qzrWtmL8xbEEnJ2pQ4Ti32w=;
+	bh=TePe5x8bc2SCbRZ9v/pRAuE0G51ZeD7YUoqCgC3LQ48=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=mzT6qM8rw2RJCKFYMgfCLXeZQRNcWj+/PxNpYUFgiH4DxfuqIUprwuvqDtzaAQtXR
-	 874EN4AC5SApcs4aIicsRguBc+GmNFhsfWSb7EbzaiQ7oQxPvyPh+BhrXalbRnTEvd
-	 hZi1g3+5DXAqUnUzpullvaHjxc4VxpManOrkdKObWq7vkkCII2MdwnUH1mZXDQ3z/c
-	 IpWFM3b4vJ0icAm27ALeP7Pcxif/+7YF88Xb1zdH74zKTzz8SHXRQws+XTbeTL5qUb
-	 A+F0Hm5iLBlCDxSliE92ykDfYVfaqR2dAaf7m9gjH42F1U/Vj5+YOuhZYwBRzlBQYl
-	 63jszX7wkCGXQ==
+	b=Jf+OSPkjYsWOffttmTCaFsgPSvn8S1UkZ0ZTWN7qhrUtFwtsE7KEaJI7He2rO7dpi
+	 eVBKwqrGnoDvrAdu6Z8Nov9Dp3GBV6AKUxIYfLWvBvuASgG/qssJnfUWCWdv5DegSU
+	 /vJf8SYDq+WBlFrMedeD8drUEiWPwL2Df+aFwCdN+N8tdN8S4emcvALs+Aaufc1TOW
+	 X1TrhfpWSp0ulyEtEfzTviJslWaKLLgTBNEKRiawhQ+gWGwXxKAvQ0ixUvrrb6jjhl
+	 DuD7sxcvse1MPBERmTRu+K/V579PUKXSewDUbl7l3BkQ2c5lXD5zRMEPG79JvXv1xu
+	 IJIK0WuD3cbkA==
 From: Eric Biggers <ebiggers@kernel.org>
 To: dm-devel@lists.linux.dev,
 	Alasdair Kergon <agk@redhat.com>,
@@ -36,9 +36,9 @@ Cc: Sami Tolvanen <samitolvanen@google.com>,
 	Eran Messeri <eranm@google.com>,
 	linux-kernel@vger.kernel.org,
 	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 6/7] dm-verity: correctly handle dm_bufio_client_create() failure
-Date: Tue, 16 Dec 2025 15:06:13 -0800
-Message-ID: <20251216230614.51779-7-ebiggers@kernel.org>
+Subject: [PATCH 7/7] dm-verity: allow REED_SOLOMON to be 'm' if DM_VERITY is 'm'
+Date: Tue, 16 Dec 2025 15:06:14 -0800
+Message-ID: <20251216230614.51779-8-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251216230614.51779-1-ebiggers@kernel.org>
 References: <20251216230614.51779-1-ebiggers@kernel.org>
@@ -50,36 +50,50 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-If either of the calls to dm_bufio_client_create() in verity_fec_ctr()
-fails, then dm_bufio_client_destroy() is later called with an ERR_PTR()
-argument.  That causes a crash.  Fix this.
+The dm-verity kconfig options make the common mistake of selecting a
+dependency from a bool "sub-option" rather than the main tristate
+option.  This unnecessarily forces the dependency to built-in ('y').
 
-Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
+Fix this by moving the selections of REED_SOLOMON and REED_SOLOMON_DEC8
+into DM_VERITY, conditional on DM_VERITY_FEC.
+
+This allows REED_SOLOMON to be 'm' if DM_VERITY is 'm'.
+
 Signed-off-by: Eric Biggers <ebiggers@kernel.org>
 ---
- drivers/md/dm-verity-fec.c | 4 ++--
+ drivers/md/Kconfig | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index 9bf93280cf33..e8f1913f5f12 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -500,13 +500,13 @@ void verity_fec_dtr(struct dm_verity *v)
- 	mempool_exit(&f->rs_pool);
- 	mempool_exit(&f->prealloc_pool);
- 	mempool_exit(&f->output_pool);
- 	kmem_cache_destroy(f->cache);
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index 239c1744a926..c58a9a8ea54e 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -547,10 +547,12 @@ config DM_VERITY
+ 	depends on BLK_DEV_DM
+ 	select CRYPTO
+ 	select CRYPTO_HASH
+ 	select CRYPTO_LIB_SHA256
+ 	select DM_BUFIO
++	select REED_SOLOMON if DM_VERITY_FEC
++	select REED_SOLOMON_DEC8 if DM_VERITY_FEC
+ 	help
+ 	  This device-mapper target creates a read-only device that
+ 	  transparently validates the data on one underlying device against
+ 	  a pre-generated tree of cryptographic checksums stored on a second
+ 	  device.
+@@ -596,12 +598,10 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+ 	  If unsure, say N.
  
--	if (f->data_bufio)
-+	if (!IS_ERR_OR_NULL(f->data_bufio))
- 		dm_bufio_client_destroy(f->data_bufio);
--	if (f->bufio)
-+	if (!IS_ERR_OR_NULL(f->bufio))
- 		dm_bufio_client_destroy(f->bufio);
+ config DM_VERITY_FEC
+ 	bool "Verity forward error correction support"
+ 	depends on DM_VERITY
+-	select REED_SOLOMON
+-	select REED_SOLOMON_DEC8
+ 	help
+ 	  Add forward error correction support to dm-verity. This option
+ 	  makes it possible to use pre-generated error correction data to
+ 	  recover from corrupted blocks.
  
- 	if (f->dev)
- 		dm_put_device(v->ti, f->dev);
- out:
 -- 
 2.52.0
 
