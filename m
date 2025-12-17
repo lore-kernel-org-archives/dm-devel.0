@@ -1,73 +1,73 @@
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
+Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 610A530F945
-	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 21:21:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3AFFB30F95D
+	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 21:21:36 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766006497; cv=none; b=E9nlczPot9MeffiggIOWfVDhh8OlAfc7q6ui8iHcZ+AVvMnWwIYKuNw5hF+S0Kzp2TF/H8azOQEo5RU4hvNJkd9iIsKvNaTa4keBEfMkzHcplGcBVx/UZFMxyc9qEhL86l6jGDzPu+f8CDc7miVszv77JnmxBNNtTdwypOsaZkw=
+	t=1766006498; cv=none; b=S5NXJdLZBIOMZSeIpK8romeR9BZXznu3a/0v5QGRv0/8y6l/ClNebiMRZVuLpA/4HBWDuSmUou/GzOQI1Eea3YPOYlwzYhvXUosRaGXyzvVfzvRvljEey8CShtWRRTk1o5WSScHAbh+ixNeZ9UR3P02WILg876LNv0w60Tzlxqc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766006497; c=relaxed/simple;
-	bh=ZmuuoiALpERO86eefCm2qlat3NvNqyG8jH1YgTvtZeI=;
+	s=arc-20240116; t=1766006498; c=relaxed/simple;
+	bh=k11BgGkp1mInbho0Fojgh8pIDf84rbezlmZpTOrs9kE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=thrhjbC5OV3TD+dP3+MhmRqSrHBiDJNiP7MKOWRl+hwKlbMqQjMf1amU7mEoaqXf6m+itmgytfs3FD4Jr1RIzKLL7Er1iQAJ+MAKAp/azugu0PIJOstgKK1Qij6JE8+AgEYU/5fXj+1M/7S0YaXLFVtJUjTpM8iJ8JAxeIxl4FU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Fw8IPuOM; arc=none smtp.client-ip=209.85.208.41
+	 MIME-Version; b=TuRvO3amOpGO5rs5Tp0WwyrQYUXJTBbgKmsCNn+b9DZ+NC/NYwq+TXcJ+MGFc99nvzTte+S76utmBm8XJA39FejKJ+v+6NZ2zsXh9JG/1kCH484bnME6NkrZhz0CdAQbh8O6urXFbXsNp794TPMFc09S0mmd/ou1EXZTh+3UtgI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=TkxsvrCg; arc=none smtp.client-ip=209.85.208.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Fw8IPuOM"
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-649820b4b3aso4802536a12.3
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="TkxsvrCg"
+Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-63c489f1e6cso2281992a12.1
         for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 13:21:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1766006493; x=1766611293; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1766006494; x=1766611294; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=3fQoUvjceraUkFfH5MK0jvE38ZbDXECEddZ2sEayAU4=;
-        b=Fw8IPuOMNg/bC0JgTKqkcL6fo9K10OQPSI3T8VRMDojK+Tudos/p6qYO8g3qDmg1n0
-         DTcPPUDPzD65HtpzNDUZTiQy1BBGLYUI29CKIuYqEICyIjvjOrImqBagtw2fM4yhnANC
-         8ScYC/NQrJCof5utgvv1y0/3aizjP/BIPR2sXFMfrJ8fPC1R0HIsTHZhWbPJtqjVPJDm
-         P6SWrrafOrmdhAp/fw3ZDIQ/Ozh2IVw/3H0Ou9fXvFaGjlQy5jovYTVU2Yd0GW0BziMu
-         RM1rlJwxU833Knu/SJz8b/jm+X/FWMqNriszdcKE1ADMr0+dTX5/lK04aw1C7Amdj8RQ
-         YNvQ==
+        bh=+kd1DzfwkMmpB1Qyu2tXWA83LTDqlaYjO2LsLpcpLRE=;
+        b=TkxsvrCgsx06awe25lOxc7vLAG9AyK1SnesSRT0bM5O3sdc79vkkccL8tcu8GzWr6h
+         CTa1DH1shb9KkkRTvxHw6XYC2L7SMWEj8+Nkm94D7wn09CD2akOikTA4mux226oklvVm
+         KslMk7o01OMxAMTKKVAA3t0S0eNlDtj1vhzuekWhShKRRCF5uHkbNyen0wGE5C3S09cI
+         Z4TvfSw9EHetshMGHrSc0iyNUtSIreAiM4M+8+bmsf5kakO+VLSVYtfdKFYRYwOS/3v5
+         7R5PwkpfGpUMi8gciwDMGlb93I1xSYhgaObutIW7aWTq5gRw/XCBegMqB1j6FFIiDxMr
+         T2Sw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766006493; x=1766611293;
+        d=1e100.net; s=20230601; t=1766006494; x=1766611294;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=3fQoUvjceraUkFfH5MK0jvE38ZbDXECEddZ2sEayAU4=;
-        b=Y5/3whr/TLExkCVvWhudXW34E/wLN+WKNt2kfELNHAmZDY4ekakF3hIWJJmuZ9rW8X
-         wLoORAawXUrnZjM9gsZg4/Pw9zRQQg7i+yJZhnrpqVBSvzm4PRpUehMGdGcg/TBU2sLj
-         FTGeX+GrufHl1bvwAZgCGBkIKVCgCOymkC2VvoNwQxfM8v1LY1nHqWDQK9/JEbccK+cS
-         /tn8UO4CzYyX8N2g/MWwnwCMsjDmATlEj+6uxlhDMzMRsVixIrnynSsC55ZgSQPqrNxI
-         LEFD+ENYXD1ppES+JfO3SKsBGQv72P2HSrvSU5BZJTge1t3hCW8se1Vlr9pGPlEj3SGc
-         x0XA==
-X-Gm-Message-State: AOJu0YytlzBBxdCvVjDQJeSghtFrmM57CjImMqfAiRqLmZd8G2RfxquX
-	TYA+4aIqW9b0oEGd+K7XOv5ag1ubF7867x10y39hk8yuggBdhybGmDZV2oARSY9A8bc=
-X-Gm-Gg: AY/fxX5R4+xJm5boX1a9jz9tvLFL//zIrcoImgUlbm5v4P4Xv5lvj+ntjYsic/N8+wg
-	b1UiOpUWNQ622aPkkkQRQmkgO9FZhsSJtiIfvY5i5YQK/GphIYBray8pMDKup/NE2DsRnuzp9C0
-	SNJhJOU3ECwk8h1d2HfmLg9ZIeKUmsFpdZeVPpNeSvrOjQ4V/6YK7R+hPqA6jnHXrCiBInerhxG
-	BS+2l2a4bBn/+YDckjqtzis9Y0u9glVxOJXTJgAS7J/vidCLK8xg4MhCUdbwTXAWemAM+7gtUkG
-	HlXPohLae/UAHGDWoZ/juDkMmenIsajqRlg3CE6vw/Kud4W0hiSzL0+XXPaBEI6GTzwuwRjhxFF
-	Eza+W/bhGnmnRbYmRmIoJtVM+0+34DnBpN1KHLCXJGR4g2bss1QV8pGTgQGXxF2lkKGRV6+5+52
-	JGTk8nhs8jE3oNGScMTWUNicM4Pb5N9Yq2LJB6CqUzidF9zH+EoMBKYmWt+PRqOvlouAKMqjfra
-	w==
-X-Google-Smtp-Source: AGHT+IGlYk/eb+4d9hfAlZ1sALP3oB0r9inO9Os8tQCrZipnh65NKmqwVczN+apvTODt/kEr2b1reQ==
-X-Received: by 2002:a17:907:1c0a:b0:b40:b54d:e687 with SMTP id a640c23a62f3a-b7d23ad8ce8mr1853639866b.47.1766006493230;
-        Wed, 17 Dec 2025 13:21:33 -0800 (PST)
+        bh=+kd1DzfwkMmpB1Qyu2tXWA83LTDqlaYjO2LsLpcpLRE=;
+        b=Yjxt8qqOlS9xLYouB3i+A+njOffMuwrKFn67nYcVug43znUP5XJKGCedxUV/1G4dO7
+         2sQcGXfcAzAYGwYA8zZYYlm6I4Q79N5QObGMZ3aPN/4GO9M5fFk6xl1OHjLiuWr4NDsY
+         DpGNEPHjcsPqucdlYrXjEpHYzP4a9SlCMgaNEozUVkRw9VJH0JrGG5dYrMbPVpC3obve
+         NDthwKJICgZsZxd6Zrwxn5rDlxZTmKTuZXxUTF64VNxsDmJwLIfvH/nqdRWiGSM0hpSP
+         RTgUcdk1SvlviyJn+yneMUWHvffJOs+/kAZdhO9vRlsDIhglHwSSJt9yncnJPdpiS11j
+         WjKg==
+X-Gm-Message-State: AOJu0YxjNvIvoZgAnR0mtqWBAUmwyISqCFNUkSkUGaP8rjwjzBQEY3Tf
+	JBh07quDaw3DF3cS0uE4go6lQ9JM8Vi9x70zTFlV4MN6F8WpktkFpvcOMtNwZVdWjRk=
+X-Gm-Gg: AY/fxX4wwLyOj48ZTU+nyhl8ls1NLvbb1PXvgZuWjBEf68bRAvHF5vTKCt6dMZdWh6X
+	U3jKom9ZifwIr87a4wzse9Il4yn7ADmywEmfRJIfdp9KRDFvwK1LOGceL2CEmv+mYycCzSgtBwb
+	Wq66FeElXEM5zXURih2wfrvrmvWXZmtRqwUUv8qXJNkDRsJ4TvVz35iLNrOzadp703kl3N+9fsD
+	ZF6ajCFJUcy0rV6gBtnYmlhkjiXvE3qrt3Kj1mYycejLCUubhHzQLE7r1bJ0cfnN5w41wu3uVJL
+	RVWE2+2MZ8E9UmNqrfBFblbSCiLd9JgCRU+occqkrvBogN2g9wtt2e+tNSUR+OVUCdZwbn5j/p9
+	Pm+1Mf5i8QDPMkOY8EFZS3ObuSYNe7bBA96hHyIkBVuqUyGEOUXxVIbITa2EqYNghliBhccPr1c
+	dkR+EupYwSjQDpcIrv7DpDxggAj27LL3VR+N3sdDnz2DXPJoz2TVpm7BSoeOHtyW/nApglZuES+
+	VK6/eO1EBHA
+X-Google-Smtp-Source: AGHT+IE5y/M//bgtkMYhCl22HS57IrDL7OjGQhUqv9D12zYOlx9EjGzHlsH55pFT+bRIyLl+c0tiLA==
+X-Received: by 2002:a05:6402:1bd0:b0:640:92eb:aa24 with SMTP id 4fb4d7f45d1cf-64b584ec823mr535526a12.15.1766006494404;
+        Wed, 17 Dec 2025 13:21:34 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b802351a335sm28011266b.66.2025.12.17.13.21.32
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-64b5887d4a0sm510507a12.23.2025.12.17.13.21.33
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 17 Dec 2025 13:21:32 -0800 (PST)
+        Wed, 17 Dec 2025 13:21:33 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 11/21] libmultipath: remove free_paths argument from free_multipathvec()
-Date: Wed, 17 Dec 2025 22:21:03 +0100
-Message-ID: <20251217212113.234959-12-mwilck@suse.com>
+Subject: [PATCH 12/21] libmultipath: free_multipath: fix FREE_PATHS case
+Date: Wed, 17 Dec 2025 22:21:04 +0100
+Message-ID: <20251217212113.234959-13-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251217212113.234959-1-mwilck@suse.com>
 References: <20251217212113.234959-1-mwilck@suse.com>
@@ -79,90 +79,88 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-free_multipathvec() is always called with KEEP_PATHS=free_paths.
-Remove the argument.
+free_multipath was passing FREE_PATHS to both free_pgvec() and
+free_pathvec(), which was wrong because a path could be referenced
+in both structures. This can't happen any more now, as free_pgvec()
+has lost the ability to free paths.
+
+In general, free_multipath can't make any assumptions about whether
+a given path is referenced in mpp->paths, mpp->pg, or both. Therefore
+look first for paths that are referenced in mpp->pg but not in mpp->paths,
+clean them, and finally loop over mpp->paths.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmpathpersist/mpath_persist.c | 2 +-
- libmultipath/structs.c          | 4 ++--
- libmultipath/structs.h          | 2 +-
- multipath/main.c                | 6 +++---
- 4 files changed, 7 insertions(+), 7 deletions(-)
+ libmultipath/structs.c | 44 +++++++++++++++++++++++++++++-------------
+ 1 file changed, 31 insertions(+), 13 deletions(-)
 
-diff --git a/libmpathpersist/mpath_persist.c b/libmpathpersist/mpath_persist.c
-index f5267eb..e786e91 100644
---- a/libmpathpersist/mpath_persist.c
-+++ b/libmpathpersist/mpath_persist.c
-@@ -76,7 +76,7 @@ static vector pathvec;
- 
- static void mpath_persistent_reserve_free_vecs__(vector curmp, vector pathvec)
- {
--	free_multipathvec(curmp, KEEP_PATHS);
-+	free_multipathvec(curmp);
- 	free_pathvec(pathvec, FREE_PATHS);
- }
- 
 diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 7b5b483..1ee29f6 100644
+index 1ee29f6..29b62e4 100644
 --- a/libmultipath/structs.c
 +++ b/libmultipath/structs.c
-@@ -348,7 +348,7 @@ void cleanup_multipath_and_paths(struct multipath **pmpp)
+@@ -298,8 +298,12 @@ void free_multipath_attributes(struct multipath *mpp)
  }
  
  void
--free_multipathvec (vector mpvec, enum free_path_mode free_paths)
-+free_multipathvec (vector mpvec)
+-free_multipath (struct multipath * mpp, enum free_path_mode free_paths)
++free_multipath (struct multipath *mpp, enum free_path_mode free_paths)
  {
- 	int i;
- 	struct multipath * mpp;
-@@ -357,7 +357,7 @@ free_multipathvec (vector mpvec, enum free_path_mode free_paths)
++	struct pathgroup *pgp;
++	struct path *pp;
++	int i, j;
++
+ 	if (!mpp)
  		return;
  
- 	vector_foreach_slot (mpvec, mpp, i)
--		free_multipath(mpp, free_paths);
-+		free_multipath(mpp, KEEP_PATHS);
+@@ -310,22 +314,36 @@ free_multipath (struct multipath * mpp, enum free_path_mode free_paths)
+ 		mpp->alias = NULL;
+ 	}
  
- 	vector_free(mpvec);
- }
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 3a52c01..738bea6 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -583,7 +583,7 @@ void free_multipath (struct multipath *, enum free_path_mode free_paths);
- void cleanup_multipath(struct multipath **pmpp);
- void cleanup_multipath_and_paths(struct multipath **pmpp);
- void free_multipath_attributes (struct multipath *);
--void free_multipathvec (vector mpvec, enum free_path_mode free_paths);
-+void free_multipathvec(vector mpvec);
+-	if (free_paths == KEEP_PATHS && mpp->pg) {
+-		struct pathgroup *pgp;
+-		struct path *pp;
+-		int i, j;
+-
+-		/*
+-		 * Make sure paths carry no reference to this mpp any more
+-		 */
+-		vector_foreach_slot(mpp->pg, pgp, i) {
+-			vector_foreach_slot(pgp->paths, pp, j)
+-				if (pp->mpp == mpp)
++	/*
++	 * If free_paths == FREE_PATHS, free all paths.
++	 * Otherwise, make sure no references to this mpp remain.
++	 *
++	 * First loop over mpp->pg and clean the paths that might
++	 * be missing in mpp->paths. Then clean the rest
++	 * by looping over mpp->paths.
++	 */
++	vector_foreach_slot(mpp->pg, pgp, i) {
++		vector_foreach_slot(pgp->paths, pp, j) {
++			if (find_slot(mpp->paths, pp) == -1) {
++				if (free_paths == FREE_PATHS)
++					free_path(pp);
++				else
+ 					pp->mpp = NULL;
++			}
+ 		}
+ 	}
  
- struct adapter_group * alloc_adaptergroup(void);
- struct host_group * alloc_hostgroup(void);
-diff --git a/multipath/main.c b/multipath/main.c
-index 58db288..4b8d7dd 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -436,7 +436,7 @@ static bool released_to_systemd(void)
- static struct vectors vecs;
- static void cleanup_vecs(void)
- {
--	free_multipathvec(vecs.mpvec, KEEP_PATHS);
-+	free_multipathvec(vecs.mpvec);
- 	free_pathvec(vecs.pathvec, FREE_PATHS);
- }
- 
-@@ -580,9 +580,9 @@ out:
- 	if (refwwid)
- 		free(refwwid);
- 
--	free_multipathvec(curmp, KEEP_PATHS);
-+	free_multipathvec(curmp);
- 	vecs.mpvec = NULL;
--	free_multipathvec(newmp, KEEP_PATHS);
-+	free_multipathvec(newmp);
- 	free_pathvec(pathvec, FREE_PATHS);
- 	vecs.pathvec = NULL;
- 
+-	free_pathvec(mpp->paths, free_paths);
++	vector_foreach_slot(mpp->paths, pp, i) {
++		if (free_paths == FREE_PATHS)
++			free_path(pp);
++		else
++			pp->mpp = NULL;
++	}
++
++	/*
++	 * We've freed paths above already, use KEEP_PATHS here
++	 */
++	free_pathvec(mpp->paths, KEEP_PATHS);
+ 	free_pgvec(mpp->pg);
+ 	if (mpp->hwe) {
+ 		vector_free(mpp->hwe);
 -- 
 2.52.0
 
