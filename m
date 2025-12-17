@@ -1,73 +1,74 @@
-Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
+Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 393F118AE3
-	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 21:21:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF1C92FFDDC
+	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 21:21:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766006488; cv=none; b=CkRtSE3qAyG9SkmxWtRnj5PtskGWXQNLevD7d7JX5gFTg7epeoHGN/hMoZHhVkKDOIj6UonVVh1rqxJRsVSDTeHthEqiptsnr7B5/k7UVHe433BAyQRFEt23o11jywLRg/GPZwg9G3bvP/1jXQez1ar7PHXDCFma/SSPS8knQ+o=
+	t=1766006489; cv=none; b=rKyNaxM6IMAnehOkQKbS/+fAWn3mSmvKHZsyA3of2IAWMHl//bWaRYDIqclsFEU77tZaKQrVwaJJ2ddINwEOkU36Rn9MAg9tQXRuQ6USL9BO8HBSB5xGpHuBHZigJCcSZhhJtNaVDDeamFeuMNoDbOyTcLUc0PqJGOSCn0HWqfs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766006488; c=relaxed/simple;
-	bh=Pw+5vQyVWqzXUrDhvEWRp0E1HctMVuL6/2ovv7rgTD0=;
+	s=arc-20240116; t=1766006489; c=relaxed/simple;
+	bh=9b82XPAUKJTfGZeUtjivujsFmAk+V7+4B2OjJZE9eaI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=OEy+1I8Iik74o348GtBOpGB7dMt8UdVM4Sb8a87S5JsOyC2NAa1LODh0vidGHm5mmyjUQjUOjse2BveOXlx9uB4M1nRe+b11X0Mdo9eNgW9pLT3FLGoHLAyp9SKfoTuhkH2+vez+zx8z5EXL0lvqIHwC7WVRikTX3mPUNhrArrI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UjTHN4y5; arc=none smtp.client-ip=209.85.218.48
+	 MIME-Version; b=ccolnFIu+nByTL8dg7Bu1qptiZjclpiQLDMuw0QmKntk1LYVxrHOZlQ0YFC7/bLNGcK91qEjPAeVKXBIzo99zcI7nAXoSXwfgGnnHg7vMTN9sA+rfCCxc9llgyWQhPSfzIJKj1EbcYSD0hr26rDp5rVToSlRBa1yuprzF/5HkGw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=HKTdwXYB; arc=none smtp.client-ip=209.85.208.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UjTHN4y5"
-Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-b7277324054so1010043366b.0
-        for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 13:21:25 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="HKTdwXYB"
+Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-649820b4b3aso4802392a12.3
+        for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 13:21:26 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1766006484; x=1766611284; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1766006485; x=1766611285; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ZuVN2CaIzHjRxEtnG3bWAThkh+zmNjEeqTj9XRn3BsM=;
-        b=UjTHN4y5lKTU9HWtJCdZu5MWAZmoIefoBy/HLichNTH+Ud2XZo8RMXkl6HxebYGiYg
-         zCNAXLejG9PzjrWxT+fYbgIqovmJumCH7bB437H7kgMQ3RxFpe/ZD2bsC9cIzwkTguzt
-         khQDzbLhhsh0iVLMjQ4aEOcGAy0rdwoQJ7aD4iZhu7JkD3tYJ73KaOFX7VSt3Jj9Zbn6
-         A9kPz1aFY67am9wY9p70MoaBlUTVgzX3+OstwRZD1V62XGj+M6EIUn2b7jymp2qWQ6gw
-         pRVDvmRGz5D8rIAy0NFOgDUEkVZXXZC1g4UpjCpPeDxDzfnFn7A6JM40KK6ikotM1WIm
-         DPOQ==
+        bh=TR0T83dq/XLmU9sA8OB9nubnwgJpGdbivhC9ApfgFpg=;
+        b=HKTdwXYB9PNQQCtnW7jJcJF4rovtMMWchPqMODVzoLez4APXt6IzWE3N1vUUBaVQYy
+         U9yOMnYVeVk3cvtVWLDHTcPJNeAxa6gFbN2n4D/M3ZMLCi/yZpUkfAa2kMaAkjMmyoVL
+         yn4Q+vlXafDIno3RfH7+0MJtQ8SQF06LYuOsWMeJEkdlsG2s2q733sqGPy4r8NqRbpyi
+         nfDJ5O0qu64hiuRBsq3CEEreWFoh5jG56Er1Zmc12ziOCHjiqp1mtBDI3g+MiJHb9K76
+         vBhaaO8sX6jB1LnVGnKEllDe3ITwiXuDsa31WXxDsDRaZR3CKGIeJ3dkrvo3pvNM+qhw
+         kaMw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766006484; x=1766611284;
+        d=1e100.net; s=20230601; t=1766006485; x=1766611285;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=ZuVN2CaIzHjRxEtnG3bWAThkh+zmNjEeqTj9XRn3BsM=;
-        b=bnTrXtXqvglLPXdI4N2dFzLv3ytOtj9hbO90K0+ap7VId3GFbCm2JVXe6eYUtorOml
-         8k2qzbAwM4t4208VJJwvxNIkBjLDq7Sa6Grc/Zb9pka7rAbX4/3la3qSakgOli/Wyxz7
-         YCXwI/30EGmgXm7pbsFjwJkY5RdbFWPTUAFAhN7BLCb+eeNOIACcnN3gmMK8DyLgZSEK
-         Jjw/rdYnKEYA6PbPQ9op0V8XuKKYjGaZ6AXqVKZJYVVdr1OeRsxA/pYV2zPT6bWIhtHO
-         sA8A8BeOud9lGpmfhfehsYYJTPIhx+Y2+a/9Ty62BdS2Mk6+vo1fbxWkW7MJK3YhVtfE
-         iBYA==
-X-Gm-Message-State: AOJu0YyCH1h0Ouh95LOAKpVCdF2EaQmsAbDsDtxDhFR4L8JwGdC05cqp
-	6hEmG7IbcbOhaSeWhcpvXsF17yNDxVII8Yt9eO2qFnwHfWZEFkrBrolEhHLALIyZQaI=
-X-Gm-Gg: AY/fxX7nBDG5NMI9SatrHakT6dR/MCbfZsuFTC+FpFdpyorLZxIQo3Jix0S5XZTjNQs
-	nxl5Ma9qhAo0OLjL3hPYZkyCgP1YQlVERANG6QakcwKEQtizs1gxQhNMxjGkcRn40/j0vS0LuMV
-	Nv+C0f97IIjpnxJ+icM8AXb8b09KUZXKbB13v/xbY1Gnm/yNGakLfNEnE8LbM4uA4ea0jvKxJH6
-	xZoNlCQlBFOEvbRNHNEqNxjE5DLmMGnvgSius/oA9KIJj8hOPA6AdTdhjWLL1jvTK4wZcqnd3h5
-	HeywQBTN00dz7AFDLCcvOILMtfM6IIfpqHb0ErvYQIPe94cyCocXH0Qsch4IS2kygr6kWdFyHE+
-	95WBDjcxqSlr32QvFizaExzH/g8MtCIQfGKjlZSVsbkyzuy8uZoQ+FTB43DsxstJQB/lATX522H
-	yfkKRVm4Hy4A45LBIQw31iNRaCTQD+VuV7l02Pw4QVWn3j/grs/zTp6wYWSSagWHfRdPzq79Dgk
-	Q==
-X-Google-Smtp-Source: AGHT+IEHGeCM9LYvx5w2+m6sSbjcD9AdlDWTq1Hei5pXh7KwQA5ciwj2cJTZpb8Uz4VxiALKxHrZ8A==
-X-Received: by 2002:a17:906:ee81:b0:b6d:67b0:ca0b with SMTP id a640c23a62f3a-b7d23a7b1ffmr2029346366b.61.1766006484148;
-        Wed, 17 Dec 2025 13:21:24 -0800 (PST)
+        bh=TR0T83dq/XLmU9sA8OB9nubnwgJpGdbivhC9ApfgFpg=;
+        b=VRQ4MZ1Lo9qqS8C3J1AC6bXuntuUWP9SzEG6F0Mgh9Yk0TjmZDce3/sBckCPJmE0it
+         Lk9gQlQAgMnXspLTiSA+ZYQCRiLxKBg0fAXWl62WnntnKEc90MTFXbXE1//L4vASZu87
+         r1SXXSUCP//Eic5s5I5f/M++MlZmGfIt9L0zfFO+pqcMqtJ7qlVTkaNibGAwOU1AMFB+
+         ZME+hKDi3DRSHWD00JoeUsyIQevcnoH/1fMfL7QHFJ0y7/BIYC8VqfEEOZZXXnTLDshf
+         TfWSeUMwtN+bZW63O+nJHuMkDouDLuDA1H/3B7yV/elX52dWhw6/ES9xZKoCEQ2S1WPb
+         lHHg==
+X-Gm-Message-State: AOJu0Ywy1Yv1R0nRG0A10bWydE3+KWtG1zm7hU34Kyhnh9qaZn/IWFds
+	Tbo9nP90JMRXyYqxFU+3X7DfNH2VaecYOb8rUQ5Zc3eg9KGcRJNLgohECCkbcZmPHrPi6zfgye2
+	zVuht
+X-Gm-Gg: AY/fxX7xCB5slykMIgBdAmQ3V+Bq/WlDHVNh6DYLSH2+O7kurWPmauxqfokfQu38CUR
+	ys+giQmXFEsbz0Xo96EVtFkXB2mAIv453EwqONOHrTKjDPHB87UsP5xXkvGA98chD1nsQBeqCgf
+	2kGBlGjGFc96G5zB/zp2Xxoe5UBdxB6PKck25Nq8B6wl+fTREyTMFgCD4HFl4MqrQlfE9R9h2B4
+	JRxxT3CigDaw64dWEvGLDMOTmZphDj/SbShXtjCXa9ig9TXw/AmgNmMFnzar8y55hAZhZIhU+xz
+	gIuzChsZB2VqUHNyZRIThiiEbFMeS6RY+vv2YwQXQCDaT83YbnyGzXm5IEBT1Q1JBYs6g1wkEI7
+	wI2Al8YSxgU1L5V1RTlIzR5tRlihpu+EmzQ3sM3LwCJUTeH/BWpsKbMGQvGquw+kZZtPWmfZdmI
+	qyqGimCihj/VTOTXDfI4O4sJj8mZCr1mEAt3kztBus8gFChpa0arSiJiflmtE3SAp86lvx6KCUj
+	g==
+X-Google-Smtp-Source: AGHT+IGBdxETeuRFGql+w4OtB5WQIf0VLXTbiAU3Fp+7mkMZWUJq7W87L2Ww0ewxuwg1jEIq3vhSbQ==
+X-Received: by 2002:a17:907:1c0a:b0:b40:b54d:e687 with SMTP id a640c23a62f3a-b7d23ad8ce8mr1853613466b.47.1766006485172;
+        Wed, 17 Dec 2025 13:21:25 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b8023118b0dsm30458466b.31.2025.12.17.13.21.23
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b8023466002sm28447066b.35.2025.12.17.13.21.24
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 17 Dec 2025 13:21:23 -0800 (PST)
+        Wed, 17 Dec 2025 13:21:24 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 03/21] multipathd: free paths in checker_finished()
-Date: Wed, 17 Dec 2025 22:20:55 +0100
-Message-ID: <20251217212113.234959-4-mwilck@suse.com>
+Subject: [PATCH 04/21] libmultipath: don't touch mpvec in remove_map()
+Date: Wed, 17 Dec 2025 22:20:56 +0100
+Message-ID: <20251217212113.234959-5-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251217212113.234959-1-mwilck@suse.com>
 References: <20251217212113.234959-1-mwilck@suse.com>
@@ -79,87 +80,257 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Modifying the pathvec in a deep call stack is unexpected and
-error-prone. Free paths in the checkerloop instead, after
-having synced all maps.
+Move the removal of an mpp from the mpvec into a separate function,
+remove_map_from_mpvec(). There should be no functional differences
+so far.
 
-Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/libmultipath.version | 1 +
- libmultipath/structs_vec.c        | 7 +++----
- libmultipath/structs_vec.h        | 1 +
- multipathd/main.c                 | 1 +
- 4 files changed, 6 insertions(+), 4 deletions(-)
+ libmultipath/configure.c          | 14 +++++++-------
+ libmultipath/libmultipath.version |  1 +
+ libmultipath/structs_vec.c        | 26 +++++++++++++-------------
+ libmultipath/structs_vec.h        |  3 ++-
+ multipath/main.c                  |  8 ++++----
+ multipathd/main.c                 | 17 ++++++++++-------
+ 6 files changed, 37 insertions(+), 32 deletions(-)
 
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index baa1357..2d324ad 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1140,7 +1140,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 
+ 		if (!mpp->paths) {
+ 			condlog(0, "%s: skip coalesce (no paths)", mpp->alias);
+-			remove_map(mpp, vecs->pathvec, NULL);
++			remove_map(mpp, vecs->pathvec);
+ 			continue;
+ 		}
+ 
+@@ -1172,7 +1172,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 		if (cmd == CMD_DRY_RUN && mpp->action == ACT_UNDEF)
+ 			mpp->action = ACT_DRY_RUN;
+ 		if (setup_map(mpp, &params, vecs)) {
+-			remove_map(mpp, vecs->pathvec, NULL);
++			remove_map(mpp, vecs->pathvec);
+ 			continue;
+ 		}
+ 
+@@ -1192,7 +1192,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 				condlog(2, "%s: %s map",
+ 					mpp->alias, (mpp->action == ACT_CREATE)?
+ 					"ignoring" : "removing");
+-				remove_map(mpp, vecs->pathvec, NULL);
++				remove_map(mpp, vecs->pathvec);
+ 				continue;
+ 			} else /* if (r == DOMAP_RETRY && !is_daemon) */ {
+ 				ret = CP_RETRY;
+@@ -1201,7 +1201,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 		}
+ 		if (r == DOMAP_DRY) {
+ 			if (!vector_alloc_slot(newmp)) {
+-				remove_map(mpp, vecs->pathvec, NULL);
++				remove_map(mpp, vecs->pathvec);
+ 				goto out;
+ 			}
+ 			vector_set_slot(newmp, mpp);
+@@ -1224,20 +1224,20 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 
+ 		if (mpp->action != ACT_REJECT) {
+ 			if (!vector_alloc_slot(newmp)) {
+-				remove_map(mpp, vecs->pathvec, NULL);
++				remove_map(mpp, vecs->pathvec);
+ 				goto out;
+ 			}
+ 			vector_set_slot(newmp, mpp);
+ 		}
+ 		else
+-			remove_map(mpp, vecs->pathvec, NULL);
++			remove_map(mpp, vecs->pathvec);
+ 	}
+ 	ret = CP_OK;
+ out:
+ 	free(size_mismatch_seen);
+ 	if (!mpvec) {
+ 		vector_foreach_slot (newmp, mpp, i)
+-			remove_map(mpp, vecs->pathvec, NULL);
++			remove_map(mpp, vecs->pathvec);
+ 		vector_free(newmp);
+ 	}
+ 	return ret;
 diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 89ae2a3..e5b7b83 100644
+index e5b7b83..9282ff2 100644
 --- a/libmultipath/libmultipath.version
 +++ b/libmultipath/libmultipath.version
-@@ -58,6 +58,7 @@ global:
- 	change_foreign;
- 	check_alias_settings;
- 	check_daemon;
-+	check_removed_paths;
- 	checker_clear_message;
- 	checker_disable;
- 	checker_enable;
+@@ -160,6 +160,7 @@ global:
+ 	remove_map;
+ 	remove_map_by_alias;
+ 	remove_map_callback;
++	remove_map_from_mpvec;
+ 	remove_maps;
+ 	remove_wwid;
+ 	replace_wwids;
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f651b29..3a9ab58 100644
+index 3a9ab58..7f5da21 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -573,16 +573,16 @@ static struct path *find_devt_in_pathgroups(const struct multipath *mpp,
+@@ -420,11 +420,16 @@ void remove_map_callback(struct multipath *mpp __attribute__((unused)))
+ {
+ }
+ 
+-void
+-remove_map(struct multipath *mpp, vector pathvec, vector mpvec)
++void remove_map_from_mpvec(const struct multipath *mpp, vector mpvec)
+ {
+-	int i;
++	int i = find_slot(mpvec, mpp);
+ 
++	if (i != -1)
++		vector_del_slot(mpvec, i);
++}
++
++void remove_map(struct multipath *mpp, vector pathvec)
++{
+ 	remove_map_callback(mpp);
+ 
+ 	free_pathvec(mpp->paths, KEEP_PATHS);
+@@ -436,13 +441,6 @@ remove_map(struct multipath *mpp, vector pathvec, vector mpvec)
+ 	 */
+ 	orphan_paths(pathvec, mpp, "map removed internally");
+ 
+-	if (mpvec &&
+-	    (i = find_slot(mpvec, (void *)mpp)) != -1)
+-		vector_del_slot(mpvec, i);
+-
+-	/*
+-	 * final free
+-	 */
+ 	free_multipath(mpp, KEEP_PATHS);
+ }
+ 
+@@ -452,7 +450,8 @@ remove_map_by_alias(const char *alias, struct vectors * vecs)
+ 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, alias);
+ 	if (mpp) {
+ 		condlog(2, "%s: removing map by alias", alias);
+-		remove_map(mpp, vecs->pathvec, vecs->mpvec);
++		remove_map_from_mpvec(mpp, vecs->mpvec);
++		remove_map(mpp, vecs->pathvec);
+ 	}
+ }
+ 
+@@ -466,7 +465,7 @@ remove_maps(struct vectors * vecs)
+ 		return;
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i)
+-		remove_map(mpp, vecs->pathvec, NULL);
++		remove_map(mpp, vecs->pathvec);
+ 
+ 	vector_free(vecs->mpvec);
+ 	vecs->mpvec = NULL;
+@@ -831,7 +830,8 @@ struct multipath *add_map_with_path(struct vectors *vecs, struct path *pp,
+ 	return mpp;
+ 
+ out:
+-	remove_map(mpp, vecs->pathvec, vecs->mpvec);
++	remove_map_from_mpvec(mpp, vecs->mpvec);
++	remove_map(mpp, vecs->pathvec);
  	return NULL;
  }
  
--static void check_removed_paths(const struct multipath *mpp, vector pathvec)
-+void check_removed_paths(vector pathvec)
- {
- 	struct path *pp;
- 	int i;
- 
- 	vector_foreach_slot(pathvec, pp, i) {
--		if (pp->mpp == mpp &&
-+		if (pp->mpp &&
- 		    (pp->initialized == INIT_REMOVED ||
- 		     pp->initialized == INIT_PARTIAL) &&
--		    !find_devt_in_pathgroups(mpp, pp->dev_t)) {
-+		    !find_devt_in_pathgroups(pp->mpp, pp->dev_t)) {
- 			condlog(2, "%s: %s: freeing path in %s state",
- 				__func__, pp->dev,
- 				pp->initialized == INIT_REMOVED ?
-@@ -615,7 +615,6 @@ void sync_paths(struct multipath *mpp, vector pathvec)
- 			orphan_path(pp, "path removed externally");
- 		}
- 	}
--	check_removed_paths(mpp, pathvec);
- 	update_mpp_paths(mpp, pathvec);
- 	vector_foreach_slot (mpp->paths, pp, i)
- 		pp->mpp = mpp;
 diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index 1188ada..cb02d75 100644
+index cb02d75..89e4213 100644
 --- a/libmultipath/structs_vec.h
 +++ b/libmultipath/structs_vec.h
-@@ -18,6 +18,7 @@ int adopt_paths (vector pathvec, struct multipath *mpp,
- void orphan_path (struct path * pp, const char *reason);
- void set_path_removed(struct path *pp);
- 
-+void check_removed_paths(vector pathvec);
- int verify_paths(struct multipath *mpp);
- int update_mpp_paths(struct multipath * mpp, vector pathvec);
+@@ -24,7 +24,8 @@ int update_mpp_paths(struct multipath * mpp, vector pathvec);
  int update_multipath_strings (struct multipath *mpp, vector pathvec);
+ void extract_hwe_from_path(struct multipath * mpp);
+ 
+-void remove_map (struct multipath *mpp, vector pathvec, vector mpvec);
++void remove_map_from_mpvec(const struct multipath *mpp, vector mpvec);
++void remove_map(struct multipath *mpp, vector pathvec);
+ void remove_map_by_alias(const char *alias, struct vectors * vecs);
+ void remove_maps (struct vectors * vecs);
+ 
+diff --git a/multipath/main.c b/multipath/main.c
+index f2adcde..58db288 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -181,15 +181,15 @@ get_dm_mpvec (enum mpath_cmds cmd, vector curmp, vector pathvec, char * refwwid)
+ 		if (refwwid && strlen(refwwid) &&
+ 		    strncmp(mpp->wwid, refwwid, WWID_SIZE)) {
+ 			condlog(3, "skip map %s: out of scope", mpp->alias);
+-			remove_map(mpp, pathvec, curmp);
+-			i--;
++			vector_del_slot(curmp, i--);
++			remove_map(mpp, pathvec);
+ 			continue;
+ 		}
+ 
+ 		if (update_multipath_table(mpp, pathvec, flags) != DMP_OK) {
+ 			condlog(1, "error parsing map %s", mpp->wwid);
+-			remove_map(mpp, pathvec, curmp);
+-			i--;
++			vector_del_slot(curmp, i--);
++			remove_map(mpp, pathvec);
+ 			continue;
+ 		}
+ 
 diff --git a/multipathd/main.c b/multipathd/main.c
-index d3bf4d0..49a1f25 100644
+index 49a1f25..2043ff3 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -3127,6 +3127,7 @@ static void checker_finished(struct vectors *vecs, unsigned int ticks)
- 	}
- 	if (uev_timed_out && !need_to_delay_reconfig(vecs))
- 		unblock_reconfigure();
-+	check_removed_paths(vecs->pathvec);
- 	partial_retrigger_tick(vecs->pathvec);
+@@ -480,7 +480,8 @@ remove_map_and_stop_waiter(struct multipath *mpp, struct vectors *vecs)
+ 	condlog(3, "%s: removing map from internal tables", mpp->alias);
+ 	if (!poll_dmevents)
+ 		stop_waiter_thread(mpp);
+-	remove_map(mpp, vecs->pathvec, vecs->mpvec);
++	remove_map_from_mpvec(mpp, vecs->mpvec);
++	remove_map(mpp, vecs->pathvec);
  }
  
+ static void
+@@ -745,7 +746,8 @@ retry:
+ fail:
+ 	if (new_map && wait_for_events(mpp, vecs)) {
+ 		condlog(0, "%s: failed to create new map", mpp->alias);
+-		remove_map(mpp, vecs->pathvec, vecs->mpvec);
++		remove_map_from_mpvec(mpp, vecs->mpvec);
++		remove_map(mpp, vecs->pathvec);
+ 		return 1;
+ 	}
+ 
+@@ -1439,7 +1441,8 @@ rescan:
+ 		goto fail;
+ 
+ fail_map:
+-	remove_map(mpp, vecs->pathvec, vecs->mpvec);
++	remove_map_from_mpvec(mpp, vecs->mpvec);
++	remove_map(mpp, vecs->pathvec);
+ fail:
+ 	orphan_path(pp, "failed to add path");
+ 	return 1;
+@@ -1837,8 +1840,8 @@ map_discovery (struct vectors * vecs)
+ 
+ 	vector_foreach_slot (vecs->mpvec, mpp, i)
+ 		if (update_multipath_table(mpp, vecs->pathvec, DI_DISCOVERY) != DMP_OK) {
+-			remove_map(mpp, vecs->pathvec, vecs->mpvec);
+-			i--;
++			vector_del_slot(vecs->mpvec, i--);
++			remove_map(mpp, vecs->pathvec);
+ 		}
+ 
+ 	return 0;
+@@ -3353,8 +3356,8 @@ configure (struct vectors * vecs, enum force_reload_types reload_type)
+ 	 */
+ 	vector_foreach_slot(vecs->mpvec, mpp, i) {
+ 		if (wait_for_events(mpp, vecs)) {
+-			remove_map(mpp, vecs->pathvec, vecs->mpvec);
+-			i--;
++			vector_del_slot(vecs->mpvec, i--);
++			remove_map(mpp, vecs->pathvec);
+ 			continue;
+ 		}
+ 		if (setup_multipath(vecs, mpp))
 -- 
 2.52.0
 
