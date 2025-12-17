@@ -1,97 +1,210 @@
-Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
+Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com [209.85.208.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC3F3337BBD
-	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 17:51:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A86231DDA18
+	for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 21:21:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1765993900; cv=none; b=Qbw4SJuLh8AIAnthiGLK+OvMb+Oh1tqJipUr03E53zu5SB9vGV5smVnemOyAYuJUfiDnx6rx3jjEjPNjBJnPl/s7C45gSlgY3HwPzUaGts51I/9stdLtE26fITunGIo2wIZ5H/nBubniFW/5CPGNZV0x2usaIAJO1N4Yryw+eic=
+	t=1766006485; cv=none; b=W5cjTylMk9T822hSllw46B8FXyYAv2C3XYhY2sEg/qjW1GamqYWTJp3TfxH8sZ9qKgofwhVuB6zCBtak9up0lbqxRjbYrTpzw8lzD1UNzK4rwHs/GVyS8vvpJmiVR6BxXoq/rdLUiY5+rzMdKMjSffgvJJidp7tl6oY4tADb24Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1765993900; c=relaxed/simple;
-	bh=RCxp6y3XJ/hXVxOndc/GAG8xesvNhKJgedju7fzLXBY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=guOPbkb+fIKUfgUAj+pgB4q7u494SRsRJing+MT1j43i2JoI6Vz9yfIddSuOvVchRbGQ7FiPkn1He1R1wJbNvtB0O64nYentqVS1cYB7mJQEv4s8MazUIZ9GIVhIGWTt6E3T+UdhrPVLjiMpffrB2RE2MZFl3LUQbfvsgDrlxhU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=J++82Mh+; arc=none smtp.client-ip=209.85.214.174
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	s=arc-20240116; t=1766006485; c=relaxed/simple;
+	bh=KvMV1BVMfU1Xl1d5Aezi91VNcQ3WSJFkkomMUxyA2p0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Oi77V5EwZJnlc/oPrVyJG9zEoUWsZIvXNztgZhaJrfBDdqjsMils3sokyYDTsjTHpyojXoXZJViSL1Xbj0QDdjEorNh7ByMZLK5xWDevpgISqcV8myUFtleSyhYJnChRSonOVHF6lah7P2p1z0ytE2ka80Cgrlh7OElb4/2ieUU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=ANKlCmkZ; arc=none smtp.client-ip=209.85.208.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="J++82Mh+"
-Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-2a1462573caso3565ad.0
-        for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 09:51:30 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="ANKlCmkZ"
+Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-64b4f730a02so972548a12.0
+        for <dm-devel@lists.linux.dev>; Wed, 17 Dec 2025 13:21:22 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1765993889; x=1766598689; darn=lists.linux.dev;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=ZyTq6XmdfdDxSW4g2YrFks1A8iekcfCGj5INQxpHBvo=;
-        b=J++82Mh+VU4Fq/UXH8B0qwZp5iZDjT0pCebBkVFOWKaNt/S/Ls/AgqjyLJyH1x4dKE
-         E8p2ur9XGDWiIEUiCtBsyeSfvfxmp40zMvBhJeudVlBOjSlsAtokTSEUosNEq0ShXy57
-         Ai/PVwZH/C+3DW8RAv7uqOJv6TP9FNUkDZI0zTvE4yZCjnBzZGWIhe8/5twAnD464pJQ
-         n07GbdXG8AyHq7vIQljCCzb+REQ2QpT53gvr9LqBxVTMNxSbq21pNaiggOlr4sNA9BRD
-         s+glBLOUfiN3ja5aBXDe+LNoywub+BQkXvbuYx16ztuiD6DL9FRV6OTRNoJJNJL86SAb
-         WlZw==
+        d=suse.com; s=google; t=1766006481; x=1766611281; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=jSFdouv2l8AbD43Sak2nwSvvnDkvP4ycHoC63SluMwo=;
+        b=ANKlCmkZiU+YDUXIEWtyzPw2kzu5JsXHSAZLtO5U30zQvOpP5ip9WS7vpZ6M9SzRSH
+         g2Ygc66j5B7O96c1aAY133m3dN/cxUPvffKBJ62P2BbqezBsJFn5ha/LFgE1R31n8bMJ
+         Y6maaCRS6q1Yk/BR9SxqUyc6I3dvQN/lXjCJ31n/B+aAilgcdPd9BpGExjGHd2b6PTgH
+         amWVmxxTkRDo9s4Z7rec6qifwkIh2S802sc+L8IyhnkjTF71nAC5QyCjhXw1tBA27M15
+         3Qn5g6uWfP6r2ZdIhpcr2d7ddVUl/v6jqB1n3F/m6Vwb91ZdP4Tt9c/zENkwu6Zei4i2
+         6Ijw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1765993889; x=1766598689;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ZyTq6XmdfdDxSW4g2YrFks1A8iekcfCGj5INQxpHBvo=;
-        b=FZSiog+jzd6u/tngkILRLCg9S099UJcjrV4o5vHyAdii+Iy+Fd/aCK2MlFgpsOJ7hh
-         UBRLJcmIA1JEPXhIYzI4sGV5NXV2jzx50g1ScTKVJPVC42hOdDEE+0cl3kRnB2SohYv7
-         ELawKQ9cXul25MdLkj/N1qppwgfnGFwTCj/3IcTyxAyPjEAN3kO4r6cwzUXumenE9kWP
-         qWOSTyGOyiefWyTsxQpY2WAmuUu1+8SnGmbRSSxtONZzJfgqfkZWLfuCr9o2YkuBHgRc
-         qYYqQaVWbTp/tNQ1Kr7cg1eN99Suq54B+L+UEa2mQfuBvy9m1p2z9HqPqFrVgekpKUBG
-         RaTA==
-X-Gm-Message-State: AOJu0Yw4YGt7mmHoY/OVd/wAs9mn9wy/8jWZcjLdiUQwIFPu9dRM/Vsf
-	aZLZ5sWWuJX+ObnKdW4Hg4+7qvnus5Cb8PPBy3r3kXrpPR/h1vGifgvKOvYdhyFxhQ==
-X-Gm-Gg: AY/fxX4jHKrM98duEOdeVl4Cx7N5p9yvB8xsaAKTZd9AL0/o8AsmrKuWzCiAd8yeENO
-	aubdrhms5EA9lYlWvC2DE2m1hC1N9hf1XgAZHBcfjFSCMmVnwyiGkxrzK1W3LXffZj37Q+kkDSf
-	ns4JNjj+ww4XH92HzZV6y/91ec9LCh4WKfB/VanMfGM/SGhY2SR/+7QaDavvux6omdGQFKDYHT9
-	3fx6ddKNzT4BPuxVN05PmYD+eqfEcmRbDrtYf5XNRG5YMdVmdX8ai0m37uZ1NheMxNsy1ByKAJf
-	Hu/bAONlxTemIYlOVrh/oxjvKDrKCXZQaQ0v8V46B+CseUPDKDd8DM3TOs9/U5n+iTLYBcQJmDT
-	NTMK+5EA07lQULTSHL8yzWIIeEHL/Z0xY6tmc45VpL+Vlu0dOZa9HA9i0xVxa9QZP7ayXj1OXMb
-	Q7VDPbpH9YPqgQGO7U9BOLfGpALpcKF7ToINPhIz7/OYL5O3dVUuwN1r8=
-X-Google-Smtp-Source: AGHT+IFld/cVLkutGPIwFU6gTtgiNwrdStwKm/AuagaycEuqI9ldZygKeX4fyLGVXc23iyrCCgoS1A==
-X-Received: by 2002:a17:903:b4c:b0:291:6858:ee60 with SMTP id d9443c01a7336-2a15f261df0mr3617535ad.4.1765993888769;
-        Wed, 17 Dec 2025 09:51:28 -0800 (PST)
-Received: from google.com (99.181.125.34.bc.googleusercontent.com. [34.125.181.99])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-7fe12128ebdsm93892b3a.26.2025.12.17.09.51.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 17 Dec 2025 09:51:28 -0800 (PST)
-Date: Wed, 17 Dec 2025 17:51:23 +0000
-From: Sami Tolvanen <samitolvanen@google.com>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Eran Messeri <eranm@google.com>, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 7/7] dm-verity: allow REED_SOLOMON to be 'm' if DM_VERITY
- is 'm'
-Message-ID: <20251217175123.GG2944334@google.com>
-References: <20251216230614.51779-1-ebiggers@kernel.org>
- <20251216230614.51779-8-ebiggers@kernel.org>
+        d=1e100.net; s=20230601; t=1766006481; x=1766611281;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=jSFdouv2l8AbD43Sak2nwSvvnDkvP4ycHoC63SluMwo=;
+        b=Ix72xOp8mpPrgQci75TklsI2ksRXaAmFzsAyjpVmQS27HTrKWI8rtdttNylVwxfqLm
+         O0uhhHlLnr200yJg9Ul0Akdd1W1QpALA4hhDIVhCNoCTILjIwejr0SvFCNOVA4Aqt8u/
+         JU6QiFEiWJTozLaddQrGOHej15zonDr1F16x66kCtcoOPNCsvwgRLCr8a8vnU6RuQVsE
+         q5o0Ah41lEHeKJ73TPuwxMi7UDJl9AH2XM9Sm2RviTStZUGxs8idthP+EC+4AL9AUcUw
+         a5PDjVPX9LJGllbJjnX6iqK5H6GQLZjdFJK3spKkXXdqv62oWyKskkmAn3aMEvxjlFpK
+         MqnQ==
+X-Gm-Message-State: AOJu0Yy5Z8e7LBlop5JXM8CBjiBo30FqQtnGALiJlt8y2k4p1ZrVC/al
+	RYA128jLMiCJRyWJpxF38nYT8b4d/XFuI+b9/OsSgO4lUcP5TVGpADfu4GF9Aia60ww=
+X-Gm-Gg: AY/fxX5Im93Xxz06hmvTCXwUdjXSTTaz1hXPyzbiopLQ0DSyHdICsF+263Hg6bW9pFb
+	GeMXR8QVL/6amXG8Pkv+cMTbR3VreDlvhjeEpK7Eomh+43oCohwPNNjfOfnSj2WWh8rUDZcUMoJ
+	QSK1sNJKv32pCciOaEEA+I7SucEcYrZ6qXmZ+yBi5muRR1wO5uhrRO0YprNgDyoxZuoXkTythV9
+	fySJ0MT/sYwti+GPWJ7PpQCnm5ZmHHt6350kHTtfM3h13Q6FCVDwsfZgNceu9hho1bSdN+oTF6e
+	4cBxWo9/0XtOZgU/rJlwiCgu+nFs6AUkg+cY0mGTKNgwayAUGf+SeAaDsXaCOgJu9RKRxpmm+i0
+	4PtwpemIXvtVTgMRPa9Lq1dwdIh6POdJnxAbQNMxdtZHmEGz2bjioMXKX0uWOIMNQjdR/Z2C07O
+	1wlz2gMLWIXE+aEh2uPOSqMuCIizruMbQm3BAC9knZNU6xkJni5md9E7TTW22llEY+herQrmWyQ
+	w==
+X-Google-Smtp-Source: AGHT+IH3Q+gqgZQNKgsAq2+31lQTzpa9e9xe3VdJqgL/2HdMamr93ANJ/SlMhEtlIL4sV9zm73WBbA==
+X-Received: by 2002:a17:907:96a4:b0:b7a:1bdb:30d9 with SMTP id a640c23a62f3a-b7d23ac8995mr1790616666b.65.1766006480911;
+        Wed, 17 Dec 2025 13:21:20 -0800 (PST)
+Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b8023466e85sm26808766b.36.2025.12.17.13.21.20
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 17 Dec 2025 13:21:20 -0800 (PST)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH 00/21] Multipath-tools: various bug fixes
+Date: Wed, 17 Dec 2025 22:20:52 +0100
+Message-ID: <20251217212113.234959-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20251216230614.51779-8-ebiggers@kernel.org>
+Content-Transfer-Encoding: 8bit
 
-On Tue, Dec 16, 2025 at 03:06:14PM -0800, Eric Biggers wrote:
-> The dm-verity kconfig options make the common mistake of selecting a
-> dependency from a bool "sub-option" rather than the main tristate
-> option.  This unnecessarily forces the dependency to built-in ('y').
-> 
-> Fix this by moving the selections of REED_SOLOMON and REED_SOLOMON_DEC8
-> into DM_VERITY, conditional on DM_VERITY_FEC.
-> 
-> This allows REED_SOLOMON to be 'm' if DM_VERITY is 'm'.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+This series contains a number of fixes for various recent issues with
+multipath-tools. The starting point was a use-after-free issue reported on
+GitHub [1]. The actual fixes for that are 02/21 and 06/21. Because this
+Patches 3-12 generally rework the freeing of maps, trying to avoid unexpected
+freeing of paths while freeing multipath structures.
 
-Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Because this changes memory handling in multipathd, I ran a set of tests to
+make sure the series doesn't open up new memory leaks. The good news is that I
+haven't found any, except some trivial ones (15/21, 16/21). But I did see one
+minor issue related to libudev [2]. After I found a warning in the libudev man
+page about the library not being thread-safe, I suspected that this might be
+causing the leak, and came up with code wrapping all libudev calls with a
+mutex (18/21, 19/21).  Unfortunately it didn't fix the observed leak, but I
+suppose it's still useful because multipathd is using libudev in a way that
+the authors of the library explicitly dismiss as unsupported.
 
-Sami
+The release of cmocka 2.0 [3] necessitated rather large-ish adaptations in our
+unit test code (20/21, 21/21).
+
+Finally 13/21 and 17/21 are bug fixes; in particular the latter is rather nasty.
+
+[1] https://github.com/opensvc/multipath-tools/issues/128
+[2] https://github.com/opensvc/multipath-tools/issues/130
+[3] https://github.com/opensvc/multipath-tools/issues/129
+
+Martin Wilck (21):
+  libmultipath: drop drop_multipath
+  libmultipath: don't access path members in free_pgvec()
+  multipathd: free paths in checker_finished()
+  libmultipath: don't touch mpvec in remove_map()
+  libmpathutil: constify find_slot()
+  libmultipath: don't free paths in orphan_paths()
+  libmultipath: free orphaned paths in check_removed_paths()
+  libmultipath: remove free_paths argument from free_pathgroup()
+  libmultipath: fix numeric value of free_paths in free_multipaths()
+  libmultipath: remove free_paths argument from free_pgvec()
+  libmultipath: remove free_paths argument from free_multipathvec()
+  libmultipath: free_multipath: fix FREE_PATHS case
+  multipath-tools: Fix ISO C23 errors with strchr()
+  libmultipath: simplify sysfs_get_target_nodename()
+  multipathd: join the init_unwinder dummy thread
+  kpartx: fix some memory leaks
+  libmpathutil: use union for bitfield
+  libmpathutil: add wrapper code for libudev
+  multipath-tools: use the libudev wrapper functions
+  Makefile: add functionality to determine cmocka version
+  multipath-tools tests: adaptations for cmocka 2.0
+
+ Makefile.inc                          |   2 +-
+ create-config.mk                      |   5 +
+ kpartx/kpartx.c                       |  18 +-
+ libdmmp/Makefile                      |   2 +-
+ libdmmp/libdmmp.c                     |   2 +-
+ libmpathpersist/mpath_persist.c       |   2 +-
+ libmpathpersist/mpath_persist_int.c   |   2 +-
+ libmpathpersist/mpath_pr_ioctl.c      |   2 +-
+ libmpathpersist/mpath_updatepr.c      |   2 +-
+ libmpathutil/Makefile                 |   2 +-
+ libmpathutil/globals.c                |   2 +-
+ libmpathutil/libmpathutil.version     |  62 ++
+ libmpathutil/mt-libudev.c             | 776 ++++++++++++++++++++++++++
+ libmpathutil/mt-libudev.h             | 120 ++++
+ libmpathutil/mt-udev-wrap.h           |  90 +++
+ libmpathutil/parser.c                 |   2 +-
+ libmpathutil/util.c                   |  12 +-
+ libmpathutil/util.h                   |  43 +-
+ libmpathutil/vector.c                 |   3 +-
+ libmpathutil/vector.h                 |   2 +-
+ libmpathvalid/mpath_valid.c           |   2 +-
+ libmultipath/blacklist.c              |   2 +-
+ libmultipath/blacklist.h              |   2 +-
+ libmultipath/config.c                 |   2 +-
+ libmultipath/configure.c              |  22 +-
+ libmultipath/dict.c                   |   2 +-
+ libmultipath/discovery.c              |  36 +-
+ libmultipath/dmparser.c               |   6 +-
+ libmultipath/foreign.c                |   2 +-
+ libmultipath/foreign.h                |   2 +-
+ libmultipath/foreign/nvme.c           |   2 +-
+ libmultipath/libmultipath.version     |   2 +
+ libmultipath/pgpolicies.c             |  14 +-
+ libmultipath/print.c                  |   2 +-
+ libmultipath/prio.c                   |   2 +-
+ libmultipath/prioritizers/alua_rtpg.c |   2 +-
+ libmultipath/prioritizers/ana.c       |   2 +-
+ libmultipath/prkey.c                  |   4 +-
+ libmultipath/prkey.h                  |   2 +-
+ libmultipath/propsel.c                |   2 +-
+ libmultipath/structs.c                |  94 ++--
+ libmultipath/structs.h                |   7 +-
+ libmultipath/structs_vec.c            |  58 +-
+ libmultipath/structs_vec.h            |   4 +-
+ libmultipath/sysfs.c                  |   2 +-
+ libmultipath/uevent.c                 |   2 +-
+ libmultipath/valid.c                  |   2 +-
+ mpathpersist/main.c                   |   2 +-
+ multipath/main.c                      |  16 +-
+ multipathd/cli_handlers.c             |   2 +-
+ multipathd/fpin_handlers.c            |   2 +-
+ multipathd/init_unwinder.c            |   4 +-
+ multipathd/main.c                     |  20 +-
+ tests/Makefile                        |  22 +-
+ tests/alias.c                         |  44 +-
+ tests/blacklist.c                     |   2 +-
+ tests/cli.c                           |   8 +-
+ tests/cmocka-compat.h                 |  16 +
+ tests/devt.c                          |   6 +-
+ tests/directio.c                      |  23 +-
+ tests/dmevents.c                      |  74 +--
+ tests/features.c                      |   2 +-
+ tests/hwtable.c                       |   6 +-
+ tests/mapinfo.c                       |  82 +--
+ tests/mpathvalid.c                    |  18 +-
+ tests/parser.c                        |   2 +-
+ tests/pgpolicy.c                      |   4 +-
+ tests/strbuf.c                        | 130 ++---
+ tests/sysfs.c                         |  76 +--
+ tests/test-lib.c                      |  90 +--
+ tests/test-log.c                      |  10 +-
+ tests/uevent.c                        |   2 +-
+ tests/unaligned.c                     |   8 +-
+ tests/util.c                          | 116 ++--
+ tests/valid.c                         |  30 +-
+ tests/vpd.c                           |  12 +-
+ 76 files changed, 1680 insertions(+), 581 deletions(-)
+ create mode 100644 libmpathutil/mt-libudev.c
+ create mode 100644 libmpathutil/mt-libudev.h
+ create mode 100644 libmpathutil/mt-udev-wrap.h
+ create mode 100644 tests/cmocka-compat.h
+
+-- 
+2.52.0
+
