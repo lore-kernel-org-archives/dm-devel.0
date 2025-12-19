@@ -1,119 +1,178 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D2723242A9
-	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:46:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 171CE29DB64
+	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 17:27:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766155575; cv=none; b=nB1hW33QvELdKthC8+xhasYEYaZL1oO/kd0+1UYTQuCP6MVp4CXlVJ6z1XrSaONbo4/4i2DM2x7S5JkYdNl2clVi1of6IZ/wPpmsIX3Ia7wimFRV4Z0qSrJGUyRvB0onk7kYsbw9JWHWk5CI57sdO+rUNHjUsbiivd6hEo7vwDE=
+	t=1766165256; cv=none; b=a+SidTFG/cJmM0MuN/wgeyehi3O+kQeNHvs7fIZ5GjKKeCogGB+FhlGQaYh8swKZ0pFgMgyf324pixgX2Pi7HVNc59FlBb8cbR08U3TcwhhMG0pymq56mIhTjVMwzBs5Mh1D1iEDP/Ceh1OkT/M696N8OrlbjwZfjrzS0qs+tMw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766155575; c=relaxed/simple;
-	bh=Ya1cdQLhS9b9gefKj0DC2qAdMQWe2yNJIp0UD381WSQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=E4D5WZVjBSc/iglc/xCm/7uGvPs4JbHF6y0Nsxzr4dJSdM8M+mZHs0nR2W3QjC4QwR2Td12kMGzi1itqlPTrfBU4xEiazn1GCq3x1L4yc4TJFhsm9cI9pM8XZa0kQ9tI98DoT/mvBoZcq6N1P4kb2p0uV+qG73/AVwMkLVg+Fzc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=D1IDomrj; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=D1IDomrj; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1766165256; c=relaxed/simple;
+	bh=20o2stF5xQy19K/o7Md25t59JAb4OllZsb35x1jPQ4M=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=EbFJmClH1xQP48fu8P+gaT1xMv5EgOKLKzIf2uoyNSS0+ie4gIpNBK1hojtlPeDAP9iCz3uJRv1VuMv0hYnJfR75l/XnVtm7IKaOtxZ5EKzGgvld9PiRGenW6midDg3GvRftFZwVPYLftizpIagZo5i9c4KJsTGmHCqLgX6+Fx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N40T2NmW; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="D1IDomrj";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="D1IDomrj"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 96C075BD10;
-	Fri, 19 Dec 2025 14:46:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1766155565; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N40T2NmW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1766165253;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Ya1cdQLhS9b9gefKj0DC2qAdMQWe2yNJIp0UD381WSQ=;
-	b=D1IDomrjfSGRHwU0JI7UQTob1AkM/lBZnrcWxPni2nwu8v+kSh+kcUvlaCLGdb0uDkPF+F
-	zQMeztlprvX3U68MPLOK0WiAItW3zI3m6J8B85aFFzY7yl99YYKU42JhuzSewGivycL1PH
-	4EAbVDXjfbETsAQ6wi1qYFFLRPOu4Uk=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=D1IDomrj
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1766155565; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Ya1cdQLhS9b9gefKj0DC2qAdMQWe2yNJIp0UD381WSQ=;
-	b=D1IDomrjfSGRHwU0JI7UQTob1AkM/lBZnrcWxPni2nwu8v+kSh+kcUvlaCLGdb0uDkPF+F
-	zQMeztlprvX3U68MPLOK0WiAItW3zI3m6J8B85aFFzY7yl99YYKU42JhuzSewGivycL1PH
-	4EAbVDXjfbETsAQ6wi1qYFFLRPOu4Uk=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=9+7NdZHgWQZzXcJhQb/rQOSzAFj79EKKpkHfeTHW4ko=;
+	b=N40T2NmWcQ0dSZpTATCSr2c+V8BIadgsVfWOWRZMOCB1yK11CmTkdbYmPtJ4Qfhn5SHXjt
+	kL5by5XJ/GgAsCB257MMrT0dotJSvI7EFRe1zfWB02QUC0HlxcaIu5fg1vTPH6xvod8MwA
+	MwgSUDI4qvkzPUwmroK/uUZqlU73MB8=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-416-dxBKuoRnOG6rTKhXK0zBDQ-1; Fri,
+ 19 Dec 2025 12:27:30 -0500
+X-MC-Unique: dxBKuoRnOG6rTKhXK0zBDQ-1
+X-Mimecast-MFC-AGG-ID: dxBKuoRnOG6rTKhXK0zBDQ_1766165249
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 76E123EA63;
-	Fri, 19 Dec 2025 14:46:05 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id oAnBGy1lRWnIPQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 19 Dec 2025 14:46:05 +0000
-Message-ID: <82a381769d0b1eef421244fb3e4ac10c3197ed43.camel@suse.com>
-Subject: Re: [PATCH v2 14/26] multipathd: add_map_without_path(): orphan
- paths instead of freeing them
-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, Martin Wilck <martin.wilck@suse.com>
-Date: Fri, 19 Dec 2025 15:46:05 +0100
-In-Reply-To: <20251219144108.237928-15-mwilck@suse.com>
-References: <20251219144108.237928-1-mwilck@suse.com>
-	 <20251219144108.237928-15-mwilck@suse.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2A8161956095;
+	Fri, 19 Dec 2025 17:27:29 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 88D2619560B4;
+	Fri, 19 Dec 2025 17:27:28 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5BJHRRiY2154043
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 19 Dec 2025 12:27:27 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5BJHRRZn2154042;
+	Fri, 19 Dec 2025 12:27:27 -0500
+Date: Fri, 19 Dec 2025 12:27:27 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH 18/21] libmpathutil: add wrapper code for libudev
+Message-ID: <aUWK_4QoG6JFWIqG@redhat.com>
+References: <20251217212113.234959-1-mwilck@suse.com>
+ <20251217212113.234959-19-mwilck@suse.com>
+ <aUSedLFHsg6xRGRR@redhat.com>
+ <af00ff3e05b643a9ed41e23a9f0ba4553d6c2e4b.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Score: -5.51
-X-Rspamd-Queue-Id: 96C075BD10
-X-Spamd-Result: default: False [-5.51 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	DWL_DNSWL_LOW(-1.00)[suse.com:dkim];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-0.998];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	ARC_NA(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:dkim,suse.com:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Level: 
+In-Reply-To: <af00ff3e05b643a9ed41e23a9f0ba4553d6c2e4b.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: s6_yas9P0r8zlSAb7ZvDvsh2QVRJ6o0HyJwsKCEFlN4_1766165249
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2025-12-19 at 15:40 +0100, Martin Wilck wrote:
-> If add_map_without_path() fails to set up the multipath data
-> structures,
-> don't free the paths associated with the map as
-> cleanup_multipath_and_paths() would; just orphan the paths.
-> update_pathvec_from_dm() will handle the paths and see if they
-> need to be removed.
->=20
-> Suggested-by: Benjamin Marzinski <bmarzins@suse.com>
+On Fri, Dec 19, 2025 at 09:06:49AM +0100, Martin Wilck wrote:
+> On Thu, 2025-12-18 at 19:38 -0500, Benjamin Marzinski wrote:
+> > On Wed, Dec 17, 2025 at 10:21:10PM +0100, Martin Wilck wrote:
+> > It sounds like
+> > the functions themselves are safe to call from multiple threads, as
+> > long
+> > as they are working on separate data. If they were manipulating
+> > global
+> > state that wouldn't be true.
+> 
+> They aren't working on completely separate data, that's the problem. We
+> only have one "struct udev", which provides the context for the entire
+> operation of libudev in our code. The udev_device structs we use are
+> created from that object and link to it internally. Individual
+> udev_device structs are linked together e.g. through parent
+> releationships. That's why devices obtained by udev_device_get_parent()
+> et al. don't need to be unref()'d; they're referenced by their children
+> and supposed to be freed together with the last child.
+> 
+> As the udev operations are opaque, we can't make any assumptions about
+> which of the libudev funtions allocate memory, or modify shared data
+> structures otherwise. Some properties are fetched "lazily", when the
+> user actually needs them, and then cached in libudev. The 2-layer
+> architecture with udev_device being actually a shallow wrapper around
+> sd_device etc. doesn't make it easier to assess the code flow inside
+> the systemd libraries.
+> 
+> These issues should be fixed by serializing the libudev accesses with a
+> mutex. I agree with you that I don't understand what could still go
+> wrong if that's done.
+> 
+> In theory we could have separate "struct udev" devices per thread, but
+> keeping these in sync with each other would be a nightmare. We could
+> rather give up running multithreaded altogether.
 
-Ups, sorry.=C2=A0;-)
-I won't resend just for this, it's fixed on my tip branch.
+Yeah. I started looking into this, and quickly realized the issue with
+the shared struct udev and gave up. I can easily believe that two
+threads running at the same time could corrupt a sharted object, and
+since everything is linked to one struct udev, there's no way that we
+can claim that there can't be shared objects in any of our calls.
 
-Martin
+I assume that we've likely been pretty safe because most (maybe all) of
+our udev device accesses (which is where I assume things could get
+corrupted the easiest) have been protected by the vecs lock. But the
+purge code is about to add a bunch of unprotected accesses, so clearly
+we need some locking there. 
+ 
+> > 
+> > > Add wrapper code that wraps all calls to libudev in a critical
+> > > section
+> > > holding a specific mutex.
+> > > 
+> > > [1] https://man7.org/linux/man-pages/man3/libudev.3.html
+> > 
+> > I assume that there must be times when use call a udev outside of the
+> > vecs lock. Did you check how often that is? Not that would be great
+> > to
+> > pile even more work on the vecs lock.
+> 
+> I wouldn't want to do that. Even if we could create a comprehensive
+> assessment now, it could become incorrect any time just by adding an
+> innocent libudev call somewhere. Also, I wouldn't want to overload the
+> vecs lock further. This code is ugly, but I am pretty sure that the
+> mutex operations will be light-weight. The mutex is always at the
+> bottom of our call stack, so no ABBA deadlock is possibe.
+> 
+> I started out by just wrapping some libudev calls, but I soon realized
+> that we can't do that without making assumptions about libudev's inner
+> workings, which we shouldn't (see above).
+> 
+> That said, I agree that it's unclear if this is really worth the
+> effort. I did it because I was hoping to fix the memory leak issue #129
+> with it. But that attempt was unsuccessful. So we have no evidence that
+> this serialization fixes any actual issue. multipathd has been using
+> libudev from multi-theaded context for 20 years, and we have never
+> encountered a problem that was caused by that (or if we did, we didn't
+> realize). At least in theory, the mutex could cause a deadlock or
+> noticeable delay if some libudev operation blocks or crashes, so the
+> change is not without risk. 
+> 
+> So, consider this part of the patch set an RFC.
+> 
+> OTOH, the libudev man page is pretty clear about being not thread-safe.
+
+Especially with the purge code adding otherwise unprotected udev device
+accesses, I think this is probably a good idea. I don't recall seeing
+libudev calls block. I'm betting the real risk is for systems where the
+root filesystem is multipathed, and you lose all paths. But that's
+always the scary case, and we do enough udev accesses with the vecs lock
+held, that if we can get wedged in one, we're likely already gonna get
+locked up, even without these mutexes.
+
+-Ben
+ 
+> > Also, git flagged some whitespace errors.
+> 
+> Ups, will fix.
+> 
+> Thanks,
+> Martin
+
