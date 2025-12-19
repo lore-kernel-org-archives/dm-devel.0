@@ -1,74 +1,74 @@
-Received: from mail-ed1-f43.google.com (mail-ed1-f43.google.com [209.85.208.43])
+Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A94FC21C160
-	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B124326ED25
+	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766155302; cv=none; b=c5U1kQeEK8RcrGesL3/k6KBYbSNcW+lUA83+mYAdX2PdC9nQZ7uRR4+jLpkafoFUwhNR3BYHtc5oXxWk/dfbQUvkyzhxYBngumlDO8pwnOyW+uas07NUR+WGIZ+E9gM5ewreoG7YfnxCG5u51CCTQPgVsuBvDNPUa9jYGHMByiw=
+	t=1766155303; cv=none; b=qcc9r+SFGMUsS3W65NvJEH0u+P5euunetI59mV7yPZHEnkVNo8grZauzOx7/bx3cJgDTHLmdFDdDAo9SGae/B+gtzf8/AG8lB8zJDFOycG3MMVdA9a67iEweIiY4vKFLvy8HLB0m3C2UUghCqkP06uijz+nJF8s1BY5ja1aGMHQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766155302; c=relaxed/simple;
-	bh=qsX3lDwwxdkwojdAreZpOAUvJ2bh6L4zEH3X55aBnag=;
+	s=arc-20240116; t=1766155303; c=relaxed/simple;
+	bh=hWj4k+Eb6o10yIVA79bRryNDUQDy/D24TlaSFjlOoTs=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lVEBPwDAXrEJjWlb/6xphM9f+wpkey0tTi5soCBhe3Oc25p96cUcCTkmo3hat8x0xUSlv7/cH+kLL0xVXSbUA1X0aemSn07EaHBTnjIptb56pHc0SwjW5Jr15g5v7GumrCGnZIjOPnTOHt22ukbwltYTKNSYRMkLDIbBQgIZGbg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=evnsPici; arc=none smtp.client-ip=209.85.208.43
+	 MIME-Version; b=LOsWSz+3NslmaL699z6TFMpkt8U5zTkLvB9BBhdQgUZPEgzF0dsUD8O5+jgFiVYElUNc/CmdY8q6JQ5uxjp98hwaQyJb8yZzSE9WqRjUp5vJdbYlJToJQhdC9OMZcJNqQQ3SjZjWD2abMW8p08FYzZrIgFmxr0b940IybJu4hkM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=N7qdgKbo; arc=none smtp.client-ip=209.85.218.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="evnsPici"
-Received: by mail-ed1-f43.google.com with SMTP id 4fb4d7f45d1cf-64baaa754c6so623657a12.3
-        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:40 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="N7qdgKbo"
+Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-b8010b8f078so131456766b.0
+        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:41 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1766155299; x=1766760099; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1766155300; x=1766760100; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2OCXNmIuU/rXQScWnk+KRkZAXzGxXs65iGCpsakMS0M=;
-        b=evnsPiciAdEHxmLFQ/vog9SkSMlA4XVdY/py6jGwlII7jkZ23ZI1bwdJ8K3Tc9gRuX
-         WFngoA6eyb1uLIKIhoiIuxZD5wGXcBFyA65btCkq++Y8UqpLjEufKB0e9H5lv/XtIzpx
-         9Q1OzOmphqrwFf73zyLDrvXa/FkHMwG2JxxCnZ9Sq4eHY9jBm/j6g6+A3tH9G+iG+in+
-         B+DFsoSY6P3g3RIpJ8XoUJo/6ecZPq6Tp96DsQyd5fPL4hocKg6RG4qBqpx+LarVI3Gv
-         BfEIbYRgMy7nrsyI1KX2rpcIRMZ7UhgylRnnnZhPss1LjLKfKdQQLj8qLahs8jEb4uiq
-         ctHw==
+        bh=dIPn8JplPpaVUxxk26ghN8vPEcnBnxv1u53Sqc4WOew=;
+        b=N7qdgKbosSPDHE2JgaCGha6PHFrL8S3j/MA7LMwLPZ3k00Mf8Zo5SCV0vK4gXHEjoe
+         q1TFgH6IC9W6qcWK8Ucku+BRjTdknbF7uNwlbptWudGkYw11nHrVeZCeaRRs4/YCF0L5
+         b9LxpQ/jMT2Nst357TgPqUR1UlFjoYB1qMgqyt6rvK4RczcTkWK4/tuGRrn34h+AFU+9
+         Ls9n/QE5+cn3kYA/iWx7Jvu+Q2T4xIIpVSsSr657blaLqc814TLwunenDm8KGevSf8cq
+         EQ9f5RiSNWHw5BG+LS1tS1VAfwGYKeGifK3W1eMP9/lalGG2hNMyr1cBCvK+hUB/AXhy
+         vAlw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766155299; x=1766760099;
+        d=1e100.net; s=20230601; t=1766155300; x=1766760100;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=2OCXNmIuU/rXQScWnk+KRkZAXzGxXs65iGCpsakMS0M=;
-        b=TWoOEEW0gTIsscKObdq2061//pXtQ4XvBa9uWvLWcv4H0lgx018Q84CywEkff7Qb7/
-         UAv70LYjzDmwDNJGGnKc77ZomM7E2LiffjmYNub07mVlfkajc9RlzyC+SayzdHnMDXRz
-         TG7PVVF74UPkpeYggTG5ETp3vmy3z03PD/tDaLTeJepsYvjIAt4cGTb67fHH4wZQGv9T
-         bs/yyh4Ism0YjF/hlVzCNp0H0m+hWeovn+zd33/zNGWkVFAr8GHYCRM3zxamnLwE+DW6
-         cCLqJVWBaRgUkP3bWpA790IY4I91/cpueZGRgaYGXcgidPQqexIRy4EgyQy3UDUMXjyM
-         fBEA==
-X-Gm-Message-State: AOJu0YwQM1OC5AcI2vvFUb7D8cxTttYoyaH+KUa0MG9ubzMgy1tj+MBB
-	mbr1Wdin3ANpg4VpWbAQz2g041whOOk1mjhfRBjAjOYm9k3gIhd23XmpT0niV78fKKuReno8tyf
-	e8t58
-X-Gm-Gg: AY/fxX42UID5HSmUrVSbf9xqKLQx4AMt6tX6a/GptHoo41JX+gI9SfjOUsZEGHmeV+F
-	1UB0fK4Oayd8LVC2mG+uIv4Oa/oo+bdd5pOr1G42iTEEmcMkq02iEzI/8pBTV2yy/BOesbLnG4b
-	EDtAjxYWSrOMjLUAUSBaxUyVsgnA5GQ6UVEOpGSv7nSaMqozcqlaHn9Hww3+n/H27QcNsbfiYCu
-	NfTD1ADn4au3jyw/UQ1wAC5LcX0RuHDf2Cx9A5Gg9EgNzmev8/sNhDdAU/ABKAdIps4u1dcw48i
-	xBBML6wljgKd+neye3hPZU8iPROUxbIxPdUEktootwky6JyUFf16PP408z8uRKQ6z/5B4GkVl8+
-	CRE67kUkzcwXd+NWvY5Wtjp0D7U4cP2uiL6h+fJJHURFISHxOUFm3ow0mDbAYFIyX1eeKPvU1AR
-	kvl1uGXccwcYOJ0L+BVJc3ajF0G1h5Rsly3L+t9lQ6Vd++9QvZvjnUfKd196lKY76nd7ym9KppR
-	g==
-X-Google-Smtp-Source: AGHT+IGqFXIMRvWv5wy6Xs1PXImrIGdfytN9reLIAliA1wihllDDBBiT6IuM4fKuDA85CF/Tz4ygFg==
-X-Received: by 2002:a05:6402:40c2:b0:64b:585d:6bcf with SMTP id 4fb4d7f45d1cf-64b8eeea20cmr3225051a12.33.1766155298902;
-        Fri, 19 Dec 2025 06:41:38 -0800 (PST)
+        bh=dIPn8JplPpaVUxxk26ghN8vPEcnBnxv1u53Sqc4WOew=;
+        b=Ot8UCTmSJp8CLY7mQM4MZE6Zb5n44dLSbfquLySHcDF0sW+Lgcg7MkFRwZLpftAXdX
+         EVSxlgwUjWdIjTMAbGygILpLTJ47OiuBI4giEOekUwh8UlbCpiEuEyVmruqrDt2CKkwG
+         3fWKSNa7kroz3X1dR7OOQA+tlV0rqvO3u0WO3ETeJLj04r+aY6/GFn8NpPzTnCp0oMjy
+         UDguUHfkiVUvnWG/YZbXI+IRHjxrMjrqoe6XZMo17Vm/GS41nCycDCFSgNpeIJln5mph
+         XuYcKFLMJrzrNR2LUPGohsGaR6HNumMmMjh84ABrgp9fyq812G7h956ESCVGp6Hz5xQm
+         UYTQ==
+X-Gm-Message-State: AOJu0YwQZSKTzrteMI5BlEPrKqsGG387nR37Nuv8HnQUNXSpbQYAkt71
+	3KlPeVE3XjFuaW9LquSMXIQ6RC+XpGDCFz8T+PqWjbjA1IuDVEkFgEq/aqHdiv9LfLaUsjV0ASH
+	/IRtg
+X-Gm-Gg: AY/fxX7ju40vbAAiCioTaHJx6yyUuSAExN1vAW3LvTa6KgiaPjDlwNDQgTMbDdhEz+B
+	MnCU9F8ZLfKQfMQuAjmElwcoTNI0geTL1iuglqct8S7VwIYznfozNP2+e5h/gFfFLYC19vTaof+
+	Ny1/YWSwMwFUc+gpCesIU/9RlmJk04RcZdVWiY/ZrffPLUkr7sh40APl/HmjvkjSCtCrjE6uTCp
+	PT0buTajKOymZYWM7J9y1v9vhd30oI2r+kj5ytz1/YHoPvSb0qfzc2hfNGKgeam3SyESd9xPuCY
+	GIsUanjSaUz4EZqD1V8fG2huqjXID7Qxc7Cq3uQIFBq+2wSaVa2b5cwXU9BMWy4d/nBZm5X/IJW
+	MkBhHrgiNUjaWmbc/8twZxx6sf1RSHBd3mnFtbeBIn80ZOp4XUymsryvEggc4iJWyeclReAvYW/
+	eNvcM4HDp56JS6zTnISL6jZlxiDqDfkU7vcemPES0YojLacRspUDAeBtrK/16CC6zoBe6v+1nv+
+	w==
+X-Google-Smtp-Source: AGHT+IHRFPe7iYbR4V9kVkB6siXtrNzhINyJMa8duoOMrpqSnGqT2myAmgWPGitJB3ZsiEDqnD3IzA==
+X-Received: by 2002:a17:907:7f05:b0:b7c:fc5c:7ca5 with SMTP id a640c23a62f3a-b80371d32a0mr308923566b.49.1766155299789;
+        Fri, 19 Dec 2025 06:41:39 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-64b910601c7sm2401285a12.14.2025.12.19.06.41.38
+        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b80464e01d9sm55689466b.42.2025.12.19.06.41.39
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 19 Dec 2025 06:41:38 -0800 (PST)
+        Fri, 19 Dec 2025 06:41:39 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 20/26] multipathd: join the init_unwinder dummy thread
-Date: Fri, 19 Dec 2025 15:41:02 +0100
-Message-ID: <20251219144108.237928-21-mwilck@suse.com>
+Subject: [PATCH v2 21/26] kpartx: fix some memory leaks
+Date: Fri, 19 Dec 2025 15:41:03 +0100
+Message-ID: <20251219144108.237928-22-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251219144108.237928-1-mwilck@suse.com>
 References: <20251219144108.237928-1-mwilck@suse.com>
@@ -80,28 +80,64 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This closes a minor memory leak (thread-local storage of the
-dummy thread is never freed).
+These leaks were reported by LeakSanitizer.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/init_unwinder.c | 4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ kpartx/kpartx.c | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
 
-diff --git a/multipathd/init_unwinder.c b/multipathd/init_unwinder.c
-index b1cd283..d39e428 100644
---- a/multipathd/init_unwinder.c
-+++ b/multipathd/init_unwinder.c
-@@ -34,5 +34,7 @@ int init_unwinder(void)
- 
- 	pthread_mutex_unlock(&dummy_mtx);
- 
--	return pthread_cancel(dummy);
-+	rc = pthread_cancel(dummy);
-+	pthread_join(dummy, NULL);
-+	return rc;
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index a1495e5..7ec89b4 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -227,6 +227,11 @@ xmalloc (size_t size) {
+ 	return t;
  }
+ 
++static void cleanup_charp(char **p)
++{
++	free(*p);
++}
++
+ int
+ main(int argc, char **argv){
+ 	int i, j, m, n, op, off, arg, c, d, ro=0;
+@@ -237,10 +242,10 @@ main(int argc, char **argv){
+ 	char *type, *diskdevice, *device, *progname;
+ 	int verbose = 0;
+ 	char partname[PARTNAME_SIZE], params[PARTNAME_SIZE + 16];
+-	char * loopdev = NULL;
+-	char * delim = NULL;
+-	char *uuid = NULL;
+-	char *mapname = NULL;
++	char *loopdev __attribute__((cleanup(cleanup_charp))) = NULL;
++	char *delim __attribute__((cleanup(cleanup_charp))) = NULL;
++	char *uuid __attribute__((cleanup(cleanup_charp))) = NULL;
++	char *mapname __attribute__((cleanup(cleanup_charp))) = NULL;
+ 	int hotplug = 0;
+ 	int loopcreated = 0;
+ 	struct stat buf;
+@@ -292,7 +297,9 @@ main(int argc, char **argv){
+ 			verbose = 1;
+ 			break;
+ 		case 'p':
+-			delim = optarg;
++			delim = strdup(optarg);
++			if (!delim)
++				exit(1);
+ 			break;
+ 		case 'l':
+ 			what = LIST;
+@@ -674,7 +681,6 @@ main(int argc, char **argv){
+ 		if (verbose)
+ 			fprintf(stderr, "loop deleted : %s\n", device);
+ 	}
+-
+ end:
+ 	dm_lib_exit();
+ 
 -- 
 2.52.0
 
