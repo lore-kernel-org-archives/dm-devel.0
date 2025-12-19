@@ -1,73 +1,74 @@
-Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BC0A284B29
-	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8DBE21C160
+	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766155305; cv=none; b=E/vsLe91x7K+BUd75dUjLytCjD4S1eFaCUk0Ezb5TA4nkx4eO79RR+1Idx9/zr8R6GnQaTvqzGvRFEFat3ji3ansRlmoGI1wn2KZ/4gpbAu/vcpggcxWojjOqi524Uku8YZDwQu5tKZ9Fbx3FzXLHdi30SiyvdLGujuaq+f++XM=
+	t=1766155306; cv=none; b=q6rvpnTDT2SRsXSghBlM3QfB8TZKkUR8fStL4LQPD10AoLepboIYUW2/FLyuQ60OqcFH6uBL3cJMtWIyWpFDWJl2NJ/cA7bk7r/wFnfxJ48YzZXObfzxqQoaW1BOTj7zMKwvpsRzz5+E8dcu3OmpxokbZI6+MX7khErQr1Yymew=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766155305; c=relaxed/simple;
-	bh=jsH7g+ywMwjf13wl3rAsZH2LDK4ZxzoLw83R3IyMlTE=;
+	s=arc-20240116; t=1766155306; c=relaxed/simple;
+	bh=tgwEx2nTLvgjItY6ASGZP7s5Cxm3Hw/LugwJ2go124o=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=S9fLWj0WSE2+EouwjmZDlEsNFEBSM4aLjlAixduzvu6zNjhbleF/vEBgvmw/Xn4MSvamEV4dUIlOkAFaGcqW6iOenL/ztZiHtHSSA0gBY0nf5R+DsOCW5FzCPEejypDd/gspBYktOluhDa1y/OGIR/E0prKIhiytiiAcVp7wdEI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Ek5qABci; arc=none smtp.client-ip=209.85.218.43
+	 MIME-Version; b=Jh9L4CtAQwluMzmeM1ErD6PhFIVBv9h89AWqcUJUYa5eVeKxnFIAxYLnoWgTPKnqVjb4AsXVrXCQgEtArl+NLGoUK+Xt/00KtosDnFn9q+w8BLYP4adJLRLTtkHKUPlXGzh9an9BUWWgEoBEePIeBWcqlY0JwBTr/b33dJ0tx4s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=E9oZEsnE; arc=none smtp.client-ip=209.85.208.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Ek5qABci"
-Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-b727f452fffso473221166b.1
-        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:42 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="E9oZEsnE"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-649e28dccadso2730525a12.3
+        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:43 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1766155301; x=1766760101; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1766155302; x=1766760102; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=dRanMH1ks00YH4vMQoJjrQp5OFfxyhmA0V5smThj1ZI=;
-        b=Ek5qABciu5+88XWTWdhWwfAbf3JJsvb4VT4PKAgm+cDEjpxm65mAtzXXjma5OeDEY8
-         eUrzWs8i08AHQokKexks1i81/0KIYC7YaANEcMAQ/ZqXR/mmKd3+GiwPeTDM6c1dmZoe
-         JCZUNHPOP8yaPD13ACKyvFnnDzxY/MQPlB9PbOgw8QFYtANIkZO+Unwqzj6felGp/6W9
-         phzjR8U2azWE9b4qErTQiQYcOrcc62P76G62Of1cS43cWhmBYK9st47udNHRnOb8g9AG
-         1Qun0fgfvNiSpcJdTW9W0kxagvYabkU+1W8W0XHaImSsv6gJm/fYVFzTdfwDzXMrCIJu
-         zRKQ==
+        bh=3z/bwD55I0fqNpTZO0HvQVssdTjjr6FXPZsgFY1l3kE=;
+        b=E9oZEsnEMrdVPKvgHvR/kSHUNt1k8qjPMs6xpkk4mgP0u+8q6o7PEcQvfLofdiUwdu
+         iFOWDplUix8lSnXTzWF1YDjsatYYtIBpT9ScEPUBsxub2sSYp98khkdKVhNaq4B87JIx
+         TEWIagTeI6F85npnKQS1IaPkWmLPZgtDCE6pR6AaitL858wdl/zojPbl+Gnd/3jCS5Ot
+         iMyra7LZmFEWffIrTC18yagAHPkgbDGwwaUVje+H0mNDnXxSG70BmhH3GI+pXdn0sdDk
+         vKsB3CqQNRAw8VEuIxtFOglx5v6KidUYdVUK22jnk2OwLuPeQ4T5U5C/B1daX2Wy7HSO
+         5Utw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766155301; x=1766760101;
+        d=1e100.net; s=20230601; t=1766155302; x=1766760102;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=dRanMH1ks00YH4vMQoJjrQp5OFfxyhmA0V5smThj1ZI=;
-        b=J1QSngBE+69xwnsO07tyfhc1EgyB0FZ7yHYCRJEH92xiyFlk+U4nXDeM9WMpqlZf5v
-         cnIPBZ/RoUYCj7kyjdHCGULbIBjb0/Qb4+mxUVTqcxQoJxrigJONY+8OK1fT04nBhOon
-         kmYX2++4vcmFGKIdLsMwyp1jOtlAbar/FQ4EDXf3OEpb3yw66TE+yfIBuq8etSHGhsGq
-         9d1qkf4267uP6AR4/aYCugU0VGe/E4/Ak0fSTPuCggcxk4zSoWzsNhb9wS25+uxb7mx1
-         RVTkI3ZDSLuTuQQvB0ERcKrKAVBxWEoQcozByoVQ1w5+2lWy2zoB9V6ZTWyxFSgd3JMM
-         RZcA==
-X-Gm-Message-State: AOJu0Yx0ygADn4vJtNAJDG61lwAwEGbOUGbmGY7D31yo+0ToJAy6IXrA
-	MfpDYO9e4UfTMoT0pEmqD7HjWu5B00FzIzSZGus8faTgdzRGGxwvL2F6GDVsOaz3JU8=
-X-Gm-Gg: AY/fxX4SKlP98NksDNIo3Gbl59YsPXwXx2wQxtShN0HHXOIYFTRQ5pkZbD2zSLnSvkc
-	AhmfhKTJecliVXwADw3QqPaOeTq3kiEnT2vkqkuBArCQ2HIQIg9pOGOztkzUAi47jlpPYHJf8K9
-	0k6UUyZgMWEKA5zwDziYc9pJoKesCgQYTHpwrQjIbrAK434S3EhDNaswVwhPocUFzaQJIj3fTDV
-	9EaUrQsAtqjcPXdA/k/Q9v8Eq8X0s5R+pXMHwvi3OXOISDykh9LhFNz1SyrpbzBNiVXbZBUYAf1
-	lGqE6GPZbyc8hgCHf2kPISd7LOS4Bet65PxcYTnjj0lgWkEH+Sd95Baul7x4sCFZh4hq711zVYN
-	ekUIDeYZoh+P7yrKiB1oPCtO9MZl+OQZOOVz36C/AKEzwc/qxsIAMYl/jRP03xkqMWmHlXTmVaG
-	GMDb41jHythFJyuOyJeq5oid9L/HWhx9/lt1CDA/LAU1uMP2zr3bMArbZwFdY3Kmb7IGymeiH+S
-	A==
-X-Google-Smtp-Source: AGHT+IH2/R3YNbr1A6nmLFS89E7nWT3oP3sVvf2cmuzer7CrB0xZ/23++eaJmoadjfFgIy3oJsYvpA==
-X-Received: by 2002:a17:907:7f01:b0:b71:ea7c:e501 with SMTP id a640c23a62f3a-b80355b2523mr456289466b.4.1766155300793;
-        Fri, 19 Dec 2025 06:41:40 -0800 (PST)
+        bh=3z/bwD55I0fqNpTZO0HvQVssdTjjr6FXPZsgFY1l3kE=;
+        b=tQ9ZmLhgRcgRyYEgZtYoKoDfRpmXmQ5jh7bHZ+hSz3bDgW3ljuprBp7ip4vpTX1UCH
+         i0BlGyzYZvmGBc8h6fzz4kUOfzGDZfENhwzZfSZxv76PjNPRC0aSe6PU0ywnHZ6t2lb8
+         wSimZ1nwt7a1LEb1YdFjP4mKEev2PmXSU1g3W2M80Olt6xcraDZ13Oik64jIcrxtyz/k
+         97r8ZSAW3j0nKWwEXlfHapDqUB94nRdLUyAIQKHTi1OlB1vMy+B3082baRrjqqOa2F8N
+         vzaUGmiFjnVR/9hItmS1+4PyoA5jNbDGrQJt2kHCUr2fUjt4dUx9Le8hNEVOrxV+irDn
+         B2sA==
+X-Gm-Message-State: AOJu0YwXBOlHdFijcchesjaxn3iSPRc6thFHoCE1bMxOGPFKgQgGufcM
+	/C9WoLp1TnWrecYei9ViaZYtN1i7eVh92KBz0b3wNXjYf1/vKQYgHQjmQ0qNOjGdZE0sLgdnv5o
+	QPrKU
+X-Gm-Gg: AY/fxX4gHFRGRUq3ngNwDYHKu4Ilkv6sIlQ0yjFPPv/t9UJrBx/MFCpI4GvQksRHh+T
+	5Fe3kse7jbIs2cDYa44yCEbM8OJX8nv4iFCXEgKuz9pYT3qS/swGB5HaDlQetY06g6P5Aqp7VB4
+	bg4mJ+oZVpzUyKLNFVbOgi/Wu7xCMqB4Y20OcWZpCwBO/pF9MF8Xyi71AbtXWIe1BMqahhpaHG4
+	npZxyVkJDXTg3p0OHBVjiDsnDFjHjrZlQ5O53G4i+NIdJlIWBhb8J8TF2ROK60x47lXJK1ACsIf
+	MtrKYb902Yht1IxasnzmUUD0+nndMktqx4N2DPvDm3VA9+20GrqYMv7LEufuLlPNeZ92Komr0Hy
+	JfgMk1KHsl/WfxthEsJDDXJ1L7JHJmt83s9N5Kh7Sq8sa/OXn+6ihodh0sSpzu0LduMwBqFpIPP
+	GzhTz269im5GtD/zD03vC6hZ0suW/ciUhkzp7epf0pWib3RApkOs3KPjgJ6fWS/U/cpolbSyeJa
+	g==
+X-Google-Smtp-Source: AGHT+IF2fxSz/1EKewFM2Q3qLzaxXfgPLjqKKaypt5wx9lrbmA0uc889QRGPzhZGSZG9f2PoriN5Sw==
+X-Received: by 2002:a05:6402:4311:b0:64b:7f98:c7e with SMTP id 4fb4d7f45d1cf-64b8e93bb68mr2478868a12.1.1766155301937;
+        Fri, 19 Dec 2025 06:41:41 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b8037f37edasm241598566b.58.2025.12.19.06.41.40
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-64b916b3b35sm2400391a12.30.2025.12.19.06.41.41
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 19 Dec 2025 06:41:40 -0800 (PST)
+        Fri, 19 Dec 2025 06:41:41 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 22/26] libmpathutil: use union for bitfield
-Date: Fri, 19 Dec 2025 15:41:04 +0100
-Message-ID: <20251219144108.237928-23-mwilck@suse.com>
+Subject: [PATCH v2 23/26] libmpathutil: add wrapper code for libudev
+Date: Fri, 19 Dec 2025 15:41:05 +0100
+Message-ID: <20251219144108.237928-24-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251219144108.237928-1-mwilck@suse.com>
 References: <20251219144108.237928-1-mwilck@suse.com>
@@ -79,266 +80,1107 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The macro BITFIELD used a cast of a pointer to a different anonymous struct
-to (struct bitfield *). This violates strict aliasing rules, because the
-two structs aren't compatible types in the sense of the language
-specification. With -O2, gcc 15.1 generates code that makes th pgcmp()
-function fail, because the compiler doesn't initialize bf->len aka
-__storage_for__bf.len to 64.
+The libudev documentation [1] states that libudev is not thread-safe and
+shouldn't be used from multithreaded programs. While the man page also
+states that using libudev in multithreaded programs is unsafe even if
+locking is used, there's not much else we can do in multipath-tools to
+mitigate the problem, as we are using libudev in multiple threads all over
+the place.
 
-The problem will show through error messages like this:
+Add wrapper code that wraps all calls to libudev in a critical section
+holding a specific mutex.
 
-multipathd[1974208]: is_bit_set_in_bitfield: bitfield overflow: 1 >= 0
+[1] https://man7.org/linux/man-pages/man3/libudev.3.html
 
-Fix this by using a union.
-
-The "length" argument to BITFIELD has no effect any more. Remove it.
-BITFIELD will now always have space for bits_per_slot bits (usually
-64 on modern 64-bit distros).
-
-Introduce BUILD_BUG_ON and use it in ordert to make sure static bit fields
-are large enough.
-
-Fixes: 9a2f173 ("libmpathutil: change STATIC_BITFIELD to BITFIELD")
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathutil/util.c       |  8 +++----
- libmpathutil/util.h       | 47 +++++++++++++++++++++++++--------------
- libmultipath/configure.c  |  6 ++---
- libmultipath/discovery.c  |  4 +++-
- libmultipath/pgpolicies.c |  2 +-
- tests/util.c              | 10 ++++-----
- 6 files changed, 46 insertions(+), 31 deletions(-)
+ libmpathutil/libmpathutil.version |  62 +++
+ libmpathutil/mt-libudev.c         | 776 ++++++++++++++++++++++++++++++
+ libmpathutil/mt-libudev.h         | 120 +++++
+ libmpathutil/mt-udev-wrap.h       |  90 ++++
+ 4 files changed, 1048 insertions(+)
+ create mode 100644 libmpathutil/mt-libudev.c
+ create mode 100644 libmpathutil/mt-libudev.h
+ create mode 100644 libmpathutil/mt-udev-wrap.h
 
-diff --git a/libmpathutil/util.c b/libmpathutil/util.c
-index 37412c6..5e45750 100644
---- a/libmpathutil/util.c
-+++ b/libmpathutil/util.c
-@@ -337,15 +337,15 @@ void cleanup_fclose(void *p)
- 		fclose(p);
- }
- 
--void cleanup_bitfield(struct bitfield **p)
-+void cleanup_bitfield(union bitfield **p)
- {
- 	free(*p);
- }
- 
--struct bitfield *alloc_bitfield(unsigned int maxbit)
-+union bitfield *alloc_bitfield(unsigned int maxbit)
- {
- 	unsigned int n;
--	struct bitfield *bf;
-+	union bitfield *bf;
- 
- 	if (maxbit == 0) {
- 		errno = EINVAL;
-@@ -353,7 +353,7 @@ struct bitfield *alloc_bitfield(unsigned int maxbit)
- 	}
- 
- 	n = (maxbit - 1) / bits_per_slot + 1;
--	bf = calloc(1, sizeof(struct bitfield) + n * sizeof(bitfield_t));
-+	bf = calloc(1, sizeof(union bitfield) + (n - 1) * sizeof(bitfield_t));
- 	if (bf)
- 		bf->len = maxbit;
- 	return bf;
-diff --git a/libmpathutil/util.h b/libmpathutil/util.h
-index 3799fd4..d2a6c52 100644
---- a/libmpathutil/util.h
-+++ b/libmpathutil/util.h
-@@ -16,6 +16,8 @@
- #define __GLIBC_PREREQ(x, y) 0
- #endif
- 
-+#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
+index 14aa083..8fab1a6 100644
+--- a/libmpathutil/libmpathutil.version
++++ b/libmpathutil/libmpathutil.version
+@@ -93,6 +93,68 @@ global:
+ 	log_thread_stop;
+ 	logsink;
+ 	msort;
 +
- size_t strchop(char *);
- 
- const char *libmp_basename(const char *filename);
-@@ -86,29 +88,40 @@ typedef unsigned int bitfield_t;
- #endif
- #define bits_per_slot (sizeof(bitfield_t) * CHAR_BIT)
- 
--struct bitfield {
--	unsigned int len;
--	bitfield_t bits[];
-+union bitfield {
-+	struct {
-+		unsigned int len;
-+		bitfield_t bits[];
-+	};
-+	/* for initialization in the BITFIELD macro */
-+	struct {
-+		unsigned int __len;
-+		bitfield_t __bits[1];
-+	};
- };
- 
--#define BITFIELD(name, length)					\
--	struct {							\
--		unsigned int len;					\
--		bitfield_t bits[((length) - 1) / bits_per_slot + 1];	\
--	} __storage_for__ ## name = {					\
--		.len = (length),					\
--		.bits = { 0, },						\
++	mt_udev_ref;
++	mt_udev_unref;
++	mt_udev_new;
++
++	mt_udev_list_entry_get_next;
++	mt_udev_list_entry_get_by_name;
++	mt_udev_list_entry_get_name;
++	mt_udev_list_entry_get_value;
++
++	mt_udev_device_ref;
++	mt_udev_device_unref;
++
++	mt_udev_device_new_from_syspath;
++	mt_udev_device_new_from_devnum;
++	mt_udev_device_new_from_subsystem_sysname;
++	mt_udev_device_new_from_device_id;
++	mt_udev_device_new_from_environment;
++
++	mt_udev_device_get_udev;
++	mt_udev_device_get_parent;
++	mt_udev_device_get_parent_with_subsystem_devtype;
++	mt_udev_device_get_devpath;
++	mt_udev_device_get_subsystem;
++	mt_udev_device_get_devtype;
++	mt_udev_device_get_syspath;
++	mt_udev_device_get_sysname;
++	mt_udev_device_get_devnum;
++	mt_udev_device_get_is_initialized;
++	mt_udev_device_get_property_value;
++	mt_udev_device_get_seqnum;
++	mt_udev_device_set_sysattr_value;
++	mt_udev_device_get_sysattr_value;
++	mt_udev_device_get_driver;
++	mt_udev_device_get_devnode;
++
++	mt_udev_device_get_properties_list_entry;
++
++	mt_udev_monitor_new_from_netlink;
++	mt_udev_monitor_enable_receiving;
++	mt_udev_monitor_get_fd;
++	mt_udev_monitor_receive_device;
++	mt_udev_monitor_filter_add_match_subsystem_devtype;
++	mt_udev_monitor_ref;
++	mt_udev_monitor_unref;
++	mt_udev_monitor_set_receive_buffer_size;
++
++	mt_udev_enumerate_new;
++	mt_udev_enumerate_ref;
++	mt_udev_enumerate_unref;
++	mt_udev_enumerate_add_match_subsystem;
++	mt_udev_enumerate_scan_devices;
++	mt_udev_enumerate_get_list_entry;
++	mt_udev_enumerate_add_nomatch_subsystem;
++	mt_udev_enumerate_add_match_sysattr;
++	mt_udev_enumerate_add_nomatch_sysattr;
++	mt_udev_enumerate_add_match_property;
++	mt_udev_enumerate_add_match_tag;
++	mt_udev_enumerate_add_match_parent;
++	mt_udev_enumerate_add_match_is_initialized;
++	mt_udev_enumerate_add_syspath;
++
+ 	normalize_timespec;
+ 	parse_devt;
+ 	print_strbuf;
+diff --git a/libmpathutil/mt-libudev.c b/libmpathutil/mt-libudev.c
+new file mode 100644
+index 0000000..2e37c7d
+--- /dev/null
++++ b/libmpathutil/mt-libudev.c
+@@ -0,0 +1,776 @@
++#include "mt-libudev.h"
++#include <stddef.h>
++#include <libudev.h>
++#include "util.h"
++
++static pthread_mutex_t libudev_mutex = PTHREAD_MUTEX_INITIALIZER;
++
++struct udev *mt_udev_ref(struct udev *udev)
++{
++	struct udev *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_ref(udev);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev *mt_udev_unref(struct udev *udev)
++{
++	struct udev *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_unref(udev);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev *mt_udev_new(void)
++{
++	struct udev *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_new();
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_list_entry *mt_udev_list_entry_get_next(struct udev_list_entry *list_entry)
++{
++	struct udev_list_entry *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_list_entry_get_next(list_entry);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_list_entry *
++mt_udev_list_entry_get_by_name(struct udev_list_entry *list_entry, const char *name)
++{
++	struct udev_list_entry *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_list_entry_get_by_name(list_entry, name);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_list_entry_get_name(struct udev_list_entry *list_entry)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_list_entry_get_name(list_entry);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_list_entry_get_value(struct udev_list_entry *list_entry)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_list_entry_get_value(list_entry);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *
++mt_udev_device_new_from_syspath(struct udev *udev, const char *syspath)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_new_from_syspath(udev, syspath);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *
++mt_udev_device_new_from_devnum(struct udev *udev, char type, dev_t devnum)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_new_from_devnum(udev, type, devnum);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *
++mt_udev_device_new_from_subsystem_sysname(struct udev *udev, const char *subsystem,
++					  const char *sysname)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_new_from_subsystem_sysname(udev, subsystem, sysname);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_new_from_device_id(struct udev *udev, char *id)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_new_from_device_id(udev, id);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_new_from_environment(struct udev *udev)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_new_from_environment(udev);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_ref(struct udev_device *udev_device)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_ref(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_unref(struct udev_device *udev_device)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_unref(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev *mt_udev_device_get_udev(struct udev_device *udev_device)
++{
++	struct udev *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_udev(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_get_parent(struct udev_device *udev_device)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_parent(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_device_get_parent_with_subsystem_devtype(
++	struct udev_device *udev_device, const char *subsystem, const char *devtype)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_parent_with_subsystem_devtype(udev_device,
++							    subsystem, devtype);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_devpath(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_devpath(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_subsystem(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_subsystem(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_devtype(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_devtype(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_syspath(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_syspath(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_sysname(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_sysname(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++dev_t mt_udev_device_get_devnum(struct udev_device *udev_device)
++{
++	dev_t ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_devnum(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++unsigned long long mt_udev_device_get_seqnum(struct udev_device *udev_device)
++{
++	unsigned long long ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_seqnum(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_driver(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_driver(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_devnode(struct udev_device *udev_device)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_devnode(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_device_get_is_initialized(struct udev_device *udev_device)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_is_initialized(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *
++mt_udev_device_get_property_value(struct udev_device *udev_device, const char *key)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_property_value(udev_device, key);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++const char *mt_udev_device_get_sysattr_value(struct udev_device *udev_device,
++					     const char *sysattr)
++{
++	const char *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_sysattr_value(udev_device, sysattr);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_device_set_sysattr_value(struct udev_device *udev_device,
++				     const char *sysattr, char *value)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_set_sysattr_value(udev_device, sysattr, value);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_list_entry *
++mt_udev_device_get_properties_list_entry(struct udev_device *udev_device)
++{
++	struct udev_list_entry *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_device_get_properties_list_entry(udev_device);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
 +/*
-+ * BITFIELD: define a static bitfield of length bits_per_slot
-+ * (aka 64 on 64-bit architectures).
-+ * gcc 4.9.2 (Debian Jessie) raises an error if the initializer for
-+ * .__len comes first. Thus put .__bits first.
-+ * Use e.g. BUILD_BUG_ON() to make sure the bitfield size is sufficient
-+ * to hold the number of bits required.
++ * multipath-tools doesn't use these, and some of them aren't available
++ * in older libudev versions. Keeping the code here in case we will
++ * need it in the future.
++
++struct udev_list_entry *mt_udev_device_get_devlinks_list_entry(struct
++udev_device *udev_device)
++{
++    struct udev_list_entry *ret;
++    pthread_mutex_lock(&libudev_mutex);
++    pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++    ret = udev_device_get_devlinks_list_entry(udev_device);
++
++    pthread_cleanup_pop(1);
++    return ret;
++}
++
++struct udev_list_entry *mt_udev_device_get_tags_list_entry(struct udev_device
++*udev_device)
++{
++    struct udev_list_entry *ret;
++    pthread_mutex_lock(&libudev_mutex);
++    pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++    ret = udev_device_get_tags_list_entry(udev_device);
++
++    pthread_cleanup_pop(1);
++    return ret;
++}
++
++struct udev_list_entry *mt_udev_device_get_current_tags_list_entry(struct
++udev_device *udev_device)
++{
++    struct udev_list_entry *ret;
++    pthread_mutex_lock(&libudev_mutex);
++    pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++    ret = udev_device_get_current_tags_list_entry(udev_device);
++
++    pthread_cleanup_pop(1);
++    return ret;
++}
++
++struct udev_list_entry *mt_udev_device_get_sysattr_list_entry(struct
++udev_device *udev_device)
++{
++    struct udev_list_entry *ret;
++    pthread_mutex_lock(&libudev_mutex);
++    pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++    ret = udev_device_get_sysattr_list_entry(udev_device);
++
++    pthread_cleanup_pop(1);
++    return ret;
++}
++*/
++
++struct udev_monitor *
++mt_udev_monitor_new_from_netlink(struct udev *udev, const char *name)
++{
++	struct udev_monitor *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_new_from_netlink(udev, name);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_monitor *mt_udev_monitor_ref(struct udev_monitor *udev_monitor)
++{
++	struct udev_monitor *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_ref(udev_monitor);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_monitor *mt_udev_monitor_unref(struct udev_monitor *udev_monitor)
++{
++	struct udev_monitor *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_unref(udev_monitor);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_monitor_enable_receiving(struct udev_monitor *udev_monitor)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_enable_receiving(udev_monitor);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_monitor_get_fd(struct udev_monitor *udev_monitor)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_get_fd(udev_monitor);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_device *mt_udev_monitor_receive_device(struct udev_monitor *udev_monitor)
++{
++	struct udev_device *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_receive_device(udev_monitor);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_monitor_filter_add_match_subsystem_devtype(
++	struct udev_monitor *udev_monitor, const char *subsystem, const char *devtype)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_filter_add_match_subsystem_devtype(udev_monitor,
++							      subsystem, devtype);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_monitor_set_receive_buffer_size(struct udev_monitor *udev_monitor, int size)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_monitor_set_receive_buffer_size(udev_monitor, size);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_enumerate *mt_udev_enumerate_new(struct udev *udev)
++{
++	struct udev_enumerate *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_new(udev);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_enumerate *mt_udev_enumerate_ref(struct udev_enumerate *udev_enumerate)
++{
++	struct udev_enumerate *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_ref(udev_enumerate);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_enumerate *mt_udev_enumerate_unref(struct udev_enumerate *udev_enumerate)
++{
++	struct udev_enumerate *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_unref(udev_enumerate);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_subsystem(struct udev_enumerate *udev_enumerate,
++					  const char *subsystem)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_subsystem(udev_enumerate, subsystem);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_nomatch_subsystem(struct udev_enumerate *udev_enumerate,
++					    const char *subsystem)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_nomatch_subsystem(udev_enumerate, subsystem);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_sysattr(struct udev_enumerate *udev_enumerate,
++					const char *sysattr, const char *value)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_sysattr(udev_enumerate, sysattr, value);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_nomatch_sysattr(struct udev_enumerate *udev_enumerate,
++					  const char *sysattr, const char *value)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_nomatch_sysattr(udev_enumerate, sysattr, value);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_property(struct udev_enumerate *udev_enumerate,
++					 const char *property, const char *value)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_property(udev_enumerate, property, value);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_tag(struct udev_enumerate *udev_enumerate,
++				    const char *tag)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_tag(udev_enumerate, tag);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_parent(struct udev_enumerate *udev_enumerate,
++				       struct udev_device *parent)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_parent(udev_enumerate, parent);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_match_is_initialized(struct udev_enumerate *udev_enumerate)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_match_is_initialized(udev_enumerate);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_add_syspath(struct udev_enumerate *udev_enumerate,
++				  const char *syspath)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_add_syspath(udev_enumerate, syspath);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++int mt_udev_enumerate_scan_devices(struct udev_enumerate *udev_enumerate)
++{
++	int ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_scan_devices(udev_enumerate);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
++
++struct udev_list_entry *
++mt_udev_enumerate_get_list_entry(struct udev_enumerate *udev_enumerate)
++{
++	struct udev_list_entry *ret;
++
++	pthread_mutex_lock(&libudev_mutex);
++	pthread_cleanup_push(cleanup_mutex, &libudev_mutex);
++
++	ret = udev_enumerate_get_list_entry(udev_enumerate);
++
++	pthread_cleanup_pop(1);
++	return ret;
++}
+diff --git a/libmpathutil/mt-libudev.h b/libmpathutil/mt-libudev.h
+new file mode 100644
+index 0000000..1c1e748
+--- /dev/null
++++ b/libmpathutil/mt-libudev.h
+@@ -0,0 +1,120 @@
++#ifndef MT_LIBUDEV_H
++#define MT_LIBUDEV_H
++
++#include <pthread.h>
++#include <stdarg.h>    /* for va_list */
++#include <sys/types.h> /* For dev_t */
++
++struct udev;
++struct udev_list_entry;
++struct udev_device;
++struct udev_monitor;
++struct udev_enumerate;
++
++struct udev *mt_udev_ref(struct udev *udev);
++struct udev *mt_udev_unref(struct udev *udev);
++struct udev *mt_udev_new(void);
++
++struct udev_list_entry *
++mt_udev_list_entry_get_next(struct udev_list_entry *list_entry);
++struct udev_list_entry *
++mt_udev_list_entry_get_by_name(struct udev_list_entry *list_entry, const char *name);
++const char *mt_udev_list_entry_get_name(struct udev_list_entry *list_entry);
++const char *mt_udev_list_entry_get_value(struct udev_list_entry *list_entry);
++
++struct udev_device *
++mt_udev_device_new_from_syspath(struct udev *udev, const char *syspath);
++struct udev_device *
++mt_udev_device_new_from_devnum(struct udev *udev, char type, dev_t devnum);
++struct udev_device *
++mt_udev_device_new_from_subsystem_sysname(struct udev *udev, const char *subsystem,
++					  const char *sysname);
++/*
++ * Some older libudev versions  don't use "const" for the id argument,
++ * therefore we can't use it here, either.
 + */
-+#define BITFIELD(name)							\
-+	union bitfield __storage_for__ ## name = {			\
-+		.__bits = { 0 },					\
-+		.__len = (bits_per_slot),				\
- 	}; \
--	struct bitfield *name = (struct bitfield *)& __storage_for__ ## name
-+	union bitfield *name = & __storage_for__ ## name
- 
--struct bitfield *alloc_bitfield(unsigned int maxbit);
-+union bitfield *alloc_bitfield(unsigned int maxbit);
- 
- void log_bitfield_overflow__(const char *f, unsigned int bit, unsigned int len);
- #define log_bitfield_overflow(bit, len) \
- 	log_bitfield_overflow__(__func__, bit, len)
- 
--static inline bool is_bit_set_in_bitfield(unsigned int bit,
--				       const struct bitfield *bf)
-+static inline bool is_bit_set_in_bitfield(unsigned int bit, const union bitfield *bf)
- {
- 	if (bit >= bf->len) {
- 		log_bitfield_overflow(bit, bf->len);
-@@ -118,7 +131,7 @@ static inline bool is_bit_set_in_bitfield(unsigned int bit,
- 		  (1ULL << (bit % bits_per_slot)));
- }
- 
--static inline void set_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
-+static inline void set_bit_in_bitfield(unsigned int bit, union bitfield *bf)
- {
- 	if (bit >= bf->len) {
- 		log_bitfield_overflow(bit, bf->len);
-@@ -127,7 +140,7 @@ static inline void set_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
- 	bf->bits[bit / bits_per_slot] |= (1ULL << (bit % bits_per_slot));
- }
- 
--static inline void clear_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
-+static inline void clear_bit_in_bitfield(unsigned int bit, union bitfield *bf)
- {
- 	if (bit >= bf->len) {
- 		log_bitfield_overflow(bit, bf->len);
-@@ -146,5 +159,5 @@ static inline void clear_bit_in_bitfield(unsigned int bit, struct bitfield *bf)
- void cleanup_charp(char **p);
- void cleanup_ucharp(unsigned char **p);
- void cleanup_udev_device(struct udev_device **udd);
--void cleanup_bitfield(struct bitfield **p);
-+void cleanup_bitfield(union bitfield **p);
- #endif /* UTIL_H_INCLUDED */
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index a8e18a2..b5f1bab 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -439,8 +439,8 @@ static int pgcmp(struct multipath *mpp, struct multipath *cmpp)
- {
- 	int i, j;
- 	struct pathgroup *pgp, *cpgp;
--	BITFIELD(bf, bits_per_slot);
--	struct bitfield *bf__  __attribute__((cleanup(cleanup_bitfield))) = NULL;
-+	BITFIELD(bf);
-+	union bitfield *bf__ __attribute__((cleanup(cleanup_bitfield))) = NULL;
- 
- 	if (VECTOR_SIZE(mpp->pg) != VECTOR_SIZE(cmpp->pg))
- 		return 1;
-@@ -1049,7 +1049,7 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
- 	vector newmp;
- 	struct config *conf = NULL;
- 	int allow_queueing;
--	struct bitfield *size_mismatch_seen;
-+	union bitfield *size_mismatch_seen;
- 	struct multipath * cmpp;
- 
- 	/* ignore refwwid if it's empty */
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 85ea1aa..72e64da 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -880,10 +880,12 @@ sysfs_set_nexus_loss_tmo(struct path *pp)
- static void
- scsi_tmo_error_msg(struct path *pp)
- {
--	static BITFIELD(bf, LAST_BUS_PROTOCOL_ID + 1);
-+	static BITFIELD(bf);
- 	STRBUF_ON_STACK(proto_buf);
- 	unsigned int proto_id = bus_protocol_id(pp);
- 
-+	/* make sure the bitfield is large enough */
-+	BUILD_BUG_ON((LAST_BUS_PROTOCOL_ID + 1) > bits_per_slot);
- 	snprint_path_protocol(&proto_buf, pp);
- 	condlog(2, "%s: setting scsi timeouts is unsupported for protocol %s",
- 		pp->dev, get_strbuf_str(&proto_buf));
-diff --git a/libmultipath/pgpolicies.c b/libmultipath/pgpolicies.c
-index 2e1a543..57b7485 100644
---- a/libmultipath/pgpolicies.c
-+++ b/libmultipath/pgpolicies.c
-@@ -201,7 +201,7 @@ int group_by_match(struct multipath * mp, vector paths,
- 		   bool (*path_match_fn)(struct path *, struct path *))
- {
- 	int i, j;
--	struct bitfield *bitmap;
-+	union bitfield *bitmap;
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 	struct path * pp2;
-diff --git a/tests/util.c b/tests/util.c
-index da192ba..67d8148 100644
---- a/tests/util.c
-+++ b/tests/util.c
-@@ -198,7 +198,7 @@ static uint64_t maybe_swap(uint64_t v)
- 
- static void test_bitmask_1(void **state)
- {
--	struct bitfield *bf;
-+	union bitfield *bf;
- 	uint64_t *arr;
- 	int i, j, k, m, b;
- 
-@@ -240,7 +240,7 @@ static void test_bitmask_1(void **state)
- 
- static void test_bitmask_2(void **state)
- {
--	struct bitfield *bf;
-+	union bitfield *bf;
- 	uint64_t *arr;
- 	int i, j, k, m, b;
- 
-@@ -307,7 +307,7 @@ static void test_bitmask_2(void **state)
-  */
- static void test_bitmask_len_0(void **state)
- {
--	struct bitfield *bf;
-+	union bitfield *bf;
- 
- 	bf = alloc_bitfield(0);
- 	assert_null(bf);
-@@ -329,7 +329,7 @@ static unsigned int maybe_swap_idx(unsigned int i)
- 
- static void _test_bitmask_small(unsigned int n)
- {
--	struct bitfield *bf;
-+	union bitfield *bf;
- 	uint32_t *arr;
- 	unsigned int size = maybe_swap_idx((n - 1) / 32) + 1, i;
- 
-@@ -378,7 +378,7 @@ static void _test_bitmask_small(unsigned int n)
- 
- static void _test_bitmask_small_2(unsigned int n)
- {
--	struct bitfield *bf;
-+	union bitfield *bf;
- 	uint32_t *arr;
- 	unsigned int size = maybe_swap_idx((n - 1) / 32) + 1, i;
- 
++struct udev_device *mt_udev_device_new_from_device_id(struct udev *udev, char *id);
++struct udev_device *mt_udev_device_new_from_environment(struct udev *udev);
++
++struct udev_device *mt_udev_device_ref(struct udev_device *udev_device);
++struct udev_device *mt_udev_device_unref(struct udev_device *udev_device);
++struct udev *mt_udev_device_get_udev(struct udev_device *udev_device);
++struct udev_device *mt_udev_device_get_parent(struct udev_device *udev_device);
++struct udev_device *mt_udev_device_get_parent_with_subsystem_devtype(
++	struct udev_device *udev_device, const char *subsystem,
++	const char *devtype);
++const char *mt_udev_device_get_devpath(struct udev_device *udev_device);
++const char *mt_udev_device_get_subsystem(struct udev_device *udev_device);
++const char *mt_udev_device_get_devtype(struct udev_device *udev_device);
++const char *mt_udev_device_get_syspath(struct udev_device *udev_device);
++const char *mt_udev_device_get_sysname(struct udev_device *udev_device);
++int mt_udev_device_get_is_initialized(struct udev_device *udev_device);
++const char *
++mt_udev_device_get_property_value(struct udev_device *udev_device, const char *key);
++dev_t mt_udev_device_get_devnum(struct udev_device *udev_device);
++unsigned long long int mt_udev_device_get_seqnum(struct udev_device *udev_device);
++const char *mt_udev_device_get_driver(struct udev_device *udev_device);
++const char *mt_udev_device_get_devnode(struct udev_device *udev_device);
++const char *mt_udev_device_get_sysattr_value(struct udev_device *udev_device,
++					     const char *sysattr);
++/*
++ * libudev-215 (Debian jessie) doesn't use "const" for the value argument,
++ * therefore we can't use it here, either.
++ */
++int mt_udev_device_set_sysattr_value(struct udev_device *udev_device,
++				     const char *sysattr, char *value);
++
++struct udev_list_entry *
++mt_udev_device_get_properties_list_entry(struct udev_device *udev_device);
++/*
++ * multipath-tools doesn't use these, and some of them aren't available
++ * in older libudev versions.
++
++ struct udev_list_entry *mt_udev_device_get_devlinks_list_entry(struct
++ udev_device *udev_device); struct udev_list_entry
++ *mt_udev_device_get_tags_list_entry(struct udev_device *udev_device); struct
++ udev_list_entry *mt_udev_device_get_current_tags_list_entry(struct udev_device
++ *udev_device); struct udev_list_entry
++ *mt_udev_device_get_sysattr_list_entry(struct udev_device *udev_device);
++*/
++struct udev_monitor *
++mt_udev_monitor_new_from_netlink(struct udev *udev, const char *name);
++struct udev_monitor *mt_udev_monitor_ref(struct udev_monitor *udev_monitor);
++struct udev_monitor *mt_udev_monitor_unref(struct udev_monitor *udev_monitor);
++int mt_udev_monitor_enable_receiving(struct udev_monitor *udev_monitor);
++int mt_udev_monitor_get_fd(struct udev_monitor *udev_monitor);
++struct udev_device *
++mt_udev_monitor_receive_device(struct udev_monitor *udev_monitor);
++int mt_udev_monitor_filter_add_match_subsystem_devtype(
++	struct udev_monitor *udev_monitor, const char *subsystem,
++	const char *devtype);
++int mt_udev_monitor_set_receive_buffer_size(struct udev_monitor *udev_monitor,
++					    int size);
++
++struct udev_enumerate *mt_udev_enumerate_new(struct udev *udev);
++struct udev_enumerate *mt_udev_enumerate_ref(struct udev_enumerate *udev_enumerate);
++struct udev_enumerate *
++mt_udev_enumerate_unref(struct udev_enumerate *udev_enumerate);
++int mt_udev_enumerate_add_match_subsystem(struct udev_enumerate *udev_enumerate,
++					  const char *subsystem);
++int mt_udev_enumerate_add_nomatch_subsystem(struct udev_enumerate *udev_enumerate,
++					    const char *subsystem);
++int mt_udev_enumerate_add_match_sysattr(struct udev_enumerate *udev_enumerate,
++					const char *sysattr, const char *value);
++int mt_udev_enumerate_add_nomatch_sysattr(struct udev_enumerate *udev_enumerate,
++					  const char *sysattr, const char *value);
++int mt_udev_enumerate_add_match_property(struct udev_enumerate *udev_enumerate,
++					 const char *property, const char *value);
++int mt_udev_enumerate_add_match_tag(struct udev_enumerate *udev_enumerate,
++				    const char *tag);
++int mt_udev_enumerate_add_match_parent(struct udev_enumerate *udev_enumerate,
++				       struct udev_device *parent);
++int mt_udev_enumerate_add_match_is_initialized(struct udev_enumerate *udev_enumerate);
++int mt_udev_enumerate_add_syspath(struct udev_enumerate *udev_enumerate,
++				  const char *syspath);
++int mt_udev_enumerate_scan_devices(struct udev_enumerate *udev_enumerate);
++int mt_udev_enumerate_scan_subsystems(struct udev_enumerate *udev_enumerate);
++struct udev_list_entry *
++mt_udev_enumerate_get_list_entry(struct udev_enumerate *udev_enumerate);
++
++#endif
+diff --git a/libmpathutil/mt-udev-wrap.h b/libmpathutil/mt-udev-wrap.h
+new file mode 100644
+index 0000000..f232821
+--- /dev/null
++++ b/libmpathutil/mt-udev-wrap.h
+@@ -0,0 +1,90 @@
++#ifndef MT_LIBUDEV_WRAP_HPP
++#define MT_LIBUDEV_WRAP_HPP
++#include "mt-libudev.h"
++
++#define udev_ref(udev)                       mt_udev_ref(udev)
++#define udev_unref(udev)                     mt_udev_unref(udev)
++#define udev_new()                           mt_udev_new()
++
++#define udev_list_entry_get_next(list_entry)             mt_udev_list_entry_get_next(list_entry)
++#define udev_list_entry_get_by_name(list_entry, name)    mt_udev_list_entry_get_by_name(list_entry, name)
++#define udev_list_entry_get_name(list_entry)             mt_udev_list_entry_get_name(list_entry)
++#define udev_list_entry_get_value(list_entry)            mt_udev_list_entry_get_value(list_entry)
++
++#define udev_list_entry_foreach(list_entry, first_entry)	\
++        for (list_entry = first_entry; \
++             list_entry; \
++             list_entry = udev_list_entry_get_next(list_entry))
++
++#define udev_device_new_from_syspath(udev, syspath)               mt_udev_device_new_from_syspath(udev, syspath)
++#define udev_device_new_from_devnum(udev, type, devnum)           mt_udev_device_new_from_devnum(udev, type, devnum)
++#define udev_device_new_from_subsystem_sysname(udev, subsystem, sysname) \
++                                                                  mt_udev_device_new_from_subsystem_sysname(udev, subsystem, sysname)
++#define udev_device_new_from_device_id(udev, id) mt_udev_device_new_from_device_id(udev, id)
++#define udev_device_new_from_environment(udev)                    mt_udev_device_new_from_environment(udev)
++
++#define udev_device_ref(udev_device)                      mt_udev_device_ref(udev_device)
++#define udev_device_unref(udev_device)                    mt_udev_device_unref(udev_device)
++#define udev_device_get_udev(udev_device)                 mt_udev_device_get_udev(udev_device)
++#define udev_device_get_parent(udev_device)               mt_udev_device_get_parent(udev_device)
++#define udev_device_get_parent_with_subsystem_devtype(udev_device, subsystem, devtype) \
++	mt_udev_device_get_parent_with_subsystem_devtype(udev_device, subsystem, devtype)
++#define udev_device_get_devpath(udev_device)              mt_udev_device_get_devpath(udev_device)
++#define udev_device_get_subsystem(udev_device)            mt_udev_device_get_subsystem(udev_device)
++#define udev_device_get_devtype(udev_device)              mt_udev_device_get_devtype(udev_device)
++#define udev_device_get_syspath(udev_device)              mt_udev_device_get_syspath(udev_device)
++#define udev_device_get_sysname(udev_device)              mt_udev_device_get_sysname(udev_device)
++#define udev_device_get_is_initialized(udev_device)       mt_udev_device_get_is_initialized(udev_device)
++#define udev_device_get_property_value(udev_device, key)  mt_udev_device_get_property_value(udev_device, key)
++#define udev_device_get_devnum(udev_device)               mt_udev_device_get_devnum(udev_device)
++#define udev_device_get_seqnum(udev_device)               mt_udev_device_get_seqnum(udev_device)
++#define udev_device_get_driver(udev_device)                       mt_udev_device_get_driver(udev_device)
++#define udev_device_get_devnode(udev_device)                      mt_udev_device_get_devnode(udev_device)
++#define udev_device_get_sysattr_value(udev_device, sysattr) \
++                                                          mt_udev_device_get_sysattr_value(udev_device, sysattr)
++#define udev_device_set_sysattr_value(udev_device, sysattr, value) \
++	mt_udev_device_set_sysattr_value(udev_device, sysattr, value)
++
++#define udev_device_get_devlinks_list_entry(udev_device)        mt_udev_device_get_devlinks_list_entry(udev_device)
++#define udev_device_get_properties_list_entry(udev_device)      mt_udev_device_get_properties_list_entry(udev_device)
++#define udev_device_get_tags_list_entry(udev_device)            mt_udev_device_get_tags_list_entry(udev_device)
++#define udev_device_get_current_tags_list_entry(udev_device)    mt_udev_device_get_current_tags_list_entry(udev_device)
++#define udev_device_get_sysattr_list_entry(udev_device)         mt_udev_device_get_sysattr_list_entry(udev_device)
++
++#define udev_monitor_new_from_netlink(udev, name)         mt_udev_monitor_new_from_netlink(udev, name)
++#define udev_monitor_ref(udev_monitor)                    mt_udev_monitor_ref(udev_monitor)
++#define udev_monitor_unref(udev_monitor)                  mt_udev_monitor_unref(udev_monitor)
++#define udev_monitor_enable_receiving(udev_monitor)       mt_udev_monitor_enable_receiving(udev_monitor)
++#define udev_monitor_get_fd(udev_monitor)                 mt_udev_monitor_get_fd(udev_monitor)
++#define udev_monitor_receive_device(udev_monitor)         mt_udev_monitor_receive_device(udev_monitor)
++#define udev_monitor_filter_add_match_subsystem_devtype(udev_monitor, subsystem, devtype) \
++	mt_udev_monitor_filter_add_match_subsystem_devtype(udev_monitor, subsystem, devtype)
++#define udev_monitor_set_receive_buffer_size(udev_monitor, size) \
++                                                          mt_udev_monitor_set_receive_buffer_size(udev_monitor, size)
++
++#define udev_enumerate_new(udev)                          mt_udev_enumerate_new(udev)
++#define udev_enumerate_unref(udev_enumerate)              mt_udev_enumerate_unref(udev_enumerate)
++#define udev_enumerate_add_match_subsystem(udev_enumerate, subsystem) \
++                                                          mt_udev_enumerate_add_match_subsystem(udev_enumerate, subsystem)
++#define udev_enumerate_add_nomatch_subsystem(udev_enumerate, subsystem) \
++                                                          mt_udev_enumerate_add_nomatch_subsystem(udev_enumerate, subsystem)
++#define udev_enumerate_add_match_sysattr(udev_enumerate, sysattr, value) \
++                                                          mt_udev_enumerate_add_match_sysattr(udev_enumerate, sysattr, value)
++#define udev_enumerate_add_nomatch_sysattr(udev_enumerate, sysattr, value) \
++                                                          mt_udev_enumerate_add_nomatch_sysattr(udev_enumerate, sysattr, value)
++#define udev_enumerate_add_match_property(udev_enumerate, property, value) \
++                                                          mt_udev_enumerate_add_match_property(udev_enumerate, property, value)
++#define udev_enumerate_add_match_tag(udev_enumerate, tag) mt_udev_enumerate_add_match_tag(udev_enumerate, tag)
++#define udev_enumerate_add_match_parent(udev_enumerate, parent) \
++                                                          mt_udev_enumerate_add_match_parent(udev_enumerate, parent)
++#define udev_enumerate_add_match_is_initialized(udev_enumerate) \
++                                                          mt_udev_enumerate_add_match_is_initialized(udev_enumerate)
++#define udev_enumerate_add_syspath(udev_enumerate, syspath) \
++                                                          mt_udev_enumerate_add_syspath(udev_enumerate, syspath)
++
++#define udev_enumerate_scan_devices(udev_enumerate)       mt_udev_enumerate_scan_devices(udev_enumerate)
++#define udev_enumerate_scan_device(udev_enumerate, syspath) \
++                                                          mt_udev_enumerate_scan_device(udev_enumerate, syspath)
++#define udev_enumerate_get_list_entry(udev_enumerate)     mt_udev_enumerate_get_list_entry(udev_enumerate)
++
++#endif
 -- 
 2.52.0
 
