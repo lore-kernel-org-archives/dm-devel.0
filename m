@@ -1,74 +1,73 @@
-Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
+Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A7DA324700
-	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 340A3284B29
+	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 14:41:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766155283; cv=none; b=RiFQsrZs6lFdnN8sp6oKbB7sYjlJkVBgyiSrnI1HLrD7WRmj0ysarh7u7wWPF8juizFf6yK1bJUgD/gcsWw4yrtLMQUHOdDXBOwPi8xlZdIo7GZnYqLcN2tbTuhJ7PWyinAWYEf59j7iwMg+lEl+UV2wW857ODYWmDjK9/4jYic=
+	t=1766155284; cv=none; b=Jv/lqoIPGq53f1IYCLJ+lZmguggjsdVm5XD9wLUjV+sg95EikutARfeqi8Dof/UvmySnYTnEOq29hLkJ04LyTKV6PabNixwW6Zuj4mn5vvO81Tno/Qr46lRw5XZTpZJLv125O8GMVFoB5GxykMMRzH6/mYQ47R+Ypjj7vqhDwCk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766155283; c=relaxed/simple;
-	bh=CLN3yE6fOnt8I9K7wg2UbrJtK2U7Nkec/yorb9LlgN0=;
+	s=arc-20240116; t=1766155284; c=relaxed/simple;
+	bh=2mw4R9xUgpEID1+yzw64LclaqB547lu8GnaiMHY3LDQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ebuRSIuwmKtbAjRXycCpUAaZa4aOMlhTRnAbXkzXTtPCXHLUu/Nh17OWlpeIMo0SQGXxUKFDnAtii3V+JYFqlgylJSiKdiqMyaRMF1IfWtV6KnBTtuypn66BNgjw0BPl3L9xVe761SmMtW9eCdUMUtQqrWr7UjZBNh5C+89mkwQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EdQ8Zce4; arc=none smtp.client-ip=209.85.218.44
+	 MIME-Version; b=uV0zDt7+G2ZyLVGxBjnCAWxb767KX6xn/4fHuMWTFABXgfyTFDPvV9VMnRvfMTp+m+q7NTDqAP/uQM8XeScZFq7o0mDi/KevhUZhDDF34xzTCVJ5eZPjW+lF9c5O4sB8OePw9qhhvxULg4cs0/UilEcITwXO1urTt6Zvwg2R/qo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=IFWFxijc; arc=none smtp.client-ip=209.85.218.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EdQ8Zce4"
-Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-b79d6a70fc8so317068166b.0
-        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:20 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="IFWFxijc"
+Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-b728a43e410so307131966b.1
+        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 06:41:21 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1766155279; x=1766760079; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1766155280; x=1766760080; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=jxzWfCuZGPGEIkmHhlLNui+nr1vXjBhFCqjtzKiI298=;
-        b=EdQ8Zce4T6mLOlN7X/MrF0cY3V5YqFi8DI4Uywz5bfrHLD3XZmVa6xNdgydy7wURyL
-         x02GR0RTyfEv6rrInI+PBSU27wR6gZjK1SjPdtJVeyq0PK/UrBzA8bygDgzfHcHJg3at
-         SlyGwUt8vlObpmIvAdWNTqReic1S+JjxPkCc7thIGAg7Hf+6psWTsHxbo0Wno8B8859K
-         nt9xDyBCYN2Ft21Q0KBbXeGYu3HlN3+EWq3wB46muW/FHhP4ySLRVMdDo2XfDUXokrJ3
-         4JYR3iZ7Jq5lDiL+aivTkQbEAg5FORNtti/rDcHHnF8gqNu5rzxVsDWRyILXe4I2wJsE
-         cqTA==
+        bh=kUDWfvQX+zbixVMyxEvAWD28Fqm+izRQyft2Ld9BCc8=;
+        b=IFWFxijcwppT7P+sSrzU01ovf0PJ+RkGSumMqPrmIq+1XrteGs3Z6dt+noPZQOrSwk
+         1Z0DFEcrRxM8xg4ezaUrsoMTYY9kaFO0ZIqzmPFSKvHTpcuHTKZSNIsOXG3r2l1MtPA9
+         M2SobBi7qRJ8rpD78QpfgX/9VhHLzJYKH7YXRR6NMxVpJpCQ2Jn3xnLZxH28iZryq31H
+         7meN9+UGkZX6vmPD+Tcz83pNYb3dtpilmTAGjJS/EISF858eToWMsaFYJCdJtRg6wP7v
+         0QemMHaFjDOUAniPNM6vkGlq2h7rVFK7WhPQdKn615IBWcHcfp88v3iSTurs3aiCjrXj
+         tiFg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766155279; x=1766760079;
+        d=1e100.net; s=20230601; t=1766155280; x=1766760080;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=jxzWfCuZGPGEIkmHhlLNui+nr1vXjBhFCqjtzKiI298=;
-        b=ieEEX6lATqXvLCLNmBmbmB0iuassenDQF3co0SnOfWtS3Qk2quL3bksNdR7ckm0O0y
-         JGwzWRrJr6W5rwgw/e2/SJOjKnckdvIGa9YwZODIOF5aPTTDPxvVirAINwILxdWkownE
-         KRGz1rr7bRihI1waNTHrYeNkqDX1sM+lgE9n7fTDdR1cpCIgcX4M7rME4E7FkZ+fYApQ
-         X+IGUJbVc59jLxBaxXEJjCO1KtX/coBuVvmz0L2TGrHLrhrQxxM/k3lOTarFIH9ylJWg
-         LexoI1yu4bcjQCM1CR/KHNrh5QyOnh/O2hbFxrRpDrELUEFhqpmP84QITPXGolA1BTtQ
-         athg==
-X-Gm-Message-State: AOJu0YzGF8feidFPcqQhlzETfK556nmWCApiDFPpM5VCifKdiTyCR96s
-	PhmLc/BPH9JZ2BMIpGDktrw1aEbG1obbBfmBGblvnonWYJtI/pXrs+fS0RsjHiZ+1ISlSXSvIew
-	2qaTF
-X-Gm-Gg: AY/fxX4Xy4zlb3LL4hW/bQeLkXbQd6qYLy5pChjBbXsaDYo9nbbnGfEbT8wL3odBTbB
-	jWXbWtkw4jPm1YRP8jOnGchZn7qOBz5R8l+2g6Zmbwtqc23y3R37Mkza/xVFuo1+remqlskICSd
-	Xd0I+n1UElG6zWTs5K2hrWGfbWuwxUC6aQs/koS4v7ekJHySJ3yIHOMDIJ/TUD/5Bd7t0B/pNDV
-	cIBapoXauBNeWuJID0YeZBDyc3qNPOWMm1/NqgdW96ztYz3V+4WHx/aLraVXl14tLFi34rsyjDo
-	xs7FYwfl/QNzFIcvgGnKOoHZLaKWx/DW7yuelLTZXGXuj/jDvymeDXcodJvxmeQj65XUhR2VrAe
-	Wy9AQFuxh5g0/zsP1XRISHR/WEYZ2AE/OpkcsE1Qp5+96Cfe99DRpjfa4z/WcC1HPiN58EjUgSP
-	NueIAEaqMUXGsU4RRCjZPjJfCQ5jahWOuNSrqZTFZfkx4Sl1qmZ60DrNrHbULo4z2FaUWIv0iHq
-	A==
-X-Google-Smtp-Source: AGHT+IHkUiCuADPxrsVOHj/QAM20fQTwsVbwMvhWfubhFAhQon/OsKQhwLysfs0FeukGoyrW2tYIRw==
-X-Received: by 2002:a17:907:1c0a:b0:b7a:1bdc:aab8 with SMTP id a640c23a62f3a-b80372301femr306334166b.65.1766155278928;
-        Fri, 19 Dec 2025 06:41:18 -0800 (PST)
+        bh=kUDWfvQX+zbixVMyxEvAWD28Fqm+izRQyft2Ld9BCc8=;
+        b=WN8qZdazcKgzswKawDAFqC6WF0cJMwll+dhhvtZI2p/O+4oGo76JwrUnVe0+iZjHRc
+         2bTlgdyJWkEPiknb/B7slftr1rGRjKEE+EViQR+FeOljiv1ELBcsCn9dZOEEunguYkoP
+         s9MMblKZn0qWT26MLI7AxVYbwUJJjHA7PDm8di4/NumAsW9sHOLi10HLxY0fwmfDuS7I
+         sxGYqJNfE0fQbI/bgHwM8iZUS6f/wADkB1I60Yh5mZOTHZ0qwrNa7MS3EDbIyFhJMoEH
+         6Sb+onm8cvr3rkWX9DgZTWZ/QLZAPUC4m4y1upkOwU11ZnxDGY9DvH1mkWitsvdSU0+J
+         v0vA==
+X-Gm-Message-State: AOJu0YxqyWV4AMiJLd4lTHvPlQxeOzUjTW6B7z0n4qtxQoUOzLaA/sJs
+	UZA9l6PlPJpNAeqMisYOkgvR7yjZb0f+bFwY2VT0ABIbQdaCRTobJtAHG+MvwhjH/Zg=
+X-Gm-Gg: AY/fxX564owaoAlhWzfbtT2bcl+ngd4lHintnr+ZUpUYfpHT2XIS/UjUBoY5UVV3w31
+	2k355oFkbbCoq8OYrHR+b5KlfTV6MayNr4b3bNB4pVRiOlCjGKAYWtTqnGFU8Om/7T0QYg4nrc8
+	MYn2Z5jVreUQWDu31z8YK7hAU+G6eBkJrxp+PhjgJVScsSQ3ctKY1Y8mCddYly7QQXkmC2gBWes
+	abawAuRBCn6ock3ciX9TcFueoEo5hM58+QmaXAeQq2mryu/r8NRGYz5xGhsl9hiqmDuFXqZKWCZ
+	s0cHTyVDb9JhzS6pqT7rMu4GPfMy5XE6RG2mwBu3bTzaWGpW7TI3aJ7pNIpN68Ly233Ns+LkyMk
+	1CvotrMqqHWZxmlNitiUq7fs+FY39nY7eU/ge49MQ8XUbYIKWZFM5juSM8ln1O3JJzs48yLIVKf
+	1WMU/aI7fci0nDiSE+HCXIEEQWRMU9I4h8AW+xvLXeAqJAZtBdj45+8PBPN7dSFjUzGV4TNxP08
+	Rh57sI9oCpC
+X-Google-Smtp-Source: AGHT+IFBR/JN9UtyRQz132FqCVnyL0MznkZBVaSCQCVbtpmKf5G0szPr/m4JAhd3eUSfOjFWtuc0rQ==
+X-Received: by 2002:a17:907:3e8c:b0:b73:7fc8:a9c9 with SMTP id a640c23a62f3a-b8036f5a99emr287417866b.29.1766155279993;
+        Fri, 19 Dec 2025 06:41:19 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b8037f512e3sm246188166b.67.2025.12.19.06.41.18
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-64b91599844sm2344871a12.25.2025.12.19.06.41.19
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 19 Dec 2025 06:41:18 -0800 (PST)
+        Fri, 19 Dec 2025 06:41:19 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 02/26] libmultipath: don't access path members in free_pgvec()
-Date: Fri, 19 Dec 2025 15:40:44 +0100
-Message-ID: <20251219144108.237928-3-mwilck@suse.com>
+Subject: [PATCH v2 03/26] libmpathutil: constify find_slot()
+Date: Fri, 19 Dec 2025 15:40:45 +0100
+Message-ID: <20251219144108.237928-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20251219144108.237928-1-mwilck@suse.com>
 References: <20251219144108.237928-1-mwilck@suse.com>
@@ -80,59 +79,40 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-It can happen that a path group contains references to paths that are
-already freed. If we access pp->pgindex in such a case, a use-after-free
-occurs. In particular, this occurs if we call remove_map() from configure()
--> coalesce_paths(), and some paths are freed in orphan_paths() because
-they are in INIT_PARTIAL or INIT_REMOVED state. The paths of the removed
-map may still be referenced by maps in the "old" mpvec in configure(). The
-UAF occurs when configure() calls remove_maps(vecs).
-
-This code has been introduced in cd912cf ("libmultipath: fix handling of
-pp->pgindex"). The commit message stated: "The hunk in group_paths is
-mostly redundant with the hunk in free_pgvec(), but because we're looping
-over pg->paths in the former and over pg->pgp in the latter, I think it's
-better too play safe". It turns out that it would have been better not
-to "play safe" here. No caller of free_pgvec() requires the pgindex to
-be reset. For the functions in pgpolicies.c, the reset of pgindex is
-redundant, as remarked in cd912cf. disassemble_map() will set the pgindex
-later anyway, and update_multipath_strings() will call disassemble_map().
-The other callers remove the struct multipath, in which case the paths
-will eventually be orphaned or freed (except for the special case of
-coalesce_paths() mentioned above).
-
-Fixes: cd912cf ("libmultipath: fix handling of pp->pgindex")
-
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/structs.c | 12 +-----------
- 1 file changed, 1 insertion(+), 11 deletions(-)
+ libmpathutil/vector.c | 3 +--
+ libmpathutil/vector.h | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 1cbbea8..cde5991 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -239,18 +239,8 @@ free_pgvec (vector pgvec, enum free_path_mode free_paths)
- 	if (!pgvec)
- 		return;
- 
--	vector_foreach_slot(pgvec, pgp, i) {
--
--		/* paths are going to be re-grouped, reset pgindex */
--		if (free_paths != FREE_PATHS) {
--			struct path *pp;
--			int j;
--
--			vector_foreach_slot(pgp->paths, pp, j)
--				pp->pgindex = 0;
--		}
-+	vector_foreach_slot (pgvec, pgp, i)
- 		free_pathgroup(pgp, free_paths);
--	}
- 
- 	vector_free(pgvec);
+diff --git a/libmpathutil/vector.c b/libmpathutil/vector.c
+index 3d54ed9..3e9f941 100644
+--- a/libmpathutil/vector.c
++++ b/libmpathutil/vector.c
+@@ -81,8 +81,7 @@ vector_insert_slot(vector v, int slot, void *value)
+ 	return v->slot[slot];
  }
+ 
+-int
+-find_slot(vector v, void * addr)
++int find_slot(vector v, const void *addr)
+ {
+ 	int i;
+ 
+diff --git a/libmpathutil/vector.h b/libmpathutil/vector.h
+index 0701277..7b2c559 100644
+--- a/libmpathutil/vector.h
++++ b/libmpathutil/vector.h
+@@ -74,7 +74,7 @@ extern void free_strvec(vector strvec);
+ extern void vector_set_slot(vector v, void *value);
+ extern void vector_del_slot(vector v, int slot);
+ extern void *vector_insert_slot(vector v, int slot, void *value);
+-int find_slot(vector v, void * addr);
++int find_slot(vector v, const void *addr);
+ int vector_find_or_add_slot(vector v, void *value);
+ extern void vector_dump(vector v);
+ extern void dump_strvec(vector strvec);
 -- 
 2.52.0
 
