@@ -1,173 +1,120 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40DA91D90DF;
-	Sat, 20 Dec 2025 03:49:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC9BA27EFE3
+	for <dm-devel@lists.linux.dev>; Sat, 20 Dec 2025 04:19:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766202590; cv=none; b=Q0asKfyk5eJ8JrC1QfOC1BgvNO0BV2Stwt2OzGlDjYi+oEDKBLsQObwKaVRP/RJMKbWqVpZBl7DCGeTOxabgEIeqF6D9T5znSqoqA+yYb5hpB1pMDY8iCbOxV5zjQ2Q/0PczzW7ijFLSykT84wvTt/qDRxlPS3fvhq+EO0kQbSw=
+	t=1766204387; cv=none; b=hhh7M04GBpQKb3PWJxQhY49RnU54kFcxd+LACeDvcqzkKL5gx5goOMAvR1rIjqrR5NQDXBs3ctdZdckTPhuEBu9ESrfKWZgKmLOPA4j4Fh2/H/VJDith9Ay9PZbLK48Pfug/GCwDdIQ22/ySDIH+FVd3WOpF5ulTNSmEhH5hRcU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766202590; c=relaxed/simple;
-	bh=QWh9rxCDoyp2juQL2Q1ZXFFSFiSU37YjjmSjsZmDVc4=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=Sz/uCP2i9Roh7lLMF14aIr9l4h6I/T59DjTZxy+rD+wf7W0yJetX/UV3V/rWVgd4SbP4iXW3orXI4TvlW1ji4FAEKzeexixEugrVmjTyWGT3V2tykFRPfXMkI/9v1HhW+pat9R4/yzvzpT3AZ8ZzERQyw/dk5Hi5b2qVKoI8nLY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nFs1me0N; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1766204387; c=relaxed/simple;
+	bh=13v0Mv8DzYAqBOeAMoCTcLSWkfbgLnxsf5dpJmxzWto=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=rKWVYh+b39ErS/faNSDkiwO5IeNdYzAsuUkreBe9eN+v2Sr2P1/+I+NQf+XqbFVSbeiAAZGnGMjtmKh7vU4dvcUCgLjDZ32JMTbaDQDn6/YejWgYPyI0AEP2RR4zrwdg6QMPAJPPulhLsMwm9wO1st+mb8Yu5zaiVJhsCKPZGiM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=I2w1dGwd; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nFs1me0N"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 40163C4CEF5;
-	Sat, 20 Dec 2025 03:49:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1766202589;
-	bh=QWh9rxCDoyp2juQL2Q1ZXFFSFiSU37YjjmSjsZmDVc4=;
-	h=From:Date:Subject:To:Cc:From;
-	b=nFs1me0NHvzgDwN0vE8GxjlcUSL21L5JGQteBCscNwpKpAIDAMKXnmXn00a8OkPoR
-	 lLWudfZKFm7IRQTWeYT+7SDgTk9YIgntpZfdcZ0AhYQ8lI/gS/d5J9ENBqmVskPNJU
-	 loHutJ/GNoMp8FFiENs97+NWWxP5UDo+hRgD7sDNTQl97P4AdqZfCiXsVK8pYRviWW
-	 0O7yw/FXDW4uVF7ImgIn1Sv5ivI0MOJSfUh0+T23GLAe2IQs6VVu60jsyy3RokqDyA
-	 lmH1WkywZ6f3Bw/hX//SxVQGzEHbtAfSwFMcoKfWZZQzuCRIv1wVTOV1BwQtjUV7rk
-	 5612b2g9BNXiA==
-From: Daniel Gomez <da.gomez@kernel.org>
-Date: Sat, 20 Dec 2025 04:49:37 +0100
-Subject: [PATCH] dm: replace -EEXIST with -EBUSY
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="I2w1dGwd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1766204384;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=i8L3mC2PjB7t4WT1jo00t4HDfX5xaJ2SxcjmdQJnN2c=;
+	b=I2w1dGwdYcMyvz3YtGzvSSTUAZrn3mOCnxQTQH/dTF+UqKOjS+PaUfAYqPOroAmQ+IWq0I
+	QXMWT3GPLtiU1dmDHghUCcEco279gqmsOtQU/iDFwdOsQ3OIuTxZoW7pwkk8TNnhh5p8ld
+	XVak36z4z9j4Pvw4xSljX2Tbz4mOblk=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-614-_8L55AHhPL6WxU6Pa8LwPg-1; Fri,
+ 19 Dec 2025 23:19:41 -0500
+X-MC-Unique: _8L55AHhPL6WxU6Pa8LwPg-1
+X-Mimecast-MFC-AGG-ID: _8L55AHhPL6WxU6Pa8LwPg_1766204380
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B52901955F34;
+	Sat, 20 Dec 2025 04:19:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2E844180049F;
+	Sat, 20 Dec 2025 04:19:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 5BK4Jb0V2173544
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 19 Dec 2025 23:19:38 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 5BK4Jbg02173543;
+	Fri, 19 Dec 2025 23:19:37 -0500
+Date: Fri, 19 Dec 2025 23:19:37 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH v2 13/26] multipath: free paths through pathvec in
+ check_usable_paths()
+Message-ID: <aUYj2RFgD81maXre@redhat.com>
+References: <20251219144108.237928-1-mwilck@suse.com>
+ <20251219144108.237928-14-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20251220-dev-module-init-eexists-dm-devel-v1-1-90ed00444ea0@samsung.com>
-X-B4-Tracking: v=1; b=H4sIANAcRmkC/x2NwQrCMBAFf6Xs2QWzkqD+ingQ90UX2lSybSmU/
- rvR4zAws5GjGpyu3UYVi7mNpUE4dPR8P8oLbNqY5CgxSDizYuFh1LlvptjEwGo+OevwU+hZNMW
- UL1lOKVLLfCqyrf/F7b7vX13hMfhyAAAA
-X-Change-ID: 20251218-dev-module-init-eexists-dm-devel-2d656f9f2365
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Luis Chamberlain <mcgrof@kernel.org>, Petr Pavlu <petr.pavlu@suse.com>, 
- Daniel Gomez <da.gomez@kernel.org>, Sami Tolvanen <samitolvanen@google.com>, 
- Aaron Tomlin <atomlin@atomlin.com>, Lucas De Marchi <demarchi@kernel.org>, 
- dm-devel@lists.linux.dev, linux-modules@vger.kernel.org, 
- linux-kernel@vger.kernel.org, Daniel Gomez <da.gomez@samsung.com>
-X-Mailer: b4 0.15-dev
-X-Developer-Signature: v=1; a=openpgp-sha256; l=3952; i=da.gomez@samsung.com;
- h=from:subject:message-id; bh=MG8e+vxiY9C9ehStOyYYHRRXlZKUpSGUgXejP7etWME=;
- b=owEBbQKS/ZANAwAIAUCeo8QfGVH7AcsmYgBpRhzZeZlSIe1p2xlI3eFIWTKBGw6SEvI3Bn1vw
- rmtxaeFxnyJAjMEAAEIAB0WIQTvdRrhHw9z4bnGPFNAnqPEHxlR+wUCaUYc2QAKCRBAnqPEHxlR
- +346EACVULz1BLBsWaPWpD4Z/3jTvDiinEDK8Ekgi5Cc/7TBCp8VVusYMRUyHqOXKNfbe/8J5+B
- Qe35rFvildNH6bhrbvmDm3pwJpFEfCORu2zFZg/AyUfhyD0uO0C/9+7yfjqYNJ47uOU34uN+GyK
- rLRCfBGMMFTN/rWQm8mrhVTp26zNCuWTr7X/u8+gvyir/4Crid7c78bMbq0Vaz8+3Arxyjpt2Pn
- Bcn19Y16B+31RXuGTryDg0qJ/jhb0eWMjOrTrnonytFK9Bg8vAM9+GeBnCuVZBONxReeiR1tnRP
- Zcs4iYfSU3Wl3Q+Qs7/sqdIYpyU+mXXAhUq+GkNMabrO3sulfzZPx06nM4IZ14/w4W2AKoenUrf
- fctDw/VOBGjQZa1GlCorRjvL3pbd5PUWwAiUldzJvWYyjZPCZbCyuhFS9K6zwKXBHUHuoaxARyz
- 2rJ7VjNu2CKkL/pRC/zMa6StbxLVvZ4OwGzDm5A7SUJ7Zs7/WuDfq8UOZ/HfZNU4ekpNXJU02zs
- 7dHz7OfHKTFTNH3NL1BYnYnDYaHcxo4DG1G71j2Eea2Wjix3hBep4mkAW3S881n9IMq15GXRaG3
- mIMIXCES5MxDY7SJNuy6mnnQUtrQKRPfnBlHlRj5SuamMaQTt8ey2ZwOWoDLjGEjh3lRzW4ywLS
- HenzJUJsDYyJgnw==
-X-Developer-Key: i=da.gomez@samsung.com; a=openpgp;
- fpr=B2A7A9CFDD03B540FF58B27185F56EA4E9E8138F
+In-Reply-To: <20251219144108.237928-14-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: BZkn_IeX2wcqIFz6Qn_9s4DQAvvJHZVWGcxWbOGdi3g_1766204380
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-From: Daniel Gomez <da.gomez@samsung.com>
+On Fri, Dec 19, 2025 at 03:40:55PM +0100, Martin Wilck wrote:
+> Paths belong to the pathvec and should be freed from it.
+> Use cleanup_multipath() instead of cleanup_multipath_and_paths(),
+> and free the paths via the pathvec instead.
+> 
 
-The -EEXIST error code is reserved by the module loading infrastructure
-to indicate that a module is already loaded. When a module's init
-function returns -EEXIST, userspace tools like kmod interpret this as
-"module already loaded" and treat the operation as successful, returning
-0 to the user even though the module initialization actually failed.
+I don't know if this matters, but until you stop free_multipaths() from
+clearing pp->mpp in patch 15/26, this will temporarily cause UAF errors,
+since you free the paths from the pathvec first, and then attempt to
+reset their pp->mpp value in free_multipaths() later.
 
-This follows the precedent set by commit 54416fd76770 ("netfilter:
-conntrack: helper: Replace -EEXIST by -EBUSY") which fixed the same
-issue in nf_conntrack_helper_register().
+You could avoid the temporary problem by moving the pathvec definition
+before the mpp definition, since cleanup functions are run in reverse
+order of their declaration.
 
-Affected modules:
-  * dm_cache dm_clone dm_integrity dm_mirror dm_multipath dm_pcache
-  * dm_vdo dm-ps-round-robin dm_historical_service_time dm_io_affinity
-  * dm_queue_length dm_service_time dm_snapshot
+But after applying patch 15/26, this is fine, so
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Signed-off-by: Daniel Gomez <da.gomez@samsung.com>
----
-The error code -EEXIST is reserved by the kernel module loader to
-indicate that a module with the same name is already loaded. When a
-module's init function returns -EEXIST, kmod interprets this as "module
-already loaded" and reports success instead of failure [1].
-
-The kernel module loader will include a safety net that provides -EEXIST
-to -EBUSY with a warning [2], and a documentation patch has been sent to
-prevent future occurrences [3].
-
-These affected code paths were identified using a static analysis tool
-[4] that traces -EEXIST returns to module_init(). The tool was developed
-with AI assistance and all findings were manually validated.
-
-Link: https://lore.kernel.org/all/aKEVQhJpRdiZSliu@orbyte.nwl.cc/ [1]
-Link: https://lore.kernel.org/all/20251013-module-warn-ret-v1-0-ab65b41af01f@intel.com/ [2]
-Link: https://lore.kernel.org/all/20251218-dev-module-init-eexists-modules-docs-v1-0-361569aa782a@samsung.com/ [3]
-Link: https://gitlab.com/-/snippets/4913469 [4]
----
- drivers/md/dm-exception-store.c | 2 +-
- drivers/md/dm-log.c             | 2 +-
- drivers/md/dm-path-selector.c   | 2 +-
- drivers/md/dm-target.c          | 2 +-
- 4 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index c3799757bf4a..88f119a0a2ae 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -116,7 +116,7 @@ int dm_exception_store_type_register(struct dm_exception_store_type *type)
- 	if (!__find_exception_store_type(type->name))
- 		list_add(&type->list, &_exception_store_types);
- 	else
--		r = -EEXIST;
-+		r = -EBUSY;
- 	spin_unlock(&_lock);
- 
- 	return r;
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 9d85d045f9d9..bced5a783ee3 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -121,7 +121,7 @@ int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
- 	if (!__find_dirty_log_type(type->name))
- 		list_add(&type->list, &_log_types);
- 	else
--		r = -EEXIST;
-+		r = -EBUSY;
- 	spin_unlock(&_lock);
- 
- 	return r;
-diff --git a/drivers/md/dm-path-selector.c b/drivers/md/dm-path-selector.c
-index d0b883fabfeb..2b0ac200f1c0 100644
---- a/drivers/md/dm-path-selector.c
-+++ b/drivers/md/dm-path-selector.c
-@@ -107,7 +107,7 @@ int dm_register_path_selector(struct path_selector_type *pst)
- 
- 	if (__find_path_selector_type(pst->name)) {
- 		kfree(psi);
--		r = -EEXIST;
-+		r = -EBUSY;
- 	} else
- 		list_add(&psi->list, &_path_selectors);
- 
-diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
-index 8fede41adec0..1fd41289de36 100644
---- a/drivers/md/dm-target.c
-+++ b/drivers/md/dm-target.c
-@@ -88,7 +88,7 @@ int dm_register_target(struct target_type *tt)
- 	if (__find_target_type(tt->name)) {
- 		DMERR("%s: '%s' target already registered",
- 		      __func__, tt->name);
--		rv = -EEXIST;
-+		rv = -EBUSY;
- 	} else {
- 		list_add(&tt->list, &_targets);
- 	}
-
----
-base-commit: 8f0b4cce4481fb22653697cced8d0d04027cb1e8
-change-id: 20251218-dev-module-init-eexists-dm-devel-2d656f9f2365
-
-Best regards,
---  
-Daniel Gomez <da.gomez@samsung.com>
+> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Signed-off-by: Martin Wilck <mwilck@suse.com>
+> ---
+>  multipath/main.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/multipath/main.c b/multipath/main.c
+> index 4b8d7dd..d28628b 100644
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -214,12 +214,12 @@ static int check_usable_paths(struct config *conf,
+>  			      const char *devpath, enum devtypes dev_type)
+>  {
+>  	struct udev_device __attribute__((cleanup(cleanup_udev_device))) *ud = NULL;
+> -	struct multipath __attribute__((cleanup(cleanup_multipath_and_paths))) *mpp = NULL;
+> +	struct multipath __attribute__((cleanup(cleanup_multipath))) *mpp = NULL;
+>  	struct pathgroup *pg;
+>  	struct path *pp;
+>  	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
+>  	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
+> -	vector __attribute((cleanup(cleanup_vector))) pathvec = NULL;
+> +	vector __attribute((cleanup(cleanup_pathvec_and_free_paths))) pathvec = NULL;
+>  	char uuid[DM_UUID_LEN];
+>  	dev_t devt;
+>  	int r = 1, i, j;
+> -- 
+> 2.52.0
 
