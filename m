@@ -1,146 +1,173 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41E4233CE95
-	for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 20:14:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40DA91D90DF;
+	Sat, 20 Dec 2025 03:49:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766175270; cv=none; b=mNxzcX7Fk09pN7Jzj4f0vV6f0VhkjGG1g5z5EQfg5nNG4jIFtVvihFopD6PXWLn3SgGbU//PxxT/2eabLeFvhfYsR1neLgFzyb2qVrJ4nRpTXh9GSW0ZytHVDyJ5s3Cy/nu9bfXpHhYvtiB8S7d/Zv/L1Umf49aF7Btb/YYYtVs=
+	t=1766202590; cv=none; b=Q0asKfyk5eJ8JrC1QfOC1BgvNO0BV2Stwt2OzGlDjYi+oEDKBLsQObwKaVRP/RJMKbWqVpZBl7DCGeTOxabgEIeqF6D9T5znSqoqA+yYb5hpB1pMDY8iCbOxV5zjQ2Q/0PczzW7ijFLSykT84wvTt/qDRxlPS3fvhq+EO0kQbSw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766175270; c=relaxed/simple;
-	bh=dIxfwhhJL0i/I8nr6bMpMUsa10C0sVgxYpQj4hnaMz8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=gHejTrDSDRVh40UANm8XUdB8PTtss81EdaJFcI67ABN49IiBzIMgoQ05oVwAf0LZnavziJc62P/mq5W6d3h/b3uX8Fbn9nA0IpHiEUEndkw2Zr4WVrNUSk5xB7n1//6E/wNHdws1C/uFQqS+4qqFwD0cf1o1gKcrJT+UPrnl9yI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QJA6nmsE; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1766202590; c=relaxed/simple;
+	bh=QWh9rxCDoyp2juQL2Q1ZXFFSFiSU37YjjmSjsZmDVc4=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=Sz/uCP2i9Roh7lLMF14aIr9l4h6I/T59DjTZxy+rD+wf7W0yJetX/UV3V/rWVgd4SbP4iXW3orXI4TvlW1ji4FAEKzeexixEugrVmjTyWGT3V2tykFRPfXMkI/9v1HhW+pat9R4/yzvzpT3AZ8ZzERQyw/dk5Hi5b2qVKoI8nLY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nFs1me0N; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QJA6nmsE"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766175268;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=NBfdYfCkq8K5J6dzHLuqBSpEl8OulRkj0yogBVBa9eY=;
-	b=QJA6nmsEhsWsFwuQQJcef/QG9feBK3+h/op/fRCkh1lEIx+sMi7d+U8/Ii3xAmhHmFxw3/
-	vcJWjy4w+g2O/u+n23CQgESC4LOoe6k1Vm3T09Pg0lXtZCq4tTi6CMkI8xGhTBQ4ISPJZI
-	oYmcSuc1nhybbzfg0UUoQQ9lhBVmYyE=
-Received: from mail-yw1-f200.google.com (mail-yw1-f200.google.com
- [209.85.128.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-657-n0S6Q8crN-q71e14fzxBgA-1; Fri, 19 Dec 2025 15:14:25 -0500
-X-MC-Unique: n0S6Q8crN-q71e14fzxBgA-1
-X-Mimecast-MFC-AGG-ID: n0S6Q8crN-q71e14fzxBgA_1766175264
-Received: by mail-yw1-f200.google.com with SMTP id 00721157ae682-78e70a60973so24386277b3.3
-        for <dm-devel@lists.linux.dev>; Fri, 19 Dec 2025 12:14:25 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766175264; x=1766780064;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=NBfdYfCkq8K5J6dzHLuqBSpEl8OulRkj0yogBVBa9eY=;
-        b=SCbu+U6DdQKLVXCbD8zYPzkYCFxOlR5dfzr63TfrqZGgv5GpYk6pH3LTX4sxVoPChg
-         8qoZm/Wov2RBpb3Brc7dK71Hnh9ZxBxPEfKSAL7Ellbv1xlq7VVeQdPOTW22a5N9l4xE
-         7iONXrxtOLTlk7XBsBVi4h+0iXk8sXevITnhh94iAQSheOJLK2ln9rpKFgi61pre5cFl
-         iWrvD6942TCHIFxioHgmN3SuG9zs4je+VhFOMnMy4f5Tse4JP33RzA5l6GhtWxvts0Bp
-         ms+4nklLduKzVsutrPL1JP6jEjMNCggw0sg5ioR3hQKOnFqCy70wLCE5BU9OpF1Q+c6f
-         lMjQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVNd8j4gCJ4F65I6Fxq5rVnAWZiooN3YdyVD0o8QOSAU5YzSqNu4zD58alyEEdUl3IbvlWCj8g+Cg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw1v7312CIGz3c6mpMwbEwr9paq8iLpKiBBR9jW5WGZVZdKHR71
-	zeMT0WPd2HiZ+V6plci9l2cTqujbdFfIWumKT9VJ94s3MLf1+LnxANik8GwKiuDfwp1aQZO0eGy
-	8tMulI7mONzzF2rmAF82d2/bkrXhWh33P64DZG1LkrGIC2AxKeavAEjrO+v0x+EYhujZGTG+R2m
-	Tlofa0REnhKpE0uJlkFdc6xFdaZI5kqNi2ZOc=
-X-Gm-Gg: AY/fxX6C0WZ6aIHncHU02z9b3/3hAHBEzRqAypB7BkKh8Af/L6XwdYKkzKaefRYHNGp
-	ton3bNnm46bpQ8RcAovunXLLYcdW0h9GIwiBs42Kfq1xX25J5mOW9xmdBlxMwwC4/robb8Mze/S
-	Y0YPZc4WYgUgJX34wTYJefsPUj+qTP6dxbJw17F896MxQc5yVOFnyFI1tHwN15aG5f
-X-Received: by 2002:a05:690e:d45:b0:644:60d9:7511 with SMTP id 956f58d0204a3-6466a924b7cmr2939904d50.97.1766175264010;
-        Fri, 19 Dec 2025 12:14:24 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IHrNtpAXBkLfsv4ZPV7ytMwDCknVLCZ37g47oODzFz+yaO52Pr39pYpvX6RkjSMSLTqKC4vn7AIoer0DNh5XIs=
-X-Received: by 2002:a05:690e:d45:b0:644:60d9:7511 with SMTP id
- 956f58d0204a3-6466a924b7cmr2939880d50.97.1766175263490; Fri, 19 Dec 2025
- 12:14:23 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nFs1me0N"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 40163C4CEF5;
+	Sat, 20 Dec 2025 03:49:47 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1766202589;
+	bh=QWh9rxCDoyp2juQL2Q1ZXFFSFiSU37YjjmSjsZmDVc4=;
+	h=From:Date:Subject:To:Cc:From;
+	b=nFs1me0NHvzgDwN0vE8GxjlcUSL21L5JGQteBCscNwpKpAIDAMKXnmXn00a8OkPoR
+	 lLWudfZKFm7IRQTWeYT+7SDgTk9YIgntpZfdcZ0AhYQ8lI/gS/d5J9ENBqmVskPNJU
+	 loHutJ/GNoMp8FFiENs97+NWWxP5UDo+hRgD7sDNTQl97P4AdqZfCiXsVK8pYRviWW
+	 0O7yw/FXDW4uVF7ImgIn1Sv5ivI0MOJSfUh0+T23GLAe2IQs6VVu60jsyy3RokqDyA
+	 lmH1WkywZ6f3Bw/hX//SxVQGzEHbtAfSwFMcoKfWZZQzuCRIv1wVTOV1BwQtjUV7rk
+	 5612b2g9BNXiA==
+From: Daniel Gomez <da.gomez@kernel.org>
+Date: Sat, 20 Dec 2025 04:49:37 +0100
+Subject: [PATCH] dm: replace -EEXIST with -EBUSY
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20251208121020.1780402-1-agruenba@redhat.com> <20251208121020.1780402-7-agruenba@redhat.com>
- <aUERRp7S1A5YXCm4@infradead.org> <CAHc6FU6QCfqTM9zCREdp3o0UzFX99q2QqXgOiNkN8OtnhWYZVQ@mail.gmail.com>
- <aUE3_ubz172iThdl@infradead.org> <CAHc6FU4OeAYgvXGE+QZrAJPqERLS3v7q64uSoVtxJjG0AdZvCA@mail.gmail.com>
- <aUO_u7x-4oIfKMei@infradead.org>
-In-Reply-To: <aUO_u7x-4oIfKMei@infradead.org>
-From: Andreas Gruenbacher <agruenba@redhat.com>
-Date: Fri, 19 Dec 2025 21:14:12 +0100
-X-Gm-Features: AQt7F2qA1mcyWoa8p0XYXVuSER3YOFH3464n9K2F3F4P3zepWO8fQIC-uKVJeus
-Message-ID: <CAHc6FU7H7gFFRw5FCc58ki85Pbedfs8NegjWQbpN7otzfsJNpg@mail.gmail.com>
-Subject: Re: [RFC 06/12] bio: don't check target->bi_status on error
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Jens Axboe <axboe@kernel.dk>, Chris Mason <clm@fb.com>, David Sterba <dsterba@suse.com>, 
-	linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, 
-	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: eRmOV0f4OTftC7GTTD9JLO7ea2RgCezpGSabwqUp2CE_1766175264
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20251220-dev-module-init-eexists-dm-devel-v1-1-90ed00444ea0@samsung.com>
+X-B4-Tracking: v=1; b=H4sIANAcRmkC/x2NwQrCMBAFf6Xs2QWzkqD+ingQ90UX2lSybSmU/
+ rvR4zAws5GjGpyu3UYVi7mNpUE4dPR8P8oLbNqY5CgxSDizYuFh1LlvptjEwGo+OevwU+hZNMW
+ UL1lOKVLLfCqyrf/F7b7vX13hMfhyAAAA
+X-Change-ID: 20251218-dev-module-init-eexists-dm-devel-2d656f9f2365
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Luis Chamberlain <mcgrof@kernel.org>, Petr Pavlu <petr.pavlu@suse.com>, 
+ Daniel Gomez <da.gomez@kernel.org>, Sami Tolvanen <samitolvanen@google.com>, 
+ Aaron Tomlin <atomlin@atomlin.com>, Lucas De Marchi <demarchi@kernel.org>, 
+ dm-devel@lists.linux.dev, linux-modules@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, Daniel Gomez <da.gomez@samsung.com>
+X-Mailer: b4 0.15-dev
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3952; i=da.gomez@samsung.com;
+ h=from:subject:message-id; bh=MG8e+vxiY9C9ehStOyYYHRRXlZKUpSGUgXejP7etWME=;
+ b=owEBbQKS/ZANAwAIAUCeo8QfGVH7AcsmYgBpRhzZeZlSIe1p2xlI3eFIWTKBGw6SEvI3Bn1vw
+ rmtxaeFxnyJAjMEAAEIAB0WIQTvdRrhHw9z4bnGPFNAnqPEHxlR+wUCaUYc2QAKCRBAnqPEHxlR
+ +346EACVULz1BLBsWaPWpD4Z/3jTvDiinEDK8Ekgi5Cc/7TBCp8VVusYMRUyHqOXKNfbe/8J5+B
+ Qe35rFvildNH6bhrbvmDm3pwJpFEfCORu2zFZg/AyUfhyD0uO0C/9+7yfjqYNJ47uOU34uN+GyK
+ rLRCfBGMMFTN/rWQm8mrhVTp26zNCuWTr7X/u8+gvyir/4Crid7c78bMbq0Vaz8+3Arxyjpt2Pn
+ Bcn19Y16B+31RXuGTryDg0qJ/jhb0eWMjOrTrnonytFK9Bg8vAM9+GeBnCuVZBONxReeiR1tnRP
+ Zcs4iYfSU3Wl3Q+Qs7/sqdIYpyU+mXXAhUq+GkNMabrO3sulfzZPx06nM4IZ14/w4W2AKoenUrf
+ fctDw/VOBGjQZa1GlCorRjvL3pbd5PUWwAiUldzJvWYyjZPCZbCyuhFS9K6zwKXBHUHuoaxARyz
+ 2rJ7VjNu2CKkL/pRC/zMa6StbxLVvZ4OwGzDm5A7SUJ7Zs7/WuDfq8UOZ/HfZNU4ekpNXJU02zs
+ 7dHz7OfHKTFTNH3NL1BYnYnDYaHcxo4DG1G71j2Eea2Wjix3hBep4mkAW3S881n9IMq15GXRaG3
+ mIMIXCES5MxDY7SJNuy6mnnQUtrQKRPfnBlHlRj5SuamMaQTt8ey2ZwOWoDLjGEjh3lRzW4ywLS
+ HenzJUJsDYyJgnw==
+X-Developer-Key: i=da.gomez@samsung.com; a=openpgp;
+ fpr=B2A7A9CFDD03B540FF58B27185F56EA4E9E8138F
 
-On Thu, Dec 18, 2025 at 10:08=E2=80=AFAM Christoph Hellwig <hch@infradead.o=
-rg> wrote:
-> On Tue, Dec 16, 2025 at 12:20:07PM +0100, Andreas Gruenbacher wrote:
-> > > I still don't understand what you're saying here at all, or what this=
- is
-> > > trying to fix or optimize.
-> >
-> > When we have this construct in the code and we know that status is not =
-0:
-> >
-> >   if (!bio->bi_status)
-> >     bio->bi_status =3D status;
-> >
-> > we can just do this instead:
-> >
-> >   bio>bi_status =3D status;
->
-> But this now overrides the previous status instead of preserving the
-> first error?
+From: Daniel Gomez <da.gomez@samsung.com>
 
-This is exactly my point: we already don't preserve the first error,
-it only looks like we do. Here are the possible cases:
+The -EEXIST error code is reserved by the module loading infrastructure
+to indicate that a module is already loaded. When a module's init
+function returns -EEXIST, userspace tools like kmod interpret this as
+"module already loaded" and treat the operation as successful, returning
+0 to the user even though the module initialization actually failed.
 
-(1) A single bio A: there are no competing completions. A->bi_status
-is set before calling bio_endio(), and it can be set to any value
-including BLK_STS_OK (0) with a simple assignment.
+This follows the precedent set by commit 54416fd76770 ("netfilter:
+conntrack: helper: Replace -EEXIST by -EBUSY") which fixed the same
+issue in nf_conntrack_helper_register().
 
-(2) An A -> B chain: there are two competing completions, and
-B->bi_status is the resulting status of the bio chain. Both
-completions will immediately update B->bi_status. When B->bi_status is
-updated, it must not be set to BLK_STS_OK (0) or else a previous
-non-zero status code could be wiped out. But for such a non-zero
-status code, a construct like 'if (B->status !=3D BLK_STS_OK) B->status
-=3D status' is no better than a simple 'B->status =3D status' because the
-if is not atomic. But we only care about preserving an error code, not
-the first error code that occurred, so that's fine.
+Affected modules:
+  * dm_cache dm_clone dm_integrity dm_mirror dm_multipath dm_pcache
+  * dm_vdo dm-ps-round-robin dm_historical_service_time dm_io_affinity
+  * dm_queue_length dm_service_time dm_snapshot
 
-(3) An A -> B -> C chain: There are three competing completions, and
-C->bi_status is the resulting status of the bio chain. Not all
-completions will immediately update C->bi_status, but if at least one
-of the completions fails, we know that we will always end up with a
-non-zero error code in C->bi_status eventually.
+Signed-off-by: Daniel Gomez <da.gomez@samsung.com>
+---
+The error code -EEXIST is reserved by the kernel module loader to
+indicate that a module with the same name is already loaded. When a
+module's init function returns -EEXIST, kmod interprets this as "module
+already loaded" and reports success instead of failure [1].
 
-And again, switching to cmpxchg() would not always preserve the first
-error, either: for example, in case (3), if the bios complete in the
-order A, C, B and they all fail, C->bi_status would end up with the
-error code of C instead of A even though A completed before C.
+The kernel module loader will include a safety net that provides -EEXIST
+to -EBUSY with a warning [2], and a documentation patch has been sent to
+prevent future occurrences [3].
 
-This could be fixed by chaining all consecutive bios to bio A (the
-first one) and reversing the pointer direction so that all cmpxchg()
-operations will target A->bi_status. But again, I don't think
-preserving the first error is actually needed. And it certainly isn't
-being done today.
+These affected code paths were identified using a static analysis tool
+[4] that traces -EEXIST returns to module_init(). The tool was developed
+with AI assistance and all findings were manually validated.
 
-Thanks,
-Andreas
+Link: https://lore.kernel.org/all/aKEVQhJpRdiZSliu@orbyte.nwl.cc/ [1]
+Link: https://lore.kernel.org/all/20251013-module-warn-ret-v1-0-ab65b41af01f@intel.com/ [2]
+Link: https://lore.kernel.org/all/20251218-dev-module-init-eexists-modules-docs-v1-0-361569aa782a@samsung.com/ [3]
+Link: https://gitlab.com/-/snippets/4913469 [4]
+---
+ drivers/md/dm-exception-store.c | 2 +-
+ drivers/md/dm-log.c             | 2 +-
+ drivers/md/dm-path-selector.c   | 2 +-
+ drivers/md/dm-target.c          | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index c3799757bf4a..88f119a0a2ae 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -116,7 +116,7 @@ int dm_exception_store_type_register(struct dm_exception_store_type *type)
+ 	if (!__find_exception_store_type(type->name))
+ 		list_add(&type->list, &_exception_store_types);
+ 	else
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	spin_unlock(&_lock);
+ 
+ 	return r;
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 9d85d045f9d9..bced5a783ee3 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -121,7 +121,7 @@ int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
+ 	if (!__find_dirty_log_type(type->name))
+ 		list_add(&type->list, &_log_types);
+ 	else
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	spin_unlock(&_lock);
+ 
+ 	return r;
+diff --git a/drivers/md/dm-path-selector.c b/drivers/md/dm-path-selector.c
+index d0b883fabfeb..2b0ac200f1c0 100644
+--- a/drivers/md/dm-path-selector.c
++++ b/drivers/md/dm-path-selector.c
+@@ -107,7 +107,7 @@ int dm_register_path_selector(struct path_selector_type *pst)
+ 
+ 	if (__find_path_selector_type(pst->name)) {
+ 		kfree(psi);
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	} else
+ 		list_add(&psi->list, &_path_selectors);
+ 
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 8fede41adec0..1fd41289de36 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -88,7 +88,7 @@ int dm_register_target(struct target_type *tt)
+ 	if (__find_target_type(tt->name)) {
+ 		DMERR("%s: '%s' target already registered",
+ 		      __func__, tt->name);
+-		rv = -EEXIST;
++		rv = -EBUSY;
+ 	} else {
+ 		list_add(&tt->list, &_targets);
+ 	}
+
+---
+base-commit: 8f0b4cce4481fb22653697cced8d0d04027cb1e8
+change-id: 20251218-dev-module-init-eexists-dm-devel-2d656f9f2365
+
+Best regards,
+--  
+Daniel Gomez <da.gomez@samsung.com>
 
