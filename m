@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5C8F2698AF
-	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:53:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26FC026D4C3
+	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:53:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766285620; cv=none; b=hZ74lk2SzzaIuV/fqSxWKJVImQe2GxXWtDguBiaxBtwUC/9EvryqL6+vNARbU0cXe4TngV+Ejj7AwNckfpY9+ldMYZDtu+bihzY51wZC3PJzdDIVplvM2qw1yWG/CmnHMdiKyZzuRwW5c/8sD811V2JnejR6DWkzyQrjk9TcVKk=
+	t=1766285625; cv=none; b=Q9ok//xVk5KRbG/lQLOYZCcLVsvV1lT5udreqhYbWsOF8FtGyLIbJ9xfPoET/NxRpi7ePCERGc2X9hJ5ovc7KPnFFvio3aPfUd3FdRzPqHNOkd5x9rwaSipJoWbzHChpYJ64mIMmJLgn64uUo1sA2mug4oTpzTMM3qyTPw/yeDE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766285620; c=relaxed/simple;
-	bh=4P2dhr1JL9AniZ7kydn/X2v06EQ/REJNhKDabgui29c=;
+	s=arc-20240116; t=1766285625; c=relaxed/simple;
+	bh=kS8wU+Kr6qroCP7DZhoh64x8fFSwe6S0dB5tsS+Jaw0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=O3g9dUf+vS9myepoo6pFTiVsKAuETw0npxIT5z47zvzo7bj7vhSt1Qksi5s5VvTKcr9JNm4b85Mnzubb341emXczlzoFRp9ttfn9tXVhzZ3jO2sCTJTuGZbxz3gKPlEyZMdfj7tTROd5RDdOJfJ3+I27UEEqrX4haZxYjyXrUoI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dYM9H2uB; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=nRNrzh8KQ1X3ZRlSJzJo6Gx2JjUwE3RcAkuUBt5VG9JHZPLd3jmuSjfdJ+lqbXj2HH1WDhwD4qx7fLjhgPeL+yNE6YQdYtpbtyvZoEf7m3YKZA8mwSS0fFroVkBzKrhCIqOeTOdHoLu8dvl20ll2gPjhhiMBV9VqCiHwb5+SqJA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ar5Ih7VA; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dYM9H2uB"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ar5Ih7VA"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766285616;
+	s=mimecast20190719; t=1766285619;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Fol6UoUTNivE27QS2qgrcPSW+57SEzmLBc6042LIvfY=;
-	b=dYM9H2uBGCFWLUqgqk0lHA65VvbtCs6sfIgYWovJEbSALxImTw1IOLz1sKJ2Z5caPi9Gpy
-	CN5fxl1FmkNbEcgonDdacnXnEVuvKTjJ1Yk5Xjmyme7GYslIoXHnmghfbAsCMVxtXWUHcm
-	ibQzdjzdNlDO9Ey2DY4nxs2GjgLNJ0g=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=x4YveIZPStQoOwAVRFZjjRjkOAhnls6D4Neb20u0xq8=;
+	b=Ar5Ih7VAdLfDDxYIb2pQ/ezi/2PmY5hFbKsVOpsMIDe4Klv8UXqJWoSZ5Ua/eGbj+KZcag
+	YyovkaelTIZ0sn8UVlM566pTrC3tp3e539zAlEZVuFW5tzZuAZTzh1DYJy+GKTD7HH1zqQ
+	xWdhtYPG9C40wtFT/abEbOb64hN9K/0=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-134-o5WEt6OwNsyRSe35HCz4Kw-1; Sat,
- 20 Dec 2025 21:53:31 -0500
-X-MC-Unique: o5WEt6OwNsyRSe35HCz4Kw-1
-X-Mimecast-MFC-AGG-ID: o5WEt6OwNsyRSe35HCz4Kw_1766285609
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-101-s95MwjcOPB-9iFVMjIt5ng-1; Sat,
+ 20 Dec 2025 21:53:34 -0500
+X-MC-Unique: s95MwjcOPB-9iFVMjIt5ng-1
+X-Mimecast-MFC-AGG-ID: s95MwjcOPB-9iFVMjIt5ng_1766285613
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 943D619560B2;
-	Sun, 21 Dec 2025 02:53:29 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 26FEB1800378;
+	Sun, 21 Dec 2025 02:53:33 +0000 (UTC)
 Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.32.8])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 94EF8180049F;
-	Sun, 21 Dec 2025 02:53:26 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 075D9180049F;
+	Sun, 21 Dec 2025 02:53:29 +0000 (UTC)
 From: Andreas Gruenbacher <agruenba@redhat.com>
 To: Christoph Hellwig <hch@infradead.org>,
 	Jens Axboe <axboe@kernel.dk>,
@@ -54,9 +54,9 @@ Cc: Andreas Gruenbacher <agruenba@redhat.com>,
 	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org
-Subject: [RFC v2 14/17] bio: switch to bio_set_status in submit_bio_noacct
-Date: Sun, 21 Dec 2025 03:52:29 +0100
-Message-ID: <20251221025233.87087-15-agruenba@redhat.com>
+Subject: [RFC v2 15/17] bio: never set bi_status to BLK_STS_OK during completion
+Date: Sun, 21 Dec 2025 03:52:30 +0100
+Message-ID: <20251221025233.87087-16-agruenba@redhat.com>
 In-Reply-To: <20251221025233.87087-1-agruenba@redhat.com>
 References: <20251221025233.87087-1-agruenba@redhat.com>
 Precedence: bulk
@@ -68,40 +68,71 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-In submit_bio_noacct(), call bio_endio() and return directly when
-successful.  That way, bio_set_status(bio, status) will only be called
-for actual errors and the compiler can optimize out the 'status !=
-BLK_STS_OK' check inside bio_set_status().
+In a few places in the code, we don't know if a bio has failed or
+completed successfully, so use bio_set_status() instead of setting
+bi_status directly.  That way, bi_status will never be set to
+BI_STS_OK (0) during completion.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- block/blk-core.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ block/blk-crypto-fallback.c   | 2 +-
+ drivers/block/ps3vram.c       | 2 +-
+ drivers/md/dm-flakey.c        | 2 +-
+ drivers/md/dm-verity-target.c | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 381bdf66045b..acf0a82a90ce 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -821,8 +821,8 @@ void submit_bio_noacct(struct bio *bio)
- 		if (!bdev_write_cache(bdev)) {
- 			bio->bi_opf &= ~(REQ_PREFLUSH | REQ_FUA);
- 			if (!bio_sectors(bio)) {
--				status = BLK_STS_OK;
--				goto end_io;
-+				bio_endio(bio);
-+				return;
- 			}
- 		}
- 	}
-@@ -887,7 +887,7 @@ void submit_bio_noacct(struct bio *bio)
- not_supported:
- 	status = BLK_STS_NOTSUPP;
- end_io:
--	bio->bi_status = status;
-+	bio_set_status(bio, status);
+diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
+index 8a2631b1e7e1..7014f646e236 100644
+--- a/block/blk-crypto-fallback.c
++++ b/block/blk-crypto-fallback.c
+@@ -150,7 +150,7 @@ static void blk_crypto_fallback_encrypt_endio(struct bio *enc_bio)
+ 		mempool_free(enc_bio->bi_io_vec[i].bv_page,
+ 			     blk_crypto_bounce_page_pool);
+ 
+-	src_bio->bi_status = enc_bio->bi_status;
++	bio_set_status(src_bio, enc_bio->bi_status);
+ 
+ 	bio_uninit(enc_bio);
+ 	kfree(enc_bio);
+diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
+index bdcf083b45e2..06844674c998 100644
+--- a/drivers/block/ps3vram.c
++++ b/drivers/block/ps3vram.c
+@@ -573,7 +573,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
+ 	next = bio_list_peek(&priv->list);
+ 	spin_unlock_irq(&priv->lock);
+ 
+-	bio->bi_status = error;
++	bio_set_status(bio, error);
+ 	bio_endio(bio);
+ 	return next;
+ }
+diff --git a/drivers/md/dm-flakey.c b/drivers/md/dm-flakey.c
+index 08925aca838c..8dde47beb387 100644
+--- a/drivers/md/dm-flakey.c
++++ b/drivers/md/dm-flakey.c
+@@ -420,7 +420,7 @@ static void clone_free(struct bio *clone)
+ static void clone_endio(struct bio *clone)
+ {
+ 	struct bio *bio = clone->bi_private;
+-	bio->bi_status = clone->bi_status;
++	bio_set_status(bio, clone->bi_status);
+ 	clone_free(clone);
  	bio_endio(bio);
  }
- EXPORT_SYMBOL(submit_bio_noacct);
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 66a00a8ccb39..4793bcf546ad 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -544,7 +544,7 @@ static void verity_finish_io(struct dm_verity_io *io, blk_status_t status)
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+ 
+ 	bio->bi_end_io = io->orig_bi_end_io;
+-	bio->bi_status = status;
++	bio_set_status(bio, status);
+ 
+ 	if (!static_branch_unlikely(&use_bh_wq_enabled) || !io->in_bh)
+ 		verity_fec_finish_io(io);
 -- 
 2.52.0
 
