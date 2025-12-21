@@ -1,575 +1,122 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46BB8270EC3
-	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:53:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53B292F9C39
+	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 15:40:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766285627; cv=none; b=cvhQWdt3yiCr3yHmaOTNH+BC7evKgWXywik3ZTA9dz7FFgoZYs/ACLM9dZm/dhum2gB4I0yu3FzabTzklFleM5c7t6kzdmEG/9iVlYvemhg3Efl0YRJUmMU/FN/ybF8EzvUPWUM1l2Umn9i976VEYZYt/LOhNyI9vJX1HOxfdF8=
+	t=1766331605; cv=none; b=qwLPI+VBwUJ2LcOW6HWSlCvVtFAuCpddrG8V9dBkJN9EtcxTlIFg35EltXx68GzgSDaFQn+ko69nPBBA2QRhGzLm8cflc12sWQTGqwIszANu7zoO/l2JTLrtAXg5SafeJv3c3wL5JL3EGV2nbAVKuTRD6LUndKi4ARez221Jy8M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766285627; c=relaxed/simple;
-	bh=tkUKQd/oOejzy1+4KfPeSYtNVDYc9mFOs+DgnnOeR+E=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=sM8ZFrPaKDZUntrjHIR4ijMTnJcXfHST2xDUPwF478t80+OA+7O42YDNMrNxpqUrArgU5XsQ6RVN0lyCTIA93AX2dh1W9A+qNAdVAXZRLtcnuHd96E2H0HDNNbA2lfWt3sffkl0wkC0JZMrLzPy4ZccDc54P8dSANjS/417sZlA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=donMqugW; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1766331605; c=relaxed/simple;
+	bh=mnZjXNK0u+HP/XUiaDYnE60D1RSlqmCcOGyEHMy6J80=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=WMnj6IiXTjNj+TRKHFCMobZxZNgsQYLAovsyGi4AhQ3w49hc8rJvoQVx9NpGywa1Ap1R63cAx2BKswW1gehtbs45oyh0ikDG+RJTLAkRieC0qEmzrOnPh24vvkBwVDNY46IEOjw7q7b95KxaU1cDdkrGkCeXT0wrsD6ltUrZwyc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fttG2Je7; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="donMqugW"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fttG2Je7"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766285624;
+	s=mimecast20190719; t=1766331601;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=FggBl310SeU2z5ihOYBZTljJM6cUTkQcdyJAp+ym5x0=;
-	b=donMqugWDn1Rr0qTeO4vr4ArRIc960vk19Sj3JabUmIgBGzTMLJhfty+h9pKobJMAvJzxI
-	g558lMMFAur2t/PMPrQPqKjnvb2UZK1k7NBEgZhonqLMeYEOBycBbWdabKlbrPfNwIkfHQ
-	QY0M5O1okOvTqcCfHl75Wwix9Pv3QwQ=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-401-_V4fehw6PWaygTl_DPmMEQ-1; Sat,
- 20 Dec 2025 21:53:41 -0500
-X-MC-Unique: _V4fehw6PWaygTl_DPmMEQ-1
-X-Mimecast-MFC-AGG-ID: _V4fehw6PWaygTl_DPmMEQ_1766285619
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CB9051800637;
-	Sun, 21 Dec 2025 02:53:39 +0000 (UTC)
-Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.32.8])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id C08BA180049F;
-	Sun, 21 Dec 2025 02:53:36 +0000 (UTC)
-From: Andreas Gruenbacher <agruenba@redhat.com>
-To: Christoph Hellwig <hch@infradead.org>,
-	Jens Axboe <axboe@kernel.dk>,
-	Chris Mason <clm@fb.com>,
-	David Sterba <dsterba@suse.com>,
-	Satya Tangirala <satyat@google.com>
-Cc: Andreas Gruenbacher <agruenba@redhat.com>,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [RFC v2 17/17] bio: add bio_endio_status
-Date: Sun, 21 Dec 2025 03:52:32 +0100
-Message-ID: <20251221025233.87087-18-agruenba@redhat.com>
-In-Reply-To: <20251221025233.87087-1-agruenba@redhat.com>
-References: <20251221025233.87087-1-agruenba@redhat.com>
+	bh=+KE66w4YWw6ndgVPN9WJoeENuvGjofTuSeoIQ9xGNDM=;
+	b=fttG2Je7tdPOfLijYFhXFq3PE3AKCw6AQNJoJS1mI71qQq+TxQDEPYBBt6SS1Dp57w5qD7
+	UYCri/YFtUkTv2MRs6daOTYs5v2OUv8HvFYCcr7jN0dEfgATrZwVtAhZ4MNRg0LCX20bjY
+	xUoPIgUQDJrr+9L+UnTYemEK8FkcUxw=
+Received: from mail-yx1-f69.google.com (mail-yx1-f69.google.com
+ [74.125.224.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-321-c52bcWArN52gsVN9UeRfVA-1; Sun, 21 Dec 2025 10:39:59 -0500
+X-MC-Unique: c52bcWArN52gsVN9UeRfVA-1
+X-Mimecast-MFC-AGG-ID: c52bcWArN52gsVN9UeRfVA_1766331599
+Received: by mail-yx1-f69.google.com with SMTP id 956f58d0204a3-6446c91addfso4464558d50.3
+        for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 07:39:59 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1766331599; x=1766936399;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=+KE66w4YWw6ndgVPN9WJoeENuvGjofTuSeoIQ9xGNDM=;
+        b=G34w+PT7YoQ7CTnlMwxYZJ9hL9JRzNQUzTccGutdjPEWDABUvdDRoEK0omjj4h1OOL
+         i3UkPHhM+RJ9bJcTwY4IQMdOQY+aTs1gSWys68N8CC0jgD4byx2YAKSeaS8AgUy0xpib
+         eDTW3ay0pbbcbXsyhmw9SYV5W4uOog+2uys94Z6JHOEgYex+4r4hFouKGUCY21gchPUp
+         CzAZLHCbsZZ3kQ1rBxadiBb1J/ghmxxrTel+OZjNy2JQus/WcxNy5HdokcDNQfdwqZTF
+         UvijZMU7mLpYWtb3S6aTv04WvL2ddFNeOV69+OEwlnk19PqAR2lTWKKUDvGnDf+eE11R
+         Fr1Q==
+X-Forwarded-Encrypted: i=1; AJvYcCW0zyqcACJtunhJlDkdvlkGBmJcXqmtmBqDFb0sDwintvu6M4WUv+ibS8oOVsFumoyNnxN6vxIoSA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YymT+ko1frdSl12S/Bz59zX2mym/SbUH7JshFCuaSZk4IzGSGPu
+	KqcUoU0h05Ft1283WVAL4ajzCGPtGMVfZNm2GEfJPSEIwGW1FqN4XaxpOXWhoqcjAEXKI5ScQyh
+	31JUuvbIrNv06W+X+SNtbNbkA+mf2nH7iU57G6jCpwJ56L+qPBbwcKsGr4tn1AnkJ14TFzcAVtv
+	4+AvZzrKtb6iR9Gp0HQ58iF9pNdg1tn2Vs4F0=
+X-Gm-Gg: AY/fxX69wj26wzf2e7h123Zr1FLekqsvogw2PPUn3zYIMWg2H0RVw+hQSIIRj62UpXW
+	7VDHf7Tta7LVdoxsC7Is+iB6LzxOWeJsKWZH1aJvf8AabS6tQTfXc3AapzeiPdJ6crSt0xu9DQ8
+	YVbfOMdUT9RZ9W54gUy5eQ3z5f9EniQ+QaosUuTZdAVIKSIcux/0geGWRGyZt+o/D7Jowrse+hr
+	CGG9WwIYxX9HqJq6uaJ3YUhXQY7+UEIbq/IsAu6lpc11EHMLI66Tg==
+X-Received: by 2002:a05:690e:1284:b0:644:60d9:866c with SMTP id 956f58d0204a3-6466a92dc91mr6656838d50.93.1766331599149;
+        Sun, 21 Dec 2025 07:39:59 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFC7mRAlf3U3160pFy0QO4PEVMCEcrUcemZaiGKUncjGrA9BOh5VcTiZvbH4/xJJSP0FWrca5aMSKuDJG3O3Q8=
+X-Received: by 2002:a05:690e:1284:b0:644:60d9:866c with SMTP id
+ 956f58d0204a3-6466a92dc91mr6656830d50.93.1766331598821; Sun, 21 Dec 2025
+ 07:39:58 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+References: <20251221025233.87087-1-agruenba@redhat.com> <20251221025233.87087-2-agruenba@redhat.com>
+In-Reply-To: <20251221025233.87087-2-agruenba@redhat.com>
+From: Andreas Gruenbacher <agruenba@redhat.com>
+Date: Sun, 21 Dec 2025 16:39:47 +0100
+X-Gm-Features: AQt7F2o4CmeFGTIojqbpS0PVmjVAd-d4HUDEVdSFp54dsbxM3ZckXV6-nNPzQZs
+Message-ID: <CAHc6FU6vAokT9ugX1DA8iQLbeu7=Eixr9bq6z0o77_Nq+PyXvw@mail.gmail.com>
+Subject: Re: [RFC v2 01/17] xfs: don't clobber bi_status in xfs_zone_alloc_and_submit
+To: Christoph Hellwig <hch@infradead.org>, Jens Axboe <axboe@kernel.dk>, Chris Mason <clm@fb.com>, 
+	David Sterba <dsterba@suse.com>
+Cc: linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org, 
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: HymA3XPHWHFD9eWmj6AbCiE8M5banNllCYPvcrLANII_1766331599
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Add a bio_endio_status() helper as a shortcut for calling
-bio_set_status() and bio_endio() in sequence. Use the new helper
-throughout the code.
+On Sun, Dec 21, 2025 at 3:52=E2=80=AFAM Andreas Gruenbacher <agruenba@redha=
+t.com> wrote:
+> Function xfs_zone_alloc_and_submit() sets bio->bi_status and then it
+> calls bio_io_error(), which overwrites that value again.  Fix that by
+> completing the bio separately after setting bio->bi_status.
 
-Created with Coccinelle using the following semantic patch:
+By the way, this bug makes me wonder if we shouldn't just get rid of
+bio_io_error() in favour of bio_endio_status(bio, BLK_STS_IOERR). The
+latter would be a lot more obvious.
 
-@@
-expression bio, status;
-@@
-- bio_set_status(bio, status);
-- bio_endio(bio);
-+ bio_endio_status(bio, status);
+Andreas
 
-Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
----
- block/bio-integrity-auto.c       |  3 +--
- block/blk-core.c                 |  6 ++----
- block/blk-merge.c                |  6 ++----
- block/blk-mq.c                   |  6 ++----
- drivers/block/drbd/drbd_req.c    |  3 +--
- drivers/block/ps3vram.c          |  3 +--
- drivers/md/dm-cache-target.c     |  3 +--
- drivers/md/dm-integrity.c        | 25 +++++++++----------------
- drivers/md/dm-mpath.c            |  3 +--
- drivers/md/dm-pcache/dm_pcache.c |  3 +--
- drivers/md/dm-raid1.c            |  3 +--
- drivers/md/dm-thin.c             |  6 ++----
- drivers/md/dm-vdo/data-vio.c     |  3 +--
- drivers/md/dm.c                  |  3 +--
- drivers/md/raid1-10.c            |  3 +--
- drivers/md/raid10.c              | 16 ++++++----------
- fs/btrfs/raid56.c                |  6 ++----
- fs/iomap/ioend.c                 |  3 +--
- fs/xfs/xfs_aops.c                |  3 +--
- fs/xfs/xfs_zone_alloc.c          |  3 +--
- include/linux/bio.h              | 12 ++++++++----
- 21 files changed, 46 insertions(+), 76 deletions(-)
-
-diff --git a/block/bio-integrity-auto.c b/block/bio-integrity-auto.c
-index 736d53a7f699..1185f6e15d86 100644
---- a/block/bio-integrity-auto.c
-+++ b/block/bio-integrity-auto.c
-@@ -190,8 +190,7 @@ bool bio_integrity_prep(struct bio *bio)
- err_free_buf:
- 	kfree(buf);
- err_end_io:
--	bio_set_status(bio, BLK_STS_RESOURCE);
--	bio_endio(bio);
-+	bio_endio_status(bio, BLK_STS_RESOURCE);
- 	return false;
- }
- EXPORT_SYMBOL(bio_integrity_prep);
-diff --git a/block/blk-core.c b/block/blk-core.c
-index acf0a82a90ce..119ac3156eeb 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -645,8 +645,7 @@ static void __submit_bio(struct bio *bio)
- 	
- 		if ((bio->bi_opf & REQ_POLLED) &&
- 		    !(disk->queue->limits.features & BLK_FEAT_POLL)) {
--			bio_set_status(bio, BLK_STS_NOTSUPP);
--			bio_endio(bio);
-+			bio_endio_status(bio, BLK_STS_NOTSUPP);
- 		} else {
- 			disk->fops->submit_bio(bio);
- 		}
-@@ -887,8 +886,7 @@ void submit_bio_noacct(struct bio *bio)
- not_supported:
- 	status = BLK_STS_NOTSUPP;
- end_io:
--	bio_set_status(bio, status);
--	bio_endio(bio);
-+	bio_endio_status(bio, status);
- }
- EXPORT_SYMBOL(submit_bio_noacct);
- 
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 27ea5ffb8f77..5ab948ed4c1a 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -122,8 +122,7 @@ struct bio *bio_submit_split_bioset(struct bio *bio, unsigned int split_sectors,
- 	struct bio *split = bio_split(bio, split_sectors, GFP_NOIO, bs);
- 
- 	if (IS_ERR(split)) {
--		bio_set_status(bio, errno_to_blk_status(PTR_ERR(split)));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(PTR_ERR(split)));
- 		return NULL;
- 	}
- 
-@@ -143,8 +142,7 @@ EXPORT_SYMBOL_GPL(bio_submit_split_bioset);
- static struct bio *bio_submit_split(struct bio *bio, int split_sectors)
- {
- 	if (unlikely(split_sectors < 0)) {
--		bio_set_status(bio, errno_to_blk_status(split_sectors));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(split_sectors));
- 		return NULL;
- 	}
- 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 8fb35a258b4c..3ad79017ceeb 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3165,8 +3165,7 @@ void blk_mq_submit_bio(struct bio *bio)
- 	}
- 
- 	if ((bio->bi_opf & REQ_POLLED) && !blk_mq_can_poll(q)) {
--		bio_set_status(bio, BLK_STS_NOTSUPP);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_NOTSUPP);
- 		goto queue_exit;
- 	}
- 
-@@ -3206,8 +3205,7 @@ void blk_mq_submit_bio(struct bio *bio)
- 
- 	ret = blk_crypto_rq_get_keyslot(rq);
- 	if (ret != BLK_STS_OK) {
--		bio_set_status(bio, ret);
--		bio_endio(bio);
-+		bio_endio_status(bio, ret);
- 		blk_mq_free_request(rq);
- 		return;
- 	}
-diff --git a/drivers/block/drbd/drbd_req.c b/drivers/block/drbd/drbd_req.c
-index 983b2ff5eb6b..3d3476707638 100644
---- a/drivers/block/drbd/drbd_req.c
-+++ b/drivers/block/drbd/drbd_req.c
-@@ -1211,8 +1211,7 @@ drbd_request_prepare(struct drbd_device *device, struct bio *bio)
- 		/* only pass the error to the upper layers.
- 		 * if user cannot handle io errors, that's not our business. */
- 		drbd_err(device, "could not kmalloc() req\n");
--		bio_set_status(bio, BLK_STS_RESOURCE);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_RESOURCE);
- 		return ERR_PTR(-ENOMEM);
- 	}
- 
-diff --git a/drivers/block/ps3vram.c b/drivers/block/ps3vram.c
-index 06844674c998..8b8bdfa50c97 100644
---- a/drivers/block/ps3vram.c
-+++ b/drivers/block/ps3vram.c
-@@ -573,8 +573,7 @@ static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
- 	next = bio_list_peek(&priv->list);
- 	spin_unlock_irq(&priv->lock);
- 
--	bio_set_status(bio, error);
--	bio_endio(bio);
-+	bio_endio_status(bio, error);
- 	return next;
- }
- 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index d1dbd4ddaadb..da1b1eb29bb8 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -1856,8 +1856,7 @@ static void requeue_deferred_bios(struct cache *cache)
- 	bio_list_merge_init(&bios, &cache->deferred_bios);
- 
- 	while ((bio = bio_list_pop(&bios))) {
--		bio_set_status(bio, BLK_STS_DM_REQUEUE);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_DM_REQUEUE);
- 		cond_resched();
- 	}
- }
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 4a6e27c0d510..c21b0d866627 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -2512,8 +2512,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
- 	sector_t recalc_sector;
- 
- 	if (unlikely(bio_integrity(bio))) {
--		bio_set_status(bio, BLK_STS_NOTSUPP);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_NOTSUPP);
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
-@@ -2534,8 +2533,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
- 			if (dio->payload_len > x_size) {
- 				unsigned sectors = ((x_size - extra_size) / ic->tuple_size) << ic->sb->log2_sectors_per_block;
- 				if (WARN_ON(!sectors || sectors >= bio_sectors(bio))) {
--					bio_set_status(bio, BLK_STS_NOTSUPP);
--					bio_endio(bio);
-+					bio_endio_status(bio, BLK_STS_NOTSUPP);
- 					return DM_MAPIO_SUBMITTED;
- 				}
- 				dm_accept_partial_bio(bio, sectors);
-@@ -2593,8 +2591,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
- 
- 	bip = bio_integrity_alloc(bio, GFP_NOIO, 1);
- 	if (IS_ERR(bip)) {
--		bio_set_status(bio, errno_to_blk_status(PTR_ERR(bip)));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(PTR_ERR(bip)));
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
-@@ -2615,8 +2612,7 @@ static int dm_integrity_map_inline(struct dm_integrity_io *dio, bool from_map)
- 	ret = bio_integrity_add_page(bio, virt_to_page(dio->integrity_payload),
- 					dio->payload_len, offset_in_page(dio->integrity_payload));
- 	if (unlikely(ret != dio->payload_len)) {
--		bio_set_status(bio, BLK_STS_RESOURCE);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_RESOURCE);
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
-@@ -2661,16 +2657,15 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
- 		bip = bio_integrity_alloc(outgoing_bio, GFP_NOIO, 1);
- 		if (IS_ERR(bip)) {
- 			bio_put(outgoing_bio);
--			bio_set_status(bio, errno_to_blk_status(PTR_ERR(bip)));
--			bio_endio(bio);
-+			bio_endio_status(bio,
-+					 errno_to_blk_status(PTR_ERR(bip)));
- 			return;
- 		}
- 
- 		r = bio_integrity_add_page(outgoing_bio, virt_to_page(dio->integrity_payload), ic->tuple_size, 0);
- 		if (unlikely(r != ic->tuple_size)) {
- 			bio_put(outgoing_bio);
--			bio_set_status(bio, BLK_STS_RESOURCE);
--			bio_endio(bio);
-+			bio_endio_status(bio, BLK_STS_RESOURCE);
- 			return;
- 		}
- 
-@@ -2679,8 +2674,7 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
- 		r = submit_bio_wait(outgoing_bio);
- 		if (unlikely(r != 0)) {
- 			bio_put(outgoing_bio);
--			bio_set_status(bio, errno_to_blk_status(r));
--			bio_endio(bio);
-+			bio_endio_status(bio, errno_to_blk_status(r));
- 			return;
- 		}
- 		bio_put(outgoing_bio);
-@@ -2693,8 +2687,7 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
- 			dm_audit_log_bio(DM_MSG_PREFIX, "integrity-checksum",
- 				bio, dio->bio_details.bi_iter.bi_sector, 0);
- 
--			bio_set_status(bio, BLK_STS_PROTECTION);
--			bio_endio(bio);
-+			bio_endio_status(bio, BLK_STS_PROTECTION);
- 			return;
- 		}
- 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 761e5e79d4a7..1097ffb05b00 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -722,8 +722,7 @@ static void process_queued_bios(struct work_struct *work)
- 			bio_io_error(bio);
- 			break;
- 		case DM_MAPIO_REQUEUE:
--			bio_set_status(bio, BLK_STS_DM_REQUEUE);
--			bio_endio(bio);
-+			bio_endio_status(bio, BLK_STS_DM_REQUEUE);
- 			break;
- 		case DM_MAPIO_REMAPPED:
- 			submit_bio_noacct(bio);
-diff --git a/drivers/md/dm-pcache/dm_pcache.c b/drivers/md/dm-pcache/dm_pcache.c
-index 086ae9b06bfb..925a25aa8699 100644
---- a/drivers/md/dm-pcache/dm_pcache.c
-+++ b/drivers/md/dm-pcache/dm_pcache.c
-@@ -74,8 +74,7 @@ static void end_req(struct kref *ref)
- 		pcache_req_get(pcache_req);
- 		defer_req(pcache_req);
- 	} else {
--		bio_set_status(bio, errno_to_blk_status(ret));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(ret));
- 
- 		if (atomic_dec_and_test(&pcache->inflight_reqs))
- 			wake_up(&pcache->inflight_wq);
-diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
-index c54995847db0..1f53b125b333 100644
---- a/drivers/md/dm-raid1.c
-+++ b/drivers/md/dm-raid1.c
-@@ -627,8 +627,7 @@ static void write_callback(unsigned long error, void *context)
- 	 * degrade the array.
- 	 */
- 	if (bio_op(bio) == REQ_OP_DISCARD) {
--		bio_set_status(bio, BLK_STS_NOTSUPP);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_NOTSUPP);
- 		return;
- 	}
- 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index 42261bbe4771..7fe004a330c0 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -422,8 +422,7 @@ static void end_discard(struct discard_op *op, int r)
- 	 * Even if r is set, there could be sub discards in flight that we
- 	 * need to wait for.
- 	 */
--	bio_set_status(op->parent_bio, errno_to_blk_status(r));
--	bio_endio(op->parent_bio);
-+	bio_endio_status(op->parent_bio, errno_to_blk_status(r));
- }
- 
- /*----------------------------------------------------------------*/
-@@ -2730,8 +2729,7 @@ static int thin_bio_map(struct dm_target *ti, struct bio *bio)
- 	thin_hook_bio(tc, bio);
- 
- 	if (tc->requeue_mode) {
--		bio_set_status(bio, BLK_STS_DM_REQUEUE);
--		bio_endio(bio);
-+		bio_endio_status(bio, BLK_STS_DM_REQUEUE);
- 		return DM_MAPIO_SUBMITTED;
- 	}
- 
-diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
-index 11becc4138c4..298957fa938a 100644
---- a/drivers/md/dm-vdo/data-vio.c
-+++ b/drivers/md/dm-vdo/data-vio.c
-@@ -287,8 +287,7 @@ static void acknowledge_data_vio(struct data_vio *data_vio)
- 	if (data_vio->is_partial)
- 		vdo_count_bios(&vdo->stats.bios_acknowledged_partial, bio);
- 
--	bio_set_status(bio, errno_to_blk_status(error));
--	bio_endio(bio);
-+	bio_endio_status(bio, errno_to_blk_status(error));
- }
- 
- static void copy_to_bio(struct bio *bio, char *data_ptr)
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index cbc64377fa96..1743042db9f6 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -983,8 +983,7 @@ static void __dm_io_complete(struct dm_io *io, bool first_stage)
- 		queue_io(md, bio);
- 	} else {
- 		/* done with normal IO or empty flush */
--		bio_set_status(bio, io_error);
--		bio_endio(bio);
-+		bio_endio_status(bio, io_error);
- 	}
- }
- 
-diff --git a/drivers/md/raid1-10.c b/drivers/md/raid1-10.c
-index 504730aba9df..53903bb91408 100644
---- a/drivers/md/raid1-10.c
-+++ b/drivers/md/raid1-10.c
-@@ -104,8 +104,7 @@ static void md_bio_reset_resync_pages(struct bio *bio, struct resync_pages *rp,
- 		int len = min_t(int, size, PAGE_SIZE);
- 
- 		if (WARN_ON(!bio_add_page(bio, page, len, 0))) {
--			bio_set_status(bio, BLK_STS_RESOURCE);
--			bio_endio(bio);
-+			bio_endio_status(bio, BLK_STS_RESOURCE);
- 			return;
- 		}
- 
-diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
-index 3e15e190f103..5bbef4954fd5 100644
---- a/drivers/md/raid10.c
-+++ b/drivers/md/raid10.c
-@@ -1665,9 +1665,8 @@ static int raid10_handle_discard(struct mddev *mddev, struct bio *bio)
- 		split_size = stripe_size - remainder;
- 		split = bio_split(bio, split_size, GFP_NOIO, &conf->bio_split);
- 		if (IS_ERR(split)) {
--			bio_set_status(bio,
--				       errno_to_blk_status(PTR_ERR(split)));
--			bio_endio(bio);
-+			bio_endio_status(bio,
-+					 errno_to_blk_status(PTR_ERR(split)));
- 			return 0;
- 		}
- 
-@@ -1683,9 +1682,8 @@ static int raid10_handle_discard(struct mddev *mddev, struct bio *bio)
- 		split_size = bio_sectors(bio) - remainder;
- 		split = bio_split(bio, split_size, GFP_NOIO, &conf->bio_split);
- 		if (IS_ERR(split)) {
--			bio_set_status(bio,
--				       errno_to_blk_status(PTR_ERR(split)));
--			bio_endio(bio);
-+			bio_endio_status(bio,
-+					 errno_to_blk_status(PTR_ERR(split)));
- 			return 0;
- 		}
- 
-@@ -3685,8 +3683,7 @@ static sector_t raid10_sync_request(struct mddev *mddev, sector_t sector_nr,
- 			struct resync_pages *rp = get_resync_pages(bio);
- 			page = resync_fetch_page(rp, page_idx);
- 			if (WARN_ON(!bio_add_page(bio, page, len, 0))) {
--				bio_set_status(bio, BLK_STS_RESOURCE);
--				bio_endio(bio);
-+				bio_endio_status(bio, BLK_STS_RESOURCE);
- 				goto giveup;
- 			}
- 		}
-@@ -4867,8 +4864,7 @@ static sector_t reshape_request(struct mddev *mddev, sector_t sector_nr,
- 			len = PAGE_SIZE;
- 		for (bio = blist; bio ; bio = bio->bi_next) {
- 			if (WARN_ON(!bio_add_page(bio, page, len, 0))) {
--				bio_set_status(bio, BLK_STS_RESOURCE);
--				bio_endio(bio);
-+				bio_endio_status(bio, BLK_STS_RESOURCE);
- 				return sectors_done;
- 			}
- 		}
-diff --git a/fs/btrfs/raid56.c b/fs/btrfs/raid56.c
-index b60ab0bb08ad..5bd9dd132314 100644
---- a/fs/btrfs/raid56.c
-+++ b/fs/btrfs/raid56.c
-@@ -1750,8 +1750,7 @@ void raid56_parity_write(struct bio *bio, struct btrfs_io_context *bioc)
- 
- 	rbio = alloc_rbio(fs_info, bioc);
- 	if (IS_ERR(rbio)) {
--		bio_set_status(bio, errno_to_blk_status(PTR_ERR(rbio)));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(PTR_ERR(rbio)));
- 		return;
- 	}
- 	rbio->operation = BTRFS_RBIO_WRITE;
-@@ -2148,8 +2147,7 @@ void raid56_parity_recover(struct bio *bio, struct btrfs_io_context *bioc,
- 
- 	rbio = alloc_rbio(fs_info, bioc);
- 	if (IS_ERR(rbio)) {
--		bio_set_status(bio, errno_to_blk_status(PTR_ERR(rbio)));
--		bio_endio(bio);
-+		bio_endio_status(bio, errno_to_blk_status(PTR_ERR(rbio)));
- 		return;
- 	}
- 
-diff --git a/fs/iomap/ioend.c b/fs/iomap/ioend.c
-index 1ebe6730d013..10963b7c0837 100644
---- a/fs/iomap/ioend.c
-+++ b/fs/iomap/ioend.c
-@@ -87,8 +87,7 @@ int iomap_ioend_writeback_submit(struct iomap_writepage_ctx *wpc, int error)
- 		error = -EIO;
- 
- 	if (error) {
--		bio_set_status(&ioend->io_bio, errno_to_blk_status(error));
--		bio_endio(&ioend->io_bio);
-+		bio_endio_status(&ioend->io_bio, errno_to_blk_status(error));
- 		return error;
- 	}
- 
-diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
-index bd2b828164cb..c56560715ba4 100644
---- a/fs/xfs/xfs_aops.c
-+++ b/fs/xfs/xfs_aops.c
-@@ -653,8 +653,7 @@ xfs_zoned_writeback_submit(
- 
- 	ioend->io_bio.bi_end_io = xfs_end_bio;
- 	if (error) {
--		bio_set_status(&ioend->io_bio, errno_to_blk_status(error));
--		bio_endio(&ioend->io_bio);
-+		bio_endio_status(&ioend->io_bio, errno_to_blk_status(error));
- 		return error;
- 	}
- 	xfs_zone_alloc_and_submit(ioend, &XFS_ZWPC(wpc)->open_zone);
-diff --git a/fs/xfs/xfs_zone_alloc.c b/fs/xfs/xfs_zone_alloc.c
-index 2b069cffac00..e5f91580e6d9 100644
---- a/fs/xfs/xfs_zone_alloc.c
-+++ b/fs/xfs/xfs_zone_alloc.c
-@@ -896,8 +896,7 @@ xfs_zone_alloc_and_submit(
- 	return;
- 
- out_split_error:
--	bio_set_status(&ioend->io_bio, errno_to_blk_status(PTR_ERR(split)));
--	bio_endio(&ioend->io_bio);
-+	bio_endio_status(&ioend->io_bio, errno_to_blk_status(PTR_ERR(split)));
- 	return;
- 
- out_error:
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index cf0f5aba7bee..94f0c7f58002 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -392,17 +392,21 @@ static inline void bio_set_status(struct bio *bio, blk_status_t status)
- 		WRITE_ONCE(bio->bi_status, status);
- }
- 
--static inline void bio_io_error(struct bio *bio)
-+static inline void bio_endio_status(struct bio *bio, blk_status_t status)
- {
--	bio_set_status(bio, BLK_STS_IOERR);
-+	bio_set_status(bio, status);
- 	bio_endio(bio);
- }
- 
-+static inline void bio_io_error(struct bio *bio)
-+{
-+	bio_endio_status(bio, BLK_STS_IOERR);
-+}
-+
- static inline void bio_wouldblock_error(struct bio *bio)
- {
- 	bio_set_flag(bio, BIO_QUIET);
--	bio_set_status(bio, BLK_STS_AGAIN);
--	bio_endio(bio);
-+	bio_endio_status(bio, BLK_STS_AGAIN);
- }
- 
- /*
--- 
-2.52.0
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> ---
+>  fs/xfs/xfs_zone_alloc.c | 3 +++
+>  1 file changed, 3 insertions(+)
+>
+> diff --git a/fs/xfs/xfs_zone_alloc.c b/fs/xfs/xfs_zone_alloc.c
+> index ef7a931ebde5..bd6f3ef095cb 100644
+> --- a/fs/xfs/xfs_zone_alloc.c
+> +++ b/fs/xfs/xfs_zone_alloc.c
+> @@ -897,6 +897,9 @@ xfs_zone_alloc_and_submit(
+>
+>  out_split_error:
+>         ioend->io_bio.bi_status =3D errno_to_blk_status(PTR_ERR(split));
+> +       bio_endio(&ioend->io_bio);
+> +       return;
+> +
+>  out_error:
+>         bio_io_error(&ioend->io_bio);
+>  }
+> --
+> 2.52.0
+>
 
