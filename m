@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9598020C001
-	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:52:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C51A1C860C
+	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:52:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766285573; cv=none; b=cFw/9zcqPeFX7ZYPS9b4fOtMthpKbziZGJR4T1BtOBAeOMfnlkvotLNjMQdnGnkT1tIwL7LgrSS9ZUJ/Y/I78bx0qSvblW7to+pHf4KMOAeLNLcpRuaPGTUdgbRTt7nXIc6NpkxkjeImDxppdMSoIGjDpCeqANSCeKNPi9Z7YRc=
+	t=1766285575; cv=none; b=E466INsGt9qJ7hq9ZE7G+3Y23BHvQKea0V2x2lqMThNXJ1YNew85NrVp4eLpzdzQA5jxQ3Znvs8upAGK9aisYetw7sZRGel5Kuj6sg0J9VsgY3s2DPeRnV0fMezBXhRQ/Vk1tQzBDHxitUyxNcqRurWJmpEU44P5Y+bA7D10/1w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766285573; c=relaxed/simple;
-	bh=4ZBa892y1M1TfmSx5/Ar1yUahL1O7FrFkXQfkieSWPI=;
+	s=arc-20240116; t=1766285575; c=relaxed/simple;
+	bh=s2FKoMxZd739dCzhmdB8JVLEUJx/RdFLnNDGdbuTA+s=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Ch3ALXKlgn0GPQ79QC9FXAJbqYfKNl22YfPv5MQCfbN31zvD8ueH1vE2zUCUQhKYDIa9HLCThQxz85uubsO5MQtVMbaQ/x+HzBEtEIz3nRl7szAxofvnBvUP+ZjMZ9ObklPW1uMPc+4pGSjdDR9dZ0NvNzevSgbC4GxRBjtuwEU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bFxIxCWJ; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=HK9YCwUueX4s0oqkjCVulL0vTdrSnmmUAZyaS5JJr/qc1nc0YMETYOkuvunnuVsyEBWhXyCFBygss2cMWURtcdyU9LQW/2jP27ciZR9RVgqqWcV2HqToRZZjh0DHVOU9MtxA/V4nmt5VvoisHTFWHGZ5PV1Vdo5KyScVsa6ZhuI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SAng18/l; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bFxIxCWJ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SAng18/l"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766285570;
+	s=mimecast20190719; t=1766285573;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=0rFNrTbz3ZImqikct+7ijcbg6dOqTPdKeJOJQAT9nGU=;
-	b=bFxIxCWJy/J0RxiW3Vtvf6H6PK3Xpy1HoBLtooSI3JNAJLZ8o7FbY5AYzUZRwqbSu2/0Kh
-	vXYzFOt0rdyLeg3ETddLyhEzZS645e/etBo6xUNezgiePBt3oNaodR/cclkfABBxVE4yzR
-	WJk7MQ4aunbkWzCXqJZM1apN+c2pBjs=
+	bh=z84twE+0dmUFQawUihISJPCYSTL4dhggfdILlETnyIY=;
+	b=SAng18/l80lsNrPcct+pMt6T8hrcXRKqXT2uR66uZLFDtcGUq7HA+npj4YNfTs1NWBAW0u
+	ssjVpFEKa6SHHJnjiUOxSobOl+E+wzpGVIW95VRt3igFO+eJvWUGWHi1DLtqzoG4/IxrpG
+	TgW0KTVF9gxXMgyU+eKxmh7YIGofJVU=
 Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-624-4BAqgF_mO_m3d2XQMIrwtg-1; Sat,
- 20 Dec 2025 21:52:44 -0500
-X-MC-Unique: 4BAqgF_mO_m3d2XQMIrwtg-1
-X-Mimecast-MFC-AGG-ID: 4BAqgF_mO_m3d2XQMIrwtg_1766285563
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-iB9QqN7SOFaqUEEFzmQTgg-1; Sat,
+ 20 Dec 2025 21:52:49 -0500
+X-MC-Unique: iB9QqN7SOFaqUEEFzmQTgg-1
+X-Mimecast-MFC-AGG-ID: iB9QqN7SOFaqUEEFzmQTgg_1766285567
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1CE4D1956080;
-	Sun, 21 Dec 2025 02:52:43 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 341301956088;
+	Sun, 21 Dec 2025 02:52:47 +0000 (UTC)
 Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.32.8])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 1EF1B180045B;
-	Sun, 21 Dec 2025 02:52:39 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 863B8180049F;
+	Sun, 21 Dec 2025 02:52:43 +0000 (UTC)
 From: Andreas Gruenbacher <agruenba@redhat.com>
 To: Christoph Hellwig <hch@infradead.org>,
 	Jens Axboe <axboe@kernel.dk>,
@@ -53,10 +53,11 @@ Cc: Andreas Gruenbacher <agruenba@redhat.com>,
 	linux-btrfs@vger.kernel.org,
 	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [RFC v2 01/17] xfs: don't clobber bi_status in xfs_zone_alloc_and_submit
-Date: Sun, 21 Dec 2025 03:52:16 +0100
-Message-ID: <20251221025233.87087-2-agruenba@redhat.com>
+	linux-kernel@vger.kernel.org,
+	Christoph Hellwig <hch@lst.de>
+Subject: [RFC v2 02/17] bio: rename bio_chain arguments
+Date: Sun, 21 Dec 2025 03:52:17 +0100
+Message-ID: <20251221025233.87087-3-agruenba@redhat.com>
 In-Reply-To: <20251221025233.87087-1-agruenba@redhat.com>
 References: <20251221025233.87087-1-agruenba@redhat.com>
 Precedence: bulk
@@ -68,29 +69,53 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Function xfs_zone_alloc_and_submit() sets bio->bi_status and then it
-calls bio_io_error(), which overwrites that value again.  Fix that by
-completing the bio separately after setting bio->bi_status.
+Use the same argument names in bio_chain() as in bio_chain_and_submit()
+to be consistent.  Slightly improve the function description.
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
- fs/xfs/xfs_zone_alloc.c | 3 +++
- 1 file changed, 3 insertions(+)
+ block/bio.c | 22 +++++++++++-----------
+ 1 file changed, 11 insertions(+), 11 deletions(-)
 
-diff --git a/fs/xfs/xfs_zone_alloc.c b/fs/xfs/xfs_zone_alloc.c
-index ef7a931ebde5..bd6f3ef095cb 100644
---- a/fs/xfs/xfs_zone_alloc.c
-+++ b/fs/xfs/xfs_zone_alloc.c
-@@ -897,6 +897,9 @@ xfs_zone_alloc_and_submit(
+diff --git a/block/bio.c b/block/bio.c
+index b3a79285c278..3f408e1ba13f 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -327,22 +327,22 @@ static void bio_chain_endio(struct bio *bio)
  
- out_split_error:
- 	ioend->io_bio.bi_status = errno_to_blk_status(PTR_ERR(split));
-+	bio_endio(&ioend->io_bio);
-+	return;
-+
- out_error:
- 	bio_io_error(&ioend->io_bio);
+ /**
+  * bio_chain - chain bio completions
+- * @bio: the target bio
+- * @parent: the parent bio of @bio
++ * @prev: the bio to chain
++ * @new: the bio to chain to
+  *
+- * The caller won't have a bi_end_io called when @bio completes - instead,
+- * @parent's bi_end_io won't be called until both @parent and @bio have
+- * completed; the chained bio will also be freed when it completes.
++ * The caller won't have a bi_end_io called when @prev completes.  Instead,
++ * @new's bi_end_io will be called once both @new and @prev have completed.
++ * Like an unchained bio, @prev will be put when it completes.
+  *
+- * The caller must not set bi_private or bi_end_io in @bio.
++ * The caller must not set bi_private or bi_end_io in @prev.
+  */
+-void bio_chain(struct bio *bio, struct bio *parent)
++void bio_chain(struct bio *prev, struct bio *new)
+ {
+-	BUG_ON(bio->bi_private || bio->bi_end_io);
++	BUG_ON(prev->bi_private || prev->bi_end_io);
+ 
+-	bio->bi_private = parent;
+-	bio->bi_end_io	= bio_chain_endio;
+-	bio_inc_remaining(parent);
++	prev->bi_private = new;
++	prev->bi_end_io	= bio_chain_endio;
++	bio_inc_remaining(new);
  }
+ EXPORT_SYMBOL(bio_chain);
+ 
 -- 
 2.52.0
 
