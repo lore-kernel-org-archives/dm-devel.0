@@ -1,47 +1,47 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 264232236F7
-	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:53:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15F0A231830
+	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:53:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766285597; cv=none; b=iBfXYBpeDGG9kpRRzNjnGeG4aHAMQXv6HFKqvIwB/BxX8OZvQKt54c5nAFHHkBQSCDNz5raJdKMQt2qJK2eaFCxa31mqD2/UH41wqFnubb2loHcKHWhLbIYcC7Mbp4s0XImSsxBKtDcjRb/WVvensorGYPVxNF90wCwEODr2r74=
+	t=1766285602; cv=none; b=QKn1zlVS5+Pu8zpPj458+xxnwwE59+U3Hyb6gTtUCwg0qxAD9YhVmSOkfbouQm/BZw0WubBphTmrzLaPbCyz2MAeQ+ncZfPQ4qWiGSHGQiKNE+7el33GUdgc4PNGa1z6tuxXb7IYdnHGzOBJZhHWeWNQmGEm24o5W9G8KhQz7iY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766285597; c=relaxed/simple;
-	bh=r+kpZSnrmH/jtmd1hDSOL/n3Adl+xnlQeDwR/UMYB7A=;
+	s=arc-20240116; t=1766285602; c=relaxed/simple;
+	bh=HIqf22Ptud/9ac/5C/HAWxjPJyK8tFALQWxnuDFT/3Q=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=IeCK/uCM4+jdmqH1YwTtQlurAz80wSRzuUqs5eKgkz+SqhH6YjL0lwBO7+ObKcb12YmrZZfm+N1V2N9SXXfwj+O/fBQGv9fJC2UQuA96KyToKPT5/6b7eOfYaDze1qTylsHGj+EFvwq4O7606fIhtISAOpkzfr1SLzMuQoh8rLY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=D78F+IiN; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=juFH0XdTN0A0vjDZyA2KbIYCwjsSq2th0CO4da419304HSCtoupB2f94KtocDQlJudgucXO6Yea9KYPnvPdFX81MIYmpfvQko0WsoMfh/Xa/6i770iG0gWkc/aV1bkIRsFm62rmcguL1tvo/wq6xvTQqIFdxiHDwU9Md/2GQb7E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=X3MpC3iY; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="D78F+IiN"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="X3MpC3iY"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766285594;
+	s=mimecast20190719; t=1766285599;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=D1JskjMhrT7L2sDTvMTDHnPfov5h9SsZ7fKDyJLN1aE=;
-	b=D78F+IiNBRrA13cbuhxg0oW7mlVVCA9cFL/KSwx9QHjiXGT4Inzr1hiLdR6Hxc8J00yGnk
-	4N20sPgKDcc47PUA/GN9VNE6Nf1zyAqHHGsbs06aNnJXYaOkkTUHxj+uRJ8HA5/5qhGju7
-	MBvEJmZ7RFdOO7Uv6KtUeVs66jQArGk=
+	bh=5lqEV0d5M/MjlyxOPZzQUlj9JHGomOy6Eck36K06ymo=;
+	b=X3MpC3iYWVm5TY1K1IReC+9zuq1ShJc607HTy3lFKkcam0nRd9SjdOGzG/z+S+6Bbgs9Nv
+	c0m0tHTZm5XtgulcCIzhCN+HN6+We1EDBGiL2CHfwRCiQvWUswNzIp5hK4Rnv2CgK3teVm
+	vyGXmcQ61qTajYHNjtTjzz6gIuGCr6Q=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-370-dzh2yQG1NdePxmIEEG69Rw-1; Sat,
- 20 Dec 2025 21:53:10 -0500
-X-MC-Unique: dzh2yQG1NdePxmIEEG69Rw-1
-X-Mimecast-MFC-AGG-ID: dzh2yQG1NdePxmIEEG69Rw_1766285589
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-235-9DEeJGNpMOmGqmAAYZY70Q-1; Sat,
+ 20 Dec 2025 21:53:17 -0500
+X-MC-Unique: 9DEeJGNpMOmGqmAAYZY70Q-1
+X-Mimecast-MFC-AGG-ID: 9DEeJGNpMOmGqmAAYZY70Q_1766285596
 Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 27D661956046;
-	Sun, 21 Dec 2025 02:53:09 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 010051956050;
+	Sun, 21 Dec 2025 02:53:16 +0000 (UTC)
 Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.32.8])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 2BE8E180049F;
-	Sun, 21 Dec 2025 02:53:05 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id EEBD6180049F;
+	Sun, 21 Dec 2025 02:53:12 +0000 (UTC)
 From: Andreas Gruenbacher <agruenba@redhat.com>
 To: Christoph Hellwig <hch@infradead.org>,
 	Jens Axboe <axboe@kernel.dk>,
@@ -54,9 +54,9 @@ Cc: Andreas Gruenbacher <agruenba@redhat.com>,
 	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org
-Subject: [RFC v2 08/17] block: fix blk_status_to_{errno,str} inconsistency
-Date: Sun, 21 Dec 2025 03:52:23 +0100
-Message-ID: <20251221025233.87087-9-agruenba@redhat.com>
+Subject: [RFC v2 10/17] block: optimize blk_status <=> errno conversion
+Date: Sun, 21 Dec 2025 03:52:25 +0100
+Message-ID: <20251221025233.87087-11-agruenba@redhat.com>
 In-Reply-To: <20251221025233.87087-1-agruenba@redhat.com>
 References: <20251221025233.87087-1-agruenba@redhat.com>
 Precedence: bulk
@@ -68,40 +68,93 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Change blk_status_to_str() to be consistent with blk_status_to_errno()
-and return "I/O" for undefined status codes.
-
-With that, the fallback case in blk_errors can be removed with no change
-in behavior.
+Handle the errno_to_blk_status(0) case inline so that the compiler can
+optimize when it knows that errno is not 0.  Likewise for
+blk_status_to_errno(BLK_STATUS_OK).
 
 Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
 ---
- block/blk-core.c | 5 +----
- 1 file changed, 1 insertion(+), 4 deletions(-)
+ block/blk-core.c       | 11 ++++++-----
+ include/linux/blkdev.h | 18 ++++++++++++++++--
+ 2 files changed, 22 insertions(+), 7 deletions(-)
 
 diff --git a/block/blk-core.c b/block/blk-core.c
-index 4f7b7cf50d23..47ce458b4f34 100644
+index 9b3100d171b7..381bdf66045b 100644
 --- a/block/blk-core.c
 +++ b/block/blk-core.c
-@@ -161,9 +161,6 @@ static const struct {
- 	[BLK_STS_DURATION_LIMIT]	= { -ETIME, "duration limit exceeded" },
+@@ -133,7 +133,6 @@ inline const char *blk_op_str(enum req_op op)
+ EXPORT_SYMBOL_GPL(blk_op_str);
  
- 	[BLK_STS_INVAL]		= { -EINVAL,	"invalid" },
--
--	/* everything else not covered above: */
--	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
- };
+ #define blk_errors(_)									\
+-	_(BLK_STS_OK,			0,		"")				\
+ 	_(BLK_STS_NOTSUPP,		-EOPNOTSUPP,	"operation not supported")	\
+ 	_(BLK_STS_TIMEOUT,		-ETIMEDOUT,	"timeout")			\
+ 	_(BLK_STS_NOSPC,		-ENOSPC,	"critical space allocation")	\
+@@ -159,7 +158,7 @@ EXPORT_SYMBOL_GPL(blk_op_str);
+ 											\
+ 	_(BLK_STS_INVAL,		-EINVAL,	"invalid")
  
- blk_status_t errno_to_blk_status(int errno)
-@@ -194,7 +191,7 @@ const char *blk_status_to_str(blk_status_t status)
- 	int idx = (__force int)status;
- 
- 	if (WARN_ON_ONCE(idx >= ARRAY_SIZE(blk_errors)))
--		return "<null>";
-+		return "I/O";
- 	return blk_errors[idx].name;
+-blk_status_t errno_to_blk_status(int errno)
++blk_status_t __errno_to_blk_status(int errno)
+ {
+ 	switch(errno) {
+ #define _(_status, _errno, _name)		\
+@@ -171,9 +170,9 @@ blk_status_t errno_to_blk_status(int errno)
+ 		return BLK_STS_IOERR;
+ 	}
  }
- EXPORT_SYMBOL_GPL(blk_status_to_str);
+-EXPORT_SYMBOL_GPL(errno_to_blk_status);
++EXPORT_SYMBOL_GPL(__errno_to_blk_status);
+ 
+-int blk_status_to_errno(blk_status_t status)
++int __blk_status_to_errno(blk_status_t status)
+ {
+ 	switch(status) {
+ #define _(_status, _errno, _name)		\
+@@ -185,11 +184,13 @@ int blk_status_to_errno(blk_status_t status)
+ 		return -EIO;
+ 	}
+ }
+-EXPORT_SYMBOL_GPL(blk_status_to_errno);
++EXPORT_SYMBOL_GPL(__blk_status_to_errno);
+ 
+ const char *blk_status_to_str(blk_status_t status)
+ {
+ 	switch(status) {
++	case BLK_STS_OK:
++		return "";
+ #define _(_status, _errno, _name)		\
+ 	case _status:				\
+ 		return _name;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 70b671a9a7f7..a2451fbd53a8 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1011,8 +1011,22 @@ extern void blk_sync_queue(struct request_queue *q);
+ /* Helper to convert REQ_OP_XXX to its string format XXX */
+ extern const char *blk_op_str(enum req_op op);
+ 
+-int blk_status_to_errno(blk_status_t status);
+-blk_status_t errno_to_blk_status(int errno);
++int __blk_status_to_errno(blk_status_t status);
++static inline int blk_status_to_errno(blk_status_t status)
++{
++	if (status == BLK_STS_OK)
++		return 0;
++	return __blk_status_to_errno(status);
++}
++
++blk_status_t __errno_to_blk_status(int errno);
++static inline blk_status_t errno_to_blk_status(int errno)
++{
++	if (errno == 0)
++		return BLK_STS_OK;
++	return __errno_to_blk_status(errno);
++}
++
+ const char *blk_status_to_str(blk_status_t status);
+ 
+ /* only poll the hardware once, don't continue until a completion was found */
 -- 
 2.52.0
 
