@@ -1,45 +1,45 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D71F1A9FA0
-	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:52:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC6B91F4611
+	for <dm-devel@lists.linux.dev>; Sun, 21 Dec 2025 02:52:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766285543; cv=none; b=otDYKVQK1Gvf78zyupAQknPzLq2ZtWwP3CtKi0ba03XRxYeIYIIuIgvFpDx96SVedPPXo+4neWcmytFh8ATEppRgXZNVSoLEYBo9V8jc6F6ilC1DMJPdA8rgyY82T1QrK3IhYLKeWe6ADaE3r4axDbyFSEnQ1fFTtk12oyrBGU4=
+	t=1766285568; cv=none; b=XyFQILOSJTv2NdUn1x+gYXSuAOOluKWfTwZ/OWgg8u2uVk+UvT5B0YsFZd/p38MQeEr9AIqlKxd4BDDLfFBkAE9erkIz3XIAuFV3fuII8AtC4cDRpRpWoWYJcp6UGFNM4qjlCr0dFPT7OcEHHObtWaSfViqnCZqQ4BvAvefhKiM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766285543; c=relaxed/simple;
+	s=arc-20240116; t=1766285568; c=relaxed/simple;
 	bh=wydG2tqDwgj6QuZW7DY/zuZo5VojiZ1uNvXaK/0N8JE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tup0SwCxhw0MA3H9KNOKqV4UxMdYhD9XHMB8kxEl+ZIMY/af8Wb/YQtDwd+69HcrZ+7Hqe8TxAk/uROFcpl7MSmSLa7wdYCeWmYq362FUEq1y0cdooIFzqipVDE0x5dFuxlqImqWdAhVLglHDKrUjbCYg13HF+Z+ZoT2ukWhvGw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=blLiLepq; arc=none smtp.client-ip=170.10.129.124
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mYy4zf8XPOxUTIVQZQvu9Q/EVOTgTLDz6Mg4v52UYQOIgYOz/1OJkS9JxK/c44+LE1cDSM+fiyNk2XmNTu/KjpKUdQ40pDSjzIReQOinAEqtN2Vuz3E2OE/f0ttnRT3+3gX5h/jsf92JzSeEdekff4lXBc7ZMCdjAo9nlzHGA1Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dBP4Gzuk; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="blLiLepq"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dBP4Gzuk"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1766285541;
+	s=mimecast20190719; t=1766285564;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding;
 	bh=gck6PTahdn31ztY8BjIzxEwMrGwEobhk2pDC85pgr+M=;
-	b=blLiLepqm85lxw6NiGX7XeM7wuDd0BXhschteZC3CxgWBagknz5YlwZDs2HEme6dVpQPcJ
-	zGITuHTyghQGL0XCTMeaIU54fmQZ9SarbDpd8ZHrEsV14XjlDc6GIGQ0olYlsjwDtIxQUB
-	azS7iFdI1a8ltGvbomfqkX5aH8JGrug=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	b=dBP4GzukA6We+d8eJuiC8A37+b4mZbpn6dg/jAlHnZ1mOw2J8mNwxsy1uCwivA5O57hme+
+	Wh41cGXc51SKrMf34BAmLi5seboCoxNI/JfXvrqVvFAMaWbhq7iKJlaeFmk/gu9SkDpeUe
+	RASleTcHWRCHU166KSY+4n06u5B3jLU=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-605-1LXmPRQqPJis4DcQ0aFGKw-1; Sat,
- 20 Dec 2025 21:52:15 -0500
-X-MC-Unique: 1LXmPRQqPJis4DcQ0aFGKw-1
-X-Mimecast-MFC-AGG-ID: 1LXmPRQqPJis4DcQ0aFGKw_1766285533
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-135-T_VNJ7IVO7K6lHxJxxN1RQ-1; Sat,
+ 20 Dec 2025 21:52:41 -0500
+X-MC-Unique: T_VNJ7IVO7K6lHxJxxN1RQ-1
+X-Mimecast-MFC-AGG-ID: T_VNJ7IVO7K6lHxJxxN1RQ_1766285559
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 800E9195605A;
-	Sun, 21 Dec 2025 02:52:12 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 478D41956050;
+	Sun, 21 Dec 2025 02:52:39 +0000 (UTC)
 Received: from pasta.fast.eng.rdu2.dc.redhat.com (unknown [10.44.32.8])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8B52D1800367;
-	Sun, 21 Dec 2025 02:52:07 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8801F180049F;
+	Sun, 21 Dec 2025 02:52:34 +0000 (UTC)
 From: Andreas Gruenbacher <agruenba@redhat.com>
 To: Christoph Hellwig <hch@infradead.org>,
 	Jens Axboe <axboe@kernel.dk>,
@@ -52,9 +52,9 @@ Cc: Andreas Gruenbacher <agruenba@redhat.com>,
 	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org
-Subject: [RFC v2 00/17] bio clenups
-Date: Sun, 21 Dec 2025 03:51:48 +0100
-Message-ID: <20251221025206.87021-1-agruenba@redhat.com>
+Subject: [RFC v2 00/17] bio cleanups
+Date: Sun, 21 Dec 2025 03:52:15 +0100
+Message-ID: <20251221025233.87087-1-agruenba@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -62,7 +62,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
 Hello,
 
