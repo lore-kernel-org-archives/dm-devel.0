@@ -1,67 +1,66 @@
-Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55D02311966
-	for <dm-devel@lists.linux.dev>; Mon, 22 Dec 2025 15:03:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90DE63218A6
+	for <dm-devel@lists.linux.dev>; Mon, 22 Dec 2025 15:13:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1766415808; cv=none; b=aDnSfhaPZkgGOsDGdAvgE0iHhbmbS7+WrT/0aMg1yBz3Kg0Jopukfqf+NavEhkAYXUhOX1W+2zXeYY1IQkXENYywOG9ZkWiZmRoHuiydHZZnXx7HZ1fsiRqdJV7L2H0TpGXzDHhNq51qdXqExH7SQMT10p9RXPtu2g+9G4VKHOQ=
+	t=1766416391; cv=none; b=Wt4kvxmVL/PSwiFNhER0hp5KEm0PBFA2Lc+gNbwDBcFPUKy+a8z25ff5nXnpTYqzv4OquqqTb8QwSf321d2tSwZWULWEFjz3CkN5xDOwIxETG8L/Z3B8w1PczVSKoevl7G1ZZAu9j3/WHFNWbTzoNjUu51NlQNEec6kPPvo7c/w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1766415808; c=relaxed/simple;
-	bh=t4rsFnGUzeD1KMwXT4iUUV1jriowknwgJrrHKVJFd1U=;
+	s=arc-20240116; t=1766416391; c=relaxed/simple;
+	bh=Va4ICYDJTWGWFOPwDzlSH1hQbtgJ/Ee84/CTAWfUr78=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=uf0Kf65PHVe6cv6Rz16igM0CM2Do0F14eSYfKyNN8OSR8IalK24zBJSbXcuo+RcNc6R7hHpG1HZFl+8SEnLiZ8p48fynAJ1Asu15zYc+ZToSTNG8dTHku0K3I1j0nQ6zgfuwyXEjYBpkBimdbE3oa3lNx5aHSCYNj6jHE7IhXFU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gjTsXUXV; arc=none smtp.client-ip=209.85.128.52
+	 In-Reply-To:Content-Type; b=maa8GYnG8fYMu//c743ebsIZWCBGGP5iWtRky82wbSxv7OVftfQz6clsCnjDBTllYlDsxglHrGE+NzI7jCOM67Edns9hQJtTU0naVCvAHqMLMZwmtn39LDRnS0IJPpPowHpitrkVYDskyEg7B34Y/H4fETUUgTIIK4iR5YbyQpM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Kg80Pj17; arc=none smtp.client-ip=209.85.128.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gjTsXUXV"
-Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-4779aa4f928so39148765e9.1
-        for <dm-devel@lists.linux.dev>; Mon, 22 Dec 2025 07:03:26 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Kg80Pj17"
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-477b198f4bcso26520375e9.3
+        for <dm-devel@lists.linux.dev>; Mon, 22 Dec 2025 07:13:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1766415805; x=1767020605; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1766416387; x=1767021187; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:autocrypt:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=/BovpYoyCqPQI6cHyERY9sM0XnG6cSj0PGe1+XI7CW4=;
-        b=gjTsXUXVct/Xr3aBd4dRC+yD9bY2XGNocXIsnyU+WdRg9sGWEHw2emDmLMyeamege+
-         UedH3E0F5/AXbCRPq/Nd29dbvukiDzlxGe215CaXvTNxeT37Sloagxkf9rULI6vYQiZa
-         33I1dh85QVJxW8suXg3dEA/21yym2ZcDUAryZn8Ey4xCqRcFaYKH7hCA/4UBoO3ltmv6
-         3Mfgjp6Wv9ouySXO9tkgS3sFjY/PBz07ZBLlii/swcqy2s2zSU5uFEUWZp0nzll/TuQi
-         YhTcnHxZE37ef9V4er2mMJUmEvj8eGtpMl8hjldcWSd8RfvWTGSjMtSy8Pz8rYmCgnOM
-         gs0w==
+        bh=Va4ICYDJTWGWFOPwDzlSH1hQbtgJ/Ee84/CTAWfUr78=;
+        b=Kg80Pj17uCtNm/jLX2O8BrRWgZV7rXmaT0ch35pn4zEwY4iiLVPowAYl25lenR6TDa
+         xmMJzBOVq0cnTxGfXPZ5lKq+fBRfd035aI0qh/tqaJe67OzUeozDxWlwNn+9QU8y9P/M
+         RGFCuR0HSrjrnVBFnaBR57Qb5l+DjWatySnOuEcKGJlloxXJmS1d1WCDmLvqoEYVdWMS
+         b021wgaPd2Vd4TqvkKHYTpIlt6bO9/g5qm/36dYc8XIbuy5+NDv+8sRvdzolm6EqVWqP
+         Jn85W72HWIh0HoQxbXfLtmqNiul/NUmmUhofh13pD0rxwFjf9iK5WnIOK5YJJo3fwO7Y
+         zBfA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1766415805; x=1767020605;
+        d=1e100.net; s=20230601; t=1766416387; x=1767021187;
         h=content-transfer-encoding:in-reply-to:autocrypt:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/BovpYoyCqPQI6cHyERY9sM0XnG6cSj0PGe1+XI7CW4=;
-        b=qlFqbC8yU3fm2Fp146rig9hI0rY/lTl6TXj31ZekOMysLb+Y9bJ4PlfHbsns6wMaRz
-         L+xjDO61x2yY7agUN8GFlZtRRUOHymjLLF48vyfnHuHanhGBUKHB8wGoz9sUj8OKA4yj
-         Qs8qXK4gO9kb2oLcj23IvUuwtuIlcQj0tDCEQxjSSBIOXw4hpzh4M9LzP1uHDwon3ZyY
-         hTLISlpTlp48zN8uua2qo4U4q/epvVHIpHToDcwBYudCcWjFWE2RcToZRJe30sARly4o
-         asp74MlHpDHjWq4GXUwXuRt+bH3COEaaoFzYYmou18JCQ3RsKZoIWE42DYX9bjXF/xxB
-         TaTg==
-X-Forwarded-Encrypted: i=1; AJvYcCVN0UTq7eCzaw+mhbM1s4azVaJWgpQ7yiXCEZtKZpHkt0EEfDRb/GqTcpVGcLXu1fG8hWHaScgfnw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwTi01ceeffBdB3pAEy2ftoOL+PLZpw0Lxl7LJSvAYKd2zobbt1
-	kQnouamliPL2MfYcI/KusScEN9MV0Gy0lm2pExciFnYhskFrWBN8CEUB
-X-Gm-Gg: AY/fxX61wJaCA/8ZRe2RPYwmShcZ/5ncNjOfPoiYRu81vXGL4D1kZj8Q4dNdcm3G7Gr
-	VSiAjy4O8AodmxDEOq8DV1jpSRnz47JfaemENV7koGvJZHiNibMNU61tLbUcAXg8MzCwdZ/nDQi
-	8GhJfC0OzwKtWa/1ewhTKW8GgF9yDAUB3V0wBbYYe5Qe8vgMIIHnR5+61NyniUP1DjNIloSiWfZ
-	68SG5jgC6rNigU2PyCFHNedK6tyaYBuXUpxdKdPV38cPBdRKAZm42h7d4JhIVhsvvfvYRvL4767
-	ZhhH8fdVQNRwacmCn136NNb5q97wXY+Cbef/fN8CkQMAMUQgEkfxMUOiboh1LErjLI09hi+WXdy
-	A6GqSqJq0+oC58ENm3yMCWlYLq9vQGEZrwrM5nT29FQJRXQ3VKG/sEKtpcgH0sKjAk/FEQcLwlm
-	n6e2/uQC23EWWcekA=
-X-Google-Smtp-Source: AGHT+IFJuusyQ+1Mz3/8tYi1eqLylmqECFtDDXhQgv1q9fY01NTCrKY3AspjaGJTpIOiZ62UGg1d9Q==
-X-Received: by 2002:a05:600c:4fce:b0:47a:935f:61a0 with SMTP id 5b1f17b1804b1-47d194c659emr102417425e9.0.1766415804486;
-        Mon, 22 Dec 2025 07:03:24 -0800 (PST)
+        bh=Va4ICYDJTWGWFOPwDzlSH1hQbtgJ/Ee84/CTAWfUr78=;
+        b=XcX/E+tFvjBqJKlKCLGv5EBuMo6MtOBgmWE0UQkvvkwbR/ciclYUcQsTs11MW8Pfaz
+         mVQgpjlChtP+Knbf/wqGHQdmT84VCwXn7liydkpXgmoJVIrpkfGQw9F8BhVG0Yu55R53
+         zninHDMKbVZug3pZnA57FwV1vpLoPw7GDtu5IuHlwTepXbdpq51Mai4frz1ZM+Ohphid
+         /QR2Q5q/C0poiu9sW7hUyYSL6f+RwUCQWiYsqeAwbfNrJBtFt9161B6RAIwFg5NdNowz
+         fdrI4HMyQApCugXSY4CtkpujC2PdjYaFQjXLXgcqQy8+VqoD/DVJKFSvbF2yUve2fw00
+         mryw==
+X-Gm-Message-State: AOJu0Yw0UfaRj0mDw7GOPcfLxRTBDyaF6LhVOIG1h6trCRD+2qBxKk/6
+	JbEoOMNnnRntSRTlmmCX0PhzVBrCMl4X8PJkXunl9EBh0y8UGIpoSfYk
+X-Gm-Gg: AY/fxX7iiUrBIN6zeSaELVKLjw82WtuVAOlyVxf6efmUvBmabgn2MsRsrXNIqQXXWCk
+	AHzV/mjSAbrdzVbjjcFyfJyBZdgDYT9bvKC64xYsWl56ecWXRrWiAhrgkDzT/FyJPK4zq1xLXnY
+	4YMXzUzxyFFDOJrM95xbDVItFN6gmQ/nMwr5K2SIu0M5UcmhYyYPoj+N60wEo+kXdTzeDSjKcUP
+	2PzCvvfrZoeDXrTEAhC2juKaC2OrWvusxXCxV44iVWrP3ggAFk2zQFCV9xG2f2e418QMow/aw2U
+	TvbO709tYxIcymd9Pf7CypHngPmBTGqpcZWDXirRgK8Ek89ayLBXAw9z1Qoq4322U0TCAkxXVKz
+	NwBOVjMkSAK/PyL9HPGcc4NPx/it7S0FyuGjy91zWlrdMugytMuAhN0boYfcPZ+DhBSHjXWqmgP
+	I3I80h/oDhvXp/z5s=
+X-Google-Smtp-Source: AGHT+IG0IoDw/WsawtOalNWNn3EGylf+z1+Iv+5gFdr7+QSWCRLfs97MQQjqtXXcjxq0577xzmJ7Og==
+X-Received: by 2002:a05:600c:1d1d:b0:477:a21c:2066 with SMTP id 5b1f17b1804b1-47d19532f48mr108069635e9.5.1766416386725;
+        Mon, 22 Dec 2025 07:13:06 -0800 (PST)
 Received: from [192.168.1.27] ([176.74.141.242])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4325dbc522esm11740249f8f.11.2025.12.22.07.03.23
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-47be274e407sm247668465e9.8.2025.12.22.07.13.06
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 22 Dec 2025 07:03:24 -0800 (PST)
-Message-ID: <86300955-72e4-42d5-892d-f49bdf14441e@gmail.com>
-Date: Mon, 22 Dec 2025 16:03:22 +0100
+        Mon, 22 Dec 2025 07:13:06 -0800 (PST)
+Message-ID: <0cabd3cf-232a-46f4-9ca6-b1df7fe675d5@gmail.com>
+Date: Mon, 22 Dec 2025 16:13:05 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -69,16 +68,12 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [RFC PATCH 2/2] swsusp: make it possible to hibernate to device
- mapper devices
-To: Askar Safin <safinaskar@gmail.com>, mpatocka@redhat.com
-Cc: Dell.Client.Kernel@dell.com, dm-devel@lists.linux.dev,
- linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org,
- linux-crypto@vger.kernel.org, linux-lvm@lists.linux.dev, linux-mm@kvack.org,
- linux-pm@vger.kernel.org, linux-raid@vger.kernel.org,
- lvm-devel@lists.linux.dev, pavel@ucw.cz, rafael@kernel.org
-References: <b32d0701-4399-9c5d-ecc8-071162df97a7@redhat.com>
- <20251217231837.157443-1-safinaskar@gmail.com>
+Subject: Re: dm-verity issue on 6.19
+To: =?UTF-8?Q?Nuno_Gon=C3=A7alves?= <nunog@fr24.com>
+Cc: dm-devel@lists.linux.dev, mpatocka@redhat.com
+References: <CA+mKM5kAB0_CWDU41v8=8mLp3cd6qwhuSFenjw-17wcjvshHbQ@mail.gmail.com>
+ <9027c5d6-3eb6-456a-a939-24639a3e5278@gmail.com>
+ <CA+mKM5kC_rPcfOnKrvdJoDPKW3j3ATdouwrJV+Jx8kXa5u-gxg@mail.gmail.com>
 Content-Language: en-US
 From: Milan Broz <gmazyland@gmail.com>
 Autocrypt: addr=gmazyland@gmail.com; keydata=
@@ -124,68 +119,22 @@ Autocrypt: addr=gmazyland@gmail.com; keydata=
  vlB+GpT+iFRLvhCBe5kAERREfRfmWJq1bHod/ulrp/VLGAaZlOBTgsCzufWF5SOLbZkmV2b5
  xy2F/AU3oQUZncCvFMTWpBC+gO/o3kZCyyGCaQdQe4jS/FUJqR1suVwNMzcOJOP/LMQwujE/
  Ch7XLM35VICo9qqhih4OvLHUAWzC5dNSipL+rSGHvWBdfXDhbezJIl6sp7/1rJfS8qPs
-In-Reply-To: <20251217231837.157443-1-safinaskar@gmail.com>
+In-Reply-To: <CA+mKM5kC_rPcfOnKrvdJoDPKW3j3ATdouwrJV+Jx8kXa5u-gxg@mail.gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 12/18/25 12:18 AM, Askar Safin wrote:
-> Mikulas Patocka <mpatocka@redhat.com>:
->> Askar Safin requires swap and hibernation on the dm-integrity device mapper
->> target because he needs to protect his data.
-> 
-> Hi, Mikulas, Milan and others.
-> 
-> I'm running swap on dm-integrity for 40 days.
-> 
-> It runs mostly without problems.
-> 
-> But yesterday my screen freezed for 4 minutes. And then continued to work
-> normally.
-> 
-> So, may I ask again a question: is swap on dm-integrity supposed to work
-> at all? (I. e. swap partition on top of dm-integrity partition on top of
-> actual disk partition.) (I'm talking about swap here, not about hibernation.)
+On 12/22/25 3:39 PM, Nuno Gonçalves wrote:
+> I opened a issue with RAUC after your answer suggests there was no
+> regression in user land API.
 
-Hi,
+It was an addition to the status line, it should be "compatible".
 
-I am not sure if Mikulas is available; maybe it's better to try again
-in January...
+That said, we were quite lucky in libcryptsetup to not fail on parse here
+(I added support for this field for veritysetup recently) but I can imagine
+it could break other code.
 
-Anyway, my understanding is that all device-mapper targets use mempools,
-which should ensure that they can process even under memory pressure.
-
-AFAIK, swap over a device-mapper target (any target!) with a real block device
-should be ok. The problematic part is stacking over a filesystem (through a loop)
-as Mikulas mentioned.
-
-If I interpret Mikulas' answer correctly, it is the filesystem that could
-allocate memory here, and it deadlocks because of it (as it is swap itself).
-So I believe it can happen with other DM targets too.
-(If I am mistaken, please correct me.)
-
-I wish it could work, but I do not understand kernel details anymore here.
-It seems we are still in "a little walled gardens" communication issues
-among various kernel subsystems, as one of the former maintainers said :-)
-
-But you asked about a real block device, so it should work.
-I guess it is just another bug you see...
+For more information, see this patch in 6.19
+https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=ae97648e14f7907f4b0e0b295eb2fdcf43806f9d
 
 Milan
-> 
-> Mikulas Patocka said here https://lore.kernel.org/all/3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com/ :
-> 
->> Encrypted swap file is not supposed to work. It uses the loop device that
->> routes the requests to a filesystem and the filesystem needs to allocate
->> memory to process requests.
-> 
->> So, this is what happened to you - the machine runs out of memory, it
->> needs to swap out some pages, dm-crypt encrypts the pages and generates
->> write bios, the write bios are directed to the loop device, the loop
->> device directs them to the filesystem, the filesystem attempts to allocate
->> more memory => deadlock.
-> 
-> Does the same apply to dm-integrity?
-> 
-> I. e. is it possible that write to dm-integrity will lead to allocation?
-> 
 
