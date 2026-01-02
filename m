@@ -1,80 +1,89 @@
-Received: from mail3-relais-sop.national.inria.fr (mail3-relais-sop.national.inria.fr [192.134.164.104])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3C14256C70
-	for <dm-devel@lists.linux.dev>; Tue, 30 Dec 2025 15:22:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.134.164.104
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 366EB3126C3
+	for <dm-devel@lists.linux.dev>; Fri,  2 Jan 2026 13:47:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767108158; cv=none; b=fm8zSkOvNbUPlpPnEV5RX+ZuM9zHys2Qy2HilCGT0qxhu38ht9nmOVLsp41v5T0D4EiKHj5s2iwaK8pUSqE/SINeRMn2NIRuUlbiq/pUfcJRNWmSVs0IgqO2OMlEI0qZ2lBQFBdpnue7VIo0zB+VIei4citdtyIUFThcjZkTCGA=
+	t=1767361625; cv=none; b=jzXRnZJ9HojD47ts1Gp/t83/A3+bs/7aS+N1nXpPmjMCMRQ6v+xD4njkIsopARrImIgapMYELf7+JpHu4T2bdtZ1nT09OWPhWhw+I0glxY+DWaLvXfZEEQtsoL4CsJdN90YxhxOIDXW6cWOa5pE04ZQ+3UDrebHk49fkuCsRd2o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767108158; c=relaxed/simple;
-	bh=suIXkmoVQmlzBUmLipBdlApoDeFj2mkohzt3LfyOh/c=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=eJdCebtkGGs9mOXvM07XHiwtdmiP/lDqm0VxwDgr8wG4eyJaTX1CWQXd5gLwaZ+9cdGbNWDFRjImn625L4mupWTBShG2QA+peNlpqwtGYkGTLF7mHOA5sUoUTFHPF+yKAMt3hujElHJWcZ/vJtARn/Qy6nLfuL5WyfsRJUMwzI8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=inria.fr; spf=pass smtp.mailfrom=inria.fr; dkim=pass (1024-bit key) header.d=inria.fr header.i=@inria.fr header.b=TXsy7mMA; arc=none smtp.client-ip=192.134.164.104
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=inria.fr
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=inria.fr
+	s=arc-20240116; t=1767361625; c=relaxed/simple;
+	bh=L2GJNIzZGxj1iTrqoajisleJTyF/oA9RtQX2Rdfh/o4=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=j6lsroSIF7oieDqhh5Qwcn8JI1evNgdASkRMkWP1CrZknxEMQO0JcOqDvLu9EIC4I5/tfMTrBwIqdepIvn7KypHoUgzqyBF3HRJcVX+yMiWm9UKQwxNykH9/+UioNSS+OztjQp44EXf+88W5XowNtq5/RtKsoySsH5Etc6gLnn8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eWTW6Tb7; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=inria.fr header.i=@inria.fr header.b="TXsy7mMA"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=inria.fr; s=dc;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=BwGeXmrO0Of+jJVl/9dhbuBAE3i4wNQakMB9+Ir1KTY=;
-  b=TXsy7mMAxWipJ06hzTCYq2VGcXvSV89stByvK+lrrUjLQsmfJH5qro5z
-   X+c2V39QSrEHqnbmoY5qe84QuwDYo/4P4xWjxnnNnlIRp1ZOcClnk1g0P
-   o9OMP80B5prwjqblihZkzqfC1F+2//cjJYnmNuYF2ge9qvWPzlpuyWKSm
-   8=;
-X-CSE-ConnectionGUID: bd+a9HoiQE+fKIUqZyhgjg==
-X-CSE-MsgGUID: RpHYAj6fSQKnTayLEuA/cg==
-Authentication-Results: mail3-relais-sop.national.inria.fr; dkim=none (message not signed) header.i=none; spf=SoftFail smtp.mailfrom=Julia.Lawall@inria.fr; dmarc=fail (p=none dis=none) d=inria.fr
-X-IronPort-AV: E=Sophos;i="6.21,189,1763420400"; 
-   d="scan'208";a="134753959"
-Received: from i80.paris.inria.fr (HELO i80.paris.inria.fr.) ([128.93.102.196])
-  by mail3-relais-sop.national.inria.fr with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Dec 2025 16:22:34 +0100
-From: Julia Lawall <Julia.Lawall@inria.fr>
-To: Matthew Sakai <msakai@redhat.com>
-Cc: yunbolyu@smu.edu.sg,
-	kexinsun@smail.nju.edu.cn,
-	ratnadiraw@smu.edu.sg,
-	xutong.ma@inria.fr,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] drivers/md/dm-vdo/data-vio.h: adjust function name reference
-Date: Tue, 30 Dec 2025 16:22:27 +0100
-Message-Id: <20251230152227.97578-1-Julia.Lawall@inria.fr>
-X-Mailer: git-send-email 2.39.5
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eWTW6Tb7"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1767361621;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=1i20b/Mjn1bqQD3Dx3TUmWUZ2VJRP6JCW5L9UDKlzFc=;
+	b=eWTW6Tb7L4WmHzf+qzWQPEw7uUN8ch+xyx93zqq2fDKj1bWZkQpeqdX0V+OTgTLXMM6FBG
+	CLXxmH1RCJFfb4Z9AZBzRY7b7jan+euI2B0oF/HyG4duv2IE6y1kZfjTf2ToVyzRx1Ko+G
+	3Beit/op3VASG4HuOSrjpozKrdO5Euk=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-439-62FfLU-aMZixtLHflc2r_Q-1; Fri,
+ 02 Jan 2026 08:46:52 -0500
+X-MC-Unique: 62FfLU-aMZixtLHflc2r_Q-1
+X-Mimecast-MFC-AGG-ID: 62FfLU-aMZixtLHflc2r_Q_1767361611
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9BEB119560B2;
+	Fri,  2 Jan 2026 13:46:50 +0000 (UTC)
+Received: from [10.44.33.27] (unknown [10.44.33.27])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 34A4A1800576;
+	Fri,  2 Jan 2026 13:46:48 +0000 (UTC)
+Date: Fri, 2 Jan 2026 14:46:44 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Askar Safin <safinaskar@gmail.com>
+cc: adrelanos@whonix.org, arraybolt3@gmail.com, cryptsetup@lists.linux.dev, 
+    dm-devel@lists.linux.dev, gmazyland@gmail.com, 
+    linux-kernel@vger.kernel.org, linux-mm@kvack.org
+Subject: Re: Hard system lock-ups when using encrypted swap and RAM is
+ exhausted
+In-Reply-To: <20251211182429.3300562-1-safinaskar@gmail.com>
+Message-ID: <eb3a9746-83a0-8271-6bd6-867ecfa49aad@redhat.com>
+References: <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com> <20251211182429.3300562-1-safinaskar@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
 
-There is no function advance_compression_stage().  But
-advance_data_vio_compression_stage() does iterate through
-the values of the data_vio_compression_stage enum, so it
-seems to be what was intended.
 
-Signed-off-by: Julia Lawall <Julia.Lawall@inria.fr>
 
----
- drivers/md/dm-vdo/data-vio.h |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+On Thu, 11 Dec 2025, Askar Safin wrote:
 
-diff --git a/drivers/md/dm-vdo/data-vio.h b/drivers/md/dm-vdo/data-vio.h
-index 067b983bb291..58a1ac806885 100644
---- a/drivers/md/dm-vdo/data-vio.h
-+++ b/drivers/md/dm-vdo/data-vio.h
-@@ -88,8 +88,8 @@ struct zoned_pbn {
- };
- 
- /*
-- * Where a data_vio is on the compression path; advance_compression_stage() depends on the order of
-- * this enum.
-+ * Where a data_vio is on the compression path; advance_data_vio_compression_stage()
-+ * depends on the order of this enum.
-  */
- enum data_vio_compression_stage {
- 	/* A data_vio which has not yet entered the compression path */
+> Mikulas Patocka <mpatocka@redhat.com>:
+> > So, this is what happened to you - the machine runs out of memory, it 
+> > needs to swap out some pages, dm-crypt encrypts the pages and generates 
+> > write bios, the write bios are directed to the loop device, the loop 
+> > device directs them to the filesystem, the filesystem attempts to allocate 
+> > more memory => deadlock.
+> 
+> Does similar thing happen in my case? I. e. swap on top of dm-integrity on
+> top of partition? Is my use case supported? (I'm not talking about
+> hibernation now, just about swap.)
+> 
+> -- 
+> Askar Safin
+
+Hi
+
+Dm integrity doesn't need to allocate memory when processing I/O requests 
+(it reserves some memory using mempools). So, dm-integrity on the top of a 
+partition should be safe.
+
+Mikulas
 
