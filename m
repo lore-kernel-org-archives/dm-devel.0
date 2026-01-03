@@ -1,89 +1,163 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.20])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 366EB3126C3
-	for <dm-devel@lists.linux.dev>; Fri,  2 Jan 2026 13:47:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B63E525783A;
+	Sat,  3 Jan 2026 17:27:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.20
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767361625; cv=none; b=jzXRnZJ9HojD47ts1Gp/t83/A3+bs/7aS+N1nXpPmjMCMRQ6v+xD4njkIsopARrImIgapMYELf7+JpHu4T2bdtZ1nT09OWPhWhw+I0glxY+DWaLvXfZEEQtsoL4CsJdN90YxhxOIDXW6cWOa5pE04ZQ+3UDrebHk49fkuCsRd2o=
+	t=1767461248; cv=none; b=gDFoQx136HeWUeeL4uQjlw8tSLGR8alXJl16GchMf5TS5tCKlNeuHuGCE/7mt2/pGtzt0WTIPCIOF1BFSYVTXrqEmJNQzoUR5schg9KR0lUUI7Cjrrw9rNP+33zLo2iaRuJ2Umiz3+GcsWI4OZvmu4rRqpXDfoDVFod4IAqAw8E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767361625; c=relaxed/simple;
-	bh=L2GJNIzZGxj1iTrqoajisleJTyF/oA9RtQX2Rdfh/o4=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=j6lsroSIF7oieDqhh5Qwcn8JI1evNgdASkRMkWP1CrZknxEMQO0JcOqDvLu9EIC4I5/tfMTrBwIqdepIvn7KypHoUgzqyBF3HRJcVX+yMiWm9UKQwxNykH9/+UioNSS+OztjQp44EXf+88W5XowNtq5/RtKsoySsH5Etc6gLnn8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eWTW6Tb7; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1767461248; c=relaxed/simple;
+	bh=1KTepNE9/PIiH60G1XCJqDTU661np6x7wNVI1ZkZJPY=;
+	h=Date:From:To:Cc:Subject:Message-ID; b=UahQcHDuOzI75iqO95znpk6VA8xKA7RbsfzD0nHUQsTh37R44l3pvaZX2gzFCvMeL3/mVmyHftepUkdHHe0h5rJ1NOYq44EKzdAlddN2ZQ5L9j3+GMMLbps9R1NbWMBUxaSxWlqBk2BrjSrVsRtWvow/sgap7bZESBYSt9Malus=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=OLKbiucR; arc=none smtp.client-ip=198.175.65.20
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eWTW6Tb7"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1767361621;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1i20b/Mjn1bqQD3Dx3TUmWUZ2VJRP6JCW5L9UDKlzFc=;
-	b=eWTW6Tb7L4WmHzf+qzWQPEw7uUN8ch+xyx93zqq2fDKj1bWZkQpeqdX0V+OTgTLXMM6FBG
-	CLXxmH1RCJFfb4Z9AZBzRY7b7jan+euI2B0oF/HyG4duv2IE6y1kZfjTf2ToVyzRx1Ko+G
-	3Beit/op3VASG4HuOSrjpozKrdO5Euk=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-439-62FfLU-aMZixtLHflc2r_Q-1; Fri,
- 02 Jan 2026 08:46:52 -0500
-X-MC-Unique: 62FfLU-aMZixtLHflc2r_Q-1
-X-Mimecast-MFC-AGG-ID: 62FfLU-aMZixtLHflc2r_Q_1767361611
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9BEB119560B2;
-	Fri,  2 Jan 2026 13:46:50 +0000 (UTC)
-Received: from [10.44.33.27] (unknown [10.44.33.27])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 34A4A1800576;
-	Fri,  2 Jan 2026 13:46:48 +0000 (UTC)
-Date: Fri, 2 Jan 2026 14:46:44 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Askar Safin <safinaskar@gmail.com>
-cc: adrelanos@whonix.org, arraybolt3@gmail.com, cryptsetup@lists.linux.dev, 
-    dm-devel@lists.linux.dev, gmazyland@gmail.com, 
-    linux-kernel@vger.kernel.org, linux-mm@kvack.org
-Subject: Re: Hard system lock-ups when using encrypted swap and RAM is
- exhausted
-In-Reply-To: <20251211182429.3300562-1-safinaskar@gmail.com>
-Message-ID: <eb3a9746-83a0-8271-6bd6-867ecfa49aad@redhat.com>
-References: <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com> <20251211182429.3300562-1-safinaskar@gmail.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="OLKbiucR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1767461246; x=1798997246;
+  h=date:from:to:cc:subject:message-id;
+  bh=1KTepNE9/PIiH60G1XCJqDTU661np6x7wNVI1ZkZJPY=;
+  b=OLKbiucRee3J1r96bJUdGm+t1GXK7qbfXQ/Rllcva3y97uXBZ7nAce4x
+   XQYV61XUKGhqIDv9jlusF/qIKV0JEAxS1oW0ZjwSWDZQaVeWfB8/aXxPX
+   cNFeWxh5YLEYnUIK0Ce8s5D8DNn1Q/FoFMkK6sBJGWS7Gp0ey2jqOhRZE
+   fhsqOVJizBS0ZP/1GrPV+zH1tYqpev1O4aGuAmWu4qOeO4v2BHgoejBzk
+   zr7OknotVlUGiFIaOy9KPBN4v06gI9vfInPSyEXtjrexJtfkJAZ95VSo/
+   qQrhYCt+lsmgKcMJBab3RsOQkTecw689EltGbK4hldX5Rj10729woeO/j
+   Q==;
+X-CSE-ConnectionGUID: TX9GB3vaSf+tqM2H4hYO4w==
+X-CSE-MsgGUID: xSSeQJqlSDq1HMD83CuEaQ==
+X-IronPort-AV: E=McAfee;i="6800,10657,11659"; a="68644641"
+X-IronPort-AV: E=Sophos;i="6.21,198,1763452800"; 
+   d="scan'208";a="68644641"
+Received: from orviesa009.jf.intel.com ([10.64.159.149])
+  by orvoesa112.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Jan 2026 09:27:25 -0800
+X-CSE-ConnectionGUID: CUej8eGpTyqHTCFJLHKbgw==
+X-CSE-MsgGUID: WmLsXgdlQUqvgzYVgUEv4g==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.21,198,1763452800"; 
+   d="scan'208";a="201794097"
+Received: from lkp-server01.sh.intel.com (HELO 765f4a05e27f) ([10.239.97.150])
+  by orviesa009.jf.intel.com with ESMTP; 03 Jan 2026 09:27:22 -0800
+Received: from kbuild by 765f4a05e27f with local (Exim 4.98.2)
+	(envelope-from <lkp@intel.com>)
+	id 1vc5PM-000000000An-3fGB;
+	Sat, 03 Jan 2026 17:27:20 +0000
+Date: Sun, 04 Jan 2026 01:26:23 +0800
+From: kernel test robot <lkp@intel.com>
+To: "jaeyuel.im" <jaeyuel.im@lge.com>
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+ dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>
+Subject: [device-mapper-dm:for-next 6/15]
+ drivers/md/dm-init.c:314:20: error: call to undeclared function
+ 'blkdev_get_no_open'; ISO C99 and later do not support implicit function
+ declarations
+Message-ID: <202601040123.HHNIwEua-lkp@intel.com>
+User-Agent: s-nail v14.9.25
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
+head:   89db2b980bb27a5ec625382f8fe7798f6ab10d01
+commit: 5cf739d81755e49c39a3bd3c8bf5ec57441710b5 [6/15] dm init: ensure block device is ready before creating mapped device
+config: loongarch-defconfig (https://download.01.org/0day-ci/archive/20260104/202601040123.HHNIwEua-lkp@intel.com/config)
+compiler: clang version 19.1.7 (https://github.com/llvm/llvm-project cd708029e0b2869e80abe31ddb175f7c35361f90)
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260104/202601040123.HHNIwEua-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202601040123.HHNIwEua-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+>> drivers/md/dm-init.c:314:20: error: call to undeclared function 'blkdev_get_no_open'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+     314 |                         while (!(bdev = blkdev_get_no_open(dev, false)))
+         |                                         ^
+>> drivers/md/dm-init.c:314:18: error: incompatible integer to pointer conversion assigning to 'struct block_device *' from 'int' [-Wint-conversion]
+     314 |                         while (!(bdev = blkdev_get_no_open(dev, false)))
+         |                                       ^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+>> drivers/md/dm-init.c:316:4: error: call to undeclared function 'blkdev_put_no_open'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+     316 |                         blkdev_put_no_open(bdev);
+         |                         ^
+   3 errors generated.
 
 
+vim +/blkdev_get_no_open +314 drivers/md/dm-init.c
 
-On Thu, 11 Dec 2025, Askar Safin wrote:
+   267	
+   268	/**
+   269	 * dm_init_init - parse "dm-mod.create=" argument and configure drivers
+   270	 */
+   271	static int __init dm_init_init(void)
+   272	{
+   273		struct dm_device *dev;
+   274		LIST_HEAD(devices);
+   275		char *str;
+   276		int i, r;
+   277	
+   278		if (!create)
+   279			return 0;
+   280	
+   281		if (strlen(create) >= DM_MAX_STR_SIZE) {
+   282			DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
+   283			return -EINVAL;
+   284		}
+   285		str = kstrndup(create, DM_MAX_STR_SIZE, GFP_KERNEL);
+   286		if (!str)
+   287			return -ENOMEM;
+   288	
+   289		r = dm_parse_devices(&devices, str);
+   290		if (r)
+   291			goto out;
+   292	
+   293		DMINFO("waiting for all devices to be available before creating mapped devices");
+   294		wait_for_device_probe();
+   295	
+   296		for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
+   297			if (waitfor[i]) {
+   298				dev_t dev;
+   299				struct block_device *bdev;
+   300	
+   301				DMINFO("waiting for device %s ...", waitfor[i]);
+   302				while (early_lookup_bdev(waitfor[i], &dev))
+   303					fsleep(5000);
+   304	
+   305				/*
+   306				 * early_lookup_bdev() only checks if the device node exists and
+   307				 * returns the dev_t. It does not guarantee that the underlying
+   308				 * block device is fully initialized and ready to be opened. On
+   309				 * some platforms, this can lead to a race condition where
+   310				 * dm_early_create() fails because the device is not yet ready.
+   311				 * Ensure the block device is truly available by attempting to
+   312				 * get it.
+   313				 */
+ > 314				while (!(bdev = blkdev_get_no_open(dev, false)))
+   315					fsleep(5000);
+ > 316				blkdev_put_no_open(bdev);
+   317			}
+   318		}
+   319	
+   320		if (waitfor[0])
+   321			DMINFO("all devices available");
+   322	
+   323		list_for_each_entry(dev, &devices, list) {
+   324			if (dm_early_create(&dev->dmi, dev->table,
+   325					    dev->target_args_array))
+   326				break;
+   327		}
+   328	out:
+   329		kfree(str);
+   330		dm_setup_cleanup(&devices);
+   331		return r;
+   332	}
+   333	
 
-> Mikulas Patocka <mpatocka@redhat.com>:
-> > So, this is what happened to you - the machine runs out of memory, it 
-> > needs to swap out some pages, dm-crypt encrypts the pages and generates 
-> > write bios, the write bios are directed to the loop device, the loop 
-> > device directs them to the filesystem, the filesystem attempts to allocate 
-> > more memory => deadlock.
-> 
-> Does similar thing happen in my case? I. e. swap on top of dm-integrity on
-> top of partition? Is my use case supported? (I'm not talking about
-> hibernation now, just about swap.)
-> 
-> -- 
-> Askar Safin
-
-Hi
-
-Dm integrity doesn't need to allocate memory when processing I/O requests 
-(it reserves some memory using mempools). So, dm-integrity on the top of a 
-partition should be safe.
-
-Mikulas
-
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
