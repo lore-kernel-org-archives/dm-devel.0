@@ -1,176 +1,131 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4A443A1E7F
-	for <dm-devel@lists.linux.dev>; Sun,  4 Jan 2026 19:38:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8D683043BE
+	for <dm-devel@lists.linux.dev>; Mon,  5 Jan 2026 14:38:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767555490; cv=none; b=pGrfIZt2nYWyvKWLT9UJBa0xHZnDfnDKlQUmT3KaE8eBvTtqjhDW4IsveLp334BtjB9x0tp2X8odscz6FFb3Zdtu2Vo/e4Fxti8SKDXNxRIVpav08bznyEa/DJxdjjj5LxFJ4OoGyN/BIZDrLNKOSiuWb6nqw/ff6BW2qgUkjhQ=
+	t=1767623936; cv=none; b=RNz2Av5BYm8XA1491WjbGb9X75z2xoPXFfxFWB9iGXQiyC0o/L6Bs9iMrCHJ3Qab2dKAD6/Ccyo76m+8a4N7Lh5daO9ygti1w01NRavLU7LlNhAyetiX6YiwLV7BCk3zQziqAtwwtW43umu9XPWBs0z7Jx3RjMMX4F/00w1Homc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767555490; c=relaxed/simple;
-	bh=FjPrdJ0DnKy34nfI1kQnwVbxhP/c+PMF0czbMq7E28k=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=EHNIIwMZ/FxQr4CntIlrcyoJKiYwjsCubmL0sQwLaMcnAA9NU9IWfAV2dAkmBr6W/4146YsSnLR1z5jehc+FSysE7fCxTrhBPoZv/ZAINzrxzrv/FViq6OyAesHnunxNJHFtJ3gj+OMln7I0ZC0e3/AyT7t1J/3HSGfTKBnYtfI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CfCTHDIt; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1767623936; c=relaxed/simple;
+	bh=OxkGUs1oyQ+R9GP10Gl5PpzkuzZbNA2tux+B6TE20ak=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=UVB+xu6xx/aGmH45Nbay0tw5fapvUCcjNieKUzyssHj4HS4xxv3zf/qzJvMArF/RQPtMIyT5K6T86zkpHJ/CXO451WEjx/sNJUQgbQbexzsi4myvUDjAkjoTMiwj2lUXYFkwjrXpPSO51/Dg6XVaix3vvkXBA97/VTBVQWwkCnk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Xt/Mytln; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Xt/Mytln; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CfCTHDIt"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1767555485;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=e4FQq9bgTO64JKvCK31u3/i9EX231rTKwrlrMLGEJSI=;
-	b=CfCTHDItM3B/0VqdIV9YNJwQqM9VlsZcukNJkv7Gr0ut/rQhHyM2XHYmSurNJpVAgl/iy9
-	QdwEsOJuCbtWx8mzb4c72pmctW8urqprTGdOGOOr1xhF04CaHfOjhB/z1SSABEd1QibMj4
-	582LvUMsyEHQRoCeAyv+kyaIgW8dga0=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-488-Hy4fXwHOMKCAd9p-Git3UQ-1; Sun,
- 04 Jan 2026 14:38:02 -0500
-X-MC-Unique: Hy4fXwHOMKCAd9p-Git3UQ-1
-X-Mimecast-MFC-AGG-ID: Hy4fXwHOMKCAd9p-Git3UQ_1767555481
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Xt/Mytln";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Xt/Mytln"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F12011800669;
-	Sun,  4 Jan 2026 19:37:59 +0000 (UTC)
-Received: from [10.44.33.27] (unknown [10.44.33.27])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C80E419560AB;
-	Sun,  4 Jan 2026 19:37:58 +0000 (UTC)
-Date: Sun, 4 Jan 2026 20:37:53 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: "jaeyuel.im" <jaeyuel.im@lge.com>
-cc: dm-devel@lists.linux.dev
-Subject: Re: [device-mapper-dm:for-next 6/15] drivers/md/dm-init.c:314:41:
- error: implicit declaration of function 'blkdev_get_no_open'; did you mean
- 'blkdev_get_zone_info'?
-In-Reply-To: <202601050152.9pJILlEG-lkp@intel.com>
-Message-ID: <992a6ce0-c9aa-fe0b-68ad-d2f1f3fed8ab@redhat.com>
-References: <202601050152.9pJILlEG-lkp@intel.com>
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 962745BD95;
+	Mon,  5 Jan 2026 14:38:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1767623931; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=OxkGUs1oyQ+R9GP10Gl5PpzkuzZbNA2tux+B6TE20ak=;
+	b=Xt/MytlnZRsD4fNC4EhEdGGoUXJX6Q8BPx7gRS4z2w4z41XMxMyXoKmG9YL9WOnQrC2r00
+	KJ8KqNYqew4Ze1blSmdszs/9y1FC64zVcIFfQMPmtFszdAoxPuXvaAG0fJ66XP0Vpdwk95
+	jyVA+Pr5o3eS4rDLubhuNtC50FLksbA=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b="Xt/Mytln"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1767623931; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=OxkGUs1oyQ+R9GP10Gl5PpzkuzZbNA2tux+B6TE20ak=;
+	b=Xt/MytlnZRsD4fNC4EhEdGGoUXJX6Q8BPx7gRS4z2w4z41XMxMyXoKmG9YL9WOnQrC2r00
+	KJ8KqNYqew4Ze1blSmdszs/9y1FC64zVcIFfQMPmtFszdAoxPuXvaAG0fJ66XP0Vpdwk95
+	jyVA+Pr5o3eS4rDLubhuNtC50FLksbA=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 7B8963EA63;
+	Mon,  5 Jan 2026 14:38:51 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id HvMeHfvMW2kVCQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 05 Jan 2026 14:38:51 +0000
+Message-ID: <b5761d8608124827df8a2c3746e55493aad9e4b5.camel@suse.com>
+Subject: Re: [PATCH v2 13/26] multipath: free paths through pathvec in
+ check_usable_paths()
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
+	dm-devel@lists.linux.dev
+Date: Mon, 05 Jan 2026 15:38:51 +0100
+In-Reply-To: <aUYj2RFgD81maXre@redhat.com>
+References: <20251219144108.237928-1-mwilck@suse.com>
+	 <20251219144108.237928-14-mwilck@suse.com> <aUYj2RFgD81maXre@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 3I1EhELVxxIw6YoxlCQHXZnUwZIeal6DWOpvFZbJm6k_1767555481
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-0.998];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	ARC_NA(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	TO_DN_SOME(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Action: no action
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Spam-Level: 
+X-Rspamd-Queue-Id: 962745BD95
+X-Spam-Flag: NO
+X-Spam-Score: -4.51
 
-I reverted this patch.
+On Fri, 2025-12-19 at 23:19 -0500, Benjamin Marzinski wrote:
+> On Fri, Dec 19, 2025 at 03:40:55PM +0100, Martin Wilck wrote:
+> > Paths belong to the pathvec and should be freed from it.
+> > Use cleanup_multipath() instead of cleanup_multipath_and_paths(),
+> > and free the paths via the pathvec instead.
+> >=20
+>=20
+> I don't know if this matters, but until you stop free_multipaths()
+> from
+> clearing pp->mpp in patch 15/26, this will temporarily cause UAF
+> errors,
+> since you free the paths from the pathvec first, and then attempt to
+> reset their pp->mpp value in free_multipaths() later.
+>=20
+> You could avoid the temporary problem by moving the pathvec
+> definition
+> before the mpp definition, since cleanup functions are run in reverse
+> order of their declaration.
+>=20
+> But after applying patch 15/26, this is fine, so
+> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Mikulas
+Thanks for pointing this out. I will move 13 after 14, 15.
 
-
-
-On Mon, 5 Jan 2026, kernel test robot wrote:
-
-> tree:   https://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git for-next
-> head:   89db2b980bb27a5ec625382f8fe7798f6ab10d01
-> commit: 5cf739d81755e49c39a3bd3c8bf5ec57441710b5 [6/15] dm init: ensure block device is ready before creating mapped device
-> config: sparc-randconfig-002-20260104 (https://download.01.org/0day-ci/archive/20260105/202601050152.9pJILlEG-lkp@intel.com/config)
-> compiler: sparc-linux-gcc (GCC) 12.5.0
-> reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260105/202601050152.9pJILlEG-lkp@intel.com/reproduce)
-> 
-> If you fix the issue in a separate patch/commit (i.e. not just a new version of
-> the same patch/commit), kindly add following tags
-> | Reported-by: kernel test robot <lkp@intel.com>
-> | Closes: https://lore.kernel.org/oe-kbuild-all/202601050152.9pJILlEG-lkp@intel.com/
-> 
-> All errors (new ones prefixed by >>):
-> 
->    drivers/md/dm-init.c: In function 'dm_init_init':
-> >> drivers/md/dm-init.c:314:41: error: implicit declaration of function 'blkdev_get_no_open'; did you mean 'blkdev_get_zone_info'? [-Werror=implicit-function-declaration]
->      314 |                         while (!(bdev = blkdev_get_no_open(dev, false)))
->          |                                         ^~~~~~~~~~~~~~~~~~
->          |                                         blkdev_get_zone_info
->    drivers/md/dm-init.c:314:39: warning: assignment to 'struct block_device *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
->      314 |                         while (!(bdev = blkdev_get_no_open(dev, false)))
->          |                                       ^
-> >> drivers/md/dm-init.c:316:25: error: implicit declaration of function 'blkdev_put_no_open' [-Werror=implicit-function-declaration]
->      316 |                         blkdev_put_no_open(bdev);
->          |                         ^~~~~~~~~~~~~~~~~~
->    cc1: some warnings being treated as errors
-> 
-> 
-> vim +314 drivers/md/dm-init.c
-> 
->    267	
->    268	/**
->    269	 * dm_init_init - parse "dm-mod.create=" argument and configure drivers
->    270	 */
->    271	static int __init dm_init_init(void)
->    272	{
->    273		struct dm_device *dev;
->    274		LIST_HEAD(devices);
->    275		char *str;
->    276		int i, r;
->    277	
->    278		if (!create)
->    279			return 0;
->    280	
->    281		if (strlen(create) >= DM_MAX_STR_SIZE) {
->    282			DMERR("Argument is too big. Limit is %d", DM_MAX_STR_SIZE);
->    283			return -EINVAL;
->    284		}
->    285		str = kstrndup(create, DM_MAX_STR_SIZE, GFP_KERNEL);
->    286		if (!str)
->    287			return -ENOMEM;
->    288	
->    289		r = dm_parse_devices(&devices, str);
->    290		if (r)
->    291			goto out;
->    292	
->    293		DMINFO("waiting for all devices to be available before creating mapped devices");
->    294		wait_for_device_probe();
->    295	
->    296		for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
->    297			if (waitfor[i]) {
->    298				dev_t dev;
->    299				struct block_device *bdev;
->    300	
->    301				DMINFO("waiting for device %s ...", waitfor[i]);
->    302				while (early_lookup_bdev(waitfor[i], &dev))
->    303					fsleep(5000);
->    304	
->    305				/*
->    306				 * early_lookup_bdev() only checks if the device node exists and
->    307				 * returns the dev_t. It does not guarantee that the underlying
->    308				 * block device is fully initialized and ready to be opened. On
->    309				 * some platforms, this can lead to a race condition where
->    310				 * dm_early_create() fails because the device is not yet ready.
->    311				 * Ensure the block device is truly available by attempting to
->    312				 * get it.
->    313				 */
->  > 314				while (!(bdev = blkdev_get_no_open(dev, false)))
->    315					fsleep(5000);
->  > 316				blkdev_put_no_open(bdev);
->    317			}
->    318		}
->    319	
->    320		if (waitfor[0])
->    321			DMINFO("all devices available");
->    322	
->    323		list_for_each_entry(dev, &devices, list) {
->    324			if (dm_early_create(&dev->dmi, dev->table,
->    325					    dev->target_args_array))
->    326				break;
->    327		}
->    328	out:
->    329		kfree(str);
->    330		dm_setup_cleanup(&devices);
->    331		return r;
->    332	}
->    333	
-> 
-> -- 
-> 0-DAY CI Kernel Test Service
-> https://github.com/intel/lkp-tests/wiki
-> 
-
+Martin
