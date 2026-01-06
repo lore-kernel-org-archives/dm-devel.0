@@ -1,210 +1,126 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21C80342C9D
-	for <dm-devel@lists.linux.dev>; Tue,  6 Jan 2026 10:31:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6168F2DE6E3
+	for <dm-devel@lists.linux.dev>; Tue,  6 Jan 2026 22:44:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767695483; cv=none; b=TqUQcmwfosiA2+PyffjPMboYufEkqk38m7SmDJwQU4VTODBSKqRxpw1FHdq5FG9GMwN6P8NYhv7UKnlpyjRZ8VNTrnKLgZYmS/SeneVhP+HW+YPLjSL6ckAteErR+TzA4QVeG65kVSWez4B1EEm1KfIJPuC5vDs/Au1qM3lcBWs=
+	t=1767739462; cv=none; b=ShD4ZCwR4SiyleHJH8Q2s1QFk9xQ+DhD7WBaJ9UgcjWs/HArDsqA3RMEBDQomCFy4T98asAqLMTo2bnJtsiU03w/+1UhB3yyN0Qlk8br9yYqV/0RxHuaPKbQx7V0Rm28SbPflYVVqtwIqP2feB0rb+8ntvx3KfjQJtK6pRUKF20=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767695483; c=relaxed/simple;
-	bh=KRuJG//E0rvlhOSjXqtG9eDJZS9LylP/h66a/Hf0+uA=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=kNSWHq+8boZy3lL+a4AhlaSGFFHvVj56oW3HjFiTgLWXAbuvuNtvN8Zip7PfIm0GoHaZP+jR716u/s77HIGqyN5gikE5gXYu9b14FPnatrTTbS0VduG3UOp1exIS5dsOGnyYGrwHXcrdC+buieUS7qfiT6oML3M2jDsRvh5zCQk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=ZTgET/a/; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=ZTgET/a/; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1767739462; c=relaxed/simple;
+	bh=ITjERw4U9PBk41BgCkmU3KS4pePQ4ckaHOWns5arRbU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=dvRJVZwc3d8xnXXNXDM+kk4EI4DAP90tTK6GBUmYHJM2OYkNRc5/+72qa+Rq0TiY+vw5L8t/bxzon/x0IOymafTZqXpd7oYa6XF0r+wCNg7+pkZUBtD2soc7K7OupNseGN2PCtn7wH1ZAfYbLC7VfeFRzFYX99XogLtMDYijihg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XmjCk4LN; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="ZTgET/a/";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="ZTgET/a/"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 5C1F65BCC3;
-	Tue,  6 Jan 2026 10:31:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1767695479; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XmjCk4LN"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1767739459;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=olheXERRRA+slhc+DLPgvqrmxffKsTZayuPpkOXmTpM=;
-	b=ZTgET/a/8BZc2ZOQaZcya7IDqh0b9No8DZP3Wdk4/X8OTl2qDxVW/KQgAVwEARJWw+92KC
-	BKRjY8OUEXvg2VRzAFNBZO6MuKmPqIFo1DSCuQoHwjFSPtB1+ARcYlAOz6swYHKnrZWY4L
-	HSm8aWTOMIJatGYLqTO0Ryt9rVsDURA=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1767695479; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=olheXERRRA+slhc+DLPgvqrmxffKsTZayuPpkOXmTpM=;
-	b=ZTgET/a/8BZc2ZOQaZcya7IDqh0b9No8DZP3Wdk4/X8OTl2qDxVW/KQgAVwEARJWw+92KC
-	BKRjY8OUEXvg2VRzAFNBZO6MuKmPqIFo1DSCuQoHwjFSPtB1+ARcYlAOz6swYHKnrZWY4L
-	HSm8aWTOMIJatGYLqTO0Ryt9rVsDURA=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 379E03EA63;
-	Tue,  6 Jan 2026 10:31:19 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id uKPlC3fkXGkEIQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 06 Jan 2026 10:31:19 +0000
-Message-ID: <0a89de25ab451995aee9af8745627cf14c00cdca.camel@suse.com>
-Subject: Re: [PATCH v2 14/26] multipathd: add_map_without_path(): orphan
- paths instead of freeing them
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, 
-	dm-devel@lists.linux.dev, Benjamin Marzinski <bmarzins@suse.com>
-Date: Tue, 06 Jan 2026 11:31:18 +0100
-In-Reply-To: <aVxGoTt8zHbnmGXI@redhat.com>
-References: <20251219144108.237928-1-mwilck@suse.com>
-	 <20251219144108.237928-15-mwilck@suse.com> <aUYkuzmyuntUhEvk@redhat.com>
-	 <f74331bcf74067f85a8836e014d322eccf2995ed.camel@suse.com>
-	 <aVxGoTt8zHbnmGXI@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	bh=CDfj0So7WZYgW0Csc1gyMZ0casdKBaEPpSS9WF9xG80=;
+	b=XmjCk4LNC7oPayOeFJgmp7y//mtTIAPocPp1EPcIRVEpRAzPC18ky7TpwVPCfJ+/tZxBl5
+	bxyycf7vX2V7cbdpnWnA1ADK6vrhPcjJAsrSL7E7bIxxCKAOJidhd7Q8bpyUUd2EdnKgvZ
+	meTQMuT1eqrDBRVGOTl8T6kzMvcYewE=
+Received: from mail-qt1-f200.google.com (mail-qt1-f200.google.com
+ [209.85.160.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-78-R5LW-GeVMqK3DNhv7lJq8Q-1; Tue, 06 Jan 2026 17:44:18 -0500
+X-MC-Unique: R5LW-GeVMqK3DNhv7lJq8Q-1
+X-Mimecast-MFC-AGG-ID: R5LW-GeVMqK3DNhv7lJq8Q_1767739457
+Received: by mail-qt1-f200.google.com with SMTP id d75a77b69052e-4f1b39d7ed2so29986111cf.2
+        for <dm-devel@lists.linux.dev>; Tue, 06 Jan 2026 14:44:18 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1767739457; x=1768344257;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=CDfj0So7WZYgW0Csc1gyMZ0casdKBaEPpSS9WF9xG80=;
+        b=TBCid56wOysDw+0dJBS6ABpBgdMjq0uLjz4SF7ZQ2x0W7Xh/mf8zLsRegY/cHdAAsY
+         hOwR4fc60thpK44J8CGXowrFSAU+UhgBn9WqYhbZUPc4vCnKK6+sN9hMx267Bv+vmfFc
+         Acwn8COWV4bIkrkqRtQapfNuFEam9TTWohsJAyQCG9p/K2RFC1Rc33kmL8hrsZzxmcNO
+         uZB0d+Vw9kjsrRk2bZ3C69OTfkQybxDntM6sYgEeFRriBrfnAPLfZ020rkRZf9ppHxvp
+         LB2aM4cXD44t5Bl+UbDuNick0yjpe0pKv55hM0TSraZ+9zePugujNqC3x6oNNUXz76Hm
+         E7CA==
+X-Forwarded-Encrypted: i=1; AJvYcCU8HupOJFZiy3TzH8Yn3LIgixJM458mSIyZSNoK9MLDMv4+dYFDre1peg91AIXVlWn182waYdWoVA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyzvxFxdkeImA5SSRMUM/isoTCCrv39nWjCxrQH185hE0891IIN
+	/yUXYdvdefNpmhMpiIY5uR5m8oIguPuJ0S5lB1JjQd+J/T7YvpI/Jy9+3nXu212UePkgCRAjzdk
+	xF4NAhErEfq5fcbPKRZLNzKhFJmD2AwM/608/axvaWawIWt2H/qgq4Qh6VYbO
+X-Gm-Gg: AY/fxX7bNSAc/3aAqm6/iLhaJbW+tL3c4Wzab5jW5B3s31DdfVSjGmXLd9tjPimicJl
+	RaCFXlKPzr5OpR6h6CFA9uSo2fZJjlerz9o/sgwmZale8HV/+mwhdn2wrjss/A3qQnM7bavE44K
+	MbECxI9cUogzUHtsPwJPTLRvIcLrOn4jsHmfa3J0nARLje9Rw2l1fh5lKnnhWIkg6TuGqA911CH
+	C83ITTZwUBO7jls+wiPTCn0eAM0J0zwj0Mn3PxtMnPUie3qIfjtn/GtcDae8CsmDj9Di6BL5xT1
+	bZCBat4Xx7XH4PNpjatX57X6w7W99R5W47KjKhIiyyFICywkzqElumXm3go3F3B/9W7rRH8PfRu
+	rLOTniQV8SYHXz3zuK7vfOG8Ma32p3u741+RSp7Jki+Nq/J/0EjMFghFBww==
+X-Received: by 2002:a05:622a:351:b0:4eb:a4fc:6095 with SMTP id d75a77b69052e-4ffb4a29b23mr7065691cf.68.1767739457616;
+        Tue, 06 Jan 2026 14:44:17 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFRfJXac6gimfVw8WekwKPXpdxGtLKbITUtgdjZT8fmoQ+tN7E7EiEHkEoBIIEhgpHFvHJv8A==
+X-Received: by 2002:a05:622a:351:b0:4eb:a4fc:6095 with SMTP id d75a77b69052e-4ffb4a29b23mr7065491cf.68.1767739457221;
+        Tue, 06 Jan 2026 14:44:17 -0800 (PST)
+Received: from ?IPV6:2600:4040:5308:eb00:a77e:fec5:d269:f23e? ([2600:4040:5308:eb00:a77e:fec5:d269:f23e])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-89077267b9esm23141466d6.48.2026.01.06.14.44.16
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 06 Jan 2026 14:44:16 -0800 (PST)
+Message-ID: <13e4593c-c061-40cb-a0e8-78764488ca67@redhat.com>
+Date: Tue, 6 Jan 2026 17:44:15 -0500
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Score: -4.26
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.26 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.16)[-0.804];
-	MIME_GOOD(-0.10)[text/plain];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid]
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] drivers/md/dm-vdo/data-vio.h: adjust function name
+ reference
+To: Julia Lawall <Julia.Lawall@inria.fr>
+Cc: yunbolyu@smu.edu.sg, kexinsun@smail.nju.edu.cn, ratnadiraw@smu.edu.sg,
+ xutong.ma@inria.fr, dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20251230152227.97578-1-Julia.Lawall@inria.fr>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20251230152227.97578-1-Julia.Lawall@inria.fr>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: rcexsQC2suBj2lQ16_Ni3S0uUjsci6yeJo0w4f_SfZE_1767739457
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Mon, 2026-01-05 at 18:17 -0500, Benjamin Marzinski wrote:
-> On Mon, Jan 05, 2026 at 04:15:37PM +0100, Martin Wilck wrote:
-> > On Fri, 2025-12-19 at 23:23 -0500, Benjamin Marzinski wrote:
-> > > On Fri, Dec 19, 2025 at 03:40:56PM +0100, Martin Wilck wrote:
-> > > > If add_map_without_path() fails to set up the multipath data
-> > > > structures,
-> > > > don't free the paths associated with the map as
-> > > > cleanup_multipath_and_paths() would; just orphan the paths.
-> > > > update_pathvec_from_dm() will handle the paths and see if they
-> > > > need to be removed.
-> > > >=20
-> > > > Suggested-by: Benjamin Marzinski <bmarzins@suse.com>
-> > > > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > > > ---
-> > > > =C2=A0multipathd/main.c | 12 +++++++-----
-> > > > =C2=A01 file changed, 7 insertions(+), 5 deletions(-)
-> > > >=20
-> > > > diff --git a/multipathd/main.c b/multipathd/main.c
-> > > > index c03546b..7b522e8 100644
-> > > > --- a/multipathd/main.c
-> > > > +++ b/multipathd/main.c
-> > > > @@ -771,8 +771,8 @@ fail:
-> > > > =C2=A0
-> > > > =C2=A0static int add_map_without_path (struct vectors *vecs, const
-> > > > char
-> > > > *alias)
-> > > > =C2=A0{
-> > > > -	struct multipath
-> > > > __attribute__((cleanup(cleanup_multipath_and_paths)))
-> > > > -		*mpp =3D alloc_multipath();
-> > > > +	struct multipath
-> > > > __attribute__((cleanup(cleanup_multipath))) *mpp =3D
-> > > > +		alloc_multipath();
-> > > > =C2=A0	char __attribute__((cleanup(cleanup_charp))) *params =3D
-> > > > NULL;
-> > > > =C2=A0	char __attribute__((cleanup(cleanup_charp))) *status =3D
-> > > > NULL;
-> > > > =C2=A0	struct config *conf;
-> > > > @@ -802,11 +802,13 @@ static int add_map_without_path (struct
-> > > > vectors *vecs, const char *alias)
-> > > > =C2=A0	mpp->mpe =3D find_mpe(conf->mptable, mpp->wwid);
-> > > > =C2=A0	put_multipath_config(conf);
-> > > > =C2=A0
-> > > > -	if ((rc =3D update_multipath_table__(mpp, vecs->pathvec,
-> > > > 0,
-> > > > params, status)) !=3D DMP_OK)
-> > > > +	if (update_multipath_table__(mpp, vecs->pathvec, 0,
-> > > > params, status) !=3D DMP_OK ||
-> > > > +	=C2=A0=C2=A0=C2=A0 !vector_alloc_slot(vecs->mpvec)) {
-> > > > +		orphan_paths(vecs->pathvec, mpp, "failed to
-> > > > add
-> > > > map");
-> > > > =C2=A0		return DMP_ERR;
-> > >=20
-> > > I'm not sure we should just call orphan_paths() after we call
-> > > update_multipath_table__(). If we hit a cancellation point in the
-> > > middle
-> > > of update_multipath_table__(), we want to fully orphan any paths
-> > > that
-> > > got added to the device before we cancelled.=C2=A0=C2=A0
-> >=20
-> > Sorry, I don't understand.
-> >=20
-> > The __attribute__((cleanup())) functions don't protect against
-> > thread
-> > cancellation. If we want to achieve what you describe, we must add
-> > a
-> > pthread_cleanup_push()/pop() pair around the
-> > update_multipath_table__()
-> > call.
->=20
-> I'm pretty sure they do run during cancellation after I added
-> ca957f2a
-> ("multipath-tools: Makefile.inc: compile with -fexceptions").
+On 12/30/25 10:22 AM, Julia Lawall wrote:
+> There is no function advance_compression_stage().  But
+> advance_data_vio_compression_stage() does iterate through
+> the values of the data_vio_compression_stage enum, so it
+> seems to be what was intended.
+> 
+> Signed-off-by: Julia Lawall <Julia.Lawall@inria.fr>
 
-Right, I forgot about that, sorry. Re-reading the docs, I'd like
-to double-check if this is really guaranteed.
+We must have missed this comment when we were renaming functions a few 
+years ago.
 
-I think we should get rid of cancellation for our long-running threads.
-Later ;-)
+Reviewed-by: Matthew Sakai <msakai@redhat.com>
 
-> > But would that buy us anything? update_multipath_table__() only
-> > manipulates multipathd's internal data structures, which, if a
-> > cancellation happens, will almost immediately all be freed anyway.
-> > What
-> > harm would be done if these paths weren't orphaned in such a case?
-> > Yes,
-> > the some paths might now link to a non-existing struct multipath.
-> > I'd
-> > see your point if we accessed pp->mpp in the path-freeing code
-> > path,
-> > but we don't do this any more.
->=20
-> We check whether pp->mpp is set in lots of places in the code to
-> decide
-> what to do with the paths. But you are correct that we don't ever
-> call
-> add_map_without_path() from a thread that can be cancelled and have
-> multipathd continue running, and we aren't likely to do so.
+> ---
+>   drivers/md/dm-vdo/data-vio.h |    4 ++--
+>   1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-vdo/data-vio.h b/drivers/md/dm-vdo/data-vio.h
+> index 067b983bb291..58a1ac806885 100644
+> --- a/drivers/md/dm-vdo/data-vio.h
+> +++ b/drivers/md/dm-vdo/data-vio.h
+> @@ -88,8 +88,8 @@ struct zoned_pbn {
+>   };
+>   
+>   /*
+> - * Where a data_vio is on the compression path; advance_compression_stage() depends on the order of
+> - * this enum.
+> + * Where a data_vio is on the compression path; advance_data_vio_compression_stage()
+> + * depends on the order of this enum.
+>    */
+>   enum data_vio_compression_stage {
+>   	/* A data_vio which has not yet entered the compression path */
+> 
 
-Yes, this was my thinking. I didn't write it explicitly. The function
-is only called from the uevent_dispatch thread, which is cancelled if
-and only if multipathd exits.
-
-However, you are right that this isn't clean. What actually need=C2=A0
-here is remove_map(), which does exactly what we want, AFAICS.
-But I'll give the struct-multipath-freeing code another review.
-
-Regards
-Martin
