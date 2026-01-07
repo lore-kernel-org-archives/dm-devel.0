@@ -1,73 +1,74 @@
-Received: from mail-ed1-f51.google.com (mail-ed1-f51.google.com [209.85.208.51])
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35BB5338581
-	for <dm-devel@lists.linux.dev>; Wed,  7 Jan 2026 20:19:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E18633859E
+	for <dm-devel@lists.linux.dev>; Wed,  7 Jan 2026 20:19:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767817144; cv=none; b=tVLEerXEGGd7sLgHbw+Mir+4+QMFQJAIkufBV3z2SPNuLVx0cKpLfkvlvd1yUwVSRlFEuofQq26QttF/Aa0NlfzoXpQAgvTftNYKu3Fv9IE9KapSWateMTrln4zwEAMJbps9GAy+vcRIcblJqr4cpwceJQiX4YnNBy8Qc2vfDRc=
+	t=1767817145; cv=none; b=utNJllHtsE5STqEG7gydz+DV3DWeeN8XYkfSRKrhYWliSGUfVH6CJ0wCwfoh0sewNEOrpNfUUNkC6rUjcvf2lvZWW0g7TWaWCAxR4Ba2cUb3xvlibbaO/KklsQnsUoWrx8i340Q8z3AVAh6P+wyhPX2rj7J2bNXl1ogUGlFG+Cs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767817144; c=relaxed/simple;
-	bh=LynzlpRdwxb5OMRcnWqp/SDVzIyvm5ToM5rYeM6yqb0=;
+	s=arc-20240116; t=1767817145; c=relaxed/simple;
+	bh=NesLQV9bR8hXgNnAHK59HoFYwWCmMo6gmi3tAOO+rfI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pVjKr2ge78tCjdzPyQMluT2O6kPsVqMUBkHzakmqqyNUA1OVPtZYrKngT8xXHV3fMPtkfXMIFlJt2A2bMqB+ozR2C3A6/8GOz8XdbmSP2RM4DSWM9nYcDEUE+bSEzmA2fqGZg49BAC+rYvwhXpeUI9sKVr7CBIaI5b2En0ipKEU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=QIT85ci9; arc=none smtp.client-ip=209.85.208.51
+	 MIME-Version; b=ltniwipgNjdPcqkqwjuUxkWUakrkRNWUf6JBK0TZ0dJJDj/8f+ARpZtkKepH6igU07TFhSuM+qQ39vcnXA3vBEwaT/hrnAfhyUZZ65Chsw02fdZe5AsIaPvR5GYvfkuasH8Y0uTfWrWVU/zHy0DxViN6HJCBPIQxdc3uNdFurOw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=gLw5iLhI; arc=none smtp.client-ip=209.85.208.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="QIT85ci9"
-Received: by mail-ed1-f51.google.com with SMTP id 4fb4d7f45d1cf-64d0d41404cso3653481a12.0
-        for <dm-devel@lists.linux.dev>; Wed, 07 Jan 2026 12:19:01 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="gLw5iLhI"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-64d30dc4ed7so4748532a12.0
+        for <dm-devel@lists.linux.dev>; Wed, 07 Jan 2026 12:19:00 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1767817140; x=1768421940; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1767817139; x=1768421939; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=ACT83A+LDdCCHg1rjy2VCDjCliOcr2Ne8r2XteelJ+0=;
-        b=QIT85ci9cV5MK0ZZYty3qh+TXuetCOad301J1Eh8F8kS0QMt6roU5jSVnZx358UINE
-         IFCznBF4LkLamxBngx+z9RL1Kp0g7bVa9l4jj56NvUrMa3RWagv7NSCmIKTybXz2VfbM
-         TvSAQ2WdJDjQe//BLPEqwmjupe+30B46OtBmDXnTUdb/yngB2fHzeQHZALGVaL+wqKzG
-         8qaIYH23mmL4CEAv6/4Y1QEApvExMteb5/AFfYEJQkj4JT5+5LccBKbrrg62iwT/D+Fb
-         +OH+S9irYHeNVhhn9Nc/tY+fon2D6xAibqfsp0sWFDCS1p2WMpGvSbAWw4H0BGPjd0AM
-         unQg==
+        bh=iNw+z1T3C9iRpuCnvLBLi+biH1NMqLzbW7ORWi74Wtg=;
+        b=gLw5iLhIALnrJME5ipVrKXJMBKqMvJuTl7LO8/RrYZV0f1TSTVXicSYe8CuH0cooJp
+         /mvirPhoJQ0BgP9sA+3lKRyuCAU3TKU6hc30igPLfkeV03IDPYDEao6VqEK9VfWqur+z
+         hLU+CH2AnY7mq2mdE+lyFeUlIocJY7FN4UqdPjL/i5GTjWxNl2WNQQWnVIwmVOGBXhry
+         shGBzv3FT37ghZjI1jJQXKYC8Q3YreY1v3QnsKnm6Ww9n3VHQjvmhDeHCPBfJc4NC+Yb
+         NviBitHOYbOLNnykfXXvX+wwYecQ6xofU68ew4DllVeMRvZih7JC1m1ga/MQJ0Yy5IJL
+         nNrA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1767817140; x=1768421940;
+        d=1e100.net; s=20230601; t=1767817139; x=1768421939;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=ACT83A+LDdCCHg1rjy2VCDjCliOcr2Ne8r2XteelJ+0=;
-        b=kpLVO5M2vokThRVttIL7fjFiDHRurzNR+uK2u8DAbbrvhZm0OY7UvmpdMF/TUTp0h+
-         OcU1w5TRbQeFu2ifdITs1+mVaz6xNhO7cnbiSwhBiTUPT0wHWP/wuGoyTSX0k4c7Qrw/
-         3BFUL/GDgIwK0Lj4xrCqmhXcMolcCHAwbIAjCPs7GIG8VzIoIK4LEbCIzaYptJF6uOO5
-         xnQdwgtaXvhp70nTy6IwLCdVkn4l3A0Vw0WkWuZiUhgcnIpmCCA/uHyPjqqN4mJJji5S
-         BaizDfBaj5DGjRCstmwbbTvkWrejKdAJ4bIQXwOOjq2C9JfZzt3p88gD6yCxHJD8kTCS
-         7K2g==
-X-Gm-Message-State: AOJu0Yw4XAkSrPszlt0SmRVVlfYTdAAKE6KFvfWhjXeVdVYSndPlIjh0
-	uDTHXRfW+Z46Iva8Zc0aWVAazaK1UesvdQUCTAF1t4K+CARoyHK5r7qDnthCCXbiIWk=
-X-Gm-Gg: AY/fxX6QCOwsE080RQ7a12TuB38SMGcfDEkA3uErQSrVdHCapu9RUkBQK6iJRAuV/Vc
-	kXhWuRjh9Via/9hbEHakTJCB6dWv07VvBblXThhgYzA4GXrI0etha7DcPZmKjd37KDdw4rHf0gx
-	0AKaQWQsJcJHNDXzadIXcBAo3lVMBRfI6par2AUqkJNFBe4hilM5gbePIV6rpwISbbvh+ym4e4h
-	7sx0IDw4jENEFjPsWHPUZhGr+rqDOqH8yN3btsr76B6aQZ0GmdYkifa15K/YN5g8B9SJEswu5n/
-	a6vyqDaCbnTQMfRAWfQTf9Fyixf/Aoz0y9Lmo0NoOmifdZ12AR5qqo0gGoAvFTO7+w3uNBpObr/
-	bF4oaiwnTZZGRwju8/Bry2FctzCYTfn/LPDYoCEnfK7pDnKGw2Rh46wKfeUUsT+/NiUFz8SOKUH
-	uQAlcWwUsWzWUaL+sI6qkkmj85AJupLfPBK3ugyhV1rcaIK6WmeI/tDvjMQsw/8ur/crUBCkDpu
-	Q==
-X-Google-Smtp-Source: AGHT+IFEYE8KJuvHQJRiNGHouaRx6mZYuyVzXzdRIPoITZ4XGE8zFi3Si1k+HTDUuT1Jhgdak1IPSQ==
-X-Received: by 2002:a17:907:9449:b0:b7a:1be3:a583 with SMTP id a640c23a62f3a-b844516e596mr342991566b.64.1767817140189;
-        Wed, 07 Jan 2026 12:19:00 -0800 (PST)
-Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b842a4d1c61sm594190666b.35.2026.01.07.12.18.59
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        bh=iNw+z1T3C9iRpuCnvLBLi+biH1NMqLzbW7ORWi74Wtg=;
+        b=FQyWhuoxfK8trc6khN9AuvKJzG54RMXDcamHw1zAwBx4+o6EyUAg3GCWs1mq81MqJq
+         hHeauB533UBYK/ca4IfLhJ+q7R9qGaIX1Hb4oTrAHS5YXcy2T9v9DR+ARwd65i6ix3vH
+         un1OeyCs5J6MofZEKdbW2KlUViQN11TGKrHnEy8bzKib9GLt/no5xW191V3GRO6hZtLC
+         XaCPdZU5DUaWlet6UWHrQR8cmUR0srA6YgPsuynSltRh452JjdrPrdqaZJ9fT6LVy95U
+         w4aR4eNwEudOChZWofe0egU41545fvcnZPhk/lMHs+C5OA5Ssyc6UppDL275M1Oguwug
+         ZEuw==
+X-Gm-Message-State: AOJu0YzlxuVnv0MjSdlABQW+/rjE/TGVE0+jyF+Pzuf0HzKJ8aVYom4v
+	9qiwgJIqlIxg9PKDkjyR6RHvo/OaU3f9hRdGdOpGeMT5qAdE44SKYJdnfNoPdep2w/OWvtfharo
+	2EPgO
+X-Gm-Gg: AY/fxX7PKmPRF9fx7wXqVOz1ybLUePc2VLa3hlrhlhnTdye7etqsUluL1wW764WpwZl
+	Q94QOm53H9W9lwGMMMVDBhXPrIJs4abo3i/EHYlG4p63mMBnKOaswcBYxbpP6lxe9irQlA7Gsln
+	Wx/6GRZEYGZlBbbdLK8DA/IfM3NW+QtkbnG9RWsrmM1urGfOtc09dnd5Eia0mGNHccF4jdczdz7
+	rRj7RrghBCj5zDYqJZg3hycM/TsKz4Q0Khwnt2GUcEwftqoCRyILzjXg+30cLVJbIYe4bsQFtnu
+	p8t5SWl7lRassNhERxIz78k8fV6WAeByERci0hk2oCmGnR1mhFkqD9Fs0sCV08R12yqDseqmDJF
+	OP55ZOgGJD9TxN1OZOKMUx5kS9xuSkhwwPHiGvFn4RyBNRESmSQM75d7gW7Kby+1jLC4UCl2WKn
+	9J42dLpnvaJ2MbWmdoSxKJSI4lwz18tIPwLrKEZ0Zg77WOkqX38qqUQrdr2bEV0XuyAom8zjpl9
+	g==
+X-Google-Smtp-Source: AGHT+IH0MALfFpB0aRgflQ0FSrVXVS7/Fr80jggsdcsxnI0bTSIIyqeAT0N+7Q97+MUX0Gnu+ju3fA==
+X-Received: by 2002:a17:907:3d0b:b0:b7a:2d:71af with SMTP id a640c23a62f3a-b8444f4ab6bmr346435966b.38.1767817139133;
         Wed, 07 Jan 2026 12:18:59 -0800 (PST)
+Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-6507bf6d5d4sm5516511a12.32.2026.01.07.12.18.58
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 07 Jan 2026 12:18:58 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH v3 19/26] libmultipath: simplify sysfs_get_target_nodename()
-Date: Wed,  7 Jan 2026 21:18:19 +0100
-Message-ID: <20260107201826.323977-20-mwilck@suse.com>
+Subject: [PATCH v3 18/26] multipath-tools: Fix ISO C23 errors with strchr()
+Date: Wed,  7 Jan 2026 21:18:18 +0100
+Message-ID: <20260107201826.323977-19-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20260107201826.323977-1-mwilck@suse.com>
 References: <20260107201826.323977-1-mwilck@suse.com>
@@ -79,140 +80,75 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-All devices that we use to derive the target node name from are
-parents of the scsi_target device. This allows some simplification
-in sysfs_get_target_nodename().
+In ISO C23, memchr, strchr, strpbrk, strrchr and strstr become
+const-preserving macros [1], meaning that the return value
+inherits the const qualifier from the function argument.
 
-This changes the sequence of libudev calls in some of the tests, which
-need to be adapted.
+This has turned up a few glitches in our code.
+
+[1] https://gustedt.gitlabpages.inria.fr/c23-library/#memchr
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/discovery.c | 36 ++++++++++++++++++++----------------
- tests/test-lib.c         |  5 +++--
- 2 files changed, 23 insertions(+), 18 deletions(-)
+ libmpathutil/parser.c | 2 +-
+ libmpathutil/util.c   | 2 +-
+ libmultipath/prkey.c  | 2 +-
+ libmultipath/prkey.h  | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 31db875..85ea1aa 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -325,19 +325,23 @@ static int
- sysfs_get_tgt_nodename(struct path *pp, char *node)
+diff --git a/libmpathutil/parser.c b/libmpathutil/parser.c
+index 131a5ed..bf7c411 100644
+--- a/libmpathutil/parser.c
++++ b/libmpathutil/parser.c
+@@ -144,7 +144,7 @@ snprint_keyword(struct strbuf *buff, const char *fmt, struct keyword *kw,
+ 		const void *data)
  {
- 	const char *tgtname, *value;
--	struct udev_device *parent, *tgtdev;
-+	struct udev_device *parent, *tgtdev, *device, *target;
- 	int host, channel, tgtid = -1;
+ 	int r = 0;
+-	char *f;
++	const char *f;
+ 	struct config *conf;
+ 	STRBUF_ON_STACK(sbuf);
  
- 	if (!pp->udev)
- 		return 1;
--	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev,
--							 "scsi", "scsi_device");
--	if (!parent)
-+	device = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi",
-+							       "scsi_device");
-+	if (!device)
- 		return 1;
-+	target = udev_device_get_parent_with_subsystem_devtype(device, "scsi",
-+							       "scsi_target");
- 	/* Check for SAS */
--	value = udev_device_get_sysattr_value(parent, "sas_address");
-+	if (!target)
-+		return 1;
-+	value = udev_device_get_sysattr_value(device, "sas_address");
- 	if (value) {
--		tgtdev = udev_device_get_parent(parent);
-+		tgtdev = udev_device_get_parent(target);
- 		while (tgtdev) {
- 			char c;
- 
-@@ -362,7 +366,7 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 	}
- 
- 	/* Check for USB */
--	tgtdev = udev_device_get_parent(parent);
-+	tgtdev = target;
- 	while (tgtdev) {
- 		value = udev_device_get_subsystem(tgtdev);
- 		if (value && !strcmp(value, "usb")) {
-@@ -375,11 +379,8 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 		}
- 		tgtdev = udev_device_get_parent(tgtdev);
- 	}
--	parent = udev_device_get_parent_with_subsystem_devtype(pp->udev, "scsi", "scsi_target");
--	if (!parent)
--		return 1;
- 	/* Check for FibreChannel */
--	tgtdev = udev_device_get_parent(parent);
-+	tgtdev = udev_device_get_parent(target);
- 	value = udev_device_get_sysname(tgtdev);
- 	if (value && sscanf(value, "rport-%d:%d-%d",
- 		   &host, &channel, &tgtid) == 3) {
-@@ -399,13 +400,15 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 				strlcpy(node, value, NODE_NAME_SIZE);
- 				udev_device_unref(tgtdev);
- 				return 0;
--			} else
-+			} else {
- 				udev_device_unref(tgtdev);
-+				return 1;
-+			}
- 		}
- 	}
- 
- 	/* Check for iSCSI */
--	parent = pp->udev;
-+	parent = target;
- 	tgtname = NULL;
- 	while (parent) {
- 		tgtname = udev_device_get_sysname(parent);
-@@ -428,13 +431,14 @@ sysfs_get_tgt_nodename(struct path *pp, char *node)
- 				strlcpy(node, value, NODE_NAME_SIZE);
- 				udev_device_unref(tgtdev);
- 				return 0;
--			}
--			else
-+			} else {
- 				udev_device_unref(tgtdev);
-+				return 1;
-+			}
- 		}
- 	}
- 	/* Check for libata */
--	parent = pp->udev;
-+	parent = target;
- 	tgtname = NULL;
- 	while (parent) {
- 		tgtname = udev_device_get_sysname(parent);
-diff --git a/tests/test-lib.c b/tests/test-lib.c
-index e529711..963e289 100644
---- a/tests/test-lib.c
-+++ b/tests/test-lib.c
-@@ -292,12 +292,13 @@ static void mock_sysfs_pathinfo(const struct mocked_path *mp)
- 
- 	/* sysfs_get_tgt_nodename */
- 	will_return(__wrap_udev_device_get_sysattr_value, NULL);
-+	will_return(__wrap_udev_device_get_subsystem, NULL);
- 	will_return(__wrap_udev_device_get_parent, NULL);
- 	will_return(__wrap_udev_device_get_parent, NULL);
- 	will_return(__wrap_udev_device_get_sysname, "nofibre");
- 	will_return(__wrap_udev_device_get_sysname, "noiscsi");
--	will_return(__wrap_udev_device_get_parent, NULL);
- 	will_return(__wrap_udev_device_get_sysname, "ata25");
-+	will_return(__wrap_udev_device_get_parent, NULL);
+diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+index 38e984f..37412c6 100644
+--- a/libmpathutil/util.c
++++ b/libmpathutil/util.c
+@@ -38,7 +38,7 @@ strchop(char *str)
+  */
+ const char *libmp_basename(const char *filename)
+ {
+-	char *p = strrchr(filename, '/');
++	const char *p = strrchr(filename, '/');
+ 	return p ? p + 1 : filename;
  }
  
- /*
-@@ -328,7 +329,7 @@ void mock_pathinfo(int mask, const struct mocked_path *mp)
- 	    (mask & DI_BLACKLIST && mask & DI_SYSFS))
- 		return;
+diff --git a/libmultipath/prkey.c b/libmultipath/prkey.c
+index 4fbde5a..ebed0d0 100644
+--- a/libmultipath/prkey.c
++++ b/libmultipath/prkey.c
+@@ -50,7 +50,7 @@ static int parse_prkey(const char *ptr, uint64_t *prkey)
+ 	return 0;
+ }
  
--	/* path_offline */
-+	/* path_sysfs_state */
- 	will_return(__wrap_udev_device_get_subsystem, "scsi");
- 	will_return(__wrap_sysfs_attr_get_value, "running");
+-int parse_prkey_flags(const char *ptr, uint64_t *prkey, uint8_t *flags)
++int parse_prkey_flags(char *ptr, uint64_t *prkey, uint8_t *flags)
+ {
+ 	char *flagstr;
  
+diff --git a/libmultipath/prkey.h b/libmultipath/prkey.h
+index a89a617..806795e 100644
+--- a/libmultipath/prkey.h
++++ b/libmultipath/prkey.h
+@@ -15,7 +15,7 @@
+ 
+ int print_reservation_key(struct strbuf *buff,
+ 			  struct be64 key, uint8_t flags, int source);
+-int parse_prkey_flags(const char *ptr, uint64_t *prkey, uint8_t *flags);
++int parse_prkey_flags(char *ptr, uint64_t *prkey, uint8_t *flags);
+ int set_prkey(struct config *conf, struct multipath *mpp,
+ 	      uint64_t prkey, uint8_t sa_flags);
+ int get_prkey(struct multipath *mpp, uint64_t *prkey, uint8_t *sa_flags);
 -- 
 2.52.0
 
