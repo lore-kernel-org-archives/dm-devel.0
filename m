@@ -1,73 +1,73 @@
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
+Received: from mail-ed1-f47.google.com (mail-ed1-f47.google.com [209.85.208.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BB083396F8
-	for <dm-devel@lists.linux.dev>; Wed,  7 Jan 2026 20:18:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D235C3396F4
+	for <dm-devel@lists.linux.dev>; Wed,  7 Jan 2026 20:18:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767817140; cv=none; b=njdHc5ZMq/Q/+e5Jsb8K2L+dkCIDT3krlbjmr3C/6Tt+6Pp1ZyrB9VcGRDa5r5mjYo9gTC6a2+nvT//ER5yWZYgZ+ITSk3Q5QkxE7WLSCXBmrDdkBzNc7DerVE6SAS4fykJwtuzTSBF2Wy+unCgMGPgPXp9J6mPE1Xe42OmCEik=
+	t=1767817141; cv=none; b=cvUtfyI3jLrv9aechU9eftddE6/A/dGwSSJPRIvd4LfSBuBTqsCC3XH9U5x0+VW89pmVKKEwyEOjqD7/A+Z2DI4KFf1bfdiqOK8BrCgSEvrcGN+DNayDqtSM6qvAitnF0BO9mUFVhHqdqGVi5oQpJgBFHWUsOvlq+3mRweycP7s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767817140; c=relaxed/simple;
-	bh=/C15T6q/ue2tcZsfL3o/G4tNyJdOAQ8aUM6FnTPDlhg=;
+	s=arc-20240116; t=1767817141; c=relaxed/simple;
+	bh=CT/bDR/F4ugjStTsuNDbQ1bVAWmGKTFJ6uBq/pcgNCk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=guAsMBxJ/c8x/5GdPS+FULPM9PRropS6Xfr2zyjuU5YvjnhrUuZTGoP74r2vYq2x2erHMASX2GGYa/ACNJim4GqF5upgW9BE1m7QtzVV3QWXKT7EU1lzgbf2Co/rFETJnLi7pXZUPenxGL9FB9cXrJjEInQsBMrItM06yQUJprM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=PFNtspb2; arc=none smtp.client-ip=209.85.218.47
+	 MIME-Version; b=Y/lln65pJTGdCIQj8ZlSR9t2EnlQGBJxEInTgPaL/GeLI8MlGlGEWlnAlK1BBx21msxZKLiI73l8t0oyX2npcbRViiiXDWUCNm16rHx+7FWKX2mXO8y+asOugyhRW+fVEtYyxGdwlEVCJfMFA3SrA2dkNKK9KloaH8WFqNu7/f4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=THp1xVp8; arc=none smtp.client-ip=209.85.208.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="PFNtspb2"
-Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-b83b72508f3so408040566b.2
-        for <dm-devel@lists.linux.dev>; Wed, 07 Jan 2026 12:18:57 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="THp1xVp8"
+Received: by mail-ed1-f47.google.com with SMTP id 4fb4d7f45d1cf-6505d3adc3aso3804619a12.1
+        for <dm-devel@lists.linux.dev>; Wed, 07 Jan 2026 12:18:58 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1767817135; x=1768421935; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1767817137; x=1768421937; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=lbAOFB5V0xgraVXg9CweY3OeUQRsfBgf/2Wi3EspVQ8=;
-        b=PFNtspb2ygOtDkjbZaLN/QQ4anf0jVgRRjro/yVP8cqd0qONRBAnXViPPgI/b7MlgG
-         tzHbkYADEeZp0cDP0fSsN5iyPP9NeEPZpXnE3IycqLTyRQRr1QsN8LCLI9jj49RkcLB4
-         Zeac0ThEMA03QWmpSdHXIYdjzKIWOE4H9kz03beo+7d2NIicxvGy10bDCNwbeQvF/6T9
-         RQxN6ZlRcgV7vBFbxiaGxRxwZXLKO7arVW4Xa7HTuene0fwTPrfcVQoSXLYicuFDNV0J
-         zdhQbCJ14PEk0HOmfHEynJbAQ5O7COlHjyhuPKxTE05IrQ5BQiHPyG0Tm2+zsD/U2H+L
-         FlYQ==
+        bh=p6T1L0qkXf4MUc0T6lsxhl70nvDv7By4N/ST/H1buKo=;
+        b=THp1xVp8r3lUOQB/eBmGoinGVOMh9qnOI8Z/oUT9veYhQs6eNZfnU9XJVRSVbkNKAz
+         O8497B6y89mRMkHXfKXQrCubzh2SXB9bA9yfjR3ifjbrT8iGiJSmM25TahN9+Pkv9CF1
+         jC4hc6/7cmfRsHy8pD205i+CQsWMKQVPqZUkT5Bfb5RhrRTFVUMm/qlv4gAYGWjvTNHW
+         afaIs+LUlC+CktUtT8CB02rsCg4FCVxFErqZ4qFRoJ/1q/RsPzNqbFUuVzMjhWefkSu8
+         8wJYbC6hAhfwmS0HTUru8ILHoLdNoZMML+VDcWrf/AEz0afT88uFWSub7c1qYp55fCvN
+         xGRQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1767817135; x=1768421935;
+        d=1e100.net; s=20230601; t=1767817137; x=1768421937;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=lbAOFB5V0xgraVXg9CweY3OeUQRsfBgf/2Wi3EspVQ8=;
-        b=VKNUFb99H9rBhVbdoFwvOzfAIae/Oy2CwrSOThLIDs/JdVXhq/TG77A/aHDPMFe0ue
-         QjyPfUt4uWq1YyofPWqgbRr5PS+GAfSwk1g7EtrULksghlzhbLUnlIM37yQWp7r/qpwx
-         /jp8AisnmZqMd6uluwj7z42xYdFMy9kLFwnYiikS2rkHRvKf2VqeFJerprHkN4bOjnqB
-         A201tL7AjR7aiM/nLlFbBsfk6CWgEmm8xOoPMFVtafmsMcG7FmitsjTetiJzg3xQ80VN
-         vlVIz0zd0y/dcRr5QPf/2r/mMfumB2sBZquKrFNt/Nyjffhd1T0TWPDTk9/7auQcyi3Q
-         8Agw==
-X-Gm-Message-State: AOJu0Ywyir+AnInm9fZCTla/T3I9hMPZRjoz0Rar899p1TO6gnVN0T3F
-	EiI0hpXGhHyCfhfFVwQxWiA0qZJ3+yU3wK6KoDZ7e5oi+eSgSYy4CMd39xP8BNQDe2I=
-X-Gm-Gg: AY/fxX4tXMNue0xc985dvaQd/u04yscw9aof5+OwWKJ7stgISpEYMRdukETAes+HN3D
-	IWudEUvToYin+RMpXoHix/c+9190DYoqbHWKKmkn9u5M5/CUkIRkM574EVt6loAeEaTkVorgtv3
-	ZCm7jDy2q1yl5lRLHQOK8TJFonc2i+sfCvUc6cymgQS8rk+z4RuZQdFyfNSJ5hS/3llnwpZS3lW
-	SOjBICLvA9J4M1xZbj/4hm0uSwzYMx7U5Zm+o88KPjclFANiCzr/xQ8vtlFds1EM40Ztv80sisO
-	PL8DfedAUCgSyL3pwEBmXCE3Ki9ZYw2UtTkaCAMlIJ/WT8mDNn6vHNhV1pd/Fzyp5AFozQz36OF
-	Oj/xjCcVCQ1caWBn1GNhf3W2mjRzqe8gDpCqX8yEWRtVuEI1K8DGPD7SpG9wWXJ83TSVMA44YfT
-	ZHhuNK4/XFdDjMe/6Hnak64vNW5aAt9v4L/lQIWAtonqTLGcwqHImWdbmCBBJzwJDxMc4ZMlwVr
-	9yqvyw86JkP
-X-Google-Smtp-Source: AGHT+IEQlHl5TB0gLWsdPkwbiQncHKYDc9bwS3n0UjzghrAolDtP9otqZoGlsQw51gUtZu15YHEjQA==
-X-Received: by 2002:a17:907:6d01:b0:b84:1fc7:9457 with SMTP id a640c23a62f3a-b844519023cmr344571366b.8.1767817134917;
-        Wed, 07 Jan 2026 12:18:54 -0800 (PST)
+        bh=p6T1L0qkXf4MUc0T6lsxhl70nvDv7By4N/ST/H1buKo=;
+        b=v4G54a4Vj4cPfTEQejUznXlWBKV/Z2LmAJc78s4Z6EtInIdredAlxeEM36jR1leESZ
+         GR3NyIBAOG67hf5RM8BmxtbpklXg/+pfsVoVqAEm0Nl5QiKcTdmWCim9OztR8aW4elrg
+         WprP5smUexFKJHdYZm/Kee3/c2QkkdEznuVOlJbqEOa0vJspa7U3Q5ubq+KnXs7/KfIO
+         cNuNzkxewZCz1qZbC99E+bm+OfmC+QhVckxqmqwdAxrlgRlGeSxedFUubU9YnO5EqAAg
+         p2zRSRRa/ranoiF9rDUWLP+t8rWWE2Ck23vLYh2qVhjG3Nb7dZD49RMRyUhlVK8Q3aha
+         MiPg==
+X-Gm-Message-State: AOJu0YyMHSBv+es9iFI8s7zl6RlnOq/vtWrS3UFIRODk7ovChY+lkiHb
+	mH2CBnXO1208GwKslbgKLZDpu7BtqGHYedLxExMN9aT7K0mAdI6IasEishMyzEI79B4=
+X-Gm-Gg: AY/fxX4mxKf/Hv2Vk/g8A1X2TIIgxQ34RvicFZbLUzsmMt2YmCFD5hUmJ9IWAcQpINt
+	Uit5notVUBZ+enCMYD5mgOQbgZFicMHbSJUBTWf6RVFtEwA6oDrwgNQPJjUVRvwxfDp8GBMOVpy
+	Ndq38XvEa9bEwTloygrJc5iRTgaXxJiKkUGtgKUb0GAmrWt931B32ZV+9IvMrhASmjRuGoqMS5H
+	/CZhdjmc7P1FzpTq1v34P0r420AWEcwblP10fmFEJgCKnmY/8hG1fLJ8ciZuj61U26JzfgJNYBY
+	WHjjSKgLE1IWNxFtDv+g182GmIGMvvYn6d2RyDyrsKu8c85vFYc2DtD3VlHrsyGUfJnF4FjPsDk
+	ttdtJ4TC0TzGTD0mlxyOthw3QSCvlfpS/lELixhOsyY7epqAy9vXU+9j34cgxvD+JxSyPmqQGN1
+	PObEi5NGDxHKNSWkfMJ1CIQc76Vul/Az3grRdzxFlLY/n/zOS7nU//ZW9xFQjYAfo2UESHfSS03
+	g==
+X-Google-Smtp-Source: AGHT+IEavb7r2Gy60zT+19kQPcd07DtisjoQaE/t8tBZk6IHFvP4EYBJoWt70FhroVk/QwZL0FeIKQ==
+X-Received: by 2002:a05:6402:51cb:b0:64b:9fa4:ade1 with SMTP id 4fb4d7f45d1cf-65097df569bmr3235744a12.14.1767817137113;
+        Wed, 07 Jan 2026 12:18:57 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id a640c23a62f3a-b842a2ab77bsm634351866b.25.2026.01.07.12.18.54
+        by smtp.gmail.com with UTF8SMTPSA id 4fb4d7f45d1cf-6507b8c3f89sm5840896a12.5.2026.01.07.12.18.56
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 07 Jan 2026 12:18:54 -0800 (PST)
+        Wed, 07 Jan 2026 12:18:56 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Martin Wilck <mwilck@suse.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH v3 14/26] multipath: free paths through pathvec in check_usable_paths()
-Date: Wed,  7 Jan 2026 21:18:14 +0100
-Message-ID: <20260107201826.323977-15-mwilck@suse.com>
+Subject: [PATCH v3 16/26] libmultipath: remove cleanup_multipath_and_paths()
+Date: Wed,  7 Jan 2026 21:18:16 +0100
+Message-ID: <20260107201826.323977-17-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20260107201826.323977-1-mwilck@suse.com>
 References: <20260107201826.323977-1-mwilck@suse.com>
@@ -79,40 +79,57 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Paths belong to the pathvec and should be freed from it.
-Use cleanup_multipath() instead of cleanup_multipath_and_paths(),
-and free the paths via the pathvec instead.
+This function is not used any more.
 
 Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- multipath/main.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ libmultipath/libmultipath.version | 1 -
+ libmultipath/structs.c            | 6 ------
+ libmultipath/structs.h            | 1 -
+ 3 files changed, 8 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index e3123e5..2b23564 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -214,12 +214,17 @@ static int check_usable_paths(struct config *conf,
- 			      const char *devpath, enum devtypes dev_type)
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index f62b4da..3778816 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -69,7 +69,6 @@ global:
+ 	cleanup_bindings;
+ 	cleanup_lock;
+ 	cleanup_multipath;
+-	cleanup_multipath_and_paths;
+ 	cleanup_pathvec_and_free_paths;
+ 	cleanup_udev_device_ptr;
+ 	cleanup_udev_enumerate_ptr;
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 0af46a2..45a3192 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -336,12 +336,6 @@ void cleanup_multipath(struct multipath **pmpp)
+ 		free_multipath(*pmpp);
+ }
+ 
+-void cleanup_multipath_and_paths(struct multipath **pmpp)
+-{
+-	if (*pmpp)
+-		free_multipath(*pmpp);
+-}
+-
+ void free_multipathvec(vector mpvec)
  {
- 	struct udev_device __attribute__((cleanup(cleanup_udev_device))) *ud = NULL;
--	struct multipath __attribute__((cleanup(cleanup_multipath_and_paths))) *mpp = NULL;
- 	struct pathgroup *pg;
- 	struct path *pp;
- 	char __attribute__((cleanup(cleanup_charp))) *params = NULL;
- 	char __attribute__((cleanup(cleanup_charp))) *status = NULL;
--	vector __attribute((cleanup(cleanup_vector))) pathvec = NULL;
-+	vector __attribute((cleanup(cleanup_pathvec_and_free_paths))) pathvec = NULL;
-+	/*
-+	 * The sequence of variable definitions matters here, cleanup handlers
-+	 * are executed in reverse order of definition, and we access pp->mpp
-+	 * in free_multipath().
-+	 */
-+	struct multipath __attribute__((cleanup(cleanup_multipath))) *mpp = NULL;
- 	char uuid[DM_UUID_LEN];
- 	dev_t devt;
- 	int r = 1, i, j;
+ 	int i;
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index a637af7..251e672 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -582,7 +582,6 @@ void free_pathgroup(struct pathgroup *pgp);
+ void free_pgvec(vector pgvec);
+ void free_multipath(struct multipath *mpp);
+ void cleanup_multipath(struct multipath **pmpp);
+-void cleanup_multipath_and_paths(struct multipath **pmpp);
+ void free_multipath_attributes(struct multipath *);
+ void free_multipathvec(vector mpvec);
+ 
 -- 
 2.52.0
 
