@@ -1,76 +1,71 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33D98500955
-	for <dm-devel@lists.linux.dev>; Fri,  9 Jan 2026 18:39:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC3FF86353
+	for <dm-devel@lists.linux.dev>; Fri,  9 Jan 2026 22:53:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767983991; cv=none; b=a/gBqW0NIwMMzDqfIaYprRfAKsvMRBTYYtC0RIrz1W6mw2sQefiNrLJn2cXOqyZaqT4vgcrgZdG0M5CXOW7vmS5AwZ/YJRswvZx7QiZfNq6QhmWYyPbRn/jUvk3hRsOzFi1/JdDgMUxmgsMfm+A2OoIL5ImQJ8IE+CLx5WQJ7PQ=
+	t=1767999183; cv=none; b=o0reY2SnFkj4IH4EfJ0PYuK/b7g2OEHS9xjZ0yRn70TWslc8Yn6vRtrKSQv4O8PF7UtPyWc9h/7WqnYKKIvl3muVd2Z9F9dzlb2W77A9KDoSt/eA+XEtfJSmHNfgR4ij7qNaZAmP+2JaJ1Aakol4ozPcdi06spvrMlbsyKUSsuA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767983991; c=relaxed/simple;
-	bh=cQUgG22Bjs2dQbHQ018bIeCEALBJ/7BqHtIRGPwQu+g=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=W53JNEgQ9Eg2H0rUg55rN/kqRg3MHZtUqqQnhQlxgepBJIOpduvD6iUtzHlIfJ5IDO3BQzXAessqlRxNl/cDByr/ws9zDMcH9Sw1JK9iO9T8RUkwztKAHv/7N1jri9+vvd29J7z0R9+FXStDO55qpuyzJiYTeAyz79dE1UePttA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=O9L2OVCs; arc=none smtp.client-ip=209.85.128.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1767999183; c=relaxed/simple;
+	bh=Uof0hsJLzgi6olNyPmme0s0a909wom4Pj4EMkvI3XOQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=kVfHwZ6l7A4jieK5vvaj9upD2mLMAO/ugsLc8MGHh8d7rLUKk4m2UuvHVdlFmMDKSnKouBUi+SRLWLT6s283AZpdn7Z/Hnrwh6KRoUTW2HDm1w8E9k6OcqhwdHwZc8zobAuKqLKkyH8GOwH1QMu49G9sm1kOIQvZ/pX3Y43ih2s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=cIZWRZxZ; arc=none smtp.client-ip=209.85.208.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="O9L2OVCs"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-47aa03d3326so38593175e9.3
-        for <dm-devel@lists.linux.dev>; Fri, 09 Jan 2026 10:39:42 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="cIZWRZxZ"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-64ba9a00b5aso6881804a12.2
+        for <dm-devel@lists.linux.dev>; Fri, 09 Jan 2026 14:53:01 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1767983977; x=1768588777; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=2kPcsCa0+sTA2KITnHd4lPcP1bslLjKXUMb+D8RNoLQ=;
-        b=O9L2OVCsnhyRMji17IkDKyyG1zK2QxtudIH/07bFVvH1tfs7wKarR2TTgOtn11HOp3
-         QxtmOkgyf/UH/yf72k3LWZIo2VrKvrxIOc3J+k9LA7MqnuupE7M07TLxAssqQz8D7GgP
-         WDySmpAWPB6AXangX/lYi5opwZ0q9HesQbRyqzrPoXHeqYnSkt1SEIkNLOrKBkFr2SCT
-         FfG9qWJ4Pzn0SwvAK48lg8CL4gh+WQ96qGLjNgNRelVfyB4gEh4dalZRltGF6rnSLOxP
-         PUjVsv6QP98bexTNeaI8OY0BucXDuhJE2kPPEWfho+KBSsaq7IVWLDFojBa+As3NtLO9
-         87cg==
+        d=purestorage.com; s=google2022; t=1767999180; x=1768603980; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Agyfq9gmMc7YEBEnkhUYiC8N4EAGz8jV8lWmjTPGfe4=;
+        b=cIZWRZxZpPiF2dsR32O/DKe3sFiXA8+RAO2nmNWxn9ifcQ8V6ztINMIIhOgP/jH0e+
+         F3thcxrYZ3FBdu6eyEsuLZ4Yj9XgsPMUbP8X7mTBITVk1Z2D2cTvyNiXeUsk839mpOdF
+         syUNDWzYcybcO2CQZfhdsVkqy6D2LMUlQ1UzPr/oLwquJ9xmkpF12f+E18Ec63aKSA01
+         v0/Wio711+VBofxfD6FUwysJGMVhe+zJDmREoRs5cJ+zSti7gTUaKoBOf8gTZUWRp1Ky
+         zxVQL3k5uSiBOx7B26ngigaQCrU9kJqTIKf7U2GVGOHk496S5PPd2hk6qyvoU5xDjCPR
+         dckQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1767983977; x=1768588777;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=2kPcsCa0+sTA2KITnHd4lPcP1bslLjKXUMb+D8RNoLQ=;
-        b=s9jQoXndchauk4uE1qYxDAXlKL9B1n5XbKC2NskHvSgpR+36IHy/jXrSPb8OCDL2em
-         72yNsSTSI7IYeoFBFForVAae0pWYHoU0DEnYicMLomiVMLNbwiI7aoKWx2QGISRd0pon
-         0nQmwGOCQmQImcfibtWsX1Oc/6J4/XYeCIaQFz/o84lctJb6UyRHK4Q/ofaqYjivwGx2
-         rEJUjwyw78KFcUdaBLYmJH3HIdRS5spJ7SevPcJ6VRNm0giGf3Rfe5wO5af/yOXsKDqn
-         RXvBaMfYOhaIxw+bKv5Yr4Tw0wuW4rzlyBqYV+kN0mRO/jPl9F/ohLxEsPRCMGTj9bXG
-         3Qiw==
-X-Forwarded-Encrypted: i=1; AJvYcCWZh4pGTH8iNctYzKk0raSXd3OrEQaM1VaOkVe0KNKjFHhpsKQFApcjm33LBqVFkZxNwQ3L6/G86Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yws0Ikv08OeXlZJ5EDXECNHwCYtmkUsAE1HZotULa0Bf0nes8SW
-	kf6rOX6G0YbeSjV2PQVumGUPWWCA9HmOmNSZ2gqB6Sq8nBse4jovWMy+QfMJuxLWBvI=
-X-Gm-Gg: AY/fxX72vDGWCFGlUVS3+sqGO0xh7zmjYmuqyvYEmRpBCN4jDa3DRYDh+7DZxUQ/LLd
-	xra/q1/9/+SWgIBA0f0Ur9+LEYNjrSULILcCkqi8uySXyC2F3D/L4b+cskAwsqRChli+HY6QyFh
-	f0Rvcqi4ZwIqEVTJL9ZKt8rY/mFLYjJdnwaAdLF7Tnz66fOpJveXwMftuoL4iZ7lAX7lGNNF0sk
-	kZjrCgvwE3lTFcCpLvC1Zlc60nOmV2MD9YVpYzienuGhAzNgdag2rokORk3Agexb+WMoQsM91t9
-	f0x6fZnlep/HTLC7RdmRpLGAnAjQy7yidaUt1DH4KB8t2/C1e2BrPvxr5sjyE6rz0g3hYE2uge8
-	hIgxN5qHFHB8Vp0u4TW3BQOTyjH9toKljDgHT8Sedje15C58jjznYN6k3b/U3epECYYuAJGGTxc
-	g05QIibRmcZ5w9Mt/orK83weZGzSJOfxYPx/olrizpU75HimEud+/RaLJEfpp6z7YLQQ7O7du7n
-	w==
-X-Google-Smtp-Source: AGHT+IFhT0L9Yos/FkI4ypxCe5qVkD3DyBkBB6r3+dZBYdb9FG31rGl9rJh2bWRCEa5u32hBtjCnmQ==
-X-Received: by 2002:a05:600c:4449:b0:477:aed0:f401 with SMTP id 5b1f17b1804b1-47d84b368f6mr123528825e9.23.1767983976877;
-        Fri, 09 Jan 2026 10:39:36 -0800 (PST)
-Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-47d87167832sm72118585e9.7.2026.01.09.10.39.36
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 09 Jan 2026 10:39:36 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH 9/9] multipath-tools: compile with -fno-strict-aliasing
-Date: Fri,  9 Jan 2026 19:39:07 +0100
-Message-ID: <20260109183907.201250-10-mwilck@suse.com>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20260109183907.201250-1-mwilck@suse.com>
-References: <20260109183907.201250-1-mwilck@suse.com>
+        d=1e100.net; s=20230601; t=1767999180; x=1768603980;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Agyfq9gmMc7YEBEnkhUYiC8N4EAGz8jV8lWmjTPGfe4=;
+        b=R8CyYMCGZaVisoArlqzL5Nz+2dOLAqWXtbwGl+sWm7KC6WyUK/K8+MerJ+JxynHzX4
+         7YczhAmZJjzix0gMWIstHWBnk/BbPnb7fhkYChayLKXa1ozAgF7ok+wDp8SalYPjWuRs
+         eS+iWVGippGhW//jy8VNZPgS8SLUxbrKf9jLFnqPDboUIZl5X4Jkk32hyiJjKLmz3Obj
+         rfC89k4WMX00f9RXUOMYiGqSEPb0fKm2+ZwWDA4kHG0RuW+I2JpP15rUsANX3uXIZgfH
+         /9eEpQHM2umyUTvblOtsKDumhb8UoCpqb1Spxb23ePV309A68rCVEkhN4PlzIIVnPUlj
+         Jvxw==
+X-Gm-Message-State: AOJu0YyomeanIXjI0KOREuIl0imfOrM6KPgkeLOk3r533dTdsjJFoJXX
+	5MSDcwKunjS2MYHiYklSr1FpEIMC/AZI5+tiqkjRqLuyXpZpeotSwArzIDkztp7APCOd7QnmmsG
+	MTjds/oFNAALkI25S3ZRrUNsJaBuYUNh3Q6tw8dhfNRV2kdux4Bg1OUJMcTlmm4ukks7w7RmccC
+	EFvxc3FL7XY8oVXedesNQp1VuMXZfhmuTG+NWLhrD07LH1JA==
+X-Gm-Gg: AY/fxX7tgqNlZVRWjSmHnuwljCrGKXu2bZo5mdvogHd8B+HYr3kLOaNoPILMBGeQkuX
+	Y9Ih8KoHdcDjXGzBJGDRCXtWjLadYT8AGUSgWy8mRakFB3tFO4kzObkOOMTazpnak1Dlb91JGEY
+	9bWyYJZOpyJCJe3QY+c22OGYREfniQPyImm/diobpwz5cB4Ww88GOIzNBYBeCaVSLK3hYz/B8Np
+	QQsIUXGJ4yUqc7EL7ivTpZzaKnoXzG1prmM3e6+xq+91eg8sSyON8Zes8oqvPvJudle4ewXMd1w
+	J2cPrK53qiKNAGavSdnZoSuiTnBw0kqQjcZhNW8dbZeIy7ifN+GxphCnpAYmwqsWDhzTfTqFAaK
+	Ez93Ejp6B9e0plXpxdH07imYYZJO9FBwQcrjZ5Y435Ks/KyeJ61OLJX1xNoe38WrAmFrFgiduEx
+	1Xa5UpHF5Virreqk4uHaMl7mG8Yi6mTcXjWG0CCZ8R2swWJSSG
+X-Google-Smtp-Source: AGHT+IEHNteY24s1cIy3qe4bEPSYzo3gHBZCWmzPzgK4JWCLDWOo0shzntvw6fRXDAj0XF1mErxp1w==
+X-Received: by 2002:a05:6402:34c2:b0:64d:2769:8460 with SMTP id 4fb4d7f45d1cf-65097dd1197mr10669257a12.6.1767999179634;
+        Fri, 09 Jan 2026 14:52:59 -0800 (PST)
+Received: from dev-mliang.dev.purestorage.com ([208.88.159.129])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6507be658b3sm11282857a12.18.2026.01.09.14.52.58
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 09 Jan 2026 14:52:59 -0800 (PST)
+From: Michael Liang <mliang@purestorage.com>
+To: dm-devel@lists.linux.dev
+Cc: mliang@purestorage.com,
+	Mohamed Khalfella <mkhalfella@purestorage.com>
+Subject: [PATCH] dm: clear cloned request bio pointer when last clone bio completes
+Date: Fri,  9 Jan 2026 15:52:54 -0700
+Message-Id: <20260109225254.3609160-1-mliang@purestorage.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -79,37 +74,70 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-multipath-tools uses container_of() and similar macros, which imply
-casts between different types, which isn't stricly compliant with
-strict aliasing rules. The issue that lead to the previous commit
-"libmpathutil: use union for bitfield" was one example where this
-can fail. While that one could be fixed relatively easily, it shows
-that surprises can happen any time when we compile our code with
-strict aliasing enabled. This can be seen clearly when we compile
-with "-fstrict-aliasing -Wstrict-aliasing=1" (note that the bitfield
-problem is only reported by gcc with "-Wstrict-aliasing=1", other
-levels of aliasing detection miss it with gcc 15).
+Stale rq->bio values have been observed to cause double-initialization of
+cloned bios in request-based device-mapper targets, leading to
+use-after-free and double-free scenarios.
 
-Use -fno-strict-aliasing to disable it. The kernel does the same.
+One such case occurs when using dm-multipath on top of a PCIe NVMe
+namespace, where cloned request bios are freed during
+blk_complete_request(), but rq->bio is left intact. Subsequent clone
+teardown then attempts to free the same bios again via
+blk_rq_unprep_clone().
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+The resulting double-free path looks like:
+
+  nvme_pci_complete_batch()
+    nvme_complete_batch()
+      blk_mq_end_request_batch()
+        blk_complete_request()        // called on a DM clone request
+          bio_endio()                 // first free of all clone bios
+          ...
+        rq->end_io()                  // end_clone_request()
+          dm_complete_request(tio->orig)
+            dm_softirq_done()
+              dm_done()
+                dm_end_request()
+                  blk_rq_unprep_clone()  // second free of clone bios
+
+Fix this by clearing the clone request's bio pointer when the last cloned
+bio completes, ensuring that later teardown paths do not attempt to free
+already-released bios.
+
+Signed-off-by: Michael Liang <mliang@purestorage.com>
+Reviewed-by: Mohamed Khalfella <mkhalfella@purestorage.com>
 ---
- Makefile.inc | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-rq.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 3dbcdcf..539415d 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -122,7 +122,7 @@ CPPFLAGS	:= $(FORTIFY_OPT) $(CPPFLAGS) $(D_URCU_VERSION) $(D_CMOCKA_VERSION) \
- 		   -DWSTRINGOP_TRUNCATION=$(if $(WSTRINGOP_TRUNCATION),1,0) \
- 		   -MMD -MP
- CFLAGS		:= -std=$(C_STD) $(CFLAGS) $(OPTFLAGS) $(WARNFLAGS) -pipe \
--		   -fexceptions
-+		   -fexceptions -fno-strict-aliasing
- BIN_CFLAGS	:= -fPIE -DPIE
- LIB_CFLAGS	:= -fPIC
- SHARED_FLAGS	:= -shared
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index a6ca92049c10..ce7e6e9a2510 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -109,14 +109,21 @@ static void end_clone_bio(struct bio *clone)
+ 	 */
+ 	tio->completed += nr_bytes;
+ 
++	if (!is_last)
++		return;
++	/*
++	 * At this moment we know this is the last bio of the cloned request,
++	 * and all cloned bios have been released, so reset the clone request's
++	 * bio pointer to avoid double free.
++	 */
++	tio->clone->bio = NULL;
++ exit:
+ 	/*
+ 	 * Update the original request.
+ 	 * Do not use blk_mq_end_request() here, because it may complete
+ 	 * the original request before the clone, and break the ordering.
+ 	 */
+-	if (is_last)
+- exit:
+-		blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
++	blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
+ }
+ 
+ static struct dm_rq_target_io *tio_from_request(struct request *rq)
 -- 
-2.52.0
+2.34.1
 
