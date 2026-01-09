@@ -1,73 +1,73 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E241262FC0
-	for <dm-devel@lists.linux.dev>; Fri,  9 Jan 2026 18:39:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC4BA27FB2A
+	for <dm-devel@lists.linux.dev>; Fri,  9 Jan 2026 18:39:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767983973; cv=none; b=n4t4K4g8SHGqml1KdUoc/0NeFNsqM+bPvRduxFnFPU0cEGX+xkfLdekcKVIXEDeopRh2mvx4Oi1zcAORN5RbDJJXgm1aekJq5mtlA62Enjov48K71j+VjGDjpa05H+RfBJGbmg9hHqazx1/Yq7tjdxW3CywPsUOWq1FMAcBc0LM=
+	t=1767983974; cv=none; b=lqHi2k/V46nyfIHLCarWwX7EgkaQoTVPqFFkxuSYeSzoFciYtbLwhVMtBLSGx3Tp/OEJQvM6qHI+tP1/+KMPzstPMa1T+JoKDQDgfyTcJOmucmAF9nm17NcezkU2m/wAWmI4kpZIaOWAR+pCMOICv6Q/PeszCUJ96H0Gd1WJ+4A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767983973; c=relaxed/simple;
-	bh=5ulvlEWuoGAFuXkuPSlmUk1BbNfR14W+4CqHQ9OFM6U=;
+	s=arc-20240116; t=1767983974; c=relaxed/simple;
+	bh=G8IugEbeLHwFv2r/6Kc+026VL7m7LE3+2lkqjJostKY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=OLWI6FR9hXtuYpgUhuyHzNVcSDRUhx1ZqSXnPzSisClHMmTvCepEAc6RQoJzXZmIJufSzPpWSAKLCF8i2BsDeHjS4ZVrnfVGUIz10gt05xQmnjFrmBq+UxgrZRNwgNxBVruOjRPU6ayVj8tYTGtsySNrSrzdiHGrWh6QM0381oI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WQk7YOs0; arc=none smtp.client-ip=209.85.221.47
+	 MIME-Version; b=J2BiSJ2weSIwWDV79o0JYmiyKwdhoqODIsKpFWoI1GHa3HRLEKwlTHFVWHitZ4cd31dzuGeypKJTkavH/XOhjnENPuAozfHwyjm6OQ1950fvReGGoCKnwqw/KZGUtI6GKjgA+Z4cYS38B3H2nvJ5LrSpghFKol/nZH2jaDKjTfU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KMkgNe7r; arc=none smtp.client-ip=209.85.221.43
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WQk7YOs0"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-430f9ffd4e8so1643367f8f.0
-        for <dm-devel@lists.linux.dev>; Fri, 09 Jan 2026 10:39:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KMkgNe7r"
+Received: by mail-wr1-f43.google.com with SMTP id ffacd0b85a97d-42fed090e5fso2567857f8f.1
+        for <dm-devel@lists.linux.dev>; Fri, 09 Jan 2026 10:39:32 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1767983970; x=1768588770; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1767983971; x=1768588771; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=UrFrMBs/bdgWRb+Sb+1gnF0EorY6ZRpOLo3prbf3HtQ=;
-        b=WQk7YOs00+j0bsZJEF8EIdMEb26O85Gq8IUeWD3PEk0EHv1HNS4t9PMSeaptrOaw08
-         zc6oXDr0u60nxx/xg5ODViOyX3pvJ5NnONJ2xLvUbo1XE8Ib4zWQ8rXasmc6T+6hJrX2
-         97soW6NFkVVEfcjmIVvA0zpYtiNiQgAcxvJituvFXXmPT4bYy0Zoqp7DITqugn0zwI39
-         QR7FbAneH6Y+/r6hmfk3OlyFjNmZFC1I4I0ZbLShAUPiEWeMqED2ekga1mguFynO1eAi
-         +AdXut62G3PiHWV8wdKWKeD73sMh0XMBCHcE3MsgxpI3d2Y7IlVkOi7M05OIKAIj8KTj
-         9tNw==
+        bh=iL2aI6XpuLSdb+BQOf9QgFNhyy0noJKO7Cg0Jw0u18A=;
+        b=KMkgNe7rQRpD9UgKL1v5K/pF6h5meQnw0T8HZcUdcpSRYlnA5MmeGZda8p/ATGN42M
+         6OiPSDB+cYQBFBDmVzUnC4szPXZ0H1RF6pO4Z8zoDvl11Gv6lx3ksiTIphOnrrMwWPZI
+         Eyszkesm3T2q9h/FvEYO+lCb4jCu0rO/Rjlik5YPleqRU8PPo2ixMIE/JklymHm/MzbG
+         awFrqLcL2UDzUUSlp0A6ros0ISsWQkCSUG4osF/diyLPWd4O7IIq6T2RD7bOszMBMjRF
+         Ov26+DAip0fd3HWrmC60Gx5Up1hR8VCu0OrO6+kaqh0jZ1VOBaniSfP//xkLQl/aV+oX
+         piRg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1767983970; x=1768588770;
+        d=1e100.net; s=20230601; t=1767983971; x=1768588771;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=UrFrMBs/bdgWRb+Sb+1gnF0EorY6ZRpOLo3prbf3HtQ=;
-        b=D1PsBoWBTfy+JZuCUSSkTTRCzqqzT9MTANuAOlxfiPQCZRKWgwfL92eaFGOLHWGpjV
-         bYRYYuPzo4o9u01GWZq1HGDUzXChNTx5yG2xkYsUNYgfaf9WVgVt7pr5kTQ55Zpe6fTC
-         ec7JupczEdhhVlaIHMlQzMdMs8RVTXwFxp+4lUj5KkVHnQEBS3y1BWaSm9Yzv3TodSOn
-         krorpxlpasCvIFDjw1lowvBFaLanJl2Wxb6ve7xHRzaETRYsE8LP/zbj8YdX8v8u4Z9Y
-         d87l5ISBE+/JIHqBXPUx83Oy3kZ3Wf4x5Wa/Ke5h0YchzvohI3OCi+bEzKHgOSvbO8Te
-         wnhA==
-X-Forwarded-Encrypted: i=1; AJvYcCXN3aYW+SkZ/FkqYWmJSG1M0YJiz10nyfYSngrMyu5C0+yFLNO3VI23ButPUbgMIrw/BiUC4Rieng==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzceidlnyoJz/O2mdCZVUxrYnWlQLE4877RizzEmFN6nClMSp8i
-	o/k+KZ8KZfWmCFwBL92SC4eGYUJaJHqDKu0Vjx9Kdo4+MdVYwWdGiBByrb8SRarUZ04=
-X-Gm-Gg: AY/fxX7vH1WG1eqnc+xUmJmgeQhKhG4zJf9Y7GeQArA3riZPesbu81qjGON4qv2uqMI
-	VL4wCMOkcBj4CSvAaMve/uFc1DJoGl17Hv6ruhMoT7jVIE1V3gDJJLt3awyUt1ALJvn7vmH5A4M
-	g90QLd/kybgMcZH2JXzmwy+zLTCPofnF/3M0Tz344UTvb62g4ZnrX45WBv4Zl+y8863iLUdOraQ
-	BzO86gj6km83kVVbnlFPxYVa9UWEshWwFAnR9Y4SMriIUp6zTgJq59oZOK0EUw+N753jR40cWrT
-	bOATwtvZjsZqeduRPwsIA6Jsg/RVrlfPb8/SliVSaHDAYwNjrQBqr1Rfq1EUGccXNoM3rk1QTuh
-	lBJVjrl1e+jZmru7HSu3Eoj0zdr6k8q9bn5E3anDlW68ZgRj8wIPGybp+Qp3kKc7bzv0SrCgfsZ
-	mRsSC9yKQOvKh2cjMJQbnJGYpp15Ttqb57beh+Y1Fym1BG41obzXam9zYzLG/aagZdpXknFoxs/
-	qCUsmYZDR32
-X-Google-Smtp-Source: AGHT+IGWThjhj/8mXlY0nGd334wsEQwgiPR2N5HUFuTCLPog8GXmCcVyNS9G2TKtHWemjC1XbWqjtQ==
-X-Received: by 2002:a5d:5887:0:b0:42f:b555:5274 with SMTP id ffacd0b85a97d-432bcfde7efmr16522564f8f.20.1767983970254;
-        Fri, 09 Jan 2026 10:39:30 -0800 (PST)
+        bh=iL2aI6XpuLSdb+BQOf9QgFNhyy0noJKO7Cg0Jw0u18A=;
+        b=Sl9ocxOgO8hDjRrZseLIWzGd9+EO0UtxP5bnKlzRcAquUOUyuCVUZhxJ3xMtqemyX/
+         J+XP5jJ8sdFyzCiAY3nTfj2k96e02TX1cmLjGIxCQ4Ynxy2k4Q0Zj2UbM8Hiqp46QGrz
+         ysQ4+vQp49KFZ1rKYw5zQpq0H6LbBlhx9wi1Mrv3LoAvnzXWzkbUHk0yDlPphH5tOtPo
+         vheAoHPeRIpJ2ZIGuAW6epP4RTp7IBWhMw7lVuInMNON7EfQNQcSG2gEI0zuWOVq6zv+
+         25Q0lqOiNeWWMy3/4cuC82WRQTAPdTCG0Yi3J5oc8xewI2hxodHFvjPT2Z8g5Ks5PXz8
+         qwHw==
+X-Forwarded-Encrypted: i=1; AJvYcCUe8cGgwLgP9lpgxn24pw+9T+WLL3wTgKIj9vqq8rTOPkXeNjZr8d2Lvn9bJ7g90gnEJmhJcJ3m3w==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyt4Z7gSk0Gf+nANmukDtwRqpQJwmQ6W5E12jhxm8SDzD0TJs5G
+	oqdwFE5ixc++/FzwiZGD61vHU1SOteosWOT0wnQvrwDwXlcVjTe0XSlGOCTPOapVhF0=
+X-Gm-Gg: AY/fxX6Y9Vv3uyg+HXAafUuoH8O0Q7Wl9oreRd6DOIx+7+0kSrmwnmWR/XRD6d5R3PE
+	Iw0EOcG82s2RIKCYHoPD3s2ATNWOYCpz7A18OMZq879MWycb0YIQ2QD0+yn6UJdrsb3cGM84F9f
+	gyuHBgmbShsWksLH7w/X7KAxyUY9pgSqQciQu4KYdOrwtjcAB05bLOU2NtIdC1EHs5871LbyAX+
+	H1os78GhhiRqU+UKn2uYSkz/Yb+OM1VtICEPm+q+beuIIFPHHIWG1DptuymmmBQhPM/WKylaWXP
+	4KvIGUqTH0R2zEr+oEHE3NgtI+7MhwmEacm18mGWbgN1sJbH4ruoX6aLJbGra4JMyaIeQcaGo7Q
+	FQHqYqOgmRPEZ7+utH7IeDwHPd67EA3x7SexCqpYFJUl/VNsLzmVwqXFliyBve5rKpp8PeP/QRD
+	r3DSsvPe1+nvp3BocLcy329u9S+D44N/KDuDdsZKwrtTkzoSDvpxIIGq7Vh6SQZaNG4WBBv/Ldi
+	PDo9qcVL6wz
+X-Google-Smtp-Source: AGHT+IFXGR70D2Ct8+zi0qEDpL98Uro+ESZHNs/jDcS4uURq4Ih+YUrN5fKJ+16OWLbt0k6IFEidjA==
+X-Received: by 2002:a05:6000:1843:b0:432:b951:e9ff with SMTP id ffacd0b85a97d-432c376158amr14330271f8f.53.1767983971230;
+        Fri, 09 Jan 2026 10:39:31 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-432bd0e16ffsm24650720f8f.12.2026.01.09.10.39.29
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-432bd0e19bfsm23405052f8f.18.2026.01.09.10.39.30
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 09 Jan 2026 10:39:29 -0800 (PST)
+        Fri, 09 Jan 2026 10:39:30 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>,
 	dm-devel@lists.linux.dev
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH 2/9] libmultipath: clarify code in set_path_removed()
-Date: Fri,  9 Jan 2026 19:39:00 +0100
-Message-ID: <20260109183907.201250-3-mwilck@suse.com>
+Subject: [PATCH 3/9] libmultipath: nullify pp->mpp before calling free_path()
+Date: Fri,  9 Jan 2026 19:39:01 +0100
+Message-ID: <20260109183907.201250-4-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20260109183907.201250-1-mwilck@suse.com>
 References: <20260109183907.201250-1-mwilck@suse.com>
@@ -79,60 +79,41 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Instead of remembering pp->mpp and setting it back after orphan_path(),
-create a variant orphan_path__() that keeps pp->mpp set. The name
-of this function is kind of misleading, but keep it as the main caller
-is still orphan_path(), and we want to keep the well-known message.
+This is a preparation for the next patch.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/structs_vec.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+ libmultipath/structs_vec.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
 diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 434b57c..8d4fc69 100644
+index 8d4fc69..7185038 100644
 --- a/libmultipath/structs_vec.c
 +++ b/libmultipath/structs_vec.c
-@@ -369,13 +369,18 @@ err:
- 	return 1;
- }
- 
--void orphan_path(struct path *pp, const char *reason)
-+static void orphan_path__(struct path *pp, const char *reason)
- {
- 	condlog(3, "%s: orphan path, %s", pp->dev, reason);
--	pp->mpp = NULL;
- 	uninitialize_path(pp);
- }
- 
-+void orphan_path(struct path *pp, const char *reason)
-+{
-+	pp->mpp = NULL;
-+	orphan_path__(pp, reason);
-+}
-+
- static void orphan_paths(vector pathvec, struct multipath *mpp, const char *reason)
- {
- 	int i;
-@@ -393,16 +398,13 @@ static void orphan_paths(vector pathvec, struct multipath *mpp, const char *reas
- 
- void set_path_removed(struct path *pp)
- {
--	struct multipath *mpp = pp->mpp;
--
--	orphan_path(pp, "removed");
- 	/*
- 	 * Keep link to mpp. It will be removed when the path
- 	 * is successfully removed from the map.
- 	 */
--	if (!mpp)
-+	if (!pp->mpp)
- 		condlog(0, "%s: internal error: mpp == NULL", pp->dev);
--	pp->mpp = mpp;
-+	orphan_path__(pp, "removed");
- 	pp->initialized = INIT_REMOVED;
- }
- 
+@@ -181,6 +181,7 @@ static void update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 					condlog(2, "%s: discarding non-existing path %s",
+ 						mpp->alias, pp->dev_t);
+ 					vector_del_slot(pgp->paths, j--);
++					pp->mpp = NULL;
+ 					free_path(pp);
+ 					must_reload = true;
+ 					continue;
+@@ -201,6 +202,7 @@ static void update_pathvec_from_dm(vector pathvec, struct multipath *mpp,
+ 						condlog(1, "%s: error %d in pathinfo, discarding path",
+ 							pp->dev, rc);
+ 						vector_del_slot(pgp->paths, j--);
++						pp->mpp = NULL;
+ 						free_path(pp);
+ 						must_reload = true;
+ 						continue;
+@@ -605,6 +607,7 @@ static void check_removed_paths(const struct multipath *mpp, vector pathvec)
+ 				pp->initialized == INIT_REMOVED ?
+ 				"removed" : "partial");
+ 			vector_del_slot(pathvec, i--);
++			pp->mpp = NULL;
+ 			free_path(pp);
+ 		}
+ 	}
 -- 
 2.52.0
 
