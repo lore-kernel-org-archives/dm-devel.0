@@ -1,73 +1,66 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 238B3322B89
-	for <dm-devel@lists.linux.dev>; Sun, 11 Jan 2026 13:34:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF043213E89
+	for <dm-devel@lists.linux.dev>; Sun, 11 Jan 2026 17:59:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768138468; cv=none; b=XFSrRm6ez3e/xWYOXCH6g44xC4yAj8QfWmlvBZM81x5vvuptAQNBjgSsnoknxoHWT40pSz01VeXoI57TOFAJOOe/fj4sZT9ybnucmO0HEPzpOxELcp/E5/l7p5Vyn2B3Ab3vlG0Kx2yetd3GxjX8esm9991lFaW3Thfd+yRZT4c=
+	t=1768154392; cv=none; b=rO7FYi0Xdxx1A0+IQOjHpNJyetptzmw0tLsWEWpYFpLSGpCGrl4G5Dw90qlCKTPAzdD+kZMxnnuIeFeDdomXoVBvZFCwigr0JaOdL4wzTXaHUbdlAyNS/crOi+mr9Dkuz/yS/F5f2OhEa97BfNLJG7DFbPxW7tIe53UDWk+hUkM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768138468; c=relaxed/simple;
-	bh=+fWdVbBVS+5ZieHGAy8VJ46GImYkPTn95DEhd287x7k=;
+	s=arc-20240116; t=1768154392; c=relaxed/simple;
+	bh=V3m4ismIJQAsbHN/8chmLCUaIjYZON7QgLdJUzqoEQA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=WAc2GYXxjJU37FK5U9SBVkvl/YKd0HqwzOZWtT35MlY8AHXSHlGVdvGpRlY003V+pHMNtlQhZm/0tEawCSLlQCKVgHkfbspmj0z8hEDZj9tuKinbFqeSyGLsymwbrUMF8gAwrNsz6N9QM+uXNS0V/omU/glxLLfSYLhT/c1av1Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HO0If3Vd; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 In-Reply-To:Content-Type; b=IjVN2whajP6cVg7couTa6QOm/9bHl1NQ87kb/hDCVqjxizfk3zuMuIWntF7i+qc9ALDws/IGiYIRBgwDQ/2SYatbviAXu5rKwuNPXPFWHvO0NTnuKck6mJ0eUNIcJTBCEsEzeOhVJ77XsdkXwVrnY77s6B/P4pL/Vl1L2wHsv1c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XaWaHAkH; arc=none smtp.client-ip=209.85.208.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HO0If3Vd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1768138466;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1iIwW7B3/vGlG96EY9fov8v0A5KtPeBu8NxLAHkqFGo=;
-	b=HO0If3VdBsdIm9YJ+dI7KNiRsRFVj84KcCRnk/70Nb5rO3kei0oZur5cbQAS+UE1yE+S8w
-	KVu3io4oMMpacChFCVPcsZrA2s2Cr1a9FgRLJUlXsSJJ2Vvj4fC9Owztza6eZrm3Ih59hK
-	btq0mOvJZPkjc1DE70MGiC9+Asi8wVw=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-497-sJ8qnvplOvq0M4pMXKmRnA-1; Sun, 11 Jan 2026 08:34:24 -0500
-X-MC-Unique: sJ8qnvplOvq0M4pMXKmRnA-1
-X-Mimecast-MFC-AGG-ID: sJ8qnvplOvq0M4pMXKmRnA_1768138464
-Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-430fcb6b2ebso3507006f8f.2
-        for <dm-devel@lists.linux.dev>; Sun, 11 Jan 2026 05:34:24 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XaWaHAkH"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-65063a95558so8415395a12.0
+        for <dm-devel@lists.linux.dev>; Sun, 11 Jan 2026 09:59:50 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1768154389; x=1768759189; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=2oFsCDvdf+K4h93poiIWzTcv+QuUqjOYDkJQOYyKG3Q=;
+        b=XaWaHAkHfrNiXqRmWzps7RjQUnj4Qt1NjswAJIWPAFLY82o3VTZ7aFpo3Smu1SgARy
+         v3JFr2Lai2dknpD2FIdIvQeNzMWdVMayqzYZzlQ6RhjNlxG73W5xGfKnMpmOzu5JirCz
+         DT77kXBosHhmyMbzNK3b4D4RgFrcYEKAPeVGp+/zSrcsgDKdIv6uzmYReTKZsdORqjBS
+         WlzSs8OI/B8LQmsDCRVNaAeNLPqDjf17KPnr6sbF5oMQCYB5tM0JduVYNbxPtR70meOO
+         kaSrMB4HDOGrF1y6GQlui8eK/weMf7PZQGmKVSemROtp7LIX91orhFYiRImP/GqewrPD
+         aujA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768138463; x=1768743263;
-        h=content-transfer-encoding:in-reply-to:organization:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=1iIwW7B3/vGlG96EY9fov8v0A5KtPeBu8NxLAHkqFGo=;
-        b=feAA1S+EE8LMk7iG8Knl8UBFnD1V2twXNHmyNmZXhjhWEc8S/zmPINn9mtl3p67/kY
-         BYra1VsaA+xeMTkBBsTFubR4GtUhfa2XmEeq2uQPDvUdF5KxxuIl+pA/5v2SmTsgnSvZ
-         nVlftb+sSx0rVgLF/1/dqoHJdjxcFW+M2R4ratJrRCM2P+29pjyQ6CxIyP7aBJH5HK2q
-         W2eWNXFP9gVJ+PgS6R8478DwAxRBp3Fh5ik7ySVFif/Z6b0Br1/zTtQQNc5Ybj/x82uG
-         lr+emzFIPrM5dcmb9Ds1MyBtaYfXMrypSNwHE22jxFC+hs5zTWIArU/J8OAyrVXMYVW4
-         LtlA==
-X-Forwarded-Encrypted: i=1; AJvYcCVw/gk7j8vBYvj/5HKQGnziwGKpUgvMypJU+1lFOrR4xAI0rOl6lchN+EipouaTenPeYw/XktDKlQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxtbkPRHF3XqC7X2niI+u0OYEH4JE+1dpLRWoBaYrwBOjfbThQV
-	BtnZmU1ygwV1ULPWatXOIWt2KAIRFARzNvydL9rKGyeWAlurYZvf1KMkpiuPjmWufP2sjKKTEbo
-	CqUT6qQrlve6HDCdSWUBQeW1F2mdEoVyyWK4Y6f20lnWD3mQj86xdP2/H6Xaq
-X-Gm-Gg: AY/fxX5Km/cVD96/C8CovdBZjXTMpkol/AX6EktNq7CbOq/X8KH4ncxUwJZqxUDPind
-	BeulO8dDrDfVdH7ysadsC5H0odERfL+tUMNudkeA6Q/1BRRK2PEVL+8xAVOSfDvLf+ahV7B23F1
-	s3feiiLW6BsHg/YP6BkeWuKOvUxSp7a1Zoprz2K6JALg5UjnBovl68kIhYYnQg9Oy1l13VwSOCt
-	La1muH9wjuNg9V7w7HrC3w8KfIhQp33vlDGO5wS5ihzws3yTm0iFPpcqijX4Gq+Mb82vY5LZ7d8
-	S0ltopaZ+pXcm/rAZxnEvKNjHkDmikdO9eYUk+5HenemgNtN35ly99eJtweGXahB6CK5S2qNDYo
-	M0Hu6HGTKik42
-X-Received: by 2002:a05:6000:18a5:b0:431:8f8:7f17 with SMTP id ffacd0b85a97d-432c362830dmr16282388f8f.10.1768138463553;
-        Sun, 11 Jan 2026 05:34:23 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEUrdZET3rEay41v44TRADbajgxRdDNJp4A+SRYJqr3oi8KK+Jf1Lh89iqwj9E2Qa02SJMCbA==
-X-Received: by 2002:a05:6000:18a5:b0:431:8f8:7f17 with SMTP id ffacd0b85a97d-432c362830dmr16282379f8f.10.1768138463142;
-        Sun, 11 Jan 2026 05:34:23 -0800 (PST)
-Received: from [192.168.0.99] ([212.20.115.16])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-432bd0dacdcsm32760448f8f.1.2026.01.11.05.34.22
+        d=1e100.net; s=20230601; t=1768154389; x=1768759189;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=2oFsCDvdf+K4h93poiIWzTcv+QuUqjOYDkJQOYyKG3Q=;
+        b=GzfHZlIOi7EHUlSYLFPvjOvJh3svBQ3bOPVCdFLmhOApUrmz/qF6mC6nAb3jSURycJ
+         L2JoS30gCQg/Hcz1riieho1LYcEOUcooifJUJj5MgXrWSp84LnzoUywCUbbrWcX5Txrg
+         JBIyigKzJCp0aM1KdiOJp8p2F0aWGriTnHDxbcRfysKGg1xyrQT0YTlkZfOEgVB213Qn
+         s45RXaguQGVSowlEx3iVFRbmQ+4fQsshWbVN/8xekWUHNJoAmXvwVEh/llbp4ddGv38K
+         xtooSVhy0UhW+/LAcqSWB9pVlogU9+WDLwIjPOZFxKyo9MtIreSeuBQGmebFYLEPIcvJ
+         qblw==
+X-Gm-Message-State: AOJu0YzHe7ntjimDen+OKvmBkjKuU2ZYxCY5kjOUwApRrvTcfeEG/VDx
+	Qm8i1YLYNsbZAwubk6kpY5M/CUzvNmgOFHgP81H9WtlLbCvhVCssAP7i
+X-Gm-Gg: AY/fxX73Oz1yeN0oL5J0piQDrtny4Va050D3n80I1a5TZEEpjB/tWVqC7mGME/MnoQB
+	VCnhkF5HMFHbsKVNSwwDVZ53pH4gsWKNLwCGrLlbjN4WMDrXVOVv7hrKSP1rCeXRjQ1iWWecNCD
+	aKUxAbchz3XlIMrpKb4VvY1e7UvJUANWaI7oIadXAAYXLuhJKOA/1w59WObhRE3DR6kxbtdUCIC
+	2I7wtI9xwuhblbmh77BE3qBH4+/iHmI4yU88aEU7AJgW7GKQXNkhzsaxkHg9iXDGFsvkH+uPwRd
+	8OMyRigwdOH5f+MKkqXz2JL/HSUGSEOYuo/nKhonFqijMpJhyX3wCt41MTm7dNz2BKb9DYFOkz+
+	ezxH3BJV7f5nkFht+ELZjA4xOm4BieTXVOlkyutXOH+/zB9D93p5yNmQUrfYbNE/VIVHIRZPoKO
+	avTO2+b2CRzSxbEIv+QpW6ccwKLwEw8odfMwyNrCpm0+9hZME=
+X-Google-Smtp-Source: AGHT+IGIPNl5Gb4dhJtpebyqB7+K6TDnSvvsD53OVqfLpRxsLs6btnKavSQL/uO3vEnE9ZpSKR2uQQ==
+X-Received: by 2002:a17:907:a08:b0:b74:984c:a3de with SMTP id a640c23a62f3a-b84452837c3mr1571941566b.28.1768154388871;
+        Sun, 11 Jan 2026 09:59:48 -0800 (PST)
+Received: from [10.137.0.14] ([146.70.124.156])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b86faa6be37sm413044066b.36.2026.01.11.09.59.47
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 11 Jan 2026 05:34:22 -0800 (PST)
-Message-ID: <fc1d7900-3a5f-4b31-8aa3-8c8cd317d646@redhat.com>
-Date: Sun, 11 Jan 2026 14:34:22 +0100
+        Sun, 11 Jan 2026 09:59:48 -0800 (PST)
+Message-ID: <3150e43b-523b-442f-a2de-a89be43a248c@gmail.com>
+Date: Sun, 11 Jan 2026 19:59:46 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -75,59 +68,84 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: Hard system lock-ups when using encrypted swap and RAM is
- exhausted
-To: Askar Safin <safinaskar@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: adrelanos@whonix.org, arraybolt3@gmail.com, cryptsetup@lists.linux.dev,
- dm-devel@lists.linux.dev, gmazyland@gmail.com, linux-kernel@vger.kernel.org,
- linux-mm@kvack.org
-References: <3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com>
- <20251211182429.3300562-1-safinaskar@gmail.com>
- <eb3a9746-83a0-8271-6bd6-867ecfa49aad@redhat.com>
- <CAPnZJGAvA+SpkMeOdZx+SZG=qZxSXOThO+Or1bgw=3QqCoEDgw@mail.gmail.com>
-From: Zdenek Kabelac <zkabelac@redhat.com>
-Organization: RedHat
-In-Reply-To: <CAPnZJGAvA+SpkMeOdZx+SZG=qZxSXOThO+Or1bgw=3QqCoEDgw@mail.gmail.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Pmq0NSfIRpNSt9GElE5t6Agh766jP8MEe8WqSYwLGPw_1768138464
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US, cs
+Subject: Re: [RFQ] dm-steg : a deniable encryption module
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>,
+ =?UTF-8?Q?Marek_Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>, Milan Broz <gmazyland@gmail.com>,
+ "Bryn M. Reeves" <bmr@redhat.com>
+References: <022d700d-d3d8-4ef9-8d7b-505f7df89354@gmail.com>
+ <c3e8ba98-2ac9-9424-f6ad-d279f22c2073@redhat.com>
+Content-Language: en-US
+From: Leo Samulis <anagon@gmail.com>
+In-Reply-To: <c3e8ba98-2ac9-9424-f6ad-d279f22c2073@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 
-Dne 10. 01. 26 v 8:09 Askar Safin napsal(a):
-> On Fri, Jan 2, 2026 at 4:47 PM Mikulas Patocka <mpatocka@redhat.com> wrote:
->> Hi
+On 1/7/26 11:26 PM, Mikulas Patocka wrote:
+>
+> On Tue, 23 Dec 2025, Leo Samulis wrote:
+>
+>> Hello,
 >>
->> Dm integrity doesn't need to allocate memory when processing I/O requests
-> 
-> Thank you for answer!
-> 
-> Unfortunately, my experience shows the opposite thing.
-> 
-> [[ TL;DR: my experience shows that dm-integrity journaled mode is buggy, and
-> non-journaled mode is not. I. e. journaled mode seems to allocate memory, and
-> this causes temporary (for 4 minutes) lockups (on high specced
-> machine). Or maybe journaled mode has
-> some another bug, which causes such lockups. They are not reproducible in
-> non-journaled mode. ]]
+>> I'm Leo, the author of dm-steg ( https://dmsteg.sourceforge.net/Steg.pdf ), a
+>> deniable encryption module for device mapper. It was working nicely in 2011
+>> but I got caught up in life and never updated it.
+>>
+>> What would need to be done for it to be accepted into mainline device mapper?
+>>
+>> Would I simply need to update the code, get it working reliably, and then
+>> submit a patch? Or would the specification and use of crypto primitives also
+>> need to pass a separate cryptography exam?
+>>
+>> Thanks in advance,
+>>
+>> - Leo
+> Hi
+>
+> If it doesn't interfere with other kernel code (i.e. if it's just one or a
+> few files with no changes elsewhere), it should be quite easy to get it
+> in. There is no formal verification of cryptography required.
+>
+> Milan Broz is developing the userspace cryptsetup package, so you can
+> discuss with him how to integrate it with the existing tools.
+>
+> I think that (if possible) it would be better to integrate it with
+> cryptsetup.
+>
+>
+> Just one big warning - it doesn't work on SSDs!
+>
+> If the attacker unsolders the flash chips from the SSD and reads them
+> directly, he can read the mapping table for the blocks. From the mapping
+> table, he can infer which blocks were written recently.
+>
+> I.e. if you recently wrote to the hidden area that is supposed to contain
+> random data, the attacker would know that you wrote there and know how
+> much data did you write there - he just wouldn't be able to decrypt actual
+> data.
+>
+> So, I suggest to either disable it completely on SSDs or print a big
+> warning that it is not as secure as it is supposed to be.
+>
+> Mikulas
+>
+Hi Mikulas,
 
+Thanks very much for your reply!
 
-I think it's important to decipher what and how it's blocked - I kind of 
-suspect your system is not blocked on 'dm-integrity' itself - rather some 
-userland app being swapped out of CPU.
+Lack of formal verification for cryptography is both a blessing and a 
+curse. I'll KISS.
 
-You probably do need to configure your systemd-oom killer to prevent getting 
-your system to it's knees - if you run your system to the moment whether it 
-takes 4 minutes to run a task - there is something seriously wrong with the 
-configuration - as OOM is supposed to kill userland RAM hogging task much 
-earlier (possibly even your overbloated google chrome APP if it run out of 
-bounds).
+Re: Milan Broz, I'm not sure how much traffic you guys like to see on 
+dm-devel, so I'll drop him a private email. I agree that cryptsetup 
+integration is the ideal, and I see no reason why it's not possible.
 
-So I think you should also show whole device tree of your system and some more 
-information - so there is even 'remote' chance trying to reproduce your scenario.
+Re: SSDs - I already thought of this. See Section 4.7 Transparent 
+Aspects @ https://dmsteg.sourceforge.net/Steg.pdf
 
-Regards
+Thanks,
 
-Zdenek
+- Leo
 
