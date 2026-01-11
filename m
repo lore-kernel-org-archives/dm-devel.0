@@ -1,30 +1,30 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E1641EBFF7;
-	Sun, 11 Jan 2026 20:28:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7197013B58A;
+	Sun, 11 Jan 2026 21:39:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768163303; cv=none; b=avnk/S4MC9b/2/AkCHCK+u6H6pYegrq9tR1EFQdWLUOSxlvsKS4Y82EaWLyPnM/5egrEJQETHu17/BQns7E+3MMW7iDHv+XND9m9T64Ztjr1o5ShHeIXrBpcwbz/Bw2xqC0w+wr1Wct4EGrLV3j0j6XDENlQd8q5qIe3hbpL3QM=
+	t=1768167546; cv=none; b=VlqR0aKXFJEuhI14Xdc4BZiYqeXsTe7oyCXXRdhCO0yX/TYREybf8xoioC7ZfPlEXwtqLOl7YQi5fhFrFgbhS8azl8II/96wyPJ1MBxnG4Np3Iiv8FRMM6im3u4po7I0zcuTjdPRKhAYx1wP/gc0PFHCj+xHS+VtdECIr0iLeN0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768163303; c=relaxed/simple;
-	bh=TN6/Fi+/LHAZnqn1ObgCz5s4lskfWtVPjMWKBjxWbXA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=QlNKnZqOQmpDOkKYhO89utZnX34PyWgsfPzrqYufUArrlVR1qbxK6WxXgUC4mp5RGjOm291JCeWaFLeOrA/+d3QWpjrvlf1P9se5dUCmAX3RTOu0uuitIC6HxzFf0BNWfTFtGc5pkkM+W6XgBI1Bn1nwsSsiKzsFhK1eecwDzAA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=f98vSvvU; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1768167546; c=relaxed/simple;
+	bh=sKPQ2a2R4mmADvLRBV220wKlB0vPViIc33+txu11jdI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mw4D/2X/45QRosdRE3dCaaPpFbf0vBpTKxWtkDR/KNx2liKqppJ91tyRpcJtDcH7LNhw/NrBikwTzUPrVMPwuEI25RUPkp1rXvkmAAt/Mc2Qwid4Oi2K2WgK6E3ClKtlIZx98119yUe5TxM6b6zIQLh45ggIxiX94rCBHGo8jWg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DJBPWLoM; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="f98vSvvU"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B95EFC4CEF7;
-	Sun, 11 Jan 2026 20:28:21 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DJBPWLoM"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CB2F1C4CEF7;
+	Sun, 11 Jan 2026 21:39:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1768163302;
-	bh=TN6/Fi+/LHAZnqn1ObgCz5s4lskfWtVPjMWKBjxWbXA=;
+	s=k20201202; t=1768167546;
+	bh=sKPQ2a2R4mmADvLRBV220wKlB0vPViIc33+txu11jdI=;
 	h=From:To:Cc:Subject:Date:From;
-	b=f98vSvvU78Wxu55+VrWDT25eUlffgfkmhbylaOHxTtQW4f0igAhGleBvuR2xPUaL3
-	 urCDQFysOVZ/lXyomDp7dQDf9Drxf4w4utbvuoV7n/tPVUCZlHFygEpC0V1rfWuO1z
-	 q0OPCncXUyk8uyMQW5sYpS0t62gTZBQ+bRbRrmJuYVj4NHbWpIg+za3H54opHe6SKi
-	 hmOs+DOyveLQvo6Rcz5SCesUcrhDIj8vqYSmeUP2pENmMDFoJMfQDLoEKDk72KDgE9
-	 kGpwKYhApPrcJAQSVWL63PnKZnsMIrXTAciSlGuaIpLvKeGeiR/4d8DuJtLApnyHRc
-	 r/MBXijbJ1U7g==
+	b=DJBPWLoMz/CpuSqMchjOCpVQ2CfQ/NQr7QBgCqPBoFN2CW5C6sF2OT9PxHh3OGgPR
+	 m9ty+46kPd4znlc8Lwv5zRVCuQeCZQiOf0XlTAud834nAqFDhTVBWFdKhRkW5+C3LE
+	 vKHAD0MsHtRuqnwdJDSyxu5QkpQOczhlTObEiQinyOSGJfAR2OQalGwbL3csG+THjg
+	 XYeIbTyqxKEw0vU/wXTdghkyvyfE5bzpYbGWP0X8LBg4poIgraaBD8chKNFsCIEBFM
+	 TT4Ro9wcUKq6cCnW1WXpwNN6qb7aNQ4hHUWXQr3iqpJB/iAogR0iCqtpUymYO8akLP
+	 manbNmhYAgOJg==
 From: Eric Biggers <ebiggers@kernel.org>
 To: dm-devel@lists.linux.dev,
 	Alasdair Kergon <agk@redhat.com>,
@@ -34,9 +34,9 @@ To: dm-devel@lists.linux.dev,
 Cc: Sami Tolvanen <samitolvanen@google.com>,
 	linux-kernel@vger.kernel.org,
 	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH] dm-verity: switch to bio_advance_iter_single()
-Date: Sun, 11 Jan 2026 12:27:49 -0800
-Message-ID: <20260111202750.52992-1-ebiggers@kernel.org>
+Subject: [PATCH 0/2] Optimize dm-bufio cache lookups
+Date: Sun, 11 Jan 2026 13:38:19 -0800
+Message-ID: <20260111213821.94895-1-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -46,33 +46,16 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-dm-verity doesn't support data blocks that span pages, and it sets
-dma_alignment accordingly.  As such, instead of using
-bio_advance_iter(), it can use the more lightweight function
-bio_advance_iter_single() to get the same result.
+This series updates dm-bufio to avoid redundant work when looking up
+buffers in its cache.
 
-Signed-off-by: Eric Biggers <ebiggers@kernel.org>
----
- drivers/md/dm-verity-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Eric Biggers (2):
+  dm-bufio: merge cache_put() into cache_put_and_wake()
+  dm-bufio: avoid redundant buffer_tree lookups
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 777a0ebe8536..4b86f7faffd0 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -526,11 +526,11 @@ static int verity_verify_io(struct dm_verity_io *io)
- 		iter = &iter_copy;
- 	} else
- 		iter = &io->iter;
- 
- 	for (b = 0; b < io->n_blocks;
--	     b++, bio_advance_iter(bio, iter, block_size)) {
-+	     b++, bio_advance_iter_single(bio, iter, block_size)) {
- 		sector_t blkno = io->block + b;
- 		struct pending_block *block;
- 		bool is_zero;
- 		struct bio_vec bv;
- 		void *data;
+ drivers/md/dm-bufio.c | 170 ++++++++++++++++++++++++------------------
+ 1 file changed, 97 insertions(+), 73 deletions(-)
+
 
 base-commit: 8fbb8fe75d4cf92eaa7b21828ec39c1bf79a262f
 -- 
