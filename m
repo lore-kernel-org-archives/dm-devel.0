@@ -1,273 +1,159 @@
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 252EB3624C7
-	for <dm-devel@lists.linux.dev>; Mon, 12 Jan 2026 16:16:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B12E837BE7E
+	for <dm-devel@lists.linux.dev>; Mon, 12 Jan 2026 17:27:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768234572; cv=none; b=UA9A497pcUki1zWEwB1jquPXw/Vr2x3AWJG4GqMzKyAtmyu9AoQbRxw+cEkLVaN2mDortLJy+XBDv/1Z9JO7qANSEmh+P/k922MUHJJasdmxnt2J2DJ6KLHUadrYwdwgmmBaWAfmPWOP6EybTAGmn8rdlQkY1JIvi7INGOvrvIc=
+	t=1768238881; cv=none; b=n/nWPffgWncEWv81+5BuTI6W2YbjvAUPqJEZtfhrXyTlUc8wyf6xLnSt9zQ/pKyn6KUjLLb0akhkcJRRVFW8RbUxsBBbL9IpUYEUxqbBbAF0GlQP5/7754ffaM7JlrC34nlnLhTkLMjBcD0cL9sYHa5drZOXfxSTjlQoHVtIkHI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768234572; c=relaxed/simple;
-	bh=FhmuqyUJ7+MDhvtBfXWHXbSEvmmu1Y/PbSHNDKDWvgA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=V6fWLyOIixl5Up05acahbLZBzQP//Ru54XIWvez4AqZVLzDCbed8GwRHUFXXnKCMHXcTApAFF6fZfTi6Zg0i3tTjkWZFvYUHgcVybdtIdxbNUz6UtLKxPNOoQItXZDOhu8kWk4qfD1e7mM2RwGbZSda7zgYgvmdz240o1mLxuEI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FZDVuTBW; arc=none smtp.client-ip=209.85.221.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1768238881; c=relaxed/simple;
+	bh=rhZp3FhpkdvJFqfyP0R3sWiIkQM5geDMCm3gNb14hxo=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=rCCuxrC7jXJG+TnDyH0uCPuCZHcWzckNXs7eX4GOT3TsjuI4/KF6si1HpIPJMDSEtX4YbQStuwq+PeSKlHVYhjraxERn3Dg+9c6jdebqL8D8vxt28Zwgxdgwx2Z6m8hHUQDYsgSAXjqY6xP3Msz+2KM9h1hQ41dsim3XkuoAQug=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WOpce43/; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FZDVuTBW"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-432ebea8b4cso137676f8f.0
-        for <dm-devel@lists.linux.dev>; Mon, 12 Jan 2026 08:16:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1768234569; x=1768839369; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=217ZtzlwG5+URQMym2CUOoeHZSU2yzkevLZM/3LggAQ=;
-        b=FZDVuTBWuFEVXM3bwpqpQegK3p98hb7hKJeMMGzOZm2Tjo9MPYgjhdjO/22Hlw8ipu
-         aY45hErTEgZVVpsl7Hi0f2k61HvOfNNNW91yIvJHIpl6IDAhuLxm1UYsNDM4nHD5C7kg
-         G2gTBfEOQsqsAJFt3Vw7xN5BI9Y+AmWsEqHEkGluAK4x9YjWj2vpaKKjVkuI69eB2yYE
-         agMVi2vUL5MWjTMQDpfPMU5O/iLHgDG+JFjDNxqApomikCrmxGArlJET9DNbGhuMNU9q
-         OsBuhOIDLGIrAr1V8hbpfmgVk8+2bg1WjLbu9TO5PmelC1EhrDLdkbP43uNB5qY1u8EC
-         cJng==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768234569; x=1768839369;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=217ZtzlwG5+URQMym2CUOoeHZSU2yzkevLZM/3LggAQ=;
-        b=Dzax15IWf4YTShy8TMIAwurcG7UWbvDxPtaS5opWt3zsX3xjsUfeQvti33sY1oX7G8
-         gPFOj8YIXY49GWzKxrtTH8hATd6xUVCnPeePpH1mS9pTXK2kXuS5xc72/X8us2Pt6PbO
-         +WVwzo33MppydMJiiFUbpEJgeQKFElGSVGpCxZ2uu0Rwxek2aFygftuu5g6qbWeMMwMQ
-         s5uUD0wHlUWQj/XrSEz+lTP0eO4RPnAfr4QY0yu/kMqruXSCm3YYDe3TGuliM4P/gdWH
-         PzQHXWH7yqi1vncTE1dkIAZVu4b7asCTQeK3AIkWTYXZrsGYBbsxxxGV0qMhlVNTJZhX
-         Mqzw==
-X-Forwarded-Encrypted: i=1; AJvYcCVepH8QjabjarU5fDi2OTjB1YWbJc6mcXijfUIM53LbEl2c3/PSbg7P1O7kF2PwDgtHJ6CltO1YuA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz5qnAb8cbtwZ480WtG8fecz1i9Ke4GEqYwUt/TwbdwM1/qYBGq
-	joJViOySLi9WVuSr3jQ+ORBn93ZMqHnqfaA9uK0WlPJplGAZJYdTFXM=
-X-Gm-Gg: AY/fxX41Szj4BUYDKHrS1Yn6PA09S6JKQOB/MIbvjnvSVj1QDRhGpo/rZ1KWZv7YLOo
-	7aYbVABjeV0Ee2P9zAkSz1n5lSZjef8oO+LTpLgP2IyRMtlc2+lRseyiGNcr0zlcTK4r0OjG/MO
-	GDOUgd+aecQ+GZ6t65ovANeNLUmw2iBKXzaYYzKLzuaMsmsdgfF43TTvPpsoGmDIEybcV/3Blv1
-	AHFO7JzlVlldqzb7kXuXt96MQHVV9IrFqPxbjhJdZoZurhqOhgd7BCYVUV94AQHnGY9M6a65wlw
-	fOZFL/lIGifkkqw6lqYhO2j7cB2OiwJ6XxJXiUQ01oeM+/40fHf5Oijkh/IT95zeRRmT0RSWllZ
-	EyPaQXmePO5CbxICbdwwD+gBaYCBC9afvlcN8uXU6aNv8UH0EKdWxupXXRUxuX67X+ZYxoKH0lF
-	hkGtfAX1xv29xh79sv7YgRFekijdHxtEj4xYZZsJ3npdNb/wLnNuqNrU8=
-X-Google-Smtp-Source: AGHT+IF0WkM7ol8TvCZQeCXFiK6Z2+8SWQ7ztrJApvGRdCNnlG91bx7I0fcUKg7+JEWPpVYWKTJZyg==
-X-Received: by 2002:a05:6000:2c0c:b0:431:66a:cbcb with SMTP id ffacd0b85a97d-432c37c1eddmr12627111f8f.7.1768234569219;
-        Mon, 12 Jan 2026 08:16:09 -0800 (PST)
-Received: from localhost (194.red-95-127-93.dynamicip.rima-tde.net. [95.127.93.194])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-432bd0dade5sm39727073f8f.9.2026.01.12.08.16.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 12 Jan 2026 08:16:08 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: move SPDX-License-Identifier to the top of the file
-Date: Mon, 12 Jan 2026 17:16:06 +0100
-Message-ID: <20260112161607.55522-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WOpce43/"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1768238878;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=UYlFYflaiicRhHjlBUOwOc9xyibnzsVwIEkt7Cu3ORY=;
+	b=WOpce43/cbbJQI3z+CIQNgk4W0NVpcLZXRQget+9L7lmVQ5TlfigsifInL0Ilbm3NBEvz7
+	3gSnuTv/y2uzEOg+rhSqVoNrHdC6L3JhMnFs8SlpRz44dIVuBU+TrSE/PfwiWGZ5CWdR+L
+	zytkXDP3xDBSzIWetRoPhbOoBDVgCPo=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-387-UMTWbY2IMdG5Or4frSzUwg-1; Mon,
+ 12 Jan 2026 12:27:54 -0500
+X-MC-Unique: UMTWbY2IMdG5Or4frSzUwg-1
+X-Mimecast-MFC-AGG-ID: UMTWbY2IMdG5Or4frSzUwg_1768238873
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0124718002CF;
+	Mon, 12 Jan 2026 17:27:53 +0000 (UTC)
+Received: from [10.44.33.27] (unknown [10.44.33.27])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D29EF30001A2;
+	Mon, 12 Jan 2026 17:27:50 +0000 (UTC)
+Date: Mon, 12 Jan 2026 18:27:45 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Ding Hui <dinghui@sangfor.com.cn>
+cc: agk@redhat.com, snitzer@kernel.org, bmarzins@redhat.com, hch@lst.de, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] dm: remove fake timeout to avoid leak request
+In-Reply-To: <61d6db2d-30f8-4c20-8fca-60a0cb9f3baa@sangfor.com.cn>
+Message-ID: <a0f67a16-42fc-81ce-9ae8-1f14f5e10f7b@redhat.com>
+References: <20251220120350.10750-1-dinghui@sangfor.com.cn> <61d6db2d-30f8-4c20-8fca-60a0cb9f3baa@sangfor.com.cn>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmpathcmd/libmpathcmd.version         | 2 +-
- libmpathpersist/libmpathpersist.version | 2 +-
- libmpathutil/libmpathutil.version       | 2 +-
- libmpathutil/strbuf.c                   | 2 +-
- libmpathutil/strbuf.h                   | 2 +-
- libmultipath/libmultipath.version       | 2 +-
- multipathd/multipathc.c                 | 2 +-
- tests/cli.c                             | 3 +--
- tests/devt.c                            | 3 +--
- tests/mapinfo.c                         | 2 +-
- tests/mpathvalid.c                      | 3 +--
- tests/strbuf.c                          | 2 +-
- tests/sysfs.c                           | 2 +-
- tests/vpd.c                             | 2 +-
- 14 files changed, 14 insertions(+), 17 deletions(-)
 
-diff --git a/libmpathcmd/libmpathcmd.version b/libmpathcmd/libmpathcmd.version
-index 81bdb2b7..e672755a 100644
---- a/libmpathcmd/libmpathcmd.version
-+++ b/libmpathcmd/libmpathcmd.version
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  *
-  * libmpathcmd ABI
-  *
-diff --git a/libmpathpersist/libmpathpersist.version b/libmpathpersist/libmpathpersist.version
-index e486c5cd..28350417 100644
---- a/libmpathpersist/libmpathpersist.version
-+++ b/libmpathpersist/libmpathpersist.version
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  *
-  * libmpathpersist ABI
-  *
-diff --git a/libmpathutil/libmpathutil.version b/libmpathutil/libmpathutil.version
-index e0e9ffd7..fe88ca31 100644
---- a/libmpathutil/libmpathutil.version
-+++ b/libmpathutil/libmpathutil.version
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  *
-  * libmultipath ABI (libmpathutil part)
-  *
-diff --git a/libmpathutil/strbuf.c b/libmpathutil/strbuf.c
-index 491a343a..3ff1413b 100644
---- a/libmpathutil/strbuf.c
-+++ b/libmpathutil/strbuf.c
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2021 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- #include <inttypes.h>
- #include <stdint.h>
-diff --git a/libmpathutil/strbuf.h b/libmpathutil/strbuf.h
-index 790dc233..44818431 100644
---- a/libmpathutil/strbuf.h
-+++ b/libmpathutil/strbuf.h
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2021 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- #ifndef STRBUF_H_INCLUDED
- #define STRBUF_H_INCLUDED
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 3eee67a8..158e7c50 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  *
-  * libmultipath ABI
-  *
-diff --git a/multipathd/multipathc.c b/multipathd/multipathc.c
-index 38f2d6a3..cb3d6f87 100644
---- a/multipathd/multipathc.c
-+++ b/multipathd/multipathc.c
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-3.0-or-later
- /*
-  * Copyright (c) 2022 SUSE LLC
-- * SPDX-License-Identifier: GPL-3.0-or-later
-  */
- #include <string.h>
- #include <stdio.h>
-diff --git a/tests/cli.c b/tests/cli.c
-index f008d26b..fbcca095 100644
---- a/tests/cli.c
-+++ b/tests/cli.c
-@@ -1,7 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 Martin Wilck, SUSE
-- *
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- #include <stdbool.h>
- #include <stdarg.h>
-diff --git a/tests/devt.c b/tests/devt.c
-index 3b322df9..711947cb 100644
---- a/tests/devt.c
-+++ b/tests/devt.c
-@@ -1,7 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 Martin Wilck, SUSE
-- *
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- #include <stdbool.h>
- #include <stdarg.h>
-diff --git a/tests/mapinfo.c b/tests/mapinfo.c
-index d8461b48..12540f9f 100644
---- a/tests/mapinfo.c
-+++ b/tests/mapinfo.c
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2024 Martin Wilck, SUSE
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- 
- /*
-diff --git a/tests/mpathvalid.c b/tests/mpathvalid.c
-index 1b060fe4..0a70c614 100644
---- a/tests/mpathvalid.c
-+++ b/tests/mpathvalid.c
-@@ -1,7 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /*
-  * Copyright (c) 2020 Benjamin Marzinski, Red Hat
-- *
-- * SPDX-License-Identifier: GPL-2.0-or-later
-  */
- #include <stdbool.h>
- #include <stdarg.h>
-diff --git a/tests/strbuf.c b/tests/strbuf.c
-index 06fa71c4..8d0beb80 100644
---- a/tests/strbuf.c
-+++ b/tests/strbuf.c
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-only
- /*
-  * Copyright (c) 2021 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-only
-  */
- 
- #define _GNU_SOURCE
-diff --git a/tests/sysfs.c b/tests/sysfs.c
-index 5f029427..a3c0a7f7 100644
---- a/tests/sysfs.c
-+++ b/tests/sysfs.c
-@@ -1,6 +1,6 @@
-+// SPDX-License-Identifier: GPL-2.0-only
- /*
-  * Copyright (c) 2021 SUSE LLC
-- * SPDX-License-Identifier: GPL-2.0-only
-  */
- 
- #define _GNU_SOURCE
-diff --git a/tests/vpd.c b/tests/vpd.c
-index 043b6aa7..c0da3769 100644
---- a/tests/vpd.c
-+++ b/tests/vpd.c
-@@ -1,4 +1,4 @@
--/* SPDX-License-Identifier: GPL-2.0-or-later */
-+// SPDX-License-Identifier: GPL-2.0-or-later
- /* Copyright (c) 2019 Martin Wilck, SUSE Linux GmbH, Nuremberg */
- 
- #define _GNU_SOURCE
--- 
-2.52.0
+
+On Mon, 12 Jan 2026, Ding Hui wrote:
+
+> Hi,
+> 
+> Sorry for this ping mail as there is no feedback from maintainers, just in
+> case the patch was forgotten somewhere.
+> 
+> And it has already received a Reviewed-by from Christoph last month.
+
+Hi
+
+I committed the patch - it is in the linux-dm git, branch for-next.
+
+Mikulas
+
+> On 2025/12/20 20:03, Ding Hui wrote:
+> > Since commit 15f73f5b3e59 ("blk-mq: move failure injection out of
+> > blk_mq_complete_request"), drivers are responsible for calling
+> > blk_should_fake_timeout() at appropriate code paths and opportunities.
+> > 
+> > However, the dm driver does not implement its own timeout handler and
+> > relies on the timeout handling of its slave devices.
+> > 
+> > If an io-timeout-fail error is injected to a dm device, the request
+> > will be leaked and never completed, causing tasks to hang indefinitely.
+> > 
+> > Reproduce:
+> > 1. prepare dm which has iscsi slave device
+> > 2. inject io-timeout-fail to dm
+> >     echo 1 >/sys/class/block/dm-0/io-timeout-fail
+> >     echo 100 >/sys/kernel/debug/fail_io_timeout/probability
+> >     echo 10 >/sys/kernel/debug/fail_io_timeout/times
+> > 3. read/write dm
+> > 4. iscsiadm -m node -u
+> > 
+> > Result: hang task like below
+> > [  862.243768] INFO: task kworker/u514:2:151 blocked for more than 122
+> > seconds.
+> > [  862.244133]       Tainted: G            E       6.19.0-rc1+ #51
+> > [  862.244337] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables
+> > this message.
+> > [  862.244718] task:kworker/u514:2  state:D stack:0     pid:151   tgid:151
+> > ppid:2      task_flags:0x4288060 flags:0x00080000
+> > [  862.245024] Workqueue: iscsi_ctrl_3:1 __iscsi_unbind_session
+> > [scsi_transport_iscsi]
+> > [  862.245264] Call Trace:
+> > [  862.245587]  <TASK>
+> > [  862.245814]  __schedule+0x810/0x15c0
+> > [  862.246557]  schedule+0x69/0x180
+> > [  862.246760]  blk_mq_freeze_queue_wait+0xde/0x120
+> > [  862.247688]  elevator_change+0x16d/0x460
+> > [  862.247893]  elevator_set_none+0x87/0xf0
+> > [  862.248798]  blk_unregister_queue+0x12e/0x2a0
+> > [  862.248995]  __del_gendisk+0x231/0x7e0
+> > [  862.250143]  del_gendisk+0x12f/0x1d0
+> > [  862.250339]  sd_remove+0x85/0x130 [sd_mod]
+> > [  862.250650]  device_release_driver_internal+0x36d/0x530
+> > [  862.250849]  bus_remove_device+0x1dd/0x3f0
+> > [  862.251042]  device_del+0x38a/0x930
+> > [  862.252095]  __scsi_remove_device+0x293/0x360
+> > [  862.252291]  scsi_remove_target+0x486/0x760
+> > [  862.252654]  __iscsi_unbind_session+0x18a/0x3e0 [scsi_transport_iscsi]
+> > [  862.252886]  process_one_work+0x633/0xe50
+> > [  862.253101]  worker_thread+0x6df/0xf10
+> > [  862.253647]  kthread+0x36d/0x720
+> > [  862.254533]  ret_from_fork+0x2a6/0x470
+> > [  862.255852]  ret_from_fork_asm+0x1a/0x30
+> > [  862.256037]  </TASK>
+> > 
+> > Remove the blk_should_fake_timeout() check from dm, as dm has no
+> > native timeout handling and should not attempt to fake timeouts.
+> > 
+> > Signed-off-by: Ding Hui <dinghui@sangfor.com.cn>
+> > ---
+> >   drivers/md/dm-rq.c | 3 +--
+> >   1 file changed, 1 insertion(+), 2 deletions(-)
+> > 
+> > diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+> > index a6ca92049c10..5e0854669614 100644
+> > --- a/drivers/md/dm-rq.c
+> > +++ b/drivers/md/dm-rq.c
+> > @@ -278,8 +278,7 @@ static void dm_complete_request(struct request *rq,
+> > blk_status_t error)
+> >   	struct dm_rq_target_io *tio = tio_from_request(rq);
+> >     	tio->error = error;
+> > -	if (likely(!blk_should_fake_timeout(rq->q)))
+> > -		blk_mq_complete_request(rq);
+> > +	blk_mq_complete_request(rq);
+> >   }
+> >     /*
+> 
+> -- 
+> Thanks,
+> - Ding Hui
+> 
 
