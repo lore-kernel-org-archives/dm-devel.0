@@ -1,145 +1,181 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA25A2FB0B3
-	for <dm-devel@lists.linux.dev>; Tue, 13 Jan 2026 20:56:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E760B35FF58
+	for <dm-devel@lists.linux.dev>; Wed, 14 Jan 2026 07:27:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768337809; cv=none; b=AINxP5wXScrxQLAp3tNYzlh3dOPKGjtuAMHRhteMeekyVB2TIbNL+fjCXdK5C0WdgnpIqNt1NshSSFtEmy9QgssckgBk62fnoqKLjM759v3ifihL7asRrZ6OmuhO9I/FBmAOMXsXHC18GndGgCQ0zjzxiL0bUOPazSQnFKoRV8M=
+	t=1768375651; cv=none; b=mdoCisu0ckiO7dMME59VvW2EXUn0gpBbvu4SRYjsfDxJNkG4B+mJZRR4qoZjVePDrejUI2rTuWkX+lmdQmg1cZO/NaKj5s2KA2nVkmx2GQBTdI4pCbi77IPXOr7P1TaWAhKdITjj+67+SeXLxc3ZXNuLuFu2KJTYZOGIyTYH+dg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768337809; c=relaxed/simple;
-	bh=V8h6UZgnim+7f+g5QSpKEbZrs4Btx1Cr1341cXskVkg=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=kNRuC7Q/Ua8TBYzZhV8xBpnU3x+LZHRD38nLoKN3qLWKh8FBUIqdT9W8N+ZIM2hwB5kf7yWS1UK44M+CdNxiX+Choy1n/n6vCMlD/suFHydQehI922WV21MSDuTL54Bl++TcD50KXqjFOc0sP6V5XV0cQP2ZzxPikOIHpNzwgf8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fQzNZ51T; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1768375651; c=relaxed/simple;
+	bh=DQUeirNpPP89aLFHeqsLAGeTASvH8cy8TfogQVOev1c=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=ZZv+Oi0GBGLF4bdaDGf143B6OBc8Xx2olf8tODFA08H0DF8fVbOGVncVAkUJJ2HM7kNYmAs50i+kmyjIh7XS1i5AzC3Im+ChK1xWq0sEv+aNq+OMxlsP03oOQXo85j5pmStMeVOJnOKxVSexhOpM9j5kK7EFMIpp03iEAmlPMPk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=XVfcB7lL; arc=none smtp.client-ip=209.85.221.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fQzNZ51T"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1768337806;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=pWzBiBUP/iRy4a1krobDb24CcVEQNe9zusviagmjDQc=;
-	b=fQzNZ51Ta2CjKjANi6+QwnjvkyeSiCVUTu+oRIZlzBD/uzdMLrw/ey+pcoy2MTlN4hcgXX
-	jvY/1o5GVznvNY4NrloZ4z00hQMWOWqhy2jgKk5sghrWggT9X/bl960mcW1xoRkGwyGwt1
-	/m+TWdMCqlKTvxhPaJ/bbnFocInWsUw=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-540-Te5iGk02PTuC4fZCHgGZRw-1; Tue,
- 13 Jan 2026 15:56:44 -0500
-X-MC-Unique: Te5iGk02PTuC4fZCHgGZRw-1
-X-Mimecast-MFC-AGG-ID: Te5iGk02PTuC4fZCHgGZRw_1768337804
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C4CC4180047F;
-	Tue, 13 Jan 2026 20:56:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 639D718001D5;
-	Tue, 13 Jan 2026 20:56:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 60DKugC13277309
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 13 Jan 2026 15:56:42 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 60DKufxP3277308;
-	Tue, 13 Jan 2026 15:56:41 -0500
-Date: Tue, 13 Jan 2026 15:56:41 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: dm-devel@lists.linux.dev,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH 0/9] multipath-tools: more small fixes
-Message-ID: <aWaxif6-mcbwq88d@redhat.com>
-References: <20260109183907.201250-1-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="XVfcB7lL"
+Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-431048c4068so315077f8f.1
+        for <dm-devel@lists.linux.dev>; Tue, 13 Jan 2026 23:27:25 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1768375643; x=1768980443; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Iatfbkb039XtZtG7yO5eMvoMHygvxkVJOdhG6yXVCuE=;
+        b=XVfcB7lL+v9es3grZKFiIHM/hEYcoVkk7ccaGaxtbBZ7xq2uH48+86YUN6oQ4XcXvG
+         ngMlFV41Gps+1uTRmHsmpJzVkNCmi6zSxWn+TDVMAhc1QViKcBnsLG/PlidmdWIkOT4a
+         AKPWWVRKuAV97ccOXcta7Re2/Ty8Ol4/LwfS+YMiOdfwsymKYL9n96rbluflkNY/tD8E
+         xqTn4kREBuClJwK+l2KgDc2r5YGEpOXfWag5K0MeqLXCSlowH8TPSNpTbnt8KtgxMxLj
+         nMHXlLodDgENskpIeX5lq4ILYfTCRYbz7a8T2u7wK8dY04+TsREaLB6eWi6lpzpeOvvt
+         XY7Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1768375643; x=1768980443;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=Iatfbkb039XtZtG7yO5eMvoMHygvxkVJOdhG6yXVCuE=;
+        b=nm32DS+v22Mli5LwCZCihUr8NFGnHZaaaShPIAZJl7jb2pIxNKch5jT8ddIefIaKZW
+         73nDT0Dp3nwN2RD+3bsoSWOKrTIJ416wdJfCMnzTZpCKMlIZGVXLYEkjBFbKuCsTTBaO
+         rWQmi9O42eAs6Cz3+tfW1jHdapXR7Z6+tWI0ysQeVskATGuhlr1istV/l8kjZfh7Icj6
+         N+k3lmnfh82j2K3IDrRMXqbamlL+fDjl3pzddY1Z28Gj8mKFxCmrU6ycF4C78VHGNOtQ
+         0dLuX3ER80vJBxD3GjMQX4o64aA+4bgGBvoWz2TODKqfHjznR3URN86QGIuGggIWQ3V3
+         ctFQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWTPGOdl2griWud0ORvAHwN71eBD9qcZPaRG5f7XbbZmo+wPeO+Z6VvhA+48IHSJSkdiz3ylhH1Ng==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyfG+LjYKyQDijcpiwDc/xPT46tNjGmU4n7kfEmoXPfJH/imD4I
+	3r94a+Fh4aMVPnqpsCBDUeVLiaW6iaBNs2GrHu9/xw2kNSuiyC6h21OY
+X-Gm-Gg: AY/fxX6w7BcEclMkdsuxa4oFDlYrHm2nTOPFDmSdqfPFN56pqba07LjuMrP+//dPkM3
+	7MWEW5+flL7M1lndaqAWPor+0PC/XSPeYZSzWxoEnD/idHDxFg3o7MTvj+SYpl7g5T3kKCpL6/r
+	SX9D1ooukB+kCzK/5pe8hQztCrB4DAaIxuv2XKGbo1dsFbD9NyVvQ34sbn6fBaVXABRb/e8HUSX
+	sWIoaqrQbQQsKsB2wcwSFcZeHvxbgnz9Xt8fOoRkqvxCxjZAODoGLGjWqJ/D4d4tHJkDH9aCg+k
+	JrdBARu4c3X8X9UBpT1Z07Jl1xdUBwp0JQqdn08wm3jq9of7OIvYF4bHqKO+7mUFTXTyX5sQlxv
+	r2a0AxBrSW13KGB5Hh2oyvW6Xulh/Bgs0mjHGzqJzME+feLssQ2AtiO0qjIlJZ2WKaq+9qxRP4x
+	FNa9ATG+k=
+X-Received: by 2002:a05:6000:402c:b0:431:66a:cbda with SMTP id ffacd0b85a97d-43423d4709emr6998700f8f.0.1768375642965;
+        Tue, 13 Jan 2026 23:27:22 -0800 (PST)
+Received: from localhost ([212.73.77.104])
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-432bd0dacd1sm47532193f8f.4.2026.01.13.23.27.20
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 13 Jan 2026 23:27:22 -0800 (PST)
+From: Askar Safin <safinaskar@gmail.com>
+To: mpatocka@redhat.com
+Cc: Dell.Client.Kernel@dell.com,
+	agk@redhat.com,
+	brauner@kernel.org,
+	dm-devel@lists.linux.dev,
+	ebiggers@kernel.org,
+	kix@kix.es,
+	linux-block@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	linux-crypto@vger.kernel.org,
+	linux-lvm@lists.linux.dev,
+	linux-mm@kvack.org,
+	linux-pm@vger.kernel.org,
+	linux-raid@vger.kernel.org,
+	lvm-devel@lists.linux.dev,
+	milan@mazyland.cz,
+	msnitzer@redhat.com,
+	mzxreary@0pointer.de,
+	nphamcs@gmail.com,
+	pavel@ucw.cz,
+	rafael@kernel.org,
+	ryncsn@gmail.com,
+	torvalds@linux-foundation.org
+Subject: Re: [RFC PATCH 2/2] swsusp: make it possible to hibernate to device mapper devices
+Date: Wed, 14 Jan 2026 10:27:05 +0300
+Message-ID: <20260114072705.2798057-1-safinaskar@gmail.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <b32d0701-4399-9c5d-ecc8-071162df97a7@redhat.com>
+References: <b32d0701-4399-9c5d-ecc8-071162df97a7@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260109183907.201250-1-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: hhFJsJN24SKgMyIbRyJbNfyeJnybfBvooPGb5ZFvGUU_1768337804
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Fri, Jan 09, 2026 at 07:38:58PM +0100, Martin Wilck wrote:
-> 1 and 2 are minor cleanups. 
-> 
-> Patch 3-5 are follow-ups of the structure-freeing cleanup of my
-> previous patch series "Multipath-tools: various bug fixes".
-> The previous series tried to make sure that no freed "struct multipath"
-> objects are ever referenced by any "struct path" objects. To achieve
-> that, it nullified pp->mpp links from all paths in a struct multipath
-> when the latter was discarded in free_multipath(). This is only safe
-> if we make sure that the path referenced by a struct multipath (either
-> via mpp->paths or mpp->pg[i]->paths for some i), aren't freed before
-> the struct multipath itself. Ideally, the orphaning in free_multipath()
-> wouldn't need to happen if we'd make sure that pp->mpp is set *if and
-> only if* pp was referenced by mpp as explained above. I think we do
-> a decent job at that, but it's hard to tell with 100% confidence.
-> 
-> In order to improve confidence, patch 4 and 5 add some logging. It's now an
-> error if a path which is freed still links to a multipath map. Patch 3/5
-> eliminates a few cases where this could still happen, even though the path was
-> not member of the map. Patch 5 is mainly meant to debug cases pp->mpp was
-> either NULL or pointing to a different map. This shouldn't happen and I
-> haven't observed it in my testing so far.
-> 
-> Patch 6 avoids a strange behavior that multipathd has had forever - after
-> grouping paths, mpp->paths was freed. In most of our code, we assume that
-> mpp->paths and mpp->pg should reference the same set of path devices, and
-> we have update_mpp_paths() and sync_paths() to take care of it. But right
-> after path grouping, this is not the case. Subsequent invocations of
-> update_mpp_path() (usually via refresh_multipath()) will re-allocate and
-> fill the paths vector. This causes a lot of unnecessary heap operations.
-> 
-> Patch 7 and 8 are unrelated bug fixes which I came across lately.
-> 
-> Patch 9 is motivated by the recent patch "libmpathutil: use union for bitfield".
-> I did some further experiments with strict aliasing and found that the
-> multipath-tools code base just should not use it at all. Like the kernel,
-> we use between low-level data structures that don't comply with strict
-> aliasing rules. So like the kernel, we should disable strict aliasing.
-> That basically obsoletes "libmpathutil: use union for bitfield", but having
-> it doesn't hurt, either.
-> 
-> Interestingly, switching to -fno-strict-aliasing seems to have fixed [1],
-> which I'd unsuccessfully tried to fix with various methods before.
+Mikulas Patocka <mpatocka@redhat.com>:
+> Askar Safin requires swap and hibernation on the dm-integrity device mapper
+> target because he needs to protect his data.
 
-For the set:
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Now I see that your approach is valid. (But some small changes are needed.)
 
-> 
-> [1] https://github.com/opensvc/multipath-tools/issues/130
-> 
-> Martin Wilck (9):
->   libmultipath: reset pgindex in uninitialize_path()
->   libmultipath: clarify code in set_path_removed()
->   libmultipath: nullify pp->mpp before calling free_path()
->   libmultipath: log error when freeing path that refers to a map
->   libmultipath: sync_paths(): print message when fixing pp->mpp
->   libmultipath: don't free mpp->paths in group_paths()
->   libmultipath: warn only once in scsi_tmo_error_msg()
->   libmultipath: find_hwe(): fix gcc errors at high optimization levels
->   multipath-tools: compile with -fno-strict-aliasing
-> 
->  Makefile.inc               |  2 +-
->  libmultipath/config.c      | 13 ++++++++++---
->  libmultipath/discovery.c   |  3 +++
->  libmultipath/pgpolicies.c  |  2 --
->  libmultipath/structs.c     |  4 ++++
->  libmultipath/structs_vec.c | 26 +++++++++++++++++---------
->  tests/pgpolicy.c           |  7 +++++--
->  7 files changed, 40 insertions(+), 17 deletions(-)
-> 
-> -- 
-> 2.52.0
+[[ TL;DR: you approach is good. I kindly ask you to continue with this patch.
+Needed changes are in section "Needed changes". ]]
 
+Let me explain why I initially rejected your patch and why now I think it is good.
+
+
+= Why I rejected =
+
+In your patch "notify_swap_device" call located before "pm_restrict_gfp_mask".
+
+But "pm_restrict_gfp_mask" is call, which forbids further swapping. I. e.
+we still can swap till "pm_restrict_gfp_mask" call!
+
+Thus "notify_swap_device" should be moved after "pm_restrict_gfp_mask" call.
+
+But then I thought about more complex storage hierarchies. For example,
+swap on top of some dm device on top of loop device on top of some filesystem
+on top of some another dm device, etc.
+
+If we have such hierarchy, then hibernating dm devices should be intertwined
+with freezing of filesystems, which happens in "filesystems_freeze" call.
+
+But "filesystems_freeze" call located before "pm_restrict_gfp_mask" call, so
+here we got contradiction.
+
+In other words, we should satisfy this 3 things at the same time:
+
+- Hibernating of dm devices should happen inside "filesystems_freeze" call
+intermixed with freezing of filesystems
+- Hibernating of dm devices should happen after "pm_restrict_gfp_mask" call
+- "pm_restrict_gfp_mask" is located after "filesystems_freeze" call in current
+kernel
+
+These 3 points obviously contradict to each other.
+
+So in this point I gave up.
+
+The only remaining solution (as I thought at that time) was to move
+"filesystems_freeze" after "pm_restrict_gfp_mask" call (or to move
+"pm_restrict_gfp_mask" before "filesystems_freeze").
+
+But:
+- Freezing of filesystem might require memory. It is bad idea to call
+"filesystems_freeze" after we forbid to swap
+- This would be pretty big change to the kernel. I'm not sure that my
+small use case justifies such change
+
+So in this point I totally gave up.
+
+
+= Why now I think your patch is good =
+
+But then I found this your email:
+https://lore.kernel.org/all/3f3d871a-6a86-354f-f83d-a871793a4a47@redhat.com/ .
+
+And now I see that complex hierarchies, such as described above, are not
+supported anyway!
+
+This fully ruins my argument above.
+
+And this means that your patch in fact works!
+
+
+= Needed changes =
+
+Please, move "notify_swap_device" after "pm_restrict_gfp_mask".
+
+Also: you introduced new operation to target_type: hibernate.
+I'm not sure we need this operation, we already have presuspend
+and postsuspend. In my personal hacky patch I simply added
+"dm_bufio_client_reset" to the end of "dm_integrity_postsuspend",
+and it worked. But I'm not sure about this point, i. e. if
+you think that we need "hibernate", then go with it.
+
+
+-- 
+Askar Safin
