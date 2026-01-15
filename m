@@ -1,95 +1,102 @@
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F31D30B501
-	for <dm-devel@lists.linux.dev>; Thu, 15 Jan 2026 21:38:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B35AD32B9BD
+	for <dm-devel@lists.linux.dev>; Thu, 15 Jan 2026 21:52:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768513100; cv=none; b=OXuBRLlhJrAfLPvha72iqmrHPSh2mg7j0L5oviJYXtHjWPh4qIR+nmfHfG2Hu0o00KI/e3oDZ/gn7J5MbjcUCUogfjN1wL7WOVIhviJoIM9kvbYbNg51sd8Drm3xXH7W0cWtyBwUnyMZ38oJSWXR3I7xKjh9HZKXIks9TyYKeCk=
+	t=1768513926; cv=none; b=HNTjjOEK3P2qDhwhlbS7W5Q4qz26jWWUiAI9Or59ASXfdrtkhmwPStnf/u9/t6GTrg+rwvGhAFfUMUag157HA3ub5l0Po84oAuKis5pZPTntqngcw1LUNJUWGCUCcVWKruOAu/PAWIaCpiJ/kCRIsHQYm3ueZ/JrmWhkQH+YW3M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768513100; c=relaxed/simple;
-	bh=m9P223K4ndO21TRmHjkqIe0258b5/ga1xzV0jmWff1o=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=I3qZVn/j6nXb4lz7Vd36Ue2bOcO8+Yl+OF3Vmb+NMkNAOhUVuDNuFobTn4PmDnVv3jG1uORLsY6mbeVtK7y+7ERJxdpKglUynHG0fx/+WHUfMUMdbOtTxOL0v2O0Aa2YYbQg7YVeslF7qyEW6sKJwBagv1IbhtzuJKzJxVHCuBA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jUqMumTM; arc=none smtp.client-ip=209.85.128.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1768513926; c=relaxed/simple;
+	bh=zWYsgi7X8olDWOiqd0n2ARsVZVSoeAf0u1dBnQ2jc7I=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=qncukY8iQ0LR3YBr9LD7oABJrZIAzMbZYsUPuM1PTRK0F2Gm5RgOE/suN7HRgzWQIOiRj38rOG53bqzld4UjbQJem+3KRF9ZQKaP7BV1c6GtH52EdQYLmQl+UuEOVWgMeY5qx0e2U8fYIlvGI2yH1pouKriJbX/hmHX70052TLQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=oOlaRcLt; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=oOlaRcLt; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jUqMumTM"
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-47ee57c478eso1029295e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 15 Jan 2026 13:38:18 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1768513097; x=1769117897; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=m9P223K4ndO21TRmHjkqIe0258b5/ga1xzV0jmWff1o=;
-        b=jUqMumTM6FedD46XfmouRIBkAQBtgprUJdjfUxMGIh5+gnFxGZ+r+T5H4JH3RcjaOz
-         CWe1riKQUVQ4Onq42h1B7R8hDz2IaBxrXQdyGK/B+ZRCuv70t2WcWV/S65jPcCC+0HLr
-         nuif1iUr/3ksW+zuUIHTJub30tgHWwHjUp95M53Pt4NX/clukMl3B1eddGBw9hdJrGRs
-         kgPwu+ubFX+YmtbP2lXzodzccL5w5vVLtiHyZZ+KdWR7uvDhtQdIG7XIgKeXFtZ/A2R9
-         Ww1yQ+H9HieBEWYpfiwDqysf2mL7dwGb5+OOZMWdpgCKVgi3RrEuBJqpjkKbi42yMrx0
-         onTg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768513097; x=1769117897;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=m9P223K4ndO21TRmHjkqIe0258b5/ga1xzV0jmWff1o=;
-        b=gXziU9RZkvmW6O6RF29cBsnb4a8tm4L5yzhCdnm96kOgueofs9vjLl3vIyn91FVUoa
-         cbrtQ6MiobVNUl4OgcxAKtc8MpDwI9RKDUl5fUVIk5pKC9wAm19Yb3vYaU09ZOZIIAA8
-         1IPMXh9Pt0FZxuVcLm9FXvXTllG9QAeHe2fBNUkKOLTw7UUYGFr/+ATxvLpMBc++4o4/
-         SHpKGUgesPVdUtvHze6Ig0DKvz4HtJncsLNzVjN13/NTv5Y8O0JjFlxviEPpcQLWRb6p
-         4Sl+oLnJp6Yzs0iG2o+nqiW08Y/teyRs2IG/ul1/TWIPyuyN5w2F+zZEyuVajbpQ+Ix7
-         B62w==
-X-Forwarded-Encrypted: i=1; AJvYcCVigdhEsIiJHfTpjUyDyhe0pXfYYwjWILyPrlFZQ6eIgNw4Hj1DKRibjf/datx8L1T0dGABaMAgVQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy4U7ZG16p2dkc6wwPHgii0bKMpiJf8rP1qVzeBhJy8FZLX5tDv
-	5gt2l9DEp1RXVRZnPQbZ2THlod6pOgDlfcehmI7LWaDTvOcDNAZZCZ00jciykgU=
-X-Gm-Gg: AY/fxX44LcGp/jKNUMpUy71SU712zNy3uJ1ScmbOBvTK2vF2Ycgmwr3yFFL6NyuxYO4
-	lHfXwVEwGsZHneLZDb9b8SUVgch9KMZmcM4V8uHa8RkRSQ1ivd6Fdl9bDoFa/qwPXuENINDU+TI
-	53q8TTxhmaBWZXTMTKmOdOvuquMwsoKOdVglJtWdS8nY5LrvtKpV478w4Pig3x5lFeaJpgrQ0Am
-	qcrQN5uhgMAcyRGwnCXqGCH24a+E+PfSuv6OzA0a3JL2R/tVA/SSTuKCupRdSi7dtqbHg8WDHw5
-	Rm3ZAzapg/mPK59ilrj1IDDXWJrZ4z1nlNkVUADktCzmzQ/0TkkHjEF7jg5m7j2wxyIwChz/2Kx
-	TcwJPsazIkQvw2I7exKY1oCUfQTM9F0BwjjplWxh6iKFXY2jxdwnMgb+ELFHJBveWHXKIDvfVkK
-	haQULxfHHeksSdnaNReGUgsYklmLBTUKXSPlDfulpqW5tr36nMn21VvNE=
-X-Received: by 2002:a05:600c:64cf:b0:477:a6f1:499d with SMTP id 5b1f17b1804b1-4801e33c5ecmr6708125e9.3.1768513096700;
-        Thu, 15 Jan 2026 13:38:16 -0800 (PST)
-Received: from localhost (198.red-80-39-149.dynamicip.rima-tde.net. [80.39.149.198])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4801ea09747sm3360745e9.7.2026.01.15.13.38.15
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 15 Jan 2026 13:38:16 -0800 (PST)
-Message-ID: <fdbdda06-c36b-47f5-9492-9c4cd1c4035f@gmail.com>
-Date: Thu, 15 Jan 2026 22:38:15 +0100
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="oOlaRcLt";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="oOlaRcLt"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id E73A55BCCE;
+	Thu, 15 Jan 2026 21:52:02 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1768513922; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=zWYsgi7X8olDWOiqd0n2ARsVZVSoeAf0u1dBnQ2jc7I=;
+	b=oOlaRcLtPwOk1n2k0uuulD+e/Lt2kBXtA313lejjF2lOA1vqpoF6UdZ9My3UZR0FIpJQhH
+	G3Gm03Go3szYfk5gVO0KVqrbw9O+X6D45lz2z8AfeL5OHdnwYcOZQoVoQSWwbhm6uU2QPb
+	XS+r9GxwyPaVZFEcZrEgyNjYqqafT2Y=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1768513922; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=zWYsgi7X8olDWOiqd0n2ARsVZVSoeAf0u1dBnQ2jc7I=;
+	b=oOlaRcLtPwOk1n2k0uuulD+e/Lt2kBXtA313lejjF2lOA1vqpoF6UdZ9My3UZR0FIpJQhH
+	G3Gm03Go3szYfk5gVO0KVqrbw9O+X6D45lz2z8AfeL5OHdnwYcOZQoVoQSWwbhm6uU2QPb
+	XS+r9GxwyPaVZFEcZrEgyNjYqqafT2Y=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id C65723EA63;
+	Thu, 15 Jan 2026 21:52:02 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 0mq1LoJhaWlZAgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 15 Jan 2026 21:52:02 +0000
+Message-ID: <8a8b3322a7d10f754337b26760c208d165e0189c.camel@suse.com>
+Subject: Re: [PATCH v3 21/26] kpartx: fix some memory leaks
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Date: Thu, 15 Jan 2026 22:52:02 +0100
+In-Reply-To: <20260107201826.323977-22-mwilck@suse.com>
+References: <20260107201826.323977-1-mwilck@suse.com>
+	 <20260107201826.323977-22-mwilck@suse.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH] multipath-tools: move SPDX-License-Identifier to the top
- of the file
-To: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM_DEVEL-ML <dm-devel@lists.linux.dev>
-References: <20260112161607.55522-1-xose.vazquez@gmail.com>
- <1013360c887d3d62b30d6baa832c653ee1456a10.camel@suse.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <1013360c887d3d62b30d6baa832c653ee1456a10.camel@suse.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Spam-Score: -4.29
+X-Spamd-Result: default: False [-4.29 / 50.00];
+	BAYES_HAM(-2.99)[99.96%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.998];
+	MIME_GOOD(-0.10)[text/plain];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_HAS_DN(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid]
+X-Spam-Level: 
+X-Spam-Flag: NO
 
-On 1/15/26 10:25 PM, Martin Wilck wrote:
+On Wed, 2026-01-07 at 21:18 +0100, Martin Wilck wrote:
+> These leaks were reported by LeakSanitizer.
 
-> It turns out that the linker doesn't appreciate C++-style comments in
-> linker scripts. I'll fix that, but next time please compile-test your
-> patches.
+Coverity showed that this patch was wrong. I'll resend.
 
-It seemed trivial, I'm sorry.
-
-> I'm not sure if the license tag really needs to be in the
-> first line of every file. I only found the recommendation to
-> put it "near the top". Anyway,
-
-https://www.kernel.org/doc/html/latest/process/license-rules.html#license-identifier-syntax
+Martin
