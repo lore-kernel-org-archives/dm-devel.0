@@ -1,77 +1,46 @@
-Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from canpmsgout03.his.huawei.com (canpmsgout03.his.huawei.com [113.46.200.218])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 410B62E718B
-	for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 11:33:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83F88376BCC
+	for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 12:11:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.218
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768563187; cv=none; b=auaiFHR2TulfUx00MJwzBQxpgHQ8SaqNx+AlJ0kGmixSlAQ57+f3ZJu1utHECAL0I+wq5ENp4lAZE/9Lo9ibDF2j2nyqPeAE7wxlitmf322Gjp0Biv0Y0MmwposYe8KNXLkIWYTBoUgQC7vjJ+9+Ir57qzBFkbz/ZUmw50gV7So=
+	t=1768565493; cv=none; b=hq6s2e1lFQwEa0uU36rSfL0EbpbuO7zxX2iRxLydTn6sJfwNNtS8pvw1AcO0D3jpGeknTi9hlx0/J+ak60GtlK74hA0rFf0mCniDy/WtFloLH3c2QlPH/GRIRjMnvQP7HIWwjSF3NmS4fHCz68YWHB8h9P9Hi0Yr1/nTcTf/mb8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768563187; c=relaxed/simple;
-	bh=cIRTiOOwWh2lAqblFKSv6KTTG3uNVoJXppJBelYcMtM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Iqmz1b5TZTVLMLK4NYdfabg+Oz8LxdaDAGejzJ0F/hZNJXVo0FryNjWl6Qf+X9nL27BpVmHtOMh9tgmuKhuq3GQHjVBmPPWOSbfoP9ftG/lK9h6CseT7nE+ZM34qlyu4ShQLynxhDUMZFV2xfBSadOA9vNCJWWjETOdPZHb+Oa4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=OQukilxf; arc=none smtp.client-ip=209.85.221.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1768565493; c=relaxed/simple;
+	bh=/Yd34El++CCt08toxVD8Oe+2GJdlGtPi5iTl12UsvJg=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Arsbd1av8X0+rnuafU4i+fOTyDJR9mX+oO4eDWLl4qgGC8PiGV2bu2CcT/IQuTfump5sCiNI6ZnR6DtcMCeFPMBRs5mF43ff0t6GDO/72XrpVWcV9Q+mlvOM9fWXEZOpfS5RWpO9YnT+8QallK+8hoQJnkpvH4szkDwcJK+vwOs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=D8HfNTRW; arc=none smtp.client-ip=113.46.200.218
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="OQukilxf"
-Received: by mail-wr1-f43.google.com with SMTP id ffacd0b85a97d-4327778df7fso1140383f8f.3
-        for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 03:33:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1768563185; x=1769167985; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=qyZ3gs+mpRSEhX8E1iOtSjmzhodyNNNWLFWBqFIw2sg=;
-        b=OQukilxf47yvHYgFfHSjO5WHBAgm1jghDFLc5ZSUgP2WaFkRuDXT02b4p1cZUY7oAR
-         fK6ldbicsFkhZIGozFnO2FVZsH7+JGfbEjDQkYd6LMxKnbsXo7/GjuBBsLrcHSSvgJ1d
-         AH/5LBSTUgdvARk1j54kh9HFdJDd2KplWd9uR7JvTg9pD0uRIVtn9dgYYJw5goXXVswv
-         Oc2+ha8F8GWYMnwtFKEMX4+BV8Xpc+iYOlKxZ+yLiM4N6iriHXuQpIaaf7v373biKbbv
-         IjtlbIvVPdTPQcy2JWqKMEGdWC5o2zu/SXyTSNvdQqJ6qQ8w/tP6hcNqY2nJ+JbnSYS8
-         d4qg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768563185; x=1769167985;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=qyZ3gs+mpRSEhX8E1iOtSjmzhodyNNNWLFWBqFIw2sg=;
-        b=pUt28EqnlsrpSJ/0KIREFvgSyXnZo6smgrxvsjKqSAS6rpucRimyYzJ3q6JXnohkMX
-         zKrodEF/Gxj62vIue+bx3sFJ6kp0LXmVx/Ushm4Xoz5kWtCYt4vvLopwiXWrhjnKjgi6
-         GeF3ExQxiulf8mJ4fJTaFAQ+lCigGrTONrFVaFnLt9HJxFLRPSiYOuHZMl4zb1BqoxLw
-         +qCPXx0YzfLHO63yOLqEa3DDawzd+zcS2rvbaEApnNxwifgfSVLC+Nl4cdzRwoCYXj0n
-         54/IrdMfzsjCBejXnkkhXjxa/GiVNkFEYKykKAz2Q8eduFBWTiBBzBu8116NADPD4NE9
-         GbIA==
-X-Forwarded-Encrypted: i=1; AJvYcCUxLlMkY0MV+B7XLyGJWejUTc+NW60wHL7jQOJc3XQuHEwMI0TWVbkiUTt6fy+Mz+BdhWyvgEwBgA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyOArKYNNGZPWK3kEpr4FbY9i2vt2yF+WN4I8RAckmxYkb7+96g
-	Qg76dV/YNSFF37OxZ04sSSqd5Kic6HBF9pbwAG44HCrIcHn+3a20HR7AJ3pBshsLhUDjrNsnIDO
-	WQK5k
-X-Gm-Gg: AY/fxX6HIDzqzVRZeeIzlHYQ6OqdhII/ku7I1+p+RQUk2BdlvjRbinG/GqzMbkWyy2Z
-	/zPyi98zIgkQh2Fj7vsOWtEooIvElTqlIIEtFNULl59eRenxwQL0MqoTFCAoRCIpJ0YFpA0uNKy
-	grmJgfrFabN3eCixo5Gulrf+rj/Cn0xGkqic7UcNECB6pR64ht6H8pjfIw2xohz2JPJ/59nm1U8
-	Gmd3c5eROxPgv0SiFTmd8ZlGeeNgugirL4K8HCqprJ4ne75O4CAAER8WarcQ6aTCSQ4+0bBI4Mc
-	RDmsCe2Xmu9JhOc7Ii49VyVEtDnREtgV6TM4TcCXarr4Fds/86MrW8dPXp5Toi5y4KOymodKleu
-	Ot0MG3rqyvconniC37ImcrPHT1ft6io23YFVVV8wdo9g4fKGxIqbgb2G2xt5kcW7FgFOy9BH2bA
-	sj99krC69ZIJhasuAxuf0Nfh/5ELjQBRzTGs1wBF811K6ZBYqhhc8PBOSNihKL20OP9tVQfgg7S
-	w==
-X-Received: by 2002:a05:6000:4009:b0:430:f985:a7b2 with SMTP id ffacd0b85a97d-4356a060d4fmr2960810f8f.51.1768563184572;
-        Fri, 16 Jan 2026 03:33:04 -0800 (PST)
-Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-4356997e664sm4271604f8f.30.2026.01.16.03.33.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 16 Jan 2026 03:33:04 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: Martin Wilck <mwilck@suse.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH 5/5] Makefiles: add "OPT=" make parameter
-Date: Fri, 16 Jan 2026 12:30:42 +0100
-Message-ID: <20260116113042.140719-6-mwilck@suse.com>
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="D8HfNTRW"
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=nYmaYPLH2er8UG6enM6EeoVcPjWY0mCAQvIGP55CyfE=;
+	b=D8HfNTRWRHbiGPmsG/tQ7VXp1tMWTofz8Dn/cJfF1qpGhS1wa8yV0OOln/hjjAMcJO3RehEqi
+	tL24dhTdZDzKFOWIKYnsLi04YNMThwIvKE91VVQxSa1JU5/7BhGT+1tP/UY+RHkdcgQ9pdAkPpO
+	tVjco/AUuApKBmy1L1yuDBs=
+Received: from mail.maildlp.com (unknown [172.19.163.0])
+	by canpmsgout03.his.huawei.com (SkyGuard) with ESMTPS id 4dszBZ3dXJzpStc;
+	Fri, 16 Jan 2026 20:07:50 +0800 (CST)
+Received: from kwepemk500005.china.huawei.com (unknown [7.202.194.90])
+	by mail.maildlp.com (Postfix) with ESMTPS id BD11D405AA;
+	Fri, 16 Jan 2026 20:11:27 +0800 (CST)
+Received: from huawei.com (10.50.85.155) by kwepemk500005.china.huawei.com
+ (7.202.194.90) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.1544.11; Fri, 16 Jan
+ 2026 20:11:27 +0800
+From: Zhihao Cheng <chengzhihao1@huawei.com>
+To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
+	<bmarzins@redhat.com>
+CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
+	<chengzhihao1@huawei.com>, <yangerkun@huawei.com>, <lilingfeng3@huawei.com>
+Subject: [PATCH] dm: pass origin bio's bdev to bio_alloc_clone
+Date: Fri, 16 Jan 2026 20:07:44 +0800
+Message-ID: <20260116120744.908987-1-chengzhihao1@huawei.com>
 X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20260116113042.140719-1-mwilck@suse.com>
-References: <20260116113042.140719-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -79,59 +48,51 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: kwepems500001.china.huawei.com (7.221.188.70) To
+ kwepemk500005.china.huawei.com (7.202.194.90)
 
-Our OPTFLAGS variable contains stack protection options which are
-intended to be overridable by distribution build scripts. When developers
-just want to experiment with optimization levels, they often just want
-to modify the `-O` level. Introduce a variable `OPT` that allows to do just
-that by passing e.g. `OPT=-O0` to the `make` command line.
+The origin bio carries blk-cgroup information which could be set from
+foreground(task_css(css) - wbc->wb->blkcg_css), so the blkcg won't
+control buffer io since commit ca522482e3eaf ("dm: pass NULL bdev to
+bio_alloc_clone"). The synchronous io is still under control by blkcg,
+because 'bio->bi_blkg' is set by io submitting task which has been
+added into 'cgroup.procs'.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
+Fix it by passing origin bio's bdev to bio_alloc_clone.
+
+Fetch a reproducer in [Link].
+
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=220985
+Fixes: ca522482e3eaf ("dm: pass NULL bdev to bio_alloc_clone")
+Signed-off-by: Zhihao Cheng <chengzhihao1@huawei.com>
 ---
- Makefile.inc | 5 ++++-
- README.md    | 6 ++++++
- 2 files changed, 10 insertions(+), 1 deletion(-)
+ drivers/md/dm.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 8356254..c6aa6ed 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -12,6 +12,9 @@
- # Use ASAN=1 on make command line to enable address sanitizer
- ASAN := 
- #
-+# Override on make command line if desired
-+OPT := -O2
-+
- # Readline library to use, libedit, libreadline, or empty
- # Caution: Using libreadline may make the multipathd binary undistributable,
- # see https://github.com/opensvc/multipath-tools/issues/36
-@@ -105,7 +108,7 @@ SYSTEMD_LIBDEPS := $(if $(SYSTEMD),$(if $(shell test $(SYSTEMD) -gt 209 && echo
- MODPROBE_UNIT := $(shell test "0$(SYSTEMD)" -lt 245 2>/dev/null || \
- 			echo "modprobe@dm_multipath.service")
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index b63279202260..e763e3b02a9f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -574,7 +574,8 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio, gfp_t g
+ 	struct dm_target_io *tio;
+ 	struct bio *clone;
  
--OPTFLAGS	:= -O2 -g $(STACKPROT) --param=ssp-buffer-size=4
-+OPTFLAGS	:= $(OPT) -g $(STACKPROT) --param=ssp-buffer-size=4
- 
- # Set WARN_ONLY=1 to avoid compilation erroring out due to warnings. Useful during development.
- WARN_ONLY       :=
-diff --git a/README.md b/README.md
-index 8ff139c..888998b 100644
---- a/README.md
-+++ b/README.md
-@@ -107,6 +107,12 @@ See "Passing standard compiler flags" below for an exception.
- The following variables can be passed to the `make` command line:
- 
-  * `V=1`: enable verbose build.
-+ * `OPT=`: set optimization flags. You may want to set `OPT="-O0"` for
-+   debugging, for example. The default is `-O2`. Note that it is also
-+   possible to set `OPTFLAGS`, which takes precedence over `OPT`. `OPTFLAGS`
-+   sets additional options by default, which are intended for distribution
-+   build environments to override. For quick customization of the optimization
-+   level, use `OPT`.
-  * `ASAN=1`: Enable
-    [AddressSanitizer](https://github.com/google/sanitizers/wiki/AddressSanitizerLeakSanitizer)
-    during build for debugging memory allocation. This is off by default.
+-	clone = bio_alloc_clone(NULL, bio, gfp_mask, &md->mempools->io_bs);
++	clone = bio_alloc_clone(bio->bi_bdev, bio,
++				gfp_mask, &md->mempools->io_bs);
+ 	if (unlikely(!clone))
+ 		return NULL;
+ 	tio = clone_to_tio(clone);
+@@ -623,7 +624,7 @@ static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
+ 		/* alloc_io() already initialized embedded clone */
+ 		clone = &tio->clone;
+ 	} else {
+-		clone = bio_alloc_clone(NULL, ci->bio, gfp_mask,
++		clone = bio_alloc_clone(ci->bio->bi_bdev, ci->bio, gfp_mask,
+ 					&md->mempools->bs);
+ 		if (!clone)
+ 			return NULL;
 -- 
 2.52.0
 
