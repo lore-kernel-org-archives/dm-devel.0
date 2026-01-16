@@ -1,74 +1,73 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB98B2E718B
-	for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 11:33:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DBC6334C30
+	for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 11:33:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768563183; cv=none; b=fXt2eo8s46dKpan9GgONQr3TF1JG8NCvfGTmycu5VYt3pQQjJoUmqyhNf0e/4Em3DMOVxO6xd46W7K6sP9cuVVfpG3N2uBR4dlrOuvUjpdidojXYGdCQTMKacFHM2Zx1DB5Dbg7QaZ3eSvNIP6gr0tKhx7HXDQfQXRBWUmPWQBI=
+	t=1768563184; cv=none; b=R9t9AzykurcGf03pjDHkoB50nQuHGNCDp+F4mrYh1SbRBoSvfamYS7Ah34iJ18mziE8pYEK6+OKZRs8TRAccKM0/Gq1U9VzOReb53Rr1KE9lMDCq4DwXu51lCOxUk9S6MxChNMOOJztqeqTy7rZKshwSy5yXDN3MdPkIZELztWA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768563183; c=relaxed/simple;
-	bh=74emLXp/+J+E10JcvFCb9XdwkaK2Xb1aJ33Ft+lgl/Q=;
+	s=arc-20240116; t=1768563184; c=relaxed/simple;
+	bh=zAh+pPhFJHXQQEq5mKPXyP0P8BSJg/0e4E+CsptPi0c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=G+1z2xk7dafstTKlT4o78QATHS3+JxL2GNhpSFR9+AHu4gZcs0ljYJw7O0sJ4boAxqZ3eKeLaRMUmWn5/0rjbKSxQPvwZvyaWfnHAvXN0GQcSWVxU2+qIiDJGVq9npkAC1WLIhWt/op82XnnHOv6w1Tqrt7pwIzriS3rV/Gyfv4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Nd4OFfxM; arc=none smtp.client-ip=209.85.221.47
+	 MIME-Version; b=NwJeIg3i5FsnuiInBxbxyyenwdrGk5VRUcmdMkfWqrCAtJAYcyNnyvQoytgwTsHBnzdCOb9WZUT/Qt0rA/Olye+NACp+kWvfrm5/sIFlDwx0Q7tOwGtydCNKuAzDxM4MY50CjnQsS34CmOxrijzFa6ZjAe0xbcSrnkBvMhLykww=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=NCRmIre1; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Nd4OFfxM"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-432d2c96215so1614320f8f.3
-        for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 03:33:01 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="NCRmIre1"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-4801bbbdb4aso8601245e9.1
+        for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 03:33:03 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1768563180; x=1769167980; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1768563181; x=1769167981; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=3SwlLpE2jsc3V4vniU50ENwYEylQ17t4SOkAhM9WbmI=;
-        b=Nd4OFfxM2FjJCnaFbo8yJxk8wGZkFcSiu5wOSnunpNh5vllnzJsmWnNyuGaXC7vFtR
-         +TfaFx/a54RAJTxpwIjJgw/DZ962/rRRuNCcZprAIqeYVDBkFyfWIag/P3vP2H4Wj1CB
-         in68cnCFspuFsQOqEXqpbqxV/BBKKdUNBkyTsNmQxIN+XbyGHnx+8YeeuUxChhMm8LbS
-         hirQnl3VlUnkLbCXzfWc1pZ9NjTnJ5DQFXSCThSdBTZYqZsGKNolIxmvo83kumeijmaH
-         2TDrZNNVmH4OPxWQv0HpufeDMY55v/enNzn+ReVMw4DNef8pVdg3bm+o2VOmL4dsOdbd
-         zn+g==
+        bh=qpEc4zeahjkzePqOaQKnLlfWFAo1r4kHKso4ivZ++I8=;
+        b=NCRmIre1qJZ0exc6qBJ1WWRS34hOxeQnfC3flm858dbg1NvbCgx7O5J3vhAD3+GGSO
+         wG+NYQ/KRfNq5wjP7blpC64yXJv5GgfEl2t7To2tzlb/Y1wMmwUljyaP+FucITKNu92/
+         7pfpvxbN3sa5zsr8y48NgilLpD0dcA04ThkUgrTNcxXxMK74rbCEYF0YhO/ubUSiJEWd
+         aWJ4n/JJCWBtovBpQyyhifqxz8hxEA+M1NT3+NqWAh515kDJAXQhqSmtrCa1bWJ6iT7+
+         WSMjN6NqSDy6oZTpnA+yi+ZtACHq81AR7H3tIfgOX3INptCTnHrzxbPnO+gi0iN7lR9Q
+         zf+Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768563180; x=1769167980;
+        d=1e100.net; s=20230601; t=1768563181; x=1769167981;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=3SwlLpE2jsc3V4vniU50ENwYEylQ17t4SOkAhM9WbmI=;
-        b=auXfQB3AsKo0a0XV6GGSDaSyy6FtgAOLb+SALhLaAw0NJBytoBrM+e1T02Gcqx+C3F
-         zwm1u/VV3wgm5BJQpa6Xytm8Rhw6eL02968/DR9bbQ94/YyNEc0Svv1prP7l0fHiNGhf
-         MDOo2UNWO77X/rAPEq+M6PYmqPS/+AS2f+UHYsfC5bigJAtlsQoZRJqiSPWkuFT1YeIN
-         sXBslZl3xMzoU7xS/D4m3YRrYAH4ObTJ3i+gg6hdgtx08OA1kG9GSA0uyhMzWJt/JqRX
-         VvgpIrN8P2x5+HgjOiTANrbulH+bSisrStn8WzZB1OsLIILZr7hDlfJntc/wJLYfolNs
-         ufJA==
-X-Forwarded-Encrypted: i=1; AJvYcCUxB6YoqT6TwV0PY+V1iPwT2slxC3RNVGFu/gtq87WKCL9MkuQaCYc6ydcIFfbD0PKBO7vVlTfctg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxI/13Kz1fE1EG6cU5fvRK8FWtRgHakvUMBxz1VOLSxuxnJ4L8Q
-	pPCzdiQxXLKo0EUS/Is4BMLk46VV+swGrmINeo6N8x4IRueKLrTMyiqhIPwf0+GJB4VW800VLKP
-	uhw3R
-X-Gm-Gg: AY/fxX6508mO5xrfPcijRrYxlHm8lbDNRi3klFscM1WopMmm3Yi9lUyiHK6fD9VCajL
-	mRAt91LnGyqkjr6fbkhe1z/tDstvRzYkg7I+liFQd64JyKcfzGJCRekLpdUFASkenka8LADO52w
-	1jze6Pa79Y19YKXVb1DPBeGw61FLJSiKK/2UadgL8qkPA2Igkyx30rWqxmjBEuDZEIAOLiUE0vE
-	BaEOQwNan9o9yfZKU+ILYVELfCPDjlgWsl8uWZ98oE3D7c01Oj7tbvH+HECfuoaH61PbBGtdMO7
-	nciYXBz98UknjDPjqQMWGf+gnXIEwUVkee2wPAeN/xFzYUpsvRHJqk8uNG2MtB+8CraRCDYOcvG
-	Qhrss83c1bpnF1kLu1pxpWpO0i6G9YRRGtNX3qwhCwbtFd9sUChCqIw/0bjiEC2VdCWjhlN7jOh
-	d8BqOOjgG3BOJqir36tbxkBetL8JJybMg+f7Yujn4PRs69oh+dBezOt3u9SP+AVbls/xi33ylnc
-	UG3lblW6DrF
-X-Received: by 2002:a05:6000:2512:b0:431:32f:314d with SMTP id ffacd0b85a97d-4356999982dmr3342457f8f.25.1768563180255;
-        Fri, 16 Jan 2026 03:33:00 -0800 (PST)
+        bh=qpEc4zeahjkzePqOaQKnLlfWFAo1r4kHKso4ivZ++I8=;
+        b=cpY18ceIRZxA3Qb+j5Q1378YDyT8jLVtjuSh0PU6xMYZNSBOWSk0nKuf1rkFSEgz8t
+         8mkwPDEWhikULEAg3UWH1E3BUAczD+APhTL2dH9QGWZr0bWVLbYprpHg8DYFy1v2wEvb
+         8xsJZG2OOSamxTXReqvyO+Dsb7qL8imom8X6zCFBMDvhmwF1MejOje91sAZiRACvPMrd
+         bIFsX5W9VZNjQXsJBZbhLFhTiZRcZiEwO5UNLdb/r+OFHr6K+GlpLATvmNBBUAPKDsk3
+         s7i1qv0abhBxi8pYaMTLPMxzKb2FyyxIlAssHocBbEn2JE6lWzexDw0qpkZNV/+pWnel
+         jWKg==
+X-Forwarded-Encrypted: i=1; AJvYcCXVkeK9IeqS09Fns5qrQ9hrKWarC34OHfQN6jJj5Re00XXjsmFmle+zbOpQVtiiK09Cn0GxkpS5gw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyF3hstKwvq4PBoUFK+rvsD9S3Q9L0FDlStbrFbjqkSyF6RQmYb
+	+5w6O4fJNZS8zxjKvZ6zdtoHtwUzPvOdDaBWfwDfh6s90Nhdoj7jX109Im0bZI12U+A=
+X-Gm-Gg: AY/fxX6ineehgRHe9lq0rKL4zkVjovXZwJnfMCeOtrvPl1TBJVAxbllrPpIz30NXTFW
+	qLBkd+btp9UuVdr7LY+VXhIG0VC+6s+Ym0/FWin1+GKaL/3byucImcmcWuhVBXMIiLK92JjLWGq
+	o2bFwAPok3CpSHsMvuNYWXGnBhPGApYlriymVVdDOS6NhmGWWC+hhOvoe63G9MsBoYYlegOqQyQ
+	csfuDUx0r44IZLEeHLZFu/UXHNz9nukgdA+rckRn4+S8kpjEr3jswb4BPzgvJYQjlGJK6g+xJVU
+	42ACQSi4W7qGP4pgGFarUthnLnicBUs+9fbLyhnFa9uMQI1IxyBpGtYUf9Enq/WzZhZ9L/K3FUt
+	KNt8Md8w3kNtM8RId/BGuNTu+u+uuuSDZgu0hI5V1Ihx8VQJk1raTSoIdQ29vRQ/YEM4EuLCyx6
+	R+0F9AVNAaydZwKlz2I6SxG7GBuzeedw5driNgZiq+GTNKO+5GX9oDspilkeIU4UtWTqAKE74Ga
+	A==
+X-Received: by 2002:a05:600c:6048:b0:47d:87ac:73ef with SMTP id 5b1f17b1804b1-4801d7d2524mr30555355e9.13.1768563181454;
+        Fri, 16 Jan 2026 03:33:01 -0800 (PST)
 Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-4356996dadbsm4677655f8f.21.2026.01.16.03.32.59
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4801e80c477sm46216985e9.0.2026.01.16.03.33.00
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 16 Jan 2026 03:32:59 -0800 (PST)
+        Fri, 16 Jan 2026 03:33:01 -0800 (PST)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>,
 	dm-devel@lists.linux.dev
 Cc: Martin Wilck <mwilck@suse.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH 1/5] kpartx: avoid double-free of mapname
-Date: Fri, 16 Jan 2026 12:30:38 +0100
-Message-ID: <20260116113042.140719-2-mwilck@suse.com>
+Subject: [PATCH 2/5] kpartx: remove "hotplug" mode
+Date: Fri, 16 Jan 2026 12:30:39 +0100
+Message-ID: <20260116113042.140719-3-mwilck@suse.com>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20260116113042.140719-1-mwilck@suse.com>
 References: <20260116113042.140719-1-mwilck@suse.com>
@@ -80,58 +79,132 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The variable mapname is sometimes allocated and sometimes not.
-To avoid double-free and still free allocated memory cleanly,
-introduce a helper pointer for storing possibly allocated memory.
+This functionality has been obsolete for a long time.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- kpartx/kpartx.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+ kpartx/kpartx.c | 78 +++----------------------------------------------
+ 1 file changed, 4 insertions(+), 74 deletions(-)
 
 diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 7ec89b4..6f2ec4e 100644
+index 6f2ec4e..9bdd204 100644
 --- a/kpartx/kpartx.c
 +++ b/kpartx/kpartx.c
-@@ -245,7 +245,8 @@ main(int argc, char **argv){
+@@ -145,56 +145,6 @@ find_devname_offset (char * device)
+ 	return (int)(q - device);
+ }
+ 
+-static char *
+-get_hotplug_device(void)
+-{
+-	unsigned int major, minor, off, len;
+-	char *mapname;
+-	char *devname = NULL;
+-	char *device = NULL;
+-	char *var = NULL;
+-	struct stat buf;
+-
+-	var = getenv("ACTION");
+-
+-	if (!var || strcmp(var, "add"))
+-		return NULL;
+-
+-	/* Get dm mapname for hotpluged device. */
+-	if (!(devname = getenv("DEVNAME")))
+-		return NULL;
+-
+-	if (stat(devname, &buf))
+-		return NULL;
+-
+-	major = major(buf.st_rdev);
+-	minor = minor(buf.st_rdev);
+-
+-	if (!(mapname = dm_mapname(major, minor))) /* Not dm device. */
+-		return NULL;
+-
+-	off = find_devname_offset(devname);
+-	len = strlen(mapname);
+-
+-	/* Dirname + mapname + \0 */
+-	if (!(device = (char *)malloc(sizeof(char) * (off + len + 1)))) {
+-		free(mapname);
+-		return NULL;
+-	}
+-
+-	/* Create new device name. */
+-	snprintf(device, off + 1, "%s", devname);
+-	snprintf(device + off, len + 1, "%s", mapname);
+-
+-	if (strlen(device) != (off + len)) {
+-		free(device);
+-		free(mapname);
+-		return NULL;
+-	}
+-	free(mapname);
+-	return device;
+-}
+-
+ static int
+ check_uuid(char *uuid, char *part_uuid, char **err_msg) {
+ 	char *map_uuid = strchr(part_uuid, '-');
+@@ -239,7 +189,7 @@ main(int argc, char **argv){
+ 	struct slice all;
+ 	struct pt *ptp;
+ 	enum action what = LIST;
+-	char *type, *diskdevice, *device, *progname;
++	char *type, *diskdevice, *device;
+ 	int verbose = 0;
+ 	char partname[PARTNAME_SIZE], params[PARTNAME_SIZE + 16];
  	char *loopdev __attribute__((cleanup(cleanup_charp))) = NULL;
- 	char *delim __attribute__((cleanup(cleanup_charp))) = NULL;
+@@ -247,7 +197,6 @@ main(int argc, char **argv){
  	char *uuid __attribute__((cleanup(cleanup_charp))) = NULL;
--	char *mapname __attribute__((cleanup(cleanup_charp))) = NULL;
-+	char *_mapname __attribute__((cleanup(cleanup_charp))) = NULL;
-+	char *mapname;
- 	int hotplug = 0;
+ 	char *_mapname __attribute__((cleanup(cleanup_charp))) = NULL;
+ 	char *mapname;
+-	int hotplug = 0;
  	int loopcreated = 0;
  	struct stat buf;
-@@ -388,11 +389,15 @@ main(int argc, char **argv){
- 	off = find_devname_offset(device);
  
- 	if (!loopdev) {
--		mapname = dm_mapname(major(buf.st_rdev), minor(buf.st_rdev));
--		if (mapname)
--			uuid = dm_mapuuid(mapname);
-+		_mapname = dm_mapname(major(buf.st_rdev), minor(buf.st_rdev));
-+		if (_mapname)
-+			uuid = dm_mapuuid(_mapname);
+@@ -258,24 +207,7 @@ main(int argc, char **argv){
+ 	memset(&all, 0, sizeof(all));
+ 	memset(&partname, 0, sizeof(partname));
+ 
+-	/* Check whether hotplug mode. */
+-	progname = strrchr(argv[0], '/');
+-
+-	if (!progname)
+-		progname = argv[0];
+-	else
+-		progname++;
+-
+-	if (!strcmp(progname, "kpartx.dev")) { /* Hotplug mode */
+-		hotplug = 1;
+-
+-		/* Setup for original kpartx variables */
+-		if (!(device = get_hotplug_device()))
+-			exit(1);
+-
+-		diskdevice = device;
+-		what = ADD;
+-	} else if (argc < 2) {
++	if (argc < 2) {
+ 		usage();
+ 		exit(1);
+ 	}
+@@ -337,12 +269,10 @@ main(int argc, char **argv){
+ 		exit(1);
  	}
  
-+	mapname = _mapname;
-+	if (!mapname)
-+		mapname = device + off;
-+
- 	/*
- 	 * We are called for a non-DM device.
- 	 * Make up a fake UUID for the device, unless "-d -f" is given.
-@@ -402,9 +407,6 @@ main(int argc, char **argv){
- 	if (!uuid && !(what == DELETE && force_devmap))
- 		uuid = nondm_create_uuid(buf.st_rdev);
- 
--	if (!mapname)
--		mapname = device + off;
--
- 	if (delim == NULL) {
- 		delim = xmalloc(DELIM_SIZE);
- 		memset(delim, 0, DELIM_SIZE);
+-	if (hotplug) {
+-		/* already got [disk]device */
+-	} else if (optind == argc-2) {
++	if (optind == argc - 2) {
+ 		device = argv[optind];
+ 		diskdevice = argv[optind+1];
+-	} else if (optind == argc-1) {
++	} else if (optind == argc - 1) {
+ 		diskdevice = device = argv[optind];
+ 	} else {
+ 		usage();
 -- 
 2.52.0
 
