@@ -1,977 +1,133 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ECAF1F239B
-	for <dm-devel@lists.linux.dev>; Fri, 16 Jan 2026 14:31:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A740114A91;
+	Sat, 17 Jan 2026 03:03:34 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768573883; cv=none; b=o4wwESnp1mAlKKH9ME6KWNEtyHDWy2LNHa+pCgWoIHgpOTuxkPj8Jr6DC0qVK3Wti140zI1qWqTO2n4vAxD40OlVmeV1LP64HMeA99xW5HZB6KiwW+aMERcIa7+xQ29opjVbedYIEo9pGj21Rspwoy3Qso4/LEg2d+F3FUZcOWU=
+	t=1768619014; cv=none; b=mCBJqMMrA0t1gjgPB8/dp6OZoiLTdnvF7myjjXoAhMIx9qgRTd8Utg+rxjwUJl2UBaZxRNTiImWVx3VrT87+p9vFG2yi5nBOXfeemdKoUgQCxT6KAQhLA21GBMAhs06O0gLDpUlEZDNtfGj4uEdH/Ywa44bAA0lj2tyefSWPfKo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768573883; c=relaxed/simple;
-	bh=YTpc+m/bUbKxF9bbbr4XN1Werk43cY/qVsiuYs91Nxc=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=Rx9izQIa6chk06I7WjWlAh5z0RllyLDxUHFg89YOHYbCIhf7Qp29V2EL5sOe6puhKm73Jsspp1Yl3ehVvdcqKpAr72UgGhCdVURjZrHxW6Lbqe/X0gJeKe+/9Mu/0/ysQcEm3uc0ce+ZXpYQo/4tiBKKEQSyk1TxHetZPMajX7U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=sliWFirO; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1768619014; c=relaxed/simple;
+	bh=5a1WgP/Qg2izGvJGBk/tBOl6Nj20ZHzFu58PWB8StLA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=at19hV6QNN4/Nf4AR5ZGIpuaF3EMWlvjKG/UrVXvywMA1uC5B0jC5nVIdaN/Tv6nhhYT0jF261b0wUQBTySMZYWVCq2IWXnUi8JubYtTzjLedYs6BO8dde8Rn0IRrt9efyocNZESdXy7Iw6TUFzY8XBGJnq3MnUyDCEVL3bIxFE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pydZAKNP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="sliWFirO"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 49997C19421;
-	Fri, 16 Jan 2026 14:31:21 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pydZAKNP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E58E1C116C6;
+	Sat, 17 Jan 2026 03:03:33 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1768573882;
-	bh=YTpc+m/bUbKxF9bbbr4XN1Werk43cY/qVsiuYs91Nxc=;
-	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
-	b=sliWFirO2yxgD2rezpWNxhNzmrTRAg/MF8Ly4Bxd3M2P8sD/ZmvWYqkVHqwXnEN6M
-	 ZVl7AORsjwjCyUIXv2LA4SRT/eAWxg00koy8DWMOvhmJKFca3tDAOeCdOW+bj94I0R
-	 LEB6u+Pq6j3O1ifKUYhe2sCUo3JxgzWi8CDyLAkLcFVIgSmmzLFRvRECYvv75ydeOH
-	 NRqDGtqsW+xwf+iGO2UfG13/usveR+8KcGacIFC4tpRMESLjly7tq7lTwc4Q6a4n8G
-	 MFIhpKklUgAUwYa9jXd+m23i782I8JzwBIuEEGqMTmF21n2vbRgD3pjkwrI3GU0fNX
-	 vxuOfZjpW4O4g==
-From: Christian Brauner <brauner@kernel.org>
-Date: Fri, 16 Jan 2026 15:30:35 +0100
-Subject: [PATCH 2/2] selftests: add dm-verity keyring selftests
+	s=k20201202; t=1768619014;
+	bh=5a1WgP/Qg2izGvJGBk/tBOl6Nj20ZHzFu58PWB8StLA=;
+	h=From:To:Cc:Subject:Date:From;
+	b=pydZAKNPweCLWsmd3hbrw+9IBGSZWK/Z0P5xULc4PJApowrT4MYjx820A+lw6DcK0
+	 eAqmuG4OdrYPMmzWzLXC/+GzU9HxBtlpTGoDOqCa46lDMYCM0wGrKeAsCUuRSbB/e0
+	 PqhG8e+Lz3KowIBmyRJGOriahaMlcGslGjFs68lcEwpNtODgAdpNBM/I83wrFt9KAf
+	 PfIpoCEOr9NWuP7qZYpIVB9evVXPM4xYSUD/P9MP09o+L6eeVKuDaJAlQzUO+4BRjy
+	 usRonrCu7oQEW0b9nYs3VwIGGD7L1utMadBoXxZrEzcx8Z+7ZYnUDEpsg1ursdBFN3
+	 dQMB5s5g7U9Tg==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linux-kernel@vger.kernel.org,
+	Eric Biggers <ebiggers@kernel.org>,
+	stable@vger.kernel.org
+Subject: [PATCH] dm: fix excessive blk-crypto operations for invalid keys
+Date: Fri, 16 Jan 2026 19:02:36 -0800
+Message-ID: <20260117030236.96871-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20260116-work-dm-verity-keyring-v1-2-0d3de29b0618@kernel.org>
-References: <20260116-work-dm-verity-keyring-v1-0-0d3de29b0618@kernel.org>
-In-Reply-To: <20260116-work-dm-verity-keyring-v1-0-0d3de29b0618@kernel.org>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, dm-devel@lists.linux.dev, 
- Christian Brauner <brauner@kernel.org>
-X-Mailer: b4 0.15-dev-a6db3
-X-Developer-Signature: v=1; a=openpgp-sha256; l=28747; i=brauner@kernel.org;
- h=from:subject:message-id; bh=YTpc+m/bUbKxF9bbbr4XN1Werk43cY/qVsiuYs91Nxc=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWRmeW/xnzVnMt/mst18LwxNJl7O+LnnwAyxfSb6qunty
- +QWVu1y6ihlYRDjYpAVU2RxaDcJl1vOU7HZKFMDZg4rE8gQBi5OAZhIdwsjQ8PFmEnz7Wo/L/vM
- dzYrsSRlZ0NooxZnjN4Wx30Hdi//s4Lhf7Knn0pY6sIzq344zNt5zu+L+12XFVpCvT2Vuv4cEzU
- T+QE=
-X-Developer-Key: i=brauner@kernel.org; a=openpgp;
- fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
+Content-Transfer-Encoding: 8bit
 
-Add selftests that verify the keyring behaves correctly.
-For simplicity this works with dm-verity as a module.
+dm_exec_wrappedkey_op() passes through the derive_sw_secret, import_key,
+generate_key, and prepare_key blk-crypto operations to an underlying
+device.
 
-Signed-off-by: Christian Brauner <brauner@kernel.org>
+Currently, it calls the operation on every underlying device until one
+returns success.
+
+This logic is flawed when the operation is expected to fail, such as an
+invalid key being passed to derive_sw_secret.  That can happen if
+userspace passes an invalid key to the FS_IOC_ADD_ENCRYPTION_KEY ioctl.
+
+When that happens on a device-mapper device that consists of many
+dm-linear targets, a lot of unnecessary key unwrapping requests get sent
+to the underlying key wrapping hardware.
+
+Fix this by considering the first device only.  As already documented in
+the comment, it was already checked that all underlying devices support
+wrapped keys, so this should be fine.
+
+Fixes: e93912786e50 ("dm: pass through operations on wrapped inline crypto keys")
+Cc: stable@vger.kernel.org
+Signed-off-by: Eric Biggers <ebiggers@kernel.org>
 ---
- tools/testing/selftests/dm-verity/Makefile         |   5 +
- tools/testing/selftests/dm-verity/config           |  10 +
- .../selftests/dm-verity/test-dm-verity-keyring.sh  | 873 +++++++++++++++++++++
- 3 files changed, 888 insertions(+)
+ drivers/md/dm-table.c | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
 
-diff --git a/tools/testing/selftests/dm-verity/Makefile b/tools/testing/selftests/dm-verity/Makefile
-new file mode 100644
-index 000000000000..b75ee08a54af
---- /dev/null
-+++ b/tools/testing/selftests/dm-verity/Makefile
-@@ -0,0 +1,5 @@
-+# SPDX-License-Identifier: GPL-2.0
-+
-+TEST_PROGS := test-dm-verity-keyring.sh
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/dm-verity/config b/tools/testing/selftests/dm-verity/config
-new file mode 100644
-index 000000000000..1cd3712fa0a4
---- /dev/null
-+++ b/tools/testing/selftests/dm-verity/config
-@@ -0,0 +1,10 @@
-+CONFIG_BLK_DEV_DM=y
-+CONFIG_DM_VERITY=m
-+CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG=y
-+CONFIG_MODULE_UNLOAD=y
-+CONFIG_KEYS=y
-+CONFIG_ASYMMETRIC_KEY_TYPE=y
-+CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE=y
-+CONFIG_X509_CERTIFICATE_PARSER=y
-+CONFIG_PKCS7_MESSAGE_PARSER=y
-+CONFIG_SYSTEM_DATA_VERIFICATION=y
-diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-new file mode 100755
-index 000000000000..1f9601ef22f8
---- /dev/null
-+++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-@@ -0,0 +1,873 @@
-+#!/bin/bash
-+# SPDX-License-Identifier: GPL-2.0
-+#
-+# Test script for dm-verity keyring functionality
-+#
-+# This script has two modes depending on kernel configuration:
-+#
-+# 1. keyring_unsealed=1 AND require_signatures=1:
-+#    - Upload a test key to the .dm-verity keyring
-+#    - Seal the keyring
-+#    - Create a dm-verity device with a signed root hash
-+#    - Verify signature verification works
-+#
-+# 2. keyring_unsealed=0 (default) OR require_signatures=0:
-+#    - Verify the keyring is already sealed (if unsealed=0)
-+#    - Verify keys cannot be added to a sealed keyring
-+#    - Verify the keyring is inactive (not used for verification)
-+#
-+# Requirements:
-+# - Root privileges
-+# - openssl
-+# - veritysetup (cryptsetup)
-+# - keyctl (keyutils)
-+
-+set -e
-+
-+WORK_DIR=""
-+DATA_DEV=""
-+HASH_DEV=""
-+DM_NAME="verity-test-$$"
-+CLEANUP_DONE=0
-+
-+# Module parameters (detected at runtime)
-+KEYRING_UNSEALED=""
-+REQUIRE_SIGNATURES=""
-+
-+# Colors for output
-+RED='\033[0;31m'
-+GREEN='\033[0;32m'
-+YELLOW='\033[1;33m'
-+NC='\033[0m' # No Color
-+
-+log_info() {
-+    echo -e "${GREEN}[INFO]${NC} $*"
-+}
-+
-+log_warn() {
-+    echo -e "${YELLOW}[WARN]${NC} $*"
-+}
-+
-+log_error() {
-+    echo -e "${RED}[ERROR]${NC} $*" >&2
-+}
-+
-+log_pass() {
-+    echo -e "${GREEN}[PASS]${NC} $*"
-+}
-+
-+log_fail() {
-+    echo -e "${RED}[FAIL]${NC} $*" >&2
-+}
-+
-+log_skip() {
-+    echo -e "${YELLOW}[SKIP]${NC} $*"
-+}
-+
-+cleanup() {
-+    if [ "$CLEANUP_DONE" -eq 1 ]; then
-+        return
-+    fi
-+    CLEANUP_DONE=1
-+
-+    log_info "Cleaning up..."
-+
-+    # Remove dm-verity device if it exists
-+    if dmsetup info "$DM_NAME" &>/dev/null; then
-+        dmsetup remove "$DM_NAME" 2>/dev/null || true
-+    fi
-+
-+    # Detach loop devices
-+    if [ -n "$DATA_DEV" ] && [[ "$DATA_DEV" == /dev/loop* ]]; then
-+        losetup -d "$DATA_DEV" 2>/dev/null || true
-+    fi
-+    if [ -n "$HASH_DEV" ] && [[ "$HASH_DEV" == /dev/loop* ]]; then
-+        losetup -d "$HASH_DEV" 2>/dev/null || true
-+    fi
-+
-+    # Remove work directory
-+    if [ -n "$WORK_DIR" ] && [ -d "$WORK_DIR" ]; then
-+        rm -rf "$WORK_DIR"
-+    fi
-+}
-+
-+trap cleanup EXIT
-+
-+die() {
-+    log_error "$*"
-+    exit 1
-+}
-+
-+find_dm_verity_keyring() {
-+    # The .dm-verity keyring is not linked to user-accessible keyrings,
-+    # so we need to find it via /proc/keys
-+    local serial_hex
-+    serial_hex=$(awk '/\.dm-verity/ {print $1}' /proc/keys 2>/dev/null)
-+
-+    if [ -z "$serial_hex" ]; then
-+        return 1
-+    fi
-+
-+    # Convert hex to decimal for keyctl
-+    echo $((16#$serial_hex))
-+}
-+
-+get_module_param() {
-+    local param="$1"
-+    local path="/sys/module/dm_verity/parameters/$param"
-+
-+    if [ -f "$path" ]; then
-+        cat "$path"
-+    else
-+        echo ""
-+    fi
-+}
-+
-+check_requirements() {
-+    log_info "Checking requirements..."
-+
-+    # Check for root
-+    if [ "$(id -u)" -ne 0 ]; then
-+        die "This script must be run as root"
-+    fi
-+
-+    # Check for required tools
-+    for cmd in openssl veritysetup keyctl losetup dmsetup dd awk; do
-+        if ! command -v "$cmd" &>/dev/null; then
-+            die "Required command not found: $cmd"
-+        fi
-+    done
-+
-+    # Check for dm-verity module
-+    if ! modprobe -n dm-verity &>/dev/null; then
-+        die "dm-verity module not available"
-+    fi
-+
-+    # Verify OpenSSL can create signatures
-+    # OpenSSL cms -sign with -binary -outform DER creates detached signatures by default
-+    log_info "Using OpenSSL for PKCS#7 signatures"
-+}
-+
-+load_dm_verity_module() {
-+    local keyring_unsealed="${1:-0}"
-+    local require_signatures="${2:-0}"
-+
-+    log_info "Loading dm-verity module with keyring_unsealed=$keyring_unsealed require_signatures=$require_signatures"
-+
-+    # Unload if already loaded
-+    if lsmod | grep -q '^dm_verity'; then
-+        log_info "Unloading existing dm-verity module..."
-+        modprobe -r dm-verity 2>/dev/null || \
-+            die "Failed to unload dm-verity module (may be in use)"
-+        sleep 1
-+    fi
-+
-+    # Load with specified parameters
-+    modprobe dm-verity keyring_unsealed="$keyring_unsealed" require_signatures="$require_signatures" || \
-+        die "Failed to load dm-verity module"
-+
-+    # Wait for keyring to be created (poll with timeout)
-+    local keyring_id=""
-+    local timeout=50  # 5 seconds (50 * 0.1s)
-+    while [ $timeout -gt 0 ]; do
-+        keyring_id=$(find_dm_verity_keyring) && break
-+        sleep 0.1
-+        timeout=$((timeout - 1))
-+    done
-+
-+    if [ -z "$keyring_id" ]; then
-+        die "dm-verity keyring not found after module load (timeout)"
-+    fi
-+
-+    log_info "Found .dm-verity keyring: $keyring_id"
-+    echo "$keyring_id" > "$WORK_DIR/keyring_id"
-+
-+    # Read and display module parameters
-+    KEYRING_UNSEALED=$(get_module_param "keyring_unsealed")
-+    REQUIRE_SIGNATURES=$(get_module_param "require_signatures")
-+
-+    log_info "Module parameters:"
-+    log_info "  keyring_unsealed=$KEYRING_UNSEALED"
-+    log_info "  require_signatures=$REQUIRE_SIGNATURES"
-+}
-+
-+unload_dm_verity_module() {
-+    log_info "Unloading dm-verity module..."
-+
-+    # Clean up any dm-verity devices first
-+    local dm_dev
-+    while read -r dm_dev _; do
-+        [ -n "$dm_dev" ] || continue
-+        log_info "Removing dm-verity device: $dm_dev"
-+        dmsetup remove "$dm_dev" 2>/dev/null || true
-+    done < <(dmsetup ls --target verity 2>/dev/null)
-+
-+    if lsmod | grep -q '^dm_verity'; then
-+        modprobe -r dm-verity 2>/dev/null || \
-+            log_warn "Failed to unload dm-verity module"
-+        sleep 1
-+    fi
-+}
-+
-+generate_keys() {
-+    log_info "Generating signing key pair..."
-+
-+    # Generate private key (2048-bit for faster test execution)
-+    openssl genrsa -out "$WORK_DIR/private.pem" 2048 2>/dev/null
-+
-+    # Create OpenSSL config for certificate extensions
-+    # The kernel requires digitalSignature key usage for signature verification
-+    # Both subjectKeyIdentifier and authorityKeyIdentifier are needed for
-+    # the kernel to match keys in the keyring (especially for self-signed certs)
-+    cat > "$WORK_DIR/openssl.cnf" << 'EOF'
-+[req]
-+distinguished_name = req_distinguished_name
-+x509_extensions = v3_ca
-+prompt = no
-+
-+[req_distinguished_name]
-+CN = dm-verity-test-key
-+
-+[v3_ca]
-+basicConstraints = critical,CA:FALSE
-+keyUsage = digitalSignature
-+subjectKeyIdentifier = hash
-+authorityKeyIdentifier = keyid
-+EOF
-+
-+    # Generate self-signed certificate with proper extensions
-+    openssl req -new -x509 -key "$WORK_DIR/private.pem" \
-+        -out "$WORK_DIR/cert.pem" -days 365 \
-+        -config "$WORK_DIR/openssl.cnf" 2>/dev/null
-+
-+    # Convert certificate to DER format for kernel
-+    openssl x509 -in "$WORK_DIR/cert.pem" -outform DER \
-+        -out "$WORK_DIR/cert.der"
-+
-+    # Show certificate info for debugging
-+    log_info "Certificate details:"
-+    openssl x509 -in "$WORK_DIR/cert.pem" -noout -text 2>/dev/null | \
-+        grep -E "Subject:|Issuer:|Key Usage|Extended" | head -10
-+
-+    log_info "Keys generated successfully"
-+}
-+
-+seal_keyring() {
-+    log_info "Sealing the .dm-verity keyring..."
-+
-+    local keyring_id
-+    keyring_id=$(cat "$WORK_DIR/keyring_id")
-+
-+    keyctl restrict_keyring "$keyring_id" || \
-+        die "Failed to seal keyring"
-+
-+    log_info "Keyring sealed successfully"
-+}
-+
-+create_test_device() {
-+    log_info "Creating test device images..."
-+
-+    # Create data image with random content (8MB is sufficient for testing)
-+    dd if=/dev/urandom of="$WORK_DIR/data.img" bs=1M count=8 status=none
-+
-+    # Create hash image (will be populated by veritysetup)
-+    dd if=/dev/zero of="$WORK_DIR/hash.img" bs=1M count=1 status=none
-+
-+    # Setup loop devices
-+    DATA_DEV=$(losetup --find --show "$WORK_DIR/data.img")
-+    HASH_DEV=$(losetup --find --show "$WORK_DIR/hash.img")
-+
-+    log_info "Data device: $DATA_DEV"
-+    log_info "Hash device: $HASH_DEV"
-+}
-+
-+create_verity_hash() {
-+    log_info "Creating dm-verity hash tree..."
-+
-+    local root_hash output
-+    output=$(veritysetup format "$DATA_DEV" "$HASH_DEV" 2>&1)
-+    root_hash=$(echo "$output" | grep "Root hash:" | awk '{print $3}')
-+
-+    if [ -z "$root_hash" ]; then
-+        log_error "veritysetup format output:"
-+        echo "$output" | sed 's/^/  /'
-+        die "Failed to get root hash from veritysetup format"
-+    fi
-+
-+    echo "$root_hash" > "$WORK_DIR/root_hash"
-+    log_info "Root hash: $root_hash"
-+}
-+
-+create_detached_signature() {
-+    local infile="$1"
-+    local outfile="$2"
-+    local cert="$3"
-+    local key="$4"
-+
-+    # Use openssl smime (not cms) for PKCS#7 signatures compatible with kernel
-+    # Flags from working veritysetup example:
-+    #   -nocerts: don't include certificate in signature
-+    #   -noattr: no signed attributes
-+    #   -binary: binary input mode
-+    if openssl smime -sign -nocerts -noattr -binary \
-+        -in "$infile" \
-+        -inkey "$key" \
-+        -signer "$cert" \
-+        -outform der \
-+        -out "$outfile" 2>/dev/null; then
-+        return 0
-+    fi
-+
-+    log_error "Failed to create signature"
-+    return 1
-+}
-+
-+activate_verity_device() {
-+    local with_sig="$1"
-+    local root_hash
-+    root_hash=$(cat "$WORK_DIR/root_hash")
-+
-+    # Clear dmesg and capture any kernel messages during activation
-+    dmesg -C 2>/dev/null || true
-+
-+    if [ "$with_sig" = "yes" ]; then
-+        log_info "Activating dm-verity device with signature..."
-+        veritysetup open "$DATA_DEV" "$DM_NAME" "$HASH_DEV" "$root_hash" \
-+            --root-hash-signature="$WORK_DIR/root_hash.p7s" 2>&1
-+        local ret=$?
-+    else
-+        log_info "Activating dm-verity device without signature..."
-+        veritysetup open "$DATA_DEV" "$DM_NAME" "$HASH_DEV" "$root_hash" 2>&1
-+        local ret=$?
-+    fi
-+
-+    # Show relevant kernel messages
-+    local kmsg
-+    kmsg=$(dmesg 2>/dev/null | grep -i -E 'verity|pkcs|signature|asymmetric|key' | tail -10)
-+    if [ -n "$kmsg" ]; then
-+        log_info "Kernel messages:"
-+        echo "$kmsg" | while read -r line; do echo "  $line"; done
-+    fi
-+
-+    return $ret
-+}
-+
-+deactivate_verity_device() {
-+    if dmsetup info "$DM_NAME" &>/dev/null; then
-+        dmsetup remove "$DM_NAME" 2>/dev/null || true
-+    fi
-+}
-+
-+show_keyring_status() {
-+    log_info "Keyring status:"
-+
-+    local keyring_id
-+    keyring_id=$(find_dm_verity_keyring) || true
-+
-+    if [ -n "$keyring_id" ]; then
-+        echo "  Keyring ID: $keyring_id"
-+        keyctl show "$keyring_id" 2>/dev/null || true
-+        grep '\.dm-verity' /proc/keys 2>/dev/null || true
-+    fi
-+}
-+
-+list_keyring_keys() {
-+    log_info "Keys in .dm-verity keyring:"
-+
-+    local keyring_id
-+    keyring_id=$(cat "$WORK_DIR/keyring_id" 2>/dev/null) || \
-+        keyring_id=$(find_dm_verity_keyring) || true
-+
-+    if [ -z "$keyring_id" ]; then
-+        log_warn "Could not find keyring"
-+        return
-+    fi
-+
-+    # List all keys in the keyring
-+    local keys
-+    keys=$(keyctl list "$keyring_id" 2>/dev/null)
-+    if [ -z "$keys" ] || [ "$keys" = "keyring is empty" ]; then
-+        echo "  (empty)"
-+    else
-+        echo "$keys" | while read -r line; do
-+            echo "  $line"
-+        done
-+
-+        # Show detailed info for each key
-+        log_info "Key details:"
-+        keyctl list "$keyring_id" 2>/dev/null | awk '{print $1}' | grep -E '^[0-9]+$' | while read -r key_id; do
-+            echo "  Key $key_id:"
-+            keyctl describe "$key_id" 2>/dev/null | sed 's/^/    /'
-+        done
-+    fi
-+}
-+
-+generate_named_key() {
-+    local name="$1"
-+    local key_dir="$WORK_DIR/keys/$name"
-+
-+    mkdir -p "$key_dir"
-+
-+    # Log to stderr so it doesn't interfere with return value
-+    echo "[INFO] Generating key pair: $name" >&2
-+
-+    # Generate private key
-+    openssl genrsa -out "$key_dir/private.pem" 2048 2>/dev/null
-+
-+    # Create OpenSSL config for certificate extensions
-+    # Both subjectKeyIdentifier and authorityKeyIdentifier are needed for
-+    # the kernel to match keys in the keyring (especially for self-signed certs)
-+    cat > "$key_dir/openssl.cnf" << EOF
-+[req]
-+distinguished_name = req_distinguished_name
-+x509_extensions = v3_ca
-+prompt = no
-+
-+[req_distinguished_name]
-+CN = dm-verity-test-$name
-+
-+[v3_ca]
-+basicConstraints = critical,CA:FALSE
-+keyUsage = digitalSignature
-+subjectKeyIdentifier = hash
-+authorityKeyIdentifier = keyid
-+EOF
-+
-+    # Generate self-signed certificate with proper extensions
-+    openssl req -new -x509 -key "$key_dir/private.pem" \
-+        -out "$key_dir/cert.pem" -days 365 \
-+        -config "$key_dir/openssl.cnf" 2>/dev/null
-+
-+    # Convert certificate to DER format for kernel
-+    openssl x509 -in "$key_dir/cert.pem" -outform DER \
-+        -out "$key_dir/cert.der"
-+
-+    # Return the key directory path (only this goes to stdout)
-+    echo "$key_dir"
-+}
-+
-+upload_named_key() {
-+    local name="$1"
-+    local key_dir="$2"
-+
-+    local keyring_id
-+    keyring_id=$(cat "$WORK_DIR/keyring_id")
-+
-+    log_info "Uploading key '$name' to keyring..."
-+
-+    local key_id
-+    if key_id=$(keyctl padd asymmetric "$name" "$keyring_id" \
-+        < "$key_dir/cert.der" 2>&1); then
-+        log_info "Key '$name' uploaded with ID: $key_id"
-+        echo "$key_id" > "$key_dir/key_id"
-+        return 0
-+    else
-+        log_error "Failed to upload key '$name': $key_id"
-+        return 1
-+    fi
-+}
-+
-+#
-+# Test: Verify sealed keyring rejects key additions
-+#
-+test_sealed_keyring_rejects_keys() {
-+    log_info "TEST: Verify sealed keyring rejects key additions"
-+
-+    local keyring_id
-+    keyring_id=$(cat "$WORK_DIR/keyring_id")
-+
-+    generate_keys
-+
-+    # Try to add a key - should fail
-+    if keyctl padd asymmetric "dm-verity-test" "$keyring_id" \
-+        < "$WORK_DIR/cert.der" 2>/dev/null; then
-+        log_fail "Key addition should have been rejected on sealed keyring"
-+        return 1
-+    else
-+        log_pass "Sealed keyring correctly rejected key addition"
-+        return 0
-+    fi
-+}
-+
-+#
-+# Test: Multiple keys in keyring
-+#
-+test_multiple_keys() {
-+    log_info "TEST: Multiple keys in keyring"
-+
-+    local key1_dir key2_dir key3_dir
-+
-+    # Generate three different keys
-+    key1_dir=$(generate_named_key "vendor-a")
-+    key2_dir=$(generate_named_key "vendor-b")
-+    key3_dir=$(generate_named_key "vendor-c")
-+
-+    # Upload all three keys
-+    upload_named_key "vendor-a" "$key1_dir" || return 1
-+    upload_named_key "vendor-b" "$key2_dir" || return 1
-+    upload_named_key "vendor-c" "$key3_dir" || return 1
-+
-+    log_info ""
-+    log_info "Keys in keyring before sealing:"
-+    list_keyring_keys
-+    show_keyring_status
-+
-+    # Seal the keyring
-+    log_info ""
-+    seal_keyring
-+
-+    # List keys after sealing
-+    log_info ""
-+    log_info "Keys in keyring after sealing:"
-+    list_keyring_keys
-+    show_keyring_status
-+
-+    log_pass "Key upload and keyring sealing succeeded"
-+
-+    # Create test device
-+    log_info ""
-+    create_test_device
-+    create_verity_hash
-+
-+    # Test 1: Sign with key1, should verify successfully
-+    log_info ""
-+    log_info "Sub-test: Verify with vendor-a key"
-+    if ! sign_root_hash_with_key "$key1_dir"; then
-+        log_fail "Failed to sign with vendor-a key"
-+        return 1
-+    fi
-+    if activate_verity_device "yes"; then
-+        log_pass "Verification with vendor-a key succeeded"
-+        deactivate_verity_device
-+    else
-+        log_fail "Verification with vendor-a key should succeed"
-+        return 1
-+    fi
-+
-+    # Test 2: Sign with key2, should also verify successfully
-+    log_info ""
-+    log_info "Sub-test: Verify with vendor-b key"
-+    if ! sign_root_hash_with_key "$key2_dir"; then
-+        log_fail "Failed to sign with vendor-b key"
-+        return 1
-+    fi
-+    if activate_verity_device "yes"; then
-+        log_pass "Verification with vendor-b key succeeded"
-+        deactivate_verity_device
-+    else
-+        log_fail "Verification with vendor-b key should succeed"
-+        return 1
-+    fi
-+
-+    # Test 3: Sign with key3, should also verify successfully
-+    log_info ""
-+    log_info "Sub-test: Verify with vendor-c key"
-+    if ! sign_root_hash_with_key "$key3_dir"; then
-+        log_fail "Failed to sign with vendor-c key"
-+        return 1
-+    fi
-+    if activate_verity_device "yes"; then
-+        log_pass "Verification with vendor-c key succeeded"
-+        deactivate_verity_device
-+    else
-+        log_fail "Verification with vendor-c key should succeed"
-+        return 1
-+    fi
-+
-+    # Test 4: Generate a key NOT in the keyring, should fail
-+    log_info ""
-+    log_info "Sub-test: Verify with unknown key (should fail)"
-+    local unknown_key_dir
-+    unknown_key_dir=$(generate_named_key "unknown-vendor")
-+    if ! sign_root_hash_with_key "$unknown_key_dir"; then
-+        log_fail "Failed to sign with unknown-vendor key"
-+        return 1
-+    fi
-+    if activate_verity_device "yes"; then
-+        log_fail "Verification with unknown key should fail"
-+        deactivate_verity_device
-+        return 1
-+    else
-+        log_pass "Verification with unknown key correctly rejected"
-+    fi
-+
-+    log_info ""
-+    log_pass "Multiple keys test completed successfully"
-+    return 0
-+}
-+
-+sign_root_hash_with_key() {
-+    local key_dir="$1"
-+
-+    local root_hash
-+    root_hash=$(cat "$WORK_DIR/root_hash")
-+
-+    # Create the data to sign (hex string, not binary)
-+    echo -n "$root_hash" > "$WORK_DIR/root_hash.txt"
-+
-+    # Debug: show exactly what we're signing
-+    log_info "Root hash (hex): $root_hash"
-+    log_info "Root hash hex string size: $(wc -c < "$WORK_DIR/root_hash.txt") bytes"
-+
-+    # Create detached PKCS#7 signature
-+    if ! create_detached_signature "$WORK_DIR/root_hash.txt" "$WORK_DIR/root_hash.p7s" \
-+            "$key_dir/cert.pem" "$key_dir/private.pem"; then
-+        log_error "Failed to sign root hash with key from $key_dir"
-+        return 1
-+    fi
-+
-+    # Debug: show signing certificate info
-+    log_info "Signed with certificate:"
-+    openssl x509 -in "$key_dir/cert.pem" -noout -subject 2>/dev/null | sed 's/^/  /'
-+
-+    # Debug: verify signature locally
-+    # -nointern: cert not in signature, use -certfile
-+    # -noverify: skip certificate chain validation (self-signed)
-+    if openssl smime -verify -binary -inform der -nointern -noverify \
-+        -in "$WORK_DIR/root_hash.p7s" \
-+        -content "$WORK_DIR/root_hash.txt" \
-+        -certfile "$key_dir/cert.pem" \
-+        -out /dev/null 2>/dev/null; then
-+        log_info "Local signature verification: PASSED"
-+    else
-+        log_warn "Local signature verification: FAILED"
-+    fi
-+    return 0
-+}
-+
-+#
-+# Test: Verify corrupted signatures are rejected
-+#
-+test_corrupted_signature() {
-+    log_info "TEST: Verify corrupted signatures are rejected"
-+
-+    # This test requires a valid setup from test_multiple_keys or similar
-+    # It modifies the signature file and verifies rejection
-+
-+    if [ ! -f "$WORK_DIR/root_hash.p7s" ]; then
-+        log_warn "No signature file found, skipping corrupted signature test"
-+        return 0
-+    fi
-+
-+    # Save original signature
-+    cp "$WORK_DIR/root_hash.p7s" "$WORK_DIR/root_hash.p7s.orig"
-+
-+    # Test 1: Truncated signature
-+    log_info "Sub-test: Truncated signature (should fail)"
-+    head -c 100 "$WORK_DIR/root_hash.p7s.orig" > "$WORK_DIR/root_hash.p7s"
-+    if activate_verity_device "yes"; then
-+        log_fail "Truncated signature should be rejected"
-+        deactivate_verity_device
-+        cp "$WORK_DIR/root_hash.p7s.orig" "$WORK_DIR/root_hash.p7s"
-+        return 1
-+    else
-+        log_pass "Truncated signature correctly rejected"
-+    fi
-+
-+    # Test 2: Corrupted signature (flip some bytes)
-+    log_info "Sub-test: Corrupted signature bytes (should fail)"
-+    cp "$WORK_DIR/root_hash.p7s.orig" "$WORK_DIR/root_hash.p7s"
-+    # Corrupt bytes in the middle of the signature
-+    local sig_size
-+    sig_size=$(wc -c < "$WORK_DIR/root_hash.p7s")
-+    local corrupt_offset=$((sig_size / 2))
-+    printf '\xff\xff\xff\xff' | dd of="$WORK_DIR/root_hash.p7s" bs=1 seek=$corrupt_offset conv=notrunc 2>/dev/null
-+    if activate_verity_device "yes"; then
-+        log_fail "Corrupted signature should be rejected"
-+        deactivate_verity_device
-+        cp "$WORK_DIR/root_hash.p7s.orig" "$WORK_DIR/root_hash.p7s"
-+        return 1
-+    else
-+        log_pass "Corrupted signature correctly rejected"
-+    fi
-+
-+    # Test 3: Signature over wrong data (sign different content)
-+    log_info "Sub-test: Signature over wrong data (should fail)"
-+    # Create a different root hash (all zeros as hex string)
-+    printf '%064d' 0 > "$WORK_DIR/wrong_hash.txt"
-+    # Get the first key directory that was used
-+    local key_dir="$WORK_DIR/keys/vendor-a"
-+    if [ -d "$key_dir" ]; then
-+        create_detached_signature "$WORK_DIR/wrong_hash.txt" "$WORK_DIR/root_hash.p7s" \
-+            "$key_dir/cert.pem" "$key_dir/private.pem"
-+        if activate_verity_device "yes"; then
-+            log_fail "Signature over wrong data should be rejected"
-+            deactivate_verity_device
-+            cp "$WORK_DIR/root_hash.p7s.orig" "$WORK_DIR/root_hash.p7s"
-+            return 1
-+        else
-+            log_pass "Signature over wrong data correctly rejected"
-+        fi
-+    else
-+        log_warn "Key directory not found, skipping wrong data test"
-+    fi
-+
-+    # Restore original signature
-+    cp "$WORK_DIR/root_hash.p7s.orig" "$WORK_DIR/root_hash.p7s"
-+
-+    log_pass "Corrupted signature test completed successfully"
-+    return 0
-+}
-+
-+#
-+# Test: Verify keyring is sealed when keyring_unsealed=0
-+#
-+test_keyring_sealed_by_default() {
-+    log_info "TEST: Verify keyring is sealed by default (keyring_unsealed=0)"
-+
-+    local keyring_id
-+    keyring_id=$(cat "$WORK_DIR/keyring_id")
-+
-+    log_info "Current keyring state (should be empty and sealed):"
-+    list_keyring_keys
-+    show_keyring_status
-+
-+    generate_keys
-+
-+    # Try to add a key - should fail if keyring is sealed
-+    log_info "Attempting to add key to sealed keyring..."
-+    if keyctl padd asymmetric "dm-verity-test" "$keyring_id" \
-+        < "$WORK_DIR/cert.der" 2>/dev/null; then
-+        log_fail "Keyring should be sealed when keyring_unsealed=0"
-+        list_keyring_keys
-+        return 1
-+    else
-+        log_pass "Keyring is correctly sealed when keyring_unsealed=0"
-+        log_info "Keyring state after failed add attempt:"
-+        list_keyring_keys
-+        return 0
-+    fi
-+}
-+
-+#
-+# Test: Verify dm-verity keyring is inactive when sealed empty
-+#
-+test_keyring_inactive_when_empty() {
-+    log_info "TEST: Verify dm-verity keyring is inactive when sealed empty"
-+
-+    # When keyring_unsealed=0, the keyring is sealed immediately while empty
-+    # This means it should NOT be used for verification (nr_leaves_on_tree=0)
-+
-+    log_info "Keyring state (should be empty and sealed):"
-+    list_keyring_keys
-+    show_keyring_status
-+
-+    create_test_device
-+    create_verity_hash
-+
-+    # Without any keys in the dm-verity keyring, and with it sealed,
-+    # verification should fall through to the secondary/platform keyrings
-+    # and likely succeed (if require_signatures=0) or fail (if =1)
-+
-+    log_info "Sub-test: Device activation with sealed empty keyring"
-+    if [ "$REQUIRE_SIGNATURES" = "Y" ] || [ "$REQUIRE_SIGNATURES" = "1" ]; then
-+        if activate_verity_device "no"; then
-+            log_fail "Device should NOT activate without signature when require_signatures=1"
-+            deactivate_verity_device
-+            return 1
-+        else
-+            log_pass "Device correctly rejected (require_signatures=1, no valid signature)"
-+        fi
-+    else
-+        if activate_verity_device "no"; then
-+            log_pass "Device activated (require_signatures=0, empty dm-verity keyring is inactive)"
-+            deactivate_verity_device
-+        else
-+            log_fail "Device should activate when require_signatures=0"
-+            return 1
-+        fi
-+    fi
-+
-+    return 0
-+}
-+
-+main() {
-+    local rc=0
-+
-+    log_info "=== dm-verity keyring test ==="
-+    log_info ""
-+
-+    # Create work directory
-+    WORK_DIR=$(mktemp -d -t dm-verity-test.XXXXXX)
-+    log_info "Work directory: $WORK_DIR"
-+
-+    check_requirements
-+
-+    #
-+    # Test 1: UNSEALED keyring mode (keyring_unsealed=1)
-+    #
-+    log_info ""
-+    log_info "========================================"
-+    log_info "=== TEST MODE: UNSEALED KEYRING ==="
-+    log_info "========================================"
-+    log_info ""
-+
-+    load_dm_verity_module 1 1  # keyring_unsealed=1, require_signatures=1
-+    show_keyring_status
-+
-+    log_info ""
-+    if ! test_multiple_keys; then
-+        rc=1
-+    fi
-+
-+    # After sealing, verify it rejects new keys
-+    log_info ""
-+    if ! test_sealed_keyring_rejects_keys; then
-+        rc=1
-+    fi
-+
-+    # Test corrupted signatures are rejected
-+    log_info ""
-+    if ! test_corrupted_signature; then
-+        rc=1
-+    fi
-+
-+    # Clean up devices before reloading module
-+    deactivate_verity_device
-+    if [ -n "$DATA_DEV" ] && [[ "$DATA_DEV" == /dev/loop* ]]; then
-+        losetup -d "$DATA_DEV" 2>/dev/null || true
-+        DATA_DEV=""
-+    fi
-+    if [ -n "$HASH_DEV" ] && [[ "$HASH_DEV" == /dev/loop* ]]; then
-+        losetup -d "$HASH_DEV" 2>/dev/null || true
-+        HASH_DEV=""
-+    fi
-+
-+    #
-+    # Test 2: SEALED keyring mode (keyring_unsealed=0, default)
-+    #
-+    log_info ""
-+    log_info "========================================"
-+    log_info "=== TEST MODE: SEALED KEYRING (default) ==="
-+    log_info "========================================"
-+    log_info ""
-+
-+    load_dm_verity_module 0 0  # keyring_unsealed=0, require_signatures=0
-+    show_keyring_status
-+
-+    log_info ""
-+    if ! test_keyring_sealed_by_default; then
-+        rc=1
-+    fi
-+
-+    log_info ""
-+    if ! test_keyring_inactive_when_empty; then
-+        rc=1
-+    fi
-+
-+    #
-+    # Summary
-+    #
-+    log_info ""
-+    log_info "========================================"
-+    if [ $rc -eq 0 ]; then
-+        log_info "=== All tests PASSED ==="
-+    else
-+        log_error "=== Some tests FAILED ==="
-+    fi
-+    log_info "========================================"
-+
-+    return $rc
-+}
-+
-+main "$@"
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 0522cd700e0e..4b70872725d0 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1235,13 +1235,10 @@ static int dm_wrappedkey_op_callback(struct dm_target *ti, struct dm_dev *dev,
+ 	struct block_device *bdev = dev->bdev;
+ 	struct blk_crypto_profile *profile =
+ 		bdev_get_queue(bdev)->crypto_profile;
+ 	int err = -EOPNOTSUPP;
+ 
+-	if (!args->err)
+-		return 0;
+-
+ 	switch (args->op) {
+ 	case DERIVE_SW_SECRET:
+ 		err = blk_crypto_derive_sw_secret(
+ 					bdev,
+ 					args->derive_sw_secret.eph_key,
+@@ -1264,13 +1261,11 @@ static int dm_wrappedkey_op_callback(struct dm_target *ti, struct dm_dev *dev,
+ 					     args->prepare_key.lt_key_size,
+ 					     args->prepare_key.eph_key);
+ 		break;
+ 	}
+ 	args->err = err;
+-
+-	/* Try another device in case this fails. */
+-	return 0;
++	return 1; /* No need to continue the iteration. */
+ }
+ 
+ static int dm_exec_wrappedkey_op(struct blk_crypto_profile *profile,
+ 				 struct dm_wrappedkey_op_args *args)
+ {
+@@ -1292,18 +1287,17 @@ static int dm_exec_wrappedkey_op(struct blk_crypto_profile *profile,
+ 	 * implementations of wrapped inline crypto keys on a single system.
+ 	 * It was already checked earlier that support for wrapped keys was
+ 	 * declared on all underlying devices.  Thus, all the underlying devices
+ 	 * should support all wrapped key operations and they should behave
+ 	 * identically, i.e. work with the same keys.  So, just executing the
+-	 * operation on the first device on which it works suffices for now.
++	 * operation on the first device suffices for now.
+ 	 */
+ 	for (i = 0; i < t->num_targets; i++) {
+ 		ti = dm_table_get_target(t, i);
+ 		if (!ti->type->iterate_devices)
+ 			continue;
+-		ti->type->iterate_devices(ti, dm_wrappedkey_op_callback, args);
+-		if (!args->err)
++		if (ti->type->iterate_devices(ti, dm_wrappedkey_op_callback, args) != 0)
+ 			break;
+ 	}
+ out:
+ 	dm_put_live_table(md, srcu_idx);
+ 	return args->err;
 
+base-commit: fb8a6c18fb9a6561f7a15b58b272442b77a242dd
 -- 
-2.47.3
+2.52.0
 
