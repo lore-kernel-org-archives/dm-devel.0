@@ -1,133 +1,117 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from iguana.tulip.relay.mailchannels.net (iguana.tulip.relay.mailchannels.net [23.83.218.253])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A740114A91;
-	Sat, 17 Jan 2026 03:03:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768619014; cv=none; b=mCBJqMMrA0t1gjgPB8/dp6OZoiLTdnvF7myjjXoAhMIx9qgRTd8Utg+rxjwUJl2UBaZxRNTiImWVx3VrT87+p9vFG2yi5nBOXfeemdKoUgQCxT6KAQhLA21GBMAhs06O0gLDpUlEZDNtfGj4uEdH/Ywa44bAA0lj2tyefSWPfKo=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768619014; c=relaxed/simple;
-	bh=5a1WgP/Qg2izGvJGBk/tBOl6Nj20ZHzFu58PWB8StLA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=at19hV6QNN4/Nf4AR5ZGIpuaF3EMWlvjKG/UrVXvywMA1uC5B0jC5nVIdaN/Tv6nhhYT0jF261b0wUQBTySMZYWVCq2IWXnUi8JubYtTzjLedYs6BO8dde8Rn0IRrt9efyocNZESdXy7Iw6TUFzY8XBGJnq3MnUyDCEVL3bIxFE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=pydZAKNP; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC051212FB9
+	for <dm-devel@lists.linux.dev>; Sun, 18 Jan 2026 23:25:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=23.83.218.253
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1768778751; cv=pass; b=s+ORR2dMXQggSjUQVv5tJMkbuKqywbmtggdObOqwBJ2RhCCiiFGHzKabnHGgoUlCgwAlzRB2VDdTtYyYfsKYErqPN6wANs+KOqUHlDg3pqtU+hvdU2tqpChb3nzc4BdPAyrlvuI504s/WZzzHBa5Lw6f5FoyAoPan7xmz3Crxhs=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1768778751; c=relaxed/simple;
+	bh=ukv2snMEI9xnzP0hOZKt45u3o1OIZ0NXXFlJIQGTZgQ=;
+	h=From:To:Cc:Subject:Date:MIME-Version:Message-ID:Content-Type; b=QuD2b7Gdl10NT+XBLtCdSVXjS/q5ndnr0Lb9rOY2zxxwSTgXG3Zp/5fSteea02TOhIfS+upGT8KgR7/Lc0x8g+EYSjhaRv6vgl68XXpG4zxj8jYakXGRj8Wlou82sSCAcN9CV6ODvECPeBEWU8eOvv2PvSeE7sAVlVEQzgM85hc=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mattwhitlock.name; spf=pass smtp.mailfrom=mattwhitlock.name; dkim=pass (2048-bit key) header.d=mattwhitlock.name header.i=@mattwhitlock.name header.b=IAvESAcX; arc=pass smtp.client-ip=23.83.218.253
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mattwhitlock.name
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mattwhitlock.name
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="pydZAKNP"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E58E1C116C6;
-	Sat, 17 Jan 2026 03:03:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1768619014;
-	bh=5a1WgP/Qg2izGvJGBk/tBOl6Nj20ZHzFu58PWB8StLA=;
-	h=From:To:Cc:Subject:Date:From;
-	b=pydZAKNPweCLWsmd3hbrw+9IBGSZWK/Z0P5xULc4PJApowrT4MYjx820A+lw6DcK0
-	 eAqmuG4OdrYPMmzWzLXC/+GzU9HxBtlpTGoDOqCa46lDMYCM0wGrKeAsCUuRSbB/e0
-	 PqhG8e+Lz3KowIBmyRJGOriahaMlcGslGjFs68lcEwpNtODgAdpNBM/I83wrFt9KAf
-	 PfIpoCEOr9NWuP7qZYpIVB9evVXPM4xYSUD/P9MP09o+L6eeVKuDaJAlQzUO+4BRjy
-	 usRonrCu7oQEW0b9nYs3VwIGGD7L1utMadBoXxZrEzcx8Z+7ZYnUDEpsg1ursdBFN3
-	 dQMB5s5g7U9Tg==
-From: Eric Biggers <ebiggers@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: linux-kernel@vger.kernel.org,
-	Eric Biggers <ebiggers@kernel.org>,
-	stable@vger.kernel.org
-Subject: [PATCH] dm: fix excessive blk-crypto operations for invalid keys
-Date: Fri, 16 Jan 2026 19:02:36 -0800
-Message-ID: <20260117030236.96871-1-ebiggers@kernel.org>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (2048-bit key) header.d=mattwhitlock.name header.i=@mattwhitlock.name header.b="IAvESAcX"
+X-Sender-Id: dreamhost|x-authsender|matt@whitlock.name
+Received: from relay.mailchannels.net (localhost [127.0.0.1])
+	by relay.mailchannels.net (Postfix) with ESMTP id 46EB14C1326;
+	Sun, 18 Jan 2026 18:36:18 +0000 (UTC)
+Received: from pdx1-sub0-mail-a246.dreamhost.com (trex-green-3.trex.outbound.svc.cluster.local [100.111.223.119])
+	(Authenticated sender: dreamhost)
+	by relay.mailchannels.net (Postfix) with ESMTPA id E8B594C10A5;
+	Sun, 18 Jan 2026 18:36:17 +0000 (UTC)
+ARC-Seal: i=1; a=rsa-sha256; d=mailchannels.net; s=arc-2022; cv=none;
+	t=1768761377;
+	b=P1gWEqJgLx/JTCcq83GYs0HjTvGi0xewytW6zCI8OLUaCfs5MDbXahuTGdt1QbtP4RmWOP
+	91I0qVHM+M3TU0j+KPlu4q2OL5jmT9AarNB831gkOyIDC5AS2nDxUV/FDGf15omg8cqAJu
+	h+SrlyxC5grxX2w1I0i+zk/i2GO/CnxCT0Qha8sfn2T4xaTfG0LKsaGr1HIlKGeph/QHdV
+	OlZH0eYgXaSsC1UgNy7/DqGeXfm8nwGfVaj7517a5iui55frTO1QwQNdtOutbkcUOZGyQZ
+	EjxvpMR4dMmUf4SlqO1FuacToLeaTrvca7I+bGRkA17bQoyeulqUT3O6Hkbbbg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=mailchannels.net;
+	s=arc-2022; t=1768761377;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:dkim-signature;
+	bh=nO6TSIwrWCSu4qJ+c5+so9F8tdioN7vt2lC24zkVRNI=;
+	b=ba5lzRXlZRBiTiEfOdQ4dbzGWutORemj5ZkwQnQmkiyvF4MYIzyFBFnVhQZJ85jRY8NCsC
+	H8BWYvY/B1Hzn31+0+c85ozzREdNAtlDAQgEDELvj5vff7y7YT/8cEsPw7fdAtg7EYeNdm
+	tGkDbSniGJeKmdwyA3sodYsMDYmyJJnuHMEPEW11R/qebQe+KcgOpDEEDPTOQPjaF00ZAA
+	KqfBEc0joeOit01U5sYlrHDeYo/6j4ieak+m4RaLlpPlVGa1zcbeDdPSHX1uX4iDIpM15g
+	GYbaMRLYn9aSL00ZhawCx5sOAPMffAPNBg1hKobLnWxGIrYcYzwoNl9+wuUaeA==
+ARC-Authentication-Results: i=1;
+	rspamd-8f4d6bb8d-lrtz8;
+	auth=pass smtp.auth=dreamhost smtp.mailfrom=kernel@mattwhitlock.name
+X-Sender-Id: dreamhost|x-authsender|matt@whitlock.name
+X-MC-Relay: Neutral
+X-MailChannels-SenderId: dreamhost|x-authsender|matt@whitlock.name
+X-MailChannels-Auth-Id: dreamhost
+X-Name-Juvenile: 0b2d37ea10d4337d_1768761378162_3174146764
+X-MC-Loop-Signature: 1768761378162:3718357440
+X-MC-Ingress-Time: 1768761378162
+Received: from pdx1-sub0-mail-a246.dreamhost.com (pop.dreamhost.com
+ [64.90.62.162])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
+	by 100.111.223.119 (trex/7.1.3);
+	Sun, 18 Jan 2026 18:36:18 +0000
+Received: from localhost (unknown [72.71.209.96])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: matt@whitlock.name)
+	by pdx1-sub0-mail-a246.dreamhost.com (Postfix) with ESMTPSA id 4dvMjs35dtz107N;
+	Sun, 18 Jan 2026 10:36:17 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mattwhitlock.name;
+	s=dreamhost; t=1768761377;
+	bh=nO6TSIwrWCSu4qJ+c5+so9F8tdioN7vt2lC24zkVRNI=;
+	h=From:To:Cc:Subject:Date:Content-Type:Content-Transfer-Encoding;
+	b=IAvESAcXuaL792gVSxy1bS0a04BjyQsqb48dHbg7Yun2cY7b5Z0nLMIU0Tbic0GIy
+	 JbRdWxtBLKFiWxN6bnWjRdTff8mIr6UJ3URYs9oFOWAZAbrlNHwZ11od3NlBjKJRek
+	 qe0J+t6Y0HgpVGKMnLhVyzlkQTDL6PUN0g6gUstPSkm1SHfHAD2SvwDtuu4hzpB7sT
+	 YuPDgemieQw4hJTYe8Etz8dGhcQfoO2OjxduAsxnbCih0NFfbrI1EJ6CBF5wNIXAnD
+	 9V3RaxJaRh6OluHjC0fzs5M+gBtNifDAUMp5j4C4ZC6yiA09R9nqO3GMJ5HBPk9K5Z
+	 /BPoO0i+f3XUA==
+From: Matt Whitlock <kernel@mattwhitlock.name>
+To: Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: <dm-devel@lists.linux.dev>
+Subject: Patch for mapping bug in drivers/md/dm-unstripe.c
+Date: Sun, 18 Jan 2026 13:36:15 -0500
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Message-ID: <68f72c7d-7e4e-4182-87fc-78c138046cd3@mattwhitlock.name>
+User-Agent: Trojita/v0.7-781-gfddd17b7; Qt/6.10.1; xcb; Linux; Gentoo Linux
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-dm_exec_wrappedkey_op() passes through the derive_sw_secret, import_key,
-generate_key, and prepare_key blk-crypto operations to an underlying
-device.
-
-Currently, it calls the operation on every underlying device until one
-returns success.
-
-This logic is flawed when the operation is expected to fail, such as an
-invalid key being passed to derive_sw_secret.  That can happen if
-userspace passes an invalid key to the FS_IOC_ADD_ENCRYPTION_KEY ioctl.
-
-When that happens on a device-mapper device that consists of many
-dm-linear targets, a lot of unnecessary key unwrapping requests get sent
-to the underlying key wrapping hardware.
-
-Fix this by considering the first device only.  As already documented in
-the comment, it was already checked that all underlying devices support
-wrapped keys, so this should be fine.
-
-Fixes: e93912786e50 ("dm: pass through operations on wrapped inline crypto keys")
-Cc: stable@vger.kernel.org
-Signed-off-by: Eric Biggers <ebiggers@kernel.org>
----
- drivers/md/dm-table.c | 12 +++---------
- 1 file changed, 3 insertions(+), 9 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 0522cd700e0e..4b70872725d0 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1235,13 +1235,10 @@ static int dm_wrappedkey_op_callback(struct dm_target *ti, struct dm_dev *dev,
- 	struct block_device *bdev = dev->bdev;
- 	struct blk_crypto_profile *profile =
- 		bdev_get_queue(bdev)->crypto_profile;
- 	int err = -EOPNOTSUPP;
- 
--	if (!args->err)
--		return 0;
--
- 	switch (args->op) {
- 	case DERIVE_SW_SECRET:
- 		err = blk_crypto_derive_sw_secret(
- 					bdev,
- 					args->derive_sw_secret.eph_key,
-@@ -1264,13 +1261,11 @@ static int dm_wrappedkey_op_callback(struct dm_target *ti, struct dm_dev *dev,
- 					     args->prepare_key.lt_key_size,
- 					     args->prepare_key.eph_key);
- 		break;
- 	}
- 	args->err = err;
--
--	/* Try another device in case this fails. */
--	return 0;
-+	return 1; /* No need to continue the iteration. */
- }
- 
- static int dm_exec_wrappedkey_op(struct blk_crypto_profile *profile,
- 				 struct dm_wrappedkey_op_args *args)
- {
-@@ -1292,18 +1287,17 @@ static int dm_exec_wrappedkey_op(struct blk_crypto_profile *profile,
- 	 * implementations of wrapped inline crypto keys on a single system.
- 	 * It was already checked earlier that support for wrapped keys was
- 	 * declared on all underlying devices.  Thus, all the underlying devices
- 	 * should support all wrapped key operations and they should behave
- 	 * identically, i.e. work with the same keys.  So, just executing the
--	 * operation on the first device on which it works suffices for now.
-+	 * operation on the first device suffices for now.
- 	 */
- 	for (i = 0; i < t->num_targets; i++) {
- 		ti = dm_table_get_target(t, i);
- 		if (!ti->type->iterate_devices)
- 			continue;
--		ti->type->iterate_devices(ti, dm_wrappedkey_op_callback, args);
--		if (!args->err)
-+		if (ti->type->iterate_devices(ti, dm_wrappedkey_op_callback, args) != 0)
- 			break;
- 	}
- out:
- 	dm_put_live_table(md, srcu_idx);
- 	return args->err;
-
-base-commit: fb8a6c18fb9a6561f7a15b58b272442b77a242dd
--- 
-2.52.0
-
+The "unstriped" device-mapper target incorrectly calculates the sector offset=
+ on the mapped device when the target's origin is not zero.=0A=0ATake for exa=
+mple this hypothetical concatenation of the members of a two-disk RAID0:=0A=0A=
+linearized:       0 2097152 unstriped 2 128 0 /dev/md/raid0 0=0Alinearized: 2=
+097152 2097152 unstriped 2 128 1 /dev/md/raid0 0=0A=0AThe intent in this exam=
+ple is to create a single device named /dev/mapper/linearized that comprises =
+all of the chunks of the first disk of the RAID0 set, followed by all of the =
+chunks of the second disk of the RAID0 set.=0A=0AThis fails because dm-unstri=
+pe.c's map_to_core function does its computations based on the sector number =
+within the mapper device rather than the sector number within the target. The=
+ bug turns invisible when the target's origin is at sector zero of the mapper=
+ device, as is the common case. In the example above, however, what happens i=
+s that the first half of the mapper device gets mapped correctly to the first=
+ disk of the RAID0, but the second half of the mapper device gets mapped past=
+ the end of the RAID0 device, and accesses to any of those sectors return err=
+ors.=0A=0AHere is a very simple (tested) patch that corrects the problem:=0A=0A=
+--- drivers/md/dm-unstripe.c~=092025-11-28 22:33:48.000000000 -0500=0A+++ dri=
+vers/md/dm-unstripe.c=092026-01-18 12:48:52.378293579 -0500=0A@@ -117,7 +117,=
+7 @@=0A static sector_t map_to_core(struct dm_target *ti, struct bio *bio)=0A=
+ {=0A =09struct unstripe_c *uc =3D ti->private;=0A-=09sector_t sector =3D bio=
+->bi_iter.bi_sector;=0A+=09sector_t sector =3D dm_target_offset(ti, bio->bi_i=
+ter.bi_sector);=0A =09sector_t tmp_sector =3D sector;=0A =0A =09/* Shift us u=
+p to the right "row" on the stripe */=0A
