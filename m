@@ -1,117 +1,120 @@
-Received: from iguana.tulip.relay.mailchannels.net (iguana.tulip.relay.mailchannels.net [23.83.218.253])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC051212FB9
-	for <dm-devel@lists.linux.dev>; Sun, 18 Jan 2026 23:25:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=23.83.218.253
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768778751; cv=pass; b=s+ORR2dMXQggSjUQVv5tJMkbuKqywbmtggdObOqwBJ2RhCCiiFGHzKabnHGgoUlCgwAlzRB2VDdTtYyYfsKYErqPN6wANs+KOqUHlDg3pqtU+hvdU2tqpChb3nzc4BdPAyrlvuI504s/WZzzHBa5Lw6f5FoyAoPan7xmz3Crxhs=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768778751; c=relaxed/simple;
-	bh=ukv2snMEI9xnzP0hOZKt45u3o1OIZ0NXXFlJIQGTZgQ=;
-	h=From:To:Cc:Subject:Date:MIME-Version:Message-ID:Content-Type; b=QuD2b7Gdl10NT+XBLtCdSVXjS/q5ndnr0Lb9rOY2zxxwSTgXG3Zp/5fSteea02TOhIfS+upGT8KgR7/Lc0x8g+EYSjhaRv6vgl68XXpG4zxj8jYakXGRj8Wlou82sSCAcN9CV6ODvECPeBEWU8eOvv2PvSeE7sAVlVEQzgM85hc=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mattwhitlock.name; spf=pass smtp.mailfrom=mattwhitlock.name; dkim=pass (2048-bit key) header.d=mattwhitlock.name header.i=@mattwhitlock.name header.b=IAvESAcX; arc=pass smtp.client-ip=23.83.218.253
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=mattwhitlock.name
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mattwhitlock.name
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83651378D77
+	for <dm-devel@lists.linux.dev>; Mon, 19 Jan 2026 14:06:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1768831577; cv=none; b=MbmWwdDlrxbt4Jn/dAmRGIAm2r/2C+qrZghob9SuSX0MyxAM5pKjfy+yyGsl9EwJDo+F+spxBP4/04kGGTTijKOhLkUn6i3Ll32hmZfQCmqGKYmohr2kiC7P0si3J0NEAsIEh01iAlxZoKyEmpAMYByXFfxbITGGEZ9lYhIW68U=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1768831577; c=relaxed/simple;
+	bh=RsR93PcsZIKOMA8BgcA0+hvvShf6Ot8VuNi5wU18Nog=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=YCVroIpMXBfl5w6a17mT6i66Zhec64OrqcNTroQfuTZohvgx9/7Euy87KrPNvbfQ5RXh6pRf8cBJtnhzefhfywjaTInSE7xBK9wcP1/X3VNsivcusBh9Umg61s6wIVokbe3WibwAT/I6z33aJw2p66rBtW4GUOCqhwdOYC0kHKE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VM3FC4PV; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mattwhitlock.name header.i=@mattwhitlock.name header.b="IAvESAcX"
-X-Sender-Id: dreamhost|x-authsender|matt@whitlock.name
-Received: from relay.mailchannels.net (localhost [127.0.0.1])
-	by relay.mailchannels.net (Postfix) with ESMTP id 46EB14C1326;
-	Sun, 18 Jan 2026 18:36:18 +0000 (UTC)
-Received: from pdx1-sub0-mail-a246.dreamhost.com (trex-green-3.trex.outbound.svc.cluster.local [100.111.223.119])
-	(Authenticated sender: dreamhost)
-	by relay.mailchannels.net (Postfix) with ESMTPA id E8B594C10A5;
-	Sun, 18 Jan 2026 18:36:17 +0000 (UTC)
-ARC-Seal: i=1; a=rsa-sha256; d=mailchannels.net; s=arc-2022; cv=none;
-	t=1768761377;
-	b=P1gWEqJgLx/JTCcq83GYs0HjTvGi0xewytW6zCI8OLUaCfs5MDbXahuTGdt1QbtP4RmWOP
-	91I0qVHM+M3TU0j+KPlu4q2OL5jmT9AarNB831gkOyIDC5AS2nDxUV/FDGf15omg8cqAJu
-	h+SrlyxC5grxX2w1I0i+zk/i2GO/CnxCT0Qha8sfn2T4xaTfG0LKsaGr1HIlKGeph/QHdV
-	OlZH0eYgXaSsC1UgNy7/DqGeXfm8nwGfVaj7517a5iui55frTO1QwQNdtOutbkcUOZGyQZ
-	EjxvpMR4dMmUf4SlqO1FuacToLeaTrvca7I+bGRkA17bQoyeulqUT3O6Hkbbbg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed;
- d=mailchannels.net;
-	s=arc-2022; t=1768761377;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VM3FC4PV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1768831572;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:dkim-signature;
-	bh=nO6TSIwrWCSu4qJ+c5+so9F8tdioN7vt2lC24zkVRNI=;
-	b=ba5lzRXlZRBiTiEfOdQ4dbzGWutORemj5ZkwQnQmkiyvF4MYIzyFBFnVhQZJ85jRY8NCsC
-	H8BWYvY/B1Hzn31+0+c85ozzREdNAtlDAQgEDELvj5vff7y7YT/8cEsPw7fdAtg7EYeNdm
-	tGkDbSniGJeKmdwyA3sodYsMDYmyJJnuHMEPEW11R/qebQe+KcgOpDEEDPTOQPjaF00ZAA
-	KqfBEc0joeOit01U5sYlrHDeYo/6j4ieak+m4RaLlpPlVGa1zcbeDdPSHX1uX4iDIpM15g
-	GYbaMRLYn9aSL00ZhawCx5sOAPMffAPNBg1hKobLnWxGIrYcYzwoNl9+wuUaeA==
-ARC-Authentication-Results: i=1;
-	rspamd-8f4d6bb8d-lrtz8;
-	auth=pass smtp.auth=dreamhost smtp.mailfrom=kernel@mattwhitlock.name
-X-Sender-Id: dreamhost|x-authsender|matt@whitlock.name
-X-MC-Relay: Neutral
-X-MailChannels-SenderId: dreamhost|x-authsender|matt@whitlock.name
-X-MailChannels-Auth-Id: dreamhost
-X-Name-Juvenile: 0b2d37ea10d4337d_1768761378162_3174146764
-X-MC-Loop-Signature: 1768761378162:3718357440
-X-MC-Ingress-Time: 1768761378162
-Received: from pdx1-sub0-mail-a246.dreamhost.com (pop.dreamhost.com
- [64.90.62.162])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-	by 100.111.223.119 (trex/7.1.3);
-	Sun, 18 Jan 2026 18:36:18 +0000
-Received: from localhost (unknown [72.71.209.96])
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=wQ435I3KwXD+ip22/eNP4psZTujJv8QByglKv/EYHEw=;
+	b=VM3FC4PV0oo8986KuoSUWgSkO3P0nolv4zzsiL7zgFtgWBoWK6Tj99q/LPWNy1qrrjlZNI
+	JcsQ7GZoeoxDDR2accl9OlXW1XGyg8qv1cmzJyXPz2uBLp6xCvSdb/MStObCKYtcA61Ft9
+	vTXOqqd9MTV+XUwup4Y/6O/3jfynGlo=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-568-fVZhzHKeNPePEzy_GqSuTA-1; Mon,
+ 19 Jan 2026 09:06:10 -0500
+X-MC-Unique: fVZhzHKeNPePEzy_GqSuTA-1
+X-Mimecast-MFC-AGG-ID: fVZhzHKeNPePEzy_GqSuTA_1768831569
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	(Authenticated sender: matt@whitlock.name)
-	by pdx1-sub0-mail-a246.dreamhost.com (Postfix) with ESMTPSA id 4dvMjs35dtz107N;
-	Sun, 18 Jan 2026 10:36:17 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mattwhitlock.name;
-	s=dreamhost; t=1768761377;
-	bh=nO6TSIwrWCSu4qJ+c5+so9F8tdioN7vt2lC24zkVRNI=;
-	h=From:To:Cc:Subject:Date:Content-Type:Content-Transfer-Encoding;
-	b=IAvESAcXuaL792gVSxy1bS0a04BjyQsqb48dHbg7Yun2cY7b5Z0nLMIU0Tbic0GIy
-	 JbRdWxtBLKFiWxN6bnWjRdTff8mIr6UJ3URYs9oFOWAZAbrlNHwZ11od3NlBjKJRek
-	 qe0J+t6Y0HgpVGKMnLhVyzlkQTDL6PUN0g6gUstPSkm1SHfHAD2SvwDtuu4hzpB7sT
-	 YuPDgemieQw4hJTYe8Etz8dGhcQfoO2OjxduAsxnbCih0NFfbrI1EJ6CBF5wNIXAnD
-	 9V3RaxJaRh6OluHjC0fzs5M+gBtNifDAUMp5j4C4ZC6yiA09R9nqO3GMJ5HBPk9K5Z
-	 /BPoO0i+f3XUA==
-From: Matt Whitlock <kernel@mattwhitlock.name>
-To: Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: <dm-devel@lists.linux.dev>
-Subject: Patch for mapping bug in drivers/md/dm-unstripe.c
-Date: Sun, 18 Jan 2026 13:36:15 -0500
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 87198180047F;
+	Mon, 19 Jan 2026 14:06:09 +0000 (UTC)
+Received: from [10.44.34.158] (unknown [10.44.34.158])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 80FFB1800577;
+	Mon, 19 Jan 2026 14:06:07 +0000 (UTC)
+Date: Mon, 19 Jan 2026 15:06:02 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Ondrej Kozina <okozina@redhat.com>, Zdenek Kabelac <zkabelac@redhat.com>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-integrity: fix recalculation in bitmap mode
+Message-ID: <951dcc10-c271-a257-84d5-81362e81e2b4@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Message-ID: <68f72c7d-7e4e-4182-87fc-78c138046cd3@mattwhitlock.name>
-User-Agent: Trojita/v0.7-781-gfddd17b7; Qt/6.10.1; xcb; Linux; Gentoo Linux
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: fPpRAazm8z_obH5AJYIJP4CPmWaWFk21GOHNGt-voqQ_1768831569
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-The "unstriped" device-mapper target incorrectly calculates the sector offset=
- on the mapped device when the target's origin is not zero.=0A=0ATake for exa=
-mple this hypothetical concatenation of the members of a two-disk RAID0:=0A=0A=
-linearized:       0 2097152 unstriped 2 128 0 /dev/md/raid0 0=0Alinearized: 2=
-097152 2097152 unstriped 2 128 1 /dev/md/raid0 0=0A=0AThe intent in this exam=
-ple is to create a single device named /dev/mapper/linearized that comprises =
-all of the chunks of the first disk of the RAID0 set, followed by all of the =
-chunks of the second disk of the RAID0 set.=0A=0AThis fails because dm-unstri=
-pe.c's map_to_core function does its computations based on the sector number =
-within the mapper device rather than the sector number within the target. The=
- bug turns invisible when the target's origin is at sector zero of the mapper=
- device, as is the common case. In the example above, however, what happens i=
-s that the first half of the mapper device gets mapped correctly to the first=
- disk of the RAID0, but the second half of the mapper device gets mapped past=
- the end of the RAID0 device, and accesses to any of those sectors return err=
-ors.=0A=0AHere is a very simple (tested) patch that corrects the problem:=0A=0A=
---- drivers/md/dm-unstripe.c~=092025-11-28 22:33:48.000000000 -0500=0A+++ dri=
-vers/md/dm-unstripe.c=092026-01-18 12:48:52.378293579 -0500=0A@@ -117,7 +117,=
-7 @@=0A static sector_t map_to_core(struct dm_target *ti, struct bio *bio)=0A=
- {=0A =09struct unstripe_c *uc =3D ti->private;=0A-=09sector_t sector =3D bio=
-->bi_iter.bi_sector;=0A+=09sector_t sector =3D dm_target_offset(ti, bio->bi_i=
-ter.bi_sector);=0A =09sector_t tmp_sector =3D sector;=0A =0A =09/* Shift us u=
-p to the right "row" on the stripe */=0A
+There's a logic quirk in the handling of suspend in the bitmap mode:
+
+This is the sequence of calls if we are reloading a dm-integrity table:
+* dm_integrity_ctr reads a superblock with the flag SB_FLAG_DIRTY_BITMAP
+  set.
+* dm_integrity_postsuspend initializes a journal and clears the flag
+  SB_FLAG_DIRTY_BITMAP.
+* dm_integrity_resume sees the superblock with SB_FLAG_DIRTY_BITMAP set -
+  thus it interprets the journal as if it were a bitmap.
+
+This quirk causes recalculation problem if the user increases the size of
+the device in the bitmap mode.
+
+Fix this by reading a fresh copy on the superblock in
+dm_integrity_resume. This commit also fixes another logic quirk - the
+branch that sets bitmap bits if the device was extended should only be
+executed if the flag SB_FLAG_DIRTY_BITMAP is set.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
+Cc: stable@vger.kernel.org
+
+---
+ drivers/md/dm-integrity.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2026-01-16 08:54:47.000000000 +0100
++++ linux-2.6/drivers/md/dm-integrity.c	2026-01-16 17:17:06.000000000 +0100
+@@ -3788,14 +3788,27 @@ static void dm_integrity_resume(struct d
+ 	struct dm_integrity_c *ic = ti->private;
+ 	__u64 old_provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors);
+ 	int r;
++	__le32 flags;
+ 
+ 	DEBUG_print("resume\n");
+ 
+ 	ic->wrote_to_journal = false;
+ 
++	flags = ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING);
++	r = sync_rw_sb(ic, REQ_OP_READ);
++	if (r)
++		dm_integrity_io_error(ic, "reading superblock", r);
++	if ((ic->sb->flags & flags) != flags) {
++		ic->sb->flags |= flags;
++		r = sync_rw_sb(ic, REQ_OP_WRITE | REQ_FUA);
++		if (unlikely(r))
++			dm_integrity_io_error(ic, "writing superblock", r);
++	}
++
+ 	if (ic->provided_data_sectors != old_provided_data_sectors) {
+ 		if (ic->provided_data_sectors > old_provided_data_sectors &&
+ 		    ic->mode == 'B' &&
++		    ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP) &&
+ 		    ic->sb->log2_blocks_per_bitmap_bit == ic->log2_blocks_per_bitmap_bit) {
+ 			rw_journal_sectors(ic, REQ_OP_READ, 0,
+ 					   ic->n_bitmap_blocks * (BITMAP_BLOCK_SIZE >> SECTOR_SHIFT), NULL);
+
