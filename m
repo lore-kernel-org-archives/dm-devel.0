@@ -1,75 +1,75 @@
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3CA5447DD46
-	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 09:00:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24672472773
+	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 09:27:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768986028; cv=none; b=jI6zScz9C5C/0AHlDF5Qt/DbpUrx/5+PMf+CVGhP06tiUoXj17Tl18dyK4i75AEJ+P/GU7PucopSvjn7/oCj7wYArB0YwGL/+crevBCZ4SXsexXWCZ5VnRhPOogsjuG5nPisBWLL0EYD67uGbwYispA20j3MBkfyEGB0hm2+CAY=
+	t=1768987676; cv=none; b=fWCW0q8z5RZyiaRm9fr4IOVWyGoADM/GGxUMsGQym6hjockQANdFJF7DgEHGBrls4t5Ty0oXHOo0CT710SxlsXI7i70LHa+57FGgjmCtFJEiR2J+pM5Wkypkml/Y+JAQiliXKUuJhixdy7iPUNBziqDQdlVfniXvZQRdh2xGL6g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768986028; c=relaxed/simple;
-	bh=1L4jAaHZZoQpE9R/Q78fJeYD+syjFidiJAqRJ2zj3vY=;
+	s=arc-20240116; t=1768987676; c=relaxed/simple;
+	bh=Ev6yPu7y2Y22Wf2C2egkmhxMtF93deb9lFmwOrgrxwI=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=F6Kv7EZQtDOryh+Kg7u/JqvN+Ii3YF3gZpa7LsRpPRFObXS4FSUcmH3K8CBrdxcSh0ml9GzbZiar4ulr/WvYJRrj2npNECN01+ZQhuoPIGIXNoXOMlA40CUm2p31uXeJZN1dDCQOWv09V1o9jOold7uxwVEMPKAykD5zx2F/fvc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WDOyXJmS; arc=none smtp.client-ip=209.85.128.47
+	 Content-Type:MIME-Version; b=dtvBL2I76NPhAvFgfZ32TWq8r4k8saY/56JTQYCAPUjwov5tFNaOD/U7gu168FKYETdq4stxC2YuVzE4YayfSty+13CLnxKIIb4AMfbbIFIpXdKG/gpG26sFkojfwB14FJTaaIjeaXrhKk9S0MIoaRVk51LGNKfTkbJqulo0fQw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WFk7tAvO; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WDOyXJmS"
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-47f3b7ef761so37273765e9.0
-        for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 01:00:25 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WFk7tAvO"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-47edd6111b4so59073875e9.1
+        for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 01:27:53 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1768986024; x=1769590824; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1768987672; x=1769592472; darn=lists.linux.dev;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=N5Q4AHUkLWSSqPPtzY9j6qCYCbOMnl7yoxLfW+0IIIg=;
-        b=WDOyXJmSRHSWv33WI5y9fY8Bal4kljQFHYSl2xAlCWxIl68j/kgcdPpWVDCpKG22Qm
-         Sb5eaihQjAtuY03BxfTNgpo5t+AM0IMgl47YasGzVUVZuEjtLGJXc9lLO+B9NX8nuIhw
-         5y5l22F8Kv8HxPNWx0WNxq86dMHJLc0+TfZC0X5Zv0uwMFrEyEHM5CpKe0lXiHcLFK3F
-         +J1WT1zwFXcePHFamGVkRrNixTg7aIiXVKLA0o4iS7hFn3OLSM2s6BjiIHQSKNVGvDPs
-         ftaRaWnmVLLjlrQQtLp2YEZrC0nYzuOOTn5WNVoRbpLiqPn4cGB/YsvMw+5B55knUVg8
-         uKMg==
+        bh=Ev6yPu7y2Y22Wf2C2egkmhxMtF93deb9lFmwOrgrxwI=;
+        b=WFk7tAvOhp7/Gai3oDNG677tKhEAl5MDWZ75RT/WcCMwcvd2FZX3jtpip/3wSqr/K+
+         5XvhkeGZMt5eiKeGe65SN1UTYDh1kmTdtk8ALnHmuN4aAw6eX4/lqv73K0pCM4XLyBXK
+         l3lzNVSBrveBjYSG0nBsRjFnPG4XTH85rLsm6aInsYFsBHee0qY3iA3owWn15EwHWCb3
+         I63STr9fNFxIFTJfYvCQErRlOz+iDmHpfm1lLnn/3ovUqyRUgaP/FRalcnSQvAjMuipI
+         yKM9G0cQloqk2/0CEyGrdu4h2kKQgOGNK6i4Y6cDcR8Fi7eaMmdoEkUBryPkSzaf4+b0
+         jXMg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1768986024; x=1769590824;
+        d=1e100.net; s=20230601; t=1768987672; x=1769592472;
         h=mime-version:user-agent:content-transfer-encoding:references
          :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=N5Q4AHUkLWSSqPPtzY9j6qCYCbOMnl7yoxLfW+0IIIg=;
-        b=g+Rs9tEha93FcNNsKuSvBwV6shp8+hi62PaaLBQCnZniCYyogOJVZddEtecR/cq2vX
-         hogpgc5xYtm6lelK/7rtx2CsLL9OIF9m1AJrQrkz7+WwvGkToWuoSga3f0r1smCjpkdO
-         YmL6/XK6BTXrQ5vXILcYr3zW3Fn9GIK2KOXBQAvVHDdHex2ZoY/Dj/D3UkgjCP9zxa3C
-         /InfZIrncwjrqUt3NRBek10Z0UwmMWhc796cjBfvoPL0LvE4Qg9o3H6Ed6Rd0n59B0F+
-         /bYugBzpGZ+eivRscvH6kaCHOvVuPK7CeaNWMLwwPRBcX71knDRFVg1NMNSB7EQsqzcX
-         c94w==
-X-Gm-Message-State: AOJu0Yw+INhP3bJPoThI/RVn5LWtdCa0qtNt1+aybyjZFA5mVq+3rB9z
-	7AtRW/tzQTIeIBhsezX1Rt7KnnKGG83iJxs8IvhwE+D/Bahfmlo8hMJtl3yto1ArMbUHCZTRj3+
-	FS4PN
-X-Gm-Gg: AZuq6aLkD7u5mDaALEOtI13srHLIEyVLQHKh7ImJz3ywFxzR5BtnHlWjGvl8UQvrKtT
-	8NqCVPWV5OKbsnNzn08HRGnE2mSXr2XvtAgLTr8SYoHS8k7KjadfHYXvnr0p9iXN0U5CXXe5ebh
-	GUsI+sphg5KTS/qbFK7lHGgH3W9kQytmfJ2/pn7/XuQim3haQRwE5TzD0wLB9qq6sW+WZXPiPZw
-	7saSb884wCG6WfJ4/r4tFZq/sXzPAZpGUhUSZ3eKnvocs9/cFi7O4Nni84R9tsM0y4aHGtmWZAG
-	Z40lkrU4hXevh5h/zaB3MwNJ9YSqz8pqwJHDea8j0hHv1gyi5XZfc/RkIepkX4qhkAZhlIATZku
-	DZG38ksaQJRWEafthZXGF4D562VxtS5A+VZ6mctNnAcjdoBfsFvv4uz70zSfcW4xT6HP3peXj66
-	IYtE0rwhVdRzM2Grw1YeQIlFZTF+q52NzDSQpsIWbhu/HJfrPjwUwMksrPB4HaSCo3KWAgFwfhn
-	Nt8/CaLNxdx8IdDaB4AWtxXK6OhSqXMdwHefVnZ6s0om94=
-X-Received: by 2002:a05:600c:45d1:b0:477:73e9:dc17 with SMTP id 5b1f17b1804b1-4803e80438amr59354015e9.35.1768986022727;
-        Wed, 21 Jan 2026 01:00:22 -0800 (PST)
+        bh=Ev6yPu7y2Y22Wf2C2egkmhxMtF93deb9lFmwOrgrxwI=;
+        b=f4XwqnMjCdYeaNmDShUQxRxcM7LV7UuAj8epTRdrIJT0ojF106VgLaSzEzz3U6zpSQ
+         Jn6kQ7UNuY5x0RNzqRCW1zWymHGOSjVAQ/0POSjIl6W5xCng1j5Hza6WHe8qzrtxPDb4
+         OZZ8NimE9aHrIXAE1wmqAEkOnx8ktg/5/Pw7+0BwzC8lmRmCae8jZJgkxsty8dCXFmcM
+         SXU3zD1Peb8k5MfWnBGKc6GLVuH4ToqLN1u+VCeOjbc7kQG1N+Ac/h+NTEk5MJdpli4y
+         0vPG7NOjeh/Q2u1ohbOofVR4JzaKFd3yIMPlDmUHiMgrgttSuPKizHo3/cErir4++c0q
+         V23w==
+X-Gm-Message-State: AOJu0Yzn8un9gCXkvMx/6sj4XZl6fPL3HX4VMsB6DS1+Qo2UCFd1nmbZ
+	7ULCKuSsoKjWwI6Tck6nbi4ri/Pg68No2PYTmM6LrQEThqHWh9YZMqLWPl/4vDOoPpiGBn9YP/W
+	/Bzab
+X-Gm-Gg: AZuq6aJUAp81u0H8slGnzo1wamaInXGHqgsjDjnB4uPmE+RxL/C+76rSYCAPhc6rlp4
+	KZRF+nx7e/WMvE7f7SKLbCE6C1BSJBWL3VoDt4KXctHKZzIqNX141I+OSCr92U+6Rz23KwgNp6c
+	HtSolYsASSviIFkhxdIvQlvpuSu2Uveh66EbgEKm05Ty2lMKVI7wzWzw4OrW7YkRZz7bzXWNbNe
+	d1JqK/URLHu9LO+7FlzV41ow6cdWj6sfRqeXBDRALPmWhLpo97B035ARG4R6M4+zHzgD1Rd1IsX
+	3RAIQt0R2q3eWIAlWl33wgK93myqV0zuRvXNGre7VZnMQAIwPnIrWJeGoACkFGBgNbl9I9DR0hL
+	ZlHEBnnock/RJ6IRQnminqSP/VlFXxjFY6W+w1PjJEVR/xYymXNuh8t+U6AftNVu3U5x2hL6d0D
+	dHEw827sIJwe8B2dbD03Y6dU3t2p0EfTncn0kAXxE+f2DUOYrAJqhiNjXhkq4vkkMrnKty6nUj3
+	LTuBdLVztmjBPpgInTVUmz0dWS/1EttpIBGpfEQH+J6GBuh9flQSRcomQ==
+X-Received: by 2002:a05:600c:358b:b0:475:da1a:5418 with SMTP id 5b1f17b1804b1-4801e2f0573mr250822535e9.1.1768987672351;
+        Wed, 21 Jan 2026 01:27:52 -0800 (PST)
 Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-43595e0a705sm7178160f8f.14.2026.01.21.01.00.22
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-47f4289b83csm353643055e9.3.2026.01.21.01.27.51
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Jan 2026 01:00:22 -0800 (PST)
-Message-ID: <cb0311f9641a398981a543a3698a5395edb27165.camel@suse.com>
-Subject: Re: [PATCH 4/4] multipathd: print path offline message even without
- a checker
+        Wed, 21 Jan 2026 01:27:52 -0800 (PST)
+Message-ID: <a6931ca87fcb21eb20490be1f3a6b7b21d80985b.camel@suse.com>
+Subject: Re: [PATCH 3/4] multipathd: make "multipathd show status" busy
+ checker better
 From: Martin Wilck <martin.wilck@suse.com>
 To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Wed, 21 Jan 2026 10:00:21 +0100
-In-Reply-To: <20260121042315.3914707-5-bmarzins@redhat.com>
+Date: Wed, 21 Jan 2026 10:27:51 +0100
+In-Reply-To: <20260121042315.3914707-4-bmarzins@redhat.com>
 References: <20260121042315.3914707-1-bmarzins@redhat.com>
-	 <20260121042315.3914707-5-bmarzins@redhat.com>
+	 <20260121042315.3914707-4-bmarzins@redhat.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.58.2 
@@ -81,37 +81,29 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 
 On Tue, 2026-01-20 at 23:23 -0500, Benjamin Marzinski wrote:
-> If a path has a checker selected and is offline, multipathd will
-> print a
-> "path offline" message. However if the checker isn't selected, for
-> instance because multipathd was started or reconfigured while the
-> path
-> was offline, multipathd was not printing the "path offline" message.
-> Fix that.
+> while uevent_listen() was grabbing new uevents, "multipathd show
+> status"
+> would still show show busy as "False". Add a check there, to make
+> catch
+> multipathd's uevent processing earlier. Also, access servicing_uev
+> (as
+> well as the new variable, adding_uev) atomically, just to make sure
+> that
+> the compiler doesn't do stupid things trying to optimize them.
 >=20
 > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
-> =C2=A0multipathd/main.c | 5 ++---
-> =C2=A01 file changed, 2 insertions(+), 3 deletions(-)
->=20
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 2140e432..69e4808f 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -96,12 +96,11 @@ mpath_pr_event_handle(struct path *pp, unsigned
-> int nr_keys_needed,
-> =C2=A0
-> =C2=A0#define LOG_MSG(lvl, pp)					\
-> =C2=A0do {								\
-> -	if (pp->mpp && checker_selected(&pp->checker) &&	\
-> -	=C2=A0=C2=A0=C2=A0 lvl <=3D libmp_verbosity)
-> {					\
-> +	if (pp->mpp && lvl <=3D libmp_verbosity) {		\
-> =C2=A0		if (pp->sysfs_state =3D=3D PATH_DOWN)		\
 
-While at it, we should probably change this to "p->sysfs_state !=3D
-PATH_UP", because start_path_check will only call the checker for the
-PATH_UP case, and in other cases, the checker state will be stale.
+access to servicing_uev is protected by uevq_lockp. The
+atomic=C2=A0annotation isn't necessary for it, AFAICT.
 
-Regards,
+I have to admit that I wasn't fully aware of the semantics of "busy".
+Na=C3=AFvely, one would assume that it means "some thread of multipathd is
+doing something". But your intention in 69cb2d8 ("multipath: add "count
+paths" multipathd command") was that it means "states of paths and/or
+maps are imminent because of current uevent processing". With that in
+mind, taking "adding_uev" into account makes sense. I'm not so sure
+about the practical relevance, though. How likely is it to hit a
+situation where the uevent listener is working but the uevent
+dispatcher hasn't been woken up yet?
+
 Martin
