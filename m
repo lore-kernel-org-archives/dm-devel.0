@@ -1,114 +1,123 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBE81355021
-	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 15:50:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F18FB285CBA
+	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 16:02:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769010624; cv=none; b=Yz5jCm/ZVDIx3kR73lneT2I2fAxTQEEb4XD3hhot1ZKv9n50yu5C5SmLpcNuo6Z6cFb9o8Qwm8fGOecinWPsq8JMFG8255RvDtR2LfYE1IxWdv/qJmTzEsPSp0nRdskwZmzVc1W4AHBTfcQ2Ml8DpPwPUeBrfBJc9Mt25o9azvM=
+	t=1769011343; cv=none; b=gc4Fmu3vigZAEAR4VVwLV/5J3xwFmpsQQXFehGnu4S+4tDciYJqXkz+LG0O5+Ck6DSQttK+gQoVAqxfi8mxuOlAB9NwDobZZKLZq9NZRE+H9LDgkKhBr2PHXPbYumx2fmYfeMShVdpSt1J16tmM9ZX7eTGz9jaxn8jOysXa5Alk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769010624; c=relaxed/simple;
-	bh=scVHSAd3RYEtELBcceeznqJX6b99/wYF4gXQlZ/mCA8=;
+	s=arc-20240116; t=1769011343; c=relaxed/simple;
+	bh=ATnObeCoEHqFUM1RYN+3i7gk73GG6OeXohdFOZ7QZcg=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=DQKb/5VXIyRkbHYt/skn67e9JfbMw6yvs6h2b5SqzHIRisFe6ngugNB/XOqUa33vgKmoJXoI2/MeI2waQQ9RDOG68fxjTxq5ckAdc+X3sV/nTMCKS9nsX+wbS1L+nD/XgV5luclCYJqE6jVQYjb89Ij30pO51OpJvvGh+l7VE+4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=e3od7Atr; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=RoCU5QIw6KA0gu+RdMmGVfx+2ShIZj7StT4xTItctUeBEmyenfcZdDmWlRiJPo9dkljzh4Ctx7HzIh5lmRLJmXLsonM3In5R8ggQY1SuUfbRNZTuvPfO++5hP1SboKcQmY9bIu4nhfNefPcj7Oifb/cwGlEqZKUe3gmt1BmJs84=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XZ5DwtRJ; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="e3od7Atr"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XZ5DwtRJ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1769010620;
+	s=mimecast20190719; t=1769011340;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=gXsAeVm1zH8uXdf5W12thRyzrRe7PRzMyZ5q/jBL9X8=;
-	b=e3od7Atr/FTytHsQGMaN6M2vsQOuZ3vEyLtq1sqr8TRwL86KCnqcsdYKb57tDCqCDhWXWy
-	d5HDCxKVloXSYdG5cYOghBqjAV1DGfNOVCn/JMmh2m6WcmAyPM7lms3iTuWx6QBzgYc9fe
-	anrCISDrxJefyDoVCPA3EIm2CZLMEmA=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=wcgOUrvoIOa6w5i9GYOINP/p4KOt9xKidwHRe7iB2w8=;
+	b=XZ5DwtRJ2pmDEFVuxW/M/PFlZkQizZjnAyLbq/sV1ePNFbIWGkbWdWNsC9kqg1u4cMqevm
+	GsJud0n+4SW+MmYJZJnbFTVyAOKKDkaE6cj7I8jt/xJ84yN6HMP/IpzcW4g1IXGCj4+asp
+	YVv0mRsBnivCXZpJGWa/HYlGAxRPKIc=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-549-94PgPUkjNpep9S5Xp8BRfg-1; Wed,
- 21 Jan 2026 10:50:17 -0500
-X-MC-Unique: 94PgPUkjNpep9S5Xp8BRfg-1
-X-Mimecast-MFC-AGG-ID: 94PgPUkjNpep9S5Xp8BRfg_1769010616
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-320-m8-DV9C8N8SpqvnNiO993g-1; Wed,
+ 21 Jan 2026 11:02:13 -0500
+X-MC-Unique: m8-DV9C8N8SpqvnNiO993g-1
+X-Mimecast-MFC-AGG-ID: m8-DV9C8N8SpqvnNiO993g_1769011332
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EA13118003FC;
-	Wed, 21 Jan 2026 15:50:15 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E372D19560AF;
+	Wed, 21 Jan 2026 16:02:11 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B1BFA19560A2;
-	Wed, 21 Jan 2026 15:50:15 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ABB5A19560AB;
+	Wed, 21 Jan 2026 16:02:11 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 60LFoEth3932327
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 60LG2A0C3932687
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 21 Jan 2026 10:50:14 -0500
+	Wed, 21 Jan 2026 11:02:10 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 60LFoEqL3932326;
-	Wed, 21 Jan 2026 10:50:14 -0500
-Date: Wed, 21 Jan 2026 10:50:14 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 60LG2A3F3932686;
+	Wed, 21 Jan 2026 11:02:10 -0500
+Date: Wed, 21 Jan 2026 11:02:10 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Martin Wilck <martin.wilck@suse.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
         device-mapper development <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH 3/4] multipathd: make "multipathd show status" busy
- checker better
-Message-ID: <aXD1tsRC9PeR5aEX@redhat.com>
+Subject: Re: [PATCH 4/4] multipathd: print path offline message even without
+ a checker
+Message-ID: <aXD4gokRK8GZYSFY@redhat.com>
 References: <20260121042315.3914707-1-bmarzins@redhat.com>
- <20260121042315.3914707-4-bmarzins@redhat.com>
- <a6931ca87fcb21eb20490be1f3a6b7b21d80985b.camel@suse.com>
+ <20260121042315.3914707-5-bmarzins@redhat.com>
+ <cb0311f9641a398981a543a3698a5395edb27165.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <a6931ca87fcb21eb20490be1f3a6b7b21d80985b.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+In-Reply-To: <cb0311f9641a398981a543a3698a5395edb27165.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 1N65-TL6SeBOmLBQFFIV2npyYgpGlZAU8jUG2QksIHY_1769010616
+X-Mimecast-MFC-PROC-ID: s2fV80IV8_jX3bL8-cWisqebhUNZ0BsKYo_KZpPiKK4_1769011332
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-On Wed, Jan 21, 2026 at 10:27:51AM +0100, Martin Wilck wrote:
+On Wed, Jan 21, 2026 at 10:00:21AM +0100, Martin Wilck wrote:
 > On Tue, 2026-01-20 at 23:23 -0500, Benjamin Marzinski wrote:
-> > while uevent_listen() was grabbing new uevents, "multipathd show
-> > status"
-> > would still show show busy as "False". Add a check there, to make
-> > catch
-> > multipathd's uevent processing earlier. Also, access servicing_uev
-> > (as
-> > well as the new variable, adding_uev) atomically, just to make sure
-> > that
-> > the compiler doesn't do stupid things trying to optimize them.
+> > If a path has a checker selected and is offline, multipathd will
+> > print a
+> > "path offline" message. However if the checker isn't selected, for
+> > instance because multipathd was started or reconfigured while the
+> > path
+> > was offline, multipathd was not printing the "path offline" message.
+> > Fix that.
 > > 
 > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> > ---
+> >  multipathd/main.c | 5 ++---
+> >  1 file changed, 2 insertions(+), 3 deletions(-)
+> > 
+> > diff --git a/multipathd/main.c b/multipathd/main.c
+> > index 2140e432..69e4808f 100644
+> > --- a/multipathd/main.c
+> > +++ b/multipathd/main.c
+> > @@ -96,12 +96,11 @@ mpath_pr_event_handle(struct path *pp, unsigned
+> > int nr_keys_needed,
+> >  
+> >  #define LOG_MSG(lvl, pp)					\
+> >  do {								\
+> > -	if (pp->mpp && checker_selected(&pp->checker) &&	\
+> > -	    lvl <= libmp_verbosity)
+> > {					\
+> > +	if (pp->mpp && lvl <= libmp_verbosity) {		\
+> >  		if (pp->sysfs_state == PATH_DOWN)		\
 > 
-> access to servicing_uev is protected by uevq_lockp. The
-> atomic annotation isn't necessary for it, AFAICT.
+> While at it, we should probably change this to "p->sysfs_state !=
+> PATH_UP", because start_path_check will only call the checker for the
+> PATH_UP case, and in other cases, the checker state will be stale.
 
-True. I can remove that.
- 
-> I have to admit that I wasn't fully aware of the semantics of "busy".
-> Naïvely, one would assume that it means "some thread of multipathd is
-> doing something". But your intention in 69cb2d8 ("multipath: add "count
-> paths" multipathd command") was that it means "states of paths and/or
-> maps are imminent because of current uevent processing". With that in
-> mind, taking "adding_uev" into account makes sense. I'm not so sure
-> about the practical relevance, though. How likely is it to hit a
-> situation where the uevent listener is working but the uevent
-> dispatcher hasn't been woken up yet?
-
-I saw it happen at the start of a uevent surge. To be honest, I don't
-know why uevent_receive_events() took so long to return, but it seemed
-like extending the check is a pretty painless way to catch that.
+Sure, although I'm pretty sure that will just mean that removed paths
+might see a final log message, since PATH_PENDING paths won't see any,
+and the only other sysfs_state options are PATH_UP and PATH_DOWN.
+Actually, if we print an explicit "path removed" message, it could be
+useful on the off chance that a removed path didn't transistion to
+INIT_REMOVED like it should.
 
 -Ben
-
+ 
+> Regards,
 > Martin
 
