@@ -1,140 +1,127 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4B9F30BF52
-	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 17:01:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88BF9238C1A
+	for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 21:03:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769014907; cv=none; b=i+OShz857dhlf2X8y/eke5ATNcRFlenLjnEDQht3Dx0AEHfgE/6zwFI+geTV7dWrK15atJybatNbzwWPADG4wicV/amr2/AKU3wfnaw9kriVQgbtZKFhmMnLS6USbaNMe1mBSOBD/cH0W+/J2TdijY5VRTGbc+/1xntAVxLhNQ0=
+	t=1769029401; cv=none; b=cHpXtk8DtliyoPJs817uzMhOqsW8sxhyGF24zD1sM9CslOsI/FnyMzdCIupQRsor0xyEBKGKw1X6J6F7pddG8EeVXaR8YozXsX/yNRw45t80kxTFS/ZoGnM3xbzWrE4lXgm9UvS4mwbwEwbpQHue/wQZyJQHH+aO/ulrssF7eK8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769014907; c=relaxed/simple;
-	bh=+jRcdDbhjK1sCgH9JB42558Zn/SVbF9IGFkrhDcSgx0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Z2XpeHlEYp656WEYplPD7F7UUoSN/r0xij6D1oZIrp8H5N+N+ACMEa1wG+sm4kbLrVCj+08j777aS+Ejrz2qiGdnvOkHA90dRDzll05XYZ7KjVn4vg4FaAKgJmEzo39jIC8/rbHj8IHOrfA9Sxsz9bHxJU7pJ7zIv/nXCWO+u1w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=d4lkXbCW; arc=none smtp.client-ip=209.85.221.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1769029401; c=relaxed/simple;
+	bh=Vhe3Vbv1b51Ws/SbClE1aSifaKT1bR7cdliQ0154OVM=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=sdnLBVMt4u8SLkGRY4Z7F/nxN0m/psluzu4XyxShOLGFdxd6oOyuTDuj7h5l1OPGSSbBd1zE/bLYO7UFqj2tDhFsKPYd/xR9Zj01ZXFt0UuNAoh2cxA18+fMJgtuFh523qtGf0fE2sl5IRhoAjuwo3xX7dViQCInTndUjfMH5pw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HTCFhffq; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="d4lkXbCW"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-43284ed32a0so20766f8f.3
-        for <dm-devel@lists.linux.dev>; Wed, 21 Jan 2026 09:01:44 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1769014903; x=1769619703; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=D0353kSabTIoTikdXbdSfoVh/Akth8pu4Hx3F73cWuk=;
-        b=d4lkXbCWKdEf2nR2dtazQrSKIfpllv5vjLe7jWYg3w7oCuVshBN9ckE2Qt3RdvbPTw
-         UkGUckDEtAmTC/LnTrkGCVjZ39s6fqZbR/DKWQoIpcRBK0TbfwFXRUcJDdQqpcYW/+Zh
-         BN5SXflaLW4oFEtQem8M7s0XGH4eCUtooI0uuGLT9eK/12n3xlifB2b4aSefawL/xWaG
-         GTOMokQdqZck1jbTFzrOuDCP8632JwCTT4H14Rx9xCwJglMw/dIQRqW6gjEJOY80aZsx
-         sO1dWMah216Lpk+j1NoqbCe9quRH/diO+JsKyh4iYTx0UxSc9DuoZdiS+Z67dwcRY36H
-         pfaQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1769014903; x=1769619703;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=D0353kSabTIoTikdXbdSfoVh/Akth8pu4Hx3F73cWuk=;
-        b=HrIF8VK8rFimHV51x6qPd/ayPOiDnbri56fs+8RdRa7rwFvODsPOfcabCZAcL8fX6d
-         vCNBuZ7uJo+D9U6KGhA6i621PqBg1PNipDjTq03D4wZoQ8OY+/UmAbSiNk1JydTu73O9
-         PLVDoMKWDAqh1gPxBf2QyzyqcqCO75j9/AxCfvS/npcVSwLV/YgZ7YBMRJiP4kn4wiVI
-         QlmlF5slYFsF4jJwHjpphsgXdpbuQ0s09lqa9V9jxXqsZwdEhNZTIOSCrd1L4e9fdxkV
-         VCL2wR0kAQFJpivN9GxAeglKbgC4fqg1/otoIaMnDAgbIq6jSA+s70QynGemK+azOwUm
-         TBQA==
-X-Forwarded-Encrypted: i=1; AJvYcCVtn6ADVavFz5HuW2ynlPiA4SV4DTMpPug4DmWMO6Hf60DfdSs/6j5vGlzvQaenpro6sCbfT5mfog==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxywjvP7t/pReShsJYRua77icAkQaCD9eW53JsXMkekpO9ZCki0
-	ot6XQgzagEZt/YuLBFAlaK6mva0ev+IcDirDX0pxK1fF5VHxH6eRe8Oucm3IIoVnfOA=
-X-Gm-Gg: AZuq6aK4XVzDlcucbqa6oqlxaZVcYgInHLxyTJdWT+VWtd6AkdhYjeyNnHqiCyXfqA0
-	ee0VGXT4bfvMNAkabZOh/nY68c0gzSkhLPj0CKlQGC4v8+Aq5u2OrhqX21sJNxk2LcTZU2CYCpY
-	bllsNaRyaYwFIz+RmHql4Uyk3wXUw8tCVCzqEF0e5kLRescidQ8I3DVilsiA95eQEbMI+5RT9hI
-	NRe6MUwtSXlo3Bx7goqH4s8yxq6F77kbli+URAMchZfnLEb1IGoc3qZmEfy5ZQTIb4QRGNtdJlq
-	qLAWHcwH5bIAkOFAvUY6aVv1VmcGLOoyCy+xraIrbKUkyUrOgOw3I2jAa3ShkqdVN2FOlV3bCZG
-	XsvYnENXp1VjJajzB7FB1NcDPw0QMLJMx46ejmY9aUxQbVIi+eELqsmd59NVsEQjizsa7BdnQUL
-	9UrVMyi1GPxe19bGLhnepwBMha7T+cN4HG+fz5T0F0HQtlFtWSfaNO1vLEIbPRoostqyxHiW6FS
-	oYvWtokMDRqzqTWTULsIDv1A5wFZoIq5kzMquICwT89qP8=
-X-Received: by 2002:a5d:64c8:0:b0:435:9223:c625 with SMTP id ffacd0b85a97d-4359223cbd6mr9822836f8f.28.1769014902770;
-        Wed, 21 Jan 2026 09:01:42 -0800 (PST)
-Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-43597bda41esm8313892f8f.28.2026.01.21.09.01.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Jan 2026 09:01:42 -0800 (PST)
-Message-ID: <cc15e6e5593427f633d9fb86f791db2bdc4fa293.camel@suse.com>
-Subject: Re: [PATCH 4/4] multipathd: print path offline message even without
- a checker
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, device-mapper
- development <dm-devel@lists.linux.dev>
-Date: Wed, 21 Jan 2026 18:01:41 +0100
-In-Reply-To: <aXD4gokRK8GZYSFY@redhat.com>
-References: <20260121042315.3914707-1-bmarzins@redhat.com>
-	 <20260121042315.3914707-5-bmarzins@redhat.com>
-	 <cb0311f9641a398981a543a3698a5395edb27165.camel@suse.com>
-	 <aXD4gokRK8GZYSFY@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HTCFhffq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1769029398;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=IBAgXeZH+kqBAfDL6WhRS2wAPfHgPPpaNs+l3VceABw=;
+	b=HTCFhffqq53+edWV/z5+qSli8nGvPeqXIV2axQhgAck/5jOIUzL8hu1pwvP+ZfJpOwYeV7
+	Nwp6fxKS2mssGRC0Cc1XXR++IKkEqk3RinsCudys7n0hWh/RJ1rqYIYNNCHJ87j9aXStFR
+	9oYyRATvFUF9I0JcGUzQQu9OYPG7u/o=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-448-mE8FCyofOaCPv10xgqOB9Q-1; Wed,
+ 21 Jan 2026 16:03:16 -0500
+X-MC-Unique: mE8FCyofOaCPv10xgqOB9Q-1
+X-Mimecast-MFC-AGG-ID: mE8FCyofOaCPv10xgqOB9Q_1769029395
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 67ED719560B5;
+	Wed, 21 Jan 2026 21:03:15 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DD72819560A2;
+	Wed, 21 Jan 2026 21:03:14 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 60LL3Dq33942744
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 21 Jan 2026 16:03:13 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 60LL3DN63942743;
+	Wed, 21 Jan 2026 16:03:13 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>, Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2 1/4] multipathd: don't add removed/partial paths to new maps
+Date: Wed, 21 Jan 2026 16:03:10 -0500
+Message-ID: <20260121210313.3942727-2-bmarzins@redhat.com>
+In-Reply-To: <20260121210313.3942727-1-bmarzins@redhat.com>
+References: <20260121210313.3942727-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: eMkHOCuB4gEnwcoC0SwErXOdHQNdU565gNvdMYMdnIc_1769029395
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Wed, 2026-01-21 at 11:02 -0500, Benjamin Marzinski wrote:
-> On Wed, Jan 21, 2026 at 10:00:21AM +0100, Martin Wilck wrote:
-> > On Tue, 2026-01-20 at 23:23 -0500, Benjamin Marzinski wrote:
-> > > If a path has a checker selected and is offline, multipathd will
-> > > print a
-> > > "path offline" message. However if the checker isn't selected,
-> > > for
-> > > instance because multipathd was started or reconfigured while the
-> > > path
-> > > was offline, multipathd was not printing the "path offline"
-> > > message.
-> > > Fix that.
-> > >=20
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > ---
-> > > =C2=A0multipathd/main.c | 5 ++---
-> > > =C2=A01 file changed, 2 insertions(+), 3 deletions(-)
-> > >=20
-> > > diff --git a/multipathd/main.c b/multipathd/main.c
-> > > index 2140e432..69e4808f 100644
-> > > --- a/multipathd/main.c
-> > > +++ b/multipathd/main.c
-> > > @@ -96,12 +96,11 @@ mpath_pr_event_handle(struct path *pp,
-> > > unsigned
-> > > int nr_keys_needed,
-> > > =C2=A0
-> > > =C2=A0#define LOG_MSG(lvl,
-> > > pp)					\
-> > > =C2=A0do
-> > > {								\
-> > > -	if (pp->mpp && checker_selected(&pp->checker)
-> > > &&	\
-> > > -	=C2=A0=C2=A0=C2=A0 lvl <=3D libmp_verbosity)
-> > > {					\
-> > > +	if (pp->mpp && lvl <=3D libmp_verbosity)
-> > > {		\
-> > > =C2=A0		if (pp->sysfs_state =3D=3D
-> > > PATH_DOWN)		\
-> >=20
-> > While at it, we should probably change this to "p->sysfs_state !=3D
-> > PATH_UP", because start_path_check will only call the checker for
-> > the
-> > PATH_UP case, and in other cases, the checker state will be stale.
->=20
-> Sure, although I'm pretty sure that will just mean that removed paths
-> might see a final log message, since PATH_PENDING paths won't see
-> any,
-> and the only other sysfs_state options are PATH_UP and PATH_DOWN.
-> Actually, if we print an explicit "path removed" message, it could be
-> useful on the off chance that a removed path didn't transistion to
-> INIT_REMOVED like it should.
+During configure(), when the old multipath devices are added in
+map_discovery(), it's possible that they have paths in the INIT_PARTIAL
+or INIT_REMOVED state. These paths were not found during
+path_discovery(). Don't add them to the new multipath maps.
+coalesce_maps() will make sure that they point to the old maps, so they
+will get cleaned up when those maps are removed.
 
-I'm fine with always printing "offline" here, which at that point would
-just mean that no checker state could be retrieved.
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/configure.c   | 12 +++++++++++-
+ libmultipath/structs_vec.c |  3 ++-
+ 2 files changed, 13 insertions(+), 2 deletions(-)
 
-Martin
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 0bcec089..a713ddc4 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -1113,7 +1113,17 @@ int coalesce_paths (struct vectors *vecs, vector mpvec, char *refwwid,
+ 			continue;
+ 		}
+ 
+-		/* 4. path is out of scope */
++		/*
++		 * 4. The path wasn't found in path_discovery. It only exists
++		 *    in an old map.
++		 */
++		if (pp1->initialized == INIT_PARTIAL ||
++		    pp1->initialized == INIT_REMOVED) {
++			orphan_path(pp1, "path not found");
++			continue;
++		}
++
++		/* 5. path is out of scope */
+ 		if (refwwid && strncmp(pp1->wwid, refwwid, WWID_SIZE - 1))
+ 			continue;
+ 
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index 9384de01..3e63e9c3 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -315,7 +315,8 @@ int adopt_paths(vector pathvec, struct multipath *mpp,
+ 					pp->dev, mpp->alias);
+ 				continue;
+ 			}
+-			if (pp->initialized == INIT_REMOVED)
++			if (pp->initialized == INIT_REMOVED ||
++			    pp->initialized == INIT_PARTIAL)
+ 				continue;
+ 			if (mpp->queue_mode == QUEUE_MODE_RQ &&
+ 			    pp->bus == SYSFS_BUS_NVME &&
+-- 
+2.50.1
+
