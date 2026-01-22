@@ -1,120 +1,153 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C7F0539CED5
-	for <dm-devel@lists.linux.dev>; Thu, 22 Jan 2026 21:29:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 440D3303C86
+	for <dm-devel@lists.linux.dev>; Thu, 22 Jan 2026 22:39:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769117387; cv=none; b=bw0iycpDzw7cjIotDG56m2Ap0CDJcyrhA8z3NdSpOaI9n3BpkJieEipq8g7BqJtck4I/SQCN1S/VMGZzIm/btbc99GUgVLo3rmv2ngvBSIQvVsda/PjqgVxUKp32RFTBBTip9XJbP/IIvYGyFfOPQZbz3qYvoHKl/mLizXLxYWI=
+	t=1769121547; cv=none; b=h69g+tSYYISjrdo4lIglsytOLt9iRdCkRi0PDrvDATxQOub2lKn3MTSnKKHGKkHlVT9oFtsoOroHDRcOZNVREcknCnYqKKJyMlDHXjyuPvWErusxagTcfGbHT3nR9oiPg2rjQILdU8BkCPcOQNsYkcHwuwVLcm1t11l+cvx2AEM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769117387; c=relaxed/simple;
-	bh=eaN5PrvS2vXtlR0wucaA4Z2ZGk+jaqkKwOa5jkkXmkk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=KHtrKYgzN1h5/kEI7sKrJnbIElEq3V+yp0vXxqKQGHHdc4AAuVIYKSlPS35ConDdO4TcoVwtnnBrryU1ER+k0+7XgKYkX81MSJuAFAZj7eZ9ICAh8iNL0HDskJkCTI9teu6wfdv7sqalUvQOMGuX0BFfLQKb+jhg3tOsIwjkDOk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AYtmbl8S; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1769121547; c=relaxed/simple;
+	bh=FSO7Ql0K2jDV/fqjccH8DsaI9+QUtI7Odct8DNGREhY=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=SH+SxALVLPOjpMzR5ZLdQcMksS91l9/Dxwg49Bjpq3yMBz4OZ0N/AbHUC7B6z0k8ezFsJZLpdaHDPvZ8H+l8UWsHHDOuV+oC6IDphSEiWGQwqzq5usT4TBygxH6ciyBKoEXyo9Y2RH+2b3nykPgr7CUBOW/DZsWh1MU9325obGI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=GZ+1oUlS; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=GZ+1oUlS; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AYtmbl8S"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-47ee787da37so888105e9.2
-        for <dm-devel@lists.linux.dev>; Thu, 22 Jan 2026 13:29:42 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1769117380; x=1769722180; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=g0+BE2nPu0Rdnvf8M0OPuhFnkPXxsPzsDpqpeP3/VmY=;
-        b=AYtmbl8Snh6zcWvUrzeOy+SoQh0ebbnUpLT1yvTauHbXBogiXAzEM3lcZ8lG+4TjrT
-         vlCmDIxq/yTrUC+PoWB3mHjorUI3R45s161gpcP/MhAkmRNzfBkNEwHtwqZaRASJRdvY
-         TqG2TJgAzDL9n04l7C05UXzpDR+tauUpYbE3jKdVa1Fb4LqBhspHlROwKG6hNCd0Vml3
-         eSU9Lu94EILVZ239cluJZHkjKz1C44tgNMW+Ogn5n56vHNg3Iuttbmgi+qLgVBV9hqrC
-         AJEVtRgyPYtTN3oBdA+RW9Tl7960aRN/fLjFl8cFCTYrXVenqqaIvsLuRGB5L6IweLUh
-         48TA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1769117380; x=1769722180;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=g0+BE2nPu0Rdnvf8M0OPuhFnkPXxsPzsDpqpeP3/VmY=;
-        b=BhFBCn/lRaK3buF3KBezGBxaecD55XIGfmSLJtMuKcD/2mr+nEMKPHkv6uySby0BhU
-         Q99/hfytwtByw60zcAK3tBR7a3wR8fsYsdB689BpqG7MFxvLm0Hw2LCz3Bi8PqvUqOty
-         oBTz31NLL5W7i4G2k6R34F4GH+E12X4rtLTBWWGq6mStKEsLgzGqQUTEnDLy9LeJR460
-         RamNpqi4v2ZF5EMex1NzO7a4sQww/xfdXYxbYcDzrqzjK2JL+F4djjtScYLI9LoyurTn
-         InWn8m9sYp/Rj+AKVM2RgAWaFweutsIgbF5G6Do9McV0OPi2FJlhDW8PpWNSR2n78Lpq
-         78pA==
-X-Forwarded-Encrypted: i=1; AJvYcCWso81F3vkzbmW2mxfP0PkGTd+S0m02ehRUhCVdBiSNYbAsdURdkvOQVb1ambGKr/xJhbonf7WiFg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxl4SaukkAdT/oEHEIafH4l272pmOdVxpIXiRrTdQQf6tY8Omyr
-	MNFNKuNGcvBN3wLejzV8KeyrYZJr8o9d7lqWatfSeL12TLVKzkzhlUM=
-X-Gm-Gg: AZuq6aIlP6IBwhfjJGwevn9mKXdASDMKqIMCwc8KQftHAy3ZljTDP73iPK0e8BbgiVe
-	+FElxo032ghWbnd8ltdqYX4+xUt8aMwiML8b6ACkDU2Skg11hXEXgH9heAj25CqmA7SfEqtJv47
-	mvId9dvegg0eUA0a803UDY3HvDEGrSVTfYCYTnqZa3ohzr7ufX/58PxzUD5mfsjYh04MWJJhdYJ
-	bcda2DTb+BRHj5TOCMPi5681ULHMwNeiLfOn/fPCH7iyCeVl8eP6ErXlYsU55P+f+vHLD86mrxX
-	t0eizwuALOI9mzFYQIFCjGbhQlOxHesEyZI9qbrnFVEw9/SvtM6Wa25m9eaOLJ90U/x3/xVL0ce
-	2vAVwJLEw/RTGJehMnltIbyckOjRojbsIcvMS38sDLEsv1upwOc0EQTPZdE9TV5lBvzeuf6lyR+
-	xQvo5yBP1ehD9xYy+yMUYH9WTlmEOWXNh55yw7hBZ5O02GlqPm7yenrQQz8FtjwH8=
-X-Received: by 2002:a05:600c:828f:b0:477:9a4d:b92d with SMTP id 5b1f17b1804b1-4804c9b9df3mr9622555e9.5.1769117380079;
-        Thu, 22 Jan 2026 13:29:40 -0800 (PST)
-Received: from localhost (19.red-80-39-166.dynamicip.rima-tde.net. [80.39.166.19])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-435b1f74b15sm1524141f8f.35.2026.01.22.13.29.39
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 22 Jan 2026 13:29:39 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Mike Christie <michael.christie@oracle.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: add NEC iStorage to hwtable
-Date: Thu, 22 Jan 2026 22:29:38 +0100
-Message-ID: <20260122212939.321161-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="GZ+1oUlS";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="GZ+1oUlS"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 8271433789;
+	Thu, 22 Jan 2026 22:38:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1769121539; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+HlcpNNa+Fy9jEYtSV4YvD7ZJ1hYW8OQnzgq1kRwm1w=;
+	b=GZ+1oUlSyIxDtWw2YHVcNnx89s29C0kjhtJkmFyeowoSeHe2s8whK3umroqMe0I2Yq4oCl
+	++Emmnwv9qMtFRqhD+GD3zSPMwu3x+gH5BqYMq93GnM89NIkjGONjH/+GFbmh+sgCUA8DP
+	RjF1Onezw/rBd3/TxB4cWmpDKUX7YbA=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1769121539; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+HlcpNNa+Fy9jEYtSV4YvD7ZJ1hYW8OQnzgq1kRwm1w=;
+	b=GZ+1oUlSyIxDtWw2YHVcNnx89s29C0kjhtJkmFyeowoSeHe2s8whK3umroqMe0I2Yq4oCl
+	++Emmnwv9qMtFRqhD+GD3zSPMwu3x+gH5BqYMq93GnM89NIkjGONjH/+GFbmh+sgCUA8DP
+	RjF1Onezw/rBd3/TxB4cWmpDKUX7YbA=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5062F1395E;
+	Thu, 22 Jan 2026 22:38:59 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id ojkKEgOncmkrdQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 22 Jan 2026 22:38:59 +0000
+Message-ID: <f8ac0fb7f1582371dfeafb381f19a173c7ce1fce.camel@suse.com>
+Subject: Re: [PATCH] multipath-tools: add NEC iStorage to hwtable
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Mike Christie <michael.christie@oracle.com>, Benjamin Marzinski	
+ <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>,
+  DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Thu, 22 Jan 2026 23:38:58 +0100
+In-Reply-To: <20260122212939.321161-1-xose.vazquez@gmail.com>
+References: <20260122212939.321161-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.998];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_TO(0.00)[gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_FIVE(0.00)[5];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:email,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Flag: NO
+X-Spam-Score: -2.80
+X-Spam-Level: 
 
-Info from https://marc.info/?l=linux-kernel&m=122123037102604 :
+On Thu, 2026-01-22 at 22:29 +0100, Xose Vazquez Perez wrote:
+> Info from https://marc.info/?l=3Dlinux-kernel&m=3D122123037102604=C2=A0:
+>=20
+> "Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> [...]
+> Some basic function/performance testings are done with NEC iStorage
+> (active-active multipath)..."
 
-"Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-[...]
-Some basic function/performance testings are done with NEC iStorage
-(active-active multipath)..."
+Thanks... so, you inferred the settings just from the "active-active"?=20
+That might be correct, but it's hard to say with confidence after 15+
+years.
 
-Added to BLIST in:
-https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=12427d99489966185dc12a0b6f725d682a3277ca
+Nobody has complained about this device not being in our HW table.
+I admire your detective skills, but I don't think that adding it now,
+guessing the parameters, makes much sense.
 
-Cc: Mike Christie <michael.christie@oracle.com>
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/hwtable.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+Regards,
+Martin
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 23c54933..4fc245a4 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -872,6 +872,13 @@ static struct hwentry default_hw[] = {
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.prio_name     = PRIO_ALUA,
- 	},
-+	{
-+		 // iStorage series
-+		.vendor        = "NEC",
-+		.product       = "iStorage",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * Oracle
- 	 */
--- 
-2.52.0
-
+>=20
+> Added to BLIST in:
+> https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit=
+/?id=3D12427d99489966185dc12a0b6f725d682a3277ca
+>=20
+> Cc: Mike Christie <michael.christie@oracle.com>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+> =C2=A0libmultipath/hwtable.c | 7 +++++++
+> =C2=A01 file changed, 7 insertions(+)
+>=20
+> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+> index 23c54933..4fc245a4 100644
+> --- a/libmultipath/hwtable.c
+> +++ b/libmultipath/hwtable.c
+> @@ -872,6 +872,13 @@ static struct hwentry default_hw[] =3D {
+> =C2=A0		.pgfailback=C2=A0=C2=A0=C2=A0 =3D -FAILBACK_IMMEDIATE,
+> =C2=A0		.prio_name=C2=A0=C2=A0=C2=A0=C2=A0 =3D PRIO_ALUA,
+> =C2=A0	},
+> +	{
+> +		 // iStorage series
+> +		.vendor=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "NEC",
+> +		.product=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "iStorage",
+> +		.pgpolicy=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D MULTIBUS,
+> +		.no_path_retry =3D 30,
+> +	},
+> =C2=A0	/*
+> =C2=A0	 * Oracle
+> =C2=A0	 */
