@@ -1,122 +1,110 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C452F2F2604
-	for <dm-devel@lists.linux.dev>; Fri, 23 Jan 2026 16:17:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769185029; cv=none; b=cK2cgFPPkeKia+8gmidHswuyB/eo8DXJulK9X2AJrG04mxUmjq69StwvzvoLsFMSW30WeJ5sqYrbQ+rcsT1eh2WDlfJYmJvkyHS1r2k0F37XZ/kdRSxPswuemg9Rj/W3lZD5QDyXa1Kxd+9WRGrsBWzqIQdX8674Cw/CHhDb9+0=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769185029; c=relaxed/simple;
-	bh=nbJa3JQ8YGysAxwDTcq+13cYv0FPt1KYgwxWB0Yo5zA=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=qIbpatoxNXsbbCIiv7csqEUEFiMk4KhnidjNNf66a1G9K2FbwczyTVf6czXfmlAyvlD+hlb21KS2j35B7ONLi2CO7kX3YvLUXC6Wpj9hXkwfNRWUTq+7HnjrJkXmLB8fWGj9Pye9XyabJF5QuexILPDMA1QQr3HC8Mx1GDrJKes=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cvTOF+eU; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C84D11A2C0B
+	for <dm-devel@lists.linux.dev>; Fri, 23 Jan 2026 22:45:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.50
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1769208345; cv=pass; b=HEckbkDDRRZlGb6QGrtJrTqsS2mSWabWdPbAASFba744s+pZHmcLK5fZvHba3RwLXj7wFaqK8v5N9WQrdbIZy5lK6eMc+vsoUJwpcX+Iish0Fsd0/XM86vhAXFgwHZoyVmaBN9zLOLXwNVXnKEepBUk1jJs7Aar39FiMS0nL7j0=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1769208345; c=relaxed/simple;
+	bh=Y67GBtXDVaAOQ8LhyEmeOykoFjVr4U/jCQoNXM2zraM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=OJwauSRrDRdN4gcaRu6TtwZQpAzNeJLSawZA42MOpBvemQSt0KOBYvVsQewZrhmwkgWDwnG6UMB66SlWVM0eR3CTXA9HKN5Zzeqd5vnWJLrGa0o5YLSV0ZuiUSovfBw42gk/RGPVsZrXz90uhvHicEpxSnv2D7V15opnexaQLfE=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=H1L9nwdw; arc=pass smtp.client-ip=209.85.208.50
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cvTOF+eU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1769185026;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=afoXArO+XWTJyzsoOKc4uTxqnzUsR1b4tnwkzr0xN3c=;
-	b=cvTOF+eU5X7HCa56rn/ye+ul7eBEEBZNXjNEM9gPNHaRDDgrvgYdbMVOiciYJ6CSCaC7AX
-	OaYE731pD6d78E5tbhuZL7CDiDGbxqdjx4ASyrVaWEabv5wF1J16+XHLpYEzPQUaCRqKFk
-	36dwtYGWQAUIjFCUcSTJhQkg7fhFHbY=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-622-3Rod1OQnPA-3l2HvUKcfIg-1; Fri,
- 23 Jan 2026 11:17:05 -0500
-X-MC-Unique: 3Rod1OQnPA-3l2HvUKcfIg-1
-X-Mimecast-MFC-AGG-ID: 3Rod1OQnPA-3l2HvUKcfIg_1769185024
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7D5D619373E2;
-	Fri, 23 Jan 2026 16:17:03 +0000 (UTC)
-Received: from [10.44.34.158] (unknown [10.44.34.158])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 22CE51958DC1;
-	Fri, 23 Jan 2026 16:17:00 +0000 (UTC)
-Date: Fri, 23 Jan 2026 17:16:54 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Zhihao Cheng <chengzhihao1@huawei.com>
-cc: agk@redhat.com, snitzer@kernel.org, bmarzins@redhat.com, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    yangerkun@huawei.com, lilingfeng3@huawei.com
-Subject: Re: [PATCH] dm: pass origin bio's bdev to bio_alloc_clone
-In-Reply-To: <bb49f820-473a-a951-60b0-32dcd8fb0110@huawei.com>
-Message-ID: <b3731751-c286-f61e-95ab-c59f9aba98d0@redhat.com>
-References: <20260116120744.908987-1-chengzhihao1@huawei.com> <bb49f820-473a-a951-60b0-32dcd8fb0110@huawei.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="H1L9nwdw"
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-6581551aa88so3341a12.0
+        for <dm-devel@lists.linux.dev>; Fri, 23 Jan 2026 14:45:43 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1769208342; cv=none;
+        d=google.com; s=arc-20240605;
+        b=LUDsE4k5uF2hUcJBzsAQIbemc+r3d7ypQyMbDk7W+yLMsbp4hTLuIws/qIo59F9ypV
+         FSDav8r7U8fZaj5TgFtisNdQeYx0INr88wyv+9Hsam5DafIgxA/u+JhOsEq710H2ytB9
+         Gv/vYe048cwicSQ5Hsp94aRXn8zn/MPtYJyf4f72Olk/mekk2SV4pBFq+Kfet3zSaDBv
+         jIpbvWhlX8zFHe4FMAjUDwzlm+8OCVGKW//QHurYSxIJWXEWA4FQLfZnz9Z6icRc2eAA
+         8xyhUrHWCQS0kl/ZWfpZcrXCKZ1lZHXdDxVeU/1san1ICTlEGHNCNdw9F/TGBHWJsika
+         gxwQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=bz3aHhjSbSNSlznz3JK7SLtphGO9MrlffKZeacdwsA8=;
+        fh=dTAHK+0abp6vtiCw8MzE2mrS5eqwMiO7Tz4d9qqUk/4=;
+        b=DUvxI2cOASOVMglIEkyo/LmuB00HUvTwexz9Vc/TC8ZYHn4F/DGJIEZggrJAz/U1s8
+         sB8Zu3pMy5cYvWEjfeqTDTilURYGX6pMmaQtuaC+hMtidOKs4U33zVp9dlX4OEO7r2CB
+         IV37sdM/pINrdGWOo+NnUZwg2XAD3FlYiijkIWh2uBNjhqgebLhYZFXpvoj1vXHG4Opz
+         o3rlnnwqJYDDBMYcMFIrE8OiHk5rNZb6o2Dvc1nEE3Jyqkkbubp+hD89LrKhEEXGmA/H
+         ZSF3eyPMJJ/3FXWQLRn/uoB8WJzOVY9md9kzmvgQHQMjfWRGFnTgxblSl8li+kjYsdPt
+         O07A==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1769208342; x=1769813142; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=bz3aHhjSbSNSlznz3JK7SLtphGO9MrlffKZeacdwsA8=;
+        b=H1L9nwdwKipPyVi7vNhPioSdtqOFSdUc2IA9m87Lo4ciCLpBsh8AOLAF/bpBV/O+Vq
+         hSG7G0i0NsfZc8QLJmAafVz8KGhVYkvMv2mJAEfsA9TOkerf4tuntiee1FDjI46vzBDB
+         WKA6FG5d4hwPXQ4V522Hx5dfLoSVx7+abjHY1TrH8++cmmLsgS6DV4wQz75GZVlYvLm1
+         sS0onxDjWyx/qNvP82g7ylgeYdHi+FpVwHxSjz7mx88bsnPybok0JKgbaHLYTPC7HkBo
+         jQc1OnQmpiXeooUCISTKR8XK0j3v1gmzl7fcwqXaJ0UXPThxnsnOxOxZ5wdWUyuYdNti
+         rfsw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1769208342; x=1769813142;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=bz3aHhjSbSNSlznz3JK7SLtphGO9MrlffKZeacdwsA8=;
+        b=SlUHL2DdCk8gyU+aFPmCtsPhMCIomkCwMu7dEiyX12nYzH89w7y43r6tJs18Ahgt2d
+         r76ggu2OrU0Tg7/4fXNp84RaFu9nUqbfaxNW5LYqr77ceHiELk3ofKmSMF4CTXIqq177
+         we/O1d643+2kcjPQoOe/otRyjVCH11WEj16mvL+ZSMgvWcgqvU39nh8e2UqrBt1TlJ4X
+         bAagEVbI9F5OHc9SeAZnBMZryyybvD6rq/uaFfdqTivcPqDer5C7hFsx3krVP/39dNEM
+         BVkLJSVelLO6hRVKJyBADxyD5zFkj1GqoaQSV8pJemD2hEUS8WvV1JARGTkusXbz+ke9
+         8oyQ==
+X-Gm-Message-State: AOJu0Yzs9Lp/5IQwFBmeeULgMtybrmWs0CoZ3kgnzaIEN2vCanPt62jm
+	o3DZff6fhV6I9N29tBPD+tNq9KeCCHV/NtAi1rQN5HFn5R/7J0VEezGmHRIPo65mhvBEysivjEt
+	Sq7OKK4zp+FcBbM4kwgzLsJrlQ+LC7fnkORRmjPQ9
+X-Gm-Gg: AZuq6aIpWv2ZKklq/26S4HOC8FQP56eMxAq17E3o/ienRdJr3BtYPDe5TF+raN8tpis
+	HeE8jOfW35TgCr106YkPcJqJOVbrCLnRMObpqyx1cYv0mUuE8ZER1rU+tNj8DZrUEIwRDaG2aTZ
+	OCTHUSl1PUmfNNEwwm9xOmUBRgqaKIJ0X1R4RhY8w3uptQEoZoNCHoEl6rEPlUE1x2m+U4pJoVn
+	WxH40zR/0gMoFMJQbX6BR/XOgDsHdzEpUjVwCT2TsxcP8RIbJSmtrBo+Qqlfy8mgygX
+X-Received: by 2002:aa7:ca4b:0:b0:658:909:511 with SMTP id 4fb4d7f45d1cf-6585f13501bmr3915a12.3.1769208341999;
+ Fri, 23 Jan 2026 14:45:41 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="-1463811712-1508282898-1769185023=:900946"
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+References: <20260111202530.52665-1-ebiggers@kernel.org>
+In-Reply-To: <20260111202530.52665-1-ebiggers@kernel.org>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Fri, 23 Jan 2026 14:45:05 -0800
+X-Gm-Features: AZwV_QjB8Pr7SnumueW5YqKzz4lIyDGh4SZWb0xXJej3upe8esO7OhYNX9jmV9o
+Message-ID: <CABCJKudwzZ1BWaKTAHa0dmnOnRFAugaon0gYqFbRHve1841eDA@mail.gmail.com>
+Subject: Re: [PATCH] dm-verity: consolidate the BH and normal work structs
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Sun, Jan 11, 2026 at 12:26=E2=80=AFPM Eric Biggers <ebiggers@kernel.org>=
+ wrote:
+>
+> Since each dm_verity_io is never on both the BH and normal workqueues at
+> the same time, there's no need for two different work_structs.  Replace
+> the 'bh_work' and 'work' fields with just 'work'.
+>
+> Note: this is correct even though it means 'work' may be reused while
+> verity_bh_work() is running.  The workqueue API allows work functions to
+> reuse or free their work_struct, and many workqueue users rely on that.
+>
+> Signed-off-by: Eric Biggers <ebiggers@kernel.org>
 
----1463811712-1508282898-1769185023=:900946
-Content-Type: text/plain; charset=gbk
-Content-Transfer-Encoding: 8BIT
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
 
-
-
-On Fri, 23 Jan 2026, Zhihao Cheng wrote:
-
-> ÔÚ 2026/1/16 20:07, Zhihao Cheng Ð´µÀ:
-> 
-> friendly ping
-
-Hi
-
-I find it quite hacky to set bi_bdev and overwrite it later. I came up 
-with this patch that clones the control group association explictely, it 
-fixes your testcase. Please test it and report if it works for you.
-
-Mikulas
-
-
-dm: use bio_clone_blkg_association
-
-The origin bio carries blk-cgroup information which could be set from
-foreground(task_css(css) - wbc->wb->blkcg_css), so the blkcg won't
-control buffer io since commit ca522482e3eaf ("dm: pass NULL bdev to
-bio_alloc_clone"). The synchronous io is still under control by blkcg,
-because 'bio->bi_blkg' is set by io submitting task which has been added
-into 'cgroup.procs'.
-
-Fix it by using bio_clone_blkg_association when submitting a cloned bio.
-
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=220985
-Fixes: ca522482e3eaf ("dm: pass NULL bdev to bio_alloc_clone")
-Reported-by: Zhihao Cheng <chengzhihao1@huawei.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm.c |    2 ++
- 1 file changed, 2 insertions(+)
-
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2026-01-06 15:55:41.000000000 +0100
-+++ linux-2.6/drivers/md/dm.c	2026-01-23 17:07:50.000000000 +0100
-@@ -1364,6 +1364,8 @@ void dm_submit_bio_remap(struct bio *clo
- 	if (!tgt_clone)
- 		tgt_clone = clone;
- 
-+	bio_clone_blkg_association(tgt_clone, io->orig_bio);
-+
- 	/*
- 	 * Account io->origin_bio to DM dev on behalf of target
- 	 * that took ownership of IO with DM_MAPIO_SUBMITTED.
-
----1463811712-1508282898-1769185023=:900946--
-
+Sami
