@@ -1,155 +1,158 @@
-Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FCBD335094
-	for <dm-devel@lists.linux.dev>; Mon, 26 Jan 2026 12:13:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 593F833F8C5
+	for <dm-devel@lists.linux.dev>; Mon, 26 Jan 2026 15:27:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769429618; cv=none; b=LK2Y6yBFhB0cDVJ4ixBpA0T4c45riF7xWTHZ37/BcIVP+n9Nlwu5uTCJTY+/c7TszlBJkyuAVR5etrT3zLJRTneN1XTl54g7Zw+ou8Q2fubonzb2vHfqWLQQYKufIO9XkgmzfANdPIV/c03gdc5gwqflahlxvcddi7hLHYLpbJI=
+	t=1769441234; cv=none; b=e+gZKEx6vWpvz4sPRmqnpvoncJPC2k5exesSEnnmuDAAa6FAf5bs0lNAbufDngCWUQvQXOmzqXAAGQYiiXlq8G9W9ZEbnZPLKe2NitDEU8GajoEHJA6dFIaiVGPXYPumxMCzccJK7t6AChkpMoaz9NK5g3yudsAGIkn3Jyf9/TA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769429618; c=relaxed/simple;
-	bh=PRqSoiRNmo/oGibpN2auWoS4GtaLRMlJbPV+0wPbuIo=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RhdAbEW/sIrqUwaFipkOz3jUylySPpkjybUH/Pr9P4sJolUbQcUDKIQoSV7p4cIx5+NpvYoE4KrDQoYuD8+fMbiiTY1x77BcMzFu/th67n4yk02V0qJ4dAGM7FP+6UI/nWoSVVTqckEeg68PXtwoVUcMBcaPcPw+lrCYRKx+VhU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=e48gqsyP; arc=none smtp.client-ip=209.85.128.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1769441234; c=relaxed/simple;
+	bh=pn5JeZQU35qEdRJMrjAEd/FQ4nCcU0prp75YxGWJSH8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=J2Lfb/jqgY2y4fnNpawbCh+LxayUTTwEv+YQV8EbK35/yiWnm01NF0JkUToHvckpxn8PhQnf9/yn9BlKOWimERTEX6DXerC6t3CDqwnmB0tl537seWQuiySnlQEjZrzMmy4IDFNO0kHTDXcm+oJcM+jHg8uEI+iM6WOtz9lcEEg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=C4roZ7+Q; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="e48gqsyP"
-Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-47ee301a06aso51306225e9.0
-        for <dm-devel@lists.linux.dev>; Mon, 26 Jan 2026 04:13:36 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1769429615; x=1770034415; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=euNPhpJbBqy7FGShIuikf6pVpsrbMy/Y95LZ8PISAeM=;
-        b=e48gqsyPP4RMTBPE2VBOO91moyfN6bZVj/tCxiabWFMSTRoBYLIIqbEt0h2RCw//ZR
-         2yKiH3A7ngnmbhR5CyUviiu61x8D7JHM5cpEm026lY0pU30LwcuLLYwhuMk9iOVOWSt9
-         iVcz6OOVD9tamAUYgNgAcsFrSt1ad4Va+PK/qBwlicVAAkpFCgBY/v3KZdyTVztfP3/1
-         yaY0mOuhSvRnl7ZPC+/iP95HC0G1oQtgg8ClnGQh3J2gXau0tk5i2CN+0T+3aY0F84tL
-         p3sYw+RlbcUv5RUtqQPUGzOn/r04WwNJeJFuzO2y97r6RBcfsRmIzqZ41Wz+FWZI6xcB
-         QAEg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1769429615; x=1770034415;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=euNPhpJbBqy7FGShIuikf6pVpsrbMy/Y95LZ8PISAeM=;
-        b=Vvz0Rzv+kxLAgm+qP0zByGiujRyRmah299nu+YLrpZfEPiLXmeEEZ1BeMX64H72c++
-         1yZI1HU45tkSll9XmVe5S9QbGJtL/gCiPe36eKUZfnleS6RAQkFhqeLaZZtAu/oIeiia
-         b/aoyK2eaLsZAPT7SuENQVNyRTSFXtnrj3x4J5K065OYIKjzjqBxLsY5EyZsMjIPkYUW
-         gjUVQEwCyHXnRiCjlI4fvhMDFfEmLAuYGsEoA3WuBY96KDagpQqt0HJ4AUxXNTIOQxCw
-         ec8qWtZmONh7kkz8cRAyisqVz4kP0RAeINBMMJLJ+1NBo0x2AqRP/4G4Jrqu+TjC4Ayv
-         fFyA==
-X-Forwarded-Encrypted: i=1; AJvYcCVRzPwrTp22E7Kqq+beIdqEYbyYPMCbL5Fy7RZ4mFlAVpTL2RYjzg8HDMMozT1NTFN5HpqQyJ7kNg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyMG3gtd2U0wrW+vUbjFqOzH3lq7t18pRcbx2fdMu0s/uy7mh/d
-	xbNmfymb0shmW9GevqwWuX8m2WhuE7nPCxogsiaO1vxzB0RUUHDUEZgaxhxdImvZkmY=
-X-Gm-Gg: AZuq6aKBZf50xyPNS1iJgmVp2CQejzN0jIj5GeDP3Idn2ZEPUx6R3y5PYIa0snPmG3l
-	rTSzVbRS9b9IF9suepmwruhRi8V8FXpsG/+fGQ5puNX45L/YOnx/YBQgWg/OcXoPaR+H8mSD/dP
-	MxoAKhxkjaPVE0psQULGiSGEgfhhQNrijj1Apdxg4uLhoYdkdWJO1WMbq8vckkFAcZQuoi5U0kq
-	fBEOWSD2rgJ5c8QP381umLf9bJMHYEuBEYv4hFgKVLi8TEPIJnXv5mWRfV7TUekG2NLCyJoO9MS
-	KKfMkAop45putselnvBiFFR9Cllu4fH8aEh8FEHAccyxPlyeGDa7l3qwO7HThQ4f+BXC9KDzetm
-	b8U7KXYYSI7+K4H0w1DHaAx9ILXFu0YMoUUhP1GUkfOLKd5y2eZ1q5dEJUROc9f4s/RiGBGfDZt
-	YlnUQKuWihx7kKn19VXF5dP5ViMRfWeQDmwTzHLtC/hbGvdHxcTyHnonjXSR3VZnVK4VUcqElqG
-	Q==
-X-Received: by 2002:a05:6000:2501:b0:431:4c6:724d with SMTP id ffacd0b85a97d-435ca1ad9f3mr7717459f8f.29.1769429614726;
-        Mon, 26 Jan 2026 04:13:34 -0800 (PST)
-Received: from localhost (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-435b1c0179bsm29603552f8f.1.2026.01.26.04.13.34
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 26 Jan 2026 04:13:34 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] kpartx: fix segfault when operating on regular files
-Date: Mon, 26 Jan 2026 13:13:25 +0100
-Message-ID: <20260126121325.208908-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="C4roZ7+Q"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1769441231;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Up7sQFHZ9aeEQLwL7CCpjH7le2N1vjhn8OstuebeEsA=;
+	b=C4roZ7+QFEPA8ommeruBuqjTBhW4IEY9eFSBI6fxisucjCq+VcGr145e/VoQFd8uAY5MHv
+	98nSNNOwl4Q+i6pHSnRanx90YZBP5oSz5USUTtR6T4NG+ipg/3BgTCsCriLGOF+kpCNxML
+	15AlWo6S7lMu625ewlAsewCUCVdj1+c=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-663-7oBXf_7cP2eDNzwGc0C7Yg-1; Mon,
+ 26 Jan 2026 10:27:09 -0500
+X-MC-Unique: 7oBXf_7cP2eDNzwGc0C7Yg-1
+X-Mimecast-MFC-AGG-ID: 7oBXf_7cP2eDNzwGc0C7Yg_1769441229
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A5E49180044D;
+	Mon, 26 Jan 2026 15:27:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 39376180066A;
+	Mon, 26 Jan 2026 15:27:08 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 60QFR7me4126557
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 26 Jan 2026 10:27:07 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 60QFR6Ah4126556;
+	Mon, 26 Jan 2026 10:27:06 -0500
+Date: Mon, 26 Jan 2026 10:27:06 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <martin.wilck@suse.com>
+Cc: dm-devel@lists.linux.dev,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        Martin Wilck <mwilck@suse.com>
+Subject: Re: [PATCH] kpartx: fix segfault when operating on regular files
+Message-ID: <aXeHyiI7YtdQKCZx@redhat.com>
+References: <20260126121325.208908-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20260126121325.208908-1-mwilck@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: _rznhVCgKDTk33SJvURLcfKwx853JMUiRUdHXa6XpAQ_1769441229
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-The following problem has been introduced in multipath-tools 0.14.0:
+On Mon, Jan 26, 2026 at 01:13:25PM +0100, Martin Wilck wrote:
+> The following problem has been introduced in multipath-tools 0.14.0:
+> 
+> > truncate -s1G /tmp/img
+> > kpartx -a /tmp/img
+> double free or corruption (out)
+> Aborted                    (core dumped) kpartx -a /tmp/img
+> 
+> Fix it by always allocating "uuid" on the heap, rather than
+> using a static char array.
+> 
+> Fixes: 8c39e60 ("kpartx: fix some memory leaks")
+> Fixes: https://github.com/opensvc/multipath-tools/issues/139
+> ---
+> 
+> Note: This issue also affects the pending github PRs for the
+> stable branches 0.13.y, 0.12.y, 0.11.y, and 0.10.y.
+> 
+> A fix will be pushed to these PRs ASAP.
+> 
+> ---
+>  kpartx/devmapper.c | 16 ++++++++--------
+>  kpartx/kpartx.c    |  5 ++++-
+>  2 files changed, 12 insertions(+), 9 deletions(-)
+> 
+> diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+> index d49c680..45dac58 100644
+> --- a/kpartx/devmapper.c
+> +++ b/kpartx/devmapper.c
+> @@ -1,6 +1,7 @@
+>  /*
+>   * Copyright (c) 2004, 2005 Christophe Varoqui
+>   */
+> +#define _GNU_SOURCE
+>  #include <stdio.h>
+>  #include <stdlib.h>
+>  #include <string.h>
+> @@ -699,14 +700,13 @@ out:
+>  
+>  char *nondm_create_uuid(dev_t devt)
+>  {
+> -#define NONDM_UUID_BUFLEN (34 + sizeof(NONDM_UUID_PREFIX) + \
+> -			   sizeof(NONDM_UUID_SUFFIX))
+> -	static char uuid_buf[NONDM_UUID_BUFLEN];
+> -	snprintf(uuid_buf, sizeof(uuid_buf), "%s_%u:%u_%s",
+> -		 NONDM_UUID_PREFIX, major(devt), minor(devt),
+> -		 NONDM_UUID_SUFFIX);
+> -	uuid_buf[NONDM_UUID_BUFLEN-1] = '\0';
+> -	return uuid_buf;
+> +	char *uuid;
+> +
+> +	if (asprintf(&uuid, "%s_%u:%u_%s", NONDM_UUID_PREFIX, major(devt),
+> +		     minor(devt), NONDM_UUID_SUFFIX) >= 0)
+> +		return uuid;
+> +	else
+> +		return NULL;
+>  }
+>  
+>  int nondm_parse_uuid(const char *uuid, unsigned int *major, unsigned int *minor)
+> diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+> index 9bdd204..cfd8212 100644
+> --- a/kpartx/kpartx.c
+> +++ b/kpartx/kpartx.c
+> @@ -334,8 +334,11 @@ main(int argc, char **argv){
+>  	 * This allows deletion of partitions created with older kpartx
+>  	 * versions which didn't use the fake UUID during creation.
+>  	 */
+> -	if (!uuid && !(what == DELETE && force_devmap))
+> +	if (!uuid && !(what == DELETE && force_devmap)) {
+>  		uuid = nondm_create_uuid(buf.st_rdev);
+> +		if (!uuid)
 
-> truncate -s1G /tmp/img
-> kpartx -a /tmp/img
-double free or corruption (out)
-Aborted                    (core dumped) kpartx -a /tmp/img
+We should probably print an error message before we exit, but
+otherwise, this looks good.
 
-Fix it by always allocating "uuid" on the heap, rather than
-using a static char array.
+-Ben
 
-Fixes: 8c39e60 ("kpartx: fix some memory leaks")
-Fixes: https://github.com/opensvc/multipath-tools/issues/139
----
-
-Note: This issue also affects the pending github PRs for the
-stable branches 0.13.y, 0.12.y, 0.11.y, and 0.10.y.
-
-A fix will be pushed to these PRs ASAP.
-
----
- kpartx/devmapper.c | 16 ++++++++--------
- kpartx/kpartx.c    |  5 ++++-
- 2 files changed, 12 insertions(+), 9 deletions(-)
-
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index d49c680..45dac58 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -1,6 +1,7 @@
- /*
-  * Copyright (c) 2004, 2005 Christophe Varoqui
-  */
-+#define _GNU_SOURCE
- #include <stdio.h>
- #include <stdlib.h>
- #include <string.h>
-@@ -699,14 +700,13 @@ out:
- 
- char *nondm_create_uuid(dev_t devt)
- {
--#define NONDM_UUID_BUFLEN (34 + sizeof(NONDM_UUID_PREFIX) + \
--			   sizeof(NONDM_UUID_SUFFIX))
--	static char uuid_buf[NONDM_UUID_BUFLEN];
--	snprintf(uuid_buf, sizeof(uuid_buf), "%s_%u:%u_%s",
--		 NONDM_UUID_PREFIX, major(devt), minor(devt),
--		 NONDM_UUID_SUFFIX);
--	uuid_buf[NONDM_UUID_BUFLEN-1] = '\0';
--	return uuid_buf;
-+	char *uuid;
-+
-+	if (asprintf(&uuid, "%s_%u:%u_%s", NONDM_UUID_PREFIX, major(devt),
-+		     minor(devt), NONDM_UUID_SUFFIX) >= 0)
-+		return uuid;
-+	else
-+		return NULL;
- }
- 
- int nondm_parse_uuid(const char *uuid, unsigned int *major, unsigned int *minor)
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 9bdd204..cfd8212 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -334,8 +334,11 @@ main(int argc, char **argv){
- 	 * This allows deletion of partitions created with older kpartx
- 	 * versions which didn't use the fake UUID during creation.
- 	 */
--	if (!uuid && !(what == DELETE && force_devmap))
-+	if (!uuid && !(what == DELETE && force_devmap)) {
- 		uuid = nondm_create_uuid(buf.st_rdev);
-+		if (!uuid)
-+			exit(1);
-+	}
- 
- 	if (delim == NULL) {
- 		delim = xmalloc(DELIM_SIZE);
--- 
-2.52.0
+> +			exit(1);
+> +	}
+>  
+>  	if (delim == NULL) {
+>  		delim = xmalloc(DELIM_SIZE);
+> -- 
+> 2.52.0
 
