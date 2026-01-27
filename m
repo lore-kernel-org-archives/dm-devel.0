@@ -1,90 +1,147 @@
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8425A347FEA
-	for <dm-devel@lists.linux.dev>; Mon, 26 Jan 2026 16:56:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC98E35CB9A
+	for <dm-devel@lists.linux.dev>; Tue, 27 Jan 2026 15:50:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769446596; cv=none; b=p1nS3xqkY6+kkYUzqp7udw9rd6F3YQz/P6WzBlxlcJjZtleoJ26cob/aeTWftD+fUAWP3v8i7kBDTCqlUYRELIx3HLFRXcm32DfPp5CxWla6izDBoAShwSI3vqmZu5JVMO24I0OwsfaspkRBENLkEPjX/n1RXXRNBHBgiCEp010=
+	t=1769529049; cv=none; b=BTmx0VqswiSVW+FDgn8S1dVetwzllFsGdo6v8xG/874c6HieIaiHOnS1yM0SUiYYnFxFPC2odixJXwKmO1WNC0QZOFPAMLcZubyLj8AbT/tl0HGEIVcymUKIINBYFGK9wYLcfhXJ46A2ZCN8sW4KpSR/qITgEHIYcizlBWnyFiM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769446596; c=relaxed/simple;
-	bh=j6YocmqoNoHwC4lNNSRLqCtxxUEk8b0GsCPyBT7tx0Y=;
-	h=Message-ID:Subject:From:To:Cc:Date:Content-Type:MIME-Version; b=ahU2MJQgnCYI+Qhj0ub4FCFa2f5t0m9oUfukNrMtsow/OrN7XsnTjS4HzqFgeIPAdwUuecsLccbV5iJ3ZmvzV4GldzySzGKMYHPrEmyL41Af4kWwsjrMIeqQOmbZKIgAEJXf5HLx1V9MApd8ELk10bzTi2rk6AWD7mKyOswxmZw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=FQWYGy7Y; arc=none smtp.client-ip=209.85.221.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1769529049; c=relaxed/simple;
+	bh=2hYDT+B/4yxohWjlbxyzTTFWub5BB7K/CDfmxqEI4ZU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=sMSCj8ZpZML8vmeNgJl5mLhGTxlBc3pji8J7/wZAEvAbep96nl1kIZSeEC6uCM5SeW0QC10sDMYf573l0eEQKuLjib9iiQAHZGPmX4BCHwsWTcEYt2C7IYQxqH5bA+XEUMc9zfdocn+ou5Cg9Myz2ik+v2iNfKMbGVcvdxpWOM0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AeCOJ1Ce; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="FQWYGy7Y"
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-42fbc544b09so3332579f8f.1
-        for <dm-devel@lists.linux.dev>; Mon, 26 Jan 2026 08:56:34 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1769446592; x=1770051392; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:date:cc:to:from
-         :subject:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=j6YocmqoNoHwC4lNNSRLqCtxxUEk8b0GsCPyBT7tx0Y=;
-        b=FQWYGy7Y+wQzoFpMnSkYfyFUJvX6HEznnwQsTxyGG+vFXzXXbUsgsgVs2BdzuK40PV
-         NoqpX1NAKMta+X3rI6nxv0uG1r4tz60Rqk034XHR5ayAWWueE/jkUkmbIchyXcyGOhVL
-         g1kK9ieMxF2fRzQLI0QH2LeqRbB43JvFDLV1SNAtDh2JXJpajpN73cNYPTJdSHFqVarh
-         u5HJUaB4HGy/u/JFINR6aBWPfho+Qqic5UXlU8VI4YObcdpvCeOJCJJmZyg0du97MNEK
-         wXS6gtwvBMcZr4ToSkl7hvX8jUkuKXLiO/lq5+Hpxeo4vx8G4lVvjcfGo/tTkpVoKpgJ
-         sgeQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1769446592; x=1770051392;
-        h=mime-version:user-agent:content-transfer-encoding:date:cc:to:from
-         :subject:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=j6YocmqoNoHwC4lNNSRLqCtxxUEk8b0GsCPyBT7tx0Y=;
-        b=s9HJXtMcxFeI+jlo9/xTwGSP+8gTicPOf5GG3Dr/EoMw+7aad8KpUodQmOM2v0qI5L
-         xby5Scfdgib+syqrdc05vD9C2KjUe/5Ow3wNQu0OSmlGROKaGMTCd8lhjLz1p6isPVzn
-         WDBluYbtP0J4bDFgeUn7EKqxgawKsilJqWdq6eio/IFTpI1BEgxdTVqw3bUC47VTkaOO
-         cYxHfymhgsgy9SEqSTvnT4BmqdbhAqDTp/N0AwakEn6wCf26NJP3BX0leZdFGbV9m8NI
-         MHXUBIUzobENbV0IkOvzeXZFiuLzrIvEg9sIhqYAnjQwJkVvQmZ7NWrkTWhIe+aM71Tw
-         bNAA==
-X-Gm-Message-State: AOJu0YzWoTMxGDKAlGdhIgSsj2KGGcJ3nFL5xlbggTcZeAopZxMs/LZZ
-	cactrnmL5xsTkoaBKy0MVM4uOcKbRbZUrmnRch+3CL1xQFXUIunaNUpYDqjxH5HmQN9yB0kvhlA
-	EDyxO
-X-Gm-Gg: AZuq6aIVd10n+w4UuIJWxJob8fJW7dqq0oQ9CSZQaQbsK+R6MywhlUTRvZOpV5opBI+
-	eJMoFOCbY+AnI0B+PcyJOlFeb9CYDhKYTq+Rm0vsEFxKtNMag51lXuphOB5gWD1+kPlTpw3pZHY
-	wEqqRD8ohr2cnAYM6zA5viu07cirOSCtdp9cBh9yuIAPDknUbMx5Gz7p9xMDsqwpPuBEl214BKc
-	Oo/zg5HfVIZrp1FVLPmqGW6hW7HfSRTxmlKFTKoRG1q0GfmY2sQMWbeKGqaW73Wo6ExKE3NVcVO
-	QtKul/1ok65ttwsLaT0g38cYF18Tyonlz5dYlzY+EzV3scmDEU+nUFs5t1IeT16H1a1AAb36BzI
-	Zs41rw0AznVZ4KU2/yqyjMbUZzpHmx1i6vfwmSyEvL+P4cnaTc0u2KNpWBVxHWEn2y0d8DtbBZi
-	OEGea3pku5DKCnzL+2rwgPczEFibgzbeTD0ZsV+zNkle5COLWNureIPFnzdtmOdeeInTYyyd09t
-	DvrdHg1QUO0JMd74yVfXuUYdl6qAJDv2ab6BstjD4jq3xg=
-X-Received: by 2002:a05:6000:4210:b0:430:f6bc:2f8a with SMTP id ffacd0b85a97d-435ca138f6dmr7927752f8f.47.1769446592442;
-        Mon, 26 Jan 2026 08:56:32 -0800 (PST)
-Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-435b1c24ac1sm31146963f8f.14.2026.01.26.08.56.32
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Jan 2026 08:56:32 -0800 (PST)
-Message-ID: <938bceda7592f9257ccee0533027ca6c2f861d31.camel@suse.com>
-Subject: multipath-tools 0.14.1, and new stable releases
-From: Martin Wilck <martin.wilck@suse.com>
-To: device-mapper development <dm-devel@lists.linux.dev>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>
-Date: Mon, 26 Jan 2026 17:56:31 +0100
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AeCOJ1Ce"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1769529046;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=yMP7m/R5nwjJz0j/n5osl14sRnt6hf98jJbrx5kViG0=;
+	b=AeCOJ1CewrpvYCWxZb6zOVqRMCtC4fmpt9sK9elRxIaXycrG+VGMTjJ94U1MNpcFRHD0+/
+	ywR3AZiEQ0UzG1w66jGrqfyYZ2OAEqyumdz15/Vw8gIpRj0O0uO7S0bPZ655VqBQXsseGS
+	ADxCh2ULp3dmHJlpEWg1r3p9GNYhWws=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-442-ycb0ZOAYNCyQ0MueB4P74w-1; Tue,
+ 27 Jan 2026 10:50:45 -0500
+X-MC-Unique: ycb0ZOAYNCyQ0MueB4P74w-1
+X-Mimecast-MFC-AGG-ID: ycb0ZOAYNCyQ0MueB4P74w_1769529044
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 70A7A19775A5
+	for <dm-devel@lists.linux.dev>; Tue, 27 Jan 2026 15:50:44 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 53E55180086E;
+	Tue, 27 Jan 2026 15:50:44 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id AB503124FAD; Tue, 27 Jan 2026 10:50:43 -0500 (EST)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo encodings: clean up header and version functions
+Date: Tue, 27 Jan 2026 10:50:43 -0500
+Message-ID: <9b0f316824a5fab184b2d215c85a363cd5fb77b3.1769499846.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 32WMOHIdCH-9R-qOsVqaPK6dizld4sti1Q4fJilXEFE_1769529044
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Hello all,
+Make several header functions static. Also remove
+vdo_is_upgradable_version, which is unused.
 
-multipath-tools 0.14.1 has been released today after a nasty bug was
-reported for 0.14.0. *If you have installed 0.14.0, please update
-asap*.
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo/encodings.c | 11 ++++++-----
+ drivers/md/dm-vdo/encodings.h | 25 -------------------------
+ 2 files changed, 6 insertions(+), 30 deletions(-)
 
-New stable releases 0.13.1, 0.12.2, 0.11.4, and 0.10.6 have also been
-created.
+diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
+index dd59691be840..bd60f4b3a0d0 100644
+--- a/drivers/md/dm-vdo/encodings.c
++++ b/drivers/md/dm-vdo/encodings.c
+@@ -172,9 +172,9 @@ static int __must_check validate_version(struct version_number expected_version,
+  *         VDO_INCORRECT_COMPONENT if the component ids don't match,
+  *         VDO_UNSUPPORTED_VERSION if the versions or sizes don't match.
+  */
+-int vdo_validate_header(const struct header *expected_header,
+-			const struct header *actual_header, bool exact_size,
+-			const char *name)
++static int vdo_validate_header(const struct header *expected_header,
++			       const struct header *actual_header,
++			       bool exact_size, const char *name)
+ {
+ 	int result;
+ 
+@@ -210,7 +210,8 @@ static void encode_version_number(u8 *buffer, size_t *offset,
+ 	*offset += sizeof(packed);
+ }
+ 
+-void vdo_encode_header(u8 *buffer, size_t *offset, const struct header *header)
++static void vdo_encode_header(u8 *buffer, size_t *offset,
++			      const struct header *header)
+ {
+ 	struct packed_header packed = vdo_pack_header(header);
+ 
+@@ -228,7 +229,7 @@ static void decode_version_number(u8 *buffer, size_t *offset,
+ 	*version = vdo_unpack_version_number(packed);
+ }
+ 
+-void vdo_decode_header(u8 *buffer, size_t *offset, struct header *header)
++static void vdo_decode_header(u8 *buffer, size_t *offset, struct header *header)
+ {
+ 	struct packed_header packed;
+ 
+diff --git a/drivers/md/dm-vdo/encodings.h b/drivers/md/dm-vdo/encodings.h
+index e5ff2b0aaa79..87b7d2f3b545 100644
+--- a/drivers/md/dm-vdo/encodings.h
++++ b/drivers/md/dm-vdo/encodings.h
+@@ -707,31 +707,6 @@ static inline bool vdo_are_same_version(struct version_number version_a,
+ 		(version_a.minor_version == version_b.minor_version));
+ }
+ 
+-/**
+- * vdo_is_upgradable_version() - Check whether an actual version is upgradable to an expected
+- *                               version.
+- * @expected_version: The expected version.
+- * @actual_version: The version being validated.
+- *
+- * An actual version is upgradable if its major number is expected but its minor number differs,
+- * and the expected version's minor number is greater than the actual version's minor number.
+- *
+- * Return: true if the actual version is upgradable.
+- */
+-static inline bool vdo_is_upgradable_version(struct version_number expected_version,
+-					     struct version_number actual_version)
+-{
+-	return ((expected_version.major_version == actual_version.major_version) &&
+-		(expected_version.minor_version > actual_version.minor_version));
+-}
+-
+-int __must_check vdo_validate_header(const struct header *expected_header,
+-				     const struct header *actual_header, bool exact_size,
+-				     const char *component_name);
+-
+-void vdo_encode_header(u8 *buffer, size_t *offset, const struct header *header);
+-void vdo_decode_header(u8 *buffer, size_t *offset, struct header *header);
+-
+ /**
+  * vdo_pack_version_number() - Convert a version_number to its packed on-disk representation.
+  * @version: The version number to convert.
+-- 
+2.48.1
 
-Please see=C2=A0https://github.com/opensvc/multipath-tools/releases for
-details.
-
-Regards,
-Martin
