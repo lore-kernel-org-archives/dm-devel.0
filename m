@@ -1,95 +1,111 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 448AF34253C
-	for <dm-devel@lists.linux.dev>; Wed, 28 Jan 2026 22:11:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20BD32EB860
+	for <dm-devel@lists.linux.dev>; Fri, 30 Jan 2026 21:50:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769638301; cv=none; b=pYgv3i9SjK+miLtGI3A/YtMGinV77sn5AI67XVDrcWVJWpgIdndWFYvpMLz9sI7caV2mVi+JVQ2iCFy8NTcSqNaSo5sJu7nD/Ay9w+QN99zttcocWOnw3BXgUtnXkYwQ6o1uCMx17PaBVYQvom0aAwJy5bVkX0O4vkDb2/p//RY=
+	t=1769809823; cv=none; b=Gjw52/WbwClHHZuv8uKfeumAVTYfQJMB5lR4zYnnt5kyzFEIh4sHye6OPllFbuKrRkLM4z9ZOrbbTJt6fsssPQotJqTK1l3Krh3hrHSVEB8kn39PC1voCAj+h2oPOw4T1KKiKLs7tUocwsI4tKETZ5vnjMgnG9NCudrXWureI48=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769638301; c=relaxed/simple;
-	bh=QxkdfRGJAKgdB+0bryxR7WomppWJfsDTxi5I65ovev4=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=LpTHUhfyr9cJHsxKngnSKkWsg2nNTnYl2jPv8wxBYRzNXFNXRXvJ5uBr2YthfNWEKYdN8VxSr1A7eN85LNF5QtOnwA0XRa7/SGVy/l2yoWUOaZaS84f03WKbhJiTlW46ynIYcmpSUEOjxkkXHGhQ5xFdZqvGB8cGVmAsOkJIUf0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Hv5ZC+7w; arc=none smtp.client-ip=209.85.128.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1769809823; c=relaxed/simple;
+	bh=3yw2KnTIQrapdylaLDJ980OIK9NfLVXDiRdSdCH8VaA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=TLBaoV2EYzg78Kt3MxXjoWlddpCao1+oLEafKKze/0H+TA1kHoXwsZVm2mRFY6QFwegszBRxykJRZZumNARkPMZlD8Y8sX6ZMS0cZnaYkPNnz6W1lcyKmpOihdIm9kSEEH9/AVqx7XM6awZosYnRC4KD5AjEejWizksWDjFTV2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N0q/yh0A; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Hv5ZC+7w"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4806f3fc50bso2883225e9.0
-        for <dm-devel@lists.linux.dev>; Wed, 28 Jan 2026 14:11:40 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1769638298; x=1770243098; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=QxkdfRGJAKgdB+0bryxR7WomppWJfsDTxi5I65ovev4=;
-        b=Hv5ZC+7wOeOjKLoqS4P++B4KxeaKFBo+ep2x1NLGJytHOh8FnYiqjC2ayiomd7SjOP
-         Odx1G8z60Utix6oZtDiSmAZ4vfhTk29OPpQRP4zFoXoXnagbQRNmdo5hCsCulTI3cu8J
-         OZ5pNRRRliO9QH/wMuxOWQKDRDan9p5zd3iIX+7X8Ue97OtFY2kucixFpumDKVAQs3qj
-         Y1k6KADmy2vQAP0OpOrd2CT5I/ZTsekB5CwxmBogl7TAUk6UQoNFwSDYisnvHGqCmPVW
-         hBt0d5rRwDA8AGv1EIUTdGDdg1NT+KyvyZmhg7J6CrpHJNwix3cGkcwqkFLa3VRnjEnG
-         t24g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1769638298; x=1770243098;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=QxkdfRGJAKgdB+0bryxR7WomppWJfsDTxi5I65ovev4=;
-        b=krXeJDxvf9G+L38EQ7Mlq3j/zBX06bzH101nygIdBvlufIYn6fR1KhA/8SN8Ade042
-         +0GQggZu3iSpK4rUhebwzfsMNYgZrCVLCa75781+X1fCndq5ITqOpkYgNQTtLXje8X48
-         ZQsgNEDXUkABibkI23ILmOXHrvbt62UsgkqWgxcK008CBDwfQvtBScBe5utQuRX8b8/Z
-         lxd87TWDZUQ6MwWi/SFID+oZsLOofQa3WsV5FdzWsYJOB6ziE1CnQaJwz+HJIDYs5xDC
-         NUkENZ/GZOa2glrceYJcEZ7KKOGrhzdbjtmfg2mbiT97KRijZM3ZVzt0NWQxZoCF+9Uc
-         e33w==
-X-Gm-Message-State: AOJu0Yx6nm/AZwawFQ+X/dCtPrXJvTZogoEjxqunWY9STB6Qx3/8xWz1
-	ipRxTBtCsf/tDUc+FduOVf9aDypb3yAj0AHn20RqWiBTa7QEq0hUhpfcKFG25/IY/sQ=
-X-Gm-Gg: AZuq6aIw61Fc0QsPSIHoxyGas3XwdAm2YnNPhxmm8K1qj4EfBQWaNecEiaytOznnRw6
-	dBghaoPZw7F9L1VuOx3xVkACQfuS0vucb6k6aGqkNkXHHku07y+NaWxwVb+AaNIWBeIvrvjeJYb
-	8WFLGVmd00R+ykD5Ue6kmUZ3uG/syvt76RfS1X7dsFj9hYsUxAGlPNL4kcwUO3klQE8AjyILEvL
-	fssyF1jBVO9Q6gtYMXF9vDuXz136DYeTmuXxm0h/Aa9GL+wtRqGAm98+E7rbzwmb4r40lfHoV1E
-	QQ4xT1avO43H3OnsJO2wCcf3692/xEw89f32aoF3gBI5V0EgyTRRt/NAWu6e79yyM6//2qT+xyf
-	V6dAQwzJnTZVWPMuhUb6N/s4ImmGc7lnRcYh+L1k3ha7ECAhxMPedWLRTUlec2srFWARurxgyAy
-	5/M2Friwxw63KaUqZ0jPE84+bhEfHaURGMDXJ08vYx7PV/xaZe13DostE4VcPruhiPxgDhk5khZ
-	hoVGYx2Z+9aPsRcugPo7+A6mOZpjt26Fos2C0Iv01YoHgc=
-X-Received: by 2002:a05:600c:a08c:b0:47a:975b:e3e6 with SMTP id 5b1f17b1804b1-48069c540camr75771045e9.18.1769638298429;
-        Wed, 28 Jan 2026 14:11:38 -0800 (PST)
-Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-481a5dc8d3esm36955e9.13.2026.01.28.14.11.37
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 28 Jan 2026 14:11:38 -0800 (PST)
-Message-ID: <c9bfd614e5cdb0a90d312d9053f7b935c11f69a0.camel@suse.com>
-Subject: Re: [PATCH] multipathd: fix possible null deference in
- purge_disconnected code
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>, Brian Bunker
-	 <brian@purestorage.com>
-Date: Wed, 28 Jan 2026 23:11:37 +0100
-In-Reply-To: <20260128214651.499138-1-bmarzins@redhat.com>
-References: <20260128214651.499138-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.2 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N0q/yh0A"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1769809821;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=KhYzmtntFG8vFTiyBIUehs8/9+KXhztYSjTBWVbgXzU=;
+	b=N0q/yh0AhD1Olq1OwqIaAUP7s3jMMlbqNkDuUirWIbTJrSdwpfxzqNkslGEdRXY04jQFQG
+	6O324l4JeA+EmkuTzUk6Hhhn4KY9oBxPY4jopK/tydebH339vFPpidnks/v286Gth6qndf
+	sIeoGEqM2G3zwQNxQjXTE09Bm7VFZPA=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-166-baBnSI7cPcaUGVfrAZNGSw-1; Fri,
+ 30 Jan 2026 16:50:18 -0500
+X-MC-Unique: baBnSI7cPcaUGVfrAZNGSw-1
+X-Mimecast-MFC-AGG-ID: baBnSI7cPcaUGVfrAZNGSw_1769809818
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E49031956050
+	for <dm-devel@lists.linux.dev>; Fri, 30 Jan 2026 21:50:17 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7BD801800870;
+	Fri, 30 Jan 2026 21:50:17 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id E00F9125919; Fri, 30 Jan 2026 16:50:16 -0500 (EST)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo logger: remove redundant logging info
+Date: Fri, 30 Jan 2026 16:50:16 -0500
+Message-ID: <fc522f07bab3369a35dea11fbd201ee940a9c5bf.1769809573.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: o7u7C02czVfEzlA74G5qQVu1um_dF_OQ9ZsTq0pRd-U_1769809818
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Wed, 2026-01-28 at 16:46 -0500, Benjamin Marzinski wrote:
-> purge_disconnected only works on paths that are part of a multipath
-> device. However, get_new_state() is also run on uninitialized paths
-> that
-> are not part of any multipath device, and the purge_disconnected code
-> in
-> it was dereferencing pp->mpp, without checking if it was NULL. Fix
-> that.
->=20
-> Fixes: 690550a1 ("multipathd: implement purge functionality for
-> disconnected paths")
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Also update comments to reflect current log output style.
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo/logger.c | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
+index 3f7dc2cb6b98..1c57f03fd275 100644
+--- a/drivers/md/dm-vdo/logger.c
++++ b/drivers/md/dm-vdo/logger.c
+@@ -94,10 +94,10 @@ static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
+  *
+  * Context info formats:
+  *
+- * interrupt:           uds[NMI]: blah
+- * kvdo thread:         kvdo12:foobarQ: blah
+- * thread w/device id:  kvdo12:myprog: blah
+- * other thread:        uds: myprog: blah
++ * interrupt:           device-mapper: vdo[NMI]: blah
++ * thread w/device id:  device-mapper: vdo12:myprog: blah
++ * dm-vdo thread:       device-mapper: vdo12:foobarQ: blah
++ * other thread:        device-mapper: vdo: myprog: blah
+  *
+  * Fields: module name, interrupt level, process name, device ID.
+  *
+@@ -134,13 +134,13 @@ static void emit_log_message(int priority, const char *module, const char *prefi
+ 	}
+ 
+ 	/*
+-	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
+-	 * and only identify the thread.
++	 * If it's a kernel thread and the target name is a prefix of the thread name, assume it
++	 * is ours and collapse the names.
+ 	 */
+ 	if (((current->flags & PF_KTHREAD) != 0) &&
+-	    (strncmp(module, current->comm, strlen(module)) == 0)) {
+-		emit_log_message_to_kernel(priority, "%s: %s%pV%pV\n", current->comm,
+-					   prefix, vaf1, vaf2);
++	    (strncmp(DM_MSG_PREFIX, current->comm, strlen(DM_MSG_PREFIX)) == 0)) {
++		emit_log_message_to_kernel(priority, "%s: %s: %s%pV%pV\n", DM_NAME,
++					   current->comm, prefix, vaf1, vaf2);
+ 		return;
+ 	}
+ 
+-- 
+2.48.1
+
