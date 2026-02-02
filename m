@@ -1,111 +1,97 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 20BD32EB860
-	for <dm-devel@lists.linux.dev>; Fri, 30 Jan 2026 21:50:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 686B1259C92
+	for <dm-devel@lists.linux.dev>; Mon,  2 Feb 2026 21:40:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769809823; cv=none; b=Gjw52/WbwClHHZuv8uKfeumAVTYfQJMB5lR4zYnnt5kyzFEIh4sHye6OPllFbuKrRkLM4z9ZOrbbTJt6fsssPQotJqTK1l3Krh3hrHSVEB8kn39PC1voCAj+h2oPOw4T1KKiKLs7tUocwsI4tKETZ5vnjMgnG9NCudrXWureI48=
+	t=1770068413; cv=none; b=oEwEtNy2ZNjE5bcyJIPo+VzKxp2Rf0o7OAtcwXtJ/q3seeRg8SS/y5OSsN0UAgAtO+LpqpKOg9rN4hjvTzvkL6+KdNbF6sP8VZ6e73ETT3aVyEcrhZDG5f+LvKatlDBo7hAezW8iHwozFMOGzLOt2PXnMpu9DYaaKXfZKaKJdkc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769809823; c=relaxed/simple;
-	bh=3yw2KnTIQrapdylaLDJ980OIK9NfLVXDiRdSdCH8VaA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=TLBaoV2EYzg78Kt3MxXjoWlddpCao1+oLEafKKze/0H+TA1kHoXwsZVm2mRFY6QFwegszBRxykJRZZumNARkPMZlD8Y8sX6ZMS0cZnaYkPNnz6W1lcyKmpOihdIm9kSEEH9/AVqx7XM6awZosYnRC4KD5AjEejWizksWDjFTV2k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=N0q/yh0A; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1770068413; c=relaxed/simple;
+	bh=AUTqhUeKrkSw6xgBLGKfe8+rIFtAsftGVTPGhH0DOoo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=dlyIH/9Mha5z1laSt68n0JshAaVK1ugDCIViJ2/aVUwFS3T8C+d8nerzUhcR+zcZ7V8z8l7N89W/NPLoMWUQoVyEy+9mIgT1ZUEF4RKvohD26sHJ5kemulEtZcgWtM5AmNqdz57Rv/juq465uH80nxbzVGNYASBp4PcPrZkgwnE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JUW2OcN6; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="N0q/yh0A"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JUW2OcN6"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1769809821;
+	s=mimecast20190719; t=1770068411;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding;
-	bh=KhYzmtntFG8vFTiyBIUehs8/9+KXhztYSjTBWVbgXzU=;
-	b=N0q/yh0AhD1Olq1OwqIaAUP7s3jMMlbqNkDuUirWIbTJrSdwpfxzqNkslGEdRXY04jQFQG
-	6O324l4JeA+EmkuTzUk6Hhhn4KY9oBxPY4jopK/tydebH339vFPpidnks/v286Gth6qndf
-	sIeoGEqM2G3zwQNxQjXTE09Bm7VFZPA=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+	bh=h7RxOx/y5Z+GGwqLkByYEkbKAI3Oz0xNSQkfNiYDIYc=;
+	b=JUW2OcN6rsnZ/Yv5QFLwRKXOtZU0oKTJ1ZBYMMVfrCIlWrQlB9h07B3AH6wuf5y1cApniM
+	2TboCadYa8DJKDeta/7fBZe68VuMBEpN5mNjtPptJDUG0a+I4l3gOsP3fPwRWuU/EAM2JO
+	q2+EAcEsDYWf8r+phCjKaOwkKFmb6Ok=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-166-baBnSI7cPcaUGVfrAZNGSw-1; Fri,
- 30 Jan 2026 16:50:18 -0500
-X-MC-Unique: baBnSI7cPcaUGVfrAZNGSw-1
-X-Mimecast-MFC-AGG-ID: baBnSI7cPcaUGVfrAZNGSw_1769809818
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-471-9xCTLx3JNAiHosLxmE5MVA-1; Mon,
+ 02 Feb 2026 16:40:10 -0500
+X-MC-Unique: 9xCTLx3JNAiHosLxmE5MVA-1
+X-Mimecast-MFC-AGG-ID: 9xCTLx3JNAiHosLxmE5MVA_1770068409
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E49031956050
-	for <dm-devel@lists.linux.dev>; Fri, 30 Jan 2026 21:50:17 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 7BD801800870;
-	Fri, 30 Jan 2026 21:50:17 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id E00F9125919; Fri, 30 Jan 2026 16:50:16 -0500 (EST)
-From: Matthew Sakai <msakai@redhat.com>
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 56CBC1954B1B;
+	Mon,  2 Feb 2026 21:40:09 +0000 (UTC)
+Received: from localhost (unknown [10.2.16.238])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id A7C0819560B2;
+	Mon,  2 Feb 2026 21:40:08 +0000 (UTC)
+From: Stefan Hajnoczi <stefanha@redhat.com>
 To: dm-devel@lists.linux.dev
-Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo logger: remove redundant logging info
-Date: Fri, 30 Jan 2026 16:50:16 -0500
-Message-ID: <fc522f07bab3369a35dea11fbd201ee940a9c5bf.1769809573.git.msakai@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Stefan Hajnoczi <stefanha@redhat.com>
+Subject: [PATCH multipath-tools] libmpathpersist: fix mpath_persistent_reserve_out(3) synopsis
+Date: Mon,  2 Feb 2026 16:40:07 -0500
+Message-ID: <20260202214007.429134-1-stefanha@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: o7u7C02czVfEzlA74G5qQVu1um_dF_OQ9ZsTq0pRd-U_1769809818
+X-Mimecast-MFC-PROC-ID: 1J0UmM02LUZOwhbUVQ2Qc58kxzbVcdtfycdqCSjgwEM_1770068409
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Also update comments to reflect current log output style.
+The argument list is copy-pasted from mpath_persistent_reserve_in(3)
+instead of mpath_persistent_reserve_out(3). Use the correct argument
+list from libmpathpersist/mpath_persist.h.
 
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
+Signed-off-by: Stefan Hajnoczi <stefanha@redhat.com>
 ---
- drivers/md/dm-vdo/logger.c | 18 +++++++++---------
- 1 file changed, 9 insertions(+), 9 deletions(-)
+ libmpathpersist/mpath_persistent_reserve_out.3 | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/logger.c b/drivers/md/dm-vdo/logger.c
-index 3f7dc2cb6b98..1c57f03fd275 100644
---- a/drivers/md/dm-vdo/logger.c
-+++ b/drivers/md/dm-vdo/logger.c
-@@ -94,10 +94,10 @@ static void emit_log_message_to_kernel(int priority, const char *fmt, ...)
-  *
-  * Context info formats:
-  *
-- * interrupt:           uds[NMI]: blah
-- * kvdo thread:         kvdo12:foobarQ: blah
-- * thread w/device id:  kvdo12:myprog: blah
-- * other thread:        uds: myprog: blah
-+ * interrupt:           device-mapper: vdo[NMI]: blah
-+ * thread w/device id:  device-mapper: vdo12:myprog: blah
-+ * dm-vdo thread:       device-mapper: vdo12:foobarQ: blah
-+ * other thread:        device-mapper: vdo: myprog: blah
-  *
-  * Fields: module name, interrupt level, process name, device ID.
-  *
-@@ -134,13 +134,13 @@ static void emit_log_message(int priority, const char *module, const char *prefi
- 	}
- 
- 	/*
--	 * If it's a kernel thread and the module name is a prefix of its name, assume it is ours
--	 * and only identify the thread.
-+	 * If it's a kernel thread and the target name is a prefix of the thread name, assume it
-+	 * is ours and collapse the names.
- 	 */
- 	if (((current->flags & PF_KTHREAD) != 0) &&
--	    (strncmp(module, current->comm, strlen(module)) == 0)) {
--		emit_log_message_to_kernel(priority, "%s: %s%pV%pV\n", current->comm,
--					   prefix, vaf1, vaf2);
-+	    (strncmp(DM_MSG_PREFIX, current->comm, strlen(DM_MSG_PREFIX)) == 0)) {
-+		emit_log_message_to_kernel(priority, "%s: %s: %s%pV%pV\n", DM_NAME,
-+					   current->comm, prefix, vaf1, vaf2);
- 		return;
- 	}
- 
+diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
+index 3dbeae1f..ab1f923e 100644
+--- a/libmpathpersist/mpath_persistent_reserve_out.3
++++ b/libmpathpersist/mpath_persistent_reserve_out.3
+@@ -6,7 +6,7 @@
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+-.TH MPATH_PERSISTENT_RESERVE_OUT 3 2024-02-09 Linux
++.TH MPATH_PERSISTENT_RESERVE_OUT 3 2026-02-02 Linux
+ .
+ .
+ .\" ----------------------------------------------------------------------------
+@@ -22,7 +22,7 @@ mpath_persistent_reserve_out \- send PROUT command to DM device
+ .
+ .B #include <mpath_persist.h>
+ .P
+-.BI "int mpath_persistent_reserve_out" "(int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
++.BI "int mpath_persistent_reserve_out" "(int fd, int rq_servact, int rq_scope, unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy, int verbose)"
+ .P
+ .
+ .
 -- 
-2.48.1
+2.52.0
 
