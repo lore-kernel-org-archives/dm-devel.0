@@ -1,130 +1,123 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from lgeamrelo12.lge.com (lgeamrelo12.lge.com [156.147.23.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 13211344053;
-	Fri,  6 Feb 2026 05:02:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AC1D2C0F90
+	for <dm-devel@lists.linux.dev>; Fri,  6 Feb 2026 05:05:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=156.147.23.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770354123; cv=none; b=R4k2Ms/5ZXdmfRFYQ8+fQMGfiNQCtXFfKZZn+RHrK0gjqvx4e3vdgkSz1eTFcBX+TOtqplCZYMBvHp7hOAP7ZTKVlm3sirC68iKsvg9AiElZ7vf/6n57cASA47jq8zFW4KBr3IYfwye/uZAy4cOGrA/8Mf5Nt/+D4/FRhaL6WhY=
+	t=1770354345; cv=none; b=JiOqzUHl0SMqDu5vy+7+PyYSmaGei6UAFGf9KlcXiRZY3nlq+kqmxqITqTptUSou+f278FxBkfvK4z88FXWuxPUInQeEJb8qCVJ8D0lctKZ/l1anlW1pZWs3N4ckXFv+TPuUB1/H6eGdChE7PRFAI9DuYcFnzvWst6t4RzuwGgA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770354123; c=relaxed/simple;
-	bh=j7cUUZCXDpGOPnDD6xevilNT4R6dBIcSSIK4b1WnMi4=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=XRIFraHvU+z7wcUYzXgUGv+Ol6MaJoWbFiCJOJZaieuu25nPwO/LGrWW18e6MC6HWdiTe6MXJS/v05ua5rnUzske4VT97mtCle/cC09a9nvKHpLYDfAgJcB93iLk5gvp2avjcqRzXEVg6NzxR0G5wqvRgyUJF4nFlaW+9Sy27LQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MrJeie8J; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MrJeie8J"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AD453C19422;
-	Fri,  6 Feb 2026 05:02:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1770354122;
-	bh=j7cUUZCXDpGOPnDD6xevilNT4R6dBIcSSIK4b1WnMi4=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=MrJeie8JydDPc99h00Or1pVIqsWDekJiW71Kw9Pu+aT1sHlsB9fCLiMe66Yv/GQP1
-	 zdWrjPX3eWh71fbTSesgcTwCzwZ/NiBpANXKhDui9uLWn7Bc+DtHJZt971GDOldn6a
-	 GNVOePhH/akFTiQmh+VNjInWMA3v3NiPxUjrxtqfxzOHMljilx8t9qYLEcg2+LNmZy
-	 tXZeaosab2srQqNLnhSZ0rbmxkbazXCGFN3sNfWJhYWLf3AqWT7cRGfx6d8SZgG6kq
-	 X+Ji56aupMdKodOrv0htb50l3il1fkDih62+QGLOSVguvMnjiYj2aw2ArSK7LEEd/5
-	 Zf6MTYTVJm21A==
-From: Eric Biggers <ebiggers@kernel.org>
-To: dm-devel@lists.linux.dev,
-	Alasdair Kergon <agk@redhat.com>,
+	s=arc-20240116; t=1770354345; c=relaxed/simple;
+	bh=B1r0XH0TjvMaPBG35nI2v13c75hdcVyF9EN7yB8QNjQ=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=PeVVDfAXIaHccjMQe3H3LUhjVaKRZVX1Y5pcA1If/Wjd//Cvdru/rYVw+mKj4g+QRvjQ+29EKsiZlK0t3cPiIVp3H79px8IGWttm7bosDJhKE/dPXrmY1VX+XnenNlASz3XEJiETZoHLjEnKaScdp+vHUxUAzszZiHp5eT3qdso=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com; spf=pass smtp.mailfrom=lge.com; arc=none smtp.client-ip=156.147.23.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lge.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lge.com
+Received: from unknown (HELO lgeamrelo01.lge.com) (156.147.1.125)
+	by 156.147.23.52 with ESMTP; 6 Feb 2026 14:05:36 +0900
+X-Original-SENDERIP: 156.147.1.125
+X-Original-MAILFROM: jaeyuel.im@lge.com
+Received: from unknown (HELO jaeyuelim-three.bee-live.svc.cluster.local) (10.185.60.48)
+	by 156.147.1.125 with ESMTP; 6 Feb 2026 14:05:36 +0900
+X-Original-SENDERIP: 10.185.60.48
+X-Original-MAILFROM: jaeyuel.im@lge.com
+From: jaeyuel.im@lge.com
+To: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Sami Tolvanen <samitolvanen@google.com>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
-	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 22/22] dm-verity-fec: improve comments for fec_read_bufs()
-Date: Thu,  5 Feb 2026 20:59:41 -0800
-Message-ID: <20260206045942.52965-23-ebiggers@kernel.org>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20260206045942.52965-1-ebiggers@kernel.org>
-References: <20260206045942.52965-1-ebiggers@kernel.org>
+	"jaeyuel.im" <jaeyuel.im@lge.com>
+Subject: [PATCH] dm init: ensure block device is ready before creating mapped device
+Date: Fri,  6 Feb 2026 05:05:26 +0000
+Message-Id: <20260206050526.930530-1-jaeyuel.im@lge.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20251212000955.171808-1-jaeyuel.im@lge.com>
+References: <20251212000955.171808-1-jaeyuel.im@lge.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Update the comments in and above fec_read_bufs() to more clearly
-describe what it does.
+From: "jaeyuel.im" <jaeyuel.im@lge.com>
 
-Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+The current implementation of dm_init_init() uses early_lookup_bdev() to
+wait for the device node to appear. However, early_lookup_bdev() only
+verifies that the device node exists and returns the dev_t. It does not
+guarantee that the underlying block device structure is fully initialized
+and ready for I/O operations or to be opened.
+
+On certain platforms (e.g., embedded systems with specific storage
+drivers), this can lead to a race condition where dm_early_create()
+attempts to open the device immediately after early_lookup_bdev() returns,
+but fails because the device is not yet fully ready. This results in boot
+failures as the mapped device cannot be created.
+
+This patch adds an additional check using blkdev_get_no_open() after
+early_lookup_bdev() returns. This ensures that the struct block_device is
+actually available and the device is ready to be opened, effectively
+preventing the race condition.
+
+Changes in v2:
+- Pass autoload parameter for new blkdev_get_no_open()
+
+Changes in v3:
+- Exported to a public header for both blkdev_get_no_open() and
+  blkdev_put_no_open()
+
+Link: https://patchwork.kernel.org/project/dm-devel/patch/20251212000955.171808-1-jaeyuel.im@lge.com/
+Signed-off-by: jaeyuel.im <jaeyuel.im@lge.com>
 ---
- drivers/md/dm-verity-fec.c | 30 ++++++++++++++++++++++--------
- 1 file changed, 22 insertions(+), 8 deletions(-)
+ drivers/md/dm-init.c   | 14 ++++++++++++++
+ include/linux/blkdev.h |  3 +++
+ 2 files changed, 17 insertions(+)
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index fbe01f809aca3..70aa4a20891bc 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -152,12 +152,25 @@ static int fec_is_erasure(struct dm_verity *v, struct dm_verity_io *io,
+diff --git a/drivers/md/dm-init.c b/drivers/md/dm-init.c
+index b37bbe762500..b3905e094ffc 100644
+--- a/drivers/md/dm-init.c
++++ b/drivers/md/dm-init.c
+@@ -296,10 +296,24 @@ static int __init dm_init_init(void)
+ 	for (i = 0; i < ARRAY_SIZE(waitfor); i++) {
+ 		if (waitfor[i]) {
+ 			dev_t dev;
++			struct block_device *bdev;
  
- 	return memcmp(io->tmp_digest, want_digest, v->digest_size) != 0;
- }
- 
- /*
-- * Read data blocks that are part of the RS block and deinterleave as much as
-- * fits into buffers. Check for erasure locations if @neras is non-NULL.
-+ * Read the message block at index @index_in_region within each of the
-+ * @v->fec->rs_k regions and deinterleave their contents into @io->fec_io->bufs.
-+ *
-+ * @target_block gives the index of specific block within this sequence that is
-+ * being corrected, relative to the start of all the FEC message blocks.
-+ *
-+ * @out_pos gives the current output position, i.e. the position in (each) block
-+ * from which to start the deinterleaving.  Deinterleaving continues until
-+ * either end-of-block is reached or there's no more buffer space.
-+ *
-+ * If @neras is non-NULL, then also use verity hashes and the presence/absence
-+ * of I/O errors to determine which of the message blocks in the sequence are
-+ * likely to be incorrect.  Write the number of such blocks to *@neras and the
-+ * indices of the corresponding RS message bytes in [0, k - 1] to
-+ * @io->fec_io->erasures, up to a limit of @v->fec->roots + 1 such blocks.
-  */
- static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 			 u64 target_block, u64 index_in_region,
- 			 unsigned int out_pos, int *neras)
- {
-@@ -176,15 +189,15 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 		*neras = 0;
- 
- 	if (WARN_ON(v->digest_size > sizeof(want_digest)))
- 		return -EINVAL;
- 
--	/*
--	 * read each of the rs_k data blocks that are part of the RS block, and
--	 * interleave contents to available bufs
--	 */
- 	for (i = 0; i < v->fec->rs_k; i++) {
-+		/*
-+		 * Read the block from region i.  It contains the i'th message
-+		 * byte of the target block's RS codewords.
-+		 */
- 		block = i * v->fec->region_blocks + index_in_region;
- 		bufio = v->fec->data_bufio;
- 
- 		if (block >= v->data_blocks) {
- 			block -= v->data_blocks;
-@@ -229,12 +242,13 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
- 			    fec_is_erasure(v, io, want_digest, bbuf))
- 				fio->erasures[(*neras)++] = i;
+ 			DMINFO("waiting for device %s ...", waitfor[i]);
+ 			while (early_lookup_bdev(waitfor[i], &dev))
+ 				fsleep(5000);
++
++			/*
++			 * early_lookup_bdev() only checks if the device node exists and
++			 * returns the dev_t. It does not guarantee that the underlying
++			 * block device is fully initialized and ready to be opened. On
++			 * some platforms, this can lead to a race condition where
++			 * dm_early_create() fails because the device is not yet ready.
++			 * Ensure the block device is truly available by attempting to
++			 * get it.
++			 */
++			while (!(bdev = blkdev_get_no_open(dev, false)))
++				fsleep(5000);
++			blkdev_put_no_open(bdev);
  		}
+ 	}
  
- 		/*
--		 * deinterleave and copy the bytes that fit into bufs,
--		 * starting from out_pos
-+		 * Deinterleave the bytes of the block, starting from 'out_pos',
-+		 * into the i'th byte of the RS message buffers.  Stop when
-+		 * end-of-block is reached or there are no more buffers.
- 		 */
- 		src_pos = out_pos;
- 		fec_for_each_buffer_rs_message(fio, n, j) {
- 			if (src_pos >= v->fec->block_size)
- 				goto done;
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 72e34acd439c..7f4a05b536ca 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1873,4 +1873,7 @@ static inline int bio_split_rw_at(struct bio *bio,
+ 
+ #define DEFINE_IO_COMP_BATCH(name)	struct io_comp_batch name = { }
+ 
++struct block_device *blkdev_get_no_open(dev_t dev, bool autoload);
++void blkdev_put_no_open(struct block_device *bdev);
++
+ #endif /* _LINUX_BLKDEV_H */
 -- 
-2.52.0
+2.34.1
 
