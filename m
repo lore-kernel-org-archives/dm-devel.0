@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C72B333CEAF;
-	Fri,  6 Feb 2026 05:01:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33C6933D6C2;
+	Fri,  6 Feb 2026 05:01:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770354117; cv=none; b=pRiesBw6gTdcWT+sEd0tTwydoW9RrG+/0xRShECg3SWfTWVJLC1t72gM6tPQdy5d6tOhKoLmU4wmJ1QEFOqERXalAJco/msWgyVglrnUQGuz/8XJ2CFBgOurll5BljSjcsPwKspr+1jkYjAn4Kk2cVAooxsnqc7a/5c9YJH2IQ8=
+	t=1770354118; cv=none; b=FCZ02cfAvZIh9sR4ING4w9GGLlZAVAUdmF10mPaaKnT7xLo02h92Bl5KC4yCxG/H+FnqP2SINtD07HMV+KxfnqkvowtJ8f7oDDv7imeAP8xTfmCsaH7UeveT0qlBm6uhG8nyPk7jzKS4KK8aDUEE/d+JA3RJzPYaaAugYtCRFPw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770354117; c=relaxed/simple;
-	bh=UmBnnJD5gutfSn3AllzRmWoVzM59iVB0G7xY9DxeVR0=;
+	s=arc-20240116; t=1770354118; c=relaxed/simple;
+	bh=0+BZxKuKZeUs+WBhbuBBTQwZHtqoL7AOSTxD/oy7SJw=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GHYr79+oWyOuI9jcj+GZLzkp2GHKJ3vzOnQD6TBIAaOHZrGbS58sJCMjHx2oIt0A7ItgetKi14sht3zaydKiq+XpqRtoBiP5ni5o/Kk4o5kFSM4NCMVdm2IZEU5PNZQGZRAVSYEJ05UZN+EPfy3vWLYrkZjPMa1FA8rCLrY6Jd4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VRQFpMcy; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=uAZyGim41MhpayHp1wO3J6VgzxN3rwmwb2UBDJEqjZ9mM66g6ATxwVDBmD7FocyARgvYLzXxX9GrEHZkCeVzQJVHrlYxF6iezcfmS9LaYzSDHpxTUmeJmYdzdeOj+IpnHvQ8CELgFgK35waFSFgsyB6GKPm+cSiuWJq9QJ6oYNM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=uGGs8Y0r; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VRQFpMcy"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6C104C19425;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="uGGs8Y0r"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CDC7DC4AF09;
 	Fri,  6 Feb 2026 05:01:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1770354117;
-	bh=UmBnnJD5gutfSn3AllzRmWoVzM59iVB0G7xY9DxeVR0=;
+	s=k20201202; t=1770354118;
+	bh=0+BZxKuKZeUs+WBhbuBBTQwZHtqoL7AOSTxD/oy7SJw=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=VRQFpMcyBGGEyYYa4ijosyzDSG7/WtIWHwM9AJhkQp+4UyFGEsaeAHmCMmvCMvwq1
-	 cxKuzKyJulPY/zRmOWtyebBmJDaWjLKZ1HNFgsNI8y2kjZl2AAbqCp27gocFGX/87k
-	 S5u5d/X9vsOXT57pwyxGtren7IV3FwSkdW82TK77+cD7BzrmeKFFkawHXZ0DDzMjWR
-	 ur6IwgJeiMLN/3Zi3RpjlpHpKW50evCoeVW8nInuY8cL6+QdVSykLl+sKD6IkcBJ6T
-	 CjasXrCc6Z2WDoQ1FPTM4QicKxhWmS+cSQFUx14tvNRX03JIJrVFMtW+7ERehPXND6
-	 mSurCE0bqJlPw==
+	b=uGGs8Y0rGBxiObjAD68WKduXPfx1GyZBCJvJ4oSF98Jz+MYt54gHsXqb9WhtYN7xt
+	 Fb776b82jVyT9CE7PFYDx21FlcSgk5Yjb97lN58+JT68xziBblHE1Zt83oCRP+H23i
+	 4P/vu0L6YTDE1Zq8S5R6O4t6+BCbVeGGgf4Ly9JajD6EMvfkACM8HlID5cQawjNJOc
+	 /AXV9K11vTfbl6pEwaFrZG3RXhq2HweJAC/iOYH+gk3Sxcc2aRo5OlsPLKXpbtqx1t
+	 lT7husKZZ5UuTfLwsGPmY/0tv6hR/RfZvIdDZuUCIR/DxQkQ3g2vpvdNGG3hBbX6z3
+	 rilOK6VOnTZAg==
 From: Eric Biggers <ebiggers@kernel.org>
 To: dm-devel@lists.linux.dev,
 	Alasdair Kergon <agk@redhat.com>,
@@ -35,9 +35,9 @@ To: dm-devel@lists.linux.dev,
 Cc: Sami Tolvanen <samitolvanen@google.com>,
 	linux-kernel@vger.kernel.org,
 	Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 09/22] dm-verity-fec: use standard names for Reed-Solomon parameters
-Date: Thu,  5 Feb 2026 20:59:28 -0800
-Message-ID: <20260206045942.52965-10-ebiggers@kernel.org>
+Subject: [PATCH 10/22] dm-verity-fec: rename "RS block" to "RS codeword"
+Date: Thu,  5 Feb 2026 20:59:29 -0800
+Message-ID: <20260206045942.52965-11-ebiggers@kernel.org>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <20260206045942.52965-1-ebiggers@kernel.org>
 References: <20260206045942.52965-1-ebiggers@kernel.org>
@@ -49,195 +49,232 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-"RS(n, k)" is by far the most common and standard notation for
-describing Reed-Solomon codes.  Each RS codeword consists of 'n'
-symbols, divided into 'k' message symbols and 'n - k' parity symbols.
-'n - k' is also the number of roots of the generator polynomial.
+The literature refers to the unit of a Reed-Solomon (RS) code as either
+a "block" or a "codeword".
 
-dm-verity uses "RS(M, N)" instead.  I haven't been able to find any
-other source that uses this convention.  This quirk makes the code
-harder to understand than necessary, especially due to dm-verity's 'N'
-meaning something different from the standard 'n'.
+dm-verity's source code uses "RS block".  Unfortunately, that's really
+confusing because "block" already means something else in dm-verity.
+Especially problematic is the fact that dm-verity sometimes uses "RS
+block" to mean an RS codeword and sometimes to mean some dm-verity block
+that's related to the RS decoding process, for example one of the blocks
+that shares its RS codewords with the target block.
 
-Therefore, update dm-verity-fec.c and dm-verity-fec.h to use the
-standard parameter names.  No functional changes.
+Let's use "RS codeword" instead, or "RS message" when referring to just
+the message part of the codeword.  Update some comments, function names,
+macro names, and variable names accordingly.  No functional change.
+
+There are still some remaining comments where "RS block" refers to a
+dm-verity block.  Later commits will handle these cases.
 
 Signed-off-by: Eric Biggers <ebiggers@kernel.org>
 ---
- drivers/md/dm-verity-fec.c | 30 +++++++++++++++---------------
- drivers/md/dm-verity-fec.h |  8 ++++----
- 2 files changed, 19 insertions(+), 19 deletions(-)
+ drivers/md/dm-verity-fec.c | 58 ++++++++++++++++++++------------------
+ drivers/md/dm-verity-fec.h | 10 +++----
+ 2 files changed, 35 insertions(+), 33 deletions(-)
 
 diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index c5f97a49e5b79..8e9482a6df4a1 100644
+index 8e9482a6df4a1..619645edaf509 100644
 --- a/drivers/md/dm-verity-fec.c
 +++ b/drivers/md/dm-verity-fec.c
-@@ -27,11 +27,11 @@ static inline unsigned int fec_max_nbufs(struct dm_verity *v)
-  */
- static inline u64 fec_interleave(struct dm_verity *v, u64 offset)
- {
- 	u32 mod;
+@@ -9,15 +9,16 @@
+ #include <linux/math64.h>
  
--	mod = do_div(offset, v->fec->rsn);
-+	mod = do_div(offset, v->fec->rs_k);
- 	return offset + mod * (v->fec->rounds << v->data_dev_block_bits);
+ #define DM_MSG_PREFIX	"verity-fec"
+ 
+ /*
+- * When correcting a data block, the FEC code performs optimally when it can
+- * collect all the associated RS blocks at the same time.  As each byte is part
+- * of a different RS block, there are '1 << data_dev_block_bits' RS blocks.
+- * There are '1 << DM_VERITY_FEC_BUF_RS_BITS' RS blocks per buffer, so that
+- * gives '1 << (data_dev_block_bits - DM_VERITY_FEC_BUF_RS_BITS)' buffers.
++ * When correcting a block, the FEC implementation performs optimally when it
++ * can collect all the associated RS codewords at the same time.  As each byte
++ * is part of a different codeword, there are '1 << data_dev_block_bits'
++ * codewords.  Each buffer has space for the message bytes for
++ * '1 << DM_VERITY_FEC_BUF_RS_BITS' codewords, so that gives
++ * '1 << (data_dev_block_bits - DM_VERITY_FEC_BUF_RS_BITS)' buffers.
+  */
+ static inline unsigned int fec_max_nbufs(struct dm_verity *v)
+ {
+ 	return 1 << (v->data_dev_block_bits - DM_VERITY_FEC_BUF_RS_BITS);
  }
+@@ -35,48 +36,49 @@ static inline u64 fec_interleave(struct dm_verity *v, u64 offset)
  
  /* Loop over each allocated buffer. */
  #define fec_for_each_buffer(io, __i) \
-@@ -48,11 +48,11 @@ static inline u64 fec_interleave(struct dm_verity *v, u64 offset)
+ 	for (__i = 0; __i < (io)->nbufs; __i++)
+ 
+-/* Loop over each RS block in each allocated buffer. */
+-#define fec_for_each_buffer_rs_block(io, __i, __j) \
++/* Loop over each RS message in each allocated buffer. */
++/* To stop early, use 'goto', not 'break' (since this uses nested loops). */
++#define fec_for_each_buffer_rs_message(io, __i, __j) \
+ 	fec_for_each_buffer(io, __i) \
+ 		for (__j = 0; __j < 1 << DM_VERITY_FEC_BUF_RS_BITS; __j++)
+ 
+ /*
+- * Return a pointer to the current RS block when called inside
+- * fec_for_each_buffer_rs_block.
++ * Return a pointer to the current RS message when called inside
++ * fec_for_each_buffer_rs_message.
   */
- static inline u8 *fec_buffer_rs_block(struct dm_verity *v,
- 				      struct dm_verity_fec_io *fio,
- 				      unsigned int i, unsigned int j)
+-static inline u8 *fec_buffer_rs_block(struct dm_verity *v,
+-				      struct dm_verity_fec_io *fio,
+-				      unsigned int i, unsigned int j)
++static inline u8 *fec_buffer_rs_message(struct dm_verity *v,
++					struct dm_verity_fec_io *fio,
++					unsigned int i, unsigned int j)
  {
--	return &fio->bufs[i][j * v->fec->rsn];
-+	return &fio->bufs[i][j * v->fec->rs_k];
+ 	return &fio->bufs[i][j * v->fec->rs_k];
  }
  
  /*
-  * Return an index to the current RS block when called inside
-  * fec_for_each_buffer_rs_block.
-@@ -127,11 +127,11 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+- * Return an index to the current RS block when called inside
+- * fec_for_each_buffer_rs_block.
++ * Return the index of the current RS message when called inside
++ * fec_for_each_buffer_rs_message.
+  */
+ static inline unsigned int fec_buffer_rs_index(unsigned int i, unsigned int j)
+ {
+ 	return (i << DM_VERITY_FEC_BUF_RS_BITS) + j;
+ }
+ 
+ /*
+- * Decode all RS blocks from buffers and copy corrected bytes into fio->output
+- * starting from block_offset.
++ * Decode all RS codewords whose message bytes were loaded into fio->bufs.  Copy
++ * the corrected bytes into fio->output starting from block_offset.
+  */
+ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 			   struct dm_verity_fec_io *fio, u64 rsb, int byte_index,
+ 			   unsigned int block_offset, int neras)
+ {
+ 	int r, corrected = 0, res;
+ 	struct dm_buffer *buf;
+ 	unsigned int n, i, j, parity_pos, to_copy;
+ 	uint16_t par_buf[DM_VERITY_FEC_MAX_ROOTS];
+-	u8 *par, *block;
++	u8 *par, *msg_buf;
+ 	u64 parity_block;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+ 
+ 	/*
+ 	 * Compute the index of the first parity block that will be needed and
+@@ -95,15 +97,16 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 		      v->data_dev->name, rsb, parity_block, PTR_ERR(par));
+ 		return PTR_ERR(par);
+ 	}
+ 
+ 	/*
+-	 * Decode the RS blocks we have in bufs. Each RS block results in
+-	 * one corrected target byte and consumes fec->roots parity bytes.
++	 * Decode the RS codewords whose message bytes are in bufs. Each RS
++	 * codeword results in one corrected target byte and consumes fec->roots
++	 * parity bytes.
+ 	 */
+-	fec_for_each_buffer_rs_block(fio, n, i) {
+-		block = fec_buffer_rs_block(v, fio, n, i);
++	fec_for_each_buffer_rs_message(fio, n, i) {
++		msg_buf = fec_buffer_rs_message(v, fio, n, i);
+ 
+ 		/*
+ 		 * Copy the next 'roots' parity bytes to 'par_buf', reading
+ 		 * another parity block if needed.
+ 		 */
+@@ -126,20 +129,20 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 			}
  			for (; j < v->fec->roots; j++)
  				par_buf[j] = par[parity_pos++];
  		}
  
- 		/* Decode an RS block using Reed-Solomon */
--		res = decode_rs8(fio->rs, block, par_buf, v->fec->rsn,
-+		res = decode_rs8(fio->rs, block, par_buf, v->fec->rs_k,
+-		/* Decode an RS block using Reed-Solomon */
+-		res = decode_rs8(fio->rs, block, par_buf, v->fec->rs_k,
++		/* Decode an RS codeword using the Reed-Solomon library. */
++		res = decode_rs8(fio->rs, msg_buf, par_buf, v->fec->rs_k,
  				 NULL, neras, fio->erasures, 0, NULL);
  		if (res < 0) {
  			r = res;
  			goto error;
  		}
-@@ -195,19 +195,19 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
  
- 	if (WARN_ON(v->digest_size > sizeof(want_digest)))
- 		return -EINVAL;
+ 		corrected += res;
+-		fio->output[block_offset] = block[byte_index];
++		fio->output[block_offset] = msg_buf[byte_index];
  
- 	/*
--	 * read each of the rsn data blocks that are part of the RS block, and
-+	 * read each of the rs_k data blocks that are part of the RS block, and
- 	 * interleave contents to available bufs
- 	 */
--	for (i = 0; i < v->fec->rsn; i++) {
--		ileaved = fec_interleave(v, rsb * v->fec->rsn + i);
-+	for (i = 0; i < v->fec->rs_k; i++) {
-+		ileaved = fec_interleave(v, rsb * v->fec->rs_k + i);
+ 		block_offset++;
+ 		if (block_offset >= 1 << v->data_dev_block_bits)
+ 			goto done;
+ 	}
+@@ -183,11 +186,11 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 	int i, j, target_index = -1;
+ 	struct dm_buffer *buf;
+ 	struct dm_bufio_client *bufio;
+ 	struct dm_verity_fec_io *fio = io->fec_io;
+ 	u64 block, ileaved;
+-	u8 *bbuf, *rs_block;
++	u8 *bbuf;
+ 	u8 want_digest[HASH_MAX_DIGESTSIZE];
+ 	unsigned int n, k;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
+ 
+ 	if (neras)
+@@ -260,18 +263,17 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
  
  		/*
- 		 * target is the data block we want to correct, target_index is
--		 * the index of this block within the rsn RS blocks
-+		 * the index of this block within the rs_k RS blocks
+ 		 * deinterleave and copy the bytes that fit into bufs,
+ 		 * starting from block_offset
  		 */
- 		if (ileaved == target)
- 			target_index = i;
+-		fec_for_each_buffer_rs_block(fio, n, j) {
++		fec_for_each_buffer_rs_message(fio, n, j) {
+ 			k = fec_buffer_rs_index(n, j) + block_offset;
  
- 		block = ileaved >> v->data_dev_block_bits;
-@@ -320,11 +320,11 @@ static struct dm_verity_fec_io *fec_alloc_and_init_io(struct dm_verity *v)
- static void fec_init_bufs(struct dm_verity *v, struct dm_verity_fec_io *fio)
- {
- 	unsigned int n;
+ 			if (k >= 1 << v->data_dev_block_bits)
+ 				goto done;
  
- 	fec_for_each_buffer(fio, n)
--		memset(fio->bufs[n], 0, v->fec->rsn << DM_VERITY_FEC_BUF_RS_BITS);
-+		memset(fio->bufs[n], 0, v->fec->rs_k << DM_VERITY_FEC_BUF_RS_BITS);
- 
- 	memset(fio->erasures, 0, sizeof(fio->erasures));
- }
- 
- /*
-@@ -392,16 +392,16 @@ int verity_fec_decode(struct dm_verity *v, struct dm_verity_io *io,
- 
- 	if (type == DM_VERITY_BLOCK_TYPE_METADATA)
- 		block = block - v->hash_start + v->data_blocks;
- 
- 	/*
--	 * For RS(M, N), the continuous FEC data is divided into blocks of N
--	 * bytes. Since block size may not be divisible by N, the last block
-+	 * For RS(n, k), the continuous FEC data is divided into blocks of k
-+	 * bytes. Since block size may not be divisible by k, the last block
- 	 * is zero padded when decoding.
- 	 *
--	 * Each byte of the block is covered by a different RS(M, N) code,
--	 * and each code is interleaved over N blocks to make it less likely
-+	 * Each byte of the block is covered by a different RS(n, k) code,
-+	 * and each code is interleaved over k blocks to make it less likely
- 	 * that bursty corruption will leave us in unrecoverable state.
- 	 */
- 
- 	offset = block << v->data_dev_block_bits;
- 	res = div64_u64(offset, v->fec->rounds << v->data_dev_block_bits);
-@@ -648,19 +648,19 @@ int verity_fec_ctr(struct dm_verity *v)
- 
- 	if (!f->roots) {
- 		ti->error = "Missing " DM_VERITY_OPT_FEC_ROOTS;
- 		return -EINVAL;
- 	}
--	f->rsn = DM_VERITY_FEC_RSM - f->roots;
-+	f->rs_k = DM_VERITY_FEC_RS_N - f->roots;
- 
- 	if (!f->blocks) {
- 		ti->error = "Missing " DM_VERITY_OPT_FEC_BLOCKS;
- 		return -EINVAL;
+-			rs_block = fec_buffer_rs_block(v, fio, n, j);
+-			rs_block[i] = bbuf[k];
++			fec_buffer_rs_message(v, fio, n, j)[i] = bbuf[k];
+ 		}
+ done:
+ 		dm_bufio_release(buf);
  	}
  
- 	f->rounds = f->blocks;
--	if (sector_div(f->rounds, f->rsn))
-+	if (sector_div(f->rounds, f->rs_k))
- 		f->rounds++;
- 
- 	/*
- 	 * Due to optional metadata, f->blocks can be larger than
- 	 * data_blocks and hash_blocks combined.
-@@ -728,11 +728,11 @@ int verity_fec_ctr(struct dm_verity *v)
- 		ti->error = "Cannot allocate RS pool";
- 		return ret;
- 	}
- 
- 	f->cache = kmem_cache_create("dm_verity_fec_buffers",
--				     f->rsn << DM_VERITY_FEC_BUF_RS_BITS,
-+				     f->rs_k << DM_VERITY_FEC_BUF_RS_BITS,
- 				     0, 0, NULL);
- 	if (!f->cache) {
- 		ti->error = "Cannot create FEC buffer cache";
- 		return -ENOMEM;
- 	}
 diff --git a/drivers/md/dm-verity-fec.h b/drivers/md/dm-verity-fec.h
-index d8d0e81da2701..5afa93f2f1fc7 100644
+index 5afa93f2f1fc7..257a609274c7c 100644
 --- a/drivers/md/dm-verity-fec.h
 +++ b/drivers/md/dm-verity-fec.h
-@@ -9,12 +9,12 @@
- #define DM_VERITY_FEC_H
- 
- #include "dm-verity.h"
- #include <linux/rslib.h>
- 
--/* Reed-Solomon(M, N) parameters */
--#define DM_VERITY_FEC_RSM		255
-+/* Reed-Solomon(n, k) parameters */
-+#define DM_VERITY_FEC_RS_N	255
+@@ -15,11 +15,11 @@
+ #define DM_VERITY_FEC_RS_N	255
  #define DM_VERITY_FEC_MIN_ROOTS	2	/* RS(255, 253): ~0.8% space overhead */
  #define DM_VERITY_FEC_MAX_ROOTS	24	/* RS(255, 231): ~10% space overhead */
  
  /* buffers for deinterleaving and decoding */
- #define DM_VERITY_FEC_BUF_RS_BITS	4	/* 1 << RS blocks per buffer */
-@@ -32,12 +32,12 @@ struct dm_verity_fec {
- 	size_t io_size;		/* IO size for roots */
- 	sector_t start;		/* parity data start in blocks */
- 	sector_t blocks;	/* number of blocks covered */
- 	sector_t rounds;	/* number of interleaving rounds */
- 	sector_t hash_blocks;	/* blocks covered after v->hash_start */
--	unsigned char roots;	/* number of parity bytes, M-N of RS(M, N) */
--	unsigned char rsn;	/* N of RS(M, N) */
-+	unsigned char roots;	/* parity bytes per RS codeword, n-k of RS(n, k) */
-+	unsigned char rs_k;	/* message bytes per RS codeword, k of RS(n, k) */
- 	mempool_t fio_pool;	/* mempool for dm_verity_fec_io */
- 	mempool_t rs_pool;	/* mempool for fio->rs */
- 	mempool_t prealloc_pool;	/* mempool for preallocated buffers */
- 	mempool_t output_pool;	/* mempool for output */
- 	struct kmem_cache *cache;	/* cache for buffers */
+-#define DM_VERITY_FEC_BUF_RS_BITS	4	/* 1 << RS blocks per buffer */
++#define DM_VERITY_FEC_BUF_RS_BITS	4 /* log2(RS messages per buffer) */
+ 
+ #define DM_VERITY_OPT_FEC_DEV		"use_fec_from_device"
+ #define DM_VERITY_OPT_FEC_BLOCKS	"fec_blocks"
+ #define DM_VERITY_OPT_FEC_START		"fec_start"
+ #define DM_VERITY_OPT_FEC_ROOTS		"fec_roots"
+@@ -50,14 +50,14 @@ struct dm_verity_fec_io {
+ 	int erasures[DM_VERITY_FEC_MAX_ROOTS + 1]; /* erasures for decode_rs8 */
+ 	u8 *output;		/* buffer for corrected output */
+ 	unsigned int level;		/* recursion level */
+ 	unsigned int nbufs;		/* number of buffers allocated */
+ 	/*
+-	 * Buffers for deinterleaving RS blocks.  Each buffer has space for
+-	 * the data bytes of (1 << DM_VERITY_FEC_BUF_RS_BITS) RS blocks.  The
+-	 * array length is fec_max_nbufs(v), and we try to allocate that many
+-	 * buffers.  However, in low-memory situations we may be unable to
++	 * Buffers for deinterleaving RS codewords.  Each buffer has space for
++	 * the message bytes of (1 << DM_VERITY_FEC_BUF_RS_BITS) RS codewords.
++	 * The array length is fec_max_nbufs(v), and we try to allocate that
++	 * many buffers.  However, in low-memory situations we may be unable to
+ 	 * allocate all buffers.  'nbufs' holds the number actually allocated.
+ 	 */
+ 	u8 *bufs[];
+ };
+ 
 -- 
 2.52.0
 
