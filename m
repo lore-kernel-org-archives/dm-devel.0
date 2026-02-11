@@ -1,92 +1,129 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEA3D2877D5
-	for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 15:06:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770822363; cv=none; b=Vpl+Q2k0p5Ueui1rR3mVwYgC+fx7AMRczO6Crk2YQVEQEOzfkr/RX2HiuiM87DXNiJCEYOBPd9IAPs5IybmkSasuz+B8D377snkXaUysVGdFp2N5a71Q+BdV1eDClt6SWcseNKDXJj/Oj1sQZJU3VIDYE6xSWycf7AOoMsKbraU=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770822363; c=relaxed/simple;
-	bh=f8ZU9X1jxb9sQtRETw2Ojm3qdkClh936hPJFROivdgY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=QOhvWOSYNaKyhhNN69W8HvrtsGHvBNCBzMeuA7sN0+t7mxB0XzAqhjGs7jFU6kda6WJy0HVJf/l6FN6SAbYAmPWNDvrtiFrDRFzVDHaz47w3/eQOudRmXE1KiTAigMCXwS0kXmUoLYe2IZU6bbgsfBfXKL6wb7IQFVEs4K3jRU4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=FrQboLiB; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 162FC355020
+	for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 22:30:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.54
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1770849009; cv=pass; b=GzCkcIDNl1NA0YzHvy67xdC9TINuX48WzTaEsFFG6pBmeHBcoxAUOWJWpEgtCdmlfXeB4DRrnmOPI+rnZfg1xX1VGTBXUlxltz93WHiqdHXFXMyl8jZorQIWtn/urDtdege4YxsAQy7nUrqhJ10BQjmtDnPwRl+rSRLa7T3WsH8=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1770849009; c=relaxed/simple;
+	bh=pGdDWQqG1KFZxJTAs8F1G6rNe5pllLAyQQWQEejQa1U=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=Grb1/OaqV5nk3nA3J7lF2nhqNZB7bRmBmvEOFjPR0yeEZN6mFlZRNwqjIeULqzuf19LDduWH6F8qeHjewXny3OhiMFwsTYByTWPYJEjluIL2HanH9sQAqFXhK+sQGW0/Ett3HWje93NFZ712tZR1H+FzHShafLYZHKprbzHur6s=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=xYtBP/+y; arc=pass smtp.client-ip=209.85.208.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="FrQboLiB"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1770822361;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=FXLMjrw+mRzPtaQ5vaZMo2HxwEpNccgUjBIRD2RdbCU=;
-	b=FrQboLiBdAC/m/ZtOMRB+yf7ZRFhTXexSTjtWDMukzEfYCX9+IWbwCICVAk0AtXX2vtADX
-	kvyPiH5p4t/1FsITBWDgwWWXb/ZU/pMg+8atP0kgHOmCxDnPNyyqex/Fceq6kK9ORPz3NA
-	HmSbQbn0trZ77rbIC6hq+EFoGWuv/3c=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-540-dBnTmWTIN0-3BbgK-odeoA-1; Wed,
- 11 Feb 2026 10:05:57 -0500
-X-MC-Unique: dBnTmWTIN0-3BbgK-odeoA-1
-X-Mimecast-MFC-AGG-ID: dBnTmWTIN0-3BbgK-odeoA_1770822356
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C10741956050
-	for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 15:05:56 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (unknown [10.0.103.170])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 8C6931956053;
-	Wed, 11 Feb 2026 15:05:56 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 0CD311279DD; Wed, 11 Feb 2026 10:05:56 -0500 (EST)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH 1/2] dm vdo indexer: validate saved zone count
-Date: Wed, 11 Feb 2026 10:05:54 -0500
-Message-ID: <d5a993c1d724a5a2ae3c9a7179eedf68afa16f67.1770818146.git.msakai@redhat.com>
-In-Reply-To: <cover.1770818146.git.msakai@redhat.com>
-References: <cover.1770818146.git.msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="xYtBP/+y"
+Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-65a3a1740e7so1626a12.0
+        for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 14:30:06 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1770849005; cv=none;
+        d=google.com; s=arc-20240605;
+        b=fZ6jwGQjB7yTACiuAaGG+nQLhSPPn5NfsTTZznBvEQGYqr7jWoYkiKYdrqeKcjvoRZ
+         bYZ4oPZmuMAyxbXh4sdH6WaAkLTnzRHSfLB12RMnIf/p43k0Vy/BBoH6SIQ7V5XIr+1R
+         gCxL/PhhefaV8Ijios94EgP7BXJwjLwdECkTbz9DdnV95miKTZcJ2+GSta3uJut6AU+l
+         duil0nAplUr8cIc7osjCH8mqY1sYArtSHVHzSqHO4v5abJ8eq1LCxSmG77gCzF+/xceI
+         FoGJSXieP5DnIm4VQ3ZZ3mZFSLqKOuTKjEcnui6ds47on1Lv8t/grozV2MV+63VVoKfD
+         l47A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
+        fh=dTAHK+0abp6vtiCw8MzE2mrS5eqwMiO7Tz4d9qqUk/4=;
+        b=NxQVKDbxlYwJ33XedqyfpPY22WbaWDU2BQgLaZAKT4oFV7J2H9AhI0rfKRWkQiy2y+
+         stNzSVkB90Mjt+VrJdIfGmGApTCDYa21f4Ja7CBfIanHY/NNDRV2SwLCVyZAxc1szoS3
+         O9Fk58BkiDMlbcytbiwlkNeKsb2M1RgpalGzmQKsu0RBRU329AuQ0XN0pN5qlP16RlBu
+         cqAT+KW6tNPEVZux/Mr2XV9j+ICK/K4uEwOWOOmpgDRbou4ncjgX1qsKFcxRtfiEOpub
+         jtCZI4Ly80AQkinzWkj+40rNfoNkpyn+DWooesBgYh3UaAjiIEtwfXlhxIvjYmNIZUW1
+         TR6g==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20230601; t=1770849005; x=1771453805; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
+        b=xYtBP/+ysJVR0mVaKrEU7ji5qeuELvsiww4azzd/xmOPzu6fQ6DvCDztn6IIbURJCT
+         BAfUXJaM5T9OuiXzJN1xLICprtrB8aqonJKvdf5ZLUPTfZqCFcVqFs3r4V1n0BwIOGy+
+         0gmzqGdQJXRf1V2+5IrWn5ldbF1zx1a31IaCWha0TF5A8GKHsAdIRBor8IsavkWB5kFv
+         NSGebGrUtMofkfrZ+nT86Q01Qb6nRbD3tk7nKx4Lc/qESEscEgU85Lik7SfG5kbdMmUP
+         VZ+7KwHpDA94ucX0XD3gwCt/yZEcUQQsC6zTNbN/8m+SEyduj6aVkVAQylTrM1tfqsHZ
+         ecOA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1770849005; x=1771453805;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
+        b=neezZaW8xoYC+G/fwQ6dpvl1R2q/XlK61KAaJhHXOkHrX/EcEujPMIPXd9K36fu/KC
+         qb0XHl7Or6LCFX06Ksyu5t574fLmTeHEg0jDfzLb0dK4+X9Ckkf/jYMnKa9er/avXsdX
+         KZLTPgygYIyCFFWIYg2I6q+vcWHhj1OcCRgNSU9Aywiy9NbgvbdingXtkrIYf+MGY5i+
+         bNU+aW+vmxHUYhNnsBLpCCK5YGNYpS/yISrJHDe1Pyy2ugmtvQHk8+VxvzdD02WhWX7+
+         0C+Zb/WPzbi17kX6mK0C8XjbpZgsyvISJcUgjMAIg0W66h05On5eTkw8yaYH2mtCBSrA
+         lz0w==
+X-Gm-Message-State: AOJu0YwDDgIfTiV29gh3yuy/rtqXqaEQzyz4y4V7tGWRY7C1G1Xlnp0m
+	WECmb6A8ZdttJHP7587UIPC2O5BUkaGlj0WXHNuYQKdH95LC/2xx/v05vUADi+f0LHctLm+Toh0
+	zT3rbUVq+SBeJWKPxlwAUTWIFSJcwXFmpi/hSEOPoCSOSXINH8Wbg6Htn
+X-Gm-Gg: AZuq6aJGCPNrjccv/SoriKh8i39ObBTJYJ6nyo4OVn2RkXP4EK+RaX2Zdvl+oFXg7pz
+	xUdOeOm3DjB4GifQqDaDDRPnH2u/U7x5cXEotbJpsn+5czcY/gIutm7p2XrmI/gdGSpklAg8htp
+	8x/Ds0l30A9dPdukmWvOxkBT7nZ+x4enjATEzFXGs2+h0zQxd/tiyImHTfk9e3un4FzvNZan/25
+	xHtC22Xz61M41F360AeCVyzGcr9wVThIDczPNOaOydBT+YmrMDcNgtePpkeskcOV8pKAli5ZdGe
+	BZkq
+X-Received: by 2002:a05:6402:3549:b0:659:785c:d3a5 with SMTP id
+ 4fb4d7f45d1cf-65b9912a432mr14930a12.8.1770849004949; Wed, 11 Feb 2026
+ 14:30:04 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: EVN2GMJFbZ4nTMEyB0RRJUpXiVUtOsTtqBgKrewzojQ_1770822356
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+References: <20260206045942.52965-1-ebiggers@kernel.org>
+In-Reply-To: <20260206045942.52965-1-ebiggers@kernel.org>
+From: Sami Tolvanen <samitolvanen@google.com>
+Date: Wed, 11 Feb 2026 14:29:28 -0800
+X-Gm-Features: AZwV_QjXUSjV1pv6Y68lqJuBrcv9hMb-19wxW5nMb6HgoGHcM1hIcT1G1aOVgPQ
+Message-ID: <CABCJKufKYMPcjiviWdGR=h5HVAmavwacsSdMNPQaaXeeL+GoFw@mail.gmail.com>
+Subject: Re: [PATCH 00/22] dm-verity: more FEC fixes and cleanups
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
+	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Verify that the loaded zone count is in the valid range
-before using it as a loop iterator.
+Hi Eric,
 
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/indexer/index-layout.c | 3 +++
- 1 file changed, 3 insertions(+)
+On Thu, Feb 5, 2026 at 9:01=E2=80=AFPM Eric Biggers <ebiggers@kernel.org> w=
+rote:
+>
+> This series applies to linux-dm/for-next.  It can also be retrieved from:
+>
+>     git fetch https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/li=
+nux.git dm-verity-fec-2026-02-05
+>
+> Patches 1-5 fix bugs in dm-verity's forward error correction (FEC):
+>
+> - FEC and hash devices that are too small were not rejected.
+>
+> - Corrected blocks could be multiple-counted in statistics.
+>
+> - The erasures array was significantly oversized for its use case.
+>
+> - An out-of-bounds read could occur when decoding an RS codeword whose
+>   parity bytes span a block boundary.
 
-diff --git a/drivers/md/dm-vdo/indexer/index-layout.c b/drivers/md/dm-vdo/indexer/index-layout.c
-index 61edf2b72427..37144249f7ba 100644
---- a/drivers/md/dm-vdo/indexer/index-layout.c
-+++ b/drivers/md/dm-vdo/indexer/index-layout.c
-@@ -1445,6 +1445,9 @@ static int __must_check reconstruct_index_save(struct index_save_layout *isl,
- 	u64 last_block = next_block + isl->index_save.block_count;
- 
- 	isl->zone_count = table->header.region_count - 3;
-+	if (isl->zone_count > MAX_ZONES)
-+		return vdo_log_error_strerror(UDS_CORRUPT_DATA,
-+					      "invalid zone count");
- 
- 	last_region = &table->regions[table->header.region_count - 1];
- 	if (last_region->kind == RL_KIND_EMPTY) {
--- 
-2.48.1
+Thanks for the fixes, these look correct to me. It would be nice to
+have tests for the edge cases though. Perhaps in the
+verity-compat-test script that's included in the cryptsetup repo?
 
+> Patches 6-22 clean up the FEC implementation to be easier to understand
+> and improve documentation and log messages.
+
+The clean-ups also look reasonable. For the series:
+
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+
+Sami
