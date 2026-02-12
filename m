@@ -1,129 +1,63 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 162FC355020
-	for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 22:30:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.54
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770849009; cv=pass; b=GzCkcIDNl1NA0YzHvy67xdC9TINuX48WzTaEsFFG6pBmeHBcoxAUOWJWpEgtCdmlfXeB4DRrnmOPI+rnZfg1xX1VGTBXUlxltz93WHiqdHXFXMyl8jZorQIWtn/urDtdege4YxsAQy7nUrqhJ10BQjmtDnPwRl+rSRLa7T3WsH8=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770849009; c=relaxed/simple;
-	bh=pGdDWQqG1KFZxJTAs8F1G6rNe5pllLAyQQWQEejQa1U=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Grb1/OaqV5nk3nA3J7lF2nhqNZB7bRmBmvEOFjPR0yeEZN6mFlZRNwqjIeULqzuf19LDduWH6F8qeHjewXny3OhiMFwsTYByTWPYJEjluIL2HanH9sQAqFXhK+sQGW0/Ett3HWje93NFZ712tZR1H+FzHShafLYZHKprbzHur6s=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=xYtBP/+y; arc=pass smtp.client-ip=209.85.208.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 979C415CD74
+	for <dm-devel@lists.linux.dev>; Thu, 12 Feb 2026 03:59:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1770868766; cv=none; b=BqZUDgzju4JtTY2i90AGd7baR0QkfxEBBDcPlrzNkT8KnNai3nUH2vCbIl4lFViF/ekmlbKEvPLQr3htOsMk2qnGoMfqTEeoLh7Rnr1B/B/V6DQQoEBkrEGvhAqwzL4v24psGmDPAQdAX8Y0/I92ft/+Y39Ee2z/lD68hymkMWA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1770868766; c=relaxed/simple;
+	bh=msHxKueG5asbmGjTHneSY3up4w8u2WoM+q4OlnMo/nY=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=eoBTN9SM5zzLmgFFFThlDVa0oJ/6rohZz5F3VnIH4+h/KMeX+uPdqJ9TDu3c8AOHHBJ7x2tI3A2Bbx3XTc8A301+XjOewfTG0zjVZJgsZopdAtdKQ5EofLNGcgSZbXl3rx8Aqk2SwDX2JSIbQLsoS4KTwofnBdfYX4402JoigwY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ephxTMVa; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="xYtBP/+y"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-65a3a1740e7so1626a12.0
-        for <dm-devel@lists.linux.dev>; Wed, 11 Feb 2026 14:30:06 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1770849005; cv=none;
-        d=google.com; s=arc-20240605;
-        b=fZ6jwGQjB7yTACiuAaGG+nQLhSPPn5NfsTTZznBvEQGYqr7jWoYkiKYdrqeKcjvoRZ
-         bYZ4oPZmuMAyxbXh4sdH6WaAkLTnzRHSfLB12RMnIf/p43k0Vy/BBoH6SIQ7V5XIr+1R
-         gCxL/PhhefaV8Ijios94EgP7BXJwjLwdECkTbz9DdnV95miKTZcJ2+GSta3uJut6AU+l
-         duil0nAplUr8cIc7osjCH8mqY1sYArtSHVHzSqHO4v5abJ8eq1LCxSmG77gCzF+/xceI
-         FoGJSXieP5DnIm4VQ3ZZ3mZFSLqKOuTKjEcnui6ds47on1Lv8t/grozV2MV+63VVoKfD
-         l47A==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
-        fh=dTAHK+0abp6vtiCw8MzE2mrS5eqwMiO7Tz4d9qqUk/4=;
-        b=NxQVKDbxlYwJ33XedqyfpPY22WbaWDU2BQgLaZAKT4oFV7J2H9AhI0rfKRWkQiy2y+
-         stNzSVkB90Mjt+VrJdIfGmGApTCDYa21f4Ja7CBfIanHY/NNDRV2SwLCVyZAxc1szoS3
-         O9Fk58BkiDMlbcytbiwlkNeKsb2M1RgpalGzmQKsu0RBRU329AuQ0XN0pN5qlP16RlBu
-         cqAT+KW6tNPEVZux/Mr2XV9j+ICK/K4uEwOWOOmpgDRbou4ncjgX1qsKFcxRtfiEOpub
-         jtCZI4Ly80AQkinzWkj+40rNfoNkpyn+DWooesBgYh3UaAjiIEtwfXlhxIvjYmNIZUW1
-         TR6g==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1770849005; x=1771453805; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
-        b=xYtBP/+ysJVR0mVaKrEU7ji5qeuELvsiww4azzd/xmOPzu6fQ6DvCDztn6IIbURJCT
-         BAfUXJaM5T9OuiXzJN1xLICprtrB8aqonJKvdf5ZLUPTfZqCFcVqFs3r4V1n0BwIOGy+
-         0gmzqGdQJXRf1V2+5IrWn5ldbF1zx1a31IaCWha0TF5A8GKHsAdIRBor8IsavkWB5kFv
-         NSGebGrUtMofkfrZ+nT86Q01Qb6nRbD3tk7nKx4Lc/qESEscEgU85Lik7SfG5kbdMmUP
-         VZ+7KwHpDA94ucX0XD3gwCt/yZEcUQQsC6zTNbN/8m+SEyduj6aVkVAQylTrM1tfqsHZ
-         ecOA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1770849005; x=1771453805;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=ZxVigXbvBhhR1mA0KIKOZKOhZET0Gp0En0HjTBqR0nY=;
-        b=neezZaW8xoYC+G/fwQ6dpvl1R2q/XlK61KAaJhHXOkHrX/EcEujPMIPXd9K36fu/KC
-         qb0XHl7Or6LCFX06Ksyu5t574fLmTeHEg0jDfzLb0dK4+X9Ckkf/jYMnKa9er/avXsdX
-         KZLTPgygYIyCFFWIYg2I6q+vcWHhj1OcCRgNSU9Aywiy9NbgvbdingXtkrIYf+MGY5i+
-         bNU+aW+vmxHUYhNnsBLpCCK5YGNYpS/yISrJHDe1Pyy2ugmtvQHk8+VxvzdD02WhWX7+
-         0C+Zb/WPzbi17kX6mK0C8XjbpZgsyvISJcUgjMAIg0W66h05On5eTkw8yaYH2mtCBSrA
-         lz0w==
-X-Gm-Message-State: AOJu0YwDDgIfTiV29gh3yuy/rtqXqaEQzyz4y4V7tGWRY7C1G1Xlnp0m
-	WECmb6A8ZdttJHP7587UIPC2O5BUkaGlj0WXHNuYQKdH95LC/2xx/v05vUADi+f0LHctLm+Toh0
-	zT3rbUVq+SBeJWKPxlwAUTWIFSJcwXFmpi/hSEOPoCSOSXINH8Wbg6Htn
-X-Gm-Gg: AZuq6aJGCPNrjccv/SoriKh8i39ObBTJYJ6nyo4OVn2RkXP4EK+RaX2Zdvl+oFXg7pz
-	xUdOeOm3DjB4GifQqDaDDRPnH2u/U7x5cXEotbJpsn+5czcY/gIutm7p2XrmI/gdGSpklAg8htp
-	8x/Ds0l30A9dPdukmWvOxkBT7nZ+x4enjATEzFXGs2+h0zQxd/tiyImHTfk9e3un4FzvNZan/25
-	xHtC22Xz61M41F360AeCVyzGcr9wVThIDczPNOaOydBT+YmrMDcNgtePpkeskcOV8pKAli5ZdGe
-	BZkq
-X-Received: by 2002:a05:6402:3549:b0:659:785c:d3a5 with SMTP id
- 4fb4d7f45d1cf-65b9912a432mr14930a12.8.1770849004949; Wed, 11 Feb 2026
- 14:30:04 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ephxTMVa"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7755DC4CEF7;
+	Thu, 12 Feb 2026 03:59:26 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1770868766;
+	bh=msHxKueG5asbmGjTHneSY3up4w8u2WoM+q4OlnMo/nY=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc:From;
+	b=ephxTMVaxA+ijpKxmak2EPS9VvoADxzwSK65q2hjVadNMiRER8gPdFFnmNsseCRGc
+	 MP9A4ZRyqxpi0FC2esYqoZkbBlonYt3bBVrc14SF6f5YalI0C/YRP+7QFePrrHDPwc
+	 ug53rpcRcelDfFkji68wbDW3kTFcH+j4Jyz18kjbNOzVN0ff3CAO3xo0abjEn6Ck3h
+	 hIi4fLwJEAfCgoVasR9N6BIJAaVdfTUj33VzmFgtX6IbpgIdcjpeg9IQopeha3J3w5
+	 bgf0IExsKL+3i3cP53sczUHxpN9cXgnVa6YIE96nsAEl4cGBjfATHzGXHSY5lFzX5g
+	 3belMP7Gyvu2A==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 481D339EF966;
+	Thu, 12 Feb 2026 03:59:22 +0000 (UTC)
+Subject: Re: [git pull] device mapper changes for 7.0
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <30b93671-3771-b7ce-2553-e0bc1a4a17d2@redhat.com>
+References: <30b93671-3771-b7ce-2553-e0bc1a4a17d2@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <30b93671-3771-b7ce-2553-e0bc1a4a17d2@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.0/dm-changes
+X-PR-Tracked-Commit-Id: 218b16992a37ea97b9e09b7659a25a864fb9976f
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 61e629596fabd7f60cc3748a603703c5d9b58428
+Message-Id: <177086876079.893578.15253224516450907731.pr-tracker-bot@kernel.org>
+Date: Thu, 12 Feb 2026 03:59:20 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, Akiyoshi Kurita <weibu@redadmin.org>, Benjamin Marzinski <bmarzins@redhat.com>, Daniel Gomez <da.gomez@samsung.com>, Ding Hui <dinghui@sangfor.com.cn>, Eric Biggers <ebiggers@kernel.org>, Christian Brauner <brauner@kernel.org>, Julia Lawall <Julia.Lawall@inria.fr>, Li Chen <me@linux.beauty>, Marco Crivellari <marco.crivellari@suse.com>, Matthew Sakai <msakai@redhat.com>, Matt Whitlock <kernel@mattwhitlock.name>, Michael Liang <mliang@purestorage.com>, Yongpeng Yang <yangyongpeng@xiaomi.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-References: <20260206045942.52965-1-ebiggers@kernel.org>
-In-Reply-To: <20260206045942.52965-1-ebiggers@kernel.org>
-From: Sami Tolvanen <samitolvanen@google.com>
-Date: Wed, 11 Feb 2026 14:29:28 -0800
-X-Gm-Features: AZwV_QjXUSjV1pv6Y68lqJuBrcv9hMb-19wxW5nMb6HgoGHcM1hIcT1G1aOVgPQ
-Message-ID: <CABCJKufKYMPcjiviWdGR=h5HVAmavwacsSdMNPQaaXeeL+GoFw@mail.gmail.com>
-Subject: Re: [PATCH 00/22] dm-verity: more FEC fixes and cleanups
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-Hi Eric,
+The pull request you sent on Tue, 10 Feb 2026 13:29:05 +0100 (CET):
 
-On Thu, Feb 5, 2026 at 9:01=E2=80=AFPM Eric Biggers <ebiggers@kernel.org> w=
-rote:
->
-> This series applies to linux-dm/for-next.  It can also be retrieved from:
->
->     git fetch https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/li=
-nux.git dm-verity-fec-2026-02-05
->
-> Patches 1-5 fix bugs in dm-verity's forward error correction (FEC):
->
-> - FEC and hash devices that are too small were not rejected.
->
-> - Corrected blocks could be multiple-counted in statistics.
->
-> - The erasures array was significantly oversized for its use case.
->
-> - An out-of-bounds read could occur when decoding an RS codeword whose
->   parity bytes span a block boundary.
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.0/dm-changes
 
-Thanks for the fixes, these look correct to me. It would be nice to
-have tests for the edge cases though. Perhaps in the
-verity-compat-test script that's included in the cryptsetup repo?
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/61e629596fabd7f60cc3748a603703c5d9b58428
 
-> Patches 6-22 clean up the FEC implementation to be easier to understand
-> and improve documentation and log messages.
+Thank you!
 
-The clean-ups also look reasonable. For the series:
-
-Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
-
-Sami
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
