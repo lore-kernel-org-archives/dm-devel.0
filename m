@@ -1,159 +1,104 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0CB6F200C2
-	for <dm-devel@lists.linux.dev>; Thu, 12 Feb 2026 18:05:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B03036073C
+	for <dm-devel@lists.linux.dev>; Fri, 13 Feb 2026 15:26:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.43
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770919547; cv=none; b=oDc11MQZjLi4ocrPjg8mKjmQv7uEJZ+xE3HaVGxvZRDTmRqaKFo17zSOUfiDeguD66I3nXJcELeV2JrQHyehikKyfW6q0QhrkxAFtx3g/MWHmm/J0lHupDNuFky/X7jJBmUEeuYrMVRSpHZnZ4j3vEn4ZPUyVtgCU0poXUAzzLQ=
+	t=1770996408; cv=none; b=YyDbHKiIXpqHG8si2TedZRshWRyDueH3Xib/khYM9rUjFH94l8Cy5n0KgfQ0zjVq+lEyA4X8076LKrSY3dyhMQAR7TYrYOF+2fh6DPJ+8DguUa25LmfS8YCurk8XU9iOM/8gFkbgktJ4JDNszOZ2affgfV82kOPYQOi2u/um6Q0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770919547; c=relaxed/simple;
-	bh=YKjWTk6wKM5JJ6LgYDdkxSVUz8K8iLx1pREUcjQdavk=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=b2fgfQl4sPnwMT03y9uoQE8sDLDNN21PADLBhEc/RbPC63SDz9SmlVSL982Zhy5axUKGzkAo2nWbhkCd5x4yVFONZ6aGqNjEKM85m7c3tvnnRRzlbYSm3LVocPxVhbPYrpydtFeDTlc8etBN8QZyjPoIRGvGmEeO5yMbY09fLaQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ILX7PHEn; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1770996408; c=relaxed/simple;
+	bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
+	h=Message-ID:Date:MIME-Version:Subject:References:To:From:
+	 In-Reply-To:Content-Type; b=YH2qQXH6sPSDEubjlinMbGGveLHAuSzc2yAyMJ8S/ZzEKdUw3jD+hYqHRR0QbqhHuQYhHGpSPJmGtX3md257RKKp5Dvy52eMP7TUwaIxD0QWnHRBV2wQSfvzdB0kBMkUQjiGm3tpsUJUyud5ksLtrNOhwpRvn7Yyq4Ms4a0klY8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jLEOZ4J+; arc=none smtp.client-ip=209.85.218.43
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ILX7PHEn"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1770919545;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=cyzWq1J4t8CqXOOi7BR/1JMfHIixthKhaYPekWHzqL4=;
-	b=ILX7PHEn7FcOSVS9K6CcxY8hYPMXZXbV20MoZOAueOChfufHN9Rd95y6U9Mfi7bgQcI4At
-	bS8NXw9M13vPoDfHC0mmtNZenJJ64b/NyxBrWYHG4+gY2uMiMYtZPikyWerXcqsX/UVHb4
-	KLRCaruXedjCBI5WRi39WFV8bZWovRg=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-499-4loMLB6nMRWdNOm2ZKqjJA-1; Thu,
- 12 Feb 2026 13:05:43 -0500
-X-MC-Unique: 4loMLB6nMRWdNOm2ZKqjJA-1
-X-Mimecast-MFC-AGG-ID: 4loMLB6nMRWdNOm2ZKqjJA_1770919543
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 08C011955BF9;
-	Thu, 12 Feb 2026 18:05:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 67E151800669;
-	Thu, 12 Feb 2026 18:05:42 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61CI5f6X1154484
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 12 Feb 2026 13:05:41 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61CI5fAg1154483;
-	Thu, 12 Feb 2026 13:05:41 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@lists.linux.dev, Kevin Wolf <kwolf@redhat.com>,
-        Hanna Czenczek <hreitz@redhat.com>,
-        Martin Wilck <martin.wilck@suse.com>
-Subject: [PATCH] dm-mpath: don't stop probing paths at presuspend
-Date: Thu, 12 Feb 2026 13:05:41 -0500
-Message-ID: <20260212180541.1154475-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jLEOZ4J+"
+Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-b8f7fd33bd2so17362966b.3
+        for <dm-devel@lists.linux.dev>; Fri, 13 Feb 2026 07:26:47 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1770996406; x=1771601206; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:to:references
+         :content-language:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
+        b=jLEOZ4J+MQ6dl5gFdOZvp1uJIYSWwpWIpQJCRrJZeyvl7kR8sN4ZTaGU2PpOmMAk7l
+         c7JtLPwv86gtyg9Eocow1nbUFt3tbn3b5/ujGVlRJNMhlPa/MwPSVfH5SzCI1mPl0GcH
+         yB7pJH0c+ec2vNZZIJ3YNodEzTgpMq+qIbtBDegovtx9uWZ/+q6DRAnoxFDiv9/uQuDb
+         eWcim+yElJP01x2LEr1Y4qY18o1lbXPLbu+j/87h0g6vaACcjsx78Ji2dYw9+PF0Ddr3
+         u091Gpew68LaiGlXET1Fb4sE1Q3SD3jQ+oPiSGnUKMaP+L+2H/X09YJDyUdTMBedON61
+         oTUw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1770996406; x=1771601206;
+        h=content-transfer-encoding:in-reply-to:from:to:references
+         :content-language:subject:mime-version:date:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
+        b=OnkVXJj2e/NPnpHjR2QPD1DXUGx+HES3tids2OhdL7RTLsBs5HEiJOYlV2nZA3YO/F
+         Gl37j5RXQzYzN2z88UXxj9r0azG3DQugXW+Whsp8lgXhbuqvfj1ZGGwQoOcSAfVEYEi5
+         51mzYZbUStSHxyxubqKz8y6FcedQbFvrMs80EPv/Fh3oLpgWr8AlQGLxBh8PuiUiCJby
+         wLlB3afhDIP+yMiBpyB9qalhxjfMRPkRQ9fKUCTDrxH2V8y0FqScBr765T6Tp4JWW4EP
+         PazLrvGvpXONvnpJlIK2c+P5gS/hWktXBQakW5hEdUmiwCPxa7F7E/n+aKPJUds4+0qn
+         AAQw==
+X-Forwarded-Encrypted: i=1; AJvYcCXAirPZ0EyIs7+Z5Zi8ef90l42lpQBZpWygMs9P2h9SD6KWrMAqgn9ORtLuZQofbRuJnyi9IPs8LA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyi1+2o221zy+20r6RiG4PB4rzr/skiqI6IGIu6v/cVUfBymB//
+	EdvWU0b1hi+nFQxc6bRbDlU+lSPZzsLoXrxQuUIEd4a8jpoVjvlu1ew=
+X-Gm-Gg: AZuq6aJI9i70qrmVgNMy2UqbzaW1iYd2hl0nAMQAKAiSwJzwbTylJdiKnzFPo+3jETv
+	nGfrn1kTvWjiy/dAWgiTVSy+eQb2aDZEcgB4trMY6NBD0kZVX/OrostaE/e4GPH6wm0VsI/po8+
+	HggB6xgQVP5Q9jWOJ0Owp6EuoafU7BuTkiiQl0Zn7IDjj7Y9WhGagsX9IoxxNNnjkvaPROQr0gv
+	CxoR+z4rUV43Wy6B8TuxRSrlDkH+y4V3d4CeVhEq4o+mjYWW3qxoKRtZgdrnIokIIp7CgVQihUl
+	L0nPF75eXqsc9r1TGckKk6lk4HRZUzbiLOo5Ra408pkCiu7ge5Rp163WO/66AuCFWv+/SnvEOUD
+	L357sWbVmienrbsOgqsGvdKzLCXfuj5GAYri4H5HkSz/TR4SXNGI+mzGHAKItI+OliWnVnkHgND
+	BQfURAYZUoPU2iV88rPpVoC8xEX/DhlcAqZ+FA1TZZ+8m2/5G1Xy0WB2DXmVY3Xw==
+X-Received: by 2002:a17:907:6eab:b0:b87:1e1:e562 with SMTP id a640c23a62f3a-b8fad019240mr90172966b.8.1770996405545;
+        Fri, 13 Feb 2026 07:26:45 -0800 (PST)
+Received: from localhost (218.red-88-28-8.dynamicip.rima-tde.net. [88.28.8.218])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b8f6e9a6a24sm263458766b.20.2026.02.13.07.26.43
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 13 Feb 2026 07:26:45 -0800 (PST)
+Message-ID: <e8f58a8f-8116-4c68-b408-96b21a6480b0@gmail.com>
+Date: Fri, 13 Feb 2026 16:26:42 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: whOOXBc48s-zxfwMhaaVGQzDsyXQo6bXcMGcywR0lAw_1770919543
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Subject: Fwd: [LSF/MM/BPF TOPIC] Native SCSI multipath support
+Content-Language: en-US, en-GB, es-ES
+References: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
+X-Forwarded-Message-Id: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Commit 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing
-paths"), added code to make multipath quit probing paths early, if it
-was trying to suspend. This isn't necessary. It was just an optimization
-to try to keep path probing from delaying a suspend. However it causes
-problems with the intended user of this code, qemu. The path probing
-code was added because failed ioctls to multipath devices don't cause
-paths to fail in cases where a regular IO failure would.
 
-If an ioctl to a path failed because the path was down, and the
-multipath device had passed presuspend, the M_MPATH_PROBE_PATHS ioctl
-would exit early, without probing the path. The caller would then retry
-the original ioctl, hoping to use a different path. But if there was
-only one path in the pathgroup, it would pick the same non-working path
-again, even if there were working paths in other pathgroups.
+FYI: https://lore.kernel.org/linux-scsi/69349b51-72c2-47f9-948f-f89843af62e4@oracle.com/dm
 
-ioctls to a suspended dm device will return -EAGAIN, notifying the
-caller that the device is suspended, but ioctls to a device that is just
-preparing to suspend won't (and in general, shouldn't). This means that
-the caller (qemu in this case) would get into a tight loop where it
-would issue an ioctl that failed, skip probing the paths because the
-device had already passed presuspend, and start over issuing the ioctl
-again. This would continue until the multipath device finally fully
-suspended, or the caller gave up and failed the ioctl.
+-------- Forwarded Message --------
+Subject: [LSF/MM/BPF TOPIC] Native SCSI multipath support
+Date: Fri, 13 Feb 2026 14:19:11 +0000
+From: John Garry <john.g.garry@oracle.com>
+Organization: Oracle Corporation
+To: lsf-pc@lists.linux-foundation.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
 
-multipath's path probing code could return -EAGAIN in this case, and the
-caller could delay a bit before retrying, but the whole purpose of
-skipping the probe after presuspend was to speed things up, and that
-would just slow them down. Instead, remove the is_suspending flag, and
-check dm_suspended() instead to decide whether to exit the probing code
-early. This means that when the probing code exits early, future ioctls
-will also be delayed, because the device is fully suspended.
+At ALPSS 25 I presented a proposal for Native SCSI multipath support. Let's discuss this topic at LSFMM.
 
-Fixes: 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing paths")
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/dm-mpath.c | 9 ++-------
- 1 file changed, 2 insertions(+), 7 deletions(-)
+The idea for this is that SCSI could natively support multipath, like how NVMe host driver does today. It is intended as an alternative to dm-multipath support.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index de03f9b06584..09a5544bc8b1 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -102,7 +102,6 @@ struct multipath {
- 	struct bio_list queued_bios;
- 
- 	struct timer_list nopath_timer;	/* Timeout for queue_if_no_path */
--	bool is_suspending;
- };
- 
- /*
-@@ -1749,9 +1748,6 @@ static void multipath_presuspend(struct dm_target *ti)
- {
- 	struct multipath *m = ti->private;
- 
--	spin_lock_irq(&m->lock);
--	m->is_suspending = true;
--	spin_unlock_irq(&m->lock);
- 	/* FIXME: bio-based shouldn't need to always disable queue_if_no_path */
- 	if (m->queue_mode == DM_TYPE_BIO_BASED || !dm_noflush_suspending(m->ti))
- 		queue_if_no_path(m, false, true, __func__);
-@@ -1774,7 +1770,6 @@ static void multipath_resume(struct dm_target *ti)
- 	struct multipath *m = ti->private;
- 
- 	spin_lock_irq(&m->lock);
--	m->is_suspending = false;
- 	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) {
- 		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
- 		clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
-@@ -2098,7 +2093,7 @@ static int probe_active_paths(struct multipath *m)
- 		if (m->current_pg == m->last_probed_pg)
- 			goto skip_probe;
- 	}
--	if (!m->current_pg || m->is_suspending ||
-+	if (!m->current_pg || dm_suspended(m->ti) ||
- 	    test_bit(MPATHF_QUEUE_IO, &m->flags))
- 		goto skip_probe;
- 	set_bit(MPATHF_DELAY_PG_SWITCH, &m->flags);
-@@ -2107,7 +2102,7 @@ static int probe_active_paths(struct multipath *m)
- 
- 	list_for_each_entry(pgpath, &pg->pgpaths, list) {
- 		if (pg != READ_ONCE(m->current_pg) ||
--		    READ_ONCE(m->is_suspending))
-+		    dm_suspended(m->ti))
- 			goto out;
- 		if (!pgpath->is_active)
- 			continue;
--- 
-2.50.1
+I have been working on the implementation and I plan to post patches in the next cycle. I am looking at a 3-stage approach:
+a. create a driver-agnostic multipath library, very heavily based on NVMe host multipath support.
+The library would support features such as path management, path selection/iopolicy, failover recovery, PR, delayed removal, gendisk management etc.
+b. switch NVMe over to use this library
+c. add native SCSI multipath support based on this common library
+
+Thanks,
+John
+
 
