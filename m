@@ -1,104 +1,183 @@
-Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B03036073C
-	for <dm-devel@lists.linux.dev>; Fri, 13 Feb 2026 15:26:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEB983C2D;
+	Sat, 14 Feb 2026 21:25:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1770996408; cv=none; b=YyDbHKiIXpqHG8si2TedZRshWRyDueH3Xib/khYM9rUjFH94l8Cy5n0KgfQ0zjVq+lEyA4X8076LKrSY3dyhMQAR7TYrYOF+2fh6DPJ+8DguUa25LmfS8YCurk8XU9iOM/8gFkbgktJ4JDNszOZ2affgfV82kOPYQOi2u/um6Q0=
+	t=1771104318; cv=none; b=ggsrpNm8Fim8syVyynHGPYxA0q37R0nw36RiazIDWxlfUQErwK/Y4lIK6o6i7pkpmSyN77H6UP6OR6YkGAgya0nqElgJPMwbmpS5rlulXlAv2JACACcml1jE+V2YXUE5RCYmB//KNgXGvEe3CMRYa9zQO4wcICuBRLDc0hxl31s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1770996408; c=relaxed/simple;
-	bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
-	h=Message-ID:Date:MIME-Version:Subject:References:To:From:
-	 In-Reply-To:Content-Type; b=YH2qQXH6sPSDEubjlinMbGGveLHAuSzc2yAyMJ8S/ZzEKdUw3jD+hYqHRR0QbqhHuQYhHGpSPJmGtX3md257RKKp5Dvy52eMP7TUwaIxD0QWnHRBV2wQSfvzdB0kBMkUQjiGm3tpsUJUyud5ksLtrNOhwpRvn7Yyq4Ms4a0klY8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jLEOZ4J+; arc=none smtp.client-ip=209.85.218.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1771104318; c=relaxed/simple;
+	bh=/cqgyn07X/GNVDX6qvDE04jLrBdHKDPV3bDIlUemsvw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=PjyM4aexdc/qLZ5ZPENR5917jblpR2htguLiYXUCBcwvujsGABeAIVXlpLj8bzeb+5kBAaa1tVVwdGW4hyPrIKBDbXBa+sTy5cCpr5u8UzXDhCi9zKerHkV2AOcQZ9l6TPXln5qREznNXWhScVIfBAojNG+F/+DgrFmK9DhXEuI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=R+CNkrOK; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jLEOZ4J+"
-Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-b8f7fd33bd2so17362966b.3
-        for <dm-devel@lists.linux.dev>; Fri, 13 Feb 2026 07:26:47 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1770996406; x=1771601206; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:to:references
-         :content-language:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
-        b=jLEOZ4J+MQ6dl5gFdOZvp1uJIYSWwpWIpQJCRrJZeyvl7kR8sN4ZTaGU2PpOmMAk7l
-         c7JtLPwv86gtyg9Eocow1nbUFt3tbn3b5/ujGVlRJNMhlPa/MwPSVfH5SzCI1mPl0GcH
-         yB7pJH0c+ec2vNZZIJ3YNodEzTgpMq+qIbtBDegovtx9uWZ/+q6DRAnoxFDiv9/uQuDb
-         eWcim+yElJP01x2LEr1Y4qY18o1lbXPLbu+j/87h0g6vaACcjsx78Ji2dYw9+PF0Ddr3
-         u091Gpew68LaiGlXET1Fb4sE1Q3SD3jQ+oPiSGnUKMaP+L+2H/X09YJDyUdTMBedON61
-         oTUw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1770996406; x=1771601206;
-        h=content-transfer-encoding:in-reply-to:from:to:references
-         :content-language:subject:mime-version:date:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=TIyYhBjIMdhMFqURWlwOaH0ft6/je8jcM72gBZMgN1c=;
-        b=OnkVXJj2e/NPnpHjR2QPD1DXUGx+HES3tids2OhdL7RTLsBs5HEiJOYlV2nZA3YO/F
-         Gl37j5RXQzYzN2z88UXxj9r0azG3DQugXW+Whsp8lgXhbuqvfj1ZGGwQoOcSAfVEYEi5
-         51mzYZbUStSHxyxubqKz8y6FcedQbFvrMs80EPv/Fh3oLpgWr8AlQGLxBh8PuiUiCJby
-         wLlB3afhDIP+yMiBpyB9qalhxjfMRPkRQ9fKUCTDrxH2V8y0FqScBr765T6Tp4JWW4EP
-         PazLrvGvpXONvnpJlIK2c+P5gS/hWktXBQakW5hEdUmiwCPxa7F7E/n+aKPJUds4+0qn
-         AAQw==
-X-Forwarded-Encrypted: i=1; AJvYcCXAirPZ0EyIs7+Z5Zi8ef90l42lpQBZpWygMs9P2h9SD6KWrMAqgn9ORtLuZQofbRuJnyi9IPs8LA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyi1+2o221zy+20r6RiG4PB4rzr/skiqI6IGIu6v/cVUfBymB//
-	EdvWU0b1hi+nFQxc6bRbDlU+lSPZzsLoXrxQuUIEd4a8jpoVjvlu1ew=
-X-Gm-Gg: AZuq6aJI9i70qrmVgNMy2UqbzaW1iYd2hl0nAMQAKAiSwJzwbTylJdiKnzFPo+3jETv
-	nGfrn1kTvWjiy/dAWgiTVSy+eQb2aDZEcgB4trMY6NBD0kZVX/OrostaE/e4GPH6wm0VsI/po8+
-	HggB6xgQVP5Q9jWOJ0Owp6EuoafU7BuTkiiQl0Zn7IDjj7Y9WhGagsX9IoxxNNnjkvaPROQr0gv
-	CxoR+z4rUV43Wy6B8TuxRSrlDkH+y4V3d4CeVhEq4o+mjYWW3qxoKRtZgdrnIokIIp7CgVQihUl
-	L0nPF75eXqsc9r1TGckKk6lk4HRZUzbiLOo5Ra408pkCiu7ge5Rp163WO/66AuCFWv+/SnvEOUD
-	L357sWbVmienrbsOgqsGvdKzLCXfuj5GAYri4H5HkSz/TR4SXNGI+mzGHAKItI+OliWnVnkHgND
-	BQfURAYZUoPU2iV88rPpVoC8xEX/DhlcAqZ+FA1TZZ+8m2/5G1Xy0WB2DXmVY3Xw==
-X-Received: by 2002:a17:907:6eab:b0:b87:1e1:e562 with SMTP id a640c23a62f3a-b8fad019240mr90172966b.8.1770996405545;
-        Fri, 13 Feb 2026 07:26:45 -0800 (PST)
-Received: from localhost (218.red-88-28-8.dynamicip.rima-tde.net. [88.28.8.218])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b8f6e9a6a24sm263458766b.20.2026.02.13.07.26.43
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 13 Feb 2026 07:26:45 -0800 (PST)
-Message-ID: <e8f58a8f-8116-4c68-b408-96b21a6480b0@gmail.com>
-Date: Fri, 13 Feb 2026 16:26:42 +0100
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="R+CNkrOK"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 385BBC16AAE;
+	Sat, 14 Feb 2026 21:25:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1771104317;
+	bh=/cqgyn07X/GNVDX6qvDE04jLrBdHKDPV3bDIlUemsvw=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=R+CNkrOKho40F0c3r3zQoObZSHzjZrzgKCYG1QNN9WRMwqtkhohF2LA6+qwEL7RUF
+	 jtFoSMVoqbuXvMqZ0y1SlIh9vdP1W3IKLFcRdjpAc0NOSrj7Bi29u21UuyL6VjNgL4
+	 b7n8Z791ULEahmddoGHyfTUy5BsJny2sw3PIBYNRiU4cV37UXSRFTAoJSLkx5e+KjI
+	 aDJrOBZNM1Dw+k3B7UtlmGWb9o1GRI3rJ488rLUwtPbNT9ADckKxZCvtFCiAK+TVkG
+	 ZAY/ZC4G/TcYxiP3pvJ2x74/DeCCS7rMDyDBrvtoRShAQEifV9E7d3VlivEY4K7IB8
+	 V27sbBJb8d6aw==
+From: Sasha Levin <sashal@kernel.org>
+To: patches@lists.linux.dev,
+	stable@vger.kernel.org
+Cc: Daniel Gomez <da.gomez@samsung.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Sasha Levin <sashal@kernel.org>,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	bmarzins@redhat.com,
+	dm-devel@lists.linux.dev
+Subject: [PATCH AUTOSEL 6.19-6.6] dm: replace -EEXIST with -EBUSY
+Date: Sat, 14 Feb 2026 16:22:37 -0500
+Message-ID: <20260214212452.782265-12-sashal@kernel.org>
+X-Mailer: git-send-email 2.51.0
+In-Reply-To: <20260214212452.782265-1-sashal@kernel.org>
+References: <20260214212452.782265-1-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Fwd: [LSF/MM/BPF TOPIC] Native SCSI multipath support
-Content-Language: en-US, en-GB, es-ES
-References: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM_DEVEL-ML <dm-devel@lists.linux.dev>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
-X-Forwarded-Message-Id: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-stable: review
+X-Patchwork-Hint: Ignore
+X-stable-base: Linux 6.19
+Content-Transfer-Encoding: 8bit
 
+From: Daniel Gomez <da.gomez@samsung.com>
 
-FYI: https://lore.kernel.org/linux-scsi/69349b51-72c2-47f9-948f-f89843af62e4@oracle.com/dm
+[ Upstream commit b13ef361d47f09b7aecd18e0383ecc83ff61057e ]
 
--------- Forwarded Message --------
-Subject: [LSF/MM/BPF TOPIC] Native SCSI multipath support
-Date: Fri, 13 Feb 2026 14:19:11 +0000
-From: John Garry <john.g.garry@oracle.com>
-Organization: Oracle Corporation
-To: lsf-pc@lists.linux-foundation.org, linux-nvme@lists.infradead.org, linux-block@vger.kernel.org, linux-scsi@vger.kernel.org
+The -EEXIST error code is reserved by the module loading infrastructure
+to indicate that a module is already loaded. When a module's init
+function returns -EEXIST, userspace tools like kmod interpret this as
+"module already loaded" and treat the operation as successful, returning
+0 to the user even though the module initialization actually failed.
 
-At ALPSS 25 I presented a proposal for Native SCSI multipath support. Let's discuss this topic at LSFMM.
+This follows the precedent set by commit 54416fd76770 ("netfilter:
+conntrack: helper: Replace -EEXIST by -EBUSY") which fixed the same
+issue in nf_conntrack_helper_register().
 
-The idea for this is that SCSI could natively support multipath, like how NVMe host driver does today. It is intended as an alternative to dm-multipath support.
+Affected modules:
+  * dm_cache dm_clone dm_integrity dm_mirror dm_multipath dm_pcache
+  * dm_vdo dm-ps-round-robin dm_historical_service_time dm_io_affinity
+  * dm_queue_length dm_service_time dm_snapshot
 
-I have been working on the implementation and I plan to post patches in the next cycle. I am looking at a 3-stage approach:
-a. create a driver-agnostic multipath library, very heavily based on NVMe host multipath support.
-The library would support features such as path management, path selection/iopolicy, failover recovery, PR, delayed removal, gendisk management etc.
-b. switch NVMe over to use this library
-c. add native SCSI multipath support based on this common library
+Signed-off-by: Daniel Gomez <da.gomez@samsung.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
 
-Thanks,
-John
+LLM Generated explanations, may be completely bogus:
 
+The precedent commit exists in the tree and was merged through the net
+subsystem, confirming this is a recognized bug pattern.
+
+### Stable Kernel Criteria Assessment
+
+1. **Obviously correct and tested**: Yes - trivial error code
+   substitution with clear rationale
+2. **Fixes a real bug**: Yes - modules can silently fail to initialize,
+   and userspace reports success
+3. **Fixes an important issue**: Yes - affects many commonly used DM
+   modules in enterprise storage environments; silent module load
+   failures can cause data availability issues
+4. **Small and contained**: Yes - 4 single-line changes, all identical
+   in nature
+5. **No new features or APIs**: Correct - only changes an error code
+6. **Applies cleanly**: These files and functions have been stable for a
+   long time; the change should apply cleanly to most stable trees
+
+### User Impact
+
+Device-mapper is heavily used in enterprise Linux (LVM, RAID, encryption
+via dm-crypt, thin provisioning, etc.). If any DM module fails to
+register its target/type during init and returns `-EEXIST`, kmod will
+silently swallow the error. This could lead to:
+- Storage subsystems appearing available but not functioning
+- Difficult-to-diagnose failures in storage setups
+- Potential data availability issues
+
+### Risk vs Benefit
+
+- **Risk**: Near zero. The change is a trivial error code substitution
+  that makes the semantics correct.
+- **Benefit**: Prevents silent module initialization failures across
+  many DM modules, improving error visibility and system reliability.
+
+This is a textbook stable backport candidate: a small, obviously correct
+fix to a real bug with meaningful user impact and essentially zero
+regression risk.
+
+**YES**
+
+ drivers/md/dm-exception-store.c | 2 +-
+ drivers/md/dm-log.c             | 2 +-
+ drivers/md/dm-path-selector.c   | 2 +-
+ drivers/md/dm-target.c          | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index c3799757bf4a0..88f119a0a2ae0 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -116,7 +116,7 @@ int dm_exception_store_type_register(struct dm_exception_store_type *type)
+ 	if (!__find_exception_store_type(type->name))
+ 		list_add(&type->list, &_exception_store_types);
+ 	else
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	spin_unlock(&_lock);
+ 
+ 	return r;
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 9d85d045f9d9d..bced5a783ee33 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -121,7 +121,7 @@ int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
+ 	if (!__find_dirty_log_type(type->name))
+ 		list_add(&type->list, &_log_types);
+ 	else
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	spin_unlock(&_lock);
+ 
+ 	return r;
+diff --git a/drivers/md/dm-path-selector.c b/drivers/md/dm-path-selector.c
+index d0b883fabfeb6..2b0ac200f1c02 100644
+--- a/drivers/md/dm-path-selector.c
++++ b/drivers/md/dm-path-selector.c
+@@ -107,7 +107,7 @@ int dm_register_path_selector(struct path_selector_type *pst)
+ 
+ 	if (__find_path_selector_type(pst->name)) {
+ 		kfree(psi);
+-		r = -EEXIST;
++		r = -EBUSY;
+ 	} else
+ 		list_add(&psi->list, &_path_selectors);
+ 
+diff --git a/drivers/md/dm-target.c b/drivers/md/dm-target.c
+index 8fede41adec00..1fd41289de367 100644
+--- a/drivers/md/dm-target.c
++++ b/drivers/md/dm-target.c
+@@ -88,7 +88,7 @@ int dm_register_target(struct target_type *tt)
+ 	if (__find_target_type(tt->name)) {
+ 		DMERR("%s: '%s' target already registered",
+ 		      __func__, tt->name);
+-		rv = -EEXIST;
++		rv = -EBUSY;
+ 	} else {
+ 		list_add(&tt->list, &_targets);
+ 	}
+-- 
+2.51.0
 
