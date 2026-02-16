@@ -1,104 +1,130 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E63926FA6F
-	for <dm-devel@lists.linux.dev>; Mon, 16 Feb 2026 11:25:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB19731194C
+	for <dm-devel@lists.linux.dev>; Mon, 16 Feb 2026 14:28:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771241142; cv=none; b=jPA5VX0wTjmapn5zaXYLLmBAR5Mtoho6ImYAIMNprJvAPVLSyDIJeNBYq0zcIFSdDMrRbAA6gTrXDaXNzobmHORqzDdL54HQhTlUlgbWncZ6DH9p+yPDIDqsepGQ+ubvLa2RWqPbERvR8nlRnR7PcmQ/1Kp2txWRxXrhysVHhKU=
+	t=1771252084; cv=none; b=aJlNqKbyGeXIOtSTXQMhsh88yOxdI2TvtBQA1ouenoOhNCdNVFB51lmgjJWr7J/uPT9ODfYOoUjgkpXBAY9EN8aaLE54u9zTGjCIeHjUWZJRQaQYgw+Yr3cXA9hABUjuiTNSOTUXq4sEMsXR4T/Wmf53xGbX/qxm99bmDkpBekY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771241142; c=relaxed/simple;
-	bh=EHl9NKReES/DgtVZLnM2n/TdvpFrxpqVI2qT3d+hdck=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RqYInEniaU96iscj0mtdWES+Ui6C9wJ8HvNFTxK/wInHQIzGfQY2E0tvjjOCT7V56BFqZ+MRic1kzzTq32wfScWfvjRzaFgqdrtR7XKQDTGrI2fKs3daj0GaW9gzeh1D2kMbufOZI5sM5P+UR6YpgiRmwCPreq2IPOzeNx8fiHU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=muEpQbrs; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1771252084; c=relaxed/simple;
+	bh=J9a6dttbPvuh9UP7gboRwUMpon3EluO7gnlgfIOwZJc=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=b7GzmtXND21qUUc6tV0LZyjjJ/gdIi4/FzwERsWTqk9te2bnRXxwSiB65jG1Egfo6jcPBCF15r+Wnbg6Db+amd2Wn9WI6pja/GdW54c5LzDEpSmmRx2gmL4WXXQsxt0LJq6JCfwO/CBAPUPYHgw/IqOUaCfNc6ajhYKq3LBtneM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=HKnb82o8; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="muEpQbrs"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-4836d541968so1946865e9.2
-        for <dm-devel@lists.linux.dev>; Mon, 16 Feb 2026 03:25:41 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="HKnb82o8"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-48069a48629so30943185e9.0
+        for <dm-devel@lists.linux.dev>; Mon, 16 Feb 2026 06:28:02 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1771241140; x=1771845940; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=BNT0V6okWDcTRHlbWaGQUAAKv2TewztcpV/KE7Hp8PM=;
-        b=muEpQbrs6AgiNbo1Is23pxULselDCvB68QGL+WlAzErELDKLrguqjuUso0tOF5kLG4
-         bAS/jD1zJ+LAhD9otKa1nttKb3eZI7iggO8JpnX5cQPpyo1//l19DGG7hjY9lGRagtrn
-         zGs01867U6r012vrUOs3yT7azzpqwU0ceyy/BAZGjAROzMg8JvbURVIoMV4Q3arAARE3
-         2vz7zqn2EWYCv+UnRxA3CCj+oWkU3W6yl2BV/n6OPM7pax3z4EWZedwtGrzVpEL6s4MC
-         lz0jRi90O43UzLduXUy5Zg3mzHo2VKnPH6I5qTi36X8uyVIZBQGHyKeYvC852Zn/nGfQ
-         I48g==
+        d=suse.com; s=google; t=1771252081; x=1771856881; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=J9a6dttbPvuh9UP7gboRwUMpon3EluO7gnlgfIOwZJc=;
+        b=HKnb82o8FMcND20pWwAAWQaSuHjesH90XYHLk5PM+5QjBTm2abuLx4AjYQbxHCzah7
+         vp6TjwkHNoGJJkmn+R/V1SmWh7MZLnxQHTo4lz7ZuUZTypmZXQcBQwQzH30obLYxFl5K
+         hxKy0m+ybKxkxyFTWkiBSs6gGfwOXaZNSzhb28DrcnzhDp8y+vYaEl8xSdk1M6ZBA6Xr
+         jjorFEbpLjVjaOamBQ8PcGRdj3Qk42yz9dPGCx9Y6FFrmy+xua8pmQZ6lM2QN4KRTn4P
+         bQwt4y2/yHaqRY5R/rkUghRd8hcJpqvbFc1QRdauuGYEHU2LTfCTHwV5FW8AfELmtYB7
+         qz+w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771241140; x=1771845940;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=BNT0V6okWDcTRHlbWaGQUAAKv2TewztcpV/KE7Hp8PM=;
-        b=P9bJ9iAYHVDTLSY8sErZ+zkDoK5xEWhtl1EbPDu1R9XsHu2yYUCth0EfV/ZDObZj/2
-         FEEF+s6IHRRN7oXmtRYYUAG4qGrOtWufVBuAqN0diTRUSnjZ3yu2BToipcXgk5wYJ8V3
-         k6YtlkgiGLuaR2I5f+2s959ATJW63UXXWzfpGDYDYAY0zlR8IOGDUDyaBrygdzwCsWWu
-         /SytMaAsoXoveV3Pe0zZ6XJvofdy5renMdw73YOKuvu1FLWvjFDmw0gYNwZPxRu5CrBG
-         8jbFarEfBSCT8KQYB3HMAdFU38FpaGrV/KZwF9xnzVBupIAlat5YZqKJrsah0NZ909Nk
-         F3pg==
-X-Forwarded-Encrypted: i=1; AJvYcCXgh0+9iYoX6/FPn6uV6rTEwT/2h+6WeFMMLB8qhfMw9W+fwFyFtzeWvJEzJqHC02cBqDdR/d9MWQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzbSCdCkJvKyGeHVbHtETRLnaM1vikvb2plZMi79rLkv3rY4Bnu
-	zWp3xNwBqkTvds6TcAzrnNNE5fpof9rq4lwI4iYueCTWDdZGRVlHpCU=
-X-Gm-Gg: AZuq6aKP/GTz8h9fk6qHrpiUL7EvmVedhAufwlf4Gqf9DRh2bV7GoltXLB+EmPsJUol
-	ZqKmzDyE5QRBSaeo4IKyGNSlioro1CGk7ElgO3saP+hM14dnhGsrFBqpVedjjJCsTKpWQlbTcgQ
-	aS9a55BvBm+kbSFMcfdM5gpE0ZBq/P1cJghUMR7EZBvya7WwgfEwWQ1OSfxnXOVs1f+Vhkj0gFt
-	UGaw+XjZgfut527eS7jfrx6QzrBh8lRV1NQcHuRlRceai9vNnY1Y7fNU7TMp8ERxkJTNy9DWNvv
-	qsVmcrusbu5aFG2056hLs37HerxlxTyxJoeOFCiMEoHDTvSkclQjeLL+s8T4YNpm1s2HPLM8X9J
-	r0Xz10zjgoE+k0FF7Fcy+t1Kq7hjQb6VkvlMV3xn9yQwjCIn+9N78OdAx5qrnNwn8nqwHbpO1l0
-	rImMCDtmcm4YJrCqWjoOiEpyzlumoxep6PywLECsiYNlWxmnPAIEfN5alIGo4DaVH6o/DVLPxj/
-	QY=
-X-Received: by 2002:a05:600c:8b4c:b0:46e:43f0:6181 with SMTP id 5b1f17b1804b1-483710663d9mr98841235e9.7.1771241139279;
-        Mon, 16 Feb 2026 03:25:39 -0800 (PST)
-Received: from localhost (48.red-80-39-158.dynamicip.rima-tde.net. [80.39.158.48])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4835dcfafcdsm658813855e9.9.2026.02.16.03.25.38
+        d=1e100.net; s=20230601; t=1771252081; x=1771856881;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=J9a6dttbPvuh9UP7gboRwUMpon3EluO7gnlgfIOwZJc=;
+        b=ofvIaFRQFyXTDv+GWqVrVkN21pAbVWGniZ/gnHOK7rQ3Qs2e6n6EVBdBBbSY/7hJ+K
+         eQjhQv/lqN6ybdywTLs+FNiKXlr9aopnvnTNz+9JIltK18hKJBQyyrLSk8y9SLYa17dr
+         z/jzx5UdXXcinY6/wFefnTECqIYoX/TXgtQibmrqXRs/c8fGddewU9k+ZnJafichhLBr
+         0AGoAVXOUMK6ve2G+4TfvFxwfUEjWkjqrVetYN0R3glInc2mT26us0w8C+o5X+8q8b5j
+         Z5/3C3nKGRI1DVH9IBJurJQNA2V+oVilDOmIMeT9NsZdJviZHgr5hazJwTxF6OMRsnUh
+         ULVg==
+X-Gm-Message-State: AOJu0YwGAehHUD+3lLGY757NQyOu86Uxrfdx7LcvqeX6ejx3QziNAAQK
+	1nlSRhKawwN8cZiyYyr7cYoLBRZw4ciH/liXuyvUrIQMA5xvVzx1mLUE4TIAcdN+Znc=
+X-Gm-Gg: AZuq6aJDZupYYl8/JaZQJka3Gkap7FdUaBPeaOzDmxzb1opjl6m/x6rZbHZ1hD4NIfg
+	INAJAgn34F6Vk0T3IzUfdhOnlGp5KfnjB8+dJyWdeQentHX/GHJOJcnrXhtORxB8SLf2/cAAcw8
+	vBtmyg+Mf6RF9uY/IFpzCSO23JWeKcCFv7KmaFplMPwVq8DRO21uA7PFPDPn4xTlfmyV11OgR02
+	YI5OJ+3svjiysHfVLU3R11/GkL2GRIcu80nNlUg752ZbXrX4fN1CzafNhZwiDpOP2AlNdTL2Y1x
+	IjUYqMNHJM1tgczQ3KArsoRiQgmreqeCYLNpsKt1jgZpLUO4vaxukVmsOsXNp3MaXg/neYbYg6c
+	TN/7mfmArx7RaUgIv/7/GTteoI49UeSS9HH0ynva+uvVeGhnp+JOrcpJvz3vZ5I9rc2cU6N0cgM
+	pJScr/d4PuHvBn8km/w7bZ8q7WSP0b42d6zDLWs9pEvfp2KKEsP0LR/Aj8XUqh345mhfWOWgDwg
+	/R33n6wVpVb6rZXI6hOKpQNGU83wRhauO0LZC97ec5OpoLW4mcvh/wX4MPOC+/kuktZog==
+X-Received: by 2002:a05:600c:4e56:b0:480:20f1:7abd with SMTP id 5b1f17b1804b1-48373a58997mr195888615e9.31.1771252080677;
+        Mon, 16 Feb 2026 06:28:00 -0800 (PST)
+Received: from ?IPv6:2003:de:373a:d100:7c9:709f:eaee:b67f? (p200300de373ad10007c9709feaeeb67f.dip0.t-ipconnect.de. [2003:de:373a:d100:7c9:709f:eaee:b67f])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-43796ac8209sm29167200f8f.30.2026.02.16.06.27.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 16 Feb 2026 03:25:38 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: add missing colon to the multipath output
-Date: Mon, 16 Feb 2026 12:25:37 +0100
-Message-ID: <20260216112537.120343-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.53.0
+        Mon, 16 Feb 2026 06:28:00 -0800 (PST)
+Message-ID: <9973ba7435c726437e6e1a83f36a29df74377130.camel@suse.com>
+Subject: Re: [PATCH] dm-mpath: don't stop probing paths at presuspend
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Mikulas Patocka
+	 <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
+Cc: dm-devel@lists.linux.dev, Kevin Wolf <kwolf@redhat.com>, Hanna Czenczek
+	 <hreitz@redhat.com>
+Date: Mon, 16 Feb 2026 15:27:59 +0100
+In-Reply-To: <20260212180541.1154475-1-bmarzins@redhat.com>
+References: <20260212180541.1154475-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmultipath/propsel.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+On Thu, 2026-02-12 at 13:05 -0500, Benjamin Marzinski wrote:
+> Commit 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing
+> paths"), added code to make multipath quit probing paths early, if it
+> was trying to suspend. This isn't necessary. It was just an
+> optimization
+> to try to keep path probing from delaying a suspend. However it
+> causes
+> problems with the intended user of this code, qemu. The path probing
+> code was added because failed ioctls to multipath devices don't cause
+> paths to fail in cases where a regular IO failure would.
+>=20
+> If an ioctl to a path failed because the path was down, and the
+> multipath device had passed presuspend, the M_MPATH_PROBE_PATHS ioctl
+> would exit early, without probing the path. The caller would then
+> retry
+> the original ioctl, hoping to use a different path. But if there was
+> only one path in the pathgroup, it would pick the same non-working
+> path
+> again, even if there were working paths in other pathgroups.
+>=20
+> ioctls to a suspended dm device will return -EAGAIN, notifying the
+> caller that the device is suspended, but ioctls to a device that is
+> just
+> preparing to suspend won't (and in general, shouldn't). This means
+> that
+> the caller (qemu in this case) would get into a tight loop where it
+> would issue an ioctl that failed, skip probing the paths because the
+> device had already passed presuspend, and start over issuing the
+> ioctl
+> again. This would continue until the multipath device finally fully
+> suspended, or the caller gave up and failed the ioctl.
+>=20
+> multipath's path probing code could return -EAGAIN in this case, and
+> the
+> caller could delay a bit before retrying, but the whole purpose of
+> skipping the probe after presuspend was to speed things up, and that
+> would just slow them down. Instead, remove the is_suspending flag,
+> and
+> check dm_suspended() instead to decide whether to exit the probing
+> code
+> early. This means that when the probing code exits early, future
+> ioctls
+> will also be delayed, because the device is fully suspended.
+>=20
+> Fixes: 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing
+> paths")
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 56895c4b..0c10ebc1 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -640,7 +640,7 @@ int select_checker_timeout(struct config *conf, struct path *pp)
- 	}
- 	pp_set_default(checker_timeout, DEF_TIMEOUT);
- out:
--	condlog(3, "%s checker timeout = %u s %s", pp->dev, pp->checker_timeout,
-+	condlog(3, "%s: checker timeout = %u s %s", pp->dev, pp->checker_timeout,
- 		origin);
- 	return 0;
- }
--- 
-2.53.0
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
