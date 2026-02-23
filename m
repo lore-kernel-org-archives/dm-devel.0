@@ -1,132 +1,119 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ot1-f51.google.com (mail-ot1-f51.google.com [209.85.210.51])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48F7F32693D
-	for <dm-devel@lists.linux.dev>; Mon, 23 Feb 2026 17:01:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FB4C36A002
+	for <dm-devel@lists.linux.dev>; Mon, 23 Feb 2026 19:02:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771866071; cv=none; b=WJ1J9nhK6fEoJPYfWIMCGK2JkNkg+rQtrEchilveiMbK7li33arYc0tYJdWKjRIgbfgIArrg9AMvoNSndtGh2pNmMtbizu3lu3pPP+TPVFSl5Ev37Hs5RMpYmZcuo7ZBVOC2PD+fkIMaxbvwCax7DSV/xJjKI2x5M3PyYsmD2us=
+	t=1771873377; cv=none; b=s6H3blEE/XoYiEktpvtFeb8hhb4BZj+Qwa8pmjug4nMGAZIM8WNctjglIbK+CaSHAZm6gQ5fd1FF+hDJjeFsHU8OFzSJTiBquL616ji9yPvKsii22ZiPFwK2WHOSO5qdFxQOmcvoaDu4SIqiPOcaZ/M9ij65YccFKwZrT1Tekf8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771866071; c=relaxed/simple;
-	bh=YoSdX5A1qCF2rf/iZWIwKvcKlBSd19BvmD7dbe6mWN0=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=lSPKBRA3wAYeTJY591fwgAHTgM2BzYyAQETYBJxTYVcnRMijW2hGIuFGLsiYXVdrFdKnzoOZ3XFD5T9M6Tj82WPMyZVFiPTbDcfHmromJbCmxmrQGyppEsQYsO7OLcNQmKnrQpT2Y366GE398sQ5W0ZwrOQebw+P2boQeE2Snwo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CnJ6duUn; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1771873377; c=relaxed/simple;
+	bh=uTfMCcqUUjrvTGiFfz//4bRSnO1pbZFHIyy1EJvAuwA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=jDvlB7XWFVooDvH7h21gF5FnBlja55ikC0KCHh5R2tAkYXgP2oC8/6Eef9D1kYXLlOV0YUmO4JJLkfPFalZsyKdysAoL4GkKJWtDK7GgVMpryERRpaLjrhZ0Vw7fSWCqEg859K7eF7MnhD7RXRz7mivgVmOWuVIFdwgwPErJG1Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=aabzV5wr; arc=none smtp.client-ip=209.85.210.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CnJ6duUn"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1771866067;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GXae8ZDi2xAVqOQ536LC8GPIXHI77pgb4VLzCQO0tUE=;
-	b=CnJ6duUnN6s1esVPDGe1mtJg/67W4Jx0no+lnyiaZdiPpA8Z/7Rp13AoDICV1qZdRF08i5
-	OswvyaviYB5En/474BIFjqnvb4ldqvoq/suucFXmfWbFxwOqPgztNRD/EDyiAu6QPDuDJM
-	BPP9hnsdPkorR60ITpIH2ViFdtXC2Ms=
-Received: from mail-lf1-f72.google.com (mail-lf1-f72.google.com
- [209.85.167.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-317-NIiJ91ZYPYu5tykUD3gGoQ-1; Mon, 23 Feb 2026 12:01:05 -0500
-X-MC-Unique: NIiJ91ZYPYu5tykUD3gGoQ-1
-X-Mimecast-MFC-AGG-ID: NIiJ91ZYPYu5tykUD3gGoQ_1771866064
-Received: by mail-lf1-f72.google.com with SMTP id 2adb3069b0e04-5a0f92b33a0so148699e87.2
-        for <dm-devel@lists.linux.dev>; Mon, 23 Feb 2026 09:01:05 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="aabzV5wr"
+Received: by mail-ot1-f51.google.com with SMTP id 46e09a7af769-7d4c307db9aso2406242a34.3
+        for <dm-devel@lists.linux.dev>; Mon, 23 Feb 2026 11:02:56 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20230601; t=1771873375; x=1772478175; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=1q9OIY/ja79xQZyMwDY8+lmaLB15J8cqbigUd8WTY1g=;
+        b=aabzV5wrNqYFmt+0SAzOqSbAKt191Z9+TpdgF0kNPtsnfdfOu1jQ2URsrI4dU80WzB
+         6k8dYYEozVmWa4BGEYLN/Q7gmlAg4VWd/vOh6BQIU1vuYQ58bSOa7F1hdm/+NhCasyPq
+         VmyTngNy0xY5DqJT1wiaZCiLH7Ry67moYgbdU5B6EZEsU18ngJu0C7L96xjkgPk8Uc5v
+         RdLQQFFQKdkQHydK44PkIv7BmBWKj2iFAqTQg565QUr3vE9kdCGmuzIy0InUIhUrvmK2
+         g9mi5hvMlPmvy1IDo8RAnBo/vOCfG/vBS4EwNPP2TDGjdjNITQmaf6PlLWUZ9sIgtkg0
+         dYxw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771866064; x=1772470864;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=GXae8ZDi2xAVqOQ536LC8GPIXHI77pgb4VLzCQO0tUE=;
-        b=oyQUkHtuFjYB7fVQysCTLjQupNvUWFQwJ34F00XYh5M6Ri1QGUTd1JZuL20SIH6Dot
-         R2QzITKDd/UXoJDC0h2RtWogaAp7K/9/C2EH5y7kSffVonzEYwitqob6qag1yB2ZZOys
-         ZnRWV6MREaWJesPWnoI0ip5PC2j82OsWD5rywQZ0AkNs9gGhIyHpzACidkqbEHcOiv6J
-         oadK+7GMyIZqQEq2VAeGSTbBOW3CwzjH7u8U30uECYrPbk+vZU24nAMSxnc1O14af2Hm
-         TSQhrKQ2ArdzFH9885IwXKNgTUpGRtqJCtj6nyYTl/Ept0LpE3jsyfQZkztIgDS1KQ61
-         uqoA==
-X-Gm-Message-State: AOJu0Yx/FtBkuI7vgjON056bTDdRM8E8ZU175EFTY+ZTRp7LPbhJj5om
-	twm31krQUwKsPEvMf6pmIDpkt8Vg6J8KkeFviaHFP5rVyZSLakfkZmGA9sj6vvCSPXKtdNwSFkC
-	gjuEhp2o/D9352dIBmHAStF+FOPIJiQpKj6Nv9PLrG+8mWdy2DMjirh3f5Mc6
-X-Gm-Gg: ATEYQzwvRZMjn+gjXagSPhJCiHv5yWY+gNu4yrWBxFsCuKDTuNtGNgyj9Bw7zMxlkip
-	uKCJDsQJxmxBX9k3ZXpEMxKUVhNaaaowcoLgcjJXVLf0fYkgRNzRcFGJDWpveVs63W4asR+phA1
-	f1tBvA4xRLwvoRfFW7ju8VPYAdrASidkZWrR5GW3NO5ZgK1NKTAOqFu6C21UW2nW52Dd2YZBNpB
-	O00D9dgsPospsu/LJfcBCpKDuc57bqLmS1ZMrbDNhRqxR2sXHcTuu1Fh6GPUs0v/7+oWw49FPTN
-	UIvhOo83703Y7HHD0wxyacIoKtjdAhjTstACWdsbu7p01ZjB9WR+U1sFqkMD6x5ZNY3IozY1n2k
-	NYqulAzYfNBEzpkMnnF+XvRGLK6cabyP1cx1FbmS/zxh98dosaSw6IPj9UECJr4imAI9YsujeUn
-	SvzURc/xROMxwE8X6zMF5zA0vkl+u3aPI2JnypeqVr5uwjj+GjxEA=
-X-Received: by 2002:a05:6512:2316:b0:59b:b096:c659 with SMTP id 2adb3069b0e04-5a0ed99d66bmr2769433e87.34.1771866062384;
-        Mon, 23 Feb 2026 09:01:02 -0800 (PST)
-X-Received: by 2002:a05:6512:2316:b0:59b:b096:c659 with SMTP id 2adb3069b0e04-5a0ed99d66bmr2769385e87.34.1771866060338;
-        Mon, 23 Feb 2026 09:01:00 -0800 (PST)
-Received: from ?IPV6:2003:cf:d737:d011:ab6c:9161:6264:9da5? (p200300cfd737d011ab6c916162649da5.dip0.t-ipconnect.de. [2003:cf:d737:d011:ab6c:9161:6264:9da5])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5a0eeb4c66asm1689900e87.85.2026.02.23.09.00.58
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 23 Feb 2026 09:00:59 -0800 (PST)
-Message-ID: <c2600a65-b94d-4889-9f92-0ba9cd964ea4@redhat.com>
-Date: Mon, 23 Feb 2026 18:00:54 +0100
+        d=1e100.net; s=20230601; t=1771873375; x=1772478175;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=1q9OIY/ja79xQZyMwDY8+lmaLB15J8cqbigUd8WTY1g=;
+        b=b+M1PFWuvMt3+3FNs7jO74+MjlauQ/6dl53lgTRIo5jOQsFEm1hYEnP/ArDfSx5ai+
+         wjY2HGzaTxIrbJN/P43oeYjSSJcNnmUW+Ig8qefxhpGnI41UioAYjzh6NUZcp53vg6oO
+         u6E+lBRZLtQicf9Yb/cfUjx82t4Ngsv1GhTOF+5wygYKfaJn9gS1tsyYvSQqxYZ7jlc8
+         S4sz05sx2WTnUWTl82Y8RWN7Lo3i6gbtmF9+3C9dA9sMYSNPXPN3J8R+CjkOCLUGjyAo
+         /AuKukjrzY+j6e7DHaEJVbdxgxK04QdSGX9EDae1QL+bEq4X9OjM/fll+9tTbx4Drcw+
+         QSBA==
+X-Forwarded-Encrypted: i=1; AJvYcCWyHD/KMsZlpuEQ9CRe4e9LS6bwIb5LJkX3T3ESortIS7yvmeGhldz8WgOBVr9MnDV+39TuRr85wg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yxow0Hjxa3+yyPQ1WDfYQp9mgg+VSyHDnJ9v853I823lKIv9Dj8
+	frulfKBd2JoBc1M6n+ItLG0+2tvZsZ2lx0czMts1fluQrvevK6IE/Z3K
+X-Gm-Gg: AZuq6aK1bWdFc0vSvZ0HT+LdftbTIFzITzLsTVH63YEFkYnmVvkWmgS0mkdHKcTuVUJ
+	Ps0KQpSX4S3dAwza/BPaqrFCNBsAk8O4yBfxRvDkrBSCG6MuN0l1wzb2BoY9wNw01J3Swbypge3
+	qWbSuETMVUY7t8u6uxG+LcvrF3bOjzHgGKqVZphf0PESQeHg9EKZnSAm2hgSGkNz9lZRAVX99CQ
+	auZpS7G8dI52cB4A7i4K/2PX8BkSYL799gskMo5Gqv9PIKNH65CDfnRtGItKE+cGQerf6+HGBbg
+	zyZR0W4tupYMXH1iqMSqtkPEmCIF0VvYcipq0mYcMWNccKekD7m1/IV+0pCsDhQ5zu7JzMOtWip
+	zHRj6yI32t5y0u3m48PrZkmCRiggKRfqE7Nxh/EuqFZD+Um46DrFsjNMuVrcSEvQAl1JJCTFHWl
+	ZIGhJYZ84CZ10V4hx7rNimJFM8fQ6kqTA7vxQvuQ==
+X-Received: by 2002:a05:6820:450c:b0:663:56f:1ac with SMTP id 006d021491bc7-679c424dd9emr4009371eaf.6.1771873374840;
+        Mon, 23 Feb 2026 11:02:54 -0800 (PST)
+Received: from fedora ([2603:8080:10f0:ab80::1382])
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-679c5630a56sm7024190eaf.1.2026.02.23.11.02.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 23 Feb 2026 11:02:53 -0800 (PST)
+Date: Mon, 23 Feb 2026 11:02:51 -0800
+From: "Vishal Moola (Oracle)" <vishal.moola@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Christoph Hellwig <hch@infradead.org>,
+	"Uladzislau Rezki (Sony)" <urezki@gmail.com>,
+	SeongJae Park <sj@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>, zkabelac@redhat.com,
+	Matthew Sakai <msakai@redhat.com>, linux-mm@kvack.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH] mm: allow __GFP_RETRY_MAYFAIL in vmalloc
+Message-ID: <aZykWyxLy34o7PKr@fedora>
+References: <ff48283b-be21-7f9a-d616-e303a4a1ebe6@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm-mpath: don't stop probing paths at presuspend
-To: Benjamin Marzinski <bmarzins@redhat.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@redhat.com>
-Cc: dm-devel@lists.linux.dev, Kevin Wolf <kwolf@redhat.com>,
- Martin Wilck <martin.wilck@suse.com>
-References: <20260212180541.1154475-1-bmarzins@redhat.com>
-From: Hanna Czenczek <hreitz@redhat.com>
-In-Reply-To: <20260212180541.1154475-1-bmarzins@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: vFFAJvXUH9j20v7EQ5NqSLfTNlkVMgWwuAedH08-jUQ_1771866064
-X-Mimecast-Originator: redhat.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <ff48283b-be21-7f9a-d616-e303a4a1ebe6@redhat.com>
 
-On 12.02.26 19:05, Benjamin Marzinski wrote:
-> Commit 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing
-> paths"), added code to make multipath quit probing paths early, if it
-> was trying to suspend. This isn't necessary. It was just an optimization
-> to try to keep path probing from delaying a suspend. However it causes
-> problems with the intended user of this code, qemu. The path probing
-> code was added because failed ioctls to multipath devices don't cause
-> paths to fail in cases where a regular IO failure would.
->
-> If an ioctl to a path failed because the path was down, and the
-> multipath device had passed presuspend, the M_MPATH_PROBE_PATHS ioctl
-> would exit early, without probing the path. The caller would then retry
-> the original ioctl, hoping to use a different path. But if there was
-> only one path in the pathgroup, it would pick the same non-working path
-> again, even if there were working paths in other pathgroups.
->
-> ioctls to a suspended dm device will return -EAGAIN, notifying the
-> caller that the device is suspended, but ioctls to a device that is just
-> preparing to suspend won't (and in general, shouldn't). This means that
-> the caller (qemu in this case) would get into a tight loop where it
-> would issue an ioctl that failed, skip probing the paths because the
-> device had already passed presuspend, and start over issuing the ioctl
-> again. This would continue until the multipath device finally fully
-> suspended, or the caller gave up and failed the ioctl.
->
-> multipath's path probing code could return -EAGAIN in this case, and the
-> caller could delay a bit before retrying, but the whole purpose of
-> skipping the probe after presuspend was to speed things up, and that
-> would just slow them down. Instead, remove the is_suspending flag, and
-> check dm_suspended() instead to decide whether to exit the probing code
-> early. This means that when the probing code exits early, future ioctls
-> will also be delayed, because the device is fully suspended.
->
-> Fixes: 5c977f102315 ("dm-mpath: Don't grab work_mutex while probing paths")
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Thu, Feb 12, 2026 at 05:33:30PM +0100, Mikulas Patocka wrote:
+> The commit 07003531e03c8 ("mm/vmalloc: warn on invalid vmalloc gfp
+> flags") breaks the device mapper VDO target. The VDO target calls vmalloc
+> with __GFP_RETRY_MAYFAIL and this flag is not in the mask of allowed
+> flags.
+> 
+> There is no reason why vmalloc couldn't support __GFP_RETRY_MAYFAIL, so 
+> let's add this flag to GFP_VMALLOC_SUPPORTED.
+
+My only skepticism about this comes from the line in the
+vmalloc_node_range() doc: 
+"and %__GFP_RETRY_MAYFAIL are not supported."
+
+I myself don't know why that may be. Could you elaborate on if/why the
+doc is wrong please?
+
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
+> Fixes: 07003531e03c ("mm/vmalloc: warn on invalid vmalloc gfp flags")
+> Cc: stable@vger.kernel.org	# v6.19
+> 
 > ---
->   drivers/md/dm-mpath.c | 9 ++-------
->   1 file changed, 2 insertions(+), 7 deletions(-)
-
-Reviewed-by: Hanna Czenczek <hreitz@redhat.com>
-
+>  mm/vmalloc.c |    1 +
+>  1 file changed, 1 insertion(+)
+> 
+> Index: linux-2.6/mm/vmalloc.c
+> ===================================================================
+> --- linux-2.6.orig/mm/vmalloc.c
+> +++ linux-2.6/mm/vmalloc.c
+> @@ -3928,6 +3928,7 @@ fail:
+>   */
+>  #define GFP_VMALLOC_SUPPORTED (GFP_KERNEL | GFP_ATOMIC | GFP_NOWAIT |\
+>  				__GFP_NOFAIL |  __GFP_ZERO | __GFP_NORETRY |\
+> +				__GFP_RETRY_MAYFAIL |\
+>  				GFP_NOFS | GFP_NOIO | GFP_KERNEL_ACCOUNT |\
+>  				GFP_USER | __GFP_NOLOCKDEP)
+>  
+> 
