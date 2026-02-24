@@ -1,207 +1,73 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5FBD39E16A
-	for <dm-devel@lists.linux.dev>; Tue, 24 Feb 2026 13:26:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 365D939903C
+	for <dm-devel@lists.linux.dev>; Tue, 24 Feb 2026 14:03:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771939588; cv=none; b=c53w3BUiGWFWj80Tv5XYS+7EmlAOa249Fv+vx51PF8CjjJNPFqPjuLcCq+oWrYzbyh4IYvYauEcRl175Pd7disPVgQLq/PUm7mDdbK0dixpnLh9Gado5xRA8Rbe577jETf6bz5xVEhDVcC+9Ee56Z5hte1fwt8dftLmVQO8gBYg=
+	t=1771941799; cv=none; b=LT6DT0YpPEBq75xbm2ieiMz1WEPjzHadWnkyir7rqIK+oOykVDJOWQue6R2uidAwevDboNtiep3EvC/3YflAFn6SLJ1RUD8s76wdTcaL75bdHiLeiNxvo5fAMUhSk6m/B6a4RVbrqo8+jhbW/Elbp+FBfy3tVyjgnRLO6MkyWm8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771939588; c=relaxed/simple;
-	bh=f2hOyaUiwyM+L9e7NV9Q0Zj8nAujqLtmGF1uHjfHWwg=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=TjQYjnTWEQ9i8UDSNTnYaQqfksdEG0NIQ6jr+KHGFR5jgtR8arbGHOEpEfY8U1CyhNts7P3olmEbSReQ1wcFi8dRjMnM58McWpgkwNRxN+sTY7/2zy8lKnrIKvfML0Ej0rhpHcaC+8yF9sQATb/9MZ/cTS3OqsVzU3rc4FO152s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=lAl/ixpa; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=lAl/ixpa; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1771941799; c=relaxed/simple;
+	bh=3ScI8KESTTAEAW5laz0VrxT1UjHicVx789xOAf1YCHc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=JGItqfNsrg6rYSCst/LqJb92tLPIGJGQuse7eTRP/urykfeaWj+9l6E0/lC/DLzXdykPc8KX6SbBUoLlXy3ez10HaazWMot7pIv5KNeUSIIMxgJ8X/hxZ9wxG7FiD48hTQAnaNjKPmbHIdcolUNvwyu3SrxZa/Sm2W/Dii3/ShQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=mvBU86ky; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="lAl/ixpa";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="lAl/ixpa"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 9B89A5BCD9;
-	Tue, 24 Feb 2026 13:26:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1771939583; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4J53injnWYa//bcmtv1ePdUrXmZme0ogyWX73sft3IQ=;
-	b=lAl/ixpav1bNhAXqPohtGgJFsfb8Bk1za71xP/sG0jiJf9xw4VICo3BSRYz7HX8KmuFlmO
-	WJlGpBh9jmwJu1XIaKoUqA5+XnV457RKrsNZzksoGVZLWKLZnDnOo0c6/gRSVkFn0MTo4a
-	Nb2tJdgGnQeYbV2Fkc5TLpf/X1WMmBg=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="lAl/ixpa"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1771939583; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=4J53injnWYa//bcmtv1ePdUrXmZme0ogyWX73sft3IQ=;
-	b=lAl/ixpav1bNhAXqPohtGgJFsfb8Bk1za71xP/sG0jiJf9xw4VICo3BSRYz7HX8KmuFlmO
-	WJlGpBh9jmwJu1XIaKoUqA5+XnV457RKrsNZzksoGVZLWKLZnDnOo0c6/gRSVkFn0MTo4a
-	Nb2tJdgGnQeYbV2Fkc5TLpf/X1WMmBg=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 7514D3EA68;
-	Tue, 24 Feb 2026 13:26:23 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id BZN8G/+mnWnuBwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 24 Feb 2026 13:26:23 +0000
-Message-ID: <d9355e67dc64b7af940f6b8e6845d0f37565dd34.camel@suse.com>
-Subject: Re: [PATCH 0/1] checkers: fix race in async TUR and ALUA result
- collection
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>, bmarzins@redhat.com
-Cc: dm-devel@lists.linux.dev
-Date: Tue, 24 Feb 2026 14:26:22 +0100
-In-Reply-To: <20260224010058.35337-1-brian@purestorage.com>
-References: <20260224010058.35337-1-brian@purestorage.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.3 
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="mvBU86ky"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=XgaqhpWFYGvROue4gL/TfoePBW3Q9dTD+bwqL6WL7RM=; b=mvBU86ky7lcd6I5HRE6fGvlYXJ
+	uwBfVXfU5HIZuac/qboBp11jZkMJwtoEOsB5UP/9IC7UeHSvym5KoL7DGmOoZZhtSOSSoFbfc/UOc
+	ToSEnISXcBFvarBZCGLFzZU07L0IqUOqIVTsB3DSwui1xXhb7yTEbpt0SfC+5Cv1DiQb/LZelx8W2
+	/uJGEl4W5I/CXwx/E5qUcSpKUEBBHsyB7NZZyoHOJKjCNrEgGlFnxitvXO4EDty5jBl6MXKtLlJJ8
+	o74PfH29QMfgyEc79fLI4lcPCOlYkCVqg3lkXNJ8D9hHD1Mfonx/i+Sm9gxfKQibqMpT8juPeGEOT
+	G+fLUUIA==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1vut0L-00000002AsL-3V9s;
+	Tue, 24 Feb 2026 14:03:13 +0000
+Date: Tue, 24 Feb 2026 06:03:13 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Michal Hocko <mhocko@suse.com>
+Cc: Uladzislau Rezki <urezki@gmail.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	"Vishal Moola (Oracle)" <vishal.moola@gmail.com>,
+	Christoph Hellwig <hch@infradead.org>,
+	SeongJae Park <sj@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>, zkabelac@redhat.com,
+	Matthew Sakai <msakai@redhat.com>, linux-mm@kvack.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH] mm: allow __GFP_RETRY_MAYFAIL in vmalloc
+Message-ID: <aZ2voRA5VJytcfLp@infradead.org>
+References: <ff48283b-be21-7f9a-d616-e303a4a1ebe6@redhat.com>
+ <aZykWyxLy34o7PKr@fedora>
+ <32bd9bed-a939-69c4-696d-f7f9a5fe31d8@redhat.com>
+ <aZzPwsBp-Z4XM58U@tiehlicka>
+ <aZ2N9a4XgxnurOhz@pc636>
+ <aZ2YDD_l5JN78DJC@tiehlicka>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.com:dkim,suse.com:mid]
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 9B89A5BCD9
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <aZ2YDD_l5JN78DJC@tiehlicka>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
-Hi Brian,
+On Tue, Feb 24, 2026 at 01:22:36PM +0100, Michal Hocko wrote:
+> One thing that we could do to improve __GFP_RETRY_MAYFAIL resp.
+> __GFP_NORETRY is to use NOWAIT allocation semantic for page table
+> allocations as those could be achieved by scoped allocation context.
+> This could cause pre-mature failure after the whole bunch of memory has
+> already been allocated for the backing pages but considering that page
+> table allocations should be more and more rare over system runtime it
+> might be just a reasonable workaround. WDYT?
 
-On Mon, 2026-02-23 at 17:00 -0800, Brian Bunker wrote:
-> Fix a race condition in libcheck_check() for both the TUR and ALUA
-> async
-> checkers where a completed result could be missed, returning
-> PATH_PENDING
-> unnecessarily.
+Why bother?  __GFP_RETRY_MAYFAIL has pretty lose semantics.  Trying
+too hard to allocate PTEs is not breaking the overall concept.
 
-First of all, you should have cc'd the dm-devel mailing list.
-
-Second, you call this a race condition, but what negative effect does
-it actually have? AFAIU this "race condition" just delays returning the
-new checker state by a single tick (i.e. 1 second), which is a rather
-benign problem for a race, and generally not a big problem for
-multipath, where paths can be offline for much longer periods of time.
-
-Finally, before going into any detail, I am highly reluctant to changes
-in this area. Ben and I have fought with deadlocks and races in corner
-cases for a long time, and we seem to have solved it for good; at least
-we haven't seen any more bugs in this area for quite some time. For a
-change like this, figuring out possible side effects for all possible
-cases by code inspection alone is extremely hard. I'd rather not risk a
-regression just to detect a status change 1 second earlier than we
-currently do, in rare cases.
-
->=20
-> Race window
-> -----------
->=20
-> In libcheck_thread() / alua_thread():
->=20
-> =C2=A0=C2=A0=C2=A0 pthread_mutex_lock(&ct->lock);
-> =C2=A0=C2=A0=C2=A0 ct->state =3D state;
-> =C2=A0=C2=A0=C2=A0 ct->msgid =3D msgid;
-> =C2=A0=C2=A0=C2=A0 pthread_cond_signal(&ct->active);
-> =C2=A0=C2=A0=C2=A0 pthread_mutex_unlock(&ct->lock);
-> =C2=A0=C2=A0=C2=A0 /* <-- race window here --> */
-> =C2=A0=C2=A0=C2=A0 uatomic_set(&ct->running, 0);
->=20
-
-You seem to be looking at old code. The code I am seeing has this:
-
-       running =3D uatomic_xchg(&ct->running, 0);
-       if (!running)
-               pause();
-
-Anyway, I think we had very good reasons to set the running state after
-releasing the lock. I would need to dig deeper into the history in
-order to figure out exactly why we did it this way. It probably has
-something to do with the actual fatal races that we observed between
-checkers timing out / being cancelled and finishing.
-
-
-> When libcheck_check() observes ct->running !=3D 0 during this window,
-> the
-> result is already available under lock, but the previous code could
-> fail
-> to collect it.
->=20
-> Why the old check was broken
-> ----------------------------
->=20
-> The ALUA checker used:
->=20
-> =C2=A0=C2=A0=C2=A0 if (ct->state !=3D PATH_PENDING || ct->msgid !=3D MSG_=
-ALUA_RUNNING)
->=20
-> This conflated two different meanings of PATH_PENDING:
-> 1. Thread still in progress (no result yet)
-> 2. ALUA state is transitioning (valid completed result with
-> =C2=A0=C2=A0 MSG_ALUA_TRANSITIONING)
-
-True, but what's the actual problem with this? In both cases, the
-checker is indeed not yet able to figure out if the path is usable,
-which is what CHECKER_PENDING means.
-
-
->=20
-> The TUR checker had similar issues since PATH_PENDING with
-> MSG_TUR_TRANSITIONING is a valid result.
->=20
-> The fix
-> -------
->=20
-> Check ct->msgid alone under lock. The msgid is set to MSG_*_RUNNING
-> only
-> at async check start and atomically updated with state when complete:
->=20
-> =C2=A0=C2=A0=C2=A0 if (ct->msgid !=3D MSG_TUR_RUNNING) {
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 tur_status =3D ct->state;
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 c->msgid =3D ct->msgid;
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 ct->thread =3D 0;
-> =C2=A0=C2=A0=C2=A0 }
-
-You probably realize that with this change, you basically imply that
-the test for ct->running is superfluous. If this was true, we could
-actually just skip it and solely rely on ct->msgid. What you're
-basically saying is that ct->running is meaningless. But it isn't. It
-means that the thread is "dead", which it isn't as long as holds the
-mutex.
-
-I'll wait for Ben's opinion, but I am inclined to nack this, sorry.
-
-Martin
