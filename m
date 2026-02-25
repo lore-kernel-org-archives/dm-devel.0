@@ -1,30 +1,80 @@
-Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF96F22B8A6
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 02:32:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C1812FD1B6
+	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 08:11:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771986765; cv=none; b=S70aJbB3YyVfwjzdP9Z6EnzPK1NJkYCPvukvBY5uqokn3LsgpeODKjFqrdGeyNojWVzHv7GYdNlCb2uwY0g/X023H8j8M1ZkfxlFOO65wo1/Q3YlXvVcg3XT4B+oJs2KO2zeZj25qylEBXjI7NgPMCR3Sqd6GWl5CEknkhxliqQ=
+	t=1772007069; cv=none; b=d+tiSclzhYqXiV1dHuZ+HEVKtf56fBC/1Rii0pELBaPfOSNRfBa7ikvZz27HPikBgtWao9PNgtUGjlspBZeJPvkw4ebiPdmfZltGrdD4HNITNVkMMwClDGM715jzErCGd4E/J0k0J8oESr7EMvO555OPVPJQ5tbOYDXjtg1+a2k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771986765; c=relaxed/simple;
-	bh=aG/j1CTumnrhavQPqTjfysHv89qbQiOwddXSaUmOgMc=;
+	s=arc-20240116; t=1772007069; c=relaxed/simple;
+	bh=qLef9uxa8AdOuNJ8gdi/vh0vs43/RazEr7LOTI6DLSw=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=iLtAX1P94KPGcjq55IlgJnsDhw3Dhygh0Ok7QZC3BeoioELU7NQ+pE0B9eGoX+Y2/HEDNcsp/4VL6GboxJhDTb5cA2fnKWY/f1ZhL0M0k+KEf7fKSlkJnmzLLXSpG+oqkPsNqSwGgck4Moub2rtzopRww39wubCUgWiMM/5glWc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.177])
-	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4fLJWP2vTCzKHMJv
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 10:31:45 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 7F2984058F
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 10:32:40 +0800 (CST)
-Received: from [10.174.178.253] (unknown [10.174.178.253])
-	by APP4 (Coremail) with SMTP id gCh0CgBnE_REX55p6vqmIg--.46236S3;
-	Wed, 25 Feb 2026 10:32:38 +0800 (CST)
-Message-ID: <7d2a3f65-4272-46c1-991a-356f0d2323cb@huaweicloud.com>
-Date: Wed, 25 Feb 2026 10:32:36 +0800
+	 In-Reply-To:Content-Type; b=KfBhdk/tfmrRXMTVBplaJUxlZ+ep/5pn9wjD5auEur2STKPVajNDAik9aVdUPDsx6nJQ1AC0BZZLczAGQfeHGkzIWNYOba5itL7j57xTee61KtzqkAx2h0Yl3BNiysATELd5GjJh39iYn4mkearfou/wZWfqa9FjPb/MNUyeP9s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=mMtgbQ33; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=D7Fgbhv8; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=mMtgbQ33; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=D7Fgbhv8; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="mMtgbQ33";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="D7Fgbhv8";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="mMtgbQ33";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="D7Fgbhv8"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 83F553F6D2;
+	Wed, 25 Feb 2026 08:11:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1772007066; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cv61eXul4+Id0Xk3dMKov6St1E/xGPF7i7RC/RbLP28=;
+	b=mMtgbQ339ta6FU0XTED0h+40xDyL5aM/deQNd1mnahKJxGQFnLyRxYyMVQa4Z36pMhRMwH
+	lsv+ALst/r7Da2jOFMS9q82RHCgB4MhrzEC9NT7/FepFA9ZkcgULwzlXOT3J3Scgt1VYXZ
+	+AHLdLMgDkxn8WIN/zkcQa+uPH3Y1PY=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1772007066;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cv61eXul4+Id0Xk3dMKov6St1E/xGPF7i7RC/RbLP28=;
+	b=D7Fgbhv8hbdx99qzzkFVJTNx12tSQ4AW8N352bDH7ZwGNqfn4H+b8xVqDorJxf03NXkGnp
+	1IqgF8U7MBHTZ+BQ==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1772007066; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cv61eXul4+Id0Xk3dMKov6St1E/xGPF7i7RC/RbLP28=;
+	b=mMtgbQ339ta6FU0XTED0h+40xDyL5aM/deQNd1mnahKJxGQFnLyRxYyMVQa4Z36pMhRMwH
+	lsv+ALst/r7Da2jOFMS9q82RHCgB4MhrzEC9NT7/FepFA9ZkcgULwzlXOT3J3Scgt1VYXZ
+	+AHLdLMgDkxn8WIN/zkcQa+uPH3Y1PY=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1772007066;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cv61eXul4+Id0Xk3dMKov6St1E/xGPF7i7RC/RbLP28=;
+	b=D7Fgbhv8hbdx99qzzkFVJTNx12tSQ4AW8N352bDH7ZwGNqfn4H+b8xVqDorJxf03NXkGnp
+	1IqgF8U7MBHTZ+BQ==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 240DB3EA65;
+	Wed, 25 Feb 2026 08:11:06 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id /ip0BpqunmmRRgAAD6G6ig
+	(envelope-from <hare@suse.de>); Wed, 25 Feb 2026 08:11:06 +0000
+Message-ID: <0a6ec8d3-7623-4809-b275-3eccb94419d4@suse.de>
+Date: Wed, 25 Feb 2026 09:11:05 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -32,107 +82,99 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 2/9] nvme: set max_hw_wzeroes_unmap_sectors if device
- supports DEAC bit
-To: Robert Pang <robertpang@google.com>, Zhang Yi <yi.zhang@huawei.com>
-Cc: bmarzins@redhat.com, brauner@kernel.org, chaitanyak@nvidia.com,
- chengzhihao1@huawei.com, djwong@kernel.org, dm-devel@lists.linux.dev,
- hch@lst.de, john.g.garry@oracle.com, linux-block@vger.kernel.org,
- linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org,
- martin.petersen@oracle.com, shinichiro.kawasaki@wdc.com, tytso@mit.edu,
- yangerkun@huawei.com, yukuai3@huawei.com
-References: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
- <20260225000531.3658802-1-robertpang@google.com>
+Subject: Re: [LSF/MM/BPF TOPIC] Native SCSI multipath support
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>
+Cc: John Garry <john.g.garry@oracle.com>, lsf-pc@lists.linux-foundation.org,
+ linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+ linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev
+References: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
+ <aZnuSC0qYfw0hiwM@kernel.org> <aZ5GbVxDT3gcS6WE@redhat.com>
 Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <20260225000531.3658802-1-robertpang@google.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-CM-TRANSID:gCh0CgBnE_REX55p6vqmIg--.46236S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxur4rJFyDCw15JF4UuF4fGrg_yoW5ZFyrpF
-	4DWry0vrn8WF1UA3yDZw1I9FyUXws5Zry3Wa4kG3W5ZrZ0qryfZr1kuFZ0qa1DGrnrWw4F
-	ya1xZryqvasrXaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <aZ5GbVxDT3gcS6WE@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_SEVEN(0.00)[8];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:mid,suse.de:email]
+X-Spam-Flag: NO
+X-Spam-Score: -4.30
+X-Spam-Level: 
 
-Hi Robert!
-
-On 2/25/2026 8:05 AM, Robert Pang wrote:
-> Dear Zhang Yi,
+On 2/25/26 01:46, Benjamin Marzinski wrote:
+> On Sat, Feb 21, 2026 at 12:41:28PM -0500, Mike Snitzer wrote:
+>> On Fri, Feb 13, 2026 at 02:19:11PM +0000, John Garry wrote:
+>>> At ALPSS 25 I presented a proposal for Native SCSI multipath support. Let's
+>>> discuss this topic at LSFMM.
+>>>
+>>> The idea for this is that SCSI could natively support multipath, like how
+>>> NVMe host driver does today. It is intended as an alternative to
+>>> dm-multipath support.
+>>>
+>>> I have been working on the implementation and I plan to post patches in the
+>>> next cycle. I am looking at a 3-stage approach:
+>>> a. create a driver-agnostic multipath library, very heavily based on NVMe
+>>> host multipath support.
+>>> The library would support features such as path management, path
+>>> selection/iopolicy, failover recovery, PR, delayed removal, gendisk
+>>> management etc.
+>>> b. switch NVMe over to use this library
+>>
+>> I can appreciate that the kernel to userspace interface of DM
+>> multipath is clearly unwanted (hence NVMe multipath and now SCSI
+>> multipath).
+>>
+>> But you should really be switching DM-multipath over to using it too;
+>> or at least detailing _why_ the core of DM multipath
+>> (drivers/md/dm-mpath.c) cannot be updated to use this common backend
+>> library.
+>>
+>> This line of work makes little sense to me if it just ignores
+>> dm-multipath.
+>>
+>> Mike
 > 
-> In reviewing your patch series implementing support for the
-> FALLOC_FL_WRITE_ZEROES flag, I noted the logic propagating
-> max_write_zeroes_sectors to max_hw_wzeroes_unmap_sectors in commit 545fb46e5bc6
-> "nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit" [1]. This
-> appears to be intended for devices that support the Write Zeroes command
-> alongside the DEAC bit to indicate unmap capability.
+> Thinking about this work from a DM multipath perspective, I'm more
+> interested in how much it plans to handle the more annoying niche cases
+> of dealing with SCSI devices, like paths that confidently report that
+> they are able to accept IO, only to fail all IO sent to them. Also, I
+> wonder how/if this is planning on handling Persistent Reservations. The
+> arrays, I assume, are still going to see this as a collection of I_T
+> Nexuses (some of which may be down and unable to accept commands at any
+> given time, and to which new ones my be added) instead of a single one.
 > 
-> Furthermore, within core.c, the NVME_QUIRK_DEALLOCATE_ZEROES quirk already
-> identifies devices that deterministically return zeroes after a deallocate
-> command [2]. This quirk currently enables Write Zeroes support via discard in
-> existing implementations [3, 4].
+> I also think this would be useful to talk about at LSF.
 > 
-> Given this, would it be appropriate to respect NVME_QUIRK_DEALLOCATE_ZEROES also
-> to enable unmap Write Zeroes for these devices, following the prior commit
-> 6e02318eaea5 "nvme: add support for the Write Zeroes command" [5]? I have
-> included a proposed change to nvme_update_ns_info_block() below for your
-> consideration.
-> 
+And that even makes me wonder whether we should have a discussion about
+persistent reservations at LSF, too.
+I seem to be involved in discussions about PRs from various angles now
+(live migration seems to want to join the fray), so maybe we could get
+together to discuss things.
 
-Thank you for your point. Overall, this makes sense to me, but I have one
-question below.
-
-> Best regards
-> Robert Pang
-> 
-> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-> index f5ebcaa2f859..9c7e2cabfab3 100644
-> --- a/drivers/nvme/host/core.c
-> +++ b/drivers/nvme/host/core.c
-> @@ -2422,7 +2422,9 @@ static int nvme_update_ns_info_block(struct nvme_ns *ns,
->          * require that, it must be a no-op if reads from deallocated data
->          * do not return zeroes.
->          */
-> -       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3))) {
-> +       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3)) ||
-> +           (ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
-> +           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
-                                ^^^^^^^^^^^^^^^^^^
-Why do you want to add a check for NVME_CTRL_ONCS_DSM? In nvme_config_discard(),
-it appears that we prioritize ctrl->dmrsl, allowing discard to still be
-supported even on some non-standard devices where NVME_CTRL_ONCS_DSM is not set.
-In nvme_update_disk_info(), if the device only has NVME_QUIRK_DEALLOCATE_ZEROES,
-we still populate lim->max_write_zeroes_sectors (which might be non-zero on
-devices that support NVME_CTRL_ONCS_WRITE_ZEROES). Right? So I'm not sure if we
-only need to check for NVME_QUIRK_DEALLOCATE_ZEROES here.
-
->                 ns->head->features |= NVME_NS_DEAC;
-
-I think we should not set NVME_NS_DEAC for the quirks case.
+And I _still_ want to have a blktests for persistent reservations ...
 
 Cheers,
-Yi.
 
->                 lim.max_hw_wzeroes_unmap_sectors = lim.max_write_zeroes_sectors;
->         }
-> 
-> [1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=545fb46e5bc6
-> [2] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/nvme.h#n72
-> [3] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n938
-> [4] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n2122
-> [5] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6e02318eaea5
-
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
