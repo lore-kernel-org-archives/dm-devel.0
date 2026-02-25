@@ -1,238 +1,198 @@
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC7B831690E
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 21:43:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.49
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772055827; cv=pass; b=lD3+uwpmvcBvw1Gu7zdLdilSApihnVtCD3aBrx98XGZaREniZS3B9hIKRUMjMxYtEJTcHDNjoHcdXaFZOI97cIJe9rcNmaGFjVyIeWW+IXoaRmvly65cJSpH9hRIu3cPWoFAV5tEoJ1skbbP+wpwl5sWBU9TAZ3tdzPIYXAUNi0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772055827; c=relaxed/simple;
-	bh=hoZBQczrzcuyVPOXD+tTAmFlTYabJ94zI9Irylb/EVw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=RzYEoO44ES5QHptp3n1+RiPkPS7wibScBeo6QHC6iZkKMDbiW9+UADHQFCq7wuuBjtWMMMmaxuY9Aqi6H0y0aHN3HsbXVi3owCA2ulZSPncdyR5xA4Jia/PdMA7TK9pErWNwJ6anCUG/Tri49n12ehW6ZNeQRDEw0ApTlUDJWCY=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=AtKzt/Y7; arc=pass smtp.client-ip=209.85.208.49
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 153ED3176E0
+	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 22:00:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1772056848; cv=none; b=PDSXueLu03X014SJhvT0GgyvhHX13awSnF8eZbMSu0qQLYz/ln/RQKQJLD/iTbv0zEOlCRICg5XVcmERHS5YuRV04YzYw4YqvknArXv4tW8S+1qnrUiu5Lv2EQh4HDJo6QXrhEngN6th5I/q6A9thY89bjCEbXjPJC1lzGT5XTk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1772056848; c=relaxed/simple;
+	bh=HggH2ESMnuwfbVHxKbswX/liDq9ImPnUAby6G7qHaF8=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=ZzyVYXTHU/lUIPThQnIRZVKlnkVJZivuLavdCJJlQM5ZAO66Al2rEta4Bko2X43WFcNM6dQzoXBv9c8+rlbo5x9UYO4Jkf3w4cwJD3HH6AVEPgNBoEVWvdKUUuRB413k+fTzINzswp39kZ5R3YadcJswpJMZXr/Uuec0M7JQixM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=kMVwOgdG; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=kMVwOgdG; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="AtKzt/Y7"
-Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-65f3a35ff13so3609a12.0
-        for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 13:43:45 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1772055824; cv=none;
-        d=google.com; s=arc-20240605;
-        b=htXmM7U9S6jJ06ff/HcmWms1hizSJF+V4hmHZ/gI0uzE8x0V04ycuCa17C71OB68+S
-         QZZYktN77FLG+dvaW9EkY/0vmbwlj1A9nisInpa7aF436zqQ8M3mRgZgxCsCbNCsOHCs
-         B2dc3sbnDoWQN+C4CAK34mN+hsprH0RLcTeYQIA1prKhk/ata5MgEf8PBDQlQlOrs5ZS
-         V78rspUtGCfzyVBE/uk5jo5/AgeGsURZiF+hfncfaDxZNeJSmasVbA8NgOq7RbCsbVg3
-         HQgrBr57D9Aqh31VEmnypZ+i2Ihm7vRjzJjYBpkqPFeiIVe2Jg7iS0x2V3nfD22RbyxL
-         0+Ow==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=vB9FeLIHdzkOeJQl8sZ1jnIIU5NTPuPRUQDCv7qOk1c=;
-        fh=QO7vjZoPh5R6lKm1oKVaqKPvNFvW4LIfaMuTvWBJJOQ=;
-        b=Bed2jZWDS1BurefnubImFYRHoMRzf681uIXtfoeZdDcFBZx2aPorcsmA1G4nLx9Y5v
-         a3LkoLG2pFKH6YHxE23DNLY/TK+dT3l+rCDitv7GcGvjBhHqUJZezCb7/XOj1uCrbhe5
-         wyIiwIM73Z62taFL0gIoPT/L1qYLZjlj0FfzIpeaBmli/zOt5TBzNYMY8ewTJ8UKYeYD
-         224s/VXPagqVqs6ZpHnugGeSyqPH7LFqtketzBJ4DQ2CR+JP8Pf9M+8qa9jgCyFUUOLo
-         Sa0aWUOP5ToEhQn7Oic5tSTE21LjdkwMzR3SNlo99DrGCAW7jVoUoegzPpC0Z6/j41pA
-         yC6g==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1772055824; x=1772660624; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=vB9FeLIHdzkOeJQl8sZ1jnIIU5NTPuPRUQDCv7qOk1c=;
-        b=AtKzt/Y7nU4HsGWVP6OJJAgBGYELCOEDjsXTgVI/lm1NBj8lFvyv3pE8CA+s5Vs2ax
-         lGCLSwSuvnhtJYaP8IzizoVLEfOnBgxAwg6x2z4d5H0jngP5M5anIgirm3WxKof1aDGw
-         mocxTtzfV+uXhNvQ3D4P7nDEsj2tc2ruc1Oywa2OguqhS1IM2wUr4GyUtcUg4PD3Rf6l
-         pftyw2ufF5nF6MnSWxtbkm2WezjbtB0C+WN8P/u3DqlBuJEnVuUBvgbIIJ1uAX1MFQkc
-         zLweANxBGv+BwX8ta1l8W1BvAxShpxHFcT42YRmtHA9S77NimFXtRCwY3OhdFWF689M4
-         sZ5w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772055824; x=1772660624;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=vB9FeLIHdzkOeJQl8sZ1jnIIU5NTPuPRUQDCv7qOk1c=;
-        b=jabOBDf6d0IJRSRX9UAzQoX/G+cSztOTcS5tFzALcWeOcnGIfMA9HelJ/UXez/Ij8k
-         wNMiz/V0UH6u1VpAhJrJXsn61w35ZAMM4GP4NfxkOyVFXalgxcRWLfllTaMvoZ92kI1X
-         Euc8EMljOOmm6lTIB4/956/gDPSQMg65G7P6Wrh6QlCggegNY1h0QMWVdgaLjg2HgnMA
-         eI5KiwTfrFCt72qiEAFXv6+uKGSJsT4WwBOYGnw6nhgpaYc192bRs6GfN41jSyFNMLtc
-         XNNIkoClbJyP9a2vYBLHjrb/YcXfSEf7E0rFqx28ZGvI3RaJI66ndPyzguTZaSy/+Yc4
-         wQqQ==
-X-Forwarded-Encrypted: i=1; AJvYcCXJynseaT8QwviF8WUQajn6zHZq+GuLd00qLOrtZ/OFCWh3anoHh6hrAy8qSa4ILmrbzd9XgfWdzA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzLGHQu7l/C757TAsHovuJkF3w2tjfhe37IJatFCqbxYwcfgriV
-	Vf46LxSEtoqjQRdI/T7B1k3lFLEQaeaw/Tp+pZ8kQ1InSt79ueHZpN6i0kqUBwWWaSRB9s7Q/hN
-	x73ucryenXrWu57ChWXTHwE6eC0Nt2yci4HvPKH4m
-X-Gm-Gg: ATEYQzzKw7XjGnSbzoqwVJJiCgQqmtUO03xsdDeoKPYqPYCdG+I5Qw4MpLVKFiAet8a
-	xRc3qGTpAovQ7CerQr1WLr4YVT2bc93o3/aVBKBEgS8UpyxHWKknaLv9E2/dv9oLfaqNnhS6UyN
-	zo1en3Iif3lUtbXY+JSwI21i4v3QVV+NxQemiI3axisJUaF6PcRoBZ0ty2RJ+D2JWpN6Ed8SmHH
-	2lgdjsM6y6pNWe3TWEBkMxfchyzEttXBnG2RswU4a6VWLk0TUgajQt1tSlySb/oIWsNv/NMhhM+
-	6O/3h8rUk3j83n9NeaEI9NO44S5tjIKbTcppAw==
-X-Received: by 2002:aa7:c7cf:0:b0:658:e7a:6fa7 with SMTP id
- 4fb4d7f45d1cf-65fab61a7b0mr11377a12.4.1772055823405; Wed, 25 Feb 2026
- 13:43:43 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="kMVwOgdG";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="kMVwOgdG"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 351B35BE10;
+	Wed, 25 Feb 2026 22:00:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1772056845; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=KSffuIPzEzXz7tTRH9rHFMXERV+ZrJtB9vNgz8HlXio=;
+	b=kMVwOgdGersmC5mSMhxgyAkAy2Q9NdMxCFPpWnwhstuE2URqJWo3sduC9S569lPAoQaaQW
+	kbPVZOxyeYsF7CqpkMkRdAjuTztqJre2HRsN82e3Jc06GT3toSJ5B32C94MXhcjtBnwWL9
+	bwoQGdS77G1ClGyqH4h1vdX9uFIL22o=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1772056845; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=KSffuIPzEzXz7tTRH9rHFMXERV+ZrJtB9vNgz8HlXio=;
+	b=kMVwOgdGersmC5mSMhxgyAkAy2Q9NdMxCFPpWnwhstuE2URqJWo3sduC9S569lPAoQaaQW
+	kbPVZOxyeYsF7CqpkMkRdAjuTztqJre2HRsN82e3Jc06GT3toSJ5B32C94MXhcjtBnwWL9
+	bwoQGdS77G1ClGyqH4h1vdX9uFIL22o=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 0D6C93EA65;
+	Wed, 25 Feb 2026 22:00:45 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id dHspAg1xn2nhKAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 25 Feb 2026 22:00:45 +0000
+Message-ID: <d223eb7cb4088d672b0312d929fa7d2c0e723875.camel@suse.com>
+Subject: Re: [PATCH 0/1] checkers: fix race in async TUR and ALUA result
+ collection
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
+Date: Wed, 25 Feb 2026 23:00:44 +0100
+In-Reply-To: <aZ9ec_ce8dCCBzR0@redhat.com>
+References: <20260224010058.35337-1-brian@purestorage.com>
+	 <d9355e67dc64b7af940f6b8e6845d0f37565dd34.camel@suse.com>
+	 <aZ9ec_ce8dCCBzR0@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
- <20260225000531.3658802-1-robertpang@google.com> <7d2a3f65-4272-46c1-991a-356f0d2323cb@huaweicloud.com>
-In-Reply-To: <7d2a3f65-4272-46c1-991a-356f0d2323cb@huaweicloud.com>
-From: Robert Pang <robertpang@google.com>
-Date: Wed, 25 Feb 2026 13:43:31 -0800
-X-Gm-Features: AaiRm53fO14_kYBnlB-QimzynwfGzteAR7wRZiT1Sf0awQgFveGcUyR_Z7IWsCY
-Message-ID: <CAJhEC05L7QEc9iY7gFZVK3SPYvFhtFyURss6xQgZ-qWwZZkFjA@mail.gmail.com>
-Subject: Re: [PATCH v2 2/9] nvme: set max_hw_wzeroes_unmap_sectors if device
- supports DEAC bit
-To: Zhang Yi <yi.zhang@huaweicloud.com>
-Cc: Zhang Yi <yi.zhang@huawei.com>, bmarzins@redhat.com, brauner@kernel.org, 
-	chaitanyak@nvidia.com, chengzhihao1@huawei.com, djwong@kernel.org, 
-	dm-devel@lists.linux.dev, hch@lst.de, john.g.garry@oracle.com, 
-	linux-block@vger.kernel.org, linux-ext4@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, martin.petersen@oracle.com, 
-	shinichiro.kawasaki@wdc.com, tytso@mit.edu, yangerkun@huawei.com, 
-	yukuai3@huawei.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Spam-Score: -4.30
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Flag: NO
 
-Dear Zhang Yi
+On Wed, 2026-02-25 at 15:41 -0500, Benjamin Marzinski wrote:
+>=20
+> I pretty much agree with Martin here. I do think this is likely safe,
+> but I don't think this is really a race. We don't return the status
+> of
+> the thread until the thread completes, and the thread signals its
+> completion by clearing ct->running. That's the same definition of
+> successful thread completion that we use for deciding to kill the
+> thread, and I don't see why it's not a valid one.
+>=20
+> Yes we can get the thread result slightly before the thread has
+> completed. But by trusting that the thread will complete once pp-
+> >msgid
+> has changed, we are giving up the ability to kill it if it does hang
+> later, for instance in that condlog() call. On systemd systems, this
+> is
+> just some stdio print functions, but on non-systemd systems, this
+> uses
+> its own pthread locking, and could legitimately hang (although the
+> argument certainly can be made that if this is hanging, multipathd
+> has
+> bigger problems to worry about than an extra tur checker thread lying
+> around).=C2=A0=20
 
-Thank you for your quick response. Please see my comments below:
+After some further pondering, I wonder if we could do this:
 
-On Tue, Feb 24, 2026 at 6:32=E2=80=AFPM Zhang Yi <yi.zhang@huaweicloud.com>=
- wrote:
->
-> Hi Robert!
->
-> On 2/25/2026 8:05 AM, Robert Pang wrote:
-> > Dear Zhang Yi,
-> >
-> > In reviewing your patch series implementing support for the
-> > FALLOC_FL_WRITE_ZEROES flag, I noted the logic propagating
-> > max_write_zeroes_sectors to max_hw_wzeroes_unmap_sectors in commit 545f=
-b46e5bc6
-> > "nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit" [1=
-]. This
-> > appears to be intended for devices that support the Write Zeroes comman=
-d
-> > alongside the DEAC bit to indicate unmap capability.
-> >
-> > Furthermore, within core.c, the NVME_QUIRK_DEALLOCATE_ZEROES quirk alre=
-ady
-> > identifies devices that deterministically return zeroes after a dealloc=
-ate
-> > command [2]. This quirk currently enables Write Zeroes support via disc=
-ard in
-> > existing implementations [3, 4].
-> >
-> > Given this, would it be appropriate to respect NVME_QUIRK_DEALLOCATE_ZE=
-ROES also
-> > to enable unmap Write Zeroes for these devices, following the prior com=
-mit
-> > 6e02318eaea5 "nvme: add support for the Write Zeroes command" [5]? I ha=
-ve
-> > included a proposed change to nvme_update_ns_info_block() below for you=
-r
-> > consideration.
-> >
->
-> Thank you for your point. Overall, this makes sense to me, but I have one
-> question below.
->
-> > Best regards
-> > Robert Pang
-> >
-> > diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-> > index f5ebcaa2f859..9c7e2cabfab3 100644
-> > --- a/drivers/nvme/host/core.c
-> > +++ b/drivers/nvme/host/core.c
-> > @@ -2422,7 +2422,9 @@ static int nvme_update_ns_info_block(struct nvme_=
-ns *ns,
-> >          * require that, it must be a no-op if reads from deallocated d=
-ata
-> >          * do not return zeroes.
-> >          */
-> > -       if ((id->dlfeat & 0x7) =3D=3D 0x1 && (id->dlfeat & (1 << 3))) {
-> > +       if ((id->dlfeat & 0x7) =3D=3D 0x1 && (id->dlfeat & (1 << 3)) ||
-> > +           (ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
-> > +           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
->                                 ^^^^^^^^^^^^^^^^^^
-> Why do you want to add a check for NVME_CTRL_ONCS_DSM? In nvme_config_dis=
-card(),
-> it appears that we prioritize ctrl->dmrsl, allowing discard to still be
-> supported even on some non-standard devices where NVME_CTRL_ONCS_DSM is n=
-ot set.
-> In nvme_update_disk_info(), if the device only has NVME_QUIRK_DEALLOCATE_=
-ZEROES,
-> we still populate lim->max_write_zeroes_sectors (which might be non-zero =
-on
-> devices that support NVME_CTRL_ONCS_WRITE_ZEROES). Right? So I'm not sure=
- if we
-> only need to check for NVME_QUIRK_DEALLOCATE_ZEROES here.
->
-The check for NVME_CTRL_ONCS_DSM is to follow the same check in [3]. There,=
- the
-check was added by 58a0c875ce02 "nvme: don't apply NVME_QUIRK_DEALLOCATE_ZE=
-ROES
-when DSM is not supported" [6]. The idea is to limit
-NVME_QUIRK_DEALLOCATE_ZEROES
-to those devices that support DSM.
-
-> >                 ns->head->features |=3D NVME_NS_DEAC;
->
-> I think we should not set NVME_NS_DEAC for the quirks case.
->
-Make sense. In that case, will it be more appropriate to set
-max_hw_wzeroes_unmap_sectors in nvme_update_disk_info() where
-NVME_QUIRK_DEALLOCATE_ZEROES is checked? I.e.
-
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index f5ebcaa2f859..3f5dd3f867e9 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2120,9 +2120,10 @@ static bool nvme_update_disk_info(struct
-nvme_ns *ns, struct nvme_id_ns *id,
-        lim->io_min =3D phys_bs;
-        lim->io_opt =3D io_opt;
-        if ((ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
--           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM))
-+           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
-                lim->max_write_zeroes_sectors =3D UINT_MAX;
--       else
-+               lim->max_hw_wzeroes_unmap_sectors =3D UINT_MAX;
-+       } else
-                lim->max_write_zeroes_sectors =3D ns->ctrl->max_zeroes_sect=
-ors;
-        return valid;
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -267,6 +267,7 @@ void *libcheck_thread(struct checker_context *ctx)
+        struct tur_checker_context *ct =3D
+                container_of(ctx, struct tur_checker_context, ctx);
+        int state, running;
++       dev_t devt;
+        short msgid;
+=20
+        /* This thread can be canceled, so setup clean up */
+@@ -284,17 +285,17 @@ void *libcheck_thread(struct checker_context
+*ctx)
+        ct->state =3D state;
+        ct->msgid =3D msgid;
+        pthread_cond_signal(&ct->active);
++       running =3D uatomic_xchg(&ct->running, 0);
+        pthread_mutex_unlock(&ct->lock);
+=20
+-       condlog(4, "%d:%d : tur checker finished, state %s", major(ct-
+>devt),
+-               minor(ct->devt), checker_state_name(state));
+-
+-       running =3D uatomic_xchg(&ct->running, 0);
++       devt =3D ct->devt;
+        if (!running)
+                pause();
+=20
+        tur_thread_cleanup_pop(ct);
+=20
++       condlog(4, "%d:%d : tur checker finished, state %s",
+major(devt),
++               minor(devt), checker_state_name(state));
+        return ((void *)0);
  }
+=20
+@@ -356,7 +357,7 @@ int libcheck_check(struct checker * c)
+                                pthread_mutex_unlock(&ct->lock);
+                        }
+                        ct->thread =3D 0;
+-               } else if (uatomic_read(&ct->running) !=3D 0) {
++               } else if (uatomic_add_return(&ct->running, 0) !=3D 0) {
+                        condlog(3, "%d:%d : tur checker not finished",
+                                major(ct->devt), minor(ct->devt));
+                        tur_status =3D PATH_PENDING;
 
-Best regards
-Robert
 
-> Cheers,
-> Yi.
->
-> >                 lim.max_hw_wzeroes_unmap_sectors =3D lim.max_write_zero=
-es_sectors;
-> >         }
-> >
-> > [1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-commit/?id=3D545fb46e5bc6
-> > [2] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-tree/drivers/nvme/host/nvme.h#n72
-> > [3] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-tree/drivers/nvme/host/core.c#n938
-> > [4] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-tree/drivers/nvme/host/core.c#n2122
-> > [5] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/=
-commit/?id=3D6e02318eaea5
-[6] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/comm=
-it/?id=3D58a0c875ce02
+This way the thread would "lie" about itself being not running any more
+by setting ct->running to 0 before releasing the lock.=C2=A0AFAICS, in the
+worst case, this can cause the main thread not to cancel it even though
+it has timed out. But at this point it has already passed the point at
+which it's most likely to hang. The only point at which it could still
+block is the condlog(). By releasing ct before calling condlog() we can
+make sure that even if the thread now blocks, it can't prevent freeing
+of ct any more. We can basically forget about it at this point.
+
+Replacing the uatomic_read() by a uatomic_add_return(..., 0) is a hack
+that adds a memory barrier, which, together with the mutex in
+libcheck_thread(), should make sure that the values of ct->running and
+ct->msgid are consistent at this point in libcheck_check().
+
+Together, these changes should fix Brian's issue.
+
+The added memory barrier might make libcheck_check() a bit slower. I'm
+not sure whether the difference would be noticeable. I'm not sure why
+we didn't use a barrier there to begin with, perhaps to make this check
+as light-weight as possible. The uatomic_read has been added in c3a839c
+("libmultipath: cleanup tur locking").
+
+I'm still undecided if it's worth changing this code in order to
+reinstate some paths 1s earlier in certain sitautions.
+
+Thoughts?
+
+Martin
