@@ -1,119 +1,127 @@
-Received: from mail-dy1-f201.google.com (mail-dy1-f201.google.com [74.125.82.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F2532745C
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 00:07:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.82.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3103018DF80
+	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 00:46:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1771978042; cv=none; b=hPPDuHD2wGjruzGNXQORpQQEtmt/+j349xuCS37RMXQqKYU37tSiv5IYhObd3qB85LPiG3wXMYu5Al3odjhx1kBCqHpF9rXmwJ9DR54N7Yv0d4XUjIrK47clDkRhXFo4JncsdbNiC3ml4x8sJIkUVEtFVEwIf3gnlwqnxtX4DRg=
+	t=1771980407; cv=none; b=ZlhY2wK/JEab3YNBJMrQxuy7hrhzDl2xaPTqEUC6yxjwts/sjguz2d59Ew6pcP3zWf1vNZ5+0PSbocbn9mP1WX58f7UZl6P52cMv5bks4Y/tWZ9vC6yiOcSPddaV1qVs2cEp3lO3DK3GdklHLLWP9nRvBAnXhxDGUl2wvhDiduI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1771978042; c=relaxed/simple;
-	bh=TmVck+FldsP6JAM+f7tHdpVNV1AQOfdjvZD6NWwaNTM=;
-	h=Date:In-Reply-To:Mime-Version:References:Message-ID:Subject:From:
-	 To:Cc:Content-Type; b=q769QgZ00BxEZaPiEuWbNjViuCFfTFjOwRIMRQCP0xnWIBsO8aIZz2dgn4ca8vqqum/xVdHwBhrD47tYHuV3876E4nwKYIGYbXQqa5mzdf57efcys/1kQVecFu00c9iEMRo27xQsO7DLDtSbi5lIELMK6V6uAM+dWBYfc7syS0M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=flex--robertpang.bounces.google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=jKaaHcIi; arc=none smtp.client-ip=74.125.82.201
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--robertpang.bounces.google.com
+	s=arc-20240116; t=1771980407; c=relaxed/simple;
+	bh=9GHiBkrPxDxT4gm/0NFYVvV91kzXbVO7+7SdoSElsUE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=AjKw2DtZU95wQp3Ks0qW3la5KTCtVzUVObet9sxYLoTEOnTckCNwVkvMzZdfUBNMSjfENcG18hBx/Hr0etpzLLGptURKslnLkDv1RYpOakkR7imeuvRMma6AOHT1k36tGfcY4UPfGmDcBVEuhpN1qH4d7Iiz8rFFSLR08f0hcIk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ed413fnC; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="jKaaHcIi"
-Received: by mail-dy1-f201.google.com with SMTP id 5a478bee46e88-2ba7e98178fso5641657eec.0
-        for <dm-devel@lists.linux.dev>; Tue, 24 Feb 2026 16:07:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1771978040; x=1772582840; darn=lists.linux.dev;
-        h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
-         :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=tYhhsa7kCZNvYr93t3sYKWAVnQ12TUikgigc7L/AwWs=;
-        b=jKaaHcIitmR/ydiQtUbMPDWOANfqKZkdT/Pkq88CSXekmqzE+O4Xooj5AqmPj5715x
-         Sy3RQPTvdlLpaHLp8xAVm9Du47Ty7E0Fxw6GTBDsw8nsASeiRBZWxKd+vLuopZtf9G+f
-         1m5F4c30/oiNdqo5eiNknI2lQ1A6z7ElSe/cmMhXWuyLaA+CPzIr9+hu+Kg7TDB/+Jmm
-         mtK2YIeaN+VpTS12FuSokJoWqRjCwZHBiXRTVOznqLOKCPvjt/bl2RlmW8FwuP6q+xWj
-         jdmJ2s+RZpyQebY7Vee4OfQ/2tnV7zLhq7rCD90yJiwnavCe8uo9raeAmK7dYvc0RL+l
-         dm2Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1771978040; x=1772582840;
-        h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
-         :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=tYhhsa7kCZNvYr93t3sYKWAVnQ12TUikgigc7L/AwWs=;
-        b=QYg4G1yrqrOMPe+SdNKBug4recQtgOUcMLa2BKhhSFT8OMuCvo7mwBtR8PSLcEL+FV
-         WS6pWMUCeqqiQx0GFcfaPgmbyWQBSVim08BWASWr0MJckSwGG2N6gbSoPX3jZ5N6G0b6
-         0yWW9qoCxMV+DPetD7dsAN95ON0jlwyHVsH/1ikhui6ANFYqtQ6wXNmr58l0ycBHfMII
-         2dGz4NUSuGzYKiA/LVNdzgk6Jm6lqTuYVY9lQ72AOHsl3oxm0qgu5+D2rdtUfv9NuKb0
-         gZ1XVnyO7Ue3vLQPILiN9A0KHgPwUc8l4C0OAwNfcsfgMpYske7A6eSWhXJVwn5xiKES
-         AfNg==
-X-Forwarded-Encrypted: i=1; AJvYcCWvnzenxveonIJ1s+XkZouJDyPydFdTttHQygOR3baJw/Esby6CwbPY2gF1K7xvzse6yIehneYojg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxWJVhRLa0kSMU2ztVp+sMAnRN5adH2YkYa7tf5rXAiJBx0+Rmz
-	/3CQ7sB6//imXsDy0u5hl6lLwCACmRFjjPpveO3Bfiu21d68R8aD0VRif8kbb/rpQuIE78vSwbA
-	GcgJDnYSDWRWiLV7Bzr3pQA==
-X-Received: from dycqa7.prod.google.com ([2002:a05:7300:fe47:b0:2bd:b038:ae2f])
- (user=robertpang job=prod-delivery.src-stubby-dispatcher) by
- 2002:a05:7300:dc0d:b0:2b8:209d:5983 with SMTP id 5a478bee46e88-2bdc33aeb7dmr127538eec.29.1771978033558;
- Tue, 24 Feb 2026 16:07:13 -0800 (PST)
-Date: Tue, 24 Feb 2026 16:05:31 -0800
-In-Reply-To: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ed413fnC"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1771980405;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=wu6e7y6744AKrfSalZoNneCouriwnPLCWnCIppXtUnk=;
+	b=Ed413fnCV9+K6lZtkTdPqwebwAihFhHQ3671dCSKK+MPiG1xf9Svz5T4sBruqVMVbJNhbE
+	nKweDRLby0ti5pp5GQmAyEiEJ9FIHTESAgufrUhEvtvIacP+Gsjc6cc1AsRdO9cMBUXRQW
+	2nH07Cc9rehcCl9aAG+Uh9UipUoqU9I=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-561-4PJYxqWAM6iAB9Q5q0qJVQ-1; Tue,
+ 24 Feb 2026 19:46:41 -0500
+X-MC-Unique: 4PJYxqWAM6iAB9Q5q0qJVQ-1
+X-Mimecast-MFC-AGG-ID: 4PJYxqWAM6iAB9Q5q0qJVQ_1771980400
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1B5AD1956052;
+	Wed, 25 Feb 2026 00:46:40 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 266451800348;
+	Wed, 25 Feb 2026 00:46:39 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61P0kbjW1637572
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 24 Feb 2026 19:46:38 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61P0kbXS1637571;
+	Tue, 24 Feb 2026 19:46:37 -0500
+Date: Tue, 24 Feb 2026 19:46:37 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: John Garry <john.g.garry@oracle.com>, lsf-pc@lists.linux-foundation.org,
+        linux-nvme@lists.infradead.org, linux-block@vger.kernel.org,
+        linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: [LSF/MM/BPF TOPIC] Native SCSI multipath support
+Message-ID: <aZ5GbVxDT3gcS6WE@redhat.com>
+References: <69349b51-72c2-47f9-948f-f89843af62e4@oracle.com>
+ <aZnuSC0qYfw0hiwM@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-References: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
-X-Mailer: git-send-email 2.53.0.414.gf7e9f6c205-goog
-Message-ID: <20260225000531.3658802-1-robertpang@google.com>
-Subject: Re: [PATCH v2 2/9] nvme: set max_hw_wzeroes_unmap_sectors if device
- supports DEAC bit
-From: Robert Pang <robertpang@google.com>
-To: yi.zhang@huaweicloud.com, Zhang Yi <yi.zhang@huawei.com>
-Cc: bmarzins@redhat.com, brauner@kernel.org, chaitanyak@nvidia.com, 
-	chengzhihao1@huawei.com, djwong@kernel.org, dm-devel@lists.linux.dev, 
-	hch@lst.de, john.g.garry@oracle.com, linux-block@vger.kernel.org, 
-	linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org, 
-	linux-scsi@vger.kernel.org, linux-xfs@vger.kernel.org, 
-	martin.petersen@oracle.com, shinichiro.kawasaki@wdc.com, tytso@mit.edu, 
-	yangerkun@huawei.com, yukuai3@huawei.com, robertpang@google.com
-Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+In-Reply-To: <aZnuSC0qYfw0hiwM@kernel.org>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-MFC-PROC-ID: qV5oAwArWc0HHvrwqjrCHQK0J_yxqc9RXH-Kx10rwgA_1771980400
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Dear Zhang Yi,
+On Sat, Feb 21, 2026 at 12:41:28PM -0500, Mike Snitzer wrote:
+> On Fri, Feb 13, 2026 at 02:19:11PM +0000, John Garry wrote:
+> > At ALPSS 25 I presented a proposal for Native SCSI multipath support. Let's
+> > discuss this topic at LSFMM.
+> > 
+> > The idea for this is that SCSI could natively support multipath, like how
+> > NVMe host driver does today. It is intended as an alternative to
+> > dm-multipath support.
+> > 
+> > I have been working on the implementation and I plan to post patches in the
+> > next cycle. I am looking at a 3-stage approach:
+> > a. create a driver-agnostic multipath library, very heavily based on NVMe
+> > host multipath support.
+> > The library would support features such as path management, path
+> > selection/iopolicy, failover recovery, PR, delayed removal, gendisk
+> > management etc.
+> > b. switch NVMe over to use this library
+> 
+> I can appreciate that the kernel to userspace interface of DM
+> multipath is clearly unwanted (hence NVMe multipath and now SCSI
+> multipath).
+> 
+> But you should really be switching DM-multipath over to using it too;
+> or at least detailing _why_ the core of DM multipath
+> (drivers/md/dm-mpath.c) cannot be updated to use this common backend
+> library.
+> 
+> This line of work makes little sense to me if it just ignores
+> dm-multipath.
+> 
+> Mike
 
-In reviewing your patch series implementing support for the
-FALLOC_FL_WRITE_ZEROES flag, I noted the logic propagating
-max_write_zeroes_sectors to max_hw_wzeroes_unmap_sectors in commit 545fb46e5bc6
-"nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit" [1]. This
-appears to be intended for devices that support the Write Zeroes command
-alongside the DEAC bit to indicate unmap capability.
+Thinking about this work from a DM multipath perspective, I'm more
+interested in how much it plans to handle the more annoying niche cases
+of dealing with SCSI devices, like paths that confidently report that
+they are able to accept IO, only to fail all IO sent to them. Also, I
+wonder how/if this is planning on handling Persistent Reservations. The
+arrays, I assume, are still going to see this as a collection of I_T
+Nexuses (some of which may be down and unable to accept commands at any
+given time, and to which new ones my be added) instead of a single one.
 
-Furthermore, within core.c, the NVME_QUIRK_DEALLOCATE_ZEROES quirk already
-identifies devices that deterministically return zeroes after a deallocate
-command [2]. This quirk currently enables Write Zeroes support via discard in
-existing implementations [3, 4].
+I also think this would be useful to talk about at LSF.
 
-Given this, would it be appropriate to respect NVME_QUIRK_DEALLOCATE_ZEROES also
-to enable unmap Write Zeroes for these devices, following the prior commit
-6e02318eaea5 "nvme: add support for the Write Zeroes command" [5]? I have
-included a proposed change to nvme_update_ns_info_block() below for your
-consideration.
+-Ben
 
-Best regards
-Robert Pang
+> 
+> > c. add native SCSI multipath support based on this common library
+> > 
+> > Thanks,
+> > John
+> > 
+> > 
+> > 
 
-diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-index f5ebcaa2f859..9c7e2cabfab3 100644
---- a/drivers/nvme/host/core.c
-+++ b/drivers/nvme/host/core.c
-@@ -2422,7 +2422,9 @@ static int nvme_update_ns_info_block(struct nvme_ns *ns,
-         * require that, it must be a no-op if reads from deallocated data
-         * do not return zeroes.
-         */
--       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3))) {
-+       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3)) ||
-+           (ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
-+           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
-                ns->head->features |= NVME_NS_DEAC;
-                lim.max_hw_wzeroes_unmap_sectors = lim.max_write_zeroes_sectors;
-        }
-
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=545fb46e5bc6
-[2] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/nvme.h#n72
-[3] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n938
-[4] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n2122
-[5] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6e02318eaea5
