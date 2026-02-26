@@ -1,190 +1,192 @@
-Received: from dggsgout11.his.huawei.com (dggsgout11.his.huawei.com [45.249.212.51])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8527B336EF7
-	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 11:09:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D49A82D7DE7
+	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 18:48:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772104191; cv=none; b=bvIT54kLq+BYEBfiR0c9ZnLM991w/PSCCT77taLSFkVEccLCOVdkv9soa+hOjVV4AjjgMANJ2PnrgvLALfoTShd/SEwgT8ziTNugRIwrWZa67Rc028BWwLIWzzllet8IqHG146piAS5OWyio2lw1dgsbrsO2h0U2nPpqTRoN//Y=
+	t=1772131713; cv=none; b=qizxmKc3W86fweHWD/9HXJrCF04OclftGWutXms/674vn/sYN2KgD/NqZpJ+WsmkSjtx+tMf/hWwRhcU9hYklmFeA3Mq5MhXLEFySOxgMwUvDh0aTmIk/BJtTIQZZhHq44a2XF8+CYZG202smNjUzbTs3wWs8u6w4AWN10h3tZc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772104191; c=relaxed/simple;
-	bh=tGJd/yOzp/uuX/6Z03jyOFPxRlrff2uK13N8ULGzr3I=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=RKoPno7+KYq7zQKZavUYtiGES+k6zNCtLE0X5mUPdCsvkkgFloUIDPOKZjkWMeAPtwruOQxoWaRbgl9SXApoMYeCwpE5p9SHW931Dc4hh7uM6irQOMG4cbClX1pJMFq2AyzmurZUC3aLw6+Oh9nWi9zdwNQYZ64e8rZSE2Er69A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.19.163.170])
-	by dggsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4fM7y96SVnzYQv0D
-	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 19:09:21 +0800 (CST)
-Received: from mail02.huawei.com (unknown [10.116.40.128])
-	by mail.maildlp.com (Postfix) with ESMTP id 31D444056F
-	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 19:09:47 +0800 (CST)
-Received: from [10.174.178.253] (unknown [10.174.178.253])
-	by APP4 (Coremail) with SMTP id gCh0CgAHZ_f2KaBpG75MIw--.17526S3;
-	Thu, 26 Feb 2026 19:09:44 +0800 (CST)
-Message-ID: <8a45c55f-8abe-4cdf-be70-208550edf320@huaweicloud.com>
-Date: Thu, 26 Feb 2026 19:09:42 +0800
+	s=arc-20240116; t=1772131713; c=relaxed/simple;
+	bh=xHeejQQ+cM7Iy2BOy0AMRSK1sesZBvDSgSw6xqSD9s4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=Baad/E4sQpP7qa0pIe6cscQv9GHnS57E/m2Vat9yHtE4Po9gLyX5Xyw4jo1bG2Rxo8yfeK0g1YpDS+P4tyBsUduRIdfUA80c9LEFc92CX3Nlu/yZctZkZXnIQMJXoAEnTbIwYFDzR/7ou3zC0aoeNdoImombWDfFlqEuUn6AjUc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PQ4G+HFV; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PQ4G+HFV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1772131710;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=K2WZXDs0HItit6i2KadtmDPrKZ0iDFDXIMIdbsXNdh0=;
+	b=PQ4G+HFVIxtCgwk5wyO43zIMC6cNNv1ycAEacnSZXJkeDjSt2HI8A/9ruoRGnDeyHu54wn
+	56bWyNg10r41c+oVVe0Eabl9h7wI2jCFpgv8ixtw5u36UyyHpx2EyCRicIE9KiXyBtLptx
+	xunhMZKB8T46GKaAqUzbeA1wx0/kn3g=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-hx7rnFTNOoeq4pLTM4UYVQ-1; Thu,
+ 26 Feb 2026 13:48:29 -0500
+X-MC-Unique: hx7rnFTNOoeq4pLTM4UYVQ-1
+X-Mimecast-MFC-AGG-ID: hx7rnFTNOoeq4pLTM4UYVQ_1772131708
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 612F619560AF;
+	Thu, 26 Feb 2026 18:48:28 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F06AF1956053;
+	Thu, 26 Feb 2026 18:48:27 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61QImQNZ1703751
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 26 Feb 2026 13:48:26 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61QImQSk1703750;
+	Thu, 26 Feb 2026 13:48:26 -0500
+Date: Thu, 26 Feb 2026 13:48:26 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH 0/1] checkers: fix race in async TUR and ALUA result
+ collection
+Message-ID: <aaCVelI_vQZEBihM@redhat.com>
+References: <20260224010058.35337-1-brian@purestorage.com>
+ <d9355e67dc64b7af940f6b8e6845d0f37565dd34.camel@suse.com>
+ <aZ9ec_ce8dCCBzR0@redhat.com>
+ <d223eb7cb4088d672b0312d929fa7d2c0e723875.camel@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 2/9] nvme: set max_hw_wzeroes_unmap_sectors if device
- supports DEAC bit
-To: Robert Pang <robertpang@google.com>
-Cc: Zhang Yi <yi.zhang@huawei.com>, bmarzins@redhat.com, brauner@kernel.org,
- chaitanyak@nvidia.com, chengzhihao1@huawei.com, djwong@kernel.org,
- dm-devel@lists.linux.dev, hch@lst.de, john.g.garry@oracle.com,
- linux-block@vger.kernel.org, linux-ext4@vger.kernel.org,
- linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-scsi@vger.kernel.org,
- linux-xfs@vger.kernel.org, martin.petersen@oracle.com,
- shinichiro.kawasaki@wdc.com, tytso@mit.edu, yangerkun@huawei.com,
- yukuai3@huawei.com
-References: <20250619111806.3546162-3-yi.zhang@huaweicloud.com>
- <20260225000531.3658802-1-robertpang@google.com>
- <7d2a3f65-4272-46c1-991a-356f0d2323cb@huaweicloud.com>
- <CAJhEC05L7QEc9iY7gFZVK3SPYvFhtFyURss6xQgZ-qWwZZkFjA@mail.gmail.com>
-Content-Language: en-US
-From: Zhang Yi <yi.zhang@huaweicloud.com>
-In-Reply-To: <CAJhEC05L7QEc9iY7gFZVK3SPYvFhtFyURss6xQgZ-qWwZZkFjA@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8
+In-Reply-To: <d223eb7cb4088d672b0312d929fa7d2c0e723875.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: dYGN6ZQZ0QihyjPqYy-X_C2MDqPnNr7MQj7LbbHHLFU_1772131708
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:gCh0CgAHZ_f2KaBpG75MIw--.17526S3
-X-Coremail-Antispam: 1UD129KBjvJXoWxArW8Gr4xCr1rtry7AFyUtrb_yoW7Gr4UpF
-	4UWFyIvrZ8WF1UA3yqvw1I9FyUJ3s5ZryxWa4DG3W5Zryqqr1SvF1kuFZ09FWDGrn8uw4S
-	ya18Ar9Fv3ZxZaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26ryj6rWUM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_tr0E3s1l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
-	0267AKxVW0oVCq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG
-	6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aVAFwI0_Jr0_Gr1lOx8S6xCaFV
-	Cjc4AY6r1j6r4UM4x0Y48IcVAKI48JM4IIrI8v6xkF7I0E8cxan2IY04v7MxkF7I0En4kS
-	14v26r4a6rW5MxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I
-	8CrVAFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVW8ZVWr
-	XwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	s2-5UUUUU==
-X-CM-SenderInfo: d1lo6xhdqjqx5xdzvxpfor3voofrz/
 
-On 2/26/2026 5:43 AM, Robert Pang wrote:
-> Dear Zhang Yi
+On Wed, Feb 25, 2026 at 11:00:44PM +0100, Martin Wilck wrote:
+> On Wed, 2026-02-25 at 15:41 -0500, Benjamin Marzinski wrote:
+> > 
+> > I pretty much agree with Martin here. I do think this is likely safe,
+> > but I don't think this is really a race. We don't return the status
+> > of
+> > the thread until the thread completes, and the thread signals its
+> > completion by clearing ct->running. That's the same definition of
+> > successful thread completion that we use for deciding to kill the
+> > thread, and I don't see why it's not a valid one.
+> > 
+> > Yes we can get the thread result slightly before the thread has
+> > completed. But by trusting that the thread will complete once pp-
+> > >msgid
+> > has changed, we are giving up the ability to kill it if it does hang
+> > later, for instance in that condlog() call. On systemd systems, this
+> > is
+> > just some stdio print functions, but on non-systemd systems, this
+> > uses
+> > its own pthread locking, and could legitimately hang (although the
+> > argument certainly can be made that if this is hanging, multipathd
+> > has
+> > bigger problems to worry about than an extra tur checker thread lying
+> > around).  
 > 
-> Thank you for your quick response. Please see my comments below:
+> After some further pondering, I wonder if we could do this:
 > 
-> On Tue, Feb 24, 2026 at 6:32â€¯PM Zhang Yi <yi.zhang@huaweicloud.com> wrote:
->>
->> Hi Robert!
->>
->> On 2/25/2026 8:05 AM, Robert Pang wrote:
->>> Dear Zhang Yi,
->>>
->>> In reviewing your patch series implementing support for the
->>> FALLOC_FL_WRITE_ZEROES flag, I noted the logic propagating
->>> max_write_zeroes_sectors to max_hw_wzeroes_unmap_sectors in commit 545fb46e5bc6
->>> "nvme: set max_hw_wzeroes_unmap_sectors if device supports DEAC bit" [1]. This
->>> appears to be intended for devices that support the Write Zeroes command
->>> alongside the DEAC bit to indicate unmap capability.
->>>
->>> Furthermore, within core.c, the NVME_QUIRK_DEALLOCATE_ZEROES quirk already
->>> identifies devices that deterministically return zeroes after a deallocate
->>> command [2]. This quirk currently enables Write Zeroes support via discard in
->>> existing implementations [3, 4].
->>>
->>> Given this, would it be appropriate to respect NVME_QUIRK_DEALLOCATE_ZEROES also
->>> to enable unmap Write Zeroes for these devices, following the prior commit
->>> 6e02318eaea5 "nvme: add support for the Write Zeroes command" [5]? I have
->>> included a proposed change to nvme_update_ns_info_block() below for your
->>> consideration.
->>>
->>
->> Thank you for your point. Overall, this makes sense to me, but I have one
->> question below.
->>
->>> Best regards
->>> Robert Pang
->>>
->>> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
->>> index f5ebcaa2f859..9c7e2cabfab3 100644
->>> --- a/drivers/nvme/host/core.c
->>> +++ b/drivers/nvme/host/core.c
->>> @@ -2422,7 +2422,9 @@ static int nvme_update_ns_info_block(struct nvme_ns *ns,
->>>          * require that, it must be a no-op if reads from deallocated data
->>>          * do not return zeroes.
->>>          */
->>> -       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3))) {
->>> +       if ((id->dlfeat & 0x7) == 0x1 && (id->dlfeat & (1 << 3)) ||
->>> +           (ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
->>> +           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
->>                                 ^^^^^^^^^^^^^^^^^^
->> Why do you want to add a check for NVME_CTRL_ONCS_DSM? In nvme_config_discard(),
->> it appears that we prioritize ctrl->dmrsl, allowing discard to still be
->> supported even on some non-standard devices where NVME_CTRL_ONCS_DSM is not set.
->> In nvme_update_disk_info(), if the device only has NVME_QUIRK_DEALLOCATE_ZEROES,
->> we still populate lim->max_write_zeroes_sectors (which might be non-zero on
->> devices that support NVME_CTRL_ONCS_WRITE_ZEROES). Right? So I'm not sure if we
->> only need to check for NVME_QUIRK_DEALLOCATE_ZEROES here.
->>
-> The check for NVME_CTRL_ONCS_DSM is to follow the same check in [3]. There, the
-> check was added by 58a0c875ce02 "nvme: don't apply NVME_QUIRK_DEALLOCATE_ZEROES
-> when DSM is not supported" [6]. The idea is to limit
-> NVME_QUIRK_DEALLOCATE_ZEROES
-> to those devices that support DSM.
-> 
-
-OK.
-
->>>                 ns->head->features |= NVME_NS_DEAC;
->>
->> I think we should not set NVME_NS_DEAC for the quirks case.
->>
-> Make sense. In that case, will it be more appropriate to set
-> max_hw_wzeroes_unmap_sectors in nvme_update_disk_info() where
-> NVME_QUIRK_DEALLOCATE_ZEROES is checked? I.e.
-> 
-> diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
-> index f5ebcaa2f859..3f5dd3f867e9 100644
-> --- a/drivers/nvme/host/core.c
-> +++ b/drivers/nvme/host/core.c
-> @@ -2120,9 +2120,10 @@ static bool nvme_update_disk_info(struct
-> nvme_ns *ns, struct nvme_id_ns *id,
->         lim->io_min = phys_bs;
->         lim->io_opt = io_opt;
->         if ((ns->ctrl->quirks & NVME_QUIRK_DEALLOCATE_ZEROES) &&
-> -           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM))
-> +           (ns->ctrl->oncs & NVME_CTRL_ONCS_DSM)) {
->                 lim->max_write_zeroes_sectors = UINT_MAX;
-> -       else
-> +               lim->max_hw_wzeroes_unmap_sectors = UINT_MAX;
-> +       } else
->                 lim->max_write_zeroes_sectors = ns->ctrl->max_zeroes_sectors;
->         return valid;
+> --- a/libmultipath/checkers/tur.c
+> +++ b/libmultipath/checkers/tur.c
+> @@ -267,6 +267,7 @@ void *libcheck_thread(struct checker_context *ctx)
+>         struct tur_checker_context *ct =
+>                 container_of(ctx, struct tur_checker_context, ctx);
+>         int state, running;
+> +       dev_t devt;
+>         short msgid;
+>  
+>         /* This thread can be canceled, so setup clean up */
+> @@ -284,17 +285,17 @@ void *libcheck_thread(struct checker_context
+> *ctx)
+>         ct->state = state;
+>         ct->msgid = msgid;
+>         pthread_cond_signal(&ct->active);
+> +       running = uatomic_xchg(&ct->running, 0);
+>         pthread_mutex_unlock(&ct->lock);
+>  
+> -       condlog(4, "%d:%d : tur checker finished, state %s", major(ct-
+> >devt),
+> -               minor(ct->devt), checker_state_name(state));
+> -
+> -       running = uatomic_xchg(&ct->running, 0);
+> +       devt = ct->devt;
+>         if (!running)
+>                 pause();
+>  
+>         tur_thread_cleanup_pop(ct);
+>  
+> +       condlog(4, "%d:%d : tur checker finished, state %s",
+> major(devt),
+> +               minor(devt), checker_state_name(state));
+>         return ((void *)0);
 >  }
+>  
+> @@ -356,7 +357,7 @@ int libcheck_check(struct checker * c)
+>                                 pthread_mutex_unlock(&ct->lock);
+>                         }
+>                         ct->thread = 0;
+> -               } else if (uatomic_read(&ct->running) != 0) {
+> +               } else if (uatomic_add_return(&ct->running, 0) != 0) {
+>                         condlog(3, "%d:%d : tur checker not finished",
+>                                 major(ct->devt), minor(ct->devt));
+>                         tur_status = PATH_PENDING;
 > 
-
-Yeah, it looks good to me.
-
-Best regards,
-Yi.
-
-> Best regards
-> Robert
 > 
->> Cheers,
->> Yi.
->>
->>>                 lim.max_hw_wzeroes_unmap_sectors = lim.max_write_zeroes_sectors;
->>>         }
->>>
->>> [1] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=545fb46e5bc6
->>> [2] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/nvme.h#n72
->>> [3] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n938
->>> [4] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/drivers/nvme/host/core.c#n2122
->>> [5] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=6e02318eaea5
-> [6] https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=58a0c875ce02
+> This way the thread would "lie" about itself being not running any more
+> by setting ct->running to 0 before releasing the lock. AFAICS, in the
+> worst case, this can cause the main thread not to cancel it even though
+> it has timed out. But at this point it has already passed the point at
+> which it's most likely to hang. The only point at which it could still
+> block is the condlog(). By releasing ct before calling condlog() we can
+> make sure that even if the thread now blocks, it can't prevent freeing
+> of ct any more. We can basically forget about it at this point.
+> 
+> Replacing the uatomic_read() by a uatomic_add_return(..., 0) is a hack
+> that adds a memory barrier, which, together with the mutex in
+> libcheck_thread(), should make sure that the values of ct->running and
+> ct->msgid are consistent at this point in libcheck_check().
+> 
+> Together, these changes should fix Brian's issue.
+> 
+> The added memory barrier might make libcheck_check() a bit slower. I'm
+> not sure whether the difference would be noticeable. I'm not sure why
+> we didn't use a barrier there to begin with, perhaps to make this check
+> as light-weight as possible. The uatomic_read has been added in c3a839c
+> ("libmultipath: cleanup tur locking").
+> 
+> I'm still undecided if it's worth changing this code in order to
+> reinstate some paths 1s earlier in certain sitautions.
+> 
+> Thoughts?
+
+I don't see any problems with this. But I also didn't see any real
+problems with Brian's version (although this version does remove most of
+my theoretic issues. Like I said before. If we hang in the condlog,
+we've got bigger problems than a stray checker thread). If we do this,
+we should probably document the uatomic_add_return() call, or just use
+cmm_smp_mb() directly. But I still not sure what we get out of this,
+other than a very slight chance to finish the checker a second sooner. I
+don't think that really makes a difference, but I don't really see much
+risk in the patch either, so I guess I'm fine either way.
+
+-Ben
+
+> 
+> Martin
 
