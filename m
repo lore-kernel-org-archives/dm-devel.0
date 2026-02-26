@@ -1,54 +1,54 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FF7C278753
-	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 02:16:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BCD8D26FD97
+	for <dm-devel@lists.linux.dev>; Thu, 26 Feb 2026 03:37:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772072198; cv=none; b=nls7ybWTqnMhlGWc8ZRRoLsk7tWzU0fuubEGPNlWqsrs7EhVhbsNli+nf0y8k6j28otYD6XJZWpCI2PUz7qHzRVZ+CQ9Zt5I3S4tbe35P9zIJc5EaXW/BAwNi8/ssypuZAv9ZVOZc9CXOTI1lZJVjcTmbiC8aPq0/2HLC7ZC2xY=
+	t=1772077034; cv=none; b=VCSbeSOOATFJvTHzsSR1fRq2xLg2LX1u0B+C7OUbGwtG65j9xla3IyfsTG+A5Tqu7GDPx5aEexy5n/jxzfibwu626CiKVYNiDlJpHkmsDhvANXPnAnmG3SP7ekF0BqkkIE/lE2jOywR2g4N3qg0U5nsG8dDTzYAsqMZDt2e2wGE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772072198; c=relaxed/simple;
-	bh=RVmoPkXlFbz9EbpwqjvzIV3GDq3ozZDDazmcIJOSNnQ=;
+	s=arc-20240116; t=1772077034; c=relaxed/simple;
+	bh=2NoCN6+mTCZfckAbUadVoYxFffzxni/k9obOl9HI1y4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=D17I/Edh19g5h4V/s/SHLGF9mrlqd14O+hoBtrRF2YaxTbTdAU29Aibpdgr6IQvD1kXcfShYHf2krbhGdmiWUmRzLOpqlePWvkKy+/Y+9S2jusHY01xoUu7PelM3/123mR0DT/s0W1ye/o5FijnhBCPlPm3jJgAdIt337ssAWwk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=G79U9jF4; arc=none smtp.client-ip=170.10.133.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=beeI5eTOQnu8ok28e9NDzP7fggR5U48MElpI4KZEa0IJs+AUzaRKkr95z/qsBYzXDW557yIZL4DddtVCrsBjrtMBpPiHvcW0Or2S8PKmwJP1kKjxz9fu8KIEMOAMQUAyNrAhWgFL8/PwwrgYAtTx+TNqcAH3d/27L9n+p37jdWg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fo+4MtIt; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G79U9jF4"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fo+4MtIt"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772072196;
+	s=mimecast20190719; t=1772077032;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=hJmYuxjS0nD2lV0lsEQm+chlolOaID++/wSzcaTxkiM=;
-	b=G79U9jF4msSaezHmHhiFNtoAbJXbzxHAYSYdY2VyE0FSMDrYdi8+HH4pUST/aBpbYRah99
-	EVikKx8KtZQimKVvsGn252XLDjYCeMKyO4wR5kXimg0TI9js4B4881AMgtEDb2SkBq8dGa
-	lZN1wdYOSqgU4tvlErT6XTHtIdvhqA0=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=bkLc+GDTQrnsggrpWJFZMbOK/80PHJQs/QIq3lF3I4w=;
+	b=fo+4MtItLc2K/i2RowYc+e9H9c2GWdj86JAr3e/eUtGKI3w8mkwnchzkHR4WBw6kwrrUwm
+	yV3uBcsbwcvannJdW+4yEP0xHxjGRJVpk6txPXkJf0oFSkzlxMtNCCPjdsfY4xAsa7/bmI
+	0EMTJ6raQIja3huEQkkNFKPkgEGDmE8=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-684-kv6YtGLNMKaescy-QcRm1g-1; Wed,
- 25 Feb 2026 21:16:30 -0500
-X-MC-Unique: kv6YtGLNMKaescy-QcRm1g-1
-X-Mimecast-MFC-AGG-ID: kv6YtGLNMKaescy-QcRm1g_1772072188
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-st2cy_XBNqSdjq7AuUSX_w-1; Wed,
+ 25 Feb 2026 22:37:09 -0500
+X-MC-Unique: st2cy_XBNqSdjq7AuUSX_w-1
+X-Mimecast-MFC-AGG-ID: st2cy_XBNqSdjq7AuUSX_w_1772077027
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EDDCC180057E;
-	Thu, 26 Feb 2026 02:16:27 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 304EC19560A3;
+	Thu, 26 Feb 2026 03:37:06 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DA4D13003D88;
-	Thu, 26 Feb 2026 02:16:26 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DE9641800465;
+	Thu, 26 Feb 2026 03:37:04 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61Q2GPtm1678244
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61Q3b3hQ1680267
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 25 Feb 2026 21:16:25 -0500
+	Wed, 25 Feb 2026 22:37:03 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61Q2GO3e1678243;
-	Wed, 25 Feb 2026 21:16:24 -0500
-Date: Wed, 25 Feb 2026 21:16:24 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61Q3b33W1680266;
+	Wed, 25 Feb 2026 22:37:03 -0500
+Date: Wed, 25 Feb 2026 22:37:03 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: John Garry <john.g.garry@oracle.com>
 Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
@@ -57,68 +57,44 @@ Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
         linux-scsi@vger.kernel.org, michael.christie@oracle.com,
         snitzer@kernel.org, dm-devel@lists.linux.dev,
         linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 02/13] libmultipath: Add basic gendisk support
-Message-ID: <aZ-s-JNWBOA1xqVG@redhat.com>
+Subject: Re: [PATCH 03/13] libmultipath: Add path selection support
+Message-ID: <aZ-_3_hXEkFEClhs@redhat.com>
 References: <20260225153225.1031169-1-john.g.garry@oracle.com>
- <20260225153225.1031169-3-john.g.garry@oracle.com>
+ <20260225153225.1031169-4-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260225153225.1031169-3-john.g.garry@oracle.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: 8BFtv2Dq9McIbTDKVoqkPIZi2xQBENYu2-KuGmQgJmM_1772072188
+In-Reply-To: <20260225153225.1031169-4-john.g.garry@oracle.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-MFC-PROC-ID: 2STMnZzOCTMUr4r5fHj_aUMorQhfGFM_8ed23i95cQc_1772077027
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-On Wed, Feb 25, 2026 at 03:32:14PM +0000, John Garry wrote:
-> Add support to allocate and free a multipath gendisk.
-> 
-> NVMe has almost like-for-like equivalents here:
-> - mpath_alloc_head_disk() -> nvme_mpath_alloc_disk()
-> - multipath_partition_scan_work() -> nvme_partition_scan_work()
-> - mpath_remove_disk() -> nvme_remove_head()
-> - mpath_device_set_live() -> nvme_mpath_set_live()
-> 
-> struct mpath_head_template is introduced as a method for drivers to
-> provide custom multipath functionality.
-> 
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
-> ---
-> +
-> +void mpath_device_set_live(struct mpath_disk *mpath_disk,
-> +			struct mpath_device *mpath_device)
+On Wed, Feb 25, 2026 at 03:32:15PM +0000, John Garry wrote:
+> +__maybe_unused
+> +static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head)
 > +{
-> +	struct mpath_head *mpath_head = mpath_disk->mpath_head;
+> +	enum mpath_iopolicy_e iopolicy =
+> +			mpath_head->mpdt->get_iopolicy(mpath_head);
+> +
+> +	switch (iopolicy) {
+> +	case MPATH_IOPOLICY_QD:
+> +		return mpath_queue_depth_path(mpath_head);
+> +	case MPATH_IOPOLICY_RR:
+> +		return mpath_round_robin_path(mpath_head, iopolicy);
+> +	default:
+> +		return mpath_numa_path(mpath_head, iopolicy);
 
-You're dereferencing mpath_disk here, before the check if it's NULL.
+When we're in mpath_round_robin_path() and mpath_numa_path(), we know the
+iopolicy, so we don't really need to pass it in.
 
 -Ben
 
-> +	int ret;
-> +
-> +	if (!mpath_disk)
-> +		return;
-> +
-> +	if (!test_and_set_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
-> +		dev_set_drvdata(disk_to_dev(mpath_disk->disk), mpath_disk);
-> +		ret = device_add_disk(mpath_disk->parent, mpath_disk->disk,
-> +				mpath_head->mpdt->device_groups);
-> +		if (ret) {
-> +			clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags);
-> +			return;
-> +		}
-> +		queue_work(mpath_wq, &mpath_disk->partition_scan_work);
 > +	}
 > +}
-> +EXPORT_SYMBOL_GPL(mpath_device_set_live);
 > +
->  struct mpath_head *mpath_alloc_head(void)
->  {
->  	struct mpath_head *mpath_head;
-> -- 
-> 2.43.5
 
