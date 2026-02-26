@@ -1,198 +1,240 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 153ED3176E0
-	for <dm-devel@lists.linux.dev>; Wed, 25 Feb 2026 22:00:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 40602371067;
+	Thu, 26 Feb 2026 01:41:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772056848; cv=none; b=PDSXueLu03X014SJhvT0GgyvhHX13awSnF8eZbMSu0qQLYz/ln/RQKQJLD/iTbv0zEOlCRICg5XVcmERHS5YuRV04YzYw4YqvknArXv4tW8S+1qnrUiu5Lv2EQh4HDJo6QXrhEngN6th5I/q6A9thY89bjCEbXjPJC1lzGT5XTk=
+	t=1772070115; cv=none; b=Yq+mtQDQCRg2ZGsDA8dXoipbVWwx2cecNrk4ypwSkDgbwo11lSNAlId1SFs9Px/IZ7MehY7PsU9npPqT+N0stGOVDGefEDPFqo9iLQgiBrJPntCrFpn8WqiAQhS3V4Q4pwXc/RLWNCP8MCfnZHtCls1fe3ADjupXaaLo3WPeCqg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772056848; c=relaxed/simple;
-	bh=HggH2ESMnuwfbVHxKbswX/liDq9ImPnUAby6G7qHaF8=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=ZzyVYXTHU/lUIPThQnIRZVKlnkVJZivuLavdCJJlQM5ZAO66Al2rEta4Bko2X43WFcNM6dQzoXBv9c8+rlbo5x9UYO4Jkf3w4cwJD3HH6AVEPgNBoEVWvdKUUuRB413k+fTzINzswp39kZ5R3YadcJswpJMZXr/Uuec0M7JQixM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=kMVwOgdG; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=kMVwOgdG; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1772070115; c=relaxed/simple;
+	bh=CfAYEd9U4HSw1/bmYpiEHbdxZ+wvqDZ8aVBkXZx6dkU=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=onfyZzTXcY6LFw07601VM4Keek1wEK2aUbYnfynIJodPmyA455dqtLrrRdfjSKGRZ3L2ymTEBvuK6eK0foSdw6JJ18nACbljnQgiFJ6U4ZPTO2TRtXH5Fbblc6BuITjxcaM7+nRLxSVgFfO+wpSxtkaCS7Ezm5KNTgJtesGzy7Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=H53BGrd2; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="kMVwOgdG";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="kMVwOgdG"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 351B35BE10;
-	Wed, 25 Feb 2026 22:00:45 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1772056845; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=KSffuIPzEzXz7tTRH9rHFMXERV+ZrJtB9vNgz8HlXio=;
-	b=kMVwOgdGersmC5mSMhxgyAkAy2Q9NdMxCFPpWnwhstuE2URqJWo3sduC9S569lPAoQaaQW
-	kbPVZOxyeYsF7CqpkMkRdAjuTztqJre2HRsN82e3Jc06GT3toSJ5B32C94MXhcjtBnwWL9
-	bwoQGdS77G1ClGyqH4h1vdX9uFIL22o=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1772056845; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=KSffuIPzEzXz7tTRH9rHFMXERV+ZrJtB9vNgz8HlXio=;
-	b=kMVwOgdGersmC5mSMhxgyAkAy2Q9NdMxCFPpWnwhstuE2URqJWo3sduC9S569lPAoQaaQW
-	kbPVZOxyeYsF7CqpkMkRdAjuTztqJre2HRsN82e3Jc06GT3toSJ5B32C94MXhcjtBnwWL9
-	bwoQGdS77G1ClGyqH4h1vdX9uFIL22o=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 0D6C93EA65;
-	Wed, 25 Feb 2026 22:00:45 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id dHspAg1xn2nhKAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 25 Feb 2026 22:00:45 +0000
-Message-ID: <d223eb7cb4088d672b0312d929fa7d2c0e723875.camel@suse.com>
-Subject: Re: [PATCH 0/1] checkers: fix race in async TUR and ALUA result
- collection
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
-Date: Wed, 25 Feb 2026 23:00:44 +0100
-In-Reply-To: <aZ9ec_ce8dCCBzR0@redhat.com>
-References: <20260224010058.35337-1-brian@purestorage.com>
-	 <d9355e67dc64b7af940f6b8e6845d0f37565dd34.camel@suse.com>
-	 <aZ9ec_ce8dCCBzR0@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.3 
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="H53BGrd2"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7BE0AC116D0;
+	Thu, 26 Feb 2026 01:41:54 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1772070114;
+	bh=CfAYEd9U4HSw1/bmYpiEHbdxZ+wvqDZ8aVBkXZx6dkU=;
+	h=From:To:Cc:Subject:Date:From;
+	b=H53BGrd2Jugain5WpBIrTcN5iYco/wtxdQ1czG6LZmIRgWcSRT+cMyVtPC2C0wLAi
+	 ukX2fn+giEXD/GWD+eFKH2XMMtDJA9JXtQoQ0VQyLr7t2XF/khLqloaUOLYxwwbSI2
+	 +bkRNGZKOEj2Nv9rPGQX0N8Qhb04x65bbgPOIFG+twUTqicJu7IaceGFFKfwJSpvNO
+	 bOPHwHmB77NHBCzrW9wWzq9cNPogZgfL0xLMx31cpQeGrPqwnvGq4WYhBUFLkQ9gLw
+	 Hg0tNGX3DXf3j4kRCpe7w4xFvZeV+GB11W6biY0D79iO0pkcPhjladpvXQuLn7ywo+
+	 w4tBht8QGUEzA==
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linux-crypto@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH] dm-ima: use SHA-256 library
+Date: Wed, 25 Feb 2026 17:39:15 -0800
+Message-ID: <20260226013915.54873-1-ebiggers@kernel.org>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Score: -4.30
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Flag: NO
+Content-Transfer-Encoding: 8bit
 
-On Wed, 2026-02-25 at 15:41 -0500, Benjamin Marzinski wrote:
->=20
-> I pretty much agree with Martin here. I do think this is likely safe,
-> but I don't think this is really a race. We don't return the status
-> of
-> the thread until the thread completes, and the thread signals its
-> completion by clearing ct->running. That's the same definition of
-> successful thread completion that we use for deciding to kill the
-> thread, and I don't see why it's not a valid one.
->=20
-> Yes we can get the thread result slightly before the thread has
-> completed. But by trusting that the thread will complete once pp-
-> >msgid
-> has changed, we are giving up the ability to kill it if it does hang
-> later, for instance in that condlog() call. On systemd systems, this
-> is
-> just some stdio print functions, but on non-systemd systems, this
-> uses
-> its own pthread locking, and could legitimately hang (although the
-> argument certainly can be made that if this is hanging, multipathd
-> has
-> bigger problems to worry about than an extra tur checker thread lying
-> around).=C2=A0=20
+Make dm_ima_measure_on_table_load() use the SHA-256 library API instead
+of crypto_shash to calculate the SHA-256 hash value that it needs.  This
+is simpler and more efficient.  It also ensures that SHA-256 is actually
+available and doesn't fail due to the unreliable loading by name.
 
-After some further pondering, I wonder if we could do this:
+While doing this, also use kasprintf() to simplify building the string
+version of the digest.
 
---- a/libmultipath/checkers/tur.c
-+++ b/libmultipath/checkers/tur.c
-@@ -267,6 +267,7 @@ void *libcheck_thread(struct checker_context *ctx)
-        struct tur_checker_context *ct =3D
-                container_of(ctx, struct tur_checker_context, ctx);
-        int state, running;
-+       dev_t devt;
-        short msgid;
-=20
-        /* This thread can be canceled, so setup clean up */
-@@ -284,17 +285,17 @@ void *libcheck_thread(struct checker_context
-*ctx)
-        ct->state =3D state;
-        ct->msgid =3D msgid;
-        pthread_cond_signal(&ct->active);
-+       running =3D uatomic_xchg(&ct->running, 0);
-        pthread_mutex_unlock(&ct->lock);
-=20
--       condlog(4, "%d:%d : tur checker finished, state %s", major(ct-
->devt),
--               minor(ct->devt), checker_state_name(state));
+Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+---
+ drivers/md/Kconfig  |  1 +
+ drivers/md/dm-ima.c | 54 +++++++++------------------------------------
+ drivers/md/dm-ima.h |  1 -
+ 3 files changed, 11 insertions(+), 45 deletions(-)
+
+diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+index c58a9a8ea54e..53351048d3ec 100644
+--- a/drivers/md/Kconfig
++++ b/drivers/md/Kconfig
+@@ -224,10 +224,11 @@ config BLK_DEV_DM_BUILTIN
+ config BLK_DEV_DM
+ 	tristate "Device mapper support"
+ 	select BLOCK_HOLDER_DEPRECATED if SYSFS
+ 	select BLK_DEV_DM_BUILTIN
+ 	select BLK_MQ_STACKING
++	select CRYPTO_LIB_SHA256 if IMA
+ 	depends on DAX || DAX=n
+ 	help
+ 	  Device-mapper is a low level volume manager.  It works by allowing
+ 	  people to specify mappings for ranges of logical sectors.  Various
+ 	  mapping types are available, in addition people may write their own
+diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
+index efb3cd4f9cd4..9495ca035056 100644
+--- a/drivers/md/dm-ima.c
++++ b/drivers/md/dm-ima.c
+@@ -10,13 +10,11 @@
+ #include "dm-core.h"
+ #include "dm-ima.h"
+ 
+ #include <linux/ima.h>
+ #include <linux/sched/mm.h>
+-#include <crypto/hash.h>
+-#include <linux/crypto.h>
+-#include <crypto/hash_info.h>
++#include <crypto/sha2.h>
+ 
+ #define DM_MSG_PREFIX "ima"
+ 
+ /*
+  * Internal function to prefix separator characters in input buffer with escape
+@@ -176,23 +174,17 @@ void dm_ima_reset_data(struct mapped_device *md)
+ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_flags)
+ {
+ 	size_t device_data_buf_len, target_metadata_buf_len, target_data_buf_len, l = 0;
+ 	char *target_metadata_buf = NULL, *target_data_buf = NULL, *digest_buf = NULL;
+ 	char *ima_buf = NULL, *device_data_buf = NULL;
+-	int digest_size, last_target_measured = -1, r;
++	int last_target_measured = -1;
+ 	status_type_t type = STATUSTYPE_IMA;
+ 	size_t cur_total_buf_len = 0;
+ 	unsigned int num_targets, i;
+-	SHASH_DESC_ON_STACK(shash, NULL);
+-	struct crypto_shash *tfm = NULL;
+-	u8 *digest = NULL;
++	struct sha256_ctx hash_ctx;
++	u8 digest[SHA256_DIGEST_SIZE];
+ 	bool noio = false;
+-	/*
+-	 * In below hash_alg_prefix_len assignment +1 is for the additional char (':'),
+-	 * when prefixing the hash value with the hash algorithm name. e.g. sha256:<hash_value>.
+-	 */
+-	const size_t hash_alg_prefix_len = strlen(DM_IMA_TABLE_HASH_ALG) + 1;
+ 	char table_load_event_name[] = "dm_table_load";
+ 
+ 	ima_buf = dm_ima_alloc(DM_IMA_MEASUREMENT_BUF_LEN, noio);
+ 	if (!ima_buf)
+ 		return;
+@@ -208,23 +200,11 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
+ 	num_targets = table->num_targets;
+ 
+ 	if (dm_ima_alloc_and_copy_device_data(table->md, &device_data_buf, num_targets, noio))
+ 		goto error;
+ 
+-	tfm = crypto_alloc_shash(DM_IMA_TABLE_HASH_ALG, 0, 0);
+-	if (IS_ERR(tfm))
+-		goto error;
 -
--       running =3D uatomic_xchg(&ct->running, 0);
-+       devt =3D ct->devt;
-        if (!running)
-                pause();
-=20
-        tur_thread_cleanup_pop(ct);
-=20
-+       condlog(4, "%d:%d : tur checker finished, state %s",
-major(devt),
-+               minor(devt), checker_state_name(state));
-        return ((void *)0);
+-	shash->tfm = tfm;
+-	digest_size = crypto_shash_digestsize(tfm);
+-	digest = dm_ima_alloc(digest_size, noio);
+-	if (!digest)
+-		goto error;
+-
+-	r = crypto_shash_init(shash);
+-	if (r)
+-		goto error;
++	sha256_init(&hash_ctx);
+ 
+ 	memcpy(ima_buf + l, DM_IMA_VERSION_STR, table->md->ima.dm_version_str_len);
+ 	l += table->md->ima.dm_version_str_len;
+ 
+ 	device_data_buf_len = strlen(device_data_buf);
+@@ -268,13 +248,11 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
+ 		 * we have in the current buffer, and continue measuring the remaining
+ 		 * targets by prefixing the device metadata again.
+ 		 */
+ 		if (unlikely(cur_total_buf_len >= DM_IMA_MEASUREMENT_BUF_LEN)) {
+ 			dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
+-			r = crypto_shash_update(shash, (const u8 *)ima_buf, l);
+-			if (r < 0)
+-				goto error;
++			sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
+ 
+ 			memset(ima_buf, 0, DM_IMA_MEASUREMENT_BUF_LEN);
+ 			l = 0;
+ 
+ 			/*
+@@ -309,34 +287,25 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
+ 	}
+ 
+ 	if (!last_target_measured) {
+ 		dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
+ 
+-		r = crypto_shash_update(shash, (const u8 *)ima_buf, l);
+-		if (r < 0)
+-			goto error;
++		sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
+ 	}
+ 
+ 	/*
+ 	 * Finalize the table hash, and store it in table->md->ima.inactive_table.hash,
+ 	 * so that the table data can be verified against the future device state change
+ 	 * events, e.g. resume, rename, remove, table-clear etc.
+ 	 */
+-	r = crypto_shash_final(shash, digest);
+-	if (r < 0)
+-		goto error;
+-
+-	digest_buf = dm_ima_alloc((digest_size*2) + hash_alg_prefix_len + 1, noio);
++	sha256_final(&hash_ctx, digest);
+ 
++	digest_buf = kasprintf(GFP_KERNEL, "sha256:%*phN", SHA256_DIGEST_SIZE,
++			       digest);
+ 	if (!digest_buf)
+ 		goto error;
+ 
+-	snprintf(digest_buf, hash_alg_prefix_len + 1, "%s:", DM_IMA_TABLE_HASH_ALG);
+-
+-	for (i = 0; i < digest_size; i++)
+-		snprintf((digest_buf + hash_alg_prefix_len + (i*2)), 3, "%02x", digest[i]);
+-
+ 	if (table->md->ima.active_table.hash != table->md->ima.inactive_table.hash)
+ 		kfree(table->md->ima.inactive_table.hash);
+ 
+ 	table->md->ima.inactive_table.hash = digest_buf;
+ 	table->md->ima.inactive_table.hash_len = strlen(digest_buf);
+@@ -352,13 +321,10 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
+ 	goto exit;
+ error:
+ 	kfree(digest_buf);
+ 	kfree(device_data_buf);
+ exit:
+-	kfree(digest);
+-	if (tfm)
+-		crypto_free_shash(tfm);
+ 	kfree(ima_buf);
+ 	kfree(target_metadata_buf);
+ 	kfree(target_data_buf);
  }
-=20
-@@ -356,7 +357,7 @@ int libcheck_check(struct checker * c)
-                                pthread_mutex_unlock(&ct->lock);
-                        }
-                        ct->thread =3D 0;
--               } else if (uatomic_read(&ct->running) !=3D 0) {
-+               } else if (uatomic_add_return(&ct->running, 0) !=3D 0) {
-                        condlog(3, "%d:%d : tur checker not finished",
-                                major(ct->devt), minor(ct->devt));
-                        tur_status =3D PATH_PENDING;
+ 
+diff --git a/drivers/md/dm-ima.h b/drivers/md/dm-ima.h
+index 568870a1a145..a403deca6093 100644
+--- a/drivers/md/dm-ima.h
++++ b/drivers/md/dm-ima.h
+@@ -13,11 +13,10 @@
+ #define DM_IMA_MEASUREMENT_BUF_LEN	4096
+ #define DM_IMA_DEVICE_BUF_LEN		1024
+ #define DM_IMA_TARGET_METADATA_BUF_LEN	128
+ #define DM_IMA_TARGET_DATA_BUF_LEN	2048
+ #define DM_IMA_DEVICE_CAPACITY_BUF_LEN	128
+-#define DM_IMA_TABLE_HASH_ALG		"sha256"
+ 
+ #define __dm_ima_stringify(s) #s
+ #define __dm_ima_str(s) __dm_ima_stringify(s)
+ 
+ #define DM_IMA_VERSION_STR "dm_version="	\
 
+base-commit: 6de23f81a5e08be8fbf5e8d7e9febc72a5b5f27f
+-- 
+2.53.0
 
-This way the thread would "lie" about itself being not running any more
-by setting ct->running to 0 before releasing the lock.=C2=A0AFAICS, in the
-worst case, this can cause the main thread not to cancel it even though
-it has timed out. But at this point it has already passed the point at
-which it's most likely to hang. The only point at which it could still
-block is the condlog(). By releasing ct before calling condlog() we can
-make sure that even if the thread now blocks, it can't prevent freeing
-of ct any more. We can basically forget about it at this point.
-
-Replacing the uatomic_read() by a uatomic_add_return(..., 0) is a hack
-that adds a memory barrier, which, together with the mutex in
-libcheck_thread(), should make sure that the values of ct->running and
-ct->msgid are consistent at this point in libcheck_check().
-
-Together, these changes should fix Brian's issue.
-
-The added memory barrier might make libcheck_check() a bit slower. I'm
-not sure whether the difference would be noticeable. I'm not sure why
-we didn't use a barrier there to begin with, perhaps to make this check
-as light-weight as possible. The uatomic_read has been added in c3a839c
-("libmultipath: cleanup tur locking").
-
-I'm still undecided if it's worth changing this code in order to
-reinstate some paths 1s earlier in certain sitautions.
-
-Thoughts?
-
-Martin
