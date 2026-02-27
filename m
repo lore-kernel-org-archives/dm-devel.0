@@ -1,54 +1,54 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ECB8B36C0BF
-	for <dm-devel@lists.linux.dev>; Fri, 27 Feb 2026 19:05:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 156C946AF25
+	for <dm-devel@lists.linux.dev>; Fri, 27 Feb 2026 19:52:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772219119; cv=none; b=r4cN8WIUWj9o1LIrbqJRrD/bJAgNfvxpXJYzYdQilZE6hyK7RApK3/gb6WLKU9yKV5QoqHt2NaKSY+/ww4FwEsbtWh3Kme+zpxIePXSurjczTJyggo/XuVLyspzVxLb5SUAk1gS92MKBBR0ynqdl3SzAS9Gso6T2x2uMnfPxd0Y=
+	t=1772221951; cv=none; b=Qxnt60Ke0T+UdBMvaZHb9X5vwFtH1J8fJTVeLNdvLggquopTVHvj3/4PUp6VehqCqQOGjwU53r9QiOBdnHgU5WNq3MrmbVIu0VapjGECP7mENVlMp98XiSbxa7J8oOKmbPqeETbAt8cGAIr7PnnDSEr+7RuglYfTLj5uIREHtnQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772219119; c=relaxed/simple;
-	bh=YjzBD2yv2GVDOfY/BKkn8IXk657SWzaiGqYjVTbICcA=;
+	s=arc-20240116; t=1772221951; c=relaxed/simple;
+	bh=AVjNWv52I/SShc+g8l5QzIxcmqI4KZIzz5YjHaqQqns=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=SENLn5N1pg4g39pr/tL9AEJQSyzwrDFc0d3lcmpbND1ZzDrsY9GPOGMab6o2aWQUTBGvknPEbZnpXML52BliRJSlaj+G4auP1gTBLfpt2cjNVwyn+/pZeTJQfEo0pn2T2oDXEYKLudB8CAeTe5bCBy1hBsq5N1iW6mwdNqjsqU4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F3vhuD1C; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type:Content-Disposition; b=fsFzjGt21+xxcxjzlEcmMpWPN3GmFZVqZZcRHjAljQcgNTLx1ux27kkmYUBFQ7F6syOUBfoyQYggVAweK/sLxQBVTBfeF4EDYgYMgan8fK2/CzHSKPtTQAtpcYmkhJfwNMqYN9pZtZt/4VbeH/WOstI7GxT3xX9U2jIvexYzPEE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fYb/hcWa; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F3vhuD1C"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fYb/hcWa"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772219116;
+	s=mimecast20190719; t=1772221945;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=mlsUkhGkLfHAu3CbQ0GtlZOIBXBxqT8Jxs7n/ibGimA=;
-	b=F3vhuD1CYzAsXWkj5YSi6jGa3R1WOGU1U7LfETSl5yGSCLWPNkt8WoqQFKcCTlBLCJwNjA
-	jjVfW4Avduh65mtCfxRQlr3O0KyB6Bgan5M74xQpiMSYUfaiDGxgdMfniy3WAB+dXEN66L
-	J3Ay6o0uc0orikWNbHPffmt4mhaqgb0=
+	bh=i9XwpDxs/qoFLn1Jvyqbmikgtgk6yGhzXhIV9M3DNKQ=;
+	b=fYb/hcWaUK5VducarmXvXRPd00jg3evRo4KqabMDXhjJEWOBQ0+8kzjLIPcdUy7PA+ZFyl
+	Of8fAGWwQ2ZXN6zPf95dgrQn4XM/JNA636nohBLCEF7RWoxlmbrrrBlG2ILrdkVGqwYVpC
+	NwSL6tPmsboqaWfiil8kTFFOATBcpmQ=
 Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-325-g8S7khIRMOiLV6tCmxm0Og-1; Fri,
- 27 Feb 2026 14:05:13 -0500
-X-MC-Unique: g8S7khIRMOiLV6tCmxm0Og-1
-X-Mimecast-MFC-AGG-ID: g8S7khIRMOiLV6tCmxm0Og_1772219111
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-690-AAfjTlalMvC76zMyXgTzMA-1; Fri,
+ 27 Feb 2026 14:52:21 -0500
+X-MC-Unique: AAfjTlalMvC76zMyXgTzMA-1
+X-Mimecast-MFC-AGG-ID: AAfjTlalMvC76zMyXgTzMA_1772221939
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 860361956061;
-	Fri, 27 Feb 2026 19:05:10 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C8E61956063;
+	Fri, 27 Feb 2026 19:52:19 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 87C7E1800666;
-	Fri, 27 Feb 2026 19:05:09 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 47D8B1800286;
+	Fri, 27 Feb 2026 19:52:18 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61RJ58qL1742192
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61RJqH8H1743483
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 27 Feb 2026 14:05:08 -0500
+	Fri, 27 Feb 2026 14:52:17 -0500
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61RJ58XE1742191;
-	Fri, 27 Feb 2026 14:05:08 -0500
-Date: Fri, 27 Feb 2026 14:05:08 -0500
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61RJqG1o1743482;
+	Fri, 27 Feb 2026 14:52:16 -0500
+Date: Fri, 27 Feb 2026 14:52:16 -0500
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: John Garry <john.g.garry@oracle.com>
 Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
@@ -57,113 +57,57 @@ Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
         linux-scsi@vger.kernel.org, michael.christie@oracle.com,
         snitzer@kernel.org, dm-devel@lists.linux.dev,
         linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 08/13] libmultipath: Add sysfs helpers
-Message-ID: <aaHq5EjVVYODGxjA@redhat.com>
+Subject: Re: [PATCH 11/13] libmultipath: Add support for block device IOCTL
+Message-ID: <aaH18HKCMdjuUhUh@redhat.com>
 References: <20260225153225.1031169-1-john.g.garry@oracle.com>
- <20260225153225.1031169-9-john.g.garry@oracle.com>
+ <20260225153225.1031169-12-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260225153225.1031169-9-john.g.garry@oracle.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: mIXSEVrg1HIFeEpt7vjlUchyxoVmdn6a5_Dzz7WjwOo_1772219111
+In-Reply-To: <20260225153225.1031169-12-john.g.garry@oracle.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-MFC-PROC-ID: 38gFNqWNdXvoDPKrDk7HACXDUCSbxy_eKs1fWRFz6pk_1772221939
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 
-On Wed, Feb 25, 2026 at 03:32:20PM +0000, John Garry wrote:
-> Add helpers for driver sysfs code for the following functionality:
-> - get/set iopolicy with mpath_iopolicy_store() and mpath_iopolicy_show()
-> - show device path per NUMA node
-> - "multipath" attribute group, equivalent to nvme_ns_mpath_attr_group
-> - device groups attribute array, similar to nvme_ns_attr_groups but not
->   containing NVMe members.
+On Wed, Feb 25, 2026 at 03:32:23PM +0000, John Garry wrote:
+> Add mpath_bdev_ioctl() as a multipath block device IOCTL handler. This
+> handler calls into driver mpath_head_template.ioctl handler.
 > 
-> Note that mpath_iopolicy_store() has a update callback to allow same
-> functionality as nvme_subsys_iopolicy_update() be run for clearing paths.
+> It is expected that the .ioctl handler will unlock the SRCU read lock,
+> as this is what NVMe requires - see nvme_ns_head_ctrl_ioctl(). As such,
+> export a handler to unlock, mpath_head_read_unlock().
+> 
+> The .compat_ioctl handler is given the standard handler.
 > 
 > Signed-off-by: John Garry <john.g.garry@oracle.com>
->
-> diff --git a/lib/multipath.c b/lib/multipath.c
-> index 1ce57b9b14d2e..c05b4d25ca223 100644
-> --- a/lib/multipath.c
-> +++ b/lib/multipath.c
-> @@ -745,6 +745,116 @@ void mpath_device_set_live(struct mpath_disk *mpath_disk,
->  }
->  EXPORT_SYMBOL_GPL(mpath_device_set_live);
->  
-> +static struct attribute dummy_attr = {
-> +	.name = "dummy",
-> +};
-> +
-> +static struct attribute *mpath_attrs[] = {
-> +	&dummy_attr,
-> +	NULL
-> +};
-> +
-> +static bool multipath_sysfs_group_visible(struct kobject *kobj)
-> +{
-> +	struct device *dev = container_of(kobj, struct device, kobj);
-> +	struct gendisk *disk = dev_to_disk(dev);
-> +
-> +	return is_mpath_head(disk);
-> +}
-> +
-> +static bool multipath_sysfs_attr_visible(struct kobject *kobj,
-> +		struct attribute *attr, int n)
-> +{
-> +	return false;
-> +}
-> +
-> +DEFINE_SYSFS_GROUP_VISIBLE(multipath_sysfs)
+> ---
+>  include/linux/multipath.h |  4 ++++
+>  lib/multipath.c           | 42 +++++++++++++++++++++++++++++++++++++++
+>  2 files changed, 46 insertions(+)
+> 
+> diff --git a/include/linux/multipath.h b/include/linux/multipath.h
+> index 3846ea8cfd319..40dda6a914c5f 100644
+> --- a/include/linux/multipath.h
+> +++ b/include/linux/multipath.h
+> @@ -72,6 +72,9 @@ struct mpath_head_template {
+>  	bool (*is_disabled)(struct mpath_device *);
+>  	bool (*is_optimized)(struct mpath_device *);
+>  	enum mpath_access_state (*get_access_state)(struct mpath_device *);
+> +	int (*bdev_ioctl)(struct block_device *bdev, struct mpath_device *,
+> +			blk_mode_t mode, unsigned int cmd, unsigned long arg,
+> +			int srcu_idx);
 
-nitpick: this could use DEFINE_SIMPLE_SYSFS_GROUP_VISIBLE instead.
+I don't know that this API is going to work out. SCSI persistent
+reservations need access to all the mpath_devices, not just one, and
+they are commonly handled via SG_IO ioctls. Unless you want to disallow
+SCSI persistent reservations via SG_IO, you need to be able to detect
+them, and handle them using the persistent reservation code with the
+mpath_head.
 
-> +
-> +const struct attribute_group mpath_attr_group = {
-> +	.name           = "multipath",
-> +	.attrs		= mpath_attrs,
-> +	.is_visible     = SYSFS_GROUP_VISIBLE(multipath_sysfs),
-> +};
-> +EXPORT_SYMBOL_GPL(mpath_attr_group);
-> +
-> +const struct attribute_group *mpath_device_groups[] = {
-> +	&mpath_attr_group,
-> +	NULL
-> +};
-> +EXPORT_SYMBOL_GPL(mpath_device_groups);
-> +
-> +ssize_t mpath_iopolicy_show(struct mpath_iopolicy *mpath_iopolicy, char *buf)
-> +{
-> +	return sysfs_emit(buf, "%s\n",
-> +		mpath_iopolicy_names[mpath_read_iopolicy(mpath_iopolicy)]);
-> +}
-> +EXPORT_SYMBOL_GPL(mpath_iopolicy_show);
-> +
-> +static void mpath_iopolicy_update(struct mpath_iopolicy *mpath_iopolicy,
-> +		int iopolicy, void (*update)(void *), void *data)
-> +{
-> +	int old_iopolicy = READ_ONCE(mpath_iopolicy->iopolicy);
-> +
-> +	if (old_iopolicy == iopolicy)
-> +		return;
-> +
-> +	WRITE_ONCE(mpath_iopolicy->iopolicy, iopolicy);
-> +
-> +	/*
-> +	 * iopolicy changes clear the mpath by design, which @update
-> +	 * must do.
-> +	 */
-> +	update(data);
-> +
-> +	pr_err("iopolicy changed from %s to %s\n",
-> +		mpath_iopolicy_names[old_iopolicy],
-> +		mpath_iopolicy_names[iopolicy]);
-
-I not sure this warrants a pr_err().
-
--Ben
+-Ben 
 
