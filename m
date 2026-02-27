@@ -1,148 +1,199 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2EDF25FA05
-	for <dm-devel@lists.linux.dev>; Fri, 27 Feb 2026 08:36:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE23736B043
+	for <dm-devel@lists.linux.dev>; Fri, 27 Feb 2026 18:12:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772181415; cv=none; b=mGfk5SsuhbcUMrkFumBGhtA2L9f+smmciXzlldJYBbrLnUgS6XcP9GCz9PkGRFsg7jCyQomzjdT8/BrimgaVw15TnyGrAh0r99B0+n8wPZBPC4QPadMDr9hyotcY1gZ0AuHxnm8aeZOhon5E1Yrgm7/Gesohuvqvww/TIli35d0=
+	t=1772215933; cv=none; b=mg4NenNIjFobxCQFjwEnBE7ggsY6YxzmKmXcnxGqZ6382D/IhQ/PVx3leS7CCD1qYiiJ/vDgCL6PB1k+XAJbRX7vxIn5CKuSi/FtK5+y+QM0JLnBqUM4+IfCEKLpELCh0Z/32QW5C4sVEEZDGAYF5L2r3GkMl0fPGEb/naEhK1c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772181415; c=relaxed/simple;
-	bh=dZjfB4sray2TsGcDivIWIeRpP8j6H1ey2Uz5GeHMO1s=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=TgWeqbrNBbEDkjQHF0q0QYOJ7t7I4ohs/uqRZoOY5Mysoe0fcHGAfkO2ER7P4fEQOdm3YQsa7c1UqSWmGNo7jTtCQukOuZh1etIqy2irNw7K6bwmVKE+SNWastaTBaMlKic0rG2EAEfa+uM+0Jz7ebgVgQLcutqXaQi7/SXbFI0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=s7NFdRrZ; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=LajQScQv; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1772215933; c=relaxed/simple;
+	bh=LhWoa3Gc15gL8xOlC3I0r2uKc6Y2oNYr1JgGUU8tc8Y=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=aRziO4n7SvS7rJv3t9bckXhJYX25EK8JdFnx1MgzwqR4+cB9KIaKvIX585LXTOh/waVaeJV7BOiEqCcARLFs1gu7HvacKCo3h17V6eULe4OrqD/hwGERa/hi3Bd9aOFZ6nrGNN4Nh+4ZXrIOTe34ucz6BwUuESB/vfNlbr4yK1M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Rc733B6p; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="s7NFdRrZ";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="LajQScQv"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id EA3C14D73D;
-	Fri, 27 Feb 2026 08:36:51 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1772181412; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Rc733B6p"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1772215930;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=gb3HTdedytHi7XLDFyzbPwwKzinG/zF0lcuSsAqdWYA=;
-	b=s7NFdRrZ6fcBLTnEskYavVbkhSdrI3p6trZY8u9WPGrzwTHz41R5rKcboVLk0LhwSVoNRF
-	G6WjgMYHkkanRjAXM9dRD7kp+vuQawD9Sd+Xb4t6YYdrFPUGUnVFm+dh5J4vRwJBjmvjk9
-	ih12/Zvq/+EQb/byS2nz3Gf7x60bd9Q=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1772181411; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=gb3HTdedytHi7XLDFyzbPwwKzinG/zF0lcuSsAqdWYA=;
-	b=LajQScQvCUmY0avM8+Y9eYeznxioBdqGgge4WBMqYGsH5dQJLaWLOPweRRvgYO2vks1WtM
-	4cORsvuqDbKWwn6GTKCSoLS3teWxsa48ywS0wkKHQkvX+d8tbNr6CnVe0HNNRxuvoqEy/n
-	a7qJU8HBO9UjKC/RfyIoJMkfKGc8ALA=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=iG5lt5XxO/hh9xVt2TbhtRpf4Oxa4xmbAazMvGovJ3Q=;
+	b=Rc733B6p6cz+tklQk0N+04GpY+nWV7VRoKWDGFmX8xe5CW5Akv17QPtRcbrgqFioZIInYy
+	JIvKWxZWslo2GLSPlC9+0WaVS/abk/cwPa2VeWwPubCf9fLo3y0jmnTZYy8/KC0bP01EoO
+	cMMjdaWLBzr8J6vGhvfv8vt26aa1wTk=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-562-omPVtsOgMy-QsqCfcc6GHw-1; Fri,
+ 27 Feb 2026 13:12:09 -0500
+X-MC-Unique: omPVtsOgMy-QsqCfcc6GHw-1
+X-Mimecast-MFC-AGG-ID: omPVtsOgMy-QsqCfcc6GHw_1772215927
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id CFBF43EA69;
-	Fri, 27 Feb 2026 08:36:51 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id E3aaMaNXoWl+ZAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 27 Feb 2026 08:36:51 +0000
-Message-ID: <2ae78a2af1cc187a0cee9f0660e31fbd7cc79cd9.camel@suse.com>
-Subject: Re: [PATCH 0/1] checkers: fix race in async TUR and ALUA result
- collection
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
-Date: Fri, 27 Feb 2026 09:36:51 +0100
-In-Reply-To: <aaCVelI_vQZEBihM@redhat.com>
-References: <20260224010058.35337-1-brian@purestorage.com>
-	 <d9355e67dc64b7af940f6b8e6845d0f37565dd34.camel@suse.com>
-	 <aZ9ec_ce8dCCBzR0@redhat.com>
-	 <d223eb7cb4088d672b0312d929fa7d2c0e723875.camel@suse.com>
-	 <aaCVelI_vQZEBihM@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.3 
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EFC28180025E;
+	Fri, 27 Feb 2026 18:12:05 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3FC081800286;
+	Fri, 27 Feb 2026 18:12:04 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61RIC3Le1740709
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 27 Feb 2026 13:12:03 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61RIC2001740708;
+	Fri, 27 Feb 2026 13:12:02 -0500
+Date: Fri, 27 Feb 2026 13:12:02 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Keith Busch <kbusch@kernel.org>
+Cc: John Garry <john.g.garry@oracle.com>, hch@lst.de, sagi@grimberg.me,
+        axboe@fb.com, martin.petersen@oracle.com,
+        james.bottomley@hansenpartnership.com, hare@suse.com,
+        jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 09/13] libmultipath: Add PR support
+Message-ID: <aaHecneNg9Q8EtiS@redhat.com>
+References: <20260225153225.1031169-1-john.g.garry@oracle.com>
+ <20260225153225.1031169-10-john.g.garry@oracle.com>
+ <aZ8Z7A4uOFfOTDeY@kbusch-mbp>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[3];
-	FROM_EQ_ENVFROM(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid]
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
+In-Reply-To: <aZ8Z7A4uOFfOTDeY@kbusch-mbp>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-MFC-PROC-ID: 4dXPecun2hLtHcHz3K00j8s18ZCKhB2Hpy1XZRoqOqU_1772215927
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Thu, 2026-02-26 at 13:48 -0500, Benjamin Marzinski wrote:
-> On Wed, Feb 25, 2026 at 11:00:44PM +0100, Martin Wilck wrote:
-> >=20
-> > I'm still undecided if it's worth changing this code in order to
-> > reinstate some paths 1s earlier in certain sitautions.
-> >=20
-> > Thoughts?
->=20
-> I don't see any problems with this. But I also didn't see any real
-> problems with Brian's version (although this version does remove most
-> of
-> my theoretic issues. Like I said before. If we hang in the condlog,
-> we've got bigger problems than a stray checker thread). If we do
-> this,
-> we should probably document the uatomic_add_return() call,
+On Wed, Feb 25, 2026 at 08:49:00AM -0700, Keith Busch wrote:
+> On Wed, Feb 25, 2026 at 03:32:21PM +0000, John Garry wrote:
+> > +static int mpath_pr_register(struct block_device *bdev, u64 old_key,
+> > +			u64 new_key, unsigned int flags)
+> > +{
+> > +	struct mpath_disk *mpath_disk = dev_get_drvdata(&bdev->bd_device);
+> > +	struct mpath_head *mpath_head = mpath_disk->mpath_head;
+> > +	struct mpath_device *mpath_device;
+> > +	int srcu_idx, ret = -EWOULDBLOCK;
+> > +
+> > +	srcu_idx = srcu_read_lock(&mpath_head->srcu);
+> > +	mpath_device = mpath_find_path(mpath_head);
+> > +	if (mpath_device)
+> > +		ret = mpath_head->mpdt->pr_ops->pr_register(mpath_device,
+> > +				old_key, new_key, flags);
+> > +	srcu_read_unlock(&mpath_head->srcu, srcu_idx);
+> 
+> Instead of having the lower layer define new mp template functions, why
+> not use the existing pr_ops from mpath_device->disk->fops->pr_ops?
 
-Of course, this was not an official patch submission, just an idea how
-we might improve this code. It's not exactly the same thing; Brian's
-patch meant simply ignoring ct->running, while mine would make the ct-
->running check reliable, albeit with changed semantics.
+I don't think that's the right answer. The regular scsi persistent
+reservation functions simply won't work on a multipath device. Even just
+a simple reservation fails.
 
->  or just use
-> cmm_smp_mb() directly. But I still not sure what we get out of this,
-> other than a very slight chance to finish the checker a second
-> sooner.
+For example (with /dev/sda being multipath device 0):
+# echo round-robin > /sys/class/scsi_mpath_device/0/iopolicy
+# blkpr -c register -k 0x1 /dev/sda
+# blkpr -c reserve -k 0x1 -t exclusive-access-reg-only /dev/sda
+# dd if=/dev/sda of=/dev/null iflag=direct count=100
+dd: error reading '/dev/sda': Invalid exchange
+1+0 records in
+1+0 records out
+512 bytes copied, 0.00871312 s, 58.8 kB/s
 
-Yes. But it's also a fact that the simple atomic_read() test in the
-current code isn't reliable. It can well return true when ct->running
-has already been set to false. I guess the implementation tends to be
-as light-weight as possible, avoiding a memory barrier (or taking a
-lock with the side effect of a memory barrier) in the "fast path". That
-comes with the price that we may miss an already finished checker
-thread.
+Here are the kernel messages:
+[ 3494.660401] sd 7:0:1:0: reservation conflict
+[ 3494.661802] sd 7:0:1:0: [sda:1] tag#768 FAILED Result: hostbyte=DID_OK driverbyte=DRIVER_OK cmd_age=0s
+[ 3494.664848] sd 7:0:1:0: [sda:1] tag#768 CDB: Read(10) 28 00 00 00 00 01 00 00 01 00
+[ 3494.667092] reservation conflict error, dev sda:1, sector 1 op 0x0:(READ) flags 0x2800800 phys_seg 1 prio class 2
 
-> don't think that really makes a difference, but I don't really see
-> much
-> risk in the patch either, so I guess I'm fine either way.
+If you don't have a multipathed scsi device to try this on, you can run:
 
-If the risk was truly zero, I would agree. But experience tells that
-it's very easy to get these things wrong for corner cases, and I tend
-to want to avoid even a minimal risk just for "very slight chance to
-finish the checker a second sooner", as you've expressed it very
-nicely.
+targetcli <<EOF
+/backstores/ramdisk create mptest 1G
+/loopback create naa.5001401111111111
+/loopback create naa.5001402222222222
+/loopback create naa.5001403333333333
+/loopback create naa.5001404444444444
+/loopback/naa.5001401111111111/luns create /backstores/ramdisk/mptest
+/loopback/naa.5001402222222222/luns create /backstores/ramdisk/mptest
+/loopback/naa.5001403333333333/luns create /backstores/ramdisk/mptest
+/loopback/naa.5001404444444444/luns create /backstores/ramdisk/mptest
+EOF
 
-@Brian, feel free to try to convince us otherwise. It might be helpful
-if we understood your use case better.
+to create one.
 
-Martin
+Handling scsi Persistent Reservations on a multipath device is painful.
+Here is a non-exhaustive list of the problems with trying to make a
+multipath device act like a single scsi device for persistent
+reservation purposes:
+
+You need to register the key on all the I_T Nexuses. You can't just pick
+a single path. Otherwise, when you set up the reservation, you will only
+be able to do IO on one of the paths. That's what happened above.
+
+If an path is down when you do the resevation, you might not be able to
+register the key on that path. You certainly can't do it directly.
+Using the All Target Ports bit (assuming the device supports it) could
+let you extend a reservation from one target port to others, assuming
+your path isn't down because of connection issue on the host side. But
+in general, you have to be able to handle the case where you can't
+register (or unregister) a key on your failed paths. If you don't do
+that (un)registration when the path comes up, before it can get seleted
+for handling IO, you will fail when accessing a path you should be
+allowed allowed to access, or succeed in accessing a path that you are
+should not be allowed to access.
+
+The same is true when new paths are discovered. You need to register
+them.
+
+Except that a preempt can come and remove your registration at any time.
+You can't register the new (or newly active) path if the key has been
+preempted, and this preemption can happen at any moment, even after you
+check if the other paths are still registered. If this isn't handled
+correctly, paths can access storage that they should not be allowed to
+access.
+
+Changing the reservation type (for instance from
+exclusive-access-reg-only to write-exclusive-reg-only) in scsi devices
+is done by preempting the existing reservation. This will remove the
+registered keys from every path except the one issuing the command. The
+key needs to be reregistered on all the other paths again. If any IO
+goes to these paths before they are reregistered, it will fail with a
+reservation conflict, so IO needs to be suspended during this time.
+
+The path that is holding the reservation might be down. In this case,
+you aren't able to release the reservation from that path. The only way
+I figured out to handle this in dm-mpath was for the device to preempt
+it's own key, to move the reservation to a working path. This causes the
+same issues as preempting key to change the reservation type, where you
+need to reregister all the paths with IO suspended.
+
+An actual preemption can come in from another machine while you are
+doing this. In that case, you must not reregister the paths, and if you
+already started, you must unregister them.
+
+I can probably come up with more issues.
+
+I think the best course of action for now is to just fail persistent
+reservations as non-supported for scsi devices. IMHO Making them work
+correctly (where mulitpath device IO won't fail when it should succeed,
+and succeed when it should fail with a reservation conflict) dwarfs the
+amount of work necessary to support ALUA.
+
+dm-mpath previously did a pretty good job handling Persistent
+Reservations. But recently it became much better, because it become very
+clear that pretty good is not good enough for what people what to do
+with Persistent Reservations and multipath devices.
+
+-Ben
+
