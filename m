@@ -1,37 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81EF229D270;
-	Sun,  1 Mar 2026 01:32:30 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85C9913B58A;
+	Sun,  1 Mar 2026 01:32:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772328750; cv=none; b=A30gExHCK3kCQCuklYtKjF3QKFsbRf2Afyry3hc4OWrNqFk6PQG0XGTMyWhx1Yzc7RFfQ+e7Em1VRSKoFEt5Q3e/MTnDTWl+zAFgdWiBv3lhuRfjM4aHv2VB5Sxo2NMBX+r3N/DggNS4R1wWy/LaBvvQ7F9xe8NgkZrQVWRql3I=
+	t=1772328758; cv=none; b=mTyB/ZxcCMwP+uIQ0fM43A4OqKnTdZMG0Qa8kh25bzbmScRvoWxevnbLP7roVe9lgWq58EFAohC96h/1maUDZQDNRjAo7jpCgxvW4OjTr569AEftOW9sMMHgvQF3yEfbgee4sLbaq0oXD9Ob9f4dywqsa4Na/BhheRaWGKnHOHI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772328750; c=relaxed/simple;
-	bh=e7Zoi+CR3Z3G2lEw20DOPseLJyZXSkuFXvTRS5S8FFA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=gaYWSmrDouqlxlzZuLNaQ8vGVQgAmlM+dsT/jlIJzH6F4vPOCqnX0R23/Na0sR2tpdjQYvJrCdBg6b4xzZC6R7XBcXkuzaNjAfKN6QldI2+x2NUR/9HnDZ4PpRCxkxO8JKityh4ui7V3bVYEKof20uwap+4TLyC3H0O48VInSrU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=UXCKIdmE; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772328758; c=relaxed/simple;
+	bh=KH3qxqzi9XQ9F+p84tRvdsjBiT1ixpg/UFT+2Sl7yOI=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=D2owO0C3OQtSrK/kSaRArzh+V0XJTq9DfIkt+dHf+gCBQ+gTWUng7v1gqBU5Au/k5gQlwcKtjbCd0VbaNujBklaAcppuBQqtOz/SrwrrSxMFqAMMGahIC4CSZTLuGSWGiQbfqX0S2DSNN56pmnuDFOU/ViUSh2O6ohxjBnhIFFE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=EDRWcd5S; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="UXCKIdmE"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 04187C19421;
-	Sun,  1 Mar 2026 01:32:29 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="EDRWcd5S"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6FFDFC19421;
+	Sun,  1 Mar 2026 01:32:37 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772328750;
-	bh=e7Zoi+CR3Z3G2lEw20DOPseLJyZXSkuFXvTRS5S8FFA=;
+	s=k20201202; t=1772328758;
+	bh=KH3qxqzi9XQ9F+p84tRvdsjBiT1ixpg/UFT+2Sl7yOI=;
 	h=From:To:Cc:Subject:Date:From;
-	b=UXCKIdmExFTqtxEB0QDqdwBM/58EGAMpBKsxbKUkXCPF6j92cycrFimHxPf9tTSBQ
-	 D5F2rMntJLR1sp0llm2Y1NGQh0YIRFioBzdJbRdTK5JU97U7e0z4PSB8f8ERSMeYKU
-	 i9N800D6CLDsoKYgQLlWSylH8yW+J7GckFANDZaAMp+4mcpRiB+Dbti2kxl+iwQmau
-	 n60qcZmxZF/AjNVSPhZfEypeWjW/hT3dOw42DU9stBsnPNMI7FluHRexVxBi51lxPP
-	 F7KGN/V5N/kgOvOymD2SKraCj2B3BlMPPuSi9OToUBqlnHMnZ2XuhpIksnxIP25qaj
-	 pdsc+RMAwhS/g==
+	b=EDRWcd5Sq3Mq9yBxFoSg76a+rtsoXmsS6l73pJ80Xi3TtGl2gyQGpgYVzR3qdjh5y
+	 clCtgVrI8dmkkwwLCv1sbs+fA1Yfcmciat0TkO0BX+Y7RWFZiasSKc/6qC+0Bu8H4P
+	 y5UXvaC/uT6tOarA9sQx4uEAOPwpx6gabpWvzGYpLhE99janrzR1I35fDOFk41TQfS
+	 f4Cm2l9JkntjqlPrbopEkLrawXmH74b6j5/qg+LkU5/ebRK6IE7m3hKQdKRcTq9/L/
+	 95sRXruasWgf3vfqPGXwJgvAQOrOU32Djic2IKZrPjn32heHYSGXJlzDFD3DGM+xlf
+	 J2UQLYNow1PZA==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm-integrity: fix a typo in the code for write/discard race" failed to apply to 6.6-stable tree
-Date: Sat, 28 Feb 2026 20:32:28 -0500
-Message-ID: <20260301013228.1691438-1-sashal@kernel.org>
+	mliang@purestorage.com
+Cc: Mohamed Khalfella <mkhalfella@purestorage.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev
+Subject: FAILED: Patch "dm: clear cloned request bio pointer when last clone bio completes" failed to apply to 6.6-stable tree
+Date: Sat, 28 Feb 2026 20:32:35 -0500
+Message-ID: <20260301013236.1691598-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -53,40 +55,78 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From c698b7f417801fcd79f0dc844250b3361d38e6b8 Mon Sep 17 00:00:00 2001
-From: Mikulas Patocka <mpatocka@redhat.com>
-Date: Mon, 12 Jan 2026 21:15:27 +0100
-Subject: [PATCH] dm-integrity: fix a typo in the code for write/discard race
+From fb8a6c18fb9a6561f7a15b58b272442b77a242dd Mon Sep 17 00:00:00 2001
+From: Michael Liang <mliang@purestorage.com>
+Date: Fri, 9 Jan 2026 15:52:54 -0700
+Subject: [PATCH] dm: clear cloned request bio pointer when last clone bio
+ completes
 
-If we send a write followed by a discard, it may be possible that the
-discarded data end up being overwritten by the previous write from the
-journal. The code tries to prevent that, but there was a typo in this
-logic that made it not being activated as it should be.
+Stale rq->bio values have been observed to cause double-initialization of
+cloned bios in request-based device-mapper targets, leading to
+use-after-free and double-free scenarios.
 
-Note that if we end up here the second time (when discard_retried is
-true), it means that the write bio is actually racing with the discard
-bio, and in this situation it is not specified which of them should win.
+One such case occurs when using dm-multipath on top of a PCIe NVMe
+namespace, where cloned request bios are freed during
+blk_complete_request(), but rq->bio is left intact. Subsequent clone
+teardown then attempts to free the same bios again via
+blk_rq_unprep_clone().
 
-Cc: stable@vger.kernel.org
-Fixes: 31843edab7cb ("dm integrity: improve discard in journal mode")
+The resulting double-free path looks like:
+
+  nvme_pci_complete_batch()
+    nvme_complete_batch()
+      blk_mq_end_request_batch()
+        blk_complete_request()        // called on a DM clone request
+          bio_endio()                 // first free of all clone bios
+          ...
+        rq->end_io()                  // end_clone_request()
+          dm_complete_request(tio->orig)
+            dm_softirq_done()
+              dm_done()
+                dm_end_request()
+                  blk_rq_unprep_clone()  // second free of clone bios
+
+Fix this by clearing the clone request's bio pointer when the last cloned
+bio completes, ensuring that later teardown paths do not attempt to free
+already-released bios.
+
+Signed-off-by: Michael Liang <mliang@purestorage.com>
+Reviewed-by: Mohamed Khalfella <mkhalfella@purestorage.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-integrity.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-rq.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 170bf67a2edd9..79d60495454a5 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -2411,7 +2411,7 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 5e08546696145..923252fb57aec 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -109,14 +109,21 @@ static void end_clone_bio(struct bio *clone)
+ 	 */
+ 	tio->completed += nr_bytes;
  
- 		new_pos = find_journal_node(ic, dio->range.logical_sector, &next_sector);
- 		if (unlikely(new_pos != NOT_FOUND) ||
--		    unlikely(next_sector < dio->range.logical_sector - dio->range.n_sectors)) {
-+		    unlikely(next_sector < dio->range.logical_sector + dio->range.n_sectors)) {
- 			remove_range_unlocked(ic, &dio->range);
- 			spin_unlock_irq(&ic->endio_wait.lock);
- 			queue_work(ic->commit_wq, &ic->commit_work);
++	if (!is_last)
++		return;
++	/*
++	 * At this moment we know this is the last bio of the cloned request,
++	 * and all cloned bios have been released, so reset the clone request's
++	 * bio pointer to avoid double free.
++	 */
++	tio->clone->bio = NULL;
++ exit:
+ 	/*
+ 	 * Update the original request.
+ 	 * Do not use blk_mq_end_request() here, because it may complete
+ 	 * the original request before the clone, and break the ordering.
+ 	 */
+-	if (is_last)
+- exit:
+-		blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
++	blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
+ }
+ 
+ static struct dm_rq_target_io *tio_from_request(struct request *rq)
 -- 
 2.51.0
 
