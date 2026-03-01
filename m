@@ -1,37 +1,38 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 56FF62C0294;
-	Sun,  1 Mar 2026 01:41:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 759AF1A3165;
+	Sun,  1 Mar 2026 01:42:32 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772329306; cv=none; b=FzDPzhkrvZc8B9VL7iI0t+BaQSoeKLmiCdX4QjztZKN855Ddv/xJ/OlV0tv/mujcIgklnU8sSJNCSYHZGWu3IyCQOOslMOV6sXR/POM62exp0zlqbiqhiPZWQHTKE6jt3/9mfvCesnohMmyU1VIG/qUGhQ509/oGv5odz+nDfCA=
+	t=1772329352; cv=none; b=QgDBjZth7f89qwZ1cjppi8HpEEPv7JdNp9FLJgL8y6qfmbFFG3bPuJpti6QjXgV+Q1pH22pdfaB4c9fO4fd2uXfM0WBhNFzE2JhUYTW5p9jxTeQuliamCkPTBCZyO0FzkjWQwYN+phg80pxvc3I5pQzqRvkW4iYt74JS77Tqt4U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772329306; c=relaxed/simple;
-	bh=CIIr3NGEKkFaMC9e9pMh/KuEXB73QvfJAuEq6KNACa4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=qnmhPIv+l60fjIq/yWaN3VL0QLHekJgYPhju/Mo9P+s0b5Ciczyzl2AElzQEX3X1ETTwGIOrX2L7gQ2C/aBKCK8eJdOCRWrTn9Qhejwmih4I5vJi8twbOAt6CAuIgIUKvjRucmh++f9yjiLCHGLgDaMsF5blAj28wt4hANkrGAA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LOsTHtfn; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772329352; c=relaxed/simple;
+	bh=KAk+Aca2vz9KajuHbmT9nUR3+Ea6uiLegGfRQp79oPc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=abQxsRHU291o/iqvuBeeyBDWNe7nLaRkweHKjoUXi8AHDwB/gggXMUb2l9JbHtw8H73hyaiOIkOjtraVSLU1NuiWXbETLETqmE+3c5WF9izNwJYe5ovXtolRUcLDaKxshFXDvClzIfu1xHN3DacO5UGai1iqcyp7qElPFMYX3Ps=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Omb4JloW; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LOsTHtfn"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id CB713C19421;
-	Sun,  1 Mar 2026 01:41:45 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Omb4JloW"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DE2CAC19421;
+	Sun,  1 Mar 2026 01:42:31 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772329306;
-	bh=CIIr3NGEKkFaMC9e9pMh/KuEXB73QvfJAuEq6KNACa4=;
+	s=k20201202; t=1772329352;
+	bh=KAk+Aca2vz9KajuHbmT9nUR3+Ea6uiLegGfRQp79oPc=;
 	h=From:To:Cc:Subject:Date:From;
-	b=LOsTHtfndjt9qBC3ZEFAHvNyFFX8GFdAIYOQ3UBEKTlh+q1/DjeTgQuiO2CUO+V0q
-	 DC5uFDK0Hsyee44rFvP7Yh9sx14yYV7JTDtfTbxpSobw75K/7NqN+StYmsN+0g1mnG
-	 utytV8ZkqoTi4zAuq2imGXvK9LocdAefp+a283eyuy+Z89Zl5ppHKJkeWkTQ2dW54r
-	 gBIVU4UtB7JBcgLgmyJifbKCBunS+GofijBiciP4qIYSVROjKLUacJ+TGPu3YCcyuo
-	 DITZt+MhCgVnIikreW4VK0W/Q0NfDLTvDNe2FzAWRDwE7HnvaTnGeBJEHeInNtrDPb
-	 tSPAJcPL+NPSQ==
+	b=Omb4JloW1VFIVLsDBW8FIoKOExlMhMvlqBNYWHiX/WCL/cMFHMYsPBCG4Ym8VK9Up
+	 rE9alPEpWz1nmW7MgKkBdCpkqzKBDklx3IbFSwx8V5msMP4GA5EA4GtEcbiZk8eBfp
+	 aXtipnDCZ+U+2iOUV9koOW4J8MtMi6Tq2/WnqviWjaHXtXxHAPJ35y78F7tGjSS6EF
+	 wCy3jkYYkLovS6Mllyw2Td7O6bWUBjg9QqNpilB01k5SKJNIBERi4c5sJjksUEew3S
+	 tj7v6o/4oESLuPVua6dg8FjGmLbk83WiDzIhIsNbIx35SKs9ALsWKDtMuacivQdctB
+	 X+2x5peBeVEHA==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm-integrity: fix a typo in the code for write/discard race" failed to apply to 6.1-stable tree
-Date: Sat, 28 Feb 2026 20:41:44 -0500
-Message-ID: <20260301014144.1703446-1-sashal@kernel.org>
+	kernel@mattwhitlock.name
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev
+Subject: FAILED: Patch "dm-unstripe: fix mapping bug when there are multiple targets in a table" failed to apply to 6.1-stable tree
+Date: Sat, 28 Feb 2026 20:42:30 -0500
+Message-ID: <20260301014230.1704377-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -53,40 +54,57 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From c698b7f417801fcd79f0dc844250b3361d38e6b8 Mon Sep 17 00:00:00 2001
-From: Mikulas Patocka <mpatocka@redhat.com>
-Date: Mon, 12 Jan 2026 21:15:27 +0100
-Subject: [PATCH] dm-integrity: fix a typo in the code for write/discard race
+From 83c10e8dd43628d0bf86486616556cd749a3c310 Mon Sep 17 00:00:00 2001
+From: Matt Whitlock <kernel@mattwhitlock.name>
+Date: Sun, 18 Jan 2026 13:36:15 -0500
+Subject: [PATCH] dm-unstripe: fix mapping bug when there are multiple targets
+ in a table
 
-If we send a write followed by a discard, it may be possible that the
-discarded data end up being overwritten by the previous write from the
-journal. The code tries to prevent that, but there was a typo in this
-logic that made it not being activated as it should be.
+The "unstriped" device-mapper target incorrectly calculates the sector
+offset on the mapped device when the target's origin is not zero.
 
-Note that if we end up here the second time (when discard_retried is
-true), it means that the write bio is actually racing with the discard
-bio, and in this situation it is not specified which of them should win.
+Take for example this hypothetical concatenation of the members of a
+two-disk RAID0:
 
-Cc: stable@vger.kernel.org
-Fixes: 31843edab7cb ("dm integrity: improve discard in journal mode")
+linearized:       0 2097152 unstriped 2 128 0 /dev/md/raid0 0
+linearized: 2097152 2097152 unstriped 2 128 1 /dev/md/raid0 0
+
+The intent in this example is to create a single device named
+/dev/mapper/linearized that comprises all of the chunks of the first disk
+of the RAID0 set, followed by all of the chunks of the second disk of the
+RAID0 set.
+
+This fails because dm-unstripe.c's map_to_core function does its
+computations based on the sector number within the mapper device rather
+than the sector number within the target. The bug turns invisible when
+the target's origin is at sector zero of the mapper device, as is the
+common case. In the example above, however, what happens is that the
+first half of the mapper device gets mapped correctly to the first disk
+of the RAID0, but the second half of the mapper device gets mapped past
+the end of the RAID0 device, and accesses to any of those sectors return
+errors.
+
+Signed-off-by: Matt Whitlock <kernel@mattwhitlock.name>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+Fixes: 18a5bf270532 ("dm: add unstriped target")
 ---
- drivers/md/dm-integrity.c | 2 +-
+ drivers/md/dm-unstripe.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 170bf67a2edd9..79d60495454a5 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -2411,7 +2411,7 @@ static void dm_integrity_map_continue(struct dm_integrity_io *dio, bool from_map
+diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+index e8a9432057dce..17be483595642 100644
+--- a/drivers/md/dm-unstripe.c
++++ b/drivers/md/dm-unstripe.c
+@@ -117,7 +117,7 @@ static void unstripe_dtr(struct dm_target *ti)
+ static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
+ {
+ 	struct unstripe_c *uc = ti->private;
+-	sector_t sector = bio->bi_iter.bi_sector;
++	sector_t sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
+ 	sector_t tmp_sector = sector;
  
- 		new_pos = find_journal_node(ic, dio->range.logical_sector, &next_sector);
- 		if (unlikely(new_pos != NOT_FOUND) ||
--		    unlikely(next_sector < dio->range.logical_sector - dio->range.n_sectors)) {
-+		    unlikely(next_sector < dio->range.logical_sector + dio->range.n_sectors)) {
- 			remove_range_unlocked(ic, &dio->range);
- 			spin_unlock_irq(&ic->endio_wait.lock);
- 			queue_work(ic->commit_wq, &ic->commit_work);
+ 	/* Shift us up to the right "row" on the stripe */
 -- 
 2.51.0
 
