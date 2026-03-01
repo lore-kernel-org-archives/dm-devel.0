@@ -1,39 +1,38 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 637FF19CD19;
-	Sun,  1 Mar 2026 02:00:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEE642673AA;
+	Sun,  1 Mar 2026 02:00:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772330417; cv=none; b=KkqbEWjNHur63HsZNVriOlM0Muu9d/+pRKMIG5XdEh3exJwwH2sBmZl4gId1xIzg64HXoMtOT304k7LouUxosqFGuA65We7xO6KUmSBiqpoauYScRX7QY/VTN30BsZerpcOfqbN6CcCYY0zDuL71k7zqwmatqwF092IJzWOmpkQ=
+	t=1772330453; cv=none; b=mUdcHgz9MdObDsKDkyRP9kWBNt7iSGQw9uuQhnrt1jCZ0jjeGZrW8d+PzSabL3Wva2BTUF4ilan38TAVlIaZHdz+pgMeK6QeMiPlVNiHkD/FDSQxIn8Oiit7c02iSKVvv6nU9AxMF+NtnC89fNaJRaZGok6SJ0Jm4Zph150jBnM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772330417; c=relaxed/simple;
-	bh=CAqfdvGTsAeA/zXlRzNkFlP0fHkN5zOVayou3z5MjIg=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YSkAdi7/SDT/UAXQjw5PM4Tsx4mfxEWzfxFXn1k083U6Zgm8TCi47hRqR90CwqYinrcnecrZteVcC0vzouTn7zkXuXRA91TBXeoKbNMp1mDs9YUJN5TAJ609g59GGFncDGck4VK0SkGDySUAhFO1TCGO0SsuNhTRELpFtFjJTqs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=l9ptrlGk; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772330453; c=relaxed/simple;
+	bh=sRiAbVZEtucVV/FCQuNlZZ+or8oZjZ9TM8ZA5WygZqc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=p29F6kasNMszOJG06J6DrsSRZbPBmfIOOZtXDqAd/IrA4nXT/X8UAen+2fCBDqxvyQUcUncY825gZSUY3/G7qhwTOzHxLJUOITgRyGxfPZxWTXj/3le+sQfafdqbAQpk0xdawNOi0wCT959TlxlNxOm3kNesNEhNattVGSVADl4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hyg6uPX4; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="l9ptrlGk"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AC865C19421;
-	Sun,  1 Mar 2026 02:00:16 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hyg6uPX4"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 16E1AC19421;
+	Sun,  1 Mar 2026 02:00:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772330417;
-	bh=CAqfdvGTsAeA/zXlRzNkFlP0fHkN5zOVayou3z5MjIg=;
+	s=k20201202; t=1772330453;
+	bh=sRiAbVZEtucVV/FCQuNlZZ+or8oZjZ9TM8ZA5WygZqc=;
 	h=From:To:Cc:Subject:Date:From;
-	b=l9ptrlGkPTzuw1bbM9jdZre+93IJofTc9wvwRl9r18QZ5gwclUAYmRG2dZt7VOUj9
-	 O642U2kPAXE104cTujEtC0FxzBbi2rtixYfuM5iAlsshhyVOaYBGZ0rj7d4AIjXzPx
-	 7yZmqm7woMe3jwjtYZXiyFcOd/G8/445hKrR9JbcPLjJiDQsQQLqzXJxBJUR341FhV
-	 zf/qmB5z5D1gj2cDr+gGV3wWWbKZZ0jV40oBNtw/3ajyytY7iMJN+r5wi/KXjxldmy
-	 bbcnzst2CplBIEXRkP7rp48sJtkJuIa7rdbiFBv/tuVJQZsjTfrVIGzumjJcguK26Y
-	 4wQBwKp1aFyuQ==
+	b=hyg6uPX4GWzEKsR32UzGFtZ+mWeGpFmtyp+QpbFJ8e+2h4vSGTm5JeLmSf0PEEngq
+	 afHjyuVC0Yahd3grN0evAl/pS22Af+IobYR+sruDRoYE2uNGCr66r1BFgaxY38x8q1
+	 NPRRhp4Et/eUhXjIBkdi3oL5gdGCjSHlTOqwElWJyDyPMLwdXiGWuCAn86HyOwlrxs
+	 6EdJ6052dSDP2T1OhQwOT34R0xTA0pTY5hTcgcOrDHU1ATf0lQzN8ppqn105P6iE6q
+	 2iINvcMGeei8qFPsENBmHmw2JX5Y99zIVqaFQbfeuegVJhxAO+Nt2FxufpCaH3hyCn
+	 3Z8A1pL4WA8oQ==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	mliang@purestorage.com
-Cc: Mohamed Khalfella <mkhalfella@purestorage.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
+	mpatocka@redhat.com
+Cc: Ondrej Kozina <okozina@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm: clear cloned request bio pointer when last clone bio completes" failed to apply to 5.10-stable tree
-Date: Sat, 28 Feb 2026 21:00:15 -0500
-Message-ID: <20260301020015.1726261-1-sashal@kernel.org>
+Subject: FAILED: Patch "dm-integrity: fix recalculation in bitmap mode" failed to apply to 5.10-stable tree
+Date: Sat, 28 Feb 2026 21:00:51 -0500
+Message-ID: <20260301020051.1727770-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -55,78 +54,69 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From fb8a6c18fb9a6561f7a15b58b272442b77a242dd Mon Sep 17 00:00:00 2001
-From: Michael Liang <mliang@purestorage.com>
-Date: Fri, 9 Jan 2026 15:52:54 -0700
-Subject: [PATCH] dm: clear cloned request bio pointer when last clone bio
- completes
+From 118ba36e446c01e3cd34b3eedabf1d9436525e1d Mon Sep 17 00:00:00 2001
+From: Mikulas Patocka <mpatocka@redhat.com>
+Date: Mon, 19 Jan 2026 15:06:02 +0100
+Subject: [PATCH] dm-integrity: fix recalculation in bitmap mode
 
-Stale rq->bio values have been observed to cause double-initialization of
-cloned bios in request-based device-mapper targets, leading to
-use-after-free and double-free scenarios.
+There's a logic quirk in the handling of suspend in the bitmap mode:
 
-One such case occurs when using dm-multipath on top of a PCIe NVMe
-namespace, where cloned request bios are freed during
-blk_complete_request(), but rq->bio is left intact. Subsequent clone
-teardown then attempts to free the same bios again via
-blk_rq_unprep_clone().
+This is the sequence of calls if we are reloading a dm-integrity table:
+* dm_integrity_ctr reads a superblock with the flag SB_FLAG_DIRTY_BITMAP
+  set.
+* dm_integrity_postsuspend initializes a journal and clears the flag
+  SB_FLAG_DIRTY_BITMAP.
+* dm_integrity_resume sees the superblock with SB_FLAG_DIRTY_BITMAP set -
+  thus it interprets the journal as if it were a bitmap.
 
-The resulting double-free path looks like:
+This quirk causes recalculation problem if the user increases the size of
+the device in the bitmap mode.
 
-  nvme_pci_complete_batch()
-    nvme_complete_batch()
-      blk_mq_end_request_batch()
-        blk_complete_request()        // called on a DM clone request
-          bio_endio()                 // first free of all clone bios
-          ...
-        rq->end_io()                  // end_clone_request()
-          dm_complete_request(tio->orig)
-            dm_softirq_done()
-              dm_done()
-                dm_end_request()
-                  blk_rq_unprep_clone()  // second free of clone bios
+Fix this by reading a fresh copy on the superblock in
+dm_integrity_resume. This commit also fixes another logic quirk - the
+branch that sets bitmap bits if the device was extended should only be
+executed if the flag SB_FLAG_DIRTY_BITMAP is set.
 
-Fix this by clearing the clone request's bio pointer when the last cloned
-bio completes, ensuring that later teardown paths do not attempt to free
-already-released bios.
-
-Signed-off-by: Michael Liang <mliang@purestorage.com>
-Reviewed-by: Mohamed Khalfella <mkhalfella@purestorage.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Tested-by: Ondrej Kozina <okozina@redhat.com>
+Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
 Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-rq.c | 13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+ drivers/md/dm-integrity.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
-index 5e08546696145..923252fb57aec 100644
---- a/drivers/md/dm-rq.c
-+++ b/drivers/md/dm-rq.c
-@@ -109,14 +109,21 @@ static void end_clone_bio(struct bio *clone)
- 	 */
- 	tio->completed += nr_bytes;
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 380527f43b2a1..a9c0157bf42fe 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -3788,14 +3788,27 @@ static void dm_integrity_resume(struct dm_target *ti)
+ 	struct dm_integrity_c *ic = ti->private;
+ 	__u64 old_provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors);
+ 	int r;
++	__le32 flags;
  
-+	if (!is_last)
-+		return;
-+	/*
-+	 * At this moment we know this is the last bio of the cloned request,
-+	 * and all cloned bios have been released, so reset the clone request's
-+	 * bio pointer to avoid double free.
-+	 */
-+	tio->clone->bio = NULL;
-+ exit:
- 	/*
- 	 * Update the original request.
- 	 * Do not use blk_mq_end_request() here, because it may complete
- 	 * the original request before the clone, and break the ordering.
- 	 */
--	if (is_last)
-- exit:
--		blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
-+	blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
- }
+ 	DEBUG_print("resume\n");
  
- static struct dm_rq_target_io *tio_from_request(struct request *rq)
+ 	ic->wrote_to_journal = false;
+ 
++	flags = ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING);
++	r = sync_rw_sb(ic, REQ_OP_READ);
++	if (r)
++		dm_integrity_io_error(ic, "reading superblock", r);
++	if ((ic->sb->flags & flags) != flags) {
++		ic->sb->flags |= flags;
++		r = sync_rw_sb(ic, REQ_OP_WRITE | REQ_FUA);
++		if (unlikely(r))
++			dm_integrity_io_error(ic, "writing superblock", r);
++	}
++
+ 	if (ic->provided_data_sectors != old_provided_data_sectors) {
+ 		if (ic->provided_data_sectors > old_provided_data_sectors &&
+ 		    ic->mode == 'B' &&
++		    ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP) &&
+ 		    ic->sb->log2_blocks_per_bitmap_bit == ic->log2_blocks_per_bitmap_bit) {
+ 			rw_journal_sectors(ic, REQ_OP_READ, 0,
+ 					   ic->n_bitmap_blocks * (BITMAP_BLOCK_SIZE >> SECTOR_SHIFT), NULL);
 -- 
 2.51.0
 
