@@ -1,38 +1,37 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1112E430BA3;
-	Sun,  1 Mar 2026 01:51:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 760262E54A2;
+	Sun,  1 Mar 2026 01:52:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772329864; cv=none; b=Mybt1zAtq3l2Fu72RH3QvwJMHqjmvC0I/0m5YkrzMl1fF/4YhSGhDFxNZQehKP+oTJuJW1hK07nsaVAZsbWLUtcx/9PvFRqE/K/7IMautw4gH7ki0KZpE1hhCz05j5ZAvKCFpnfkeZKHbKAYJtjEplC9lBTjtONOuoPCr+/UvBE=
+	t=1772329956; cv=none; b=GXs3J5MSdL1a6uz6CuJMND6ApMdVZIuEnpRuC69+I9ZNA0OdHUT0lAK62sHt6zAcU47uiwbpJENMuvA7JvJiUSeSHsXworiwpOMun9067wX2PJ15/Oep5gzcFNZK9tonQGlkWzz5bbxdzY9ryleasgNSzrY4m7N5bH8Z/5loFqE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772329864; c=relaxed/simple;
-	bh=uQmxfgCPeuvSjBiobXxiPtsaGsDnF0pu65G2bO7lCwM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=VGFCddTfGNKXym8TtsnXJzRJnB25uZ9KJ9IiB7heBoLS38OACYNbBL6GJP15CW+2JNga1PxzwC9NQXphVz2Q+gVvZlFF48+VTKtH3vyn3pJxwpSXV13o2tonHbFBuFYPSV3TrVMo8E1lczhGTrFAh6zSLciK/w4MMELlQ+Bxk5o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=WekFOGxn; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772329956; c=relaxed/simple;
+	bh=3HOPbnmS4dKpQZXmQv8qJEvkgyHK0VUlvlTbJ6jt3Uk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ongmLv9BPxZoJUgjQcqKMHoZJEM/WvOrmTq+V71lgerbBWJJgUaaTi8STeo5QnXcdVWZcrSnpE3IYv52SOgTs1YWqy5xu8npmWPS4ib5k+AwOTqGu+BSfuFgWS5xkeD9+yEOckqrwLVc60u1wuC+UQI+gT+ZllLFrEFJDvEA84g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MFQdddtU; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="WekFOGxn"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7058DC19421;
-	Sun,  1 Mar 2026 01:51:03 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MFQdddtU"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EF0E2C19421;
+	Sun,  1 Mar 2026 01:52:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772329864;
-	bh=uQmxfgCPeuvSjBiobXxiPtsaGsDnF0pu65G2bO7lCwM=;
+	s=k20201202; t=1772329956;
+	bh=3HOPbnmS4dKpQZXmQv8qJEvkgyHK0VUlvlTbJ6jt3Uk=;
 	h=From:To:Cc:Subject:Date:From;
-	b=WekFOGxn7fDjROlpRyImGn+QGtwnY6+kvP+CkEjy+eId/4elffXGcoFlKtRVK9wwo
-	 FZ8grkYFHDQujXhBWQeKToRTDYfTIaqQGsB9rfJo2tIwceayL+0+e2Rtbcg3QJxIJ1
-	 4D4H1z6d1a9lf5mgUwb6j+5TjY0RDAWOMagr3wbqQf0PH43QWWQkSeEfTYLcEVk//p
-	 OvcpC1LdmTJH5UwO+aypxwDn6W04SHQSp8+uuOmjdcYWSthWfPMqnap9ag+SeFaQtg
-	 O9hkm8E0u4fyehCs0r/SLyPjURxlfB9IcNiwaGyCgTOoJqCSvMDsPnacfFkOBr5jEa
-	 /pEWC2E3iUeYw==
+	b=MFQdddtU33Q4sBDjkDRAKH6yQW4YnlVfUPMKBuVfy4awqDX3uSbm0kZeyU94MPSBS
+	 Ji3bRp2FriofhX/cSoOD5mGpWcDzGbDwX+6bzv1Ju5I8BPdQP6cnRimoGS69q+J75N
+	 KcwdYKyiYhVcpr9ctbE7xbpGt8hdLWp7q+P0ItLmjG1OCHLlCk1JX3ANPtmnSbz0/h
+	 w2q3LmlS1hgDwaQ15sNoVHy3rH9jCSSElcPPv6heI5a6sddLW5IuHH9hbJ/hYdmToQ
+	 AifYC8Ju48bVd9GREST3AryU9jzpg5M1ELm5S57GyEa+QSluwwCUK+cCR6Jz4K3kFp
+	 nETyQJ5WCCXVQ==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	kernel@mattwhitlock.name
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm-unstripe: fix mapping bug when there are multiple targets in a table" failed to apply to 5.15-stable tree
-Date: Sat, 28 Feb 2026 20:51:01 -0500
-Message-ID: <20260301015102.1717215-1-sashal@kernel.org>
+	bmarzins@redhat.com
+Cc: dm-devel@lists.linux.dev
+Subject: FAILED: Patch "dm mpath: make pg_init_delay_msecs settable" failed to apply to 5.15-stable tree
+Date: Sat, 28 Feb 2026 20:52:34 -0500
+Message-ID: <20260301015234.1719130-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -54,57 +53,45 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From 83c10e8dd43628d0bf86486616556cd749a3c310 Mon Sep 17 00:00:00 2001
-From: Matt Whitlock <kernel@mattwhitlock.name>
-Date: Sun, 18 Jan 2026 13:36:15 -0500
-Subject: [PATCH] dm-unstripe: fix mapping bug when there are multiple targets
- in a table
+From 218b16992a37ea97b9e09b7659a25a864fb9976f Mon Sep 17 00:00:00 2001
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Tue, 27 Jan 2026 19:12:24 -0500
+Subject: [PATCH] dm mpath: make pg_init_delay_msecs settable
 
-The "unstriped" device-mapper target incorrectly calculates the sector
-offset on the mapped device when the target's origin is not zero.
+"pg_init_delay_msecs X" can be passed as a feature in the multipath
+table and is used to set m->pg_init_delay_msecs in parse_features().
+However, alloc_multipath_stage2(), which is called after
+parse_features(), resets m->pg_init_delay_msecs to its default value.
+Instead, set m->pg_init_delay_msecs in alloc_multipath(), which is
+called before parse_features(), to avoid overwriting a value passed in
+by the table.
 
-Take for example this hypothetical concatenation of the members of a
-two-disk RAID0:
-
-linearized:       0 2097152 unstriped 2 128 0 /dev/md/raid0 0
-linearized: 2097152 2097152 unstriped 2 128 1 /dev/md/raid0 0
-
-The intent in this example is to create a single device named
-/dev/mapper/linearized that comprises all of the chunks of the first disk
-of the RAID0 set, followed by all of the chunks of the second disk of the
-RAID0 set.
-
-This fails because dm-unstripe.c's map_to_core function does its
-computations based on the sector number within the mapper device rather
-than the sector number within the target. The bug turns invisible when
-the target's origin is at sector zero of the mapper device, as is the
-common case. In the example above, however, what happens is that the
-first half of the mapper device gets mapped correctly to the first disk
-of the RAID0, but the second half of the mapper device gets mapped past
-the end of the RAID0 device, and accesses to any of those sectors return
-errors.
-
-Signed-off-by: Matt Whitlock <kernel@mattwhitlock.name>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: stable@vger.kernel.org
-Fixes: 18a5bf270532 ("dm: add unstriped target")
 ---
- drivers/md/dm-unstripe.c | 2 +-
+ drivers/md/dm-mpath.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
-index e8a9432057dce..17be483595642 100644
---- a/drivers/md/dm-unstripe.c
-+++ b/drivers/md/dm-unstripe.c
-@@ -117,7 +117,7 @@ static void unstripe_dtr(struct dm_target *ti)
- static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
- {
- 	struct unstripe_c *uc = ti->private;
--	sector_t sector = bio->bi_iter.bi_sector;
-+	sector_t sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
- 	sector_t tmp_sector = sector;
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index 6f9d86f4b912c..de03f9b065842 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -225,6 +225,7 @@ static struct multipath *alloc_multipath(struct dm_target *ti)
+ 		mutex_init(&m->work_mutex);
  
- 	/* Shift us up to the right "row" on the stripe */
+ 		m->queue_mode = DM_TYPE_NONE;
++		m->pg_init_delay_msecs = DM_PG_INIT_DELAY_DEFAULT;
+ 
+ 		m->ti = ti;
+ 		ti->private = m;
+@@ -251,7 +252,6 @@ static int alloc_multipath_stage2(struct dm_target *ti, struct multipath *m)
+ 	set_bit(MPATHF_QUEUE_IO, &m->flags);
+ 	atomic_set(&m->pg_init_in_progress, 0);
+ 	atomic_set(&m->pg_init_count, 0);
+-	m->pg_init_delay_msecs = DM_PG_INIT_DELAY_DEFAULT;
+ 	init_waitqueue_head(&m->pg_init_wait);
+ 	init_waitqueue_head(&m->probe_wait);
+ 
 -- 
 2.51.0
 
