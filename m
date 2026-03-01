@@ -1,39 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 316872D837E;
-	Sun,  1 Mar 2026 01:49:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72A793033D5;
+	Sun,  1 Mar 2026 01:50:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772329741; cv=none; b=QJ9hlzXoTFyAhD3/7hH51cViqXP3Qy2id4ditDJVLQ+yZP6lpTaR3reSA967+1x2jmuLCFHSSa/lt4dxXqQxmyhJ/2E2MD75iBmMb7vL/FKhC85Soh444jeRBOQo9rvA3octzADRjSmn0GAZjzN394bxNHqLk06ABhx3O2BpY3g=
+	t=1772329806; cv=none; b=XWe4GNanuGOxS8RHSsVTHDz7zkilDIpkM7XZBOd7cJpqJk7a2w1cEIWeLcQqrvhPFTY7wFnNd6Rtz0T6m8jh6Ji6pX6R/wlGkh9Rbcumsr2ALvLLgSGgtFdK35mkHSPB+DT8muPzwFRL6NBG+vhSFN0VLWwE+Ah3zz07LN3vQ3M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772329741; c=relaxed/simple;
-	bh=1v5VOec4mPL2m0hJuGIj42Rm/Fdy7QBXm4L3bn/wd/0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=u3KT9vn/0RPK6Ysk3NSk0cXrfsPr+1xqEugGCB/AMi93KMmYwpZA6rMqb2Cel+Nr+M0nw3RCw5s8zHAdaPl2YwHaUpO8vD/ZpWb2getnQ/PLskoDaRstZoR4Xv3aUMNyQNdlSgfdJ9HVkKoly3YnS1/Ne0irlpRNJqffbQ8afmY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=NqATBNtv; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772329806; c=relaxed/simple;
+	bh=egZ+BMy85krg1F7KMRh2SeKdT/DZBZlgsxaCH8aSCxg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=sDGMgGzTEKrLDfFfrVHtgrzEdNJ8ImnZ1tQdHa7M8atQsonWJVBUuLYF+phDsSk+TcswN+cDe/oJSnuUKvnsoqSvrwXFxiFDt0YNWHWtHWnTaO7x6cpmFmjw8CsSz4VZjzawcfWZolzxXZoa8iancqGrLH+ivBzmjUcPLch94XM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hZcDwGdn; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="NqATBNtv"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7CE7DC19424;
-	Sun,  1 Mar 2026 01:49:00 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hZcDwGdn"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BF731C19421;
+	Sun,  1 Mar 2026 01:50:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772329741;
-	bh=1v5VOec4mPL2m0hJuGIj42Rm/Fdy7QBXm4L3bn/wd/0=;
+	s=k20201202; t=1772329806;
+	bh=egZ+BMy85krg1F7KMRh2SeKdT/DZBZlgsxaCH8aSCxg=;
 	h=From:To:Cc:Subject:Date:From;
-	b=NqATBNtvuX+4tz0pQCuupduPpnkoK7VmbBbBoIJxxJ4jD2omeB8mqLsJAtth8oR5Y
-	 ekkjbK7ZfA9NfXWjd6KFid1jUHr50L736iSJL5otw7lJ1JPWP0yKToAxKQQsHvAY1c
-	 5oAjLPmEUYFP3CQ1SVKDyw7IH/je9/8AA74gOCbvpL+tO2es1Kcd95sCuseMKj+PvG
-	 uTTQr+w9vRIZRg2zGFw2rqgXy3/nDNAy7y91xr8Y+s5VcDer/v1UpGrLaofLpuDFjV
-	 XIZ5th7Dfnex1Xh+eZOVCm/GV/T7Byv36ow9i0ajDFRAGU0CYjl+eT85NqSth/RSoE
-	 PeqOWcMBDyMeA==
+	b=hZcDwGdn3DMNGXmA1D5gdFBX4HWrryEDCChz0WIy+LEH5d1vt4YIZgaNfJ8x8JYl6
+	 U8q/CGITIja+gvqp3DoPgkgZafK9DlYFuN1zLxskEJwB+HdZVDc+r0J1sjA7Mq7eVK
+	 iRIBrzpVxw8KfuKgC+/0r0ffHfn0YLW2LX6hcbA9+dNgCUaucgaOSqjfn07Bpla2hU
+	 xY0gzE4aLznS9g0faapUnFZNea7Gb/xULN4OGUDdG0yskGrxbroIjFeaeYHav+vj3d
+	 a9QJmaGTb6hIyskUcZUs0QIcw6Nvpc4UjjVBLg3HPiOit5BUoKmdkLYhjv/a8TDq0c
+	 bFoQrOE9sfUjg==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	ebiggers@kernel.org
-Cc: Sami Tolvanen <samitolvanen@google.com>,
+	mliang@purestorage.com
+Cc: Mohamed Khalfella <mkhalfella@purestorage.com>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm-verity: correctly handle dm_bufio_client_create() failure" failed to apply to 5.15-stable tree
-Date: Sat, 28 Feb 2026 20:48:59 -0500
-Message-ID: <20260301014859.1713290-1-sashal@kernel.org>
+Subject: FAILED: Patch "dm: clear cloned request bio pointer when last clone bio completes" failed to apply to 5.15-stable tree
+Date: Sat, 28 Feb 2026 20:50:04 -0500
+Message-ID: <20260301015004.1715749-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -55,40 +55,78 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From 119f4f04186fa4f33ee6bd39af145cdaff1ff17f Mon Sep 17 00:00:00 2001
-From: Eric Biggers <ebiggers@kernel.org>
-Date: Fri, 19 Dec 2025 11:29:08 -0800
-Subject: [PATCH] dm-verity: correctly handle dm_bufio_client_create() failure
+From fb8a6c18fb9a6561f7a15b58b272442b77a242dd Mon Sep 17 00:00:00 2001
+From: Michael Liang <mliang@purestorage.com>
+Date: Fri, 9 Jan 2026 15:52:54 -0700
+Subject: [PATCH] dm: clear cloned request bio pointer when last clone bio
+ completes
 
-If either of the calls to dm_bufio_client_create() in verity_fec_ctr()
-fails, then dm_bufio_client_destroy() is later called with an ERR_PTR()
-argument.  That causes a crash.  Fix this.
+Stale rq->bio values have been observed to cause double-initialization of
+cloned bios in request-based device-mapper targets, leading to
+use-after-free and double-free scenarios.
 
-Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
-Cc: stable@vger.kernel.org
-Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
-Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+One such case occurs when using dm-multipath on top of a PCIe NVMe
+namespace, where cloned request bios are freed during
+blk_complete_request(), but rq->bio is left intact. Subsequent clone
+teardown then attempts to free the same bios again via
+blk_rq_unprep_clone().
+
+The resulting double-free path looks like:
+
+  nvme_pci_complete_batch()
+    nvme_complete_batch()
+      blk_mq_end_request_batch()
+        blk_complete_request()        // called on a DM clone request
+          bio_endio()                 // first free of all clone bios
+          ...
+        rq->end_io()                  // end_clone_request()
+          dm_complete_request(tio->orig)
+            dm_softirq_done()
+              dm_done()
+                dm_end_request()
+                  blk_rq_unprep_clone()  // second free of clone bios
+
+Fix this by clearing the clone request's bio pointer when the last cloned
+bio completes, ensuring that later teardown paths do not attempt to free
+already-released bios.
+
+Signed-off-by: Michael Liang <mliang@purestorage.com>
+Reviewed-by: Mohamed Khalfella <mkhalfella@purestorage.com>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 ---
- drivers/md/dm-verity-fec.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm-rq.c | 13 ++++++++++---
+ 1 file changed, 10 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
-index ef9970b889aaf..7583607a8aa62 100644
---- a/drivers/md/dm-verity-fec.c
-+++ b/drivers/md/dm-verity-fec.c
-@@ -501,9 +501,9 @@ void verity_fec_dtr(struct dm_verity *v)
- 	mempool_exit(&f->output_pool);
- 	kmem_cache_destroy(f->cache);
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 5e08546696145..923252fb57aec 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -109,14 +109,21 @@ static void end_clone_bio(struct bio *clone)
+ 	 */
+ 	tio->completed += nr_bytes;
  
--	if (f->data_bufio)
-+	if (!IS_ERR_OR_NULL(f->data_bufio))
- 		dm_bufio_client_destroy(f->data_bufio);
--	if (f->bufio)
-+	if (!IS_ERR_OR_NULL(f->bufio))
- 		dm_bufio_client_destroy(f->bufio);
++	if (!is_last)
++		return;
++	/*
++	 * At this moment we know this is the last bio of the cloned request,
++	 * and all cloned bios have been released, so reset the clone request's
++	 * bio pointer to avoid double free.
++	 */
++	tio->clone->bio = NULL;
++ exit:
+ 	/*
+ 	 * Update the original request.
+ 	 * Do not use blk_mq_end_request() here, because it may complete
+ 	 * the original request before the clone, and break the ordering.
+ 	 */
+-	if (is_last)
+- exit:
+-		blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
++	blk_update_request(tio->orig, BLK_STS_OK, tio->completed);
+ }
  
- 	if (f->dev)
+ static struct dm_rq_target_io *tio_from_request(struct request *rq)
 -- 
 2.51.0
 
