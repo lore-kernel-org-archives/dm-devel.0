@@ -1,38 +1,38 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D61A2BD0B;
-	Sun,  1 Mar 2026 01:22:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84BE02BD0B;
+	Sun,  1 Mar 2026 01:22:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772328121; cv=none; b=dFOcYQqxBDu5DkpeTG2KSGGvth7z8kbviP8IqAS0m2s88/UoiHsmDyd1WL1qjp8bHwXH8GXa8OCXyPwQrvOdDwmIlJoo+Df20PCN8Ar92KBt+V6zBHJGwaZCABmUJMHPViTq+WsPX/RHPiTbeZh5te6+IDigDhHl9dcs1PLKjmk=
+	t=1772328128; cv=none; b=V9sBQhVC4LZBve7GwDQZ9cldiGEwLU2ekqNgHBPwU/LiaiP+86+aZjqVV5g6hWmh6HTLQCBJDBCPmZyQxcOBEexyMs3UjeKOqk5TzlotrwwhEhxvkO3XelE4soPquWo2dogbTB4zFF31YKH1Tc44FyuDvCjUfeacaQUY6udvncE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772328121; c=relaxed/simple;
-	bh=B0uiqKLhCH0bkKZ7PLi2LlNFMi1S+qX4duXZwiZB7xA=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=emcmmeGyTt/YuDCWGuVRHsbaH151CSdTf1grWyXiXLvqRdutfF9ycmnx85BcnDV9R3QjJ4EMY+xrOlTQvN7m0cdfPE4QykVH6vGkxlGlE0i1YUdKw4cCFfIrKWbML9KMZJoo3MzK8INserstvjS18vh+K7DB2kycXE574tSkNyU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LvJiwaYh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1772328128; c=relaxed/simple;
+	bh=ih2Dd/RaF24QD/X5P2E3Ua0bTxxuraC/vK8wpf7vWoQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=UrbKM0V3q0KiyuhLrfHm5HNIBE48hKvfKeZUdhr+UUAtq8asSdTexrxIlmcSZ3jUA641HqovDKXCKSKHPRTPP6QWRITtWF3tVuPtHUFQnwh0LY9nSAMzUbKifyuR9Rplz7O9JbN2xnX+BpJTZ7S1FirOut128L2EfMi7jL2bXhU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VgkS0E1v; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LvJiwaYh"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D3B2BC19421;
-	Sun,  1 Mar 2026 01:22:00 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VgkS0E1v"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E94D1C19421;
+	Sun,  1 Mar 2026 01:22:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772328121;
-	bh=B0uiqKLhCH0bkKZ7PLi2LlNFMi1S+qX4duXZwiZB7xA=;
+	s=k20201202; t=1772328128;
+	bh=ih2Dd/RaF24QD/X5P2E3Ua0bTxxuraC/vK8wpf7vWoQ=;
 	h=From:To:Cc:Subject:Date:From;
-	b=LvJiwaYhKD/QgXbc3n28Oa/hBNX1Hx7LfPnSX/u4vwrLhHQNL/X1GlewfqolJpl2y
-	 wbkyTfE5WWQSiyr0ShqvV/kOd3Jc1oeI0wINcoquVMDKzvkTjNjsE5HymFK6Jy/OrF
-	 jx5bm7hPRf72hmFCIiSKbOyNZyv68jeFi5RBGo4IVX12SfV7FQt8J76rvcxCzDZhdf
-	 BZyJccAjInKQagJFKojVC+jUUh29tDRCakkzsDGDIPN4Ce3kRJts1iDZVqy9EzYsbW
-	 hCsqtp9sm1H5aeX0XR3IteUC9mcLlHz6D+v1x0VG83lGzDygDRk2CE/XmT2Gy7wzQg
-	 9eSEHtvm3K4BQ==
+	b=VgkS0E1v0sCT/4VhndhuY17xJ/q0ZulhZMZwlsE6IdFpCeBCdlCo9eCqpwq7QvgDx
+	 3X++nCV95igVs9yHcTOK6AGe4kPeQ/XQvtrLIlZ0W7iCY3ufo3kS+MoJy4FNSoVZo3
+	 gjau4+B0kKzsDB4rBKjgzEVA/FUdlYobfBArAKBIO6ot9JFUfXh0dE9pB+XieS+zbP
+	 BlHCEiMp1BkQe+bx1iKK2wjFTT70cp4t4DXnP/G0Jbgzym0/vZpup7F9MPM9ZBi9MF
+	 3fY35vrVAYzV1/tqU/pdG8PUAgMrgyO459Ur6GMVJavtptTnrtHWubwP02bz9A5+dH
+	 28BdZXPsF2p2w==
 From: Sasha Levin <sashal@kernel.org>
 To: stable@vger.kernel.org,
-	mpatocka@redhat.com
-Cc: Ondrej Kozina <okozina@redhat.com>,
+	kernel@mattwhitlock.name
+Cc: Mikulas Patocka <mpatocka@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: FAILED: Patch "dm-integrity: fix recalculation in bitmap mode" failed to apply to 6.12-stable tree
-Date: Sat, 28 Feb 2026 20:21:59 -0500
-Message-ID: <20260301012159.1678115-1-sashal@kernel.org>
+Subject: FAILED: Patch "dm-unstripe: fix mapping bug when there are multiple targets in a table" failed to apply to 6.12-stable tree
+Date: Sat, 28 Feb 2026 20:22:06 -0500
+Message-ID: <20260301012206.1678262-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -54,69 +54,57 @@ Sasha
 
 ------------------ original commit in Linus's tree ------------------
 
-From 118ba36e446c01e3cd34b3eedabf1d9436525e1d Mon Sep 17 00:00:00 2001
-From: Mikulas Patocka <mpatocka@redhat.com>
-Date: Mon, 19 Jan 2026 15:06:02 +0100
-Subject: [PATCH] dm-integrity: fix recalculation in bitmap mode
+From 83c10e8dd43628d0bf86486616556cd749a3c310 Mon Sep 17 00:00:00 2001
+From: Matt Whitlock <kernel@mattwhitlock.name>
+Date: Sun, 18 Jan 2026 13:36:15 -0500
+Subject: [PATCH] dm-unstripe: fix mapping bug when there are multiple targets
+ in a table
 
-There's a logic quirk in the handling of suspend in the bitmap mode:
+The "unstriped" device-mapper target incorrectly calculates the sector
+offset on the mapped device when the target's origin is not zero.
 
-This is the sequence of calls if we are reloading a dm-integrity table:
-* dm_integrity_ctr reads a superblock with the flag SB_FLAG_DIRTY_BITMAP
-  set.
-* dm_integrity_postsuspend initializes a journal and clears the flag
-  SB_FLAG_DIRTY_BITMAP.
-* dm_integrity_resume sees the superblock with SB_FLAG_DIRTY_BITMAP set -
-  thus it interprets the journal as if it were a bitmap.
+Take for example this hypothetical concatenation of the members of a
+two-disk RAID0:
 
-This quirk causes recalculation problem if the user increases the size of
-the device in the bitmap mode.
+linearized:       0 2097152 unstriped 2 128 0 /dev/md/raid0 0
+linearized: 2097152 2097152 unstriped 2 128 1 /dev/md/raid0 0
 
-Fix this by reading a fresh copy on the superblock in
-dm_integrity_resume. This commit also fixes another logic quirk - the
-branch that sets bitmap bits if the device was extended should only be
-executed if the flag SB_FLAG_DIRTY_BITMAP is set.
+The intent in this example is to create a single device named
+/dev/mapper/linearized that comprises all of the chunks of the first disk
+of the RAID0 set, followed by all of the chunks of the second disk of the
+RAID0 set.
 
+This fails because dm-unstripe.c's map_to_core function does its
+computations based on the sector number within the mapper device rather
+than the sector number within the target. The bug turns invisible when
+the target's origin is at sector zero of the mapper device, as is the
+common case. In the example above, however, what happens is that the
+first half of the mapper device gets mapped correctly to the first disk
+of the RAID0, but the second half of the mapper device gets mapped past
+the end of the RAID0 device, and accesses to any of those sectors return
+errors.
+
+Signed-off-by: Matt Whitlock <kernel@mattwhitlock.name>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Tested-by: Ondrej Kozina <okozina@redhat.com>
-Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
 Cc: stable@vger.kernel.org
+Fixes: 18a5bf270532 ("dm: add unstriped target")
 ---
- drivers/md/dm-integrity.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ drivers/md/dm-unstripe.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 380527f43b2a1..a9c0157bf42fe 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -3788,14 +3788,27 @@ static void dm_integrity_resume(struct dm_target *ti)
- 	struct dm_integrity_c *ic = ti->private;
- 	__u64 old_provided_data_sectors = le64_to_cpu(ic->sb->provided_data_sectors);
- 	int r;
-+	__le32 flags;
+diff --git a/drivers/md/dm-unstripe.c b/drivers/md/dm-unstripe.c
+index e8a9432057dce..17be483595642 100644
+--- a/drivers/md/dm-unstripe.c
++++ b/drivers/md/dm-unstripe.c
+@@ -117,7 +117,7 @@ static void unstripe_dtr(struct dm_target *ti)
+ static sector_t map_to_core(struct dm_target *ti, struct bio *bio)
+ {
+ 	struct unstripe_c *uc = ti->private;
+-	sector_t sector = bio->bi_iter.bi_sector;
++	sector_t sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
+ 	sector_t tmp_sector = sector;
  
- 	DEBUG_print("resume\n");
- 
- 	ic->wrote_to_journal = false;
- 
-+	flags = ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING);
-+	r = sync_rw_sb(ic, REQ_OP_READ);
-+	if (r)
-+		dm_integrity_io_error(ic, "reading superblock", r);
-+	if ((ic->sb->flags & flags) != flags) {
-+		ic->sb->flags |= flags;
-+		r = sync_rw_sb(ic, REQ_OP_WRITE | REQ_FUA);
-+		if (unlikely(r))
-+			dm_integrity_io_error(ic, "writing superblock", r);
-+	}
-+
- 	if (ic->provided_data_sectors != old_provided_data_sectors) {
- 		if (ic->provided_data_sectors > old_provided_data_sectors &&
- 		    ic->mode == 'B' &&
-+		    ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP) &&
- 		    ic->sb->log2_blocks_per_bitmap_bit == ic->log2_blocks_per_bitmap_bit) {
- 			rw_journal_sectors(ic, REQ_OP_READ, 0,
- 					   ic->n_bitmap_blocks * (BITMAP_BLOCK_SIZE >> SECTOR_SHIFT), NULL);
+ 	/* Shift us up to the right "row" on the stripe */
 -- 
 2.51.0
 
