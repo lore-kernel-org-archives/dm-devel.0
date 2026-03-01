@@ -1,113 +1,97 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 156C946AF25
-	for <dm-devel@lists.linux.dev>; Fri, 27 Feb 2026 19:52:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2EC2257849;
+	Sun,  1 Mar 2026 01:19:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772221951; cv=none; b=Qxnt60Ke0T+UdBMvaZHb9X5vwFtH1J8fJTVeLNdvLggquopTVHvj3/4PUp6VehqCqQOGjwU53r9QiOBdnHgU5WNq3MrmbVIu0VapjGECP7mENVlMp98XiSbxa7J8oOKmbPqeETbAt8cGAIr7PnnDSEr+7RuglYfTLj5uIREHtnQ=
+	t=1772327957; cv=none; b=kTWJuaDNy5SFPSt4O5SvstrSrzP2CfKRV/2i4DfHAZ/G9m1ZuRypN4/YO+GNIikUWEEaBdhZAAM0QPnBPPvTounGXmdKteBuWgPJ81BVWQiAPtyHdyBWmcC301lLccTfUbXoKMByr+ImQ5h9GaN8gv0L3GtV/CvMpxwDFuHvJeE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772221951; c=relaxed/simple;
-	bh=AVjNWv52I/SShc+g8l5QzIxcmqI4KZIzz5YjHaqQqns=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=fsFzjGt21+xxcxjzlEcmMpWPN3GmFZVqZZcRHjAljQcgNTLx1ux27kkmYUBFQ7F6syOUBfoyQYggVAweK/sLxQBVTBfeF4EDYgYMgan8fK2/CzHSKPtTQAtpcYmkhJfwNMqYN9pZtZt/4VbeH/WOstI7GxT3xX9U2jIvexYzPEE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fYb/hcWa; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1772327957; c=relaxed/simple;
+	bh=vg2wYXpIJqGd8g0WmYcYCUB3RP4fbeALeEXbSIbweNc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=FNoLOivAXGXZJ+t1ziEw4jyzcrczKm3ppvrGtrqg51mkJj51uGiB06VJzPDez91JNwEAHe+V0ZC8HOtnj5jdyQLrRiFVyoOVIU5gElMBgL1vwXC+AAoEyq3HQv2eikRnWgT6lPiuGblHcvYGidW4q0wF6Zy9NkqL7F5lqodGSGY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=iS5sooO0; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fYb/hcWa"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772221945;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=i9XwpDxs/qoFLn1Jvyqbmikgtgk6yGhzXhIV9M3DNKQ=;
-	b=fYb/hcWaUK5VducarmXvXRPd00jg3evRo4KqabMDXhjJEWOBQ0+8kzjLIPcdUy7PA+ZFyl
-	Of8fAGWwQ2ZXN6zPf95dgrQn4XM/JNA636nohBLCEF7RWoxlmbrrrBlG2ILrdkVGqwYVpC
-	NwSL6tPmsboqaWfiil8kTFFOATBcpmQ=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-690-AAfjTlalMvC76zMyXgTzMA-1; Fri,
- 27 Feb 2026 14:52:21 -0500
-X-MC-Unique: AAfjTlalMvC76zMyXgTzMA-1
-X-Mimecast-MFC-AGG-ID: AAfjTlalMvC76zMyXgTzMA_1772221939
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C8E61956063;
-	Fri, 27 Feb 2026 19:52:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 47D8B1800286;
-	Fri, 27 Feb 2026 19:52:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 61RJqH8H1743483
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 27 Feb 2026 14:52:17 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 61RJqG1o1743482;
-	Fri, 27 Feb 2026 14:52:16 -0500
-Date: Fri, 27 Feb 2026 14:52:16 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: John Garry <john.g.garry@oracle.com>
-Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
-        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
-        hare@suse.com, jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 11/13] libmultipath: Add support for block device IOCTL
-Message-ID: <aaH18HKCMdjuUhUh@redhat.com>
-References: <20260225153225.1031169-1-john.g.garry@oracle.com>
- <20260225153225.1031169-12-john.g.garry@oracle.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="iS5sooO0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E9680C19421;
+	Sun,  1 Mar 2026 01:19:16 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1772327957;
+	bh=vg2wYXpIJqGd8g0WmYcYCUB3RP4fbeALeEXbSIbweNc=;
+	h=From:To:Cc:Subject:Date:From;
+	b=iS5sooO0PbdPpbRKnnjAnH4CgPiw0/7vdweuwhXLSmCQQVy7jB2Sn9LboJk9slS2/
+	 NXgUUlIciTkb44Gjc1qBOF3je3Wy53oxZok5ldcm1+w9m0k2OHVOb2VZEG5wV4CWKp
+	 AFnvT+39xTK9Qi6EB9hy5IECpiaL+r3hB4hYP2WXxRDjlycPephomYvlBQ6C+d0dl+
+	 +xGK/qmygn4oHqHBDk4p3jEDTwnbIxRcQA4Iku33OInLSSLpgLCyrHqQ+3hU657MM5
+	 l1EFY3pp/o5JdQxLS+Ly+Nwm4EzVJSWJ3Ot3MyE3ypAgnZjNqoZ9UxKwGDfqFEA64B
+	 PGuOohIp4aOPw==
+From: Sasha Levin <sashal@kernel.org>
+To: stable@vger.kernel.org,
+	ebiggers@kernel.org
+Cc: Sami Tolvanen <samitolvanen@google.com>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev
+Subject: FAILED: Patch "dm-verity: correctly handle dm_bufio_client_create() failure" failed to apply to 6.12-stable tree
+Date: Sat, 28 Feb 2026 20:19:15 -0500
+Message-ID: <20260301011915.1674187-1-sashal@kernel.org>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260225153225.1031169-12-john.g.garry@oracle.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: 38gFNqWNdXvoDPKrDk7HACXDUCSbxy_eKs1fWRFz6pk_1772221939
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-Patchwork-Hint: ignore
+X-stable: review
+Content-Transfer-Encoding: 8bit
 
-On Wed, Feb 25, 2026 at 03:32:23PM +0000, John Garry wrote:
-> Add mpath_bdev_ioctl() as a multipath block device IOCTL handler. This
-> handler calls into driver mpath_head_template.ioctl handler.
-> 
-> It is expected that the .ioctl handler will unlock the SRCU read lock,
-> as this is what NVMe requires - see nvme_ns_head_ctrl_ioctl(). As such,
-> export a handler to unlock, mpath_head_read_unlock().
-> 
-> The .compat_ioctl handler is given the standard handler.
-> 
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
-> ---
->  include/linux/multipath.h |  4 ++++
->  lib/multipath.c           | 42 +++++++++++++++++++++++++++++++++++++++
->  2 files changed, 46 insertions(+)
-> 
-> diff --git a/include/linux/multipath.h b/include/linux/multipath.h
-> index 3846ea8cfd319..40dda6a914c5f 100644
-> --- a/include/linux/multipath.h
-> +++ b/include/linux/multipath.h
-> @@ -72,6 +72,9 @@ struct mpath_head_template {
->  	bool (*is_disabled)(struct mpath_device *);
->  	bool (*is_optimized)(struct mpath_device *);
->  	enum mpath_access_state (*get_access_state)(struct mpath_device *);
-> +	int (*bdev_ioctl)(struct block_device *bdev, struct mpath_device *,
-> +			blk_mode_t mode, unsigned int cmd, unsigned long arg,
-> +			int srcu_idx);
+The patch below does not apply to the 6.12-stable tree.
+If someone wants it applied there, or to any other stable or longterm
+tree, then please email the backport, including the original git commit
+id to <stable@vger.kernel.org>.
 
-I don't know that this API is going to work out. SCSI persistent
-reservations need access to all the mpath_devices, not just one, and
-they are commonly handled via SG_IO ioctls. Unless you want to disallow
-SCSI persistent reservations via SG_IO, you need to be able to detect
-them, and handle them using the persistent reservation code with the
-mpath_head.
+Thanks,
+Sasha
 
--Ben 
+------------------ original commit in Linus's tree ------------------
+
+From 119f4f04186fa4f33ee6bd39af145cdaff1ff17f Mon Sep 17 00:00:00 2001
+From: Eric Biggers <ebiggers@kernel.org>
+Date: Fri, 19 Dec 2025 11:29:08 -0800
+Subject: [PATCH] dm-verity: correctly handle dm_bufio_client_create() failure
+
+If either of the calls to dm_bufio_client_create() in verity_fec_ctr()
+fails, then dm_bufio_client_destroy() is later called with an ERR_PTR()
+argument.  That causes a crash.  Fix this.
+
+Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
+Cc: stable@vger.kernel.org
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-verity-fec.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+index ef9970b889aaf..7583607a8aa62 100644
+--- a/drivers/md/dm-verity-fec.c
++++ b/drivers/md/dm-verity-fec.c
+@@ -501,9 +501,9 @@ void verity_fec_dtr(struct dm_verity *v)
+ 	mempool_exit(&f->output_pool);
+ 	kmem_cache_destroy(f->cache);
+ 
+-	if (f->data_bufio)
++	if (!IS_ERR_OR_NULL(f->data_bufio))
+ 		dm_bufio_client_destroy(f->data_bufio);
+-	if (f->bufio)
++	if (!IS_ERR_OR_NULL(f->bufio))
+ 		dm_bufio_client_destroy(f->bufio);
+ 
+ 	if (f->dev)
+-- 
+2.51.0
+
+
+
 
