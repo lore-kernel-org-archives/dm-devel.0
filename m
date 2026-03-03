@@ -1,137 +1,99 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6804142F56F
-	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 14:20:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF4323890E7;
+	Tue,  3 Mar 2026 19:31:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772547658; cv=none; b=myeSop5NceUO6jxb70xm9Ot0nAjR69He+TGgruwCBulBIRc9ogEVsRlwicWNyYS+Kq3INDqff5GEBpNCSApJ3hfkXp08pmw8fGnYG5RMrHw2D/UOqBaV8quwkc//gxMHGFUDfP+hHeyP8JfMa/sSWXFXUqm4rGb/d4uMfqWjitc=
+	t=1772566318; cv=none; b=CoIhOBhTsWSor18rxTNgWMvwJP7+hwcxGLLvUo02K+jO0G3xlLiBmjkJjv2e1/kGXBvcOcXF3PadwJ4T0dpNWLZBNKG5+719r9FekZmzkQ7+ht8psQgNfYhGAIMKwDAYZSYg8cxBXjz6IUfmq4YrsmMAJrkSOdu75g6CedbHPVc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772547658; c=relaxed/simple;
-	bh=IkQ7/gyK0kZ4FalknuXom3D+eyJvw5c+6TIGp5/qhI8=;
+	s=arc-20240116; t=1772566318; c=relaxed/simple;
+	bh=i9EZozHW8XRAVLe8EAr2xfM/6NutGAKezx67stLre7Y=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=HVqw9/1aP/EK+ebxWGIo6kgtIJ53SOykKH82f+bbjNE6T3Mq8+FRHckulBJkM7EzaMHD/uD0BViQop5STeaD2Q2FHRMHCdMCwZ8WE0VDGW5zDx8O4ZbtHydcfPI/irmXumQ98xgkAmXfNEQ9l4geKkrgN9N9DS92kwT0EHeqhR8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CUvUYXgi; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=P+oLoGgaRcRNmJQWA+2+7gEICEqbyN+klesFLf4ZYxVMsbCGSlE0pr+2NrsKDyESfz00eUaR5fAmykn92R0CElSnksCVWUzCj0qPZdveJnlMqcllnhJnq9aoaztQyQKCxNsZfiM3boXt7gfPbcBmQESWLKZ0y0cnjuHSTRZekN4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LBMtiYqd; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CUvUYXgi"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772547655;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=hpscGlqtT0S5hsz/lvyVjD4lT80PmJ0j11LCHkWNSX8=;
-	b=CUvUYXgigXubGNHGgiMATtQquc0X01JXnse/JSrxcs75h86ojlpnE98WkSqQPWSqm3YTiD
-	tsbqQXlkeW31ttRZBvvvUBjsxoRN3vVTu9BNfKStS6PH91j6nT20FExk11cKHg9Wi/Wfvj
-	glFXogcxpuW2rDe9vzR7sE+wniPCx0M=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-127-3ehT5qksMqaYvuvFq6SAhg-1; Tue,
- 03 Mar 2026 09:20:52 -0500
-X-MC-Unique: 3ehT5qksMqaYvuvFq6SAhg-1
-X-Mimecast-MFC-AGG-ID: 3ehT5qksMqaYvuvFq6SAhg_1772547649
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B940B1956095;
-	Tue,  3 Mar 2026 14:20:48 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 632EE1800590;
-	Tue,  3 Mar 2026 14:20:47 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 623EKkZo1889507
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 3 Mar 2026 09:20:46 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 623EKibS1889506;
-	Tue, 3 Mar 2026 09:20:44 -0500
-Date: Tue, 3 Mar 2026 09:20:44 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Hannes Reinecke <hare@suse.de>
-Cc: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
-        sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
-        james.bottomley@hansenpartnership.com, hare@suse.com,
-        jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 02/24] scsi-multipath: introduce basic SCSI device support
-Message-ID: <aabuPClNgSC6uO93@redhat.com>
-References: <20260225153627.1032500-1-john.g.garry@oracle.com>
- <20260225153627.1032500-3-john.g.garry@oracle.com>
- <aaT0Taxs6WgX6m-j@redhat.com>
- <784abca8-9dc1-4fca-b72f-62d55b4cc3f1@oracle.com>
- <aaZ0Kf9n79QF4gbR@redhat.com>
- <003612c1-ff07-466c-93e8-d7766a9ec2db@suse.de>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LBMtiYqd"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DAD2DC2BCB2;
+	Tue,  3 Mar 2026 19:31:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1772566318;
+	bh=i9EZozHW8XRAVLe8EAr2xfM/6NutGAKezx67stLre7Y=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=LBMtiYqdzTeup8FJVWXxT6ukyG6zRobBUe/9Mx8IhAhFrfRxHAAIym3RpikfeMD8m
+	 v+A2VcjZ21cSREjyMLdsu4gGu0wL0kRMhC4IlX1qyyeULlbBGl5uw6UGuBBquOolxm
+	 Row+8ruBmAX+JL+HmOC80eEVQkVtrtMP8DP02cDIuI7a5crnsN/KD8SglZtR0sV8T2
+	 FSzBQStrg4lKjjyetLh5Js0XceJBji3eyotTabSoV8O5Bg2+oeRAjkkb6HQGmyyYd8
+	 IiX+5wsaOMUgS37UEGItnTYawAACGA3cYTgx4ebBRCK2MxWOXqEBOSJPb1mhDQEhyr
+	 p8K4qxyCPAlBg==
+Date: Tue, 3 Mar 2026 11:31:02 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Joachim Vandersmissen <git@jvdsn.com>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	"David S. Miller" <davem@davemloft.net>,
+	Maxime Coquelin <mcoquelin.stm32@gmail.com>,
+	Alexandre Torgue <alexandre.torgue@foss.st.com>,
+	linux-crypto@vger.kernel.org,
+	linux-stm32@st-md-mailman.stormreply.com,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH] crypto: testmgr - block Crypto API xxhash64 in FIPS mode
+Message-ID: <20260303193102.GA2846@sol>
+References: <20260303060509.246038-1-git@jvdsn.com>
+ <aab5ptuamQ7d_tTi@infradead.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <003612c1-ff07-466c-93e8-d7766a9ec2db@suse.de>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: 6VU7slXqrHF31TxIAUXdpYQVnJgrj-Y2Bdy7pM9b98Y_1772547649
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <aab5ptuamQ7d_tTi@infradead.org>
 
-On Tue, Mar 03, 2026 at 09:01:04AM +0100, Hannes Reinecke wrote:
-> On 3/3/26 06:39, Benjamin Marzinski wrote:
-> > On Mon, Mar 02, 2026 at 11:39:28AM +0000, John Garry wrote:
-> > > On 02/03/2026 02:22, Benjamin Marzinski wrote:
-> > > > > diff --git a/drivers/scsi/Kconfig b/drivers/scsi/Kconfig
-> > > > > index 19d0884479a24..cfab7ad1e3c2c 100644
-> > > > > --- a/drivers/scsi/Kconfig
-> > > > > +++ b/drivers/scsi/Kconfig
-> > > > > @@ -76,6 +76,16 @@ config SCSI_LIB_KUNIT_TEST
-> > > > >    	  If unsure say N.
-> > > > > +config SCSI_MULTIPATH
-> > > > > +	bool "SCSI multipath support"
-> > > > At least until this supports ALUA, it should probably be marked
-> > > > EXPERIMENTAL, just so people trying it out aren't surprised if it
-> > > > doesn't multipath their device in the way they expect.
-> > > 
-> > > I think that ALUA support will be mainline acceptance criteria, and I am
-> > > looking to add it now.
-> > > 
-> > > BTW, Hannes suggested to not use the DH ALUA support, so that means to
-> > > separate out the core ALUA support from the DH stuff. So you have any
-> > > opinion on that approach?
+[+Cc dm-devel@lists.linux.dev]
+
+On Tue, Mar 03, 2026 at 07:09:26AM -0800, Christoph Hellwig wrote:
+> On Tue, Mar 03, 2026 at 12:05:09AM -0600, Joachim Vandersmissen wrote:
+> > xxhash64 is not a cryptographic hash algorithm, but is offered in the
+> > same API (shash) as actual cryptographic hash algorithms such as
+> > SHA-256. The Cryptographic Module Validation Program (CMVP), managing
+> > FIPS certification, believes that this could cause confusion. xxhash64
+> > must therefore be blocked in FIPS mode.
 > > 
-> > I would (perhaps naively) have thought that the device handlers would be
-> > a useful abstraction for dealing with ALUA devices. But, Hannes knows
-> > this code much better than me. like I said before, I'm no scsi expert.
-> > 
-> The main point of the device handlers was to inject a 'start' command
-> whenever paths needed to be switched (Like you need to do for some
-> active/passive arrays).
-> But that really caused quite some issues with complexity, as you easily
-> can get into array path ping-pong on path failure with no I/O being
-> transmitted.
+> > The only usage of xxhash64 in the kernel is btrfs. Commit fe11ac191ce0
+> > ("btrfs: switch to library APIs for checksums") recently modified the
+> > btrfs code to use the lib/crypto API, avoiding the Kernel Cryptographic
+> > API. Consequently, the removal of xxhash64 from the Crypto API in FIPS
+> > mode should now have no impact on btrfs usage.
 > 
-> So for this implementation I would stick with implicit ALUA
-> (most modern implementations have done so already anyway), and
-> then there's no need using the device handlers.
+> It sounds like xxhash should be removed the crypto API entirely.
+> There's no user of it, it's not crypto, and doing xxhash through
+> the userspace crypto API socket is so stupid that I doubt anyone
+> attempted it.
 
-That makes sense. Limiting support to implicit ALUA significantly lowers
-the bar for getting ALUA working. AFAICS, It should just require getting
-the path selecting code right.
+dm-integrity, which uses crypto_shash and accepts arbitrary hash
+algorithm strings from userspace, might be relying on "xxhash64" being
+supported in crypto_shash.  The integritysetup man page specifically
+mentions xxhash64:
 
--Ben
+     --integrity, -I algorithm
+         Use  internal  integrity  calculation (standalone mode). The integrity
+         algorithm can be CRC (crc32c/crc32), a non-cryptographic hash function
+         (xxhash64) or a hash function (sha1, sha256).
 
-> 
-> Cheers,
-> 
-> Hannes
-> -- 
-> Dr. Hannes Reinecke                  Kernel Storage Architect
-> hare@suse.de                                +49 911 74053 688
-> SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-> HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+         For HMAC (hmac-sha256), you must specify  an  integrity  key  and  its
+         size.
 
+Maybe the device-mapper maintainers have some insight into whether
+anyone is actually using xxhash64 with dm-integrity.
+
+If yes, then dm-integrity could still switch to using the library API
+for it.  dm-integrity would just need to gain some helper functions that
+call either the xxhash64 library or crypto_shash depending on the
+configured algorithm.  If the full set of algorithms being used can be
+determined, then dm-integrity could even switch to the library APIs
+entirely, like many other kernel subsystems such as btrfs have.
+
+- Eric
