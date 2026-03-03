@@ -1,108 +1,109 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 152AC1684B4
-	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 05:40:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D15C935CBD7
+	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 06:52:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772516423; cv=none; b=e9Wz0gGYLcSko7OkA0HZxBxWN8GtHWFWjbzbMSjwjT7Kr9r8QnXCmTGGb4AzpdYZYy14Qt+sDUT0p/AaMtzPGGvBsCLjdOuXk7CNaJGhwmMy/i2uQvHR5o+YjfELtdo3MIE9N5K9Hv5lSBoBN21ysxi3GpcExZOmP9dFe7xIrH4=
+	t=1772520773; cv=none; b=eia2LvGntF4te5pl+SzpVHyuencLQN5E88dyPu1DnkWzdJC4rCcWw6CE8dJiWoeOgtCkT9zlgy0uw6l6mgJJtCkLFV8RhJonQ2Go7DM/wXIcT/ZX1xz6xwUib8gnfWT8+rcCdTHzrzQi7ZtE1RFw0VsfA1wRxW/nNldAut+npUw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772516423; c=relaxed/simple;
-	bh=Efrv2cy+F/yE2YkjAE1qPqG9zYUCEuW6ZG9zHXhbxxE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=seFAPBhArweAiHyfRGZGWWM7NRuMSRwwxLboMjKgYD5tki9k2A8oDkKvOoDit04o3WM1ax9mVHapUapxi2ChwVceVPijyTXXKeKcQQhhClPnEziPTw5xoC8rXbZZcfwBWMItVgRuYJPpISyYcWhxKqEIWt1RHIbJ8vTOlPIAi8c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SWS3YZUj; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1772520773; c=relaxed/simple;
+	bh=9pJJVTZZM3QCn+oui6V6Hn0OTNpM5sMorAYDGGh6gjc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=doQbJainOkbbaUwS8UmwQy/Q3obG0p54lZCNOCRfV/atmo4Rm+Wj+yJnSjoxGMcXdv484N7202eN1p/mwpT8eaaJOZqDpYsSjsE9kJJI+PeYUK/2IcjHj9Uv8K2vkrRVthUh71UiduzzL7mRTsWd5ZS+MO9jzH9a83vatoINbJw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AujvFRZZ; arc=none smtp.client-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SWS3YZUj"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772516419;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=wGDXpiZUgPV8wjM7a62PXYfnySDj7E1W1FYiXgU7gPk=;
-	b=SWS3YZUjoThOjxIpu2S9PRIPpnoPxxMvuRXJEa7K6fFeJv0+sQL2p5UIt9qBjvQhIejAIm
-	zI6L4WpB6ApYl+2N/LFkYsZn2Ugrm03jUoldiBQfwxXk2cPaGOjyC2iW6EdT0twLpTKD0V
-	ALnlJIoQS83+YqwevUC9Z+E+UOJ7Vkk=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-551-hkpAaKNIMXqbxBv1z2Y9jA-1; Tue,
- 03 Mar 2026 00:40:08 -0500
-X-MC-Unique: hkpAaKNIMXqbxBv1z2Y9jA-1
-X-Mimecast-MFC-AGG-ID: hkpAaKNIMXqbxBv1z2Y9jA_1772516396
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A15D919560B2;
-	Tue,  3 Mar 2026 05:39:55 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EBF8319560A2;
-	Tue,  3 Mar 2026 05:39:54 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6235dr2b1875431
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 3 Mar 2026 00:39:53 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6235drsg1875430;
-	Tue, 3 Mar 2026 00:39:53 -0500
-Date: Tue, 3 Mar 2026 00:39:53 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: John Garry <john.g.garry@oracle.com>
-Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
-        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
-        hare@suse.com, jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 02/24] scsi-multipath: introduce basic SCSI device support
-Message-ID: <aaZ0Kf9n79QF4gbR@redhat.com>
-References: <20260225153627.1032500-1-john.g.garry@oracle.com>
- <20260225153627.1032500-3-john.g.garry@oracle.com>
- <aaT0Taxs6WgX6m-j@redhat.com>
- <784abca8-9dc1-4fca-b72f-62d55b4cc3f1@oracle.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AujvFRZZ"
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4806cc07ce7so59578775e9.1
+        for <dm-devel@lists.linux.dev>; Mon, 02 Mar 2026 22:52:50 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1772520769; x=1773125569; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=a2Ju36mr4bvkPwgZixZd3t2ngeaxuwiZ8lFBXsrk3Fg=;
+        b=AujvFRZZJz1WEefOQIj/pv2nMAp2cTTOH1eqqAsnFCbrrYwUQvxL+MGWAetYUYpBpS
+         cGgdY0PqJn780bCvUV4ebwb1kH1GJvV/PeMsBac7lrwxpuHic4BtLbi+Id/uDhOqDLdP
+         Mo6LMADEJefG12GJ5QiHxRdpBMSJVR+vY8Fb9LYqHGNQPxN+w09Hj5Df4V6+8NXeN4TQ
+         vuxyad3dbDdqDvViMUi2PApNccK89SBU0XB8qtKL3vDmmqCNq6QhdUjTtZCRzYTyD+6+
+         LDS5jQqWoKu1gzr8zdx5DPw17KyUV9QR+WfnH+PrUee/OptIOjnwOdGQA8ZuGCy0XHbl
+         yljQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1772520769; x=1773125569;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=a2Ju36mr4bvkPwgZixZd3t2ngeaxuwiZ8lFBXsrk3Fg=;
+        b=n5JQ8LfaLyiRBksGZ2lUo1YeQx8YzoK50jKMmVjEzGrpmmr0olE0e3UM7h2VaPh9FS
+         0MO7nNyhM0nshtwd8OEfB48mDd3quEEvOJ67TWkDIwsUEsqwSPCz0At7jxOv+FoZb0dS
+         FdHnN5/1T7/Yd17yykm50S00G1n0BmLZ1JD5tReJ+mJmOAe8wco82GhagkIPDOA+ocEH
+         yh838elZLI8BnMcsFc6eFZH4eT7GrIXpYCzlkI75LLVYii7hmgtiASVKUxnDynz9xGrf
+         cJR3YIo6mJQD/Y1zi6W7mx2Bw/psXvdltyRkU3KSpETcS8FUZa2NcT4gzTBc5XK6q/zo
+         +Fiw==
+X-Forwarded-Encrypted: i=1; AJvYcCUtvxvn5qFVlW+jOlZwiIn96QsSpVsMCKwCRuBIMH4ireXgka/lh6LfcTEhdBvNibH48dEj/or9ww==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwXb4NtnUsdhO3N5oriH9I6v1kmFerDC/1gS/jxabK/3wimCTD1
+	qZdVRZXkT1EWz2qsljv/OHgLHcnebs7FTwJX717pvKhh2RKB1UdfIlR7LgBEuU3b6iQ=
+X-Gm-Gg: ATEYQzwa/YrFty+B7jCAirUCCIN4pEJcNuaGOZzDOEHQodbOgVlQDIgDO1c9kdejJa4
+	RQruthV0OMRT/dGgd6DGSMyY7rxLI1D8HTmy53V7zNIMRFigfeBLHNdGh+Z37degp7K/O/XAF4P
+	DEf98c9IqHX0Kizt8XJJevPh/+iJzriku/eVXRdPHnGYmD6reCQQjat2PzBv9MBgk1uYhIVnbv2
+	IWZdqzrRyo8czpblSd+5lepr8gAvakCCsF+vRDuDOBCCxT2WAUaD1SfH4aP4fpZEGOiAW4Amw1u
+	etI4lkQfNRsiOTLTBYk/5On+xrNh6K8m4lPR9Fwq4qLbzj9B/1t4MJovHUENq3OS08a/AZmYGXj
+	Zc5Y73TaG/B+jAI/tX7hdCAg1NxKA1KYsWd9jfghR+iaXVkCZUe75nfxzJso2FK8lWYLU3QOcbs
+	FOJKiqHBhwCXDzUtqRXGL02VDvma9p1rbXeDND59cPxJ76eHvehezPcxDqOJWMd0EVnxMcpRDYC
+	iwb
+X-Received: by 2002:a05:600c:3108:b0:483:887:59b0 with SMTP id 5b1f17b1804b1-483c9c1cd2bmr282993795e9.35.1772520769194;
+        Mon, 02 Mar 2026 22:52:49 -0800 (PST)
+Received: from [192.168.178.47] (aftr-82-135-83-117.dynamic.mnet-online.de. [82.135.83.117])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-483c3b3ce8fsm329359945e9.4.2026.03.02.22.52.47
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 02 Mar 2026 22:52:48 -0800 (PST)
+Message-ID: <d79cb9d5-8935-45ac-b2f0-f86f0728bd8d@suse.com>
+Date: Tue, 3 Mar 2026 07:52:47 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <784abca8-9dc1-4fca-b72f-62d55b4cc3f1@oracle.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: TFB-nf7Zd3dpn7yM9G_isrHb9TzaR--I02Q1sP88V6M_1772516396
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 01/24] scsi: core: add SCSI_MAX_QUEUE_DEPTH
+To: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
+ sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
+ james.bottomley@hansenpartnership.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+ linux-scsi@vger.kernel.org, michael.christie@oracle.com, snitzer@kernel.org,
+ bmarzins@redhat.com, dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+ linux-kernel@vger.kernel.org
+References: <20260225153627.1032500-1-john.g.garry@oracle.com>
+ <20260225153627.1032500-2-john.g.garry@oracle.com>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.com>
+In-Reply-To: <20260225153627.1032500-2-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-On Mon, Mar 02, 2026 at 11:39:28AM +0000, John Garry wrote:
-> On 02/03/2026 02:22, Benjamin Marzinski wrote:
-> > > diff --git a/drivers/scsi/Kconfig b/drivers/scsi/Kconfig
-> > > index 19d0884479a24..cfab7ad1e3c2c 100644
-> > > --- a/drivers/scsi/Kconfig
-> > > +++ b/drivers/scsi/Kconfig
-> > > @@ -76,6 +76,16 @@ config SCSI_LIB_KUNIT_TEST
-> > >   	  If unsure say N.
-> > > +config SCSI_MULTIPATH
-> > > +	bool "SCSI multipath support"
-> > At least until this supports ALUA, it should probably be marked
-> > EXPERIMENTAL, just so people trying it out aren't surprised if it
-> > doesn't multipath their device in the way they expect.
+On 2/25/26 16:36, John Garry wrote:
+> Add a macro for the max queue depth which is supported.
 > 
-> I think that ALUA support will be mainline acceptance criteria, and I am
-> looking to add it now.
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>   drivers/scsi/scsi.c      | 2 +-
+>   drivers/scsi/scsi_priv.h | 2 ++
+>   2 files changed, 3 insertions(+), 1 deletion(-)
 > 
-> BTW, Hannes suggested to not use the DH ALUA support, so that means to
-> separate out the core ALUA support from the DH stuff. So you have any
-> opinion on that approach?
+Maybe: 'Add a macro for the supported queue depth'?
 
-I would (perhaps naively) have thought that the device handlers would be
-a useful abstraction for dealing with ALUA devices. But, Hannes knows
-this code much better than me. like I said before, I'm no scsi expert.
+Anyway:
+Reviewed-by: Hannes Reinecke <hare@suse.de>
 
--Ben
+Cheers,
 
-> 
-> Thanks!
-
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.com                               +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
