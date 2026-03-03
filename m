@@ -1,66 +1,66 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19E4538642A
-	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 07:13:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FF951862A
+	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 07:16:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772522012; cv=none; b=ff0er+p61jii/qfziNhLvLaaJr0IlyxVfGh1eQ5i58GEWSl09WNgzyumNbthb46Gv8Jjokn+fY1R1s2IfRKs35ir+W9kdUkDvzsU2J/Rx//SE+tgQaxeIuJtkzexMDNnM/F0sQ0VArT5dhIL/eXFfuB2jJ2WdtcQgZ/7S4f3KPY=
+	t=1772522213; cv=none; b=ott/OR1WNN9xzjFR6DhEZ1U3fYIJzvPOj2k3Oo5ioZwWCy9gGlH4t5+posZsPdTLJi216FoQ0WzUrQ62f/WsFqWb2ruogd8I9EFPUYfB0rnSB7snJFsX52FMuzNndMunROUGd/dQU0eypAQjcPAl72Gy7jAW0L8vj5c9UlY1iJo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772522012; c=relaxed/simple;
-	bh=vXeb1YMngigtTKDZStvPTDAGb3cr/q40OIJPzfwTusI=;
+	s=arc-20240116; t=1772522213; c=relaxed/simple;
+	bh=/Qfj9Rfe9VHa6B3SdwOqVDt88Ex5URZd6iDmMVRAVRs=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=UkGORIpHlwU0anu6qSnObl8RRtif82RgQyIPF/aYJzqClVxVTWO/fsjffMyloyxbiEzfSvbPoFoQuP5Fcvz2tf91MpMx0zNg2OgyVvY1fbOF7FYvRvy1DNAIJ9DwovsjkMDV2hsGDL+QB2PjBTQTwxGRxa78i1MU1eJXlj/KzMc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AVKxJEdV; arc=none smtp.client-ip=209.85.128.41
+	 In-Reply-To:Content-Type; b=fPapgrojQPza7HSu/9iKtLoMQHpPxRssRtHgUdl6sQxZT1YcHVuTEKg37hyjEMS7iPfc5NEof3UjjRDiaCjlAgcmPfG3Wa/yCkdmOTS/1eprvT9i6Lpt72FyvXTK+dmzOATyedKI3k/g3G603HG7vbYQxsHFbr/mgI1le4Zz5Rk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=a/Sv1+az; arc=none smtp.client-ip=209.85.128.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AVKxJEdV"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-48374014a77so63236205e9.3
-        for <dm-devel@lists.linux.dev>; Mon, 02 Mar 2026 23:13:30 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="a/Sv1+az"
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4836d4c26d3so39705825e9.2
+        for <dm-devel@lists.linux.dev>; Mon, 02 Mar 2026 23:16:52 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1772522009; x=1773126809; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1772522211; x=1773127011; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :from:to:cc:subject:date:message-id:reply-to;
-        bh=+diqLHAbCu0YIrK7BmkSHmFnH/39tPbeAFxeHFPEiPU=;
-        b=AVKxJEdVod8XZry2NcxZcAsz4s0yUFtYd03cHF7pUMqVeuJHqlm5/LGxaFk+9f0s/6
-         kbOAaZr3cUw5DQECZZXY6BR9RUWD7rZU2H5aWSyynw9a9moVERptyZHol2q/+xVxPXmL
-         Rjfmo9MHsLieWMdNUxcwDeh+lhGTk/SHgFc9hcRfB83x3Y5rQEcQ/VTHVUqgzIpOav8B
-         bIuuwaVU6wuuekl42Pty0acDOG4yXkpFhCQ3fBfbeD1PUhvEDHRL2rWum+5sYJUaB19a
-         RfMLZRCInnGucZY2Boc7c5d6Qz7c5bm+Do3XoIXrO5OBXftNCfgV7Ux2Z1gYpeMdi0vj
-         HOqQ==
+        bh=ubymJC3yMVrWaVX4434QCzD6ml7X+t88qVksAj99ZwM=;
+        b=a/Sv1+azyRza27pJQ2aEBqpTCYS0LrLQ7RniUYPzpafIjghYgvxgd4MhomDToUqsBX
+         b3dmPIM5IRrV1BtJqTIhZXNDvZKNfblNxj1/oKd12isCBhrnPGAmPgRckUQdvtHlNT5j
+         EV/9S/6Ke88ilsp/u46knxBGMIo/pF7kFE3iy3W3qyp/Kh6ssJDlDOVibF3y0oTu46Uv
+         En2Gn9WivWMAyVMAoviKqM8p3KbmqQNw89O0LEu9cVzFj8xQI6sJmLtvb6Zdn9+h925I
+         1MJ8GuH7PapjhrnRG8TDM5hCXlMmihbKpm4jv5eF9QvgOM5fB+t/B/fJQ2/WmdqM80R0
+         4VBA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772522009; x=1773126809;
+        d=1e100.net; s=20230601; t=1772522211; x=1773127011;
         h=content-transfer-encoding:in-reply-to:from:content-language
          :references:cc:to:subject:user-agent:mime-version:date:message-id
          :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=+diqLHAbCu0YIrK7BmkSHmFnH/39tPbeAFxeHFPEiPU=;
-        b=GnkB1oRJPcgvMMeo+T4wcjioFNk+knNupLt1TOSAwccIB8b/fkLHSAZGgPNgjMe+lh
-         /iD7vsesS5CatvVQv0ZaBFmg/TRg/RKbNDGfySNQC9s12REUyUMcGpK36bKhjVbjmw7m
-         FUnhJDAB/l0BNGsOR2hwxCUfO0XJ22KBKvp4NAgpvbKh5ftdXVBlSpieJOTOocKlw3Kd
-         hbWyMFdyPhZt53Ns01UdBTeD4qsjSm1iim59e4iKhXVSbplb0Xf5UAPUoiKYpxxSnpS9
-         g/nKUx++XNKp9Dt7ZfSr0XWavBzjJ5w/ti4Xwun9RWpshwFegkFPm5rhQIc9tZDAsTDf
-         +VuQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVFSRBfzWXbSTPOJTFgIGfoR3yctggxkG81hC761WHERS8UVdrgkP2mdh6jLI0cNDGFuC5Gk3APtA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxy1lIBwAkcfdsHbjPi8vS/y/42/8JIPh/VK57IEBkMrCRW465N
-	nfuRiBxhllIghn/4NYtriPTHl1aJGLEhMkbDIWxYTahIelebQCy63PV8ujlVFdQHxqo=
-X-Gm-Gg: ATEYQzyEp1+6F3Jow0QSBTTUNG46VhwvlBFoF1Q8H+cPJj8Y5CGY83hDWlDTfHYWkX7
-	4DBaeFutoP+zWVERS7c1wMyHfUpb4pd4gft/IdZBm9cHDbF2YAFZXogywS/9NgzAkIcgfvxneKi
-	zlIjARvHRYw2+SSAscDiwgwsbyT7BJ8AHYCloqN4d5JiuPuQUnYxXdvMtqu1OyNWtOV0ZWl2N0r
-	46POWNZWdo0ZZcLOhilv9CtE9T3vCeU/TI49CtsMYQsoxmd4p3EEeI4ngoGrYqWLeeapfD2J04o
-	RAvX4QLqXxtIKQG1WlOMJiLG1LfMI8f3/D7CA1O5VOZZSpmQz4zu3NUfujBakoafH3rr+bmNeJu
-	SrcmaukQxqOnmmjvMm8Vqphy6+gy+lf53PISpqTwxqIx24fR4hdXBu3SiyoO/LjOR9HsLvM+NP/
-	nW7V31RmSJv+gFPUDW12KPHn46AxL1zrFLDa+y5uN9Oc0ghdNl5wokWaM78RcY5qejbw==
-X-Received: by 2002:a05:600c:4592:b0:480:6999:27ec with SMTP id 5b1f17b1804b1-483c9bc03b1mr291390865e9.13.1772522009331;
-        Mon, 02 Mar 2026 23:13:29 -0800 (PST)
+        bh=ubymJC3yMVrWaVX4434QCzD6ml7X+t88qVksAj99ZwM=;
+        b=lfLVwoQSnXiB5bjjWHJC7LtfAHnp6IEp24HXFouf84iFKrckcyWpdG9XQw8JTjTTPZ
+         Obpo+IzhPrLAop8GzKohj09hCfR8SLUxEvY0G/GvZfrdsn7P1mKXdUcxSW8NvDqFYEcR
+         TTBVhKKt4nDw1aSdEFTEzG5XrrJGLe/QO9LL9c61YDEilvw+zARlUJwMk2nUkwJU/H5z
+         O0SnTotri0XQohrxzLlM7vI7WFkHId5JGd8H7NMylqaSiWH7XCARqXq3WRUFiFKaExsx
+         wYWqcY7CVsCE5CjhWWDPq5WP5WJuIYwWvk0wkeqzXcmAznv2oc1kHOWWPYg4TL1fYMp7
+         XDvA==
+X-Forwarded-Encrypted: i=1; AJvYcCUGRTN+/Ub4Au3g9ubYgIozc4dpgtFGxEyYgV091rMBA2k7Kob1TJHTBdLUQTmGxQ1O5Lu+fMO2/g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyYUFcu8F/buTUV4KmRXZjOBBEuRuikLvE5V/vWelHgM/f9Td2M
+	zqqom21zHj4Ok4aR97x1rDBSoM59N/9nNKeN4do7NIhMhOZGV1J+fZ3fZy4JGHgOaI0=
+X-Gm-Gg: ATEYQzwBfoSDavdHOPwdNFfMdWcQTX8D2SECLEqPZ3j2eC3gc1nwsQJLBJl6c4HaNs2
+	/hccEhChhUfeqgqVIrk/+o0X7++ivDBD1BNhSkQ4P37M+bAtRb+xyAFnHVKSDKN3nOYaMvoxkH/
+	svCtdJ9643VDC7kLeDiEfo56f8p43mq8ke3EQCA0N7nkz56VKewYadBLTkWzKzu2RKiGSW/ted3
+	2O0c5/wmv61mZQhsBWJzpY8RmdM27cOdD3ECciWck6m8k5bqOtD2fekjkkafONNBneyOJq76yLa
+	8jXLRsQtMVj6OtqIeyPzD+j3GnqlYh0v2rUeugS6E/sjUwytMxrQbwRLAdTwwpK6RJqQivQCsbD
+	bf9rlRnz9yC6dJylA6z4Cmq3rLRbGoSpWUrjwQRP4uPRfmU535lm7l4mPkOUiUqT62WMoiZkGaZ
+	CFBcn8QBSUz/0PLNKlJEK1BVR3kRAbbihMjSnWFWOOoG67LrsDcwQd6jrwHYyrgjvpqA==
+X-Received: by 2002:a05:600c:3108:b0:483:709e:f238 with SMTP id 5b1f17b1804b1-483c9c1d177mr268411375e9.29.1772522210626;
+        Mon, 02 Mar 2026 23:16:50 -0800 (PST)
 Received: from [192.168.178.47] (aftr-82-135-83-117.dynamic.mnet-online.de. [82.135.83.117])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-48512628e2asm22510605e9.1.2026.03.02.23.13.27
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-485125bbb48sm16093555e9.0.2026.03.02.23.16.49
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 02 Mar 2026 23:13:28 -0800 (PST)
-Message-ID: <0809867c-796a-4bf1-a868-7ec64504723d@suse.com>
-Date: Tue, 3 Mar 2026 08:13:27 +0100
+        Mon, 02 Mar 2026 23:16:50 -0800 (PST)
+Message-ID: <9881a867-244c-4ae5-852a-3332b7eb0614@suse.com>
+Date: Tue, 3 Mar 2026 08:16:49 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,8 +68,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 03/24] scsi-multipath: introduce scsi_device head
- structure
+Subject: Re: [PATCH 04/24] scsi-multipath: introduce scsi_mpath_device_class
 To: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
  sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
  james.bottomley@hansenpartnership.com
@@ -78,317 +77,48 @@ Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
  bmarzins@redhat.com, dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
  linux-kernel@vger.kernel.org
 References: <20260225153627.1032500-1-john.g.garry@oracle.com>
- <20260225153627.1032500-4-john.g.garry@oracle.com>
+ <20260225153627.1032500-5-john.g.garry@oracle.com>
 Content-Language: en-US
 From: Hannes Reinecke <hare@suse.com>
-In-Reply-To: <20260225153627.1032500-4-john.g.garry@oracle.com>
+In-Reply-To: <20260225153627.1032500-5-john.g.garry@oracle.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
 On 2/25/26 16:36, John Garry wrote:
-> Introduce a scsi_device head structure - scsi_mpath_head - to manage
-> multipathing for a scsi_device. This is similar to nvme_ns_head structure.
+> Introduce a new class for multipathed devices, scsi_mpath_device_class.
 > 
-> There is no reference in scsi_mpath_head to any disk, as this would be
-> mananged by the scsi_disk driver.
+> The purpose of this class is for managing the scsi_mpath_head.dev member.
 > 
-> A list of scsi_mpath_head structures is managed to lookup for matching
-> multipathed scsi_device's. Matching is done through the scsi_device
-> unique id.
+> The naming for the scsi_device structure is in form H:C:I:L,
+> where H is host, C is channel, I is ID, and L is lun.
 > 
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
-> ---
->   drivers/scsi/scsi_multipath.c | 147 ++++++++++++++++++++++++++++++++++
->   drivers/scsi/scsi_sysfs.c     |   3 +
->   include/scsi/scsi_multipath.h |  29 +++++++
->   3 files changed, 179 insertions(+)
+> However, for a multipathed scsi_device, all the naming members may be
+> different between member scsi_device's. As such, just use a simple
+> single-number naming index for each scsi_mpath_head.
 > 
-> diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
-> index 04e0bad3d9204..49316269fad8e 100644
-> --- a/drivers/scsi/scsi_multipath.c
-> +++ b/drivers/scsi/scsi_multipath.c
-> @@ -16,6 +16,10 @@
->   bool scsi_multipath;
->   static bool scsi_multipath_always;
->   
-> +static LIST_HEAD(scsi_mpath_heads_list);
-> +static DEFINE_MUTEX(scsi_mpath_heads_lock);
-> +static DEFINE_IDA(scsi_multipath_dev_ida);
-> +
->   static int multipath_param_set(const char *val, const struct kernel_param *kp)
->   {
->   	int ret;
-> @@ -99,6 +103,73 @@ static int scsi_multipath_sdev_init(struct scsi_device *sdev)
->   	return 0;
->   }
->   
-> +struct mpath_head_template smpdt_pr = {
-> +};
-> +
-> +static struct scsi_mpath_head *scsi_mpath_alloc_head(void)
-> +{
-> +	struct scsi_mpath_head *scsi_mpath_head;
-> +	int ret;
-> +
-> +	scsi_mpath_head = kzalloc(sizeof(*scsi_mpath_head), GFP_KERNEL);
-> +	if (!scsi_mpath_head)
-> +		return NULL;
-> +
-> +	ida_init(&scsi_mpath_head->ida);
-> +	mutex_init(&scsi_mpath_head->lock);
-> +
-> +	scsi_mpath_head->mpath_head = mpath_alloc_head();
-> +	if (IS_ERR(scsi_mpath_head->mpath_head))
-> +		goto out_free;
-> +	scsi_mpath_head->mpath_head->mpdt = &smpdt_pr;
+> The sysfs device folder will have links to the scsi_device's so, it will
+> be possible to lookup the member scsi_device's.
+> 
+> An example sysfs entry is as follows:
+> # ls -l /sys/class/scsi_mpath_device/0/
+> total 0
+> drwxr-xr-x    2 root     root             0 Feb 24 11:56 power
+> lrwxrwxrwx    1 root     root             0 Feb 24 11:56 subsystem -> ../../../../class/scsi_mpath_device
+> -rw-r--r--    1 root     root          4096 Feb 24 11:55 uevent
+> -r--r--r--    1 root     root          4096 Feb 24 11:56 wwid
+> # cat /sys/class/scsi_mpath_device/0/wwid
+> naa.600140505200a986f0043c9afa1fd077
+> 
+Ah, here it is.
+So you can ignore my comments from the previous patch.
+(and you might think of merging this and the previous patch).
 
-mpdt?
-What's that supposed to mean?
-Seems to be like a persistent reservation thing, so why don't
-you introduce it together with PR suppoer?
+But device naming is still dodgy. A plain number has so many ways of
+being misinterpreted.
+Wouldn't it be better to name it 'mpathX' ?
 
-> +	scsi_mpath_head->mpath_head->drvdata = scsi_mpath_head;
-> +
-> +	scsi_mpath_head->index = ida_alloc(&scsi_multipath_dev_ida, GFP_KERNEL);
-> +	if (scsi_mpath_head->index < 0)
-> +		goto out_put_head;
-> +
-> +	device_initialize(&scsi_mpath_head->dev);
-> +	ret = dev_set_name(&scsi_mpath_head->dev, "%d", scsi_mpath_head->index);
-
-Huh? The name is just the number? So we will have a device
-/sys/devices/virtual/1 ?
-
-The sysfs registration looks decidedly odd.
-I guess we should add a scsi multipath class to sort the devices under.
-
-> +	if (ret) {
-> +		put_device(&scsi_mpath_head->dev);
-> +		goto out_free_ida;
-> +	}
-> +
-> +	return scsi_mpath_head;
-> +
-> +out_free_ida:
-> +	ida_free(&scsi_multipath_dev_ida, scsi_mpath_head->index);
-> +out_put_head:
-> +	mpath_put_head(scsi_mpath_head->mpath_head);
-> +out_free:
-> +	kfree(scsi_mpath_head);
-> +	return NULL;
-> +}
-> +
-> +static struct scsi_mpath_head *scsi_mpath_find_head(
-> +			struct scsi_mpath_device *scsi_mpath_dev)
-> +{
-> +	struct scsi_mpath_head *scsi_mpath_head;
-> +	int ret;
-> +
-> +	mutex_lock(&scsi_mpath_heads_lock);
-> +	list_for_each_entry(scsi_mpath_head, &scsi_mpath_heads_list, entry) {
-> +		ret = scsi_mpath_get_head(scsi_mpath_head);
-> +		if (ret)
-> +			continue;
-> +		if (strncmp(scsi_mpath_head->wwid,
-> +			scsi_mpath_dev->device_id_str,
-> +			SCSI_MPATH_DEVICE_ID_LEN) == 0) {
-> +
-> +			mutex_unlock(&scsi_mpath_heads_lock);
-> +			return scsi_mpath_head;
-> +		}
-> +		scsi_mpath_put_head(scsi_mpath_head);
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
->   static void scsi_multipath_sdev_uninit(struct scsi_device *sdev)
->   {
->   	kfree(sdev->scsi_mpath_dev);
-> @@ -107,6 +178,7 @@ static void scsi_multipath_sdev_uninit(struct scsi_device *sdev)
->   
->   int scsi_mpath_dev_alloc(struct scsi_device *sdev)
->   {
-> +	struct scsi_mpath_head *scsi_mpath_head;
->   	int ret;
->   
->   	if (!scsi_multipath)
-> @@ -127,13 +199,75 @@ int scsi_mpath_dev_alloc(struct scsi_device *sdev)
->   		goto out_uninit;
->   	}
->   
-> +	scsi_mpath_head = scsi_mpath_find_head(sdev->scsi_mpath_dev);
-> +	if (scsi_mpath_head)
-> +		goto found;
-> +	/* scsi_mpath_disks_list lock held */
-> +	scsi_mpath_head = scsi_mpath_alloc_head();
-> +	if (!scsi_mpath_head)
-> +		goto out_uninit;
-> +
-> +	strcpy(scsi_mpath_head->wwid, sdev->scsi_mpath_dev->device_id_str);
-> +
-
-Do we have a sysfs attribute for this?
-
-> +	ret = device_add(&scsi_mpath_head->dev);
-> +	if (ret)
-> +		goto out_put_head;
-> +
-> +	list_add_tail(&scsi_mpath_head->entry, &scsi_mpath_heads_list);
-> +
-> +	mutex_unlock(&scsi_mpath_heads_lock);
-> +	sdev->scsi_mpath_dev->scsi_mpath_head = scsi_mpath_head;
-> +
-> +found:
-> +	sdev->scsi_mpath_dev->index = ida_alloc(&scsi_mpath_head->ida, GFP_KERNEL);
-> +	if (sdev->scsi_mpath_dev->index < 0) {
-> +		ret = sdev->scsi_mpath_dev->index;
-> +		goto out_put_head;
-> +	}
-> +
-> +	mutex_lock(&scsi_mpath_head->lock);
-> +	scsi_mpath_head->dev_count++;
-> +	mutex_unlock(&scsi_mpath_head->lock);
-> +
-> +	sdev->scsi_mpath_dev->scsi_mpath_head = scsi_mpath_head;
->   	return 0;
->   
-> +out_put_head:
-> +	scsi_mpath_put_head(scsi_mpath_head);
->   out_uninit:
-> +	mutex_unlock(&scsi_mpath_heads_lock);
->   	scsi_multipath_sdev_uninit(sdev);
->   	return ret;
->   }
->   
-> +static void scsi_mpath_remove_head(struct scsi_mpath_device *scsi_mpath_dev)
-> +{
-> +	struct scsi_mpath_head *scsi_mpath_head =
-> +			scsi_mpath_dev->scsi_mpath_head;
-> +	bool last_path = false;
-> +
-> +	mutex_lock(&scsi_mpath_head->lock);
-> +	scsi_mpath_head->dev_count--;
-> +	if (scsi_mpath_head->dev_count == 0)
-> +		last_path = true;
-> +	mutex_unlock(&scsi_mpath_head->lock);
-> +
-> +	if (last_path)
-> +		device_del(&scsi_mpath_head->dev);
-> +
-> +	scsi_mpath_dev->scsi_mpath_head = NULL;
-> +	scsi_mpath_put_head(scsi_mpath_head);
-> +}
-> +
-> +void scsi_mpath_remove_device(struct scsi_mpath_device *scsi_mpath_dev)
-> +{
-> +	struct scsi_mpath_head *scsi_mpath_head = scsi_mpath_dev->scsi_mpath_head;
-> +
-> +	ida_free(&scsi_mpath_head->ida, scsi_mpath_dev->index);
-> +
-> +	scsi_mpath_remove_head(scsi_mpath_dev);
-> +}
-> +
->   void scsi_mpath_dev_release(struct scsi_device *sdev)
->   {
->   	struct scsi_mpath_device *scsi_mpath_dev = sdev->scsi_mpath_dev;
-> @@ -142,8 +276,21 @@ void scsi_mpath_dev_release(struct scsi_device *sdev)
->   		return;
->   
->   	scsi_multipath_sdev_uninit(sdev);
-> +}
-> +
-> +int scsi_mpath_get_head(struct scsi_mpath_head *scsi_mpath_head)
-> +{
-> +	if (!get_device(&scsi_mpath_head->dev))
-> +		return -ENXIO;
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(scsi_mpath_get_head);
->   
-> +void scsi_mpath_put_head(struct scsi_mpath_head *scsi_mpath_head)
-> +{
-> +	put_device(&scsi_mpath_head->dev);
->   }
-> +EXPORT_SYMBOL_GPL(scsi_mpath_put_head);
->   
->   int __init scsi_multipath_init(void)
->   {
-> diff --git a/drivers/scsi/scsi_sysfs.c b/drivers/scsi/scsi_sysfs.c
-> index 0d69e27600a7a..287a683e89ae5 100644
-> --- a/drivers/scsi/scsi_sysfs.c
-> +++ b/drivers/scsi/scsi_sysfs.c
-> @@ -1447,6 +1447,9 @@ void __scsi_remove_device(struct scsi_device *sdev)
->   	} else
->   		put_device(&sdev->sdev_dev);
->   
-> +	if (sdev->scsi_mpath_dev)
-> +		scsi_mpath_remove_device(sdev->scsi_mpath_dev);
-> +
->   	/*
->   	 * Stop accepting new requests and wait until all queuecommand() and
->   	 * scsi_run_queue() invocations have finished before tearing down the
-> diff --git a/include/scsi/scsi_multipath.h b/include/scsi/scsi_multipath.h
-> index ca00ea10cd5db..38953b05a44dc 100644
-> --- a/include/scsi/scsi_multipath.h
-> +++ b/include/scsi/scsi_multipath.h
-> @@ -19,9 +19,22 @@
->   #ifdef CONFIG_SCSI_MULTIPATH
->   #define SCSI_MPATH_DEVICE_ID_LEN 40
->   
-> +struct scsi_mpath_head {
-> +	char			wwid[SCSI_MPATH_DEVICE_ID_LEN];
-
-Don't name it WWID. That's an ATA thing. Make it vpd_id.
-
-> +	struct list_head	entry;
-> +	int			dev_count;
-> +	struct ida		ida;
-> +	struct mutex		lock;
-> +	struct mpath_head	*mpath_head;
-> +	struct device		dev;
-> +	int			index;
-> +};
-> +
->   struct scsi_mpath_device {
->   	struct mpath_device	mpath_device;
->   	struct scsi_device 	*sdev;
-> +	int			index;
-> +	struct scsi_mpath_head	*scsi_mpath_head;
->   
->   	char			device_id_str[SCSI_MPATH_DEVICE_ID_LEN];
->   };
-> @@ -32,8 +45,13 @@ int scsi_mpath_dev_alloc(struct scsi_device *sdev);
->   void scsi_mpath_dev_release(struct scsi_device *sdev);
->   int scsi_multipath_init(void);
->   void scsi_multipath_exit(void);
-> +void scsi_mpath_remove_device(struct scsi_mpath_device *scsi_mpath_dev);
-> +int scsi_mpath_get_head(struct scsi_mpath_head *);
-> +void scsi_mpath_put_head(struct scsi_mpath_head *);
->   #else /* CONFIG_SCSI_MULTIPATH */
->   
-> +struct scsi_mpath_head {
-> +};
->   struct scsi_mpath_device {
->   };
->   
-> @@ -51,5 +69,16 @@ static inline int scsi_multipath_init(void)
->   static inline void scsi_multipath_exit(void)
->   {
->   }
-> +static inline void scsi_mpath_remove_device(struct scsi_mpath_device
-> +					*scsi_mpath_dev)
-> +{
-> +}
-> +static inline int scsi_mpath_get_head(struct scsi_mpath_head *)
-> +{
-> +	return 0;
-> +}
-> +static inline void scsi_mpath_put_head(struct scsi_mpath_head *)
-> +{
-> +}
->   #endif /* CONFIG_SCSI_MULTIPATH */
->   #endif /* _SCSI_SCSI_MULTIPATH_H */
+And, of course: how can we get the topology?
+Do we get a list of the underlying scsi devices from sysfs?
 
 Cheers,
 
