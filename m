@@ -1,60 +1,40 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+Received: from mout.web.de (mout.web.de [212.227.17.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 484F23DA5D4
-	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 11:01:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77A1C1A6825
+	for <dm-devel@lists.linux.dev>; Tue,  3 Mar 2026 12:13:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.227.17.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772535695; cv=none; b=Q78rXrJwcYRPKykPpUOOrkibY4d4xauXK4TjkuEsNqIPnG3AEQdEAVddKvHP4pVuXwpV21XIeCc7nKVKdqReoZCS1xEAPHn2rx4h91My3o1HRW5aGG47oH/iukfIMKSj1yYEXvBQDq7yqYd+Azn1bJea+eKpwRi3vDq+/eCpkmI=
+	t=1772540020; cv=none; b=VHH73Dba/euRmzVOZaPj+4+hmSVSwLfYqoHzjSbE3ZsJTZq/AywgowdsWK7x4RQIXxFsziskJyB2VsyVUdIDfPftmL3/KqHkZNpcgmZQcdNBKSfsJwP7oxxhxPkdEjTw0X7P0jcdDRXEI5EMgFSk+LmDhC/mBuwqvbEk3knEu9E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772535695; c=relaxed/simple;
-	bh=c75Czd/WuSxAxL7HBZ8ph01D/n6FrkUU+B9CLkB8dnQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=RGww0QpqHzZSnza6MCO+TbRJWY3UhB5pgerzNO1Uvl4PlcVhVlbCnW8TcoTFCRRAaBAPjTr77yAYL31R+K7A9KDNj5pbH9bEgjz3UJm3q4ej8LXfuWY4ARwZwVJMTdYlveiyahfDNiyGJpFiew3QN9xr0CIT3L98XtZknkXJcNU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=dIvcPKEM; arc=none smtp.client-ip=148.163.158.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1772540020; c=relaxed/simple;
+	bh=TWj0Uz55Wuh0z68fyA36RmjG//2hytmhazu3ZxHQV4A=;
+	h=Message-ID:Date:MIME-Version:To:Cc:References:Subject:From:
+	 In-Reply-To:Content-Type; b=u5Ho6GnQwPRvpH8YZA7OjjlLFrHzt/ow/UGHKw6/5l+2AmO7ror4222leif5jveP5JWNNShL7Ao9WH8SbqZ4MUUap8OkIqxKhQ+oCugDHZS1rzvsxlEer4oDtumOKlsDQ6iIZIVVOKMs55/6Dhk2ofa7Fwybcvcriqj/h4AG+2E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de; spf=pass smtp.mailfrom=web.de; dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b=VL4xd4hz; arc=none smtp.client-ip=212.227.17.12
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=web.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=web.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="dIvcPKEM"
-Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 623545Tw2063768;
-	Tue, 3 Mar 2026 11:01:09 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=Pz6W5X
-	TViXjXNBWwPK//f19ZN9+SGTRlKphirex+vPU=; b=dIvcPKEMfH9L0VHBAgRYG5
-	+uV4X1rg853lkKGtgmXizAJX4L3E17/Jy6G62ZbGzJERnspyzC+3i/FZ8SVChuOz
-	C0Gf14bw8zV5SjjmMNwwO52KRZ9LSAi9HyE1pkleCrHMiaayMInM0nitlGXsyaIN
-	1fzvCBZ0Gt3qHO5jkd6VYw70PZZu/sQAq39r6j24a1S9gvLSR6eyBw+1Mau72dip
-	6FEjDf7b6dNpk4nq3yX24psYbebMrSJzJ0VE5FbYyufTlaKWeI7i0tKs3x7dMgRt
-	udZbfKnZ6EF7PdxSUNjqplsiSRUd0Sbcl7temn1oEmcBX1EMDRSbFItwfGJt+15A
-	==
-Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4ckskbtaf6-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 03 Mar 2026 11:01:09 +0000 (GMT)
-Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
-	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 623AYo8Z010335;
-	Tue, 3 Mar 2026 11:01:08 GMT
-Received: from smtprelay02.wdc07v.mail.ibm.com ([172.16.1.69])
-	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4cmc6k1thj-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 03 Mar 2026 11:01:08 +0000
-Received: from smtpav04.dal12v.mail.ibm.com (smtpav04.dal12v.mail.ibm.com [10.241.53.103])
-	by smtprelay02.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 623B17RB30016112
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 3 Mar 2026 11:01:08 GMT
-Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id A9329580D3;
-	Tue,  3 Mar 2026 11:01:07 +0000 (GMT)
-Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id DDA51580D2;
-	Tue,  3 Mar 2026 11:01:01 +0000 (GMT)
-Received: from [9.124.211.174] (unknown [9.124.211.174])
-	by smtpav04.dal12v.mail.ibm.com (Postfix) with ESMTP;
-	Tue,  3 Mar 2026 11:01:01 +0000 (GMT)
-Message-ID: <bb4df6e1-cd83-4a73-af67-f83c543d6e6c@linux.ibm.com>
-Date: Tue, 3 Mar 2026 16:31:00 +0530
+	dkim=pass (2048-bit key) header.d=web.de header.i=markus.elfring@web.de header.b="VL4xd4hz"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=web.de;
+	s=s29768273; t=1772540005; x=1773144805; i=markus.elfring@web.de;
+	bh=gIp54MN4jChuEYUh7TNa6eqBLe7+iFuIFJTp65fofko=;
+	h=X-UI-Sender-Class:Message-ID:Date:MIME-Version:To:Cc:References:
+	 Subject:From:In-Reply-To:Content-Type:Content-Transfer-Encoding:
+	 cc:content-transfer-encoding:content-type:date:from:message-id:
+	 mime-version:reply-to:subject:to;
+	b=VL4xd4hzTmxeRHnNfny/2YerGM5ZFuLtzbSrtOQmtHR0nvZlKNaRRud1MdQawEto
+	 49B7QDrjPUxSdxjsLExlQ2JXWsLOhJy/6T5w4nhCfHy1qxZrM2pWVGAgqgKzxnOd1
+	 O0rxyW4vq3aDchyISnb1hfkWCGlCPALjzBZD2Cbn2MIWKbLOZkdf825FjIDFMEaZy
+	 cWguu+UYHb9BiTc/6wMToFTIHlCqJgpXcZ6KFq9LBJGPdWOh2bhbF7jbHphJIgUjj
+	 TPDbJpw8FQDoNSdUBKxG1ngOAlKOjnS8YV3SfNIhjCvIuEVbDZF9SZ+5EZyJiruMa
+	 GmkiSDgpX8wBtc5a1w==
+X-UI-Sender-Class: 814a7b36-bfc1-4dae-8640-3722d8ec6cd6
+Received: from client.hidden.invalid by smtp.web.de (mrweb105
+ [213.165.67.124]) with ESMTPSA (Nemesis) id 1MFJnX-1vvUwm0ZNR-00BCZp; Tue, 03
+ Mar 2026 13:13:25 +0100
+Message-ID: <317a7883-9470-453d-a3cf-8d819383aca2@web.de>
+Date: Tue, 3 Mar 2026 13:13:21 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -62,153 +42,121 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 03/13] libmultipath: Add path selection support
-To: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
-        sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
-        james.bottomley@hansenpartnership.com, hare@suse.com
-Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-References: <20260225153225.1031169-1-john.g.garry@oracle.com>
- <20260225153225.1031169-4-john.g.garry@oracle.com>
- <775dd360-ea41-4e27-9690-e0633e0522d7@linux.ibm.com>
- <f9fb6d73-9b90-4c11-ae1f-3f2e76773d7f@oracle.com>
-Content-Language: en-US
-From: Nilay Shroff <nilay@linux.ibm.com>
-In-Reply-To: <f9fb6d73-9b90-4c11-ae1f-3f2e76773d7f@oracle.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-ORIG-GUID: 112SSYPwvQ1fPTytZawkBdxWb6kjkNkm
-X-Authority-Analysis: v=2.4 cv=b66/I9Gx c=1 sm=1 tr=0 ts=69a6bf75 cx=c_pps
- a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
- a=IkcTkHD0fZMA:10 a=Yq5XynenixoA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=V8glGbnc2Ofi9Qvn3v5h:22 a=yPCof4ZbAAAA:8
- a=ZfRzAisczin3gzfXZHYA:9 a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzAzMDA4MSBTYWx0ZWRfX+DiNchBZqfTc
- AQzx2tFHh2mKaWkBpjsnPgnxf1RmrBcae8G6vPT2+hXFFFm4sNwgIftrCwT/wW2h6oUb8BXDxEA
- BP7NCiM332PYNcotWMQ9GrpJMb3gEbLdKqfk4S6fpYWx8uhST3iW1sl99w4UILs9JcLxphDCwbS
- zmbeHao3nfMncErfISA8fic58zaTyXmjYPH1h2GInfNkR/WKhswtzI8RpV71wuZsU21g29F1C5d
- WDPCLA9CzCz6XJ/e3sKmGjmjzM96YzFbSns9utKY1mpW6N1iXQzOlbJLNSgGOXg24kQTBTleXFo
- X78mSOVN5hYjjQKnx+X9K31RSe/qNIrR/jQAePmHiDQq71KYoY+DURlF2ze3j7So8ftVkPttUte
- tBQD7hEqYx3uTrrTD23nPU+5+tq5UGZzinWUZ+6WxURbumThWDMu3yyPpi3Hy0HtLkZ2fWFL2/7
- LK5vkGpBrq6+qrRTXsg==
-X-Proofpoint-GUID: 112SSYPwvQ1fPTytZawkBdxWb6kjkNkm
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1121,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-02_05,2026-03-03_01,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- suspectscore=0 lowpriorityscore=0 phishscore=0 clxscore=1015 adultscore=0
- bulkscore=0 impostorscore=0 malwarescore=0 spamscore=0 priorityscore=1501
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2602130000 definitions=main-2603030081
+To: John Garry <john.g.garry@oracle.com>, linux-block@vger.kernel.org,
+ linux-scsi@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-nvme@lists.infradead.org, Christoph Hellwig <hch@lst.de>,
+ Hannes Reinecke <hare@suse.com>,
+ James Bottomley <James.Bottomley@HansenPartnership.com>,
+ Jens Axboe <axboe@fb.com>, Keith Busch <kbusch@kernel.org>,
+ "Martin K. Petersen" <martin.petersen@oracle.com>,
+ Sagi Grimberg <sagi@grimberg.me>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ John Meneghini <jmeneghi@redhat.com>,
+ Mike Christie <michael.christie@oracle.com>,
+ Mike Snitzer <snitzer@kernel.org>
+References: <20260225153225.1031169-3-john.g.garry@oracle.com>
+Subject: Re: [PATCH 02/13] libmultipath: Add basic gendisk support
+Content-Language: en-GB, de-DE
+From: Markus Elfring <Markus.Elfring@web.de>
+In-Reply-To: <20260225153225.1031169-3-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+X-Provags-ID: V03:K1:Y9Tc070tjaLWTl1kQxMYkGBPvc0yZW6gcj0I/lU6blB2sw2I6X5
+ FNV025sdMT51il+Fyo390oz8ADSxrqQEQTVB35shpjZiBYP7pochPJ7Q1oPGW1/Ml0c52qn
+ eZi9PcdDyYSAH5lNDPryZJcYkGPLzFZfDCbX9c4qG8YJHI76+yqjO8bRvfAk7UkjFPDObbv
+ lfopfHBl9sSQr8KGN4aWg==
+X-Spam-Flag: NO
+UI-OutboundReport: notjunk:1;M01:P0:GvzOakMwmiM=;WR8ltfsCe2n2cQ9lB5rEju6RTFT
+ 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
+ dv4rfAGauumZ3Sr1I4lBt3IXtXCUT
 
-On 3/2/26 8:41 PM, John Garry wrote:
-> On 02/03/2026 12:36, Nilay Shroff wrote:
->> On 2/25/26 9:02 PM, John Garry wrote:
->>> Add code for path selection.
->>>
->>> NVMe ANA is abstracted into enum mpath_access_state. The motivation 
->>> here is
->>> so that SCSI ALUA can be used. Callbacks .is_disabled, .is_optimized,
->>> .get_access_state are added to get the path access state.
->>>
->>> Path selection modes round-robin, NUMA, and queue-depth are added, same
->>> as NVMe supports.
->>>
->>> NVMe has almost like-for-like equivalents here:
->>> - __mpath_find_path() -> __nvme_find_path()
->>> - mpath_find_path() -> nvme_find_path()
->>>
->>> and similar for all introduced callee functions.
->>>
->>> Functions mpath_set_iopolicy() and mpath_get_iopolicy() are added for
->>> setting default iopolicy.
->>>
->>> A separate mpath_iopolicy structure is introduced. There is no iopolicy
->>> member included in the mpath_head structure as it may not suit NVMe, 
->>> where
->>> iopolicy is per-subsystem and not per namespace.
->>>
->>> Signed-off-by: John Garry <john.g.garry@oracle.com>
->>> ---
->>>   include/linux/multipath.h |  36 ++++++
->>>   lib/multipath.c           | 251 ++++++++++++++++++++++++++++++++++++++
->>>   2 files changed, 287 insertions(+)
->>>
->>> diff --git a/include/linux/multipath.h b/include/linux/multipath.h
->>> index be9dd9fb83345..c964a1aba9c42 100644
->>> --- a/include/linux/multipath.h
->>> +++ b/include/linux/multipath.h
->>> @@ -7,6 +7,22 @@
->>>   extern const struct block_device_operations mpath_ops;
->>> +enum mpath_iopolicy_e {
->>> +    MPATH_IOPOLICY_NUMA,
->>> +    MPATH_IOPOLICY_RR,
->>> +    MPATH_IOPOLICY_QD,
->>> +};
->>> +
->>> +struct mpath_iopolicy {
->>> +    enum mpath_iopolicy_e    iopolicy;
->>> +};
->>> +
->>> +enum mpath_access_state {
->>> +    MPATH_STATE_OPTIMIZED,
->>> +    MPATH_STATE_ACTIVE,
->>> +    MPATH_STATE_INVALID    = 0xFF
->>> +};
->> Hmm so here we don't have MPATH_STATE_NONOPTIMIZED.
->> We are morphing NVME_ANA_NONOPTIMIZED as MPATH_STATE_ACTIVE.
-> 
-> Yes, well it is treated the same (as NVME_ANA_NONOPTIMIZED) for path 
-> selection.
-> 
->> Is it because SCSI doesn't have (NONOPTIMIZED) state?
-> 
-> It does have an active (and optimal) state, but I think that keeping 
-> NVMe terminology may be better for now.
-> 
->>
->>> +
->>>   struct mpath_disk {
->>>       struct gendisk        *disk;
->>>       struct kref        ref;
->>> @@ -18,10 +34,16 @@ struct mpath_disk {
->>>   struct mpath_device {
->>>       struct list_head    siblings;
->>> +    atomic_t        nr_active;
->>>       struct gendisk        *disk;
->>> +    int            numa_node;
->>>   };
->> I haven't seen any API which help set nr_active or numa_node.
-> 
-> I missed setting numa_node for NVMe. About nr_active, that is set/read 
-> by the NVMe code, like nvme_mpath_start_request(). I did try to abstract 
-> that function into a common helper, but it just becomes a mess.
-> 
-The nvme_mpath_start_request() increments ns->ctrl->nr_active, and 
-nvme_mpath_end_request() decrements it. This means that nr_active is 
-maintained per controller. If multiple NVMe namespaces are created and 
-attached to the same controller, their I/O activity is accumulated in 
-the single ctrl->nr_active counter.
+=E2=80=A6
+> +++ b/lib/multipath.c
+=E2=80=A6
+> +static void multipath_partition_scan_work(struct work_struct *work)
+> +{
+=E2=80=A6
+> +	mutex_lock(&mpath_disk->disk->open_mutex);
+> +	bdev_disk_changed(mpath_disk->disk, false);
+> +	mutex_unlock(&mpath_disk->disk->open_mutex);
+> +}
+=E2=80=A6
 
-In contrast, libmultipath defines nr_active in struct mpath_device, 
-which is referenced from struct nvme_ns. Even if we add code to update 
-mpath_device->nr_active, that accounting would effectively be per 
-namespace, not per controller.
+Under which circumstances would you become interested to apply a statement
+like =E2=80=9Cguard(mutex)(&mpath_disk->disk->open_mutex);=E2=80=9D?
+https://elixir.bootlin.com/linux/v6.19.3/source/include/linux/mutex.h#L253
 
-The nr_active value is used by the queue-depth policy. Currently, 
-mpath_queue_depth_path() accesses mpath_device->nr_active to make 
-forwarding decisions. However, if mpath_device->nr_active is maintained 
-per namespace, it does not correctly reflect controller-wide load when 
-multiple namespaces share the same controller.
-
-Therefore, instead of maintaining a separate nr_active in struct 
-mpath_device, it may be more appropriate for mpath_queue_depth_path() to 
-reference ns->ctrl->nr_active directly. In that case, nr_active could be 
-removed from struct mpath_device entirely.
-
-Thanks,
---Nilay
-
+Regards,
+Markus
