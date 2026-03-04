@@ -1,111 +1,254 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from CH1PR05CU001.outbound.protection.outlook.com (mail-northcentralusazon11010021.outbound.protection.outlook.com [52.101.193.21])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFB7D149C7B;
-	Tue,  3 Mar 2026 20:17:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772569072; cv=none; b=jzVCeaIJJxNlauzaeu637jxjBC0F2jRnUHkC2xmGz65eZpVqms5abY1VtLon2d+iz6XVdX7aMkBgg0ksaquXMnwt1Y8r82EwH4n1J2VI/g12iOfIPWP3+rXFUu9lJn4Up1WcmYm8jOQghMfXQU+pqNT3i5tCHfh10+rnqe2W4PI=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772569072; c=relaxed/simple;
-	bh=u3dNGvXC26ETICo5jJCfeJ8Yg70Gdd4NDPFa8bCpAuQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=bx+7BkMeCINieAV5XbqKFsD6ixPP4hmqClWjTDAbvl+FXsdffPLhAlBW5hAW7uy2ESzaLj/f1MZTFqIYtBUhSX2TI9ZEk3d2D/w+35Hw/Mg+yet+z2tSsIUXppAyx1AoFDER0LkPL+SduZOe1g+DX0x9WL9SWPJW+knQ33Z38FU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=V/IzHq2q; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A363309EFF;
+	Wed,  4 Mar 2026 01:27:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.193.21
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1772587648; cv=fail; b=auu8VU7OFlubjkwUUcN0U61u5DgXVkD8Lhq0rrQAzGLdORP+lzIWGne1PSEHe+5KpnTUrXmhF3qf9Q3TEnZoWRZOiKb0qfqs4X11KYoxvzDg18wg+rAfWD/j93PRcF+5RA6ErpPJ5hsgPzMAcINP3CRhM/4YMJdpDflTbv74r70=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1772587648; c=relaxed/simple;
+	bh=If+alELQRxoZYh2+j+me3+yl43ZvUq195jzSNB/UyVM=;
+	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=ZkL+LDoSd81pzLm/z9jDsmB1gcMlNCkhCommAgfkXWTkgBzRRN/2yW8SrArZ0QP1ctrcBbozSmVN5kvLDff4McR1hOgAlxm8jMWptKYzj8LaO7QSs5aHSkaTknSgPYx2wK60ksS3G+bVwlVpcVx7BqkQ0QurD27T+FbMsbbWOmI=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com; spf=fail smtp.mailfrom=nvidia.com; dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b=T1x3dr5b; arc=fail smtp.client-ip=52.101.193.21
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=nvidia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="V/IzHq2q"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 985EDC116C6;
-	Tue,  3 Mar 2026 20:17:51 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1772569071;
-	bh=u3dNGvXC26ETICo5jJCfeJ8Yg70Gdd4NDPFa8bCpAuQ=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=V/IzHq2qM5pFKopFFC/Qce4sjLDefOoG6fglrpibYTiFRstSABep4y4h/KaVL7bz1
-	 jpIPoNJOzr3R5hnSvm74zwkMaqa7TznuI//dqnw8Vdm6VdKTGoIwSC8aDhxDUZIeu3
-	 uSO8l6CQgXugQIEDmcCcZuP5tEhtGuCgHOjIczXoAgPd17PE91kzT3RpicZtmEJBOs
-	 2T3zIjN7Q2xJ2WHqPKdFe2Q4FHAiOHo2+HVOJSXcdgZ7bCNyKfDOR7ips8yN6n64qB
-	 noaSFVHmjOOQN0sdfDEaUFnBNkUBGV6QBwCtKjeanG9t/+KxmfroO7TjDInL4OvQY4
-	 eRkqcStb9cDJQ==
-Date: Tue, 3 Mar 2026 12:16:56 -0800
-From: Eric Biggers <ebiggers@kernel.org>
-To: Sami Tolvanen <samitolvanen@google.com>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 00/22] dm-verity: more FEC fixes and cleanups
-Message-ID: <20260303201656.GE2846@sol>
-References: <20260206045942.52965-1-ebiggers@kernel.org>
- <CABCJKufKYMPcjiviWdGR=h5HVAmavwacsSdMNPQaaXeeL+GoFw@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=Nvidia.com header.i=@Nvidia.com header.b="T1x3dr5b"
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=Rm/VnHnpDPQIQYcS+jZghbeqSPlJONh/rihh8kOsTQWeaBwcMzwMS6LqH824SpR6XQmLXCKB6IJ5fAW5CucBjmY1Q/T6mPOLIuSIlhiUtCYHdnmdu8ZsCncnXuqkuiCzACJRfGGIHrU/z2tUx1TQ3gA+6GzB007lzRcNyeKrhy7gjSxHdET7tQM0oitkY9X0irmdTAuUbWgTBql53P92zRBFsRJwOcf792R7lKiN2z2YWOgT9+GuSZnKxVW5ionNW28amrx2Jie6dIhY+V8CcfrgUXM2hBlJi2JbLedarCNbHobtoWNQLmFSiaWNlZtItvHDf4fXu9uWU2ijzhsMsA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=qRSvKdolX3cJvMiUv+2Pa5U4bClslgETVtpoYDq3wrk=;
+ b=rA9wVEHd1De4y7fGlzc10SS9PTIqUmoAQ0UqdOKk02GVwAgy5I7aeA9crrkpiozGuAPreaeqdfUKvWc71Lm4z1eRYIFbFeaaK7S8nAvMJyRpvFDGWA+k+LsfJJJ54GMTrtfSfD5vb1QkFKktBJuyYrSnvpQIQ2lMNsEZ5tilKkZhRSedVcz2+pvLuxCbccj89m16Ki+XF8GAU9BgxegM2ciy8a5VuNUeVGaaBk7jEko+EOUZZhN8uQfqi8feTxs6o+0yO68KNlVQFFU52xX8WbfATPMSWMUOQ98oTxY5o5P3vOQu4ll98eFErPd2onGevRjA7C4PUh5x7OnPw2BK4Q==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
+ dkim=pass header.d=nvidia.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=qRSvKdolX3cJvMiUv+2Pa5U4bClslgETVtpoYDq3wrk=;
+ b=T1x3dr5bl7RHDFLPNxCv5Er6PT7PKmd1nW7DArldd5hr+qqrMi9gybc9TRxgccBUO0PKGieAeUnN6vVeFYc+s0iFUqYO94F68sabpuZfom4W+MZFjvbhRnFojnOPBA3jQOmQ0l2OKh/QRWrRdC2UB+Xw/56QDaC4E3opyqU2BuAX7wxs186698bPb3d4IUveRSNLjajFHV0EO+aScaF3sJw+JMsNfYPEIcwmJwRMuirU+cjCuycd6YZFRFHCpi4xReJFBz7yWpPQTZ7OIbPyTuGnkt72/u/tCv9uc2qGttEDMBEsblz7KWSKPSr3E8k5PY/yRF/r2sDuGv37uZpuNA==
+Authentication-Results: dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=nvidia.com;
+Received: from PH0PR12MB8800.namprd12.prod.outlook.com (2603:10b6:510:26f::12)
+ by IA1PR12MB6651.namprd12.prod.outlook.com (2603:10b6:208:3a0::22) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9654.22; Wed, 4 Mar
+ 2026 01:27:21 +0000
+Received: from PH0PR12MB8800.namprd12.prod.outlook.com
+ ([fe80::f79d:ddc5:2ad7:762d]) by PH0PR12MB8800.namprd12.prod.outlook.com
+ ([fe80::f79d:ddc5:2ad7:762d%4]) with mapi id 15.20.9654.022; Wed, 4 Mar 2026
+ 01:27:20 +0000
+From: Yury Norov <ynorov@nvidia.com>
+To: Andrew Morton <akpm@linux-foundation.org>,
+	"David S. Miller" <davem@davemloft.net>,
+	"Michael S. Tsirkin" <mst@redhat.com>,
+	"Theodore Ts'o" <tytso@mit.edu>,
+	Albert Ou <aou@eecs.berkeley.edu>,
+	Alexander Duyck <alexanderduyck@fb.com>,
+	Alexander Gordeev <agordeev@linux.ibm.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Alexandra Winter <wintera@linux.ibm.com>,
+	Andreas Dilger <adilger.kernel@dilger.ca>,
+	Andrew Lunn <andrew+netdev@lunn.ch>,
+	Anna Schumaker <anna@kernel.org>,
+	Anton Yakovlev <anton.yakovlev@opensynergy.com>,
+	Arnaldo Carvalho de Melo <acme@kernel.org>,
+	Aswin Karuvally <aswin@linux.ibm.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Carlos Maiolino <cem@kernel.org>,
+	Catalin Marinas <catalin.marinas@arm.com>,
+	Chao Yu <chao@kernel.org>,
+	Christian Borntraeger <borntraeger@linux.ibm.com>,
+	Christian Brauner <brauner@kernel.org>,
+	Claudio Imbrenda <imbrenda@linux.ibm.com>,
+	Dave Hansen <dave.hansen@linux.intel.com>,
+	David Airlie <airlied@gmail.com>,
+	Dominique Martinet <asmadeus@codewreck.org>,
+	Dongsheng Yang <dongsheng.yang@linux.dev>,
+	Eric Dumazet <edumazet@google.com>,
+	Eric Van Hensbergen <ericvh@kernel.org>,
+	Heiko Carstens <hca@linux.ibm.com>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Ingo Molnar <mingo@redhat.com>,
+	Jaegeuk Kim <jaegeuk@kernel.org>,
+	Jakub Kicinski <kuba@kernel.org>,
+	Jani Nikula <jani.nikula@linux.intel.com>,
+	Janosch Frank <frankja@linux.ibm.com>,
+	Jaroslav Kysela <perex@perex.cz>,
+	Jens Axboe <axboe@kernel.dk>,
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+	Latchesar Ionkov <lucho@ionkov.net>,
+	Linus Walleij <linusw@kernel.org>,
+	Madhavan Srinivasan <maddy@linux.ibm.com>,
+	Mark Brown <broonie@kernel.org>,
+	Michael Ellerman <mpe@ellerman.id.au>,
+	Miklos Szeredi <miklos@szeredi.hu>,
+	Namhyung Kim <namhyung@kernel.org>,
+	Palmer Dabbelt <palmer@dabbelt.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	Paul Walmsley <pjw@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Rodrigo Vivi <rodrigo.vivi@intel.com>,
+	Sean Christopherson <seanjc@google.com>,
+	Simona Vetter <simona@ffwll.ch>,
+	Takashi Iwai <tiwai@suse.com>,
+	Thomas Gleixner <tglx@kernel.org>,
+	Trond Myklebust <trondmy@kernel.org>,
+	Tvrtko Ursulin <tursulin@ursulin.net>,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	Will Deacon <will@kernel.org>,
+	Yury Norov <yury.norov@gmail.com>,
+	Zheng Gu <cengku@gmail.com>
+Cc: Yury Norov <ynorov@nvidia.com>,
+	linux-kernel@vger.kernel.org,
+	x86@kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linuxppc-dev@lists.ozlabs.org,
+	linux-riscv@lists.infradead.org,
+	kvm@vger.kernel.org,
+	linux-s390@vger.kernel.org,
+	linux-block@vger.kernel.org,
+	intel-gfx@lists.freedesktop.org,
+	dri-devel@lists.freedesktop.org,
+	dm-devel@lists.linux.dev,
+	netdev@vger.kernel.org,
+	linux-spi@vger.kernel.org,
+	linux-ext4@vger.kernel.org,
+	linux-f2fs-devel@lists.sourceforge.net,
+	linux-fsdevel@vger.kernel.org,
+	linux-xfs@vger.kernel.org,
+	linux-nfs@vger.kernel.org,
+	linux-crypto@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-perf-users@vger.kernel.org,
+	v9fs@lists.linux.dev,
+	virtualization@lists.linux.dev,
+	linux-sound@vger.kernel.org
+Subject: [PATCH 0/8] mm: globalize rest_of_page() macro
+Date: Tue,  3 Mar 2026 20:27:08 -0500
+Message-ID: <20260304012717.201797-1-ynorov@nvidia.com>
+X-Mailer: git-send-email 2.43.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: BN0PR04CA0194.namprd04.prod.outlook.com
+ (2603:10b6:408:e9::19) To PH0PR12MB8800.namprd12.prod.outlook.com
+ (2603:10b6:510:26f::12)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CABCJKufKYMPcjiviWdGR=h5HVAmavwacsSdMNPQaaXeeL+GoFw@mail.gmail.com>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH0PR12MB8800:EE_|IA1PR12MB6651:EE_
+X-MS-Office365-Filtering-Correlation-Id: 4e6ed4ea-07d7-47d3-22ea-08de798d2de2
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|1800799024|10070799003|376014|7416014|921020;
+X-Microsoft-Antispam-Message-Info:
+	EJSb5AO6p5oAuFPpEYmGGSPtTg65RgEQhbQzAgFRFsoY+L4pkN3PI53L9q4qk/lDqSuTSprt8Q6a2rBdmBzd3xiGIhBYQWn72TwJi1O5TC2/gxxzhYqzMxi5OpoZSrm8e4Tr8Us456TttKhQZ2v4cJb2flYpxK/JBKqkpdmukliE3Ov4LQyCwLes2VNF6PNcdpd/ZSE+jZPDw+P1qb/9/+QGZ2khiFPO8jxf9iNDqi3uNMVGfddvQWLPZJd5lFbXzEjdPh43dOX3W2ysr7Gb7PNw066wkrMa8MX/U7jusY7A1Y0N78iZBNQhAX15Iesk7y59SQ8PlindxQ/rLCko8GysTd3NE8I3R62ddu9e/LlitOWkNjPp5XUis7sCrDZ4CcPLP9rU3siYy8C3yqhOXEo+bCwq8h7suPVbgRQVtF3cCUIJkvjPTZr5FM9H7Vh31W5hjBGpjxjMZeINBzZ/iv8TjcDfIEfGesCyzZYawS7hV4bAL0PzvuuaZ7C1172bv1ezc7a9MMHq/+096Aqy7tKFGq4JdM2q/MraGfS2j7ZHFdezZWJJqpp+tkH4sZ3sTyLC7R24A7Kip0PGh47V9Ti+TGExBXVeIFDFmAm9ScPjIc5pF4Q7XZTyT9v0sTbtFK1Fl6Oo1OANjeMWfNJvN7ZsYdSRGgaDohrru36CxclHRkbsPDlQHetn1NHziKEtO5tJzEz+KtkF7AM3t8OIi8SnqQ4i9OiH744/4H3BVm8gQsvaXGbqiz/kSl7NRsvFJWk/xm8sNYKaJKMiKKBY6lIi8rWMq4uLJufj3E0A98g=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH0PR12MB8800.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(10070799003)(376014)(7416014)(921020);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?5S/xGfJhxq7PH6zLNWYwhusHSMrvUYH0Un9YPofehcsuyq37tlRoAbcoKgE7?=
+ =?us-ascii?Q?B3FhdSpJu0cWLnk51jwgWmrAmlTj0cTI5MFhy8NwE4yTHRMtNPYIzm8lSJJL?=
+ =?us-ascii?Q?PEBdmpf9rEczOCoN30GBnabffRCF/cUrmwNJRkMpps7xBOVMVIHxLtJ6CpW5?=
+ =?us-ascii?Q?Uj9SaoeprEjwZEcEh0FI+MngV8ki2BD57VWzzMZ+9uiYhLDjQguHH/Bv6FbR?=
+ =?us-ascii?Q?cyE14m8n0pbMGsPUmYIx1bWfUVJoXj5qWr4Zs2IUXQiWYFdHJGfohr8Y/E7J?=
+ =?us-ascii?Q?AVfuDfjp3OfMDcg/cYNHS8OelMiIlaOpT7Lnc9br07JRkZ3eNuxftu0oOzYh?=
+ =?us-ascii?Q?emdBx82p+SBinByHoPw0aPrCNGNHOHwMXerHd2CtGcetK2pS52xKukAx3Kpr?=
+ =?us-ascii?Q?4Uzh5OG42/7t5HMbpxQVnbPUPOPDCt2BbfvYZk9J+ZCxN3pIK68sUdbrHMt1?=
+ =?us-ascii?Q?wcO373zT5EBT4+EyJbZ9s6o28DNWwL0Q1aOFsYrqdJ0o8Tq6dVxP5XIvEHMC?=
+ =?us-ascii?Q?+An9Wuz6fiaFTLL1IMm3PGoRAndk+z/xnK7AjkJA7dlSZzi2On0ltyL6LM7Q?=
+ =?us-ascii?Q?eAKZDuxwbS5W1OamhrKEZ8agZCYB0NcazrVK+Xm3NJIv2qRAm86mjz+BXZNQ?=
+ =?us-ascii?Q?vt5tUuKc71XXuXlJnb7hCso6myekDc19VP5UWKSpzWX52FVDiwrOUAhNW1JH?=
+ =?us-ascii?Q?/N+KSGG1fa8We+fQleRZaA/mc1zx7PZq0L7wkk2Z0NWbI9AkGtFMhBYE492S?=
+ =?us-ascii?Q?j6qeC0H1TsTVV3/6CHeY4psAL39btt6IshskvcJjGUWK3wZAlck8lVNyzrHa?=
+ =?us-ascii?Q?djTtvnCsVCvXS/oXrznc3xQhMBisJsfct9fgBcG9z7cxo/B2pLrgr9OH3wD4?=
+ =?us-ascii?Q?kZDfdx8XFrRDNwbsFeIj2m6mleQowKWLzsfP0h6zyY/5JfNcwdpz8i6vx8bl?=
+ =?us-ascii?Q?ccnno5iLoF5u1gF0+Vxmr9wvOhIkBvMFPOQwtuab7iL5AO6is8ZkKs3PHmf6?=
+ =?us-ascii?Q?0lRc0StRnN4/60EJf0H2xSZADkbRvqIlDX7Ia1WlPG5oCQyTOs+wIdQANf2/?=
+ =?us-ascii?Q?vxSmcYVNYb9goJhgIwQ55CJxrdFQzD2NPO3uSlramK4zfulzHkPoq0f+uNBf?=
+ =?us-ascii?Q?dYMAgeKeoRauP5i2ZDaAB4m4y39PJ4NQesQIwA6LtlURhumee4zQH198wLVD?=
+ =?us-ascii?Q?qO2YsxM9F++y7+EVywl26hq+LgFz2VsjIQvEeB0K7GoJU20nwwua8V4DL0nb?=
+ =?us-ascii?Q?/qQ+FM3hs7iaGcrUYE1u/epwv6ZgzzbyVP+bisUxXNKF1QXfHwziARbPl98r?=
+ =?us-ascii?Q?HjBcy0kSELG2X9GdAsG6yg0fHm1xX/4eWrTBC4pl6YTbU95z0+QnEV1oUNa9?=
+ =?us-ascii?Q?US8FEu5GnOV5tO5kX/t7QgbYRsEWGRz7eUUaVj6GtY2KZV1+mM23T0RYz/4x?=
+ =?us-ascii?Q?GBJV5W6KTd2I6QMtaG3jGsJvDwN/vLDYUDsFzjstqbQ0r6WSS1fNiVRJoa+S?=
+ =?us-ascii?Q?P0lRAxTRScIbX28G1wPUyhHi34Kk0Xhb+9FUX7pssSt54Z8Vccc02HAw5dJb?=
+ =?us-ascii?Q?Llgn7iVV5Wco/3up56kFUcmvXHf6lSPsGrdBlIE/Ylf5kCFX52O7ZQhqG/Hv?=
+ =?us-ascii?Q?4kKCXEF9I2/ufZ5K5Ww9jBvduETWekINb6+A1YbtW5cuzzqiu9ddeTB4APz/?=
+ =?us-ascii?Q?6maz++AVh+e84Yxx4MeGqvZ5f73onH73V1vl1cpjDChSSB+ujkmJHEGIvyew?=
+ =?us-ascii?Q?vHi1dyWLH/GNctIyBHTNffTLNGdaMs/dZGi+dRrjaBdlkgv7JeSB?=
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 4e6ed4ea-07d7-47d3-22ea-08de798d2de2
+X-MS-Exchange-CrossTenant-AuthSource: PH0PR12MB8800.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 04 Mar 2026 01:27:20.3880
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: /+Lmm+XVjZYyMMKaXXXS817iT5VoaRx4GbjtH3sXBl09zO/C4kzjI8NuzoQ2rOW9d6TUbJNSeZvIbtW2k70y9w==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA1PR12MB6651
 
-On Wed, Feb 11, 2026 at 02:29:28PM -0800, Sami Tolvanen wrote:
-> Hi Eric,
-> 
-> On Thu, Feb 5, 2026 at 9:01 PM Eric Biggers <ebiggers@kernel.org> wrote:
-> >
-> > This series applies to linux-dm/for-next.  It can also be retrieved from:
-> >
-> >     git fetch https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/linux.git dm-verity-fec-2026-02-05
-> >
-> > Patches 1-5 fix bugs in dm-verity's forward error correction (FEC):
-> >
-> > - FEC and hash devices that are too small were not rejected.
-> >
-> > - Corrected blocks could be multiple-counted in statistics.
-> >
-> > - The erasures array was significantly oversized for its use case.
-> >
-> > - An out-of-bounds read could occur when decoding an RS codeword whose
-> >   parity bytes span a block boundary.
-> 
-> Thanks for the fixes, these look correct to me. It would be nice to
-> have tests for the edge cases though. Perhaps in the
-> verity-compat-test script that's included in the cryptsetup repo?
-> 
-> > Patches 6-22 clean up the FEC implementation to be easier to understand
-> > and improve documentation and log messages.
-> 
-> The clean-ups also look reasonable. For the series:
-> 
-> Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
-> 
-> Sami
+The net/9p networking driver has a handy macro to calculate the
+amount of bytes from a given pointer to the end of page. Move it
+to core/mm, and apply tree-wide. No functional changes intended.
 
-"FEC and hash devices that are too small were not rejected" should be
-fairly straightforward to test.
+This series was originally introduced as a single patch #07/12 in:
 
-Testing "Corrected blocks could be multiple-counted in statistics" and
-"An out-of-bounds read could occur when decoding an RS codeword whose
-parity bytes span a block boundary" would require injecting kmalloc
-failures.  It might be possible using the fault injection framework.
+https://lore.kernel.org/all/20260219181407.290201-1-ynorov@nvidia.com/
 
-"The erasures array was significantly oversized for its use case" just
-changes the size of an internal structure.  Not testable from userspace.
+Split it for better granularity and submit separately.
 
-Unfortunately the verity-compat-test script isn't in very good shape.  I
-opened a pull request to clean it up:
-https://gitlab.com/cryptsetup/cryptsetup/-/merge_requests/890
+Yury Norov (8):
+  mm: add rest_of_page() macro
+  fs: use rest_of_page() macro where appropriate
+  net: use rest_of_page() macro where appropriate
+  core: use rest_of_page() macro where appropriate
+  spi: use rest_of_page() macro where appropriate
+  KVM: use rest_of_page() macro where appropriate
+  drivers: ALSA: use rest_of_page() macro where appropriate
+  arch: use rest_of_page() macro where appropriate
 
-After that I'll add test cases for at least the "FEC and hash devices
-that are too small were not rejected" bug.
+ arch/arm64/kernel/patching.c                |  4 +---
+ arch/powerpc/lib/code-patching.c            |  6 +++---
+ arch/riscv/kernel/sbi.c                     |  4 ++--
+ arch/s390/kvm/gaccess.c                     |  6 +++---
+ arch/x86/kvm/emulate.c                      |  4 ++--
+ drivers/block/null_blk/main.c               |  6 ++----
+ drivers/gpu/drm/i915/gt/shmem_utils.c       |  5 ++---
+ drivers/md/dm-pcache/backing_dev.h          |  2 +-
+ drivers/net/ethernet/meta/fbnic/fbnic_tlv.c |  6 +++---
+ drivers/s390/net/qeth_core_main.c           |  6 ++----
+ drivers/spi/spi-pl022.c                     |  3 +--
+ drivers/spi/spi.c                           |  4 +---
+ fs/ext4/verity.c                            |  3 +--
+ fs/f2fs/verity.c                            |  6 ++----
+ fs/fuse/dev.c                               |  4 ++--
+ fs/iomap/buffered-io.c                      |  2 +-
+ fs/nfs/pagelist.c                           |  2 +-
+ fs/remap_range.c                            |  3 +--
+ fs/xfs/scrub/xfile.c                        |  3 +--
+ include/crypto/scatterwalk.h                |  2 +-
+ include/linux/highmem.h                     | 24 +++++++++------------
+ include/linux/iomap.h                       |  2 +-
+ include/linux/iov_iter.h                    |  3 +--
+ include/linux/mm.h                          |  2 ++
+ kernel/events/ring_buffer.c                 |  2 +-
+ lib/bitmap-str.c                            |  2 +-
+ lib/iov_iter.c                              |  5 ++---
+ net/9p/trans_virtio.c                       |  6 ------
+ sound/virtio/virtio_pcm_msg.c               |  4 ++--
+ 29 files changed, 53 insertions(+), 78 deletions(-)
 
-I noticed verity-compat-test also never tests fec_roots != 2, even
-though it contains code that seems to have been intended to.  So I'll
-plan to fix that too, though unless we're able to add fault injection
-too it won't specifically cover the bug fixed by this series.
+-- 
+2.43.0
 
-Anyway, point is, I'm indeed working on improving the test script.  I
-think these patches can be applied for 7.1 either way though.
-
-- Eric
