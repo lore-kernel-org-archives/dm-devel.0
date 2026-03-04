@@ -1,66 +1,66 @@
 Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4A883988F2
-	for <dm-devel@lists.linux.dev>; Wed,  4 Mar 2026 09:34:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F5FD39EF00
+	for <dm-devel@lists.linux.dev>; Wed,  4 Mar 2026 09:55:16 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772616881; cv=none; b=pykCUYBkyjkr0g9hgOLkfHwu2PFDilJ/An6JKT8wDyQiQrx6wo1BnAMBhNYAGeb3d4uu6yaR6vIydzUr7I9S7X5j/DRSh+pFW+9zYDu/rhtXI9i/vwHR5tFHx00YbJNAncbM7pS3NQYHvgJ0x2TV6oFK6yKGiWWXqYFirjQCXGg=
+	t=1772618117; cv=none; b=EL0b3NOG5qpM9y1YVWDl0lEPaHnmn0DD/MAlpXOogMqhCJyf/bq0rJgoU6qYzNt4BHZdkN2UJyU1P9eJ7XpCmwql/QVsO3kZl2DxTfR4a4jsqNRGo+e3wT+3NSmPPi32/V3Jw9/gshD86h4xLteAtK4K3Q8mz/thXLeffB29t48=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772616881; c=relaxed/simple;
-	bh=rrM1IpBf746jD26qdFKsiRca5rihxtuLdQ+6J+VrA2o=;
+	s=arc-20240116; t=1772618117; c=relaxed/simple;
+	bh=O0MRU27ew/SrQhFalT8ZdeJNDqEp5zlC+Wu0Yqesj+Q=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=EhcfTpiZiaRQ+o0AyoVnpsk0YMcjcCfm9rFiFUkYbSBGZ9+zN+EdzRPiGaDxGrm1oaz7BkpXFvl3z8L09UuTmQaFUEothp5bbhh+iIyXkeuABUtOXzYHm66BF2nLSxPM9zoe5uGL2c8elLqHH8cxT05Kf/Zkn8ty1ozDzWeQ2lg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=I4vVA9Pt; arc=none smtp.client-ip=209.85.221.46
+	 In-Reply-To:Content-Type; b=KKKRpOv08mGRTDiAcgFtk8yeljqp85QKi+YJIWKnm9mxQFDvA2zpfsDAaZ3YByA+EH63eWHPSQK552oUrrCVkdD7IDuJdhtLGn8I4p9OfKFUPbQEvyO7CXczWLRsePD0KUR2rGRc3ooC2kxl0M1dDbkBcMbEvi8h2DyRQp9EGVU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=l1QhhrAQ; arc=none smtp.client-ip=209.85.221.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="I4vVA9Pt"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-439a90f194bso3017409f8f.0
-        for <dm-devel@lists.linux.dev>; Wed, 04 Mar 2026 01:34:39 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="l1QhhrAQ"
+Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-439b78b638eso3225273f8f.2
+        for <dm-devel@lists.linux.dev>; Wed, 04 Mar 2026 01:55:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1772616878; x=1773221678; darn=lists.linux.dev;
+        d=gmail.com; s=20230601; t=1772618115; x=1773222915; darn=lists.linux.dev;
         h=content-transfer-encoding:in-reply-to:autocrypt:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=4YO0VXFXt084fdhDYeMeN7Bd3IkQAwJbt0ykqWBxv7I=;
-        b=I4vVA9PtoVJoh3wMFLFsuWXcaEaLNdKSDLl3/oadyWq5Q6OyfzBUkeW3Hmy1ebZKVy
-         XzG2BnU/+qoMvFNN+Q3IaPeBYSxeBmErY9f0vj56ODVPOpPh8vREq7p0bfN31Ikr9Moc
-         AGskEd6142E5PG67GLAR4UDcsclC8I50lXkA3eWllt93jWZsVzIz9/TtyPMMmUqjawXA
-         LQ9IR/O7rlCf3Pca99IWOystnIEaVWDjIdtzhm89+SdwkPgzYlGb8siYhvyel47TR0IO
-         MZxIA3pKpHG1aj0DdPF8NgZLLkwjgxAJ/6CwOt8ZWxQ7C970t0upmtigCypgVd0INwIt
-         3U+Q==
+        bh=HhXPnr03Y/leMepxSCjQSHMXa+oDzBD6QYUvs+/AppA=;
+        b=l1QhhrAQeLW/VM55StS23UCMUdSwOsikwQaDWtUeY0L9cz0GHqP0RRGl09vo2jSgRz
+         AonRliYn3OcnPhQyD/+VZrRg4Rf7Is021iY3OEZd3YVdSLm5x9+TKZrZrVXSWK5hsGFo
+         4XAtnK52spTjNXnuS9Ll997h0i0WVYZVbNfyQDiPs6x54ZIekIX3MGFX4l1Q1MbBy2Py
+         DNzJSnf95/w+LNpsQ7vpcRke89EGepFrWqFAOipXSNwA38aFU+AYVeyWAxwtFdZO65WM
+         SaL1Dhuj/9uFR8XdwieofutFUej+bXEShi9Y3ftPVVeEkuzzFzUQ484qP3KkRwPn90Mv
+         AdWA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772616878; x=1773221678;
+        d=1e100.net; s=20230601; t=1772618115; x=1773222915;
         h=content-transfer-encoding:in-reply-to:autocrypt:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=4YO0VXFXt084fdhDYeMeN7Bd3IkQAwJbt0ykqWBxv7I=;
-        b=YqBxG6LurTgZkhzPfz0kniHMcebFf7AFhVzuaXValxhau3E2o1kzEvK6ZDWVF7LP5d
-         FLDyedlG3yfihnym6OHPfOeW+sCehGIYzqCjJCZxhM9HQAciJfNo/e2uEvXbxWHyehkd
-         8l3O7rKYnbJ+RlS6DbYnFXdg83W0c+yrF7p8gKbn67whl40JE403BV08rVZ/P33Sw5uX
-         LLdveFX8JdO3/fGYF7bH/m62H5H4x7eHLUpLwlk+3fEIHabgpWzdz1VCNosw3ae4voXL
-         FvVesxw429KgYgzlK0GbDueAPdKSIGqNL9mS/pPAnW35Ubw9r7t5F+ITZt/ODI7COlAH
-         Uz+A==
-X-Forwarded-Encrypted: i=1; AJvYcCXbca+IZq4j9iojYKMMrGhc8L0arJkkng3K8tKXhP7DZ2tGvIZLpeBC9IqXU0/8A0OTTpjmOQpJrA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw7VVv3A6dnmJMAEYp0SeWqAYwBumgKYnTAkrBz+EDfcgjUMQAf
-	E/WzB2i42F5R6bIQ5kIP6FJEOFI8PxaGZJb6ncvXGtUKTTu6gdHqwuFe
-X-Gm-Gg: ATEYQzyWHknjDI2yY2ddsUn1Z7coYzbpAoOyEWhEOJHfJEOeMgA6//gwCpYl8q+rLFY
-	tNi7XC4amjjku1Cos04RZ43F7LTDhW0euu5tTbWkO3lEaBeBBFkJ00tEz5o+1RGsWcwsVE7+nnp
-	/ZVPhGdjXhECgxwIYwZWAPnmF/B42ldtl7myLbbOM8AuyFJJEDGTNIeVoKeOyV5jFaLrUdH9TDW
-	1F0/u6YtTqEiiG+S3KjxL+cg4gXH1EGnicTpHT6bMMHFXZW29TPADPdg5Yb6SWYyca4XOEPpKdk
-	nThLvmhoAbYDLbUgFlKgWwasha1xju8Ob53MHMmhqkrJh6bWb6ve8l+hkYiiAYvhg1LSWMDtzdD
-	dH2y9BFc9Els3aXLWBN73MofPaADClHAebnwm8BH9kH6WoZC3ix6wTNZjtYljv7eDl16kpczJlO
-	kECsa8bEovCvr8oWbHq2YFX/3awAmI
-X-Received: by 2002:a05:6000:2404:b0:439:b3d2:3765 with SMTP id ffacd0b85a97d-439c7f65004mr2644866f8f.1.1772616877965;
-        Wed, 04 Mar 2026 01:34:37 -0800 (PST)
+        bh=HhXPnr03Y/leMepxSCjQSHMXa+oDzBD6QYUvs+/AppA=;
+        b=YnkF329S17Sp4hV1d32Vu4JYwc32NrDLdxnyKqTNlXkXC9T4EP037sRsoP5w8ceHBi
+         SMcKHZp3/EBSGBEThQl0+w36fMRbx6LVMfy6r89PLyHGMVAPnnjCT4j/4UVsjwIUdviS
+         hRWmYpvDQi92tDUoLn6ElNvM9BYhyIEGOjsq7haGZI4915+6LqzQ7xneRQYznOD/ipFV
+         d4YjryJ/6+cMgCN32o7NV2FGKHeZ2YYGY97aYsKSvfU5DfwJxeTOy/+jxwwhKJXgl+SB
+         wCkEf34lIrsi0Eh8VzUWK0s9gl4+KxwFggDxTB6sPJGW3BctCEcw9E8piRs7Og37Gudu
+         kkyw==
+X-Forwarded-Encrypted: i=1; AJvYcCVYWo+WtBPkX79oi/pJskwiHGDbVlDSjU/Z5nU/W2womOcjyFprZBKFlqCYabvTxJjZTb4Sl0/T2A==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy8ThxCmLa1Zd47MjdoJTwNCr6yPmoh45FalYIvDha6ZHgpi7oT
+	LVpj8WwWAWcMFIMVKxeedi3l+KUPJiDg93Ehia0abxaHaFUbkpYepsLe
+X-Gm-Gg: ATEYQzxIBxS3PfuNcHFxsER4o+nJrdXPnMgMLO7OIHl1pBC3kwHvvCBoBS7NpxkfZgS
+	0Hgmu2whGq8e7Wg3HAYXEToprrqlGbqQxiRp47BnARWh8jaSg1Yb2/wOE0NCRTjzIF5G8vfdbPA
+	K6ufOuolyB0WmewPR+S0K+fbLVMrbaWXWHhoCSescAeue9pkANoNGzuRUb5hwA2CiHcKBPpRRMk
+	nG1xfEZCzVVHG9WlFNjkZyut/pNvsDKSJeRctOBo4agV+wWgEeB64mF2h0f6y4BbUcnI+hd8CWo
+	sAxSHpyIvx/0PzYMh18ShRyFsOKjt4cbkG3wa1D3VfE6n6d+zn9NK+kYR4X5rr8ZK5pAnk0gauZ
+	jLWHTG5gpnRN7YG2YpNOESIWzzPq4hXKUOSIfg/fDxB1kEPicqLoaJGf/NIW3JUEKSkok6ZPLAF
+	ugW+St/8/fsZTrHstwAKOzgeJtsFWZmp+7ytIsS2o=
+X-Received: by 2002:a05:6000:1885:b0:439:b788:73ab with SMTP id ffacd0b85a97d-439c7fe63e5mr2428249f8f.49.1772618114586;
+        Wed, 04 Mar 2026 01:55:14 -0800 (PST)
 Received: from [192.168.1.116] ([176.74.141.242])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-439ae0e7abasm28206857f8f.23.2026.03.04.01.34.37
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-439c4489279sm9971477f8f.20.2026.03.04.01.55.13
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 04 Mar 2026 01:34:37 -0800 (PST)
-Message-ID: <32e6883d-3818-4e7c-b626-4e4f609928a2@gmail.com>
-Date: Wed, 4 Mar 2026 10:34:37 +0100
+        Wed, 04 Mar 2026 01:55:14 -0800 (PST)
+Message-ID: <97515a2e-38a8-4795-ba6c-45bc3b6cc507@gmail.com>
+Date: Wed, 4 Mar 2026 10:55:13 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,16 +68,18 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 00/22] dm-verity: more FEC fixes and cleanups
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Sami Tolvanen <samitolvanen@google.com>, dm-devel@lists.linux.dev,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
-References: <20260206045942.52965-1-ebiggers@kernel.org>
- <CABCJKufKYMPcjiviWdGR=h5HVAmavwacsSdMNPQaaXeeL+GoFw@mail.gmail.com>
- <20260303201656.GE2846@sol> <690a74be-4707-4bf8-8c71-685dd8831664@gmail.com>
- <20260304090013.GA2211@sol>
+Subject: Re: [PATCH] crypto: testmgr - block Crypto API xxhash64 in FIPS mode
+To: Eric Biggers <ebiggers@kernel.org>, Christoph Hellwig <hch@infradead.org>
+Cc: Joachim Vandersmissen <git@jvdsn.com>,
+ Herbert Xu <herbert@gondor.apana.org.au>,
+ "David S. Miller" <davem@davemloft.net>,
+ Maxime Coquelin <mcoquelin.stm32@gmail.com>,
+ Alexandre Torgue <alexandre.torgue@foss.st.com>,
+ linux-crypto@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com,
+ linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev
+References: <20260303060509.246038-1-git@jvdsn.com>
+ <aab5ptuamQ7d_tTi@infradead.org> <20260303193102.GA2846@sol>
 Content-Language: en-US
 From: Milan Broz <gmazyland@gmail.com>
 Autocrypt: addr=gmazyland@gmail.com; keydata=
@@ -123,24 +125,19 @@ Autocrypt: addr=gmazyland@gmail.com; keydata=
  vlB+GpT+iFRLvhCBe5kAERREfRfmWJq1bHod/ulrp/VLGAaZlOBTgsCzufWF5SOLbZkmV2b5
  xy2F/AU3oQUZncCvFMTWpBC+gO/o3kZCyyGCaQdQe4jS/FUJqR1suVwNMzcOJOP/LMQwujE/
  Ch7XLM35VICo9qqhih4OvLHUAWzC5dNSipL+rSGHvWBdfXDhbezJIl6sp7/1rJfS8qPs
-In-Reply-To: <20260304090013.GA2211@sol>
+In-Reply-To: <20260303193102.GA2846@sol>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 3/4/26 10:00 AM, Eric Biggers wrote:
-> On Wed, Mar 04, 2026 at 09:25:02AM +0100, Milan Broz wrote:
+On 3/3/26 8:31 PM, Eric Biggers wrote:
+> 
+> Maybe the device-mapper maintainers have some insight into whether
+> anyone is actually using xxhash64 with dm-integrity.
 
-> Okay, it sounds like the verity-compat-test script isn't open for
-> contributions then.  Would have been nice to know earlier, but thanks
-> for letting me know now.  I'll plan to start some new tests for
-> kselftests.
+Someone requested to mention it in integritysetup man page
+   https://gitlab.com/cryptsetup/cryptsetup/-/issues/632
 
-That's not what I said, just I would prefer adding new test without
-the need to completely reformatting the test.
-
-But IMO, kernel self tests _should_ cover it. It can do a lot of
-more things there and can catch regressions earlier, as we usually
-catch them once it appears in Fedora rawhide (as this is in our CI).
+I think there were more reports people are using it in some specific cases.
 
 Milan
 
