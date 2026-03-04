@@ -1,66 +1,60 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BDD75FDA7
-	for <dm-devel@lists.linux.dev>; Wed,  4 Mar 2026 13:11:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4B6933689E
+	for <dm-devel@lists.linux.dev>; Wed,  4 Mar 2026 13:11:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772629872; cv=none; b=SnOoMqruMKx93zLqASnkW6AVRQPUC/BW4ShJzmAwx9752naMW271SZ3aLiWFMCBg61iwrh6KxEvSXaUskT49tyT7MQc+c7b4eYAppmXwErMIWR+BzWhsyMnDM8blJwDWkHIeUZgAI/ilWJ2tbqQaWBa8E5f/yv6no1JPnFs98OQ=
+	t=1772629881; cv=none; b=B71G1H/A8wBFNhj2sh4Bz7ge0cmhJ8DTzfNcoQDKNBRduq3fyvuGjSHe6yjFL1wm35mF3CKDgDX/+XwkZvTWa+2Kt95SyvVu/tcz63VGQLDwTWMwYKSXCB8BopZpcQxCRVghiAw+vN3a1aXpjU+WLV0+FSjigrrqAljOpvLTSag=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772629872; c=relaxed/simple;
-	bh=tdr4XFSl2VHNiGrD3QQhBo8zpnljibR0pWucSkqXtDo=;
+	s=arc-20240116; t=1772629881; c=relaxed/simple;
+	bh=8CQVbZhvgDEerj7hpjqj+mgqxQVM5P1qrl9uzHGXzhw=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Tq2NkuDzQx1Cr5Q/iHwpX+ydMT6RvFmThSm/SBJ0xw1c618vc/1Pj7aR2LHe2z8gQTcdolfR66qb5blvsT8xO1aTjKeb/EH0Wry9yD+5WUY/x9rHcCBJIypp5YRJ1puML3t2lbFH2AZJvtb7eIR3wdcxowmZZsIia/5nFFXWCTw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=D+to+U5P; arc=none smtp.client-ip=209.85.221.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	 In-Reply-To:Content-Type; b=ui3hl8W4L0JrAM3TXTFwOd3K2ZbXOasheWmF/FEqnD7rKdHysvd3nYQCzfBnY/+1e+WSedBdT0xItZb1G5nXXH2G7rVmcMbXzT/OJn3ZTYYQ7pcd75Ukc0MENMTlyh4VomLrL7wmvE4anhIan70ZRDK+Qm4EyHBffMuOji6tISc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=h3r7OaJO; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="D+to+U5P"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-439ac15f35fso3828038f8f.0
-        for <dm-devel@lists.linux.dev>; Wed, 04 Mar 2026 05:11:11 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1772629870; x=1773234670; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=JCrSCreRYyCyvdWOvN57PUFUflJeOrYLAAUvncKqv3Q=;
-        b=D+to+U5P4mhSPibCEubDYsWx4M98teLrs2AGFanZFDcicgAsFDSOeyQqj0DerLAQHn
-         Cbm9mAKU57U/nz7z2jcOBmE0V5DcrK1awJWQ+iBfuQmmQiwf5dmVLisrAmKutH2uqKvT
-         fs+gMcKwMGAdsb3baV30ddWDoHJuuFENQrAG2k/C/f+JetTQgDtSSZtlDdRvPhMLj8QY
-         vS2tqvSEIsc3c1cSCttj/Ws7aoryUH3qCdK0/rmoGAKLCZdVZkRtyPvOZmk0hiVXGSBo
-         8nJo0tMYL4+v/f8no+HYv5fk/S0L0dOtHRoj7AbtLuWHpf4UsAULdBjh+/2h7gdQGf+F
-         NmfQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772629870; x=1773234670;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=JCrSCreRYyCyvdWOvN57PUFUflJeOrYLAAUvncKqv3Q=;
-        b=c3S6LHKI9gMB4l8as5Li5AeBUMvT4lYyvdXVFAGrJMRYY6DyYZKBbxbA5AI2Y8UA7b
-         nz8SM4qVXKMLws/YNw9gAcHwUFfeoT9dRMYTDy13MrdPBsoUo2/BIZdsRXQqun4Lzxqr
-         CFFKUfo5870IiSqX+auJ3SOt5fkk+kRJHU/nv956RljSzlg25kpARKKEkqhZ+VMGgpWJ
-         CqV4AwgGDR2MUy711NRhlNlU/futDhfGnuyz86QpG8l88uNsJYBujG67GE6AwOAJyO1G
-         LDWD9HgwMN21Lobd95ghNIJvqHba05iwfmdCpiUlaulNY147yqlOserI8+C2YQCY2NU6
-         4riA==
-X-Forwarded-Encrypted: i=1; AJvYcCW+SRsnSRWTTXz795bBwNORDuPgSbrWeyRDIW4tNfGFs58R/EkPmJOztSaqGWnWwJgRyH0tG5CW+A==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzeU9+Lg8U/+KXYwvmGxrLjKXm6OiI7npDp13kWt3il8uIUV/jQ
-	S0aAAEiLmt1YI/gwwdUuNb9wJHTauCQQfcAldyy8YlLc2iQ+rVbxrwQO
-X-Gm-Gg: ATEYQzyHgfvmcQ2DXPUhPbVhquOMpyHyhStOreLIxFugP+zT18YpOHm5HiRH6epdTSo
-	ouSw6oKkKJ0o1fC0E5/1QHP4dnICe2bcD8I6GTt6o/pH1ZqWfJ/IbDdISNN58g39YskApgDBDcr
-	+pnoue93wrL8Bym5iXIoQbjZrf/6RooWzGI4Mze0zwm8pUrWDlGpDvuZ7J1d1LsotnE3zFq2/ut
-	+IWtONahiY8Ge4zTUOjw+NEn/kwgSeA/8m0/xrwgGrgRsCm+RwsoN2PsbpFL5r4SE945WudY1tK
-	OQ7rduH+JkxbUeebBIgsz6c5GRcn/6tqLGGY64t0fJwVJQ3KuEigpmI+eW5pjPa5A96YNGWQGi5
-	nwBPubrhtOVrgRyiQeExWUH0kZGqx0GqQvnnD8mWT2hsE8kQ8MLGEwrmpRynocgQejlzXlz6yDz
-	ZeFxzEa+yc3a1oR5HDtxuV0Yki1jDm
-X-Received: by 2002:a05:6000:40e0:b0:439:aef4:9451 with SMTP id ffacd0b85a97d-439c7f79e83mr3862806f8f.18.1772629869650;
-        Wed, 04 Mar 2026 05:11:09 -0800 (PST)
-Received: from [192.168.1.116] ([176.74.141.242])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-439bb686a32sm17572791f8f.13.2026.03.04.05.11.08
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 04 Mar 2026 05:11:09 -0800 (PST)
-Message-ID: <682506ea-c9c2-458b-8123-8d78fc53cc7f@gmail.com>
-Date: Wed, 4 Mar 2026 14:11:06 +0100
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="h3r7OaJO"
+Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 624CSMtH2021490;
+	Wed, 4 Mar 2026 13:11:06 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=uqJLKJ
+	wpEhz8qK4MbW7QESrzLNSyj+3jTip8w/7IyDQ=; b=h3r7OaJO1ts3VC2QEvUPzF
+	gnucWd10yDnTJFzeBhfJ9fwKHu6k0UaARXrzb9ALUHzQIubHX7ymytRxSrs3+0Nw
+	CqhHOUkSDjDp8MDdvneAYUoUMjuquUILelu1XFp5VHPEWPdqz1VjjjEtB+t2DD3d
+	/MQ7unT8+zQXHq4FUfJmeOdpHY+hAXGj6YjPtQUJDAueVLRIdtwO+F9E30BleOtU
+	GThXLlY9NuNC5OulxoIHfrF27aYTPyrzuDSCMD+Os4o9kAoocyk+K6ZzrgopIVa1
+	eBcBgvxJUpXdQZxW3/CEybCpjw9LFbQbgE+0mYfOAANZDOnJGihyveeK373KqloQ
+	==
+Received: from ppma13.dal12v.mail.ibm.com (dd.9e.1632.ip4.static.sl-reverse.com [50.22.158.221])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4cksk3y19e-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Wed, 04 Mar 2026 13:11:06 +0000 (GMT)
+Received: from pps.filterd (ppma13.dal12v.mail.ibm.com [127.0.0.1])
+	by ppma13.dal12v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 624BdcjQ027692;
+	Wed, 4 Mar 2026 13:11:05 GMT
+Received: from smtprelay06.dal12v.mail.ibm.com ([172.16.1.8])
+	by ppma13.dal12v.mail.ibm.com (PPS) with ESMTPS id 4cmcwjefeg-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Wed, 04 Mar 2026 13:11:05 +0000
+Received: from smtpav04.dal12v.mail.ibm.com (smtpav04.dal12v.mail.ibm.com [10.241.53.103])
+	by smtprelay06.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 624DB5IR18416304
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 4 Mar 2026 13:11:05 GMT
+Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 272665805A;
+	Wed,  4 Mar 2026 13:11:05 +0000 (GMT)
+Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 74ED55805E;
+	Wed,  4 Mar 2026 13:10:59 +0000 (GMT)
+Received: from [9.124.211.174] (unknown [9.124.211.174])
+	by smtpav04.dal12v.mail.ibm.com (Postfix) with ESMTP;
+	Wed,  4 Mar 2026 13:10:59 +0000 (GMT)
+Message-ID: <93696b95-7c01-4988-8fe2-baf427469f4f@linux.ibm.com>
+Date: Wed, 4 Mar 2026 18:40:57 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,176 +62,62 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v1 2/3] dm-inlinecrypt: add target for inline block device
- encryption
-To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
- linux-block@vger.kernel.org, ebiggers@kernel.org
-Cc: linux-kernel@vger.kernel.org, adrianvovk@gmail.com,
- dm-devel@lists.linux.dev, quic_mdalam@quicinc.com, israelr@nvidia.com,
- mpatocka@redhat.com
-References: <20260304121729.1532469-1-linlin.zhang@oss.qualcomm.com>
- <20260304121729.1532469-3-linlin.zhang@oss.qualcomm.com>
+Subject: Re: [PATCH 03/13] libmultipath: Add path selection support
+To: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
+        sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
+        james.bottomley@hansenpartnership.com, hare@suse.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20260225153225.1031169-1-john.g.garry@oracle.com>
+ <20260225153225.1031169-4-john.g.garry@oracle.com>
 Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20260304121729.1532469-3-linlin.zhang@oss.qualcomm.com>
+From: Nilay Shroff <nilay@linux.ibm.com>
+In-Reply-To: <20260225153225.1031169-4-john.g.garry@oracle.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: Aaom7RQJ9fQrig_94ibNusALFS6MxUTI
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzA0MDEwNSBTYWx0ZWRfX5GdPTBXG37lh
+ obKehUKoCQlVUGZyUcfC/SdqLQB+cSi+1P1ob56lr79kjlAiXD4OcWk1CMWTcW9NQp9Yh9QdDEb
+ PGKfWiZYziTXUe1PNoIe1ilM2tIOjHuEgUqzwr8EXwp5dn/mdhuUEC1c6idtJwp0TQ+P4m6sIDz
+ 18dFdPjt+ipaG+nuf3YjwDvUfB9TjU1IWuXWrs6sVG516JhlWsPZFKZsKQejWM0pzgir2+mj8FN
+ alHrf/+iTfpQIMBTzmjJUXhRnd4VHyi+QhhWIwn/xwHYMVclX06Yjf9zqVozLCQZP2Bw9gRl7Es
+ G2B0Bv2UCja8vqveqkhfkZKlyXSKcWJwesIT80xzZvRqOqcxfzcthHRZeJEDw4eJJ6EdZmG6cqO
+ gsuaoofWMQ185sG5VqST6cBcCywBEn/+OOvO3S+OTojNVzi1VC8Q9ePihcQ8LMQuVcH9CoLg9r/
+ E+C31FDrk4tl1+qhvZw==
+X-Authority-Analysis: v=2.4 cv=csCWUl4i c=1 sm=1 tr=0 ts=69a82f6a cx=c_pps
+ a=AfN7/Ok6k8XGzOShvHwTGQ==:117 a=AfN7/Ok6k8XGzOShvHwTGQ==:17
+ a=IkcTkHD0fZMA:10 a=Yq5XynenixoA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=Y2IxJ9c9Rs8Kov3niI8_:22 a=DxhCtTx9tnWbhxYo0-8A:9
+ a=QEXdDO2ut3YA:10
+X-Proofpoint-GUID: Aaom7RQJ9fQrig_94ibNusALFS6MxUTI
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-03-04_06,2026-03-03_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ impostorscore=0 priorityscore=1501 suspectscore=0 malwarescore=0 adultscore=0
+ clxscore=1015 bulkscore=0 phishscore=0 spamscore=0 lowpriorityscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2602130000 definitions=main-2603040105
 
-Hi,
+Hi John,
 
-just few comments below, but I am not DM maintainer so feel free to ignore it :)
-
-On 3/4/26 1:17 PM, Linlin Zhang wrote:
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Add a new device-mapper target "dm-inlinecrypt" that is similar to
-> dm-crypt but uses the blk-crypto API instead of the regular crypto API.
-> This allows it to take advantage of inline encryption hardware such as
-> that commonly built into UFS host controllers.
-> 
-> The table syntax matches dm-crypt's, but for now only a stripped-down
-> set of parameters is supported.  For example, for now AES-256-XTS is the
-> only supported cipher.
-> 
-> dm-inlinecrypt is based on Android's dm-default-key with the
-> controversial passthrough support removed.  Note that due to the removal
-> of passthrough support, use of dm-inlinecrypt in combination with
-> fscrypt causes double encryption of file contents (similar to dm-crypt +
-> fscrypt), with the fscrypt layer not being able to use the inline
-> encryption hardware.  This makes dm-inlinecrypt unusable on systems such
-> as Android that use fscrypt and where a more optimized approach is
-> needed.  It is however suitable as a replacement for dm-crypt.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-> Signed-off-by: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-> ---
->   drivers/md/Kconfig          |  10 +
->   drivers/md/Makefile         |   1 +
->   drivers/md/dm-inlinecrypt.c | 416 ++++++++++++++++++++++++++++++++++++
-
-I think it should also add doc in
-Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-...
-
-> +#define DM_MSG_PREFIX	"inlinecrypt"
+On 2/25/26 9:02 PM, John Garry wrote:
+> +static struct mpath_device *__mpath_find_path(struct mpath_head *mpath_head,
+> +			enum mpath_iopolicy_e iopolicy, int node)
+> +{
+> +	int found_distance = INT_MAX, fallback_distance = INT_MAX, distance;
+> +	struct mpath_device *mpath_dev_found, *mpath_dev_fallback,
+> +			*mpath_device;
 > +
-> +static const struct dm_inlinecrypt_cipher {
-> +	const char *name;
-> +	enum blk_crypto_mode_num mode_num;
-> +	int key_size;
-> +} dm_inlinecrypt_ciphers[] = {
-> +	{
-> +		.name = "aes-xts-plain64",
-> +		.mode_num = BLK_ENCRYPTION_MODE_AES_256_XTS,
-> +		.key_size = 64,
 
-Hm. I can understand some translation table for this stupid
-dm-crypt notation to inline enum, but why you need key size here?
+I think we should initialize mpath_dev_found and mpath_dev_fallback to
+NULL. Otherwise this may lead upto adding a junk mpath_device pointer
+in ->current_path[node] when mpath_head->dev_list is empty. This may
+particularly manifests when a controller is being shutdown and
+concurrently I/O is forwarded to the same controller.
 
-Shouldn't there be some helper for inline crypt returning
-keysize based on BLK_ENCRYPTION_MODE_AES_256_XTS?
-
-I guess you have fixed cipher list already, but what about IV?
-Is it always little-endian, or someone already reinvented plain64be (big-endian)?
-
-...> +	while (opt_params--) {
-
-...> +/*
-> + * Construct an inlinecrypt mapping:
-> + * <cipher> <key> <iv_offset> <dev_path> <start>
-
-As above, it supports opt params, it should mention it here (or in doc).
-
-
-...
-> +	/* <key> */
-> +	if (strlen(argv[1]) != 2 * cipher->key_size) {
-> +		ti->error = "Incorrect key size for cipher";
-> +		err = -EINVAL;
-> +		goto bad;
-> +	}
-> +	if (hex2bin(raw_key, argv[1], cipher->key_size) != 0) {
-> +		ti->error = "Malformed key string";
-> +		err = -EINVAL;
-> +		goto bad;
-> +	}
-
-
-Any reason it does not support keyring keys from the beginning?
-
-...
-> +static int inlinecrypt_map(struct dm_target *ti, struct bio *bio)
-
-> +	/* Map the bio's sector to the underlying device. (512-byte sectors) */
-> +	sector_in_target = dm_target_offset(ti, bio->bi_iter.bi_sector);
-> +	bio->bi_iter.bi_sector = ctx->start + sector_in_target;
-> +	/*
-> +	 * If the bio doesn't have any data (e.g. if it's a DISCARD request),
-> +	 * there's nothing more to do.
-> +	 */
-
-dmcrypt uses bio_set_dev() for REQ_PREFLUSH or REQ_OP_DISCARD, why this differs?
-
-> +
-> +	switch (type) {
-> +	case STATUSTYPE_INFO:
-> +	case STATUSTYPE_IMA:
-> +		result[0] = '\0';
-
-This should really emit audit information similar to dm-crypt.
-
-> +		break;
-> +
-> +	case STATUSTYPE_TABLE:
-> +		/*
-> +		 * Warning: like dm-crypt, dm-inlinecrypt includes the key in
-> +		 * the returned table.  Userspace is responsible for redacting
-> +		 * the key when needed.
-
-Again, why not support keyring format? LUKS2 uses it by default for dm-crypt table.
-
-Milan
-
+Thanks,
+--Nilay
