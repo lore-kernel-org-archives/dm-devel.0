@@ -1,110 +1,72 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.jvdsn.com (smtp.jvdsn.com [129.153.194.31])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE60D260566
-	for <dm-devel@lists.linux.dev>; Thu,  5 Mar 2026 02:37:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 608D430F52B
+	for <dm-devel@lists.linux.dev>; Thu,  5 Mar 2026 07:19:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=129.153.194.31
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772678252; cv=none; b=rEqqPuvlb5mnuL+EBg94F1VpfU7tr1g2iWSsJ0/MO60UcHR2DZ/PYgYJzMH33+8whwu6y710pRMSy8c3YR6kVyJJRCiWoyId24VxlF8hWnXk53w/pdJFy8Cqdtm1aoPuRPgiZxU3Wr0t1LWhAOBwAT3be54ROXKYHIxn5gg4cZw=
+	t=1772695182; cv=none; b=KYRt3ENyi0C2zne8dZp2ulvFrmtTpe0HPobLK8B1zP/vteT5lwozT89XJ78pv/yddgxoWIb3gFghEXLKyi/KoGV+J63pn2trC/WA0D7B8G131tzRzqdRGULAH5RYHHloHAZGa3OShqDDHUMm5MsfpGTCtghjF4YSBssljOjzGA4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772678252; c=relaxed/simple;
-	bh=Zrg3xQuzRFUmRFcIu7kcHq6e2o8cqc90mKbBofbKzTI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=e1wv4R59qJ3MZmaPbSdDhhSRRg+BoM2kP8oJkDquC3tef1fr43GoUdGsgagUXNf5o7Ab1qxdorhoKZ/1KBsdq09XT45ji70k2B6triCnqoNwEF41rbgbSbiN0BXKlLyj7Lz596+KmsAYEjn7SkG4HvzpzHSDJzTA939x40BLr/c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WkVZ2TIo; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1772695182; c=relaxed/simple;
+	bh=28Ie8QvorUqaeXyfBFib6Vpgd0CWzIv1/GxcOBEm6QM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=qUaMZIsl+qgg1NZNx0NiIqR+cd/JUR2AaBUFVzTYHFI0YIR+0vSlgyEFZaMaBD6HtBAh+pJJWoKL1d6KQtOK3E0djmix7na4scecF0Dg3FtTQ3VlZHI2fnSDgpoTonMKDCAUtFBrgG/hJ75fgpdWQ9Bf8ol0/z/ol6QQvFSdzyw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=jvdsn.com; spf=pass smtp.mailfrom=jvdsn.com; dkim=pass (2048-bit key) header.d=jvdsn.com header.i=@jvdsn.com header.b=4I6+dhHD; arc=none smtp.client-ip=129.153.194.31
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=jvdsn.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=jvdsn.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WkVZ2TIo"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1772678249;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=yBUhNsBoeECXQ2g42ZbRUoURW/9mr3wjydrCeND0ozI=;
-	b=WkVZ2TIos7vMR8datonuO+xUMd5g68v0iIl7OkrywObdeGPWib0vi9+A8peTwq3UGM/E9A
-	HXU/V7rrtBYvtNmG94NaXaIO7cVNlw+MMg7wvJey5u5tXR+TFA1J5fi+kQVBizczgB6adB
-	IhPtQwd2/bko5uPmlVIkqBE1Oy7p8Jg=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-408-gnIwOrr_MGynkDKdRAbF8A-1; Wed,
- 04 Mar 2026 21:37:26 -0500
-X-MC-Unique: gnIwOrr_MGynkDKdRAbF8A-1
-X-Mimecast-MFC-AGG-ID: gnIwOrr_MGynkDKdRAbF8A_1772678244
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 19BF119560A5;
-	Thu,  5 Mar 2026 02:37:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (unknown [10.6.23.247])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DEF321800671;
-	Thu,  5 Mar 2026 02:37:21 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6252bKqD1952898
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 4 Mar 2026 21:37:20 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6252bIIF1952897;
-	Wed, 4 Mar 2026 21:37:18 -0500
-Date: Wed, 4 Mar 2026 21:37:18 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: John Garry <john.g.garry@oracle.com>
-Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
-        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
-        hare@suse.com, jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev,
-        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 10/24] scsi-multipath: add
- scsi_mpath_{start,end}_request()
-Message-ID: <aajsXqau3gHFIqVG@redhat.com>
-References: <20260225153627.1032500-1-john.g.garry@oracle.com>
- <20260225153627.1032500-11-john.g.garry@oracle.com>
- <aafNnO6o2yoeLjPs@redhat.com>
- <93752514-3225-4cdf-b9a5-e0964d693b5b@oracle.com>
+	dkim=pass (2048-bit key) header.d=jvdsn.com header.i=@jvdsn.com header.b="4I6+dhHD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=jvdsn.com; s=mail;
+	t=1772695175; bh=28Ie8QvorUqaeXyfBFib6Vpgd0CWzIv1/GxcOBEm6QM=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=4I6+dhHDnhoRF7n6JWdDE9O8fP3gN5EuF5Xg0PY1SoG7hZdINWPSf07YIsZbAfKUk
+	 0RPU5iLbNHN5ZnGGUdWbVsEgJwbODOeQfmR0zkezNU4GngmeiKycX9nL4CzMY3a2ct
+	 /YG+DJ/Fq7W0L4DmDNuUvVgsDmUPMR5Y4X676dsBNeygIP+Ce/g/WyZI9+3pRxI4pP
+	 dNZ0TSX+Txu6tsTapGlZbfNVcNYCwDsTZ4ltdkSFo2Et32FQeyLliS+bY4IJqOzFY4
+	 oSFlKqqhbmeq4y352WuXhw6/4KcvQdyYp725I00E8PYmA85ikTdLWMLw2+RKW/2OIg
+	 ubv1nyl7WwjKA==
+Message-ID: <952df8bf-0393-48a3-a844-e3acf13fd770@jvdsn.com>
+Date: Thu, 5 Mar 2026 01:19:34 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <93752514-3225-4cdf-b9a5-e0964d693b5b@oracle.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: YrPTA9UFe5hcZyh_CxLzVWoSdxZXK8th6krZfmqDD2s_1772678244
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Subject: Re: [PATCH] crypto: testmgr - block Crypto API xxhash64 in FIPS mode
+To: Christoph Hellwig <hch@infradead.org>, Eric Biggers <ebiggers@kernel.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>,
+ "David S. Miller" <davem@davemloft.net>,
+ Maxime Coquelin <mcoquelin.stm32@gmail.com>,
+ Alexandre Torgue <alexandre.torgue@foss.st.com>,
+ linux-crypto@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com,
+ linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+ dm-devel@lists.linux.dev
+References: <20260303060509.246038-1-git@jvdsn.com>
+ <aab5ptuamQ7d_tTi@infradead.org> <20260303193102.GA2846@sol>
+ <aagvBY-XMfPIqkDO@infradead.org>
+Content-Language: en-US
+From: Joachim Vandersmissen <git@jvdsn.com>
+In-Reply-To: <aagvBY-XMfPIqkDO@infradead.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Wed, Mar 04, 2026 at 11:11:08AM +0000, John Garry wrote:
-> On 04/03/2026 06:13, Benjamin Marzinski wrote:
-> > > +	scsi_mpath_end_request(req);
-> > > +
-> > >   	/*
-> > >   	 * In the MQ case the command gets freed by __blk_mq_end_request,
-> > >   	 * so we have to do all cleanup that depends on it earlier.
-> > This looks wrong. We start accounting in scsi_queue_rq(), and we need to
-> > end it whenever we complete or requeue the request, otherwise the
-> > accounting will get off. But not all requests go through
-> > scsi_end_request(). scsi_mpath_failover_req(), for instance, calls
-> > blk_mq_end_request() directly, and other functions, like
-> > scsi_queue_insert() call blk_mq_requeue_request(). I'm pretty sure that
-> > this should go in scsi_complete(), as well in the error path of
-> > scsi_queue_rq().
-> 
-> ok, let me check that further.
-> 
+Thanks for the discussion below, it sounds like I need to ensure 
+dm-integrity can use lib/crypto (at least for xxhash64) before blocking 
+it in the crypto API.
 
-I think I was a little hasty here. Looking at sd_mpath_start_command()
-and sd_mpath_end_command() in patch 17, I can see that they protect
-against repeat calls, so requeueing the request should be o.k. There's
-still a problem when scsi_mpath_failover_req() calls blk_mq_end_request()
-directly, and when scsi_queue_rq() exits with a failure where the
-request won't requeued (all the returns except BLK_STS_OK,
-BLK_STS_RESOURCE, and BLK_STS_DEV_RESOURCE).
-
--Ben
-
-> Thanks for the notice.
-
+On 3/4/26 7:09 AM, Christoph Hellwig wrote:
+> On Tue, Mar 03, 2026 at 11:31:02AM -0800, Eric Biggers wrote:
+>>> It sounds like xxhash should be removed the crypto API entirely.
+>>> There's no user of it, it's not crypto, and doing xxhash through
+>>> the userspace crypto API socket is so stupid that I doubt anyone
+>>> attempted it.
+>> dm-integrity, which uses crypto_shash and accepts arbitrary hash
+>> algorithm strings from userspace, might be relying on "xxhash64" being
+>> supported in crypto_shash.  The integritysetup man page specifically
+>> mentions xxhash64:
+> Oh, ok.  So at least for now we need it, although it would be nice to
+> convert dm-integrity to lib/crypto/ and limit it to the advertised
+> algorithms (including xxhash).
+>
+>
