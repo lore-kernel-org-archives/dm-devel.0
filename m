@@ -1,66 +1,130 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from sg-1-34.ptr.blmpb.com (sg-1-34.ptr.blmpb.com [118.26.132.34])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BBECB3803F6;
-	Thu,  5 Mar 2026 14:14:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E1783A7F78
+	for <dm-devel@lists.linux.dev>; Thu,  5 Mar 2026 14:32:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=118.26.132.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772720092; cv=none; b=O3fPphShzrRCZbT9y/pa9eH+/MbqTLTKTMIzhKnWQvP+UcBif7q6v/Xx/K2foaZ/siM4FszbaRwiUZo5v5SyYzC/JAb/YXZz851309Hn5upNMTsdvjMl8t/aPDFLW6Y1jj3Mh5VArrdQutLA18dE457Yg8Dt3dFDNzP54GJQP3w=
+	t=1772721151; cv=none; b=K9ti5KL4iIPVoBBiT5jMEsli6ODIQ6Mds3m5By9krSo9nvXu+NjRye78Pqq+t13+18TglWgRJH/mfXNt8wxcopt77DG4//uy9BXzByYIA8WrqIN8IlWjeclCy3Nh/SYkrTSH+DLMQvHwHGOvx2vLO6KcYe8YSzPK4yefO0wSJRU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772720092; c=relaxed/simple;
-	bh=VyACtQ8FtLAF8W79RsrWoCkj/Khk2u/PvVKY+BBKGME=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HbEpYfSU7P96Ich8mmzHO9+V/Z6KBZKmT8UB6OZVgaMi6ihsayafZn0Qkm/oMqul6VQxTJwRrfkiDJIb/bg80BBXkuxlEIFiOi6ls4+ZXIuJKL7aMWGrO5qgGAVzY82c5uy7my1lXHxzvnqkHyDaRWkb/UO/KM4IlRErMBQAJ7o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=U2aAmqo6; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1772721151; c=relaxed/simple;
+	bh=95qaNlQMJOP4pN9jLzHKErKpVpxXUhS6M/jbWeKMUN4=;
+	h=In-Reply-To:To:Cc:Subject:From:Date:Message-Id:Content-Type:
+	 Mime-Version:Content-Disposition:References; b=XlQYyJzjyhV1GNrnea+IeV5PDMwDZ5NWI54EA7CTxwOgfBCcCBUPeECvKiFS3FWFoIKZTDf3UTuC2CR+m1YLVYDky/HCrle6R8+kccByjnbfbIu6GL15IlQl62z7koHpfdN7sVESKwb01IfMFlZ7i33YjePHZRFmmNJcpiQnxts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com; spf=pass smtp.mailfrom=fnnas.com; dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b=AAxZ2sSH; arc=none smtp.client-ip=118.26.132.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fnnas.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="U2aAmqo6"
+	dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b="AAxZ2sSH"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=VyACtQ8FtLAF8W79RsrWoCkj/Khk2u/PvVKY+BBKGME=; b=U2aAmqo60Ca2/4JMxoWYSz2OVF
-	8QLmkiTeD4u5i+7Gd0GWJoGUQndeSnQacyao3D9qsQBZeRoOOVpM8JMUAmJxvyQwmheNYR+hSMJ7Z
-	cWMb0FsOXd7+ooYDZmyz+u5PanFqzy3OnVz8D7RdoaUDxNCbse76mdMg76J9SDdj0yXMX8JQfDSd4
-	iS2zckLHXZTKDFIJOSjCMzNUge0cry9LRaDjszhjh9063HVjUBzB7amJykGVzfJ6Gt1xNMRdUClrm
-	hdzknJxq7H1R1g5INpLcftONLawlD22PRX+CoSl4YLlm8k40BUuFebC2Ys96u4Z/NZ7VaelX9mQ9L
-	9qZn6wwA==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
-	id 1vy9TW-00000001van-3rd0;
-	Thu, 05 Mar 2026 14:14:50 +0000
-Date: Thu, 5 Mar 2026 06:14:50 -0800
-From: Christoph Hellwig <hch@infradead.org>
-To: Andreas Gruenbacher <agruenba@redhat.com>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
-	drbd-dev@lists.linbit.com, linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev, linux-f2fs-devel@lists.sourceforge.net,
-	linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+ s=s1; d=fnnas-com.20200927.dkim.feishu.cn; t=1772721137;
+  h=from:subject:mime-version:from:date:message-id:subject:to:cc:
+ reply-to:content-type:mime-version:in-reply-to:message-id;
+ bh=fd+yf1MWzvARKFw8KBfrfEqR9xVpjfuoaal13vgTb08=;
+ b=AAxZ2sSHWBbHI7bgo9b94IGyL9gbbFmnG2NRpr2rPRJHORW19c5D9fIVDKQmGT+SjHgHkT
+ w9rTBRmAS7+aci8rWfM7wYOKLGRQnzJMIbXjN+AEn3+iu+I8HP9VaOkhlBNy7Miepdvy7t
+ UiAagZ3L9669d9b9HdLl1d1kt7+OIufueeiBMmVyqxYcOF+mkzjmceodm2A5nCl4vYTDYe
+ 7qxP0ynSnam8VDnptEWPT0qLpJKADLMTFSAzRSAWnag2HxtiNXwEtRZAXpHePZpqV95Tky
+ JhYfI8ghcEjCDB0EnM4Ax0kFdpMCCpE3TAh5Jm2IXeFDMhOo+zyImudtdQaCYA==
+In-Reply-To: <20260304190424.291743-5-agruenba@redhat.com>
+Content-Transfer-Encoding: 7bit
+To: "Andreas Gruenbacher" <agruenba@redhat.com>
+Cc: "Jens Axboe" <axboe@kernel.dk>, <linux-block@vger.kernel.org>, 
+	<drbd-dev@lists.linbit.com>, <linux-bcache@vger.kernel.org>, 
+	<dm-devel@lists.linux.dev>, <linux-f2fs-devel@lists.sourceforge.net>, 
+	<linux-kernel@vger.kernel.org>, "Christoph Hellwig" <hch@lst.de>
 Subject: Re: [PATCH 4/4] bio: use bio_io_error more often
-Message-ID: <aamP2qNKEmiyXQQH@infradead.org>
-References: <20260304190424.291743-1-agruenba@redhat.com>
- <20260304190424.291743-5-agruenba@redhat.com>
+From: "Coly Li" <colyli@fnnas.com>
+Date: Thu, 5 Mar 2026 22:32:13 +0800
+X-Lms-Return-Path: <lba+269a993ef+8ed4aa+lists.linux.dev+colyli@fnnas.com>
+Message-Id: <aamTA2F84tiDbmF3@studio.local>
+Received: from studio.local ([120.245.64.174]) by smtp.feishu.cn with ESMTPS; Thu, 05 Mar 2026 22:32:14 +0800
+Content-Type: text/plain; charset=UTF-8
+X-Original-From: Coly Li <colyli@fnnas.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0
 Content-Disposition: inline
-In-Reply-To: <20260304190424.291743-5-agruenba@redhat.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+References: <20260304190424.291743-1-agruenba@redhat.com> <20260304190424.291743-5-agruenba@redhat.com>
 
-On Wed, Mar 04, 2026 at 08:04:09PM +0100, Andreas Gruenbacher wrote:
+On Wed, Mar 04, 2026 at 08:04:09PM +0800, Andreas Gruenbacher wrote:
 > Instead of setting bio->bi_status to BLK_STS_IOERR and calling
 > bio_endio(bio), use the shorthand bio_io_error(bio).
+> 
+> Created with Coccinelle using the following semantic patch:
+> 
+> @@
+> struct bio *bio;
+> @@
+> - bio->bi_status = BLK_STS_IOERR;
+> - bio_endio(bio);
+> + bio_io_error(bio);
+> 
+> Signed-off-by: Andreas Gruenbacher <agruenba@redhat.com>
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> ---
+>  block/fops.c                  | 3 +--
+>  drivers/block/drbd/drbd_int.h | 3 +--
+>  drivers/md/bcache/bcache.h    | 3 +--
+>  drivers/md/bcache/request.c   | 6 ++----
+>  drivers/md/dm-mpath.c         | 3 +--
+>  drivers/md/dm-writecache.c    | 3 +--
+>  fs/f2fs/segment.c             | 3 +--
+>  7 files changed, 8 insertions(+), 16 deletions(-)
+> 
 
-I'm a little torn how good these helpers actually are, as
-hard coding one specific type of error seems to create weird
-code and lead to bugs like the xfs one you fixed yesterday.
+[snipped]
 
-Maybe we just need a bio_endio_status() that allows passing the
-satatus?
+>  
+> diff --git a/drivers/md/bcache/bcache.h b/drivers/md/bcache/bcache.h
+> index ec9ff9715081..e0c9d9eef0a0 100644
+> --- a/drivers/md/bcache/bcache.h
+> +++ b/drivers/md/bcache/bcache.h
+> @@ -947,8 +947,7 @@ static inline void closure_bio_submit(struct cache_set *c,
+>  {
+>  	closure_get(cl);
+>  	if (unlikely(test_bit(CACHE_SET_IO_DISABLE, &c->flags))) {
+> -		bio->bi_status = BLK_STS_IOERR;
+> -		bio_endio(bio);
+> +		bio_io_error(bio);
+>  		return;
+>  	}
+>  	submit_bio_noacct(bio);
+> diff --git a/drivers/md/bcache/request.c b/drivers/md/bcache/request.c
+> index 3fa3b13a410f..0f6fa0a2920b 100644
+> --- a/drivers/md/bcache/request.c
+> +++ b/drivers/md/bcache/request.c
+> @@ -1178,8 +1178,7 @@ void cached_dev_submit_bio(struct bio *bio)
+>  
+>  	if (unlikely((d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags)) ||
+>  		     dc->io_disable)) {
+> -		bio->bi_status = BLK_STS_IOERR;
+> -		bio_endio(bio);
+> +		bio_io_error(bio);
+>  		return;
+>  	}
+>  
+> @@ -1283,8 +1282,7 @@ void flash_dev_submit_bio(struct bio *bio)
+>  	struct bcache_device *d = bio->bi_bdev->bd_disk->private_data;
+>  
+>  	if (unlikely(d->c && test_bit(CACHE_SET_IO_DISABLE, &d->c->flags))) {
+> -		bio->bi_status = BLK_STS_IOERR;
+> -		bio_endio(bio);
+> +		bio_io_error(bio);
+>  		return;
+>  	}
+>  
 
-Also you really need to send one patch per subsystem.
+For bcache part, I feel current hard code is explict and clear.
+The bio_io_error() wrapper is not so directly understood. This is just
+my opinion, not a strong objection. 
 
+Thanks.
+
+Coly Li
+
+
+[snipped]
