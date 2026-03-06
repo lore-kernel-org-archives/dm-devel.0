@@ -1,194 +1,623 @@
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.21])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 254FC30EF65
-	for <dm-devel@lists.linux.dev>; Fri,  6 Mar 2026 15:51:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772812303; cv=fail; b=MY72x2iVoJdAWEUY+fuXdDyaIiuSs43XSMuwFOM8JtusFkK/hRjIK92tk85iNlj26mUOMOpoN5p0tnuZp7hJAdoKATIKk9ezjR4dwC7mkCSe3PJGOqWdXMVlwoAIZGnSfyuMTsVo+fdu0l0J5TEa9qish0yEeSc4SSr7VUQpVc0=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772812303; c=relaxed/simple;
-	bh=FcWZ8un9cXxzgXxa05bqwHMNo1Tjm8xxn4JDMw8hjHs=;
-	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=oqOLzrUiFHhPMVA5wl8W9ngAD0394/cjuc6m9Vr0udJWQsPuXbF2z4NKjZ+X6DOU+49k08nDoaHV8oKC+MLOn064HBGa0ud8sMEK+3iV+gBIuM7sbx3UoQoXt03Qh5QODbFn0OYgHQ9OFIAp4Guxe1eirwXF6dHI7QntcrqpGiM=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=XH9Gtncl; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=RNx2iwqR; arc=fail smtp.client-ip=205.220.177.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D59A41B34F;
+	Fri,  6 Mar 2026 17:15:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.21
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1772817304; cv=none; b=pa4vDi9FFpy4shRBrqWRzxRZBpBkp5MGu/Gg6bjGhOEDsofXwpgH0rBNt8Am46goucI6miy5iy8zYh3doTuiYuq44ppC4iTatKnJOQh0siM7HVhw43i6v2O7bvTVKPUwcGq6j2lScXOLZl9+X4ndg2sw9ZkB3aTk/dQt1A/mCig=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1772817304; c=relaxed/simple;
+	bh=BQG2iBejr7GJS93lSzOQzYGb4u+EhLXK6hWxnP7UGHo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=XhZVE/ZBG2cM4SeJ+awR/yLqAUCHs/l7K8hLuSNZbYjnd3wxweZkK5QNok+GiQOdvMgGFP4m2kvRkeMtLqPUDg8UWtKgEEHe1AT6qxF6iB955ilflYg4BWRwL9owW+9Szvg5WIPlOmBklFu7g4HuVUWbE6UEZmwutXdJJ+iyUaQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=L9bQ2I5o; arc=none smtp.client-ip=198.175.65.21
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="XH9Gtncl";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="RNx2iwqR"
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 626FYJgx3388845;
-	Fri, 6 Mar 2026 15:51:38 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2025-04-25; bh=Vj+Cl8+X0dRaDZp9DQzN1/LLixpKg52S/fU79P3Ss8Y=; b=
-	XH9GtncltqH6bEMQZ9VPTN9X7OcSDBxjFDI5c0QhCUE+WZiTFNQ0Dt2BsKQCr82V
-	+XRQgDTbAV2IK8bmVxxLmW7nL8RlvHzFZeaygbIWQ47YtpbOB+BRA6Hcsbh05szt
-	c6BgSOZc8AI69eh1rq65JKBf7nZE4HH42Y9UfwEI7f9rLSRenuHS/XywsJFTK3PB
-	p+BtyuhQt3rqTNn7SCeYJBoeYbkpXgPX+73Od11sSgT6J2ZlvKHYyLdsV58RIuHP
-	KFHSTalQRYuClkE54bePNpD1FRSC4THe9p4raeP0s+XaubLk28QVw0r2CDgOdiBm
-	LWfwRN9emAwbnVq8G/Mqsg==
-Received: from iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta02.appoci.oracle.com [147.154.18.20])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4cr1p5r12n-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 06 Mar 2026 15:51:38 +0000 (GMT)
-Received: from pps.filterd (iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 626EOgHG001439;
-	Fri, 6 Mar 2026 15:51:37 GMT
-Received: from mw6pr02cu001.outbound.protection.outlook.com (mail-westus2azon11012034.outbound.protection.outlook.com [52.101.48.34])
-	by iadpaimrmta02.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 4ckptk50q3-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 06 Mar 2026 15:51:37 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=YJP9d1sgQWcADlVbJd87pibJ/nShHBVZjMgx18tvTCyaOP5UuDPKWaUX9D854xwVbew2Ui9Md8c8kj4cM7IetGVRbbGQFTF/klE4N373Rrp0J/UJVHmfaRiVJYCEi7zr1DjXM5Ww3XOSCme4ItDdlj2Lk317sEMQbghXwzMOMx+qKPvnGeD1uHpboybVYr31c1hWc3gHRIsM/uVotelcwKRsfsvXwnfERdGgCQjjxIPGz2vV74M82+oxd4Rdbl7nGETOVwWKjy1BzwzeKmIpy3jM5XC/A+cLrYRFbyY5jwLtqAa7NBLFPsoNBuDi/5cWW7Hst0m0467qQXC4Iqsnrg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=Vj+Cl8+X0dRaDZp9DQzN1/LLixpKg52S/fU79P3Ss8Y=;
- b=YDaXIppxt4YCry5l6EsN95wTg6iYdeXwXIO3UaVWxM4pFPcgePkFnyGZIRnT4pcbdifLS48mjr859mQKGFhg6kMTYxVBgW1WwbxFh7EA0EC2Cn4sXyiv/6C8Sj3KXqrm9psfuAtLO6XcIYqyPcmg6yYc+SjrCYmjbnr/hfsDOGuWjGgT7gRVZsVCco09253A5m+062/mKgHfO2ij00nk3DWyS9MppXWjOO1N/ABl3Atdc0YRz8MABsrR3t1tM7+xNpqOiUfq7CzsTce8M2erXNhg/611Rwdep25X8nK0jftTpj2YALvO7JC8gs48LSFgSK/WH1qakXbZ34WatXO37A==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=Vj+Cl8+X0dRaDZp9DQzN1/LLixpKg52S/fU79P3Ss8Y=;
- b=RNx2iwqR84KhFsQX66plS2HxYPd0+cLR0m9mC9wwsPENkb8GTart/3tChv5UCZq+kIuRD0uRFzWwM7SXZWKxaP67J9tknjgjkJHVQVx3v2A7ygDed9aAPnoWzVcozGkLzirhs9yco6UiIhPXWxJcamkHA4WwN/q3y86ZCPSZIxw=
-Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
- (2603:10b6:f:fc00::d54) by MN6PR10MB7421.namprd10.prod.outlook.com
- (2603:10b6:208:46e::5) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9678.18; Fri, 6 Mar
- 2026 15:51:34 +0000
-Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
- ([fe80::5266:1601:5598:3f0a]) by DS4PPFEAFA21C69.namprd10.prod.outlook.com
- ([fe80::5266:1601:5598:3f0a%4]) with mapi id 15.20.9632.017; Fri, 6 Mar 2026
- 15:51:34 +0000
-Message-ID: <a60a80a7-e612-4eb1-a151-eaaef57ac14c@oracle.com>
-Date: Fri, 6 Mar 2026 15:51:29 +0000
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 2/4] block: get rid of blk_status_to_{errno,str}
- inconsistency
-To: Andreas Gruenbacher <agruenba@redhat.com>, Jens Axboe <axboe@kernel.dk>
-Cc: linux-block@vger.kernel.org, drbd-dev@lists.linbit.com,
-        linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-        linux-f2fs-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org
-References: <20260304190424.291743-1-agruenba@redhat.com>
- <20260304190424.291743-3-agruenba@redhat.com>
-Content-Language: en-US
-From: John Garry <john.g.garry@oracle.com>
-Organization: Oracle Corporation
-In-Reply-To: <20260304190424.291743-3-agruenba@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: DU7P194CA0006.EURP194.PROD.OUTLOOK.COM
- (2603:10a6:10:553::15) To DS4PPFEAFA21C69.namprd10.prod.outlook.com
- (2603:10b6:f:fc00::d54)
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="L9bQ2I5o"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1772817303; x=1804353303;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=BQG2iBejr7GJS93lSzOQzYGb4u+EhLXK6hWxnP7UGHo=;
+  b=L9bQ2I5oeUzs6YdEC53iVFCZpEgv/7jO/P9XZjsdlYTLGNOuSILgmcOr
+   UkpNV7MDilFEc1DAIBCdSAHVjgaOFHm8K81EelR1YucmOJskm7AhL0UAy
+   S8pAwtWNWLf7ZmafX4HqyBm8jDftMgt1h4V5HNq0Mqu1UKZ6dt6w5OJve
+   ElKKihemnCj+S1fBKDgwgQA5MYP7PKvU+7EKL28UKwsp/iD1+2HHqECKs
+   iBP2A+rJRWfzLl6u4qTjrepzOgFkDrqSTQ9DMjswZYMigTUFwHieMRjBP
+   lBLc8zRMarzduMVgKt32rbn0ocjsfvEBXC4+tQmKnT8XhKIuPXq8BDGCu
+   A==;
+X-CSE-ConnectionGUID: dQ7G2YdURUqLXrLk6AjXVg==
+X-CSE-MsgGUID: JbR4E6olRDO9TP4EB1lYUw==
+X-IronPort-AV: E=McAfee;i="6800,10657,11721"; a="73805077"
+X-IronPort-AV: E=Sophos;i="6.23,105,1770624000"; 
+   d="scan'208";a="73805077"
+Received: from fmviesa005.fm.intel.com ([10.60.135.145])
+  by orvoesa113.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 06 Mar 2026 09:15:02 -0800
+X-CSE-ConnectionGUID: LAkPTm3EQQGZ0w/WrREynA==
+X-CSE-MsgGUID: Nmkri4kzTGiz1scqZDclxQ==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.23,105,1770624000"; 
+   d="scan'208";a="223757673"
+Received: from igk-lkp-server01.igk.intel.com (HELO 9958d990ccf2) ([10.211.93.152])
+  by fmviesa005.fm.intel.com with ESMTP; 06 Mar 2026 09:14:59 -0800
+Received: from kbuild by 9958d990ccf2 with local (Exim 4.98.2)
+	(envelope-from <lkp@intel.com>)
+	id 1vyYlM-000000002I5-2mCq;
+	Fri, 06 Mar 2026 17:14:56 +0000
+Date: Fri, 6 Mar 2026 18:14:17 +0100
+From: kernel test robot <lkp@intel.com>
+To: luoqing <l1138897701@163.com>, agk@redhat.com
+Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev, snitzer@kernel.org,
+	dm-devel@lists.linux.dev, mpatocka@redhat.com, bmarzins@redhat.com,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 2/2] dm-bufio: Use struct_size() helper in kmalloc()
+Message-ID: <202603061810.Sm9P1QKo-lkp@intel.com>
+References: <20260306080257.1268206-1-l1138897701@163.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DS4PPFEAFA21C69:EE_|MN6PR10MB7421:EE_
-X-MS-Office365-Filtering-Correlation-Id: 13cf97d7-52d8-4247-792d-08de7b983dfc
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|376014|1800799024|7053199007;
-X-Microsoft-Antispam-Message-Info:
-	IP7zh7es9N3BfbKyfk/E2s2igtd92ZXHd343ChA4yDk7yVlV556SX9n+D0iy8FquYeYND3Sd5C3jpuzbcw/c0GU7a70hgY3CGyleltf/Rx4HOT72UE5lWZCfSp3HKhIJMoNDFj/w0SqFXlhZsKt56x0QraMyTBhgmylk4vbo291tZgbDH7GJvdNquXg9pRwCDG4woAWyg90erhBF6sUEh1JXI+DCAhg1iarFnG+HzcohAwU2l2C5+SoJ083lyA3bOsaZwX/ZArffabwYLlaQmojLUN9+ZOMO0oT0lw5mhA53b/A6PQYDDqQbZQgcDqx5O7V0RUtRiMRsH9vehx7oeDXZvK8l7KQdSEkHqDQiFEYIf7zZC33xPpH+DofIMkAu9ZofFbLtslzG0bdgAwprjy6Hd6o8Fz9tKFHRD9j6JHLQJEwfi7L7TOW6zAoPPfIGtxhQwwzovoJVzfviDhveYBhzcx8fl2oavp39EpgTMTEGKWDjzQKraB56toJgps0fGHrZTMtcfRQIxF6xAvl7arMX80zoxirVUPC/FAX4pzEn5uYEIMrejKdmfHx/294BOhI8KJnecP93dWjyk9ytti/Ct1tuRgMaXTAXMiSG3lfhKLJnOl/Pv9vzJ6aHpqPqrWhtl3HG0LHzDWIp+s0BYXPYissb+rjM24+Iw8u5/zdOaqiwya/5jlYcV2oM6T/Qz/8HJ3wAWwyvvAioAv/x/rj/5vPUvz4BOJbtx+XhuRg=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DS4PPFEAFA21C69.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(376014)(1800799024)(7053199007);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?WCtrZCtrcmdCdmFkZXlEZjF6SFlPSDQ4T3lnNlhBM3BOUXpCY0tMaWFDQjda?=
- =?utf-8?B?c1M2Mk9Wc1RDdytORGpaYlc4THRZUHVqYVJLNjZXUTZJYXU5Wk9vQUw4REQ1?=
- =?utf-8?B?OFpYbzA3YytRc2NzOFdVK3ZUdzMyM0hDZGI0VGRiUTFZTVRqZjFKbFhVZVFt?=
- =?utf-8?B?MkpQUTN6VkNGMDdrT1hieitqSXlFNXdWMkFjU1F3azBmSU1sKzRqVEtCWHVj?=
- =?utf-8?B?SHJiNXlWVmw3djRHa3VJZU0yLzNVMWpzZ1JhOFJHSEhVaHBnT0V5SzgyOGFX?=
- =?utf-8?B?eEtmNGpRQXNsSTR4dERPZUd0UklCREFwLzZUbmxYaSs2SjJtbkdiMXZHT1VW?=
- =?utf-8?B?UGtVTHoraTNmaS9MV3pxam9rM1BpQ0sxNUgyYXVwVForSUxZcEYvU1NCb2p2?=
- =?utf-8?B?bFVndnVrY2owVG5RWjZsWFNHcHN5TkxjSW4va3VsenVpNnk3QUt4Zy9zS2g1?=
- =?utf-8?B?eVNJRzhnSk51OTU1cmQxZkx5b3JkRjVaZTFCZGNUczhpRU9aLzZKQk0vNWtG?=
- =?utf-8?B?QXB5dG9rSUZYb3JPdTNGTHg4bEdGL05QVEpGTGd3djlhZVVKWjgwVm0wVUt0?=
- =?utf-8?B?Z2k2SlBJQ0pvUWFSb2ZnK2RCbW9lRXBIQ2JBYWY1ZmtCSTlCamROUVRUZlZB?=
- =?utf-8?B?TmVDcGp6b2ZPUERpWEZVU1dlVjVpalUwM29jbzZ0MTZ4NVhyL0FyT1A4enBk?=
- =?utf-8?B?VDRvbHoyNEhtVEpmYXRuejFZUXQ0azlFU043S1R2aXJJd3VlWG5uVnlvR0Nr?=
- =?utf-8?B?WTBXTnV1dXY0Sk05MTJ3ZlUwL2twM1ZFaXJxbkp4dXNzQUNJdEhCVmNmQjdO?=
- =?utf-8?B?N3J5eVh3b0lkdmJCaHYwbHQ1Y0IrVmxMT0xIQ0FqNFJWTVNHRVRXeTNwMm1n?=
- =?utf-8?B?cEViZUw3K2hsbnB6MDVQcytEcUhaTGpDSFlUYXQza25rTUpLVUlENHhNU3Ax?=
- =?utf-8?B?alRUQ081L3ZFVTFDQzJLWlJWaVI5VzFOSFAvZDlHUDJiemVUcEdYZ2tkOVpJ?=
- =?utf-8?B?UVdPN1lLREY0bzdobDdkL3IvUFc3RnJtK2FaUEc0c2NLb3J0c0VEUW5kVk1k?=
- =?utf-8?B?ZHNlT3drcWt1Z2JWZmRFWWNBbWhHT3hLait0YlVENnlBaXpKTW5idXdOdVcx?=
- =?utf-8?B?QXFndzRJZ0dWUC8wMCtseFdDcnhES1AwU3VDTHRJUFlTVjhaZmxQMWg2TDdE?=
- =?utf-8?B?L0dIVnZReXE3SlEwWlBEQmlXQTgzb1J4VFVJVHZGRmRsdzA3NXp4M1Jzelhy?=
- =?utf-8?B?dnZXbzhOczRZcXBnQlJTaS8rRDJwYkx3Nk0xSnZzYVkzQUw3ZWFnNUpONEQv?=
- =?utf-8?B?VENQcDYreWw0Qlg5YUk3K3duZ2E1eE1hcUZ6MHVwMTRkSXRWZ2d4OTFIQVFO?=
- =?utf-8?B?ZUVRNkVFNkFBQXpIaEtoVWVzLzZWamRsNWJ5RW1sQmt6RTJiaG1rMXRwL2VC?=
- =?utf-8?B?Z3BTN1ROc3czT1ZFRUxPL3pEWmUvRDlUMHhBc0xHVnNWSHlodVkwYWUzV3ND?=
- =?utf-8?B?WXlMb2tjOE02VGZJeGxjWHhBQnErY081SXF0Tlk2K2xCc3RlZmxLMDh2OUNk?=
- =?utf-8?B?WGlqWXo5OGt5YUd2ZjlTL3pyWEFPMFRnSDdpNmFuWmxHVDBVQUpVMXR6enhj?=
- =?utf-8?B?M3h5M2NXVzJ2ZHFXcktyTXdVWm9NQStBL3N2NHBmSGFJSkhnelgySDFvdzFj?=
- =?utf-8?B?U2V4NXVHRnFTaFI5RnlER2JuZzU3NXpJRzNFcDlITFFreWRGMlpZZktIQkdl?=
- =?utf-8?B?elowd3g2T2dSa01EV2xIR1Frd2hjcU1GQVR1RW15YjdJcTB6cGJuWXFHSDFq?=
- =?utf-8?B?Z2dPRXg1bzhTNzFpRklDY21lcVRvQVFHcWdId0RxSjhvdnFoakNMRTl2MmQ0?=
- =?utf-8?B?dFpaRjZqcm9WVEE2WEFrNnQyS2h6MzBUSk43NEJyeEU3VCtKMXp0TFlVYUVJ?=
- =?utf-8?B?SFVsN3dtV0gzRERIVzB3VWt4N0ZjbkFYWmozZTRxQjBjS2I4eFJYcnZ6Rjgz?=
- =?utf-8?B?OWxFZzFrcmRmaXZhY3V0T3pnSVpJR2NQN0J4ZW51UU90SlVCdVloRmo4UXI1?=
- =?utf-8?B?T0RvNi9VN1U2UzRLVGtCNUp3WFVXem1SK2NPT0hXVGRzL05CbkRhVG9ZMkJ3?=
- =?utf-8?B?eDNRalRXM1JwR1g5ejZ4U1MwYVlHQ1VsZXoxT0ZQV1RhNGl0WW0rVFJUenlD?=
- =?utf-8?B?U2EwWjQ2ZERwMTNvaTRyWlZudTNkZXptS1pkL0o2bDJCWEhOU0RwTisvM0hj?=
- =?utf-8?B?ck5aZDNjbWxKenIvdDR2YUFvUG95Uk5FMHNheEFmWitJY2VuZDdDY0w3R2V1?=
- =?utf-8?B?Z3dVVFJ3cXdwSTdxYW9wdkJjZlZhRngzRGg4Uk1ZbTJScTZvbkVaUT09?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	QXka6RZHy2AbjneGqmbZLvUjHn4cRO2Nv+1maRYTUm0oGpoQJcqJxy3umO2Wmoz0bLM9Whse9nhws5bESSZ+th2OsYW2+cNhF+JW7XOsfJpubcZJ8XQ29pGCxjskfoD2ARLWlAGSy25P6OgpzHH3QqpyG+GXGulfiK8yBis4remZEgS5/UtnTtRniODZqCzkT+e9iWIDZ5HOlLvkHABOY6PCHdWX4LSveBxSKEGzDMUsHDukrsnCKinusm1SBB1vN/2uPMYm8AJXCHB/eYsEC/rsW3tYGHIiyvYshqPesdMDKzXfFfTMfatocWqj08LzgZE9gzF0E8WshcNviu/Xwbb2y12FuUshmAvCp5TdAFbH+KUzXGBGIG1w9ebMvnPmR2LujDAOjjaUr9EmTiGlArslCZQ9Ym2fVewHGbHxZn9dRF7IDSN8slLpHdF3cGe7WaJBw2QyVuTTagb9w1dzGR0ircJx6ubNIrA6bNGOsdZ2zQDiUPixKVSRalbyNyEVJ9UPQ/1VkOs2NIrvXq/tKU1R0j0q2BvGB1vsK9eKvapbPD1Q68P8jzO/2IgmUPXLRi/1rWJZ6XG3OFdbMo3LZzgSNe48CrI6MoGfoMnr8j4=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 13cf97d7-52d8-4247-792d-08de7b983dfc
-X-MS-Exchange-CrossTenant-AuthSource: DS4PPFEAFA21C69.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Mar 2026 15:51:34.1415
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: cLuQjF1+8IQYCeKDC9sPUBcCWtxdT2voK6XngvmnrbAp6SRJ0dCxALrOhpWvP54Bp03mZk10Nyoynk0pDXtHlQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN6PR10MB7421
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-06_05,2026-03-06_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 malwarescore=0 phishscore=0
- spamscore=0 mlxscore=0 mlxlogscore=999 suspectscore=0 adultscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2602130000
- definitions=main-2603060149
-X-Proofpoint-GUID: JFs8JS8Ia3dSEdxKKY2qKcBhK-QRtZOo
-X-Authority-Analysis: v=2.4 cv=JOg2csKb c=1 sm=1 tr=0 ts=69aaf80a b=1 cx=c_pps
- a=e1sVV491RgrpLwSTMOnk8w==:117 a=e1sVV491RgrpLwSTMOnk8w==:17
- a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
- a=Yq5XynenixoA:10 a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=jiCTI4zE5U7BLdzWsZGv:22 a=o5oIOnhZENCTenyL_yNV:22 a=20KFwNOVAAAA:8
- a=yPCof4ZbAAAA:8 a=FCHOSpNyMqDNgBJJgV8A:9 a=QEXdDO2ut3YA:10 cc=ntf
- awl=host:13812
-X-Proofpoint-ORIG-GUID: JFs8JS8Ia3dSEdxKKY2qKcBhK-QRtZOo
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzA2MDE1MCBTYWx0ZWRfX/K4kcxrCfMJN
- Nw/6CMRx11r5tUnWlLbEcDhTKjExjnZQCj+4HUli1WrcDZUibomzq7zkraIj/ifTeuksnguPpjI
- NYJXxO9tZjQbkxqLwGbeypMO7JdVWoHj2LUuCud4Rui/TMP7CItnVZMRNJbs/TF4BW1CrWUqfKz
- aguPl0Pp/a7tYQ2mjqE1McWl04wcs2oN2whohOFBq/gp52XgqB/nJKp/07QOGKEuhm/cO16R6bH
- XssCSzbrhvljpcBFtnKuVrc2p8XTYuxxsUZA9lo3xAbGOd2dsGKZodlakYRc15NhRUKiTyZ8yzU
- Eikg9/aXj5oRvlL3JcnFoSvpjfnTAJmLeUgBu8aZLg5SWlDlj83306JUmVC07McyWyYsExcsDqZ
- 4Xqvz20yg9L9Ro1f7XSob0mvFMjO0W/gB8wMu4QkVs1rCtGhq3K4ldLozM8xsapwvx6oGEgbu1F
- rh1zxI1PoRn1UVgO3AQ63EE+ezsvdgHPnJlSJlZg=
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260306080257.1268206-1-l1138897701@163.com>
 
-On 04/03/2026 19:04, Andreas Gruenbacher wrote:
-> Change blk_status_to_str() to be consistent with blk_status_to_errno()
-> and return "I/O" for undefined status codes.
-> 
-> With that, the fallback case in the blk_errors array can be removed with
-> no change in behavior.
-> 
-> Signed-off-by: Andreas Gruenbacher<agruenba@redhat.com>
+Hi luoqing,
 
-Reviewed-by: John Garry <john.g.garry@oracle.com>
+kernel test robot noticed the following build errors:
+
+[auto build test ERROR on axboe/for-next]
+[also build test ERROR on device-mapper-dm/for-next linus/master v7.0-rc2 next-20260306]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
+
+url:    https://github.com/intel-lab-lkp/linux/commits/luoqing/dm-bufio-Use-struct_size-helper-in-kmalloc/20260306-165625
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux.git for-next
+patch link:    https://lore.kernel.org/r/20260306080257.1268206-1-l1138897701%40163.com
+patch subject: [PATCH 2/2] dm-bufio: Use struct_size() helper in kmalloc()
+config: x86_64-kexec (https://download.01.org/0day-ci/archive/20260306/202603061810.Sm9P1QKo-lkp@intel.com/config)
+compiler: clang version 20.1.8 (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260306/202603061810.Sm9P1QKo-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202603061810.Sm9P1QKo-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:26: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                        ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:57: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                                                       ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:421:32: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                              ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:421:63: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                                                             ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:420:26: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                        ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:420:57: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                                                       ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:421:32: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                              ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:421:63: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                                                             ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:251:9: note: expanded from macro 'alloc_hooks_tag'
+     251 |         typeof(_do_alloc) _res;                                         \
+         |                ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:26: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                        ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:57: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                                                       ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:421:32: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                              ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:421:63: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                                                             ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:420:26: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                        ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:420:57: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                                                       ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:421:32: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                              ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:437:45: note: expanded from macro 'struct_size'
+     437 |                 size_add(sizeof(*(p)), flex_array_size(p, member, count)))
+         |                                                           ^
+   include/linux/overflow.h:421:63: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                                                             ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:255:10: note: expanded from macro 'alloc_hooks_tag'
+     255 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:26: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                        ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:258:10: note: expanded from macro 'alloc_hooks_tag'
+     258 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:420:57: note: expanded from macro 'flex_array_size'
+     420 |                 (count) * sizeof(*(p)->member) + __must_be_array((p)->member),  \
+         |                                                                       ^
+   include/linux/compiler.h:208:64: note: expanded from macro '__must_be_array'
+     208 | #define __must_be_array(a)      __BUILD_BUG_ON_ZERO_MSG(!__is_array(a), \
+         |                                                                     ^
+   note: (skipping 3 expansions in backtrace; use -fmacro-backtrace-limit=0 to see all)
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:258:10: note: expanded from macro 'alloc_hooks_tag'
+     258 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+>> drivers/md/dm-bufio.c:2514:29: error: no member named 'buffer_tree' in 'struct dm_bufio_client'
+    2514 |         c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+         |             ~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   include/linux/overflow.h:436:37: note: expanded from macro 'struct_size'
+     436 |                 sizeof(*(p)) + flex_array_size(p, member, count),       \
+         |                                                   ^
+   include/linux/overflow.h:421:32: note: expanded from macro 'flex_array_size'
+     421 |                 size_mul(count, sizeof(*(p)->member) + __must_be_array((p)->member)))
+         |                                              ^
+   include/linux/slab.h:1190:52: note: expanded from macro 'kzalloc'
+    1190 | #define kzalloc(...)                            alloc_hooks(kzalloc_noprof(__VA_ARGS__))
+         |                                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~
+   include/linux/alloc_tag.h:265:31: note: expanded from macro 'alloc_hooks'
+     265 |         alloc_hooks_tag(&_alloc_tag, _do_alloc);                        \
+         |         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~
+   include/linux/alloc_tag.h:258:10: note: expanded from macro 'alloc_hooks_tag'
+     258 |                 _res = _do_alloc;                                       \
+         |                        ^~~~~~~~~
+   fatal error: too many errors emitted, stopping now [-ferror-limit=]
+   20 errors generated.
+
+
+vim +2514 drivers/md/dm-bufio.c
+
+  2491	
+  2492	/*
+  2493	 * Create the buffering interface
+  2494	 */
+  2495	struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsigned int block_size,
+  2496						       unsigned int reserved_buffers, unsigned int aux_size,
+  2497						       void (*alloc_callback)(struct dm_buffer *),
+  2498						       void (*write_callback)(struct dm_buffer *),
+  2499						       unsigned int flags)
+  2500	{
+  2501		int r;
+  2502		unsigned int num_locks;
+  2503		struct dm_bufio_client *c;
+  2504		char slab_name[64];
+  2505		static atomic_t seqno = ATOMIC_INIT(0);
+  2506	
+  2507		if (!block_size || block_size & ((1 << SECTOR_SHIFT) - 1)) {
+  2508			DMERR("%s: block size not specified or is not multiple of 512b", __func__);
+  2509			r = -EINVAL;
+  2510			goto bad_client;
+  2511		}
+  2512	
+  2513		num_locks = dm_num_hash_locks();
+> 2514		c = kzalloc(struct_size(c, buffer_tree, num_locks), GFP_KERNEL);
+  2515		if (!c) {
+  2516			r = -ENOMEM;
+  2517			goto bad_client;
+  2518		}
+  2519		cache_init(&c->cache, num_locks, (flags & DM_BUFIO_CLIENT_NO_SLEEP) != 0);
+  2520	
+  2521		c->bdev = bdev;
+  2522		c->block_size = block_size;
+  2523		if (is_power_of_2(block_size))
+  2524			c->sectors_per_block_bits = __ffs(block_size) - SECTOR_SHIFT;
+  2525		else
+  2526			c->sectors_per_block_bits = -1;
+  2527	
+  2528		c->alloc_callback = alloc_callback;
+  2529		c->write_callback = write_callback;
+  2530	
+  2531		if (flags & DM_BUFIO_CLIENT_NO_SLEEP) {
+  2532			c->no_sleep = true;
+  2533			static_branch_inc(&no_sleep_enabled);
+  2534		}
+  2535	
+  2536		mutex_init(&c->lock);
+  2537		spin_lock_init(&c->spinlock);
+  2538		INIT_LIST_HEAD(&c->reserved_buffers);
+  2539		c->need_reserved_buffers = reserved_buffers;
+  2540	
+  2541		dm_bufio_set_minimum_buffers(c, DM_BUFIO_MIN_BUFFERS);
+  2542	
+  2543		init_waitqueue_head(&c->free_buffer_wait);
+  2544		c->async_write_error = 0;
+  2545	
+  2546		c->dm_io = dm_io_client_create();
+  2547		if (IS_ERR(c->dm_io)) {
+  2548			r = PTR_ERR(c->dm_io);
+  2549			goto bad_dm_io;
+  2550		}
+  2551	
+  2552		if (block_size <= KMALLOC_MAX_SIZE && !is_power_of_2(block_size)) {
+  2553			unsigned int align = min(1U << __ffs(block_size), (unsigned int)PAGE_SIZE);
+  2554	
+  2555			snprintf(slab_name, sizeof(slab_name), "dm_bufio_cache-%u-%u",
+  2556						block_size, atomic_inc_return(&seqno));
+  2557			c->slab_cache = kmem_cache_create(slab_name, block_size, align,
+  2558							  SLAB_RECLAIM_ACCOUNT, NULL);
+  2559			if (!c->slab_cache) {
+  2560				r = -ENOMEM;
+  2561				goto bad;
+  2562			}
+  2563		}
+  2564		if (aux_size)
+  2565			snprintf(slab_name, sizeof(slab_name), "dm_bufio_buffer-%u-%u",
+  2566						aux_size, atomic_inc_return(&seqno));
+  2567		else
+  2568			snprintf(slab_name, sizeof(slab_name), "dm_bufio_buffer-%u",
+  2569						atomic_inc_return(&seqno));
+  2570		c->slab_buffer = kmem_cache_create(slab_name, sizeof(struct dm_buffer) + aux_size,
+  2571						   0, SLAB_RECLAIM_ACCOUNT, NULL);
+  2572		if (!c->slab_buffer) {
+  2573			r = -ENOMEM;
+  2574			goto bad;
+  2575		}
+  2576	
+  2577		while (c->need_reserved_buffers) {
+  2578			struct dm_buffer *b = alloc_buffer(c, GFP_KERNEL);
+  2579	
+  2580			if (!b) {
+  2581				r = -ENOMEM;
+  2582				goto bad;
+  2583			}
+  2584			__free_buffer_wake(b);
+  2585		}
+  2586	
+  2587		INIT_WORK(&c->shrink_work, shrink_work);
+  2588		atomic_long_set(&c->need_shrink, 0);
+  2589	
+  2590		c->shrinker = shrinker_alloc(0, "dm-bufio:(%u:%u)",
+  2591					     MAJOR(bdev->bd_dev), MINOR(bdev->bd_dev));
+  2592		if (!c->shrinker) {
+  2593			r = -ENOMEM;
+  2594			goto bad;
+  2595		}
+  2596	
+  2597		c->shrinker->count_objects = dm_bufio_shrink_count;
+  2598		c->shrinker->scan_objects = dm_bufio_shrink_scan;
+  2599		c->shrinker->seeks = 1;
+  2600		c->shrinker->batch = 0;
+  2601		c->shrinker->private_data = c;
+  2602	
+  2603		shrinker_register(c->shrinker);
+  2604	
+  2605		mutex_lock(&dm_bufio_clients_lock);
+  2606		dm_bufio_client_count++;
+  2607		list_add(&c->client_list, &dm_bufio_all_clients);
+  2608		__cache_size_refresh();
+  2609		mutex_unlock(&dm_bufio_clients_lock);
+  2610	
+  2611		return c;
+  2612	
+  2613	bad:
+  2614		while (!list_empty(&c->reserved_buffers)) {
+  2615			struct dm_buffer *b = list_to_buffer(c->reserved_buffers.next);
+  2616	
+  2617			list_del(&b->lru.list);
+  2618			free_buffer(b);
+  2619		}
+  2620		kmem_cache_destroy(c->slab_cache);
+  2621		kmem_cache_destroy(c->slab_buffer);
+  2622		dm_io_client_destroy(c->dm_io);
+  2623	bad_dm_io:
+  2624		mutex_destroy(&c->lock);
+  2625		if (c->no_sleep)
+  2626			static_branch_dec(&no_sleep_enabled);
+  2627		kfree(c);
+  2628	bad_client:
+  2629		return ERR_PTR(r);
+  2630	}
+  2631	EXPORT_SYMBOL_GPL(dm_bufio_client_create);
+  2632	
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
