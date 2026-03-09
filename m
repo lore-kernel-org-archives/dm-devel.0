@@ -1,140 +1,89 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.11])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69EBD22A1D4;
-	Mon,  9 Mar 2026 15:45:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 630AA3D648B
+	for <dm-devel@lists.linux.dev>; Mon,  9 Mar 2026 16:12:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773071152; cv=none; b=Pupdwpm5lsWYXpyj2OFzjhTa2hVFHbwk7dfQhhT1DsgJsPisyXCPIlyqfNbrUpyn0qfnVK5uIIDlw9P/UnoMG5T6Qk7h0D4RwNNuqVcqtbAEJMXWxTA686C8Lry66Z4cI7xSvWrLlvd/+jVDJBA3NEHazCRJiI3QoYZZ/MQPQvk=
+	t=1773072756; cv=none; b=VIdgGv64ACSXypuJWMfxutYspZsVaXSIn3R1C9r0yqbroVfqzioWsuC6lQ6TTawymeJGYngiEBEbZ4cjhAP6Nb/OmMCO2bFswe+fMLqlNeSzcSdII9s8lS/tsD+9/Ct0K2XZ+CCvgQWBbUI93rPcGWWG2i7N8Fdw89AE6J1cS8w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773071152; c=relaxed/simple;
-	bh=rCt8TwEoX6RUjX3Ol5H8E1fQFJJiWpMnctAnEqxheAo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=BrdZAcUZkWA7XuKF9YLPJw252S6JKTRUytVCRX+oCN7FfA5+NEmB/teHi0FW5dP/zzuHip53cUjNKTa5ESISmt0kRXedPs3blIAMDGjCvZj11DhuTsa6AhYLB9Qni0kJFOCGh+FoIFSDIcA3847QfJXu4Ddrm33QtMmLYESnKuw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=khPM7IdR; arc=none smtp.client-ip=198.175.65.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	s=arc-20240116; t=1773072756; c=relaxed/simple;
+	bh=e1AKI+bCKQbWCoFU9e4RZd9y4sbLesngNc7PnzpU/KU=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=DoU3fpMBnOurfYldvcO7Ay+eN/FKoi0pmtWCMCKaOlHWkei2ZNBixa1KSmQF7r5gTwtfP+2CSTJSXCRjflEO8WxMW0xbZsG3GNEMOBhRm3gEcoHWQ6ON+VcldNs4rKzdKqyXPmLque38DQsF/zeVDQ75P3CjEH/RI4EEvBGWGtk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JjSTfIhc; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="khPM7IdR"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1773071150; x=1804607150;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=rCt8TwEoX6RUjX3Ol5H8E1fQFJJiWpMnctAnEqxheAo=;
-  b=khPM7IdR9MFli8rDH937Lsm8dp9Dmg8V5j4dCYencoORJTX4yHnnIVzM
-   zQpGeMlD4mpxF/xzhbYlxP52JY46s/3DoYbGlyGXBox6yBudBW4SBmWlD
-   o9+L8CulA1Vr4CzUf74rLMyxmOX1C+PDhmNGZgjrCIXU3hKCDKTRUlQeM
-   WYvnOjbR6hXadCQcJQijPs3n0WYAI0F8Yje72n0xeWjwzTyVzDnj/9eHg
-   0K1pJzceiUOjRQ7UldzLpysiLyDjSypPtvW3R4usgME96HagjZwalSQn6
-   bFSXMy6Npqvx1Q23BWl4Ti3SoiaVfQ31iofug+kw1IwqH1/7jYf7UH3bZ
-   w==;
-X-CSE-ConnectionGUID: bsE6bDQSQ4eiXB/X8DogJg==
-X-CSE-MsgGUID: PYIJBvPyQDWpI683vnN/cQ==
-X-IronPort-AV: E=McAfee;i="6800,10657,11723"; a="84425193"
-X-IronPort-AV: E=Sophos;i="6.23,109,1770624000"; 
-   d="scan'208";a="84425193"
-Received: from orviesa006.jf.intel.com ([10.64.159.146])
-  by orvoesa103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Mar 2026 08:45:45 -0700
-X-CSE-ConnectionGUID: OMDR4XcbRTSxWzhtRo1HIw==
-X-CSE-MsgGUID: rFUv7x1wQnqy+hBWujFnNg==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.23,109,1770624000"; 
-   d="scan'208";a="218939094"
-Received: from lkp-server01.sh.intel.com (HELO 434e41ea3c86) ([10.239.97.150])
-  by orviesa006.jf.intel.com with ESMTP; 09 Mar 2026 08:45:38 -0700
-Received: from kbuild by 434e41ea3c86 with local (Exim 4.98.2)
-	(envelope-from <lkp@intel.com>)
-	id 1vzcnV-000000000Rw-12zd;
-	Mon, 09 Mar 2026 15:45:33 +0000
-Date: Mon, 9 Mar 2026 23:44:44 +0800
-From: kernel test robot <lkp@intel.com>
-To: Sungwoo Kim <iam@sung-woo.kim>, Jens Axboe <axboe@kernel.dk>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-	Ulf Hansson <ulf.hansson@linaro.org>,
-	Richard Weinberger <richard@nod.at>,
-	Miquel Raynal <miquel.raynal@bootlin.com>,
-	Vignesh Raghavendra <vigneshr@ti.com>,
-	Hector Martin <marcan@marcan.st>, Sven Peter <sven@svenpeter.dev>,
-	Alyssa Rosenzweig <alyssa@rosenzweig.io>,
-	Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>,
-	Sagi Grimberg <sagi@grimberg.me>,
-	James Smart <james.smart@broadcom.com>,
-	Chaitanya Kulkarni <kch@nvidia.com>,
-	"James E.J. Bottomley" <jejb@linux.ibm.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
-	Sungwoo Kim <iam@sung-woo.kim>, Chao Shi <cshi008@fiu.edu>,
-	Weidong Zhu <weizhu@fiu.edu>, Dave Tian <daveti@purdue.edu>,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	nbd@other.debian.org, linux-mmc@vger.kernel.org,
-	linux-mtd@lists.infradead.org, asahi@lists.linux.dev
-Subject: Re: [PATCH] blk-mq: nvme: Fix general protection fault in
- nvme_setup_descriptor_pools()
-Message-ID: <202603092305.jcWVkoXK-lkp@intel.com>
-References: <20260309062840.2937858-2-iam@sung-woo.kim>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JjSTfIhc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1773072751;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=8gnnyUL0n6EDT1Fhp8qXg6+M1hpcHUbUUrCiGO+2l/A=;
+	b=JjSTfIhcTOdoFVAUqz2x6dQWawP9UU8kdH59p7nbVcZCj3HaUB/jnZgXbE/BcILjMGsWU0
+	iDXwxguif0+okH1oy39KuPOL65ps1TE6CWdQ5BjPAdH5YAw20LEXL6w87hUKzQfi87txt+
+	ldWlf6Yj0Sinxs60NiCVwaD/kFrvcTQ=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-322-yqA2XdDOM0aCU0b3yaFr-g-1; Mon,
+ 09 Mar 2026 12:12:27 -0400
+X-MC-Unique: yqA2XdDOM0aCU0b3yaFr-g-1
+X-Mimecast-MFC-AGG-ID: yqA2XdDOM0aCU0b3yaFr-g_1773072746
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6E887180035D;
+	Mon,  9 Mar 2026 16:12:25 +0000 (UTC)
+Received: from [10.44.32.29] (unknown [10.44.32.29])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CED171956095;
+	Mon,  9 Mar 2026 16:12:22 +0000 (UTC)
+Date: Mon, 9 Mar 2026 17:12:19 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Jens Axboe <axboe@kernel.dk>
+cc: Linlin Zhang <linlin.zhang@oss.qualcomm.com>, linux-block@vger.kernel.org, 
+    ebiggers@kernel.org, linux-kernel@vger.kernel.org, adrianvovk@gmail.com, 
+    dm-devel@lists.linux.dev, quic_mdalam@quicinc.com, gmazyland@gmail.com, 
+    israelr@nvidia.com
+Subject: Re: [PATCH v1 1/3] block: export blk-crypto symbols required by
+ dm-inlinecrypt
+In-Reply-To: <4d46676d-e738-497c-b848-4278ec15d868@kernel.dk>
+Message-ID: <9ca23050-7ea6-e1d2-004a-807912379a21@redhat.com>
+References: <20260304121729.1532469-1-linlin.zhang@oss.qualcomm.com> <20260304121729.1532469-2-linlin.zhang@oss.qualcomm.com> <4d46676d-e738-497c-b848-4278ec15d868@kernel.dk>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260309062840.2937858-2-iam@sung-woo.kim>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: 1oCvP1wLO6CrJsK5kWRhC_g-djMeCOKlpR7_eqd_5p8_1773072746
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Hi Sungwoo,
 
-kernel test robot noticed the following build errors:
 
-[auto build test ERROR on axboe/for-next]
-[also build test ERROR on device-mapper-dm/for-next linus/master v7.0-rc3 next-20260306]
-[cannot apply to linux-nvme/for-next]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch#_base_tree_information]
+On Mon, 9 Mar 2026, Jens Axboe wrote:
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Sungwoo-Kim/blk-mq-nvme-Fix-general-protection-fault-in-nvme_setup_descriptor_pools/20260309-143107
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux.git for-next
-patch link:    https://lore.kernel.org/r/20260309062840.2937858-2-iam%40sung-woo.kim
-patch subject: [PATCH] blk-mq: nvme: Fix general protection fault in nvme_setup_descriptor_pools()
-config: x86_64-randconfig-074-20260309 (https://download.01.org/0day-ci/archive/20260309/202603092305.jcWVkoXK-lkp@intel.com/config)
-compiler: clang version 20.1.8 (https://github.com/llvm/llvm-project 87f0227cb60147a26a1eeb4fb06e3b505e9c7261)
-rustc: rustc 1.88.0 (6b00bc388 2025-06-23)
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260309/202603092305.jcWVkoXK-lkp@intel.com/reproduce)
+> On 3/4/26 5:17 AM, Linlin Zhang wrote:
+> > From: Eric Biggers <ebiggers@google.com>
+> > 
+> > bio_crypt_set_ctx(), blk_crypto_init_key(), and
+> > blk_crypto_start_using_key() are needed to use inline encryption; see
+> > Documentation/block/inline-encryption.rst.  Export them so that
+> > dm-inlinecrypt can use them.  The only reason these weren't exported
+> > before was that inline encryption was previously used only by fs/crypto/
+> > which is built-in code.
+> 
+> Reviewed-by: Jens Axboe <axboe@kernel.dk>
+> 
+> -- 
+> Jens Axboe
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202603092305.jcWVkoXK-lkp@intel.com/
+Thanks.
 
-All errors (new ones prefixed by >>):
+Mikulas
 
->> error[E0308]: mismatched types
-   --> rust/kernel/block/mq/operations.rs:274:28
-   |
-   274 |         init_request: Some(Self::init_request_callback),
-   |                       ---- ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected fn pointer, found fn item
-   |                       |
-   |                       arguments to this enum variant are incorrect
-   |
-   = note: expected fn pointer `unsafe extern "C" fn(_, _, _, i32) -> _`
-   found fn item `unsafe extern "C" fn(_, _, _, u32) -> _ {OperationsVTable::<T>::init_request_callback}`
-   help: the type constructed contains `unsafe extern "C" fn(*mut blk_mq_tag_set, *mut bindings::request, u32, u32) -> i32 {OperationsVTable::<T>::init_request_callback}` due to the type of the argument passed
-   --> rust/kernel/block/mq/operations.rs:274:23
-   |
-   274 |         init_request: Some(Self::init_request_callback),
-   |                       ^^^^^---------------------------^
-   |                            |
-   |                            this argument influences the type of `Some`
-   note: tuple variant defined here
-   --> /opt/cross/rustc-1.88.0-bindgen-0.72.1/rustup/toolchains/1.88.0-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:597:5
-   |
-   597 |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
-   |     ^^^^
-
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
