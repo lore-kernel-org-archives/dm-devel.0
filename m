@@ -1,79 +1,89 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f179.google.com (mail-qt1-f179.google.com [209.85.160.179])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26CED38BF91
-	for <dm-devel@lists.linux.dev>; Mon,  9 Mar 2026 14:01:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B98A258EFF
+	for <dm-devel@lists.linux.dev>; Mon,  9 Mar 2026 15:06:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773064892; cv=none; b=Gvmz13Nprg3jf4WMUwQWajH5L2zUFL+tLJgGOfmUzLvTFXSiRSBWW7qM8FaoIa2GeA6fyfS/tLk+E7zTF38k3C0bmsoT4XOV8EKLfmKYGx2oDKUvJj3xlW5YqyM9VWafIBWvCbMohauJW9u6HDPNJVxFm4Ktu7fKP7Tv6PDtOtA=
+	t=1773068777; cv=none; b=qhgXPf4KSlZmYsxKjTqnkBE3F0igOSkiYYDISnZQ49JvnD79FxjDi5dpEAAEEoatVyK0/geYO0b6dDktfsb2gmQUtSAj4M4wMUFWyORgUHfmUOywJGgCpeFTccfCrYob2eFu6D+K9BrbTiRUyfcP5sNMxMVkiZuiJVsSpeLWOg4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773064892; c=relaxed/simple;
-	bh=EEOTlo86A7ZfBDzwp1r8PpCOvEmtkfd/bbw+Elh5c74=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=LoFCfrecCCZ3W1h5RwPHYziXOFnBFwzJ4WEOsJ5g6yAJWPZT8fJsFgTSGcXsI0pE2moK0iLiyRA+krVncJHdKFrnTXjw01moQlNqeDwnTtRrPGnBGjcbjeWO+gh+m99xVS/u0V4HCpLhex0AQBnRiyRf48SCvxv/nC+ZzJpCicY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BWhIsodJ; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1773068777; c=relaxed/simple;
+	bh=wRzvLbBGaAh9TMd/K6fo819fSxGJuZ6OqTWdUwzMPLc=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=RdAVrmcenFS6YQqKeeByYiOe9C5HgKuHnNCto/EU6WaASAxAJuCFVH+R/mWvyo+dDVxgjKHtZmkdAnPIARcI7do6sqsAFhFaUkQayjcWGqSEauDWvhTf0s/xBPTw0Zkb88fo2wNQOqyt+RRMsifRms998l26uD3GbglKAwvJB2g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b=K+jLq9dm; arc=none smtp.client-ip=209.85.160.179
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BWhIsodJ"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1773064890;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=gAFp5NffJ90d8jxyKdfFgqhADKMayxhkc4+zwPm9YPY=;
-	b=BWhIsodJ5m0KAnnq9ZXrZbN3GLDaBiXSkAoLKn1z3HXx6pjKXStbUGarXMWu+M7j6ehfTx
-	TdaIqJMYURzWR3gY4kDQiCGjJeKEs+HjKHe3R/eKj/f9rYdk1efMHR158YF5b4JOHAO9JB
-	vXtcEDbsnriXKK9X08ROy4kdipIJUOM=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-647-xEKTaFEcNoKp-_nIPIXWeQ-1; Mon,
- 09 Mar 2026 10:01:26 -0400
-X-MC-Unique: xEKTaFEcNoKp-_nIPIXWeQ-1
-X-Mimecast-MFC-AGG-ID: xEKTaFEcNoKp-_nIPIXWeQ_1773064884
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5709419560BC;
-	Mon,  9 Mar 2026 14:01:24 +0000 (UTC)
-Received: from [10.44.32.29] (unknown [10.44.32.29])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A6F8B19560A6;
-	Mon,  9 Mar 2026 14:01:21 +0000 (UTC)
-Date: Mon, 9 Mar 2026 15:01:18 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Jens Axboe <axboe@kernel.dk>
-cc: linux-block@vger.kernel.org, Linlin Zhang <linlin.zhang@oss.qualcomm.com>, 
-    ebiggers@kernel.org, linux-kernel@vger.kernel.org, adrianvovk@gmail.com, 
-    dm-devel@lists.linux.dev, quic_mdalam@quicinc.com, gmazyland@gmail.com, 
-    israelr@nvidia.com
-Subject: Re: [PATCH v1 1/3] block: export blk-crypto symbols required by
- dm-inlinecrypt
-In-Reply-To: <20260304121729.1532469-2-linlin.zhang@oss.qualcomm.com>
-Message-ID: <4fe2e556-2190-0cc1-08b3-96046432d48d@redhat.com>
-References: <20260304121729.1532469-1-linlin.zhang@oss.qualcomm.com> <20260304121729.1532469-2-linlin.zhang@oss.qualcomm.com>
+	dkim=pass (2048-bit key) header.d=kernel-dk.20230601.gappssmtp.com header.i=@kernel-dk.20230601.gappssmtp.com header.b="K+jLq9dm"
+Received: by mail-qt1-f179.google.com with SMTP id d75a77b69052e-50905b779dfso24592141cf.3
+        for <dm-devel@lists.linux.dev>; Mon, 09 Mar 2026 08:06:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1773068774; x=1773673574; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=X/pSwYu0Cu6TqiNKu2kObY4zE6l9DNx84f7s+dA/j44=;
+        b=K+jLq9dmo+84UE/WSJJUKPM/4IrFYhfKioSNBcZqmRrJCpLDwdDzCI5wGV1TPdWpUK
+         9aR4CsvfEtLGxojWPhbaFnVHb1gqX969VHAYgmrn+YMbIvrRk9ZyCGQ1ocqxmwm8N6Q9
+         xYMjoLBZp44AbN0cnOmKXb+6+pJz2GWx+/iL0ITRS5uIl9okx7T/Mtt+vjktqKNl6Ed8
+         AiRC96RJBCgtJ2wcuW+T39bQRFTDKOUWBy+MYkSxUipb/o+kXGhgV8UwPlBo9cIu4+3L
+         Erm6+2Ram9Z1OZqAf8s54Gg1i3B81eO5Hwdjf13dPe82Ii36pPR4n3/WmoroYeX9eWqK
+         nreg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1773068774; x=1773673574;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=X/pSwYu0Cu6TqiNKu2kObY4zE6l9DNx84f7s+dA/j44=;
+        b=MsNNcilph59IGQ/slg0+3wmtXknu3b98zYEW4X7w343ZCEScrK9mk9Q3ypW6ad162T
+         E4ftXY4qKhZ6WPYJnEOaiokCFx9RlMqfUgmIsJvTqC3bvlQgTz0przmmBFv13ePC5zm8
+         o0ifpHSDW/lyFvO56J1qDWjJr36L4CqSRtYZ+SY1JgEnBEQcyHWD0rVGd9RWtn+YwCbe
+         DiwEzAmihWj5gkNhaJA/4kgpY25GsYKhtxGbz1kx1pp7f2U+PgqFbFvK7Q6A2fzoKnhA
+         ehej7iL8BxcXMr8dARlGm3VrSmPSlyvPy+GIHFscBsFwzKuQCLekiGwHPUYlweV0BRrD
+         jgyA==
+X-Forwarded-Encrypted: i=1; AJvYcCW9Fc60RMue9zYCoOADCmkgrFmelydgOLl1DKyCPhTsYWKaCvYkPGrRyiUMzjLpyE2LRIWxDkCyjA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwOAYWD5nv5ORgLgfSn7KwaZSF0Fa/kTOcCGNDZOozqOF6TUKP7
+	KOdJntQ2oAgkYiuwSaMpSobmZruzrjS2K9sHTnHncsu3mBc0w/wE8Xe+GwTtomIxQaE=
+X-Gm-Gg: ATEYQzz3BcU8744BhoAS5VwcxRhtsGR9ZF20o3HUpqGwQQg2mjH37zd1QG1dAL/m8vz
+	jah1JEP6MSnunlSlQPOJjtW2ueNp9PIJ1pvroS8H2UK+k/bAL0Gf6++8mMTZlCX3WaW49j1pv6B
+	HUWFbBLJ5cTO02kncZFnB+29+e83Nh2KpONQPo+ksJ+hvCfeWl1bRyCjeHtruRHvoKhv+U6M+Eh
+	Mmdo04oT7l0KVQg8yMai7M39dTD7vk9VxwdtXC+koO8bInCeDHbHKJi1BRlA7OI/sy7j+nA3XJ+
+	Bv69+WDsEf2nQoGA8Vlf8Ifsr0EHHtls6AB14tHh5g48OqEIHjtURQIGITGvlcPLmAviYKC7bIR
+	9ApsrAZzif4SfpCKhwP8uuFTe1dDpQAECQV3R4dvdwAj+Uwxmz/g3cQe5daIrU4yCEFivnGuHPm
+	CnDJspPmW7g1ly9SMFzPBh02Bbh18DUz90zUPmOlPqpXpDXbeF3Q==
+X-Received: by 2002:ac8:7f86:0:b0:509:17b5:654c with SMTP id d75a77b69052e-50917b56abdmr50427091cf.37.1773068774226;
+        Mon, 09 Mar 2026 08:06:14 -0700 (PDT)
+Received: from [172.19.0.48] ([99.196.133.212])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-50923ed69bbsm5209671cf.28.2026.03.09.08.06.03
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 09 Mar 2026 08:06:13 -0700 (PDT)
+Message-ID: <4d46676d-e738-497c-b848-4278ec15d868@kernel.dk>
+Date: Mon, 9 Mar 2026 09:05:56 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: TeJwiUSZRFfZTvtDdQS_JS_Yv0C84_49fEQXzUj2NIM_1773064884
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v1 1/3] block: export blk-crypto symbols required by
+ dm-inlinecrypt
+To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
+ linux-block@vger.kernel.org, ebiggers@kernel.org
+Cc: linux-kernel@vger.kernel.org, adrianvovk@gmail.com,
+ dm-devel@lists.linux.dev, quic_mdalam@quicinc.com, gmazyland@gmail.com,
+ israelr@nvidia.com, mpatocka@redhat.com
+References: <20260304121729.1532469-1-linlin.zhang@oss.qualcomm.com>
+ <20260304121729.1532469-2-linlin.zhang@oss.qualcomm.com>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <20260304121729.1532469-2-linlin.zhang@oss.qualcomm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Hi Jens
-
-Would you please ack this block layer patch, so that I can add it to the 
-device mapper tree?
-
-Mikulas
-
-
-On Wed, 4 Mar 2026, Linlin Zhang wrote:
-
+On 3/4/26 5:17 AM, Linlin Zhang wrote:
 > From: Eric Biggers <ebiggers@google.com>
 > 
 > bio_crypt_set_ctx(), blk_crypto_init_key(), and
@@ -82,41 +92,9 @@ On Wed, 4 Mar 2026, Linlin Zhang wrote:
 > dm-inlinecrypt can use them.  The only reason these weren't exported
 > before was that inline encryption was previously used only by fs/crypto/
 > which is built-in code.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-> ---
->  block/blk-crypto.c | 3 +++
->  1 file changed, 3 insertions(+)
-> 
-> diff --git a/block/blk-crypto.c b/block/blk-crypto.c
-> index 856d3c5b1fa0..40a99a859748 100644
-> --- a/block/blk-crypto.c
-> +++ b/block/blk-crypto.c
-> @@ -116,6 +116,7 @@ void bio_crypt_set_ctx(struct bio *bio, const struct blk_crypto_key *key,
->  
->  	bio->bi_crypt_context = bc;
->  }
-> +EXPORT_SYMBOL_GPL(bio_crypt_set_ctx);
->  
->  void __bio_crypt_free_ctx(struct bio *bio)
->  {
-> @@ -349,6 +350,7 @@ int blk_crypto_init_key(struct blk_crypto_key *blk_key,
->  
->  	return 0;
->  }
-> +EXPORT_SYMBOL_GPL(blk_crypto_init_key);
->  
->  bool blk_crypto_config_supported_natively(struct block_device *bdev,
->  					  const struct blk_crypto_config *cfg)
-> @@ -399,6 +401,7 @@ int blk_crypto_start_using_key(struct block_device *bdev,
->  	}
->  	return blk_crypto_fallback_start_using_mode(key->crypto_cfg.crypto_mode);
->  }
-> +EXPORT_SYMBOL_GPL(blk_crypto_start_using_key);
->  
->  /**
->   * blk_crypto_evict_key() - Evict a blk_crypto_key from a block_device
-> -- 
-> 2.34.1
-> 
+
+Reviewed-by: Jens Axboe <axboe@kernel.dk>
+
+-- 
+Jens Axboe
 
