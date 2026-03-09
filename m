@@ -1,70 +1,86 @@
-Received: from mail-dy1-f182.google.com (mail-dy1-f182.google.com [74.125.82.182])
+Received: from mail-yx1-f44.google.com (mail-yx1-f44.google.com [74.125.224.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F3931EB5E1
-	for <dm-devel@lists.linux.dev>; Sat,  7 Mar 2026 01:06:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.82.182
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0D234261B6D
+	for <dm-devel@lists.linux.dev>; Mon,  9 Mar 2026 06:30:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1772845583; cv=none; b=drCwteSkh86kziV02CFFAHy6P/eaMMwfaQMykaWYdr4/V8Pq1lNvKBV5TBDySdzXTM7oozz2fzG3nsVMx341F9s/6bFdDTJENb/k9wTvFHMCugzFUMgHpokSTrCbR9YuPHEvGYWWFNW6Ki7nRYDrnxYQQ5kBB0c0HIugsl4V/L0=
+	t=1773037840; cv=none; b=Gn3y5ld99s+o0t3kg9aCcSxm5ThEXdkb6/CFvGjRJvVd8g7WqMoAXaRC49WOvyWmdgopAcjNwwA69TcIMrRJSzIIDcrsWdIgzoKgEbTbNyQ27kvZEzqp9m93qbo7nuIsQ4cIU4rypk8Lql3yLfPMpcTAYZ9xn1DNZSpOzXNaH9M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1772845583; c=relaxed/simple;
-	bh=gPdb8RulG26hlU+zefDlU4fZ0Eh9Wbcqb3khJpobHaI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pHuYm7CGU1jYeAMEpUMjR0pSJZSMCHIfDaWcX/DvpAbF4eDS2OJWvb9mEMWeSjB1kGhLDMBXwy5ZQuOITJLQ0Pg+EMb3udSki8RZPiEfsUAGd3j4ISahO/G+M/QqGclPM30TKmc9HJXwE8YQF930wW/HdMxcVP6ovqyQEe2jyh0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=XdjWqp9y; arc=none smtp.client-ip=74.125.82.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="XdjWqp9y"
-Received: by mail-dy1-f182.google.com with SMTP id 5a478bee46e88-2bdfc4b191fso5394763eec.1
-        for <dm-devel@lists.linux.dev>; Fri, 06 Mar 2026 17:06:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1772845581; x=1773450381; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=IeJm7iucEni8JZQfQqnV98iB4bEYRzAaPigok/OL+bc=;
-        b=XdjWqp9yRD/HMZGBUbstrh0Ra7r59WSKi2hn7xegYnWAi2VvXbNqta5bcDKpZyD+fm
-         L+0YbTC5dCjUAcdUbhU8EgIHxj3fe/3T/2Wi9SGQcnIQKHfD55QFie/tbhbGiZcDx29k
-         G7kwN9fs4gQuzQCp4cH1aSWqX/cW5kbuqmVcf2SkDznqMZW6C9qILZRaE4VTcQZTH8bC
-         eCyeXmV5iseUwWzH3EGP/A1ZkeVQ+l3RfPRiEBQvHOR/+b1MerKAiLtt+klDuAsS9M16
-         QnUQzRSC0JA/Yy5LG28WT/3BNkaz+FtiK4v+fuNiQX3O5v5Bj2ZR9i3E6af9eLsQMYKb
-         dlKQ==
+	s=arc-20240116; t=1773037840; c=relaxed/simple;
+	bh=eR37L2FsDwZdFJHplBLrIPA+OUwRH+Zoksw7lqsF/D0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=lfhWsNp392VcsDDwLED4uqkE9Zz9ZRvAME6AZ6MmLecQgLSoYMjMi8Tus6Caln8t2wVqRZvvnNaxRtz9mrczXmwSudfhR0D8yj6Rxc5Pk6zBLI15WVZICaJiHUTRGeiL3wBjHUbr+0yuNIvPjFY+hvXitYOEHwOYZhaHx6HOL2o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sung-woo.kim; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=74.125.224.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sung-woo.kim
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-yx1-f44.google.com with SMTP id 956f58d0204a3-64ad46a44easo9899460d50.0
+        for <dm-devel@lists.linux.dev>; Sun, 08 Mar 2026 23:30:37 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1772845581; x=1773450381;
+        d=1e100.net; s=20230601; t=1773037837; x=1773642637;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=IeJm7iucEni8JZQfQqnV98iB4bEYRzAaPigok/OL+bc=;
-        b=GYSa/kRjOfA+p8jhT/7EpA/F32nD+ViLPEmp5bM9tJDZPYCmDBJJDTrHBltKAcLDfq
-         wQDhg6IYHLfkXUCo6kf9QJeJQIK1cvVhzXuOy+vyGklOXL7SGIBIMpx2XtsgNSAFocwQ
-         pzC5goGPRhCrmvvvxH6Ar9KDKA2R/2iuWlKVvaGGsYE9FIORXFhod+3AxAoqKBsd/Oh6
-         30aLpuN+x2O57MrFlr0JvuP9q+cOalVyygt6uxk5ThutlrZhlJB51GXpPlKiFbYn6p8q
-         NN/FO3RTku9PXUtvLrGRXC7/hEay5C+h3FyuHmSRgDTMRM3ykuL3yoy4uayAmXhLBUPv
-         QFXg==
-X-Forwarded-Encrypted: i=1; AJvYcCXdNduAREyOiXL7aT7mNjjxmlbfXofybvv9yAUdRs3iOaHTs6crG57bJ16S+97sos64PNdh8IO1hg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw4ZfKUoQx+tD12g8ZOb/pXHz/XzBNrWdKRYjGf/BIcyz4tYx3N
-	WLm4vI6wFUbj9qRMqO1W6TgIx03SYZmGpbyKlbInpUXvgZcabrIo6mcvxKZmSL5R1Tg=
-X-Gm-Gg: ATEYQzzfSJjrWSybFNmHtVVbbAO1hVuC7vhmmCs5jqONyStXu5pfFDKEm+arsUOw3oB
-	sMcZ7lNDvULPL5Uwm40mGLrqxiIZ3He250tTbOM0iJc+BTNADvhFt3t4hgIb/e+gjwKHRp/74cP
-	WJLNtiusbnzlaS2UG7jjnhNlvbiu8L+OzLNyBc2vNNV8XXyMJsDEuoRlDMwDHsBy7czOy06bp9L
-	HT1ZYYVBTPGIh3Z+cQ5O0jjb9ffCbPfF9g4kv31y5agvTirf3sMPkavfXr5tfPULB+6qieAV2iO
-	S0hwv662IkQ5HXD5ZSmRcjGQKS9bm8HPCn6KCSljDk3QFyLAUSor5L+AZzmqSZS/4VqcsmrlGgO
-	4du/8zs23/j56wbGitmXZnj4nSRMAzOmWvdjb4lOrxhQDKgcRXniaVG8xLB9j3sLSOMxuamEo3Y
-	vaojqZeY0mHDMSk3kog/9y01fDWh6N+OSDnTgJ19D1EeAYd2rTziadLGHkY3PiNLbAqkCQNVg4W
-	yA37gkrbo264omD8VNHv7e5AlP8CZc0ZiVitrRj9A6UkV7y9ps/dg4=
-X-Received: by 2002:a05:7300:1489:b0:2b8:6ae5:79c3 with SMTP id 5a478bee46e88-2be4e090105mr1571907eec.38.1772845580427;
-        Fri, 06 Mar 2026 17:06:20 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([136.226.65.98])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2be4f82851esm2246129eec.10.2026.03.06.17.06.18
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Fri, 06 Mar 2026 17:06:19 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: bmarzins@redhat.com,
-	dm-devel@lists.linux.dev
-Cc: Brian Bunker <brian@purestorage.com>
-Subject: [PATCH] tests: add test demonstrating TUR checker race condition
-Date: Fri,  6 Mar 2026 17:06:14 -0800
-Message-ID: <20260307010614.1732-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.52.0
+        bh=cKT0KH0p7R5uMYth9xJvno/l1dgnZFPJ0glm1hSa/Jo=;
+        b=K5Q8jmk2axfKNofikmFjzj6AFbhJVKBrtmdInUTGopvwpOiKYUkRJ6yAp1j/VqquZ5
+         t4yGPoWf6uZi6uOXBXFYeOsq8ibdekY4dCSKzZBryuRZs1+Vawh3qX+x1I8ym7dsNUuw
+         c7pRVtPsFn3SMLvCiH90yvunY0F/WBImj/u2IjgvbVau+NAKObkV2NfQ2nOYEnKapTa/
+         4GrhisBVEUwxEXDBoHu+fA5svBsStaO+LsjkQmBERbYU87L1VJmKD4vpAH1d7hJ6Qo5R
+         1bX/zE6ciIlscLyP5ORnCdDUkeu1ayH00jXVQkIRFIWfFoTDMHr+fjTzjWpPnfNXf/m4
+         GlFw==
+X-Forwarded-Encrypted: i=1; AJvYcCX0Vj4nWLcVqlbokxSYXTiAFr91AdDFi9TcJiMDnevMXmAezU8nek2XYhB1pMACxAC4wRo7CIU5AA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzO+mhqbsUy6UKx3mNTSJOBPBFavolnJ5bo9ie+1G28XPZ2RH1g
+	P5JrcmWFGqC9kHs1lb8lK8ZaahH/hMgHs+rtIrqWQXTOOaIM4nNIyNys
+X-Gm-Gg: ATEYQzzFIm7FjqS1q4bAOuzcjopTyI/mz3K9so/mWhzKcACTOjKRifMUaEO/sQNiGdm
+	E+CWQzMN+w1s6vcMV/Sds9SeAkMvCdtHhIcvoAGl0cqLUhx8D8Ta2jG3i12n0eBSkBQ+fWRFkkX
+	ALUxY5KN/85qt5nyBxgYVLKvJnz/A3khJOdN2thQn2s7iFY69ukuRYp3JZaz8YXJcxlL1R/v8gD
+	2qzSerQGNMI75EucCCj6LClQbwOPzBF1Ai1E0pGy7te4FO2PqKoDbXby8rU4pLYYUhYM/43EosF
+	g1VYZTnGAb7tXHWkQ1q5Nkthic/6izSY7JpwbZsNF0hTu4mhE2avuzR+h+cN6URfKq9ry0g+9ip
+	ppW5EkAGM8yvOp2np1cmxvUgX3xHgV3m+BXTc4kxDQlu1Gjl50KvJXqZ9Ug9k1tuFq9nUbJR3Zz
+	DtjAInWDZ5vg==
+X-Received: by 2002:a05:690e:12c9:b0:64a:e0bf:3ef5 with SMTP id 956f58d0204a3-64d142c569fmr9032253d50.60.1773037836950;
+        Sun, 08 Mar 2026 23:30:36 -0700 (PDT)
+Received: from tofu.. ([128.210.0.165])
+        by smtp.googlemail.com with ESMTPSA id 956f58d0204a3-64d177032d9sm4290936d50.23.2026.03.08.23.30.35
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 08 Mar 2026 23:30:36 -0700 (PDT)
+From: Sungwoo Kim <iam@sung-woo.kim>
+To: Jens Axboe <axboe@kernel.dk>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	Ulf Hansson <ulf.hansson@linaro.org>,
+	Richard Weinberger <richard@nod.at>,
+	Miquel Raynal <miquel.raynal@bootlin.com>,
+	Vignesh Raghavendra <vigneshr@ti.com>,
+	Hector Martin <marcan@marcan.st>,
+	Sven Peter <sven@svenpeter.dev>,
+	Alyssa Rosenzweig <alyssa@rosenzweig.io>,
+	Keith Busch <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	James Smart <james.smart@broadcom.com>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	"James E.J. Bottomley" <jejb@linux.ibm.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: Sungwoo Kim <iam@sung-woo.kim>,
+	Chao Shi <cshi008@fiu.edu>,
+	Weidong Zhu <weizhu@fiu.edu>,
+	Dave Tian <daveti@purdue.edu>,
+	linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	nbd@other.debian.org,
+	linux-mmc@vger.kernel.org,
+	linux-mtd@lists.infradead.org,
+	asahi@lists.linux.dev,
+	linux-arm-kernel@lists.infradead.org,
+	linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org
+Subject: [PATCH] blk-mq: nvme: Fix general protection fault in nvme_setup_descriptor_pools()
+Date: Mon,  9 Mar 2026 02:28:37 -0400
+Message-ID: <20260309062840.2937858-2-iam@sung-woo.kim>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -73,247 +89,319 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a test that reproduces the race condition in the TUR checker where
-the checker thread has finished updating ct->state and ct->msgid (under
-lock) but hasn't yet cleared ct->running. In this race window, the
-code incorrectly returns PATH_PENDING even though a valid result is
-already available.
+The numa_node can be < 0 since NUMA_NO_NODE = -1. However,
+struct blk_mq_hw_ctx{} defines numa_node as unsigned int. As a result,
+numa_node is set to UINT_MAX for NUMA_NO_NODE in blk_mq_alloc_hctx().
 
-NOTE: This test currently fails, demonstrating the bug exists.
+Later, nvme_setup_descriptor_pools() accesses
+descriptor_pools[numa_node]. Due to the above, it tries to access
+descriptor_pools[UINT_MAX]. The address is garbage but accessible
+because it is canonical and still within the slab memory range.
+Therefore, no page fault occurs, and KASAN cannot detect this since it
+is beyond the redzones.
 
-The test includes two cases:
-- test_race_window_result_ready: Simulates the race window where
-  ct->running is still set but ct->msgid indicates the check has
-  completed. This currently returns PATH_PENDING instead of the
-  actual result (PATH_UP).
-- test_thread_still_running: Verifies that when ct->msgid is
-  MSG_TUR_RUNNING (thread genuinely hasn't finished), PATH_PENDING
-  is correctly returned.
+Subsequently, normal I/O calls dma_pool_alloc() with the garbage pool
+address. pool->next_block contains a wild pointer, causing a general
+protection fault (GPF).
 
-== running tur_race-test ==
-[==========] Running 2 test(s).
-[ RUN      ] test_race_window_result_ready
-[  ERROR   ] --- 0x6 != 0x3
-[   LINE   ] --- tur_race.c:104: error: Failure!
-[  FAILED  ] test_race_window_result_ready
-[ RUN      ] test_thread_still_running
-[       OK ] test_thread_still_running
-[==========] 2 test(s) run.
-[  PASSED  ] 1 test(s).
-[  FAILED  ] 1 test(s), listed below:
-[  FAILED  ] test_race_window_result_ready
+To fix this, this patch changes the type of numa_node to int and adds
+a check for NUMA_NO_NODE.
 
- 1 FAILED TEST(S)
+Log:
 
-Signed-off-by: Brian Bunker <brian@purestorage.com>
+Oops: general protection fault, probably for non-canonical address 0xe9803b040854d02c: 0000 [#1] SMP KASAN PTI
+KASAN: maybe wild-memory-access in range [0x4c01f82042a68160-0x4c01f82042a68167][FEMU] Err: I/O cmd failed: opcode=0x2 status=0x4002
+CPU: 0 UID: 0 PID: 112363 Comm: systemd-udevd Not tainted 6.19.0-dirty #10 PREEMPT(voluntary)
+Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.16.3-0-ga6ed6b701f0a-prebuilt.qemu.org 04/01/2014
+RIP: 0010:pool_block_pop mm/dmapool.c:187 [inline]
+RIP: 0010:dma_pool_alloc+0x110/0x990 mm/dmapool.c:417
+Code: 00 0f 85 a4 07 00 00 4c 8b 63 58 4d 85 e4 0f 84 12 01 00 00 e8 41 1d 93 ff 4c 89 e2 48 b8 00 00 00 00 00 fc ff df 48 c1 ea 03 <80> 3c 02 00 0f 85 a7 07 00 00 49 8b 04 24 48 8d 7b 68 48 89 fa 48
+RSP: 0018:ffffc90002b9efd0 EFLAGS: 00010003
+RAX: dffffc0000000000 RBX: ffff888005466800 RCX: ffffffff94faab7f
+RDX: 09803f040854d02c RSI: 6c9b26c9b26c9b27 RDI: ffff88800c725ea0
+RBP: ffffc90002b9f060 R08: 0000000000000001 R09: 0000000000000001
+R10: 0000000000000003 R11: 0000000000000000 R12: 4c01f82042a68164
+R13: ffff888005466800 R14: 0000000000000820 R15: ffff888007b29000
+FS:  00007f2abc4ff8c0(0000) GS:ffff8880d1ff7000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 000056360eb89000 CR3: 000000000a480000 CR4: 00000000000006f0
+Call Trace:
+ <TASK>
+ nvme_pci_setup_data_prp drivers/nvme/host/pci.c:906 [inline]
+ nvme_map_data drivers/nvme/host/pci.c:1114 [inline]
+ nvme_prep_rq.part.0+0x17d3/0x3c90 drivers/nvme/host/pci.c:1243
+ nvme_prep_rq drivers/nvme/host/pci.c:1239 [inline]
+ nvme_prep_rq_batch drivers/nvme/host/pci.c:1321 [inline]
+ nvme_queue_rqs+0x37b/0x8a0 drivers/nvme/host/pci.c:1336
+ __blk_mq_flush_list block/blk-mq.c:2848 [inline]
+ __blk_mq_flush_list+0xaa/0xe0 block/blk-mq.c:2844
+ blk_mq_dispatch_queue_requests+0x4f5/0x990 block/blk-mq.c:2893
+ blk_mq_flush_plug_list+0x232/0x650 block/blk-mq.c:2981
+ __blk_flush_plug+0x2c3/0x510 block/blk-core.c:1225
+ blk_finish_plug block/blk-core.c:1252 [inline]
+ blk_finish_plug+0x64/0xc0 block/blk-core.c:1249
+ read_pages+0x6bd/0x9d0 mm/readahead.c:176
+ page_cache_ra_unbounded+0x659/0x950 mm/readahead.c:269
+ do_page_cache_ra mm/readahead.c:332 [inline]
+ force_page_cache_ra+0x282/0x3a0 mm/readahead.c:361
+ page_cache_sync_ra+0x201/0xbf0 mm/readahead.c:579
+ filemap_get_pages+0x3be/0x1990 mm/filemap.c:2690
+ filemap_read+0x3ea/0xdf0 mm/filemap.c:2800
+ blkdev_read_iter+0x1b8/0x520 block/fops.c:856
+ new_sync_read fs/read_write.c:491 [inline]
+ vfs_read+0x90f/0xd80 fs/read_write.c:572
+ ksys_read+0x14e/0x280 fs/read_write.c:715
+ __do_sys_read fs/read_write.c:724 [inline]
+ __se_sys_read fs/read_write.c:722 [inline]
+ __x64_sys_read+0x7b/0xc0 fs/read_write.c:722
+ x64_sys_call+0x17ec/0x21b0 arch/x86/include/generated/asm/syscalls_64.h:1
+ do_syscall_x64 arch/x86/entry/syscall_64.c:63 [inline]
+ do_syscall_64+0x8b/0x1200 arch/x86/entry/syscall_64.c:94
+ entry_SYSCALL_64_after_hwframe+0x76/0x7e
+RIP: 0033:0x7f2abc7b204e
+Code: 0f 1f 40 00 48 8b 15 79 af 00 00 f7 d8 64 89 02 48 c7 c0 ff ff ff ff eb ba 0f 1f 00 64 8b 04 25 18 00 00 00 85 c0 75 14 0f 05 <48> 3d 00 f0 ff ff 77 5a c3 66 0f 1f 84 00 00 00 00 00 48 83 ec 28
+RSP: 002b:00007fff07113cb8 EFLAGS: 00000246 ORIG_RAX: 0000000000000000
+RAX: ffffffffffffffda RBX: 000056360eb6a528 RCX: 00007f2abc7b204e
+RDX: 0000000000040000 RSI: 000056360eb6a538 RDI: 000000000000000f
+RBP: 000056360e8d23d0 R08: 000056360eb6a510 R09: 00007f2abc79abe0
+R10: 0000000000040050 R11: 0000000000000246 R12: 000000003ff80000
+R13: 0000000000040000 R14: 000056360eb6a510 R15: 000056360e8d2420
+ </TASK>
+Modules linked in:
+
+Fixes: 320ae51feed5 ("blk-mq: new multi-queue block IO queueing mechanism")
+Fixes: d977506f8863 ("nvme-pci: make PRP list DMA pools per-NUMA-node")
+Acked-by: Chao Shi <cshi008@fiu.edu>
+Acked-by: Weidong Zhu <weizhu@fiu.edu>
+Acked-by: Dave Tian <daveti@purdue.edu>
+Signed-off-by: Sungwoo Kim <iam@sung-woo.kim>
 ---
- tests/Makefile   |   3 +-
- tests/tur_race.c | 175 +++++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 177 insertions(+), 1 deletion(-)
- create mode 100644 tests/tur_race.c
+ block/bsg-lib.c                   |  2 +-
+ drivers/block/mtip32xx/mtip32xx.c |  2 +-
+ drivers/block/nbd.c               |  2 +-
+ drivers/md/dm-rq.c                |  2 +-
+ drivers/mmc/core/queue.c          |  2 +-
+ drivers/mtd/ubi/block.c           |  2 +-
+ drivers/nvme/host/apple.c         |  2 +-
+ drivers/nvme/host/fc.c            |  2 +-
+ drivers/nvme/host/pci.c           | 11 ++++++++---
+ drivers/nvme/host/rdma.c          |  2 +-
+ drivers/nvme/host/tcp.c           |  2 +-
+ drivers/nvme/target/loop.c        |  2 +-
+ drivers/scsi/scsi_lib.c           |  2 +-
+ include/linux/blk-mq.h            |  4 ++--
+ 14 files changed, 22 insertions(+), 17 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index 9f1b950f..3d033d9a 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -9,7 +9,7 @@ CFLAGS += $(BIN_CFLAGS) -Wno-unused-parameter -Wno-unused-function $(W_MISSING_I
- LIBDEPS += -L. -L $(mpathutildir) -L$(mpathcmddir) -lmultipath -lmpathutil -lmpathcmd -lcmocka
+diff --git a/block/bsg-lib.c b/block/bsg-lib.c
+index 9ceb5d0832f5..e93b1018a346 100644
+--- a/block/bsg-lib.c
++++ b/block/bsg-lib.c
+@@ -299,7 +299,7 @@ static blk_status_t bsg_queue_rq(struct blk_mq_hw_ctx *hctx,
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
--	 alias directio valid devt mpathvalid strbuf sysfs features cli mapinfo
-+	 alias directio valid devt mpathvalid strbuf sysfs features cli mapinfo tur_race
- HELPERS := test-lib.o test-log.o
+ /* called right after the request is allocated for the request_queue */
+ static int bsg_init_rq(struct blk_mq_tag_set *set, struct request *req,
+-		       unsigned int hctx_idx, unsigned int numa_node)
++		       unsigned int hctx_idx, int numa_node)
+ {
+ 	struct bsg_job *job = blk_mq_rq_to_pdu(req);
  
- .PRECIOUS: $(TESTS:%=%-test)
-@@ -65,6 +65,7 @@ features-test_LIBDEPS := -ludev -lpthread
- features-test_OBJDEPS := $(mpathutildir)/mt-libudev.o
- cli-test_OBJDEPS := $(daemondir)/cli.o
- mapinfo-test_LIBDEPS = -lpthread -ldevmapper
-+tur_race-test_LIBDEPS := -lpthread -lurcu
+diff --git a/drivers/block/mtip32xx/mtip32xx.c b/drivers/block/mtip32xx/mtip32xx.c
+index 567192e371a8..8aedba9b5690 100644
+--- a/drivers/block/mtip32xx/mtip32xx.c
++++ b/drivers/block/mtip32xx/mtip32xx.c
+@@ -3340,7 +3340,7 @@ static void mtip_free_cmd(struct blk_mq_tag_set *set, struct request *rq,
+ }
  
- %.o: %.c
- 	@echo building $@ because of $?
-diff --git a/tests/tur_race.c b/tests/tur_race.c
-new file mode 100644
-index 00000000..00ad3cea
---- /dev/null
-+++ b/tests/tur_race.c
-@@ -0,0 +1,175 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+/*
-+ * Test for TUR checker race condition.
-+ *
-+ * This test demonstrates a race condition where the checker thread has
-+ * finished (set state/msgid under lock) but hasn't yet cleared ct->running.
-+ * Currently, libcheck_check() incorrectly returns PATH_PENDING even though
-+ * a valid result is available.
-+ *
-+ * NOTE: test_race_window_result_ready currently FAILS, demonstrating the bug.
-+ */
+ static int mtip_init_cmd(struct blk_mq_tag_set *set, struct request *rq,
+-			 unsigned int hctx_idx, unsigned int numa_node)
++			 unsigned int hctx_idx, int numa_node)
+ {
+ 	struct driver_data *dd = set->driver_data;
+ 	struct mtip_cmd *cmd = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index f6c33b21f69e..e1fac1c0c4cd 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -1888,7 +1888,7 @@ static void nbd_dbg_close(void)
+ #endif
+ 
+ static int nbd_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-			    unsigned int hctx_idx, unsigned int numa_node)
++			    unsigned int hctx_idx, int numa_node)
+ {
+ 	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(rq);
+ 	cmd->nbd = set->driver_data;
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index a6ca92049c10..b687a209256b 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -455,7 +455,7 @@ static void dm_start_request(struct mapped_device *md, struct request *orig)
+ }
+ 
+ static int dm_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-			      unsigned int hctx_idx, unsigned int numa_node)
++			      unsigned int hctx_idx, int numa_node)
+ {
+ 	struct mapped_device *md = set->driver_data;
+ 	struct dm_rq_target_io *tio = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
+index 284856c8f655..06cb29190a88 100644
+--- a/drivers/mmc/core/queue.c
++++ b/drivers/mmc/core/queue.c
+@@ -203,7 +203,7 @@ static unsigned short mmc_get_max_segments(struct mmc_host *host)
+ }
+ 
+ static int mmc_mq_init_request(struct blk_mq_tag_set *set, struct request *req,
+-			       unsigned int hctx_idx, unsigned int numa_node)
++			       unsigned int hctx_idx, int numa_node)
+ {
+ 	struct mmc_queue_req *mq_rq = req_to_mmc_queue_req(req);
+ 	struct mmc_queue *mq = set->driver_data;
+diff --git a/drivers/mtd/ubi/block.c b/drivers/mtd/ubi/block.c
+index b53fd147fa65..1c0bd2b36637 100644
+--- a/drivers/mtd/ubi/block.c
++++ b/drivers/mtd/ubi/block.c
+@@ -312,7 +312,7 @@ static blk_status_t ubiblock_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 
+ static int ubiblock_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
+ 
+diff --git a/drivers/nvme/host/apple.c b/drivers/nvme/host/apple.c
+index ed61b97fde59..50ff5e9a168d 100644
+--- a/drivers/nvme/host/apple.c
++++ b/drivers/nvme/host/apple.c
+@@ -819,7 +819,7 @@ static int apple_nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+ 
+ static int apple_nvme_init_request(struct blk_mq_tag_set *set,
+ 				   struct request *req, unsigned int hctx_idx,
+-				   unsigned int numa_node)
++				   int numa_node)
+ {
+ 	struct apple_nvme_queue *q = set->driver_data;
+ 	struct apple_nvme *anv = queue_to_apple_nvme(q);
+diff --git a/drivers/nvme/host/fc.c b/drivers/nvme/host/fc.c
+index 6948de3f438a..64d0c5d7613a 100644
+--- a/drivers/nvme/host/fc.c
++++ b/drivers/nvme/host/fc.c
+@@ -2109,7 +2109,7 @@ __nvme_fc_init_request(struct nvme_fc_ctrl *ctrl,
+ 
+ static int
+ nvme_fc_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-		unsigned int hctx_idx, unsigned int numa_node)
++		unsigned int hctx_idx, int numa_node)
+ {
+ 	struct nvme_fc_ctrl *ctrl = to_fc_ctrl(set->driver_data);
+ 	struct nvme_fcp_op_w_sgl *op = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index 3c83076a57e5..a5f12fc7655d 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -443,11 +443,16 @@ static bool nvme_dbbuf_update_and_check_event(u16 value, __le32 *dbbuf_db,
+ }
+ 
+ static struct nvme_descriptor_pools *
+-nvme_setup_descriptor_pools(struct nvme_dev *dev, unsigned numa_node)
++nvme_setup_descriptor_pools(struct nvme_dev *dev, int numa_node)
+ {
+-	struct nvme_descriptor_pools *pools = &dev->descriptor_pools[numa_node];
++	struct nvme_descriptor_pools *pools;
+ 	size_t small_align = NVME_SMALL_POOL_SIZE;
+ 
++	if (numa_node == NUMA_NO_NODE)
++		pools = &dev->descriptor_pools[numa_node_id()];
++	else
++		pools = &dev->descriptor_pools[numa_node];
 +
-+#define _GNU_SOURCE
-+#include <stdint.h>
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stddef.h>
-+#include <setjmp.h>
-+#include <stdlib.h>
-+#include <pthread.h>
-+#include <time.h>
-+#include "cmocka-compat.h"
-+
-+#include "globals.c"
-+#include "../libmultipath/checkers/tur.c"
-+
-+/* Mock device for testing */
-+static dev_t test_devt;
-+
-+static int setup(void **state)
-+{
-+	test_devt = makedev(8, 0);
-+	return 0;
-+}
-+
-+static int teardown(void **state)
-+{
-+	return 0;
-+}
-+
-+/*
-+ * Test: Simulate the race window where thread has finished but running != 0
-+ *
-+ * This simulates the state between:
-+ *   pthread_mutex_unlock(&ct->lock);  // thread released lock
-+ *   uatomic_set(&ct->running, 0);     // thread hasn't cleared running yet
-+ *
-+ * In this window:
-+ *   - ct->state and ct->msgid have the final result
-+ *   - ct->running is still 1
-+ *
-+ * BUG: The code sees running != 0 and returns PATH_PENDING, ignoring
-+ * the valid result that is already available.
-+ *
-+ * This test currently FAILS, demonstrating the race condition.
-+ */
-+static void test_race_window_result_ready(void **state)
-+{
-+	struct checker c = {0};
-+	struct tur_checker_context *ct;
-+	int result;
-+
-+	/* Initialize the checker context manually to avoid dependencies */
-+	ct = calloc(1, sizeof(struct tur_checker_context));
-+	assert_non_null(ct);
-+
-+	pthread_mutex_init(&ct->lock, NULL);
-+	pthread_cond_init(&ct->active, NULL);
-+	uatomic_set(&ct->holders, 1);
-+	ct->state = PATH_UNCHECKED;
-+	ct->fd = -1;
-+
-+	c.fd = 1;
-+	c.timeout = 30;
-+	c.context = ct;
-+	assert_non_null(ct);
-+
-+	/*
-+	 * Simulate race condition state:
-+	 * - Thread has finished and set state/msgid
-+	 * - Thread has NOT yet cleared running
-+	 * - ct->thread is set (appears to be an active check)
-+	 */
-+	ct->thread = (pthread_t)1;  /* Non-zero: appears to be running */
-+	ct->devt = test_devt;
-+
-+	pthread_mutex_lock(&ct->lock);
-+	ct->state = PATH_UP;
-+	ct->msgid = CHECKER_MSGID_UP;
-+	pthread_mutex_unlock(&ct->lock);
-+
-+	uatomic_set(&ct->running, 1);  /* Thread "still running" */
-+	ct->time = time(NULL) + 100;   /* Not timed out */
-+
-+	/* Call libcheck_check - this is where the race manifests */
-+	result = libcheck_check(&c);
-+
-+	/*
-+	 * Expected: PATH_UP (the result is ready)
-+	 * Actual (BUG): PATH_PENDING (ignores ready result)
-+	 *
-+	 * This assertion currently FAILS, demonstrating the bug.
-+	 */
-+	assert_int_equal(result, PATH_UP);
-+	assert_int_equal(c.msgid, CHECKER_MSGID_UP);
-+
-+	/* ct->thread was cleared by libcheck_check when it collected result */
-+	ct->thread = 0;
-+	uatomic_set(&ct->running, 0);
-+	pthread_mutex_destroy(&ct->lock);
-+	pthread_cond_destroy(&ct->active);
-+	free(ct);
-+}
-+
-+/*
-+ * Test: Verify thread still running returns PATH_PENDING
-+ *
-+ * When the thread genuinely hasn't finished (msgid == MSG_TUR_RUNNING),
-+ * we should correctly return PATH_PENDING.
-+ */
-+static void test_thread_still_running(void **state)
-+{
-+	struct checker c = {0};
-+	struct tur_checker_context *ct;
-+	int result;
-+
-+	/* Initialize the checker context manually to avoid dependencies */
-+	ct = calloc(1, sizeof(struct tur_checker_context));
-+	assert_non_null(ct);
-+
-+	pthread_mutex_init(&ct->lock, NULL);
-+	pthread_cond_init(&ct->active, NULL);
-+	uatomic_set(&ct->holders, 1);
-+	ct->state = PATH_UNCHECKED;
-+	ct->fd = -1;
-+
-+	c.fd = 1;
-+	c.timeout = 30;
-+	c.context = ct;
-+
-+	/* Thread is genuinely still running - no result yet */
-+	ct->thread = (pthread_t)1;
-+	ct->devt = test_devt;
-+
-+	pthread_mutex_lock(&ct->lock);
-+	ct->state = PATH_PENDING;
-+	ct->msgid = MSG_TUR_RUNNING;  /* Thread hasn't set result yet */
-+	pthread_mutex_unlock(&ct->lock);
-+
-+	uatomic_set(&ct->running, 1);
-+	ct->time = time(NULL) + 100;
-+
-+	result = libcheck_check(&c);
-+
-+	/* Should correctly return PATH_PENDING */
-+	assert_int_equal(result, PATH_PENDING);
-+
-+	ct->thread = 0;
-+	uatomic_set(&ct->running, 0);
-+	pthread_mutex_destroy(&ct->lock);
-+	pthread_cond_destroy(&ct->active);
-+	free(ct);
-+}
-+
-+int main(void)
-+{
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test_setup_teardown(test_race_window_result_ready,
-+						setup, teardown),
-+		cmocka_unit_test_setup_teardown(test_thread_still_running,
-+						setup, teardown),
-+	};
-+	return cmocka_run_group_tests(tests, NULL, NULL);
-+}
-+
+ 	if (pools->small)
+ 		return pools; /* already initialized */
+ 
+@@ -516,7 +521,7 @@ static int nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+ 
+ static int nvme_pci_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
+ 
+diff --git a/drivers/nvme/host/rdma.c b/drivers/nvme/host/rdma.c
+index 35c0822edb2d..c2514ef94028 100644
+--- a/drivers/nvme/host/rdma.c
++++ b/drivers/nvme/host/rdma.c
+@@ -292,7 +292,7 @@ static void nvme_rdma_exit_request(struct blk_mq_tag_set *set,
+ 
+ static int nvme_rdma_init_request(struct blk_mq_tag_set *set,
+ 		struct request *rq, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_rdma_ctrl *ctrl = to_rdma_ctrl(set->driver_data);
+ 	struct nvme_rdma_request *req = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/host/tcp.c b/drivers/nvme/host/tcp.c
+index 69cb04406b47..385eef98081b 100644
+--- a/drivers/nvme/host/tcp.c
++++ b/drivers/nvme/host/tcp.c
+@@ -547,7 +547,7 @@ static void nvme_tcp_exit_request(struct blk_mq_tag_set *set,
+ 
+ static int nvme_tcp_init_request(struct blk_mq_tag_set *set,
+ 		struct request *rq, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(set->driver_data);
+ 	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/target/loop.c b/drivers/nvme/target/loop.c
+index fc8e7c9ad858..72a8ea70eae7 100644
+--- a/drivers/nvme/target/loop.c
++++ b/drivers/nvme/target/loop.c
+@@ -202,7 +202,7 @@ static int nvme_loop_init_iod(struct nvme_loop_ctrl *ctrl,
+ 
+ static int nvme_loop_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_loop_ctrl *ctrl = to_loop_ctrl(set->driver_data);
+ 	struct nvme_loop_iod *iod = blk_mq_rq_to_pdu(req);
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 4a902c9dfd8b..8958ad31ed2a 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -1948,7 +1948,7 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
+ }
+ 
+ static int scsi_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-				unsigned int hctx_idx, unsigned int numa_node)
++				unsigned int hctx_idx, int numa_node)
+ {
+ 	struct Scsi_Host *shost = set->driver_data;
+ 	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index cae9e857aea4..1a5a3786522c 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -426,7 +426,7 @@ struct blk_mq_hw_ctx {
+ 	struct blk_mq_tags	*sched_tags;
+ 
+ 	/** @numa_node: NUMA node the storage adapter has been connected to. */
+-	unsigned int		numa_node;
++	int		numa_node;
+ 	/** @queue_num: Index of this hardware queue. */
+ 	unsigned int		queue_num;
+ 
+@@ -651,7 +651,7 @@ struct blk_mq_ops {
+ 	 * flush request.
+ 	 */
+ 	int (*init_request)(struct blk_mq_tag_set *set, struct request *,
+-			    unsigned int, unsigned int);
++			    unsigned int, int);
+ 	/**
+ 	 * @exit_request: Ditto for exit/teardown.
+ 	 */
 -- 
-2.52.0
+2.47.3
 
