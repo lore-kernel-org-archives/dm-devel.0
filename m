@@ -1,159 +1,378 @@
-Received: from mail-ej1-f46.google.com (mail-ej1-f46.google.com [209.85.218.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C117838E112
-	for <dm-devel@lists.linux.dev>; Mon,  9 Mar 2026 23:58:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 424953A6419
+	for <dm-devel@lists.linux.dev>; Tue, 10 Mar 2026 02:41:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773100736; cv=none; b=gWO0WB+IGg1ybSll24fOk5cHAMS3YYXyQK3YzCmqcHgtxkIF4rzxsJzRVE/SklkFKdQHVu4Glz4Wzmx2dTE5T6lmINBF4eAERpOUurWazdV3aXkR3ABbuvO1B4TtEuAEfcE90ctQxvjUJLGIjhDelOca+BP/mgfBv/XTOnmh+HY=
+	t=1773110466; cv=none; b=dVmrkv09/dn1Z+t5xC9U7Uw5BDmQb1WRFYNaEslF/wFPOe8c64kb4kDm41OJ+WnrNs5ywJBxe/dt6+B+SflZ37Jnn/QKJ0fg5tZ19qU3+EYJDKGkXkrS6uPtXkqJjh6jdm1gZiCs8t0QucnconDwGvI+fbrU+jT77yXdAn2RPx8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773100736; c=relaxed/simple;
-	bh=40Mlp2c6INEworHVA8B/tjgxxnGjEAtQ2cBtMbRWvDc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ti5xOLs0Ncl8NVPDIgZWJOSjbqoPz80ZC6dow5EAtmysYlhdcOFMr2qCcaIJTv/KuLE1upBP8zT+tSzAhHNeD9IXNaf6KKW1XlRXY2+56puaf5cd0/Na43IBwt27dq1SPfEw1RLkPCp4Y9J2ZvQ7nLPQxOCDVcbNGZtSx1P2HdA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sung-woo.kim; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.218.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=sung-woo.kim
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-ej1-f46.google.com with SMTP id a640c23a62f3a-b8f9568e074so2022653566b.0
-        for <dm-devel@lists.linux.dev>; Mon, 09 Mar 2026 16:58:54 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1773100733; x=1773705533;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=Oe74yVewJW4EdL4NdMuEiANgmdgDMqRgsPaxoV9IVrk=;
-        b=vb6E2y2nAHvM4b/ebxt17y7iaqgQQgBHbmGkoJQjiG/DCNeD+5mQIv7GWy/Y2PLDBx
-         XiiDm8pB6QybLXQiSnpz8F9auGU0Afp11mqEhNezIxslpggXQE4bfFJpIVh29/AF6ICA
-         g8DtXiqSPN4439Z13jdvYODQvqEBHhfo/RZW9tMNBkvFDxXpwAK4cFYrEQABlVhiwUie
-         s+CFe8gchWuYQnKi4TTW/on+6S8sQhRQzair4fzQReyVEIFbTzYsThbh/LH2eQP4mmk0
-         TWP5YYYktvh605Zg+xkGzwi1vMUpZfX08AKyqifv3EQ+CYdtGcULErr+aO5cQv3vlBtN
-         w2bA==
-X-Forwarded-Encrypted: i=1; AJvYcCUh3g1i1IJL3nZ7HwVMho5I/K/7YMHU8jONUx4CQkxuyLvPlJMeIVuV7qbZ39+s4KSkiTsMR/Vqxw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxGzxdzfO4oxW6OlSOxe1P7BJ0+8lSf9iEt6FE1c5ynRoXscA1F
-	3LlZVAxTYB2m2S03SPZoG2E45uNnRped0WsO+5lRzSe65P5badGnfVqEHyRwSVeh
-X-Gm-Gg: ATEYQzxy+MxUWUkZVJEzp2qz5irtho+u+sNaKiCEkWAkD/p3XdwcST/hBKlV5IpArLR
-	wqe7D/GOMW5lH8ba+YSFbS/x3emM4zHoqxXzCvxfx82koDgAjVHYEFZldVEq+h9utPddURWF9Vb
-	P4fGtP1wfEiu35KI1FI2AZFy1PzcdTctU7uE2SSMG9378pL9d3UFPaqzk8+7XcGKvXlqlAg2iqP
-	BXSOajMYy10vlZYRZHPlSZvlcjsItHA/JON3Jo7ogd/MQZjGW+1nrFhthVXDh9dnXEazf9U+O1J
-	+6YxWBe54hm9UsxWX3xnRE0d1tg9m966tUVf+1H2uYnNEvqBafB6pJysa+6z5foy/P3HBN00INs
-	gPirXJz1Nk7Fs+Fo494GztGegzb/MqEEuwWcVykuNeKE5IAJuIkvvNpkvRCi12c2xDxK8IV6NGV
-	7LVAHV1Lo5uhpJSzecAkBRAyP2e4+zmS46JOJE/QpjLZfkPqoqMm8zn6k=
-X-Received: by 2002:a17:907:86a2:b0:b88:5a44:fe27 with SMTP id a640c23a62f3a-b942dfb204fmr787058766b.42.1773100733084;
-        Mon, 09 Mar 2026 16:58:53 -0700 (PDT)
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com. [209.85.221.51])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-b942f139d2esm437186266b.37.2026.03.09.16.58.50
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 09 Mar 2026 16:58:53 -0700 (PDT)
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-439b7c2788dso6288583f8f.1
-        for <dm-devel@lists.linux.dev>; Mon, 09 Mar 2026 16:58:50 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AJvYcCW3EAp7rP+sfIPLGesSuKTrlTVnn7Syyt8YWbE1Klj3q/6W18PyPLAcG0izu5yD1U/blGVOzZfalg==@lists.linux.dev
-X-Received: by 2002:adf:f4cb:0:b0:439:df33:827f with SMTP id
- ffacd0b85a97d-439df33828emr14050045f8f.10.1773100730271; Mon, 09 Mar 2026
- 16:58:50 -0700 (PDT)
+	s=arc-20240116; t=1773110466; c=relaxed/simple;
+	bh=LRcLLBHRU5GLCzyUqdv3jNI81HpymoQj00jKeO2lTzY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=rfjkCu+NY8bgWKKZTtdYw8tdDrtn93ZEodwedSeuywB+iKzIi8yd1xn2nXPrxi8IWW2aJ0JJfgk/nerFJjDERJi9gFg+DZKvZ19kRQteCAPWQuRgzMsXdpgL1u7VqfpH0bVPp3TcVEO6jmSku1IxzKu/41RAbHOAjOAJBQ8pe5U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SbCJmE+n; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SbCJmE+n"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1773110464;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=tAGewiFPK0elo/WiSxOjUP/dvI4PkKIm5cf5C8uZl1U=;
+	b=SbCJmE+nfymTIA2lj/70eWHSy3P41YI4ApaHZBLJOHzMOLeOs5X0/vMbQH/c5GS+xTTSfA
+	ZxEnwjWgJn/vS8nBMegBN5Z8bJDalBbGSzoMIpl5gS6Uy97K/IdNG7/lVywf5i7qBj7zWV
+	dVLHfzBNCaHkXz4Gv1NjNfxU+bZUMJo=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-175-b1Rn-TQjPs--YYd2Ud5OpQ-1; Mon,
+ 09 Mar 2026 22:41:00 -0400
+X-MC-Unique: b1Rn-TQjPs--YYd2Ud5OpQ-1
+X-Mimecast-MFC-AGG-ID: b1Rn-TQjPs--YYd2Ud5OpQ_1773110458
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6D3EC180034E;
+	Tue, 10 Mar 2026 02:40:57 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0D52B195410D;
+	Tue, 10 Mar 2026 02:40:55 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 62A2esvQ007596
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 9 Mar 2026 22:40:54 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 62A2erW1007595;
+	Mon, 9 Mar 2026 22:40:53 -0400
+Date: Mon, 9 Mar 2026 22:40:53 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: John Garry <john.g.garry@oracle.com>
+Cc: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
+        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+        hare@suse.com, jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 21/24] scsi: sd: support multipath disk
+Message-ID: <aa-EtdqIOX603PVu@redhat.com>
+References: <20260225153627.1032500-1-john.g.garry@oracle.com>
+ <20260225153627.1032500-22-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260309062840.2937858-2-iam@sung-woo.kim> <202603090911.0DdOwjTR-lkp@intel.com>
- <CADUfDZqBZWwy+6XOde_aZTwLisRP8j5qRqB6X_EJJPr+wmdGZQ@mail.gmail.com>
-In-Reply-To: <CADUfDZqBZWwy+6XOde_aZTwLisRP8j5qRqB6X_EJJPr+wmdGZQ@mail.gmail.com>
-From: Sungwoo Kim <iam@sung-woo.kim>
-Date: Mon, 9 Mar 2026 19:58:34 -0400
-X-Gmail-Original-Message-ID: <CAJNyHp+a8FqB7Y8DobMxKOn9KAQXH0KvHTRgTjFuMppneSznvw@mail.gmail.com>
-X-Gm-Features: AaiRm50FODLuR7mIvmUavdQJgpvkliqN2c7Myo_nPa5e2Uo34ON5h-NAjYa6-ys
-Message-ID: <CAJNyHp+a8FqB7Y8DobMxKOn9KAQXH0KvHTRgTjFuMppneSznvw@mail.gmail.com>
-Subject: Re: [PATCH] blk-mq: nvme: Fix general protection fault in nvme_setup_descriptor_pools()
-To: Caleb Sander Mateos <csander@purestorage.com>
-Cc: kernel test robot <lkp@intel.com>, Jens Axboe <axboe@kernel.dk>, Josef Bacik <josef@toxicpanda.com>, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev, 
-	Ulf Hansson <ulf.hansson@linaro.org>, Richard Weinberger <richard@nod.at>, 
-	Miquel Raynal <miquel.raynal@bootlin.com>, Vignesh Raghavendra <vigneshr@ti.com>, 
-	Hector Martin <marcan@marcan.st>, Sven Peter <sven@svenpeter.dev>, 
-	Alyssa Rosenzweig <alyssa@rosenzweig.io>, Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, 
-	Sagi Grimberg <sagi@grimberg.me>, James Smart <james.smart@broadcom.com>, 
-	Chaitanya Kulkarni <kch@nvidia.com>, "James E.J. Bottomley" <jejb@linux.ibm.com>, 
-	"Martin K. Petersen" <martin.petersen@oracle.com>, oe-kbuild-all@lists.linux.dev, 
-	Chao Shi <cshi008@fiu.edu>, Weidong Zhu <weizhu@fiu.edu>, Dave Tian <daveti@purdue.edu>, 
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	nbd@other.debian.org, linux-mmc@vger.kernel.org, 
-	linux-mtd@lists.infradead.org, asahi@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20260225153627.1032500-22-john.g.garry@oracle.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: aJ0S5nXuT90jK8-zfIuF-ADxMsSjyWzBrCaoRfln5lQ_1773110458
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, Mar 9, 2026 at 11:31=E2=80=AFAM Caleb Sander Mateos
-<csander@purestorage.com> wrote:
->
-> On Mon, Mar 9, 2026 at 1:42=E2=80=AFAM kernel test robot <lkp@intel.com> =
-wrote:
-> >
-> > Hi Sungwoo,
-> >
-> > kernel test robot noticed the following build errors:
-> >
-> > [auto build test ERROR on axboe/for-next]
-> > [also build test ERROR on device-mapper-dm/for-next linus/master v6.16-=
-rc1 next-20260306]
-> > [cannot apply to linux-nvme/for-next]
-> > [If your patch is applied to the wrong git tree, kindly drop us a note.
-> > And when submitting patch, we suggest to use '--base' as documented in
-> > https://git-scm.com/docs/git-format-patch#_base_tree_information]
-> >
-> > url:    https://github.com/intel-lab-lkp/linux/commits/Sungwoo-Kim/blk-=
-mq-nvme-Fix-general-protection-fault-in-nvme_setup_descriptor_pools/2026030=
-9-143107
-> > base:   https://git.kernel.org/pub/scm/linux/kernel/git/axboe/linux.git=
- for-next
-> > patch link:    https://lore.kernel.org/r/20260309062840.2937858-2-iam%4=
-0sung-woo.kim
-> > patch subject: [PATCH] blk-mq: nvme: Fix general protection fault in nv=
-me_setup_descriptor_pools()
-> > config: x86_64-rhel-9.4-rust (https://download.01.org/0day-ci/archive/2=
-0260309/202603090911.0DdOwjTR-lkp@intel.com/config)
-> > compiler: clang version 20.1.8 (https://github.com/llvm/llvm-project 87=
-f0227cb60147a26a1eeb4fb06e3b505e9c7261)
-> > rustc: rustc 1.88.0 (6b00bc388 2025-06-23)
-> > reproduce (this is a W=3D1 build): (https://download.01.org/0day-ci/arc=
-hive/20260309/202603090911.0DdOwjTR-lkp@intel.com/reproduce)
-> >
-> > If you fix the issue in a separate patch/commit (i.e. not just a new ve=
-rsion of
-> > the same patch/commit), kindly add following tags
-> > | Reported-by: kernel test robot <lkp@intel.com>
-> > | Closes: https://lore.kernel.org/oe-kbuild-all/202603090911.0DdOwjTR-l=
-kp@intel.com/
-> >
-> > All errors (new ones prefixed by >>):
-> >
-> > >> error[E0308]: mismatched types
-> >    --> rust/kernel/block/mq/operations.rs:274:28
-> >    |
-> >    274 |         init_request: Some(Self::init_request_callback),
-> >    |                       ---- ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected fn=
- pointer, found fn item
-> >    |                       |
-> >    |                       arguments to this enum variant are incorrect
-> >    |
-> >    =3D note: expected fn pointer `unsafe extern "C" fn(_, _, _, i32) ->=
- _`
-> >    found fn item `unsafe extern "C" fn(_, _, _, u32) -> _ {block::mq::o=
-perations::OperationsVTable::<T>::init_request_callback}`
-> >    help: the type constructed contains `unsafe extern "C" fn(*mut bindi=
-ngs::blk_mq_tag_set, *mut bindings::request, u32, u32) -> i32 {block::mq::o=
-perations::OperationsVTable::<T>::init_request_callback}` due to the type o=
-f the argument passed
->
-> Looks like the type of _numa_node in the signature of
-> init_request_callback() needs to be updated accordingly from c_uint to
-> c_int.
->
-> Best,
-> Caleb
+On Wed, Feb 25, 2026 at 03:36:24PM +0000, John Garry wrote:
+> Add support to attach a multipath disk.
+> 
+> We still allocate the gendisk per path, and this is required for the
+> per-path submission. However, those gendisks are marked as hidden. Those
+> disks are named sdX:Y, where X is the multipath disk index and Y is the
+> per-path index.
+> 
+> A global list of sd_mpath_disks is kept for matching scsi_device's.
+> 
+> The multipath gendisk has the name and disk->major/minor set to minic a
+> scsi_disk.
+> 
+> The following is an example of relevant scsi_disk and block sysfs
+> directories:
+> 
+> $ ls -l /sys/block/ | grep sdc
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:01 sdc -> ../devices/virtual/scsi_mpath_disk/0/sdc
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:01 sdc:0 -> ../devices/platform/host8/session1/target8:0:0/8:0:0:0/block/sdc:0
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:02 sdc:1 -> ../devices/platform/host9/session2/target9:0:0/9:0:0:0/block/sdc:1
+> 
+> $ ls -l /sys/class/scsi_mpath_disk/0/
+> total 0
+> drwxr-xr-x    2 root     root             0 Feb 24 16:03 power
+> drwxr-xr-x   11 root     root             0 Feb 24 16:01 sdc
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:01 subsystem -> ../../../../class/scsi_mpath_disk
+> -rw-r--r--    1 root     root          4096 Feb 24 16:01 uevent
+> 
+> $ ls -l /sys/class/scsi_mpath_disk/0/sdc/multipath/
+> total 0
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:20 sdc:0 -> ../../../../../platform/host8/session1/target8:0:0/8:0:0:0/block/sdc:0
+> lrwxrwxrwx    1 root     root             0 Feb 24 16:20 sdc:1 -> ../../../../../platform/host9/session2/target9:0:0/9:0:0:0/block/sdc:1
+> 
+> 
+> $ ls -l /dev/sdc*
+> brw-rw----    1 root     disk        8,  32 Feb 24 16:01 /dev/sdc
+> brw-rw----    1 root     disk        8,  33 Feb 24 16:01 /dev/sdc1
+> brw-rw----    1 root     disk        8,  34 Feb 24 16:01 /dev/sdc2
+> 
+> 
+> $ lsblk /dev/sdc
+> NAME            MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+> sdc               8:32   0  600M  0 disk
+> |-sdc1            8:33   0    9M  0 part
+> `-sdc2            8:34   0  568M  0 part
+> 
+> Signed-off-by: John Garry <john.g.garry@oracle.com>
+> ---
+>  drivers/scsi/sd.c | 376 +++++++++++++++++++++++++++++++++++++++++++---
+>  1 file changed, 358 insertions(+), 18 deletions(-)
+> 
+> diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+> index 9617878b53ec6..409c0937764d9 100644
+> --- a/drivers/scsi/sd.c
+> +++ b/drivers/scsi/sd.c
+> @@ -117,12 +117,33 @@ static DEFINE_IDA(sd_index_ida);
+>  static mempool_t *sd_page_pool;
+>  static struct lock_class_key sd_bio_compl_lkclass;
+>  #ifdef CONFIG_SCSI_MULTIPATH
+> +static LIST_HEAD(sd_mpath_disks_list);
+> +static DEFINE_MUTEX(sd_mpath_disks_lock);
+> +
+>  struct sd_mpath_disk {
+> +	struct device			dev;
+> +	int				disk_index;
+> +	int				disk_count;
+> +	struct list_head		entry;
+> +	struct mutex			lock;
+>  	struct mpath_disk		*mpath_disk;
+> +	struct scsi_mpath_head		*scsi_mpath_head;
+>  };
+>  
+>  static void sd_mpath_disk_release(struct device *dev)
+>  {
+> +	struct sd_mpath_disk *sd_mpath_disk =
+> +		container_of(dev, struct sd_mpath_disk, dev);
+> +	struct scsi_mpath_head *scsi_mpath_head =
+> +		sd_mpath_disk->scsi_mpath_head;
+> +	struct mpath_disk *mpath_disk = sd_mpath_disk->mpath_disk;
+> +
+> +	mpath_put_disk(mpath_disk);
+> +
+> +	ida_free(&sd_index_ida, sd_mpath_disk->disk_index);
+> +	scsi_mpath_put_head(scsi_mpath_head);
+> +
+> +	kfree(sd_mpath_disk);
+>  }
+>  
+>  static const struct class sd_mpath_disk_class = {
+> @@ -4144,7 +4165,302 @@ static const struct scsi_mpath_pr_ops sd_mpath_pr_ops = {
+>  	.pr_read_keys	= sd_mpath_pr_read_keys,
+>  	.pr_read_reservation = sd_mpath_pr_read_reservation,
+>  };
+> +
+> +static int sd_mpath_revalidate_head(struct scsi_disk *sdkp)
+> +{
+> +	struct sd_mpath_disk *sd_mpath_disk = sdkp->sd_mpath_disk;
+> +	struct mpath_disk *mpath_disk = sd_mpath_disk->mpath_disk;;
+> +	struct gendisk *disk = mpath_disk->disk;
+> +	struct queue_limits *sdkp_lim = &sdkp->disk->queue->limits;
+> +	struct queue_limits lim;
+> +	unsigned int memflags;
+> +	int ret;
+> +
+> +	lim = queue_limits_start_update(disk->queue);
+> +	memflags = blk_mq_freeze_queue(disk->queue);
+> +
+> +	lim.logical_block_size = sdkp_lim->logical_block_size;
+> +	lim.physical_block_size = sdkp_lim->physical_block_size;
+> +	lim.io_min = sdkp_lim->io_min;
+> +	lim.io_opt = sdkp_lim->io_opt;
+> +
+> +	queue_limits_stack_bdev(&lim, sdkp->disk->part0, 0,
+> +					disk->disk_name);
+> +
+> +	/* TODO: setup integrity limits */
+> +	lim.max_write_streams = sdkp_lim->max_write_streams;
+> +	lim.write_stream_granularity = sdkp_lim->write_stream_granularity;
+> +	ret = queue_limits_commit_update(disk->queue, &lim);
+> +
+> +	set_capacity_and_notify(disk, get_capacity(sdkp->disk));
+> +
+> +	blk_mq_unfreeze_queue(disk->queue, memflags);
+> +
+> +	return ret;
+> +}
+> +static int sd_mpath_get_disk(struct sd_mpath_disk *sd_mpath_disk)
+> +{
+> +	if (!get_device(&sd_mpath_disk->dev))
+> +		return -ENXIO;
+> +	return 0;
+> +}
+> +
+> +static void sd_mpath_put_disk(struct sd_mpath_disk *sd_mpath_disk)
+> +{
+> +	put_device(&sd_mpath_disk->dev);
+> +}
+> +
+> +static struct sd_mpath_disk *sd_mpath_find_disk(struct scsi_device *sdp)
+> +{
+> +	struct scsi_mpath_device *scsi_mpath_dev = sdp->scsi_mpath_dev;
+> +	struct sd_mpath_disk *sd_mpath_disk;
+> +	int ret;
+> +
+> +	mutex_lock(&sd_mpath_disks_lock);
+> +	list_for_each_entry(sd_mpath_disk, &sd_mpath_disks_list, entry) {
+> +		struct scsi_mpath_head *scsi_mpath_head;
+> +		struct mpath_disk *mpath_disk;
+> +		struct mpath_head *mpath_head;
+> +
+> +		ret = sd_mpath_get_disk(sd_mpath_disk);
+> +		if (ret)
+> +			continue;
+> +		mpath_disk = sd_mpath_disk->mpath_disk;
+> +		mpath_head = mpath_disk->mpath_head;
+> +		scsi_mpath_head = mpath_head->drvdata;
+> +
+> +		if (strncmp(scsi_mpath_head->wwid,
+> +			scsi_mpath_dev->device_id_str,
+> +			SCSI_MPATH_DEVICE_ID_LEN) == 0) {
+> +
+> +			mutex_unlock(&sd_mpath_disks_lock);
+> +			return sd_mpath_disk;
+> +		}
+> +		sd_mpath_put_disk(sd_mpath_disk);
+> +	}
+> +
+> +	return NULL;
+> +}
+> +
+> +static void sd_mpath_add_disk(struct scsi_disk *sdkp)
+> +{
+> +	struct scsi_device *sdp = sdkp->device;
+> +	struct scsi_mpath_device *scsi_mpath_dev = sdp->scsi_mpath_dev;
+> +	struct mpath_device *mpath_device = &scsi_mpath_dev->mpath_device;
+> +	struct sd_mpath_disk *sd_mpath_disk = sdkp->sd_mpath_disk;
+> +	struct mpath_disk *mpath_disk = sd_mpath_disk->mpath_disk;
+> +	struct mpath_head *mpath_head = mpath_disk->mpath_head;
+> +
+> +	mpath_device->disk = sdkp->disk;
+> +	mpath_add_device(mpath_head, mpath_device);
+> +	mpath_device_set_live(mpath_disk, mpath_device);
+> +}
+> +
+> +static int sd_mpath_probe(struct scsi_disk *sdkp)
+> +{
+> +	struct scsi_device *sdp = sdkp->device;
+> +	struct scsi_mpath_device *scsi_mpath_dev = sdp->scsi_mpath_dev;
+> +	struct device *dma_dev = sdp->host->dma_dev;
+> +	struct scsi_mpath_head *scsi_mpath_head =
+> +				scsi_mpath_dev->scsi_mpath_head;
+> +	struct sd_mpath_disk *sd_mpath_disk;
+> +	struct mpath_head *mpath_head = scsi_mpath_head->mpath_head;
+> +	struct queue_limits lim;
+> +	struct gendisk *disk;
+> +	int error;
+> +
+> +	/*
+> +	 * sd_mpath_disks_list is kept locked if no disk found.
+> +	 * Otherwise an extra reference is taken.
+> +	 */
 
-I will change it in V2, thanks.
-Also, I may need to split the patches by driver as the cc list explodes.
+Again, I personally think the logic is easier to follow when all the
+locking isn't split over multiple functions.
 
-Sungwoo
+> +	sd_mpath_disk = sd_mpath_find_disk(sdp);
+> +	if (sd_mpath_disk) {
+> +		mutex_lock(&sd_mpath_disk->lock);
+> +		sd_mpath_disk->disk_count++;
+> +		mutex_unlock(&sd_mpath_disk->lock);
+> +		goto found;
+> +	}
+> +
+> +	sd_mpath_disk = kzalloc(sizeof(*sd_mpath_disk), GFP_KERNEL);
+> +	if (!sd_mpath_disk) {
+> +		error = -ENOMEM;
+> +		goto out_unlock;
+> +	}
+> +
+> +	sd_mpath_disk->scsi_mpath_head = scsi_mpath_head;
+> +	device_initialize(&sd_mpath_disk->dev);
+> +	mutex_init(&sd_mpath_disk->lock);
+> +	sd_mpath_disk->dev.class = &sd_mpath_disk_class;
+> +
+> +	blk_set_stacking_limits(&lim);
+> +	lim.dma_alignment = 3;
+> +	lim.features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT |
+> +		BLK_FEAT_POLL | BLK_FEAT_ATOMIC_WRITES;
+> +
+> +	sd_mpath_disk->mpath_disk = mpath_alloc_head_disk(&lim,
+> +						dev_to_node(dma_dev));
+> +	if (!sd_mpath_disk->mpath_disk) {
+> +		error = -ENOMEM;
+> +		goto out_free_disk;
+> +	}
+> +	disk = sd_mpath_disk->mpath_disk->disk;
+> +	mpath_get_head(mpath_head); /* undone in mpath_free_disk() */
+> +
+> +	sd_mpath_disk->mpath_disk->mpath_head = mpath_head;
+> +	sd_mpath_disk->mpath_disk->parent = &sd_mpath_disk->dev;
+> +
+> +	error = ida_alloc(&sd_index_ida, GFP_KERNEL);
+> +	if (error < 0) {
+> +		sdev_printk(KERN_WARNING, sdp, "sd_probe: memory exhausted.\n");
+> +		goto out_put_disk;
+> +	}
+> +	sd_mpath_disk->disk_index = error;
+> +	error = sd_format_disk_name("sd", sd_mpath_disk->disk_index,
+> +				disk->disk_name, DISK_NAME_LEN);
+> +	if (error)
+> +		goto out_free_index;
+> +
+> +	error = dev_set_name(&sd_mpath_disk->dev, "%s",
+> +				dev_name(&scsi_mpath_head->dev));
+> +	if (error)
+> +		goto out_free_index;
+> +
+> +	/* undone in sd_mpath_disk_release() */
+> +	scsi_mpath_get_head(scsi_mpath_head);
+> +
+> +	error = device_add(&sd_mpath_disk->dev);
+> +	if (error) {
+> +		put_device(&sd_mpath_disk->dev);
+> +		goto out_unlock;
+
+We should clean up when we fail here, instead of just unlocking without
+fully setting things up.
+
+-Ben
+
+> +	}
+> +
+> +	list_add_tail(&sd_mpath_disk->entry, &sd_mpath_disks_list);
+> +	disk->major = sd_major((sd_mpath_disk->disk_index & 0xf0) >> 4);
+> +	disk->first_minor = ((sd_mpath_disk->disk_index & 0xf) << 4) |
+> +				(sd_mpath_disk->disk_index & 0xfff00);
+> +	disk->minors = SD_MINORS;
+> +
+> +	sd_mpath_disk->disk_count = 1;
+> +	mutex_unlock(&sd_mpath_disks_lock);
+> +
+> +found:
+> +	sdkp->sd_mpath_disk = sd_mpath_disk;
+> +	sdkp->disk->flags |= GENHD_FL_HIDDEN;
+> +	snprintf(sdkp->disk->disk_name, DISK_NAME_LEN, "%s:%d",
+> +		sd_mpath_disk->mpath_disk->disk->disk_name,
+> +		scsi_mpath_dev->index);
+> +
+> +	sdkp->index = -1;
+> +	return 0;
+> +
+> +out_free_index:
+> +	ida_free(&sd_index_ida, sd_mpath_disk->disk_index);
+> +out_put_disk:
+> +	mpath_put_disk(sd_mpath_disk->mpath_disk);
+> +out_free_disk:
+> +	kfree(sd_mpath_disk);
+> +out_unlock:
+> +	mutex_unlock(&sd_mpath_disks_lock);
+> +	return error;
+> +}
+
