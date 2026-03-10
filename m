@@ -1,30 +1,38 @@
-Received: from mail.avm.de (mail.avm.de [212.42.244.94])
+Received: from mail.avm.de (mail.avm.de [212.42.244.120])
 	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3DC58421890;
-	Tue, 10 Mar 2026 11:55:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.42.244.94
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27646421896;
+	Tue, 10 Mar 2026 11:55:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.42.244.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773143736; cv=none; b=oK8cvoVzUqaQOEuatgBtfkxiSIgqK49ZEKSsf1N1ZpgPuJhfGlp0B9Qe1DPCsSUA1696qFt3Tj/Z7wTyCM4ikoiKiz6tKPmMEW8b2iWe/y386n4SMQJpwaPie8gq/BXgHEuIrjiTFqmQ3MqGvEqMtQYQgjpUhGgFFvC/YYQmRwk=
+	t=1773143736; cv=none; b=VvKtjENe6k+ZgapyoNuIPZWniPUqsg4JS6Y9BGBbj0zOp+TjqD+AIXEp6giVyGj9oY3SUn1gdTbLsMnfX1cCzOn3FkHzlNwKnQ+UQzvW6dlAsTJsNJhkQF26j61+2JU52I73LQFMiYsKAGHfAIeA6MxpIELsJeqAj0y7Hh6RUT0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1773143736; c=relaxed/simple;
-	bh=0D7JqCvM2HduGB7jcCjsvL2MgPxSPSMnqWoOW6gFXPg=;
+	bh=TePjCBJ2mRHkUlSzKz9AEyXwCeNO/T4sJeJlLVRUEek=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=JSA5856zokB/MskVW0NmVvv9e3IyOFAa751OqPWH8r4XRweliUQE8rLI+e+G+yFCOoBLX6kVDT2wVXz/ecZY7PLzlFILXJvyljNIWwK292DYPnSCtA7IQDiaHOmQRiQ1QlI+4wqroJyxoWjB6jDkcJEyo09ef0654vqMdsCkRiY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; arc=none smtp.client-ip=212.42.244.94
+	 In-Reply-To:To:Cc; b=CDqYI/L3SQ3AeJvt6Ud2a5+nn9m5YlsK9dIx6EQ/RkmZEf5EC6JO6vXnBOTuO0FigZ048+gBPkLcqGkneymvo510K8KE7nT7/SLtm7ymsDH6pnQ8RyIr50Q6vlGeC1mA/5tXfAGS873E7pfrdNFsd8Ist8qz/yow0kxd59DRgVU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=CWhZH8pY; arc=none smtp.client-ip=212.42.244.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=avm.de
-Received: from [212.42.244.71] (helo=mail.avm.de)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="CWhZH8pY"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=avm.de; s=mail;
+	t=1773143724; bh=TePjCBJ2mRHkUlSzKz9AEyXwCeNO/T4sJeJlLVRUEek=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=CWhZH8pYoPHXJ9GodRv8bZf7CTCXPR5biEc/ESvLjFSG7M9EoK4FQxeOy1o2q/xFG
+	 adtTUhZFnjWgEtd3EnUld9xRhtBPP2LCXHOMBXjK/IfTv5IvUPb5jOISEusb1eiq65
+	 jalyJvpG8KfbWsOaQK+eTSDIbq4VvwVTL38wqr+Y=
+Received: from [2001:bf0:244:244::71] (helo=mail.avm.de)
 	by mail.avm.de with ESMTP (eXpurgate 4.55.2)
 	(envelope-from <phahn-oss@avm.de>)
-	id 69b006ac-e21d-7f0000032729-7f000001d9ae-1
-	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:24 +0100
-Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [212.42.244.71])
+	id 69b006ab-b734-7f0000032729-7f000001c000-1
+	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:23 +0100
+Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [IPv6:2001:bf0:244:244::71])
 	by mail.avm.de (Postfix) with ESMTPS;
-	Tue, 10 Mar 2026 12:55:24 +0100 (CET)
+	Tue, 10 Mar 2026 12:55:23 +0100 (CET)
 From: Philipp Hahn <phahn-oss@avm.de>
-Date: Tue, 10 Mar 2026 12:48:35 +0100
-Subject: [PATCH 09/61] ntfs3: Prefer IS_ERR_OR_NULL over manual NULL check
+Date: Tue, 10 Mar 2026 12:48:44 +0100
+Subject: [PATCH 18/61] sound: Prefer IS_ERR_OR_NULL over manual NULL check
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -33,7 +41,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260310-b4-is_err_or_null-v1-9-bd63b656022d@avm.de>
+Message-Id: <20260310-b4-is_err_or_null-v1-18-bd63b656022d@avm.de>
 References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 In-Reply-To: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com, 
@@ -63,21 +71,24 @@ To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
  sched-ext@lists.linux.dev, target-devel@vger.kernel.org, 
  tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev, 
  Philipp Hahn <phahn-oss@avm.de>
-Cc: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1617; i=phahn-oss@avm.de;
- h=from:subject:message-id; bh=0D7JqCvM2HduGB7jcCjsvL2MgPxSPSMnqWoOW6gFXPg=;
- b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAX0gr7ZqouZ6B9Y6l873KDZh87VRkMxmLSVt
- AItcTzXYr2JATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAF9AAKCRA0LQZT0ays
- 2/XgCACwqNRVP1ceb2sCHMTvH8vznLrrwbRdBid2VGiRwlIoIqclnUBeLwwGZ/n/hBxtkijY1s3
- NziYVgznq0k9VYxacmvzAvuKhhv5805K9y/+itK+PFXmzL3ZRzqmfWP6ng28fVSUYAufwVEc7CR
- 9llIbOBq8N4aCpqTBELhb7mwymU8hNLZpMBK934i79wnmNx9OySShuCrTBL+FEQ9g/aUtfHcqTV
- 4JM/tu/NHEvIwEfZrC8rjS3HwU+8fz/vbF4We+/TjORw4iEGT1m6VfBdB71QF+Wi1viRKTPIkVW
- Nxf+o86GuJolrkUsNGy4WHdCFW95aUilkAjXyF+7XIpdZkLT
+Cc: Sylwester Nawrocki <s.nawrocki@samsung.com>, 
+ Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, 
+ Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.com>, 
+ Max Filippov <jcmvbkbc@gmail.com>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2160; i=phahn-oss@avm.de;
+ h=from:subject:message-id; bh=TePjCBJ2mRHkUlSzKz9AEyXwCeNO/T4sJeJlLVRUEek=;
+ b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAYTbY49pcWmI+zPeufRNN/9dH/gm0tUhIW5M
+ sSE0KnGvN+JATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAGEwAKCRA0LQZT0ays
+ 20TjCACXYevOdzzWZ8zg+QT0mj5XNSQgsj+29ztKUJ+NhTXTaWid39EhUMP397Ax0ta31zsGPRm
+ 0odiGii9nvcNMTK3z0LbXHwAyd2Q0fNqi4zFsqaNgSljw41n6QLzk50RIIvlMAtwUsismcvcfkc
+ GlGmvCqi0YMh5Ps6ZKTVJuHiANRfJwasfti849ayN0tL2bNpZjcStJrsD6oocum/i0yO/DOehLD
+ OGOf2TSq2UVG28aLw7N49gUvv1bUDwk6CT215ovMEtUyRG0UE7FpDGWKSdiW4/MWJSzpOO7eARa
+ NIfS+Ckmg34HqAiCowU5EbKs98L8LUAVBFgmoB7oAUhpavOc
 X-Developer-Key: i=phahn-oss@avm.de; a=openpgp;
  fpr=58AF7C2E007CDBE62C59E078F50EFDCF8AD04B1A
-X-purgate-ID: 149429::1773143724-80E01F2F-4A43AD77/0/0
+X-purgate-ID: 149429::1773143723-26DC0A3D-7CFC2EAB/0/0
 X-purgate-type: clean
-X-purgate-size: 1619
+X-purgate-size: 2162
 X-purgate-Ad: Categorized by eleven eXpurgate (R) https://www.eleven.de
 X-purgate: This mail is considered clean (visit https://www.eleven.de for further information)
 X-purgate: clean
@@ -87,52 +98,55 @@ check.
 
 Change generated with coccinelle.
 
-To: Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
-Cc: ntfs3@lists.linux.dev
+To: Sylwester Nawrocki <s.nawrocki@samsung.com>
+To: Liam Girdwood <lgirdwood@gmail.com>
+To: Mark Brown <broonie@kernel.org>
+To: Jaroslav Kysela <perex@perex.cz>
+To: Takashi Iwai <tiwai@suse.com>
+To: Max Filippov <jcmvbkbc@gmail.com>
+Cc: linux-sound@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
 ---
- fs/ntfs3/fsntfs.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ sound/soc/samsung/i2s.c       | 4 ++--
+ sound/soc/xtensa/xtfpga-i2s.c | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/fs/ntfs3/fsntfs.c b/fs/ntfs3/fsntfs.c
-index 0df2aa81d8845f21bfb571c408bd65b9e1fb8128..3ced4f95c2e95bac1fe5b334f976b8c8a15cf19d 100644
---- a/fs/ntfs3/fsntfs.c
-+++ b/fs/ntfs3/fsntfs.c
-@@ -237,7 +237,7 @@ int ntfs_extend_init(struct ntfs_sb_info *sbi)
+diff --git a/sound/soc/samsung/i2s.c b/sound/soc/samsung/i2s.c
+index e9964f0e010aee549cced75d8fe2023e8271d443..6e86f3a0a52dd3f8fc728d634594eb81f9945c57 100644
+--- a/sound/soc/samsung/i2s.c
++++ b/sound/soc/samsung/i2s.c
+@@ -559,7 +559,7 @@ static int i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int rfs,
+ 			clk_id = 1;
  
- 	/* Try to find $ObjId */
- 	inode2 = dir_search_u(inode, &NAME_OBJID, NULL);
--	if (inode2 && !IS_ERR(inode2)) {
-+	if (!IS_ERR_OR_NULL(inode2)) {
- 		if (is_bad_inode(inode2)) {
- 			iput(inode2);
- 		} else {
-@@ -248,21 +248,21 @@ int ntfs_extend_init(struct ntfs_sb_info *sbi)
+ 		if (!any_active(i2s)) {
+-			if (priv->op_clk && !IS_ERR(priv->op_clk)) {
++			if (!IS_ERR_OR_NULL(priv->op_clk)) {
+ 				if ((clk_id && !(mod & rsrc_mask)) ||
+ 					(!clk_id && (mod & rsrc_mask))) {
+ 					clk_disable_unprepare(priv->op_clk);
+@@ -812,7 +812,7 @@ static int i2s_hw_params(struct snd_pcm_substream *substream,
+ 	i2s->frmclk = params_rate(params);
  
- 	/* Try to find $Quota */
- 	inode2 = dir_search_u(inode, &NAME_QUOTA, NULL);
--	if (inode2 && !IS_ERR(inode2)) {
-+	if (!IS_ERR_OR_NULL(inode2)) {
- 		sbi->quota_no = inode2->i_ino;
- 		iput(inode2);
- 	}
+ 	rclksrc = priv->clk_table[CLK_I2S_RCLK_SRC];
+-	if (rclksrc && !IS_ERR(rclksrc))
++	if (!IS_ERR_OR_NULL(rclksrc))
+ 		priv->rclk_srcrate = clk_get_rate(rclksrc);
  
- 	/* Try to find $Reparse */
- 	inode2 = dir_search_u(inode, &NAME_REPARSE, NULL);
--	if (inode2 && !IS_ERR(inode2)) {
-+	if (!IS_ERR_OR_NULL(inode2)) {
- 		sbi->reparse.ni = ntfs_i(inode2);
- 		sbi->reparse_no = inode2->i_ino;
- 	}
+ 	return 0;
+diff --git a/sound/soc/xtensa/xtfpga-i2s.c b/sound/soc/xtensa/xtfpga-i2s.c
+index 678ded059b959d475b6be3766867c8a78bdd4e54..698905257b690457a5d3d315e77d99d487d91f77 100644
+--- a/sound/soc/xtensa/xtfpga-i2s.c
++++ b/sound/soc/xtensa/xtfpga-i2s.c
+@@ -609,7 +609,7 @@ static void xtfpga_i2s_remove(struct platform_device *pdev)
+ {
+ 	struct xtfpga_i2s *i2s = dev_get_drvdata(&pdev->dev);
  
- 	/* Try to find $UsnJrnl */
- 	inode2 = dir_search_u(inode, &NAME_USNJRNL, NULL);
--	if (inode2 && !IS_ERR(inode2)) {
-+	if (!IS_ERR_OR_NULL(inode2)) {
- 		sbi->usn_jrnl_no = inode2->i_ino;
- 		iput(inode2);
- 	}
+-	if (i2s->regmap && !IS_ERR(i2s->regmap)) {
++	if (!IS_ERR_OR_NULL(i2s->regmap)) {
+ 		regmap_write(i2s->regmap, XTFPGA_I2S_CONFIG, 0);
+ 		regmap_write(i2s->regmap, XTFPGA_I2S_INT_MASK, 0);
+ 		regmap_write(i2s->regmap, XTFPGA_I2S_INT_STATUS,
 
 -- 
 2.43.0
