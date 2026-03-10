@@ -1,38 +1,38 @@
 Received: from mail.avm.de (mail.avm.de [212.42.244.120])
 	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8C53466B5F;
-	Tue, 10 Mar 2026 11:55:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B304477E55;
+	Tue, 10 Mar 2026 11:55:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.42.244.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773143744; cv=none; b=mb6Cc9A9IOefZ8thOeDHiSqOSC5+8pdgpcLyPe6YL+wj3K0w64FqtBOJV2GizbV3nBi2TrV43N/Cq+5haSS9eo7vt8XT9w+z3Y2MIINaoeu86r5gQZZkrSc0jimVNou/K9xO6jeZv4prgrTB4VwG1llqZdrm4HHVGQ1dKWTW60w=
+	t=1773143751; cv=none; b=GIpa07r2wikWV21nv1931vTPZuMM8ZfHgcLAS17XMjodQo9UIWBB3454FqCxaDXqB5FJHUrWHK48NlQl4Zna7OMOuRP77IVKYWYHQRvpnSkCOTHLElfM7sueVvLEYCRNZCtqQ+98fif3UEYUGz42mX8iQx889Bj01Y6EM6+EN0Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773143744; c=relaxed/simple;
-	bh=7kdqP+tYIFKXEbW/CcutoIH+BaTJGO9lG8xGd+KBKlA=;
+	s=arc-20240116; t=1773143751; c=relaxed/simple;
+	bh=r2ZNUyu6wG+N08MfsdquggU1Q5xHuPu+4B/VYVv0t9Q=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=Q3jJ1RkB9JmLHALebtPwrCe1vWh8B2L1tgRFJ5fDuL93L3G8Hn+2FIczGdGqXaF+LSF3JeII9i2J4EZ6jGJ7anlJlAOLDCd8Y2qq6wj1Z4Qsd0dYJv/VUp7bwiqfBsSzVNp3LF1YRVGEANFEHIrKhMKqVIZeYKYrR7b7HlWgb9E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=nh38mtwH; arc=none smtp.client-ip=212.42.244.120
+	 In-Reply-To:To:Cc; b=sV4sGNwB2ms7AI6p6AGsNfz1kPIXtE+BBcISobxX3warZbDebwiW3ykk1WVPkTamRnvAXh0arIf/8FYHq75HFXcTLlxmlh+bdkanbD2PMjtWiJWOpysE1LIeI7V09+bxQYsyw+cQ28IiOnlWX0l9ANU6RmSGxwOjqFKL6VDU0q4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=YXGm2fdd; arc=none smtp.client-ip=212.42.244.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=avm.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="nh38mtwH"
+	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="YXGm2fdd"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=avm.de; s=mail;
-	t=1773143726; bh=7kdqP+tYIFKXEbW/CcutoIH+BaTJGO9lG8xGd+KBKlA=;
+	t=1773143727; bh=r2ZNUyu6wG+N08MfsdquggU1Q5xHuPu+4B/VYVv0t9Q=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
-	b=nh38mtwHyUV9SKw+BNpXSRFMzfO8/FcrsieQzDWw9oji2O+z7Psbni6v7KAffehjx
-	 qmid8HatIGHMRnktoTMo9XRdUV6Ztkx3lRZel+NdFrmuz3TY6gos5gVQP+DoaQPsNi
-	 ndWgzemtoyfAka1Tah5hiKpjxy0BL5dDr2HvKeZc=
+	b=YXGm2fddB0bD05XRQUo0zroBzSiXv55w6mXtnC3/rbyTRBzDlz9PWwan2loANEchz
+	 3nUHhdwioF2zPrdtj5GGDiz2/RlpAekCz2aZgV1toF9qbrEYEb5oV3jU7h9yUVsShF
+	 X4koU5bE7tqGGpl7IdLmkPqUNFFBIWSBlmjRRwMc=
 Received: from [212.42.244.71] (helo=mail.avm.de)
 	by mail.avm.de with ESMTP (eXpurgate 4.55.2)
 	(envelope-from <phahn-oss@avm.de>)
-	id 69b006ae-b734-7f0000032729-7f000001c0a2-1
-	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:26 +0100
+	id 69b006af-b734-7f0000032729-7f0000019c66-1
+	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:27 +0100
 Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [212.42.244.71])
 	by mail.avm.de (Postfix) with ESMTPS;
-	Tue, 10 Mar 2026 12:55:26 +0100 (CET)
+	Tue, 10 Mar 2026 12:55:27 +0100 (CET)
 From: Philipp Hahn <phahn-oss@avm.de>
-Date: Tue, 10 Mar 2026 12:49:09 +0100
-Subject: [PATCH 43/61] s390: Prefer IS_ERR_OR_NULL over manual NULL check
+Date: Tue, 10 Mar 2026 12:49:20 +0100
+Subject: [PATCH 54/61] aoe: Prefer IS_ERR_OR_NULL over manual NULL check
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -41,7 +41,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260310-b4-is_err_or_null-v1-43-bd63b656022d@avm.de>
+Message-Id: <20260310-b4-is_err_or_null-v1-54-bd63b656022d@avm.de>
 References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 In-Reply-To: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com, 
@@ -71,24 +71,21 @@ To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
  sched-ext@lists.linux.dev, target-devel@vger.kernel.org, 
  tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev, 
  Philipp Hahn <phahn-oss@avm.de>
-Cc: Heiko Carstens <hca@linux.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, 
- Alexander Gordeev <agordeev@linux.ibm.com>, 
- Christian Borntraeger <borntraeger@linux.ibm.com>, 
- Sven Schnelle <svens@linux.ibm.com>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1168; i=phahn-oss@avm.de;
- h=from:subject:message-id; bh=7kdqP+tYIFKXEbW/CcutoIH+BaTJGO9lG8xGd+KBKlA=;
- b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAZn1sZXeMLIPVJuPMvtIFyA6+Lb/ZSleHAPf
- T0qLrc6EciJATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAGZwAKCRA0LQZT0ays
- 20K6B/45z034OMVnc7IW5eSlZRm22idjp9lRSYx7bSAgasz9Q69aq8L0v4zLmsPUTUANCklIZV3
- Ky9LpL/JQ27BKEBlPFUkZv7HOQgdozWfUf51X/x0BdMhEpEPDFIJUTovRoUphEHN8rw1r9KUQDQ
- dRKeWS5ua07ZtP69du+2qOW1Bjj55fWBu+uxvI7fohNlQeSwssQzt0rpy3r+7xRxxg0LdKDF+Eo
- Y+QuFzLHRhLpEtgPju+jKGgQPeWyFuaSnteU1ZzTdDhjn5fvjXBJ7IuXzcVk6epAYwi3YolC11O
- rwheclTeEca9nqJY9eYYhG9OXtZeHQ7d173Po939eVnoDlQn
+Cc: Justin Sanders <justin@coraid.com>, Jens Axboe <axboe@kernel.dk>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=955; i=phahn-oss@avm.de;
+ h=from:subject:message-id; bh=r2ZNUyu6wG+N08MfsdquggU1Q5xHuPu+4B/VYVv0t9Q=;
+ b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAaNWcUAch/xMnI0wAbOgPf41K9NsP36Msk7P
+ Nki6xRL5YKJATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAGjQAKCRA0LQZT0ays
+ 2xbWCACfzS98X1Mp5R5EwpIK0pTgqrssQIB840NNUj3GRa/d9D29Lch2JFjR2Yy+ldzvSmEDJYr
+ +FATwB8i4z+nArVkmYPgbG8vodjj8pep1H5lik7YhU3G9ClazVWr99T039Q+W8sEprULXLQ0dbA
+ 4Kpe3/L1QfxY1N+GchfqAHMv0rRJq1RvirATmISGmxTg7n0SEymJW83Bn4X8R0ZnvK6kohy5NEW
+ 2Ii5RKfTmBA8YgN2bfh5HrwrKAUrDiQU4qD40KTADcaRVC7Oxd160l9rFHE0+fB+GiDoct83TcC
+ /85+2RTmaR+Iva1VQ69ftJxFcgDmZC/vMk3mknKyTuNPcNM+
 X-Developer-Key: i=phahn-oss@avm.de; a=openpgp;
  fpr=58AF7C2E007CDBE62C59E078F50EFDCF8AD04B1A
-X-purgate-ID: 149429::1773143726-E3DCEA3D-4F569189/0/0
+X-purgate-ID: 149429::1773143727-DADD8A3D-0ED39ACF/0/0
 X-purgate-type: clean
-X-purgate-size: 1170
+X-purgate-size: 957
 X-purgate-Ad: Categorized by eleven eXpurgate (R) https://www.eleven.de
 X-purgate: This mail is considered clean (visit https://www.eleven.de for further information)
 X-purgate: clean
@@ -98,31 +95,28 @@ check.
 
 Change generated with coccinelle.
 
-To: Heiko Carstens <hca@linux.ibm.com>
-To: Vasily Gorbik <gor@linux.ibm.com>
-To: Alexander Gordeev <agordeev@linux.ibm.com>
-To: Christian Borntraeger <borntraeger@linux.ibm.com>
-To: Sven Schnelle <svens@linux.ibm.com>
-Cc: linux-s390@vger.kernel.org
+To: Justin Sanders <justin@coraid.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-block@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
 ---
- drivers/s390/char/tape_class.c | 2 +-
+ drivers/block/aoe/aoecmd.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/s390/char/tape_class.c b/drivers/s390/char/tape_class.c
-index b69430220a813e764ec1514c27ad486ac9e95575..aad4fff1faea69ae055b517910ec6467b14cb6e8 100644
---- a/drivers/s390/char/tape_class.c
-+++ b/drivers/s390/char/tape_class.c
-@@ -100,7 +100,7 @@ EXPORT_SYMBOL(register_tape_dev);
+diff --git a/drivers/block/aoe/aoecmd.c b/drivers/block/aoe/aoecmd.c
+index a4744a30a8af4ff05113f3234021eec728265b4f..b31e539a66433a0a5d6e81117a32d12735ffc1bc 100644
+--- a/drivers/block/aoe/aoecmd.c
++++ b/drivers/block/aoe/aoecmd.c
+@@ -1268,7 +1268,7 @@ aoe_ktstart(struct ktstate *k)
  
- void unregister_tape_dev(struct device *device, struct tape_class_device *tcd)
- {
--	if (tcd != NULL && !IS_ERR(tcd)) {
-+	if (!IS_ERR_OR_NULL(tcd)) {
- 		sysfs_remove_link(&device->kobj, tcd->mode_name);
- 		device_destroy(&tape_class, tcd->char_device->dev);
- 		cdev_del(tcd->char_device);
+ 	init_completion(&k->rendez);
+ 	task = kthread_run(kthread, k, "%s", k->name);
+-	if (task == NULL || IS_ERR(task))
++	if (IS_ERR_OR_NULL(task))
+ 		return -ENOMEM;
+ 	k->task = task;
+ 	wait_for_completion(&k->rendez); /* allow kthread to start */
 
 -- 
 2.43.0
