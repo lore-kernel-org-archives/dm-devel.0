@@ -1,242 +1,407 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail.avm.de (mail.avm.de [212.42.244.119])
+	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C67093B8D7E
-	for <dm-devel@lists.linux.dev>; Tue, 10 Mar 2026 11:50:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773143405; cv=fail; b=r2zr847/wrOcZknJ1OwP8yKibEBmzxo7xcRSsUBfyHig8sJHdetfHrPK7OeGKhpUjst47BpeF2Nuh9M6TdNbMiydUz4qeo2sFy8IS47qXZE4jGtrZQci2hZ2yhgOVEpASY6BdVCRWj0gaRrFWyVnrzvfTmSfPDQLSDUNxdQDlG4=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773143405; c=relaxed/simple;
-	bh=xMXobP9GPVbaDpIHzcIo8fritLIyfvnDVTZbjpnl9DY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=pOjJcF5sMNaQ/G7RlhP/If/54noTeXl5cX052SAJEGqG5b6BP/TBByJywvJ9g8f6HHksu9BhZlLh097XY7vUu837velgPggWtUuhNJB/DcXCfLCQDIcdaIAm7o0pkN+tOSzdZi6k2XmH1BoR9jv7rE2URQ9ODusA5c+mvEv7/iA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=gLTfAo3d; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=y5aLR1gd; arc=fail smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D4933CD8B2;
+	Tue, 10 Mar 2026 11:55:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.42.244.119
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1773143735; cv=none; b=jcTmctn28xx3zu/ApasDTVQqBm6Q8q6uG2orsosoLa1BoGj7p1b3b0Z8ayl13VAvoTpXGnYyjnLv7f2TN9G+HwroPcfIapHU719aCX0nIOw4pMK5E9q6VKjYxCE+wsiQ6GYm+orFPVD7pDyG2Wq1OXqilHGQWD2+63ZNj/v3AUI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1773143735; c=relaxed/simple;
+	bh=LK3zT21XXqhQvbEwg2nItTFGXqZVrRtI29hZHPSW/Rg=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=inR3Yb1KscsU/RhUczh8gG8T9Iw8KsSbAqdpLHryYCXlNDGGEY7GZi91oYd0VhdIZ0s1D3AcHwV9ovi8K3LQoJUz9tmTpSiNS6eo2yQYQ4he0Rt4roOLkaHMFhUD2AxgZm3otXLBH2txI1AhxhrOnc+XEhYVIxJkPikIIUaLQZI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=dZcJYTZu; arc=none smtp.client-ip=212.42.244.119
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=avm.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="gLTfAo3d";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="y5aLR1gd"
-Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62A9eCLb1628413;
-	Tue, 10 Mar 2026 11:49:55 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2025-04-25; bh=XBPEgrh3P8I/wnirTcteSmT4GS9exVPhQYf7Aaz/CYk=; b=
-	gLTfAo3d+r9gxzzoUUfLavazLqyFDpcOamvKFUApJNWLvdDR1U/SA8uTS+LAdRRM
-	XR54WeXcDRQQAsMiEzt8MoASQm0wZumT/2CW3MIO0HifHsT61j9jXJTM/GDNOKdA
-	iL8f+e6mRHTopfxiKodjy/QuClXBz95rbYyjzbRYHqUgMdU0Chte4T91FYqUFGGR
-	mf4lrswf+yFZTirhKDwJ/36WfTbNt+X6tToKCSAqbt/a0rRvHvHT4p70jvd0hEHZ
-	oR/FF94MfBpJ3jSUWtJK9C2VWENuHh2VvbOoTUlSzedzbJ6aswtQHoWN65dXqIqS
-	luv5kfdhIJFAaT3qS7d4DQ==
-Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta01.appoci.oracle.com [130.35.100.223])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4csmps2nt6-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 10 Mar 2026 11:49:55 +0000 (GMT)
-Received: from pps.filterd (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 62AAbA1Z020243;
-	Tue, 10 Mar 2026 11:49:53 GMT
-Received: from ch1pr05cu001.outbound.protection.outlook.com (mail-northcentralusazon11010044.outbound.protection.outlook.com [52.101.193.44])
-	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 4crafe075d-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 10 Mar 2026 11:49:53 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=n/h4dgl7zzPFWWaL/3lg8trN+Id3ZVMdv9HsF89Y4OGaodEcXpZube68E3YLnRh3LruRPEOe3se4wvSlOLuVQHqBXyHO88k2jS1tO0W36zD+DZdyklgtX6zyaa0fIsy6U8dUILflGmUHFxTj8IOXDCE+wsnAE6Q5/YKxxo9GU+53Xo4oy5bEZDttyCRqTwrc+aC3ikndgp9+kwHrYFMlPkiiMvGa3fsUik08tWdO/zIONz2Z8S7++UgyVPrRJHWR9H7WJago5Q/IrZs+Pr1TkowAxqUbgF4fnhWwL4cC2SAxvdcHtkYuS9GP9CzfhWdlFWgB/iOO2BqxVCKz2XKW5w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=XBPEgrh3P8I/wnirTcteSmT4GS9exVPhQYf7Aaz/CYk=;
- b=nSyJ1yygkzT6YswMbokAWSJEt1SWnCHFEDMBBVy5DIr/u5t+z47bjicrDn2OX2+fjrqPMReQ60ZdrlfsqVmPMJahBYvZmeChYdO3Ss2McXr2GJwngzRwtb++CfWr6DOlArvrLkAyuF+FfYAyxoF4oFQz0UI+ACdjdDsahi0M+2Zm8QfptjXbmJPFczA9/z34KJjVHKecAs8nuPVALWzeHq2WrGgKfSK1pbRv/M9JqZ74p9ECVaUL8WsZxCqtdzj9wuhwgQX49aaVODbXgf7hZs7uDqi3kVFfSe9uFNu0pogPsEBuxVQxwl2N7/LhSmCgBjFgcs/3ia7ROc30W6TyGg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=XBPEgrh3P8I/wnirTcteSmT4GS9exVPhQYf7Aaz/CYk=;
- b=y5aLR1gdEgYDDQR9+fO/YQS3RABMd3mTjLn3YQB16CrvuyEvx5RTeGNDloRfOz/qtkaNVY3L6MhqnK8Cax6k2r16+PfeXN5CWO54X2/xKi7kIcZXLvLZ2OPwuuQazo+m1wBl4ZZNeLG1CoCccWg9A4G4CeRdTPXIHTQ+w2ydQh4=
-Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
- (2603:10b6:f:fc00::d54) by DS7PR10MB5166.namprd10.prod.outlook.com
- (2603:10b6:5:3a4::12) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9678.25; Tue, 10 Mar
- 2026 11:49:51 +0000
-Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
- ([fe80::5266:1601:5598:3f0a]) by DS4PPFEAFA21C69.namprd10.prod.outlook.com
- ([fe80::5266:1601:5598:3f0a%5]) with mapi id 15.20.9700.010; Tue, 10 Mar 2026
- 11:49:50 +0000
-From: John Garry <john.g.garry@oracle.com>
-To: hch@lst.de, kbusch@kernel.org, martin.petersen@oracle.com,
-        james.bottomley@hansenpartnership.com, hare@suse.com,
-        bmarzins@redhat.com
-Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org, sagi@grimberg.me,
-        axboe@fb.com, linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org, nilay@linux.ibm.com,
-        John Garry <john.g.garry@oracle.com>
-Subject: [PATCH 8/8] scsi: scsi-multipath: Add stubbed scsi_multipath_dev_rescan()
-Date: Tue, 10 Mar 2026 11:49:25 +0000
-Message-ID: <20260310114925.1222263-9-john.g.garry@oracle.com>
-X-Mailer: git-send-email 2.43.5
-In-Reply-To: <20260310114925.1222263-1-john.g.garry@oracle.com>
-References: <20260310114925.1222263-1-john.g.garry@oracle.com>
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: BL1PR13CA0132.namprd13.prod.outlook.com
- (2603:10b6:208:2bb::17) To DS4PPFEAFA21C69.namprd10.prod.outlook.com
- (2603:10b6:f:fc00::d54)
+	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="dZcJYTZu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=avm.de; s=mail;
+	t=1773143722; bh=LK3zT21XXqhQvbEwg2nItTFGXqZVrRtI29hZHPSW/Rg=;
+	h=From:Subject:Date:To:Cc:From;
+	b=dZcJYTZuZDA4q/3hNz64Owdc1HJABJYJkt99++PaaLbW7gaZD9g2/iS9O5ENS8TqR
+	 Wd0w2FXgMI0uZVVeVPaP0+G8ebTl5PjkrH+/Un6QvZSpSuAmb2VEM0TmWU3qAXNa/R
+	 B92BBimBzpC3ASCEhSshSATaYHjIa50MBa4pF9SU=
+Received: from [212.42.244.71] (helo=mail.avm.de)
+	by mail.avm.de with ESMTP (eXpurgate 4.55.2)
+	(envelope-from <phahn-oss@avm.de>)
+	id 69b006a9-2367-7f0000032729-7f0000019ca8-1
+	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:22 +0100
+Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [212.42.244.71])
+	by mail.avm.de (Postfix) with ESMTPS;
+	Tue, 10 Mar 2026 12:55:21 +0100 (CET)
+From: Philipp Hahn <phahn-oss@avm.de>
+Subject: [PATCH 00/61] treewide: Use IS_ERR_OR_NULL over manual NULL check
+ - refactor
+Date: Tue, 10 Mar 2026 12:48:26 +0100
+Message-Id: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DS4PPFEAFA21C69:EE_|DS7PR10MB5166:EE_
-X-MS-Office365-Filtering-Correlation-Id: 7784f53b-e273-4fbd-eb7c-08de7e9b2317
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|376014|7416014|1800799024|366016;
-X-Microsoft-Antispam-Message-Info:
-	D9/TQpBrKZ/QlZXvum0fgilxnV9YwdbY+AgQUR+xPAuQuoJ9SxxeBjw217GMWzPq2LBw6ZU7l4ldJeF+c+4p5LoHgM3wGY3YJNQ9owG3TSztdFo/s/wkPQO7XpmHjnUOuO3Zov0M66f13Q34UBAiOhgHfpCBWksW4H9brta5bmWh/SXh8PQsNkHNwKVdSQuuTtezmeLUXGfVjV+Zqmzvgu3K2tbHZ+p8IGbjDpmfHX/XGuT7Q1onf/1DCPMiv4INZC7n1kHeKAPRnySpCpUXh3xQkKRVc7Wwj6sw4ZczKNRKP8JrmApb+xd1nyrKsGq5S7qPnkmhdDZ91zk8y7HE0JaMqpXSuxYZ6lw9FeExUNPzMd2kG5pa3WcesoSFS7c0ij3f/ocrqC8nTkwaozgic40ADHhq0kCI/W/mDZJ1RytjepPdUB2csGnXIX2ipKbd9tImc8HEQ1ROwu9crySn6S/AzEwC/a7MnasXrykI5Hu9PfAqKPehvHVDSoP0M3fNvzLudZOWk+A2KWJPxc5pwzQ3AsTYhGPE6gUPHimcM8rn0QJYYi39RczEQZiLLe2FWXbfiZ94ESLtjLhZp655u9cD4dLw68rbY1HhNqAcbzxxIBhmG0Y2tYkdPc+WzjF1KUqkDy6z3JOfcnfm8jEYGXDupN/NTU5guKvgbq+HtdPvSW5GWXuLBGbyiiCetGeV3DpRlwXETVSdpOrJF8Ryy3DXFLTG0T/G+JH9Q8q44Ys=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DS4PPFEAFA21C69.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(7416014)(1800799024)(366016);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?8beSk49EAsw9VpghDGGRZuau1jrcvD9rUAUTSL0SnZYtpPbHQyav8aSSCurO?=
- =?us-ascii?Q?ZQsi1W/rGCvHjdbjsdXhkn1MKfRB+D0Y1e0MZzDzUsLfFwMlxulVH7MI9RYz?=
- =?us-ascii?Q?+DVCz+W3HGOCq9uKuGCK/QnRccR7qunsujqHSMtJyjWptRTOHiK/HqzmXI8a?=
- =?us-ascii?Q?ggOvpa2cRYhBf0PdauyLheQ8vS+4nwZ/Nov3GX0ygsgnso5zARcsLoeyn28F?=
- =?us-ascii?Q?FY8tcDFyd9uw6p6ltJLZRGRpW0Y2BL9lOjzH2IeVXTByaoDCRZUMKhid7GrQ?=
- =?us-ascii?Q?gNLsGIqm648O7HhbAHs0KTmO8LlidcrsEjPMUvc8gvZSRzLM+fPKBSqkG/by?=
- =?us-ascii?Q?+NV8KOEKiicPC3Zx9/bmOTLCzSOdMH4KLlw7lVrZsTMMA+zQJt4htEMrr9Ui?=
- =?us-ascii?Q?Bf6qZlcemiC/o44yztUgCcprffn7OE4KenkIn1f+f8Tid4EZ9l8WBE57cYbO?=
- =?us-ascii?Q?qELTK5HGxpMSn6aFvg+b0+F2FFzec+QEUof6CLGgvRmPERySdOnEj9+4C9g+?=
- =?us-ascii?Q?/n3lkfOae3oPwL7DsNYgbq7cxaj0qAQZIurthdBrBJGe62Lv9sxazGVg8bRP?=
- =?us-ascii?Q?t9Dy3L9Ufy89QDeJi5XfKKfI45T/nCki9si9XHCYegP3bfSrXCUvDZshg6vg?=
- =?us-ascii?Q?uM7E+1E6+79cUqUiW3IrOWip8uoD100of8Cf61e51ABIImWlJsinSN8yaZRO?=
- =?us-ascii?Q?WPj5UD91nn14bg+yFfyp0OPZANN2ZXQJPCA96kOhqMGFtWqgJrq/4Ye1PMbp?=
- =?us-ascii?Q?ikgndsKsvTdvwOeHnRg4KjzFXAzkz1O5HIfISzQzuEzeDEekAezq2NWAU3EE?=
- =?us-ascii?Q?M5YIwsQ9+wYj7Ee9QSpHm0J9cQHZjqPUqjIPRmgKWBeNdFqzMVUT28YY1zMa?=
- =?us-ascii?Q?qsmNYC25voqx+3GO9aJtqs76jYVF0YCumFoY4HBYYB+Nhz1u2i2ZN/TnUzQq?=
- =?us-ascii?Q?2iOzOv/tI0bZrMsx0+LiL56O+JsV4s+MszqeapCe3MX78LXIEgXeyciiH7Sj?=
- =?us-ascii?Q?LkzI1O5lx445nJf/Odf8LzWCHo7Vly4mbIpX1/e+z9VdHdHAmL9XsLNUM9+C?=
- =?us-ascii?Q?6Se/NIVFgN4z4i+SbUsQ6tid6cOH8m6jt98ajfAGdcJx3/oiI8/JEItN3hrl?=
- =?us-ascii?Q?Y2wPLhQ/BTYeFZZ5Qf3W8EduwHEVwLa3s0uhpZYOClix3yiqVsaw0tXfx+e/?=
- =?us-ascii?Q?eqvA+LBWMPAEPRAjtGJZYx9RThDfBxkNYM4VIz2Mi66Dmde30qPXXgyHpit0?=
- =?us-ascii?Q?vdN5FzIvPTziyX7FttgrWDlVkk4lHv0FAWVF9fUSTNIC85jkSVUntyPpAeXY?=
- =?us-ascii?Q?fUmFQjdFdv6jO1pvhKB2MUFf3rk7hPnJkDWqIUc3qwSO99TpMMTOF1MhKYcL?=
- =?us-ascii?Q?b3tduBVufwtohcZJHdD8QfrElRKVpvrplC5RW9thI1BJez6ZAMdWApj9vqRa?=
- =?us-ascii?Q?3hc0SSDvdISFMaDivgpHwjqcUKSlKeMfGpdxj7NjCuXLCApwH5RKLpfQfin2?=
- =?us-ascii?Q?FALM1ZiCb4NrB4TsO42VQJsut3RrQMTnq+zlWa5PpJC25Xh1W+ZKYSIM5rPW?=
- =?us-ascii?Q?Rup4b4ix4zchkG9nMyurxnnQ7kdJ4Sni9gK/Ie5yTVcyAc9tNqgFInSP70+d?=
- =?us-ascii?Q?ijFFcWOmd58/0i3CASS85P2v2lthTxxJXPKcAsJDnvPVsYAUM9jaeVazLYq/?=
- =?us-ascii?Q?tqr6CqDALdTnFjRqwAxHpR+Q7ow27EpJl8lN0Px0IJMojItGxfUeAg7pA68Y?=
- =?us-ascii?Q?UTwntTzQXg=3D=3D?=
-X-Exchange-RoutingPolicyChecked:
-	Jgap6+K9xdkXeCut4pQR89oS3kktkek6Arh+6iQp3VawKgCdVVyHMcf/GzveVF4ifewst1400eHuGlkXTvWA3v5qwO1Ch7trkGYcbuIgdeVXUBu0OT675915Q/t/kABMlCpgxzik7DBaSsnVTLswohSJHoB3n6EEedGCSlzHqgta3SOmBTKcW/nfiRIWIZABPB42Q5mzydH18uufiXqkP9aALVF9+uxKvp9C7n1rprbZV2xcHTuSxkgYhjglgSenaKNiFpmK+eJHXHXgxrTvbkyDyWLx3gflUPleGDU6Tkey414oDW1+yH04mOKCKI7oMDd/aiHREAiuJBy3LbrHAg==
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	aleiRuDtxDhritaFgCi5sELA4G5kMgqGg+rnad5UpFdl7hfWra32VrPBaPama1nvtmJofpigFK72GCOGg/W8TlUsTc26fl8x4mBXn+5BqiymbQN2rKS9ElSb/hhc5QrpgdBPooBuJJKlsiV4x4HqruOlyY6iUHvbh7FeRQnFJAgd5p4IkskW9cAFEx9/z2+KJgVoeWYxK23ywke8YXA0JZGEMcN9ZXTjuFhPzFoLb1XXKUXeUjvwxh1nXLgrzvMMDC4mKhJQnUYM8egKLksAOmN8q10fqbztul8njc93KaXMhoB0GD1S2lJw0Uy4NmZ+AQ8s3zcZa10mCKuX/AhEFXiphrHZfyOvE4sZcHhfWn+I8V3Ogldiim74mTBGgjPeKmiMK5hwKcwNf1L5CARShD3DvV8uo6mT8oDvu6+fFBu5uBhFqt4Grb3azKjwPWyUVSQJk/sSvMxhqQnYKSMGcWZpd7Dn7ilYis3DrXHzOsxUY8M3H+KFamYep0villaw8DIaEuZNJM3Nqh7f0AbP2khyup55hMa+s9wXkc9GC+8n/VYkhjaQ21Wd+B4YZ31nJ/ew9BPDXG+W2D7dcS+4EGPzzYD5THeMgapUK6Ol3uE=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7784f53b-e273-4fbd-eb7c-08de7e9b2317
-X-MS-Exchange-CrossTenant-AuthSource: DS4PPFEAFA21C69.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Mar 2026 11:49:50.8318
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: aFVQVFSV1ku9ZkbJRumM5CEu0OkbNeEYlfjVmkpTdMXsxSLAt1jNrK3hOOH15X35l/KpwrJr7fy4Dl/OLhOvTg==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS7PR10MB5166
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-10_02,2026-03-09_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 malwarescore=0 mlxscore=0
- mlxlogscore=999 adultscore=0 phishscore=0 suspectscore=0 spamscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2602130000
- definitions=main-2603100102
-X-Authority-Analysis: v=2.4 cv=IJQPywvG c=1 sm=1 tr=0 ts=69b00563 b=1 cx=c_pps
- a=zPCbziy225d3KhSqZt3L1A==:117 a=zPCbziy225d3KhSqZt3L1A==:17
- a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=Yq5XynenixoA:10
- a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22 a=jiCTI4zE5U7BLdzWsZGv:22
- a=7Gl3-_t3PgB9XO-mQDs3:22 a=yPCof4ZbAAAA:8 a=0MBnn374Ymj33g5u8Y0A:9 cc=ntf
- awl=host:12272
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzEwMDEwMiBTYWx0ZWRfX5ZGTdpUnuL+p
- VPfqBaNBMEiK8iFDHc5aoEcTSf9A/zbeXwIX/EeRnXkmNevNdnRWZOkvoIlYHod5h8mtR5AnXTS
- u71tWuQYnZvGfUEbdzSSI8hqD1BOsmFFlLNFrNfeUoqv0jrP7u4nVGfU9lgVRX3/w++J1mQu4Zs
- ebOFWik8rxUnAMoNPdmnIHVuRCRi6LnrCsz030rhFDSvl0vJ6/7WclRy8/LeV6/w6bh2R6KHDxH
- MEN9tg9g/uxHiBK3bhkz94lUgAvatL4cnLZ7cPOBUoGv8uXLvNmBIcRpvOskm9UuzRexwmbpumF
- K5Vd8WFM6sV6ohmbbOnrShiOeztPKMRmbv+SLXjcAKBaGlH5EM/nL6W6cKeWXiqjCP4vbh521/B
- jx16xWhsEy0WPkvK5JVwjcbUlJ1l9lXSUFTNUdEO4uRV62XQtdXx9T14sBA7JlclI4GwCFGDqlG
- OrsnXwsgEvBonpgpE49XHhl7Uq2zHo9HWwzTVVTM=
-X-Proofpoint-GUID: hil4FPYBFlfcYTW8AES7d6airb5TT97N
-X-Proofpoint-ORIG-GUID: hil4FPYBFlfcYTW8AES7d6airb5TT97N
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAAsFsGkC/x3M0QpAMBSA4VfRubYaNsyrSIvt4JRGZ5GSd7dcf
+ hf//0BEJozQZQ8wXhRpDwlFnoFbx7CgIJ8MpSxrWUktJiUoWmS2O9twbpvQxph2bLysnILUHYw
+ z3f+zH973A3+QboxjAAAA
+X-Change-ID: 20260305-b4-is_err_or_null-59998a7d03c4
+To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com, 
+ bpf@vger.kernel.org, ceph-devel@vger.kernel.org, cocci@inria.fr, 
+ dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org, 
+ gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org, 
+ intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev, 
+ kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org, 
+ linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org, 
+ linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org, 
+ linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+ linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org, 
+ linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, 
+ linux-leds@vger.kernel.org, linux-media@vger.kernel.org, 
+ linux-mips@vger.kernel.org, linux-mm@kvack.org, 
+ linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org, 
+ linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org, 
+ linux-phy@lists.infradead.org, linux-pm@vger.kernel.org, 
+ linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org, 
+ linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org, 
+ linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org, 
+ linux-sound@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com, 
+ linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org, 
+ linux-wireless@vger.kernel.org, netdev@vger.kernel.org, 
+ ntfs3@lists.linux.dev, samba-technical@lists.samba.org, 
+ sched-ext@lists.linux.dev, target-devel@vger.kernel.org, 
+ tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev, 
+ Philipp Hahn <phahn-oss@avm.de>
+Cc: Julia Lawall <Julia.Lawall@inria.fr>, 
+ Nicolas Palix <nicolas.palix@imag.fr>, Chris Mason <clm@fb.com>, 
+ David Sterba <dsterba@suse.com>, Ilya Dryomov <idryomov@gmail.com>, 
+ Alex Markuze <amarkuze@redhat.com>, Viacheslav Dubeyko <slava@dubeyko.com>, 
+ Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, 
+ Steve French <sfrench@samba.org>, Paulo Alcantara <pc@manguebit.org>, 
+ Ronnie Sahlberg <ronniesahlberg@gmail.com>, 
+ Shyam Prasad N <sprasad@microsoft.com>, Tom Talpey <tom@talpey.com>, 
+ Bharath SM <bharathsm@microsoft.com>, 
+ Eric Van Hensbergen <ericvh@kernel.org>, 
+ Latchesar Ionkov <lucho@ionkov.net>, 
+ Dominique Martinet <asmadeus@codewreck.org>, 
+ Christian Schoenebeck <linux_oss@crudebyte.com>, 
+ Gao Xiang <xiang@kernel.org>, Chao Yu <chao@kernel.org>, 
+ Yue Hu <zbestahu@gmail.com>, Jeffle Xu <jefflexu@linux.alibaba.com>, 
+ Sandeep Dhavale <dhavale@google.com>, Hongbo Li <lihongbo22@huawei.com>, 
+ Chunhai Guo <guochunhai@vivo.com>, Miklos Szeredi <miklos@szeredi.hu>, 
+ Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
+ Andreas Gruenbacher <agruenba@redhat.com>, Kees Cook <kees@kernel.org>, 
+ Tony Luck <tony.luck@intel.com>, 
+ "Guilherme G. Piccoli" <gpiccoli@igalia.com>, Jan Kara <jack@suse.com>, 
+ Phillip Lougher <phillip@squashfs.org.uk>, 
+ Alexander Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+ Steven Rostedt <rostedt@goodmis.org>, 
+ Masami Hiramatsu <mhiramat@kernel.org>, 
+ Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, 
+ Tejun Heo <tj@kernel.org>, David Vernet <void@manifault.com>, 
+ Andrea Righi <arighi@nvidia.com>, Changwoo Min <changwoo@igalia.com>, 
+ Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, 
+ Juri Lelli <juri.lelli@redhat.com>, 
+ Vincent Guittot <vincent.guittot@linaro.org>, 
+ Dietmar Eggemann <dietmar.eggemann@arm.com>, 
+ Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, 
+ Valentin Schneider <vschneid@redhat.com>, 
+ Luis Chamberlain <mcgrof@kernel.org>, Petr Pavlu <petr.pavlu@suse.com>, 
+ Daniel Gomez <da.gomez@kernel.org>, Sami Tolvanen <samitolvanen@google.com>, 
+ Aaron Tomlin <atomlin@atomlin.com>, 
+ Sylwester Nawrocki <s.nawrocki@samsung.com>, 
+ Liam Girdwood <lgirdwood@gmail.com>, Mark Brown <broonie@kernel.org>, 
+ Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.com>, 
+ Max Filippov <jcmvbkbc@gmail.com>, Paolo Bonzini <pbonzini@redhat.com>, 
+ John Johansen <john.johansen@canonical.com>, 
+ Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
+ "Serge E. Hallyn" <serge@hallyn.com>, 
+ Andrew Morton <akpm@linux-foundation.org>, Alasdair Kergon <agk@redhat.com>, 
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, 
+ "David S. Miller" <davem@davemloft.net>, David Ahern <dsahern@kernel.org>, 
+ Eric Dumazet <edumazet@google.com>, Jakub Kicinski <kuba@kernel.org>, 
+ Paolo Abeni <pabeni@redhat.com>, Simon Horman <horms@kernel.org>, 
+ Marcel Holtmann <marcel@holtmann.org>, 
+ Johan Hedberg <johan.hedberg@gmail.com>, 
+ Luiz Augusto von Dentz <luiz.dentz@gmail.com>, 
+ Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, 
+ Jesper Dangaard Brouer <hawk@kernel.org>, 
+ John Fastabend <john.fastabend@gmail.com>, 
+ Stanislav Fomichev <sdf@fomichev.me>, Jamal Hadi Salim <jhs@mojatatu.com>, 
+ Jiri Pirko <jiri@resnulli.us>, 
+ Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>, 
+ Xin Long <lucien.xin@gmail.com>, Trond Myklebust <trondmy@kernel.org>, 
+ Anna Schumaker <anna@kernel.org>, Chuck Lever <chuck.lever@oracle.com>, 
+ Jeff Layton <jlayton@kernel.org>, NeilBrown <neil@brown.name>, 
+ Olga Kornievskaia <okorniev@redhat.com>, Dai Ngo <Dai.Ngo@oracle.com>, 
+ Jon Maloy <jmaloy@redhat.com>, Johannes Berg <johannes@sipsolutions.net>, 
+ Catalin Marinas <catalin.marinas@arm.com>, 
+ Russell King <linux@armlinux.org.uk>, John Crispin <john@phrozen.org>, 
+ Thomas Bogendoerfer <tsbogend@alpha.franken.de>, 
+ Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, 
+ John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>, 
+ Andrzej Hajda <andrzej.hajda@intel.com>, 
+ Neil Armstrong <neil.armstrong@linaro.org>, Robert Foss <rfoss@kernel.org>, 
+ Laurent Pinchart <Laurent.pinchart@ideasonboard.com>, 
+ Jonas Karlman <jonas@kwiboo.se>, Jernej Skrabec <jernej.skrabec@gmail.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Zhenyu Wang <zhenyuw.linux@gmail.com>, Zhi Wang <zhi.wang.linux@gmail.com>, 
+ Jani Nikula <jani.nikula@linux.intel.com>, 
+ Joonas Lahtinen <joonas.lahtinen@linux.intel.com>, 
+ Rodrigo Vivi <rodrigo.vivi@intel.com>, 
+ Tvrtko Ursulin <tursulin@ursulin.net>, 
+ Alex Deucher <alexander.deucher@amd.com>, 
+ =?utf-8?q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
+ Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, Igor Russkikh <irusskikh@marvell.com>, 
+ Andrew Lunn <andrew+netdev@lunn.ch>, 
+ Pavan Chebbi <pavan.chebbi@broadcom.com>, Michael Chan <mchan@broadcom.com>, 
+ Potnuri Bharat Teja <bharat@chelsio.com>, 
+ Tony Nguyen <anthony.l.nguyen@intel.com>, 
+ Przemek Kitszel <przemyslaw.kitszel@intel.com>, 
+ Taras Chornyi <taras.chornyi@plvision.eu>, 
+ Maxime Coquelin <mcoquelin.stm32@gmail.com>, 
+ Alexandre Torgue <alexandre.torgue@foss.st.com>, 
+ Iyappan Subramanian <iyappan@os.amperecomputing.com>, 
+ Keyur Chudgar <keyur@os.amperecomputing.com>, 
+ Quan Nguyen <quan@os.amperecomputing.com>, 
+ Heiner Kallweit <hkallweit1@gmail.com>, Marc Zyngier <maz@kernel.org>, 
+ Thomas Gleixner <tglx@kernel.org>, Andrew Lunn <andrew@lunn.ch>, 
+ Gregory Clement <gregory.clement@bootlin.com>, 
+ Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>, 
+ Vinod Koul <vkoul@kernel.org>, Linus Walleij <linusw@kernel.org>, 
+ Ulf Hansson <ulf.hansson@linaro.org>, Heiko Carstens <hca@linux.ibm.com>, 
+ Vasily Gorbik <gor@linux.ibm.com>, 
+ Alexander Gordeev <agordeev@linux.ibm.com>, 
+ Christian Borntraeger <borntraeger@linux.ibm.com>, 
+ Sven Schnelle <svens@linux.ibm.com>, 
+ "Martin K. Petersen" <martin.petersen@oracle.com>, 
+ Eduardo Valentin <edubezval@gmail.com>, Keerthy <j-keerthy@ti.com>, 
+ "Rafael J. Wysocki" <rafael@kernel.org>, 
+ Daniel Lezcano <daniel.lezcano@kernel.org>, Zhang Rui <rui.zhang@intel.com>, 
+ Lukasz Luba <lukasz.luba@arm.com>, Alex Williamson <alex@shazbot.org>, 
+ Mark Greer <mgreer@animalcreek.com>, 
+ Miquel Raynal <miquel.raynal@bootlin.com>, 
+ Richard Weinberger <richard@nod.at>, Vignesh Raghavendra <vigneshr@ti.com>, 
+ Shuah Khan <skhan@linuxfoundation.org>, 
+ Kieran Bingham <kieran.bingham@ideasonboard.com>, 
+ Mauro Carvalho Chehab <mchehab@kernel.org>, Joerg Roedel <joro@8bytes.org>, 
+ Will Deacon <will@kernel.org>, Robin Murphy <robin.murphy@arm.com>, 
+ Lee Jones <lee@kernel.org>, Pavel Machek <pavel@kernel.org>, 
+ Dave Penkler <dpenkler@gmail.com>, "K. Y. Srinivasan" <kys@microsoft.com>, 
+ Haiyang Zhang <haiyangz@microsoft.com>, Wei Liu <wei.liu@kernel.org>, 
+ Dexuan Cui <decui@microsoft.com>, Long Li <longli@microsoft.com>, 
+ Justin Sanders <justin@coraid.com>, Jens Axboe <axboe@kernel.dk>, 
+ Georgi Djakov <djakov@kernel.org>, 
+ Michael Turquette <mturquette@baylibre.com>, 
+ Stephen Boyd <sboyd@kernel.org>, Philipp Zabel <p.zabel@pengutronix.de>, 
+ Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, 
+ x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, 
+ =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
+ Dmitry Torokhov <dmitry.torokhov@gmail.com>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=10360; i=phahn-oss@avm.de;
+ h=from:subject:message-id; bh=LK3zT21XXqhQvbEwg2nItTFGXqZVrRtI29hZHPSW/Rg=;
+ b=kA0DAAoBNC0GU9GsrNsByyZiAGmwBcqh8d5mE3lAkbCCIhk2oWSgNcET++LXgLEGzX+74PInx
+ YkBMwQAAQoAHRYhBDls8G2tYNRwNAKmmDQtBlPRrKzbBQJpsAXKAAoJEDQtBlPRrKzbYqsIAK5d
+ elvBcseQjOmeiD4mSMAZLrcAEl20R9MpPKd4mWL5ml8BfXxNcML8Lnb2x/WwXL0Hqh2kmn+ol5+
+ jwvmVgqFrje1/XM4onDIIomJOYl/rYSo9qoSx+5IKZAy9eiZAEDM2imcIQKtITZKLNjFZpUiemv
+ mdOvazQvY2blxW+Lw4Oka7Gqf4ifxsINodUwI5EJjZnPs1AWGammHryjBSpAgbnOjEtCZ7iJAEM
+ 1l6rZhJZICWoWrt5P/y0CkrMmXMHjvK3or/XW/Oz6/UjFbEuZQMK4Nxx19avU2B1AgjKkKB7gjl
+ xFjM+LS1mYwhLw6sC6tDl2dBVLvscyKlify3SXk=
+X-Developer-Key: i=phahn-oss@avm.de; a=openpgp;
+ fpr=58AF7C2E007CDBE62C59E078F50EFDCF8AD04B1A
+X-purgate-ID: 149429::1773143722-1DCBBF5F-0E465A5B/0/0
+X-purgate-type: clean
+X-purgate-size: 10362
+X-purgate-Ad: Categorized by eleven eXpurgate (R) https://www.eleven.de
+X-purgate: This mail is considered clean (visit https://www.eleven.de for further information)
+X-purgate: clean
 
-Add an empty function scsi_multipath_dev_rescan() to handle sdev rescans.
+While doing some static code analysis I stumbled over a common pattern,
+where IS_ERR() is combined with a NULL check. For that there is
+IS_ERR_OR_NULL().
 
-It should handle ALUA reconfiguration, and that will be possible when the
-core ALUA driver can handle that.
+I've written a Coccinelle patch to find and patch those instances.
+The patches follow grouped by subsystem.
 
-Signed-off-by: John Garry <john.g.garry@oracle.com>
+Patches 55-58 may be dropped as they have a (minor?) semantic change:
+They use WARN_ON() or WARN_ON_ONCE(), but only in the IS_ERR() path, not
+for the NULL check. Iff it is okay to print the warning also for NULL,
+then the patches can be applied.
+
+While generating the patch set `checkpatch` complained about mixing
+[un]likely() with IS_ERR_OR_NULL(), which already uses likely()
+internally. I found and fixed several locations, where that combination
+has been used.
+
+Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
 ---
- drivers/scsi/scsi_multipath.c | 6 ++++++
- drivers/scsi/scsi_scan.c      | 2 ++
- include/scsi/scsi_multipath.h | 4 ++++
- 3 files changed, 12 insertions(+)
+Philipp Hahn (61):
+      Coccinelle: Prefer IS_ERR_OR_NULL over manual NULL check
+      btrfs: Prefer IS_ERR_OR_NULL over manual NULL check
+      ceph: Prefer IS_ERR_OR_NULL over manual NULL check
+      ext4: Prefer IS_ERR_OR_NULL over manual NULL check
+      smb: Prefer IS_ERR_OR_NULL over manual NULl check
+      9p: Prefer IS_ERR_OR_NULL over manual NULL check
+      erofs: Prefer IS_ERR_OR_NULL over manual NULL check
+      fuse: Prefer IS_ERR_OR_NULL over manual NULL check
+      ntfs3: Prefer IS_ERR_OR_NULL over manual NULL check
+      gfs2: Prefer IS_ERR_OR_NULL over manual NULL check
+      pstore: Prefer IS_ERR_OR_NULL over manual NULL check
+      quota: Prefer IS_ERR_OR_NULL over manual NULL check
+      squashfs: Prefer IS_ERR_OR_NULL over manual NULL check
+      seq_file: Prefer IS_ERR_OR_NULL over manual NULL check
+      trace: Prefer IS_ERR_OR_NULL over manual NULL check
+      sched: Prefer IS_ERR_OR_NULL over manual NULL check
+      module: Prefer IS_ERR_OR_NULL over manual NULL check
+      sound: Prefer IS_ERR_OR_NULL over manual NULL check
+      kvm: Prefer IS_ERR_OR_NULL over manual NULL check
+      apparmor: Prefer IS_ERR_OR_NULL over manual NULL check
+      lib/test: Prefer IS_ERR_OR_NULL over manual NULL check
+      md: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/ipv6: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/9p: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/bluetooth: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/core: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/netlink: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/sched: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/sctp: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/sunrpc: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/tipc: Prefer IS_ERR_OR_NULL over manual NULL check
+      net/wireless: Prefer IS_ERR_OR_NULL over manual NULL check
+      mm: Prefer IS_ERR_OR_NULL over manual NULL check
+      arch/arm: Prefer IS_ERR_OR_NULL over manual NULL check
+      arch/mips: Prefer IS_ERR_OR_NULL over manual NULL check
+      arch/sh: Prefer IS_ERR_OR_NULL over manual NULL check
+      drm: Prefer IS_ERR_OR_NULL over manual NULL check
+      net: Prefer IS_ERR_OR_NULL over manual NULL check
+      irqchip: Prefer IS_ERR_OR_NULL over manual NULL check
+      phy: Prefer IS_ERR_OR_NULL over manual NULL check
+      pinctrl: Prefer IS_ERR_OR_NULL over manual NULL check
+      pmdomain: Prefer IS_ERR_OR_NULL over manual NULL check
+      s390: Prefer IS_ERR_OR_NULL over manual NULL check
+      target: Prefer IS_ERR_OR_NULL over manual NULL check
+      thermal: Prefer IS_ERR_OR_NULL over manual NULL check
+      vfio: Prefer IS_ERR_OR_NULL over manual NULL check
+      nfc: Prefer IS_ERR_OR_NULL over manual NULL check
+      mtd: Prefer IS_ERR_OR_NULL over manual NULL check
+      media: Prefer IS_ERR_OR_NULL over manual NULL check
+      iommu: Prefer IS_ERR_OR_NULL over manual NULL check
+      leds: Prefer IS_ERR_OR_NULL over manual NULL check
+      gpib: Prefer IS_ERR_OR_NULL over manual NULL check
+      hyperv: Prefer IS_ERR_OR_NULL over manual NULL check
+      aoe: Prefer IS_ERR_OR_NULL over manual NULL check
+      interconnect: Prefer IS_ERR_OR_NULL over manual NULL check
+      clk: Prefer IS_ERR_OR_NULL over manual NULL check
+      reset: Prefer IS_ERR_OR_NULL over manual NULL check
+      arch/x86: Prefer IS_ERR_OR_NULL over manual NULL check
+      debugobjects: Drop likely() around !IS_ERR_OR_NULL()
+      Input alps: Drop unlikely() around IS_ERR_OR_NULL()
+      file: Drop unlikely() around IS_ERR_OR_NULL()
 
-diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
-index 2b916c7af4bd7..97d835f1b6aaf 100644
---- a/drivers/scsi/scsi_multipath.c
-+++ b/drivers/scsi/scsi_multipath.c
-@@ -539,6 +539,12 @@ static int scsi_mpath_ua_thread(void *data)
- 	return 0;
- }
- 
-+void scsi_multipath_dev_rescan(struct scsi_device *sdev)
-+{
-+	/* Handle ALUA reconfig */
-+	dev_warn_once(&sdev->sdev_gendev, "mulitpath rescan not handled\n");
-+}
-+
- static struct scsi_mpath_head *scsi_mpath_alloc_head(void)
- {
- 	struct scsi_mpath_head *scsi_mpath_head;
-diff --git a/drivers/scsi/scsi_scan.c b/drivers/scsi/scsi_scan.c
-index e22d3245d4b65..bf602daeac1db 100644
---- a/drivers/scsi/scsi_scan.c
-+++ b/drivers/scsi/scsi_scan.c
-@@ -1743,6 +1743,8 @@ int scsi_rescan_device(struct scsi_device *sdev)
- 
- 	if (sdev->handler && sdev->handler->rescan)
- 		sdev->handler->rescan(sdev);
-+	else if (sdev->scsi_mpath_dev)
-+		scsi_multipath_dev_rescan(sdev);
- 
- 	if (dev->driver && try_module_get(dev->driver->owner)) {
- 		struct scsi_driver *drv = to_scsi_driver(dev->driver);
-diff --git a/include/scsi/scsi_multipath.h b/include/scsi/scsi_multipath.h
-index d30f2c41e17de..9dc02a56e6342 100644
---- a/include/scsi/scsi_multipath.h
-+++ b/include/scsi/scsi_multipath.h
-@@ -78,6 +78,7 @@ void scsi_mpath_add_sysfs_link(struct scsi_device *sdev);
- void scsi_mpath_remove_sysfs_link(struct scsi_device *sdev);
- int scsi_mpath_get_head(struct scsi_mpath_head *);
- void scsi_mpath_put_head(struct scsi_mpath_head *);
-+void scsi_multipath_dev_rescan(struct scsi_device *sdev);
- 
- static inline void scsi_mpath_start_request(struct request *req)
- {
-@@ -156,5 +157,8 @@ static inline void scsi_mpath_add_sysfs_link(struct scsi_device *sdev)
- static inline void scsi_mpath_remove_sysfs_link(struct scsi_device *sdev)
- {
- }
-+static inline void scsi_multipath_dev_rescan(struct scsi_device *sdev)
-+{
-+}
- #endif /* CONFIG_SCSI_MULTIPATH */
- #endif /* _SCSI_SCSI_MULTIPATH_H */
+ arch/arm/common/bL_switcher.c                      |   2 +-
+ arch/mips/lantiq/clk.c                             |   2 +-
+ arch/sh/mm/ioremap.c                               |   2 +-
+ arch/x86/kernel/callthunks.c                       |   2 +-
+ arch/x86/kernel/irq.c                              |   2 +-
+ drivers/block/aoe/aoecmd.c                         |   2 +-
+ drivers/clk/clk.c                                  |   4 +-
+ drivers/clocksource/timer-pxa.c                    |   2 +-
+ drivers/gpib/common/iblib.c                        |   2 +-
+ drivers/gpu/drm/bridge/synopsys/dw-hdmi.c          |   2 +-
+ drivers/gpu/drm/drm_sysfs.c                        |   2 +-
+ drivers/gpu/drm/i915/gvt/scheduler.c               |   4 +-
+ drivers/gpu/drm/radeon/radeon_test.c               |   2 +-
+ drivers/gpu/drm/rockchip/dw-mipi-dsi-rockchip.c    |   2 +-
+ drivers/hv/mshv_eventfd.c                          |   4 +-
+ drivers/input/mouse/alps.c                         |   2 +-
+ drivers/interconnect/core.c                        |   2 +-
+ drivers/iommu/omap-iommu.c                         |   2 +-
+ drivers/irqchip/irq-gic-v3.c                       |   2 +-
+ drivers/irqchip/irq-mvebu-odmi.c                   |   2 +-
+ drivers/leds/trigger/ledtrig-tty.c                 |   2 +-
+ drivers/md/dm-cache-metadata.c                     |   2 +-
+ drivers/md/dm-crypt.c                              |   4 +-
+ drivers/media/test-drivers/vimc/vimc-streamer.c    |   2 +-
+ drivers/mtd/nand/raw/gpio.c                        |  10 +-
+ drivers/net/ethernet/aquantia/atlantic/aq_ring.c   |   2 +-
+ drivers/net/ethernet/broadcom/tg3.c                |   2 +-
+ .../net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c   |   3 +-
+ drivers/net/ethernet/intel/ice/devlink/devlink.c   |   2 +-
+ .../ethernet/marvell/prestera/prestera_router.c    |   2 +-
+ drivers/net/ethernet/stmicro/stmmac/stmmac_main.c  |   2 +-
+ drivers/net/mdio/mdio-xgene.c                      |   2 +-
+ drivers/net/usb/r8152.c                            |   2 +-
+ drivers/nfc/trf7970a.c                             |   2 +-
+ drivers/phy/phy-core.c                             |   2 +-
+ drivers/pinctrl/core.c                             |   2 +-
+ drivers/pmdomain/rockchip/pm-domains.c             |   2 +-
+ drivers/reset/core.c                               |   2 +-
+ drivers/s390/char/tape_class.c                     |   2 +-
+ drivers/target/target_core_fabric_configfs.c       |   6 +-
+ drivers/thermal/ti-soc-thermal/ti-thermal-common.c |   2 +-
+ drivers/vfio/vfio_main.c                           |   2 +-
+ fs/9p/fid.h                                        |   2 +-
+ fs/btrfs/inode.c                                   |   2 +-
+ fs/btrfs/transaction.c                             |   2 +-
+ fs/btrfs/tree-log.c                                |   2 +-
+ fs/btrfs/uuid-tree.c                               |   2 +-
+ fs/ceph/dir.c                                      |   2 +-
+ fs/ceph/snap.c                                     |   2 +-
+ fs/erofs/zdata.c                                   |   2 +-
+ fs/ext4/fast_commit.c                              |   2 +-
+ fs/ext4/mballoc.c                                  |   2 +-
+ fs/ext4/namei.c                                    |   2 +-
+ fs/ext4/symlink.c                                  |   2 +-
+ fs/fuse/dir.c                                      |   2 +-
+ fs/gfs2/glock.c                                    |   2 +-
+ fs/ntfs3/fsntfs.c                                  |   8 +-
+ fs/pstore/zone.c                                   |   2 +-
+ fs/quota/quota.c                                   |   2 +-
+ fs/seq_file.c                                      |   4 +-
+ fs/smb/client/cifsglob.h                           |   2 +-
+ fs/smb/client/connect.c                            |   2 +-
+ fs/smb/client/readdir.c                            |   2 +-
+ fs/squashfs/cache.c                                |   2 +-
+ include/linux/file.h                               |   2 +-
+ include/net/9p/client.h                            |   2 +-
+ kernel/module/main.c                               |   2 +-
+ kernel/sched/ext.c                                 |   2 +-
+ kernel/trace/fprobe.c                              |   2 +-
+ kernel/trace/kprobe_event_gen_test.c               |   2 +-
+ kernel/trace/trace_events_hist.c                   |   2 +-
+ lib/debugobjects.c                                 |   2 +-
+ lib/test_firmware.c                                |   2 +-
+ lib/test_kmod.c                                    |   4 +-
+ mm/kmemleak.c                                      |  16 +--
+ net/9p/trans_rdma.c                                |   8 +-
+ net/bluetooth/mgmt.c                               |   6 +-
+ net/core/xdp.c                                     |   2 +-
+ net/ipv6/ila/ila_xlat.c                            |   2 +-
+ net/ipv6/ndisc.c                                   |   2 +-
+ net/netlink/af_netlink.c                           |   2 +-
+ net/sched/cls_api.c                                |   6 +-
+ net/sctp/socket.c                                  |   2 +-
+ net/sunrpc/xprtrdma/svc_rdma_transport.c           |  12 +-
+ net/tipc/socket.c                                  |   2 +-
+ net/wireless/reg.c                                 |   2 +-
+ scripts/coccinelle/api/is_err_or_null.cocci        | 125 +++++++++++++++++++++
+ security/apparmor/apparmorfs.c                     |   2 +-
+ sound/soc/samsung/i2s.c                            |   4 +-
+ sound/soc/xtensa/xtfpga-i2s.c                      |   2 +-
+ virt/kvm/eventfd.c                                 |   4 +-
+ 91 files changed, 251 insertions(+), 127 deletions(-)
+---
+base-commit: 1f318b96cc84d7c2ab792fcc0bfd42a7ca890681
+change-id: 20260305-b4-is_err_or_null-59998a7d03c4
+
+Best regards,
 -- 
-2.43.5
+Philipp Hahn <phahn-oss@avm.de>
 
