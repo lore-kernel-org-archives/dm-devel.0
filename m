@@ -1,38 +1,38 @@
 Received: from mail.avm.de (mail.avm.de [212.42.244.119])
 	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9502847B43A;
-	Tue, 10 Mar 2026 11:55:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4CFF447DD6F;
+	Tue, 10 Mar 2026 11:55:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=212.42.244.119
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773143753; cv=none; b=F/44Xk5A7fsHXFegFcXpUBw2XMysoACKHQ2w975mxLh/kEZ1VHYNxt9Ow3gpwqRfKGyxnow6vFvrR04ZYqwFZ/FUmAX/IYe/xsdsn4bRXObNMLUkkSmJbP/EQrYVSsCp1XJnkwEYLL/q2uIvDsxuVT/CDkbtT4+OLBJRAj5A6uw=
+	t=1773143755; cv=none; b=pmTmh18MI82cAmzuVBn3/TLslDCgwF48naHS4vEsNCv7hwuYaD4tMK+RuCWjRBgrTvEGtYIi5y7NE7fRZn0ePtatMstjV0/Q4jc7YuqHUfVeY89O3c4BDfGjPbsiqRfD266MxxcCzp0oaWS5frA3IJdqUh2KMA/9FW8OVcin6zM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773143753; c=relaxed/simple;
-	bh=aOTa0J99wrUiCJDKciZIBaRSFy8AAIBeipk1P/Ry6Do=;
+	s=arc-20240116; t=1773143755; c=relaxed/simple;
+	bh=BZdZKAXpTi8WGNXN2fiMzetM/noYEEE0kBAl+EzvNzY=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=mROPffrlSGndXo5kdzX2aRA3zFeTbkWDOD4c9QIV7QMn5quv8n4bBs9tiZ0szJwEkLOvyO8MpupP6D0JYaC6GJg2vJRYCe67j1UIKfKEHREMi3mFbL2QRRZR8BeoUKPLeSXKhr8aIjWFuFROqz3O5kLyAJQOTGmCQ+JArxpGssk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=OzCQWGEP; arc=none smtp.client-ip=212.42.244.119
+	 In-Reply-To:To:Cc; b=LHNBkjc5071gpELTFFi8IWKZ/VgQbqJOrNTTCxu4StHO7fJ7MLVbC83rUUf12RFtrgl0lZEjcgV0Jn8x/fx4qNt+7RETF61D9hegeleiITlPMKWfSe1IlSKxAUE/3JcFxV1SbDDtUEBnBGpnaLQLtIAz0OryG7SqgJBPtwMbptI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de; spf=pass smtp.mailfrom=avm.de; dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b=SoumYKRr; arc=none smtp.client-ip=212.42.244.119
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=avm.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=avm.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="OzCQWGEP"
+	dkim=pass (1024-bit key) header.d=avm.de header.i=@avm.de header.b="SoumYKRr"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=avm.de; s=mail;
-	t=1773143729; bh=aOTa0J99wrUiCJDKciZIBaRSFy8AAIBeipk1P/Ry6Do=;
+	t=1773143730; bh=BZdZKAXpTi8WGNXN2fiMzetM/noYEEE0kBAl+EzvNzY=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
-	b=OzCQWGEP3xIWg4aft9Gi61CqVxzVTLKLAimjDrWeQqUc3hUkPv1N3tKeXtgO8+TTP
-	 XhmqP+sFetcOut+NsJt0vEBnYbeIs2Hbr8gQtf+aklxbXgaq0RnUqAMfY7Dvjp000Y
-	 AkX7mNRKwyV5huTmoXbZ4xAO9eyZ3soV+HNDBiK0=
-Received: from [2001:bf0:244:244::71] (helo=mail.avm.de)
+	b=SoumYKRreG/py1h5mHUmmcf5MNhTA0IWVyuhwVtBQDsB3zjLeFZGYUpB8dmBQK885
+	 8zp8zOhWINTswvz/8Dpb4sCQeiaM8MeFzyXeYCejwMtQ6v6ZBfw76CXpeNeZINOkH+
+	 x4yAkEpkA6PhpBthZhWBkiZQBi3374fgQonGrnmw=
+Received: from [212.42.244.71] (helo=mail.avm.de)
 	by mail.avm.de with ESMTP (eXpurgate 4.55.2)
 	(envelope-from <phahn-oss@avm.de>)
-	id 69b006b1-2367-7f0000032729-7f000001ca34-1
+	id 69b006b1-2367-7f0000032729-7f000001ca68-1
 	for <multiple-recipients>; Tue, 10 Mar 2026 12:55:29 +0100
-Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [IPv6:2001:bf0:244:244::71])
+Received: from mail-auth.avm.de (dovecot-mx-01.avm.de [212.42.244.71])
 	by mail.avm.de (Postfix) with ESMTPS;
 	Tue, 10 Mar 2026 12:55:29 +0100 (CET)
 From: Philipp Hahn <phahn-oss@avm.de>
-Date: Tue, 10 Mar 2026 12:49:23 +0100
-Subject: [PATCH 57/61] reset: Prefer IS_ERR_OR_NULL over manual NULL check
+Date: Tue, 10 Mar 2026 12:49:27 +0100
+Subject: [PATCH 61/61] file: Drop unlikely() around IS_ERR_OR_NULL()
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -41,7 +41,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260310-b4-is_err_or_null-v1-57-bd63b656022d@avm.de>
+Message-Id: <20260310-b4-is_err_or_null-v1-61-bd63b656022d@avm.de>
 References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 In-Reply-To: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
 To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com, 
@@ -71,54 +71,55 @@ To: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
  sched-ext@lists.linux.dev, target-devel@vger.kernel.org, 
  tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev, 
  Philipp Hahn <phahn-oss@avm.de>
-Cc: Philipp Zabel <p.zabel@pengutronix.de>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=968; i=phahn-oss@avm.de;
- h=from:subject:message-id; bh=aOTa0J99wrUiCJDKciZIBaRSFy8AAIBeipk1P/Ry6Do=;
- b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAaYTbMwEnKjO28t4NGQZrm6X1QSq5SK/k8qB
- qh4VPr1rLCJATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAGmAAKCRA0LQZT0ays
- 21umCACxIKapQYseolYqqyBm7SyLTZbMM7MUu/ruXbxGyc49Ef4ha2YprHG4wuhRGtqa+VJappe
- JyX0Z9X9KMdJsI/T+BsTdbSpg720pNSAKbSG/WcuoRUIgTiyuqx3+IKJLG0jtFT86FOozZPOWEy
- PPGiUFAfCi7lTKlHGrGHOhGX9fNEHoC67p+hbdbdmFe+ifTERx6lzSSYvUcvltMUMt2tdHG0fgm
- mbuvPyYzKrB65Gooayr+TJ6lncMe1eo3kIkCgAS0gJFF08HI7PwP3Atbb7J7YpFYREokazErNBn
- 540BWDngwOE49h53Z1ngLFPv4fl7uolW05pdRIimfw0qiceA
+Cc: Christian Brauner <brauner@kernel.org>, 
+ Jeff Layton <jlayton@kernel.org>
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1020; i=phahn-oss@avm.de;
+ h=from:subject:message-id; bh=BZdZKAXpTi8WGNXN2fiMzetM/noYEEE0kBAl+EzvNzY=;
+ b=owEBbQGS/pANAwAKATQtBlPRrKzbAcsmYgBpsAamjmr2YH1D6NIv4bWMOoOgSjqlNw1AkTnEk
+ z4zblGz3BCJATMEAAEKAB0WIQQ5bPBtrWDUcDQCppg0LQZT0ays2wUCabAGpgAKCRA0LQZT0ays
+ 24dkB/9I2IH2WVtNuAbc4pN8k/UWfzfn7IBk5SYldKbG4a3vAt2BCQOMLY6KBgHTT+SL+30NFE0
+ eqhT72U09tRMvyWUaeodCCSJABvxL6Unq+gQWaX6/P1+X8+kVa/Fa0v8GHtiYqiopntbOsAjZBr
+ sS0Bbptn0GuVsdoMNke4vQD0A9rA3xW5nWOgDpK1U8FjC9uaXfz1Bfzn2XQq/Me0fZtcNCJpNlZ
+ qjNOLRSw3BZGb7IPqnUrcjHIuuNd6dYbs6wYHOgbyiibTqQrj6tp6SnoDxHnYU93V6GBh2lMfHt
+ 9qSEynUbZNIYOnoqI2ah9KWLVKFkMsTrddsdp5JisL6z2WZS
 X-Developer-Key: i=phahn-oss@avm.de; a=openpgp;
  fpr=58AF7C2E007CDBE62C59E078F50EFDCF8AD04B1A
-X-purgate-ID: 149429::1773143729-7B4FEE1F-3FF7DD9F/0/0
+X-purgate-ID: 149429::1773143729-96CB1E1F-80912B69/0/0
 X-purgate-type: clean
-X-purgate-size: 970
+X-purgate-size: 1022
 X-purgate-Ad: Categorized by eleven eXpurgate (R) https://www.eleven.de
 X-purgate: This mail is considered clean (visit https://www.eleven.de for further information)
 X-purgate: clean
 
-Prefer using IS_ERR_OR_NULL() over using IS_ERR() and a manual NULL
-check.
+IS_ERR_OR_NULL() already uses likely(!ptr) internally. checkpatch does
+not like nesting it:
+> WARNING: nested (un)?likely() calls, IS_ERR_OR_NULL already uses
+> unlikely() internally
+Remove the explicit use of unlikely().
 
-Semantich change: Previously the code only printed the warning on error,
-but not when the pointer was NULL. Now the warning is printed in both
-cases!
+Change generated with coccinelle.
 
-Change found with coccinelle.
-
-To: Philipp Zabel <p.zabel@pengutronix.de>
+To: Christian Brauner <brauner@kernel.org>
+To: Jeff Layton <jlayton@kernel.org>
 Cc: linux-kernel@vger.kernel.org
 Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
 ---
- drivers/reset/core.c | 2 +-
+ include/linux/file.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/reset/core.c b/drivers/reset/core.c
-index fceec45c8afc1e74fe46311bdc023ff257e8d770..649bb4ebabb20a09349ccbfc62f8280621df450e 100644
---- a/drivers/reset/core.c
-+++ b/drivers/reset/core.c
-@@ -715,7 +715,7 @@ EXPORT_SYMBOL_GPL(reset_control_bulk_acquire);
-  */
- void reset_control_release(struct reset_control *rstc)
+diff --git a/include/linux/file.h b/include/linux/file.h
+index 27484b444d3155685cdbb89f546f26ef66e3e1b4..007b9b9d365a052c1c056e12571eaf4f8ef5a45c 100644
+--- a/include/linux/file.h
++++ b/include/linux/file.h
+@@ -163,7 +163,7 @@ static inline void class_fd_prepare_destructor(const struct fd_prepare *fdf)
  {
--	if (!rstc || WARN_ON(IS_ERR(rstc)))
-+	if (WARN_ON(IS_ERR_OR_NULL(rstc)))
- 		return;
+ 	if (unlikely(fdf->__fd >= 0))
+ 		put_unused_fd(fdf->__fd);
+-	if (unlikely(!IS_ERR_OR_NULL(fdf->__file)))
++	if (!IS_ERR_OR_NULL(fdf->__file))
+ 		fput(fdf->__file);
+ }
  
- 	if (reset_control_is_array(rstc))
 
 -- 
 2.43.0
