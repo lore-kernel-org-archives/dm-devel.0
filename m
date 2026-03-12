@@ -1,352 +1,1207 @@
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.12])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 729622BE02A;
-	Thu, 12 Mar 2026 16:12:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=198.175.65.12
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773331967; cv=fail; b=hEvmPtCxn0+1cfIy4B+p3Ic8p85778AJHWO+Fb/NXdY4Q06fIQuYQUeFgvhop5yeMjIdeoyU9w0kADPpEB9Ice/3cxjq9BNCbdQuMMfUdk7cuWYqk5jtJuZfFGxImxTQR2Y+h6y1Ag6gLN3O08mS0pNSoqoZZRbtWNHvc4DOpQg=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773331967; c=relaxed/simple;
-	bh=5bFRno/x5CuND9g6xv0lanCw5CYbDU9w0cEWHBHlDpc=;
-	h=Message-ID:Date:Subject:To:CC:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=nWQO9irL5Te6H1LwZr0ReQIzi2NK80RWG0TPuT9WcvogpGgTFdpjLO6Dx8jn0/z11cWSdibUIiOd2wr0w698nT9UfoKvvHuTUNt+ijmONRYj6Yf8TjKEmTK/CZ9hIK6srqOf5mjUaigdMwPBivFMHxnrdyJMh2yzLpLzrGKPoxk=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=eTRxF84U; arc=fail smtp.client-ip=198.175.65.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C83B212D7C
+	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 16:32:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1773333171; cv=none; b=D96/wgNpB3St7uoNilBB/SVOVxeYu8vRyB8kiIMhiilLQlI8s5F55TeNOY2+dHdq6p8z4a4g64QKZK2oOoEY0kPpdEr0lQ/cOf7YA5qmR+rRCbiB9nej3hMM5QRhSnR9ojpHQo1S/fjZgU9/QVDfNJd0YsdiFNx0/3166Agxd64=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1773333171; c=relaxed/simple;
+	bh=HW0TkeZvRknBu5/QcKM7Nfjn/rPkDVP3/XGQIaXN6iw=;
+	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=PTJ15v/RsU2QuQaZ4imj799NHm3+uwkGbyin5QflSw86JCII8nSPhJo5ttXIXcDcUeteyqGXpbRxbhF3M7wJ9gV+1jZQ+CNKKi+iiXEBkwkJtGmysDSOBuH40MB3TUqKp+IrYA3521zfBbftXfypGDdo26vGw3Ag86KQuKJmY2g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=b7KedUmG; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=b7KedUmG; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="eTRxF84U"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1773331966; x=1804867966;
-  h=message-id:date:subject:to:cc:references:from:
-   in-reply-to:content-transfer-encoding:mime-version;
-  bh=5bFRno/x5CuND9g6xv0lanCw5CYbDU9w0cEWHBHlDpc=;
-  b=eTRxF84UNKvNFRzQhmbRzm88h7IJLvvXqHA/XLkbAaStXjCjdXvwn036
-   T/3SJr6lYH9orml/67hvqZofXBNWg+HbSWI0WhIq4TXhDlmeKVcLOWQBd
-   nD/IUVpff7wL2LS60lnmffSeRga4cLXqnul9OYbFjVE33XalukgEX+sgL
-   dSeHgaYpLXYh5gf5r4IFVisWJR3G1d9p8fJc8BX+9hsy6DzP1BRJAkCLP
-   H08u6yQIdE3tIbZrmHWxEYbRMmKRyIlZnC8Qo/PZIdKwmt7xKIgb1xN1K
-   JYvOwtZLCkbkcPXPrlcolL8tisGkWMO/kq26zqstvGqfTf2oUFmeFPP4P
-   w==;
-X-CSE-ConnectionGUID: EIowWxylT8KOnj/2/DQ43g==
-X-CSE-MsgGUID: PkW2rrksSiWOryKLjxZyCw==
-X-IronPort-AV: E=McAfee;i="6800,10657,11727"; a="85910024"
-X-IronPort-AV: E=Sophos;i="6.23,116,1770624000"; 
-   d="scan'208";a="85910024"
-Received: from orviesa007.jf.intel.com ([10.64.159.147])
-  by orvoesa104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Mar 2026 09:12:42 -0700
-X-CSE-ConnectionGUID: wo9a9boLQ3W77nLAysyVeA==
-X-CSE-MsgGUID: UCZc7QZASc6MQg3o49dwnQ==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.23,116,1770624000"; 
-   d="scan'208";a="221051544"
-Received: from fmsmsx903.amr.corp.intel.com ([10.18.126.92])
-  by orviesa007.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Mar 2026 09:12:26 -0700
-Received: from FMSMSX901.amr.corp.intel.com (10.18.126.90) by
- fmsmsx903.amr.corp.intel.com (10.18.126.92) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.37; Thu, 12 Mar 2026 09:12:16 -0700
-Received: from fmsedg901.ED.cps.intel.com (10.1.192.143) by
- FMSMSX901.amr.corp.intel.com (10.18.126.90) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.37 via Frontend Transport; Thu, 12 Mar 2026 09:12:16 -0700
-Received: from MW6PR02CU001.outbound.protection.outlook.com (52.101.48.16) by
- edgegateway.intel.com (192.55.55.81) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.2562.37; Thu, 12 Mar 2026 09:12:16 -0700
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=aQffyITYkzTS7flG4mkV7DfqRy6p0yvoelsD1vPvzqmebccUjnkt1BqsOASVKXX4x3BQJ0/fhMjJjYTbKnlf3lvYGmjtJVizJ69cNSh5jhuSL2AQ01AGkoVtcw3unypqT9dvuaTwpqb+jjgJ7vlCBtf1HWVN6s4fqOYqq9QZwsk1A9WzGZGdEs/5dSSqLdPPfixlVnwkDluMZyAhItvv5kGdMIcI6g35NEL5jpCBIoBM372SFwDMdrPpAdQ5KcYZcdMKZRMeyPvTlVgDa8AjH2VNO5QGAihTlm5OehOlbQf/y69qehIByv+JbnNkYOFrLMG4EmrTpDQKs37UJp4uYg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=S2r3mEx4jaS69b6pg4TeplPYQyNYaMq5f3Q1pXlTbJ4=;
- b=BztW+Cme5OBlZFfQyBCT3cw5ysoYvV9bvxO9E6neEsl0PT5FFXC3+hYCwymttBgqy/O1ZLFwr0kDKiWbQkgNkrKS4GIU57Keqr5x34a5354EeTMbgD3X8v5XNkdeHaxX/rr3vxJFgx2JDRU8FQbxz4nMP5ci3XJHEh43dAgT8+mP0ZXNwXUvKgg+BXL7/+njvxLtEkUIMgxIflWkKsSVdgeYD4aMFtVpIeABrP99SEHA1GvIK5GAlGmSYhMUpM5kPkTPOM6wrwVlwR5CjOhT6Qgc7hMTjtxIa8k1CJOgDbe0WZCQKoI2qggdWbyMknWbNKzpzgNtgx2i25vyrDOpjg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=intel.com; dmarc=pass action=none header.from=intel.com;
- dkim=pass header.d=intel.com; arc=none
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=intel.com;
-Received: from MN6PR11MB8102.namprd11.prod.outlook.com (2603:10b6:208:46d::9)
- by DS4PPFDA9EFDFDB.namprd11.prod.outlook.com (2603:10b6:f:fc02::55) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9700.12; Thu, 12 Mar
- 2026 16:12:12 +0000
-Received: from MN6PR11MB8102.namprd11.prod.outlook.com
- ([fe80::8d98:e538:8d7:6311]) by MN6PR11MB8102.namprd11.prod.outlook.com
- ([fe80::8d98:e538:8d7:6311%5]) with mapi id 15.20.9723.000; Thu, 12 Mar 2026
- 16:12:12 +0000
-Message-ID: <0da51c50-3afd-464a-aad8-99e475a31339@intel.com>
-Date: Thu, 12 Mar 2026 17:11:56 +0100
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 38/61] net: Prefer IS_ERR_OR_NULL over manual NULL check
-To: Philipp Hahn <phahn-oss@avm.de>
-CC: <amd-gfx@lists.freedesktop.org>, <apparmor@lists.ubuntu.com>,
-	<bpf@vger.kernel.org>, <ceph-devel@vger.kernel.org>, <cocci@inria.fr>,
-	<dm-devel@lists.linux.dev>, <dri-devel@lists.freedesktop.org>,
-	<gfs2@lists.linux.dev>, <intel-gfx@lists.freedesktop.org>,
-	<intel-wired-lan@lists.osuosl.org>, <iommu@lists.linux.dev>,
-	<kvm@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>,
-	<linux-block@vger.kernel.org>, <linux-bluetooth@vger.kernel.org>,
-	<linux-btrfs@vger.kernel.org>, <linux-cifs@vger.kernel.org>,
-	<linux-clk@vger.kernel.org>, <linux-erofs@lists.ozlabs.org>,
-	<linux-ext4@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
-	<linux-gpio@vger.kernel.org>, <linux-hyperv@vger.kernel.org>,
-	<linux-input@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-	<linux-leds@vger.kernel.org>, <linux-media@vger.kernel.org>,
-	<linux-mips@vger.kernel.org>, <linux-mm@kvack.org>,
-	<linux-modules@vger.kernel.org>, <linux-mtd@lists.infradead.org>,
-	<linux-nfs@vger.kernel.org>, <linux-omap@vger.kernel.org>,
-	<linux-phy@lists.infradead.org>, <linux-pm@vger.kernel.org>,
-	<linux-rockchip@lists.infradead.org>, <linux-s390@vger.kernel.org>,
-	<linux-scsi@vger.kernel.org>, <linux-sctp@vger.kernel.org>,
-	<linux-security-module@vger.kernel.org>, <linux-sh@vger.kernel.org>,
-	<linux-sound@vger.kernel.org>, <linux-stm32@st-md-mailman.stormreply.com>,
-	<linux-trace-kernel@vger.kernel.org>, <linux-usb@vger.kernel.org>,
-	<linux-wireless@vger.kernel.org>, <netdev@vger.kernel.org>,
-	<ntfs3@lists.linux.dev>, <samba-technical@lists.samba.org>,
-	<sched-ext@lists.linux.dev>, <target-devel@vger.kernel.org>,
-	<tipc-discussion@lists.sourceforge.net>, <v9fs@lists.linux.dev>, "Igor
- Russkikh" <irusskikh@marvell.com>, Andrew Lunn <andrew+netdev@lunn.ch>,
-	"David S. Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>,
-	"Jakub Kicinski" <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Pavan
- Chebbi <pavan.chebbi@broadcom.com>, Michael Chan <mchan@broadcom.com>,
-	"Potnuri Bharat Teja" <bharat@chelsio.com>, Tony Nguyen
-	<anthony.l.nguyen@intel.com>, Taras Chornyi <taras.chornyi@plvision.eu>,
-	Maxime Coquelin <mcoquelin.stm32@gmail.com>, Alexandre Torgue
-	<alexandre.torgue@foss.st.com>, Iyappan Subramanian
-	<iyappan@os.amperecomputing.com>, Keyur Chudgar
-	<keyur@os.amperecomputing.com>, Quan Nguyen <quan@os.amperecomputing.com>,
-	Heiner Kallweit <hkallweit1@gmail.com>, Russell King <linux@armlinux.org.uk>
-References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
- <20260310-b4-is_err_or_null-v1-38-bd63b656022d@avm.de>
-From: Przemek Kitszel <przemyslaw.kitszel@intel.com>
-Content-Language: en-US
-In-Reply-To: <20260310-b4-is_err_or_null-v1-38-bd63b656022d@avm.de>
-Content-Type: text/plain; charset="UTF-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: DB9PR05CA0028.eurprd05.prod.outlook.com
- (2603:10a6:10:1da::33) To MN6PR11MB8102.namprd11.prod.outlook.com
- (2603:10b6:208:46d::9)
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="b7KedUmG";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="b7KedUmG"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 90E5D5C04F;
+	Thu, 12 Mar 2026 16:32:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773333166; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=gNQ0NTdexzTN064QlP3UYlLNRLYojPLT7ANIr94mVLk=;
+	b=b7KedUmGLJn5mz63us4/dC/87mBUcNXNvp9OCjJfLrV5+RMLE5dpj5FPEVaNgEIjyXjGAk
+	OzBAmjhcl1nTvA0KOUdRL5kERRAF0YUSLEs7AtKOOWANOxgzHomWf/AyGrC7gGJey3vzYL
+	Hi1YVZYXlFQtso48ftYc+5umZWg5BFE=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773333166; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=gNQ0NTdexzTN064QlP3UYlLNRLYojPLT7ANIr94mVLk=;
+	b=b7KedUmGLJn5mz63us4/dC/87mBUcNXNvp9OCjJfLrV5+RMLE5dpj5FPEVaNgEIjyXjGAk
+	OzBAmjhcl1nTvA0KOUdRL5kERRAF0YUSLEs7AtKOOWANOxgzHomWf/AyGrC7gGJey3vzYL
+	Hi1YVZYXlFQtso48ftYc+5umZWg5BFE=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 72CF440073;
+	Thu, 12 Mar 2026 16:32:46 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id u8nrGq7qsmlSeAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 12 Mar 2026 16:32:46 +0000
+Message-ID: <8653507a25c02727037e7e8bad4b2178a9702040.camel@suse.com>
+Subject: Re: [PATCH 1/1] checkers: add alua path checker
+From: Martin Wilck <mwilck@suse.com>
+To: Brian Bunker <brian@purestorage.com>, bmarzins@redhat.com, 
+	dm-devel@lists.linux.dev
+Date: Thu, 12 Mar 2026 17:32:46 +0100
+In-Reply-To: <20260312001642.53321-2-brian@purestorage.com>
+References: <20260312001642.53321-1-brian@purestorage.com>
+	 <20260312001642.53321-2-brian@purestorage.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: MN6PR11MB8102:EE_|DS4PPFDA9EFDFDB:EE_
-X-MS-Office365-Filtering-Correlation-Id: 6f0f9ecc-edd7-4e03-1a3f-08de80521e93
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|1800799024|376014|7416014|22082099003|7053199007|56012099003|18002099003;
-X-Microsoft-Antispam-Message-Info: 0JzyEtz+ZbY+UJfay1MMx6cC7k0VDpTAisQfHr8ee8fhRS9oZ/3EkK0SYa4H9xO+17cqN8E+INuWd0bDOhg6KyMSzQi4RLCB8yuN8addTN8WfkoDEXNJd3uynlJwQMFvJpVc5/6mTD+E8XvzGrnqrFo3mdW0yJLnV+UL+VFlNvaI7d3JY+amn8fmczN5NWzLWPhGBAt2EMHTRLTc8v8nGb0g73JENOqONAlmDCfKE0GXQx238nSbuoRBzBGsrkpYLX0pGkMHDk5HsKqQySnqWHSIGAs9FIfiQ40DdaWm8mwqbOfnJpoxF8PSYWVX02H6lUXF2NuGRZVoW0O6iEmJTBTtk47r/Uob+aS0SdHobYpGy2JhDE1CFbFyiD8Rhr9YqFpB6I7pUC5CO376reeOmS1ggrEUisVWCJ8UCW/cm7uZVmRS7KJnFOPnJ0H1rbHeXczxrtg13GUOjBpAoeHkI6e72lLPv5Xj5OOdYD8GCbWA6bNGCfVjbZXkKtYzNhOp9gtoZ1NNYTLIklJDjukLNoia6KYo5rUKZkX3sMViba6m8oY1T/8y6T83Q7cSeVNXpdvgJ+D3rUuF66Bn29BhUp50Gss35pc8jsAIvV92tpazJssg2Yfv3zGruCBTbGG6uKoA/+Lyct3jhQyr2suol6i7dMGHlSURpaY/Y65Ye+icJJRzr306I9/r63LzJ5Kl
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:MN6PR11MB8102.namprd11.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014)(7416014)(22082099003)(7053199007)(56012099003)(18002099003);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?utf-8?B?UTh0emRrTjRWY2xrdUwrdmFCeDU4bmVmeGtUQTI5MnZ2MnQ5UmJtWFllN3Nv?=
- =?utf-8?B?WVZpMHFMNGREY2IxMllKYnY1UGxWanZTNlFHTGk1QjdyS0lvTVh4eU9BUkhk?=
- =?utf-8?B?L2tJRUJEN1RQdmlqUUtvY2hhOGgrSis2Y00wTC9uU0U4WXZuOUZWL25kWXNX?=
- =?utf-8?B?eXBRZkprWlpkUFU4M2RPckgxNlFBM0lCZnIxZzJpeWV0UmczVkMweGRHUFM3?=
- =?utf-8?B?Sjh6TWE3WVNJd21XM1RQODMzT1J3c2ZTa1NyUEs4dTdmMlNtQXlzZU5nVzND?=
- =?utf-8?B?K29aRHA4ZDllcmNWRFNZeDBRUTNheWd2dWNWdHY4RjJIVnhuRGNvRG93NVZv?=
- =?utf-8?B?dGhPVkUvYlJSbmhxZDJFMEF5TU5Bb3RkbjlvVktNQWVqWWlRSWMyNlFYei8v?=
- =?utf-8?B?ZFdzUFpFR0xseWs3ZDNRbW5qenowWXM3MEpjTldRc0J6eVdBT0prNTNqQUF2?=
- =?utf-8?B?SjloL0Jzd0lnSC8yTkFvMzJtemJzckxHeEVKU1FmcU5lcXcrT29BWGsvNmFB?=
- =?utf-8?B?SEE0ZlFaTlkvOUNHZDdjRDN2Vzg4Y1lEOFlRRitsOC9IOVJrSi93YnFyRnB0?=
- =?utf-8?B?d1ZjTm1TUWl4TnBQSytnektHR1hzWk1mT1BuTi9ZVlJyaFlWTVJjSnZ1WUo3?=
- =?utf-8?B?MEUyYkUraHNhcTRtMmNMa3VIS1ovVFlVbTYyc2NVMDlYN2svaDRHYmlpa0lz?=
- =?utf-8?B?RjhZaEF0eVZTUDJBREtqZTdaMkNobkkwTURGTmFHOFlnNGUwSTFSRmEvSmFF?=
- =?utf-8?B?TnE5RXp4MmZOeEFzZ0xUZTBZSlh0VWVnams3eWlpWTNOL1JmN3RleEExRVo4?=
- =?utf-8?B?R0JyVUg1ZkxnV21LSUtocHMzSDJ4bTdYTFpBK1VPWjVoTnBEU1NKaHRLUW1z?=
- =?utf-8?B?ODFUYTdUZm9ZUysrUm9pbEd5ZXZXd1J5ZGRsMjV6eXRmWVIvVUkva2FSYjVC?=
- =?utf-8?B?OUFyTVhNQ2xCWkJEdnNjUm1VM0VLM2lEYkVnazRSalVzQUl3cFk3UDhMcHBJ?=
- =?utf-8?B?U2pMWC93eUIzZy9QVGJGQkp6d21rRTR1R1gyWUdScVdkRVo5R1FTcDlvOGI4?=
- =?utf-8?B?cmNLeWdZKzJnaDlYa0xMSXNRamg3YWE5eWhsTldaS21jaUNDVHBKZGdOcEZT?=
- =?utf-8?B?V2wrZWNhOTBCVEdkMnpIdTNWdGt6MlJXTXlRdDIzanYreUEydGsrTU92SVFu?=
- =?utf-8?B?OHluS3JyS0RiR2N0UVU0V01Ub1l0K2hZVjNjeTJiVEFhTklBWm52eHRWQjI3?=
- =?utf-8?B?THByM21VZ3V2QVV2ZWJEWG5SbFNRZzdoR0lnM0F6aDBxSFU3aU1RbEZYa0VL?=
- =?utf-8?B?SUc5ZDRkWXRhWkRvamZxMlh6eDBGSVJJeHZnanBRU0FUaE5lcUZXMzB4WSt2?=
- =?utf-8?B?cFBNRC91b0FlaSthVXpjK1VnZXMrakl2enVYdFMrU09UZHNQbnY1dk15V243?=
- =?utf-8?B?UEdGL05LczgzTHMrUlRVNk9IallyLzFyb0xwbkxYZ0wrZm9PeUx2MXVwbzEx?=
- =?utf-8?B?NTA4Wk9GUlpFRElnUEpNNDZqODAxQ0F0ejdQS1JZaGtmd1V3MG5QYnZ5K1Rs?=
- =?utf-8?B?MGFTK3VsblR1M3dQaDB6NHhkV3pUaUFERTd4UUxQQjlSK2JsZjRQNForNENm?=
- =?utf-8?B?MFpKYjVWc21qOXBKSmR4T1F3TW9uaFpxY0EzWVZZZFRoMW5RWk5HdWNTMmJr?=
- =?utf-8?B?OWtBbG9XODhZNEphWURHbjdwYnNEUlNPcGRQNmtvNHhuSHZQN2VBQ21MWUxD?=
- =?utf-8?B?L04zYzQvRTBzc25HSGtLMHNBWlgzZTFud1VOUGdTVkhRU0lydExMZ1hiRUVk?=
- =?utf-8?B?OEo3SGtYelUxRW1QT05oNG1FVlB6WDIxc05TVU5EMVpQb0w0WjJIdVFVTnNG?=
- =?utf-8?B?eUhPZm5hZU1JeG5tbTRMbUNKR0h6R2xEaEdyWFRSWksrWnE4UkY5NkZlM2ZX?=
- =?utf-8?B?N0h6WSszYVZhQUVOREhCNDdlZmlXV3UvUFMwbG5sbWFjS3pPWEdnMlBqRGxG?=
- =?utf-8?B?ZWpmb1NNUWN6UDg3NVVwTlhKZGZ4RThBdUI5cFJjazZKWUhyTmZyRm9VZ0Nx?=
- =?utf-8?B?VmVXMXg0T0dtODErRndFcndkWG5EeGY5NGNsSDdoYTZRZFpLbDAwU0pDSnRD?=
- =?utf-8?B?NVRYS3RZNkZvRVEwVjNlajFJVTRVZlM0ek9JbnozeFBQY1U0c25BaFkzMGl5?=
- =?utf-8?B?bG1FZlBZdGxZTGdmSnFHdXdjR240OGZGR3JiQ2w4UE1YSHNaVVMydG9CZHo2?=
- =?utf-8?B?OVRkd0hTaENFTEhscWluWVN2N3RCOWUrTnRuTEs5NHRtWVoxK21LSDQvWnpD?=
- =?utf-8?B?WkhKZkp4U3dVVzE2VG9Fc0hERXRBdUFWRHlSWjdGMDNmUEZzYW1VY1lDNEtF?=
- =?utf-8?Q?lEcw5NvkT6Xp+YVo=3D?=
-X-Exchange-RoutingPolicyChecked: k+VKSPAM7KWe+eF9eQg7nB4SNgLOqJ5F7bFdYbbZTeKXANRkNzvGEEYyC8gBkAnYBQbBnLETSuGZzhg7V4slfrEEpJGCeVVYiKSNWO4OGl7pZi68LFMzCHTPrtuvVgpFVD4uDxqt1/HNubsnanmP1G8FAl6IOpxVKnaoPEg/NVcU52Q0KSEBFFkAPBogHPZy7e9fZJLJe3ETdjYg9N6IwBd9le+DB9VqnLVHfYvwevLcu2RqYd8Pnb86MrH17SC1qPrVolB8jsGaZJmKP6DFKbBWzt6ba1ADz8SHmFKvpVy8K5W1mh+EmY5zJIOQfUYIOwbE9LGf9+WF/pWC99LnEQ==
-X-MS-Exchange-CrossTenant-Network-Message-Id: 6f0f9ecc-edd7-4e03-1a3f-08de80521e93
-X-MS-Exchange-CrossTenant-AuthSource: MN6PR11MB8102.namprd11.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 12 Mar 2026 16:12:12.3882
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 46c98d88-e344-4ed4-8496-4ed7712e255d
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: NEdWwkLUzCzbtdV4esOcW+KF0h2yXcJdE4EMktG7LaB1JizSgLunmzY78asDDAwWKzmb3uxKUCQCT5c3xwKLv6ET/L3+njS36DMvqibeYL4=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS4PPFDA9EFDFDB
-X-OriginatorOrg: intel.com
+X-Spam-Score: -4.30
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Flag: NO
 
-On 3/10/26 12:49, Philipp Hahn wrote:
-> Prefer using IS_ERR_OR_NULL() over using IS_ERR() and a manual NULL
-> check.
-> 
-> Change generated with coccinelle.
-> 
-> To: Igor Russkikh <irusskikh@marvell.com>
-> To: Andrew Lunn <andrew+netdev@lunn.ch>
-> To: "David S. Miller" <davem@davemloft.net>
-> To: Eric Dumazet <edumazet@google.com>
-> To: Jakub Kicinski <kuba@kernel.org>
-> To: Paolo Abeni <pabeni@redhat.com>
-> To: Pavan Chebbi <pavan.chebbi@broadcom.com>
-> To: Michael Chan <mchan@broadcom.com>
-> To: Potnuri Bharat Teja <bharat@chelsio.com>
-> To: Tony Nguyen <anthony.l.nguyen@intel.com>
-> To: Przemek Kitszel <przemyslaw.kitszel@intel.com>
-> To: Taras Chornyi <taras.chornyi@plvision.eu>
-> To: Maxime Coquelin <mcoquelin.stm32@gmail.com>
-> To: Alexandre Torgue <alexandre.torgue@foss.st.com>
-> To: Iyappan Subramanian <iyappan@os.amperecomputing.com>
-> To: Keyur Chudgar <keyur@os.amperecomputing.com>
-> To: Quan Nguyen <quan@os.amperecomputing.com>
-> To: Heiner Kallweit <hkallweit1@gmail.com>
-> To: Russell King <linux@armlinux.org.uk>
-> Cc: netdev@vger.kernel.org
-> Cc: linux-kernel@vger.kernel.org
-> Cc: intel-wired-lan@lists.osuosl.org
-> Cc: linux-stm32@st-md-mailman.stormreply.com
-> Cc: linux-arm-kernel@lists.infradead.org
-> Cc: linux-usb@vger.kernel.org
-> Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
+Hi Brian,
 
-this is too trivial change, especially when combined like that
-https://docs.kernel.org/process/maintainer-netdev.html#clean-up-patches
+On Wed, 2026-03-11 at 17:16 -0700, Brian Bunker wrote:
+> Add an 'alua' path checker that uses RTPG to check path state, and an
+> 'alua_cached' prioritizer that uses the checker's cached ALUA state.
+>=20
+> The checker maps ALUA Asymmetric Access States to path states:
+> =C2=A0 - AAS_OPTIMIZED, AAS_NON_OPTIMIZED -> PATH_UP
+> =C2=A0 - AAS_STANDBY -> PATH_GHOST
+> =C2=A0 - AAS_TRANSITIONING -> PATH_PENDING
+> =C2=A0 - AAS_UNAVAILABLE, AAS_OFFLINE -> PATH_DOWN
+>=20
+> The alua_cached prioritizer first checks for cached state from the
+> alua
+> checker, then falls back to sysfs, then to issuing RTPG directly.
+> This
+> maintains backward compatibility with other checker configurations.
+>=20
+> When detect_checker is enabled, the alua checker is auto-selected for
+> devices with TPGS support. When the alua checker is in use,
+> detect_prio
+> auto-selects the alua_cached prioritizer.
+>=20
+> Signed-off-by: Brian Bunker <brian@purestorage.com>
+
+Thanks! Just a few remarks for now.
+
+Martin
 
 > ---
->   drivers/net/ethernet/aquantia/atlantic/aq_ring.c        | 2 +-
->   drivers/net/ethernet/broadcom/tg3.c                     | 2 +-
->   drivers/net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c    | 3 +--
->   drivers/net/ethernet/intel/ice/devlink/devlink.c        | 2 +-
->   drivers/net/ethernet/marvell/prestera/prestera_router.c | 2 +-
->   drivers/net/ethernet/stmicro/stmmac/stmmac_main.c       | 2 +-
->   drivers/net/mdio/mdio-xgene.c                           | 2 +-
->   drivers/net/usb/r8152.c                                 | 2 +-
->   8 files changed, 8 insertions(+), 9 deletions(-)
-> 
-> diff --git a/drivers/net/ethernet/aquantia/atlantic/aq_ring.c b/drivers/net/ethernet/aquantia/atlantic/aq_ring.c
-> index e270327e47fd804cc8ee5cfd53ed1b993c955c41..43edef35c4b1ff606b2f1519a07fad4c9a990ad4 100644
-> --- a/drivers/net/ethernet/aquantia/atlantic/aq_ring.c
-> +++ b/drivers/net/ethernet/aquantia/atlantic/aq_ring.c
-> @@ -810,7 +810,7 @@ static int __aq_ring_xdp_clean(struct aq_ring_s *rx_ring,
->   		}
->   
->   		skb = aq_xdp_run_prog(aq_nic, &xdp, rx_ring, buff);
-> -		if (IS_ERR(skb) || !skb)
-> +		if (IS_ERR_OR_NULL(skb))
->   			continue;
->   
->   		if (ptp_hwtstamp_len > 0)
-> diff --git a/drivers/net/ethernet/broadcom/tg3.c b/drivers/net/ethernet/broadcom/tg3.c
-> index 2328fce336447eb4a796f9300ccc0ab536ff0a35..8ed79f34f03d81184dcc12e6eaff009cb8f7756e 100644
-> --- a/drivers/net/ethernet/broadcom/tg3.c
-> +++ b/drivers/net/ethernet/broadcom/tg3.c
-> @@ -7943,7 +7943,7 @@ static int tg3_tso_bug(struct tg3 *tp, struct tg3_napi *tnapi,
->   
->   	segs = skb_gso_segment(skb, tp->dev->features &
->   				    ~(NETIF_F_TSO | NETIF_F_TSO6));
-> -	if (IS_ERR(segs) || !segs) {
-> +	if (IS_ERR_OR_NULL(segs)) {
->   		tnapi->tx_dropped++;
->   		goto tg3_tso_bug_end;
->   	}
-> diff --git a/drivers/net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c b/drivers/net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c
-> index 3307e50426819087ad985178c4a5383f16b8e7b4..1c8a6445d4b2e3535d8f1b7908dd02d8dd2f23fa 100644
-> --- a/drivers/net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c
-> +++ b/drivers/net/ethernet/chelsio/cxgb4/cxgb4_tc_flower.c
-> @@ -1032,8 +1032,7 @@ static void ch_flower_stats_handler(struct work_struct *work)
->   	do {
->   		rhashtable_walk_start(&iter);
->   
-> -		while ((flower_entry = rhashtable_walk_next(&iter)) &&
-> -		       !IS_ERR(flower_entry)) {
-> +		while (!IS_ERR_OR_NULL((flower_entry = rhashtable_walk_next(&iter)))) {
->   			ret = cxgb4_get_filter_counters(adap->port[0],
->   							flower_entry->filter_id,
->   							&packets, &bytes,
-> diff --git a/drivers/net/ethernet/intel/ice/devlink/devlink.c b/drivers/net/ethernet/intel/ice/devlink/devlink.c
-> index 6c72bd15db6d75a1d4fa04ef8fefbd26fb6e84bd..3d08b9187fd76ca3198af28111b6f1c1765ea01e 100644
-> --- a/drivers/net/ethernet/intel/ice/devlink/devlink.c
-> +++ b/drivers/net/ethernet/intel/ice/devlink/devlink.c
-> @@ -791,7 +791,7 @@ static void ice_traverse_tx_tree(struct devlink *devlink, struct ice_sched_node
->   						  node->parent->rate_node);
->   	}
->   
-> -	if (rate_node && !IS_ERR(rate_node))
-> +	if (!IS_ERR_OR_NULL(rate_node))
->   		node->rate_node = rate_node;
->   
->   traverse_children:
-> diff --git a/drivers/net/ethernet/marvell/prestera/prestera_router.c b/drivers/net/ethernet/marvell/prestera/prestera_router.c
-> index b036b173a308b5f994ad8538eb010fa27196988c..4492938e8a3da91d32efe8d45ccbe2eb437c0e49 100644
-> --- a/drivers/net/ethernet/marvell/prestera/prestera_router.c
-> +++ b/drivers/net/ethernet/marvell/prestera/prestera_router.c
-> @@ -1061,7 +1061,7 @@ static void __prestera_k_arb_hw_state_upd(struct prestera_switch *sw,
->   		n = NULL;
->   	}
->   
-> -	if (!IS_ERR(n) && n) {
-> +	if (!IS_ERR_OR_NULL(n)) {
->   		neigh_event_send(n, NULL);
->   		neigh_release(n);
->   	} else {
-> diff --git a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
-> index 6827c99bde8c22db42b363d2d36ad6f26075ed50..356a4e9ce04b1fcf8786d7274d31ace404be2cf6 100644
-> --- a/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
-> +++ b/drivers/net/ethernet/stmicro/stmmac/stmmac_main.c
-> @@ -1275,7 +1275,7 @@ static int stmmac_init_phy(struct net_device *dev)
->   	/* Some DT bindings do not set-up the PHY handle. Let's try to
->   	 * manually parse it
->   	 */
-> -	if (!phy_fwnode || IS_ERR(phy_fwnode)) {
-> +	if (IS_ERR_OR_NULL(phy_fwnode)) {
->   		int addr = priv->plat->phy_addr;
->   		struct phy_device *phydev;
->   
-> diff --git a/drivers/net/mdio/mdio-xgene.c b/drivers/net/mdio/mdio-xgene.c
-> index a8f91a4b7fed0927ee14e408000cd3a2bfb9b09a..09b30b563295c6085dc1358ac361301e5cf6b2a8 100644
-> --- a/drivers/net/mdio/mdio-xgene.c
-> +++ b/drivers/net/mdio/mdio-xgene.c
-> @@ -265,7 +265,7 @@ struct phy_device *xgene_enet_phy_register(struct mii_bus *bus, int phy_addr)
->   	struct phy_device *phy_dev;
->   
->   	phy_dev = get_phy_device(bus, phy_addr, false);
-> -	if (!phy_dev || IS_ERR(phy_dev))
-> +	if (IS_ERR_OR_NULL(phy_dev))
->   		return NULL;
->   
->   	if (phy_device_register(phy_dev))
-> diff --git a/drivers/net/usb/r8152.c b/drivers/net/usb/r8152.c
-> index 0c83bbbea2e7c322ee6339893e281237663bd3ae..73f17ebd7d40007eec5004f887a46249defd28ab 100644
-> --- a/drivers/net/usb/r8152.c
-> +++ b/drivers/net/usb/r8152.c
-> @@ -2218,7 +2218,7 @@ static void r8152_csum_workaround(struct r8152 *tp, struct sk_buff *skb,
->   
->   		features &= ~(NETIF_F_SG | NETIF_F_IPV6_CSUM | NETIF_F_TSO6);
->   		segs = skb_gso_segment(skb, features);
-> -		if (IS_ERR(segs) || !segs)
-> +		if (IS_ERR_OR_NULL(segs))
->   			goto drop;
->   
->   		__skb_queue_head_init(&seg_list);
-> 
+> =C2=A0libmultipath/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=
+=A0 5 +
+> =C2=A0libmultipath/checkers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/checkers.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/checkers/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 3 +-
+> =C2=A0libmultipath/checkers/alua.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 426
+> ++++++++++++++++++++++++
+> =C2=A0libmultipath/checkers/alua.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 15 +
+> =C2=A0libmultipath/prio.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
+=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/prio.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
+=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/prioritizers/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
+=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/prioritizers/alua_cached.c | 224 +++++++++++++
+> =C2=A0libmultipath/prioritizers/alua_rtpg.c=C2=A0=C2=A0 |=C2=A0 12 +-
+> =C2=A0libmultipath/prioritizers/alua_rtpg.h=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> =C2=A0libmultipath/prioritizers/sysfs.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0=C2=A0 7 +-
+> =C2=A0libmultipath/propsel.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 20 +-
+> =C2=A0libmultipath/structs.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +
+> =C2=A0libmultipath/structs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 3 +
+> =C2=A016 files changed, 716 insertions(+), 7 deletions(-)
+> =C2=A0create mode 100644 libmultipath/checkers/alua.c
+> =C2=A0create mode 100644 libmultipath/checkers/alua.h
+> =C2=A0create mode 100644 libmultipath/prioritizers/alua_cached.c
+>=20
+> diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+> index 85767ab4..379f4d02 100644
+> --- a/libmultipath/Makefile
+> +++ b/libmultipath/Makefile
+> @@ -38,6 +38,11 @@ nvme-lib.o: nvme-lib.c nvme-ioctl.c nvme-ioctl.h
+> =C2=A0dict.o:	dict.c
+> =C2=A0	$(Q)$(CC) $(CPPFLAGS) $(CFLAGS) -Wno-unused-parameter -c -o
+> $@ $<
+> =C2=A0
+> +# checkers/alua.o needs to find headers in parent directory
+> +checkers/alua.o: checkers/alua.c
+> +	@echo building $@ because of $?
+> +	$(Q)$(CC) $(CPPFLAGS) $(CFLAGS) -I. -c -o $@ $<
+> +
+> =C2=A0make_static =3D $(shell sed '/^static/!s/^\([a-z]\{1,\} \)/static \=
+1/'
+> <$1 >$2)
+> =C2=A0
+> =C2=A0nvme-ioctl.c: nvme/nvme-ioctl.c
+> diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+> index bb6ad1ee..21aa52d4 100644
+> --- a/libmultipath/checkers.c
+> +++ b/libmultipath/checkers.c
+> @@ -461,6 +461,7 @@ int init_checkers(void)
+> =C2=A0		EMC_CLARIION,
+> =C2=A0		READSECTOR0,
+> =C2=A0		CCISS_TUR,
+> +		ALUA_RTPG,
+> =C2=A0	};
+> =C2=A0	unsigned int i;
+> =C2=A0
+> diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+> index a969e7d1..2905f3fc 100644
+> --- a/libmultipath/checkers.h
+> +++ b/libmultipath/checkers.h
+> @@ -98,6 +98,7 @@ enum path_check_state {
+> =C2=A0#define EMC_CLARIION "emc_clariion"
+> =C2=A0#define READSECTOR0=C2=A0 "readsector0"
+> =C2=A0#define CCISS_TUR=C2=A0=C2=A0=C2=A0 "cciss_tur"
+> +#define ALUA=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 "alua"
+> =C2=A0#define NONE=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 "none"
+> =C2=A0#define INVALID=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 "invalid"
+> =C2=A0
+> diff --git a/libmultipath/checkers/Makefile
+> b/libmultipath/checkers/Makefile
+> index 6f7cfb95..dfdd13a1 100644
+> --- a/libmultipath/checkers/Makefile
+> +++ b/libmultipath/checkers/Makefile
+> @@ -17,7 +17,8 @@ LIBS=3D \
+> =C2=A0	libcheckdirectio.so \
+> =C2=A0	libcheckemc_clariion.so \
+> =C2=A0	libcheckhp_sw.so \
+> -	libcheckrdac.so
+> +	libcheckrdac.so \
+> +	libcheckalua.so
+> =C2=A0
+> =C2=A0all: $(LIBS)
+> =C2=A0
+> diff --git a/libmultipath/checkers/alua.c
+> b/libmultipath/checkers/alua.c
+> new file mode 100644
+> index 00000000..cb3d7000
+> --- /dev/null
+> +++ b/libmultipath/checkers/alua.c
+> @@ -0,0 +1,426 @@
+> +/*
+> + * ALUA Path Checker
+> + *
+> + * Copyright (c) 2024
+> + * This file is released under the GPL.
 
+Please add a proper license header.
+
+> + */
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <sys/types.h>
+> +#include <sys/stat.h>
+> +#include <sys/sysmacros.h>
+> +#include <unistd.h>
+> +#include <fcntl.h>
+> +#include <errno.h>
+> +#include <pthread.h>
+> +#include <urcu.h>
+> +#include <urcu/uatomic.h>
+> +
+> +#include "checkers.h"
+> +#include "debug.h"
+> +#include "structs.h"
+> +#include "prio.h"
+> +#include "util.h"
+> +#include "time-util.h"
+> +#include "../prioritizers/alua.h"
+> +#include "../prioritizers/alua_rtpg.h"
+> +#include "alua.h"
+> +
+> +#define MAX_NR_TIMEOUTS 1
+> +
+> +enum {
+> +	MSG_ALUA_RTPG_NOT_SUPPORTED =3D CHECKER_FIRST_MSGID,
+> +	MSG_ALUA_RTPG_TRANSITIONING,
+> +	MSG_ALUA_RUNNING,
+> +	MSG_ALUA_TIMEOUT,
+> +};
+> +
+> +#define IDX_(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
+> +const char *libcheck_msgtable[] =3D {
+> +	[IDX_(ALUA_RTPG_NOT_SUPPORTED)] =3D " ALUA not supported",
+> +	[IDX_(ALUA_RTPG_TRANSITIONING)] =3D " path is transitioning",
+> +	[IDX_(ALUA_RUNNING)] =3D " still running",
+> +	[IDX_(ALUA_TIMEOUT)] =3D " timed out",
+> +	NULL,
+> +};
+> +
+> +struct alua_checker_context {
+> +	dev_t devt;
+> +	int state;
+> +	int running; /* uatomic access only */
+> +	int fd;
+> +	unsigned int timeout;
+> +	time_t time;
+> +	pthread_t thread;
+> +	pthread_mutex_t lock;
+> +	pthread_cond_t active;
+> +	int holders; /* uatomic access only */
+> +	int msgid;
+> +	struct checker_context ctx;
+> +	unsigned int nr_timeouts;
+> +	bool checked_state;
+> +	/* ALUA-specific cached data for prioritizer */
+> +	int aas;=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /*=
+ Asymmetric Access State */
+> +	int tpg;=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 /*=
+ Target Port Group */
+> +	time_t timestamp;=C2=A0 /* When this data was collected */
+> +	/* Data needed for RTPG in thread */
+> +	struct path *pp;=C2=A0=C2=A0 /* Path pointer - only valid during check
+> */
+> +};
+
+Instead of duplicating the threading implementation of the TUR checker
+here we should abstract it out and use the common framework by both
+checkers (and others, too, maybe). This is a thing I've wanted to do
+for a long time. Maybe it's time to start doing it now.
+
+
+
+
+> +
+> +int libcheck_init(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct;
+> +	struct stat sb;
+> +
+> +	ct =3D malloc(sizeof(struct alua_checker_context));
+> +	if (!ct)
+> +		return 1;
+> +	memset(ct, 0, sizeof(struct alua_checker_context));
+> +
+> +	ct->state =3D PATH_UNCHECKED;
+> +	ct->fd =3D -1;
+> +	ct->aas =3D -1;
+> +	ct->tpg =3D -1;
+> +	uatomic_set(&ct->holders, 1);
+> +	pthread_cond_init_mono(&ct->active);
+> +	pthread_mutex_init(&ct->lock, NULL);
+> +	if (fstat(c->fd, &sb) =3D=3D 0)
+> +		ct->devt =3D sb.st_rdev;
+> +	ct->ctx.cls =3D c->cls;
+> +	c->context =3D ct;
+> +
+> +	return 0;
+> +}
+> +
+> +static void cleanup_context(struct alua_checker_context *ct)
+> +{
+> +	pthread_mutex_destroy(&ct->lock);
+> +	pthread_cond_destroy(&ct->active);
+> +	free(ct);
+> +}
+> +
+> +void libcheck_free(struct checker *c)
+> +{
+> +	if (c->context) {
+> +		struct alua_checker_context *ct =3D c->context;
+> +		int holders;
+> +		int running;
+> +
+> +		running =3D uatomic_xchg(&ct->running, 0);
+> +		if (running)
+> +			pthread_cancel(ct->thread);
+> +		ct->thread =3D 0;
+> +		holders =3D uatomic_sub_return(&ct->holders, 1);
+> +		if (!holders)
+> +			cleanup_context(ct);
+> +		c->context =3D NULL;
+> +	}
+> +	return;
+> +}
+> +
+> +/*
+> + * Map ALUA Asymmetric Access State to path state
+> + */
+> +static int alua_state_to_path_state(int aas, short *msgid)
+> +{
+> +	switch (aas & 0x0f) {
+> +	case AAS_OPTIMIZED:
+> +	case AAS_NON_OPTIMIZED:
+> +		*msgid =3D CHECKER_MSGID_UP;
+> +		return PATH_UP;
+> +	case AAS_STANDBY:
+> +		*msgid =3D CHECKER_MSGID_GHOST;
+> +		return PATH_GHOST;
+> +	case AAS_TRANSITIONING:
+> +		*msgid =3D MSG_ALUA_RTPG_TRANSITIONING;
+> +		return PATH_PENDING;
+> +	case AAS_UNAVAILABLE:
+> +	case AAS_OFFLINE:
+> +	default:
+> +		*msgid =3D CHECKER_MSGID_DOWN;
+> +		return PATH_DOWN;
+> +	}
+> +}
+> +
+> +/*
+> + * Main ALUA check function - uses alua_rtpg.c library.
+> + * This is called either in sync mode or from the async thread.
+> + */
+> +static int
+> +alua_check(struct path *pp, int *aas_out, short *msgid)
+> +{
+> +	int aas;
+> +
+> +	if (pp->tpg_id =3D=3D GROUP_ID_UNDEF) {
+> +		*msgid =3D CHECKER_MSGID_DOWN;
+> +		return PATH_DOWN;
+> +	}
+> +
+> +	aas =3D get_asymmetric_access_state(pp, pp->tpg_id);
+> +	if (aas < 0) {
+> +		if (aas =3D=3D -RTPG_LUN_DISCONNECTED) {
+> +			*msgid =3D CHECKER_MSGID_DISCONNECTED;
+> +			return PATH_DISCONNECTED;
+> +		}
+> +		*msgid =3D CHECKER_MSGID_DOWN;
+> +		return PATH_DOWN;
+> +	}
+> +
+> +	*aas_out =3D aas;
+> +	return alua_state_to_path_state(aas, msgid);
+> +}
+> +
+> +#define alua_thread_cleanup_push(ct)
+> pthread_cleanup_push(cleanup_func, ct)
+> +#define alua_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
+> +
+> +static void cleanup_func(void *data)
+> +{
+> +	int holders;
+> +	struct alua_checker_context *ct =3D data;
+> +
+> +	holders =3D uatomic_sub_return(&ct->holders, 1);
+> +	if (!holders)
+> +		cleanup_context(ct);
+> +}
+> +
+> +void *libcheck_thread(struct checker_context *ctx)
+> +{
+> +	struct alua_checker_context *ct =3D
+> +		container_of(ctx, struct alua_checker_context, ctx);
+> +	int state, running;
+> +	short msgid;
+> +	int aas;
+> +
+> +	/* This thread can be canceled, so setup clean up */
+> +	alua_thread_cleanup_push(ct);
+> +
+> +	condlog(4, "%d:%d : alua checker starting up", major(ct-
+> >devt),
+> +		minor(ct->devt));
+> +
+> +	state =3D alua_check(ct->pp, &aas, &msgid);
+> +	pthread_testcancel();
+> +
+> +	/* ALUA checker done */
+> +	pthread_mutex_lock(&ct->lock);
+> +	ct->state =3D state;
+> +	ct->msgid =3D msgid;
+> +	ct->aas =3D aas;
+> +	ct->tpg =3D ct->pp->tpg_id;
+> +	ct->timestamp =3D time(NULL);
+> +	/* Update path-level cache for prioritizer use */
+> +	ct->pp->alua_state =3D aas;
+> +	ct->pp->alua_timestamp =3D ct->timestamp;
+> +	pthread_cond_signal(&ct->active);
+> +	pthread_mutex_unlock(&ct->lock);
+> +
+> +	condlog(4, "%d:%d : alua checker finished, state %s",
+> major(ct->devt),
+> +		minor(ct->devt), checker_state_name(state));
+> +
+> +	running =3D uatomic_xchg(&ct->running, 0);
+> +	if (!running)
+> +		pause();
+> +
+> +	alua_thread_cleanup_pop(ct);
+> +
+> +	return ((void *)0);
+> +}
+> +
+> +static void alua_set_async_timeout(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +	struct timespec now;
+> +
+> +	get_monotonic_time(&now);
+> +	ct->time =3D now.tv_sec + c->timeout;
+> +}
+> +
+> +static int alua_check_async_timeout(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +	struct timespec now;
+> +
+> +	get_monotonic_time(&now);
+> +	return (now.tv_sec > ct->time);
+> +}
+> +
+> +static int check_pending(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +	int alua_status =3D PATH_PENDING;
+> +
+> +	pthread_mutex_lock(&ct->lock);
+> +	if (ct->state !=3D PATH_PENDING || ct->msgid !=3D
+> MSG_ALUA_RUNNING) {
+> +		alua_status =3D ct->state;
+> +		c->msgid =3D ct->msgid;
+> +	}
+> +	pthread_mutex_unlock(&ct->lock);
+> +	if (alua_status =3D=3D PATH_PENDING && c->msgid =3D=3D
+> MSG_ALUA_RUNNING) {
+> +		condlog(4, "%d:%d : alua checker still running",
+> +			major(ct->devt), minor(ct->devt));
+> +	} else {
+> +		int running =3D uatomic_xchg(&ct->running, 0);
+> +		if (running)
+> +			pthread_cancel(ct->thread);
+> +		ct->thread =3D 0;
+> +	}
+> +
+> +	ct->checked_state =3D true;
+> +	return alua_status;
+> +}
+> +
+> +bool libcheck_need_wait(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +	return (ct && ct->thread && uatomic_read(&ct->running) !=3D 0
+> &&
+> +		!ct->checked_state);
+> +}
+> +
+> +int libcheck_pending(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +
+> +	/* The if path checker isn't running, just return the
+> exiting value. */
+> +	if (!ct || !ct->thread)
+> +		return c->path_state;
+> +
+> +	return check_pending(c);
+> +}
+> +
+> +int libcheck_check(struct checker *c)
+> +{
+> +	struct alua_checker_context *ct =3D c->context;
+> +	struct path *pp =3D container_of(c, struct path, checker);
+> +	pthread_attr_t attr;
+> +	int alua_status =3D PATH_PENDING, r;
+> +	int aas;
+> +
+> +	if (!ct)
+> +		return PATH_UNCHECKED;
+> +
+> +	if (checker_is_sync(c)) {
+> +		alua_status =3D alua_check(pp, &aas, &c->msgid);
+> +		ct->tpg =3D pp->tpg_id;
+> +		ct->aas =3D aas;
+> +		ct->timestamp =3D time(NULL);
+> +		/* Update path-level cache for prioritizer use */
+> +		pp->alua_state =3D aas;
+> +		pp->alua_timestamp =3D ct->timestamp;
+> +		return alua_status;
+> +	}
+> +
+> +	/* Async mode */
+> +	if (ct->thread) {
+> +		ct->checked_state =3D true;
+> +		if (alua_check_async_timeout(c)) {
+> +			int running =3D uatomic_xchg(&ct->running, 0);
+> +			if (running) {
+> +				pthread_cancel(ct->thread);
+> +				condlog(3, "%d:%d : alua checker
+> timeout",
+> +					major(ct->devt), minor(ct-
+> >devt));
+> +				c->msgid =3D MSG_ALUA_TIMEOUT;
+> +				alua_status =3D PATH_TIMEOUT;
+> +			} else {
+> +				pthread_mutex_lock(&ct->lock);
+> +				alua_status =3D ct->state;
+> +				c->msgid =3D ct->msgid;
+> +				pthread_mutex_unlock(&ct->lock);
+> +			}
+> +			ct->thread =3D 0;
+> +		} else if (uatomic_read(&ct->running) !=3D 0) {
+> +			/*
+> +			 * ct->running may be stale - the thread
+> sets
+> +			 * msgid/state under lock, then clears
+> running
+> +			 * after releasing it. Check msgid under
+> lock
+> +			 * to get the truth. Only MSG_ALUA_RUNNING
+> means
+> +			 * no result yet.
+> +			 */
+> +			pthread_mutex_lock(&ct->lock);
+> +			if (ct->msgid !=3D MSG_ALUA_RUNNING) {
+> +				alua_status =3D ct->state;
+> +				c->msgid =3D ct->msgid;
+> +				ct->thread =3D 0;
+> +			}
+> +			pthread_mutex_unlock(&ct->lock);
+> +		} else {
+> +			/* ALUA checker done */
+> +			ct->thread =3D 0;
+> +			pthread_mutex_lock(&ct->lock);
+> +			alua_status =3D ct->state;
+> +			c->msgid =3D ct->msgid;
+> +			pthread_mutex_unlock(&ct->lock);
+> +		}
+> +	} else {
+> +		if (uatomic_read(&ct->holders) > 1) {
+> +			/* The thread has been cancelled but hasn't
+> quit. */
+> +			if (ct->nr_timeouts <=3D MAX_NR_TIMEOUTS) {
+> +				if (ct->nr_timeouts =3D=3D
+> MAX_NR_TIMEOUTS) {
+> +					condlog(2, "%d:%d : waiting
+> for stalled alua thread to finish",
+> +						major(ct->devt),
+> minor(ct->devt));
+> +				}
+> +				ct->nr_timeouts++;
+> +				c->msgid =3D MSG_ALUA_TIMEOUT;
+> +				return PATH_TIMEOUT;
+> +			}
+> +			ct->nr_timeouts++;
+> +			/*
+> +			 * Start a new thread while the old one is
+> stalled.
+> +			 * We have to prevent it from interfering
+> with the new
+> +			 * thread. We create a new context and leave
+> the old
+> +			 * one with the stale thread, hoping it will
+> clean up
+> +			 * eventually.
+> +			 */
+> +			condlog(3, "%d:%d : alua thread not
+> responding",
+> +				major(ct->devt), minor(ct->devt));
+> +
+> +			if (libcheck_init(c) !=3D 0) {
+> +				c->msgid =3D CHECKER_MSGID_DOWN;
+> +				return PATH_UNCHECKED;
+> +			}
+> +			((struct alua_checker_context *)c->context)-
+> >nr_timeouts =3D ct->nr_timeouts;
+> +
+> +			if (!uatomic_sub_return(&ct->holders, 1)) {
+> +				/* It did terminate, eventually */
+> +				cleanup_context(ct);
+> +				((struct alua_checker_context *)c-
+> >context)->nr_timeouts =3D 0;
+> +			}
+> +
+> +			ct =3D c->context;
+> +		} else
+> +			ct->nr_timeouts =3D 0;
+> +
+> +		/* Start new ALUA checker */
+> +		pthread_mutex_lock(&ct->lock);
+> +		alua_status =3D ct->state =3D PATH_PENDING;
+> +		c->msgid =3D ct->msgid =3D MSG_ALUA_RUNNING;
+> +		pthread_mutex_unlock(&ct->lock);
+> +		ct->fd =3D c->fd;
+> +		ct->timeout =3D c->timeout;
+> +		ct->pp =3D pp;
+> +		ct->checked_state =3D false;
+> +		uatomic_add(&ct->holders, 1);
+> +		uatomic_set(&ct->running, 1);
+> +		alua_set_async_timeout(c);
+> +		setup_thread_attr(&attr, 32 * 1024, 1);
+> +		r =3D start_checker_thread(&ct->thread, &attr, &ct-
+> >ctx);
+> +		pthread_attr_destroy(&attr);
+> +		if (r) {
+> +			uatomic_sub(&ct->holders, 1);
+> +			uatomic_set(&ct->running, 0);
+> +			ct->thread =3D 0;
+> +			condlog(3, "%d:%d : failed to start alua
+> thread, using"
+> +				" sync mode", major(ct->devt),
+> minor(ct->devt));
+> +			alua_status =3D alua_check(pp, &aas, &c-
+> >msgid);
+> +			ct->tpg =3D pp->tpg_id;
+> +			ct->aas =3D aas;
+> +			ct->timestamp =3D time(NULL);
+> +			/* Update path-level cache for prioritizer
+> use */
+> +			pp->alua_state =3D aas;
+> +			pp->alua_timestamp =3D ct->timestamp;
+> +			return alua_status;
+> +		}
+> +	}
+> +
+> +	return alua_status;
+> +}
+> +
+> diff --git a/libmultipath/checkers/alua.h
+> b/libmultipath/checkers/alua.h
+> new file mode 100644
+> index 00000000..b53cef66
+> --- /dev/null
+> +++ b/libmultipath/checkers/alua.h
+> @@ -0,0 +1,15 @@
+> +/*
+> + * ALUA Path Checker Header
+> + *
+> + * This file is released under the GPL.
+
+Please add a proper license header.
+
+> + */
+> +#ifndef _ALUA_CHECKER_H
+> +#define _ALUA_CHECKER_H
+> +
+> +/* ALUA checker caches state in struct path for prioritizer use:
+> + *=C2=A0=C2=A0 pp->alua_state=C2=A0=C2=A0=C2=A0=C2=A0 - cached AAS value=
+ (-1 if not cached)
+> + *=C2=A0=C2=A0 pp->alua_timestamp - when the state was last updated
+> + */
+> +
+> +#endif /* _ALUA_CHECKER_H */
+> +
+
+Only comments in this file?
+
+
+> diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+> index 24f825bd..2d59d04e 100644
+> --- a/libmultipath/prio.c
+> +++ b/libmultipath/prio.c
+> @@ -29,6 +29,7 @@ int init_prio(void)
+> =C2=A0#ifdef LOAD_ALL_SHARED_LIBS
+> =C2=A0	static const char *const all_prios[] =3D {
+> =C2=A0		PRIO_ALUA,
+> +		PRIO_ALUA_CACHED,
+> =C2=A0		PRIO_CONST,
+> =C2=A0		PRIO_DATACORE,
+> =C2=A0		PRIO_EMC,
+> diff --git a/libmultipath/prio.h b/libmultipath/prio.h
+> index 119b75f2..b54ece0d 100644
+> --- a/libmultipath/prio.h
+> +++ b/libmultipath/prio.h
+> @@ -17,6 +17,7 @@ struct path;
+> =C2=A0 * Known prioritizers for use in hwtable.c
+> =C2=A0 */
+> =C2=A0#define PRIO_ALUA		"alua"
+> +#define PRIO_ALUA_CACHED	"alua_cached"
+> =C2=A0#define PRIO_CONST		"const"
+> =C2=A0#define PRIO_DATACORE		"datacore"
+> =C2=A0#define PRIO_EMC		"emc"
+> diff --git a/libmultipath/prioritizers/Makefile
+> b/libmultipath/prioritizers/Makefile
+> index ff2524c2..201c52c0 100644
+> --- a/libmultipath/prioritizers/Makefile
+> +++ b/libmultipath/prioritizers/Makefile
+> @@ -13,6 +13,7 @@ LIBDEPS =3D -lmultipath -lmpathutil -lm -lpthread -
+> lrt
+> =C2=A0# If you add or remove a prioritizer also update
+> multipath/multipath.conf.5
+> =C2=A0LIBS =3D \
+> =C2=A0	libprioalua.so \
+> +	libprioalua_cached.so \
+> =C2=A0	libprioconst.so \
+> =C2=A0	libpriodatacore.so \
+> =C2=A0	libprioemc.so \
+
+I think the below should go into a separate patch.
+
+> diff --git a/libmultipath/prioritizers/alua_cached.c
+> b/libmultipath/prioritizers/alua_cached.c
+> new file mode 100644
+> index 00000000..2ba5b2e7
+> --- /dev/null
+> +++ b/libmultipath/prioritizers/alua_cached.c
+> @@ -0,0 +1,224 @@
+> +/*
+> + * (C) Copyright IBM Corp. 2004, 2005=C2=A0=C2=A0 All Rights Reserved.
+> + * Modified 2024 to support cached ALUA state from checker
+> + *
+> + * ALUA prioritizer that can use cached state from alua checker
+> + * to avoid duplicate RTPG commands.
+> + *
+> + * This file is released under the GPL.
+
+Please add a proper license header.
+
+> + */
+> +#include <stdio.h>
+> +#include <string.h>
+> +
+> +#include <time.h>
+> +
+> +#include "debug.h"
+> +#include "prio.h"
+> +#include "structs.h"
+> +#include "checkers.h"
+> +#include "discovery.h"
+> +
+> +#include "alua.h"
+> +
+> +#define ALUA_PRIO_NOT_SUPPORTED			1
+> +#define ALUA_PRIO_RTPG_FAILED			2
+> +#define ALUA_PRIO_GETAAS_FAILED			3
+> +#define ALUA_PRIO_TPGS_FAILED			4
+> +#define ALUA_PRIO_NO_INFORMATION		5
+> +#define ALUA_PRIO_CACHED_STALE			6
+> +
+> +/* Maximum age of cached ALUA state in seconds */
+> +#define ALUA_CACHE_MAX_AGE_SECS			5
+> +
+> +static const char * aas_string[] =3D {
+> +	[AAS_OPTIMIZED]		=3D "active/optimized",
+> +	[AAS_NON_OPTIMIZED]	=3D "active/non-optimized",
+> +	[AAS_STANDBY]		=3D "standby",
+> +	[AAS_UNAVAILABLE]	=3D "unavailable",
+> +	[AAS_LBA_DEPENDENT]	=3D "logical block dependent",
+> +	[AAS_RESERVED]		=3D "ARRAY BUG: invalid TPGs state!",
+> +	[AAS_OFFLINE]		=3D "offline",
+> +	[AAS_TRANSITIONING]	=3D "transitioning between states",
+> +};
+
+We shouldn't duplicate the definition of these constants.
+
+> +
+> +static const char *aas_print_string(int rc)
+> +{
+> +	rc &=3D 0x7f;
+> +
+> +	if (rc & 0x70)
+> +		return aas_string[AAS_RESERVED];
+> +	rc &=3D 0x0f;
+> +	if (rc > AAS_RESERVED && rc < AAS_OFFLINE)
+> +		return aas_string[AAS_RESERVED];
+> +	else
+> +		return aas_string[rc];
+> +}
+> +
+> +/*
+> + * Try to get ALUA info with optimization:
+> + * 1. If using alua checker: use its cached state (it just polled!)
+> + * 2. Try sysfs (kernel maintains this, no I/O needed)
+> + * 3. Fall back to issuing RTPG directly
+> + *
+> + * Rationale: The checker is our active poller. If we're using alua
+> + * and its cache is fresh, we trust that data first. If the cache
+> misses
+> + * (stale or empty), we try sysfs before issuing RTPG. This provides
+> a
+> + * three-tier optimization: checker cache =E2=86=92 sysfs =E2=86=92 RTPG=
+.
+> + */
+> +/* Maximum length of sysfs access_state string */
+> +#define ALUA_ACCESS_STATE_SIZE 32
+> +
+> +int
+> +get_alua_info_cached(struct path * pp, bool *used_cache)
+> +{
+> +	int	rc;
+> +	int	tpg;
+> +	bool	diff_tpg;
+> +	char	buff[ALUA_ACCESS_STATE_SIZE];
+> +
+> +	*used_cache =3D false;
+> +
+> +	/* First: if using alua checker, use its fresh data from
+> path structure */
+> +	if (checker_selected(&pp->checker)) {
+> +		const char *chk_name =3D checker_name(&pp->checker);
+> +
+> +		if (chk_name && strcmp(chk_name, "alua") =3D=3D 0 &&
+> +		=C2=A0=C2=A0=C2=A0 pp->alua_state >=3D 0) {
+> +			time_t now =3D time(NULL);
+> +			time_t age =3D now - pp->alua_timestamp;
+> +
+> +			if (pp->alua_timestamp > 0 && age <=3D
+> ALUA_CACHE_MAX_AGE_SECS) {
+> +				condlog(4, "%s: using cached ALUA
+> state from checker (fresh poll)", pp->dev);
+> +				*used_cache =3D true;
+> +				return pp->alua_state;
+> +			}
+> +			condlog(4, "%s: cached ALUA state not
+> available or stale, trying sysfs",
+> +				pp->dev);
+> +			/* Cache miss - try sysfs before issuing
+> RTPG */
+> +		}
+> +	}
+> +
+> +	/* Second: try sysfs (if cache missed or not using alua
+> checker) */
+> +	rc =3D sysfs_get_asymmetric_access_state(pp, buff,
+> sizeof(buff));
+> +	if (rc >=3D 0) {
+> +		/* Parse sysfs state string to ALUA state value */
+> +		int aas =3D -1;
+> +		int priopath =3D rc; /* rc contains preferred bit */
+> +
+> +		if (!strncmp(buff, "active/optimized", 16))
+> +			aas =3D AAS_OPTIMIZED;
+> +		else if (!strncmp(buff, "active/non-optimized", 20))
+> +			aas =3D AAS_NON_OPTIMIZED;
+> +		else if (!strncmp(buff, "lba-dependent", 13))
+> +			aas =3D AAS_LBA_DEPENDENT;
+> +		else if (!strncmp(buff, "standby", 7))
+> +			aas =3D AAS_STANDBY;
+> +
+> +		if (aas >=3D 0) {
+> +			condlog(4, "%s: using sysfs ALUA state (no
+> I/O)", pp->dev);
+> +			*used_cache =3D true;
+> +			return (priopath ? 0x80 : 0) | aas;
+> +		}
+> +	}
+> +
+> +	/* Last resort: issue RTPG directly */
+> +	tpg =3D get_target_port_group(pp);
+> +	if (tpg < 0) {
+> +		rc =3D get_target_port_group_support(pp);
+> +		if (rc < 0)
+> +			return -ALUA_PRIO_TPGS_FAILED;
+> +		if (rc =3D=3D TPGS_NONE)
+> +			return -ALUA_PRIO_NOT_SUPPORTED;
+> +		return -ALUA_PRIO_RTPG_FAILED;
+> +	}
+> +	diff_tpg =3D (pp->tpg_id !=3D GROUP_ID_UNDEF && pp->tpg_id !=3D
+> tpg);
+> +	pp->tpg_id =3D tpg;
+> +	condlog((diff_tpg) ? 2 : 4, "%s: reported target port group
+> is %i",
+> +		pp->dev, tpg);
+> +	rc =3D get_asymmetric_access_state(pp, tpg);
+> +	if (rc < 0) {
+> +		condlog(2, "%s: get_asymmetric_access_state returned
+> %d",
+> +			__func__, rc);
+> +		return -ALUA_PRIO_GETAAS_FAILED;
+> +	}
+> +
+> +	condlog(3, "%s: aas =3D %02x [%s]%s", pp->dev, rc,
+> aas_print_string(rc),
+> +		(rc & 0x80) ? " [preferred]" : "");
+> +	return rc;
+> +}
+> +
+> +int get_exclusive_pref_arg(char *args)
+> +{
+> +	char *ptr;
+> +
+> +	if (args =3D=3D NULL)
+> +		return 0;
+> +	ptr =3D strstr(args, "exclusive_pref_bit");
+> +	if (!ptr)
+> +		return 0;
+> +	if (ptr[18] !=3D '\0' && ptr[18] !=3D ' ' && ptr[18] !=3D '\t')
+> +		return 0;
+> +	if (ptr !=3D args && ptr[-1] !=3D ' ' && ptr[-1] !=3D '\t')
+> +		return 0;
+> +	return 1;
+> +}
+> +
+> +int getprio (struct path * pp, char * args)
+> +{
+> +	int rc;
+> +	int aas;
+> +	int priopath;
+> +	int exclusive_pref;
+> +	bool used_cache =3D false;
+> +
+> +	if (pp->fd < 0)
+> +		return -ALUA_PRIO_NO_INFORMATION;
+> +
+> +	exclusive_pref =3D get_exclusive_pref_arg(args);
+> +	rc =3D get_alua_info_cached(pp, &used_cache);
+> +
+> +	if (used_cache) {
+> +		condlog(4, "%s: priority calculated from cached ALUA
+> state (no RTPG issued)",
+> +			pp->dev);
+> +	}
+> +
+> +	if (rc >=3D 0) {
+> +		aas =3D (rc & 0x0f);
+> +		priopath =3D (rc & 0x80);
+> +		switch(aas) {
+> +		case AAS_OPTIMIZED:
+> +			rc =3D 50;
+> +			break;
+> +		case AAS_NON_OPTIMIZED:
+> +			rc =3D 10;
+> +			break;
+> +		case AAS_LBA_DEPENDENT:
+> +			rc =3D 5;
+> +			break;
+> +		case AAS_STANDBY:
+> +			rc =3D 1;
+> +			break;
+> +		default:
+> +			rc =3D 0;
+> +		}
+> +		if (priopath && (aas !=3D AAS_OPTIMIZED ||
+> exclusive_pref))
+> +			rc +=3D 80;
+> +	} else {
+> +		switch(-rc) {
+> +		case ALUA_PRIO_NOT_SUPPORTED:
+> +			condlog(0, "%s: alua not supported", pp-
+> >dev);
+> +			break;
+> +		case ALUA_PRIO_RTPG_FAILED:
+> +			condlog(0, "%s: couldn't get target port
+> group", pp->dev);
+> +			break;
+> +		case ALUA_PRIO_GETAAS_FAILED:
+> +			condlog(0, "%s: couldn't get asymmetric
+> access state", pp->dev);
+> +			break;
+> +		case ALUA_PRIO_TPGS_FAILED:
+> +			condlog(3, "%s: couldn't get supported alua
+> states", pp->dev);
+> +			break;
+> +		}
+> +	}
+> +	return rc;
+> +}
+> +
+> diff --git a/libmultipath/prioritizers/alua_rtpg.c
+> b/libmultipath/prioritizers/alua_rtpg.c
+> index 053cccb7..5da06b50 100644
+> --- a/libmultipath/prioritizers/alua_rtpg.c
+> +++ b/libmultipath/prioritizers/alua_rtpg.c
+> @@ -75,6 +75,7 @@ enum scsi_disposition {
+> =C2=A0	SCSI_GOOD =3D 0,
+> =C2=A0	SCSI_ERROR,
+> =C2=A0	SCSI_RETRY,
+> +	SCSI_DISCONNECTED,
+> =C2=A0};
+> =C2=A0
+> =C2=A0static int
+> @@ -124,6 +125,12 @@ scsi_error(struct sg_io_hdr *hdr, int opcode)
+> =C2=A0	PRINT_DEBUG("alua: SCSI error for command %02x: status %02x,
+> sense %02x/%02x/%02x",
+> =C2=A0		=C2=A0=C2=A0=C2=A0 opcode, hdr->status, sense_key, asc, ascq);
+> =C2=A0
+> +	/* Check for disconnected LUN (unmapped at target) */
+> +	if (sense_key =3D=3D 0x5 && asc =3D=3D 0x25 && ascq =3D=3D 0x00) {
+> +		/* ILLEGAL REQUEST / LOGICAL UNIT NOT SUPPORTED */
+> +		return SCSI_DISCONNECTED;
+> +	}
+> +
+> =C2=A0	if (sense_key =3D=3D UNIT_ATTENTION || sense_key =3D=3D NOT_READY)
+> =C2=A0		return SCSI_RETRY;
+> =C2=A0	else
+> @@ -325,7 +332,10 @@ retry:
+> =C2=A0	}
+> =C2=A0
+> =C2=A0	rc =3D scsi_error(&hdr, OPERATION_CODE_RTPG);
+> -	if (rc =3D=3D SCSI_ERROR) {
+> +	if (rc =3D=3D SCSI_DISCONNECTED) {
+> +		PRINT_DEBUG("do_rtpg: LUN disconnected (unmapped at
+> target)!");
+> +		return -RTPG_LUN_DISCONNECTED;
+> +	} else if (rc =3D=3D SCSI_ERROR) {
+> =C2=A0		PRINT_DEBUG("do_rtpg: SCSI error!");
+> =C2=A0		return -RTPG_RTPG_FAILED;
+> =C2=A0	} else if (rc =3D=3D SCSI_RETRY) {
+> diff --git a/libmultipath/prioritizers/alua_rtpg.h
+> b/libmultipath/prioritizers/alua_rtpg.h
+> index ff6ec0ef..030ca58d 100644
+> --- a/libmultipath/prioritizers/alua_rtpg.h
+> +++ b/libmultipath/prioritizers/alua_rtpg.h
+> @@ -21,6 +21,7 @@
+> =C2=A0#define RTPG_NO_TPG_IDENTIFIER			2
+> =C2=A0#define RTPG_RTPG_FAILED			3
+> =C2=A0#define RTPG_TPG_NOT_FOUND			4
+> +#define RTPG_LUN_DISCONNECTED			5
+> =C2=A0
+> =C2=A0int get_target_port_group_support(const struct path *pp);
+> =C2=A0int get_target_port_group(const struct path *pp);
+> diff --git a/libmultipath/prioritizers/sysfs.c
+> b/libmultipath/prioritizers/sysfs.c
+> index 5e8adc05..ab058ea9 100644
+> --- a/libmultipath/prioritizers/sysfs.c
+> +++ b/libmultipath/prioritizers/sysfs.c
+> @@ -10,6 +10,9 @@
+> =C2=A0#include "discovery.h"
+> =C2=A0#include "prio.h"
+> =C2=A0
+> +/* Maximum length of sysfs access_state string */
+> +#define ALUA_ACCESS_STATE_SIZE 32
+> +
+> =C2=A0static const struct {
+> =C2=A0	unsigned char value;
+> =C2=A0	char *name;
+> @@ -39,11 +42,11 @@ int get_exclusive_pref_arg(char *args)
+> =C2=A0int getprio (struct path * pp, char *args)
+> =C2=A0{
+> =C2=A0	int prio =3D 0, rc, i;
+> -	char buff[512];
+> +	char buff[ALUA_ACCESS_STATE_SIZE];
+> =C2=A0	int exclusive_pref;
+> =C2=A0
+> =C2=A0	exclusive_pref =3D get_exclusive_pref_arg(args);
+> -	rc =3D sysfs_get_asymmetric_access_state(pp, buff, 512);
+> +	rc =3D sysfs_get_asymmetric_access_state(pp, buff,
+> sizeof(buff));
+> =C2=A0	if (rc < 0)
+> =C2=A0		return PRIO_UNDEF;
+> =C2=A0	prio =3D 0;
+> diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+> index 56895c4b..e421abba 100644
+> --- a/libmultipath/propsel.c
+> +++ b/libmultipath/propsel.c
+> @@ -262,6 +262,7 @@ verify_alua_prio(struct multipath *mp)
+> =C2=A0		if (!prio_selected(&pp->prio))
+> =C2=A0			continue;
+> =C2=A0		if (strncmp(name, PRIO_ALUA, PRIO_NAME_LEN) &&
+> +		=C2=A0=C2=A0=C2=A0 strncmp(name, PRIO_ALUA_CACHED, PRIO_NAME_LEN)
+> &&
+> =C2=A0		=C2=A0=C2=A0=C2=A0 strncmp(name, PRIO_SYSFS, PRIO_NAME_LEN))
+> =C2=A0			 return false;
+> =C2=A0		assume_alua =3D true;
+> @@ -690,7 +691,12 @@ int select_checker(struct config *conf, struct
+> path *pp)
+> =C2=A0		}
+> =C2=A0		(void)path_get_tpgs(pp);
+> =C2=A0		if (pp->tpgs !=3D TPGS_NONE && pp->tpgs !=3D TPGS_UNDEF)
+> {
+> -			ckr_name =3D TUR;
+> +			/*
+> +			 * For ALUA devices (any TPGS support), use
+> alua
+> +			 * checker which combines path checking with
+> ALUA state
+> +			 * caching for optimal performance.
+> +			 */
+> +			ckr_name =3D ALUA;
+> =C2=A0			goto out;
+> =C2=A0		}
+> =C2=A0	}
+> @@ -767,8 +773,15 @@ void detect_prio(struct path *pp)
+> =C2=A0		if ((tpgs =3D=3D TPGS_EXPLICIT || !check_rdac(pp)) &&
+> =C2=A0		=C2=A0=C2=A0=C2=A0 sysfs_get_asymmetric_access_state(pp, buff, 51=
+2)
+> >=3D 0)
+> =C2=A0			default_prio =3D PRIO_SYSFS;
+> -		else
+> +		else {
+> =C2=A0			default_prio =3D PRIO_ALUA;
+> +			/* If using alua checker, use cached
+> prioritizer */
+> +			if (checker_selected(&pp->checker)) {
+> +				const char *chk_name =3D
+> checker_name(&pp->checker);
+> +				if (chk_name && strcmp(chk_name,
+> ALUA) =3D=3D 0)
+> +					default_prio =3D
+> PRIO_ALUA_CACHED;
+> +			}
+> +		}
+> =C2=A0		break;
+> =C2=A0	default:
+> =C2=A0		return;
+> @@ -831,7 +844,8 @@ out:
+> =C2=A0	/*
+> =C2=A0	 * fetch tpgs mode for alua, if its not already obtained
+> =C2=A0	 */
+> -	if (!strncmp(prio_name(p), PRIO_ALUA, PRIO_NAME_LEN)) {
+> +	if (!strncmp(prio_name(p), PRIO_ALUA, PRIO_NAME_LEN) ||
+> +	=C2=A0=C2=A0=C2=A0 !strncmp(prio_name(p), PRIO_ALUA_CACHED, PRIO_NAME_L=
+EN))
+> {
+> =C2=A0		int tpgs =3D path_get_tpgs(pp);
+> =C2=A0
+> =C2=A0		if (tpgs =3D=3D TPGS_NONE) {
+> diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+> index f4413127..6483a568 100644
+> --- a/libmultipath/structs.c
+> +++ b/libmultipath/structs.c
+> @@ -126,6 +126,8 @@ alloc_path (void)
+> =C2=A0		pp->fd =3D -1;
+> =C2=A0		pp->tpgs =3D TPGS_UNDEF;
+> =C2=A0		pp->tpg_id =3D GROUP_ID_UNDEF;
+> +		pp->alua_state =3D -1;
+> +		pp->alua_timestamp =3D 0;
+> =C2=A0		pp->priority =3D PRIO_UNDEF;
+> =C2=A0		pp->checkint =3D CHECKINT_UNDEF;
+> =C2=A0		checker_clear(&pp->checker);
+> diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> index 9adedde2..c4bddee9 100644
+> --- a/libmultipath/structs.h
+> +++ b/libmultipath/structs.h
+> @@ -444,6 +444,9 @@ struct path {
+> =C2=A0	vector hwe;
+> =C2=A0	struct gen_path generic_path;
+> =C2=A0	int tpg_id;
+> +	/* Cached ALUA state from checker for prioritizer use */
+> +	int alua_state;		/* AAS value, -1 if not
+> cached */
+> +	time_t alua_timestamp;	/* When alua_state was last updated
+> */
+> =C2=A0	enum ioctl_info_states ioctl_info;
+> =C2=A0};
+> =C2=A0
