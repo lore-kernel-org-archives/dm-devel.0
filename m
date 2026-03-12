@@ -1,218 +1,313 @@
-Received: from mail-lj1-f173.google.com (mail-lj1-f173.google.com [209.85.208.173])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 992AF3AB29A
-	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 19:19:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.173
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773343166; cv=pass; b=VMc2v+lOp5h8hDeHZp7Uq5ii/AdCeEqtImpC5DpxNzG6Ap/yr+iu6Kro6hH1TlzfSiKbPi6whTJFLqPZ5NFNMJYf6AZgmsOWbJvsKc1XgqqwZ7vX8/CABxG54DlSIptFra4TD9exRdynhg93Mtkn8iWfRl+J2To2yrvbYD6a3NA=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773343166; c=relaxed/simple;
-	bh=I3uKnC16ezyhP+czELeQ/aWDMFjA1rI9w2SJmMhY5go=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Content-Type; b=JzvhCRRqA9JT/6860mhVEU0je0LH+7cbb3znGav/RteS8XVO1b94eUk+fFE0AT1qMpuj7VmVyZiy3XIVl1CM+ePEMQ6BdM+hYG+z5P59+Mp9L3k0ucujlSD/1fETvpXKptcUXqKrJypVTD+shjcBXzVgJH2ds5L6FuTbWHN68pw=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=TNweFMU0; arc=pass smtp.client-ip=209.85.208.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE31C3AC0CA
+	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 19:31:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1773343895; cv=none; b=Yt7stnZxp+d2gdftZhoRRX+X9IFfNGRJV8lI/mURNKeC2IcdkROn5kwAx9pfdL8My60b56JrG8lJVePlQCOSasjPPAMPsggOcAPr0kPlIVI5U1y5xlUl1/PVItXwru/1zJT825+onYxQTDhAgVdEJ+HT2o1s/L5Iw75GDk8c5lQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1773343895; c=relaxed/simple;
+	bh=givuKbd0CXQz0dthcv5EunK27bFfg0z0c3zr3yrA8VI=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=eHSXXB4YT60I1Q0gxdMOgcFWIuboQQdOriZNIOLorx/fQ/yHG/kBeK7MquwOyBBrgPF9W101bzlb5FFnCusLChRewf2gWNHD6ff0vyqpn5VWvBqMNWV8hrLcqCuz/R/D9gHW72zfXBoRLyBN9X8QwdfvQLetamBWNcXmvbm1lFU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=hlRS5cp8; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=IX8dcY+d; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="TNweFMU0"
-Received: by mail-lj1-f173.google.com with SMTP id 38308e7fff4ca-38a67221fe8so13064821fa.3
-        for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 12:19:24 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1773343162; cv=none;
-        d=google.com; s=arc-20240605;
-        b=S7dxCMYLDdmm9A+OCdAmjv4VRNCVPYyudurs7CcVW86Eh+3tgyvTxfvAyMBI3Zpxrp
-         mnqSVBMLlrBMFZjlTHO3swajpkK1AqMdRUnnHdBpV5Pd1XDpGu3iJmPwZLODzjlVwMUK
-         9xQeskeYeIpC8jlBxeiCCVRmT4V0YtEteWv8YVHteXp0TVgCgVzc4f9eWWD0rBleUkB2
-         cyMgHfHRB98QkUxXDcHcN3RAJBfhpuPprCa43HqFhlsCwlQWTwNo91Z0CE1g/1YqhlyW
-         o9/0DBLXMazjDUQn5Sgr1iU6+GXLHw8IQ1OC6wI3yjW9j5jCoux5kKGB6uMmHDwSl/hD
-         QzRQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=rAm4iYP5dKixiOkXLqp54PSNBJLPGNPkqOxwaaOp/3E=;
-        fh=l3CRNgvI34UZ3wS7PlCwranVVWi6QT1yE5+JJM716rk=;
-        b=GioNxmam+5hrhUm8YJz5jMKorg4wxXzcHvNOgcnbCCQODEkqgaYfUo94nmb3+xKuWj
-         MWmOeHRRO0QUKG2VJSYF2Eqfbw+641WGfJQiJHXHT9vtdH9HFuDYQMngHpXraxbpah2Y
-         VPiSCHzl9MzPeRm3DSc5/8CcFxeJ1A0VgTXKd4u0tssYhEwam7FD9VXXteYt3v7tspAc
-         sqq9LXrsNK+EXoorcvbSZqH13ilfUle0EWcBca+jeM1au0JjtJ7Rmu8r3RzlJV65h4us
-         4RNxrXOjXYly4ptqtjxlznwofOB4Jd2Xgd/sKODdhpFnuJDubvhGMJSfxQ7eywEmSWgE
-         V6xg==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1773343162; x=1773947962; darn=lists.linux.dev;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=rAm4iYP5dKixiOkXLqp54PSNBJLPGNPkqOxwaaOp/3E=;
-        b=TNweFMU0forVDbCFwiGNIKWnI9WhFU8z3sa3xYtaPQHSu76rqT+hO1pLN5oAvyosPM
-         fMBymnBybS9QGA46bQnaPuq4z5hMYkUGh5m8Qx8edhU0B3ZWj9worVi7pUBiq+ErFdRr
-         1VIIlOkPlRYYgyNXvs79sDIffduz0+4prdHqaW85bRTbzZkasL/EWcPwZHwjqDvTc+US
-         I7s9v/4+Itescj2i0p2jnkksQJPfUFMQkoKVg0CvI5DIjsRxfj76bU11w+JXBdoSa4bh
-         jYpjIHmRy2guMcxUjBo161wvNNosM7xA5GXClIhyYcjGjWeOeFjXLn6AYcBV2I8Pf5L5
-         XYhg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1773343162; x=1773947962;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=rAm4iYP5dKixiOkXLqp54PSNBJLPGNPkqOxwaaOp/3E=;
-        b=rEbKTHyOfCaoWxJlskDqkHk9I+Foob25EeoA0vItk1QdFMI0j+EEDvTq9P0WXX/K74
-         0EKXvxQkxlIhUdmj3wXg4v8rbnddqZ+PeSRGdt7RYmB43djuTXJXhoj4ugDEwosUVKD0
-         4t+EsKW7B801V9jZvibxbWYB2VKnVn9aNoMcWZFVARWbhdnGeS0ja6FSQb6DObtMRy0b
-         SYL7f2ZPqvZXwyI3zvXlbO+GekdCq63BP6fBDHbwaC+fLotgdS+ZDO4ODUSRzCVj/h5A
-         03bN0WbaavYNKx6WXX4pK2osrW1Y5ywnMzQJK5HbgoZ2SwVkjBTV75sLl6gvm/7I287t
-         QZMQ==
-X-Gm-Message-State: AOJu0YyxsMVXyj3n0xyVqNyeBdX0ySUEnO3Fe8Zbre1QUGVxJnyynz1S
-	2xsn5wIaUxoSs2HLQnhdk2WjwyPAO8BbFNTbTX3Zf/hDec0yjeAgcDy6juuLllUCDpnju80OXJe
-	1l1nKqLucJWTLp3Gg5oqtbfxrHV+qrHAZnGyFQwMfggCQGuTCEcMD01k=
-X-Gm-Gg: ATEYQzz+h2ed7+q7ifR4EDg/LtxjncrK08GrSsiyKVg5bePnbFGbb7wySCEWwX1Mgdt
-	r4bIFTVWQJuFklBMrm0Qe4hDRCsTnJnGjp82erZFpVBYtYPbml344CTdh9n65lHl4bUq6jXH0lL
-	VWqIfeF/RhdlHorQQ/0HB8A7mXTy1XXa6mXJL6j0Ym2d2NZYlCh9lLb7NBsDn4I0uXCRI4tKZML
-	SyrCsOQY29s/Xt5Pndu5BRWUrlhcKoWXeWJducFwbXXhsJDn4hyTOrTdqHCXXA7+ykBevR+w6jp
-	TUrr1eaPGgXhIPfo2aGRJkRoSrz+ffr4neYldPMeRgpxOB0bXireJSqjUAAaUa0=
-X-Received: by 2002:a2e:a98b:0:b0:38a:8b28:f9d4 with SMTP id
- 38308e7fff4ca-38a8b28fc87mr73301fa.41.1773343162013; Thu, 12 Mar 2026
- 12:19:22 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="hlRS5cp8";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="IX8dcY+d"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id EC8195BE73;
+	Thu, 12 Mar 2026 19:31:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773343892; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=givuKbd0CXQz0dthcv5EunK27bFfg0z0c3zr3yrA8VI=;
+	b=hlRS5cp84C6e4qbo99KDfFQch+8fYXA5xqCS3msX+ECVhTsQ9gp94hJ4M56HhEXBO1lQGp
+	7PRVnOSpKJ4ZAcb7MywtefHqKXUYxkLVmREzBihlrdcFFuE38tWSO+mQG21p8fW5WC2gqr
+	++vafYtWQlhm+o1CseJ5u2zXV3TcOUM=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773343891; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=givuKbd0CXQz0dthcv5EunK27bFfg0z0c3zr3yrA8VI=;
+	b=IX8dcY+dHV3Lkii8csaBQfiH316Ty7FYLsLc73/hyb4P8tROXkpKbCHmX2Wc72h0oj6W+R
+	9X5iSB6rT60iJeZFVf66/7k4zdBaNUD78jc6j+tR9UTkrHc5YmfC6AVF9aG47xueqIa61a
+	AAghtnciOiB+UrGkGPSu8OZVqqCu5Yc=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D0A8F40124;
+	Thu, 12 Mar 2026 19:31:31 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id F7rGMZMUs2keMgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 12 Mar 2026 19:31:31 +0000
+Message-ID: <dc790696d57a889e5a3383abaab491f858561595.camel@suse.com>
+Subject: Re: [PATCH 1/1] checkers: add alua path checker
+From: Martin Wilck <mwilck@suse.com>
+To: Brian Bunker <brian@purestorage.com>
+Cc: bmarzins@redhat.com, dm-devel@lists.linux.dev
+Date: Thu, 12 Mar 2026 20:31:31 +0100
+In-Reply-To: <CAHZQxy+V5YSiHnB5sp8A_jbN_n1OQ633KiDeFa+vXQrNafHzDA@mail.gmail.com>
+References: <20260312001642.53321-1-brian@purestorage.com>
+	 <20260312001642.53321-2-brian@purestorage.com>
+	 <8653507a25c02727037e7e8bad4b2178a9702040.camel@suse.com>
+	 <CAHZQxy+V5YSiHnB5sp8A_jbN_n1OQ633KiDeFa+vXQrNafHzDA@mail.gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260312001642.53321-1-brian@purestorage.com> <91ed7162-719f-4ff2-9951-913fe8096f08@suse.de>
-In-Reply-To: <91ed7162-719f-4ff2-9951-913fe8096f08@suse.de>
-From: Brian Bunker <brian@purestorage.com>
-Date: Thu, 12 Mar 2026 12:19:10 -0700
-X-Gm-Features: AaiRm52y1m-7QKdiMhkwB4orxtvBmSd4qa2dLGFaVT84Ldv10HnMIXIupBCa5-Q
-Message-ID: <CAHZQxyJGxCBkWC7qU2TMowx1G5hPp4UNi3rkixeW4dwEWS9CkQ@mail.gmail.com>
-Subject: Re: [PATCH 0/1] checkers: add alua path checker
-To: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Spam-Score: -4.30
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid,suse.com:email]
+X-Spam-Flag: NO
 
-On Thu, Mar 12, 2026 at 12:10=E2=80=AFAM Hannes Reinecke <hare@suse.de> wro=
-te:
->
-> On 3/12/26 01:16, Brian Bunker wrote:
-> > For ALUA-capable storage arrays, multipath-tools currently uses TUR
-> > (Test Unit Ready) as the default path checker while a separate
-> > prioritizer determines ALUA state. When sysfs provides ALUA state
-> > (the common case), no RTPG command is needed for priority. However,
-> > if sysfs is unavailable or detect_prio is off, the prioritizer issues
-> > RTPG, resulting in two SCSI commands per path check cycle: TUR + RTPG.
-> >
-> > This patch introduces an 'alua' path checker that uses RTPG as the path
-> > check command, providing two benefits:
-> >
-> > 1. For configurations where RTPG is needed for priority, this eliminate=
-s
-> >     duplicate I/O by combining path checking and ALUA state retrieval
-> >     into a single RTPG command.
-> >
-> > 2. RTPG provides richer path state information than TUR:
-> >     * TRANSITIONING state detected and mapped to PATH_PENDING,
-> >       preventing false all paths down during controller failover
-> >     * STANDBY state detected and mapped to PATH_GHOST
-> >     * UNAVAILABLE/OFFLINE states properly distinguished
-> >
-> > The richer state information is valuable even when sysfs is available,
-> > as TUR cannot distinguish between these ALUA-specific conditions.
-> >
-> > This design intentionally couples the checker and prioritizer: the
-> > alua_cached prioritizer consumes state cached by the alua checker.
-> > While this blurs the traditional separation between these components,
-> > for ALUA the path state and priority fundamentally derive from the
-> > same underlying data, making the coupling a natural fit.
-> >
-> > This patch sets the alua checker as the auto-detected default for ALUA
-> > devices to demonstrate its benefits. We recognize that adopting a new
-> > default checker requires careful consideration; the auto-detection can
-> > be adjusted or removed based on review feedback.
-> >
-> > Brian Bunker (1):
-> >    checkers: add alua path checker
-> >
-> >   libmultipath/Makefile                   |   5 +
-> >   libmultipath/checkers.c                 |   1 +
-> >   libmultipath/checkers.h                 |   1 +
-> >   libmultipath/checkers/Makefile          |   3 +-
-> >   libmultipath/checkers/alua.c            | 426 +++++++++++++++++++++++=
-+
-> >   libmultipath/checkers/alua.h            |  15 +
-> >   libmultipath/prio.c                     |   1 +
-> >   libmultipath/prio.h                     |   1 +
-> >   libmultipath/prioritizers/Makefile      |   1 +
-> >   libmultipath/prioritizers/alua_cached.c | 225 +++++++++++++
-> >   libmultipath/prioritizers/alua_rtpg.c   |  12 +-
-> >   libmultipath/prioritizers/alua_rtpg.h   |   1 +
-> >   libmultipath/prioritizers/sysfs.c       |   7 +-
-> >   libmultipath/propsel.c                  |  25 +-
-> >   libmultipath/structs.c                  |   2 +
-> >   libmultipath/structs.h                  |   3 +
-> >   16 files changed, 721 insertions(+), 8 deletions(-)
-> >   create mode 100644 libmultipath/checkers/alua.c
-> >   create mode 100644 libmultipath/checkers/alua.h
-> >   create mode 100644 libmultipath/prioritizers/alua_cached.c
-> >
->
-> Hmm. Some array vendor have been less than happy when I
-> tried a similar thing during development of the ALUA
-> device handler.
-> Problem is that RTPG requires a cluster callout on the
-> array side, as it needs to contain information about
-> the _entire_ target system. Which, for distributed systems,
-> is a costly operation. So using this as a path
-> checker is not making certain array vendors happy.
-From working on one of these arrays, many of the path
-state decisions often require the same set of information
-to respond correctly to test unit ready.  Other OS's including
-both Windows and ESX, once they determine that the array
-supports ALUA, use RTPG rather than TUR as the periodic
-path checker.
->
-> However: as you might have followed the discussion
-> about scsi multipathing, maybe we can turn this around
-> to profit both sides:
-> Can't we move ALUA state handling into the generic
-> code, leaving the device handler only to deal with
-> explicit ALUA?
-> That way we can intercept sense codes and send RTPG
-> only when required, such that the ALUA state of
-> the scsi device is correct.
-> And the the ALUA path checker just has to evaluate
-> the information in sysfs.
-> _And_ scsi multipathing can use that information, too.
->
-> Hmm?
-I think that there are likely ways to re-imagine the checker
-and prioritizer separation that would have benefit. This
-patch wasn't really about going in "as is" but to start that
-sort of thought.
+On Thu, 2026-03-12 at 11:38 -0700, Brian Bunker wrote:
+> On Thu, Mar 12, 2026 at 9:32=E2=80=AFAM Martin Wilck <mwilck@suse.com> wr=
+ote:
+>=20
+> > Hi Brian,
+> >=20
+> > On Wed, 2026-03-11 at 17:16 -0700, Brian Bunker wrote:
+> > > Add an 'alua' path checker that uses RTPG to check path state,
+> > > and an
+> > > 'alua_cached' prioritizer that uses the checker's cached ALUA
+> > > state.
+> > >=20
+> > > The checker maps ALUA Asymmetric Access States to path states:
+> > > =C2=A0 - AAS_OPTIMIZED, AAS_NON_OPTIMIZED -> PATH_UP
+> > > =C2=A0 - AAS_STANDBY -> PATH_GHOST
+> > > =C2=A0 - AAS_TRANSITIONING -> PATH_PENDING
+> > > =C2=A0 - AAS_UNAVAILABLE, AAS_OFFLINE -> PATH_DOWN
+> > >=20
+> > > The alua_cached prioritizer first checks for cached state from
+> > > the
+> > > alua
+> > > checker, then falls back to sysfs, then to issuing RTPG directly.
+> > > This
+> > > maintains backward compatibility with other checker
+> > > configurations.
+> > >=20
+> > > When detect_checker is enabled, the alua checker is auto-selected
+> > > for
+> > > devices with TPGS support. When the alua checker is in use,
+> > > detect_prio
+> > > auto-selects the alua_cached prioritizer.
+> > >=20
+> > > Signed-off-by: Brian Bunker <brian@purestorage.com>
+> >=20
+> > Thanks! Just a few remarks for now.
+> >=20
+> > Martin
+> >=20
+> > > ---
+> > > =C2=A0libmultipath/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=
+=C2=A0 5 +
+> > > =C2=A0libmultipath/checkers.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> > > =C2=A0libmultipath/checkers.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 1 +
+> > > =C2=A0libmultipath/checkers/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 3 +-
+> > > =C2=A0libmultipath/checkers/alua.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 426
+> > > ++++++++++++++++++++++++
+> > > =C2=A0libmultipath/checkers/alua.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 15 +
+> > > =C2=A0libmultipath/prio.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0=C2=A0 1 +
+> > > =C2=A0libmultipath/prio.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0=C2=A0 1 +
+> > > =C2=A0libmultipath/prioritizers/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 |=C2=A0=C2=A0 1 +
+> > > =C2=A0libmultipath/prioritizers/alua_cached.c | 224 +++++++++++++
+> > > =C2=A0libmultipath/prioritizers/alua_rtpg.c=C2=A0=C2=A0 |=C2=A0 12 +-
+> > > =C2=A0libmultipath/prioritizers/alua_rtpg.h=C2=A0=C2=A0 |=C2=A0=C2=A0=
+ 1 +
+> > > =C2=A0libmultipath/prioritizers/sysfs.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0 |=C2=A0=C2=A0 7 +-
+> > > =C2=A0libmultipath/propsel.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 20 =
++-
+> > > =C2=A0libmultipath/structs.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=
+=A0 2 +
+> > > =C2=A0libmultipath/structs.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=
+=A0 3 +
+> > > =C2=A016 files changed, 716 insertions(+), 7 deletions(-)
+> > > =C2=A0create mode 100644 libmultipath/checkers/alua.c
+> > > =C2=A0create mode 100644 libmultipath/checkers/alua.h
+> > > =C2=A0create mode 100644 libmultipath/prioritizers/alua_cached.c
+> >=20
 
-In general multipath-tools is "good enough" to support the
-ALUA story from my perspective as a target vendor. There
-are some improvements that would likely simplify things.
+[...]
 
-The Linux kernel, in my view, should take these two
-changes to complete its ALUA story:
-https://marc.info/?l=3Dlinux-scsi&m=3D177189801604075&w=3D2
-https://marc.info/?l=3Dlinux-scsi&m=3D176530648031820&w=3D2
+> > Instead of duplicating the threading implementation of the TUR
+> > checker
+> > here we should abstract it out and use the common framework by both
+> > checkers (and others, too, maybe). This is a thing I've wanted to
+> > do
+> > for a long time. Maybe it's time to start doing it now.
+> >=20
+> I considered that sort of re-work, but I was concerned that changes
+> adding to the existing checker might muddy the waters. There are
+> certainly
+> changes where helper functions could be extracted for both checkers
+> to leverage them.
+>=20
 
-It would be great if someone could review those two changes.
->
-> Cheers,
->
-> Hannes
-> --
-> Dr. Hannes Reinecke                  Kernel Storage Architect
-> hare@suse.de                                +49 911 74053 688
-> SUSE Software Solutions GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg
-> HRB 36809 (AG N=C3=BCrnberg), GF: I. Totev, A. McDonald, W. Knoblich
+I didn't mean to say that _you_ have to do it. I see it as my job,
+actually. The question is whether you are willing to wait until I get
+to it...
 
-Thanks,
-Brian
---=20
-Brian Bunker
-PURE Storage, Inc.
-brian@purestorage.com
+[...]
+
+> > > --- a/libmultipath/prioritizers/Makefile
+> > > +++ b/libmultipath/prioritizers/Makefile
+> > > @@ -13,6 +13,7 @@ LIBDEPS =3D -lmultipath -lmpathutil -lm -lpthread
+> > > -
+> > > lrt
+> > > =C2=A0# If you add or remove a prioritizer also update
+> > > multipath/multipath.conf.5
+> > > =C2=A0LIBS =3D \
+> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libprioalua.so \
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 libprioalua_cached.so \
+> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libprioconst.so \
+> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libpriodatacore.so \
+> > > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 libprioemc.so \
+> >=20
+> > I think the below should go into a separate patch.
+> >=20
+> Can they be separated? The prioritizer's logic relies
+> on the checker populating values for its decision.
+>=20
+
+First the checker, then the prioritizer?
+
+> >=20
+> > > diff --git a/libmultipath/prioritizers/alua_cached.c
+> > > b/libmultipath/prioritizers/alua_cached.c
+> > > new file mode 100644
+> > > index 00000000..2ba5b2e7
+> > > --- /dev/null
+> > > +++ b/libmultipath/prioritizers/alua_cached.c
+> > > @@ -0,0 +1,224 @@
+> > > +/*
+> > > + * (C) Copyright IBM Corp. 2004, 2005=C2=A0=C2=A0 All Rights Reserve=
+d.
+> > > + * Modified 2024 to support cached ALUA state from checker
+> > > + *
+> > > + * ALUA prioritizer that can use cached state from alua checker
+> > > + * to avoid duplicate RTPG commands.
+> > > + *
+> > > + * This file is released under the GPL.
+> >=20
+> > Please add a proper license header.
+> >=20
+> > > + */
+> > > +#include <stdio.h>
+> > > +#include <string.h>
+> > > +
+> > > +#include <time.h>
+> > > +
+> > > +#include "debug.h"
+> > > +#include "prio.h"
+> > > +#include "structs.h"
+> > > +#include "checkers.h"
+> > > +#include "discovery.h"
+> > > +
+> > > +#include "alua.h"
+> > > +
+> > > +#define ALUA_PRIO_NOT_SUPPORTED=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 1
+> > > +#define ALUA_PRIO_RTPG_FAILED=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 2
+> > > +#define ALUA_PRIO_GETAAS_FAILED=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 3
+> > > +#define ALUA_PRIO_TPGS_FAILED=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0 4
+> > > +#define ALUA_PRIO_NO_INFORMATION=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 5
+> > > +#define ALUA_PRIO_CACHED_STALE=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 6
+> > > +
+> > > +/* Maximum age of cached ALUA state in seconds */
+> > > +#define ALUA_CACHE_MAX_AGE_SECS=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 5
+> > > +
+> > > +static const char * aas_string[] =3D {
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_OPTIMIZED]=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0 =3D "active/optimized",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_NON_OPTIMIZED]=C2=A0=C2=A0=C2=A0=C2=A0=
+ =3D "active/non-optimized",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_STANDBY]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "standby",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_UNAVAILABLE]=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0 =3D "unavailable",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_LBA_DEPENDENT]=C2=A0=C2=A0=C2=A0=C2=A0=
+ =3D "logical block dependent",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_RESERVED]=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "ARRAY BUG: invalid TPGs state!",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_OFFLINE]=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 =3D "offline",
+> > > +=C2=A0=C2=A0=C2=A0=C2=A0 [AAS_TRANSITIONING]=C2=A0=C2=A0=C2=A0=C2=A0=
+ =3D "transitioning between states",
+> > > +};
+> >=20
+> > We shouldn't duplicate the definition of these constants.
+>=20
+> This was somewhat intentional though not efficient. I will
+> do better with leveraging in the next patch.
+>=20
+>=20
+
+OK.
+
+Thanks
+Martin
+
+
