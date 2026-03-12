@@ -1,85 +1,137 @@
-Received: from perceval.ideasonboard.com (perceval.ideasonboard.com [213.167.242.64])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-dy1-f175.google.com (mail-dy1-f175.google.com [74.125.82.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A72F579DA;
-	Wed, 11 Mar 2026 23:03:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.167.242.64
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92A9F1FB1
+	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 00:16:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.82.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773270229; cv=none; b=roggHObGrMztUhdo4nb5uQuRkPEYZCn5X3QwxcJ7z5Dyv2K6zPgJpNqffR5gaz+VMRA3RXs25ESkVY7wXriRS/ACsiKP/b/Ydy5tNVkqvSBiaeddvZZZAkc/K6AISBrnPy2OBu1ByqoBgPhF9/8k/UFJwSaDxNj5rV5ykcRUkUw=
+	t=1773274609; cv=none; b=SqmJuC/ufMsRPECaDYabLFSg1HkXyULdeqITaGUSQynFQaZIqnk8S6GksJJtrDCEQ4W34ae+DAlSDSLWAdk39+u3nUc5ZVnrdPFhya79EomV7imbSvKsWugSX02mzaQD1GlqLWd59uKjISP9StvwxQtla4kyk3ydLvHZ38wReoQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773270229; c=relaxed/simple;
-	bh=ATo3aRyKmYSXuSYD8x/NeBUp5LJcLKbzHVpozNXQJC0=;
-	h=Content-Type:MIME-Version:In-Reply-To:References:Subject:From:Cc:
-	 To:Date:Message-ID; b=PrqFnIb5a7YHwE4RE6eaxrPHMLCEhV1UmhNlDjtvnxO/j3qF9tAaL0cHFxZqctKaEfyKbmVUdt5eF0Rp4vslLIMe5IoThbCLCSD9qfcST1vt7UbMZIgTTynOeQ7iRGr0bFdYOsCWUBXnhy3F43XbfViPKFuu1FeWRQQccyWeq8c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ideasonboard.com; spf=pass smtp.mailfrom=ideasonboard.com; dkim=fail (1024-bit key) header.d=ideasonboard.com header.i=@ideasonboard.com header.b=WxcdvAR4 reason="signature verification failed"; arc=none smtp.client-ip=213.167.242.64
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=ideasonboard.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ideasonboard.com
+	s=arc-20240116; t=1773274609; c=relaxed/simple;
+	bh=H46vsjcFWjfyrcuc0NONDq7O9n1rO+xfd7TMEFF/Kzg=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=rDhKYRdmZcv6Q9AeandjSQPtQhvgtwdfAvDArTThj1vuLHKgsCb3p/t52K3/qFITIxsOnOel025RP6sXKugDTFlCoQe5TLhiuLgUrPUsTRawAjGlv8STdatscvxsgz06RK3WY1l0x0CYHIRHWtqHOdw0BrMk1Q4V/VKby9m80aU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=OSJAF1uQ; arc=none smtp.client-ip=74.125.82.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=fail reason="signature verification failed" (1024-bit key) header.d=ideasonboard.com header.i=@ideasonboard.com header.b="WxcdvAR4"
-Received: from monstersaurus.ideasonboard.com (cpc89244-aztw30-2-0-cust6594.18-1.cable.virginm.net [86.31.185.195])
-	by perceval.ideasonboard.com (Postfix) with ESMTPSA id CD91E448;
-	Thu, 12 Mar 2026 00:02:28 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=ideasonboard.com;
-	s=mail; t=1773270149;
-	bh=ATo3aRyKmYSXuSYD8x/NeBUp5LJcLKbzHVpozNXQJC0=;
-	h=In-Reply-To:References:Subject:From:Cc:To:Date:From;
-	b=WxcdvAR4zphcUuTNTLXCbLGiiCOKCwemLRMbnRdmW3ARcBHAWQiYVeysDpnfCIDuk
-	 B8rMCjKjDjoWJdgj4Zp0scfHxrPnr5P3xl9hFANY/wyWKZBZYHzyf2qsFxVEe9S31Y
-	 m9r/HjFnopry9bsUUdk6/id/Q3d97jYK/FiMa+Qw=
-Content-Type: text/plain; charset="utf-8"
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="OSJAF1uQ"
+Received: by mail-dy1-f175.google.com with SMTP id 5a478bee46e88-2be0711f493so930143eec.0
+        for <dm-devel@lists.linux.dev>; Wed, 11 Mar 2026 17:16:47 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1773274607; x=1773879407; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=08jq9kN+mcXQq6zTMIpGhphJoefCrqfLZOcQnYPyBec=;
+        b=OSJAF1uQ22vnugAfwYyXBrUNE1zhkVRubko67RcrvCDguALhW2HV2I1DdrvFnCkqGS
+         WgrDmshFSFaMYP70l5YH8EoKyiOCgaRqozbO29tuQQVJurLjZ9t3v/CVWKEqxIXedw1P
+         +f6FQa3aoS5SEOH5VgLbaYZz5/h4jZiyJJtdRFKhHrowgkgsjoJW5HXnGHM1A/KiNsnk
+         h/gSSLlx5Turpz0ZazNJwBiDpdtT4HGk+sVXU8fzhuB+SJfZeB/EmQdECjDVkxETjVdo
+         16w1Gnv+zy0Pylwl1B4adOmAG1rRyFUZXTxohbmwqussapl7RsmxHUa4z9IoFtV03uSY
+         k0IA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1773274607; x=1773879407;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=08jq9kN+mcXQq6zTMIpGhphJoefCrqfLZOcQnYPyBec=;
+        b=tPMG9PXbzBfIz0HF/OoIyPz8lrer7yoNtj/l3h7u2v6atccOmTQpmWj1kgsRFs7qWo
+         PndwVG+vK0f53zOnE1rFWGhPZgbqtx5pCYHlu98aVjwtHy6ZWr3nMINjR/cebg2/Vr/r
+         2cJY+3gf8MPDeH3rlB6rUYaEJ7WODgQGZ70/zycPx84ekp7NBKNEBL/nLOkQgwn9EGF8
+         bmVTL8zRy2ycAwTRJEnBu3B712I8ZfP8HXnl7ILhGLRreEqdxEwJmjtpZeQJwp7seS0x
+         J10XvCKXk5Y44Bl2L1q6FaSKgpPQ3hsA46O1UNmncjq7CR7o/NQ0LIjS1yYjiaKksAHZ
+         YpIA==
+X-Forwarded-Encrypted: i=1; AJvYcCVtBZiPyG00/ST6xgUNcp66PVedYTjPARkcUMHNZJfkFW965NNIlVOGVFvw4cP4Hx2bOuQM39PKXA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyN5R69DVMTCgszTuFIeCQ8FgO1Yn71iN3ezFXmNIvfP5zz+Nd4
+	WSlRRDSlnKUvRHvcktWNds0yhOrcQSOJ93DlegYkM0o8WoWFeg937hTBsjXD9CYb7JU=
+X-Gm-Gg: ATEYQzyHrvXb0MViY0g8PP0hw5J6cGyZvEdLbV9KHvSKYtxmCAHFjouI3Xr+Wzo51iO
+	BKs/12CFIAuTsh3z/oxcT6eFw/OTHlUI9j10evbhSj2wJ3N4AMeUXNFR6xIAJWDZaxR263mvoVm
+	WnaI9H7QpnoRTBb8PeRYXoLlcbAKNPsoxAxJ0zjK6f3jGxVtmFkCPNKVoASCtrslOcedt4Kp4cK
+	TztkgUTjDQ0B9TymBfBu3YeyuCdiGRZhzYiVXSbrAQcq0Ob9vu4tUSGwj3W1HW602RofIKWpwB5
+	vEFK0bXGyFKGSsOpfOo3B4QLmAvsK+ILCj/CT1r8vO/3ObFTo2QasWwYQ0DgHFM/vC/MCieuCyt
+	0rDOlAPwhAT2oaHnvr9QKc/x6LCLTCxK45XZjt5bHMTRiJ/Zv961cuCqd8xP17Nj6pk5fk2K/aF
+	UcqMctjs+DWyCPkcujKtgEXD4sQRgNukSFh3Udxk/cqkMBBrqJRtThS4ym8Id3v5VwEMX8sib6o
+	GSLZUqcsONLlpWN9zraWbKJGfB1BSiZPshBdaMDaqVKi8nKYg6jBWahQnVigLcoiw==
+X-Received: by 2002:a05:7300:a506:b0:2b6:bb18:c70a with SMTP id 5a478bee46e88-2be9447abfbmr670028eec.15.1773274606375;
+        Wed, 11 Mar 2026 17:16:46 -0700 (PDT)
+Received: from brian--MacBookPro18.purestorage.com ([136.226.65.98])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2be8aa73ba6sm4375169eec.25.2026.03.11.17.16.45
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Wed, 11 Mar 2026 17:16:45 -0700 (PDT)
+From: Brian Bunker <brian@purestorage.com>
+To: bmarzins@redhat.com,
+	mwilck@suse.com,
+	dm-devel@lists.linux.dev
+Cc: Brian Bunker <brian@purestorage.com>
+Subject: [PATCH 0/1] checkers: add alua path checker
+Date: Wed, 11 Mar 2026 17:16:36 -0700
+Message-ID: <20260312001642.53321-1-brian@purestorage.com>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20260310-b4-is_err_or_null-v1-49-bd63b656022d@avm.de>
-References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de> <20260310-b4-is_err_or_null-v1-49-bd63b656022d@avm.de>
-Subject: Re: [PATCH 49/61] media: Prefer IS_ERR_OR_NULL over manual NULL check
-From: Kieran Bingham <kieran.bingham@ideasonboard.com>
-Cc: Shuah Khan <skhan@linuxfoundation.org>, Mauro Carvalho Chehab <mchehab@kernel.org>
-To: Philipp Hahn <phahn-oss@avm.de>, amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com, bpf@vger.kernel.org, ceph-devel@vger.kernel.org, cocci@inria.fr, dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org, gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org, intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev, kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org, linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org, linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, linux-leds@vger.kernel.org, linux-media@vger.kernel.org, linux-mips@vger.kernel.org, linux-mm@kvack.org, linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org, linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org, linux-phy@lists.infradead.org, lin
- ux-pm@vger.kernel.org, linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org, linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org, linux-sound@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com, linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org, linux-wireless@vger.kernel.org, netdev@vger.kernel.org, ntfs3@lists.linux.dev, samba-technical@lists.samba.org, sched-ext@lists.linux.dev, target-devel@vger.kernel.org, tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev
-Date: Wed, 11 Mar 2026 23:03:33 +0000
-Message-ID: <177327021364.3167621.11851238159935183684@ping.linuxembedded.co.uk>
-User-Agent: alot/0.9.1
+Content-Transfer-Encoding: 8bit
 
-Quoting Philipp Hahn (2026-03-10 11:49:15)
-> Prefer using IS_ERR_OR_NULL() over using IS_ERR() and a manual NULL
-> check.
->=20
-> Change generated with coccinelle.
->=20
-> To: Shuah Khan <skhan@linuxfoundation.org>
-> To: Kieran Bingham <kieran.bingham@ideasonboard.com>
-> To: Mauro Carvalho Chehab <mchehab@kernel.org>
-> Cc: linux-media@vger.kernel.org
-> Cc: linux-kernel@vger.kernel.org
-> Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
-> ---
->  drivers/media/test-drivers/vimc/vimc-streamer.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
->=20
-> diff --git a/drivers/media/test-drivers/vimc/vimc-streamer.c b/drivers/me=
-dia/test-drivers/vimc/vimc-streamer.c
-> index 15d863f97cbf96b7ca7fbf3d7b6b6ec39fcc8ae3..da5aca50bcb4990c06f28e5a8=
-83eb398606991e9 100644
-> --- a/drivers/media/test-drivers/vimc/vimc-streamer.c
-> +++ b/drivers/media/test-drivers/vimc/vimc-streamer.c
-> @@ -167,7 +167,7 @@ static int vimc_streamer_thread(void *data)
->                 for (i =3D stream->pipe_size - 1; i >=3D 0; i--) {
->                         frame =3D stream->ved_pipeline[i]->process_frame(
->                                         stream->ved_pipeline[i], frame);
-> -                       if (!frame || IS_ERR(frame))
-> +                       if (IS_ERR_OR_NULL(frame))
+For ALUA-capable storage arrays, multipath-tools currently uses TUR
+(Test Unit Ready) as the default path checker while a separate
+prioritizer determines ALUA state. When sysfs provides ALUA state
+(the common case), no RTPG command is needed for priority. However,
+if sysfs is unavailable or detect_prio is off, the prioritizer issues
+RTPG, resulting in two SCSI commands per path check cycle: TUR + RTPG.
 
-Reviewed-by: Kieran Bingham <kieran.bingham@ideasonboard.com>
+This patch introduces an 'alua' path checker that uses RTPG as the path
+check command, providing two benefits:
 
->                                 break;
->                 }
->                 //wait for 60hz
->=20
-> --=20
-> 2.43.0
->
+1. For configurations where RTPG is needed for priority, this eliminates
+   duplicate I/O by combining path checking and ALUA state retrieval
+   into a single RTPG command.
+
+2. RTPG provides richer path state information than TUR:
+   * TRANSITIONING state detected and mapped to PATH_PENDING,
+     preventing false all paths down during controller failover
+   * STANDBY state detected and mapped to PATH_GHOST
+   * UNAVAILABLE/OFFLINE states properly distinguished
+
+The richer state information is valuable even when sysfs is available,
+as TUR cannot distinguish between these ALUA-specific conditions.
+
+This design intentionally couples the checker and prioritizer: the
+alua_cached prioritizer consumes state cached by the alua checker.
+While this blurs the traditional separation between these components,
+for ALUA the path state and priority fundamentally derive from the
+same underlying data, making the coupling a natural fit.
+
+This patch sets the alua checker as the auto-detected default for ALUA
+devices to demonstrate its benefits. We recognize that adopting a new
+default checker requires careful consideration; the auto-detection can
+be adjusted or removed based on review feedback.
+
+Brian Bunker (1):
+  checkers: add alua path checker
+
+ libmultipath/Makefile                   |   5 +
+ libmultipath/checkers.c                 |   1 +
+ libmultipath/checkers.h                 |   1 +
+ libmultipath/checkers/Makefile          |   3 +-
+ libmultipath/checkers/alua.c            | 426 ++++++++++++++++++++++++
+ libmultipath/checkers/alua.h            |  15 +
+ libmultipath/prio.c                     |   1 +
+ libmultipath/prio.h                     |   1 +
+ libmultipath/prioritizers/Makefile      |   1 +
+ libmultipath/prioritizers/alua_cached.c | 225 +++++++++++++
+ libmultipath/prioritizers/alua_rtpg.c   |  12 +-
+ libmultipath/prioritizers/alua_rtpg.h   |   1 +
+ libmultipath/prioritizers/sysfs.c       |   7 +-
+ libmultipath/propsel.c                  |  25 +-
+ libmultipath/structs.c                  |   2 +
+ libmultipath/structs.h                  |   3 +
+ 16 files changed, 721 insertions(+), 8 deletions(-)
+ create mode 100644 libmultipath/checkers/alua.c
+ create mode 100644 libmultipath/checkers/alua.h
+ create mode 100644 libmultipath/prioritizers/alua_cached.c
+
+-- 
+2.50.1 (Apple Git-155)
+
