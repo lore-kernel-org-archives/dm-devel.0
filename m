@@ -1,155 +1,147 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-qt1-f174.google.com (mail-qt1-f174.google.com [209.85.160.174])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 812DE3FB7E1
-	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 16:48:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F4E33E8697
+	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 16:54:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.174
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773334093; cv=none; b=E3EdRctDusWwWxGJfQVabkrO51YHHak2Wqq3MtwqfNZbSYtqORNORx+fUJRoUvY7jgfHvNGrKa4W+KjJHDZg9A/LwKbU0byCB5jz2sgwePWGwHIe/Pf9kraiJvYkbNwslPJuJGrzUxg3na57YVA3SorD0/sDRIHIxHHNh3BFI/c=
+	t=1773334494; cv=none; b=Ir0sjOi/jrIqdML0kRs9Y+aPLYr+941H3J59rpJCafU1BAV/+p2r96AQ+5fDno4BhIWYXRcctbGm1rdKuDyhPnXjSXEEL0zKYdRnKJmWyWtOqnnjCdCFDzw8DrvlvUBOPU5YVRRaLyNVTa61JSzU2+wtPyljSJ4stxC9hSOuoSw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773334093; c=relaxed/simple;
-	bh=G8ZcrArS0PK+7OGxgFfZECOZUJEB4mjcLerOY1bweVU=;
-	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Z4Tv62O53xFHCtVc3VERPCBhmKA205bPqP5IaxADMUQaynQqKRGcsX2AUQT+NUDSt7xJRKzoxUb2aeFFDuAWw8cXoUKE9tWHOkPllourUVO4qBx/6vKsRQ1F9olAb9hzHC4/VG65I8JW20jZBnTEFW/lY+UvA5c0KbZoBVDf3vI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=ZFA//Vea; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=ZFA//Vea; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1773334494; c=relaxed/simple;
+	bh=ENv0+4bH9YdpFLGeURNwJ3+rEUsnNn74RNCtOl26SEA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Re8DwSbBRFrERFcDTIeNUWiTDUKAMchgWnf64eJWGQaaUo8h58ENQpTeANaPZX56LQf9Ao3wy9A9GxILSnD7PRnUbdb2LNUCJoDCyzssZRpRleO+bXsf+k5McxraNhi4e9r/jDXPy6NqyiRMa32zMPOqFnr8U3A5nwGGptxTiyA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca; spf=pass smtp.mailfrom=ziepe.ca; dkim=pass (2048-bit key) header.d=ziepe.ca header.i=@ziepe.ca header.b=XdvK8Dom; arc=none smtp.client-ip=209.85.160.174
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="ZFA//Vea";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="ZFA//Vea"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 711675C05E;
-	Thu, 12 Mar 2026 16:48:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1773334084; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=G8ZcrArS0PK+7OGxgFfZECOZUJEB4mjcLerOY1bweVU=;
-	b=ZFA//VeapdvY3YpPLPe73XoFctEkItGYR0PqRMm8fJD8Wh7BpnxAuFk8IDNnS4k6dL9fcD
-	qHxb16lvfS249LQqrEjV+3PzPpKuGKxfxBipkYFKiDF1BsvIOaT5HZEoNGm3ikhDDhUJzc
-	9oDYXFYy7+HhxVCYSzeWZ5T/dIE0tJ4=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="ZFA//Vea"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1773334084; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=G8ZcrArS0PK+7OGxgFfZECOZUJEB4mjcLerOY1bweVU=;
-	b=ZFA//VeapdvY3YpPLPe73XoFctEkItGYR0PqRMm8fJD8Wh7BpnxAuFk8IDNnS4k6dL9fcD
-	qHxb16lvfS249LQqrEjV+3PzPpKuGKxfxBipkYFKiDF1BsvIOaT5HZEoNGm3ikhDDhUJzc
-	9oDYXFYy7+HhxVCYSzeWZ5T/dIE0tJ4=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 544DA40082;
-	Thu, 12 Mar 2026 16:48:04 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id pxdpE0Tusml0CQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 12 Mar 2026 16:48:04 +0000
-Message-ID: <bc54bb449129d0a026e69a502d82ef54793f33cc.camel@suse.com>
-Subject: Re: [PATCH 0/1] checkers: add alua path checker
-From: Martin Wilck <mwilck@suse.com>
-To: Hannes Reinecke <hare@suse.de>, Brian Bunker <brian@purestorage.com>, 
-	bmarzins@redhat.com, dm-devel@lists.linux.dev
-Date: Thu, 12 Mar 2026 17:48:03 +0100
-In-Reply-To: <91ed7162-719f-4ff2-9951-913fe8096f08@suse.de>
-References: <20260312001642.53321-1-brian@purestorage.com>
-	 <91ed7162-719f-4ff2-9951-913fe8096f08@suse.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.58.3 
+	dkim=pass (2048-bit key) header.d=ziepe.ca header.i=@ziepe.ca header.b="XdvK8Dom"
+Received: by mail-qt1-f174.google.com with SMTP id d75a77b69052e-5094e1d17d3so7532791cf.3
+        for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 09:54:51 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1773334491; x=1773939291; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=VQXCfPVu6b6dIVECzm0C8AUD7IL7VvpSkD5+M4S95sw=;
+        b=XdvK8DomXzUZgO6AoDwb+gZ7o/ziIbnIXHeoewfKtBKE5xyNG2Zck6CmNzNDWec1SB
+         l6itnkZH4V9Sxuv0dVfHojcx0ZpqqhGCu/CZ5lz2UxM0wQMexAGfjHJyeFboOcff/WPI
+         JWK+J3NRN2leYxfwrsAMxhrjjfN+/EJv+9htug6y4h/ByTJ80eVLtuuGfD4FwFG/E8H4
+         +uJdLGbU04IwX90inux/pY/ZLtJN3b61jhvP7qTFaBcM7pf3RlEjLXo6caO0csHVqAxz
+         hJgxIdv6OCGWX2aaKuKGlaQjUc3E4H2ah716Fy2ZS8tSsepbC+HgAc1oQbQJOLyGhGnN
+         nYLw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1773334491; x=1773939291;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=VQXCfPVu6b6dIVECzm0C8AUD7IL7VvpSkD5+M4S95sw=;
+        b=Qh1hYba+b7S3HiRJtcW/vbYd3mii+U/iYaeJTemXzNj4cvc1TnxU4vFHWy2mEYpkOT
+         igxw/elskI9C6Jo5NMZmtQBb9E/OThqaRsfhCRvzsGGIrnnDMszKOrEuTLVmwMW3vhv0
+         7PilkfRqok6jpNicWup9J9yld6mGXZTF7KtBkv6Twi+ZyG4i1iH8c9XWeqADqxDE4zqA
+         zkwitPhXgKUqp4Vb0jFaboJhvtNP+u766xIdzO0xNr7BIl5KoRS5uIixuaiV+k1KQj1B
+         9vwDHm4td8J/NUA/CFVZIaq8pIUSKy9cZ3SPViEiXCybAKf1CWjqqGMBNHCxpnyDW5wk
+         57Mw==
+X-Forwarded-Encrypted: i=1; AJvYcCVVba49EAv1tPut86LOR/+a3M9wj2+3bPO02ulgTkUhcklaKFTR4VU0NtBuWr3AMF/m1X3X7KS4/Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yypj/Omh0vIXiHxzgsw9KClkXp2zHbGOvPzlRr1bHjxcpDRTvtH
+	JxADF0w/1AufqUqzQs0PXvJ1wZKS7mDjbKb7lcmJQlxAwzaGWFwF9TKfhnbG/M6tpPQ=
+X-Gm-Gg: ATEYQzwsbQRvsk2Pz7z8QHhS/a2N6MEsE8QEnhrlmmK+Gd+TLWo+BQgp6gHdNQVc+L0
+	XLe23D99yFNHtY2hR0rlzl0qspjHZKjnRcqgAQlj5Ai3rQUWW5y+K5nO7gVw3sKn1vFT82GGZ0i
+	Sf1QP7IBxR6p7gqFmiphsY/Jo2aEaafKm8eBwJs9YZfRAHP/+vx407ddaAckiS+DbnN5HqruQfo
+	ptE/KbC89CamTvgQ2pOfaovfis4ipe2JdZSS7SiU/tu9iyQVkBcOBYDXBPo3AxLJ+EzQEe5niVy
+	kI6u8yX7hF5ZX/iGlC5AHLP/n6atZeQPedijtYt5dQZQ5wh7sIO5vmW/N+YMuqVRUUec+vEpNNK
+	vLZQrhfC8Hg/AehaoI9N+QoQLuT8IgIC4BATs1MZufFObkjBDYtMKZTkMFuml5jrmRQOLOGVKNR
+	Ep7JGTWoycaeQA3s+mg3BCk1Ik4WHq2sygtja3K18jBJ8KFw59sx2rWY+Ug6q8J8dv8EBeoYxx7
+	2w2HoAi1DzBjx48xHs=
+X-Received: by 2002:a05:622a:289:b0:509:44c3:5ffa with SMTP id d75a77b69052e-50957e10673mr1403911cf.52.1773334490530;
+        Thu, 12 Mar 2026 09:54:50 -0700 (PDT)
+Received: from ziepe.ca (hlfxns017vw-142-162-112-119.dhcp-dynamic.fibreop.ns.bellaliant.net. [142.162.112.119])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-5093a119602sm36658181cf.28.2026.03.12.09.54.49
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 12 Mar 2026 09:54:49 -0700 (PDT)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1w0jJA-00000006i8N-40X9;
+	Thu, 12 Mar 2026 13:54:48 -0300
+Date: Thu, 12 Mar 2026 13:54:48 -0300
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: James Bottomley <James.Bottomley@hansenpartnership.com>
+Cc: Kuan-Wei Chiu <visitorckw@gmail.com>, Philipp Hahn <phahn-oss@avm.de>,
+	amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
+	bpf@vger.kernel.org, ceph-devel@vger.kernel.org, cocci@inria.fr,
+	dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
+	gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org,
+	intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev,
+	kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+	linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org,
+	linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org,
+	linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org,
+	linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-leds@vger.kernel.org, linux-media@vger.kernel.org,
+	linux-mips@vger.kernel.org, linux-mm@kvack.org,
+	linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org,
+	linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org,
+	linux-phy@lists.infradead.org, linux-pm@vger.kernel.org,
+	linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org,
+	linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org,
+	linux-sound@vger.kernel.org,
+	linux-stm32@st-md-mailman.stormreply.com,
+	linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org,
+	linux-wireless@vger.kernel.org, netdev@vger.kernel.org,
+	ntfs3@lists.linux.dev, samba-technical@lists.samba.org,
+	sched-ext@lists.linux.dev, target-devel@vger.kernel.org,
+	tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev
+Subject: Re: [PATCH 00/61] treewide: Use IS_ERR_OR_NULL over manual NULL
+ check - refactor
+Message-ID: <20260312165448.GN1469476@ziepe.ca>
+References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
+ <abBlpGKO842B3yl9@google.com>
+ <20260312125730.GI1469476@ziepe.ca>
+ <f5688b895eaebabae6545a0d9baf8f1404e8454e.camel@HansenPartnership.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	ARC_NA(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 711675C05E
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <f5688b895eaebabae6545a0d9baf8f1404e8454e.camel@HansenPartnership.com>
 
-On Thu, 2026-03-12 at 08:10 +0100, Hannes Reinecke wrote:
-> >=20
->=20
-> Hmm. Some array vendor have been less than happy when I
-> tried a similar thing during development of the ALUA
-> device handler.
-> Problem is that RTPG requires a cluster callout on the
-> array side, as it needs to contain information about
-> the _entire_ target system. Which, for distributed systems,
-> is a costly operation. So using this as a path
-> checker is not making certain array vendors happy.
->=20
+On Thu, Mar 12, 2026 at 11:32:37AM -0400, James Bottomley wrote:
+> On Thu, 2026-03-12 at 09:57 -0300, Jason Gunthorpe wrote:
+> > On Wed, Mar 11, 2026 at 02:40:36AM +0800, Kuan-Wei Chiu wrote:
+> > 
+> > > IMHO, the necessity of IS_ERR_OR_NULL() often highlights a
+> > > confusing or flawed API design. It usually implies that the caller
+> > > is unsure whether a failure results in an error pointer or a NULL
+> > > pointer. 
+> > 
+> > +1
+> > 
+> > IS_ERR_OR_NULL() should always be looked on with suspicion. Very
+> > little should be returning some tri-state 'ERR' 'NULL' 'SUCCESS'
+> > pointer. What does the middle condition even mean? IS_ERR_OR_NULL()
+> > implies ERR and NULL are semanticly the same, so fix the things to
+> > always use ERR.
+> 
+> Not in any way supporting the original patch.  However, the pattern
+> ERR, NULL, PTR is used extensively in the dentry code of filesystems. 
+> See the try_lookup..() set of functions in fs/namei.c
+> 
+> The meaning is
+> 
+> PTR - I found it
+> NULL - It definitely doesn't exist
+> ERR - something went wrong during the lookup.
+> 
+> So I don't think you can blanket say this pattern is wrong.
 
-I wonder if we could avoid this problem by listening to=20
-SDEV_EVT_ALUA_STATE_CHANGE_REPORTED uevents in multipathd.
+Lots of places also would return ENOENT, I'd argue that is easier to
+use..
 
-Actually, multipathd could use TUR for checking unless we=C2=A0receive an
-event of this type. multipathd could listen to those events and then
-retrieve the new device state(s) from sysfs, without sending an RTPG
-command itself.
+But yes, I did use the word "suspicion" not blanket wrong :)
 
-We wouldn't switch to the alua checker by default anyway, so the
-vendors that prefer the sysfs prioritizer won't be hurt even
-if that doesn't work.
-
-> However: as you might have followed the discussion
-> about scsi multipathing, maybe we can turn this around
-> to profit both sides:
-> Can't we move ALUA state handling into the generic
-> code, leaving the device handler only to deal with
-> explicit ALUA?
-
-When you say "generic code", I suppose you are talking about
-the SCSI midlayer. It isn't clear to me how multipathd would benefit
-from handling ALUA there, other than being able to read state from
-sysfs, as it already does.
-
-Regards
-Martin
-
-> That way we can intercept sense codes and send RTPG
-> only when required, such that the ALUA state of
-> the scsi device is correct.
-> And the the ALUA path checker just has to evaluate
-> the information in sysfs.
-> _And_ scsi multipathing can use that information, too.
->=20
-> Hmm?
->=20
-> Cheers,
->=20
-> Hannes
+Jason
