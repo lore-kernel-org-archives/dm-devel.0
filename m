@@ -1,215 +1,129 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-qt1-f171.google.com (mail-qt1-f171.google.com [209.85.160.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5BBF3AC0E2
-	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 07:10:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2CA13C3C1D
+	for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 12:57:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773299436; cv=none; b=VwuQms812TCoWr0fV27tfPEkIXjTgfHr/SbdTulrdvs7k0Xt3oD3hPqGw0P/eU4hAB3/3XJlGpiLuqZl1NPSGw5Kq7TV/GoJ0NVofU3PueHbfb1IO1p9ojUWkTXYbBed5IKMOFvApiTyJUKY0h0/EAmxrH0P29Byxemh196xP/I=
+	t=1773320256; cv=none; b=qHh1uE7p/8RhAtxkJp2F+qMtKNwYlzCnbo569bGyx93wwgXfvqrvzekXuHxED6BQVtwqMoNwROSosgsjzNLnEU5Oyg6aTJfBXYZYMzZNEq95bErelDxn/etPEpEifu8QurmEA+uWt6xCeXMZuGax6NpDwgPrlPXk8M2Nqe4aYf0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773299436; c=relaxed/simple;
-	bh=JZRYTXo+JjHZpZlDU6EMIbBSq24RUHmUGrqZsllm2Rg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=Zl48F4g5QptpC6Ce0XKvitgbKd4yQtnDsefZZhdQB+naFf/mlwhtPSNk+fQ1v45VXWDkmBNIucYSu6y7/FHPDgam7zr5rwY7SiRFWPBcoGrBMFmtHJJ4VX4JJWGIc9ouO04IVWsejiUXQWPmhOCbJmdrKPnzbCu6jlWW5401qd8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=Iym63A57; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=P3t1QYH9; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=Iym63A57; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=P3t1QYH9; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1773320256; c=relaxed/simple;
+	bh=Rr1jkAP22lZkLvo3o90a9fRSWh9+kilNKtAarSScWFY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=X8iLYNc38LRyuAioF1Zr3IXCcJ827DKOuO8rCt7LTMoR59Fn39gEdKSn66EzdfmFanmsB2rNHNw4eLs4YP0n/9P5200GplH5Rm84LkjEIRH+BCoiIoxkblQUOEXBcjx8XyGeBmhYVR6Ov2uWnIooo3WT9+eL3JkBzLcWexzoivI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca; spf=pass smtp.mailfrom=ziepe.ca; dkim=pass (2048-bit key) header.d=ziepe.ca header.i=@ziepe.ca header.b=nVIyHmtx; arc=none smtp.client-ip=209.85.160.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="Iym63A57";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="P3t1QYH9";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="Iym63A57";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="P3t1QYH9"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id CA39C5BD08;
-	Thu, 12 Mar 2026 07:10:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1773299430; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tr9cbP1Svc+kQDHpamxFCkcB3+I0OqVICFe/AAvO56s=;
-	b=Iym63A57FAkSLhROOWTQTWB5Qxoye0liG9oRllY+8tfIW5M99vQvWLWmsniGSsL7zi1tcX
-	YiY7klMMpj1MklGN04QmzNIX+H095qmQD8uzy07BBoBKO/PM5dS14Ac4/ZMZ7mavRe/VJs
-	6iqMKMO8hJ2kJ4+jsJu2Jv4skA5Lze8=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1773299430;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tr9cbP1Svc+kQDHpamxFCkcB3+I0OqVICFe/AAvO56s=;
-	b=P3t1QYH9YA7nVPHXkqMP9G9bSD1+eBON4x9C7ONmQcdrdrT9Qre0+MHf9v8eRwaT98yDnJ
-	NRlkMyx9g4joxcCA==
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=Iym63A57;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=P3t1QYH9
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1773299430; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tr9cbP1Svc+kQDHpamxFCkcB3+I0OqVICFe/AAvO56s=;
-	b=Iym63A57FAkSLhROOWTQTWB5Qxoye0liG9oRllY+8tfIW5M99vQvWLWmsniGSsL7zi1tcX
-	YiY7klMMpj1MklGN04QmzNIX+H095qmQD8uzy07BBoBKO/PM5dS14Ac4/ZMZ7mavRe/VJs
-	6iqMKMO8hJ2kJ4+jsJu2Jv4skA5Lze8=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1773299430;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=tr9cbP1Svc+kQDHpamxFCkcB3+I0OqVICFe/AAvO56s=;
-	b=P3t1QYH9YA7nVPHXkqMP9G9bSD1+eBON4x9C7ONmQcdrdrT9Qre0+MHf9v8eRwaT98yDnJ
-	NRlkMyx9g4joxcCA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9AFFE3FE4A;
-	Thu, 12 Mar 2026 07:10:30 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id cuQlJOZmsmk5FgAAD6G6ig
-	(envelope-from <hare@suse.de>); Thu, 12 Mar 2026 07:10:30 +0000
-Message-ID: <91ed7162-719f-4ff2-9951-913fe8096f08@suse.de>
-Date: Thu, 12 Mar 2026 08:10:30 +0100
+	dkim=pass (2048-bit key) header.d=ziepe.ca header.i=@ziepe.ca header.b="nVIyHmtx"
+Received: by mail-qt1-f171.google.com with SMTP id d75a77b69052e-506251815a3so8617461cf.0
+        for <dm-devel@lists.linux.dev>; Thu, 12 Mar 2026 05:57:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1773320252; x=1773925052; darn=lists.linux.dev;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=J1SF1XBHkHR0j7NZVucv0LxpGoGXl67PUefLsfwpAbo=;
+        b=nVIyHmtxjvuHU2WooaPvVIJyWMLIavFAbnfF3EMwTyeCe6Jwh16Cc/2X5oR5JCY7xN
+         Sa9SHT7wbmq/tQso5EeKa3cB0FFKwnbLFKVySuwjtZIgkFpm5Y5/y1sH3IN0ZjxujoTs
+         cvi3DS59f6x8zSGKa30UG+1YXccClF6XKkfhX27a2mQ1iHcgjt07iiTvNDOusfoyyb4L
+         tHa/jwISMxQfIP0HxYaAgcwqVI4491rQ8DHPUkX9vV3Vz2aY8KPu88HffHi/BD6zwcm1
+         p6rnPX+s1J3sQAUNk2MURk7ASeBgJODP/YrfH9/YU9OQIT+mFcp1uUjG0i3nLTckdXon
+         4D3Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1773320252; x=1773925052;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=J1SF1XBHkHR0j7NZVucv0LxpGoGXl67PUefLsfwpAbo=;
+        b=QxORATmzcrVFw+kPt6aYSXq9Q6l0UcZU4sPn8nP8QtyrCWBgVtBcUseGUfbtwcADDR
+         gE4letmICI2Kdd8NM+qKW4FkD6C37FLxfHJ6Uq8NSJVMSNOVpcRfAk1iuQxF8MYVNgnq
+         DrUhdNlOy1Ldx+O9Obg2VgxrvaX5DWluMsFfMO3l9LCN9wICBw8MqWeUnaxK9c/Ag5uZ
+         E20xhgHjBl6VyeiKvBjzCbPPtbdQyB2cPIYNJxK9+P45hVEq1cTeizkp6AqzSfHRusHV
+         Yv+6+iicwRx5qO17/fRQBmyd6eWWP79pTfQwgJopyODqwJt/PSsMtShNW4YkQGM7/ywk
+         Kl9w==
+X-Forwarded-Encrypted: i=1; AJvYcCWnUrhjQZPKVFxF6tIgR4aJQfbH4dhH/7xj97RkrwEZUeo5j+63sXRvI3do4lAhuA86hgS56Uf99A==@lists.linux.dev
+X-Gm-Message-State: AOJu0Ywa5TcrfdrSzKEBLS56WIzFfOgKDCWThYNng0yvzPfwuM4Uz+MX
+	S/DBlV8L2pYsj28fCQfhDk0tYJ5VOOujt5yCz22Hwxsf9jpB45pnMWK8GTQ4/dec9Kg=
+X-Gm-Gg: ATEYQzzgkA+Yl0F6LW1VWaBqj/XOyQXJEcjeGD7bvI8+ghqU2xZntRXdVtGMfi8KMen
+	ivIHMUHglzJ5mMkKjV0UycNgFOdQywAthsGqqpOCed3aKEDlfiEOZ5/MNTmUn6UXdCp20B3dVmc
+	h0KP8z0qKn04+791i5tSZGMOdVyWZQSrQ3aD+PFObkRdXfsXrCXv34SAdjrMyBpHDhACcxEijsx
+	/Hj9spI9l5UwMqPMaQbTehzWoF3ODFTv3FQo/EOcQDtZ5V1DvtiubWW3VU5raXiHPX2OZQum+Ze
+	b03xk9dXam4wyq3EGHTK544HRQzGhYiTnGC0qnRzJ2JmE9mXjsuSx0ZB5VXDMbhrxSvmC6pyAMr
+	OIkr8BseKaFcdcy6A8gi67wNrdH0TGvdutvNVRm5tequ/vjNp6rY22HzD0l+VwGC1Mf6B4G/2qY
+	kpLzR8snprdb5CG9/fGud/1dO7bDTd3pyllAnIft2DWdGI9A7lO3y/z8PJ0F1WgzgjIWt4yqoKJ
+	8n6dxii
+X-Received: by 2002:ac8:5d4d:0:b0:509:cbc:127b with SMTP id d75a77b69052e-5093a1bd58fmr77950521cf.60.1773320251710;
+        Thu, 12 Mar 2026 05:57:31 -0700 (PDT)
+Received: from ziepe.ca (hlfxns017vw-142-162-112-119.dhcp-dynamic.fibreop.ns.bellaliant.net. [142.162.112.119])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-89a65bd318fsm33341196d6.8.2026.03.12.05.57.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 12 Mar 2026 05:57:31 -0700 (PDT)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1w0fbW-00000006fKD-1POa;
+	Thu, 12 Mar 2026 09:57:30 -0300
+Date: Thu, 12 Mar 2026 09:57:30 -0300
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: Kuan-Wei Chiu <visitorckw@gmail.com>
+Cc: Philipp Hahn <phahn-oss@avm.de>, amd-gfx@lists.freedesktop.org,
+	apparmor@lists.ubuntu.com, bpf@vger.kernel.org,
+	ceph-devel@vger.kernel.org, cocci@inria.fr,
+	dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
+	gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org,
+	intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev,
+	kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+	linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org,
+	linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org,
+	linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org,
+	linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org,
+	linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-leds@vger.kernel.org, linux-media@vger.kernel.org,
+	linux-mips@vger.kernel.org, linux-mm@kvack.org,
+	linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org,
+	linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org,
+	linux-phy@lists.infradead.org, linux-pm@vger.kernel.org,
+	linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org,
+	linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org,
+	linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org,
+	linux-sound@vger.kernel.org,
+	linux-stm32@st-md-mailman.stormreply.com,
+	linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org,
+	linux-wireless@vger.kernel.org, netdev@vger.kernel.org,
+	ntfs3@lists.linux.dev, samba-technical@lists.samba.org,
+	sched-ext@lists.linux.dev, target-devel@vger.kernel.org,
+	tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev
+Subject: Re: [PATCH 00/61] treewide: Use IS_ERR_OR_NULL over manual NULL
+ check - refactor
+Message-ID: <20260312125730.GI1469476@ziepe.ca>
+References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
+ <abBlpGKO842B3yl9@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/1] checkers: add alua path checker
-To: Brian Bunker <brian@purestorage.com>, bmarzins@redhat.com,
- mwilck@suse.com, dm-devel@lists.linux.dev
-References: <20260312001642.53321-1-brian@purestorage.com>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20260312001642.53321-1-brian@purestorage.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Rspamd-Action: no action
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TO_DN_SOME(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.de:dkim,suse.de:mid,suse.de:email];
-	DKIM_TRACE(0.00)[suse.de:+]
-X-Rspamd-Queue-Id: CA39C5BD08
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <abBlpGKO842B3yl9@google.com>
 
-On 3/12/26 01:16, Brian Bunker wrote:
-> For ALUA-capable storage arrays, multipath-tools currently uses TUR
-> (Test Unit Ready) as the default path checker while a separate
-> prioritizer determines ALUA state. When sysfs provides ALUA state
-> (the common case), no RTPG command is needed for priority. However,
-> if sysfs is unavailable or detect_prio is off, the prioritizer issues
-> RTPG, resulting in two SCSI commands per path check cycle: TUR + RTPG.
-> 
-> This patch introduces an 'alua' path checker that uses RTPG as the path
-> check command, providing two benefits:
-> 
-> 1. For configurations where RTPG is needed for priority, this eliminates
->     duplicate I/O by combining path checking and ALUA state retrieval
->     into a single RTPG command.
-> 
-> 2. RTPG provides richer path state information than TUR:
->     * TRANSITIONING state detected and mapped to PATH_PENDING,
->       preventing false all paths down during controller failover
->     * STANDBY state detected and mapped to PATH_GHOST
->     * UNAVAILABLE/OFFLINE states properly distinguished
-> 
-> The richer state information is valuable even when sysfs is available,
-> as TUR cannot distinguish between these ALUA-specific conditions.
-> 
-> This design intentionally couples the checker and prioritizer: the
-> alua_cached prioritizer consumes state cached by the alua checker.
-> While this blurs the traditional separation between these components,
-> for ALUA the path state and priority fundamentally derive from the
-> same underlying data, making the coupling a natural fit.
-> 
-> This patch sets the alua checker as the auto-detected default for ALUA
-> devices to demonstrate its benefits. We recognize that adopting a new
-> default checker requires careful consideration; the auto-detection can
-> be adjusted or removed based on review feedback.
-> 
-> Brian Bunker (1):
->    checkers: add alua path checker
-> 
->   libmultipath/Makefile                   |   5 +
->   libmultipath/checkers.c                 |   1 +
->   libmultipath/checkers.h                 |   1 +
->   libmultipath/checkers/Makefile          |   3 +-
->   libmultipath/checkers/alua.c            | 426 ++++++++++++++++++++++++
->   libmultipath/checkers/alua.h            |  15 +
->   libmultipath/prio.c                     |   1 +
->   libmultipath/prio.h                     |   1 +
->   libmultipath/prioritizers/Makefile      |   1 +
->   libmultipath/prioritizers/alua_cached.c | 225 +++++++++++++
->   libmultipath/prioritizers/alua_rtpg.c   |  12 +-
->   libmultipath/prioritizers/alua_rtpg.h   |   1 +
->   libmultipath/prioritizers/sysfs.c       |   7 +-
->   libmultipath/propsel.c                  |  25 +-
->   libmultipath/structs.c                  |   2 +
->   libmultipath/structs.h                  |   3 +
->   16 files changed, 721 insertions(+), 8 deletions(-)
->   create mode 100644 libmultipath/checkers/alua.c
->   create mode 100644 libmultipath/checkers/alua.h
->   create mode 100644 libmultipath/prioritizers/alua_cached.c
-> 
+On Wed, Mar 11, 2026 at 02:40:36AM +0800, Kuan-Wei Chiu wrote:
 
-Hmm. Some array vendor have been less than happy when I
-tried a similar thing during development of the ALUA
-device handler.
-Problem is that RTPG requires a cluster callout on the
-array side, as it needs to contain information about
-the _entire_ target system. Which, for distributed systems,
-is a costly operation. So using this as a path
-checker is not making certain array vendors happy.
+> IMHO, the necessity of IS_ERR_OR_NULL() often highlights a confusing or
+> flawed API design. It usually implies that the caller is unsure whether
+> a failure results in an error pointer or a NULL pointer. 
 
-However: as you might have followed the discussion
-about scsi multipathing, maybe we can turn this around
-to profit both sides:
-Can't we move ALUA state handling into the generic
-code, leaving the device handler only to deal with
-explicit ALUA?
-That way we can intercept sense codes and send RTPG
-only when required, such that the ALUA state of
-the scsi device is correct.
-And the the ALUA path checker just has to evaluate
-the information in sysfs.
-_And_ scsi multipathing can use that information, too.
++1
 
-Hmm?
+IS_ERR_OR_NULL() should always be looked on with suspicion. Very
+little should be returning some tri-state 'ERR' 'NULL' 'SUCCESS'
+pointer. What does the middle condition even mean? IS_ERR_OR_NULL()
+implies ERR and NULL are semanticly the same, so fix the things to
+always use ERR.
 
-Cheers,
+If you want to improve things work to get rid of the NULL checks this
+script identifies. Remove ERR or NULL because only one can ever
+happen, or fix the source to consistently return ERR.
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+Jason
