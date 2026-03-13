@@ -1,63 +1,61 @@
-Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
+Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F3F93E3D8F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5103938553D
 	for <dm-devel@lists.linux.dev>; Fri, 13 Mar 2026 23:14:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.48
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773443696; cv=none; b=bad6abb6wA956WAsrPsRgMYu0SgA4xmRTTMLXdWy3eMeKIJwvpb23/2IzKkogLo443rvvhYdssVkW7ltTaMs8xaxLNU+gHMyQfpOyBOQ1/K+xUmsJkrRPRJq7HvvdICnPe5QTzjatW1G0FClFSxf92aU0tcJDGgwMWjrp0rKe88=
+	t=1773443698; cv=none; b=c4XMwhZGW7YeBmQ66kUnJ5IsIoR82Ufp5Ihqrqe/GUWog77O2y6JvICcjnH2bWpCL+g+febh/M9HpbLr/A4WPgZR9gLGN33RoOPSQvH6wgnl97bDtdbQbQy4jlrBy3yvLCTUMgdvXW0dahX5ZpM/f0B9P205hfprokr0O4CQnUg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773443696; c=relaxed/simple;
-	bh=Uil74205CwaP20Za/WREdIBKWQZwXoUxTbFt71e1TwI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=R4LBr6VGQCOLAregE47njHmVBZBIrWCql2UjXsAQsV4isLu0cecOpYEIeIh6YrXxXPcaLhIGS29paKRpYP9l+BCKp7mm608b7A8HybZ9NLTlxbKcq7jQmEcMrbD9R24CNAmXtxBiFtlqM6dOCGJeyuEZPZ3S6nIlRwVMEsBv6Sw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=dd/jbV5M; arc=none smtp.client-ip=209.85.221.48
+	s=arc-20240116; t=1773443698; c=relaxed/simple;
+	bh=E7Rnjcu3xc7jCUUrPfIo1zrwhYjgCiPTJbyvK9BDFV4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=WxvspLIEeAV0/Tg/JtYG2+lkVWFdYLRlBku2uU1xRBxjsyFY/uzqwrTpY01g2Tbrz/igjvI5QgUEjAoq6PLS3z2i+j6ZiAWBgI3vV/1w5+wAE6a7xnAPV4kAfPuvR7ok0dsUqVe4NqVTx698jGhrGLF3C6FtKUnCgMizD3PvuJQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=C3/PdLmm; arc=none smtp.client-ip=209.85.221.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="dd/jbV5M"
-Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-439b873a54bso252048f8f.2
-        for <dm-devel@lists.linux.dev>; Fri, 13 Mar 2026 16:14:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="C3/PdLmm"
+Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-439b7d4a843so238595f8f.3
+        for <dm-devel@lists.linux.dev>; Fri, 13 Mar 2026 16:14:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1773443692; x=1774048492; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=0PbbR/VlPL0wMP8uzQWIl825wGwm20CdLkHLtunXySk=;
-        b=dd/jbV5MA7Cqc8ArGEvbGNVuM1S7JJJqV/CtmpXszN/XLSgkE6NaGF8H9KTgj4r1I1
-         H0+lONa8xCEflm2rSDPxxIhYfSQXIX9yRgokz2l0z+b4QE2N9t/WidCmb99rd54BpViG
-         QjS4kIhuwixozce5uwVhQLRsjUG/ZKX7I6sCYSxfnFtvhprGOueChRvR8k0C6eShHnos
-         DZtakQRlD32lcQGMaQof9yCDPwa93zyF/zB4RXnhIkYjKrh6Y/tWeIs/E89Mhrw+sYpt
-         Fqqmp4xpi8IuGJytmzIJaqz3wp925G5D/F19Im6uNnWFZbOty+lclraUZVAIKQdbWtSG
-         q14w==
+        d=gmail.com; s=20230601; t=1773443691; x=1774048491; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=OhpyJzyyBtdF8j1cOzmDiH0pJj8UkzVrenuDeF4Vba4=;
+        b=C3/PdLmmEzxeX/q1q41Lt4lCGH0Cpy5gnpSDpVpqQs02CzDEaYwx1YT+wMO6IJX+72
+         2aHRmXnDfD7nXhApIMtX/YtyNS8Qe/p/aKiIjQjnsymcaHiQY8snFhVZD7NPc7V30Zu+
+         V/qr1WqLD/evuE1ohhr/Fhej743NMDdyCTjy0L5BPSH0ZrOBJ5iaf5tPS7mKsBs9c7Ov
+         8Xvj7/sBbtM0AO7FYPMxj+Iar28S0DxMtX2lI1UTDrTp+i/86UvjBkJHF+dm5RzBnCu9
+         Wbipl5LQGLhuIOPHjrz8+xk2kJ0Uun0lBZZxP5dfu32E2qhfEM+dto1ADSQOiD3U+3wh
+         xNEw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1773443692; x=1774048492;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=0PbbR/VlPL0wMP8uzQWIl825wGwm20CdLkHLtunXySk=;
-        b=fS1jr8NTdqOskiQHS6PtXa4f87VyccEOSNg4bkWjDGeZpkJFP3x/7C2O/AWCj0lzmg
-         too+9ZTw6n3Aw6TWwdnSPKJJdRFkIFiukCl2ThdY7UK/0VwCpyGfqUHmhcufrboS5uOu
-         EZxs/JQSSGyBqAjJrz4ka/t2yQjqB65dPr735qtaMuytLEp3Fsit/8K2rD5f8sTuvd5c
-         mcID7K/XL+UZQVIZOUPWs6fQMHqdMtnLUy9dTtcE5bbGG12l9lSNL8gQqSturbafobqs
-         iwccWYDSMrtQiMxEX9E4FPj0BOeJ55L/P0oGKRkYnWniprXhgfb2iCHIMPG7I2ifyO9D
-         6duA==
-X-Forwarded-Encrypted: i=1; AJvYcCVreHPqrsiwjQtabRzgxbNFbGi8BDaG1i7WR4I9J+5PwsuXbvavcrpfxjOSMjKZsrc2HiRT6glmog==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxyJeTpo33JEGZ3p7OfejRBgPWKFwBQ3jgl0DcG93V0pwGXMeRZ
-	fOx+j5yukZN9mYN/CmqYLI1Mh2HRAght6vD5eCpkzb34IYz46yiUR0Y=
-X-Gm-Gg: ATEYQzx3FeS2bLjCkDwifp0/vxFcyXBoX4+qnZcMROl/sCbfDDqB8IJ+l4qoUAiMJKE
-	+tn0JE3zaDzTpjW1r00qoKmesBBa24FVdsU+u8ahy1dt8MIQkd/ng8BzptzUC9umYD9O8IGDivI
-	7HhwKjH5dJcIQghCOsYqtDQdRzOfWEEXtwWjOwFyJXTmTuXFtzY0Z4Mn3HA8wDQ4GCSlxtnzXgA
-	c5pIHUamWdc9l+o2u79yMa5aHvW7c8//maw75eUfwKS23BpPW5NLzKJ6ofmCVBzp6yiWF6HBJAN
-	k6a+BYs1NoRaYbe/l0F9jbr5G4IjxYMTjFJMJW/kLcLwNnd6NHGaEH2pJHsEg/QgSPDnpAM5hh/
-	MmIwWmvUq3UvlCMHilsGqKajQhtAhsFn0YNMJo5WievsfUTfd/SRl2ZGXB013tdjpCYYMlETTRA
-	HeihDuYr9rhCjmNCDsOu5P2PFJOaQGEvV0tBTc+P4bbVKilHbh2feyt3Bbow42
-X-Received: by 2002:a05:600c:4fcd:b0:485:3bc7:a224 with SMTP id 5b1f17b1804b1-48556715146mr41818095e9.6.1773443692367;
-        Fri, 13 Mar 2026 16:14:52 -0700 (PDT)
-Received: from localhost (99.red-80-39-36.staticip.rima-tde.net. [80.39.36.99])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-439fe22e9ddsm18778497f8f.37.2026.03.13.16.14.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        d=1e100.net; s=20251104; t=1773443691; x=1774048491;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=OhpyJzyyBtdF8j1cOzmDiH0pJj8UkzVrenuDeF4Vba4=;
+        b=j7QYC+a6lxPq0SziKrY3N087MbpjNPT+X36KakTgvp/A73NO7ejC8H1DWTxoJwqqFu
+         ubHasHUwyyUbXzIvRj8cKNWZFrfHWoIw7TavwekdY/pIsyy1/RaBV1HKcXQh67fW7jRx
+         N5QNLUHgiqPbiT14Ftec2+bsO8QwH2xmAY64w6OMwLkOvS3Qt26S9dEMIKyc/VJT8S89
+         5qxqasoW1+k18QUmZ8GvUDHKhWMKp0GbEn+7UYigDxVLCI+wZUJKdVdxWtGjx/gMjp/R
+         kCR1XawseXxvYdzPcs0SB7jYqZusCH0siUR0zVC3K8MqfpP6IaKdkoWHrbHKHa4giHPj
+         9D1Q==
+X-Forwarded-Encrypted: i=1; AJvYcCVZiJgkQNFJqLHkTFiu+P1XvHA9OeecjvxO1r4Zj8chT61DQixzFo+k94mm0Y4+tWtzFF3cYYgC/Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxdIk/j4Lt2jJTrY5MlVijk2R5z/lS1KNuY1njPcgcS8RBpHo1/
+	gSoXgiHXTECSGZnnwAWc9wiKmjjuRIldRb+wwfkR20If7uE8qY903LI=
+X-Gm-Gg: ATEYQzzwHRDU5ds6Gv+iJvO/wAy+MjFOE5ynxiRHf2O+0VvYvz3BfGIRGZR6KxT5q5S
+	H25/T7Ap2YfXzesf89hAGaWH5G1SrhkEJPhX/RgDxB0yDTp3jOSb1zZxJQDOx9gvdN7W/fvUx6W
+	CmtZSnKOBxG/mvBAj9WUjuxSX0Qr2iIOKtw5osOpDm2wAf/8P3ecIdJF15hm/Ljx5EMUhv4h7CK
+	MrwY7Ovr3Cv1S7OYOGRuxUC2uF7FRjsU679yN2b2L0vfsHntLqn7lQWQcStqB7lmiJAG1LcPQ6x
+	ZrtNKTi720Jx5kRy2Ujlv0h7DnXMj1lp2wnHvKU77WkyY4RHmPDVFD6pQCRhyzcBGvKOA4prMio
+	p/emSwfaA0kefYPe3GPpHiHJmlWO0xmS+u8xndYg308yeVPJbNYEAFAmaPobFQWithvEm+3hq/A
+	BRdkA2Yjc21xOOWCVABB72uiREMYNX8rSu1CGMELY3koyMPMdfdFe3FewQfvL2
+X-Received: by 2002:a05:6000:4287:b0:437:72ce:8954 with SMTP id ffacd0b85a97d-43a04dbcb4fmr5581255f8f.6.1773443691245;
         Fri, 13 Mar 2026 16:14:51 -0700 (PDT)
+Received: from localhost (99.red-80-39-36.staticip.rima-tde.net. [80.39.36.99])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-439fe19ad9asm21827905f8f.7.2026.03.13.16.14.50
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 13 Mar 2026 16:14:50 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -65,12 +63,10 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 2/2] multipath-tools: move SPDX-License-Identifier to the top of create-config.mk and rules.mk
-Date: Sat, 14 Mar 2026 00:14:48 +0100
-Message-ID: <20260313231449.79972-2-xose.vazquez@gmail.com>
+Subject: [PATCH 1/2] multipath-tools: add SPDX-License-Identifier tag to libmpathutil/util.c
+Date: Sat, 14 Mar 2026 00:14:47 +0100
+Message-ID: <20260313231449.79972-1-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260313231449.79972-1-xose.vazquez@gmail.com>
-References: <20260313231449.79972-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -80,8 +76,8 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-It is not mandatory, but highly recommended for
-better consistency and automated license scanning.
+This file combines "LGPL-2.1-or-later" and "GPLv2 or later" code,
+so the resulting code is GPL-2.0-or-later via the LGPL conversion clause.
 
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -89,32 +85,35 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- create-config.mk | 2 +-
- rules.mk         | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ libmpathutil/util.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/create-config.mk b/create-config.mk
-index 712cef05..3f6a2636 100644
---- a/create-config.mk
-+++ b/create-config.mk
-@@ -1,5 +1,5 @@
--# Copyright (c) SUSE LLC
- # SPDX-License-Identifier: GPL-2.0-or-later
-+# Copyright (c) SUSE LLC
+diff --git a/libmpathutil/util.c b/libmpathutil/util.c
+index 23a9797c..2220f4ab 100644
+--- a/libmpathutil/util.c
++++ b/libmpathutil/util.c
+@@ -1,3 +1,4 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
+ #include <assert.h>
+ #include <ctype.h>
+ #include <limits.h>
+@@ -34,7 +35,6 @@ strchop(char *str)
  
- TOPDIR := .
- CREATE_CONFIG := 1
-diff --git a/rules.mk b/rules.mk
-index c3a8e7ac..844f0bff 100644
---- a/rules.mk
-+++ b/rules.mk
-@@ -1,5 +1,5 @@
--# Copyright (c) SUSE LLC
- # SPDX-License-Identifier: GPL-2.0-or-later
-+# Copyright (c) SUSE LLC
- 
- $(DEVLIB): $(LIBS)
- 	$(Q)$(LN) $(LIBS) $@
+ /*
+  * glibc's non-destructive version of basename()
+- * License: LGPL-2.1-or-later
+  */
+ const char *libmp_basename(const char *filename)
+ {
+@@ -219,7 +219,7 @@ static pthread_once_t _lvc_initialized = PTHREAD_ONCE_INIT;
+  *     if (get_linux_version_code() > KERNEL_VERSION(2,2,11)) { <stuff> }
+  *
+  * Copyright (C) 1999-2004 by Erik Andersen <andersen@codepoet.org>
+- * Code copied from busybox (GPLv2 or later)
++ * Code copied from busybox
+  */
+ static void
+ _set_linux_version_code(void)
 -- 
 2.53.0
 
