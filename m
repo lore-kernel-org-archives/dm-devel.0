@@ -1,90 +1,121 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 629F839BFF9
-	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 14:04:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4AFA9397E9F
+	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 14:07:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773669869; cv=none; b=kiXSmiQb3naubsKCmntOzwwHytGGqARPsw9WQhmPNx+IvbKVesA64Y8K4TNjAtiVCLm0mWN4bnNUQF9DXlLE1bqdL+/3qvBAsI7DbqJuH0736CxHXtbD/0sMHKWzV8KGjuCNUtSUco1mLNQK+xKW2wXzeJ6SDbMbWgenX1pKjJ8=
+	t=1773670034; cv=none; b=ONbH+c4qRLkLcI6Pj4E8x5jGNqw9CtTnsK4+YZQU8ZEu6Cq9cnK41tMdQqdqc6l8K5u9BzcsFoTR9Y3eKa2GrPbE56KtewxozDWe/bHyovWZqv2dOtwxqj3q1lYsnpMEIhTBgc38AlS37XwBSwygX4+H58QGNyJ9CrQxSgwvdFk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773669869; c=relaxed/simple;
-	bh=vt9tGxLmQ029phejD4+FpG4fjrmaEIn6ay3vKJ2yJMA=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=EgLTUpIA5jg6h3yFnVche3t3Vn2Lrpz5Y440OoUMQDMjqjH3LnZLcYj6LPSjEiTJxPVqs5d1nuul3i39ZTM6DYkk2tO1puV+Hdc7/P/G225V+VnUvkPajJmhJv3qxq33aBdZ+mh6sfvIGihIr/AZhqK9yMiPtAkpzy9OjDkFlYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KFHtqaCG; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1773670034; c=relaxed/simple;
+	bh=YxL6RdPVB3y738Wf5MrxI8dULdsIWDQZ/1ZHMtg8LQw=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=eBdDJw19LAJzRjSAM3hozaKoRBFYA1+lPF+FLo9Mkp4geGCKinKq+nhqvmK1WfjNzUvBijS4bpVagBKqGLAuoaTnJZ4DXZPvlhF5P0bxmMj7G4zCujsgZ5mhvUaolDNn4BF3IVKCXCHGgGJXRAzBHvc7hEjUR1kGThc+yS5EzbU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QPNUH5d8; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=QPNUH5d8; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KFHtqaCG"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1773669867;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=cl7Ut20tei9OI7fQ1tVv+eO+itQbgPrtE8ePmD599S4=;
-	b=KFHtqaCGuPKxLHX6sgVuXfTh+2VmgrTNaOESXPwP/6wiPllSN3UhWAxYKAljyuCnAkaNN5
-	nQxGPWlNisGpz9soHL6VZBDCAxciUPZtrMcmOEX2vOgi2mxr2H8bAVXbhHGZd+0sd+1JAt
-	4moJ4dVJTdnSQaTIQsR6ZsDq/kUdb50=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-136-10JwcZQEOw2vOZJMKpET6w-1; Mon,
- 16 Mar 2026 10:04:24 -0400
-X-MC-Unique: 10JwcZQEOw2vOZJMKpET6w-1
-X-Mimecast-MFC-AGG-ID: 10JwcZQEOw2vOZJMKpET6w_1773669863
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QPNUH5d8";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="QPNUH5d8"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CE5DA1944DD2;
-	Mon, 16 Mar 2026 14:04:22 +0000 (UTC)
-Received: from [10.44.32.29] (unknown [10.44.32.29])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1A0221800107;
-	Mon, 16 Mar 2026 14:04:20 +0000 (UTC)
-Date: Mon, 16 Mar 2026 15:04:15 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, 
-    Zdenek Kabelac <zkabelac@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm: don't report warning when doing deferred remove
-Message-ID: <bbe915c1-396e-94a7-cf7f-9f23a2fadb36@redhat.com>
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 7384C4D2E8;
+	Mon, 16 Mar 2026 14:07:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773670031; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YxL6RdPVB3y738Wf5MrxI8dULdsIWDQZ/1ZHMtg8LQw=;
+	b=QPNUH5d8Zbfg3VeY1v50WG1YNpSMfZN/0MRalwMf5tDyy022PQv8u03wdQ1It3itti8cRc
+	Ng3iFE87DtEXFpz8OWCsRCzHqp5FWok2Z/j+QrqYsgMLYP+AZqTa8jTCvhQncfl5W4JytJ
+	auGmUyHbJikwI3lZgF6xLgcfjDDluFc=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1773670031; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YxL6RdPVB3y738Wf5MrxI8dULdsIWDQZ/1ZHMtg8LQw=;
+	b=QPNUH5d8Zbfg3VeY1v50WG1YNpSMfZN/0MRalwMf5tDyy022PQv8u03wdQ1It3itti8cRc
+	Ng3iFE87DtEXFpz8OWCsRCzHqp5FWok2Z/j+QrqYsgMLYP+AZqTa8jTCvhQncfl5W4JytJ
+	auGmUyHbJikwI3lZgF6xLgcfjDDluFc=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 51DBC4273B;
+	Mon, 16 Mar 2026 14:07:11 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 5i/gEo8OuGkgBgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 16 Mar 2026 14:07:11 +0000
+Message-ID: <d72b98cf99e1f9af2223cde15c4e586b13747569.camel@suse.com>
+Subject: Re: [PATCH 1/2] multipath-tools: add SPDX-License-Identifier tag to
+ libmpathutil/util.c
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Mon, 16 Mar 2026 15:07:10 +0100
+In-Reply-To: <20260313231449.79972-1-xose.vazquez@gmail.com>
+References: <20260313231449.79972-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.58.3 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: sPT0ik4Tt21R3LNAXQ6eip0K_A9e_S2XYRZT34ILXXo_1773669863
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+X-Spam-Score: -2.80
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_TO(0.00)[gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid,suse.com:email]
+X-Spam-Flag: NO
 
-If dm_hash_remove_all was called from dm_deferred_remove, it would write
-a warning "remove_all left %d open device(s)" if there are some other
-devices active.
+On Sat, 2026-03-14 at 00:14 +0100, Xose Vazquez Perez wrote:
+> This file combines "LGPL-2.1-or-later" and "GPLv2 or later" code,
+> so the resulting code is GPL-2.0-or-later via the LGPL conversion
+> clause.
+>=20
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-The warning is bogus, so let's disable it in this case.
+This would relicense the entire file, except the basename()
+implementation, which is already under GPL-2.0-or-later. That is quite
+probably not in line with the intention of every copyright holder.
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: 2c140a246dc0 ("dm: allow remove to be deferred")
+We can move libmp_basename() to a separate file to clarify the license
+of this code snippet.
 
----
- drivers/md/dm-ioctl.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: linux-2.6/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ioctl.c	2026-02-23 19:31:52.000000000 +0100
-+++ linux-2.6/drivers/md/dm-ioctl.c	2026-03-16 14:37:37.000000000 +0100
-@@ -384,7 +384,7 @@ retry:
- 
- 	up_write(&_hash_lock);
- 
--	if (dev_skipped)
-+	if (dev_skipped && !only_deferred)
- 		DMWARN("remove_all left %d open device(s)", dev_skipped);
- }
- 
-
+Regards
+Martin
