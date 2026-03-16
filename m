@@ -1,92 +1,160 @@
-Received: from mail.thinkmo.de (s3.thinkmo.de [162.55.237.202])
+Received: from flow-a3-smtp.messagingengine.com (flow-a3-smtp.messagingengine.com [103.168.172.138])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4A9F34CFBE
-	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 19:00:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.55.237.202
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79AAD139D;
+	Mon, 16 Mar 2026 22:10:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.168.172.138
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773687621; cv=none; b=glcgyinb50Ol8vCzgwmEUB0bHiApe9ST5H3PokbsjAE4UVbiNkfXXO75my2DKS1491aEEpG4waffOMFsDh9gYv2LH4zXDaotfFmpqXbGiMn8npa4vipV1nUWMmLlh+MxdIO3BL/N+AcIA1oYZbsczeGrjfEALVRoc8PIvG9Ww0s=
+	t=1773699059; cv=none; b=Tn4g6yuQsrdprb0Bsx8F7QrQOodEARd0OnKV3QjRfxK6J6YrJpd21lzvfIzHZRo1o3IGrzoIqfrCL5odl6666mwSYGyf2TFtnrcxxkYYBfEdL78vw6eMID7uyzE63Hoh3B1eN98qirDXQGROu9Dkndtspi1VLDFq3hf+3Do+P7w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773687621; c=relaxed/simple;
-	bh=K8NpBFsH5VMSGbpr79MI4TOuiQQQqMd/cErQKqOfEU4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=bBarQLk+dOUaR1QDRdWVTFK0IdbD1V/CtwsJZzHTBQT+GbcSvFGMAeSBNEb2zRZ14/URZHg+qL2ZxhznsxtGWj+Y/SNYGy5jiYlq+bfLcC5bBvpVN/o972jgFfDsIb8p4cafTZU3OrAnP7lwfmR53UtIRZHN5EoeI77fV9k96XI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=thinkmo.de; spf=pass smtp.mailfrom=thinkmo.de; dkim=pass (2048-bit key) header.d=thinkmo.de header.i=@thinkmo.de header.b=PDJYi+qb; arc=none smtp.client-ip=162.55.237.202
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=thinkmo.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=thinkmo.de
+	s=arc-20240116; t=1773699059; c=relaxed/simple;
+	bh=bR3l1XBxxG0Br6WPViaTYx4jBj801ByLeboUNggNeu4=;
+	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=IjPn0SMPb4DsgdJfGm14G8xAS4hIDAtI7biL4yhakfHBUxAM83Pb9JhZX6NCaMyu5mbB2wf3tY3MRXQ8FfTOra0ipiwzV1RyIYnPMOSih2WeYsp3aJ0L2Efs4UnUO6wffARmu+dFT2EulyYaRazBEVrfNw5FfnBiBlWhpKTr4LM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=shazbot.org; spf=pass smtp.mailfrom=shazbot.org; dkim=pass (2048-bit key) header.d=shazbot.org header.i=@shazbot.org header.b=eyO5nsRG; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=guCypQjf; arc=none smtp.client-ip=103.168.172.138
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=shazbot.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=shazbot.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=thinkmo.de header.i=@thinkmo.de header.b="PDJYi+qb"
-Received: from localhost (localhost [127.0.0.1])
-	by mail.thinkmo.de (Postfix) with ESMTP id 4fZPKw3mhnzyY2;
-	Mon, 16 Mar 2026 18:50:28 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=thinkmo.de; h=
-	in-reply-to:content-disposition:content-type:content-type
-	:mime-version:references:message-id:subject:subject:from:from
-	:date:date:received:received; s=mail202312; t=1773687028; bh=/8l
-	Ev91r5d5xju7ki3pR3KlyTJ14j8DUsjzMPu+/STo=; b=PDJYi+qbmuXTpc3Jm2Z
-	WgcsB65oEn13neRPErVkVnBRVvGrt4sys/t5U/5kRObm0Apyux79rXTv48zYPEie
-	1Sy6MxfUSMt+bL4y60FlISulArATRa6RiLdpF0S3BAf3AbzEbqMZ++aAPJBl7mCx
-	qi03jDEK2NJnAXf/7lo7M8HqBX8o1A8VxLg2RyzpCZlaTC3bqeYESCGcJoAuHqTC
-	Yb8N7wyXXe4HDxODfBFXum5hK5uBNCvlJiykXazjXHUy1F1AXdXn5qlnScgKqVeU
-	cR2YxBjmyqfH5VaPEA2xPonYaoefwq3C8uvw6k8UwPTIt+28EOufAltMBY9hAT82
-	QQQ==
-X-Virus-Scanned: Debian amavis at 
-Received: from mail.thinkmo.de ([127.0.0.1])
- by localhost (mail.thinkmo.de [127.0.0.1]) (amavis, port 10024) with ESMTP
- id pKtFh56zawNE; Mon, 16 Mar 2026 18:50:28 +0000 (UTC)
-Received: from shell.thinkmo.de (shell.thinkmo.de [IPv6:2a01:4f8:271:3f5c:0:22:0:1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (prime256v1) server-signature ECDSA (secp384r1) server-digest SHA384)
-	(No client certificate requested)
-	by mail.thinkmo.de (Postfix) with ESMTPS id 4fZPKw2ZLxzyVT;
-	Mon, 16 Mar 2026 18:50:28 +0000 (UTC)
-Date: Mon, 16 Mar 2026 19:50:24 +0100
-From: Bastian Blank <bblank@thinkmo.de>
-To: Bart Van Assche <bvanassche@acm.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Zdenek Kabelac <zkabelac@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH v2] dm: make "dmsetup remove_all" interruptible
-Message-ID: <20260316185024.awx5ljaozloojtxx@shell.thinkmo.de>
-Mail-Followup-To: Bastian Blank <bblank@thinkmo.de>,
-	Bart Van Assche <bvanassche@acm.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Zdenek Kabelac <zkabelac@redhat.com>, dm-devel@lists.linux.dev
-References: <4a39a67d-37e6-bb5c-d08f-0fd4b75e5181@redhat.com>
- <79941ba6-cac8-4283-82b6-807c20729e76@acm.org>
- <bec39289-bf7a-2ba7-70c0-ec227c30d078@redhat.com>
- <8c60292b-bab9-4a7e-8014-8fa2dda3965c@acm.org>
+	dkim=pass (2048-bit key) header.d=shazbot.org header.i=@shazbot.org header.b="eyO5nsRG";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="guCypQjf"
+Received: from phl-compute-01.internal (phl-compute-01.internal [10.202.2.41])
+	by mailflow.phl.internal (Postfix) with ESMTP id 96E81138028E;
+	Mon, 16 Mar 2026 18:10:56 -0400 (EDT)
+Received: from phl-frontend-04 ([10.202.2.163])
+  by phl-compute-01.internal (MEProxy); Mon, 16 Mar 2026 18:10:56 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=shazbot.org; h=
+	cc:cc:content-transfer-encoding:content-type:content-type:date
+	:date:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:subject:subject:to:to; s=fm3; t=1773699056;
+	 x=1773706256; bh=pZj8f0JboyjKt94J8KB7OLIiCOoml43GOZ4w8rDpLPA=; b=
+	eyO5nsRGgscBaSPTlSrjx8D8qsmxFZTD+YBT90C8JLtkSU+JG9otBsGP68/aDjfq
+	Ip8/CY7pDqj8uLfl6tk9PaoCLmHFx9BmC+OLDsgQIKz5wruWwvglBIFTzX8Bgo1G
+	D7tyDhfcq/yYvbxAZYbPlVlov+W1BUQwVVZx34myYfSzzczy+o0TvO2AJR+dEy1d
+	h9Fy4zA0IHy3AyAu2lJw7cTPeRVsoH7Q9DZJUhPGVmEq8IZ5byXvr46eUf3RwYLV
+	Pd21rN+O2sxo21UD0KoApMpHYwnhY5vI1CKlHqs6nb1Q0ON5mjBcz18/WvPyI4M2
+	g7ed/wORmv3aHNEvlM9NEQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:cc:content-transfer-encoding
+	:content-type:content-type:date:date:feedback-id:feedback-id
+	:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:subject:subject:to:to:x-me-proxy
+	:x-me-sender:x-me-sender:x-sasl-enc; s=fm1; t=1773699056; x=
+	1773706256; bh=pZj8f0JboyjKt94J8KB7OLIiCOoml43GOZ4w8rDpLPA=; b=g
+	uCypQjfxr+Zi7JxdTC/p3wGQ4VV0q/Wv3rf4QuOSSvRwPZ4hwWoKXSQwRlJppx/A
+	eTD/kX8ytMBkqeeAHXi8QojGoDJPwhemKEl1A5BQyy+VTfQ0kjCklEhRU0D9TNU6
+	QzoouUhJdY7Fi24kVLMS4vkfF5Xif+sxcGuZ+ZH9bmNOAZhg/6jHFnuxjrIUYo4Y
+	sJAjmQ/c58h+MsTVokuL8c2t4xBbVGwnTgXIvKplEwnaY81NNzKXbPGa+zPU58N/
+	vwQ/zZfUYT5zYdyXfBWrfC5sZSkqzhpuD1WACxXIM/TD7Jh2N1ZXy8qS+O1DtSBY
+	h24uS6YuZ9c79L+rKNYRA==
+X-ME-Sender: <xms:73-4aYdtUUIQC679P0YPl8k6UZ10Tz8-qTD319yDZEtXusdBhZuXRA>
+    <xme:73-4aTUav9FvduIIOmc0jldmINr5W_MhUsWQFGzP1fBm1dpf8ggOxSMvCMHniLmCu
+    LbRPk360ujIo39hLA6fsP95YlnCLki5WcrUsiuRyEwh6NcxWlxF>
+X-ME-Received: <xmr:73-4aSY56rJyFtQwMFw-H9dfM29zbbMWxWkWrpi3kYaZ1kbqDyXdf5bHU5U>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgeefgedrtddtgddvleelheegucetufdoteggodetrf
+    dotffvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfurfetoffkrfgpnffqhgenuceu
+    rghilhhouhhtmecufedttdenucenucfjughrpeffhffvvefukfgjfhfogggtgfesthejre
+    dtredtvdenucfhrhhomheptehlvgigucghihhllhhirghmshhonhcuoegrlhgvgiesshhh
+    rgiisghothdrohhrgheqnecuggftrfgrthhtvghrnhepvdekfeejkedvudfhudfhteekud
+    fgudeiteetvdeukedvheetvdekgfdugeevueeunecuvehluhhsthgvrhfuihiivgeptden
+    ucfrrghrrghmpehmrghilhhfrhhomheprghlvgigsehshhgriigsohhtrdhorhhgpdhnsg
+    gprhgtphhtthhopeehhedpmhhouggvpehsmhhtphhouhhtpdhrtghpthhtohepphhhrghh
+    nhdqohhsshesrghvmhdruggvpdhrtghpthhtoheprghmugdqghhfgieslhhishhtshdrfh
+    hrvggvuggvshhkthhophdrohhrghdprhgtphhtthhopegrphhprghrmhhorheslhhishht
+    shdruhgsuhhnthhurdgtohhmpdhrtghpthhtohepsghpfhesvhhgvghrrdhkvghrnhgvlh
+    drohhrghdprhgtphhtthhopegtvghphhdquggvvhgvlhesvhhgvghrrdhkvghrnhgvlhdr
+    ohhrghdprhgtphhtthhopegtohgttghisehinhhrihgrrdhfrhdprhgtphhtthhopegumh
+    dquggvvhgvlheslhhishhtshdrlhhinhhugidruggvvhdprhgtphhtthhopegurhhiqdgu
+    vghvvghlsehlihhsthhsrdhfrhgvvgguvghskhhtohhprdhorhhgpdhrtghpthhtohepgh
+    hfshdvsehlihhsthhsrdhlihhnuhigrdguvghv
+X-ME-Proxy: <xmx:73-4aQltNdDVIdEqvCmz7Mlt0qW50NA4CHgJQUMNlacMN4MGiVKHfA>
+    <xmx:73-4acHdFw15OLpR73_B1AdIXJMG-pYssiD_C0T2dj2N-8ux7fVHFg>
+    <xmx:73-4aU6P6J2BtdvPwSPzfrUNjz9-qYacHOOWBucSAMlha23fXDTcIg>
+    <xmx:73-4aaO5YEqAXlnOLRO88GZx1RbxPW8QtXAeqZQNaqmxlgOL7PgFkQ>
+    <xmx:8H-4abIvs_QYur641c9BpnDuFQ6ssCC-7-o-rPLEHWyRxStBDxJEr6SL>
+Feedback-ID: i03f14258:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Mon,
+ 16 Mar 2026 18:10:52 -0400 (EDT)
+Date: Mon, 16 Mar 2026 16:10:50 -0600
+From: Alex Williamson <alex@shazbot.org>
+To: Philipp Hahn <phahn-oss@avm.de>
+Cc: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
+ bpf@vger.kernel.org, ceph-devel@vger.kernel.org, cocci@inria.fr,
+ dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
+ gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org,
+ intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev,
+ kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+ linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org,
+ linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org,
+ linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org,
+ linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org,
+ linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-leds@vger.kernel.org, linux-media@vger.kernel.org,
+ linux-mips@vger.kernel.org, linux-mm@kvack.org,
+ linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org,
+ linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org,
+ linux-phy@lists.infradead.org, linux-pm@vger.kernel.org,
+ linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org,
+ linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org,
+ linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org,
+ linux-sound@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com,
+ linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org,
+ linux-wireless@vger.kernel.org, netdev@vger.kernel.org,
+ ntfs3@lists.linux.dev, samba-technical@lists.samba.org,
+ sched-ext@lists.linux.dev, target-devel@vger.kernel.org,
+ tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev,
+ alex@shazbot.org
+Subject: Re: [PATCH 46/61] vfio: Prefer IS_ERR_OR_NULL over manual NULL
+ check
+Message-ID: <20260316161050.01c82973@shazbot.org>
+In-Reply-To: <20260310-b4-is_err_or_null-v1-46-bd63b656022d@avm.de>
+References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
+	<20260310-b4-is_err_or_null-v1-46-bd63b656022d@avm.de>
+X-Mailer: Claws Mail 4.3.1 (GTK 3.24.51; x86_64-pc-linux-gnu)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <8c60292b-bab9-4a7e-8014-8fa2dda3965c@acm.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-On Mon, Mar 16, 2026 at 10:58:39AM -0700, Bart Van Assche wrote:
-> On 3/16/26 9:37 AM, Mikulas Patocka wrote:
-> > +#define KEEP_OPEN_DEVICES	1
-> > +#define MARK_DEFERRED		2
-> > +#define ONLY_DEFERRED		4
-> > +#define INTERRUPTIBLE		8
-> Has it been considered to add a (short) prefix to these flag names?
+On Tue, 10 Mar 2026 12:49:12 +0100
+Philipp Hahn <phahn-oss@avm.de> wrote:
 
-And shouldn't this be an enum?  Yes, the dm code currently flaps between
-both styles.
+> Prefer using IS_ERR_OR_NULL() over using IS_ERR() and a manual NULL
+> check.
+> 
+> Change generated with coccinelle.
+> 
+> To: Alex Williamson <alex@shazbot.org>
+> Cc: kvm@vger.kernel.org
+> Cc: linux-kernel@vger.kernel.org
+> Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
+> ---
+>  drivers/vfio/vfio_main.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/vfio/vfio_main.c b/drivers/vfio/vfio_main.c
+> index 742477546b15d4dbaf9ebcfb2e67627db71521e0..d71922dfde5885967398deddec3e9e04b05adfec 100644
+> --- a/drivers/vfio/vfio_main.c
+> +++ b/drivers/vfio/vfio_main.c
+> @@ -923,7 +923,7 @@ vfio_ioctl_device_feature_mig_device_state(struct vfio_device *device,
+>  
+>  	/* Handle the VFIO_DEVICE_FEATURE_SET */
+>  	filp = device->mig_ops->migration_set_state(device, mig.device_state);
+> -	if (IS_ERR(filp) || !filp)
+> +	if (IS_ERR_OR_NULL(filp))
+>  		goto out_copy;
+>  
+>  	return vfio_ioct_mig_return_fd(filp, arg, &mig);
+> 
 
-| Enums are preferred when defining several related constants.
-https://www.kernel.org/doc/html/v6.19/process/coding-style.html#macros-enums-and-rtl
+As others have expressed in general, this doesn't seem to be cleaner
+and tends to mask that we consider IS_ERR() and NULL as separate cases
+in the goto.  This code looks like it could use some refactoring, and
+likely that refactoring should handle the IS_ERR() and NULL cases
+separately, but conflating them here is not an improvement.  Thanks,
 
-And maybe even "(1 << 0)" to make them easier visible as flags.
-
-Bastian
-
--- 
-I'm a soldier, not a diplomat.  I can only tell the truth.
-		-- Kirk, "Errand of Mercy", stardate 3198.9
+Alex
