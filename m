@@ -1,118 +1,90 @@
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 3B3BE361663;
-	Mon, 16 Mar 2026 13:30:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 629F839BFF9
+	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 14:04:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773667835; cv=none; b=dMmWbQcH9JXXE3dVUgMNW4DFLAhgCEZhhlhpCenx9HwWxkTmE1uTzwVMrvrtGunNs1VrPWP5rZM4lkGQSP7FsIOJODAJxpbrEmTA5eCCzSOxYC5y/ou/ovFowog2PpdEUnuaZZ3pNPDtvj+wqVD6PA4W2aQFgtQyVmbqVOi490o=
+	t=1773669869; cv=none; b=kiXSmiQb3naubsKCmntOzwwHytGGqARPsw9WQhmPNx+IvbKVesA64Y8K4TNjAtiVCLm0mWN4bnNUQF9DXlLE1bqdL+/3qvBAsI7DbqJuH0736CxHXtbD/0sMHKWzV8KGjuCNUtSUco1mLNQK+xKW2wXzeJ6SDbMbWgenX1pKjJ8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773667835; c=relaxed/simple;
-	bh=12QmHVFW6kvGAsAEHlRgc6k9FaOX+eCOvB+1XSjB85g=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Bbj9i3OmX6tLHsLG9LsVUer8BMIseUV+cewr4p5b4W0GLlnwPuU7seL8aE/at0nXm72aSd8dJNxLetLzuHHuYyH1LmmKQGBoR67oCN6y9fm4gvzOaf7ZCgi6tFdE7Nt15YoWXaTLjQ3vkM5D8UeKzGqO7h9DPbsmd2QLdRgsNKs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com; spf=pass smtp.mailfrom=arm.com; arc=none smtp.client-ip=217.140.110.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 357291477;
-	Mon, 16 Mar 2026 06:30:25 -0700 (PDT)
-Received: from [10.57.61.116] (unknown [10.57.61.116])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 9D4953F778;
-	Mon, 16 Mar 2026 06:30:22 -0700 (PDT)
-Message-ID: <2c7466f5-d952-4356-9b55-9d2ebb3471f2@arm.com>
-Date: Mon, 16 Mar 2026 13:30:19 +0000
+	s=arc-20240116; t=1773669869; c=relaxed/simple;
+	bh=vt9tGxLmQ029phejD4+FpG4fjrmaEIn6ay3vKJ2yJMA=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=EgLTUpIA5jg6h3yFnVche3t3Vn2Lrpz5Y440OoUMQDMjqjH3LnZLcYj6LPSjEiTJxPVqs5d1nuul3i39ZTM6DYkk2tO1puV+Hdc7/P/G225V+VnUvkPajJmhJv3qxq33aBdZ+mh6sfvIGihIr/AZhqK9yMiPtAkpzy9OjDkFlYg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=KFHtqaCG; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="KFHtqaCG"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1773669867;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=cl7Ut20tei9OI7fQ1tVv+eO+itQbgPrtE8ePmD599S4=;
+	b=KFHtqaCGuPKxLHX6sgVuXfTh+2VmgrTNaOESXPwP/6wiPllSN3UhWAxYKAljyuCnAkaNN5
+	nQxGPWlNisGpz9soHL6VZBDCAxciUPZtrMcmOEX2vOgi2mxr2H8bAVXbhHGZd+0sd+1JAt
+	4moJ4dVJTdnSQaTIQsR6ZsDq/kUdb50=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-136-10JwcZQEOw2vOZJMKpET6w-1; Mon,
+ 16 Mar 2026 10:04:24 -0400
+X-MC-Unique: 10JwcZQEOw2vOZJMKpET6w-1
+X-Mimecast-MFC-AGG-ID: 10JwcZQEOw2vOZJMKpET6w_1773669863
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CE5DA1944DD2;
+	Mon, 16 Mar 2026 14:04:22 +0000 (UTC)
+Received: from [10.44.32.29] (unknown [10.44.32.29])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1A0221800107;
+	Mon, 16 Mar 2026 14:04:20 +0000 (UTC)
+Date: Mon, 16 Mar 2026 15:04:15 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Zdenek Kabelac <zkabelac@redhat.com>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm: don't report warning when doing deferred remove
+Message-ID: <bbe915c1-396e-94a7-cf7f-9f23a2fadb36@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 50/61] iommu: Prefer IS_ERR_OR_NULL over manual NULL check
-To: Philipp Hahn <phahn-oss@avm.de>, amd-gfx@lists.freedesktop.org,
- apparmor@lists.ubuntu.com, bpf@vger.kernel.org, ceph-devel@vger.kernel.org,
- cocci@inria.fr, dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
- gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org,
- intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev,
- kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
- linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org,
- linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org,
- linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org,
- linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
- linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org,
- linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-leds@vger.kernel.org, linux-media@vger.kernel.org,
- linux-mips@vger.kernel.org, linux-mm@kvack.org,
- linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org,
- linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org,
- linux-phy@lists.infradead.org, linux-pm@vger.kernel.org,
- linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org,
- linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org,
- linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org,
- linux-sound@vger.kernel.org, linux-stm32@st-md-mailman.stormreply.com,
- linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org,
- linux-wireless@vger.kernel.org, netdev@vger.kernel.org,
- ntfs3@lists.linux.dev, samba-technical@lists.samba.org,
- sched-ext@lists.linux.dev, target-devel@vger.kernel.org,
- tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev
-Cc: Joerg Roedel <joro@8bytes.org>, Will Deacon <will@kernel.org>
-References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
- <20260310-b4-is_err_or_null-v1-50-bd63b656022d@avm.de>
-From: Robin Murphy <robin.murphy@arm.com>
-Content-Language: en-GB
-In-Reply-To: <20260310-b4-is_err_or_null-v1-50-bd63b656022d@avm.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: sPT0ik4Tt21R3LNAXQ6eip0K_A9e_S2XYRZT34ILXXo_1773669863
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 2026-03-10 11:49 am, Philipp Hahn wrote:
-> Prefer using IS_ERR_OR_NULL() over using IS_ERR() and a manual NULL
-> check.
+If dm_hash_remove_all was called from dm_deferred_remove, it would write
+a warning "remove_all left %d open device(s)" if there are some other
+devices active.
 
-AFAICS it doesn't look possible for the argument to be anything other 
-than valid at both callsites, so *both* conditions here seem in fact to 
-be entirely redundant.
+The warning is bogus, so let's disable it in this case.
 
-> Change generated with coccinelle.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Reported-by: Zdenek Kabelac <zkabelac@redhat.com>
+Cc: stable@vger.kernel.org
+Fixes: 2c140a246dc0 ("dm: allow remove to be deferred")
 
-Please use coccinelle responsibly. Mechanical changes are great for 
-scripted API updates, but for cleanup, whilst it's ideal for *finding* 
-areas of code that are worth looking at, the code then wants actually 
-looking at, in its whole context, because meaningful cleanup often goes 
-deeper than trivial replacement.
+---
+ drivers/md/dm-ioctl.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-In particular, anywhere IS_ERR_OR_NULL() is genuinely relevant is 
-usually a sign of bad interface design, so if you're looking at this 
-then you really should be looking first and foremost to remove any 
-checks that are already unnecessary, and for the remainder, to see if 
-the thing being checked can be improved to not mix the two different 
-styles. That would be constructive and (usually) welcome cleanup. Simply 
-churning a bunch of code with this ugly macro that's arguably less 
-readable than what it replaces, not so much.
-
-Thanks,
-Robin.
-
-> To: Joerg Roedel <joro@8bytes.org>
-> To: Will Deacon <will@kernel.org>
-> To: Robin Murphy <robin.murphy@arm.com>
-> Cc: iommu@lists.linux.dev
-> Cc: linux-kernel@vger.kernel.org
-> Signed-off-by: Philipp Hahn <phahn-oss@avm.de>
-> ---
->   drivers/iommu/omap-iommu.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/iommu/omap-iommu.c b/drivers/iommu/omap-iommu.c
-> index 8231d7d6bb6a9202025643639a6b28e6faa84659..500a42b57a997696ff37c76f028a717ab71d01f9 100644
-> --- a/drivers/iommu/omap-iommu.c
-> +++ b/drivers/iommu/omap-iommu.c
-> @@ -881,7 +881,7 @@ static int omap_iommu_attach(struct omap_iommu *obj, u32 *iopgd)
->    **/
->   static void omap_iommu_detach(struct omap_iommu *obj)
->   {
-> -	if (!obj || IS_ERR(obj))
-> +	if (IS_ERR_OR_NULL(obj))
->   		return;
->   
->   	spin_lock(&obj->iommu_lock);
-> 
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2026-02-23 19:31:52.000000000 +0100
++++ linux-2.6/drivers/md/dm-ioctl.c	2026-03-16 14:37:37.000000000 +0100
+@@ -384,7 +384,7 @@ retry:
+ 
+ 	up_write(&_hash_lock);
+ 
+-	if (dev_skipped)
++	if (dev_skipped && !only_deferred)
+ 		DMWARN("remove_all left %d open device(s)", dev_skipped);
+ }
+ 
 
