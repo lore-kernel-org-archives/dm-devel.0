@@ -1,97 +1,144 @@
-Received: from mx0a-00082601.pphosted.com (mx0b-00082601.pphosted.com [67.231.153.30])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5F89391827
-	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 15:10:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=67.231.153.30
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E474C3AE714
+	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 15:56:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773673806; cv=none; b=Tjote54R67AeM3qeEue09k6iMMAL+TQLvuGbI/SpEltl5RqBVh8PMBldF3VCMa85sHkazm7MEBDM+ISa6GdV5pPawB0ZmeYQbGQ/C+2m1JDVe9Ecz84H3ER7+RocKEq0f2wcn20egNFGE2GoVayhmZCSTopQCRLts1AuXJF88ko=
+	t=1773676567; cv=none; b=DeFDUiPe63PAbnjfIwzad1JMSjxnESWFIBBJpEL8WwtYQMiB4qZgXuYPy9zIMtF4KvKjmFP9As4IZZmwfv1g3CxuYKm36FeGIZXD3u8EAtWoov7hdQLcuJD15kR2R2nvJ8PitpdrmY+lLXawW9OZxUoLUF5GNcuvjMyh3leELbk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773673806; c=relaxed/simple;
-	bh=zj+GUnHecFvNIPm0U0aGtHOktI/Qo9EggDs0UX0IXk4=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=SMKBFeOmwmvy0zKkmuNWzgXZ81Jz+sX76BzMvDKYGOlwNnj2Rjf2sdeSrh1ihbiQLtO+y/OoEGE4AHmhSCTe4Yq6qyAFvcglAjeqKEwd+5ufC6LHGST9x9eNmArDaktm/XHxhHUy75Jscd1hngPj3ZiT8EpPwuBNq+yoTa75UVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com; spf=pass smtp.mailfrom=meta.com; dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b=XTBd6xeM; arc=none smtp.client-ip=67.231.153.30
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=meta.com
+	s=arc-20240116; t=1773676567; c=relaxed/simple;
+	bh=9exCGDvHGV9V7agI3mKSMcgO4LsJx5BcjER6igQ56vg=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=NXw5gRstoCfKWo4770e20Y0ZrDhVe4ZtjozxFPAuX03AFdpqCv0/GEI0zNEguB/C6UN5zuEyyGwRaproAVYwWIaGpTSEaTFCbrRwoXqw+bvqz+L3k4jipxBQdJcm2Mipn9BVHpNzOFzl1QxV+3V0Tle3qGNEI5ZCXe/NCYi3wS0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=jWmvTCQR; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b="XTBd6xeM"
-Received: from pps.filterd (m0089730.ppops.net [127.0.0.1])
-	by m0089730.ppops.net (8.18.1.11/8.18.1.11) with ESMTP id 62GElJCb009163
-	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 08:10:04 -0700
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=meta.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=s2048-2025-q2;
-	 bh=YWnnmKJGVUAKUiPXyW7SGr096KueHVGjY6+6k29jtb0=; b=XTBd6xeMDF0c
-	276vqdUCVycVHbeWuIoY3hsc9UB3zz6V7MC4lIHsmPCxzYmWEz3UMaV/GXOzW8fe
-	JYo86Qn1hk6WkECex1AUrxRyOXskLLDeScwxlcmT7y1iJSOfPP1OrU4meX8oCvio
-	D9MPs7y3QETAemacmDGjhxgUHLTu+/neGpfJiEO/vZ3jeacpkEW9CuVCQj6LXNEp
-	vQrMuzeovqr/qQXo7nUpQunyqT7UDXpGI39kFk95kap8laf+whvxjRBqPuUo3Hvy
-	xn6Vw6to292iFUBWnxErADcD3S6K2j10ls3y+de99AywkgtfbI4TVKW2+d5lsjfI
-	batvt5FWug==
-Received: from maileast.thefacebook.com ([163.114.135.16])
-	by m0089730.ppops.net (PPS) with ESMTPS id 4cxehncej6-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <dm-devel@lists.linux.dev>; Mon, 16 Mar 2026 08:10:03 -0700 (PDT)
-Received: from twshared111727.16.frc2.facebook.com (2620:10d:c0a8:1c::11) by
- mail.thefacebook.com (2620:10d:c0a9:6f::237c) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.2.2562.35; Mon, 16 Mar 2026 15:10:03 +0000
-Received: by devbig197.nha3.facebook.com (Postfix, from userid 544533)
-	id C4FCBBA0A80A; Mon, 16 Mar 2026 08:09:51 -0700 (PDT)
-From: Keith Busch <kbusch@meta.com>
-To: <dm-devel@lists.linux.dev>
-CC: <linux-block@vger.kernel.org>, <snitzer@kernel.org>,
-        Keith Busch
-	<kbusch@kernel.org>
-Subject: [RESEND PATCHv3 0/2] dm-crypt: support relaxed memory alignment
-Date: Mon, 16 Mar 2026 08:09:51 -0700
-Message-ID: <20260316150951.1814817-1-kbusch@meta.com>
-X-Mailer: git-send-email 2.52.0
-In-Reply-To: <20260316150229.1771884-1-kbusch@meta.com>
-References: <20260316150229.1771884-1-kbusch@meta.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="jWmvTCQR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1773676564;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=oSW66eg+cF73seRx87+v6HtQuWVKNacH11R8GErmkz0=;
+	b=jWmvTCQREzRFFolUTwHxjBtO3H3C9hO0DIjm/E5NzX4ykoo86IF6hnwLMZgH5zHVv3V9sk
+	QIzL5ISgbpEXpnFbpGSXxeLZ+zpuYl84ZOmyA+pXvbBbv5JrrVPqvmqxCw+bl+FhopbyTV
+	djUV8O6yxpGp762iFIYjOx3OQdKTgzg=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-86-ErqXcR9hPrGCPA84z9iYug-1; Mon,
+ 16 Mar 2026 11:56:03 -0400
+X-MC-Unique: ErqXcR9hPrGCPA84z9iYug-1
+X-Mimecast-MFC-AGG-ID: ErqXcR9hPrGCPA84z9iYug_1773676562
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 83A9A18002D0;
+	Mon, 16 Mar 2026 15:56:02 +0000 (UTC)
+Received: from [10.44.32.29] (unknown [10.44.32.29])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9D9071800361;
+	Mon, 16 Mar 2026 15:56:00 +0000 (UTC)
+Date: Mon, 16 Mar 2026 16:55:54 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Zdenek Kabelac <zkabelac@redhat.com>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm: make "dmsetup remove_all" interruptible
+Message-ID: <4a39a67d-37e6-bb5c-d08f-0fd4b75e5181@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-FB-Internal: Safe
-Content-Type: text/plain
-X-Proofpoint-GUID: RSh-Y1re1GTioH4XyVTkZz_wCudUCP7i
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzE2MDExNCBTYWx0ZWRfX57q79W1uxNbF
- irnxKELxUr/3V3MF9T7AO20b5ycS3JEraKXyqSO+0S4P5iVH0wtYg/5Z/FSRkVVaJ7gz3Uh9qgA
- IGL2U6MOt5yPs2Co1gE+lAuDGEbmRUV7qUf27YcxWPjIm3yXlYRxhXqpEWKlwfEqyjW5MKwrgnH
- 8AS6m7dOaMOCVQoyBs1Px4xKU2pJ9W+gJii4QvK9J86o0sKrEcxBhIy4ONkzWHVg8hfZQ/6WntY
- A6r6EsJmce8xQWnjEZaDXY+ZWays9pNba5lLgzIPuZgNCGnPMgCD6YLyKr9SsPC6/G3j+8of7av
- SuIA0mtQ8T61C+wXZA3lxk/Ro3/IjHG1G4mrPGEVginMGynyneYWD1VcyL2DZWvleFuUbiP0LMV
- 0JChu+SN66SL3iXoruuhdy0+ew7dPBz29jaHgD2YvzYN2z5uYTdC2jDgrVKgxoCOiuXvIjP6irF
- P2EthIzdjuFaHrbUK6g==
-X-Authority-Analysis: v=2.4 cv=e8sLiKp/ c=1 sm=1 tr=0 ts=69b81d4b cx=c_pps
- a=MfjaFnPeirRr97d5FC5oHw==:117 a=MfjaFnPeirRr97d5FC5oHw==:17
- a=Yq5XynenixoA:10 a=VkNPw1HP01LnGYTKEx00:22 a=7x6HtfJdh03M6CCDgxCd:22
- a=855S8uPTkML1Oy45N9_h:22 a=VwQbUJbxAAAA:8 a=eAdyUgeKvQIH7_0eDpMA:9
-X-Proofpoint-ORIG-GUID: RSh-Y1re1GTioH4XyVTkZz_wCudUCP7i
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-16_04,2026-03-16_03,2025-10-01_01
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: rT8YNMFnFwO3jDUwPaFYfaE3oudB_2DcjmMudA20umA_1773676562
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-From: Keith Busch <kbusch@kernel.org>
+The command "dmsetup remove_all" may take a long time (a minute for
+removing 1000 devices), so make it interruptible with fatal signals.
 
-Direct-io can support any memory alignment the hardware allows. Device
-mappers don't need to impose any software constraints on memory
-alignment, so this series removes one of those limitations from the
-dm-crypt mapper.
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Keith Busch (2):
-  dm-crypt: allow unaligned bio_vecs for direct io
-  dm-crypt: dynamic scatterlist for many segments
+---
+ drivers/md/dm-ioctl.c |   19 +++++++++++++------
+ 1 file changed, 13 insertions(+), 6 deletions(-)
 
- drivers/md/dm-crypt.c | 114 ++++++++++++++++++++++++++++++++++--------
- drivers/md/dm-table.c |   1 +
- 2 files changed, 94 insertions(+), 21 deletions(-)
-
---=20
-2.52.0
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2026-03-16 14:37:37.000000000 +0100
++++ linux-2.6/drivers/md/dm-ioctl.c	2026-03-16 16:44:46.000000000 +0100
+@@ -64,7 +64,7 @@ struct vers_iter {
+ static struct rb_root name_rb_tree = RB_ROOT;
+ static struct rb_root uuid_rb_tree = RB_ROOT;
+ 
+-static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred);
++static int dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred, bool interruptible);
+ 
+ /*
+  * Guards access to both hash tables.
+@@ -78,7 +78,7 @@ static DEFINE_MUTEX(dm_hash_cells_mutex)
+ 
+ static void dm_hash_exit(void)
+ {
+-	dm_hash_remove_all(false, false, false);
++	dm_hash_remove_all(false, false, false, false);
+ }
+ 
+ /*
+@@ -333,7 +333,7 @@ static struct dm_table *__hash_remove(st
+ 	return table;
+ }
+ 
+-static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred)
++static int dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred, bool interruptible)
+ {
+ 	int dev_skipped;
+ 	struct rb_node *n;
+@@ -347,6 +347,11 @@ retry:
+ 	down_write(&_hash_lock);
+ 
+ 	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
++		if (interruptible && fatal_signal_pending(current)) {
++			up_write(&_hash_lock);
++			return -EINTR;
++		}
++
+ 		hc = container_of(n, struct hash_cell, name_node);
+ 		md = hc->md;
+ 		dm_get(md);
+@@ -386,6 +391,8 @@ retry:
+ 
+ 	if (dev_skipped && !only_deferred)
+ 		DMWARN("remove_all left %d open device(s)", dev_skipped);
++
++	return 0;
+ }
+ 
+ /*
+@@ -513,7 +520,7 @@ static struct mapped_device *dm_hash_ren
+ 
+ void dm_deferred_remove(void)
+ {
+-	dm_hash_remove_all(true, false, true);
++	dm_hash_remove_all(true, false, true, false);
+ }
+ 
+ /*
+@@ -529,9 +536,9 @@ typedef int (*ioctl_fn)(struct file *fil
+ 
+ static int remove_all(struct file *filp, struct dm_ioctl *param, size_t param_size)
+ {
+-	dm_hash_remove_all(true, !!(param->flags & DM_DEFERRED_REMOVE), false);
++	int r = dm_hash_remove_all(true, !!(param->flags & DM_DEFERRED_REMOVE), false, true);
+ 	param->data_size = 0;
+-	return 0;
++	return r;
+ }
+ 
+ /*
 
