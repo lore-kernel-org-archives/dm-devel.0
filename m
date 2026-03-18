@@ -1,42 +1,62 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.14])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1BF5C2F6922;
-	Wed, 18 Mar 2026 17:01:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D44FF263C8C;
+	Wed, 18 Mar 2026 17:18:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.175.65.14
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1773853277; cv=none; b=hXdqthhY1yItyoWlHQGyPewvQHMlArV8yJOzpcn0QEEw6v7zYTI8/D12ZWLZIl00XojDNCp5TAzE2F7gh13iaa/HPDfV0iwqeH/u3hRNRhzWoa9qtbyhqx4TtBXHQdCBfgSQ3+zJMaYutFwclOp5UPEPMA7T0x+Hm0YcApwA+SQ=
+	t=1773854308; cv=none; b=JPgOrW/+sRj0zZ9/wkmaRucEzG/vJgie8bTBsBMXx86kFz2SEDP4jAPbRI6qnufZEuJytjaroIOCGf+7JnXWPTGJs1JWkLrBoOiaZk/r9dvv8oBxwq6unfj8O04GIqM4r9dGVljPexu2qxk84sUx9DCWG0PMaJoV2yD3heuBmsc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1773853277; c=relaxed/simple;
-	bh=20mJmBB3SaecDG2JqcS0cOmUVcCOcH8rUNBLVK/9WkA=;
+	s=arc-20240116; t=1773854308; c=relaxed/simple;
+	bh=tcwBnr4PB39Z0VvfyqpTv96JTqTKA7HJd/AGMFQzpNE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=lW2hntz4Azmj2zd1hN/SpOKR7bu6R221zBtfEYz+pxremZ/jJ9tVGx4cxplJBhKrEB10ayDeAlEU7Go9a5tdkZsDgxOJRo8zT+o9sNcQZcFbu/jrDuaPniGEeaPiaPY8yaxiZyjSHMqw33sU0ESbpejj9+EOdN9ytriihovzPGY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=eX/QisCZ; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=opTtzb13N+OOlli5EHxZGpjdqfnJb/Suyyi5StoL/jc/z4U8l162LmZ1aFCmiBdHmWXdDN41cG1lZJTVHNvfsqZED21U74HKhNexM6KfkRUqmNjj++haMCeqt++8DxT8NResTbAjBAwGOECpVeCP8iK4wDFcVnmtwjPp/XvS4N0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=N1/Bxw2J; arc=none smtp.client-ip=198.175.65.14
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="eX/QisCZ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6E109C19421;
-	Wed, 18 Mar 2026 17:01:16 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1773853276;
-	bh=20mJmBB3SaecDG2JqcS0cOmUVcCOcH8rUNBLVK/9WkA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=eX/QisCZrRpE/d5Dc1xM11OkaaMJn4aALE+kkYCvDJDdrrbiumQwP2xvyV8q2IGGt
-	 4dslEHhu7XJFoSqEl8k8xIMDW32bICnbQmAsiBc5B98EOWIKdoscLzeEgBvA91bFoG
-	 Z9/RcDOUrV3FgW504k5cj+an5iakkWOQeFlniswfy/0YJk6So7MWtDiQ2lgHtifH9o
-	 6u2JH1zOQ/9745VSPHFwsYrnlN7NQwlY2KskVM68TVrvWD4MedNsCPle0cYa9UZ+jb
-	 NewuyvahUMwcoaeUPEdSoEmI3lLqOodMB0z0RO9U1lUK1id0v2AYykSnFvZiWowA5S
-	 H0vsC902OBWKg==
-Date: Wed, 18 Mar 2026 11:01:14 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, snitzer@kernel.org
-Subject: Re: [RESEND PATCHv3 2/2] dm-crypt: dynamic scatterlist for many
- segments
-Message-ID: <abraWvuLlTjHF-9q@kbusch-mbp>
-References: <20260316150229.1771884-1-kbusch@meta.com>
- <20260316150941.1813568-1-kbusch@meta.com>
- <08fbfa54-0e19-82b5-01ba-216a4202d2e5@redhat.com>
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="N1/Bxw2J"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1773854307; x=1805390307;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=tcwBnr4PB39Z0VvfyqpTv96JTqTKA7HJd/AGMFQzpNE=;
+  b=N1/Bxw2Jls0Wfx60V7+SXdvJ8Roh8foe+9nnJpDtqvkOATmYMMArn9dl
+   YQ8CEC3npkEyjE3rn4WJsiSMd4Tr8+NFb4zareZ6b7Puz9P6NnS8876AC
+   EmYW0HjAxzswbO4Wb8w1vZDO7fqhwn7b1nZn8FiG2MhEr3yTZfl0UgbgW
+   PR+321TUpIDozf7ITeL6sIUBvHFM1rgNVKNvPgvYZF/u4WIpiMGdhHWIc
+   SIhgYRaGU2/+BG3vFkKk5mxXv66P/yDS2lWXpY/ih5SoaOrbjWrQu+iI4
+   vEyipNgz3IBXyxSuEjJKl9VDwgcyo3ysrJ9xP5qRj+u5NXW0EcprEzyO/
+   Q==;
+X-CSE-ConnectionGUID: KuwWjhnjQsCzBydRNSi36A==
+X-CSE-MsgGUID: 6teJq9fQT2eE1vPsDGemzg==
+X-IronPort-AV: E=McAfee;i="6800,10657,11733"; a="78777249"
+X-IronPort-AV: E=Sophos;i="6.23,127,1770624000"; 
+   d="scan'208";a="78777249"
+Received: from fmviesa003.fm.intel.com ([10.60.135.143])
+  by orvoesa106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Mar 2026 10:18:26 -0700
+X-CSE-ConnectionGUID: VjFluSBYSA6w+OIZxsFQjw==
+X-CSE-MsgGUID: FxqhJ4nVRnKXPpe36MzK0Q==
+X-ExtLoop1: 1
+Received: from lkp-server01.sh.intel.com (HELO 63737dd503cb) ([10.239.97.150])
+  by fmviesa003.fm.intel.com with ESMTP; 18 Mar 2026 10:18:24 -0700
+Received: from kbuild by 63737dd503cb with local (Exim 4.98.2)
+	(envelope-from <lkp@intel.com>)
+	id 1w2uXC-000000003BZ-2GZk;
+	Wed, 18 Mar 2026 17:18:18 +0000
+Date: Thu, 19 Mar 2026 01:17:24 +0800
+From: kernel test robot <lkp@intel.com>
+To: John Garry <john.g.garry@oracle.com>, martin.petersen@oracle.com,
+	james.bottomley@hansenpartnership.com, hare@suse.com,
+	bmarzins@redhat.com
+Cc: oe-kbuild-all@lists.linux.dev, jmeneghi@redhat.com,
+	linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+	snitzer@kernel.org, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, John Garry <john.g.garry@oracle.com>
+Subject: Re: [PATCH 02/13] scsi: alua: Create a core ALUA driver
+Message-ID: <202603190113.JzA11dmp-lkp@intel.com>
+References: <20260317120703.3702387-3-john.g.garry@oracle.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -45,49 +65,38 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <08fbfa54-0e19-82b5-01ba-216a4202d2e5@redhat.com>
+In-Reply-To: <20260317120703.3702387-3-john.g.garry@oracle.com>
 
-On Wed, Mar 18, 2026 at 05:34:47PM +0100, Mikulas Patocka wrote:
-> On Mon, 16 Mar 2026, Keith Busch wrote:
-> > +static int crypt_build_sgl(struct crypt_config *cc, struct scatterlist **psg,
-> >  			   struct bvec_iter *iter, struct bio *bio,
-> >  			   int max_segs)
-> >  {
-> >  	unsigned int bytes = cc->sector_size;
-> > +	struct scatterlist *sg = *psg;
-> >  	struct bvec_iter tmp = *iter;
-> >  	int segs, i = 0;
-> >  
-> >  	bio_advance_iter(bio, &tmp, bytes);
-> >  	segs = tmp.bi_idx - iter->bi_idx + !!tmp.bi_bvec_done;
-> > -	if (segs > max_segs)
-> > -		return -EIO;
-> > +	if (segs > max_segs) {
-> > +		sg = kmalloc_array(segs, sizeof(struct scatterlist), GFP_NOIO);
-> > +		if (!sg)
-> > +			return -ENOMEM;
-> > +	}
-> >  
-> >  	sg_init_table(sg, segs);
-> >  	do {
-> 
-> GFP_NOIO allocations may be unavailable when you are swapping to the 
-> dm-crypt device and the machine runs out of memory temporarily. There 
-> should be:
-> 
-> sg = kmalloc_array(segs, sizeof(struct scatterlist), GFP_NOWAIT | __GFP_NOMEMALLOC);
-> 
-> and if it fails, allocate "sg" from a mempool with GFP_NOIO (mempool_alloc 
-> with GFP_NOIO can't fail, it waits until someone frees some entries into 
-> the mempool).
+Hi John,
 
-Thanks for the suggestion, this sounds good. Just to note, the use case
-for swap always writes out pages, so it's always aligned and would never
-take this path. The use case in mind where this path could happen is
-just for zero-copy direct io applications.
+kernel test robot noticed the following build errors:
 
-But even then, the only thing I know of that really wants this has an
-offset that straddles two pages per block, so I never need more than 2
-segments, and the inline scatterlist has four. There's just currently no
-way for the block layer to report a max-segments-per-block limit, so I'm
-including this patch to be consistent with the reportable limits.
+[auto build test ERROR on mkp-scsi/for-next]
+[also build test ERROR on jejb-scsi/for-next linus/master v7.0-rc4 next-20260317]
+[If your patch is applied to the wrong git tree, kindly drop us a note.
+And when submitting patch, we suggest to use '--base' as documented in
+https://git-scm.com/docs/git-format-patch#_base_tree_information]
+
+url:    https://github.com/intel-lab-lkp/linux/commits/John-Garry/scsi-scsi_dh_alua-Delete-alua_port_group/20260318-105207
+base:   https://git.kernel.org/pub/scm/linux/kernel/git/mkp/scsi.git for-next
+patch link:    https://lore.kernel.org/r/20260317120703.3702387-3-john.g.garry%40oracle.com
+patch subject: [PATCH 02/13] scsi: alua: Create a core ALUA driver
+config: s390-randconfig-001-20260318 (https://download.01.org/0day-ci/archive/20260319/202603190113.JzA11dmp-lkp@intel.com/config)
+compiler: s390-linux-gcc (GCC) 11.5.0
+reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20260319/202603190113.JzA11dmp-lkp@intel.com/reproduce)
+
+If you fix the issue in a separate patch/commit (i.e. not just a new version of
+the same patch/commit), kindly add following tags
+| Reported-by: kernel test robot <lkp@intel.com>
+| Closes: https://lore.kernel.org/oe-kbuild-all/202603190113.JzA11dmp-lkp@intel.com/
+
+All errors (new ones prefixed by >>, old ones prefixed by <<):
+
+>> ERROR: modpost: "scsi_exit_alua" [drivers/scsi/scsi_mod.ko] undefined!
+>> ERROR: modpost: "scsi_alua_init" [drivers/scsi/scsi_mod.ko] undefined!
+>> ERROR: modpost: "scsi_alua_sdev_exit" [drivers/scsi/scsi_mod.ko] undefined!
+>> ERROR: modpost: "scsi_alua_sdev_init" [drivers/scsi/scsi_mod.ko] undefined!
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests/wiki
