@@ -1,595 +1,218 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 516E03C13F1
-	for <dm-devel@lists.linux.dev>; Tue, 24 Mar 2026 06:38:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774334312; cv=none; b=WnXJ6JypEyG7BYfEMav2Q7cdNNXdLwOSIrcN98s49mTTay5H23h/fl3ZowdV2Y+YPjUd0Mxw/QmYKizq4QQ9X/M4xyZGD/R3x5LgqqaspL5F+cbv2TmIJjnjedehPcna0bpssYJKOTngk0mPorMXiWGCfXxAZpi5i26KoDP5WNk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774334312; c=relaxed/simple;
-	bh=5ZLl7gEWMPyKw+L/2HRGS6wnk7FeRwQi9CUa+y+tUsY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=Yu3P0gxQ4SNr7ixjaZAoudciY56Ty7lP23fDTFHGcoy5J7zfvnUCpUoECtJIlY4PPZWX1Rf0I2VjmuQh3NGLhaGZ0GJcAkkD9RyneRgSCh9gVNUz+n2n4cppH9dgjKGgB3FRUI1C3prXwt+vo28zcRSHMlZ+U7qVMpMbNVtc2rM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=e+KyAIyK; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0D763E63A8
+	for <dm-devel@lists.linux.dev>; Tue, 24 Mar 2026 10:49:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1774349385; cv=fail; b=XBD7nHIlW1CjBE01+G++4NRG78y8Su7cnVCJFJJ7/LRkO2mkhXpvLh1XfSzEuH3JD/hNFwGCfyrIJwk6OUmM74f0Y3xTwvtbe2Y87GShiqKvcfMR6wIKuDcmmjeLlb5u0ABd/+GNSv1rP6qyEW7Nr+0ifr8A9mIdXOGFW+slcPQ=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1774349385; c=relaxed/simple;
+	bh=4HNmGOr40BzTewB3mIinkxEZfnA545D5VbGcReqcRUU=;
+	h=Message-ID:Date:Subject:From:To:Cc:References:In-Reply-To:
+	 Content-Type:MIME-Version; b=WyGsC7RcUmMemxOBpZStv61ns9rzbWDwUbq4apUutAN8h7BZPExJ7pS+0j/GLGTBVjXhkjU+oDKMvs00CvP2jyjfFoa7m087DxFUpIdUNtFG1fozyjufsrNMj3iHcyrmKUXSfvbq4EbzSTOXzST16QkMPK5fjfQLwXh1pi3nqrM=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=V4KDM38X; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=rhr3GLCq; arc=fail smtp.client-ip=205.220.177.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="e+KyAIyK"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774334309;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GBQAb3wjqvBNjd7x/KGa+Y60ncfNH8ftsGCEsXnoyzY=;
-	b=e+KyAIyKK3HZvi/lePegPM17mZV6WxvnBA8oAYaWIjcwxuEUI1V9BnOfVR0T0fxQA8xxT7
-	CzkfZpEAV6m8EZz+4td/Rbal3e52Y1XzsMRPaxVIa46QTpsT/M/AWHu+n0mp61uGhyKUVp
-	Wri4VhR6rH/YHsxw9xy9ZjrqqHE9yTw=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-477-l1LoZzKBOMCsmnqoKCzagQ-1; Tue,
- 24 Mar 2026 02:38:25 -0400
-X-MC-Unique: l1LoZzKBOMCsmnqoKCzagQ-1
-X-Mimecast-MFC-AGG-ID: l1LoZzKBOMCsmnqoKCzagQ_1774334304
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 29612195607B;
-	Tue, 24 Mar 2026 06:38:24 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E67D9300019F;
-	Tue, 24 Mar 2026 06:38:23 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 62O6cMVJ1048752
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 24 Mar 2026 02:38:22 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 62O6cMqJ1048751;
-	Tue, 24 Mar 2026 02:38:22 -0400
-Date: Tue, 24 Mar 2026 02:38:22 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev,
-        Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 4/4] libmultipath: TUR checker: use runner threads
-Message-ID: <acIxXt69d6JkDtlQ@redhat.com>
-References: <20260319221344.753790-1-mwilck@suse.com>
- <20260319221344.753790-5-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="V4KDM38X";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="rhr3GLCq"
+Received: from pps.filterd (m0246630.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62O2e2J6074619;
+	Tue, 24 Mar 2026 10:49:34 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2025-04-25; bh=/ZY1hR1rRuwt6NTvOuYLyE9FCJLvHEFDSS1q3DTUeN8=; b=
+	V4KDM38X8rOiHp90PbV40ZCV1WxnmJEHlN/X5fZ2nyRsris7C5c7i0zE11EPJCF2
+	ZbWmUbxVJxELWRif6NyBL2d4NTrgO79dSKymq8namChNH4WghtrxC4PhFMaIOA04
+	saNulHjrLM8rYDgAVPXlhYQeepT4YgzUB2ynavPwKdpPPa1GaCl/ouSbkJuDmSW0
+	EUOfcOapD3EYRNqHCQJreGXul5YThAsOaiQ+Ri4jJ8/o591UOOmhd5FU8RrCHLhR
+	4oYandmcUpegAAYkANnghjpu880yF1O+O+TQ2o63YwtuW+KRKeCW8QjVNNrG2DlW
+	75VwmX0VKMeCXJWhmpogLA==
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4d1kfpkyfy-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 24 Mar 2026 10:49:34 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 62O8v54U000598;
+	Tue, 24 Mar 2026 10:49:33 GMT
+Received: from dm5pr21cu001.outbound.protection.outlook.com (mail-centralusazon11011035.outbound.protection.outlook.com [52.101.62.35])
+	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4d1hs9rm8x-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 24 Mar 2026 10:49:33 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=ULmhfHDDQJhhkwgA6RUvrFJ3HPBY/GcrAeyS85P5eRIuiMoXPegIQz0CtD7eDKhg7ujd0xYbAqpDNGlrYZxupGknpDvLU57Fdg88nzcxfTL+9uYRTBAaEfoX9VE1DsAlOEsxjuWQuzjW5yJT4LqlFe4LeOZlPQrOFmJVTE7D+0Fx9QDVTTcJrBAuVFtrR1Xc45kg+I9QgMi88W1hqSjxkGcRo0H3gCyQp0Fh7HuYoS0wKWi2F+Y2kJPNkkcamGPOALoGOR+LX9Utz5AktOcBJL6fBB87OlXFC5/kJcGl2a1lO+4w9VPQLXQrkKH4LiIfIY3k9CoKiIS2+9+2oHc8VQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=/ZY1hR1rRuwt6NTvOuYLyE9FCJLvHEFDSS1q3DTUeN8=;
+ b=uW04BSRzdU7iIm+6znCHt4y9jpn6PToGsek9kYcKSwiO7vXgVrfx0cqUzLXArLgNaJbBBJ3Jg87PEqgYf0HbtD9CgZBItx9GT9PtfOxS6iIHM7X9PIRXWBWQn2WMTwNCHiuKikuDULUQQhHgL2HXx7qGdk1JwKYrEMF4f7kLD3wCghbtGWy2VZ2uLgsv4ZMQbMvcfLiOFv6t47+eMzDWH2bi240203LPKZA0E77g0v2xOS+19i0j6Fc4Xnx1frhaoHv+rV36bs8OYNNMfAv6u1DJHtiFONqtmpPyyR8sxgRErhb4z8BKJX2CdA2NGlC0dvCoCNKkmrdGuxUfmKXcSQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=/ZY1hR1rRuwt6NTvOuYLyE9FCJLvHEFDSS1q3DTUeN8=;
+ b=rhr3GLCqHNcEW115+py0QuOpKcwMtv5cGmgt3msJMvD4o9g5DAGwR3tR+VPW5wJA2Zu9SL87oLqEdwWLPLiBoRjQZHHxkZJ5sdrM8I4R51TdPK3wE3wKqvEWA91SJLp3ZVJew4db8zqQf1KxK7ZPaX8YPxINGt8Vb6RmcZFU7kc=
+Received: from PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ (2603:10b6:518:1::7d6) by SJ0PR10MB5671.namprd10.prod.outlook.com
+ (2603:10b6:a03:3ee::10) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9723.31; Tue, 24 Mar
+ 2026 10:49:25 +0000
+Received: from PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ ([fe80::e515:6610:798b:9d8f]) by PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ ([fe80::e515:6610:798b:9d8f%7]) with mapi id 15.20.9723.030; Tue, 24 Mar 2026
+ 10:49:25 +0000
+Message-ID: <d2a9c76d-885e-4b2c-afe9-3178408cffad@oracle.com>
+Date: Tue, 24 Mar 2026 10:49:16 +0000
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 05/13] scsi: alua: Add scsi_alua_tur()
+From: John Garry <john.g.garry@oracle.com>
+To: Hannes Reinecke <hare@suse.de>, martin.petersen@oracle.com,
+        james.bottomley@hansenpartnership.com, hare@suse.com,
+        bmarzins@redhat.com
+Cc: jmeneghi@redhat.com, linux-scsi@vger.kernel.org,
+        michael.christie@oracle.com, snitzer@kernel.org,
+        dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20260317120703.3702387-1-john.g.garry@oracle.com>
+ <20260317120703.3702387-6-john.g.garry@oracle.com>
+ <692a4803-743e-4146-a48b-2a9e65326907@suse.de>
+ <649e8a2b-b0b1-4eff-b2f5-56e37b7da980@oracle.com>
+Content-Language: en-US
+Organization: Oracle Corporation
+In-Reply-To: <649e8a2b-b0b1-4eff-b2f5-56e37b7da980@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: DX0P273CA0089.AREP273.PROD.OUTLOOK.COM
+ (2603:1086:300:5d::13) To PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ (2603:10b6:518:1::7d6)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260319221344.753790-5-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Mr-jLMz_ZtaUBIy1VGYLnrA3_QevKFs5bLSWBt_GboM_1774334304
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH3PPFEDB06D67A:EE_|SJ0PR10MB5671:EE_
+X-MS-Office365-Filtering-Correlation-Id: 9c3897dc-329a-4244-81e7-08de899303ad
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|1800799024|376014|18002099003|22082099003|7053199007|56012099003;
+X-Microsoft-Antispam-Message-Info:
+	KC/1lfWZLXp669KTD1Xwn6leORb2QV+DkXdYzGctnsC0rRpTTTzUetcbstbuQA4Ca9fqeEtA3nrrWrjEQfXo+XjXGZz4pJa7ySuZfa2pseOY6VaTZxwss0Cuxz/6qjs9oVdE3x58L74L5rwaE3A+SjMTf2cwC2vcRj+MHBmoUJN9WElA0zhsnPLhaoZNKPLxC3IWIti3LO83h1ma9DDSuAMMhN/mnXb7am8Xx/EWUpEZBffKGAJszaV52lCMLrBxJx3/+VTgQfbA84nY0+YCAZo60k2GIl66xzUCx0Shk46WlXUhitINhRBZHm0aKmREfNNttUs1fTrF4FVUQt5cFTsHLZXjKy8hgxfHDBTdCKb/cL5ZtvyLKXw0AueOP+mLGv4/j5W2iXUMFu4eFMxEYuWq6FBxKB9c0FVBBQzPI97CfuW13sSSNNuK+0DxyO7GcpviOtSNjKL30rxZRld+/lKtRFPeGI1dQQzOq5LRjLq1/gpcv9ZKiXXCPNGcCnWgd0uKCk23HPp6B+jwwYoacKWE9kzYbubOtecPo0e4iSW7bLNwXFYzZM2ktpzwaFoGMGzr1aUemxBw9KrMheasl/OXFmZct/eN3MEs8kgUO9g4wj15U8Llv8cZwZDz2g/YbO+wlGq48N6GGB/j5SeIBavKz7jhYvQn59DNx+l8VCp/d9x0cQvDu1TolZq/+RpgNVF4dieUe/MPDjftaRF3lfFecvtLL8eF58jWGFBiSno=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH3PPFEDB06D67A.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014)(18002099003)(22082099003)(7053199007)(56012099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?Y1ZxMm5lQjBNcUlWZ1JQK3dLdDV1ZVc3MXdBQVBPdUNiMHpSTkIzVDl3WnJH?=
+ =?utf-8?B?WUJselNIVm0vclBZbHF1aGF1Mm9KUW1UZ2R4R0I3QjV3cGRGVERaZ3lVUkJV?=
+ =?utf-8?B?eVc1YTJBOWNqenNHNHZPM1JkL0EzeHVGWHNWVndpdFFobzZZMHdqUm4zYys1?=
+ =?utf-8?B?QXFpdUgwMkNLZXYxazVJQU1XbjN5LzlIV29raUR3UFRoUFdZVzRSNjREbGR4?=
+ =?utf-8?B?cVBDdFpONjRiTXgzNkhRdVQzdVJhc3daRStvSWtwUW1KYmtSWWVqMU11ZWVT?=
+ =?utf-8?B?bUg0MUNGazJVUFZGeHgyU2pMdkh5Z015eTM5L2d0ekNjT3NhT1BIN0wzamZD?=
+ =?utf-8?B?MGQ1c051d1BIL0QyaENnWDcvK1VPcFVNUlZXNVVlUzNVZkwwdWc1Q3pDNmIr?=
+ =?utf-8?B?S0EvekY3YzcvVHRwaUhaQkJoWDA4ZlZ3SG92Yks0U1NpZ0tuNHA3QWZwWVds?=
+ =?utf-8?B?Smd1UG45RzREUUVIc2F1Y3JtZGUxbGdsTGEyTG5oWUhiTGxrQStOSmNvZ0dK?=
+ =?utf-8?B?eDNiRnUrQzk2OXBKcDZXS3N6TklyUGF0VUgrb09vUEtiUHFvTWNVMTlMWmFX?=
+ =?utf-8?B?V2pMMXJPWFlvQ1c4NHltZWp2Qmw1VlpHRGVmcTREZ2pFYXpOcVdmTXRtS0Vj?=
+ =?utf-8?B?dHdpdlFEcXd6Z04zSFk0OFRrcVFSWFVwZmZsU1l3ZDZyREZ5bkJadzJwQWZ6?=
+ =?utf-8?B?ZFBpUDh0TUxaUGttOWJkRWJZZ1ZVWWpHRGNpb3UzUUV3RlV2SHZZQ1dDRVZk?=
+ =?utf-8?B?SE9NRmJxa2VJaUZmL2tpL05FREJLVjk3UlhPL01qeFFibFFyOW9uc0RBcDlN?=
+ =?utf-8?B?cTliaFMyaUxuQnFwU002c0RhNUtCcTA0ckFoVk5EdG9iUXg3OWVFTnZtQmw5?=
+ =?utf-8?B?SlAvc1Z0anJ3MWNSYjRsUThqZE1jeHFZaDNzc2d0Vlc0dVE2SzdJY1FCYll0?=
+ =?utf-8?B?RmpoVnJIRlg2c3N6NGF0emQ0ZndrMWErRFNFOXJvOUtJN242NDkvcmVkSklI?=
+ =?utf-8?B?a3RxTmd1N0xVb3g2T2taNmU0WVk5REZ0UWdMWlJPcld0eE1ib29pVHBJNWNM?=
+ =?utf-8?B?cTZsLzMvTTdIQmF1WVBBcCtCTERiMUZFcjRUbkkrS0FzQlNGZGlTU3lhcTFY?=
+ =?utf-8?B?ZFZYRW9pVXF5UjhUMUsybkRKeHJRN2tWRnVKNDRJNWpheG5FWVRoOEpJMVoy?=
+ =?utf-8?B?R3hEN2twZWoyOStqZUhiQmU4ZGVKM0dRTmZnbjBuRUljY1BGa2JaT083RGdF?=
+ =?utf-8?B?ajR6YUZrbHh3L00zU0loOFBmemJhSXFUSTlGdUp1aDRjOCttSTRaU3M5WmJj?=
+ =?utf-8?B?YVpXV1JuMW5aWmY2VHVDTzlseFROalRTbG85dktMOFVISjhiVG0yT3lBOHZZ?=
+ =?utf-8?B?Vnl1UU1xYWttZjFITlNZYnlTL0JjV3JtQ1F6U0ZvdHA2Qm5CWjIwdGJFdHZE?=
+ =?utf-8?B?MWU5ay9Ccm9JMjh2ZjZ3SmkvRk5sOGM3WmNhSnZqd1lrQW1wRy82a1JZRUZ0?=
+ =?utf-8?B?ZkF1d3l1eVJPd3hsRTBWaDY5RjNFMkZ3RFpiZkhjNVBzUE9haHp3ZStaVHNN?=
+ =?utf-8?B?L3lUeERjUHVNU1JncUlmaEloUEFIc3oxNVNCaGhsQ3MrOG1FNVlTTTl3VFph?=
+ =?utf-8?B?cTVGdmlmYkh4SUpmY05DZEpwd25OTnZUSFVnblFGaTNNakE3NEpXVXFMMnpl?=
+ =?utf-8?B?UnVQZkJPNnJNbTlzTnNJVi9zc3pTaUFmWjNlK2pKUkszUExpSG1QRHpCR2ZZ?=
+ =?utf-8?B?ZTVCUll4Z1J0Mlo3L1EwMHZoWjkzTksrVWVZSlAyWjRIeXNHL3pVK1hNU25O?=
+ =?utf-8?B?ekp6Q2lQd1RmcHBoRGx6NC92WW81eGQvZlYreWxINWVlZDBlaldvMVBwY1Nn?=
+ =?utf-8?B?S04xUHA3QXo5YlR0U1l6SmVXeWRnQzdhTE5KUUM3NW5PRFQvVmZNTkJiRGZZ?=
+ =?utf-8?B?ekIreTUwbk9pdXRvV1J1Rk1OWE4yb2RlNTlYTHNwd0ozSml3VjJoTUIyT2xI?=
+ =?utf-8?B?V3dyZUFNMEhuckVVSWx3bWd1YWFxYVhjRm5CMmk5N1VSMHhCTklYc3NwTmpQ?=
+ =?utf-8?B?ZDBHU2JmbEpEaWsyRjFuemlzYVR1MlRzOXhkS1lOY2I2ZjJqZlE4cVlSRkYw?=
+ =?utf-8?B?Tmo0L2VyZ1VDbnJKVVdhQytsQzJyOEUzaU1jc0t5VlNkSEV0QzY2OTVPcFpX?=
+ =?utf-8?B?QjVIOGF6cVVYb0dqZERVaTUxQjBrVVo3SVhjU01yMGZDZE5rdjBGeDFTOUtt?=
+ =?utf-8?B?ZEI0SDhKeFBKcllLK01DMnB4elNEZnBlTUgvSS9FVnBXSkdsckJER3U5NU1R?=
+ =?utf-8?B?bmF1dXlaM2dUME1zUW43Q3F3WDRrN3Q2czlyOUJVQlpTOWIwaG9VN3RnUXBv?=
+ =?utf-8?Q?IGDX3ngYFj5fQIjg=3D?=
+X-Exchange-RoutingPolicyChecked:
+	gWWnCE0t1uGxcpxaymN7QjJUujo+WnwVdE49YOMR2GHa49tN9/BsL0VzUb64hMA2e6has4Iho/xGw72pz+zECCbsVnxf4wH3v3qOVJK1rrxQhe2Yq9uHQnAkzNTPdPYgCvXyvw9QdpcJZgHNT9fFlRyFXep1CqCtFzM+8ohks8NsFdJ897Wpykp+RzedoA67BZQOFJUnPTh8Zba6Arp774ia75K8+Zd7/xhdX9rJxKz9f50AFbGDvj9wknYX6msVygzgeunNljpFVE9M4zPOh0lXLPclzAK2xpLvxVoADX6Wk3nNGx9DxDc/sQrBPnn82b+ZHp0y5GYpFVmTNjVIUw==
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	Cw647eMTKHL5Yc73w/nlL0zhoBfYEzHenynNFbnmKTRFbtbRvHPjLrB+4I9ZX1rKkqmK0XpUhXnqvLDwp/psVa+RpAwjfV1AvpN6T0vwP4B14Rpy9uGrpg6X6dFdAXV8XVO/PoMFAU1Cb+x6bLSo2B78MvTmiKEIRFMfqtx8ppgp4DW/TExhXpSN42FLzvRjYQ4X6KyZryB+nG0Yt4R4gJn/1DsuAKZvma2NTga+gvDM1eP6on86lUvhWOYX+KYu+a81ejfkxaUFcfJQYSF+d2mISXjFNMxsdfX27ndplOR4VMxYQRtmtnbPezmiNfpXeDqEj4KMLWBaQJDnjKW48wpil3XtAJY6WQRWEvS+b2kXIiaiZLCh9sMjd00uuFMG4nnklNZqDiosUqTLIPYgA0+Bvx2j+9C4Rx01zvNirIYodd9J8Pv0aZ2tY3caMQMRHEGbFrato7Y7uN6K82fKF5upy7w/czuuqSed+EPMYk9APYzspoHHHBNFOFlNjb10MaI6Ydwh3qIK3bpbj/pKwtZFT5nigX0SLeP49dBxRROTWhfAdNua6mDzIclUT6UFRipAcfCx/UfIQYkxlR3DWWmfsTgo0g5RS/36E/w2iGs=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 9c3897dc-329a-4244-81e7-08de899303ad
+X-MS-Exchange-CrossTenant-AuthSource: PH3PPFEDB06D67A.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Mar 2026 10:49:25.2120
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: VwOcrWLtltnRugzK2jyXiT2zIcs1v/3M4M60TFKnqyucmUxoMQZFR6lTSFTG+9hTLncltgG2gr9ga6EiG/ZiJw==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR10MB5671
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-03-24_02,2026-03-23_02,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0 bulkscore=0 mlxscore=0
+ suspectscore=0 spamscore=0 malwarescore=0 mlxlogscore=999 adultscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2603050001
+ definitions=main-2603240086
+X-Proofpoint-GUID: mB8DhyvYHFPUrt5pTZddbjfiyDkVnf2b
+X-Authority-Analysis: v=2.4 cv=VKnQXtPX c=1 sm=1 tr=0 ts=69c26c3e cx=c_pps
+ a=OOZaFjgC48PWsiFpTAqLcw==:117 a=OOZaFjgC48PWsiFpTAqLcw==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
+ a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
+ a=Yq5XynenixoA:10 a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=jiCTI4zE5U7BLdzWsZGv:22 a=x4eqshVgHu-cdnggieHk:22 a=b8zn4VCPTkzp0Y1Wa7gA:9
+ a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
+X-Proofpoint-ORIG-GUID: mB8DhyvYHFPUrt5pTZddbjfiyDkVnf2b
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzI0MDA4NiBTYWx0ZWRfXwSdpllUhswuj
+ mEIlC6v01pu+UgDjwAhYs8Uu83KXgI6vIuFsb1sJ+tTzEPeM6kanTdDs2nP6wlfnMvzfnkQYP9d
+ fmwIgXq4qnUTjj/iH9u1PX6/b0wC2eujer/NUMlyZG8XA+GiriLwSTd5e7C4EF/bCKGONpgITAC
+ IzF7TmtrTmDBna4Iyn3TYjCT1f4p30BtXOSFuY/8w0lfqQMyTKSR+kas+O1G/J7dCj5lPFb0CFY
+ gNAprEL1nuZpgSCmOeCdR90MVeJZz/F0NPai9riNAXGcu7toD3/WGwzI1g3jMbQAOUt9Ox0SgeG
+ 5VNwSjanmYm5P9QJmEkh7dztoIu/t1cYPFxOpxztFjOr3lzJeJP8Zg3wms8e6/Ns0xYmHD5MWBy
+ k+OsYCPXuLif4eT/aKCr+wzsb/LFKs4k7JwHAS7xHtLMcRcnKb7NexGrACPz6umpENoLFg7uQZx
+ g6Brr0i/sa/NFJx6JuA==
 
-On Thu, Mar 19, 2026 at 11:13:44PM +0100, Martin Wilck wrote:
-> Use the generic runners to simplify the TUR checker code.
+On 23/03/2026 13:42, John Garry wrote:
+> On 18/03/2026 07:54, Hannes Reinecke wrote:
+>>>   /*
+>>>    * submit_rtpg - Issue a REPORT TARGET GROUP STATES command
+>>>    * @sdev: sdev the command should be sent to
+>>
+>> ???
+>> And this function is useful _why_?
+>> We're just sending a normal 'TEST UNIT READY', it has nothing to
+>> do with ALUA. Why do we have a special function here?
 > 
-> The logic is the same as before, with one exception: the runner API does
-> not allow to track a thread after it has been cancelled, like our current
-> code does. The current code used this to determine when a previously
-> cancelled thread eventually did complete. The use case for doing this in
-> the current code was the MAX_NR_RUNNERS logic: the code waited "forever"
-> for the "last" checker to complete. This is not possible with runners;
-> once a runner is cancelled, it is off limits. (Waiting for a zombie thread to
-> write to memory belonging to the main program, as the current code does,
-> doesn't seem to be the best idea, anyway).
-> 
-> Therefore this patch implements a different logic for MAX_NR_RUNNERS. When
-> nr_timeouts reaches the limit, the last checker is spawned with an infinite
-> timeout. Like before, no new checker thread will be spawned until this last
-> checker eventually completes. One difference to the previous code is that
-> this last checker thread is never cancelled (after all, it never times
-> out). But this code is meant for the case where cancellation is not
-> effective, anyway. Another difference is that the new code will report
-> PATH_TIMEOUT state as soon as this last thread is started rather than
-> PATH_PENDING. That seems reasonable given that the checker previously timed
-> out for this thread.
+> This is used in the STPG code, and I added the STPG code to scsi_alua.c
 
-I'm not super enthused about this way of handling the misbehaving
-threads. It's probably o.k. But what if the issue is that the checker
-isn't completing by itself at all, but it would eventually get
-cancelled, just not till after we timeout. In this case, we should be
-cancelling that last runner. Admittedly, it's kinda hard to believe that
-a new runner would work correctly, while the old one still is stuck
-needing to be cancelled, but what we had before definitely worked.
+I meant to say that this is used in RTPG code from the following:
 
-I don't really see why we can't continue with roughly what we had
-before. We just need a new state for check_runner_state() to return.
-Something like RUNNER_STOPPING. cancel_runner() would cmpxchg with
-RUNNER_STOPPING, and not free the runner_context. In check_runner(), if
-the state was RUNNER_STOPPING or you just called cancel_runner(), you
-would check the ctx->refcount. If it was already 1, you would release
-the context and return RUNNER_CANCELLED. This way RUNNER_CANCELLED still
-means that the context has been freed, but it would only happen when the
-thread has ended. If you want to stop paying attention to a runner in
-RUNNER_STOPPING, you just call release_context() manually to drop your
-reference without waiting for it to finish.
 
-Then, if you still have a runner in RUNNER_STOPPING after calling
-check_runner_state() at the start of libcheck_check(), you drop your
-reference to it if ct->nr_timeouts < MAX_NR_TIMEOUTS. Otherwise you just
-return PATH_TIMEOUT.
+commit 9d2c30395213166e0b5614fe97576a789864e5de
+Author: Hannes Reinecke <hare@suse.de>
+Date:   Fri Feb 19 09:17:15 2016 +0100
 
-Thoughts? Like I said, I think what you have will probably be fine.
-I just know what we had before worked.
+     scsi_dh_alua: Send TEST UNIT READY to poll for transitioning
 
-More comments below.
-
-> 
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-> ---
->  libmultipath/checkers/tur.c | 341 +++++++++++-------------------------
->  1 file changed, 103 insertions(+), 238 deletions(-)
-> 
-> diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
-> index ba4ca68..6f22c45 100644
-> --- a/libmultipath/checkers/tur.c
-> +++ b/libmultipath/checkers/tur.c
-> @@ -3,7 +3,6 @@
->   *
->   * Copyright (c) 2004 Christophe Varoqui
->   */
-> -#include <stdio.h>
->  #include <stdlib.h>
->  #include <string.h>
->  #include <sys/types.h>
-> @@ -17,13 +16,13 @@
->  #include <pthread.h>
->  #include <urcu.h>
->  #include <urcu/uatomic.h>
-> +#include <assert.h>
->  
->  #include "checkers.h"
->  
->  #include "debug.h"
->  #include "sg_include.h"
-> -#include "util.h"
-> -#include "time-util.h"
-> +#include "runner.h"
->  
->  #define TUR_CMD_LEN 6
->  #define HEAVY_CHECK_COUNT       10
-> @@ -45,21 +44,20 @@ const char *libcheck_msgtable[] = {
->  	NULL,
->  };
->  
-> -struct tur_checker_context {
-> -	dev_t devt;
-> -	int state;
-> -	int running; /* uatomic access only */
-> +struct tur_context {
->  	int fd;
-> +	dev_t devt;
->  	unsigned int timeout;
-> -	time_t time;
-> -	pthread_t thread;
-> -	pthread_mutex_t lock;
-> -	pthread_cond_t active;
-> -	int holders; /* uatomic access only */
-> -	int msgid;
-> +	int state;
-> +	short msgid;
-> +};
-> +
-> +struct tur_checker_context {
->  	struct checker_context ctx;
-> +	int last_runner_state;
->  	unsigned int nr_timeouts;
-> -	bool checked_state;
-> +	struct runner_context *rtx;
-> +	struct tur_context tcx;
-
-There are lots of structures named *_context with names like *tx.
-Perhaps we could rename the tur_context something like tur_data?
-
-Also, ctx is the checker_context here, and the runner_contect in the
-runner.c code. I think it would be easier to follow and grep if we kept
-the runner_context named rtx in both places.
-
->  };
->  
->  int libcheck_init (struct checker * c)
-> @@ -67,48 +65,26 @@ int libcheck_init (struct checker * c)
->  	struct tur_checker_context *ct;
-
-Also the tur_checker_context is tcc in every function but this one. I
-think it helpful to always have the same name.
-
->  	struct stat sb;
->  
-> -	ct = malloc(sizeof(struct tur_checker_context));
-> -	if (!ct)
-> -		return 1;
-> -	memset(ct, 0, sizeof(struct tur_checker_context));
-> -
-> -	ct->state = PATH_UNCHECKED;
-> -	ct->fd = -1;
-> -	uatomic_set(&ct->holders, 1);
-> -	pthread_cond_init_mono(&ct->active);
-> -	pthread_mutex_init(&ct->lock, NULL);
-> +	ct = calloc(1, sizeof(*ct));
-> +	ct->tcx.state = PATH_UNCHECKED;
-> +	ct->tcx.fd = -1;
->  	if (fstat(c->fd, &sb) == 0)
-> -		ct->devt = sb.st_rdev;
-> +		ct->tcx.devt = sb.st_rdev;
->  	ct->ctx.cls = c->cls;
->  	c->context = ct;
-> -
->  	return 0;
->  }
->  
-> -static void cleanup_context(struct tur_checker_context *ct)
-> -{
-> -	pthread_mutex_destroy(&ct->lock);
-> -	pthread_cond_destroy(&ct->active);
-> -	free(ct);
-> -}
-> -
->  void libcheck_free (struct checker * c)
->  {
-> -	if (c->context) {
-> -		struct tur_checker_context *ct = c->context;
-> -		int holders;
-> -		int running;
-> +	struct tur_checker_context *tcc = c->context;
->  
-> -		running = uatomic_xchg(&ct->running, 0);
-> -		if (running)
-> -			pthread_cancel(ct->thread);
-> -		ct->thread = 0;
-> -		holders = uatomic_sub_return(&ct->holders, 1);
-> -		if (!holders)
-> -			cleanup_context(ct);
-> -		c->context = NULL;
-> -	}
-> -	return;
-> +	if (!tcc)
-> +		return;
-> +	c->context = NULL;
-> +	if (tcc->rtx)
-> +		cancel_runner(tcc->rtx);
-> +	free(tcc);
->  }
->  
->  static int
-> @@ -216,19 +192,6 @@ retry:
->  	return PATH_UP;
->  }
->  
-> -#define tur_thread_cleanup_push(ct) pthread_cleanup_push(cleanup_func, ct)
-> -#define tur_thread_cleanup_pop(ct) pthread_cleanup_pop(1)
-> -
-> -static void cleanup_func(void *data)
-> -{
-> -	int holders;
-> -	struct tur_checker_context *ct = data;
-> -
-> -	holders = uatomic_sub_return(&ct->holders, 1);
-> -	if (!holders)
-> -		cleanup_context(ct);
-> -}
-> -
->  /*
->   * Test code for "zombie tur thread" handling.
->   * Compile e.g. with CFLAGS=-DTUR_TEST_MAJOR=8
-> @@ -273,110 +236,82 @@ static void tur_deep_sleep(const struct tur_checker_context *ct)
->  #define tur_deep_sleep(x) do {} while (0)
->  #endif /* TUR_TEST_MAJOR */
->  
-> -void *libcheck_thread(struct checker_context *ctx)
-> +void runner_callback(void *arg)
->  {
-> -	struct tur_checker_context *ct =
-> -		container_of(ctx, struct tur_checker_context, ctx);
-> -	int state, running;
-> -	short msgid;
-> +	struct tur_context *tcx = arg;
-> +	int state;
->  
-> -	/* This thread can be canceled, so setup clean up */
-> -	tur_thread_cleanup_push(ct);
-> +	condlog(4, "%d:%d : tur checker starting up", major(tcx->devt),
-> +		minor(tcx->devt));
->  
-> -	condlog(4, "%d:%d : tur checker starting up", major(ct->devt),
-> -		minor(ct->devt));
-> -
-> -	tur_deep_sleep(ct);
-> -	state = tur_check(ct->fd, ct->timeout, &msgid);
-> +	tur_deep_sleep(tcx);
-> +	state = tur_check(tcx->fd, tcx->timeout, &tcx->msgid);
-> +	tcx->state = state;
->  	pthread_testcancel();
-> -
-> -	/* TUR checker done */
-> -	pthread_mutex_lock(&ct->lock);
-> -	ct->state = state;
-> -	ct->msgid = msgid;
-> -	pthread_cond_signal(&ct->active);
-> -	pthread_mutex_unlock(&ct->lock);
-> -
-> -	condlog(4, "%d:%d : tur checker finished, state %s", major(ct->devt),
-> -		minor(ct->devt), checker_state_name(state));
-> -
-> -	running = uatomic_xchg(&ct->running, 0);
-> -	if (!running)
-> -		pause();
-> -
-> -	tur_thread_cleanup_pop(ct);
-> -
-> -	return ((void *)0);
-> +	condlog(4, "%d:%d : tur checker finished, state %s", major(tcx->devt),
-> +		minor(tcx->devt), checker_state_name(state));
->  }
->  
-> -static void tur_set_async_timeout(struct checker *c)
-> +static int check_runner_state(struct tur_checker_context *tcc)
->  {
-> -	struct tur_checker_context *ct = c->context;
-> -	struct timespec now;
-> +	struct runner_context *rtx = tcc->rtx;
-> +	int rc;
->  
-> -	get_monotonic_time(&now);
-> -	ct->time = now.tv_sec + c->timeout;
-> -}
-> -
-> -static int tur_check_async_timeout(struct checker *c)
-> -{
-> -	struct tur_checker_context *ct = c->context;
-> -	struct timespec now;
-> -
-> -	get_monotonic_time(&now);
-> -	return (now.tv_sec > ct->time);
-> -}
-> -
-> -int check_pending(struct checker *c)
-> -{
-> -	struct tur_checker_context *ct = c->context;
-> -	int tur_status = PATH_PENDING;
-> -
-> -	pthread_mutex_lock(&ct->lock);
-> -
-> -	if (ct->state != PATH_PENDING || ct->msgid != MSG_TUR_RUNNING)
-> -	{
-> -		tur_status = ct->state;
-> -		c->msgid = ct->msgid;
-> -	}
-> -	pthread_mutex_unlock(&ct->lock);
-> -	if (tur_status == PATH_PENDING && c->msgid == MSG_TUR_RUNNING) {
-> +	rc = check_runner(rtx, &tcc->tcx, sizeof(tcc->tcx));
-> +	switch (rc) {
-> +	case RUNNER_DONE:
-> +		tcc->last_runner_state = rc;
-> +		tcc->rtx = NULL;
-> +		tcc->nr_timeouts = 0;
-> +		condlog(3, "%d:%d : tur checker finished, state %s",
-> +			major(tcc->tcx.devt), minor(tcc->tcx.devt),
-> +			checker_state_name(tcc->tcx.state));
-> +		break;
-> +	case RUNNER_CANCELLED:
-> +		tcc->last_runner_state = rc;
-> +		tcc->rtx = NULL;
-> +		tcc->tcx.state = PATH_TIMEOUT;
-> +		tcc->tcx.msgid = MSG_TUR_TIMEOUT;
-> +		if (tcc->nr_timeouts < MAX_NR_TIMEOUTS)
-> +			tcc->nr_timeouts++;
-> +		condlog(3, "%d:%d : tur checker timed out",
-> +			major(tcc->tcx.devt), minor(tcc->tcx.devt));
-> +		break;
-> +	case RUNNER_RUNNING:
->  		condlog(4, "%d:%d : tur checker still running",
-> -			major(ct->devt), minor(ct->devt));
-> -	} else {
-> -		int running = uatomic_xchg(&ct->running, 0);
-> -		if (running)
-> -			pthread_cancel(ct->thread);
-> -		ct->thread = 0;
-> +			major(tcc->tcx.devt), minor(tcc->tcx.devt));
-> +		tcc->tcx.msgid = MSG_TUR_RUNNING;
-> +		break;
-> +	default:
-> +		assert(false);
-> +		break;
->  	}
-> -
-> -	ct->checked_state = true;
-> -	return tur_status;
-> +	return rc;
->  }
->  
->  bool libcheck_need_wait(struct checker *c)
->  {
->  	struct tur_checker_context *ct = c->context;
-> -	return (ct && ct->thread && uatomic_read(&ct->running) != 0 &&
-> -		!ct->checked_state);
-> +
-> +	return ct && ct->rtx;
->  }
->  
->  int libcheck_pending(struct checker *c)
->  {
->  	struct tur_checker_context *ct = c->context;
-> -
->  	/* The if path checker isn't running, just return the exiting value. */
-> -	if (!ct || !ct->thread)
-> +	if (!ct || !ct->rtx)
->  		return c->path_state;
->  
-> -	return check_pending(c);
-> +	/* This may nullify ct->rtx */
-> +	check_runner_state(ct);
-> +	c->msgid = ct->tcx.msgid;
-> +	return ct->tcx.state;
->  }
->  
->  int libcheck_check(struct checker * c)
->  {
->  	struct tur_checker_context *ct = c->context;
-> -	pthread_attr_t attr;
-> -	int tur_status, r;
->  
->  	if (!ct)
->  		return PATH_UNCHECKED;
-> @@ -384,109 +319,39 @@ int libcheck_check(struct checker * c)
->  	if (checker_is_sync(c))
->  		return tur_check(c->fd, c->timeout, &c->msgid);
->  
-> -	/*
-> -	 * Async mode
-> -	 */
-> -	if (ct->thread) {
-> -		ct->checked_state = true;
-> -		if (tur_check_async_timeout(c)) {
-> -			int running = uatomic_xchg(&ct->running, 0);
-> -			if (running) {
-> -				pthread_cancel(ct->thread);
-> -				condlog(3, "%d:%d : tur checker timeout",
-> -					major(ct->devt), minor(ct->devt));
-> -				c->msgid = MSG_TUR_TIMEOUT;
-> -				tur_status = PATH_TIMEOUT;
-> -			} else {
-> -				pthread_mutex_lock(&ct->lock);
-> -				tur_status = ct->state;
-> -				c->msgid = ct->msgid;
-> -				pthread_mutex_unlock(&ct->lock);
-> -			}
-> -			ct->thread = 0;
-> -		} else if (uatomic_read(&ct->running) != 0) {
-> +	/* Handle the case that the checker just completed */
-> +	if (ct->rtx) {
-> +		if (check_runner_state(ct) == RUNNER_RUNNING)
->  			condlog(3, "%d:%d : tur checker not finished",
-> -				major(ct->devt), minor(ct->devt));
-> -			tur_status = PATH_PENDING;
-> -			c->msgid = MSG_TUR_RUNNING;
-> -		} else {
-> -			/* TUR checker done */
-> -			ct->thread = 0;
-> -			pthread_mutex_lock(&ct->lock);
-> -			tur_status = ct->state;
-> -			c->msgid = ct->msgid;
-> -			pthread_mutex_unlock(&ct->lock);
-> -		}
-> -	} else {
-> -		if (uatomic_read(&ct->holders) > 1) {
-> -			/* The thread has been cancelled but hasn't quit. */
-> -			if (ct->nr_timeouts == MAX_NR_TIMEOUTS) {
-> -				condlog(2, "%d:%d : waiting for stalled tur thread to finish",
-> -					major(ct->devt), minor(ct->devt));
-> -				ct->nr_timeouts++;
-> -			}
-> -			/*
-> -			 * Don't start new threads until the last once has
-> -			 * finished.
-> -			 */
-> -			if (ct->nr_timeouts > MAX_NR_TIMEOUTS) {
-> -				c->msgid = MSG_TUR_TIMEOUT;
-> -				return PATH_TIMEOUT;
-> -			}
-> -			ct->nr_timeouts++;
-> -			/*
-> -			 * Start a new thread while the old one is stalled.
-> -			 * We have to prevent it from interfering with the new
-> -			 * thread. We create a new context and leave the old
-> -			 * one with the stale thread, hoping it will clean up
-> -			 * eventually.
-> -			 */
-> -			condlog(3, "%d:%d : tur thread not responding",
-> -				major(ct->devt), minor(ct->devt));
-> -
-> -			/*
-> -			 * libcheck_init will replace c->context.
-> -			 * It fails only in OOM situations. In this case, return
-> -			 * PATH_UNCHECKED to avoid prematurely failing the path.
-> -			 */
-> -			if (libcheck_init(c) != 0) {
-> -				c->msgid = MSG_TUR_FAILED;
-> -				return PATH_UNCHECKED;
-> -			}
-> -			((struct tur_checker_context *)c->context)->nr_timeouts = ct->nr_timeouts;
-> -
-> -			if (!uatomic_sub_return(&ct->holders, 1)) {
-> -				/* It did terminate, eventually */
-> -				cleanup_context(ct);
-> -				((struct tur_checker_context *)c->context)->nr_timeouts = 0;
-> -			}
-> -
-> -			ct = c->context;
-> -		} else
-> -			ct->nr_timeouts = 0;
-> -		/* Start new TUR checker */
-> -		pthread_mutex_lock(&ct->lock);
-> -		tur_status = ct->state = PATH_PENDING;
-> -		c->msgid = ct->msgid = MSG_TUR_RUNNING;
-> -		pthread_mutex_unlock(&ct->lock);
-> -		ct->fd = c->fd;
-> -		ct->timeout = c->timeout;
-> -		ct->checked_state = false;
-> -		uatomic_add(&ct->holders, 1);
-> -		uatomic_set(&ct->running, 1);
-> -		tur_set_async_timeout(c);
-> -		setup_thread_attr(&attr, 32 * 1024, 1);
-> -		r = start_checker_thread(&ct->thread, &attr, &ct->ctx);
-> -		pthread_attr_destroy(&attr);
-> -		if (r) {
-> -			uatomic_sub(&ct->holders, 1);
-> -			uatomic_set(&ct->running, 0);
-> -			ct->thread = 0;
-> -			condlog(3, "%d:%d : failed to start tur thread, using"
-> -				" sync mode", major(ct->devt), minor(ct->devt));
-> -			return tur_check(c->fd, c->timeout, &c->msgid);
-> -		}
-> +				major(ct->tcx.devt), minor(ct->tcx.devt));
-> +		c->msgid = ct->tcx.msgid;
-> +		return ct->tcx.state;
->  	}
->  
-> -	return tur_status;
-> +	/* create new checker thread */
-> +	ct->tcx.fd = c->fd;
-> +	ct->tcx.timeout = c->timeout;
-> +
-> +	if (ct->nr_timeouts < MAX_NR_TIMEOUTS) {
-> +		condlog(3, "%d:%d : starting checker with timeout",
-> +			major(ct->tcx.devt), minor(ct->tcx.devt));
-> +		ct->tcx.state = PATH_PENDING;
-> +		ct->tcx.msgid = MSG_TUR_RUNNING;
-> +		ct->rtx = get_runner(runner_callback, &ct->tcx,
-> +				     sizeof(ct->tcx), 1000000 * c->timeout);
-> +	} else {
-> +		condlog(3, "%d:%d : starting checker without timeout",
-> +			major(ct->tcx.devt), minor(ct->tcx.devt));
-> +		ct->tcx.state = PATH_TIMEOUT;
-
-shouldn't we set ct->tcx.msgid = MSG_TUR_MSG_TUR_TIMEOUT here?
-
--Ben
-
-> +		ct->rtx = get_runner(runner_callback, &ct->tcx, sizeof(ct->tcx), 0);
-> +	}
-> +
-> +	if (ct->rtx) {
-> +		c->msgid = ct->tcx.msgid;
-> +		return ct->tcx.state;
-> +	} else {
-> +		condlog(3, "%d:%d : failed to start tur thread, using sync mode",
-> +			major(ct->tcx.devt), minor(ct->tcx.devt));
-> +		return tur_check(c->fd, c->timeout, &c->msgid);
-> +	}
->  }
-> -- 
-> 2.53.0
+     Sending a 'REPORT TARGET PORT GROUP' command is a costly operation,
+     as the array has to gather information about all ports.
+     So instead of using RTPG to poll for a status update when a port
+     is in transitioning we should be sending a TEST UNIT READY, and
+     wait for the sense code to report success.
 
