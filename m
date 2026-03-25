@@ -1,135 +1,69 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AD7A33CCFBA
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 15:31:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 27AF9314B8F;
+	Wed, 25 Mar 2026 18:34:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774452716; cv=none; b=ElNqjVKOVHC0g/UCauswcwdh+Qx8qfvpkYr/KY7m+qDFgsUT5k/rx0LoVP6s2K4ZLcNh2KlrHpWe2bU0uqD2qSng4LYRX9LP0VgJiHcZUN4mnJKjgIGTifGZKaioLG00QFRoU2ISwIgDhohjU703eLcSts4jcs3nu1GZdJF6i2w=
+	t=1774463690; cv=none; b=p8eS303kcX5Scqf2TY515ruVTIBZModL0gQCznQkkFP2GHTSDzGFUpBVDY5eY9lAGegNqFJOqlXCyEkXNzPs/v/5zzgC3kixpN8CaWQkesINcloBbq3+51pR8LxIivuEwEhp3u8Mpyi75sI675pq0yy6CTBCEhba4+nO4ITwLD0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774452716; c=relaxed/simple;
-	bh=rAU7mpdZrJ4Eo6S2jbYg2ERbl/Fmt9gGxZBcEPYFIfA=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=J0pva0A7mCMxblCFMTT+yZ5cwZDDKPx+GQsvsDw0yuHz5O6qDQKVfFq4g+0vvAMR1ORXXT8xkboqbO8otuTrBUsrwr1obC3lDAGPQRNLBhA0Zr349KCNm5ZWkcaw7vK1g/mUSWNNfmtTU+cEIb066+COQ9jCYCpERW5yWrjMNF0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cWea1oEy; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1774463690; c=relaxed/simple;
+	bh=gFdhIT7zohDFHph+YzuIffzKIM3BcR+OhAMRrbLwYmk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=tn1Np6aduL1yqE+8N+aI1yNehVMHoMfKytciAg7peoyN2Jhdf2T+e0QrUikaa278ux2NtliN2PDzw6fjHpjey3sBtHVU+ven72jzpyUniYo6YeWXqofFjhVAl7uziUXFtABr7kgp4b/dMdwps59m6Zc2PPxHxoVxO3cMaGo657U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MGXd8KxY; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cWea1oEy"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774452713;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=hgn5LRIv+4wSW1Ec+npnS4dLubBrEt6pLha/k1rXeec=;
-	b=cWea1oEygbd7pHkY8Y7tPdB9psgHyZti7qm60DOc20/TR22m8UTBeA2VXeqqif/Gm5eTjX
-	Ax40yhGw9YQdjYepYgbckCT+So6hCHZKmbIFclAWjndR2oZhjFpccl3m9E3nEv12GZcukX
-	SPJgDZJuy9VAgm+UID3b9AvRHj9GvYI=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-546-rLe7-a8BPvyqcLPaQQEjmQ-1; Wed,
- 25 Mar 2026 11:31:49 -0400
-X-MC-Unique: rLe7-a8BPvyqcLPaQQEjmQ-1
-X-Mimecast-MFC-AGG-ID: rLe7-a8BPvyqcLPaQQEjmQ_1774452708
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 050C31956076;
-	Wed, 25 Mar 2026 15:31:48 +0000 (UTC)
-Received: from [10.44.32.29] (unknown [10.44.32.29])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 967EB19560B1;
-	Wed, 25 Mar 2026 15:31:45 +0000 (UTC)
-Date: Wed, 25 Mar 2026 16:31:38 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>, 
-    "David S. Miller" <davem@davemloft.net>
-cc: linux-crypto@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Subject: [PATCH] crypto-deflate: fix spurious -ENOSPC
-Message-ID: <f6a1465f-c4f1-6847-9e3c-d7225bad4059@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MGXd8KxY"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 62E72C19423;
+	Wed, 25 Mar 2026 18:34:49 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1774463689;
+	bh=gFdhIT7zohDFHph+YzuIffzKIM3BcR+OhAMRrbLwYmk=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=MGXd8KxYJf4fgBG6VwiOt5iufYXHRH7MWHTrzV2OIbYeBM7yRbx1RK/h1WjVojN3L
+	 LDl/ABFiCgesosTt0C3A7sr8SE71c6JqHzg0j/azYeARRTRWojpQfXnbk+AOKMPqq7
+	 ZUJDlbFXtVb15z8vszsX8CxIS3FzHOeSQmAbsc5itkWnJNDlt6PNxUWudYlppJ7nOk
+	 ySg3rkj4M1+gXkofITpBHiDcrwtx9Gmj/WGuJFD6VJut0dMfUpjTduXyVkP1P92HM6
+	 POqTNq40OMKGUDteQ/rWZqZXwsXQttFZy1fVm+CTxLJrWhyAT6JZ38SL7JLvATdDFo
+	 La+0Nhmdjd52A==
+Date: Wed, 25 Mar 2026 12:34:47 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org, snitzer@kernel.org
+Subject: Re: [RESEND PATCHv3 1/2] dm-crypt: allow unaligned bio_vecs for
+ direct io
+Message-ID: <acQqx_gCjHmP8BGR@kbusch-mbp>
+References: <20260316150229.1771884-1-kbusch@meta.com>
+ <7cc4892a-5a2f-09b7-1f32-320acac4c797@redhat.com>
+ <abrjgdttXBHCFh34@kbusch-mbp>
+ <fa0978af-398b-a212-73bc-80f0f2c375a4@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: rdJlaNak9r1wRvz0cc_yEszFORx_jqN95bleKNo3z1A_1774452708
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <fa0978af-398b-a212-73bc-80f0f2c375a4@redhat.com>
 
-Hi Herbert
+On Wed, Mar 18, 2026 at 07:06:40PM +0100, Mikulas Patocka wrote:
+> 
+> If we have dm-integrity with 512-byte sector size on the top of a device 
+> that has dma_alignment less than 512, the code would set 
+> limits->dma_alignment to the value of the underlying block device and 
+> break dm-integrity (which assumes sector-aligned bios).
+> 
+> But that's a problem of dm-integrity - this "if (ic->sectors_per_block > 
+> 1)" condition in dm_integrity_io_hints is weird, it should be dropped and 
+> the limits should be properly merged.
 
-I am developing a new device mapper target that compresses data and I 
-found a bug in crypto/deflate.c that it sometimes returns -ENOSPC even if 
-the decompressed data fits into the destination buffer. I'm submitting 
-this patch to fix it.
+Looks like dm-integrity is a bit weird for other reasons, too. If a user
+creates a dm-integrity device with block size of 1k or 2k, but the
+backing device is 4k logical size, we'll have a mismatch from what the
+dm-integrity block device reports compared to what it can actually do.
 
-Mikulas
-
-
-From: Mikulas Patocka <mpatocka@redhat.com>
-
-The code in deflate_decompress_one may erroneously return -ENOSPC even if
-it didn't run out of output space. The error happens under this
-condition:
-
-- Suppose that there are two input pages, the compressed data fits into
-  the first page and the zlib checksum is placed in the second page.
-
-- The code iterates over the first page, decompresses the data and fully
-  fills the destination buffer, zlib_inflate returns Z_OK becuse zlib
-  hasn't seen the checksum yet.
-
-- The outer do-while loop is iterated again, acomp_walk_next_src sets the
-  input parameters to the second page containing the checksum.
-
-- We go into the inner do-while loop, execute "dcur =
-  acomp_walk_next_dst(&walk);". "dcur" is zero, so we break out of the
-  loop and return -ENOSPC, despite the fact that the decompressed data
-  fit into the destination buffer.
-
-In order to fix this bug, this commit changes the logic when to report
-the -ENOSPC error. We report the error if the destination buffer is empty
-*and* if zlib_inflate didn't make any progress consuming the input
-buffer. If zlib_inflate consumes the trailing checksum, we see that it
-made progress and we will not return -ENOSPC.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- crypto/deflate.c |   11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
-
-Index: linux-2.6/crypto/deflate.c
-===================================================================
---- linux-2.6.orig/crypto/deflate.c	2026-03-25 15:30:28.000000000 +0100
-+++ linux-2.6/crypto/deflate.c	2026-03-25 15:33:37.000000000 +0100
-@@ -164,18 +164,21 @@ static int deflate_decompress_one(struct
- 
- 		do {
- 			unsigned int dcur;
-+			unsigned long avail_in;
- 
- 			dcur = acomp_walk_next_dst(&walk);
--			if (!dcur) {
--				out_of_space = true;
--				break;
--			}
- 
- 			stream->avail_out = dcur;
- 			stream->next_out = walk.dst.virt.addr;
-+			avail_in = stream->avail_in;
- 
- 			ret = zlib_inflate(stream, Z_NO_FLUSH);
- 
-+			if (!dcur && avail_in == stream->avail_in) {
-+				out_of_space = true;
-+				break;
-+			}
-+
- 			dcur -= stream->avail_out;
- 			acomp_walk_done_dst(&walk, dcur);
- 		} while (ret == Z_OK && stream->avail_in);
-
+The pattern needed to get it right is repeated several times, so a
+helper is probably warranted. I'll put a series together as a prep and
+fix up.
