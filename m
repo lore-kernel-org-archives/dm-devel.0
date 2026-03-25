@@ -1,152 +1,203 @@
-Received: from mx0b-0031df01.pphosted.com (mx0b-0031df01.pphosted.com [205.220.180.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qt1-f170.google.com (mail-qt1-f170.google.com [209.85.160.170])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 277A535F60B
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 07:04:10 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.180.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C66AF3A3817
+	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 10:28:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774422251; cv=none; b=dNFWa9cEsfcSSoNiLEYXNr/gBtJi9utolzEE//6MTMEZY+nC2EPsMsCiX0NIzLYm2rqk7Ada2qDW0uC31zB2H7V8N7oNgrjoKu9i09n58/XOaIBKGNC1lfUsvneypH3vwVW5jcJJyvTg68Ql+5p/5i7vKoIgbskfNtMPnRMPKGU=
+	t=1774434490; cv=none; b=qI/68kbRGnRhRW9OmUydDT1HWjk2m5sADbHRDl67UPnCOWbhOTcbMftkcencBFC6bI37SiLrb+GGHkM7cWXtp4hdts75m9lpQyPZQug18gX5/zjcr84jeULbBlRr1Em2zaTrJZucFZuP8zSHdPFWoifU1HZO4pF1SeGLFCUfPkk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774422251; c=relaxed/simple;
-	bh=EqBOs0jRrwD3FbMvrXgC+4DO4UvpFLji0qZZL0gGPdI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ciRs+ySqvLCVF+sj3IWmUSI+e7p33MoLjxP47HpzEqk6Afdp0ufP3GC3yPKxjca6V/TN59ZC0lSV8smJeRyn0Ti0OHdljXp0QZSBv2VDKlavstshw7NH4wVymrzkw78qZ0M/7XRKLRpVL+o4f2Qqd1KXLHJRO+mgodKiPiWjXW0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=iBMeEJie; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=PtOB9WvK; arc=none smtp.client-ip=205.220.180.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
+	s=arc-20240116; t=1774434490; c=relaxed/simple;
+	bh=tom43KEKyh2fvaci/YD62RwzIfn9WllCNjMC0bb/dl8=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=Jkb+kYfc38IXiNkuPpLwd1fn067whawR5yHLWepja6QDA/HMGX/WN8LwQ/N5v9Pt8TM/q+CXeSPISyzFvSspBK117mPIXMNoSDRTR56OtgelrFyPl0VCLbkwHgboKpBNZEQhyqz5sVn0EPMvaM2hhTTN/KMQOu45GyUYlh47/6A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com; spf=fail smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=FbtLe0R/; arc=none smtp.client-ip=209.85.160.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="iBMeEJie";
-	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="PtOB9WvK"
-Received: from pps.filterd (m0279873.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62P5Nh811862825
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 07:04:09 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
-	cc:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
-	wL2rYIimLmWWyyTP/wOfbukZyeC2GNRpjfItV9cVfng=; b=iBMeEJietAg1y97q
-	qhdsajuTN8VYuhVBVnuBss3JMk2cFTYYWXWBdCJUNUMrSZHNT0qwr12h9JbhkSOg
-	OQu3aYGSOQdS6TcP/p67oVBDP5gOEHsRZEGu377z9fYCloNKz3c+18MVoXLhaNnH
-	a7y/jz+P1KoTs6h/wOUBZWUs3HKENLsOXJc13yqs6VB44e4EA19gD98Oemp//e1p
-	JD8PGReAmQh+KkYtV6BxUABm4FAIlZqgLrcfPhFxEotxCtdRcYJnP010ct9VTYMM
-	Eb81Fq6Iz++x7X0FjNPJN5pP6A7+Gy6ecu2y2YpBhV3MAhJy/HgF0GWnWHWIl7gO
-	NH2znQ==
-Received: from mail-dy1-f198.google.com (mail-dy1-f198.google.com [74.125.82.198])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4d40rasv2b-1
-	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 07:04:09 +0000 (GMT)
-Received: by mail-dy1-f198.google.com with SMTP id 5a478bee46e88-2ba9a744f7dso5241213eec.0
-        for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 00:04:09 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="FbtLe0R/"
+Received: by mail-qt1-f170.google.com with SMTP id d75a77b69052e-506a747448dso41484411cf.0
+        for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 03:28:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=oss.qualcomm.com; s=google; t=1774422248; x=1775027048; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=wL2rYIimLmWWyyTP/wOfbukZyeC2GNRpjfItV9cVfng=;
-        b=PtOB9WvK9Fco657aDREOESFcuMjeJ/88m1WxhbPtIGnldCq/2VxWg9Ma/5aDbBFINC
-         DMMfgfGxsirYq7B3QJAtZYDHkEnVs+7WmJU4H9vqUwoHUe58pAp8W/ILQ5LlPtuCbNNZ
-         oEkC8rQQqn73COXWO/r/J5iXDUtJ/9VPSyl032S4C+OZfc7FHm1rM1ntKHmTx+CPKmic
-         UpyS9WM3uedjTB4mP3kSuMu9nVE0q+WO75Zp7Qb6IIevN636/jZ370jgmS+Le4ybUQvW
-         7gIFZHryaeEOR1UJXI/nIQtf8nP0SBqUpU7Sl9wayrQyDZKOfNz8LjoZpSK8omgFs98j
-         q3Sw==
+        d=purestorage.com; s=google2022; t=1774434487; x=1775039287; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=eW9ecECq1NUBzDLIkheZ6doi9a4ejV/IV7e6eOyQgdw=;
+        b=FbtLe0R/wd14ZDVuWCnTNVD5/dvwYNMp7unDEWHBp5eAqua5+uW8+3OO8VEuqaabv/
+         vJAgSJrmJMKDeYKA3n26Dh4uzfJgGhwfFS7PxUneI7gAlQQ893/ZpxbHs7gdszZP4jbL
+         Cij+5RurxihT6d7yT8WkgPJ1Bnrj8YnOgxpHKLDLibwqbWk9gOx9IHQdzWX66wdeucmr
+         KYowxPSu1Sa0JgaAvsrdWizo6YcPo1i2nX4BaWfLk6EQuCk2MnYdiAtOzIr8LuxXXq71
+         RSQREURX2+T3L34rztIPvlsvG1G8RzsX0ebLBHOt43fvlKoDcXv2c2QhgzmUtfiSWJdl
+         WYKQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1774422248; x=1775027048;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=wL2rYIimLmWWyyTP/wOfbukZyeC2GNRpjfItV9cVfng=;
-        b=nkR3lxSJqm6WjJ82D5cENiqDxady1WpcDdtw69eCv1gWRDmn3TNfIoL2MIgznOo6B7
-         FwnUSNRgLZRmOTuNdZCD+LSkubO6Xm1OO1EAMAQbkWDjWdZRGZogpzOsYC+njlpYTMD9
-         rJuoRP1LYqgeGz/IY4H6VAeHRrzJXXKm7G9ul4d+bw82N2ZpMnSH26arJdtbiTTLPs9q
-         AJ1WpMbh5fVd7FYi5u6Eyq/4kC3OVjRpodSMzHHJzLC5NSj0plFsVts3kW5xMsRUkYql
-         ELP+bg2JlJTAkfoYyXunUruXrTkF5D2DmkJLsV2I8Tch5KE5yg62YznGVvC5hqbsTxxF
-         0+Aw==
-X-Forwarded-Encrypted: i=1; AJvYcCWQIF9mRdtdjKKkBkPE5tH91cA6V4939jJcBOJykbd4PwqFs+3n4N2YvlZQyvRIXOb94/XsszAiYA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwyDHgKyIicXsqduIq8uHeAi0umSpEaRCmfLr+Bm0+65WWp2Dn4
-	O9zmAFKWHTONvpnJrzsUhWqjT7hKgcDepJlD2ftrWYSrn2ZRRwXx8xG8hYKe9iBIH5blXLezn8Y
-	lXYCTuXNvODFKaesdyKK4B+9e/AuDEul3dvrglmfamXHC55EL9ywIFhoZSvNYiQ==
-X-Gm-Gg: ATEYQzx0GiYGqZWYbSgrksVn7Nu/86GWsrKyX9Uh6Z2WeZNuHvatAqozmKUaPjT7b0y
-	FmzOKVgFiXU+0KFPDRV/s6eZnuuz7vkqi0gdUkC0ejSe2RAaN7D4FG+nQ0RsVCgitSc7A2+nDOg
-	r3rc+nbs4qvtOZ3sF8BS6ONWTvWyprC272aS+AOmZ5E2nxfPtDfkP8OLEQPcDi3kgbeYfpVhwVL
-	qPSuOZbusEg01T2DOjlhT1EJf7DWdbr0omaziPbqCjpL6IOyeDpCpCkUe4SkNfrMc98ze7ifs01
-	KHPRhrSPu1JTkpxI29uJfi0DpiddyzxDwZ2xV5nnGCPurWij2LfCySgNoCoAoAE3y22z3xIl0mA
-	Y/wogXK3FesJBEr6kJfMAv93rrVveR3JkljoRrqLrNZCndRuFSHr9qPYIa6GNQMLZwYwJCfXmE2
-	BwcvI=
-X-Received: by 2002:a05:7300:6405:b0:2c1:571f:b824 with SMTP id 5a478bee46e88-2c15d4177eamr1370257eec.30.1774422248255;
-        Wed, 25 Mar 2026 00:04:08 -0700 (PDT)
-X-Received: by 2002:a05:7300:6405:b0:2c1:571f:b824 with SMTP id 5a478bee46e88-2c15d4177eamr1370239eec.30.1774422247741;
-        Wed, 25 Mar 2026 00:04:07 -0700 (PDT)
-Received: from [10.110.19.183] (i-global254.qualcomm.com. [199.106.103.254])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2c10b1a88e5sm22144015eec.13.2026.03.25.00.04.04
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 25 Mar 2026 00:04:07 -0700 (PDT)
-Message-ID: <996ba1c4-e91b-4a04-9424-7c262d45ce0a@oss.qualcomm.com>
-Date: Wed, 25 Mar 2026 15:04:03 +0800
+        d=1e100.net; s=20251104; t=1774434487; x=1775039287;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=eW9ecECq1NUBzDLIkheZ6doi9a4ejV/IV7e6eOyQgdw=;
+        b=CdjTnyd1Z9pPHQGqPJ2cVNCHj8vOUj7fQfa4h/ttNzo6Pc69Kd1l9Gt9ghPyNC9lUM
+         ufkNsJYF7dwLnGK/TsVD/b/0G4aCr8oLJMJXaZPR4m+Zz8W6ru75OlNGXnoipfONkP3/
+         HXMLSImXwEea8ZrmLApuY7yzXVCcs2y9+rSxZrpkCFHFsQ0Mdwd4aD1GfpbtwV5dPYEF
+         AFw2OLkk/w/B6IkBiakf8H8hTcPdjC1jbzEvhhoB52CvnF1NtjdrxNJVBa8M81ZHDwWJ
+         uQRq9xAgaVPnXDluexcpFp6Q0/AyxZJ0IfyI5H/HLti1/cm37YevN1AQ+1uYAYb2Ippz
+         p2DA==
+X-Gm-Message-State: AOJu0YypQMVV6N5q/KTyD+bJHuYiSLRrOv7WwBTsUQvzT+lUlwPea7cp
+	o/XvtXZwV+xpDlSD+CY9fomvY7vnk3a83KOJzHVZtClHOqfofeP9KZkJrayqZv0VaG4=
+X-Gm-Gg: ATEYQzziOiiqb6qC1NLyMfA+nAvp7Kuf/Rf+3H5ZAKavjB8qCFVtmHTKJag0tcSj1GH
+	fQ+eEdXabq4CIdWVAUBOguW+f0Ue+S2pqKFnbulQbBJKZLHnlMbe47e2hLDGiUybWO1Hq3k926I
+	SNRBVbEbHNV60Aoq3UBaz2tDgcyzsZTa/WJC7DkWrBHU4V20owHsyZIfGFUgeT0gVuIgycd+JUl
+	g5eGuAPk7sbfKQStIDx0NFoD5ZTojcHEVOZnddR3D2SHFCyoUR52UsNZSxzemLK+QvQbkJ16rcN
+	PIEv5a4JoRuesmTOXTyqM2YVhjDepYroi2311N+OZ5nUwwoGtUE9lnxUaQTbELRlAtK+4S8ZXsE
+	Sk9Yyn0dDJ7r4YzubIIg3o+k3sQlq7PeWI3ZmNFX/SgzczJFnp+yuM53mfTibpr6sjShd8+xyU3
+	Xr7nXm0gjIW8RZiFC5yqZjWW1MUjspglietgI1WEydym9pYQsjohz0rt16iFcZ6teN24ogQjhh
+X-Received: by 2002:a05:622a:1f8e:b0:50b:4d27:bebb with SMTP id d75a77b69052e-50b80ccc75fmr44824111cf.14.1774434486645;
+        Wed, 25 Mar 2026 03:28:06 -0700 (PDT)
+Received: from vm-libchen-fa.tier4-kif-devvm.svc.slc-eng-prd2 ([208.88.159.129])
+        by smtp.googlemail.com with ESMTPSA id 6a1803df08f44-89c85361ac2sm132870796d6.41.2026.03.25.03.28.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Mar 2026 03:28:06 -0700 (PDT)
+From: Libo Chen <libchen@purestorage.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Yuanyuan Zhong <yzhong@purestorage.com>,
+	libochen@chenlibo.work
+Subject: [PATCH] dm: fix race between dm_mq_queue_rq and __dm_destroy
+Date: Wed, 25 Mar 2026 04:27:41 -0600
+Message-Id: <20260325102741.293982-1-libchen@purestorage.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v1 0/3] dm-inlinecrypt: add target for inline block device
- encryption
-To: Christoph Hellwig <hch@infradead.org>, Adrian Vovk <adrianvovk@gmail.com>
-Cc: linux-block@vger.kernel.org, ebiggers@kernel.org,
-        linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev,
-        quic_mdalam@quicinc.com, gmazyland@gmail.com, israelr@nvidia.com,
-        mpatocka@redhat.com
-References: <20260304121729.1532469-1-linlin.zhang@oss.qualcomm.com>
- <aaguW3p3_LOeM_Dz@infradead.org>
- <CAAdYy_mSB4U39Onwa=V2e2XB0sJXV6tCGkzwV2-z7ZtMcm+8zg@mail.gmail.com>
- <aamVXAqlWGcPXCDe@infradead.org>
-Content-Language: en-US
-From: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-In-Reply-To: <aamVXAqlWGcPXCDe@infradead.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-Authority-Analysis: v=2.4 cv=Jvr8bc4C c=1 sm=1 tr=0 ts=69c388e9 cx=c_pps
- a=wEP8DlPgTf/vqF+yE6f9lg==:117 a=JYp8KDb2vCoCEuGobkYCKw==:17
- a=IkcTkHD0fZMA:10 a=Yq5XynenixoA:10 a=s4-Qcg_JpJYA:10
- a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=rJkE3RaqiGZ5pbrm-msn:22
- a=fqon-WgCYBziNm8ShXUA:9 a=QEXdDO2ut3YA:10 a=bBxd6f-gb0O0v-kibOvt:22
-X-Proofpoint-ORIG-GUID: IH7_FSG72K0QiiiMgrPDBEGkqtBhyhvE
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzI1MDA0OCBTYWx0ZWRfX8KOXS/3anbWc
- 8haRJXOe1mQWIlL+UW0weuV89hBXZIpKAy9hprP5jEmEhnxuTfElBnE360SHlUr4IwUaGZgr0PK
- k8wKuuFljv40o7cQG4BCe3HnYsVdaGNVdhlKyN/xJU9deRpj3Zrr+cbRCice7UVNNcXHdkbGYMN
- DTpNXB7OTHFrBDTLMDUfUpwsUDS+rZ+uICF+D+cPNExnnaufl3WGVfpGheKqtBMCAP1a/d0DmWq
- pBBDLygpwEpCAQiMZAJXbrdFY01z0W2CoIl0jcWpoHGW7IVz3R2A87jM1XUZTmzOE+9BSQR1OfS
- 3kV15QFebGW32iKdtRWVWSRc/Zu/yaJgcfCWI4u0vFlRqAjCB8N69MvvQScYCvXcz1WhZfsPeYe
- e18oz3EXAhlFR7dHao2nPOshaoIPnb4SprIaCIPe5PAXHxKC54cRJ1C7VMbHBuqkNoRfBNScbSV
- 1gj5NW0X2KAO9CGs/Zg==
-X-Proofpoint-GUID: IH7_FSG72K0QiiiMgrPDBEGkqtBhyhvE
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-25_02,2026-03-24_01,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- lowpriorityscore=0 adultscore=0 impostorscore=0 suspectscore=0 phishscore=0
- priorityscore=1501 spamscore=0 clxscore=1015 bulkscore=0 malwarescore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2603050001 definitions=main-2603250048
+Content-Transfer-Encoding: 8bit
 
+The existing dm_get() calls BUG_ON if DMF_FREEING is already set. This
+can be triggered when a request is dispatched via blk_mq_requeue_work()
+racing with __dm_destroy():
 
+  CPU0                           CPU1
+  ----                           ----
+  __dm_destroy()
+    set_bit(DMF_FREEING)
+                                 blk_mq_requeue_work()
+                                   dm_mq_queue_rq()
+                                     dm_start_request()
+                                       dm_get(md)
+                                         BUG_ON(DMF_FREEING) <-- crash
 
-On 3/5/2026 10:38 PM, Christoph Hellwig wrote:
-> On Wed, Mar 04, 2026 at 01:02:41PM -0500, Adrian Vovk wrote:
->> Hello Christoph,
->>
->> Maybe I am misunderstanding something, but this seems orthogonal to
->> fscrypt? Userspace would use this to do LUKS full-disk encryption, but with
->> the hardware acceleration provided by the inline encryption hardware.
-> 
-> Ok, if people really still want to do that that should be ok.
-> 
+Introduce dm_try_get() which increments holders first, then checks
+DMF_FREEING. If set, it decrements holders and returns false. The
+smp_mb__after_atomic() ensures the increment is visible before reading
+the flag, providing correct synchronization with __dm_destroy().
 
-Thanks for your review!
+dm_hold() was not used because it acquires the global _minor_lock,
+which would cause contention in the hot I/O path.
 
-Yes, this new dm-target type is designed for the Full-Disk Encryption with
-inline encryption hardware used scenario.
-I believe it's necessary as dm-crypt only provide software encryption, the hardware
-acceleration provided by the inline encryption hardware for Full-Disk Encryption
-is always what the customer wants, like File-based Encryption with Inline Crypto
-Engine supported.
+Move dm_try_get() before blk_mq_start_request() in dm_start_request().
+This ensures we don't start the block layer timer or mark the request
+MQ_RQ_IN_FLIGHT for a request that will immediately fail due to device
+destruction. If dm_try_get() fails, we return early without calling
+blk_mq_start_request(), providing cleaner error semantics.
+
+Signed-off-by: Libo Chen <libchen@purestorage.com>
+---
+ drivers/md/dm-rq.c            | 26 ++++++++++++++++----------
+ drivers/md/dm.c               | 12 ++++++++++++
+ include/linux/device-mapper.h |  1 +
+ 3 files changed, 29 insertions(+), 10 deletions(-)
+
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index a6ca92049c10..dc6ba46cad92 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -430,8 +430,20 @@ ssize_t dm_attr_rq_based_seq_io_merge_deadline_store(struct mapped_device *md,
+ 	return count;
+ }
+ 
+-static void dm_start_request(struct mapped_device *md, struct request *orig)
++static bool dm_start_request(struct mapped_device *md, struct request *orig)
+ {
++	/*
++	 * Hold the md reference here for the in-flight I/O.
++	 * We can't rely on the reference count by device opener,
++	 * because the device may be closed during the request completion
++	 * when all bios are completed.
++	 * See the comment in rq_completed() too.
++	 *
++	 * Fail if DMF_FREEING is set to avoid racing with __dm_destroy().
++	 */
++	if (!dm_try_get(md))
++		return false;
++
+ 	blk_mq_start_request(orig);
+ 
+ 	if (unlikely(dm_stats_used(&md->stats))) {
+@@ -444,14 +456,7 @@ static void dm_start_request(struct mapped_device *md, struct request *orig)
+ 				    &tio->stats_aux);
+ 	}
+ 
+-	/*
+-	 * Hold the md reference here for the in-flight I/O.
+-	 * We can't rely on the reference count by device opener,
+-	 * because the device may be closed during the request completion
+-	 * when all bios are completed.
+-	 * See the comment in rq_completed() too.
+-	 */
+-	dm_get(md);
++	return true;
+ }
+ 
+ static int dm_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
+@@ -508,7 +513,8 @@ static blk_status_t dm_mq_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 	if (ti->type->busy && ti->type->busy(ti))
+ 		return BLK_STS_RESOURCE;
+ 
+-	dm_start_request(md, rq);
++	if (!dm_start_request(md, rq))
++		return BLK_STS_IOERR;
+ 
+ 	/* Init tio using md established in .init_request */
+ 	init_tio(tio, rq, md);
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 6c83ab940af7..bd75b34de333 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2673,6 +2673,18 @@ void dm_get(struct mapped_device *md)
+ 	BUG_ON(test_bit(DMF_FREEING, &md->flags));
+ }
+ 
++bool dm_try_get(struct mapped_device *md)
++{
++	atomic_inc(&md->holders);
++	smp_mb__after_atomic();
++
++	if (unlikely(test_bit(DMF_FREEING, &md->flags))) {
++		atomic_dec(&md->holders);
++		return false;
++	}
++	return true;
++}
++
+ int dm_hold(struct mapped_device *md)
+ {
+ 	spin_lock(&_minor_lock);
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 84fdc3a6a19a..8df81c180f2f 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -500,6 +500,7 @@ int dm_create(int minor, struct mapped_device **md);
+  */
+ struct mapped_device *dm_get_md(dev_t dev);
+ void dm_get(struct mapped_device *md);
++bool dm_try_get(struct mapped_device *md);
+ int dm_hold(struct mapped_device *md);
+ void dm_put(struct mapped_device *md);
+ 
+-- 
+2.34.1
+
