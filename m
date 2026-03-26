@@ -1,113 +1,100 @@
-Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68DA11EEA31
-	for <dm-devel@lists.linux.dev>; Thu, 26 Mar 2026 04:14:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31EE23603F8;
+	Thu, 26 Mar 2026 09:13:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774498454; cv=none; b=NRY0fqZXATauqgouvsE6eeRrzZuvYQdspU4Dl3LQBNv4dSLcdWoLkl+Lt5DBaAXePh1xhT7UMNfK58E8jkC8wCNc01jEuYO37kPzty6ioNZSSoZJBPF09yGxOq0pmuGBKYcVEmDrnaU7XzhAkGEmnTQ1qGzVQfLDy9gIOM2CpSM=
+	t=1774516424; cv=none; b=ap6EbY7RgUFDc6BN9ZHcz0qjYFUyWdlN3HiLbB/S8lTppe5FRVGa1031ZhAOPef4rRnsQG3370RPHuT3bWetbpFQFAfWyti5IuWQ6LphH3ujMPR12gB8YHdA9Gqf2wZScIAliU1OWIElvN7RWE1sWQ46/isV1RE7FpTFSQh1wvI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774498454; c=relaxed/simple;
-	bh=DyQeCFKi9GZc/taP2lccAYrEAdGOXF5bfDvpSUu3F/4=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=b3NsN/JoXy0TSPnL+dxXxUV33j+T+UiTBLkkhs2JtdBryEZsYQPVKTCRPw3dzxtPl5l4eGtNX2GRnL5+8uCGr+W+ucbj6u0FVB3mXgAeWwRx8yg9Nex+gkBH50zHMgAdtDhzCpFzGRfZl2wW/lAnS4KQHUDRpoXAUxjBB3+07/E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HFXP5IaX; arc=none smtp.client-ip=209.85.210.176
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1774516424; c=relaxed/simple;
+	bh=TkjcpSbGaKVmBl031mSS6ieanqz+GuZBMOqtcqFwr+g=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=N+Od382TsmFW+DZhM8M154trNELdBcTvU8+D8ZTNFWXkZ196UHwfEnl9ehn3yGv3kIPDfMCMv8oje97KksN1p0cnSUXRWx1RhZMy7DEdJGlpbJ4DBkdsktFThujna1QNV7IkodZ+IgJj3DHVcI7UOM5HfUa7NwibGlr9a6avJHo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b=ckVuESrW; arc=none smtp.client-ip=180.181.231.80
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HFXP5IaX"
-Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-82c20b9f989so280512b3a.0
-        for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 21:14:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1774498452; x=1775103252; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=22US7uthXpFUornciEIu45mKxTqm34WwP4xBdw3Eh7k=;
-        b=HFXP5IaXGDOCQrRV1KUAn/RHZlHcVWie56LVkM2XcJxSUWhqML2SArptQ8evyareWM
-         X4PdgB8tvl/lqBA2znBXXu9wPTDBPIOQ1CZld0SwluEGMbz1g1I8ygC67A8RqMAQmQUz
-         We3jh+6hhz2T2W7PDK06BLEp86StiP1dxOwkKnslmjWVbkF/kVq75qvfbvY6Bnh6mv0w
-         cQufylVOkAASe3TF1PT4csE0qATEuqj3KYafFJhymhKMO5WGYUZ6xPdxgPwvtqUmfWsS
-         nTpqHys6W/+EhSfOJh/1FVOhyBGJu+wZbbSHIhbJXkCKvPgxQJ0HSmRYalhZ6jvhnp0/
-         3TFQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1774498452; x=1775103252;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=22US7uthXpFUornciEIu45mKxTqm34WwP4xBdw3Eh7k=;
-        b=gxnkIoltkIIVCccwBS/IAmRK+6W2TppYassuGNrJnJhNka5xW3ZhXncer4J5QqHhel
-         WmTQW2qn+4kJiJzz5V6rZ8EoAcBVOCYWfp6ehIbHaRT/1o+ikqIKHyi50WH9kAnyndk2
-         dInbjgCrkRIQsNICtSMgxnHQpojv0njQe3+T2lI4qle5/OBv98WWFU0bzqUpS8JM6Po1
-         eKcRSpen2pkbgq1xlnpfnXhU0bd6tHZeZhxZ9qXViowe0wxhoT4EGfwV2t0aGm0hI1Y2
-         eyAxdK6/0C1SSSyrhXOfH66vRRJB5sE+Es/uvRNOA5MWqZIukhCA8rVp5AJXzlBoFNyt
-         quzQ==
-X-Gm-Message-State: AOJu0Yw9opJlENa7PEGv+XRRKccsYGp1WwFCSBB+oTF3jn6dHAwbYKEq
-	koIuULkMz4W2+LbkJ+29yPb+QEPuk/AwJmmJWiPpMrLtx3Wg1OJKfoFkQuIUMc68
-X-Gm-Gg: ATEYQzy+VcDC6fw9r2Gix96eLIZipF2hAiYjnJoh9Ywhp13wf+k+SDnzd8A+98MBPQr
-	p6juvhi4qEZCWmAkaXXlymbwclvB3BTn2pgwTffvFPkWsOVLjRvK/iBLRs19lCFftWxg6Vt+w1q
-	qihHthyOP+PWISIR8NOr3oZIhyoBp61tJFy241H5B7Ff2DbQc5qW7zvpL4Gf4pngOGbTKzwhR0q
-	bBwLkDLQeEMngmjvfEuywIMNu7Y4Jb/ZtrmnU6YMgtYR8pcEnyQUiUSJ+nCreC+Omgmv+sgDaeH
-	HEUrhqsFmINuDxkzWRCQT5BE5RNM48hKu/tsvcVQ6e9Dr1ch97mxCsmKmf5EzcRAiR4u4UuofTK
-	f4tsbtt28KJdQzG8Sg7JzGfBh0lzZh0OnOZJE8YuBpNRcG+pASEuZv3buEe6eeXdT7DJ5rHtyMU
-	i4Qm1guktfNxnSYy7q7nedBo/WnD5uNUm1pevqby4btYXEOo7LzzXhS3E=
-X-Received: by 2002:a05:6a00:3d0b:b0:824:188b:c173 with SMTP id d2e1a72fcca58-82c6de8582amr6139470b3a.5.1774498452427;
-        Wed, 25 Mar 2026 21:14:12 -0700 (PDT)
-Received: from ryzen ([2601:644:8000:5b5d::8bd])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-82c7d3bf324sm1335527b3a.40.2026.03.25.21.14.11
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Mar 2026 21:14:11 -0700 (PDT)
-From: Rosen Penev <rosenp@gmail.com>
-To: dm-devel@lists.linux.dev
-Cc: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Kees Cook <kees@kernel.org>,
-	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
-	linux-kernel@vger.kernel.org (open list),
-	linux-hardening@vger.kernel.org (open list:KERNEL HARDENING (not covered by other areas):Keyword:\b__counted_by(_le|_be)?\b)
-Subject: [PATCH] dm-bufio: use kzalloc_flex
-Date: Wed, 25 Mar 2026 21:13:54 -0700
-Message-ID: <20260326041354.70229-1-rosenp@gmail.com>
-X-Mailer: git-send-email 2.53.0
+	dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b="ckVuESrW"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=gondor.apana.org.au; s=h01; h=In-Reply-To:Content-Type:MIME-Version:
+	References:Message-ID:Subject:Cc:To:From:Date:cc:to:subject:message-id:date:
+	from:content-type:reply-to; bh=XKaq7aORbC/ZEtWldVF64pO4QPNHEjZ4d3bJU/Rxw3k=; 
+	b=ckVuESrWWHWhkoaItMn7Ll2wA5crY4z3t8vkibiMm8UeDJgpuhiAi8eQZrcQrwnYYdfgAF8uOzP
+	z/63JuaTgzWm85q6LMIM9DJ6CSaUN2jFeS6FIYbdzPFRB08q17HKIDXCna08eo1lCQe8aPzktUh57
+	2N4eyYW7NYOMXkQo2dG4sMllC3ddAI1BrbR6FuJ2KnQc/SH+E/Lcyokkf3vI6tn0IKfbVDExMxI3l
+	3eehXVi2+CzLfiOcSe17Hc+oywoC6hoTS4VBq6e7crHppYVmsbXH7N2PZHGxHAOs8KGIUVLgI4pHC
+	UYjYj8ZEAafT7NBRABFN4zIcmEuRFNFesALQ==;
+Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
+	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
+	id 1w5gN6-001Fqb-1M;
+	Thu, 26 Mar 2026 17:13:40 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 26 Mar 2026 18:13:39 +0900
+Date: Thu, 26 Mar 2026 18:13:39 +0900
+From: Herbert Xu <herbert@gondor.apana.org.au>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: "David S. Miller" <davem@davemloft.net>, linux-crypto@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH] crypto-deflate: fix spurious -ENOSPC
+Message-ID: <acT4w_1OifZthFYs@gondor.apana.org.au>
+References: <f6a1465f-c4f1-6847-9e3c-d7225bad4059@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <f6a1465f-c4f1-6847-9e3c-d7225bad4059@redhat.com>
 
-Avoid manual size calculations and use the proper helper.
+On Wed, Mar 25, 2026 at 04:31:38PM +0100, Mikulas Patocka wrote:
+> Hi Herbert
+> 
+> I am developing a new device mapper target that compresses data and I 
+> found a bug in crypto/deflate.c that it sometimes returns -ENOSPC even if 
+> the decompressed data fits into the destination buffer. I'm submitting 
+> this patch to fix it.
+> 
+> Mikulas
+> 
+> 
+> From: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> The code in deflate_decompress_one may erroneously return -ENOSPC even if
+> it didn't run out of output space. The error happens under this
+> condition:
+> 
+> - Suppose that there are two input pages, the compressed data fits into
+>   the first page and the zlib checksum is placed in the second page.
+> 
+> - The code iterates over the first page, decompresses the data and fully
+>   fills the destination buffer, zlib_inflate returns Z_OK becuse zlib
+>   hasn't seen the checksum yet.
+> 
+> - The outer do-while loop is iterated again, acomp_walk_next_src sets the
+>   input parameters to the second page containing the checksum.
+> 
+> - We go into the inner do-while loop, execute "dcur =
+>   acomp_walk_next_dst(&walk);". "dcur" is zero, so we break out of the
+>   loop and return -ENOSPC, despite the fact that the decompressed data
+>   fit into the destination buffer.
+> 
+> In order to fix this bug, this commit changes the logic when to report
+> the -ENOSPC error. We report the error if the destination buffer is empty
+> *and* if zlib_inflate didn't make any progress consuming the input
+> buffer. If zlib_inflate consumes the trailing checksum, we see that it
+> made progress and we will not return -ENOSPC.
+> 
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> ---
+>  crypto/deflate.c |   11 +++++++----
+>  1 file changed, 7 insertions(+), 4 deletions(-)
 
-Add __counted_by for extra runtime analysis.
-
-Signed-off-by: Rosen Penev <rosenp@gmail.com>
----
- drivers/md/dm-bufio.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 60f7badec91f..26fedf5883ef 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -391,7 +391,7 @@ struct dm_buffer_cache {
- 	 */
- 	unsigned int num_locks;
- 	bool no_sleep;
--	struct buffer_tree trees[];
-+	struct buffer_tree trees[] __counted_by(num_locks);
- };
- 
- static DEFINE_STATIC_KEY_FALSE(no_sleep_enabled);
-@@ -2511,7 +2511,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
- 	}
- 
- 	num_locks = dm_num_hash_locks();
--	c = kzalloc(sizeof(*c) + (num_locks * sizeof(struct buffer_tree)), GFP_KERNEL);
-+	c = kzalloc_flex(*c, cache.trees, num_locks);
- 	if (!c) {
- 		r = -ENOMEM;
- 		goto bad_client;
+Patch applied.  Thanks.
 -- 
-2.53.0
-
+Email: Herbert Xu <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
