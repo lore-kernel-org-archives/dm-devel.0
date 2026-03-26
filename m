@@ -1,115 +1,113 @@
-Received: from mx0a-00082601.pphosted.com (mx0a-00082601.pphosted.com [67.231.145.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pf1-f176.google.com (mail-pf1-f176.google.com [209.85.210.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4378F22576E
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 19:36:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=67.231.145.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 68DA11EEA31
+	for <dm-devel@lists.linux.dev>; Thu, 26 Mar 2026 04:14:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774467393; cv=none; b=mflEV9/UeN7EedwJkIhIgQgLk29AVbKKgSCVV/jaG7hcS9LT8TdvCMeKICfTaQvYXVyKL2xLpnQsoC/b5Okgm8Jgo6wqA+jgiVGHvtF6m8t6pP0Q+/rsi4UHEHppWB17QXmxzmBqWebQDwt4W3fk5+jZ5vMiwgo5F4IW7PdshSQ=
+	t=1774498454; cv=none; b=NRY0fqZXATauqgouvsE6eeRrzZuvYQdspU4Dl3LQBNv4dSLcdWoLkl+Lt5DBaAXePh1xhT7UMNfK58E8jkC8wCNc01jEuYO37kPzty6ioNZSSoZJBPF09yGxOq0pmuGBKYcVEmDrnaU7XzhAkGEmnTQ1qGzVQfLDy9gIOM2CpSM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774467393; c=relaxed/simple;
-	bh=y3ch744VeObj6sfg9NjYQyLQbWkTYuuRxBEBHniyWBU=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Lgpz2G7gNAZ/5CF+RMYyr638z3K+VXHWbSjSgwJ2cXKVX6HrHGeJEQIvDCdl5aPXrrpQGuj3zK9gPUmZrir+m7SyA/BCIFRRMsGFXDeTp1eB4NValYD6wSdgA3SBai2keIKMsan9Is/sfAUOMGrMbtcYwVZGtsnTLUehAMsmDOA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com; spf=pass smtp.mailfrom=meta.com; dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b=P1gloXpl; arc=none smtp.client-ip=67.231.145.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=meta.com
+	s=arc-20240116; t=1774498454; c=relaxed/simple;
+	bh=DyQeCFKi9GZc/taP2lccAYrEAdGOXF5bfDvpSUu3F/4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=b3NsN/JoXy0TSPnL+dxXxUV33j+T+UiTBLkkhs2JtdBryEZsYQPVKTCRPw3dzxtPl5l4eGtNX2GRnL5+8uCGr+W+ucbj6u0FVB3mXgAeWwRx8yg9Nex+gkBH50zHMgAdtDhzCpFzGRfZl2wW/lAnS4KQHUDRpoXAUxjBB3+07/E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=HFXP5IaX; arc=none smtp.client-ip=209.85.210.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b="P1gloXpl"
-Received: from pps.filterd (m0148461.ppops.net [127.0.0.1])
-	by mx0a-00082601.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62PFtuvK1965264
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 12:36:31 -0700
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=meta.com; h=cc
-	:content-transfer-encoding:content-type:date:from:message-id
-	:mime-version:subject:to; s=s2048-2025-q2; bh=UxiGs+5CbQWjyDDwFR
-	1mbVN7qgtXVq8rQ6CPr/wZkuE=; b=P1gloXplwTsQsMQahPzkUkXcv7dfizhrzD
-	Yygz/gt4ihvPKMVQcglWsHm35aqP/6IldjGW67PXXxDeU0koxz4Dq+2FmERy9Bul
-	AADNeKcvWF9jikma8OvcuZMfNrHHyG2TL6JfTNzvzAXa2aaqalz1c+0q2+0LtWK8
-	ldzZEArG3ddwHo5irY4TA3+j2JZr9lK7MxCr4g9yIrhOGEq/vaFw5TrZ6+bwCsMa
-	mUC9JX/ABoHpzVEkXlmwJBLs2kxxvta7r7YD7mO+vELIYgiCPmT6Jg3U7rSQ9vqw
-	UYjxbY1/dpCwU5mVc/F0at2tEsZPqE+kN5a4TE+kXpysJOMi1q5A==
-Received: from maileast.thefacebook.com ([163.114.135.16])
-	by mx0a-00082601.pphosted.com (PPS) with ESMTPS id 4d45cgjx5w-4
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 12:36:31 -0700 (PDT)
-Received: from twshared18080.32.frc3.facebook.com (2620:10d:c0a8:1b::2d) by
- mail.thefacebook.com (2620:10d:c0a9:6f::237c) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.2.2562.35; Wed, 25 Mar 2026 19:36:30 +0000
-Received: by devbig197.nha3.facebook.com (Postfix, from userid 544533)
-	id B50BCD2EC963; Wed, 25 Mar 2026 12:36:08 -0700 (PDT)
-From: Keith Busch <kbusch@meta.com>
-To: <dm-devel@lists.linux.dev>
-CC: <mpatocka@redhat.com>, <snitzer@kernel.org>,
-        Keith Busch
-	<kbusch@kernel.org>
-Subject: [PATCH 1/3] dm-integrity: fix mismatched queue limits
-Date: Wed, 25 Mar 2026 12:36:06 -0700
-Message-ID: <20260325193608.2827042-1-kbusch@meta.com>
-X-Mailer: git-send-email 2.52.0
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HFXP5IaX"
+Received: by mail-pf1-f176.google.com with SMTP id d2e1a72fcca58-82c20b9f989so280512b3a.0
+        for <dm-devel@lists.linux.dev>; Wed, 25 Mar 2026 21:14:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1774498452; x=1775103252; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=22US7uthXpFUornciEIu45mKxTqm34WwP4xBdw3Eh7k=;
+        b=HFXP5IaXGDOCQrRV1KUAn/RHZlHcVWie56LVkM2XcJxSUWhqML2SArptQ8evyareWM
+         X4PdgB8tvl/lqBA2znBXXu9wPTDBPIOQ1CZld0SwluEGMbz1g1I8ygC67A8RqMAQmQUz
+         We3jh+6hhz2T2W7PDK06BLEp86StiP1dxOwkKnslmjWVbkF/kVq75qvfbvY6Bnh6mv0w
+         cQufylVOkAASe3TF1PT4csE0qATEuqj3KYafFJhymhKMO5WGYUZ6xPdxgPwvtqUmfWsS
+         nTpqHys6W/+EhSfOJh/1FVOhyBGJu+wZbbSHIhbJXkCKvPgxQJ0HSmRYalhZ6jvhnp0/
+         3TFQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1774498452; x=1775103252;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=22US7uthXpFUornciEIu45mKxTqm34WwP4xBdw3Eh7k=;
+        b=gxnkIoltkIIVCccwBS/IAmRK+6W2TppYassuGNrJnJhNka5xW3ZhXncer4J5QqHhel
+         WmTQW2qn+4kJiJzz5V6rZ8EoAcBVOCYWfp6ehIbHaRT/1o+ikqIKHyi50WH9kAnyndk2
+         dInbjgCrkRIQsNICtSMgxnHQpojv0njQe3+T2lI4qle5/OBv98WWFU0bzqUpS8JM6Po1
+         eKcRSpen2pkbgq1xlnpfnXhU0bd6tHZeZhxZ9qXViowe0wxhoT4EGfwV2t0aGm0hI1Y2
+         eyAxdK6/0C1SSSyrhXOfH66vRRJB5sE+Es/uvRNOA5MWqZIukhCA8rVp5AJXzlBoFNyt
+         quzQ==
+X-Gm-Message-State: AOJu0Yw9opJlENa7PEGv+XRRKccsYGp1WwFCSBB+oTF3jn6dHAwbYKEq
+	koIuULkMz4W2+LbkJ+29yPb+QEPuk/AwJmmJWiPpMrLtx3Wg1OJKfoFkQuIUMc68
+X-Gm-Gg: ATEYQzy+VcDC6fw9r2Gix96eLIZipF2hAiYjnJoh9Ywhp13wf+k+SDnzd8A+98MBPQr
+	p6juvhi4qEZCWmAkaXXlymbwclvB3BTn2pgwTffvFPkWsOVLjRvK/iBLRs19lCFftWxg6Vt+w1q
+	qihHthyOP+PWISIR8NOr3oZIhyoBp61tJFy241H5B7Ff2DbQc5qW7zvpL4Gf4pngOGbTKzwhR0q
+	bBwLkDLQeEMngmjvfEuywIMNu7Y4Jb/ZtrmnU6YMgtYR8pcEnyQUiUSJ+nCreC+Omgmv+sgDaeH
+	HEUrhqsFmINuDxkzWRCQT5BE5RNM48hKu/tsvcVQ6e9Dr1ch97mxCsmKmf5EzcRAiR4u4UuofTK
+	f4tsbtt28KJdQzG8Sg7JzGfBh0lzZh0OnOZJE8YuBpNRcG+pASEuZv3buEe6eeXdT7DJ5rHtyMU
+	i4Qm1guktfNxnSYy7q7nedBo/WnD5uNUm1pevqby4btYXEOo7LzzXhS3E=
+X-Received: by 2002:a05:6a00:3d0b:b0:824:188b:c173 with SMTP id d2e1a72fcca58-82c6de8582amr6139470b3a.5.1774498452427;
+        Wed, 25 Mar 2026 21:14:12 -0700 (PDT)
+Received: from ryzen ([2601:644:8000:5b5d::8bd])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-82c7d3bf324sm1335527b3a.40.2026.03.25.21.14.11
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Mar 2026 21:14:11 -0700 (PDT)
+From: Rosen Penev <rosenp@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Kees Cook <kees@kernel.org>,
+	"Gustavo A. R. Silva" <gustavoars@kernel.org>,
+	linux-kernel@vger.kernel.org (open list),
+	linux-hardening@vger.kernel.org (open list:KERNEL HARDENING (not covered by other areas):Keyword:\b__counted_by(_le|_be)?\b)
+Subject: [PATCH] dm-bufio: use kzalloc_flex
+Date: Wed, 25 Mar 2026 21:13:54 -0700
+Message-ID: <20260326041354.70229-1-rosenp@gmail.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-FB-Internal: Safe
-Content-Type: text/plain
-X-Authority-Analysis: v=2.4 cv=FOcWBuos c=1 sm=1 tr=0 ts=69c4393f cx=c_pps
- a=MfjaFnPeirRr97d5FC5oHw==:117 a=MfjaFnPeirRr97d5FC5oHw==:17
- a=Yq5XynenixoA:10 a=VkNPw1HP01LnGYTKEx00:22 a=7x6HtfJdh03M6CCDgxCd:22
- a=03ozwUkBphtHgyqjj1sw:22 a=VwQbUJbxAAAA:8 a=po2vHTGQ69wFjfYcvKgA:9
-X-Proofpoint-GUID: maBbL2h15xQwrq-ePa0p-Ls4nsHkgFMs
-X-Proofpoint-ORIG-GUID: maBbL2h15xQwrq-ePa0p-Ls4nsHkgFMs
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzI1MDE0MyBTYWx0ZWRfXzSjWTJA6y+C0
- 5cEtGJUoav9LQSXWngtfELDumhBY3gqwjgmLerrD04H3FjGV7DKEA6n0+1DBC43DbXDYw82jxmj
- zCs1+/uiiyjKSNt/5itRtqcZrdq2RnpOyNO+a2z7xhrhOoRs4+ANCr4quEkGtmWB/H1/u5Da4Fx
- ybO7DNevfejG/fb0RiqgXbOqgZDd1AkVIJb3TEI7XVFtQ4PrYRZHpWY7VQKUepDnzJCYaNhBMkL
- kpRq4T4BPOfk55ubS07qShQ1Jnn+k6nM3jrrs0+RB4Lq7OpXNModKFDi2pXG0k05+dTxWcxn3+Y
- 4VUUsMu1qUn8TZdzWfLJ7QpqBF9nDPo59y0auMWdxJTMamwIbtbz/qOCC8cw6oFZ+TjeHHfBznA
- OC9QMQOYbVGIg5m1mq6QrXmudUnL6B0u1UHpZ0kOEotxti6R+SzfwWnCZd4KcypF8AJrMV+ijyz
- 11e4Ct50USElm7+BKng==
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-03-25_05,2026-03-24_01,2025-10-01_01
+Content-Transfer-Encoding: 8bit
 
-From: Keith Busch <kbusch@kernel.org>
+Avoid manual size calculations and use the proper helper.
 
-A user can integritysetup a device with a backing device using a 4k
-logical block size, but request the dm device use 1k or 2k. This
-mismatch creates an inconsistency such that the dm device would report
-limits for IO that it can't actually execute. Fix this by using the
-backing device's limits if they are larger.
+Add __counted_by for extra runtime analysis.
 
-Signed-off-by: Keith Busch <kbusch@kernel.org>
+Signed-off-by: Rosen Penev <rosenp@gmail.com>
 ---
- drivers/md/dm-integrity.c | 12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ drivers/md/dm-bufio.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 06e805902151c..8dfd498ed1ffd 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -4047,9 +4047,15 @@ static void dm_integrity_io_hints(struct dm_target=
- *ti, struct queue_limits *lim
- 	struct dm_integrity_c *ic =3D ti->private;
-=20
- 	if (ic->sectors_per_block > 1) {
--		limits->logical_block_size =3D ic->sectors_per_block << SECTOR_SHIFT;
--		limits->physical_block_size =3D ic->sectors_per_block << SECTOR_SHIFT;
--		limits->io_min =3D ic->sectors_per_block << SECTOR_SHIFT;
-+		limits->logical_block_size =3D
-+				max(limits->logical_block_size,
-+				    ic->sectors_per_block << SECTOR_SHIFT);
-+		limits->physical_block_size =3D
-+				max(limits->physical_block_size,
-+				    ic->sectors_per_block << SECTOR_SHIFT);
-+		limits->io_min =3D
-+				max(limits->io_min,
-+				    ic->sectors_per_block << SECTOR_SHIFT);
- 		limits->dma_alignment =3D limits->logical_block_size - 1;
- 		limits->discard_granularity =3D ic->sectors_per_block << SECTOR_SHIFT;
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 60f7badec91f..26fedf5883ef 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -391,7 +391,7 @@ struct dm_buffer_cache {
+ 	 */
+ 	unsigned int num_locks;
+ 	bool no_sleep;
+-	struct buffer_tree trees[];
++	struct buffer_tree trees[] __counted_by(num_locks);
+ };
+ 
+ static DEFINE_STATIC_KEY_FALSE(no_sleep_enabled);
+@@ -2511,7 +2511,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
  	}
---=20
-2.52.0
+ 
+ 	num_locks = dm_num_hash_locks();
+-	c = kzalloc(sizeof(*c) + (num_locks * sizeof(struct buffer_tree)), GFP_KERNEL);
++	c = kzalloc_flex(*c, cache.trees, num_locks);
+ 	if (!c) {
+ 		r = -ENOMEM;
+ 		goto bad_client;
+-- 
+2.53.0
 
