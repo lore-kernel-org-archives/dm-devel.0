@@ -1,396 +1,208 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB1162F6931
-	for <dm-devel@lists.linux.dev>; Tue, 31 Mar 2026 02:25:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1774923906; cv=none; b=rr9LGZegGwIsTKT9od2EwaUy7Vx5kUzPM2d8sfiBMbZ6uQO+5a3HvzoC4pzBf13dK0R3d1hHwhPTuMM+Iq7WnlCMh1QuGv7hBh2fQqFUFoUJQCGUZ8VDACfkVGdGHV1oMTzd2Df569fgZ0t4tCqtnoaQIta28q/RsANKvQvZ38I=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1774923906; c=relaxed/simple;
-	bh=53waOxUAU8GIqETOQkUAx2zTki5kVHzmbzSTUC/qWTg=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jn9TpBwWbH35agCUGYXz7JGL086qPySBp3t+Bbga+f/htaTuW4egPtqbPuk5E+VserRxRJ8wVWaGp5Y4XMuCqj+jgp5+IOvFu0R0LdPc10xnO07EYGv7etIMj4lk+qZ8F2f2PVeEYUnf8N2/qfyB09bBOfrG+U3mU8chElwW6S4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=O5N3CKvs; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 732F93DDDDE
+	for <dm-devel@lists.linux.dev>; Tue, 31 Mar 2026 08:25:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1774945541; cv=fail; b=HczPoolbbvWrXyiwObMZ39WJ2npyuJmzVo4titgcy5Z/W1P/oX3cSaMpDxsVx4+1iCI15m0FiVAbH8mNco2tOBIkWjNfVeoRHLrj3sXDpOrlGjo6p24acJ20cJVQoPbKGkQXaXaItjdXU4EOi0jVgv3/tuX/MY4t4Dj3AOpkwWE=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1774945541; c=relaxed/simple;
+	bh=yTxAaNhCr9+/mr3h8HkOt0DKRYWo8GW33nYFkHlTcsY=;
+	h=Message-ID:Date:Subject:From:To:Cc:References:In-Reply-To:
+	 Content-Type:MIME-Version; b=N+Em1+NxbYKIHgdaJm5eAfIx5laoGGftOQXmRd/3ZnS+v8wqnE1+qTkBRhfp7ftVapvB30MZEWahrXb6JXY162HGbYt/WuEXM2h6GHeS6DlyJO00T+MadO/yGrFIa3RLakR3//YzkB4qUYNuXy44v6k9KZe3i//X8+BFw3uW9sw=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=b9u2d0of; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=pg0Mdi0H; arc=fail smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="O5N3CKvs"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1774923903;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lzqRMsrsPMa4VNMQGbFosoNwmkTRdKsCUylOoUrvuG8=;
-	b=O5N3CKvsrXhtbB2rzVjWHs3w2+WYbJ07H/BmSJXeMIfn7yvoi9ReSbwxzV5xWVjBMvHSmi
-	mnWNBMlqVEiymsYh9/5xRU95Cra4K91hp8zDzjgMSP2bfRiHSudMy6eTp6yT+cv2+OOUPu
-	zvDdXOIyNmn5KTtsd9Yk2HM/8MIKA2g=
-Received: from mail-lf1-f71.google.com (mail-lf1-f71.google.com
- [209.85.167.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-600-1rFTFxtKNr6TeL2IXNEGzA-1; Mon, 30 Mar 2026 22:25:02 -0400
-X-MC-Unique: 1rFTFxtKNr6TeL2IXNEGzA-1
-X-Mimecast-MFC-AGG-ID: 1rFTFxtKNr6TeL2IXNEGzA_1774923901
-Received: by mail-lf1-f71.google.com with SMTP id 2adb3069b0e04-5a2a203916cso3949996e87.3
-        for <dm-devel@lists.linux.dev>; Mon, 30 Mar 2026 19:25:02 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1774923901; x=1775528701;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=lzqRMsrsPMa4VNMQGbFosoNwmkTRdKsCUylOoUrvuG8=;
-        b=UaTUi3flBlN5wssf2vF2AGqVmufGUFwDSIlRFkLIA4TWCQIJSbvLyCJn3tUka3/dSu
-         62QUkwGdamw5U99pi+ZIk14mmZGe32m1Y70kFi/Mlfsrj0xCgB/12Uto4aZzhFYHVP4S
-         OB+iAU4jOOM+9QZjKI7iNFDm4bLJvqWsQs2M7PPjvPMC3g+mWPkrd9vw2jl61vfucMFR
-         RoE6tz/V1qLikASQ9sLYDuevL7xa9JNJjk0P7ZvEZYSdZ/LPlBx9jRXrYSxYeZhQ8tY2
-         Er3YXYOQbv71DTIb3E4cJDzyFvwvFvXdq1kXSop9B3OLaM0XfKdQ7bxUB5y3nLxxKb0W
-         jHiA==
-X-Forwarded-Encrypted: i=1; AJvYcCW37SNAF+RIO18dqqhfntAZeQzT0lrNQnKDsWChXTv/fhy7Xwe3J870myTZytxtJvIjeLgiBiQ69Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx0ODMpFfvUM35jkSZPyp95C8p+xhN8XI2eVyUguSKb2kXqNvFm
-	vi4BKiE7zKBpptVcalzvPSSOWwNCPhuegNBWe2UCTARrKY0VLNLBtVhJXFS3cKDUj9EEiPkUIxz
-	ylrQsWXHpvAiXSf+XE7Y3X21TEizHE9gj3u2PGGERQNYiZbD7Thjd7BfKBkLohcnVRj9zd4YCxq
-	gud3YNw1YyB9hKMs1OTbMCS3OVFTSehCg9xRA=
-X-Gm-Gg: ATEYQzz6flU7N29g+ovOlmvL2tNEuadR6e0oC7G1hFGxf7c9kx52ieF0aNkxpMig1Jp
-	ekvSpYSJw7pEHn3VaFrW/r/R3Jobxz1EjayBmmwvlhjvxMqMu1qXDFVeZvxiQD6fNG1mpj1KoDS
-	Ymen0S9sLC7wVpaJv9RPZ/9Hba51amUekfcC+us1kewpUikdoFqM5V+CzSELRkm0qWRQW7U1tZ3
-	c2C/cD9l+zlqplRF2AELtGmvsS+VbbSjAJJ2bijqETd4KY889UCAQ1Yd9M59Qrr8CPwp9E8hFHe
-	6ts8Qw==
-X-Received: by 2002:a05:6512:3d1c:b0:5a2:b842:6850 with SMTP id 2adb3069b0e04-5a2b842695cmr1489750e87.15.1774923900571;
-        Mon, 30 Mar 2026 19:25:00 -0700 (PDT)
-X-Received: by 2002:a05:6512:3d1c:b0:5a2:b842:6850 with SMTP id
- 2adb3069b0e04-5a2b842695cmr1489732e87.15.1774923900001; Mon, 30 Mar 2026
- 19:25:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="b9u2d0of";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="pg0Mdi0H"
+Received: from pps.filterd (m0246617.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 62UMHYXA1800706;
+	Tue, 31 Mar 2026 08:25:24 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2025-04-25; bh=bB+7/FO8au5mHpJhsjH78hCmsfFtC4mfW8w3tigOkf0=; b=
+	b9u2d0offtbnRk/kJOkoTEiwBHVkYEbacUC4Lo3W6WkVZNWCpcm5fg++qQFyVIms
+	aISVR3gCAYqQLD2QYAgx+mS0xGn4vOpaDYAsvEzt/jv66jV+8TUR9JKd097rKDf7
+	2IkSzUULs10vkrEFVzGHVqUMK7ovN7K8D+DVo3HRXWcwmuTPAUmrjcJf1fuoc//f
+	uyBRGU3qXfhcSiIUURA31xgUGptnP/W+DsDOIDzZq69LajVl4CmJMDlViwRq3AeE
+	GpbEHddgwDFDHK8cRHYfBJ47WpYtFKGRA0XPVIJslhc8hEm9QqICPKskXpqWH8xi
+	M9lzMEz808jtP4CErUB8Mg==
+Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4d67hqbr3c-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 31 Mar 2026 08:25:24 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 62V8NfF7006878;
+	Tue, 31 Mar 2026 08:25:23 GMT
+Received: from dm5pr21cu001.outbound.protection.outlook.com (mail-centralusazon11011022.outbound.protection.outlook.com [52.101.62.22])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4d65e9v2pg-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 31 Mar 2026 08:25:23 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=vQT0mH5ghxIHrSbnBGkYsd+0HRidoBl4/WH5q3fZJ726EruyBmOkT1Dupp/NaBhYQe1ghbJn0vbZXPhrx4HTh9S1Xs3gXnPzQNi4gOB0Xah0inzDl6WCcxsqDHtlHdyeV+v+LIlXBkorcGU14dRIzmBsjyDETl+vG590gY1dwle5baImU0YCMhDx+3Nd/HYkMr5jl6vHzRXfXJM+l+ScwMuVpBCxA2SacaK+rJJ56QHxsWsoxRFdUjtAU8OfZLLLLSPkyJd4GJIPuYYH2+j1SWVjrFC7lLXFjqBjOaBHkMwlB3Zn60pHvarojjsNMLeRWqB94ufLrvQUpsF130U4LQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=bB+7/FO8au5mHpJhsjH78hCmsfFtC4mfW8w3tigOkf0=;
+ b=arX+qpTesSSKbW9xFnWKAQFlVj+kUzpPMQMyOh58Pgff67fwxPUhXmU5ZTXgChfuZJDEb/78lkrxHq1LKn76ABxZXeUVZ/aMiQs2Ag3mTpaHfAlgJyJeDTneV/1r22TO0oMD0s355u5llQ0YddPNJZJc/oJDENP3qU6buoOhhVTqaUQE62IINh/cs8WIcxY7KWoHt/yIsgNPIAKObK9g7g9nspamyNpTfy3chXaZGWTav3gbB7I2r8qy8G+pJxZQiondAFP8Nsu9PlE9YwnAklCzL1tyd+ZGK20qclrPC1bib+397oIOY8AX8ixdV9skBlj/2HlUVq9yUj09WNT3XQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=bB+7/FO8au5mHpJhsjH78hCmsfFtC4mfW8w3tigOkf0=;
+ b=pg0Mdi0Hp0tKG9tG7+BN1BvH/LT1JHotnPvJMq3S0a9RIPJvlWdK8VS9eXQOEkNJ3L1Flx4DIWyo8y65nGFjiXdv0gpNPLrVXdd05aHg6Z/2HtQl63PZYf+rM6/Pzjb7tjIxmL5XzfWjSkZKGaywycbMqVAulfGFygh0c711TVo=
+Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ (2603:10b6:f:fc00::d54) by LV3PR10MB7963.namprd10.prod.outlook.com
+ (2603:10b6:408:20e::15) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9745.28; Tue, 31 Mar
+ 2026 08:25:19 +0000
+Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ ([fe80::5266:1601:5598:3f0a]) by DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ ([fe80::5266:1601:5598:3f0a%5]) with mapi id 15.20.9745.027; Tue, 31 Mar 2026
+ 08:25:19 +0000
+Message-ID: <97e1ee63-23a3-4869-bd54-6ab3e01fcf91@oracle.com>
+Date: Tue, 31 Mar 2026 09:25:14 +0100
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 00/19] nvme: switch to libmultipath
+From: John Garry <john.g.garry@oracle.com>
+To: Christoph Hellwig <hch@lst.de>
+Cc: kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
+        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+        hare@suse.com, jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20260225154007.1033735-1-john.g.garry@oracle.com>
+ <20260302141206.GA23439@lst.de>
+ <69040b90-1be1-4b9d-8318-5ff06ee9f697@oracle.com>
+Content-Language: en-US
+Organization: Oracle Corporation
+In-Reply-To: <69040b90-1be1-4b9d-8318-5ff06ee9f697@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-ClientProxiedBy: LO4P123CA0387.GBRP123.PROD.OUTLOOK.COM
+ (2603:10a6:600:18f::14) To DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ (2603:10b6:f:fc00::d54)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260323225836.1037060-1-bmarzins@redhat.com> <CALTww29P_jZ-n9GMgFG0EW_N22vUsGAPJ5OGn5Lw8yfEpEoGOw@mail.gmail.com>
- <acrMIhAjB-HKszbs@redhat.com>
-In-Reply-To: <acrMIhAjB-HKszbs@redhat.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Tue, 31 Mar 2026 10:24:48 +0800
-X-Gm-Features: AQROBzAoNeL_79_n60BBdgTQ5ZkqBekFQ4T4471TwNRsR_066n-TnL_fljoedq8
-Message-ID: <CALTww2-SE6b7bQ93ZbJ3N_Xxgrm4b8rv6Sukjt5cUVNHScPFRg@mail.gmail.com>
-Subject: Re: [RFC PATCH] md/raid5: Fix UAF on IO across the reshape position
-To: Benjamin Marzinski <bmarzins@redhat.com>, Yu Kuai <yukuai@fnnas.com>
-Cc: Song Liu <song@kernel.org>, Li Nan <linan122@huawei.com>, linux-raid@vger.kernel.org, 
-	dm-devel@lists.linux.dev, Nigel Croxon <ncroxon@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: R4kI2y5dvH3YQ71QNr_mJy56qgT9GWtt21b5oK4uikA_1774923901
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DS4PPFEAFA21C69:EE_|LV3PR10MB7963:EE_
+X-MS-Office365-Filtering-Correlation-Id: 339619bf-eb20-44ab-147f-08de8eff0b17
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|1800799024|7416014|376014|18002099003|22082099003|56012099003;
+X-Microsoft-Antispam-Message-Info:
+	phq0o6DrLIEOtpszm+EgjtiKrMPEgrpkfmEAJT8dxfjip/llyZq5ljaL+3w30lQY74JiDtmmBMlUrqUacXpFbGSbfIAGwRw0UgIr5R/XbnRTTyijXyQ1xlS09T8fzRoGJZANUOc5HA3YBdVRyh5fN4voCW7wTQ/z/nZTpdhzTJRsDGGRyqnc+hIAEGAC/c1W9SUFc5Adum2NWGEC3PWkpmDXaaw56hpGYubtg415/D0qz3S7CHrLRPvvE1I/0pARPYYRV7NW2i4qdQycWN/lcP/9GVH2lYBaQ7hwfPt1LPxZBQB5xfY0GKB6WrQpS3bIvwCpjPgAQIsUGstpDxCRRRJLz6bckYMy+WIPASD+nN7us1+On2+F11fewhqRJF2xthXLDTyYAHHy08eY6FUpRo8D2ASVcv9JPYOx65X7w8M/5qiFhP74+MAdidKBjHefOdKlqh8PEoyIzEPWtk3+i4qtiPUiF0y8L7jEGh3Mfbz0gKySAGQSVuleAjF0ZDbNL8pKPBREJJJE1EryJ3lnvBMOT35CqcXrY3kQxsH6/a07TCVxtZB3Do5AxRyp0wvstMtL+/yrfs86vRNrYl46Zo1EXOn+8oUpOCyab2w/Vpdew6PxBNq3adbxlzJGvr3U/9ULHQTfFuGln1HC2a31IpX2ZYKCytYxusuDQfYDNwWzKY28G0GZx9JMd9hAF8NdN7utHFF2LNtlzb3KSuyheEcm/C2e87v69nFRDuA2a9Y=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DS4PPFEAFA21C69.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(7416014)(376014)(18002099003)(22082099003)(56012099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?cEJHaUV0VFdhWko4cjdHZnd4RHI2K3NqTXNlMWt4Z01tNkN6VnhvcWxDcUNp?=
+ =?utf-8?B?SHpsQjR4VmJ3R2t1eDF0dmpYWTRYUGtuTHVGcjNvY0ppMmxLM0IxbndIWW0r?=
+ =?utf-8?B?TnEvem5vVjVuamlzZ01MWmZRcERLK200UVRlcDBSZkRwLzFoNENHaG4yMWNx?=
+ =?utf-8?B?WndWdlRVUzFjTytCdXZkUUJobExuTXNzMURvSDdRMVU4RnZ4QURKMjZCVlM1?=
+ =?utf-8?B?OE1heStWc1BhUE1KZHgydFc0YjNlVkJNWHlJUU1WRDNIQitJbXliQlJWYng1?=
+ =?utf-8?B?WGRhdG9LRzNSSXpmczZYS252RVdMYzZPcWFITHZHWXFiVzhycEF5eHNYa3VY?=
+ =?utf-8?B?QXJrRWM0R1A0MFJIUHZRb2YwRmdrcjhheDMvWnp6bHMrc2xsSG8rR2hUU284?=
+ =?utf-8?B?MDJHbDlTVDBiYnBHV1Y1M2VHamNiZ0RlUmtLampBdnlUQ3BxcCtLSnpiTTF5?=
+ =?utf-8?B?WXFqcmg5bkE2SWZHTU8yYXBscjlyQzdFRVpSbGNoVFVFQU1JSm5FQ1JVLzZj?=
+ =?utf-8?B?U3BrZmNEUXh4eHpNNkRUYllNaiszd1k1Y2lYUFYrZHB1Q1l6VWhaakw4U2Ev?=
+ =?utf-8?B?SEI4bE5nOFIrOUttTW1Sem5Gb21jdEk2MDBxWkYrYjFGaGl0bjBTZnNNNVZq?=
+ =?utf-8?B?aC9CQ2psTTBxalNzbXpSSHFHd1dwUW5TMFNuT1dicFVnWU5ZZXhEbm5VUlhu?=
+ =?utf-8?B?R3R1Y2VVU09wYWhrSVNyWE55NlB1bVhyYis3ZklHbVhBMlhMUEQveDZoNjNQ?=
+ =?utf-8?B?SHQ3dmJaTmdJQkhwRnZaQW90NWpaSVpSYVRmNXY0WnlOSUlxYVpOTGdiNHd5?=
+ =?utf-8?B?QW5ndXNkMEc1ZUhmUGJWNkYxejhVOTA0ODJMZ3Flby9GTHFrcDM1ZmVQbXVw?=
+ =?utf-8?B?VXUwVmRYTkZLRDZ2OUdVdlJYWU4wTk5QMExoVGhNQUpFaXVWamFwNlN3Y0g1?=
+ =?utf-8?B?a0ZGbEtDNldmRGpROGZqRStvZjd0VE9yWTNLc3hDdzI2eVRoTnEvUzRaVGFm?=
+ =?utf-8?B?UW5WcUt5aEFXeWFJbWVQQTJiS0dGNmZmRXhzTlhSZUppOWRZUnZvSEdOcnFK?=
+ =?utf-8?B?WUJ5REN6S3NyNFM3dXg2bnhrVEl2OFR3WDk0VzJocGduUWI4QU1xRDQrVEpy?=
+ =?utf-8?B?S2gzT0gvSEVtVmZTcHJLU2ZJaTIzT25qRlJEcDdUNUV5Sk9BV1RRZFB6S3lI?=
+ =?utf-8?B?V3pUUkNPNHNPTmZpS2RWVk9PWnNabjJIYnRzNHprN3RveExXbW9MTWpsdlRK?=
+ =?utf-8?B?OVhhb3JxYkEweTFoVnZRNWdxVTRRbkhmRkdwTHRjS1ZOWEF0QlhBV0xSWm5Z?=
+ =?utf-8?B?TUtoZDZYdk5weCtKVC9TK0ZaSGpWZk13dlIxaVFqd0hvV3l3L0h5aVNuWEo1?=
+ =?utf-8?B?dVRvdTZQczE2N29PeENXUnB4bzBUYWYySFdKeHVid3JhUndQQkI2Q0ZtVXZZ?=
+ =?utf-8?B?OXR0VEdENUgxRlVndDY5amxlL1lQNEdFVno1R1YzNTNOZEhOUUk3ODExMW14?=
+ =?utf-8?B?aGdHMkVqeENWa2pNK3hLeUF6NmRVNXc3QTJBaXM5Nmx2T0hvell3WDFyL2RI?=
+ =?utf-8?B?ZnBtd0gwQ0tZeFI2Tnd5dDFLTWx3bGcrMDVXaFNXR2VsUVVoODFRS3JVUmEv?=
+ =?utf-8?B?cHNUdUc2WTI1VkQ1WlRtK205Q2xzSTNoZy9zOWF3T2x5STZFTFVCU2R6UGxQ?=
+ =?utf-8?B?dGw1eW9sRThJTmdlS0FZL1RpL3lMRUxsTzhxZWlBN0NXbUhzb1AvVDJ0Nlhp?=
+ =?utf-8?B?M1ZnR1lZck03MFdDWkhoRXZFS3lsUVkvZGw1bzk0K2ZXZWVGY256Tnkwa1dj?=
+ =?utf-8?B?Q0E1Vk1WVzRMZlU1WDAvVnVuMFllS085bjVyNlRzSlVuQXgvajludGF4Z0xy?=
+ =?utf-8?B?QVBvU1MwQWxtamtwRHJNazlneGpVaGRlT2lFMmZZV3RNQzJRblREZEFraFk4?=
+ =?utf-8?B?eDRSaWhrRjQxdFZvLzRJd05ham9rVCt4RE9wSWVIS1BINm10dGUvWVoxT3lL?=
+ =?utf-8?B?WW16V3dOL25kNjNtSk0zOHozZzhKb3Q3SFgxT0M4VTFxQnlnQU9lck9jc0l4?=
+ =?utf-8?B?VkwzanNrUGthVmMxelUzdHJuWDNzVUdZSmJRNFBKdUZlYWVOdWxUTjFET0JX?=
+ =?utf-8?B?UGNZbHVOL2sxeEVpSlJiZUtxWklYcjAzSE41bmg5WXFaWnV3MGNPNGlvZjB2?=
+ =?utf-8?B?SnFpNHd2NkJGMlFNT0YxU3VEVjZpQnlnVkxPbk1rdEhhV2FqSmduZEdBcExh?=
+ =?utf-8?B?bUZtajkrSmZSclRvc2c1RDFkSkZnYlhNLzZ1Vk94UkkzakxBVXhSa3lCc3pE?=
+ =?utf-8?B?QjlwOS9MRzY2V0VPWXRGcTFmWkNBY0hvVmdvN0g4RVI2djh5ck9uUT09?=
+X-Exchange-RoutingPolicyChecked:
+	tOx2vGhr57lI8AfWrUenwJOSYzcXUBef7GMIUjCQZG4qWGn5gAA9hk0C8NmLoBmRSN+qJzm2PrLB6FlYEl9FafqLN7/wQLrNDb1u4YYpzlNZLTyjhfOmq9teS1Hr9QnhdTR3ZAjpIAGPwlpfGO90zerDQzJGD0ExgSQ7BIy/yuEVOHmsR/HzIXKJxJYUWSZ25iKpujV7hsvxf9ANLuHbsdCxz2UZZz8IK4dq9qxwLFYhpvSdCfYjCCBWLV4iph4m5AZlHdBb1sYj6kHh3VY1RXQNAZGc2NV8RqvrAziH3S8Q2y2ivpBoIQGFucweouaaJOT+GnGAMKSlrlqB847Xhw==
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	RKn/5dPB1Srhukqm8V1lts3Aak2SlpaLUrdGa/C7Qsr5STB3B/nrCBNcjqqEy6ea84ZLFzo2vGmOPYAlTjC/iKuKimSdYlQBwiyGq+ubTEXIbMDlOx5yK69o/fX85RPscmK5xJsT58pINn5dQlR2nWEXHfyZLqZqQHLrvxNv8Ldhr/WYo99JQ3+jza74y2SRr3ri+G0xDH3lE5icfDL5JkpCfr6MJgALQjMt9m0VxlbSCCaR+OFMgdE4U0irkXc+q1Jqc36toihUios8pwYkZ+/BBhiB+IBWNMQmOkwhYpBWFfRdzu0YpM2wCEtOkejWMUZenv4Uy42mRf09K3e1nEf28c2bYHDb1DvDiHJRuR/Qb+K3nU2U8rH4ujgnLbsBKMsVal1bSPCu0Ur2Nq8w8Se0Ucw9z4W/0eF9pSVg0198aoJnD8fuixjJAISH2fEejLNfeSiwTea8Xia05x8CPet9IHtdn3JYExmFbQIpMmnvIzTeLA6YFp4Mtj8uhXKWtMTjPzM5BM2TMp/mSGNlSM7cNa2owON50MyVDN4pVHaZToC5niXzx88izvxlsZE4yVj+sjHLwCK3VrQtPcjm6vgt28b4gs7HJAamh0cRA9I=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 339619bf-eb20-44ab-147f-08de8eff0b17
+X-MS-Exchange-CrossTenant-AuthSource: DS4PPFEAFA21C69.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 31 Mar 2026 08:25:19.0937
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: hukRfQk84ZbsePYMSPyGDDyuDdHBf8cu8fjt5tD3aUPtbKaU84o1+a6VFmiPLEmAguAkFC80uF8VNiSltjUBLQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: LV3PR10MB7963
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-03-31_02,2026-03-28_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0 spamscore=0
+ mlxlogscore=999 adultscore=0 suspectscore=0 mlxscore=0 bulkscore=0
+ malwarescore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2603050001 definitions=main-2603310079
+X-Authority-Analysis: v=2.4 cv=T7WBjvKQ c=1 sm=1 tr=0 ts=69cb84f4 cx=c_pps
+ a=XiAAW1AwiKB2Y8Wsi+sD2Q==:117 a=XiAAW1AwiKB2Y8Wsi+sD2Q==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
+ a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
+ a=Yq5XynenixoA:10 a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=jiCTI4zE5U7BLdzWsZGv:22 a=7Gl3-_t3PgB9XO-mQDs3:22 a=VUHgZIE3kZyzxbyzL1QA:9
+ a=QEXdDO2ut3YA:10
+X-Proofpoint-ORIG-GUID: GMUj_tLHZw7lpoPW0GVWIv4N79dlE79W
+X-Proofpoint-GUID: GMUj_tLHZw7lpoPW0GVWIv4N79dlE79W
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwMzMxMDA3OSBTYWx0ZWRfX1/+aHDUTbiHv
+ h0qFJU7VKimacumQNYsBXse6+q8PGHNK2sHuuw2bUg49g9wNqVbNGVUy9QstRlMogRJZ2962KIc
+ sp5I37H+LpAD95O3OE96vYuwtCGlgcI4YoKPZTzsXdBxsuFNMUg5rkrU93qUZjH/Wsl1I0kb0Bw
+ s/2PW2oz8smPdM27Oox/eCGESUncCPfViXhmwVn4VsRNnETrmzWEII9hIQ8TUZXT7LwzxCBH55V
+ 0WKY+H62eRj1dByntj0V15DGQmxfbUvLjuB2QlK0hCtEk6bx3lVNdvklsN4c0aAOMUE+RNJhIJs
+ Ko2HDtiRd0HJSfeBzz2k+TE2NFiIEna38A4MYX7GpuBjEt3PI1iNo1qRiBLSYrvxd+br68IOW2k
+ oj4rJdDyxO7YkFsEi1GYB2RvCev2E87L99Alab2yVIZi36ctjY4Jpq1roUgX/KwcYmF7YE9jG9e
+ FILxWwBvIy7n5Guwoyg==
 
-On Tue, Mar 31, 2026 at 3:16=E2=80=AFAM Benjamin Marzinski <bmarzins@redhat=
-.com> wrote:
->
-> On Mon, Mar 30, 2026 at 11:44:54PM +0800, Xiao Ni wrote:
-> > On Tue, Mar 24, 2026 at 6:58=E2=80=AFAM Benjamin Marzinski <bmarzins@re=
-dhat.com> wrote:
-> > >
-> > > If make_stripe_request() returns STRIPE_WAIT_RESHAPE,
-> > > raid5_make_request() will free the cloned bio. But raid5_make_request=
-()
-> > > can call make_stripe_request() multiple times, writing to the various
-> > > stripes. If that bio got added to the toread or towrite lists of a
-> > > stripe disk in an earlier call to make_stripe_request(), then it's no=
-t
-> > > safe to just free the bio if a later part of it is found to cross the
-> > > reshape position. Doing so can lead to a UAF error, when bio_endio()
-> > > is called on the bio for the earlier stripes.
-> > >
-> > > Instead, raid5_make_request() needs to wait until all parts of the bi=
-o
-> > > have called bio_endio(). To do this, bios that cross the reshape
-> > > position while the reshape can't make progress are flagged as needing=
- a
-> > > retry, and mddev tracks the number of bios needing a retry which have
-> > > not yet completed. When raid5_make_request() has a bio that failed
-> > > make_stripe_request() with STRIPE_WAIT_RESHAPE, it waits for this
-> > > counter to reach zero. When the bio_endio() is called for the last ti=
-me
-> > > on a bio needing a retry, it decrements mddev's count of outstanding
-> > > bios needing a retry. This guarantees that raid5_make_request() doesn=
-'t
-> > > return until the cloned bio needing a retry for io across the reshape
-> > > boundary is safely cleaned up.
-> > >
-> > > There is a simple reproducer available at [1]. Compile the kernel wit=
-h
-> > > KASAN for more useful reporting when the error is triggered (this is =
-not
-> > > necessary to see the bug).
-> > >
-> > > [1] https://gist.github.com/bmarzins/e48598824305cf2171289e47d7241fa5
-> > >
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > ---
-> > >
-> > > I've tested this for regressions with the lvm2-testsuite raid tests. =
-I
-> > > have not run any md-specific tests on it.
-> > >
-> > >
-> > >  drivers/md/md.c    | 30 +++++++++---------------------
-> > >  drivers/md/md.h    |  5 ++++-
-> > >  drivers/md/raid5.c |  8 +++++++-
-> > >  3 files changed, 20 insertions(+), 23 deletions(-)
-> > >
-> > > diff --git a/drivers/md/md.c b/drivers/md/md.c
-> > > index 3ce6f9e9d38e..5ec116b9da32 100644
-> > > --- a/drivers/md/md.c
-> > > +++ b/drivers/md/md.c
-> > > @@ -776,9 +776,11 @@ int mddev_init(struct mddev *mddev)
-> > >         atomic_set(&mddev->active, 1);
-> > >         atomic_set(&mddev->openers, 0);
-> > >         atomic_set(&mddev->sync_seq, 0);
-> > > +       atomic_set(&mddev->pending_retry_bios, 0);
-> > >         spin_lock_init(&mddev->lock);
-> > >         init_waitqueue_head(&mddev->sb_wait);
-> > >         init_waitqueue_head(&mddev->recovery_wait);
-> > > +       init_waitqueue_head(&mddev->retry_bios_wait);
-> > >         mddev->reshape_position =3D MaxSector;
-> > >         mddev->reshape_backwards =3D 0;
-> > >         mddev->last_sync_action =3D ACTION_IDLE;
-> > > @@ -9218,6 +9220,7 @@ static void md_end_clone_io(struct bio *bio)
-> > >         struct md_io_clone *md_io_clone =3D bio->bi_private;
-> > >         struct bio *orig_bio =3D md_io_clone->orig_bio;
-> > >         struct mddev *mddev =3D md_io_clone->mddev;
-> > > +       unsigned int must_retry =3D md_io_clone->must_retry;
-> > >
-> > >         if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(=
-mddev, false))
-> > >                 md_bitmap_end(mddev, md_io_clone);
-> > > @@ -9229,7 +9232,11 @@ static void md_end_clone_io(struct bio *bio)
-> > >                 bio_end_io_acct(orig_bio, md_io_clone->start_time);
-> > >
-> > >         bio_put(bio);
-> > > -       bio_endio(orig_bio);
-> > > +       if (unlikely(must_retry)) {
-> > > +               if (atomic_dec_and_test(&mddev->pending_retry_bios))
-> > > +                       wake_up(&mddev->retry_bios_wait);
-> > > +       } else
-> > > +               bio_endio(orig_bio);
-> > >         percpu_ref_put(&mddev->active_io);
-> > >  }
-> > >
-> > > @@ -9243,6 +9250,7 @@ static void md_clone_bio(struct mddev *mddev, s=
-truct bio **bio)
-> > >         md_io_clone =3D container_of(clone, struct md_io_clone, bio_c=
-lone);
-> > >         md_io_clone->orig_bio =3D *bio;
-> > >         md_io_clone->mddev =3D mddev;
-> > > +       md_io_clone->must_retry =3D 0;
-> > >         if (blk_queue_io_stat(bdev->bd_disk->queue))
-> > >                 md_io_clone->start_time =3D bio_start_io_acct(*bio);
-> > >
-> > > @@ -9265,26 +9273,6 @@ void md_account_bio(struct mddev *mddev, struc=
-t bio **bio)
-> > >  }
-> > >  EXPORT_SYMBOL_GPL(md_account_bio);
-> > >
-> > > -void md_free_cloned_bio(struct bio *bio)
-> > > -{
-> > > -       struct md_io_clone *md_io_clone =3D bio->bi_private;
-> > > -       struct bio *orig_bio =3D md_io_clone->orig_bio;
-> > > -       struct mddev *mddev =3D md_io_clone->mddev;
-> > > -
-> > > -       if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(=
-mddev, false))
-> > > -               md_bitmap_end(mddev, md_io_clone);
-> > > -
-> > > -       if (bio->bi_status && !orig_bio->bi_status)
-> > > -               orig_bio->bi_status =3D bio->bi_status;
-> > > -
-> > > -       if (md_io_clone->start_time)
-> > > -               bio_end_io_acct(orig_bio, md_io_clone->start_time);
-> > > -
-> > > -       bio_put(bio);
-> > > -       percpu_ref_put(&mddev->active_io);
-> > > -}
-> > > -EXPORT_SYMBOL_GPL(md_free_cloned_bio);
-> > > -
-> > >  /* md_allow_write(mddev)
-> > >   * Calling this ensures that the array is marked 'active' so that wr=
-ites
-> > >   * may proceed without blocking.  It is important to call this befor=
-e
-> > > diff --git a/drivers/md/md.h b/drivers/md/md.h
-> > > index ac84289664cd..49a231f11676 100644
-> > > --- a/drivers/md/md.h
-> > > +++ b/drivers/md/md.h
-> > > @@ -626,6 +626,9 @@ struct mddev {
-> > >
-> > >         /* The sequence number for sync thread */
-> > >         atomic_t sync_seq;
-> > > +
-> > > +       wait_queue_head_t               retry_bios_wait;
-> > > +       atomic_t                        pending_retry_bios;
-> > >  };
-> > >
-> > >  enum recovery_flags {
-> > > @@ -877,6 +880,7 @@ struct md_io_clone {
-> > >         sector_t        offset;
-> > >         unsigned long   sectors;
-> > >         enum stat_group rw;
-> > > +       unsigned int    must_retry;
-> > >         struct bio      bio_clone;
-> > >  };
-> > >
-> > > @@ -917,7 +921,6 @@ extern void md_finish_reshape(struct mddev *mddev=
-);
-> > >  void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev=
-,
-> > >                         struct bio *bio, sector_t start, sector_t siz=
-e);
-> > >  void md_account_bio(struct mddev *mddev, struct bio **bio);
-> > > -void md_free_cloned_bio(struct bio *bio);
-> > >
-> > >  extern bool __must_check md_flush_request(struct mddev *mddev, struc=
-t bio *bio);
-> > >  void md_write_metadata(struct mddev *mddev, struct md_rdev *rdev,
-> > > diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> > > index a8e8d431071b..fb78a757f2fd 100644
-> > > --- a/drivers/md/raid5.c
-> > > +++ b/drivers/md/raid5.c
-> > > @@ -6217,7 +6217,13 @@ static bool raid5_make_request(struct mddev *m=
-ddev, struct bio * bi)
-> > >
-> > >         mempool_free(ctx, conf->ctx_pool);
-> > >         if (res =3D=3D STRIPE_WAIT_RESHAPE) {
-> > > -               md_free_cloned_bio(bi);
-> > > +               struct md_io_clone *md_io_clone =3D bi->bi_private;
-> > > +
-> > > +               md_io_clone->must_retry =3D 1;
-> > > +               atomic_inc(&mddev->pending_retry_bios);
-> > > +               bio_endio(bi);
-> > > +               wait_event(mddev->retry_bios_wait,
-> > > +                          atomic_read(&mddev->pending_retry_bios)=3D=
-=3D0);
-> >
-> > Hi Ben
-> >
-> > There is a problem here. The new counter pending_retry_bios above
-> > doesn't represent the bios which have been added to stripes. So uaf
-> > still can happen.
->
-> I don't think it can. That counter won't be zero until there are no bios
-> that need to get retried. So we way end up waiting too long, but we
-> shouldn't ever end up not waiting long enough.
+On 02/03/2026 14:58, John Garry wrote:
+>> Given how little code this removes while adding the new libmultipath
+>> dependency and abstractions I can't say I like this at all.
+>>
+> 
 
-Ah, yes, you're right. I thought wrongly. The counter tracks multiple
-threads that encounter BLK_STS_RESOURCE. For each thread,
-md_end_clone_bio is called only when all bios return. But why do
-different threads need to sync at raid5_make_request?
+I have been doing some code trimming, and now I am getting a diff like this:
 
+  drivers/nvme/host/core.c      |  84 ++--
+  drivers/nvme/host/ioctl.c     | 110 ++--
+  drivers/nvme/host/multipath.c | 917 +++++++---------------------------
+  drivers/nvme/host/nvme.h      | 144 +++---
+  drivers/nvme/host/pr.c        |  18 -
+  drivers/nvme/host/sysfs.c     |  86 +---
+  6 files changed, 357 insertions(+), 1002 deletions(-)
 
->
-> > Do we need to add a new counter?
->
-> I did it that way because I wanted to avoid growing md_io_clone
-> ("must_retry" fit nicely in a hole in the structure, so it didn't take
-> up any extra space). But if you are fine with adding the extra
-
-Nice design.
-
-> reshape_completion pointer to md_io_clone, then your way avoids the
-> chance that we might wait when we don't need to.
-
-If you mention the threads sync here, yes.
-
->
-> > Because
-> > md_end_clone_io is only called when all bios return. How about
-> > something like:
-> >
-> > md_end_clone_io
-> > +       if (unlikely(READ_ONCE(md_io_clone->waiting_reshape))) {
-> > +               complete(md_io_clone->reshape_completion);
-> > +       } else {
-> > +               bio_endio(orig_bio);
-> > +       }
-> >
-> > raid5_make_request:
-> >
-> >         if (res =3D=3D STRIPE_WAIT_RESHAPE) {
-> > -               md_free_cloned_bio(bi);
-> > +               struct md_io_clone *md_io_clone =3D bi->bi_private;
-> > +               struct completion done;
-> > +
-> > +               init_completion(&done);
-> > +               md_io_clone->reshape_completion =3D &done;
-> > +               WRITE_ONCE(md_io_clone->waiting_reshape, 1);
-> > +
-> > +               bio_endio(bi);
-> > +
-> > +               wait_for_completion(&done);
->
-> This looks fine.
->
-> I'm pretty sure that the READ_ONCE() and WRITE_ONCE() are unnecessary.
-> First, theres no chance that these operations will ever happen at the
-> same time and we're just writing a 1, so there's no chance of tearing.
-
-For the first point, I have a question. They can't happen
-simultaneously. But the cache of different CPUs may contain different
-values.
-
->
-> The compiler can't reorder setting md_io_clone->waiting_reshape to afer
-> bio_endio(), since bio_endio can free md_io_clone. Also the compiler
-> can't reorder reading it to before calling md_end_clone_io() from
-> bio_endio(), obviously.
-
-Thanks very much for pointing this out.
-
->
-> If the bio was never chained, then there can't be a race, since only
-> raid5_make_request() will be calling bio_endio(). waiting_reshape will
-> be read by the same process that sets it.
->
-> If the bio was chained, then like you said, md_end_clone_io() will only
-> get called by the final caller of bio_endio(). This is determined by
-> bio_remaining_done(), which guarantees a full memory barrier for
-> atomic_dec_and_test(&bio->__bi_remaining).
-
-Nice analysis! Thanks.
-
->
-> Since we know the compiler will keep these instructions on the proper
-> size of a full memory barrier, I'm pretty sure that this is concurrency
-> race free, even without the READ_ONCE() and WRITE_ONCE(). Like with
-> trying to avoid growing md_io_clone, I was trying to keep
-> md_end_clone_io() as fast as possible (at least on architectures where
-> READ_ONCE can have more of a performance impact) Again, if I'm
-> overthinking this (or if my concurrency argument is flawed) feel free to
-> ignore me.
-
-Thanks for your patience in explaining the concurrency problem. I
-agree with you. And it's better to add comments that describe the
-reason and it will help people understand it better.
-
-By the way, the md raid maintainer's email has changed. I fixed the
-email address in to list.
-
-Regards
-Xiao
-
->
-> -Ben
->
-> > Best Regards
-> > Xiao
-> >
-> >
-> > >                 return false;
-> > >         }
-> >
-> > >
-> > > --
-> > > 2.53.0
-> > >
->
-
+That is losing 645 LoC - previously it was 282. Would that be a sort of 
+acceptable diff?
+Obviously that is before thorough review (so prone to change).
