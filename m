@@ -1,246 +1,212 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4825B3890EC
-	for <dm-devel@lists.linux.dev>; Wed,  8 Apr 2026 11:22:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775647376; cv=none; b=OTw1LvVR3+npokEfVLXQZSbyBsPYD4tHv7PVuec7fevjfg8hrbAdr/o0vcnh2sqBS7Iz+0R5a8kbABLnJUTG+rajPV358d9XpgHXNiMBaLlWJAR4a5gKsrhCsvNS185sDdvWh9eXhzMnZe2ZkM86osxd7uznUlx5F3ah2qU9ms4=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775647376; c=relaxed/simple;
-	bh=0VuHqHHpyW+7Ubv1yMXWzlWnTsewZQjIdtzyFEq/Ncs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=mPu0AitBKYNL6J4KhwsEvg9A50xeJh2qHjW9xnQTydWfK3ASwaAWkQCVjz2yo/hfjUVLAgwcqiTgbBZIg8dM4klxMoWs0AhWt6+JV0JRwSwT6wTjt2v523+RDQUWPOa/rD1nTeATKtBQE+NFnLKVWEcfrlW+olyMvp8PxONILy8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U42mv9+N; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77DC93845C9
+	for <dm-devel@lists.linux.dev>; Wed,  8 Apr 2026 11:29:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1775647749; cv=fail; b=dEE69hC5K/RszpPPJQBQnscQpqNmtBh1/cjR9Xtv9or+9cDmgeGja5uo+a/Sd740SvSh40UIIrsAyWBBUfvIeYsuDda1GciQl3nvTECQP7UlwrQTeucKYWu92+cSd0BtAE+QZVD+P4fWwPZsg/1zYWZkOqcVOLSYsdppngfesKM=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1775647749; c=relaxed/simple;
+	bh=NI311aUw2QgfO3tS+QGSFaLWAwhD8PL1SZ8bVlYMpys=;
+	h=Message-ID:Date:Subject:To:Cc:References:From:In-Reply-To:
+	 Content-Type:MIME-Version; b=NDog9ltKIjcjtd006gpddfuwVFfqQpbD08MCZRzLdN5un9k9Fq+9kXsy89wxfgU0Hw/JLtkliFAmy2j0iqoIldl2QifjQ4eg5hUNP2iV1NOVbNlaXVi/1jCPcfh0nFzMhFE2RxXytps2P6MnejsUsAhREGLkcO6XKhyGsgFL9+8=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=jxBs2KSC; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=ewMi48iB; arc=fail smtp.client-ip=205.220.177.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U42mv9+N"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1775647373;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TNKMWuYgUc5fzKKqw/32Wp+3lRPes9FnP7bh6GZ+Vio=;
-	b=U42mv9+NW5P/6PLw69SBqZfRhlf6JDlOHZKuLxxydpv6husLRXH1Xf3qxNRGb91nmWShrM
-	D1eJeNB4aNAvVVuKM/b1qvexbMaw7YxSkKSUN8TP1QWzMbpmGfiVKCbujWVdKrbx2eFLFr
-	iVZby+LU7BRp5MZQMq6sOBskCY9ZuFg=
-Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
- [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-213-BMGZMCP9MAq3y5jAlIbF_A-1; Wed, 08 Apr 2026 07:22:52 -0400
-X-MC-Unique: BMGZMCP9MAq3y5jAlIbF_A-1
-X-Mimecast-MFC-AGG-ID: BMGZMCP9MAq3y5jAlIbF_A_1775647371
-Received: by mail-lf1-f70.google.com with SMTP id 2adb3069b0e04-5a2c98f8b69so4747592e87.3
-        for <dm-devel@lists.linux.dev>; Wed, 08 Apr 2026 04:22:51 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1775647370; x=1776252170;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=TNKMWuYgUc5fzKKqw/32Wp+3lRPes9FnP7bh6GZ+Vio=;
-        b=ODJU26yxJNFPPFFZH7D/+Y7bSDmGm/l8bk8fqxunYOTqDem1TeohcoAoxwzmNLhvGM
-         ANwW8o9P/7PJWrBXTUIqBTwEPKw/2PlP8TC3Dn/U29dHZE+18wJH+cdnSaBYOY+DlpU9
-         VRl+rzVo2wHzbNBMAVhUlEwYVaiZ9pr+KSg36ePx4Fbu/RYtRb3t7+PVwpRAigJ6tqMK
-         mWWkBw4zHN30YnPetrTQgK/0GXIzDe/Yin4OQ3Mn8qDYU1D6ezJzWfiRbMZhAsqjnRsU
-         XpoGxs1njbYIQCRXoGObs9R/L7U/aJ5iEx8eLXdYPuXD0/ixYHZgcUw6G4kzOjaorKUQ
-         kmhQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVscjcjBOHa98aWHr7Zl04YmWvKq5MWg02ogJx934+Ud2X91nVlGg95cel2wDNvR9T/WM9pjJ3RlQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxTrKFvQU8U4V1btZLmRnT+9sEkxXr/LxJQiWs1UuOLnlvPR/v9
-	pvylEFrx6QI+rLtQ5cDGev/tYizaiTteORQWiMUUSA3Go2XLl3I/DUyC35dHv/vwHjfXPdnJALP
-	k5YRJ9d7tzQ98DfW/ZAzg3qO19npTHVFr/gWv1gx6BL4j9dNayXIQbiQu/sUUntiJGLvtQP2H58
-	LFlAI85VavzD4HArXgi5CxatK2lMSp03F37vA=
-X-Gm-Gg: AeBDietuQ2K7iVxTYQyLgoj9vUatpO5ilcRKQdiR5p362VarS36LljbNkWkaaqOWbvo
-	XWRqKJGbRsdmEL8ceHMuVFbsNWI8nNQVVl2P+5bPkeWKTyAkUHqxNvT5yQawmEmMCfpw927xRjg
-	O53pG/A/wnEQ1EdhbXzvYYKcAb3hcAsGrHGjJm6LMwZLeprrmB4h+Y70lr3aO57QPf60WWcC+nQ
-	LvVRYJZWuIFUcPXb8lFq3RWl83PJvMCKhXPfivsMApxYUXgdCYBGOUXawPqLEi/vYiDp3J4EUH1
-	1/lvfw==
-X-Received: by 2002:a05:6512:1151:b0:5a1:448b:317b with SMTP id 2adb3069b0e04-5a337591959mr8247518e87.42.1775647370297;
-        Wed, 08 Apr 2026 04:22:50 -0700 (PDT)
-X-Received: by 2002:a05:6512:1151:b0:5a1:448b:317b with SMTP id
- 2adb3069b0e04-5a337591959mr8247500e87.42.1775647369709; Wed, 08 Apr 2026
- 04:22:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="jxBs2KSC";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="ewMi48iB"
+Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6386krw11227468;
+	Wed, 8 Apr 2026 11:28:49 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2025-04-25; bh=hFWWT0HDoriPrGwa71FnC069V5R4NWWKxPMi0oxpaPM=; b=
+	jxBs2KSCTql7GpLOwwox7+9xIGcDrKN+I5Gk+sgGL5AyysDBpu2EK+IDAvbIIQfZ
+	Q+un9wuPmy+cDSVv8Se2odDaSCCU07XrqTM5RwKo91DuTFb2skpAFDsfiq5yXv+e
+	s5yWtYTQCUZCirvQ+BXr4EF7drlQPCV8JHsWsKlAOool+Wkc9/wn+9DzTYuc9mfe
+	Z60MzsERvaFNeoF8/P1rBzgLHaKMxLlHUmkZ2qB8WfQtO0PYSwGppvc0VNev4vKy
+	3227zYG6RnPBUTnWOednkg7WR0HS8mQbg2w53Fx2xWewPeo6qBjmZAqqmE2rlrSx
+	4EGlu4Q++5u+tgHQVqhLtQ==
+Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4dcmq9ubrq-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 08 Apr 2026 11:28:49 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 6389bc06040097;
+	Wed, 8 Apr 2026 11:28:48 GMT
+Received: from sn4pr0501cu005.outbound.protection.outlook.com (mail-southcentralusazon11011010.outbound.protection.outlook.com [40.93.194.10])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4dcmn9cf2x-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 08 Apr 2026 11:28:48 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=LwUa//vfD/ZykygF0AkjeNxi5qPNGqbbWo4FNePMBHkLy7mBquyyHI8Ue5q0QKLIpI+LiA7kP6hDh9/jyKjluhm4jaQAgG8DuTVniHafH2Pi33pvx/xmVD0bVRmaCkur1s99i7QCUjjkVFJfAqgyqdPFgVArQHLRZNhjE2OIZ2PiCw6LE2YoFcoWiBaD3yQqLaXBsGdP9rf9wcyQOjGFt+kagZ6FjrIYPjw0DSLo3EWNYfsmD+2JqtnD6oUFIzNZJHhjyj3NqUoDEX/TcTMcal6oij8pL9fheUKyFITQIkP6c9SyJj5swa5BCknIxyL3GW/fWiuZu4TfWcTLmQw8+w==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=hFWWT0HDoriPrGwa71FnC069V5R4NWWKxPMi0oxpaPM=;
+ b=c5IdMCESAWxVwqPy6AybG/Al4t4LloEvxprM6fSqr8avB5RUmGGr5qqF2C8cwzFydqprtSAyzG9XCctrtCT7FmE5kdlYvi1mAVYy5ve9j8RZFV7SVTy0VJFBz9nDV6ptgCDjgD7Fdi2XQgdTbs3KrhXM6OU3dQM4qD19Z3OtC3VA1KiYgS3mYJ5KqY9pzqHJN/VvQW852Z3NrK23AGWiSwmsXvXoEFi0k92LUc11/O+OH2Eo9yr2kv83acpy4zJiXTrX+jwvEPB0DiScoNXp6iW+K4O5RjNd997hfN+ymZgyt/QP0fu9E11aM7nrqDRtKPiDI7sEaZS8BfkzlQySXw==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=hFWWT0HDoriPrGwa71FnC069V5R4NWWKxPMi0oxpaPM=;
+ b=ewMi48iBAxymcxQmMYasTOwO8/RkFKxGlG3dzyy6pttsolFYT9+iYEaCrqpXfnrjz3+gwR6ApbvvLdSiw4f5OdcGhhWqgCmh1jR3IzKWtwqtgUgw11D/oI2yIu/tGXUBc7jEWZ1+99/7xLVn0QVLArdqWQqrEvVjbrPoNdIk4dU=
+Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ (2603:10b6:f:fc00::d54) by DS4PPF085C55EC8.namprd10.prod.outlook.com
+ (2603:10b6:f:fc00::d06) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9769.18; Wed, 8 Apr
+ 2026 11:28:45 +0000
+Received: from DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ ([fe80::5266:1601:5598:3f0a]) by DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ ([fe80::5266:1601:5598:3f0a%5]) with mapi id 15.20.9769.018; Wed, 8 Apr 2026
+ 11:28:45 +0000
+Message-ID: <74eb1f9b-265e-4264-9575-177de6c924a0@oracle.com>
+Date: Wed, 8 Apr 2026 12:28:40 +0100
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 07/13] libmultipath: Add delayed removal support
+To: Nilay Shroff <nilay@linux.ibm.com>, hch@lst.de, kbusch@kernel.org,
+        sagi@grimberg.me, axboe@fb.com, martin.petersen@oracle.com,
+        james.bottomley@hansenpartnership.com, hare@suse.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20260225153225.1031169-1-john.g.garry@oracle.com>
+ <20260225153225.1031169-8-john.g.garry@oracle.com>
+ <bc006d17-22b6-49d5-9e04-02eab7dab729@linux.ibm.com>
+Content-Language: en-US
+From: John Garry <john.g.garry@oracle.com>
+Organization: Oracle Corporation
+In-Reply-To: <bc006d17-22b6-49d5-9e04-02eab7dab729@linux.ibm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: LO4P265CA0190.GBRP265.PROD.OUTLOOK.COM
+ (2603:10a6:600:311::18) To DS4PPFEAFA21C69.namprd10.prod.outlook.com
+ (2603:10b6:f:fc00::d54)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260408043548.1695157-1-bmarzins@redhat.com>
-In-Reply-To: <20260408043548.1695157-1-bmarzins@redhat.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Wed, 8 Apr 2026 19:22:38 +0800
-X-Gm-Features: AQROBzCf6Y1kVpCeNIdFbfFk6n__k5koH8VEiLhimoVQ-nWfueuWBkFtItAN2Ik
-Message-ID: <CALTww28H_Qs_Oh0WkDFvVynvbyUhgUK9u0cuU7bpoF+jOg1mYA@mail.gmail.com>
-Subject: Re: [PATCH v2] md/raid5: Fix UAF on IO across the reshape position
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>, 
-	Song Liu <song@kernel.org>, Li Nan <linan122@huawei.com>, linux-raid@vger.kernel.org, 
-	dm-devel@lists.linux.dev, Nigel Croxon <ncroxon@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: G1zGUi4RG-T3jjKux_BE_1P_5RaRopLSWhm-xdhNbNY_1775647371
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DS4PPFEAFA21C69:EE_|DS4PPF085C55EC8:EE_
+X-MS-Office365-Filtering-Correlation-Id: 4e2067a6-0166-4e78-98f2-08de9561fe8d
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|366016|376014|7416014|1800799024|18002099003|56012099003|22082099003;
+X-Microsoft-Antispam-Message-Info:
+	0JGMptqhrH2juwC7xLGpK8mHfIjy4Vo+avd3g4+11vcpfOA263rWwlK/UXwbotHc8DkPqHBv7Bcmp2neN5pFIx8xjjVJ99ScRQyuZodrclEGS2xSSnpQkhW759ax8vJQ4jB2/Y2+CwrBKq3ASSD16zJKfXhZx0XclOWZ7GD2Hk9bLyG9TWUDgwLGR1ckjR7rMKYPAjdfcNjgF/1NMacWcSX9W06zwQzOgKVlo5AnV35puPGuXokCM5HEoiz9XjqruoYMp1NLvCsf4vLYsNryNGa85miSwFtrGL33nyWcX/NvOSBhA3g1vSxDHwuPh0uL/r4xrBuydGQ3y5fkuBJk8hjxiLGhSXxLSsNJCN6jhGdKVrUeAmIYr2/ookeai6aON4uzUc+93cojr12J0UCiZL4IZ4G1ghJqg+IkSAC39o9+LT7/s4DOazUvShGUVTqPBDtDlY0ObdbnfbpAYA+mqn3O+d21RL4UTZGGBQp3eGGeUnnZEC8vwWEsJpwEJuzGHmrTbfn97Fi7fIQK5VJWLnhRvEq2nbRMXgHPKQ+vHn7meTC3fpkgQJXXN4tHul+A6HGql89GNgH4DhJj6LcKP5SsCOUaXWEfMlEAtkImvcwIGK0gH56cmN93cvssS5MRXaR0rvNMYXD+SZ19xbhNj5YARLFUq5PgPIK/rAdTcsnGe3KR+LZs2wd0tSDQs4q+kpJlTEITQDLwFfKvlOpRXzMUtRgpMXhqCA+SFPra+xA=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DS4PPFEAFA21C69.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(376014)(7416014)(1800799024)(18002099003)(56012099003)(22082099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?VUZ5Q2FDUnJZS0JXd3pjMS8xSkRwTW5QaDBCTGFyQ1FRaExBWkhLRXhRdXEy?=
+ =?utf-8?B?V2dQY2xwQUU5ditCWEtWanhSbEFla1JqYytJOTFKWXFtYlFoTGhwd3Z0eXAr?=
+ =?utf-8?B?SHlDKzBTVGRIaGttVU1rZXdkaDQvNnJRKzRvOXhEOEorbmhISCtyd1JtYnIr?=
+ =?utf-8?B?dEg5M09CYTdXVXJlMmk2NGcrL0ZybFQybm92NHN2LzRFTk9FdGU0eWZCQWR1?=
+ =?utf-8?B?Tk1nYUVLVmhsdXNRaWgrWUJzYXNZV0hXc0JyTlR6dlZ5aEt2eUprVUkzbzcw?=
+ =?utf-8?B?VTJZOTUzaG5hN1htMXVpUVV1b2pjd1VKd05Ya0pBREFMdENVTXpNdTYyZU1F?=
+ =?utf-8?B?RC9VaUd5TThHWUlCWG8yN1ZEMVlERjZkdnJxbFJNNjROT0t1Zk9hSVBnQUF0?=
+ =?utf-8?B?NmFDNnJoODVQcEFSTzdxMnZmSklKcjA5OHBsUnl6bzBRQXV6RzVVaGs1ZC9G?=
+ =?utf-8?B?QStxdTdobkxhRC9BdklENHM3OXg1eHFzNEhBTno4OWdHOWZBcGdEakZRbWFj?=
+ =?utf-8?B?aHg0SDAwS2N1eTlURTRBZUp1NnlwZ1g0amplSEc3b1dPU3BwZVJIdE1aTU1H?=
+ =?utf-8?B?QWhwOE1aWFZ0bnVWUkpZdkI0VmtMS3pjNXAzMi83K1VYaDMwaEJwZG9pMHM4?=
+ =?utf-8?B?WnoxZDFNVUxVRU8yUk1BNjJNaTJtY2EyMld3bXhqdmd1ZmpTUnhXSXVyMVg4?=
+ =?utf-8?B?bXVsR255MlA5aEFvQVJDaGtIbUpYU2VyQ0RkRUc5Wmx6VGR3MW5SNUtwQnpk?=
+ =?utf-8?B?cVo4WnpWM05tS1E3bklVZm1SVzlYTjcvcGNZalFXdHBKTWtLc0QzMWxhWW5N?=
+ =?utf-8?B?c0NrNlg4bmpRK3ZXWWM4OXFpQklkbVdxeXVlVnIxckxlbXZheTF1amtmS2pv?=
+ =?utf-8?B?YUpOdGJZSWp5MHdUT1V2WGZ1THRleklsdHArK0UwQ1Q0MlZ4QUd6SlVuSFRQ?=
+ =?utf-8?B?ak0zeEtsdTZ6cDBaZ3huaHpUZkFtaTBpWG9mVm0rYjB5QlgzU0pWSkl5WVk5?=
+ =?utf-8?B?bnJGNThDNFU0Sm44bUk2Lzl2YkVHYmxOQjJQd1JkdnRCejNISDd4cDFoeDNr?=
+ =?utf-8?B?cEJ0cUJ3VS9xMjh0TG13U2RFRDhLVnhPc0xjVmN4U1V3WGl6L2VIWTI5THRC?=
+ =?utf-8?B?SHB3NmxyQTcyc1J5Q3JaamV4cHM2UHc3R0ZPSmRvN0FqQ0pJNVQzQkIvVlNY?=
+ =?utf-8?B?bTd5YUd2YTBEVmc2YjhIRThXd21WNUQ5T2lMMXYyOXB1VEtaQmZQdjFhdDJx?=
+ =?utf-8?B?MG5ld2lJbGZOTDJmdFE4VHJqOGhDT1FkWWZ2ZU5UZ1FVSDBYNzRUdyt6WDBu?=
+ =?utf-8?B?cTBwZ1pZM2J1RXJOYi9kNFgxTUs3RWo2OWV1WDgrSUhpS1R3MXdDNFFoaXJs?=
+ =?utf-8?B?V1lRQ1RLdTVaVDRkVnBtRlh2L01rdkRlaXhCOWlUcTVlaW9FOW92eU9nb2JQ?=
+ =?utf-8?B?cENaaDRVRDJmL0lqanU1ak8vUDBINzJoK0hhRWl3RkswaVdUblNkTTh1VWkr?=
+ =?utf-8?B?a0g5dFhkZE9mUjNYSlZQS1FnTkptbWUrM1NrM1hIY2Y0NDFSVnVzbWhmd3N4?=
+ =?utf-8?B?VklhOVJCQkZRcW0xNmxZR2toTFdGZVo0OFRCTFNFemhlMzk1WjFTenhwcjB4?=
+ =?utf-8?B?RjVaSkplcGRGaHBEM0t5Qkt0UzJkRlVKYUdIclBzNzlKSkh0am9ISjdVT1Vk?=
+ =?utf-8?B?c0t2MFZDeE1FTytCSE1rbi9uSUduenlKbHFqQXpZT3pKamF1NXdOUjFGTE9Q?=
+ =?utf-8?B?dFJOUGw0MmtxYmxwSWgybll5RUpvbzNhTnhrY2t4NVBpZXd0T1g5RWw5NUtF?=
+ =?utf-8?B?WG9aV1k2dWs5VFRWTWd3U2gvNk9oRndQWWdFNlFqeWJzODBDdUpHcGd2SGhj?=
+ =?utf-8?B?NjRRRW5laUkxLzJITFBBblQ0RFhnL05sOGswNnFIV2VXTnlOUVhUMW1zdWUr?=
+ =?utf-8?B?dHhCUXZ1Z0JDbXNSUzEzdm5jRW1qcW5zd0FwMEFrQjNyZDN2S1hPcE9LYWhW?=
+ =?utf-8?B?SFdxdWE5ZWlVNkd4NjlydGw4TUNYUHdreFI0a28raTlTN3VGT3NiLzJqcitm?=
+ =?utf-8?B?ei9NbnBjb3JNUzF0a2prMHpuZC9VVjduVkRLUUcxcTNyS3ZsRkZYaHlSYzJI?=
+ =?utf-8?B?Ynd2QjJqd2QrWlVtYVgxOURCRUpaU3hIeCtuRG5MZm9SMEQrbFdZQzJNNkN5?=
+ =?utf-8?B?VDBLVkUzQ3UwdnRCTUM4ZFRDZUIyZGVYYWpHM2ZSVSs5aUNXQ25jQWlKZ3NU?=
+ =?utf-8?B?amZwZTUxQTNYL25WYU9ZVFFaaUY3bzlVRVRsMkwrYnNIOTgzZEx2dGQ4eDFE?=
+ =?utf-8?B?RGtRdk1NY1NUZmh2VmxBeE94RHJqWTIzNGozU3I5cEw0czZUTFBqQT09?=
+X-Exchange-RoutingPolicyChecked:
+	cHLLKwJkdqCBRczfuZJ0DRwU0R91VaZMdqZwwiV2TBg56yDjIgGEIpPiKcfoWkWxInYe1/4cnAf4vUKfWBvsP00V2LquriJDdQatFlhGbv5pecAxMZM3PUQs4Pnt0xoodmmiW4Q5zEiXT5GTh8RoQ1T9Erkh4n8JJ4qdtVOLVzgiqYHXpKk0xfroDtTRZHtN36KakLE8nDiE/A/ODWB46SCp7b3HkPhw4X/9s5mPG8RhB3Z3J3aqo9A5s+eFmHBuziJa0Zmdz1WRrCAzrW5y8bdiaJBNP/vKUiL8xvQ6nEOnz17GhE2RAJHRnCz07rGbTlMvbebFaa9s+StvuwqK/w==
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	lXcF/s+R2DfVKUIlGoypwRScuyHvXr6HCIX1d9cbpagq8wV2DAq8B9gwCTngSvBZggleRGNsyTMTxnFt7JNxsXTnjWfUVJ51Pau74zWQarLN8Jxz+YKdPZ4rzi8Xde0+y1AWveau/K5QhXClRNlcuqZQGTc5LZOC3UPetioDLkxBERLN2yBPuapSskZuiBo+602WXWJnNWgDfe1kTMzHmBMoakdJc9n5z5mGFEJ3jV434N4feR6P8oKTBBRVpdlurevK3TMoSn/4mnYCKfMjxr6jLbT7MvXeXaQPEYSg5sgLp+vQiggljHUW/nQZeLz6KjoWZHo65VIQWIUIvNGkklVZzClzQAb9fcphGz+dxwtsT/4+6nD6QxZzQMd/goWYYlMoqT2AcPF7CVEklm4cEtAkXh4dV47PN+SV3ET7LweMbxSN8yeGIKZ6azCL1xcWVLv6Y2rAiYlR6G2nWe9ioD6hfgs86UEqhrH4fJBfbqV9hJn3lvBHf70JCqNSPQkbpvqOKKgIRq66/GZija/JCl8OG0kcb/6P/H0U1AJnnhcPZxnW64B6ltdCXfQ8KyZjewatuQeQA+v+FmnzkKCooo/I5lfVbqR//PqJPG28iQo=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 4e2067a6-0166-4e78-98f2-08de9561fe8d
+X-MS-Exchange-CrossTenant-AuthSource: DS4PPFEAFA21C69.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 08 Apr 2026 11:28:45.3089
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: 2cFAmE55XAvMlV8uW45tCLl0EpxBR2O/6I61d6XbyBITG/WAk94/6NBqugwrJ28+xEdleknPrZofC5CQp7jIuA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS4PPF085C55EC8
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-08_03,2026-04-08_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxscore=0 adultscore=0 spamscore=0
+ phishscore=0 suspectscore=0 malwarescore=0 bulkscore=0 mlxlogscore=999
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2604010000
+ definitions=main-2604080106
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDA4MDEwNiBTYWx0ZWRfX98uyrlMNLceh
+ 5gF97+fPomu5pcCdBKchEP7xTmVNIwzWoQzhWseHw1UR86BYjt/GrJFfP4YBCD1gUevUXBAaWcO
+ cg2E7Yc/+PLnc4tgSuG4RHE3RTrspdzorlEb0mTFIJSWcV+7+ldfjzek1mSncEJmsNfrX5QHjHV
+ qeMi1sg7fKU8GnrlXHsQemcgMu3LmAu4ZZDfA+GuPhE0zEenb64sub+/4wLwODRUezVHXDovPVh
+ +suqutovb2PR0o4GREdG6iXv5DN+Dk3QGFeU+qTJw7X3VRkEfMwn+uUIj8gwFt0w6nig9zePS5q
+ LMW37xr8T4DD8+RqgPme6oJVxHK5aEcN6jnzGuZyALRApyi3iUzsUkvLKgb15oWEolGhaQ+/vOX
+ 5os61ZxSCtToCBThqyaXPb1rZ/tu94YaVS+gc9EVbGz+QfpkizXKxg9pFnl5MXygNifABTUKG/N
+ HPzCFjEfAG4nJE6lEeA==
+X-Proofpoint-ORIG-GUID: v69Vgp1wYT-bPzMaVuhiCYuS0emjtLPm
+X-Authority-Analysis: v=2.4 cv=MaJcfZ/f c=1 sm=1 tr=0 ts=69d63bf1 b=1 cx=c_pps
+ a=WeWmnZmh0fydH62SvGsd2A==:117 a=WeWmnZmh0fydH62SvGsd2A==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
+ a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=IkcTkHD0fZMA:10
+ a=A5OVakUREuEA:10 a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=jiCTI4zE5U7BLdzWsZGv:22 a=o5oIOnhZENCTenyL_yNV:22 a=SHLv58NeNCR32GBbl4EA:9
+ a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10 a=yzZZxD1ETDaWDB-n6lAJ:22
+X-Proofpoint-GUID: v69Vgp1wYT-bPzMaVuhiCYuS0emjtLPm
 
-On Wed, Apr 8, 2026 at 12:35=E2=80=AFPM Benjamin Marzinski <bmarzins@redhat=
-.com> wrote:
->
-> If make_stripe_request() returns STRIPE_WAIT_RESHAPE,
-> raid5_make_request() will free the cloned bio. But raid5_make_request()
-> can call make_stripe_request() multiple times, writing to the various
-> stripes. If that bio got added to the toread or towrite lists of a
-> stripe disk in an earlier call to make_stripe_request(), then it's not
-> safe to just free the bio if a later part of it is found to cross the
-> reshape position. Doing so can lead to a UAF error, when bio_endio()
-> is called on the bio for the earlier stripes.
->
-> Instead, raid5_make_request() needs to wait until all parts of the bio
-> have called bio_endio(). To do this, bios that cross the reshape
-> position while the reshape can't make progress are flagged as needing to
-> wait for all parts to complete. When raid5_make_request() has a bio that
-> failed make_stripe_request() with STRIPE_WAIT_RESHAPE, it sets
-> bi->bi_private to a completion struct and waits for completion after
-> ending the bio.  When the bio_endio() is called for the last time on a
-> clone bio with bi->bi_private set, it wakes up the waiter. This
-> guarantees that raid5_make_request() doesn't return until the cloned bio
-> needing a retry for io across the reshape boundary is safely cleaned up.
->
-> There is a simple reproducer available at [1]. Compile the kernel with
-> KASAN for more useful reporting when the error is triggered (this is not
-> necessary to see the bug).
->
-> [1] https://gist.github.com/bmarzins/e48598824305cf2171289e47d7241fa5
->
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->
-> Changes from v1:
-> - Removed mddev->pending_retry_bios, mddev->retry_bios_wait, and
->   md_io_clone->must_retry. Instead, use a completion struct
->   pointed to by bi->bi_private, as suggested by Xiao Ni and Yu Kuai.
->
->  drivers/md/md.c    | 31 ++++++++-----------------------
->  drivers/md/md.h    |  1 -
->  drivers/md/raid5.c |  7 ++++++-
->  3 files changed, 14 insertions(+), 25 deletions(-)
->
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 3ce6f9e9d38e..4318d875a5f6 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -9215,9 +9215,11 @@ static void md_bitmap_end(struct mddev *mddev, str=
-uct md_io_clone *md_io_clone)
->
->  static void md_end_clone_io(struct bio *bio)
->  {
-> -       struct md_io_clone *md_io_clone =3D bio->bi_private;
-> +       struct md_io_clone *md_io_clone =3D container_of(bio, struct md_i=
-o_clone,
-> +                                                      bio_clone);
->         struct bio *orig_bio =3D md_io_clone->orig_bio;
->         struct mddev *mddev =3D md_io_clone->mddev;
-> +       struct completion *reshape_completion =3D bio->bi_private;
->
->         if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(mdde=
-v, false))
->                 md_bitmap_end(mddev, md_io_clone);
-> @@ -9229,7 +9231,10 @@ static void md_end_clone_io(struct bio *bio)
->                 bio_end_io_acct(orig_bio, md_io_clone->start_time);
->
->         bio_put(bio);
-> -       bio_endio(orig_bio);
-> +       if (unlikely(reshape_completion))
-> +               complete(reshape_completion);
-> +       else
-> +               bio_endio(orig_bio);
->         percpu_ref_put(&mddev->active_io);
->  }
->
-> @@ -9254,7 +9259,7 @@ static void md_clone_bio(struct mddev *mddev, struc=
-t bio **bio)
->         }
->
->         clone->bi_end_io =3D md_end_clone_io;
-> -       clone->bi_private =3D md_io_clone;
-> +       clone->bi_private =3D NULL;
->         *bio =3D clone;
->  }
->
-> @@ -9265,26 +9270,6 @@ void md_account_bio(struct mddev *mddev, struct bi=
-o **bio)
->  }
->  EXPORT_SYMBOL_GPL(md_account_bio);
->
-> -void md_free_cloned_bio(struct bio *bio)
-> -{
-> -       struct md_io_clone *md_io_clone =3D bio->bi_private;
-> -       struct bio *orig_bio =3D md_io_clone->orig_bio;
-> -       struct mddev *mddev =3D md_io_clone->mddev;
-> -
-> -       if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(mdde=
-v, false))
-> -               md_bitmap_end(mddev, md_io_clone);
-> -
-> -       if (bio->bi_status && !orig_bio->bi_status)
-> -               orig_bio->bi_status =3D bio->bi_status;
-> -
-> -       if (md_io_clone->start_time)
-> -               bio_end_io_acct(orig_bio, md_io_clone->start_time);
-> -
-> -       bio_put(bio);
-> -       percpu_ref_put(&mddev->active_io);
-> -}
-> -EXPORT_SYMBOL_GPL(md_free_cloned_bio);
-> -
->  /* md_allow_write(mddev)
->   * Calling this ensures that the array is marked 'active' so that writes
->   * may proceed without blocking.  It is important to call this before
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index ac84289664cd..5d57fee22901 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -917,7 +917,6 @@ extern void md_finish_reshape(struct mddev *mddev);
->  void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev,
->                         struct bio *bio, sector_t start, sector_t size);
->  void md_account_bio(struct mddev *mddev, struct bio **bio);
-> -void md_free_cloned_bio(struct bio *bio);
->
->  extern bool __must_check md_flush_request(struct mddev *mddev, struct bi=
-o *bio);
->  void md_write_metadata(struct mddev *mddev, struct md_rdev *rdev,
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index a8e8d431071b..dc0c680ca199 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -6217,7 +6217,12 @@ static bool raid5_make_request(struct mddev *mddev=
-, struct bio * bi)
->
->         mempool_free(ctx, conf->ctx_pool);
->         if (res =3D=3D STRIPE_WAIT_RESHAPE) {
-> -               md_free_cloned_bio(bi);
-> +               DECLARE_COMPLETION_ONSTACK(done);
-> +               WRITE_ONCE(bi->bi_private, &done);
-> +
-> +               bio_endio(bi);
+On 02/03/2026 12:41, Nilay Shroff wrote:
+>> +
+>>   void mpath_add_sysfs_link(struct mpath_disk *mpath_disk)
+>>   {
+>>       struct mpath_head *mpath_head = mpath_disk->mpath_head;
+>> @@ -793,6 +868,8 @@ struct mpath_head *mpath_alloc_head(void)
+>>       mutex_init(&mpath_head->lock);
+>>       kref_init(&mpath_head->ref);
+>> +    mpath_head->delayed_removal_secs = 0;
+>> +
+>>       INIT_WORK(&mpath_head->requeue_work, mpath_requeue_work);
+>>       spin_lock_init(&mpath_head->requeue_lock);
+>>       bio_list_init(&mpath_head->requeue_list);
+> 
+> I think we also need to initialize ->drv_module here.
 
-Hi Ben
+Hi Nilay,
 
-You gave an explanation why it doesn't need WRITE_ONCE. As you said,
-bio_endio uses atomic_dec_and_test, so it guarantees a full memory
-barrier. Why do you use WRITE_ONCE here?
+I am just coming back to this now. About NVMe multipath delayed disk 
+removal, did you consider a blktests testcase to cover it? I might look 
+at it if I have a chance (and it makes sense to do so).
 
-Regards
-Xiao
-
-
-> +
-> +               wait_for_completion(&done);
->                 return false;
->         }
->
-> --
-> 2.53.0
->
-
+Thanks!
