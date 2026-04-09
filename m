@@ -1,316 +1,148 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89EF41C862F
-	for <dm-devel@lists.linux.dev>; Thu,  9 Apr 2026 02:32:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C18AE28E0
+	for <dm-devel@lists.linux.dev>; Thu,  9 Apr 2026 06:38:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775701922; cv=none; b=p2sGjLjJupNgx5+7O+kBdGUKY9QQRfnO8Sf4vbGyA/ezmO/eTxjNeOG5UuFRUvekHh4cHM71XluZPdxg6XC7iipmwtm9Nc2RsIF2xiSgIjlwfzHwZa9/YLVpX3Yy5e/pT5Ay1qlQfs00pwHsS+1etUGqanAGHG+uEKyxuROht4Y=
+	t=1775716687; cv=none; b=RytQIBoFCnRnnUgy0O2xyZs2kWgvll6LMx0mDTCHNJYUuRknIvpuPOMK7Pk6ouYXe4j1EEh1Qv61b/Z3Scd2D7dPKSOKL37U0Xs7PlZalsin+vjivJ3x5wBQDAzSuiE2A1+193NFqvn5/5mX9R5SbXDY2RMyinNvNA30y0j7NC8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775701922; c=relaxed/simple;
-	bh=HuTkQcMSnTdWdzJiZnv58KvdOWhs+6qeCppNZi4Trxs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=nN/f/dD+doUuSWiFammlg7hGTP1MJxYJNmRA9M6iMBuAVxFb1+iy4uA0yUYR7d46c9aOf/NxZdqcrEPPOHu02MVRSHTlc4QCzsCm9iUfUHLESkhZsGut3WdR+f1TSIqgjYuNTLiuZLPJxcds/iIENV27h9mKPs7uYyXqB3U0AJw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Fxw737RP; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1775716687; c=relaxed/simple;
+	bh=HpHC1U+Xcdp6b1MczAs0Dx4aAMHkPSk3tRwK/vZUTog=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=uDoWM+2x7rPXoFJcinQzOvWG/OffS1cUHY2/GdGgunNF4zGXLGICcW7kyy4uTMMq3ZwV3O7C1wn1hL+mNUzmEHkED+iCMh9L0xZxQvhi4Z/qA05Eq3mYBl9CrIoxsexqmzE4S+l6OTb0QBuFe4rqhsekXjkY0T2pPkGnJNxJpUY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=SrxVuGy3; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Fxw737RP"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1775701919;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Z6DAwRwjUB6mVh6wBFSHONXTHG5mUAPiZqK2kyLUtcc=;
-	b=Fxw737RPXbShhZj4h5jmgJyMAInRM9uytAfNI26dKZQwqmSLq0Jr9CoIqlKZh52rchCI9B
-	HiXJGC5lLMbjRT9d4wKoj0M00dg2vt4bP0ozVG+XRoWimd7Hf7ue9vpFn2bj4y9V9h1sDr
-	nFa0iqvAFfo6qeqZTmZm2rTfffKA22o=
-Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
- [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-509-EzeyfinUNAm0B4zdKogeAA-1; Wed, 08 Apr 2026 22:31:58 -0400
-X-MC-Unique: EzeyfinUNAm0B4zdKogeAA-1
-X-Mimecast-MFC-AGG-ID: EzeyfinUNAm0B4zdKogeAA_1775701917
-Received: by mail-lf1-f70.google.com with SMTP id 2adb3069b0e04-59b6cbd5493so329857e87.0
-        for <dm-devel@lists.linux.dev>; Wed, 08 Apr 2026 19:31:57 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1775701917; x=1776306717;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=Z6DAwRwjUB6mVh6wBFSHONXTHG5mUAPiZqK2kyLUtcc=;
-        b=NnEsEmaZrJCGXdkwMIvsMOje3RxA8sLHx+RYZe9PDYaUHw1xm0cqBMdjWVvhxhDyW6
-         Jeq/wAkQrAWGNtrZVH9aXmDWF+qFfNscQf8wrlS7qmfQ1z6VoyAxEX3xTMAGoplUE6Jw
-         ITluZKMTB8IkzOc/lqpV3PUvSNd4Hzloh88/ALers4X1Q9jVaSUwf8M3dw1+cvRTayhU
-         T/ff4JLuDFl/VBt9Ug8uDAkJzJCah71TxQcBvJkfZx0km3ZUIu0NRzA+lplqTGdnxwMm
-         eBPhgNiisKiR5CBht5ePdsNhrZhKAn+QeMGZD9SpXbjI6ObrVYAyp+P83Ua/qfVFF1+q
-         VBFw==
-X-Forwarded-Encrypted: i=1; AJvYcCX7dTl7KqbKXRcj2oX/s76dXgMZIfUpIJl2zPx+s2LQjKvizDYSTTmXBLZYJArd9kzNff2tXdg7Cg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzQBYrJ9zRcK3t+j3nzZVGlWbpBxMNz5mf0K4sG6gg8A7cJ8qlG
-	6pPb5wPqy6dW3UvBlmWAv5JuyZwQ9tBhg2bpvKp1EjizNO/eNADmaftWU9VSCEEmOUau/AkanAz
-	xBBvFB11ggie7gHiO5O859dryP3hqKi+HWTzPuLW/E3FQgEucd72aMB+MfRR7RLdHYvnpeXtuiQ
-	OaUBDBjZkJmfw6Bkxl9EeCS2+jc4qoYmtocxU=
-X-Gm-Gg: AeBDietNOQIXm1Z7q4pC8jomsvjd9HxJ1HBu7SYAEUow67NJimVUi3FE9rkgK8OqQyQ
-	JmJCK2r9wdG02HitqWW8Febb8Gz74lSXxCq7xLFlnzyUMiUVtt+qr8aTkT2HUrzDiWqsP8UMpdP
-	ogVE1ao+bpxevMyZKvPq2e8ufHG/LLqdxz8pScF2jzNaWkGlaFE2sSPePykBPJxj4ZtQPj5Oj5w
-	V0HaiRolWieo0wm8nmX4kk8bf2VlaYDbLPsYv69N2NHhq402a3zuZvd2EmAZ7ejjLoALCzc0QaR
-	JDBdAA==
-X-Received: by 2002:a05:6512:159f:b0:59e:6296:80ef with SMTP id 2adb3069b0e04-5a337515c84mr7283048e87.0.1775701916371;
-        Wed, 08 Apr 2026 19:31:56 -0700 (PDT)
-X-Received: by 2002:a05:6512:159f:b0:59e:6296:80ef with SMTP id
- 2adb3069b0e04-5a337515c84mr7283031e87.0.1775701915690; Wed, 08 Apr 2026
- 19:31:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="SrxVuGy3"
+Received: from pps.filterd (m0360083.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 638NFUrR665439;
+	Thu, 9 Apr 2026 06:37:51 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=b0dEBK
+	YkoDMME7nEkhgrR/yUhnHdtdm3xnurIwXVQyc=; b=SrxVuGy3iXYZ8oSGCG9y5+
+	cW+OqNWQbLcIW79IQm6DI5kiYc7gcOpWIIE/hBjGprg16b0OFfX4FBr2QwUOCv1q
+	Hc+cf/2rfk7XJdUVwECyeCqbCHAkAA+xE+dyaMt1rzu1NNPCOPynMV4v1SmfNTWb
+	N+W7dZtt22o7PYUxLouayC4XGm5WXqQS88HmRuuMlu1uizmGvumBo8TPO0YIsEMq
+	Y6LfW/MUAcxDx51mLFEX8No4vAywfkrOiVAfRTiqtt4h0cw1tkQEOMTw+5Dm8Wm+
+	ORErl1J6+RwrhM4VvorsRlw7uQE3vEc4P5Z4RkRmdgAOnmlnEu7+qIKTVKVGnZIw
+	==
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4dcn2ebmvc-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 09 Apr 2026 06:37:51 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 6392KXYu013824;
+	Thu, 9 Apr 2026 06:37:50 GMT
+Received: from smtprelay02.dal12v.mail.ibm.com ([172.16.1.4])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4dcmf4agb5-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Thu, 09 Apr 2026 06:37:50 +0000
+Received: from smtpav04.dal12v.mail.ibm.com (smtpav04.dal12v.mail.ibm.com [10.241.53.103])
+	by smtprelay02.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 6396bn1g31851160
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Thu, 9 Apr 2026 06:37:49 GMT
+Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 9F67A5805A;
+	Thu,  9 Apr 2026 06:37:49 +0000 (GMT)
+Received: from smtpav04.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 0412D58052;
+	Thu,  9 Apr 2026 06:37:44 +0000 (GMT)
+Received: from [9.123.2.203] (unknown [9.123.2.203])
+	by smtpav04.dal12v.mail.ibm.com (Postfix) with ESMTP;
+	Thu,  9 Apr 2026 06:37:43 +0000 (GMT)
+Message-ID: <79725a83-3dc1-4398-ac86-c3e317e0e107@linux.ibm.com>
+Date: Thu, 9 Apr 2026 12:07:42 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260408043548.1695157-1-bmarzins@redhat.com> <CALTww28H_Qs_Oh0WkDFvVynvbyUhgUK9u0cuU7bpoF+jOg1mYA@mail.gmail.com>
- <adazQdvXjE1RlMid@redhat.com>
-In-Reply-To: <adazQdvXjE1RlMid@redhat.com>
-From: Xiao Ni <xni@redhat.com>
-Date: Thu, 9 Apr 2026 10:31:43 +0800
-X-Gm-Features: AQROBzCbW2whcDPrvxF_fdRhk4uZD1cfpp3BYHGSaHp8p7JoZ7T9FwE1DKEISJA
-Message-ID: <CALTww2_EE5ZZKEUjxONrkfsAQJE0qp7H=S-RJTXSBGNiCHgraw@mail.gmail.com>
-Subject: Re: [PATCH v2] md/raid5: Fix UAF on IO across the reshape position
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>, 
-	Song Liu <song@kernel.org>, Li Nan <linan122@huawei.com>, linux-raid@vger.kernel.org, 
-	dm-devel@lists.linux.dev, Nigel Croxon <ncroxon@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 4YoeGtqo9eHWTMYOLvGQKnkBv598Vw3i75TJ-DN0Nd8_1775701917
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 07/13] libmultipath: Add delayed removal support
+To: John Garry <john.g.garry@oracle.com>, Hannes Reinecke <hare@suse.de>,
+        hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
+        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+        hare@suse.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20260225153225.1031169-1-john.g.garry@oracle.com>
+ <20260225153225.1031169-8-john.g.garry@oracle.com>
+ <bc006d17-22b6-49d5-9e04-02eab7dab729@linux.ibm.com>
+ <74eb1f9b-265e-4264-9575-177de6c924a0@oracle.com>
+ <6d7a4076-a4ad-4185-8e82-8e27d704d20e@suse.de>
+ <c5334a6b-8089-4ee5-abd3-8340133db29a@oracle.com>
+Content-Language: en-US
+From: Nilay Shroff <nilay@linux.ibm.com>
+In-Reply-To: <c5334a6b-8089-4ee5-abd3-8340133db29a@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-ORIG-GUID: ryGWzV-kxtfoOaaEQla0XCXQw7DbbbdA
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDA5MDA1NCBTYWx0ZWRfX5XcfgdUgYwDD
+ KkdwNvKclumlzdnlNHFpblTJb8dLXPGm773qOMgfkjCHTJKrOq+0harj3CiJH40ATmFzw7lNjG6
+ V0W+Y/K5QLt+3nYWuHhQh+jqQMAsx2yQoo+5XinxIxmmxP2LMzJwPuKJXIrQMJ0xlxUREey6HSG
+ rDMzHiKuRHJA7j6yn93sNlJ29f0Shih1NLSM3qY5IW3xMNDhzGZEH/+ekS2R0HN4UMXQWdL5I7c
+ rzg/IXWZUYe9XGyfVV2UbjvOvtCI+xVtRuHqpOLPMQqIbBWIgvueGIC+I3OvXn/wmcDyqoZQgz7
+ hS7aC+k/3HsM+GmjB0ZxjFsIsGUAInm3nsaSti4sWLGb0rAAgxTC2EKkT9JColBhvm+xME+vvXZ
+ a54OJmHYfdrTjRvbS+U0uAghg3N+HGO6d2dD4aDVGIZx4aZjbtSa+fBk5me3hyOgj8xjrTPhUen
+ ohNzoEVtbumSVvvhFJg==
+X-Authority-Analysis: v=2.4 cv=Cfw4Irrl c=1 sm=1 tr=0 ts=69d7493f cx=c_pps
+ a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
+ a=IkcTkHD0fZMA:10 a=A5OVakUREuEA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=iQ6ETzBq9ecOQQE5vZCe:22 a=qGyuYsBrm1yEalbM7ekA:9
+ a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
+X-Proofpoint-GUID: ryGWzV-kxtfoOaaEQla0XCXQw7DbbbdA
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-09_01,2026-04-08_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ malwarescore=0 phishscore=0 clxscore=1011 adultscore=0 suspectscore=0
+ priorityscore=1501 impostorscore=0 bulkscore=0 spamscore=0 lowpriorityscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2604010000 definitions=main-2604090054
 
-On Thu, Apr 9, 2026 at 3:58=E2=80=AFAM Benjamin Marzinski <bmarzins@redhat.=
-com> wrote:
->
-> On Wed, Apr 08, 2026 at 07:22:38PM +0800, Xiao Ni wrote:
-> > On Wed, Apr 8, 2026 at 12:35=E2=80=AFPM Benjamin Marzinski <bmarzins@re=
-dhat.com> wrote:
-> > >
-> > > If make_stripe_request() returns STRIPE_WAIT_RESHAPE,
-> > > raid5_make_request() will free the cloned bio. But raid5_make_request=
-()
-> > > can call make_stripe_request() multiple times, writing to the various
-> > > stripes. If that bio got added to the toread or towrite lists of a
-> > > stripe disk in an earlier call to make_stripe_request(), then it's no=
-t
-> > > safe to just free the bio if a later part of it is found to cross the
-> > > reshape position. Doing so can lead to a UAF error, when bio_endio()
-> > > is called on the bio for the earlier stripes.
-> > >
-> > > Instead, raid5_make_request() needs to wait until all parts of the bi=
-o
-> > > have called bio_endio(). To do this, bios that cross the reshape
-> > > position while the reshape can't make progress are flagged as needing=
- to
-> > > wait for all parts to complete. When raid5_make_request() has a bio t=
-hat
-> > > failed make_stripe_request() with STRIPE_WAIT_RESHAPE, it sets
-> > > bi->bi_private to a completion struct and waits for completion after
-> > > ending the bio.  When the bio_endio() is called for the last time on =
-a
-> > > clone bio with bi->bi_private set, it wakes up the waiter. This
-> > > guarantees that raid5_make_request() doesn't return until the cloned =
-bio
-> > > needing a retry for io across the reshape boundary is safely cleaned =
-up.
-> > >
-> > > There is a simple reproducer available at [1]. Compile the kernel wit=
-h
-> > > KASAN for more useful reporting when the error is triggered (this is =
-not
-> > > necessary to see the bug).
-> > >
-> > > [1] https://gist.github.com/bmarzins/e48598824305cf2171289e47d7241fa5
-> > >
-> > > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > > ---
-> > >
-> > > Changes from v1:
-> > > - Removed mddev->pending_retry_bios, mddev->retry_bios_wait, and
-> > >   md_io_clone->must_retry. Instead, use a completion struct
-> > >   pointed to by bi->bi_private, as suggested by Xiao Ni and Yu Kuai.
-> > >
-> > >  drivers/md/md.c    | 31 ++++++++-----------------------
-> > >  drivers/md/md.h    |  1 -
-> > >  drivers/md/raid5.c |  7 ++++++-
-> > >  3 files changed, 14 insertions(+), 25 deletions(-)
-> > >
-> > > diff --git a/drivers/md/md.c b/drivers/md/md.c
-> > > index 3ce6f9e9d38e..4318d875a5f6 100644
-> > > --- a/drivers/md/md.c
-> > > +++ b/drivers/md/md.c
-> > > @@ -9215,9 +9215,11 @@ static void md_bitmap_end(struct mddev *mddev,=
- struct md_io_clone *md_io_clone)
-> > >
-> > >  static void md_end_clone_io(struct bio *bio)
-> > >  {
-> > > -       struct md_io_clone *md_io_clone =3D bio->bi_private;
-> > > +       struct md_io_clone *md_io_clone =3D container_of(bio, struct =
-md_io_clone,
-> > > +                                                      bio_clone);
-> > >         struct bio *orig_bio =3D md_io_clone->orig_bio;
-> > >         struct mddev *mddev =3D md_io_clone->mddev;
-> > > +       struct completion *reshape_completion =3D bio->bi_private;
-> > >
-> > >         if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(=
-mddev, false))
-> > >                 md_bitmap_end(mddev, md_io_clone);
-> > > @@ -9229,7 +9231,10 @@ static void md_end_clone_io(struct bio *bio)
-> > >                 bio_end_io_acct(orig_bio, md_io_clone->start_time);
-> > >
-> > >         bio_put(bio);
-> > > -       bio_endio(orig_bio);
-> > > +       if (unlikely(reshape_completion))
-> > > +               complete(reshape_completion);
-> > > +       else
-> > > +               bio_endio(orig_bio);
-> > >         percpu_ref_put(&mddev->active_io);
-> > >  }
-> > >
-> > > @@ -9254,7 +9259,7 @@ static void md_clone_bio(struct mddev *mddev, s=
-truct bio **bio)
-> > >         }
-> > >
-> > >         clone->bi_end_io =3D md_end_clone_io;
-> > > -       clone->bi_private =3D md_io_clone;
-> > > +       clone->bi_private =3D NULL;
-> > >         *bio =3D clone;
-> > >  }
-> > >
-> > > @@ -9265,26 +9270,6 @@ void md_account_bio(struct mddev *mddev, struc=
-t bio **bio)
-> > >  }
-> > >  EXPORT_SYMBOL_GPL(md_account_bio);
-> > >
-> > > -void md_free_cloned_bio(struct bio *bio)
-> > > -{
-> > > -       struct md_io_clone *md_io_clone =3D bio->bi_private;
-> > > -       struct bio *orig_bio =3D md_io_clone->orig_bio;
-> > > -       struct mddev *mddev =3D md_io_clone->mddev;
-> > > -
-> > > -       if (bio_data_dir(orig_bio) =3D=3D WRITE && md_bitmap_enabled(=
-mddev, false))
-> > > -               md_bitmap_end(mddev, md_io_clone);
-> > > -
-> > > -       if (bio->bi_status && !orig_bio->bi_status)
-> > > -               orig_bio->bi_status =3D bio->bi_status;
-> > > -
-> > > -       if (md_io_clone->start_time)
-> > > -               bio_end_io_acct(orig_bio, md_io_clone->start_time);
-> > > -
-> > > -       bio_put(bio);
-> > > -       percpu_ref_put(&mddev->active_io);
-> > > -}
-> > > -EXPORT_SYMBOL_GPL(md_free_cloned_bio);
-> > > -
-> > >  /* md_allow_write(mddev)
-> > >   * Calling this ensures that the array is marked 'active' so that wr=
-ites
-> > >   * may proceed without blocking.  It is important to call this befor=
-e
-> > > diff --git a/drivers/md/md.h b/drivers/md/md.h
-> > > index ac84289664cd..5d57fee22901 100644
-> > > --- a/drivers/md/md.h
-> > > +++ b/drivers/md/md.h
-> > > @@ -917,7 +917,6 @@ extern void md_finish_reshape(struct mddev *mddev=
-);
-> > >  void md_submit_discard_bio(struct mddev *mddev, struct md_rdev *rdev=
-,
-> > >                         struct bio *bio, sector_t start, sector_t siz=
-e);
-> > >  void md_account_bio(struct mddev *mddev, struct bio **bio);
-> > > -void md_free_cloned_bio(struct bio *bio);
-> > >
-> > >  extern bool __must_check md_flush_request(struct mddev *mddev, struc=
-t bio *bio);
-> > >  void md_write_metadata(struct mddev *mddev, struct md_rdev *rdev,
-> > > diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> > > index a8e8d431071b..dc0c680ca199 100644
-> > > --- a/drivers/md/raid5.c
-> > > +++ b/drivers/md/raid5.c
-> > > @@ -6217,7 +6217,12 @@ static bool raid5_make_request(struct mddev *m=
-ddev, struct bio * bi)
-> > >
-> > >         mempool_free(ctx, conf->ctx_pool);
-> > >         if (res =3D=3D STRIPE_WAIT_RESHAPE) {
-> > > -               md_free_cloned_bio(bi);
-> > > +               DECLARE_COMPLETION_ONSTACK(done);
-> > > +               WRITE_ONCE(bi->bi_private, &done);
-> > > +
-> > > +               bio_endio(bi);
-> >
-> > Hi Ben
-> >
-> > You gave an explanation why it doesn't need WRITE_ONCE. As you said,
-> > bio_endio uses atomic_dec_and_test, so it guarantees a full memory
-> > barrier. Why do you use WRITE_ONCE here?
->
-> You're correct. I don't believe it's necessary. The compiler has to
-> update bi->bi_private before calling bio_endio(bi), which can free bi,
-> and either the bio was never chained, and bi->bi_private will be read by
-> the same process that set it, or it was chained, and the
-> atomic_dec_and_test() in bio_remaining_done() will guarantee a memory
-> barrier.
->
-> I just patterned my updated fix off your idea, and left the WRITE_ONCE
-> there because it doesn't really hurt anything, since this is already the
-> slow (and unlikely) path. I can pull it out if you'd like.
-
-Thanks for the explanation. It's good to me to keep it.
-
->
-> I actually have another question about this code. My patch doesn't mess
-> with the code at the end of make_stripe_request() to return
-> STRIPE_WAIT_RESHAPE, but I'm not sure that it's right. That code
-> includes:
->
->                 bi->bi_status =3D BLK_STS_RESOURCE;
->
-> This will update the orig_bio's bi_status in md_end_clone_io():
->
->         if (bio->bi_status && !orig_bio->bi_status)
->                 orig_bio->bi_status =3D bio->bi_status;
->
-> For dm-raid, that orig_bio is itself a clone, and will eventually
-> get ended with DM_MAPIO_REQUEUE, which will requeue the actual
-> original bio (assuming that this happens when the device is
-> in a noflush suspend).
->
-> But for md, md_handle_request() can just loop and retry it. If the
-> mddev->pers->make_request() call succeeds on retry, the orig_bio will
-> still have the BLK_STS_RESOURCE status that got set when the earlier
-> call to make_stripe_request() returned STRIPE_WAIT_RESHAPE.
->
-> Perhaps make_stripe_request() shouldn't set bi->bi_status if
-> it's going to return STRIPE_WAIT_RESHAPE. The only thing I can see that
-> it does is set orig_bio->bi_status, which I don't think we want it to
-> do. Am I missing something here?
-
-It's good to me to remove the line of setting BLK_STS_RESOURCE.
-
-Regards
-Xiao
->
-> -Ben
->
-> >
-> > Regards
-> > Xiao
-> >
-> >
-> > > +
-> > > +               wait_for_completion(&done);
-> > >                 return false;
-> > >         }
-> > >
-> > > --
-> > > 2.53.0
-> > >
->
-
+On 4/8/26 9:58 PM, John Garry wrote:
+> On 08/04/2026 16:41, Hannes Reinecke wrote:
+>> On 4/8/26 13:28, John Garry wrote:
+>>> On 02/03/2026 12:41, Nilay Shroff wrote:
+>>>>> +
+>>>>>   void mpath_add_sysfs_link(struct mpath_disk *mpath_disk)
+>>>>>   {
+>>>>>       struct mpath_head *mpath_head = mpath_disk->mpath_head;
+>>>>> @@ -793,6 +868,8 @@ struct mpath_head *mpath_alloc_head(void)
+>>>>>       mutex_init(&mpath_head->lock);
+>>>>>       kref_init(&mpath_head->ref);
+>>>>> +    mpath_head->delayed_removal_secs = 0;
+>>>>> +
+>>>>>       INIT_WORK(&mpath_head->requeue_work, mpath_requeue_work);
+>>>>>       spin_lock_init(&mpath_head->requeue_lock);
+>>>>>       bio_list_init(&mpath_head->requeue_list);
+>>>>
+>>>> I think we also need to initialize ->drv_module here.
+>>>
+>>> Hi Nilay,
+>>>
+>>> I am just coming back to this now. About NVMe multipath delayed disk removal, did you consider a blktests testcase to cover it? I might look at it if I have a chance (and it makes sense to do so).
+>>>
+>>
+>> That look patently like the 'queue_if_no_path' feature from dm- multipath. Any chance of reconciling these two?
+> 
+> You mean a common blktests testcase, right?
+> 
+> For NVMe, that test would:
+> a. try to remove NVMe ko when we have the delayed removal active
+> b. ensure that we can queue for no path
+> 
+> I suppose that a common testcase could be possible (with dm mpath), but doesn't dm have its own testsuite?
+> 
+Yes, I'd add a blktest for 'queue_if_no_path' feature. But as we know we have
+separate test suite for dm under blktests, I'd first target nvme testcase and
+then later add another testcase for dm-multipath.
+Thanks,
+--Nilay
