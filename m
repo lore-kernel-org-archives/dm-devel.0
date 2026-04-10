@@ -1,248 +1,233 @@
-Received: from zeniv.linux.org.uk (zeniv.linux.org.uk [62.89.141.173])
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7156D3E314E;
-	Thu,  9 Apr 2026 18:12:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=62.89.141.173
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26B1938C2C0
+	for <dm-devel@lists.linux.dev>; Fri, 10 Apr 2026 07:06:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775758382; cv=none; b=jPBFkce5IdXM1oR73zp4d1LQl0Kwxcrj3NcvsS19vR4mmxL8wW/vH//PX2n7RpmzuRHzssvYEPhl5QPncuxqBy+krKZnaIm0reghk/4NWMmfYlJ8evh3v7iUEaEc0I+SF6w4e1Ha4sSEUxrh4xsoCtEMjb8aPXFlJblfS6a99es=
+	t=1775804818; cv=none; b=WlfyBr/KvV3BbLNA64xQtZWphllIkdTqsjEL0Ebno+sTM2UhQzDij4M5KlkRR7+w6lAvKzDIuVQgvjJnGOX5/5ZYHgS0yQXn89HKIcaGaKPP/ddOyehaJ/uRu4LCRMZmqxwW84BDrGMC9YGXY0wHK86yZCpfavX5tc23A//5c/U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775758382; c=relaxed/simple;
-	bh=BoGW7oywgvm57yYmgFIJhKPYzBfyhEW/uN+KSu6heaU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Z1pkP+nYR0+2vauJLLzvKfLodZ7EBKfx8ohRzW6suEJnaHscQ4K//wJ7y+uvbvFBWGNcUG/+A0YIABFmqUyBZ8NS1VCLOEy6CEBGLnc7RZqBdLn9hWKo5XW/dWgWg1Fas/wZxp/gVYCP0n4sY3yf/wK+9LX+VXoeij5b9l9mkaI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk; spf=none smtp.mailfrom=ftp.linux.org.uk; dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.b=JJcsCEca; arc=none smtp.client-ip=62.89.141.173
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=ftp.linux.org.uk
+	s=arc-20240116; t=1775804818; c=relaxed/simple;
+	bh=7924LyPz+7XslcATVmHCF21cqIc92A+jvphY+OSRdjA=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=DKbdLNdjipKgAsZgig7VLwSaMFJEu1UhCywilzKBGdBtIyEMVvg47RGfqDQ5WqTSqdm3tU2WG5ALXh9gdsnQ04BZWBK5aBJ7be4Y7TbGRVdjEsSOHqygqzokChF5vOXHuE1fO3g0688roLhVxtdRNL/2mjSGEFnBmUqPJFB1jiY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=IY3mkX2W; arc=none smtp.client-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.b="JJcsCEca"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:Content-Type:
-	MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=BoGW7oywgvm57yYmgFIJhKPYzBfyhEW/uN+KSu6heaU=; b=JJcsCEcaKqyNrvJOUZ8XOnA1AS
-	yC//2gnLRa8FcBRiXofOYljopOoyt9r8CbkWaLEFmbUVfW5qK5utkUh3D77jxlkhKoZiYVbvdTEnm
-	X8jEr88bUddVEJ+24e8elVa7rPEDm9C+KeO3Yi+QSp+riwZi9Be8u3P2jnyNq7RhzU24dEi9YT5JB
-	9o5OjQL5vQk2h32ksN+l6XHB7LZbu7YtKRAMPXU1ZH+Yata0JOXemtl88QWI3UJ7mBXR7GCgddkg5
-	qrhpzNPrKwHYiMCapxKfC0E4ZwUatWZBULD1y88efyo7haqTewJrOOn317SRlKBwAg9TXV76h3bsC
-	A/eZOWQA==;
-Received: from viro by zeniv.linux.org.uk with local (Exim 4.99.1 #2 (Red Hat Linux))
-	id 1wAtvH-00000003xj6-26He;
-	Thu, 09 Apr 2026 18:16:11 +0000
-Date: Thu, 9 Apr 2026 19:16:11 +0100
-From: Al Viro <viro@zeniv.linux.org.uk>
-To: Philipp Hahn <phahn-oss@avm.de>
-Cc: amd-gfx@lists.freedesktop.org, apparmor@lists.ubuntu.com,
-	bpf@vger.kernel.org, ceph-devel@vger.kernel.org, cocci@inria.fr,
-	dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
-	gfs2@lists.linux.dev, intel-gfx@lists.freedesktop.org,
-	intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev,
-	kvm@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-	linux-block@vger.kernel.org, linux-bluetooth@vger.kernel.org,
-	linux-btrfs@vger.kernel.org, linux-cifs@vger.kernel.org,
-	linux-clk@vger.kernel.org, linux-erofs@lists.ozlabs.org,
-	linux-ext4@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-gpio@vger.kernel.org, linux-hyperv@vger.kernel.org,
-	linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-leds@vger.kernel.org, linux-media@vger.kernel.org,
-	linux-mips@vger.kernel.org, linux-mm@kvack.org,
-	linux-modules@vger.kernel.org, linux-mtd@lists.infradead.org,
-	linux-nfs@vger.kernel.org, linux-omap@vger.kernel.org,
-	linux-phy@lists.infradead.org, linux-pm@vger.kernel.org,
-	linux-rockchip@lists.infradead.org, linux-s390@vger.kernel.org,
-	linux-scsi@vger.kernel.org, linux-sctp@vger.kernel.org,
-	linux-security-module@vger.kernel.org, linux-sh@vger.kernel.org,
-	linux-sound@vger.kernel.org,
-	linux-stm32@st-md-mailman.stormreply.com,
-	linux-trace-kernel@vger.kernel.org, linux-usb@vger.kernel.org,
-	linux-wireless@vger.kernel.org, netdev@vger.kernel.org,
-	ntfs3@lists.linux.dev, samba-technical@lists.samba.org,
-	sched-ext@lists.linux.dev, target-devel@vger.kernel.org,
-	tipc-discussion@lists.sourceforge.net, v9fs@lists.linux.dev,
-	Julia Lawall <Julia.Lawall@inria.fr>,
-	Nicolas Palix <nicolas.palix@imag.fr>, Chris Mason <clm@fb.com>,
-	David Sterba <dsterba@suse.com>, Ilya Dryomov <idryomov@gmail.com>,
-	Alex Markuze <amarkuze@redhat.com>,
-	Viacheslav Dubeyko <slava@dubeyko.com>,
-	Theodore Ts'o <tytso@mit.edu>,
-	Andreas Dilger <adilger.kernel@dilger.ca>,
-	Steve French <sfrench@samba.org>,
-	Paulo Alcantara <pc@manguebit.org>,
-	Ronnie Sahlberg <ronniesahlberg@gmail.com>,
-	Shyam Prasad N <sprasad@microsoft.com>, Tom Talpey <tom@talpey.com>,
-	Bharath SM <bharathsm@microsoft.com>,
-	Eric Van Hensbergen <ericvh@kernel.org>,
-	Latchesar Ionkov <lucho@ionkov.net>,
-	Dominique Martinet <asmadeus@codewreck.org>,
-	Christian Schoenebeck <linux_oss@crudebyte.com>,
-	Gao Xiang <xiang@kernel.org>, Chao Yu <chao@kernel.org>,
-	Yue Hu <zbestahu@gmail.com>, Jeffle Xu <jefflexu@linux.alibaba.com>,
-	Sandeep Dhavale <dhavale@google.com>,
-	Hongbo Li <lihongbo22@huawei.com>,
-	Chunhai Guo <guochunhai@vivo.com>,
-	Miklos Szeredi <miklos@szeredi.hu>,
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Kees Cook <kees@kernel.org>, Tony Luck <tony.luck@intel.com>,
-	"Guilherme G. Piccoli" <gpiccoli@igalia.com>,
-	Jan Kara <jack@suse.com>, Phillip Lougher <phillip@squashfs.org.uk>,
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Masami Hiramatsu <mhiramat@kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Tejun Heo <tj@kernel.org>, David Vernet <void@manifault.com>,
-	Andrea Righi <arighi@nvidia.com>,
-	Changwoo Min <changwoo@igalia.com>, Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Juri Lelli <juri.lelli@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Luis Chamberlain <mcgrof@kernel.org>,
-	Petr Pavlu <petr.pavlu@suse.com>,
-	Daniel Gomez <da.gomez@kernel.org>,
-	Sami Tolvanen <samitolvanen@google.com>,
-	Aaron Tomlin <atomlin@atomlin.com>,
-	Sylwester Nawrocki <s.nawrocki@samsung.com>,
-	Liam Girdwood <lgirdwood@gmail.com>,
-	Mark Brown <broonie@kernel.org>, Jaroslav Kysela <perex@perex.cz>,
-	Takashi Iwai <tiwai@suse.com>, Max Filippov <jcmvbkbc@gmail.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	John Johansen <john.johansen@canonical.com>,
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	David Ahern <dsahern@kernel.org>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
-	Simon Horman <horms@kernel.org>,
-	Marcel Holtmann <marcel@holtmann.org>,
-	Johan Hedberg <johan.hedberg@gmail.com>,
-	Luiz Augusto von Dentz <luiz.dentz@gmail.com>,
-	Alexei Starovoitov <ast@kernel.org>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Jesper Dangaard Brouer <hawk@kernel.org>,
-	John Fastabend <john.fastabend@gmail.com>,
-	Stanislav Fomichev <sdf@fomichev.me>,
-	Jamal Hadi Salim <jhs@mojatatu.com>, Jiri Pirko <jiri@resnulli.us>,
-	Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>,
-	Xin Long <lucien.xin@gmail.com>,
-	Trond Myklebust <trondmy@kernel.org>,
-	Anna Schumaker <anna@kernel.org>,
-	Chuck Lever <chuck.lever@oracle.com>,
-	Jeff Layton <jlayton@kernel.org>, NeilBrown <neil@brown.name>,
-	Olga Kornievskaia <okorniev@redhat.com>,
-	Dai Ngo <Dai.Ngo@oracle.com>, Jon Maloy <jmaloy@redhat.com>,
-	Johannes Berg <johannes@sipsolutions.net>,
-	Catalin Marinas <catalin.marinas@arm.com>,
-	Russell King <linux@armlinux.org.uk>,
-	John Crispin <john@phrozen.org>,
-	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-	Yoshinori Sato <ysato@users.sourceforge.jp>,
-	Rich Felker <dalias@libc.org>,
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
-	Andrzej Hajda <andrzej.hajda@intel.com>,
-	Neil Armstrong <neil.armstrong@linaro.org>,
-	Robert Foss <rfoss@kernel.org>,
-	Laurent Pinchart <Laurent.pinchart@ideasonboard.com>,
-	Jonas Karlman <jonas@kwiboo.se>,
-	Jernej Skrabec <jernej.skrabec@gmail.com>,
-	Maarten Lankhorst <maarten.lankhorst@linux.intel.com>,
-	Maxime Ripard <mripard@kernel.org>,
-	Thomas Zimmermann <tzimmermann@suse.de>,
-	David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>,
-	Zhenyu Wang <zhenyuw.linux@gmail.com>,
-	Zhi Wang <zhi.wang.linux@gmail.com>,
-	Jani Nikula <jani.nikula@linux.intel.com>,
-	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
-	Rodrigo Vivi <rodrigo.vivi@intel.com>,
-	Tvrtko Ursulin <tursulin@ursulin.net>,
-	Alex Deucher <alexander.deucher@amd.com>,
-	Christian =?iso-8859-1?Q?K=F6nig?= <christian.koenig@amd.com>,
-	Sandy Huang <hjc@rock-chips.com>,
-	Heiko =?iso-8859-1?Q?St=FCbner?= <heiko@sntech.de>,
-	Andy Yan <andy.yan@rock-chips.com>,
-	Igor Russkikh <irusskikh@marvell.com>,
-	Andrew Lunn <andrew+netdev@lunn.ch>,
-	Pavan Chebbi <pavan.chebbi@broadcom.com>,
-	Michael Chan <mchan@broadcom.com>,
-	Potnuri Bharat Teja <bharat@chelsio.com>,
-	Tony Nguyen <anthony.l.nguyen@intel.com>,
-	Przemek Kitszel <przemyslaw.kitszel@intel.com>,
-	Taras Chornyi <taras.chornyi@plvision.eu>,
-	Maxime Coquelin <mcoquelin.stm32@gmail.com>,
-	Alexandre Torgue <alexandre.torgue@foss.st.com>,
-	Iyappan Subramanian <iyappan@os.amperecomputing.com>,
-	Keyur Chudgar <keyur@os.amperecomputing.com>,
-	Quan Nguyen <quan@os.amperecomputing.com>,
-	Heiner Kallweit <hkallweit1@gmail.com>,
-	Marc Zyngier <maz@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
-	Andrew Lunn <andrew@lunn.ch>,
-	Gregory Clement <gregory.clement@bootlin.com>,
-	Sebastian Hesselbarth <sebastian.hesselbarth@gmail.com>,
-	Vinod Koul <vkoul@kernel.org>, Linus Walleij <linusw@kernel.org>,
-	Ulf Hansson <ulf.hansson@linaro.org>,
-	Heiko Carstens <hca@linux.ibm.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	"Martin K. Petersen" <martin.petersen@oracle.com>,
-	Eduardo Valentin <edubezval@gmail.com>, Keerthy <j-keerthy@ti.com>,
-	"Rafael J. Wysocki" <rafael@kernel.org>,
-	Daniel Lezcano <daniel.lezcano@kernel.org>,
-	Zhang Rui <rui.zhang@intel.com>, Lukasz Luba <lukasz.luba@arm.com>,
-	Alex Williamson <alex@shazbot.org>,
-	Mark Greer <mgreer@animalcreek.com>,
-	Miquel Raynal <miquel.raynal@bootlin.com>,
-	Richard Weinberger <richard@nod.at>,
-	Vignesh Raghavendra <vigneshr@ti.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Kieran Bingham <kieran.bingham@ideasonboard.com>,
-	Mauro Carvalho Chehab <mchehab@kernel.org>,
-	Joerg Roedel <joro@8bytes.org>, Will Deacon <will@kernel.org>,
-	Robin Murphy <robin.murphy@arm.com>, Lee Jones <lee@kernel.org>,
-	Pavel Machek <pavel@kernel.org>, Dave Penkler <dpenkler@gmail.com>,
-	"K. Y. Srinivasan" <kys@microsoft.com>,
-	Haiyang Zhang <haiyangz@microsoft.com>,
-	Wei Liu <wei.liu@kernel.org>, Dexuan Cui <decui@microsoft.com>,
-	Long Li <longli@microsoft.com>, Justin Sanders <justin@coraid.com>,
-	Jens Axboe <axboe@kernel.dk>, Georgi Djakov <djakov@kernel.org>,
-	Michael Turquette <mturquette@baylibre.com>,
-	Stephen Boyd <sboyd@kernel.org>,
-	Philipp Zabel <p.zabel@pengutronix.de>,
-	Borislav Petkov <bp@alien8.de>,
-	Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Pali =?iso-8859-1?Q?Roh=E1r?= <pali@kernel.org>,
-	Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Subject: Re: [PATCH 00/61] treewide: Use IS_ERR_OR_NULL over manual NULL
- check - refactor
-Message-ID: <20260409181611.GP3836593@ZenIV>
-References: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="IY3mkX2W"
+Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 639Gd0Fv773967;
+	Fri, 10 Apr 2026 07:06:41 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=jjdWvt
+	z81DpzP/9ibBKHCS6i67LOXAZzB1JC038nklg=; b=IY3mkX2WeyMQTbT8hnVZaJ
+	rN0zYlL6adx4Jb2VYc69NL1EpGgbHt42QIRbp+M6O1KY/Xw17Y9fJFBXZcwLcZRF
+	YN791fdNvGK5vzTf9aYuNQEEeCtIMyn2ZrjfnHfGjGWRodbBuN+ePco25bfl4OEo
+	/hS8G//fXCMsmTVa45AjhIi2PZi9JIMMk7x1iQMwigCc8mHF4idgg9rUM4MtFGbX
+	yk0bWsQSBkXsvjR1RXaUsgsnRVS7q4C4ZLT0KXuHaA/LYm92rFViMeff5khQJJTk
+	+9Q8A8fYudYZU3mHCnU0D3XZFx3m2PFgYHKTfX1NYcycNvFO0+rIzIKpb1Ii50DA
+	==
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4dcn2hqpaa-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 10 Apr 2026 07:06:41 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 63A2ejTN013844;
+	Fri, 10 Apr 2026 07:06:41 GMT
+Received: from smtprelay02.wdc07v.mail.ibm.com ([172.16.1.69])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4dcmf4eypm-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Fri, 10 Apr 2026 07:06:41 +0000
+Received: from smtpav04.wdc07v.mail.ibm.com (smtpav04.wdc07v.mail.ibm.com [10.39.53.231])
+	by smtprelay02.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 63A76e1t31261422
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Fri, 10 Apr 2026 07:06:40 GMT
+Received: from smtpav04.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 9363658052;
+	Fri, 10 Apr 2026 07:06:40 +0000 (GMT)
+Received: from smtpav04.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id B83B65805E;
+	Fri, 10 Apr 2026 07:06:33 +0000 (GMT)
+Received: from [9.39.26.31] (unknown [9.39.26.31])
+	by smtpav04.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Fri, 10 Apr 2026 07:06:33 +0000 (GMT)
+Message-ID: <da2bfbb0-70ef-4c3a-a235-1343b4a02489@linux.ibm.com>
+Date: Fri, 10 Apr 2026 12:36:31 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260310-b4-is_err_or_null-v1-0-bd63b656022d@avm.de>
-Sender: Al Viro <viro@ftp.linux.org.uk>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 07/13] libmultipath: Add delayed removal support
+To: John Garry <john.g.garry@oracle.com>, Hannes Reinecke <hare@suse.de>,
+        hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
+        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+        hare@suse.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20260225153225.1031169-1-john.g.garry@oracle.com>
+ <20260225153225.1031169-8-john.g.garry@oracle.com>
+ <bc006d17-22b6-49d5-9e04-02eab7dab729@linux.ibm.com>
+ <74eb1f9b-265e-4264-9575-177de6c924a0@oracle.com>
+ <6d7a4076-a4ad-4185-8e82-8e27d704d20e@suse.de>
+ <c5334a6b-8089-4ee5-abd3-8340133db29a@oracle.com>
+ <79725a83-3dc1-4398-ac86-c3e317e0e107@linux.ibm.com>
+ <ccfc867c-e744-42a2-9b22-47245a6c06d7@oracle.com>
+Content-Language: en-US
+From: Nilay Shroff <nilay@linux.ibm.com>
+In-Reply-To: <ccfc867c-e744-42a2-9b22-47245a6c06d7@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-TM-AS-GCONF: 00
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDEwMDA2MSBTYWx0ZWRfX3atOYmuSqHgA
+ 83ISnRFcZNQmY4UX6drZl8sj9IRocDy/eLf2LMo/pdmrYODFzDVlBNwjCEuNzwTKblBhdFha22I
+ zOz74ImcGcc8CyAY4tk19mFAxQFWZXtYrrlp0z8LijDUhh0FyCG7p2nAUOIxp+Eyb25ldQEi7nV
+ S+m2xqT8kJ2PkLW6FnVPKW5fI8KIhZ8G4Fgq/kUSLao/I6kreU+VJcPrH3Ey17eosJGS/d01CFw
+ VxBRPoycpV79PSwXaJyFdDh1oPgKmfskOb/Eh8J5v1v7sQGiI3B1P7OlYJmwpShcSIE5LlAbRbT
+ 5+5YZSrogzEKU17slYtXS4JnkrZ/FM6RQdh4ikELC1co56qN/QtVa4u87JbebHP6PZZ69bk1lcy
+ FBT1DFQl9YlyBsRB/4pgSVwWkFtoEBSSaaRJ9rcXyfN5YnSj+kU0kHeIPgaemG+Yx1EIb1RvDpH
+ Ehv6WC85ViFsFuNQXDw==
+X-Proofpoint-GUID: 9fyxScA-pcIiFl_bT5Yynx1JEic1pTK3
+X-Authority-Analysis: v=2.4 cv=a/wAM0SF c=1 sm=1 tr=0 ts=69d8a181 cx=c_pps
+ a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
+ a=IkcTkHD0fZMA:10 a=A5OVakUREuEA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=V8glGbnc2Ofi9Qvn3v5h:22 a=hYD4mLzqdKOEPKpwNsQA:9
+ a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
+X-Proofpoint-ORIG-GUID: 9fyxScA-pcIiFl_bT5Yynx1JEic1pTK3
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-10_02,2026-04-09_02,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ bulkscore=0 clxscore=1015 spamscore=0 impostorscore=0 priorityscore=1501
+ phishscore=0 lowpriorityscore=0 adultscore=0 malwarescore=0 suspectscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2604010000 definitions=main-2604100061
 
-On Tue, Mar 10, 2026 at 12:48:26PM +0100, Philipp Hahn wrote:
-> While doing some static code analysis I stumbled over a common pattern,
-> where IS_ERR() is combined with a NULL check. For that there is
-> IS_ERR_OR_NULL().
+On 4/9/26 6:30 PM, John Garry wrote:
+> On 09/04/2026 07:37, Nilay Shroff wrote:
+>>>
+>>> You mean a common blktests testcase, right?
+>>>
+>>> For NVMe, that test would:
+>>> a. try to remove NVMe ko when we have the delayed removal active
+>>> b. ensure that we can queue for no path
+>>>
+>>> I suppose that a common testcase could be possible (with dm mpath), but doesn't dm have its own testsuite?
+>>>
+>> Yes, I'd add a blktest for 'queue_if_no_path' feature. But as we know we have
+>> separate test suite for dm under blktests, I'd first target nvme testcase and
+>> then later add another testcase for dm-multipath.
+> 
+> Testing a. is a challenge to be effective, as we would typically not be able to remove the nvme modules anyway due to many other references.
+> 
+> For b, how about something like the following:
+> 
+> set_conditions() {
+>      _set_nvme_trtype "$@"
+> }
+> 
+> _delayed_nvme_reconnect_ctrl() {
+>      sleep 2
+>      _nvme_connect_subsys
+> }
+> 
+> test() {
+>      echo "Running ${TEST_NAME}"
+> 
+>      _setup_nvmet
+> 
+>      local nvmedev
+>      local ns
+>      local bytes_written
+> 
+>      _nvmet_target_setup
+>      _nvme_connect_subsys
+> 
+>      # Part a: Ensure writes fail when no path returns
+>      nvmedev=$(_find_nvme_dev "${def_subsysnqn}")
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      echo 10 > "/sys/block/"$ns"/delayed_removal_secs"
+>      bytes_written=$(run_xfs_io_pwritev2 /dev/"$ns" 4096)
+>      if [ "$bytes_written" != 4096 ]; then
+>          echo "could not write successfully initially"
+>      fi
+>      sleep 1
+>      _nvme_disconnect_ctrl "${nvmedev}"
+>      sleep 1
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      if [[ "${ns}" = "" ]]; then
+>          echo "could not find ns after disconnect"
+>      fi
+>      bytes_written=$(run_xfs_io_pwritev2 /dev/"$ns" 4096)
+>      if [ "$bytes_written" == 4096 ]; then
+>          echo "wrote successfully after disconnect"
+>      fi
+>      sleep 10
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      if [[ !"${ns}" = "" ]]; then
+>          echo "found ns after delayed removal"
+>      fi
+> 
+>      #echo "now part 2"
+>      # Part b: Ensure writes work for intermittent disconnect
+>      _nvme_connect_subsys
+> 
+>      nvmedev=$(_find_nvme_dev "${def_subsysnqn}")
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      echo 10 > "/sys/block/"$ns"/delayed_removal_secs"
+>      bytes_written=$(run_xfs_io_pwritev2 /dev/"$ns" 4096)
+>      if [ "$bytes_written" != 4096 ]; then
+>          echo "could not write successfully initially"
+>      fi
+>      sleep 1
+>      _nvme_disconnect_ctrl "${nvmedev}"
+>      sleep 1
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      if [[ "${ns}" = "" ]]; then
+>          echo "could not find ns after disconnect"
+>      fi
+>      _delayed_nvme_reconnect_ctrl &
+>      sleep 1
+>      bytes_written=$(run_xfs_io_pwritev2 /dev/"$ns" 4096)
+>      if [ "$bytes_written" != 4096 ]; then
+>          echo "could not write successfully with reconnect"
+>      fi
 
-... and valid uses of IS_ERR_OR_NULL are rare as hen teeth.
-Most of those are "I'm not sure how this function returns an
-error, let's use that just in case".
+It seems there may be a race here if we attempt to write to $ns before
+the reconnect has completed in _delayed_nvme_reconnect_ctrl.
 
-Please, do not introduce more of that crap.
+If the intention is simply to verify that the controller reconnect occurs
+within the delayed removal window and test pwrite, then it may be sufficient
+to:
+- perform the reconnect, and
+- then validate the write (pwrite) afterwards.
+
+In that case, we could either:
+- run _delayed_nvme_reconnect_ctrl in the foreground, or
+- open-code the reconnect directly in the script before issuing the write.
+
+>      sleep 10
+>      ns=$(_find_nvme_ns "${def_subsys_uuid}")
+>      if [[ "${ns}" = "" ]]; then
+>          echo "could not find ns after delayed reconnect"
+>      fi
+> 
+>      # Final tidy-up
+>      echo 0 > /sys/block/"$ns"/delayed_removal_secs
+>      nvmedev=$(_find_nvme_dev "${def_subsysnqn}")
+>      _nvme_disconnect_ctrl "${nvmedev}"
+>      _nvmet_target_cleanup
+> 
+>      echo "Test complete"
+> }
+
+Otherwise overall this looks good to me.
+
+Thanks,
+--Nilay
