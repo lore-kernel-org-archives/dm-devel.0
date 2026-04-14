@@ -1,146 +1,106 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from dggsgout12.his.huawei.com (dggsgout12.his.huawei.com [45.249.212.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A219245020
-	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 00:22:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 51B911C84A0
+	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 01:25:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776126176; cv=none; b=DJVrbm8nR7AVxZtS97a6WsaLLno8oFYaYl6tTikYk7x2JpErYGb7x410Dccrk9ilLYJTlFjMijb4HXET1TV+cufp7H2DCucdfkvKnKRqEIAymvw0D/YA+AlRqx48eBjWVpDqmZaXkzvm2kx1DMF47zqPlSpD6JPXzj26TY1tHU4=
+	t=1776129929; cv=none; b=f69VkRgfXHloqbFK56QWj4fESJ5K4k+OFax9XuJx1O560FaEzLe2GqvyVWOFHnnpriGtCld49DrWXHJkj9IATUgighdqJSLulO43qr0mvN+Dl8JqBVwrBT3JLqh3BHYB5Qtc7D/cDeKCYpZSk7uBUl9Ftmsg0ZT788mDEJXo8BI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776126176; c=relaxed/simple;
-	bh=LGXCPK0WIeb96A3NC8ZkfX/nGxwdjBOpBz9Knpay8YQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=O5qN7qB8InOUXemEqTVXLaDzWK7qU1jXjuKacarZebsTt8QbIDYSxI/NlzA5cPvDayNY7Wtck3jjQuR9pQ0pO4HUUUYWBFLoz6m0uoNVD1zwv8id/yB5Qlpl738fqlqGnqN4J+WiMuju2pdpidtdhFIeQ7xAOFD4VrAofxtuSmk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BZ37BC+f; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BZ37BC+f"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1776126174;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YFqV/KOxxVZt5oI9jDOVr4WGcOcSzlwNUFUrpU5i+XY=;
-	b=BZ37BC+fSis61rbtsDCSqRsZtw3SHhOTojnZS1QdJ+CGaHT1i/VQnmaL41RPzcNmf0ogd0
-	cTFwMvaSitDVB+qtgm4UTEOwZMOl5OLittc+SeXtg+NaSN9Mnon8Z/Z+oDTDryyCNK3LNe
-	7Qz28k+ciCUVJQNnzZet/V3Yb409Xns=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-271-gmWdqrukM1ma3swKIIxhLA-1; Mon,
- 13 Apr 2026 20:22:48 -0400
-X-MC-Unique: gmWdqrukM1ma3swKIIxhLA-1
-X-Mimecast-MFC-AGG-ID: gmWdqrukM1ma3swKIIxhLA_1776126167
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C2ED9195609D;
-	Tue, 14 Apr 2026 00:22:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4E2F519560AB;
-	Tue, 14 Apr 2026 00:22:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63E0MjWs1917474
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 13 Apr 2026 20:22:45 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63E0MjTa1917473;
-	Mon, 13 Apr 2026 20:22:45 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev, linux-integrity@vger.kernel.org,
-        Mimi Zohar <zohar@linux.ibm.com>,
-        Roberto Sassu <roberto.sassu@huawei.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>
-Subject: [PATCH 02/10] dm-ima: remove broken last_target_measured logic
-Date: Mon, 13 Apr 2026 20:22:36 -0400
-Message-ID: <20260414002244.1917447-3-bmarzins@redhat.com>
-In-Reply-To: <20260414002244.1917447-1-bmarzins@redhat.com>
-References: <20260414002244.1917447-1-bmarzins@redhat.com>
+	s=arc-20240116; t=1776129929; c=relaxed/simple;
+	bh=YAYb9y/TTjBWHdZIb4mdpDSVQ4V596B7tbzcj3SXob4=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=oUFaNX36Nk3JvBT7VEZgmzsrf1GFznJZPktsKPWzU64dvb0gQk8g/ZAth9/dd97BNu0IkaamI14c5EsVLV75G4cGaBWwZsp2uMXF8vlNbWUAn+MHOf3qCJZ+RjypKfxoJJiEkVT7LzDS0rVpU9lx9zcq/7ZUNZrFsTYa7uATprk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=45.249.212.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
+Received: from mail.maildlp.com (unknown [172.19.163.170])
+	by dggsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4fvmmW2Dt7zKHLyK
+	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 09:25:15 +0800 (CST)
+Received: from mail02.huawei.com (unknown [10.116.40.252])
+	by mail.maildlp.com (Postfix) with ESMTP id ABF0E4056B
+	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 09:25:22 +0800 (CST)
+Received: from [10.174.178.255] (unknown [10.174.178.255])
+	by APP3 (Coremail) with SMTP id _Ch0CgB3JL5_l91pFCFMAQ--.10291S3;
+	Tue, 14 Apr 2026 09:25:21 +0800 (CST)
+Message-ID: <0e53701a-2471-9b72-eef8-27b168a0f3ea@huaweicloud.com>
+Date: Tue, 14 Apr 2026 09:25:19 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: fJyD0UXTA8l-pAAtWFrKl6JFOTfds8yX_0UIMb-HDMU_1776126167
-X-Mimecast-Originator: redhat.com
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.10.0
+Subject: Re: [PATCH] md/raid5: Don't set bi_status on STRIPE_WAIT_RESHAPE
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+ Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>,
+ Song Liu <song@kernel.org>
+Cc: linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+ Xiao Ni <xni@redhat.com>, Nigel Croxon <ncroxon@redhat.com>
+References: <20260413224556.1914504-1-bmarzins@redhat.com>
+From: Li Nan <linan666@huaweicloud.com>
+In-Reply-To: <20260413224556.1914504-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+X-CM-TRANSID:_Ch0CgB3JL5_l91pFCFMAQ--.10291S3
+X-Coremail-Antispam: 1UD129KBjvJXoW7tF15Jw4fGw4xJFykAr1kXwb_yoW8WF4kpa
+	y09a1a9wn0qrykK39rJ3yUuFZ0g397try5Kan7tw4xXr1YqryF9r43JrW5WF1UZa4v93y3
+	Jr1rZryDGF4YqrDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUU90b4IE77IF4wAFF20E14v26r4j6ryUM7CY07I20VC2zVCF04k2
+	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
+	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Ar0_tr1l84ACjcxK6xIIjxv20xvEc7Cj
+	xVAFwI0_Gr1j6F4UJwA2z4x0Y4vEx4A2jsIE14v26rxl6s0DM28EF7xvwVC2z280aVCY1x
+	0267AKxVW0oVCq3wAac4AC62xK8xCEY4vEwIxC4wAS0I0E0xvYzxvE52x082IY62kv0487
+	Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0I7IYx2IY67AKxVWUJVWUGwAv7VC2z280aV
+	AFwI0_Jr0_Gr1lOx8S6xCaFVCjc4AY6r1j6r4UM4x0Y48IcVAKI48JMxk0xIA0c2IEe2xF
+	o4CEbIxvr21lc7CjxVAaw2AFwI0_JF0_Jw1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x
+	0Yz7v_Jr0_Gr1lx2IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2
+	zVAF1VAY17CE14v26r126r1DMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF
+	4lIxAIcVC0I7IYx2IY6xkF7I0E14v26r1j6r4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWU
+	CwCI42IY6I8E87Iv67AKxVWUJVW8JwCI42IY6I8E87Iv6xkF7I0E14v26r1j6r4UYxBIda
+	VFxhVjvjDU0xZFpf9x07UMnQUUUUUU=
+X-CM-SenderInfo: polqt0awwwqx5xdzvxpfor3voofrz/
 
-When it ran out of space for adding more targets to the ima_buf,
-dm_ima_measure_on_table_load() would measure the dm device early, and
-then add the rest of the targets and measure it again.
-last_target_measured was intended to flag the last target measured so
-that the device wouldn't get remeasured, if no new targets were added
-after the early measurement. But the way to code works, the dm device
-will never be measured early unless there is another target to add to
-the ima_buf.  Instead, if there is only one more target to add, that
-target was getting added to the ima_buf, but it wasn't getting
-remeasured, because last_target_measured was set. Since
-dm_ima_measure_on_table_load() only measures a device early when there
-are more targets to add, the final measurement must always happen, and
-last_target_measured is unneeded.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/dm-ima.c | 18 ++----------------
- 1 file changed, 2 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
-index a639bb0fe6c3..209221fa8bc5 100644
---- a/drivers/md/dm-ima.c
-+++ b/drivers/md/dm-ima.c
-@@ -167,7 +167,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 	size_t device_data_buf_len, target_metadata_buf_len, target_data_buf_len, l = 0;
- 	char *target_metadata_buf = NULL, *target_data_buf = NULL, *digest_buf = NULL;
- 	char *ima_buf = NULL, *device_data_buf = NULL;
--	int last_target_measured = -1;
- 	status_type_t type = STATUSTYPE_IMA;
- 	size_t cur_total_buf_len = 0;
- 	unsigned int num_targets, i;
-@@ -205,8 +204,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 	for (i = 0; i < num_targets; i++) {
- 		struct dm_target *ti = dm_table_get_target(table, i);
- 
--		last_target_measured = 0;
--
- 		/*
- 		 * First retrieve the target metadata.
- 		 */
-@@ -256,14 +253,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 
- 			memcpy(ima_buf + l, device_data_buf, device_data_buf_len);
- 			l += device_data_buf_len;
--
--			/*
--			 * If this iteration of the for loop turns out to be the last target
--			 * in the table, dm_ima_measure_data("dm_table_load", ...) doesn't need
--			 * to be called again, just the hash needs to be finalized.
--			 * "last_target_measured" tracks this state.
--			 */
--			last_target_measured = 1;
- 		}
- 
- 		/*
-@@ -277,11 +266,8 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 		l += target_data_buf_len;
- 	}
- 
--	if (!last_target_measured) {
--		dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
--
--		sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
--	}
-+	dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
-+	sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
- 
- 	/*
- 	 * Finalize the table hash, and store it in table->md->ima.inactive_table.hash,
+在 2026/4/14 6:45, Benjamin Marzinski 写道:
+> When make_stripe_request() encounters a clone bio that crosses the
+> reshape position while the reshape cannot make progress, it was setting
+> bi->bi_status to BLK_STS_RESOURCE when returning STRIPE_WAIT_RESHAPE.
+> This will update the original bio's bi_status in md_end_clone_io().
+> Afterwards, md_handle_request() will wait for the device to become
+> unsuspended and submit a new cloned bio. However, even if that clone
+> completes successfully, it will not clear the original bio's bi_status.
+> 
+> There's no need to set bi_status when retrying the bio. md will already
+> error out the bio correctly if it is set REQ_NOWAIT. Otherwise it will
+> be retried. dm-raid will already end the bio with DM_MAPIO_REQUEUE.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>   drivers/md/raid5.c | 1 -
+>   1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index dc0c680ca199..690c65cd1e29 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -6042,7 +6042,6 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
+>   	raid5_release_stripe(sh);
+>   out:
+>   	if (ret == STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(mddev)) {
+> -		bi->bi_status = BLK_STS_RESOURCE;
+>   		ret = STRIPE_WAIT_RESHAPE;
+>   		pr_err_ratelimited("dm-raid456: io across reshape position while reshape can't make progress");
+>   	}
+
+The link below leads to the same patch, which Kuai has already replied to.
+
+https://lore.kernel.org/all/20260203095156.2349174-1-yangxiuwei@kylinos.cn/
+
 -- 
-2.53.0
+Thanks,
+Nan
 
