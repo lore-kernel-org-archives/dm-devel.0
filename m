@@ -1,168 +1,164 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71CDB3009E1
-	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 18:35:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE68E1C01
+	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 19:03:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776191712; cv=none; b=Aif9Ku9b8OdowOIX56rm5kldRmXEa1dHFBySgy7sSUBdunj777aUCjnfpUNHvjZziwGo7XjW8d8zhVFng6kvK81Omvunf7DOXOnTAtsPyIh16x+okBWN5xYMQDidPxMMEeBVI92hSiiDuh0TklYfIn1Fra/FIX95iMpNaFBXsKk=
+	t=1776193441; cv=none; b=fwffpis8RdoUoVIipigBp30Yc9xdJ5VjUmQuErq8w20osEVt0RaGC5rBanuZCyiiG7W3kjq/eBYotjqJqqLo7PQbZu5yBWZPhzXlCNCC7xHNFOj/IQe5c1e5Gd870RgelnhNSB6P+ng2vxq98LjPRt80TsBQAmkMxu4uK+Lf0uM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776191712; c=relaxed/simple;
-	bh=jG3SJ2UDkFr172PJmfPN9RC1nSKIojbIeSYU8sEjGk0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=tzUHszz2/gEGzwIy4cixh1Qs4EQZdmHKpHt9rsgq4Kf4pUH9ynQiHgeARm4yvmuQae/2vepxHIM5tW7dafmWB4rUCfekUJzDeiKdkT8Slc1bJCb3eQy68hz7Ary7wyeSrl9bOs/cBjEaxetTOg492RKpPeRhh2r2z3BWos8/0/s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cpNRjK63; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1776193441; c=relaxed/simple;
+	bh=cTXsm8tj4+Aew6KZ7P/9JHRSQEBBa68fwxqOtIF4p6E=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=jhSH4cytoM+D1qA5e0S3YQLQmuKcIXdc9tiVCmKT+YqaemvAuQBZdJDKM9wcqFUJhlju1lXfBFw9yMdb9CRFO2d1bcFlgkrxLsNl8nRkmkwij9ljzIG8p8AT2QGihcR+IU5USvpV0IRnLyah3GmUNVX9x/khgcQqVH1Dcl6PEKw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=G8JI8gBq; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cpNRjK63"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="G8JI8gBq"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1776191710;
+	s=mimecast20190719; t=1776193438;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=j8P4KyMBQD5XgNwu1KSgwH6g9MpC+vp4OJ5CZE90VEw=;
-	b=cpNRjK63/in/Efwbyr2ovckM6JKaW4gjUCIoTiTerY1DwrPskmASqSNDhdjzGh/aHsW9kD
-	B6pHRNwrlSGA2GYnEOoekCxsFFpgiPnfUSUZvXeWs9oKNb4OaShsK5u6BSfm+XFkN4Z24P
-	nzyDBkxIlI9iBDTjCG52McGGRuW7WaQ=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=0rmEvvdam10Cf8MxTAK66l5x4XHEJkIkPLQ3pRrmcAw=;
+	b=G8JI8gBqRfIQS4oDp0J3Oz8ZM1f4kGTKbX398/WFSSm6bPsP/fZx+hPV76xWTJ+cAVJ98r
+	5EKh8wB6d8/rg/XV6HIKCgu1m/+1BsUsAeJHkTnQQbNoF09BocjJW1wAByzx+vPtyFxVgo
+	aB/OKhSlcysHgGyedFhsOq0cYHYJtRw=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-102-yiMExI4WP2KzT4aM278hPA-1; Tue,
- 14 Apr 2026 14:35:07 -0400
-X-MC-Unique: yiMExI4WP2KzT4aM278hPA-1
-X-Mimecast-MFC-AGG-ID: yiMExI4WP2KzT4aM278hPA_1776191706
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-288-FaphZKyqM1qFakKujGcX6g-1; Tue,
+ 14 Apr 2026 15:03:55 -0400
+X-MC-Unique: FaphZKyqM1qFakKujGcX6g-1
+X-Mimecast-MFC-AGG-ID: FaphZKyqM1qFakKujGcX6g_1776193434
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A1A60195608D;
-	Tue, 14 Apr 2026 18:35:05 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BBB7A195608F;
+	Tue, 14 Apr 2026 19:03:53 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4F981180049F;
-	Tue, 14 Apr 2026 18:35:05 +0000 (UTC)
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4385C1800451;
+	Tue, 14 Apr 2026 19:03:52 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63EIZ4D31945641
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63EJ3pfS1946415
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 14 Apr 2026 14:35:04 -0400
+	Tue, 14 Apr 2026 15:03:51 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63EIZ3ts1945640;
-	Tue, 14 Apr 2026 14:35:03 -0400
-Date: Tue, 14 Apr 2026 14:35:03 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63EJ3oId1946414;
+	Tue, 14 Apr 2026 15:03:50 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
-        linux-integrity@vger.kernel.org, Mimi Zohar <zohar@linux.ibm.com>,
-        Roberto Sassu <roberto.sassu@huawei.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>
-Subject: Re: [RFC PATCH 00/10] Fix dm-ima bugs
-Message-ID: <ad6I1yu6b26qRbEa@redhat.com>
-References: <20260414002244.1917447-1-bmarzins@redhat.com>
- <ad51kuxJuU84Amep@kernel.org>
+To: Yang Xiuwei <yangxiuwei@kylinos.cn>
+Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>,
+        Li Nan <linan666@huaweicloud.com>, Song Liu <song@kernel.org>,
+        linux-raid@vger.kernel.org, dm-devel@lists.linux.dev,
+        Xiao Ni <xni@redhat.com>, Nigel Croxon <ncroxon@redhat.com>
+Subject: [RFC PATCH] dm-raid: only requeue bios when dm is suspending.
+Date: Tue, 14 Apr 2026 15:03:50 -0400
+Message-ID: <20260414190350.1946406-1-bmarzins@redhat.com>
+In-Reply-To: <ad6FNUtSCS_zTrHW@redhat.com>
+References: <ad6FNUtSCS_zTrHW@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <ad51kuxJuU84Amep@kernel.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: VFJIhGO5I5yEH-66KPd6fmTKz7jwCYs1akNuG32aMBo_1776191706
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-MFC-PROC-ID: W7vRhKKh_iCyCVQBIsk6fV6WHWXpE-jUyMJ20SB6Fe8_1776193434
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Tue, Apr 14, 2026 at 01:12:50PM -0400, Mike Snitzer wrote:
-> On Mon, Apr 13, 2026 at 08:22:34PM -0400, Benjamin Marzinski wrote:
-> > The dm-ima code does not guarantee that the dm_ima_measure_on_*
-> > functions will not be called at the same time. Since they modify and
-> > free shared memory, this can lead to Use-After-Free errors or garbage
-> > measurements. Further, they don't make sure that the state they measure
-> > corresponds to the actual device state. For instance if table_load()
-> > runs at the same time as do_resume() on a table swap,
-> > dm_ima_measure_on_device_resume() can end up thinking the wrong table is
-> > active. Or a concurrent dm_hash_rename() and a table swap, can end up
-> > with a the new active table still using the old name. This patchset
-> > makes sure the the dm-ima function are serialized and report the correct
-> > device state.
-> > 
-> > However, the code is still messier that in could be. This is because
-> > it duplicates the current measurement events and format. I would really
-> > like to know if that is necessary. Specifically, it currently measures
-> > the following dm device and table actions:
-> > 
-> > load
-> > clear
-> > rename
-> > resume
-> > remove
-> > 
-> > I don't see the benefit of reporting changes to the inactive table, or
-> > resumes where the device does not change state. From the user's point of
-> > view, the device is still the same after these events.  At the same
-> > time, it doesn't measure device creates if no table was loaded, so you
-> > can have situations where the the first measurement for a device is a
-> > rename or a remove. A more sensible set of actions to measure would be:
-> > 
-> > create
-> > table_swap
-> > rename
-> > remove
-> > 
-> > Also, the measurement format doesn't map well to how dm device's are
-> > actually set up, in a way that makes it harder for the code and records
-> > extraneous information. First, like I mentioned before, I don't see the
-> > benefit of measuring the inactive table. Second, the name, uuid, and
-> > major/minor numbers are properties of the device, not it's table (and dm
-> > devices can't have partitions, so the minor count will always be 1). I
-> > don't see a reason to store and occasinally log this information twice,
-> > if there is an active and incative table, and it forces extra
-> > coordination between the dm_ima_measure_on_* functions.
-> > 
-> > I'm wondering it we are stuck with the current events and format, now
-> > that this has been released? Or could we bump the version, and change
-> > what events we measure, and how we format the output?
-> > 
-> > Benjamin Marzinski (10):
-> >   dm-ima: remove dm_ima_reset_data()
-> >   dm-ima: remove broken last_target_measured logic
-> >   dm-ima: Remove status_flags from dm_ima_measure_on_table_load()
-> >   dm-ima: don't copy the active table to the inactive table
-> >   dm-ima: Fix UAF errors and measuring incorrect context
-> >   dm-ima: remove new_map from dm_ima_measure_on_device_clear
-> >   dm-ima: Fix issues with dm_ima_measure_on_device_rename
-> >   dm-ima: Handle race between rename and table swap
-> >   dm-ima: Fail more gracefully in dm_ima_measure_on_*
-> >   dm-ima: use active table's size if available
-> > 
-> >  drivers/md/dm-ima.c   | 506 +++++++++++++++++++-----------------------
-> >  drivers/md/dm-ima.h   |  67 ++++--
-> >  drivers/md/dm-ioctl.c | 146 +++++++++++-
-> >  drivers/md/dm.c       |   2 +-
-> >  4 files changed, 421 insertions(+), 300 deletions(-)
-> 
-> Pretty extensive changes needed here all things considered.
-> 
-> SO I'm aware, who is using dm-ima?  I see that Tushar Sugandhi is no
-> longer at Microsoft and so he isn't cc'd on these changes.  I can
-> infer from Cc some potential users, but I just want to make sure this
-> code isn't just technical debt that we're having to carry in DM now?
+returning DM_MAPIO_REQUEUE from the target map() function only requeues
+the bio during noflush suspends. During regular operations or during
+flushing suspends, it fails the bio. Failing the bio during flushing
+suspends is the correct behavior here. We cannot handle the bio, and we
+cannot suspends while it is outstanding. But during normal operations,
+we should not push the bio back to do. Instead, wait for the reshape
+to be resumed.
 
-I don't actually know if anyone is. The issue is that the Use After Free
-crashes can happen as long as CONFIG_IMA is set, regardless of whether
-or not you have any IMA policy set.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
 
-If we don't need to care, we could just serialize the
-dm_ima_measure_on_* functions to keep them from having concurrent access
-to shared memory, and let them keep reporting bogus data if there are
-races (or simply unfortunate orderings. load then rename then resume
-currently forgets the rename, even without a race) That's a much smaller
-change, and if they're currently good enough for any users, it won't
-make them any worse.
+Yang Xiuwei, if you are still able to see I/O errors during LVM testing,
+does this patch fix them?
 
--Ben
+ drivers/md/dm-raid.c | 7 +++++++
+ drivers/md/md.h      | 1 +
+ drivers/md/raid5.c   | 6 ++++--
+ 3 files changed, 12 insertions(+), 2 deletions(-)
 
-> 
-> Thanks,
-> Mike
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 4bacdc499984..cac61d57e7e2 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3831,6 +3831,7 @@ static void raid_presuspend(struct dm_target *ti)
+ 	 * resume, raid_postsuspend() is too late.
+ 	 */
+ 	set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
++	WRITE_ONCE(mddev->dm_suspending, 1);
+ 
+ 	if (!reshape_interrupted(mddev))
+ 		return;
+@@ -3847,6 +3848,9 @@ static void raid_presuspend(struct dm_target *ti)
+ static void raid_presuspend_undo(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
++	struct mddev *mddev = &rs->md;
++
++	WRITE_ONCE(mddev->dm_suspending, 0);
+ 
+ 	clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
+ }
+@@ -3854,6 +3858,7 @@ static void raid_presuspend_undo(struct dm_target *ti)
+ static void raid_postsuspend(struct dm_target *ti)
+ {
+ 	struct raid_set *rs = ti->private;
++	struct mddev *mddev = &rs->md;
+ 
+ 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
+ 		/*
+@@ -3864,6 +3869,8 @@ static void raid_postsuspend(struct dm_target *ti)
+ 		mddev_suspend(&rs->md, false);
+ 		rs->md.ro = MD_RDONLY;
+ 	}
++	WRITE_ONCE(mddev->dm_suspending, 0);
++
+ }
+ 
+ static void attempt_restore_of_faulty_devices(struct raid_set *rs)
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index ac84289664cd..e8d7332c5cb9 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -463,6 +463,7 @@ struct mddev {
+ 	int				delta_disks, new_level, new_layout;
+ 	int				new_chunk_sectors;
+ 	int				reshape_backwards;
++	int				dm_suspending;
+ 
+ 	struct md_thread __rcu		*thread;	/* management thread */
+ 	struct md_thread __rcu		*sync_thread;	/* doing resync or reconstruct */
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 8854e024f311..d528263f92a3 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -6042,8 +6042,10 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
+ 	raid5_release_stripe(sh);
+ out:
+ 	if (ret == STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(mddev)) {
+-		bi->bi_status = BLK_STS_RESOURCE;
+-		ret = STRIPE_WAIT_RESHAPE;
++		if (!mddev_is_dm(mddev) || READ_ONCE(mddev->dm_suspending)) {
++			bi->bi_status = BLK_STS_RESOURCE;
++			ret = STRIPE_WAIT_RESHAPE;
++		}
+ 		pr_err_ratelimited("dm-raid456: io across reshape position while reshape can't make progress");
+ 	}
+ 	return ret;
+-- 
+2.50.1
 
