@@ -1,287 +1,276 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.4])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E0BCB1D61A3
-	for <dm-devel@lists.linux.dev>; Tue, 14 Apr 2026 22:12:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F018175A80
+	for <dm-devel@lists.linux.dev>; Wed, 15 Apr 2026 01:31:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.4
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776204774; cv=none; b=m3te7Zi1MyQNm2IbdkCK8rMApvw2SMwJHudlaxcGBhI0Lrv1YzTcVrCRuFzTLYglW+3KzBscbuuBWSgDKFvy0uKYokzF1/57fBoAOweQKr2zj/n1bn2DFSBinNGdIVl+kXxddKLOoErTmde2nL4Vzul/YkUwTHr1ZEnfJ9z2inM=
+	t=1776216669; cv=none; b=Wu1XVdEOjrNMHjuzMAH49F7QlHNx0I4o+V/KapKtUhSSO8FxDxddjNju/DmSnSHeqSvm93Yqikb5FeFIkeBobEs8crZkEtNWhAZANm1dzClbnxouOw+GfB6L3DnZ3bHvplxzgArYQGwcIk3OkajYQHouyAvSDQxD/H2vLA8fxkM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776204774; c=relaxed/simple;
-	bh=Vlg9t92htYv5tjtSeHo6icx36NP0b1/S28RgAstf3gM=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=VObyhbhBGbwVWTEAQiqo+1C7ygkor3+MDrrMb2PGjGkFXzhzmrQtnUcftoLxXwRtQKZpHBC05r4GV8sdeNOAo2BTh/S0UeMoPjzjcVbScIm4z0PBIsik9CSpTIcRQZUIap3urNqZOzUVLGOAXrjpzouBuhKzCF2uItI9G2MBgPg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=RMHTXNqV; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1776216669; c=relaxed/simple;
+	bh=L+loQVx5Y+tfwBEJq+sKJJPg5ZN+4dCmIRpcWGILUkg=;
+	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
+	 MIME-Version; b=mtem3S84IubRgswUwdG26Hfu0GSelD9aX9JwL6IyWdW/JE46PwNZBAeBKsBY/QFvdHwVWZKlYgGKnN3ZzBnu0OANIDqUxd83E3eI++ASyuvj7XVDaTwMYTbYMBlb31a12GrSQJReq+e2ESpZHrGndrVLE/adNO48t/+gnU9BwHE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kylinos.cn; spf=pass smtp.mailfrom=163.com; dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b=nmWj86jp; arc=none smtp.client-ip=220.197.31.4
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kylinos.cn
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="RMHTXNqV"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1776204771;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=T2h3mTrGhUN37rqfw16kBjjUI6tkwkHXpd0cu7NoOGg=;
-	b=RMHTXNqVOcUfnttOXumCWPIwCS4NwToRRGp6JBoCGph1C43WSbJ9mzJi+WdoOP0q0LsRKi
-	EY2548zfPUZKhq02v1YsfTI9xub2Bs7Rsk90ByFdU8RKHajiwjThzlTqB6xZZ/qvIulU1y
-	YHf1ZZXajKjA4jwYxR4zX3ltholPM1I=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-127-zqP8vfI1NZKl04yaKCMxDQ-1; Tue,
- 14 Apr 2026 18:12:46 -0400
-X-MC-Unique: zqP8vfI1NZKl04yaKCMxDQ-1
-X-Mimecast-MFC-AGG-ID: zqP8vfI1NZKl04yaKCMxDQ_1776204765
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 031101800365;
-	Tue, 14 Apr 2026 22:12:45 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B2C7B30001BE;
-	Tue, 14 Apr 2026 22:12:43 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63EMCgIU1956137
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 14 Apr 2026 18:12:42 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63EMCgdw1956136;
-	Tue, 14 Apr 2026 18:12:42 -0400
-Date: Tue, 14 Apr 2026 18:12:42 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
-        Bruce Johnston <bjohnsto@redhat.com>,
-        Colin Ian King <colin.i.king@gmail.com>,
-        Eric Biggers <ebiggers@kernel.org>,
-        Guillaume Gonnet <ggonnet.linux@gmail.com>,
-        Junrui Luo <moonafterrain@outlook.com>,
-        Keith Busch <kbusch@kernel.org>, Ken Raeburn <raeburn@redhat.com>,
-        Matthew Sakai <msakai@redhat.com>, Ming-Hung Tsai <mtsai@redhat.com>,
-        Rosen Penev <rosenp@gmail.com>
-Subject: [git pull] device mapper changes for 7.1
-Message-ID: <ad672n9Rn9CFIYyA@redhat.com>
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b="nmWj86jp"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=j0
+	o59kTS/Zhg7PsIWgAQ7cAffxHUiiQn3ZNVavmjMkI=; b=nmWj86jpyTbdoI/s0J
+	F9Yz2P3UNlYblQsHleHqDfxja7WK7n+rSjsk5VjTYXaVR13iPC28Vw4D5FOMmXQd
+	cNSaEfWh8yFVms/VPw2GLfsgdUW7DAm9YwgLJxliNv6zQDy05FSwuxMtGFEkCUNC
+	ZYxOR54T6y8YcVRee/06yzDeE=
+Received: from localhost.localdomain (unknown [])
+	by gzsmtp3 (Coremail) with SMTP id PigvCgC3ZrHG6d5phKZLAA--.155S2;
+	Wed, 15 Apr 2026 09:28:43 +0800 (CST)
+From: Yang Xiuwei <yangxiuwei@kylinos.cn>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>,
+	Li Nan <linan666@huaweicloud.com>,
+	Song Liu <song@kernel.org>,
+	Xiao Ni <xni@redhat.com>,
+	Nigel Croxon <ncroxon@redhat.com>,
+	linux-raid@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH] md/raid5: Don't set bi_status on STRIPE_WAIT_RESHAPE
+Date: Wed, 15 Apr 2026 09:28:38 +0800
+Message-Id: <20260415012838.395439-1-yangxiuwei@kylinos.cn>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <ad6FNUtSCS_zTrHW@redhat.com>
+References: <20260413224556.1914504-1-bmarzins@redhat.com> <0e53701a-2471-9b72-eef8-27b168a0f3ea@huaweicloud.com> <717caf7b-03ef-41d8-bbb3-f6ce5d4a49fa@fnnas.com> <ad6FNUtSCS_zTrHW@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: CtUvXKdDXsHwaCt6Q8jdPkOrryAF_jIHTn3X0JlzIOs_1776204765
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:PigvCgC3ZrHG6d5phKZLAA--.155S2
+X-Coremail-Antispam: 1Uf129KBjvAXoWfJr13KF13Ar4fAF4UGFW3Jrb_yoW8JFWfGo
+	Wvyws8A34UXwsFg3WqkF4xJw17X3yYgF9xWrW5Wr9FkFW7Jws8Can5Cr43J3y7Gw4v9r95
+	K34UXayrCF48t34fn29KB7ZKAUJUUUU8529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
+	AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvj4RMuWlDUUUU
+Sender: yangxiuwei2025@163.com
+X-CM-SenderInfo: p1dqw55lxzvxisqskqqrwthudrp/xtbC6Qu+T2ne6ctqHgAA3y
 
-Hi Linus,
+Hi Ben,
 
-Please pull the device mapper updates for 7.1. There are fixes for some
-corner case crashes in dm-cache and dm-mirror, new setup functionality for
-dm-vdo, and miscellaneous minor fixes and cleanups, especially to dm-verity.
+On Tue, Apr 14, 2026 at 02:19:33PM -0400, Benjamin Marzinski wrote:
+> Yang Xiuwei, have you verified that this fix actually solves your
+> problems? If a dm map() function completes with DM_MAPIO_REQUEUE, and
+> the device is in a noflush suspend, it shouldn't set the error on the
+> original bio, regardless of the clone bio. It should requeue the bio. If
+> a dm map() function completes with DM_MAPIO_REQUEUE, and the device
+> isn't in a noflush suspend, the original bio will always be completed
+> with an error.
+>
+> To me, it seems more likely that what you are seeing is
+> make_stripe_request() returning STRIPE_WAIT_RESHAPE when the dm device
+> isn't actually in a noflush suspend. I have seen this myself.
+>
+> -Ben
 
-The following changes since commit 11439c4635edd669ae435eec308f4ab8a0804808:
+I tested the version that removes setting bi->bi_status to BLK_STS_RESOURCE
+in the STRIPE_WAIT_RESHAPE path you described. In my environment it did
+not fix the failure below.
 
-  Linux 7.0-rc2 (2026-03-01 15:39:31 -0800)
+Sorry for the slow response. The earlier fix still did not solve the
+problem in my testing. I am not very familiar with this area yet and wanted
+to learn more before continuing the analysis, but other work meant I have
+not had time to pick it up again until now.
 
-are available in the Git repository at:
+I have not yet tested the dm-raid RFC patch from your follow-up message,
+but I plan to try it when I have time.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.1/dm-changes
+The failure was observed while running the LVM2 shell test
+lvconvert-raid-reshape-stripes-load-fail.sh. Below is the test log (kernel
+messages and harness output), followed by the script contents.
 
-for you to fetch changes up to 8c0ee19db81f0fa1ff25fd75b22b17c0cc2acde3:
+Test log:
+| [ 0:10.630]   WARNING: This metadata update is NOT backed up.
+| [ 0:10.632] aux disable_dev $dev1
+| [ 0:10.748] #lvconvert-raid-reshape-stripes-load-fail.sh:68+ aux disable_dev /dev/mapper/LVMTEST1351568pv1
+| [ 0:10.748] Disabling device /dev/mapper/LVMTEST1351568pv1 (252:5)
+| [ 0:10.868] [73439.222696] <6> 2026-01-20 13:59:47  md: reshape of RAID array mdX
+| [ 0:10.868] aux delay_dev "$dev2" 0 50
+| [ 0:10.871] #lvconvert-raid-reshape-stripes-load-fail.sh:69+ aux delay_dev /dev/mapper/LVMTEST1351568pv2 0 50
+| [ 0:10.871] check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
+| [ 0:10.886] [73439.231558] <3> 2026-01-20 13:59:47  Buffer I/O error on dev dm-5, logical block 0, async page read
+| [ 0:10.886] #lvconvert-raid-reshape-stripes-load-fail.sh:70+ check lv_first_seg_field LVMTEST1351568vg/LV1 segtype raid5_ls
+| [ 0:10.886] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
+| [ 0:10.910] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
+| [ 0:10.910] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
+| [ 0:10.910] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
+| [ 0:10.910] check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
+| [ 0:10.912] #lvconvert-raid-reshape-stripes-load-fail.sh:71+ check lv_first_seg_field LVMTEST1351568vg/LV1 stripesize 64.00k
+| [ 0:10.912] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
+| [ 0:10.933] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
+| [ 0:10.933] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
+| [ 0:10.933] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
+| [ 0:10.933] check lv_first_seg_field $vg/$lv1 data_stripes 15
+| [ 0:10.935] #lvconvert-raid-reshape-stripes-load-fail.sh:72+ check lv_first_seg_field LVMTEST1351568vg/LV1 data_stripes 15
+| [ 0:10.935] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
+| [ 0:10.956] [73439.292632] <3> 2026-01-20 13:59:47  md: super_written gets error=-5
+| [ 0:10.956] [73439.297679] <2> 2026-01-20 13:59:47  md/raid:mdX: Disk failure on dm-22, disabling device.
+| [ 0:10.956] [73439.304626] <2> 2026-01-20 13:59:47  md/raid:mdX: Operation continuing on 15 devices.
+| [ 0:10.956] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
+| [ 0:10.956] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
+| [ 0:10.956] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
+| [ 0:10.956] check lv_first_seg_field $vg/$lv1 stripes 16
+| [ 0:10.958] #lvconvert-raid-reshape-stripes-load-fail.sh:73+ check lv_first_seg_field LVMTEST1351568vg/LV1 stripes 16
+| [ 0:10.958] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
+| [ 0:10.979] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
+| [ 0:10.979] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
+| [ 0:10.979] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
+| [ 0:10.979] 
+| [ 0:10.981] kill -9 %%
+| [ 0:10.981] #lvconvert-raid-reshape-stripes-load-fail.sh:75+ kill -9 %%
+| [ 0:10.981] wait
+| [ 0:10.981] #lvconvert-raid-reshape-stripes-load-fail.sh:76+ wait
+| [ 0:10.981] rm -fr "$mount_dir/[12]"
+| [ 0:11.787] [73439.674065] <4> 2026-01-20 13:59:48  make_stripe_request: 24 callbacks suppressed
+| [ 0:11.787] [73439.674074] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.674086] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1074, lost sync page write
+| [ 0:11.787] [73439.681096] <6> 2026-01-20 13:59:48  md: mdX: reshape interrupted.
+| [ 0:11.787] [73439.682723] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.691180] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.699766] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.708347] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.716934] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.725519] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.734099] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.734574] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_check_bdev_write_error:225: comm kworker/u388:2: Error while async write back metadata
+| [ 0:11.787] [73439.742682] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.787] [73439.764081] <3> 2026-01-20 13:59:48  Aborting journal on device dm-43-8.
+| [ 0:11.787] [73439.778040] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
+| [ 0:11.788] [73439.778043] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 740, lost sync page write
+| [ 0:11.788] [73439.795025] <3> 2026-01-20 13:59:48  JBD2: I/O error when updating journal superblock for dm-43-8.
+| [ 0:11.788] [73439.802674] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_journal_check_start:85: comm cp: Detected aborted journal
+| [ 0:11.788] [73439.802673] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_journal_check_start:85: comm cp: Detected aborted journal
+| [ 0:11.788] [73440.032568] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1, lost sync page write
+| [ 0:11.788] [73440.040800] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
+| [ 0:11.788] [73440.040813] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): previous I/O error to superblock detected
+| [ 0:11.788] [73440.047569] <2> 2026-01-20 13:59:48  EXT4-fs (dm-43): Remounting filesystem read-only
+| [ 0:11.788] [73440.054948] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1, lost sync page write
+| [ 0:11.788] [73440.069663] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
+| [ 0:11.788] [73440.076428] <2> 2026-01-20 13:59:48  EXT4-fs (dm-43): Remounting filesystem read-only
+| [ 0:11.788] #lvconvert-raid-reshape-stripes-load-fail.sh:77+ rm -fr 'mnt/[12]'
+| [ 0:11.788] 
+| [ 0:11.789] sync
+| [ 0:11.789] #lvconvert-raid-reshape-stripes-load-fail.sh:79+ sync
+| [ 0:11.789] umount "$mount_dir"
+| [ 0:11.798] [73440.145596] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 82, lost async page write
+| [ 0:11.798] #lvconvert-raid-reshape-stripes-load-fail.sh:80+ umount mnt
+| [ 0:11.798] 
+| [ 0:11.814] fsck -fn "$DM_DEV_DIR/$vg/$lv1"
+| [ 0:11.814] [73440.162114] <6> 2026-01-20 13:59:48  EXT4-fs (dm-43): unmounting filesystem 86548d8e-e409-4ae8-b7d5-8b78a9b5fb50.
+| [ 0:11.814] [73440.162336] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
+| [ 0:11.814] #lvconvert-raid-reshape-stripes-load-fail.sh:82+ fsck -fn /dev/LVMTEST1351568vg/LV1
+| [ 0:11.814] fsck from util-linux 2.39.1
+| [ 0:11.816] e2fsck 1.47.0 (5-Feb-2023)
+| [ 0:11.821] fsck.ext2: Input/output error while trying to open /dev/mapper/LVMTEST1351568vg-LV1
+| [ 0:11.821] 
+| [ 0:11.821] The superblock could not be read or does not describe a valid ext2/ext3/ext4
+| [ 0:11.821] filesystem.  If the device is valid and it really contains an ext2/ext3/ext4
+| [ 0:11.821] filesystem (and not swap or ufs or something else), then the superblock
+| [ 0:11.821] is corrupt, and you might try running e2fsck with an alternate superblock:
+| [ 0:11.821]     e2fsck -b 8193 <device>
+| [ 0:11.821]  or
+| [ 0:11.821]     e2fsck -b 32768 <device>
+| [ 0:11.821] 
+| [ 0:11.821] set +vx; STACKTRACE; set -vx
+| [ 0:11.822] ##lvconvert-raid-reshape-stripes-load-fail.sh:82+ set +vx
+| [ 0:11.822] ## - /opt/K2CI_agent_tool/lvm2/test/shell/lvconvert-raid-reshape-stripes-load-fail.sh:82
+| [ 0:11.822] ## 1 STACKTRACE() called from /opt/K2CI_agent_tool/lvm2/test/shell/lvconvert-raid-reshape-stripes-load-fail.sh:82
 
-  dm cache: fix missing return in invalidate_committed's error path (2026-04-10 15:16:06 +0200)
+lvconvert-raid-reshape-stripes-load-fail.sh:
+#!/usr/bin/env bash
 
-----------------------------------------------------------------
-Device Mapper patches for 7.1
+# Copyright (C) 2017 Red Hat, Inc. All rights reserved.
+#
+# This copyrighted material is made available to anyone wishing to use,
+# modify, copy, or redistribute it subject to the terms and conditions
+# of the GNU General Public License v.2.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin Street, Fifth Floor, Boston, MA2110-1301 USA
 
-dm-vdo:
-- Make dm-vdo able to format the device itself, like other dm targets,
-  instead of needing a userspace formating program.
-- Add some sanity checks and code cleanup.
 
-dm-cache:
-- Fix crashes and hangs when operating in passthrough mode (which have
-  been around, unnoticed, since 4.12), as well as a late arriving fix for
-  an error path bug in the passthrough fix.
-- Fix a corner case memory leak.
+SKIP_WITH_LVMPOLLD=1
 
-dm-verity:
-- Another set of minor bugfixes and code cleanups to the forward error
-  correction code.
+. lib/inittest
 
-dm-mirror
-- Fix minor initialization bug
-- Fix overflow crash on a large devices with small region sizes
+# Test reshaping under io load
 
-dm-crypt
-- Reimplement elephant diffuser using AES library and minor cleanups
+case "$(uname -r)" in
+  3.10.0-862*) skip "Cannot run this test on unfixed kernel." ;;
+esac
 
-dm-core:
-- Claude found a buffer overflow in /dev/mapper/contrl ioctl handling
-- make dm_mod.wait_for correctly wait for partitions
-- minor code fixes and cleanups
+which mkfs.ext4 || skip
+aux have_raid 1 13 2 || skip
 
-----------------------------------------------------------------
-Benjamin Marzinski (1):
-      dm-mpath: don't stop probing paths at presuspend
+mount_dir="mnt"
 
-Bruce Johnston (9):
-      dm vdo: add geometry block initialization to encodings.c
-      dm vdo: add super block initialization to encodings.c
-      dm vdo: add formatting parameters to table line
-      dm vdo: add upfront validation for logical size
-      dm vdo: add geometry block encoding
-      dm vdo: add geometry block structure
-      dm vdo: add synchronous metadata I/O submission helper
-      dm vdo: add formatting logic and initialization
-      dm vdo: save the formatted metadata to disk
+cleanup_mounted_and_teardown()
+{
+	umount "$mount_dir" || true
+	aux teardown
+}
 
-Colin Ian King (1):
-      dm vdo: Fix spelling mistake "postive" -> "positive"
+aux prepare_pvs 16 32
 
-Eric Biggers (27):
-      dm-ima: use SHA-256 library
-      dm-verity-fec: correctly reject too-small FEC devices
-      dm-verity-fec: correctly reject too-small hash devices
-      dm-verity-fec: fix corrected block count stat
-      dm-verity-fec: fix the size of dm_verity_fec_io::erasures
-      dm-verity-fec: fix reading parity bytes split across blocks (take 3)
-      dm-verity: rename dm_verity::hash_blocks to dm_verity::hash_end
-      dm-verity-fec: improve documentation for Forward Error Correction
-      dm-verity-fec: replace {MAX,MIN}_RSN with {MIN,MAX}_ROOTS
-      dm-verity-fec: use standard names for Reed-Solomon parameters
-      dm-verity-fec: rename "RS block" to "RS codeword"
-      dm-verity-fec: replace io_size with block_size
-      dm-verity-fec: rename rounds to region_blocks
-      dm-verity-fec: simplify computation of rsb
-      dm-verity-fec: simplify computation of ileaved
-      dm-verity-fec: simplify deinterleaving
-      dm-verity-fec: rename block_offset to out_pos
-      dm-verity-fec: move computation of offset and rsb down a level
-      dm-verity-fec: compute target region directly
-      dm-verity-fec: pass down index_in_region instead of rsb
-      dm-verity-fec: make fec_decode_bufs() just return 0 or error
-      dm-verity-fec: log target_block instead of index_in_region
-      dm-verity-fec: improve comments for fec_read_bufs()
-      dm-verity-fec: warn even when there were no errors
-      dm-crypt: Reimplement elephant diffuser using AES library
-      dm-crypt: Make crypt_iv_operations::wipe return void
-      dm-crypt: Make crypt_iv_operations::post return void
+get_devs
 
-Guillaume Gonnet (1):
-      dm init: ensure device probing has finished in dm-mod.waitfor=
+vgcreate $SHARED -s 1M "$vg" "${DEVICES[@]}"
 
-Junrui Luo (2):
-      dm mirror: fix integer overflow in create_dirty_log()
-      dm log: fix out-of-bounds write due to region_count overflow
+trap 'cleanup_mounted_and_teardown' EXIT
 
-Keith Busch (3):
-      dm-integrity: fix mismatched queue limits
-      dm-integrity: always set the io hints
-      dm: provide helper to set stacked limits
+# Create 10-way striped raid5 (11 legs total)
+lvcreate --yes --type raid5_ls --stripesize 64K --stripes 10 -L4 -n$lv1 $vg
+check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
+check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
+check lv_first_seg_field $vg/$lv1 data_stripes 10
+check lv_first_seg_field $vg/$lv1 stripes 11
+wipefs -a "$DM_DEV_DIR/$vg/$lv1"
+mkfs -t ext4 "$DM_DEV_DIR/$vg/$lv1"
+fsck -fn "$DM_DEV_DIR/$vg/$lv1"
 
-Ken Raeburn (3):
-      dm vdo: update vdo_allocate_extended to take a field name, no types
-      dm vdo: remove redundant TYPE argument from vdo_allocate macro
-      dm vdo: add __counted_by attribute to a number of structures
+mkdir -p "$mount_dir"
+mount "$DM_DEV_DIR/$vg/$lv1" "$mount_dir"
+mkdir -p "$mount_dir/1" "$mount_dir/2"
 
-Matthew Sakai (2):
-      dm vdo indexer: validate saved zone count
-      dm vdo slab-depot: validate old zone count on load
 
-Mikulas Patocka (3):
-      dm: don't report warning when doing deferred remove
-      dm: make "dmsetup remove_all" interruptible
-      dm: fix a buffer overflow in ioctl processing
+echo 3 >/proc/sys/vm/drop_caches
+cp -r /usr/bin "$mount_dir/1" &>/dev/null &
+cp -r /usr/bin "$mount_dir/2" &>/dev/null &
+sync &
 
-Ming-Hung Tsai (9):
-      dm cache: fix null-deref with concurrent writes in passthrough mode
-      dm cache: fix write path cache coherency in passthrough mode
-      dm cache: fix write hang in passthrough mode
-      dm cache policy smq: fix missing locks in invalidating cache blocks
-      dm cache: fix concurrent write failure in passthrough mode
-      dm cache: fix dirty mapping checking in passthrough mode switching
-      dm cache: prevent entering passthrough mode after unclean shutdown
-      dm cache metadata: fix memory leak on metadata abort retry
-      dm cache: fix missing return in invalidate_committed's error path
+aux wait_for_sync $vg $lv1
+aux delay_dev "$dev2" 0 100
 
-Rosen Penev (1):
-      dm-bufio: use kzalloc_flex
+# Reshape it to 15 data stripes
+lvconvert --yes --stripes 15 $vg/$lv1
+aux disable_dev $dev1
+aux delay_dev "$dev2" 0 50
+check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
+check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
+check lv_first_seg_field $vg/$lv1 data_stripes 15
+check lv_first_seg_field $vg/$lv1 stripes 16
 
- Documentation/admin-guide/device-mapper/verity.rst | 122 +++++--
- drivers/md/Kconfig                                 |   2 +
- drivers/md/dm-bufio.c                              |   4 +-
- drivers/md/dm-cache-metadata.c                     |  33 +-
- drivers/md/dm-cache-metadata.h                     |  10 +-
- drivers/md/dm-cache-policy-smq.c                   |   4 +
- drivers/md/dm-cache-target.c                       |  92 +++--
- drivers/md/dm-crypt.c                              | 140 +++-----
- drivers/md/dm-ima.c                                |  54 +--
- drivers/md/dm-ima.h                                |   1 -
- drivers/md/dm-init.c                               |   4 +-
- drivers/md/dm-integrity.c                          |  10 +-
- drivers/md/dm-ioctl.c                              |  39 ++-
- drivers/md/dm-log.c                                |   6 +-
- drivers/md/dm-mpath.c                              |   9 +-
- drivers/md/dm-raid1.c                              |   6 +-
- drivers/md/dm-vdo/action-manager.c                 |   2 +-
- drivers/md/dm-vdo/block-map.c                      |  32 +-
- drivers/md/dm-vdo/block-map.h                      |   2 +-
- drivers/md/dm-vdo/constants.h                      |  13 +-
- drivers/md/dm-vdo/data-vio.c                       |   3 +-
- drivers/md/dm-vdo/dedupe.c                         |   8 +-
- drivers/md/dm-vdo/dm-vdo-target.c                  | 151 +++++++-
- drivers/md/dm-vdo/encodings.c                      | 221 +++++++++++-
- drivers/md/dm-vdo/encodings.h                      |  17 +
- drivers/md/dm-vdo/flush.c                          |   4 +-
- drivers/md/dm-vdo/funnel-queue.c                   |   2 +-
- drivers/md/dm-vdo/funnel-workqueue.c               |   8 +-
- drivers/md/dm-vdo/indexer/chapter-index.c          |   2 +-
- drivers/md/dm-vdo/indexer/config.c                 |   2 +-
- drivers/md/dm-vdo/indexer/delta-index.c            |  13 +-
- drivers/md/dm-vdo/indexer/funnel-requestqueue.c    |   2 +-
- drivers/md/dm-vdo/indexer/geometry.c               |   2 +-
- drivers/md/dm-vdo/indexer/index-layout.c           |  54 ++-
- drivers/md/dm-vdo/indexer/index-page-map.c         |   8 +-
- drivers/md/dm-vdo/indexer/index-session.c          |   2 +-
- drivers/md/dm-vdo/indexer/index.c                  |  14 +-
- drivers/md/dm-vdo/indexer/index.h                  |   2 +-
- drivers/md/dm-vdo/indexer/indexer.h                |   4 +
- drivers/md/dm-vdo/indexer/io-factory.c             |   6 +-
- drivers/md/dm-vdo/indexer/open-chapter.c           |   4 +-
- drivers/md/dm-vdo/indexer/open-chapter.h           |   2 +-
- drivers/md/dm-vdo/indexer/radix-sort.c             |   3 +-
- drivers/md/dm-vdo/indexer/sparse-cache.c           |  10 +-
- drivers/md/dm-vdo/indexer/volume-index.c           |  10 +-
- drivers/md/dm-vdo/indexer/volume.c                 |  22 +-
- drivers/md/dm-vdo/int-map.c                        |   5 +-
- drivers/md/dm-vdo/io-submitter.c                   |  30 +-
- drivers/md/dm-vdo/io-submitter.h                   |   4 +
- drivers/md/dm-vdo/logical-zone.c                   |   3 +-
- drivers/md/dm-vdo/logical-zone.h                   |   2 +-
- drivers/md/dm-vdo/memory-alloc.c                   |   8 +-
- drivers/md/dm-vdo/memory-alloc.h                   |  74 +---
- drivers/md/dm-vdo/message-stats.c                  |   2 +-
- drivers/md/dm-vdo/packer.c                         |   9 +-
- drivers/md/dm-vdo/physical-zone.c                  |   8 +-
- drivers/md/dm-vdo/priority-table.c                 |   3 +-
- drivers/md/dm-vdo/recovery-journal.c               |  23 +-
- drivers/md/dm-vdo/repair.c                         |  17 +-
- drivers/md/dm-vdo/slab-depot.c                     |  41 +--
- drivers/md/dm-vdo/slab-depot.h                     |   2 +-
- drivers/md/dm-vdo/status-codes.c                   |   2 +
- drivers/md/dm-vdo/thread-utils.c                   |   2 +-
- drivers/md/dm-vdo/types.h                          |   3 +
- drivers/md/dm-vdo/vdo.c                            | 333 ++++++++++++------
- drivers/md/dm-vdo/vdo.h                            |  19 ++
- drivers/md/dm-vdo/vio.c                            |  12 +-
- drivers/md/dm-verity-fec.c                         | 380 ++++++++++-----------
- drivers/md/dm-verity-fec.h                         |  28 +-
- drivers/md/dm-verity-target.c                      |  16 +-
- drivers/md/dm-verity.h                             |   4 +-
- drivers/md/dm-writecache.c                         |  10 +-
- include/linux/device-mapper.h                      |   7 +
- 73 files changed, 1348 insertions(+), 860 deletions(-)
+kill -9 %%
+wait
+rm -fr "$mount_dir/[12]"
+
+sync
+umount "$mount_dir"
+
+fsck -fn "$DM_DEV_DIR/$vg/$lv1"
+
+vgremove -ff $vg
+
+Thanks,
+Yang Xiuwei
 
