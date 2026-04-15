@@ -1,276 +1,191 @@
-Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.4])
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F018175A80
-	for <dm-devel@lists.linux.dev>; Wed, 15 Apr 2026 01:31:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.4
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA15C2D322E
+	for <dm-devel@lists.linux.dev>; Wed, 15 Apr 2026 02:07:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776216669; cv=none; b=Wu1XVdEOjrNMHjuzMAH49F7QlHNx0I4o+V/KapKtUhSSO8FxDxddjNju/DmSnSHeqSvm93Yqikb5FeFIkeBobEs8crZkEtNWhAZANm1dzClbnxouOw+GfB6L3DnZ3bHvplxzgArYQGwcIk3OkajYQHouyAvSDQxD/H2vLA8fxkM=
+	t=1776218832; cv=none; b=DgHpU/NroFEUzwEhfti7U+WK3KzwoiU8+yTKKx61Ohx44A2yXvUwqrbE6TvNYCfvFNyBdBzqD/2TDlkTujlFX7BYns/zf0+bSPWwPqxyBVI/kqw/EeXTezeX/otCawv0yY0dGONqDnXkYhm++j5THOopX8TIBeV0bsi3aQAMopQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776216669; c=relaxed/simple;
-	bh=L+loQVx5Y+tfwBEJq+sKJJPg5ZN+4dCmIRpcWGILUkg=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=mtem3S84IubRgswUwdG26Hfu0GSelD9aX9JwL6IyWdW/JE46PwNZBAeBKsBY/QFvdHwVWZKlYgGKnN3ZzBnu0OANIDqUxd83E3eI++ASyuvj7XVDaTwMYTbYMBlb31a12GrSQJReq+e2ESpZHrGndrVLE/adNO48t/+gnU9BwHE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kylinos.cn; spf=pass smtp.mailfrom=163.com; dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b=nmWj86jp; arc=none smtp.client-ip=220.197.31.4
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kylinos.cn
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
+	s=arc-20240116; t=1776218832; c=relaxed/simple;
+	bh=Es8fpT9bu7EESDkMBpRrdAZkVl3a7Gb9E0o7DUx2oyI=;
+	h=Message-ID:Subject:From:To:Cc:In-Reply-To:References:Content-Type:
+	 Date:MIME-Version; b=ZHSK0dwqXC2Pbf/+8RTmDiUxnqIXRwIe/UvVieisxdqlMFsX1nTpnSDEfsj9sRn9DsGf/rNDEOybMgcbwxjRx3QsB7pcORgxLE0tOQPlkY4wpE+WpJ7awMzgAv94uLsD+7mVAVOpwI7isVu6KH0nnkTeuGtdPtx55qE3CUPnM7M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=g6XeLZBh; arc=none smtp.client-ip=148.163.156.1
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b="nmWj86jp"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=j0
-	o59kTS/Zhg7PsIWgAQ7cAffxHUiiQn3ZNVavmjMkI=; b=nmWj86jpyTbdoI/s0J
-	F9Yz2P3UNlYblQsHleHqDfxja7WK7n+rSjsk5VjTYXaVR13iPC28Vw4D5FOMmXQd
-	cNSaEfWh8yFVms/VPw2GLfsgdUW7DAm9YwgLJxliNv6zQDy05FSwuxMtGFEkCUNC
-	ZYxOR54T6y8YcVRee/06yzDeE=
-Received: from localhost.localdomain (unknown [])
-	by gzsmtp3 (Coremail) with SMTP id PigvCgC3ZrHG6d5phKZLAA--.155S2;
-	Wed, 15 Apr 2026 09:28:43 +0800 (CST)
-From: Yang Xiuwei <yangxiuwei@kylinos.cn>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>,
-	Li Nan <linan666@huaweicloud.com>,
-	Song Liu <song@kernel.org>,
-	Xiao Ni <xni@redhat.com>,
-	Nigel Croxon <ncroxon@redhat.com>,
-	linux-raid@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH] md/raid5: Don't set bi_status on STRIPE_WAIT_RESHAPE
-Date: Wed, 15 Apr 2026 09:28:38 +0800
-Message-Id: <20260415012838.395439-1-yangxiuwei@kylinos.cn>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <ad6FNUtSCS_zTrHW@redhat.com>
-References: <20260413224556.1914504-1-bmarzins@redhat.com> <0e53701a-2471-9b72-eef8-27b168a0f3ea@huaweicloud.com> <717caf7b-03ef-41d8-bbb3-f6ce5d4a49fa@fnnas.com> <ad6FNUtSCS_zTrHW@redhat.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="g6XeLZBh"
+Received: from pps.filterd (m0356517.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 63ELaPkI1832986;
+	Wed, 15 Apr 2026 02:07:02 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=CSs2sv
+	jc1dOM10HwOVD++VQa7bhMhE3lXd68lxrii3k=; b=g6XeLZBhHZiavd41Sjltcc
+	Qx6VHXx+4+BX5E8/P8iSliav1lUWJSxskJbqMlrpc1o7Uaiiv5D796y00OaiooN4
+	hg6XgXpT6P7zN9Aa9RSLz4yn4hw8oHkkL2/yS29UdJv0gNi4Zsi9WEJuQvmaweoe
+	iwVqnhLtWutC40OJQiLlgTLBfFOetiR6pG3Pvu+i0ikK9zjU76l7e3Mr6t4WRTvK
+	UbousAj8JLU+3fBczHx29yQFhcAFlMZ4I/arZyTLIYi5zKYPc/3Eh0MC0J2GmKj7
+	/IQdNvoQi56nwkH6Xj3M8xtjcJ6/YLI72CvUjveZ6gWSd8+Xny//uAY20pA5T4tQ
+	==
+Received: from ppma21.wdc07v.mail.ibm.com (5b.69.3da9.ip4.static.sl-reverse.com [169.61.105.91])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4dh89rdwha-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Wed, 15 Apr 2026 02:07:01 +0000 (GMT)
+Received: from pps.filterd (ppma21.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma21.wdc07v.mail.ibm.com (8.18.1.2/8.18.1.2) with ESMTP id 63ELkx5e003586;
+	Wed, 15 Apr 2026 02:07:00 GMT
+Received: from smtprelay07.wdc07v.mail.ibm.com ([172.16.1.74])
+	by ppma21.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4dg1mncasm-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Wed, 15 Apr 2026 02:07:00 +0000
+Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
+	by smtprelay07.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 63F270g316188112
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 15 Apr 2026 02:07:00 GMT
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 69EA958066;
+	Wed, 15 Apr 2026 02:07:00 +0000 (GMT)
+Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 71F045805C;
+	Wed, 15 Apr 2026 02:06:59 +0000 (GMT)
+Received: from li-43857255-d5e6-4659-90f1-fc5cee4750ad.ibm.com (unknown [9.61.163.24])
+	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
+	Wed, 15 Apr 2026 02:06:59 +0000 (GMT)
+Message-ID: <28cc90640be7efadb40fdd0af699e3a69b632d83.camel@linux.ibm.com>
+Subject: Re: [RFC PATCH 00/10] Fix dm-ima bugs
+From: Mimi Zohar <zohar@linux.ibm.com>
+To: Mike Snitzer <snitzer@kernel.org>,
+        Benjamin Marzinski
+ <bmarzins@redhat.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev,
+        linux-integrity@vger.kernel.org,
+        Roberto Sassu <roberto.sassu@huawei.com>,
+        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
+        Lakshmi Ramasubramanian
+ <nramas@linux.microsoft.com>,
+        steven chen	 <chenste@linux.microsoft.com>
+In-Reply-To: <ad51kuxJuU84Amep@kernel.org>
+References: <20260414002244.1917447-1-bmarzins@redhat.com>
+	 <ad51kuxJuU84Amep@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Date: Tue, 14 Apr 2026 22:06:59 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:PigvCgC3ZrHG6d5phKZLAA--.155S2
-X-Coremail-Antispam: 1Uf129KBjvAXoWfJr13KF13Ar4fAF4UGFW3Jrb_yoW8JFWfGo
-	Wvyws8A34UXwsFg3WqkF4xJw17X3yYgF9xWrW5Wr9FkFW7Jws8Can5Cr43J3y7Gw4v9r95
-	K34UXayrCF48t34fn29KB7ZKAUJUUUU8529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
-	AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvj4RMuWlDUUUU
-Sender: yangxiuwei2025@163.com
-X-CM-SenderInfo: p1dqw55lxzvxisqskqqrwthudrp/xtbC6Qu+T2ne6ctqHgAA3y
+User-Agent: Evolution 3.56.2 (3.56.2-2.fc42) 
+X-TM-AS-GCONF: 00
+X-Proofpoint-Reinject: loops=2 maxloops=12
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDE1MDAxNSBTYWx0ZWRfX2ZDh/t/AGpgl
+ 6Vg9NdvyaceolBI6iHj+6tSM240x6p2WlrrGe5xtO6ejqJgVTRioZbQIeJTijsPypR4NdN8J1Az
+ XSd4RIMJr6cOzILRckLFzpw3zXZBgIrnWJzMQw27t8Qr8tlMu3OM9hKaSp4rWLZn0gmz/e6cJ2s
+ hvp+tylzwiDWB1Izqe+pJ4C9qgwLgyA4fgMr2Rke0/pYncbNDG1B9PApXX2pAfGH3IZqTjlAQEV
+ 8f336kn2ki2EO8+8koUNwRyVn/N6QB+nwRc25zrCx6845vbXAR/ZMqr3ZJXS6vX1sURCOB4ydtO
+ 7N/Otjzia2rRhxgLiTq7vO9MHBBnbFVtwqb2/0ma43D7i1124crt8Yj+ewzifpiDnNjVmHl6e1t
+ kb3+ZQeZUN3QimOpKyw451pLF5ivwnKv9Eneqo8gidGAWouplzbw9TETcU1HO2+YwMIXhGEqb8p
+ 11ueUeYAZzB3G4IZZ3g==
+X-Proofpoint-ORIG-GUID: eqKrFqGF0yWS8JOIsq5kY4W8_hVLNdbh
+X-Proofpoint-GUID: oD_7GsmHchX54z0PdWmFeKOUWitPLLnk
+X-Authority-Analysis: v=2.4 cv=fYidDUQF c=1 sm=1 tr=0 ts=69def2c6 cx=c_pps
+ a=GFwsV6G8L6GxiO2Y/PsHdQ==:117 a=GFwsV6G8L6GxiO2Y/PsHdQ==:17
+ a=IkcTkHD0fZMA:10 a=A5OVakUREuEA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=U7nrCbtTmkRpXpFmAIza:22 a=6cIjQJOKbT__1nPyWC8A:9
+ a=QEXdDO2ut3YA:10
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-14_04,2026-04-13_04,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ adultscore=0 impostorscore=0 clxscore=1011 malwarescore=0 phishscore=0
+ bulkscore=0 priorityscore=1501 spamscore=0 suspectscore=0 lowpriorityscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2604070000 definitions=main-2604150015
 
-Hi Ben,
+[Cc: Lakshmi Ramasubramanian, steven chen]
 
-On Tue, Apr 14, 2026 at 02:19:33PM -0400, Benjamin Marzinski wrote:
-> Yang Xiuwei, have you verified that this fix actually solves your
-> problems? If a dm map() function completes with DM_MAPIO_REQUEUE, and
-> the device is in a noflush suspend, it shouldn't set the error on the
-> original bio, regardless of the clone bio. It should requeue the bio. If
-> a dm map() function completes with DM_MAPIO_REQUEUE, and the device
-> isn't in a noflush suspend, the original bio will always be completed
-> with an error.
->
-> To me, it seems more likely that what you are seeing is
-> make_stripe_request() returning STRIPE_WAIT_RESHAPE when the dm device
-> isn't actually in a noflush suspend. I have seen this myself.
->
-> -Ben
-
-I tested the version that removes setting bi->bi_status to BLK_STS_RESOURCE
-in the STRIPE_WAIT_RESHAPE path you described. In my environment it did
-not fix the failure below.
-
-Sorry for the slow response. The earlier fix still did not solve the
-problem in my testing. I am not very familiar with this area yet and wanted
-to learn more before continuing the analysis, but other work meant I have
-not had time to pick it up again until now.
-
-I have not yet tested the dm-raid RFC patch from your follow-up message,
-but I plan to try it when I have time.
-
-The failure was observed while running the LVM2 shell test
-lvconvert-raid-reshape-stripes-load-fail.sh. Below is the test log (kernel
-messages and harness output), followed by the script contents.
-
-Test log:
-| [ 0:10.630]   WARNING: This metadata update is NOT backed up.
-| [ 0:10.632] aux disable_dev $dev1
-| [ 0:10.748] #lvconvert-raid-reshape-stripes-load-fail.sh:68+ aux disable_dev /dev/mapper/LVMTEST1351568pv1
-| [ 0:10.748] Disabling device /dev/mapper/LVMTEST1351568pv1 (252:5)
-| [ 0:10.868] [73439.222696] <6> 2026-01-20 13:59:47  md: reshape of RAID array mdX
-| [ 0:10.868] aux delay_dev "$dev2" 0 50
-| [ 0:10.871] #lvconvert-raid-reshape-stripes-load-fail.sh:69+ aux delay_dev /dev/mapper/LVMTEST1351568pv2 0 50
-| [ 0:10.871] check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
-| [ 0:10.886] [73439.231558] <3> 2026-01-20 13:59:47  Buffer I/O error on dev dm-5, logical block 0, async page read
-| [ 0:10.886] #lvconvert-raid-reshape-stripes-load-fail.sh:70+ check lv_first_seg_field LVMTEST1351568vg/LV1 segtype raid5_ls
-| [ 0:10.886] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
-| [ 0:10.910] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
-| [ 0:10.910] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
-| [ 0:10.910] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
-| [ 0:10.910] check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
-| [ 0:10.912] #lvconvert-raid-reshape-stripes-load-fail.sh:71+ check lv_first_seg_field LVMTEST1351568vg/LV1 stripesize 64.00k
-| [ 0:10.912] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
-| [ 0:10.933] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
-| [ 0:10.933] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
-| [ 0:10.933] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
-| [ 0:10.933] check lv_first_seg_field $vg/$lv1 data_stripes 15
-| [ 0:10.935] #lvconvert-raid-reshape-stripes-load-fail.sh:72+ check lv_first_seg_field LVMTEST1351568vg/LV1 data_stripes 15
-| [ 0:10.935] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
-| [ 0:10.956] [73439.292632] <3> 2026-01-20 13:59:47  md: super_written gets error=-5
-| [ 0:10.956] [73439.297679] <2> 2026-01-20 13:59:47  md/raid:mdX: Disk failure on dm-22, disabling device.
-| [ 0:10.956] [73439.304626] <2> 2026-01-20 13:59:47  md/raid:mdX: Operation continuing on 15 devices.
-| [ 0:10.956] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
-| [ 0:10.956] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
-| [ 0:10.956] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
-| [ 0:10.956] check lv_first_seg_field $vg/$lv1 stripes 16
-| [ 0:10.958] #lvconvert-raid-reshape-stripes-load-fail.sh:73+ check lv_first_seg_field LVMTEST1351568vg/LV1 stripes 16
-| [ 0:10.958] WARNING: Couldn't find device with uuid Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ.
-| [ 0:10.979] WARNING: VG LVMTEST1351568vg is missing PV Xprpyw-NTcw-RDRr-HzMg-LDZN-ZDIL-0Q2LoQ (last written to /dev/mapper/LVMTEST1351568pv1).
-| [ 0:10.979] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rimage_0 while checking used and assumed devices.
-| [ 0:10.979] WARNING: Couldn't find all devices for LV LVMTEST1351568vg/LV1_rmeta_0 while checking used and assumed devices.
-| [ 0:10.979] 
-| [ 0:10.981] kill -9 %%
-| [ 0:10.981] #lvconvert-raid-reshape-stripes-load-fail.sh:75+ kill -9 %%
-| [ 0:10.981] wait
-| [ 0:10.981] #lvconvert-raid-reshape-stripes-load-fail.sh:76+ wait
-| [ 0:10.981] rm -fr "$mount_dir/[12]"
-| [ 0:11.787] [73439.674065] <4> 2026-01-20 13:59:48  make_stripe_request: 24 callbacks suppressed
-| [ 0:11.787] [73439.674074] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.674086] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1074, lost sync page write
-| [ 0:11.787] [73439.681096] <6> 2026-01-20 13:59:48  md: mdX: reshape interrupted.
-| [ 0:11.787] [73439.682723] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.691180] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.699766] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.708347] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.716934] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.725519] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.734099] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.734574] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_check_bdev_write_error:225: comm kworker/u388:2: Error while async write back metadata
-| [ 0:11.787] [73439.742682] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.787] [73439.764081] <3> 2026-01-20 13:59:48  Aborting journal on device dm-43-8.
-| [ 0:11.787] [73439.778040] <3> 2026-01-20 13:59:48  dm-raid456: io across reshape position while reshape can't make progress
-| [ 0:11.788] [73439.778043] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 740, lost sync page write
-| [ 0:11.788] [73439.795025] <3> 2026-01-20 13:59:48  JBD2: I/O error when updating journal superblock for dm-43-8.
-| [ 0:11.788] [73439.802674] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_journal_check_start:85: comm cp: Detected aborted journal
-| [ 0:11.788] [73439.802673] <2> 2026-01-20 13:59:48  EXT4-fs error (device dm-43): ext4_journal_check_start:85: comm cp: Detected aborted journal
-| [ 0:11.788] [73440.032568] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1, lost sync page write
-| [ 0:11.788] [73440.040800] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
-| [ 0:11.788] [73440.040813] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): previous I/O error to superblock detected
-| [ 0:11.788] [73440.047569] <2> 2026-01-20 13:59:48  EXT4-fs (dm-43): Remounting filesystem read-only
-| [ 0:11.788] [73440.054948] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 1, lost sync page write
-| [ 0:11.788] [73440.069663] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
-| [ 0:11.788] [73440.076428] <2> 2026-01-20 13:59:48  EXT4-fs (dm-43): Remounting filesystem read-only
-| [ 0:11.788] #lvconvert-raid-reshape-stripes-load-fail.sh:77+ rm -fr 'mnt/[12]'
-| [ 0:11.788] 
-| [ 0:11.789] sync
-| [ 0:11.789] #lvconvert-raid-reshape-stripes-load-fail.sh:79+ sync
-| [ 0:11.789] umount "$mount_dir"
-| [ 0:11.798] [73440.145596] <3> 2026-01-20 13:59:48  Buffer I/O error on dev dm-43, logical block 82, lost async page write
-| [ 0:11.798] #lvconvert-raid-reshape-stripes-load-fail.sh:80+ umount mnt
-| [ 0:11.798] 
-| [ 0:11.814] fsck -fn "$DM_DEV_DIR/$vg/$lv1"
-| [ 0:11.814] [73440.162114] <6> 2026-01-20 13:59:48  EXT4-fs (dm-43): unmounting filesystem 86548d8e-e409-4ae8-b7d5-8b78a9b5fb50.
-| [ 0:11.814] [73440.162336] <3> 2026-01-20 13:59:48  EXT4-fs (dm-43): I/O error while writing superblock
-| [ 0:11.814] #lvconvert-raid-reshape-stripes-load-fail.sh:82+ fsck -fn /dev/LVMTEST1351568vg/LV1
-| [ 0:11.814] fsck from util-linux 2.39.1
-| [ 0:11.816] e2fsck 1.47.0 (5-Feb-2023)
-| [ 0:11.821] fsck.ext2: Input/output error while trying to open /dev/mapper/LVMTEST1351568vg-LV1
-| [ 0:11.821] 
-| [ 0:11.821] The superblock could not be read or does not describe a valid ext2/ext3/ext4
-| [ 0:11.821] filesystem.  If the device is valid and it really contains an ext2/ext3/ext4
-| [ 0:11.821] filesystem (and not swap or ufs or something else), then the superblock
-| [ 0:11.821] is corrupt, and you might try running e2fsck with an alternate superblock:
-| [ 0:11.821]     e2fsck -b 8193 <device>
-| [ 0:11.821]  or
-| [ 0:11.821]     e2fsck -b 32768 <device>
-| [ 0:11.821] 
-| [ 0:11.821] set +vx; STACKTRACE; set -vx
-| [ 0:11.822] ##lvconvert-raid-reshape-stripes-load-fail.sh:82+ set +vx
-| [ 0:11.822] ## - /opt/K2CI_agent_tool/lvm2/test/shell/lvconvert-raid-reshape-stripes-load-fail.sh:82
-| [ 0:11.822] ## 1 STACKTRACE() called from /opt/K2CI_agent_tool/lvm2/test/shell/lvconvert-raid-reshape-stripes-load-fail.sh:82
-
-lvconvert-raid-reshape-stripes-load-fail.sh:
-#!/usr/bin/env bash
-
-# Copyright (C) 2017 Red Hat, Inc. All rights reserved.
-#
-# This copyrighted material is made available to anyone wishing to use,
-# modify, copy, or redistribute it subject to the terms and conditions
-# of the GNU General Public License v.2.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software Foundation,
-# Inc., 51 Franklin Street, Fifth Floor, Boston, MA2110-1301 USA
-
-
-SKIP_WITH_LVMPOLLD=1
-
-. lib/inittest
-
-# Test reshaping under io load
-
-case "$(uname -r)" in
-  3.10.0-862*) skip "Cannot run this test on unfixed kernel." ;;
-esac
-
-which mkfs.ext4 || skip
-aux have_raid 1 13 2 || skip
-
-mount_dir="mnt"
-
-cleanup_mounted_and_teardown()
-{
-	umount "$mount_dir" || true
-	aux teardown
-}
-
-aux prepare_pvs 16 32
-
-get_devs
-
-vgcreate $SHARED -s 1M "$vg" "${DEVICES[@]}"
-
-trap 'cleanup_mounted_and_teardown' EXIT
-
-# Create 10-way striped raid5 (11 legs total)
-lvcreate --yes --type raid5_ls --stripesize 64K --stripes 10 -L4 -n$lv1 $vg
-check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
-check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
-check lv_first_seg_field $vg/$lv1 data_stripes 10
-check lv_first_seg_field $vg/$lv1 stripes 11
-wipefs -a "$DM_DEV_DIR/$vg/$lv1"
-mkfs -t ext4 "$DM_DEV_DIR/$vg/$lv1"
-fsck -fn "$DM_DEV_DIR/$vg/$lv1"
-
-mkdir -p "$mount_dir"
-mount "$DM_DEV_DIR/$vg/$lv1" "$mount_dir"
-mkdir -p "$mount_dir/1" "$mount_dir/2"
-
-
-echo 3 >/proc/sys/vm/drop_caches
-cp -r /usr/bin "$mount_dir/1" &>/dev/null &
-cp -r /usr/bin "$mount_dir/2" &>/dev/null &
-sync &
-
-aux wait_for_sync $vg $lv1
-aux delay_dev "$dev2" 0 100
-
-# Reshape it to 15 data stripes
-lvconvert --yes --stripes 15 $vg/$lv1
-aux disable_dev $dev1
-aux delay_dev "$dev2" 0 50
-check lv_first_seg_field $vg/$lv1 segtype "raid5_ls"
-check lv_first_seg_field $vg/$lv1 stripesize "64.00k"
-check lv_first_seg_field $vg/$lv1 data_stripes 15
-check lv_first_seg_field $vg/$lv1 stripes 16
-
-kill -9 %%
-wait
-rm -fr "$mount_dir/[12]"
-
-sync
-umount "$mount_dir"
-
-fsck -fn "$DM_DEV_DIR/$vg/$lv1"
-
-vgremove -ff $vg
-
-Thanks,
-Yang Xiuwei
-
+On Tue, 2026-04-14 at 13:12 -0400, Mike Snitzer wrote:
+> On Mon, Apr 13, 2026 at 08:22:34PM -0400, Benjamin Marzinski wrote:
+> > The dm-ima code does not guarantee that the dm_ima_measure_on_*
+> > functions will not be called at the same time. Since they modify and
+> > free shared memory, this can lead to Use-After-Free errors or garbage
+> > measurements. Further, they don't make sure that the state they measure
+> > corresponds to the actual device state. For instance if table_load()
+> > runs at the same time as do_resume() on a table swap,
+> > dm_ima_measure_on_device_resume() can end up thinking the wrong table i=
+s
+> > active. Or a concurrent dm_hash_rename() and a table swap, can end up
+> > with a the new active table still using the old name. This patchset
+> > makes sure the the dm-ima function are serialized and report the correc=
+t
+> > device state.
+> >=20
+> > However, the code is still messier that in could be. This is because
+> > it duplicates the current measurement events and format. I would really
+> > like to know if that is necessary. Specifically, it currently measures
+> > the following dm device and table actions:
+> >=20
+> > load
+> > clear
+> > rename
+> > resume
+> > remove
+> >=20
+> > I don't see the benefit of reporting changes to the inactive table, or
+> > resumes where the device does not change state. From the user's point o=
+f
+> > view, the device is still the same after these events.  At the same
+> > time, it doesn't measure device creates if no table was loaded, so you
+> > can have situations where the the first measurement for a device is a
+> > rename or a remove. A more sensible set of actions to measure would be:
+> >=20
+> > create
+> > table_swap
+> > rename
+> > remove
+> >=20
+> > Also, the measurement format doesn't map well to how dm device's are
+> > actually set up, in a way that makes it harder for the code and records
+> > extraneous information. First, like I mentioned before, I don't see the
+> > benefit of measuring the inactive table. Second, the name, uuid, and
+> > major/minor numbers are properties of the device, not it's table (and d=
+m
+> > devices can't have partitions, so the minor count will always be 1). I
+> > don't see a reason to store and occasinally log this information twice,
+> > if there is an active and incative table, and it forces extra
+> > coordination between the dm_ima_measure_on_* functions.
+> >=20
+> > I'm wondering it we are stuck with the current events and format, now
+> > that this has been released? Or could we bump the version, and change
+> > what events we measure, and how we format the output?
+> >=20
+> > Benjamin Marzinski (10):
+> >   dm-ima: remove dm_ima_reset_data()
+> >   dm-ima: remove broken last_target_measured logic
+> >   dm-ima: Remove status_flags from dm_ima_measure_on_table_load()
+> >   dm-ima: don't copy the active table to the inactive table
+> >   dm-ima: Fix UAF errors and measuring incorrect context
+> >   dm-ima: remove new_map from dm_ima_measure_on_device_clear
+> >   dm-ima: Fix issues with dm_ima_measure_on_device_rename
+> >   dm-ima: Handle race between rename and table swap
+> >   dm-ima: Fail more gracefully in dm_ima_measure_on_*
+> >   dm-ima: use active table's size if available
+> >=20
+> >  drivers/md/dm-ima.c   | 506 +++++++++++++++++++-----------------------
+> >  drivers/md/dm-ima.h   |  67 ++++--
+> >  drivers/md/dm-ioctl.c | 146 +++++++++++-
+> >  drivers/md/dm.c       |   2 +-
+> >  4 files changed, 421 insertions(+), 300 deletions(-)
+>=20
+> Pretty extensive changes needed here all things considered.
+>=20
+> SO I'm aware, who is using dm-ima?  I see that Tushar Sugandhi is no
+> longer at Microsoft and so he isn't cc'd on these changes.  I can
+> infer from Cc some potential users, but I just want to make sure this
+> code isn't just technical debt that we're having to carry in DM now?
+>=20
+> Thanks,
+> Mike
