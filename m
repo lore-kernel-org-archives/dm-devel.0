@@ -1,35 +1,35 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE65C3C2774;
-	Mon, 20 Apr 2026 13:26:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06E6D472794;
+	Mon, 20 Apr 2026 13:30:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1776691608; cv=none; b=sQ2PVBsqhxgV0OGIAT2mq7j/oTFgl+q71dCqfYubYcwAnjAgcXZWYqlpI+EXaoV94nYCIYbCPnTXqeqbPU0jFVVP2hxrzWQQOShRF1MuFczsYLNchKD+r5qmlj2+W75kDk8xhgNDsyJO7bFJIhoxZ25XQN/SdgQeMWw+aLGpkQU=
+	t=1776691840; cv=none; b=lhRJ9TioFBt570ouJNWTEkDByVEjS0tj74MaEyMPJ88o8hcoErMHrYiYBM10QNpAdPsmfWOnZHpkN+wAJNi68hZ8KiXI+7QoRw+TyMHqKq3WTuPDEwHXtc2rWZf/hYQ3tQK7jXYaKLO0IYnHcM0wynw32+1iyC9s3xSJYyqbIVQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1776691608; c=relaxed/simple;
-	bh=zNaoH0AUU3IETA0aOc1dRkhTGox/YjeGvMQCoQ0m/1Y=;
+	s=arc-20240116; t=1776691840; c=relaxed/simple;
+	bh=R7c8B7eWelbtycKZCd6RLTn/tu87WwxKPZdcFdNv4lU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Y7Wrb+u4bOHofBGU3M+EAG9ZW4CrAwJGcj5RNsgiLZhYh5+dIoB3QIwRcIwhTaA+1t9Hocex0WiUHyNv9ydBwMhq7jUugE0sYI/LxgZE9awxiq5rHWJ9cA5AOSGFzOGru84K/2vq2lI1cM2pNAnig02qgReT4VM4JBPLHnAlbJk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=tYB/7ThB; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=XLsQTRH8lFK7uL5rZRT+HOoDEBo9Q3Ab5cv0y2pn1bdljUD/NhuAEmKhQkGBB8qOUOjdxo9XKSU3n0eiIa9jlYt85pGp104LV3aIj4Y+xJhSV0XK+K1cskqhdTd5Ubiwdg1taHnpgSGIhbLhQpKi/gqng0dV0euEvZOz5kvENHM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dTLt7tTP; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="tYB/7ThB"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 611AAC2BCB7;
-	Mon, 20 Apr 2026 13:26:47 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dTLt7tTP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 99B2AC2BCB4;
+	Mon, 20 Apr 2026 13:30:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1776691608;
-	bh=zNaoH0AUU3IETA0aOc1dRkhTGox/YjeGvMQCoQ0m/1Y=;
+	s=k20201202; t=1776691839;
+	bh=R7c8B7eWelbtycKZCd6RLTn/tu87WwxKPZdcFdNv4lU=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=tYB/7ThBZW/htnFAEUMb0jnbtJpS4ONCEXDmPBFRljT9fCeqUFhuKAGzvsWZfTY1w
-	 oP72y1mtwOVNS+aGCUEAxRY2LnZ5+Ewq1t9sk0yolXS4a+mKjIKlV+ZBqVYQsWATIE
-	 CurSep4jThujYv74g/WzQfMJwwS6mUvGppTf9Rm9kIC4Hr/PIaarXeQHCtAgFXznV6
-	 AjDS2uNh7xryvoaSGrxff2udhB/DG8MDkAY7VVDAlD8TWpEi0BXLkMOPjoklCxou5w
-	 +/MrkQ89vgDFka2v4wZGdDHLoPAbCwqPOLj1318Ezw/S91Wu3hd01j5pfgljVc17ob
-	 bQWDR3+P8FlBw==
+	b=dTLt7tTPwzXK9tyE+5vl8VW6pHkV0FzJmUzxEGLwjaWjerxL6K7ONEFC3awydYJl+
+	 clPWvu+SbhNu3UusajxCepignTCvyp0+r5YvjnrlLDZXTOK68feFF/gcLGWuDyqzva
+	 SqT8lNtIU5EV+923il3wH3Jn3IrrnnrtRGbKXwjvoMElt7i3MwCAGU7LD9uPlgHjG2
+	 2T4JrHWG05vdj+rBwfLk6pc3c3THNreIoOY++xTZ4G3tZgChbWjGA4ZdUoIZ9bRRyF
+	 eRElimnyq3cYwVZCTZY/gAqfEAjfjzVg9qkz2Q4rGPfemSOV2gVzkKN4WktkbzPJF0
+	 yOvV2fFWCO49A==
 From: Sasha Levin <sashal@kernel.org>
 To: patches@lists.linux.dev,
 	stable@vger.kernel.org
-Cc: Ming-Hung Tsai <mtsai@redhat.com>,
+Cc: Keith Busch <kbusch@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Sasha Levin <sashal@kernel.org>,
 	agk@redhat.com,
@@ -37,9 +37,9 @@ Cc: Ming-Hung Tsai <mtsai@redhat.com>,
 	bmarzins@redhat.com,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH AUTOSEL 7.0-6.18] dm cache: prevent entering passthrough mode after unclean shutdown
-Date: Mon, 20 Apr 2026 09:18:43 -0400
-Message-ID: <20260420132314.1023554-129-sashal@kernel.org>
+Subject: [PATCH AUTOSEL 7.0-6.12] dm-integrity: fix mismatched queue limits
+Date: Mon, 20 Apr 2026 09:20:19 -0400
+Message-ID: <20260420132314.1023554-225-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260420132314.1023554-1-sashal@kernel.org>
 References: <20260420132314.1023554-1-sashal@kernel.org>
@@ -52,480 +52,353 @@ MIME-Version: 1.0
 X-stable: review
 X-Patchwork-Hint: Ignore
 X-stable-base: Linux 7.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-From: Ming-Hung Tsai <mtsai@redhat.com>
+From: Keith Busch <kbusch@kernel.org>
 
-[ Upstream commit a373b3d5289e50ab26d4cf776bf5891436ff3658 ]
+[ Upstream commit 6ebf3b6c6f16fda0568aa4207c6cd398f983c354 ]
 
-dm-cache assumes all cache blocks are dirty when it recovers from an
-unclean shutdown. Given that the passthrough mode doesn't handle dirty
-blocks, we should not load a cache in passthrough mode if it was not
-cleanly shut down; or we'll risk data loss while updating an actually
-dirty block.
+A user can integritysetup a device with a backing device using a 4k
+logical block size, but request the dm device use 1k or 2k. This
+mismatch creates an inconsistency such that the dm device would report
+limits for IO that it can't actually execute. Fix this by using the
+backing device's limits if they are larger.
 
-Also bump the target version to 2.4.0 to mark completion of passthrough
-mode fixes.
-
-Reproduce steps:
-
-1. Create a writeback cache with zero migration_threshold to produce
-   dirty blocks.
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 131072 linear /dev/sdc 8192"
-dmsetup create corig --table "0 262144 linear /dev/sdc 262144"
-dd if=/dev/zero of=/dev/mapper/cmeta bs=4k count=1 oflag=direct
-dmsetup create cache --table "0 262144 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writeback smq \
-2 migration_threshold 0"
-
-2. Write the first cache block dirty
-
-fio --filename=/dev/mapper/cache --name=populate --rw=write --bs=4k \
---direct=1 --size=64k
-
-3. Ensure the number of dirty blocks is 1. This status query triggers
-   metadata commit without flushing the dirty bitset, setting up the
-   unclean shutdown state.
-
-dmsetup status cache | awk '{print $14}'
-
-4. Force reboot, leaving the cache uncleanly shutdown.
-
-echo b > /proc/sysrq-trigger
-
-5. Activate the above cache components, and verify the first data block
-   remains dirty.
-
-dmsetup create cmeta --table "0 8192 linear /dev/sdc 0"
-dmsetup create cdata --table "0 131072 linear /dev/sdc 8192"
-dmsetup create corig --table "0 262144 linear /dev/sdc 262144"
-dd if=/dev/mapper/cdata of=/tmp/cb0.bin bs=64k count=1
-dd if=/dev/mapper/corig of=/tmp/ob0.bin bs=64k count=1
-md5sum /tmp/cb0.bin /tmp/ob0.bin # expected to be different
-
-6. Try bringing up the cache in passthrough mode. It succeeds, while the
-   first cache block was loaded dirty due to unclean shutdown, violates
-   the passthrough mode's constraints.
-
-dmsetup create cache --table "0 262144 cache /dev/mapper/cmeta \
-/dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 passthrough smq 0"
-dmsetup status cache | awk '{print $14}'
-
-7. (Optional) Demonstrate the integrity issue: invalidating the dirty
-   block in passthrough mode doesn't write back the dirty data, causing
-   data loss.
-
-fio --filename=/dev/mapper/cache --name=invalidate --rw=write --bs=4k \
---direct=1 --size=4k  # overwrite the first 4k to trigger invalidation
-dmsetup remove cache
-dd if=/dev/mapper/corig of=/tmp/ob0new.bin bs=64k count=1
-cb0sum=$(dd if=/tmp/cb0.bin bs=4k count=15 skip=1 | md5sum | \
-awk '{print $1}')
-ob0newsum=$(dd if=/tmp/ob0new.bin bs=4k count=15 skip=1 | md5sum | \
-awk '{print $1}')
-echo "$cb0sum, $ob0newsum"  # remaining 60k should differ (data loss)
-
-Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>
+Signed-off-by: Keith Busch <kbusch@kernel.org>
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
 
 LLM Generated explanations, may be completely bogus:
 
-Now I have all the information needed for a complete analysis. Let me
-compile my findings.
+Now I have all the information needed for a thorough analysis. Let me
+compile the findings.
 
 ---
 
 ## PHASE 1: COMMIT MESSAGE FORENSICS
 
 ### Step 1.1: Subject Line
-- **Subsystem**: dm cache (device-mapper cache target)
-- **Action verb**: "prevent" — indicates fixing a dangerous condition
-- **Summary**: Prevents entering passthrough mode after unclean
-  shutdown, which would cause data loss
+- **Subsystem**: `dm-integrity` (device mapper integrity target)
+- **Action verb**: "fix"
+- **Summary**: Fixes mismatched queue limits between DM integrity device
+  and backing device
 
 ### Step 1.2: Tags
-- **Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>** — author, active
-  dm-cache contributor
-- **Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>** — dm
-  subsystem maintainer
-- No Fixes: tag, no Reported-by:, no Cc: stable (as expected for
-  candidates)
+- `Signed-off-by: Keith Busch <kbusch@kernel.org>` - the author
+- `Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>` - the DM
+  integrity maintainer committed it
+- No Fixes: tag, no Reported-by:, no Cc: stable (expected for manual
+  review candidates)
 
-### Step 1.3: Commit Body Analysis
-The bug is clearly described: dm-cache assumes all cache blocks are
-dirty after unclean shutdown. Passthrough mode doesn't handle dirty
-blocks (reads from origin, writes go to origin + invalidate cache hits).
-If a cache with potentially dirty blocks is loaded in passthrough mode
-after an unclean shutdown, invalidating a dirty cache block discards
-data that was never written back to the origin — causing **data loss**.
+### Step 1.3: Commit Body
+The commit clearly describes the bug: a user can create an integrity
+device (via `integritysetup`) on a 4k logical block size backing device
+but request 1k or 2k for the DM device. The DM device then reports queue
+limits it can't actually satisfy because they're below the backing
+device's capabilities. This is an IO correctness bug - the device
+advertises capabilities it doesn't have.
 
-Detailed 7-step reproduction steps are provided with concrete commands.
+### Step 1.4: Hidden Bug Fix
+No - this is an explicit "fix" with clear description. The word "fix" is
+in the subject.
 
-### Step 1.4: Hidden Bug Fix Detection
-This is explicitly a data integrity protection fix. The word "prevent"
-combined with the description of data loss makes the intent unambiguous.
-
-**Record**: Bug fix preventing data loss in dm-cache passthrough mode
-after unclean shutdown.
+Record: Real bug fix. Queue limit mismatch causes IO that the backing
+device cannot execute.
 
 ---
 
 ## PHASE 2: DIFF ANALYSIS
 
 ### Step 2.1: Inventory
-- **dm-cache-metadata.c**: +9 lines (new
-  `dm_cache_metadata_clean_when_opened()` function)
-- **dm-cache-metadata.h**: +5 lines (function declaration + comment)
-- **dm-cache-target.c**: +17 lines changed (passthrough check in
-  `can_resume()` + version bump)
-- **Total**: ~31 lines added, 1 line modified
-- **Functions modified**: `can_resume()` (body extended), new function
-  `dm_cache_metadata_clean_when_opened()`
-- **Scope**: single-subsystem surgical fix
+- **Files**: `drivers/md/dm-integrity.c` only (+9, -3 lines)
+- **Function**: `dm_integrity_io_hints()` - the io_hints callback
+- **Scope**: Single-file, single-function surgical fix
 
 ### Step 2.2: Code Flow Change
-1. **dm-cache-metadata.c**: New accessor function reads
-   `cmd->clean_when_opened` under READ_LOCK. Trivial, obviously correct.
-2. **dm-cache-target.c `can_resume()`**: Before the change,
-   `can_resume()` only checked for failed resume retries. After, it also
-   checks if we're in passthrough mode with an unclean shutdown.
-3. **Version bump**: 2.3.0 → 2.4.0 — cosmetic marker for the behavioral
-   change.
+Before: Unconditionally sets `logical_block_size`,
+`physical_block_size`, and `io_min` to `ic->sectors_per_block <<
+SECTOR_SHIFT`.
+
+After: Uses `max()` to ensure these values are never LOWER than the
+existing limits (which come from the backing device).
 
 ### Step 2.3: Bug Mechanism
-This is a **data corruption / data loss** bug:
-- The constructor (`cache_ctr` at line 2470) checks
-  `dm_cache_metadata_all_clean()` which reads the **on-disk dirty
-  bitset** — stale after an unclean shutdown
-- The runtime (`__load_mapping_v1`/`__load_mapping_v2`) checks
-  `clean_when_opened` and treats all blocks as dirty when false
-- The gap: constructor says "all clean" (stale bitset), but runtime
-  later marks everything dirty — passthrough mode then incorrectly
-  invalidates blocks without writeback
+Category: **Logic/correctness fix**. The old code overwrites the backing
+device's queue limits with potentially smaller values, creating an
+inconsistency where the DM device reports it accepts smaller IO than the
+backing device can handle.
 
 ### Step 2.4: Fix Quality
-- **Obviously correct**: The check is a simple boolean read of an
-  existing, well-tested field
-- **Minimal**: Only adds essential check code
-- **Regression risk**: Very low — worst case, a cache that should be
-  refused in passthrough mode is correctly refused (fail-safe)
+- Obviously correct: `max()` ensures the larger of the two values is
+  used
+- Minimal and surgical
+- Uses the exact same pattern that `dm-crypt` already uses (verified:
+  `max_t(unsigned int, limits->logical_block_size, cc->sector_size)`)
+- No regression risk: the fix only ever keeps limits the same or makes
+  them larger, never smaller
 
-**Record**: Small, surgical fix. ~31 lines total. Three files, one
-subsystem. Fix is fail-safe (blocks dangerous mode, doesn't change data
-paths).
+Record: High quality fix. Pattern already proven in dm-crypt.
 
 ---
 
-## PHASE 3: GIT HISTORY INVESTIGATION
+## PHASE 3: GIT HISTORY
 
 ### Step 3.1: Blame
-The `can_resume()` function was introduced by `5da692e2262b8` (Ming-Hung
-Tsai, 2025-03-06), first in v6.15-rc1.
+The buggy code was introduced in commit `9d609f85b7eb96` ("dm integrity:
+support larger block sizes") by Mikulas Patocka, which first appeared at
+`v4.12-rc1~120^2~28` - so approximately **kernel v4.12 (2017)**. The bug
+has existed for ~9 years and affects all stable trees.
 
 ### Step 3.2: Fixes Tag
-No Fixes: tag present. The underlying bug has existed since
-`2ee57d587357f` ("dm cache: add passthrough mode", 2013-10-24, v3.13),
-which never validated `clean_when_opened` before allowing passthrough
-mode activation after a crash.
+No Fixes: tag present (expected for manual review).
 
 ### Step 3.3: File History
-The author (Ming-Hung Tsai) has contributed 10+ dm-cache fixes,
-including out-of-bounds access fixes, BUG_ON prevention, and other
-critical corrections. All accepted by the dm maintainer tree.
+The dm-integrity.c file is actively developed with many recent changes.
+The io_hints function itself has had additions (`dma_alignment` in v6.1
+era, `discard_granularity` and `io_min` changes in v6.11) but the core
+bug (unconditional assignment) has been present since introduction.
 
-### Step 3.4: Author Assessment
-Ming-Hung Tsai is a Red Hat engineer who has been a prolific dm-cache
-bug fixer. Their patches go through Mikulas Patocka (dm maintainer) who
-co-signs them.
+### Step 3.4: Author
+Keith Busch (`kbusch@kernel.org`) is a well-known kernel developer and
+NVMe/block layer expert at Meta. Not the dm-integrity maintainer but
+very knowledgeable about block layer queue limits. The patch was
+accepted by Mikulas Patocka, the dm-integrity maintainer.
 
 ### Step 3.5: Dependencies
-This commit depends on `5da692e2262b8` which introduced `can_resume()`.
-That commit is in v6.15+. For the 7.0.y tree, this dependency is
-satisfied.
+This is patch 1/3 of a series. Patch 2 ("dm-integrity: always set the io
+hints") removes the `if (sectors_per_block > 1)` guard. Patch 3 ("dm:
+provide helper to set stacked limits") creates a common helper. **This
+patch (1/3) is fully self-contained** - it fixes the core bug
+independently. Patches 2 and 3 are enhancements/refactoring.
 
-**Record**: Bug has existed since v3.13 (2013). Fix depends on
-`can_resume()` from v6.15+.
+Record: Self-contained fix. Bug since v4.12. Accepted by maintainer.
 
 ---
 
 ## PHASE 4: MAILING LIST RESEARCH
 
-### Step 4.1-4.5
-Could not access lore.kernel.org directly (Anubis protection). However,
-b4 dig confirms the related series (v3 of 2 patches by Ming-Hung Tsai,
-submitted to dm-devel, CC'd dm maintainers Joe Thornber, Heinz
-Mauelshagen, Mike Snitzer, and Mikulas Patocka). The series went through
-3 revisions, indicating active review. The commit analyzed is a follow-
-up fix likely from a later submission.
+### Step 4.1: Original Discussion
+Found via `b4 dig`: [PATCH 1/3] at
+`https://patch.msgid.link/20260325193608.2827042-1-kbusch@meta.com`
 
-**Record**: Author is well-known to dm maintainers. Prior patches in the
-same series were reviewed and merged. Could not verify specific lore
-discussion for this exact commit.
+Key findings from the mbox:
+- **Mikulas Patocka** (maintainer): "I accepted all three patches."
+- **Benjamin Marzinski** (Red Hat DM developer): Provided concrete
+  reproduction demonstrating the bug causes real IO failures:
+
+```
+INVALID:
+# modprobe scsi_debug dev_size_mb=1024 lbpu=1 sector_size=4096
+# integritysetup format -s 1024 /dev/sda
+# integritysetup open --allow-discards /dev/sda integrity-test
+# cat /sys/block/sda/queue/discard_granularity
+2048
+# cat /sys/block/dm-1/queue/discard_granularity
+1024
+# blkdiscard -o 1024 -l 16384 /dev/mapper/integrity-test
+blkdiscard: BLKDISCARD: /dev/mapper/integrity-test ioctl failed:
+Input/output error
+```
+
+### Step 4.2: Reviewers
+Sent to dm-devel@lists.linux.dev, mpatocka@redhat.com (maintainer),
+snitzer@kernel.org (DM maintainer). Appropriate subsystem maintainers
+were included.
+
+### Step 4.3-4.5: No explicit stable nomination in discussion, but no
+objections either.
+
+Record: Concrete reproduction of IO failures. Maintainer accepted
+immediately.
 
 ---
 
 ## PHASE 5: CODE SEMANTIC ANALYSIS
 
-### Step 5.1-5.4: Key Functions
-- `can_resume()` is called from `cache_preresume()` which is the DM
-  target's `.preresume` callback — called during device activation
-- `passthrough_mode()` checks `cache->features.io_mode ==
-  CM_IO_PASSTHROUGH`
-- `dm_cache_metadata_clean_when_opened()` reads `cmd->clean_when_opened`
-  which is set from the CLEAN_SHUTDOWN superblock flag during metadata
-  open
+### Step 5.1: Functions Modified
+Only `dm_integrity_io_hints()` modified.
 
-The constructor check at line 2470 (`dm_cache_metadata_all_clean`) reads
-the on-disk dirty bitset, which is **stale after an unclean shutdown** —
-the dirty bitset is not flushed on every dirty block write, only on
-clean shutdown. The CLEAN_SHUTDOWN flag is the authoritative indicator.
+### Step 5.2: Callers
+Called via the `.io_hints` callback in `struct target_type
+integrity_target`. This is invoked by the DM core when setting up queue
+limits for the DM device - affects every dm-integrity device setup.
 
-### Step 5.5: Similar Patterns
-Commit `5b1fe7bec8a8d` ("dm cache metadata: set dirty on all cache
-blocks after a crash", 2018) fixed the same root issue for the normal
-(non-passthrough) code path — it was Cc'd to stable. This commit fixes
-the passthrough-specific gap.
+### Step 5.3-5.5: Impact Surface
+Every dm-integrity device created via `integritysetup` (or similar) with
+a block size smaller than the backing device's logical block size is
+affected. This is a common user-facing operation in LUKS/dm-integrity
+setups.
 
-**Record**: Bug is reachable from userspace (dmsetup commands). The
-constructor check is insufficient because it reads stale on-disk data.
+Record: Affects every dm-integrity device with mismatched block sizes.
 
 ---
 
 ## PHASE 6: STABLE TREE ANALYSIS
 
 ### Step 6.1: Code Existence
-- Passthrough mode exists since v3.13 (all stable trees)
-- `can_resume()` exists since v6.15 (7.0.y, 6.15.y+)
-- `clean_when_opened` field exists since the beginning of dm-cache
+The buggy code exists in ALL stable trees (since v4.12). Verified:
+- v5.15: Same bug, uses `blk_limits_io_min()` instead of direct
+  assignment
+- v6.1: Same bug, same code as v5.15
+- v6.6: Same bug, same code plus `dma_alignment`
+- v6.12+: Same bug, uses direct `limits->io_min =` (matches the fix
+  exactly)
 
 ### Step 6.2: Backport Complications
-For 7.0.y: should apply cleanly (all prerequisites present, version is
-2.3.0).
-For trees < 6.15: would need adaptation (no `can_resume()`, check would
-go directly in `cache_preresume()`).
+- **v6.12+**: Applies cleanly (code matches exactly)
+- **v6.6 and earlier**: Minor conflict - uses `blk_limits_io_min()`
+  instead of direct `limits->io_min =`. The `logical_block_size` and
+  `physical_block_size` lines are identical in all versions. Only the
+  io_min line needs trivial adaptation.
 
-**Record**: Clean apply expected for 7.0.y. Older trees need adaptation.
+### Step 6.3: No related fixes already in stable for this issue.
+
+Record: Bug present in all stable trees. Clean apply for v6.12+, trivial
+adaptation for older.
 
 ---
 
 ## PHASE 7: SUBSYSTEM CONTEXT
 
-### Step 7.1: Criticality
-- **Subsystem**: dm-cache (device-mapper caching layer)
-- **Criticality**: IMPORTANT — used by LVM's lvmcache, enterprise
-  storage stacks, and production workloads
-- Data loss in a caching layer is especially severe as users expect
-  transparent, reliable behavior
+### Step 7.1: Subsystem
+- `drivers/md/dm-integrity.c` - Device Mapper integrity target
+- **Criticality**: IMPORTANT - dm-integrity is used in LUKS setups,
+  enterprise storage, and data integrity verification. It's a core
+  component of the device mapper framework.
 
 ### Step 7.2: Activity
-dm-cache has received numerous bug fixes recently, with Ming-Hung Tsai
-being the most active contributor.
+Actively developed - 20+ commits since v6.6, including several bug
+fixes.
 
 ---
 
 ## PHASE 8: IMPACT AND RISK ASSESSMENT
 
 ### Step 8.1: Affected Users
-Users of dm-cache in passthrough mode after an unclean shutdown (power
-failure, crash, sysrq-b). This includes LVM cache users (lvmcache) on
-enterprise systems.
+Users of dm-integrity devices where the integrity block size is smaller
+than the backing device's logical block size. Common scenario: 4k
+native-sector drives with 1k/2k integrity block sizes.
 
 ### Step 8.2: Trigger Conditions
-1. Have a dm-cache with dirty blocks in writeback mode
-2. Experience an unclean shutdown (crash, power loss)
-3. Resume the cache in passthrough mode
-4. Write to the cached region (triggers invalidation of dirty blocks)
-5. Data loss occurs silently
+Any IO operation (including discard) on a dm-integrity device with
+mismatched block sizes. The mismatch is user-creatable via
+`integritysetup`. Not timing-dependent.
 
 ### Step 8.3: Failure Mode
-**DATA LOSS** — dirty data in the cache is silently discarded without
-writeback to the origin device. Severity: **CRITICAL**.
+**IO errors** - the device accepts IO that the backing device cannot
+execute. Demonstrated: `blkdiscard` fails with `Input/output error`.
+Severity: **HIGH** - IO failures can cause data loss, filesystem errors,
+application failures.
 
-### Step 8.4: Risk-Benefit Ratio
-- **Benefit**: Very high — prevents silent data loss in production
-  storage
-- **Risk**: Very low — the fix only adds a fail-safe check that blocks a
-  dangerous operation
+### Step 8.4: Risk-Benefit
+- **Benefit**: HIGH - prevents IO errors on dm-integrity devices with
+  common hardware configurations
+- **Risk**: VERY LOW - 9 lines changed, uses `max()` pattern already
+  proven in dm-crypt, only ever makes limits larger (never smaller),
+  obviously correct
 - **Ratio**: Strongly favorable for backporting
 
 ---
 
 ## PHASE 9: FINAL SYNTHESIS
 
-### Step 9.1: Evidence Summary
+### Step 9.1: Evidence Compilation
 
 **FOR backporting:**
-- Fixes silent data loss (CRITICAL severity)
-- Small, contained fix (~31 lines, 3 files, 1 subsystem)
-- Obviously correct — reads an existing, well-tested flag
-- Fail-safe behavior (refuses dangerous operation rather than modifying
-  data paths)
-- Author is an established dm-cache contributor
-- Co-signed by dm maintainer Mikulas Patocka
-- Detailed reproduction steps demonstrate the bug is real and
-  triggerable
-- Related fix (`5b1fe7bec8a8d` from 2018) for non-passthrough path was
-  Cc: stable
+- Fixes real IO errors (demonstrated with concrete reproduction)
+- Small, surgical fix (9 added, 3 removed, single function)
+- Uses proven `max()` pattern from dm-crypt
+- Bug present since v4.12 (all stable trees affected)
+- Accepted by subsystem maintainer (Mikulas Patocka)
+- Self-contained (no dependencies on patches 2/3)
+- Reviewed by Red Hat DM developer who provided testing
 
 **AGAINST backporting:**
-- Version bump from 2.3.0 to 2.4.0 (cosmetic, could be dropped for
-  stable)
-- Adds a new accessor function (trivial, just reads existing field)
-- Dependency on `can_resume()` from v6.15+ (present in 7.0.y)
+- Minor adaptation needed for v6.6 and earlier (blk_limits_io_min vs
+  direct assignment)
+- No explicit Cc: stable nomination (but this is expected)
 
 ### Step 9.2: Stable Rules Checklist
-1. **Obviously correct and tested?** YES — trivial accessor + simple
-   conditional, with detailed repro steps
-2. **Fixes a real bug?** YES — silent data loss on unclean shutdown with
-   passthrough mode
-3. **Important issue?** YES — data corruption/loss, CRITICAL severity
-4. **Small and contained?** YES — ~31 lines, single subsystem
-5. **No new features or APIs?** Correct — the new function is a private
-   internal accessor, not user-facing
-6. **Can apply to stable?** YES for 7.0.y (all prerequisites present)
+1. Obviously correct and tested? **YES** - max() is trivially correct,
+   maintainer accepted, Ben Marzinski tested
+2. Fixes a real bug? **YES** - IO errors with concrete reproduction
+3. Important issue? **YES** - IO errors leading to data access failures
+4. Small and contained? **YES** - 12 lines net, single function
+5. No new features? **YES** - pure bug fix
+6. Can apply to stable? **YES** - cleanly for v6.12+, minor adaptation
+   for older
 
 ### Step 9.3: Exception Categories
-Not applicable — this is a straightforward critical bug fix.
+Not applicable - this is a standard bug fix, not an exception category.
 
 ### Step 9.4: Decision
-This is a clear YES. It prevents silent data loss in dm-cache, is small
-and surgical, obviously correct, and meets all stable kernel criteria.
+Clear YES. This is a textbook stable backport candidate: small, obvious,
+fixes a real user-facing bug (IO errors), long-standing (since v4.12),
+accepted by the subsystem maintainer, and uses an already-proven
+pattern.
 
 ---
 
 ## Verification
 
-- [Phase 1] Parsed tags: Signed-off-by from Ming-Hung Tsai (author) and
-  Mikulas Patocka (dm maintainer). No Fixes/Cc:stable tags (expected).
-- [Phase 2] Diff analysis: ~31 lines added across 3 files. New trivial
-  accessor `dm_cache_metadata_clean_when_opened()`, passthrough check in
-  `can_resume()`, version bump.
-- [Phase 2] Verified constructor check at line 2470-2486 calls
-  `dm_cache_metadata_all_clean()` which reads stale on-disk dirty bitset
-  — insufficient after crash.
-- [Phase 2] Verified `blocks_are_clean_separate_dirty()` reads on-disk
-  bitset (dm_bitset_cursor), not the `clean_when_opened` flag.
-- [Phase 2] Verified `__load_mapping_v1` (line 1343) and
-  `__load_mapping_v2` (line 1385) check `cmd->clean_when_opened` and
-  treat all blocks as dirty when false.
-- [Phase 3] git blame: `can_resume()` introduced by `5da692e2262b8`
-  (2025-03-06, v6.15-rc1).
-- [Phase 3] Passthrough mode introduced by `2ee57d587357f` (2013-10-24,
-  v3.13) — bug has existed since then.
-- [Phase 3] `git tag --contains 5da692e2262b8`: first appears in
-  v6.15-rc1, present in 7.0.
-- [Phase 3] `git tag --contains 2ee57d587357f`: present since v3.13, in
-  all stable trees.
-- [Phase 3] Version was 2.2.0 → 2.3.0 by `c2662b1544cbd` (same
-  author/series), now 2.3.0 → 2.4.0.
-- [Phase 4] b4 dig: found the related series (v3, 2 patches) on dm-
-  devel. CC'd Joe Thornber, Heinz Mauelshagen, Mike Snitzer, Mikulas
-  Patocka.
-- [Phase 4] lore.kernel.org blocked by Anubis. Could not fetch specific
-  discussion for this commit.
-- [Phase 5] `clean_when_opened` is set at line 508 from CLEAN_SHUTDOWN
-  flag in superblock, well-established mechanism.
-- [Phase 5] `5b1fe7bec8a8d` (2018) fixed same root issue for non-
-  passthrough path, was Cc: stable.
-- [Phase 6] All prerequisites present in 7.0.y tree. Clean apply
-  expected.
-- [Phase 7] dm-cache is IMPORTANT subsystem used by LVM, enterprise
-  storage.
-- [Phase 8] Failure mode: silent data loss (CRITICAL). Trigger: unclean
-  shutdown + passthrough mode resume + write.
-- UNVERIFIED: Could not verify specific mailing list discussion or
-  reviewer feedback for this exact commit due to lore.kernel.org access
-  restrictions.
+- [Phase 1] Parsed subject: "dm-integrity: fix mismatched queue limits"
+  - explicit fix
+- [Phase 1] Parsed tags: SOB from Keith Busch (author) and Mikulas
+  Patocka (maintainer/committer)
+- [Phase 2] Diff analysis: 3 assignments changed to max() in
+  dm_integrity_io_hints(), +9/-3 lines
+- [Phase 2] Verified dm-crypt uses identical max_t() pattern
+  (drivers/md/dm-crypt.c line 3721)
+- [Phase 3] git blame: buggy code introduced in 9d609f85b7eb96 (v4.12,
+  2017)
+- [Phase 3] git describe --contains: confirmed v4.12-rc1~120^2~28
+- [Phase 3] Confirmed patch 1/3 is self-contained; patches 2-3 are
+  enhancement/refactoring
+- [Phase 4] b4 dig found:
+  https://patch.msgid.link/20260325193608.2827042-1-kbusch@meta.com
+- [Phase 4] b4 dig -a: single version (v1), no revisions needed
+- [Phase 4] b4 dig -w: dm-devel, mpatocka, snitzer all included
+- [Phase 4] Mbox review: Mikulas accepted ("I accepted all three
+  patches"), Ben Marzinski provided IO error reproduction
+- [Phase 5] dm_integrity_io_hints called via .io_hints callback for
+  every dm-integrity device setup
+- [Phase 6] Verified code exists in v5.15, v6.1, v6.6, v6.12 - all
+  stable trees affected
+- [Phase 6] v6.6 and earlier use blk_limits_io_min() - minor backport
+  adaptation needed
+- [Phase 6] v6.12+ uses direct limits->io_min assignment - clean apply
+- [Phase 8] Failure mode: IO errors (EIO), demonstrated with blkdiscard,
+  severity HIGH
 
 **YES**
 
- drivers/md/dm-cache-metadata.c |  9 +++++++++
- drivers/md/dm-cache-metadata.h |  5 +++++
- drivers/md/dm-cache-target.c   | 19 ++++++++++++++++++-
- 3 files changed, 32 insertions(+), 1 deletion(-)
+ drivers/md/dm-integrity.c | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-cache-metadata.c b/drivers/md/dm-cache-metadata.c
-index 57158c02d096e..70e0c6c064082 100644
---- a/drivers/md/dm-cache-metadata.c
-+++ b/drivers/md/dm-cache-metadata.c
-@@ -1824,3 +1824,12 @@ int dm_cache_metadata_abort(struct dm_cache_metadata *cmd)
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 06e805902151c..8dfd498ed1ffd 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -4047,9 +4047,15 @@ static void dm_integrity_io_hints(struct dm_target *ti, struct queue_limits *lim
+ 	struct dm_integrity_c *ic = ti->private;
  
- 	return r;
- }
-+
-+int dm_cache_metadata_clean_when_opened(struct dm_cache_metadata *cmd, bool *result)
-+{
-+	READ_LOCK(cmd);
-+	*result = cmd->clean_when_opened;
-+	READ_UNLOCK(cmd);
-+
-+	return 0;
-+}
-diff --git a/drivers/md/dm-cache-metadata.h b/drivers/md/dm-cache-metadata.h
-index 5f77890207fed..dca423522da6c 100644
---- a/drivers/md/dm-cache-metadata.h
-+++ b/drivers/md/dm-cache-metadata.h
-@@ -146,6 +146,11 @@ void dm_cache_metadata_set_read_only(struct dm_cache_metadata *cmd);
- void dm_cache_metadata_set_read_write(struct dm_cache_metadata *cmd);
- int dm_cache_metadata_abort(struct dm_cache_metadata *cmd);
- 
-+/*
-+ * Query method.  Was the metadata cleanly shut down when opened?
-+ */
-+int dm_cache_metadata_clean_when_opened(struct dm_cache_metadata *cmd, bool *result);
-+
- /*----------------------------------------------------------------*/
- 
- #endif /* DM_CACHE_METADATA_H */
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 935ab79b1d0cd..962ac5ee081c2 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2929,6 +2929,9 @@ static dm_cblock_t get_cache_dev_size(struct cache *cache)
- 
- static bool can_resume(struct cache *cache)
- {
-+	bool clean_when_opened;
-+	int r;
-+
- 	/*
- 	 * Disallow retrying the resume operation for devices that failed the
- 	 * first resume attempt, as the failure leaves the policy object partially
-@@ -2945,6 +2948,20 @@ static bool can_resume(struct cache *cache)
- 		return false;
+ 	if (ic->sectors_per_block > 1) {
+-		limits->logical_block_size = ic->sectors_per_block << SECTOR_SHIFT;
+-		limits->physical_block_size = ic->sectors_per_block << SECTOR_SHIFT;
+-		limits->io_min = ic->sectors_per_block << SECTOR_SHIFT;
++		limits->logical_block_size =
++				max(limits->logical_block_size,
++				    ic->sectors_per_block << SECTOR_SHIFT);
++		limits->physical_block_size =
++				max(limits->physical_block_size,
++				    ic->sectors_per_block << SECTOR_SHIFT);
++		limits->io_min =
++				max(limits->io_min,
++				    ic->sectors_per_block << SECTOR_SHIFT);
+ 		limits->dma_alignment = limits->logical_block_size - 1;
+ 		limits->discard_granularity = ic->sectors_per_block << SECTOR_SHIFT;
  	}
- 
-+	if (passthrough_mode(cache)) {
-+		r = dm_cache_metadata_clean_when_opened(cache->cmd, &clean_when_opened);
-+		if (r) {
-+			DMERR("%s: failed to query metadata flags", cache_device_name(cache));
-+			return false;
-+		}
-+
-+		if (!clean_when_opened) {
-+			DMERR("%s: unable to resume into passthrough mode after unclean shutdown",
-+			      cache_device_name(cache));
-+			return false;
-+		}
-+	}
-+
- 	return true;
- }
- 
-@@ -3510,7 +3527,7 @@ static void cache_io_hints(struct dm_target *ti, struct queue_limits *limits)
- 
- static struct target_type cache_target = {
- 	.name = "cache",
--	.version = {2, 3, 0},
-+	.version = {2, 4, 0},
- 	.module = THIS_MODULE,
- 	.ctr = cache_ctr,
- 	.dtr = cache_dtr,
 -- 
 2.53.0
 
