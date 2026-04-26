@@ -1,148 +1,149 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from m16.mail.126.com (m16.mail.126.com [220.197.31.6])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA1D04C97
-	for <dm-devel@lists.linux.dev>; Sat, 25 Apr 2026 19:26:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 491C2301460
+	for <dm-devel@lists.linux.dev>; Sun, 26 Apr 2026 14:00:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.6
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777145175; cv=none; b=HUPwvb3I4a2jHlcKSX3VGJWB0TmSthaNzbLOrBAIVjojVwxlRUn2WToxFZtQOBbT9EkVPnXkllnniFIB17nuLphP4/lN94CcnqfFL08IZ3eyh/Ck72jOPEVlFmQxVDZMM0cfqFcJeLG2SO5MZ/pMTejCv2Cu+5k3Y7qRtwGfXik=
+	t=1777212045; cv=none; b=PrOP2+fV1EysvroBMfmC9kJ43Ltfon7y6NX8ImpZPtsdaFGbR2aJ/uB4Pk5qryh/p10ZNmVnRNz8QX/RqRVwbitUlZnInBR6W8SmfNjL0suLJLHSwsJPed7RpRi6Ug110lg65rQ4qpbgm4cOHP6Lq5jX2OOguZ6mlHriQgI2Xt0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777145175; c=relaxed/simple;
-	bh=guN2tsyK91tBx/iQTlAiFEB3mHeUnUGyiZFd/WHy4FU=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=u/DdgDjJjHjD90OHgcOZEge0nm6qTvtVKebNI7Z7I2piZdU+LaYoAZGhDZwKWQDMLZbf7fF7Lf0qyZB97DQcmi59ossLLwXzR6Np6fiUYh7TAI08pLQur97Ngr6GpGK+9Vsp/E78S1aI9ySZiA7EvDoO7R6Uu0PbysxcsfE6Kpc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Xoau6xiv; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Xoau6xiv; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1777212045; c=relaxed/simple;
+	bh=1EWd3FHK/NUyYRjrPUv26hddlhWeaeFiowafrqz4J6I=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=SJcN/JqESSMt3/Hja3Lr37tbcHRSjtcRFpwhKIWvmid1YDRCR+WxfbjMElz3aPnBWncwCPj8HquZDapraOObSvonoDJHRgrBGMghE/AdyjxWAuzvrw11IQpb4hrM/9gm5hSaDkanBHWYfRv2SwHtrxx7h+lm4Y7TdczrKe74m2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=126.com; spf=pass smtp.mailfrom=126.com; dkim=pass (1024-bit key) header.d=126.com header.i=@126.com header.b=Gfz8tGph; arc=none smtp.client-ip=220.197.31.6
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=126.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=126.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Xoau6xiv";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Xoau6xiv"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 882E05BD32;
-	Sat, 25 Apr 2026 19:26:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1777145171; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=guN2tsyK91tBx/iQTlAiFEB3mHeUnUGyiZFd/WHy4FU=;
-	b=Xoau6xiv+gSwr2AbZ9WqYs8d9dJpGDGM8CMaXdqH1TKkVftKnclCUDEbRV9F4Rh8C4xIcP
-	CgLNdcOmnVZnI4vbwx0s4wVAKTnUHj/sEQkkMaIEV+U8+i9Z2GNLC8zIJSG3HVWI5Un4Bg
-	3PTUaVFzx59f7uXOqhnOT4v7esE6wEM=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=Xoau6xiv
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1777145171; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=guN2tsyK91tBx/iQTlAiFEB3mHeUnUGyiZFd/WHy4FU=;
-	b=Xoau6xiv+gSwr2AbZ9WqYs8d9dJpGDGM8CMaXdqH1TKkVftKnclCUDEbRV9F4Rh8C4xIcP
-	CgLNdcOmnVZnI4vbwx0s4wVAKTnUHj/sEQkkMaIEV+U8+i9Z2GNLC8zIJSG3HVWI5Un4Bg
-	3PTUaVFzx59f7uXOqhnOT4v7esE6wEM=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 67412593A6;
-	Sat, 25 Apr 2026 19:26:11 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id y2oUGFMV7WnbZQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Sat, 25 Apr 2026 19:26:11 +0000
-Message-ID: <78bcf0d1b38d650d80292fd184725f9b1b47ecef.camel@suse.com>
-Subject: Re: [PATCH 1/2] checkers: add alua path checker and async checker
- framework
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com, Krishna Kant <krishna.kant@purestorage.com>
-Date: Sat, 25 Apr 2026 21:26:10 +0200
-In-Reply-To: <b2f1700d804f5f254dd614ba09746534ea0d0a22.camel@suse.com>
-References: <20260325151940.18928-1-brian@purestorage.com>
-		 <20260325151940.18928-2-brian@purestorage.com>
-	 <b2f1700d804f5f254dd614ba09746534ea0d0a22.camel@suse.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.0 
+	dkim=pass (1024-bit key) header.d=126.com header.i=@126.com header.b="Gfz8tGph"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=126.com;
+	s=s110527; h=Message-ID:Date:MIME-Version:Subject:To:From:
+	Content-Type; bh=VObAGbTW+9A0YlT8RDgNBAL8kbf8Bp4GNC/bJiVMM38=;
+	b=Gfz8tGph2KWgVIskV7kFH/2JPRot07G06I1K2xbCam83mOtshbvOugP3G7Jyqo
+	ai37Dr1ofQD7wUpqZRBL3mxeK1hyR12P/5uwp0yunrzAchjxANOPZenxC08kKLYx
+	5hJRvTmihsx0Vyjm1RkYPJzh1rEdFERh8U8wZYoIfh//U=
+Received: from [IPV6:2408:8210:480a:2590:ec66:74e8:68a7:a44b] (unknown [])
+	by gzsmtp4 (Coremail) with SMTP id PykvCgD3_9WEGe5pvjEhEA--.25861S2;
+	Sun, 26 Apr 2026 21:56:23 +0800 (CST)
+Message-ID: <30411bd3-2c92-495b-9d87-d6660b5cf3a3@126.com>
+Date: Sun, 26 Apr 2026 21:56:20 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	ARC_NA(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 882E05BD32
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH 1/2] kernel/notifier: replace single-linked list with
+ double-linked list for reverse traversal
+To: Petr Mladek <pmladek@suse.com>, Masami Hiramatsu <mhiramat@kernel.org>
+Cc: chensong_2000@189.cn, rafael@kernel.org, lenb@kernel.org,
+ mturquette@baylibre.com, sboyd@kernel.org, viresh.kumar@linaro.org,
+ agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
+ bmarzins@redhat.com, song@kernel.org, yukuai@fnnas.com, linan122@huawei.com,
+ jason.wessel@windriver.com, danielt@kernel.org, dianders@chromium.org,
+ horms@kernel.org, davem@davemloft.net, edumazet@google.com, kuba@kernel.org,
+ pabeni@redhat.com, paulmck@kernel.org, frederic@kernel.org,
+ mcgrof@kernel.org, petr.pavlu@suse.com, da.gomez@kernel.org,
+ samitolvanen@google.com, atomlin@atomlin.com, jpoimboe@kernel.org,
+ jikos@kernel.org, mbenes@suse.cz, joe.lawrence@redhat.com,
+ rostedt@goodmis.org, mark.rutland@arm.com, mathieu.desnoyers@efficios.com,
+ linux-modules@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-trace-kernel@vger.kernel.org, linux-acpi@vger.kernel.org,
+ linux-clk@vger.kernel.org, linux-pm@vger.kernel.org,
+ live-patching@vger.kernel.org, dm-devel@lists.linux.dev,
+ linux-raid@vger.kernel.org, kgdb-bugreport@lists.sourceforge.net,
+ netdev@vger.kernel.org
+References: <20260415070137.17860-1-chensong_2000@189.cn>
+ <20260420144429.57b45f2beece690bceea96ec@kernel.org>
+ <aec90caYZDHDAHgw@pathway.suse.cz>
+Content-Language: en-US
+From: Song Chen <chensong_2000@126.com>
+In-Reply-To: <aec90caYZDHDAHgw@pathway.suse.cz>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:PykvCgD3_9WEGe5pvjEhEA--.25861S2
+X-Coremail-Antispam: 1Uf129KBjvJXoWxGr48trW5Xw1rurW8KFy5twb_yoW5Wry5pF
+	90gF4SkF4kJr92kFn2gw18WF1Y9FZ5GFWqqr18GrySkwn0grnFvrZrtw15uFykur48Ar12
+	vrWUXasru34DZaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07UXyCJUUUUU=
+X-CM-SenderInfo: xfkh02prqjsjqqqqqiyswou0bp/xtbBpQd9-GnuGYeunwAA3L
 
-Brian,
+Hi,
 
-On Sat, 2026-04-25 at 19:16 +0200, Martin Wilck wrote:
->=20
-> I just had another look at this patch as I'm working on the checkers
-> myself, and I have to say that this is something you absolutely
-> cannot
-> do, especially not when the checker thread is supposed to run
-> asynchronously. There's a reason that we pass "struct checker *" to
-> the
-> checker threads and not "struct path *", and the code above is a hack
-> to work around this design decision.
->=20
-> When you write a checker, you need to think carefully what
-> information
-> you actually need, and copy that from "struct path" to the checker
-> context. Currently, for all checkers except emc_clariion, nothing is
-> needed except pp->fd and pp->timeout. I understand that the alua
-> checker needs more context, but that doesn't mean you can simply pass
-> the entire data structure to the checker, and I believe that an=C2=A0 ALU=
-A
-> can be written so that it needs just a few more fields (if any).
+On 4/21/26 17:05, Petr Mladek wrote:
+> On Mon 2026-04-20 14:44:29, Masami Hiramatsu wrote:
+>> Hi Song,
+>>
+>> On Wed, 15 Apr 2026 15:01:37 +0800
+>> chensong_2000@189.cn wrote:
+>>
+>>> From: Song Chen <chensong_2000@189.cn>
+>>>
+>>> The current notifier chain implementation uses a single-linked list
+>>> (struct notifier_block *next), which only supports forward traversal
+>>> in priority order. This makes it difficult to handle cleanup/teardown
+>>> scenarios that require notifiers to be called in reverse priority order.
+>>
+>> What about introducing a new notification callback API that allows you
+>> to describe dependencies between callback functions?
+>>
+>> For example, when registering a callback, you could register a string
+>> as an ID and specify whether to call it before or after that ID,
+>> or you could register a comparison function that is called when adding
+>> to a list. (I prefer @name and @depends fields so that it can be easily
+>> maintained.)
+> 
+> This looks too complex. It would make sense only
+> when this API has more users.
+> 
+> Also this won't be enough for the ftrace/livepatch callbacks.
+> They need to be ordered against against each other. But they
+> also need to be called before/after all other callbacks.
+> For example, when the module is loaded:
+> 
+>     + 1st frace
+>     + 2nd livepatch
+>     + then other notifiers
+> 
+> See the commit c1bf08ac26e92122 ("ftrace: Be first to run code
+> modification on modules").
+> 
+>> This would allow for better dependency building when adding to the list.
+>   
+>>>
+>>> A concrete example is the ordering dependency between ftrace and
+>>> livepatch during module load/unload. see the detail here [1].
+>>
+>> If this only concerns notification callback issues with the ftrace
+>> and livepatch modules, it's far more robust to simply call the
+>> necessary processing directly when the modules load and unload,
+>> rather than registering notification callbacks externally.
+>>
+>> There are fprobe, kprobe and its trace-events, all of them are using
+>> ftrace as its fundation layer. In this case, I always needs to
+>> consider callback order when a module is unloaded.
+>>
+>> If ftrace is working as a part of module callbacks, it will conflict
+>> with fprobe/kprobe module callback. Of course we can reorder it with
+>> modifying its priority. But this is ugly, because when we introduce
+>> a new other feature which depends on another layer, we need to
+>> reorder the callback's priority number on the list.
+>>
+>> Based on the above, I don't think this can be resolved simply by
+>> changing the list of notification callbacks to a bidirectional list.
+> 
+> I agree. I would keep it as is (hardcoded).
+> 
+> Best Regards,
+> Petr
+> 
 
-Unless I am mistaken, the only additional property that we need for
-ALUA is the tpg_id. We need to refactor our inquiry and rtpg code such
-that it takes only the parameters that are needed (fd, timeout, and
-tpg_id). It would then be possible to call these functions from
-checkers with limited context, without the hack to pass "struct path *"
-to the checkers.
 
-The tpg_id of a path will change very rarely, if at all (and we
-currently do not handle possible changes of the tpg_id in a clever
-way). We determine the tpg_id() in detect_alua(), and on every call of
-the alua prioritizer, which is too often, IMO. The kernel re-fetches
-the tpg only if a LUN is rescanned. For a first attempt of an alua
-checker, we could simply pass pp->tpg_id to the checker.
+Thanks for the feedback, the necessity doesn't convincing enough. I will 
+try the proposal from Masami Hiramatsu.
 
-We might as well try to get the ALUA state from sysfs in order to avoid
-sending extra RTPGs (see Hannes' previous reply), in which case we'd t
-need the dev_t to determine the sysfs directory.
+Best regards,
 
-Regards
-Martin
+Song
+
