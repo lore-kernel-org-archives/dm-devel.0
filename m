@@ -1,220 +1,346 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10F253FB067
-	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 10:47:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777373262; cv=none; b=g6cXTfnSiEporHKJYCWmeOodn1qdwZEFtzOiJpadV8Fyk4xYD2Gh95qeLTZyM11j42sbo+sT5T471EEogFfIyR6QKSpSeG3dL0tXAi0SdPpy7jGSG/MsYAN5cKQ54zwTwWRUoXTmQDYzHhlSkT4l2psB5jI8X/FiqbZ6hOJoF18=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777373262; c=relaxed/simple;
-	bh=O918bV/K5sjnS+3JttgF+Qh2bG/r0wFplRTCZRJyLoQ=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=mCpIh/Eum3whb+ZNWz0keoSitqqmYSFG0VXe/KNMoOTPIQOAqI8HiKQubrDssrYni/J5wR6FEgWYfYGAhdeC3BCaK9oRY84HKF6yBkNEL91sODN0tdGEnYeyktfePRQDdISvEtRWAepKXrpt8Vc8PG9BekI7+jPOqmBRHUSHkRE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=e1hfddos; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=e1hfddos; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65DD53EBF19
+	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 11:11:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1777374696; cv=fail; b=EmlDqomUJpE4fjcKWs8qXYfBD17rPhuJpQ4BD5iDkaaC6reHCX39uwyFnTcoHCMxeOleWNZhxTPvy2vQEoCX8k8P1J7YiUynKZUak61WkimuRpJHtMpY08jkv7I20/RDBzM3gHbkjxpyB2pytYbYDW4CJMwdFpSyJ1UeyQZy5TA=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1777374696; c=relaxed/simple;
+	bh=xYjlI7GGuZjwwrV9dxuK9fHXb2Fem4+yZXJuvGWOWrA=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=hqiJ5GXIzREH1LEYf4dA3Cy//FGPlO8mTU46g2o8Csv5LfeFYDfDckJtKXWBaPeYE0zJtGqaM+a0SnqXgR7pjr8iRsUWf9XJFPXu7hEBuWnxCNIuJGkJy5i43H1FFpEcRq9u5D6BR2uxqRgCJLW++Sm3LcPHVRsmTCqQ1C2MP44=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=JIH3/9LZ; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=jc3yK/Bz; arc=fail smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="e1hfddos";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="e1hfddos"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 5F0885BCC9;
-	Tue, 28 Apr 2026 10:47:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1777373259; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=q6Yk8eSjxwV88kLh3rCkK5htFAvx05lt+TH1xVWdj6E=;
-	b=e1hfddosD4Q0KUoX3OaNTTr1jMycygSwl+NGhP1GIXHrTx1c3Uvz266QOvCRrl2+8VsMAF
-	tGNZlihaDFI2h6eZYket/qcZbDVQWN6pHc+oc6GkDKyNUbsYQK3oANzvBF5XOXDTwy4C4J
-	7dto6112vCveUMSN9fNX9zEh3/88qp4=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1777373259; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=q6Yk8eSjxwV88kLh3rCkK5htFAvx05lt+TH1xVWdj6E=;
-	b=e1hfddosD4Q0KUoX3OaNTTr1jMycygSwl+NGhP1GIXHrTx1c3Uvz266QOvCRrl2+8VsMAF
-	tGNZlihaDFI2h6eZYket/qcZbDVQWN6pHc+oc6GkDKyNUbsYQK3oANzvBF5XOXDTwy4C4J
-	7dto6112vCveUMSN9fNX9zEh3/88qp4=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3EF03593B0;
-	Tue, 28 Apr 2026 10:47:39 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id LAlKDkuQ8GkJQwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 28 Apr 2026 10:47:39 +0000
-Message-ID: <6318cdc91d7531b29b9565395dc8a17c09e1127f.camel@suse.com>
-Subject: Re: [PATCH v2 2/5] libmpathutil: add generic implementation for
- checker thread runners
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Brian Bunker
-	 <brian@purestorage.com>, dm-devel@lists.linux.dev
-Date: Tue, 28 Apr 2026 12:47:38 +0200
-In-Reply-To: <ae_9U_JAoiihraT4@redhat.com>
-References: <20260423204446.472642-1-mwilck@suse.com>
-	 <20260423204446.472642-3-mwilck@suse.com> <ae_9U_JAoiihraT4@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.0 
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="JIH3/9LZ";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="jc3yK/Bz"
+Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 63SAKCW71015453;
+	Tue, 28 Apr 2026 11:11:24 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2025-04-25; bh=qu5ejjtQDJobWV+8ud6I/z21eINPbr/9+GVvdtHO884=; b=
+	JIH3/9LZMG1WKHUNrryRSlrAo+2YjFvYEVANWmKpvAxUVYTgTQF2WdKsnRng3F1M
+	I3klsrJSb6Wixe0uDV5vbV+mvAOgmX9+BgKvAatC2HuaXJgpy7XFFY0AKCJAOiK1
+	3QZy3KhBhLYiO1ySjG6m0TxxMzLSOrQfyIV+TMJLc6ySKryVukgt69Wm0M00sDNJ
+	aLaQSYQOydAwvPlQ2MOD0MV5zMqTHQoXhEnRJdVUgBaehP69Qh0Yu410yHRpvIcx
+	PzgGLLjKBtHxLdveLTr8JwmJEC670GNoXove7cT7zWSC8y1PunPw07o/cInuIQC7
+	eaX6fUR0+L1U3GXEcUhJdA==
+Received: from iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta03.appoci.oracle.com [130.35.103.27])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4drm6yyjtd-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 28 Apr 2026 11:11:24 +0000 (GMT)
+Received: from pps.filterd (iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.7/8.18.1.7) with ESMTP id 63SB2jhU036886;
+	Tue, 28 Apr 2026 11:11:23 GMT
+Received: from sj2pr03cu001.outbound.protection.outlook.com (mail-westusazon11012060.outbound.protection.outlook.com [52.101.43.60])
+	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 4drm2bvem5-2
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 28 Apr 2026 11:11:23 +0000 (GMT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=WXpKoIeA5LFqIjTdIdfLCVoeIbSYGmHj4iFaneKSFZhhqATjJA4BHCAVlL/gIyAcc9IWaVQQLxaG9cmAMx0hsyuMy3d8+yZT6Du1dxC/NS/kdPq3azNOWzCEkCpj+ZhAuIDPp4ewE80mgm7ff075pPe7+tgvY2/lHsIVfwtmZMvpM4KcjJkhz1stayIPaWBRguZJxDTty0o3V9Ye+y5VBkdiw5nZYqJ0qnBRVFk35cSYA7kMvTBZxkBmgboVyNFOdyaYUeiVR/3/4aNcSwJv4cFGj/YwqOIkYaV5vaVwVP8QEunvYC9AGFQ+WVK6bgKaeBks/qNciK5C+xmZB2qKjQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=qu5ejjtQDJobWV+8ud6I/z21eINPbr/9+GVvdtHO884=;
+ b=ZBxbWV+U+zeJEmyv76P77Z6pBsDBm1262uOGzFNURFspORxycA/Rjwzv/qxRz1j7d7aNdlS9jngjRyaDUzNkSl0Q2VXyjNkKH2wzENjGQ6Hoe1r3nz9fILMdYT1bDpEREI+nh8kQcPI940yDU31GhAnMwVrai7ZbLeM17Rz6Y3bX9xE6mmddAlKX43XhujwFYBey8K/0q/kdtoTmDtOdy7Stz/hotWB79TII2iF1W+e5y2yMWFcFpj3xt6HNiVqVKiLYPalo/aeGyP9CMiZ7a8cX14ncwvg8p5VHNwTY6UXRZG79spfz/J60yvDqx5t4dLTp/nDKDUAHdUzedT+RbA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=qu5ejjtQDJobWV+8ud6I/z21eINPbr/9+GVvdtHO884=;
+ b=jc3yK/BzlIOkPqMWE3KPbR78zyn0O8kesqmdPNQryFgd87Gx0T/M+BH4uNbk24/j1eG9vVIFxRUnxGSJM8mi+KGWO30bMkCG6IBY+McDCNiKMbca/p+D3x6vSa6inWl2kmwl6rx1Hs/5s20Ju/sFy0eZhxT4cf6XMQRtOdOAi9o=
+Received: from PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ (2603:10b6:518:1::7d6) by BLAPR10MB5073.namprd10.prod.outlook.com
+ (2603:10b6:208:307::18) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.9846.26; Tue, 28 Apr
+ 2026 11:11:19 +0000
+Received: from PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ ([fe80::234c:e047:21c1:6d16]) by PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ ([fe80::234c:e047:21c1:6d16%8]) with mapi id 15.20.9846.025; Tue, 28 Apr 2026
+ 11:11:18 +0000
+From: John Garry <john.g.garry@oracle.com>
+To: hch@lst.de, kbusch@kernel.org, sagi@grimberg.me, axboe@fb.com,
+        martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+        hare@suse.com, bmarzins@redhat.com, nilay@linux.ibm.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, dm-devel@lists.linux.dev,
+        linux-kernel@vger.kernel.org, John Garry <john.g.garry@oracle.com>
+Subject: [PATCH v2 01/13] libmultipath: Add initial framework
+Date: Tue, 28 Apr 2026 11:10:53 +0000
+Message-ID: <20260428111105.1778008-2-john.g.garry@oracle.com>
+X-Mailer: git-send-email 2.43.5
+In-Reply-To: <20260428111105.1778008-1-john.g.garry@oracle.com>
+References: <20260428111105.1778008-1-john.g.garry@oracle.com>
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: PH7PR02CA0010.namprd02.prod.outlook.com
+ (2603:10b6:510:33d::29) To PH3PPFEDB06D67A.namprd10.prod.outlook.com
+ (2603:10b6:518:1::7d6)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-0.987];
-	MIME_GOOD(-0.10)[text/plain];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:email,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: PH3PPFEDB06D67A:EE_|BLAPR10MB5073:EE_
+X-MS-Office365-Filtering-Correlation-Id: 3ae5bcaf-188f-4d2b-2b46-08dea516df05
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|7416014|366016|376014|1800799024|56012099003|22082099003|18002099003;
+X-Microsoft-Antispam-Message-Info:
+	ux03vHIOlipE60jf7WFQsdqJ3cKk/sTkwcqXST/61XGgKDcAAYfKRkf8NX68P2n+0YCuEYIReHZNdEM2YXSd1hZavkm/6AYah+zUnL7CINy0HNyKR69ljMu1wMtx5dZ0ybZQLA765s2B4WjJAYg6M4veS3Qgz4vRNHdXMGy6qECTS5RY9RCXHIFLprB6tS8g3FKeAjETKG+rxkJuNTbJjuxPCrQ/dbMOolURUtxUeqBpYy8nD7tZdNH3alwpymqkFe6IcDz2aY134kr+vgnNsLfsIGOllktAi30bsQ5JEOAMZoEDAqpq8fgNIwxTZFkJjEub1Mt9j+pjB5NTPr+QlW/PnCwm2TsYLWnv8SS7CRh+rNgR6l5dsy9b8BztH+MKM+dCsmYxdURyeQyTWgEdWBznwZlaIGbWlWPFQ70m71fNpDcXUlLgxQhYRHApPoOwHC1xc+oPotCpFML982PgEDAyKvS7QVURIVmEHlII3bCpqyvCZRwtKUqmU/2yN9v9lnfczgyob4H7faWJVn+FR14L8LBsOUktiOwyFX174cka8yYI/vMAKgLJgNt/bOrZMXMgJH0wKlNmIeUkCgcbP4mVGWdaXDWDUCPjWnHO7UENJP3RtdZBjmg7CXLkr/qnYDBu4oiNoqJCdWTZKpvkYNJv397euJmjVFAF+9jTE0oEZ8YbLXWp9yHzYFYSVn4a3VnfYEp8J6JCqjyq6L8MjYd9ct8wrGmiaXWXL9NnbHo=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:PH3PPFEDB06D67A.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(366016)(376014)(1800799024)(56012099003)(22082099003)(18002099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?hJU/o0T0pfKHqMvD1JQTWIU5RZBtR20fAfuCU74+M6kCJrY0R76aw+tUEqPv?=
+ =?us-ascii?Q?inB/pmzTtvOEQtnaI9hD/fNXO6Wg7s47munR+LE++Qj1ZAgmtBWpNTS4sxR6?=
+ =?us-ascii?Q?huiRj9WRwkDEfujcQeXcto+AHVJZCbxSnBWSBy68zzaeQMwlJHfCbNF4HIR/?=
+ =?us-ascii?Q?EtM1Vdt6YEiOD+WGlf9HPz057Evhpj9+A7GfeGxU72y3h9xWJIewmMAj+p4W?=
+ =?us-ascii?Q?RDR3O5ZluYCQZ7zES+cDKObsYPY2Lt1OA9gSP0Jn2LHTKiUAdTlqRSL1mTU0?=
+ =?us-ascii?Q?dMisGCY/tBsAKxR3N8lVZIdhjQ7Ly39nBP3a4of+Ql5oPpbz3pInBrbYy+Zp?=
+ =?us-ascii?Q?HcmNEeN91loPTfEVXdizglp+P3NHMTOfcYAUsvLU5iLDlSORX7Gr6SmHHWDW?=
+ =?us-ascii?Q?JHZ/M0DGF0oHhJSo8T6+nz1K2OxKWbh628rBNZw7/gKueeSnDwbJdfttRwTi?=
+ =?us-ascii?Q?cAzd4JCkcqCT3dX8TXZLsimIhj2jdM4dtjvSgJdPFwaY4zEPPQUFZ07eLqjk?=
+ =?us-ascii?Q?0sJccYzjszyVwST/mxQRoXL5KRrB3d6eNiJ0s9Xd+42hHwfY302c+qg9EFeF?=
+ =?us-ascii?Q?hfblhd48pnaBIQ0GbSgn5GvsPaRv+R/gVXnTEC8IZr4IXB+uhzdKQe2/GzCq?=
+ =?us-ascii?Q?7ja/XdoeeLoZZs3ut/I02/vH5jg+SWnM/JEnv1p9w163047uZPIAdR2gQEQD?=
+ =?us-ascii?Q?ymF7lA7iVWEI8oTTRBPNhcHYThA5QnEf7CYSpMVfKm5sPbTNPP19a+5b8+Ro?=
+ =?us-ascii?Q?ZugLyc52+TyxgB19l5P4/x3buwhAOi6wDKDfj2XTthQuiklGw3yeoCaoWSZ0?=
+ =?us-ascii?Q?IPoUafs4FkheNJFDV22Bjs9hKYZFj+/tjJV4PqJiaIf4UrdTGVbReJo7q5/e?=
+ =?us-ascii?Q?rdU7Sm84t/clbRvWxe8FfaATivl5AO+jY0s6aZVmL1mzslMCf0R6kS0d2+MR?=
+ =?us-ascii?Q?CWPmxFJX6KXbuxz2aT5AfKtEWyy6++Z4NoHY9mD8eYaEqfl+XTn6e4xYZD3E?=
+ =?us-ascii?Q?S5AYWC+Oa/kzvfnVNkLO93F7m5PWorN90cKbdT9xBiDvCTwR3dfBOUof5FHB?=
+ =?us-ascii?Q?PrPlcMPEC1nkHz3dBDmepR9WF/9AZMj59UGKU6YzZ+9JwuFQkNofKw+fAyfq?=
+ =?us-ascii?Q?u6h2oOQyLOE4d0519g6DOlYGZ3GTOlUQ/o1tCMjgiTqXEMeNJPdwM4nx+U72?=
+ =?us-ascii?Q?qExgVBzbrtVlylUQZlWNX0uY1uHbumX2fKjvtzNqPigpFBOVXbdoDd9li69s?=
+ =?us-ascii?Q?5HTm3FS15fXWXnsf+wVE4B7FLiIB3FOueyIaGIHN6PXQvkLQANGdd0JKlGpx?=
+ =?us-ascii?Q?mzB7F5++WNNN+hdjgQIPs9VaeP2u2s4o9wV1X/h0DnYoeTQCXw4B0Uu/r6GH?=
+ =?us-ascii?Q?l0o+2Gt/mBc7oP+i0YvfdBX2BVherdaYMAbERwJqzbtsmCGGYfpJGocOKII9?=
+ =?us-ascii?Q?9K23AOVw/vZkGzXoO4T1FxoagyPND97nrBZRcEoTiJI7l0RQuTMPACHi3XR8?=
+ =?us-ascii?Q?4NsYB6kAGSqMnz5N8T7TPr9oGai3Us3AaVf0H4Vur0pX70/29tslmTdN7sBH?=
+ =?us-ascii?Q?X+GNOtMVYojhJRTAs2ZFs9fmTYD4jaYeol8AOjXBF/ktRZUVeuJyPOMXCUzF?=
+ =?us-ascii?Q?HTx5UAKuX2r+YSoYxLMD+rDvqKTvYW42NytdVcQKO7pYS41pB9Kx70J+2Od9?=
+ =?us-ascii?Q?dfAeMlQG5AbPHEZxx5J5zT5iVbJFZMQ4pJUYHG+uSfIokClf2oCH8X71XYgz?=
+ =?us-ascii?Q?7MJ8M3Sm3dZwPkv3YpW0vvUJ3T9ff/o=3D?=
+X-Exchange-RoutingPolicyChecked:
+	iFVlkLHt2bh8UDocI7uh4ZTSZqp91ynbjFuMi+M+OtYJ4KL3VRli8KSh+t3POXW3sQSrlWUw6YKZ5HfOJC62EvZYwAp/TLJzdKXtn3DRJjVlMdqee2RrABqedfFvVT6rkq7sAiwuVarfaj9mGw+hSL9F0UmIAYaYwFSWD634Xdx4ralx1c+qGzDOEunZWH08C5iMlCsg5v3CWfkEQd5n0V+hVq4c1bYpp45uEmTKRg4r8y7wMiAHZfGCphQS37Es/iOuXMWKfrNSMrD2/MGowOAOd1Jl9uCV00+gwelIxZkYQlJbFbOsmyX3usB3+z4Zj4SLcy3BpZec2Bund/EoGQ==
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	eKKP8T+G6C4urZ1d6F1LlWlZbDzpw8mkVj4cBaD9AkPaNdUD4dQciUM2ATEFhcDenp28JPxCUhxGMwmZGwTg6xiTBs7wq9nfoowdcStsg9clSJPDbUwKK+dKDyWAicS0TUCz/OAn/ToplaLbNVkOP+ImCeLEar2ec75sok9xDNlvLEkj4VVfnBLdOix0f/9ZpRUqwEK7ESfBFHujBmM6sImAfwjkfoa7NvlMSU/aa3vpjuOF/M2dUTlUk6f4dUiYxZ/sCjszFjWq5Wz2f/VGK4WxodcP8/ecCQwtu/eMgKIbrIj1ilfO5RDZQhxM0Z+xSZTupLGFIDtwPGj1DOWrUZMO392zwKMyS+rIFnKXDajB67bhwVKZE8ooaqizSsXhPnk7FhvG3KB+CvQYLvDQsP4j2HYSFs8x1XgoCXSKpJg9eLWuSW6VpfShvh4cdMmfE7WJcaqKyOiMys3sPDBnindmC8ZXZNMGnxbBfmdkWqqBxYO4VsRW2zLIOnCH85lo1fWFQoxUm8i6CcNws4WYsGgZKWNQPm2v/LVxCXTVPuvY7atbbFyFMCAPxAoOCQFpaqM0b//ifkDVp37kdutPRpG7o3BCpFAO+txt4/ZnMk4=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 3ae5bcaf-188f-4d2b-2b46-08dea516df05
+X-MS-Exchange-CrossTenant-AuthSource: PH3PPFEDB06D67A.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 28 Apr 2026 11:11:18.4432
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: QFJ1OEFMbqqfuJXy+kJ/4MpgWXNknWF9XGXD4KNkIaEzJFVvZMYUzFCkvXUpaY2BaQg2FPcWED6yLUNvuKuLeA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BLAPR10MB5073
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-28_02,2026-04-21_02,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0
+ suspectscore=0 adultscore=0 mlxlogscore=999 spamscore=0 malwarescore=0
+ lowpriorityscore=0 phishscore=0 mlxscore=0 classifier=spam adjust=0
+ reason=mlx scancount=1 engine=8.19.0-2604200000 definitions=main-2604280100
+X-Proofpoint-GUID: 0LwnBUeDsUX-pyhdyVsVGkYkB48oI7sH
+X-Proofpoint-ORIG-GUID: 0LwnBUeDsUX-pyhdyVsVGkYkB48oI7sH
+X-Authority-Analysis: v=2.4 cv=BePoFLt2 c=1 sm=1 tr=0 ts=69f095dc b=1 cx=c_pps
+ a=qoll8+KPOyaMroiJ2sR5sw==:117 a=qoll8+KPOyaMroiJ2sR5sw==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
+ a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=A5OVakUREuEA:10
+ a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22 a=jiCTI4zE5U7BLdzWsZGv:22
+ a=RD47p0oAkeU5bO7t-o6f:22 a=yPCof4ZbAAAA:8 a=XP0GnSSCGFUgwQirCqwA:9 cc=ntf
+ awl=host:12310
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDI4MDEwMSBTYWx0ZWRfX4gxlityiGVeR
+ 89n/6jWK51uXqcvcjKSjjAmOm5kSKD7eCdgtAlMNwYQTH0QloN7zCrnudTQtVbvAhrSn1K6ezlw
+ +ODs9fPwT9WFtH5zBwWyj3Sqn3R9qkE8d+PVdz1c3vT/aL7BILzaDQHTV1QYQjfTp9uFfPBXkUX
+ z9A/Ikp5b0ZUMHQim6gtcdn8Rr9mOcNfF+pUZjtIjpY/KqRT411DDoIuLj4E/RuzayiGqYRh+J5
+ mKCixJm8QO1Eb1843hNz65wynX0xAndfisd5VRh+9IKB4dxrk8gXVYyuqGtKywbeRa6Ee3f5rAF
+ HNHPCBQtWl5fpccMYmT7kgn18TQ1gyXXmtXalZzwX/8oZY/ES792p3CblgHlWXl6geWN1RiMdqb
+ VacC2NyHIuoR/PPpvPHgZIM0LDgA3jEomow5qNMIG0CB+mH+XjwhiauondTRm1OrjyUuKdB0cDn
+ 9Jf5JbPsB/DUTsg6ronYt4Uhp1vic7iLzi0gKCTY=
 
-Hi Ben,
+Add initial framework for libmultipath. libmultipath is a library for
+multipath-capable block drivers, such as NVMe. The main function is to
+support path management, path selection, and failover handling.
 
-On Mon, 2026-04-27 at 20:20 -0400, Benjamin Marzinski wrote:
-> On Thu, Apr 23, 2026 at 10:44:43PM +0200, Martin Wilck wrote:
-> > This code adds a generic, abstract implementation of the kind of
-> > threads we
-> > need for checkers: detached threads that may time out. The design
-> > is such
-> > that these threads never access any memory of the calling program,
-> > simplifying the management of lifetimes of objects.
-> >=20
-> > See the documentation of the API in "runner.h".
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> > =C2=A0libmpathutil/Makefile=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +-
-> > =C2=A0libmpathutil/libmpathutil.version |=C2=A0=C2=A0 7 +-
-> > =C2=A0libmpathutil/runner.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 221
-> > ++++++++++++++++++++++++++++++
-> > =C2=A0libmpathutil/runner.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 102 ++++++++++++++
-> > =C2=A04 files changed, 330 insertions(+), 2 deletions(-)
-> > =C2=A0create mode 100644 libmpathutil/runner.c
-> > =C2=A0create mode 100644 libmpathutil/runner.h
-> >=20
-> >=20
-[...]
-> > diff --git a/libmpathutil/runner.c b/libmpathutil/runner.c
-> > new file mode 100644
-> > index 0000000..f5c5482
-> > --- /dev/null
-> > +++ b/libmpathutil/runner.c
-[...]
-> > +static void *runner_thread(void *arg)
-> > +{
-> > +	int st, refcount;
-> > +	/*
-> > +	 * The cleanup function makes sure memory is freed if the
-> > thread is
-> > +	 * cancelled (-fexceptions).
-> > +	 */
-> > +	struct runner_context *rctx
-> > __attribute__((cleanup(cleanup_context))) =3D arg;
-> > +
-> > +	refcount =3D uatomic_add_return(&rctx->refcount, 1);
-> > +	assert(refcount =3D=3D 2);
-> > +
-> > +	st =3D uatomic_cmpxchg(&rctx->status, RUNNER_IDLE,
-> > RUNNER_RUNNING);
-> > +	/*
-> > +	 * The thread has already been cancelled before it was
-> > even started.
-> > +	 * In this case, cancel_runner() doesn't release the
-> > context.
-> > +	 * Do it here. See comments for RUNNER_IDLE in
-> > cancel_runner().
-> > +	 */
->=20
-> I'm confused about this, and AFAICS, it doesn't appear to be true. If
-> you call check_runner() and it returns RUNNER_CANCELLED, you have no
-> idea if the runner was previously in RUNNER_IDLE, which means that
-> you
-> cannot touch the context anymore, or if the runner was in
-> RUNNER_RUNNING, in which case it's your job to release the context.
-> In the TUR checker, check_runner_state() just calls release_runner(),
-> which will cause a UAF error if the runner was in RUNNER_IDLE before
-> it got cancelled.
+Basic support to add and remove the head structure - mpath_head - is
+included.
 
-Right, good catch, thanks for finding it. This was a remnant of the
-previous code, where the caller didn't have to release the context
-after RUNNER_CANCELLED.=C2=A0
+This main purpose of this structure is to manage available paths and path
+selection. It is quite similar to the multipath functionality in
+nvme_ns_head. It also manages the multipath gendisk.
 
-Releasing the context here is just wrong, I'll drop the line.
+Each path is represented by the mpath_device structure. It should hold a
+pointer to the per-path gendisk and also a list element for all siblings
+of paths. For NVMe, there would be a mpath_device per nvme_ns.
 
-I had expected my tests to capture an UAF like this, but I made a dumb
-mistake: I used a timeout of 0 in my test code, which means "infinite"
-timeout for the runner, and thus my first test case, which was intended
-to capture thus this kind of issue, was ineffective. I will change my
-test program now to use 1us timeout if "-t 0" is specified. I will also
-add a compile-time option to artificially delay thread startup in order
-to test this.
+All the libmultipath code is more or less taken from
+drivers/nvme/host/multipath.c, which was originally authored by Christoph
+Hellwig <hch@lst.de>.
 
-> It seems to me that the correct way to do this would be to set
-> rctx->refcount to 2 before creating the runner thread, and not even
-> have
-> a RUNNER_IDLE state.=C2=A0
+Signed-off-by: John Garry <john.g.garry@oracle.com>
+---
+ include/linux/multipath.h | 28 +++++++++++++++
+ lib/Kconfig               |  6 ++++
+ lib/Makefile              |  2 ++
+ lib/multipath.c           | 74 +++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 110 insertions(+)
+ create mode 100644 include/linux/multipath.h
+ create mode 100644 lib/multipath.c
 
-Correct, too. I was totally na=C3=AFve to rely on the thread itself
-increasing the refcount if I allow the thread to be cancelled before
-it even starts :-/
+diff --git a/include/linux/multipath.h b/include/linux/multipath.h
+new file mode 100644
+index 0000000000000..102dfcf21ffc9
+--- /dev/null
++++ b/include/linux/multipath.h
+@@ -0,0 +1,28 @@
++
++#ifndef _LIBMULTIPATH_H
++#define _LIBMULTIPATH_H
++
++#include <linux/blkdev.h>
++#include <linux/srcu.h>
++
++struct mpath_device {
++	struct list_head	siblings;
++	struct gendisk		*disk;
++};
++
++struct mpath_head {
++	struct srcu_struct	srcu;
++	struct list_head	dev_list;	/* list of all mpath_devs */
++	struct mutex		lock;
++
++	struct kref		ref;
++
++	void			*drvdata;
++	struct mpath_device __rcu		*current_path[];
++};
++
++int mpath_get_head(struct mpath_head *mpath_head);
++void mpath_put_head(struct mpath_head *mpath_head);
++struct mpath_head *mpath_alloc_head(void);
++
++#endif // _LIBMULTIPATH_H
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 0f2fb96106476..5c70e6df89740 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -636,3 +636,9 @@ config UNION_FIND
+ 
+ config MIN_HEAP
+ 	bool
++
++config LIBMULTIPATH
++	bool "MULTIPATH BLOCK DRIVER LIBRARY"
++	depends on BLOCK
++	help
++	  If you say yes here then you get a multipath lib for block drivers
+diff --git a/lib/Makefile b/lib/Makefile
+index 1b9ee167517f3..98948b18af7f7 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -335,3 +335,5 @@ CONTEXT_ANALYSIS_test_context-analysis.o := y
+ obj-$(CONFIG_CONTEXT_ANALYSIS_TEST) += test_context-analysis.o
+ 
+ subdir-$(CONFIG_FORTIFY_SOURCE) += test_fortify
++
++obj-$(CONFIG_LIBMULTIPATH)	+= multipath.o
+diff --git a/lib/multipath.c b/lib/multipath.c
+new file mode 100644
+index 0000000000000..0d5690b5ba4ca
+--- /dev/null
++++ b/lib/multipath.c
+@@ -0,0 +1,74 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (c) 2017-2018 Christoph Hellwig.
++ * Copyright (c) 2026 Oracle and/or its affiliates.
++ */
++#include <linux/module.h>
++#include <linux/multipath.h>
++
++static struct workqueue_struct *mpath_wq;
++
++static void mpath_free_head(struct kref *ref)
++{
++	struct mpath_head *mpath_head =
++		container_of(ref, struct mpath_head, ref);
++
++	cleanup_srcu_struct(&mpath_head->srcu);
++	kfree(mpath_head);
++}
++
++int mpath_get_head(struct mpath_head *mpath_head)
++{
++	if (!kref_get_unless_zero(&mpath_head->ref))
++		return -ENXIO;
++	return 0;
++}
++EXPORT_SYMBOL_GPL(mpath_get_head);
++
++void mpath_put_head(struct mpath_head *mpath_head)
++{
++	kref_put(&mpath_head->ref, mpath_free_head);
++}
++EXPORT_SYMBOL_GPL(mpath_put_head);
++
++struct mpath_head *mpath_alloc_head(void)
++{
++	struct mpath_head *mpath_head;
++	int ret;
++
++	mpath_head = kzalloc(struct_size(mpath_head, current_path,
++				num_possible_nodes()), GFP_KERNEL);
++	if (!mpath_head)
++		return ERR_PTR(-ENOMEM);
++	INIT_LIST_HEAD(&mpath_head->dev_list);
++	mutex_init(&mpath_head->lock);
++	kref_init(&mpath_head->ref);
++
++	ret = init_srcu_struct(&mpath_head->srcu);
++	if (ret) {
++		kfree(mpath_head);
++		return ERR_PTR(ret);
++	}
++
++	return mpath_head;
++}
++EXPORT_SYMBOL_GPL(mpath_alloc_head);
++
++static int __init mpath_init(void)
++{
++	mpath_wq = alloc_workqueue("mpath-wq",
++			WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS, 0);
++	if (!mpath_wq)
++		return -ENOMEM;
++	return 0;
++}
++
++static void __exit mpath_exit(void)
++{
++	destroy_workqueue(mpath_wq);
++}
++
++module_init(mpath_init);
++module_exit(mpath_exit);
++MODULE_LICENSE("GPL");
++MODULE_DESCRIPTION("libmultipath");
+-- 
+2.43.5
 
-However, I think I'll keep RUNNER_IDLE state around. It doesn't hurt
-and it provides possible insight into whether or not the runner
-function was actually called.
-
-> Perhaps I'm just being stupid, but I don't see the
-> necessity. If you set a thread to deferred cancellation, I don't
-> believe
-> it can get cancelled between when you create it, and when it hits
-> it's
-> first cancellation point, so you shouldn't have to worry about
-> getting
-> cancelled before the runner's cleanup_context handler isset up. I'm
-> pretty sure that if the thread gets created successfully, it should
-> always drop its reference count when it exits, regardless of if/when
-> it
-> gets cancelled. And if you fail to create the thread, you can just
-> drop
-> the refcount back to 1 before calling release_context() in
-> get_runner().
-
-I believe that it's possible for pthread_create() to succeed and the
-program to terminate before the thread is started. In which case the
-thread's cleanup code won't be set up, and the context won't be freed.
-But we explicitly don't want to wait for these threads, so I think
-that's a cosmetic problem in a corner case that we don't need to bother
-with.
-
-Thanks,
-Martin
