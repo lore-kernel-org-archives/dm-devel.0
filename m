@@ -1,159 +1,197 @@
-Received: from va-2-30.ptr.blmpb.com (va-2-30.ptr.blmpb.com [209.127.231.30])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3574E3A7831
-	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 08:36:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.30
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F35522D47E9
+	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 09:20:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777365370; cv=none; b=LodG9Pg/hGDbUehG1Vo72PJJYfXTr2wFRtBW4gpdxMeIvybNKah7kStEat0gxSnJzujjIlP4JLEYz01qsCHHoW00W54tf8rQfDUAsf6hAaJQxcx98Y7J0DOrCwVKO/DLVg/5iF3nVjNMDHrsgaTeKXgBoEgeYY65ZcmLxvBwd0c=
+	t=1777368015; cv=none; b=QjuMSKd02C0vFtMo8rANOZtxvGSORMCGtZrhPooqr34WX6hB3J917U86vqcwDczeUlZJfQddIohc8FYVLmNqvT2NcuEJDDTWS8U4T0dIxWQo3v4CEehes9NrGifscLIAqAnZ3t0y1FHLYB3nZneJslO2XGVxKb1sRFX//acOqpw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777365370; c=relaxed/simple;
-	bh=mEkoZyVRKnDgwYNS3ydtXdpNVtYjMErvomVxhO9m5Zk=;
-	h=To:From:Message-Id:Cc:Subject:Date:Mime-Version:References:
-	 In-Reply-To:Content-Type; b=KYGUEs6nyq/wm3NT427yC/TP4LMNQLhQT/PZa8cB2roIfom5VyvRYpLgNpiyInWK3L5lbyQCPzhjxf9ng5i2cAwFZJIfe+FFzHj0lbKRunEKmj5VNVTySVfxk485P5+KCPj5rU3fgZmJ6aaJftr1LdVtuOyACD4WqelYHS6TE8s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com; spf=pass smtp.mailfrom=fnnas.com; dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b=oqNwNAAf; arc=none smtp.client-ip=209.127.231.30
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fnnas.com
+	s=arc-20240116; t=1777368015; c=relaxed/simple;
+	bh=E59q141eIMRoVS0CIFBNpImOnrZTdEnPeY4n1aRI5qI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=PiNuMSnslAZ6XfrDysQjG5Rg7ArTzZ1HlQzr7jlYRuenVMkKNxICh/bn/oFjlNEKFwf0q1M5scA0qpz77eI2QkR0v+U5+cUbP+2hgqjrOFfBHAv+2quNIssiOjTGJm7+d2s9jQ5/8eygdwBIUNUVjGKHKsohqsZftyW9OabsGcY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=QEyvf2UM; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=dOaK06dd; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b="oqNwNAAf"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=s1; d=fnnas-com.20200927.dkim.feishu.cn; t=1777365357;
-  h=from:subject:mime-version:from:date:message-id:subject:to:cc:
- reply-to:content-type:mime-version:in-reply-to:message-id;
- bh=WqOpI73oguuXxE77jncWiCP//wCNv+y8pygW9AIz84M=;
- b=oqNwNAAf7DALDEfrPCktzy2byPviQ8BQePJXUfBbBkcE1vSWusieLpU3gggyNnuC/shFez
- jKaOR5Z0Ns2eCxb8sda7ESPvxnIhIggYj1BCC4KE2FEiKqbc5UUYJc5bOtlmk0Ll1LUiei
- JXaBJ6ZgUUPsJ7JHPWqZet2nGwpNdPZuqCSJ7ExALh5RTPQFZvPwoUKU311Rol00CIRWP1
- NlDxrD2UqeZniKMVMO25qJ8psKM4A87nTmIJFfGU3E/ck3q0G6qcCfnsUjBL23ORE/yzR6
- td8KfZ/NqPR3dH1vMmQDymuHAP2Vp2CUG4RtcdYCQvwZ2zlJg8UljNxLTMsQ3Q==
-To: "Benjamin Marzinski" <bmarzins@redhat.com>, 
-	"Yang Xiuwei" <yangxiuwei@kylinos.cn>
-From: "Yu Kuai" <yukuai@fnnas.com>
-Message-Id: <e98037c0-de70-4de4-b3ea-e2d67022a7fc@fnnas.com>
-Reply-To: yukuai@fnnas.com
-Cc: "Yu Kuai" <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>, 
-	"Li Nan" <linan666@huaweicloud.com>, "Song Liu" <song@kernel.org>, 
-	<linux-raid@vger.kernel.org>, <dm-devel@lists.linux.dev>, 
-	"Xiao Ni" <xni@redhat.com>, "Nigel Croxon" <ncroxon@redhat.com>, 
-	<yukuai@fnnas.com>
-User-Agent: Mozilla Thunderbird
-Received: from [192.168.1.104] ([39.182.0.183]) by smtp.feishu.cn with ESMTPS; Tue, 28 Apr 2026 16:35:54 +0800
-X-Original-From: Yu Kuai <yukuai@fnnas.com>
-X-Lms-Return-Path: <lba+269f0716b+eeb328+lists.linux.dev+yukuai@fnnas.com>
-Subject: Re: [RFC PATCH] dm-raid: only requeue bios when dm is suspending.
-Date: Tue, 28 Apr 2026 16:35:52 +0800
+	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="QEyvf2UM";
+	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="dOaK06dd"
+Received: from pps.filterd (m0279867.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 63S7vlZG1744834
+	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 09:20:13 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	vpAxPHzEnIqyJBQRocZHAzzK0xrcj2x1AR2IF+lJmZc=; b=QEyvf2UMeBITgznu
+	+c0glZBplK9L1i6Oaneda/tHjAbz6LNUlUwMrH0Jpxp8ViGgZEBprVEyNgn85/Tc
+	TwLrPEcgFWBuxVHTSHUX0nJlMzkGWEjtsG7KuBooBBkBFhsE4Xj9zE62/Dalag6F
+	F6lx98sxn4wrLMEMF5Q5ZcgrQFeGOxnhaQ57CU9xxtaRTvb8Q9w69P2XbAtXDRyS
+	3HzBUOMTtgTdyJ/Hy0mZAW30tndjpuiVRCZVbMp/Ku8g7DOLK0gSQ4cujAUYp+Wn
+	90gFXSWaT2eNtjZuzKSenmmPGazPCvNuaI62Hfc/V3u7oRS0Q/ZDAdD84nNgGy+C
+	4Fd0AQ==
+Received: from mail-dy1-f199.google.com (mail-dy1-f199.google.com [74.125.82.199])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4dtryd8ajg-1
+	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
+	for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 09:20:13 +0000 (GMT)
+Received: by mail-dy1-f199.google.com with SMTP id 5a478bee46e88-2de07c12745so36853814eec.1
+        for <dm-devel@lists.linux.dev>; Tue, 28 Apr 2026 02:20:13 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=oss.qualcomm.com; s=google; t=1777368012; x=1777972812; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=vpAxPHzEnIqyJBQRocZHAzzK0xrcj2x1AR2IF+lJmZc=;
+        b=dOaK06ddRbpCXCx0N6oleHLl42HifWVOf8MR1gS15woKPA5Am8/+eyeQiFm3suFedl
+         Yg2jkjlrMSt2EQtxO5wJGvN+JJwC9Qf85mPw9WFRvWC0bYg8IW0jB8nPodf8l8qo1BeJ
+         ZvPejGrx+nUnXBajs0VEjy1Bu7iNCtSZDnug4fHoitakIESu5Ic7EwM11qZ4F66oHSdv
+         rUrTryaRvEV24yos8xfnVxy1R2Ty5AcxlSP0zEUzde+XqKd8ORZXDBm8LzR4TbX4UZAY
+         Uv4MtdFdI8NFdFgkBKnwAjZ7iWev0TdYPa532HwRmj6pKBp9QQ/NGShSO279Agg8CCrg
+         nbRw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1777368012; x=1777972812;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=vpAxPHzEnIqyJBQRocZHAzzK0xrcj2x1AR2IF+lJmZc=;
+        b=Fvd0NWNxQn8QFZFZFpSLfXMSzV34jwVhnV+4k1bUkAFtzjGpCosgPnbDXFkR+UYYk3
+         gaVigjmYEgqNXLAyfXGO3rucuNDru6UKYJl7HakEMVUWvEj64LSb4MgpvWHf8X0YUocF
+         0DHNDXh8fFYrFoQvtKR8AxOLLzBQzQEmMyQ3bb0rF8VkBNbOEH+V4cAjoEdUHLWCK4DT
+         2mTv8DKzlSbpWWwJ0EyjN8GpYF59fPOm5SuhcVou9vkYioxjK/AyTY0p6k+BhdLtKE8/
+         VqMqtrPbyopuAhIGtNKVN2HzhBMq/b/A2xiJBd/wHzf67szDDsO046uA71+EgeQcpOYt
+         aqew==
+X-Forwarded-Encrypted: i=1; AFNElJ/6Uu8YuZrS4ZyM/qDeZfh5UXglyFAP5de0eD+RU607UNkqVXM241DQwsuCBfK4t90UhaPatD/NWA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxdtvEawXYWGJVInFgX1N/wDd0Hs5mLsSQOh8UuQueF+Sfz827h
+	lb+7Uo8uHDr4lUx/XNydorYXJaYbvZ/x1jl5BX6wwUWqnKCQFa/MPBHpZ8ed36hmgfBSk7PBtFT
+	1AePCF87JogxlZOc5R2fkpdgS954/TvRmSe/6HJPY3p2V9zMv6FttIuCXskU5rg==
+X-Gm-Gg: AeBDieuVGq25qaInxKi7kn9rxUmxc9+8ZZjN/j65VTXxWX+bYHqgN236QHzWnI9po2v
+	TqTXrFLr0Yx3XuWAUD1EeecDLcUWgnNRLVxb3rv6LhkynS4pBM9zXq7MAlfBJ2Ha3Gx7j2dbcGD
+	fe/P++74pmwl6OVITu0ImzYmHd4h5c5MuaaKLGAMuk/bthCVe77508c8E4nKcEjkmbVY89/7mdL
+	XcZuZol2vo9Xup+1YE0BgZWP7k9aY12k0OvZLHFYiW/No0cSRvvfUpK9RoAHFBurmB22KOHTAu1
+	Xv+NvAjNIGYw/N7OGRoCPnj0CG2XStsAwtYo9/5DdEbjOS0bUS9g9I9tOW+RhClTm3tKPZeXHz1
+	KSYlkNOS8WKgx2xYGJDNYcxuhQvXWXjEBtv/MSekoWKZYMRN4+/ecgEJ9eaGYcuTIuNlT5loRXs
+	Ii+kUEcPZGR8i67w==
+X-Received: by 2002:a05:7300:bc1a:b0:2ed:e17:d50d with SMTP id 5a478bee46e88-2ed0e17d71dmr608534eec.32.1777368012412;
+        Tue, 28 Apr 2026 02:20:12 -0700 (PDT)
+X-Received: by 2002:a05:7300:bc1a:b0:2ed:e17:d50d with SMTP id 5a478bee46e88-2ed0e17d71dmr608514eec.32.1777368011821;
+        Tue, 28 Apr 2026 02:20:11 -0700 (PDT)
+Received: from [10.110.45.159] (i-global254.qualcomm.com. [199.106.103.254])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2ed0a103542sm2463767eec.21.2026.04.28.02.20.08
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 28 Apr 2026 02:20:11 -0700 (PDT)
+Message-ID: <6390db35-7f8e-4d00-9c1f-43d676007910@oss.qualcomm.com>
+Date: Tue, 28 Apr 2026 17:20:07 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-References: <ad6FNUtSCS_zTrHW@redhat.com> <20260414190350.1946406-1-bmarzins@redhat.com>
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 2/3] dm-inlinecrypt: add target for inline block device
+ encryption
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linux-block@vger.kernel.org, ebiggers@kernel.org, mpatocka@redhat.com,
+        gmazyland@gmail.com, linux-kernel@vger.kernel.org,
+        adrianvovk@gmail.com, dm-devel@lists.linux.dev,
+        quic_mdalam@quicinc.com, israelr@nvidia.com, hch@infradead.org,
+        axboe@kernel.dk
+References: <20260410134031.2880675-1-linlin.zhang@oss.qualcomm.com>
+ <20260410134031.2880675-3-linlin.zhang@oss.qualcomm.com>
+ <ae7yzw-5wz9cqZt8@redhat.com> <ae_vacHQ75AgZbm_@redhat.com>
 Content-Language: en-US
-Content-Transfer-Encoding: quoted-printable
-In-Reply-To: <20260414190350.1946406-1-bmarzins@redhat.com>
+From: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+In-Reply-To: <ae_vacHQ75AgZbm_@redhat.com>
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-Proofpoint-GUID: rdqdHagcRJEs2vHL78QOcNHtsAmXFeNh
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDI4MDA4MiBTYWx0ZWRfX4E2tRKF9Z9oq
+ GYGPk7BrBQuOjiF2AVrlgJ/Q3YBOXI6hHEuclrygpPSlZp9X1N5VKaqRZqQXdfScJs/z2mGlNgI
+ dw9flyUe8rkI2dza2XGRykCgZOL6HCyukR0LdLeBfX0h2ioYrxWgueFmz7Q6YYw5La+Hj5RBP2h
+ NF7oqBv17v7RavARO93kYbaVJojjyjv1Bg8UNAWCDpC3m8azuxzilizsZCFZiYOJI/iSSBYwBel
+ qx1cHmLpTVj7kgg/LKqDCrOBThJJHQ+ooEPccR+bBnYBKaL00ntCAJ78L7Kcl5nhU9FGBCXJYQN
+ OfnehdetN2KV56YOy9BjEQG0h5I6XaPhYRQK8Ou0t4ryYZO/ULCM4qJMTF0F0esENTd06SFRSjN
+ 4uWpvLxiL/msv9M2zVGJsCS1srwTqZ7OysBwnFfDRkgmlxojRLuiRETmP8IFOcqHrMd5ZycS5mQ
+ xIX8RZMmWvmtICx+MIw==
+X-Proofpoint-ORIG-GUID: rdqdHagcRJEs2vHL78QOcNHtsAmXFeNh
+X-Authority-Analysis: v=2.4 cv=cMnQdFeN c=1 sm=1 tr=0 ts=69f07bcd cx=c_pps
+ a=cFYjgdjTJScbgFmBucgdfQ==:117 a=JYp8KDb2vCoCEuGobkYCKw==:17
+ a=IkcTkHD0fZMA:10 a=A5OVakUREuEA:10 a=s4-Qcg_JpJYA:10
+ a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=eoimf2acIAo5FJnRuUoq:22
+ a=1XWaLZrsAAAA:8 a=mLr8kJcTbZJnnLskd6wA:9 a=QEXdDO2ut3YA:10
+ a=scEy_gLbYbu1JhEsrz4S:22
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-28_02,2026-04-21_02,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ adultscore=0 spamscore=0 impostorscore=0 malwarescore=0 bulkscore=0
+ clxscore=1015 priorityscore=1501 suspectscore=0 lowpriorityscore=0
+ phishscore=0 classifier=typeunknown authscore=0 authtc= authcc=
+ route=outbound adjust=0 reason=mlx scancount=1 engine=8.22.0-2604200000
+ definitions=main-2604280082
 
-Hi,
 
-=E5=9C=A8 2026/4/15 3:03, Benjamin Marzinski =E5=86=99=E9=81=93:
-> returning DM_MAPIO_REQUEUE from the target map() function only requeues
-> the bio during noflush suspends. During regular operations or during
-> flushing suspends, it fails the bio. Failing the bio during flushing
-> suspends is the correct behavior here. We cannot handle the bio, and we
-> cannot suspends while it is outstanding. But during normal operations,
-> we should not push the bio back to do. Instead, wait for the reshape
-> to be resumed.
->
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->
-> Yang Xiuwei, if you are still able to see I/O errors during LVM testing,
-> does this patch fix them?
->
->   drivers/md/dm-raid.c | 7 +++++++
->   drivers/md/md.h      | 1 +
->   drivers/md/raid5.c   | 6 ++++--
->   3 files changed, 12 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index 4bacdc499984..cac61d57e7e2 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -3831,6 +3831,7 @@ static void raid_presuspend(struct dm_target *ti)
->   	 * resume, raid_postsuspend() is too late.
->   	 */
->   	set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
-> +	WRITE_ONCE(mddev->dm_suspending, 1);
->  =20
->   	if (!reshape_interrupted(mddev))
->   		return;
-> @@ -3847,6 +3848,9 @@ static void raid_presuspend(struct dm_target *ti)
->   static void raid_presuspend_undo(struct dm_target *ti)
->   {
->   	struct raid_set *rs =3D ti->private;
-> +	struct mddev *mddev =3D &rs->md;
-> +
-> +	WRITE_ONCE(mddev->dm_suspending, 0);
->  =20
->   	clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
->   }
-> @@ -3854,6 +3858,7 @@ static void raid_presuspend_undo(struct dm_target *=
-ti)
->   static void raid_postsuspend(struct dm_target *ti)
->   {
->   	struct raid_set *rs =3D ti->private;
-> +	struct mddev *mddev =3D &rs->md;
->  =20
->   	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
->   		/*
-> @@ -3864,6 +3869,8 @@ static void raid_postsuspend(struct dm_target *ti)
->   		mddev_suspend(&rs->md, false);
->   		rs->md.ro =3D MD_RDONLY;
->   	}
-> +	WRITE_ONCE(mddev->dm_suspending, 0);
-> +
->   }
->  =20
->   static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index ac84289664cd..e8d7332c5cb9 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -463,6 +463,7 @@ struct mddev {
->   	int				delta_disks, new_level, new_layout;
->   	int				new_chunk_sectors;
->   	int				reshape_backwards;
-> +	int				dm_suspending;
 
-This patch looks fine, however, can you also optimize it by a new
-flag instead a new int field ?
+On 4/28/2026 7:21 AM, Benjamin Marzinski wrote:
+> On Mon, Apr 27, 2026 at 01:23:27AM -0400, Benjamin Marzinski wrote:
+>> On Fri, Apr 10, 2026 at 06:40:30AM -0700, Linlin Zhang wrote:
+>>> From: Eric Biggers <ebiggers@google.com>
+>>> +	/*
+>>> +	 * Since we've added an encryption context to the bio and
+>>> +	 * blk-crypto-fallback may be needed to process it, it's necessary to
+>>> +	 * use the fallback-aware bio submission code rather than
+>>> +	 * unconditionally returning DM_MAPIO_REMAPPED.
+>>> +	 *
+>>> +	 * To get the correct accounting for a dm target in the case where
+>>> +	 * __blk_crypto_submit_bio() doesn't take ownership of the bio (returns
+>>> +	 * true), call __blk_crypto_submit_bio() directly and return
+>>> +	 * DM_MAPIO_REMAPPED in that case, rather than relying on
+>>> +	 * blk_crypto_submit_bio() which calls submit_bio() in that case.
+>>> +	 */
+>>> +	if (__blk_crypto_submit_bio(bio))
+>>
+>> This will still double account for fallback writes (which call
+>> submit_bio() on the encrypted bios, and return DM_MAPIO_SUBMITTED here). 
+> 
+> Just to clarify, I'm talking about the vmstats accounting. The IO
+> originally gets accounted by submit_bio() when the bio is submitted to
+> the dm device. For actual inline encryption and fallback reads, dm will
+> submit the bio to the underlying device using submit_bio_noacct() to
+> avoid double-counting the IO.
+> 
+> For fallback writes, __blk_crypto_submit_bio() will submit the encrypted
+> bios to the underlying device with submit_bio(). This adds the IO
+> sectors again, even though it's the same IO, only encrypted now.
 
->  =20
->   	struct md_thread __rcu		*thread;	/* management thread */
->   	struct md_thread __rcu		*sync_thread;	/* doing resync or reconstruct *=
-/
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index 8854e024f311..d528263f92a3 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -6042,8 +6042,10 @@ static enum stripe_result make_stripe_request(stru=
-ct mddev *mddev,
->   	raid5_release_stripe(sh);
->   out:
->   	if (ret =3D=3D STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(mddev)=
-) {
-> -		bi->bi_status =3D BLK_STS_RESOURCE;
-> -		ret =3D STRIPE_WAIT_RESHAPE;
-> +		if (!mddev_is_dm(mddev) || READ_ONCE(mddev->dm_suspending)) {
-> +			bi->bi_status =3D BLK_STS_RESOURCE;
-> +			ret =3D STRIPE_WAIT_RESHAPE;
-> +		}
->   		pr_err_ratelimited("dm-raid456: io across reshape position while resh=
-ape can't make progress");
->   	}
->   	return ret;
 
---=20
-Thansk,
-Kuai
+Right, thanks for calling this out.
+
+For fallback writes, the IO is still double-counted. Given that this only
+affects IO accounting in the blk-crypto fallback write slow-path and not
+correctness, I think this is an acceptable tradeoff, and we can leave a
+TODO to revisit the accounting once a better solution exists.
+
+Add the bellow to the annotate.
+
+  /*
+   * TODO: blk-crypto fallback write slow-path currently double-accounts
+   * IO in vmstat, as encrypted bios are submitted via submit_bio().
+   * This does not affect data correctness. Consider fixing this if
+   * a cleaner accounting model for derived bios is introduced.
+   */
+
+Do you agree?
+
+> 
+> -Ben
+> 
+>>
+>> -Ben
+>>
+>>> +		return DM_MAPIO_REMAPPED;
+>>> +	return DM_MAPIO_SUBMITTED;
+>>> +}
+>>
+> 
+
