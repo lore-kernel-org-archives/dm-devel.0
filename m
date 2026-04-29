@@ -1,170 +1,188 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A266C3783AC
-	for <dm-devel@lists.linux.dev>; Wed, 29 Apr 2026 15:24:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78D3437B400
+	for <dm-devel@lists.linux.dev>; Wed, 29 Apr 2026 15:25:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777476280; cv=none; b=TmM6V5Js3jHonn7LFfsRl/j92CJi3BvESXvfI7yJGTjJX8O483frT/LfWJJTIJ8useRTAp28OK7Tcqt9Rniin5+2J2TcmGy+xDbBlGVBa2HV2+LQJVmFKK2gpirqyIyD0ZfTFCRJ6TSSW66i6Go7V8twPBQ1wWy0epJnYKJTbWg=
+	t=1777476313; cv=none; b=MapmmNymDkkdoZAI40qYhgOvIlfeDV67p0wXo2EzQIJdy3r4MVu8cd1fVtoqTdQsCicivkIkvgUYFyOzRRBO7NjKn8jI9nA7ActTKYp3qdthnKg+5ioPWbS0ZM9D2LUWt7RoAfwVwaqOqNR1VC+p71CD5KgvozfMv1JrnH01JtI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777476280; c=relaxed/simple;
-	bh=hVTWOmWkKedUOB/OEaM4zwcAK5LJMw3Do/CLTzzXoJc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=N4PzyqUikbP+wXMVH//NZ/VgKoVJkqrV2YUfmjzhDTnyycwXMEY//DQeDxan2hD0UEQiUgzMBVGibAU9zQddm2Me9FiGLVwul/3C6gczqCSpx2zW3sUA9Ck0LzFKST8lisey4ksJJ/WzOomy9XQFVY7j00MEDJ0M2NJKUK8+l1E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gCILolhp; arc=none smtp.client-ip=170.10.133.124
+	s=arc-20240116; t=1777476313; c=relaxed/simple;
+	bh=JvxfV5QjKQbwm7+BOekQVOayYxapWdUNFPLNqt75HHE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=PWpp/1yLk5ZGFXDSZ7za583ST+1F9yM59UBMxG+KxUDE5NeYhRx6hJ2H9yM2YEttbe7InHlz2y6qHZIdxPsAbAxjKADCgwWj/yywxuWxUqG4FLjJa6re4P2/Ub5c/tArtU36VLb4RfooOrHuL/cGiWgVH+h4VvcDhCrab5CAsGc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=dT1NP/sx; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gCILolhp"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="dT1NP/sx"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1777476277;
+	s=mimecast20190719; t=1777476311;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=+NrCE4WeZBcnCMinEJhD3rPeEPQJTvMbPaUc0uBBZa4=;
-	b=gCILolhpMm6+M4RWQ4C21V6yGh/9KL4T8CQQj8LvmvGl0z/XoT71FWwHmVeLrDnYeKN4F4
-	goSzqdlUIL/VqqXb+UK1bsm2z0IPko+6kzPY/JgNdtcKSmB4IuWfS4gqSzQ4V5qpL5l2pe
-	rtfyjzOZduWfFAz39YBygJo8ZLm91nU=
+	bh=EMT0J2vcJAfTCz/tlata9hzsUiHyRA7lCZ4HpBR0qWg=;
+	b=dT1NP/sxT3VGPWsydoGKGl7vNbc0Jdly5UqednVXraLvgIsDXCA+Q95OhvwspK/4idjtBy
+	LuvZkx0A6mXOi7u53nldcbQpPQnfUKTXTuWUhncSyiCX8KUhNifCC+bZ2heyuvget2cYRZ
+	ApjP16uM34DTe6WEn++8+sMHNBf70Hg=
 Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-286-3IlXz3BOOM-tDHxxDjEjZg-1; Wed,
- 29 Apr 2026 11:24:34 -0400
-X-MC-Unique: 3IlXz3BOOM-tDHxxDjEjZg-1
-X-Mimecast-MFC-AGG-ID: 3IlXz3BOOM-tDHxxDjEjZg_1777476273
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-584-MwTeSaaBP3KyBOulTq63rQ-1; Wed,
+ 29 Apr 2026 11:25:09 -0400
+X-MC-Unique: MwTeSaaBP3KyBOulTq63rQ-1
+X-Mimecast-MFC-AGG-ID: MwTeSaaBP3KyBOulTq63rQ_1777476307
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 336BE1800282;
-	Wed, 29 Apr 2026 15:24:33 +0000 (UTC)
-Received: from [10.44.34.100] (unknown [10.44.34.100])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35202180034F;
-	Wed, 29 Apr 2026 15:24:32 +0000 (UTC)
-Date: Wed, 29 Apr 2026 17:24:29 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: "..." <439291857@qq.com>
-cc: dm-devel <dm-devel@lists.linux.dev>
-Subject: Re: dm vdo: add optional Intel IAA-backed compression support
-In-Reply-To: <tencent_C10B5DDE03BCA1510BF6D23F384A4C120308@qq.com>
-Message-ID: <a986902e-014c-2df6-4e0d-de99a62f90f2@redhat.com>
-References: <tencent_C10B5DDE03BCA1510BF6D23F384A4C120308@qq.com>
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AEE2B1800350;
+	Wed, 29 Apr 2026 15:25:06 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F110B300019F;
+	Wed, 29 Apr 2026 15:25:05 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63TFP4Zs2813142
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Wed, 29 Apr 2026 11:25:04 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63TFP24c2813132;
+	Wed, 29 Apr 2026 11:25:02 -0400
+Date: Wed, 29 Apr 2026 11:25:01 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+Cc: linux-block@vger.kernel.org, ebiggers@kernel.org, mpatocka@redhat.com,
+        gmazyland@gmail.com, linux-kernel@vger.kernel.org,
+        adrianvovk@gmail.com, dm-devel@lists.linux.dev,
+        quic_mdalam@quicinc.com, israelr@nvidia.com, hch@infradead.org,
+        axboe@kernel.dk
+Subject: Re: [PATCH v2 2/3] dm-inlinecrypt: add target for inline block
+ device encryption
+Message-ID: <afIizQA9kVR_u_2j@redhat.com>
+References: <20260410134031.2880675-1-linlin.zhang@oss.qualcomm.com>
+ <20260410134031.2880675-3-linlin.zhang@oss.qualcomm.com>
+ <ae7yzw-5wz9cqZt8@redhat.com>
+ <ae_vacHQ75AgZbm_@redhat.com>
+ <6390db35-7f8e-4d00-9c1f-43d676007910@oss.qualcomm.com>
+ <afDh8XRWW_JgaUP3@redhat.com>
+ <7ab5cd97-30b7-42ca-80ce-6d9cd8c45b73@oss.qualcomm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: wRdHYPG0EHCgrmVBhOprzIUK-r7bXucL4OfeTDTxUxw_1777476273
+In-Reply-To: <7ab5cd97-30b7-42ca-80ce-6d9cd8c45b73@oss.qualcomm.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-MFC-PROC-ID: cnpO3RKhNSjtKC4UTYVW49GVJSQYKkefkLMiVeE-JCU_1777476307
 X-Mimecast-Originator: redhat.com
-Content-Type: multipart/mixed; boundary="-1463811712-134907032-1777476272=:538637"
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
----1463811712-134907032-1777476272=:538637
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+On Wed, Apr 29, 2026 at 08:34:00PM +0800, Linlin Zhang wrote:
+> 
+> 
+> On 4/29/2026 12:36 AM, Benjamin Marzinski wrote:
+> > On Tue, Apr 28, 2026 at 05:20:07PM +0800, Linlin Zhang wrote:
+> >>
+> >>
+> >> On 4/28/2026 7:21 AM, Benjamin Marzinski wrote:
+> >>> On Mon, Apr 27, 2026 at 01:23:27AM -0400, Benjamin Marzinski wrote:
+> >>>> On Fri, Apr 10, 2026 at 06:40:30AM -0700, Linlin Zhang wrote:
+> >>>>> From: Eric Biggers <ebiggers@google.com>
+> >>>>> +	/*
+> >>>>> +	 * Since we've added an encryption context to the bio and
+> >>>>> +	 * blk-crypto-fallback may be needed to process it, it's necessary to
+> >>>>> +	 * use the fallback-aware bio submission code rather than
+> >>>>> +	 * unconditionally returning DM_MAPIO_REMAPPED.
+> >>>>> +	 *
+> >>>>> +	 * To get the correct accounting for a dm target in the case where
+> >>>>> +	 * __blk_crypto_submit_bio() doesn't take ownership of the bio (returns
+> >>>>> +	 * true), call __blk_crypto_submit_bio() directly and return
+> >>>>> +	 * DM_MAPIO_REMAPPED in that case, rather than relying on
+> >>>>> +	 * blk_crypto_submit_bio() which calls submit_bio() in that case.
+> >>>>> +	 */
+> >>>>> +	if (__blk_crypto_submit_bio(bio))
+> >>>>
+> >>>> This will still double account for fallback writes (which call
+> >>>> submit_bio() on the encrypted bios, and return DM_MAPIO_SUBMITTED here). 
+> >>>
+> >>> Just to clarify, I'm talking about the vmstats accounting. The IO
+> >>> originally gets accounted by submit_bio() when the bio is submitted to
+> >>> the dm device. For actual inline encryption and fallback reads, dm will
+> >>> submit the bio to the underlying device using submit_bio_noacct() to
+> >>> avoid double-counting the IO.
+> >>>
+> >>> For fallback writes, __blk_crypto_submit_bio() will submit the encrypted
+> >>> bios to the underlying device with submit_bio(). This adds the IO
+> >>> sectors again, even though it's the same IO, only encrypted now.
+> >>
+> >>
+> >> Right, thanks for calling this out.
+> >>
+> >> For fallback writes, the IO is still double-counted. Given that this only
+> >> affects IO accounting in the blk-crypto fallback write slow-path and not
+> >> correctness, I think this is an acceptable tradeoff, and we can leave a
+> >> TODO to revisit the accounting once a better solution exists.
+> >>
+> >> Add the bellow to the annotate.
+> >>
+> >>   /*
+> >>    * TODO: blk-crypto fallback write slow-path currently double-accounts
+> >>    * IO in vmstat, as encrypted bios are submitted via submit_bio().
+> >>    * This does not affect data correctness. Consider fixing this if
+> >>    * a cleaner accounting model for derived bios is introduced.
+> >>    */
+> >>
+> >> Do you agree?
+> > 
+> > You could add an extra argument, for instance "bool need_acct", to
+> > __blk_crypto_submit_bio(), and plumb it through to
+> > __blk_crypto_fallback_encrypt_bio(), where it could be used to choose
+> > between calling submit_bio() and and submit_bio_noacct().
+> > 
+> > We could even add a flag to cloned bios for stacked devices, that could
+> > be checked in submit_bio(), so we didn't need to have
+> > submit_bio_noacct(). But this is a pretty niche case with other
+> > solutions, so I'm not sure if it warrants adding more checks to
+> > submit_bio().
+> > 
+> > I do agree that people probably aren't using dm-inlinecrypt for devices
+> > where they don't actually have inline encryption capabilities, so it's
+> > not a major issue. What to you think, Mikulas?
+> 
+> Thanks for the suggestions.
+> 
+> Adding a bool need_acct parameter to __blk_crypto_submit_bio() would require
+> updating all existing callers, which feels rather intrusive given that the
+> accounting issue only affects the blk‑crypto fallback write slow‑path. I’m a
+> bit concerned that this would broaden the scope of the change more than
+> necessary for the problem at hand.
 
-Hi
+I get your concern, and I'd like a second opinion on how much we should
+care about this, but it doesn't look like there are many other callers
+that would be effected here. The only existing caller of
+__blk_crypto_submit_bio() is blk_crypto_submit_bio(), which would just
+call it with "need_acct=true". Looking at the code path below
+__blk_crypto_submit_bio() that would need to change for submitting the
+bios:
 
-I think the best way how to support it would be to modify the VDO target 
-to use the asynchronous compression API (so that it could use arbitrary 
-algorithms). Then, the support for IAA could be plugged in easily with 
-little or no extra code.
+__blk_crypto_submit_bio() is the only caller of
+blk_crypto_fallback_bio_prep()
 
-It is not good to have branches like "if (iaa_enabled) ... else ...;", 
-because that would just blow into unmaintainable bunch of code when other 
-accelerators (maybe s390x?) would be added.
+blk_crypto_fallback_bio_prep() is the only caller of
+blk_crypto_fallback_encrypt_bio().
 
-Also, it would be good (to ease reviewing), to split the patch into 
-several smaller patches.
+blk_crypto_fallback_encrypt_bio() is the only caller of
+__blk_crypto_fallback_encrypt_bio(), which is the function that would
+need to choose between submit_bio() and submit_bio_noacct().
 
-Mikulas
+Doing this would change the crypto API (by necessity, since we're adding
+a new argument to __blk_crypto_submit_bio() for stacking devices to
+use), and it is adds a extra argument to a number of functions, just to
+handle this corner case. But it is still a relatively contained change.
 
-
-On Wed, 29 Apr 2026, ... wrote:
-
-> 
-> Hello,
-> 
-> I am following up here after an earlier reply suggested that Linux dm-vdo changes should be discussed on the device-mapper mailing list rather than as a GitHub PR.
-> 
->  Intel IAA, the In-Memory Analytics Accelerator, is a built-in accelerator in recent Intel Xeon processors. One of its main uses is offloading compression and decompression
-> work from CPU cores. This is relevant to dm-vdo because VDO already spends CPU time in the compressed write and read paths, and the kernel already exposes IAA compression
-> through the crypto API as the deflate-iaa algorithm. The existing IAA crypto driver documentation (dm-linux/Documentation/driver-api/crypto/iaa/iaa-crypto.rst) also describes
-> zswap as one consumer of this interface, so my prototype tries the same general model for dm-vdo.
-> 
-> Before changing dm-vdo, I compared the current LZ4 path with IAA on a set of single-thread compression tests. For compression, IAA hardware was faster than LZ4 on most tested
-> datasets, withthe measured compression time often reduced by about 1.3x to 3.5x compared with LZ4. The compression ratio was also generally comparable to or better than LZ4,
-> because the IAA path uses DEFLATE rather than LZ4. Decompression was more mixed: IAA hardware was close to LZ4 or faster on some datasets, but slower on others.
-> [IMAGE]
-> Please see figure1 in the attachments.
-> 
-> The prototype is in:
-> 
->   https://github.com/dm-vdo/dm-linux/pull/96
-> 
-> It contains two commits:
-> 
->   dm vdo: add minimal IAA compression support
-> 
->   dm vdo: preserve compressed block format for IAA
-> 
-> The change is intentionally narrow and only touches the dm-vdo compression and
-> 
-> decompression path under `drivers/md/dm-vdo/`.The design is as shown in the figure below:
-> 
-> [IMAGE]
-> 
-> Please see figure2 in the attachments.
-> 
-> The current result is:
-> 
-> 1. dm-vdo gets an optional iaa_enabled module parameter.
-> 
-> 2. On writes, compress_data_vio() first tries deflate-iaa through the async compression crypto API. If IAA is disabled, unavailable, or the IAA compression attempt fails, it
-> falls back to the existing LZ4 path.
-> 
-> 3. On reads, uncompress_data_vio() can decode data produced by the IAA path. It tries IAA-assisted DEFLATE first, then software zlib inflate, and then the existing LZ4 path.
-> 
-> 4. The prototype preserves the existing compressed block format. I did not add a new on-disk compressor field in this version.
-> 
-> 5. Data written through the IAA path is not dependent on IAA hardware being present later, because it can still be decoded by the software DEFLATE fallback.
-> 
-> In local testing, the prototype was able to write and read IAA-compressed VDO data correctly, including the software fallback case when IAA was not used for the read. The
-> performance is as shown in the figure below. As can be seen, the performance remains largely consistent with the original after adding IAA.
-> 
-> Write path：
-> 
-> Command: dd if=../mnt_ori/SRR.fastq of=./SSR.fastq bs=1M oflag=direct
-> 
-> IAA: 6430986673 bytes (6.4 GB, 6.0 GiB) copied, 4.98476 s, 1.3
-> GB/s                                                                                                                                             
-> 
-> LZ4: 6430986673 bytes (6.4 GB, 6.0 GiB) copied, 4.91684 s, 1.3 GB/s
-> 
-> Read path:
-> 
-> [IMAGE]
-> 
-> Please see figure3 in the attachments.
-> 
-> The reason I think this may be worth discussing is that IAA gives dm-vdo a way to offload compression work on systems that already have the accelerator, while keeping the
-> existing LZ4 path as the compatibility and fallback path. The goal of this RFC is not to propose a final format or policy yet, but to check whether this direction is acceptable
-> before I spend more time preparing a proper patch series.
-> 
-> I would appreciate feedback on whether using the existing kernel IAA crypto API from dm-vdo is a reasonable direction, and whether preserving the current compressed block
-> format is acceptable for an initial RFC.
-> 
->  
-> 
-> Best regards,
-> 
-> 
-> 
-> 
-
----1463811712-134907032-1777476272=:538637--
+-Ben 
 
