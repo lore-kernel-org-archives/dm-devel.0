@@ -1,54 +1,54 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A9A938423A
-	for <dm-devel@lists.linux.dev>; Wed, 29 Apr 2026 20:21:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2D04B39282B
+	for <dm-devel@lists.linux.dev>; Wed, 29 Apr 2026 20:21:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777494079; cv=none; b=OTaX38Sn9tHir26K4HFr75f4W3zfIc2CXvgICZnWaCE6oFH+/er1+pl2KLgkLHnlO/pSzbNMu4eo6R8LglW/Z6Vql1m+crF4WzL2cB2WHK15Rh1ueQfJX83RYpZGs6Bp2TG2RS4rhuL6n/RBWoqqQLPpuYeYZDKK8WzMJIVDsNU=
+	t=1777494079; cv=none; b=TBpDa47BgbOZsaHBesCWeAdvnClwPPR5nog6hNLgY0ln1mu6iWwOGbuLNT8oV5r9N7Olm7Yy3s5Ta9oY75rPUv1tc17ECn82Erq0lPBX3XcBnnQS356FEokMQbFoZ+g2VX8wMUU+f1sOBg/nRaPvCf0+fgmiXpeJYbYWLtkKpUM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1777494079; c=relaxed/simple;
-	bh=LGXCPK0WIeb96A3NC8ZkfX/nGxwdjBOpBz9Knpay8YQ=;
+	bh=3FxO1iDgb4mxw+gAkK3tavJ9IdmxxEkQ5MUdaG6Vrf4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=J/5T4eT8jeTpf0/dzmcCmL5sdVNs/5vffiLoV7gYD4MmBHvBQ8R/SZCscZ3mp7aBWHCv61eActsDcRZ1EHPMf/fuMrFbJsDE2uKc+5s54L+pHPpiKNvbeP7amvhUJ/mt+UDfN53C/JsVGEMSfy2O9sWnwMSoLT/s5733JoGt2Cs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Yq3U8muv; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:content-type; b=rySyVJxcat+EKfnwaJpA2o2k18WgRIGdAwnVl5RVgmnVsvMg0SJ+SDjZffDNsqVoE8yGeqpcBz9P8IoKVOCod7uLwQXrSj1ei1TJ61CjHqEMf7bju5xqyTWhNlspM3TqgE/whv4zTSj/ZAz8Dymle5rwyNdio1NzGndGfENSWwk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=EulqCXqi; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Yq3U8muv"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="EulqCXqi"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1777494076;
+	s=mimecast20190719; t=1777494077;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=YFqV/KOxxVZt5oI9jDOVr4WGcOcSzlwNUFUrpU5i+XY=;
-	b=Yq3U8muvofc0EAhSQh2pB0kQBKvUmd3pupqFfkfltfkeVqbLyFRTw3resmR1XVJluq7Zg2
-	34OYqm4FwF/f+zqbY0Ln/WeGPip68/mI0X60agIMQ5P/8+VDLtgqbzOPme5q3Y0RES4bdD
-	4iO45uPjx0q1Fuc2Ek8RWU21tDKFra0=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=7U6Ubq0Pg8aoyDkNV5MNRlvVVrUWnndqdlDiAOuAX38=;
+	b=EulqCXqiRlUhXjG74uPwZDdXvgZp8N1aa8ODkxG1bOjjJe7Wb3pVyOL/Eq1gNTEf06ZgUu
+	J7h7pm4/TnBLlQwsgmwFjNc41Ncyq2mp1cAmm33Tlaua2ZNeyVcpl/Sr7R9braeJZEs637
+	nqBdifq8FosMqJqIGMLJVYYF7mTQ+JY=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-60-pfTWDh4VPGuhfXM09aApsw-1; Wed,
- 29 Apr 2026 16:21:12 -0400
-X-MC-Unique: pfTWDh4VPGuhfXM09aApsw-1
-X-Mimecast-MFC-AGG-ID: pfTWDh4VPGuhfXM09aApsw_1777494071
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-9tcjfy1_OAKZwxdCM1kCww-1; Wed,
+ 29 Apr 2026 16:21:13 -0400
+X-MC-Unique: 9tcjfy1_OAKZwxdCM1kCww-1
+X-Mimecast-MFC-AGG-ID: 9tcjfy1_OAKZwxdCM1kCww_1777494072
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 50CF31800345;
-	Wed, 29 Apr 2026 20:21:11 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 606D919560B8;
+	Wed, 29 Apr 2026 20:21:12 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B7132180045E;
-	Wed, 29 Apr 2026 20:21:10 +0000 (UTC)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 28717195608E;
+	Wed, 29 Apr 2026 20:21:12 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63TKL9RE2823288
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63TKLBGg2823320
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 29 Apr 2026 16:21:09 -0400
+	Wed, 29 Apr 2026 16:21:11 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63TKL9fv2823287;
-	Wed, 29 Apr 2026 16:21:09 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63TKLBxg2823319;
+	Wed, 29 Apr 2026 16:21:11 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
 Cc: dm-devel@lists.linux.dev, linux-integrity@vger.kernel.org,
@@ -57,9 +57,9 @@ Cc: dm-devel@lists.linux.dev, linux-integrity@vger.kernel.org,
         Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
         Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
         steven chen <chenste@linux.microsoft.com>
-Subject: [PATCH v2 02/10] dm-ima: remove broken last_target_measured logic
-Date: Wed, 29 Apr 2026 16:21:00 -0400
-Message-ID: <20260429202108.2823261-3-bmarzins@redhat.com>
+Subject: [PATCH v2 10/10] dm-ima: use active table's size if available
+Date: Wed, 29 Apr 2026 16:21:08 -0400
+Message-ID: <20260429202108.2823261-11-bmarzins@redhat.com>
 In-Reply-To: <20260429202108.2823261-1-bmarzins@redhat.com>
 References: <20260429202108.2823261-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -68,81 +68,259 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: mHfxuAWy16JUrdfK1VIG13iSBKlcF8vxUpTK4uJV6Xo_1777494071
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: drbl1zSpe4P7D60MMfU3XfEMLQ_S-GwddyBDw-7oGjk_1777494072
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
 
-When it ran out of space for adding more targets to the ima_buf,
-dm_ima_measure_on_table_load() would measure the dm device early, and
-then add the rest of the targets and measure it again.
-last_target_measured was intended to flag the last target measured so
-that the device wouldn't get remeasured, if no new targets were added
-after the early measurement. But the way to code works, the dm device
-will never be measured early unless there is another target to add to
-the ima_buf.  Instead, if there is only one more target to add, that
-target was getting added to the ima_buf, but it wasn't getting
-remeasured, because last_target_measured was set. Since
-dm_ima_measure_on_table_load() only measures a device early when there
-are more targets to add, the final measurement must always happen, and
-last_target_measured is unneeded.
+It is possible that the dm_ima_measure_on_* functions run at the same
+time as a table is getting swapped, but before the md->ima.active_table
+is updated by dm_ima_measure_on_device_resume(). Instead of using the
+current device size, use the size of the active table that is being
+measured (assuming there is one), so the information is consistent.
+Also, don't allocate a separate string to hold the capactiy. Just
+print it directly to the measurement buffer.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- drivers/md/dm-ima.c | 18 ++----------------
- 1 file changed, 2 insertions(+), 16 deletions(-)
+ drivers/md/dm-ima.c | 79 +++++++++++----------------------------------
+ drivers/md/dm-ima.h |  1 +
+ 2 files changed, 20 insertions(+), 60 deletions(-)
 
 diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
-index a639bb0fe6c3..209221fa8bc5 100644
+index 5e2efcd1de33..5e7232582feb 100644
 --- a/drivers/md/dm-ima.c
 +++ b/drivers/md/dm-ima.c
-@@ -167,7 +167,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 	size_t device_data_buf_len, target_metadata_buf_len, target_data_buf_len, l = 0;
- 	char *target_metadata_buf = NULL, *target_data_buf = NULL, *digest_buf = NULL;
- 	char *ima_buf = NULL, *device_data_buf = NULL;
--	int last_target_measured = -1;
- 	status_type_t type = STATUSTYPE_IMA;
- 	size_t cur_total_buf_len = 0;
- 	unsigned int num_targets, i;
-@@ -205,8 +204,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 	for (i = 0; i < num_targets; i++) {
- 		struct dm_target *ti = dm_table_get_target(table, i);
+@@ -165,22 +165,10 @@ static void dm_ima_measure_data(const char *event_name, const void *buf, size_t
+ 		memalloc_noio_restore(noio_flag);
+ }
  
--		last_target_measured = 0;
+-/*
+- * Internal function to allocate and copy current device capacity for IMA measurements.
+- */
+-static int dm_ima_alloc_and_copy_capacity_str(struct mapped_device *md, char **capacity_str,
+-					      bool noio)
++static sector_t dm_ima_capacity(struct mapped_device *md)
+ {
+-	sector_t capacity;
 -
- 		/*
- 		 * First retrieve the target metadata.
- 		 */
-@@ -256,14 +253,6 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 
- 			memcpy(ima_buf + l, device_data_buf, device_data_buf_len);
- 			l += device_data_buf_len;
+-	capacity = get_capacity(md->disk);
 -
--			/*
--			 * If this iteration of the for loop turns out to be the last target
--			 * in the table, dm_ima_measure_data("dm_table_load", ...) doesn't need
--			 * to be called again, just the hash needs to be finalized.
--			 * "last_target_measured" tracks this state.
--			 */
--			last_target_measured = 1;
- 		}
+-	*capacity_str = dm_ima_alloc(DM_IMA_DEVICE_CAPACITY_BUF_LEN, noio);
+-	if (!(*capacity_str))
+-		return -ENOMEM;
+-
+-	return scnprintf(*capacity_str, DM_IMA_DEVICE_BUF_LEN, "current_device_capacity=%llu;",
+-			 capacity);
++	return (md->ima.active_table.device_metadata) ?
++		md->ima.active_table.capacity : get_capacity(md->disk);
+ }
  
- 		/*
-@@ -277,11 +266,8 @@ void dm_ima_measure_on_table_load(struct dm_table *table, unsigned int status_fl
- 		l += target_data_buf_len;
+ /*
+@@ -320,6 +308,7 @@ void dm_ima_measure_on_table_load(struct dm_table *table,
+ 	table->md->ima.inactive_table.hash = digest_buf;
+ 	table->md->ima.inactive_table.hash_len = strlen(digest_buf);
+ 	table->md->ima.inactive_table.num_targets = num_targets;
++	table->md->ima.inactive_table.capacity = dm_table_get_size(table);
+ 
+ 
+ 	kfree(table->md->ima.inactive_table.device_metadata);
+@@ -344,13 +333,12 @@ void dm_ima_measure_on_table_load(struct dm_table *table,
+ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap,
+ 				     struct dm_ima_context *context)
+ {
+-	char *device_table_data = NULL, *capacity_str = NULL;
++	char *device_table_data = NULL;
+ 	char active[] = "active_table_hash=";
+ 	unsigned int active_len = strlen(active);
+ 	unsigned int l = 0;
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int capacity_len;
+ 
+ 	if (unlikely(!context))
+ 		return;
+@@ -381,10 +369,6 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap,
+ 	if (!device_table_data)
+ 		goto error;
+ 
+-	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (capacity_len < 0)
+-		goto error;
+-
+ 	memcpy(device_table_data + l, DM_IMA_VERSION_STR, strlen(DM_IMA_VERSION_STR));
+ 	l += strlen(DM_IMA_VERSION_STR);
+ 
+@@ -417,14 +401,12 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap,
+ 			      DM_IMA_VERSION_STR, context->dev_name,
+ 			      context->dev_uuid);
+ 	}
+-
+-	memcpy(device_table_data + l, capacity_str, capacity_len);
+-	l += capacity_len;
++	l += scnprintf(device_table_data + l, DM_IMA_DEVICE_BUF_LEN - l,
++		       "current_device_capacity=%llu;", dm_ima_capacity(md));
+ 
+ 	dm_ima_measure_data("dm_device_resume", device_table_data, l, noio);
+ 
+ error:
+-	kfree(capacity_str);
+ 	kfree(device_table_data);
+ 
+ 	wake_next_measure(&md->ima);
+@@ -437,21 +419,18 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all,
+ 				     struct dm_ima_context *context,
+ 				     unsigned int idx)
+ {
+-	char *device_table_data, *capacity_str = NULL;
++	char *device_table_data;
+ 	char active_table_str[] = "active_table_hash=";
+ 	char inactive_table_str[] = "inactive_table_hash=";
+ 	char device_active_str[] = "device_active_metadata=";
+ 	char device_inactive_str[] = "device_inactive_metadata=";
+-	char remove_all_str[] = "remove_all=";
+ 	unsigned int active_table_len = strlen(active_table_str);
+ 	unsigned int inactive_table_len = strlen(inactive_table_str);
+ 	unsigned int device_active_len = strlen(device_active_str);
+ 	unsigned int device_inactive_len = strlen(device_inactive_str);
+-	unsigned int remove_all_len = strlen(remove_all_str);
+ 	unsigned int l = 0;
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int capacity_len;
+ 
+ 	wait_to_measure(&md->ima, idx);
+ 
+@@ -462,12 +441,6 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all,
+ 	if (!device_table_data)
+ 		goto exit;
+ 
+-	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (capacity_len < 0) {
+-		kfree(device_table_data);
+-		goto exit;
+-	}
+-
+ 	memcpy(device_table_data + l, DM_IMA_VERSION_STR, strlen(DM_IMA_VERSION_STR));
+ 	l += strlen(DM_IMA_VERSION_STR);
+ 
+@@ -533,18 +506,13 @@ void dm_ima_measure_on_device_remove(struct mapped_device *md, bool remove_all,
+ 			      context->dev_uuid);
  	}
  
--	if (!last_target_measured) {
--		dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
+-	memcpy(device_table_data + l, remove_all_str, remove_all_len);
+-	l += remove_all_len;
+-	memcpy(device_table_data + l, remove_all ? "y;" : "n;", 2);
+-	l += 2;
 -
--		sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
--	}
-+	dm_ima_measure_data(table_load_event_name, ima_buf, l, noio);
-+	sha256_update(&hash_ctx, (const u8 *)ima_buf, l);
+-	memcpy(device_table_data + l, capacity_str, capacity_len);
+-	l += capacity_len;
++	l += scnprintf(device_table_data + l, (DM_IMA_DEVICE_BUF_LEN * 2) - l,
++		       "remove_all=%c;current_device_capacity=%llu;",
++		       remove_all ? 'y' : 'n', dm_ima_capacity(md));
+ 
+ 	dm_ima_measure_data("dm_device_remove", device_table_data, l, noio);
+ 
+ 	kfree(device_table_data);
+-	kfree(capacity_str);
+ exit:
+ 	kfree(md->ima.active_table.device_metadata);
+ 	kfree(md->ima.inactive_table.device_metadata);
+@@ -565,12 +533,11 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md,
+ 				   struct dm_ima_context *context)
+ {
+ 	unsigned int l = 0;
+-	char *device_table_data = NULL, *capacity_str = NULL;
++	char *device_table_data = NULL;
+ 	char inactive_str[] = "inactive_table_hash=";
+ 	unsigned int inactive_len = strlen(inactive_str);
+ 	bool noio = true;
+ 	bool nodata = true;
+-	int capacity_len;
+ 
+ 	if (unlikely(!context))
+ 		return;
+@@ -581,10 +548,6 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md,
+ 	if (!device_table_data)
+ 		goto error;
+ 
+-	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
+-	if (capacity_len < 0)
+-		goto error;
+-
+ 	memcpy(device_table_data + l, DM_IMA_VERSION_STR, strlen(DM_IMA_VERSION_STR));
+ 	l += strlen(DM_IMA_VERSION_STR);
+ 
+@@ -616,8 +579,8 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md,
+ 			      context->dev_uuid);
+ 	}
+ 
+-	memcpy(device_table_data + l, capacity_str, capacity_len);
+-	l += capacity_len;
++	l += scnprintf(device_table_data + l, DM_IMA_DEVICE_BUF_LEN - l,
++		       "current_device_capacity=%llu;", dm_ima_capacity(md));
+ 
+ 	dm_ima_measure_data("dm_table_clear", device_table_data, l, noio);
+ 
+@@ -626,7 +589,6 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md,
+ 	kfree(md->ima.inactive_table.device_metadata);
+ 	memset(&md->ima.inactive_table, 0, sizeof(md->ima.inactive_table));
+ 
+-	kfree(capacity_str);
+ 	kfree(device_table_data);
+ 
+ 	wake_next_measure(&md->ima);
+@@ -639,7 +601,7 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
+ 				     struct dm_ima_context *context)
+ {
+ 	char *old_device_data = NULL;
+-	char *combined_device_data = NULL, *capacity_str = NULL;
++	char *combined_device_data = NULL;
+ 	bool noio = true;
+ 	int len;
+ 	struct dm_ima_device_table_metadata *table;
+@@ -655,9 +617,6 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
+ 	if (!combined_device_data)
+ 		goto exit;
+ 
+-	if (dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio) < 0)
+-		goto exit;
+-
+ 	if (md->ima.active_table.device_metadata)
+ 		old_device_data = md->ima.active_table.device_metadata;
+ 	else if (md->ima.inactive_table.device_metadata)
+@@ -665,14 +624,14 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
+ 	else
+ 		old_device_data = "device_rename=no_data;";
+ 	len = scnprintf(combined_device_data, DM_IMA_DEVICE_BUF_LEN * 2,
+-			"%s%snew_name=%s,new_uuid=%s;%s", DM_IMA_VERSION_STR, old_device_data,
+-			context->dev_name, context->dev_uuid, capacity_str);
++			"%s%snew_name=%s,new_uuid=%s;current_device_capacity=%llu;",
++			DM_IMA_VERSION_STR, old_device_data, context->dev_name,
++			context->dev_uuid, dm_ima_capacity(md));
+ 
+ 	dm_ima_measure_data("dm_device_rename", combined_device_data, len, noio);
+-exit:
+-	kfree(capacity_str);
+ 	kfree(combined_device_data);
+ 
++exit:
+ 	if (md->ima.active_table.device_metadata) {
+ 		table = &md->ima.active_table;
+ 		dm_ima_copy_device_data(md, table->device_metadata, context,
+diff --git a/drivers/md/dm-ima.h b/drivers/md/dm-ima.h
+index b240e0e4b6a1..0ec013d1545c 100644
+--- a/drivers/md/dm-ima.h
++++ b/drivers/md/dm-ima.h
+@@ -41,6 +41,7 @@ struct dm_ima_device_table_metadata {
+ 	char *device_metadata;
+ 	unsigned int device_metadata_len;
+ 	unsigned int num_targets;
++	sector_t capacity;
  
  	/*
- 	 * Finalize the table hash, and store it in table->md->ima.inactive_table.hash,
+ 	 * Contains the sha256 hashes of the IMA measurements of the target
 -- 
 2.53.0
 
