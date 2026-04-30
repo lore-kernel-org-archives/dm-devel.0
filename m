@@ -1,181 +1,187 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAFBD392C40
-	for <dm-devel@lists.linux.dev>; Wed, 29 Apr 2026 20:21:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A54093A0EA2
+	for <dm-devel@lists.linux.dev>; Thu, 30 Apr 2026 09:21:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777494082; cv=none; b=WrsjAZyO2VCPt9vgBDHXF75P1d84J6dr2UhDSNaMvdIhRBHQfLua0kmg7CxfFUx17MQsasr0sw4bnCkJsc0FkgjZNeIDHsVMvRHuB6fdddtA9Rf5WzRZKclW3wmtlLdrpw4yUznCrBEDo8fW9dusPdy27F/N5/cVWOSEdFGgNJQ=
+	t=1777540900; cv=none; b=k/MkkdmghTn/XKxfV1KWWuJxJ/a2Y/XH/3T60bXA6cYxY8NyBc9LIfWUgVb7PtP6hPhhlignv13vYQQLN6oS9mLaMKrutt1Z+AlR0xnUP26GMLhXAQDlbitnQnb+SS8c1vJiKA30nQ/1nOrqluETZmOkivN3osaqcDngO+zPWuI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777494082; c=relaxed/simple;
-	bh=SMTcW6mQxI8y93oCc+V/UUhsQZBKX/Zd1L8aqgFDV5s=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=WE+Obqp73O8QWjtn+9fJ0oU4X53Cw5OZhII6mNvB93gWN5ylho1cKJsCUENKh0oFPxb9oiEeQiKy7MwqS3J9zvslAdXQKgYyFMV6lg6PAdbEfiCSISlyiS46r0h0UOWix/+DjqBIxyEdVZmQ5TF9tOqT6GW578HRlI2y5YZzeI4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U9GTRNk0; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1777540900; c=relaxed/simple;
+	bh=5VbGrAjbaukprpJqt2wW7jnukrcStD38ZA9lfHMjQ7U=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=asIVw1YbKLPbvC5qZL7SRdw+p29BQEQHc+IPBG0zmXWz/KbJ69anTDHEP6PEtUaKKqlYDhJ+yhuGq8Ws8P6lS0Ek2rpnHurQCbIW/chCDiyJquL5SJsCY2SkGzxmFHDhMU1kOSMwdrLO53Ajb/A3684c/iW0w/5639Zk+/61BDY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=BLzIlbwn; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=jdUHcJfD; arc=none smtp.client-ip=205.220.168.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U9GTRNk0"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1777494080;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=QofwoMwxSCGblSWZLoeJ9G1stYebwuDx/UerX9q6nec=;
-	b=U9GTRNk0mWHY1lh4hApJQQiT6rsuXUPHierSJ0q/GPTw+biIegiiTRcBdGho8wDUg7mGvG
-	eM5tvKMA9/f3QQ5MSGJTlOtrqBheabfKAs9ZfpPEHPJhc3bVUfN/Tcgg/k5MTZ7FX8qa8a
-	NeG8u+n1Q5rty5ytBwWYGJ72N3oSsrw=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-639-JNke8-QsMkSa15wDqhYvQA-1; Wed,
- 29 Apr 2026 16:21:14 -0400
-X-MC-Unique: JNke8-QsMkSa15wDqhYvQA-1
-X-Mimecast-MFC-AGG-ID: JNke8-QsMkSa15wDqhYvQA_1777494072
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3305D195605E;
-	Wed, 29 Apr 2026 20:21:12 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F1A0D180045E;
-	Wed, 29 Apr 2026 20:21:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 63TKLAMp2823316
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 29 Apr 2026 16:21:11 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 63TKLA8s2823315;
-	Wed, 29 Apr 2026 16:21:10 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
-Cc: dm-devel@lists.linux.dev, linux-integrity@vger.kernel.org,
-        Alasdair Kergon <agk@redhat.com>, Mimi Zohar <zohar@linux.ibm.com>,
-        Roberto Sassu <roberto.sassu@huawei.com>,
-        Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-        Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
-        steven chen <chenste@linux.microsoft.com>
-Subject: [PATCH v2 09/10] dm-ima: Fail more gracefully in dm_ima_measure_on_*
-Date: Wed, 29 Apr 2026 16:21:07 -0400
-Message-ID: <20260429202108.2823261-10-bmarzins@redhat.com>
-In-Reply-To: <20260429202108.2823261-1-bmarzins@redhat.com>
-References: <20260429202108.2823261-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="BLzIlbwn";
+	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="jdUHcJfD"
+Received: from pps.filterd (m0279866.ppops.net [127.0.0.1])
+	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 63U59Kok2907559
+	for <dm-devel@lists.linux.dev>; Thu, 30 Apr 2026 09:21:38 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
+	cc:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=qcppdkim1; bh=
+	o1WNaMKL0REcbyyi9G+CV0fM9H39t5QBIQfH9Xvc+Vg=; b=BLzIlbwnQ05OHk82
+	LMkyessnHkjifiel+N3dItvb62jlZuUCmQ3jkSTwM2UtQm8OZ2QAnMtbIFdHYCKP
+	J3oA+Ly273tzT1F9635jWua9o4VSh9wEiqu5gPYgWhSQVhcdYIde9Lz371Y7j63E
+	tFa4XUHxVcxEqOt1mcVmNZ8zDrU/Bu4J+ztSje+nshOZ2fucjww6BZbdDx3h93RV
+	p9M2sVminOXNt5vtO0guuJdVaIubZDnIbGK5CG9mz5GNwFnYIpy04CR0BXRewKUb
+	/jSXm2E1bRFOm04Ikzw3MiGw25D6m/1DDxkrw5RMBV87+Yl6kI7MG50Q2d+tP5+/
+	YNT1tg==
+Received: from mail-dy1-f199.google.com (mail-dy1-f199.google.com [74.125.82.199])
+	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4dv0pf8x2r-1
+	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
+	for <dm-devel@lists.linux.dev>; Thu, 30 Apr 2026 09:21:37 +0000 (GMT)
+Received: by mail-dy1-f199.google.com with SMTP id 5a478bee46e88-2d889997495so2645539eec.0
+        for <dm-devel@lists.linux.dev>; Thu, 30 Apr 2026 02:21:37 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=oss.qualcomm.com; s=google; t=1777540897; x=1778145697; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=o1WNaMKL0REcbyyi9G+CV0fM9H39t5QBIQfH9Xvc+Vg=;
+        b=jdUHcJfD5qTKsVClHam+vRFjO2+h2xfQT0TiTdXSSKsKyn9TBe6aSr0nO1gxr45l+T
+         xMfcyQckDbI2voZdh4WI5BGKSEO78MFbiY+20gYJQYbxYEeVQlnb8d4Bqit+PUxF2Rv9
+         WpzfsQvXtbqGSVA2TPUczEPui52MAVSbCUQUrwsJ6wuW3b4aE9Yl/pFD2/WUsDWDUfQS
+         H4AyDuMBhMFmjBlrlHzTefLyhMBo/CjYaNX1yNFCzbz/PBKm4y1kqWljKw1FciWQRqQu
+         13wP+BffasQhhpftvS7caE4MidPOg3/WFlHzLYeMiauUo7Bvg8dbFkbWqwTglvCG20p8
+         +E9g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1777540897; x=1778145697;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=o1WNaMKL0REcbyyi9G+CV0fM9H39t5QBIQfH9Xvc+Vg=;
+        b=pfYxPzzpztGr6klb7aZd9Npu8uP+DyReyVFKymQ1ZWjYa6ZR6Xh/RgaZFo8CNlUgWE
+         ZdCOQbtIXn/UEkhYplmeklcw/XNIckbs1aqeItZPpzabzMJLTCxpLMRKf9w4ShFq1lB3
+         cXTqqm8zDRagx7jXISq2pJtL3rbD5Rw1CdW4NZzD0x9Sb4NTLb50RyGoVUNj4MEN4ZAq
+         IJc5nKaSc1dp5sXmsFibOcvNRCTtwzpcN6RvegJBYTuSpY+WwNzMhVC5g9jFAKzLF3np
+         CKPxIvht338v+uV+x473LhBrCApduMi+6IkfSQYNZ5jW31YRz8QYdLbAcQVaEoa8fV5k
+         unNA==
+X-Forwarded-Encrypted: i=1; AFNElJ8aJkf3WBZY3/XC9dJof2d3DgyrWzKqUgK87hUPsPa7MmlydQVMv2Snk82g8tvfgswTMFKlsN3zWg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxaeMTiL+0o0YqGaCNX7802yyHJ+vVvh14/50FilVpBC9p7ZXUq
+	GB4PfEIWE7wOsnAXAtwakVnoXZ/JAFW1pRyofo3bqXuwo7VkWJCa7NEvcqYcMUpCLyf7EnPyzoT
+	3oETFiN4QJuOJQqCAzg9vft17jMQM9IhJiPzLUkVAi7oVelvvLlf78sXVL74GqA==
+X-Gm-Gg: AeBDieuZh1yHm2JgM0bQ0RiVMJQDhWTXbRTBTn6RdZnYZMVXWcmSej4D14J7+qG96qD
+	EnIcUQSglCYKLl8iGAjtQmO9M6/q8irFHWJivOGyBa6V2eWusguSLFlr9SN6UESDCJpBb/fdQLV
+	wsGJbLIz5BJMGiEq2/trP5nP/gaZEtRHxhuE6Z3xZEdjbdE3D8TxneuU9CaHsAl37zTjRaa0neA
+	6p6/KpaAnmUMKVYJPwpTqrYRDcqv3/3ee4OMuYJC+6P78pV7SUgxHK3+F4qRw52b8ODckZNHdLv
+	kTl698ojuZqo87FbGe/l5brrJkIUTi2f5ToapAL7m3BBHR9sAXdpdg/TGuj3JLW2VmdvLHzma7x
+	FGQdmwnA31ttdy9oKvqTIGKd6MPOhC+eKpZYI/WPztrFTrzROCOzFIXky/5PtxDqIcCeTT/MK/c
+	Ujul0Q3qQCBJglzg==
+X-Received: by 2002:a05:7300:7b95:b0:2c5:b23e:48a9 with SMTP id 5a478bee46e88-2ed3e491075mr988856eec.25.1777540897195;
+        Thu, 30 Apr 2026 02:21:37 -0700 (PDT)
+X-Received: by 2002:a05:7300:7b95:b0:2c5:b23e:48a9 with SMTP id 5a478bee46e88-2ed3e491075mr988838eec.25.1777540896448;
+        Thu, 30 Apr 2026 02:21:36 -0700 (PDT)
+Received: from [10.110.45.159] (i-global254.qualcomm.com. [199.106.103.254])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2ed1c09c6e3sm5667943eec.25.2026.04.30.02.21.33
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 30 Apr 2026 02:21:36 -0700 (PDT)
+Message-ID: <effcf41f-c6a7-441d-85a5-b1d471611dfb@oss.qualcomm.com>
+Date: Thu, 30 Apr 2026 17:21:31 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: kYQv9SAMQCob9QiXv40mmHH4IHHD-6uJNOLXEt3n-u4_1777494072
-X-Mimecast-Originator: redhat.com
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 2/3] dm-inlinecrypt: add target for inline block device
+ encryption
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: linux-block@vger.kernel.org, ebiggers@kernel.org, mpatocka@redhat.com,
+        gmazyland@gmail.com, linux-kernel@vger.kernel.org,
+        adrianvovk@gmail.com, dm-devel@lists.linux.dev,
+        quic_mdalam@quicinc.com, israelr@nvidia.com, hch@infradead.org,
+        axboe@kernel.dk
+References: <20260410134031.2880675-1-linlin.zhang@oss.qualcomm.com>
+ <20260410134031.2880675-3-linlin.zhang@oss.qualcomm.com>
+ <ae7yzw-5wz9cqZt8@redhat.com> <ae_vacHQ75AgZbm_@redhat.com>
+ <6390db35-7f8e-4d00-9c1f-43d676007910@oss.qualcomm.com>
+ <afDh8XRWW_JgaUP3@redhat.com>
+ <7ab5cd97-30b7-42ca-80ce-6d9cd8c45b73@oss.qualcomm.com>
+ <afIizQA9kVR_u_2j@redhat.com> <afIqszyKboCEmHDa@redhat.com>
+Content-Language: en-US
+From: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+In-Reply-To: <afIqszyKboCEmHDa@redhat.com>
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNDMwMDA5MyBTYWx0ZWRfX54oe1UqHVXWI
+ nb/8x5Ph2+xNy7KLmUhuYFdsXcr5LOoI6Uw4e4Qv8Zsx8kUenm/+DdwIzxDuoZ34y/a4ljOHxMg
+ fpK1fGwkVXVhAYb8jkM1QDNnKou35mvi6lsOOJ2uk/64Y1LNbGoPKdAVYVEKe4gm/cj6H/EY1Jt
+ qr9tCjucctLIRZkiW3ucd1t4PYnpjYEsGEbJB+ntk2F0QWwn6FeutK53WNyh0spcLQRq59IIADY
+ 5spmcxhcNwHK7ztDnu/rfknJ2wUJfZ4pQw2UCzmwr251xRDuV/FakzA0mUE4Yv4Q8QgdKgUL3lj
+ sWmNUZD6ReKhCGHk3oN2Ai1rJzFyBzK4zj+hRGr0O+n8COTzn+i0INESRoE5JGm6Wth/+rRZ+V6
+ ZDBIOu+k1fuY0mspbvlpMAxjdW+n7kTGnPMhSobID4htFgk0IUmLZoyIWyhtkZIq+vJZueB25l6
+ bJ22WooCtx5aR/QDn0A==
+X-Authority-Analysis: v=2.4 cv=Zrnd7d7G c=1 sm=1 tr=0 ts=69f31f21 cx=c_pps
+ a=cFYjgdjTJScbgFmBucgdfQ==:117 a=JYp8KDb2vCoCEuGobkYCKw==:17
+ a=IkcTkHD0fZMA:10 a=A5OVakUREuEA:10 a=s4-Qcg_JpJYA:10
+ a=VkNPw1HP01LnGYTKEx00:22 a=u7WPNUs3qKkmUXheDGA7:22 a=YMgV9FUhrdKAYTUUvYB2:22
+ a=lklvTEQ6XvIVcFA1PqMA:9 a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
+ a=scEy_gLbYbu1JhEsrz4S:22
+X-Proofpoint-ORIG-GUID: 6N0YOjbsrhToyrMI99TJ4TFfa7ERIRgL
+X-Proofpoint-GUID: 6N0YOjbsrhToyrMI99TJ4TFfa7ERIRgL
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
+ definitions=2026-04-30_02,2026-04-28_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ priorityscore=1501 bulkscore=0 lowpriorityscore=0 clxscore=1015 spamscore=0
+ adultscore=0 phishscore=0 suspectscore=0 impostorscore=0 malwarescore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2604200000 definitions=main-2604300093
 
-In all the dm_ima_measure_on_* functions besides
-dm_ima_measure_on_table_load(), even if measuring the event fails, it's
-still possible to update dm->ima, so that it continues to correctly
-track the device state. This means that one measurement failure won't
-cause future measurements to record the wrong data.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- drivers/md/dm-ima.c | 38 +++++++++++++++++++-------------------
- 1 file changed, 19 insertions(+), 19 deletions(-)
 
-diff --git a/drivers/md/dm-ima.c b/drivers/md/dm-ima.c
-index 47af99c9b79c..5e2efcd1de33 100644
---- a/drivers/md/dm-ima.c
-+++ b/drivers/md/dm-ima.c
-@@ -357,17 +357,6 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap,
- 
- 	wait_to_measure(&md->ima, context->update_idx);
- 
--	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN, noio);
--	if (!device_table_data)
--		goto error;
--
--	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
--	if (capacity_len < 0)
--		goto error;
--
--	memcpy(device_table_data + l, DM_IMA_VERSION_STR, strlen(DM_IMA_VERSION_STR));
--	l += strlen(DM_IMA_VERSION_STR);
--
- 	if (swap) {
- 		kfree(md->ima.active_table.hash);
- 		kfree(md->ima.active_table.device_metadata);
-@@ -388,6 +377,17 @@ void dm_ima_measure_on_device_resume(struct mapped_device *md, bool swap,
- 		}
- 	}
- 
-+	device_table_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN, noio);
-+	if (!device_table_data)
-+		goto error;
-+
-+	capacity_len = dm_ima_alloc_and_copy_capacity_str(md, &capacity_str, noio);
-+	if (capacity_len < 0)
-+		goto error;
-+
-+	memcpy(device_table_data + l, DM_IMA_VERSION_STR, strlen(DM_IMA_VERSION_STR));
-+	l += strlen(DM_IMA_VERSION_STR);
-+
- 	if (md->ima.active_table.device_metadata) {
- 		memcpy(device_table_data + l, md->ima.active_table.device_metadata,
- 		       md->ima.active_table.device_metadata_len);
-@@ -621,11 +621,11 @@ void dm_ima_measure_on_table_clear(struct mapped_device *md,
- 
- 	dm_ima_measure_data("dm_table_clear", device_table_data, l, noio);
- 
-+error:
- 	kfree(md->ima.inactive_table.hash);
- 	kfree(md->ima.inactive_table.device_metadata);
- 	memset(&md->ima.inactive_table, 0, sizeof(md->ima.inactive_table));
- 
--error:
- 	kfree(capacity_str);
- 	kfree(device_table_data);
- 
-@@ -649,6 +649,8 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
- 
- 	wait_to_measure(&md->ima, context->update_idx);
- 
-+	fix_context_strings(context);
-+
- 	combined_device_data = dm_ima_alloc(DM_IMA_DEVICE_BUF_LEN * 2, noio);
- 	if (!combined_device_data)
- 		goto exit;
-@@ -662,11 +664,15 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
- 		old_device_data = md->ima.inactive_table.device_metadata;
- 	else
- 		old_device_data = "device_rename=no_data;";
--	fix_context_strings(context);
- 	len = scnprintf(combined_device_data, DM_IMA_DEVICE_BUF_LEN * 2,
- 			"%s%snew_name=%s,new_uuid=%s;%s", DM_IMA_VERSION_STR, old_device_data,
- 			context->dev_name, context->dev_uuid, capacity_str);
- 
-+	dm_ima_measure_data("dm_device_rename", combined_device_data, len, noio);
-+exit:
-+	kfree(capacity_str);
-+	kfree(combined_device_data);
-+
- 	if (md->ima.active_table.device_metadata) {
- 		table = &md->ima.active_table;
- 		dm_ima_copy_device_data(md, table->device_metadata, context,
-@@ -681,11 +687,5 @@ void dm_ima_measure_on_device_rename(struct mapped_device *md,
- 		table->device_metadata_len = strlen(table->device_metadata);
- 	}
- 
--	dm_ima_measure_data("dm_device_rename", combined_device_data, len, noio);
--
--exit:
--	kfree(capacity_str);
--	kfree(combined_device_data);
--
- 	wake_next_measure(&md->ima);
- }
--- 
-2.53.0
+On 4/29/2026 11:58 PM, Benjamin Marzinski wrote:
+> On Wed, Apr 29, 2026 at 11:25:04AM -0400, Benjamin Marzinski wrote:
+>> On Wed, Apr 29, 2026 at 08:34:00PM +0800, Linlin Zhang wrote:
+> [...]
+>>>
+>>> Thanks for the suggestions.
+>>>
+>>> Adding a bool need_acct parameter to __blk_crypto_submit_bio() would require
+>>> updating all existing callers, which feels rather intrusive given that the
+>>> accounting issue only affects the blk‑crypto fallback write slow‑path. I’m a
+>>> bit concerned that this would broaden the scope of the change more than
+>>> necessary for the problem at hand.
+>>
+>> I get your concern, and I'd like a second opinion on how much we should
+>> care about this, but it doesn't look like there are many other callers
+>> that would be effected here. The only existing caller of
+>> __blk_crypto_submit_bio() is blk_crypto_submit_bio(), which would just
+>> call it with "need_acct=true". Looking at the code path below
+>> __blk_crypto_submit_bio() that would need to change for submitting the
+>> bios:
+>>
+>> __blk_crypto_submit_bio() is the only caller of
+>> blk_crypto_fallback_bio_prep()
+>>
+>> blk_crypto_fallback_bio_prep() is the only caller of
+>> blk_crypto_fallback_encrypt_bio().
+>>
+>> blk_crypto_fallback_encrypt_bio() is the only caller of
+>> __blk_crypto_fallback_encrypt_bio(), which is the function that would
+>> need to choose between submit_bio() and submit_bio_noacct().
+>>
+>> Doing this would change the crypto API (by necessity, since we're adding
+>> a new argument to __blk_crypto_submit_bio() for stacking devices to
+>> use), and it is adds a extra argument to a number of functions, just to
+>> handle this corner case. But it is still a relatively contained change.
+> 
+> Having discussed this a bit, I'm fine with leaving this as a TODO for
+> now. If anyone wants to chime in with an opinion on how acceptable it
+> would be to add a new bio flag for skipping accounting, that would be
+> great.
+
+Thanks, Ben.
+
+I’d appreciate it if someone else could chime in on these two approaches.
+
+> 
+> -Ben 
+> 
 
