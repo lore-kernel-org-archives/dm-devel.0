@@ -1,165 +1,161 @@
-Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5160622CBD9
-	for <dm-devel@lists.linux.dev>; Mon,  4 May 2026 06:08:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 112753DFC93
+	for <dm-devel@lists.linux.dev>; Mon,  4 May 2026 15:45:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777874894; cv=none; b=QC3jeS06KF6xSfy7uc/cXdRuRTwtiAxp6W5kHUOHbmDfiCZlGsOmkqRJzXltrsNdBXv9VAt5bBrSrdeS/kdB+IjISVHP38jHholeLfEjHnTMqiSa5802+vqV+LBMtixFuCN9NIbRT6vD3ZNXiBe6tzNMqaZBOFuKq27xloMw57U=
+	t=1777909558; cv=none; b=najos5txfakRZ/ZhIrO2JwcC7wX25iSbOjN2cSmTLUoYfsq9S7vArvIPz8hAerx+q1TGUQu1EDvNDUxpNPxBx1xQ3NRTAEX5xnhq/sgTrmFpwprqWWrRG01WloZLtkXswo8YZWFOTA8N2RNfWvr2EUF8KGkYsdl8g3t15t22v1U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777874894; c=relaxed/simple;
-	bh=TOca50pS01td/jUU/FwvS94h/ZEqq56G62bJ29EsyTM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=ERbGLbNHeZxwZXxL4nW/rpCH4tW2/6hXN8dFMp1Od0OXineF1G6re+KvUbR0fmX84v0z5Erl8Kgoxx0GwwGnY5tMJVCgG1/mBCVkc/tb4Cm5VjdgZaKR8Mdw8VU5Jbiy+W1LNt3NOYuhsOe6EPuXeGWpmqr4xEfEW8WcBBiViyU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=sTs82dsu; arc=none smtp.client-ip=209.85.221.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1777909558; c=relaxed/simple;
+	bh=UncsDpUux9RPqUz8sjxaXS3FdJ2vgHGJfOrjz4Zt2iM=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=d8LxYcm2ZGpw2ThkuaFj9t42RWzsk9+hE5dDAM8mZ44yAvjVfOfb31IX8QpSjB8pcHQWlJeVGL++Fik0DCpLafqf3S45F3vx5CLQeqCm9QrdnCTpQRzPs/AlF1ECtuVPeAPQH0HLpvcY5HC6MpYflx+6SSK6wLiZZzxuHWjF5LM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=bUU3bAsH; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sTs82dsu"
-Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-44c350a5b87so609348f8f.3
-        for <dm-devel@lists.linux.dev>; Sun, 03 May 2026 23:08:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1777874892; x=1778479692; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=FaZbHH/IOIhjmW6XYALmsYnEPoCz+hdT8OiAn2Buu0Q=;
-        b=sTs82dsu2m1vl/5Uus3jogLMN4oZhkHDDlryT7uZLnF9VW/KGNkyNnSU/lbaAshE+a
-         6DOoxZoWgiMAgvA/rbm+LJD6tTgtsal0I99aBR9237kkrc0LMgk9TQae/wriyRbl26xL
-         4Wu0OhgevsXLe7wLg6Nd1/Oapez9EK4ODineIcaqtUtKnYXTinoX4mq6/ITaPDrGtRtI
-         3jM5j44c4mvvk1HQfW2jxVEnHeUFm52I+F3liRZnEZnpq/MeGHSZ9O3EbhPqn9m0XBMJ
-         ictv4O4TOfkgPXfHxjaT4Df8p6XAKDNVPszuUyXqmcTYpG6ryfb2ZDr3QNJOMQhYmCaf
-         OJFw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777874892; x=1778479692;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=FaZbHH/IOIhjmW6XYALmsYnEPoCz+hdT8OiAn2Buu0Q=;
-        b=CmseD48YMuLRtccTHL9Jbt4GslzfKBj7F1B4OwhlfKswWXJp/c+X4ntw0sMv/INIwm
-         YcZNWRRa+/drWcbFKaMi+Fn0XQEPw6zBuESnHYSntbljNpaxltJ6vuzKvHWcHF2ZlRyu
-         mVmSxN8AqYjaNARjFhYMeC/uEWfnG4iUPpClUgry0WvuCxI/4HbEaolHZhvTgewskgcq
-         BC6s2/D4hLg65ES87zZmq09kASZCmAbFJs7/FWBIk1+lRPOX4YS3tuy5+X0Sl8ptTxCG
-         XfhGFuh2jdhWPphPX4G1CFtS1mMIPZEhOhfiXliWhSGsTbo9hAqx2NW29MYITvUovwy0
-         uQnQ==
-X-Forwarded-Encrypted: i=1; AFNElJ93h5q2KrI1yxTnT0Qg49S7YDUBfsL4PW9v8eS2w1sKJ2B5cihSZww+hJIZ0eg67HePuA8Wiqix0g==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyheb55xUcfc5RhL/udrzynvlQ5wEt5wb7HLpzaEsVVznyLcQOh
-	TLxb2F9C9ieUSu6dCheJXY4IzEeVKizCWF9sEkoXqk7N01Kw9pXWshFp
-X-Gm-Gg: AeBDieuM8/UKcn8VZwi9wqXnJr1s8ygoLcucld91+KgjBvl3BPpGjTO0yMchCEiFMYy
-	xk/T7MtHnSQUGpxHmpwewMRV+hyuKxqlq/QNJ30GujLL1Ms587zXcgTsod6u5X1bBrNellOR86x
-	YcNm0dDfCPkLGI8wEEvdIV6hRXfJsbhTZE8Ky1kVcjeDWserpe8QykYOcC9AAvxakv0G/9y3Itl
-	oYWw443WjrmRnu2a2VSku02vOssT8zx/NeV4xb0PQFbzcyE+wLBW8W2vJ64/5AX8mTrgrKmFba2
-	+ni/Jn9S2HxbYXwZ5GBomMroc3U83cfNmXgZ2JNttO/aWjhdtGWJ1+Cw+v+5WFM9g5bJuqviRbm
-	s9qKMunzJUIuvSrjkZN5ktim8tqjgbpdYkN5rVuEkzDzPFKCEGNtFOk2X0KZJ6HVJ59IaGYzI6r
-	h7SSXLY3v9uRWFT//yadQo8jUI1eQTeainlTig53qsMseNqY8euQiAU4RMKsg=
-X-Received: by 2002:a05:6000:2407:b0:43c:fb48:6856 with SMTP id ffacd0b85a97d-44bb34e71cdmr13957607f8f.13.1777874891529;
-        Sun, 03 May 2026 23:08:11 -0700 (PDT)
-Received: from [192.168.2.14] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-44a8ea7cf97sm27118213f8f.6.2026.05.03.23.08.10
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 03 May 2026 23:08:11 -0700 (PDT)
-Message-ID: <5dd3be22-13fb-41fb-b469-1ae6472200b1@gmail.com>
-Date: Mon, 4 May 2026 08:08:10 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="bUU3bAsH"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1777909554;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=A69Kep75LLqd41mMNsXegVZLwk7G1mxWb4F0HACVbMo=;
+	b=bUU3bAsHd9OFcozwF4BENuqXIxttNKx4Vddh7M56ODk58sLLGXjG1FL+4TkR+IzsShGY4Z
+	KXLKDVqG16/ya1miRYuTvzoLUcAkFDP+Nw8jlOTow5PYf73Rd5tl4NtsGh+RIqACsVPr0k
+	3YPuO2OM3c1BKlNfnyPsKBDcG+HGgx0=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-184-tPByX-99Nx6Jbw5aqgCrYA-1; Mon,
+ 04 May 2026 11:45:52 -0400
+X-MC-Unique: tPByX-99Nx6Jbw5aqgCrYA-1
+X-Mimecast-MFC-AGG-ID: tPByX-99Nx6Jbw5aqgCrYA_1777909551
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD2841800348;
+	Mon,  4 May 2026 15:45:50 +0000 (UTC)
+Received: from [10.44.34.35] (unknown [10.44.34.35])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 13D58180045E;
+	Mon,  4 May 2026 15:45:47 +0000 (UTC)
+Date: Mon, 4 May 2026 17:45:44 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
+    linux-integrity@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
+    Mimi Zohar <zohar@linux.ibm.com>, Roberto Sassu <roberto.sassu@huawei.com>, 
+    Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, 
+    Lakshmi Ramasubramanian <nramas@linux.microsoft.com>, 
+    steven chen <chenste@linux.microsoft.com>
+Subject: Re: [PATCH v2 00/10] Fix dm-ima bugs
+In-Reply-To: <20260429202108.2823261-1-bmarzins@redhat.com>
+Message-ID: <f90f2f8e-37c4-9412-1f33-b95f821aa7d6@redhat.com>
+References: <20260429202108.2823261-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: AF_ALG algorithms required by cryptsetup
-To: Eric Biggers <ebiggers@kernel.org>,
- cryptsetup development <cryptsetup@lists.linux.dev>
-Cc: linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org, Demi Marie Obenour <demiobenour@gmail.com>
-References: <20260504052400.GB2289@sol>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20260504052400.GB2289@sol>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-MFC-PROC-ID: IRbgxcMmH1MTZzy_Yy2MouzseUn38nR2wtoCcm-le30_1777909551
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 5/4/26 7:24 AM, Eric Biggers wrote:
-> Hi Milan,
+Applied, thanks.
+
+Mikulas
+
+
+
+On Wed, 29 Apr 2026, Benjamin Marzinski wrote:
+
+> The dm-ima code does not guarantee that the dm_ima_measure_on_*
+> functions will not be called at the same time. Since they modify and
+> free shared memory, this can lead to Use-After-Free errors or garbage
+> measurements. Further, they don't make sure that the state they measure
+> corresponds to the actual device state. For instance if table_load()
+> runs at the same time as do_resume() on a table swap,
+> dm_ima_measure_on_device_resume() can end up thinking the wrong table is
+> active. Or a concurrent dm_hash_rename() and a table swap, can end up
+> with a the new active table still using the old name. This patchset
+> makes sure the the dm-ima function are serialized and report the correct
+> device state.
 > 
-> AF_ALG is going to have to go away eventually, due to its frequent
-> vulnerabilities which vastly outweigh its benefits.  Userspace crypto
-> code can be, should be, and generally already is used instead.
-
-Heh, I just send reply to the thread on security list. I know about this.
-(It is probably waiting for moderation, cannot find link to paste here yet.)
-
-In general, it is more complicated and need some time, but it can be done.
-
-> Is a reasonably definitive list of the algorithms cryptsetup needs from
-> AF_ALG available anywhere, so that an allowlist can be implemented on
-> the kernel side?
-
-For Veracrypt support, it would be easy to create list.
-But maybe we can do it differently completely without AF_ALG.
-
-> (It would need to be unioned with what iwd uses as well.)
+> However, the code is still messier that in could be. This is because
+> it duplicates the current measurement events and format. I would really
+> like to know if that is necessary. Specifically, it currently measures
+> the following dm device and table actions:
 > 
-> Also, what are the biggest blockers to removing the AF_ALG dependency
-> from cryptsetup, in your view?
+> load
+> clear
+> rename
+> resume
+> remove
 > 
-> Finally, how well would a CAP_SYS_ADMIN or CAP_NET_ADMIN restriction
-> work for cryptsetup?  IIUC, volume formatting and opening require root
-> anyway, and all the device-mapper ioctls already require CAP_SYS_ADMIN.
-> I know 'cryptsetup benchmark' would be affected, but that tends to be a
-> one-off manually-run thing, which people could add 'sudo' to.
-
-Formatting does not require root, basically only device-mapper interaction
-requires it now.
-
-LUKS should be completely OK without AF_ALG (it calls userspace backend),
-it is about other formats.
-
-I'll reply later.
-
-Milan
+> I don't see the benefit of reporting changes to the inactive table, or
+> resumes where the device does not change state. From the user's point of
+> view, the device is still the same after these events.  At the same
+> time, it doesn't measure device creates if no table was loaded, so you
+> can have situations where the the first measurement for a device is a
+> rename or a remove. A more sensible set of actions to measure would be:
+> 
+> create
+> table_swap
+> rename
+> remove
+> 
+> Also, the measurement format doesn't map well to how dm device's are
+> actually set up, in a way that makes it harder for the code and records
+> extraneous information. First, like I mentioned before, I don't see the
+> benefit of measuring the inactive table. Second, the name, uuid, and
+> major/minor numbers are properties of the device, not it's table (and dm
+> devices can't have partitions, so the minor count will always be 1). I
+> don't see a reason to store and occasinally log this information twice,
+> if there is an active and incative table, and it forces extra
+> coordination between the dm_ima_measure_on_* functions.
+> 
+> I'm wondering it we are stuck with the current events and format, now
+> that this has been released? Or could we bump the version, and change
+> what events we measure, and how we format the output?
+> 
+> Changes in v2:
+> - 05/10: Switched from using atomics and barriers to using a spinlock to
+>          serialize the dm_ima_measure_on_* functions
+> - 05/10: Fixed typos in comments and commit message
+> - 06/10: changed no_data string from "table_rename" to "device_rename"
+> 
+> If this patchset is going in largely as it is, I should point out that
+> there are changes to the ima measurements in corner cases, where the
+> data was previously incorrect (as mentioned in the patches). However
+> it's possible, although I don't think very likely, that systems are
+> expecting these incorrect measurements. We could bump the version number
+> because of this possible change in the measurements, but IIUC, since
+> this version number itself is part of the IMA measurements, that would
+> guarantee that systems would get different measurements. 
+> 
+> Benjamin Marzinski (10):
+>   dm-ima: remove dm_ima_reset_data()
+>   dm-ima: remove broken last_target_measured logic
+>   dm-ima: Remove status_flags from dm_ima_measure_on_table_load()
+>   dm-ima: don't copy the active table to the inactive table
+>   dm-ima: Fix UAF errors and measuring incorrect context
+>   dm-ima: remove new_map from dm_ima_measure_on_device_clear
+>   dm-ima: Fix issues with dm_ima_measure_on_device_rename
+>   dm-ima: Handle race between rename and table swap
+>   dm-ima: Fail more gracefully in dm_ima_measure_on_*
+>   dm-ima: use active table's size if available
+> 
+>  drivers/md/dm-ima.c   | 492 +++++++++++++++++++-----------------------
+>  drivers/md/dm-ima.h   |  68 ++++--
+>  drivers/md/dm-ioctl.c | 146 +++++++++++--
+>  drivers/md/dm.c       |   2 +-
+>  4 files changed, 410 insertions(+), 298 deletions(-)
+> 
+> -- 
+> 2.53.0
+> 
 
