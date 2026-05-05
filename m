@@ -1,64 +1,64 @@
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 843FA48AE35
-	for <dm-devel@lists.linux.dev>; Tue,  5 May 2026 15:43:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCD8A48A2D6
+	for <dm-devel@lists.linux.dev>; Tue,  5 May 2026 15:43:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777995840; cv=none; b=Lly751QIutfvNxeP41ng+nIlbsEdLUhkeFTlLtdDSLgw3XNpk+EVD33jB3oontv1nk9GBrmHcm+sZuD42jW05qPOD+MchUZRLPGLp9RdHgezXH0Xq2qZnQHOitDICuVl4ngy4q3oK2OrYz2lo7+LJrAtyJWjKhKM9b7QdfYNfgs=
+	t=1777995841; cv=none; b=brIjfCurRZ8wDgm0fwCXWhxAS8bX5mnBeivL9Weu15tjRYwrz+0CB4OK8FBvOtIHhpYo+pZinGxfeA4eCYAuq2CEuiFF9IhORCulRWWJ1ghrkEiwS0YVQTH+e/J2NobpgYzRJFoBNUoe2R2Me3k1sr6ElRx8kL5HcGi/N9AloFg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777995840; c=relaxed/simple;
-	bh=v8uNva+LdouYexPuU2sjZXoefdjCgIRzTdfbPRFRlNI=;
+	s=arc-20240116; t=1777995841; c=relaxed/simple;
+	bh=hzVFSRAR1OD5QIHlJMqd4tT6dhu4YJDAoB8s3Bagjco=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=i8gmcGcVmR4fil13OEFLVkwaKgkGwEEqUh0DMu9H++gOVKYCPEjDYKZCCXTt3pTAIIwtN4p9NevwWL29aCHoE5O4ObPsqXAqSNKnSKtI+Aj9la6vbR9HmcJqKQESlYWvMaNZK7SK2mqvKOeUw+AS1mf8UcIKPLPgWKgXt+DrXbA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=UGtp5Yl6; arc=none smtp.client-ip=209.85.128.50
+	 MIME-Version; b=kF+IBHMTl3Hw6NeNiW/3Y0BfjyRqc6vh/d69zEyXubvu50wXj2wSbfyKNSCJB6JlDf1AZzDUqHjpsynDsPWOWb6yJfmfViHHeY0PscEWMqoxykvEk4rTYa11G9JasZVbvRDk5tXkjbQhL9NkLVBDMPY9MiGwErRxCdxBxmaeL98=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=D6MmEVoB; arc=none smtp.client-ip=209.85.128.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="UGtp5Yl6"
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4893940bb5eso29693625e9.3
-        for <dm-devel@lists.linux.dev>; Tue, 05 May 2026 08:43:58 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="D6MmEVoB"
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-48a563e4ef7so52430185e9.0
+        for <dm-devel@lists.linux.dev>; Tue, 05 May 2026 08:43:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1777995837; x=1778600637; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1777995838; x=1778600638; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=lpp55zoPIC2bbOFsUuCWAadxQP1Cb/VUb0GKSZCJrx8=;
-        b=UGtp5Yl6G4IRY3VCC2CXhREVQ+eQ43+hiZDMNRLsmqCpgBMBLRKk2zzt20y7B2FN/u
-         2AyG1dt8RkchXJt8yo9Xi8XKOn40X0NCAoeAPYuWltrKkcwCPDxTMSA+8CqhXgF1v6LO
-         LW6yKZteZnftFjydoHKXII5OnDDNEk8umFh28+GsrA/LJbDL5lGMRB1CmxsSiiuEKeCG
-         IWqbb5t+vTqFE9cxQnQWcHiRIXFGjxrzTWAwfuRdz54e4cvEGSCCQDdQdTV1UbATmL/G
-         0j47AyYT7ljImok+b28/yiFab3EaLWyGcUkpbH/CYkpEPxGYe52lHkXoEjTg3v2EhNMy
-         YorA==
+        bh=ogP480h5In236yzJU/6YPtUqWWV3hL6EipFFCJsxdwI=;
+        b=D6MmEVoBCAix/s6301fOi9mTyciZFOwBsDtGeBeiuApUk+p9AciftLXXgvsy9bwLHd
+         tpbnpApGb8JxejVq8kPTusij6iafOoK72/HVBoN5W2wab4P/Ezh4Bc77zU1VrILn8vMT
+         lh0oq5LyoSt7m4hMmCWC5TjCI88iF+kYqTJEfQ5HwPvlo8cpCeff6kcYmxIzR0/h4uPu
+         cipF5cupzgEYRjv4MOchkvXXTHemp19/tPZK3qelqM9WMOVaftJf+3Ln/XsNvscgfOD9
+         VsdJMcyNudupr7LCpLjuvMQiyBpNxTXhpLuOUC+IeIVWOad7ucaVE6OJMQEgeIiVKMbU
+         ol3w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777995837; x=1778600637;
+        d=1e100.net; s=20251104; t=1777995838; x=1778600638;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=lpp55zoPIC2bbOFsUuCWAadxQP1Cb/VUb0GKSZCJrx8=;
-        b=rRIpy/pszwdut71cuu3shuPhaQDcz2pLpIAUL7sVnUoCPMe2gVarqujsdCCbi3QA/1
-         xTmCIvOhmlRS7gh+rNZQS6c4t19/9Cew7a4JSDyJANVy+VOISmvLoKNPFcOytaTVXb5Z
-         zxkBb72N2Sqpu2MMmmhslJFvevIoEsFTft5r1+hsuzU1oidDhU1jiJBunwDLKy09Rz7/
-         Bj0UQiQ8QtjhIn/ZhdbynVd6aihiMENwcaI5meiEuK0d1AiF1Y7QxmmLdOXmcH23Lekv
-         wnhVKHm87/Mak6YuhW8HyhyMtbWmxoXRwT/uzHIUC1k2WMaeicq7G17qHpsSWtUMgtHr
-         fHkw==
-X-Forwarded-Encrypted: i=1; AFNElJ+7LdrnkX8MO8/+GxidFMCkH5jqAfarU3xcy6m85ewy6hu+mHYkB02sP+LNo5VZElmQuqCpEkXZ3w==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzJX4bnJKhTZ8cqAIEC4YMURgVGqk9T1b4s/04Vy1TKlNEXOc//
-	NroeT1LP+znL7b3BnX2G/g7O4XVNMPJ1H0esTUJIGENlCHdeJYTMsSTfknxhWIUwxiw=
-X-Gm-Gg: AeBDietrs5neXjugzFfEIUUR7VVH08m06ADS+dKmR4VwSwPVl5k2tXtIIxOWV57GxYZ
-	4sW1UVzVAHsJDKuo2benCDY2ZgTcpgn3WXm6MiCa7pDePdcMEJ+buYwucN6fhkUQp6RCu/CMZd/
-	b6XpF2O6X68XyKB4ldo3AmKA1q+j6hBJ0EzZHurmPGgQm9+PYLdwpZ2fQoevOTaNUH9afQK9uij
-	D+8IA797dyn2luj6NcfP53xqhhd9yKqQjq344dbuaWMk4buQblSOHHeE4Km+15wM+LPwNiAAcLG
-	uufGnZRtUFHE/2PcnnisKtbGXMsvMqJqfKj7+XibO0gYfql/GOBBq3KowM4Fp6ueLxjyak9xXaQ
-	sVL7oZ433ErZDuJnGPBkqgQp0kUHObVQ2YxaBU3m+heWQJ28I/jzPZtxJzEg2ODm1nU0xFMsjFv
-	uC1QhiIpcrI6AV4WTz7kQipBKVId34MTs93LSGYAYiuLzGBHCRehZShhkKeoYYI9mxtmYG0tpl1
-	cmpgWZXLC1gG0Foix0BiVmv
-X-Received: by 2002:a05:600c:26d4:b0:48b:339:73cf with SMTP id 5b1f17b1804b1-48b03397507mr125874955e9.1.1777995836584;
-        Tue, 05 May 2026 08:43:56 -0700 (PDT)
+        bh=ogP480h5In236yzJU/6YPtUqWWV3hL6EipFFCJsxdwI=;
+        b=dCB39+Yk/NRfTiGVOTRq3e8MiDBWMQQB5jSXFTovT53A/I1p20UDVOBqI4rU6Glloo
+         oxBbmgXc1hXHWXC/cdj1gHvxeIO3EX9Lsw3d8+k7rDu4pX0YZ/M2VUoYLTwkQAOhbu3P
+         lDqiRG/I0BseZNbTwa6sZJ7nZpPHZJiU83Ry0pYgo6bPsAEKRvGbsIIgLt1wZueWBQ20
+         PXWPSkKjdJHWbNSl8ZdJ2tPbwarWb6qK8iA9h5V/uae3OSwLWGg84Gok4DNTNgkm7aJ4
+         w0QXVXamJt68Ti6iOxVLxfq9eRZpSHAK7yeavKHQioJ3abI9QsMN0p5sRb25VnYqPYtD
+         SX9Q==
+X-Forwarded-Encrypted: i=1; AFNElJ8+4UXTZJstht8IgOEdgKnxDYIKUJhAJjTZELVuVyoUxcscYD025Va2gMA2DCXqog97nwjZa55FiQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yxc1xCajmjsoWGdQM0EvaWwUEVldVqTVa5AZ2tFWxWyWOM5Nr75
+	WeglpKr/el+xIwY9IweRhJKjf9tT0ymRlqJEEuQXG/un2pnNJQdk7W+mqxVYv8hIzmg=
+X-Gm-Gg: AeBDies0zwW7GLMFkyrMg/DXuS34sVQuU3KYSuxOXuVo5IZx103d593fJFLJxrOkjnb
+	dLsIHB/0xON6P+xpJSIqGeX/i3rOf1QgQAtwe4oRTVJ06tdwZHzi/NlCqiwm81omuHTqCDI83aI
+	S5Nt9bq1L6FkDcwDU6KMcjCqukgh6HmFMde+rHKg929J/SStwO/34iRDMHri+KhUVpV+7KkvBZt
+	IsMa3H/G69Ju5rCNQg5p3+UXAOhoqpplLBBXuuPyDL3ayLibwxud6steyS3qLmSy8Lm9J0510bK
+	uYRB7yFZVcV9G1+I4n+iniZqEzdsQzKS+GIcF6SvnrhW9Xp3oDPqyH6qGVi0HN0OGFEpeiVwscv
+	sFAxm0E3FyBBozZX3ZCSJD7wtImVrCMMkkFh8gIh/GmZPhEIB+vTza+gCNiF7Dfg61t0Laz6JnJ
+	cUtipmSzcxdklK5UkBhdvccIUWOj39zhvTrMC1SRY77cyOq+LVKiZjC1ogadgov1zcofIJcRm5R
+	i+WUiEwEGFcByVOvkd6lfji
+X-Received: by 2002:a05:6000:18a6:b0:43d:7b7b:ab77 with SMTP id ffacd0b85a97d-450041b05abmr7105113f8f.11.1777995838082;
+        Tue, 05 May 2026 08:43:58 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-48d149de41asm34975525e9.2.2026.05.05.08.43.55
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45055960902sm5976324f8f.28.2026.05.05.08.43.57
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 May 2026 08:43:55 -0700 (PDT)
+        Tue, 05 May 2026 08:43:57 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 09/18] libmultipath: add generic async path checker code
-Date: Tue,  5 May 2026 17:43:23 +0200
-Message-ID: <20260505154332.448054-10-mwilck@suse.com>
+Subject: [PATCH 10/18] libmultipath: checkers: add support for async checker
+Date: Tue,  5 May 2026 17:43:24 +0200
+Message-ID: <20260505154332.448054-11-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260505154332.448054-1-mwilck@suse.com>
 References: <20260505154332.448054-1-mwilck@suse.com>
@@ -81,334 +81,112 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a framework for an asynchronous path checker utilizing the
-recently added runner code for thread handling.
+If a checker shared library contains a symbol "libcheck_async_func",
+use this as a callback for the async checker functions, and do not
+read any other symbols from the .so file except the message table.
 
-This code has been derived from the TUR checker code by removing
-all references to the actual sending of TUR ioctls.
+Checkers can provide a symbol async_context_size that will cause
+the async_checker code to reserve extra space in runner_data for
+the checker to use, and a symbol async_init() for initializing
+this private context.
 
-Follow-up patches will convert the current TUR checker into an
-instance of this async checker class.
+Only emc_clariion will use the latter functionality.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/Makefile        |   2 +-
- libmultipath/async_checker.c | 216 +++++++++++++++++++++++++++++++++++
- libmultipath/async_checker.h |  35 ++++++
- libmultipath/checkers.c      |   1 +
- libmultipath/checkers.h      |   2 +
- 5 files changed, 255 insertions(+), 1 deletion(-)
- create mode 100644 libmultipath/async_checker.c
- create mode 100644 libmultipath/async_checker.h
+ libmultipath/checkers.c           | 51 +++++++++++++++++++++----------
+ libmultipath/libmultipath.version |  2 +-
+ 2 files changed, 36 insertions(+), 17 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 85767ab..d71a835 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -22,7 +22,7 @@ OBJS-O := devmapper.o hwtable.o blacklist.o dmparser.o \
- 	configure.o structs_vec.o sysfs.o \
- 	lock.o file.o wwids.o prioritizers/alua_rtpg.o prkey.o \
- 	io_err_stat.o dm-generic.o generic.o nvme-lib.o \
--	libsg.o valid.o
-+	libsg.o valid.o async_checker.o
- 
- OBJS := $(OBJS-O) $(OBJS-U)
- 
-diff --git a/libmultipath/async_checker.c b/libmultipath/async_checker.c
-new file mode 100644
-index 0000000..06159dd
---- /dev/null
-+++ b/libmultipath/async_checker.c
-@@ -0,0 +1,216 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+// Copyright (c) 2026 SUSE LLC
-+
-+#include <sys/types.h>
-+#include <sys/sysmacros.h>
-+#include <sys/stat.h>
-+#include <stdlib.h>
-+#include <stdbool.h>
-+#include "async_checker.h"
-+#include "checkers.h"
-+#include "debug.h"
-+#include "runner.h"
-+
-+#define MAX_NR_TIMEOUTS 1
-+
-+struct async_checker_context {
-+	struct checker_context chkr;
-+	int last_runner_state;
-+	unsigned int nr_timeouts;
-+	struct runner_context *rtx;
-+	struct runner_data rdata;
-+};
-+
-+#define rdata_size(acc) (sizeof(acc->rdata))
-+
-+int async_check_init(struct checker *c)
-+{
-+	struct async_checker_context *acc;
-+	struct stat sb;
-+
-+	acc = calloc(1, sizeof(*acc));
-+	if (!acc)
-+		return -1;
-+	acc->rdata.state = PATH_UNCHECKED;
-+	acc->rdata.fd = -1;
-+	if (fstat(c->fd, &sb) == 0)
-+		acc->rdata.devt = sb.st_rdev;
-+	acc->chkr.cls = c->cls;
-+	c->context = acc;
-+	return 0;
-+}
-+
-+void async_check_free(struct checker *c)
-+{
-+	struct async_checker_context *acc = c->context;
-+
-+	if (!acc)
-+		return;
-+	c->context = NULL;
-+	if (acc->rtx)
-+		release_runner(acc->rtx);
-+	free(acc);
-+}
-+
-+static void runner_callback(void *arg)
-+{
-+	struct runner_data *rdata = arg;
-+	int state;
-+
-+	condlog(4, "%d:%d : async checker starting up", major(rdata->devt),
-+		minor(rdata->devt));
-+
-+	async_deep_sleep(rdata);
-+	state = rdata->afunc(rdata);
-+	rdata->state = state;
-+	pthread_testcancel();
-+	condlog(4, "%d:%d : async checker finished, state %s", major(rdata->devt),
-+		minor(rdata->devt), checker_state_name(state));
-+}
-+
-+static int check_runner_state(struct async_checker_context *acc)
-+{
-+	struct runner_context *rtx = acc->rtx;
-+	int rc;
-+
-+	rc = check_runner(rtx, &acc->rdata, rdata_size(acc));
-+	switch (rc) {
-+	case RUNNER_DEAD:
-+		acc->rdata.state = PATH_TIMEOUT;
-+		acc->rdata.msgid = CHECKER_MSGID_TIMEOUT;
-+		/* fallthrough */
-+	case RUNNER_DONE:
-+		release_runner(acc->rtx);
-+		acc->rtx = NULL;
-+		acc->last_runner_state = rc;
-+		acc->nr_timeouts = 0;
-+		condlog(rc == RUNNER_DONE ? 4 : 3,
-+			"%d:%d : async checker finished, state %s, runner state %s",
-+			major(acc->rdata.devt), minor(acc->rdata.devt),
-+			checker_state_name(acc->rdata.state),
-+			runner_state_name(rc));
-+		break;
-+	case RUNNER_CANCELLED:
-+		acc->last_runner_state = rc;
-+		acc->rdata.state = PATH_TIMEOUT;
-+		acc->rdata.msgid = CHECKER_MSGID_TIMEOUT;
-+		if (acc->nr_timeouts < MAX_NR_TIMEOUTS) {
-+			condlog(3, "%d:%d : async checker timed out, releasing it",
-+				major(acc->rdata.devt), minor(acc->rdata.devt));
-+			acc->nr_timeouts++;
-+			release_runner(acc->rtx);
-+			acc->rtx = NULL;
-+		} else if (acc->nr_timeouts == MAX_NR_TIMEOUTS) {
-+			acc->nr_timeouts++;
-+			condlog(3, "%d:%d : async checker timed out, waiting for it",
-+				major(acc->rdata.devt), minor(acc->rdata.devt));
-+		}
-+		break;
-+	default:
-+		condlog(4, "%d:%d : async checker still running",
-+			major(acc->rdata.devt), minor(acc->rdata.devt));
-+		acc->rdata.msgid = CHECKER_MSGID_RUNNING;
-+		break;
-+	}
-+	return rc;
-+}
-+
-+bool async_check_need_wait(struct checker *c)
-+{
-+	struct async_checker_context *acc = c->context;
-+
-+	return acc && acc->rtx;
-+}
-+
-+int async_check_pending(struct checker *c)
-+{
-+	struct async_checker_context *acc = c->context;
-+	/* The if path checker isn't running, just return the exiting value. */
-+	if (!acc || !acc->rtx)
-+		return c->path_state;
-+
-+	/* This may nullify ct->rtx */
-+	check_runner_state(acc);
-+	c->msgid = acc->rdata.msgid;
-+	return acc->rdata.state;
-+}
-+
-+int async_check_check(struct checker *c)
-+{
-+	struct async_checker_context *acc = c->context;
-+
-+	if (!acc)
-+		return PATH_UNCHECKED;
-+
-+	if (checker_is_sync(c))
-+		return acc->rdata.afunc(&acc->rdata);
-+
-+	/* Handle the case that the checker just completed */
-+	if (acc->rtx) {
-+		check_runner_state(acc);
-+		c->msgid = acc->rdata.msgid;
-+		return acc->rdata.state;
-+	}
-+
-+	/* create new checker thread */
-+	acc->rdata.fd = c->fd;
-+	acc->rdata.timeout = c->timeout;
-+
-+	acc->rdata.state = PATH_PENDING;
-+	acc->rdata.msgid = CHECKER_MSGID_RUNNING;
-+	acc->rdata.afunc = c->cls->async_func;
-+	condlog(4, "%d:%d : starting checker", major(acc->rdata.devt),
-+		minor(acc->rdata.devt));
-+	acc->rtx = get_runner(runner_callback, &acc->rdata, rdata_size(acc),
-+			      1000000 * c->timeout);
-+
-+	if (acc->rtx) {
-+		c->msgid = acc->rdata.msgid;
-+		return acc->rdata.state;
-+	} else {
-+		condlog(3, "%d:%d : failed to start async thread, using sync mode",
-+			major(acc->rdata.devt), minor(acc->rdata.devt));
-+		return acc->rdata.afunc(&acc->rdata);
-+	}
-+}
-+
-+/*
-+ * Test code for "zombie tur thread" handling.
-+ * Compile e.g. with CFLAGS=-DASYNC_TEST_MAJOR=8
-+ * Additional parameters can be configure with the macros below.
-+ *
-+ * Everty nth started thread will hang in non-cancellable state
-+ * for given number of seconds, for device given by major/minor.
-+ */
-+#ifdef ASYNC_TEST_MAJOR
-+#ifndef ASYNC_TEST_MINOR
-+#define ASYNC_TEST_MINOR 0
-+#endif
-+#ifndef ASYNC_SLEEP_INTERVAL
-+#define ASYNC_SLEEP_INTERVAL 3
-+#endif
-+#ifndef ASYNC_SLEEP_SECS
-+#define ASYNC_SLEEP_SECS 60
-+#endif
-+
-+static void async_deep_sleep(const struct runner_data *rdata)
-+{
-+	static int sleep_cnt;
-+	const struct timespec ts = {.tv_sec = ASYNC_SLEEP_SECS, .tv_nsec = 0};
-+	int oldstate;
-+
-+	if (rdata->devt != makedev(ASYNC_TEST_MAJOR, ASYNC_TEST_MINOR) ||
-+	    ++sleep_cnt % ASYNC_SLEEP_INTERVAL == 0)
-+		return;
-+
-+	condlog(3, "async thread going to sleep for %ld seconds", ts.tv_sec);
-+	if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate) != 0)
-+		condlog(0, "pthread_setcancelstate: %m");
-+	if (nanosleep(&ts, NULL) != 0)
-+		condlog(0, "nanosleep: %m");
-+	condlog(3, "async zombie thread woke up");
-+	if (pthread_setcancelstate(oldstate, NULL) != 0)
-+		condlog(0, "pthread_setcancelstate (2): %m");
-+	pthread_testcancel();
-+}
-+#endif /* ASYNC_TEST_MAJOR */
-diff --git a/libmultipath/async_checker.h b/libmultipath/async_checker.h
-new file mode 100644
-index 0000000..835de2a
---- /dev/null
-+++ b/libmultipath/async_checker.h
-@@ -0,0 +1,35 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+// Copyright (c) 2026 SUSE LLC
-+#ifndef ASYNC_CHECKER_H_INCLUDED
-+#define ASYNC_CHECKER_H_INCLUDED
-+
-+struct runner_data;
-+struct checker;
-+typedef int (*async_checker_func)(struct runner_data *);
-+
-+struct runner_data {
-+	int fd;
-+	dev_t devt;
-+	async_checker_func afunc;
-+	unsigned int timeout;
-+	int state;
-+	short msgid;
-+	char checker_ctx[];
-+};
-+
-+int async_check_init(struct checker *c);
-+void async_check_free(struct checker *c);
-+bool async_check_need_wait(struct checker *c);
-+int async_check_pending(struct checker *c);
-+int async_check_check(struct checker *c);
-+
-+#define CHECKER_MAX_CONTEXT_SIZE 1024
-+
-+/* For testing handling of async checker timeouts */
-+#ifdef ASYNC_TEST_MAJOR
-+static void async_deep_sleep(const struct runner_data *rdata);
-+#else
-+#define async_deep_sleep(x) do {} while (0)
-+#endif
-+
-+#endif
 diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index a3b9cc8..3a1663f 100644
+index 3a1663f..2f20b25 100644
 --- a/libmultipath/checkers.c
 +++ b/libmultipath/checkers.c
-@@ -9,6 +9,7 @@
+@@ -101,6 +101,18 @@ void reset_checker_classes(void)
+ 	}
+ }
  
- #include "debug.h"
- #include "checkers.h"
-+#include "async_checker.h"
- #include "vector.h"
- #include "util.h"
++static struct checker_class *add_async_checker_class(struct checker_class *c)
++{
++	c->init = async_check_init;
++	c->check = async_check_check;
++	c->need_wait = async_check_need_wait;
++	c->pending = async_check_pending;
++	c->free = async_check_free;
++
++	list_add(&c->node, &checkers);
++	return c;
++}
++
+ static struct checker_class *add_checker_class(const char *name)
+ {
+ 	char libname[LIB_CHECKER_NAMELEN];
+@@ -129,6 +141,29 @@ static struct checker_class *add_checker_class(const char *name)
+ 				errstr);
+ 		goto out;
+ 	}
++
++	c->msgtable_size = 0;
++	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
++
++	if (c->msgtable != NULL) {
++		const char **p;
++
++		for (p = c->msgtable;
++		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
++			/* nothing */;
++
++		c->msgtable_size = p - c->msgtable;
++	} else
++		c->msgtable_size = 0;
++	condlog(3, "checker %s: message table size = %d", c->name,
++		c->msgtable_size);
++
++	c->async_func = (int (*)(struct runner_data *))
++		dlsym(c->handle, "libcheck_async_func");
++	errstr = dlerror();
++	if (c->async_func)
++		return add_async_checker_class(c);
++
+ 	c->check = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_check");
+ 	errstr = dlerror();
+ 	if (errstr != NULL)
+@@ -158,22 +193,6 @@ static struct checker_class *add_checker_class(const char *name)
+ 	if (!c->free)
+ 		goto out;
  
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 630e987..744be54 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -132,6 +132,7 @@ enum {
+-	c->msgtable_size = 0;
+-	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
+-
+-	if (c->msgtable != NULL) {
+-		const char **p;
+-
+-		for (p = c->msgtable;
+-		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
+-			/* nothing */;
+-
+-		c->msgtable_size = p - c->msgtable;
+-	} else
+-		c->msgtable_size = 0;
+-	condlog(3, "checker %s: message table size = %d",
+-		c->name, c->msgtable_size);
+-
+ done:
+ 	c->sync = 1;
+ 	list_add(&c->node, &checkers);
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index 78fa2d4..5e8dbda 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -43,7 +43,7 @@ LIBMPATHCOMMON_1.0.0 {
+ 	put_multipath_config;
  };
  
- struct checker;
-+struct runner_data;
- struct checker_class {
- 	struct list_head node;
- 	void *handle;
-@@ -144,6 +145,7 @@ struct checker_class {
- 	void (*reset)(void);		  /* to reset the global variables */
- 	int (*pending)(struct checker *); /* to recheck pending paths */
- 	bool (*need_wait)(struct checker *); /* checker needs waiting for */
-+	int (*async_func)(struct runner_data *); /* callback for async_checker */
- 	const char **msgtable;
- 	short msgtable_size;
- };
+-LIBMULTIPATH_32.0.0 {
++LIBMULTIPATH_33.0.0 {
+ global:
+ 	/* symbols referenced by multipath and multipathd */
+ 	add_foreign;
 -- 
 2.54.0
 
