@@ -1,64 +1,64 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D044048A2CD
-	for <dm-devel@lists.linux.dev>; Tue,  5 May 2026 15:44:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3BA8481FD4
+	for <dm-devel@lists.linux.dev>; Tue,  5 May 2026 15:44:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777995846; cv=none; b=X8+sR2dFJ4ajuTWVpi9BjxiaaShJvOX+3s416Jkx9owRdSBdzpBvciofFLTfKEIEokDCdmTdAyT7H8PA4WymMXEevgYoLO7eEWAXX3AenBa/RMCDvAjJfnsD+a4uakmRMOMi14ikZqr+0iSMsfYHVL9n9FonzxtByjaxtyiLnMo=
+	t=1777995847; cv=none; b=dd+u/99K35lAhnGRaUk86yZz+VrKa/eaxowsc0VpR3CmoJrg8B4DaE83SkIH7pkKEPdDDerNfWsWorYJhckIC+LQSHoL+8QsFWM9Ia+ZK6ZfROpsb5ijDqTbA7sq3ZCf8xJoBcUdKZrNLCw+2gwy9EG/QVZXhWrY4aLkPPOAqUE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777995846; c=relaxed/simple;
-	bh=LTHnZ/o/ZuLLzEwFG/rcloAicrQU2lKH9wYY+P6dzHY=;
+	s=arc-20240116; t=1777995847; c=relaxed/simple;
+	bh=ztd24/ryESOlXr0sJiebU4Z/iVSFUBK5r9NEhXz25Zk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=KOnWLz7GeZzwGtYZ3VeigdWCh4I6VJZE7iqg0u+mKCsFYGonZnTtbedMmvBkz16hdbM9lvx0mGCLRJiSUS3o+7LdVLDcEnyW4kmAWmcDY5TxOz1y8rZg0cTJYheNTlhcJ/gzNgHV9O9C9ihhKQEvlmORXdmd/FpTPpIKz+phlOw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=BjG/RGW3; arc=none smtp.client-ip=209.85.128.54
+	 MIME-Version; b=Xtnvo7O+0ThSx0FyIlQ5cvRNN6cXG/D9eAxlJWVzN3V3JRIn/t2Rp55dGoho2FD6sUf8qo0YuKIi0bkRSYCcYVug7KtOA6SUC7I2yTNmFs8bTssNceKiaamlQLX2FQEB85nWWXqF9tK9jPy1eb0mx6Y7oe7TZZp6vXQUyZuHjWY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=X2puhuJD; arc=none smtp.client-ip=209.85.221.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="BjG/RGW3"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-48984d29fe3so78559725e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 05 May 2026 08:44:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="X2puhuJD"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-43d7e23defbso3081073f8f.0
+        for <dm-devel@lists.linux.dev>; Tue, 05 May 2026 08:44:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1777995843; x=1778600643; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1777995844; x=1778600644; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/RdSIn1RRplQLuqRM0kteEP4T32YGvE4m+LZT5nuI/Y=;
-        b=BjG/RGW3c4dJjaZV6Xe57WkZ9YjFKp4exPx03xZIAcVy9uj5Np89f4XElyWYqeoI/9
-         SoGmiCgZWm4iEbYnOgOxUQG8/BHJ8UD6W0+uGsQN5MxnlQ2mvF+epqeWwR1ljMrwdMlQ
-         aZrrRADCUoGvAbuoYObql6nXd3KAZF8jduycLRpZJum46eqPXSy1JV7o2Um7xG04N7/P
-         Na50yTHJoIoDC6kaJg86lQg63yLajeq1l/J3eeD2Vs2Obi/4d3gS+Im0mpttXLa/pVAe
-         qraShDw2R7WzNspcmooFM2G32UVza0hHV3lIeugsNOj4Ftwt5PvZiBW73UHYScfgGS82
-         Mf3g==
+        bh=X7cU/QgOKi8bhmf9Zudxy5M2a55eUM7JU5Z2NnqGNQU=;
+        b=X2puhuJD1l1k4E5A3WQh4+mlnhYfACeYsn5voCQaP9tMnfs9N4Ar3Ih0eauwEMdYap
+         MshIWzt8ThSsBPqXNHCHOpkWwqggkWJ7Fm/wytb2R59p9QRmISZggREW1a3iXf4hXm/1
+         HikiHHZIzRm7KC/GtjLvI7du2oWF6RUFCyOJzJzPP2iAht/IidoCXhwAdDUTU+8yky5O
+         LCopAhYrv0LM43SJEsvE7KEiib3/Rhj/cKxGlbTvjZXLx+D3kvYsuowjXew8s5TGtUBL
+         PDnORSOsF6g510WPsTUL61ECalFreaythMbziIhyjFIjMdJklVpJG27moBG3eftbL61L
+         yqRw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777995843; x=1778600643;
+        d=1e100.net; s=20251104; t=1777995844; x=1778600644;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=/RdSIn1RRplQLuqRM0kteEP4T32YGvE4m+LZT5nuI/Y=;
-        b=K140PzuW9dJQ88inwI7vdPDgyFfXWk77UupKxid3ZMTVxsL87Ps01Je+Jg/4U1iYSU
-         RJ8P0sE2COOnsy65C8+4zL0WUB95oBHbUZ3g6euDzVwKYgWi2pJkPXHLQggR/gwpfZM0
-         VMgKwiRPAsCmqyaQdED8WJ4LPcCt5tD8MIMSajYS3aH4pIfw9Ud30rzQQtpk54PMsb62
-         TdL6zq9+OOzJpnPOmb+lcDbXm8k+YbBmax0isUznLC1slrlMmlNowzOWb3mW5JnqNUYC
-         4x8y99nlFu/2tHeWAr/AM6GaNRz9n1sL6mnWyIHFMTg4TAIZBe1VTtnINsPjPBBzEKFC
-         /dqg==
-X-Forwarded-Encrypted: i=1; AFNElJ/Z6/i8HMTMDv3nKDWFindeSZpaU35YlVQOPl+S0Dw/5ykx5YL5Bx2bXTsQPU7X4z2EsFN7wR+QzQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz/u6ngf1PEmVum4wQ92NW1HRWAixFzp2qgXueuK68FTwv1HXBZ
-	pIpPMXOoNNWfVwIMLYI/n22HK08zbpIEaNOLVxjV+Vum7NAsOpi64weYYFD/tFiclcU=
-X-Gm-Gg: AeBDievkFloHJIhjs5Ndcn5J0J5bwmgNrLuLjBDMFdCr5XDSQavrlkLZi95dCscD8DQ
-	+01OtvA18tmxPWapyZKMGra8/AlI9Axbnh3vvTtfh1P/lzbUiskiQxYvLMICQWR5WSCPs6X/JCh
-	M2xkZL8/QSAcPwARxQhx8iJUN3hzyfvz2ASHQVteALVfNzMUKbeHO/OC8PdYaHBE+Lhj0aCD3L2
-	mEI9sGKC8llKk8itFmGPizQcH4oD3qmaZUhDe9Anq7atRfbXUguuF/bXll34XwhfIquO2IIAmub
-	KNFm58uyCc8MxLHPM3TW46Qsi37IvDAextCaYPy/qBKFJtTuHbI/jqnmKqOoeC9pw98D4+p6DYc
-	WFLuZMF1WxHBan/rZxreYmb1wosPRhZemry9GKeZfnPuLbaPZ7KT5nr1RE+vFW28YbM4Ul/mHTG
-	Pjy0/15je2YiMX4jXe1vteAQPpF7DVfwwnznYYNhQGp+pYiFR+1RUTz+J66QLveFwPa8fBA81Df
-	65TJ/7knV6nCaE6eK0eGiX5
-X-Received: by 2002:a05:600c:c10b:b0:488:9ed3:1492 with SMTP id 5b1f17b1804b1-48d188e7990mr45574365e9.10.1777995843134;
-        Tue, 05 May 2026 08:44:03 -0700 (PDT)
+        bh=X7cU/QgOKi8bhmf9Zudxy5M2a55eUM7JU5Z2NnqGNQU=;
+        b=eBgkVAd15k/BNQaOiE9egyJvQhfeOcGw6tmtqeYJNswulFzINoca5UBtg3PVPvgk0+
+         ysk009weoIKbX4aMLbWyw7aRwRcC1saU7ot2ekl2G33poWHEDTMriKuPflv7VdXBBWSP
+         BKKLT8VMCIwvtM542f6pxf6EWEW7m7HATs3mrDcxbdAnbG3kO6EuoQLJn3Q9v/6WzZdN
+         SfpaIdCi54puUQHEhYsnf1KhFeggvBJbYCWHei34R6wR6JactAxWnO1emxewQNkpbNRj
+         SDXvcBJpBWtVl7VXYPJ3vDWi4/iW09kjk2dqGPkFd9P3uyBB2jC/9Xfy4KFSkbDPqlSI
+         WC5A==
+X-Forwarded-Encrypted: i=1; AFNElJ8F6P9pbwIcVrTnQ5hnq6P07ezOz+mIbi3wkHz9ubP5GoTilX84BCHT5/KD7AMAvA6tiVKLUMc4QA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy5+sOvIau/qSQGqUxa3czmRMFIM2VWSY4YSYKMgCJTSPl7LEyo
+	ts+tSFDmRVXeKH86B01pjTfqT7a/H1cXerhwthor0evhpWhPWXEhMeLGO6prDtQIL38=
+X-Gm-Gg: AeBDietT5t1Rz859oZac12pPc6JrSPg8nsSlvYbI0MZ4DynWJAxkDsk3Alntv9QhGHf
+	Ag3iVkUBZucPS+aDJFVossHwjSwqmcDV26Ta6gld3NFuubSl+Op+ogcU403owLuhM2U5BGrZ17l
+	8PV928Rs180ZrRMNoNQn+klow5EWT4pAuwe/rx1e1XTcchsTxCXYaicms2NMdt3Q2fiD4r9fLXU
+	GUFacAPTyZdSDFHYxdOreeCnBKYty/74PXkt3drzjR91mriQQgysGx1GOuBSQiwNTTWoFC8xw+i
+	0y762iKh82YdPBbZM5DKKC9eK9ZovXTk5H3ZXt+DQE0xx/hx3SHccySJ71fgw8V7GgDMi3jNGad
+	+MdTa5SQ7pQygsHBYgUVNk65LFSx727/XjlD00m2AK8M3ouNLCFV3X+Hb2RTZSwP7Jedo+MuxDB
+	Xg6idIxhssFmBtzNBenDmEBlRPh+7Du6UJurRutBTb+SKP1aPJeYQn/9MJlX+GYLXX9P8dQFUXl
+	1UdTxXUD65YBqutJ+Y2DCk6M2sIyCWBeqY=
+X-Received: by 2002:a05:6000:1889:b0:43d:242:b9bb with SMTP id ffacd0b85a97d-44bb481766emr24851545f8f.18.1777995844130;
+        Tue, 05 May 2026 08:44:04 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-4511d8cd160sm867991f8f.8.2026.05.05.08.44.02
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45054b03d4csm5769649f8f.22.2026.05.05.08.44.03
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 May 2026 08:44:02 -0700 (PDT)
+        Tue, 05 May 2026 08:44:03 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 14/18] libmultipath: convert readsector0 checker to async checker
-Date: Tue,  5 May 2026 17:43:28 +0200
-Message-ID: <20260505154332.448054-15-mwilck@suse.com>
+Subject: [PATCH 15/18] libmultipath: convert hp_sw checker to async checker
+Date: Tue,  5 May 2026 17:43:29 +0200
+Message-ID: <20260505154332.448054-16-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260505154332.448054-1-mwilck@suse.com>
 References: <20260505154332.448054-1-mwilck@suse.com>
@@ -81,29 +81,40 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Make the readsector0 checker use the async checker framework.
+Make the hp_sw checker use the async checker framework.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- libmultipath/checkers/readsector0.c | 28 +++++++---------------------
- 1 file changed, 7 insertions(+), 21 deletions(-)
+ libmultipath/checkers/hp_sw.c | 32 ++++++++------------------------
+ 1 file changed, 8 insertions(+), 24 deletions(-)
 
-diff --git a/libmultipath/checkers/readsector0.c b/libmultipath/checkers/readsector0.c
-index b041f11..fcc4ad1 100644
---- a/libmultipath/checkers/readsector0.c
-+++ b/libmultipath/checkers/readsector0.c
-@@ -1,41 +1,27 @@
+diff --git a/libmultipath/checkers/hp_sw.c b/libmultipath/checkers/hp_sw.c
+index 1ab7909..770221f 100644
+--- a/libmultipath/checkers/hp_sw.c
++++ b/libmultipath/checkers/hp_sw.c
+@@ -1,8 +1,6 @@
  /*
-  * Copyright (c) 2004, 2005 Christophe Varoqui
+  * Copyright (c) 2005 Christophe Varoqui
   */
 -#include <stdio.h>
--
-+#include <sys/types.h>
- #include "checkers.h"
- #include "libsg.h"
-+#include "async_checker.h"
+-#include <stdlib.h>
+ #include <string.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -12,7 +10,7 @@
+ #include <errno.h>
  
--struct readsector0_checker_context {
+ #include "checkers.h"
+-
++#include "async_checker.h"
+ #include "sg_include.h"
+ #include "unaligned.h"
+ 
+@@ -28,20 +26,6 @@
+ #define MX_ALLOC_LEN		255
+ #define HEAVY_CHECK_COUNT       10
+ 
+-struct sw_checker_context {
 -	void * dummy;
 -};
 -
@@ -117,30 +128,41 @@ index b041f11..fcc4ad1 100644
 -	return;
 -}
 -
--int libcheck_check (struct checker * c)
+ static int
+ do_inq(int sg_fd, int cmddt, int evpd, unsigned int pg_op,
+        void *resp, int mx_resp_len, unsigned int timeout)
+@@ -127,24 +111,24 @@ do_tur (int fd, unsigned int timeout)
+ 	return 0;
+ }
+ 
+-int libcheck_check(struct checker * c)
 +int libcheck_async_func(struct runner_data *rdata)
  {
- 	unsigned char buf[4096];
- 	unsigned char sbuf[SENSE_BUFF_LEN];
- 	int ret;
+ 	char buff[MX_ALLOC_LEN];
+-	int ret = do_inq(c->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, c->timeout);
++	int ret = do_inq(rdata->fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, rdata->timeout);
  
--	ret = sg_read(c->fd, &buf[0], 4096, &sbuf[0],
--		      SENSE_BUFF_LEN, c->timeout);
-+	ret = sg_read(rdata->fd, &buf[0], 4096, &sbuf[0], SENSE_BUFF_LEN,
-+		      rdata->timeout);
- 
- 	switch (ret)
- 	{
- 	case PATH_DOWN:
+ 	if (ret == PATH_WILD) {
+-		c->msgid = CHECKER_MSGID_UNSUPPORTED;
++		rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
+ 		return ret;
+ 	}
+ 	if (ret != PATH_UP) {
 -		c->msgid = CHECKER_MSGID_DOWN;
 +		rdata->msgid = CHECKER_MSGID_DOWN;
- 		break;
- 	case PATH_UP:
--		c->msgid = CHECKER_MSGID_UP;
-+		rdata->msgid = CHECKER_MSGID_UP;
- 		break;
- 	default:
- 		break;
+ 		return ret;
+ 	};
+ 
+-	if (do_tur(c->fd, c->timeout)) {
+-		c->msgid = CHECKER_MSGID_GHOST;
++	if (do_tur(rdata->fd, rdata->timeout)) {
++		rdata->msgid = CHECKER_MSGID_GHOST;
+ 		return PATH_GHOST;
+ 	}
+-	c->msgid = CHECKER_MSGID_UP;
++	rdata->msgid = CHECKER_MSGID_UP;
+ 	return PATH_UP;
+ }
 -- 
 2.54.0
 
