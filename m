@@ -1,321 +1,207 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1749D363C50
-	for <dm-devel@lists.linux.dev>; Tue,  5 May 2026 15:44:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EABA247F2F3
+	for <dm-devel@lists.linux.dev>; Wed,  6 May 2026 14:15:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777995851; cv=none; b=IstHfiGUvDW1g+dr9yH5UUmDh+IyspODvAfCUECGTXEy8r1PpzPgEmLRsTj8cF8DhrcM1JatYmPKfi/xCd1/mfHFqhJZSbxE4e35RqechCMbRzBlmOl/bwf/pJzaZH8GQ2nASfhLIjO744ltFIMtS5xJVz3RNYbR0wCvifKVkso=
+	t=1778076952; cv=none; b=SSUtXLreYp+u3uQ+nJZl043p2oK1xMN5U+xh/C93wKUDqKJOcPvAewIZUZUjmKkfh+Czj5KvcatwBmhAp4bLuOqsmWeKe7SpHzPUXnbsEtWYAPBVyobsUWMzSgHU9yM/pijmlwT9B28zHSiqhxSIx7WShVoeK1JtmIdPcJjsXb8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777995851; c=relaxed/simple;
-	bh=3VNeQ5mdo4oP5RilpO+zCKFKzvR4nyXeCbGlRiID698=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=CYeba453YmgJEa62DT8WaAEkJvtueDmI/keAu5N9exp/9fvnIQ3DlgfJ7WyrMFl3SFxzQm2gDiwTxGHpect5kNQazBUcVUzmzklaRNi+9h5mwzbVJzOmd7kt8H5wHOMGORzCPvIZojbDKDjh+GQrhKKnWLYVPLc/cKsRLdWpU4Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=XFHkOrWA; arc=none smtp.client-ip=209.85.128.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1778076952; c=relaxed/simple;
+	bh=zZcagGFZAjrjlPTdskd9mqi0QrGre7yqU1eShhuplxw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Exk8VdJQNfcGC326XnLy4o5RAn83LwzDUGfnUo0w9OhpLMOqxzKTYlwhA/BZ4As3Buh3JUPoJ3Y565g1oxogvWj1Mx2tPoH0nlL0Lm8uMYLgDoL3Fvwact7xeH2mnKi8xbRyWKFwrSKx3QZldeH/Sov0rU+bwcvI4zhSuoHwA3Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=nKZjcGRH; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="XFHkOrWA"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-48909558b3aso59248545e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 05 May 2026 08:44:09 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="nKZjcGRH"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-48962cd0864so8262965e9.1
+        for <dm-devel@lists.linux.dev>; Wed, 06 May 2026 07:15:50 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1777995848; x=1778600648; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=HECIAMjB9qhF3yXR90JP9SNCnCaJQ4VhRpjCETrSL7I=;
-        b=XFHkOrWA0pdYWB4Y2LxYcsEKyF0b8+/gm1WE9nQVqmCl6OvAohGxvs0lMQCm+D00Ly
-         6tANMe4IhM/1r83fmhWJvcSnh3wyUYqefvOkMLIW56VSzOn7kqLsSki0MnUmRHyWl/5y
-         2RU6o4OCO9TYxeE1E86loBaCFXDhlmZ0CKmOP9FgGrdax9ZP1mA/jNyuUiCNOkkIfNpU
-         0c/o4haYhNSriKZjLC2YvSVdcQeZ6Bj+HH/RrPLN2CDdWnWL1XDm5bCA2uFNtZ44FNbH
-         ikIZ38RXdYzFIed+U/XHJmO0JParLXFI21rF+qSd6ci3bmibILrLC0utbUmQjFnFiqgl
-         copQ==
+        d=gmail.com; s=20251104; t=1778076949; x=1778681749; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Io/N+hHnLMI/zVIF68lkuWkyC9l4bvcPQWSmOV0m6oQ=;
+        b=nKZjcGRHE/1+9TanovpgDomDi0x6vp7Jt0xLder8idjUF8ch6x8Y2Yyvbgnq0pFe8U
+         WxktoGemXCcB8b8TQ41gR8kAnemqrGPDqga5EaPcmQ8C5R/sAOJsjlk3yf5SxoCHaRNa
+         7d1C1FJ98CiTvo0EJboQvuJgnPR2pVnqoJ7LEnRw7frZTHSeOES5LES3D8c12FaicIP9
+         Slz7515TOsVmMuKk1QFBznK2j0zuL0fHnuAQRHOVTnyWIMJFMfsj5XnwR198rmgtruwG
+         hw74k/134rmBjts2PiJ8RiPF32oOBCcbs1c6epeuQcSU+VktkUUK8VlSd1SH/FJpAsRl
+         Y/eA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1777995848; x=1778600648;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=HECIAMjB9qhF3yXR90JP9SNCnCaJQ4VhRpjCETrSL7I=;
-        b=MD4SEL5fO3x6cagYqDrHggJn56qGFHrSmw9X2T7MSZHMBwnDnOm2r52wm1VQtylEWh
-         9H5HuvcRLwdmshMqEi1UbdsqYcRxMm0V2tz3uxEemva898xYS90ANmkI/pl4xpj00Qzb
-         4ZW17TbEawFR6KST6NP9VikLn+OAzBpdMiahmA+eFcFpDQCtkEol3y0k0AJnSkGABziw
-         Oi+6CWAJjjsbUFBel1q0qL1ss9I06ED9rpr2zP9Kq4x/y16csh36xGAl/58Be1AsOm9s
-         +WwINh814qpiRnJ/go8fFiZt8Pv0KbSuMji6K7Z+n1klRGwC2CHJ2hhw8/+4y4Pp02V1
-         LVLQ==
-X-Forwarded-Encrypted: i=1; AFNElJ/TocUYZrzxkm4Fm/wLBu1bD67ijL07/s0Q2VgR+3BihfguorZIfB9Ry3DJWP6Os4u8ds35Tp0TRg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YybQdT4kvceC/7Kve/lAGs2YHccUAq09JhDDmRXdFITdLr5+mA5
-	kifpuI14eC25ZwtGGGMjHD0xez4WPXOoWcrrp3txz9oEOamb7olJmNtWQOhqq3V+eOg=
-X-Gm-Gg: AeBDiet6OSDcwVEoRfXVhhEDhI4YloHviwkhygZutBckxlpRZbn3Z9RRCEt7FDYsuQh
-	VUqMllhZfvjlBj9D0MTB/4fBxXdGaaDjCXkl+wh/Vv+3FCCovg7j1X4Abl2ssoOy/0iNy8EB6fw
-	1trzoj1rNhtoMOuzbSldqyRQPczZYSmxylZYh0RlGdUDBhliyB57RxLGgt5EFwgJSRoQaEvF0Vr
-	g6MVoaNbhFeiMxTjeB2Sbde2W7XCgRIfeTO58P2/sS+o3gQHNchhJC/E9eN7jOJDsdzcU2bv/wf
-	G82ToSdj6INyUOkse4EeEMvJ6L209ococ2S3VkBHJK1BvW4RSIwaL4q9N4UM9bnclXmNbGYyHdr
-	Z+jJbZsZRjNdji/xFxi/sOUGW533pCLrZIm+P8dNpMu2Lq2WMLEo5IY4NdjByVkL61ofXKw8nFz
-	5r/bz2GOaxGkPFW/5k7itUo+r5uKml9ZMXKuMKq7I0/FCZ/C088GTMg9ESreIph458rRj17ncxY
-	MW5uylYBdDBd92Y+h/bWooLUq3L0sHEfP4=
-X-Received: by 2002:a05:600c:4e11:b0:48a:9562:7a30 with SMTP id 5b1f17b1804b1-48a98670ea9mr240977215e9.24.1777995848374;
-        Tue, 05 May 2026 08:44:08 -0700 (PDT)
-Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-48d14c1ef96sm21859895e9.11.2026.05.05.08.44.07
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 05 May 2026 08:44:07 -0700 (PDT)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        d=1e100.net; s=20251104; t=1778076949; x=1778681749;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Io/N+hHnLMI/zVIF68lkuWkyC9l4bvcPQWSmOV0m6oQ=;
+        b=JItRB7pTuCw/4jT1XvA3V6xTKzRGqOGB2SCQfllokpLjfYHItktHpMzlJqccBNbhI1
+         H7IoranJvmOn8V9XbXkHheq3cE48YWIa2rXDajGulo3fzKWr3HWmAg+bX2DFNZWfzziw
+         89Z2jPLtXq+tbCCVU2hAdjKT0502WCeWLw4SIMrwd7Wqokk0Si4FgI0swW/mrLbc+E9t
+         UEXTybSBLsP68wrbp8i9SkOg93bY4QnEmd0A0S2oAzVQAHmlYc6PGXQ9QeW7r8kUlMFY
+         5JXWFHc+6j75bOwf4NbEButR5b+GWdGwqUX/zrg89EQza6H015w0Cxm4wFO5bkrtczZ/
+         Aq5g==
+X-Forwarded-Encrypted: i=1; AFNElJ+rdPGn40IOOXvHahSpHQ+adjxEIMs3ShgJhLjKa0sD48/zm8KpS3DSJ1WD6N9LTAecqAMM1Yh0ow==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzTkUpXnNlQn2aq1U403WDswZPw8HpLH3/UySvy8hViTI1OYl7v
+	Sno2zA6e519V0cZbHX29/Ma7/xIV/tvHL+IBkfc6BmxN+tQNlU9egGA=
+X-Gm-Gg: AeBDievIGe+UIPvGveOlowpCiRb0HGVQpeGnOCOVEXKSofGMJqkCOH3+hIt7PUnTOft
+	S28eukiAoVkpBNQCxeSEnPYbpFZbc5Ue8V4SjwEkglTq2jP8+ABvhEas3smq3kpzM4ysZIkMv5i
+	KTTa7c9XkBK/mxhXnUDsJs/KpSAtozN9gcQmpm+r7Ob8bg0Ef/bx012ky43crl+9aiwipmYXU66
+	w8bSof0E+hS9+X3j3cgPuRzUmvtPEP40UVQz3OWacWICspJxkTDU/jwIZewNdUNFjbaXVscUptg
+	xE+3S8Hq+cBcBayqGDJgzAwmUCBbkGydBtTaY0VpbvkeWE6bGJDTqP/qJ/J2RFVLxaoB+rrM2ax
+	o+Rs531Np8Es+8bSGPycnByYisWjWpp//LBI4hlkD4CFmzOICGK+7Mp3gOvhD+p3JTtVTg7VNtQ
+	g+BepnmX+O9vtoL/sJwuxPL+8+q8PCyrkHD7fZ0WhvpokytALJq0sDs6huBy6UKk1a7qurdhpj
+X-Received: by 2002:a05:600c:1f95:b0:486:fc61:541d with SMTP id 5b1f17b1804b1-48e51e124b9mr32527385e9.2.1778076948868;
+        Wed, 06 May 2026 07:15:48 -0700 (PDT)
+Received: from localhost (8.red-80-39-165.dynamicip.rima-tde.net. [80.39.165.8])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4505558e213sm13671647f8f.25.2026.05.06.07.15.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 06 May 2026 07:15:47 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Aviv Coro <aviv.coro@ibm.com>,
+	Bart Van Assche <bvanassche@acm.org>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Brian Bunker <brian@purestorage.com>,
-	dm-devel@lists.linux.dev
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH 18/18] libmultipath: convert emc_clariion to async_checker
-Date: Tue,  5 May 2026 17:43:32 +0200
-Message-ID: <20260505154332.448054-19-mwilck@suse.com>
+	Caleb Sander <csander@purestorage.com>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	Chris Leech <cleech@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Christoph Hellwig <hch@lst.de>,
+	Clayton Skaggs <claytons@netapp.com>,
+	Constantine Gavrilov <cgavrilov@infinidat.com>,
+	Daniel Wagner <wagi@kernel.org>,
+	=?UTF-8?q?David=20Santamar=C3=ADa=20Rogado?= <howl.nsp@gmail.com>,
+	"Dmitry V. Levin" <ldv@strace.io>,
+	"Ewan D. Milne" <emilne@redhat.com>,
+	Hannes Reinecke <hare@suse.de>,
+	James Smart <jsmart2021@gmail.com>,
+	Jens Axboe <axboe@kernel.dk>,
+	John Meneghini <jmeneghi@redhat.com>,
+	Jyoti Rani <jrani@purestorage.com>,
+	Keith Busch <kbusch@kernel.org>,
+	Li Xiaokeng <lixiaokeng@huawei.com>,
+	Marco Patalano <mpatalan@redhat.com>,
+	Martin Belanger <martin.belanger@dell.com>,
+	Martin George <Martin.George@netapp.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>,
+	Maurizio Lombardi <mlombard@arkamax.eu>,
+	NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>,
+	Nilay Shroff <nilay@linux.ibm.com>,
+	Randy Jennings <randyj@purestorage.com>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	Simon Schricker <sschricker@suse.de>,
+	Steven Schremmer <Steve.Schremmer@netapp.com>,
+	Thomas Song <tsong@purestorage.com>,
+	Uday Shankar <ushankar@purestorage.com>,
+	Vasuki Manikarnike <vasuki.manikarnike@hpe.com>,
+	Wayne Berthiaume <Wayne.Berthiaume@dell.com>,
+	Zou Ming <zouming.zouming@huawei.com>,
+	BLOCK-ML <linux-block@vger.kernel.org>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>,
+	NVME-ML <linux-nvme@lists.infradead.org>,
+	SCSI-ML <linux-scsi@vger.kernel.org>
+Subject: [PATCH RFC] nvme-multipath: optimize path selection in queue-depth policy
+Date: Wed,  6 May 2026 16:15:41 +0200
+Message-ID: <20260506141544.125089-1-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260505154332.448054-1-mwilck@suse.com>
-References: <20260505154332.448054-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Patchwork-Bot: notify
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
----
- libmultipath/checkers/emc_clariion.c | 79 ++++++++++++----------------
- 1 file changed, 33 insertions(+), 46 deletions(-)
+Move the zero-depth check inside the optimized path case to enable early
+exit. It avoids redundant condition checks for non-optimized paths, and
+eliminates the per-iteration check at the end of the loop, improving the
+performance.
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 24a386c..2c9d4fd 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -1,8 +1,6 @@
- /*
-  * Copyright (c) 2004, 2005 Lars Marowsky-Bree
-  */
--#include <stdio.h>
--#include <stdlib.h>
- #include <string.h>
- #include <sys/types.h>
- #include <sys/stat.h>
-@@ -14,8 +12,8 @@
- #include "sg_include.h"
- #include "libsg.h"
- #include "checkers.h"
-+#include "async_checker.h"
- #include "debug.h"
--#include "util.h"
- 
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
-@@ -33,19 +31,17 @@
-  * simple read test would return 02/04/03 instead
-  * of 05/25/01 sensekey/ASC/ASCQ data.
-  */
--#define IS_INACTIVE_SNAP(mpctx)				\
--	(!mpctx || IS_INVALID_MPCONTEXT(*mpctx) ? 0 : mpctx->long_val)
-+#define IS_INACTIVE_SNAP(mpctx)					\
-+	(IS_INVALID_MPCONTEXT(mpctx) ? 0 : mpctx.long_val)
- 
- #define SET_INACTIVE_SNAP(mpctx)		\
- 	do {					\
--		if (mpctx)			\
--			mpctx->long_val = 1;	\
-+		mpctx.long_val = 1;		\
- 	} while (0);
- 
- #define CLR_INACTIVE_SNAP(mpctx)		\
- 	do {					\
--		if (mpctx)			\
--			mpctx->long_val = 0;	\
-+		mpctx.long_val = 0;		\
- 	} while (0);
- 
- enum {
-@@ -86,7 +82,9 @@ struct emc_clariion_checker_LU_context {
- 	int inactive_snap;
- };
- 
--void hexadecimal_to_ascii(char * wwn, char *wwnstr)
-+int async_context_size = sizeof(struct emc_clariion_checker_path_context);
-+
-+static void hexadecimal_to_ascii(char *wwn, char *wwnstr)
- {
- 	int i,j, nbl;
- 
-@@ -99,33 +97,22 @@ void hexadecimal_to_ascii(char * wwn, char *wwnstr)
- 	wwnstr[32]=0;
- }
- 
--int libcheck_init (struct checker * c)
-+int async_init(struct runner_data *rdata)
- {
--	/*
--	 * Allocate and initialize the path specific context.
--	 */
--	c->context = calloc(1, sizeof(struct emc_clariion_checker_path_context));
--	if (!c->context)
--		return 1;
--	((struct emc_clariion_checker_path_context *)c->context)->wwn_set = 0;
-+	((struct emc_clariion_checker_path_context *)rdata->checker_ctx)->wwn_set = 0;
- 
- 	return 0;
- }
- 
--void libcheck_free(struct checker *c)
--{
--	free(c->context);
--}
+Cc: Aviv Coro <aviv.coro@ibm.com>
+Cc: Bart Van Assche <bvanassche@acm.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Brian Bunker <brian@purestorage.com>
+Cc: Caleb Sander <csander@purestorage.com>
+Cc: Chaitanya Kulkarni <kch@nvidia.com>
+Cc: Chris Leech <cleech@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: Clayton Skaggs <claytons@netapp.com>
+Cc: Constantine Gavrilov <cgavrilov@infinidat.com>
+Cc: Daniel Wagner <wagi@kernel.org>
+Cc: David Santamaría Rogado <howl.nsp@gmail.com>
+Cc: Dmitry V. Levin <ldv@strace.io>
+Cc: Ewan D. Milne <emilne@redhat.com>
+Cc: Ewan Milne <emilne@redhat.com>
+Cc: Hannes Reinecke <hare@suse.de>
+Cc: James Smart <jsmart2021@gmail.com>
+Cc: Jens Axboe <axboe@kernel.dk>
+Cc: John Meneghini <jmeneghi@redhat.com>
+Cc: Jyoti Rani <jrani@purestorage.com>
+Cc: Keith Busch <kbusch@kernel.org>
+Cc: Li Xiaokeng <lixiaokeng@huawei.com>
+Cc: Marco Patalano <mpatalan@redhat.com>
+Cc: Martin Belanger <martin.belanger@dell.com>
+Cc: Martin George <Martin.George@netapp.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Matthias Rudolph <Matthias.Rudolph@hitachivantara.com>
+Cc: Maurizio Lombardi <mlombard@arkamax.eu>
+Cc: NetApp RDAC team <ng-eseries-upstream-maintainers@netapp.com>
+Cc: Nilay Shroff <nilay@linux.ibm.com>
+Cc: Randy Jennings <randyj@purestorage.com>
+Cc: Sagi Grimberg <sagi@grimberg.me>
+Cc: Simon Schricker <sschricker@suse.de>
+Cc: Steven Schremmer <Steve.Schremmer@netapp.com>
+Cc: Thomas Song <tsong@purestorage.com>
+Cc: Uday Shankar <ushankar@purestorage.com>
+Cc: Vasuki Manikarnike <vasuki.manikarnike@hpe.com>
+Cc: Wayne Berthiaume <Wayne.Berthiaume@dell.com>
+Cc: Zou Ming <zouming.zouming@huawei.com>
+Cc: BLOCK-ML <linux-block@vger.kernel.org>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Cc: NVME-ML <linux-nvme@lists.infradead.org>
+Cc: SCSI-ML <linux-scsi@vger.kernel.org>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+Status: Compile-tested only. UNTESTED on real hardware.
+
+[I do not have access to this kind of hardware]
+
+Feedback and testing are highly welcome.
+---
+ drivers/nvme/host/multipath.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+index 263161cb8ac0..7d212f6e865d 100644
+--- a/drivers/nvme/host/multipath.c
++++ b/drivers/nvme/host/multipath.c
+@@ -409,6 +409,8 @@ static struct nvme_ns *nvme_queue_depth_path(struct nvme_ns_head *head)
+ 				min_depth_opt = depth;
+ 				best_opt = ns;
+ 			}
++			if (min_depth_opt == 0)
++				goto out;
+ 			break;
+ 		case NVME_ANA_NONOPTIMIZED:
+ 			if (depth < min_depth_nonopt) {
+@@ -419,11 +421,8 @@ static struct nvme_ns *nvme_queue_depth_path(struct nvme_ns_head *head)
+ 		default:
+ 			break;
+ 		}
 -
--int libcheck_check(struct checker *c, union checker_mpcontext *mpctx)
-+int libcheck_async_func(struct runner_data *rdata)
- {
- 	unsigned char sense_buffer[128] = { 0, };
- 	unsigned char sb[SENSE_BUFF_LEN] = { 0, }, *sbb;
- 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
- 						sizeof(sense_buffer), 0};
- 	struct sg_io_hdr io_hdr;
--	struct emc_clariion_checker_path_context * ct =
--		(struct emc_clariion_checker_path_context *)c->context;
-+	struct emc_clariion_checker_path_context *ct =
-+		(struct emc_clariion_checker_path_context *)rdata->checker_ctx;
- 	char wwnstr[33];
- 	int ret;
- 	int retry_emc = 5;
-@@ -142,14 +129,14 @@ retry:
- 	io_hdr.dxferp = sense_buffer;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sb;
--	io_hdr.timeout = c->timeout * 1000;
-+	io_hdr.timeout = rdata->timeout * 1000;
- 	io_hdr.pack_id = 0;
--	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-+	if (ioctl(rdata->fd, SG_IO, &io_hdr) < 0) {
- 		if (errno == ENOTTY) {
--			c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+			rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
- 			return PATH_WILD;
- 		}
--		c->msgid = MSG_CLARIION_QUERY_FAILED;
-+		rdata->msgid = MSG_CLARIION_QUERY_FAILED;
- 		return PATH_DOWN;
+-		if (min_depth_opt == 0)
+-			return best_opt;
  	}
+-
++out:
+ 	return best_opt ? best_opt : best_nonopt;
+ }
  
-@@ -181,12 +168,12 @@ retry:
- 				sense_key = sbp[2] & 0xf;
- 
- 			if (sense_key == ILLEGAL_REQUEST) {
--				c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+				rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
- 				return PATH_WILD;
- 			} else if (sense_key != RECOVERED_ERROR) {
- 				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
- 					sense_key);
--				c->msgid = MSG_CLARIION_QUERY_ERROR;
-+				rdata->msgid = MSG_CLARIION_QUERY_ERROR;
- 				return PATH_DOWN;
- 			}
- 		}
-@@ -195,13 +182,13 @@ retry:
- 	if (io_hdr.info & SG_INFO_OK_MASK) {
- 		condlog(1, "emc_clariion_checker: INQUIRY failed without sense, status %02x",
- 			io_hdr.status);
--		c->msgid = MSG_CLARIION_QUERY_ERROR;
-+		rdata->msgid = MSG_CLARIION_QUERY_ERROR;
- 		return PATH_DOWN;
- 	}
- 
- 	if (/* Verify the code page - right page & revision */
- 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
--		c->msgid = MSG_CLARIION_UNIT_REPORT;
-+		rdata->msgid = MSG_CLARIION_UNIT_REPORT;
- 		return PATH_DOWN;
- 	}
- 
-@@ -215,19 +202,19 @@ retry:
- 		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
--		c->msgid = MSG_CLARIION_PATH_CONFIG;
-+		rdata->msgid = MSG_CLARIION_PATH_CONFIG;
- 		return PATH_DOWN;
- 	}
- 
- 	if ( /* LUN operations should indicate normal operations */
- 		sense_buffer[48] != 0x00) {
--		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
-+		rdata->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
- 		return PATH_SHAKY;
- 	}
- 
- 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
- 		sense_buffer[4] == 0x00) {
--		c->msgid = MSG_CLARIION_LUN_UNBOUND;
-+		rdata->msgid = MSG_CLARIION_LUN_UNBOUND;
- 		return PATH_DOWN;
- 	}
- 
-@@ -238,7 +225,7 @@ retry:
- 	 */
- 	if (ct->wwn_set) {
- 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
--			c->msgid = MSG_CLARIION_WWN_CHANGED;
-+			rdata->msgid = MSG_CLARIION_WWN_CHANGED;
- 			return PATH_DOWN;
- 		}
- 	} else {
-@@ -253,8 +240,8 @@ retry:
- 		unsigned char buf[4096];
- 
- 		memset(buf, 0, 4096);
--		ret = sg_read(c->fd, &buf[0], 4096,
--			      sbb = &sb[0], SENSE_BUFF_LEN, c->timeout);
-+		ret = sg_read(rdata->fd, &buf[0], 4096, sbb = &sb[0],
-+			      SENSE_BUFF_LEN, rdata->timeout);
- 		if (ret == PATH_DOWN) {
- 			hexadecimal_to_ascii(ct->wwn, wwnstr);
- 
-@@ -269,7 +256,7 @@ retry:
- 				 * passive paths which will return
- 				 * 02/04/03 not 05/25/01 on read.
- 				 */
--				SET_INACTIVE_SNAP(mpctx);
-+				SET_INACTIVE_SNAP(rdata->mpc);
- 				condlog(3, "emc_clariion_checker: Active "
- 					"path to inactive snapshot WWN %s.",
- 					wwnstr);
-@@ -278,26 +265,26 @@ retry:
- 					"error for WWN %s.  Sense data are "
- 					"0x%x/0x%x/0x%x.", wwnstr,
- 					sbb[2]&0xf, sbb[12], sbb[13]);
--				c->msgid = MSG_CLARIION_READ_ERROR;
-+				rdata->msgid = MSG_CLARIION_READ_ERROR;
- 			}
- 		} else {
--			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
-+			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			/*
- 			 * Remove the path from the set of paths to inactive
- 			 * snapshot LUs if it was in this list since the
- 			 * snapshot is no longer inactive.
- 			 */
--			CLR_INACTIVE_SNAP(mpctx);
-+			CLR_INACTIVE_SNAP(rdata->mpc);
- 		}
- 	} else {
--		if (IS_INACTIVE_SNAP(mpctx)) {
-+		if (IS_INACTIVE_SNAP(rdata->mpc)) {
- 			hexadecimal_to_ascii(ct->wwn, wwnstr);
- 			condlog(3, "emc_clariion_checker: Passive "
- 				"path to inactive snapshot WWN %s.",
- 				wwnstr);
- 			ret = PATH_DOWN;
- 		} else {
--			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
-+			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			ret = PATH_UP;	/* not ghost */
- 		}
- 	}
 -- 
 2.54.0
 
