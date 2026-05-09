@@ -1,118 +1,169 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E8D0221DB3
-	for <dm-devel@lists.linux.dev>; Fri,  8 May 2026 23:11:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BA6A382365
+	for <dm-devel@lists.linux.dev>; Sat,  9 May 2026 09:19:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778281872; cv=none; b=sV8+oBm7h0xMC88C5jMyRYbRekizDUvOz7HXZ3IiHCzi7ybbd7T/aAIX7To9hh6LxREGAHCKAPvFAtco5vo5uBqSGVO3ngsalSmtPomyu/a2raODIA1AFcQP/GpJxzAp6POspIng4XxKHtjBLxXjgTo7Be43zrYfMG0YTBfu7X4=
+	t=1778318349; cv=none; b=OAqbji9/TqGK96LI1f/tjPL9dGTxYsJw5sBIEHCHvU9fyTTv/wtZ2+jBEcrXM3xMqHe/UNTqSfF4e2RrpMstSE27o7+guPwLbakNCuARJjFRPmRtVXtvfncABloRH87karayTLiT6bpqLWYY3eQIMG9+YBACAnDkU2ObF0ucQPw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778281872; c=relaxed/simple;
-	bh=U/IRvpdIVQ5wmQvj+XkLIl8dyqoL0vuM3E+OEl3XUYY=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=uimpeTWSDlkzNZrmvujygZF9BbNiRqKWGINRvbALQnKGfOPzdtClEf4//NmfnUjTbCmbbRDTLreqF5Kl2PDUns3s+mgpoIgJouf+i0D775nCSiKfMn0+GR7G+R7VgFXqiQpL3fj6SqN0iWAXVVgp4CxGtrVJJa3g0hjH2L7Z56I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=NSDQiWII; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=NSDQiWII; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1778318349; c=relaxed/simple;
+	bh=GAmfihzwBx8UlSMVGuHe/To1/SPfWGuDi3zQirtTis0=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=WDPM+f1gDpbzuUMJq/UkBh1JgElfstKxdXYEJbiatHDjo26jI5GqAFpsgHLa+GTYE7G+Dfr+uFZddjYU3GML7oUj3q35ctyBkDBD/TFwnCrhZwcxW8Gvp46fbi6akGGaPNoTZUQSwT9/WHuXwLl/KMIBxbH4YmQy88YejBapc+A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=CrMy9uzi; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="NSDQiWII";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="NSDQiWII"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 432986AF19;
-	Fri,  8 May 2026 23:11:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1778281869; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=U/IRvpdIVQ5wmQvj+XkLIl8dyqoL0vuM3E+OEl3XUYY=;
-	b=NSDQiWIIdGAxdn4oAvkMbgdlhNdzCfan7G1lahZMdHiKXC5XQ1yLDMo1lGT7RDkQMC6uke
-	in1du1Tz5VcXYLc/UsLPm4v/0Di4IsTLEM4xbW07nrYEsI9bUSTp7UzAnFhPSnsMZBND0h
-	syDw6sG6GQsyON0x8D9eZDdy82WFI08=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=NSDQiWII
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1778281869; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=U/IRvpdIVQ5wmQvj+XkLIl8dyqoL0vuM3E+OEl3XUYY=;
-	b=NSDQiWIIdGAxdn4oAvkMbgdlhNdzCfan7G1lahZMdHiKXC5XQ1yLDMo1lGT7RDkQMC6uke
-	in1du1Tz5VcXYLc/UsLPm4v/0Di4IsTLEM4xbW07nrYEsI9bUSTp7UzAnFhPSnsMZBND0h
-	syDw6sG6GQsyON0x8D9eZDdy82WFI08=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 1D46B593A7;
-	Fri,  8 May 2026 23:11:09 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id FjMBBo1t/mn5RQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 08 May 2026 23:11:09 +0000
-Message-ID: <c0567063115fb987e700601ac17821feda87b086.camel@suse.com>
-Subject: Re: [PATCH 05/18] multipath-tools tests: add tests for shared
- pointer code
-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>, Brian Bunker <brian@purestorage.com>, 
-	dm-devel@lists.linux.dev
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Sat, 09 May 2026 01:11:08 +0200
-In-Reply-To: <20260505154332.448054-6-mwilck@suse.com>
-References: <20260505154332.448054-1-mwilck@suse.com>
-	 <20260505154332.448054-6-mwilck@suse.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="CrMy9uzi"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2431AC2BCB2
+	for <dm-devel@lists.linux.dev>; Sat,  9 May 2026 09:19:09 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1778318349;
+	bh=GAmfihzwBx8UlSMVGuHe/To1/SPfWGuDi3zQirtTis0=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
+	b=CrMy9uzidZ/luDhoiN3Ec85H8qAcXyVpzmwdUv8KK4NBSB46fHpeCEHBbmFP6yF3f
+	 abaPIu9ZPlrS6OVytP+vUh++Uepcvt/XPT+0Zj2ZXJ7UE3AWFlijMZpYN6GarAyxNu
+	 g6pyF0WVJihjh03jG4apz5jkSGIsaiZu3NCD8bWQinXIZqkuDhscjUymqTktmaCBPd
+	 iY8R9Lpx/YN570D/ahiPmP5W09Pf8cMLxk52XlMpviv/2s2XqFv02tkDZKivFgealv
+	 1qKF+bw6l4bdnx4FvAQWoftygultEwuk9ndaiw6b92AC8Dg0xlJ//tdhivHWqWAxeF
+	 442sABnN9YvAg==
+Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-50d876329bbso25891321cf.2
+        for <dm-devel@lists.linux.dev>; Sat, 09 May 2026 02:19:09 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AFNElJ/DI6lI7zqSE82Ha/ME+cL+M4OYTuo0ujpSejR53tSKGtgaOcZh6vs9kxM3NS49pM+qa+zgYJaYrQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzOkt4uLzJ2HpdpKPI57rNBknIak3SYUwb/o8zjMXQhrIg64wJs
+	ilWV1Lch61ycGYcs9Qb9mucw7XTv/pNN56mi5pBZRMRh/ieBOILZxHgsz9SbrdlsZlv9/2qoGJx
+	DUA4f7Af0V3nQtavFvs4z+ObGc/I02g==
+X-Received: by 2002:ac8:6f09:0:b0:50f:135d:9508 with SMTP id
+ d75a77b69052e-514621dd852mr221575831cf.55.1778318348481; Sat, 09 May 2026
+ 02:19:08 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Score: -3.01
-X-Rspamd-Action: no action
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	FREEMAIL_CC(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:email,suse.com:dkim,suse.com:mid]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 432986AF19
-X-Spam-Level: 
+References: <20260428232010.2785514-1-bmarzins@redhat.com>
+In-Reply-To: <20260428232010.2785514-1-bmarzins@redhat.com>
+From: Xiao Ni <xiao@kernel.org>
+Date: Sat, 9 May 2026 17:18:57 +0800
+X-Gmail-Original-Message-ID: <CAF-RUYVNd42=g7qSZPJKEndqk4EjjHWcdpByFN1qGkGSGQF53Q@mail.gmail.com>
+X-Gm-Features: AVHnY4JlceJXW-oWxLURieRKh-TK859p6YpIIiSYVXUrDSdTmw5CyeoScb-wW1k
+Message-ID: <CAF-RUYVNd42=g7qSZPJKEndqk4EjjHWcdpByFN1qGkGSGQF53Q@mail.gmail.com>
+Subject: Re: [PATCH v2] dm-raid: only requeue bios when dm is suspending.
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>, 
+	Song Liu <song@kernel.org>, linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
+	Yang Xiuwei <yangxiuwei@kylinos.cn>, Li Nan <linan122@huawei.com>, 
+	Nigel Croxon <ncroxon@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2026-05-05 at 17:43 +0200, Martin Wilck wrote:
-> Add a few tests (mostly meaningful with valgrind or ASAN) to test the
-> shared pointer code.
->=20
-> Signed-off-by: Martin Wilck <mwilck@suse.com>
-
-This test code needs rework. Don't review it yet.
-
+On Wed, Apr 29, 2026 at 7:20=E2=80=AFAM Benjamin Marzinski <bmarzins@redhat=
+.com> wrote:
+>
+> returning DM_MAPIO_REQUEUE from the target map() function only requeues
+> the bio during noflush suspends. During regular operations or during
+> flushing suspends, it fails the bio. Failing the bio during flushing
+> suspends is the correct behavior here. We cannot handle the bio, and we
+> cannot suspends while it is outstanding. But during normal operations,
+> we should not push the bio back to dm. Instead, wait for the reshape
+> to be resumed.
+>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>
+> Changes from v1:
+> - Track the dm device's suspending state in mddev->flags instead of
+>   adding a new integer to mddev.
+>
+>  drivers/md/dm-raid.c | 6 ++++++
+>  drivers/md/md.h      | 2 ++
+>  drivers/md/raid5.c   | 7 +++++--
+>  3 files changed, 13 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index c5dc083c7244..8f5a5e1342a9 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -3831,6 +3831,7 @@ static void raid_presuspend(struct dm_target *ti)
+>          * resume, raid_postsuspend() is too late.
+>          */
+>         set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
+> +       set_bit(MD_DM_SUSPENDING, &mddev->flags);
+>
+>         if (!reshape_interrupted(mddev))
+>                 return;
+> @@ -3847,13 +3848,16 @@ static void raid_presuspend(struct dm_target *ti)
+>  static void raid_presuspend_undo(struct dm_target *ti)
+>  {
+>         struct raid_set *rs =3D ti->private;
+> +       struct mddev *mddev =3D &rs->md;
+>
+> +       clear_bit(MD_DM_SUSPENDING, &mddev->flags);
+>         clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
+>  }
+>
+>  static void raid_postsuspend(struct dm_target *ti)
+>  {
+>         struct raid_set *rs =3D ti->private;
+> +       struct mddev *mddev =3D &rs->md;
+>
+>         if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) =
+{
+>                 /*
+> @@ -3864,6 +3868,8 @@ static void raid_postsuspend(struct dm_target *ti)
+>                 mddev_suspend(&rs->md, false);
+>                 rs->md.ro =3D MD_RDONLY;
+>         }
+> +       clear_bit(MD_DM_SUSPENDING, &mddev->flags);
+> +
+>  }
+>
+>  static void attempt_restore_of_faulty_devices(struct raid_set *rs)
+> diff --git a/drivers/md/md.h b/drivers/md/md.h
+> index 52c378086046..9e5100609d12 100644
+> --- a/drivers/md/md.h
+> +++ b/drivers/md/md.h
+> @@ -346,6 +346,7 @@ struct md_cluster_operations;
+>   * @MD_HAS_SUPERBLOCK: There is persistence sb in member disks.
+>   * @MD_FAILLAST_DEV: Allow last rdev to be removed.
+>   * @MD_SERIALIZE_POLICY: Enforce write IO is not reordered, just used by=
+ raid1.
+> + * @MD_DM_SUSPENDING: This DM raid device is suspending.
+>   *
+>   * change UNSUPPORTED_MDDEV_FLAGS for each array type if new flag is add=
+ed
+>   */
+> @@ -365,6 +366,7 @@ enum mddev_flags {
+>         MD_HAS_SUPERBLOCK,
+>         MD_FAILLAST_DEV,
+>         MD_SERIALIZE_POLICY,
+> +       MD_DM_SUSPENDING,
+>  };
+>
+>  enum mddev_sb_flags {
+> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+> index 0d76e82f4506..65ae7d8930fc 100644
+> --- a/drivers/md/raid5.c
+> +++ b/drivers/md/raid5.c
+> @@ -6042,8 +6042,11 @@ static enum stripe_result make_stripe_request(stru=
+ct mddev *mddev,
+>         raid5_release_stripe(sh);
+>  out:
+>         if (ret =3D=3D STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(m=
+ddev)) {
+> -               bi->bi_status =3D BLK_STS_RESOURCE;
+> -               ret =3D STRIPE_WAIT_RESHAPE;
+> +               if (!mddev_is_dm(mddev) ||
+> +                   test_bit(MD_DM_SUSPENDING, &mddev->flags)) {
+> +                       bi->bi_status =3D BLK_STS_RESOURCE;
+> +                       ret =3D STRIPE_WAIT_RESHAPE;
+> +               }
+>                 pr_err_ratelimited("dm-raid456: io across reshape positio=
+n while reshape can't make progress");
+>         }
+>         return ret;
+> --
+> 2.53.0
+>
+This patch looks good to me.
+Reviewed-by: Xiao Ni <xiao@kernel.org>
