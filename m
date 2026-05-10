@@ -1,169 +1,112 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BA6A382365
-	for <dm-devel@lists.linux.dev>; Sat,  9 May 2026 09:19:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1A2F213B58A
+	for <dm-devel@lists.linux.dev>; Sun, 10 May 2026 22:03:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778318349; cv=none; b=OAqbji9/TqGK96LI1f/tjPL9dGTxYsJw5sBIEHCHvU9fyTTv/wtZ2+jBEcrXM3xMqHe/UNTqSfF4e2RrpMstSE27o7+guPwLbakNCuARJjFRPmRtVXtvfncABloRH87karayTLiT6bpqLWYY3eQIMG9+YBACAnDkU2ObF0ucQPw=
+	t=1778450597; cv=none; b=nw/IjaBC7u4heYnsIyKdFmT/8Bo9bd+wQVJy65mbe9cv/04dR2SQhRZX7HWDiA/OGn9IO6Kvepke5fiv0k6nHTJNwcERLGnt8LkcJJuEh2etV7mbxu7cPLBDxjzRYyMN25c2yJMtDisXWzuFGVNo52z19ZO9rcfOteTgIdZR4w4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778318349; c=relaxed/simple;
-	bh=GAmfihzwBx8UlSMVGuHe/To1/SPfWGuDi3zQirtTis0=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=WDPM+f1gDpbzuUMJq/UkBh1JgElfstKxdXYEJbiatHDjo26jI5GqAFpsgHLa+GTYE7G+Dfr+uFZddjYU3GML7oUj3q35ctyBkDBD/TFwnCrhZwcxW8Gvp46fbi6akGGaPNoTZUQSwT9/WHuXwLl/KMIBxbH4YmQy88YejBapc+A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=CrMy9uzi; arc=none smtp.client-ip=10.30.226.201
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="CrMy9uzi"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2431AC2BCB2
-	for <dm-devel@lists.linux.dev>; Sat,  9 May 2026 09:19:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1778318349;
-	bh=GAmfihzwBx8UlSMVGuHe/To1/SPfWGuDi3zQirtTis0=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc:From;
-	b=CrMy9uzidZ/luDhoiN3Ec85H8qAcXyVpzmwdUv8KK4NBSB46fHpeCEHBbmFP6yF3f
-	 abaPIu9ZPlrS6OVytP+vUh++Uepcvt/XPT+0Zj2ZXJ7UE3AWFlijMZpYN6GarAyxNu
-	 g6pyF0WVJihjh03jG4apz5jkSGIsaiZu3NCD8bWQinXIZqkuDhscjUymqTktmaCBPd
-	 iY8R9Lpx/YN570D/ahiPmP5W09Pf8cMLxk52XlMpviv/2s2XqFv02tkDZKivFgealv
-	 1qKF+bw6l4bdnx4FvAQWoftygultEwuk9ndaiw6b92AC8Dg0xlJ//tdhivHWqWAxeF
-	 442sABnN9YvAg==
-Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-50d876329bbso25891321cf.2
-        for <dm-devel@lists.linux.dev>; Sat, 09 May 2026 02:19:09 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AFNElJ/DI6lI7zqSE82Ha/ME+cL+M4OYTuo0ujpSejR53tSKGtgaOcZh6vs9kxM3NS49pM+qa+zgYJaYrQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzOkt4uLzJ2HpdpKPI57rNBknIak3SYUwb/o8zjMXQhrIg64wJs
-	ilWV1Lch61ycGYcs9Qb9mucw7XTv/pNN56mi5pBZRMRh/ieBOILZxHgsz9SbrdlsZlv9/2qoGJx
-	DUA4f7Af0V3nQtavFvs4z+ObGc/I02g==
-X-Received: by 2002:ac8:6f09:0:b0:50f:135d:9508 with SMTP id
- d75a77b69052e-514621dd852mr221575831cf.55.1778318348481; Sat, 09 May 2026
- 02:19:08 -0700 (PDT)
+	s=arc-20240116; t=1778450597; c=relaxed/simple;
+	bh=fCqlht/qE5LYYm9uvUbmL1f49xyJZVdgsxDC1qfEkYI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=o7mOQTBSHL5uHSgwJ48MyHpqWK5SW0mJKWRExUaK4zd3p5Cy1WoQysU9byF0G9MSPMjnhlYpxpgJlEaw2WWunVjx+oIQrbuZeyRUfB0B5iIAG0sy082mVnxb9YFq+SGO7Iar6ESnGnhMdAqgRlDr6dawIIiEKEYdDqrUJomWKus=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=grimberg.me; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=grimberg.me
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-48a3e9862f0so23816535e9.1
+        for <dm-devel@lists.linux.dev>; Sun, 10 May 2026 15:03:15 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1778450594; x=1779055394;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=7TT88Obqx1AJAzXu0jcEZD6MoC4AHPr3xtkjAGFDve0=;
+        b=A5veXxTuL6wUsBt1Yo3bDjdC4oMiFDJMQN1FmfCoJrZZQWEB+74cFz5vDRGBh0PQ1x
+         YosV7Tt4Nv1+rW0zZNDIES9vG47WBLFSd1ynZ4xbo/U6fueYqxFthSkZf+guZbc2yG1C
+         a2qi0soIRLLpggq0b+Y1BUjLfFAzHwRTKXBiuYnS0aHj34NvMGbPVJo2CNhde1o9CdmG
+         NmW/glREm41ZEjuprmD5YVsvNidhDBUSDwvY74RabtbGxTokHcOK5uEt79PcKvT1naDB
+         T5+9SXK6Bk1gw2KhahrVb/6R8XSz9oQjWUxfJQBLa6IvVADJK8v+CSu8f1HP5a2ZarxI
+         nPTg==
+X-Forwarded-Encrypted: i=1; AFNElJ8ErXh0G/VT2/AqUEQEN1VDOT/vMseB/YOlyld0h1L+0VMRiucv0vs/8SjGRjPJ7RPg8cRLvH81vw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yzth8bIa+w0RburV9fK2N0gmpt9U8IjxI43LRuBIXo/DPUJsXPA
+	ze5ppwtnkW1xs16hrE+ZHSVtJONYTmCcg6JcsoGkyRQQv6FrYmho5Qvc
+X-Gm-Gg: Acq92OEZMnhsusL62aOaaMxQ/W99uG8A33N+s0umfR6XqKjkNNqo006GOYSZqMzGNk6
+	rviqoeGdX+sME63u7mHyJ1gwTL8PfNgQL2MomoNPhs0+bws1gRfOydqTKOKz0Cbka/ARLSBX1tS
+	m2YE+HKDNcW9Ou23oSPBoCcAjj0kU1qvwTU2AB0CO/UmY8nHByrQIDHOBWMlIPcb4HvTlPBy48e
+	uQT7z8i9wqiWTwOHlHwvosB3isSBclcrcJXogFnQtoQXfQrij85gEBXBTAqXa+SW7hwSr03Y8AR
+	G6Of4kdr1lni1mtjMANSPxziwPYYn91B8zD2rdd8IVBDzQKbDuC9EgdC04i0l4nRpv9Bhoja4nk
+	TdEbDuWuZIWCDHrrWmBdxKmU9EXytXnvsNyknFoB6J/KIGNmWPGdbmdKL035OkE2KPhTAWygYg+
+	V7SsD0PsHh5JjXJrUdwD0=
+X-Received: by 2002:a05:600c:570d:b0:48a:5236:7f38 with SMTP id 5b1f17b1804b1-48e5dfffademr189351075e9.14.1778450594444;
+        Sun, 10 May 2026 15:03:14 -0700 (PDT)
+Received: from [10.100.102.74] ([89.138.75.0])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-45491304505sm21071533f8f.22.2026.05.10.15.03.12
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 10 May 2026 15:03:13 -0700 (PDT)
+Message-ID: <ad0a1191-4928-4700-8c55-4c844a7058e3@grimberg.me>
+Date: Mon, 11 May 2026 01:03:11 +0300
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260428232010.2785514-1-bmarzins@redhat.com>
-In-Reply-To: <20260428232010.2785514-1-bmarzins@redhat.com>
-From: Xiao Ni <xiao@kernel.org>
-Date: Sat, 9 May 2026 17:18:57 +0800
-X-Gmail-Original-Message-ID: <CAF-RUYVNd42=g7qSZPJKEndqk4EjjHWcdpByFN1qGkGSGQF53Q@mail.gmail.com>
-X-Gm-Features: AVHnY4JlceJXW-oWxLURieRKh-TK859p6YpIIiSYVXUrDSdTmw5CyeoScb-wW1k
-Message-ID: <CAF-RUYVNd42=g7qSZPJKEndqk4EjjHWcdpByFN1qGkGSGQF53Q@mail.gmail.com>
-Subject: Re: [PATCH v2] dm-raid: only requeue bios when dm is suspending.
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Yu Kuai <yukuai@alb-78bjiv52429oh8qptp.cn-shenzhen.alb.aliyuncs.com>, 
-	Song Liu <song@kernel.org>, linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
-	Yang Xiuwei <yangxiuwei@kylinos.cn>, Li Nan <linan122@huawei.com>, 
-	Nigel Croxon <ncroxon@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 00/13] libmultipath: a generic multipath lib for block
+ drivers
+To: John Garry <john.g.garry@oracle.com>, hch@lst.de, kbusch@kernel.org,
+ axboe@fb.com, martin.petersen@oracle.com,
+ james.bottomley@hansenpartnership.com, hare@suse.com, bmarzins@redhat.com,
+ nilay@linux.ibm.com
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+ linux-scsi@vger.kernel.org, michael.christie@oracle.com, snitzer@kernel.org,
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20260428111105.1778008-1-john.g.garry@oracle.com>
+Content-Language: en-US
+From: Sagi Grimberg <sagi@grimberg.me>
+In-Reply-To: <20260428111105.1778008-1-john.g.garry@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Wed, Apr 29, 2026 at 7:20=E2=80=AFAM Benjamin Marzinski <bmarzins@redhat=
-.com> wrote:
+
+
+On 28/04/2026 14:10, John Garry wrote:
+> libmultipath: a generic multipath lib for block drivers
+
+This is very nice John.
+
 >
-> returning DM_MAPIO_REQUEUE from the target map() function only requeues
-> the bio during noflush suspends. During regular operations or during
-> flushing suspends, it fails the bio. Failing the bio during flushing
-> suspends is the correct behavior here. We cannot handle the bio, and we
-> cannot suspends while it is outstanding. But during normal operations,
-> we should not push the bio back to dm. Instead, wait for the reshape
-> to be resumed.
+> This series introduces libmultipath. It is essentially a refactoring of
+> NVME multipath support, so we can have a common library to also support
+> native SCSI multipath.
 >
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
+> Much of the code is taken directly from the NVMe multipath code. However,
+> NVMe specifics are removed. A template structure is provided so the driver
+> may provide callbacks for driver specifics, like ANA support for NVMe.
 >
-> Changes from v1:
-> - Track the dm device's suspending state in mddev->flags instead of
->   adding a new integer to mddev.
+> Important new structures introduced include:
 >
->  drivers/md/dm-raid.c | 6 ++++++
->  drivers/md/md.h      | 2 ++
->  drivers/md/raid5.c   | 7 +++++--
->  3 files changed, 13 insertions(+), 2 deletions(-)
+> - mpath_head
+> These contain much of the multipath-specific functionality from
+> nvme_ns_head, including a pointer to the gendisk structure and
+> a path SRCU-based array.
+
+I think it should be placed first in its parent struct as it holds the 
+hot-path
+head->srcu and head->list.
+
 >
-> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-> index c5dc083c7244..8f5a5e1342a9 100644
-> --- a/drivers/md/dm-raid.c
-> +++ b/drivers/md/dm-raid.c
-> @@ -3831,6 +3831,7 @@ static void raid_presuspend(struct dm_target *ti)
->          * resume, raid_postsuspend() is too late.
->          */
->         set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
-> +       set_bit(MD_DM_SUSPENDING, &mddev->flags);
+> - mpath_device
+> This is the per-path structure, and contains much the same
+> multipath-specific functionality in nvme_ns
 >
->         if (!reshape_interrupted(mddev))
->                 return;
-> @@ -3847,13 +3848,16 @@ static void raid_presuspend(struct dm_target *ti)
->  static void raid_presuspend_undo(struct dm_target *ti)
->  {
->         struct raid_set *rs =3D ti->private;
-> +       struct mddev *mddev =3D &rs->md;
+> libmultipath provides functionality for path management, path selection,
+> data path, and failover handling.
 >
-> +       clear_bit(MD_DM_SUSPENDING, &mddev->flags);
->         clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
->  }
->
->  static void raid_postsuspend(struct dm_target *ti)
->  {
->         struct raid_set *rs =3D ti->private;
-> +       struct mddev *mddev =3D &rs->md;
->
->         if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) =
-{
->                 /*
-> @@ -3864,6 +3868,8 @@ static void raid_postsuspend(struct dm_target *ti)
->                 mddev_suspend(&rs->md, false);
->                 rs->md.ro =3D MD_RDONLY;
->         }
-> +       clear_bit(MD_DM_SUSPENDING, &mddev->flags);
-> +
->  }
->
->  static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-> diff --git a/drivers/md/md.h b/drivers/md/md.h
-> index 52c378086046..9e5100609d12 100644
-> --- a/drivers/md/md.h
-> +++ b/drivers/md/md.h
-> @@ -346,6 +346,7 @@ struct md_cluster_operations;
->   * @MD_HAS_SUPERBLOCK: There is persistence sb in member disks.
->   * @MD_FAILLAST_DEV: Allow last rdev to be removed.
->   * @MD_SERIALIZE_POLICY: Enforce write IO is not reordered, just used by=
- raid1.
-> + * @MD_DM_SUSPENDING: This DM raid device is suspending.
->   *
->   * change UNSUPPORTED_MDDEV_FLAGS for each array type if new flag is add=
-ed
->   */
-> @@ -365,6 +366,7 @@ enum mddev_flags {
->         MD_HAS_SUPERBLOCK,
->         MD_FAILLAST_DEV,
->         MD_SERIALIZE_POLICY,
-> +       MD_DM_SUSPENDING,
->  };
->
->  enum mddev_sb_flags {
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index 0d76e82f4506..65ae7d8930fc 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -6042,8 +6042,11 @@ static enum stripe_result make_stripe_request(stru=
-ct mddev *mddev,
->         raid5_release_stripe(sh);
->  out:
->         if (ret =3D=3D STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(m=
-ddev)) {
-> -               bi->bi_status =3D BLK_STS_RESOURCE;
-> -               ret =3D STRIPE_WAIT_RESHAPE;
-> +               if (!mddev_is_dm(mddev) ||
-> +                   test_bit(MD_DM_SUSPENDING, &mddev->flags)) {
-> +                       bi->bi_status =3D BLK_STS_RESOURCE;
-> +                       ret =3D STRIPE_WAIT_RESHAPE;
-> +               }
->                 pr_err_ratelimited("dm-raid456: io across reshape positio=
-n while reshape can't make progress");
->         }
->         return ret;
-> --
-> 2.53.0
->
-This patch looks good to me.
-Reviewed-by: Xiao Ni <xiao@kernel.org>
+> Since the NVMe driver has some code in the sysfs and ioctl handling
+> which iterate all multipath NSes, functions like mpath_call_for_device()
+> are added to do the same per-path iteration.
+
+very nice, overall seems fairly straight forward.
