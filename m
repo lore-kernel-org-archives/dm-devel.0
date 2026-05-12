@@ -1,122 +1,107 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oa1-f54.google.com (mail-oa1-f54.google.com [209.85.160.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D8CF3911CD
-	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 13:39:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F158375AB8
+	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 15:27:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778593187; cv=none; b=fjaJCc13jW/be9H4MEVlKSJ7gvUIpdcU2Z6UjhD5sFTdPrN9pUlTf+jtix/Kmam2MlqqempEjvcC+Z6QwRAX7cb03hshDuIC0TSseXxvXEa6ssMd8l4CbGENJlPJZm05GRM7v98WeJikRJRKotBs36X7gysQUGdCUp8J4wYEKhA=
+	t=1778599667; cv=none; b=Cq+yuMi6jxBDvVtNAPSnoYMHJjH7mwF7PNfltkL28fzfLcTCKDE6rrgLNQpIrrOc0tG0+UyARCsUzD1qMYxXPn50axWf8G6S1U15fGAo4SzPCpDiX/nYj6BA7TEY71YL+RDvcXkxYDLiRXaG5q24Rk+gISzjVLZaSFwPiHbgQQw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778593187; c=relaxed/simple;
-	bh=TpMJdqaXxN8hv/mZ1uwhxBBQ14xqBuQDHf08jOtJkME=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=iEt7BTY1HYloRggTbkstaAEfOJ8rr+F0hfLc5TTqhihjieM7LbONlHXtGYaHuH355NXklnuPzcLD3O+MnUdXvUS+4Rvv0ORMq2ORuVp6sON7XdT4fPwqrRtHLWYSxrbQZ/6DaCp0PF9TpErkU6cI+rqtzpmuhcEqGm89Mq6EbwY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XfjeBHL5; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1778599667; c=relaxed/simple;
+	bh=So5T+PwK0h5wB2TBy4BEBdk40dKHXVlqW1XorlNO6P4=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=XVNn7HK2YgTc6bkI5OM2BjjehAVscwd+ld5PLU0UUZNc40ig3c6iMuBwtfmKrugZ094z7t8hOR4S2lh4HegZ/82w1exQbFC+VzOb34hYYewyBQ5mGgbWLD9uK5thEWAGFSKgVOKuUM8XEclQt0m0YAwvgDB0LBSzqilbwImgMTw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b=cSqBCukv; arc=none smtp.client-ip=209.85.160.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XfjeBHL5"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1778593183;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=0zp4Qqan6Z62FuqnHBtnTR/jGKZ6YPGqXEHWdKy09JQ=;
-	b=XfjeBHL5VfehhPUAk2eSKr9Gh38L6nwcLeLIxPfb2HlmXIXQ/Tq2mAw1feXaFj6kvoVIju
-	DTTXcreMKUbznK53mKCp+303+0nqnWkUJ4FWNikfwbhv2bLd+cE8RZyqipR4AcDyIXMzSV
-	aVvWLaK6lje5A0SESTOkJA8+9dzaSfw=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-68-2b6dJredNx6kZmZEWYdChw-1; Tue,
- 12 May 2026 09:39:39 -0400
-X-MC-Unique: 2b6dJredNx6kZmZEWYdChw-1
-X-Mimecast-MFC-AGG-ID: 2b6dJredNx6kZmZEWYdChw_1778593178
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5C10818002E0;
-	Tue, 12 May 2026 13:39:38 +0000 (UTC)
-Received: from [10.44.34.151] (unknown [10.44.34.151])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7896130001BB;
-	Tue, 12 May 2026 13:39:36 +0000 (UTC)
-Date: Tue, 12 May 2026 15:39:31 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, 
-    Bruce Johnston <bjohnsto@redhat.com>, Matthew Sakai <msakai@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: Re: [RFC PATCH] dm: add deviceless messages
-In-Reply-To: <3bdbd9fa-52ce-ab52-569f-29d4a30c6780@redhat.com>
-Message-ID: <ba49d68e-ece2-f56c-6b25-e47e87ef739f@redhat.com>
-References: <3bdbd9fa-52ce-ab52-569f-29d4a30c6780@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b="cSqBCukv"
+Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-43034c0fd27so2113880fac.1
+        for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 08:27:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel-dk.20251104.gappssmtp.com; s=20251104; t=1778599665; x=1779204465; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=vEsOf8XubBs/oNOFxIW9V5cC+c0JsyhoGC4fUhIAwv0=;
+        b=cSqBCukv7GP/TB9AZXqgCeAdrHca5Y0yGAwuV3zIExxqDTwT2ROpr/sbTSNluNNO/s
+         NcXMaRDaEG0uldIpj53g+oKnlVhfetP8RLVlEJJqVzUYCLU4qqpbCdegLa/VGb4kRSYQ
+         TpSb5LEg7AcgAqYAY1ZVCxUOO9eThKILfUXr/fTJB3bC5qOTAxg2ADI7dPezGS7OyXPb
+         SFRQqiScyqM3n1Sf8gMFfDNUSV8AlA1fnf3X4c8WNoK/w5Hscs+ap6VC9Nb7ZZJ4GDUe
+         XRMJXuWBdocGBMqvWBAq85UNg5o8SbmN6KvdI1E7VbqmYiphTpzC4oJFm1I8pHuBtPt6
+         FK3w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1778599665; x=1779204465;
+        h=content-transfer-encoding:mime-version:date:message-id:subject
+         :references:in-reply-to:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=vEsOf8XubBs/oNOFxIW9V5cC+c0JsyhoGC4fUhIAwv0=;
+        b=XirbvUHZXYO16vD4OQeDOKvRLdYKPozJr981pl915ntwXZ+P1Zx0L0VUafznAKeKSd
+         rFciH2jjPGNJUOlL8dRB5vcbG1agHcBJwVdDQ6QQ9C9HORavWL0kHsfVBjCcj+K1qIoq
+         T96KA3KVZGtStCcwmo/xo/YE93fDTQMN10UjqPZf9f4lA8OlifXV9//4kI2LPvwSyIxZ
+         T3bm5cAGfB1TnLtw3yKh044ZxYCkZTMnII3hoEMWkJm/dRxIVnj/SX9y45MdWHnDSV1z
+         dA9V3Wll6fdfM/cJoFE4ihQ4Ln2seYUgzLa/Zya7pIWr/VWAJTo8Y1ygr16YueW5EfcO
+         ASWw==
+X-Forwarded-Encrypted: i=1; AFNElJ/8iHjAeYQoFRqVdUgtiD5/6diRxwY/Fcb7E4KxWnERPNSLlEqf7F/W54LzfV4TcQG25XznlYGj8w==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzMGR5kVFGdVSEzpM5DlBrpITx3PW09xS+BQJwfiPNv5CM1O6cG
+	wBPIw+1GePmIQIOOafb7n9t9vwOVrYai2lmQCbBEfP7FjNDhdJPWVCTFBfBExvo2ATE=
+X-Gm-Gg: Acq92OFjxbasjzZ52xBQCOGqmBmxNOmNOFLi/vSwViboX0N4bOz3i4w63v/IzLVREDc
+	GzIGjWOUtshgxjV1MYJkLS2OEz77FhDDD1FvtM7gJwSyXeZ880dw+Bfae96emNHCsL11lSgace7
+	OFgFCFMBHK0rHLIV8Sxc4P+HA2XjS0IrUwW4BBG9weiU0/JKgoBmbRdp073Gl9PD2fdUrieKg4b
+	HXapHzTdetXfhQ9gJccQmDAOebxR+5vkwCm+U5CI6YW0Cv2boVO9zK5hWwi++zvILZ9G4eLxwes
+	ZD9MFbg8IsQppEhYNLlIh92Vo2RaoiySa0ZLPD5JFDyBX/geUolhmeDHabwIqEeZnBtTv4PcBaG
+	4H/7d2Grk5dfVJjr1U7xeAl4SXbglHkNiM/b3/tOU1zIjNMxSXc+mfWphFClL6nzri5ykSvDZRr
+	DQrKX3Tkr7a7NYfPRFST7zz3RUzmnilB7T19JtGZob7AqCpaLhBYJdkZs/eaIEq0lSa1pQJy7Tb
+	OY=
+X-Received: by 2002:a05:6870:970f:b0:42c:259c:6c8c with SMTP id 586e51a60fabf-439a2441508mr2107070fac.3.1778599665025;
+        Tue, 12 May 2026 08:27:45 -0700 (PDT)
+Received: from [127.0.0.1] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-4355736f517sm13044552fac.12.2026.05.12.08.27.43
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 May 2026 08:27:44 -0700 (PDT)
+From: Jens Axboe <axboe@kernel.dk>
+To: Casey Chen <cachen@purestorage.com>
+Cc: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, 
+ "Martin K . Petersen" <martin.petersen@oracle.com>, 
+ linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+In-Reply-To: <20260511212230.27511-1-cachen@purestorage.com>
+References: <20260511212230.27511-1-cachen@purestorage.com>
+Subject: Re: [PATCH] block: recompute nr_integrity_segments in
+ blk_insert_cloned_request
+Message-Id: <177859966380.306312.3636019256841689076.b4-ty@b4>
+Date: Tue, 12 May 2026 09:27:43 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: zz45AAGHGl1ZSq7JzkFwcBorsU_Y1zUSncepvqCUctQ_1778593178
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.15.2
 
 
-
-On Tue, 12 May 2026, Mikulas Patocka wrote:
-
-> The VDO code needs to perform some calculations before creating a device. 
-> The calculations should be performed in the kernel, so that the same logic 
-> is not duplicated in the kernel and in the userspace.
+On Mon, 11 May 2026 15:22:30 -0600, Casey Chen wrote:
+> blk_insert_cloned_request() already recomputes nr_phys_segments
+> against the bottom queue, because "the queue settings related to
+> segment counting may differ from the original queue." The exact same
+> reasoning applies to integrity segments: a stacked driver's underlying
+> queue can have tighter virt_boundary_mask, seg_boundary_mask, or
+> max_segment_size than the top queue, in which case
+> blk_rq_count_integrity_sg() against the bottom queue produces a
+> different count than the cached rq->nr_integrity_segments inherited
+> from the source request by blk_rq_prep_clone().
 > 
-> However, currently it is not possible to call a device mapper target 
-> when no device exists.
-> 
-> This commit solves the problem by adding "deviceless" messages. If the 
-> message starts with '%', the name is a name of a target, not a name of a 
-> device. The message will be directed to the target by calling the 
-> "deviceless_message" method. The target can perform the requested 
-> calculations in this method and return the result back to userspace.
-> 
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> [...]
 
-This is example code how to use deviceless messages. You can call it with 
-"dmsetup message linear 0 %Hello"
+Applied, thanks!
 
-Mikulas
+[1/1] block: recompute nr_integrity_segments in blk_insert_cloned_request
+      commit: 2c6e6a18a37b905cb584eb0dda3ae482162a81ca
 
----
- drivers/md/dm-linear.c |   10 ++++++++++
- 1 file changed, 10 insertions(+)
+Best regards,
+-- 
+Jens Axboe
 
-Index: linux-2.6/drivers/md/dm-linear.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-linear.c	2026-05-11 13:00:08.000000000 +0200
-+++ linux-2.6/drivers/md/dm-linear.c	2026-05-11 13:00:14.000000000 +0200
-@@ -199,6 +199,15 @@ static size_t linear_dax_recovery_write(
- #define linear_dax_recovery_write NULL
- #endif
- 
-+static int linear_deviceless_message(unsigned int argc, char **argv, char *result, unsigned int maxlen)
-+{
-+	if (argc == 1 && !strcasecmp(argv[0], "%Hello")) {
-+		snprintf(result, maxlen, "World!");
-+		return 1;
-+	}
-+	return -EINVAL;
-+}
-+
- static struct target_type linear_target = {
- 	.name   = "linear",
- 	.version = {1, 5, 0},
-@@ -211,6 +220,7 @@ static struct target_type linear_target
- 	.dtr    = linear_dtr,
- 	.map    = linear_map,
- 	.status = linear_status,
-+	.deviceless_message = linear_deviceless_message,
- 	.prepare_ioctl = linear_prepare_ioctl,
- 	.iterate_devices = linear_iterate_devices,
- 	.direct_access = linear_dax_direct_access,
+
 
