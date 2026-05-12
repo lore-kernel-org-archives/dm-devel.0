@@ -1,102 +1,87 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA8253EDE59;
-	Tue, 12 May 2026 18:04:11 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FDB734F48A;
+	Tue, 12 May 2026 18:53:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778609056; cv=none; b=B0h1kCwXuIXc5iu/+mzghTv+oShCc3pfuEFfnSd3wq4LDPMryrdrC8FZ32xnUMhiDYGevr2AyYgIJub205v5OX49A74cBOsiqlbP2d2jERuLscCsYjojE1jiV11ZvJeaDTHk0Bv56nLCMjLrP6rdl5w+I5PGxRPNHf1RPwLU/XE=
+	t=1778612017; cv=none; b=CLWRdN/qj70GQB6gOjaSk8jztPRydu+yKySsfIsIP2gDry9ThQYRw9+m05IjxWPwBE2F3m+stHAobuxoD2yyi4HN8gzX3Ntz2sq0TkRF1QLWUbOL5i3eaIAyEjbOyconqT/bCcpGaKIkUiLAlUIXp7aKivCP6v/m4cOoC7guu6g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778609056; c=relaxed/simple;
-	bh=4wTiUWk+kXDfsSDTUkqMRFg521OYTDMxR3952/wrLf8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ka/Z5mJ4vT/NV6Rct/IsM7ZNRAC1+4NmzXMZCk5Ssk++6aXuF6CbQhB77Wh9vRXAvmMLP9kjPVH8nbeqJWstyYt/bcOHNQVqTigM5yVkRblPtoU0Dg3XyCZG9xijR2t5omZ05eYXnSPAqOo3yyMVSk86eoDZQcD1lo96O1s1e2A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=nPiVuNxX; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
+	s=arc-20240116; t=1778612017; c=relaxed/simple;
+	bh=uMz7MW+SWq5AWMBcgDdU0w3RFBHT9PqHFn8eO9emi3E=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=KwUCaY8M/I0gtIb+xvlEhOddPMfOjrvLzgtKahZV6xs+ufhlT2QfUdF9Eol24ZUBLXTlMjR8Yp2Qm74s9PgnEtoqh/Kbu0XZn8KtZMfrSyuogpOM9ZvJWVzJoP5tz7upWbNYi05fvFnI5J5ZMntQE5L3lTx036v6Yi+X5g0uvmo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TCVtyK6e; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="nPiVuNxX"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
-	MIME-Version:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
-	Content-ID:Content-Description:In-Reply-To:References;
-	bh=Jv9iEDDVJEBKZBfKo5BN0Msjy+MqMxFpvywOcjoM8zU=; b=nPiVuNxXKrbFE3zHF60q6sRYtp
-	VF6WxC/lJ5YR5Y5iCGh8H3dEgpiB6P+D0nSFScg2rAHlVwKHTDfpyvWnl+G+D98CjOObQICGen8xs
-	XwQamf6wIry9FFLv7HS9UQrDvsVT9XmHVTpIf6IsOMBzaIO6TAEKPhwSTERNA8YuG6GWUOGpUDZGT
-	K3kOGX5RRxZ7q4Y3T2dTwEX2azvevDw2a/oaSo1tRP+e77wE4IOMAClrL+C/gW7Kgu7cmJcJ+8gkD
-	0fGd/yRLpPUNZuGsKsKC6r7kDqGXBqW5WZN3x1YybgRdOmxhOiPM4E+LQgfCD1tAiVV76aNk6KXeU
-	yZFHnARw==;
-Received: from [50.53.43.113] (helo=bombadil.infradead.org)
-	by bombadil.infradead.org with esmtpsa (Exim 4.99.1 #2 (Red Hat Linux))
-	id 1wMrSk-000000002hu-34qZ;
-	Tue, 12 May 2026 18:04:10 +0000
-From: Randy Dunlap <rdunlap@infradead.org>
-To: linux-kernel@vger.kernel.org
-Cc: Randy Dunlap <rdunlap@infradead.org>,
-	Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
-	Alasdair Kergon <agk@redhat.com>,
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TCVtyK6e"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D5147C2BCB0;
+	Tue, 12 May 2026 18:53:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1778612017;
+	bh=uMz7MW+SWq5AWMBcgDdU0w3RFBHT9PqHFn8eO9emi3E=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=TCVtyK6exqsVcsftpztAwRt7AAsl7Ga1b75aTH9GGmwWawAZQ8mHa/z9zOsYowlTZ
+	 uOTXBzIWyBnfhIx+CuHylpFbhHSuA4iHNz6QIlcwZyjZnsPjqTubNc6Pm/PbaYL458
+	 oNfXSARJRoP2XTaSur/5T2J6ho94LF+sbM3Hxh5tuMyqEy3z+TCScgz136l7sN3iy4
+	 YEd/dw0OSNd7xGksLJo0CGExhyQTeWznu/rkt5hBNVKZjYWczYAxBz8qbNXLhvob2H
+	 kyuDmXo4RjPXlxPaIHVk+FxQk1ou2jGAYT84vpSErJlvctRB3B7jSOzSoUSR1u03T3
+	 vDfzROs4MieYA==
+Date: Tue, 12 May 2026 18:53:35 +0000
+From: Eric Biggers <ebiggers@kernel.org>
+To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	linux-doc@vger.kernel.org
-Subject: [PATCH] dm: fix dm-inlinecrypt docs warnings
-Date: Tue, 12 May 2026 11:04:09 -0700
-Message-ID: <20260512180409.1193504-1-rdunlap@infradead.org>
-X-Mailer: git-send-email 2.54.0
+	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v1 1/1] dm-inlinecrypt: initialize blk-crypto key as
+ HW-wrapped key
+Message-ID: <20260512185335.GA3085076@google.com>
+References: <20260512095203.3688708-1-linlin.zhang@oss.qualcomm.com>
+ <20260512095203.3688708-2-linlin.zhang@oss.qualcomm.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260512095203.3688708-2-linlin.zhang@oss.qualcomm.com>
 
-Add this file to the index and use a longer heading overline string
-to eliminate warnings:
+On Tue, May 12, 2026 at 02:52:03AM -0700, Linlin Zhang wrote:
+> dm-inlinecrypt currently initializes the blk-crypto key using
+> BLK_CRYPTO_KEY_TYPE_RAW, which implies that the provided key material
+> is a plaintext software key owned by the block layer.
+> 
+> However, on platforms where dm-inlinecrypt is used together with a
+> hardware-backed key source (e.g. TrustZone/TEE or other secure key
+> wrapping mechanisms), the key material passed down is already wrapped
+> and must be treated as opaque by the block layer.
+> 
+> Initialize the blk-crypto key using BLK_CRYPTO_KEY_TYPE_HW_WRAPPED
+> instead, so that dm-inlinecrypt correctly models hardware-wrapped keys
+> and avoids incorrect assumptions about key ownership and visibility.
+> 
+> Signed-off-by: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+> ---
+>  drivers/md/dm-inlinecrypt.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-inlinecrypt.c b/drivers/md/dm-inlinecrypt.c
+> index bd8e58a028c5..bcbf363c533a 100644
+> --- a/drivers/md/dm-inlinecrypt.c
+> +++ b/drivers/md/dm-inlinecrypt.c
+> @@ -386,7 +386,7 @@ static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  	dun_bytes = DIV_ROUND_UP(fls64(ctx->max_dun), 8);
+>  
+>  	err = blk_crypto_init_key(&ctx->key, raw_key, ctx->key_size,
+> -				  BLK_CRYPTO_KEY_TYPE_RAW,
+> +				  BLK_CRYPTO_KEY_TYPE_HW_WRAPPED,
+>  				  cipher->mode_num, dun_bytes,
+>  				  ctx->sector_size);
 
-Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst:1: WARNING: Title overline too short.
-========
-dm-inlinecrypt
-========
-Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst: WARNING: document isn't included in any toctree [toc.not_included]
+The raw key support is useful too, and it should be the default.
+I recommend adding a "wrappedkey" optional argument that enables
+BLK_CRYPTO_KEY_TYPE_HW_WRAPPED.
 
-Fixes: b4a0774bd7fd ("dm: add documentation for dm-inlinecrypt target")
-Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
----
-Cc: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: linux-doc@vger.kernel.org
-
- Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst |    4 ++--
- Documentation/admin-guide/device-mapper/index.rst          |    1 +
- 2 files changed, 3 insertions(+), 2 deletions(-)
-
---- linux-next-20260508.orig/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-+++ linux-next-20260508/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-@@ -1,6 +1,6 @@
--========
-+==============
- dm-inlinecrypt
--========
-+==============
- 
- Device-Mapper's "inlinecrypt" target provides transparent encryption of block devices
- using the inline encryption hardware.
---- linux-next-20260508.orig/Documentation/admin-guide/device-mapper/index.rst
-+++ linux-next-20260508/Documentation/admin-guide/device-mapper/index.rst
-@@ -15,6 +15,7 @@ Device Mapper
-     dm-flakey
-     dm-ima
-     dm-init
-+    dm-inlinecrypt
-     dm-integrity
-     dm-io
-     dm-log
+- Eric
