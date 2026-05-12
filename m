@@ -1,156 +1,205 @@
-Received: from mx0a-0031df01.pphosted.com (mx0a-0031df01.pphosted.com [205.220.168.131])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C87FA49250D
-	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 09:52:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.168.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B4B43911C5
+	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 13:36:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778579531; cv=none; b=jAY+Oe68v8XbswYhU6KvK35bmXQdgyMKojcA34/0hLWP2xFTZ+wIuhTUM9VEo6+q/rRAHSFv7PMU6Yey8hCPTn5Ag4X4NgLZicpk5WMC7P+2S8f6w4fZS+mH3/NPUoUFQUHLxbokt1QkiTQB1MCXhRoEuY/s95PGNTZVEMyD5w8=
+	t=1778592977; cv=none; b=N+oDSyHeqG6LmlA00vcMdrgHZ8YSPST75Hx/pY7d95pZQzIl6X9fm4KCtHmQCUGCt+P+cizRF1szAhqO3+jGlMBUyCIKDZ6rZEtpTZPquZZpxzbkEH5HZ0CRMX36fQKu4PaBZzvqQF4+XK8/DSujvB+3AmTgrobXwojKeLesYLM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778579531; c=relaxed/simple;
-	bh=HCyYVTGN6Cbf8t3hOc8piA8NWcVyRHJK+jphv1f4mV8=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=U+vquUlGirtK/0/DL3JVT2zOH8MxLOt8XIZVDEazqNwHoE06JMUCHo1wCLroXHymceB5I4Zo2g1jNQBt6PFyLbe7yC2GOo4iKVR/Wjn8TY2vReUnH8F005iimPnWa9ZtwyW9VLuQDyoMZLMjRVfdseSbkePsDWO//EceNWW6hsQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com; spf=pass smtp.mailfrom=oss.qualcomm.com; dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b=B/QxkWIv; dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b=SH2W0vKp; arc=none smtp.client-ip=205.220.168.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oss.qualcomm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oss.qualcomm.com
+	s=arc-20240116; t=1778592977; c=relaxed/simple;
+	bh=FJlJi7V34LfsT9zPjGD0tK5+bk/sX5VkgYq3uG4wQB4=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=TrmcBplCP+mD1SZGlgTd7xyxbrJuRlnTzWl/ipSRS/Fnwg96TmR8QmJZftU1foLFOIUOBZnjv7Wm3GIgPQ3GufivFLLgO/1T4nbjGvCYISciquUSfTne9R6CIaoVeDVlpkzasoqlb8nW2J44uhG9TAJNeMkF5wBuuY7O0St3NwM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Kl1imHbh; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=qualcomm.com header.i=@qualcomm.com header.b="B/QxkWIv";
-	dkim=pass (2048-bit key) header.d=oss.qualcomm.com header.i=@oss.qualcomm.com header.b="SH2W0vKp"
-Received: from pps.filterd (m0279867.ppops.net [127.0.0.1])
-	by mx0a-0031df01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 64C7XOIl3698411
-	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 09:52:09 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qualcomm.com; h=
-	cc:content-transfer-encoding:date:from:in-reply-to:message-id
-	:mime-version:references:subject:to; s=qcppdkim1; bh=LD5WUJ+s3N8
-	WsiHaOGBLmG8YulMJ7+dhDgjVuuKNtZs=; b=B/QxkWIvpJMDY/BLDy8XcOkmy9K
-	cAP+7J2eNoDPR07glVcAsrbDa8wgWccr0QfhtsshMNrLIn2rLyD1JUMH5sgPbZtk
-	CU2PCva51vpNOWKZufgpHKMiQNXztrOdbOf5KoM11KbRYX91HPPQVVahr6fITwvc
-	5Jv4Xz8KDkY2T11S9JVhsA2snmqmpyD4TDEQJH7yE7plyxIxwN6OflJ3QEqzAOMQ
-	9zBdGR+aGkMmplvdOk5x9QG2HWtZW/k41GSPY7UWs4rTq0Q4QBCyYZIQUdIIcNis
-	ZvfICiivG/KAjZTsUNm1tPJn97UX2sEZK0aG8s9tiJKi8/Gx6Bg5b/JDdRw==
-Received: from mail-dy1-f198.google.com (mail-dy1-f198.google.com [74.125.82.198])
-	by mx0a-0031df01.pphosted.com (PPS) with ESMTPS id 4e3nuyjhv2-1
-	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NOT)
-	for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 09:52:09 +0000 (GMT)
-Received: by mail-dy1-f198.google.com with SMTP id 5a478bee46e88-2ef37c3f773so6380622eec.1
-        for <dm-devel@lists.linux.dev>; Tue, 12 May 2026 02:52:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=oss.qualcomm.com; s=google; t=1778579529; x=1779184329; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=LD5WUJ+s3N8WsiHaOGBLmG8YulMJ7+dhDgjVuuKNtZs=;
-        b=SH2W0vKpf/ilRJtec9CV8xmzJVNi5lG6PGyOvmqrxuZRrNyddCS7lvnIFM20wnuPti
-         GKZcNON90F2DZZndulxZMSKbKNeRq8VPAknU5T+tJe+nwe7DkKbufGDKjg/yWbBziATq
-         6XiEJcb5MFLVrcKwo1E31H1dNtmGnADM8pAr66X2WkEyz0rH37ULbQDYjlHyT1B6nTzw
-         7SaOM9Md0BeyXQC89k4vnQrwJRlkLvxrytPtAYbaMdomyZAmfyISQzZCGmHSGobTPBvA
-         7FwV77asYVPkRsmYJNzYOaJSht1XqVxUoTnhlDjX65TO3/BO/2NUV3P+8rbHuEC0hcdh
-         mDlA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1778579529; x=1779184329;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=LD5WUJ+s3N8WsiHaOGBLmG8YulMJ7+dhDgjVuuKNtZs=;
-        b=m9uHdJ2uoSCHsvOaBUtctpmvRFMo7fUOOeUsfipUiOwJIBKWcqEhy7pCCKK++oJJts
-         1aRSF7YTgBZ/2RmA7Q8a9+PAmeghFoVXDZzYDNj/sYfkddSar4YKwY6HtTPpVvzJp3gb
-         cjAjLmKh/AGtlUNQakvB1sQCg0cdaUgLltbZFLWq4+6spm0F1lgmage9MS7CrKp8fWkP
-         w7XAKxTKF6+WTKjY0hILWp+syZNVRTWEHhLyaM3nZn3LL/F9XtaREzvO7BnDkyyMXD4Z
-         Db0vX7GouV/cHotMP7mT1TxsJMTdJLfcgxtx42ZdrBIVQtknKgso44/+qNkToUTcX+u8
-         918w==
-X-Forwarded-Encrypted: i=1; AFNElJ+fehuPskSbgrLfM0/HwDeKrcYKv1l9tX+6oMhJJ5zsdgW9H1IaMtAIRsCTE7YTAMBChAfsRxW2NQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyI4F1yfq4GYebCN1P4w2FvzSYynfEjrPxpzd+MJVyDQxkMSHmJ
-	JdemGaR8uOEnrdhgl7VUOz9Ar0SeNDw9gn20lwf06ceokfTObLQLxtkInKnqhR5J7qY6wkKP+qO
-	XQjD5WbHzBA1kkLOigGa7OSUOLZMzO9fThrBLX/nwfvPr1TL37gOCK/mUALKJNw==
-X-Gm-Gg: Acq92OEfBXKTdg1tXRzlYa6swMg5orsTnVxOl1NYtcpP8y5bL5b+UkUXdUCIDDvwVcu
-	YEjyOFBRMCz+y2BgSVCnDuYcq7jzyVDA5wFU8XL3SljvsvGvxZIGAWlq14DZxGU/JByyssQICZ7
-	jSUVc/isaJRuSNXPdRrv58j1yTUWujH4FqQZpTDTvgw1/Wd1RtbHvg+lT9M1ucW4e7zIilYik3N
-	0SG7B/zWkWMLrj+tMC/Go6eoBlwezDg+bRY8jBy+iNaHmkMxmT+sFWdNQf+0TiKfiYuaVu2K0LH
-	cLnG0xJRJ4m0EWVAmrNfL/CqNzAgH+DxahGMvIbhfDGF+Ff2RcU3Qx/APfKlObZkaIAkOkEoZt6
-	fqLu4h8Dbudlu9GL6RFYTFAh/yXPCr0XbLTXIedRH/K0rNAtsBzhHrfPha0ZNdd6FvGmb/DFMSj
-	3WwiNN
-X-Received: by 2002:a05:7300:5726:b0:2d3:f3fc:bb6b with SMTP id 5a478bee46e88-2ffd51d5d14mr1124775eec.1.1778579528521;
-        Tue, 12 May 2026 02:52:08 -0700 (PDT)
-X-Received: by 2002:a05:7300:5726:b0:2d3:f3fc:bb6b with SMTP id 5a478bee46e88-2ffd51d5d14mr1124761eec.1.1778579527981;
-        Tue, 12 May 2026 02:52:07 -0700 (PDT)
-Received: from u20-san1p10573.qualcomm.com (i-global254.qualcomm.com. [199.106.103.254])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-2f88885b820sm16887442eec.20.2026.05.12.02.52.07
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 12 May 2026 02:52:07 -0700 (PDT)
-From: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH v1 1/1] dm-inlinecrypt: initialize blk-crypto key as HW-wrapped key
-Date: Tue, 12 May 2026 02:52:03 -0700
-Message-Id: <20260512095203.3688708-2-linlin.zhang@oss.qualcomm.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20260512095203.3688708-1-linlin.zhang@oss.qualcomm.com>
-References: <20260512095203.3688708-1-linlin.zhang@oss.qualcomm.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Kl1imHbh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1778592974;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=PxMgnVKlIoMxMUxYU5gOuHGrcy7Buunzp7idUYJMPm4=;
+	b=Kl1imHbhWIfwrBEj32zNjbRLsz40OfWnu3qzRn6gOgL8zNzNpPoCF7I0maKk0rmvvpwef3
+	KuvV+jUnyc+1H92MygLQtQzuwm6EP+NvlzxdTlYTaJq++HGzABdGOBb31Njc88tyCrVXI5
+	Aeu5xl4U/eBvDb/FV8+Uwhsg/Miyb60=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-670-bQgcQYFuM7SG3TORw2_S9Q-1; Tue,
+ 12 May 2026 09:36:08 -0400
+X-MC-Unique: bQgcQYFuM7SG3TORw2_S9Q-1
+X-Mimecast-MFC-AGG-ID: bQgcQYFuM7SG3TORw2_S9Q_1778592968
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C08EB1800618;
+	Tue, 12 May 2026 13:36:07 +0000 (UTC)
+Received: from [10.44.34.151] (unknown [10.44.34.151])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AAAE81955D84;
+	Tue, 12 May 2026 13:36:05 +0000 (UTC)
+Date: Tue, 12 May 2026 15:36:01 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Bruce Johnston <bjohnsto@redhat.com>, Matthew Sakai <msakai@redhat.com>
+cc: dm-devel@lists.linux.dev
+Subject: [RFC PATCH] dm: add deviceless messages
+Message-ID: <3bdbd9fa-52ce-ab52-569f-29d4a30c6780@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNTEyMDA5OSBTYWx0ZWRfX5auw3QZLjlcc
- ptrl7czGjo/bTIz4yDLwektwV9gc2ylWhlTd+Iu37nqgDtxDVeekge9d+m+kUmxOFaNlgqnVFnC
- 1KbqLZlhbWsNMy3yCBzQ93r7J/d3Ul1oUvFaVnJ7QMQu87DrynbtZdv6E3YSmDi/N9RnaCH/KCQ
- 4hnlqC+RVFz5J/4cL4ybh0e3SU8sdsr5qRjiGr0zdWihbinQ8+2WMmZk0zxd1SA35336jc/s6Rb
- WymCqe7BKuWp2KmfEQU2Y/JthoPHUV8vvPptzzy/sraZaE61fO95u6fTYRe4E/1Uh5KPj8bm9/e
- +u7B0C9l+NxEZjLp0Af5aEkYlp7aC3kFFY72+bNqdBxqxAFuD1Cw+cTTy7ueqKQNqS9FNbRdRA9
- LbdsaZorCGCxxU0jdDjrPbfeFyRZ/C7Zs65cUEoFPHUKPEj7KK73jluh7Fi5wNsUm326b8rYzf1
- PUGKWNcGyXrmBbxDvRQ==
-X-Proofpoint-GUID: 5v406XALu23cHHpdROvHBWjl4jWcto4x
-X-Proofpoint-ORIG-GUID: 5v406XALu23cHHpdROvHBWjl4jWcto4x
-X-Authority-Analysis: v=2.4 cv=Y5XIdBeN c=1 sm=1 tr=0 ts=6a02f849 cx=c_pps
- a=wEP8DlPgTf/vqF+yE6f9lg==:117 a=JYp8KDb2vCoCEuGobkYCKw==:17
- a=NGcC8JguVDcA:10 a=s4-Qcg_JpJYA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=u7WPNUs3qKkmUXheDGA7:22 a=eoimf2acIAo5FJnRuUoq:22 a=EUspDBNiAAAA:8
- a=EusemhtJF9FVNhmqrvwA:9 a=bBxd6f-gb0O0v-kibOvt:22
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.51,FMLib:17.12.100.49
- definitions=2026-05-11_05,2026-05-08_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- spamscore=0 malwarescore=0 lowpriorityscore=0 impostorscore=0 suspectscore=0
- adultscore=0 phishscore=0 priorityscore=1501 clxscore=1015 bulkscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2605050000 definitions=main-2605120099
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: ynX0KyOvAe1AO0KBFkGc9PIcjld6oDnGqmsAsHZPy08_1778592968
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-dm-inlinecrypt currently initializes the blk-crypto key using
-BLK_CRYPTO_KEY_TYPE_RAW, which implies that the provided key material
-is a plaintext software key owned by the block layer.
+The VDO code needs to perform some calculations before creating a device. 
+The calculations should be performed in the kernel, so that the same logic 
+is not duplicated in the kernel and in the userspace.
 
-However, on platforms where dm-inlinecrypt is used together with a
-hardware-backed key source (e.g. TrustZone/TEE or other secure key
-wrapping mechanisms), the key material passed down is already wrapped
-and must be treated as opaque by the block layer.
+However, currently it is not possible to call a device mapper target 
+when no device exists.
 
-Initialize the blk-crypto key using BLK_CRYPTO_KEY_TYPE_HW_WRAPPED
-instead, so that dm-inlinecrypt correctly models hardware-wrapped keys
-and avoids incorrect assumptions about key ownership and visibility.
+This commit solves the problem by adding "deviceless" messages. If the 
+message starts with '%', the name is a name of a target, not a name of a 
+device. The message will be directed to the target by calling the 
+"deviceless_message" method. The target can perform the requested 
+calculations in this method and return the result back to userspace.
 
-Signed-off-by: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
 ---
- drivers/md/dm-inlinecrypt.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-ioctl.c         |   57 +++++++++++++++++++++++++++++++++---------
+ include/linux/device-mapper.h |    4 ++
+ 2 files changed, 49 insertions(+), 12 deletions(-)
 
-diff --git a/drivers/md/dm-inlinecrypt.c b/drivers/md/dm-inlinecrypt.c
-index bd8e58a028c5..bcbf363c533a 100644
---- a/drivers/md/dm-inlinecrypt.c
-+++ b/drivers/md/dm-inlinecrypt.c
-@@ -386,7 +386,7 @@ static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	dun_bytes = DIV_ROUND_UP(fls64(ctx->max_dun), 8);
+Index: linux-2.6/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-ioctl.c	2026-05-06 22:15:36.000000000 +0200
++++ linux-2.6/drivers/md/dm-ioctl.c	2026-05-11 12:53:37.000000000 +0200
+@@ -1743,6 +1743,33 @@ static int table_status(struct file *fil
+ 	return 0;
+ }
  
- 	err = blk_crypto_init_key(&ctx->key, raw_key, ctx->key_size,
--				  BLK_CRYPTO_KEY_TYPE_RAW,
-+				  BLK_CRYPTO_KEY_TYPE_HW_WRAPPED,
- 				  cipher->mode_num, dun_bytes,
- 				  ctx->sector_size);
- 	if (err) {
--- 
-2.34.1
++static int message_for_module(const char *target_name, unsigned int argc, char **argv,
++			      char *result, unsigned int maxlen)
++{
++	struct target_type *tt;
++	int r;
++
++	if (**argv != '%')
++		return 2;
++
++	tt = dm_get_target_type(target_name);
++	if (!tt) {
++		DMERR("unknown target name %s", target_name);
++		return -EINVAL;
++	}
++
++	if (!tt->deviceless_message) {
++		DMERR("target %s doesn't support deviceless messages", target_name);
++		r = -EINVAL;
++	} else {
++		r = tt->deviceless_message(argc, argv, result, maxlen);
++	}
++
++	dm_put_target_type(tt);
++
++	return r;
++}
++
+ /*
+  * Process device-mapper dependent messages.  Messages prefixed with '@'
+  * are processed by the DM core.  All others are delivered to the target.
+@@ -1788,10 +1815,6 @@ static int target_message(struct file *f
+ 	char *result = get_result_buffer(param, param_size, &maxlen);
+ 	int srcu_idx;
+ 
+-	md = find_device(param);
+-	if (!md)
+-		return -ENXIO;
+-
+ 	if (tmsg < (struct dm_target_msg *) param->data ||
+ 	    invalid_str(tmsg->message, (void *) param + param_size)) {
+ 		DMERR("Invalid target message parameters.");
+@@ -1811,9 +1834,19 @@ static int target_message(struct file *f
+ 		goto out_argv;
+ 	}
+ 
+-	r = message_for_md(md, argc, argv, result, maxlen);
++	r = message_for_module(param->name, argc, argv, result, maxlen);
+ 	if (r <= 1)
++		goto out_deviceless;
++
++	md = find_device(param);
++	if (!md) {
++		r = -ENXIO;
+ 		goto out_argv;
++	}
++
++	r = message_for_md(md, argc, argv, result, maxlen);
++	if (r <= 1)
++		goto out_md;
+ 
+ 	table = dm_get_live_table(md, &srcu_idx);
+ 	if (!table) {
+@@ -1838,14 +1871,13 @@ static int target_message(struct file *f
+ 		r = -EINVAL;
+ 	}
+ 
+- out_table:
++out_table:
+ 	dm_put_live_table(md, srcu_idx);
+- out_argv:
+-	kfree(argv);
+- out:
++out_md:
+ 	if (r >= 0)
+ 		__dev_status(md, param);
+-
++	dm_put(md);
++out_deviceless:
+ 	if (r == 1) {
+ 		param->flags |= DM_DATA_OUT_FLAG;
+ 		if (dm_message_test_buffer_overflow(result, maxlen))
+@@ -1854,8 +1886,9 @@ static int target_message(struct file *f
+ 			param->data_size = param->data_start + strlen(result) + 1;
+ 		r = 0;
+ 	}
+-
+-	dm_put(md);
++out_argv:
++	kfree(argv);
++out:
+ 	return r;
+ }
+ 
+Index: linux-2.6/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.orig/include/linux/device-mapper.h	2026-04-27 19:06:34.000000000 +0200
++++ linux-2.6/include/linux/device-mapper.h	2026-05-11 12:45:45.000000000 +0200
+@@ -93,6 +93,9 @@ typedef void (*dm_status_fn) (struct dm_
+ typedef int (*dm_message_fn) (struct dm_target *ti, unsigned int argc, char **argv,
+ 			      char *result, unsigned int maxlen);
+ 
++typedef int (*dm_deviceless_message_fn) (unsigned int argc, char **argv,
++			      char *result, unsigned int maxlen);
++
+ /*
+  * Called with *forward == true. If it remains true, the ioctl should be
+  * forwarded to bdev. If it is reset to false, the target already fully handled
+@@ -214,6 +217,7 @@ struct target_type {
+ 	dm_resume_fn resume;
+ 	dm_status_fn status;
+ 	dm_message_fn message;
++	dm_deviceless_message_fn deviceless_message;
+ 	dm_prepare_ioctl_fn prepare_ioctl;
+ 	dm_report_zones_fn report_zones;
+ 	dm_busy_fn busy;
 
