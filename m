@@ -1,49 +1,49 @@
-Received: from lf-1-128.ptr.blmpb.com (lf-1-128.ptr.blmpb.com [103.149.242.128])
+Received: from va-1-112.ptr.blmpb.com (va-1-112.ptr.blmpb.com [209.127.230.112])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2AAFB3672BE
-	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 09:09:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.149.242.128
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEA233E51F2
+	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 09:14:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.230.112
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778663393; cv=none; b=IlDJqQ4VoZ1ozsRZWc3kVBzYQ3v6QrMIcMS+pwoc2B3LaElnTy51ZoHlP/2dQFBn1r9PA2tt6z1Mr/0D/GOhD45fbDmsu2E89On6R/q2sfT94GqMQTyVLuLK5ZO7evks0aYycgWjul8LWVYQ9U8ZYkk2blkZ0I5K9f375oXRvhE=
+	t=1778663662; cv=none; b=d/uCfZ0RHtCZAG5+P0TNGjKMt5tMVM6E4xZKYUZ+SqW6TwLGbDvpg7MAy9IQDepYZozBg7uZWmEqmiIz5jeImN+0/ZHxh2PfKe4agp3t+k2oSaa+s7U2UqtIxnU6Kq/nsEqhRUYOTiGRHvKm7DOJEoAWuLSW207apsbEcnGXkzU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778663393; c=relaxed/simple;
+	s=arc-20240116; t=1778663662; c=relaxed/simple;
 	bh=Uw0uScx8E1a3wIEO5ri99NR4rDuQtAaM+XVL+5J8xD0=;
-	h=Date:Subject:Content-Type:To:Cc:Mime-Version:From:Message-Id; b=jgYh11Qham1h5EOP8qSSYtF3l1PmocFln9kRQocGFtOMLu/l40dZG8oBtbKZCL+aZM44NuSgCPWSegftUy5RBpq5rUVwF6w4qeUOv9SnBt9w046S4X2phG/9R1f5oBtIn/lK0b2lU4arxA2Q31gLUegUYad22hsUyVoypHRxwwk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com; spf=pass smtp.mailfrom=bytedance.com; dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b=I5h1iDV9; arc=none smtp.client-ip=103.149.242.128
+	h=Date:Content-Type:Cc:Subject:Mime-Version:To:From:Message-Id; b=epoHDZAl1BBPRlKzC/ZQ3Qdb7I5Y7jIehTGhufYSx5ueHXSt0fW3cdLCyRBWaxSfVr0GheTCdl3+DHmbgJXCJKWOXiiPVfo3v5ZrpLbBXKy0TlS9JGJr0j4neVGbPipG7y8eC7pVGeJZdsX1hcCBR3P5c4Z7HaW9Ed6JZoFYBMk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com; spf=pass smtp.mailfrom=bytedance.com; dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b=j4xV9Q+p; arc=none smtp.client-ip=209.127.230.112
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bytedance.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b="I5h1iDV9"
+	dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b="j4xV9Q+p"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=2212171451; d=bytedance.com; t=1778663299; h=from:subject:
+ s=2212171451; d=bytedance.com; t=1778663650; h=from:subject:
  mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
  mime-version:in-reply-to:message-id;
  bh=y9nLA5PRTc6yF2cdJng5j4g+eBMacB7v/4HE+A0Ob9E=;
- b=I5h1iDV9Ssd1bg8h5q7eLtPqgfebv33khYcuDn/RG0nFrgAcV7Nu4Tm8P20RlOrSaennVp
- 5pXViXz6YP9WX/iZ0/6vOtPy3Ph3sfWIxw2xRcphXOA0XoFx0SUR8xl1vhFVFtC35xAGwU
- G9U+BOg1f4t49QrXQh2fHOvohBS+7d3qefOsUNtEyk/Q+1Ld3o5qnC7gCKoWzHGva0xtEF
- xOz1I25o1cgr5xnsCGytKOPdzzC2VUsuRCPd6qpLN1V40RrwIhBqsCB3URsvJXq4k+whWn
- ZD2jMozENT3oPwHGctCILkpsTBqgfmQGDaOOqjg9iRgtSXO7kVO24mVHjWU11Q==
-Date: Wed, 13 May 2026 17:07:55 +0800
-Subject: [PATCH] dm: limit target bio polling to one shot
-X-Lms-Return-Path: <lba+26a043f81+d5f666+lists.linux.dev+changfengnan@bytedance.com>
-X-Mailer: git-send-email 2.39.5 (Apple Git-154)
+ b=j4xV9Q+puY7d8l3iZfDVdfWBIn0QdqPOy6q4YJcMB1mIHbqYrWF46SLhyBSaUFbmbmfuQF
+ uHSzrpbEWvcn8pyFHcYRSOaabw16aCglp4CvWB1qY7uTSGWcFU6ClxtsGrRPlLVgH+yMUc
+ yEtzJctaSYUtK0ag8bZmOzAjmMf3p3YVAURdicnoIg+uCP/rIziAihXr9tPcyZ8mLEFsJi
+ oqH/ue034JzAu91haYuNiB1cUv6FnU/1a8A6F/H4YjbdR7vIXRPRTqVRN4TeXbmEAgx3oZ
+ tzrMhOnEnIsQe4j49lUfieWevaj8fQlpZlmfhPBcCd/1gwybIv4rFJ1IhyFswQ==
+Date: Wed, 13 May 2026 17:13:49 +0800
 Content-Type: text/plain; charset=UTF-8
-To: <axboe@kernel.dk>, <asml.silence@gmail.com>, <io-uring@vger.kernel.org>, 
-	<agk@redhat.com>, <nitzer@kernel.org>, <bmarzins@redhat.com>, 
-	<dm-devel@lists.linux.dev>
+Content-Transfer-Encoding: 7bit
+X-Original-From: Fengnan Chang <changfengnan@bytedance.com>
 Cc: "Fengnan Chang" <changfengnan@bytedance.com>
+Subject: [PATCH RESEND] dm: limit target bio polling to one shot
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 Mime-Version: 1.0
-X-Original-From: Fengnan Chang <changfengnan@bytedance.com>
-Content-Transfer-Encoding: 7bit
+X-Lms-Return-Path: <lba+26a0440e0+74435d+lists.linux.dev+changfengnan@bytedance.com>
+X-Mailer: git-send-email 2.39.5 (Apple Git-154)
+To: <axboe@kernel.dk>, <asml.silence@gmail.com>, <io-uring@vger.kernel.org>, 
+	<agk@redhat.com>, <snitzer@kernel.org>, <bmarzins@redhat.com>, 
+	<dm-devel@lists.linux.dev>
 From: "Fengnan Chang" <changfengnan@bytedance.com>
-Message-Id: <20260513090755.99278-1-changfengnan@bytedance.com>
+Message-Id: <20260513091349.2194-1-changfengnan@bytedance.com>
 
 dm_poll_bio() is the ->poll_bio() callback for a stacked dm device.
 The caller only knows about the dm queue, so it may decide to do a
