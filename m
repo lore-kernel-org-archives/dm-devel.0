@@ -1,97 +1,120 @@
-Received: from va-1-112.ptr.blmpb.com (va-1-112.ptr.blmpb.com [209.127.230.112])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEA233E51F2
-	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 09:14:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.230.112
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EA4B39656D
+	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 10:37:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778663662; cv=none; b=d/uCfZ0RHtCZAG5+P0TNGjKMt5tMVM6E4xZKYUZ+SqW6TwLGbDvpg7MAy9IQDepYZozBg7uZWmEqmiIz5jeImN+0/ZHxh2PfKe4agp3t+k2oSaa+s7U2UqtIxnU6Kq/nsEqhRUYOTiGRHvKm7DOJEoAWuLSW207apsbEcnGXkzU=
+	t=1778668676; cv=none; b=Zv8N9mhw/yNJjYPn/L6TaHzOZCq03GQ/2MiHTcdkUb9GWDoBMCQnUWBCBhHZeHga6B2uMJR8tVw0YVmt61B9Rj8Zt+c1S1utqLnlDKHB5DZM7yOpZ0uC9M4810lV3YwR7rQYtYaeX9RH/N9vB5tztqWLEzR79CEh+XeuaMfsFAk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778663662; c=relaxed/simple;
-	bh=Uw0uScx8E1a3wIEO5ri99NR4rDuQtAaM+XVL+5J8xD0=;
-	h=Date:Content-Type:Cc:Subject:Mime-Version:To:From:Message-Id; b=epoHDZAl1BBPRlKzC/ZQ3Qdb7I5Y7jIehTGhufYSx5ueHXSt0fW3cdLCyRBWaxSfVr0GheTCdl3+DHmbgJXCJKWOXiiPVfo3v5ZrpLbBXKy0TlS9JGJr0j4neVGbPipG7y8eC7pVGeJZdsX1hcCBR3P5c4Z7HaW9Ed6JZoFYBMk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com; spf=pass smtp.mailfrom=bytedance.com; dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b=j4xV9Q+p; arc=none smtp.client-ip=209.127.230.112
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bytedance.com
+	s=arc-20240116; t=1778668676; c=relaxed/simple;
+	bh=si0YdMWLpEha1pR7cG27VlF7QB3J4cJXwn/noCs+xpM=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=eEJroiYe894/rWG5KNA8c8DQor4bM51c0L3vXYgT/sv4ivJGkzg5pdAoQ50PXIYi5pvGl3A3gbd/PfhvbtO9Bxdpa3oAh3LFYeYDiEu0qX2hS/odDm5Nv90VVTHeprysjdowqeOL3UYRBcJIDpsXrnFsOXVnh4VR+zZG+s7fB9s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A8MpdSzm; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b="j4xV9Q+p"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=2212171451; d=bytedance.com; t=1778663650; h=from:subject:
- mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
- mime-version:in-reply-to:message-id;
- bh=y9nLA5PRTc6yF2cdJng5j4g+eBMacB7v/4HE+A0Ob9E=;
- b=j4xV9Q+puY7d8l3iZfDVdfWBIn0QdqPOy6q4YJcMB1mIHbqYrWF46SLhyBSaUFbmbmfuQF
- uHSzrpbEWvcn8pyFHcYRSOaabw16aCglp4CvWB1qY7uTSGWcFU6ClxtsGrRPlLVgH+yMUc
- yEtzJctaSYUtK0ag8bZmOzAjmMf3p3YVAURdicnoIg+uCP/rIziAihXr9tPcyZ8mLEFsJi
- oqH/ue034JzAu91haYuNiB1cUv6FnU/1a8A6F/H4YjbdR7vIXRPRTqVRN4TeXbmEAgx3oZ
- tzrMhOnEnIsQe4j49lUfieWevaj8fQlpZlmfhPBcCd/1gwybIv4rFJ1IhyFswQ==
-Date: Wed, 13 May 2026 17:13:49 +0800
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-Original-From: Fengnan Chang <changfengnan@bytedance.com>
-Cc: "Fengnan Chang" <changfengnan@bytedance.com>
-Subject: [PATCH RESEND] dm: limit target bio polling to one shot
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A8MpdSzm"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1778668673;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=vLIZtpme7lqA8uaBYjY0PoknW19oz1RAiCg1eSrGKpU=;
+	b=A8MpdSzmC+w02c8FkJ0Ex8NCEkm1P2T7qE93aHPmgzBQkTKzXsWFXLMVrcYenEWf+yh3Wa
+	kGgYIGUnEJlBZ2QTb9ewjK95Deo61I+6JaNUTnrhqBiWsSF2h3t0BkygipYvq8KLuwlCHp
+	WsMTpHmebDmVzgs5nNzSU1lvs5d/wko=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-436-SHXkheLvN3OeujhFH9nbRA-1; Wed,
+ 13 May 2026 06:37:52 -0400
+X-MC-Unique: SHXkheLvN3OeujhFH9nbRA-1
+X-Mimecast-MFC-AGG-ID: SHXkheLvN3OeujhFH9nbRA_1778668671
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ACA151956094;
+	Wed, 13 May 2026 10:37:51 +0000 (UTC)
+Received: from [10.44.34.151] (unknown [10.44.34.151])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8F96730001BB;
+	Wed, 13 May 2026 10:37:49 +0000 (UTC)
+Date: Wed, 13 May 2026 12:37:43 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Matthew Sakai <msakai@redhat.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Bruce Johnston <bjohnsto@redhat.com>, zkabelac@redhat.com, 
+    dm-devel@lists.linux.dev
+Subject: Re: [RFC PATCH] dm: add deviceless messages
+In-Reply-To: <b775c420-da70-4568-afd6-3a3aabbe6b10@redhat.com>
+Message-ID: <fe13dcbc-8b07-4a0a-89a5-9a5e123e9873@redhat.com>
+References: <3bdbd9fa-52ce-ab52-569f-29d4a30c6780@redhat.com> <b775c420-da70-4568-afd6-3a3aabbe6b10@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-X-Lms-Return-Path: <lba+26a0440e0+74435d+lists.linux.dev+changfengnan@bytedance.com>
-X-Mailer: git-send-email 2.39.5 (Apple Git-154)
-To: <axboe@kernel.dk>, <asml.silence@gmail.com>, <io-uring@vger.kernel.org>, 
-	<agk@redhat.com>, <snitzer@kernel.org>, <bmarzins@redhat.com>, 
-	<dm-devel@lists.linux.dev>
-From: "Fengnan Chang" <changfengnan@bytedance.com>
-Message-Id: <20260513091349.2194-1-changfengnan@bytedance.com>
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: F3cOICfD-ibJfejqcflMRdvq3AbaaTfwylJLXi4GFLY_1778668671
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-dm_poll_bio() is the ->poll_bio() callback for a stacked dm device.
-The caller only knows about the dm queue, so it may decide to do a
-spinning poll if it thinks a single queue is being polled. Passing those
-flags unchanged to the mapped clone lets blk_mq_poll() spin on a target
-queue from inside dm_poll_bio().
 
-With io_uring IOPOLL on a dm-stripe target this can keep a task in
 
-  dm_poll_bio() -> bio_poll() -> blk_mq_poll()
+On Tue, 12 May 2026, Matthew Sakai wrote:
 
-long enough to trigger an RCU CPU stall, before io_uring gets back to
-io_iopoll_check() and its need_resched() check.
+> 
+> 
+> On 5/12/26 9:36 AM, Mikulas Patocka wrote:
+> > The VDO code needs to perform some calculations before creating a device.
+> > The calculations should be performed in the kernel, so that the same logic
+> > is not duplicated in the kernel and in the userspace.
+> > 
+> > However, currently it is not possible to call a device mapper target
+> > when no device exists.
+> > 
+> > This commit solves the problem by adding "deviceless" messages. If the
+> > message starts with '%', the name is a name of a target, not a name of a
+> > device. The message will be directed to the target by calling the
+> > "deviceless_message" method. The target can perform the requested
+> > calculations in this method and return the result back to userspace.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> 
+> I do wish that we could clean up the message interface. The sector number
+> argument is completely meaningless for a deviceless message, so in theory we
+> could distinguish this case by omitting the argument, e.g. "dmsetup message
+> <target_type> <command>" and not require the special '%' notation, either. But
+> that looks like it would require a lot more rearrangement of the message
+> handling code.
 
-Keep dm's ->poll_bio() bounded by forcing one-shot polling for target
-bios. The caller can invoke dm_poll_bio() again if it wants to keep
-polling, and it also gets a chance to reap completions or reschedule
-between passes.
+I wanted to design it in such a way that we don't have to update the 
+libdevmapper library or the dmsetup tool to send deviceless messages - 
+that's why there is the unused sector number.
 
-Fixes: f22ecf9c14c1 ("blk-mq: delete task running check in blk_hctx_poll()")
-Signed-off-by: Fengnan Chang <changfengnan@bytedance.com>
----
- drivers/md/dm.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
+In the past, dm_stats was glueued to messages in a similar way (the 
+dm_stats messages start with '@'), the sector number is also unused in 
+this case.
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index e178fe19973ea..8f44fbbcf3da2 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2098,8 +2098,17 @@ static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
- 	WARN_ON_ONCE(!dm_tio_is_normal(&io->tio));
- 
- 	/* don't poll if the mapped io is done */
--	if (atomic_read(&io->io_count) > 1)
--		bio_poll(&io->tio.clone, iob, flags);
-+	if (atomic_read(&io->io_count) > 1) {
-+		/*
-+		 * DM hides the target queues from the upper poller, which may
-+		 * decide it is safe to spin on a single stacked queue.  Do not
-+		 * pass that spinning policy down to a target queue: one slow
-+		 * clone could keep the task inside dm_poll_bio() for a long
-+		 * time.  Poll target bios once and let the caller decide
-+		 * whether to keep polling, reap completions or reschedule.
-+		 */
-+		bio_poll(&io->tio.clone, iob, flags | BLK_POLL_ONESHOT);
-+	}
- 
- 	/* bio_poll holds the last reference */
- 	return atomic_read(&io->io_count) == 1;
--- 
-2.39.5 (Apple Git-154)
+Perhaps we could introduce a new ioctl DM_DEVICELESS_MSG_CMD and send 
+deviceless messages with it, but that would need coordination with the 
+libdevmapper+dmsetup maintainers. I think it would create maintenance 
+burden (you couldn't use deviceless messages unless you update 
+libdevmapper, you couldn't update libdevmapper unless you update libc, you 
+couldn't update libc unless you update the whole distribution ... etc.).
+
+> I agree this does what we need, so...
+> 
+> Reviewed-by: Matthew Sakai <msakai@redhat.com>
+
+When you make a patch that needs deviceless messages, let me know and I 
+will commit it. I will not commit deviceless messages now, because I want 
+to have someone using it when committing it.
+
+Mikulas
+
