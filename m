@@ -1,93 +1,97 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from lf-1-128.ptr.blmpb.com (lf-1-128.ptr.blmpb.com [103.149.242.128])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5D54364948
-	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 01:20:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2AAFB3672BE
+	for <dm-devel@lists.linux.dev>; Wed, 13 May 2026 09:09:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.149.242.128
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778635230; cv=none; b=kSBlR3Xvde67/lqQGytqopcJSe6i0OA+IMgD4H6d7TC5+WI+pp9gSnMrkL5z05H0zJF3fCNBMIx4OYhY/8LAKhs6/o/qQ1Jb9mYjSqapVB3rOmNbbWBrChl3fnHmdM7DvUjg+dj6oQ8ckMdGbvLjs0+PCTKBOa+lZC6iSBakeLU=
+	t=1778663393; cv=none; b=IlDJqQ4VoZ1ozsRZWc3kVBzYQ3v6QrMIcMS+pwoc2B3LaElnTy51ZoHlP/2dQFBn1r9PA2tt6z1Mr/0D/GOhD45fbDmsu2E89On6R/q2sfT94GqMQTyVLuLK5ZO7evks0aYycgWjul8LWVYQ9U8ZYkk2blkZ0I5K9f375oXRvhE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778635230; c=relaxed/simple;
-	bh=nPU9/GxI8N0KxWAnsE/FWeyMn/e/xfgTRDINaJ2KleE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=ar5SdjNfjMFzWD40lfMHjoeYF8/FAqQ5nVVJVsds9OVhfz9GjJRV+n4dqXgjjzELPOlr8i92GfahTZO1TSEYEYOpJmraIbl6hWUm0wLdB9L0C1ZjazzVWvzS9ZVQXRvyTsxDZWwEjfF73vAitXX8TrmNG8cGXKs+CsUcbr9qNaQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=UM6HQkwG; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1778663393; c=relaxed/simple;
+	bh=Uw0uScx8E1a3wIEO5ri99NR4rDuQtAaM+XVL+5J8xD0=;
+	h=Date:Subject:Content-Type:To:Cc:Mime-Version:From:Message-Id; b=jgYh11Qham1h5EOP8qSSYtF3l1PmocFln9kRQocGFtOMLu/l40dZG8oBtbKZCL+aZM44NuSgCPWSegftUy5RBpq5rUVwF6w4qeUOv9SnBt9w046S4X2phG/9R1f5oBtIn/lK0b2lU4arxA2Q31gLUegUYad22hsUyVoypHRxwwk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com; spf=pass smtp.mailfrom=bytedance.com; dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b=I5h1iDV9; arc=none smtp.client-ip=103.149.242.128
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bytedance.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="UM6HQkwG"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1778635217;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=IrcVHCtoNrFpPuERxn1taLVyoUuqz4AmQRx1tl/BPGY=;
-	b=UM6HQkwGF711LVp70+hP6UYNtip4dWg6/ikNxWZMxKQxk+WuP+okUuTkJjEfCvXfnT08si
-	oNqqtAnDNmVxZyY31DKIBbJeTFvkk+V/mBakzeY8eDl5UFDP9McYc9vVbd2Ovrw5M31Jqd
-	SCYfHV7573d+jigX9zuuUfKNtUB2boI=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-473-LyyoBk06MxOEmn-_DYLtGg-1; Tue,
- 12 May 2026 21:20:13 -0400
-X-MC-Unique: LyyoBk06MxOEmn-_DYLtGg-1
-X-Mimecast-MFC-AGG-ID: LyyoBk06MxOEmn-_DYLtGg_1778635212
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 31D99195608A;
-	Wed, 13 May 2026 01:20:12 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D88AC180058F;
-	Wed, 13 May 2026 01:20:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 64D1KAmG3332746
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 12 May 2026 21:20:10 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 64D1KAIt3332745;
-	Tue, 12 May 2026 21:20:10 -0400
-Date: Tue, 12 May 2026 21:20:10 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <martin.wilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev,
-        Xose Vazquez Perez <xose.vazquez@gmail.com>,
-        Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 18/18] libmultipath: convert emc_clariion to async_checker
-Message-ID: <agPRygKYahqLafvM@redhat.com>
-References: <20260505154332.448054-1-mwilck@suse.com>
- <20260505154332.448054-19-mwilck@suse.com>
+	dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b="I5h1iDV9"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=2212171451; d=bytedance.com; t=1778663299; h=from:subject:
+ mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
+ mime-version:in-reply-to:message-id;
+ bh=y9nLA5PRTc6yF2cdJng5j4g+eBMacB7v/4HE+A0Ob9E=;
+ b=I5h1iDV9Ssd1bg8h5q7eLtPqgfebv33khYcuDn/RG0nFrgAcV7Nu4Tm8P20RlOrSaennVp
+ 5pXViXz6YP9WX/iZ0/6vOtPy3Ph3sfWIxw2xRcphXOA0XoFx0SUR8xl1vhFVFtC35xAGwU
+ G9U+BOg1f4t49QrXQh2fHOvohBS+7d3qefOsUNtEyk/Q+1Ld3o5qnC7gCKoWzHGva0xtEF
+ xOz1I25o1cgr5xnsCGytKOPdzzC2VUsuRCPd6qpLN1V40RrwIhBqsCB3URsvJXq4k+whWn
+ ZD2jMozENT3oPwHGctCILkpsTBqgfmQGDaOOqjg9iRgtSXO7kVO24mVHjWU11Q==
+Date: Wed, 13 May 2026 17:07:55 +0800
+Subject: [PATCH] dm: limit target bio polling to one shot
+X-Lms-Return-Path: <lba+26a043f81+d5f666+lists.linux.dev+changfengnan@bytedance.com>
+X-Mailer: git-send-email 2.39.5 (Apple Git-154)
+Content-Type: text/plain; charset=UTF-8
+To: <axboe@kernel.dk>, <asml.silence@gmail.com>, <io-uring@vger.kernel.org>, 
+	<agk@redhat.com>, <nitzer@kernel.org>, <bmarzins@redhat.com>, 
+	<dm-devel@lists.linux.dev>
+Cc: "Fengnan Chang" <changfengnan@bytedance.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-In-Reply-To: <20260505154332.448054-19-mwilck@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: cEY0CoTA20wUJLrMr3DxiiRfVt8SP2Pbjzu2lcWBCT4_1778635212
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Mime-Version: 1.0
+X-Original-From: Fengnan Chang <changfengnan@bytedance.com>
+Content-Transfer-Encoding: 7bit
+From: "Fengnan Chang" <changfengnan@bytedance.com>
+Message-Id: <20260513090755.99278-1-changfengnan@bytedance.com>
 
-On Tue, May 05, 2026 at 05:43:32PM +0200, Martin Wilck wrote:
-> ---
->  libmultipath/checkers/emc_clariion.c | 79 ++++++++++++----------------
->  1 file changed, 33 insertions(+), 46 deletions(-)
-> 
+dm_poll_bio() is the ->poll_bio() callback for a stacked dm device.
+The caller only knows about the dm queue, so it may decide to do a
+spinning poll if it thinks a single queue is being polled. Passing those
+flags unchanged to the mapped clone lets blk_mq_poll() spin on a target
+queue from inside dm_poll_bio().
 
-No Signed-off-by. Also, I don't think it really matters much, but
-running this checker asynchronously means that the checkers will not
-have their mpcontext updated by previous checkers run in the same
-checker loop, like they did when the checker was synchronous. If an
-earlier path check detects that a snapshot LU is no longer inactive, a
-later call to a passive path in the same checker loop will still return
-PATH_DOWN instead of PATH_UP, since the mpcontext won't be updated until
-update_paths() gets called. Obviously, this will get fixed the next time
-the path is checked, so I think it's fine.
+With io_uring IOPOLL on a dm-stripe target this can keep a task in
 
--Ben
+  dm_poll_bio() -> bio_poll() -> blk_mq_poll()
 
+long enough to trigger an RCU CPU stall, before io_uring gets back to
+io_iopoll_check() and its need_resched() check.
+
+Keep dm's ->poll_bio() bounded by forcing one-shot polling for target
+bios. The caller can invoke dm_poll_bio() again if it wants to keep
+polling, and it also gets a chance to reap completions or reschedule
+between passes.
+
+Fixes: f22ecf9c14c1 ("blk-mq: delete task running check in blk_hctx_poll()")
+Signed-off-by: Fengnan Chang <changfengnan@bytedance.com>
+---
+ drivers/md/dm.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index e178fe19973ea..8f44fbbcf3da2 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -2098,8 +2098,17 @@ static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
+ 	WARN_ON_ONCE(!dm_tio_is_normal(&io->tio));
+ 
+ 	/* don't poll if the mapped io is done */
+-	if (atomic_read(&io->io_count) > 1)
+-		bio_poll(&io->tio.clone, iob, flags);
++	if (atomic_read(&io->io_count) > 1) {
++		/*
++		 * DM hides the target queues from the upper poller, which may
++		 * decide it is safe to spin on a single stacked queue.  Do not
++		 * pass that spinning policy down to a target queue: one slow
++		 * clone could keep the task inside dm_poll_bio() for a long
++		 * time.  Poll target bios once and let the caller decide
++		 * whether to keep polling, reap completions or reschedule.
++		 */
++		bio_poll(&io->tio.clone, iob, flags | BLK_POLL_ONESHOT);
++	}
+ 
+ 	/* bio_poll holds the last reference */
+ 	return atomic_read(&io->io_count) == 1;
+-- 
+2.39.5 (Apple Git-154)
