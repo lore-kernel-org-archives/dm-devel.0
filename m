@@ -1,88 +1,98 @@
-Received: from ms.lwn.net (ms.lwn.net [45.79.88.28])
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78560481A98
-	for <dm-devel@lists.linux.dev>; Fri, 15 May 2026 13:55:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.79.88.28
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8B8B4C0401;
+	Fri, 15 May 2026 16:49:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778853307; cv=none; b=gWZNXgnZGbwxOy2WlMEXR01IOaV5DG9yF9Z1wOOPyH2e+oIA9xWVXIQwxGeNFiuzg6KARzs8pWpH2WDaCxIuORyf/Q12lO7KbQ+i6/GkPgEZaKVu9HYkdN9DU5Fq8VSruWBvj4dM7YqYRK+qu4n+QkGsIdrT1M8BNQmqddgQk7g=
+	t=1778863775; cv=none; b=lxS+3Fq8WftZ9qpGT9COgAx3RuYjbOrgo4uq/RET3Aq1A5iVvm76HYlT9cbGllRQfozrops/LqUM8TYx+EOYebMFTvauOeYcM7zWsm2ZrFd6akbl90MQmlLLqcQSwQA00YsYBNEmTf6p3hDTkyGoPp2jhqYy8fmZmb19IjUGN1Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778853307; c=relaxed/simple;
-	bh=evXWKftjuLJQ4mRjWE5B2AiBxfbS1BL93pLn0xAnNR8=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=eqJGagVUs64aEjUrP/5QWn++guHlKWOegnqCU4aNA6zgWOwMM3/zkd95FqLsufb/ymMChY9XsMG5/PQXurrMJpkFjvdwnK+L0N1rF7fl5Di/h+ATEjmqv7HBny9Y+LzDXqxhGHZEtezwGuOl674f9po2h1CRWTzZCN3L608qoLw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net; spf=pass smtp.mailfrom=lwn.net; dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b=IKQlV14T; arc=none smtp.client-ip=45.79.88.28
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lwn.net
+	s=arc-20240116; t=1778863775; c=relaxed/simple;
+	bh=p/DzNJ0ZFT3YunZjTo5emDl7we4MJDcdv4qMy/E59Ew=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=rwGxy9TjoVWSdO88vypSHoxkXTucDpmQpaSzkIzj2tybcuxL7S3H+df4I3CpduCx9WFaU8BwUAQqqbxQLeZbskNybOiar2SAuudIRuOpvvxif3B5/aycmt6xDDBTqHMjiR3B6A2fEanDKMUSwYBb9Di0hJCUfBcn3Z9zJm9K/l0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Kt/oOoIw; arc=none smtp.client-ip=198.137.202.133
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b="IKQlV14T"
-DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net CB76A410B5
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
-	t=1778853305; bh=A9nDFv3vagy3+1F49CmVRh5+xa3gfle1V5vbvV6JaGE=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
-	b=IKQlV14Tq6bBIDndNUTmOqE3N/cj8mjMEbhzn2t5RYhMoumSdoRAaOZQA5JvJV0lh
-	 119XI4z++YKndyQvwrHv6UQscJZDn4qF3uGSnCT1il0subk3E01AL8xs+e7FxO5Ip1
-	 viz9+8uamfr002g9f3m4Qx5W8asunN6proGzY05Lc/8mns3YzVfjGHSLpHYqKwEBrE
-	 4RK4NdLoN1AnanOIKwzGQRsxHzAcHbxtmqCIooLiQyE6ge6fOJ5k7JbXmXdRhvhG9H
-	 DklKp0Do/hUu27Ie4RBEDilSfvmF2hrbprnuh/7Mpchumrv7GFxd1n8onCUFwSqIVq
-	 7SWMESMAQdc9A==
-Received: from localhost (unknown [IPv6:2601:280:4600:27b:67c:16ff:fe81:5f9b])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by ms.lwn.net (Postfix) with ESMTPSA id CB76A410B5;
-	Fri, 15 May 2026 13:55:05 +0000 (UTC)
-From: Jonathan Corbet <corbet@lwn.net>
-To: Randy Dunlap <rdunlap@infradead.org>, linux-kernel@vger.kernel.org
-Cc: Randy Dunlap <rdunlap@infradead.org>, Linlin Zhang
- <linlin.zhang@oss.qualcomm.com>, Alasdair Kergon <agk@redhat.com>, Mike
- Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, Shuah
- Khan <skhan@linuxfoundation.org>, linux-doc@vger.kernel.org
-Subject: Re: [PATCH] dm: fix dm-inlinecrypt docs warnings
-In-Reply-To: <20260512180409.1193504-1-rdunlap@infradead.org>
-References: <20260512180409.1193504-1-rdunlap@infradead.org>
-Date: Fri, 15 May 2026 07:55:05 -0600
-Message-ID: <878q9ksrpi.fsf@trenco.lwn.net>
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Kt/oOoIw"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=Content-Transfer-Encoding:
+	Content-Type:In-Reply-To:From:References:Cc:To:Subject:MIME-Version:Date:
+	Message-ID:Sender:Reply-To:Content-ID:Content-Description;
+	bh=kpTdqu2lNMVtc5L56yZUrdrtD8VOiGhfVlKZKMtrnJ0=; b=Kt/oOoIwefGBYMcpFBsqU65p64
+	CvnXWQQWHZAewr6HMWEGAo/aRIfz/UpURCos0+xqMRrxYv0t2ZZZOLv9A1Ybm9ihlFJDI/Q+LicCK
+	xOnZOdjgP37wTUwMU6uiCyh3dfSacilCDzal7gn29OAx01ijuP8+NKGCiMFs3hPU3PM2UO6u/gy23
+	4Gn/9ikLVOVlS7g17vTd3kRyy1V+VMIKKm4IWcJGaYkV0iCm3+IlSo+QDi2U5WxRiRykCxqmqeVew
+	uQPLHLgRQCpeFucUpSLneMMoVsdqosv+uvHnkww+oN16Dk+I1I0oadZiRuQDIoKXvSwSrVCVgEyUr
+	TWKqPglw==;
+Received: from [50.53.43.113] (helo=[192.168.254.34])
+	by bombadil.infradead.org with esmtpsa (Exim 4.99.1 #2 (Red Hat Linux))
+	id 1wNvj9-00000008ui2-2fCQ;
+	Fri, 15 May 2026 16:49:31 +0000
+Message-ID: <39614db4-8b5d-4174-837d-73ce124ff2b7@infradead.org>
+Date: Fri, 15 May 2026 09:49:29 -0700
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm: fix dm-inlinecrypt docs warnings
+To: Jonathan Corbet <corbet@lwn.net>, linux-kernel@vger.kernel.org
+Cc: Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev,
+ Shuah Khan <skhan@linuxfoundation.org>, linux-doc@vger.kernel.org
+References: <20260512180409.1193504-1-rdunlap@infradead.org>
+ <878q9ksrpi.fsf@trenco.lwn.net>
+Content-Language: en-US
+From: Randy Dunlap <rdunlap@infradead.org>
+In-Reply-To: <878q9ksrpi.fsf@trenco.lwn.net>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Randy Dunlap <rdunlap@infradead.org> writes:
 
-> Add this file to the index and use a longer heading overline string
-> to eliminate warnings:
->
-> Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst:1: WARNING: Title overline too short.
-> ========
-> dm-inlinecrypt
-> ========
-> Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst: WARNING: document isn't included in any toctree [toc.not_included]
->
-> Fixes: b4a0774bd7fd ("dm: add documentation for dm-inlinecrypt target")
-> Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
-> ---
-> Cc: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-> Cc: Alasdair Kergon <agk@redhat.com>
-> Cc: Mike Snitzer <snitzer@kernel.org>
-> Cc: Mikulas Patocka <mpatocka@redhat.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: dm-devel@lists.linux.dev
-> Cc: Jonathan Corbet <corbet@lwn.net>
-> Cc: Shuah Khan <skhan@linuxfoundation.org>
-> Cc: linux-doc@vger.kernel.org
->
->  Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst |    4 ++--
->  Documentation/admin-guide/device-mapper/index.rst          |    1 +
->  2 files changed, 3 insertions(+), 2 deletions(-)
 
-This doesn't apply to docs-next, so I'm guessing it's intended for some
-other tree?
+On 5/15/26 6:55 AM, Jonathan Corbet wrote:
+> Randy Dunlap <rdunlap@infradead.org> writes:
+> 
+>> Add this file to the index and use a longer heading overline string
+>> to eliminate warnings:
+>>
+>> Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst:1: WARNING: Title overline too short.
+>> ========
+>> dm-inlinecrypt
+>> ========
+>> Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst: WARNING: document isn't included in any toctree [toc.not_included]
+>>
+>> Fixes: b4a0774bd7fd ("dm: add documentation for dm-inlinecrypt target")
+>> Signed-off-by: Randy Dunlap <rdunlap@infradead.org>
+>> ---
+>> Cc: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
+>> Cc: Alasdair Kergon <agk@redhat.com>
+>> Cc: Mike Snitzer <snitzer@kernel.org>
+>> Cc: Mikulas Patocka <mpatocka@redhat.com>
+>> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+>> Cc: dm-devel@lists.linux.dev
+>> Cc: Jonathan Corbet <corbet@lwn.net>
+>> Cc: Shuah Khan <skhan@linuxfoundation.org>
+>> Cc: linux-doc@vger.kernel.org
+>>
+>>  Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst |    4 ++--
+>>  Documentation/admin-guide/device-mapper/index.rst          |    1 +
+>>  2 files changed, 3 insertions(+), 2 deletions(-)
+> 
+> This doesn't apply to docs-next, so I'm guessing it's intended for some
+> other tree?
 
-Thanks,
+Right. It should go thru the device-mapper tree.
 
-jon
+@Mikulas merged this file.
+
+thanks.
+-- 
+~Randy
+
