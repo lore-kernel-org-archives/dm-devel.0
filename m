@@ -1,197 +1,331 @@
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+Received: from mail-lj1-f182.google.com (mail-lj1-f182.google.com [209.85.208.182])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 554CF348866
-	for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 09:57:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779011857; cv=none; b=EHYtutOZKJdgKu1ela23/BzFCCSvvGmMQJGFtmWD63Oioqky5z4TgjY8GkoinadyHB//IqIQ2PdnTwxWKPP5HCh/IARiYoKETx2V9e82aVMmEu6aCx7881bcGMKqCdenSP1lQ15zbOAKYSiTl/Q0ZPHg1/ligdv/vqBCuDi1z0E=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779011857; c=relaxed/simple;
-	bh=QrLEntlR9eCJgKpfnOERLDwvgQnIcENE2UtUNxnc9eM=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=J4YaJSfWW85LXSA4duVbN2KhS/5six84bnzbUCsbb8JK3/9ubMn8tSxiG4xPxoJFZUKc/15r5Co7KjoDQhrEI98+lWXUbL9+B/K7R1Pi5Ga+z7BknomeRDVUk9YJplxQKlDkdK51lFzK70o2xqZQNMxKPnQUeouJFi0EZ4CAqZs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=T/M8byQG; arc=none smtp.client-ip=209.85.221.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15E8D2F7F19
+	for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 22:34:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.182
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1779057281; cv=pass; b=GaatdKlm0MIWDTbyfSBMXMu9rKDpsc6Fxip64lbvf8hNEkLQJUJmU7Zc1Kc/IrOEOywpyc0Al61FmQ9MJnV3YvSMyIfvIvAW+RZiVSFMsSBJNV8qdbOppNAtKs3Y5Y9L6bffj/xAeaMnwHahoNSftrUpKRE5muqtlaHXHn04tnw=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1779057281; c=relaxed/simple;
+	bh=pH7I+bNZ+H2bfRjIa356NrYYGA0fsgnUE3iSoHZtMaU=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=ROHAJHKjDumTTsgvSo9TEslhfIk3DEaSMj2Ltc2v8+8W71dOhJkOYqOgtfxoL4w68x3zIUANLm2hM38CKTSBc9r0h5Hwx62UnK7ihTvtUHi9X3FtuG0oAQj4aXhQyP9iaWE7srFntLmTZrngFMfOCy2I7G4cB1x0P0tP9TZ3YF4=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ArajxlEs; arc=pass smtp.client-ip=209.85.208.182
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="T/M8byQG"
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-4585a116a4aso972981f8f.3
-        for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 02:57:35 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ArajxlEs"
+Received: by mail-lj1-f182.google.com with SMTP id 38308e7fff4ca-38ee0fe3bdeso3314361fa.2
+        for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 15:34:38 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1779057277; cv=none;
+        d=google.com; s=arc-20240605;
+        b=ezLYHZKZXV4WUpq2XLGDFBI5INoDIbH/YzlHoGe41Tp/gr1/330xaArJLWkIHU/wEy
+         simOQHSQGAbxoj+2PwQVlkelYYW31EfGq91x+4saP2+oiw7fzQr5OEiIGUI/VitSFHzh
+         Z0ydhaR3nfI1k7Bp7hpOsyf37zVBxSXu782E3YqUPQW/sZ++qH5nZ78x2RM+seBVSpuB
+         ofKsPeDIN+j61FKd6+vyqnwDQnu7kRr8pu++Z9wYcRmIHENO6gU4820aNFscHgBqiWXm
+         Sr4ngbywgAizhNHUG5oqvrhPvRec70ASFb1gI8RE0B641ngiXQG7hgLmCeu20xq7Pd8u
+         tfig==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=O/MQlLLBDXSTdeD7xZqTG/PCJ9KXZ9mlqodjpYu4cBM=;
+        fh=jWXl8k8tCduWs3i4ZKmcIxSi6uBKACDkK4JVSrgdIi4=;
+        b=cub/7PxDuuFtHtx8oRfnNRWsAoZihU9zKF7L3ZZFXm8cRhpQytbKrsvYyW9lY8YiU2
+         A5sqabbYui8u3eyJDg424qaE45oEPrUkJlbml4fIW8PN3LIaw9r4C+HzNhF0tSsiU7Yc
+         ju8+Nx/9+kHWn5nim/Egk79tHQJ/WqLNAXcho1dcoS14DAh75ieHx6UOBcx4qaN6neVR
+         0FeM8CJIZsZtn7lBgnQT/iRTAEK1+843eW39nKbsj05Dqg9h1AyhDjksulW2UE2bc/6r
+         PjHivtxjFStOCqzChZC8QUmP/y1UrzEZLQiq5e5wLgNU3Co1wZolFF4lN+CHxEiBlZja
+         Didg==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779011854; x=1779616654; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=Sl1Bw/0RxsOrZnosvkgEqpf9C8mJ0ZVAuZnVOQypWcg=;
-        b=T/M8byQGhpXo7EA4lPRPGBTyMYR8h1vsLJa/bI6IKYvQos4GuRiM8ov5QApK+qooFD
-         aGVzA24qm+jipGDoUJeiPhNbPsnlDc76yc7ZuSirB6Ty57blLZPdIytDxzOV/efLt4KP
-         GAFJyjyZTGjneeEhypEQWtkouT17WIWWtmKhFf81ENysNDNIJKhPlddfe5T4Va/PFuo+
-         h7t4JtnFGV+tGcnKEaytx3QX/vorUzWkIgecTOEclPxFbdaTjUygVbcfqYYO9j2XrSMM
-         t7848BS3hx5+3qC1R6mTuZhO86NI8xbFt1sn8tWI7rOG/9PQer0mBjxVrnireRXLp5j9
-         aCZw==
+        d=gmail.com; s=20251104; t=1779057277; x=1779662077; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=O/MQlLLBDXSTdeD7xZqTG/PCJ9KXZ9mlqodjpYu4cBM=;
+        b=ArajxlEss9g9tCXIATwvRzbYNu89mW90w/x1u7RWgQ6Zgv97J5fDsDfLFWPShMZqR0
+         88ABmW8n9oSzorddYjECnM/VhiprByAFqe1wNYQjirda2TtPKy+QJuq5kSM0rgALBA4i
+         2bpqyXRKFm9vdIa8NcGXYBg+NHfWBi/w2xLniaVKRHoTfyHGxmO76Pkd3p/iUFiUAuKB
+         VbvPeBl704okyim2yFkzi9+z3CkM0A3eM7c7clvF1Z5e4IC8aVMORmsSmcOvOC+/xKEE
+         6St7+dwn8IC1blebjlVGH+EYs0I1W/wF1mX0AqnHaj9ByPEoTG8MWbLrahz77EhslEg+
+         SoQw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779011854; x=1779616654;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=Sl1Bw/0RxsOrZnosvkgEqpf9C8mJ0ZVAuZnVOQypWcg=;
-        b=iK+3EB3IUXy01WD95+hRvjOwZ3k7i6F11Ww3/FioN+bN7KV3BjWrJZI/RZfL9VZQUg
-         ZLG5l1cg/MP+WC4UnAPu2tY1GyoRCYIATf9XFDEECy7611Brd1pgrVPM0flQZ500jaup
-         ani4ADmFHs9LoFiuhcuUIWKKb08ZAgCcgJMSrW+0RtYe2HxWRJsKMCruFNYhl6Sevg9L
-         adsiz93J/f2C0U1TfrBkzHmELVfoWtnvUI66fhO8YoK6HBJGl2HoHhpzRSPVhlRpUAp5
-         NWBSCWnr3YyXugVDT++/S68GY4nP2IY4i7a2gqo7e+jHo59l2eyeJyCUGwL7f+9kHEx7
-         6i7A==
-X-Forwarded-Encrypted: i=1; AFNElJ893s8R7HmOyqQZiFxRDuKat1KCtWzoowEjzS8mxp25U8ZLEY5M3bQbi8tE2cKvhWaY/j2p4FcmYQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxWz+46sTTyYNRrIJpFrROrRP3Tj1+E7r8g+l4spvWFgAJhfqXL
-	ltOib8Xo4SghcO5eZq41AhYr/KzpURORD48fhpPBsvssxwjrXhKDTjj+Ps44MUa8iHo=
-X-Gm-Gg: Acq92OHCXEBspHiaGhCzTE1SEOuDIMJvG57qSgL1dNP8Di0zgmeMf2TrTHuaBTkEOgJ
-	z5EaSL2N2zwHdnoe8ZmdnOoUVniao1tP7IzGHhFvRm+lVJMHUUFmsmIlrRl7fXOof+acVm/OImU
-	tniYxskTduzgjGFb3GBHa0qa1W8Pk9R8jGID9mppl/bSw6FTNUDVMlMVnebyYsRm7V1WYN54Qfu
-	G3NATmGY9RYHKPy8Gm6lRux4kDy6AcgrmFRIAOA7J+CxFe+bguuq4c7dKwLjY8R/wbSDvPiKZ8+
-	Xm9bBdcys+MR4A2edxn6o0Fr7PQv64CRtqVkz+JF5VQ60AtkB4ZlWjzmLs/ZpUwnPDSVR9zTx2j
-	ckekp8FM1qQHRaqxkS2FVMVor5q5vGgHDi7yFQwBZvGupEaxnBkPuoULLB3YfVErX5ksKKIHDvr
-	G6rbw2qcIBFVNUPZuvT+411v2J/pPGO5ItPb9uJac5mKYpffrJbmQWXmdunEBc7eI7EAMlbQ==
-X-Received: by 2002:a5d:584c:0:b0:44b:7ec9:2d76 with SMTP id ffacd0b85a97d-45e5c57d400mr15640757f8f.7.1779011853540;
-        Sun, 17 May 2026 02:57:33 -0700 (PDT)
-Received: from [172.18.125.123] (ip-185-104-138-119.ptr.icomera.net. [185.104.138.119])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-45d9e768bcesm30290208f8f.4.2026.05.17.02.57.30
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 17 May 2026 02:57:33 -0700 (PDT)
-Message-ID: <41f748a2979937ca6d7e8016d06de9ddc4c4d129.camel@suse.com>
-Subject: Re: [PATCH 06/18] libmultipath: use shared_ptr for checker classes
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Brian Bunker
-	 <brian@purestorage.com>, dm-devel@lists.linux.dev, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Date: Sun, 17 May 2026 11:57:25 +0200
-In-Reply-To: <agPKtqVRFSIsxerR@redhat.com>
-References: <20260505154332.448054-1-mwilck@suse.com>
-	 <20260505154332.448054-7-mwilck@suse.com> <agPKtqVRFSIsxerR@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 
+        d=1e100.net; s=20251104; t=1779057277; x=1779662077;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=O/MQlLLBDXSTdeD7xZqTG/PCJ9KXZ9mlqodjpYu4cBM=;
+        b=WRFd/xW3XVQH/z8nl7yEmHv+8Dvqgcu3mlmFlP5ZTVYztFvf8HvDgalAJOhvNi+ggu
+         i3UjhqhF9tEUcLsQyCJElJa/UcI/vzcilSaieSnqiZL7liMjNcjAV6MG9S7RAR1YaNyS
+         1uXG0O8ktyvX3AEV8BngC30GqhNaLidRzwb1nlfFJ1cQK9k1FJw4Coo4/oscjb1YMX0x
+         dcF24wp7Zx4NZeOW+6yw64O9cvwg3ps6G9jb+bRG41WH4of0hURjq1KErN+OUToRXdUK
+         EwB+r0u3IDIXu7mI3YQUpqMKuNQh+5G0G0PpRsoPCMtMYdPTgAylIZ23CXpXCHCmLyyC
+         mceg==
+X-Forwarded-Encrypted: i=1; AFNElJ9tTJa6GZ/m49zTQ+kRMT00cS57cMFAtSo1XYrW74ab0fb467EoqS3Z/PsM7O/SxeGLyuv3oSzofg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Ywk7S5oDEAAAinzQFgruCGg2LkyLW2nOqGRQWhiIAQ6cWSibNtB
+	5XZHis6YMiCRDDhKVuszYtbEc88nrdmRxQv+DQD3GVdncYf480+N8BQLAIkEhymYLRL6uh26F56
+	rQlEUO/7y6mA8OgJEg5sOIyGWqYIfQfw=
+X-Gm-Gg: Acq92OGGjCMyNF0ge6qTGXGS4HjYq5cKQBzN6AE9p59rRi8MnyuhaaJPj6MPa/ZWcXu
+	IX5P5uTUGwZU4JpBFc33RZPQR+BPE395voWVUQpa27XZk7E8D1+xnt4GteBG12EhXPEOIrdvzXo
+	29nT81sP3YRFbG3CSAQaLf7Fo0e+nj/floqNOsDKcHd6+UW4W81UMxWpjmghdOWzCbcRFbC5QOj
+	5mxsv01yXDwUM8N5uvGLz+C2Tbjfvmx7u5E3LKmKd2kb1PaAKK5Ho9d0b42GSUya0IWFUWA8sxu
+	hOCTvQbrEy4R0B0yMUFv4SA43eow
+X-Received: by 2002:a05:6512:31c4:b0:5a4:11b0:fad7 with SMTP id
+ 2adb3069b0e04-5aa0e619d6amr1672043e87.2.1779057277025; Sun, 17 May 2026
+ 15:34:37 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+References: <CAC_j7i1R7oy+nRhxEjCTba=DUgn02w9X+p94DCu0aHv5+5tKnQ@mail.gmail.com>
+ <c3e576c8-f548-4ee4-87de-cb9151f8a061@leemhuis.info>
+In-Reply-To: <c3e576c8-f548-4ee4-87de-cb9151f8a061@leemhuis.info>
+From: Vjaceslavs Klimovs <vklimovs@gmail.com>
+Date: Sun, 17 May 2026 15:34:25 -0700
+X-Gm-Features: AVHnY4IqVaFrB5wz53o74Aa6juPbaca2mW3cmxSanoIxrR8TtY6H1MsdZzNhJHI
+Message-ID: <CAC_j7i0iL9tPSuCxxUH_F_Ph7jy=6LcXA5=ZPoFU0jUo2P4fag@mail.gmail.com>
+Subject: Re: [REGRESSION] block: virtio-blk + LVM raid1 spurious sector-0 read
+ failures on libaio/threads submit since 5ff3f74e145a ("block: simplify direct
+ io validity check")
+To: Thorsten Leemhuis <regressions@leemhuis.info>
+Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>, Hannes Reinecke <hare@suse.de>, 
+	"Martin K. Petersen" <martin.petersen@oracle.com>, Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org, 
+	linux-raid@vger.kernel.org, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, regressions@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2026-05-12 at 20:49 -0400, Benjamin Marzinski wrote:
-> On Tue, May 05, 2026 at 05:43:20PM +0200, Martin Wilck wrote:
-> > Utilize the share_ptr code for tracking the refcount of checker
-> > classes.
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > ---
-> > =C2=A0libmultipath/checkers.c | 98 +++++++++---------------------------=
--
-> > ----
-> > =C2=A0libmultipath/checkers.h |=C2=A0 2 -
-> > =C2=A02 files changed, 20 insertions(+), 80 deletions(-)
-> >=20
-> > diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-> > index 8f18ca6..a3b9cc8 100644
-> > --- a/libmultipath/checkers.c
-> > +++ b/libmultipath/checkers.c
-> [...]
-> > @@ -163,8 +143,7 @@ static struct checker_class
-> > *add_checker_class(const char *name)
-> > =C2=A0		goto out;
-> > =C2=A0
-> > =C2=A0	c->mp_init =3D (int (*)(struct checker *)) dlsym(c->handle,
-> > "libcheck_mp_init");
-> > -	c->reset =3D (void (*)(void)) dlsym(c->handle,
-> > "libcheck_reset");
-> > -	c->thread =3D (void *(*)(void*)) dlsym(c->handle,
-> > "libcheck_thread");
-> > +	c->reset =3D (void (*)(void))dlsym(c->handle,
-> > "libcheck_reset");
->=20
-> Nitpick. Dropped a space here.
+Yes, that was exactly it. The patch works for raid1 logical volumes
+but, for obvious reasons (these are dm raid) this still oopses on
+legacy mirror logical volumes:
 
-I didn't do that. clang-format did, as it also reformats context lines
-in patches. I think clang-format is correct. We usually don't use space
-after cast, do we? (As usual, our code base is inconsistent in this
-respect).
+[    2.168054] device-mapper: raid1: Mirror read failed from 252:0.
+Trying alternative device.
+  [    2.169241] BUG: unable to handle page fault for address: fffff580045f=
+4bc8
+  [    2.170256] #PF: supervisor read access in kernel mode
+  [    2.170997] #PF: error_code(0x0000) - not-present page
+  [    2.171706] PGD 7ff9d067 P4D 7ff9d067 PUD 7ff9c067 PMD 0
+  [    2.172433] Oops: Oops: 0000 [#1] SMP PTI
+  [    2.173003] CPU: 0 UID: 0 PID: 11 Comm: kworker/0:1 Not tainted
+6.18.29+ #19 PREEMPT(lazy)
+  [    2.174118] Hardware name: QEMU Standard PC (Q35 + ICH9, 2009),
+BIOS 1.16.3-20250108_150619-localhost 04/01/2014
+  [    2.175472] Workqueue: kmirrord do_mirror
+  [    2.176040] RIP: 0010:bio_add_page+0x8c/0x340
+  [    2.176676] Code: 07 4d 8b 48 08 41 f6 c1 01 0f 85 d6 01 00 00 0f
+1f 44 00 00 4d 89 c1 49 8b 11 48 c1 ea 33 83 e2 07 83 fa 04 0f 84 bf
+00 00 00 <48> 8b 56 08 4c 8d 4a ff f6 c2 01 75
+  08 0f 1f 44 00 00 49 89 f1 49
+  [    2.179169] RSP: 0018:ffffcea500063bc8 EFLAGS: 00010293
+  [    2.179933] RAX: 0000000000000001 RBX: ffff8d53149af400 RCX:
+0000000000000580
+  [    2.180947] RDX: 0000000000000001 RSI: fffff580045f4bc0 RDI:
+ffff8d53149af488
+  [    2.181969] RBP: 0000000000000000 R08: fffff580005f4c00 R09:
+fffff580005f4c00
+  [    2.182978] R10: ffffcea500063c14 R11: 0000000000000a80 R12:
+ffff8d5303192a80
+  [    2.183997] R13: ffffcea500063c20 R14: 0000000000000001 R15:
+ffffcea500063cf8
+  [    2.185022] FS:  0000000000000000(0000) GS:ffff8d53ed4d5000(0000)
+knlGS:0000000000000000
+  [    2.186180] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+  [    2.187035] CR2: fffff580045f4bc8 CR3: 0000000002c44002 CR4:
+0000000000372ef0
+  [    2.188047] Call Trace:
+  [    2.188417]  <TASK>
+  [    2.188756]  do_region+0x21d/0x270
+  [    2.189313]  dispatch_io+0xf1/0x150
+  [    2.189832]  ? __pfx_bio_get_page+0x10/0x10
+  [    2.190424]  ? __pfx_bio_next_page+0x10/0x10
+  [    2.191046]  dm_io+0x136/0x240
+  [    2.191503]  ? __pfx_read_callback+0x10/0x10
+  [    2.192108]  ? __pfx_bio_get_page+0x10/0x10
+  [    2.192708]  ? __pfx_bio_next_page+0x10/0x10
+  [    2.193319]  do_reads+0x13e/0x210
+  [    2.193807]  ? __pfx_read_callback+0x10/0x10
+  [    2.194411]  do_mirror+0x117/0x2a0
+  [    2.194912]  process_one_work+0x18d/0x340
+  [    2.195508]  worker_thread+0x196/0x300
+  [    2.196022]  ? __pfx_worker_thread+0x10/0x10
+  [    2.196617]  kthread+0xfc/0x240
+  [    2.197073]  ? __pfx_kthread+0x10/0x10
+  [    2.197606]  ? __pfx_kthread+0x10/0x10
+  [    2.198116]  ret_from_fork+0x158/0x170
+  [    2.198645]  ? __pfx_kthread+0x10/0x10
+  [    2.199161]  ret_from_fork_asm+0x1a/0x30
+  [    2.199736]  </TASK>
+  [    2.200053] Modules linked in:
+  [    2.200493] CR2: fffff580045f4bc8
+  [    2.200951] ---[ end trace 0000000000000000 ]---
+  [    2.201599] RIP: 0010:bio_add_page+0x8c/0x340
+  [    2.202193] Code: 07 4d 8b 48 08 41 f6 c1 01 0f 85 d6 01 00 00 0f
+1f 44 00 00 4d 89 c1 49 8b 11 48 c1 ea 33 83 e2 07 83 fa 04 0f 84 bf
+00 00 00 <48> 8b 56 08 4c 8d 4a ff f6 c2 01 75
+  08 0f 1f 44 00 00 49 89 f1 49
+  [    2.204690] RSP: 0018:ffffcea500063bc8 EFLAGS: 00010293
+  [    2.205390] RAX: 0000000000000001 RBX: ffff8d53149af400 RCX:
+0000000000000580
+  [    2.206368] RDX: 0000000000000001 RSI: fffff580045f4bc0 RDI:
+ffff8d53149af488
+  [    2.207333] RBP: 0000000000000000 R08: fffff580005f4c00 R09:
+fffff580005f4c00
+  [    2.208297] R10: ffffcea500063c14 R11: 0000000000000a80 R12:
+ffff8d5303192a80
+  [    2.209257] R13: ffffcea500063c20 R14: 0000000000000001 R15:
+ffffcea500063cf8
+  [    2.210265] FS:  0000000000000000(0000) GS:ffff8d53ed4d5000(0000)
+knlGS:0000000000000000
+  [    2.211391] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+  [    2.212201] CR2: fffff580045f4bc8 CR3: 0000000002c44002 CR4:
+0000000000372ef0
+  [    2.213196] Kernel panic - not syncing: Fatal exception
+  [    2.214313] Kernel Offset: 0xc200000 from 0xffffffff81000000
+(relocation range: 0xffffffff80000000-0xffffffffbfffffff)
+  [    2.215981] Rebooting in 10 seconds..
 
-While I don't want to enforce formatting style throughout the entire
-code base, I tend to keep the changes that clang-format applies to
-context lines (be it only to avoid red lights from the GitHub CI).
-
-Do you disagree with this policy?
-
-Regards
-Martin
-
->=20
-> > =C2=A0	c->pending =3D (int (*)(struct checker *)) dlsym(c->handle,
-> > "libcheck_pending");
-> > =C2=A0	c->need_wait =3D (bool (*)(struct checker *)) dlsym(c-
-> > >handle, "libcheck_need_wait");
-> > =C2=A0	/* These 5 functions can be NULL. call dlerror() to clear
-> > out any
-> [...]
-> > @@ -371,43 +350,6 @@ bad_id:
-> > =C2=A0	return generic_msg[CHECKER_MSGID_NONE];
-> > =C2=A0}
->=20
-> Removing the checker thread stuff is more of a cleanup from d1ebd977.
-> It
-> should probably either be it's own cleanup patch, or it should at
-> least
-> get mentioned in the commit message.
-> =C2=A0=20
-> > -static void checker_cleanup_thread(void *arg)
-> > -{
-> > -	struct checker_class *cls =3D arg;
-> > -
-> > -	free_checker_class(cls);
-> > -	rcu_unregister_thread();
-> > -}
-> > -
-> > -static void *checker_thread_entry(void *arg)
-> > -{
-> > -	struct checker_context *ctx =3D arg;
-> > -	void *rv;
-> > -
-> > -	rcu_register_thread();
-> > -	pthread_cleanup_push(checker_cleanup_thread, ctx->cls);
-> > -	rv =3D ctx->cls->thread(ctx);
-> > -	pthread_cleanup_pop(1);
-> > -	return rv;
-> > -}
-> > -
->=20
-> Also, start_checker_thread() is stil declared in
-> libmultipath/checkers.h,
-> along with a comment.
->=20
-> -Ben
->=20
-> > -int start_checker_thread(pthread_t *thread, const pthread_attr_t
-> > *attr,
-> > -			 struct checker_context *ctx)
-> > -{
-> > -	int rv;
-> > -
-> > -	assert(ctx && ctx->cls && ctx->cls->thread);
-> > -	/* Take a ref here, lest the class be freed before the
-> > thread starts */
-> > -	(void)checker_class_ref(ctx->cls);
-> > -	rv =3D pthread_create(thread, attr, checker_thread_entry,
-> > ctx);
-> > -	if (rv !=3D 0) {
-> > -		condlog(1, "failed to start checker thread for %s:
-> > %m",
-> > -			ctx->cls->name);
-> > -		checker_class_unref(ctx->cls);
-> > -	}
-> > -	return rv;
-> > -}
-> > -
-> > =C2=A0void checker_clear_message (struct checker *c)
-> > =C2=A0{
-> > =C2=A0	if (!c)
+On Fri, May 15, 2026 at 10:10=E2=80=AFPM Thorsten Leemhuis
+<regressions@leemhuis.info> wrote:
+>
+> On 5/15/26 18:52, Vjaceslavs Klimovs wrote:
+> > Summary
+> > -------
+> > On v6.18, starting a libvirt/QEMU guest with virtio-blk backed by an
+> > LVM "--type raid1" LV (drivers/md/dm-raid.c stacked on
+> > drivers/md/raid1.c) makes md/raid1 register read failures at LV
+> > sector 0 within seconds of "virsh start" and mark rimage_0 Faulty
+> > once max_corrected_read_errors (default 20) is exceeded. Reads
+> > succeed via the redirect path so guests boot, but every guest disk
+> > ends up degraded on every VM start. Same workload on legacy
+> > "--type mirror" (drivers/md/dm-raid1.c) crashes the host: a
+> > zero-length READ reaches the NVMe controller, is rejected with
+> > "Invalid Field in Command", and the dm-mirror recovery path oopses.
+>
+> That sounds somewhat like
+> https://lore.kernel.org/all/2982107.4sosBPzcNG@electra/
+>
+> Have you tried latest 7.1-rc? It contains a fix for the problem
+> mentioned in said thread: f7b24c7b41f23b ("md/raid1,raid10: don't fail
+> devices for invalid IO errors") [v7.1-rc2]
+>
+> Ciao, Thorsten
+>
+> > Symptom on dm-raid raid1 (post --type raid1)
+> > --------------------------------------------
+> > Per LV, at virsh start, in host dmesg:
+> >
+> >   kernel: raid1_end_read_request: 95 callbacks suppressed
+> >   kernel: raid1_read_request: 95 callbacks suppressed
+> >   kernel: md/raid1:mdX: dm-58: rescheduling sector 0
+> >   kernel: md/raid1:mdX: redirecting sector 0 to other mirror: dm-58
+> >   kernel: md/raid1:mdX: dm-58: rescheduling sector 0
+> >   kernel: md/raid1:mdX: redirecting sector 0 to other mirror: dm-58
+> >   [... 10 rescheduling/redirecting pairs ...]
+> >   kernel: md/raid1:mdX: dm-58: Raid device exceeded read_error
+> > threshold [cur 21:max 20]
+> >   kernel: md/raid1:mdX: dm-58: Failing raid device
+> >   kernel: md/raid1:mdX: Disk failure on dm-58, disabling device.
+> >   kernel: md/raid1:mdX: Operation continuing on 1 devices.
+> >
+> >   dmeventd: WARNING: Device #0 of raid1 array, vg0-iris_boot, has faile=
+d.
+> >   dmeventd: WARNING: Waiting for resynchronization to finish before
+> > initiating repair on RAID device vg0-iris_boot.
+> >   dmeventd: Use 'lvconvert --repair vg0/iris_boot' to replace failed de=
+vice.
+> >
+> > Subsequent "lvs -a":
+> >
+> >   WARNING: RaidLV vg0/iris_boot needs to be refreshed!
+> >   See character 'r' at position 9 in the RaidLV's attributes and its Su=
+bLV(s).
+> >
+> > dmesg | grep nvme is EMPTY on this path. The NVMe driver is not
+> > involved in producing the error; the failure originates between the
+> > virtio-blk bio submission and raid1_end_read_request().
+> >
+> > Symptom on legacy dm-mirror (pre-conversion --type mirror)
+> > ----------------------------------------------------------
+> > Same workload on drivers/md/dm-raid1.c reaches the NVMe controller
+> > as a zero-length READ and panics the host through dm-mirror's
+> > recovery path:
+> >
+> >   kernel: operation not supported error, dev nvme1n1, sector 935446535
+> > op 0x0:(READ) flags 0x0 phys_seg 0 prio class 2
+> >   kernel: nvme1n1: I/O Cmd(0x2) @ LBA 935446535, 0 blocks, I/O Error
+> > (sct 0x0 / sc 0x2)
+> >   [... 10+ identical bursts at same timestamp ...]
+> >   dmeventd: Primary mirror device 252:58 read failed.
+> >   dmeventd: vg0-iris_boot is now in-sync.
+> >   [kernel oops in dm_mirror recovery path, full trace lost to console f=
+lash]
+> >
+> > The "phys_seg 0", "0 blocks", "sct 0x0/sc 0x2" trio (NVMe Generic,
+> > Invalid Field in Command, NVMe spec 4.1.1.2) is unambiguous: a bio
+> > with bi_iter.bi_size =3D=3D 0 and bi_vcnt =3D=3D 0 left the block layer=
+ and
+> > hit the controller. dm-raid raid1 hides this by retrying on the
+> > surviving leg, but the upstream-of-md trigger is identical.
+> >
+> > Bisect
+> > ------
+> > git bisect, v6.12..v6.18, 16 deterministic GOOD/BAD steps, no skips,
+> > ~104 minutes:
+> >
+> >   5ff3f74e145adc79b49668adb8de276446acf6be is the first bad commit
+> >   block: simplify direct io validity check
+> >
+> >   --- a/block/fops.c
+> >   +++ b/block/fops.c
+> >   @@ -38,8 +38,8 @@ static blk_opf_t dio_bio_write_op(struct kiocb *ioc=
+b)
+> >    static bool blkdev_dio_invalid(struct block_device *bdev, struct kio=
+cb *iocb,
+> >                                   struct iov_iter *iter)
+> >    {
+> >   -        return iocb->ki_pos & (bdev_logical_block_size(bdev) - 1) ||
+> >   -                !bdev_iter_is_aligned(bdev, iter);
+> >   +        return (iocb->ki_pos | iov_iter_count(iter)) &
+> >   +                        (bdev_logical_block_size(bdev) - 1);
+> >    }
+> >
+> > The dropped bdev_iter_is_aligned() used to walk the iov_iter and
+> > reject per-segment misaligned/degenerate vectors at the blkdev fops
+> > entry point. The replacement only validates ki_pos and total length
+> > against the logical block size. Cases that now pass that no longer
+> > get rejected:
+> >
+> >   - iter with iov_iter_count(iter) =3D=3D 0  (degenerate; total length =
+is
+> >     "sector-aligned" since 0 % 512 =3D=3D 0)
+> >   - iter where total length is sector-aligned but a segment isn't
+> >
+> > The commit message justifies the removal with "The block layer
+> > checks all the segments for validity later". This is true for the
+> > io_uring submit path (which enters __blkdev_direct_IO directly and
+> > does its own validation) but not for the libaio aio_read/write_iter
+> > or the worker-pool sync read/write_iter paths that enter via
+> > blkdev_{read,write}_iter() -> blkdev_dio_invalid(). For those paths,
+> > the segment check has no replacement.
+> >
+> > Reproducing
+> > ----------------------------------------------------------
+> >
+> > The trigger requires QEMU virtio-blk's specific submission shape AND
+> > a non-io_uring submit. Userspace libaio alone, userspace
+> > preadv-in-a-thread alone, and QEMU's raw-driver open probes (which
+> > qemu-img info exercises identically) are all insufficient. The
+> > combination that hits the bug is "guest-driven I/O through
+> > virtio-blk-pci with cache.direct=3Don and aio in {native, threads}".
+> >
+> > #regzbot introduced: 5ff3f74e145adc79b49668adb8de276446acf6be
+> >
+> > Thanks,
+> > Vjaceslavs Klimovs
+> >
+>
