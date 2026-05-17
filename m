@@ -1,185 +1,197 @@
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 283A237BE8E
-	for <dm-devel@lists.linux.dev>; Sat, 16 May 2026 12:18:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 554CF348866
+	for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 09:57:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778933884; cv=none; b=t5MuRpVE79Sb9woRRsEimcAjgVsWqDajhViHQvzi1xt1koZuhDhVOSYt2hCZCQvRYCjf0EwhQG9ekPx3kVms6A7QG1D87AKCLZhrlDmlDdUajBnm9hgHc8JsrdD/q/a0FCO86Ok5FiWc7MCZRJsKBW4KWHRCBRawWoRW/Go+ZrY=
+	t=1779011857; cv=none; b=EHYtutOZKJdgKu1ela23/BzFCCSvvGmMQJGFtmWD63Oioqky5z4TgjY8GkoinadyHB//IqIQ2PdnTwxWKPP5HCh/IARiYoKETx2V9e82aVMmEu6aCx7881bcGMKqCdenSP1lQ15zbOAKYSiTl/Q0ZPHg1/ligdv/vqBCuDi1z0E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778933884; c=relaxed/simple;
-	bh=Db7mhb9DKOULr0KFD6k/vchV59TltpGYG6dPoC2RznY=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=TArJnd50yLhiAy1x4Ynqt+u1aBVGm2qGlwHc+Fmex4hHiQx6vv5i7FjIOq0NDzJ3+APOcjAxAPoJN3hD6v0uf/eehPbpEZKWQIIhK1IjOV3DBrs0qad7J9yzvd+CVFb1772Gxk5T5WBZ9VwoSIDs6DJqURzMMNOEp9ws16JCQsU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z1Io64v1; arc=none smtp.client-ip=209.85.128.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1779011857; c=relaxed/simple;
+	bh=QrLEntlR9eCJgKpfnOERLDwvgQnIcENE2UtUNxnc9eM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=J4YaJSfWW85LXSA4duVbN2KhS/5six84bnzbUCsbb8JK3/9ubMn8tSxiG4xPxoJFZUKc/15r5Co7KjoDQhrEI98+lWXUbL9+B/K7R1Pi5Ga+z7BknomeRDVUk9YJplxQKlDkdK51lFzK70o2xqZQNMxKPnQUeouJFi0EZ4CAqZs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=T/M8byQG; arc=none smtp.client-ip=209.85.221.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z1Io64v1"
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-48fde648a71so4077675e9.0
-        for <dm-devel@lists.linux.dev>; Sat, 16 May 2026 05:18:02 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="T/M8byQG"
+Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-4585a116a4aso972981f8f.3
+        for <dm-devel@lists.linux.dev>; Sun, 17 May 2026 02:57:35 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1778933881; x=1779538681; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to;
-        bh=nKg8jOwjc4StdEv3NDoZR5djOXhb/uASYMLmVlDBpgk=;
-        b=Z1Io64v1ZSuZORtiUZQcphVP+Rhq/K6qBqc/ovjOOKoq2HfmSb6iV4BAgxGlT1Qwjm
-         zStWF+wBq4TO+odRwZobv9Oi9M8eyI/a+BPFwA6sckWHDlsWWZU4CLOMPDbdSHuiLC/x
-         7LbEj48cwNxmI3mEf4bJqDoDWaBEU5+YZB1/WDURSlYs9WNBM2txZZzGMHD8zBwYVrnB
-         IYf5UNWopK95gHH+ZCei5DJRMdrvxAYOTkrOL6zQAlneFVG3RyYwh+qtxd4/jylvj7zd
-         HZOG88SADRdhwMFxPCpa6oxMZsgcuLb0AjBQ9HsfG07PcBGT2+HJrrsuQLNJCThdLEDB
-         I3Tw==
+        d=suse.com; s=google; t=1779011854; x=1779616654; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=Sl1Bw/0RxsOrZnosvkgEqpf9C8mJ0ZVAuZnVOQypWcg=;
+        b=T/M8byQGhpXo7EA4lPRPGBTyMYR8h1vsLJa/bI6IKYvQos4GuRiM8ov5QApK+qooFD
+         aGVzA24qm+jipGDoUJeiPhNbPsnlDc76yc7ZuSirB6Ty57blLZPdIytDxzOV/efLt4KP
+         GAFJyjyZTGjneeEhypEQWtkouT17WIWWtmKhFf81ENysNDNIJKhPlddfe5T4Va/PFuo+
+         h7t4JtnFGV+tGcnKEaytx3QX/vorUzWkIgecTOEclPxFbdaTjUygVbcfqYYO9j2XrSMM
+         t7848BS3hx5+3qC1R6mTuZhO86NI8xbFt1sn8tWI7rOG/9PQer0mBjxVrnireRXLp5j9
+         aCZw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1778933881; x=1779538681;
-        h=content-transfer-encoding:in-reply-to:autocrypt:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=nKg8jOwjc4StdEv3NDoZR5djOXhb/uASYMLmVlDBpgk=;
-        b=oi/N0vZQUlKvtc5BxUF0I8/cn/vj57EELob9BiQj+pDbzGEw8TYlAOH2wIQMcjoZ+g
-         2Xj8KLVs12nrSauVsX87tvVnXyZcKRk7Tk3Uoz39WRsjtI2+3pIvO4ssNPa/49NkX6FI
-         JX2jkvGbs4pD3aLsnjyEdQfIJAvn/4K/whUBLiWhgw/j2NVVxY0vFWukfIcPCz9OYCiT
-         4jxumUmzoQVlvDjDtyyUHjsX/Yv+JP6fZUGnBPZ3diQz2a/mJfUjAcGy2U62u2kLKw0K
-         xECsJJ28HfECYqARGgUkNonfk27UZ1L0Q/jKwjasJGoYU42k+mgUgxR2obGLpa3UWHCv
-         wFQw==
-X-Forwarded-Encrypted: i=1; AFNElJ+DBdWLZQvexirZ6envzki5c1sV6R0SLlvimiYB71JeoN8r6IeAlznb+pbMdGIgrU4QyURDeqH3nA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxyn+g+lLFo5V0aovPNbSAzal7moPgUdwyVR1zKQk1h+Y2/+HoJ
-	VwgjZ9xlTUBGfbwtBvfEi5rF8nXU2LaJHbt4W3zSMkuRSwdYY1fT/fe2
-X-Gm-Gg: Acq92OFGsTbTyjstemqHGVULu9AckEgAFDpNdmDbTSN7LTi9UOSZgg3NYHPa8p557h3
-	+MjNW2idNi/P5ZZLRvBUMKn2PihlAxVzh9aMwvN/yLq+Y7HdOIgskQ+faBCu8Hhlac6Du0ZWDZ5
-	oRF+aXVzha5V+Lcc3aQ9IPu39JCT1/oywQiMK2mE6qXcd6mFJxPHchem84tIs7B3UiX9+AfZMDe
-	2NVB152RnOrqp5k2w3uLqbsin4/gJeAPuXHmVHltyf1xY2f6v1rWDUVdZIVwWnKwxCCx5ccIB2Z
-	aGbvc+uctYaG7hWLY5PlYd/mzVenxvKsDNYQoWJidJYraor+6U+aqeOlqwkBUmmsrpQLqpuN+Ah
-	3ujOXcg+uHjNQ8nAos8A79HvQhYIrZ4RWLKwmWJrwgjeptT9uE1BwxJUWZ3OZMgwB75rfap/e4X
-	0jqZGogEeda2PypvF7AqFTNq2v6FdRGJuKa7G0qa2UugSwfd0Vj+CMC7mpLRC9amv8iA==
-X-Received: by 2002:a05:600c:c0d0:b0:48a:761:5816 with SMTP id 5b1f17b1804b1-48fe53774b4mr86301855e9.8.1778933881207;
-        Sat, 16 May 2026 05:18:01 -0700 (PDT)
-Received: from [192.168.8.101] (37-48-49-167.nat.epc.tmcz.cz. [37.48.49.167])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-48fe5cab818sm128228785e9.14.2026.05.16.05.17.59
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sat, 16 May 2026 05:18:00 -0700 (PDT)
-Message-ID: <3b57685a-09b4-473a-8810-bbb46769ab42@gmail.com>
-Date: Sat, 16 May 2026 14:17:59 +0200
+        d=1e100.net; s=20251104; t=1779011854; x=1779616654;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Sl1Bw/0RxsOrZnosvkgEqpf9C8mJ0ZVAuZnVOQypWcg=;
+        b=iK+3EB3IUXy01WD95+hRvjOwZ3k7i6F11Ww3/FioN+bN7KV3BjWrJZI/RZfL9VZQUg
+         ZLG5l1cg/MP+WC4UnAPu2tY1GyoRCYIATf9XFDEECy7611Brd1pgrVPM0flQZ500jaup
+         ani4ADmFHs9LoFiuhcuUIWKKb08ZAgCcgJMSrW+0RtYe2HxWRJsKMCruFNYhl6Sevg9L
+         adsiz93J/f2C0U1TfrBkzHmELVfoWtnvUI66fhO8YoK6HBJGl2HoHhpzRSPVhlRpUAp5
+         NWBSCWnr3YyXugVDT++/S68GY4nP2IY4i7a2gqo7e+jHo59l2eyeJyCUGwL7f+9kHEx7
+         6i7A==
+X-Forwarded-Encrypted: i=1; AFNElJ893s8R7HmOyqQZiFxRDuKat1KCtWzoowEjzS8mxp25U8ZLEY5M3bQbi8tE2cKvhWaY/j2p4FcmYQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxWz+46sTTyYNRrIJpFrROrRP3Tj1+E7r8g+l4spvWFgAJhfqXL
+	ltOib8Xo4SghcO5eZq41AhYr/KzpURORD48fhpPBsvssxwjrXhKDTjj+Ps44MUa8iHo=
+X-Gm-Gg: Acq92OHCXEBspHiaGhCzTE1SEOuDIMJvG57qSgL1dNP8Di0zgmeMf2TrTHuaBTkEOgJ
+	z5EaSL2N2zwHdnoe8ZmdnOoUVniao1tP7IzGHhFvRm+lVJMHUUFmsmIlrRl7fXOof+acVm/OImU
+	tniYxskTduzgjGFb3GBHa0qa1W8Pk9R8jGID9mppl/bSw6FTNUDVMlMVnebyYsRm7V1WYN54Qfu
+	G3NATmGY9RYHKPy8Gm6lRux4kDy6AcgrmFRIAOA7J+CxFe+bguuq4c7dKwLjY8R/wbSDvPiKZ8+
+	Xm9bBdcys+MR4A2edxn6o0Fr7PQv64CRtqVkz+JF5VQ60AtkB4ZlWjzmLs/ZpUwnPDSVR9zTx2j
+	ckekp8FM1qQHRaqxkS2FVMVor5q5vGgHDi7yFQwBZvGupEaxnBkPuoULLB3YfVErX5ksKKIHDvr
+	G6rbw2qcIBFVNUPZuvT+411v2J/pPGO5ItPb9uJac5mKYpffrJbmQWXmdunEBc7eI7EAMlbQ==
+X-Received: by 2002:a5d:584c:0:b0:44b:7ec9:2d76 with SMTP id ffacd0b85a97d-45e5c57d400mr15640757f8f.7.1779011853540;
+        Sun, 17 May 2026 02:57:33 -0700 (PDT)
+Received: from [172.18.125.123] (ip-185-104-138-119.ptr.icomera.net. [185.104.138.119])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-45d9e768bcesm30290208f8f.4.2026.05.17.02.57.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 17 May 2026 02:57:33 -0700 (PDT)
+Message-ID: <41f748a2979937ca6d7e8016d06de9ddc4c4d129.camel@suse.com>
+Subject: Re: [PATCH 06/18] libmultipath: use shared_ptr for checker classes
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Brian Bunker
+	 <brian@purestorage.com>, dm-devel@lists.linux.dev, Xose Vazquez Perez
+	 <xose.vazquez@gmail.com>
+Date: Sun, 17 May 2026 11:57:25 +0200
+In-Reply-To: <agPKtqVRFSIsxerR@redhat.com>
+References: <20260505154332.448054-1-mwilck@suse.com>
+	 <20260505154332.448054-7-mwilck@suse.com> <agPKtqVRFSIsxerR@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.1 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 1/1] dm-inlinecrypt: add support for hardware-wrapped
- keys
-To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
- Mikulas Patocka <mpatocka@redhat.com>, Eric Biggers <ebiggers@kernel.org>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Neeraj Soni <neeraj.soni@oss.qualcomm.com>, dm-devel@lists.linux.dev,
- linux-kernel@vger.kernel.org
-References: <20260516115045.3958326-1-linlin.zhang@oss.qualcomm.com>
- <20260516115045.3958326-2-linlin.zhang@oss.qualcomm.com>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20260516115045.3958326-2-linlin.zhang@oss.qualcomm.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
 
-On 5/16/26 1:50 PM, Linlin Zhang wrote:
-> Add support for hardware-wrapped encryption keys to the
-> dm-inlinecrypt target.
-> 
-> Introduce a new parameter <is_wrappedkey> to indicate whether
-> the provided key is a raw key or a hardware-wrapped key. Based
-> on this flag, the appropriate blk-crypto key type is selected
-> when initializing the key.
-> 
-> This allows dm-inlinecrypt to work with hardware that requires
-> keys to be wrapped and managed by the underlying inline
-> encryption engine.
-> 
-> Update the target argument parsing accordingly and pass the
-> key type to blk_crypto_init_key(). Documentation is also
-> updated to reflect the new parameter and usage.
-> 
-> Signed-off-by: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-> ---
->   .../device-mapper/dm-inlinecrypt.rst          | 10 ++-
->   drivers/md/dm-inlinecrypt.c                   | 71 +++++++++++--------
->   2 files changed, 50 insertions(+), 31 deletions(-)
-> 
-> diff --git a/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst b/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-> index c71e600efb76..3a4ce2c5f228 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-> @@ -10,7 +10,7 @@ https://docs.kernel.org/block/inline-encryption.html
->   
->   Parameters::
->   
-> -	      <cipher> <key> <iv_offset> <device path> \
-> +	      <cipher> <key> <is_wrappedkey> <iv_offset> <device path> \
->   	      <offset> [<#opt_params> <opt_params>]
+On Tue, 2026-05-12 at 20:49 -0400, Benjamin Marzinski wrote:
+> On Tue, May 05, 2026 at 05:43:20PM +0200, Martin Wilck wrote:
+> > Utilize the share_ptr code for tracking the refcount of checker
+> > classes.
+> >=20
+> > Signed-off-by: Martin Wilck <mwilck@suse.com>
+> > ---
+> > =C2=A0libmultipath/checkers.c | 98 +++++++++---------------------------=
+-
+> > ----
+> > =C2=A0libmultipath/checkers.h |=C2=A0 2 -
+> > =C2=A02 files changed, 20 insertions(+), 80 deletions(-)
+> >=20
+> > diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+> > index 8f18ca6..a3b9cc8 100644
+> > --- a/libmultipath/checkers.c
+> > +++ b/libmultipath/checkers.c
+> [...]
+> > @@ -163,8 +143,7 @@ static struct checker_class
+> > *add_checker_class(const char *name)
+> > =C2=A0		goto out;
+> > =C2=A0
+> > =C2=A0	c->mp_init =3D (int (*)(struct checker *)) dlsym(c->handle,
+> > "libcheck_mp_init");
+> > -	c->reset =3D (void (*)(void)) dlsym(c->handle,
+> > "libcheck_reset");
+> > -	c->thread =3D (void *(*)(void*)) dlsym(c->handle,
+> > "libcheck_thread");
+> > +	c->reset =3D (void (*)(void))dlsym(c->handle,
+> > "libcheck_reset");
+>=20
+> Nitpick. Dropped a space here.
 
-Please use optional parameter.
-Adding mandatory field will introduce unnecessary incompatibility with dm-crypt mappings.
-(The idea was that you can simply switch "crypt" to "inlinecrypt" for raw keys.)
+I didn't do that. clang-format did, as it also reformats context lines
+in patches. I think clang-format is correct. We usually don't use space
+after cast, do we? (As usual, our code base is inconsistent in this
+respect).
 
-I would probably just add "hw-wrapped" or "keytype=raw|hw-wrapped" optional argument
-(with raw as default, so no need so specify it).
+While I don't want to enforce formatting style throughout the entire
+code base, I tend to keep the changes that clang-format applies to
+context lines (be it only to avoid red lights from the GitHub CI).
 
-IOW the mapping will look like this (1 is number of optional parameters):
+Do you disagree with this policy?
 
-    <cipher> <key> <iv_offset> <device path> <offset> 1 hw-wrapped
-or
-    <cipher> <key> <iv_offset> <device path> <offset> 1 keytype=hw-wrapped
+Regards
+Martin
 
-The second option will allow to add new key type much easier.
-
-Please check how other targets implement it, some dm-crypt examples
-https://gitlab.com/cryptsetup/cryptsetup/-/wikis/DMCrypt
-
-Thanks,
-Milan
-
+>=20
+> > =C2=A0	c->pending =3D (int (*)(struct checker *)) dlsym(c->handle,
+> > "libcheck_pending");
+> > =C2=A0	c->need_wait =3D (bool (*)(struct checker *)) dlsym(c-
+> > >handle, "libcheck_need_wait");
+> > =C2=A0	/* These 5 functions can be NULL. call dlerror() to clear
+> > out any
+> [...]
+> > @@ -371,43 +350,6 @@ bad_id:
+> > =C2=A0	return generic_msg[CHECKER_MSGID_NONE];
+> > =C2=A0}
+>=20
+> Removing the checker thread stuff is more of a cleanup from d1ebd977.
+> It
+> should probably either be it's own cleanup patch, or it should at
+> least
+> get mentioned in the commit message.
+> =C2=A0=20
+> > -static void checker_cleanup_thread(void *arg)
+> > -{
+> > -	struct checker_class *cls =3D arg;
+> > -
+> > -	free_checker_class(cls);
+> > -	rcu_unregister_thread();
+> > -}
+> > -
+> > -static void *checker_thread_entry(void *arg)
+> > -{
+> > -	struct checker_context *ctx =3D arg;
+> > -	void *rv;
+> > -
+> > -	rcu_register_thread();
+> > -	pthread_cleanup_push(checker_cleanup_thread, ctx->cls);
+> > -	rv =3D ctx->cls->thread(ctx);
+> > -	pthread_cleanup_pop(1);
+> > -	return rv;
+> > -}
+> > -
+>=20
+> Also, start_checker_thread() is stil declared in
+> libmultipath/checkers.h,
+> along with a comment.
+>=20
+> -Ben
+>=20
+> > -int start_checker_thread(pthread_t *thread, const pthread_attr_t
+> > *attr,
+> > -			 struct checker_context *ctx)
+> > -{
+> > -	int rv;
+> > -
+> > -	assert(ctx && ctx->cls && ctx->cls->thread);
+> > -	/* Take a ref here, lest the class be freed before the
+> > thread starts */
+> > -	(void)checker_class_ref(ctx->cls);
+> > -	rv =3D pthread_create(thread, attr, checker_thread_entry,
+> > ctx);
+> > -	if (rv !=3D 0) {
+> > -		condlog(1, "failed to start checker thread for %s:
+> > %m",
+> > -			ctx->cls->name);
+> > -		checker_class_unref(ctx->cls);
+> > -	}
+> > -	return rv;
+> > -}
+> > -
+> > =C2=A0void checker_clear_message (struct checker *c)
+> > =C2=A0{
+> > =C2=A0	if (!c)
