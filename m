@@ -1,462 +1,175 @@
-Received: from pdx-out-002.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-002.esa.us-west-2.outbound.mail-perimeter.amazon.com [44.246.1.125])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CE7D84C042E
-	for <dm-devel@lists.linux.dev>; Tue, 19 May 2026 12:00:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=44.246.1.125
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 345982882B4
+	for <dm-devel@lists.linux.dev>; Tue, 19 May 2026 23:15:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779192027; cv=none; b=OySKrtS27tq4vxRu56iNSnBO1P8xw4qbcz/VO1nqdAh+5RfW1drzg86OujqpdNBmehzwixacL3XQpBklhlDpJYRVqhvtTdWCXOCuDXM7n3LHOodt9eek4GN68+yVQ8zvXNnsQyKLVs/kZKCgEV0NPo1/1d/Ft9UIhIMNztvmiT4=
+	t=1779232518; cv=none; b=cq+xsJCj0xEQDzPpiy68kT5Sz9ZuUd+n6b7tK0PZZAp78LQ70X8/21nzu9XytliMXdC4QJYY9Cd1rv1ar3GzdaounaSNrguWi5VwgI07cw9VMoNWKeBiOTGqXV5E8lMCRDh53C2A3mNkLlmeatsfrPjtVh/OsOxVxWC0eA6Sd9c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779192027; c=relaxed/simple;
-	bh=cmw5aiU/mmpjfz/z7SlEMc31GunMUvm60AbAqOeUUAc=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=CdcR+rB45NDHpt0KtSMDAToyUF/rXDouhecAhQ5pAilQNMd6NTnOd/w1vpSIuxfH4EKC/GY0QOCgCEi3UXgPJ8wVZDd7qDK260NHyAuDXs2LLzvrVizjscLMf2XLZUUj77IRU0aNzb5E6C9ULpDUciY8E9F1mHM3KKMgMKRATbI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=q9KWbRE0; arc=none smtp.client-ip=44.246.1.125
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
+	s=arc-20240116; t=1779232518; c=relaxed/simple;
+	bh=lHDb2wCVccf4bMdzNh2Rk4e/R44omaI3P5HbRgBPcAE=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=STBNkFIFSvcA8MTi7wXYmQvlm9BwjqA+EdqRB46vnv1F7NmcgFH/JDCEVmc9f5lVGokH1H1kpVpMdMZc6XsBZwnUVSocZdqj0rrkjhLqz/L2JVmho5Qz0RHJpw4bhY9hjCYVvyaZA3eO3XC/eoRnIy9JGajQfQZPJTYkViXZX/k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Gj4KldkA; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="q9KWbRE0"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1779192025; x=1810728025;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=UW5P8STsJj+56MEmP59ylOT5VDbq34vc6f5Ggr7qf68=;
-  b=q9KWbRE0RfJwkAGZqKRYinRwXyQIkhwZDN/ek8ZZBKiEAuryQ2rHXfXs
-   Gc9LraztRwdOc2rEPlgwLSJEGtyxAJpJWGRnhMxzRCKQ2AzNggjcrDmVl
-   8gEh9O3fqu6bedudl+2Z1ZUJJ9LkCh5lsQs2O74mlIZWzVpeF4hecYTJo
-   Ua/AWt1TNE7e1jWEuh12Ilpudity2SyOmWHWlJ+br8aD+GKOJc8hz88pI
-   YJWZ6wAp3NYSN+z05kIvQcSnlQ4zds1pb55uP1Su45tg0dlwZLim9SCqw
-   Lei+7KTSXrbq+5NodfIUj8w9SClPhyZERj0+r5r89kvOrveSc2GlWTWbS
-   A==;
-X-CSE-ConnectionGUID: /5gWueNlQ76pOlbn+Z0ZKg==
-X-CSE-MsgGUID: Fq3RHgseREWhhTdZouJMOQ==
-X-IronPort-AV: E=Sophos;i="6.23,243,1770595200"; 
-   d="scan'208";a="19991179"
-Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
-  by internal-pdx-out-002.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 May 2026 12:00:23 +0000
-Received: from EX19MTAUWB002.ant.amazon.com [205.251.233.111:16491]
- by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.48.131:2525] with esmtp (Farcaster)
- id 95177541-f195-4a82-8748-f0bb5d5c2a00; Tue, 19 May 2026 12:00:23 +0000 (UTC)
-X-Farcaster-Flow-ID: 95177541-f195-4a82-8748-f0bb5d5c2a00
-Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
- EX19MTAUWB002.ant.amazon.com (10.250.64.231) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
- Tue, 19 May 2026 12:00:20 +0000
-Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
- by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
- Tue, 19 May 2026 12:00:18 +0000
-From: Leonid Ravich <lravich@amazon.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-CC: "David S . Miller" <davem@davemloft.net>, Mike Snitzer
-	<snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon
-	<agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, Eric Biggers
-	<ebiggers@kernel.org>, Jens Axboe <axboe@kernel.dk>, Horia Geanta
-	<horia.geanta@nxp.com>, Gilad Ben-Yossef <gilad@benyossef.com>,
-	<linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>,
-	<linux-block@vger.kernel.org>
-Subject: [PATCH 4/4] dm crypt: batch all sectors of a bio per crypto request
-Date: Tue, 19 May 2026 12:00:00 +0000
-Message-ID: <20260519120002.27267-5-lravich@amazon.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20260428101225.24316-1-lravich@amazon.com>
-References: <20260428101225.24316-1-lravich@amazon.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Gj4KldkA"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1779232515;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rH7Rm/MFTCSCauaDmPiyviKdVdO8hos6+4Wjad+hNUA=;
+	b=Gj4KldkAtk5UX77voTCUJE86KFER7aQOlI5KhT7X/EPRsb16ZTiqWmyZZ/4M+EKaPdyVSz
+	LxC44mV2mrS7EzLw7fzw5g9aEtvZ4NCD6H8J266VoxoUtas7Rt1tCww97az7wvQChROdgb
+	PTuz4WskyOSl7W9IXJQC42Oml7uqlJc=
+Received: from mail-qk1-f199.google.com (mail-qk1-f199.google.com
+ [209.85.222.199]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-661-fQQ9LcdZM2S8gYUYAYULEQ-1; Tue, 19 May 2026 19:15:13 -0400
+X-MC-Unique: fQQ9LcdZM2S8gYUYAYULEQ-1
+X-Mimecast-MFC-AGG-ID: fQQ9LcdZM2S8gYUYAYULEQ_1779232513
+Received: by mail-qk1-f199.google.com with SMTP id af79cd13be357-913fcc4c164so946730685a.1
+        for <dm-devel@lists.linux.dev>; Tue, 19 May 2026 16:15:13 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1779232513; x=1779837313;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=rH7Rm/MFTCSCauaDmPiyviKdVdO8hos6+4Wjad+hNUA=;
+        b=NHS6dzl7HLDKtsHH9QnGI1HZAbUgNw8enTLJIELy2SDmDmIqi2slbGVkDZQTMJSdN5
+         5oB74dV8o9KDqbMv+rpYbpt3zeB6Bwfv8Qt7hw94tYt5CfbBZApu/07uvBNtYmUNpWwj
+         mvbmdcp6p5Ht/bdBTdmEeR6MmBrF0bLbfLZOYJhdYHrnUEzzX0ubJZ4K+K24QyPAqDTi
+         ZNWy74OAbb2lBCSYmWKAxBf3lzL3wX0XmNImRxMgIF+RonnTgt/xGlwHGf1SD8czZ/xp
+         GzgVI3MSOJ4skDiiaTUU/E6fzso8VQEVcdAVhDYcFhPMZeHttC1EOaT2LArpSmu/3WMe
+         VFaQ==
+X-Gm-Message-State: AOJu0Yx3kvkApoqYtAqkyYDGxPj9DuWf7DMZnP62HJVjj8owrCg3uwEw
+	3Du21CFkTEWufxvv5LtS7tlpxUNAVy7PIC2bO/XLuC9PG7wWT2o1jvbmY208kuOijgXzctGEvjg
+	5XNGJnPHpJslJCHCBwyNF1kdze2dHJAZk8U6Sl2JIAerHq3CiuF0sKtScL7SI
+X-Gm-Gg: Acq92OFWHF5BORilHvztZitEaq5qthNs+Gdr8MxQlJrxyik3Gh7NIyvSB5UvszGpwlf
+	0iPG/lsrxevwMo5Ze3iSuUm2urF2RhSyUAv7YTun2AppiQ2fONX853XmChnersDS5ck26VDAWGk
+	myKt18W5cHYtKOw38yPq8dNX9EaKq6VKTSbISF4PFTSZZPDv9FSNMmSTC3b0tj43Ct73K69iNEt
+	qa8kMrGZPWgoPXiwCDmrkDMVPyl4yJ3lIgRGclZrWlfIQAp4KWZMOJH4ehTIDfVyPLirsFSfBqz
+	X4aaMx06h/lUp1/GKb/8AbVX9WNKXUN1ZJbXePhffblv98hlt2MsRP7h5pqFCM1SG5D1VamMWkL
+	b2ViXDZ7vnus+qHpinx9YvVcHZ8yFd5dhf6kSEF2exDV8iku12O2uOuTGLiVemZ1ByEpNOkQ9ts
+	LQWwF/
+X-Received: by 2002:a05:620a:698a:b0:8cd:8884:2509 with SMTP id af79cd13be357-911cf2f0e0cmr3317756085a.55.1779232512572;
+        Tue, 19 May 2026 16:15:12 -0700 (PDT)
+X-Received: by 2002:a05:620a:698a:b0:8cd:8884:2509 with SMTP id af79cd13be357-911cf2f0e0cmr3317747985a.55.1779232512071;
+        Tue, 19 May 2026 16:15:12 -0700 (PDT)
+Received: from ?IPV6:2600:4040:530f:2500:540d:8da2:f197:6711? ([2600:4040:530f:2500:540d:8da2:f197:6711])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-910ba9454basm2007293485a.12.2026.05.19.16.15.11
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 19 May 2026 16:15:11 -0700 (PDT)
+Message-ID: <f46045af-5705-4c5e-98e8-80b8c2c5387e@redhat.com>
+Date: Tue, 19 May 2026 19:15:11 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: EX19D041UWB002.ant.amazon.com (10.13.139.179) To
- EX19D001UWA001.ant.amazon.com (10.13.138.214)
+User-Agent: Mozilla Thunderbird
+Subject: Re: dm-vdo: iterator after loop end in mark_slab_journal_dirty?
+To: Maoyi Xie <maoyixie.tju@gmail.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <20260519094132.1964544-1-maoyixie.tju@gmail.com>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <20260519094132.1964544-1-maoyixie.tju@gmail.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Z0jUm_LssuFkfO_U100ZetDO9ZJmr6gRNzC8L6mKBF0_1779232513
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-When the underlying skcipher driver advertises support for multiple
-data units in a single request (CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT),
-configure the cipher with cc->sector_size as data_unit_size and
-submit one request per bio instead of one request per sector.  This
-removes per-sector overhead in the crypto API hot path: request
-allocation, callback dispatch, completion handling, and SG setup.
 
-The optimisation is enabled automatically at table load when all
-of the following hold:
 
- - the cipher is non-aead (i.e. skcipher);
- - tfms_count is 1 (interleaved per-sector keys would break batching);
- - the IV mode is plain or plain64 (the only modes whose generator
-   produces a sequential 64-bit little-endian counter that the cipher
-   can extend by adding the data-unit index, matching the convention
-   documented in crypto_skcipher_set_data_unit_size());
- - the iv_gen_ops->post() hook is unset (lmk and tcw use it; both are
-   already excluded by the IV-mode test, but the explicit check makes
-   the assumption durable against future IV modes);
- - dm-integrity is not stacked (no integrity tag or integrity IV);
- - the cipher driver advertises multi-data-unit support.
+On 5/19/26 5:41 AM, Maoyi Xie wrote:
+> Hi all,
+> 
+> While reading drivers/md/dm-vdo/slab-depot.c I noticed
+> something that looks like a past the end iterator pattern.
+> I would appreciate it if you could take a look and let me
+> know whether this is a real issue, and whether it is worth
+> fixing.
+> 
+> The site is mark_slab_journal_dirty() (linux-7.1-rc1, around
+> line 156):
+> 
+>      list_for_each_entry_reverse(dirty_journal, dirty_list,
+>                                  dirty_entry) {
+>              if (dirty_journal->recovery_lock <=
+>                  journal->recovery_lock)
+>                      break;
+>      }
+> 
+>      list_move_tail(&journal->dirty_entry,
+>                     dirty_journal->dirty_entry.next);
+> 
+> When the loop walks all entries without break (the new
+> journal's recovery_lock is smaller than every existing
+> entry), dirty_journal is past the end.
+> dirty_journal->dirty_entry then aliases dirty_list (the
+> list head) via container_of offset cancellation. So
+> dirty_journal->dirty_entry.next is head->next, the first
+> real entry. list_move_tail then inserts journal just
+> before the first entry, i.e. at the front of the list.
+> That is the intended behaviour for a sorted insertion
+> where the new entry has the smallest recovery_lock. The
+> dereference of the past the end iterator is undefined per
+> C11.
 
-A new CRYPT_MULTI_DATA_UNIT cipher_flag, set once at construction
-time, gates the multi-data-unit path.  The existing per-sector path
-in crypt_convert_block_skcipher() is unchanged; the new
-crypt_convert_block_skcipher_multi() is reached from a small dispatch
-in crypt_convert() and shares the same backlog/-EBUSY/-EINPROGRESS
-flow control with the per-sector path.
+I don't quite follow your train of thought here. Which dereference do 
+you think produces undefined behavior, and why? Everything you describe 
+sounds valid.
 
-Heap-allocated scatterlists are stashed in dm_crypt_request and freed
-in crypt_free_req_skcipher() to avoid races between the synchronous-
-success free path and async-completion reuse from the request pool.
-On -ENOMEM during scatterlist allocation, the bio is requeued via
-BLK_STS_DEV_RESOURCE rather than failed, matching the behaviour of
-the existing -ENOMEM path for crypto request allocation.
+> Jakob Koschel cleaned up many such sites in 2022, for
+> example commits 99d8ae4ec8a (tracing: Remove usage of list
+> iterator variable after the loop), 2966a9918df (clockevents:
+> Use dedicated list iterator variable) and dc1acd5c946 (dlm:
+> replace usage of found with dedicated list iterator
+> variable). This site was not covered.
 
-Verified end-to-end with a byte-equivalence test: encrypted output of
-plain64 dm-crypt with the multi-data-unit path matches output of the
-single-data-unit path bit-for-bit over a 256 MB device.
+Jakob's series did not address this driver, because this driver was 
+added to the Linux kernel after 2022.
 
-Signed-off-by: Leonid Ravich <lravich@amazon.com>
----
- drivers/md/dm-crypt.c | 248 ++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 241 insertions(+), 7 deletions(-)
+I think I understand your point that the code really shouldn't use 
+dirty_journal outside the loop, since it doesn't point to a valid struct 
+slab_journal object. I certainly wouldn't mind a patch to clean this up 
+a bit (perhaps by doing the list insertion inside the loop when 
+possible). But as a practical matter it doesn't seem to matter all that 
+much, since this function is only manipulating the list heads.
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 5ef43231fe77..b35831d43f0e 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -98,6 +98,14 @@ struct dm_crypt_request {
- 	struct scatterlist sg_in[4];
- 	struct scatterlist sg_out[4];
- 	u64 iv_sector;
-+	/*
-+	 * Heap-allocated scatterlists used by the multi-data-unit path
-+	 * when one bio is processed in a single skcipher request.  NULL
-+	 * when the inline sg_in[]/sg_out[] arrays above are sufficient
-+	 * (single-data-unit path).  Freed in crypt_free_req_skcipher().
-+	 */
-+	struct scatterlist *sg_in_ext;
-+	struct scatterlist *sg_out_ext;
- };
- 
- struct crypt_config;
-@@ -149,6 +157,7 @@ enum cipher_flags {
- 	CRYPT_IV_LARGE_SECTORS,		/* Calculate IV from sector_size, not 512B sectors */
- 	CRYPT_ENCRYPT_PREPROCESS,	/* Must preprocess data for encryption (elephant) */
- 	CRYPT_KEY_MAC_SIZE_SET,		/* The integrity_key_size option was used */
-+	CRYPT_MULTI_DATA_UNIT,		/* Batch all sectors of a bio per crypto request */
- };
- 
- /*
-@@ -1501,12 +1510,139 @@ static int crypt_convert_block_skcipher(struct crypt_config *cc,
- 	return r;
- }
- 
-+/*
-+ * Multi-data-unit variant of crypt_convert_block_skcipher.  Submits all
-+ * remaining sectors of the current bio in one skcipher request whose
-+ * data_unit_size is cc->sector_size.  The cipher walks the IV between
-+ * data units (see crypto_skcipher_set_data_unit_size()).
-+ *
-+ * Returns the same set of values as crypt_convert_block_skcipher:
-+ *   0 on synchronous success (full chunk processed),
-+ *   -EINPROGRESS / -EBUSY on asynchronous dispatch,
-+ *   -ENOMEM if scatterlist allocation fails (caller maps to
-+ *           BLK_STS_DEV_RESOURCE so the bio is requeued, not failed),
-+ *   negative errno otherwise.
-+ *
-+ * On success the bio iterators have been advanced by the chunk size.
-+ */
-+static int crypt_convert_block_skcipher_multi(struct crypt_config *cc,
-+					      struct convert_context *ctx,
-+					      struct skcipher_request *req,
-+					      unsigned int *out_processed)
-+{
-+	const unsigned int sector_size = cc->sector_size;
-+	unsigned int total_in = ctx->iter_in.bi_size;
-+	unsigned int total_out = ctx->iter_out.bi_size;
-+	unsigned int total = min(total_in, total_out);
-+	unsigned int n_sectors;
-+	unsigned int n_sg_in = 0, n_sg_out = 0;
-+	struct dm_crypt_request *dmreq = dmreq_of_req(cc, req);
-+	struct scatterlist *sg_in = NULL, *sg_out = NULL;
-+	struct bvec_iter iter_in, iter_out;
-+	struct bio_vec bv;
-+	u8 *iv, *org_iv;
-+	int r;
-+
-+	if (unlikely(total < sector_size))
-+		return -EIO;
-+	n_sectors = total / sector_size;
-+	total = n_sectors * sector_size;
-+
-+	/*
-+	 * Walk the bio_vec iterators to count how many SG entries we need
-+	 * for exactly @total bytes.  bi_size of the iterators is at least
-+	 * @total by construction above.
-+	 */
-+	iter_in = ctx->iter_in;
-+	iter_in.bi_size = total;
-+	__bio_for_each_segment(bv, ctx->bio_in, iter_in, iter_in)
-+		n_sg_in++;
-+
-+	iter_out = ctx->iter_out;
-+	iter_out.bi_size = total;
-+	__bio_for_each_segment(bv, ctx->bio_out, iter_out, iter_out)
-+		n_sg_out++;
-+
-+	sg_in = kmalloc_array(n_sg_in, sizeof(*sg_in), GFP_NOIO);
-+	sg_out = (ctx->bio_in == ctx->bio_out) ? sg_in :
-+		 kmalloc_array(n_sg_out, sizeof(*sg_out), GFP_NOIO);
-+	if (!sg_in || !sg_out) {
-+		kfree(sg_in);
-+		if (sg_out != sg_in)
-+			kfree(sg_out);
-+		return -ENOMEM;
-+	}
-+
-+	sg_init_table(sg_in, n_sg_in);
-+	{
-+		unsigned int i = 0;
-+
-+		iter_in = ctx->iter_in;
-+		iter_in.bi_size = total;
-+		__bio_for_each_segment(bv, ctx->bio_in, iter_in, iter_in)
-+			sg_set_page(&sg_in[i++], bv.bv_page, bv.bv_len,
-+				    bv.bv_offset);
-+	}
-+
-+	if (sg_out != sg_in) {
-+		unsigned int i = 0;
-+
-+		sg_init_table(sg_out, n_sg_out);
-+		iter_out = ctx->iter_out;
-+		iter_out.bi_size = total;
-+		__bio_for_each_segment(bv, ctx->bio_out, iter_out, iter_out)
-+			sg_set_page(&sg_out[i++], bv.bv_page, bv.bv_len,
-+				    bv.bv_offset);
-+	}
-+
-+	/*
-+	 * Compute the IV for the first data unit.  The cipher will derive
-+	 * IVs for subsequent data units by treating this one as a 128-bit
-+	 * little-endian counter and adding the data-unit index, which
-+	 * matches the layout produced by plain and plain64.
-+	 */
-+	dmreq->iv_sector = ctx->cc_sector;
-+	if (test_bit(CRYPT_IV_LARGE_SECTORS, &cc->cipher_flags))
-+		dmreq->iv_sector >>= cc->sector_shift;
-+	dmreq->ctx = ctx;
-+
-+	iv = iv_of_dmreq(cc, dmreq);
-+	org_iv = org_iv_of_dmreq(cc, dmreq);
-+	r = cc->iv_gen_ops->generator(cc, org_iv, dmreq);
-+	if (r < 0)
-+		goto out_free_sg;
-+	memcpy(iv, org_iv, cc->iv_size);
-+
-+	/* Stash the SG arrays for cleanup on completion / free. */
-+	dmreq->sg_in_ext = sg_in;
-+	dmreq->sg_out_ext = (sg_out == sg_in) ? NULL : sg_out;
-+
-+	skcipher_request_set_crypt(req, sg_in, sg_out, total, iv);
-+
-+	if (bio_data_dir(ctx->bio_in) == WRITE)
-+		r = crypto_skcipher_encrypt(req);
-+	else
-+		r = crypto_skcipher_decrypt(req);
-+
-+	*out_processed = total;
-+	return r;
-+
-+out_free_sg:
-+	kfree(sg_in);
-+	if (sg_out != sg_in)
-+		kfree(sg_out);
-+	dmreq->sg_in_ext = NULL;
-+	dmreq->sg_out_ext = NULL;
-+	return r;
-+}
-+
- static void kcryptd_async_done(void *async_req, int error);
- 
- static int crypt_alloc_req_skcipher(struct crypt_config *cc,
- 				     struct convert_context *ctx)
- {
- 	unsigned int key_index = ctx->cc_sector & (cc->tfms_count - 1);
-+	struct dm_crypt_request *dmreq;
- 
- 	if (!ctx->r.req) {
- 		ctx->r.req = mempool_alloc(&cc->req_pool, in_interrupt() ? GFP_ATOMIC : GFP_NOIO);
-@@ -1516,6 +1652,18 @@ static int crypt_alloc_req_skcipher(struct crypt_config *cc,
- 
- 	skcipher_request_set_tfm(ctx->r.req, cc->cipher_tfm.tfms[key_index]);
- 
-+	/*
-+	 * Initialise the heap-allocated scatterlist pointers so that
-+	 * crypt_free_req_skcipher() does not read uninitialised memory
-+	 * for paths that don't take the multi-data-unit branch.  The
-+	 * dmreq trailer lives in the per-bio data area which is not
-+	 * zeroed by the dm core, and the request is reused from the
-+	 * mempool across many bios.
-+	 */
-+	dmreq = dmreq_of_req(cc, ctx->r.req);
-+	dmreq->sg_in_ext = NULL;
-+	dmreq->sg_out_ext = NULL;
-+
- 	/*
- 	 * Use REQ_MAY_BACKLOG so a cipher driver internally backlogs
- 	 * requests if driver request queue is full.
-@@ -1562,6 +1710,12 @@ static void crypt_free_req_skcipher(struct crypt_config *cc,
- 				    struct skcipher_request *req, struct bio *base_bio)
- {
- 	struct dm_crypt_io *io = dm_per_bio_data(base_bio, cc->per_bio_data_size);
-+	struct dm_crypt_request *dmreq = dmreq_of_req(cc, req);
-+
-+	kfree(dmreq->sg_in_ext);
-+	dmreq->sg_in_ext = NULL;
-+	kfree(dmreq->sg_out_ext);
-+	dmreq->sg_out_ext = NULL;
- 
- 	if ((struct skcipher_request *)(io + 1) != req)
- 		mempool_free(req, &cc->req_pool);
-@@ -1590,7 +1744,9 @@ static void crypt_free_req(struct crypt_config *cc, void *req, struct bio *base_
- static blk_status_t crypt_convert(struct crypt_config *cc,
- 			 struct convert_context *ctx, bool atomic, bool reset_pending)
- {
--	unsigned int sector_step = cc->sector_size >> SECTOR_SHIFT;
-+	const unsigned int sector_step = cc->sector_size >> SECTOR_SHIFT;
-+	const bool multi_du = test_bit(CRYPT_MULTI_DATA_UNIT, &cc->cipher_flags);
-+	unsigned int processed;
- 	int r;
- 
- 	/*
-@@ -1611,8 +1767,13 @@ static blk_status_t crypt_convert(struct crypt_config *cc,
- 
- 		atomic_inc(&ctx->cc_pending);
- 
-+		processed = cc->sector_size;
- 		if (crypt_integrity_aead(cc))
- 			r = crypt_convert_block_aead(cc, ctx, ctx->r.req_aead, ctx->tag_offset);
-+		else if (multi_du)
-+			r = crypt_convert_block_skcipher_multi(cc, ctx,
-+							       ctx->r.req,
-+							       &processed);
- 		else
- 			r = crypt_convert_block_skcipher(cc, ctx, ctx->r.req, ctx->tag_offset);
- 
-@@ -1634,8 +1795,19 @@ static blk_status_t crypt_convert(struct crypt_config *cc,
- 					 * exit and continue processing in a workqueue
- 					 */
- 					ctx->r.req = NULL;
--					ctx->tag_offset++;
--					ctx->cc_sector += sector_step;
-+					if (!multi_du) {
-+						ctx->tag_offset++;
-+						ctx->cc_sector += sector_step;
-+					} else {
-+						bio_advance_iter(ctx->bio_in,
-+								 &ctx->iter_in,
-+								 processed);
-+						bio_advance_iter(ctx->bio_out,
-+								 &ctx->iter_out,
-+								 processed);
-+						ctx->cc_sector +=
-+							processed >> SECTOR_SHIFT;
-+					}
- 					return BLK_STS_DEV_RESOURCE;
- 				}
- 			} else {
-@@ -1649,19 +1821,42 @@ static blk_status_t crypt_convert(struct crypt_config *cc,
- 		 */
- 		case -EINPROGRESS:
- 			ctx->r.req = NULL;
--			ctx->tag_offset++;
--			ctx->cc_sector += sector_step;
-+			if (!multi_du) {
-+				ctx->tag_offset++;
-+				ctx->cc_sector += sector_step;
-+			} else {
-+				bio_advance_iter(ctx->bio_in, &ctx->iter_in,
-+						 processed);
-+				bio_advance_iter(ctx->bio_out, &ctx->iter_out,
-+						 processed);
-+				ctx->cc_sector += processed >> SECTOR_SHIFT;
-+			}
- 			continue;
- 		/*
- 		 * The request was already processed (synchronously).
- 		 */
- 		case 0:
- 			atomic_dec(&ctx->cc_pending);
--			ctx->cc_sector += sector_step;
--			ctx->tag_offset++;
-+			if (!multi_du) {
-+				ctx->cc_sector += sector_step;
-+				ctx->tag_offset++;
-+			} else {
-+				bio_advance_iter(ctx->bio_in, &ctx->iter_in,
-+						 processed);
-+				bio_advance_iter(ctx->bio_out, &ctx->iter_out,
-+						 processed);
-+				ctx->cc_sector += processed >> SECTOR_SHIFT;
-+			}
- 			if (!atomic)
- 				cond_resched();
- 			continue;
-+		/*
-+		 * Out of memory for the multi-DU SG arrays — bounce back
-+		 * to the caller for requeue rather than failing the bio.
-+		 */
-+		case -ENOMEM:
-+			atomic_dec(&ctx->cc_pending);
-+			return BLK_STS_DEV_RESOURCE;
- 		/*
- 		 * There was a data integrity error.
- 		 */
-@@ -3142,6 +3337,45 @@ static int crypt_ctr_cipher(struct dm_target *ti, char *cipher_in, char *key)
- 		}
- 	}
- 
-+	/*
-+	 * Enable multi-data-unit batching when the cipher supports it and
-+	 * the IV layout is one we can derive per-DU from a single starting
-+	 * IV: plain or plain64 produce a sequential 64-bit little-endian
-+	 * counter, which matches the convention of
-+	 * crypto_skcipher_set_data_unit_size().  Restrict to the simple
-+	 * case (single tfm, no integrity, no per-sector post() callback)
-+	 * to keep the consumer path small; modes like essiv, lmk, tcw,
-+	 * eboiv, plain64be, random, null, benbi, and elephant are
-+	 * deliberately excluded because their generators or post-IV hooks
-+	 * cannot be re-derived by the cipher between data units.
-+	 */
-+	if (!crypt_integrity_aead(cc) && cc->tfms_count == 1 &&
-+	    cc->iv_gen_ops &&
-+	    (cc->iv_gen_ops == &crypt_iv_plain_ops ||
-+	     cc->iv_gen_ops == &crypt_iv_plain64_ops) &&
-+	    !cc->iv_gen_ops->post &&
-+	    !cc->integrity_tag_size && !cc->integrity_iv_size &&
-+	    crypto_skcipher_supports_multi_data_unit(cc->cipher_tfm.tfms[0])) {
-+		ret = crypto_skcipher_set_data_unit_size(cc->cipher_tfm.tfms[0],
-+							 cc->sector_size);
-+		if (!ret) {
-+			set_bit(CRYPT_MULTI_DATA_UNIT, &cc->cipher_flags);
-+			DMINFO("Using multi-data-unit crypto offload (du=%u)",
-+			       cc->sector_size);
-+		} else {
-+			/*
-+			 * The driver advertised the capability via cra_flags
-+			 * but rejected the requested data unit size.  This is
-+			 * a driver bug worth seeing in dmesg; fall back to
-+			 * the per-sector path so the device still activates.
-+			 */
-+			DMWARN_LIMIT("multi-DU offload disabled: %s rejected du=%u (%d)",
-+				     crypto_skcipher_driver_name(cc->cipher_tfm.tfms[0]),
-+				     cc->sector_size, ret);
-+			ret = 0;
-+		}
-+	}
-+
- 	/* wipe the kernel key payload copy */
- 	if (cc->key_string)
- 		memset(cc->key, 0, cc->key_size * sizeof(u8));
--- 
-2.47.3
+If you do decide to patch this, it would be nice to clean up the list 
+insertion, too. It's more indirect than it needs to be.
+
+> A candidate fix would track an explicit insertion target.
+> Declare `struct list_head *insert_after = dirty_list` before
+> the loop. Overwrite it to `&dirty_journal->dirty_entry` only
+> when the loop breaks early. The final list_move_tail then
+> reads `insert_after->next`. On break that points to the
+> entry right after the insertion position. On fall-through
+> it points to `head->next`, the first real entry. The
+> behaviour is unchanged in all cases, including an empty
+> list and a list with one entry.
+
+Please don't fix it like this, this would just makes the code messier.
+
+Matt
+
+> If this is intentional or already known, please disregard.
+> Otherwise, I am happy to send a [PATCH] or to leave the fix
+> to you. Thank you for your time, and sorry for the noise if
+> this is not actually worth fixing or has already been
+> spotted.
+> 
+> Thanks,
+> Maoyi Xie
+> https://maoyixie.com/
+> 
 
