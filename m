@@ -1,64 +1,64 @@
-Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3099A4779B0
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA2A646AECC
 	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468284; cv=none; b=Wr4hwfNOBIuLsyjsJWlKbaRSfverwJ7aa1XjQOlPbe2sIqQCwqWscx9afoqTL6h7ndv3iaIIdHuAn+4p34gyINJs3ReDfMw4FKG9/BHJibhSvrxp04lZW2WRvBCdgysHU0upL+gk6/QWTR/DEzjg0eT5vqRnQ5MPykb/WY2Xqy4=
+	t=1779468284; cv=none; b=N4nD1HB0nD4KanN4dKdHqSnKFt4fmkk7IBo8nVqzzNO3+sxZUQQr20QCl71LdwvYG9K7pAPMsDJ49XggwzCbBdcnhe/ZhNbXXSgiR07Z9GhpjqwaI4LscmREq/TZwqfHkFIrdlwl5dZMRkTKAnnqHDpvGWf0mLfW71618vib3Mg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1779468284; c=relaxed/simple;
-	bh=5676EvXfSCQ/ALhd7z1F9jhGhMTxi3RGF99qx4Ikvfs=;
+	bh=E9nqpJmkFFOE5rXCWDsB4SqaATPEbMYYnK15jZK1JUk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lLHtrmPvLTVGlVobDrD6ELuZOu60rq0x7aRntM/c7QY6hh4031XHNwdj2P7nMQaGFrXc6pwrpGrmWnmgn77Q6Kwm30kAym3IyxCRBMGcONJsHkZX4kxKoJFCcJudz9Y93SJARIQWSdLxhcbf/x378MeLu9baRBU2ArYBRzCViBE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VBZamHJ0; arc=none smtp.client-ip=209.85.128.49
+	 MIME-Version; b=OPKXlkK78KoB77i3DbDo9tZd+n/I1NgNFJGbIQYnv1BvQRwD+uLZiuw0GukDKWI/sPKzswm+r3KgqV82x7ctyowTk4MrXFs3kpdQ8XIfsOmPta8JuvL/mARABxCKpPgfY71SKaziiswEKViUyzfuNaRlhfD6Rg6v3PBMCXNqpX8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=dwAf66jC; arc=none smtp.client-ip=209.85.221.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VBZamHJ0"
-Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-49048e043e5so4147085e9.1
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="dwAf66jC"
+Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-44e5624c053so4657831f8f.2
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468280; x=1780073080; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1779468281; x=1780073081; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=CJNKGc6pMtucdlUZ8vOfhBN75A3wyRFUCBEKzsHn5qU=;
-        b=VBZamHJ0GYJD/ApY7LiFtjiB072aEfzHfikiRMqfchkeRrJDy3aeyOHXQypBmuI3KJ
-         e0UHm+GZimtZL9S4nWnbNleVy4OHvKARnpc5TsaN82JQnafN00FgHcbgpAgZt4x6fx4P
-         QJoNItmA1HuTQqkw4v2KZo2oNWsbwG97mtN9/uQp+uxFEtC4s/FYvtr58UYRq7SrED1U
-         lJ1ZsmVJuC/VBczYJ9A6GkGiZuNOKRnurILS9DfQW/vmwvGUmr3aqOrjvLXBxqZA3/e2
-         r9eTfkXLb8TtIp97im1dN8z/iLjOizQuqcVj4/C3ulEgQYud7O4KB4+uPlAFbwN5483/
-         WzCA==
+        bh=6wquKeVwk9ztUhB5WlI2KjbtTjjmukvxevZQvcveqCI=;
+        b=dwAf66jCGZpLKve4aujQdjGYETZsyFAEq8zSN+yZ9ZDbyTTXkDPpuQ7mZUWLUdHFKs
+         JXZ6Bx7JMhCmor3YngBpqBb+6rexHVpwcECSyodf4UqqHrIUvmSE3iYSYHWMZlFFHK9P
+         zpdtxiAOahxGIA6nSwxLOykRl5/xvuSNFRkSZKnb3o2JXro/WNmIybYG930XOcU6Nw7F
+         Ni4Od4fdvEcKphbFIIc10BMlFcsf3Ik7AAyIptdTba3Ipjcj/8rUid2LQ2lgxo2/JDuP
+         jAY5fD+dI5Mg6L8rdo05dZAILdpKc/TkkcH4E9cD9uHPW+f2DKqb/y6JydGKfqC0sVDS
+         yt2Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468280; x=1780073080;
+        d=1e100.net; s=20251104; t=1779468281; x=1780073081;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=CJNKGc6pMtucdlUZ8vOfhBN75A3wyRFUCBEKzsHn5qU=;
-        b=YYKyHgNJru0WfydGcR4hfFquAzGge5GfWOg88HMOBF9DZ9j73rxsAHU0RsbvcBEd8G
-         aeSUX4BAZMkZBzlYG7aPpHmq7WDFsQ/4vbfH5e42kEe2i910hlETE2o89PyJLm8Esh/J
-         o/+7BCOYzTkx5EP/oKp5f43bDXUyY5H7vlfq45cw9rZSiaYfLYNyumFXblBuwKz85M2q
-         8J5jgPvo0hrReXLmT4l8qhyoM30Ll1pvpzyTZqrsNvyUJeaMVvfF7eaULEQvlTgbd25M
-         gll6JDzy7KDOOgd6/q2tYDYxZ4Dv5e4Hz9AGOfxhj7QalmxSsfDd2OmMLuPYuCGS9Ij/
-         yq6Q==
-X-Forwarded-Encrypted: i=1; AFNElJ/+5x2g/t+wg5OEoqTO3NZfmsozko2zwjKvtfV6KJbi/me6O/x4CMvqVuR7ecO72giC/9X5tdDyvA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yznwblcz0CFft7m0zolx1QCvPVuhwOBIEIiLKstnnSEs0ahMwFO
-	mGd13xIXDSUZtFHusnqKKIJ6nvf2hgI/YrzCxiSFPZlca5d/KECrSAGht60igXdyms8=
-X-Gm-Gg: Acq92OFk7b4sN6rbkZeDIJShJQ1ZrXX+iZu91s5N4OQAnqIYdBJy2xnxQ+lEkm4jY3V
-	LStAe5dCsGAar0HHZ2cjccUvf0tnV1/Jfhpe4xLQlN715n6rzm6R2XWDRi8j9xPCYEQ9BGxfgww
-	FaYB5OwBK6kyghtnE0hLh4PQzHEh/uyasQpmjs9OGHH3cFxn6Ay9M+OVwOgE+ZTkFU6Ti/qOJe3
-	Mng5juWRnlT+64lbjU4+wp/qNUv4cO942uX78ktA7gmKOcw0UBJOBfQnQx3DFxSSjha5NXdNzbj
-	z5w5PtfASIeQj/bPP145jSGhl8xlRU2eCjQez+hTHye+KJgQOZqgJN6ivtQXaw9R/YjfAKMajUB
-	1+SyzrlpSnAHHMpgTGzAlXbQuEMLoTjYHoToAaSK2SN1aFkgAgX0kuVFoZd9Wyby/AytuFUZI+E
-	44O6A4MHVodXzaAFkFXpjY5VMnxBNw0vJCBVWtO+3npAok8BNXS3vxZnpNN9tLq9e+9rTY1aFv+
-	OvC6lvkPTGusw==
-X-Received: by 2002:a05:600c:a402:b0:48a:5546:61a1 with SMTP id 5b1f17b1804b1-490426b4da5mr51366755e9.15.1779468280090;
-        Fri, 22 May 2026 09:44:40 -0700 (PDT)
+        bh=6wquKeVwk9ztUhB5WlI2KjbtTjjmukvxevZQvcveqCI=;
+        b=LTEwHfGJHFocZ9ZguONKcy+ijfvJKlVzWY5StRP35v6f6rsyxEMKxo5+M86cxMyc5M
+         quwl1JEZ+5Fh5gH3mAf5graAR3lBw4TMtpIRjsPkJxKKBD5sFQFgBFbu1mSKKuj4NhZ/
+         BC+Z6QvqShTg3UvvkB89fFLOd6pQsDWSCl8qXa7rNuT5FAZ50/la/O03EaoXL1dF1oSO
+         +7jQSrlmMeml03HgtphxsD6CM0h8wQ3hnFa0rBNlqJ5nGsu9kaN+bT/Ml/I7rMWiyxfA
+         D7Rk+KoHinzVntpb2ug62b261ynZ1TdBGTYfmMC5N4xgSX8QzIiLMxNqVtsfVAYQ1uXv
+         QmXQ==
+X-Forwarded-Encrypted: i=1; AFNElJ99i9Wtas5dyh/1JdDBsdhp+4yziqwf0GKtua+QUN78axTFKpjVI7EYwUqjD0Z3IkHLJRGBh7tQ7A==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxzMNmCchaQOPcOW/mSqQsZMEZDx9lo6zQT1HyuzqStsWpGXkLx
+	DG/eXEUx5emuJvb065HHeq73a1QH78FLu12HffNDbcw0iUops2hr0KpwhUz2kHP4Xac=
+X-Gm-Gg: Acq92OG/V6OM47IyAdYo8cpB2EenpXGFero1svB13rzKfhcKnmggPJiug0B0MjGEzkm
+	GtI9PxZ+Yyr+TnvHrpgQf7A3xuCONozTyalSRQ+ZnSooQgh0QXDHxe95QbK8CPRqMyhEMADDcCs
+	5mHftRYHOjsuYNdm1hdMG9/MBj733DgTFNV9h7djGG+2urVJZCr7Ap4h0IL5+pChrgD4/i1trEl
+	LBn3mDM4mDn2FjJpyGTbYAuFDnkzoi1chLT9ejzO6LjkPLKkAhqMhfDjfUgNBAA4a4S6LQ3+3NX
+	WDPF1TAhwJ/6uHLfXufTebNTqbEmXj6IytCFygKHc/JJ9L2ZLs2KfRvr+CV52/IWNX4UhWHoQJ+
+	mR5Q4LuyTc7PCFDm0dLVu5QLAMjt2Pdvt0fXFBpqJWXy4XcisDKvDB9LyzUvmBGfB2xx+AWSDOD
+	3FUSUzAicffTow5QXFqqfFUTbFPP3InMZ+4GQzq+MfFusVBVp+b585+vVILo8iOluETjDwmMLvN
+	3wRRaNjrt5e9Q==
+X-Received: by 2002:a05:6000:41d9:b0:45d:4fc0:fe0a with SMTP id ffacd0b85a97d-45eb38a1a59mr5938505f8f.32.1779468281167;
+        Fri, 22 May 2026 09:44:41 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4904561a160sm63918255e9.9.2026.05.22.09.44.39
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6c9f598sm5516576f8f.6.2026.05.22.09.44.40
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:44:39 -0700 (PDT)
+        Fri, 22 May 2026 09:44:40 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 01/19] libmpathutil: runner: reduce a message loglevel
-Date: Fri, 22 May 2026 18:43:57 +0200
-Message-ID: <20260522164415.846589-2-mwilck@suse.com>
+Subject: [PATCH v2 02/19] libmultipath: checkers: add two generic checker messages
+Date: Fri, 22 May 2026 18:43:58 +0200
+Message-ID: <20260522164415.846589-3-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
 References: <20260522164415.846589-1-mwilck@suse.com>
@@ -81,28 +81,42 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Don't "log runner 0x7b724a07a480 cancelled in state 'done'" at
-level 3. It's a fairly normal thing to happen.
+Add generic messages for "timed out" and "still running".
+They will be needed by follow-up patches.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
 Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmpathutil/runner.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/checkers.c | 2 ++
+ libmultipath/checkers.h | 2 ++
+ 2 files changed, 4 insertions(+)
 
-diff --git a/libmpathutil/runner.c b/libmpathutil/runner.c
-index da57ff0..8c6d6b9 100644
---- a/libmpathutil/runner.c
-+++ b/libmpathutil/runner.c
-@@ -134,7 +134,7 @@ repeat:
- 		break;
- 	case RUNNER_DONE:
- 		st_new = RUNNER_DEAD;
--		/* fallthrough */
-+		break;
- 	case RUNNER_DEAD:
- 		level = 3;
- 		break;
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index bb6ad1e..8a90ade 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -365,6 +365,8 @@ static const char *generic_msg[CHECKER_GENERIC_MSGTABLE_SIZE] = {
+ 	[CHECKER_MSGID_GHOST] = " reports path is ghost",
+ 	[CHECKER_MSGID_UNSUPPORTED] = " doesn't support this device",
+ 	[CHECKER_MSGID_DISCONNECTED] = " no access to this device",
++	[CHECKER_MSGID_TIMEOUT] = " timed out",
++	[CHECKER_MSGID_RUNNING] = " still running",
+ };
+ 
+ const char *checker_message(const struct checker *c)
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index a969e7d..2317cd1 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -124,6 +124,8 @@ enum {
+ 	CHECKER_MSGID_GHOST,
+ 	CHECKER_MSGID_UNSUPPORTED,
+ 	CHECKER_MSGID_DISCONNECTED,
++	CHECKER_MSGID_TIMEOUT,
++	CHECKER_MSGID_RUNNING,
+ 	CHECKER_GENERIC_MSGTABLE_SIZE,
+ 	CHECKER_FIRST_MSGID = 100,   /* lowest msgid for checkers */
+ 	CHECKER_MSGTABLE_SIZE = 100, /* max msg table size for checkers */
 -- 
 2.54.0
 
