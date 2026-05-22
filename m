@@ -1,325 +1,96 @@
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
+Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC3B4425CF4
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:45:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2556927AC31
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 21:10:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468309; cv=none; b=XS/WuPgpGw2Cg8Uc76X0rofhrUUqcaXxQljljHhAjwoT3c6mFtdV4quN59AqnTIjQ0EKX54bCfTOHpxCnBdFR2Z/CGBGWjxwaQrUMLERGi6pUG4a3yhvZw48MiHzyYNmsp1qRRl1C7VS6DtuIy145WXMo/uNw5US+RXkAagufdo=
+	t=1779484241; cv=none; b=bH1NhmvGAKossJeKBAJR0cCsM1nfwJhtUG2eohY8BTXeZlL5BDgYlY1tdbyjZzG96tpz2baVqgIzxMjpD87TcPm6sOHaTVGj+86+5jouJeO6zPaYmJu9Dif96haciQsXo7W7NrbghmgqpgVE7V1AXw/41V8BKf1lSRQR5YUCdFM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468309; c=relaxed/simple;
-	bh=U8V+8RO5UbsoRfFhKBjxtLkKb1zrqiv95DSD1b1wRqQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=DQnVMnNIoPuE/o3NQ4G+mXXzKCZllDhKch8LDMkfDiEEqeLHDRbz6d3s1C+N2nqat2WYMSaeR3Zf/8ia6GotcS8oSKA3t41ctezmd+HuV8IEJsH30zLgf5HvEkzcFUlHcSTv/Q67X9s+nToTDo+csHPky8Ygv4F6JivBQyiD+Ig=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KlO1AlSa; arc=none smtp.client-ip=209.85.221.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1779484241; c=relaxed/simple;
+	bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
+	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=Zqf8elVtRjxGD9Rrv4X7SSG1NqG4JauZSS/NeKsM7EzjHI7UkwABXKF3wyXpo19j1EDA71sb2Fb1qTDDRyL1dNOlfJ4HaoHKR9dQDJvUMOgw56QkBmysqhBHPkNVxmwZjg2Nq+0H4c/Vxfd4K/tiDUOhzPLDhqX4rCnG2Tw0W7I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jlXUfBPI; arc=none smtp.client-ip=209.85.221.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KlO1AlSa"
-Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-43d7645adbdso5117533f8f.1
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:45:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jlXUfBPI"
+Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-44b7e8b65faso593350f8f.1
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 14:10:39 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468306; x=1780073106; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=MdC0HWQ1+3rZYUyiKiJSz5oXIMjFSNs7b4WG8FUoY2M=;
-        b=KlO1AlSaiwT/ZVaehqOxj708JLFYlgUt/tRNMQbk6wWBPv3oe394jQcyPH87kGcjkV
-         8LuO9Bs46Nad/KIn0OUcGyK+QHcXdmrylg1U43BkXo4UWIamil3u7zp1StzU6XmcIvU9
-         fpUnFAeppMsSZSfxOmx52hiwqttQA2Z9FAau8fRWgf8DRbuQFQens4xiH86qlKc46NBX
-         Lx12IrXX3E6ZEu/cVGsFxVTs2nbbSDhGd188FEQCq2Qz/BWx6Y1Xr65r7gqZzU9M9K9b
-         qMO4O6SSN4M4a0ezLOsI4DH6DOttgVoXvjF5XvcsKANixp/r2lVSuKNH8gRZ2lnK6stX
-         RfrQ==
+        d=gmail.com; s=20251104; t=1779484238; x=1780089038; darn=lists.linux.dev;
+        h=content-transfer-encoding:subject:from:cc:to:content-language
+         :mime-version:date:message-id:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
+        b=jlXUfBPIefpwnqvyo3XTfMC+g1DDBJVvKZy9Z/tw7vUsI/MgCgUc8P3uHPLGoZWQeD
+         vTUSoBYDYLbZ2/Sbr+CUIS1iYrFZ9m6/5JROMyRDyqqiss3VXhxfdfQmFQiAwp3cJVi7
+         7B2MMrX6GSeKbFikZSJfNNLfCCrUeHmqGuH5kRZ7V5Hk9LzKDCwxI2ww8QaeDRboxEEh
+         6E3f6On4zzis7QXy1MeEQ+yjoFjio8SMlh+Bx2nCy+R69Kt6K9w0r6sMoz9d4hps7M8v
+         KxwqdnF4Vx1pYZWwVmsqFCNaNdl26rL0EYNhw0F0n18QQXq72Jy4nERztK7k8pN4Aujg
+         OIoA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468306; x=1780073106;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=MdC0HWQ1+3rZYUyiKiJSz5oXIMjFSNs7b4WG8FUoY2M=;
-        b=P2vjnogfaFgXqWk2TMaU6TfT++87Wkg1ZTX7fMV1IiF5vBhCl8/FlBmmVNYjDhuq4u
-         svc4zbnMa9eHAVAMhRtNpOYp2eZEcT0wmKB5HL1C503KIImxFDhAP1MuKWdAvEemeYTr
-         d4+QyDT/AOGlZjQGq8e0bZHw9+/R/qWDIo1fpaHoi7N4GhZtw31N2coU4xzzKk1zjSmY
-         zvUpl1sFYxSDmWmCeyG59QthrwVeAktZjn9rGc8AXyrXpWt+VQ8SILozkK0QZYT7pglO
-         R3y5IFBHHnXi+BD/hHY0PN2T/IbPBhlRPp97Xpya2NN+jwIvL1hWhiX49d8gTNb8j0Eq
-         R6PA==
-X-Forwarded-Encrypted: i=1; AFNElJ9zHiKC+EPfiKJTy46jMcJeVljfn4R/ykvAT9FXhONZte6KSPYJEpW6hEtlPqHVub6J0MyUAHKNew==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyx2PT+9xahLi5n34iLWWIEfpC8AbTLLPSXfsXlilzQNgfVYhA5
-	wWxcG+OjsGX8xsU9UtNJyPQhb8SrFKzTK00JGtirxTg1sJaX5APVf709tKCv9WU76DM=
-X-Gm-Gg: Acq92OFGQiJPCePTeo9Cb9WMfiV0WYG4c66wUiMx2fcIJReHWJk/J/W2lw62pFVPZC9
-	RLV6wyGeL8bkWy9+VJuIbG8LVcgcePD8KUkWe2sxR/YqYXABsmePl4CyNSGHn4FTONKoTpk3gx5
-	gK9heaEAz9YGXVkTec5CpNKlUHzqUC/ChmlU3LVeAUE025QhQCd60isTtm1xrDqcuJy+ZSWtBsO
-	ZDReXklVRg3PTc3SiYJf3rdBSoekDz2Ux9AW5foJQFY/6OZ4TLm8t9Vz4z2dZH+VX2lCw9hWBjf
-	gedwgTARU5fbnVcadip3EmavNO6uHHtoEA6tULJ+C+Xm4e1omYwI84JawzPno7G/xXViHFfsZdd
-	J3euIZZhOk6bTEmTefMx5lemr6vJ07vTfcBZsQ/tpJLFxdOFQvEu3soqSQ+EF4XHqOCecI8Za0u
-	IVOfPJq1payANuJnQJVLpZ6CzeTHdjToeLuNxcV/6zSn1tHqXcWrn/m12itx/wAdu8kqh3JD0Gv
-	D5qOG4d2U2Blw==
-X-Received: by 2002:a05:6000:25e8:b0:452:75ca:3fab with SMTP id ffacd0b85a97d-45eb3af6236mr6802964f8f.38.1779468305928;
-        Fri, 22 May 2026 09:45:05 -0700 (PDT)
-Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6ccd211sm6445335f8f.10.2026.05.22.09.45.05
+        d=1e100.net; s=20251104; t=1779484238; x=1780089038;
+        h=content-transfer-encoding:subject:from:cc:to:content-language
+         :mime-version:date:message-id:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
+        b=q45w0FwJL+SLWgBkGBxnN3ifWA0QB3VNW/0hEdREIn3h8wnKdXjbsA9uz9lYyGpqW6
+         +fMHy6xPSk75Q2VNGitbNquWckqgALv6qjPRBSkt/b5MQet+LNSjOJIh77bGjxycdDzJ
+         EY9Eu9cqZBNsyFJ7BfWm7yZAHaoJMsqcK8klLxLBf6lHpSH3cdjfx1GyqVGM21Jyj1Wj
+         CsQA/25MoaiL4EZsQLuAQaiAmJfWDzKymSCtWawUHHpLrEy70ngcQVJLbb7NZn2EG2He
+         oHqtjpeSlS3/8r4R2Bw2fQf5Ii0TkEgGWWugtr68wQx2uQjoLHEutNrqbKeuJkN9NYiM
+         tmyw==
+X-Gm-Message-State: AOJu0YwpCGWKIW8DaY0IsYagCm44dkROnwNVbkr/waxjBpEHQouak51Y
+	obRVEULug19iiUYIW/zAJ3rYQbElV+x+TWjZcvdrGyhtTT10MTI83XY=
+X-Gm-Gg: Acq92OHKBrLV0deOWG9PLpWzcTHidZ2ViPjAXcLY2jfc0W28yyhdwpTs+eAvJNY3EqU
+	ir055q6bIPfB0HF5KPnmE6gcivBhKhcSijNuu8x4SEGFiY8i6+nRjCmlJzehsqJOaKU4kWL0U84
+	iGOT0Zh6Wt/w6RIp895kPME98VEPz6r07ayughfEzJzuXftyJw/Ji2KfHp66m0eeFjrs3D67XZM
+	1CcC1Q75zYJ6Un1QwJmrvFkPo+il+2pRBDqqYq8go5xwBDC9DYOC8Ka0DWqMXlg961eRruC8qjP
+	1goJQM8aXwjU2LV63gPtT25gJPuStK48uQmcN1wnFTOQLibSc1Hs5sNXRRjlCrlBKeU1cx89g6S
+	qSOE1PROabg1egZmvXSty6V/q185hDOyoAcSN8sqoO/aIODSvDBGwrg3Z/m2GaQbxTUGTLkxeXu
+	1M1vGXU6Mu43f4gqdc/UawJXYfNnvzmDiEepZxpwglaOmvqcrWPpq9tmEe+Yp/
+X-Received: by 2002:a05:600c:b96:b0:490:4923:aa3e with SMTP id 5b1f17b1804b1-4904923ab35mr17780385e9.7.1779484238259;
+        Fri, 22 May 2026 14:10:38 -0700 (PDT)
+Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-490454a0b9asm65790955e9.11.2026.05.22.14.10.37
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:45:05 -0700 (PDT)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Brian Bunker <brian@purestorage.com>,
-	dm-devel@lists.linux.dev
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 19/19] libmultipath: convert emc_clariion to async_checker
-Date: Fri, 22 May 2026 18:44:15 +0200
-Message-ID: <20260522164415.846589-20-mwilck@suse.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
-References: <20260522164415.846589-1-mwilck@suse.com>
+        Fri, 22 May 2026 14:10:37 -0700 (PDT)
+Message-ID: <02a2bb69-c13d-43bb-bbed-2a1bd3007ba4@gmail.com>
+Date: Fri, 22 May 2026 23:10:36 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Language: en-US, en-GB, es-ES
+To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [BUG] multipath-tools: 0 cyl reported on large disks due to overflow
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Convert also the emc_clariion checker. This is the only
-checker that uses a checker-specific context and mptcontext.
+Hi,
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- libmultipath/checkers/emc_clariion.c | 79 ++++++++++++----------------
- 1 file changed, 33 insertions(+), 46 deletions(-)
+An integer overflow occurs in libmultipath/discovery.c:get_geometry() when
+querying geometry on large disks resulting in "0 cyl" being reported:
 
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index 24a386c..5b34d68 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -1,8 +1,6 @@
- /*
-  * Copyright (c) 2004, 2005 Lars Marowsky-Bree
-  */
--#include <stdio.h>
--#include <stdlib.h>
- #include <string.h>
- #include <sys/types.h>
- #include <sys/stat.h>
-@@ -14,8 +12,8 @@
- #include "sg_include.h"
- #include "libsg.h"
- #include "checkers.h"
-+#include "async_checker.h"
- #include "debug.h"
--#include "util.h"
- 
- #define INQUIRY_CMD     0x12
- #define INQUIRY_CMDLEN  6
-@@ -33,19 +31,17 @@
-  * simple read test would return 02/04/03 instead
-  * of 05/25/01 sensekey/ASC/ASCQ data.
-  */
--#define IS_INACTIVE_SNAP(mpctx)				\
--	(!mpctx || IS_INVALID_MPCONTEXT(*mpctx) ? 0 : mpctx->long_val)
-+#define IS_INACTIVE_SNAP(mpctx)					\
-+	(IS_INVALID_MPCONTEXT(mpctx) ? 0 : mpctx.long_val)
- 
- #define SET_INACTIVE_SNAP(mpctx)		\
- 	do {					\
--		if (mpctx)			\
--			mpctx->long_val = 1;	\
-+		mpctx.long_val = 1;		\
- 	} while (0);
- 
- #define CLR_INACTIVE_SNAP(mpctx)		\
- 	do {					\
--		if (mpctx)			\
--			mpctx->long_val = 0;	\
-+		mpctx.long_val = 0;		\
- 	} while (0);
- 
- enum {
-@@ -86,7 +82,9 @@ struct emc_clariion_checker_LU_context {
- 	int inactive_snap;
- };
- 
--void hexadecimal_to_ascii(char * wwn, char *wwnstr)
-+int libcheck_async_context_size = sizeof(struct emc_clariion_checker_path_context);
-+
-+static void hexadecimal_to_ascii(char *wwn, char *wwnstr)
- {
- 	int i,j, nbl;
- 
-@@ -99,33 +97,22 @@ void hexadecimal_to_ascii(char * wwn, char *wwnstr)
- 	wwnstr[32]=0;
- }
- 
--int libcheck_init (struct checker * c)
-+int libcheck_async_init(struct runner_data *rdata)
- {
--	/*
--	 * Allocate and initialize the path specific context.
--	 */
--	c->context = calloc(1, sizeof(struct emc_clariion_checker_path_context));
--	if (!c->context)
--		return 1;
--	((struct emc_clariion_checker_path_context *)c->context)->wwn_set = 0;
-+	((struct emc_clariion_checker_path_context *)rdata->checker_ctx)->wwn_set = 0;
- 
- 	return 0;
- }
- 
--void libcheck_free(struct checker *c)
--{
--	free(c->context);
--}
--
--int libcheck_check(struct checker *c, union checker_mpcontext *mpctx)
-+int libcheck_async_func(struct runner_data *rdata)
- {
- 	unsigned char sense_buffer[128] = { 0, };
- 	unsigned char sb[SENSE_BUFF_LEN] = { 0, }, *sbb;
- 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
- 						sizeof(sense_buffer), 0};
- 	struct sg_io_hdr io_hdr;
--	struct emc_clariion_checker_path_context * ct =
--		(struct emc_clariion_checker_path_context *)c->context;
-+	struct emc_clariion_checker_path_context *ct =
-+		(struct emc_clariion_checker_path_context *)rdata->checker_ctx;
- 	char wwnstr[33];
- 	int ret;
- 	int retry_emc = 5;
-@@ -142,14 +129,14 @@ retry:
- 	io_hdr.dxferp = sense_buffer;
- 	io_hdr.cmdp = inqCmdBlk;
- 	io_hdr.sbp = sb;
--	io_hdr.timeout = c->timeout * 1000;
-+	io_hdr.timeout = rdata->timeout * 1000;
- 	io_hdr.pack_id = 0;
--	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
-+	if (ioctl(rdata->fd, SG_IO, &io_hdr) < 0) {
- 		if (errno == ENOTTY) {
--			c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+			rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
- 			return PATH_WILD;
- 		}
--		c->msgid = MSG_CLARIION_QUERY_FAILED;
-+		rdata->msgid = MSG_CLARIION_QUERY_FAILED;
- 		return PATH_DOWN;
- 	}
- 
-@@ -181,12 +168,12 @@ retry:
- 				sense_key = sbp[2] & 0xf;
- 
- 			if (sense_key == ILLEGAL_REQUEST) {
--				c->msgid = CHECKER_MSGID_UNSUPPORTED;
-+				rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
- 				return PATH_WILD;
- 			} else if (sense_key != RECOVERED_ERROR) {
- 				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
- 					sense_key);
--				c->msgid = MSG_CLARIION_QUERY_ERROR;
-+				rdata->msgid = MSG_CLARIION_QUERY_ERROR;
- 				return PATH_DOWN;
- 			}
- 		}
-@@ -195,13 +182,13 @@ retry:
- 	if (io_hdr.info & SG_INFO_OK_MASK) {
- 		condlog(1, "emc_clariion_checker: INQUIRY failed without sense, status %02x",
- 			io_hdr.status);
--		c->msgid = MSG_CLARIION_QUERY_ERROR;
-+		rdata->msgid = MSG_CLARIION_QUERY_ERROR;
- 		return PATH_DOWN;
- 	}
- 
- 	if (/* Verify the code page - right page & revision */
- 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
--		c->msgid = MSG_CLARIION_UNIT_REPORT;
-+		rdata->msgid = MSG_CLARIION_UNIT_REPORT;
- 		return PATH_DOWN;
- 	}
- 
-@@ -215,19 +202,19 @@ retry:
- 		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
--		c->msgid = MSG_CLARIION_PATH_CONFIG;
-+		rdata->msgid = MSG_CLARIION_PATH_CONFIG;
- 		return PATH_DOWN;
- 	}
- 
- 	if ( /* LUN operations should indicate normal operations */
- 		sense_buffer[48] != 0x00) {
--		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
-+		rdata->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
- 		return PATH_SHAKY;
- 	}
- 
- 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
- 		sense_buffer[4] == 0x00) {
--		c->msgid = MSG_CLARIION_LUN_UNBOUND;
-+		rdata->msgid = MSG_CLARIION_LUN_UNBOUND;
- 		return PATH_DOWN;
- 	}
- 
-@@ -238,7 +225,7 @@ retry:
- 	 */
- 	if (ct->wwn_set) {
- 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
--			c->msgid = MSG_CLARIION_WWN_CHANGED;
-+			rdata->msgid = MSG_CLARIION_WWN_CHANGED;
- 			return PATH_DOWN;
- 		}
- 	} else {
-@@ -253,8 +240,8 @@ retry:
- 		unsigned char buf[4096];
- 
- 		memset(buf, 0, 4096);
--		ret = sg_read(c->fd, &buf[0], 4096,
--			      sbb = &sb[0], SENSE_BUFF_LEN, c->timeout);
-+		ret = sg_read(rdata->fd, &buf[0], 4096, sbb = &sb[0],
-+			      SENSE_BUFF_LEN, rdata->timeout);
- 		if (ret == PATH_DOWN) {
- 			hexadecimal_to_ascii(ct->wwn, wwnstr);
- 
-@@ -269,7 +256,7 @@ retry:
- 				 * passive paths which will return
- 				 * 02/04/03 not 05/25/01 on read.
- 				 */
--				SET_INACTIVE_SNAP(mpctx);
-+				SET_INACTIVE_SNAP(rdata->mpc);
- 				condlog(3, "emc_clariion_checker: Active "
- 					"path to inactive snapshot WWN %s.",
- 					wwnstr);
-@@ -278,26 +265,26 @@ retry:
- 					"error for WWN %s.  Sense data are "
- 					"0x%x/0x%x/0x%x.", wwnstr,
- 					sbb[2]&0xf, sbb[12], sbb[13]);
--				c->msgid = MSG_CLARIION_READ_ERROR;
-+				rdata->msgid = MSG_CLARIION_READ_ERROR;
- 			}
- 		} else {
--			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
-+			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			/*
- 			 * Remove the path from the set of paths to inactive
- 			 * snapshot LUs if it was in this list since the
- 			 * snapshot is no longer inactive.
- 			 */
--			CLR_INACTIVE_SNAP(mpctx);
-+			CLR_INACTIVE_SNAP(rdata->mpc);
- 		}
- 	} else {
--		if (IS_INACTIVE_SNAP(mpctx)) {
-+		if (IS_INACTIVE_SNAP(rdata->mpc)) {
- 			hexadecimal_to_ascii(ct->wwn, wwnstr);
- 			condlog(3, "emc_clariion_checker: Passive "
- 				"path to inactive snapshot WWN %s.",
- 				wwnstr);
- 			ret = PATH_DOWN;
- 		} else {
--			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
-+			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
- 			ret = PATH_UP;	/* not ghost */
- 		}
- 	}
--- 
-2.54.0
+# multipath -ll -d -v3
+... | sdgm: 0 cyl, 64 heads, 32 sectors/track, start at 0
 
+# fdisk -l /dev/sdgm
+Disk /dev/sdgm: 12 TiB, 13194139533312 bytes, 25769803776 sectors
+Units: sectors of 1 * 512 = 512 bytes
+
+# dmesg | grep sdgm
+sd 5:0:3:100: [sdgm] 25769803776 512-byte logical blocks: (13.2 TB/12.0TiB)
+
+
+The root cause is that struct hd_geometry, from libmultipath/structs.h,
+defines cylinders as an unsigned short.
+
+Since it is a legacy interface, it should either sanitize the log output
+or avoid relying on CHS geometry for large devices.
