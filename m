@@ -1,62 +1,64 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DDE564611CC
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3099A4779B0
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468283; cv=none; b=A9rHjyZ73815Yv9zfqqxCnXLd/WfvLKdttpbfpI0VWpjy9/XeNdN1+KFNdePCg0vj6pDYRrchnlV5qc1TMABaO7DIWIxe67etw7sKIs9e/HVIOTYeN5Rqub+s/rfJs9miuaA1ySRfoC5DysaZa2+hPI9Hyq+jPrPXJ2X+nDzORc=
+	t=1779468284; cv=none; b=Wr4hwfNOBIuLsyjsJWlKbaRSfverwJ7aa1XjQOlPbe2sIqQCwqWscx9afoqTL6h7ndv3iaIIdHuAn+4p34gyINJs3ReDfMw4FKG9/BHJibhSvrxp04lZW2WRvBCdgysHU0upL+gk6/QWTR/DEzjg0eT5vqRnQ5MPykb/WY2Xqy4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468283; c=relaxed/simple;
-	bh=CAuXVu4eOpUVfCncCFsNwZOnp5yQkIj6aDJXMTXpFsY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mY0dgaWOhtyDTA50jSRo1N1WTJrcROxCpY+fNsnPu0W5VXx0Sll9WGilWhLqJs3qyGi/rfDITPfKKSLVoI1huwl0dYMMPkHTxqefymRNNbBa6viBa1H1Ir9+YtvLe0D/jBX9zDUivlwtRYxZBfrDrrmBsrBg3u6t3VJVHtY5s+g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=WB/CQJPP; arc=none smtp.client-ip=209.85.128.41
+	s=arc-20240116; t=1779468284; c=relaxed/simple;
+	bh=5676EvXfSCQ/ALhd7z1F9jhGhMTxi3RGF99qx4Ikvfs=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=lLHtrmPvLTVGlVobDrD6ELuZOu60rq0x7aRntM/c7QY6hh4031XHNwdj2P7nMQaGFrXc6pwrpGrmWnmgn77Q6Kwm30kAym3IyxCRBMGcONJsHkZX4kxKoJFCcJudz9Y93SJARIQWSdLxhcbf/x378MeLu9baRBU2ArYBRzCViBE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VBZamHJ0; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="WB/CQJPP"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4891e86fabeso97470595e9.1
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:40 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VBZamHJ0"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-49048e043e5so4147085e9.1
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:41 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468279; x=1780073079; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=tafbeq82POGkhgkJ5/b8BzoeNviDyGyczeSTTZctWhQ=;
-        b=WB/CQJPPSbJC47PFuJY1Ftbm6rl+9yZBmdUUJVdbejz4q0Sc1mm3rKPqtZi8tulz1w
-         hOMBzo/6ZmpCcRjuuxL8sTHNv46WgoNDJ2ISLGJUcFnlZ3lbGlfE124XtDRF710v2aP9
-         JVyhqXY2I92RgFEGACJ4H5iRs1t2KBbvVe6ClEUz/2rb8EQ7lQ2CDthn0Qo2V4tvBBfu
-         5Rj90lpZS/2PaRd2W1npmAfAlEW4AYFYqym+iF5U2oOyEHGhCa7BOXlq9ysl89OgVsVm
-         BxXyBdd8E07apqG669dc4PiWTXMI0qskegrYKJ0Piu6l5l0hnuipow7wga7D1lpMR8aw
-         BKjw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468279; x=1780073079;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=suse.com; s=google; t=1779468280; x=1780073080; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=tafbeq82POGkhgkJ5/b8BzoeNviDyGyczeSTTZctWhQ=;
-        b=alNo6v85MKKhzQf2WuWwGUP4FkAQurGm57WbJa9OlTimWiHCDn7psdfxLCSPO+Wd6H
-         nB394EJbYRSW4sBi0yIlLt85Ofvol6T8xqLTgj60xha5WatlM2V1vuoUUMZMTFWHM2UE
-         82IaauxY4t+c246GArgfklMrtmUXAzj3b1ACoBlej1D9up7RV9vGvnfVnQB6HnH6kFe6
-         YWeanlTclA9f9nKOuObq85NrsjDRuEYfQheN7w+cQnLDoPeMpt45w2rzVYgfr+Ynf3E3
-         2PEfs/8i3HWSJTqM0nnUnn2itXE0NrJTbbth0fZUk5YNM0E/x+mVrhErtpgN59nxc1wI
-         yN/A==
-X-Forwarded-Encrypted: i=1; AFNElJ80/UZsh8cTkoM3Fl/aVqizwtxypckOJ2oudNiEVpQyrs+nk4rD3sMUQi2yCEJ7tp+LWYurY3Gheg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzdvnNsvi+xKjKyO5q4GPXEcGyCkvzh9ZTDxuRNbRAvVZcowB0+
-	DsaaDu2fkRtN9/O+Nh0PZv6F/x+g6iQPWrUSBHmGuwF0bllP23iwWQIuikulYZeiRzo=
-X-Gm-Gg: Acq92OE5FvDRW+8nglGSrIdnYM9Mw6UYxJbB1gcJfmCtqRe7I3BusOKtjiW+R8uOJMB
-	+YS9AnXv33rFvDPNDjpsIbzvEnPUAUQLXeNmeS4XvLXYQxtNLb7s32sY/wFh6f8D9aQGdWfeRXw
-	oMD05RixSm0x4ZcIoEmGXjCNNRiMR9Yz3w/o5RcC3EL3wL0GPZ5mYJ1rE22iWR4K/lya/7vxjlw
-	vRE4cLOADHzFIqQnapKuje+XrVh4fQo5o/FFq5lAbqDIv+64OpXwmqwU0TGU28LMWVVq03Cf9VX
-	1fWGKXycs7ZMMvIWDzKM1qrjbAAiz168vIcj+TFNwIWtavnr0t4zwT3wZxXuA1K7XDAfAgFk5Mp
-	RwchRzYXCiqFeUyvmYIk5E3gN28QLG/9Rkzz4+MAd3KJqEthhyC7IBLbeSiF+/BN4O03AtGxGra
-	6vPc3JpbkUo7OK3ciLv39RK5y/2LzsoXwWxbFZo2x0xJLo/UwBWtCuFLMXbQU4ojPUSLXdSFmsH
-	2yhUngsU16fOw==
-X-Received: by 2002:a05:600c:444b:b0:490:388f:1c0d with SMTP id 5b1f17b1804b1-490424a9c9bmr64726675e9.5.1779468278964;
-        Fri, 22 May 2026 09:44:38 -0700 (PDT)
+        bh=CJNKGc6pMtucdlUZ8vOfhBN75A3wyRFUCBEKzsHn5qU=;
+        b=VBZamHJ0GYJD/ApY7LiFtjiB072aEfzHfikiRMqfchkeRrJDy3aeyOHXQypBmuI3KJ
+         e0UHm+GZimtZL9S4nWnbNleVy4OHvKARnpc5TsaN82JQnafN00FgHcbgpAgZt4x6fx4P
+         QJoNItmA1HuTQqkw4v2KZo2oNWsbwG97mtN9/uQp+uxFEtC4s/FYvtr58UYRq7SrED1U
+         lJ1ZsmVJuC/VBczYJ9A6GkGiZuNOKRnurILS9DfQW/vmwvGUmr3aqOrjvLXBxqZA3/e2
+         r9eTfkXLb8TtIp97im1dN8z/iLjOizQuqcVj4/C3ulEgQYud7O4KB4+uPlAFbwN5483/
+         WzCA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1779468280; x=1780073080;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=CJNKGc6pMtucdlUZ8vOfhBN75A3wyRFUCBEKzsHn5qU=;
+        b=YYKyHgNJru0WfydGcR4hfFquAzGge5GfWOg88HMOBF9DZ9j73rxsAHU0RsbvcBEd8G
+         aeSUX4BAZMkZBzlYG7aPpHmq7WDFsQ/4vbfH5e42kEe2i910hlETE2o89PyJLm8Esh/J
+         o/+7BCOYzTkx5EP/oKp5f43bDXUyY5H7vlfq45cw9rZSiaYfLYNyumFXblBuwKz85M2q
+         8J5jgPvo0hrReXLmT4l8qhyoM30Ll1pvpzyTZqrsNvyUJeaMVvfF7eaULEQvlTgbd25M
+         gll6JDzy7KDOOgd6/q2tYDYxZ4Dv5e4Hz9AGOfxhj7QalmxSsfDd2OmMLuPYuCGS9Ij/
+         yq6Q==
+X-Forwarded-Encrypted: i=1; AFNElJ/+5x2g/t+wg5OEoqTO3NZfmsozko2zwjKvtfV6KJbi/me6O/x4CMvqVuR7ecO72giC/9X5tdDyvA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yznwblcz0CFft7m0zolx1QCvPVuhwOBIEIiLKstnnSEs0ahMwFO
+	mGd13xIXDSUZtFHusnqKKIJ6nvf2hgI/YrzCxiSFPZlca5d/KECrSAGht60igXdyms8=
+X-Gm-Gg: Acq92OFk7b4sN6rbkZeDIJShJQ1ZrXX+iZu91s5N4OQAnqIYdBJy2xnxQ+lEkm4jY3V
+	LStAe5dCsGAar0HHZ2cjccUvf0tnV1/Jfhpe4xLQlN715n6rzm6R2XWDRi8j9xPCYEQ9BGxfgww
+	FaYB5OwBK6kyghtnE0hLh4PQzHEh/uyasQpmjs9OGHH3cFxn6Ay9M+OVwOgE+ZTkFU6Ti/qOJe3
+	Mng5juWRnlT+64lbjU4+wp/qNUv4cO942uX78ktA7gmKOcw0UBJOBfQnQx3DFxSSjha5NXdNzbj
+	z5w5PtfASIeQj/bPP145jSGhl8xlRU2eCjQez+hTHye+KJgQOZqgJN6ivtQXaw9R/YjfAKMajUB
+	1+SyzrlpSnAHHMpgTGzAlXbQuEMLoTjYHoToAaSK2SN1aFkgAgX0kuVFoZd9Wyby/AytuFUZI+E
+	44O6A4MHVodXzaAFkFXpjY5VMnxBNw0vJCBVWtO+3npAok8BNXS3vxZnpNN9tLq9e+9rTY1aFv+
+	OvC6lvkPTGusw==
+X-Received: by 2002:a05:600c:a402:b0:48a:5546:61a1 with SMTP id 5b1f17b1804b1-490426b4da5mr51366755e9.15.1779468280090;
+        Fri, 22 May 2026 09:44:40 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-490454c60b5sm58040115e9.1.2026.05.22.09.44.38
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4904561a160sm63918255e9.9.2026.05.22.09.44.39
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:44:38 -0700 (PDT)
+        Fri, 22 May 2026 09:44:39 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -65,10 +67,12 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 00/19] multipath-tools: asynchronous checker framework
-Date: Fri, 22 May 2026 18:43:56 +0200
-Message-ID: <20260522164415.846589-1-mwilck@suse.com>
+Subject: [PATCH v2 01/19] libmpathutil: runner: reduce a message loglevel
+Date: Fri, 22 May 2026 18:43:57 +0200
+Message-ID: <20260522164415.846589-2-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
+References: <20260522164415.846589-1-mwilck@suse.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -77,102 +81,28 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Based on my previous patch set [1], which introduced the "runner" thread
-handling code as an abstract implementation of the asynchronous checker
-logic in the TUR checker, this set introduces a generic "async_checker"
-type and converts all existing checkers except directio to this framework.
-With this set applied, all checkers run asyncrhonously unless explicitly
-forbidden to do so with the "force_sync" option.
+Don't "log runner 0x7b724a07a480 cancelled in state 'done'" at
+level 3. It's a fairly normal thing to happen.
 
-Patch 1-3 are minor preparations. Patch 4-8 introduce a general concept of a
-refcounted "shared" pointer and use it to replace multiple instances
-of hard-coded refcounts on objects. Patch 9 converts the current TUR code
-into a generic asynchronous checker type by separating the actual TUR
-code from the handling of the async runners. Patch 10 adds support for
-this async checker type in the checkers code by searching for
-"libcheck_async_func" with dlsym() in checker DSOs. Patch 11-15 convert
-all checkers except emc_clariion to the async_checker framework.
-emc_clariion is special because it needs extra context both for the checker
-itself and for multipath-related information. Patch 16 and 17 add the
-respective additional fields to the async_checker framework. The mpcontext
-handling is rewritten, because the current apporach of handling void **
-pointers would be disastrous in scenarious with truly asynchronous checker
-threads that may hang forever. Patch 18 finally converts emc_clariion,
-using the concepts from patch 16 and 17.
+Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmpathutil/runner.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Comments and reviews welcome.
-
-Regards,
-Martin
-
-[1] https://lore.kernel.org/dm-devel/20260428114942.292307-1-mwilck@suse.com/T/#m9369993a81c82b10ef42896505d4a354b6be3f79
-
-Changes v1 -> v2 (suggestions by Ben Marzinski)
-
-- Patch 05: rework the shared_ptr test
-- Patch 06: new, separate patch for removing libcheck_tread code;
-  remove libcheck_thread and start_checker_thread() from checkers.h
-  Following patches are renumbered
-- Patch 10 (was 09): add alignment for checker_ctx field in struct runner_data
-  remove the unused chkr field from struct async_checker_context 
-- Patch 12: remove struct checker_context from checkers.h,
-  remove unused MSG_TUR_FAILED,
-- patch 16: rename checker symbols to
-  "libcheck_async_context_size" and "libcheck_async_init"
-- Patch 17 (was 12): Try to set TAS bit in rdac checker
-  (libcheck_async_init()); this requires moving it after patch 16
-
-Martin Wilck (19):
-  libmpathutil: runner: reduce a message loglevel
-  libmultipath: checkers: add two generic checker messages
-  libmultipath: checkers: move checker_class definition to checkers.h
-  libmpathutil: add implementation of generic shared pointer
-  multipath-tools tests: add tests for shared pointer code
-  libmultipath: remove libcheck_thread related code
-  libmultipath: use shared_ptr for checker classes
-  libmultipath: use shared_ptr for prioritizers
-  libmpathutil: runner: use shared_ptr
-  libmultipath: add generic async path checker code
-  libmultipath: checkers: add support for async checker
-  libmultipath: convert TUR checker to an async checker instance
-  libmultipath: convert cciss_tur checker to async checker
-  libmultipath: convert readsector0 checker to async checker
-  libmultipath: convert hp_sw checker to async checker
-  libmultipath: async_checker: add context_size and init symbols
-  libmultipath: convert RDAC checker to async checker
-  libmultipath: checkers: rework mpcontext passing
-  libmultipath: convert emc_clariion to async_checker
-
- libmpathutil/libmpathutil.version    |   7 +
- libmpathutil/runner.c                |  32 ++--
- libmpathutil/util.c                  |  45 ++++-
- libmpathutil/util.h                  |   5 +
- libmultipath/Makefile                |   2 +-
- libmultipath/async_checker.c         | 249 ++++++++++++++++++++++++++
- libmultipath/async_checker.h         |  36 ++++
- libmultipath/checkers.c              | 236 +++++++++----------------
- libmultipath/checkers.h              |  79 +++++----
- libmultipath/checkers/cciss_tur.c    |  41 ++---
- libmultipath/checkers/directio.c     |   6 +-
- libmultipath/checkers/emc_clariion.c | 104 +++++------
- libmultipath/checkers/hp_sw.c        |  32 +---
- libmultipath/checkers/rdac.c         |  38 ++--
- libmultipath/checkers/readsector0.c  |  28 +--
- libmultipath/checkers/tur.c          | 253 ++-------------------------
- libmultipath/discovery.c             |   8 +-
- libmultipath/libmultipath.version    |   3 +-
- libmultipath/prio.c                  |  47 +++--
- libmultipath/prio.h                  |   1 -
- libmultipath/structs.c               |   3 +-
- libmultipath/structs.h               |   3 +-
- tests/Makefile                       |   4 +-
- tests/directio.c                     |   2 +-
- tests/shared_ptr.c                   | 120 +++++++++++++
- 25 files changed, 728 insertions(+), 656 deletions(-)
- create mode 100644 libmultipath/async_checker.c
- create mode 100644 libmultipath/async_checker.h
- create mode 100644 tests/shared_ptr.c
-
+diff --git a/libmpathutil/runner.c b/libmpathutil/runner.c
+index da57ff0..8c6d6b9 100644
+--- a/libmpathutil/runner.c
++++ b/libmpathutil/runner.c
+@@ -134,7 +134,7 @@ repeat:
+ 		break;
+ 	case RUNNER_DONE:
+ 		st_new = RUNNER_DEAD;
+-		/* fallthrough */
++		break;
+ 	case RUNNER_DEAD:
+ 		level = 3;
+ 		break;
 -- 
 2.54.0
 
