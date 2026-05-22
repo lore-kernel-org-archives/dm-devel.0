@@ -1,65 +1,65 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2CAB03AF643
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 611473B9927
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468292; cv=none; b=EZL04UcSFCuikssC5cjbNhb7wQLar5gqr686hZ+6fm+Cf2k1iIb9tPgle/gJx4pT2JAJsnbZ7A9PnsQGeHOjobQIdPSn36MxEtiIoDWqt5/0se1zydudaLo+G37VEHyAgGWcDEI/bFANAct4PmDywU7IzcxIX3mP12pHMGib4cM=
+	t=1779468293; cv=none; b=Ij98RU82ltyCoEWbvDYRgnB3X4nhkHSYMdwTWWA15xu25D44OEwl1WT9s7R09ZFgC6uONA8RNeJHq2dlgb4wqYD5ZuCaebRzCTkh0pvjm6CYFeTOH5AX8B1ngJPfqphOmAloYZ6jQfG8w4DXdTIf0Rix1cstvcOyjWbwwEa/0n0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468292; c=relaxed/simple;
-	bh=ym2UBYpOV8cVLmPutzvgIUVurmFvSI2CD3rqt0F2H7w=;
+	s=arc-20240116; t=1779468293; c=relaxed/simple;
+	bh=cH23sU+zftvu1jsbJSdGD1TjXDeuj4BhVqOxAb3wcs8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=VJt94mBC+Ya07gN2GRkliQY24OZrkWp/m5MjzN99i094bkwZiw2bX/IVwiCdznFTWJp3ffeVpbmg9eT3zRLn4CERrLKyfdGiBN5WRqwl0MWM/JOaPvQA+puGugFZzQnMcQSPutECWsNhpVSG/Zdbp6f/w+ct9i58/MXjYdCbmCY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=E+9F9N/0; arc=none smtp.client-ip=209.85.128.43
+	 MIME-Version; b=XPytFnCEP7C+4r4nk9+SNWZtIYM/qBwjsy/6EDPXGXaqsT734uIO3Bj+05KNVh6MXtcFczG/HUAY+9M9/srtdVQ+HXwFipmy2TzZwkHdcYD/r1JP+CQ4teXAP7CbZajjf1iX+mi/uxhKK2K2JCuNZqQfrBon4B0drO96Q0kIfic=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=B0tncBd2; arc=none smtp.client-ip=209.85.128.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="E+9F9N/0"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-4903f7a90d1so13201845e9.2
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:47 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="B0tncBd2"
+Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-4903974854dso18956215e9.3
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:52 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468286; x=1780073086; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1779468291; x=1780073091; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=8eXnf85ip145qwYDQreHB73+m6+MZphLuVdN282ULZ0=;
-        b=E+9F9N/0lBwJACdcMJ3cMX47Rh/gPEh4cxKIxL/zGzwi/r6lnuvCgt9Yvu12rScZDf
-         P8w7/wxww2vlLlgDVNk9nIRroR8AG102cqVv3jDObnETQCHW2l47i9Gk3GSwCjZsJ/98
-         buhVo4amb143ajPwhYGGq0UbtsZw8d87CC7IxY9vS/zYFxUqJgXXG7Ay1d4WUm5iu0Q4
-         vYZcmHbn+7IIR5nxEslyTq9ZKkcnnAzcL7JGDrTAY1YBlOQU4zlekIsAHUyHpp9PnxAv
-         XltA15xgYQHWP3CkAfpcTDkA4Wxpmfx/N1xgptFhLMkNM1WBvf4D/N7PRcjH+Ey8G6/a
-         LtaQ==
+        bh=3TouJLChTgRmN54e2DEM7izKB9gTvmWH4nMbHnxWSNA=;
+        b=B0tncBd2sDsSMRkg2cuv57MyOVX/LP+DqyCdn7+tvPZ+yF0C9kZGcnYZVhECnBaXKo
+         F+Bj8PhK/0JqaTFY8Wlbriln+QmyePT8JmHQGIMY+2Pu0sDWZ8mrFxZ4aLQLQfPIPK0v
+         UtMtFlatxZ538qo3czY/v4sI1p/XtId0m+r06UiXa2vCZGXzBXrxXk/mhWHTClfvef9S
+         pe+sy5LfXdfgJ46I0KiiGIsre/rW/sYBCewahK67FaSbYJrJPLhc5bY3TU+1AJuXRlOP
+         0+bSFkHLMUsvpnYo2tiznWs37NxjHv0SgUN0GS+pzAmEm0si98nifp/sIKnI2N629O7E
+         NJPg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468286; x=1780073086;
+        d=1e100.net; s=20251104; t=1779468291; x=1780073091;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=8eXnf85ip145qwYDQreHB73+m6+MZphLuVdN282ULZ0=;
-        b=g4QPeHtKe0U/3N9eakXiyfhW1aoahDPPwtTdaa3gCzQdlxDmVWLiXDY2i4DMvMwuS8
-         b7H5TDJTZSz6pwaso2eiW7mg0fBUaojDaa6Vjmwjhlxm+rT2IKrN0w/AmjjT2wx/4riT
-         c1bwU/l9ZyuHsuO16UCwvyx0qUoFSal01dGRZeM/81rKU+/HKaAHddjA1u/7iQ+71HNj
-         iJgjeu/iuAsWiImi4bmP9z6qdoQGSBQxL3zi53UPUE9KmN5E04rY+mcPYJE83JIP4fC7
-         Yc8Z4J7B617YXilvgk/kDDnMZu+ISq0nk/OV4FkYYOEVM7KB0ZS5ZIJz5Ectw2Cjzb3V
-         jcdQ==
-X-Forwarded-Encrypted: i=1; AFNElJ+ifHmEAuRZz2gdJ/MM9eNevN1VXUGguD5swsHe3edGGsl2gtWLH3YnB1kDxi5ey6x2W+OrSuVZ0w==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyzm4FufQ0XE4v2EyFFGNpRV6nXvBRiZJDj7mgijfwcNc4iybe2
-	g80G+WdrZ2qcj8Q6bA0Sk9vDaSKIiumCGKPFmXDNfFzaE7peIVT0QK296SsCQ4X2xwls5L9N2g4
-	fUKQRWjU=
-X-Gm-Gg: Acq92OFtHwd9sTH4r3znE+wQYcv+ES8CqP75ge37qkdR/ckZ+Ee2dTNzFr1FDDPGbRw
-	14A2SxQ30Imwiy0O8HMhr8PzR/TtnXDgr757kLyW0GXb/p0adj7VkL3pJuF2oJ3G6h4RrhtM4DB
-	r0S9loMN1UC51eh0c60AC/Ld17oIEQPeCFI8V1ydigmsfczjlCnxA2ucJkBVQD6mSazOVxBSCeV
-	wAbmGf7l7fEzeG0fOiKm/RTBQ8ogcIU6yDyfY9EcWdzPC7HMI/Tu2YRzn53NQ9a+ZqGDTLjmPvr
-	AYkRL+7U+sZk8PlCinGcnVZUJKTQ4hXqPo4lGSq7hREuX+1FlXmOHZhFl3nFi4M+FD9I/JxLymr
-	Thi6TteE5JcyC7t99uu7vQtmM65pJS8RP6Poz9vqWGgKR8uNMVsB/6wtmDRP0KneMJob042l+DI
-	pfBw0KRZ8ehO/a6SwknpFJn9qg395m4veuUf9aA8ifwMuyVWPitGGDwuFDRqIwB4VV5QfJ8MZb1
-	5XqpE4esjaPP4a7B/WOR6D+
-X-Received: by 2002:a05:600c:c1c8:10b0:48f:d5d7:df89 with SMTP id 5b1f17b1804b1-490426d9906mr48770605e9.25.1779468286218;
-        Fri, 22 May 2026 09:44:46 -0700 (PDT)
+        bh=3TouJLChTgRmN54e2DEM7izKB9gTvmWH4nMbHnxWSNA=;
+        b=OW3plrkkvQIRalsC3oggGM752CFY/Yrypsq7frt+sK6GtBIxtMiuiGZRZ5B5FXQxHU
+         +CjsAN17Wu/DVata1BVdoQWZoJjev3nnx6AzOFEVWt+6kWmul0uV+jbCCddbJdRk/lMn
+         iZpI7Yz08/YnD4IAMSAVJSApwduLz1LlelM1FF0wbL/ZuuEKJ6QH7FrAldi3J4zMeZ9U
+         Zfd4DEQ7znQ9OFCJpvq9ziVoLlBzag7RpfA7Smwf1wklj5HuyEFIyNnLwk5bp2uP2KkH
+         Nj6Nx+6Qd9uBkQHglv52xKchQ3uJ0eZEyd6DO0vzvKdlAn7Kwh6qdwCQIkYdpLvGR7dn
+         StQw==
+X-Forwarded-Encrypted: i=1; AFNElJ+ZuFhl8lbbXpb15TrCMJ5zVJW2sIp3AmHgYthXeOEI/Q4dPoenJu7YX5BC4yMHgRmQKKMJ2gDaSQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyNADXr4tOoVg9XJPd66PRjgiYZa4wh1BkLQMLEfrN6x8RJ1YXv
+	helYekhIUFLVibWka7PjWSRG1hubVp1zHKKixf6LvkoOT6zQTOYy2ewGw2QyS1xiJq2HcQfr48Y
+	7qLmGjLY=
+X-Gm-Gg: Acq92OGGYMDN0cp3+EVu9N/+l2aZO8AYKFiE4ncGxNiGe7ICE03IjG8eX+Qjx+vJEub
+	KT6GXcD690V542x1Honx8iEKxIWnxaJ3CPbRr2c+m0RZOUrYorjMW0c0KwQoCdzJJwb+mDQzSXp
+	9coNxzVTA0Z5qAFHLjlTSQl+a+kyzQZ8CKOyMK3YjRJlnUYG3GnWvGf8wohZdfUvxYen4hgncpA
+	p6xbl7X2LPP+nlAXkENhaNUbzL4fVJYcvPTc+m2VZf5QrcNeRmgyGZhePBmWznjxsb1fm1XiDE7
+	Mbvj4MBM4Qb8L7S7eUZE/vUQJwbEBvg9WCNBrsaeaew+xWwifEx4SpnBUFnRCIxWYWYJOa8et91
+	BGB8QcQrY3p3YghgeamX2coHZCcrFi68wtpVyyYzV38xcy6E8Xebn5nLCTPFYAD+I4dv8zOfejF
+	jkFHHtm4S9yaJr5Xb7KLAy1eImKDAMoDe07CkuFptGEYgfNZqpK2iFbccP6CMw4r/kx29d99aWs
+	eiqU5u2223unnWosQXIu970
+X-Received: by 2002:a05:600d:8494:20b0:48f:d1b8:9aaa with SMTP id 5b1f17b1804b1-490424a1628mr49077755e9.6.1779468290713;
+        Fri, 22 May 2026 09:44:50 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4904527dbf3sm50073995e9.6.2026.05.22.09.44.45
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4904561f682sm54604125e9.13.2026.05.22.09.44.49
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:44:45 -0700 (PDT)
+        Fri, 22 May 2026 09:44:50 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -68,9 +68,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 05/19] multipath-tools tests: add tests for shared pointer code
-Date: Fri, 22 May 2026 18:44:01 +0200
-Message-ID: <20260522164415.846589-6-mwilck@suse.com>
+Subject: [PATCH v2 08/19] libmultipath: use shared_ptr for prioritizers
+Date: Fri, 22 May 2026 18:44:04 +0200
+Message-ID: <20260522164415.846589-9-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
 References: <20260522164415.846589-1-mwilck@suse.com>
@@ -82,164 +82,124 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a few tests (mostly meaningful with valgrind or ASAN) to test the
-shared pointer code.
+Replace the hardcoded refcount handling in prio.c with shared_ptr.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- tests/Makefile     |   4 +-
- tests/shared_ptr.c | 120 +++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 123 insertions(+), 1 deletion(-)
- create mode 100644 tests/shared_ptr.c
+ libmultipath/prio.c | 47 +++++++++++++++++++--------------------------
+ libmultipath/prio.h |  1 -
+ 2 files changed, 20 insertions(+), 28 deletions(-)
 
-diff --git a/tests/Makefile b/tests/Makefile
-index f0e5dd3..fc2a7ed 100644
---- a/tests/Makefile
-+++ b/tests/Makefile
-@@ -9,7 +9,8 @@ CFLAGS += $(BIN_CFLAGS) -Wno-unused-parameter -Wno-unused-function $(W_MISSING_I
- LIBDEPS += -L. -L $(mpathutildir) -L$(mpathcmddir) -lmultipath -lmpathutil -lmpathcmd -lcmocka
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 24f825b..bf388e9 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -53,28 +53,11 @@ int init_prio(void)
+ 	return 0;
+ }
  
- TESTS := uevent parser util dmevents hwtable blacklist unaligned vpd pgpolicy \
--	 alias directio valid devt mpathvalid strbuf sysfs features cli mapinfo runner
-+	 alias directio valid devt mpathvalid strbuf sysfs features cli mapinfo runner \
-+	 shared_ptr
- HELPERS := test-lib.o test-log.o
- 
- .PRECIOUS: $(TESTS:%=%-test)
-@@ -66,6 +67,7 @@ features-test_OBJDEPS := $(mpathutildir)/mt-libudev.o
- cli-test_OBJDEPS := $(daemondir)/cli.o
- mapinfo-test_LIBDEPS = -lpthread -ldevmapper
- runner-test_LIBDEPS = -lpthread
-+shared_ptr-test_LIBDEPS = -lpthread
- 
- %.o: %.c
- 	@echo building $@ because of $?
-diff --git a/tests/shared_ptr.c b/tests/shared_ptr.c
-new file mode 100644
-index 0000000..2194ddd
---- /dev/null
-+++ b/tests/shared_ptr.c
-@@ -0,0 +1,120 @@
-+#include <inttypes.h>
-+#include <stdint.h>
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stddef.h>
-+#include <setjmp.h>
-+#include <pthread.h>
-+#include <urcu/uatomic.h>
-+#include "cmocka-compat.h"
-+#include "util.h"
-+#include "globals.c"
-+
-+struct s_4 {
-+	uint32_t val;
-+};
-+
-+struct s_8 {
-+	char pad[4];
-+	uint32_t val;
-+};
-+
-+struct s_64 {
-+	char pad[60];
-+	uint32_t val;
-+};
-+
-+// clang-format off
-+#define make_destruct(n, size)	     \
-+static void destruct_ ## n ## _ ## size(void *ptr) \
-+{						  \
-+	struct s_##size *s = ptr;		  \
-+						  \
-+	assert_ptr_not_equal(ptr, NULL);	  \
-+	assert_int_equal(s->val, n);		  \
+-static struct prio * alloc_prio (void)
+-{
+-	struct prio *p;
+-
+-	p = calloc(1, sizeof(struct prio));
+-	if (p) {
+-		INIT_LIST_HEAD(&p->node);
+-		p->refcount = 1;
+-	}
+-	return p;
+-}
+-
+-void free_prio (struct prio * p)
++void free_prio(void *ptr)
+ {
++	struct prio *p = ptr;
+ 	if (!p)
+ 		return;
+-	p->refcount--;
+-	if (p->refcount) {
+-		condlog(4, "%s prioritizer refcount %d",
+-			p->name, p->refcount);
+-		return;
+-	}
+ 	condlog(3, "unloading %s prioritizer", p->name);
+ 	list_del(&p->node);
+ 	if (p->handle) {
+@@ -83,7 +66,18 @@ void free_prio (struct prio * p)
+ 				p->name, dlerror());
+ 		}
+ 	}
+-	free(p);
 +}
 +
-+#define make_fn(size) \
-+static void *thread_##size(void *arg)		\
-+{						\
-+	struct s_##size *s = arg;		\
-+						\
-+	get_shared_ptr(s);			\
-+	uatomic_add(&s->val, 1);		\
-+	put_shared_ptr(s);			\
-+	return NULL;				\
-+}
-+
-+make_fn(4)
-+make_fn(8)
-+make_fn(64)
-+
-+#define make_test(n, size)					\
-+make_destruct(n, size)						\
-+								\
-+static void test_ ## n ## _ ## size(void **state)		\
-+{								\
-+	pthread_attr_t attr;					\
-+	pthread_t threads[n];					\
-+	struct s_##size *s;					\
-+	int i, rc;						\
-+								\
-+	rc = pthread_attr_init(&attr);				\
-+	assert_int_equal(rc, 0);				\
-+	rc = pthread_attr_setstacksize(&attr,			\
-+			PTHREAD_STACK_MIN + 4096);		\
-+	assert_int_equal(rc, 0);				\
-+	s = alloc_shared_ptr(size, destruct_ ## n## _ ## size);	\
-+	assert_ptr_not_equal(s, NULL);				\
-+	s->val = 0;						\
-+	for (i = 0; i < n; i++) {				\
-+		rc = pthread_create(&threads[i], &attr,		\
-+				    thread_##size, s);		\
-+		assert_int_equal(rc, 0);			\
-+	}							\
-+	pthread_attr_destroy(&attr);				\
-+	for (i = 0; i < n; i++) {				\
-+		rc = pthread_join(threads[i], NULL);		\
-+		assert_int_equal(rc, 0);			\
-+	}							\
-+	assert_int_equal(uatomic_read(&s->val), n);		\
-+	put_shared_ptr(s);					\
-+}
-+
-+make_test(0, 4)
-+make_test(100, 4)
-+make_test(1000, 4)
-+make_test(0, 8)
-+make_test(100, 8)
-+make_test(1000, 8)
-+make_test(0, 64)
-+make_test(100, 64)
-+make_test(1000, 64)
-+	// clang-format on
-+
-+	int test_shared_ptr(void)
++static struct prio *alloc_prio(void)
 +{
-+	// clang-format off
-+	const struct CMUnitTest tests[] = {
-+		cmocka_unit_test(test_0_4),
-+		cmocka_unit_test(test_100_4),
-+		cmocka_unit_test(test_1000_4),
-+		cmocka_unit_test(test_0_8),
-+		cmocka_unit_test(test_100_8),
-+		cmocka_unit_test(test_1000_8),
-+		cmocka_unit_test(test_0_64),
-+		cmocka_unit_test(test_100_64),
-+		cmocka_unit_test(test_1000_64),
-+	};
-+	// clang-format on
-+	return cmocka_run_group_tests(tests, NULL, NULL);
-+}
++	struct prio *p;
 +
-+int main(void)
-+{
-+	int ret = 0;
-+
-+	init_test_verbosity(-1);
-+	ret += test_shared_ptr();
-+	return ret;
-+}
++	p = alloc_shared_ptr(sizeof(*p), free_prio);
++	if (p) {
++		memset(p, 0, sizeof(*p));
++		INIT_LIST_HEAD(&p->node);
++	}
++	return p;
+ }
+ 
+ void cleanup_prio(void)
+@@ -91,9 +85,8 @@ void cleanup_prio(void)
+ 	struct prio * prio_loop;
+ 	struct prio * prio_temp;
+ 
+-	list_for_each_entry_safe(prio_loop, prio_temp, &prioritizers, node) {
+-		free_prio(prio_loop);
+-	}
++	list_for_each_entry_safe(prio_loop, prio_temp, &prioritizers, node)
++		put_shared_ptr(prio_loop);
+ }
+ 
+ static struct prio *prio_lookup(const char *name)
+@@ -150,7 +143,7 @@ struct prio *add_prio (const char *name)
+ 	list_add(&p->node, &prioritizers);
+ 	return p;
+ out:
+-	free_prio(p);
++	put_shared_ptr(p);
+ 	return NULL;
+ }
+ 
+@@ -199,17 +192,17 @@ void prio_get(struct prio *dst, const char *name, const char *args)
+ 	dst->getprio = src->getprio;
+ 	dst->handle = NULL;
+ 
+-	src->refcount++;
++	get_shared_ptr(src);
+ }
+ 
+ void prio_put (struct prio * dst)
+ {
+-	struct prio * src;
++	struct prio *src;
+ 
+ 	if (!dst || !dst->getprio)
+ 		return;
+ 
+ 	src = prio_lookup(dst->name);
+ 	memset(dst, 0x0, sizeof(struct prio));
+-	free_prio(src);
++	put_shared_ptr(src);
+ }
+diff --git a/libmultipath/prio.h b/libmultipath/prio.h
+index 119b75f..7ff1a24 100644
+--- a/libmultipath/prio.h
++++ b/libmultipath/prio.h
+@@ -45,7 +45,6 @@ struct path;
+ 
+ struct prio {
+ 	void *handle;
+-	int refcount;
+ 	struct list_head node;
+ 	char name[PRIO_NAME_LEN];
+ 	char args[PRIO_ARGS_LEN];
 -- 
 2.54.0
 
