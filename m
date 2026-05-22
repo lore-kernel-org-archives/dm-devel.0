@@ -1,64 +1,64 @@
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03ADA27A47F
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83391426EDA
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468297; cv=none; b=ApKbLqxxV+iyqxoeYVgC1YslRFwxlA7cH9Rkyr2aFyP3ElZRA9uqaz4qoPxx7YMEc14yTcjtoABYdiMcA8eZyLYK7VAz7mhUITNCgsdf69sycBxgIyF6fwa/mo0rBLtJboCdIKf4VMja+ElQShrW4KZSTo8zFmFxD71uBS3qusk=
+	t=1779468299; cv=none; b=YeAU6bmyP/54quy7zrYvj1rh1PeEBKMvY0WZr8ea6asvecfZAUHas/bVpRqPjpaiqMJ/kUhLmO2CVdO441w5XI62p/9uPswo18S+EqU3KUqKpoZdEmn2QZvpdbRY/uicviMYUYzM7LfHct+ecM6PQlV+Mf1/qs9gVIamJ76PVsA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468297; c=relaxed/simple;
-	bh=x2tu+IkNoXY92Ydv5wnjWmP9gRkBSNgVdcVBxLznUWE=;
+	s=arc-20240116; t=1779468299; c=relaxed/simple;
+	bh=lh88EDuub6FpQ4+j5Kx/ph+/X6yO8wxLvZSUX/h9Bco=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=TC+UsApEpiDcacBwxCjkjYil74vEq9+vlrLrmau4Rf+QbLcVpUUSyAlzKqDCJruqzDx8ZMd9m6TR0cfIfas2wlv/cV7T8HjvinjifqPh+WdjmZhdFlRTPMWZX8GhdURlCrlvi/WUzEbifX4e6hrTKqLGQwA61QCsUBTBj67rLos=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=C5QOInbE; arc=none smtp.client-ip=209.85.221.51
+	 MIME-Version; b=ITNNwVskAFTJ+WtHd8lmg47BB6p7/nDfMuzUSK5YeRW0JOXs+f7cWL9S3BoYuFGADpIc/rhEbBZYVzU5JgEMvQQ+UCHK5pmYpOVVkW4YXV+nQiEXGstlcvO+NjWsiSeZPXb45hZBRv0cHD0JHzTFIShKngaDt8M+mj13ie3/HwQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=ItsZ7ymC; arc=none smtp.client-ip=209.85.128.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="C5QOInbE"
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-449de065cb3so7177937f8f.2
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="ItsZ7ymC"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-4891e5b9c1fso66205655e9.2
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468294; x=1780073094; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1779468296; x=1780073096; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=6Grel0fqV/Y6s/BLKriNFDG4P6sB2qt8Zvb0lp+A3DQ=;
-        b=C5QOInbERkBjyoE4GQCFf0zoPT3bM+1d2yobhe16ImSfM1vVWPCnB7kltWnSBAOC5x
-         DEr5jmSWIoeZYKIP3OyOuP+b2bPYglXMd4dkf81uRSt8JmdyUU79XUQO1qzNmU514CL9
-         HZ2I7LmRHbMdh37nxTLQ9Jkyhb2ZVUNjBbvWMAsDrvFm/m0uHbd05/me6T8kjJ3KSXAL
-         XfCkL3FmgyCWWy0ebB/T4usP5SaOoxOPPnyK6uCbR9Dzf7+dMz7mOL45GdDvCtX9Gm2c
-         Ok9L4mDRsqyo1Ftxmdy0QCjI78JRSC91TAcppmxPE1gZDt2fQ3UNxQWmCDVEQ5yAquXq
-         fxQw==
+        bh=jplMPxyOi97jTs3oKZR075rKOK4VqPKOWkEyY7kUAmw=;
+        b=ItsZ7ymC6GthsXnN6ppjcSYmmDUb7o77LGJ79QLyeREsvu+ZIqXfRPpdzT63zlUUWD
+         EuO6WDPr9grFZLvfJUdXc6Jyvx4OQOJ8+l/shrCaYC9pPfwkWSpve3JoisEp5ziEwrgg
+         VzN9eJJbtaoCvcWMQ8gmGWd75etnErlAYYUao8yf8Zn1PqUwJ7L3J4aKNdfqTcSwEQTu
+         H0zcOJsXJlz5EA4FRRJ2pDjXzEH7jUqU35P8OFS/oQrHgBzxtQKxX3f9jURAE7KDyP9a
+         /CbReSaJPjod8nYWodsAc7NCUZqP29lfEl04IVrQu5iYZ9aBXWvHFsrJifBl1aVfeLMB
+         gElg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468294; x=1780073094;
+        d=1e100.net; s=20251104; t=1779468296; x=1780073096;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=6Grel0fqV/Y6s/BLKriNFDG4P6sB2qt8Zvb0lp+A3DQ=;
-        b=fxx5nROmXSsmRjOHZbwlt2PkhBMolPEXlrDj2siTBwa6fvXdc0mOAI297NrhEAuMt+
-         z3BKHfbixenOtd/y4P9oyBBoKkQJxRQMEShw54BRJsdhMp0DIpFL745Wk8KdytzC01QC
-         xFPdd5QxFulelQHh6X73qzspoz/KaydShGL0RbY/tSCvzpeM5NrYje00VFEKITMkvIU8
-         XGigizMpWOryHE9n4Ebim4DvaaZbtBq5UWuysZV+20xAV6pp8a0C9BvshbvFhXNedmKW
-         q/fR7uL1sPuAqeSte9HyX0d44k0UL2OEAFK5JZTgIj+CJDOGvK0eRHGt7nfom7YX4cp3
-         bcVA==
-X-Forwarded-Encrypted: i=1; AFNElJ9tRKUYTUobhd0jhwwhPi2rMGKyocylFCxSLdpo4AFgku+RQM4U58Op6V7Ci0Ry3UFedmw1fkHqBA==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yzqwb7fivQR96oBBtbA/RKc7mH3JPjJr89EbrOmtBCVbxLmrDgQ
-	h2BbNgY6JBBUOVWFiLr/oUaNWqH33QlnEBofEJnQecBSpwqzVWXYwROAtBIJklgpX2k=
-X-Gm-Gg: Acq92OF5fW4yQIWz3X8pbQ4m5hwx7Da/M8nJY7iVFnm7W2VJbXvfp4JwWb4N2IeH8CS
-	PQzjSHHfsHt9K+KN91xfKq8XRjrxWMpfYE0BzsSSgFsfqqgFpooKZrn0KlhiJJyjEVYOzQmMHPA
-	trqj7B6hTjRCrecFF2R1XYqNU+u+7ZQKIuWmm+AD0sfAny7YQmlsII4/YpKcZOjE2ol05J4Z5tw
-	H48jWaGFJsmDoiSKA9btO60kGWaQxKNuYFfDOvRdATSUnhy7JYKQOiTq1C5PuCtfTkOOh96XhUq
-	ajU0de8M6LABSra7KY/8Q3GDfMZBaTWSplgu9uti26FMIjT+SawlQEDXcezOnlZbDUn4Kb3o3tr
-	mdirzKsgV6DPjNoPDlNogEg8V75+9Hc7rHbhsHZ8MmQGCOEosKX6gwBwWIFEMKKhCMwFBKor4ow
-	gIYXTt1SC+dNzrMUIAZR22koqOi7hfocZJ7/FdkmBmcBSAIHgeOxNyKQqhSVof6/78n2u6zKoPQ
-	2+WB/bfxir5Dg==
-X-Received: by 2002:a05:6000:4804:b0:44a:be4:d0e4 with SMTP id ffacd0b85a97d-45eb36ac4b7mr6946607f8f.25.1779468294253;
-        Fri, 22 May 2026 09:44:54 -0700 (PDT)
+        bh=jplMPxyOi97jTs3oKZR075rKOK4VqPKOWkEyY7kUAmw=;
+        b=Fw5APkRoY54EYiHVhZ0DCr1kEOcat1Qe+NJ181msjXGMJc0+/oRcMfCwzxBZE7nHm5
+         Ar+bjrElx2KnatuDPey4rzFY7T5t52NkO2m1wPpYLDUn5Xbf8RijPsfNpCbILZplLtD1
+         wWUK9wSchW0w1ZGzlYGzGqCwaXWsJK8J1dPM0CxEVuTXf2qjXSNnH22pxq/IVzWiZiU+
+         kbm948XGENFaplyEsFdqSyw8TgO2/omj7UduXJT3l/xrasToxKmHvpYgiIaG4wS2iUR6
+         TSaUq/dty3AH0o9AgasbJKpPP38XBhLjWXHj1sc1JReeDDr2peeeRSop1OmtzlxEX13H
+         2OFg==
+X-Forwarded-Encrypted: i=1; AFNElJ9TMP8+CiLRty+YlLEtqi7u5hFxuV84vNXWAkJIJNiiTBQHcACMhsDGImG0SnZ25NgS16wXlnoaTg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyBydhO+vgCOgungBMOdsrYPKb+/WJVQmW6kQP+PtXxLQ9vE6tv
+	Xh7vyuWPQNny1gwVVEeZh8QFlRfyNHxmi3nMPmtaJNfNJS3PAQSrcO1vMF8DSGVq8mo=
+X-Gm-Gg: Acq92OHIi45cLRqx9naQsUJL4+V61FAKLnNWHtPP+Nom7W3fo7El3chNmUNojkUbfTC
+	UEmfj9SB4VDApM0NDFyuoFK7FnEVEp7E8XyQowNOz19PW1+4nuF8cERjjpMfvg7vH4nVJa0BbZe
+	vh6lm31n27ByuMbLbQoUf21Ij50L5bY48ESTqCqrhZeDCyUDVCWMWlq+enkwJ51drDW1LBwUiq/
+	qajsif+qQWMkDsupYNq8ZS9nOg+r6aA/rD7ZpsVUUZJsnoy3Svd/eGD4P++UntHZhj5tWnjm68L
+	eBbWX2PyPVF/dbKOrBqw7LlpNijuGU9VuwOrU/VKi7eaFq9SMvL103D3lhgO8m7NmGdP3M38Rwt
+	0U9ZgE8W2xZA65u4i3Qx7cPf+Rysd7BZUCD4b2YAxu0BmaG6BpQZQoym6sTO2QF4MOuybDw0396
+	z1OYRoTu1LND7sxYHlWKOYFXWCCo71LwZMbmZgRfGrGuFFKlZ+X6HqwBBfaMRlSbzKPwsTvrkTU
+	aKWUZYCspqiygipEPKKp7Ns
+X-Received: by 2002:a05:600c:8889:10b0:48f:fe2a:1089 with SMTP id 5b1f17b1804b1-490424a12f4mr50269465e9.5.1779468295778;
+        Fri, 22 May 2026 09:44:55 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6d5e363sm5727189f8f.28.2026.05.22.09.44.53
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6d5cb9asm5926404f8f.27.2026.05.22.09.44.54
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:44:53 -0700 (PDT)
+        Fri, 22 May 2026 09:44:54 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 11/19] libmultipath: checkers: add support for async checker
-Date: Fri, 22 May 2026 18:44:07 +0200
-Message-ID: <20260522164415.846589-12-mwilck@suse.com>
+Subject: [PATCH v2 12/19] libmultipath: convert TUR checker to an async checker instance
+Date: Fri, 22 May 2026 18:44:08 +0200
+Message-ID: <20260522164415.846589-13-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
 References: <20260522164415.846589-1-mwilck@suse.com>
@@ -81,106 +81,357 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-If a checker shared library contains a symbol "libcheck_async_func",
-use this as a callback for the async checker functions, and do not
-read any other symbols from the .so file except the message table.
+The TUR checker now just exports the message table and the
+"libcheck_async_func" symbol. This converts it into an instance of
+the generic async checker model.
+
+With this change, struct checker_context isn't used any more and
+can be removed.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers.c           | 51 +++++++++++++++++++++----------
- libmultipath/libmultipath.version |  2 +-
- 2 files changed, 36 insertions(+), 17 deletions(-)
+ libmultipath/checkers.h     |   3 -
+ libmultipath/checkers/tur.c | 253 +++---------------------------------
+ 2 files changed, 15 insertions(+), 241 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 3a1663f..2f20b25 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -101,6 +101,18 @@ void reset_checker_classes(void)
- 	}
- }
+diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
+index 05dbd7c..4846ea9 100644
+--- a/libmultipath/checkers.h
++++ b/libmultipath/checkers.h
+@@ -180,9 +180,6 @@ void checker_set_async (struct checker *);
+ void checker_set_fd (struct checker *, int);
+ void checker_enable (struct checker *);
+ void checker_disable(struct checker *);
+-struct checker_context {
+-	struct checker_class *cls;
+-};
+ int checker_get_state(struct checker *c);
+ bool checker_need_wait(struct checker *c);
+ void checker_check (struct checker *, int);
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index 6791172..62460cb 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -3,87 +3,29 @@
+  *
+  * Copyright (c) 2004 Christophe Varoqui
+  */
+-#include <stdlib.h>
+-#include <string.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <unistd.h>
+-#include <fcntl.h>
+ #include <sys/ioctl.h>
+-#include <sys/sysmacros.h>
++#include <sys/types.h>
++
+ #include <errno.h>
+-#include <sys/time.h>
  
-+static struct checker_class *add_async_checker_class(struct checker_class *c)
-+{
-+	c->init = async_check_init;
-+	c->check = async_check_check;
-+	c->need_wait = async_check_need_wait;
-+	c->pending = async_check_pending;
-+	c->free = async_check_free;
-+
-+	list_add(&c->node, &checkers);
-+	return c;
-+}
-+
- static struct checker_class *add_checker_class(const char *name)
- {
- 	char libname[LIB_CHECKER_NAMELEN];
-@@ -129,6 +141,29 @@ static struct checker_class *add_checker_class(const char *name)
- 				errstr);
- 		goto out;
- 	}
-+
-+	c->msgtable_size = 0;
-+	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
-+
-+	if (c->msgtable != NULL) {
-+		const char **p;
-+
-+		for (p = c->msgtable;
-+		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
-+			/* nothing */;
-+
-+		c->msgtable_size = p - c->msgtable;
-+	} else
-+		c->msgtable_size = 0;
-+	condlog(3, "checker %s: message table size = %d", c->name,
-+		c->msgtable_size);
-+
-+	c->async_func = (int (*)(struct runner_data *))
-+		dlsym(c->handle, "libcheck_async_func");
-+	errstr = dlerror();
-+	if (c->async_func)
-+		return add_async_checker_class(c);
-+
- 	c->check = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_check");
- 	errstr = dlerror();
- 	if (errstr != NULL)
-@@ -158,22 +193,6 @@ static struct checker_class *add_checker_class(const char *name)
- 	if (!c->free)
- 		goto out;
+ #include "checkers.h"
+-#include "debug.h"
++#include "async_checker.h"
+ #include "sg_include.h"
+-#include "runner.h"
  
--	c->msgtable_size = 0;
--	c->msgtable = dlsym(c->handle, "libcheck_msgtable");
--
--	if (c->msgtable != NULL) {
--		const char **p;
--
--		for (p = c->msgtable;
--		     *p && (p - c->msgtable) < CHECKER_MSGTABLE_SIZE; p++)
--			/* nothing */;
--
--		c->msgtable_size = p - c->msgtable;
--	} else
--		c->msgtable_size = 0;
--	condlog(3, "checker %s: message table size = %d",
--		c->name, c->msgtable_size);
--
- done:
- 	c->sync = 1;
- 	list_add(&c->node, &checkers);
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index 5deee32..c091ce2 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -43,7 +43,7 @@ LIBMPATHCOMMON_1.0.0 {
- 	put_multipath_config;
+ #define TUR_CMD_LEN 6
+ #define HEAVY_CHECK_COUNT       10
+-#define MAX_NR_TIMEOUTS 1
+ 
+ enum {
+-	MSG_TUR_RUNNING = CHECKER_FIRST_MSGID,
+-	MSG_TUR_TIMEOUT,
+-	MSG_TUR_FAILED,
+-	MSG_TUR_TRANSITIONING,
++	MSG_TUR_TRANSITIONING = CHECKER_FIRST_MSGID,
  };
  
--LIBMULTIPATH_32.0.0 {
-+LIBMULTIPATH_33.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
+ #define IDX_(x) (MSG_ ## x - CHECKER_FIRST_MSGID)
+ const char *libcheck_msgtable[] = {
+-	[IDX_(TUR_RUNNING)] = " still running",
+-	[IDX_(TUR_TIMEOUT)] = " timed out",
+-	[IDX_(TUR_FAILED)] = " failed to initialize",
+ 	[IDX_(TUR_TRANSITIONING)] = " reports path is transitioning",
+ 	NULL,
+ };
+ 
+-struct tur_data {
+-	int fd;
+-	dev_t devt;
+-	unsigned int timeout;
+-	int state;
+-	short msgid;
+-};
+-
+-struct tur_checker_context {
+-	struct checker_context chkr;
+-	int last_runner_state;
+-	unsigned int nr_timeouts;
+-	struct runner_context *rtx;
+-	struct tur_data tdata;
+-};
+-
+-int libcheck_init(struct checker *c)
+-{
+-	struct tur_checker_context *tcc;
+-	struct stat sb;
+-
+-	tcc = calloc(1, sizeof(*tcc));
+-	tcc->tdata.state = PATH_UNCHECKED;
+-	tcc->tdata.fd = -1;
+-	if (fstat(c->fd, &sb) == 0)
+-		tcc->tdata.devt = sb.st_rdev;
+-	tcc->chkr.cls = c->cls;
+-	c->context = tcc;
+-	return 0;
+-}
+-
+-void libcheck_free (struct checker * c)
+-{
+-	struct tur_checker_context *tcc = c->context;
+-
+-	if (!tcc)
+-		return;
+-	c->context = NULL;
+-	if (tcc->rtx)
+-		release_runner(tcc->rtx);
+-	free(tcc);
+-}
+-
+-static int
+-tur_check(int fd, unsigned int timeout, short *msgid)
++int libcheck_async_func(struct runner_data *rdata)
+ {
+ 	struct sg_io_hdr io_hdr;
+ 	unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
+@@ -99,14 +41,14 @@ retry:
+ 	io_hdr.dxfer_direction = SG_DXFER_NONE;
+ 	io_hdr.cmdp = turCmdBlk;
+ 	io_hdr.sbp = sense_buffer;
+-	io_hdr.timeout = timeout * 1000;
++	io_hdr.timeout = rdata->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+-	if (ioctl(fd, SG_IO, &io_hdr) < 0) {
++	if (ioctl(rdata->fd, SG_IO, &io_hdr) < 0) {
+ 		if (errno == ENOTTY) {
+-			*msgid = CHECKER_MSGID_UNSUPPORTED;
++			rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
+ 			return PATH_WILD;
+ 		}
+-		*msgid = CHECKER_MSGID_DOWN;
++		rdata->msgid = CHECKER_MSGID_DOWN;
+ 		return PATH_DOWN;
+ 	}
+ 	if ((io_hdr.status & 0x7e) == 0x18) {
+@@ -114,7 +56,7 @@ retry:
+ 		 * SCSI-3 arrays might return
+ 		 * reservation conflict on TUR
+ 		 */
+-		*msgid = CHECKER_MSGID_UP;
++		rdata->msgid = CHECKER_MSGID_UP;
+ 		return PATH_UP;
+ 	}
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+@@ -159,14 +101,14 @@ retry:
+ 				 * LOGICAL UNIT NOT ACCESSIBLE,
+ 				 * TARGET PORT IN STANDBY STATE
+ 				 */
+-				*msgid = CHECKER_MSGID_GHOST;
++				rdata->msgid = CHECKER_MSGID_GHOST;
+ 				return PATH_GHOST;
+ 			} else if (asc == 0x04 && ascq == 0x0a) {
+ 				/*
+ 				 * LOGICAL UNIT NOT ACCESSIBLE,
+ 				 * ASYMMETRIC ACCESS STATE TRANSITION
+ 				 */
+-				*msgid = MSG_TUR_TRANSITIONING;
++				rdata->msgid = MSG_TUR_TRANSITIONING;
+ 				return PATH_PENDING;
+ 			}
+ 		} else if (key == 0x5) {
+@@ -176,178 +118,13 @@ retry:
+ 				 * LUN NOT SUPPORTED: unmapped at target.
+ 				 * Signals pp->disconnected, becomes PATH_DOWN.
+ 				 */
+-				*msgid = CHECKER_MSGID_DISCONNECTED;
++				rdata->msgid = CHECKER_MSGID_DISCONNECTED;
+ 				return PATH_DISCONNECTED;
+ 			}
+ 		}
+-		*msgid = CHECKER_MSGID_DOWN;
++		rdata->msgid = CHECKER_MSGID_DOWN;
+ 		return PATH_DOWN;
+ 	}
+-	*msgid = CHECKER_MSGID_UP;
++	rdata->msgid = CHECKER_MSGID_UP;
+ 	return PATH_UP;
+ }
+-
+-/*
+- * Test code for "zombie tur thread" handling.
+- * Compile e.g. with CFLAGS=-DTUR_TEST_MAJOR=8
+- * Additional parameters can be configure with the macros below.
+- *
+- * Everty nth started TUR thread will hang in non-cancellable state
+- * for given number of seconds, for device given by major/minor.
+- */
+-#ifdef TUR_TEST_MAJOR
+-
+-#ifndef TUR_TEST_MINOR
+-#define TUR_TEST_MINOR 0
+-#endif
+-#ifndef TUR_SLEEP_INTERVAL
+-#define TUR_SLEEP_INTERVAL 3
+-#endif
+-#ifndef TUR_SLEEP_SECS
+-#define TUR_SLEEP_SECS 60
+-#endif
+-
+-static void tur_deep_sleep(const struct tur_data *tdata)
+-{
+-	static int sleep_cnt;
+-	const struct timespec ts = { .tv_sec = TUR_SLEEP_SECS, .tv_nsec = 0 };
+-	int oldstate;
+-
+-	if (tdata->devt != makedev(TUR_TEST_MAJOR, TUR_TEST_MINOR) ||
+-	    ++sleep_cnt % TUR_SLEEP_INTERVAL == 0)
+-		return;
+-
+-	condlog(3, "tur thread going to sleep for %ld seconds", ts.tv_sec);
+-	if (pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate) != 0)
+-		condlog(0, "pthread_setcancelstate: %m");
+-	if (nanosleep(&ts, NULL) != 0)
+-		condlog(0, "nanosleep: %m");
+-	condlog(3, "tur zombie thread woke up");
+-	if (pthread_setcancelstate(oldstate, NULL) != 0)
+-		condlog(0, "pthread_setcancelstate (2): %m");
+-	pthread_testcancel();
+-}
+-#else
+-#define tur_deep_sleep(x) do {} while (0)
+-#endif /* TUR_TEST_MAJOR */
+-
+-void runner_callback(void *arg)
+-{
+-	struct tur_data *tdata = arg;
+-	int state;
+-
+-	condlog(4, "%d:%d : tur checker starting up", major(tdata->devt),
+-		minor(tdata->devt));
+-
+-	tur_deep_sleep(tdata);
+-	state = tur_check(tdata->fd, tdata->timeout, &tdata->msgid);
+-	tdata->state = state;
+-	pthread_testcancel();
+-	condlog(4, "%d:%d : tur checker finished, state %s", major(tdata->devt),
+-		minor(tdata->devt), checker_state_name(state));
+-}
+-
+-static int check_runner_state(struct tur_checker_context *tcc)
+-{
+-	struct runner_context *rtx = tcc->rtx;
+-	int rc;
+-
+-	rc = check_runner(rtx, &tcc->tdata, sizeof(tcc->tdata));
+-	switch (rc) {
+-	case RUNNER_DEAD:
+-		tcc->tdata.state = PATH_TIMEOUT;
+-		tcc->tdata.msgid = MSG_TUR_TIMEOUT;
+-		/* fallthrough */
+-	case RUNNER_DONE:
+-		release_runner(tcc->rtx);
+-		tcc->rtx = NULL;
+-		tcc->last_runner_state = rc;
+-		tcc->nr_timeouts = 0;
+-		condlog(rc == RUNNER_DONE ? 4 : 3,
+-			"%d:%d : tur checker finished, state %s, runner state %s",
+-			major(tcc->tdata.devt), minor(tcc->tdata.devt),
+-			checker_state_name(tcc->tdata.state),
+-			runner_state_name(rc));
+-		break;
+-	case RUNNER_CANCELLED:
+-		tcc->last_runner_state = rc;
+-		tcc->tdata.state = PATH_TIMEOUT;
+-		tcc->tdata.msgid = MSG_TUR_TIMEOUT;
+-		if (tcc->nr_timeouts < MAX_NR_TIMEOUTS) {
+-			condlog(3, "%d:%d : tur checker timed out, releasing it",
+-				major(tcc->tdata.devt), minor(tcc->tdata.devt));
+-			tcc->nr_timeouts++;
+-			release_runner(tcc->rtx);
+-			tcc->rtx = NULL;
+-		} else if (tcc->nr_timeouts == MAX_NR_TIMEOUTS) {
+-			tcc->nr_timeouts++;
+-			condlog(3, "%d:%d : tur checker timed out, waiting for it",
+-				major(tcc->tdata.devt), minor(tcc->tdata.devt));
+-		}
+-		break;
+-	default:
+-		condlog(4, "%d:%d : tur checker still running",
+-			major(tcc->tdata.devt), minor(tcc->tdata.devt));
+-		tcc->tdata.msgid = MSG_TUR_RUNNING;
+-		break;
+-	}
+-	return rc;
+-}
+-
+-bool libcheck_need_wait(struct checker *c)
+-{
+-	struct tur_checker_context *ct = c->context;
+-
+-	return ct && ct->rtx;
+-}
+-
+-int libcheck_pending(struct checker *c)
+-{
+-	struct tur_checker_context *ct = c->context;
+-	/* The if path checker isn't running, just return the exiting value. */
+-	if (!ct || !ct->rtx)
+-		return c->path_state;
+-
+-	/* This may nullify ct->rtx */
+-	check_runner_state(ct);
+-	c->msgid = ct->tdata.msgid;
+-	return ct->tdata.state;
+-}
+-
+-int libcheck_check(struct checker * c)
+-{
+-	struct tur_checker_context *ct = c->context;
+-
+-	if (!ct)
+-		return PATH_UNCHECKED;
+-
+-	if (checker_is_sync(c))
+-		return tur_check(c->fd, c->timeout, &c->msgid);
+-
+-	/* Handle the case that the checker just completed */
+-	if (ct->rtx) {
+-		check_runner_state(ct);
+-		c->msgid = ct->tdata.msgid;
+-		return ct->tdata.state;
+-	}
+-
+-	/* create new checker thread */
+-	ct->tdata.fd = c->fd;
+-	ct->tdata.timeout = c->timeout;
+-
+-	ct->tdata.state = PATH_PENDING;
+-	ct->tdata.msgid = MSG_TUR_RUNNING;
+-	condlog(3, "%d:%d : starting checker", major(ct->tdata.devt),
+-		minor(ct->tdata.devt));
+-	ct->rtx = get_runner(runner_callback, &ct->tdata, sizeof(ct->tdata),
+-			     1000000 * c->timeout);
+-
+-	if (ct->rtx) {
+-		c->msgid = ct->tdata.msgid;
+-		return ct->tdata.state;
+-	} else {
+-		condlog(3, "%d:%d : failed to start tur thread, using sync mode",
+-			major(ct->tdata.devt), minor(ct->tdata.devt));
+-		return tur_check(c->fd, c->timeout, &c->msgid);
+-	}
+-}
 -- 
 2.54.0
 
