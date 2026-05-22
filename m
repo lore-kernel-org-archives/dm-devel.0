@@ -1,64 +1,64 @@
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9B883AF643
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90E2D4611CC
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:44:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468294; cv=none; b=OPa2qgYj98iP0DDzWUnZQdKUfmmX49r6t89f6F7F9sX8zZ3srzx626BV/VgrICvfospAiZRYb5n4sjpI8JB6BOf3DF8Ko196/v6SnHRk24Hh0uLjLpcGe+yGY0mtsVNjUQHPEj719a06Jvh/FVODYU4MYQaQXW6beys5r4JD8u4=
+	t=1779468295; cv=none; b=GUlCZA5aBjyHic+/vMuRd6fD7lNPp5zMIROdAIrQz2979Wy2IfABS666eX8cCOr6DMv69nmzy2UmpHKM13Vuyzk1rt8aO1brG5PbTjhu7pW7laVL56EFQ6FwMyWrb3tEsIujOLJBjUmr0Ge/dnV3GzwnB7TtJNPP0niV1ipgv+0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468294; c=relaxed/simple;
-	bh=ehRpsGZ43GgymLwm0mBAdCNWD3aLcNZmZBRYfebqKNk=;
+	s=arc-20240116; t=1779468295; c=relaxed/simple;
+	bh=X5vtvUcdIDrIIrqG/frqvencuaPmxTpgaEjUzqapn1c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=iMGPmWsAw7t3Xxbc3oEssUohlMtFUlvhQM7+1365p/wM7IXVlYAo2KWyzcI/iEXQadoApUl2bdPxxOe0E8LoFkJZ8b0NtY/PddJkSmwlUgN2EdxNjfSwE9Axr+fwK8h3QW/10gQy8EbcN47HCsTT9tmsunscncWE8K3fi9nHYec=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=V8Pjlanc; arc=none smtp.client-ip=209.85.221.54
+	 MIME-Version; b=AubHODVJYmtN8F7rgfMgxXZzr07EjgQGo2rCcar/AkQJST96nTv9WSD/coF4KTOwT7qqpmr5T2UdvwUjf+6teVyue8nNJEeZm5hAOXAu8CPWUbZj8UEHecPrJXW2ukAyn3KBvpcmXnNurgRTOCQWpU0p+8I+SYnfZiMVCXCXKMQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=J2r3h/Br; arc=none smtp.client-ip=209.85.221.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="V8Pjlanc"
-Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-45e8a834cc2so3700541f8f.1
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:52 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="J2r3h/Br"
+Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-43d7e23defbso4292900f8f.0
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:44:53 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468289; x=1780073089; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1779468292; x=1780073092; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=YGALIbFvlL4M5hXrCj+JWdejRmSOAEb4H+KRXPTBNoA=;
-        b=V8PjlancPAYtGWWM+G496CfJMT1XkBgqcIgxOFXj40vPTwm/2cYK+FJe2KHftKWdRm
-         AIr86t39O20tCLgZP81qQdIQ83IqmQnuoD6pmfHr6jMzSXnUcLDU5qj0P7G1SUgvqaE2
-         WRJYMwb3ovN8Ek7cWp5LgULQACkyuREnK/ZxdGQHs0O+4ohnxI0Vemj8tCxqs6gC72uq
-         8QFP7UVEARMpSGdOT249lBpXnhG2ccrlMwJ7DZF0Y3X91of8QQXtyLSSABUSAWPjrFZh
-         FModNxu6RNS73RoBMINQIMyi8XOb4+Yt9I7/VUjiF2kkYfXWSUQpAfYL74leGUANtu68
-         cKFg==
+        bh=hawesuSJ13GH6L7sxB+NNgVOzr5pdVX/ilIiLpmosiI=;
+        b=J2r3h/Br/LeODWYLyZu08HA4dQ0QYlntNuNQFFdTmR6KDxglh52GuefEG1ZbL2n1rP
+         KBMJiNhatOb7JgHHh/JJkSvpQf4de5IVXtqvkUXPWM/LtY+t2qKb6YHwfgCvi3UdIC5v
+         Vcj2f8yX9cfqBGVLeHrZDISXs3nmBuMSLJ0gCMBIPz2lrJaSExvA6FL0426dM5ji7gOg
+         h1KfFJq7DZjWo53fWXnUHwHwqYfHRio9Y1+NcLxE9hF3ndI58iag6cz0fC8wFxOqCpuD
+         uahyyic2T/AEux5x96NYI7Ggx/Jv7ajq5LJZcQYe9SQuxGAgYXHaRghx0BEaBocecJGN
+         W3+g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468289; x=1780073089;
+        d=1e100.net; s=20251104; t=1779468292; x=1780073092;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=YGALIbFvlL4M5hXrCj+JWdejRmSOAEb4H+KRXPTBNoA=;
-        b=EBq+n4zbH0Ho0412B9qwCJBMgajmvsjcnksn6s2fbVBFbl24wArFKdzBStWGn1su0T
-         jz5+ALUcYih1oqFUuWuxPz70cvzGhyoMDPDerdBIJdUt8dGV/5fYQpyAGF9sM9leRcZ8
-         NgVT4gvu0jjfMK5DN2V6R1LtFXEY77Eyzk69FZUPCbZeR7uBUw11FBp3DgnIDMFyuHP4
-         JeJXFUMoPabswfWrlt/jExvJivBPJ7wjFpLJpfDymGuGV6VJYjTP+ir9oSLD1FLAR2ha
-         wMsKppR4pYfIwsW31QyrP0Q23+kJ3shXs7GC6tE77zDcLDRvQyK3yJHSGIh3XX5JJPgd
-         naAg==
-X-Forwarded-Encrypted: i=1; AFNElJ/br7B6gnKgC+IibU2jwH6WHrwF+chf/E1+Afm2ry7tvf/DhoiBi0mt+MVw6E5VNm7uNvTqaCYUZg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxHzzsOYMIFbb75rsTxy/mZxz41Cn5XViyQCDJD9OYyptQLmLCE
-	C4sSThuiOSnj9dtlzQR498PlBKDbd1hYU4mpXMj9fARIdDxb+gNX1+ckmMfJLNwLrR8=
-X-Gm-Gg: Acq92OFaxOjz9BqP3CUuGYvtZOG7lDr8PweSXTxZ6dR11QBQEKu73az1BeIsl9cJEEf
-	5WqKEZTV1ln+9QMt+8fjPn5MBoaorsdLSpi8UlFPSHkQUuxSu4iy1UMIG+yJ9yLFRad3BEs7mDZ
-	A5K8zH+QUDjzUjF9mgId0xrvr6mk52C2E1C3nyMzE1bHZsxd9fredlaV240adpAKcsZdWahI+Db
-	LYS0F+4HThB0ilSlR/YVCtg3sMRh+irmytjGVAfAVR06ZfkNll9GshNk8LY6Iw7idHAcwPoAPSn
-	vcYePO29vQ+u9Ko8kDMR0v21V7m13TzAF6IJdMEj4EzEITAtOwtf35mRZZiWI2Lza0cF1qQa1ND
-	LYIfTd9wnlZJvmVBcRXp45YjQjMN3N65xU1fqfshv0sadB7Ng9801H6QHmcrZv7sZjxcD/FmYNm
-	9tgF7LSD9KMDh4g/uKHvRVjpcmuXO2HL4kpyovxNj/a5LLqxLJ+F7L3AVeE7GpAbTKBfBIVUE03
-	4qUdK2We+HiwQ==
-X-Received: by 2002:a05:6000:290b:b0:43d:7e6f:3816 with SMTP id ffacd0b85a97d-45eb38c359fmr7314300f8f.40.1779468289215;
-        Fri, 22 May 2026 09:44:49 -0700 (PDT)
+        bh=hawesuSJ13GH6L7sxB+NNgVOzr5pdVX/ilIiLpmosiI=;
+        b=gYFHTbGTXVTst+b69PdCBg+vfPB3pwCS52HgkZkuHtm0HWFUqae66xWOjH4pcBnd3m
+         wdRTB8CXk9gy1zHS+fU6N56aeuNzlAgD6TM53fhQw7tRE91ywOd3EMBmDByGdXYNl7tu
+         nNAMk+iVY3wI3vFd7hNpC8Gtsmd0kE9oW6/T2hG8H03UA7VMD9If8iY1HnEGa5BvHBHF
+         PGWjkKkGtMcxIWjMAr61gWs5SBR3BNsm97TSgaWydwl2modyGw11ZtyXlrsOJ3LMP4hW
+         Y1UGA7Wqv2ViZQuxYfsuoyffXE/dD5KvZSW+c/iKtJ6p3mAioH5nLjAlVfPulq+coPCE
+         Xutw==
+X-Forwarded-Encrypted: i=1; AFNElJ93eaYkgN8oBjT1clMceO5IaaJpyePREhzDbg0wcxGVzZuzB6gO7ElSUm9RDYcG4dDLr2M7DuCWMw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzSmVzvu45DhVYLrfrozrwgkiJUJsXLb8ThgISzFxT+ISbNcWSv
+	i/wmohDwKrWyn0eFychSkxuUxs/4N78U0vzPddOVCCqf69B9E2f4NDJEi7F//t76BGM=
+X-Gm-Gg: Acq92OFcv63txbmurW7jBPj6NCn1ESryU3TJF2altwhInkPkL+TBPQNKIeXFssTchs3
+	Ck/MT9G9NE1Cj4hs+Oy7gHjCUuanT+vi5f2/fsbFOevCTjCTkzDqy0wNiwDcTq4B4Zn1seHdIo1
+	j+2PS90AMQcupv3CbVMxloBz50JzqcTpSi6cmLe8WM1GbJaH/mQEs4RepZPidtZBSoACRqWdi7G
+	LNAeX+fRoS09ind0Hbl0l1/yGJsFD4m3cu2tVCvZqdYKESfR9GNmIuXKpmBtn7Bciwv2xh4XDTH
+	OGtxrA4S8VERE15nSvY5nEOIzj4v1s2MJTBO5LwMkDh8GF/yKQ0UcxPKdugoCGcm+gbbwH1rG1T
+	RESTMeGhL71wGLQiL2DuYP8eMgv6vx1s4fP1RGWXRU6dPiE+ChE4E0N3WvvFZVfnLUPqC+KqnLt
+	wyfQ6bej+YGnQqGCIGW46ybVptBxK57q2FaQH6wCT1Az+JUDxEHp9sU+1YT0Lw/16wGAMUQ1Rto
+	RZRvwAHcnzH3wXiaIcIoBA88kmwzvO5Ikk=
+X-Received: by 2002:a05:6000:4b06:b0:45e:73eb:1ff7 with SMTP id ffacd0b85a97d-45eb3688819mr6599964f8f.3.1779468291863;
+        Fri, 22 May 2026 09:44:51 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6c9f58dsm5196118f8f.5.2026.05.22.09.44.48
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6cce01asm5803301f8f.11.2026.05.22.09.44.51
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:44:48 -0700 (PDT)
+        Fri, 22 May 2026 09:44:51 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 07/19] libmultipath: use shared_ptr for checker classes
-Date: Fri, 22 May 2026 18:44:03 +0200
-Message-ID: <20260522164415.846589-8-mwilck@suse.com>
+Subject: [PATCH v2 09/19] libmpathutil: runner: use shared_ptr
+Date: Fri, 22 May 2026 18:44:05 +0200
+Message-ID: <20260522164415.846589-10-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
 References: <20260522164415.846589-1-mwilck@suse.com>
@@ -81,141 +81,96 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Utilize the share_ptr code for tracking the refcount of checker classes.
+Use shared_ptr to track the runner_context refcount.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/checkers.c | 58 ++++++++++++++---------------------------
- libmultipath/checkers.h |  2 --
- 2 files changed, 19 insertions(+), 41 deletions(-)
+ libmpathutil/runner.c | 30 +++++++++---------------------
+ 1 file changed, 9 insertions(+), 21 deletions(-)
 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 5655146..a3b9cc8 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -39,41 +39,11 @@ const char *checker_state_name(int i)
- 	return checker_state_names[i];
+diff --git a/libmpathutil/runner.c b/libmpathutil/runner.c
+index 8c6d6b9..56abd03 100644
+--- a/libmpathutil/runner.c
++++ b/libmpathutil/runner.c
+@@ -30,7 +30,6 @@ const char *runner_state_name(int state)
  }
  
--static struct checker_class *alloc_checker_class(void)
-+static void free_checker_class(void *ptr)
- {
--	struct checker_class *c;
--
--	c = calloc(1, sizeof(struct checker_class));
--	if (c) {
--		INIT_LIST_HEAD(&c->node);
--		uatomic_set(&c->refcount, 1);
--	}
--	return c;
--}
--
--/* Use uatomic_{sub,add}_return() to ensure proper memory barriers */
--static int checker_class_ref(struct checker_class *cls)
--{
--	return uatomic_add_return(&cls->refcount, 1);
--}
--
--static int checker_class_unref(struct checker_class *cls)
--{
--	return uatomic_sub_return(&cls->refcount, 1);
--}
--
--void free_checker_class(struct checker_class *c)
--{
--	int cnt;
--
-+	struct checker_class *c = ptr;
- 	if (!c)
- 		return;
--	cnt = checker_class_unref(c);
--	if (cnt != 0) {
--		condlog(cnt < 0 ? 1 : 4, "%s checker refcount %d",
--			c->name, cnt);
--		return;
--	}
- 	condlog(3, "unloading %s checker", c->name);
- 	list_del(&c->node);
- 	if (c->reset)
-@@ -84,7 +54,18 @@ void free_checker_class(struct checker_class *c)
- 				c->name, dlerror());
- 		}
- 	}
--	free(c);
-+}
-+
-+static struct checker_class *alloc_checker_class(void)
-+{
-+	struct checker_class *c;
-+
-+	c = alloc_shared_ptr(sizeof(*c), free_checker_class);
-+	if (c) {
-+		memset(c, 0, sizeof(*c));
-+		INIT_LIST_HEAD(&c->node);
-+	}
-+	return c;
- }
- 
- void cleanup_checkers (void)
-@@ -92,9 +73,8 @@ void cleanup_checkers (void)
- 	struct checker_class *checker_loop;
- 	struct checker_class *checker_temp;
- 
--	list_for_each_entry_safe(checker_loop, checker_temp, &checkers, node) {
--		free_checker_class(checker_loop);
--	}
-+	list_for_each_entry_safe(checker_loop, checker_temp, &checkers, node)
-+		put_shared_ptr(checker_loop);
- }
- 
- static struct checker_class *checker_class_lookup(const char *name)
-@@ -198,7 +178,7 @@ done:
- 	list_add(&c->node, &checkers);
- 	return c;
- out:
--	free_checker_class(c);
-+	put_shared_ptr(c);
- 	return NULL;
- }
- 
-@@ -284,7 +264,7 @@ void checker_put (struct checker * dst)
- 	if (src && src->free)
- 		src->free(dst);
- 	checker_clear(dst);
--	free_checker_class(src);
-+	put_shared_ptr(src);
- }
- 
- int checker_get_state(struct checker *c)
-@@ -393,7 +373,7 @@ void checker_get(struct checker *dst, const char *name)
- 	if (!src)
- 		return;
- 
--	(void)checker_class_ref(dst->cls);
-+	get_shared_ptr(dst->cls);
- }
- 
- int init_checkers(void)
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index e69dfd9..7ff8e01 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -135,7 +135,6 @@ struct checker;
- struct checker_class {
- 	struct list_head node;
- 	void *handle;
+ struct runner_context {
 -	int refcount;
- 	int sync;
- 	char name[CHECKER_NAME_LEN];
- 	int (*check)(struct checker *);
-@@ -200,7 +199,6 @@ void checker_get(struct checker *, const char *);
- int libcheck_check(struct checker *);
- int libcheck_init(struct checker *);
- void libcheck_free(struct checker *);
--void *libcheck_thread(struct checker_context *ctx);
- void libcheck_reset(void);
- int libcheck_mp_init(struct checker *);
- int libcheck_pending(struct checker *c);
+ 	int status;
+ 	struct timespec deadline;
+ 	pthread_t thr;
+@@ -39,17 +38,6 @@ struct runner_context {
+ 	char __attribute__((aligned(sizeof(void *)))) data[];
+ };
+ 
+-static void release_context(struct runner_context *rctx)
+-{
+-	int n;
+-
+-	n = uatomic_sub_return(&rctx->refcount, 1);
+-	assert(n >= 0);
+-
+-	if (n == 0)
+-		free(rctx);
+-}
+-
+ static void cleanup_context(struct runner_context **prctx)
+ {
+ 	struct runner_context *rctx = *prctx;
+@@ -65,7 +53,7 @@ static void cleanup_context(struct runner_context **prctx)
+ 			"%s: runner %p finished in state '%s'", __func__, rctx,
+ 			runner_state_name(st));
+ 	}
+-	release_context(rctx);
++	put_shared_ptr(rctx);
+ }
+ 
+ static void *runner_thread(void *arg)
+@@ -147,7 +135,7 @@ repeat:
+ void release_runner(struct runner_context *rctx)
+ {
+ 	cancel_runner(rctx);
+-	release_context(rctx);
++	put_shared_ptr(rctx);
+ }
+ 
+ int check_runner(struct runner_context *rctx, void *data, unsigned int size)
+@@ -195,17 +183,17 @@ struct runner_context *get_runner(runner_func func, void *data,
+ 		return NULL;
+ 	}
+ 
+-	rctx = malloc(sizeof(*rctx) + size);
++	rctx = alloc_shared_ptr(sizeof(*rctx) + size, NULL);
+ 	if (!rctx)
+ 		return NULL;
+ 
+ 	rctx->func = func;
+ 	/*
+-	 * We have to set the refcount to 2 here. The runner thread may be
+-	 * cancelled before it even had the chance to increase the refcount,
+-	 * which could result in a use-after-free in cleanup_context().
++	 * Take an additional reference here. The runner thread may be
++	 * cancelled before it even had the chance to take a reference, which
++	 * could result in a use-after-free in cleanup_context().
+ 	 */
+-	uatomic_set(&rctx->refcount, 2);
++	get_shared_ptr(rctx);
+ 	uatomic_set(&rctx->status, RUNNER_IDLE);
+ 	memcpy(rctx->data, data, size);
+ 
+@@ -222,8 +210,8 @@ struct runner_context *get_runner(runner_func func, void *data,
+ 
+ 	if (rc) {
+ 		condlog(1, "%s: pthread_create(): %s", __func__, strerror(rc));
+-		uatomic_dec(&rctx->refcount);
+-		release_context(rctx);
++		put_shared_ptr(rctx);
++		put_shared_ptr(rctx);
+ 		return NULL;
+ 	}
+ 	return rctx;
 -- 
 2.54.0
 
