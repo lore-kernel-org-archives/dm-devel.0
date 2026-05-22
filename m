@@ -1,64 +1,64 @@
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94BE34779A3
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:45:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC3B4425CF4
+	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 16:45:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779468308; cv=none; b=RbXWLd4ogZUO8cVVF0jJ0NhtgjxUdhlPxWHBHqJfwD1KRuFVGqRsG0Yovm3ZvdQTLjJQe3lnZ6bJCrAj8Iytc1n/+aOI+8JhUXizPf5rqQQHNEanGhx5omv2ad2C92nltnajxADLVScYYqV2y0uLxfuXq1Cfy6GtgmDYxEbN4j8=
+	t=1779468309; cv=none; b=XS/WuPgpGw2Cg8Uc76X0rofhrUUqcaXxQljljHhAjwoT3c6mFtdV4quN59AqnTIjQ0EKX54bCfTOHpxCnBdFR2Z/CGBGWjxwaQrUMLERGi6pUG4a3yhvZw48MiHzyYNmsp1qRRl1C7VS6DtuIy145WXMo/uNw5US+RXkAagufdo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779468308; c=relaxed/simple;
-	bh=qm8nqHxUEPTUHUVEfTjrwW+yPMi/Cn7hZhmjNEkRzG4=;
+	s=arc-20240116; t=1779468309; c=relaxed/simple;
+	bh=U8V+8RO5UbsoRfFhKBjxtLkKb1zrqiv95DSD1b1wRqQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=N6haj2sEd82gkXsJUKrdJ8pFgwhEK5iumPeLnAaoSmIP9x9457guoIOBwRHBWyou3/n2MF6tFaRSQunUlX7y+FtO+7kQRf3lY/cUhv4v5C0sB/oknyLVylMTO/Ti66Kway2GQylcuUIU4PE1Z/2QjusbuL1+MGK+i+WLo33s8sg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=JuGJq7Di; arc=none smtp.client-ip=209.85.221.52
+	 MIME-Version; b=DQnVMnNIoPuE/o3NQ4G+mXXzKCZllDhKch8LDMkfDiEEqeLHDRbz6d3s1C+N2nqat2WYMSaeR3Zf/8ia6GotcS8oSKA3t41ctezmd+HuV8IEJsH30zLgf5HvEkzcFUlHcSTv/Q67X9s+nToTDo+csHPky8Ygv4F6JivBQyiD+Ig=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KlO1AlSa; arc=none smtp.client-ip=209.85.221.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="JuGJq7Di"
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-44e1860558fso4927709f8f.0
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:45:06 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KlO1AlSa"
+Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-43d7645adbdso5117533f8f.1
+        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 09:45:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1779468305; x=1780073105; darn=lists.linux.dev;
+        d=suse.com; s=google; t=1779468306; x=1780073106; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=XyiqKPBebZIrWI4Vo0exGQrGYxULhWTpKmKVesTUjBo=;
-        b=JuGJq7DixJI8JIGNsC9+j4D2KoNVOAnq25GXfg61iOZ7nGXZKP4RRMFD+LYXUtiouO
-         CHRxkGgSJNil5jQgjMU7E0YIhO+/OJ0alvpgtY8wrHywa8JLlQIUjVKLFTOvIqfw2DIC
-         9s2O8ZDiWfAG2LGCz+n2O1ignt7weR7rmkHCWGsUKetLsDaWxwldM1T48GzGJ2OA3gmC
-         u15+XvXZ8v3IlUYBdAJgGQQ42rb9F9Y6ypx25ZtXBR52zjr+N3KCaXKt6L/VebYdZGJl
-         gAOIeVDGvTi3xmJTUIyD58d8aAkgHI98OCgHgOtQV84E7RGFxfkcRc1bxHhhyB05Y6sv
-         zU8Q==
+        bh=MdC0HWQ1+3rZYUyiKiJSz5oXIMjFSNs7b4WG8FUoY2M=;
+        b=KlO1AlSaiwT/ZVaehqOxj708JLFYlgUt/tRNMQbk6wWBPv3oe394jQcyPH87kGcjkV
+         8LuO9Bs46Nad/KIn0OUcGyK+QHcXdmrylg1U43BkXo4UWIamil3u7zp1StzU6XmcIvU9
+         fpUnFAeppMsSZSfxOmx52hiwqttQA2Z9FAau8fRWgf8DRbuQFQens4xiH86qlKc46NBX
+         Lx12IrXX3E6ZEu/cVGsFxVTs2nbbSDhGd188FEQCq2Qz/BWx6Y1Xr65r7gqZzU9M9K9b
+         qMO4O6SSN4M4a0ezLOsI4DH6DOttgVoXvjF5XvcsKANixp/r2lVSuKNH8gRZ2lnK6stX
+         RfrQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779468305; x=1780073105;
+        d=1e100.net; s=20251104; t=1779468306; x=1780073106;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=XyiqKPBebZIrWI4Vo0exGQrGYxULhWTpKmKVesTUjBo=;
-        b=KqycawMJtw4flciLOboCbOgqYB8lzNbvT919Yg3TWxq1q+JkesJPtGWUJx3tgJOChZ
-         Y7z4+/CtX4+V3Te+llP2JGqUQHpFD2gz/SQXskvj3aXKXS3MFQ+bETR45h5IfRagbPeU
-         BesKSSb6ymotzo+FEeColjOgGWoQnL9F85BC5pGh0kfXDay8ldKDr5Qhq0CidHLPgFnZ
-         oj2/PbHWQm4y9NFKLwnygjQ5wF2CA9DDetv8g2/u36SX8K5bnlKM0IDC1XhjbYK243iT
-         /6AC60/tedTudnH3wFIGVovLG+kJcBN5rI5HKm41KzpzsyYZOEQ//4vMoV1QsLHCS/+Y
-         gPPg==
-X-Forwarded-Encrypted: i=1; AFNElJ+WeNlI6t90a/kx+8XxNBE7tvV+rxGejbixje6xlao3+BbP5p5bZolMNkEjQxC1b95bic/I7RdOVA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzmaFtMzJQJw3a2Yg5A41IchcgbotriCEQgZ9V5lAYZc3gCtL8+
-	6JLwAEAg9oaJwGoRk2dVgG/CDwGZFe3cFf07YTe4dOwDUeV6tLYBog91UhUVpnIq+co=
-X-Gm-Gg: Acq92OHNtwH1zy703YJ88p+P7YH7wAHeGtkZjTnmdLNaCktK/jQ2J2nlpwWdx4y3dCU
-	kytC/fIeh366FrgUbfcG++GNoVMGy8Khf7iEcvtGRRRJrdvXcvBGIsLoF7QZ78hgXmibRxbT3hu
-	fuWubJUWxBvwkB5/Ury8nk73IdEawGh6EXQXMXbXnDlAOjv9B9n7wZjtQyDMDQuAWPLKRc8dDAs
-	jIyW0Igcm05Kru7URH+jB+zl25nzF6SdES+Ebs09Q+CleMgXPeC9AVcryT+zN62BdkD7BbqdZx3
-	6ChVRyUKezvhrq7G9iBXtnLU4pofYYeJUhjXtIAYhsEl7NgZdC3UwZCz+GzQiXzG9HMgjVsy23z
-	RBdeByoVezkWsAP2mwtg4i/GBC7ZX60oRrDeGKVyyoJBx/Q2fXzfyP5Ge0XBzAtcWGktnv6eLEZ
-	vZ2hx7MWZztMkIcEN1kU5OyESnlNlDWDSI+jTuOZZx4Hmvs90kZT+Kd3muVAdW2ba+nFGDSI03S
-	tjrK1otPxXJie9knCVRYN3W
-X-Received: by 2002:a05:6000:1849:b0:45e:a19f:22e4 with SMTP id ffacd0b85a97d-45eb38a9139mr7501704f8f.17.1779468304838;
-        Fri, 22 May 2026 09:45:04 -0700 (PDT)
+        bh=MdC0HWQ1+3rZYUyiKiJSz5oXIMjFSNs7b4WG8FUoY2M=;
+        b=P2vjnogfaFgXqWk2TMaU6TfT++87Wkg1ZTX7fMV1IiF5vBhCl8/FlBmmVNYjDhuq4u
+         svc4zbnMa9eHAVAMhRtNpOYp2eZEcT0wmKB5HL1C503KIImxFDhAP1MuKWdAvEemeYTr
+         d4+QyDT/AOGlZjQGq8e0bZHw9+/R/qWDIo1fpaHoi7N4GhZtw31N2coU4xzzKk1zjSmY
+         zvUpl1sFYxSDmWmCeyG59QthrwVeAktZjn9rGc8AXyrXpWt+VQ8SILozkK0QZYT7pglO
+         R3y5IFBHHnXi+BD/hHY0PN2T/IbPBhlRPp97Xpya2NN+jwIvL1hWhiX49d8gTNb8j0Eq
+         R6PA==
+X-Forwarded-Encrypted: i=1; AFNElJ9zHiKC+EPfiKJTy46jMcJeVljfn4R/ykvAT9FXhONZte6KSPYJEpW6hEtlPqHVub6J0MyUAHKNew==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yyx2PT+9xahLi5n34iLWWIEfpC8AbTLLPSXfsXlilzQNgfVYhA5
+	wWxcG+OjsGX8xsU9UtNJyPQhb8SrFKzTK00JGtirxTg1sJaX5APVf709tKCv9WU76DM=
+X-Gm-Gg: Acq92OFGQiJPCePTeo9Cb9WMfiV0WYG4c66wUiMx2fcIJReHWJk/J/W2lw62pFVPZC9
+	RLV6wyGeL8bkWy9+VJuIbG8LVcgcePD8KUkWe2sxR/YqYXABsmePl4CyNSGHn4FTONKoTpk3gx5
+	gK9heaEAz9YGXVkTec5CpNKlUHzqUC/ChmlU3LVeAUE025QhQCd60isTtm1xrDqcuJy+ZSWtBsO
+	ZDReXklVRg3PTc3SiYJf3rdBSoekDz2Ux9AW5foJQFY/6OZ4TLm8t9Vz4z2dZH+VX2lCw9hWBjf
+	gedwgTARU5fbnVcadip3EmavNO6uHHtoEA6tULJ+C+Xm4e1omYwI84JawzPno7G/xXViHFfsZdd
+	J3euIZZhOk6bTEmTefMx5lemr6vJ07vTfcBZsQ/tpJLFxdOFQvEu3soqSQ+EF4XHqOCecI8Za0u
+	IVOfPJq1payANuJnQJVLpZ6CzeTHdjToeLuNxcV/6zSn1tHqXcWrn/m12itx/wAdu8kqh3JD0Gv
+	D5qOG4d2U2Blw==
+X-Received: by 2002:a05:6000:25e8:b0:452:75ca:3fab with SMTP id ffacd0b85a97d-45eb3af6236mr6802964f8f.38.1779468305928;
+        Fri, 22 May 2026 09:45:05 -0700 (PDT)
 Received: from localhost (p200300de374a06005c73df0aad605173.dip0.t-ipconnect.de. [2003:de:374a:600:5c73:df0a:ad60:5173])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6d4850dsm5016397f8f.17.2026.05.22.09.45.03
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-45eb6ccd211sm6445335f8f.10.2026.05.22.09.45.05
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 09:45:04 -0700 (PDT)
+        Fri, 22 May 2026 09:45:05 -0700 (PDT)
 From: Martin Wilck <martin.wilck@suse.com>
 X-Google-Original-From: Martin Wilck <mwilck@suse.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
@@ -67,9 +67,9 @@ To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH v2 18/19] libmultipath: checkers: rework mpcontext passing
-Date: Fri, 22 May 2026 18:44:14 +0200
-Message-ID: <20260522164415.846589-19-mwilck@suse.com>
+Subject: [PATCH v2 19/19] libmultipath: convert emc_clariion to async_checker
+Date: Fri, 22 May 2026 18:44:15 +0200
+Message-ID: <20260522164415.846589-20-mwilck@suse.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260522164415.846589-1-mwilck@suse.com>
 References: <20260522164415.846589-1-mwilck@suse.com>
@@ -81,576 +81,245 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The emc_clariion path checker requires an "mpcontext" that is shared
-between the checkers for all paths of a given multipath map. This context
-is currently represented in struct multipath as a void *, the pointer to
-which is passed to the checker. The checker allocates the actual memory in
-the libcheck_mp_init() function, and changes the pointer in struct
-multipath. This is a dangerous layering violation as the checker operates
-on memory it doesn't own, and not type-safe at all.
-
-This patch changes the mpcontext handling as follows: The void * pointer
-is replaced by a dedicated union checker_mpcontext. It only contains
-a long integer element, which is sufficient to store the information
-needed by emc_clariion.
-
-Instead of initializing this value in mp_init, the address of the union is
-passed to libcheck_check() and libcheck_pending() if the path that is being
-checked has an associated struct multipath. Passing a union pointer
-improves compile-time type safety. In order to check whether the value is
-initialized, instead of testing for a NULL pointer like before, the code
-defines an INVALID_MPCONTEXT value. This value must obviously be chosen
-such that it doesn't represent a valid context value, which is the case for
-emc_clariion.
-
-For a synchronous checker (like emc_clariion), libcheck_check() is allowed
-to write to this memory, because at the time of the call we know that
-pp->mpp is valid. The same holds for libcheck_pending().
-
-This change requires checker_check() and checker_get_state() to be passed
-a "struct path *" rather than a "struct checker *". The layer separation
-happens in these functions now.
-
-The async_checker code also gets an implementation of mpcontext handling,
-in preparation of converting emc_clariion to an async checker.
+Convert also the emc_clariion checker. This is the only
+checker that uses a checker-specific context and mptcontext.
 
 Signed-off-by: Martin Wilck <mwilck@suse.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/async_checker.c         | 32 +++++++++++-------
- libmultipath/async_checker.h         |  5 +--
- libmultipath/checkers.c              | 46 +++++++++++---------------
- libmultipath/checkers.h              | 44 ++++++++++++++++---------
- libmultipath/checkers/directio.c     |  6 ++--
- libmultipath/checkers/emc_clariion.c | 49 ++++++++++------------------
- libmultipath/discovery.c             |  8 ++---
- libmultipath/libmultipath.version    |  2 +-
- libmultipath/structs.c               |  3 +-
- libmultipath/structs.h               |  3 +-
- tests/directio.c                     |  2 +-
- 11 files changed, 100 insertions(+), 100 deletions(-)
+ libmultipath/checkers/emc_clariion.c | 79 ++++++++++++----------------
+ 1 file changed, 33 insertions(+), 46 deletions(-)
 
-diff --git a/libmultipath/async_checker.c b/libmultipath/async_checker.c
-index 7a7bfc1..0023c73 100644
---- a/libmultipath/async_checker.c
-+++ b/libmultipath/async_checker.c
-@@ -7,8 +7,8 @@
- #include <stdlib.h>
- #include <stdbool.h>
- #include <dlfcn.h>
--#include "async_checker.h"
+diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
+index 24a386c..5b34d68 100644
+--- a/libmultipath/checkers/emc_clariion.c
++++ b/libmultipath/checkers/emc_clariion.c
+@@ -1,8 +1,6 @@
+ /*
+  * Copyright (c) 2004, 2005 Lars Marowsky-Bree
+  */
+-#include <stdio.h>
+-#include <stdlib.h>
+ #include <string.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
+@@ -14,8 +12,8 @@
+ #include "sg_include.h"
+ #include "libsg.h"
  #include "checkers.h"
 +#include "async_checker.h"
  #include "debug.h"
- #include "runner.h"
- 
-@@ -59,6 +59,7 @@ int async_check_init(struct checker *c)
- 	acc->rdata.fd = -1;
- 	if (fstat(c->fd, &sb) == 0)
- 		acc->rdata.devt = sb.st_rdev;
-+	SET_INVALID_MPCONTEXT(acc->rdata.mpc);
- 	c->context = acc;
- 	if (acc->async_init)
- 		return acc->async_init(&acc->rdata);
-@@ -147,35 +148,42 @@ bool async_check_need_wait(struct checker *c)
- 	return acc && acc->rtx;
- }
- 
--int async_check_pending(struct checker *c)
-+int async_check_pending(struct checker *c, union checker_mpcontext *mpc)
- {
- 	struct async_checker_context *acc = c->context;
-+	int rc;
- 	/* The if path checker isn't running, just return the exiting value. */
- 	if (!acc || !acc->rtx)
- 		return c->path_state;
- 
--	/* This may nullify ct->rtx */
--	check_runner_state(acc);
-+	/* This may nullify acc->rtx */
-+	rc = check_runner_state(acc);
- 	c->msgid = acc->rdata.msgid;
-+	if (rc == RUNNER_DONE && mpc && !IS_INVALID_MPCONTEXT(acc->rdata.mpc))
-+		*mpc = acc->rdata.mpc;
- 	return acc->rdata.state;
- }
- 
--int async_check_check(struct checker *c)
-+int async_check_check(struct checker *c, union checker_mpcontext *mpc)
- {
- 	struct async_checker_context *acc = c->context;
- 
- 	if (!acc)
- 		return PATH_UNCHECKED;
- 
--	if (checker_is_sync(c))
--		return acc->rdata.afunc(&acc->rdata);
-+	if (mpc && !IS_INVALID_MPCONTEXT(*mpc))
-+		acc->rdata.mpc = *mpc;
- 
--	/* Handle the case that the checker just completed */
--	if (acc->rtx) {
--		check_runner_state(acc);
--		c->msgid = acc->rdata.msgid;
--		return acc->rdata.state;
-+	if (checker_is_sync(c)) {
-+		int rc = acc->rdata.afunc(&acc->rdata);
-+
-+		if (mpc && !IS_INVALID_MPCONTEXT(acc->rdata.mpc))
-+			*mpc = acc->rdata.mpc;
-+		return rc;
- 	}
-+	/* Handle the case that the checker just completed */
-+	if (acc->rtx)
-+		return async_check_pending(c, mpc);
- 
- 	/* create new checker thread */
- 	acc->rdata.fd = c->fd;
-diff --git a/libmultipath/async_checker.h b/libmultipath/async_checker.h
-index fc9632d..d7d02e8 100644
---- a/libmultipath/async_checker.h
-+++ b/libmultipath/async_checker.h
-@@ -14,14 +14,15 @@ struct runner_data {
- 	unsigned int timeout;
- 	int state;
- 	short msgid;
-+	union checker_mpcontext mpc;
- 	char __attribute__((aligned(sizeof(void *)))) checker_ctx[];
- };
- 
- int async_check_init(struct checker *c);
- void async_check_free(struct checker *c);
- bool async_check_need_wait(struct checker *c);
--int async_check_pending(struct checker *c);
--int async_check_check(struct checker *c);
-+int async_check_pending(struct checker *c, union checker_mpcontext *mpctx);
-+int async_check_check(struct checker *c, union checker_mpcontext *mpctx);
- 
- #define CHECKER_MAX_CONTEXT_SIZE 1024
- 
-diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
-index 2f20b25..12d928a 100644
---- a/libmultipath/checkers.c
-+++ b/libmultipath/checkers.c
-@@ -12,6 +12,7 @@
- #include "async_checker.h"
- #include "vector.h"
- #include "util.h"
-+#include "structs.h"
- 
- static const char * const checker_dir = MULTIPATH_DIR;
- 
-@@ -164,7 +165,8 @@ static struct checker_class *add_checker_class(const char *name)
- 	if (c->async_func)
- 		return add_async_checker_class(c);
- 
--	c->check = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_check");
-+	c->check = (int (*)(struct checker *, union checker_mpcontext *))
-+		dlsym(c->handle, "libcheck_check");
- 	errstr = dlerror();
- 	if (errstr != NULL)
- 		condlog(0, "A dynamic linking error occurred: (%s)", errstr);
-@@ -178,9 +180,9 @@ static struct checker_class *add_checker_class(const char *name)
- 	if (!c->init)
- 		goto out;
- 
--	c->mp_init = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_mp_init");
- 	c->reset = (void (*)(void))dlsym(c->handle, "libcheck_reset");
--	c->pending = (int (*)(struct checker *)) dlsym(c->handle, "libcheck_pending");
-+	c->pending = (int (*)(struct checker *, union checker_mpcontext *))
-+		dlsym(c->handle, "libcheck_pending");
- 	c->need_wait = (bool (*)(struct checker *)) dlsym(c->handle, "libcheck_need_wait");
- 	/* These 5 functions can be NULL. call dlerror() to clear out any
- 	 * error string */
-@@ -239,31 +241,12 @@ void checker_disable (struct checker * c)
- 	c->path_state = PATH_UNCHECKED;
- }
- 
--int checker_init (struct checker * c, void ** mpctxt_addr)
-+int checker_init(struct checker *c)
- {
- 	if (!c || !c->cls)
- 		return 1;
--	c->mpcontext = mpctxt_addr;
- 	if (c->cls->init && c->cls->init(c) != 0)
- 		return 1;
--	if (mpctxt_addr && *mpctxt_addr == NULL && c->cls->mp_init &&
--	    c->cls->mp_init(c) != 0) /* continue even if mp_init fails */
--		c->mpcontext = NULL;
--	return 0;
--}
--
--int checker_mp_init(struct checker * c, void ** mpctxt_addr)
--{
--	if (!c || !c->cls)
--		return 1;
--	if (c->mpcontext || !mpctxt_addr)
--		return 0;
--	c->mpcontext = mpctxt_addr;
--	if (*mpctxt_addr == NULL && c->cls->mp_init &&
--	    c->cls->mp_init(c) != 0) {
--		c->mpcontext = NULL;
--		return 1;
--	}
- 	return 0;
- }
- 
-@@ -287,13 +270,17 @@ void checker_put (struct checker * dst)
- 	put_shared_ptr(src);
- }
- 
--int checker_get_state(struct checker *c)
-+int checker_get_state(struct path *pp)
- {
-+	struct checker *c = &pp->checker;
-+	union checker_mpcontext *mpc;
-+
- 	if (!c || !c->cls)
- 		return PATH_UNCHECKED;
- 	if (c->path_state != PATH_PENDING || !c->cls->pending)
- 		return c->path_state;
--	c->path_state = c->cls->pending(c);
-+	mpc = pp->mpp ? &pp->mpp->mpcontext : NULL;
-+	c->path_state = c->cls->pending(c, mpc);
- 	return c->path_state;
- }
- 
-@@ -305,8 +292,10 @@ bool checker_need_wait(struct checker *c)
- 	return c->cls->need_wait(c);
- }
- 
--void checker_check (struct checker * c, int path_state)
-+void checker_check(struct path *pp, int path_state)
- {
-+	struct checker *c = &pp->checker;
-+
- 	if (!c)
- 		return;
- 
-@@ -320,7 +309,10 @@ void checker_check (struct checker * c, int path_state)
- 		c->msgid = CHECKER_MSGID_NO_FD;
- 		c->path_state = PATH_WILD;
- 	} else {
--		c->path_state = c->cls->check(c);
-+		union checker_mpcontext *mpc;
-+
-+		mpc = pp->mpp ? &pp->mpp->mpcontext : NULL;
-+		c->path_state = c->cls->check(c, mpc);
- 	}
- }
- 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 4846ea9..556613a 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -131,6 +131,23 @@ enum {
- 	CHECKER_MSGTABLE_SIZE = 100, /* max msg table size for checkers */
- };
- 
-+/*
-+ * Data shared between checkers for a struct multipath.
-+ * Should be large enough to hold the data for all checker types.
-+ * Currently only used by emc_clariion.
-+ */
-+union checker_mpcontext {
-+	long long_val;
-+};
-+
-+#define INVALID_MPCONTEXT__ -1L
-+#define IS_INVALID_MPCONTEXT(mpc) ((mpc).long_val == INVALID_MPCONTEXT__)
-+#define SET_INVALID_MPCONTEXT(mpc)			\
-+	do {						\
-+		(mpc).long_val = INVALID_MPCONTEXT__;	\
-+	} while (0)
-+
-+struct path;
- struct checker;
- struct runner_data;
- struct checker_class {
-@@ -138,12 +155,12 @@ struct checker_class {
- 	void *handle;
- 	int sync;
- 	char name[CHECKER_NAME_LEN];
--	int (*check)(struct checker *);
--	int (*init)(struct checker *);	  /* to allocate the context */
--	int (*mp_init)(struct checker *); /* to allocate the mpcontext */
--	void (*free)(struct checker *);	  /* to free the context */
--	void (*reset)(void);		  /* to reset the global variables */
--	int (*pending)(struct checker *); /* to recheck pending paths */
-+	int (*check)(struct checker *, union checker_mpcontext *);
-+	int (*init)(struct checker *);	/* to allocate the context */
-+	void (*free)(struct checker *); /* to free the context */
-+	void (*reset)(void);		/* to reset the global variables */
-+	int (*pending)(struct checker *,
-+		       union checker_mpcontext *); /* to recheck pending paths */
- 	bool (*need_wait)(struct checker *); /* checker needs waiting for */
- 	int (*async_func)(struct runner_data *); /* callback for async_checker */
- 	const char **msgtable;
-@@ -157,9 +174,7 @@ struct checker {
- 	int disable;
- 	int path_state;
- 	short msgid;		             /* checker-internal extra status */
--	void * context;                      /* store for persistent data */
--	void ** mpcontext;                   /* store for persistent data shared
--						multipath-wide. */
-+	void *context;			     /* store for persistent data */
- };
- 
- static inline int checker_selected(const struct checker *c)
-@@ -170,8 +185,7 @@ static inline int checker_selected(const struct checker *c)
- const char *checker_state_name(int);
- int init_checkers(void);
- void cleanup_checkers (void);
--int checker_init (struct checker *, void **);
--int checker_mp_init(struct checker *, void **);
-+int checker_init(struct checker *);
- void checker_clear (struct checker *);
- void checker_put (struct checker *);
- void checker_reset (struct checker *);
-@@ -180,9 +194,9 @@ void checker_set_async (struct checker *);
- void checker_set_fd (struct checker *, int);
- void checker_enable (struct checker *);
- void checker_disable(struct checker *);
--int checker_get_state(struct checker *c);
-+int checker_get_state(struct path *pp);
- bool checker_need_wait(struct checker *c);
--void checker_check (struct checker *, int);
-+void checker_check(struct path *, int);
- int checker_is_sync(const struct checker *);
- const char *checker_name (const struct checker *);
- void reset_checker_classes(void);
-@@ -195,12 +209,12 @@ void checker_clear_message (struct checker *c);
- void checker_get(struct checker *, const char *);
- 
- /* Prototypes for symbols exported by path checker dynamic libraries (.so) */
--int libcheck_check(struct checker *);
-+int libcheck_check(struct checker *, union checker_mpcontext *);
- int libcheck_init(struct checker *);
- void libcheck_free(struct checker *);
- void libcheck_reset(void);
- int libcheck_mp_init(struct checker *);
--int libcheck_pending(struct checker *c);
-+int libcheck_pending(struct checker *c, union checker_mpcontext *);
- bool libcheck_need_wait(struct checker *c);
- 
- /*
-diff --git a/libmultipath/checkers/directio.c b/libmultipath/checkers/directio.c
-index a7422a8..82b2041 100644
---- a/libmultipath/checkers/directio.c
-+++ b/libmultipath/checkers/directio.c
-@@ -405,7 +405,8 @@ bool libcheck_need_wait(struct checker *c)
- 		!ct->checked_state);
- }
- 
--int libcheck_pending(struct checker *c)
-+int libcheck_pending(struct checker *c,
-+		     union checker_mpcontext *mpc __attribute__((unused)))
- {
- 	int rc;
- 	struct io_event event;
-@@ -441,7 +442,8 @@ out:
- 	return rc;
- }
- 
--int libcheck_check (struct checker * c)
-+int libcheck_check(struct checker *c,
-+		   union checker_mpcontext *mpctx __attribute__((unused)))
- {
- 	int ret;
- 	struct directio_context * ct = (struct directio_context *)c->context;
-diff --git a/libmultipath/checkers/emc_clariion.c b/libmultipath/checkers/emc_clariion.c
-index bf0baab..24a386c 100644
---- a/libmultipath/checkers/emc_clariion.c
-+++ b/libmultipath/checkers/emc_clariion.c
-@@ -15,6 +15,7 @@
- #include "libsg.h"
- #include "checkers.h"
- #include "debug.h"
-+#include "util.h"
+-#include "util.h"
  
  #define INQUIRY_CMD     0x12
  #define INQUIRY_CMDLEN  6
-@@ -32,18 +33,20 @@
+@@ -33,19 +31,17 @@
   * simple read test would return 02/04/03 instead
   * of 05/25/01 sensekey/ASC/ASCQ data.
   */
--#define	IS_INACTIVE_SNAP(c)   (c->mpcontext ?				   \
--			       ((struct emc_clariion_checker_LU_context *) \
--					(*c->mpcontext))->inactive_snap	   \
--					    : 0)
-+#define IS_INACTIVE_SNAP(mpctx)				\
-+	(!mpctx || IS_INVALID_MPCONTEXT(*mpctx) ? 0 : mpctx->long_val)
+-#define IS_INACTIVE_SNAP(mpctx)				\
+-	(!mpctx || IS_INVALID_MPCONTEXT(*mpctx) ? 0 : mpctx->long_val)
++#define IS_INACTIVE_SNAP(mpctx)					\
++	(IS_INVALID_MPCONTEXT(mpctx) ? 0 : mpctx.long_val)
  
--#define	SET_INACTIVE_SNAP(c)  if (c->mpcontext)				   \
--				((struct emc_clariion_checker_LU_context *)\
--					(*c->mpcontext))->inactive_snap = 1
-+#define SET_INACTIVE_SNAP(mpctx)		\
-+	do {					\
-+		if (mpctx)			\
-+			mpctx->long_val = 1;	\
-+	} while (0);
+ #define SET_INACTIVE_SNAP(mpctx)		\
+ 	do {					\
+-		if (mpctx)			\
+-			mpctx->long_val = 1;	\
++		mpctx.long_val = 1;		\
+ 	} while (0);
  
--#define	CLR_INACTIVE_SNAP(c)  if (c->mpcontext)				   \
--				((struct emc_clariion_checker_LU_context *)\
--					(*c->mpcontext))->inactive_snap = 0
-+#define CLR_INACTIVE_SNAP(mpctx)		\
-+	do {					\
-+		if (mpctx)			\
-+			mpctx->long_val = 0;	\
-+	} while (0);
+ #define CLR_INACTIVE_SNAP(mpctx)		\
+ 	do {					\
+-		if (mpctx)			\
+-			mpctx->long_val = 0;	\
++		mpctx.long_val = 0;		\
+ 	} while (0);
  
  enum {
- 	MSG_CLARIION_QUERY_FAILED = CHECKER_FIRST_MSGID,
-@@ -109,28 +112,12 @@ int libcheck_init (struct checker * c)
+@@ -86,7 +82,9 @@ struct emc_clariion_checker_LU_context {
+ 	int inactive_snap;
+ };
+ 
+-void hexadecimal_to_ascii(char * wwn, char *wwnstr)
++int libcheck_async_context_size = sizeof(struct emc_clariion_checker_path_context);
++
++static void hexadecimal_to_ascii(char *wwn, char *wwnstr)
+ {
+ 	int i,j, nbl;
+ 
+@@ -99,33 +97,22 @@ void hexadecimal_to_ascii(char * wwn, char *wwnstr)
+ 	wwnstr[32]=0;
+ }
+ 
+-int libcheck_init (struct checker * c)
++int libcheck_async_init(struct runner_data *rdata)
+ {
+-	/*
+-	 * Allocate and initialize the path specific context.
+-	 */
+-	c->context = calloc(1, sizeof(struct emc_clariion_checker_path_context));
+-	if (!c->context)
+-		return 1;
+-	((struct emc_clariion_checker_path_context *)c->context)->wwn_set = 0;
++	((struct emc_clariion_checker_path_context *)rdata->checker_ctx)->wwn_set = 0;
+ 
  	return 0;
  }
  
--int libcheck_mp_init (struct checker * c)
+-void libcheck_free(struct checker *c)
 -{
--	/*
--	 * Allocate and initialize the multi-path global context.
--	 */
--	if (c->mpcontext && *c->mpcontext == NULL) {
--		void * mpctxt = malloc(sizeof(int));
--		if (!mpctxt)
--			return 1;
--		*c->mpcontext = mpctxt;
--		CLR_INACTIVE_SNAP(c);
--	}
--
--	return 0;
+-	free(c->context);
 -}
 -
--void libcheck_free (struct checker * c)
-+void libcheck_free(struct checker *c)
- {
- 	free(c->context);
- }
- 
--int libcheck_check (struct checker * c)
-+int libcheck_check(struct checker *c, union checker_mpcontext *mpctx)
+-int libcheck_check(struct checker *c, union checker_mpcontext *mpctx)
++int libcheck_async_func(struct runner_data *rdata)
  {
  	unsigned char sense_buffer[128] = { 0, };
  	unsigned char sb[SENSE_BUFF_LEN] = { 0, }, *sbb;
-@@ -282,7 +269,7 @@ retry:
+ 	unsigned char inqCmdBlk[INQUIRY_CMDLEN] = {INQUIRY_CMD, 1, 0xC0, 0,
+ 						sizeof(sense_buffer), 0};
+ 	struct sg_io_hdr io_hdr;
+-	struct emc_clariion_checker_path_context * ct =
+-		(struct emc_clariion_checker_path_context *)c->context;
++	struct emc_clariion_checker_path_context *ct =
++		(struct emc_clariion_checker_path_context *)rdata->checker_ctx;
+ 	char wwnstr[33];
+ 	int ret;
+ 	int retry_emc = 5;
+@@ -142,14 +129,14 @@ retry:
+ 	io_hdr.dxferp = sense_buffer;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sb;
+-	io_hdr.timeout = c->timeout * 1000;
++	io_hdr.timeout = rdata->timeout * 1000;
+ 	io_hdr.pack_id = 0;
+-	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
++	if (ioctl(rdata->fd, SG_IO, &io_hdr) < 0) {
+ 		if (errno == ENOTTY) {
+-			c->msgid = CHECKER_MSGID_UNSUPPORTED;
++			rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
+ 			return PATH_WILD;
+ 		}
+-		c->msgid = MSG_CLARIION_QUERY_FAILED;
++		rdata->msgid = MSG_CLARIION_QUERY_FAILED;
+ 		return PATH_DOWN;
+ 	}
+ 
+@@ -181,12 +168,12 @@ retry:
+ 				sense_key = sbp[2] & 0xf;
+ 
+ 			if (sense_key == ILLEGAL_REQUEST) {
+-				c->msgid = CHECKER_MSGID_UNSUPPORTED;
++				rdata->msgid = CHECKER_MSGID_UNSUPPORTED;
+ 				return PATH_WILD;
+ 			} else if (sense_key != RECOVERED_ERROR) {
+ 				condlog(1, "emc_clariion_checker: INQUIRY failed with sense key %02x",
+ 					sense_key);
+-				c->msgid = MSG_CLARIION_QUERY_ERROR;
++				rdata->msgid = MSG_CLARIION_QUERY_ERROR;
+ 				return PATH_DOWN;
+ 			}
+ 		}
+@@ -195,13 +182,13 @@ retry:
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+ 		condlog(1, "emc_clariion_checker: INQUIRY failed without sense, status %02x",
+ 			io_hdr.status);
+-		c->msgid = MSG_CLARIION_QUERY_ERROR;
++		rdata->msgid = MSG_CLARIION_QUERY_ERROR;
+ 		return PATH_DOWN;
+ 	}
+ 
+ 	if (/* Verify the code page - right page & revision */
+ 	    sense_buffer[1] != 0xc0 || sense_buffer[9] != 0x00) {
+-		c->msgid = MSG_CLARIION_UNIT_REPORT;
++		rdata->msgid = MSG_CLARIION_UNIT_REPORT;
+ 		return PATH_DOWN;
+ 	}
+ 
+@@ -215,19 +202,19 @@ retry:
+ 		    ((sense_buffer[28] & 0x07) != 0x06))
+ 		/* Arraycommpath should be set to 1 */
+ 		|| (sense_buffer[30] & 0x04) != 0x04) {
+-		c->msgid = MSG_CLARIION_PATH_CONFIG;
++		rdata->msgid = MSG_CLARIION_PATH_CONFIG;
+ 		return PATH_DOWN;
+ 	}
+ 
+ 	if ( /* LUN operations should indicate normal operations */
+ 		sense_buffer[48] != 0x00) {
+-		c->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
++		rdata->msgid = MSG_CLARIION_PATH_NOT_AVAIL;
+ 		return PATH_SHAKY;
+ 	}
+ 
+ 	if ( /* LUN should at least be bound somewhere and not be LUNZ */
+ 		sense_buffer[4] == 0x00) {
+-		c->msgid = MSG_CLARIION_LUN_UNBOUND;
++		rdata->msgid = MSG_CLARIION_LUN_UNBOUND;
+ 		return PATH_DOWN;
+ 	}
+ 
+@@ -238,7 +225,7 @@ retry:
+ 	 */
+ 	if (ct->wwn_set) {
+ 		if (memcmp(ct->wwn, &sense_buffer[10], 16) != 0) {
+-			c->msgid = MSG_CLARIION_WWN_CHANGED;
++			rdata->msgid = MSG_CLARIION_WWN_CHANGED;
+ 			return PATH_DOWN;
+ 		}
+ 	} else {
+@@ -253,8 +240,8 @@ retry:
+ 		unsigned char buf[4096];
+ 
+ 		memset(buf, 0, 4096);
+-		ret = sg_read(c->fd, &buf[0], 4096,
+-			      sbb = &sb[0], SENSE_BUFF_LEN, c->timeout);
++		ret = sg_read(rdata->fd, &buf[0], 4096, sbb = &sb[0],
++			      SENSE_BUFF_LEN, rdata->timeout);
+ 		if (ret == PATH_DOWN) {
+ 			hexadecimal_to_ascii(ct->wwn, wwnstr);
+ 
+@@ -269,7 +256,7 @@ retry:
  				 * passive paths which will return
  				 * 02/04/03 not 05/25/01 on read.
  				 */
--				SET_INACTIVE_SNAP(c);
-+				SET_INACTIVE_SNAP(mpctx);
+-				SET_INACTIVE_SNAP(mpctx);
++				SET_INACTIVE_SNAP(rdata->mpc);
  				condlog(3, "emc_clariion_checker: Active "
  					"path to inactive snapshot WWN %s.",
  					wwnstr);
-@@ -300,10 +287,10 @@ retry:
+@@ -278,26 +265,26 @@ retry:
+ 					"error for WWN %s.  Sense data are "
+ 					"0x%x/0x%x/0x%x.", wwnstr,
+ 					sbb[2]&0xf, sbb[12], sbb[13]);
+-				c->msgid = MSG_CLARIION_READ_ERROR;
++				rdata->msgid = MSG_CLARIION_READ_ERROR;
+ 			}
+ 		} else {
+-			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
++			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			/*
+ 			 * Remove the path from the set of paths to inactive
  			 * snapshot LUs if it was in this list since the
  			 * snapshot is no longer inactive.
  			 */
--			CLR_INACTIVE_SNAP(c);
-+			CLR_INACTIVE_SNAP(mpctx);
+-			CLR_INACTIVE_SNAP(mpctx);
++			CLR_INACTIVE_SNAP(rdata->mpc);
  		}
  	} else {
--		if (IS_INACTIVE_SNAP(c)) {
-+		if (IS_INACTIVE_SNAP(mpctx)) {
+-		if (IS_INACTIVE_SNAP(mpctx)) {
++		if (IS_INACTIVE_SNAP(rdata->mpc)) {
  			hexadecimal_to_ascii(ct->wwn, wwnstr);
  			condlog(3, "emc_clariion_checker: Passive "
  				"path to inactive snapshot WWN %s.",
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f59fa6d..ceca9fd 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -1998,20 +1998,18 @@ start_checker (struct path * pp, struct config *conf, int daemon, int oldstate)
- 			return -1;
- 		}
- 		checker_set_fd(c, pp->fd);
--		if (checker_init(c, pp->mpp?&pp->mpp->mpcontext:NULL)) {
-+		if (checker_init(c)) {
- 			checker_clear(c);
- 			condlog(3, "%s: checker init failed", pp->dev);
- 			return -1;
+ 				wwnstr);
+ 			ret = PATH_DOWN;
+ 		} else {
+-			c->msgid = MSG_CLARIION_PASSIVE_GOOD;
++			rdata->msgid = MSG_CLARIION_PASSIVE_GOOD;
+ 			ret = PATH_UP;	/* not ghost */
  		}
  	}
--	if (pp->mpp && !c->mpcontext)
--		checker_mp_init(c, &pp->mpp->mpcontext);
- 	checker_clear_message(c);
- 	if (conf->force_sync == 0)
- 		checker_set_async(c);
- 	else
- 		checker_set_sync(c);
--	checker_check(c, oldstate);
-+	checker_check(pp, oldstate);
- 	return 0;
- }
- 
-@@ -2021,7 +2019,7 @@ get_state (struct path * pp)
- 	struct checker * c = &pp->checker;
- 	int state, lvl;
- 
--	state = checker_get_state(c);
-+	state = checker_get_state(pp);
- 
- 	lvl = state == pp->oldstate || state == PATH_PENDING ? 4 : 3;
- 	condlog(lvl, "%s: %s state = %s", pp->dev,
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index c091ce2..f631f45 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -43,7 +43,7 @@ LIBMPATHCOMMON_1.0.0 {
- 	put_multipath_config;
- };
- 
--LIBMULTIPATH_33.0.0 {
-+LIBMULTIPATH_34.0.0 {
- global:
- 	/* symbols referenced by multipath and multipathd */
- 	add_foreign;
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index f441312..c627b2c 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -261,7 +261,7 @@ alloc_multipath (void)
- 
- 	if (mpp) {
- 		mpp->bestpg = 1;
--		mpp->mpcontext = NULL;
-+		SET_INVALID_MPCONTEXT(mpp->mpcontext);
- 		mpp->no_path_retry = NO_PATH_RETRY_UNDEF;
- 		dm_multipath_to_gen(mpp)->ops = &dm_gen_multipath_ops;
- 	}
-@@ -330,7 +330,6 @@ void free_multipath(struct multipath *mpp)
- 		vector_free(mpp->hwe);
- 		mpp->hwe = NULL;
- 	}
--	free(mpp->mpcontext);
- 	free(mpp);
- }
- 
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index 9adedde..8b71aa2 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -540,8 +540,7 @@ struct multipath {
- 	unsigned int stat_queueing_timeouts;
- 	unsigned int stat_map_failures;
- 
--	/* checkers shared data */
--	void * mpcontext;
-+	union checker_mpcontext mpcontext;
- 
- 	/* persistent management data*/
- 	int prkey_source;
-diff --git a/tests/directio.c b/tests/directio.c
-index fa1e553..addb7cf 100644
---- a/tests/directio.c
-+++ b/tests/directio.c
-@@ -227,7 +227,7 @@ void do_check_state(struct checker *c, int sync, int chk_state)
- 
- void do_libcheck_pending(struct checker *c, int chk_state)
- {
--	assert_int_equal(libcheck_pending(c), chk_state);
-+	assert_int_equal(libcheck_pending(c, NULL), chk_state);
- 	assert_int_equal(ev_off, 0);
- 	memset(mock_events, 0, sizeof(mock_events));
- }
 -- 
 2.54.0
 
