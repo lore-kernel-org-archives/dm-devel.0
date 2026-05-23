@@ -1,96 +1,312 @@
-Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout01.posteo.de (mout01.posteo.de [185.67.36.65])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2556927AC31
-	for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 21:10:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8226034A767
+	for <dm-devel@lists.linux.dev>; Sat, 23 May 2026 12:52:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.67.36.65
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779484241; cv=none; b=bH1NhmvGAKossJeKBAJR0cCsM1nfwJhtUG2eohY8BTXeZlL5BDgYlY1tdbyjZzG96tpz2baVqgIzxMjpD87TcPm6sOHaTVGj+86+5jouJeO6zPaYmJu9Dif96haciQsXo7W7NrbghmgqpgVE7V1AXw/41V8BKf1lSRQR5YUCdFM=
+	t=1779540767; cv=none; b=YVzdEydtOlQOE7IkpXdpzHg4GGVW1eAuTeHgrcaTP1nn5SEKGsP88g2M7Y6ruteGGowSG0eqAXCi0phV6IND1qMutgOjRZsajOaIdKepf9XM1I+GssDrnW96arJZrGiOmJVYEIe9C835RO1/ZrhAMgKs9s9VBh84s1pMbu7xnjc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779484241; c=relaxed/simple;
-	bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
-	h=Message-ID:Date:MIME-Version:To:Cc:From:Subject:Content-Type; b=Zqf8elVtRjxGD9Rrv4X7SSG1NqG4JauZSS/NeKsM7EzjHI7UkwABXKF3wyXpo19j1EDA71sb2Fb1qTDDRyL1dNOlfJ4HaoHKR9dQDJvUMOgw56QkBmysqhBHPkNVxmwZjg2Nq+0H4c/Vxfd4K/tiDUOhzPLDhqX4rCnG2Tw0W7I=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jlXUfBPI; arc=none smtp.client-ip=209.85.221.48
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1779540767; c=relaxed/simple;
+	bh=6+fWAZt+4ivYTzLpmo8IvPTUCuA4JscxLqeYDtrKYs4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=k1/u0ooWhG/RX7FI7r+mOySo7aBGzje80efVKl6PXWbisE6ULf4SJuUaxUqIMb+SYj4Ybqaow9VlNqRx5fRCHlSYjpG4Qv9gy1gfWGMWoGKU9vorwvJp7K+mJW+/1UhTDwxsig7neq4TGGR0NkqTXkDyejsCDoi/dP8PIDzDtn4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.net; spf=pass smtp.mailfrom=posteo.net; dkim=pass (2048-bit key) header.d=posteo.net header.i=@posteo.net header.b=dVPhjAuy; arc=none smtp.client-ip=185.67.36.65
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=posteo.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=posteo.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jlXUfBPI"
-Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-44b7e8b65faso593350f8f.1
-        for <dm-devel@lists.linux.dev>; Fri, 22 May 2026 14:10:39 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1779484238; x=1780089038; darn=lists.linux.dev;
-        h=content-transfer-encoding:subject:from:cc:to:content-language
-         :mime-version:date:message-id:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
-        b=jlXUfBPIefpwnqvyo3XTfMC+g1DDBJVvKZy9Z/tw7vUsI/MgCgUc8P3uHPLGoZWQeD
-         vTUSoBYDYLbZ2/Sbr+CUIS1iYrFZ9m6/5JROMyRDyqqiss3VXhxfdfQmFQiAwp3cJVi7
-         7B2MMrX6GSeKbFikZSJfNNLfCCrUeHmqGuH5kRZ7V5Hk9LzKDCwxI2ww8QaeDRboxEEh
-         6E3f6On4zzis7QXy1MeEQ+yjoFjio8SMlh+Bx2nCy+R69Kt6K9w0r6sMoz9d4hps7M8v
-         KxwqdnF4Vx1pYZWwVmsqFCNaNdl26rL0EYNhw0F0n18QQXq72Jy4nERztK7k8pN4Aujg
-         OIoA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1779484238; x=1780089038;
-        h=content-transfer-encoding:subject:from:cc:to:content-language
-         :mime-version:date:message-id:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=XM06oqCrFOqxADA5FIl4oxKiOh8rHCuu6STfOGMVFZ0=;
-        b=q45w0FwJL+SLWgBkGBxnN3ifWA0QB3VNW/0hEdREIn3h8wnKdXjbsA9uz9lYyGpqW6
-         +fMHy6xPSk75Q2VNGitbNquWckqgALv6qjPRBSkt/b5MQet+LNSjOJIh77bGjxycdDzJ
-         EY9Eu9cqZBNsyFJ7BfWm7yZAHaoJMsqcK8klLxLBf6lHpSH3cdjfx1GyqVGM21Jyj1Wj
-         CsQA/25MoaiL4EZsQLuAQaiAmJfWDzKymSCtWawUHHpLrEy70ngcQVJLbb7NZn2EG2He
-         oHqtjpeSlS3/8r4R2Bw2fQf5Ii0TkEgGWWugtr68wQx2uQjoLHEutNrqbKeuJkN9NYiM
-         tmyw==
-X-Gm-Message-State: AOJu0YwpCGWKIW8DaY0IsYagCm44dkROnwNVbkr/waxjBpEHQouak51Y
-	obRVEULug19iiUYIW/zAJ3rYQbElV+x+TWjZcvdrGyhtTT10MTI83XY=
-X-Gm-Gg: Acq92OHKBrLV0deOWG9PLpWzcTHidZ2ViPjAXcLY2jfc0W28yyhdwpTs+eAvJNY3EqU
-	ir055q6bIPfB0HF5KPnmE6gcivBhKhcSijNuu8x4SEGFiY8i6+nRjCmlJzehsqJOaKU4kWL0U84
-	iGOT0Zh6Wt/w6RIp895kPME98VEPz6r07ayughfEzJzuXftyJw/Ji2KfHp66m0eeFjrs3D67XZM
-	1CcC1Q75zYJ6Un1QwJmrvFkPo+il+2pRBDqqYq8go5xwBDC9DYOC8Ka0DWqMXlg961eRruC8qjP
-	1goJQM8aXwjU2LV63gPtT25gJPuStK48uQmcN1wnFTOQLibSc1Hs5sNXRRjlCrlBKeU1cx89g6S
-	qSOE1PROabg1egZmvXSty6V/q185hDOyoAcSN8sqoO/aIODSvDBGwrg3Z/m2GaQbxTUGTLkxeXu
-	1M1vGXU6Mu43f4gqdc/UawJXYfNnvzmDiEepZxpwglaOmvqcrWPpq9tmEe+Yp/
-X-Received: by 2002:a05:600c:b96:b0:490:4923:aa3e with SMTP id 5b1f17b1804b1-4904923ab35mr17780385e9.7.1779484238259;
-        Fri, 22 May 2026 14:10:38 -0700 (PDT)
-Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-490454a0b9asm65790955e9.11.2026.05.22.14.10.37
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 May 2026 14:10:37 -0700 (PDT)
-Message-ID: <02a2bb69-c13d-43bb-bbed-2a1bd3007ba4@gmail.com>
-Date: Fri, 22 May 2026 23:10:36 +0200
+	dkim=pass (2048-bit key) header.d=posteo.net header.i=@posteo.net header.b="dVPhjAuy"
+Received: from submission (posteo.de [185.67.36.169]) 
+	by mout01.posteo.de (Postfix) with ESMTPS id DC355240027
+	for <dm-devel@lists.linux.dev>; Sat, 23 May 2026 14:52:36 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=posteo.net; s=2017;
+	t=1779540756; bh=bxiCjbyE4L9dPupS9cBbu4nnbIMmzEr7N/QwhywpPUo=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:
+	 Content-Transfer-Encoding:From;
+	b=dVPhjAuy4QprE97NyeN60SRuaFmZOVYuNgA0654tq5KR6lfgR0jfj2kMOnvDplGhT
+	 bZL1G2lrOEVS9f4QvdU32lQE3lsN3Q1KygSG1Nb6IfcDkrreY4S83EQ8NSAjKu3Tkq
+	 cK32iwTZ1Ng0maVqXElKeobTcPPh2ELWkC+Mq3okYZFZys6FY5vH3fPJp1qWL+mDUq
+	 5fmQvJDGmw1/R5QNgamgZKN1DUr8lRTHmKh+t+CJ0QuIe3thULXr2XgiPt6Ag6YXkl
+	 VLDWm2nI7T8syH4EdEW8sRaBdfxD7XPS/PKuRkC0VYtBT29HjKxlxuiz3H6RU5Obhs
+	 ZSDPX7I0mVEsA==
+Received: from customer (localhost [127.0.0.1])
+	by submission (posteo.de) with ESMTPSA id 4gN29W11Cqz6tvq;
+	Sat, 23 May 2026 14:52:31 +0200 (CEST)
+From: Mateusz Nowicki <mateusz.nowicki@posteo.net>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Caleb Sander Mateos <csander@purestorage.com>,
+	Sung-woo Kim <iam@sung-woo.kim>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Ulf Hansson <ulfh@kernel.org>,
+	Richard Weinberger <richard@nod.at>,
+	Zhihao Cheng <chengzhihao1@huawei.com>,
+	Miquel Raynal <miquel.raynal@bootlin.com>,
+	Vignesh Raghavendra <vigneshr@ti.com>,
+	Sven Peter <sven@kernel.org>,
+	Janne Grunau <j@jannau.net>,
+	Neal Gompa <neal@gompa.dev>,
+	Keith Busch <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	Justin Tee <justin.tee@broadcom.com>,
+	Naresh Gottumukkala <nareshgottumukkala83@gmail.com>,
+	Paul Ely <paul.ely@broadcom.com>,
+	Chaitanya Kulkarni <kch@nvidia.com>,
+	"James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	Thomas Fourier <fourier.thomas@gmail.com>,
+	Al Viro <viro@zeniv.linux.org.uk>,
+	Luke Wang <ziniu.wang_1@nxp.com>,
+	Kees Cook <kees@kernel.org>,
+	linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	nbd@other.debian.org,
+	dm-devel@lists.linux.dev,
+	linux-mmc@vger.kernel.org,
+	linux-mtd@lists.infradead.org,
+	asahi@lists.linux.dev,
+	linux-arm-kernel@lists.infradead.org,
+	linux-nvme@lists.infradead.org,
+	linux-scsi@vger.kernel.org
+Subject: [PATCH v1] block: switch numa_node to int in blk_mq_hw_ctx and init_request
+Date: Sat, 23 May 2026 12:52:35 +0000
+Message-ID: <20260523125210.272274-1-mateusz.nowicki@posteo.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Language: en-US, en-GB, es-ES
-To: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [BUG] multipath-tools: 0 cyl reported on large disks due to overflow
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi,
+numa_node in blk_mq_hw_ctx and the matching argument of
+blk_mq_ops::init_request can be NUMA_NO_NODE (-1).  Declared as
+unsigned int, NUMA_NO_NODE becomes UINT_MAX and walks off
+nvme_dev::descriptor_pools[] on CONFIG_NUMA=n [1].
 
-An integer overflow occurs in libmultipath/discovery.c:get_geometry() when
-querying geometry on large disks resulting in "0 cyl" being reported:
+Switch the field and the callback prototype to int and update all
+in-tree init_request implementations.  No functional change:
+cpu_to_node(), kmalloc_node() and blk_alloc_flush_queue() already
+take int.
 
-# multipath -ll -d -v3
-... | sdgm: 0 cyl, 64 heads, 32 sectors/track, start at 0
+Link: https://lore.kernel.org/linux-nvme/20260522150628.399288-1-mateusz.nowicki@posteo.net/ [1]
+Link: https://lore.kernel.org/linux-nvme/20260309062840.2937858-2-iam@sung-woo.kim/
+Suggested-by: Caleb Sander Mateos <csander@purestorage.com>
+Suggested-by: Sung-woo Kim <iam@sung-woo.kim>
+Signed-off-by: Mateusz Nowicki <mateusz.nowicki@posteo.net>
+---
+ block/bsg-lib.c                   | 2 +-
+ drivers/block/mtip32xx/mtip32xx.c | 2 +-
+ drivers/block/nbd.c               | 2 +-
+ drivers/md/dm-rq.c                | 2 +-
+ drivers/mmc/core/queue.c          | 2 +-
+ drivers/mtd/ubi/block.c           | 2 +-
+ drivers/nvme/host/apple.c         | 2 +-
+ drivers/nvme/host/fc.c            | 2 +-
+ drivers/nvme/host/pci.c           | 2 +-
+ drivers/nvme/host/rdma.c          | 2 +-
+ drivers/nvme/host/tcp.c           | 2 +-
+ drivers/nvme/target/loop.c        | 2 +-
+ drivers/scsi/scsi_lib.c           | 2 +-
+ include/linux/blk-mq.h            | 4 ++--
+ 14 files changed, 15 insertions(+), 15 deletions(-)
 
-# fdisk -l /dev/sdgm
-Disk /dev/sdgm: 12 TiB, 13194139533312 bytes, 25769803776 sectors
-Units: sectors of 1 * 512 = 512 bytes
+diff --git a/block/bsg-lib.c b/block/bsg-lib.c
+index fdb4b290ca68..895db30a7033 100644
+--- a/block/bsg-lib.c
++++ b/block/bsg-lib.c
+@@ -299,7 +299,7 @@ static blk_status_t bsg_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 
+ /* called right after the request is allocated for the request_queue */
+ static int bsg_init_rq(struct blk_mq_tag_set *set, struct request *req,
+-		       unsigned int hctx_idx, unsigned int numa_node)
++		       unsigned int hctx_idx, int numa_node)
+ {
+ 	struct bsg_job *job = blk_mq_rq_to_pdu(req);
+ 
+diff --git a/drivers/block/mtip32xx/mtip32xx.c b/drivers/block/mtip32xx/mtip32xx.c
+index 567192e371a8..8aedba9b5690 100644
+--- a/drivers/block/mtip32xx/mtip32xx.c
++++ b/drivers/block/mtip32xx/mtip32xx.c
+@@ -3340,7 +3340,7 @@ static void mtip_free_cmd(struct blk_mq_tag_set *set, struct request *rq,
+ }
+ 
+ static int mtip_init_cmd(struct blk_mq_tag_set *set, struct request *rq,
+-			 unsigned int hctx_idx, unsigned int numa_node)
++			 unsigned int hctx_idx, int numa_node)
+ {
+ 	struct driver_data *dd = set->driver_data;
+ 	struct mtip_cmd *cmd = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/block/nbd.c b/drivers/block/nbd.c
+index fe63f3c55d0d..e2fe9e3308fc 100644
+--- a/drivers/block/nbd.c
++++ b/drivers/block/nbd.c
+@@ -1888,7 +1888,7 @@ static void nbd_dbg_close(void)
+ #endif
+ 
+ static int nbd_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-			    unsigned int hctx_idx, unsigned int numa_node)
++			    unsigned int hctx_idx, int numa_node)
+ {
+ 	struct nbd_cmd *cmd = blk_mq_rq_to_pdu(rq);
+ 	cmd->nbd = set->driver_data;
+diff --git a/drivers/md/dm-rq.c b/drivers/md/dm-rq.c
+index 9703b3ae364e..9a386254d836 100644
+--- a/drivers/md/dm-rq.c
++++ b/drivers/md/dm-rq.c
+@@ -462,7 +462,7 @@ static void dm_start_request(struct mapped_device *md, struct request *orig)
+ }
+ 
+ static int dm_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-			      unsigned int hctx_idx, unsigned int numa_node)
++			      unsigned int hctx_idx, int numa_node)
+ {
+ 	struct mapped_device *md = set->driver_data;
+ 	struct dm_rq_target_io *tio = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/mmc/core/queue.c b/drivers/mmc/core/queue.c
+index 39fcb662c43f..cfa268925c26 100644
+--- a/drivers/mmc/core/queue.c
++++ b/drivers/mmc/core/queue.c
+@@ -208,7 +208,7 @@ static unsigned short mmc_get_max_segments(struct mmc_host *host)
+ }
+ 
+ static int mmc_mq_init_request(struct blk_mq_tag_set *set, struct request *req,
+-			       unsigned int hctx_idx, unsigned int numa_node)
++			       unsigned int hctx_idx, int numa_node)
+ {
+ 	struct mmc_queue_req *mq_rq = req_to_mmc_queue_req(req);
+ 	struct mmc_queue *mq = set->driver_data;
+diff --git a/drivers/mtd/ubi/block.c b/drivers/mtd/ubi/block.c
+index 8880a783c3bc..29c0d6941a81 100644
+--- a/drivers/mtd/ubi/block.c
++++ b/drivers/mtd/ubi/block.c
+@@ -312,7 +312,7 @@ static blk_status_t ubiblock_queue_rq(struct blk_mq_hw_ctx *hctx,
+ 
+ static int ubiblock_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct ubiblock_pdu *pdu = blk_mq_rq_to_pdu(req);
+ 
+diff --git a/drivers/nvme/host/apple.c b/drivers/nvme/host/apple.c
+index c692fc73babf..97586307ac1a 100644
+--- a/drivers/nvme/host/apple.c
++++ b/drivers/nvme/host/apple.c
+@@ -819,7 +819,7 @@ static int apple_nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+ 
+ static int apple_nvme_init_request(struct blk_mq_tag_set *set,
+ 				   struct request *req, unsigned int hctx_idx,
+-				   unsigned int numa_node)
++				   int numa_node)
+ {
+ 	struct apple_nvme_queue *q = set->driver_data;
+ 	struct apple_nvme *anv = queue_to_apple_nvme(q);
+diff --git a/drivers/nvme/host/fc.c b/drivers/nvme/host/fc.c
+index e4f4528fe2a2..1907da499ad2 100644
+--- a/drivers/nvme/host/fc.c
++++ b/drivers/nvme/host/fc.c
+@@ -2109,7 +2109,7 @@ __nvme_fc_init_request(struct nvme_fc_ctrl *ctrl,
+ 
+ static int
+ nvme_fc_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-		unsigned int hctx_idx, unsigned int numa_node)
++		unsigned int hctx_idx, int numa_node)
+ {
+ 	struct nvme_fc_ctrl *ctrl = to_fc_ctrl(set->driver_data);
+ 	struct nvme_fcp_op_w_sgl *op = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index 139a10cd687f..afd407df640f 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -660,7 +660,7 @@ static int nvme_init_hctx(struct blk_mq_hw_ctx *hctx, void *data,
+ 
+ static int nvme_pci_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_iod *iod = blk_mq_rq_to_pdu(req);
+ 
+diff --git a/drivers/nvme/host/rdma.c b/drivers/nvme/host/rdma.c
+index f77c960f7632..08459c65c3d5 100644
+--- a/drivers/nvme/host/rdma.c
++++ b/drivers/nvme/host/rdma.c
+@@ -292,7 +292,7 @@ static void nvme_rdma_exit_request(struct blk_mq_tag_set *set,
+ 
+ static int nvme_rdma_init_request(struct blk_mq_tag_set *set,
+ 		struct request *rq, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_rdma_ctrl *ctrl = to_rdma_ctrl(set->driver_data);
+ 	struct nvme_rdma_request *req = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/host/tcp.c b/drivers/nvme/host/tcp.c
+index 15d36d6a728e..36b3ec50a9fd 100644
+--- a/drivers/nvme/host/tcp.c
++++ b/drivers/nvme/host/tcp.c
+@@ -548,7 +548,7 @@ static void nvme_tcp_exit_request(struct blk_mq_tag_set *set,
+ 
+ static int nvme_tcp_init_request(struct blk_mq_tag_set *set,
+ 		struct request *rq, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_tcp_ctrl *ctrl = to_tcp_ctrl(set->driver_data);
+ 	struct nvme_tcp_request *req = blk_mq_rq_to_pdu(rq);
+diff --git a/drivers/nvme/target/loop.c b/drivers/nvme/target/loop.c
+index d98d0cdc5d6f..ae00bcef2251 100644
+--- a/drivers/nvme/target/loop.c
++++ b/drivers/nvme/target/loop.c
+@@ -202,7 +202,7 @@ static int nvme_loop_init_iod(struct nvme_loop_ctrl *ctrl,
+ 
+ static int nvme_loop_init_request(struct blk_mq_tag_set *set,
+ 		struct request *req, unsigned int hctx_idx,
+-		unsigned int numa_node)
++		int numa_node)
+ {
+ 	struct nvme_loop_ctrl *ctrl = to_loop_ctrl(set->driver_data);
+ 	struct nvme_loop_iod *iod = blk_mq_rq_to_pdu(req);
+diff --git a/drivers/scsi/scsi_lib.c b/drivers/scsi/scsi_lib.c
+index 6e8c7a42603e..67f789bd02e7 100644
+--- a/drivers/scsi/scsi_lib.c
++++ b/drivers/scsi/scsi_lib.c
+@@ -1950,7 +1950,7 @@ static blk_status_t scsi_queue_rq(struct blk_mq_hw_ctx *hctx,
+ }
+ 
+ static int scsi_mq_init_request(struct blk_mq_tag_set *set, struct request *rq,
+-				unsigned int hctx_idx, unsigned int numa_node)
++				unsigned int hctx_idx, int numa_node)
+ {
+ 	struct Scsi_Host *shost = set->driver_data;
+ 	struct scsi_cmnd *cmd = blk_mq_rq_to_pdu(rq);
+diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
+index 18a2388ba581..2e7f90048171 100644
+--- a/include/linux/blk-mq.h
++++ b/include/linux/blk-mq.h
+@@ -428,7 +428,7 @@ struct blk_mq_hw_ctx {
+ 	struct blk_mq_tags	*sched_tags;
+ 
+ 	/** @numa_node: NUMA node the storage adapter has been connected to. */
+-	unsigned int		numa_node;
++	int			numa_node;
+ 	/** @queue_num: Index of this hardware queue. */
+ 	unsigned int		queue_num;
+ 
+@@ -653,7 +653,7 @@ struct blk_mq_ops {
+ 	 * flush request.
+ 	 */
+ 	int (*init_request)(struct blk_mq_tag_set *set, struct request *,
+-			    unsigned int, unsigned int);
++			    unsigned int, int);
+ 	/**
+ 	 * @exit_request: Ditto for exit/teardown.
+ 	 */
 
-# dmesg | grep sdgm
-sd 5:0:3:100: [sdgm] 25769803776 512-byte logical blocks: (13.2 TB/12.0TiB)
+base-commit: 45255ea1ca096b11b1303c9b54502a28f3a31dd1
+-- 
+2.53.0
 
-
-The root cause is that struct hd_geometry, from libmultipath/structs.h,
-defines cylinders as an unsigned short.
-
-Since it is a legacy interface, it should either sanitize the log output
-or avoid relying on CHS geometry for large devices.
