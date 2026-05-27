@@ -1,111 +1,213 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from pdx-out-010.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-010.esa.us-west-2.outbound.mail-perimeter.amazon.com [52.12.53.23])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C712F33FE33
-	for <dm-devel@lists.linux.dev>; Tue, 26 May 2026 19:28:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A13E396567
+	for <dm-devel@lists.linux.dev>; Wed, 27 May 2026 06:50:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.12.53.23
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779823695; cv=none; b=H9xDqSsTt2HrTuWX1bcFEuy6CXMQtxbgnUvoXPgW1Tq3o5YJfmnTY7FjQcGyCHYH4AobeJv8WLkkuNjTRiiuSLEesa7txK7dHWyeMhmhxlcLab6aoLd8iMsTW8sgpj1+Td0N5pTiCMLkG1usgD70BkOA9pk103OJA3smuo2OvTs=
+	t=1779864633; cv=none; b=Ary3Q3ShnalvJLIluwfFO8TmsCO2NXFaGP5EuJN6VP8H2jjoPhptulmCRDhwLb5epsvYFiaAexr+m6ZAfx629saY1wZIc78k7zvUdbj8AOoi5gZOI3hywWDTrE4OO6dz5VQ8fJJLCKgemUrl0P67EYum1VV10n0wWIRjcXLeyVk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779823695; c=relaxed/simple;
-	bh=6GG9F2KZm3mqjjx2JsbzE/NnRnPg09L4udxOzEZdDl0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=HmeiJ6fkO+BMl7+1uGqt1ygP8T3YGZvR6Bl2gFyODGArXxbfyOiOQjH2IYAtmRRlD8HV4H0JRVFIu0FjHvOvMp4anWDSEp2yWRE4B92evwfNoJ2g9WtTQ0ifsD4+fZb8zK60ZMM0sdHm2gvjN3qBGRqDFqBdEg3pDU+qhu9pnPw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=f4i3sefx; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1779864633; c=relaxed/simple;
+	bh=djbJ6vooGc0EJBfZODTN/mvJKoxZcL655+9VpiaHpw4=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=a/jNLMx+n08wG51wbJxRgCuDX0qT+e5JGd8Q/Jldp6ZoPSHH4Rz7Kv5SaRHwmqgXAWLK/SC0rgbo+CsWrFsuSA07ilo7qYmeS1yRjnvF4KS1fcbluhu5Ni4TNwAlW5aMEW/HyBMUQ1v9Yrwldp8xqnof/IONSOu1kmw9h7fjKuc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=hZIFNeqW; arc=none smtp.client-ip=52.12.53.23
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="f4i3sefx"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1779823692;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=2XAm2rnSCSQDIEA7dUZRrXQ+JUGnFhPkt3UdnjgYGCE=;
-	b=f4i3sefxXq47wYG/1zTCz2YNFT43S8dEG+dw5PfkKjk7fpgGmtlAkscmhU2e4B3kJKAF/c
-	PwbBVcnnbC0rUyFxF/V/gHTeN0+3dw3CS0cnJwxePqFyE4ka8Fuq3IX2o2RtBM7zqTueLL
-	HEUDl5A4T9FKbTulRpURPsktjXsf4VY=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-452-gGjTLrzpPtem0hxUXOzoaQ-1; Tue,
- 26 May 2026 15:28:10 -0400
-X-MC-Unique: gGjTLrzpPtem0hxUXOzoaQ-1
-X-Mimecast-MFC-AGG-ID: gGjTLrzpPtem0hxUXOzoaQ_1779823689
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B60E01956046;
-	Tue, 26 May 2026 19:28:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5F5E81800465;
-	Tue, 26 May 2026 19:28:08 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 64QJS7834146547
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 26 May 2026 15:28:07 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 64QJS63K4146546;
-	Tue, 26 May 2026 15:28:06 -0400
-Date: Tue, 26 May 2026 15:28:06 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Martin Wilck <mwilck@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [BUG] multipath-tools: 0 cyl reported on large disks due to
- overflow
-Message-ID: <ahX0RqXAVsKWUIGN@redhat.com>
-References: <02a2bb69-c13d-43bb-bbed-2a1bd3007ba4@gmail.com>
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="hZIFNeqW"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1779864632; x=1811400632;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=JK5dJh3OTuRpntIesE7c/TPDGOcT/qz3MBXu5Ltjclw=;
+  b=hZIFNeqWxBFT6Yr/yqOAraDnzHKxi+N3kWDXT/LTVMFVUJtw3Tyw+2Qb
+   DeX/IuaG7r+LVoNtKCLoKongVbbmVz7ixhHW4YrF+DFCU6YlmUMfIHrrG
+   PKJ8QdIZDXVn5cNKmamMeY3eIoDUgaTnIWfGKNE5IrUQHDf3jgdfvyr7g
+   YEX9PllEk2dGP/H+5ZCneZCmmj8UwDN47dGSVc2wdwbyk0QkKzilq3+h7
+   iruy1d9QlJDNz0/cBsziLL/5B7bKJ02V+8ECBokwQARTn9Fb0weTanw7e
+   1ITz5ZsbdApACM4iY6wRBaY//JHA+Jt3Au7cmJbIGh/B75hx/uI4dzuuS
+   g==;
+X-CSE-ConnectionGUID: WDe2ww3EQICOkeePhnr2mw==
+X-CSE-MsgGUID: Z1FEUVU/TlOAvf5oscOtuA==
+X-IronPort-AV: E=Sophos;i="6.24,171,1774310400"; 
+   d="scan'208";a="20413745"
+Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
+  by internal-pdx-out-010.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 May 2026 06:50:29 +0000
+Received: from EX19MTAUWA002.ant.amazon.com [205.251.233.178:2488]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.62.206:2525] with esmtp (Farcaster)
+ id d7326058-5df9-4e01-89dc-72fa5bb92ea0; Wed, 27 May 2026 06:50:29 +0000 (UTC)
+X-Farcaster-Flow-ID: d7326058-5df9-4e01-89dc-72fa5bb92ea0
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWA002.ant.amazon.com (10.250.64.202) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
+ Wed, 27 May 2026 06:50:28 +0000
+Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
+ Wed, 27 May 2026 06:50:26 +0000
+From: Leonid Ravich <lravich@amazon.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+CC: "David S . Miller" <davem@davemloft.net>, Mike Snitzer
+	<snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Alasdair Kergon
+	<agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, Eric Biggers
+	<ebiggers@kernel.org>, Jens Axboe <axboe@kernel.dk>, Horia Geanta
+	<horia.geanta@nxp.com>, Gilad Ben-Yossef <gilad@benyossef.com>,
+	<linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+	<linux-block@vger.kernel.org>
+Subject: [PATCH v2 0/4] crypto: skcipher - per-tfm multi-data-unit batching
+Date: Wed, 27 May 2026 06:50:16 +0000
+Message-ID: <20260527065021.19525-1-lravich@amazon.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <02a2bb69-c13d-43bb-bbed-2a1bd3007ba4@gmail.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: TJdmMZ1TAyJB-3nkpDFUcP0ee7HEtL9N3Jz1bBMW-QM_1779823689
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+X-ClientProxiedBy: EX19D042UWA004.ant.amazon.com (10.13.139.16) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-On Fri, May 22, 2026 at 11:10:36PM +0200, Xose Vazquez Perez wrote:
-> Hi,
-> 
-> An integer overflow occurs in libmultipath/discovery.c:get_geometry() when
-> querying geometry on large disks resulting in "0 cyl" being reported:
-> 
-> # multipath -ll -d -v3
-> ... | sdgm: 0 cyl, 64 heads, 32 sectors/track, start at 0
-> 
-> # fdisk -l /dev/sdgm
-> Disk /dev/sdgm: 12 TiB, 13194139533312 bytes, 25769803776 sectors
-> Units: sectors of 1 * 512 = 512 bytes
-> 
-> # dmesg | grep sdgm
-> sd 5:0:3:100: [sdgm] 25769803776 512-byte logical blocks: (13.2 TB/12.0TiB)
-> 
-> 
-> The root cause is that struct hd_geometry, from libmultipath/structs.h,
-> defines cylinders as an unsigned short.
-> 
-> Since it is a legacy interface, it should either sanitize the log output
-> or avoid relying on CHS geometry for large devices.
+This is v2 of the multi-data-unit skcipher request series, addressing
+review feedback from Mikulas Patocka on v1.
 
-I'm totally fine with never reporting the geometry info or moving it to
-log level 4 (since there can be value to even pointless debugging
-messages. They can show you where you made it to if you happned to hang
-in a function)
+v1: https://lore.kernel.org/linux-crypto/20260519115955.27267-1-lravich@amazon.com/
 
-But I don't personally have a problem with multipath simply passing
-along the geometry data it gets from the disk. Sure, it may be garbage,
-but then DM's garbage matches the disk's garbage. I highly doubt that
-anything actually cares what geometry a DM device reports. But I don't
-see any benefit to changing what it currently does.
+The series adds a per-tfm "data unit size" to the skcipher API so a
+caller can submit several data units in one crypto request, mirroring
+the data_unit_size concept already exposed by struct blk_crypto_config
+for inline encryption hardware.  The first user is dm-crypt, which
+today issues one skcipher request per sector and so pays a per-sector
+cost in request allocation, callback dispatch, completion handling,
+and scatterlist setup.
 
-Thoughts?
--Ben 
+Proof-of-concept performance numbers from the RFC reply [1]: +19%
+throughput / -40% CPU on a single-core arm64 system with a hardware
+XTS-AES-256 accelerator running fio 4 KiB sequential writes through
+dm-crypt, when an out-of-tree arm64 xts driver advertises the new
+flag.  This series itself does not include arch enablement.
+
+[1] https://lore.kernel.org/linux-crypto/20260428101225.24316-1-lravich@amazon.com/
+
+Changes since v1
+----------------
+
+Patch 4 (dm-crypt) only.  Patches 1-3 are unchanged from v1.
+
+  - Multi-DU scatterlist allocation now uses
+    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN, so the allocator does
+    not loop forever waiting for memory that won't come on the
+    swap-out-to-dm-crypt path.  (Mikulas)
+
+  - On scatterlist allocation failure, return -EAGAIN instead of
+    -ENOMEM.  crypt_convert() handles -EAGAIN by clearing its
+    local multi_du flag and re-entering the per-sector path for
+    the rest of this crypt_convert() invocation.  The per-tfm
+    data_unit_size on the cipher remains set, so subsequent bios
+    (which start a fresh crypt_convert() and re-read cipher_flags)
+    get to try multi-DU again once memory pressure eases.
+
+    This gives forward progress under total memory exhaustion: the
+    per-sector path uses only cc->req_pool (a mempool with
+    reservoir set up at table-load time) and the inline
+    dmreq->sg_in[]/sg_out[] arrays, never doing any allocation
+    that could fail.  The previous v1 mapping of -ENOMEM to
+    BLK_STS_DEV_RESOURCE could loop indefinitely on swap, since
+    the bio retry would try the same multi-DU allocation again.
+    (Mikulas)
+
+  - Walk the bio with __bio_for_each_bvec instead of
+    __bio_for_each_segment.  __bio_for_each_segment splits each
+    bvec at PAGE_SIZE boundaries; __bio_for_each_bvec keeps
+    multi-page bvecs as single units, which is faster with folios
+    and produces fewer scatterlist entries.  (Mikulas)
+
+Design overview (unchanged from v1)
+-----------------------------------
+
+* Patch 1 adds an `unsigned int data_unit_size` field to
+  `struct crypto_skcipher` (per-tfm: invariant for the consumer's
+  lifetime, set once via `crypto_skcipher_set_data_unit_size()`),
+  plus a capability flag CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT in
+  `cra_flags` (type-specific high-byte range, mirroring the
+  CRYPTO_AHASH_ALG_BLOCK_ONLY precedent).  `crypto_skcipher_encrypt()`
+  and `crypto_skcipher_decrypt()` validate that `cryptlen` is a
+  positive multiple of `data_unit_size`.  The setter rejects
+  sub-blocksize values; algorithm registration rejects the flag
+  for algorithms with `ivsize != 16`.
+
+  Also exposes `skcipher_walk_data_units()` in
+  <crypto/internal/skcipher.h> as a default per-DU dispatcher for
+  drivers that don't want to roll their own.
+
+* Patch 2 lets the generic `xts(...)` template advertise the flag
+  when the inner cipher is synchronous.  This is the in-tree
+  software producer of the new capability.
+
+* Patch 3 extends `testmgr` with a self-comparison test that fires
+  automatically for every alg advertising the flag.
+
+* Patch 4 turns dm-crypt on automatically when all of the
+  following hold at table load: skcipher (not aead), tfms_count
+  == 1, IV mode is plain or plain64, no per-sector
+  iv_gen_ops->post() hook, no dm-integrity stacking, and the
+  underlying cipher advertises the capability.
+
+This series intentionally does NOT add the capability flag to any
+arch crypto driver.  Arch maintainers can opt in independently in
+follow-up patches by wrapping their xts(aes) entry points with
+skcipher_walk_data_units() or, for hardware engines, by submitting
+one HW command for the whole multi-DU request.
+
+Verification
+------------
+
+* checkpatch.pl --strict: clean on all 4 patches.
+* Builds clean on x86_64 (defconfig + DM_CRYPT + CRYPTO_AES_NI_INTEL)
+  and arm64 (cross-compile, defconfig + DM_CRYPT +
+  CRYPTO_AES_ARM64_CE_BLK + CRYPTO_AES_ARM64_NEON_BLK) on top of
+  axboe/for-next (a8cafdf8c949).
+* QEMU boots; existing xts-aes-aesni / xts-aes-ce / xts-aes-neon
+  crypto self-tests pass.
+* In-kernel testmgr self-comparison passes for any algorithm
+  advertising the flag.
+* dm-crypt round-trip with plain64: PASS on x86 and arm64.
+* dm-crypt round-trip with essiv:sha256 (single-DU path): PASS.
+* dm-crypt large-bio: PASS.
+* dm-crypt activation gating: plain -> enabled, plain64 ->
+  enabled, essiv:sha256 -> fallback, plain64be -> fallback.
+* Byte-equivalence: 256 MB of ciphertext written through the
+  multi-DU path is bit-identical to ciphertext written on an
+  unpatched axboe/for-next baseline (sha256
+  4913910b1aa6f8859fcb8f4adec20230274993a3ade8f4dd0140a323dc43efc0).
+* Low-memory boot (mem=128M): PASS — no regression in the
+  per-sector path under tight memory.
+
+The OOM-fallback path (multi-DU helper returns -EAGAIN, caller
+reverts to per-sector) is verified by inspection: the fallback is
+two lines in crypt_convert(), the per-sector path uses only the
+existing mempool reserve and the inline dmreq SG arrays (no
+allocation that could fail), and there is no shared state between
+the two paths that could deadlock.
+
+Leonid Ravich (4):
+  crypto: skcipher - add per-tfm data_unit_size for batched requests
+  crypto: xts - support multiple data units per request in template
+  crypto: testmgr - exercise multi-data-unit path for skcipher
+  dm crypt: batch all sectors of a bio per crypto request
+
+ crypto/skcipher.c                  | 120 +++++++++++++
+ crypto/testmgr.c                   | 129 ++++++++++++++
+ crypto/xts.c                       |  25 ++-
+ drivers/md/dm-crypt.c              | 272 ++++++++++++++++++++++++++++-
+ include/crypto/internal/skcipher.h |  34 ++++
+ include/crypto/skcipher.h          |  85 +++++++++
+ 6 files changed, 656 insertions(+), 9 deletions(-)
+
+
+base-commit: a8cafdf8c949f17c92eca0045532e88ac0dac30d
+-- 
+2.47.3
 
