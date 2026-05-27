@@ -1,245 +1,281 @@
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 270F93EDAC9
-	for <dm-devel@lists.linux.dev>; Wed, 27 May 2026 10:43:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9724518A6D4
+	for <dm-devel@lists.linux.dev>; Wed, 27 May 2026 13:14:01 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779878610; cv=none; b=SeyDVgfmlZ+BzYc3i4cBB3zqrINrUiA31Y96aYS6j2uWvK9VHMpDDDDTb5AAsje6nu2mlU3QIL0JXHF/H47Meu1qRLVETfYi2NwuDk0qfDM+Y8pIMwy+KmOU68MoN+uW1WATkJEcd5HtnVJzCg9kdZU4cNIUD+p5cZtRQztLjvY=
+	t=1779887643; cv=none; b=UlJzVuEP21P3hltatApceW65GlcENQXnuHP+oTbdq5Jw7NiE+ITQ6mcJ32KIOyKnLYooTXOEVrxaEniWjHqJH1lS7GApLh7x4gYC376FGyKpjGdTZ2ifHvhHinyL+9iFlSD+5p4YM9u+kbfcefIykiTGI2SFfadu3ZZHldZTlLU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779878610; c=relaxed/simple;
-	bh=CL5xoxAXq6uxYyvUnZyiUruH0Ru3ObPYGSQCqX+BjEs=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=WbWoeYQsY2EyC6QgARKi+l9MVGKrYHkT9pEvi5UO1LVxbNEWxHe3R0r/o1Z6m82jJAtbTI39CK8hZcanOmmfi8IHZkVbxFtkz7srk7JM+NtFwbY2FemCwYdYIy1C+ExawbhFYtleEgsFqX8h7Y/bdRZdcEUW/DBKlU2vKtjRoC8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	s=arc-20240116; t=1779887643; c=relaxed/simple;
+	bh=FfLb3rA5XGBA65wlFPPJopeBlH5Py8JhkIXEmEwE9eU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=RgGN00Wou81xw0aI4J5HeHVbfVgGWpyvWOVSzN2hS1GXUbPskpNz3ITW5kiLm2e95ahudREadMIRwJ5k7Qt+RYKjRbLh7NF7fjmmQgZejzHIsAgqTUGwzbN3+v8wCVyIKNTVBg4Glh2CmOjXhpC6lDppcpZD26SECfB2YNNhaLQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=E7uvayCt; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=NKHZfHKd; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=E7uvayCt; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=NKHZfHKd; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="E7uvayCt";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="NKHZfHKd";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="E7uvayCt";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="NKHZfHKd"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 7ABF56A956;
-	Wed, 27 May 2026 10:43:27 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 773AF6B8CB;
+	Wed, 27 May 2026 13:13:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1779887639; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TAKhRtYczHQd8gte47AQbM2I+m6LM6sbfN7jprck2OY=;
+	b=E7uvayCtjpNORxAv8MYsuX9DHA0SMKILQQxhduaBTCDrlCotzalVfKvHDT1oSnz6yOFMAP
+	4XOLbgXDcmsI3z51Q+tqiblSFL7fzZhSo0gbVOej9sFr9r1HK8KIx/3Z9tklGC32EEdY94
+	ELWz1Bqwv8rmLV2OL9O1BFSzKdpNxBs=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1779887639;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TAKhRtYczHQd8gte47AQbM2I+m6LM6sbfN7jprck2OY=;
+	b=NKHZfHKd0yUlKmCGPgy5KpX/xgf9gM0BZ7BijyYk4mbjriWCjI8S+GAZtyJZzSUVWyrLvF
+	3XtaOIvkKcdI6RAA==
 Authentication-Results: smtp-out1.suse.de;
 	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1779887639; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TAKhRtYczHQd8gte47AQbM2I+m6LM6sbfN7jprck2OY=;
+	b=E7uvayCtjpNORxAv8MYsuX9DHA0SMKILQQxhduaBTCDrlCotzalVfKvHDT1oSnz6yOFMAP
+	4XOLbgXDcmsI3z51Q+tqiblSFL7fzZhSo0gbVOej9sFr9r1HK8KIx/3Z9tklGC32EEdY94
+	ELWz1Bqwv8rmLV2OL9O1BFSzKdpNxBs=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1779887639;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=TAKhRtYczHQd8gte47AQbM2I+m6LM6sbfN7jprck2OY=;
+	b=NKHZfHKd0yUlKmCGPgy5KpX/xgf9gM0BZ7BijyYk4mbjriWCjI8S+GAZtyJZzSUVWyrLvF
+	3XtaOIvkKcdI6RAA==
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5007B5A7B6;
-	Wed, 27 May 2026 10:43:27 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 52A175A847;
+	Wed, 27 May 2026 13:13:59 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id v/xqEs/KFmqCewAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 27 May 2026 10:43:27 +0000
-Message-ID: <68c656ed5e6db979dd03587e5274f9cd50e29ef9.camel@suse.com>
-Subject: Re: [PATCH v2 04/19] libmpathutil: add implementation of generic
- shared pointer
-From: Martin Wilck <mwilck@suse.com>
-To: Hannes Reinecke <hare@suse.de>, Christophe Varoqui	
- <christophe.varoqui@opensvc.com>, Benjamin Marzinski <bmarzins@redhat.com>,
-  Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Date: Wed, 27 May 2026 12:43:26 +0200
-In-Reply-To: <b4bfe78c-3a19-4702-a663-2735f86d4a56@suse.de>
-References: <20260522164415.846589-1-mwilck@suse.com>
-	 <20260522164415.846589-5-mwilck@suse.com>
-	 <b4bfe78c-3a19-4702-a663-2735f86d4a56@suse.de>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 
+	id 65azExfuFmqyGAAAD6G6ig
+	(envelope-from <hare@suse.de>); Wed, 27 May 2026 13:13:59 +0000
+Message-ID: <c03305cd-5408-4b28-bcab-a43a566ce6ef@suse.de>
+Date: Wed, 27 May 2026 15:13:59 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Pre-Result: action=no action;
-	module=replies;
-	Message is reply to one we originated
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spamd-Result: default: False [-4.00 / 50.00];
-	REPLY(-4.00)[];
-	TAGGED_RCPT(0.00)[]
-X-Rspamd-Pre-Result: action=no action;
-	module=replies;
-	Message is reply to one we originated
-X-Rspamd-Queue-Id: 7ABF56A956
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 09/19] libmpathutil: runner: use shared_ptr
+To: Martin Wilck <mwilck@suse.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>
+References: <20260522164415.846589-1-mwilck@suse.com>
+ <20260522164415.846589-10-mwilck@suse.com>
+ <5cb00fa3-159b-4463-9599-55c7f8ba702f@suse.de>
+ <f4188f6ac60be14ca4ee325f776a89184e7ef01a.camel@suse.com>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <f4188f6ac60be14ca4ee325f776a89184e7ef01a.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 X-Spam-Flag: NO
-X-Spam-Score: -4.00
+X-Spam-Score: -2.80
 X-Spam-Level: 
-X-Rspamd-Action: no action
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.997];
+	MIME_GOOD(-0.10)[text/plain];
+	TAGGED_RCPT(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	TO_DN_SOME(0.00)[];
+	ARC_NA(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCPT_COUNT_FIVE(0.00)[6];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[gmail.com];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.de:email,suse.de:mid,suse.com:email,imap1.dmz-prg2.suse.org:helo]
 
-Hi Hannes,
+On 5/27/26 12:11, Martin Wilck wrote:
+> On Wed, 2026-05-27 at 11:40 +0200, Hannes Reinecke wrote:
+>> On 5/22/26 18:44, Martin Wilck wrote:
+>>> Use shared_ptr to track the runner_context refcount.
+>>>
+>>> Signed-off-by: Martin Wilck <mwilck@suse.com>
+>>> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+>>> ---
+>>>    libmpathutil/runner.c | 30 +++++++++---------------------
+>>>    1 file changed, 9 insertions(+), 21 deletions(-)
+>>>
+>>> diff --git a/libmpathutil/runner.c b/libmpathutil/runner.c
+>>> index 8c6d6b9..56abd03 100644
+>>> --- a/libmpathutil/runner.c
+>>> +++ b/libmpathutil/runner.c
+>>> @@ -30,7 +30,6 @@ const char *runner_state_name(int state)
+>>>    }
+>>>    
+>>>    struct runner_context {
+>>> -	int refcount;
+>>>    	int status;
+>>>    	struct timespec deadline;
+>>>    	pthread_t thr;
+>>> @@ -39,17 +38,6 @@ struct runner_context {
+>>>    	char __attribute__((aligned(sizeof(void *)))) data[];
+>>>    };
+>>>    
+>>> -static void release_context(struct runner_context *rctx)
+>>> -{
+>>> -	int n;
+>>> -
+>>> -	n = uatomic_sub_return(&rctx->refcount, 1);
+>>> -	assert(n >= 0);
+>>> -
+>>> -	if (n == 0)
+>>> -		free(rctx);
+>>> -}
+>>> -
+>>>    static void cleanup_context(struct runner_context **prctx)
+>>>    {
+>>>    	struct runner_context *rctx = *prctx;
+>>> @@ -65,7 +53,7 @@ static void cleanup_context(struct runner_context
+>>> **prctx)
+>>>    			"%s: runner %p finished in state '%s'",
+>>> __func__, rctx,
+>>>    			runner_state_name(st));
+>>>    	}
+>>> -	release_context(rctx);
+>>> +	put_shared_ptr(rctx);
+>>>    }
+>>>    
+>>>    static void *runner_thread(void *arg)
+>>> @@ -147,7 +135,7 @@ repeat:
+>>>    void release_runner(struct runner_context *rctx)
+>>>    {
+>>>    	cancel_runner(rctx);
+>>> -	release_context(rctx);
+>>> +	put_shared_ptr(rctx);
+>>>    }
+>>>    
+>>>    int check_runner(struct runner_context *rctx, void *data,
+>>> unsigned int size)
+>>> @@ -195,17 +183,17 @@ struct runner_context *get_runner(runner_func
+>>> func, void *data,
+>>>    		return NULL;
+>>>    	}
+>>>    
+>>> -	rctx = malloc(sizeof(*rctx) + size);
+>>> +	rctx = alloc_shared_ptr(sizeof(*rctx) + size, NULL);
+>>>    	if (!rctx)
+>>>    		return NULL;
+>>>    
+>>>    	rctx->func = func;
+>>>    	/*
+>>> -	 * We have to set the refcount to 2 here. The runner
+>>> thread may be
+>>> -	 * cancelled before it even had the chance to increase the
+>>> refcount,
+>>> -	 * which could result in a use-after-free in
+>>> cleanup_context().
+>>> +	 * Take an additional reference here. The runner thread
+>>> may be
+>>> +	 * cancelled before it even had the chance to take a
+>>> reference, which
+>>> +	 * could result in a use-after-free in cleanup_context().
+>>>    	 */
+>>> -	uatomic_set(&rctx->refcount, 2);
+>>> +	get_shared_ptr(rctx);
+>>>    	uatomic_set(&rctx->status, RUNNER_IDLE);
+>>>    	memcpy(rctx->data, data, size);
+>>>    
+>>> @@ -222,8 +210,8 @@ struct runner_context *get_runner(runner_func
+>>> func, void *data,
+>>>    
+>>>    	if (rc) {
+>>>    		condlog(1, "%s: pthread_create(): %s", __func__,
+>>> strerror(rc));
+>>> -		uatomic_dec(&rctx->refcount);
+>>> -		release_context(rctx);
+>>> +		put_shared_ptr(rctx);
+>>> +		put_shared_ptr(rctx);
+>>>    		return NULL;
+>>>    	}
+>>>    	return rctx;
+>>
+>> Hmm. While I fully get the idea why one would want to use refcounted
+>> objects, there really is only one snag: this is multipath.
+>> We really, _really_, should make sure the daemon can execute even if
+>> the root filesystem is not available.
+>> So if we start dropping the reference for the checker (eg if the last
+>> path drops and the checker is no longer used), we might end up
+>> freeing
+>> the memory (and dropping the modules altogether).
+> 
+> I am pretty sure that we handle this correctly. The current patch set
+> doesn't change anything in this respect, except translating the hard-
+> coded refcounting into the shared_ptr framework.
+> 
+>> But if the path comes back we need to reinstate the checker, which
+>> not
+>> only requires additional memory (which might need a recursion into
+>> the
+>> filesystem to get free pages) but we also might need to read the
+>> checker
+>> module from disk (again). So plenty of opportunity to deaslock
+>> waithing
+>> for the disk be become readable.
+> 
+> In checker_get(), we call add_checker_class() if the class is not yet
+> loaded, which will take one ref on the class, and then get_shared_ptr()
+> for every path (including the one for which add_checker_class() had
+> been called), which means we have (number of paths + 1) references on
+> the class, and will only drop the last ref when multipathd calls
+> cleanup_checkers() during exit.
+> 
+> Therefore I don't think it's possible that we unload the shared library
+> prematurely, and have to reload it later.
+> 
+Hmm.
 
-On Wed, 2026-05-27 at 11:28 +0200, Hannes Reinecke wrote:
-> On 5/22/26 18:44, Martin Wilck wrote:
-> > Add a set of simple functions to handle refcounted pointers.
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> > =C2=A0 libmpathutil/libmpathutil.version |=C2=A0 7 +++++
-> > =C2=A0 libmpathutil/util.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 45
-> > ++++++++++++++++++++++++++++---
-> > =C2=A0 libmpathutil/util.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 5 ++++
-> > =C2=A0 3 files changed, 53 insertions(+), 4 deletions(-)
-> >=20
-> That really looks like the Hazard pointers from Paul McK and Mathieu=20
-> Desnoyers. Maybe have a look and see if you cannot re-use the
-> approach here.
+Really hmmmmm.
 
-Thanks for the hint. Hazard pointers are a far more advanced
-complicated concept, focussed on cache efficiency and performance.
-That's important for the kernel, but it would be over-engineered for
-libmultipath, IMO. We just need to make sure that the pointer is not
-freed as long as it's still referenced somewhere.
+If the checkers are loaded during startup, and unloaded on shutdown,
+there really is no point in refcounting them, is there?
+Wouldn't global pointers to each check sufficient here, avoiding
+the need for refcounting altogether?
 
-AFAICS, Mathieu's code is targeted at the kernel. We could consider
-using some generic user-space hazard pointer implementation for
-libmultipath if there is something we could take off the shelf (like,
-as a part of liburcu, which we're using anyway). But I don't see a
-strong need for it. There's no doubt that libmultipath is inefficient
-in many ways, but it isn't CPU-intensive, and thus correctness and
-simplicity matter more than efficiency.
+Cheers,
 
->=20
-> > diff --git a/libmpathutil/libmpathutil.version
-> > b/libmpathutil/libmpathutil.version
-> > index c69120d..51594ad 100644
-> > --- a/libmpathutil/libmpathutil.version
-> > +++ b/libmpathutil/libmpathutil.version
-> > @@ -194,3 +194,10 @@ global:
-> > =C2=A0 local:
-> > =C2=A0=C2=A0	*;
-> > =C2=A0 };
-> > +
-> > +LIBMPATHUTIL_6.1 {
-> > +global:
-> > +	alloc_shared_ptr;
-> > +	get_shared_ptr;
-> > +	put_shared_ptr;
-> > +} LIBMPATHUTIL_6.0;
-> > diff --git a/libmpathutil/util.c b/libmpathutil/util.c
-> > index 23a9797..3c623ec 100644
-> > --- a/libmpathutil/util.c
-> > +++ b/libmpathutil/util.c
-> > @@ -12,15 +12,13 @@
-> > =C2=A0 #include <dirent.h>
-> > =C2=A0 #include <unistd.h>
-> > =C2=A0 #include <errno.h>
-> > +#include <urcu/uatomic.h>
-> > =C2=A0 #include "mt-udev-wrap.h"
-> > =C2=A0=20
-> > =C2=A0 #include "util.h"
-> > =C2=A0 #include "debug.h"
-> > -#include "checkers.h"
-> > =C2=A0 #include "vector.h"
-> > -#include "structs.h"
-> > -#include "config.h"
-> > -#include "log.h"
-> > +#include "list.h"
-> > =C2=A0=20
-> > =C2=A0 size_t
-> > =C2=A0 strchop(char *str)
-> > @@ -384,3 +382,42 @@ void cleanup_udev_device(struct udev_device
-> > **udd)
-> > =C2=A0=C2=A0	if (*udd)
-> > =C2=A0=C2=A0		udev_device_unref(*udd);
-> > =C2=A0 }
-> > +
-> > +struct shared_ptr {
-> > +	long refcnt;
-> > +	void (*destructor)(void *);
-> > +	char __attribute__((aligned(sizeof(void *)))) ptr[];
-> > +};
-> > +
-> > +void *alloc_shared_ptr(size_t size, void (*destructor)(void *))
-> > +{
-> > +	struct shared_ptr *sp =3D malloc(sizeof(*sp) + size);
-> > +
-> > +	if (!sp)
-> > +		return NULL;
-> > +	uatomic_set(&sp->refcnt, 1);
-> > +	sp->destructor =3D destructor;
-> > +	return sp->ptr;
-> > +}
-> > +
-> > +void get_shared_ptr(void *ptr)
-> > +{
-> > +	struct shared_ptr *sp =3D container_of(ptr, struct
-> > shared_ptr, ptr);
-> > +
-> > +	if (uatomic_add_return(&sp->refcnt, 1) < 0)
-> > +		condlog(0, "%s: refcount overflow", __func__);
-> > +}
-> > +
-> > +void put_shared_ptr(void *ptr)
-> > +{
-> > +	struct shared_ptr *sp;
-> > +
-> > +	if (!ptr)
-> > +		return;
-> > +	sp =3D container_of(ptr, struct shared_ptr, ptr);
-> > +	if (uatomic_sub_return(&sp->refcnt, 1) =3D=3D 0) {
-> > +		if (sp->destructor)
-> > +			sp->destructor(ptr);
-> > +		free(sp);
-> > +	}
-> > +}
->=20
-> I _think_ the could be implemented better using RCU primitives;
-> in the end, what you really care about is whether the pointer is
-> valid (9which is what RCU provides).
-
-What we want to achieve is just that (the destructor is called and) the
-memory is freed when the last reference is dropped, but no sooner. It's
-the same concept that the kernel uses for refcounted objects all over
-the place.
-
-> Or indeed use the hazard pointer approach, and count the number
-> of RCU references to that object ...
-
-Like I said, I'd like to keep it simple. The basic refcounting
-that this patch implements does the job for libmultipath.=C2=A0
-
-I just created this admittedly simple abstraction because the multipath
-code was using reference counters in multiple places, and I wanted to
-consolidate the code and add a unit test for it. It's not the purpose
-of this patch set to optimize for performance. If we want to optimize
-it, the API is simple enough that we can substitute the implementation
-easily with something more efficient in the future.
->=20
-
-> > diff --git a/libmpathutil/util.h b/libmpathutil/util.h
-> > index aed1bc1..ffbb182 100644
-> > --- a/libmpathutil/util.h
-> > +++ b/libmpathutil/util.h
-> > @@ -160,4 +160,9 @@ void cleanup_charp(char **p);
-> > =C2=A0 void cleanup_ucharp(unsigned char **p);
-> > =C2=A0 void cleanup_udev_device(struct udev_device **udd);
-> > =C2=A0 void cleanup_bitfield(union bitfield **p);
-> > +
-> > +void *alloc_shared_ptr(size_t size, void (*destructor)(void *));
-> > +void get_shared_ptr(void *ptr);
-> > +void put_shared_ptr(void *ptr);
-> > +
-> > =C2=A0 #endif /* UTIL_H_INCLUDED */
->=20
-> ... or just leave it as it is if the approach is to complex.
-> I doubt it's time-critical.
->=20
-
-Exactly. I'd like to see what Ben and others think.
-
-Regards,
-Martin
-
-
-
-
-> Cheers,
->=20
-> Hannes
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
