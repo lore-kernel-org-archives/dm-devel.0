@@ -1,165 +1,103 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from va-1-113.ptr.blmpb.com (va-1-113.ptr.blmpb.com [209.127.230.113])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D14D3502A8
-	for <dm-devel@lists.linux.dev>; Thu, 28 May 2026 07:50:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7A233B0AE7
+	for <dm-devel@lists.linux.dev>; Thu, 28 May 2026 09:40:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.230.113
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779954630; cv=none; b=L8r54WwfHGP3TJi5rF6dzWlWnsq0Tjcg2I2SN5Wp4bYtqvXJIyQha1gwfM1uR5+LNfZXFBElvhXKD3gbDqExJv1+I/TPIJskglM7qpwNtsmUXZdD8EGGv/1OGeJXwAUs1LVB08DpsNpaMK+VZ3ODoDmTRRiqrmniGN87cT6laf4=
+	t=1779961246; cv=none; b=fbDmVM3fjxOanN4tFYn4J01Epy86xqpsvCzaoSRq9pXI27Osfp8hVvWTIQcWW2s7fza2RN86k7WCLJlHCu17dvzwy9btr4Oe9hc4barbTJJPe1t5kF0UZBvjMUWO60cDh50gE0OhAM/AX59bpIKXI/Lk200FKssd2/EOy9+VUeU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779954630; c=relaxed/simple;
-	bh=VuzwQ3dBA1gslPmvZ+boBf5lXL/nghx7BCb2pSPKnEo=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=S/FEIIWhozEvifahkaW8LFPusE3Ep0KPzm5QmzTHCwIIhHqYeU+9KgQ2l7kU6IhHWgKedahlT5VBSaEx9s8XHtHtY5UB0LwbJ1XHoXGigMXzHznYGJre3H3HR55wBhqg3akV48DxeNTXhI85kDyMX7MzNtMfSKQ881g+QVfx4nw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Qh5M9Tzl; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=u7mE35YY; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1779961246; c=relaxed/simple;
+	bh=LRvnskXB+X4BNB2GiegUwlhjWPxgdl0B8lBtUdPNrpI=;
+	h=To:Message-Id:In-Reply-To:Subject:Date:From:Mime-Version:
+	 Content-Type:References; b=mw5/1JwkmyRMh/Nun8ki8MWCarzIh0Bp7EUl3RSMXN1uQXlQISo5K7jeqyW6j9E900MrNWZ8Bi0xYfFGfRvXIzXWiQhOXJ+L8qdcEcFxrF2k529NDdY+GbOzlVNmxmXtrPMhVvnZWsno1aEJ9Q3XADu9GjBO09TzdrZCKDzzAqM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com; spf=pass smtp.mailfrom=bytedance.com; dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b=f6IxMZyJ; arc=none smtp.client-ip=209.127.230.113
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=bytedance.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=bytedance.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Qh5M9Tzl";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="u7mE35YY"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 8B9D46AEF5;
-	Thu, 28 May 2026 07:50:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1779954627; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8d8zsbWMUv9uaZ6qEGlE1/xHqLtKrowr0HGHRukXozg=;
-	b=Qh5M9TzlBwLjaPpiD/FKGVOF6RHrg3x31MkTa9NTZ3nn0YZGEzRUNvzgTkja6NZQ+/rzfW
-	T5F6A/cTT1gjYoxu+GbFrhWEiK8VF+v2ekivEX9LyXeJfHmd0jhvxjrzRfewC+LEBvNMpQ
-	jyyBPdlmobh23dPh2WrCWGk82HMKCs4=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=u7mE35YY
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1779954626; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8d8zsbWMUv9uaZ6qEGlE1/xHqLtKrowr0HGHRukXozg=;
-	b=u7mE35YYEjp13sePDwAvs4qIOeFs4/oM+99omlQxPOnHZ/sthsYALuW5I1TTx9sMLR2pJR
-	meghr0N90rMYUHrrodeZBuMb6xTrj8IrcaLvui49fOQOI/39n7aBI84B/jnMGl35ZNhDSi
-	d9VRqn2Q3HPPENjnOEH2qofznlouj1E=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 65C525AC95;
-	Thu, 28 May 2026 07:50:26 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id 7Ya2F8LzF2oSYwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 28 May 2026 07:50:26 +0000
-Message-ID: <1c061e532328360a407d4649b256f2d3695ef08e.camel@suse.com>
-Subject: Re: [PATCH v2 04/19] libmpathutil: add implementation of generic
- shared pointer
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, Brian Bunker
-	 <brian@purestorage.com>, dm-devel@lists.linux.dev, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Date: Thu, 28 May 2026 09:50:25 +0200
-In-Reply-To: <ahd7Xcfe3alqjROA@redhat.com>
-References: <20260522164415.846589-1-mwilck@suse.com>
-	 <20260522164415.846589-5-mwilck@suse.com> <ahd7Xcfe3alqjROA@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
+	dkim=pass (2048-bit key) header.d=bytedance.com header.i=@bytedance.com header.b="f6IxMZyJ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=2212171451; d=bytedance.com; t=1779961233; h=from:subject:
+ mime-version:from:date:message-id:subject:to:cc:reply-to:content-type:
+ mime-version:in-reply-to:message-id;
+ bh=9UT7WvwB/rb2gYlyJ1CXeSOfyjr4rrczbHdlA5RdR2A=;
+ b=f6IxMZyJFp+c9JbV6nalgsACa6ywTK60XWPTxYLcMacoimGMeTIISNsa6pSfDOPqgTE54M
+ TdB2SnZ0K+1jJhrnThGSyguFd9EsTJ6tiaoQ5ClZ2r2RD0a2GyMK1FMcRBmpOnn56HNXI+
+ piX31e+ubuiutRVqmvb8/My4Y/CzbHAft8Km6WVyEbelb0Xj8jFKN3ubLHHEZMH/WcY2GZ
+ 7mylA30fNLUObt/AReD16dMJ36Yc9RdHwdS1cgoqlvjhHqXaVFlbAZTOI/PSBLnRLxdT+A
+ SbdknhZ4DswVyHaY0bs2Ca6PZF5BUT2nbZrJKh39t6rGS+Rk2tc65O4A7q3beA==
+X-Lms-Return-Path: <lba+26a180d8f+3b7365+lists.linux.dev+changfengnan@bytedance.com>
+To: <axboe@kernel.dk>, <asml.silence@gmail.com>, <io-uring@vger.kernel.org>, 
+	<agk@redhat.com>, <snitzer@kernel.org>, <bmarzins@redhat.com>, 
+	<dm-devel@lists.linux.dev>
+Message-Id: <c37f0749-1ae9-48ca-b402-38a552767b12@bytedance.com>
+X-Original-From: Fengnan <changfengnan@bytedance.com>
+In-Reply-To: <20260513091349.2194-1-changfengnan@bytedance.com>
 Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.1 
+Subject: Re: [PATCH RESEND] dm: limit target bio polling to one shot
+Date: Thu, 28 May 2026 17:40:11 +0800
+From: "Fengnan" <changfengnan@bytedance.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-X-Spam-Level: 
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: 8B9D46AEF5
-X-Rspamd-Action: no action
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	SPAMHAUS_XBL(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	FREEMAIL_CC(0.00)[opensvc.com,purestorage.com,lists.linux.dev,gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received,2a07:de40:b281:104:10:150:64:97:from];
-	TAGGED_RCPT(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Flag: NO
-X-Spam-Score: -3.01
+Mime-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Content-Type: text/plain; charset=UTF-8
+References: <20260513091349.2194-1-changfengnan@bytedance.com>
 
-On Wed, 2026-05-27 at 19:16 -0400, Benjamin Marzinski wrote:
-> On Fri, May 22, 2026 at 06:44:00PM +0200, Martin Wilck wrote:
-> > Add a set of simple functions to handle refcounted pointers.
-> >=20
-> > Signed-off-by: Martin Wilck <mwilck@suse.com>
-> > Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> > =C2=A0libmpathutil/libmpathutil.version |=C2=A0 7 +++++
-> > =C2=A0libmpathutil/util.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 45
-> > ++++++++++++++++++++++++++++---
-> > =C2=A0libmpathutil/util.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 5 ++++
-> > =C2=A03 files changed, 53 insertions(+), 4 deletions(-)
-> >=20
-> > diff --git a/libmpathutil/util.c b/libmpathutil/util.c
-> > index 23a9797..3c623ec 100644
-> > --- a/libmpathutil/util.c
-> > +++ b/libmpathutil/util.c
-> > @@ -384,3 +382,42 @@ void cleanup_udev_device(struct udev_device
-> > **udd)
-> > =C2=A0	if (*udd)
-> > =C2=A0		udev_device_unref(*udd);
-> > =C2=A0}
-> > +
-> > +struct shared_ptr {
-> > +	long refcnt;
-> > +	void (*destructor)(void *);
-> > +	char __attribute__((aligned(sizeof(void *)))) ptr[];
-> > +};
-> > +
-> > +void *alloc_shared_ptr(size_t size, void (*destructor)(void *))
-> > +{
-> > +	struct shared_ptr *sp =3D malloc(sizeof(*sp) + size);
-> > +
-> > +	if (!sp)
-> > +		return NULL;
-> > +	uatomic_set(&sp->refcnt, 1);
-> > +	sp->destructor =3D destructor;
-> > +	return sp->ptr;
-> > +}
-> > +
-> > +void get_shared_ptr(void *ptr)
-> > +{
->=20
-> We should probably return here if ptr is NULL, like we do in
-> put_shared_ptr(). Alternatively, this might be a reasonable place for
-> an
-> assert(), since nobody should be calling these with NULL pointers.
+ping..
 
-That makes sense. I'll add an assert(), and change put_shared_ptr()
-accordingly.
 
-Martin
+=E5=9C=A8 2026/5/13 17:13, Fengnan Chang =E5=86=99=E9=81=93:
+> dm_poll_bio() is the ->poll_bio() callback for a stacked dm device.
+> The caller only knows about the dm queue, so it may decide to do a
+> spinning poll if it thinks a single queue is being polled. Passing those
+> flags unchanged to the mapped clone lets blk_mq_poll() spin on a target
+> queue from inside dm_poll_bio().
+>
+> With io_uring IOPOLL on a dm-stripe target this can keep a task in
+>
+>    dm_poll_bio() -> bio_poll() -> blk_mq_poll()
+>
+> long enough to trigger an RCU CPU stall, before io_uring gets back to
+> io_iopoll_check() and its need_resched() check.
+>
+> Keep dm's ->poll_bio() bounded by forcing one-shot polling for target
+> bios. The caller can invoke dm_poll_bio() again if it wants to keep
+> polling, and it also gets a chance to reap completions or reschedule
+> between passes.
+>
+> Fixes: f22ecf9c14c1 ("blk-mq: delete task running check in blk_hctx_poll(=
+)")
+> Signed-off-by: Fengnan Chang <changfengnan@bytedance.com>
+> ---
+>   drivers/md/dm.c | 13 +++++++++++--
+>   1 file changed, 11 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> index e178fe19973ea..8f44fbbcf3da2 100644
+> --- a/drivers/md/dm.c
+> +++ b/drivers/md/dm.c
+> @@ -2098,8 +2098,17 @@ static bool dm_poll_dm_io(struct dm_io *io, struct=
+ io_comp_batch *iob,
+>   	WARN_ON_ONCE(!dm_tio_is_normal(&io->tio));
+>  =20
+>   	/* don't poll if the mapped io is done */
+> -	if (atomic_read(&io->io_count) > 1)
+> -		bio_poll(&io->tio.clone, iob, flags);
+> +	if (atomic_read(&io->io_count) > 1) {
+> +		/*
+> +		 * DM hides the target queues from the upper poller, which may
+> +		 * decide it is safe to spin on a single stacked queue.  Do not
+> +		 * pass that spinning policy down to a target queue: one slow
+> +		 * clone could keep the task inside dm_poll_bio() for a long
+> +		 * time.  Poll target bios once and let the caller decide
+> +		 * whether to keep polling, reap completions or reschedule.
+> +		 */
+> +		bio_poll(&io->tio.clone, iob, flags | BLK_POLL_ONESHOT);
+> +	}
+>  =20
+>   	/* bio_poll holds the last reference */
+>   	return atomic_read(&io->io_count) =3D=3D 1;
