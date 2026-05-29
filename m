@@ -1,139 +1,153 @@
-Received: from mail-pf1-f179.google.com (mail-pf1-f179.google.com [209.85.210.179])
+Received: from mail-wr1-f53.google.com (mail-wr1-f53.google.com [209.85.221.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 066993A3E90
-	for <dm-devel@lists.linux.dev>; Fri, 29 May 2026 16:00:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6AA1421EED
+	for <dm-devel@lists.linux.dev>; Fri, 29 May 2026 20:56:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780070418; cv=none; b=a7wuOiNsTvZv2dJWIr44RRhZ7jI8acYGarFWABwYfXXTVmQFp0r0rbkSWGA0Y+U+LreQhb3tVKhkcnD+iOqKygd6xnfStm+XN5tNbWCqU3OnEXToXkCVsHdZQIhgdRPQVd3Q6o6dQY+W0k8F+bJRDsKzxic+rlygw6cnbLMyPwo=
+	t=1780088167; cv=none; b=ORZ0aMeolYlco8XVa19zOz9HPWQsfe/nDpZNsmi4/EgXs10ULAB6BiO3vLlOcCgtj/hbrjRSwRo7nEUZAjx7v0RSlw3hGFc+ZHny7nF85qCcxHev7Xt65MH2ip89malIgyiV6OyqV9IS1Iu2iPcFB0FvnQTT5XW7jLEQZ5/XfSs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780070418; c=relaxed/simple;
-	bh=k4lx5eyaIkFZb9LSl33QVXj3R4oz3we3nc7csf+YodI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GSQlf0jLEZcLTT9VnzHo5yB1HGsOBP2MUGolJ7legJbj9zsJsLHwvsVN2Wc3myca3NBBG5SJUnev/B6I66ZAsW7rD5ENLuXpWPvgYH0e5iAIwx+vkCp2gX5SbwGDXkaFZ2NDDXxI88JBTtsgjjCW0OVv1qty1VfXvocSGMcEJ+0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=rxjxR9NX; arc=none smtp.client-ip=209.85.210.179
+	s=arc-20240116; t=1780088167; c=relaxed/simple;
+	bh=QUkTU9MAzHVjY/R52ylF2nX1IyF7xZP2bnvafUhKIKM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=MDEkimBCUoOfxo/MWspARVzcn24b3kSoxOtsOgmwSAcu7v5ibZ2BtZTlxrTGSgygLVrk1U0jwJqBIeP0BmtS6Tz3wwymNsq1Dw2t/qz8N7VX07eQPOCwOhy6j+tcjZMtT0wR3gQGfHZfdCUthkoq+BefcNmb5uWhNkWwFnPMGOg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KaJczVa0; arc=none smtp.client-ip=209.85.221.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="rxjxR9NX"
-Received: by mail-pf1-f179.google.com with SMTP id d2e1a72fcca58-83945063f70so6771315b3a.0
-        for <dm-devel@lists.linux.dev>; Fri, 29 May 2026 09:00:15 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KaJczVa0"
+Received: by mail-wr1-f53.google.com with SMTP id ffacd0b85a97d-45ef37b56e6so126326f8f.1
+        for <dm-devel@lists.linux.dev>; Fri, 29 May 2026 13:56:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1780070415; x=1780675215; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1780088164; x=1780692964; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=hKu7L3y2TqCk1Y4XvXgVCljpe0pimisDl4YLc2NUkAA=;
-        b=rxjxR9NXkgbz8dIGjbxOLjho5oDr4TNhlJQmH1lEwfOl83rwP4tCXYwy31owFRGpQt
-         BaVMhWdybnVmze00lMHsntSGcQ8BlL0GAzu4fvUqWNz9hE2cArk/YkGadh/jIubVY9DA
-         C671JFC7wy8foiUYOfR39wXOhMawBmvIRbxXitZnh5POW/aOGUT/w/DaBUZuNjLlQa5S
-         WZ7tZrm17S2nzzHnSLa2Ow2sJn71hNpO1BYD2jTqmh4WalCi2XTkxI4M7OtBcgIl2X50
-         U3qK/sd4rxLE39MYAThmBb4yx0RI3+s2oiYohD7OtAC2OIqlOL9z6mjuLtbSAq8B6lEp
-         e2pA==
+        bh=W6SZ4oP1DlaBjPFDdYbBzO7LwjBZ+p9b7ExzMxZ0B/w=;
+        b=KaJczVa0xMtdaSzdpT4tPIeIPI5YrnEad2BMZF3dC49f1/DV1ujjvXLZNITKZBqAez
+         pFrSNjD51PM3iTNo2zf/uI6xFtawjGhu7zMXaRKGf7X+UhjMj255atlEvHOoZZSgCCh5
+         VqEq7dwoPKXIQwdoUjHrZjW+M0UDK1gjUV0r+lSMpaOIx8jENYBuNRL/f+3B1nIu/udo
+         jGuk80EIqPLE4W18QyUKReOiC8LlCs6mH9lwvlNgmZca88qOieyi002BjuTUehIhepyz
+         JNVi9zi4F/Vx4cg7UsGnNS85PFNwBD96K/6KnmRIzxShydPZVjSNu3e+i+hwC1jyhqTI
+         qjuw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780070415; x=1780675215;
+        d=1e100.net; s=20251104; t=1780088164; x=1780692964;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=hKu7L3y2TqCk1Y4XvXgVCljpe0pimisDl4YLc2NUkAA=;
-        b=KbIHDwS4jjS4f1WJnor5KC8e70zvoAitVk1kR+cf35zKNFOOVtD0sE4AQ2/rKSNK9T
-         EIDN25rzkDIT7HtJRPdHkFp1CzeabuhAy9W/ye6qvIHTfi50cHF6d/urQG8YNTLVn2Dv
-         rem5WTuqiKo7+qpLl+dYP0lxPwG/5SH7cOUe99qbUUmqzUX/9Kd5kbD/2dpXXOAXT00h
-         mqhuRSX0L+MrmelDy2T4wLI9Tj8+5a5jsMqvoTlMLy4cvXF8IpgQeHR1S83Gq0n3Fk3X
-         zAWx2/OquCez5VtkQ/CdQ0ApVz8+/Z3fT3TW8bYOhuGoU+eW+aLf7lVWyabGvcPMIKKu
-         +rHw==
-X-Forwarded-Encrypted: i=1; AFNElJ9KVKDCsRMICOdoP1bCCXT6BTCoVa8WGvsWkrDf23uYjsKH76jnFtg1jugy1uLTsT9kpNBFs31MjQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Ywc/c2+W3+R0w6rWcdd8BKCi+BuJlXzis/Czice1GFzUblUC98j
-	ZPWyFISPmXi9lMMANgxahhmlgRSvd5pq5mfkEnp5kTSQ5qJWejJSjZDW
-X-Gm-Gg: Acq92OGMC9zw3QbKFbOc5gu2tg7fxjutKB/UyWXNMny3nCN/WZqrqF0yspJ9fGZG8ba
-	JpD/wzWSZFNIHRbivY3MWOI/F1VP6MjurDwhJ/D/3OASjgwQmdbc7i7iIEracDkHmpPVeeIyt+y
-	USiwzXo+GjJmuwp0JFavnQ1ayKpQ+dg4i1knDNkTUMtdS2PT13jfgRjYsTAG9jLPCiy2R4G5h6h
-	OpoMWf8VnAkPb9DLL4NSKL+8C7KqMBGHRVXcPyu/t1i+SEjoD0vRna1rhzyIFVYKT4/ScLXeN16
-	18LpaFjunnCSv2aVDOnJz7bhf9VQLDmgaE+bQuSWztbrxA5BVapxN1BerZJc3QZGV6P8ekthMUI
-	9xmWg1Rt81vS1e5GAXYph6KwLaBBnUjSISo6yx/lznX9miRerWqlfEu8UgBPoyhMFBHBNUwrBxp
-	130LQF8wyluDjKQCto
-X-Received: by 2002:a05:6a00:a218:b0:82f:39df:dd54 with SMTP id d2e1a72fcca58-8421095d2d9mr3340613b3a.8.1780070415075;
-        Fri, 29 May 2026 09:00:15 -0700 (PDT)
-Received: from lgs.. ([2001:250:5800:1000::f280])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-84214ce9cebsm2220088b3a.52.2026.05.29.09.00.11
+        bh=W6SZ4oP1DlaBjPFDdYbBzO7LwjBZ+p9b7ExzMxZ0B/w=;
+        b=VMsnPbC9vXSuGwR9mYtDg3bacYdYvTIkVBT+MAO4z5v5AO/IDdSjAgqlxLn31cDg6L
+         wJTNNKAqVvzJf20Hg3NqDYI2miQBZEvRBTmrY3XE6FrRONmInzPIRP7+9LLdYVzsbyH2
+         /sZ0TK1Ji0I9HOPRhCgg2nxKFBAf94uo/e+1O5i6OK1Mrw+SEyuy/NdNWn/P2CV8qU8m
+         GpsV2+Rym2E+JBr6ecutxM5kFAN2u6sEz0mdKhrPN30FjR30LWnkAwHcnUF2kARx6xh4
+         x/MbrCtv0wNJzwFA7CTZwT7rtQYhSqtl6DwlilQBxLk4ARs+0Z/PJSLngbsblSDrKZb+
+         WzGQ==
+X-Forwarded-Encrypted: i=1; AFNElJ/DyuYCb/tR44DR+FU7n9SFMHzMIn/zLMxpy90ewM0pFtI5j8BQsEV9oaQjBmcCMN6GixWvLs/bCA==@lists.linux.dev
+X-Gm-Message-State: AOJu0Ywf5LWJZ5VM0CqvH5EqCL1qQiIR/J1mz4gfnpfiGrP/prjOwov+
+	n5szGs19nIDnV0zOqR2TAyqvhwIwBtod/veOHaskNj24vdc2j7nJExQ=
+X-Gm-Gg: Acq92OGFg9S8CPAZsL3ZkSsgaScG3rpcooK9O4Cw8C7boxriQop0J+uQE7UjRk4H6R5
+	8/vBegLRPfTYgODqAt+hCXJqfVkF8uae0qPfgiQbTwoW13JA/Xncbpri3gEUPWGAg03WbkWRlkt
+	ESN+/Ot2FolnDS8FLgniA+Blgj8YZpfHoX0y70zaJAd4HW9qvKIXOp9viqZgnN0ziFGg5pzZOXA
+	2BIIS6FlHo7XYVoMc0W6fmRqBiLHEA9Iwo57B4LcCT6Leh9Qh0xw6eYaiHcHBzePeWKI4oveSez
+	iDpmcltmrIBNkSzcUjJfi5wWTi6Y5qj6ZAooIYanKCAvHnDofoBngrAJtGd7pT+KK1a6Nw2QgkE
+	1ISawLELREwyEAMP/8uHrCvkfetBKG+hTBfsEc0VrnuffqaFlM7d5HcpIFfIj3LyxILHgf87xp5
+	2E0/frKuvMdyOqGJND+m2BNe+HNmW18TWKu/ox3TIUi8UlQ3uPVin3tQBhjKm7d56g7tSUM3Q=
+X-Received: by 2002:a05:600c:3e18:b0:485:c456:5e4f with SMTP id 5b1f17b1804b1-490a28d24admr8850055e9.0.1780088163713;
+        Fri, 29 May 2026 13:56:03 -0700 (PDT)
+Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4909cab0e79sm126968085e9.13.2026.05.29.13.56.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 29 May 2026 09:00:14 -0700 (PDT)
-From: Guangshuo Li <lgs201920130244@gmail.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
+        Fri, 29 May 2026 13:56:03 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Alexander Perlis <aperlis@math.lsu.edu>,
+	Nikkos Svoboda <nsvoboda@math.lsu.edu>,
+	Martin Wilck <mwilck@suse.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
-	Ming-Hung Tsai <mtsai@redhat.com>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Cc: Guangshuo Li <lgs201920130244@gmail.com>
-Subject: [PATCH] dm cache policy smq: check allocation under invalidate lock
-Date: Fri, 29 May 2026 23:57:45 +0800
-Message-ID: <20260529155745.1292113-1-lgs201920130244@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Christoph Hellwig <hch@lst.de>,
+	"James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
+	"Martin K. Petersen" <martin.petersen@oracle.com>,
+	SCSI-ML <linux-scsi@vger.kernel.org>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH] scsi: devinfo: broaden Promise VTrak E310/E610 identification
+Date: Fri, 29 May 2026 22:56:02 +0200
+Message-ID: <20260529205602.177515-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-commit 2d1f7b65f5de ("dm cache policy smq: fix missing locks in
-invalidating cache blocks") added mq->lock around the destructive part of
-smq_invalidate_mapping(), but left the e->allocated check outside the
-critical section.
+The Promise VTrak Ex10 series share the same hardware base and firmware.
+Consequently all interface variants, whether fibre channel ("f") or
+SAS ("s") in dual/single controller, exhibit the same SCSI behavior.
 
-That leaves a check-then-act race. Two concurrent invalidators can both
-observe e->allocated as true before either of them takes mq->lock. The
-first invalidator that acquires the lock removes the entry from the
-queues and hash table and then calls free_entry(), which clears
-e->allocated and puts the entry back on the free list. The second
-invalidator can then acquire mq->lock and continue with the stale result
-of the unlocked check.
+Instead of adding separate blacklist entries for every specific model
+variant (such as E610f, E610s, E310f, E310s), consolidate and
+broaden the match strings to "VTrak E310" and "VTrak E610".
 
-This can corrupt the SMQ queues or hash table by deleting an entry that
-is no longer on those structures. It can also hit the allocation check in
-free_entry() when the same entry is freed again.
-
-Move the allocation check under mq->lock so the predicate and the
-destructive operations are serialized by the same lock.
-
-Fixes: 2d1f7b65f5de ("dm cache policy smq: fix missing locks in invalidating cache blocks")
-Signed-off-by: Guangshuo Li <lgs201920130244@gmail.com>
+Cc: Alexander Perlis <aperlis@math.lsu.edu>
+Cc: Nikkos Svoboda <nsvoboda@math.lsu.edu>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: Christoph Hellwig <hch@lst.de>
+Cc: James E.J. Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Martin K. Petersen <martin.petersen@oracle.com>
+Cc: SCSI-ML <linux-scsi@vger.kernel.org>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- drivers/md/dm-cache-policy-smq.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
+BTW: Be careful with the dual-controller models. They advertise ALUA
+to the OS, but they have a non-standard implementation. This could
+also happen with other Promise VTrak/Vess models, whether legacy or newer.
 
-diff --git a/drivers/md/dm-cache-policy-smq.c b/drivers/md/dm-cache-policy-smq.c
-index dd77a93fd68d..1ae304c2f573 100644
---- a/drivers/md/dm-cache-policy-smq.c
-+++ b/drivers/md/dm-cache-policy-smq.c
-@@ -1590,18 +1590,22 @@ static int smq_invalidate_mapping(struct dm_cache_policy *p, dm_cblock_t cblock)
- 	struct smq_policy *mq = to_smq_policy(p);
- 	struct entry *e = get_entry(&mq->cache_alloc, from_cblock(cblock));
- 	unsigned long flags;
--
--	if (!e->allocated)
--		return -ENODATA;
-+	int r = 0;
- 
- 	spin_lock_irqsave(&mq->lock, flags);
-+	if (!e->allocated) {
-+		r = -ENODATA;
-+		goto out;
-+	}
- 	// FIXME: what if this block has pending background work?
- 	del_queue(mq, e);
- 	h_remove(&mq->table, e);
- 	free_entry(&mq->cache_alloc, e);
-+
-+out:
- 	spin_unlock_irqrestore(&mq->lock, flags);
- 
--	return 0;
-+	return r;
- }
- 
- static uint32_t smq_get_hint(struct dm_cache_policy *p, dm_cblock_t cblock)
+From its multipath-tools/libmultipath/prioritizers/alua_spc3.h:
+[...]
+#define AAS_OPTIMIZED                   0x0
+#define AAS_STANDBY                     0x2
+
+struct rtpg_tpg_dscr {
+        unsigned char   b0;             /* x....... = pref(ered) port        */
+                                        /* .xxx.... = reserved               */
+                                        /* ....xxxx = asymetric access state */
+[...]
+
+static inline int
+rtpg_tpg_dscr_get_aas(struct rtpg_tpg_dscr *d)
+{
+        return (d->b0 & 0x0f);
+}
+
+/* added for PROMISE VTRAK */
+static inline int
+rtpg_tpg_dscr_get_aas_for_promise(struct rtpg_tpg_dscr *d)
+{
+        return ((d->b0 & 0x80)? AAS_OPTIMIZED: AAS_STANDBY);
+}
+---
+ drivers/scsi/scsi_devinfo.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/scsi/scsi_devinfo.c b/drivers/scsi/scsi_devinfo.c
+index c6defe1c3152..15ffbe93ac72 100644
+--- a/drivers/scsi/scsi_devinfo.c
++++ b/drivers/scsi/scsi_devinfo.c
+@@ -218,8 +218,8 @@ static struct {
+ 	{"PIONEER", "CD-ROM DRM-602X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+ 	{"PIONEER", "CD-ROM DRM-604X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+ 	{"PIONEER", "CD-ROM DRM-624X", NULL, BLIST_FORCELUN | BLIST_SINGLELUN},
+-	{"Promise", "VTrak E310f", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
+-	{"Promise", "VTrak E610f", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
++	{"Promise", "VTrak E310", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
++	{"Promise", "VTrak E610", NULL, BLIST_SPARSELUN | BLIST_NO_RSOC},
+ 	{"Promise", "", NULL, BLIST_SPARSELUN},
+ 	{"QEMU", "QEMU CD-ROM", NULL, BLIST_SKIP_VPD_PAGES},
+ 	{"QNAP", "iSCSI Storage", NULL, BLIST_MAX_1024},
 -- 
-2.43.0
+2.54.0
 
