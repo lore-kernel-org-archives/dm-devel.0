@@ -1,125 +1,111 @@
-Received: from mail-wr1-f44.google.com (mail-wr1-f44.google.com [209.85.221.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.3])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67A7114A619
-	for <dm-devel@lists.linux.dev>; Sun, 31 May 2026 10:38:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5363023EAA0
+	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 05:49:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.3
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780223912; cv=none; b=J96VJaf33jDWliCJbpRAzoWjFubPeWMCc7aELNy7gbQVDNCqAXJtK6wyEEbozuk1aHae/TnklZ6D7jbxHP+3KtcmE57U1JW9qxuPUau2Enl0qC1LspxqYs29KSHJiB+TCCMRF2ikbmSJ07e48WwC0Lb+19RpUf0hoGBL7aytpTc=
+	t=1780292988; cv=none; b=nWPpGM+OwJh+GHCoa2if4V/WAu+s8LJayGH9G05Tb/2cf9Y8FkZFWAUJixitVg8PKfkrGxolzge/j+uDPteWlwa9QjSdPzve4Tj0NxXK7gM2Y853xj0KRb2xDMHdnXM2Fm0l22YxX6cu2WKl/SG6vHthanf07SR7BB+hQ4Nrv1A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780223912; c=relaxed/simple;
-	bh=3hRTfETnVN7gBxlc4sDR2rKxjYr9OCGJ4qnma0LQEks=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=dYhfcPQN2BQdfgpy//d/QX4fAmd3q+uj5ObuPlA9AhjrTMhc0yN2lUBNJlK9f8y1pCWK4nv0zPhIkJuDOHpOH50ysA259ejlkHeRVSaSE/4VBpbuGevjYTvvUVSO7gcnwBAeHvab2IxEPD/8Fqwtll6sXDtI+CHh8z06V1RPOXs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=R2MNK19m; arc=none smtp.client-ip=209.85.221.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1780292988; c=relaxed/simple;
+	bh=2K+iMnPOC7o4r+K53x7+nvA7veVuiBlc05XFEWdQm14=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=VexOYFCK9+WIg+Gf/MHMojz/+FiDbkPZxbYbs9d+VnFLhnZrVmloxPhfbIU3O9OGRfvOmRS4FsVfJFoip08PcuJsVEHCkNGIcAKCRg5PB3B0e1+3ZNfrWtNh6rYqaYypHZE5Udd6fWdJH58rFGaZUgfR22EEmjJGylrYpE4OEQg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com; spf=pass smtp.mailfrom=163.com; dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b=pOv53I6T; arc=none smtp.client-ip=220.197.31.3
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R2MNK19m"
-Received: by mail-wr1-f44.google.com with SMTP id ffacd0b85a97d-45ef5b33e73so149187f8f.1
-        for <dm-devel@lists.linux.dev>; Sun, 31 May 2026 03:38:31 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1780223910; x=1780828710; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=0qoZ0dylRmAwe3rfUr9ZXx+BDfL0uT2ldx0xre/MYsc=;
-        b=R2MNK19motkzupRfon31ZJGNE2lDnDt2VolyheogHXUgm76zHMYV0h7sg9jA13F6Kl
-         7zIKWVvlPojuaXIvo7xJXaO20+YcbKmIEGTzzYfWU7wFgjgkno9HyjIYN3ftXVTEuafN
-         hYbWEr2I8kVUdKYGpGswuaQE9M96YpsuDs7gcOuV9RAvmwAPqphkrY9rqMXQm/SXIKC8
-         UaGfgDG8p5xrAd9JpmVXzNfwQC9ImLakxrUnuQVQ/WH7864s7JykLVKPK6qH//oyD6s4
-         doZrs4oE2Om/odtEsFfycZUxcHW10KNqO2alv7j4DwDBOsw3Iu5lZOnLoZrCsY0PM7rA
-         erKw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780223910; x=1780828710;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=0qoZ0dylRmAwe3rfUr9ZXx+BDfL0uT2ldx0xre/MYsc=;
-        b=bYuKB4g9pLXEslfFddySFp0XkFFrS5IAxetDH46yj/SbYFCMZR507NSiRLwyNCerHM
-         Ju8YELmt+nrkGgDdejzMfCd7r++ENEUIxALBiwZAe94rMrw9/PIOVukMs/8wWo6aJKZm
-         TCv4roOVmA3ZMbe2lNh8loT+3Ei1Fi12NmN+vyOuj+sZFh967V6S/CD+xlauAyK1od99
-         /tTpmNII5S68C3vpcRSZ2b+9sDGTXjxdfZHTvQ6alv8h7Eyhz4SEPWyscPvbEcSoakRL
-         JYB30dvNYomMFNo3BDN+dBKZFkJtxR+ATnIRiittH19LLht9bYWZXmUdbnYkerDNF6Tq
-         9how==
-X-Forwarded-Encrypted: i=1; AFNElJ/dCGwVHXVzNUAuYVU6T1GyCRw901zF15vCb04mo/jua6VHiANI1zr49lOI47z4NS0XcNufOuQE7g==@lists.linux.dev
-X-Gm-Message-State: AOJu0Ywg46OdDNf8t3ti2Aaj6uYoy+erIr+45epUbdVbwYrpN94ba1aS
-	LLPfbx5aJToEvCOrP+I1AEjnc5kbCYqKUX23A5m+RP8lMDzpd7GDWvo=
-X-Gm-Gg: Acq92OFin+bxLdHFN1je+zjwHjKgUYrZ9p8g8uOf1jxDL0JgJGyg0jWMpCUUvCi5dt5
-	wGeiyiGHXb3ThOYgvRINnRvBFa+P646XDsekmdHY6HRTsbWKrIOIpdvNjNIFIbn97H84KPAEXBS
-	r9dN5ZrmVWIhNYwfaGj5edkUIgHXJFt8DI9h9vPgZI67oahQHWQcVkQcZydvPwZ9MNnXO71c/QS
-	r5p1BsyW3y3e5TlnhurkAqQc9re2po8KjCy8D1gTpUML2pZva+AOX+xaDHyXlZgndlk1tEYvSrL
-	v0+Lery5hFhF1ltOsRmM3XfKDGPCIeuFx/El5PKP5Wy1UCnjKv5GYHPbDO9+xh7w/kjo4qj3uhE
-	f6oOJomuFj1RN32BMaTesdScox0BOR3DotiG+8P9glj76MJY0uOsczUid+ymVZvqtLwM4yu09cB
-	h4WkQ1EIcMSoLgkDYM7FyeusgVxr0shstPNOxg0nGHVwJHvMPBQLlDsfKRR06xZMiDHCV4jL0=
-X-Received: by 2002:a5d:4a85:0:b0:45e:f45c:537a with SMTP id ffacd0b85a97d-45ef6bc15a8mr3622588f8f.5.1780223909623;
-        Sun, 31 May 2026 03:38:29 -0700 (PDT)
-Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-45ef34bd320sm16087934f8f.13.2026.05.31.03.38.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 31 May 2026 03:38:29 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH] multipath-tools: align ALUA state strings with kernel scsi_sysfs
-Date: Sun, 31 May 2026 12:38:27 +0200
-Message-ID: <20260531103828.23549-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.54.0
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b="pOv53I6T"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=3k
+	+8kse7HhPHe6w47ru9IC1GN9pZ2LBF8w6Wqpfd1js=; b=pOv53I6TYOkOVRJd0E
+	ZjwJVAunE9XCA0zqtbd7i8Ntdl3agGTEb32lmNYMxlHCcDcYYi6stltRWMl6b9kX
+	0BtQRberm+SAgpzBiB6DVc7me982E1VR8uNIYRYIvLd2KT/UBdnD16vh4Q+maF8k
+	/Erb2EryBhU3U3srI/xBJqPVs=
+Received: from localhost.localdomain (unknown [])
+	by gzga-smtp-mtada-g1-3 (Coremail) with SMTP id _____wAncVRWHR1qZxnMAg--.236S2;
+	Mon, 01 Jun 2026 13:49:14 +0800 (CST)
+From: ghuicao@163.com
+To: agk@redhat.com,
+	snitzer@kernel.org
+Cc: mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Cao Guanghui <caoguanghui@kylinos.cn>
+Subject: [PATCH] dm cache: make smq background work limit configurable
+Date: Mon,  1 Jun 2026 13:49:07 +0800
+Message-Id: <20260601054907.75261-1-ghuicao@163.com>
+X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_____wAncVRWHR1qZxnMAg--.236S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW7Ww4fZr45ZFy8CrWfAFy7Wrg_yoW8Kw4fpr
+	Z3Wry3CrZ5Zw42yw1xG3yrXFyFkayrJFWUJFy3Jw1xAw1Yyr1qgFy8tFyFgryDGry5Jry7
+	uayjvF95CF1jyr7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07jwVyxUUUUU=
+X-CM-SenderInfo: 5jkxxuldr6il2tof0z/xtbC-Bo-0WodHVrKKAAA3a
 
-Update ALUA asymmetric access state descriptions in the prioritizer to
-match the shorter names defined in the SCSI kernel subsystem:
+From: Cao Guanghui <caoguanghui@kylinos.cn>
 
-   $ grep  "{ SCSI_ACCESS_STATE_"  linux/drivers/scsi/scsi_sysfs.c 
-        { SCSI_ACCESS_STATE_OPTIMAL, "active/optimized" },
-        { SCSI_ACCESS_STATE_ACTIVE, "active/non-optimized" },
-        { SCSI_ACCESS_STATE_STANDBY, "standby" },
-        { SCSI_ACCESS_STATE_UNAVAILABLE, "unavailable" },
-        { SCSI_ACCESS_STATE_LBA, "lba-dependent" },
-        { SCSI_ACCESS_STATE_OFFLINE, "offline" },
-        { SCSI_ACCESS_STATE_TRANSITIONING, "transitioning" },
+The maximum number of concurrent background work items (promotions,
+demotions, writebacks) in the SMQ policy was hardcoded to 4096, with
+a FIXME comment noting it should be made configurable.
 
-This unifies diagnostic strings across the stack and replaces the misleading
-"ARRAY BUG: invalid TPGs state!" message with the standard SPC "reserved"
-designation. These codes are explicitly reserved for future standard
-definitions rather than being treated as malformed states.
+This value was originally tuned down from 10240 to balance memory
+overhead (~128 bytes per entry, ~512KB at 4096 entries) against I/O
+parallelism. However, different workloads and cache sizes may benefit
+from different limits:
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+- Write-heavy workloads may need more writeback concurrency
+- Very large caches (10+ TB) may need more promotion slots
+- Memory-constrained systems may want a lower limit
+
+Make this configurable via the module parameter "smq_max_background_work"
+(defaulting to 4096 to preserve existing behaviour). Clamp the value to
+at least 1 to prevent setting 0, which would block all background work.
+The parameter only affects newly created cache devices; existing caches
+retain their value from creation time.
+
+Signed-off-by: Cao Guanghui <caoguanghui@kylinos.cn>
 ---
- libmultipath/prioritizers/alua.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ drivers/md/dm-cache-policy-smq.c | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/libmultipath/prioritizers/alua.c b/libmultipath/prioritizers/alua.c
-index ec68f370..e9a0683e 100644
---- a/libmultipath/prioritizers/alua.c
-+++ b/libmultipath/prioritizers/alua.c
-@@ -31,10 +31,10 @@ static const char * aas_string[] = {
- 	[AAS_NON_OPTIMIZED]	= "active/non-optimized",
- 	[AAS_STANDBY]		= "standby",
- 	[AAS_UNAVAILABLE]	= "unavailable",
--	[AAS_LBA_DEPENDENT]	= "logical block dependent",
--	[AAS_RESERVED]		= "ARRAY BUG: invalid TPGs state!",
-+	[AAS_LBA_DEPENDENT]	= "lba-dependent",
-+	[AAS_RESERVED]		= "reserved",
- 	[AAS_OFFLINE]		= "offline",
--	[AAS_TRANSITIONING]	= "transitioning between states",
-+	[AAS_TRANSITIONING]	= "transitioning",
- };
+diff --git a/drivers/md/dm-cache-policy-smq.c b/drivers/md/dm-cache-policy-smq.c
+index dd77a93fd68d..646f7c8936ad 100644
+--- a/drivers/md/dm-cache-policy-smq.c
++++ b/drivers/md/dm-cache-policy-smq.c
+@@ -21,6 +21,16 @@
  
- static const char *aas_print_string(int rc)
+ /*----------------------------------------------------------------*/
+ 
++/*
++ * Maximum number of concurrent background work items (promotions,
++ * demotions, writebacks) that can be queued in the background tracker.
++ * Tuneable via the module parameter smq_max_background_work.
++ * Only affects newly created cache devices.
++ */
++static unsigned int smq_max_background_work = 4096;
++module_param(smq_max_background_work, uint, 0644);
++MODULE_PARM_DESC(smq_max_background_work, "Max concurrent background work items");
++
+ /*
+  * Safe division functions that return zero on divide by zero.
+  */
+@@ -1816,7 +1826,7 @@ __smq_create(dm_cblock_t cache_size, sector_t origin_size, sector_t cache_block_
+ 	mq->next_hotspot_period = jiffies;
+ 	mq->next_cache_period = jiffies;
+ 
+-	mq->bg_work = btracker_create(4096); /* FIXME: hard coded value */
++	mq->bg_work = btracker_create(max(1u, smq_max_background_work));
+ 	if (!mq->bg_work)
+ 		goto bad_btracker;
+ 
 -- 
-2.54.0
+2.25.1
 
