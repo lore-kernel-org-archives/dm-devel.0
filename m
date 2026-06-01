@@ -1,247 +1,97 @@
-Received: from pdx-out-015.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-015.esa.us-west-2.outbound.mail-perimeter.amazon.com [50.112.246.219])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F14D73403E8
-	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 08:57:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=50.112.246.219
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72DC55733E
+	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 15:43:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780304222; cv=none; b=NLdRWDmRdmN+/Fm5hSLc2Rf8+XX+JcqHOp7UVEQ+63qEaWYavaOVG5rNLEhk+feQciShGGurThis3+vqC98Uj6JjUQQqm9lQsDbYPiaZWES9v9RsDdSrZGz/SvrgH45ejbuRKIm4gOKljLYiFOZ8x2xgBDBQ5ZAP+DcviBNlylU=
+	t=1780328591; cv=none; b=hUAX46PGzY5fzCF7QhBspdwQ8fjo7hCh1+jPvR+6V/VKTOqEQNDLYSF8Y2UbkpaAi1K8eySKpkzHISqwkyFlbWa7jQY+Hu5Nam59Ux08tubuRCs+I1g86nU1ArnP28oxbcZvYO+naSbX+16Sv4DYrLv8ow7UG781n5BuizDwlhA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780304222; c=relaxed/simple;
-	bh=6jigbqFIVkHaSIPggd1rbggXPOMUnaRBGgM0QovpREc=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=hgPIEVdG8t++9IEzbr+4PVOVabQ8LCI9gWYxVcvZ1do1EeKeIS1XuWK14d2qU9mXJnI0VDNxTNzI1mfZ1gCfVAA5KM5+EmZQrc4UdVdHwGWAetMMiL7FeCyXXo9FRaamSTnaD4Na/yDabIxzRzELPwwZanXLMFPdf7rHe8Q4ldY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=auxKJZF0; arc=none smtp.client-ip=50.112.246.219
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
+	s=arc-20240116; t=1780328591; c=relaxed/simple;
+	bh=13Jg9FYUvoeEcozTZ5h93zGuxKqOfNMjjR93qrdCEJE=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=Ecz742iXQHa9xaTCMAOhXEma+Ins4P0BtzDl9CwabaXWiF+CscB7hTkLD4iksIEl4IRCflCIT4Q8GeENMeFfExMgVThCSsy1PGrWxDUTOELhzwhAyScakz4ad1ooeiaPkeWplOAamGT0NxtPCN9e0BULJaygJJkIxkUKA2ucsaQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eQj061CR; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="auxKJZF0"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1780304220; x=1811840220;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=4mWB/J/i2cCgXu1keGyZ9CrkSLaEjSqWOjWRM5v/zg4=;
-  b=auxKJZF0R9fUgverERZw6j0Mu8061rZ6PW8Innp+NYE1B1ih7IQ+Yb1m
-   D7/fEnvdddyd+GS6b1MsFCzZvU44NnZuJi0dEcR4A8tcgXvIs24yK4MGF
-   RU4EEEd+syqfmJhe1IATAtVZ2LQU/GYK8HZ//khmGgX4ZNNZB3eC0Bt16
-   WtIyrf/tfDqs8ZBh5c6KRPp7x2aYfztSrGa6rz9fYyyqyT6r8D9mpY8Vw
-   irrrfM4GL14V3iY1AVMMSCKd/sBHlul5a5tkPJMAqsdLNdvcW5yNnZCiX
-   mBdX3OYYnfVyGJaidLCvvXRntf8rPBBB2Iq8XHs/23NQof/jVqXUrn8Rv
-   w==;
-X-CSE-ConnectionGUID: 5B6r7oO8QaupzivRgYho6g==
-X-CSE-MsgGUID: HGuiVuAoTeOpF7kO2ul2BA==
-X-IronPort-AV: E=Sophos;i="6.24,180,1774310400"; 
-   d="scan'208";a="20642872"
-Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
-  by internal-pdx-out-015.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Jun 2026 08:56:56 +0000
-Received: from EX19MTAUWA001.ant.amazon.com [205.251.233.236:3283]
- by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.51.252:2525] with esmtp (Farcaster)
- id e2924209-61ef-4084-a008-83e7cc262083; Mon, 1 Jun 2026 08:56:56 +0000 (UTC)
-X-Farcaster-Flow-ID: e2924209-61ef-4084-a008-83e7cc262083
-Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
- EX19MTAUWA001.ant.amazon.com (10.250.64.217) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
- Mon, 1 Jun 2026 08:56:56 +0000
-Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
- by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
- Mon, 1 Jun 2026 08:56:54 +0000
-From: Leonid Ravich <lravich@amazon.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-CC: Alasdair Kergon <agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, "Eric
- Biggers" <ebiggers@kernel.org>, Jens Axboe <axboe@kernel.dk>, Horia Geanta
-	<horia.geanta@nxp.com>, Gilad Ben-Yossef <gilad@benyossef.com>,
-	<linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>,
-	<linux-block@vger.kernel.org>
-Subject: [PATCH v3 3/4] crypto: testmgr - exercise multi-data-unit path for skcipher
-Date: Mon, 1 Jun 2026 08:56:43 +0000
-Message-ID: <20260601085644.13026-4-lravich@amazon.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20260601085644.13026-1-lravich@amazon.com>
-References: <20260601085644.13026-1-lravich@amazon.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eQj061CR"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1780328589;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=dQGRsJVL0EmG7vVIcBytAKE7iIxGerWJhh1pmLomH+U=;
+	b=eQj061CRa/nVVKXTk7OobuSjtNEkNfoBXqY97wev29yQi5x4LI3N9xn/CeP3mTNsrb/pJP
+	b7iwhR1JEEDXgWN77R6zjbOTflH36QbINeZCXf1kvyf7dZXHrzmjFuKTRQZJKybk+bjZZB
+	17168PGSTb05dJc8tWiZ5B1YNKh43Eo=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-352-Yw827maROSexvsLWboLnaA-1; Mon,
+ 01 Jun 2026 11:43:06 -0400
+X-MC-Unique: Yw827maROSexvsLWboLnaA-1
+X-Mimecast-MFC-AGG-ID: Yw827maROSexvsLWboLnaA_1780328581
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D042819560A2;
+	Mon,  1 Jun 2026 15:43:00 +0000 (UTC)
+Received: from [10.44.49.105] (unknown [10.44.49.105])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EE7C91956095;
+	Mon,  1 Jun 2026 15:42:58 +0000 (UTC)
+Date: Mon, 1 Jun 2026 17:42:51 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Ming-Hung Tsai <mtsai@redhat.com>, 
+    Guangshuo Li <lgs201920130244@gmail.com>, dm-devel@lists.linux.dev
+Subject: [git pull] device mapper fixes 3 for 7.1
+Message-ID: <cc233087-609d-8bde-ea0b-51d654636ac4@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: EX19D033UWA004.ant.amazon.com (10.13.139.85) To
- EX19D001UWA001.ant.amazon.com (10.13.138.214)
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: mfO8N-dbBLZymzosAKjDoO0j2vr3levpgIEurhVLZN0_1780328581
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Add a self-comparison test that runs whenever an skcipher algorithm
-advertises CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT in cra_flags.  The test
-encrypts the same random plaintext two ways:
+Hi Linus
 
-  1. as one batched request with data_unit_size set, and
-  2. as N back-to-back single-data-unit requests with IVs derived from
-     the original IV by adding the data-unit index (treated as a
-     128-bit little-endian counter, matching the convention documented
-     in crypto_skcipher_set_data_unit_size()).
+The following changes since commit fb7415f2ab0e3c818254cbf5fb0afda71bef4333:
 
-Both encrypts must produce byte-identical ciphertext, otherwise the
-algorithm's multi-DU implementation is inconsistent with its single-DU
-behaviour.  Iterates over a fixed set of typical data unit sizes
-(512, 1024, 2048, 4096) which cover the dm-crypt sector-size range.
+  dm vdo: use GFP_NOIO for blkdev_issue_zeroout on format path (2026-05-04 15:02:25 +0200)
 
-The test is gated on ivsize == 16 (XTS, the only multi-DU consumer in
-the kernel today) and on the algorithm advertising the capability,
-so it costs nothing for the existing fleet of skcipher drivers.
+are available in the Git repository at:
 
-Signed-off-by: Leonid Ravich <lravich@amazon.com>
----
- crypto/testmgr.c | 129 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 129 insertions(+)
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.1/dm-fixes-3
 
-diff --git a/crypto/testmgr.c b/crypto/testmgr.c
-index 4d86efae65b2..8ca92ee6b37c 100644
---- a/crypto/testmgr.c
-+++ b/crypto/testmgr.c
-@@ -3211,6 +3211,123 @@ static int test_skcipher(int enc, const struct cipher_test_suite *suite,
- 	return 0;
- }
- 
-+/*
-+ * For algorithms that advertise CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT,
-+ * verify that one request batching N data units produces the same
-+ * ciphertext as N back-to-back single-data-unit requests with IVs
-+ * derived from the original IV by adding the data-unit index (treated
-+ * as a 128-bit little-endian counter).
-+ *
-+ * This is a self-comparison: it does not depend on test-vector
-+ * authoritativeness, only on the algorithm being internally consistent
-+ * between its single-DU and multi-DU paths.
-+ */
-+#define TEST_MDU_NR_UNITS	4
-+static int test_skcipher_multi_du(struct crypto_skcipher *tfm,
-+				  unsigned int du_size)
-+{
-+	const char *driver = crypto_skcipher_driver_name(tfm);
-+	const unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-+	const unsigned int total = du_size * TEST_MDU_NR_UNITS;
-+	struct skcipher_request *req = NULL;
-+	struct scatterlist sg_in, sg_out;
-+	DECLARE_CRYPTO_WAIT(wait);
-+	u8 iv_orig[16] = {0};
-+	u8 iv_work[16];
-+	u8 *plain = NULL, *batched = NULL, *unit = NULL;
-+	unsigned int i;
-+	int err;
-+
-+	if (ivsize != 16)
-+		return 0;
-+
-+	plain = kmalloc(total, GFP_KERNEL);
-+	batched = kmalloc(total, GFP_KERNEL);
-+	unit = kmalloc(total, GFP_KERNEL);
-+	req = skcipher_request_alloc(tfm, GFP_KERNEL);
-+	if (!plain || !batched || !unit || !req) {
-+		err = -ENOMEM;
-+		goto out;
-+	}
-+
-+	get_random_bytes(plain, total);
-+	get_random_bytes(iv_orig, ivsize);
-+
-+	/* Pass 1: one batched encrypt with data_unit_size set. */
-+	err = crypto_skcipher_set_data_unit_size(tfm, du_size);
-+	if (err) {
-+		pr_err("alg: skcipher: %s set_data_unit_size(%u) failed: %d\n",
-+		       driver, du_size, err);
-+		goto out;
-+	}
-+	memcpy(batched, plain, total);
-+	memcpy(iv_work, iv_orig, ivsize);
-+	sg_init_one(&sg_in, batched, total);
-+	sg_out = sg_in;
-+	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
-+				      CRYPTO_TFM_REQ_MAY_SLEEP,
-+				      crypto_req_done, &wait);
-+	skcipher_request_set_crypt(req, &sg_in, &sg_out, total, iv_work);
-+	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-+	if (err) {
-+		pr_err("alg: skcipher: %s multi-DU batched encrypt failed: %d\n",
-+		       driver, err);
-+		goto out_clear_du;
-+	}
-+
-+	/* Pass 2: TEST_MDU_NR_UNITS single-DU encrypts with derived IVs. */
-+	err = crypto_skcipher_set_data_unit_size(tfm, 0);
-+	if (err)
-+		goto out;
-+	memcpy(unit, plain, total);
-+	memcpy(iv_work, iv_orig, ivsize);
-+	for (i = 0; i < TEST_MDU_NR_UNITS; i++) {
-+		sg_init_one(&sg_in, unit + i * du_size, du_size);
-+		sg_out = sg_in;
-+		skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
-+					      CRYPTO_TFM_REQ_MAY_SLEEP,
-+					      crypto_req_done, &wait);
-+		skcipher_request_set_crypt(req, &sg_in, &sg_out, du_size,
-+					   iv_work);
-+		err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-+		if (err) {
-+			pr_err("alg: skcipher: %s single-DU[%u] encrypt failed: %d\n",
-+			       driver, i, err);
-+			goto out;
-+		}
-+		/* Increment iv_work as a 128-bit little-endian counter. */
-+		{
-+			__le64 lo_le, hi_le;
-+			u64 lo;
-+
-+			memcpy(&lo_le, iv_work, 8);
-+			memcpy(&hi_le, iv_work + 8, 8);
-+			lo = le64_to_cpu(lo_le) + 1;
-+			lo_le = cpu_to_le64(lo);
-+			memcpy(iv_work, &lo_le, 8);
-+			if (lo == 0) {
-+				hi_le = cpu_to_le64(le64_to_cpu(hi_le) + 1);
-+				memcpy(iv_work + 8, &hi_le, 8);
-+			}
-+		}
-+	}
-+
-+	if (memcmp(batched, unit, total) != 0) {
-+		pr_err("alg: skcipher: %s multi-DU mismatch (du=%u, n=%u)\n",
-+		       driver, du_size, TEST_MDU_NR_UNITS);
-+		err = -EINVAL;
-+	}
-+
-+out_clear_du:
-+	(void)crypto_skcipher_set_data_unit_size(tfm, 0);
-+out:
-+	skcipher_request_free(req);
-+	kfree(unit);
-+	kfree(batched);
-+	kfree(plain);
-+	return err;
-+}
-+
- static int alg_test_skcipher(const struct alg_test_desc *desc,
- 			     const char *driver, u32 type, u32 mask)
- {
-@@ -3259,6 +3376,18 @@ static int alg_test_skcipher(const struct alg_test_desc *desc,
- 	if (err)
- 		goto out;
- 
-+	if (crypto_skcipher_supports_multi_data_unit(tfm)) {
-+		static const unsigned int du_sizes[] = { 512, 1024, 2048, 4096 };
-+		unsigned int j;
-+
-+		for (j = 0; j < ARRAY_SIZE(du_sizes); j++) {
-+			err = test_skcipher_multi_du(tfm, du_sizes[j]);
-+			if (err)
-+				goto out;
-+			cond_resched();
-+		}
-+	}
-+
- 	err = test_skcipher_vs_generic_impl(desc->generic_driver, req, tsgls);
- out:
- 	free_cipher_test_sglists(tsgls);
--- 
-2.47.3
+for you to fetch changes up to d3f0a606b9f278ece8a0df626ded9c4044071235:
+
+  dm cache policy smq: check allocation under invalidate lock (2026-06-01 17:30:24 +0200)
+
+Please, pull. Thanks.
+
+Mikulas
+
+----------------------------------------------------------------
+- fix race condition in dm-cache-policy-smq
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCah2mPxQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbVGGAQDNaDwK2kE1az7Jpgu91U23R8fSxeBz
+SomeFHmqEHcEQAEAk2/3vG20zshIWFbz9Y1ZdZ9q9RKLrAh/83i3YVLbkQQ=
+=D0RT
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Guangshuo Li (1):
+      dm cache policy smq: check allocation under invalidate lock
+
+ drivers/md/dm-cache-policy-smq.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
