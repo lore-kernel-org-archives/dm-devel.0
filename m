@@ -1,115 +1,135 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8BBF289E13
-	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 16:15:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 96BDD2FDC27
+	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 16:45:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780330523; cv=none; b=t2hBZ3WnpQxklSyg9dnHr1MxFeOVeFIcooZN76ih4k+/Ebz2zvaGWXf9gNEV9u82QdBo+9VYNejMuDc2xkXY3vZKGpPq4gpsElqgRYTcpaUQQv/u5PKIwjqCX6jb8iHR3fC6+tNzxqIHjvlMuUw7b+Dn8DMCiwMb9cAcSx6EwPo=
+	t=1780332336; cv=none; b=UaWcagfHcN6SkFpgR+Kik/jHgC9UOAJ/zaeAVHymx1V0663GMFk1RkatttGL0eurxymZsCxoDsO8n71uhb82EZbeXchWxPlCiwp24bLUPIKZ/WHIVG4tnYSmENoEDceP+03nM8e0NY+x1BU3CTWkXiGRiIukV2KQtce2F1nQIrw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780330523; c=relaxed/simple;
-	bh=gGgts3vFhcvuNsY6Ezu3ekzCGMMCBZk5YhQuXrdHvKc=;
+	s=arc-20240116; t=1780332336; c=relaxed/simple;
+	bh=4CnM3P+mHGUVjCte0XIRllTHqumDU20ul47lPd3fVk8=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=JX6mjmAuNaE/LH8zZiUxYzupp/VwbaN4ulAbLmkLE7NVzb84dIFrKQygbjOqdk5P5mt2PAanFO0773QjK1anSoBqv/+uy0WgjwaJ90/efFbwMBwwZg3ChBGueYtlR008rifqkTEjEoUx1MfYY03iClUFNArIPwv4mCdtFVGJCY0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QcCnoBNr; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=KqbeWi+pMBcic+6pJgtLp+uh6kkbDvMVapUihZGguCiLrzF8paWuQOIb0jPx+yMW0OOdDAIBheQmRrOyQpQ2MM9z7fldm2mphcZzJ+pwrWK8W7/d1+DvbSF39fG5Ncc6cIb1XBuowGn3SewrAy08u/hgMh57c0zDP3JAHCShGUQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HxxdR0cl; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QcCnoBNr"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HxxdR0cl"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780330521;
+	s=mimecast20190719; t=1780332334;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=TTT+gEI5KEOq43SEOKUvHTrUsZAXYCqPmLn6rmfCg7c=;
-	b=QcCnoBNrQJRU+Shdzvefiux4trSiZ1FPkjMB7CUoRH7aJneimkzVzOP145vBzIvrCmer3h
-	dUtsG3kI21q7V+N7U7SWoytAHZQRjnAymPhU2Ds4EnU2gNWKfdGoN2bQ2AGDm0IGz5TuWo
-	Ta54D8THTBwEeTb/oUrg+kJ366TBowk=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=g2wdrc6i9LTQqqSQ331yUvDWqECANJoj8A5suUsO0V0=;
+	b=HxxdR0clnVlnTRG3rfGpbH3q8IkFlItduPnAWyIgjMw8C88vmkh2V3ILSg+ehYsbgno6hX
+	/B3c4G8FKw8eilVrvRTkEK+awl2fwOZUW4oSwjujPs8EGuVZh2hvcCsLzWQKHn4LEtfdK+
+	v56GH6UPKIKLkio/gAZBIgf5SM/B7lU=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-596-CD5e8A7LMVOcOyd1kCx4yA-1; Mon,
- 01 Jun 2026 12:15:16 -0400
-X-MC-Unique: CD5e8A7LMVOcOyd1kCx4yA-1
-X-Mimecast-MFC-AGG-ID: CD5e8A7LMVOcOyd1kCx4yA_1780330515
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-526-Il7x4OeTPBumbYWOrsOLWw-1; Mon,
+ 01 Jun 2026 12:45:31 -0400
+X-MC-Unique: Il7x4OeTPBumbYWOrsOLWw-1
+X-Mimecast-MFC-AGG-ID: Il7x4OeTPBumbYWOrsOLWw_1780332330
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5228018002DC;
-	Mon,  1 Jun 2026 16:15:14 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E115E1956080;
+	Mon,  1 Jun 2026 16:45:29 +0000 (UTC)
 Received: from [10.44.49.105] (unknown [10.44.49.105])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3642C18004A3;
-	Mon,  1 Jun 2026 16:15:11 +0000 (UTC)
-Date: Mon, 1 Jun 2026 18:15:08 +0200 (CEST)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C234F1800352;
+	Mon,  1 Jun 2026 16:45:27 +0000 (UTC)
+Date: Mon, 1 Jun 2026 18:45:21 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Leonid Ravich <lravich@amazon.com>
-cc: Herbert Xu <herbert@gondor.apana.org.au>, Alasdair Kergon <agk@redhat.com>, 
-    Ard Biesheuvel <ardb@kernel.org>, Eric Biggers <ebiggers@kernel.org>, 
-    Jens Axboe <axboe@kernel.dk>, Horia Geanta <horia.geanta@nxp.com>, 
-    Gilad Ben-Yossef <gilad@benyossef.com>, linux-crypto@vger.kernel.org, 
-    dm-devel@lists.linux.dev, linux-block@vger.kernel.org
-Subject: Re: [PATCH v3 4/4] dm crypt: batch all sectors of a bio per crypto
- request
-In-Reply-To: <20260601085644.13026-5-lravich@amazon.com>
-Message-ID: <d3bb0caa-cd29-a68e-0676-0b9418751865@redhat.com>
-References: <20260601085644.13026-1-lravich@amazon.com> <20260601085644.13026-5-lravich@amazon.com>
+To: Fengnan <changfengnan@bytedance.com>
+cc: axboe@kernel.dk, asml.silence@gmail.com, io-uring@vger.kernel.org, 
+    agk@redhat.com, snitzer@kernel.org, bmarzins@redhat.com, 
+    dm-devel@lists.linux.dev
+Subject: Re: [PATCH RESEND] dm: limit target bio polling to one shot
+In-Reply-To: <c37f0749-1ae9-48ca-b402-38a552767b12@bytedance.com>
+Message-ID: <eec40ac4-3d39-8d8f-b32f-9f2eaa826531@redhat.com>
+References: <20260513091349.2194-1-changfengnan@bytedance.com> <c37f0749-1ae9-48ca-b402-38a552767b12@bytedance.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: 8JiM0sI7iXqpZcC2eXV5o4-sO--xjGTMtYhkG8veg6Y_1780330515
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-MFC-PROC-ID: ecEK9ZXAiiPG_lu9nyZ_H_JFeateKkIZuonX5Xix-iY_1780332330
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed; boundary="-1463811712-651475170-1780332329=:1690835"
+
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-651475170-1780332329=:1690835
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
 
 
-On Mon, 1 Jun 2026, Leonid Ravich wrote:
+On Thu, 28 May 2026, Fengnan wrote:
 
-> When the underlying skcipher driver advertises support for multiple
-> data units in a single request (CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT),
-> configure the cipher with cc->sector_size as data_unit_size and
-> submit one request per bio instead of one request per sector.  This
-> removes per-sector overhead in the crypto API hot path: request
-> allocation, callback dispatch, completion handling, and SG setup.
-> 
-> The optimisation is enabled automatically at table load when all
-> of the following hold:
-> 
->  - the cipher is non-aead (i.e. skcipher);
->  - tfms_count is 1 (interleaved per-sector keys would break batching);
->  - the IV mode is plain or plain64 (the only modes whose generator
->    produces a sequential 64-bit little-endian counter that the cipher
->    can extend by adding the data-unit index, matching the convention
->    documented in crypto_skcipher_set_data_unit_size());
->  - the iv_gen_ops->post() hook is unset (lmk and tcw use it; both are
->    already excluded by the IV-mode test, but the explicit check makes
->    the assumption durable against future IV modes);
->  - dm-integrity is not stacked (no integrity tag or integrity IV);
->  - the cipher driver advertises multi-data-unit support.
-> 
-> A new CRYPT_MULTI_DATA_UNIT cipher_flag, set once at construction
-> time, gates the multi-data-unit path.  The existing per-sector path
-> in crypt_convert_block_skcipher() is unchanged; the new
-> crypt_convert_block_skcipher_multi() is reached from a small dispatch
-> in crypt_convert() and shares the same backlog/-EBUSY/-EINPROGRESS
-> flow control with the per-sector path.
-> 
-> Heap-allocated scatterlists are stashed in dm_crypt_request and freed
-> in crypt_free_req_skcipher() to avoid races between the synchronous-
-> success free path and async-completion reuse from the request pool.
-> On -ENOMEM during scatterlist allocation, the bio is requeued via
-> BLK_STS_DEV_RESOURCE rather than failed, matching the behaviour of
-> the existing -ENOMEM path for crypto request allocation.
-> 
-> Verified end-to-end with a byte-equivalence test: encrypted output of
-> plain64 dm-crypt with the multi-data-unit path matches output of the
-> single-data-unit path bit-for-bit over a 256 MB device.
-> 
-> Signed-off-by: Leonid Ravich <lravich@amazon.com>
+> ping..
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
+Hi
+
+I already staged this patch in the linux-dm repository.
+
+Mikulas
+
+> 在 2026/5/13 17:13, Fengnan Chang 写道:
+> > dm_poll_bio() is the ->poll_bio() callback for a stacked dm device.
+> > The caller only knows about the dm queue, so it may decide to do a
+> > spinning poll if it thinks a single queue is being polled. Passing those
+> > flags unchanged to the mapped clone lets blk_mq_poll() spin on a target
+> > queue from inside dm_poll_bio().
+> >
+> > With io_uring IOPOLL on a dm-stripe target this can keep a task in
+> >
+> >    dm_poll_bio() -> bio_poll() -> blk_mq_poll()
+> >
+> > long enough to trigger an RCU CPU stall, before io_uring gets back to
+> > io_iopoll_check() and its need_resched() check.
+> >
+> > Keep dm's ->poll_bio() bounded by forcing one-shot polling for target
+> > bios. The caller can invoke dm_poll_bio() again if it wants to keep
+> > polling, and it also gets a chance to reap completions or reschedule
+> > between passes.
+> >
+> > Fixes: f22ecf9c14c1 ("blk-mq: delete task running check in blk_hctx_poll()")
+> > Signed-off-by: Fengnan Chang <changfengnan@bytedance.com>
+> > ---
+> >   drivers/md/dm.c | 13 +++++++++++--
+> >   1 file changed, 11 insertions(+), 2 deletions(-)
+> >
+> > diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+> > index e178fe19973ea..8f44fbbcf3da2 100644
+> > --- a/drivers/md/dm.c
+> > +++ b/drivers/md/dm.c
+> > @@ -2098,8 +2098,17 @@ static bool dm_poll_dm_io(struct dm_io *io, struct io_comp_batch *iob,
+> >   	WARN_ON_ONCE(!dm_tio_is_normal(&io->tio));
+> >   
+> >   	/* don't poll if the mapped io is done */
+> > -	if (atomic_read(&io->io_count) > 1)
+> > -		bio_poll(&io->tio.clone, iob, flags);
+> > +	if (atomic_read(&io->io_count) > 1) {
+> > +		/*
+> > +		 * DM hides the target queues from the upper poller, which may
+> > +		 * decide it is safe to spin on a single stacked queue.  Do not
+> > +		 * pass that spinning policy down to a target queue: one slow
+> > +		 * clone could keep the task inside dm_poll_bio() for a long
+> > +		 * time.  Poll target bios once and let the caller decide
+> > +		 * whether to keep polling, reap completions or reschedule.
+> > +		 */
+> > +		bio_poll(&io->tio.clone, iob, flags | BLK_POLL_ONESHOT);
+> > +	}
+> >   
+> >   	/* bio_poll holds the last reference */
+> >   	return atomic_read(&io->io_count) == 1;
+> 
+
+---1463811712-651475170-1780332329=:1690835--
 
