@@ -1,173 +1,225 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from pdx-out-001.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-001.esa.us-west-2.outbound.mail-perimeter.amazon.com [44.245.243.92])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C2143803FD
-	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 06:58:46 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 32AB4344D9B
+	for <dm-devel@lists.linux.dev>; Mon,  1 Jun 2026 08:56:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=44.245.243.92
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780297127; cv=none; b=XQhbg9JGBZIZ0Sx+6MSRa0W+gXqUpWl0y7Tw5/higH7Sqg/2CjWQAYXngVE4aJEqtlk9uuItGH9MudjEkIu1VwNCLvQjtVVn1QKnog9a8zh6aZRdpq+uVxaiWkPtHEnbjR0uHXzprD7Jy2D3RWz7nlSwgFfjbC5ZK/N/48EKZuE=
+	t=1780304215; cv=none; b=OWOluZ2mxdspOBSbkKNU658ETaFtWCSIR+NooJkHd4GcFO4v2MKt9x5CWvGOeVSohA3wL4kYd//5NkihzOJJo8QcEh+QSarHE8HgkW+PIhi7ms87gXc4Sk3o190O9w/NNKVee2ddcGH/SQvJx3fKF28gANCJTjxprct0kGKvZqY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780297127; c=relaxed/simple;
-	bh=MfLO14pT/R2LYR4K9rtIqKa9FLhhHOL6H9qEn06qdJI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=DTIVC3HTNC3LuyOCl3fGCB0fjjQGiwlQlZAQYagJ0U9qZx/Z+QT4jd0ZoQ5y9VM2lA+QvJh7wiaIqrj+nmMZsjc663KTWMYFiwTwb19WNB5to3hTN2VbcpHrPqNhLUdaty8q8Qfwr0RhREjcYAoa9EaCGVVKFKbrWpT0rWQYD94=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=XPBySl14; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=hJncENM4; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=XPBySl14; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=hJncENM4; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	s=arc-20240116; t=1780304215; c=relaxed/simple;
+	bh=qAZ4FgCDdoGgok26w2HQG3LR0EHPJ2K5/hlohTE+/9I=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=XMuobNdX6la3q1OmDwZt1slsxbZLExqD61K+vHNQL13BzlBmAuE+HazK9UEA++brc+sFaTv57FvujxxvRkGHFN1xuH+jYIH+AlFQdpdwwZNM2lA6hiEvRPizYcSgIyoMFMg0Px3CMl9Pv1HoBTXIyxnDFmJsKwqQuGdGfc5udxQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=BQ2A+hHV; arc=none smtp.client-ip=44.245.243.92
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="XPBySl14";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="hJncENM4";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="XPBySl14";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="hJncENM4"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 7CD926A9F1;
-	Mon,  1 Jun 2026 06:58:44 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1780297124; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lWhZD/1JEdMNcYdh18yF6rHIF+RkikiBViCDfc4s0z4=;
-	b=XPBySl143kgF4c9H4RyHJjRTWSv3gMXCNqWIjyc40Vuvp++4YGItMXU4e2m7ZXLFku80x9
-	yKp3Fz7qgPD3ndzYPBYvgvGekv6QbtJcD7fBdbYu2KTQbJ/o43mysMDAYJ6BKUA3lzs9Zk
-	F3be+9p3rn4IfiLiAyUDoH5sFoCOWqs=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1780297124;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lWhZD/1JEdMNcYdh18yF6rHIF+RkikiBViCDfc4s0z4=;
-	b=hJncENM4jJKWGj3P183VCGXeKULh3JHBZqwz/sq/jRVJLayLdY1M7d5Ory6ZeDrxHsUnij
-	lTUydlkdgrGMKTDQ==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1780297124; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lWhZD/1JEdMNcYdh18yF6rHIF+RkikiBViCDfc4s0z4=;
-	b=XPBySl143kgF4c9H4RyHJjRTWSv3gMXCNqWIjyc40Vuvp++4YGItMXU4e2m7ZXLFku80x9
-	yKp3Fz7qgPD3ndzYPBYvgvGekv6QbtJcD7fBdbYu2KTQbJ/o43mysMDAYJ6BKUA3lzs9Zk
-	F3be+9p3rn4IfiLiAyUDoH5sFoCOWqs=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1780297124;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lWhZD/1JEdMNcYdh18yF6rHIF+RkikiBViCDfc4s0z4=;
-	b=hJncENM4jJKWGj3P183VCGXeKULh3JHBZqwz/sq/jRVJLayLdY1M7d5Ory6ZeDrxHsUnij
-	lTUydlkdgrGMKTDQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 61D7E779A7;
-	Mon,  1 Jun 2026 06:58:44 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id /vpIFqQtHWpbNwAAD6G6ig
-	(envelope-from <hare@suse.de>); Mon, 01 Jun 2026 06:58:44 +0000
-Message-ID: <7e2150f2-caf9-47a5-aee9-e7f4bd7f70df@suse.de>
-Date: Mon, 1 Jun 2026 08:58:43 +0200
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="BQ2A+hHV"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1780304214; x=1811840214;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=Ymtn60IMDtZyz70m2rrmpV8+GhXXyb9X4BQIXzuwKdo=;
+  b=BQ2A+hHVgeftSp09JQJYH8tUk2bFQrRHCRgghIcr5jV7cwUgtvgwvwK+
+   aHnvJ7ZeFcDPILemTiypp+0YaiEgMbHWgLeS5s3RQQvYkwwAKVl8DcmGa
+   BRdw0fnHkSogXsdY3dwaTnK+yaJiK5H8n09ft76NHe+SMwsj+eRNrn/RB
+   f30Ec48Kgqm/nRiYbARS05G2kXi67ZV3tVOLJjVVwGnY9mNAw7Gyw1zk/
+   0tP8JYVRQpypNs75yMbD7Y39AvyuJMCd31iLX3gnVFP3I/cBnXeD2QaTi
+   PKoYYUWHO/bNu1V3i59BLIitchRPiVR6N5WSYiKpwa/HWmsftekhYVJfF
+   w==;
+X-CSE-ConnectionGUID: kPkfHEvcQcy5lJL8BzXZhA==
+X-CSE-MsgGUID: RgogAhS5SySxK/uXW20BPg==
+X-IronPort-AV: E=Sophos;i="6.24,180,1774310400"; 
+   d="scan'208";a="20338963"
+Received: from ip-10-5-0-115.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.0.115])
+  by internal-pdx-out-001.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Jun 2026 08:56:51 +0000
+Received: from EX19MTAUWA002.ant.amazon.com [205.251.233.234:17165]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.6.91:2525] with esmtp (Farcaster)
+ id 50f9dd4c-1df3-4494-874c-6a577002553d; Mon, 1 Jun 2026 08:56:51 +0000 (UTC)
+X-Farcaster-Flow-ID: 50f9dd4c-1df3-4494-874c-6a577002553d
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWA002.ant.amazon.com (10.250.64.202) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
+ Mon, 1 Jun 2026 08:56:50 +0000
+Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.37;
+ Mon, 1 Jun 2026 08:56:48 +0000
+From: Leonid Ravich <lravich@amazon.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+CC: Alasdair Kergon <agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, "Eric
+ Biggers" <ebiggers@kernel.org>, Jens Axboe <axboe@kernel.dk>, Horia Geanta
+	<horia.geanta@nxp.com>, Gilad Ben-Yossef <gilad@benyossef.com>,
+	<linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+	<linux-block@vger.kernel.org>
+Subject: [PATCH v3 0/4] crypto: skcipher - per-tfm multi-data-unit batching
+Date: Mon, 1 Jun 2026 08:56:40 +0000
+Message-ID: <20260601085644.13026-1-lravich@amazon.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [bug report] dm zoned: allocate temporary superblock for tertiary
- devices
-To: Dan Carpenter <error27@gmail.com>
-Cc: dm-devel@lists.linux.dev
-References: <ahrruAVoUpDmh6Cf@stanley.mountain>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <ahrruAVoUpDmh6Cf@stanley.mountain>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 8bit
-X-Spam-Flag: NO
-X-Spam-Score: -4.30
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.30 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-0.994];
-	MIME_GOOD(-0.10)[text/plain];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCPT_COUNT_TWO(0.00)[2];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:email,suse.de:mid]
+X-ClientProxiedBy: EX19D033UWA004.ant.amazon.com (10.13.139.85) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-On 5/30/26 15:52, Dan Carpenter wrote:
-> Hello Hannes Reinecke,
-> 
-> Commit 5d2c74f3ddc0 ("dm zoned: allocate temporary superblock for
-> tertiary devices") from Jun 2, 2020 (linux-next), leads to the
-> following Smatch static checker warning:
-> 
-> 	drivers/md/dm-zoned-metadata.c:1332 dmz_load_sb()
-> 	error: double free of 'sb->mblk' (line 1336)
-> 
-> drivers/md/dm-zoned-metadata.c
->      1310         if (zmd->sb_version > 1) {
->      1311                 int i;
->      1312                 struct dmz_sb *sb;
->      1313
->      1314                 sb = kzalloc_obj(struct dmz_sb);
->      1315                 if (!sb)
->      1316                         return -ENOMEM;
->      1317                 for (i = 1; i < zmd->nr_devs; i++) {
->      1318                         sb->block = 0;
->      1319                         sb->zone = dmz_get(zmd, zmd->dev[i].zone_offset);
->      1320                         sb->dev = &zmd->dev[i];
->      1321                         if (!dmz_is_meta(sb->zone)) {
->      1322                                 dmz_dev_err(sb->dev,
->      1323                                             "Tertiary super block zone %u not marked as metadata zone",
->      1324                                             sb->zone->id);
->      1325                                 ret = -EINVAL;
->      1326                                 goto out_kfree;
->      1327                         }
->      1328                         ret = dmz_get_sb(zmd, sb, i + 1);
-> 
-> This sets sb->mblk on the success path, but if the
-> dmz_get_sb() allocation fails then sb->mblk is left as-is.
-> 
->      1329                         if (ret) {
->      1330                                 dmz_dev_err(sb->dev,
->      1331                                             "Read tertiary super block failed");
-> --> 1332                                 dmz_free_mblock(zmd, sb->mblk);
->                                                                ^^^^^^^^
-> On the second iteration throug the loop then this is a double free.
-> I think this dmz_free_mblock() should just be deleted.  If
-> dmz_get_sb() fails then there shouldn't be anything to free
-> here.
-> 
-Correct. Thanks for pointing this out.
+This is v3 of the multi-data-unit skcipher request series, addressing
+review feedback from Mikulas Patocka on v2.
 
-Cheers,
+v2: https://lore.kernel.org/linux-crypto/20260527065021.19525-1-lravich@amazon.com/
+v1: https://lore.kernel.org/linux-crypto/20260519115955.27267-1-lravich@amazon.com/
 
-Hannes
+The series adds a per-tfm "data unit size" to the skcipher API so a
+caller can submit several data units in one crypto request, mirroring
+the data_unit_size concept already exposed by struct blk_crypto_config
+for inline encryption hardware.  The first user is dm-crypt, which
+today issues one skcipher request per sector and so pays a per-sector
+cost in request allocation, callback dispatch, completion handling,
+and scatterlist setup.
+
+Proof-of-concept performance numbers from the RFC reply [1]: +19%
+throughput / -40% CPU on a single-core arm64 system with a hardware
+XTS-AES-256 accelerator running fio 4 KiB sequential writes through
+dm-crypt, when an out-of-tree arm64 xts driver advertises the new
+flag.  This series itself does not include arch enablement.
+
+[1] https://lore.kernel.org/linux-crypto/20260428101225.24316-1-lravich@amazon.com/
+
+Changes since v2
+----------------
+
+Patch 4 (dm-crypt) only.  Patches 1-3 are unchanged from v2.
+
+  - Replace integer division with the equivalent shift, and tighten
+    the size sanity check from "is total < sector_size?" to "is
+    total a multiple of sector_size?".  Reject unaligned residues
+    explicitly instead of silently truncating them.  The local
+    n_sectors variable used only for a now-redundant !=0 check was
+    dropped — crypt_convert()'s outer while-loop already guarantees
+    iter_in.bi_size > 0 on entry.  (Mikulas)
+
+  - Drop `min(iter_in.bi_size, iter_out.bi_size)` in favour of using
+    iter_in.bi_size directly, with a WARN_ON_ONCE() to flag any
+    future violation of the "iter_in and iter_out describe equally-
+    sized payloads" invariant maintained by crypt_convert_init().
+    Replaces a silent mask of a real bug with an explicit warning.
+    (Mikulas)
+
+Changes since v1
+----------------
+
+Patch 4 only.  Addressed Mikulas's review of v1:
+
+  - Multi-DU scatterlist allocation uses
+    GFP_NOIO | __GFP_NORETRY | __GFP_NOWARN.
+
+  - On scatterlist allocation failure, return -EAGAIN.
+    crypt_convert() handles -EAGAIN by clearing its local multi_du
+    flag and re-entering the per-sector path for the rest of this
+    crypt_convert() invocation.  The per-tfm data_unit_size on the
+    cipher remains set, so subsequent bios (which start a fresh
+    crypt_convert() and re-read cipher_flags) get to try multi-DU
+    again once memory pressure eases.
+
+    This gives forward progress under total memory exhaustion: the
+    per-sector path uses only cc->req_pool (a mempool with reservoir
+    set up at table-load time) and the inline
+    dmreq->sg_in[]/sg_out[] arrays, never doing any allocation that
+    could fail.
+
+  - Walk the bio with __bio_for_each_bvec instead of
+    __bio_for_each_segment for folio-friendly SG construction.
+
+Design overview (unchanged from v1)
+-----------------------------------
+
+* Patch 1 adds an `unsigned int data_unit_size` field to
+  `struct crypto_skcipher` (per-tfm: invariant for the consumer's
+  lifetime, set once via `crypto_skcipher_set_data_unit_size()`),
+  plus a capability flag CRYPTO_ALG_SKCIPHER_MULTI_DATA_UNIT in
+  `cra_flags` (type-specific high-byte range, mirroring the
+  CRYPTO_AHASH_ALG_BLOCK_ONLY precedent).  `crypto_skcipher_encrypt()`
+  and `crypto_skcipher_decrypt()` validate that `cryptlen` is a
+  positive multiple of `data_unit_size`.  The setter rejects
+  sub-blocksize values; algorithm registration rejects the flag for
+  algorithms with `ivsize != 16`.
+
+  Also exposes `skcipher_walk_data_units()` in
+  <crypto/internal/skcipher.h> as a default per-DU dispatcher for
+  drivers that don't want to roll their own.
+
+* Patch 2 lets the generic `xts(...)` template advertise the flag
+  when the inner cipher is synchronous.
+
+* Patch 3 extends `testmgr` with a self-comparison test that fires
+  automatically for every alg advertising the flag.
+
+* Patch 4 turns dm-crypt on automatically when all of the
+  following hold at table load: skcipher (not aead), tfms_count
+  == 1, IV mode is plain or plain64, no per-sector
+  iv_gen_ops->post() hook, no dm-integrity stacking, and the
+  underlying cipher advertises the capability.
+
+This series intentionally does NOT add the capability flag to any
+arch crypto driver.  Arch maintainers can opt in independently in
+follow-up patches.
+
+Verification
+------------
+
+A formal regression protocol is included in the project tree
+(.claude/regression-protocol.md, .claude/run-regression.sh).  The
+v3 reference run reports 12/12 cases PASS:
+
+  - x86 + arm64 build clean (with and without out-of-tree arch
+    enablement).
+  - checkpatch.pl --strict: clean on all 4 patches.
+  - testmgr self-comparison: PASS for any algorithm advertising the
+    flag (verified end-to-end against an out-of-tree arm64/x86 xts
+    driver during regression).
+  - dm-crypt activation gating: plain/plain64 enabled,
+    essiv:sha256 / plain64be fall back.
+  - dm-crypt round-trip plain64: PASS with multi-DU active.
+  - dm-crypt round-trip essiv:sha256 (per-sector path on multi-DU
+    kernel): PASS.
+  - dm-crypt low-memory (mem=128M): PASS, no OOM kill.
+  - Byte-equivalence: 256 MB of ciphertext written through the
+    multi-DU path is bit-identical to ciphertext written through
+    the per-sector path on an unpatched axboe/for-next baseline
+    (sha256
+    4913910b1aa6f8859fcb8f4adec20230274993a3ade8f4dd0140a323dc43efc0).
+    The on-disk format is unchanged.
+  - arm64 functional (activation + round-trip) under qemu-aarch64:
+    PASS.
+
+The OOM-fallback path (multi-DU helper returns -EAGAIN, caller
+reverts to per-sector) is verified by inspection: the fallback is
+two lines in crypt_convert(), the per-sector path uses only the
+existing mempool reserve and the inline dmreq SG arrays (no
+allocation that could fail), and there is no shared state between
+the two paths that could deadlock.
+
+Leonid Ravich (4):
+  crypto: skcipher - add per-tfm data_unit_size for batched requests
+  crypto: xts - support multiple data units per request in template
+  crypto: testmgr - exercise multi-data-unit path for skcipher
+  dm crypt: batch all sectors of a bio per crypto request
+
+ crypto/skcipher.c                  | 120 ++++++++++++
+ crypto/testmgr.c                   | 129 +++++++++++++
+ crypto/xts.c                       |  25 ++-
+ drivers/md/dm-crypt.c              | 281 ++++++++++++++++++++++++++++-
+ include/crypto/internal/skcipher.h |  34 ++++
+ include/crypto/skcipher.h          |  85 +++++++++
+ 6 files changed, 665 insertions(+), 9 deletions(-)
+
+
+base-commit: a8cafdf8c949f17c92eca0045532e88ac0dac30d
 -- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+2.47.3
+
