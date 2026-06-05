@@ -1,116 +1,129 @@
-Received: from mail-qk1-f180.google.com (mail-qk1-f180.google.com [209.85.222.180])
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7EBD237E310
-	for <dm-devel@lists.linux.dev>; Wed,  3 Jun 2026 17:51:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D164830E0EC
+	for <dm-devel@lists.linux.dev>; Fri,  5 Jun 2026 11:15:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780509117; cv=none; b=lruzlICbFMH78tW6bMi7cItp2g+RfvPV9EMhwdY7E2bBZa8EwVyPYa9bb6C1U3T1gw38lqznClPeWawHol8Q/5SWESahO7n1OV7W4Yi3liFE5NOuaew7G9pi2bpysaoyHwoyCeP/xK32B4CAjIrriLijhUyWOBBW9QZoQfLbXQU=
+	t=1780658160; cv=none; b=Ln0AkcRMkDQxfdkrVoUpTZmVX8dWuXSWjsDVnO0pQbF7UGD58wT457sBbKmO72MURIfSZJQW3yYBBzYhxmut1/6zQU2yQstNaHLLj9K3ByPnHXz5gPQtpb5UIAOSRvpU3NMhfK8lakLtXMvfGN/3NE0IuN0nJT1cr4yjVPQs45M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780509117; c=relaxed/simple;
-	bh=H+YRN50ti4Grpn8ET1M09SLuCSzIJzfWGWGfUWMrwok=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=uJLnin7Tg7nTWy0c2UPMNQC3FzTEZ9Td3Bda4AhmIw1olidewlfo4EYCRsV1anxL5GCkuJyO/ssrrC5NcyMUVTEEq67EB5uyBARPKJ/QtQShP+KmH9eTGQS9099Un+PQVJP0Nh0bMbKZnW7oTQm6JY4qyfXDzOPnM+ig0NHspA4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=WuP+0E6w; arc=none smtp.client-ip=209.85.222.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
+	s=arc-20240116; t=1780658160; c=relaxed/simple;
+	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=KuJQ1MBleRCNz516LxwKslqapivvgY6erPWQE5c8hjRt4myDvkpjX38WziZ70Bk4VGiF4eDH1bW9rYw3TA2RZy4xtyUqNqg7jLh0/UI4vrJmoow9yJ4z50td6tw0zUvhqMSVw7iDNMoiJq2eFrx+52E2R4FEXwaswPmersYCdgU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=rdukO1tZ; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=rdukO1tZ; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="WuP+0E6w"
-Received: by mail-qk1-f180.google.com with SMTP id af79cd13be357-9155183b42cso126365185a.0
-        for <dm-devel@lists.linux.dev>; Wed, 03 Jun 2026 10:51:56 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=trailofbits.com; s=google; t=1780509115; x=1781113915; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=lGadk6YfHL21xxiQKKbv13C83ROX9RWh0yIQE3Hkep4=;
-        b=WuP+0E6wwi/stPRUxJzp+Ud5nbo4qS3vx08SPcRfmFw/HxJZMB6MRe5VjzAqALaCw1
-         nyawHPe6Bz34kL0jj4UzbCDJM6vJ+ThFfjS87oIS1k4UTJ88woNbs6u9DNk1rOH+2SDh
-         XHkNqu56Bk6MIC8Q3pKbV5FJjC6cEvIi2mH1iVMZ5Iazw+7zwjiHW9JSh5mOiuoME7Xe
-         P+Cg1AO753qTOq6EvcfYkhHqfIM6Gioq8rlOmtYFopfgQfR5lIUXXoMovUsGApofPYWK
-         x/CBPfrikMjftqlWZhY7oNaR3Sy69R0JVk55FMhJLuejy/Xpoz3m1rdUTGRanmfAOZQT
-         W/GQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780509115; x=1781113915;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lGadk6YfHL21xxiQKKbv13C83ROX9RWh0yIQE3Hkep4=;
-        b=DGPZseKdWx7A/CYOxo7EoksrXABTU0wfLRXQTm5M5ACaCo+i/QYv+zMkD48MBQviaG
-         VDUox3JCKK2XEdmluU14YMDvfMogAmNjK77+rKtWnqLljhYrqSaDEF7+bGsLYBeWB60M
-         cYrxoES2erbXX35sgRMGWDgE0VBAdUux3pKEHpLMktubaKcUkb8WbH6CdIWnieqxHVoE
-         ZNED5YbGwx1TL8QsCYzOw9JFanZRy2usf0mL/xrHramAtpONEVHWHKBBQWItb8YqUsSS
-         7evxRwGyL7Oug1c3m/ikp/baj9qDkqEtODsfpUaqC8847exsYFpH/KnzSQugpQJxfAYn
-         9pzg==
-X-Forwarded-Encrypted: i=1; AFNElJ9CryNGHTDa8gKclRkhhXv81cqfj4WsH5X68UPjfsv53uhjXHfRlsGEqpyB25N836cWIoz1/jF1+Q==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwesG/i8CAgLuznTHg8v3gp4f4geqN0Dk/IuI0y/ZoZb3L01OWT
-	ImBKaa73pzuR9QJ4z/1P5fWDapdO6cMW4BKnDDaIIXuYxHZolnmBkNY+6GW4cn/pcG8=
-X-Gm-Gg: Acq92OFDSAtkJa+rZQTc29BAFVfv3xw+cwKhPTytLBQu5y8jOAvVMi3PB8XzMhjC98B
-	nFcoYsCIb9QL10SpF2EDxxub6YUbdKvk1LfquIxeluG8yIE964OtRLuYezULZfMuchRzC7oojCN
-	dAMRyD+qGnBYE1bnL7ZP1gbmICRWJ9vKc13ffBZqZBiqRlmldOLWUcekiCXtSEUiGjyT/ZKkyrQ
-	19528vEc4kKibvdaWh/DFADKMeVfBVxbksS29/Tq24NBMcRLACY8cxl7dFPQfzdQMYBsBsCe+8b
-	5xvfpaiOeLn5ZcNoVpusqJSY9PdpulTK9o3dzaUfjIwCmfSunj230Ht6RE6o0+IucU8zK5UeCLO
-	T+0cF3PVi60HyXsOsaiQBawnJrVMXCKS58N8OwNuSgRR/in3UvUM4pC+NY4m+xBg782LMBTwNH3
-	Ml65YoEDetehKQE+8NS7LKVSayqnIN6/rkIMDBDw==
-X-Received: by 2002:a05:620a:a410:10b0:90f:786c:4a82 with SMTP id af79cd13be357-9159afd366dmr49606685a.39.1780509115338;
-        Wed, 03 Jun 2026 10:51:55 -0700 (PDT)
-Received: from localhost ([161.35.96.86])
-        by smtp.gmail.com with UTF8SMTPSA id af79cd13be357-9158a00b104sm323202285a.4.2026.06.03.10.51.54
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 03 Jun 2026 10:51:54 -0700 (PDT)
-From: Samuel Moelius <sam.moelius@trailofbits.com>
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
-	linux-kernel@vger.kernel.org (open list)
-Subject: [PATCH] dm ebs: drop dirty bufio state when discarding blocks
-Date: Wed,  3 Jun 2026 17:51:50 +0000
-Message-ID: <20260603175151.25026-1-sam.moelius@trailofbits.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="rdukO1tZ";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="rdukO1tZ"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 234DB68574;
+	Fri,  5 Jun 2026 11:15:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1780658156; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
+	b=rdukO1tZQ/5OTSb2Pble2X5+mt7jVSomYJjZI5HxOr9IFFEqWcUuF8DUCzWjCCRJ5LU/Yz
+	7fjso5eiR1Rv8WUsjawhAlGGqpYCcfPp+dxPrI9dSMN/B3SLZ2C+KrcbdTdwLzgtCXZp+s
+	wcM8tiI5LK+Gw9CakFLXO2V3E31QnQg=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1780658156; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
+	b=rdukO1tZQ/5OTSb2Pble2X5+mt7jVSomYJjZI5HxOr9IFFEqWcUuF8DUCzWjCCRJ5LU/Yz
+	7fjso5eiR1Rv8WUsjawhAlGGqpYCcfPp+dxPrI9dSMN/B3SLZ2C+KrcbdTdwLzgtCXZp+s
+	wcM8tiI5LK+Gw9CakFLXO2V3E31QnQg=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id DBC1A779A9;
+	Fri,  5 Jun 2026 11:15:55 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id j0+SNOuvImqoEAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 05 Jun 2026 11:15:55 +0000
+Message-ID: <91b28db156bf1a643cbe6b6380d2361f2b954a98.camel@suse.com>
+Subject: Re: [PATCH] scsi: devinfo: broaden Promise VTrak E310/E610
+ identification
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Alexander Perlis <aperlis@math.lsu.edu>, Nikkos Svoboda	
+ <nsvoboda@math.lsu.edu>, Benjamin Marzinski <bmarzins@redhat.com>, 
+ Christophe Varoqui <christophe.varoqui@opensvc.com>, Christoph Hellwig
+ <hch@lst.de>, "James E.J. Bottomley"	
+ <James.Bottomley@HansenPartnership.com>, "Martin K. Petersen"	
+ <martin.petersen@oracle.com>, SCSI-ML <linux-scsi@vger.kernel.org>,
+ DM_DEVEL-ML	 <dm-devel@lists.linux.dev>
+Date: Fri, 05 Jun 2026 13:15:55 +0200
+In-Reply-To: <20260529205602.177515-1-xose.vazquez@gmail.com>
+References: <20260529205602.177515-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCPT_COUNT_SEVEN(0.00)[10];
+	FREEMAIL_TO(0.00)[gmail.com];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	ARC_NA(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Level: 
+X-Spam-Score: -2.80
 
-dm-ebs can discard a block while a dirty dm-bufio buffer for the
-same block is still cached.  If that buffer is later written back,
-stale data can be written over the discarded state.
+On Fri, 2026-05-29 at 22:56 +0200, Xose Vazquez Perez wrote:
+> The Promise VTrak Ex10 series share the same hardware base and
+> firmware.
+> Consequently all interface variants, whether fibre channel ("f") or
+> SAS ("s") in dual/single controller, exhibit the same SCSI behavior.
+>=20
+> Instead of adding separate blacklist entries for every specific model
+> variant (such as E610f, E610s, E310f, E310s), consolidate and
+> broaden the match strings to "VTrak E310" and "VTrak E610".
+>=20
+> Cc: Alexander Perlis <aperlis@math.lsu.edu>
+> Cc: Nikkos Svoboda <nsvoboda@math.lsu.edu>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: Christoph Hellwig <hch@lst.de>
+> Cc: James E.J. Bottomley <James.Bottomley@HansenPartnership.com>
+> Cc: Martin K. Petersen <martin.petersen@oracle.com>
+> Cc: SCSI-ML <linux-scsi@vger.kernel.org>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-That resurrects data that userspace explicitly discarded and breaks
-the expected discard semantics of the target.
-
-Invalidate or clean the matching bufio state when processing discards
-so that old dirty buffers cannot be written back after the discard.
-
-Assisted-by: Codex:gpt-5.5-cyber-preview
-Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
----
- drivers/md/dm-ebs-target.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
-index 1e52bde48b91..9fece535a0b3 100644
---- a/drivers/md/dm-ebs-target.c
-+++ b/drivers/md/dm-ebs-target.c
-@@ -212,8 +212,12 @@ static void __ebs_process_bios(struct work_struct *ws)
- 			write = true;
- 			r = __ebs_rw_bio(ec, REQ_OP_WRITE, bio);
- 		} else if (bio_op(bio) == REQ_OP_DISCARD) {
--			__ebs_forget_bio(ec, bio);
--			r = __ebs_discard_bio(ec, bio);
-+			if (write)
-+				r = dm_bufio_write_dirty_buffers(ec->bufio);
-+			if (!r) {
-+				__ebs_forget_bio(ec, bio);
-+				r = __ebs_discard_bio(ec, bio);
-+			}
- 		}
- 
- 		if (r < 0)
--- 
-2.43.0
-
+Reviewed-by: Martin Wilck <mwilck@suse.com>
