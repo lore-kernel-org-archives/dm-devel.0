@@ -1,73 +1,68 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D164830E0EC
-	for <dm-devel@lists.linux.dev>; Fri,  5 Jun 2026 11:15:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB9414D2EE4
+	for <dm-devel@lists.linux.dev>; Fri,  5 Jun 2026 11:17:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780658160; cv=none; b=Ln0AkcRMkDQxfdkrVoUpTZmVX8dWuXSWjsDVnO0pQbF7UGD58wT457sBbKmO72MURIfSZJQW3yYBBzYhxmut1/6zQU2yQstNaHLLj9K3ByPnHXz5gPQtpb5UIAOSRvpU3NMhfK8lakLtXMvfGN/3NE0IuN0nJT1cr4yjVPQs45M=
+	t=1780658241; cv=none; b=opjjN86yAV3dIOQSw2BnMscQw4ZepkI2oCFop90vbNSPeP25klu2DdyV1iR+p0BqDABb4u91MLULiRG+IVRysarr67Pk8H495Rg9cepagudYQ84YjKnKZPi9lpGBIubT9S5RLScosjeS+sF1QCJwl6LNSr9EQvSuLilP5UzJ2No=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780658160; c=relaxed/simple;
-	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
+	s=arc-20240116; t=1780658241; c=relaxed/simple;
+	bh=tOXgW9ItYHoFoAb6lJ+41HVHHFjG5Jl8H04eQ2nGvvc=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=KuJQ1MBleRCNz516LxwKslqapivvgY6erPWQE5c8hjRt4myDvkpjX38WziZ70Bk4VGiF4eDH1bW9rYw3TA2RZy4xtyUqNqg7jLh0/UI4vrJmoow9yJ4z50td6tw0zUvhqMSVw7iDNMoiJq2eFrx+52E2R4FEXwaswPmersYCdgU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=rdukO1tZ; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=rdukO1tZ; arc=none smtp.client-ip=195.135.223.131
+	 Content-Type:MIME-Version; b=mo0h7v/GcxjX4bx+9jG9Dq8FoAHREZidTQrh4TDHdzRziF0jM7o/fb9Y4M9WSyeI81d18itKqMdshysKemODXka5v3NloRlAKBg5XbaMAevxwhRPPYtOEBrMP3kVObNvHWVl+9Cg4zid+JN0w/thQLuqglBPZPD8ZNywkXrZVRg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=RVyV5k5K; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=RVyV5k5K; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="rdukO1tZ";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="rdukO1tZ"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="RVyV5k5K";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="RVyV5k5K"
 Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 234DB68574;
-	Fri,  5 Jun 2026 11:15:56 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 13D476B251;
+	Fri,  5 Jun 2026 11:17:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1780658156; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1780658238; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
-	b=rdukO1tZQ/5OTSb2Pble2X5+mt7jVSomYJjZI5HxOr9IFFEqWcUuF8DUCzWjCCRJ5LU/Yz
-	7fjso5eiR1Rv8WUsjawhAlGGqpYCcfPp+dxPrI9dSMN/B3SLZ2C+KrcbdTdwLzgtCXZp+s
-	wcM8tiI5LK+Gw9CakFLXO2V3E31QnQg=
-Authentication-Results: smtp-out2.suse.de;
+	bh=tOXgW9ItYHoFoAb6lJ+41HVHHFjG5Jl8H04eQ2nGvvc=;
+	b=RVyV5k5KqdvMt02yGqHSTbMVAYtkYK6j1Sa7mXCDhV4ZFktj5f6eGz1tIFRjycsskoYN0i
+	P8hRVy4KJX6xk1hL87v1JnQbMKHudj7mgUUWB5W6izDR8aokkm2pMhcAkfW/rhOCC6Irti
+	F7ZeOxO+RHhU7NcTeVpwTwi77eur+Pk=
+Authentication-Results: smtp-out1.suse.de;
 	none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1780658156; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1780658238; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=kqxiOotK0FA1RkAiHhG2IBA+vwuPdIDMrIhttxYJopM=;
-	b=rdukO1tZQ/5OTSb2Pble2X5+mt7jVSomYJjZI5HxOr9IFFEqWcUuF8DUCzWjCCRJ5LU/Yz
-	7fjso5eiR1Rv8WUsjawhAlGGqpYCcfPp+dxPrI9dSMN/B3SLZ2C+KrcbdTdwLzgtCXZp+s
-	wcM8tiI5LK+Gw9CakFLXO2V3E31QnQg=
+	bh=tOXgW9ItYHoFoAb6lJ+41HVHHFjG5Jl8H04eQ2nGvvc=;
+	b=RVyV5k5KqdvMt02yGqHSTbMVAYtkYK6j1Sa7mXCDhV4ZFktj5f6eGz1tIFRjycsskoYN0i
+	P8hRVy4KJX6xk1hL87v1JnQbMKHudj7mgUUWB5W6izDR8aokkm2pMhcAkfW/rhOCC6Irti
+	F7ZeOxO+RHhU7NcTeVpwTwi77eur+Pk=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id DBC1A779A9;
-	Fri,  5 Jun 2026 11:15:55 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id E74B4779A9;
+	Fri,  5 Jun 2026 11:17:17 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id j0+SNOuvImqoEAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 05 Jun 2026 11:15:55 +0000
-Message-ID: <91b28db156bf1a643cbe6b6380d2361f2b954a98.camel@suse.com>
-Subject: Re: [PATCH] scsi: devinfo: broaden Promise VTrak E310/E610
- identification
+	id 3YBmNz2wImrIEQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 05 Jun 2026 11:17:17 +0000
+Message-ID: <ec4309f164e69118035bd684318ee12d2ebec530.camel@suse.com>
+Subject: Re: [PATCH] multipath-tools: align ALUA state strings with kernel
+ scsi_sysfs
 From: Martin Wilck <mwilck@suse.com>
 To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Alexander Perlis <aperlis@math.lsu.edu>, Nikkos Svoboda	
- <nsvoboda@math.lsu.edu>, Benjamin Marzinski <bmarzins@redhat.com>, 
- Christophe Varoqui <christophe.varoqui@opensvc.com>, Christoph Hellwig
- <hch@lst.de>, "James E.J. Bottomley"	
- <James.Bottomley@HansenPartnership.com>, "Martin K. Petersen"	
- <martin.petersen@oracle.com>, SCSI-ML <linux-scsi@vger.kernel.org>,
- DM_DEVEL-ML	 <dm-devel@lists.linux.dev>
-Date: Fri, 05 Jun 2026 13:15:55 +0200
-In-Reply-To: <20260529205602.177515-1-xose.vazquez@gmail.com>
-References: <20260529205602.177515-1-xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Fri, 05 Jun 2026 13:17:17 +0200
+In-Reply-To: <20260531103828.23549-1-xose.vazquez@gmail.com>
+References: <20260531103828.23549-1-xose.vazquez@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.60.2 
@@ -85,44 +80,57 @@ X-Spamd-Result: default: False [-2.80 / 50.00];
 	NEURAL_HAM_SHORT(-0.20)[-1.000];
 	MIME_GOOD(-0.10)[text/plain];
 	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCPT_COUNT_SEVEN(0.00)[10];
 	FREEMAIL_TO(0.00)[gmail.com];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
 	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
 	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
 	MID_RHS_MATCH_FROM(0.00)[];
 	DKIM_SIGNED(0.00)[suse.com:s=susede1];
 	TO_DN_ALL(0.00)[];
 	FROM_EQ_ENVFROM(0.00)[];
 	FROM_HAS_DN(0.00)[];
-	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_THREE(0.00)[4];
 	RCVD_TLS_ALL(0.00)[];
 	RCVD_COUNT_TWO(0.00)[2];
 	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:mid,imap1.dmz-prg2.suse.org:helo]
+	DBL_BLOCKED_OPENRESOLVER(0.00)[opensvc.com:email,linux.dev:email,suse.com:email,suse.com:mid,imap1.dmz-prg2.suse.org:helo]
 X-Spam-Level: 
 X-Spam-Score: -2.80
 
-On Fri, 2026-05-29 at 22:56 +0200, Xose Vazquez Perez wrote:
-> The Promise VTrak Ex10 series share the same hardware base and
-> firmware.
-> Consequently all interface variants, whether fibre channel ("f") or
-> SAS ("s") in dual/single controller, exhibit the same SCSI behavior.
+On Sun, 2026-05-31 at 12:38 +0200, Xose Vazquez Perez wrote:
+> Update ALUA asymmetric access state descriptions in the prioritizer
+> to
+> match the shorter names defined in the SCSI kernel subsystem:
 >=20
-> Instead of adding separate blacklist entries for every specific model
-> variant (such as E610f, E610s, E310f, E310s), consolidate and
-> broaden the match strings to "VTrak E310" and "VTrak E610".
+> =C2=A0=C2=A0 $ grep=C2=A0 "{ SCSI_ACCESS_STATE_"=C2=A0 linux/drivers/scsi=
+/scsi_sysfs.c=20
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_OPTIMAL, "=
+active/optimized" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_ACTIVE, "a=
+ctive/non-optimized" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_STANDBY, "=
+standby" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_UNAVAILABL=
+E, "unavailable" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_LBA, "lba-=
+dependent" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_OFFLINE, "=
+offline" },
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 { SCSI_ACCESS_STATE_TRANSITION=
+ING, "transitioning" },
 >=20
-> Cc: Alexander Perlis <aperlis@math.lsu.edu>
-> Cc: Nikkos Svoboda <nsvoboda@math.lsu.edu>
+> This unifies diagnostic strings across the stack and replaces the
+> misleading
+> "ARRAY BUG: invalid TPGs state!" message with the standard SPC
+> "reserved"
+> designation. These codes are explicitly reserved for future standard
+> definitions rather than being treated as malformed states.
+>=20
 > Cc: Martin Wilck <mwilck@suse.com>
 > Cc: Benjamin Marzinski <bmarzins@redhat.com>
 > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: Christoph Hellwig <hch@lst.de>
-> Cc: James E.J. Bottomley <James.Bottomley@HansenPartnership.com>
-> Cc: Martin K. Petersen <martin.petersen@oracle.com>
-> Cc: SCSI-ML <linux-scsi@vger.kernel.org>
 > Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
