@@ -1,153 +1,106 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mailtransmit04.runbox.com (mailtransmit04.runbox.com [185.226.149.37])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C6FE40E8F2
-	for <dm-devel@lists.linux.dev>; Fri,  5 Jun 2026 14:17:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0354E3C3C15
+	for <dm-devel@lists.linux.dev>; Sat,  6 Jun 2026 20:27:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.226.149.37
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780669054; cv=none; b=FbR7duZksAHMCTtmOolK/iYtDmSaWD2Ayc1lxIc4Yk9UNXmsASfP94UFUbs17dLRK+K3S+tFMnDwTboSHAfEL7ek9deNqmuAxy5CCZwG+k7IxTBwq6gl0zFPkyHsOx53W2ihVroqJFNysG1AXd+sK9kNUDyVUzytpcQy2buUxF0=
+	t=1780777643; cv=none; b=DT8yI+P8EGyTgsNzgwi9eSIfSq0Oy7pxgfXctaD3qqSlK55PNntvVZH/FiU70RrJ1pg9jwq6+9vFns4OrLAirE6egpYoDqLnqjIDE1MfnWeOJfBPjrZjq8jZUiD++JYJeMI9KbvgUzcw2IquUpkG9PzMC6QpDBezvJl07JYhmUo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780669054; c=relaxed/simple;
-	bh=33UJXWLSn/ZDnSFaW40FP9NsuIqBWxPX6VKsmEP1oLE=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Cwwn4ORy0irtmIgA8ro57ShYg7n6443k0gIFEIIuzOTfNZ4dGvmALZ/sBTjTDv0o/LkHIpPbhYcYxYU5uFrLtVe67h2V4LunaT4/Y96ly6y2CUFoz0uL5E0GWM5IweigicYOyT7XPK//ZV4HXCkB3bIJIn2gsX8vZIsyj7tqBWo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=UCxixQ7m; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=AqXo0SrP; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1780777643; c=relaxed/simple;
+	bh=q3m42KwlgaB47GxqTsGaX9w9chaRbKm/7VJsjZmkbKc=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=ZukLbdHCJvojHNvGHRJow83aAvxjawunoE623sn7esSiisXbd3rp8Jr8Ehw6lsiR0KGSqpc4RMDgxmnHgORXevQo3hL8amKNRM95lWrp2ehO0CzgAPuzB27cdEMUxkG1ytUid2+y9/kAPgrach/5KmC+8VssDxFJEGtRtyYI2lk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=runbox.com; dkim=pass (2048-bit key) header.d=runbox.com header.i=@runbox.com header.b=ejA22uLK; arc=none smtp.client-ip=185.226.149.37
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=runbox.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="UCxixQ7m";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="AqXo0SrP"
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 08E4675B89;
-	Fri,  5 Jun 2026 14:17:30 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1780669051; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=33UJXWLSn/ZDnSFaW40FP9NsuIqBWxPX6VKsmEP1oLE=;
-	b=UCxixQ7mT2HGjpAvOe+qD/Yf37lMufuc0alIqih5AwRShL3zHr4I4NoKnPZipQXzju6pG6
-	1MNF9Zb9MiqHuEOCVY8J54Ze6pNAgi/oN8j95pf0sQ4aXvB+7vZFyDl92niB3W3O80XnuM
-	wzZaOquhK1Cf1FQrqcMoMyAZ9ejhLiQ=
-Authentication-Results: smtp-out2.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1780669050; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=33UJXWLSn/ZDnSFaW40FP9NsuIqBWxPX6VKsmEP1oLE=;
-	b=AqXo0SrPd/Jo67o3+d5OY7EOEub2P+/CW1H0XhfXHppqWGKupZMmhwvTE8vHnZPJj+Jf6i
-	ggx4s9SegbaYB60hwlDVghgK5+T6Bu5G8wPsY6CboIG7xdrnb9xN8OmoDnriEkYrQLWprG
-	dLjbQie+YEnx1u+YzIVJ4OXeFvwL62g=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id DC724779A8;
-	Fri,  5 Jun 2026 14:17:29 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id I4i6NHnaImqyQgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 05 Jun 2026 14:17:29 +0000
-Message-ID: <a4648b1b4c04cea0f81696d06b523447aa047624.camel@suse.com>
-Subject: Re: [BUG] multipath-tools: 0 cyl reported on large disks due to
- overflow
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, DM_DEVEL-ML
-	 <dm-devel@lists.linux.dev>
-Date: Fri, 05 Jun 2026 16:17:29 +0200
-In-Reply-To: <ahX0RqXAVsKWUIGN@redhat.com>
-References: <02a2bb69-c13d-43bb-bbed-2a1bd3007ba4@gmail.com>
-	 <ahX0RqXAVsKWUIGN@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (2048-bit key) header.d=runbox.com header.i=@runbox.com header.b="ejA22uLK"
+Received: from mailtransmit02.runbox ([10.9.9.162] helo=aibo.runbox.com)
+	by mailtransmit04.runbox.com with esmtps  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+	(Exim 4.93)
+	(envelope-from <david.laight.linux_spam@runbox.com>)
+	id 1wVxbw-007NS1-6B; Sat, 06 Jun 2026 22:27:16 +0200
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=runbox.com;
+	 s=selector1; h=Content-Transfer-Encoding:MIME-Version:Message-Id:Date:
+	Subject:Cc:To:From; bh=eVS6/dpCoKYbQ7WYroUYuGcw4NkGvjE6hnkA0s1BCGk=; b=ejA22u
+	LKCCJD3gLgQvkF6/mjvY+cyGmcodchCrdYIztOaePMB1mscmFEb7YG0QxAoFgx/DF0whelcIU+j1A
+	LuCgAFh+ncSIgNm3T8LjCP2vilfYWlOGiD7DbAnS0hbX2JhHdDz4lc1H9elaTLzM9pDLmMC51p28r
+	GlXlQUnW/ZtMQLflC7oX4Kjy/XA2h6ziwknmZVV9rIKwWIdY0Am4/hTrSxwTzB5o2qsh+s7gVXC2u
+	sRh0MbFn7kvz9P2osV+VbAlvmAZCbp891FPchUaxpdrCDKsQz1id8h05yROyv2DQRcG7lIH/ieFrB
+	39UKDQP+XsfiYhFBaOcEINV0+I+Q==;
+Received: from [10.9.9.72] (helo=submission01.runbox)
+	by mailtransmit02.runbox with esmtp (Exim 4.86_2)
+	(envelope-from <david.laight.linux_spam@runbox.com>)
+	id 1wVxbv-0000uE-QG; Sat, 06 Jun 2026 22:27:15 +0200
+Received: by submission01.runbox with esmtpsa  [Authenticated ID (1493616)]  (TLS1.2:ECDHE_SECP256R1__RSA_PSS_RSAE_SHA256__AES_256_GCM:256)
+	(Exim 4.95)
+	id 1wVxbd-006V18-OS;
+	Sat, 06 Jun 2026 22:26:57 +0200
+From: david.laight.linux@gmail.com
+To: Kees Cook <kees@kernel.org>,
+	linux-hardening@vger.kernel.org,
+	Arnd Bergmann <arnd@kernel.org>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	David Laight <david.laight.linux@gmail.com>
+Subject: [PATCH next] drivers/md/dm-zoned-metadata: User strscpy() to copy device name
+Date: Sat,  6 Jun 2026 21:26:06 +0100
+Message-Id: <20260606202633.5018-12-david.laight.linux@gmail.com>
+X-Mailer: git-send-email 2.39.5
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-2.80 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-0.998];
-	MIME_GOOD(-0.10)[text/plain];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	FREEMAIL_TO(0.00)[redhat.com,gmail.com];
-	TAGGED_RCPT(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	MIME_TRACE(0.00)[0:+];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	TO_DN_ALL(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Level: 
-X-Spam-Score: -2.80
+Content-Transfer-Encoding: 8bit
 
-On Tue, 2026-05-26 at 15:28 -0400, Benjamin Marzinski wrote:
-> On Fri, May 22, 2026 at 11:10:36PM +0200, Xose Vazquez Perez wrote:
-> > Hi,
-> >=20
-> > An integer overflow occurs in
-> > libmultipath/discovery.c:get_geometry() when
-> > querying geometry on large disks resulting in "0 cyl" being
-> > reported:
-> >=20
-> > # multipath -ll -d -v3
-> > ... | sdgm: 0 cyl, 64 heads, 32 sectors/track, start at 0
-> >=20
-> > # fdisk -l /dev/sdgm
-> > Disk /dev/sdgm: 12 TiB, 13194139533312 bytes, 25769803776 sectors
-> > Units: sectors of 1 * 512 =3D 512 bytes
-> >=20
-> > # dmesg | grep sdgm
-> > sd 5:0:3:100: [sdgm] 25769803776 512-byte logical blocks: (13.2
-> > TB/12.0TiB)
-> >=20
-> >=20
-> > The root cause is that struct hd_geometry, from
-> > libmultipath/structs.h,
-> > defines cylinders as an unsigned short.
-> >=20
-> > Since it is a legacy interface, it should either sanitize the log
-> > output
-> > or avoid relying on CHS geometry for large devices.
->=20
-> I'm totally fine with never reporting the geometry info or moving it
-> to
-> log level 4 (since there can be value to even pointless debugging
-> messages. They can show you where you made it to if you happned to
-> hang
-> in a function)
->=20
-> But I don't personally have a problem with multipath simply passing
-> along the geometry data it gets from the disk. Sure, it may be
-> garbage,
-> but then DM's garbage matches the disk's garbage. I highly doubt that
-> anything actually cares what geometry a DM device reports. But I
-> don't
-> see any benefit to changing what it currently does.
->=20
-> Thoughts?
+From: David Laight <david.laight.linux@gmail.com>
 
-I agree. And as -v3 is already a moderate debugging level for us, I
-don't see the log message as problematic, either.
+Signed-off-by: David Laight <david.laight.linux@gmail.com>
+---
+This is one of a group of patches that remove potentially unbounded
+strcpy() calls.
 
-Martin
+They are mostly replaced by strscpy() or, when strlen() has just been
+called, with memcpy() (usually including the '\0').
+
+Calls with copy string literals into arrays are left unchanged.
+They are safe and easily detected as such.
+
+The changes were made by getting the compiler to detect the calls and
+then fixing the code by hand.
+
+Note that all the changes are only compile tested.
+
+Some Makefiles were changed to allow files to contain strcpy().
+As well as 'difficult to fix' files, this included 'show' functions
+as they really need to use sysfs_emit() or seq_printf().
+
+All the patches are being sent individually to avoid very long cc lists.
+Apologies for the terse commit messages and likely unexpected tags.
+(There are about 100 patches in total.)
+
+ drivers/md/dm-zoned-metadata.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
+index ec605acddd88..f4f81c79a080 100644
+--- a/drivers/md/dm-zoned-metadata.c
++++ b/drivers/md/dm-zoned-metadata.c
+@@ -2871,7 +2871,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
+ 	if (!zmd)
+ 		return -ENOMEM;
+ 
+-	strcpy(zmd->devname, devname);
++	strscpy(zmd->devname, devname);
+ 	zmd->dev = dev;
+ 	zmd->nr_devs = num_dev;
+ 	zmd->mblk_rbtree = RB_ROOT;
+-- 
+2.39.5
+
