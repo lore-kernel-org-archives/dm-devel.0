@@ -1,122 +1,154 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f42.google.com (mail-lf1-f42.google.com [209.85.167.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06A65380FCB
-	for <dm-devel@lists.linux.dev>; Mon,  8 Jun 2026 14:19:36 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780928378; cv=none; b=sq4Jm0OSoLyHewTln+h9akHV4bHDbNGzdRIHiIYZ62T3QMsCpNnMPBPcd3mCJv7/rlYdJcxloCxskJGoL/r3pnyybShCFZekTqiKS+13d97S3CVqXOz/H5bwSe7HVetmpYSrHeK6p2RcvwzBEFesNFmxvpzbtugbsRLviTv7+BA=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780928378; c=relaxed/simple;
-	bh=kBM6a5CZrIynDhrFKjkLJC3Au98q/nKeVE0HR49B+MQ=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=ZgedPB5l2Rjg2e+zGN90LimA1h8Tq0mzK8iqZRf4e+v3uUKRDPSWQB9eXJR/UYZO4IHIMv/l/4+2yvhCBOfbZlHhUMrDid+R3CwumvyoM5jCMZC5fg2Lpcy6+WdxmNftb5iJg2d6j/F06U0NeCbG11SUkD2zPHTtVLG1A/DW2wY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CACFbpT2; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 886C8330337
+	for <dm-devel@lists.linux.dev>; Mon,  8 Jun 2026 16:03:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.42
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1780934625; cv=pass; b=GDg7DuiGasB/hVLjl+J2vnmH66BSQH1wSVEF4aSb+AW1n7wHZWxuPmfAgh0ykmLklnK3S9zccpUowb4nMN7Mh8gXkbuUwPjgfhvBYO+7FDlCfHj3WbHIXhsB+srl1F+HP1Mb5HKmrS6VwuS7GntjGYZOORtVXJPGBnWg7aqN6kk=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1780934625; c=relaxed/simple;
+	bh=Jf1uYxbeS7GsTfa9sqPNAGsTSGeb99bZ6uRQ5kxnqng=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=tdiKiKNpafML30G+PweHx61vnCZD9SBOZvz7ftufzWyTIos8fDJbVFuhpk5aVN7aBqnV32/zMr4oQUbrVN/Yw455zZoxHHR398UsZNNx3ABBVzYjH1GtDzjfGC2FZZEzaAgbW6J2aQhwAhKlK9Tfpf9gE0qCjww3lTJWU5IDvFo=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=TOeDsEVY; arc=pass smtp.client-ip=209.85.167.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CACFbpT2"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1780928376;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ksEVz7zu8cddZveGMzSFRyDbw79gGlzSMPra+8QpguA=;
-	b=CACFbpT2HnRBLEICL9FTwf4/C/ibwIvuhC1jynQDhdyPbod60e+rbeU2Bew2NgGwS6v12r
-	WJFOezZ+SE1Pu6jHOXNVYreNdKllIaWpIl07H8Lz83BOjQXVlWoHoMctAE70eD8b7zqUeQ
-	S828P3cq75H981JjeEbmIu0dD+3r7Gc=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-sZu16Q8vOYK7rKPF-TgC_g-1; Mon,
- 08 Jun 2026 10:19:32 -0400
-X-MC-Unique: sZu16Q8vOYK7rKPF-TgC_g-1
-X-Mimecast-MFC-AGG-ID: sZu16Q8vOYK7rKPF-TgC_g_1780928371
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 365B218011E6;
-	Mon,  8 Jun 2026 14:19:31 +0000 (UTC)
-Received: from [10.44.50.170] (unknown [10.44.50.170])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AE77E1800367;
-	Mon,  8 Jun 2026 14:19:28 +0000 (UTC)
-Date: Mon, 8 Jun 2026 16:19:25 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: David Laight <david.laight.linux@gmail.com>
-cc: Kees Cook <kees@kernel.org>, linux-hardening@vger.kernel.org, 
-    Arnd Bergmann <arnd@kernel.org>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, 
-    Mike Snitzer <snitzer@kernel.org>
-Subject: Re: [PATCH next] drivers/md/dm-zoned-metadata: User strscpy() to
- copy device name
-In-Reply-To: <20260606202633.5018-12-david.laight.linux@gmail.com>
-Message-ID: <4773c74f-5425-76fa-dc3a-5a5cf59f4e62@redhat.com>
-References: <20260606202633.5018-12-david.laight.linux@gmail.com>
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="TOeDsEVY"
+Received: by mail-lf1-f42.google.com with SMTP id 2adb3069b0e04-5aa66893e9fso5135229e87.1
+        for <dm-devel@lists.linux.dev>; Mon, 08 Jun 2026 09:03:44 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1780934623; cv=none;
+        d=google.com; s=arc-20240605;
+        b=ERYyByWY1ojnyPabxlrrn6CMDAbgtNpK7jeG+bsXRujutiIH5dtOE/1tP+vAvCLyAA
+         NTk+cg98G2ba8/T6CTRjRxSTg1sqG+0GhSkiWT+wh0kjdNm7Hab+dNBPezSlTL59owmo
+         muhldILXwb7SACTrVmr4+kH8l7/tLwcQaUlXVheTGpJdUVnkWidwXzQ/VTyAXXyNuss5
+         uGi0xy5Hdu8K7FtJA0+VhT+I/DgNvLuOIY2dYH+6/nI+wTh1r37Kc5dSGAbwT6TqQ32m
+         +sumvQCCBO8s4DqaLYf8x3vMyEdhRyU2ZvPQw8evWKrFZCfF/HB6pjbYdg7R6bQIo+wm
+         UzeQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=TSAijtJ5QLf5xvxPFsAbVumQMO4Z1tOReihcL8xpg10=;
+        fh=ZVMkY5pec+6XEbaUBKmN9IkzKRLLoXgetXiApNKBWZc=;
+        b=PU9xSQWv9yuy9WDLYnkQm+MdRFriNQmIKqs6CVGN9u0AXRU18Ho9wqa/eqJY4xWtRU
+         ANUpdDHlwOW/PecwatvCM0LHm2HrUr1s+iOFZUcnpVMZXOMiBmZskEsKP1Kp8L9Nouqr
+         yQ81LURuNQZNayTmKPEUZ1o+uIx3dQJxn51ZlAFIbwmNfM88zFAp8XhWU1BDEAbTry15
+         lEL0YmI50l89uss9/pXC4wEMgoWGZmYmCfbfHGL+UDL5ytXDbgpDxK+9PG9mXA/mC58J
+         YZAwfXQfli/mD4nzI6yA4hXHUNIimNd/vOH7uDACv0LIY8FpFvW9Bh4KraXBKHDwCzQy
+         GkUw==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=trailofbits.com; s=google; t=1780934623; x=1781539423; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=TSAijtJ5QLf5xvxPFsAbVumQMO4Z1tOReihcL8xpg10=;
+        b=TOeDsEVYG7Z81NcChF9Ww8Dwm4VUTM8a20+K061CG5pzKamfq45hyEsrOKGYKC1/fJ
+         /GYBqau1po7qGh/D1tY+TAUZTUaBTAVDYubEdGzOsnwar2kaghVaCaPIWOhBTo946v8W
+         mnz1tPmbb6n5Igh286RCKzjml6NQCPYMewyLvZGkq7/412eEbGXG3SnicpDIYd1WMww6
+         JZu+c4YX7CIzrwwL0Rfi5YarVvYfX/7gamoX7e5aX5KMKgE1WBYz2J5kQgPPPovgitac
+         A73m5+q3krk1W2qsjIGlYHlScWy8wlz039WuEAxQQ/5luOP6MUTCRIWVd1nzXRQEk8Eq
+         GUqw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1780934623; x=1781539423;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=TSAijtJ5QLf5xvxPFsAbVumQMO4Z1tOReihcL8xpg10=;
+        b=W/q0uLJeT+ZauqWOQ89GAZtONt/E0+W8+QO8fa/QKBLRu4qEMba5dcGpV4UfLlTyhi
+         kXSwmaDkZnHw6YWdVAOXSqNerIFN/FQqN4sXQEVfjx5WzfXohQM2zu5YVZ4iG95ya68e
+         vdA1Aa/J+xEo5W+5iX7P9GEFlZ2+d83KMaX1oj/KPUrqt6A51Heypq5piinQNyWNvrVc
+         q8dodG8ACiTrlzUCY33wzsVQncKHkMl5Hz5vWjgQ6QaW1cD90Lzfv76VWoJ8ZpHoQoZf
+         +1HXm5wmnGzb9F8xrOwdmyrJ4LhhsInqnANKRddC/qltHG0j9H91tvfyoYPYavyhNCHD
+         8YqA==
+X-Forwarded-Encrypted: i=1; AFNElJ9bWl22uCzYA6uAj6SyHuShUsknZxlgimvv6Odzm3zK7XeZX3slhVV2EGfBxxOscTagBCx9HCMdSQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwuNj14J7A0iwZbVygrlqDjmkCQuTyomxPTBiHYveqAcZWXEjkc
+	XOdj7qhYzY9Go28VstGLuQPUjTYCX8OjW1Tc9MyebCDv8ZAwBQ+1laUx3EG/qQ/Cwc9KjKmbIhX
+	79cToQerHR1l3mMozSx7kisEUfRz2XqPJxOc5x5rq4w==
+X-Gm-Gg: Acq92OEwabEmW613hAcEtr+5m/6no3eWTgrVf1Zz0I0r4t2la2Nz3xBj2hSM1Zkryaa
+	sDcUcYcgBwJBzTjN+lppyPke7qCLRffgdyYGvcYY7axIbQj55R3DGhmeLPo8W2lGQMgmOkNwhAt
+	XAcSpBuDh9Fm/XyQqW9eOCBOsUjibIaY7GqXDuldRxCAix/0tRb9WAS5qmV8kb7wSzE9bfNudQN
+	7QZhej00lpY/Xlo05AGiWmtzdNcQVbuxdbUGEWwXjkNcsgP5k0RT3tv6qVFrgBjkxSKowzx4dAq
+	e56oSwXrnqaK24ZHxq+hY8hXlTY=
+X-Received: by 2002:a05:6512:3092:b0:5aa:5ce4:8e4d with SMTP id
+ 2adb3069b0e04-5aa87bc88e9mr5590502e87.29.1780934622623; Mon, 08 Jun 2026
+ 09:03:42 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: lVc4eRgo1uLH5Q8PCkIavHUZ-0moZNZgtBeL9dNVkRg_1780928371
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+References: <20260603175151.25026-1-sam.moelius@trailofbits.com> <f6c41bca-c80f-368e-f0bf-e6b57c4af9d0@redhat.com>
+In-Reply-To: <f6c41bca-c80f-368e-f0bf-e6b57c4af9d0@redhat.com>
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+Date: Mon, 8 Jun 2026 12:03:31 -0400
+X-Gm-Features: AVVi8CeFGlI4Dda80AXif2fn3M2NMWwS7reClAzO0klrGb2WlQHjbc7yRlxUHHU
+Message-ID: <CAE+C+Da2DypH+ZOOw9Dha35gumZgz=hSe=m4AF1boUyFJcQEjQ@mail.gmail.com>
+Subject: Re: [PATCH] dm ebs: drop dirty bufio state when discarding blocks
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, 
+	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Hi
+On Mon, Jun 8, 2026 at 10:16=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+>
+>
+> On Wed, 3 Jun 2026, Samuel Moelius wrote:
+>
+> > dm-ebs can discard a block while a dirty dm-bufio buffer for the
+> > same block is still cached.  If that buffer is later written back,
+> > stale data can be written over the discarded state.
+> >
+> > That resurrects data that userspace explicitly discarded and breaks
+> > the expected discard semantics of the target.
+> >
+> > Invalidate or clean the matching bufio state when processing discards
+> > so that old dirty buffers cannot be written back after the discard.
+> >
+> > Assisted-by: Codex:gpt-5.5-cyber-preview
+> > Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+> > ---
+> >  drivers/md/dm-ebs-target.c | 8 ++++++--
+> >  1 file changed, 6 insertions(+), 2 deletions(-)
+> >
+> > diff --git a/drivers/md/dm-ebs-target.c b/drivers/md/dm-ebs-target.c
+> > index 1e52bde48b91..9fece535a0b3 100644
+> > --- a/drivers/md/dm-ebs-target.c
+> > +++ b/drivers/md/dm-ebs-target.c
+> > @@ -212,8 +212,12 @@ static void __ebs_process_bios(struct work_struct =
+*ws)
+> >                       write =3D true;
+> >                       r =3D __ebs_rw_bio(ec, REQ_OP_WRITE, bio);
+> >               } else if (bio_op(bio) =3D=3D REQ_OP_DISCARD) {
+> > -                     __ebs_forget_bio(ec, bio);
+> > -                     r =3D __ebs_discard_bio(ec, bio);
+> > +                     if (write)
+> > +                             r =3D dm_bufio_write_dirty_buffers(ec->bu=
+fio);
+> > +                     if (!r) {
+> > +                             __ebs_forget_bio(ec, bio);
+> > +                             r =3D __ebs_discard_bio(ec, bio);
+> > +                     }
+> >               }
+> >
+> >               if (r < 0)
+>
+> Hi
+>
+> There's a bug in the patch - when the "write" variable is false, "r" is
+> equal to -EIO, thus __ebs_forget_bio and __ebs_discard_bio is skipped at
+> all.
+>
+> If dm_bufio_write_dirty_buffers returns non-zero, the error is erroneousl=
+y
+> reported on the discard bio (that is innocent) and not on the write bios
+> that triggered the error.
 
-I accepted the patch.
-
-Mikulas
-
-
-On Sat, 6 Jun 2026, david.laight.linux@gmail.com wrote:
-
-> From: David Laight <david.laight.linux@gmail.com>
-> 
-> Signed-off-by: David Laight <david.laight.linux@gmail.com>
-> ---
-> This is one of a group of patches that remove potentially unbounded
-> strcpy() calls.
-> 
-> They are mostly replaced by strscpy() or, when strlen() has just been
-> called, with memcpy() (usually including the '\0').
-> 
-> Calls with copy string literals into arrays are left unchanged.
-> They are safe and easily detected as such.
-> 
-> The changes were made by getting the compiler to detect the calls and
-> then fixing the code by hand.
-> 
-> Note that all the changes are only compile tested.
-> 
-> Some Makefiles were changed to allow files to contain strcpy().
-> As well as 'difficult to fix' files, this included 'show' functions
-> as they really need to use sysfs_emit() or seq_printf().
-> 
-> All the patches are being sent individually to avoid very long cc lists.
-> Apologies for the terse commit messages and likely unexpected tags.
-> (There are about 100 patches in total.)
-> 
->  drivers/md/dm-zoned-metadata.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-> index ec605acddd88..f4f81c79a080 100644
-> --- a/drivers/md/dm-zoned-metadata.c
-> +++ b/drivers/md/dm-zoned-metadata.c
-> @@ -2871,7 +2871,7 @@ int dmz_ctr_metadata(struct dmz_dev *dev, int num_dev,
->  	if (!zmd)
->  		return -ENOMEM;
->  
-> -	strcpy(zmd->devname, devname);
-> +	strscpy(zmd->devname, devname);
->  	zmd->dev = dev;
->  	zmd->nr_devs = num_dev;
->  	zmd->mblk_rbtree = RB_ROOT;
-> -- 
-> 2.39.5
-> 
-
+v2 forthcoming.
