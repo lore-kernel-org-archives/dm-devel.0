@@ -1,116 +1,94 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from cstnet.cn (smtp21.cstnet.cn [159.226.251.21])
+	(using TLSv1.2 with cipher DHE-RSA-AES256-SHA (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8759E343D8F
-	for <dm-devel@lists.linux.dev>; Tue,  9 Jun 2026 01:38:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.165.32
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81B153815D9
+	for <dm-devel@lists.linux.dev>; Tue,  9 Jun 2026 03:52:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=159.226.251.21
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780969126; cv=none; b=DlTV3prC1st2GZzoYv9IgV83gR0HR/6LVNOlfq/rh0I5FOInGbHy+z5jCxghzIeaKRQBZvg/3uv0/ThZtCp2IafPvTa8djovngVfkoEzv9vWNvFsgAjLe20ZTWT1ENxu+CuP67jkW9QrNzCE+prYJ4qtVjiY0AeQreyAQLtQYl8=
+	t=1780977174; cv=none; b=fTm7fQtD+D9ow3iNTB9h5u80TTsJ+MKLeF+H76COfffRpaN4z8q6B3QqVBBSn/W0CK3q4kavX5YGvhclcWzTtdvfDD7CQOFWAGH+mFTnXsXfhl3/xvvZYLcHnLL72b3cRtMD422v3Nvai10IBqGHLQwmFHj+5vbV1GRKnruA+jY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780969126; c=relaxed/simple;
-	bh=AIh3dvnNQihctziG//xdQ3HB1hgtumi5pJSZXqf54mo=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=uu23LXw9NlIB0N+3KzvkbLOfpVANvmX/Q69uRmHsFKo+4ssC4ZGY2ASLOf/NRzndW5vXPLIotNmPaFAGfuBwuA0cw0WzYjXzHrXTgmQKLaNMMVtI140/WrNTuc3y7H4HJMAE48viXHHyzBiV4SV4/7A1u62xNwoj3QpKcQgT8RE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=YNVXcAdH; arc=none smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="YNVXcAdH"
-Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 658HScLf429122;
-	Tue, 9 Jun 2026 01:38:39 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2025-04-25; bh=bU9WaFNzcB8oPe3O2CUP1ciL5qEo4uqiGsF1u7pZYVM=; b=
-	YNVXcAdH91Z0xHua3z3s1QJKGWhG158DiJbyawMfpHx/SNYsZlYlQWoXuyOcV37x
-	2bqXOc1UvjGxgiDtbItdhVecR8xXjx+joTEcY05x48lzPDgYlDlvLptNh416Jngz
-	xEVLBwar0ZVu0HklYWkll+Fw0kJYkfqxdpEoA5ZtjrxSXBhVcL4iFGRBevsQ9Nnm
-	8nHQIx4bcwxGmVnkuz/qba1IN5IZ4M+Sct+rkyYg4PbnaBYa3VR78/51oZLBQYu3
-	0w8VGuIwvvpO1NydANkyxxlWPONSMjQUnOQBGGOxBZq9Qg9sVi3TckkH/AODKDA6
-	OxkQ79UFkK0x1jTjIzsb4A==
-Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta01.appoci.oracle.com [130.35.100.223])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4embe7kdba-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 09 Jun 2026 01:38:39 +0000 (GMT)
-Received: from pps.filterd (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.7/8.18.1.7) with ESMTP id 6591cWdo009093;
-	Tue, 9 Jun 2026 01:38:38 GMT
-Received: from pps.reinject (localhost [127.0.0.1])
-	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 4ema0pg4m5-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 09 Jun 2026 01:38:38 +0000 (GMT)
-Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by pps.reinject (8.18.1.12/8.18.1.12) with ESMTP id 6591caZX009632;
-	Tue, 9 Jun 2026 01:38:37 GMT
-Received: from ca-mkp2.ca.oracle.com.com (mpeterse-ol9.allregionaliads.osdevelopmeniad.oraclevcn.com [100.100.251.135])
-	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 4ema0pg4hp-2;
-	Tue, 09 Jun 2026 01:38:37 +0000 (GMT)
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: "Martin K . Petersen" <martin.petersen@oracle.com>,
-        Alexander Perlis <aperlis@math.lsu.edu>,
-        Nikkos Svoboda <nsvoboda@math.lsu.edu>, Martin Wilck <mwilck@suse.com>,
-        Benjamin Marzinski <bmarzins@redhat.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        Christoph Hellwig <hch@lst.de>,
-        "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>,
-        SCSI-ML <linux-scsi@vger.kernel.org>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH] scsi: devinfo: broaden Promise VTrak E310/E610 identification
-Date: Mon,  8 Jun 2026 21:38:20 -0400
-Message-ID: <178096908540.1867344.14162914327436391638.b4-ty@oracle.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260529205602.177515-1-xose.vazquez@gmail.com>
-References: <20260529205602.177515-1-xose.vazquez@gmail.com>
+	s=arc-20240116; t=1780977174; c=relaxed/simple;
+	bh=riT7L5N3UztfxirXwAWdjKB3Ye0PfkB5zpmJwLZ/I5w=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=mNvVzjevWy2XdF+wpaNEC2NqS6HFjitmhnPwsBnMT5QeqRO3pUY8FwRjjxYkjOGQktepioMlxAg8sK0Afvxs/4NNY6Ks9yjPjffOUJxvZw5Lalh0tzxTVNh2juzWzJSqdPIPcPg4DhaUyU6R4KwB+pJ9nGd3tp5/0ErIoJvuLZk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=iscas.ac.cn; spf=pass smtp.mailfrom=iscas.ac.cn; arc=none smtp.client-ip=159.226.251.21
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=iscas.ac.cn
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=iscas.ac.cn
+Received: from dfae2b116770.home.arpa (unknown [36.110.52.2])
+	by APP-01 (Coremail) with SMTP id qwCowAAnzNQSjidqKHH2AA--.12091S2;
+	Tue, 09 Jun 2026 11:52:50 +0800 (CST)
+From: Wentao Liang <vulab@iscas.ac.cn>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Wentao Liang <vulab@iscas.ac.cn>,
+	stable@vger.kernel.org
+Subject: [PATCH] dm log writes: fix refcount leak in log_writes_map()
+Date: Tue,  9 Jun 2026 03:52:43 +0000
+Message-Id: <20260609035243.184530-1-vulab@iscas.ac.cn>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.125,FMLib:17.12.100.49
- definitions=2026-06-08_06,2026-06-09_01,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 suspectscore=0
- mlxlogscore=870 phishscore=0 spamscore=0 mlxscore=0 bulkscore=0
- malwarescore=0 adultscore=0 lowpriorityscore=0 classifier=spam adjust=0
- reason=mlx scancount=1 engine=8.19.0-2605130000 definitions=main-2606090013
-X-Proofpoint-ORIG-GUID: N4rIfsIfak7ZnvSKtDF-U9LyxzLnln9h
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNjA5MDAxMyBTYWx0ZWRfX4D0CaCaMipIC
- deFwX4V6rNoeMVZa+dUIMEW7FDcPT4xdDA6zO19fKHnz6MXQIOcKWgSPL6nb7/6fAs4hfZCOl8n
- dWONgITVHNmeovYEMFsJRsx/EhJrb8dq7t1nX9RlPNrXjKR2u2sm+cY3HvXZMUVDGj5LDVWA5bp
- 4UYoUMTyEp7g+cOv07w8cY1BR85eKsIUmrZihEFO5s7v2no0hGBLT8Syjob2neRXW5MEweLdPUv
- 5akPSUBSZAQCofVIcRrVPVx0TmcdZ6+Q7XxqVGczZe+ry03x20AcusQEluW9eFXZ/4G03uc1BJm
- FbOBTR0ULLuGHI1dbDiz2TkvEjwyCSqE+teRbNj+P8zF8mkNmpRY4AUyapXh1p/H9UOM9I7IlrQ
- 8x+qZ7IWm5FmkMS09l+ngFLyCgIEWgO9t0wL+GVC0dtNGGJktNCnYJ6FcWW2O6q9WdGt46H+s6B
- xIaSGWJpgvlu5MgPEj1tD33SUCzsZgdv2VFyVWCM=
-X-Proofpoint-GUID: N4rIfsIfak7ZnvSKtDF-U9LyxzLnln9h
-X-Authority-Analysis: v=2.4 cv=AufeGu9P c=1 sm=1 tr=0 ts=6a276e9f b=1 cx=c_pps
- a=zPCbziy225d3KhSqZt3L1A==:117 a=zPCbziy225d3KhSqZt3L1A==:17
- a=IkcTkHD0fZMA:10 a=FelO9ux0wxsA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=jiCTI4zE5U7BLdzWsZGv:22 a=EIcjfB9IiI4px24ztqRk:22 a=VwQbUJbxAAAA:8
- a=zKY0pj2RUVpoYIKHnWwA:9 a=QEXdDO2ut3YA:10 a=5yU3S35YU4bGjq-dph-N:22
- a=Bho9c0fBagfJEIQBS7DQ:22 cc=ntf awl=host:12312
+X-CM-TRANSID:qwCowAAnzNQSjidqKHH2AA--.12091S2
+X-Coremail-Antispam: 1UD129KBjvJXoW7ur1xKF18Cw13ury7Cw4UJwb_yoW8Xr18pa
+	yUWFyYyFZ5Kw4jgFn8Za1kGFyfua17JFW3urW8W34rXay5XF9rJFZ5ta9Yq3yjkFsrCF9x
+	XF4jgryUCa1UAaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUkK14x267AKxVW8JVW5JwAFc2x0x2IEx4CE42xK8VAvwI8IcIk0
+	rVWrJVCq3wAFIxvE14AKwVWUJVWUGwA2ocxC64kIII0Yj41l84x0c7CEw4AK67xGY2AK02
+	1l84ACjcxK6xIIjxv20xvE14v26r4j6ryUM28EF7xvwVC0I7IYx2IY6xkF7I0E14v26r4j
+	6F4UM28EF7xvwVC2z280aVAFwI0_Cr1j6rxdM28EF7xvwVC2z280aVCY1x0267AKxVW0oV
+	Cq3wAS0I0E0xvYzxvE52x082IY62kv0487Mc02F40EFcxC0VAKzVAqx4xG6I80ewAv7VC0
+	I7IYx2IY67AKxVWrXVW3AwAv7VC2z280aVAFwI0_Gr1j6F4UJwAm72CE4IkC6x0Yz7v_Jr
+	0_Gr1lF7xvr2IYc2Ij64vIr41lF7I21c0EjII2zVCS5cI20VAGYxC7MxkF7I0En4kS14v2
+	6r126r1DMxAIw28IcxkI7VAKI48JMxC20s026xCaFVCjc4AY6r1j6r4UMI8I3I0E5I8CrV
+	AFwI0_Jr0_Jr4lx2IqxVCjr7xvwVAFwI0_JrI_JrWlx4CE17CEb7AF67AKxVWUtVW8ZwCI
+	c40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x0267
+	AKxVWUJVW8JwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_Jr0_
+	Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7VUUyEEU
+	UUUUU==
+X-CM-SenderInfo: pyxotu46lvutnvoduhdfq/1tbiBgwNA2onYk+eiQABsy
 
-On Fri, 29 May 2026 22:56:02 +0200, Xose Vazquez Perez wrote:
+In log_writes_map(), when a discard bio is received and the device
+does not support discard, a pending block is allocated and its
+pending_blocks refcount is incremented, but the block is never
+freed. The function calls bio_endio(bio) and returns
+DM_MAPIO_SUBMITTED directly, bypassing normal_end_io() which would
+enqueue the block for later release via the kthread. As a result,
+the refcount for the associated pending block is leaked, and
+pending_blocks never reaches zero, preventing log_writes_dtr() from
+completing and causing the device destruction to hang.
 
-> The Promise VTrak Ex10 series share the same hardware base and firmware.
-> Consequently all interface variants, whether fibre channel ("f") or
-> SAS ("s") in dual/single controller, exhibit the same SCSI behavior.
-> 
-> Instead of adding separate blacklist entries for every specific model
-> variant (such as E610f, E610s, E310f, E310s), consolidate and
-> broaden the match strings to "VTrak E310" and "VTrak E610".
-> 
-> [...]
+Free the block with free_pending_block() before completing the bio
+in the !device_supports_discard path, matching the error handling
+done when page allocation fails.
 
-Applied to 7.1/scsi-fixes, thanks!
+Cc: stable@vger.kernel.org
+Fixes: 0e9cebe72459 ("dm: add log writes target")
+Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
+---
+ drivers/md/dm-log-writes.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-[1/1] scsi: devinfo: broaden Promise VTrak E310/E610 identification
-      https://git.kernel.org/mkp/scsi/c/5d5221f8a406
-
+diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
+index c72e07c3f5a0..05133b1553ca 100644
+--- a/drivers/md/dm-log-writes.c
++++ b/drivers/md/dm-log-writes.c
+@@ -709,6 +709,8 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
+ 		WARN_ON(flush_bio || fua_bio);
+ 		if (lc->device_supports_discard)
+ 			goto map_bio;
++		free_pending_block(lc, block);
++		pb->block = NULL;
+ 		bio_endio(bio);
+ 		return DM_MAPIO_SUBMITTED;
+ 	}
 -- 
-Martin K. Petersen
+2.34.1
+
