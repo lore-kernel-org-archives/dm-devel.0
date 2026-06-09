@@ -1,72 +1,70 @@
-Received: from mail-qv1-f49.google.com (mail-qv1-f49.google.com [209.85.219.49])
+Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 323D4244665
-	for <dm-devel@lists.linux.dev>; Tue,  9 Jun 2026 00:30:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAFDE481DD
+	for <dm-devel@lists.linux.dev>; Tue,  9 Jun 2026 00:31:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780965040; cv=none; b=uw/XNmvoE5oHsUZXtX0bRYuIBQghqHIZ+Aby5uIQNGo6id2WhOOyxdnnyZYZu126O/8j2fGkKIi3QXbftNMuvSHc7wPRRtu5xNwQKGLy5V2oR4EuILxZTPqogOXATyltLuLoI5u1DBIReWr4wpr0MRESp8BbGsQhSGq0UoFtnQ4=
+	t=1780965070; cv=none; b=ebZjOvtZ7zEVKO5wTpNrIF7JooZQiJtCWXmDYKNRr03+TLvZIwMN+NN/YUuMPzi5x8YhHU46TPYE08gWPaxRmx6+vaYT26Bdlj1rewmw1PApnM9ZnJZ6SSITadfqdycRquVOA8uLTVlXZErM00FVr4YpYvF8igw/SReuI+GJ7CE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780965040; c=relaxed/simple;
-	bh=a7XK+rVjCF/L5mCXSZHln5yZazYlIWvsMTDYmMjL9UI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JXlK+M8JiD9UC8Jl7QnAmp1BE93nHnH2tY1N4eH0pP5BITXl3wd/m9JWSxBqazCfaRyWBqPz9ce3RKHVEr668SRM01LAzRtG1dwK9XPptec6Yxo0xJcOUALPm6wtjRmTJYaCQJAqri4IMgFvTBmPs9suTlNrkNq3/xUbqSc/Jbc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=FtTbAJRj; arc=none smtp.client-ip=209.85.219.49
+	s=arc-20240116; t=1780965070; c=relaxed/simple;
+	bh=8q9vsUhsZGqi+EcrkG68AgEvx++08Iv4fBlsSugiAUw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=tBNdDRBQLOiUiD5HyVdAB6dHFj8zUu+xdmCJW/wzFPnWykw34IOwAeg3FCpB9dxcXxCwNVN5l8ihDiFhrI2S2xIzmOf+dXIyoVhyv5LPB2WYeFZ/3G/28SxWN8Q2eSFp7sFeVIwvb7YblCRVAjmOn/QTG6z4LCiB1u1JhlkKUqs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=Lr4hk+WV; arc=none smtp.client-ip=209.85.219.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="FtTbAJRj"
-Received: by mail-qv1-f49.google.com with SMTP id 6a1803df08f44-8cceaacd07bso54525716d6.3
-        for <dm-devel@lists.linux.dev>; Mon, 08 Jun 2026 17:30:38 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="Lr4hk+WV"
+Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-8ccd1f57b32so51557566d6.2
+        for <dm-devel@lists.linux.dev>; Mon, 08 Jun 2026 17:31:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=trailofbits.com; s=google; t=1780965038; x=1781569838; darn=lists.linux.dev;
+        d=trailofbits.com; s=google; t=1780965069; x=1781569869; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=TNfsIvgwiWVAuEVycyVt1h+afi4itu9wMZ0WqXvaU/Y=;
-        b=FtTbAJRjywKG8QJShGc82slizxmDmWWue3lJThp8TxBQSzjH57TnOPdTRmFm1ReuLR
-         st9lIcYB83Lp4yBYfRFuM4cj1sbimWPYJ63wzvCnZi6bOQFfqerURxBc895lM9BEJ53d
-         ZwnzVz1If9V2RX4An6m02q5W9Gdbh+pfXQMDEl08z+dO8iTvwIKLKzPitQJImiHQ2Hjg
-         QRD+65DEQQ1aFlLyJ/ulD/clNT6Zg+lgbQx7LtgCvlrORrsW0JDxtl5tSklWU4UJ1WDA
-         ilOTPPcIgdivfodaOHaWgYlGomORLIl9OiQs4XL3/5afERgwQlPsweG8MMFIE3cIieaK
-         8uDw==
+        bh=kMy5BwhnyaX9NS4a1FaUOvPDZuIhtSXICwCkeGO/exs=;
+        b=Lr4hk+WVxaVSyq9bU/jbvdI7/MvRHBrOIL9FyoEdgkL9Rgq3GaI3SLrYHCfw8i75tG
+         Jz5fFDy/aYGuSo8GK9nSVabAbv8htskISQQeVtVzikLrIGWGF4ajU0U+TecD3FkGxFKL
+         83ko639/UidGwI0KTUL0FyldIZDADI36XP9jDjDUerVbFuZvNFu74ZEmQWPfBpLKdYl+
+         wvR5iJXe9ZMkP+jBzPeymeeZhGXbF7GPAIPrQ9Xv0DYZ2/LeLmYK/5l8vwaplfv8VSDm
+         cI9HLmbZm/WUBa57ncj7auszetbQCfvcimsttNeOo5N8HP0+7+va5s3D8drnu0RhRobB
+         d19Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780965038; x=1781569838;
+        d=1e100.net; s=20251104; t=1780965069; x=1781569869;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=TNfsIvgwiWVAuEVycyVt1h+afi4itu9wMZ0WqXvaU/Y=;
-        b=SlfJGAOCu/23RNiw64SvK7zt/1PoE3PJomBm/aPcV1iJKR6DCpucd5HGOGPPt9R5b7
-         NItjidbNnH5vXU+soTsM01fs72bu/2uNMApvbS+pplwfB9GWbjHOHVSkyyg+2CcbTMEJ
-         W68yif1gKcZVLNkGK9gSws+GcYJcP4iK8gO14x1M+jwqDNs8fzxdkSXbOKBar2Zn69qW
-         3tLbrLLVDmf8+g2v2kIQeEcB24Y21JdV+5XkYSe0zKQqon25jzGpMM0gyKZ8uMao5sYE
-         KqrSJ1jnCwzCNJqQaF1azpDIZZbabdtxQkvvACQQPAwzyu7UWzE7ViBvGIORug4V/VRT
-         1UKw==
-X-Forwarded-Encrypted: i=1; AFNElJ8lJrzwzZJjC3ETj7Xi4/01jl+5rxnwI6kWur0l5FuOcXKVq5LNdZ1mGQMTySzVs9+eVPTKRJbUOA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YxdJSPnZbjNCeNo6uyt6+EqsKRTMb695EQsaGrMfORBC9RAH3NJ
-	4F6sSRbpEr7yEFNy2vVWTZEprMvg8CqXkMKuvxvoHhADSrQts7yflgkNOuLaJnRwovI=
-X-Gm-Gg: Acq92OFt9RaqUEFydmHR+BpcQEro5D0vkrb5Lb+cfLZBi/zf0GfADC9JpsUWVoAHTuY
-	bNKAl4gdrVZhfne4bKoCj7U8DKcg75boVBnTDTz9zW4uLLjPOqatn3lQ7aWRmTJ5Mwd8dpwX68m
-	ih7F9JXhjzW9Ip4D8iOmf0Ox7P3zGWSHX1gtVYeFACEPLydeNxGt9RbYTbJbWKMdh+GBWK1OE/6
-	MyzNvMX5lpb7YFOpgbkV74Knv6IVd0M/kSPmDL8QuS9W9mX32dfK0N2qugHUs2555Rg2oMXhuca
-	DCQ1fLFliOZP6KLizkrfMPY6DDNpWgGcx+QKrwcVVU43ARIUl0aQCo2sHa/Tr4a7AqllSqgjo0P
-	mkP+S5yJ7suo4iSFV4755fXTFVnuaMTIqL4eCQO8TP/Hm0PDcCzj59aK0cfVxB9eyIlD7qlgHYS
-	faKflDYpk/E6bkPxbqFpA+NLCaFlRILYEgnBZaTg==
-X-Received: by 2002:a05:6214:1881:b0:8ce:bfe1:cc80 with SMTP id 6a1803df08f44-8cee5fbdeb0mr215976166d6.3.1780965037887;
-        Mon, 08 Jun 2026 17:30:37 -0700 (PDT)
+        bh=kMy5BwhnyaX9NS4a1FaUOvPDZuIhtSXICwCkeGO/exs=;
+        b=OK2JaGG33wOsZfxW9qky70P13m2ymTcPigd2xktKZPmmDJ/PRrPvF3S8VsA6NwpZdD
+         Nxz9ez6Znoj7gpnPEzW16IW0Nmu3VE7Twpp5XmpTo1RWSb1h0HjP/DfX+XlhcTdLfAq4
+         jnAR/XEgIl3ggaIKcBmugA228WljFInGI9T6H7mog1u12wUG2ZJyUs425+n3BfSsa2Z7
+         ufDEJpIokXA6FffBgLaklTN936AHtYymg9Q7OGqj8Co4TVkTSTwL/6b5Iy+/yRbJgTCm
+         +d7eAyliCUKjF4LquIYQh8Z39OQkpTLcYmFZZYYHTd6FV/TZ5jfvnwAH3H4wpc8cWyRt
+         NpnQ==
+X-Forwarded-Encrypted: i=1; AFNElJ+A+IgL/uINHfVinS71CsDu1/tVA0iYPgMqXPzqYvFSshTFUP1+LDPzoN2aBtDECcFEc4aad6Ge2g==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzGtbzJ/ezMCC0FbAkgMMtdbOfkFTYXpCc2VVyGml7aRMZNeHM6
+	0ZBj4KJXMVCBNDWqmFSuJX78Hx43WLniRGOb4sp7SYEUnqGISMLkPmsrnjB3r9leiRc=
+X-Gm-Gg: Acq92OG/uwnYgBdc+/1dQe2UoIy9y0FWW3CTHIKsYDpZquz0iogG29t9o8M5QRlkAl6
+	DGTHFa+Yb8Gy9olADYckb4hMXi+GW4Qe+KqvA7ay6zh87ce1j+/ZvMwPYBaX8VjtYO8Vw+e3ssQ
+	j2hUrkMZPguRyJRYU+W+VJEjP0EL3eJp/9voVTIJCsQqaOrrXPfPlZthyxqW4bV5VmZS09i5jyp
+	45YApt6Pp/6lzdc1rw8vXZwJGJJXSTnWhiCxCANuOy5xeCa2hsk0YVdMRG9gysOcL/vGr+9Z03T
+	Tz5K15ZHR1XHS+OkGpx+KRvORuAZMt4WwNZHNEDFbbTIR/2/wWsYZq0Gz5N4TFFGwV2kdGs1xHM
+	U9lj4u01l2IiIZiNk15y36PUpFPKO7B1bt37enEk8IOVHNdWbczARnnhytsJrdB/NzOmY19+KWg
+	WWlEOhvsZgFb24naK/VrbL+U5ZOSNFiPJc506pYWXnED8S28VO
+X-Received: by 2002:a05:6214:246:b0:8b2:13cd:ad38 with SMTP id 6a1803df08f44-8cee5fb6e1emr211019846d6.11.1780965068591;
+        Mon, 08 Jun 2026 17:31:08 -0700 (PDT)
 Received: from localhost ([161.35.96.86])
-        by smtp.gmail.com with UTF8SMTPSA id 6a1803df08f44-8cecd054d2asm183566406d6.23.2026.06.08.17.30.35
+        by smtp.gmail.com with UTF8SMTPSA id 6a1803df08f44-8ceccd9dfc1sm182099906d6.4.2026.06.08.17.31.06
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 08 Jun 2026 17:30:36 -0700 (PDT)
+        Mon, 08 Jun 2026 17:31:07 -0700 (PDT)
 From: Samuel Moelius <sam.moelius@trailofbits.com>
-To: Alasdair Kergon <agk@redhat.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
 Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
+	Zheng Gu <cengku@gmail.com>,
+	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER PCACHE TARGET),
 	linux-kernel@vger.kernel.org (open list)
-Subject: [PATCH] dm log writes: do not log failed underlying writes
-Date: Tue,  9 Jun 2026 00:29:57 +0000
-Message-ID: <20260609002956.1236613.db812ce62559.dm-log-writes-failed-io-logged@trailofbits.com>
+Subject: [PATCH] dm-pcache: reject option groups without values
+Date: Tue,  9 Jun 2026 00:30:40 +0000
+Message-ID: <20260609003039.1236796.0386591ecc03.dm-pcache-missing-option-value-null-deref@trailofbits.com>
 X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
@@ -76,39 +74,40 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-dm-log-writes records write completions even when the underlying device
-reports an I/O error.  The log can then contain data for writes that did
-not actually reach the backing device.
+The pcache target parses optional arguments as name/value pairs.  A
+table that advertises one optional argument and supplies only a
+recognized option name, for example "cache_mode", reaches
+parse_cache_opts() with argc == 1.  The parser consumes the name,
+decrements argc to zero, then calls dm_shift_arg() again for the value.
+dm_shift_arg() returns NULL when no arguments remain, and the following
+strcmp() dereferences that NULL pointer.
 
-That makes replay and diagnostics disagree with the state of the lower
-device after an error.
-
-Only record completed writes after the lower layer reports success.
+Reject odd optional argument counts before parsing the name/value pairs.
+This keeps valid "cache_mode writeback" and "data_crc true/false" tables
+unchanged while making malformed tables fail during target construction.
 
 Assisted-by: Codex:gpt-5.5-cyber-preview
 Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
 ---
- drivers/md/dm-log-writes.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ drivers/md/dm-pcache/dm_pcache.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index c72e07c3f5a0..e5c4b9df5d9d 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -775,6 +775,13 @@ static int normal_end_io(struct dm_target *ti, struct bio *bio,
- 		unsigned long flags;
+diff --git a/drivers/md/dm-pcache/dm_pcache.c b/drivers/md/dm-pcache/dm_pcache.c
+index 81c795c0400e..ba5471885b16 100644
+--- a/drivers/md/dm-pcache/dm_pcache.c
++++ b/drivers/md/dm-pcache/dm_pcache.c
+@@ -163,6 +163,11 @@ static int parse_cache_opts(struct dm_pcache *pcache, struct dm_arg_set *as,
+ 	if (ret)
+ 		return -EINVAL;
  
- 		spin_lock_irqsave(&lc->blocks_lock, flags);
-+		if (*error) {
-+			if (block->flags & LOG_FLUSH_FLAG)
-+				list_splice_init(&block->list, &lc->unflushed_blocks);
-+			spin_unlock_irqrestore(&lc->blocks_lock, flags);
-+			free_pending_block(lc, block);
-+			return DM_ENDIO_DONE;
-+		}
- 		if (block->flags & LOG_FLUSH_FLAG) {
- 			list_splice_tail_init(&block->list, &lc->logging_blocks);
- 			list_add_tail(&block->list, &lc->logging_blocks);
++	if (argc & 1) {
++		*error = "Invalid number of cache option arguments";
++		return -EINVAL;
++	}
++
+ 	while (argc) {
+ 		arg = dm_shift_arg(as);
+ 		argc--;
 -- 
 2.43.0
 
