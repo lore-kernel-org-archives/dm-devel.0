@@ -1,65 +1,79 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 171D43FF1A2
-	for <dm-devel@lists.linux.dev>; Wed, 10 Jun 2026 11:51:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781092321; cv=none; b=kghw46zad8GOOKQKZB9xleoxCrA/y3mLv4zqw81PAh6Iil4XpwzwJiXCjM2vMj4Su3ghrB7Zy2BDnPrQoRAiZFg+v5+oiZbXv5SwJinktjiKjC0RkqDrJ1Wm6aRNwEEnB+GnQHdf4PQ7xITgB6hphl5Y1EcpeizRMfOWsDvZeWw=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781092321; c=relaxed/simple;
-	bh=heVMP6JmUtjecIUYrry+yuyaJ2CD4k4vpWDaRlmAt5w=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 581B43148DD
+	for <dm-devel@lists.linux.dev>; Wed, 10 Jun 2026 19:02:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.52
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1781118158; cv=pass; b=L/zz8L2OFSgmD/zUrC4ZdUL+r87A29tZD23OFpaiol8ZOOsWhFE1ZVM4AjThxFMkRYVzmu1Bc49UEPf53/hdLHgeTPmKcvDGIPYqGGeomCPWk+BH4EBBkOb1i+KT3JDMewomfDT7sB/j383Ns6T/sJ0pfWAqBYOxsDKHvcQiRhE=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1781118158; c=relaxed/simple;
+	bh=C/Fa3SLqsYjf+XEIArqUWESBN+bt3nf0fopshzrO/7U=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Content-Type; b=aqT3TNFJkh4ZjLV8xmKXsqjEZwXs9wigpxfIKRz0M5U/KpIzPf7X/hdvxixeo/dce0CKMjFfH0w9WeXcCLPFHBF+sx4nC3WdsgHopmwk/rrastM/jEmjG7V+i3yNkOUiUiu7jyaG4TBqPk3TQq8asgmiGrjraw4l9Csb4sn2a7w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TPdi6fmD; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 To:Cc:Content-Type; b=jlF+Qe+87MnpvQwH6hKDIH8cVcayTyic2B3wbZ76xS4jLz8LI5FaFH970vGYLtGZ50aZblx2c/nmNBZZFQR+Qli+/AT/+3+m/r12fLAcfn0zikdKWXUQ+UF3RHywhPZhG+F7o+Hlx/dWAyqSPG4K6GLR4PIFI8wWBU19ISpMwqE=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=ZJsRDeml; arc=pass smtp.client-ip=209.85.167.52
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TPdi6fmD"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781092317;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TqrqS42VtrksIK5677PleKbegQ6oWSw41lfab5R0bTQ=;
-	b=TPdi6fmDgUdwHFIMFnt3mtMGrcCfyMB+OOaiSN/vIrHFtdD2XDwyT8tCjI9ab+LoomcvAK
-	UC8EffJTP7DPlNeZLCWFVHE9C4wQo3joDrCPkVF7zLlQk5mW5dLwVcVUPp8cfvJIjx3vbX
-	2bKx4Fz20VWQwSJQWF1WIj3x5bkxVM4=
-Received: from mail-lf1-f71.google.com (mail-lf1-f71.google.com
- [209.85.167.71]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-558-410gMvWDO-irGfVi-Ayoiw-1; Wed, 10 Jun 2026 07:51:56 -0400
-X-MC-Unique: 410gMvWDO-irGfVi-Ayoiw-1
-X-Mimecast-MFC-AGG-ID: 410gMvWDO-irGfVi-Ayoiw_1781092315
-Received: by mail-lf1-f71.google.com with SMTP id 2adb3069b0e04-5aa68e1b53dso5899798e87.3
-        for <dm-devel@lists.linux.dev>; Wed, 10 Jun 2026 04:51:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="ZJsRDeml"
+Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-5aa7a70c0aaso7231334e87.0
+        for <dm-devel@lists.linux.dev>; Wed, 10 Jun 2026 12:02:37 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1781118156; cv=none;
+        d=google.com; s=arc-20240605;
+        b=TkCt2+eVWUrlOhi+2sDa1X7sbCHRNk0ZAZ/SsiUn66myCah3CqWs2M3sF3NVvlPEJ2
+         4mfO4ZxtgQxg5gv/ekxBugO0jUGMYCv53aH3GB4Xih3EzZajNX/ywAYsydtg6RWz727K
+         g3Dz3AomGl7NUOpMcgIn4gM6ow+2MeJyV5KRvi4SkfYsPqpQ/EMK8nlI8EUxShB854YO
+         ROR6BolWxv/JTGkYaWImXog5hZ7lMBC/Us65QUKyJnuYZgGbKzbwi5wsw9kMXPuSIDoB
+         t+jTt3uldVblS/SbUzEKt9BOjahGZZaGh7opShXBUSJw6yRvkF5vqPJ+dAuTGVhzSYrW
+         HE9A==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=aUJEKNOVm0IWiS8LEIX5N8TIjDauqTCFtiavIHACgjI=;
+        fh=+0Kgjkk3V0GUIRANHS4kO50WRmzYdr1bl4rLk3yRjZc=;
+        b=GzR0hxDIkoNI5IWr3y2hYFSFIu/pzr1gwZ29hEdYAi1ucKKocFi/pGDaeB0tM/ltPI
+         zaSKATDaodXqceIs06SWH/gI3WHhIpHWK9UlgJpfmo4UM9W0Ko24yVgw8cphaONxBuKH
+         KhKo3PMq3XfZ1vq7+94W4Vf3+V3jNBoBs175x6B799Dw926j/IGBkNdK2AXSWwD58dSS
+         /GABICdnYvFFQum/cUgsLgGRlWqvAPCCaUqTADs3W1m/8YRSMjmTg3upuM2TX1HssDEX
+         Uno2b1q4fYsNh3p1bTPN1QCxBoQLgHe6vxw3+OHGkmdhaqWiiAUcM8Kh09N44GQomb4m
+         qvAQ==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=trailofbits.com; s=google; t=1781118156; x=1781722956; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=aUJEKNOVm0IWiS8LEIX5N8TIjDauqTCFtiavIHACgjI=;
+        b=ZJsRDemlhY4Cjqyt1rrke1njAg6Svzn70lDX1KhHqtp8VIE1xRJu9341NFJia23ZP5
+         cG5m9e0ykE0X7r/fJmRbM+Kk0fKYDUVDzMnMgzMH8DkgwPuTcpxiE6dIB2U0pNYAfz+C
+         PlOK3C74Puo5dau7KWbWnCVMbvpN+e7GHW6eJMdyQiOKoSvTqR+Yo7HB7jM4r+7Rxu8f
+         vKt2ISdL9vtEkRtMscn0FzOLUiNRRl0a0aPlnwwX9ORaTEbzh4ugPpOUvzclH203p7By
+         nyenoEfFnZNlOiTKpAcRj7X9f1eRgv1fQtRStF/+NzEPkhoGdwHvjsJeOZBptoeR6bbo
+         xndA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781092315; x=1781697115;
-        h=content-transfer-encoding:to:subject:message-id:date:from
+        d=1e100.net; s=20251104; t=1781118156; x=1781722956;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=TqrqS42VtrksIK5677PleKbegQ6oWSw41lfab5R0bTQ=;
-        b=edz1c/w+R441bsVeeOvNMG/3M0FKHZcp0nE5yXiXEUvRyX/WO9HqI5fz6bOVHIOHJH
-         F6tM99tL4MJFfh/33FQMWHKeZiMugRJE7wJt8E1MLArLufEwc8OOPOybJ3VDBwRMx6g0
-         uPcRM4YHRlsgS0Rg49O3NovQDZDFNHk2iyAjUv/5+hnKq6bp8gdzruQsFfU8UBCxa3UD
-         Pwj49KEPbFe3pEAjAaFBQ5rsBtGG+UO8lpRcn650aDE7hnFhu3rRQ951F/FFY6o8xBlm
-         pO7inFWfBeHuH2cmOPa07nK1uscpEJXFJZYXgvG24jGWTBAjpW/exhxVSzPxH6i8CIPk
-         sxjg==
-X-Forwarded-Encrypted: i=1; AFNElJ/W61RQei5kEH1wRCwNO2AKCXQpyafMXPCsq2tS5owKXr+9qNU5vGGDFpZXJKEFgBEicS6DeTmAKg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyzhZBMuy8N2KJ5OUBSEaYD0hVT5Zz6smy6kCOjbYkM86GlA5Qc
-	pSJMNMcqONtYCXYV3g43DfbKRyplow/mtnNvSEtKfeIBMImo8uDTSg4Hu8DUxFznU3Ku3rSfbER
-	GsaFR1A+BefFZDp6BcAWW3OxSulVQRCFig0sUoIyBKq+6OeyHOkzmbMmXKyS1+V+G9sw/YtwsmS
-	/jFxa/oYE4HvN6bfccClR5Tv7qD11QBFABylcskXrmlQ==
-X-Gm-Gg: Acq92OHLbZDScPU/Jrx++24NQpONW1/MzgSkMb3AY2wtb+FpUCMZ0wzeCGLmp8pYL/A
-	8/+/GA5gSjwtWiOXGpJi0bXt+zGoChlzfPI4nSaj+4hBaiGRg0bXnzSBdYwW5YKG5+7nm3PQmgB
-	X9+ea5oCFzYIUuu1fbq60HpPnUEjgHwk//U2FNd0mF/AiTRrVM/7pfxpDWixBpMbi/xSNdv5Zk3
-	tdwQPLeQGF4YoI=
-X-Received: by 2002:a05:6512:a95:b0:5ad:a04:e624 with SMTP id 2adb3069b0e04-5ad0a04e776mr1950185e87.40.1781092314702;
-        Wed, 10 Jun 2026 04:51:54 -0700 (PDT)
-X-Received: by 2002:a05:6512:a95:b0:5ad:a04:e624 with SMTP id
- 2adb3069b0e04-5ad0a04e776mr1950169e87.40.1781092314213; Wed, 10 Jun 2026
- 04:51:54 -0700 (PDT)
+        bh=aUJEKNOVm0IWiS8LEIX5N8TIjDauqTCFtiavIHACgjI=;
+        b=XkfcmyOPU0XFC1P5AnnXD30wAGK994T4Jl4D8R09qtL6ext03UB03H1z0+seYKqInm
+         q1QEfZEWqOb1T8DpihAKdrJshsXAYMaWjcxMTALAW2klgSmjIcHDnF4MN5b11gzRdm06
+         zgH3UxUpL+Q5eM2ubfgiyfK6gjiZZK2Gvqh9s1xwS8MFtGH1AoC7y7A4RguboI/OMWXE
+         iIhMbutrRHmeYMCaRrPyKVWj69wHB58O5rc5ezDUDl7+fPOhSjUbd4rBmGS/JkEKb5LT
+         jnPWRv6FLQn0qJyMQ/sirDoh9bCBZCYDfLsZ+qfCcETrlT7zJOmruJwO3ZPMOZQu01f7
+         a84A==
+X-Gm-Message-State: AOJu0YyjfQguwOSFIEim2eJrp1QaFj4K9Iv7VQvVJtbQipECgrMo9tdh
+	CeXLgu+FHj0DkhuixY5ONSXqFQtRfnKlobuelOimo9JbmZrpv6x5joj5MKqkSqV34hmL60rR0wj
+	/Ne6KCbEvjgNkntxnnEN3A7VUMn4jbq0jrl2/5s4uQw==
+X-Gm-Gg: Acq92OFiBSeGE4xxCihTrIoiikiL6upMDKqmtsuCK4ho0yhFT05U779Zkq0j6YcVg4O
+	XDcSDKrGiUNHjQxELwYJeYPggEQYFnOTAHVackUEdYNXMLuGAzUL2/3fToK7z39evXtVJfwGb9r
+	ifheEQrxT68izaGJFCxk3RQZKBBoEt4TURfcA7HRXW8dvrU/38sA8xPx6kpuhICfbALPvRNT/4y
+	jjLcWWXSwBEbplbi54fXD4xIZUZwCE/qlrQCEIewiS3dFRDxQLLRUYtBZwoFTLImj7gFLb4fsAC
+	VLBNprDGj93N3gRz46RoclNOwaw=
+X-Received: by 2002:a05:6512:3f10:b0:5aa:6833:f6c7 with SMTP id
+ 2adb3069b0e04-5ad27347b3cmr42862e87.3.1781118155616; Wed, 10 Jun 2026
+ 12:02:35 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -67,84 +81,90 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 References: <20260609001636.1235504.7288d2831f6d.dm-cache-invalidate-cblock-truncation@trailofbits.com>
-In-Reply-To: <20260609001636.1235504.7288d2831f6d.dm-cache-invalidate-cblock-truncation@trailofbits.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Wed, 10 Jun 2026 19:51:41 +0800
-X-Gm-Features: AVVi8Cc9Yt-6n2IMboC8SjA9u5e9B8Ah3xEoiLQoe6fwk485MDSHERs4oQAE3Es
-Message-ID: <CALjSBEvCkx9xPTOeYOGQs-hdTsMw1vOQ3bX95n9r-ep8tA4BgQ@mail.gmail.com>
+ <CALjSBEvCkx9xPTOeYOGQs-hdTsMw1vOQ3bX95n9r-ep8tA4BgQ@mail.gmail.com>
+In-Reply-To: <CALjSBEvCkx9xPTOeYOGQs-hdTsMw1vOQ3bX95n9r-ep8tA4BgQ@mail.gmail.com>
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+Date: Wed, 10 Jun 2026 15:02:23 -0400
+X-Gm-Features: AVVi8CdySD--SPYVLKXEvmeWg9b4rGAwqzZGJyOKewqYxy5WUYMH35QGsM6tnSU
+Message-ID: <CAE+C+DbnhE+VG4X5foUeRBoHy_L9aHV-PDQRjvwhmWUtVzKBiQ@mail.gmail.com>
 Subject: Re: [PATCH] dm cache: reject oversized invalidate_cblocks values
-To: Samuel Moelius <sam.moelius@trailofbits.com>, dm-devel@lists.linux.dev
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: IBZYydN5PHccolgWWlfTfssn5yu3Vi6ZU8zUwajBQ7A_1781092315
-X-Mimecast-Originator: redhat.com
+To: Ming Hung Tsai <mtsai@redhat.com>
+Cc: dm-devel@lists.linux.dev
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jun 9, 2026 at 8:26=E2=80=AFAM Samuel Moelius
-<sam.moelius@trailofbits.com> wrote:
+On Wed, Jun 10, 2026 at 7:51=E2=80=AFAM Ming Hung Tsai <mtsai@redhat.com> w=
+rote:
 >
-> invalidate_cblocks parses the cache block number into an unsigned long
-> long, but then stores it in a narrower cblock_t.  Values that do not fit
-> in the target type are silently truncated before the cache block is
-> invalidated.
+> On Tue, Jun 9, 2026 at 8:26=E2=80=AFAM Samuel Moelius
+> <sam.moelius@trailofbits.com> wrote:
+> >
+> > invalidate_cblocks parses the cache block number into an unsigned long
+> > long, but then stores it in a narrower cblock_t.  Values that do not fi=
+t
+> > in the target type are silently truncated before the cache block is
+> > invalidated.
+> >
+> > That can make a request for one cache block invalidate a different
+> > block.  It also makes the userspace-visible control file accept input
+> > that cannot be represented by the mapping it is about to update.
+> >
+> > Reject cache block numbers that do not round-trip through cblock_t
+> > before using them.
+> >
+> > Assisted-by: Codex:gpt-5.5-cyber-preview
+> > Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+> > ---
+> >  drivers/md/dm-cache-target.c | 8 +++++++-
+> >  1 file changed, 7 insertions(+), 1 deletion(-)
+> >
+> > diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.=
+c
+> > index 097315a9bf0f..5f1a019a9a8d 100644
+> > --- a/drivers/md/dm-cache-target.c
+> > +++ b/drivers/md/dm-cache-target.c
+> > @@ -3330,6 +3330,9 @@ static int parse_cblock_range(struct cache *cache=
+, const char *str,
+> >         r =3D sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
+> >
+> >         if (r =3D=3D 2) {
+> > +               if (b > U32_MAX || e > U32_MAX)
+> > +                       return -EINVAL;
+> > +
+> >                 result->begin =3D to_cblock(b);
+> >                 result->end =3D to_cblock(e);
+> >                 return 0;
+> > @@ -3341,8 +3344,11 @@ static int parse_cblock_range(struct cache *cach=
+e, const char *str,
+> >         r =3D sscanf(str, "%llu%c", &b, &dummy);
+> >
+> >         if (r =3D=3D 1) {
+> > +               if (b > U32_MAX || b =3D=3D U32_MAX)
+> > +                       return -EINVAL;
+> > +
+> >                 result->begin =3D to_cblock(b);
+> > -               result->end =3D to_cblock(from_cblock(result->begin) + =
+1u);
+> > +               result->end =3D to_cblock(b + 1);
+> >                 return 0;
+> >         }
+> >
+> > --
+> > 2.43.0
+> >
+> >
 >
-> That can make a request for one cache block invalidate a different
-> block.  It also makes the userspace-visible control file accept input
-> that cannot be represented by the mapping it is about to update.
+> This patch is a half-measure. sscanf() silently wraps on overflow, so
+> values beyond U64_MAX still get wrapped to a u64 value, bypass the
+> range check, and invalidate a different block than specified.
 >
-> Reject cache block numbers that do not round-trip through cblock_t
-> before using them.
+> Also, in the single-value path, the b =3D=3D U32_MAX check is redundant.
+> With the original end calculation, end wraps to 0 via uint32_t
+> overflow, and validate_cblock_range() already rejects it since begin
+> >=3D end. Neither the extra check nor the new end calculation is needed
+> here.
 >
-> Assisted-by: Codex:gpt-5.5-cyber-preview
-> Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
-> ---
->  drivers/md/dm-cache-target.c | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-> index 097315a9bf0f..5f1a019a9a8d 100644
-> --- a/drivers/md/dm-cache-target.c
-> +++ b/drivers/md/dm-cache-target.c
-> @@ -3330,6 +3330,9 @@ static int parse_cblock_range(struct cache *cache, =
-const char *str,
->         r =3D sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
->
->         if (r =3D=3D 2) {
-> +               if (b > U32_MAX || e > U32_MAX)
-> +                       return -EINVAL;
-> +
->                 result->begin =3D to_cblock(b);
->                 result->end =3D to_cblock(e);
->                 return 0;
-> @@ -3341,8 +3344,11 @@ static int parse_cblock_range(struct cache *cache,=
- const char *str,
->         r =3D sscanf(str, "%llu%c", &b, &dummy);
->
->         if (r =3D=3D 1) {
-> +               if (b > U32_MAX || b =3D=3D U32_MAX)
-> +                       return -EINVAL;
-> +
->                 result->begin =3D to_cblock(b);
-> -               result->end =3D to_cblock(from_cblock(result->begin) + 1u=
-);
-> +               result->end =3D to_cblock(b + 1);
->                 return 0;
->         }
->
-> --
-> 2.43.0
->
->
+> To properly fix truncation, a rework using kstrtoull() is needed.
 
-This patch is a half-measure. sscanf() silently wraps on overflow, so
-values beyond U64_MAX still get wrapped to a u64 value, bypass the
-range check, and invalidate a different block than specified.
-
-Also, in the single-value path, the b =3D=3D U32_MAX check is redundant.
-With the original end calculation, end wraps to 0 via uint32_t
-overflow, and validate_cblock_range() already rejects it since begin
->=3D end. Neither the extra check nor the new end calculation is needed
-here.
-
-To properly fix truncation, a rework using kstrtoull() is needed.
-
+I am getting ready to travel and I will address this when I return in
+about two weeks. Thank you for understanding.
