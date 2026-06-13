@@ -1,61 +1,63 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 018B926ED46
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 13:10:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C4A42F3C3D
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 13:10:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781356206; cv=none; b=JADlw33hFozHxjjw6eSlsfhJFdg/Grw6sTs192erGdNnAt28bI541jk/ycJl7RIAiVhFF4/DPH+nbGRgyW0YFzb9DDzzWLczsRmCK/lLYjJ0v1A3cE2U8KB8R9g/bajnavgqifhxuxOTBelag5+7+2ZqcoW1TLCq4m6MVNKB3i0=
+	t=1781356207; cv=none; b=mi6ZxzhD/CXUyrekr2qdpzNIYRl948Z2VGp1j/Bp8epe0pe7qJlWGRJnVdlfloDjYVJD/VjRDUx49/3Sgcl8wmnPwOOkVWksXGI8nN2zMsejp5pG5NBcEMaib73iSLsv49ufWeXrtRor8qAlR7b5K6K1Jzf10ABBwsiYNDiVCb4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781356206; c=relaxed/simple;
-	bh=qeT90Jm68DHyvnMWRr819DYsG1ubNEah3n5p7ZNYCRY=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GKaa0fWoMbekbt4oatIoCdTXgDhoQVsdFozna9yZJkY+jg9Z37C4yY8rFVk/Ja1yDzQHOQ14V7IQQ5yYiDuJ8N6nY4k0Ji7fk8jnsD6P0uR8mZwKdLbsQkhJlyKwaJs8D/cIdGA811YJotdUtE04XQb6gGNI3lTIeUD45TATAkk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=EnInVMwD; arc=none smtp.client-ip=209.85.128.51
+	s=arc-20240116; t=1781356207; c=relaxed/simple;
+	bh=EPo9MqFwd3g8QBcrSKo0kHhaYSdqqcbRcr1BKYDKhis=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=eUzeN+FxUkzicS9bZU40IXZQtnpfso9Syas70Idr3djHyNek0JVwb4UChnm9cLxvEq8KfcQ+QxFafCGaft1YNgAgzPNgT5wKWwt6yFfVXM+U2umRccIcMz8Tw3mEsSrg3FScfAPfWoR0GEM+/LroxVq8Tn1H6ac//W2316SQia4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=tFr3l1Yf; arc=none smtp.client-ip=209.85.128.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EnInVMwD"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490a7629453so2268035e9.0
-        for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 06:10:04 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="tFr3l1Yf"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-490ae34298aso1754315e9.1
+        for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 06:10:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781356203; x=1781961003; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=E9CZ0nPZOyjKQdtPKI8vR9XTO6lw3CPQXknRiL6KtJA=;
-        b=EnInVMwDBj7sEN5/cE7y7l+XOARKo/D0ifILobVElMCdCtZfHjid5iEzzr4SMDMEph
-         pKqsrSqI7sImNs+CawFPCk+bqwktVcX3ggBf909DWHsv0qT9FTmn+zpL60tR8rcf5Yje
-         m4kurT83QHJZG+ey9xH/r4MY7Vk3zoYwc1O41vrOlKKwjYk5d29edGLJL50JarGvUH+B
-         Qdip49zt9pS0W4W3+wMsv0AY4Rj+nAn6BoTfePu3sS4/mLLQ3rBvuoGxBkQiQVdvKPTZ
-         KWTK+c/crjoiEF11CqmJOl2FEe2Ja2YBNSaKMu2Xy6Rgoq83Q2W0lkTPlXn9ZYySkZ57
-         Ze0Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781356203; x=1781961003;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20251104; t=1781356204; x=1781961004; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=E9CZ0nPZOyjKQdtPKI8vR9XTO6lw3CPQXknRiL6KtJA=;
-        b=DUz1WX8dbVUHKrR4Wj0Khg0HIMFpRw96pNBorEo82+3zMcYQzJC3zlmSIK1Fsze+AL
-         /KSGzVfQ7PeAt90joE7hKsgMfpikr75HcH9M/g7uEtyz6UO3Sn+Q+ybElP+meJOrdcyv
-         aZJ3J2yJTF0IwzWRx/HRaQSW7ALoPLE9u5GmESazdVeTqmvzvHsg+2Bqz10R0hnFykzD
-         5AifSt3x6gVUYWmVIHiOs4KzLijc7WdD26XWOX2CcuvEMP7mFlf9N7P9mTx38JnmiXhZ
-         YQEPSzyVRnKwvONb4KrDYUEQn2KyBrXxxNn2FANg5r2NGmrbv6oWH6fzR0VfTpY4ws/i
-         h8bg==
-X-Forwarded-Encrypted: i=1; AFNElJ8zDQXBunjFSrL39oGXKrtXHf6QOP4R9rJYsahoOirOZ9goqNoeEHArOwhG66Ecv8Lh43OUkprkIA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwIwPfXaDP+KFqMRhCccHJPY6hpGThAbHRZQBBAEn/cYCxWJg3n
-	9fag1wiNiarHS/xJ0Wr53h5Gz2sZ3AKaTvH1kFyviDXGPlo7fwmsg3I=
-X-Gm-Gg: Acq92OHylyG8NnzlUQRKtvlfLNVSASbdUC9DI3f9GfXoUXoJ2VkCNQxhWx/vjnytIG1
-	K9XNvkKcI0dc/UnvUablg7hB1Ahc2JY0JQo/75j76Pzgd4btaZJ0JItn9NTDQc6f1Ua7P9l4lxT
-	mcBmjcxnMpIp1f/CNxG7oggitoFOLL7oNtd2xf80iZ6fHn8XzrzZkB8Xj6Jx8NNbRUCF8fzarOr
-	orufrSiM6nfXH3tayBs8q5l7VhfYNc3oauJWOCrVhFAsH6V5/gYde+xgGbqw2dxSpfEOWfQ5f8T
-	Qct0gYAXs7erbOr24+243ksUO9JSsXl1zgRH17F58OMy3YkiYJxRcvMVjgepoEZBPD5Lap9tnvt
-	Vt7g7N720x+rsRGIgsL2+iteNz2kdFRn/softg1xoc1Rz2LZDFBJDTkMUlECD5hEdN6Mi73fmEJ
-	DZ6XWIcpdANsmREsqU68zkyJ91/D6JanjS2vWjOmQ6rTF5e3DGe0dp+SzBQ9TQzZ0i
-X-Received: by 2002:a05:6000:714:b0:460:1bf8:c959 with SMTP id ffacd0b85a97d-4606da0582dmr4178688f8f.0.1781356203294;
-        Sat, 13 Jun 2026 06:10:03 -0700 (PDT)
+        bh=27Ya0B/cyv9jJ0xkkollEps9gbMrbAPucLjqgxhCC9k=;
+        b=tFr3l1Yf9U7kxIWFBUN92XFhCWfafigJkcRsx3vs7B7Ytawi+j1eBOoKbRLBz399r/
+         ZGFGwmSwU66x08WxAaekmiTgnOoJAf7/d0fAE8nWnsO+QHIrSrY6Bxnour+Mc/zRGfSl
+         ZH3+Zlo7UbxSkWfMos8NfIcJIP7i2t9XsXso1NGaRW5XU5gT9kmrhPbzdeywr75ICYDH
+         dp8vp78bBr+CAKo01CmFeq/97t6thhDL2BXlpJ0ZRc9wpQLnPyc0FDEqOHil6pjX1Ch7
+         fPIjKo/jVOP/ijnCcqJ45xFZ2hEnDQuqIGejMw84u/Ho3OfTVjqBqdgyF4ATvMNksf10
+         BejQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781356204; x=1781961004;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=27Ya0B/cyv9jJ0xkkollEps9gbMrbAPucLjqgxhCC9k=;
+        b=sIBsEvAQcNPjv66s2Llu5n2lAstxKXBIIYDIO0BKQ3KHNeSgYnGQach3MUdjxS9lUD
+         ZM2OW+2zVN8K9HxFdwBPAra0E4FZ06pWwex/7VVTFF0EM1rT/tQYFeyDIYORaruSWDyU
+         o8vY42uaOMQULGvBGgzZ8aSfdACK2akS6AVuMcQIv33mS8yhpK684YstUgHZ8hx23jnU
+         AIm2sqZB+71Iem3F0nj6wsdWmRMzqHrogbKuavLFWeGUqBS6qg9HfuUZLkwAY2s4MO27
+         YKOKv2jQvvdwWcID64MOU3bn7OPqXmWRWE0o9F40LZ2Zy4S/lC+fo63NCwQOdbg3EG/S
+         WPJQ==
+X-Forwarded-Encrypted: i=1; AFNElJ90aTIwIiwLhzyvHiZ0K8G5T4bsxoi+TiPlXtVWQpzs5h39vB3M08hkNWERxn8X3lqC+6cwVhL+1Q==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxbEv4bitPciFWnydUks+wGxHHp+F54PpkF0/f2fJ4EZltb7w8+
+	Cgt6LsFmo5d+vmxLIiiV1aiBVg9hVMeRB3An0CWttUwh0tn2TJryvhc=
+X-Gm-Gg: Acq92OE2ADupMEUNTO/gWBkp70QAj/APCzKKpcF5GgQ8k0xv7GoeQUYpC1pA7rCqoLe
+	viOD26oR3g7N0adt8ZbP7TwCohjmvSzE9xYFO2ut26KdR7sKEWD95t9KrLGVaXeF/h0BWDoOvLy
+	Jv1HndmzYTzPtN1uXk2p8rMsplM7GlWGlUQm4/JkWpsr5/04UcFBUqE5XOI5wlaKm6hAeMnSY14
+	wojlU+6ldtHuojtJRPAdlhyQKl7C6o62EG5Q4osDjWoJK5OLXg7PSnpAwewww3+IL+7j1GcvpyM
+	hVmLUHJIPj45MSBEYW0QwSDf+kgGqe+NUFnO75Er8AIDoOQ86tcgefwtj+YlU0fZKF1ztgAcMk9
+	vqNC4LswRCSGW7jS3+WcSlF8bD8kn3mpTURbx2aM7yWjppLLMoZQUSnqP3kq3oT3YC3h5nBoQ+9
+	wKd9RGgE/XvQd83dpoITj5d8LTQqvbtd2JfhjVY0qdaCw477/gpMH8Arw5T5KbdQTP
+X-Received: by 2002:a05:600c:314a:b0:490:a2f4:c498 with SMTP id 5b1f17b1804b1-490ec504ca0mr38876115e9.6.1781356204417;
+        Sat, 13 Jun 2026 06:10:04 -0700 (PDT)
 Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4606f2c5266sm16702126f8f.29.2026.06.13.06.10.02
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49220345528sm84506395e9.8.2026.06.13.06.10.03
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 13 Jun 2026 06:10:02 -0700 (PDT)
+        Sat, 13 Jun 2026 06:10:04 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -63,10 +65,12 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 0/5] multipath-tools: clean up man pages II
-Date: Sat, 13 Jun 2026 15:09:55 +0200
-Message-ID: <20260613131002.144263-1-xose.vazquez@gmail.com>
+Subject: [PATCH 1/5] multipath-tools: remove syntax check comments from man pages
+Date: Sat, 13 Jun 2026 15:09:56 +0200
+Message-ID: <20260613131002.144263-2-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260613131002.144263-1-xose.vazquez@gmail.com>
+References: <20260613131002.144263-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -76,33 +80,130 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-It performs general cleanups, updates, and formatting fixes
-across the man pages, incorporating feedback from Martin and Ben.
+Remove the embedded groff/man command lines from the header comments
+of all man pages.
 
-Xose Vazquez Perez (5):
-  multipath-tools: remove legacy syntax check comments from man pages
-  multipath-tools: clarify path selector descriptions in multipath.conf.5
-  multipath-tools: specify file paths using variables and add FILES
-                   section in multipath.conf.5
-  multipath-tools: clarify user_friendly_names prefix behavior in
-                   multipath.conf.5
-  multipath-tools: fix mandoc errors/warnings in man pages
-
- kpartx/kpartx.8                               |  4 -
- libmpathpersist/mpath_persistent_reserve_in.3 |  5 --
- .../mpath_persistent_reserve_out.3            |  5 --
- mpathpersist/mpathpersist.8.in                |  6 --
- multipath/multipath.8.in                      |  4 -
- multipath/multipath.conf.5.in                 | 87 +++++++++++--------
- multipathd/multipathc.8                       |  6 +-
- multipathd/multipathd.8.in                    |  5 --
- 8 files changed, 54 insertions(+), 68 deletions(-)
-
+Suggested-by: Martin Wilck <mwilck@suse.com>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ kpartx/kpartx.8                                | 4 ----
+ libmpathpersist/mpath_persistent_reserve_in.3  | 4 ----
+ libmpathpersist/mpath_persistent_reserve_out.3 | 4 ----
+ mpathpersist/mpathpersist.8.in                 | 4 ----
+ multipath/multipath.8.in                       | 4 ----
+ multipath/multipath.conf.5.in                  | 4 ----
+ multipathd/multipathc.8                        | 4 ----
+ multipathd/multipathd.8.in                     | 4 ----
+ 8 files changed, 32 deletions(-)
+
+diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
+index ef8051a5..fbc8f726 100644
+--- a/kpartx/kpartx.8
++++ b/kpartx/kpartx.8
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t kpartx/kpartx.8
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z  kpartx/kpartx.8 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/libmpathpersist/mpath_persistent_reserve_in.3 b/libmpathpersist/mpath_persistent_reserve_in.3
+index 871242d5..5109fb03 100644
+--- a/libmpathpersist/mpath_persistent_reserve_in.3
++++ b/libmpathpersist/mpath_persistent_reserve_in.3
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t libmpathpersist/mpath_persistent_reserve_in.3
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z libmpathpersist/mpath_persistent_reserve_in.3 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
+index bf44777c..09708b93 100644
+--- a/libmpathpersist/mpath_persistent_reserve_out.3
++++ b/libmpathpersist/mpath_persistent_reserve_out.3
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t libmpathpersist/mpath_persistent_reserve_out.3
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z libmpathpersist/mpath_persistent_reserve_out.3 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/mpathpersist/mpathpersist.8.in b/mpathpersist/mpathpersist.8.in
+index 9a5a716b..d5f5a452 100644
+--- a/mpathpersist/mpathpersist.8.in
++++ b/mpathpersist/mpathpersist.8.in
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t mpathpersist/mpathpersist.8
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z mpathpersist/mpathpersist.8 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/multipath/multipath.8.in b/multipath/multipath.8.in
+index 0b170101..da5effb0 100644
+--- a/multipath/multipath.8.in
++++ b/multipath/multipath.8.in
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t multipath/multipath.8
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z multipath/multipath.8 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index 6990d2bf..422ab120 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t multipath/multipath.conf.5
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z multipath/multipath.conf.5 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/multipathd/multipathc.8 b/multipathd/multipathc.8
+index cf7ae5be..5e97fb81 100644
+--- a/multipathd/multipathc.8
++++ b/multipathd/multipathc.8
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t multipathd/multipathc.8
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z multipathd/multipathc.8 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
+diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
+index d766dc65..93625a90 100644
+--- a/multipathd/multipathd.8.in
++++ b/multipathd/multipathd.8.in
+@@ -1,8 +1,4 @@
+ .\" ----------------------------------------------------------------------------
+-.\" Make sure there are no errors with:
+-.\" groff -z -wall -b -e -t multipathd/multipathd.8
+-.\" man --warnings -E UTF-8 -l -Tutf8 -Z multipathd/multipathd.8 > /dev/null
+-.\"
+ .\" Update the date below if you make any significant change.
+ .\" ----------------------------------------------------------------------------
+ .
 -- 
 2.54.0
 
