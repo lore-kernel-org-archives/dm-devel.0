@@ -1,137 +1,108 @@
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD98040D589
-	for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 12:10:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 018B926ED46
+	for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 13:10:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781352602; cv=none; b=A3O9vFsry+oKR0Hn9dkhaWqP3upzU/OqWblHUakTG1wfIk9XtInHl/87Itof5AC6rZ+ESbi+1lgQz+jFFfIfL12hqW/5Acio3kuwfjauwNKTaPtb6nxlOCOcf6lMCgk4r14vZ2Sv8xvmUbqFHOu7I649xrFm8RKhw59lqwbnLx8=
+	t=1781356206; cv=none; b=JADlw33hFozHxjjw6eSlsfhJFdg/Grw6sTs192erGdNnAt28bI541jk/ycJl7RIAiVhFF4/DPH+nbGRgyW0YFzb9DDzzWLczsRmCK/lLYjJ0v1A3cE2U8KB8R9g/bajnavgqifhxuxOTBelag5+7+2ZqcoW1TLCq4m6MVNKB3i0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781352602; c=relaxed/simple;
-	bh=KQ5W3ouJfWlzPqV2kmZYj+n86hzDzhp4iaR82BsYwGU=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=GFyfMrM33uyYvnxqRdoOd+t8t0gk/6zA46NQyYPjuRqbRea2gUdfI8P8KFeggPwJuihMyHo4Shz3E2qDbJVKdW4pz3gYaMWfmMiOJKv1cdCp//Krjns7bIZ3nU9daQW6diEYXipi3mIta9kElkWgi7Je98U319qKayan+fcOX2w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=qhks7r3j; arc=none smtp.client-ip=209.85.128.47
+	s=arc-20240116; t=1781356206; c=relaxed/simple;
+	bh=qeT90Jm68DHyvnMWRr819DYsG1ubNEah3n5p7ZNYCRY=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=GKaa0fWoMbekbt4oatIoCdTXgDhoQVsdFozna9yZJkY+jg9Z37C4yY8rFVk/Ja1yDzQHOQ14V7IQQ5yYiDuJ8N6nY4k0Ji7fk8jnsD6P0uR8mZwKdLbsQkhJlyKwaJs8D/cIdGA811YJotdUtE04XQb6gGNI3lTIeUD45TATAkk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=EnInVMwD; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qhks7r3j"
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-490b8adf813so2388315e9.1
-        for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 05:10:00 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="EnInVMwD"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490a7629453so2268035e9.0
+        for <dm-devel@lists.linux.dev>; Sat, 13 Jun 2026 06:10:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781352599; x=1781957399; darn=lists.linux.dev;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=alNV2RRc878JtCohPIPQj3aM33yIJ3ezX1tJ3gF5x7Y=;
-        b=qhks7r3jiwbeRGMyAUR3TWigLbTqqGx25LkkvBktx7nL/OvtZ3mToeSvJnK/GuOwk+
-         2s8/x8vaPwXdGx/WMlkT4SGYFAFQVo7vB8/07+V/jZOqIJiE6sYlfy/VkemhZU9xwFtO
-         NKphlyru2M/1l4doe1B6OylyqmqFQjwjiakbFkWdmsUaNGtGeg7BVsJ7gV4yBzKUTg6b
-         nKvjP3rpbshDpezyN0Vv6nPcsCZYKWEK6m7V+bWh9b7tZ/8v2RX1fFYFnjQD7O2GD2/U
-         o+qzZg1d9cFS3vqZfPKhwcF0IcVJyKmuJ6XkbLHtaOM+iSm8mP5v15FhoE9cvsoPz0gi
-         iAlw==
+        d=gmail.com; s=20251104; t=1781356203; x=1781961003; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=E9CZ0nPZOyjKQdtPKI8vR9XTO6lw3CPQXknRiL6KtJA=;
+        b=EnInVMwDBj7sEN5/cE7y7l+XOARKo/D0ifILobVElMCdCtZfHjid5iEzzr4SMDMEph
+         pKqsrSqI7sImNs+CawFPCk+bqwktVcX3ggBf909DWHsv0qT9FTmn+zpL60tR8rcf5Yje
+         m4kurT83QHJZG+ey9xH/r4MY7Vk3zoYwc1O41vrOlKKwjYk5d29edGLJL50JarGvUH+B
+         Qdip49zt9pS0W4W3+wMsv0AY4Rj+nAn6BoTfePu3sS4/mLLQ3rBvuoGxBkQiQVdvKPTZ
+         KWTK+c/crjoiEF11CqmJOl2FEe2Ja2YBNSaKMu2Xy6Rgoq83Q2W0lkTPlXn9ZYySkZ57
+         Ze0Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781352599; x=1781957399;
-        h=content-transfer-encoding:in-reply-to:from:content-language
-         :references:cc:to:subject:mime-version:date:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=alNV2RRc878JtCohPIPQj3aM33yIJ3ezX1tJ3gF5x7Y=;
-        b=jVbjDlD0HFj8pQNBbGJvgRwkoq45UON7c0AJPVriD8ej7m2nbUcqmZ2xcZ2kxwlp6/
-         vgrSca4iW7sLAjpd7u0n68rM3pdlxrfSNQ2TJViVkj+0UbKUjNu9ihl/LDlrlXvFwy9+
-         f8gOi/cLz1Zbnw1hW5i3MgwLvsO5+KNwMK+zQaG5eQJfho8bfL279U/as7nT4kzV7wwo
-         24z8BSrjVEN0LEZg9cMqRV8gLTRfHbl0J+hsf2Do5xBcJSCnlUjz/H9bphmpgK6EWHhJ
-         nIpM01mvCh6Rf+EY/aM6H7JyBrGbUkO0PlLcLrO0KJT1Z3ibaPn6voy5bOl+HjSJiaK8
-         MveA==
-X-Forwarded-Encrypted: i=1; AFNElJ9Rb+mKJdR4g3OP9GsFyzvE4NlyEKfEHmhEoRqRYJavRUigIsROrri5CEVfF6JIm9kZP/HzS7GodQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw7rHOEPJmrLMnm4W3QoFEK1bECAley+UniFB3TvCqplIUZ5nPx
-	+5OHs3+8jjTY1gLOXz797UFvQa5cJFbHVbOtxTk4lSj8+dVurr8LVx4=
-X-Gm-Gg: Acq92OHTh9mfuOBvsvhcZvTImXcwLP0hYEK5atnLLn7k3qcEsO/6cv/7CrbYGOvPDF+
-	4svwboWWHDUj1oGcHOgPZKJFOOaM2uAPbtkZN81VwFZBpARy9ojo2ihsOzifiyq7gLu+XZkq71Q
-	LIENP+bNNj480SfaiacXi/oVWo9yykK+wmQTliGEt/j+lMwr1js2KN9MsTkbXb8QpM78X9I55n3
-	5gOIiDnUGWPGVcOBeF82SV/vGQprci4zkZupwB3eUjf/QGCKLqG3ONCR1d/uAQymbv6LRFpe5tH
-	oH+0yjqRiZPSRC9bfiY+YMXoPN/N94GdH3iA8zWvTDH1yyiWtE5kqfzO14djlgKCH2FdvrytQqS
-	9iH9PTsYHKZK6CEP9TGlVJjpAiDD8rKK6VO58RyKFJb2d0JaJyYKpL8URp5Ueqwn12ngJm5iCIH
-	CW8TAQvuEtzrBC7jPuDBSZkeKII0kkEtQIdoMFgI25VG4r+NJTMMtDn/kBpbKC32pm/ot/r/2hC
-	ns=
-X-Received: by 2002:a05:600c:a21a:b0:490:b71f:2de with SMTP id 5b1f17b1804b1-490ec4fe4e3mr22422145e9.5.1781352599130;
-        Sat, 13 Jun 2026 05:09:59 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1781356203; x=1781961003;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=E9CZ0nPZOyjKQdtPKI8vR9XTO6lw3CPQXknRiL6KtJA=;
+        b=DUz1WX8dbVUHKrR4Wj0Khg0HIMFpRw96pNBorEo82+3zMcYQzJC3zlmSIK1Fsze+AL
+         /KSGzVfQ7PeAt90joE7hKsgMfpikr75HcH9M/g7uEtyz6UO3Sn+Q+ybElP+meJOrdcyv
+         aZJ3J2yJTF0IwzWRx/HRaQSW7ALoPLE9u5GmESazdVeTqmvzvHsg+2Bqz10R0hnFykzD
+         5AifSt3x6gVUYWmVIHiOs4KzLijc7WdD26XWOX2CcuvEMP7mFlf9N7P9mTx38JnmiXhZ
+         YQEPSzyVRnKwvONb4KrDYUEQn2KyBrXxxNn2FANg5r2NGmrbv6oWH6fzR0VfTpY4ws/i
+         h8bg==
+X-Forwarded-Encrypted: i=1; AFNElJ8zDQXBunjFSrL39oGXKrtXHf6QOP4R9rJYsahoOirOZ9goqNoeEHArOwhG66Ecv8Lh43OUkprkIA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwIwPfXaDP+KFqMRhCccHJPY6hpGThAbHRZQBBAEn/cYCxWJg3n
+	9fag1wiNiarHS/xJ0Wr53h5Gz2sZ3AKaTvH1kFyviDXGPlo7fwmsg3I=
+X-Gm-Gg: Acq92OHylyG8NnzlUQRKtvlfLNVSASbdUC9DI3f9GfXoUXoJ2VkCNQxhWx/vjnytIG1
+	K9XNvkKcI0dc/UnvUablg7hB1Ahc2JY0JQo/75j76Pzgd4btaZJ0JItn9NTDQc6f1Ua7P9l4lxT
+	mcBmjcxnMpIp1f/CNxG7oggitoFOLL7oNtd2xf80iZ6fHn8XzrzZkB8Xj6Jx8NNbRUCF8fzarOr
+	orufrSiM6nfXH3tayBs8q5l7VhfYNc3oauJWOCrVhFAsH6V5/gYde+xgGbqw2dxSpfEOWfQ5f8T
+	Qct0gYAXs7erbOr24+243ksUO9JSsXl1zgRH17F58OMy3YkiYJxRcvMVjgepoEZBPD5Lap9tnvt
+	Vt7g7N720x+rsRGIgsL2+iteNz2kdFRn/softg1xoc1Rz2LZDFBJDTkMUlECD5hEdN6Mi73fmEJ
+	DZ6XWIcpdANsmREsqU68zkyJ91/D6JanjS2vWjOmQ6rTF5e3DGe0dp+SzBQ9TQzZ0i
+X-Received: by 2002:a05:6000:714:b0:460:1bf8:c959 with SMTP id ffacd0b85a97d-4606da0582dmr4178688f8f.0.1781356203294;
+        Sat, 13 Jun 2026 06:10:03 -0700 (PDT)
 Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-490ea95b274sm156122375e9.1.2026.06.13.05.09.58
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sat, 13 Jun 2026 05:09:58 -0700 (PDT)
-Message-ID: <403580ab-e195-4a9e-a080-9487add2eaaf@gmail.com>
-Date: Sat, 13 Jun 2026 14:09:58 +0200
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4606f2c5266sm16702126f8f.29.2026.06.13.06.10.02
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 13 Jun 2026 06:10:02 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH 0/5] multipath-tools: clean up man pages II
+Date: Sat, 13 Jun 2026 15:09:55 +0200
+Message-ID: <20260613131002.144263-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 2/2] multipath-tools: add mandoc check to man pages
-To: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM_DEVEL-ML <dm-devel@lists.linux.dev>
-References: <20251010092211.57426-1-xose.vazquez@gmail.com>
- <20251010092211.57426-2-xose.vazquez@gmail.com>
- <cd074f884f847ed291c2e720657668d6a0523f8f.camel@suse.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <cd074f884f847ed291c2e720657668d6a0523f8f.camel@suse.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-On 10/10/25 1:20 PM, Martin Wilck wrote:
+It performs general cleanups, updates, and formatting fixes
+across the man pages, incorporating feedback from Martin and Ben.
 
-> On Fri, 2025-10-10 at 11:22 +0200, Xose Vazquez Perez wrote:
->> Cc: Martin Wilck <mwilck@suse.com>
->> Cc: Benjamin Marzinski <bmarzins@redhat.com>
->> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
->> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
->> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
->> ---
->>   kpartx/kpartx.8                                | 1 +
->>   libmpathpersist/mpath_persistent_reserve_in.3  | 1 +
->>   libmpathpersist/mpath_persistent_reserve_out.3 | 1 +
->>   mpathpersist/mpathpersist.8.in                 | 5 +++--
->>   multipath/multipath.8.in                       | 5 +++--
->>   multipath/multipath.conf.5.in                  | 5 +++--
->>   multipathd/multipathc.8                        | 1 +
->>   multipathd/multipathd.8.in                     | 5 +++--
->>   8 files changed, 16 insertions(+), 8 deletions(-)
->>
->> diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
->> index ef8051a5..2a55c96b 100644
->> --- a/kpartx/kpartx.8
->> +++ b/kpartx/kpartx.8
->> @@ -2,6 +2,7 @@
->>   .\" Make sure there are no errors with:
->>   .\" groff -z -wall -b -e -t kpartx/kpartx.8
->>   .\" man --warnings -E UTF-8 -l -Tutf8 -Z  kpartx/kpartx.8 >
->> /dev/null
->> +.\" mandoc -W all -T lint kpartx/kpartx.8
+Xose Vazquez Perez (5):
+  multipath-tools: remove legacy syntax check comments from man pages
+  multipath-tools: clarify path selector descriptions in multipath.conf.5
+  multipath-tools: specify file paths using variables and add FILES
+                   section in multipath.conf.5
+  multipath-tools: clarify user_friendly_names prefix behavior in
+                   multipath.conf.5
+  multipath-tools: fix mandoc errors/warnings in man pages
 
-> Nack. We don't need this in every man page. Actually, we don't need the
-> other command lines mentioned in the man pages, either. While looking
-> at this, I realize that the "groff" command line is wrong. AFAICT it
-> should be
-> 
->     groff -man -z -wall -b -e -t -Tutf8 $MANPAGE_FILE
-> 
-> But really, it makes no sense to me to have these reminders in every
-> man page. If we want to keep our man pages in order (which is of course
-> a worthwhile goal), we should rather write a GitHub workflow to check
-> them. That would be a helpful contribution.
-> 
-> I would still question whether our man pages need to pass 3 different
-> commands. AFAICS the "groff" and "man" commands are basically
-> equivalent anyway, as "man" simply calls "groff" for the parsing and
-> formatting. Wrt mandoc in general, see my reply to patch 1/2.
-> 
-> Regards,
-> Martin
+ kpartx/kpartx.8                               |  4 -
+ libmpathpersist/mpath_persistent_reserve_in.3 |  5 --
+ .../mpath_persistent_reserve_out.3            |  5 --
+ mpathpersist/mpathpersist.8.in                |  6 --
+ multipath/multipath.8.in                      |  4 -
+ multipath/multipath.conf.5.in                 | 87 +++++++++++--------
+ multipathd/multipathc.8                       |  6 +-
+ multipathd/multipathd.8.in                    |  5 --
+ 8 files changed, 54 insertions(+), 68 deletions(-)
 
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+-- 
+2.54.0
 
-I will withdraw this patch. Instead, I will send a new one to
-completely remove those groff/man comment lines from all files
-to clean them up.
