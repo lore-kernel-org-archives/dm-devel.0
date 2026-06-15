@@ -1,162 +1,105 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B0D3D3BD246
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 08:18:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 722E03C0A0D
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 08:27:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781511508; cv=none; b=fSZUMcjDk571x3WZ2WU79EMp8f9DWbrrrCNXEPLELnZiTprmLwpaMygTsIVAfJiBRYyyd0qIq7xeUo5lnE0sNudc1vBySuvI2AQ7t+1eJjVCR+WvqWlmW1MoF6GJro3aNw3SOfaf6DMjTS7K764JOZbRxni5giWaheUxV37hp3w=
+	t=1781512023; cv=none; b=JamiRaqVpvanwBLPEOcmOxADXCYJrf9JCdx4G6IjMSgzuzUwzWfpbotmt1gm+tsET1HvfYQUZg5QbrJgtfJLJwXKunc73SW4ekwjqFkepDELinhzn3ACt5hhTH0kOyQtERftMqIjLJ6Aa8Hoz7sv4NX6XaeuVWp5+wPuuXaZwxg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781511508; c=relaxed/simple;
-	bh=m+k9sGvFRHtY2D7ixWN/lqiDm/t1J7HbkTavX3D0WNU=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=iXxdzeuVLMjAZrEBP/RFTd/sLVGzkkoJfolcT9FnFnNyQZgANcy/hv8xqN+5DZoVsOy8aJXeLgWHOqHGxUSysyB1tYONRsf+YHh5MGNIexG0mGUXV6THoJc8Lujneqh/yMae2pc8MkGNW0mjtV/9K7Q7MSrVMt6KPL54ANMXd2E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=KcgGcQn5; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=vH/LjLDz; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1781512023; c=relaxed/simple;
+	bh=A6DauMGjVX+3NjclS98vfXuBudD6Ueoxa57XuEJLoTQ=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=D0FceoStG4FMMhOS+s9+kGxqU6VgyQKZ/xRbzCTih9vRXbD0KmyNciC9e19v58cTgWnRvL7R4q8WKa047p9oJd0gnfYy7dWPLshtZ9ZGqtXIKb1ngt2rSeHKbrg0qlNYTdOIjcdbhT0BrVzmevBGYsvm6SlvHu7EOtDbq351Tkk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=p/+0ILap; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="KcgGcQn5";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="vH/LjLDz"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id C581A75E30;
-	Mon, 15 Jun 2026 08:18:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1781511505; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=m+k9sGvFRHtY2D7ixWN/lqiDm/t1J7HbkTavX3D0WNU=;
-	b=KcgGcQn5oQM31MHoXX7i2FCDrL6ZiDcyi9ZXIne3dr5okAzdGx0M7nvKU3b81n1OD1EDGA
-	FB/s/agW7xUGiWPwYA4R2vdab/9Bb7ghNOdT0dog+C9P+zV5TpuGwMMjudc++gEJwLSu1y
-	p+RRjnhH342O3vguFCWKluSJ2ftc5Vo=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="vH/LjLDz"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1781511504; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=m+k9sGvFRHtY2D7ixWN/lqiDm/t1J7HbkTavX3D0WNU=;
-	b=vH/LjLDzYWLbJzwmvOeW25pxaWg45lyhdO4G7PXIVYb+FzXpsxCg5i5MfOkCvpZVQJNtUS
-	I12ZcHS6Nb4ZbNJiJgiKtJfdsVztaSQ+0RNXkfJT0wb3zmx7vVBMa3qPwJD6fqvXCgB3mw
-	TI/nCmOjHtfaK+BsFZXy5qR/+whD4eM=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id A5A86779A7;
-	Mon, 15 Jun 2026 08:18:24 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id QbxeJ1C1L2rtdQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 15 Jun 2026 08:18:24 +0000
-Message-ID: <20b365e93e2f863ec3c9109925dc9322582f0862.camel@suse.com>
-Subject: Re: [PATCH 2/5] multipath-tools: clarify path selector descriptions
- in multipath.conf.5
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Date: Mon, 15 Jun 2026 10:18:24 +0200
-In-Reply-To: <20260613131002.144263-3-xose.vazquez@gmail.com>
-References: <20260613131002.144263-1-xose.vazquez@gmail.com>
-	 <20260613131002.144263-3-xose.vazquez@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="p/+0ILap"
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-490b8adf7efso4301615e9.1
+        for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 01:27:01 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1781512020; x=1782116820; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=S7gUfQQWNl2/162RS8DcK+pTPzQP8ocxB+jFfBNECv0=;
+        b=p/+0ILapmgYHI7xFM4FIWpTVp07UQk6YykpI0V6+K9FicP+B9waxqmkk222B4p3L5H
+         GSfTS+kGZTtDGifi5XvAaeGosUv5oF5YLK0C0T2M5gnPn/wsGjtOtVDUZofEenBTws76
+         l9tWrL8uQaId/NWG/QxUKbIxALwiSk3SMJO9tkVuxxKeN5zHP+xcuDVNWRSGmtchaidA
+         d6e4brEGWMdImPND8NZs4mfDo/l4dWSepCRYL8eokYOQntyIsxAhMXvqyYtJntFxStLf
+         zjYUgUXUPqaJgM7wCZHDSuzgXGvLdRHCgm9PpwRcyYy+xhKw/N+oECK4k17neN1T5k9Q
+         ql1Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781512020; x=1782116820;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=S7gUfQQWNl2/162RS8DcK+pTPzQP8ocxB+jFfBNECv0=;
+        b=iMcQIg8JrGxFqHGDfCyt+2zO2H6TMAOmcOpR9qEN8xSvljUrVTcwlrc+vIeysLFhBY
+         WHFfo/rjTy+N5uUSRKNnP+Eu5MNhy0rQ1ZbaNhvvzFh6n85nqAedjQ5x7tS/e1WgBWQX
+         mFihHfJVDNSYpnZq0RBS0poyPTW9mUfac9CwamHaR43WY+YlmP8xLtzWifS1480O81i/
+         jQwORoek+BxrH0iQsHB2lgR1AUWthkfiNokES9jxf5WhvG3IxJcb5kuUd2AxAVRz4M5F
+         6ipXP5hhD3hG+Qgv7LhM5gblo8mtM3nYEQa9cfpG5Jq7MMc33h4kB8DRmdolmvdcVDX8
+         18WQ==
+X-Forwarded-Encrypted: i=1; AFNElJ/EdNTHH/sysKWg/MB7z3xHafxN7fqJ1ui5XlUi/376jw9/uROF2gQQF1QmKqCXYuq8h6ebwQPtLg==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw7yNTYVfxq4qubTtXKwoAy8scDihcZC5hUNcfgnwXj2yKG3nnO
+	ncv8NYVMjgmI+zYqHjiEOo8K0dAAMXMJFKltqmEONG4qpREVh4je2gc=
+X-Gm-Gg: Acq92OGPBBTHx6ajr4S3r6SQ2QktURI3ZEEky8UHqMGrHXQdQYlSbMF2Zeuj0NFChVJ
+	NCU5P5eySP1+A0dENkbAtigcxK952T+Le/efrggB8/ELL7DY00yho7fLjDsTzn7HzATwRRnO9lJ
+	FkhyglXCQ/HTqETFzh4IEbmrLh+9cvSDpSip8g56qcOV9gdXzTsqvglCyPH+BRRFShlQntNnViE
+	cM/lum6vuYYkaJjOCHYhmxSW/5Hg3CgGIuY4Oi1Yiz6mYifeFOAbBEXu4R0ENw7e4On9aLgWb8R
+	t1baULW48Q7VX0PIPPrSdxslWcFIi4J8IWCDT1UA4BMbgQI3LDFbVfAc3MtBAAeabNtA8i9C3Gy
+	1iVuP01MNKJC/JA4iPTQ5OzmfotADF8u4/bh5qRdgu4mPJaX/dlPnxJB3mhNQcSrlZSxEUvgERH
+	6yefGJqKkYAzRjksTxfUj8QVAfrRY8M9p/yef0LFo6KqBwbtT75PNVtmDL/66jSzIk
+X-Received: by 2002:a05:600c:138e:b0:490:b45b:2471 with SMTP id 5b1f17b1804b1-490ec5067cemr95930515e9.6.1781512019280;
+        Mon, 15 Jun 2026 01:26:59 -0700 (PDT)
+Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-492202e5d61sm215569125e9.1.2026.06.15.01.26.58
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 15 Jun 2026 01:26:58 -0700 (PDT)
+Message-ID: <994b66b1-68fb-4dd6-90e4-8fcd6f894f62@gmail.com>
+Date: Mon, 15 Jun 2026 10:26:58 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Action: no action
-X-Rspamd-Queue-Id: C581A75E30
-X-Spam-Flag: NO
-X-Spam-Score: -3.01
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[99.99%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_TO(0.00)[gmail.com];
-	TO_DN_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_TRACE(0.00)[suse.com:+];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:email,suse.com:mid,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+Subject: Re: [PATCH 2/5] multipath-tools: clarify path selector descriptions
+ in multipath.conf.5
+To: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20260613131002.144263-1-xose.vazquez@gmail.com>
+ <20260613131002.144263-3-xose.vazquez@gmail.com>
+ <7c28dd835abebb6f9e4ff69159e417cac323409f.camel@suse.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <7c28dd835abebb6f9e4ff69159e417cac323409f.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Sat, 2026-06-13 at 15:09 +0200, Xose Vazquez Perez wrote:
-> Selectors operate on the next individual I/O request rather
-> than a "bunch" of I/O.
+On 6/15/26 10:16 AM, Martin Wilck wrote:
 
-This patch doesn't apply cleanly to any of my branches (master, queue,
-tip).
+> On Sat, 2026-06-13 at 15:09 +0200, Xose Vazquez Perez wrote:
+>> Selectors operate on the next individual I/O request rather
+>> than a "bunch" of I/O.
+> 
+> This patch doesn't apply cleanly to any of my branches (master, queue,
+> tip).
+That quote is from the patch series I sent earlier. You might have missed it:
 
->=20
-> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> =C2=A0multipath/multipath.conf.5.in | 12 +++++-------
-> =C2=A01 file changed, 5 insertions(+), 7 deletions(-)
->=20
-> diff --git a/multipath/multipath.conf.5.in
-> b/multipath/multipath.conf.5.in
-> index 422ab120..287441bd 100644
-> --- a/multipath/multipath.conf.5.in
-> +++ b/multipath/multipath.conf.5.in
-> @@ -2,7 +2,7 @@
-> =C2=A0.\" Update the date below if you make any significant change.
-> =C2=A0.\" ---------------------------------------------------------------=
--
-> ------------
-> =C2=A0.
-> -.TH MULTIPATH.CONF 5 2026-05-27 Linux
-> +.TH MULTIPATH.CONF 5 2026-06-13 Linux
-> =C2=A0.
-> =C2=A0.
-> =C2=A0.\" ---------------------------------------------------------------=
--
-> ------------
-> @@ -193,20 +193,18 @@ kernel multipath target:
-> =C2=A0.RS
-> =C2=A0.TP
-> =C2=A0.I "round-robin 0"
-> -Choose the path for the next bunch of I/O by looping through every
-> path in the
-> -path group, sending \fBthe same number of I/O requests\fR to each
-> path.
-> -
-> +Choose the path for the next I/O request by \fBcycling through the
-> path group\fR.
+Xose Vazquez Perez (3):
+   multipath-tools: delete obsolete information from multipath.conf.5
+   multipath-tools: remove explicit width from .TP macros in multipath.conf.5
+   multipath-tools: remove explicit widths from macros in the remaining man pages
 
-I think "group" should be replaced by "groups" here.
-
-Martin
+  libmpathpersist/mpath_persistent_reserve_in.3 |   4 +-
+  .../mpath_persistent_reserve_out.3            |   4 +-
+  mpathpersist/mpathpersist.8.in                |   2 +-
+  multipath/multipath.8.in                      |   6 +-
+  multipath/multipath.conf.5.in                 | 135 +++++-------------
+  multipathd/multipathd.8.in                    |   9 +-
+  6 files changed, 51 insertions(+), 109 deletions(-)
