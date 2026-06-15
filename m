@@ -1,62 +1,62 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BBE539B978
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B16B039DBF2
 	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 19:07:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781550440; cv=none; b=Bq3eXy/WykewNp3xR+9ET60DC2gES5fvwaDx9BrXqhmiPILqLnKIGjZYTxBVfUR64DemCrhIvmOwa8leCdl37CYaENK53vmkA5qYq7wks2PX+3IAe0zP5jwIPthA+YYN2FZGP+14Ymcuj9tTRGPdXiTMo/5YGpS3erZtlhW8pyg=
+	t=1781550441; cv=none; b=Cbl0Zpq9l/uyUatzR8QqkfL3JBi/Xxm+MK31dXfizG4HmfB++qQMx0NvEUnJieEVFalB1rQcSAbhqTmhmf891tbC6a9qNOiZZJUX9wwThxqg+OtT6VaO2xyaB7HRWBKd0fyBp7lWIGHrjaXiJalVEOVQUt8ZKOnWVt2Sb/JIppY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781550440; c=relaxed/simple;
-	bh=qw3GxXIegoQlGjfzuPE9Gw3u/lBnzXYcX6zH+/AsV4g=;
+	s=arc-20240116; t=1781550441; c=relaxed/simple;
+	bh=+8YA0j2DKL5rY9QQEBrpFbH3l38RQHQJDf//1LnSGno=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=LvL2aKkg2gcV0ITc4eLezD46A2lZhQQPmuy1yZX3/xel2ShDzlfB7jBZ4G6+Ek5+4YfHBvkobX26a0/++L4IY/n5ei71uY4Jm/FVbqZ2dvpjWOypqWsqKURURTDzegfmlqijqcYvjkLwCb1YycUwXjQqXCJIFSJ1eKOFTlMsepE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=efdH1/tj; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:content-type; b=OmlAoRLd9T0Ch1usO4Qu7H7hrmo+DcKoyZk8fnOKqXWROnwp16bTqmaLekLySlMY7lqAYoMNcbkBl880J8ePfKNAFcUPO5Ce42fUQ367QXoHjcmlXulJvB+7d3Ke08P0zc+BjLpIAAK5hcES8Fxujw8+JxSQoYqdIXPQTDN3EBg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HrLxkw8z; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="efdH1/tj"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HrLxkw8z"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
 	s=mimecast20190719; t=1781550438;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=BT53s5LiHVBD3a8YVl6jX9ISDOWdFZWrwlk78NJjTus=;
-	b=efdH1/tj/kTyVJmGf9ULsiNX/YUdfk17S3H4lM5uO+y0Rk58Ve2BN6/ZdGkRDQXWvJpOnN
-	W3+Q+oXrwYRvcTozFoJGrLGKp764UN87BjioW4HSysopF1BpOZAcSEeB7s4idgjDBZlObI
-	r9fyAtGLauS8x1YYFNi/BbLllFye1jU=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=J1FCLmw6mJYlrWNvC+L8gKuZXk0wXRBpJQ9RggdwhJA=;
+	b=HrLxkw8z53KCvAcrUcCWxAFiKB73scE2kbf41jJiduE66zfbKyXE0lJOT8dnT3PIaMofjT
+	U08fVbKRELWIhlWDn4JzZK/+uXfva/6hOy497GFx6Gsq+9zFJxXBKwLmAcjHvW4RFhrM3P
+	H92zLbVRhTh03c7t80cb0ycMm3b12Js=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-137-mj0pdvakOTGEL7PFKshXvQ-1; Mon,
- 15 Jun 2026 15:07:17 -0400
-X-MC-Unique: mj0pdvakOTGEL7PFKshXvQ-1
-X-Mimecast-MFC-AGG-ID: mj0pdvakOTGEL7PFKshXvQ_1781550433
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-90-eVXbyxWhPt2JxNsWSgFYJw-1; Mon,
+ 15 Jun 2026 15:07:14 -0400
+X-MC-Unique: eVXbyxWhPt2JxNsWSgFYJw-1
+X-Mimecast-MFC-AGG-ID: eVXbyxWhPt2JxNsWSgFYJw_1781550433
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 680901955D90;
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 25EE71800589;
 	Mon, 15 Jun 2026 19:07:13 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 362BD1800367;
-	Mon, 15 Jun 2026 19:07:13 +0000 (UTC)
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E86601800652;
+	Mon, 15 Jun 2026 19:07:12 +0000 (UTC)
 Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65FJ7CGb797602
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65FJ7BPL797598
 	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 15 Jun 2026 15:07:12 -0400
+	Mon, 15 Jun 2026 15:07:11 -0400
 Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65FJ7Csl797601;
-	Mon, 15 Jun 2026 15:07:12 -0400
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65FJ7BoO797597;
+	Mon, 15 Jun 2026 15:07:11 -0400
 From: Benjamin Marzinski <bmarzins@redhat.com>
 To: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: device-mapper development <dm-devel@lists.linux.dev>,
         Martin Wilck <Martin.Wilck@suse.com>,
         Xose Vazquez Perez <xose.vazquez@gmail.com>
-Subject: [PATCH 4/4] libmultipath: don't set hwhander for bio based devices
-Date: Mon, 15 Jun 2026 15:07:11 -0400
-Message-ID: <20260615190711.797573-5-bmarzins@redhat.com>
+Subject: [PATCH 3/4] libmultipath: deprecate rr_min_io
+Date: Mon, 15 Jun 2026 15:07:10 -0400
+Message-ID: <20260615190711.797573-4-bmarzins@redhat.com>
 In-Reply-To: <20260615190711.797573-1-bmarzins@redhat.com>
 References: <20260615190711.797573-1-bmarzins@redhat.com>
 Precedence: bulk
@@ -65,47 +65,187 @@ List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: DxKALkEtP2f-7_TCfecqphhP1jX9ZfIlGbmp1WpcSKc_1781550433
+X-Mimecast-MFC-PROC-ID: GORQImy6DB8CqBwwLpTVSvYApNnhsvvitP3qogm7G5g_1781550433
 X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
 content-type: text/plain; charset="US-ASCII"; x-default=true
 
-The kernel prints an error message when a bio-based multipath device
-sets a hardware handler, since bio-based devices only support using
-the already attached hardware handler as-is. Change select_hwhandler()
-to not set a hardware handler for bio-based devices.
+Since the kernel now requires paths to have a minio of 1, rr_min_io is
+currently useless. However, bio-based multipath performs significantly
+worse than request-based multipath. Part of that is because bio-based
+multipath will call the path selector to pick a new path for every bio,
+making it very unlikely that adjacent bios will be merged. So this patch
+leaves the bio-based minio code around, since we may revisit this in the
+future. It does disable setting the value in multipath.conf, and changes
+the default to 1. Also, it fixes select_minio() to actually check if the
+multipath device is bio-based or request-based, and it takes out the
+code for modifying the minio based on the status of the "least-pending"
+path selector, because that no longer exists.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/propsel.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ libmultipath/defaults.h |  2 +-
+ libmultipath/dict.c     | 18 +++++-------------
+ libmultipath/dmparser.c | 12 +-----------
+ libmultipath/hwtable.c  |  1 -
+ libmultipath/propsel.c  |  8 +++-----
+ tests/test-lib.c        |  1 -
+ 6 files changed, 10 insertions(+), 32 deletions(-)
 
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index d80dd7d4..bb129e66 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -16,7 +16,7 @@
+ #define DEFAULT_ALIAS_PREFIX	"mpath"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
+-#define DEFAULT_MINIO		1000
++#define DEFAULT_MINIO		1
+ #define DEFAULT_MINIO_RQ	1
+ #define DEFAULT_PGPOLICY	FAILOVER
+ #define DEFAULT_FAILBACK	-FAILBACK_MANUAL
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 3b6584ec..0e947b1d 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -746,15 +746,6 @@ declare_ovr_snprint(checker_name, print_str)
+ declare_hw_handler(checker_name, set_str)
+ declare_hw_snprint(checker_name, print_str)
+ 
+-declare_def_range_handler(minio, 0, INT_MAX)
+-declare_def_snprint_defint(minio, print_int, DEFAULT_MINIO)
+-declare_ovr_range_handler(minio, 0, INT_MAX)
+-declare_ovr_snprint(minio, print_nonzero)
+-declare_hw_range_handler(minio, 0, INT_MAX)
+-declare_hw_snprint(minio, print_nonzero)
+-declare_mp_range_handler(minio, 0, INT_MAX)
+-declare_mp_snprint(minio, print_nonzero)
+-
+ declare_def_handler(queue_without_daemon, set_yes_no)
+ static int
+ snprint_def_queue_without_daemon(struct config *conf, struct strbuf *buff,
+@@ -2108,6 +2099,7 @@ declare_deprecated_handler(pg_timeout, "(not set)")
+ declare_deprecated_handler(bindings_file, DEFAULT_BINDINGS_FILE)
+ declare_deprecated_handler(wwids_file, DEFAULT_WWIDS_FILE)
+ declare_deprecated_handler(prkeys_file, DEFAULT_PRKEYS_FILE)
++declare_deprecated_handler(minio, "1")
+ declare_deprecated_handler(minio_rq, "1")
+ declare_deprecated_handler(rr_weight, "uniform")
+ 
+@@ -2135,7 +2127,7 @@ init_keywords(vector keywords)
+ 	install_keyword("checker", &def_checker_name_handler, NULL);
+ 	install_keyword("alias_prefix", &def_alias_prefix_handler, &snprint_def_alias_prefix);
+ 	install_keyword("failback", &def_pgfailback_handler, &snprint_def_pgfailback);
+-	install_keyword("rr_min_io", &def_minio_handler, &snprint_def_minio);
++	install_keyword("rr_min_io", &deprecated_minio_handler, &snprint_deprecated);
+ 	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("max_fds", &max_fds_handler, &snprint_max_fds);
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+@@ -2245,7 +2237,7 @@ init_keywords(vector keywords)
+ 	install_keyword("failback", &hw_pgfailback_handler, &snprint_hw_pgfailback);
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &hw_no_path_retry_handler, &snprint_hw_no_path_retry);
+-	install_keyword("rr_min_io", &hw_minio_handler, &snprint_hw_minio);
++	install_keyword("rr_min_io", &deprecated_minio_handler, &snprint_deprecated);
+ 	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("pg_timeout", &deprecated_pg_timeout_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &hw_flush_on_last_del_handler, &snprint_hw_flush_on_last_del);
+@@ -2291,7 +2283,7 @@ init_keywords(vector keywords)
+ 	install_keyword("failback", &ovr_pgfailback_handler, &snprint_ovr_pgfailback);
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &ovr_no_path_retry_handler, &snprint_ovr_no_path_retry);
+-	install_keyword("rr_min_io", &ovr_minio_handler, &snprint_ovr_minio);
++	install_keyword("rr_min_io", &deprecated_minio_handler, &snprint_deprecated);
+ 	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &ovr_flush_on_last_del_handler, &snprint_ovr_flush_on_last_del);
+ 	install_keyword("fast_io_fail_tmo", &ovr_fast_io_fail_handler, &snprint_ovr_fast_io_fail);
+@@ -2340,7 +2332,7 @@ init_keywords(vector keywords)
+ 	install_keyword("failback", &mp_pgfailback_handler, &snprint_mp_pgfailback);
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &mp_no_path_retry_handler, &snprint_mp_no_path_retry);
+-	install_keyword("rr_min_io", &mp_minio_handler, &snprint_mp_minio);
++	install_keyword("rr_min_io", &deprecated_minio_handler, &snprint_deprecated);
+ 	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("pg_timeout", &deprecated_pg_timeout_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &mp_flush_on_last_del_handler, &snprint_mp_flush_on_last_del);
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index 97300668..83760e30 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -337,7 +337,6 @@ int disassemble_status(const char *params, struct multipath *mpp)
+ 	int num_pg;
+ 	int num_pg_args;
+ 	int num_paths;
+-	int def_minio = 0;
+ 	struct path * pp;
+ 	struct pathgroup * pgp;
+ 
+@@ -507,16 +506,7 @@ int disassemble_status(const char *params, struct multipath *mpp)
+ 			 * selector args
+ 			 */
+ 			for (k = 0; k < num_pg_args; k++) {
+-				if (!strncmp(mpp->selector,
+-					     "least-pending", 13)) {
+-					p += get_word(p, &word);
+-					if (sscanf(word,"%d:*d",
+-						   &def_minio) == 1 &&
+-					    def_minio != mpp->minio)
+-							mpp->minio = def_minio;
+-					free(word);
+-				} else
+-					p += get_word(p, NULL);
++				p += get_word(p, NULL);
+ 			}
+ 		}
+ 	}
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 36646540..a8fbfa70 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -57,7 +57,6 @@
+ 		.prio_args     = "",
+ 		.pgfailback    = -FAILBACK_MANUAL,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = 1000,
+ 		.flush_on_last_del = FLUSH_UNUSED,
+ 		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+ 		.fast_io_fail  = 5,
 diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 8be6f5e3..8531ca09 100644
+index cc3146fb..8be6f5e3 100644
 --- a/libmultipath/propsel.c
 +++ b/libmultipath/propsel.c
-@@ -560,6 +560,11 @@ int select_hwhandler(struct config *conf, struct multipath *mp)
+@@ -866,13 +866,11 @@ out:
+ int select_minio(struct config *conf, struct multipath *mp)
+ {
+ 	const char *origin;
+-	unsigned int minv_dmrq[3] = {1, 1, 0}, version[3];
  
- 	dh_state = &handler[2];
+-	if (!libmp_get_version(DM_MPATH_TARGET_VERSION, version)
+-	    && VERSION_GE(version, minv_dmrq))
+-		do_default(mp->minio, DEFAULT_MINIO_RQ);
+-	else
++	if (mp->queue_mode == QUEUE_MODE_BIO)
+ 		return select_minio_bio(conf, mp);
++
++	do_default(mp->minio, DEFAULT_MINIO_RQ);
+ 	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
+ 	return 0;
+ }
+diff --git a/tests/test-lib.c b/tests/test-lib.c
+index ea99977f..03bc6c71 100644
+--- a/tests/test-lib.c
++++ b/tests/test-lib.c
+@@ -414,7 +414,6 @@ struct multipath *mock_multipath__(struct vectors *vecs, struct path *pp)
+ 	select_no_path_retry(conf, mp);
+ 	will_return(__wrap_libmp_get_version, fake_dm_tgt_version);
+ 	select_retain_hwhandler(conf, mp);
+-	will_return(__wrap_libmp_get_version, fake_dm_tgt_version);
+ 	select_minio(conf, mp);
+ 	put_multipath_config(conf);
  
-+	if (mp->queue_mode == QUEUE_MODE_BIO) {
-+		mp->hwhandler = DEFAULT_HWHANDLER;
-+		origin = "(setting: disabled due to \"queue_mode bio\")";
-+		goto set;
-+	}
- 	/*
- 	 * TPGS_UNDEF means that ALUA support couldn't determined either way
- 	 * yet, probably because the path was always down.
-@@ -600,6 +605,7 @@ out:
- 		mp->hwhandler = DEFAULT_HWHANDLER;
- 		origin = tpgs_origin;
- 	}
-+set:
- 	mp->hwhandler = strdup(mp->hwhandler);
- 	condlog(3, "%s: hardware_handler = \"%s\" %s", mp->alias, mp->hwhandler,
- 		origin);
 -- 
 2.53.0
 
