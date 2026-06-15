@@ -1,141 +1,169 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 131231A9F87;
-	Mon, 15 Jun 2026 16:37:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91A1940B6EE
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 16:44:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781541463; cv=none; b=R2T+cYAPYfuxtaAqZV/NtDVtbrCGIZYZ/OqafHiDdMrP/+HMJazBRS/nm91o3zoVPzc94eekcGppsXRYz1Nma1kuzQWGiH3S2wc9p41nEa6WkFvHJf5mMuPAYw2NJbKF1N+/lsuqBl8OaY375NS9mqkgt4OthiSo0AkQU1hLDYc=
+	t=1781541888; cv=none; b=tTEOzLsBsbrOmynMmTDVTvvPCh6H38vskszobBpoC0+cKvy49RkR/TpgU2kky77m1+3NLYrcQSqWVBDC/7WDWDRWpunT0YGxsiakHDNfyGHS9K9nH2qTazi4BOFBd0XVuQ9PNfMnS3sKd3POckTrhBZrKZ0yqscS/olCAiFSRc8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781541463; c=relaxed/simple;
-	bh=Cohom2Ou5SLC0ZDO02KAD1e0G/tpoEFYh1cIDL2cUF4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HwtT01dh+9cL+MUFtnU78u1V9btshrkSZB+fPDtmDsN48D+GqTQSH/lfeN7DQ3zQ6x3+gtAbVWP8aEdNMY3byb0UUDmMwU+UiLQcvxbtm+WCDPUuuAZkSzVBGFsZKHc0BLzZH2GnBI3gtQfVWN+Y2PZ2IZrJ7KSD0cFtfFaN+o0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=WCzCU1hV; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1781541888; c=relaxed/simple;
+	bh=otoo/nKOgNau4pA5qFf4amlIzo52hCvaA76metTC/jU=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=jKC3NdqOHB8R22mIa6kMd8OIJ1LETz3SP521CoFAWlY3BrFxaQGaVCglh2Hnt2gg3Mv2ov2mvZ4PaR7bMKZuhkkHZaBeRb5guhm+o1wUGQZOzMZrognGUY+m9GX6ymKIsEuJkRnIRxjRS3jTg2URhwynWvm9Onf+MAwzDNuVrVU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VI+HXpGx; arc=none smtp.client-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="WCzCU1hV"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=x9qmKP09x6ZcRWzZLuwWvY1wTy1pWSGt1TNtv/lGbQI=; b=WCzCU1hVCZXGcf7L
-	5GeobtBV9Xqa3O0Cub152YMz2zTBnOTInZLPprTCrEGQzaGebD5d6y7ED1wyqZxsI1Ma9C8ZuEE9U
-	eEBcuF1JO/2MjX5XN1DMSqQ/pKRM+qEh/+xHmMITddgDHds00UDovVP5xvjeTeBvh4O3CXH/M35j1
-	qiyihf4IvXNOWoFzKeIKnk7qvB1Dz3V4mYXf06tJt/fpCf2T0FjvB3pvuG29xT19BIiiZISdS28+8
-	zeIR7i0CFmq9usZp2dqw8jWrDcnABTifEkeoQEPNOJqV/0IaZFAlio8Za2I3ulW+fWrVB0ZLqzIXq
-	KdSpx2nVbkrnP2p3lQ==;
-Received: from dg by mx.treblig.org with local (Exim 4.98.2)
-	(envelope-from <dg@treblig.org>)
-	id 1wZAJf-00000007nJa-44eX;
-	Mon, 15 Jun 2026 16:37:39 +0000
-Date: Mon, 15 Jun 2026 16:37:39 +0000
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
-To: Keith Busch <kbusch@kernel.org>
-Cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev
-Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
-Message-ID: <ajAqUwo3eTm1c2_J@gallifrey>
-References: <ai7rnH20IYeSmY8s@gallifrey>
- <ajAYN_mmjzYBAimV@kbusch-mbp>
- <ajAb0m9cNraQn2Pw@kbusch-mbp>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VI+HXpGx"
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-490b8adf813so4479085e9.1
+        for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 09:44:46 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1781541885; x=1782146685; darn=lists.linux.dev;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=4J4lzczMYyvCVq4P61MsFBfF8OaQf05q3jvWzSwK2Rw=;
+        b=VI+HXpGx0fHyVPAYf1ye49Hqn8pzhghZf5J8QngyqVEbw1O7CLF5VDFHhOyoovz0Wm
+         phYwl2MxFMXGU8kNODbigA0rMqYd2gjlqEQXyrS7Xao6gY9VX4y8JHpyBPSU/J/j14Or
+         Wx73is4Gck7j0dCVUHNpJrWNrQY4mgCSODq7zbIQ2VqTrnKjay+P0ohdH4dCM7BXypph
+         k0VlMs1nGee/9CEfefeN35meiGk0/Ol/pJ+3CGOT1nm4eqWpgYr0H1pocZ3QMSCmKoRG
+         e5LWrXH1JfSn7x5AT3VtMoBJHVVU3IpSqcIqyHzRd0LWh1/4tG+TURGFPsZNmMdWG8wq
+         NU1g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781541885; x=1782146685;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:mime-version:date:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=4J4lzczMYyvCVq4P61MsFBfF8OaQf05q3jvWzSwK2Rw=;
+        b=W9xP1+5sl75XnE/1/x5lK86WR2heeu0bffWCFz9EeCc0dnnjLq7mMNFdexKXGq97M+
+         6h/HSgAyix1npi4TJkn+/eNeCKnZyAOkPJXz8a8ODyoHtnqIi3y7jf9vzd4e8KIyb4PC
+         20u2sA1L0xrzKrbmpFna1LGl7YNXGpm/7nlcdyqS87mBQ1ntEULXa17ZdSlmaXenN83N
+         mMPnTz9I3EUzoujjoyfrEIBOpD/UR2whUzKUGKYWFYVqwnABvPjOiCWHActxz72e61mg
+         gvSn4OUmS8HK+/IQRlLUExF2CCluU8WoVjaaYxKDB/EZxOloAulwCSpy4nttLVRA8DVu
+         3Avw==
+X-Forwarded-Encrypted: i=1; AFNElJ9JvCc9DYlkRlmcYWuj+pj6LyZ/Yvev8fJUoPRr11D3rovi863O3BzGvJQdYn7bkz7F1OyWOes95g==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx/zr3cQgq91hVf4UGR0g6ha/AgOB8af155Xu26HAsWwJr6NsIz
+	V6ElU4ezHtoE6sx9yjDg9RVVKRsppdkxJNLWkbtcNuLZhB9Z+XvMoY4=
+X-Gm-Gg: Acq92OGRjIWlBg9cO+DF6skt4jpTrIv4QeBfNan4Z3XXaO1CriYaznNCAOTY8bhulII
+	ROrIOAU5CnCyHPZit+rrC9ZiWdhWO9QfLfSz0nkfkEYEKzDMDeOvHV0qkKX0KJM9G2jYhV2Ftvd
+	gHPk1GHZXCesU7Z0OXcvxWIj5tXxFzfu07WSHd4z+njFcRZw1w1Xffi20ozsJjGXsOaFtLuUQsE
+	kS8L1hOYCrTKDNWAKlseKXcIH1zBW1OSJ5q+NEv0qf+f9wV4iW/8kLHNoH39jxzcrZ2wvxKdudz
+	MLEZLx7isLC159J8lmf3Oap0x6ZTN1tfTyEY7MdhGpyODy3zXNyVbO6W8Rmzt2WMuPgIaPEDWpK
+	eVcXcFb73Fz1IZmGbnj0Svv6DNAUbt+F2On8M4IsFLry9FPVKCQGE4CaC+lAY54Cta3IHZWk6X4
+	w5/rkiH8Fp8dVgaZJiBgG9xHf+i2hBAcX41z4VQBa40I2BS+lL8Hij6DAXQLhA16sx
+X-Received: by 2002:a05:600c:6384:b0:490:e5c1:b8c1 with SMTP id 5b1f17b1804b1-490ec338741mr89845105e9.0.1781541884750;
+        Mon, 15 Jun 2026 09:44:44 -0700 (PDT)
+Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4922fa891acsm5332325e9.9.2026.06.15.09.44.44
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 15 Jun 2026 09:44:44 -0700 (PDT)
+Message-ID: <8a34e0aa-d9ee-4f1b-bb02-7464b56566fc@gmail.com>
+Date: Mon, 15 Jun 2026 18:44:43 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-In-Reply-To: <ajAb0m9cNraQn2Pw@kbusch-mbp>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
-X-Uptime: 16:34:56 up 30 days, 19:47,  2 users,  load average: 0.02, 0.04,
- 0.00
-User-Agent: Mutt/2.2.13 (2024-03-09)
+Subject: Re: [PATCH 2/5] multipath-tools: clarify path selector descriptions
+ in multipath.conf.5
+To: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20260613131002.144263-1-xose.vazquez@gmail.com>
+ <20260613131002.144263-3-xose.vazquez@gmail.com>
+ <7c28dd835abebb6f9e4ff69159e417cac323409f.camel@suse.com>
+ <994b66b1-68fb-4dd6-90e4-8fcd6f894f62@gmail.com>
+ <43b7869e56668aff117cc376dea71855f73b70fa.camel@suse.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <43b7869e56668aff117cc376dea71855f73b70fa.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 
-* Keith Busch (kbusch@kernel.org) wrote:
-> On Mon, Jun 15, 2026 at 09:20:23AM -0600, Keith Busch wrote:
-> > On Sun, Jun 14, 2026 at 05:57:48PM +0000, Dr. David Alan Gilbert wrote:
-> > > Jun 14 18:08:32 dalek kernel: device-mapper: raid1: Mirror read failed from 252:24. Trying alternative device.
-> > > Jun 14 18:08:32 dalek kernel: ------------[ cut here ]------------
-> > > Jun 14 18:08:32 dalek dmeventd[1010]: Primary mirror device 252:24 read failed.
-> > > Jun 14 18:08:32 dalek kernel: WARNING: block/bio.c:1044 at bio_add_page+0x18b/0x250, CPU#15: kworker/15:1/369
-> > > Jun 14 18:08:32 dalek dmeventd[1010]: main-lvol0 is now in-sync.
-> > > Jun 14 18:08:32 dalek kernel: Modules linked in: nft_masq nft_reject_ipv4 act_csum cls_u32 sch_htb nf_nat_tftp nf_conntrack_tftp bridge stp llc rfkill nft_fib_inet nft_fib_ipv4 nft_fib_ipv6 nft_fib nft_reject_inet nf_reject_ipv4 nf_reje>
-> > > Jun 14 18:08:32 dalek kernel:  drm_panel_backlight_quirks gpu_sched drm_suballoc_helper video nvme drm_display_helper nvme_core cec nvme_keyring sp5100_tco nvme_auth wmi serio_raw fuse scsi_dh_alua i2c_dev scsi_dh_rdac scsi_dh_emc
-> > > Jun 14 18:08:32 dalek kernel: CPU: 15 UID: 0 PID: 369 Comm: kworker/15:1 Not tainted 7.1.0-rc7+ #786 PREEMPT(lazy) 
-> > > Jun 14 18:08:32 dalek kernel: Hardware name: To Be Filled By O.E.M. To Be Filled By O.E.M./X570 Pro4, BIOS P3.10 07/13/2020
-> > > Jun 14 18:08:32 dalek kernel: Workqueue: kmirrord do_mirror
-> > > Jun 14 18:08:32 dalek kernel: RIP: 0010:bio_add_page+0x18b/0x250
-> > > Jun 14 18:08:32 dalek kernel: Code: 24 10 4c 8b 04 24 84 c0 0f 85 c9 00 00 00 41 0f b7 40 78 48 8b 74 24 08 8b 4c 24 14 e9 b4 fe ff ff 0f 0b 31 c0 e9 55 d1 af 00 <0f> 0b eb f5 48 8b 7f 08 83 7f 60 05 0f 85 00 ff ff ff 49 8b 3b 4c
-> > > Jun 14 18:08:32 dalek kernel: RSP: 0018:ffffd1fb8176fc10 EFLAGS: 00010246
-> > > Jun 14 18:08:32 dalek kernel: RAX: 0000000000000000 RBX: ffffd1fb8176fd18 RCX: 0000000000000000
-> > > Jun 14 18:08:32 dalek kernel: RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff8d1a8eb28b00
-> > > Jun 14 18:08:32 dalek kernel: RBP: 0000000000000000 R08: ffffd1fb8176fc38 R09: ffffd1fb8176fc40
-> > > Jun 14 18:08:32 dalek kernel: R10: ffffd1fb8176fc34 R11: 0000000000000000 R12: 0000000000000000
-> > > Jun 14 18:08:32 dalek kernel: R13: ffffd1fb8176fd90 R14: 0000000000000001 R15: ffff8d1a8eb28b00
-> > > Jun 14 18:08:32 dalek kernel: FS:  0000000000000000(0000) GS:ffff8d29d161f000(0000) knlGS:0000000000000000
-> > > Jun 14 18:08:32 dalek kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-> > > Jun 14 18:08:32 dalek kernel: CR2: 00007f0ddcd7b9d0 CR3: 000000023dcbf000 CR4: 0000000000350ef0
-> > > Jun 14 18:08:32 dalek kernel: Call Trace:
-> > > Jun 14 18:08:32 dalek kernel:  <TASK>
-> > > Jun 14 18:08:32 dalek kernel:  do_region+0x227/0x2a0
-> > 
-> > I think the problem is that do_region is tracking the "remaining" in
-> > sector granularity, but devices can have dma alignment such that it's
-> > valid to have sub-sector vectors. Rounding the length appended
-> > to_sectors() creates a 0 length subtraction, so the loop thinks no
-> > progress is made and loops forever. If we track it in bytes instead of
-> > sectors, then that should fix this observation.
+On 6/15/26 11:15 AM, Martin Wilck wrote:
+
+> On Mon, 2026-06-15 at 10:26 +0200, Xose Vazquez Perez wrote:
+>> On 6/15/26 10:16 AM, Martin Wilck wrote:
+>>
+>>> On Sat, 2026-06-13 at 15:09 +0200, Xose Vazquez Perez wrote:
+>>>> Selectors operate on the next individual I/O request rather
+>>>> than a "bunch" of I/O.
+>>>
+>>> This patch doesn't apply cleanly to any of my branches (master,
+>>> queue,
+>>> tip).
+>> That quote is from the patch series I sent earlier. You might have
+>> missed it:
+>>
+>> Xose Vazquez Perez (3):
+>>     multipath-tools: delete obsolete information from multipath.conf.5
+>>     multipath-tools: remove explicit width from .TP macros in
+>> multipath.conf.5
+>>     multipath-tools: remove explicit widths from macros in the
+>> remaining man pages
 > 
-> I recreated your observation and this patch below appears to fix the
-> stuck behavior.
+> I was about to apply this (5-part) series to the queue branch. But I do
+> have an issue with the other series, as I just wrote, so I'm postponing
+> this again. I would like to ask you to send a consolidated series. But
+> first I guess we need to reach consensus what to do with the rr_minio
+> patch.
+With git 2.54.0 and a clean environment (no ~/.gitconfig), all parches
+apply cleanly on my end over the queue branch:
 
-Hi Keith,
-  Thanks for the patch, alas it doesn't seem to be helping here;
- the first warn is still the same
-and it still hangs the test process hard and eventually BUGs at
+$ git clone https://github.com/openSUSE/multipath-tools.git
+Cloning into 'multipath-tools'...
+remote: Enumerating objects: 40696, done.
+remote: Counting objects: 100% (240/240), done.
+remote: Compressing objects: 100% (126/126), done.
+remote: Total 40696 (delta 141), reused 180 (delta 114), pack-reused 40456 (from 1)
+Receiving objects: 100% (40696/40696), 8.00 MiB | 23.14 MiB/s, done.
+Resolving deltas: 100% (31803/31803), done.
 
-void blk_mq_end_request(struct request *rq, blk_status_t error)
-{
-        if (blk_update_request(rq, error, blk_rq_bytes(rq)))
-                BUG();
+$ cd multipath-tools/
 
-Dave
+$ git branch
+* queue
 
-> ---
-> diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
-> index 1db565b376200..d72b9331c2fd1 100644
-> --- a/drivers/md/dm-io.c
-> +++ b/drivers/md/dm-io.c
-> @@ -362,19 +362,26 @@ static void do_region(const blk_opf_t opf, unsigned int region,
->                         bio->bi_iter.bi_size = num_sectors << SECTOR_SHIFT;
->                         remaining -= num_sectors;
->                 } else {
-> -                       while (remaining) {
-> +                       unsigned long byte_remaining = to_bytes(remaining);
-> +
-> +                       while (byte_remaining) {
->                                 /*
->                                  * Try and add as many pages as possible.
->                                  */
->                                 dp->get_page(dp, &page, &len, &offset);
-> -                               len = min(len, to_bytes(remaining));
-> +                               len = min(len, byte_remaining);
->                                 if (!bio_add_page(bio, page, len, offset))
->                                         break;
-> 
->                                 offset = 0;
-> -                               remaining -= to_sector(len);
-> +                               byte_remaining -= len;
->                                 dp->next_page(dp);
->                         }
-> +                       remaining = to_sector(byte_remaining);
->                 }
-> 
->                 atomic_inc(&io->count);
-> --
--- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+$ git am /mnt/datos/curre/arrays/p/enviados/cambios_man_tab/*.patch
+Committer identity unknown
+
+*** Please tell me who you are.
+
+Run
+
+   git config --global user.email "you@example.com"
+   git config --global user.name "Your Name"
+
+to set your account's default identity.
+Omit --global to set the identity only in this repository.
+
+fatal: empty ident name (for <you@example.com>) not allowed
+
+$ git config --global user.email "you@example.com"
+
+$ git config --global user.name "Your Name"
+
+$ git am /mnt/datos/curre/arrays/p/enviados/cambios_man_tab/*.patch
+Applying: multipath-tools: delete obsolete information from multipath.conf.5
+Applying: multipath-tools: remove explicit width from .TP macros in multipath.conf.5
+Applying: multipath-tools: remove explicit widths from macros in the remaining man pages
+
+$ git am /mnt/datos/curre/arrays/p/enviados/cambios_man_II/*.patch
+Applying: multipath-tools: remove syntax check comments from man pages
+Applying: multipath-tools: clarify path selector descriptions in multipath.conf.5
+Applying: multipath-tools: specify file paths using variables and add FILES section in multipath.conf.5
+Applying: multipath-tools: clarify user_friendly_names prefix behavior in multipath.conf.5
+Applying: multipath-tools: fix mandoc errors/warnings in man pages
+
+$ git log -8 --oneline
+fdd4549f (HEAD -> queue) multipath-tools: fix mandoc errors/warnings in man pages
+b487df0e multipath-tools: clarify user_friendly_names prefix behavior in multipath.conf.5
+cfe8681a multipath-tools: specify file paths using variables and add FILES section in multipath.conf.5
+f6a59c26 multipath-tools: clarify path selector descriptions in multipath.conf.5
+bf9e518c multipath-tools: remove syntax check comments from man pages
+faf4dcb4 multipath-tools: remove explicit widths from macros in the remaining man pages
+2b33e306 multipath-tools: remove explicit width from .TP macros in multipath.conf.5
+fd084d8f multipath-tools: delete obsolete information from multipath.conf.5
