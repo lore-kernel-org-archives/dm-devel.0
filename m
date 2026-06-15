@@ -1,158 +1,190 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52A22402438
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 15:26:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF8593F8256
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 15:33:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781537202; cv=none; b=P2GaLfcTlMPtDMWX4BFg0vg1pq3AtAD5IPNhMVF2Emhh4ma6QW5Xf55hOVN/M9LN2AjOOFVqH3FBYktH1rzG0+xFq/7cFzm2BmKuRRuRWlt6mIAnBClkLyxidncKw/LSoItzHYqAoNFV19TB5Fp7YFHxKcd/C2Mr1QhP9tH3yG0=
+	t=1781537598; cv=none; b=Q56xHm5gu/WAnjWZKutp6StvzgwvD4pOEk9/u32v8JtHqqm5saeMFSiAXSXsdR4rB89wYM+SWyghsN4XwMlZDl+zFmK0+pDpN8esV13eN8pY+YZ9zsKexmGCBWydEQPt8kR5juYtzLWeFYpildh68vdjLRlv1RRYrX1sXuuLoOM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781537202; c=relaxed/simple;
-	bh=3JhXoO+xV1CUt7MbBsjUmbDfbiPYaYGrgTcL/0AGdZg=;
-	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=Xri/nZEm55j5BHOMtVJMJiPjB7NlI3hZSISAFxSmqefr+F4AImEjntTeyIKUanY1G/hYfMsx/dMwRm6QfZqexSq3w0ZEg4A2fICvgrn3P50rFoQsJlL8bdOjEI68zax8BdS6K6R9Omm09n1XhQ5hfMrXMiihGdVi0nTcnw9KgJQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=iZqbWEl4; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1781537598; c=relaxed/simple;
+	bh=Q+TLT/HNVldFhWbaCLb/OJSjEvXAnDpkER+pSogagj0=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=GruB2qqZRJDAsWakE3f/48lWDkBI1MMtIPTQiVgJAXedqTrReRcanSIY4CdaLDZDEBKra9xn1KEmqaTfey0UEvYXp2r0WuQ7ARpVN1zgn9UgYPwnixaJmfAh4TSd1iU0DNh6Qkpq702eB5HQIRAG3wy+nUk/N/u8QOUGyoT55bw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=pb56YmME; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=PEVryuMO; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="iZqbWEl4"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781537200;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=Aq5l7E4pvA/4zb6Ci40VJXV75RXU4+DwuM24635PAMQ=;
-	b=iZqbWEl4x0Eh4CI7kmhu33BtLaIFR0x9l83m2Kc6lpfX8ixFcsTsla9lxuBPvK1wP1WjZr
-	/Rjrm6uyOGrb/f3iRBTMgz/RzmDnKmQIJYH4CZLB3iioCdbp+NfmnV3x/XNtMdxtvMsE3Z
-	I2+L1koAfGwuyDp5GO8JxL4O+sO+pRI=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-126-Qd7nMJYIOeCxWmGv808Jmg-1; Mon,
- 15 Jun 2026 11:26:33 -0400
-X-MC-Unique: Qd7nMJYIOeCxWmGv808Jmg-1
-X-Mimecast-MFC-AGG-ID: Qd7nMJYIOeCxWmGv808Jmg_1781537192
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="pb56YmME";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="PEVryuMO"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8DB071800661;
-	Mon, 15 Jun 2026 15:26:31 +0000 (UTC)
-Received: from [10.44.32.53] (unknown [10.44.32.53])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 414161955BCE;
-	Mon, 15 Jun 2026 15:26:28 +0000 (UTC)
-Date: Mon, 15 Jun 2026 17:26:21 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-cc: Alasdair Kergon <agk@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-    Cao Guanghui <caoguanghui@kylinos.cn>, David Carlier <devnexen@gmail.com>, 
-    David Laight <david.laight.linux@gmail.com>, 
-    Eric Biggers <ebiggers@google.com>, 
-    Fengnan Chang <changfengnan@bytedance.com>, 
-    Linlin Zhang <linlin.zhang@oss.qualcomm.com>, 
-    Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
-Subject: [git pull] device mapper changes for 7.2
-Message-ID: <60192373-6ffb-86cd-145c-0fe82b05e9e4@redhat.com>
+	by smtp-out2.suse.de (Postfix) with ESMTPS id D9AE175A46;
+	Mon, 15 Jun 2026 15:33:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1781537595; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q+TLT/HNVldFhWbaCLb/OJSjEvXAnDpkER+pSogagj0=;
+	b=pb56YmMEY8kDmzr9IYy4oGgo/GVgM+2MZGs3+peyQWDX4gulq/aiwzgOA5klQmY0J9zvV1
+	si6o9mo1fdc5iVjIN1K0H5zowSWEeun2GszLc/I2zafnfPxhuxpto/S7JT1UFoioEKAosU
+	ODR8u9dKIXlo1GYpMnTWl6ijv+ojWwk=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=PEVryuMO
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1781537594; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q+TLT/HNVldFhWbaCLb/OJSjEvXAnDpkER+pSogagj0=;
+	b=PEVryuMOKRPDQYCeadeDMNdvr8nMa6qNrKiR5zWwyIeU+yh+rcR0keqJDEYaR8C62SIInO
+	1Jyl4d3CyYR5D0vGXg9anEbUL/nAZZ1adfyZKzrQAWqYh+lX9j3vZ8DQ8Jtq1OUfgRLXPf
+	rvQAQqaL5ZEIHMADkpL+p8ZeeWkSOR8=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id B8667779A7;
+	Mon, 15 Jun 2026 15:33:14 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 1nXkKzobMGqQLgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 15 Jun 2026 15:33:14 +0000
+Message-ID: <0bcbaafbdf29d49d92418b6fb5d5b6aaeaed28dc.camel@suse.com>
+Subject: Re: [PATCH 1/3] multipath-tools: delete obsolete information from
+ multipath.conf.5
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Mon, 15 Jun 2026 17:33:14 +0200
+In-Reply-To: <ajASrXKCvccL7g65@redhat.com>
+References: <20260607103831.336833-1-xose.vazquez@gmail.com>
+	 <20260607103831.336833-2-xose.vazquez@gmail.com>
+	 <562d0c52ef13cfc1f8dec3c59b05b56304ce2c02.camel@suse.com>
+	 <ajASrXKCvccL7g65@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: pUq4EjPfZJdKXwgPuI2HYA3nW9Vb1fltanOs9ehrgYA_1781537192
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+X-Rspamd-Action: no action
+X-Rspamd-Queue-Id: D9AE175A46
+X-Spam-Flag: NO
+X-Spam-Score: -3.01
+X-Spam-Level: 
+X-Spamd-Result: default: False [-3.01 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	TO_DN_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	FREEMAIL_CC(0.00)[gmail.com,opensvc.com,lists.linux.dev];
+	DKIM_TRACE(0.00)[suse.com:+];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_COUNT_TWO(0.00)[2];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:dkim,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
+X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
 
-Hi Linus
+On Mon, 2026-06-15 at 10:56 -0400, Benjamin Marzinski wrote:
+> On Mon, Jun 15, 2026 at 11:11:07AM +0200, Martin Wilck wrote:
+> > On Sun, 2026-06-07 at 12:38 +0200, Xose Vazquez Perez wrote:
+> > > repeat_count (rr_min_io, rr_min_io_rq, rr_weight) has been
+> > > unsupported
+> > > since kernel 4.6 ( commits 90a4323ccfea and=C2=A0 21136f89d76d ).
+> > >=20
+> >=20
+> > I can't make up my mind on this patch. It is true that most path
+> > selectors in the kernel have ignored the repeat_count argument
+> > for a long time (historical_service_time still seems to honour it).
+> >=20
+> > But this is multipath-tools. _We_ still have quite a bit of code
+> > for
+> > handling the minio and weight settings. We should add a hint the
+> > the
+> > man page that these settings are ignored by modern kernels, but it
+> > would be simply wrong to say that _our_ code ignores them while it
+> > doesn't.=20
+> >=20
+> > We can decide to remove this functionality from multipath-tools,
+> > which
+> > would obviously mean removing it from the man page as well. But if
+> > we
+> > do, we should apply further cleanups. I suppose that providing the
+> > "weightedpath" prioritizer makes no sense if we have no path
+> > selector
+> > algorithm that takes such weights into account, for example.
+> >=20
+> > I should also note that there have been discussions with some
+> > partners
+> > about re-introducing parameterized path selectors. This was a topic
+> > in=20
+> > the context of Fibre Channel FPIN notifications: FPINs can be used
+> > by
+> > FC fabric to notify hosts about overloaded paths. With a
+> > parameterized
+> > path selector, the load on such paths could be decreased by
+> > multipathd.
+> > temporarily until the situation is normal again. While there has
+> > been
+> > little progress in this area, I don't consider it cast in stone
+> > that
+> > the kernel will keep ignoring path selector parameters forever, or
+> > IOW,
+> > that there won't be new path selectors in the future that do accept
+> > path parameters again.
+> >=20
+> > No doubt that the way these parameters are interpreted in different
+> > ways ("minio" vs. "weight" vs "repeat_count") and the way this is
+> > exposed to end users in the configuration file and in the man page
+> > is
+> > broken and confusing. But fixing that would be a larger effort.
+>=20
+> I actually do have a patch set I'm testing that rips out the
+> rr_weight
+> and rr_min_io_rq code completely. It leaves the rr_min_io
+> functionality
+> (on the grounds that we many have a use for it later), but it now
+> defaults to 1 and is deprecated, so it can't be changed. I assume
+> that
+> even if this code gets reused in the future, rr_min_io will remain a
+> bad name for the option.
 
-The following changes since commit 7fd2df204f342fc17d1a0bfcd474b24232fb0f32:
+That would be a welcome addition to Xose's set, then.
 
-  Linux 7.1-rc2 (2026-05-03 14:21:25 -0700)
+> I feel like the weightedpath priortizer shouldn't be effected by
+> this.
+> It is still useful to manually assign paths to path_groups when
+> combined
+> with group_by_prio.
 
-are available in the Git repository at:
+I see that it's possible. Assigning weights only as sort of a sort key
+for path grouping appears somewhat non-obvious and over-complicated to
+me. But fair enough, some people may use it this way indeed.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.2/dm-changes
-
-for you to fetch changes up to 55c99f2d901c783c49dddd98f7c05d98ad834ce9:
-
-  dm-zoned-metadata: Use strscpy() to copy device name (2026-06-08 14:59:14 +0200)
-
-Please, pull. Thanks.
-
-Mikulas
-
-----------------------------------------------------------------
-- small cleanups in dm-vdo, dm-raid, dm-cache, dm-zoned-metadata
-
-- rework of dm-ima
-
-- introduce dm-inlinecrypt
-
-- fix wrong return value in dm-ioctl
-
-- fix rcu stall when polling
------BEGIN PGP SIGNATURE-----
-
-iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCajAXChQcbXBhdG9ja2FA
-cmVkaGF0LmNvbQAKCRATAyx9YGnhbaiMAP9WzwyH3Y/cOdpdFoqqPi7IsXZisJPo
-rFiAVL4rOgF3kQD/RRp5dkn4iKSYovjZr3+i6a7srxIkpfDEf4kP2mOJBAk=
-=2jnV
------END PGP SIGNATURE-----
-
-----------------------------------------------------------------
-Benjamin Marzinski (11):
-      dm-raid: only requeue bios when dm is suspending
-      dm-ima: remove dm_ima_reset_data()
-      dm-ima: remove broken last_target_measured logic
-      dm-ima: Remove status_flags from dm_ima_measure_on_table_load()
-      dm-ima: don't copy the active table to the inactive table
-      dm-ima: Fix UAF errors and measuring incorrect context
-      dm-ima: remove new_map from dm_ima_measure_on_device_clear
-      dm-ima: Fix issues with dm_ima_measure_on_device_rename
-      dm-ima: Handle race between rename and table swap
-      dm-ima: Fail more gracefully in dm_ima_measure_on_*
-      dm-ima: use active table's size if available
-
-Cao Guanghui (1):
-      dm cache: make smq background work limit configurable
-
-David Carlier (1):
-      dm vdo: use get_random_u32() where appropriate
-
-David Laight (1):
-      dm-zoned-metadata: Use strscpy() to copy device name
-
-Eric Biggers (2):
-      block: export blk-crypto symbols required by dm-inlinecrypt
-      dm-inlinecrypt: add target for inline block device encryption
-
-Fengnan Chang (1):
-      dm: limit target bio polling to one shot
-
-Linlin Zhang (2):
-      dm: add documentation for dm-inlinecrypt target
-      dm-inlinecrypt: add support for hardware-wrapped keys
-
-Mikulas Patocka (1):
-      dm-ioctl: report an error if a device has no table
-
- .../admin-guide/device-mapper/dm-inlinecrypt.rst   | 129 +++++
- Documentation/admin-guide/device-mapper/index.rst  |   1 +
- block/blk-crypto.c                                 |   3 +
- drivers/md/Kconfig                                 |  11 +
- drivers/md/Makefile                                |   1 +
- drivers/md/dm-cache-policy-smq.c                   |  12 +-
- drivers/md/dm-ima.c                                | 492 ++++++++--------
- drivers/md/dm-ima.h                                |  68 ++-
- drivers/md/dm-inlinecrypt.c                        | 618 +++++++++++++++++++++
- drivers/md/dm-ioctl.c                              | 151 ++++-
- drivers/md/dm-raid.c                               |   6 +
- drivers/md/dm-vdo/indexer/index-layout.c           |   2 +-
- drivers/md/dm-zoned-metadata.c                     |   2 +-
- drivers/md/dm.c                                    |  15 +-
- drivers/md/md.h                                    |   2 +
- drivers/md/raid5.c                                 |   7 +-
- 16 files changed, 1214 insertions(+), 306 deletions(-)
- create mode 100644 Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
- create mode 100644 drivers/md/dm-inlinecrypt.c
-
+Martin
