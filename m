@@ -1,171 +1,351 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4BD0930D3F5
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 18:20:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F156638AC99
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 19:07:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781547615; cv=none; b=Xj9J8dVX0hBcX12+XpnI8Mq4aHIqSlCc5RU08VeZ0AZwl30ntRyfh0FeAAI+s/6LrTKWC/RVZ7vdgU2OW/cOBYcp3QudotaNS9+43givrYj/f6aqbbLb9fQmVEUL3tJpj1Wt5t0ueh9HXTs8Zq8+MEo4WNyoFXL2IQ2Q5fUceLc=
+	t=1781550439; cv=none; b=gwCr03q7ZcpKLPUND99My221/u9+N9A06ayaJ0dbIB0DXPtiTX+tBXkoF2urNCpuC1/kd/uSQ3knbFuWnudawYhBWapZr0BKwwrQaMQyrDXPdoDftsnEmcKBHVEJ0mDE69TEqRkChXz2wIZWKjs7uKstYH/n/w5o4gAnDNR4QyY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781547615; c=relaxed/simple;
-	bh=c+ml8RSe6wp0pbTPqPbKBu0+VgRO0WacvQqiIPK5GOA=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Content-Type; b=ABE4FQ/KBFC6/fhc93aBtw51GJBJSF4H5z+AKmOOJKpBgXpQTiN+poXAcUSrtFEExB3IVUN9upPlp7KndoGywHR0XERt5/r2K9PRgJLdvZ2e/O+jf4hkkJqt7pg5kjaaQutEpSCTjMx6kO0R2sSF0rtw2IWDOyLHiKmFCpqNcps=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VMMJCvIP; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1781550439; c=relaxed/simple;
+	bh=vagMby69ADGqRdyCFcnUgjY+eUhIb1lSjqiIReSLDrs=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:content-type; b=Wu9n425IuvG+vxIkTzpFJU5e41V1Ucw+1FKHhopNwDQll0WtGmUZtkJIcCMa9Qas9vP+ngZ8gkXaKAxFm6fh9lKhMGW7F6OiU5Yt58xXNlHwxxV8O3U14LQZ7vmDNnY8jH9Vp2ItDjMgRhVHjZvMoPNo+fgppHS8gWv+ist5OUw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=eeVnKg2i; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VMMJCvIP"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="eeVnKg2i"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781547613;
+	s=mimecast20190719; t=1781550437;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=gmwnm42JYU+G9jaYgd9NUsf7KZ9Dxsc+uPSbITE9tPE=;
-	b=VMMJCvIPuh5ba9Gc5V5T9JIeTFIqt/mI7Baq9EX3AdWeP5XZSx6V/Y117x35PK1yY/I9IA
-	8i0eVQFnJOLcXIFsAzfIthpbN9lFz8xFY8GzWoBrIoW42n4upP01kOfjpQVPMDmYM2w0Z3
-	DGg9jhbSkLrCC9znybvUoMWnt+Hjk08=
-Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
- [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-665--TYR1g23NLGHgOCyuz074Q-1; Mon, 15 Jun 2026 14:20:08 -0400
-X-MC-Unique: -TYR1g23NLGHgOCyuz074Q-1
-X-Mimecast-MFC-AGG-ID: -TYR1g23NLGHgOCyuz074Q_1781547607
-Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-396708fabd9so15698511fa.0
-        for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 11:20:08 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781547607; x=1782152407;
-        h=content-transfer-encoding:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=gmwnm42JYU+G9jaYgd9NUsf7KZ9Dxsc+uPSbITE9tPE=;
-        b=cO/As13n4ojD4n5ppBgXh8sLkcsGpcsog/CKIwbuqUf0k8lnzAOvL2utyfXUy/W5go
-         Y8NxyELUAU0nlRgNoIqMTnEilbg6UnpnjTT3s4retUjdg6RafW/UpCpQy1BUJcTzK+Dp
-         Z1vZT/CSQBxptx4SNFndkc3uRpNftkfIiN1Ou8HXvd+kmmcHOmwLM2OoMhak7zZCm6/7
-         5yZWdXojVZTWzNbgqNIIWCKKGDgbNslJlRGlBVvZX9ZoPZAiZsasa6XPb6IW66y67voP
-         0QQv4lly/27jj7Yee1KlGY0H3Da46/hCV5QTFqvyAOp1EzmkI4N4ji6ialeNnCaPx94e
-         qnGg==
-X-Forwarded-Encrypted: i=1; AFNElJ+eMyJB+DAPZZccJ22VbRx5mPDOVN8Gylfgqn/XtMqCX6saAYAvafWxVq8zDcrHuc/r4DLT9XXUWw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy0H7H/d4AB46OUq+y5JpYXSqBkqp++ljNs9X3W3QF5FLrfCrhK
-	TiBRT8clH6xJN/Q05I9UKmjOParxLXIfaoO9SM/TiW7ZyHJRzejTp7oezvLowAoNCN29V5pQOYi
-	MGBS4WZm8k6CLEPvzYZjy50bH7VUJ+93I+fvUG6MIQzKlOPOyPCw6IuooaNe8zHC/RcER7kq+cB
-	n3ct17/5ra5HrFvmkSUHJIeOcr8tudm33KYQ==
-X-Gm-Gg: Acq92OFQEHeTpU1d9EVpidNf09x+ZLjPd3ScwgGoysz5H+oKMpX6eaN1GacqDaUUI/u
-	yzlyN+oX12Qui5tRt+uZShXrjRZJHTPQjV0ptn4p1qO1TrvSPZA41mWO07OZvcx4ODb8oDph89v
-	MEjsh/W4/6cblC/XJEvQtpoFFgHJsl3gOTz/6VhTC+Ej+ZZjysxfTBGvMrr8Vs8VmTum2/TwqnJ
-	wCcAz8=
-X-Received: by 2002:a05:651c:2108:b0:38a:2776:1484 with SMTP id 38308e7fff4ca-399357991dcmr34436691fa.28.1781547607116;
-        Mon, 15 Jun 2026 11:20:07 -0700 (PDT)
-X-Received: by 2002:a05:651c:2108:b0:38a:2776:1484 with SMTP id
- 38308e7fff4ca-399357991dcmr34436601fa.28.1781547606589; Mon, 15 Jun 2026
- 11:20:06 -0700 (PDT)
+	bh=eubBclLQz2/wK3ElD+QehXTm1kDNzmBE0XXivvI7t5E=;
+	b=eeVnKg2ikiFycdXqTwHqXaHhRTCjvzPeWlAiE/MXtVXAC6hFZ/9vGoLryKkJF0Qq6lQbFC
+	dbH6Po0Bs76C20uzrkYfbiwFbJG1XGZ4vwEvMK6b82OnPaM0OGnmhCEX2rJPSoLoTN2su4
+	KiA7HK5uvKbNfCI147NBZzh6vvxHpp8=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-33-yvyRDIh6MjSLSO75c6Uoyw-1; Mon,
+ 15 Jun 2026 15:07:15 -0400
+X-MC-Unique: yvyRDIh6MjSLSO75c6Uoyw-1
+X-Mimecast-MFC-AGG-ID: yvyRDIh6MjSLSO75c6Uoyw_1781550433
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 08CA619540DD;
+	Mon, 15 Jun 2026 19:07:13 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CB239180066F;
+	Mon, 15 Jun 2026 19:07:12 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65FJ7BOT797594
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 15 Jun 2026 15:07:11 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65FJ7Bg4797593;
+	Mon, 15 Jun 2026 15:07:11 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>,
+        Xose Vazquez Perez <xose.vazquez@gmail.com>
+Subject: [PATCH 2/4] libmultipath: deprecate rr_min_io_rq, and make it do nothing
+Date: Mon, 15 Jun 2026 15:07:09 -0400
+Message-ID: <20260615190711.797573-3-bmarzins@redhat.com>
+In-Reply-To: <20260615190711.797573-1-bmarzins@redhat.com>
+References: <20260615190711.797573-1-bmarzins@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260609002354.1236297.0535ba20b556.dm-era-target-offset-mapping@trailofbits.com>
-In-Reply-To: <20260609002354.1236297.0535ba20b556.dm-era-target-offset-mapping@trailofbits.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Tue, 16 Jun 2026 02:19:54 +0800
-X-Gm-Features: AVVi8Ce5SqzuJvUXYV5wt38mPdetkc-9qmV-CsS3SBfKTKj9YSKhJb0VkFE10yU
-Message-ID: <CALjSBEs3y6cug0V0F-foOGy37JaRvDOqLsCT-bJ_LZfmF0AKug@mail.gmail.com>
-Subject: Re: [PATCH] dm era: include the target offset when mapping writes
-To: Samuel Moelius <sam.moelius@trailofbits.com>, dm-devel@lists.linux.dev
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 2ZN02Zqf5g5OM1HlH0Zg-Z3cOPy6LypsTX89nwaqQP4_1781547607
+X-Mimecast-MFC-PROC-ID: 4JVpfXQU7eRnQptLG7T482ePbxuUhkkyhj7tGYVOlc4_1781550433
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Tue, Jun 9, 2026 at 8:36=E2=80=AFAM Samuel Moelius
-<sam.moelius@trailofbits.com> wrote:
->
-> dm-era tracks writes in target-relative blocks, but the mapping path can
-> ignore the target offset when translating bios.  Tables with a non-zero
-> start sector can therefore map and account I/O against the wrong origin
-> sectors.
->
-> The result is inconsistent metadata for devices that are not mapped at
-> sector zero.
->
-> Apply the target offset consistently when mapping and tracking writes.
->
-> Assisted-by: Codex:gpt-5.5-cyber-preview
-> Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
-> ---
->  drivers/md/dm-era-target.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
->
-> diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-> index 05285c04ff2c..18aed0e2a508 100644
-> --- a/drivers/md/dm-era-target.c
-> +++ b/drivers/md/dm-era-target.c
-> @@ -1229,6 +1229,7 @@ static dm_block_t get_block(struct era *era, struct=
- bio *bio)
->  static void remap_to_origin(struct era *era, struct bio *bio)
->  {
->         bio_set_dev(bio, era->origin_dev->bdev);
-> +       bio->bi_iter.bi_sector =3D dm_target_offset(era->ti, bio->bi_iter=
-.bi_sector);
->  }
->
->  /*
-> @@ -1560,7 +1561,7 @@ static void era_dtr(struct dm_target *ti)
->  static int era_map(struct dm_target *ti, struct bio *bio)
->  {
->         struct era *era =3D ti->private;
-> -       dm_block_t block =3D get_block(era, bio);
-> +       dm_block_t block;
->
->         /*
->          * All bios get remapped to the origin device.  We do this now, b=
-ut
-> @@ -1568,6 +1569,7 @@ static int era_map(struct dm_target *ti, struct bio=
- *bio)
->          * block is marked in this era.
->          */
->         remap_to_origin(era, bio);
-> +       block =3D get_block(era, bio);
->
->         /*
->          * REQ_PREFLUSH bios carry no data, so we're not interested in th=
-em.
-> --
-> 2.43.0
->
->
+Since the kernel now requires paths to have a minio of 1, rr_min_io_rq
+is completely useless. Remove all the code for it, and deprecate the
+option.
 
-Thanks for the patch. This is a general bug for any dm-era table with
-a non-zero start sector, causing out-of-bounds memory access to the
-bitset when calling writeset_marked. Here's the reproducer:
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/config.c  |  3 ---
+ libmultipath/config.h  |  3 ---
+ libmultipath/dict.c    | 18 +++++-------------
+ libmultipath/hwtable.c |  1 -
+ libmultipath/propsel.c | 20 ++++----------------
+ tests/hwtable.c        | 13 +++----------
+ 6 files changed, 12 insertions(+), 46 deletions(-)
 
-```
-# era metadata
-dmsetup create emeta --table "0 8192 linear /dev/ram0 0"
-dd if=3D/dev/zero of=3D/dev/mapper/emeta bs=3D4k count=3D1
-
-# era origin
-dmsetup create eorig --table "0 8192 linear /dev/ram0 16384"
-
-# create an era device of 64 blocks, plus 2mb (32 blocks) padding at the fr=
-ont
-dmsetup create era --table "0 4096 zero
-4096 8192 era /dev/mapper/emeta /dev/mapper/eorig 128"
-
-# write to the 64th block. it should be the 32nd era data block, but
-being mapped to the 64th era data block (out-of-bounds)
-dd if=3D/dev/zero of=3D/dev/mapper/era bs=3D64K count=3D1 seek=3D64
-```
-
-KASAN report:
-
-BUG: KASAN: vmalloc-out-of-bounds in era_map+0x263/0x4a0
-Read of size 8 at addr ffffc90000075008 by task dd/86
-
-I'd suggest revising the commit message to emphasize the severity, e.g.,
-
-dm era: fix out-of-bounds memory access for non-zero start sector
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index c0be223a..0d877422 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -449,7 +449,6 @@ merge_hwe (struct hwentry * dst, struct hwentry * src)
+ 	merge_num(pgfailback);
+ 	merge_num(no_path_retry);
+ 	merge_num(minio);
+-	merge_num(minio_rq);
+ 	merge_num(flush_on_last_del);
+ 	merge_num(fast_io_fail);
+ 	merge_num(dev_loss);
+@@ -506,7 +505,6 @@ merge_mpe(struct mpentry *dst, struct mpentry *src)
+ 	merge_num(pgfailback);
+ 	merge_num(no_path_retry);
+ 	merge_num(minio);
+-	merge_num(minio_rq);
+ 	merge_num(flush_on_last_del);
+ 	merge_num(attribute_flags);
+ 	merge_num(user_friendly_names);
+@@ -616,7 +614,6 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
+ 	hwe->pgfailback = dhwe->pgfailback;
+ 	hwe->no_path_retry = dhwe->no_path_retry;
+ 	hwe->minio = dhwe->minio;
+-	hwe->minio_rq = dhwe->minio_rq;
+ 	hwe->flush_on_last_del = dhwe->flush_on_last_del;
+ 	hwe->fast_io_fail = dhwe->fast_io_fail;
+ 	hwe->dev_loss = dhwe->dev_loss;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 3a08b701..ad3b2423 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -66,7 +66,6 @@ struct hwentry {
+ 	int pgfailback;
+ 	int no_path_retry;
+ 	int minio;
+-	int minio_rq;
+ 	int flush_on_last_del;
+ 	int fast_io_fail;
+ 	unsigned int dev_loss;
+@@ -115,7 +114,6 @@ struct mpentry {
+ 	int pgfailback;
+ 	int no_path_retry;
+ 	int minio;
+-	int minio_rq;
+ 	int flush_on_last_del;
+ 	int attribute_flags;
+ 	int user_friendly_names;
+@@ -144,7 +142,6 @@ struct config {
+ 	int pgpolicy_flag;
+ 	int pgpolicy;
+ 	int minio;
+-	int minio_rq;
+ 	unsigned int checkint;
+ 	unsigned int max_checkint;
+ 	unsigned int adjust_int;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 502f54b2..3b6584ec 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -755,15 +755,6 @@ declare_hw_snprint(minio, print_nonzero)
+ declare_mp_range_handler(minio, 0, INT_MAX)
+ declare_mp_snprint(minio, print_nonzero)
+ 
+-declare_def_range_handler(minio_rq, 0, INT_MAX)
+-declare_def_snprint_defint(minio_rq, print_int, DEFAULT_MINIO_RQ)
+-declare_ovr_range_handler(minio_rq, 0, INT_MAX)
+-declare_ovr_snprint(minio_rq, print_nonzero)
+-declare_hw_range_handler(minio_rq, 0, INT_MAX)
+-declare_hw_snprint(minio_rq, print_nonzero)
+-declare_mp_range_handler(minio_rq, 0, INT_MAX)
+-declare_mp_snprint(minio_rq, print_nonzero)
+-
+ declare_def_handler(queue_without_daemon, set_yes_no)
+ static int
+ snprint_def_queue_without_daemon(struct config *conf, struct strbuf *buff,
+@@ -2117,6 +2108,7 @@ declare_deprecated_handler(pg_timeout, "(not set)")
+ declare_deprecated_handler(bindings_file, DEFAULT_BINDINGS_FILE)
+ declare_deprecated_handler(wwids_file, DEFAULT_WWIDS_FILE)
+ declare_deprecated_handler(prkeys_file, DEFAULT_PRKEYS_FILE)
++declare_deprecated_handler(minio_rq, "1")
+ declare_deprecated_handler(rr_weight, "uniform")
+ 
+ /*
+@@ -2144,7 +2136,7 @@ init_keywords(vector keywords)
+ 	install_keyword("alias_prefix", &def_alias_prefix_handler, &snprint_def_alias_prefix);
+ 	install_keyword("failback", &def_pgfailback_handler, &snprint_def_pgfailback);
+ 	install_keyword("rr_min_io", &def_minio_handler, &snprint_def_minio);
+-	install_keyword("rr_min_io_rq", &def_minio_rq_handler, &snprint_def_minio_rq);
++	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("max_fds", &max_fds_handler, &snprint_max_fds);
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &def_no_path_retry_handler, &snprint_def_no_path_retry);
+@@ -2254,7 +2246,7 @@ init_keywords(vector keywords)
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &hw_no_path_retry_handler, &snprint_hw_no_path_retry);
+ 	install_keyword("rr_min_io", &hw_minio_handler, &snprint_hw_minio);
+-	install_keyword("rr_min_io_rq", &hw_minio_rq_handler, &snprint_hw_minio_rq);
++	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("pg_timeout", &deprecated_pg_timeout_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &hw_flush_on_last_del_handler, &snprint_hw_flush_on_last_del);
+ 	install_keyword("fast_io_fail_tmo", &hw_fast_io_fail_handler, &snprint_hw_fast_io_fail);
+@@ -2300,7 +2292,7 @@ init_keywords(vector keywords)
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &ovr_no_path_retry_handler, &snprint_ovr_no_path_retry);
+ 	install_keyword("rr_min_io", &ovr_minio_handler, &snprint_ovr_minio);
+-	install_keyword("rr_min_io_rq", &ovr_minio_rq_handler, &snprint_ovr_minio_rq);
++	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &ovr_flush_on_last_del_handler, &snprint_ovr_flush_on_last_del);
+ 	install_keyword("fast_io_fail_tmo", &ovr_fast_io_fail_handler, &snprint_ovr_fast_io_fail);
+ 	install_keyword("dev_loss_tmo", &ovr_dev_loss_handler, &snprint_ovr_dev_loss);
+@@ -2349,7 +2341,7 @@ init_keywords(vector keywords)
+ 	install_keyword("rr_weight", &deprecated_rr_weight_handler, &snprint_deprecated);
+ 	install_keyword("no_path_retry", &mp_no_path_retry_handler, &snprint_mp_no_path_retry);
+ 	install_keyword("rr_min_io", &mp_minio_handler, &snprint_mp_minio);
+-	install_keyword("rr_min_io_rq", &mp_minio_rq_handler, &snprint_mp_minio_rq);
++	install_keyword("rr_min_io_rq", &deprecated_minio_rq_handler, &snprint_deprecated);
+ 	install_keyword("pg_timeout", &deprecated_pg_timeout_handler, &snprint_deprecated);
+ 	install_keyword("flush_on_last_del", &mp_flush_on_last_del_handler, &snprint_mp_flush_on_last_del);
+ 	install_keyword("features", &mp_features_handler, &snprint_mp_features);
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 949ccb33..36646540 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -58,7 +58,6 @@
+ 		.pgfailback    = -FAILBACK_MANUAL,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+ 		.minio         = 1000,
+-		.minio_rq      = 1,
+ 		.flush_on_last_del = FLUSH_UNUSED,
+ 		.user_friendly_names = USER_FRIENDLY_NAMES_OFF,
+ 		.fast_io_fail  = 5,
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index bc5aae7d..cc3146fb 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -848,21 +848,6 @@ out:
+ 	return 0;
+ }
+ 
+-int
+-select_minio_rq (struct config *conf, struct multipath * mp)
+-{
+-	const char *origin;
+-
+-	do_set(minio_rq, mp->mpe, mp->minio, multipaths_origin);
+-	do_set(minio_rq, conf->overrides, mp->minio, overrides_origin);
+-	do_set_from_hwe(minio_rq, mp, mp->minio, hwe_origin);
+-	do_set(minio_rq, conf, mp->minio, conf_origin);
+-	do_default(mp->minio, DEFAULT_MINIO_RQ);
+-out:
+-	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
+-	return 0;
+-}
+-
+ int
+ select_minio_bio (struct config *conf, struct multipath * mp)
+ {
+@@ -880,13 +865,16 @@ out:
+ 
+ int select_minio(struct config *conf, struct multipath *mp)
+ {
++	const char *origin;
+ 	unsigned int minv_dmrq[3] = {1, 1, 0}, version[3];
+ 
+ 	if (!libmp_get_version(DM_MPATH_TARGET_VERSION, version)
+ 	    && VERSION_GE(version, minv_dmrq))
+-		return select_minio_rq(conf, mp);
++		do_default(mp->minio, DEFAULT_MINIO_RQ);
+ 	else
+ 		return select_minio_bio(conf, mp);
++	condlog(3, "%s: minio = %i %s", mp->alias, mp->minio, origin);
++	return 0;
+ }
+ 
+ int select_fast_io_fail(struct config *conf, struct path *pp)
+diff --git a/tests/hwtable.c b/tests/hwtable.c
+index 6021bfd3..eb135da1 100644
+--- a/tests/hwtable.c
++++ b/tests/hwtable.c
+@@ -406,7 +406,6 @@ static const char _checker[] = "path_checker";
+ static const char _vpd_vnd[] = "vpd_vendor";
+ static const char _uid_attr[] = "uid_attribute";
+ static const char _bl_product[] = "product_blacklist";
+-static const char _minio[] = "rr_min_io_rq";
+ static const char _no_path_retry[] = "no_path_retry";
+ 
+ /* Device identifiers */
+@@ -441,7 +440,6 @@ static const struct key_value bl_bar = { _bl_product, "bar" };
+ static const struct key_value bl_baz = { _bl_product, "baz" };
+ static const struct key_value bl_barx = { _bl_product, "ba[[rxy]" };
+ static const struct key_value bl_bazy = { _bl_product, "ba[zy]" };
+-static const struct key_value minio_99 = { _minio, "99" };
+ static const struct key_value npr_37 = { _no_path_retry, "37" };
+ static const struct key_value npr_queue = { _no_path_retry, "queue" };
+ 
+@@ -552,7 +550,6 @@ static void test_sanity_globals(void **state)
+ 	assert_string_not_equal(chk_hp.value, DEFAULT_CHECKER);
+ 	assert_int_not_equal(MULTIBUS, DEFAULT_PGPOLICY);
+ 	assert_int_not_equal(NO_PATH_RETRY_QUEUE, DEFAULT_NO_PATH_RETRY);
+-	assert_int_not_equal(atoi(minio_99.value), DEFAULT_MINIO_RQ);
+ 	assert_int_not_equal(atoi(npr_37.value), DEFAULT_NO_PATH_RETRY);
+ }
+ 
+@@ -1566,7 +1563,6 @@ static void test_multipath_config(const struct hwt_state *hwt)
+ 	mp = mock_multipath(pp);
+ 	assert_ptr_not_equal(mp->mpe, NULL);
+ 	TEST_PROP(prio_name(&pp->prio), prio_rdac.value);
+-	assert_int_equal(mp->minio, atoi(minio_99.value));
+ 	TEST_PROP(pp->uid_attribute, uid_baz.value);
+ 
+ 	/* test different wwid */
+@@ -1574,14 +1570,13 @@ static void test_multipath_config(const struct hwt_state *hwt)
+ 	mp = mock_multipath(pp);
+ 	// assert_ptr_equal(mp->mpe, NULL);
+ 	TEST_PROP(prio_name(&pp->prio), prio_emc.value);
+-	assert_int_equal(mp->minio, DEFAULT_MINIO_RQ);
+ 	TEST_PROP(pp->uid_attribute, uid_baz.value);
+ }
+ 
+ static int setup_multipath_config(void **state)
+ {
+ 	struct hwt_state *hwt = CHECK_STATE(state);
+-	const struct key_value kvm[] = { wwid_test, prio_rdac, minio_99 };
++	const struct key_value kvm[] = { wwid_test, prio_rdac };
+ 	const struct key_value kvp[] = { vnd_foo, prd_bar, prio_emc, uid_baz };
+ 
+ 	begin_config(hwt);
+@@ -1612,14 +1607,13 @@ static void test_multipath_config_2(const struct hwt_state *hwt)
+ 	assert_ptr_not_equal(mp, NULL);
+ 	assert_ptr_not_equal(mp->mpe, NULL);
+ 	TEST_PROP(prio_name(&pp->prio), prio_rdac.value);
+-	assert_int_equal(mp->minio, atoi(minio_99.value));
+ 	assert_int_equal(mp->no_path_retry, atoi(npr_37.value));
+ }
+ 
+ static int setup_multipath_config_2(void **state)
+ {
+ 	const struct key_value kv1[] = { wwid_test, prio_rdac, npr_queue };
+-	const struct key_value kv2[] = { wwid_test, minio_99, npr_37 };
++	const struct key_value kv2[] = { wwid_test, npr_37 };
+ 	struct hwt_state *hwt = CHECK_STATE(state);
+ 
+ 	begin_config(hwt);
+@@ -1647,14 +1641,13 @@ static void test_multipath_config_3(const struct hwt_state *hwt)
+ 	assert_ptr_not_equal(mp, NULL);
+ 	assert_ptr_not_equal(mp->mpe, NULL);
+ 	TEST_PROP(prio_name(&pp->prio), prio_rdac.value);
+-	assert_int_equal(mp->minio, atoi(minio_99.value));
+ 	assert_int_equal(mp->no_path_retry, atoi(npr_37.value));
+ }
+ 
+ static int setup_multipath_config_3(void **state)
+ {
+ 	const struct key_value kv1[] = { wwid_test, prio_rdac, npr_queue };
+-	const struct key_value kv2[] = { wwid_test, minio_99, npr_37 };
++	const struct key_value kv2[] = { wwid_test, npr_37 };
+ 	struct hwt_state *hwt = CHECK_STATE(state);
+ 
+ 	begin_config(hwt);
+-- 
+2.53.0
 
