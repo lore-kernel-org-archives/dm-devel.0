@@ -1,115 +1,150 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 069863D6688
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 08:35:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BAD33BFAF7
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 08:38:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781512507; cv=none; b=XzZGmBINs6alWOfx/brXv+XE3CKBm77onUM52rJn/XSxCGHbXkduzyNtFNO3lB9vlyEYXoazSPN2Xu482r6CxAV9MvOwr05FhSYVZ6pYeOuN9yc+k5LkBU7rBmhq3NVb4U8KNuW4LNPdez1QrocKCOmTbMk585dNRW1NJCOQDRE=
+	t=1781512682; cv=none; b=H1ocCU5eubcIibeQbIkMa5em0ni3wgLrtNZY+jV3GWlScXxOt0no6qbNAEUgm/HjfR+NM8lNZsScM35EXt0WpOdAdH2efq39NFypenpCsc3y0eFPeL2gzGyb93VoStFfu0y+++thqUKrWtYrE3bwh8l7Fs/nBLnQQtTjiBfiroM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781512507; c=relaxed/simple;
-	bh=/3ixvILgJFwO8+8meaKS6WP8gQg66LRPMNx0uUTAgXc=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=nKNVQjuNNPyHd1NCCoPyGOHgYeEP+gMUGb3G3490iVvfKf3/BuJ99NErZxPuaT5ht99/UCoq3pZlVRQqD/AF4IpnMnKkikW4NH4YQnAgGECNPHwEG59PaP1eFKBSxDB7vATdtsRx8UMFHt73v6kYsXLKks86NN2D9wQfDJDETNY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=E2Rh89wT; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1781512682; c=relaxed/simple;
+	bh=PPD/eRFG+nzKPvKWp8I1HyjWGQoHfoLhfXNI9B+rT0I=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=i2iBT3YZA72DMWYfg0z5uJZpcLK5NK1WsSNTBYoxwuKfeaNgf9BT4Wz+rL+j5JI9xRtoQ9Cyyb96P1yPI8rkeJmTojoLUk+Dpn1xT8inCFmGEiOVoCemHkhcvkI7GOz0WfI1qo4kHNdCvoddZvt2WVUQE0+wq9MV2KkjSiDuyCE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=txgACCpo; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=txgACCpo; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="E2Rh89wT"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781512500;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=RK56bcfdzhUEzf86OpRCPFqK3g4YOUqB23+/OdLDJKY=;
-	b=E2Rh89wTwPOHokwNErZcrc4Pc1uVzCqfoofro+/ZALMOws4r2rQ7IM3mfvPcbVSWY9xOpn
-	H/MEGE2Tsj0gcuP75D7+qR8W4oQvre2bvnCcOhaEsfdZOwjaq+qDP8nVhu5K/BUaOtvJNl
-	Ci+rGv+65bnkr0MebU40GkXuL6HhJ/4=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-591-nFRNU-sSOziTbxqBdoEUUg-1; Mon,
- 15 Jun 2026 04:34:57 -0400
-X-MC-Unique: nFRNU-sSOziTbxqBdoEUUg-1
-X-Mimecast-MFC-AGG-ID: nFRNU-sSOziTbxqBdoEUUg_1781512496
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="txgACCpo";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="txgACCpo"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 00E0819560BA;
-	Mon, 15 Jun 2026 08:34:56 +0000 (UTC)
-Received: from [10.44.32.53] (unknown [10.44.32.53])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A8E4330001A1;
-	Mon, 15 Jun 2026 08:34:53 +0000 (UTC)
-Date: Mon, 15 Jun 2026 10:34:46 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-cc: Eric Biggers <ebiggers@kernel.org>, Milan Broz <gmazyland@gmail.com>, 
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, 
-    Neeraj Soni <neeraj.soni@oss.qualcomm.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v3 0/1] dm-inlinecrypt: add support for hardware-wrapped
- keys
-In-Reply-To: <13febc50-41b2-479c-97f3-f3eecc648871@oss.qualcomm.com>
-Message-ID: <5a1403ea-bec3-f414-c322-5c19edee5bf0@redhat.com>
-References: <20260525121348.1321282-1-linlin.zhang@oss.qualcomm.com> <13febc50-41b2-479c-97f3-f3eecc648871@oss.qualcomm.com>
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 76418759AD;
+	Mon, 15 Jun 2026 08:37:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1781512679; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=PPD/eRFG+nzKPvKWp8I1HyjWGQoHfoLhfXNI9B+rT0I=;
+	b=txgACCpodMHWM+vZFBeBssV2zMAmVeE+X6DzC7SVPZkc6ixW0fTM0s6CT/6JdrWG/TmjpF
+	vq+pHlaKxOpKIoureJSDyXwb6mxrzR3BuB+ldiHIQMdm1jnHhi6CMMrpgqJq7wjpA0w5/p
+	8lijZdPz89/V1uVHNtAcZbMqQiDbD3A=
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1781512679; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=PPD/eRFG+nzKPvKWp8I1HyjWGQoHfoLhfXNI9B+rT0I=;
+	b=txgACCpodMHWM+vZFBeBssV2zMAmVeE+X6DzC7SVPZkc6ixW0fTM0s6CT/6JdrWG/TmjpF
+	vq+pHlaKxOpKIoureJSDyXwb6mxrzR3BuB+ldiHIQMdm1jnHhi6CMMrpgqJq7wjpA0w5/p
+	8lijZdPz89/V1uVHNtAcZbMqQiDbD3A=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 57067779A7;
+	Mon, 15 Jun 2026 08:37:59 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id po0pFOe5L2oMCwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 15 Jun 2026 08:37:59 +0000
+Message-ID: <35ab9802b0e8a55ade753048cb70ffcafe1069a4.camel@suse.com>
+Subject: Re: [PATCH 2/5] multipath-tools: clarify path selector descriptions
+ in multipath.conf.5
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Mon, 15 Jun 2026 10:37:58 +0200
+In-Reply-To: <994b66b1-68fb-4dd6-90e4-8fcd6f894f62@gmail.com>
+References: <20260613131002.144263-1-xose.vazquez@gmail.com>
+	 <20260613131002.144263-3-xose.vazquez@gmail.com>
+	 <7c28dd835abebb6f9e4ff69159e417cac323409f.camel@suse.com>
+	 <994b66b1-68fb-4dd6-90e4-8fcd6f894f62@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: jFNglRRDdf5PtfeXIYWRdXDuw6iU_QZIwXsJnlFZ6tQ_1781512496
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+X-Spam-Flag: NO
+X-Spam-Score: -2.80
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_TO(0.00)[gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	MIME_TRACE(0.00)[0:+];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid]
+X-Spam-Level: 
+
+On Mon, 2026-06-15 at 10:26 +0200, Xose Vazquez Perez wrote:
+> On 6/15/26 10:16 AM, Martin Wilck wrote:
+>=20
+> > On Sat, 2026-06-13 at 15:09 +0200, Xose Vazquez Perez wrote:
+> > > Selectors operate on the next individual I/O request rather
+> > > than a "bunch" of I/O.
+> >=20
+> > This patch doesn't apply cleanly to any of my branches (master,
+> > queue,
+> > tip).
+> That quote is from the patch series I sent earlier. You might have
+> missed it:
+
+No, but Ben had remarks on it, and I expected you to submit a v2.
+So I am gathering that you want me to apply that series, and Ben's
+points are addressed by the 2nd series on top. That wasn's obvious to
+me, sorry.
+
+Martin
 
 
-
-On Mon, 15 Jun 2026, Linlin Zhang wrote:
-
-> Hi Milan, Eric and Mikulas,
-> 
-> Do you have a chance to help review this patch?
-> 
-> I'm appreciated if you can help give some comments or accept and help merge this patch.
-> 
-> Thanks,
-> Linlin
-
-Hi
-
-I already accepted this patch, I will send it to Linus in this merge 
-window.
-
-Mikulas
-
-> On 5/25/2026 8:13 PM, Linlin Zhang wrote:
-> > dm-inlinecrypt currently assumes that all keys are raw software keys.
-> > That does not work for platforms where inline encryption expects
-> > hardware-wrapped key material managed by secure firmware/hardware.
-> > 
-> > This series adds support for hardware-wrapped keys in dm-inlinecrypt by
-> > introducing an optional <key_type> target argument. The flag lets
-> > dm-inlinecrypt select the proper blk-crypto key type at key
-> > initialization time:
-> > 
-> > - 1: BLK_CRYPTO_KEY_TYPE_RAW
-> > - 2: BLK_CRYPTO_KEY_TYPE_HW_WRAPPED
-> > 
-> > With this change, dm-inlinecrypt can support both raw and wrapped key
-> > deployment models without hardcoding one key ownership model.
-> > The series also:
-> > - updates target argument parsing to include the new required flag
-> > - propagates the wrapped/raw state in target status output
-> > - updates dm-inlinecrypt documentation and examples accordingly
-> > Linlin Zhang (1):
-> >   dm-inlinecrypt: add support for hardware-wrapped keys
-> > 
-> >  .../device-mapper/dm-inlinecrypt.rst          | 20 +++---
-> >  drivers/md/dm-inlinecrypt.c                   | 63 ++++++++++++-------
-> >  2 files changed, 54 insertions(+), 29 deletions(-)
-> > 
-> 
-
+>=20
+> Xose Vazquez Perez (3):
+> =C2=A0=C2=A0 multipath-tools: delete obsolete information from multipath.=
+conf.5
+> =C2=A0=C2=A0 multipath-tools: remove explicit width from .TP macros in
+> multipath.conf.5
+> =C2=A0=C2=A0 multipath-tools: remove explicit widths from macros in the
+> remaining man pages
+>=20
+> =C2=A0 libmpathpersist/mpath_persistent_reserve_in.3 |=C2=A0=C2=A0 4 +-
+> =C2=A0 .../mpath_persistent_reserve_out.3=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 4 +-
+> =C2=A0 mpathpersist/mpathpersist.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0=C2=A0 2 +-
+> =C2=A0 multipath/multipath.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0 |=C2=A0=C2=A0 6 +-
+> =C2=A0 multipath/multipath.conf.5.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 135 +++++---=
+-------
+> ---
+> =C2=A0 multipathd/multipathd.8.in=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+ |=C2=A0=C2=A0 9 +-
+> =C2=A0 6 files changed, 51 insertions(+), 109 deletions(-)
