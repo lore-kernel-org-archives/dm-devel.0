@@ -1,43 +1,44 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03BA025776;
-	Mon, 15 Jun 2026 19:25:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DB2329BDBB;
+	Mon, 15 Jun 2026 20:09:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781551520; cv=none; b=Y5UgyGG9NBy/3oykWYZLtME7b71VMh/dOQHVmXRsg68frswpnyDxR3M89Xz7jvSHRVnEUToCYcbXl3GmtTycmOYcJS5FM+CXgw3ks++IrS84gYTbXEdWsxrH0jhLhjYeTVsCqFY7Rv907Q5FnJW4ei93pXlirR2PQo/QaBKCQqA=
+	t=1781554165; cv=none; b=OEUNWmDb/0FdvUqNLDEsVM7WKnWMVj6Q3aWDn7VKXyqaSm/wUxYC4wPYkTgmBObLZr3YQKM0t3vT8g1Lb+nZx3gQk3FUfR+n6G07+03jEpmMqcd9FTk0rPMQcK0aQugNTVhlLHyzuvSxHFk6Deo6Fa+/+lrYQVNdV8nGLD1ah64=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781551520; c=relaxed/simple;
-	bh=xcCL0pBFLSUueKbbdCERNE0vD2OIUdxB4/A2QjFsqZY=;
+	s=arc-20240116; t=1781554165; c=relaxed/simple;
+	bh=tSs2qRaNnzRJ5YYbjRMZFlsY6LW0L1FgXhiTZaYrr08=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=YRUzfWDPWh4Ly5OMWU8BQtgmZHKKdYY2IRIy0UsuKD7pmLNYweO071kGGqVEfT37flJrNRPkwJCpXU0ZNd7rziukK1yb9QndyVtptC+Ze/Gq3YZwWfGBZ/qO/bks+QPIce107UVF6aLE93E3GWiF3UQ5onGsBi8iyXGP8L/UnAQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=EUR1syh3; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=OpxR1lS131aNFMaxcuehL6isSWL0HM/DLmuAraEuPtbvLLZIkb/x92LdtnRWy5SCGWZXRkscCCtu2/2OeK8M8HXcvG4xKNO4kzq1xI0pZCusMj5rIiMATH+AccGSvffaZgeGWACcKtiIOnswSb+72spRwfGr8qmtxDn1I0LbJn8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=iX/IoOhh; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="EUR1syh3"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 704671F000E9;
-	Mon, 15 Jun 2026 19:25:19 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="iX/IoOhh"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 78E1E1F000E9;
+	Mon, 15 Jun 2026 20:09:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1781551519;
-	bh=XImiJzUy2p4Y8Op2JwUEIV2Jl3UCBUZzU96cLFEpEWI=;
+	s=k20260515; t=1781554163;
+	bh=wRM/WXOkYOKh+4JQuuVRGyzwmONOzjZ44ML9KD6gb8c=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=EUR1syh3q/KB0CueCCTt3Px9pBu0R9A3V9pCfX8ZKli1nfgYENVfjJJl2xwmtIxxF
-	 TZZd0wOUEN7yqkCkoaVR3/KofDcXoB/aMI3WjngNEYZHxPEbffpn5l0th3XHt0XLSx
-	 4Inr6GoC9GPQgMxx02vpfBgn2kRPRYV+IOVLmY4tyV0QNTmO90kmdnaUXWtAj3RVoQ
-	 PL1N50fMzl9sWciAzgBTmG5PkxF8ZwJSpfO3gl0GSN4BcWnf6rKi+bZTSiQNtcfwD3
-	 ZeiBerDntAsEnZYThBoD3FoDIig2U8W7oTboI2pyicSAtaPWLOERqtL3VVoCpQt+9H
-	 qh2+py2ZKtc5w==
-Date: Mon, 15 Jun 2026 13:25:17 -0600
+	b=iX/IoOhhGGEH6jOnE2wT1iChsVfdz02XSJ1YuPTm9po53Pa8vv+elrfwJ9eV8Hf9T
+	 QqIrwZXrhza+OyOskZO5m7kWgJwqZV6ZaTz5hA5JwtMaTGtrj2y3Qw1ybqOLxbY0gG
+	 Xhie2QLaCCqoFzM8Oha06UCFRkhqI2uoMH1Ugy3oqArYZrlB7S+FFBGaCW4g2zwBEW
+	 d2FRkgNt114lnXtK7RgWwPBWwAjRN9eMO7zEgtvpiH87bUMm3LIZBaY7cvPxuPEJZH
+	 4g4XoTFcToyWtU9b95Mu3m80n+qpnobltkZFNmkBxQ9407u/etJ+2GZtgSWMz8laAB
+	 OxOy0MICeK6hA==
+Date: Mon, 15 Jun 2026 14:09:22 -0600
 From: Keith Busch <kbusch@kernel.org>
 To: "Dr. David Alan Gilbert" <linux@treblig.org>
 Cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev
 Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
-Message-ID: <ajBRnUqXd7DqxLiG@kbusch-mbp>
+Message-ID: <ajBb8tK-0aJBpIgF@kbusch-mbp>
 References: <ai7rnH20IYeSmY8s@gallifrey>
  <ajAYN_mmjzYBAimV@kbusch-mbp>
  <ajAb0m9cNraQn2Pw@kbusch-mbp>
  <ajAqUwo3eTm1c2_J@gallifrey>
  <ajA0L-u-r4nhbpfl@kbusch-mbp>
  <ajA5kpUraXqh9ag9@gallifrey>
+ <ajBRnUqXd7DqxLiG@kbusch-mbp>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -46,47 +47,127 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ajA5kpUraXqh9ag9@gallifrey>
+In-Reply-To: <ajBRnUqXd7DqxLiG@kbusch-mbp>
 
-On Mon, Jun 15, 2026 at 05:42:42PM +0000, Dr. David Alan Gilbert wrote:
-> * Keith Busch (kbusch@kernel.org) wrote:
-> > On Mon, Jun 15, 2026 at 04:37:39PM +0000, Dr. David Alan Gilbert wrote:
-> > > Hi Keith,
-> > >   Thanks for the patch, alas it doesn't seem to be helping here;
-> > >  the first warn is still the same
-> > > and it still hangs the test process hard and eventually BUGs at
-> > > 
-> > > void blk_mq_end_request(struct request *rq, blk_status_t error)
-> > > {
-> > >         if (blk_update_request(rq, error, blk_rq_bytes(rq)))
-> > >                 BUG();
-> > 
-> > Oh, that was not expected.
-> > 
-> > What is the dma alignment requirement of your backing devices? You can
-> > find the attribute for sda at /sys/block/sda/queue/dma_alignment. I'm
-> > expecting 511, but just want to double check.
-> 
-> Yeh looks like it:
-> /sys/block/sda/queue/dma_alignment:511
-> /sys/block/sdb/queue/dma_alignment:511
-> 
-> all of the lvm also looks like it is.
+On Mon, Jun 15, 2026 at 01:25:17PM -0600, Keith Busch wrote:
+> In the meantime, since I so far can't reproduce this after including my
+> previous proposal, I may have to request trying out a debug patch to get
+> some more visibility on what's happening if that's okay.
 
-Thanks for confirming.
+Going in a different direction here, there's no reason to recreate the
+lower level bio's from scratch when they originate from an incoming bio.
+We can just clone it along with an iterator pointing to the original.
 
-I'm struggling to see how you're getting there with your reproducer with
-the proposal included. I can see other short comings with preadv or
-really large pread's, but not with a 4k pread. For those other issues
-this patch can fix it:
+Can you try this one out? This was successful when I ran your reproducer
+and cuts out a lot of code too with a performance bonus for large IO.
 
-  https://lore.kernel.org/linux-block/20260612223205.465913-1-kbusch@meta.com/
-
-It is currently staged for upstream, so hasn't landed yet. But again, I
-don't think those conditions apply to what you're seeing, but worth a
-shot on top of the previous proposal to use byte units instead of
-sectors.
-
-In the meantime, since I so far can't reproduce this after including my
-previous proposal, I may have to request trying out a debug patch to get
-some more visibility on what's happening if that's okay.
+---
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 1db565b376200..28adfeb58f240 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -170,12 +170,11 @@ struct dpages {
+ 			 struct page **p, unsigned long *len, unsigned int *offset);
+ 	void (*next_page)(struct dpages *dp);
+ 
+-	union {
+-		unsigned int context_u;
+-		struct bvec_iter context_bi;
+-	};
++	unsigned int context_u;
+ 	void *context_ptr;
+ 
++	struct bio *orig_bio;
++
+ 	void *vma_invalidate_address;
+ 	unsigned long vma_invalidate_size;
+ };
+@@ -210,44 +209,6 @@ static void list_dp_init(struct dpages *dp, struct page_list *pl, unsigned int o
+ 	dp->context_ptr = pl;
+ }
+ 
+-/*
+- * Functions for getting the pages from a bvec.
+- */
+-static void bio_get_page(struct dpages *dp, struct page **p,
+-			 unsigned long *len, unsigned int *offset)
+-{
+-	struct bio_vec bvec = bvec_iter_bvec((struct bio_vec *)dp->context_ptr,
+-					     dp->context_bi);
+-
+-	*p = bvec.bv_page;
+-	*len = bvec.bv_len;
+-	*offset = bvec.bv_offset;
+-
+-	/* avoid figuring it out again in bio_next_page() */
+-	dp->context_bi.bi_sector = (sector_t)bvec.bv_len;
+-}
+-
+-static void bio_next_page(struct dpages *dp)
+-{
+-	unsigned int len = (unsigned int)dp->context_bi.bi_sector;
+-
+-	bvec_iter_advance((struct bio_vec *)dp->context_ptr,
+-			  &dp->context_bi, len);
+-}
+-
+-static void bio_dp_init(struct dpages *dp, struct bio *bio)
+-{
+-	dp->get_page = bio_get_page;
+-	dp->next_page = bio_next_page;
+-
+-	/*
+-	 * We just use bvec iterator to retrieve pages, so it is ok to
+-	 * access the bvec table directly here
+-	 */
+-	dp->context_ptr = bio->bi_io_vec;
+-	dp->context_bi = bio->bi_iter;
+-}
+-
+ /*
+  * Functions for getting the pages from a VMA.
+  */
+@@ -332,6 +293,21 @@ static void do_region(const blk_opf_t opf, unsigned int region,
+ 		return;
+ 	}
+ 
++	if (dp->orig_bio) {
++		bio = bio_alloc_clone(where->bdev, dp->orig_bio, GFP_NOIO,
++				      &io->client->bios);
++		bio->bi_iter.bi_sector = where->sector;
++		bio->bi_iter.bi_size = where->count << SECTOR_SHIFT;
++		bio->bi_opf = opf;
++		bio->bi_end_io = endio;
++		bio->bi_ioprio = ioprio;
++		store_io_and_region_in_bio(bio, io, region);
++
++		atomic_inc(&io->count);
++		submit_bio(bio);
++		return;
++	}
++
+ 	/*
+ 	 * where->count may be zero if op holds a flush and we need to
+ 	 * send a zero-sized flush.
+@@ -468,6 +444,7 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
+ 
+ 	dp->vma_invalidate_address = NULL;
+ 	dp->vma_invalidate_size = 0;
++	dp->orig_bio = NULL;
+ 
+ 	switch (io_req->mem.type) {
+ 	case DM_IO_PAGE_LIST:
+@@ -475,7 +452,11 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp,
+ 		break;
+ 
+ 	case DM_IO_BIO:
+-		bio_dp_init(dp, io_req->mem.ptr.bio);
++		/*
++		 * The destination bios clone this bio's biovec directly, so
++		 * there are no per-page accessors to set up here.
++		 */
++		dp->orig_bio = io_req->mem.ptr.bio;
+ 		break;
+ 
+ 	case DM_IO_VMA:
+-- 
