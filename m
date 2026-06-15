@@ -1,134 +1,77 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A28E5340404
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 14:56:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 415E540313F;
+	Mon, 15 Jun 2026 15:20:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781535413; cv=none; b=SUFHdIwbqgtHh09i3dTq9Ub5pIX5NQVhJd1klPrQwrRZdT1TZZ5A3PJwIaRXkxAdPW/zMd8Lc4KwFYeO40fGiBedlJyZ2zLEIft+0p5jtCCQuf9KizbLG/BS9s1or5Hm4qafvtjZgRwWflpEoJrot0tgC8ksdRx7En1CoSo+IZA=
+	t=1781536826; cv=none; b=V/dnqeEw/PYi9eJiy9S/oRw3DPbAHJs5kWUCGOJcEup1NvhSUFcAysAiFgGgW7bpAdbAacik2Nl44gogbW1XlX1T/NBemyR0RFoUwWquX8ZDFSWDGst4yzuV+LNldu4z1MyD7x5ZyBsfA1SIFACq54qfS4xMlR+JzrRJqEUDQoI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781535413; c=relaxed/simple;
-	bh=a5grERLxFxLzBGCTLKoyX0X7js876dnv5gaISNV3iOI=;
+	s=arc-20240116; t=1781536826; c=relaxed/simple;
+	bh=avdt4c2mHPT5v2FSu1I85m+T66Wp6hii6Eye7zrlF6E=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=PpcfiNk8JZl1Y6O4uqGmdDugLjh+71Pg/UK4MKUX/SY4Tpii1cP4r2F4Gicpx6Pn1uiMWBxnUMTSEcy2iawOuloq5lJrblxnQ3zwqmArWVXKCzrZZYXoAnWfrFbK1EgOvvEMD6VlQt3WnV+kHHCX1Zl1CMJ0+rkHvXp8+3rABB8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ctdN6kvS; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=gdBcc7YDN0ozBX/O596BoQXagDFgnLr9utMrg/SiXaA7avNgtlWXMMpgFT+vK9DYDR6ooAjpfkmy084GuhIgU7B0WdE23knir3hTEKchAevb+vfNAK71oYvTpTP8dBauvKTpIQMhNfjzrodliruRVEhUWiIDgyP0O3vDnqxbzTc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Jvr/8MJf; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ctdN6kvS"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781535411;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Uqd9LRbtLE5W7TWPyRbfwgH0Qmtsa0/jv5X2ByIlZlY=;
-	b=ctdN6kvSiN9FOQS/g1kGEbHgbCtr54T5oTLBkXSrkJGljl2AadqVMG22TJddgDgfa5hwyV
-	ad4kwqSXQDsHs3qu8+iWtEdHQS2Dn4000ObsFPtgOWt5W4P/ewHAG9MQdm7AzL7ruAyfqO
-	pRjCY7cVxByuKo16+H4LrDXM0x2X5Oc=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-453-KDjLPvS-MuSmjp3lE3tGrg-1; Mon,
- 15 Jun 2026 10:56:48 -0400
-X-MC-Unique: KDjLPvS-MuSmjp3lE3tGrg-1
-X-Mimecast-MFC-AGG-ID: KDjLPvS-MuSmjp3lE3tGrg_1781535407
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1ED6B195411F;
-	Mon, 15 Jun 2026 14:56:47 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B0C7030001A5;
-	Mon, 15 Jun 2026 14:56:46 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65FEujIQ790629
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 15 Jun 2026 10:56:45 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65FEujIi790626;
-	Mon, 15 Jun 2026 10:56:45 -0400
-Date: Mon, 15 Jun 2026 10:56:45 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH 1/3] multipath-tools: delete obsolete information from
- multipath.conf.5
-Message-ID: <ajASrXKCvccL7g65@redhat.com>
-References: <20260607103831.336833-1-xose.vazquez@gmail.com>
- <20260607103831.336833-2-xose.vazquez@gmail.com>
- <562d0c52ef13cfc1f8dec3c59b05b56304ce2c02.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Jvr/8MJf"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0AB431F00A3A;
+	Mon, 15 Jun 2026 15:20:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1781536825;
+	bh=dGPgcbJdO0lRl03JxxXlyEHfZe8b6Vwnet2GCTbESy4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=Jvr/8MJfCA/a9Z+fEroNJxIRrD4cGbVvLyGWSHKBFzT5iRUf9llvPm6wyY2NXXQrT
+	 I8rAIjQY7S3Fd2zUBiP2/O6yKFLjg6qltRT/o45cHgQHZRB4m3lkl9sZAR/Azhf0wH
+	 oMuiPrIp7X/EeVBTC6SuuCEqYh2TwAdG339rW5FNDbgIr0Wk4BkEPaw8lXx3IZzdVH
+	 Kk2JLSs8M6BVw4g+oln/A0lj+0mUzVxa83BDM0GJWjm9tT3SLsQ/sdjz/sXhR7Q8Zt
+	 L5f1MaBWU7gj+IftJ33Pj2rak3lATuDdRTp769gmqlcrS/DU9FKnOj0JBFCpanuCfs
+	 EkL0j9QFYjrMQ==
+Date: Mon, 15 Jun 2026 09:20:23 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: "Dr. David Alan Gilbert" <linux@treblig.org>
+Cc: linux-block@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
+Message-ID: <ajAYN_mmjzYBAimV@kbusch-mbp>
+References: <ai7rnH20IYeSmY8s@gallifrey>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <562d0c52ef13cfc1f8dec3c59b05b56304ce2c02.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: auhS-nraoBrTtptTjzc_JocpWWR7k2ar6wMJrXWvYTM_1781535407
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <ai7rnH20IYeSmY8s@gallifrey>
 
-On Mon, Jun 15, 2026 at 11:11:07AM +0200, Martin Wilck wrote:
-> On Sun, 2026-06-07 at 12:38 +0200, Xose Vazquez Perez wrote:
-> > repeat_count (rr_min_io, rr_min_io_rq, rr_weight) has been
-> > unsupported
-> > since kernel 4.6 ( commits 90a4323ccfea and  21136f89d76d ).
-> > 
-> 
-> I can't make up my mind on this patch. It is true that most path
-> selectors in the kernel have ignored the repeat_count argument
-> for a long time (historical_service_time still seems to honour it).
-> 
-> But this is multipath-tools. _We_ still have quite a bit of code for
-> handling the minio and weight settings. We should add a hint the the
-> man page that these settings are ignored by modern kernels, but it
-> would be simply wrong to say that _our_ code ignores them while it
-> doesn't. 
-> 
-> We can decide to remove this functionality from multipath-tools, which
-> would obviously mean removing it from the man page as well. But if we
-> do, we should apply further cleanups. I suppose that providing the
-> "weightedpath" prioritizer makes no sense if we have no path selector
-> algorithm that takes such weights into account, for example.
-> 
-> I should also note that there have been discussions with some partners
-> about re-introducing parameterized path selectors. This was a topic in 
-> the context of Fibre Channel FPIN notifications: FPINs can be used by
-> FC fabric to notify hosts about overloaded paths. With a parameterized
-> path selector, the load on such paths could be decreased by multipathd.
-> temporarily until the situation is normal again. While there has been
-> little progress in this area, I don't consider it cast in stone that
-> the kernel will keep ignoring path selector parameters forever, or IOW,
-> that there won't be new path selectors in the future that do accept
-> path parameters again.
-> 
-> No doubt that the way these parameters are interpreted in different
-> ways ("minio" vs. "weight" vs "repeat_count") and the way this is
-> exposed to end users in the configuration file and in the man page is
-> broken and confusing. But fixing that would be a larger effort.
+On Sun, Jun 14, 2026 at 05:57:48PM +0000, Dr. David Alan Gilbert wrote:
+> Jun 14 18:08:32 dalek kernel: device-mapper: raid1: Mirror read failed from 252:24. Trying alternative device.
+> Jun 14 18:08:32 dalek kernel: ------------[ cut here ]------------
+> Jun 14 18:08:32 dalek dmeventd[1010]: Primary mirror device 252:24 read failed.
+> Jun 14 18:08:32 dalek kernel: WARNING: block/bio.c:1044 at bio_add_page+0x18b/0x250, CPU#15: kworker/15:1/369
+> Jun 14 18:08:32 dalek dmeventd[1010]: main-lvol0 is now in-sync.
+> Jun 14 18:08:32 dalek kernel: Modules linked in: nft_masq nft_reject_ipv4 act_csum cls_u32 sch_htb nf_nat_tftp nf_conntrack_tftp bridge stp llc rfkill nft_fib_inet nft_fib_ipv4 nft_fib_ipv6 nft_fib nft_reject_inet nf_reject_ipv4 nf_reje>
+> Jun 14 18:08:32 dalek kernel:  drm_panel_backlight_quirks gpu_sched drm_suballoc_helper video nvme drm_display_helper nvme_core cec nvme_keyring sp5100_tco nvme_auth wmi serio_raw fuse scsi_dh_alua i2c_dev scsi_dh_rdac scsi_dh_emc
+> Jun 14 18:08:32 dalek kernel: CPU: 15 UID: 0 PID: 369 Comm: kworker/15:1 Not tainted 7.1.0-rc7+ #786 PREEMPT(lazy) 
+> Jun 14 18:08:32 dalek kernel: Hardware name: To Be Filled By O.E.M. To Be Filled By O.E.M./X570 Pro4, BIOS P3.10 07/13/2020
+> Jun 14 18:08:32 dalek kernel: Workqueue: kmirrord do_mirror
+> Jun 14 18:08:32 dalek kernel: RIP: 0010:bio_add_page+0x18b/0x250
+> Jun 14 18:08:32 dalek kernel: Code: 24 10 4c 8b 04 24 84 c0 0f 85 c9 00 00 00 41 0f b7 40 78 48 8b 74 24 08 8b 4c 24 14 e9 b4 fe ff ff 0f 0b 31 c0 e9 55 d1 af 00 <0f> 0b eb f5 48 8b 7f 08 83 7f 60 05 0f 85 00 ff ff ff 49 8b 3b 4c
+> Jun 14 18:08:32 dalek kernel: RSP: 0018:ffffd1fb8176fc10 EFLAGS: 00010246
+> Jun 14 18:08:32 dalek kernel: RAX: 0000000000000000 RBX: ffffd1fb8176fd18 RCX: 0000000000000000
+> Jun 14 18:08:32 dalek kernel: RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff8d1a8eb28b00
+> Jun 14 18:08:32 dalek kernel: RBP: 0000000000000000 R08: ffffd1fb8176fc38 R09: ffffd1fb8176fc40
+> Jun 14 18:08:32 dalek kernel: R10: ffffd1fb8176fc34 R11: 0000000000000000 R12: 0000000000000000
+> Jun 14 18:08:32 dalek kernel: R13: ffffd1fb8176fd90 R14: 0000000000000001 R15: ffff8d1a8eb28b00
+> Jun 14 18:08:32 dalek kernel: FS:  0000000000000000(0000) GS:ffff8d29d161f000(0000) knlGS:0000000000000000
+> Jun 14 18:08:32 dalek kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> Jun 14 18:08:32 dalek kernel: CR2: 00007f0ddcd7b9d0 CR3: 000000023dcbf000 CR4: 0000000000350ef0
+> Jun 14 18:08:32 dalek kernel: Call Trace:
+> Jun 14 18:08:32 dalek kernel:  <TASK>
+> Jun 14 18:08:32 dalek kernel:  do_region+0x227/0x2a0
 
-I actually do have a patch set I'm testing that rips out the rr_weight
-and rr_min_io_rq code completely. It leaves the rr_min_io functionality
-(on the grounds that we many have a use for it later), but it now
-defaults to 1 and is deprecated, so it can't be changed. I assume that
-even if this code gets reused in the future, rr_min_io will remain a
-bad name for the option.
-
-I feel like the weightedpath priortizer shouldn't be effected by this.
-It is still useful to manually assign paths to path_groups when combined
-with group_by_prio.
-
--Ben
-
-> 
-> Regards
-> Martin
-
+I think the problem is that do_region is tracking the "remaining" in
+sector granularity, but devices can have dma alignment such that it's
+valid to have sub-sector vectors. Rounding the length appended
+to_sectors() creates a 0 length subtraction, so the loop thinks no
+progress is made and loops forever. If we track it in bytes instead of
+sectors, then that should fix this observation.
