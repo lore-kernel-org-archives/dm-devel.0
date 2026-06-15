@@ -1,69 +1,69 @@
 Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C73B145B3F
-	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 07:44:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F6832FF67E
+	for <dm-devel@lists.linux.dev>; Mon, 15 Jun 2026 08:15:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781509485; cv=none; b=T47OHooOKBnHD+50HV77b00KrXbLyk30djyD+yLdlEzZAwxDIhXAfrNOg2PNjRyZpGPTIZlPwNABnwa9Rz7Tt6QkZ42GZfBqroxCgfF3zzE4LZzyii7SrksMk5CZJy+UR9dK67in6v+SkfEw0M04PM7kLFrlZleA6IFMIZQtgaQ=
+	t=1781511344; cv=none; b=IdupPdDCFdyq+R/x2asf7Ya+bipUKaLRndFIrxujyU5DGB0w58eiFQPTAO1O/VF0whz8PwtuGlstyaFy3pB9Yp5Ysf31fSL3jAwlnMXciPcdbXLvXVQmPen6FOcEwuT79GhqKLlmt4rFi/CBhYMOLnb+5zN5tkcmRTHzRYyu7wU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781509485; c=relaxed/simple;
-	bh=edE4JfFhPDq90C75l+9esTpO7KNEuH+6alaEGg2LaJY=;
+	s=arc-20240116; t=1781511344; c=relaxed/simple;
+	bh=wGHPzdmjocnKHzRa5ralO3tsMcwAKQpQJYOhXQzVqYo=;
 	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=BUXMguAazpbXtWc09iZGyLMcsClsg6ZSdPQkaCa27hXvk/g1LsTdWncKNdDeNk8XLZIn4YVXd0XTNaA5OiKptnK07JUh+CX6N/fo2GPyq+s9nt8JDniV5HlWEXYqo06yGslErlgNCmfu42bfJSCfxltFlGl5TibPcBeBHCEOKKA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=CC6Mh7WK; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=CC6Mh7WK; arc=none smtp.client-ip=195.135.223.130
+	 Content-Type:MIME-Version; b=TyUKuGe6MTxKMDyIJP01A70q+mSZQzXl4Zb46Gu9irb0viMrqu13GaeuCu6hNQtpFAlQ1HwMsAiM2F3i+iE04Qx7gq8Ll5ioLdQF3LLgWlIoemIElV7DjLzh369kYqjm5p95Ti10xXRy/PzfiX1r0O0bkwu1fVsdKKWRSKzN3LA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Q8T85no2; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=Q8T85no2; arc=none smtp.client-ip=195.135.223.130
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="CC6Mh7WK";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="CC6Mh7WK"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Q8T85no2";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="Q8T85no2"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id B862A6BE24;
-	Mon, 15 Jun 2026 07:44:42 +0000 (UTC)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id BAA756BE5D;
+	Mon, 15 Jun 2026 08:15:40 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1781509482; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1781511340; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=edE4JfFhPDq90C75l+9esTpO7KNEuH+6alaEGg2LaJY=;
-	b=CC6Mh7WKWi+o2KOdaGqD1cNidU4KEUsiJfiHp6jsn9Sve1Hg47d4qTkIVmGoGxEknSDGrY
-	SL/1HSN9+35ZSmSJZlopI/354glVuSEZTCw0h5kArSyD0aFynYjkggeV/ZaihoJ8Ab5bn3
-	NJwzfb6jva00j36qY+5yoDmW9p15dd8=
+	bh=wGHPzdmjocnKHzRa5ralO3tsMcwAKQpQJYOhXQzVqYo=;
+	b=Q8T85no2wgnR1Gn7fo20Joc0Gn9SdwQh+/2xPx5j4tuWQW1xpeJ7y4DXkSQk6M1HODMWbD
+	npP15KiJYgRpz4yyv6otY8u9Bw1r7WIK1tsBKW3RPCVY0SAh5PI1Hq2n7IYOeHzirEFgj4
+	JUbawnIKp+fg9xsQta51dXIKvnq5U6U=
 Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=CC6Mh7WK
+	none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1781509482; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1781511340; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=edE4JfFhPDq90C75l+9esTpO7KNEuH+6alaEGg2LaJY=;
-	b=CC6Mh7WKWi+o2KOdaGqD1cNidU4KEUsiJfiHp6jsn9Sve1Hg47d4qTkIVmGoGxEknSDGrY
-	SL/1HSN9+35ZSmSJZlopI/354glVuSEZTCw0h5kArSyD0aFynYjkggeV/ZaihoJ8Ab5bn3
-	NJwzfb6jva00j36qY+5yoDmW9p15dd8=
+	bh=wGHPzdmjocnKHzRa5ralO3tsMcwAKQpQJYOhXQzVqYo=;
+	b=Q8T85no2wgnR1Gn7fo20Joc0Gn9SdwQh+/2xPx5j4tuWQW1xpeJ7y4DXkSQk6M1HODMWbD
+	npP15KiJYgRpz4yyv6otY8u9Bw1r7WIK1tsBKW3RPCVY0SAh5PI1Hq2n7IYOeHzirEFgj4
+	JUbawnIKp+fg9xsQta51dXIKvnq5U6U=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 993C0779A9;
-	Mon, 15 Jun 2026 07:44:42 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9968A779A7;
+	Mon, 15 Jun 2026 08:15:40 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id j4EyJGqtL2qsVAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 15 Jun 2026 07:44:42 +0000
-Message-ID: <5095a0f03c46aa23e74d9339e7952b95df20a166.camel@suse.com>
-Subject: Re: [PATCH 1/2] multipath-tools: fix mandoc errors in man pages
+	id w1FbJKy0L2ofcwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 15 Jun 2026 08:15:40 +0000
+Message-ID: <0c793aacfa560f76d2e5e4b34ad453d2b05cbbad.camel@suse.com>
+Subject: Re: [PATCH 4/5] multipath-tools: clarify user_friendly_names prefix
+ behavior in multipath.conf.5
 From: Martin Wilck <mwilck@suse.com>
 To: Xose Vazquez Perez <xose.vazquez@gmail.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
 	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Date: Mon, 15 Jun 2026 09:44:42 +0200
-In-Reply-To: <3219982c-58f9-4b04-b5a5-774ac61382ef@gmail.com>
-References: <20251010092211.57426-1-xose.vazquez@gmail.com>
-	 <0580f369a7102ae07aaa2c23fd4bd9165cbafd35.camel@suse.com>
-	 <3219982c-58f9-4b04-b5a5-774ac61382ef@gmail.com>
+Date: Mon, 15 Jun 2026 10:15:40 +0200
+In-Reply-To: <20260613131002.144263-5-xose.vazquez@gmail.com>
+References: <20260613131002.144263-1-xose.vazquez@gmail.com>
+	 <20260613131002.144263-5-xose.vazquez@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.60.2 
@@ -74,61 +74,64 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Spam-Flag: NO
-X-Rspamd-Action: no action
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.01 / 50.00];
+X-Spamd-Result: default: False [-2.80 / 50.00];
 	BAYES_HAM(-3.00)[99.99%];
 	SUSPICIOUS_RECIPS(1.50)[];
 	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
 	NEURAL_HAM_SHORT(-0.20)[-1.000];
 	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_DN_ALL(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
 	FREEMAIL_ENVRCPT(0.00)[gmail.com];
 	FREEMAIL_TO(0.00)[gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
 	ARC_NA(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
 	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_TLS_ALL(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_COUNT_TWO(0.00)[2];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
 	MIME_TRACE(0.00)[0:+];
 	MID_RHS_MATCH_FROM(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	DWL_DNSWL_BLOCKED(0.00)[suse.com:dkim];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:mid,suse.com:dkim,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: B862A6BE24
-X-Spam-Score: -3.01
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email,suse.com:mid]
+X-Spam-Level: 
+X-Spam-Score: -2.80
 
-On Sat, 2026-06-13 at 14:04 +0200, Xose Vazquez Perez wrote:
+On Sat, 2026-06-13 at 15:09 +0200, Xose Vazquez Perez wrote:
+> Clarify that the alias prefix depends on the alias_prefix setting.
 >=20
-> groff/man focus on rendering text, not auditing code. They are
-> permissive
-> by design and handle invalid syntax more gracefully.
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+> =C2=A0multipath/multipath.conf.5.in | 10 ++++++----
+> =C2=A01 file changed, 6 insertions(+), 4 deletions(-)
 >=20
-> mandoc focuses on structure. It parses the code into an Abstract
-> Syntax
-> Tree (AST) rather than just drawing text characters. That is why it
-> is
-> stricter than groff/man.
->=20
-> I will address this and send the updates in a new patch series.
+> diff --git a/multipath/multipath.conf.5.in
+> b/multipath/multipath.conf.5.in
+> index 9289b244..74447f8c 100644
+> --- a/multipath/multipath.conf.5.in
+> +++ b/multipath/multipath.conf.5.in
+> @@ -704,11 +704,13 @@ The default is: \fBunused\fR
+> =C2=A0.B user_friendly_names
+> =C2=A0If set to
+> =C2=A0.I yes
+> -, using the bindings file \fI@STATE_DIR@/bindings\fR to assign a
+> persistent
+> -and unique alias to the multipath, in the form of mpath<n>. If set
+> to
+> +, the bindings file \fI@STATE_DIR@/bindings\fR is used to assign a
+> persistent
+> +and unique alias to the multipath, in the form of \fIprefix\fR<n>
+> (where
+> +\fIprefix\fR is defined by \fIalias_prefix\fR; by default
+> \IBmpath<n>\fR).
 
-Great, thanks. I was looking forward to a v2 for your last set [1]
-anyway, that's why I haven't responded yet.
+I think this should be "\fImpath\fR".
 
-Regards
 Martin
-
-[1] https://lore.kernel.org/dm-devel/20260607103831.336833-2-xose.vazquez@g=
-mail.com/
