@@ -1,64 +1,63 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B218735E1A8
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 12:29:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C18D35CBD7
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 12:29:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.50
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781612963; cv=none; b=mmElw5FnJXrR0PJ749+/wOp4SzDOgGAfgzXk7UTWHjtZQJD9P4wBYhs8SzhEuvPefR98gvo7hxQrkCMWpW4bj93AnqYnVx33DD9Czz1LOOZf3CfHier4zU2xCaEAU1Xh5jBa+AvX2BWIrnnunk98UHyl4EQvF7GHADNjeVcT0Ps=
+	t=1781612965; cv=none; b=DY9LVv7vHxT8KLzJU6cWASwiIVYn+DKor+z+yqj9esUzhS7F879Rn9n7n/LvopjfQ76O2j0u2/JgIMSVzYDD3JwP1Qpm8AwEV4khnK9h+ab0eFtZXZEdxC16hv4Se08luDl4tRUsFPL59g+c+c8+sH/79q8N9TMF83Gv0tNmsGc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781612963; c=relaxed/simple;
-	bh=MGD4sJqi1J48Ftq2SqhnnMm/AFUZLHFGgTuBOtTcx5o=;
+	s=arc-20240116; t=1781612965; c=relaxed/simple;
+	bh=Ejc32cEqeNgd8v+WxwqcN9SrRJzhpw4k/egB3SYTb4M=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=EHO55bhjICxPt4p1Wg2FH6818JspRiaFUGW9Qkys2CtqzwqfFLb4RoSXmS33ajpLV58YeuSrxAn++B70kQBhB8Nc8MMM48YI3IPUQQKFlP5C5GW4pXY3/gGgiEi6Q10InZ2LmH7bIS2566nyrzMv3f89zmFEBZI8tzA3OnUqwHY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OsEyZjOf; arc=none smtp.client-ip=209.85.128.51
+	 MIME-Version; b=GGm4KAiOf9FcmCn6Rwsaa2AKyVfqAck9zJxhX8XSmD3mDdVymHsTQpqiupxRrkYy7BxcFVQVF13jPlicfuZKjtvVJTCxIyeykk+XIUbLm4mgBYQBxpYyqIJpGs1ZCL9oO+4J69UZlAk2z8Y3kFAnsszKf8lhB/LbflTkHrQMt6w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Z+duybTE; arc=none smtp.client-ip=209.85.221.50
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OsEyZjOf"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490a78fbd7bso4711285e9.2
-        for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 05:29:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Z+duybTE"
+Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-45efb47aa6fso317514f8f.1
+        for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 05:29:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781612960; x=1782217760; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1781612963; x=1782217763; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=/VVhi0QbnR9vlwqKq6lxh+5FyacG0zRP5mZ9muyK/6k=;
-        b=OsEyZjOfshKZyk/0ZbZEgZUba5A35DpAIJctZ5dTpQn7Xv/QJOEzveEAITfhCI9NJH
-         leGueQmmsPuSbBH1BLuXavIukUpgNTxFkQiOzA6Hoy4Ri8fxXWAAtUCQVpSNpDS/zl+D
-         3uZ9kw6db6dmAnCKiR9Id2PrK/NOT874XgH8d5wrQGTnpaHaPqo+leMlNxPI2CSNgTux
-         FzCONJxLLM+tE+14Bq452B3PQqthLoUmcBvbyYqYrsSLgFjUvhrz4qnfgQagWoBqm5sm
-         EEIcm/gP2Zh1cm+f6UyJERzawI6nUuKYlaH4jgivJD04sSuERT/KhTpiifsERVvJSf+f
-         J7OQ==
+        bh=5JSXibEL8OQqB1sAXtw7LTjVxlXt0OiLOY7IBzPLWt8=;
+        b=Z+duybTEj15cbWrJ6AJCdDVnTifQgNM6OhyPX/Im1RUl5mj16lawRLZp8hhviqrPdy
+         JMrOcIixI8ftGN6RIPQBISj+pyQBGZe4SOISB2UeE6ok9Z/uRvijEXf6Gq/M9JuKoAIH
+         EpYRUQXeyixHq4qxN0wEmvzolZ5s/FSWct+HIYeyylXlMbWpeAo7798WFP8Vs4W1vmWi
+         J5kqsRvegNMANm6Ow2py+XaF+mru/A9pgAw4OMv7qCxgtwRBpIrcNgSfd1L7I8/4hBBK
+         4Z0ZXR6GE9HiHYvsY1MRAL6wlPEMYujAgYK4dvzLTuooNmEeFcIrfsqU9z2VJarlN3xC
+         0UAg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781612960; x=1782217760;
+        d=1e100.net; s=20251104; t=1781612963; x=1782217763;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=/VVhi0QbnR9vlwqKq6lxh+5FyacG0zRP5mZ9muyK/6k=;
-        b=kzgRWTXIZCnBFfFjzRx+J4ecnINYTFKzMY45CfrMI9N0OPb0+XmtX4ONvJIZ1b0X56
-         DxjbD2uVJiNnDbfOxc82reQVDUgsoIHi4gQdEQc5aHGksC1Rw2AfxNDHdroOGPXuheMw
-         WXvCNFYiP57gSsI73NYbKazLBhv6y4ak6rBqRXa6oEAiL7Xw2j92r0HG/rubS/4eTRaC
-         jdY5vR7tdw/gEAxNgTH/fFGObD7vj1IJ1xj3oLoQ9X4BsNvYWkdT1TvNAWNPXw43KsxU
-         AnUnyD8L7hw6reHjN89RHp4thO69ufF6T8FG+scPJrt9CAG0RmmiNsc/QpiGnBsXCYi3
-         5MWg==
-X-Forwarded-Encrypted: i=1; AFNElJ+148Mj3cDJ1EBYWbVfsMACSDTtCIjzRiiBYOw3HiO29mDHarvrV6LXcEy8zWisYzimSv14G/q8Ew==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwsVA+3nqNHWN/81mQW3UPWdiYzEUXhGNs9UQOzqb5B2p3J1xWj
-	izE2tmO3huhX5bYSzWSE9vGxvOiUrokxLsGhkCBYaljgTsUcL918Z1o=
-X-Gm-Gg: Acq92OGXR3vKM+YmyFt7gYS2LVSCj+jUndyke4ui4aT/el155aJmYGTEv5GfQEzfkdR
-	HrPOGDclyAtFlINkZn2gTXxHUjN0A/AiuPsDf0E2eVDAwICKv/1KMyJ2CQneoR/xrDGTkj871Jw
-	sey517U2W6ezwZ67yjQpfuJyvUYcM2bpbtOLKakcZZjW1b17ASXdsCetnwsdYsSFvLas4lQEhFJ
-	Ver+26UCshFUDxoyRRmH0iLOQRY2vrQaVIqFU3gbIA7nQ8R3QQAszXKO0AfpN0UCO4Vs7XoFDqe
-	Uohgxru4PTFAoM5iUKgkJvksI0gdk8g/VU7K8WSmd8thm9VTsF7Gv17Pu9u8YK/epdoqtvXFp8k
-	AALuJ9Hps1Q5giQdgHvMZzTg3FsfYZTWXW2bE6TCS9AhaTrEvlHGfNt9FPOXpOeow3537hPEsSG
-	dFEXOCm8megsnZNCV4BiGg3bDrGrlEIGYCXk09CSUSdClEShShPJ6DyMaZ+QAcLjK09mOyXlboX
-	Vs=
-X-Received: by 2002:a05:600c:c05b:b0:492:2ea0:c1cd with SMTP id 5b1f17b1804b1-4922ea0c216mr20609485e9.5.1781612960036;
-        Tue, 16 Jun 2026 05:29:20 -0700 (PDT)
+        bh=5JSXibEL8OQqB1sAXtw7LTjVxlXt0OiLOY7IBzPLWt8=;
+        b=qDx+3LnUskOuDh1emR9V/04xICzEMXV1P3idAK1PBwfiaPRcF75GGmc+5flM0OYNPJ
+         j8jLV60ZK21mtdVbvdN2bTqAzTRJUtY5wdlx76UCepzsBC1z3Gr9ojSAW4nNEloBL07i
+         ztX7JroZ9ymVFc3Uj+RWQv22v33FZnE0HZh2YjFguORWoE8E6aagIidqr88VdGjmfGX5
+         92aDGLoyU2yHHoHJQlTAWDljPiHVRCOWxZBQ4BY49X8V3RvJwwgWTN2swJfaiEIIcNu7
+         mbLK27bjNFZZGX3iwJu24nb8GD3oJj8wjogq367Ivy5nRH+UuxxIOqp3Zep8ObFQaB8n
+         Wy7w==
+X-Forwarded-Encrypted: i=1; AFNElJ8rr/Cp3lwp+t+iuQN2q3FIKCDKsM36JAnE3mwbvWJe3OdWX+pwH+dThQ3g1DC4SCgf2N+E48vwYw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy/aQ1E/NW45Wd+TvPRF3G0EhfEWcO15isuhPF5gH7InGl4FmZ4
+	hU+kOBVdtpuQYMoELsXgz3v1muTjasfHNABfsbMEwQcj+XL6ZzSp4mA=
+X-Gm-Gg: Acq92OEZhRN5zcuPnPMTt14zTmjrvV1bovHWf6HsBqyPqXvhJm8d72SDus2KPAZlwMP
+	MBq0WCtyCr/b0xs0bg5R15KU3zb3GnlAhOzHeUjOoSI0KDlAINtxdf6WJx8VvCIrsO9r08FwZeB
+	QelqIszKMaVk8jFopCCoZEQG8Sc2i5IvF+3ayw6Mvh0dFL+QOschGjt+mdn/mLB6JtnJhz/XlDw
+	a5SWZ2lIQgBiE97XKhHak99N57vhO5XK2qCdDwkBQh6qnMpIaHFZgrrRYIZ/XT1DfwcOlBd00p0
+	qfyJuYsj1A3nu3OlbkfSgZhbaI9Fc0lItkDvqzSwPny4QoVQPWupa+Lu8gCCXjJb9bvdzQULqJR
+	R0M4+f0RMGIZQd0Aur1lr7wW2P+zilyMs7A+E0Lkagh+syjV5o1YrbvHt6FoISR2HC2qIn1yT/Y
+	60Vq2VvcWU7MaoSVRZ54rMvC/Ukqzhuk10hyp+M0lir8DQETwzRE17CK7wvrEn6I+2
+X-Received: by 2002:a05:6000:200d:b0:460:6b68:d6c with SMTP id ffacd0b85a97d-4606dba10acmr12844626f8f.6.1781612962484;
+        Tue, 16 Jun 2026 05:29:22 -0700 (PDT)
 Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-461eaa0d275sm876475f8f.2.2026.06.16.05.29.19
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4606f2c3fcfsm39312699f8f.26.2026.06.16.05.29.21
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2026 05:29:19 -0700 (PDT)
+        Tue, 16 Jun 2026 05:29:22 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -66,9 +65,9 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Martin Wilck <mwilck@suse.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2 5/8] multipath-tools: clarify path selector descriptions in multipath.conf.5
-Date: Tue, 16 Jun 2026 14:29:01 +0200
-Message-ID: <20260616122909.244619-6-xose.vazquez@gmail.com>
+Subject: [PATCH v2 6/8] multipath-tools: specify file paths using variables and add FILES section in multipath.conf.5
+Date: Tue, 16 Jun 2026 14:29:02 +0200
+Message-ID: <20260616122909.244619-7-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260616122909.244619-1-xose.vazquez@gmail.com>
 References: <20260616122909.244619-1-xose.vazquez@gmail.com>
@@ -81,8 +80,9 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Selectors operate on the next individual I/O request rather
-than a "bunch" of I/O.
+Replace hardcoded file name references with their dynamic build variables.
+Also, add a dedicated FILES section at the end of the man page to clearly
+document configuration files/dirs.
 
 Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
@@ -91,49 +91,111 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
-v2: fix typo, s/group/groups (spotted by Martin)
-
- multipath/multipath.conf.5.in | 12 +++++-------
- 1 file changed, 5 insertions(+), 7 deletions(-)
+ multipath/multipath.conf.5.in | 55 ++++++++++++++++++++++++++---------
+ 1 file changed, 42 insertions(+), 13 deletions(-)
 
 diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 422ab120..5b730801 100644
+index 5b730801..de6c21b5 100644
 --- a/multipath/multipath.conf.5.in
 +++ b/multipath/multipath.conf.5.in
-@@ -2,7 +2,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
+@@ -27,7 +27,7 @@ or \fBmultipathd show config\fR command.
  .
--.TH MULTIPATH.CONF 5 2026-05-27 Linux
-+.TH MULTIPATH.CONF 5 2026-06-13 Linux
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -193,20 +193,18 @@ kernel multipath target:
+ .PP
+ Additional configuration can be made in drop-in files under
+-.B @CONFIGDIR@.
++.BR @CONFIGDIR@/ .
+ Files ending in \fI.conf\fR in this directory are read
+ in alphabetical order, after reading \fI@CONFIGFILE@\fR.
+ They use the same syntax as \fI@CONFIGFILE@\fR itself,
+@@ -831,11 +831,11 @@ to the end of the reservation key.
  .RS
+ .PP
+ Alternatively, this can be set to \fBfile\fR, which will store the RESERVATION
+-KEY registered by mpathpersist in the \fIprkeys_file\fR. multipathd will then
+-use this key to register additional paths as they appear.  When the
++KEY registered by mpathpersist in the \fI@STATE_DIR@/prkeys\fR file. multipathd
++will then use this key to register additional paths as they appear. When the
+ registration is removed, the RESERVATION KEY is removed from the
+-\fIprkeys_file\fR. The prkeys file will automatically keep track of whether
+-the key was registered with \fI--param-aptpl\fR.
++\fI@STATE_DIR@/prkeys\fR file. The prkeys file will automatically keep track of
++whether the key was registered with \fI--param-aptpl\fR.
  .TP
- .I "round-robin 0"
--Choose the path for the next bunch of I/O by looping through every path in the
--path group, sending \fBthe same number of I/O requests\fR to each path.
--
-+Choose the path for the next I/O request by \fBcycling through the path groups\fR.
+ The default is: \fB<unset>\fR
+ .RE
+@@ -1152,9 +1152,9 @@ detects a new device. The following values are possible:
+ .I strict
+ Both multipath and multipathd treat only such devices as multipath devices
+ which have been part of a multipath map previously, and which are therefore
+-listed in the \fBwwids_file\fR. Users can manually set up multipath maps using the
+-\fBmultipathd add map\fR command. Once set up manually, the map is
+-remembered in the wwids file and will be set up automatically in the future.
++listed in the \fI@STATE_DIR@/wwids\fR file. Users can manually set up multipath
++maps using the \fBmultipathd add map\fR command. Once set up manually, the map is
++remembered in the WWIDs file and will be set up automatically in the future.
  .TP
- .I "queue-length 0"
--(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe lowest
-+(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe lowest
- number of outstanding in-flight I/O requests\fR to the path.
+ .I off
+ Multipath behaves like \fBstrict\fR. Multipathd behaves like \fBgreedy\fR.
+@@ -1513,8 +1513,8 @@ this is \fBnot\fR a regular expression or a substring; WWIDs must match
+ exactly inside the multipaths section.
  .TP
- .I "service-time 0"
--(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe
-+(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe
- lowest total size (in bytes) of outstanding in-flight I/O requests\fR to the path.
- .TP
- .I "historical-service-time 0"
--(Since 5.8 kernel) Choose the path for the next bunch of I/O with \fBa dynamic
-+(Since 5.8 kernel) Choose the path for the next I/O request with \fBa dynamic
- algorithm based on the historical service time and the number of outstanding
- in-flight I/O requests\fR to the path.
- .TP
+ .B alias
+-Symbolic name for the multipath map. This takes precedence over a an entry for
+-the same WWID in the \fIbindings_file\fR.
++Symbolic name for the multipath map. This takes precedence over an entry for
++the same WWID in the \fI@STATE_DIR@/bindings\fR file.
+ .LP
+ .
+ .
+@@ -1598,9 +1598,9 @@ for more than 100 known multipath-capable storage devices. The devices section
+ can be used to override these settings. If there are multiple matches for a
+ given device, the attributes of all matching entries are applied to it.
+ If an attribute is specified in several matching device subsections,
+-later entries take precedence. Thus, entries in files under \fIconfig_dir\fR (in
+-reverse alphabetical order) have the highest precedence, followed by entries
+-in \fI@CONFIGFILE@\fR; the built-in hardware table has the lowest
++later entries take precedence. Thus, entries in files under the \fI@CONFIGDIR@/\fR
++directory (in reverse alphabetical order) have the highest precedence, followed
++by entries in \fI@CONFIGFILE@\fR; the built-in hardware table has the lowest
+ precedence. Inside a configuration file, later entries have higher precedence
+ than earlier ones.
+ .LP
+@@ -2028,6 +2028,35 @@ specified the order of precedence is \fIno_path_retry, queue_if_no_path, dev_los
+ .
+ .
+ .\" ----------------------------------------------------------------------------
++.SH "FILES"
++.\" ----------------------------------------------------------------------------
++.
++Default paths for configuration files and directories:
++.TP
++.I @CONFIGFILE@
++Main configuration file.
++.TP
++.I @CONFIGDIR@/
++Directory for configuration drop-in files.
++.TP
++.I @STATE_DIR@/bindings
++Bindings file, used when the \fBuser_friendly_names\fR option is set to
++\fByes\fR to assign a persistent and unique alias to each multipath device.
++.TP
++.I @STATE_DIR@/prkeys
++Persistent reservation keys file, used by multipathd to keep track of the
++reservation key used for a specific WWID when \fBreservation_key\fR is set
++to \fBfile\fR.
++.TP
++.I @STATE_DIR@/wwids
++WWIDs file, used by multipath to keep track of the WWIDs of LUNs for which
++multipath devices have been created in the past.
++.TP
++.I @RUNTIME_DIR@/multipathd.pid
++PID file.
++.
++.
++.\" ----------------------------------------------------------------------------
+ .SH "SEE ALSO"
+ .\" ----------------------------------------------------------------------------
+ .
 -- 
 2.54.0
 
