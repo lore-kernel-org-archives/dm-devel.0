@@ -1,231 +1,153 @@
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94EE6303C9C
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 12:29:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79BBF357D11;
+	Tue, 16 Jun 2026 12:57:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781612971; cv=none; b=V/r1RTtzJ+ivQxOGVRUov7WmALsz22lhiakcoK9eq5MpkknQfgeIPiiXNYuXQtdfD3GektTqdkKTm8AHgKP0vBylKDrrYhqjqkV16A5w0QZdpkOK++Q7sG68wMF92rGQ0Gu7+N24CC/9jcbCe0E7sZSszgw+3SvA+m2EabQcqpU=
+	t=1781614675; cv=none; b=IF3lj1mfLDHe+JNueoMc7Uv3xNrhVFloxW3lvX8mb6FNDO7p15o8SpKj6LmYHI7YjYYzZQ2ApTJlxicKWWEy0VqO9U2HCZvP33AmC56Kb0P9kbHVKHrC8mDhypz5uqWcUSnZ7Ood/+mpeX7oHzQxLNnRTULuTUw+69gQPh8TK5E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781612971; c=relaxed/simple;
-	bh=z2Nki3K2/mx+BgKkQ0yxEBO2bqahaCRYz5ZF5gLfSYM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=CQ/28/5bOE04nkFbwv1dAg7tsAU+XhzcHgJEahoQ37/Te470WPEBJ1oOrcAYdozMWlWUa22ln8zTFV0mB9zOt48K1YUAVYTjD8ecTVI9kijPPYt/gZUHksFCG+hGfs7Lhn65j9jQ0DY1bgJAm1+bxJj416a9IbHyitBa2EJWH0U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RYeX3v+V; arc=none smtp.client-ip=209.85.128.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1781614675; c=relaxed/simple;
+	bh=zM6yyQduHzlBSbyi1O/QFeT0kfbgG1s5FfvjQ9Bm/y8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=RTdOEqIDtHxGo3jk6GQxknzikX4MBOsRqOE9aDFEklhHLy5klpCuCnq2DKV5XU+8uyTqGQoB0NtKbdOxywBgPT58+ATCdHo61nGzCX8qo7ddyxJfoZODf52c6CwOolUJ4QWeo8hJtbvxZ4c0WICRDxox1fKSN9vtTtvOyRvpexg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=UeeXQpZY; arc=none smtp.client-ip=46.235.229.95
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RYeX3v+V"
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-490c28f84fdso9963355e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 05:29:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781612965; x=1782217765; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=InJJHH60iNGCLAoJjX7vcbdTdu0kkD5JmnZ/K1EEXOQ=;
-        b=RYeX3v+VVdEbQ0x8rzloFvZ4kPv/PvRjVDsCgrtljTpc5nbyrq/3rSBQe9wAzqetlK
-         aAbd5yGF9nn8etjR5yEFjy6XGsihj/uEKTk1LhubFOIWiLuhpG5p8FTcZZ1vgvhDOhJX
-         Wo85ylO7SvAH7kISiRbMBzBIENPuDnVibihRr/jLV/cOG4GYY1+DbXSSdbhyzFM2+fRi
-         J8TGAeyTisP+lK/afN4Dqkgo9kWRR7U/czyHU7g3TWSkNCcPk/Z/IyTnLjvRcEwAO4IX
-         ZrurDL7uNwRFWAhODbRy9Q0vDbb8Fgu1Zg1Os7MmXg4ESQZYLi/CjLMd2FiRC39AVObH
-         qa+w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781612965; x=1782217765;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=InJJHH60iNGCLAoJjX7vcbdTdu0kkD5JmnZ/K1EEXOQ=;
-        b=cVgb34k8L2LhahDkmzSjpQr1Kjz49fzES7pXBtg+IPuErWnElv3mF+0yXoyBTeSPF3
-         1sz+Hnk/756RH4QawCotbL6anaHX7P8o7FKJorhOtI7BTEIStyjpEFzbnRe3IQeUPBg4
-         f3TEo2jwpNER0nwHDanAbAPme+umk6waG6MbxC6QvGTDQHOdxnlGvmkU9gW69UKmM6hh
-         ulCH3gp7d44B3bRyJNPTblu6144L5DPCCJ2bpc8M9YGXCoZsRB+zwgf40bbG7VbnMbNL
-         FeHBwpsLiCpwtD+sEVohhhrmnpsM+292ZmDtS/L5n1gO5gJGylniIty5ISbrvNiX1bfK
-         NLVw==
-X-Forwarded-Encrypted: i=1; AFNElJ97Mo42oKqHpdhbLJra8DUNQNRfwv55vBxIjcoL9hahMzJOztfeXVmKQeJHjzeyqM1qhFEak95pIA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwqsrfHmESRQBnVtuiQvO0Z4V1DhJ0+89/gD2/dvVTXuTYpicVL
-	Wdh+CQtiFYl7xEtwoVIPD8nRw4/woAtW2n+dDvJZSEbJEYN/OqROltLftGPgR+on0Q==
-X-Gm-Gg: Acq92OFTtqBlWsZyDiWB6fB1bjVX4GRdSMcjZg2Gr9O12J2Y6GjsjSRcL5UeZhnh2cs
-	q8mU7MiOotDYHOwcC8MZ5qBRDGR4biWH8CMV6kCYJBw/1AYvpQ3IfeFoVPZYhd+F4QhuDTZV44f
-	+fBaEzfLoSpMw5whf9O2ReH3zxUHg1AfcpNKv+4mzEVNLgE6XCrNrR3Edoc0T14EskWjQxr6Ehy
-	fs6KjPDWtI6GgIHSdcLX/jWn5L4B84+J5souDMSmK899Q+zjVc9+DPVNQDJBAvUr9la2OqG+h8c
-	nROaaWzWYRdEoz0hsveCRXqN97GS2RtKfo3M/zJuC0F+ZhEu84rRo5aUQFBue4q2McWRsZyw9Ze
-	06yA8a0zdLdLIXLgVBYniTNDVWJst6cQkbTX9pLqPx4SwSdlyjO//qDgGvbfxftzSxFPZgkTZ5T
-	packTAyQOMn81uTxbAtGBJouEG/B/fH3RKYG2yLJeKvOreiNFbULNA5+e8sV+RnMBg
-X-Received: by 2002:a05:600c:820c:b0:490:e170:b812 with SMTP id 5b1f17b1804b1-490ec4c3f4amr122135175e9.2.1781612964708;
-        Tue, 16 Jun 2026 05:29:24 -0700 (PDT)
-Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-490ea95b274sm421751795e9.1.2026.06.16.05.29.24
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2026 05:29:24 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2 8/8] multipath-tools: fix mandoc errors/warnings in man pages
-Date: Tue, 16 Jun 2026 14:29:04 +0200
-Message-ID: <20260616122909.244619-9-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.54.0
-In-Reply-To: <20260616122909.244619-1-xose.vazquez@gmail.com>
-References: <20260616122909.244619-1-xose.vazquez@gmail.com>
+	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="UeeXQpZY"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
+	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
+	:Subject; bh=F8hE4z9JRLxnrtDhuXfJ4p9jf50xX0zsN8ROHlQ6TS4=; b=UeeXQpZYKg97XZvH
+	M18cNKrMUYbo0B6GubiAAvJ479yrV7Mi2fiAsR7jfCHZq7UHCXT8Wbr4s9nQ/jgik1oxDIUKWOAni
+	5tsTZmdTaTtZwCiowYpv4grzhJuIJoMRhrq2pKCKkmqeMk/n2/nZvec77kEpNVcuMqjjatViBZAT8
+	i7mfiMPifX2iRN0azuIatVl4sQgAZuk4fv3+qNfM5BVThHFiOoZ9OwASt2Ju4OWqQqI6SUR1k6L0B
+	k4PE5tJ0mz7628AYDxrrm4THBZvgUwS63VecUxBdCYY0dlDzvMfnP97WjXWPp6BE5KnjOP4qApULK
+	imM0xdttLURW28Pgyg==;
+Received: from dg by mx.treblig.org with local (Exim 4.98.2)
+	(envelope-from <dg@treblig.org>)
+	id 1wZTMO-000000082VY-2zNa;
+	Tue, 16 Jun 2026 12:57:44 +0000
+Date: Tue, 16 Jun 2026 12:57:44 +0000
+From: "Dr. David Alan Gilbert" <dave@treblig.org>
+To: Keith Busch <kbusch@kernel.org>
+Cc: Vjaceslavs Klimovs <vklimovs@gmail.com>,
+	Thorsten Leemhuis <regressions@leemhuis.info>, trnka@scm.com,
+	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
+	Linux kernel regressions list <regressions@lists.linux.dev>
+Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
+Message-ID: <ajFISH9bvyWjLOM6@gallifrey>
+References: <ai7rnH20IYeSmY8s@gallifrey>
+ <165d3195-c81d-4760-870b-23a9a3b3b72c@leemhuis.info>
+ <ai_1LYtofh1fwD-N@gallifrey>
+ <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
+ <ajCTaUaACV9eNmWo@kbusch-mbp>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+In-Reply-To: <ajCTaUaACV9eNmWo@kbusch-mbp>
+X-Chocolate: 70 percent or better cocoa solids preferably
+X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
+X-Uptime: 12:47:27 up 31 days, 16:00,  2 users,  load average: 0.00, 0.02,
+ 0.00
+User-Agent: Mutt/2.2.13 (2024-03-09)
 
-Fix the following errors and warnings reported by mandoc linting:
-$ mandoc -W all -T lint man_page.X | grep -v "STYLE: input text line longer than 80 bytes"
+* Keith Busch (kbusch@kernel.org) wrote:
+> On Mon, Jun 15, 2026 at 04:16:12PM -0700, Vjaceslavs Klimovs wrote:
+> > Your trace looks like what the two earlier reports hit: a read reaching
+> > a leaf device with sectors > 0 but phys_seg 0 (an empty bio). One aside
+> > that may help read the trace: blk_io_trace.error is a __u16, so the
+> > bracketed values on your C lines are errnos as u16 (65514 = -EINVAL,
+> > 65531 = -EIO).
+> > 
+> > The WARN itself is new, the bad bio isn't. bio_add_page() only started
+> > rejecting len == 0 in 643893647cac ("block: reject zero length in
+> > bio_add_page()", v7.1-rc1); on 7.0.8 the same empty bio tripped
+> > scsi_alloc_sgtables()'s !nr_segs instead, which matches what you saw.
+> > That fits your "not a recent regression": the condition is older, v7.1
+> > just made it loud.
+> > 
+> > For Tomas's and my reports (QEMU O_DIRECT to the LV block device) the
+> > origin looks like 5ff3f74e145a ("block: simplify direct io validity
+> > check", v6.18): blkdev_dio_invalid() now checks only aggregate
+> > ki_pos | count alignment and dropped the per-segment
+> > bdev_iter_is_aligned() walk, so a degenerate or misaligned O_DIRECT no
+> > longer gets -EINVAL at the fops boundary. But your reproducer reads a
+> > file, which goes through the filesystem O_DIRECT path and never calls
+> > blkdev_dio_invalid(), and still makes the empty bio. So it isn't only
+> > that one entry point.
+> > 
+> > dm-mirror then hangs because Keith's f7b24c7b41f2 only covers md
+> > raid1/raid10; legacy dm-mirror (dm-raid1.c) has no equivalent and
+> > rebuilds the empty read onto the other leg. Note the leg's status isn't
+> > even consistent (your SATA path returns BLK_STS_IOERR, not
+> > BLK_STS_INVAL), so copying that status check into dm-mirror probably
+> > wouldn't catch every case.
+> > 
+> > For what it's worth, that points me toward rejecting the empty or
+> > misaligned bio once, at submission, with -EINVAL, rather than teaching
+> > each consumer to tolerate it. But you'll know the tradeoffs far better
+> > than I do.
+> > 
+> > I have a small QEMU + LVM raid1/mirror setup that reproduces the
+> > block-device variant and bisects to 5ff3f74e. Happy to run your file
+> > reproducer with some instrumentation at the dm-mirror read entry
+> > (bi_size vs bio_sectors vs bvec lengths) to see whether the bio is
+> > already empty on arrival or built that way on the retry, and to test
+> > any patch.
+> 
+> Thanks for following up here. I didn't initially see your follow-up
+> until Thorsten linked it. I apologize for missing that, this feature is
+> important so I don't want to see anything regress for it.
+> 
+> There is a known bug fix I think future tests should include:
+> 
+>   https://lore.kernel.org/linux-block/20260612223205.465913-1-kbusch@meta.com/
 
-mandoc: ./libmpathpersist/mpath_persistent_reserve_in.3:22:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./libmpathpersist/mpath_persistent_reserve_out.3:22:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./mpathpersist/mpathpersist.8.in:172:2: WARNING: skipping paragraph macro: PP after SH
-mandoc: ./mpathpersist/mpathpersist.8.in:215:2: WARNING: skipping paragraph macro: PP after SH
-mandoc: ./multipathd/multipathc.8:19:15: STYLE: whitespace at end of input line
-mandoc: ./multipathd/multipathd.8.in:573:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./multipathd/multipathd.8.in:573:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./multipath/multipath.conf.5.in:130:2: ERROR: skipping end of block that is not open: RE
-mandoc: ./multipath/multipath.conf.5.in:1979:2: ERROR: skipping end of block that is not open: RE
-mandoc: ./multipath/multipath.conf.5.in:89:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./multipath/multipath.conf.5.in:131:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./multipath/multipath.conf.5.in:130:2: WARNING: skipping paragraph macro: br at the end of SH
-mandoc: ./multipath/multipath.conf.5.in:1577:2: WARNING: skipping paragraph macro: PP empty
-mandoc: ./multipath/multipath.conf.5.in:1770:2: WARNING: skipping paragraph macro: PP empty
+> This likely isn't the fix you're looking for, but including it rules out
+> conditions that are not important here.
+> 
+> After that, can we try this suggestion and see if the hang goes away?
+> 
+>   https://lore.kernel.org/linux-block/ajBb8tK-0aJBpIgF@kbusch-mbp/
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
----
- libmpathpersist/mpath_persistent_reserve_in.3  | 1 -
- libmpathpersist/mpath_persistent_reserve_out.3 | 1 -
- mpathpersist/mpathpersist.8.in                 | 2 --
- multipath/multipath.conf.5.in                  | 6 ------
- multipathd/multipathc.8                        | 2 +-
- multipathd/multipathd.8.in                     | 1 -
- 6 files changed, 1 insertion(+), 12 deletions(-)
+With just that one in, the machine survives - thanks!
 
-diff --git a/libmpathpersist/mpath_persistent_reserve_in.3 b/libmpathpersist/mpath_persistent_reserve_in.3
-index 5109fb03..36cc7815 100644
---- a/libmpathpersist/mpath_persistent_reserve_in.3
-+++ b/libmpathpersist/mpath_persistent_reserve_in.3
-@@ -19,7 +19,6 @@ mpath_persistent_reserve_in \- send PRIN command to DM device
- .B #include <mpath_persist.h>
- .P
- .BI "int mpath_persistent_reserve_in" "(int fd, int rq_servact, struct prin_resp *resp, int noisy, int verbose)"
--.P
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/libmpathpersist/mpath_persistent_reserve_out.3 b/libmpathpersist/mpath_persistent_reserve_out.3
-index 09708b93..1a2b9511 100644
---- a/libmpathpersist/mpath_persistent_reserve_out.3
-+++ b/libmpathpersist/mpath_persistent_reserve_out.3
-@@ -19,7 +19,6 @@ mpath_persistent_reserve_out \- send PROUT command to DM device
- .B #include <mpath_persist.h>
- .P
- .BI "int mpath_persistent_reserve_out" "(int fd, int rq_servact, int rq_scope, unsigned int rq_type, struct prout_param_descriptor *paramp, int noisy, int verbose)"
--.P
- .
- .
- .\" ----------------------------------------------------------------------------
-diff --git a/mpathpersist/mpathpersist.8.in b/mpathpersist/mpathpersist.8.in
-index d5f5a452..2208008c 100644
---- a/mpathpersist/mpathpersist.8.in
-+++ b/mpathpersist/mpathpersist.8.in
-@@ -169,7 +169,6 @@ PR In: maximum allocation length. LEN is a decimal number between 0 and 8192.
- .SH EXAMPLE
- .\" ----------------------------------------------------------------------------
- .
--.PP
- Register the key \(dq123abc\(dq for the /dev/mapper/mpath9 device:
- .RS
- \fBmpathpersist --out --register --param-sark=\fI123abc /dev/mapper/mpath9\fR
-@@ -212,7 +211,6 @@ Remove current reservation, and unregister all registered keys from all I_T nexu
- .SH BATCH FILES
- .\" ----------------------------------------------------------------------------
- .
--.PP
- The option \fI--batch-file\fR (\fI-f\fR) sets an input file to be processed
- by \fBmpathpersist\fR. Grouping commands in batch files can provide a speed
- improvement in particular on large installments, because \fBmpathpersist\fR
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 165d3df3..c55d5d40 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -88,7 +88,6 @@ the indentation shown in the above example is helpful for human readers but
- not mandatory.
- .LP
- .
--.LP
- .B Note on regular expressions:
- The \fI@CONFIGFILE@\fR syntax allows many attribute values to be specified as POSIX
- Extended Regular Expressions (see \fBregex\fR(7)). These regular expressions
-@@ -127,8 +126,6 @@ vendor, product, and revision.
- .B overrides
- This section defines values for attributes that should override the
- device-specific settings for all devices.
--.RE
--.LP
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -1576,7 +1573,6 @@ section:
- .B ghost_delay
- .RE
- .PD
--.LP
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -1769,7 +1765,6 @@ section:
- .B all_tg_pt
- .RE
- .PD
--.LP
- .
- .
- .\" ----------------------------------------------------------------------------
-@@ -1978,7 +1973,6 @@ as integrity failures or congestion with so-called Fabric Performance
- Impact Notifications (FPINs).On receiving the fpin notifications through ELS
- multipathd will move the affected path and port states to marginal.
- .
--.RE
- .LP
- See the documentation
- of the individual options above for details.
-diff --git a/multipathd/multipathc.8 b/multipathd/multipathc.8
-index 5e97fb81..2187d1ed 100644
---- a/multipathd/multipathc.8
-+++ b/multipathd/multipathc.8
-@@ -16,7 +16,7 @@ multipathc \- Interactive client for multipathd
- .SH SYNOPSIS
- .\" ----------------------------------------------------------------------------
- .
--.B multipathc 
-+.B multipathc
- .RB [\|
- .IR timeout
- .RB \|]
-diff --git a/multipathd/multipathd.8.in b/multipathd/multipathd.8.in
-index 93625a90..632cbe40 100644
---- a/multipathd/multipathd.8.in
-+++ b/multipathd/multipathd.8.in
-@@ -570,7 +570,6 @@ The device appears usable, but it being delayed for marginal path checking.
- .I undef
- The device either is not part of a multipath device, or its path checker has
- not yet run.
--.PP
- .RE
- .TP
- .B %s
+It does give:
+
+[  505.208354] device-mapper: raid1: Mirror read failed from 252:24. Trying alternative device.
+[  505.239376] device-mapper: raid1: All sides of mirror have failed.
+[  505.239389] device-mapper: raid1: Read failure on mirror device 252:25.  Failing I/O.
+[  505.239394] device-mapper: raid1: Mirror read failed.
+
+Although as far as I can tell the RAID hasn't errored and is still in sync.
+
+If I turn the test case into a write (just s/pread/pwrite/ ) - the machine
+still survives but then it does lose raid sync, and the raid resync
+seems to stick until I do a 'lvchange --refresh main/lvol0'
+which recovers after having spat out a:
+
+[  865.319527] Buffer I/O error on dev dm-26, logical block 262128, async page read
+
+> I expect the original test case to still return an error (and I think it
+> was designed to), but it shouldn't produce the warn or bug splats with a
+> stuck uninterruptable task.
+
+It's not clear to me if it was designed to fail or not; I've not had
+a chance to rerun the original qemu block tests yet, and I don't know
+if old kernels succesfully used O_DIRECT in this case.
+
+It still feels that my pwrite case above shouldn't cause a raid de-sync
+(especially since a normal user can do it).
+
+Dave
 -- 
-2.54.0
-
+ -----Open up your eyes, open up your mind, open up your code -------   
+/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
+\        dave @ treblig.org |                               | In Hex /
+ \ _________________________|_____ http://www.treblig.org   |_______/
