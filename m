@@ -1,84 +1,115 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D9D244CAF9;
-	Tue, 16 Jun 2026 15:55:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53A9A44CAF9
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 15:55:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781625321; cv=none; b=DzEhSJaWwclsR7QaGl5tkvpCwbkBiK+M9RCnrzOIJPeCtXG3amy90FPZ/7CAcLLSvAygwWgoila01oG7a8WUGwlvsO2d5zKdMUaBj52xWaVYvZQXGWtjJqeBUzcJkK1B+BqSQ3TOkF/2eWw6L6KClLkw+Dbxi0gNkXXqZjxO2R4=
+	t=1781625333; cv=none; b=ECQjg2XMVLcWXXEhtKp0ejNfGhSZZPRqo3+u2PKg/y4EmcwbK/aw09cGVd1vFa3Q5Re8jns0upj0EZvlQGR+6StCMZEu+L338dVUVam4N+OLm13eS68APMKS1adGCmURQ8V8bBsOzNX17uWZY9lT2RBTEnzEevCU38YIUEJrzYI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781625321; c=relaxed/simple;
-	bh=YLbyZnveNFEwkF2a6dnkpPOuXUTyKCGvx8xycPn/Vg8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HwTm3kX9NU24n3S0eh4i4M040jJpQ9fDWazNbYjXEvqtGLaFfLDk7/UBOYXKzU2N51J4ppWbT4B9ylfM9z2dl7L9OtUoPsUrvU915nfOOeuHraL6ejc1kDOwkGG9FXX0dzvKAENAxDRwuAGbwkzQHzu0iKzsEI1e/TCwrYNC+ds=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=kr8TJXvM; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1781625333; c=relaxed/simple;
+	bh=WP91IeHuUIc6ZGlOcFFWbT2AeT1Qzim81H43vwAOJG8=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=l/2stvp3Zr1gIsNQfcd3oaGxOkYJIa1JO3DFlIlrePp4Pxl+zm7Qv9TTKI1hZIFT+r4VXtG9wGGw242nF5bFKCSWjQtjsZbWwVDE11dQKQfrQcb7wckHMl79YjyBlzbXcgHoxbi9zvvsryRuLLvMglrhPYvGPFpywns1cy13GMk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Wf1jKI05; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="kr8TJXvM"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=yRIX2AOrE2SZskeh2cCmVhiu01x2DMlBcOnVXRxpeJk=; b=kr8TJXvMPeIC5eQm
-	zQ5PgMDjeYwCA/t/r0qGSEJuA6XpymgBrms3mahPqBBdz1uAUYz4BpDzzZ22IUldfwNzlK+iDzUpn
-	5gWHKoamFLXIjbd8yXZTV2PXnL0UIC4BWXSgNSa621dMZWn82smCxg1fqaX5G44VDz8gIem2D0qLz
-	cfqLBoEYGC40ArfXbKDkCM0EuEj5vx4mW/onyjgoVqc6QMUVzTXH2yTq/J5ZfMLKUcUrm10fzZqA7
-	3QAzQGEUvNqs1WBgSRFOtFgx9geJu4EGfG928nrFlccAYkl2sfPLTjE6i+sCe5nIsUwGA3e5SWRqU
-	10OP+vlT+rs9PeIT6Q==;
-Received: from dg by mx.treblig.org with local (Exim 4.98.2)
-	(envelope-from <dg@treblig.org>)
-	id 1wZW8B-000000085w4-3Mry;
-	Tue, 16 Jun 2026 15:55:15 +0000
-Date: Tue, 16 Jun 2026 15:55:15 +0000
-From: "Dr. David Alan Gilbert" <dave@treblig.org>
-To: Keith Busch <kbusch@kernel.org>
-Cc: zkabelac@redhat.com, Vjaceslavs Klimovs <vklimovs@gmail.com>,
-	Thorsten Leemhuis <regressions@leemhuis.info>, trnka@scm.com,
-	linux-block@vger.kernel.org, dm-devel@lists.linux.dev,
-	Linux kernel regressions list <regressions@lists.linux.dev>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wf1jKI05"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1781625331;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=ii/SeXD5SgFlrLanbpF8iZMQ+mdyR9RNtehZhznQDVM=;
+	b=Wf1jKI05L2xe7jGCgt+DomYbO/UuKrb+uTaou4oh7TixOwzZqLRDOl2g9bq/klBblDR6fz
+	OmfbTFMUz/bJiR55OTbW1UhZFMq+54B25Hn1Ln6l//jW/pDF7Te50YlqHHc2Zbk0sA+3v5
+	nTa1FTIhRUTcr/6ZQitUD4IqtuciBsA=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-581-SVIt8UCGOyuA4XXrQNRblQ-1; Tue,
+ 16 Jun 2026 11:55:27 -0400
+X-MC-Unique: SVIt8UCGOyuA4XXrQNRblQ-1
+X-Mimecast-MFC-AGG-ID: SVIt8UCGOyuA4XXrQNRblQ_1781625325
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFE501802670;
+	Tue, 16 Jun 2026 15:55:24 +0000 (UTC)
+Received: from [10.44.32.53] (unknown [10.44.32.53])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A4B8719560A2;
+	Tue, 16 Jun 2026 15:55:21 +0000 (UTC)
+Date: Tue, 16 Jun 2026 17:55:13 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Vjaceslavs Klimovs <vklimovs@gmail.com>
+cc: "Dr. David Alan Gilbert" <linux@treblig.org>, 
+    Thorsten Leemhuis <regressions@leemhuis.info>, kbusch@kernel.org, 
+    trnka@scm.com, Zdenek Kabelac <zdenek.kabelac@gmail.com>, 
+    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
+    Linux kernel regressions list <regressions@lists.linux.dev>
 Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
-Message-ID: <ajFx4zh7hgEn0EZS@gallifrey>
-References: <ai7rnH20IYeSmY8s@gallifrey>
- <165d3195-c81d-4760-870b-23a9a3b3b72c@leemhuis.info>
- <ai_1LYtofh1fwD-N@gallifrey>
- <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
- <ajCTaUaACV9eNmWo@kbusch-mbp>
- <ajFISH9bvyWjLOM6@gallifrey>
- <ajFK5NXkxd6jU5zu@gallifrey>
- <ajFbglSvcLrFH8Z-@kbusch-mbp>
+In-Reply-To: <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
+Message-ID: <27311df3-2c46-08be-825a-157ea906bdb2@redhat.com>
+References: <ai7rnH20IYeSmY8s@gallifrey> <165d3195-c81d-4760-870b-23a9a3b3b72c@leemhuis.info> <ai_1LYtofh1fwD-N@gallifrey> <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-In-Reply-To: <ajFbglSvcLrFH8Z-@kbusch-mbp>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
-X-Uptime: 15:54:33 up 31 days, 19:07,  2 users,  load average: 0.23, 0.11,
- 0.02
-User-Agent: Mutt/2.2.13 (2024-03-09)
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-MFC-PROC-ID: Mgd8Jyyd3fjaNV9ZXglPx6PKM_gKuXP1uwEQz_VqoWM_1781625325
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-* Keith Busch (kbusch@kernel.org) wrote:
-> On Tue, Jun 16, 2026 at 01:08:52PM +0000, Dr. David Alan Gilbert wrote:
-> > ( lvcreate  -m 1 -L 1G main /dev/sda2 /dev/sdb2 ) rather than
-> > the old mirror with the same patch, then:
-> > 
-> >   a) I get no log errors with either read or write
-> >   b) read still gives EIO
+Hi
+
+
+On Mon, 15 Jun 2026, Vjaceslavs Klimovs wrote:
+
+> Hi Dave, all,
 > 
-> I've a follow up patch to handle the error properly. You want to see
-> EINVAL, not EIO, and that error shouldn't be considered for determining
-> the raid health. Something like what f7b24c7b41f23b5 does, but it's a
-> little more complicated in this path since it doesn't see the lower
-> level error status and just converts everything to EIO.
+> I'm one of the original reporters and very much a user, not a block/dm
+> developer, so please sanity-check all of this.
+> 
+> Your trace looks like what the two earlier reports hit: a read reaching
+> a leaf device with sectors > 0 but phys_seg 0 (an empty bio). One aside
+> that may help read the trace: blk_io_trace.error is a __u16, so the
+> bracketed values on your C lines are errnos as u16 (65514 = -EINVAL,
+> 65531 = -EIO).
+> 
+> The WARN itself is new, the bad bio isn't. bio_add_page() only started
+> rejecting len == 0 in 643893647cac ("block: reject zero length in
+> bio_add_page()", v7.1-rc1); on 7.0.8 the same empty bio tripped
+> scsi_alloc_sgtables()'s !nr_segs instead, which matches what you saw.
+> That fits your "not a recent regression": the condition is older, v7.1
+> just made it loud.
+> 
+> For Tomas's and my reports (QEMU O_DIRECT to the LV block device) the
+> origin looks like 5ff3f74e145a ("block: simplify direct io validity
+> check", v6.18): blkdev_dio_invalid() now checks only aggregate
+> ki_pos | count alignment and dropped the per-segment
+> bdev_iter_is_aligned() walk, so a degenerate or misaligned O_DIRECT no
+> longer gets -EINVAL at the fops boundary. But your reproducer reads a
+> file, which goes through the filesystem O_DIRECT path and never calls
+> blkdev_dio_invalid(), and still makes the empty bio. So it isn't only
+> that one entry point.
 
-OK, thanks for your help, and I'll be happy to test that when it's done.
+I thought that reverting 5ff3f74e145a and re-introducing the alignment 
+check in block/fops.c:blkdev_dio_invalid would fix it - but it wouldn't.
 
-Dave
--- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+The same problem existed even before 5ff3f74e145a, with the pvmove 
+command.
+
+Suppose that the administrator needs to move a logical volume from one 
+disk to another and uses pvmove. Pvmove inserts a new dm-mirror target 
+underneath the logical volume and uses it to copy the data. Now, the 
+dm-mirror target crashes whenever it receives bio with unaligned vectors.
+
+So, I think that the proper way to fix this is to teach dm-mirror/dm-io to 
+deal with unaligned bio vectors and handle them properly.
+
+Mikulas
+
