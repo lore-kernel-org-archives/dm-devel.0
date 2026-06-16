@@ -1,64 +1,63 @@
-Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A54E357D0F
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 12:29:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5E1135E1B9
+	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 12:29:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781612958; cv=none; b=FzUpgR8LG9lOL8Pvvi4mKEsCFrcSwHGZbR2YUks3u+te1DvVKBtGCMu01joqlcCld88x3a2tBxPrvz5Bda9raHFJuBFFtk5QFqM2f4vqnvv1FXqphq3XrYMZFZo1hRENy2/WQZCFMzI4JhKBuzSgCvfEdt3L6NJzTEeeNPbpBDI=
+	t=1781612960; cv=none; b=TpojqD+3A7uGnmUC55cD/EVGxYTr9/sd1G4xH0XDvG3Iila8UyXyCHU3Z9Qs0ZZ/LGyNB0On7xEsbK9PQlMrVgqBbycxWH4Q60sSsgHh/eQ0Q1nnQMLpCd2iDbzTLzWECe5/UJoBTaGKPBgmFTz7QW3MVUf/S+fuw34KEa5v45c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781612958; c=relaxed/simple;
-	bh=QYnHfvDGNrIjUV8iMMbT/ERkkU5EFcQDyXeJJStXOVw=;
+	s=arc-20240116; t=1781612960; c=relaxed/simple;
+	bh=D4HmTwvaZpFloSCIAg2OWDEC2MjPIYdBkLXO+h9L6aY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ROpde7oM6M3UbkWUZtMTCcY2JBZngndCGXaHNlF/Bk4hBXYMcL+PZ1HYSvjpbH4+W3SGxDrUuHQ/osTJbH5KeGmgroIFnTFBvvMtnnIsvlfpIEEV5jmsMi1WH9VqPQbColq0WuHpXuoTi8u6xHzm4qAmvZTrHZhIHd5qv+ni5x8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KqMzjKGO; arc=none smtp.client-ip=209.85.128.52
+	 MIME-Version; b=ZWIrFCgYYU0rhE9TUDs0GN27Y6e3suYI+wha9P9U/7uRckWPRTOgSwYpjFYBL0f4xUkViPKeBD5sEs1rQEJW/7ktJ9iMfxbNNc1AnW7I3XktY4FAN/WBrZQC/yS2bNAqQOg9+UA683GzrK/t1K0+9fzKMCOh1CL+WKPUaPX9/fg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=bxAQtFZS; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KqMzjKGO"
-Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-490a762c8d5so3093275e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 05:29:17 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="bxAQtFZS"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490a767521dso3440195e9.1
+        for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 05:29:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1781612956; x=1782217756; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1781612957; x=1782217757; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=0R6XIO+PrbpcJw2/DSeHl6enSkWRi0ninkEchc+xBQU=;
-        b=KqMzjKGOSuZSoRe0/MOlPZhmnLNfxnzm+7jI7T096H9aC7FuIU6so0WWfJoAR0Teyq
-         TVJ92EutGWZag+86V/2Iv5x4aOspq8x2bn39yLLNWJYiytbAd+u5RbYTBfP8Cffcp8qb
-         vAeh6go2YFRN0vxgEMEOjQLKLAU2vsWQfqtBvbA0tG8u2jIHx+Xco1wcIypgxffg9f4n
-         p0mDpXrjjz6gh1PrdUnhyC5MiKjUhh9IeyOISk9u8d2Hqq+AVIdynpO8ejALoFPtrsEO
-         KU4/DVpOR3CU/mjZsfzMCrZWH2xmoc693ePzrqPZA+UOmc1EiCZpAMwxoGFrqfDyvXMq
-         lwCg==
+        bh=zANJzgaOceE3XJAdkvJlLwYtm4O+EYkTvINlGBXXUmU=;
+        b=bxAQtFZSKG8Xktx28rF6T3n70mjZN5mD/Z3rtsS5KV1p91ZQoJSqIeA3jyYXuBdPXT
+         ilZLBcdMzGQJ6c3ib4tmQtViaDFS1E//NBRjo8MqYMuwEVSwiaq46EcFvUod3uf2lwsp
+         nPi0acABukrOcaaghZtEKfFBLNI2lmXpdF4FJYAF8KxLVn/uEvfFPFLJTtLzPJO8w+q+
+         xM5dORulNSnJmUsKXi7misgZ1jK29uMjrb7mUEAh/pMn+qslU8pqg75/Y5LEvt9Hr1QW
+         s1wt3dOLD1ScdplHH0NrGSagjOZjAhqb1kGWXaMbaKCTMQ5E4Wwgw88mKe3nifx7KTt/
+         /LbA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1781612956; x=1782217756;
+        d=1e100.net; s=20251104; t=1781612957; x=1782217757;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=0R6XIO+PrbpcJw2/DSeHl6enSkWRi0ninkEchc+xBQU=;
-        b=Nl5iwVlBL8Ihy1MIMYWEoSXNOyzNetpgmwscQMyRH7K68bIw78deCt5sJKwmggLe2A
-         OCHHI+T3qPOw2SIqMteuAimegi6pqR6f5KcLEXTQ672ZHhQzX6TYDIxeFfESk4CDMGuN
-         le0Wh6SIz4ANIsn0yfnAv0iuoesrViacaaimBN9brMFpMDCIwM8MbvHiC2hPg5GPOlvV
-         Ji+PcWsK9KN9MaD1hJ0BcS4x/d+aMdGmtR/KAUBygZheUDu9nJ1Clce7QSNLCU5AgGMO
-         kL5ait+PnG60qF76IZ5+/IGrIPe96kcTNqEyducIKixz8z/tzAd0MNojB/tiZ2qzDSyw
-         cFOw==
-X-Forwarded-Encrypted: i=1; AFNElJ9O8nlnW32pvlKTp9vVenBTFd7stGb2NT1tHsLJM97tYshBT5kGuwsiu6+ghBU36efD9ORj2V9scg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzLlS3o+HVDEVc9aKuaZdOtXgeC1v0xLdlc0D5+RsVpnre0LZiY
-	nsRXecBrMd+4otOeLyP+XbofAxLcpIRgczb8BT4ZpIbO1f663bWRLO8=
-X-Gm-Gg: Acq92OGtJviS2Hxfs+ApVVWM/OtiPb8PSv8LQ7T6fWmVtlgogLMzmmeqYOh0RitgFAe
-	o4KZb8BtFg2Wba+AC1fwSCSe6uWNrJd56JkbzD/Tvcml0W8KTuKHjpKGEeaf3EcWzn1xY+IXPk+
-	7OfuLv+x8dAAHYI4/42ujDrQO1E1g7uAr9rhz1XePXU04Y3zdiyNq5kBTNdHFVDnoxsWTgyFq7M
-	cL2j5uz8/e7jL/jDrBbg+OIqmSS41pLLc5q+RhxX2HFQDqv/EpqjdbvzikuKd3HZHj5gNRZw/AT
-	POf0dXZFqRZPEuIsnZ5e22p/jM+b0TFKFdvGt0Kj2ItN3jofdA26OCTVbcSsFW23jwJtipRDRQ2
-	R5kFgYJ42byggyjFtlvKSyr9xCIw+qMsrSaRay7bSikUBuwt/FurXFfzvJJGJlsa33WTf3yCNZh
-	vVX97+IrkltcD+2u859U2Wcq4J4bzL59QAipB+iXBKuDiR5WC/ZRmvwiT2GQtY8m8ZVB4QB82ef
-	UE=
-X-Received: by 2002:a05:600c:8b0f:b0:48d:1021:e5d1 with SMTP id 5b1f17b1804b1-490ec4f25f3mr129675815e9.3.1781612955579;
-        Tue, 16 Jun 2026 05:29:15 -0700 (PDT)
+        bh=zANJzgaOceE3XJAdkvJlLwYtm4O+EYkTvINlGBXXUmU=;
+        b=gffEHIqiB3cr2g0JhGbYaG47fm6FNSzLGkxL0Vb7763fKIosmBcGmo69c9d7Vy3dHM
+         GPmMROAbwXbzm0a5b9MEAAHu2bL0PGfwNI4kGXdnky5qyNAowMlLKw9vhFZm0pWMRSlT
+         EGvxjj/o8AuxmT7AiudKo+t4iiVA/DouBr0rH97EEY0i6zRC1RmqOf1JMp/lSBuV7WVA
+         pWX/3Pi67vHEU8Ux5BgCG4YFIUOXTTxMvqFNrwAynE6sgNAEs1PgC/VskAKEuJm/DTpG
+         wrAuZ68aLY4G54j5aF0Ujt+7FslMO9TCZwlI3jwSUUK7APOMPvT+Sx7NdPdCQ0ht3Ekl
+         FgDg==
+X-Forwarded-Encrypted: i=1; AFNElJ/qGY0oI43S+9/QwZ/8zEQ4xj4dNW7gHE0g2ug85pphUwhqJtYPldBKz57A1Ale1xRdycbMooP9Qw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzUFjJPnUilzD815L0+5zm6MyYHOR11vzSZQKKKQtTlzX7P4TK7
+	LGEX1CPItNa7noC2+0ST4UJR80NpKm1glcU2IaZ/EHSfXI+rzM7YBqg=
+X-Gm-Gg: Acq92OFfYsDtVgBqsomX2AeYxZnRKnKBuicIXLZbMsYnsAx2AxPDFvMfbOssZ3vlLfg
+	T81poM31HkBYFfi8OyI1pi3BpP7yFyOE1b/zUw0Os5Mgn5XPblMZ+AECf8WO4agboPmjb5yRZWk
+	knl6MGhfqHiQAe+M54xc1Q8cZgCXswRrRBlI4Z3mhuxrtNal7yW/Wz2LQuHjyPvqrViNiQsfMJP
+	aE8Oav4WngcSbTNhTdpL3IKdL7CwnejyhStJZcux4qjZkmKvwJN8RRLYNRJ12MicIwm+pnGE1TR
+	1Ftwi48dQWxL1F71S1lIoXPQHlk02RNYiNwzo7s5sk2tE59aGh6dcXX7dkkdq2iu3taZGDq55ew
+	G97JJnmZHIYAAWpwD+9H/oJ70ax0IaTKxUzQCgBWfOgkgetPcTcMY35DtoFn0sZywnM4gNaBlbX
+	TmELKQDMJ5A2G+20UD/GCM/aUb+wNZinlQF5scaNPKRy27/N49gtj/tvFDL8tfLoA+
+X-Received: by 2002:a05:600c:2a93:b0:490:e190:39b1 with SMTP id 5b1f17b1804b1-490ec50a6ecmr85780365e9.7.1781612956765;
+        Tue, 16 Jun 2026 05:29:16 -0700 (PDT)
 Received: from localhost (32.red-80-39-29.staticip.rima-tde.net. [80.39.29.32])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-490ea95c51dsm298091975e9.1.2026.06.16.05.29.15
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49230a96b47sm49956195e9.13.2026.06.16.05.29.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 16 Jun 2026 05:29:15 -0700 (PDT)
+        Tue, 16 Jun 2026 05:29:16 -0700 (PDT)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -66,9 +65,9 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2 1/8] multipath-tools: delete obsolete information from multipath.conf.5
-Date: Tue, 16 Jun 2026 14:28:57 +0200
-Message-ID: <20260616122909.244619-2-xose.vazquez@gmail.com>
+Subject: [PATCH v2 2/8] multipath-tools: remove explicit width from .TP macros in multipath.conf.5
+Date: Tue, 16 Jun 2026 14:28:58 +0200
+Message-ID: <20260616122909.244619-3-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <20260616122909.244619-1-xose.vazquez@gmail.com>
 References: <20260616122909.244619-1-xose.vazquez@gmail.com>
@@ -81,10 +80,8 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-repeat_count (rr_min_io, rr_min_io_rq, rr_weight) has been unsupported
-since kernel 4.6 ( commits 90a4323ccfea and  21136f89d76d ).
-
-And also clean up other deprecated entries.
+This allows man/groff to calculate the width automatically, preventing
+excessive whitespace and improving readability on various terminal sizes.
 
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -92,172 +89,252 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- multipath/multipath.conf.5.in | 69 +++--------------------------------
- 1 file changed, 6 insertions(+), 63 deletions(-)
+ multipath/multipath.conf.5.in | 56 +++++++++++++++++------------------
+ 1 file changed, 28 insertions(+), 28 deletions(-)
 
 diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index 84cd1a0a..e3a9811c 100644
+index e3a9811c..ef08ed2b 100644
 --- a/multipath/multipath.conf.5.in
 +++ b/multipath/multipath.conf.5.in
-@@ -6,7 +6,7 @@
- .\" Update the date below if you make any significant change.
- .\" ----------------------------------------------------------------------------
+@@ -103,7 +103,7 @@ matches, standard regular expression syntax using the special characters "^" and
+ .LP
  .
--.TH MULTIPATH.CONF 5 2025-09-12 Linux
-+.TH MULTIPATH.CONF 5 2026-05-27 Linux
+ The following \fIsection\fP keywords are recognized:
+-.TP 17
++.TP
+ .B defaults
+ This section defines default values for attributes which are used
+ whenever no values are given in the appropriate device or multipath
+@@ -142,7 +142,7 @@ device-specific settings for all devices.
+ The \fIdefaults\fR section recognizes the following keywords:
  .
  .
- .\" ----------------------------------------------------------------------------
-@@ -198,9 +198,8 @@ kernel multipath target:
- .TP 12
+-.TP 17
++.TP
+ .B verbosity
+ Default verbosity. Higher values increase the verbosity level. Valid
+ levels are between 0 and 6.
+@@ -195,7 +195,7 @@ The default is: \fBno\fR
+ The default path selector algorithm to use; they are offered by the
+ kernel multipath target:
+ .RS
+-.TP 12
++.TP
  .I "round-robin 0"
  Choose the path for the next bunch of I/O by looping through every path in the
--path group, sending \fBthe same number of I/O requests\fR to each path. Some
--aspects of behavior can be controlled with the attributes: \fIrr_min_io\fR,
--\fIrr_min_io_rq\fR and \fIrr_weight\fR.
-+path group, sending \fBthe same number of I/O requests\fR to each path.
-+
+ path group, sending \fBthe same number of I/O requests\fR to each path.
+@@ -223,7 +223,7 @@ The default is: \fBservice-time 0\fR
+ (Hardware-dependent) The default path grouping policy to apply to unspecified
+ multipaths. Possible values are:
+ .RS
+-.TP 12
++.TP
+ .I failover
+ One path per priority group.
  .TP
- .I "queue-length 0"
- (Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe lowest
-@@ -598,24 +597,12 @@ The default is: \fBmanual\fR
- .
+@@ -333,7 +333,7 @@ of this path. Higher number have a higher priority.
+ \fI"none"\fR is a valid value. Currently the following path priority routines
+ are implemented:
+ .RS
+-.TP 12
++.TP
+ .I const
+ Return a constant priority of \fI1\fR.
  .TP
- .B rr_min_io
--Number of I/O requests to route to a path before switching to the next in the
--same path group. This is only for \fIBlock I/O\fR(BIO) based multipath and
--only apply to \fIround-robin\fR path_selector.
--.RS
--.TP
--The default is: \fB1000\fR
--.RE
-+(Deprecated since kernel 4.6) This option is not supported anymore, and will be ignored.
- .
- .
+@@ -408,12 +408,12 @@ NetAPP E/EF Series, where it is \fBalua\fR). If \fBdetect_prio\fR is
+ Arguments to pass to to the prio function. This only applies to certain
+ prioritizers:
+ .RS
+-.TP 12
++.TP
+ .I weighted
+ Needs a value of the form
+ \fI"<hbtl|devname|serial|wwn> <regex1> <prio1> <regex2> <prio2> ..."\fR
+ .RS
+-.TP 8
++.TP
+ .I hbtl
+ Regex can be of SCSI H:B:T:L format. For example: 1:0:.:. , *:0:0:.
  .TP
- .B rr_min_io_rq
--Number of I/O requests to route to a path before switching to the next in the
--same path group. This is only for \fIRequest\fR based multipath and
--only apply to \fIround-robin\fR path_selector.
--.RS
--.TP
--The default is: \fB1\fR
--.RE
-+(Deprecated since kernel 4.6) This option is not supported anymore, and will be ignored.
- .
- .
+@@ -430,11 +430,11 @@ Regex can be of the form \fI"host_wwnn:host_wwpn:target_wwnn:target_wwpn"\fR
+ these values can be looked up through sysfs or by running \fImultipathd show paths format
+ "%N:%R:%n:%r"\fR. For example: 0x200100e08ba0aea0:0x210100e08ba0aea0:.*:.* , .*:.*:iqn.2009-10.com.redhat.msp.lab.ask-06:.*
+ .RE
+-.TP 12
++.TP
+ .I path_latency
+ Needs a value of the form "io_num=\fI<20>\fR base_num=\fI<10>\fR"
+ .RS
+-.TP 8
++.TP
+ .I io_num
+ The number of read IOs sent to the current path continuously, used to calculate the average path latency.
+ Valid Values: Integer, [20, 200].
+@@ -445,7 +445,7 @@ Double-precision floating-point, [1.1, 10]. And Max average latency value is 100
+ For example: If base_num=10, the paths will be grouped in priority groups with path latency <=1us, (1us, 10us],
+ (10us, 100us], (100us, 1ms], (1ms, 10ms], (10ms, 100ms], (100ms, 1s], (1s, 10s], (10s, 100s], >100s.
+ .RE
+-.TP 12
++.TP
+ .I alua
+ If \fIexclusive_pref_bit\fR is set, paths with the \fIpreferred path\fR bit
+ set will always be in their own path group.
+@@ -456,17 +456,17 @@ set will always be in their own path group.
  .TP
-@@ -634,16 +621,7 @@ The default is: \fBmax\fR
- .
+ .I datacore
+ .RS
+-.TP 8
++.TP
+ .I preferredsds
+ (Mandatory) The preferred "SDS name".
  .TP
- .B rr_weight
--If set to \fIpriorities\fR the multipath configurator will assign path weights
--as "path prio * rr_min_io". Possible values are
--.I priorities
--or
--.I uniform .
--Only apply to \fIround-robin\fR path_selector.
--.RS
--.TP
--The default is: \fBuniform\fR
--.RE
-+(Deprecated since kernel 4.6) This option is not supported anymore, and will be ignored.
- .
- .
- .TP
-@@ -821,28 +799,16 @@ The default is: \fB<unset>\fR
- .TP
- .B bindings_file
- (Deprecated) This option is not supported anymore, and will be ignored.
--.RS
--.TP
--The compiled-in value is: \fB@STATE_DIR@/bindings\fR
--.RE
- .
- .
- .TP
- .B wwids_file
- (Deprecated) This option is not supported anymore, and will be ignored.
--.RS
--.TP
--The compiled-in value is: \fB@STATE_DIR@/wwids\fR
--.RE
- .
- .
- .TP
- .B prkeys_file
- (Deprecated) This option is not supported anymore, and will be ignored.
--.RS
--.TP
--The compiled-in value is: \fB@STATE_DIR@/prkeys\fR
--.RE
- .
- .
- .TP
-@@ -1008,10 +974,6 @@ The default is: \fB<unset>\fR
- .TP
- .B config_dir
- (Deprecated) This option is not supported anymore, and will be ignored.
--.RS
--.TP
--The compiled-in value is: \fB@CONFIGDIR@\fR
--.RE
- .
- .
- .TP
-@@ -1324,7 +1286,6 @@ The default is: \fBno\fR
- .TP
- .B disable_changed_wwids
- (Deprecated) This option is not supported anymore, and will be ignored.
--.RE
- .
- .
- .TP
-@@ -1580,14 +1541,8 @@ section:
- .TP
- .B failback
- .TP
--.B rr_weight
--.TP
+ .I timeout
+ (Optional) The timeout for the INQUIRY, in ms.
+ .RE
+-.TP 12
++.TP
+ .I iet
+ .RS
+-.TP 8
++.TP
+ .I preferredip=...
+ (Mandatory) Th preferred IP address, in dotted decimal notation, for iSCSI targets.
+ .RE
+@@ -481,7 +481,7 @@ Specify any device-mapper features to be used. Syntax is \fInum list\fR
+ where \fInum\fR is the number, between 0 and 8, of features in \fIlist\fR.
+ Possible values for the feature list are:
+ .RS
+-.TP 12
++.TP
+ .I queue_if_no_path
+ (Deprecated, superseded by \fIno_path_retry\fR) Queue I/O if no path is active.
+ Identical to the \fIno_path_retry\fR with \fIqueue\fR value. If both this
+@@ -520,7 +520,7 @@ to respond. The asynchronous checkers (\fItur\fR and \fIdirectio\fR) will not
+ pause multipathd. Instead, multipathd will check for a response once per
+ second, until \fIchecker_timeout\fR seconds have elapsed. Possible values are:
+ .RS
+-.TP 12
++.TP
+ .I readsector0
+ (Deprecated) Read the first sector of the device. This checker is being
+ deprecated, please use \fItur\fR or \fIdirectio\fR instead.
+@@ -574,7 +574,7 @@ Tell multipathd how to manage path group failback.
+ To select \fIimmediate\fR or a \fIvalue\fR, it's mandatory that the device
+ has support for a working prioritizer.
+ .RS
+-.TP 12
++.TP
+ .I immediate
+ Immediately failback to the highest priority pathgroup that contains
+ active paths.
+@@ -628,7 +628,7 @@ The default is: \fBmax\fR
  .B no_path_retry
+ Specify what to do when all paths are down. Possible values are:
+ .RS
+-.TP 12
++.TP
+ .I value > 0
+ Number of retries until disable I/O queueing.
  .TP
--.B rr_min_io
--.TP
--.B rr_min_io_rq
--.TP
- .B flush_on_last_del
+@@ -1154,7 +1154,7 @@ blocked from further processing by higher layers - such as LVM - if and only
+ if it\'s considered a valid multipath device path), and b) when multipathd
+ detects a new device. The following values are possible:
+ .RS
+-.TP 10
++.TP
+ .I strict
+ Both multipath and multipathd treat only such devices as multipath devices
+ which have been part of a multipath map previously, and which are therefore
+@@ -1421,7 +1421,7 @@ by multipath-tools.
+ .
+ The following keywords are recognized in both sections. The defaults are empty
+ unless explicitly stated.
+-.TP 17
++.TP
+ .B devnode
+ Regular expression matching the device nodes to be excluded/included.
+ .RS
+@@ -1511,7 +1511,7 @@ from later entries take precedence.
+ .
+ .
+ The \fImultipath\fR subsection recognizes the following attributes:
+-.TP 17
++.TP
+ .B wwid
+ (Mandatory) World Wide Identifier. Detected multipath maps are matched against this attribute.
+ Note that, unlike the \fIwwid\fR attribute in the \fIblacklist\fR section,
+@@ -1530,7 +1530,7 @@ section:
+ .sp 1
+ .PD .1v
+ .RS
+-.TP 18
++.TP
+ .B path_grouping_policy
  .TP
- .B features
-@@ -1769,14 +1724,8 @@ section:
+ .B path_selector
+@@ -1587,7 +1587,7 @@ section:
+ .SH "devices section"
+ .\" ----------------------------------------------------------------------------
+ .
+-.TP 4
++.TP
+ .B Important:
+ The built-in hardware device table of
+ .I multipath-tools
+@@ -1623,7 +1623,7 @@ for all devices in the system.
+ .LP
+ .
+ The \fIdevice\fR subsection recognizes the following attributes:
+-.TP 17
++.TP
+ .B vendor
+ (Mandatory) Regular expression to match the vendor name.
+ .RS
+@@ -1666,7 +1666,7 @@ and \fImultipathd show paths format\fR commands. Currently only the
+ The hardware handler to use for this device type.
+ The following hardware handler are implemented:
+ .RS
+-.TP 12
++.TP
+ .I 1 emc
+ (Hardware-dependent)
+ Hardware handler for DGC class arrays as CLARiiON CX/AX and EMC VNX families
+@@ -1707,7 +1707,7 @@ section:
+ .sp 1
+ .PD .1v
+ .RS
+-.TP 18
++.TP
+ .B path_grouping_policy
  .TP
- .B failback
+ .B uid_attribute
+@@ -1785,7 +1785,7 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
+ .sp 1
+ .PD .1v
+ .RS
+-.TP 18
++.TP
+ .B path_grouping_policy
  .TP
--.B rr_weight
--.TP
- .B no_path_retry
- .TP
--.B rr_min_io
--.TP
--.B rr_min_io_rq
--.TP
- .B fast_io_fail_tmo
- .TP
- .B dev_loss_tmo
-@@ -1855,14 +1804,8 @@ the values are taken from the \fIdevices\fR or \fIdefaults\fR sections:
- .TP
- .B failback
- .TP
--.B rr_weight
--.TP
- .B no_path_retry
- .TP
--.B rr_min_io
--.TP
--.B rr_min_io_rq
--.TP
- .B flush_on_last_del
- .TP
- .B fast_io_fail_tmo
+ .B uid_attribute
+@@ -1899,7 +1899,7 @@ which paths belong to the same device. Each path presenting the same
+ WWID is assumed to point to the same device.
+ .LP
+ The WWID is generated by four methods (in the order of preference):
+-.TP 17
++.TP
+ .B uid_attrs
+ The WWID is derived from udev attributes by matching the device node name; cf
+ \fIuid_attrs\fR above.
+@@ -1939,7 +1939,7 @@ pathgroups will not be used until all other pathgroups have been tried. At the
+ time when the path would normally be reinstated, it will be returned to its
+ normal pathgroup. The logic of determining \(dqshaky\(dq condition, as well as
+ the logic when to reinstate, differs between the three methods.
+-.TP 8
++.TP
+ .B \(dqdelay_checks\(dq failure tracking
+ (Deprecated) This method is \fBdeprecated\fR and mapped to the \(dqsan_path_err\(dq method.
+ See the \fIdelay_watch_checks\fR and \fIdelay_wait_checks\fR options above
 -- 
 2.54.0
 
