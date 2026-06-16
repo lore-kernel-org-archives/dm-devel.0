@@ -1,115 +1,176 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53A9A44CAF9
-	for <dm-devel@lists.linux.dev>; Tue, 16 Jun 2026 15:55:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 39F6D47B425;
+	Tue, 16 Jun 2026 15:58:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781625333; cv=none; b=ECQjg2XMVLcWXXEhtKp0ejNfGhSZZPRqo3+u2PKg/y4EmcwbK/aw09cGVd1vFa3Q5Re8jns0upj0EZvlQGR+6StCMZEu+L338dVUVam4N+OLm13eS68APMKS1adGCmURQ8V8bBsOzNX17uWZY9lT2RBTEnzEevCU38YIUEJrzYI=
+	t=1781625533; cv=none; b=M+MY7VLb/fJRittb80xFEaj7gBM+GoQHa1ytraz7LvkGyuIc0v1gQt1DSnd1QN6eRF1awImDbU97uDXT4bQ7OSFAyUxABl8VmTzBoPB4a/6NJnf6i08dVqxxr1uBLersHLxhTIGcN0v/1gOzRHmUeHelRVpBrV/nGQDTa0xWG/M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781625333; c=relaxed/simple;
-	bh=WP91IeHuUIc6ZGlOcFFWbT2AeT1Qzim81H43vwAOJG8=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=l/2stvp3Zr1gIsNQfcd3oaGxOkYJIa1JO3DFlIlrePp4Pxl+zm7Qv9TTKI1hZIFT+r4VXtG9wGGw242nF5bFKCSWjQtjsZbWwVDE11dQKQfrQcb7wckHMl79YjyBlzbXcgHoxbi9zvvsryRuLLvMglrhPYvGPFpywns1cy13GMk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Wf1jKI05; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1781625533; c=relaxed/simple;
+	bh=ncv2ZU5eMn+z/lp+z/27uOZkU0DTtf+G8ApYBrT4NFY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=D68KR8IWqd4stRzRIn+2Wx/cLZGIOpqU8t+uj5hT3lGfG+3j7Or6uLa0LT0Ghj/4fPo1bnAZXv5VZRDSAdHP9vfJ6z68ua0r4gHCQatJCxkkigxhgtEcvrFcD09c9Ul8X5g+byBUWvmT8+mseF3JOR0GA1eeLHLCRh/dAsaseYo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VuLe9SOk; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Wf1jKI05"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781625331;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=ii/SeXD5SgFlrLanbpF8iZMQ+mdyR9RNtehZhznQDVM=;
-	b=Wf1jKI05L2xe7jGCgt+DomYbO/UuKrb+uTaou4oh7TixOwzZqLRDOl2g9bq/klBblDR6fz
-	OmfbTFMUz/bJiR55OTbW1UhZFMq+54B25Hn1Ln6l//jW/pDF7Te50YlqHHc2Zbk0sA+3v5
-	nTa1FTIhRUTcr/6ZQitUD4IqtuciBsA=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-581-SVIt8UCGOyuA4XXrQNRblQ-1; Tue,
- 16 Jun 2026 11:55:27 -0400
-X-MC-Unique: SVIt8UCGOyuA4XXrQNRblQ-1
-X-Mimecast-MFC-AGG-ID: SVIt8UCGOyuA4XXrQNRblQ_1781625325
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CFE501802670;
-	Tue, 16 Jun 2026 15:55:24 +0000 (UTC)
-Received: from [10.44.32.53] (unknown [10.44.32.53])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A4B8719560A2;
-	Tue, 16 Jun 2026 15:55:21 +0000 (UTC)
-Date: Tue, 16 Jun 2026 17:55:13 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Vjaceslavs Klimovs <vklimovs@gmail.com>
-cc: "Dr. David Alan Gilbert" <linux@treblig.org>, 
-    Thorsten Leemhuis <regressions@leemhuis.info>, kbusch@kernel.org, 
-    trnka@scm.com, Zdenek Kabelac <zdenek.kabelac@gmail.com>, 
-    linux-block@vger.kernel.org, dm-devel@lists.linux.dev, 
-    Linux kernel regressions list <regressions@lists.linux.dev>
-Subject: Re: Repeatable, raid1+O_DIRECT, hang/warn
-In-Reply-To: <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
-Message-ID: <27311df3-2c46-08be-825a-157ea906bdb2@redhat.com>
-References: <ai7rnH20IYeSmY8s@gallifrey> <165d3195-c81d-4760-870b-23a9a3b3b72c@leemhuis.info> <ai_1LYtofh1fwD-N@gallifrey> <CAC_j7i0eDccVWzPeRafM50mZEOFHPz2cwd=RZqqx6TK2EVRFvw@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VuLe9SOk"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C273E1F000E9;
+	Tue, 16 Jun 2026 15:58:51 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1781625532;
+	bh=WSS9qsIGDXq6Wq0D3AchmOSN3ojpQzajWBsqYSeYQRQ=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=VuLe9SOkG3cmvBQHvosTCA7QqerRwq9ZV1+PgjNj4N94uaGsPtIusgrg/sE5Nog9c
+	 GmvkBOUBH5ocYPDVJuANw/p93G/RjE3aS1whbM8nKdALfpB9pduRP6ASUNadMnItqq
+	 UqPmM1LVAZzpnKl3eeVGWtQZI5gcONXUElKJiXw7NgwOobl14YLUH7hN/5uNFaA85G
+	 SgMstEpgCiyS3T/xhWwTzMd97IHcAJEssNSY+zEt09ofz5NzEr+8XjoHjC1JSw6YWH
+	 3T/4VQL/CeamknQB6/otARwo/u9fkaeB9eHNRcbmYcmMK1vxHTEvK1Ry1WaAeJxhiq
+	 C/sVD6yh5qkyA==
+Date: Tue, 16 Jun 2026 09:58:50 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: Keith Busch <kbusch@meta.com>
+Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	mpatocka@redhat.com, "Dr. David Alan Gilbert" <linux@treblig.org>,
+	Vjaceslavs Klimovs <vklimovs@gmail.com>
+Subject: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O errors
+Message-ID: <ajFyuoMqnvQm738z@kbusch-mbp>
+References: <20260616150554.1686662-1-kbusch@meta.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: Mgd8Jyyd3fjaNV9ZXglPx6PKM_gKuXP1uwEQz_VqoWM_1781625325
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260616150554.1686662-1-kbusch@meta.com>
 
-Hi
+BLK_STS_INVAL indicates the I/O request itself was invalid (for example a
+misaligned direct I/O), not that the device has failed. dm-raid1 treated
+any read or write completion error as a device failure: it failed the
+mirror leg, retried on the alternatives - which fail identically - and
+eventually returned EIO while spuriously degrading the array.
 
+Since commit 5ff3f74e145a ("block: simplify direct io validity check") the
+direct I/O path no longer rejects misaligned buffers up front, so an
+invalid bio now reaches the lower block layers, which fail it with
+BLK_STS_INVAL. dm-io collapses the block status into a per-region error
+bit before invoking the completion callback, so record BLK_STS_INVAL on
+the originating bio and have the dm-raid1 read, write and end_io paths
+propagate it instead of failing the device.
 
-On Mon, 15 Jun 2026, Vjaceslavs Klimovs wrote:
+This mirrors the raid1/raid10 fix in commit f7b24c7b41f23
+("md/raid1,raid10: don't fail devices for invalid IO errors") for the
+device-mapper mirror target.
 
-> Hi Dave, all,
-> 
-> I'm one of the original reporters and very much a user, not a block/dm
-> developer, so please sanity-check all of this.
-> 
-> Your trace looks like what the two earlier reports hit: a read reaching
-> a leaf device with sectors > 0 but phys_seg 0 (an empty bio). One aside
-> that may help read the trace: blk_io_trace.error is a __u16, so the
-> bracketed values on your C lines are errnos as u16 (65514 = -EINVAL,
-> 65531 = -EIO).
-> 
-> The WARN itself is new, the bad bio isn't. bio_add_page() only started
-> rejecting len == 0 in 643893647cac ("block: reject zero length in
-> bio_add_page()", v7.1-rc1); on 7.0.8 the same empty bio tripped
-> scsi_alloc_sgtables()'s !nr_segs instead, which matches what you saw.
-> That fits your "not a recent regression": the condition is older, v7.1
-> just made it loud.
-> 
-> For Tomas's and my reports (QEMU O_DIRECT to the LV block device) the
-> origin looks like 5ff3f74e145a ("block: simplify direct io validity
-> check", v6.18): blkdev_dio_invalid() now checks only aggregate
-> ki_pos | count alignment and dropped the per-segment
-> bdev_iter_is_aligned() walk, so a degenerate or misaligned O_DIRECT no
-> longer gets -EINVAL at the fops boundary. But your reproducer reads a
-> file, which goes through the filesystem O_DIRECT path and never calls
-> blkdev_dio_invalid(), and still makes the empty bio. So it isn't only
-> that one entry point.
+Fixes: 7eac33186957 ("iomap: simplify direct io validity check")
+Fixes: 5ff3f74e145a ("block: simplify direct io validity check")
+Reported-by: Dr. David Alan Gilbert <linux@treblig.org>
+Reported-by: Vjaceslavs Klimovs <vklimovs@gmail.com>
+Signed-off-by: Keith Busch <kbusch@kernel.org>
+---
+Resending patch 2/2 from a different machine. For some reason, only 1/2
+is getting through with git-send-email, so manually replying to the
+thread with the missing second patch.
 
-I thought that reverting 5ff3f74e145a and re-introducing the alignment 
-check in block/fops.c:blkdev_dio_invalid would fix it - but it wouldn't.
+ drivers/md/dm-io.c    | 14 +++++++++++++-
+ drivers/md/dm-raid1.c | 28 +++++++++++++++++++++++++++-
+ 2 files changed, 40 insertions(+), 2 deletions(-)
 
-The same problem existed even before 5ff3f74e145a, with the pvmove 
-command.
+diff --git a/drivers/md/dm-io.c b/drivers/md/dm-io.c
+index 28adfeb58f240..f382e9f9be059 100644
+--- a/drivers/md/dm-io.c
++++ b/drivers/md/dm-io.c
+@@ -37,6 +37,7 @@ struct io {
+ 	struct dm_io_client *client;
+ 	io_notify_fn callback;
+ 	void *context;
++	struct bio *orig_bio;
+ 	void *vma_invalidate_address;
+ 	unsigned long vma_invalidate_size;
+ } __aligned(DM_IO_MAX_REGIONS);
+@@ -132,8 +133,18 @@ static void complete_io(struct io *io)
+ 
+ static void dec_count(struct io *io, unsigned int region, blk_status_t error)
+ {
+-	if (error)
++	if (error) {
+ 		set_bit(region, &io->error_bits);
++		/*
++		 * BLK_STS_INVAL means the bio was not valid for the underlying
++		 * device (e.g. a misaligned direct I/O), which is a caller error
++		 * rather than a device failure. Record it on the original bio so
++		 * bio-based targets can propagate it instead of treating it as a
++		 * media error and failing the device.
++		 */
++		if (error == BLK_STS_INVAL && io->orig_bio)
++			io->orig_bio->bi_status = error;
++	}
+ 
+ 	if (atomic_dec_and_test(&io->count))
+ 		complete_io(io);
+@@ -398,6 +409,7 @@ static void async_io(struct dm_io_client *client, unsigned int num_regions,
+ 	io->client = client;
+ 	io->callback = fn;
+ 	io->context = context;
++	io->orig_bio = dp->orig_bio;
+ 
+ 	io->vma_invalidate_address = dp->vma_invalidate_address;
+ 	io->vma_invalidate_size = dp->vma_invalidate_size;
+diff --git a/drivers/md/dm-raid1.c b/drivers/md/dm-raid1.c
+index de5c00704e69c..022ad791c2957 100644
+--- a/drivers/md/dm-raid1.c
++++ b/drivers/md/dm-raid1.c
+@@ -524,6 +524,17 @@ static void read_callback(unsigned long error, void *context)
+ 		return;
+ 	}
+ 
++	/*
++	 * BLK_STS_INVAL means the bio was not valid for the underlying device,
++	 * e.g. a misaligned direct I/O. That is a caller error, not a device
++	 * failure, so propagate it rather than failing the mirror and retrying
++	 * on the other legs, which would fail the same way.
++	 */
++	if (bio->bi_status == BLK_STS_INVAL) {
++		bio_endio(bio);
++		return;
++	}
++
+ 	fail_mirror(m, DM_RAID1_READ_ERROR);
+ 
+ 	if (likely(default_ok(m)) || mirror_available(m->ms, bio)) {
+@@ -622,6 +633,16 @@ static void write_callback(unsigned long error, void *context)
+ 		return;
+ 	}
+ 
++	/*
++	 * BLK_STS_INVAL means the bio was not valid for the underlying device,
++	 * e.g. a misaligned direct I/O. Propagate the error without degrading
++	 * the array.
++	 */
++	if (bio->bi_status == BLK_STS_INVAL) {
++		bio_endio(bio);
++		return;
++	}
++
+ 	/*
+ 	 * If the bio is discard, return an error, but do not
+ 	 * degrade the array.
+@@ -1262,7 +1283,12 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio,
+ 		return DM_ENDIO_DONE;
+ 	}
+ 
+-	if (*error == BLK_STS_NOTSUPP)
++	/*
++	 * BLK_STS_INVAL means the bio was not valid for the underlying device,
++	 * e.g. a misaligned direct I/O. Propagate it rather than failing the
++	 * mirror and retrying, which would fail the same way on every leg.
++	 */
++	if (*error == BLK_STS_NOTSUPP || *error == BLK_STS_INVAL)
+ 		goto out;
+ 
+ 	if (bio->bi_opf & REQ_RAHEAD)
+-- 
+2.52.0
 
-Suppose that the administrator needs to move a logical volume from one 
-disk to another and uses pvmove. Pvmove inserts a new dm-mirror target 
-underneath the logical volume and uses it to copy the data. Now, the 
-dm-mirror target crashes whenever it receives bio with unaligned vectors.
-
-So, I think that the proper way to fix this is to teach dm-mirror/dm-io to 
-deal with unaligned bio vectors and handle them properly.
-
-Mikulas
 
