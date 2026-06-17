@@ -1,88 +1,179 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBC6A47F2C0;
-	Wed, 17 Jun 2026 15:34:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BACA4963AF;
+	Wed, 17 Jun 2026 16:21:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781710451; cv=none; b=Vlehk7Gw2Mbjcs1dlfQbIuB9f1Ugw5/h5avrgs1ap9Q6zJR07PJwKmPUfGdPjZFiAb5N8zAXeceJ3NpdapTyQ302uk+at+SYvAECrxwFu8j7ZWNBqhtwDPWUtvPkItaYaczkZmu+C0/i/8kgLExgIPiM2baLvsW6ehDPXggntdE=
+	t=1781713295; cv=none; b=QdK4UaW11QXlcSM88MXXyrEmgi2LZmWz7ySGvucu44G8aMtmS/PoXZ6taWf6gveyFxhVJ3bFRK//U6ZPXJFzfPR/mlxIv1fLv0YRdF5p+Gvgt9ohy1Uegw6RO4e9selJZH7mR33JUK52Xw8sNFj9rWCFKnuKPkBxWQRwG4zUjDA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781710451; c=relaxed/simple;
-	bh=ldQlyF3iwZDHzqDz6i5JqXa6qEru3kHdRQKwkQUyNRo=;
+	s=arc-20240116; t=1781713295; c=relaxed/simple;
+	bh=aQLgDihblQHjOGt5WwFEyi+vbcGscKyL86qT6YH0dIE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=HJO6IlbK7tzl4FCN9OoG2q3KVQ17AJBjoSl07G1jx8FEfj66PzCEg94ZFFog+xvhkV09jK+K3JTVEzNVoKcwqIWQnTZnj3hhql18+Dtp1XS0018oK13jrYPIpNE9stijWZrTH04Lk6Jhal4JZy9ha0trUH21413RbIU5+z2tXlI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=pGG6rX+X; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	 Content-Type:Content-Disposition:In-Reply-To; b=YRUufv+H9329GT3RBYWl7JU4xcQW8vhMYwCJwoRZGafNsTJ1fw1ZjK+JzMF8G3fxNxWMHJsiGCXtw1jd+h+Hx53ydokjO8aGYk4aPJJkr6zkTaTRGQbz0P7lmSS1ATl4MjOyO+dQUfUEQ+maGW1q0Agp4Xz2gD332vVQsz5gEdI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Dxvvn9T2; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="pGG6rX+X"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=XZyXprz0zJow+g3vO4Ir15KoK2E7phHH/ANUzJJ3MqM=; b=pGG6rX+Xa92C8IaL
-	GGumvVURVUkhWeK15+gogjsJsf+5/GdWyMrCR9ITgof1kbwzBBI07kAiLp8OquA6DNDQxbmFTvIeR
-	ar2wjNmb4w3BzqO1Z36k+tIXwG7tFHfpMjcsqccVmOWdPEa/wG8lksS3MjduROzq3523DXfwivUI6
-	VhJtrjAH9fwjT3KKci/W5a1YIMYtPFOPC5vsb4fSKRzlYmr5MqyJht6hy0RCUpGSqxDCtbDcMedtH
-	NxRqxq9XmU/5VVQn0wUw8pg5e4ffrmiN+PFNYTViq7fhZOCGFTZsPgFTK9LffqSp/khiZoiBojOMI
-	yNdrvly2v6uMq8CUfA==;
-Received: from dg by mx.treblig.org with local (Exim 4.98.2)
-	(envelope-from <dg@treblig.org>)
-	id 1wZsH5-00000008LR7-1StE;
-	Wed, 17 Jun 2026 15:33:55 +0000
-Date: Wed, 17 Jun 2026 15:33:55 +0000
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
-To: Keith Busch <kbusch@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Dxvvn9T2"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 64B921F000E9;
+	Wed, 17 Jun 2026 16:21:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1781713290;
+	bh=hLu8faO/8oqmYLdvW3TsLnHt8kNeuLpZ1aR42WDeZ+Y=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=Dxvvn9T2uifmjeZ2pKvNo45mdsBsUX5NReSjO35fddwBFPAatrxSBwkXke8JgmvbP
+	 9p4JSNKN0Qm6cguk/OMsJdlzVbmzL6bUkwvRyQfhScasBWoOAlr1a+sju5K8Yn8LFM
+	 AE76L0R1bpIBxcVZ1+THn+AXZIbOCiNf8BxPGOwkteaopWdhXKayl5pqpcSB+GK/+M
+	 Eshx1AkIgH2J6fP8YROgntmVBYf9PaQJqzfuvm1UGTwzNPus6uZ/LgcXP7+unSdY/2
+	 AzTg0xl+xx0XOQhIHcPV02RUMk99NamVKY2GxgoN53KAzTzvatw7jIVxZDCNPTYhET
+	 9alBqQkWxhjow==
+Date: Wed, 17 Jun 2026 10:21:28 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: "Dr. David Alan Gilbert" <linux@treblig.org>
 Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
 	linux-block@vger.kernel.org, mpatocka@redhat.com,
 	Vjaceslavs Klimovs <vklimovs@gmail.com>
 Subject: Re: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O
  errors
-Message-ID: <ajK-Y7uoK0QT5PVl@gallifrey>
+Message-ID: <ajLJiOwim7qBp_0P@kbusch-mbp>
 References: <20260616150554.1686662-1-kbusch@meta.com>
  <20260616150554.1686662-2-kbusch@meta.com>
  <ajGN1OKun3qyvqMc@gallifrey>
  <ajGacnaCZ6v6VE1B@kbusch-mbp>
  <ajGtbuJ2kXo1GZ1d@gallifrey>
  <ajK4YacvP7eQ-S2o@kbusch-mbp>
+ <ajK-Y7uoK0QT5PVl@gallifrey>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ajK4YacvP7eQ-S2o@kbusch-mbp>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
-X-Uptime: 15:33:08 up 32 days, 18:45,  3 users,  load average: 0.00, 0.03,
- 0.00
-User-Agent: Mutt/2.2.13 (2024-03-09)
+In-Reply-To: <ajK-Y7uoK0QT5PVl@gallifrey>
 
-* Keith Busch (kbusch@kernel.org) wrote:
-> On Tue, Jun 16, 2026 at 08:09:18PM +0000, Dr. David Alan Gilbert wrote:
-> > root@dalek:/home/dg# lvcreate  --mirrors 1 -L 1G main /dev/sda2 /dev/sdb2
+On Wed, Jun 17, 2026 at 03:33:55PM +0000, Dr. David Alan Gilbert wrote:
+> * Keith Busch (kbusch@kernel.org) wrote:
+> > On Tue, Jun 16, 2026 at 08:09:18PM +0000, Dr. David Alan Gilbert wrote:
+> > > root@dalek:/home/dg# lvcreate  --mirrors 1 -L 1G main /dev/sda2 /dev/sdb2
+> > 
+> > So this is a subtle difference from your original report which ran
+> > lvcreate a little differently:
+> > 
+> >   # lvcreate --type mirror --mirrors 1 -L 1G main /dev/sda2 /dev/sdb2
+> > 
+> > This patch series address problems with the original report with the
+> > "--type mirror" parameter, which uses dm-raid1.c instead of md/raid1.c.
 > 
-> So this is a subtle difference from your original report which ran
-> lvcreate a little differently:
-> 
->   # lvcreate --type mirror --mirrors 1 -L 1G main /dev/sda2 /dev/sdb2
-> 
-> This patch series address problems with the original report with the
-> "--type mirror" parameter, which uses dm-raid1.c instead of md/raid1.c.
+> Ah OK.
+> (I think I think I did say that somewhere, hmm ajFK5NXkxd6jU5zu@gallifrey ? )
 
-Ah OK.
-(I think I think I did say that somewhere, hmm ajFK5NXkxd6jU5zu@gallifrey ? )
+I see. This will fix that setup:
 
-> Knowing that detail makes this a trivial matter to fix now, so I'll send
-> a separate patch for that. But this series should be good to go for the
-> original issue on the legacy dm mirror.
-
-Great!  Thanks again,
-
-Dave
-
--- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+---
+diff --git a/drivers/md/raid1.c b/drivers/md/raid1.c
+index 5b9368bd9e700..17a5f0d98aacc 100644
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -322,7 +322,9 @@ static void call_bio_endio(struct r1bio *r1_bio)
+ {
+ 	struct bio *bio = r1_bio->master_bio;
+ 
+-	if (!test_bit(R1BIO_Uptodate, &r1_bio->state))
++	if (test_bit(R1BIO_Invalid, &r1_bio->state))
++		bio->bi_status = BLK_STS_INVAL;
++	else if (!test_bit(R1BIO_Uptodate, &r1_bio->state))
+ 		bio->bi_status = BLK_STS_IOERR;
+ 
+ 	bio_endio(bio);
+@@ -403,6 +405,8 @@ static void raid1_end_read_request(struct bio *bio)
+ 		;
+ 	} else if (!raid1_should_handle_error(bio)) {
+ 		uptodate = 1;
++		if (bio->bi_status == BLK_STS_INVAL)
++			set_bit(R1BIO_Invalid, &r1_bio->state);
+ 	} else {
+ 		/* If all other devices have failed, we want to return
+ 		 * the error upwards rather than fail the last device.
+@@ -519,6 +523,14 @@ static void raid1_end_write_request(struct bio *bio)
+ 		 */
+ 		r1_bio->bios[mirror] = NULL;
+ 		to_put = bio;
++		/*
++		 * An invalid I/O (e.g. a misaligned bio rejected by the lower
++		 * device) was ignored above rather than faulting the device.
++		 * It is not a successful write, though, so report the error to
++		 * the caller instead of completing the master bio as uptodate.
++		 */
++		if (bio->bi_status == BLK_STS_INVAL)
++			set_bit(R1BIO_Invalid, &r1_bio->state);
+ 		/*
+ 		 * Do not set R1BIO_Uptodate if the current device is
+ 		 * rebuilding or Faulty. This is because we cannot use
+diff --git a/drivers/md/raid1.h b/drivers/md/raid1.h
+index c98d43a7ae993..21e837db5b25e 100644
+--- a/drivers/md/raid1.h
++++ b/drivers/md/raid1.h
+@@ -184,6 +184,12 @@ enum r1bio_state {
+ 	R1BIO_MadeGood,
+ 	R1BIO_WriteError,
+ 	R1BIO_FailFast,
++/* An invalid I/O (e.g. a bio rejected by the lower device because it does
++ * not meet that device's dma_alignment) is not a device failure.  Report
++ * the error to the caller without faulting the device or retrying, and do
++ * not complete a write as if it had succeeded.
++ */
++	R1BIO_Invalid,
+ };
+ 
+ static inline int sector_to_idx(sector_t sector)
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index cee5a253a281d..3cee9612be26d 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -323,7 +323,9 @@ static void raid_end_bio_io(struct r10bio *r10_bio)
+ 	struct r10conf *conf = r10_bio->mddev->private;
+ 
+ 	if (!test_and_set_bit(R10BIO_Returned, &r10_bio->state)) {
+-		if (!test_bit(R10BIO_Uptodate, &r10_bio->state))
++		if (test_bit(R10BIO_Invalid, &r10_bio->state))
++			bio->bi_status = BLK_STS_INVAL;
++		else if (!test_bit(R10BIO_Uptodate, &r10_bio->state))
+ 			bio->bi_status = BLK_STS_IOERR;
+ 		bio_endio(bio);
+ 	}
+@@ -403,6 +405,8 @@ static void raid10_end_read_request(struct bio *bio)
+ 		set_bit(R10BIO_Uptodate, &r10_bio->state);
+ 	} else if (!raid1_should_handle_error(bio)) {
+ 		uptodate = 1;
++		if (bio->bi_status == BLK_STS_INVAL)
++			set_bit(R10BIO_Invalid, &r10_bio->state);
+ 	} else {
+ 		/* If all other devices that store this block have
+ 		 * failed, we want to return the error upwards rather
+@@ -523,6 +527,8 @@ static void raid10_end_write_request(struct bio *bio)
+ 		 * before rdev->recovery_offset, but for simplicity we don't
+ 		 * check this here.
+ 		 */
++		if (bio->bi_status == BLK_STS_INVAL)
++			set_bit(R10BIO_Invalid, &r10_bio->state);
+ 		if (test_bit(In_sync, &rdev->flags) &&
+ 		    !test_bit(Faulty, &rdev->flags))
+ 			set_bit(R10BIO_Uptodate, &r10_bio->state);
+diff --git a/drivers/md/raid10.h b/drivers/md/raid10.h
+index ec79d87fb92f6..a1adad3acafe1 100644
+--- a/drivers/md/raid10.h
++++ b/drivers/md/raid10.h
+@@ -175,5 +175,11 @@ enum r10bio_state {
+ /* failfast devices did receive failfast requests. */
+ 	R10BIO_FailFast,
+ 	R10BIO_Discard,
++/* An invalid I/O (e.g. a bio rejected by the lower device because it does not
++ * meet that device's queue_limits) is not a device failure. Report the error
++ * to the caller without faulting the device or retrying, and do not complete a
++ * write as if it had succeeded.
++ */
++	R10BIO_Invalid,
+ };
+ #endif
+--
