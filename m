@@ -1,95 +1,91 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.2])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B27F53ADBAC;
-	Tue, 16 Jun 2026 23:47:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5AD662E7390
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jun 2026 02:11:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.2
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781653664; cv=none; b=HyNofBNU6rhgmyb5UCqa8Tw6XxBzOPeDmmL4KuSStt0BPDLsUsGXdJV5l7ZWes3y0FRuub97b74YVkdUlx+BI2b0Cp19Ys7fxTOm0CxavEP/iYtiukZ9KP7p0xxSf1vgYmnvNTPjqR3/T0k1/yshtE2FS7VqGVTJ1tywxAKi9WM=
+	t=1781662294; cv=none; b=kPipDaLh+o5FLURlOS/X6ZnU41atirkyvsyDFlhqqTPQ4SDNPs5UPauXOblDrJw7G3vO960nPXhDq0VSK8fQkcQbJzLAErSBW7IFSA58HCbSVYge4YMWpeUrhMpRB0Osbr8j1xYpuCXEdkW+8bkNIUsdOwJ+ToVk0wtl0XfeL6c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781653664; c=relaxed/simple;
-	bh=Ia37bVYtODG0iMuzwXEAyjJ7hpWmw5zvE84hvyjJdTQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=brb+wfG9EO0LHDG3j+DzEpjzbWeoNf+83gSeWyJHN2LSnV3kRqWEPginIiejVaOPcTskzDXn7rhrm+0d2i1bMC/ZxMz9D5lmTKOq25FQwAPH/4+f1nffwuIGFTeCpTTnlBZNS/cnLO378Wir4w/51bGpFMiJvUXEAGFFsksXCjc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=Mh4amz8s; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1781662294; c=relaxed/simple;
+	bh=EljJLluEGc0ho8fAeUApgB5OMbMmTVkm2t9KK5/bqsc=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=Mt3cTnBVZkc8NXXuRsWYwXLQrGDHAmeWGw7HbIMqOqoomL9TqIA0mMPUYupEnVYheBXSZhEUM9NQQjZNtanr36873hoNz+6kjs8g62tatg5Q4zxHlSlICfUUW/ycpySgBJQnL1bgvV+hEryh2ml71Aots4/ygt0/LJ+tulJ8b3E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com; spf=pass smtp.mailfrom=163.com; dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b=UV1GbdyP; arc=none smtp.client-ip=220.197.31.2
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="Mh4amz8s"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=uUqXq74JcCRG12Ys8DcDIO0suKKnJqu3XS3PIM0oyTk=; b=Mh4amz8svqS0VEgg
-	CoAV8P+tLZ/u09B0tqCDA5dylIDaMnotn2SAQ3Y9tTryhK04g7xinfPSa4NylQmRyDsaIiQcImPdk
-	UUlN5oXYIZkuDV3e7JtWAQvQ+tpDhE1eMjMAkq8NSr+2KJlWUBIOrBOW+UOMGC8YoX70L+fJPbGBL
-	0NhF3LfsfUDRXkfpSKLHoC8GUegsyc75xqFAt7lLrzpYSRHfFSw4kB70RZt0J0hC83hQUUrITMxqi
-	LNL4PjwdRkM6/P+DSFAVaSeMTGXLjv/MuJyShGndyhLqrHBjanNvEAJ6C+mZk88Qe4BOI7cxQf+hS
-	Kjddq5EPrOIGJjMWTg==;
-Received: from dg by mx.treblig.org with local (Exim 4.98.2)
-	(envelope-from <dg@treblig.org>)
-	id 1wZdVM-00000008A3o-0iao;
-	Tue, 16 Jun 2026 23:47:40 +0000
-Date: Tue, 16 Jun 2026 23:47:40 +0000
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
-To: Keith Busch <kbusch@kernel.org>
-Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, mpatocka@redhat.com,
-	Vjaceslavs Klimovs <vklimovs@gmail.com>
-Subject: Re: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O
- errors
-Message-ID: <ajHgnCh7mv-TYilH@gallifrey>
-References: <20260616150554.1686662-1-kbusch@meta.com>
- <20260616150554.1686662-2-kbusch@meta.com>
- <ajGN1OKun3qyvqMc@gallifrey>
- <ajGacnaCZ6v6VE1B@kbusch-mbp>
- <ajGtbuJ2kXo1GZ1d@gallifrey>
- <ajHgIWdT0QmeF_t4@kbusch-mbp>
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b="UV1GbdyP"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=r5
+	RDwkhjs4Y5rBiG7yrjf6iT6unRBSjoN7B9knkLfRQ=; b=UV1GbdyPTa3PbzD5+P
+	i5wvCh+gacP9brUVbAURYH0BPTmPS5le9hRnhYTOGkg93QquhwoNeZWCZlxdAnVm
+	R/BuOwpjUQNRFaLioEmDXLt0fJRN793hZ2Q1mtPcJ2WjNmCEM8KKhaBfnq3MNRho
+	ESyIuaeJOHXee+GVnqc7/Zwhc=
+Received: from localhost.localdomain (unknown [])
+	by gzga-smtp-mtada-g0-3 (Coremail) with SMTP id _____wDnL2k_AjJqcPsZEA--.54106S2;
+	Wed, 17 Jun 2026 10:11:11 +0800 (CST)
+From: ghuicao@163.com
+To: dm-devel@lists.linux.dev
+Cc: Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Joe Thornber <ejt@redhat.com>,
+	Cao Guanghui <caoguanghui@kylinos.cn>
+Subject: [PATCH] dm cache policy smq: fix promote level threshold clamp
+Date: Wed, 17 Jun 2026 10:11:09 +0800
+Message-Id: <20260617021109.31595-1-ghuicao@163.com>
+X-Mailer: git-send-email 2.25.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-In-Reply-To: <ajHgIWdT0QmeF_t4@kbusch-mbp>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
-X-Uptime: 23:46:18 up 32 days,  2:59,  2 users,  load average: 0.01, 0.05,
- 0.01
-User-Agent: Mutt/2.2.13 (2024-03-09)
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_____wDnL2k_AjJqcPsZEA--.54106S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW7ArW5ZF47AF4rCFW7uF1xZrb_yoW8CryfpF
+	W7Wr9Yyrn5XwnFq3ZxKa4UXF9Y93W7JayUuFWqkryUZ345XryUAr4Ikw4DJFyrtFnrXF43
+	ZFnIvFWak34DCF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07jO9NsUUUUU=
+X-CM-SenderInfo: 5jkxxuldr6il2tof0z/xtbC4AC3SmoyAkBPmwAA3T
 
-* Keith Busch (kbusch@kernel.org) wrote:
-> On Tue, Jun 16, 2026 at 08:09:18PM +0000, Dr. David Alan Gilbert wrote:
-> > Interesting; I've got your:
-> >   dm-raid1: don't fail the mirror for invalid I/O errors
-> >   For DM_IO_BIO requests, do_region() built each destination bio by walking..
-> > ontop of e21ee273e6fa3879aec9a27251cfce98156e07c4 which is just before 7.1
-> >   I've not your https://lore.kernel.org/linux-block/20260612223205.465913-1-kbusch@meta.com/
-> > 
-> > root@dalek:/home/dg# lvcreate  --mirrors 1 -L 1G main /dev/sda2 /dev/sdb2
-> > root@dalek:/home/dg# mkfs.ext4 /dev/mapper/main-lvol0
-> > root@dalek:/home/dg# mount /dev/mapper/main-lvol0 /mnt/tmp/
-> > root@dalek:/home/dg# chmod a+rwx /mnt/tmp
-> > 
-> > dg@dalek:~$ dd if=/dev/zero of=/mnt/tmp/testfile bs=1024k count=1
-> > 
-> > my two tests are separate tests:
-> 
-> Goodness, I'm struggling here. Unpatched, I have no problem recreating
-> the issues you've described, but everything I've tried with the
-> proposals included gets the expected results. I'm running out of ideas
-> on replicating your results with hardware I have, but it's getting late,
-> so I'll try to have new ideas tomorrow.
+From: Cao Guanghui <caoguanghui@kylinos.cn>
 
-OK, no problem - let me know if there's any useful diags I can gather;
-would blktrace or function tracing or something help?
+In update_promote_levels(), the threshold_level is clamped against
+NR_HOTSPOT_LEVELS (64) using max().  This is wrong: threshold_level is
+later subtracted from NR_HOTSPOT_LEVELS to derive the actual promote
+level, so a smaller threshold_level means a higher promote level (more
+eager promotion).
 
-Sleep tight!
+The comment above explicitly states that when the cache has unused
+entries, "we want to be really eager to promote".  default_promote_level()
+returns values in the range 1..8 for this case, which would produce a
+promote level of 56..63 -- but max(threshold_level, 64) forces
+threshold_level to 64, making the promote level 0 regardless of the
+allocator state and defeating the eager-promotion logic entirely.
 
-Dave
+Replace max() with min() so that threshold_level is properly capped at
+NR_HOTSPOT_LEVELS while still allowing small values to produce high
+promote levels as intended.
 
+Fixes: b29d4986d0da ("dm cache: significant rework to leverage dm-bio-prison-v2")
+Signed-off-by: Cao Guanghui <caoguanghui@kylinos.cn>
+---
+ drivers/md/dm-cache-policy-smq.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-cache-policy-smq.c b/drivers/md/dm-cache-policy-smq.c
+index dd77a93fd68d..b3e5f7a12345 100644
+--- a/drivers/md/dm-cache-policy-smq.c
++++ b/drivers/md/dm-cache-policy-smq.c
+@@ -1064,7 +1064,7 @@ static void update_promote_levels(struct smq_policy *mq)
+ 	unsigned int threshold_level = allocator_empty(&mq->cache_alloc) ?
+ 		default_promote_level(mq) : (NR_HOTSPOT_LEVELS / 2u);
+ 
+-	threshold_level = max(threshold_level, NR_HOTSPOT_LEVELS);
++	threshold_level = min(threshold_level, NR_HOTSPOT_LEVELS);
+ 
+ 	/*
+ 	 * If the hotspot queue is performing badly then we have little
 -- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+2.25.1
+
