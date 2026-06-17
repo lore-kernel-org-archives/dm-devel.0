@@ -1,88 +1,136 @@
-Received: from mx.treblig.org (mx.treblig.org [46.235.229.95])
+Received: from mx0a-00082601.pphosted.com (mx0a-00082601.pphosted.com [67.231.145.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E62BA480DEA;
-	Wed, 17 Jun 2026 16:59:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=46.235.229.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14A72249EB
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jun 2026 23:32:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=67.231.145.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781715567; cv=none; b=XNSOgCFgRQBWc5oI0GIORtk9PNN/jvvCae8OzZDq6oW/BCCJAp3RQclc6C2zNAuqukyzDQwg5D5h5ZaNfGsN0TC8mzyTXEU/JCBCfs5QzFnFX+aFuCVLHfMKlq4tjxTh6648QkhIVO/UHPMtaw169behyf4vx5Rw25OQNNk2joM=
+	t=1781739175; cv=none; b=XXGZPdU12ixHZvakC71ndcppXtlcQ7VhkUX8FviUdanURqoyAZv/bfog0h2EaAqDr5rTqDe6RmHog8CX0kle1SplxaXtT+bh5dvvPCqvLm3VTDKsLbsf0jRvIffevYWAYSEZvLHK+9lnChw9aHRN1UItsagIA0y8NOnKnWbnvZM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781715567; c=relaxed/simple;
-	bh=NbuAaDDHw4JXB9cwte3PF66X5gRlvufDEPtX0HM0MU8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Isv3h3EKu2x/GJ/h+zjtmBk9DsLK5ALajlmNiI2pRtb1+qBLhb5aUj8F3DXMOns7GgimAzPB0Ir+tREl24xas4NtbTDRewvfHJu4JVSVbq/kBE76BekQQ3zIpc1KYqVhyrP8WVKDlJIa3plLuau0LpZgUaHqPmdzbffR40nb5pM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org; spf=pass smtp.mailfrom=treblig.org; dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b=f7pvSjEa; arc=none smtp.client-ip=46.235.229.95
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=treblig.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=treblig.org
+	s=arc-20240116; t=1781739175; c=relaxed/simple;
+	bh=kS9xwUjLnldgYcHIEAQ18+QI4EbGJkRHWK84iFkq9sA=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=B46qTKbfA3JX6L4u/njxwGKGkZdjyWX8/pe5Nvz5gRAgcEDRThOYKdINwdtpXDP98B2oStwoKwmruWI7nYZDTaZ+K0osZYKgJwCrVBsHn3TRsCwUWwrBLRUJlubXm/2uf096emN+4ewJx0D46YomnIaqKTk0/LY/Uy5KssvgZiA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com; spf=pass smtp.mailfrom=meta.com; dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b=ZVZKxZ8N; arc=none smtp.client-ip=67.231.145.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=meta.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=treblig.org header.i=@treblig.org header.b="f7pvSjEa"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=treblig.org
-	; s=bytemarkmx; h=Content-Type:MIME-Version:Message-ID:Subject:From:Date:From
-	:Subject; bh=5QUO1R3XIQ42f1w+DFF1EqW19xtkhJt8M9PwyWeViF4=; b=f7pvSjEaEhtWcLCq
-	Cn08peLaC1IgQOuL6N00Xm2HvH8TrPPELpqvMAUOeiwjNqT3IVhBBl/cojI4rm4rqMCqs70hw5vxF
-	8dnhC6uaPjzY05+mdOyZADYWve+CrM1hA5U2MMTysqyK0Ruyb3X69kebCFJ4XojoDVbvF7a2vz/dK
-	jTevWjt+Sk3kXCWyZ6mop300/TKe096LB7rROk+/NpF74iggibc3IqVjTdQqONjFU8lwjxeqi/aSD
-	tjLF3TF/0fg/ue2h8GzAP6no5nrMqrCJQ7Vlj8pqNwJs0RdmRAEf1RbwDHW7WPr2qgk6OUHEixyjh
-	MM5T5v02tIxvjCWmCQ==;
-Received: from dg by mx.treblig.org with local (Exim 4.98.2)
-	(envelope-from <dg@treblig.org>)
-	id 1wZtbm-00000008MiJ-1kLp;
-	Wed, 17 Jun 2026 16:59:22 +0000
-Date: Wed, 17 Jun 2026 16:59:22 +0000
-From: "Dr. David Alan Gilbert" <linux@treblig.org>
-To: Keith Busch <kbusch@kernel.org>, regressions@leemhuis.info
-Cc: Keith Busch <kbusch@meta.com>, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, mpatocka@redhat.com,
-	Vjaceslavs Klimovs <vklimovs@gmail.com>
-Subject: Re: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O
- errors
-Message-ID: <ajLSaiKXWIekcA97@gallifrey>
-References: <20260616150554.1686662-1-kbusch@meta.com>
- <20260616150554.1686662-2-kbusch@meta.com>
- <ajGN1OKun3qyvqMc@gallifrey>
- <ajGacnaCZ6v6VE1B@kbusch-mbp>
- <ajGtbuJ2kXo1GZ1d@gallifrey>
- <ajK4YacvP7eQ-S2o@kbusch-mbp>
- <ajK-Y7uoK0QT5PVl@gallifrey>
- <ajLJiOwim7qBp_0P@kbusch-mbp>
- <ajLO80kZmFnyR2mH@gallifrey>
- <ajLRTkSZJ0WCYNk4@kbusch-mbp>
+	dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b="ZVZKxZ8N"
+Received: from pps.filterd (m0109334.ppops.net [127.0.0.1])
+	by mx0a-00082601.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 65HK0hqi830246
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jun 2026 16:32:53 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=meta.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=s2048-2025-q2; bh=EjPlW8pUvzxKAdHJAI
+	GBSE6xXQLodHaqRM8KkH/e/Zc=; b=ZVZKxZ8NOEcu/WBakF25kY6MyjK+dYzxLM
+	ZOYdS8ddNraSrQWS28WgUPVCBOIOOoqm24qUipi5QwZWI2D0n7BMgdQDs0avrfmK
+	k29uQTv2sUOk/XyT6D5bF7zzxnmCx6WmxCiYgMmEBuponyGJdeV5TUFEDSYqczNM
+	pdgw/NWwRNwB6K0/rJm/ZhjLly6Tct/z8c2NDikSIrppWi2wjbHjduRrJmIZntzV
+	usVo+0WnI+DxlQ69XP9P82FrzcEc8ZrvfR/BrXgNsUA2sFhREfFr0h8cXGWwlh2A
+	CnkWKdC7SEncH30lmj1qrPNMpz9nS72L7ikd5VYNtOUTofpLIxOA==
+Received: from mail.thefacebook.com ([163.114.134.16])
+	by mx0a-00082601.pphosted.com (PPS) with ESMTPS id 4euegcr6xu-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+	for <dm-devel@lists.linux.dev>; Wed, 17 Jun 2026 16:32:53 -0700 (PDT)
+Received: from twshared5319.01.snb2.facebook.com (2620:10d:c085:108::4) by
+ mail.thefacebook.com (2620:10d:c08b:78::c78f) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.2.2562.41; Wed, 17 Jun 2026 23:32:52 +0000
+Received: by devbig197.nha3.facebook.com (Postfix, from userid 544533)
+	id D98EB23517B59; Wed, 17 Jun 2026 16:32:35 -0700 (PDT)
+From: Keith Busch <kbusch@meta.com>
+To: <linux-block@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>
+CC: <dm-devel@lists.linux.dev>, <hch@lst.de>, <axboe@kernel.dk>,
+        <brauner@kernel.org>, <djwong@kernel.org>, <viro@zeniv.linux.org.uk>,
+        Keith
+ Busch <kbusch@kernel.org>
+Subject: [PATCH 0/1] direct-io: validate user space vectors during extraction
+Date: Wed, 17 Jun 2026 16:32:34 -0700
+Message-ID: <20260617233235.1016063-1-kbusch@meta.com>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-In-Reply-To: <ajLRTkSZJ0WCYNk4@kbusch-mbp>
-X-Chocolate: 70 percent or better cocoa solids preferably
-X-Operating-System: Linux/6.12.88+deb13-amd64 (x86_64)
-X-Uptime: 16:58:38 up 32 days, 20:11,  2 users,  load average: 0.07, 0.02,
- 0.00
-User-Agent: Mutt/2.2.13 (2024-03-09)
+Content-Transfer-Encoding: quoted-printable
+X-FB-Internal: Safe
+Content-Type: text/plain
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNjE3MDIyNSBTYWx0ZWRfX5q/k7FiId+r/
+ sZ0BwPs04uDcQ6VXBMwy7jxfpBvd3MYlUMzb5qA5i58JMJ010SusCuC3Nqev9zYHVKKY+bW3BdO
+ YNDfk5R0U669MMVEcshWfOdQ08EcoLTmDZ30FUWdscI/hlDT2xbNcE8hgO2Lgr1mydiOP6yojq9
+ iFL/JVsRvcE+qallOCTLoJSHDgt/MU+yRpwg8OOgmlPIolbsk9YXRS4NGERve4HoTvUeQB7HBwR
+ 6U0TYwEDya7KE0/SZqfjaLMuLQFojyz0/0VVcAFz5v6MCei4kARZ+vCi26LsgYchGvDGS0YwGyp
+ Q2vZ7UmYH43K/9Xz03iDqMj7foTt1bfr6F1saWsHP0xBSRDEZb4LWD94o9Ev4ZdaVtRTEhNES80
+ 5yfJSWiNbfd/Nc6Rxn+GxLWwi9gp2iwqEvu7gGZzL0741ipWukB1LZUbEsAs1SwWufpLWutsfBO
+ CL1BQVce+xeORc1Sq7Q==
+X-Proofpoint-Spam-Info: AW1haW4tMjYwNjE3MDIyNSBTYWx0ZWRfXz3cZ/td3Ipu3
+ RV4fYQRLTAIL4gbJNVElQRVJKt5Ay4PfVwyzRVMxuapie4iOwA2W33jbpgag/YQY82+4VGBkrfk
+ 5ghjgiP1XOKsR1AkEwmjoztZ2zK/WbU=
+X-Authority-Analysis: v=2.4 cv=WYE8rUhX c=1 sm=1 tr=0 ts=6a332ea5 cx=c_pps
+ a=CB4LiSf2rd0gKozIdrpkBw==:117 a=CB4LiSf2rd0gKozIdrpkBw==:17
+ a=FelO9ux0wxsA:10 a=VkNPw1HP01LnGYTKEx00:22 a=7x6HtfJdh03M6CCDgxCd:22
+ a=crHB47gyY4rKiduisYu9:22 a=VwQbUJbxAAAA:8 a=pGLkceISAAAA:8 a=VabnemYjAAAA:8
+ a=_iIL0Scklw7mknrBnAYA:9 a=gKebqoRLp9LExxC7YDUY:22
+X-Proofpoint-ORIG-GUID: D_NVEyw5se14MFzrd86_1AX7CUN_2Ye0
+X-Proofpoint-GUID: D_NVEyw5se14MFzrd86_1AX7CUN_2Ye0
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.125,FMLib:17.12.100.49
+ definitions=2026-06-17_02,2026-06-17_03,2025-10-01_01
 
-* Keith Busch (kbusch@kernel.org) wrote:
-> On Wed, Jun 17, 2026 at 04:44:35PM +0000, Dr. David Alan Gilbert wrote:
-> > (It's a bit scary you're having to go around quite
-> > a few places and make similar fixes; I assume there
-> > are others that do similar things).
-> 
-> Yes, I understand that. I'm looking into a common way to validate this.
-> The md raid doesn't have this problem because they always call
-> bio_split_to_limits() first, but that's not an optimal thing to do for
-> dm raid in the normal read/write path, so perhaps a common checker needs
-> to happen generically in the block layer. Yeah, I know I removed the
-> previous higher level validation ... I'll try find something less costly
-> than what we had before.
+From: Keith Busch <kbusch@kernel.org>
 
-OK, thanks again
-(and to Thomas for gluing my query to those other two which got this
-moving!)
+This addresses the misaligned direct-io problem behind various threads:
 
-Dave.
--- 
- -----Open up your eyes, open up your mind, open up your code -------   
-/ Dr. David Alan Gilbert    |       Running GNU/Linux       | Happy  \ 
-\        dave @ treblig.org |                               | In Hex /
- \ _________________________|_____ http://www.treblig.org   |_______/
+ https://lore.kernel.org/linux-xfs/20260610145218.141369-1-cem@kernel.org=
+/
+ https://lore.kernel.org/all/CAC_j7i1R7oy+nRhxEjCTba=3DDUgn02w9X+p94DCu0a=
+Hv5+5tKnQ@mail.gmail.com/
+ https://lore.kernel.org/linux-block/ai7rnH20IYeSmY8s@gallifrey/
+ https://lore.kernel.org/linux-block/20260616154009.2123183-1-kbusch@meta=
+.com/
+
+The various tested fixes are correct as far as they go, but they treat th=
+e
+symptom: they only matter because an invalid bio reaches those drivers in=
+ the
+first place.
+
+The reason it reaches them is an assumption I made when I removed
+direct-io alignment checks in 5ff3f74e145a ("block: simplify direct io
+validity check") and 7eac331869575 ("iomap: simplify direct io validity
+check"): every bio is eventually split to the device limits, and the
+upper layers cope with resulting errors once the bio has formed. Both
+were optimistic assumptions. Drivers with their own ->submit_bio may
+never pass through blk_mq_submit_bio()'s split, so the check never runs
+for them, and as numerous threads showed, the consumers don't uniformly
+handle this condition.
+
+This patch stops the invalid bio at the source instead. It validates the
+buffer's alignment against the alignment limits when the bio is built
+from the iov_iter. The check is folded into the bvec extraction that
+already walks the vectors, so it adds only a comparison on a path that
+is pinning direct-io pages anyway. Misalignment is now uniformly
+rejected with EINVAL before submission for every direct-io submission
+path.
+
+With this in place, the dm side changes under discussion are no longer
+required to fix the bugs: the affected targets simply never see the
+invalid bio. The tested patches remain reasonable as defense-in-depth if
+desired, but they are not strictly necessary after this.
+
+Keith Busch (1):
+  block: validate user space vectors during extraction
+
+ block/bio.c          | 19 ++++++++++++++++---
+ block/blk-map.c      |  2 +-
+ block/fops.c         |  3 ++-
+ fs/iomap/direct-io.c |  3 ++-
+ include/linux/bio.h  |  2 +-
+ include/linux/uio.h  |  3 ++-
+ lib/iov_iter.c       |  9 ++++++++-
+ 7 files changed, 32 insertions(+), 9 deletions(-)
+
+--=20
+2.52.0
+
