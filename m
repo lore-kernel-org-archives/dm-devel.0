@@ -1,135 +1,135 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98B3F244667
-	for <dm-devel@lists.linux.dev>; Thu, 18 Jun 2026 19:38:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8146244667
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jun 2026 19:39:54 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781811507; cv=none; b=jmO0Uyz1n0s+AC8isecYU+6l+COwAnTW+vsyl08ylxsgu2v2oH4HT7nQL8AS6cCSO1vjsjxpkI/Di1xAZPiCPPfAjb1XSqVkJHruy6FlKTRP14V4EhjPereSZ4nVJmulP69kqU1pqwGKxAv+hqPKFR9TCukBaapAFOhkhfzkvTw=
+	t=1781811596; cv=none; b=ax2yOFcfGAdLlxP3Qu2kGQwXInCFJQiTU9Sbx3PFN7jWqg6s3xm/VbXYmtUyLQ51qE7kqzRb8ri1MtdRyWJb5bnsDDsAYxhgDT8Eoh7INf6ncJeVBDFGIEz17QML5ZWFsqBD8STvxCq51yYErmdWEJQk6CfTHD0TAhACbHMyVn4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781811507; c=relaxed/simple;
-	bh=AXB+vd7q3QFtApjuwjNJ1C9pK/9ayqpcEsMsyT2bzVo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=rv54lpgWE7pTvnl3dZH//19FzSagRz1atAg+frTCMKDwD0c9djVJP5gWZmcvxICF6dqByXXwjpL5Vh/XUsIFR6kaVj0dWwuNmzZnudnER4pUh1xkxIxcqmAG7S9EAaz9tUqQkBq9y9jvH988rZ1ElLpBBtfDv+NL1gpAzoRZqno=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CeMw1+mA; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1781811596; c=relaxed/simple;
+	bh=ujuCkZxzNqeCHrd60AeokeH+DmBIJqLF506rIQTnrHg=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=n0bZNJ/i8tKaTQ8H08lrefBPgjE+eGR5KtjR3ZjqTk1kBPHsSWSD8cTQXDLdG5NmiaLJZnUWkp+DzqJSQOSfVXPMMHAIbdtuspHKjKO37Phhk+va/m6nGkxYwX4HjfN7XetDMKYQjidYzeh5KN/Yn8fumHkpnxObPNrsjH9yLxE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=EL4qyfep; arc=none smtp.client-ip=209.85.128.49
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CeMw1+mA"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1781811504;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=v4tU6EXgAyv7y3kQU85iL044CFSI/k5F6+KrX2jO5uU=;
-	b=CeMw1+mAByvd1sWDzz+UBXl1wiQ4bGWdLifLQIuy0swYfjbNZ0UI+XNa3zaD6BhCS67Yeh
-	pwv5Tf8yZPJBgvd6jd08kMlJ3sI39t2rh4subjW/j0mCvBvfoF8d0FjvgMOQNdXWzU7Bk3
-	jyJATWS8tLgheG040TgKNi0z2aVPOtw=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-232-dkm0OffCPG6yuv3lxSR4Mw-1; Thu,
- 18 Jun 2026 15:38:21 -0400
-X-MC-Unique: dkm0OffCPG6yuv3lxSR4Mw-1
-X-Mimecast-MFC-AGG-ID: dkm0OffCPG6yuv3lxSR4Mw_1781811500
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E60691955F78;
-	Thu, 18 Jun 2026 19:38:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 656E5195608D;
-	Thu, 18 Jun 2026 19:38:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65IJcIrB910228
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 18 Jun 2026 15:38:18 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65IJcGSn910227;
-	Thu, 18 Jun 2026 15:38:16 -0400
-Date: Thu, 18 Jun 2026 15:38:16 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Martin Wilck <mwilck@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: Re: [PATCH v3 5/8] multipath-tools: clarify path selector
- descriptions in multipath.conf.5
-Message-ID: <ajRJKF_oQ9ws3HeR@redhat.com>
-References: <20260618134521.16878-1-xose.vazquez@gmail.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="EL4qyfep"
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-491609cdd8fso7913715e9.2
+        for <dm-devel@lists.linux.dev>; Thu, 18 Jun 2026 12:39:54 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1781811593; x=1782416393; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
+         :date:message-id:reply-to;
+        bh=ujuCkZxzNqeCHrd60AeokeH+DmBIJqLF506rIQTnrHg=;
+        b=EL4qyfepI1odyiQgfyjKQVKwwe25ejgMcEaqCJ1XEsodYsVw+gxSjMOgkG1ncbj+pS
+         JyVRmak2fAMQKPONMxW8/MkRT4Jz126euDnN+0YIyiRniGKWuIdj/6b58eh9oKyrH1E+
+         iaWvmv+E3uwzm7BUbzUZv+FvxROi4ZyJyGfIDcHXWzqiCUObwvMosfWjL13dbox7T/M5
+         uWCPYgSPfaA8QwMIaE+JatUYsjfYkWTlfCbeEvFg+S7OkUXu6L4ueeZCzEPBFsePkxSt
+         UmibyPGitWgRMMJNbDT7yDpFTUppJroBBK8NWq71PT0drnK3Mkbn1ZoVO7G+NbdnfBu2
+         nPzA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1781811593; x=1782416393;
+        h=mime-version:user-agent:content-transfer-encoding:references
+         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=ujuCkZxzNqeCHrd60AeokeH+DmBIJqLF506rIQTnrHg=;
+        b=r8OuH994+uI03HMnC913epmVsBhaVlf+GNi7rBhmlHIwKjE41Ka4zCU3+7pcy/6zy9
+         Zigqk9/8aChfnKh3Yk1p0JuJyBD4whb/ZJEJTPmwciDlx0NexGWbwY7tm4gLqgfedWda
+         DTWEZW2HsVuxquK7Hxxq1VBjvznjsZXKF4NBVMn6gA+gd8WFGQcC+d8d0uDn8vpvIlGU
+         cbUXEwfDr1gqN37cfqhOpmL0wV7OATxBTr38Jx88sprxyNgfqIa1wT9HNWIdE3+qu7uw
+         QAj2umoM4lrBh8BA9P8WDB07RQknskdEGqakU5COWGDR46rtOe9R+M+R8hJSOFX+CAn8
+         sPkQ==
+X-Gm-Message-State: AOJu0YzoKP09uiD4G0tsJrnLQw0/Ozw/q/DA90lI3PnZ5g0lbimBpto/
+	QUi513ZROOnbpZKe4+hPh7RS7qLl6n2XMqJ6UR2PkZSXrkuv0otIIYwxCwYglrw/ubA=
+X-Gm-Gg: AfdE7ckIG729Enx7ISMO0wGwG7sbdh0HgT6jjdDRmaucfWKBzmBOLkItUsTS5fIuW/n
+	35K5v3T4S9DB8hfM33nxnEoAbHFaa7EgqCXsCcEMtATIra5XRRcEie7beNZXhD5UtqAZQ4FY5/1
+	83IcgUiYKTE+2NC/8RtYqFupZOVKCoLLkOb+v7aGabDTxdYPsrU8Ngo8TT4RMuMvAaOJitPtswJ
+	8B8/wFlbsyLLIcAwmfZ5f/9zYFEnVZaAbtqMKpfArZ1ocsppKwrLt5XO0k6HZcw59zlIYuK3R4U
+	yN8Q6gZE1rekbHFO5x7PgYCOVlQuemqcT2QEw51+5jAn9zDZMDUWlVf12h22h60Fzk4HvmjsrPm
+	KwWJm3j2C1TcpPAMmGmnDnOc0ntI91cZyaqHib7WyH1jA5raO2gTBWfjKS5qZdFPIoUSdo8F6XQ
+	FkZqOpyUfiWe7C0+78O1lmBvDd6T9dj6UFVu+/xfSa6ihf9EiuX9YWTQEathN4UXP2WD9nRuEUY
+	0SqcKiS9wpW5PfwLPZEM39kCaKFk0aH4788tL++R+OAekjY42I=
+X-Received: by 2002:a05:600c:2305:b0:492:2f59:4969 with SMTP id 5b1f17b1804b1-49240e5b469mr4770285e9.22.1781811593092;
+        Thu, 18 Jun 2026 12:39:53 -0700 (PDT)
+Received: from ?IPv6:2003:de:3746:1100:f390:c52e:1c24:9082? (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-46508a04692sm1415957f8f.6.2026.06.18.12.39.52
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 18 Jun 2026 12:39:52 -0700 (PDT)
+Message-ID: <afbc85cf75c12856c2a7348efc9102e4b04fb69e.camel@suse.com>
+Subject: Re: [PATCH v2 0/4] minio cleanup patches.
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, Xose Vazquez Perez
+	 <xose.vazquez@gmail.com>
+Date: Thu, 18 Jun 2026 21:39:52 +0200
+In-Reply-To: <20260615233611.804954-1-bmarzins@redhat.com>
+References: <20260615233611.804954-1-bmarzins@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20260618134521.16878-1-xose.vazquez@gmail.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: KPzwxF7bf17XOPJrTfkdBSjm0V2YcG5hspX4mnaoe_s_1781811500
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-On Thu, Jun 18, 2026 at 03:45:20PM +0200, Xose Vazquez Perez wrote:
-> Selectors operate on the next individual I/O request rather
-> than a "bunch" of I/O.
-> 
-> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> ---
-> v2: fix typo, s/group/groups (spotted by Martin)
-> v3: revert v2, "group" makes more sense. (spotted by Ben)
+On Mon, 2026-06-15 at 19:36 -0400, Benjamin Marzinski wrote:
+> This patchset is to deprecate the rr_weight, rr_min_io_rq, and
+> rr_min_io
+> multipath config options. It's a companion of the patchset to handle
+> their deprecation in the man pages.
+> https://lore.kernel.org/all/20260607103831.336833-2-xose.vazquez@gmail.co=
+m/
+>=20
+> It does not completely remove the minio setting code, since there are
+> ideas for reusing this in the future. The final patch is simply a
+> change
+> to avoid a kernel warning message that I hit while testing these
+> patches.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+With patch 1/4 goes our only way to set path-specific weights. But it
+wasn't functional anyway, so if we want to do anything of the kind
+again in the future, we'll have to re-implement it in a cleaner way
+than what we had until now.
 
-> 
->  multipath/multipath.conf.5.in | 12 +++++-------
->  1 file changed, 5 insertions(+), 7 deletions(-)
-> 
-> diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-> index 422ab120..5b730801 100644
-> --- a/multipath/multipath.conf.5.in
-> +++ b/multipath/multipath.conf.5.in
-> @@ -2,7 +2,7 @@
->  .\" Update the date below if you make any significant change.
->  .\" ----------------------------------------------------------------------------
->  .
-> -.TH MULTIPATH.CONF 5 2026-05-27 Linux
-> +.TH MULTIPATH.CONF 5 2026-06-13 Linux
->  .
->  .
->  .\" ----------------------------------------------------------------------------
-> @@ -193,20 +193,18 @@ kernel multipath target:
->  .RS
->  .TP
->  .I "round-robin 0"
-> -Choose the path for the next bunch of I/O by looping through every path in the
-> -path group, sending \fBthe same number of I/O requests\fR to each path.
-> -
-> +Choose the path for the next I/O request by \fBcycling through the path group\fR.
->  .TP
->  .I "queue-length 0"
-> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe lowest
-> +(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe lowest
->  number of outstanding in-flight I/O requests\fR to the path.
->  .TP
->  .I "service-time 0"
-> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe
-> +(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe
->  lowest total size (in bytes) of outstanding in-flight I/O requests\fR to the path.
->  .TP
->  .I "historical-service-time 0"
-> -(Since 5.8 kernel) Choose the path for the next bunch of I/O with \fBa dynamic
-> +(Since 5.8 kernel) Choose the path for the next I/O request with \fBa dynamic
->  algorithm based on the historical service time and the number of outstanding
->  in-flight I/O requests\fR to the path.
->  .TP
-> -- 
-> 2.54.0
+For the series:
+Reviewed-by: Martin Wilck <mwilck@suse.com>
 
+>=20
+> Changes in V2 (due to issues pointed out by Xose Vazquez Perez):
+> 0001: removed rr_weight_mode enum, default value, and
+> print_rr_weight()
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 function declaration
+> 0002: changed do_default() to mp_set_default()
+> 0003: Removed comment mentioning the DM target version check for
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 the minio source.
+>=20
+> Benjamin Marzinski (4):
+> =C2=A0 libmultipath: deprecate rr_weight, and make it do nothing
+> =C2=A0 libmultipath: deprecate rr_min_io_rq, and make it do nothing
+> =C2=A0 libmultipath: deprecate rr_min_io
+> =C2=A0 libmultipath: don't set hwhander for bio based devices
+>=20
+> =C2=A0libmultipath/config.c=C2=A0=C2=A0=C2=A0 |=C2=A0 6 ---
+> =C2=A0libmultipath/config.h=C2=A0=C2=A0=C2=A0 |=C2=A0 6 ---
+> =C2=A0libmultipath/configure.c |=C2=A0 1 -
+> =C2=A0libmultipath/defaults.h=C2=A0 |=C2=A0 3 +-
+> =C2=A0libmultipath/dict.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 90 +++++++-----=
+--------------------------
+> --
+> =C2=A0libmultipath/dict.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 1 -
+> =C2=A0libmultipath/dmparser.c=C2=A0 | 28 +------------
+> =C2=A0libmultipath/hwtable.c=C2=A0=C2=A0 |=C2=A0 3 --
+> =C2=A0libmultipath/propsel.c=C2=A0=C2=A0 | 54 ++++++------------------
+> =C2=A0libmultipath/propsel.h=C2=A0=C2=A0 |=C2=A0 1 -
+> =C2=A0libmultipath/structs.h=C2=A0=C2=A0 |=C2=A0 7 ----
+> =C2=A0tests/hwtable.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0 | 13 ++----
+> =C2=A0tests/test-lib.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
+=C2=A0 2 -
+> =C2=A013 files changed, 33 insertions(+), 182 deletions(-)
