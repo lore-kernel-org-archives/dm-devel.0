@@ -1,80 +1,135 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 468BD31E848;
-	Thu, 18 Jun 2026 13:51:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98B3F244667
+	for <dm-devel@lists.linux.dev>; Thu, 18 Jun 2026 19:38:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781790664; cv=none; b=J6II0eI1ZRRNvb2/8dZexRMaWp2JabJFgFWeh3wr5OA9TPQ31fCfj7riKjGPcey6Vfic/36Vks9VCTbUpmW/EZh2ZSyq5zcFnQm+f+CHk3vZpRQ31UiZ5u8IqrI601FJsO65WxH4Nijni8avxVDjKkv+rPWBAybJW8j+/pnfw40=
+	t=1781811507; cv=none; b=jmO0Uyz1n0s+AC8isecYU+6l+COwAnTW+vsyl08ylxsgu2v2oH4HT7nQL8AS6cCSO1vjsjxpkI/Di1xAZPiCPPfAjb1XSqVkJHruy6FlKTRP14V4EhjPereSZ4nVJmulP69kqU1pqwGKxAv+hqPKFR9TCukBaapAFOhkhfzkvTw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781790664; c=relaxed/simple;
-	bh=pKc6SS8uAML39Ppryw70MR5Sdxt0EKip0fAphJGYqkE=;
+	s=arc-20240116; t=1781811507; c=relaxed/simple;
+	bh=AXB+vd7q3QFtApjuwjNJ1C9pK/9ayqpcEsMsyT2bzVo=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=rA9yAEdkiJEWY+aZhGVJ4I3d2mvX3AbseZHKfiqjT0KBCs3yRhxfw0vO3oTSfej+AsGoZn/dHO5ubjFeFttJzR6qJb4DpK8MjZVsUUkFeYundUPRbsZx91YmzrxQ90/TS4rlIJ7pxjAVkCGBoeoA0uV+IYBaReUYT/FG7My9f5w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MMekl4mC; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:Content-Type:Content-Disposition; b=rv54lpgWE7pTvnl3dZH//19FzSagRz1atAg+frTCMKDwD0c9djVJP5gWZmcvxICF6dqByXXwjpL5Vh/XUsIFR6kaVj0dWwuNmzZnudnER4pUh1xkxIxcqmAG7S9EAaz9tUqQkBq9y9jvH988rZ1ElLpBBtfDv+NL1gpAzoRZqno=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CeMw1+mA; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MMekl4mC"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8BD321F000E9;
-	Thu, 18 Jun 2026 13:51:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1781790662;
-	bh=x2xVP5fN8sggM5zWCK8BYn27nm4LN3XasYt1gta5ioA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MMekl4mCDwd1ZP5MduDsQ+HPBE9bgxpj+rsYWwUijGYCTmCZtQF0JQaavtmjzw0zl
-	 hNYSYWMOTfDLD4g4ZTJ9+nxAbPqwtqtHUI9z0wUUtXW9ZiciaQLdZjchkCvwuOfmV6
-	 jcKl3h/bLQv7BV0awzjniuDU9EH++GtyV4vve4bRvZQMajZPM7DS/VwPGV5vzJchBp
-	 Dopsxzc0XLOdUH9uAWLEjP3ZyFfeSibd3IZCtd5lbCPUfo6xTTy9l8+yy5WVnqpT5+
-	 L0PXSfYa2nTYZqmhQmJjFz2B+EUFq7WLaeVEJBGgeka6kcbsZycRbTfozTSBzQPsXu
-	 l+6ZJC0YKwSXw==
-Date: Thu, 18 Jun 2026 07:51:01 -0600
-From: Keith Busch <kbusch@kernel.org>
-To: Christoph Hellwig <hch@lst.de>
-Cc: Keith Busch <kbusch@meta.com>, linux-block@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, dm-devel@lists.linux.dev,
-	axboe@kernel.dk, brauner@kernel.org, djwong@kernel.org,
-	viro@zeniv.linux.org.uk, stable@vger.kernel.org
-Subject: Re: [PATCH 1/1] block: validate user space vectors during extraction
-Message-ID: <ajP3xZOlaMVz3VUr@kbusch-mbp>
-References: <20260617233235.1016063-1-kbusch@meta.com>
- <20260617233235.1016063-2-kbusch@meta.com>
- <20260618102627.GA23200@lst.de>
- <ajPv7yOoYsR5O6kf@kbusch-mbp>
- <20260618134346.GA2752@lst.de>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CeMw1+mA"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1781811504;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=v4tU6EXgAyv7y3kQU85iL044CFSI/k5F6+KrX2jO5uU=;
+	b=CeMw1+mAByvd1sWDzz+UBXl1wiQ4bGWdLifLQIuy0swYfjbNZ0UI+XNa3zaD6BhCS67Yeh
+	pwv5Tf8yZPJBgvd6jd08kMlJ3sI39t2rh4subjW/j0mCvBvfoF8d0FjvgMOQNdXWzU7Bk3
+	jyJATWS8tLgheG040TgKNi0z2aVPOtw=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-232-dkm0OffCPG6yuv3lxSR4Mw-1; Thu,
+ 18 Jun 2026 15:38:21 -0400
+X-MC-Unique: dkm0OffCPG6yuv3lxSR4Mw-1
+X-Mimecast-MFC-AGG-ID: dkm0OffCPG6yuv3lxSR4Mw_1781811500
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E60691955F78;
+	Thu, 18 Jun 2026 19:38:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 656E5195608D;
+	Thu, 18 Jun 2026 19:38:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 65IJcIrB910228
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 18 Jun 2026 15:38:18 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 65IJcGSn910227;
+	Thu, 18 Jun 2026 15:38:16 -0400
+Date: Thu, 18 Jun 2026 15:38:16 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: Re: [PATCH v3 5/8] multipath-tools: clarify path selector
+ descriptions in multipath.conf.5
+Message-ID: <ajRJKF_oQ9ws3HeR@redhat.com>
+References: <20260618134521.16878-1-xose.vazquez@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <20260618134521.16878-1-xose.vazquez@gmail.com>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: KPzwxF7bf17XOPJrTfkdBSjm0V2YcG5hspX4mnaoe_s_1781811500
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20260618134346.GA2752@lst.de>
 
-On Thu, Jun 18, 2026 at 03:43:46PM +0200, Christoph Hellwig wrote:
-> On Thu, Jun 18, 2026 at 07:17:35AM -0600, Keith Busch wrote:
-> > > >  	if (iov_iter_is_bvec(iter)) {
-> > > >  		bio_iov_bvec_set(bio, iter);
-> > > > +
-> > > > +		if (mp_bvec_iter_offset(bio->bi_io_vec, bio->bi_iter) &
-> > > > +							vec_align_mask)
-> > > > +			return -EINVAL;
-> > > 
-> > > Can you add a comment here?  Especially as the bvec iter doesn't actually
-> > > require all individual bvecs to be aligned and I'm not entirely sure this
-> > > handles all case - writing down the rules might help a bit with that.
-> > 
-> > The rationale is that the only iter_bvec users come from io_uring
-> > registered buffers, which are virtually contiguous.
+On Thu, Jun 18, 2026 at 03:45:20PM +0200, Xose Vazquez Perez wrote:
+> Selectors operate on the next individual I/O request rather
+> than a "bunch" of I/O.
 > 
-> There's plenty of iov_iter_bdev users, and even without poking deep I
-> know that two directly passed on bvecs from block-layer generated bios to
-> the underlying file system's direct I/O code: loop and zloop.
+> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+> v2: fix typo, s/group/groups (spotted by Martin)
+> v3: revert v2, "group" makes more sense. (spotted by Ben)
 
-Oh, I meant only users that go through this direct-io path, but you're
-right, I was wrong about that too. The nvme target file backend can also
-get here in addition to what you pointed out.
- 
-> So we need rules on what can be passed, and preferably some way to
-> enforce that at least for debug builds.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Yeah.
+> 
+>  multipath/multipath.conf.5.in | 12 +++++-------
+>  1 file changed, 5 insertions(+), 7 deletions(-)
+> 
+> diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+> index 422ab120..5b730801 100644
+> --- a/multipath/multipath.conf.5.in
+> +++ b/multipath/multipath.conf.5.in
+> @@ -2,7 +2,7 @@
+>  .\" Update the date below if you make any significant change.
+>  .\" ----------------------------------------------------------------------------
+>  .
+> -.TH MULTIPATH.CONF 5 2026-05-27 Linux
+> +.TH MULTIPATH.CONF 5 2026-06-13 Linux
+>  .
+>  .
+>  .\" ----------------------------------------------------------------------------
+> @@ -193,20 +193,18 @@ kernel multipath target:
+>  .RS
+>  .TP
+>  .I "round-robin 0"
+> -Choose the path for the next bunch of I/O by looping through every path in the
+> -path group, sending \fBthe same number of I/O requests\fR to each path.
+> -
+> +Choose the path for the next I/O request by \fBcycling through the path group\fR.
+>  .TP
+>  .I "queue-length 0"
+> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe lowest
+> +(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe lowest
+>  number of outstanding in-flight I/O requests\fR to the path.
+>  .TP
+>  .I "service-time 0"
+> -(Since 2.6.31 kernel) Choose the path for the next bunch of I/O based on \fBthe
+> +(Since 2.6.31 kernel) Choose the path for the next I/O request based on \fBthe
+>  lowest total size (in bytes) of outstanding in-flight I/O requests\fR to the path.
+>  .TP
+>  .I "historical-service-time 0"
+> -(Since 5.8 kernel) Choose the path for the next bunch of I/O with \fBa dynamic
+> +(Since 5.8 kernel) Choose the path for the next I/O request with \fBa dynamic
+>  algorithm based on the historical service time and the number of outstanding
+>  in-flight I/O requests\fR to the path.
+>  .TP
+> -- 
+> 2.54.0
+
