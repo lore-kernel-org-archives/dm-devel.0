@@ -1,195 +1,90 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp.smtpout.orange.fr (smtp-70.smtpout.orange.fr [80.12.242.70])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 620193803F9;
-	Fri, 19 Jun 2026 11:44:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DAD518A92F
+	for <dm-devel@lists.linux.dev>; Sat, 20 Jun 2026 19:33:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.12.242.70
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781869496; cv=none; b=Pd2OrhDAj/QZJSL3Ya+PDpDEILsRr4YdUhc3H8BjPgecq/U5zUdzujnd+G5W/Uis7lantb/WaXPeFtVNR+LkciTCzU3le1LaNDZ426XkrbMdKJqspzLDxShXfjxJ5zvKcPMZ3ScgPFODUig0KBXjvYcYtdcUTZKZZRiC5LIdhOs=
+	t=1781983991; cv=none; b=slnzOIkOZQ0Rms7JbJyc2IxjDlR3XhaMwj7nlPqPPWwbflMejNFw9VidtKVmlIAAn7SmNbi4Ga47kEi4zF7gJrOGxQ8YchDLerLMVKeqf+mdteXfJcFWmrJPHJ9PUohaqO/nffYczV5MIOlak0FFtF7AMHjVtKtfB9/0zVHe4Ng=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781869496; c=relaxed/simple;
-	bh=OUrNH2lpKYlpZ5nYmfP6f2AjjS0i/SvSObfaTGrTbVs=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=PHC1Ojv/FQeuwZin6BZ0xqX2h50ZyhJgwJx3NMc81fIlnoj88uGb0+MOxbT7MvwS6U3zBnPNj75i5ao2vXreXI+jlVSOAkUFxdSD/BvGkOtMqvomdwAAy45ai8XPEetzMPW9VhTkGyYHVQIBi6xoo9vZEQ7+In9h0Yw+hUquAXE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KZjp9Cvd; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1781983991; c=relaxed/simple;
+	bh=wzgvTOJfuaj5S9B9flSBzpAtRCfBo/HRym41UEdWWaE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=cZaYR9tAvS81JvCKZXCbb6vNqACdN56/daW5Dk4clvTetDibjeIWmQvogfH6KBaq/Ntqz8YgwjCfYJyYrGs/mNYEZJ45XkKDTmHigevRBBxsrajy/VcouCG0MzFtK6XTFtppldocRhezAPYEwPE9rC7roxnqCUYj9Kgc3x95Emo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wanadoo.fr; spf=pass smtp.mailfrom=wanadoo.fr; dkim=pass (2048-bit key) header.d=wanadoo.fr header.i=@wanadoo.fr header.b=nNUSMIUF; arc=none smtp.client-ip=80.12.242.70
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wanadoo.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wanadoo.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KZjp9Cvd"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 41AC9C2BCF5;
-	Fri, 19 Jun 2026 11:44:56 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1781869496;
-	bh=OUrNH2lpKYlpZ5nYmfP6f2AjjS0i/SvSObfaTGrTbVs=;
-	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
-	b=KZjp9Cvd+tYj/rYcrXhKv3/eN70UNq+wku/UlaIpmi+Gd+7VP27U20ec7so95iwZE
-	 wVrSRBklcAEaSaC3gdcqRzq8LwZ0VGklogGJHqX3Gt52EuIcFBzMExDs8E/E3bTJFa
-	 heiGm1vSMn/D2dk+Q8PYITfDl5V0xJ+n8oJ/4K9zhYXYLltvdzFkeFNW/FLiLjOfia
-	 zI92z182WhN5fSX/PWDvZiZ1a7+0917sORROWUeBo8hG7V//C3Fs4dveratLi/uN2i
-	 Pm0znNRKoNHzQpALJKfWzywULob3xsT9sYK+fSP+1HmU2g8a+CdJD3w0MuoawxUcmZ
-	 PGqgXPXUyT/dg==
-Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3A535CD98F6;
-	Fri, 19 Jun 2026 11:44:56 +0000 (UTC)
-From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
-Date: Fri, 19 Jun 2026 06:44:57 -0500
-Subject: [PATCH 3/3] dm-pcache: validate kset key_num and intra-segment
- bounds
+	dkim=pass (2048-bit key) header.d=wanadoo.fr header.i=@wanadoo.fr header.b="nNUSMIUF"
+Received: from fedora.home ([IPv6:2a01:cb10:785:b00:8347:f260:7456:7662])
+	by smtp.orange.fr with ESMTPSA
+	id b1RCwPqLOPooTb1RDwwtW5; Sat, 20 Jun 2026 21:33:08 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=wanadoo.fr;
+	s=t20230301; t=1781983988;
+	bh=otIVsKHQILgMiNi6xzRj+CP8TEISa+XW8sPwAjZtq+Q=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version;
+	b=nNUSMIUFpcIJx1oaAamMX5HlPRTBlvz0BOBT8qcpXVX3QntjCfqIvrfMbKj/L8ckf
+	 RRaWzlMauq7PO8yNwq7fqd2Kmgs1PwvpFfvIPWtRzyQob9nXT9StDJKASFOg3cRJbX
+	 wlewdd4bPWwbOJPsqQTKDlBBTXkI9BXc172UoQCZcuolgMLtg7Bzp2vZjkdKsnIhhz
+	 Pvqwf2Lgo+aep8jOYXmz5Nv6u5KVbXunXxuFF4Yw+tMmS9GCzBo7ksa7yHxrya0ro8
+	 ZxzN5SzfpjH25TplQhdrfY2eo60LZPEw07KkAET6j7Jhz6p7f87B5466I17RfB+7O8
+	 BBReYd9vlZHZg==
+X-ME-Helo: fedora.home
+X-ME-Auth: Y2hyaXN0b3BoZS5qYWlsbGV0QHdhbmFkb28uZnI=
+X-ME-Date: Sat, 20 Jun 2026 21:33:08 +0200
+X-ME-IP: 2a01:cb10:785:b00:8347:f260:7456:7662
+From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
+	Eric Biggers <ebiggers@google.com>
+Cc: linux-kernel@vger.kernel.org,
+	kernel-janitors@vger.kernel.org,
+	Christophe JAILLET <christophe.jaillet@wanadoo.fr>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH] dm-inlinecrypt: Fix an error handling path in inlinecrypt_ctr()
+Date: Sat, 20 Jun 2026 21:33:03 +0200
+Message-ID: <2b6e6b71e66fbe90c75791669a9e16a36b48f7f6.1781983971.git.christophe.jaillet@wanadoo.fr>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20260619-b4-disp-997773a1-v1-3-14df8aedb323@proton.me>
-References: <20260619-b4-disp-997773a1-v1-0-14df8aedb323@proton.me>
-In-Reply-To: <20260619-b4-disp-997773a1-v1-0-14df8aedb323@proton.me>
-To: Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Mikulas Patocka <mpatocka@redhat.com>, 
- dm-devel@lists.linux.dev
-X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1781869494; l=5615;
- i=hexlabsecurity@proton.me; s=proton; h=from:subject:message-id;
- bh=A3BdP26I4fkfP3zVHBLiakVPHYgW4y6IPtWW9Ji+tj4=;
- b=xGadi54xO5DsnxeYtuSgZehWO4BAQ0vEweH7y39KaDkrPBaynUppNzpC5Uabu0/B/PZQOYaX5
- iBhSKF+bJNwAoeyQ2HKoDU8fa8vtud6y2DsXBWlwlBcS9N7LhMMy3Rc
-X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
- pk=dmppBMZNLLoPzxHi9l8tZDzEZUunPbgsYqIZYXeUrL0=
-X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/proton with
- auth_id=814
-X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
-Reply-To: hexlabsecurity@proton.me
+Content-Transfer-Encoding: 8bit
 
-From: Bryam Vargas <hexlabsecurity@proton.me>
+All error handling paths, except but this one, branch to the 'bad' label in
+the error handling path.
 
-Two more fields decoded from the cache device go unbounded. The kset
-key_num drives cache_kset_crc() and the replay loop in cache_replay(),
-the writeback worker and the GC worker, but only the magic and a
-fixed-seed CRC are checked first, so a non-last kset whose key_num exceeds
-the PCACHE_KSET_KEYS_MAX buffer reads past its end before the CRC compare.
-A key's intra-segment offset and length in cache_key_decode() are taken
-verbatim, so a key running past its segment is replayed into the cache
-tree and the data CRC check and every later read hit then copy adjacent
-persistent memory into the caller's bio -- an out-of-bounds read that
-leaks to user space. Both fields are controlled by whoever supplies the
-cache device (CAP_SYS_ADMIN); the CRC seed is public.
+If not done, there is a memory leak and some sensitive data may be kept
+around.
 
-Add kset_onmedia_valid() to bound key_num before any kset read, and
-reject a key whose offset plus length, computed in 64 bits, exceeds the
-segment data_size. Valid metadata is unaffected.
+So, fix this error path and also do the needed clean-up.
 
-Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-mapper")
-Cc: stable@vger.kernel.org
-Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
+Fixes: e7f57d2c47e2 ("dm-inlinecrypt: add target for inline block device encryption")
+Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
 ---
- drivers/md/dm-pcache/cache.h           | 21 +++++++++++++++++++++
- drivers/md/dm-pcache/cache_gc.c        |  8 ++++----
- drivers/md/dm-pcache/cache_key.c       | 10 +++++++++-
- drivers/md/dm-pcache/cache_writeback.c |  8 ++++----
- 4 files changed, 38 insertions(+), 9 deletions(-)
+Compile tested only
+---
+ drivers/md/dm-inlinecrypt.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
-index 653ceea43131..d470e457b23f 100644
---- a/drivers/md/dm-pcache/cache.h
-+++ b/drivers/md/dm-pcache/cache.h
-@@ -505,6 +505,27 @@ static inline u32 cache_key_data_crc(struct pcache_cache_key *key)
- 	return crc32c(PCACHE_CRC_SEED, data, key->len);
- }
- 
-+/**
-+ * kset_onmedia_valid - Validate a kset header read from the cache device.
-+ * @kset_onmedia: Pointer to the kset copied from on-media metadata.
-+ *
-+ * The magic and CRC are attacker-computable (fixed public seed). A non-last
-+ * kset stores key_num keys inline, and cache_kset_crc() and the replay loop
-+ * read struct_size(.., data, key_num) bytes from a buffer sized for
-+ * PCACHE_KSET_KEYS_MAX keys, so key_num must be bounded before any such use.
-+ */
-+static inline bool kset_onmedia_valid(struct pcache_cache_kset_onmedia *kset_onmedia)
-+{
-+	if (kset_onmedia->magic != PCACHE_KSET_MAGIC)
-+		return false;
-+
-+	if (!(kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) &&
-+	    kset_onmedia->key_num > PCACHE_KSET_KEYS_MAX)
-+		return false;
-+
-+	return true;
-+}
-+
- static inline u32 cache_kset_crc(struct pcache_cache_kset_onmedia *kset_onmedia)
- {
- 	u32 crc_size;
-diff --git a/drivers/md/dm-pcache/cache_gc.c b/drivers/md/dm-pcache/cache_gc.c
-index 02fa0ce03134..1ed513745023 100644
---- a/drivers/md/dm-pcache/cache_gc.c
-+++ b/drivers/md/dm-pcache/cache_gc.c
-@@ -44,11 +44,11 @@ static bool need_gc(struct pcache_cache *cache, struct pcache_cache_pos *dirty_t
- 		return false;
+diff --git a/drivers/md/dm-inlinecrypt.c b/drivers/md/dm-inlinecrypt.c
+index be1b4aa8f28b..bb4ded4757d1 100644
+--- a/drivers/md/dm-inlinecrypt.c
++++ b/drivers/md/dm-inlinecrypt.c
+@@ -347,7 +347,8 @@ static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	err = get_key_size(&argv[1]);
+ 	if (err < 0) {
+ 		ti->error = "Cannot parse key size";
+-		return -EINVAL;
++		err = -EINVAL;
++		goto bad;
  	}
+ 	ctx->key_size = err;
  
--	/* Check if kset_onmedia is corrupted */
--	if (kset_onmedia->magic != PCACHE_KSET_MAGIC) {
--		pcache_dev_debug(pcache, "gc error: magic is not as expected. key_tail: %u:%u magic: %llx, expected: %llx\n",
-+	/* Reject a corrupted or out-of-bounds kset before reading its keys */
-+	if (!kset_onmedia_valid(kset_onmedia)) {
-+		pcache_dev_debug(pcache, "gc error: invalid kset. key_tail: %u:%u magic: %llx, key_num: %u\n",
- 					key_tail->cache_seg->cache_seg_id, key_tail->seg_off,
--					kset_onmedia->magic, PCACHE_KSET_MAGIC);
-+					kset_onmedia->magic, kset_onmedia->key_num);
- 		return false;
- 	}
- 
-diff --git a/drivers/md/dm-pcache/cache_key.c b/drivers/md/dm-pcache/cache_key.c
-index 8eec5238c5da..f4459b2e1b3b 100644
---- a/drivers/md/dm-pcache/cache_key.c
-+++ b/drivers/md/dm-pcache/cache_key.c
-@@ -103,6 +103,14 @@ int cache_key_decode(struct pcache_cache *cache,
- 	key->cache_pos.cache_seg = &cache->segments[key_onmedia->cache_seg_id];
- 	key->cache_pos.seg_off = key_onmedia->cache_seg_off;
- 
-+	if ((u64)key->cache_pos.seg_off + key->len >
-+			key->cache_pos.cache_seg->segment.data_size) {
-+		pcache_dev_err(pcache, "key seg_off %u + len %u exceeds segment data size %u\n",
-+				key->cache_pos.seg_off, key->len,
-+				key->cache_pos.cache_seg->segment.data_size);
-+		return -EIO;
-+	}
-+
- 	key->seg_gen = key_onmedia->seg_gen;
- 	key->flags = key_onmedia->flags;
- 
-@@ -784,7 +792,7 @@ int cache_replay(struct pcache_cache *cache)
- 			goto out;
- 		}
- 
--		if (kset_onmedia->magic != PCACHE_KSET_MAGIC ||
-+		if (!kset_onmedia_valid(kset_onmedia) ||
- 				kset_onmedia->crc != cache_kset_crc(kset_onmedia)) {
- 			break;
- 		}
-diff --git a/drivers/md/dm-pcache/cache_writeback.c b/drivers/md/dm-pcache/cache_writeback.c
-index a104e6ee8aa8..f96657a1dc1a 100644
---- a/drivers/md/dm-pcache/cache_writeback.c
-+++ b/drivers/md/dm-pcache/cache_writeback.c
-@@ -55,11 +55,11 @@ static inline bool is_cache_clean(struct pcache_cache *cache, struct pcache_cach
- 		return true;
- 	}
- 
--	/* Check if the magic number matches the expected value */
--	if (kset_onmedia->magic != PCACHE_KSET_MAGIC) {
--		pcache_dev_debug(pcache, "dirty_tail: %u:%u magic: %llx, not expected: %llx\n",
-+	/* Reject a corrupted or out-of-bounds kset before reading its keys */
-+	if (!kset_onmedia_valid(kset_onmedia)) {
-+		pcache_dev_debug(pcache, "dirty_tail: %u:%u invalid kset magic: %llx, key_num: %u\n",
- 				dirty_tail->cache_seg->cache_seg_id, dirty_tail->seg_off,
--				kset_onmedia->magic, PCACHE_KSET_MAGIC);
-+				kset_onmedia->magic, kset_onmedia->key_num);
- 		return true;
- 	}
- 
-
 -- 
-2.43.0
-
+2.54.0
 
