@@ -1,69 +1,109 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp.smtpout.orange.fr (smtp-22.smtpout.orange.fr [80.12.242.22])
+	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 210003597B;
-	Sat, 20 Jun 2026 21:27:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3CE34964F
+	for <dm-devel@lists.linux.dev>; Sun, 21 Jun 2026 05:50:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.12.242.22
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781990836; cv=none; b=UBDk8UFJPxuOB1KTW0hkWJzlZEfL51SIymtdodUQbRHkUIWZ6wy7Gb9LiTqmWDkJxGza+pDrCAHfW2vXZrDXCl8CDKzqt6AeDgESB+aJgJRfndZpAQkfqIc5Z7YxInvfQcvWFe9ujEuhS2yc46/r4UeoDFMA1pdJ7/ShS+5qJ80=
+	t=1782021013; cv=none; b=lyW6rg8M7XAbt+SwBM9kQua10pR95YV7huVNE6WnQoXpgTNS+t4LSwbJs6ZvhRwPgHCbhoCoGw+cZSO+gSqrFZ6MDXhuJmn+PhoUr3oq/A8KZYvoUZRZqk8n2VTjzd3XC3UGOgC9amqL1vkGKtBxp1hU9SUNp99k5zLPYITOLew=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781990836; c=relaxed/simple;
-	bh=k0tw37oTgoijHTzslreWs63br0mhdlz0v5QmW+TMebY=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=VchLMmtW7weY208tKwMzyG35FJMxX/XOwN89TV4aZpApTv6S2dp4E0pw5AHuD7MJ8vQg7/oo4BrNXqe5y02S8jrfTYdEYzGk8HfIoI7of0vg3rVSKGk6536cpKaKPpTwN0V3fj35NLUo+tZzhbSO+b6kRSla3HkHAsik1j5mkn0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=PckG8UW1; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1782021013; c=relaxed/simple;
+	bh=ESDmob5IHwgRagGfP88IZLFQ4Lb1M13h98VMBxSsOgk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=BcQYDjlriz53IP3kndl6B23QvBRHOiSFPHB4Bg2PN1vjXTXtenLNcNw2Zbs5XJo/tb2HYfYTY5W6HSxLgAhiiHRTAWucmH05aJ0ilUrY6vFakySxlUlXgiEZAtr68xQhp7TkQaE7ZcojOvhLnmRsMkIonY+aAm/MuKJxkMdnYhw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wanadoo.fr; spf=pass smtp.mailfrom=wanadoo.fr; dkim=pass (2048-bit key) header.d=wanadoo.fr header.i=@wanadoo.fr header.b=muWP06bm; arc=none smtp.client-ip=80.12.242.22
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=wanadoo.fr
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wanadoo.fr
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="PckG8UW1"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 909F11F000E9;
-	Sat, 20 Jun 2026 21:27:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1781990834;
-	bh=Bn7btM6aPISE6eCFFmm7GJe6EfxA8Y9AFDm1aRvc878=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=PckG8UW1zOSLpkkKg4SX1eiVXGKOZ0i2waABbFmdLrljjWXIh0kK/C5OisoJ+JHSN
-	 iFIXsTQPKT2FZ/nlNsNSISYdNuQS8Gh4bwL+Epo38UDB8yO83fBo6vBErqlwGfU/6i
-	 Sq5vzuVLHr01mQ6PvthdY2aPaxfTFhqqxnJ9WvOvMvuGs5wTTKRWHg6kBi0YUIHRcA
-	 TWGFmNs/TPgyiP88UUa/QnMOAOEmrYYzoqRFYK+iw1mPIfbRZGkYZj9ExuB5PDYzmK
-	 hR26fLeXSlfvoPnbT3cZO2NawlE40uBbAnFKnfiOsYlIFIhxa95f12v9FS1Tti+epj
-	 UxSkIfinaDfIg==
-Date: Sat, 20 Jun 2026 14:27:13 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Linlin Zhang <linlin.zhang@oss.qualcomm.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Milan Broz <gmazyland@gmail.com>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	dkim=pass (2048-bit key) header.d=wanadoo.fr header.i=@wanadoo.fr header.b="muWP06bm"
+Received: from fedora.home ([10.64.95.101])
+	by smtp.orange.fr with ESMTP
+	id bB4Iwa1fiax7WbB4IwHVlE; Sun, 21 Jun 2026 07:50:06 +0200
+Received: from fedora.home ([IPv6:2a01:cb10:785:b00:8347:f260:7456:7662])
+	by smtp.orange.fr with ESMTPSA
+	id bB49wrc71HUYObB49wLXKq; Sun, 21 Jun 2026 07:49:58 +0200
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=wanadoo.fr;
+	s=t20230301; t=1782020998;
+	bh=YBaqYNu0FHmuVhQvCPfkjTuwNSTkz/7PU8BfjEhnDOI=;
+	h=From:To:Subject:Date:Message-ID:MIME-Version;
+	b=muWP06bmu31/zvox/WA4NM6BmkK9m6WRSPJI1DY+g/NI6B26+hg0gCQRL4bbGTkO7
+	 LOB/XsdAn/ZzkA7+aVmi95fWv5hOsZYDsazGYD5JT6Y2M7UA7ECSpdBoOVRBJsPU7K
+	 MWd79d4RMKw5OwrotDqBlUov9iwnZ89F5tV/5tmX6KMGe5wLZpPMz5JVWDAuiQy7pd
+	 aLM2qBhbVmfOJwJKB3TEYrQMxUD9j4soRW84vzXSQ14/Xrpt3K8Yk5oximQDj/vF/V
+	 RPG1+fBkU7S3KhALN46nk7JQuRL2jaByeLRE6vZR5YdFmTdTUQHd7Ewvyiyw8HB0Au
+	 B6d3Q7YMLYRHw==
+X-ME-Helo: fedora.home
+X-ME-Auth: Y2hyaXN0b3BoZS5qYWlsbGV0QHdhbmFkb28uZnI=
+X-ME-Date: Sun, 21 Jun 2026 07:49:58 +0200
+X-ME-IP: 2a01:cb10:785:b00:8347:f260:7456:7662
+From: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
-	Neeraj Soni <neeraj.soni@oss.qualcomm.com>,
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v3 1/1] dm-inlinecrypt: add support for hardware-wrapped
- keys
-Message-ID: <20260620212713.GB1702@quark>
-References: <20260525121348.1321282-1-linlin.zhang@oss.qualcomm.com>
- <20260525121348.1321282-2-linlin.zhang@oss.qualcomm.com>
+	Linlin Zhang <linlin.zhang@oss.qualcomm.com>,
+	Eric Biggers <ebiggers@google.com>
+Cc: linux-kernel@vger.kernel.org,
+	kernel-janitors@vger.kernel.org,
+	Christophe JAILLET <christophe.jaillet@wanadoo.fr>,
+	Eric Biggers <ebiggers@kernel.org>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH v2] dm-inlinecrypt: Fix some error handling paths in inlinecrypt_ctr()
+Date: Sun, 21 Jun 2026 07:49:46 +0200
+Message-ID: <714aaad163237e33157408c31c4b71796d20c133.1782020965.git.christophe.jaillet@wanadoo.fr>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260525121348.1321282-2-linlin.zhang@oss.qualcomm.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, May 25, 2026 at 05:13:48AM -0700, Linlin Zhang wrote:
-> @@ -502,8 +520,9 @@ static void inlinecrypt_status(struct dm_target *ti, status_type_t type,
->  		 * the returned table.  Userspace is responsible for redacting
->  		 * the key when needed.
->  		 */
-> -		DMEMIT("%s %*phN %llu %s %llu", ctx->cipher_string,
-> -		       ctx->key.size, ctx->key.bytes, ctx->iv_offset,
-> +		DMEMIT("%s %*phN %u %llu %s %llu", ctx->cipher_string,
-> +		       ctx->key.size, ctx->key.bytes,
-> +		       ctx->key_type, ctx->iv_offset,
->  		       ctx->dev->name, ctx->start);
+All error handling paths, except these ones, branch to the 'bad' label in
+the error handling path.
 
-I think you forgot to update this when adding support for keyring keys.
-The point of the keyring keys (to the extent they have a point at all)
-is that their contents can't be read back from userspace.  But this just
-returns the contents.  Take a look at how dm-crypt.c handles this.
+If not done, there is a memory leak and some sensitive data may be kept
+around.
 
-- Eric
+So, fix these error handling paths and also do the needed clean-up.
+
+Fixes: e7f57d2c47e2 ("dm-inlinecrypt: add target for inline block device encryption")
+Signed-off-by: Christophe JAILLET <christophe.jaillet@wanadoo.fr>
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+---
+Compile tested only
+
+Changes in v2:
+  - Fix another missing goto   [Eric Biggers]
+  - Add R-b tag (received privately)
+
+v1: https://lore.kernel.org/all/2b6e6b71e66fbe90c75791669a9e16a36b48f7f6.1781983971.git.christophe.jaillet@wanadoo.fr/
+---
+ drivers/md/dm-inlinecrypt.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-inlinecrypt.c b/drivers/md/dm-inlinecrypt.c
+index be1b4aa8f28b..41293c18d10f 100644
+--- a/drivers/md/dm-inlinecrypt.c
++++ b/drivers/md/dm-inlinecrypt.c
+@@ -347,7 +347,8 @@ static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	err = get_key_size(&argv[1]);
+ 	if (err < 0) {
+ 		ti->error = "Cannot parse key size";
+-		return -EINVAL;
++		err = -EINVAL;
++		goto bad;
+ 	}
+ 	ctx->key_size = err;
+ 
+@@ -398,6 +399,7 @@ static int inlinecrypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	if (ctx->iv_offset & ((ctx->sector_size >> SECTOR_SHIFT) - 1)) {
+ 		ti->error = "Wrong alignment of iv_offset sector";
+ 		err = -EINVAL;
++		goto bad;
+ 	}
+ 
+ 	ctx->max_dun = (ctx->iv_offset + ti->len - 1) >>
+-- 
+2.54.0
+
