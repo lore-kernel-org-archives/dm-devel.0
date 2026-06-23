@@ -1,32 +1,43 @@
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33B8A3D75C2
-	for <dm-devel@lists.linux.dev>; Tue, 23 Jun 2026 15:05:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D81C19992C;
+	Tue, 23 Jun 2026 15:05:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782227102; cv=none; b=cg3T2VzjBE4GBKNCzGYxBjkEvhRSwM4g2Cgc4hJVvfPB8kxgsqjY+gFKJhRQ6co6UL3igNDnC7qhcXncUbmxYxEwrjYQGNY8ydy7oJfcuIiZXt0J3UNZSFMDEKSe5K5MldmWna3p0hVVlj6Jd8w0D0APf233JyC1E5qwPaCe0ho=
+	t=1782227152; cv=none; b=Rmd3/IZL8lE3f7Qexcew3tM0k+0CBFNMPPhf026BKIXV8bHotP/L3enUIzsqNVrlb8lqCtAX97zmJ0tH1sPuvBjVDBd1wHnVbFi74Dy3SISQe0g27MrD92zCjl+zQ6ESErxeBOUQ79RDgmKkViTSouljNb2F/uydsLUnivx2o3I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782227102; c=relaxed/simple;
-	bh=LsR47Q5J0PpMSawQdmVblyxnAZHiFFAKrEwGD9KU4KQ=;
+	s=arc-20240116; t=1782227152; c=relaxed/simple;
+	bh=VQuT+qaaGG+gmpfflkoTVONZ0RJrU/ANKt33NLVpMqo=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=JiUe7rYkpKwTUU0zyxWzIBlm8WnqDr4PSTPZ5+2ahh/8iRUlrK+1/1met5lY9U3mkKfhkFpmlaYMcxGbxp8dgHw6OLWKRi2Hat2cQI25PqyxfJrrdRq/Qm1isvnKtqVmya5m+/99iDpzN/CIDINUMrqs5mZF0YPDGS/F5wWp42c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id E92C368C4E; Tue, 23 Jun 2026 17:04:57 +0200 (CEST)
-Date: Tue, 23 Jun 2026 17:04:57 +0200
-From: Christoph Hellwig <hch@lst.de>
-To: Keith Busch <kbusch@meta.com>
-Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	dm-devel@lists.linux.dev, hch@lst.de, axboe@kernel.dk,
-	brauner@kernel.org, djwong@kernel.org, viro@zeniv.linux.org.uk,
-	Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCHv2 4/6] loop: set dma_alignment from the backing file
- for direct I/O
-Message-ID: <20260623150457.GD13628@lst.de>
-References: <20260622174241.2299563-1-kbusch@meta.com> <20260622174241.2299563-5-kbusch@meta.com>
+	 Content-Type:Content-Disposition:In-Reply-To; b=i8j6dGYzTdUKVNg/lsl+dhw5ztnq4vEJymhFuz8W7rx01pErLGvkt9lUqH79K5o34K8iX85GSz/XgAtw9GVoaaH89RHCm3BkOmRX7Fdj5HZpxe/0M8PKqwD3sERLrgvJJreCmy2EpI2KbfVCaeFQmrmcEXRbwCU450bIKBeMCPg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=T1PnsGiC; arc=none smtp.client-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="T1PnsGiC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id AE2D51F000E9;
+	Tue, 23 Jun 2026 15:05:50 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1782227151;
+	bh=dmzV5CEtjPPx+gb5g9qrUntLOQbsNqzVXHPb5Ly3i7w=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=T1PnsGiCbNejDCfF7tb3R8tUM31DgMmvPDkvJXNVo8hxnAkzQM7eNHE6H7mzb6fvQ
+	 4Gr5JGZwmVDHl4LcKqcqasJQZHGOWN4mCW8OEqGa45geMntiDxUSUFuuDXf9DNWvL5
+	 eHkaIOa1/LaFU+8qaTYtQSuPyOWDaicGCB5OYQzA/P3KhVerTLqjFjTNcjjlNQ1Q1V
+	 Yy4/vlpiRzkiomAtVFEsCbMJoB7TmAvnftVDHsEYGpjGJS0cKZD5Tvpar9kjR2OqUd
+	 NJ3y9KzkPhtV/eltil/V/IlERABlQ3dxpvAPUizNE0qPElWFVcH954yGbSVy2vDOsy
+	 3YZy8k43qcIBw==
+Date: Tue, 23 Jun 2026 09:05:49 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: Christoph Hellwig <hch@lst.de>
+Cc: Keith Busch <kbusch@meta.com>, linux-block@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, dm-devel@lists.linux.dev,
+	axboe@kernel.dk, brauner@kernel.org, djwong@kernel.org,
+	viro@zeniv.linux.org.uk
+Subject: Re: [PATCHv2 1/6] block: introduce bio_endio_errno helper
+Message-ID: <ajqgzcEQm6BthFvx@kbusch-mbp>
+References: <20260622174241.2299563-1-kbusch@meta.com>
+ <20260622174241.2299563-2-kbusch@meta.com>
+ <20260623145431.GA13628@lst.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,43 +46,21 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20260622174241.2299563-5-kbusch@meta.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+In-Reply-To: <20260623145431.GA13628@lst.de>
 
-On Mon, Jun 22, 2026 at 10:42:39AM -0700, Keith Busch wrote:
->  	/*
-> -	 * Use the minimal dio alignment of the file system if provided.
-> +	 * Use the dio alignment of the file system if provided.  dio_offset_align
-> +	 * is the minimum dio size and offset; dio_mem_align is the buffer memory
-> +	 * alignment, kept as a mask to become the loop device's dma_alignment in
-> +	 * direct I/O mode where the buffer is handed to the backing file unchanged.
+On Tue, Jun 23, 2026 at 04:54:31PM +0200, Christoph Hellwig wrote:
+> On Mon, Jun 22, 2026 at 10:42:36AM -0700, Keith Busch wrote:
+> > From: Keith Busch <kbusch@kernel.org>
+> > 
+> > No functional change; purely introducing a convenience function.
+> 
+> I've been deeply into untangling the 1:1 BLK_STS_ mapping to errnos,
+> as propagating them up that way often causes more issues then it
+> solves.  So we can avoid it, I'd rather not add more helpers to
+> facility that (even if the helpers are just the messenger and not
+> the cause of the problem).
 
-A bunch of overly long lines here.
-
-> +	 * In direct I/O the user pages are handed to the backing file as-is, so
-> +	 * the backing's DMA alignment requirement applies to them.  Advertise it
-> +	 * so misaligned I/O is rejected at this device's entry instead of being
-> +	 * dispatched to the backend.  Buffered I/O copies through the page cache
-> +	 * and imposes no such requirement.
-> +	 */
-
-More line spillover here.
-
-> +	if (lo->lo_flags & LO_FLAGS_DIRECT_IO)
-> +		lim->dma_alignment = lo->lo_dio_mem_align;
-> +	else
-> +		lim->dma_alignment = SECTOR_SIZE - 1;
-
-Despite the comment above this does enforce a SECTOR_SIZE dma
-alignment for buffered I/O.  Shouldn't this be our lowest supported
-value (or dword alignment to match real devices)?
-
-> +	lim = queue_limits_start_update(lo->lo_queue);
-> +	if (lo->lo_flags & LO_FLAGS_DIRECT_IO)
-> +		lim.dma_alignment = lo->lo_dio_mem_align;
-> +	else
-> +		lim.dma_alignment = SECTOR_SIZE - 1;
-
-Should this and the above copy of this assignment be factored into a
-helper?
-
+Sure, that's fine. I'm not sure what you have in mind for untangling the
+errno:blk_status_t mappings, but I can certainly have the new users this
+series introduces open code it like the existing users if that's
+alright.
