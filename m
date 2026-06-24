@@ -1,160 +1,152 @@
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-00082601.pphosted.com (mx0b-00082601.pphosted.com [67.231.153.30])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26EC03D8101
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 14:52:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.47
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A045A3C5856
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 17:09:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=67.231.153.30
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782312782; cv=none; b=bRWJPqD2y1g+/bsCp5Wjow9Ev+a8Yza4/uexATZmCU5vGO1/9VKpCaH5zOfdxd93YypL4TedrwdDdDbhmOFeK2P5R6HjKXcVN1E30cUS/gbzRvEi7a7v74PIfVAnaKkQfzSBzO7NlNrP0hAx3cH4ogu8iSXsHzmLYcrr4Hr4YJE=
+	t=1782320968; cv=none; b=IpbkiPMBeL9rwYlAvNuLlCTPlaM3Tw85gHGrq2h4ko43+6BoxIpzJ/xk+c5LQXT/CL06yDsy7prnCW/BNXs4JwfOoeuMlppqv+JkmKnxzbf+6UvuoesyCnFTjBzsy4IwuPyX+kOsc50DDBuctaQLlmAmqu0OaFwcKEhDPp8qgFA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782312782; c=relaxed/simple;
-	bh=fhVAs1PwPsfdnQ9Jjcy50CGNbeAplv8b8R0CwAfUEYE=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ZZnbDUIDElZIcc4QXm2zTi4Zjo1b8deBKikqRULIzYVFWOiktLdCz1OVERwe4VZY7X8D9NNY1ChaYuZq1ABdEhcD4TYMY0AMEln7G5G/BWRmhm0cimUMgSn55pOydYEAJfODMy5y01XhwoP80tkrUdXAzCoZfZPXFF8C+yS3m7M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=R4Rd5t0I; arc=none smtp.client-ip=209.85.128.47
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1782320968; c=relaxed/simple;
+	bh=YsUC64mgY+X0BIazTC9H5Uv03vlzG7pn10IYPSPd6ew=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=ihtrmP1fOIYxlZrxrAoPIhZ67rlgzm3eq1Kk6vTKZssDcQSvxHOkFkRbT4MniJrqfp4b+T3ZoNSbwCxId1RH1UHwfyhZn+lvvDq8pnadk1GxIPjtE/iL36Bge/YEcGqqlNAKAK3VgNgtRI8hMTlBuCknICvBWf15twKOwgSl5qQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com; spf=pass smtp.mailfrom=meta.com; dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b=U5TtPs1f; arc=none smtp.client-ip=67.231.153.30
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=meta.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="R4Rd5t0I"
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-490ac357c55so10198265e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 07:52:57 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782312776; x=1782917576; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=yBjOt8jVsqUKTnLTmqCowSfB7pi5Ax3g2yW+bcIaGZQ=;
-        b=R4Rd5t0IYyV3ntsnE5qJpwwA17W/Sy6QaGSKy96AV8bk3Y1S0XdGwWhKy1RmIzmgwv
-         //ak/+67gZJ4A3uR116eiLzfF0x+/+IRvPssN0FhSk9jxUTii51jVFkCfAhnS0jRjh7L
-         7WNdTWEKbA3+uSo8tnV96HkAkfDU2EfAidSuy8I6jajK9b5VkVcPL0ycuhLVpAovXw1+
-         tbjEXzzZbIgjNhePKwS/TkiurwSfTufXlPC09wk1DA+yE40S1TRmvYK4l6gmqEI8rocv
-         wWbHUi88ltECvPJWCJmgj7J/Kn7RZR8EAS280pxXTwNyT0/HT1ngYD+e20XhyVsqvZdG
-         i+5A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782312776; x=1782917576;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=yBjOt8jVsqUKTnLTmqCowSfB7pi5Ax3g2yW+bcIaGZQ=;
-        b=js5w4YdTF+kF85hQ1IU1gSDTl28VfwdnWhXRyGbFt5TQ3gWS18qwSYp4RqxAKWFEON
-         RcKs4ObSTi6/DMZkGTwCL4EjJ3iOPpVMkRnVWnrykI4qqUQoDdYnlXLn32WvRJqYgtCB
-         38BYj0Fbf1n3qbVtvfcOoNAi/eNXrKJ1j6dn+zb1J7JCcgHqPVmsKljjITWRKWTHvF7H
-         t4Ipwg85Xd4m3kDlVWTST/6mY/fGQr1wy5WEQrnJmyIQQpR5KT+VD/6uwvfgamBM4jwD
-         FIPaa1nfke10071tlze8V01J7C9iaFML33Xwa74dOaJuNriCSPklI6Mxlvx/l//bqrOt
-         FjwQ==
-X-Forwarded-Encrypted: i=1; AFNElJ8BtiTW5PAnf7u6cfxpJT9U3/DGYPuYdJm01Z095enI9E5J4bdRjpteH8DDU0qiFaVtIrZD1/tEQQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YynEavjvBnm13Ry24bKSrnq59hMxlC+lBU+Zv6ZlEMeOQQQKrq9
-	Diq1mmSK8qot5vOnTWti2WYaRjFP4nau7Qwa0ufsLaaLS0/bvJ0bCb7V
-X-Gm-Gg: AfdE7ck4hM4sQwD0/Xx2Pic2BsPlyCpEB1PzYec+LEn0FYbxCdu46le/d5AQIk8+Sxw
-	Xlsy+QHPM3SRM+rAwUhJXfZdhiL0yM5GoeCi7H9N3We+ow3gSOgV0uo5TFlL3myVpgmbLRDIASA
-	AVJF9CughpIS3UHyQ8jeGpcFV8GDlfZYALdNa80kQpqlxM/zwXdNHJ4uGMdLQQOhD0klq+ysm5C
-	MN0eeGGfe6Qjdii9TDDzRnZwWodjZgVHtrusjreetIXnneGs/ACc6n4OYC1D9D/Ng28+9wWe8kw
-	PK28G6RNX9Pj2RA/lWxYnQQldktjNi+bTXorv3WiIaPJZ1n+N/gkbIoQerJ9u3thyQ1PE7SWVoV
-	X183jCCGvAV0O4L3JQg1RXrpT5xf3zmfoI0jVOrf8rlvpoKz792AyIyDz2iFb3QWDXQUh8fwcKx
-	zJn8ydaTUSxROyT9Gvv/FfBYGKCEOpdIyMHjnS0kh0ipMvcR702ACTlPvh72+BPE2PPp+yGyHl3
-	AavTOnY
-X-Received: by 2002:a05:600d:4448:20b0:492:2f59:4969 with SMTP id 5b1f17b1804b1-4926086c381mr45682085e9.22.1782312776193;
-        Wed, 24 Jun 2026 07:52:56 -0700 (PDT)
-Received: from snowdrop.snailnet.com (82-69-66-36.dsl.in-addr.zen.co.uk. [82.69.66.36])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4924923392dsm735988005e9.2.2026.06.24.07.52.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 24 Jun 2026 07:52:55 -0700 (PDT)
-From: David Laight <david.laight.linux@gmail.com>
-To: Mikulas Patocka <mpatocka@redhat.com>,
-	Tony Asleson <tasleson@redhat.com>,
-	"Bryn M . Reeves" <bmr@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Cc: David Laight <david.laight.linux@gmail.com>
-Subject: [PATCH 3/3] dm: lookup_ioctl(): Use designated array initialers
-Date: Wed, 24 Jun 2026 15:52:43 +0100
-Message-Id: <20260624145243.2736-4-david.laight.linux@gmail.com>
-X-Mailer: git-send-email 2.39.5
-In-Reply-To: <20260624145243.2736-1-david.laight.linux@gmail.com>
-References: <20260624145243.2736-1-david.laight.linux@gmail.com>
+	dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b="U5TtPs1f"
+Received: from pps.filterd (m0089730.ppops.net [127.0.0.1])
+	by m0089730.ppops.net (8.18.1.11/8.18.1.11) with ESMTP id 65OEm6JB4025440
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 10:09:24 -0700
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=meta.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=s2048-2025-q2; bh=cci0X1A16/hpB/b2Gp
+	G7XR6eiq29XFDPMVfzNFYBXN8=; b=U5TtPs1fx+fvz1Q9ey7xgiAvCJA0V+mVVy
+	dyD3nSxINY1UQVp29sU3F4V5KAFaMatndeLp9BU6DRQOpeG5qIAD7BVpP6jqtwzb
+	w7ILrdg78CpriaUQySVNaRNy4Uvks8uwWcpVqkGQjLZAVLJzktrBaZBcZUqcexu3
+	sWfi/ix8RF3F8DAd5rls02MHJSIP3i4Ip5fk+TEmx+xCGgkt+MgYc9vIbpWCdtKa
+	P0jkksSrqg2JUMWOJtm+luFH6+HIh2Vnq/hk+AIcGE6nlyq24AjcCqnMwduccI6U
+	B1dWMIc2L0a+oxu7xOp1j4HHCfHw5Xii5st8RyHrhUn9fHuEcu/A==
+Received: from maileast.thefacebook.com ([163.114.135.16])
+	by m0089730.ppops.net (PPS) with ESMTPS id 4eyudja2fk-11
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 10:09:23 -0700 (PDT)
+Received: from twshared6916.34.frc3.facebook.com (2620:10d:c0a8:1b::2d) by
+ mail.thefacebook.com (2620:10d:c0a9:6f::8fd4) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.2.2562.41; Wed, 24 Jun 2026 17:09:18 +0000
+Received: by devbig197.nha3.facebook.com (Postfix, from userid 544533)
+	id 0769723C452B7; Wed, 24 Jun 2026 10:09:08 -0700 (PDT)
+From: Keith Busch <kbusch@meta.com>
+To: <linux-block@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>
+CC: <dm-devel@lists.linux.dev>, <hch@lst.de>, <axboe@kernel.dk>,
+        <brauner@kernel.org>, <djwong@kernel.org>, <viro@zeniv.linux.org.uk>,
+        Keith
+ Busch <kbusch@kernel.org>
+Subject: [PATCH v3 0/5] block: validate direct I/O memory alignment
+Date: Wed, 24 Jun 2026 10:09:00 -0700
+Message-ID: <20260624170905.3972095-1-kbusch@meta.com>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
+X-FB-Internal: Safe
+Content-Type: text/plain
+X-Proofpoint-Spam-Info: AW1haW4tMjYwNjI0MDE0MyBTYWx0ZWRfX2o4NcSwQmU0X
+ 6VX32y3ldW9PuT/dP18+llC0oNPOx9ZGOEbN0EGUcw6LAgj+SiJCXtVhIvnSvTMLLbY9HiX3k+e
+ qxMJMFI8Anh5ymj9nJkcR6HcMVbKW6Q=
+X-Authority-Analysis: v=2.4 cv=K/8S2SWI c=1 sm=1 tr=0 ts=6a3c0f43 cx=c_pps
+ a=MfjaFnPeirRr97d5FC5oHw==:117 a=MfjaFnPeirRr97d5FC5oHw==:17
+ a=FelO9ux0wxsA:10 a=VkNPw1HP01LnGYTKEx00:22 a=7x6HtfJdh03M6CCDgxCd:22
+ a=855S8uPTkML1Oy45N9_h:22 a=VwQbUJbxAAAA:8 a=pGLkceISAAAA:8 a=VabnemYjAAAA:8
+ a=8TWUW5CQ5KP6iBCUMyMA:9 a=gKebqoRLp9LExxC7YDUY:22
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNjI0MDE0MyBTYWx0ZWRfX7FqEJ4kcFM4d
+ qT6SHPrAJPP3mIURGYQ16jlpX7ZrMldlMCo/bkxYhVbASqugQaT64xt6g26ZwFxcEPZu1AMQxLu
+ sub9K7pQFP3jk5pB9BiWemMoxqWAT6F57nDqi1AGXjhdS65wLxKJpV8Uo5yQAW76Y60bnQQquPj
+ APoRzHqW9FO5gDPd+h6qodsgZ0N/SgjpZBq2m7UkJjijsuVSbVPb61OYd/9XPbMTiUsUruogTLh
+ GXUGohxhLG3dmKH0LJtdbwdtC7hA0so0Etr5mFEoAo/OXWrpI805k8l4PtSKhjxyoDbP//+8oTv
+ rKcdzdv11QjyJ8uyqfn5TvFTBS/DqNXIKiUNuNOcXHg2oRlib4w2/Jj0qaffye7yIkQjzBNW6vN
+ E76KdQ6nPBoWQLuWU/tUsoznwN5jg8kJzndU+nwpH1o3UMMyt9NEUQdA+1/lLyApuKp1Tr+Q/9g
+ R6R6Rc02+2IidTiramQ==
+X-Proofpoint-ORIG-GUID: 8liMFVXip5HWDXKiZ_wFntvUfcTH382m
+X-Proofpoint-GUID: 8liMFVXip5HWDXKiZ_wFntvUfcTH382m
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.125,FMLib:17.12.100.49
+ definitions=2026-06-24_03,2026-06-24_01,2025-10-01_01
 
-Use designated initialisers for the _ioctls[] array and delete the
-unused field that contained the array index.
+From: Keith Busch <kbusch@kernel.org>
 
-Makes the code more robust against the order of the initialers.
-Any uninitialised entries would be processed corretly.
+This addresses the misaligned direct-io problem behind various threads:
 
-Signed-off-by: David Laight <david.laight.linux@gmail.com>
----
- drivers/md/dm-ioctl.c | 47 +++++++++++++++++++++----------------------
- 1 file changed, 23 insertions(+), 24 deletions(-)
+ https://lore.kernel.org/linux-xfs/20260610145218.141369-1-cem@kernel.org=
+/
+ https://lore.kernel.org/all/CAC_j7i1R7oy+nRhxEjCTba=3DDUgn02w9X+p94DCu0a=
+Hv5+5tKnQ@mail.gmail.com/
+ https://lore.kernel.org/linux-block/ai7rnH20IYeSmY8s@gallifrey/
+ https://lore.kernel.org/linux-block/20260616154009.2123183-1-kbusch@meta=
+.com/
 
-diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
-index 57cfbc12c0ce..2ba1eda1c9dd 100644
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1851,33 +1851,32 @@ static int target_message(struct file *filp, struct dm_ioctl *param, size_t para
- static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
- {
- 	static const struct {
--		int cmd;
- 		int flags;
- 		ioctl_fn fn;
- 	} _ioctls[] = {
--		{DM_VERSION_CMD, 0, NULL}, /* version is dealt with elsewhere */
--		{DM_REMOVE_ALL_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, remove_all},
--		{DM_LIST_DEVICES_CMD, 0, list_devices},
--
--		{DM_DEV_CREATE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_create},
--		{DM_DEV_REMOVE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_remove},
--		{DM_DEV_RENAME_CMD, IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_rename},
--		{DM_DEV_SUSPEND_CMD, IOCTL_FLAGS_NO_PARAMS, dev_suspend},
--		{DM_DEV_STATUS_CMD, IOCTL_FLAGS_NO_PARAMS, dev_status},
--		{DM_DEV_WAIT_CMD, 0, dev_wait},
--
--		{DM_TABLE_LOAD_CMD, 0, table_load},
--		{DM_TABLE_CLEAR_CMD, IOCTL_FLAGS_NO_PARAMS, table_clear},
--		{DM_TABLE_DEPS_CMD, 0, table_deps},
--		{DM_TABLE_STATUS_CMD, 0, table_status},
--
--		{DM_LIST_VERSIONS_CMD, 0, list_versions},
--
--		{DM_TARGET_MSG_CMD, 0, target_message},
--		{DM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometry},
--		{DM_DEV_ARM_POLL_CMD, IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
--		{DM_GET_TARGET_VERSION_CMD, 0, get_target_version},
--		{DM_MPATH_PROBE_PATHS_CMD, 0, NULL}, /* block device ioctl */
-+		[DM_VERSION_CMD] = {0, NULL}, /* version is dealt with elsewhere */
-+		[DM_REMOVE_ALL_CMD] = {IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, remove_all},
-+		[DM_LIST_DEVICES_CMD] = {0, list_devices},
-+
-+		[DM_DEV_CREATE_CMD] = {IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_create},
-+		[DM_DEV_REMOVE_CMD] = {IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_remove},
-+		[DM_DEV_RENAME_CMD] = {IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_rename},
-+		[DM_DEV_SUSPEND_CMD] = {IOCTL_FLAGS_NO_PARAMS, dev_suspend},
-+		[DM_DEV_STATUS_CMD] = {IOCTL_FLAGS_NO_PARAMS, dev_status},
-+		[DM_DEV_WAIT_CMD] = {0, dev_wait},
-+
-+		[DM_TABLE_LOAD_CMD] = {0, table_load},
-+		[DM_TABLE_CLEAR_CMD] = {IOCTL_FLAGS_NO_PARAMS, table_clear},
-+		[DM_TABLE_DEPS_CMD] = {0, table_deps},
-+		[DM_TABLE_STATUS_CMD] = {0, table_status},
-+
-+		[DM_LIST_VERSIONS_CMD] = {0, list_versions},
-+
-+		[DM_TARGET_MSG_CMD] = {0, target_message},
-+		[DM_DEV_SET_GEOMETRY_CMD] = {0, dev_set_geometry},
-+		[DM_DEV_ARM_POLL_CMD] = {IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
-+		[DM_GET_TARGET_VERSION_CMD] = {0, get_target_version},
-+		[DM_MPATH_PROBE_PATHS_CMD] = {0, NULL}, /* block device ioctl */
- 	};
- 
- 	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
--- 
-2.39.5
+The previously tested fixes are correct as far as they go, but they
+treat the symptom: they only matter because an invalid bio reaches those
+drivers in the first place.
+
+The reason it reaches them is an assumption I made when I removed
+direct-io alignment checks in 5ff3f74e145a ("block: simplify direct io
+validity check") and 7eac331869575 ("iomap: simplify direct io validity
+check"): every bio is eventually split to the device limits, and the
+upper layers cope with resulting errors once the bio has formed. Both
+were optimistic assumptions. Drivers with their own ->submit_bio may
+never pass through blk_mq_submit_bio()'s split, so the check never runs
+for them, and as numerous threads showed, the consumers don't uniformly
+handle this condition.
+
+This series stops the invalid bio at the source instead. It validates
+the buffer's alignment against the alignment limits when the bio is
+built from the iov_iter. The check is folded into the bvec extraction
+that already walks the vectors, so it adds only a comparison on a path
+that is pinning direct-io pages anyway. Misalignment is now uniformly
+rejected with EINVAL before submission for every direct-io path.
+
+v2->v3:
+
+- Dropped the bio_endio_errno helper and open-coded its two users.
+- Documented the ITER_BVEC alignment expectation in uio.h and reworded
+  the bvec check comment; the exhaustive per-segment validation stays
+  behind CONFIG_DEBUG_KERNEL as a contract assertion.
+- Reworked zloop_get_block_size() to mirror loop's structure.
+- loop/zloop only ever tighten dma_alignment beyond the default.  I
+  think these could use more relaxed alignments, but I'm just being
+  extra conservative against introducing new changes here.
+
+Previous version:
+
+  https://lore.kernel.org/linux-block/20260622174241.2299563-1-kbusch@met=
+a.com/
+
+Keith Busch (5):
+  block: use blkdev_iov_iter_get_pages status for errors
+  block: fix dio leak on metadata mapping error
+  loop: set dma_alignment from the backing file for direct I/O
+  zloop: set dma_alignment from the backing files for direct I/O
+  block: validate user space vectors during extraction
+
+ block/bio.c           | 56 ++++++++++++++++++++++++++++++++++++++++---
+ block/blk-map.c       |  2 +-
+ block/fops.c          | 10 ++++----
+ drivers/block/loop.c  | 46 ++++++++++++++++++++++++++++-------
+ drivers/block/zloop.c | 35 +++++++++++++++++++--------
+ fs/iomap/direct-io.c  |  1 +
+ include/linux/bio.h   |  2 +-
+ include/linux/uio.h   | 10 +++++++-
+ lib/iov_iter.c        |  9 ++++++-
+ 9 files changed, 142 insertions(+), 29 deletions(-)
+
+
+base-commit: 5c7804e3279c9bdc36e5eac743b4000633b25f65
+--=20
+2.53.0-Meta
 
