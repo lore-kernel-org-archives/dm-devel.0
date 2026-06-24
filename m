@@ -1,133 +1,103 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D6FF3BC69E
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 14:09:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C5AC3D8113
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 14:52:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782310172; cv=none; b=CIEEDyg1Yo82iqvl1nCL49HGO4/ST9Ybq8wF8d8kzkjgB3e0TspU0AtE0iCXx18L4h3oE8aSpNZoNzy7aHeN3+w3DgHiaWPtdBw/ISsB3pzOXwmcnZJ1CmLDO5hG7UbeM3o4qysfcA8174cu+vCJ9KL697jVs6CHtJYAN7GszhY=
+	t=1782312779; cv=none; b=VuL13WKnb5BWTl8FStYh0Ym9qtsCcn4/KvNB+Tqov5p0jygsrpdAZhPqDzt2b3qBTLEBmta3Tz5wZAELFDI/F/ObyLgsbnc65VM16l0A0PsHlgC9gWBesfspF8fPif7iKuYAygK9UBzhNhyY7u7538iQVBCuvRpa2fQELYp7HZg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782310172; c=relaxed/simple;
-	bh=kG1dwMWFtOgSlccobteQdW1Ywo1wd4rSv2JOi/6xkHw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=CSCwevrBRghAaPa4Fi5Wang+XZbKUuS0a84ZQPrkvDPlNYLmgSEJ4JI5LA1UfQZa10f6R+aZYEj8gAyCHe5BSuPnIoCl3E0IK8PPeplydo2sosj3wlXv3GWLbeuk4tmFbQd7ktwkzUHDNPW6lhWUQQYxQgTyxYPvAaHZY50g2a0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=AOuqGmjz; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1782312779; c=relaxed/simple;
+	bh=4lIX3CSL6mRT767GfKgX/lace7SyeilSaO/bkxEAQVI=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=k8wsBN2unkG2z8+x4AW0gyfqFAfpPVoLlewGNd0vGH2/NIatjRU1r8LUQbYl8TvQ+RyOKQC72uP8tFDJ1stxjccpOSzLPeFATWcTPWYra93MP/dvX1o3y38AJtfPZ02FF2hS53LAevcQkhmVOC9t7htqN58KwUbjgqtApTyADYU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=H/XwSVOR; arc=none smtp.client-ip=209.85.128.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="AOuqGmjz"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1782310170;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=adeBgv4+WoF5/d6WW26NU8U4h0fAlJZdxze8uJxO0Qw=;
-	b=AOuqGmjz6P1jNibKfQaBZfEJ1ZZ44Y6ohzLewV9JMwpBuUTXPUfl6CDixKguheSVnHyvgx
-	yQfxP5RRuZVAA43VUGyq76J0VlojmnEkJ23a2ZoAGqocRJWQiqiRtWCvT7gbLwC5oQSSUI
-	W3FPHfKMUOtFTWJXLoP4bgtUYVEGC5U=
-Received: from mail-lj1-f200.google.com (mail-lj1-f200.google.com
- [209.85.208.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-685-4B-TTyI2MYOkmI4euVlJJw-1; Wed, 24 Jun 2026 10:09:29 -0400
-X-MC-Unique: 4B-TTyI2MYOkmI4euVlJJw-1
-X-Mimecast-MFC-AGG-ID: 4B-TTyI2MYOkmI4euVlJJw_1782310167
-Received: by mail-lj1-f200.google.com with SMTP id 38308e7fff4ca-396d01a2ef2so4691381fa.2
-        for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 07:09:28 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="H/XwSVOR"
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-490b9318997so6037045e9.2
+        for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 07:52:56 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1782312775; x=1782917575; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Sjn0jQ9j2YHkpOLgMbWv9P0/Gc0C0JiUOMhD76WOjhs=;
+        b=H/XwSVOR3Tde8LDgbNEh2rs5tp+r5cr3XYtAFFvBT7wnY3uQ754ayGqy+nVIQRcdaQ
+         6NbUZczUvztHY+jd+pD2KGRVVkA16/DR+SNJmknvBmQ+1D9DVhrEId7ZrU614emzeMMf
+         bEbStFrKVrMYHnzLHPsxO2NfKXnCGPMO3PKmm/SF1E+YhGCH2GyW9M0Lg4eC7SCdl9zl
+         jnRAlL6p8zBWdTz3/hWxlClea+moiKzmlz7ox8t74zAcYymGIUmavgozrnOYjwfBAqPW
+         FNXpKMtWJ1yXev15LbkyqFg91SVuqqGSMeCAXxJ35CSBC87FQy+BqeOvAkdFZVppiBI2
+         scIA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782310167; x=1782914967;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=adeBgv4+WoF5/d6WW26NU8U4h0fAlJZdxze8uJxO0Qw=;
-        b=Mx1gYxgbpjVs5xvd0gc2pRywKBQCCtYw10vOu8lXqr4gkW5CN+EXMePhYLy2OymFA/
-         sWMt4Sf02sne6EUP1tZ9Iu0Eb6EMDU9bl6nPgHq5ZhQ6V2bdF0AOrCTB2FFUMm4hMB1j
-         0P2VpnSDfIn+z6tsYr8Qa7lm9wASiIw5/xCOayI9vdMtUkXNwoYWpP/kt366DBaFyNRi
-         Vf0q+s1nQxjeoJDw+85LkBebpzzXkImVnhwXDppymhcIhLbrx6PCmwaJO80aXzLQhAFz
-         e3UBeh+xYIdPdi+yQKpfyWSFz8gTqMg7MMI6f+HhGonHkA0Thf9ZCbByJgg+0uqszjAb
-         Mjng==
-X-Forwarded-Encrypted: i=1; AHgh+RpI75uYuoqMjKyY4K6JSMcl6Q//+MO8lLx/P9BY81Q/ileK3r+dE9v76aH1P1VSXsWvRmG6UiOHgw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwgFPa2vbX0Z4dthucH+jPVZb/1HUGf4YQKoG/zMeG0+49EtElH
-	Ocado8uWeHa71wsmQrTlXVbfgCCRGJYHOp7GR9qlFRRuyLwiLUZMoLqed+pJaeKyfpkA648dGMP
-	WVzTN+v4ibdFDYbOEcxzeVAR+gxwRiXoL/S5OWKETAGQEN1313m/+WhW7mq0R3GN2xNK/+jvKJA
-	rLrBM/DlcKFnoO7jC4vdMbm7clI7lzyVzijw==
-X-Gm-Gg: AfdE7cmwKU4NdiI1IcJhW+Ll0lZrOuShNOf9jsPV8xIcIQE7mEnbRVvbAhowXygq7X+
-	cFxNVoHa55A1W16Xmh+wxMlwNDT0+q+kFWWSZTW30CDGBXOh83GfiOfUB8quuxaggP2BtySbyZ/
-	+UYscWJ0tAG26CQj+k+WEea5hfL5KUyz5wNGF9J6iKj5H5Fl30OwJ0KTMmkhXesI56WA==
-X-Received: by 2002:a05:651c:b28:b0:399:77c3:dae with SMTP id 38308e7fff4ca-39aba2a5012mr9075991fa.17.1782310167362;
-        Wed, 24 Jun 2026 07:09:27 -0700 (PDT)
-X-Received: by 2002:a05:651c:b28:b0:399:77c3:dae with SMTP id
- 38308e7fff4ca-39aba2a5012mr9075861fa.17.1782310166885; Wed, 24 Jun 2026
- 07:09:26 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1782312775; x=1782917575;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Sjn0jQ9j2YHkpOLgMbWv9P0/Gc0C0JiUOMhD76WOjhs=;
+        b=pa8m8S+UHzZNdGXXi6tkndrZVGf/DyZh+KhmH+89RyXfhyurdK5clH/3gkMICZfY5x
+         rIyRdd6/mYujZG0FV7f33P0n/wKxcqPRGlXdivH//aZj8g4wVRMjly2dlOHcphNSatq9
+         sMd8zdvDyMvXKTgH3HG/c1/rSXs+EZfzsTcZe8ZNqC0fdZQAuz8TMYfqt6GfUUqXIWD5
+         6CRAI0r7wczyY+T/JFbFNrN+9YCcTRG4SeFwHTFyO5goLa7p2a9Qks5MDgxduJyJLJA5
+         PgLeOUnTlC1/Tyas0mSqIQm+GQakdeu2PteiXI269e7Qx43kSLzqKaeK9ojliqQud7n3
+         eHhg==
+X-Forwarded-Encrypted: i=1; AFNElJ8Ua9eSXrwTvj7lL66zL8qBsAD/gRdjO80+s4faEfw3iikvdAFhgqax8aF8KPJbBO4E7DR1j7Renw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyAvCsxI3XeNqGnDS7aq/99l+6cOwoa37rW8DjtqUai18UyFkYr
+	f0muMRRDwh+8GAN6eRfrCvsKEE2BvFpFAR631YLHkDzjcwRRnDODx6GN
+X-Gm-Gg: AfdE7cmaB9AUSrUCdmMFkUP1vwdVc9RmClMAg9CXFUtkTlHj/WRJzsT2USMk3dVTCiV
+	WhyVC8speB25JwVOfEMi2LQV36Idr10gN+GbHQ/udnZQjDVnukovXqJ3EmZ249Nw/AYURVNp61H
+	+MtTk7M+/kr9Ry48VBJlz3OPYGjYTeCT9PzDj1vVf+UciBtP1rWpUhPRv7LJTubLuymB5VjB9nY
+	hm25bDvR/pMv24B0ygF6ReTpIVSAsyD8oOTclM7Uq2PWHjTzA+XGUVf9wx6tNNYl2buhYBHzvdH
+	c7fKTJXOl3FOwXwkZ756GI8jIR4tNMc2lGALwMyGyGzlBz77k8FHpKjefg4X9/kmTDCPt0fevqY
+	cjLpRq8f0HPY9xZwOxPvQwtjPVUdLo4621Km/mH9X6nOel5HeWP5ke395F9IaKryZcJvUJW9a3I
+	xLvupcvZxL0aWDeZzH8zZ+MWB+0Vsh/Ws0sHIGCEk7TZol7mlnSgQDBJLUN7r9KzoVACzIBg==
+X-Received: by 2002:a05:600c:8506:b0:490:b724:5085 with SMTP id 5b1f17b1804b1-4926087f25amr51464735e9.33.1782312774479;
+        Wed, 24 Jun 2026 07:52:54 -0700 (PDT)
+Received: from snowdrop.snailnet.com (82-69-66-36.dsl.in-addr.zen.co.uk. [82.69.66.36])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4924923392dsm735988005e9.2.2026.06.24.07.52.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 24 Jun 2026 07:52:54 -0700 (PDT)
+From: David Laight <david.laight.linux@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+	Tony Asleson <tasleson@redhat.com>,
+	"Bryn M . Reeves" <bmr@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Cc: David Laight <david.laight.linux@gmail.com>
+Subject: [PATCH 0/3] dm: simplify list ioctls
+Date: Wed, 24 Jun 2026 15:52:40 +0100
+Message-Id: <20260624145243.2736-1-david.laight.linux@gmail.com>
+X-Mailer: git-send-email 2.39.5
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260617060053.71051-1-ghuicao@163.com> <20260617060053.71051-2-ghuicao@163.com>
-In-Reply-To: <20260617060053.71051-2-ghuicao@163.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Wed, 24 Jun 2026 22:09:14 +0800
-X-Gm-Features: AVVi8CfmiDfgfmtnh1QpMPxcSHoz17yQOAnjysnZg3BtiCVnmqMATzgOg4nFCdI
-Message-ID: <CALjSBEuq3vyMSZMYCoW0jRrOVfEa+rTk+-eX+8hSVBZho6RbYg@mail.gmail.com>
-Subject: Re: [PATCH 1/2] dm era: fix NULL pointer dereference in metadata_open()
-To: ghuicao@163.com
-Cc: Mike Snitzer <snitzer@kernel.org>, Alasdair Kergon <agk@redhat.com>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, Cao Guanghui <caoguanghui@kylinos.cn>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 8eov0ybDsl-j5sJMHRyl8d9afvx7G4qACgJK_OwzyBM_1782310167
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Wed, Jun 17, 2026 at 2:12=E2=80=AFPM <ghuicao@163.com> wrote:
->
-> From: Cao Guanghui <caoguanghui@kylinos.cn>
->
-> metadata_open() returns NULL when kzalloc_obj() fails, but the
-> caller era_ctr() only checks IS_ERR(md).  Since IS_ERR(NULL)
-> returns false, the NULL pointer is treated as a valid result
-> and later assigned to era->md, leading to a NULL pointer
-> dereference when the metadata is accessed.
->
-> Fix this by returning ERR_PTR(-ENOMEM) on allocation failure,
-> consistent with dm-cache-metadata.c, dm-thin-metadata.c, and
-> dm-clone-metadata.c which all use ERR_PTR(-ENOMEM) for the
-> same pattern.
->
-> Fixes: eec40579d848 ("dm: add era target")
-> Signed-off-by: Cao Guanghui <caoguanghui@kylinos.cn>
+Scanning for poossibly unbounded strlen() found the device/disk
+manager ioctls that do a double scan of the data to check whether
+the caller supplied buffer is large enough, and then to fill it.
 
-Thanks for the patch!
+If the buffer is too small the required size isn't returned.
 
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
+So simplify everything and make it all less likely to overrun
+the kernel buffer (copied back to user later) if anything changes
+between the scans.
 
-> ---
->  drivers/md/dm-era-target.c | 6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-> index 05285c04ff2c..08ce96e8cf4f 100644
-> --- a/drivers/md/dm-era-target.c
-> +++ b/drivers/md/dm-era-target.c
-> @@ -810,8 +810,10 @@ static struct era_metadata *metadata_open(struct blo=
-ck_device *bdev,
->         int r;
->         struct era_metadata *md =3D kzalloc_obj(*md);
->
-> -       if (!md)
-> -               return NULL;
-> +       if (!md) {
-> +               DMERR("could not allocate metadata struct");
-> +               return ERR_PTR(-ENOMEM);
-> +       }
->
->         md->bdev =3D bdev;
->         md->block_size =3D block_size;
-> --
-> 2.25.1
->
->
+I managed a minimal test that the ioctls still work.
+
+David Laight (3):
+  dm: __list_versions(): Only process targets once
+  dm: list_devices(): Only process devices once
+  dm: lookup_ioctl(): Use designated array initialers
+
+ drivers/md/dm-ioctl.c | 207 +++++++++++++++++++-----------------------
+ 1 file changed, 92 insertions(+), 115 deletions(-)
+
+-- 
+2.39.5
 
