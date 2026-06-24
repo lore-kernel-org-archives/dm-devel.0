@@ -1,110 +1,104 @@
-Received: from mx0b-00082601.pphosted.com (mx0b-00082601.pphosted.com [67.231.153.30])
+Received: from pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com [35.162.73.231])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C3423DD533
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 17:36:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=67.231.153.30
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E41783BBFBF
+	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 19:53:06 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=35.162.73.231
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782322603; cv=none; b=nBsqIzMRJ/PHoQVBdOc1zCA+sqFpVg/0KruzGXTcDG9D/0q+DZdSk5mG5Q6KXSsiMF5oMSofOflWueV8elD47UHTwCPNfjcs26UeAyVQGp86XQu/bbdzeG5DHHLN2TXll+sqe8GElWNgapu9DiVJmpwTYWaPB6W6YocK6sj6jn8=
+	t=1782330787; cv=none; b=KQavhEkRqcxxdbuB0chTc53sC1zriCKYEPKyLZU7R9KHo78QlOzkE9R09GrIIyzdi3fOk8bpsF9rwc2naMQl0o7Dl3bFnJQMZn/Q5Kh2mJFc+CgClN0rFFn8vIvPry0M899A1HoaQYC06Ylx61KjRsJdH5eifsQjq9kUfrVHkDo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782322603; c=relaxed/simple;
-	bh=md82v5nTc8XTnpQSe3fblUv/07h/vGTvQ6G3iw0BEx0=;
+	s=arc-20240116; t=1782330787; c=relaxed/simple;
+	bh=uGManwo2POKMO9mUH2vgxLmsUYYgJxBMxApUaz/JoN4=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=hm9CnFXp9qdVURLrWGMxEIPvyvVsxKPyMgrSMIUvKaDpm2ONs9WoLSwHNoSlg6XsiMET3JDihftV9OCJ5x0dxx17xzMZ/8vEvjirI/XXQ46AfnmMWuLZcvXSOv6KMoAtqT2L0Ukoq0yqWSmsQKVHxECx1Fh6yLYlPR8y1lhQdws=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com; spf=pass smtp.mailfrom=meta.com; dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b=cmyX4eQP; arc=none smtp.client-ip=67.231.153.30
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=meta.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=meta.com
+	 MIME-Version:Content-Type; b=Yqmf48A9bHjTTmb9Rv3w6YfOA6Y6eWBtsdrZW0RHbUEy32XQfL9JdbvvaiWKrcqdY6GE8QZt5sCimvHGYd+PBTVFw11u3Cuf1yE4/hvkiQclTONRa7/xzqpDXi8Sdi5Kv1KxqjtbxyVldzbLTuBqggqS/JOKgcA/jsqkMkydHnE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=nOICm2iu; arc=none smtp.client-ip=35.162.73.231
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=meta.com header.i=@meta.com header.b="cmyX4eQP"
-Received: from pps.filterd (m0148460.ppops.net [127.0.0.1])
-	by mx0a-00082601.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 65OEjKXR3972464
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 10:36:41 -0700
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=meta.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=s2048-2025-q2;
-	 bh=fGtIVAQu0NKnCIpvhzj3m60yyJwuBfFcp94oXfJymWE=; b=cmyX4eQP6ReH
-	NQ5SeMPvA61OfSTXZwHqzdXbU9saZR9+flSfdE/8pXeCnRxU+np/6FnDH0iW3F8z
-	3e6Pwsdcql8G2HzFxsBt0rcKU9fhbo36yojLhL9zrhsnZkR5CO67hjsu2VxfMC3E
-	o11sdbucdECxksIFyT3Lou4ZEEWZYqd8Jj7ywo+KhRsidhaoQqp83aj60QeTV58f
-	gVoFHDeeUSWgWmdn2UXgn2yetf3/I++Dc1P9on+OhVageGzCtcEKtMSQcf/yFh9p
-	HNDzlbpHE7W6QR0TZ39V56MVvldP5I9Fj7lO7MueO2db09gq7i+nlChaz7BPQ0K1
-	SE2dUkZRdg==
-Received: from maileast.thefacebook.com ([163.114.135.16])
-	by mx0a-00082601.pphosted.com (PPS) with ESMTPS id 4eyumst2sw-16
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT)
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 10:36:39 -0700 (PDT)
-Received: from twshared100448.16.frc2.facebook.com (2620:10d:c0a8:1b::2d) by
- mail.thefacebook.com (2620:10d:c0a9:6f::237c) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.2.2562.41; Wed, 24 Jun 2026 17:36:39 +0000
-Received: by devbig197.nha3.facebook.com (Postfix, from userid 544533)
-	id 0A15923C452B9; Wed, 24 Jun 2026 10:09:08 -0700 (PDT)
-From: Keith Busch <kbusch@meta.com>
-To: <linux-block@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>
-CC: <dm-devel@lists.linux.dev>, <hch@lst.de>, <axboe@kernel.dk>,
-        <brauner@kernel.org>, <djwong@kernel.org>, <viro@zeniv.linux.org.uk>,
-        Keith
- Busch <kbusch@kernel.org>
-Subject: [PATCH v3 1/5] block: use blkdev_iov_iter_get_pages status for errors
-Date: Wed, 24 Jun 2026 10:09:01 -0700
-Message-ID: <20260624170905.3972095-2-kbusch@meta.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260624170905.3972095-1-kbusch@meta.com>
-References: <20260624170905.3972095-1-kbusch@meta.com>
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="nOICm2iu"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1782330786; x=1813866786;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=9kzduUnU0W5KLUH8xRjByArbNZrNdOxKMBIECVRVqgo=;
+  b=nOICm2iuvF/7hBvOGRmdUEltZ79ODKCbDCM/qGUw+xaZGctieYbzpW+P
+   t//aMECdcpQ7YwpTTGXZJooLjhmvPnbmZY+6sXkDQ8WT0JV4318moojUY
+   Sh1ghJEaYS2z0raGJtgrnb6Br9JQejUAomOPJVrCEwd1O/y28gNkAgtNC
+   NedB4OQkrOMzLoifsNYCS8SYPAo+57Fz07SWWeZeQrbAX5IPpjI0dZ7Lm
+   rRRABkqKMK6cf8ndPdR3ovV4h8KmILmlNdc+6IQCPozw5XnVTfR7K2d7C
+   gZfsx9z6N5L5YX3wucb4y6XL4Fv9hk6Y3MIg8V4c/SSV3LAeXBDIqr5ZZ
+   g==;
+X-CSE-ConnectionGUID: T4dFEcxWRLmb1DhwaTaxaQ==
+X-CSE-MsgGUID: CrIjSsjgRWCy8HXfNV8Ngg==
+X-IronPort-AV: E=Sophos;i="6.24,223,1774310400"; 
+   d="scan'208";a="22234931"
+Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
+  by internal-pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Jun 2026 19:53:03 +0000
+Received: from EX19MTAUWC002.ant.amazon.com [205.251.233.111:4369]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.1.61:2525] with esmtp (Farcaster)
+ id 485ff261-6d1f-4c4d-9fd6-0a3f6bebcd59; Wed, 24 Jun 2026 19:53:03 +0000 (UTC)
+X-Farcaster-Flow-ID: 485ff261-6d1f-4c4d-9fd6-0a3f6bebcd59
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWC002.ant.amazon.com (10.250.64.143) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 24 Jun 2026 19:53:02 +0000
+Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 24 Jun 2026 19:53:01 +0000
+From: Leonid Ravich <lravich@amazon.com>
+To: Eric Biggers <ebiggers@kernel.org>, Herbert Xu
+	<herbert@gondor.apana.org.au>
+CC: Alasdair Kergon <agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, "Jens
+ Axboe" <axboe@kernel.dk>, <dm-devel@lists.linux.dev>,
+	<linux-block@vger.kernel.org>, <linux-crypto@vger.kernel.org>
+Subject: Re: [PATCH v4 0/3] crypto: skcipher - per-request multi-data-unit batching
+Date: Wed, 24 Jun 2026 19:52:55 +0000
+Message-ID: <20260624195255.1102-1-lravich@amazon.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20260622182328.GB1250822@google.com>
+References: <20260622182328.GB1250822@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-X-FB-Internal: Safe
+Content-Transfer-Encoding: 8bit
 Content-Type: text/plain
-X-Authority-Analysis: v=2.4 cv=eoTvCIpX c=1 sm=1 tr=0 ts=6a3c15a7 cx=c_pps
- a=MfjaFnPeirRr97d5FC5oHw==:117 a=MfjaFnPeirRr97d5FC5oHw==:17
- a=FelO9ux0wxsA:10 a=VkNPw1HP01LnGYTKEx00:22 a=7x6HtfJdh03M6CCDgxCd:22
- a=JnKecZnUtZousrUlYMGU:22 a=VwQbUJbxAAAA:8 a=xbwd-4vLOdmjPcKMbXEA:9
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNjI0MDE0NyBTYWx0ZWRfX8Es/YuLmK9p7
- iILL0/FXov86nSkjg1wNZ4tm6UWb44Y/1GMnhTUDgEvoam/pZ+Jg/Iu4rifnYCAMImgiUQaMgn0
- GcGht2fHAw63IFyKTa+jkz7bTDza+Uy06B9yIExMFLqKJdu0WhPr7f/RJl9GyieOOXdJ2xHlD2r
- uA18ejpsu8M/eZU1Njcn/0EyTBclMR8NnJ8RL4/RF31+j0zdsGAaf+V+eup/qeVYXL47rhrlYfR
- OhdBWaUDQAQ4y/vbKz+djV87hdqB58P9RCTmOZdGXBrczpNdjwFlulaY2i4xhC5sBiHth84AkCj
- xoEKgWAHuhwlcDsewJ7sEvKYWH627l5wVfqtowr4ZmiQs2x0RL7cOS1IznL4W9Jty9byXlRxfaX
- rR5uRDrJRvGadvdN5oESsgqfmdgkVg==
-X-Proofpoint-ORIG-GUID: 1WdcWUq963BJoKK_x1IocS7Qq3uwO-nZ
-X-Proofpoint-Spam-Info: AW1haW4tMjYwNjI0MDE0NyBTYWx0ZWRfX2n6E2MT5joyf
- RV+Jq4e3TEVYb1ikgDQ9uxn+Uo4m1xwdUNFQ22qvc41J9VUD800R+ujPLVu0mpAZ/bw68DeH8na
- bNVT1VUOIdvKh9wrKsg/KOQdKoCYNJo=
-X-Proofpoint-GUID: 1WdcWUq963BJoKK_x1IocS7Qq3uwO-nZ
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.125,FMLib:17.12.100.49
- definitions=2026-06-24_03,2026-06-24_01,2025-10-01_01
+X-ClientProxiedBy: EX19D041UWA001.ant.amazon.com (10.13.139.124) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-From: Keith Busch <kbusch@kernel.org>
+On Mon, Jun 22, 2026 at 06:23:28PM +0000, Eric Biggers wrote:
+> I don't think there's a path forward without an in-tree user that's
+> shown to be worthwhile over just using the acceleration built directly
+> into the CPU.  As well as confirmation of no regression to existing
+> users, including in cases where the inline sg list can't be used.
 
-blkdev_iov_iter_get_pages() can return various error values, including
-EIO, EFAULT, and ENOMEM. Set the actual reported status so user space
-can know a little more on why an operation failed.
+Agreed. Proposing a smaller v5 that meets the no-regression bar now and
+leaves "beats the CPU" to a follow-up with a real in-tree user.
 
-Signed-off-by: Keith Busch <kbusch@kernel.org>
----
- block/fops.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+dm-crypt submits one request per contiguous bio segment (a single
+bio_vec) with data_unit_size = sector_size, instead of one per sector.
+E.g. default sector_size 512 with a 4 KiB bio_vec: one request of 8
+data units, which the fallback splitter walks as 8 per-sector calls --
+dm-crypt no longer open-codes the per-data-unit loop itself.
 
-diff --git a/block/fops.c b/block/fops.c
-index 15783a6180dec..0827bb884d473 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -218,7 +218,7 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb,=
- struct iov_iter *iter,
-=20
- 		ret =3D blkdev_iov_iter_get_pages(bio, iter, bdev);
- 		if (unlikely(ret)) {
--			bio_endio_status(bio, BLK_STS_IOERR);
-+			bio_endio_status(bio, errno_to_blk_status(ret));
- 			break;
- 		}
- 		if (iocb->ki_flags & IOCB_NOWAIT) {
---=20
-2.53.0-Meta
+  - Uses only the existing inline sg_in[0]/sg_out[0] entry. No per-bio
+    scatterlist, no kmalloc -- the "inline sg list can't be used" case
+    doesn't exist here, so there's nothing to regress.
+  - For a non-native algorithm the core auto-splits into the same
+    per-sector calls dm-crypt makes today: identical output and cost.
+    This is what Herbert predicted -- the per-unit indirect call just
+    moves from the caller into the API; the fallback is no slower.
 
+So it stands on no-regression alone, with no software throughput claim.
+What it adds is the interface a native one-pass driver needs. I'd land
+that now and bring a native offload user + numbers as the follow-up,
+rather than block the interface on the driver.
+
+Acceptable? If so I'll respin v5 as the minimal version.
+
+Thanks,
+Leonid
