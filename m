@@ -1,104 +1,157 @@
-Received: from pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com [35.162.73.231])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E41783BBFBF
-	for <dm-devel@lists.linux.dev>; Wed, 24 Jun 2026 19:53:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=35.162.73.231
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E53643BCD3E
+	for <dm-devel@lists.linux.dev>; Thu, 25 Jun 2026 06:20:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782330787; cv=none; b=KQavhEkRqcxxdbuB0chTc53sC1zriCKYEPKyLZU7R9KHo78QlOzkE9R09GrIIyzdi3fOk8bpsF9rwc2naMQl0o7Dl3bFnJQMZn/Q5Kh2mJFc+CgClN0rFFn8vIvPry0M899A1HoaQYC06Ylx61KjRsJdH5eifsQjq9kUfrVHkDo=
+	t=1782368445; cv=none; b=tsHTI7quFF4LhyhkVagH7jMScQ67sVYu2HbqjFhevTtjzaCOx4HH89/V1jighrIhVlBVPROK9n0KTG7nREzF/aPp0Ll0VPSOqJ9j58k8toGoacW+/ziBICadWDLQhAg1DkPN76TPErmGTNqeJD6mXTbyTugUHAglPj/1suwH9Rc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782330787; c=relaxed/simple;
-	bh=uGManwo2POKMO9mUH2vgxLmsUYYgJxBMxApUaz/JoN4=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Yqmf48A9bHjTTmb9Rv3w6YfOA6Y6eWBtsdrZW0RHbUEy32XQfL9JdbvvaiWKrcqdY6GE8QZt5sCimvHGYd+PBTVFw11u3Cuf1yE4/hvkiQclTONRa7/xzqpDXi8Sdi5Kv1KxqjtbxyVldzbLTuBqggqS/JOKgcA/jsqkMkydHnE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=nOICm2iu; arc=none smtp.client-ip=35.162.73.231
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
+	s=arc-20240116; t=1782368445; c=relaxed/simple;
+	bh=1zm6liw1piOmDUwslq1VS/ljoAF/GAhIy57Ub/PGpXs=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=kUbJbYckVqScP4fk9B8flxcK7OGxfbLosuBcendo22JE+p6qVp9RHjyO4Q43pwK8WX+3qjKupIuDf+WyzzQe+CMjhOBaoQ1fP4PK4V32XXiTu5kTtfkn5qbYIWG7nr4f7V+G++ZVWW7IoMSfuCkawbfY8gW+spkI6qGcT0osWWA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=wM+w56r6; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=VQrUJVgP; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=wM+w56r6; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=VQrUJVgP; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="nOICm2iu"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1782330786; x=1813866786;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references:mime-version:content-transfer-encoding;
-  bh=9kzduUnU0W5KLUH8xRjByArbNZrNdOxKMBIECVRVqgo=;
-  b=nOICm2iuvF/7hBvOGRmdUEltZ79ODKCbDCM/qGUw+xaZGctieYbzpW+P
-   t//aMECdcpQ7YwpTTGXZJooLjhmvPnbmZY+6sXkDQ8WT0JV4318moojUY
-   Sh1ghJEaYS2z0raGJtgrnb6Br9JQejUAomOPJVrCEwd1O/y28gNkAgtNC
-   NedB4OQkrOMzLoifsNYCS8SYPAo+57Fz07SWWeZeQrbAX5IPpjI0dZ7Lm
-   rRRABkqKMK6cf8ndPdR3ovV4h8KmILmlNdc+6IQCPozw5XnVTfR7K2d7C
-   gZfsx9z6N5L5YX3wucb4y6XL4Fv9hk6Y3MIg8V4c/SSV3LAeXBDIqr5ZZ
-   g==;
-X-CSE-ConnectionGUID: T4dFEcxWRLmb1DhwaTaxaQ==
-X-CSE-MsgGUID: CrIjSsjgRWCy8HXfNV8Ngg==
-X-IronPort-AV: E=Sophos;i="6.24,223,1774310400"; 
-   d="scan'208";a="22234931"
-Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
-  by internal-pdx-out-012.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 24 Jun 2026 19:53:03 +0000
-Received: from EX19MTAUWC002.ant.amazon.com [205.251.233.111:4369]
- by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.1.61:2525] with esmtp (Farcaster)
- id 485ff261-6d1f-4c4d-9fd6-0a3f6bebcd59; Wed, 24 Jun 2026 19:53:03 +0000 (UTC)
-X-Farcaster-Flow-ID: 485ff261-6d1f-4c4d-9fd6-0a3f6bebcd59
-Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
- EX19MTAUWC002.ant.amazon.com (10.250.64.143) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
- Wed, 24 Jun 2026 19:53:02 +0000
-Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
- by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
- Wed, 24 Jun 2026 19:53:01 +0000
-From: Leonid Ravich <lravich@amazon.com>
-To: Eric Biggers <ebiggers@kernel.org>, Herbert Xu
-	<herbert@gondor.apana.org.au>
-CC: Alasdair Kergon <agk@redhat.com>, Ard Biesheuvel <ardb@kernel.org>, "Jens
- Axboe" <axboe@kernel.dk>, <dm-devel@lists.linux.dev>,
-	<linux-block@vger.kernel.org>, <linux-crypto@vger.kernel.org>
-Subject: Re: [PATCH v4 0/3] crypto: skcipher - per-request multi-data-unit batching
-Date: Wed, 24 Jun 2026 19:52:55 +0000
-Message-ID: <20260624195255.1102-1-lravich@amazon.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20260622182328.GB1250822@google.com>
-References: <20260622182328.GB1250822@google.com>
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="wM+w56r6";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="VQrUJVgP";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="wM+w56r6";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="VQrUJVgP"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 5DA1F7614C;
+	Thu, 25 Jun 2026 06:20:42 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1782368442; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9OBlrt/I+wG/F5iVAOr1ztffYyzXO4uytI+IQs8u64A=;
+	b=wM+w56r6WZQ1WB3hNad1tC04IK2PJ/bDZaMeYi4+iwo54FwNw11uePGC44IpFG5qtERsls
+	DQdy8B4pSKOv3jMzGHqNRVE1e29yw6B35w9KUz2zsy1BUWR2P8EM7hPCoFAxk5VMstvUb3
+	xG+kNVqAbEbpk5vgWuY6uEqOB6lQwgA=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1782368442;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9OBlrt/I+wG/F5iVAOr1ztffYyzXO4uytI+IQs8u64A=;
+	b=VQrUJVgPUGzibnUK0f0RC6EMRi7Y4CChhzHjN7NQ38C8KwRlFmH+KuH5LPPYrd1qTw4PQd
+	nDfBq+/JyOMMgTDg==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1782368442; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9OBlrt/I+wG/F5iVAOr1ztffYyzXO4uytI+IQs8u64A=;
+	b=wM+w56r6WZQ1WB3hNad1tC04IK2PJ/bDZaMeYi4+iwo54FwNw11uePGC44IpFG5qtERsls
+	DQdy8B4pSKOv3jMzGHqNRVE1e29yw6B35w9KUz2zsy1BUWR2P8EM7hPCoFAxk5VMstvUb3
+	xG+kNVqAbEbpk5vgWuY6uEqOB6lQwgA=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1782368442;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=9OBlrt/I+wG/F5iVAOr1ztffYyzXO4uytI+IQs8u64A=;
+	b=VQrUJVgPUGzibnUK0f0RC6EMRi7Y4CChhzHjN7NQ38C8KwRlFmH+KuH5LPPYrd1qTw4PQd
+	nDfBq+/JyOMMgTDg==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 0390A779A8;
+	Thu, 25 Jun 2026 06:20:41 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id jirxOrnIPGowQAAAD6G6ig
+	(envelope-from <hare@suse.de>); Thu, 25 Jun 2026 06:20:41 +0000
+Message-ID: <8e8e08fe-86e0-418f-8080-0852a72d2049@suse.de>
+Date: Thu, 25 Jun 2026 08:20:41 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 1/5] block: use blkdev_iov_iter_get_pages status for
+ errors
+To: Keith Busch <kbusch@meta.com>, linux-block@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org
+Cc: dm-devel@lists.linux.dev, hch@lst.de, axboe@kernel.dk,
+ brauner@kernel.org, djwong@kernel.org, viro@zeniv.linux.org.uk,
+ Keith Busch <kbusch@kernel.org>
+References: <20260624170905.3972095-1-kbusch@meta.com>
+ <20260624170905.3972095-2-kbusch@meta.com>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20260624170905.3972095-2-kbusch@meta.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: EX19D041UWA001.ant.amazon.com (10.13.139.124) To
- EX19D001UWA001.ant.amazon.com (10.13.138.214)
+X-Spam-Flag: NO
+X-Spam-Score: -4.30
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.998];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_SEVEN(0.00)[10];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:email,suse.de:mid]
+X-Spam-Level: 
 
-On Mon, Jun 22, 2026 at 06:23:28PM +0000, Eric Biggers wrote:
-> I don't think there's a path forward without an in-tree user that's
-> shown to be worthwhile over just using the acceleration built directly
-> into the CPU.  As well as confirmation of no regression to existing
-> users, including in cases where the inline sg list can't be used.
+On 6/24/26 7:09 PM, Keith Busch wrote:
+> From: Keith Busch <kbusch@kernel.org>
+> 
+> blkdev_iov_iter_get_pages() can return various error values, including
+> EIO, EFAULT, and ENOMEM. Set the actual reported status so user space
+> can know a little more on why an operation failed.
+> 
+> Signed-off-by: Keith Busch <kbusch@kernel.org>
+> ---
+>   block/fops.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/block/fops.c b/block/fops.c
+> index 15783a6180dec..0827bb884d473 100644
+> --- a/block/fops.c
+> +++ b/block/fops.c
+> @@ -218,7 +218,7 @@ static ssize_t __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter,
+>   
+>   		ret = blkdev_iov_iter_get_pages(bio, iter, bdev);
+>   		if (unlikely(ret)) {
+> -			bio_endio_status(bio, BLK_STS_IOERR);
+> +			bio_endio_status(bio, errno_to_blk_status(ret));
+>   			break;
+>   		}
+>   		if (iocb->ki_flags & IOCB_NOWAIT) {
 
-Agreed. Proposing a smaller v5 that meets the no-regression bar now and
-leaves "beats the CPU" to a follow-up with a real in-tree user.
+Reviewed-by: Hannes Reinecke <hare@kernel.org>
 
-dm-crypt submits one request per contiguous bio segment (a single
-bio_vec) with data_unit_size = sector_size, instead of one per sector.
-E.g. default sector_size 512 with a 4 KiB bio_vec: one request of 8
-data units, which the fallback splitter walks as 8 per-sector calls --
-dm-crypt no longer open-codes the per-data-unit loop itself.
+Cheers,
 
-  - Uses only the existing inline sg_in[0]/sg_out[0] entry. No per-bio
-    scatterlist, no kmalloc -- the "inline sg list can't be used" case
-    doesn't exist here, so there's nothing to regress.
-  - For a non-native algorithm the core auto-splits into the same
-    per-sector calls dm-crypt makes today: identical output and cost.
-    This is what Herbert predicted -- the per-unit indirect call just
-    moves from the caller into the API; the fallback is no slower.
-
-So it stands on no-regression alone, with no software throughput claim.
-What it adds is the interface a native one-pass driver needs. I'd land
-that now and bring a native offload user + numbers as the follow-up,
-rather than block the interface on the driver.
-
-Acceptable? If so I'll respin v5 as the minimal version.
-
-Thanks,
-Leonid
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
