@@ -1,100 +1,85 @@
-Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
+Received: from ms.lwn.net (ms.lwn.net [45.79.88.28])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A533351C0C
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 09:16:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4EB872EBBAF
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 16:30:15 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.79.88.28
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782551768; cv=none; b=CFPuI9k9NNGIoQjvlqamHXq3rVAr2qdqBXPkFfNzPf9EWDeTwEoA9xhNXmugHiPqfrViNoU1/4s36kRJ7mvdu5B8cDcMS2pHhh0QcrW5aV7nxIy3PyenLqXlJthCdyJ2HC1mQ68oy/6e+FdYbtvB+P9JkldF29Yi+B7NcA797s0=
+	t=1782577818; cv=none; b=OVEEUD4whGgLnTUUm1Hm7+ZJ25pypbE09AGHqWH7A5IqIQ/xNPqRQIt61N+PbFC94m7EGF6l8gV1tx/Q6r/ZDMVQv1BGCm3nCi4q7ZnHCG4Z+JHSg9blW963SdBYi0Kq5knO6PUODp13Q3Oa3v/6LkQ6i664SQYezxTIWJctn3Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782551768; c=relaxed/simple;
-	bh=sTAhDUleXYtlvjsypG1oul3MvhHMsnPeBHtM1mSZpME=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ONj+5gns0AN9dHo3YzVw8RTc0tTbbs+D1VYPTvwrx9v2wNkRla5gcY/6ghHRZlbJCb9z8Ri1AT5z4WPwzWl8tlhr7gQFT3xPHysHqSmGLYka6jbQ9eMJe20W1gFlaM6GMycTIvJ+g5SwdHQLIDQOyDkjysmr9Nt3uIjzum7RRNk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=m/n1itRs; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=Chf0MxmK; arc=none smtp.client-ip=80.241.56.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
+	s=arc-20240116; t=1782577818; c=relaxed/simple;
+	bh=T9Xh9+d6qi4HBB5tejaQShSI6NeXDd5Yqy8wC7NGHnQ=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=aaYG+hYByv7k5CRjoXXx5SO7JwJM4BqydznWodsRBNG1VyJ4mEfuUnQxnzDCuzDvNJdmdFSAvryIi7Q2ootqbdR1Sl2yrGrcHckspdOhOCP9SRL//uBnPE8Ci5IxO9wbaqVDNk/InQ7kzar60JhnsRZLfvqgSR4k5j6MPXe7ct4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net; spf=pass smtp.mailfrom=lwn.net; dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b=b++FewPX; arc=none smtp.client-ip=45.79.88.28
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lwn.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lwn.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="m/n1itRs";
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="Chf0MxmK"
-Received: from smtp102.mailbox.org (smtp102.mailbox.org [IPv6:2001:67c:2050:b231:465::102])
+	dkim=pass (2048-bit key) header.d=lwn.net header.i=@lwn.net header.b="b++FewPX"
+DKIM-Filter: OpenDKIM Filter v2.11.0 ms.lwn.net 03EF140E52
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=lwn.net; s=20201203;
+	t=1782577485; bh=8UtNI14qUP/qApC73hXztpsStGcuLHgTk0AYTTh/tx4=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
+	b=b++FewPXQIhsJV90Djx9KlncZ8xI1edHIysIqAzSyW9XbbTi78I0SeScyMtERgQzC
+	 0Hxsmy2e10cDREvhDWKjW04e+v6psqpwzASlKw6Y39hPbD7SVv1vN5WGCixaqVp2+V
+	 Piwwa31zeLWDuVer8QWXcI0gJLHwfsWlNQYZhr9JdV+p5jUJHtsixmxjgIf/Tn2JnQ
+	 aPTqHtt6FEUJXdkn8VDrA1Hdmietx48mu+hb44oUyUaVqNcnwLm6nG31UUtWqh8zOX
+	 XIXRVBQEgBq5iADzEPIU1+8x03uKV47L8on2FXdbW5n46AA/0MXUHK5GKMC3X1wbNJ
+	 2wRof3bjCWdgg==
+Received: from localhost (unknown [IPv6:2601:280:4600:27b::1fe])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4gnRjV3RPdz9tWS;
-	Sat, 27 Jun 2026 11:15:58 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1782551758;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=pXQ+5vRw8gFPOsPV7D/1ZGV5eGUKSwaLPREyxVc1zFc=;
-	b=m/n1itRsS/aAWVXYzbQ7IF2q48yifmUJfhit3nzZP9H1J5NXfPGbs0ReLL/hZwdKn40bQU
-	bSLHKCctVNl9h9swx3Kc/8RSw2hRcvW5dXlEB4u/HM5f4EStdxXl2+L5soFNZpv7KmS5ir
-	Ew2nIQK1Ekr6/p1BuXNwYMBF0uHSu/kdF6bqsAUJ+VEW5RzkDOWUvq6Ud3zUtjFSM0S4DZ
-	BN101D5XlHlAdlIiRkWORcFSFqxmBXL98FTLerzRolwRpng7Jsz/s55uFyykvR8VE+hLqL
-	+6MWgJNrC68vuxFf8hK7lXaZFTzr6qgG69TREIMpOrytGODXU2vFRwk71DFs/g==
-Authentication-Results: outgoing_mbo_mout;
-	dkim=pass header.d=mailbox.org header.s=mail20150812 header.b=Chf0MxmK;
-	spf=pass (outgoing_mbo_mout: domain of manuelebner@mailbox.org designates 2001:67c:2050:b231:465::102 as permitted sender) smtp.mailfrom=manuelebner@mailbox.org
-From: Manuel Ebner <manuelebner@mailbox.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1782551756;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=pXQ+5vRw8gFPOsPV7D/1ZGV5eGUKSwaLPREyxVc1zFc=;
-	b=Chf0MxmK2ONKnVlhFY2t4mYk6oRrCLmv3p/KV3SQX4DjG4BUuNlEYRfljWa1HQG2bwKGId
-	f2oHZc/uHuH//NZB3Iw7QKdETMzoFDqoRYQG8czAowOoIOzDUH75go9brsBrLEWo7tUJat
-	cZPD2wxjV+7H784QUkrno6xakBGfol/b/GLugnsijn2a5A0+FrbgENvOa0y+HahFMtL2dV
-	BsR93hvmfCehuqJbBrnp8JaAjlFT+tQgtD2LwbnIP2lfxYsToWqJcyxdgcUMClm9W/6N8L
-	xMPjW+i+H9TnwFbq2jih+z2ZjjQUd7qHyrZZfT/kCUVCpcXA4DSVb2Mko44Isg==
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Kees Cook <kees@kernel.org>,
-	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
-	linux-doc@vger.kernel.org (open list:DOCUMENTATION),
-	linux-kernel@vger.kernel.org (open list)
+	by ms.lwn.net (Postfix) with ESMTPSA id 03EF140E52;
+	Sat, 27 Jun 2026 16:24:44 +0000 (UTC)
+From: Jonathan Corbet <corbet@lwn.net>
+To: Manuel Ebner <manuelebner@mailbox.org>, Alasdair Kergon
+ <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka
+ <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, Shuah
+ Khan <skhan@linuxfoundation.org>, Kees Cook <kees@kernel.org>, "open
+ list:DEVICE-MAPPER  (LVM)" <dm-devel@lists.linux.dev>, "open
+ list:DOCUMENTATION" <linux-doc@vger.kernel.org>, open list
+ <linux-kernel@vger.kernel.org>
 Cc: Manuel Ebner <manuelebner@mailbox.org>
-Subject: [PATCH] Documentation: device-mapper: adopt new coding style of type-aware kmalloc-family
-Date: Sat, 27 Jun 2026 11:15:07 +0200
-Message-ID: <20260627091506.29534-2-manuelebner@mailbox.org>
+Subject: Re: [PATCH] Documentation: device-mapper: adopt new coding style of
+ type-aware kmalloc-family
+In-Reply-To: <20260627091506.29534-2-manuelebner@mailbox.org>
+References: <20260627091506.29534-2-manuelebner@mailbox.org>
+Date: Sat, 27 Jun 2026 10:24:44 -0600
+Message-ID: <877bnkymr7.fsf@trenco.lwn.net>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-MBO-RS-META: if1srcg7xfuct4h3mouatgp5usae4eap
-X-MBO-RS-ID: 54a6d1f2fbb6e1a076e
-X-Rspamd-Queue-Id: 4gnRjV3RPdz9tWS
+Content-Type: text/plain
 
-Change the Documentation to reflect this commit 69050f8d6d07 ("treewide: Replace
-kmalloc with kmalloc_obj for non-scalar types")
-kmalloc -> kmalloc_objs
+Manuel Ebner <manuelebner@mailbox.org> writes:
 
-Signed-off-by: Manuel Ebner <manuelebner@mailbox.org>
----
- Documentation/admin-guide/device-mapper/statistics.rst | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> Change the Documentation to reflect this commit 69050f8d6d07 ("treewide: Replace
+> kmalloc with kmalloc_obj for non-scalar types")
+> kmalloc -> kmalloc_objs
+>
+> Signed-off-by: Manuel Ebner <manuelebner@mailbox.org>
+> ---
+>  Documentation/admin-guide/device-mapper/statistics.rst | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/Documentation/admin-guide/device-mapper/statistics.rst b/Documentation/admin-guide/device-mapper/statistics.rst
+> index 41ded0bc5933..2190b90118f8 100644
+> --- a/Documentation/admin-guide/device-mapper/statistics.rst
+> +++ b/Documentation/admin-guide/device-mapper/statistics.rst
+> @@ -30,7 +30,7 @@ region, etc.  Unique region_ids enable multiple userspace programs to
+>  request and process statistics for the same DM device without stepping
+>  on each other's data.
+>  
+> -The creation of DM statistics will allocate memory via kmalloc or
+> +The creation of DM statistics will allocate memory via kmalloc_objs or
 
-diff --git a/Documentation/admin-guide/device-mapper/statistics.rst b/Documentation/admin-guide/device-mapper/statistics.rst
-index 41ded0bc5933..2190b90118f8 100644
---- a/Documentation/admin-guide/device-mapper/statistics.rst
-+++ b/Documentation/admin-guide/device-mapper/statistics.rst
-@@ -30,7 +30,7 @@ region, etc.  Unique region_ids enable multiple userspace programs to
- request and process statistics for the same DM device without stepping
- on each other's data.
- 
--The creation of DM statistics will allocate memory via kmalloc or
-+The creation of DM statistics will allocate memory via kmalloc_objs or
- fallback to using vmalloc space.  At most, 1/4 of the overall system
- memory may be allocated by DM statistics.  The admin can see how much
- memory is used by reading:
--- 
-2.54.0
+A nit, but if you're going to fix the function name, why not make it
+kmalloc_objs() so that the automarkup code can do its magic?
 
+Thanks,
+
+jon
