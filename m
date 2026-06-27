@@ -1,178 +1,323 @@
-Received: from mail-oo1-f46.google.com (mail-oo1-f46.google.com [209.85.161.46])
+Received: from mail-oo1-f54.google.com (mail-oo1-f54.google.com [209.85.161.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DBEC924BD03
-	for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 08:03:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.161.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 15B2624BD03
+	for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 08:04:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.161.54
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782547401; cv=pass; b=U3dS9JNr7aNWBalkjZfyYx0kUHPiXYrZ+zf3LnM0VKL+Iax1J2d8StcblzeYsu6lwC8m3ZggRvSJuo0lkAVpDhfV9ttylxffSP90l5asf7y8QcpJBvrNIzA2vG5GtPkNcpQoWn+UDrkratX0H5e7WM4J5ROPXPO3GFojOKbycPE=
+	t=1782547459; cv=pass; b=KRVJw9YGZvPVaBkUrfOIGbD1ZUY8okdOMBcfn2qhEhmgK/MCXgNtWqO3fvP22Qql/3unQcWrThiyFF0SLdN3w/oVCfBY/kQmrgqz2fufDiUyg9BGbm0QJ+FN+I5jUW/m4g+q1V/gepjNsMLOMVVKsQdOodvaR3wkwkuQyywB62Y=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782547401; c=relaxed/simple;
-	bh=gp2T0qfNlzQYVnN2wDEwj9f/eW66Lkr/QJd322JAAX4=;
+	s=arc-20240116; t=1782547459; c=relaxed/simple;
+	bh=TUMTe4hxuPzNMW4temOfbNodVWXFUGVw9zm4gEY6sM4=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=HpTfGUqz1A9XAtNaLodN3hEecXczzRVtdhPgeYsG3Ellk96SfM4/VkXUZyF9bcg32KEUzJyyH/T9IRRlugQlS/MOBT4erDLB4X2vHH3f4QVmAiSHzq1G9O6bjVEz0Y+AJiBE7Wf6X9GYAE12TeG7vgEyMabx77aio3lCvBoblX4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Xd/tj4yY; arc=pass smtp.client-ip=209.85.161.46
+	 To:Cc:Content-Type; b=AsAuOHxzxHznXuxifaw3AsvrDtBW79EbZsKubZfCnOy1HaOt/0QK7bd3AfldiPe5sTVfMMIdrNj7yU9hRCYR51OPgGVP6ER+LW8OuSEnkH/GjI24MdCxS1/+Ruxpm5yS9+9Pu1X4mN6m7rBxH2ZhhWGFsbtadyL9gNY86WWZ/+8=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LB8B+Jdl; arc=pass smtp.client-ip=209.85.161.54
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Xd/tj4yY"
-Received: by mail-oo1-f46.google.com with SMTP id 006d021491bc7-6a1133217easo733137eaf.2
-        for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 01:03:19 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1782547399; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LB8B+Jdl"
+Received: by mail-oo1-f54.google.com with SMTP id 006d021491bc7-6a13fffa9b6so648788eaf.1
+        for <dm-devel@lists.linux.dev>; Sat, 27 Jun 2026 01:04:17 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1782547457; cv=none;
         d=google.com; s=arc-20260327;
-        b=B7Soww6zVIP2qUH8JW3++mWiv0UxfGBkVssUbtEQ1eh//5zKNkj8SzIsn6B4hujIBO
-         fE8QjQBdQdn8Rm70wAndrk/i17S7DDfxvU6Ge9nwcUMnN8ZJi0hWLia1WKT/+ED0fE3F
-         OMckI4d4SlVoFx4RPdEcWrh6fCpXicB289ZCaBPzyMqHyVegMEIZ2F2wsEPe7PfJXChz
-         HC39ux71r/CMBzS/gq0y4N9xMn5lqL/l/WJ/6b8jfk9o+p5nIHPYQaSytq2lM6Xa/59x
-         HEnDFKoTC94yRsdS49kE/l+Uy9vdkCIC3LrxKT4IKk2/dV0yaqqLsuIw6RTUW35c/Z7i
-         06xw==
+        b=FSu7wvo4u+R9ty1hjZAn+xKiZJTaq9X0+iJ0WpLZDA7Hz/cfpv9Umj8pOA0y/rMIjj
+         AJirJmXyvON6v3NkFyWWlBeVUVntC44GjbkWeIXNQgLjB59RPIqZ6Bb8+0CoBBPlkUzN
+         5xacpSOfy0a2a8Uc5sEVyHwzbThH+qTwJOp/EkiA3V1G+oOdy1hbrBfUME7DuLpwELyN
+         08Yaudv13wJrMWf0sD/R1tbsixd/OaSvFO++dmtQqzwdmLbTvMQwBdULE6sSOwYB12UK
+         QeC3A5qCRlby64B884ccAGasqWUqcUFbN+E/cTW2g5IKhj8GknTnFdDNZ3bbA9tefXCj
+         WKfg==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=6LfeTEWU4w8J2gbM7i+Ay7t3Nq+OGlMaWoYKn5xBoNI=;
-        fh=cfDC5rNbBF40m9oCSDPMUuGeSGV2CeS2rji77tul2GI=;
-        b=siuFhhmHf41D+csl1I5nIjH4tn8TzUyQFWCCCxiPZVx1EeGMlBSeiYoeYanGw2caiW
-         73viv4cr9PmRUk/cx037/xUxNZty0VBb3yM9q6NoPtuNk0OQiqU3yFuzW5iTQzKCTo8k
-         vJA97TF2yJstfADQRcTOwDDs95sJuDhvUYBdA0wQQW+nHV011HTraXfQSpM9NmFoogG1
-         YBt9Tc0qDyKqxzBq8/bGROPkKaPsTEiBdTQVL8NDW7LRwInLwKH+v2Ry2jAT/KoN/ipT
-         ZztaM6ggYt9XDj5U9teo2ZlmI3ERDM1lv6GH72cpx812ibc6p8Ul3k47t+2j0cjCyBqN
-         o3fQ==;
+        bh=ZKyLKeANvohLeSYZ8V4iD6wj+tbLRvnSleYUOYI6T84=;
+        fh=eXTPA3NOoLOIMrCtYxFbD0NFvpca1C06NO5gfRqAIMg=;
+        b=ObyJ7tzyZtsYiKXOgC6kocXG1LeFDfpe76gfo9rh+mIDeGdTwV+pnpxlQzKILOIQYy
+         J9DG/0p5oq68wnIz1rNjHGVFpR7ZMsN7KbFpkg6G8mwq3h5Yumnm2NZ9+68ed/CFBc7h
+         k5hNzAwigBuHIjAMo6fbiN+dRWynAb+b9R3EdaQe1vEw2xFo/C+FbwFg7afp9/bhfMlu
+         SXVXK5KRprMa3CJgzMb6DAQq3od4Fsdu5nN7/rZjC8KX3jP7qEdxnJmAWIGPNnqR/Tqz
+         dTRvQOJwVD5TaqW6HiCQ4wEmZpOa/geUwjdmCLdm3ob5QZwKubg5wyLH2ze974ZngwXs
+         TN9Q==;
         darn=lists.linux.dev
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782547399; x=1783152199; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1782547457; x=1783152257; darn=lists.linux.dev;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=6LfeTEWU4w8J2gbM7i+Ay7t3Nq+OGlMaWoYKn5xBoNI=;
-        b=Xd/tj4yYX0LiVoguNQZANvxKSXYD+vcdBLxasS9Ztv3nsifUArwg7IOkuiqxxC1Lk+
-         4REdNasIuLmTbRdpHp9oduRZaMGT5prcPvXP7o97J+KlfbZQ9rW+proXK3oLIXaEXQKO
-         Lcc/LRBazGSAo+Cd1GWxt58pqkiZVTuqiQAfbfMSNytJdBH1bSJEOMMx22bAs0FQCcdC
-         3zsmsXhDZLV9s5LP5A6g4feLKxX0bMs8G39zfmPJUveBIB/q0s3LAsupy7LiH/2EDB9Y
-         0Smyq1nwUSE3VFnEHbyGkOjqFxyFWakF7fuhVBPYqSJ7ykhX6mhuCMSx3Xss62yrWSAm
-         fXyg==
+        bh=ZKyLKeANvohLeSYZ8V4iD6wj+tbLRvnSleYUOYI6T84=;
+        b=LB8B+JdlpOtTSKFfXKphCe+GnJcVegGapPIA2/ez7i20ylyfICZXtlQvh0FAPIU/9E
+         UDNL0nd5KNCpwcdbg6olSILggA0sektzh/cKbyNgn1yAc7VDawBZEAg4NWBVkZs83uf8
+         F/3S5zD7r33d6CUMOPkozikdcYJQm1dzcq36t+xeVWWMPtoSLbLkOhE8dOuRyo+TLURY
+         cCm5BpxwNupyJfnnU/gayQeSy//7NE4LhR9G/krNAD03e35UfCleThtilVElOBkEwIqh
+         XiFbTAIROQuB/LwaXU3ytX2TkG3n5NtpEJ8k/rWlshY1bOXzuwAx01Fll7JgYTKqWbJt
+         z8NA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782547399; x=1783152199;
+        d=1e100.net; s=20251104; t=1782547457; x=1783152257;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=6LfeTEWU4w8J2gbM7i+Ay7t3Nq+OGlMaWoYKn5xBoNI=;
-        b=kfDBoLEoxXC3TvPNqRaBq+hzHn6PKwOro0m3zskkCb0T4vqtyK7zjBFKPMbk5QJU20
-         XI4BLcYnChxRYubfMjqZfytpbzB8o9ssdPuzZrmUYmmKZNihBq3ooRIOAhFieR+Wu7tG
-         Cp5ZQrvP2RU5qGs+p5qU8ZxCKDV1hK5/UkXP3yngjeTojrtTt566zksbcja061kF2ubb
-         hz+FZZvY4JPBDgOY0meCQo44rr+8zmEN12D8p+QFsM5yrUKYocDAY+vXMzTqwNo8Gor2
-         ac0FtFX1nHIykxIIW27BmAxbWRFjR+WtSYUXYak0BHiJzj+k5fR0mpxzohBpY07RcevG
-         l2/A==
-X-Forwarded-Encrypted: i=1; AFNElJ/KOnom0q5yHX5j6JE00I6402qTUx+ye8XtrinKScy3cCPGJxYeQvsba9iUEMe4i360eUCuYIrTYw==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yz5fQXDI2YQBtpaDX0NVJhnlle/ssj9XsT4ALJrNXl/+/M6+S00
-	p9+dNcXolL+g3iaS9JoubcoCM/CexVWWuHiD/5mzb9ZCsuQvxVh8PteS/S8Al82ZWaW8p8rHSlb
-	LC461FmqnHNtxWrwmUGc4gL3zQvYhbQCOiVLGzZ3TRdu1
-X-Gm-Gg: AfdE7clIJZJZLHKvVCve1daDIaTanSLj6PW/0HpMJMhgdBUZNIgLVDbnsSD9vFAHA++
-	LTV7eObB8W54l6TEURxW9eAJUE7iB2JOkYvQdxQHoxwfTIbN1WVIj5KYnAvCmuBRhYxzp9dDoAm
-	4PK1TasdFYZlOiyYseJ5gkRGyKmOSLet9mk30Jf/nWQhAFelbn2TWw0uqYMpW6aHLdnjrnEuzeJ
-	wJeQNM2WBOUJb2CLpvjNBigsntjF8kp0tjjinflDxN4rP4143acoETvz7uOkVn0vX/nQEdqxSyk
-	usOuOsZTj42dFrkYKEeAtuc4aFMaWhttJRCHxrg=
-X-Received: by 2002:a05:6820:709c:10b0:6a1:4040:97c1 with SMTP id
- 006d021491bc7-6a140409862mr3218879eaf.56.1782547398700; Sat, 27 Jun 2026
- 01:03:18 -0700 (PDT)
+        bh=ZKyLKeANvohLeSYZ8V4iD6wj+tbLRvnSleYUOYI6T84=;
+        b=Jy6L8Zwps3NdJbd64ZPm6JuLZtHMjPavwwyH6626Pa/DfOUvvD8ILkhYbqqF8Wzv4M
+         Rzn8+ThdMlnm2ckK1jByihND9/zUskJ2Fvecr0yuJN2I4mpFQMVPQoKi9J+btFhzT3kp
+         GC+fa9C/LoXu5I8Y9YGmCIfb8bZ9/oVSc6rAbOrD4jf7LdqRWL4cTVTmkMvo8uyYLMY5
+         AW/ngJQBXoD1NTlRHWIRogd+W2NYbG5hX4WMHIbyL7jl7OOdH/CmSCONBfVuUtu5S68k
+         hGDBQLoknPFXPrwqLAmQRCQpNpBXhtCruybe+HqHKmOw4rq15u81rleik1Ms9gkh2tVA
+         JXVw==
+X-Forwarded-Encrypted: i=1; AFNElJ9C0KR+XThh8OpQqGGioCAZrlHxYxHdwIPE0vV56dKI7WJb8sz3P8eDZrUUrA2fQ479eckjD87zmw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzMt0S6Y3b3+IfHFaas0KCzcHDFEgpowr8Dh9bQL0qctZtW7vm6
+	ILdYh67liHN3i0doBnhIPkwzvQH25bMB2cwcZYs12AqYITFTstzkL7lYLXxPltwALiADObDluTR
+	uDvZiMptxQU4cIexCY7XPgixFKSnpWcs2GA0QKPFtNs4Petc=
+X-Gm-Gg: AfdE7ckunc5Do7Pphp8GgN2DT1FJD0ZMXtqu/0vSotiGsGtRkFXKrhbvHLJrvFOndCU
+	qk5b90izjApGz+NWdd++7UhWHrFQOfHDaAagkTPzgzDE9BwOvox4Xne/FUzfimEuV9Xcz57MQ+B
+	MlQnObb8lpVFdYQYcVAYHuBLtiChXiZuvM38B21sp8E62g8Y5FaRBqihm/HsY7Lqk7dRhrew2zf
+	rjGLoCA+ZUaMQlknCQfuWZjD5L83CnkaeMIznV8CV/RsrFDXi49vr8TZv6XeZ9CQD+OUYDV5e4D
+	HqhMQivShOvLYdo/CTQszc4hz+MMdA+/ULiI7Ns=
+X-Received: by 2002:a05:6820:1c94:b0:6a1:41ae:1be3 with SMTP id
+ 006d021491bc7-6a141ae1eedmr4468219eaf.41.1782547456891; Sat, 27 Jun 2026
+ 01:04:16 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260619-b4-disp-997773a1-v1-0-14df8aedb323@proton.me>
-In-Reply-To: <20260619-b4-disp-997773a1-v1-0-14df8aedb323@proton.me>
+References: <20260619-b4-disp-997773a1-v1-0-14df8aedb323@proton.me> <20260619-b4-disp-997773a1-v1-1-14df8aedb323@proton.me>
+In-Reply-To: <20260619-b4-disp-997773a1-v1-1-14df8aedb323@proton.me>
 From: Zheng Gu <cengku@gmail.com>
-Date: Sat, 27 Jun 2026 16:03:07 +0800
-X-Gm-Features: AVVi8CfnINRdnH-Ry8wAKm2edAOEm5VNSI8e1Z3iiNntYJ8-33NI597OB8lz7a4
-Message-ID: <CADSj-VqmVQxrhDJH51inLTzUQK8K6mCC4Ce=dqscEO-iHUDA9A@mail.gmail.com>
-Subject: Re: [PATCH 0/3] dm-pcache: validate on-disk fields before use
+Date: Sat, 27 Jun 2026 16:04:06 +0800
+X-Gm-Features: AVVi8CdmFYoIOC742zVvP-YZZKYReBZoYRt5aHnt2PzgO6VFYL1NJAbMe-A_hR0
+Message-ID: <CADSj-VpDU6cti4UmqTc1KwZp9XqWg2zVBQ4obGWJj7h3MAe7AQ@mail.gmail.com>
+Subject: Re: [PATCH 1/3] dm-pcache: validate seg_id fields from persistent memory
 To: hexlabsecurity@proton.me
 Cc: Dongsheng Yang <dongsheng.yang@linux.dev>, linux-kernel@vger.kernel.org, 
 	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-Hi Vargas,
-
-Thanks for catching this issue.
-
-Best regards,
-Gu
-
 On Fri, Jun 19, 2026 at 7:44=E2=80=AFPM Bryam Vargas via B4 Relay
 <devnull+hexlabsecurity.proton.me@kernel.org> wrote:
 >
-> dm-pcache reads its layout from the cache device and mostly trusts it. Th=
-e
-> table load needs CAP_SYS_ADMIN, but the on-media metadata is only self-ch=
-ecked
-> with a CRC32C over a fixed, public seed, so anyone who can format or swap=
- the
-> cache device forges the fields and recomputes the CRC. Several of them be=
-come
-> segment ids, array indices, loop counts and intra-segment extents with no=
- bound
-> against the device geometry, which turns crafted metadata into kernel
-> out-of-bounds accesses, both at table load and during normal cache I/O.
+> From: Bryam Vargas <hexlabsecurity@proton.me>
 >
-> Each patch adds the bound where the field is decoded:
+> cache_pos_decode(), cache_key_decode() and the last-kset branches of
+> cache_replay(), the writeback worker and the GC worker take a cache
+> segment id from the cache device metadata and index cache->segments[]
+> with it without checking it against cache->n_segs. That metadata is only
+> CRC-protected with a fixed public seed, so whoever supplies the cache
+> device on a table load (CAP_SYS_ADMIN) controls the id; an out-of-range
+> value forms a wild pcache_cache_segment pointer that is dereferenced and
+> written through -- an out-of-bounds read and write driven by on-disk data=
+.
 >
->   1/3  segment ids that index cache->segments[] -- bound against cache->n=
-_segs
->        (cache_pos_decode, cache_key_decode, and the last-kset paths in re=
-play,
->        writeback and gc).
->   2/3  cache_info->n_segs and the segment-chain ids -- bound against the =
-cache
->        device segment count.
->   3/3  the kset key_num, read by cache_kset_crc() and the replay loop bef=
-ore the
->        CRC is even compared, and a key whose offset+length runs past its =
-segment
->        -- the latter is an OOB read that otherwise reaches user space on =
-a cache
->        read hit.
+> Add cache_seg_id_valid() and reject an out-of-range id at each decode
+> site, failing the operation with -EIO instead of indexing past the array.
+> Valid metadata is unaffected.
 >
-> I found these by walking the cache-device decode paths. Each class reprod=
-uces in a
-> faithful in-kernel model under KASAN: the bug arm faults (slab out-of-bou=
-nds -- a
-> read for the seg_id, geometry and key_num/extent cases, a write for the n=
-_segs
-> loop), the arm with the added bound is clean, and valid metadata is clean=
-. The key
-> offset/length case also reproduces under KMSAN, where the over-read retur=
-ns
-> uninitialized kernel memory. Reproducer available on request. Each check =
-rejects
-> bad metadata with -EIO and leaves valid metadata alone.
->
-> checkpatch --strict is clean apart from "Alignment should match open
-> parenthesis" on the multi-line pcache_dev_err() calls, which match the st=
-yle
-> already in the driver.
->
+> Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-ma=
+pper")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
 > ---
-> Bryam Vargas (3):
->       dm-pcache: validate seg_id fields from persistent memory
->       dm-pcache: validate geometry fields from on-disk cache_info
->       dm-pcache: validate kset key_num and intra-segment bounds
+>  drivers/md/dm-pcache/cache.c           |  3 +++
+>  drivers/md/dm-pcache/cache.h           | 14 ++++++++++++++
+>  drivers/md/dm-pcache/cache_gc.c        | 16 ++++++++++++++--
+>  drivers/md/dm-pcache/cache_key.c       | 11 +++++++++++
+>  drivers/md/dm-pcache/cache_writeback.c | 14 +++++++++++---
+>  5 files changed, 53 insertions(+), 5 deletions(-)
 >
->  drivers/md/dm-pcache/cache.c           | 17 +++++++++++++++++
->  drivers/md/dm-pcache/cache.h           | 35 ++++++++++++++++++++++++++++=
-++++++
->  drivers/md/dm-pcache/cache_gc.c        | 24 +++++++++++++++++------
->  drivers/md/dm-pcache/cache_key.c       | 21 +++++++++++++++++++-
->  drivers/md/dm-pcache/cache_writeback.c | 22 ++++++++++++++-------
->  5 files changed, 105 insertions(+), 14 deletions(-)
-> ---
-> base-commit: 4549871118cf616eecdd2d939f78e3b9e1dddc48
-> change-id: 20260619-b4-disp-997773a1-69ada10d3a3e
+> diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+> index bb1ada31e483..e6a2f4460f6e 100644
+> --- a/drivers/md/dm-pcache/cache.c
+> +++ b/drivers/md/dm-pcache/cache.c
+> @@ -118,6 +118,9 @@ int cache_pos_decode(struct pcache_cache *cache,
+>         if (!latest_addr)
+>                 return -EIO;
 >
-> Best regards,
+> +       if (!cache_seg_id_valid(cache, latest.cache_seg_id))
+> +               return -EIO;
+> +
+>         pos->cache_seg =3D &cache->segments[latest.cache_seg_id];
+>         pos->seg_off =3D latest.seg_off;
+>         *seq =3D latest.header.seq;
+> diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
+> index 27613b56be54..653ceea43131 100644
+> --- a/drivers/md/dm-pcache/cache.h
+> +++ b/drivers/md/dm-pcache/cache.h
+> @@ -420,6 +420,20 @@ static inline bool cache_seg_is_ctrl_seg(u32 cache_s=
+eg_id)
+>         return (cache_seg_id =3D=3D 0);
+>  }
+>
+> +/**
+> + * cache_seg_id_valid - Validate a cache segment id read from the cache =
+device.
+> + * @cache: Pointer to the pcache_cache structure.
+> + * @cache_seg_id: Segment id decoded from on-media metadata.
+> + *
+> + * On-media segment ids are only protected by a CRC, which an attacker w=
+ho can
+> + * format the cache device computes over their chosen value. Reject any =
+id that
+> + * would index cache->segments[] out of bounds before it is dereferenced=
+.
+> + */
+> +static inline bool cache_seg_id_valid(struct pcache_cache *cache, u32 ca=
+che_seg_id)
+> +{
+> +       return cache_seg_id < cache->n_segs;
+> +}
+> +
+>  /**
+>   * cache_key_cutfront - Cuts a specified length from the front of a cach=
+e key.
+>   * @key: Pointer to pcache_cache_key structure.
+> diff --git a/drivers/md/dm-pcache/cache_gc.c b/drivers/md/dm-pcache/cache=
+_gc.c
+> index 94f8b276a021..02fa0ce03134 100644
+> --- a/drivers/md/dm-pcache/cache_gc.c
+> +++ b/drivers/md/dm-pcache/cache_gc.c
+> @@ -74,11 +74,17 @@ static bool need_gc(struct pcache_cache *cache, struc=
+t pcache_cache_pos *dirty_t
+>   * @cache: Pointer to the pcache_cache structure.
+>   * @kset_onmedia: Pointer to the kset_onmedia structure for the last kse=
+t.
+>   */
+> -static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache=
+_kset_onmedia *kset_onmedia)
+> +static int last_kset_gc(struct pcache_cache *cache, struct pcache_cache_=
+kset_onmedia *kset_onmedia)
+>  {
+>         struct dm_pcache *pcache =3D CACHE_TO_PCACHE(cache);
+>         struct pcache_cache_segment *cur_seg, *next_seg;
+>
+> +       if (!cache_seg_id_valid(cache, kset_onmedia->next_cache_seg_id)) =
+{
+> +               pcache_dev_err(pcache, "invalid next_cache_seg_id %u in g=
+c (n_segs %u)\n",
+> +                               kset_onmedia->next_cache_seg_id, cache->n=
+_segs);
+> +               return -EIO;
+> +       }
+> +
+>         cur_seg =3D cache->key_tail.cache_seg;
+>
+>         next_seg =3D &cache->segments[kset_onmedia->next_cache_seg_id];
+> @@ -94,6 +100,8 @@ static void last_kset_gc(struct pcache_cache *cache, s=
+truct pcache_cache_kset_on
+>         spin_lock(&cache->seg_map_lock);
+>         __clear_bit(cur_seg->cache_seg_id, cache->seg_map);
+>         spin_unlock(&cache->seg_map_lock);
+> +
+> +       return 0;
+>  }
+>
+>  void pcache_cache_gc_fn(struct work_struct *work)
+> @@ -130,7 +138,11 @@ void pcache_cache_gc_fn(struct work_struct *work)
+>                         if (dirty_tail.cache_seg =3D=3D key_tail.cache_se=
+g)
+>                                 break;
+>
+> -                       last_kset_gc(cache, kset_onmedia);
+> +                       ret =3D last_kset_gc(cache, kset_onmedia);
+> +                       if (ret) {
+> +                               atomic_inc(&cache->gc_errors);
+> +                               return;
+> +                       }
+>                         continue;
+>                 }
+>
+> diff --git a/drivers/md/dm-pcache/cache_key.c b/drivers/md/dm-pcache/cach=
+e_key.c
+> index e068e878231b..8eec5238c5da 100644
+> --- a/drivers/md/dm-pcache/cache_key.c
+> +++ b/drivers/md/dm-pcache/cache_key.c
+> @@ -94,6 +94,12 @@ int cache_key_decode(struct pcache_cache *cache,
+>         key->off =3D key_onmedia->off;
+>         key->len =3D key_onmedia->len;
+>
+> +       if (!cache_seg_id_valid(cache, key_onmedia->cache_seg_id)) {
+> +               pcache_dev_err(pcache, "invalid cache_seg_id %u in cache =
+key (n_segs %u)\n",
+> +                               key_onmedia->cache_seg_id, cache->n_segs)=
+;
+> +               return -EIO;
+> +       }
+> +
+>         key->cache_pos.cache_seg =3D &cache->segments[key_onmedia->cache_=
+seg_id];
+>         key->cache_pos.seg_off =3D key_onmedia->cache_seg_off;
+>
+> @@ -789,6 +795,11 @@ int cache_replay(struct pcache_cache *cache)
+>
+>                         pcache_dev_debug(pcache, "last kset replay, next:=
+ %u\n", kset_onmedia->next_cache_seg_id);
+>
+> +                       if (!cache_seg_id_valid(cache, kset_onmedia->next=
+_cache_seg_id)) {
+> +                               ret =3D -EIO;
+> +                               goto out;
+> +                       }
+> +
+>                         next_seg =3D &cache->segments[kset_onmedia->next_=
+cache_seg_id];
+>
+>                         pos->cache_seg =3D next_seg;
+> diff --git a/drivers/md/dm-pcache/cache_writeback.c b/drivers/md/dm-pcach=
+e/cache_writeback.c
+> index 87a82b3fe836..a104e6ee8aa8 100644
+> --- a/drivers/md/dm-pcache/cache_writeback.c
+> +++ b/drivers/md/dm-pcache/cache_writeback.c
+> @@ -196,12 +196,18 @@ static int cache_kset_insert_tree(struct pcache_cac=
+he *cache, struct pcache_cach
+>         return ret;
+>  }
+>
+> -static void last_kset_writeback(struct pcache_cache *cache,
+> +static int last_kset_writeback(struct pcache_cache *cache,
+>                 struct pcache_cache_kset_onmedia *last_kset_onmedia)
+>  {
+>         struct dm_pcache *pcache =3D CACHE_TO_PCACHE(cache);
+>         struct pcache_cache_segment *next_seg;
+>
+> +       if (!cache_seg_id_valid(cache, last_kset_onmedia->next_cache_seg_=
+id)) {
+> +               pcache_dev_err(pcache, "invalid next_cache_seg_id %u in w=
+riteback (n_segs %u)\n",
+> +                               last_kset_onmedia->next_cache_seg_id, cac=
+he->n_segs);
+> +               return -EIO;
+> +       }
+> +
+>         pcache_dev_debug(pcache, "last kset, next: %u\n", last_kset_onmed=
+ia->next_cache_seg_id);
+>
+>         next_seg =3D &cache->segments[last_kset_onmedia->next_cache_seg_i=
+d];
+> @@ -211,6 +217,8 @@ static void last_kset_writeback(struct pcache_cache *=
+cache,
+>         cache->dirty_tail.seg_off =3D 0;
+>         cache_encode_dirty_tail(cache);
+>         mutex_unlock(&cache->dirty_tail_lock);
+> +
+> +       return 0;
+>  }
+>
+>  void cache_writeback_fn(struct work_struct *work)
+> @@ -241,8 +249,8 @@ void cache_writeback_fn(struct work_struct *work)
+>         }
+>
+>         if (kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) {
+> -               last_kset_writeback(cache, kset_onmedia);
+> -               delay =3D 0;
+> +               ret =3D last_kset_writeback(cache, kset_onmedia);
+> +               delay =3D ret ? PCACHE_CACHE_WRITEBACK_INTERVAL : 0;
+>                 goto queue_work;
+>         }
+>
+>
 > --
-> bryamzxz <hexlabsecurity@proton.me>
+> 2.43.0
 >
 >
+
+Reviewed-by:  Zheng Gu <cengku@gmail.com>
