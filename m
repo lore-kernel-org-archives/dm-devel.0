@@ -1,171 +1,190 @@
-Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com [209.85.167.43])
+Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF1F41A6824
-	for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 15:11:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.43
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782659479; cv=pass; b=ly8WoqGSg1XqmFPTNJm1IGqbii7RBABhi3P9q3NWx4JEfvEaSemDTgIDXvTkD/PlqkyLunG9o07qI81jqSMtywDVv0gqhwsm36JIJQWgKDUKoL78ktfj4BNnj+/AJcic/hExxRTAd6lkI4ASaLabqvkR92qm7hBWSPUiVshCs0E=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782659479; c=relaxed/simple;
-	bh=0IV7LSJfosOqXMZJCGZOIxws+EyFqvj4abMrmTC9JFY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=h2fNGE5l7ccrVtvc0YJsSftEBb9Ong9smeoUq2+c3Y860NpFdrhAs81Dzzh0AFWJYdL6oPtl2+kMLvHaQvWmXDyAjgFICWJy51fTQl69nAK1LKUl2LaOop4KeMmaxTGz7UiCBuEgqQHNRUeTIioDFDIKYR9AhjXjp9bsxEptbOA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=KW/v9JOO; arc=pass smtp.client-ip=209.85.167.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 057421A6824
+	for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 15:12:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1782659530; cv=none; b=rs+mVsYiKA7YKtk8pjibikfIbTaJ8aO4rWpUXsqr64Zc4CHjJwlEDMEswESsy7S5AE+pA9wT9xv9jpeUPFPvTSSN2ScnQNKcObvmQ0znGrROfN+w4dl/T+R8s/Or6vHHkPBE1/Ankl4j8EHd2+/iDjvK144oeURQngb0noP7yw8=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1782659530; c=relaxed/simple;
+	bh=DPrJiuhZ2KvpIwvRDGA2vWUoMG3uH2LbJqAs5WJW3rw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mpW/zi71I+gJVzB8XZJN+eiNM7QGfYG5wXWDFM1ozj21+Pymg4vBC/bj1IkIdQEn49ru0+qHlHRa3oQ2eHhrPZgZ67sx8fslf4R7Q6cABIav36Ber2AnK0EV8Wm1luWVjcqoAIWwmhm3p61sgXBkgp6Q4t3IrJwvds4w1qD4JE8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=doBpXg6J; arc=none smtp.client-ip=209.85.222.170
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="KW/v9JOO"
-Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-5aeb36ed873so467093e87.0
-        for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 08:11:17 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1782659476; cv=none;
-        d=google.com; s=arc-20260327;
-        b=LGLvmhGV7K1GxGmq1mxgd1kIqPbQXWueBVx0lj+BO10ggzfVl/O8aO7tsPJpoxpQ3V
-         14qTyCOmM3+ygnFr685IE0/8YtfRthiMjNPVNUmPrXCujw8nEsDKO+p84oaA7QcIdl/W
-         rLG55BrNQkbkJRLVZMItAIc7RtiZAG/KjI91bylQ7lY31BU86LSQB/4eCUyxoWoesFHR
-         klMM5fC777MT4MK6+xfIuV0FwCu5KS6zagydKn/4VxqmcL72MFdts+3GIS/kcdcfo7L+
-         p8V5L+398bF6K5DvXsoJrUz9hrhDwlKyDTDna+n97k9kuli9NGKzq+cbKRiHt02BQJBp
-         ueNQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=7cnDcLnb1pEkgauzvXiAxzSnyVZf0BXRh008AuKkl2Q=;
-        fh=+0Kgjkk3V0GUIRANHS4kO50WRmzYdr1bl4rLk3yRjZc=;
-        b=ZD46Vd/LMYr4547GN9gEJxWK9wJbXWaJE83Tmge0HysAl71Q3ytHQEtMHYK2fk1ry7
-         iF5kgYupd8btLxt7dkCGNgqU0jp9mBXJe4TNYY8fSlMEz2zLMKj366sXp2AIBI7AcdHS
-         prLI/NfWbxwPLG7ord4i4w39kuKvfKdogEj6cULks8ZS4Qr8Z6BkTbw0RJ9Ar04d4Yui
-         5o9tLLQq+/sC6OCSGaxmp5yJHt4Hb2T6fYVyKcHSv7As25zCd/pcuQdm9EEP4jsv+S13
-         zMfaN81YFtvUU59SkuLnjeAJIqbEtBWMlvqxJN6MvgxrWWvUUxiaQ86SAHHMjb0LX6MQ
-         L8jA==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="doBpXg6J"
+Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-9159951f05aso333594285a.0
+        for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 08:12:07 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=trailofbits.com; s=google; t=1782659476; x=1783264276; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=7cnDcLnb1pEkgauzvXiAxzSnyVZf0BXRh008AuKkl2Q=;
-        b=KW/v9JOOAzc0CHX1DufQva/jbMv9BeZ3DV9cncRSMkjBiUZXvTj2JRrsaB3yxmxccz
-         tGSBQVf4qUy/qgU6VI+W70+mFhsa1ekLpaWEIKIqeJaj6hspIJUOV5RP4i34GqMzRBlo
-         SPb/1ZI8t23iS2GllmRTBHiNzVdeN5RwwS9cFljzTIjgJfwC8T6J2QtWNEL8K7NT6J3G
-         ocyaMArvkY5ZNvEYQVt8i19jdPNlp8p4yChSSvwZmG2skM4cwQpL8MeT0xpnwBhW4qZY
-         07KF9NIn+srhPZ9Y6eqJHzAmKA3f+FyAoJlzRKL1mTj8oq91Po3WZ2unOfKxBlRb7e1o
-         HCOA==
+        d=trailofbits.com; s=google; t=1782659527; x=1783264327; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=lv0fW+wQn41e4tFDheX0OpKWimqloBhZtw7itNudSzM=;
+        b=doBpXg6JbqBcZ36rCus0YHT4LIU92vzAqtBlyrY2dUfpTxS0dzTDb3+ieqLWBtw70z
+         UaoMrOz1SCPxzL5CenAbUuVgmMFMoiZCV7Sq1jNgWR/2n+UY8EbhHcOL/P+83fjlyseD
+         KGrDdRM/bY0XNPKeXId1FORUeFUmqxbfGvAvlzQTAqKlP3Ns55PKZ1HX0rYVsk1whdBF
+         WzegoZpQJJQ3IWj7BgidQQnb865pTbPQwTrgJtfzWKjHQb84y/fPImugnle9B7jnqfaX
+         JWC7CDYZtFkKWTB1pieGiuy4Vkhb9lcRsWNkcsSR9zp+o+IagVkdu+yYw3j0ZSWrR0I0
+         ZYZg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782659476; x=1783264276;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=7cnDcLnb1pEkgauzvXiAxzSnyVZf0BXRh008AuKkl2Q=;
-        b=ezjDF7A/gej3lL6l9SiIoSSe7szEZGb7yuXxIfhvR0/2nAnQc48KQg6Dmqe/snTuKP
-         CTP5Fv38jPRm0/waw+olXXBkDKxuVlYlobG8SZDr5o1srcK3Ooo3vkeoa0wk5wi7Xd7e
-         BLJ6Sw+64sUokjekg5Mp4iX4ZE4zgEHqGGELocHSN/Obg98XH4G1WX6+JH27u99Y1PN6
-         dfUz8IlXFDEOFPQBROu4v+3KCmJxzDsLVci2UAvg+m1tfwQ2ELUlhx6tfrf4Y7nwG/x+
-         uvyjgwkCuRSH/VT5CR+Usl9FEPKENkdYG1jCKySXkADZXEo5JgYNi2gvjRPsxPip3J9p
-         jHWw==
-X-Gm-Message-State: AOJu0YwSpupuyJbelN1+zdhk5t1EZ7R0DWrzDgJVMaUrNIRBUIMNN/6A
-	BF+9/CqwtYKb/MkpQ+/IxObn3RXk1g8IXR5M+ZUhHhZQQ5Zf9v6nw5kwo9dKRWrK8z66MjDawcc
-	OjLx/Dw8KCwS+TODlDQ3Rah//QuxmXIqtywgBTe2dDw==
-X-Gm-Gg: AfdE7cl4hRYFqpN5lexGA2yFhgeHs3urZZ8iwoZUGRl4ytF2IhC3lhuwjXr+EU8f+Z1
-	59PyLVWH9XGrezMcDTGh9wDgFfL+JdhpprJuby9MiHHKPrb/ypsnIhLKI+jR/+npy2ZNdkxS9TU
-	jRSP8D7FrsHZy32r4VtU+0/VIYk5tZiYZ6dspd0GplMKLLcp0T5OGBvbCz9QfiioJQeQTSS/z/C
-	tiJ3w0UlnHCPnc9oXYMYWV7PekZZBj8zsHuZxw7BeaMXbBIHGRfTD2iC4MIQR1Z/aaiboY=
-X-Received: by 2002:a05:6512:838d:b0:5ae:9c5f:1add with SMTP id
- 2adb3069b0e04-5aea1f5f6bfmr2045673e87.27.1782659476007; Sun, 28 Jun 2026
- 08:11:16 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1782659527; x=1783264327;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=lv0fW+wQn41e4tFDheX0OpKWimqloBhZtw7itNudSzM=;
+        b=MfX4vAICsOSP4fyIRlejPV+YE3Ke53GKUtkJDxpFyNmYw8mkGsCDA4GTU1BCJaw9Na
+         ECkGRyl4cNzMWEjRLpjcJUbylpFsMRbfh+EJdDFzjsg7vprky26nBRv2miuRqhKagbit
+         WMf7j/hK0piwNntsIssjkamteZZYjgLnPOKgDLWGpPHlDhp+TDOl136heigwPdsEoZjD
+         rZ1EtEZKoYmL6SzHw2fqaHat2ujEMHtKWf9lx2BPjJJTGc78WO31TrwGANMSaXQLmVpT
+         ltNUD/xYf2XIF/SzQyIOUfunxFMM5cR978eI7xUvMWtd7NJawcyWh3nWJnNP20qmWrCN
+         Fwzg==
+X-Forwarded-Encrypted: i=1; AFNElJ9YsatArSLaB5q2jN7oraNpaFWZIF61IGhXv6rME3A8Zj+ILH3hRGG89kkxquIrhwedryXndF+Nmg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyA49KmBKYKCHwEs2F5bKg9tpWYgRezeQQBHeHvfH7O19g7evb6
+	K+f7Saj1s8dSqspMzqSDS5DP6Lf0zkIFAbeVzZvbNubiBgX95JkhqvFVYVgDAQjpy04=
+X-Gm-Gg: AfdE7ck28JxoHRwLyVHspVToAcw0eF1qz8jXdNmepgP2wFo1AuIZXTlNsL2ghuvh5ac
+	GnmoPVD2Ahib2K3IQoTxndsbi7gtn8AnsIpHQ5IdSLa7BuOrvD14i2nGiuNjHFArsk5BV97p9H3
+	uLd2vJM84wHg3tDH/vEEpAHbV7r3TOrsKIukObDn37ETX/IXFfRtsVhGDlkOHqHpTEK38YFruAW
+	BnmHTmgH1HLqkVbFpUvWotvJSeASHT6GEF50tcqLTSIrK82+gPIEYsrwoUtfkqMjLNO6j/gQBCp
+	TnKeEkpDEkRwRrx9VXBx5DlOsx0He/OchFzf7CeIGYdWUaQ1KalMNVWdVhbhRr9MSDiHKPdQY4q
+	Ken/euO8YPFSR3b4uU2STxPN/XbKPSi8DxHHw9EONmfpAwHNeO+jjf+JtDfWOW+pgwwbj4RJAwq
+	xf9GB2cFlDTuxWNkiX
+X-Received: by 2002:a05:620a:2592:b0:920:eb4b:602 with SMTP id af79cd13be357-9293c5fcccamr2005907585a.31.1782659526659;
+        Sun, 28 Jun 2026 08:12:06 -0700 (PDT)
+Received: from localhost ([161.35.96.86])
+        by smtp.gmail.com with UTF8SMTPSA id af79cd13be357-926004ac1b8sm1748617185a.36.2026.06.28.08.12.02
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 28 Jun 2026 08:12:04 -0700 (PDT)
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
+	linux-kernel@vger.kernel.org (open list)
+Subject: [PATCH] dm cache: parse invalidate_cblocks with kstrtoull()
+Date: Sun, 28 Jun 2026 15:11:55 +0000
+Message-ID: <20260628151139.75447.cf67e9b6b484.dm-cache-invalidate-cblock-truncation@trailofbits.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260609001636.1235504.7288d2831f6d.dm-cache-invalidate-cblock-truncation@trailofbits.com>
- <CALjSBEvCkx9xPTOeYOGQs-hdTsMw1vOQ3bX95n9r-ep8tA4BgQ@mail.gmail.com>
-In-Reply-To: <CALjSBEvCkx9xPTOeYOGQs-hdTsMw1vOQ3bX95n9r-ep8tA4BgQ@mail.gmail.com>
-From: Samuel Moelius <sam.moelius@trailofbits.com>
-Date: Sun, 28 Jun 2026 11:11:04 -0400
-X-Gm-Features: AVVi8CdFSZqVTZwu6Gwk3KDJantHPO2j5gPqY8ezV7Jz-OkH-FrWm-xYHS-Tocw
-Message-ID: <CAE+C+Db7v=Y0UhZo02MhEnokXfX02rFs=irQWyfaen2oO5zpfA@mail.gmail.com>
-Subject: Re: [PATCH] dm cache: reject oversized invalidate_cblocks values
-To: Ming Hung Tsai <mtsai@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Wed, Jun 10, 2026 at 7:51=E2=80=AFAM Ming Hung Tsai <mtsai@redhat.com> w=
-rote:
->
-> On Tue, Jun 9, 2026 at 8:26=E2=80=AFAM Samuel Moelius
-> <sam.moelius@trailofbits.com> wrote:
-> >
-> > invalidate_cblocks parses the cache block number into an unsigned long
-> > long, but then stores it in a narrower cblock_t.  Values that do not fi=
-t
-> > in the target type are silently truncated before the cache block is
-> > invalidated.
-> >
-> > That can make a request for one cache block invalidate a different
-> > block.  It also makes the userspace-visible control file accept input
-> > that cannot be represented by the mapping it is about to update.
-> >
-> > Reject cache block numbers that do not round-trip through cblock_t
-> > before using them.
-> >
-> > Assisted-by: Codex:gpt-5.5-cyber-preview
-> > Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
-> > ---
-> >  drivers/md/dm-cache-target.c | 8 +++++++-
-> >  1 file changed, 7 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.=
-c
-> > index 097315a9bf0f..5f1a019a9a8d 100644
-> > --- a/drivers/md/dm-cache-target.c
-> > +++ b/drivers/md/dm-cache-target.c
-> > @@ -3330,6 +3330,9 @@ static int parse_cblock_range(struct cache *cache=
-, const char *str,
-> >         r =3D sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
-> >
-> >         if (r =3D=3D 2) {
-> > +               if (b > U32_MAX || e > U32_MAX)
-> > +                       return -EINVAL;
-> > +
-> >                 result->begin =3D to_cblock(b);
-> >                 result->end =3D to_cblock(e);
-> >                 return 0;
-> > @@ -3341,8 +3344,11 @@ static int parse_cblock_range(struct cache *cach=
-e, const char *str,
-> >         r =3D sscanf(str, "%llu%c", &b, &dummy);
-> >
-> >         if (r =3D=3D 1) {
-> > +               if (b > U32_MAX || b =3D=3D U32_MAX)
-> > +                       return -EINVAL;
-> > +
-> >                 result->begin =3D to_cblock(b);
-> > -               result->end =3D to_cblock(from_cblock(result->begin) + =
-1u);
-> > +               result->end =3D to_cblock(b + 1);
-> >                 return 0;
-> >         }
-> >
-> > --
-> > 2.43.0
-> >
-> >
->
-> This patch is a half-measure. sscanf() silently wraps on overflow, so
-> values beyond U64_MAX still get wrapped to a u64 value, bypass the
-> range check, and invalidate a different block than specified.
->
-> Also, in the single-value path, the b =3D=3D U32_MAX check is redundant.
-> With the original end calculation, end wraps to 0 via uint32_t
-> overflow, and validate_cblock_range() already rejects it since begin
-> >=3D end. Neither the extra check nor the new end calculation is needed
-> here.
->
-> To properly fix truncation, a rework using kstrtoull() is needed.
+invalidate_cblocks parses cache block numbers with sscanf() and then
+stores them in the narrower dm_cblock_t type.  Values larger than the
+cblock representation are truncated before invalidation, so a request
+for one cache block can invalidate a different block.
 
-I will submit a new patch with the subject line "dm cache: parse
-invalidate_cblocks with kstrtoull()".
+Checking the parsed value after sscanf() is not sufficient because
+sscanf() does not reliably reject values beyond U64_MAX before storing
+into the destination.  Such inputs can still be converted to a wrapped
+u64 value and then pass a later range check.
 
-Please consider this patch withdrawn.
+Parse each single value or range endpoint with kstrtoull() instead, and
+reject values that do not fit in dm_cblock_t before converting them to
+cblock values.  The existing range validation continues to reject empty
+or out-of-cache ranges, including the single-value U32_MAX case whose
+exclusive end wraps to zero.
+
+Assisted-by: Codex:gpt-5.5-cyber-preview
+Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+---
+ drivers/md/dm-cache-target.c | 48 +++++++++++++++++++++++++++---------
+ 1 file changed, 36 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 097315a9bf0f..35c1eea48116 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -16,6 +16,7 @@
+ #include <linux/dm-kcopyd.h>
+ #include <linux/jiffies.h>
+ #include <linux/init.h>
++#include <linux/kstrtox.h>
+ #include <linux/mempool.h>
+ #include <linux/module.h>
+ #include <linux/rwsem.h>
+@@ -3311,6 +3312,26 @@ struct cblock_range {
+ 	dm_cblock_t end;
+ };
+ 
++static int parse_cblock(const char *str, size_t len, uint64_t *result)
++{
++	char *buf;
++	int r;
++
++	if (!len)
++		return -EINVAL;
++
++	buf = kstrndup(str, len, GFP_KERNEL);
++	if (!buf)
++		return -ENOMEM;
++
++	r = kstrtoull(buf, 10, result);
++	kfree(buf);
++	if (r)
++		return r;
++
++	return *result > U32_MAX ? -EINVAL : 0;
++}
++
+ /*
+  * A cache block range can take two forms:
+  *
+@@ -3320,32 +3341,35 @@ struct cblock_range {
+ static int parse_cblock_range(struct cache *cache, const char *str,
+ 			      struct cblock_range *result)
+ {
+-	char dummy;
++	const char *dash = strchr(str, '-');
+ 	uint64_t b, e;
+ 	int r;
+ 
+-	/*
+-	 * Try and parse form (ii) first.
+-	 */
+-	r = sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
++	if (dash) {
++		r = parse_cblock(str, dash - str, &b);
++		if (r)
++			goto bad;
++
++		r = parse_cblock(dash + 1, strlen(dash + 1), &e);
++		if (r)
++			goto bad;
+ 
+-	if (r == 2) {
+ 		result->begin = to_cblock(b);
+ 		result->end = to_cblock(e);
+ 		return 0;
+ 	}
+ 
+-	/*
+-	 * That didn't work, try form (i).
+-	 */
+-	r = sscanf(str, "%llu%c", &b, &dummy);
+-
+-	if (r == 1) {
++	r = parse_cblock(str, strlen(str), &b);
++	if (!r) {
+ 		result->begin = to_cblock(b);
+ 		result->end = to_cblock(from_cblock(result->begin) + 1u);
+ 		return 0;
+ 	}
+ 
++bad:
++	if (r == -ENOMEM)
++		return r;
++
+ 	DMERR("%s: invalid cblock range '%s'", cache_device_name(cache), str);
+ 	return -EINVAL;
+ }
+-- 
+2.43.0
+
