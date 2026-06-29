@@ -1,66 +1,72 @@
-Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f180.google.com (mail-qk1-f180.google.com [209.85.222.180])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFB2843C057
-	for <dm-devel@lists.linux.dev>; Mon, 29 Jun 2026 15:37:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F213344B690
+	for <dm-devel@lists.linux.dev>; Mon, 29 Jun 2026 15:48:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.180
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782747464; cv=none; b=oU+5KO9SJh/BTdngRMQYnhabtuXQYbkIRskOZ92iRxnBx2l0f3jx1eO+0FUfMHEtttNx2GFvUswZNshwYM6Uc9uhQTzejmxJZUe8fPmZmPvDNX5gsL6aFGcuFVy1n4pLpqcy858wfK83gxs14/qX6kqINqdjXJfGJgVqAhfE2F4=
+	t=1782748139; cv=none; b=i5idlicS3qgPLoZWumBxxY9N+w58f/Qn+jni5dfJ83Pe6fYnvfLqC2hHNT+A5EA3Wa3Q7qubaOJNRb6hmPzsW2QtfzIpnCTa1ZnTP0SETOCUwNMZWF9r+mErpEtbdd8PoOy6FztNAcqqVhXQv8YXTeOYeZCPhj0bfQZHZ7DmuM0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782747464; c=relaxed/simple;
-	bh=EwsK5YC4nvvN4juEL4G8z/eyn97NdgF6/tOCvLHgRD8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=CGqwvIekKaDzS27WhSqvobcSGqTH6vnbpvD4K72aW2ZvMnGGXWuv0lt7rgc1qOMfvUMfWJZ313XPwH6sUMlCVfrF6XpwaLa2mW7wFV1P9F1D/I2d8al7KUBElgnG60uS7vcREXAVbHhUmOV6bCoyzbmjBCk3+nIF2Qkv0bM7DCM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=Tfr4cuMS; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=vUHJD4gD; arc=none smtp.client-ip=80.241.56.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
+	s=arc-20240116; t=1782748139; c=relaxed/simple;
+	bh=ZA+NSHuLcCfnVV8X5dlflD3TBkuW7gkiOxHA5k0aPII=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=swENwSfnsV8yx6fb3bRJ39uBNduDi8FqlE8tqlw4IIx1kHMa9OKn1HG0XW+9GMQE4th4SUCMt4shr6mPsLAmTmYMM3Zpmr2A+nMjPldh33KnidUvbcVnhAF/IhzFg1fylYSamg71M0rUZXp6E1wEMaBATGo7/QDvjYAAEphASfE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=OKcAYwpZ; arc=none smtp.client-ip=209.85.222.180
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="Tfr4cuMS";
-	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="vUHJD4gD"
-Received: from smtp202.mailbox.org (smtp202.mailbox.org [IPv6:2001:67c:2050:b231:465::202])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4gpr502sYGz9tsk;
-	Mon, 29 Jun 2026 17:37:40 +0200 (CEST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1782747460;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=XMMBFhz0UKrFRcJeL1Bsan4vTZxrHHTrF4ThDim2Es8=;
-	b=Tfr4cuMSOjnJZ9HC+l1fXJLyNJBxMa+/uyx31rMMBhXHONCT4NQu6jmXUuFriXGU3OamSY
-	318+IyZU5SHUNp5KBhxxRmu1x5S6XiDS3Gg7hMqpUllW8bAk1aT+JkUFedcQPhHEmtWrKM
-	HDjQ1DTichQY6AkjpcJMBOOVQiRFW29IQ66NqYOmm6pbmCVYJXNGk/cwa+g7JYLhjYzcmT
-	C57sw4U+GxnvC10izY3X+2ciiwDHoA3gTt48P2nVYSOGDrTRzTN9PtLSqtnSKFnGJjViHb
-	uTTTOYDIcqRDbSBPGC1bg6QqHmZmOWguvLqsot5ABnIhL58DaAXq1q6QVecohQ==
-Authentication-Results: outgoing_mbo_mout;
-	dkim=pass header.d=mailbox.org header.s=mail20150812 header.b=vUHJD4gD;
-	spf=pass (outgoing_mbo_mout: domain of manuelebner@mailbox.org designates 2001:67c:2050:b231:465::202 as permitted sender) smtp.mailfrom=manuelebner@mailbox.org
-From: Manuel Ebner <manuelebner@mailbox.org>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
-	t=1782747458;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=XMMBFhz0UKrFRcJeL1Bsan4vTZxrHHTrF4ThDim2Es8=;
-	b=vUHJD4gDXB7rBgrMQAP2kqRWzalShfiEkSUQXpMRibEh58lg7fLe+03jA8R3ESg57ZCQYD
-	YUWoocibkT6L3bufs+AVkJRuB7ELpxxacV9oRuMyk3saKPm/a47ayvrOmTdyZJrr8RdMhn
-	4LKMpFcjpfs7/DQhmdpscu2LxVPFNEMDM+dxg/LVAqdoeN1wFxba50Q0x6z0MxNF5oWvp1
-	EjTFWx6x8JRwBar9zXJDtal6Yqn7q/miTpOvk0RZfS0RYA8oaZUc/Vm6sOhudommY4bybR
-	Ti/daxr4WsgnNXYMlXLbP4BHjXOirjZk4lCZBYhS6W/U1Ew219LlkmBrqQ/BCg==
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
-	linux-doc@vger.kernel.org (open list:DOCUMENTATION),
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="OKcAYwpZ"
+Received: by mail-qk1-f180.google.com with SMTP id af79cd13be357-915ab38ac14so436430385a.0
+        for <dm-devel@lists.linux.dev>; Mon, 29 Jun 2026 08:48:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=trailofbits.com; s=google; t=1782748137; x=1783352937; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=MykUwDfoN5ChmfDjdlQO00qBcy70IfdVFe3AWk6giuU=;
+        b=OKcAYwpZrqg3zsmrUDVLCj+yU6q4+wDqPCsyg7IuYfEQFBXzClZHN1YhTznAGtp6lF
+         qG5OjU5DvgUTO25VQrIkJrtsUj7QJj9BaN1trX6k0MwsGhhxhsEqWkWzQSy8AgwRL1eq
+         x1Je9M9kDyLOHIqvUdcHzAeetChQ+L78dFi/PDTUnybUxKTdj45ncZqfW1w+X0BnPsnx
+         xSvZ4pgwydpMHe2VA3Ark6J83Ev+zF3/DZHtAAHhKuK0uLhDWAY+0uR7uJpjqzRW7THC
+         +otgpksAllNoEUZy30jtRxadl1MvNjnUDaVeIXOSKKIkDtLBEX/ZrPopKZZoS6kSZhYY
+         P0hg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1782748137; x=1783352937;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=MykUwDfoN5ChmfDjdlQO00qBcy70IfdVFe3AWk6giuU=;
+        b=Q4z4fajYCzSETg/yS9ryqql8Y3WAm1lu12sYlLttqerF/MageaXEULbGxZ5XT3lMG8
+         mEB87LtOZMNMdZ5yb+DnV376jz3YnbYUBlJntfp7dP6tOEQk8WsFQ0+env9aVdevKYBI
+         ea0cKCIk/NGqMVU/Drr3MRK5bgMGtRKU4qrG2/Y2jCLVxFcWTFwccAajwWwJbkOTbVIH
+         S9RR3x3cW5ltb/6IQ62eFjz6BcZAcaAD13Ahl7F32prvTlCBk2K2H2xKMpK+BRC+3bST
+         MykjqJ31QSQauv+R2pOb1cpD04haZEuF8sgEpytGd0fnCKOcSRD3TDdrQvMd3ypCr+mn
+         xK1Q==
+X-Forwarded-Encrypted: i=1; AFNElJ8jbm1kdvdV48V1eVAzvl7q1VmJnlrv4FpM28z/feYdiDKHjX9XLUqz54mCkUQgRc+cJEGNISojGQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yw5PvAZ6ENJV2bWsW1aFkz9+ZyHERbdKu//57YxS1oSRYn1nHqH
+	aoJujgo6EPGBE3MSogIlMemrfPeA3bRdN5cdKmyN/MllG65NxGEM2rKukji8czFoTNokgDMW3+7
+	y4zd2cQU=
+X-Gm-Gg: AfdE7cmPy3Fk6oN5yr46EYxUG6p3XOR8fANpq/slcY8g4cDDm8vXPejdBGZnUeFN9rb
+	dU/bfJE2fMLs+Ow/LQ8t/uESZtj1zhe1t40L0yhmhuGSLTO2o3uQjQS32vinbOyyqC92Mgsy+xV
+	eBETOtAVYsRoILpgrZE29Y3R9kUag/5IoV/7qCffoMXYgEMaMFWoDpgNZogedJkNT0OF+eRbJte
+	f3mpRWG3gL2M/L45OBQZhVxI+Vcssngepboz2Sl5Rhv6OevqnAh+VUBR5ZOIjGGQVElk17xM9Qs
+	GJ8t9ExbxR/p0/9iPw+vEBxZqwBf2yKhxayqTQKThy+9SOoaQrAM7nrnjLrZMspteulZGa+iz5G
+	NDuQ7Dd87HbzkvPQEgFd9jKzaK2EEH5Yhcqsvc925Z+ljvT5zyT+cYny95hulkhgQPKv7svuJkg
+	ODbTx80WXrwu72pM8N
+X-Received: by 2002:a05:620a:4411:b0:915:c4de:7ab7 with SMTP id af79cd13be357-92e627b5366mr14002285a.35.1782748136941;
+        Mon, 29 Jun 2026 08:48:56 -0700 (PDT)
+Received: from localhost ([161.35.96.86])
+        by smtp.gmail.com with UTF8SMTPSA id af79cd13be357-92e623379easm9645885a.32.2026.06.29.08.48.56
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 29 Jun 2026 08:48:56 -0700 (PDT)
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+To: Dongsheng Yang <dongsheng.yang@linux.dev>
+Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
+	Zheng Gu <cengku@gmail.com>,
+	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER PCACHE TARGET),
 	linux-kernel@vger.kernel.org (open list)
-Cc: Manuel Ebner <manuelebner@mailbox.org>
-Subject: [PATCH v2] Documentation: device-mapper: adopt new coding style of type-aware kmalloc-family
-Date: Mon, 29 Jun 2026 17:35:00 +0200
-Message-ID: <20260629153458.87029-3-manuelebner@mailbox.org>
+Subject: [PATCH v2] dm-pcache: reject option groups without values
+Date: Mon, 29 Jun 2026 15:47:40 +0000
+Message-ID: <20260629154739.128526.10d4fd36508c.dm-pcache-missing-option-value-null-deref@trailofbits.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -68,35 +74,55 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-MBO-RS-ID: e6329a7e99dffda4c91
-X-MBO-RS-META: a95m11qyxo4jsautasoxsnci9bz1qqty
-X-Rspamd-Queue-Id: 4gpr502sYGz9tsk
 
-Change the Documentation to reflect this commit 69050f8d6d07 ("treewide: Replace
-kmalloc with kmalloc_obj for non-scalar types")
-kmalloc -> kmalloc_objs()
+The pcache target parses optional arguments as name/value pairs.  A
+table that advertises one optional argument and supplies only a
+recognized option name, for example "cache_mode", reaches
+parse_cache_opts() with argc == 1.  The parser consumes the name,
+decrements argc to zero, then calls dm_shift_arg() again for the value.
+dm_shift_arg() returns NULL when no arguments remain, and the following
+strcmp() dereferences that NULL pointer.
 
-Signed-off-by: Manuel Ebner <manuelebner@mailbox.org>
+Check that each recognized option has a value before consuming it.  This
+keeps valid "cache_mode writeback" and "data_crc true/false" tables
+unchanged while making malformed tables fail during target construction
+with a precise missing-value error.
+
+Assisted-by: Codex:gpt-5.5-cyber-preview
+Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
 ---
-[v2]
- added '()' for automarkup
+Changes in v2:
+  - Verify required arguments in a more flexible way
 
- Documentation/admin-guide/device-mapper/statistics.rst | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-pcache/dm_pcache.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/Documentation/admin-guide/device-mapper/statistics.rst b/Documentation/admin-guide/device-mapper/statistics.rst
-index 41ded0bc5933..517b6d576826 100644
---- a/Documentation/admin-guide/device-mapper/statistics.rst
-+++ b/Documentation/admin-guide/device-mapper/statistics.rst
-@@ -30,7 +30,7 @@ region, etc.  Unique region_ids enable multiple userspace programs to
- request and process statistics for the same DM device without stepping
- on each other's data.
+diff --git a/drivers/md/dm-pcache/dm_pcache.c b/drivers/md/dm-pcache/dm_pcache.c
+index 81c795c0400e..d5cfd162c063 100644
+--- a/drivers/md/dm-pcache/dm_pcache.c
++++ b/drivers/md/dm-pcache/dm_pcache.c
+@@ -168,6 +168,10 @@ static int parse_cache_opts(struct dm_pcache *pcache, struct dm_arg_set *as,
+ 		argc--;
  
--The creation of DM statistics will allocate memory via kmalloc or
-+The creation of DM statistics will allocate memory via kmalloc_objs() or
- fallback to using vmalloc space.  At most, 1/4 of the overall system
- memory may be allocated by DM statistics.  The admin can see how much
- memory is used by reading:
+ 		if (!strcmp(arg, "cache_mode")) {
++			if (!argc) {
++				*error = "Missing value for cache_mode";
++				return -EINVAL;
++			}
+ 			arg = dm_shift_arg(as);
+ 			if (!strcmp(arg, "writeback")) {
+ 				opts->cache_mode = PCACHE_CACHE_MODE_WRITEBACK;
+@@ -177,6 +181,10 @@ static int parse_cache_opts(struct dm_pcache *pcache, struct dm_arg_set *as,
+ 			}
+ 			argc--;
+ 		} else if (!strcmp(arg, "data_crc")) {
++			if (!argc) {
++				*error = "Missing value for data_crc";
++				return -EINVAL;
++			}
+ 			arg = dm_shift_arg(as);
+ 			if (!strcmp(arg, "true")) {
+ 				opts->data_crc = true;
 -- 
-2.54.0
+2.43.0
 
