@@ -1,73 +1,66 @@
-Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 057421A6824
-	for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 15:12:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFB2843C057
+	for <dm-devel@lists.linux.dev>; Mon, 29 Jun 2026 15:37:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782659530; cv=none; b=rs+mVsYiKA7YKtk8pjibikfIbTaJ8aO4rWpUXsqr64Zc4CHjJwlEDMEswESsy7S5AE+pA9wT9xv9jpeUPFPvTSSN2ScnQNKcObvmQ0znGrROfN+w4dl/T+R8s/Or6vHHkPBE1/Ankl4j8EHd2+/iDjvK144oeURQngb0noP7yw8=
+	t=1782747464; cv=none; b=oU+5KO9SJh/BTdngRMQYnhabtuXQYbkIRskOZ92iRxnBx2l0f3jx1eO+0FUfMHEtttNx2GFvUswZNshwYM6Uc9uhQTzejmxJZUe8fPmZmPvDNX5gsL6aFGcuFVy1n4pLpqcy858wfK83gxs14/qX6kqINqdjXJfGJgVqAhfE2F4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782659530; c=relaxed/simple;
-	bh=DPrJiuhZ2KvpIwvRDGA2vWUoMG3uH2LbJqAs5WJW3rw=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mpW/zi71I+gJVzB8XZJN+eiNM7QGfYG5wXWDFM1ozj21+Pymg4vBC/bj1IkIdQEn49ru0+qHlHRa3oQ2eHhrPZgZ67sx8fslf4R7Q6cABIav36Ber2AnK0EV8Wm1luWVjcqoAIWwmhm3p61sgXBkgp6Q4t3IrJwvds4w1qD4JE8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=doBpXg6J; arc=none smtp.client-ip=209.85.222.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
+	s=arc-20240116; t=1782747464; c=relaxed/simple;
+	bh=EwsK5YC4nvvN4juEL4G8z/eyn97NdgF6/tOCvLHgRD8=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=CGqwvIekKaDzS27WhSqvobcSGqTH6vnbpvD4K72aW2ZvMnGGXWuv0lt7rgc1qOMfvUMfWJZ313XPwH6sUMlCVfrF6XpwaLa2mW7wFV1P9F1D/I2d8al7KUBElgnG60uS7vcREXAVbHhUmOV6bCoyzbmjBCk3+nIF2Qkv0bM7DCM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org; spf=pass smtp.mailfrom=mailbox.org; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=Tfr4cuMS; dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b=vUHJD4gD; arc=none smtp.client-ip=80.241.56.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=mailbox.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mailbox.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="doBpXg6J"
-Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-9159951f05aso333594285a.0
-        for <dm-devel@lists.linux.dev>; Sun, 28 Jun 2026 08:12:07 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=trailofbits.com; s=google; t=1782659527; x=1783264327; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=lv0fW+wQn41e4tFDheX0OpKWimqloBhZtw7itNudSzM=;
-        b=doBpXg6JbqBcZ36rCus0YHT4LIU92vzAqtBlyrY2dUfpTxS0dzTDb3+ieqLWBtw70z
-         UaoMrOz1SCPxzL5CenAbUuVgmMFMoiZCV7Sq1jNgWR/2n+UY8EbhHcOL/P+83fjlyseD
-         KGrDdRM/bY0XNPKeXId1FORUeFUmqxbfGvAvlzQTAqKlP3Ns55PKZ1HX0rYVsk1whdBF
-         WzegoZpQJJQ3IWj7BgidQQnb865pTbPQwTrgJtfzWKjHQb84y/fPImugnle9B7jnqfaX
-         JWC7CDYZtFkKWTB1pieGiuy4Vkhb9lcRsWNkcsSR9zp+o+IagVkdu+yYw3j0ZSWrR0I0
-         ZYZg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782659527; x=1783264327;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=lv0fW+wQn41e4tFDheX0OpKWimqloBhZtw7itNudSzM=;
-        b=MfX4vAICsOSP4fyIRlejPV+YE3Ke53GKUtkJDxpFyNmYw8mkGsCDA4GTU1BCJaw9Na
-         ECkGRyl4cNzMWEjRLpjcJUbylpFsMRbfh+EJdDFzjsg7vprky26nBRv2miuRqhKagbit
-         WMf7j/hK0piwNntsIssjkamteZZYjgLnPOKgDLWGpPHlDhp+TDOl136heigwPdsEoZjD
-         rZ1EtEZKoYmL6SzHw2fqaHat2ujEMHtKWf9lx2BPjJJTGc78WO31TrwGANMSaXQLmVpT
-         ltNUD/xYf2XIF/SzQyIOUfunxFMM5cR978eI7xUvMWtd7NJawcyWh3nWJnNP20qmWrCN
-         Fwzg==
-X-Forwarded-Encrypted: i=1; AFNElJ9YsatArSLaB5q2jN7oraNpaFWZIF61IGhXv6rME3A8Zj+ILH3hRGG89kkxquIrhwedryXndF+Nmg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyA49KmBKYKCHwEs2F5bKg9tpWYgRezeQQBHeHvfH7O19g7evb6
-	K+f7Saj1s8dSqspMzqSDS5DP6Lf0zkIFAbeVzZvbNubiBgX95JkhqvFVYVgDAQjpy04=
-X-Gm-Gg: AfdE7ck28JxoHRwLyVHspVToAcw0eF1qz8jXdNmepgP2wFo1AuIZXTlNsL2ghuvh5ac
-	GnmoPVD2Ahib2K3IQoTxndsbi7gtn8AnsIpHQ5IdSLa7BuOrvD14i2nGiuNjHFArsk5BV97p9H3
-	uLd2vJM84wHg3tDH/vEEpAHbV7r3TOrsKIukObDn37ETX/IXFfRtsVhGDlkOHqHpTEK38YFruAW
-	BnmHTmgH1HLqkVbFpUvWotvJSeASHT6GEF50tcqLTSIrK82+gPIEYsrwoUtfkqMjLNO6j/gQBCp
-	TnKeEkpDEkRwRrx9VXBx5DlOsx0He/OchFzf7CeIGYdWUaQ1KalMNVWdVhbhRr9MSDiHKPdQY4q
-	Ken/euO8YPFSR3b4uU2STxPN/XbKPSi8DxHHw9EONmfpAwHNeO+jjf+JtDfWOW+pgwwbj4RJAwq
-	xf9GB2cFlDTuxWNkiX
-X-Received: by 2002:a05:620a:2592:b0:920:eb4b:602 with SMTP id af79cd13be357-9293c5fcccamr2005907585a.31.1782659526659;
-        Sun, 28 Jun 2026 08:12:06 -0700 (PDT)
-Received: from localhost ([161.35.96.86])
-        by smtp.gmail.com with UTF8SMTPSA id af79cd13be357-926004ac1b8sm1748617185a.36.2026.06.28.08.12.02
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Sun, 28 Jun 2026 08:12:04 -0700 (PDT)
-From: Samuel Moelius <sam.moelius@trailofbits.com>
-To: Alasdair Kergon <agk@redhat.com>
-Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
+	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="Tfr4cuMS";
+	dkim=pass (2048-bit key) header.d=mailbox.org header.i=@mailbox.org header.b="vUHJD4gD"
+Received: from smtp202.mailbox.org (smtp202.mailbox.org [IPv6:2001:67c:2050:b231:465::202])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4gpr502sYGz9tsk;
+	Mon, 29 Jun 2026 17:37:40 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
+	t=1782747460;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=XMMBFhz0UKrFRcJeL1Bsan4vTZxrHHTrF4ThDim2Es8=;
+	b=Tfr4cuMSOjnJZ9HC+l1fXJLyNJBxMa+/uyx31rMMBhXHONCT4NQu6jmXUuFriXGU3OamSY
+	318+IyZU5SHUNp5KBhxxRmu1x5S6XiDS3Gg7hMqpUllW8bAk1aT+JkUFedcQPhHEmtWrKM
+	HDjQ1DTichQY6AkjpcJMBOOVQiRFW29IQ66NqYOmm6pbmCVYJXNGk/cwa+g7JYLhjYzcmT
+	C57sw4U+GxnvC10izY3X+2ciiwDHoA3gTt48P2nVYSOGDrTRzTN9PtLSqtnSKFnGJjViHb
+	uTTTOYDIcqRDbSBPGC1bg6QqHmZmOWguvLqsot5ABnIhL58DaAXq1q6QVecohQ==
+Authentication-Results: outgoing_mbo_mout;
+	dkim=pass header.d=mailbox.org header.s=mail20150812 header.b=vUHJD4gD;
+	spf=pass (outgoing_mbo_mout: domain of manuelebner@mailbox.org designates 2001:67c:2050:b231:465::202 as permitted sender) smtp.mailfrom=manuelebner@mailbox.org
+From: Manuel Ebner <manuelebner@mailbox.org>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mailbox.org; s=mail20150812;
+	t=1782747458;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=XMMBFhz0UKrFRcJeL1Bsan4vTZxrHHTrF4ThDim2Es8=;
+	b=vUHJD4gDXB7rBgrMQAP2kqRWzalShfiEkSUQXpMRibEh58lg7fLe+03jA8R3ESg57ZCQYD
+	YUWoocibkT6L3bufs+AVkJRuB7ELpxxacV9oRuMyk3saKPm/a47ayvrOmTdyZJrr8RdMhn
+	4LKMpFcjpfs7/DQhmdpscu2LxVPFNEMDM+dxg/LVAqdoeN1wFxba50Q0x6z0MxNF5oWvp1
+	EjTFWx6x8JRwBar9zXJDtal6Yqn7q/miTpOvk0RZfS0RYA8oaZUc/Vm6sOhudommY4bybR
+	Ti/daxr4WsgnNXYMlXLbP4BHjXOirjZk4lCZBYhS6W/U1Ew219LlkmBrqQ/BCg==
+To: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
 	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
+	linux-doc@vger.kernel.org (open list:DOCUMENTATION),
 	linux-kernel@vger.kernel.org (open list)
-Subject: [PATCH] dm cache: parse invalidate_cblocks with kstrtoull()
-Date: Sun, 28 Jun 2026 15:11:55 +0000
-Message-ID: <20260628151139.75447.cf67e9b6b484.dm-cache-invalidate-cblock-truncation@trailofbits.com>
-X-Mailer: git-send-email 2.43.0
+Cc: Manuel Ebner <manuelebner@mailbox.org>
+Subject: [PATCH v2] Documentation: device-mapper: adopt new coding style of type-aware kmalloc-family
+Date: Mon, 29 Jun 2026 17:35:00 +0200
+Message-ID: <20260629153458.87029-3-manuelebner@mailbox.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -75,116 +68,35 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+X-MBO-RS-ID: e6329a7e99dffda4c91
+X-MBO-RS-META: a95m11qyxo4jsautasoxsnci9bz1qqty
+X-Rspamd-Queue-Id: 4gpr502sYGz9tsk
 
-invalidate_cblocks parses cache block numbers with sscanf() and then
-stores them in the narrower dm_cblock_t type.  Values larger than the
-cblock representation are truncated before invalidation, so a request
-for one cache block can invalidate a different block.
+Change the Documentation to reflect this commit 69050f8d6d07 ("treewide: Replace
+kmalloc with kmalloc_obj for non-scalar types")
+kmalloc -> kmalloc_objs()
 
-Checking the parsed value after sscanf() is not sufficient because
-sscanf() does not reliably reject values beyond U64_MAX before storing
-into the destination.  Such inputs can still be converted to a wrapped
-u64 value and then pass a later range check.
-
-Parse each single value or range endpoint with kstrtoull() instead, and
-reject values that do not fit in dm_cblock_t before converting them to
-cblock values.  The existing range validation continues to reject empty
-or out-of-cache ranges, including the single-value U32_MAX case whose
-exclusive end wraps to zero.
-
-Assisted-by: Codex:gpt-5.5-cyber-preview
-Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+Signed-off-by: Manuel Ebner <manuelebner@mailbox.org>
 ---
- drivers/md/dm-cache-target.c | 48 +++++++++++++++++++++++++++---------
- 1 file changed, 36 insertions(+), 12 deletions(-)
+[v2]
+ added '()' for automarkup
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 097315a9bf0f..35c1eea48116 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -16,6 +16,7 @@
- #include <linux/dm-kcopyd.h>
- #include <linux/jiffies.h>
- #include <linux/init.h>
-+#include <linux/kstrtox.h>
- #include <linux/mempool.h>
- #include <linux/module.h>
- #include <linux/rwsem.h>
-@@ -3311,6 +3312,26 @@ struct cblock_range {
- 	dm_cblock_t end;
- };
+ Documentation/admin-guide/device-mapper/statistics.rst | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Documentation/admin-guide/device-mapper/statistics.rst b/Documentation/admin-guide/device-mapper/statistics.rst
+index 41ded0bc5933..517b6d576826 100644
+--- a/Documentation/admin-guide/device-mapper/statistics.rst
++++ b/Documentation/admin-guide/device-mapper/statistics.rst
+@@ -30,7 +30,7 @@ region, etc.  Unique region_ids enable multiple userspace programs to
+ request and process statistics for the same DM device without stepping
+ on each other's data.
  
-+static int parse_cblock(const char *str, size_t len, uint64_t *result)
-+{
-+	char *buf;
-+	int r;
-+
-+	if (!len)
-+		return -EINVAL;
-+
-+	buf = kstrndup(str, len, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	r = kstrtoull(buf, 10, result);
-+	kfree(buf);
-+	if (r)
-+		return r;
-+
-+	return *result > U32_MAX ? -EINVAL : 0;
-+}
-+
- /*
-  * A cache block range can take two forms:
-  *
-@@ -3320,32 +3341,35 @@ struct cblock_range {
- static int parse_cblock_range(struct cache *cache, const char *str,
- 			      struct cblock_range *result)
- {
--	char dummy;
-+	const char *dash = strchr(str, '-');
- 	uint64_t b, e;
- 	int r;
- 
--	/*
--	 * Try and parse form (ii) first.
--	 */
--	r = sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
-+	if (dash) {
-+		r = parse_cblock(str, dash - str, &b);
-+		if (r)
-+			goto bad;
-+
-+		r = parse_cblock(dash + 1, strlen(dash + 1), &e);
-+		if (r)
-+			goto bad;
- 
--	if (r == 2) {
- 		result->begin = to_cblock(b);
- 		result->end = to_cblock(e);
- 		return 0;
- 	}
- 
--	/*
--	 * That didn't work, try form (i).
--	 */
--	r = sscanf(str, "%llu%c", &b, &dummy);
--
--	if (r == 1) {
-+	r = parse_cblock(str, strlen(str), &b);
-+	if (!r) {
- 		result->begin = to_cblock(b);
- 		result->end = to_cblock(from_cblock(result->begin) + 1u);
- 		return 0;
- 	}
- 
-+bad:
-+	if (r == -ENOMEM)
-+		return r;
-+
- 	DMERR("%s: invalid cblock range '%s'", cache_device_name(cache), str);
- 	return -EINVAL;
- }
+-The creation of DM statistics will allocate memory via kmalloc or
++The creation of DM statistics will allocate memory via kmalloc_objs() or
+ fallback to using vmalloc space.  At most, 1/4 of the overall system
+ memory may be allocated by DM statistics.  The admin can see how much
+ memory is used by reading:
 -- 
-2.43.0
+2.54.0
 
