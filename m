@@ -1,60 +1,60 @@
-Received: from pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com [52.35.192.45])
+Received: from pdx-out-005.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-005.esa.us-west-2.outbound.mail-perimeter.amazon.com [52.13.214.179])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86BE01DE8BB
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jun 2026 08:34:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.35.192.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77C2A1A08A3
+	for <dm-devel@lists.linux.dev>; Tue, 30 Jun 2026 08:34:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.13.214.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782808489; cv=none; b=QiLVZZ+fPCUI4sXpBomFVMFUwx5Cuzo9jv/pAHNE1JPeT5jfz0a6WAaSK6guT/K5mAzV7LSzqs1gwvFB7oAkeqpjL11m9vSbu1hYReysXHsPwfJp+gY6g8fVfZeMEUrbBR1777Jx+P4tdQPiYa6+ILWHjZlJ/sTzJArAHzpZlaE=
+	t=1782808493; cv=none; b=oz1JFiD4G3pVJ3urlTzSQJh+uoaSHuzvoman2cuvffKG8gIjk9jPhyQA+HOhJX+HIz1dE0htGHRSwdPjwbave4i9e5Dej+fSJvKd8/QAW0/U2BIPvsBX00ZZiAUMCzmH0ZU82TEDY98XzEJwWS3rP/iS/uVujQwldHRa1MAg1mY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782808489; c=relaxed/simple;
-	bh=4d9N22ePKHu0cqNDRs94YVybwOIJYuJQMIDBQnjtGzE=;
+	s=arc-20240116; t=1782808493; c=relaxed/simple;
+	bh=7/IOagPsD5SbbSudMDei3USPXzrE+1u69h9mV5tqSkw=;
 	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=i37on9gTUCCnA/q6QoyRKFEHAQq07CjYAn0On6zfU5q3+NaRsgAJ3vtbFxciAjJxkhWZaflI2Bl5/njmps5YgjV9jcO/iZupHIkW+8qP2HZCl8GgdGfIAhR94BA5FzNJPviH/iAbsNzdkAFbi2pscWM5o6bd8TAlEeE/t6Xl8xg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=QlW00SL9; arc=none smtp.client-ip=52.35.192.45
+	 MIME-Version:Content-Type; b=CWHFZFj7267nxStpFwqyUHJ1u3LcVUzc65rc+CSz+3ortuhGE2SKq9vamCFBawX0Z54njqVdRxKunhq9YgvUol/ElY+QBxzsxhV8GmH18leUXSTV4k3Yt7ITOZYQKDOqmVRP2IeXEt4A3ykRjcaCvA+HT31qAX/DzpsoKPdpByg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=sa11sHXM; arc=none smtp.client-ip=52.13.214.179
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="QlW00SL9"
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="sa11sHXM"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
   d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
-  t=1782808487; x=1814344487;
+  t=1782808491; x=1814344491;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=L0aNwTM4xsyVDJfGkroBvflBS/wHl3/+s2a0+xJHX7Q=;
-  b=QlW00SL9nlWCrLxnsYofIYofth0hYN2mLdSey+t84t9RtRP7N0raLChn
-   D2P2Un+QDgXbWt440IDKscdnjrnZL0zxEUktWa1l/h9FqCAZx7eNeURcr
-   ynN+mFYrcMH1oBpJqY3/23pQDgY0zFxQzyUthTgscjlEAEueilvrhVje8
-   NIuq2xRjEUWpUPskk3RRUTLTeOIgOsE+Und0GLtu7bbUwoonF4Uajf5hs
-   uW8hpej+cOvz58Wg/OSeiYqW0RHsA28Mku4r+XZyEsc7/hBg4MAjP98rN
-   t9nMp+kUDrIZsbqc99SQUrZhgW3uw8xEEdzzmt9c/DV1kt8gExa6fEYQp
-   w==;
-X-CSE-ConnectionGUID: v8hd5pM8TS6cGsTUrqndBQ==
-X-CSE-MsgGUID: VIC36+V0Rry+OQ2tUOwq+A==
+  bh=pOfKmycEvE5853rTYlDZwDOy4gkDDIDynAj/X9HCV3c=;
+  b=sa11sHXMlcuJoyFeiN/KRfAnG+b64TNRMiIYrsOskVO/hjYK2COIdcAM
+   ukdpc5xxmpj7/58iLa6AcbhLwAdbZQkm5CxRSaKRh0TLMRkoXu+M9iKNG
+   snz+c7rHNiebAi8Hx0Qrmsf2AlI9NVcjRFbodNDnXdMTPHwwsEvIAreEm
+   8K032j2259h9di/I4P51Hm5TGzLzZyeZtMxSZazERBtPyhPLIqBScYMVx
+   ybznffPq52BqEKw1yvhtE6+pQDLYZCUOsUdIxELdBPC+tte6SSky2/i0V
+   U26igOW1kQtmKsnyQA6Spq7EaZeu3wX57oRPawmnhgjXwwr/myivbv7Hs
+   A==;
+X-CSE-ConnectionGUID: zwEpHO3+RRO2dm46nxrYYA==
+X-CSE-MsgGUID: xctEXT9yR42gcV1b3mdA6Q==
 X-IronPort-AV: E=Sophos;i="6.24,233,1774310400"; 
-   d="scan'208";a="22530319"
+   d="scan'208";a="22738041"
 Received: from ip-10-5-6-203.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.6.203])
-  by internal-pdx-out-011.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2026 08:34:44 +0000
-Received: from EX19MTAUWC001.ant.amazon.com [205.251.233.53:5494]
- by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.1.61:2525] with esmtp (Farcaster)
- id a1bad821-8a74-40bd-b3ca-5eeafe1137a8; Tue, 30 Jun 2026 08:34:44 +0000 (UTC)
-X-Farcaster-Flow-ID: a1bad821-8a74-40bd-b3ca-5eeafe1137a8
+  by internal-pdx-out-005.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 30 Jun 2026 08:34:46 +0000
+Received: from EX19MTAUWB002.ant.amazon.com [205.251.233.111:16452]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.4.192:2525] with esmtp (Farcaster)
+ id 44ed3a2e-5fe0-4b2b-b693-b552b908ebdb; Tue, 30 Jun 2026 08:34:46 +0000 (UTC)
+X-Farcaster-Flow-ID: 44ed3a2e-5fe0-4b2b-b693-b552b908ebdb
 Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
- EX19MTAUWC001.ant.amazon.com (10.250.64.174) with Microsoft SMTP Server
+ EX19MTAUWB002.ant.amazon.com (10.250.64.231) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
- Tue, 30 Jun 2026 08:34:44 +0000
+ Tue, 30 Jun 2026 08:34:46 +0000
 Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
  by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
- Tue, 30 Jun 2026 08:34:42 +0000
+ Tue, 30 Jun 2026 08:34:44 +0000
 From: Leonid Ravich <lravich@amazon.com>
 To: <linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>
 CC: <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
 	<herbert@gondor.apana.org.au>, <davem@davemloft.net>, <ebiggers@kernel.org>,
 	<snitzer@kernel.org>, <mpatocka@redhat.com>, <axboe@kernel.dk>
-Subject: [PATCH v5 2/5] crypto: dun - data-unit-number dispatch template
-Date: Tue, 30 Jun 2026 08:34:28 +0000
-Message-ID: <20260630083431.2772-3-lravich@amazon.com>
+Subject: [PATCH v5 3/5] crypto: testmgr - test dun() dispatch
+Date: Tue, 30 Jun 2026 08:34:29 +0000
+Message-ID: <20260630083431.2772-4-lravich@amazon.com>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20260630083431.2772-1-lravich@amazon.com>
 References: <20260630083431.2772-1-lravich@amazon.com>
@@ -69,450 +69,329 @@ Content-Type: text/plain
 X-ClientProxiedBy: EX19D044UWA001.ant.amazon.com (10.13.139.100) To
  EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-Add a dun(...) skcipher template that wraps an inner skcipher whose IV
-is a wide data-unit-number counter (e.g. dun(xts(aes),le)).  When the
-caller sets skcipher_request::data_unit_size, the template splits the
-request into cryptlen / data_unit_size sub-requests on the inner cipher,
-walking the IV +1 per unit.  Each inner ->encrypt/->decrypt is a direct
-call, so only the outer dispatch into the crypto API is indirect -- the
-per-unit work is not.
+For every ivsize-16 skcipher, wrap it in both a dun(<inner>,le) and a
+dun(<inner>,be) instance and cross-check each batched output against an
+independent N x single-DU reference run directly on the inner tfm (both
+keyed with one random key, the reference counter walked in the matching
+endianness), over a deliberately fragmented scatterlist whose entries do
+not align to the data-unit size.  The two must produce byte-identical
+ciphertext; the batched ciphertext is then round-tripped and the caller
+IV checked unchanged.  Testing both endiannesses exercises the be path
+independently of any in-tree consumer.  Algorithms with no dun wrapper
+(ivsize != 16) are skipped; a genuine mismatch returns -EBADMSG.
 
-The second template parameter selects the counter endianness: dun(...,le)
-for a little-endian counter (dm-crypt plain64, blk-crypto inline
-encryption) and dun(...,be) for a big-endian one (dm-crypt plain64be).
-Those are the only two ways a per-unit IV relates to its neighbour by a
-+1 step; IV modes that are not such a counter are simply not wrapped.
-Like cryptd() and pcrypt(), dun() wraps an inner skcipher and changes
-only how the request is dispatched -- here, split across data units --
-performing no cipher transform of its own.
-
-A dun() tfm exists solely for multi-DU dispatch, so a request with
-data_unit_size 0 is rejected with -EINVAL; a caller wanting plain
-single-DU encryption uses the inner skcipher.
-
-A hardware engine that consumes a whole multi-DU request in one pass
-registers its own dun(...) at a higher cra_priority and is selected
-automatically by the existing priority mechanism; no per-algorithm
-capability flag is needed.  The generic template is sync-only (the split
-loop treats any non-zero inner return as terminal), so it resolves against
-a sync inner cipher (mask | CRYPTO_ALG_ASYNC); async is left to such
-native drivers.
-
-The inner IV must be a whole number of 64-bit limbs and no wider than 32
-bytes: 16 covers xts(...), 32 covers the widest inline-encryption mode
-(Adiantum).
-
-Suggested-by: Herbert Xu <herbert@gondor.apana.org.au>
 Signed-off-by: Leonid Ravich <lravich@amazon.com>
 ---
- crypto/Kconfig  |  14 ++
- crypto/Makefile |   1 +
- crypto/dun.c    | 359 ++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 374 insertions(+)
- create mode 100644 crypto/dun.c
+ crypto/testmgr.c | 289 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 289 insertions(+)
 
-diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 103d1f58cb7c..4f90a780c4fc 100644
---- a/crypto/Kconfig
-+++ b/crypto/Kconfig
-@@ -746,6 +746,20 @@ config CRYPTO_XTS
- 	  implementation currently can't handle a sectorsize which is not a
- 	  multiple of 16 bytes.
+diff --git a/crypto/testmgr.c b/crypto/testmgr.c
+index 4d86efae65b2..cd9246f432de 100644
+--- a/crypto/testmgr.c
++++ b/crypto/testmgr.c
+@@ -3211,6 +3211,291 @@ static int test_skcipher(int enc, const struct cipher_test_suite *suite,
+ 	return 0;
+ }
  
-+config CRYPTO_DUN
-+	tristate "Data-unit-number (DUN) dispatch template"
-+	select CRYPTO_SKCIPHER
-+	select CRYPTO_MANAGER
-+	help
-+	  dun(...) wraps an skcipher whose IV is a wide data-unit-number
-+	  counter (e.g. xts(aes)) and lets a caller submit several data units
-+	  sharing one starting IV in a single request, via
-+	  skcipher_request::data_unit_size.  The counter endianness is the
-+	  second parameter: dun(xts(aes),le) or dun(xts(aes),be).  The template
-+	  splits the request into one inner call per data unit; a hardware
-+	  driver may register a higher-priority dun(...) that handles the whole
-+	  request in one pass.  The first user is dm-crypt.
-+
- endmenu
- 
- menu "AEAD (authenticated encryption with associated data) ciphers"
-diff --git a/crypto/Makefile b/crypto/Makefile
-index 162242593c7c..584d9e8c4347 100644
---- a/crypto/Makefile
-+++ b/crypto/Makefile
-@@ -93,6 +93,7 @@ obj-$(CONFIG_CRYPTO_PCBC) += pcbc.o
- obj-$(CONFIG_CRYPTO_CTS) += cts.o
- obj-$(CONFIG_CRYPTO_LRW) += lrw.o
- obj-$(CONFIG_CRYPTO_XTS) += xts.o
-+obj-$(CONFIG_CRYPTO_DUN) += dun.o
- obj-$(CONFIG_CRYPTO_CTR) += ctr.o
- obj-$(CONFIG_CRYPTO_XCTR) += xctr.o
- obj-$(CONFIG_CRYPTO_HCTR2) += hctr2.o
-diff --git a/crypto/dun.c b/crypto/dun.c
-new file mode 100644
-index 000000000000..4fcb81a025b9
---- /dev/null
-+++ b/crypto/dun.c
-@@ -0,0 +1,359 @@
-+// SPDX-License-Identifier: GPL-2.0-or-later
-+/*
-+ * dun: data-unit-number dispatch template for skcipher
-+ *
-+ * Wraps an inner skcipher (e.g. xts(aes)) and, when the caller sets
-+ * skcipher_request::data_unit_size, splits the request into cryptlen /
-+ * data_unit_size sub-requests, each unit's IV the previous one +1 -- the
-+ * data-unit-number (DUN) convention.  The second parameter selects the IV
-+ * walk (see struct dun_mode): dun(xts(aes),le) or dun(xts(aes),be).
-+ *
-+ * Like cryptd()/pcrypt(), dun() only changes how a request is dispatched and
-+ * performs no transform of its own; a native one-pass multi-DU driver wins by
-+ * cra_priority.  Callers that never set data_unit_size pay nothing.
-+ */
-+
-+#include <crypto/algapi.h>
-+#include <crypto/internal/skcipher.h>
-+#include <crypto/scatterwalk.h>
-+#include <linux/err.h>
-+#include <linux/init.h>
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <linux/string.h>
-+
-+/* Bounds the on-stack IV buffers: 16 covers xts(...), 32 covers Adiantum. */
-+#define DUN_MAX_IVSIZE		32
++/* Upper bound on the IVs the dun() template accepts (16: xts; 32: Adiantum). */
++#define TEST_MDU_MAX_IVSIZE	32
 +
 +/*
-+ * A dun() mode is the rule for deriving each data unit's IV from the request's
-+ * starting IV.  @name is the template's second parameter; @iv_next advances the
-+ * @ivsize-byte @iv in place to the next data unit.  @ivsize_ok rejects IV sizes
-+ * the walk can't handle.  Add a row to dun_modes[] to support a new convention.
++ * Increment an @ivsize-byte IV as a wide counter.  Byte-wise with carry --
++ * deliberately independent of crypto/dun.c's per-limb walk, so the two only
++ * agree if the carry is right.  LE: byte 0 least significant; BE: last byte.
 + */
-+struct dun_mode {
-+	const char *name;
-+	void (*iv_next)(u8 *iv, unsigned int ivsize);
-+	bool (*ivsize_ok)(unsigned int ivsize);
-+};
++static void test_mdu_iv_inc(u8 *iv, unsigned int ivsize, bool big_endian)
++{
++	int i;
 +
-+struct dun_tfm_ctx {
-+	struct crypto_skcipher *child;
-+	const struct dun_mode *mode;
-+};
++	if (big_endian) {
++		for (i = ivsize - 1; i >= 0; i--)
++			if (++iv[i])
++				break;
++	} else {
++		for (i = 0; i < (int)ivsize; i++)
++			if (++iv[i])
++				break;
++	}
++}
 +
-+struct dun_inst_ctx {
-+	struct crypto_skcipher_spawn spawn;
-+	const struct dun_mode *mode;
-+};
-+
-+struct dun_request_ctx {
-+	/* Must be last; the child request is appended with its own reqsize. */
-+	struct skcipher_request subreq;
-+};
-+
-+/* Little-endian counter: increment the IV per __le64 limb, low limb first. */
-+static void dun_iv_next_le(u8 *iv, unsigned int ivsize)
++/*
++ * Seed @iv so the low 64-bit limb is all-ones but its least-significant byte:
++ * the 2nd increment wraps the limb and carries into the next.  LE limb is
++ * bytes [0,8); BE limb is the last 8 bytes.  Bytes outside keep their value.
++ */
++static void test_mdu_iv_boundary(u8 *iv, unsigned int ivsize, bool big_endian)
 +{
 +	unsigned int i;
 +
-+	for (i = 0; i < ivsize; i += sizeof(__le64)) {
-+		__le64 limb;
-+		u64 v;
-+
-+		memcpy(&limb, iv + i, sizeof(limb));
-+		v = le64_to_cpu(limb) + 1;
-+		limb = cpu_to_le64(v);
-+		memcpy(iv + i, &limb, sizeof(limb));
-+		if (likely(v != 0))
-+			break;			/* no carry into the next limb */
++	if (big_endian) {
++		for (i = ivsize - 8; i < ivsize; i++)
++			iv[i] = 0xff;
++		iv[ivsize - 1] = 0xfe;
++	} else {
++		for (i = 0; i < 8; i++)
++			iv[i] = 0xff;
++		iv[0] = 0xfe;
 +	}
 +}
 +
-+/* Big-endian counter: increment the IV byte-wise from the last byte. */
-+static void dun_iv_next_be(u8 *iv, unsigned int ivsize)
++/* Encrypt one du_size block with a plain single-DU request (the reference). */
++static int test_mdu_ref_encrypt(struct crypto_skcipher *tfm, const u8 *in,
++				u8 *out, unsigned int du_size, const u8 *iv,
++				unsigned int ivsize)
 +{
-+	unsigned int i = ivsize;
-+
-+	while (i--) {
-+		if (likely(++iv[i]))
-+			break;			/* no carry into the next byte */
-+	}
-+}
-+
-+/*
-+ * le requires this: it walks the IV in __le64 limbs, so the size must be a
-+ * whole number of limbs.  be increments byte-wise and would accept any size,
-+ * but reuses the same check for a uniform value-space.
-+ */
-+static bool dun_ivsize_whole_limbs(unsigned int ivsize)
-+{
-+	return IS_ALIGNED(ivsize, sizeof(__le64));
-+}
-+
-+static const struct dun_mode dun_modes[] = {
-+	{ "le", dun_iv_next_le, dun_ivsize_whole_limbs },
-+	{ "be", dun_iv_next_be, dun_ivsize_whole_limbs },
-+};
-+
-+static const struct dun_mode *dun_find_mode(const char *name)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < ARRAY_SIZE(dun_modes); i++)
-+		if (!strcmp(name, dun_modes[i].name))
-+			return &dun_modes[i];
-+	return NULL;
-+}
-+
-+static int dun_setkey(struct crypto_skcipher *parent, const u8 *key,
-+		      unsigned int keylen)
-+{
-+	struct dun_tfm_ctx *ctx = crypto_skcipher_ctx(parent);
-+	struct crypto_skcipher *child = ctx->child;
-+
-+	crypto_skcipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
-+	crypto_skcipher_set_flags(child, crypto_skcipher_get_flags(parent) &
-+					 CRYPTO_TFM_REQ_MASK);
-+	return crypto_skcipher_setkey(child, key, keylen);
-+}
-+
-+/*
-+ * Run one inner ->crypt per data unit, walking the IV as a wide counter.
-+ * @req->iv is never modified; the inner cipher only sees the iv_unit copy.
-+ */
-+static int dun_split(struct skcipher_request *req,
-+		     int (*crypt)(struct skcipher_request *))
-+{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+	struct dun_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	struct dun_request_ctx *rctx = skcipher_request_ctx(req);
-+	struct skcipher_request *subreq = &rctx->subreq;
-+	const unsigned int du = req->data_unit_size;
-+	const unsigned int total = req->cryptlen;
-+	const unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-+	const struct dun_mode *mode = ctx->mode;
-+	bool inplace = req->src == req->dst;
-+	struct scatter_walk src_walk, dst_walk;
-+	struct scatterlist src_sg[2], dst_sg[2];
-+	u8 iv_ctr[DUN_MAX_IVSIZE];
-+	u8 iv_unit[DUN_MAX_IVSIZE];
-+	unsigned int off;
-+	int err = 0;
-+
-+	/* iv_ctr is the counter; iv_unit is a per-unit copy an inner may write
-+	 * back in place (e.g. xts, essiv), so the counter is never mutated.
-+	 */
-+	memcpy(iv_ctr, req->iv, ivsize);
-+
-+	sg_init_table(src_sg, 2);
-+	scatterwalk_start(&src_walk, req->src);
-+	if (!inplace) {
-+		sg_init_table(dst_sg, 2);
-+		scatterwalk_start(&dst_walk, req->dst);
-+	}
-+
-+	skcipher_request_set_tfm(subreq, ctx->child);
-+	skcipher_request_set_callback(subreq, skcipher_request_flags(req),
-+				      NULL, NULL);
-+
-+	for (off = 0; off < total; off += du) {
-+		struct scatterlist *s, *d;
-+
-+		scatterwalk_get_sglist(&src_walk, src_sg);
-+		scatterwalk_skip(&src_walk, du);
-+		s = src_sg;
-+		if (inplace) {
-+			d = src_sg;
-+		} else {
-+			scatterwalk_get_sglist(&dst_walk, dst_sg);
-+			scatterwalk_skip(&dst_walk, du);
-+			d = dst_sg;
-+		}
-+
-+		memcpy(iv_unit, iv_ctr, ivsize);
-+		skcipher_request_set_crypt(subreq, s, d, du, iv_unit);
-+		err = crypt(subreq);
-+		if (err)
-+			break;
-+
-+		mode->iv_next(iv_ctr, ivsize);
-+	}
-+
-+	return err;
-+}
-+
-+/*
-+ * Validate a multi-DU request: non-zero cryptlen, and a data_unit_size that is
-+ * set, a multiple of the block size, and divides cryptlen evenly.
-+ */
-+static int dun_check(struct skcipher_request *req)
-+{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+
-+	if (!req->cryptlen || !req->data_unit_size ||
-+	    !IS_ALIGNED(req->data_unit_size, crypto_skcipher_blocksize(tfm)) ||
-+	    (req->cryptlen % req->data_unit_size))
-+		return -EINVAL;
-+	return 0;
-+}
-+
-+static int dun_encrypt(struct skcipher_request *req)
-+{
-+	int err = dun_check(req);
-+
-+	if (err)
-+		return err;
-+	return dun_split(req, crypto_skcipher_encrypt);
-+}
-+
-+static int dun_decrypt(struct skcipher_request *req)
-+{
-+	int err = dun_check(req);
-+
-+	if (err)
-+		return err;
-+	return dun_split(req, crypto_skcipher_decrypt);
-+}
-+
-+static int dun_init_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct skcipher_instance *inst = skcipher_alg_instance(tfm);
-+	struct dun_inst_ctx *ictx = skcipher_instance_ctx(inst);
-+	struct dun_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-+	struct crypto_skcipher *child;
-+
-+	child = crypto_spawn_skcipher(&ictx->spawn);
-+	if (IS_ERR(child))
-+		return PTR_ERR(child);
-+
-+	ctx->child = child;
-+	ctx->mode = ictx->mode;
-+	crypto_skcipher_set_reqsize(tfm,
-+				    sizeof(struct dun_request_ctx) +
-+				    crypto_skcipher_reqsize(child));
-+	return 0;
-+}
-+
-+static void dun_exit_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct dun_tfm_ctx *ctx = crypto_skcipher_ctx(tfm);
-+
-+	crypto_free_skcipher(ctx->child);
-+}
-+
-+static void dun_free_instance(struct skcipher_instance *inst)
-+{
-+	struct dun_inst_ctx *ictx = skcipher_instance_ctx(inst);
-+
-+	crypto_drop_skcipher(&ictx->spawn);
-+	kfree(inst);
-+}
-+
-+static int dun_create(struct crypto_template *tmpl, struct rtattr **tb)
-+{
-+	struct skcipher_alg_common *alg;
-+	struct skcipher_instance *inst;
-+	struct dun_inst_ctx *ictx;
-+	const struct dun_mode *mode;
-+	const char *cipher_name;
-+	const char *mode_name;
-+	u32 mask;
++	struct skcipher_request *req;
++	struct scatterlist sg_in;
++	DECLARE_CRYPTO_WAIT(wait);
++	u8 ivbuf[TEST_MDU_MAX_IVSIZE];
 +	int err;
 +
-+	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SKCIPHER, &mask);
-+	if (err)
-+		return err;
-+
-+	cipher_name = crypto_attr_alg_name(tb[1]);
-+	if (IS_ERR(cipher_name))
-+		return PTR_ERR(cipher_name);
-+
-+	/* Second parameter: the IV-walk mode (see dun_modes[]). */
-+	mode_name = crypto_attr_alg_name(tb[2]);
-+	if (IS_ERR(mode_name))
-+		return PTR_ERR(mode_name);
-+	mode = dun_find_mode(mode_name);
-+	if (!mode)
-+		return -EINVAL;
-+
-+	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
-+	if (!inst)
++	req = skcipher_request_alloc(tfm, GFP_KERNEL);
++	if (!req)
 +		return -ENOMEM;
-+	ictx = skcipher_instance_ctx(inst);
-+	ictx->mode = mode;
-+
-+	/*
-+	 * Sync-only: the split loop can't drive an async (-EINPROGRESS) child,
-+	 * so resolve against a sync inner (mask | CRYPTO_ALG_ASYNC).
-+	 */
-+	err = crypto_grab_skcipher(&ictx->spawn, skcipher_crypto_instance(inst),
-+				   cipher_name, 0, mask | CRYPTO_ALG_ASYNC);
-+	if (err)
-+		goto err_free_inst;
-+
-+	alg = crypto_spawn_skcipher_alg_common(&ictx->spawn);
-+
-+	/* The mode must accept this IV size, and it must fit our buffers. */
-+	err = -EINVAL;
-+	if (!alg->ivsize || alg->ivsize > DUN_MAX_IVSIZE ||
-+	    !mode->ivsize_ok(alg->ivsize))
-+		goto err_free_inst;
-+
-+	err = -ENAMETOOLONG;
-+	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME, "dun(%s,%s)",
-+		     alg->base.cra_name, mode->name) >= CRYPTO_MAX_ALG_NAME)
-+		goto err_free_inst;
-+	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
-+		     "dun(%s,%s)", alg->base.cra_driver_name,
-+		     mode->name) >= CRYPTO_MAX_ALG_NAME)
-+		goto err_free_inst;
-+
-+	inst->alg.base.cra_priority = alg->base.cra_priority;
-+	inst->alg.base.cra_blocksize = alg->base.cra_blocksize;
-+	inst->alg.base.cra_alignmask = alg->base.cra_alignmask;
-+	inst->alg.base.cra_ctxsize = sizeof(struct dun_tfm_ctx);
-+
-+	inst->alg.ivsize = alg->ivsize;
-+	inst->alg.chunksize = alg->chunksize;
-+	inst->alg.min_keysize = alg->min_keysize;
-+	inst->alg.max_keysize = alg->max_keysize;
-+
-+	inst->alg.init = dun_init_tfm;
-+	inst->alg.exit = dun_exit_tfm;
-+	inst->alg.setkey = dun_setkey;
-+	inst->alg.encrypt = dun_encrypt;
-+	inst->alg.decrypt = dun_decrypt;
-+
-+	inst->free = dun_free_instance;
-+
-+	err = skcipher_register_instance(tmpl, inst);
-+	if (err) {
-+err_free_inst:
-+		dun_free_instance(inst);
-+	}
++	memcpy(ivbuf, iv, ivsize);
++	memcpy(out, in, du_size);
++	sg_init_one(&sg_in, out, du_size);
++	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
++				      CRYPTO_TFM_REQ_MAY_SLEEP,
++				      crypto_req_done, &wait);
++	skcipher_request_set_crypt(req, &sg_in, &sg_in, du_size, ivbuf);
++	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
++	skcipher_request_free(req);
 +	return err;
 +}
 +
-+static struct crypto_template dun_tmpl = {
-+	.name = "dun",
-+	.create = dun_create,
-+	.module = THIS_MODULE,
-+};
-+
-+static int __init dun_module_init(void)
++/*
++ * Build an SG over @buf with du_size-unaligned entries, so the splitter's
++ * per-DU views cross SG entries and exercise the scatter_walk cursor.
++ */
++static void test_mdu_sg_fragment(struct scatterlist *sg, unsigned int nents,
++				 u8 *buf, unsigned int total)
 +{
-+	return crypto_register_template(&dun_tmpl);
++	unsigned int chunk = total / nents;
++	unsigned int off = 0, i;
++
++	sg_init_table(sg, nents);
++	for (i = 0; i < nents; i++) {
++		unsigned int len = (i == nents - 1) ? total - off : chunk;
++
++		sg_set_buf(&sg[i], buf + off, len);
++		off += len;
++	}
 +}
 +
-+static void __exit dun_module_exit(void)
++#define TEST_MDU_NR_UNITS	4
++#define TEST_MDU_NR_FRAGS	5
++/*
++ * Verify batched dispatch on @mdu (a dun(<inner>,<endian>) tfm) is byte-equal
++ * to an independent N x single-DU reference on @inner with @big_endian-walked
++ * IVs, over a fragmented SG, then round-trips.  Both tfms must share a key.
++ * @iv_orig is the ivsize-byte starting IV (the caller varies it to exercise
++ * both a random IV and one seeded to cross a carry boundary).
++ */
++static int test_skcipher_multi_du_one(struct crypto_skcipher *mdu,
++				      struct crypto_skcipher *inner,
++				      unsigned int du_size, bool big_endian,
++				      const u8 *iv_orig)
 +{
-+	crypto_unregister_template(&dun_tmpl);
++	const char *driver = crypto_skcipher_driver_name(mdu);
++	const unsigned int total = du_size * TEST_MDU_NR_UNITS;
++	const unsigned int ivsize = crypto_skcipher_ivsize(mdu);
++	struct skcipher_request *req = NULL;
++	struct scatterlist sg[TEST_MDU_NR_FRAGS];
++	DECLARE_CRYPTO_WAIT(wait);
++	u8 iv_work[TEST_MDU_MAX_IVSIZE], iv_ref[TEST_MDU_MAX_IVSIZE];
++	u8 *plain = NULL, *buf = NULL, *ref = NULL;
++	unsigned int u;
++	int err;
++
++	plain = kmalloc(total, GFP_KERNEL);
++	buf = kmalloc(total, GFP_KERNEL);
++	ref = kmalloc(total, GFP_KERNEL);
++	req = skcipher_request_alloc(mdu, GFP_KERNEL);
++	if (!plain || !buf || !ref || !req) {
++		err = -ENOMEM;
++		goto out;
++	}
++
++	get_random_bytes(plain, total);
++
++	/* Reference: per-DU single requests on the inner tfm, counter-walked IVs. */
++	memcpy(iv_ref, iv_orig, ivsize);
++	for (u = 0; u < TEST_MDU_NR_UNITS; u++) {
++		err = test_mdu_ref_encrypt(inner, plain + u * du_size,
++					   ref + u * du_size, du_size, iv_ref,
++					   ivsize);
++		if (err) {
++			pr_err("alg: skcipher: %s multi-DU ref encrypt failed (du=%u): %d\n",
++			       driver, du_size, err);
++			goto out;
++		}
++		test_mdu_iv_inc(iv_ref, ivsize, big_endian);
++	}
++
++	/* Batched: one request over a fragmented SG. */
++	memcpy(buf, plain, total);
++	memcpy(iv_work, iv_orig, ivsize);
++	test_mdu_sg_fragment(sg, TEST_MDU_NR_FRAGS, buf, total);
++	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
++				      CRYPTO_TFM_REQ_MAY_SLEEP,
++				      crypto_req_done, &wait);
++	skcipher_request_set_crypt(req, sg, sg, total, iv_work);
++	skcipher_request_set_data_unit_size(req, du_size);
++	err = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
++	if (err) {
++		pr_err("alg: skcipher: %s multi-DU encrypt failed (du=%u): %d\n",
++		       driver, du_size, err);
++		goto out;
++	}
++	if (memcmp(buf, ref, total) != 0) {
++		pr_err("alg: skcipher: %s multi-DU ciphertext differs from single-DU reference (du=%u)\n",
++		       driver, du_size);
++		err = -EBADMSG;
++		goto out;
++	}
++	/* req->iv must be unchanged after multi-DU dispatch. */
++	if (memcmp(iv_work, iv_orig, ivsize) != 0) {
++		pr_err("alg: skcipher: %s multi-DU encrypt mutated caller IV (du=%u)\n",
++		       driver, du_size);
++		err = -EBADMSG;
++		goto out;
++	}
++
++	/* Round-trip the batched ciphertext back to plaintext. */
++	test_mdu_sg_fragment(sg, TEST_MDU_NR_FRAGS, buf, total);
++	skcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG |
++				      CRYPTO_TFM_REQ_MAY_SLEEP,
++				      crypto_req_done, &wait);
++	skcipher_request_set_crypt(req, sg, sg, total, iv_work);
++	skcipher_request_set_data_unit_size(req, du_size);
++	err = crypto_wait_req(crypto_skcipher_decrypt(req), &wait);
++	if (err) {
++		pr_err("alg: skcipher: %s multi-DU decrypt failed (du=%u): %d\n",
++		       driver, du_size, err);
++		goto out;
++	}
++	if (memcmp(buf, plain, total) != 0) {
++		pr_err("alg: skcipher: %s multi-DU round-trip mismatch (du=%u)\n",
++		       driver, du_size);
++		err = -EBADMSG;
++	}
++
++out:
++	skcipher_request_free(req);
++	kfree(ref);
++	kfree(buf);
++	kfree(plain);
++	return err;
 +}
 +
-+module_init(dun_module_init);
-+module_exit(dun_module_exit);
++/*
++ * Cross-check the dun(<inner>,@endian) wrapper against @tfm over all du sizes.
++ * Returns 0 on success or skip (no wrapper / rejected key); -EBADMSG on a real
++ * mismatch.
++ */
++static int test_skcipher_multi_du_endian(struct crypto_skcipher *tfm,
++					 const char *alg_name,
++					 const char *endian, bool big_endian,
++					 const u8 *keybuf, unsigned int keylen)
++{
++	static const unsigned int du_sizes[] = { 512, 1024, 2048, 4096 };
++	char mdu_name[CRYPTO_MAX_ALG_NAME];
++	struct crypto_skcipher *mdu;
++	unsigned int ivsize;
++	u8 iv[TEST_MDU_MAX_IVSIZE];
++	unsigned int j;
++	int err;
 +
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("Data-unit-number dispatch template for skcipher");
-+MODULE_ALIAS_CRYPTO("dun");
++	if (snprintf(mdu_name, sizeof(mdu_name), "dun(%s,%s)", alg_name,
++		     endian) >= (int)sizeof(mdu_name))
++		return 0;
++
++	mdu = crypto_alloc_skcipher(mdu_name, 0, 0);
++	if (IS_ERR(mdu)) {
++		/* No dun wrapper (ivsize not a multiple of 8, or too wide): skip. */
++		if (PTR_ERR(mdu) == -ENOENT || PTR_ERR(mdu) == -EINVAL)
++			return 0;
++		return PTR_ERR(mdu);
++	}
++
++	ivsize = crypto_skcipher_ivsize(mdu);
++	if (ivsize > TEST_MDU_MAX_IVSIZE) {
++		err = 0;	/* wider than we have buffers for: skip */
++		goto out;
++	}
++
++	err = crypto_skcipher_setkey(mdu, keybuf, keylen);
++	if (err) {
++		err = 0;	/* weak/rejected key (e.g. XTS equal halves): skip */
++		goto out;
++	}
++
++	for (j = 0; j < ARRAY_SIZE(du_sizes); j++) {
++		/* A random starting IV. */
++		get_random_bytes(iv, ivsize);
++		err = test_skcipher_multi_du_one(mdu, tfm, du_sizes[j],
++						 big_endian, iv);
++		if (err)
++			break;
++		/* And one seeded to carry across a 64-bit limb / byte run. */
++		get_random_bytes(iv, ivsize);
++		test_mdu_iv_boundary(iv, ivsize, big_endian);
++		err = test_skcipher_multi_du_one(mdu, tfm, du_sizes[j],
++						 big_endian, iv);
++		if (err)
++			break;
++		cond_resched();
++	}
++out:
++	crypto_free_skcipher(mdu);
++	return err;
++}
++
++/*
++ * Cross-check dun() dispatch against a single-DU reference, in both le and be,
++ * for every ivsize the template accepts (16: xts; 32: Adiantum).
++ */
++static int test_skcipher_multi_du(struct crypto_skcipher *tfm)
++{
++	const char *alg_name = crypto_skcipher_alg(tfm)->base.cra_name;
++	u8 keybuf[128];
++	unsigned int keylen;
++	int err;
++
++	/* Key the inner tfm; each dun() wrapper is keyed identically below. */
++	keylen = crypto_skcipher_min_keysize(tfm);
++	if (keylen > sizeof(keybuf))
++		return 0;	/* unusually large key; skip rather than overflow */
++	get_random_bytes(keybuf, keylen);
++	err = crypto_skcipher_setkey(tfm, keybuf, keylen);
++	if (err)
++		return 0;	/* weak/rejected key (e.g. XTS equal halves): skip */
++
++	err = test_skcipher_multi_du_endian(tfm, alg_name, "le", false,
++					    keybuf, keylen);
++	if (err)
++		return err;
++	return test_skcipher_multi_du_endian(tfm, alg_name, "be", true,
++					     keybuf, keylen);
++}
++
+ static int alg_test_skcipher(const struct alg_test_desc *desc,
+ 			     const char *driver, u32 type, u32 mask)
+ {
+@@ -3259,6 +3544,10 @@ static int alg_test_skcipher(const struct alg_test_desc *desc,
+ 	if (err)
+ 		goto out;
+ 
++	err = test_skcipher_multi_du(tfm);
++	if (err)
++		goto out;
++
+ 	err = test_skcipher_vs_generic_impl(desc->generic_driver, req, tsgls);
+ out:
+ 	free_cipher_test_sglists(tsgls);
 -- 
 2.47.3
 
