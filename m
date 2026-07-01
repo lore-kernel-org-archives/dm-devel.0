@@ -1,402 +1,252 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from pdx-out-008.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-008.esa.us-west-2.outbound.mail-perimeter.amazon.com [52.42.203.116])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA4962E11A6
-	for <dm-devel@lists.linux.dev>; Tue, 30 Jun 2026 23:05:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D8A4356742
+	for <dm-devel@lists.linux.dev>; Wed,  1 Jul 2026 06:54:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=52.42.203.116
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782860715; cv=none; b=upX9EvDYwes8Hs9Zw/eq3wNyU6wzZJLL9tpCkQpZw8VX5HpUKAquY8EdJIfiWGmqxsjdRKeyD7XskusoWWSaQ/UGbZUb4uGw6U8LFlTWQ1fRYOPO2kEy8FPrw68DEsrSdgvSLK+ZH4jRubOOJv2P4LNuflpWSe1yQ0CyjY+jjww=
+	t=1782888846; cv=none; b=FgGu4c8+Tnln7mCb8/RxwGVBPFs/ZmWDsaZDWFMibVLA6MFSANOlgUi6CTthh/zYzHhs/Vrr9iV6M9PX5aJzY9yk4VNy/7pGN8lsVDeuhV0LRW39i/ix9A/kp3DwMJgDGYFKBFVcDEAhLGnrD+lrWHqsu7a/Yricyug3NJVTiQM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782860715; c=relaxed/simple;
-	bh=xvvrNLPCQH9zL4b+OIBfBLJggTy7xiJ+7SB0eA+nzk0=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=NVJOLi16Gs5YCLqVaMr/dtk8mSPphLjwsaZ80OJiMYz1itUD+PO452aEg+1IIA5rzetHOcyC+Ke28h1RRa5gzcvzV1MV6K3gYrhGJRGcmWuIbgGvmSaQNqS8EM4+4tnq/0g5z+XkuRtn4CTlZXPVjVOMVYZfAlf1QWSGQhGfmDc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ai6ATXNU; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1782888846; c=relaxed/simple;
+	bh=wNg8cg2qHdfGj5T0Y74ZjsGhaBXijUXnaHbfSt1bDFE=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=HTJz2FJtMqjWRvO4L2ZEunKI7W0oytyMdUfM0vpgRAgEVRmtLC1RnlkVT4yiyTft8rw7/Ms2m9kN1anZnl1UepGv89rDedymW3sZeOdbt92K2Kodm1CWkm+aCrlFwSV1ZLJPeReg7VZ5w1VZsdBnN5LnLHOoMLZjJoeisdZvqFE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=aJS8K1Y5; arc=none smtp.client-ip=52.42.203.116
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ai6ATXNU"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1782860712;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=fYU0iggmTDgB3zJuL2YZutbsYuOF/WSMaUe5t97II34=;
-	b=Ai6ATXNUADy5VZrJU31ZPXhvf6iQ0RreM+7FUm+rBVDWmhX2bR3enw6y/QXLOEODO9jRdv
-	i7jYkyMGitbn5FNNItWL/bK0r+6gMXicnv7Bu7CqON+0JL+YqkeZW0V1M4UFmY0lwVc3vB
-	fUOAtEd0KbvnA/ixk+9/hnnL3eUOrWc=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-692-KY1DFLVSPH-AgIDWcElVTw-1; Tue,
- 30 Jun 2026 19:05:09 -0400
-X-MC-Unique: KY1DFLVSPH-AgIDWcElVTw-1
-X-Mimecast-MFC-AGG-ID: KY1DFLVSPH-AgIDWcElVTw_1782860708
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5684E1856A7B;
-	Tue, 30 Jun 2026 23:05:08 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (ci-vm-10-0-103-170.hosted.upshift.rdu2.redhat.com [10.0.103.170])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 0E8DE1800605;
-	Tue, 30 Jun 2026 23:05:08 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 821411B528; Tue, 30 Jun 2026 19:05:07 -0400 (EDT)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: corwin <corwincoburn@google.com>,
-	Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo indexer: simplify sub-index parameter calculations
-Date: Tue, 30 Jun 2026 19:05:07 -0400
-Message-ID: <f64b90824275a59a4e85a970251ca32b45383a25.1782860429.git.msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="aJS8K1Y5"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1782888845; x=1814424845;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=BZtDzlUqcNbBUPrtGKQrPKoEzm0mzMrP9wv6Wa1gV0U=;
+  b=aJS8K1Y5xdhpehEAj8gmbfuE0xRIICz55yqoLHRwy+hTZiX+U1jCb20/
+   stXvORGFwOWBZKzLW6E41/ThT109GWlOvmfVyQ8qcc9gmZRKVAIuBX3Ew
+   fiqzu1Vnk5B099jTHsv2NZNlSLNpijacvKO+4rOzrfyTb04WBxjRS6FDA
+   vMFwzjXxyN/+1AfamUgpeS26wsEf3wxlgOFwz3Y+WJ+hym0jpdBxOXtZU
+   iaYIKJViKuy1MAxUBYIRc3YjST2Af0dI1p0FshcTZJzuaOFA0kNo3AQ2h
+   sgVYlIVv5ONPXpQTHip4dOSJQT9qv5yxAdgDL/u9scx+8a3VfQQV3WF0B
+   Q==;
+X-CSE-ConnectionGUID: 95UrIU7AQGKPBFe9v3jPcA==
+X-CSE-MsgGUID: rgVJLOciTemm0B3Way3f6w==
+X-IronPort-AV: E=Sophos;i="6.24,235,1774310400"; 
+   d="scan'208";a="22848772"
+Received: from ip-10-5-9-48.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.9.48])
+  by internal-pdx-out-008.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Jul 2026 06:54:02 +0000
+Received: from EX19MTAUWA002.ant.amazon.com [205.251.233.178:17636]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.52.142:2525] with esmtp (Farcaster)
+ id 69589b78-9ba7-4d21-b27e-7e4675150263; Wed, 1 Jul 2026 06:54:01 +0000 (UTC)
+X-Farcaster-Flow-ID: 69589b78-9ba7-4d21-b27e-7e4675150263
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWA002.ant.amazon.com (10.250.64.202) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 1 Jul 2026 06:54:01 +0000
+Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 1 Jul 2026 06:53:59 +0000
+From: Leonid Ravich <lravich@amazon.com>
+To: <linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>
+CC: <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<herbert@gondor.apana.org.au>, <davem@davemloft.net>, <ebiggers@kernel.org>,
+	<snitzer@kernel.org>, <mpatocka@redhat.com>, <axboe@kernel.dk>
+Subject: [PATCH v5 5/5] blk-crypto: fallback - batch a segment's data units via dun()
+Date: Wed, 1 Jul 2026 06:53:54 +0000
+Message-ID: <20260701065354.18928-1-lravich@amazon.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20260630083431.2772-1-lravich@amazon.com>
+References: <20260630083431.2772-1-lravich@amazon.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: qQ7X8GWgw6iRNs3AC93N1v4X8-QGKEUM_zwhtbI_9Ck_1782860708
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain
+X-ClientProxiedBy: EX19D046UWA003.ant.amazon.com (10.13.139.18) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-From: corwin <corwincoburn@google.com>
+blk-crypto-fallback open-codes a per-data-unit loop, issuing one
+skcipher request per data unit with the IV walked as a DUN counter.
+Allocate dun(<cipher>,le) instead of the bare cipher so a contiguous bio
+segment is encrypted/decrypted as one multi-data-unit request, the
+crypto layer walking the per-unit IV.  Every blk-crypto mode feeds the
+DUN as a little-endian counter, and dun() handles any counter width up
+to 32 bytes, so all modes -- including Adiantum (32-byte IV) -- are
+wrapped and the open-coded inner per-unit loop is removed from both the
+encrypt and decrypt paths.  This makes blk-crypto-fallback a second
+consumer of the template (after dm-crypt) and lets a higher-priority
+hardware dun(...) driver, if present, handle the request in one pass.
 
-Pull the calculations from split_config() into
-compute_volume_sub_index_parameters(). For sparse indexes, this
-eliminates the duplication of both the configs and geometries
-in favor of merely having 2 sub_index_parameters structures.
+Output is unchanged: the template's little-endian per-unit counter is
+exactly blk_crypto_dun_to_iv()/bio_crypt_dun_increment().
 
-Also expand the sub_index_parameters structure to include the
-small number of fields its users rely on from both the config
-and the geometry.
-
-Signed-off-by: corwin <corwincoburn@google.com>
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
+Signed-off-by: Leonid Ravich <lravich@amazon.com>
 ---
- drivers/md/dm-vdo/indexer/volume-index.c | 188 +++++++++++------------
- 1 file changed, 93 insertions(+), 95 deletions(-)
+ block/Kconfig               |  1 +
+ block/blk-crypto-fallback.c | 74 ++++++++++++++++++-------------------
+ 2 files changed, 36 insertions(+), 39 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/indexer/volume-index.c b/drivers/md/dm-vdo/indexer/volume-index.c
-index e78d2725ce8b..03c6b39ccdcc 100644
---- a/drivers/md/dm-vdo/indexer/volume-index.c
-+++ b/drivers/md/dm-vdo/indexer/volume-index.c
-@@ -60,6 +60,12 @@
-  * the index.
-  */
+diff --git a/block/Kconfig b/block/Kconfig
+index 15027963472d..0c9025f9b0f6 100644
+--- a/block/Kconfig
++++ b/block/Kconfig
+@@ -204,6 +204,7 @@ config BLK_INLINE_ENCRYPTION_FALLBACK
+ 	depends on BLK_INLINE_ENCRYPTION
+ 	select CRYPTO
+ 	select CRYPTO_SKCIPHER
++	select CRYPTO_DUN # batches a segment's data units per crypto request
+ 	help
+ 	  Enabling this lets the block layer handle inline encryption
+ 	  by falling back to the kernel crypto API when inline
+diff --git a/block/blk-crypto-fallback.c b/block/blk-crypto-fallback.c
+index 61f595410832..8337d56ba1dc 100644
+--- a/block/blk-crypto-fallback.c
++++ b/block/blk-crypto-fallback.c
+@@ -250,7 +250,6 @@ static void __blk_crypto_fallback_encrypt_bio(struct bio *src_bio,
+ 	unsigned int nr_enc_pages, enc_idx;
+ 	struct page **enc_pages;
+ 	struct bio *enc_bio;
+-	unsigned int i;
  
-+enum sub_index_parameters_slot {
-+	DENSE = 0,
-+	HOOK = 0,
-+	NON_HOOK = 1,
-+};
-+
- struct sub_index_parameters {
- 	/* The number of bits in address mask */
- 	u8 address_bits;
-@@ -77,16 +83,10 @@ struct sub_index_parameters {
- 	size_t memory_size;
- 	/* The number of bytes the index should keep free at all times */
- 	size_t target_free_bytes;
--};
+ 	skcipher_request_set_callback(ciph_req,
+ 			CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
+@@ -260,9 +259,6 @@ static void __blk_crypto_fallback_encrypt_bio(struct bio *src_bio,
+ 	sg_init_table(&src, 1);
+ 	sg_init_table(&dst, 1);
+ 
+-	skcipher_request_set_crypt(ciph_req, &src, &dst, data_unit_size,
+-				   iv.bytes);
 -
--struct split_config {
--	/* The hook subindex configuration */
--	struct uds_configuration hook_config;
--	struct index_geometry hook_geometry;
--
--	/* The non-hook subindex configuration */
--	struct uds_configuration non_hook_config;
--	struct index_geometry non_hook_geometry;
-+	/* The mean delta for the volume index */
-+	u32 volume_index_mean_delta;
-+	/* The number of threads used to process index requests */
-+	unsigned int zone_count;
- };
- 
- struct chapter_range {
-@@ -196,8 +196,11 @@ unsigned int uds_get_volume_index_zone(const struct volume_index *volume_index,
- 
- #define DELTA_LIST_SIZE 256
- 
--static int compute_volume_sub_index_parameters(const struct uds_configuration *config,
--					       struct sub_index_parameters *params)
-+static int compute_sub_index_parameters(const struct uds_configuration *config,
-+					u64 records_per_chapter,
-+					u32 chapters_per_volume,
-+					bool reduced,
-+					struct sub_index_parameters *params)
- {
- 	u64 entries_in_volume_index, address_span;
- 	u32 chapters_in_volume_index, invalid_chapters;
-@@ -207,17 +210,15 @@ static int compute_volume_sub_index_parameters(const struct uds_configuration *c
- 	u64 index_size_in_bits;
- 	size_t expected_index_size;
- 	u64 min_delta_lists = MAX_ZONES * MAX_ZONES;
--	struct index_geometry *geometry = config->geometry;
--	u64 records_per_chapter = geometry->records_per_chapter;
- 
--	params->chapter_count = geometry->chapters_per_volume;
-+	params->chapter_count = chapters_per_volume;
  	/*
- 	 * Make sure that the number of delta list records in the volume index does not change when
- 	 * the volume is reduced by one chapter. This preserves the mapping from name to volume
- 	 * index delta list.
- 	 */
- 	rounded_chapters = params->chapter_count;
--	if (uds_is_reduced_index_geometry(geometry))
-+	if (reduced)
- 		rounded_chapters += 1;
- 	delta_list_records = records_per_chapter * rounded_chapters;
- 	address_count = config->volume_index_mean_delta * DELTA_LIST_SIZE;
-@@ -274,9 +275,46 @@ static int compute_volume_sub_index_parameters(const struct uds_configuration *c
- 	params->memory_size = expected_index_size * 106 / 100;
+ 	 * Encrypt each page in the source bio.  Because the source bio could
+ 	 * have bio_vecs that span more than a single page, but the encrypted
+@@ -287,29 +283,26 @@ static void __blk_crypto_fallback_encrypt_bio(struct bio *src_bio,
+ 		__bio_add_page(enc_bio, enc_page, src_bv.bv_len,
+ 				src_bv.bv_offset);
  
- 	params->target_free_bytes = expected_index_size / 20;
-+	params->volume_index_mean_delta = config->volume_index_mean_delta;
-+	params->zone_count = config->zone_count;
- 	return UDS_SUCCESS;
- }
- 
-+static int compute_volume_sub_index_parameters(const struct uds_configuration *config,
-+					       struct sub_index_parameters *params)
-+{
-+	struct index_geometry *geometry = config->geometry;
-+	u64 sample_records;
-+	u64 dense_chapters;
-+	int result;
-+	bool reduced = uds_is_reduced_index_geometry(geometry);
-+
-+	if (!uds_is_sparse_index_geometry(config->geometry)) {
-+		return compute_sub_index_parameters(config,
-+						    geometry->records_per_chapter,
-+						    geometry->chapters_per_volume,
-+						    reduced,
-+						    &params[DENSE]);
-+	}
-+
-+	dense_chapters = geometry->chapters_per_volume - geometry->sparse_chapters_per_volume;
-+	sample_records = geometry->records_per_chapter / config->sparse_sample_rate;
-+
-+	result = compute_sub_index_parameters(config,
-+					      sample_records,
-+					      geometry->chapters_per_volume,
-+					      reduced,
-+					      &params[HOOK]);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
-+	return compute_sub_index_parameters(config,
-+					    geometry->records_per_chapter - sample_records,
-+					    dense_chapters,
-+					    reduced,
-+					    &params[NON_HOOK]);
-+}
-+
- static void uninitialize_volume_sub_index(struct volume_sub_index *sub_index)
- {
- 	vdo_free(vdo_forget(sub_index->flush_chapters));
-@@ -298,73 +336,32 @@ void uds_free_volume_index(struct volume_index *volume_index)
- }
- 
- 
--static int compute_volume_sub_index_save_bytes(const struct uds_configuration *config,
--					       size_t *bytes)
--{
--	struct sub_index_parameters params = { .address_bits = 0 };
--	int result;
+-		sg_set_page(&src, src_bv.bv_page, data_unit_size,
+-			    src_bv.bv_offset);
+-		sg_set_page(&dst, enc_page, data_unit_size, src_bv.bv_offset);
 -
--	result = compute_volume_sub_index_parameters(config, &params);
--	if (result != UDS_SUCCESS)
--		return result;
+ 		/*
+ 		 * Increment the index now that the encrypted page is added to
+ 		 * the bio.  This is important for the error unwind path.
+ 		 */
+ 		enc_idx++;
+ 
+-		/*
+-		 * Encrypt each data unit in this page.
+-		 */
+-		for (i = 0; i < src_bv.bv_len; i += data_unit_size) {
+-			blk_crypto_dun_to_iv(curr_dun, &iv);
+-			if (crypto_skcipher_encrypt(ciph_req)) {
+-				enc_bio->bi_status = BLK_STS_IOERR;
+-				goto out_free_enc_bio;
+-			}
+-			bio_crypt_dun_increment(curr_dun, 1);
+-			src.offset += data_unit_size;
+-			dst.offset += data_unit_size;
++		/* Encrypt the whole segment as one multi-data-unit request. */
++		blk_crypto_dun_to_iv(curr_dun, &iv);
++		sg_set_page(&src, src_bv.bv_page, src_bv.bv_len,
++			    src_bv.bv_offset);
++		sg_set_page(&dst, enc_page, src_bv.bv_len, src_bv.bv_offset);
++		skcipher_request_set_crypt(ciph_req, &src, &dst, src_bv.bv_len,
++					   iv.bytes);
++		skcipher_request_set_data_unit_size(ciph_req, data_unit_size);
++		if (crypto_skcipher_encrypt(ciph_req)) {
++			enc_bio->bi_status = BLK_STS_IOERR;
++			goto out_free_enc_bio;
+ 		}
++		bio_crypt_dun_increment(curr_dun,
++					src_bv.bv_len / data_unit_size);
+ 
+ 		bio_advance_iter_single(src_bio, &src_bio->bi_iter,
+ 				src_bv.bv_len);
+@@ -380,7 +373,6 @@ static blk_status_t __blk_crypto_fallback_decrypt_bio(struct bio *bio,
+ 	struct scatterlist sg;
+ 	struct bio_vec bv;
+ 	const int data_unit_size = bc->bc_key->crypto_cfg.data_unit_size;
+-	unsigned int i;
+ 
+ 	skcipher_request_set_callback(ciph_req,
+ 			CRYPTO_TFM_REQ_MAY_BACKLOG | CRYPTO_TFM_REQ_MAY_SLEEP,
+@@ -388,26 +380,20 @@ static blk_status_t __blk_crypto_fallback_decrypt_bio(struct bio *bio,
+ 
+ 	memcpy(curr_dun, bc->bc_dun, sizeof(curr_dun));
+ 	sg_init_table(&sg, 1);
+-	skcipher_request_set_crypt(ciph_req, &sg, &sg, data_unit_size,
+-				   iv.bytes);
+ 
+-	/* Decrypt each segment in the bio */
++	/* One dun() request per segment; the crypto layer walks the per-unit DUN. */
+ 	__bio_for_each_segment(bv, bio, iter, iter) {
+-		struct page *page = bv.bv_page;
 -
--	*bytes = (sizeof(struct sub_index_data) + params.list_count * sizeof(u64) +
--		  uds_compute_delta_index_save_bytes(params.list_count,
--						     params.memory_size));
--	return UDS_SUCCESS;
--}
+ 		if (!IS_ALIGNED(bv.bv_len | bv.bv_offset, data_unit_size))
+ 			return BLK_STS_INVAL;
+ 
+-		sg_set_page(&sg, page, data_unit_size, bv.bv_offset);
 -
--/* This function is only useful if the configuration includes sparse chapters. */
--static void split_configuration(const struct uds_configuration *config,
--				struct split_config *split)
-+static size_t compute_volume_sub_index_save_bytes(struct sub_index_parameters *params)
- {
--	u64 sample_rate, sample_records;
--	u64 dense_chapters, sparse_chapters;
--
--	/* Start with copies of the base configuration. */
--	split->hook_config = *config;
--	split->hook_geometry = *config->geometry;
--	split->hook_config.geometry = &split->hook_geometry;
--	split->non_hook_config = *config;
--	split->non_hook_geometry = *config->geometry;
--	split->non_hook_config.geometry = &split->non_hook_geometry;
--
--	sample_rate = config->sparse_sample_rate;
--	sparse_chapters = config->geometry->sparse_chapters_per_volume;
--	dense_chapters = config->geometry->chapters_per_volume - sparse_chapters;
--	sample_records = config->geometry->records_per_chapter / sample_rate;
--
--	/* Adjust the number of records indexed for each chapter. */
--	split->hook_geometry.records_per_chapter = sample_records;
--	split->non_hook_geometry.records_per_chapter -= sample_records;
--
--	/* Adjust the number of chapters indexed. */
--	split->hook_geometry.sparse_chapters_per_volume = 0;
--	split->non_hook_geometry.sparse_chapters_per_volume = 0;
--	split->non_hook_geometry.chapters_per_volume = dense_chapters;
-+	return (sizeof(struct sub_index_data) + params->list_count * sizeof(u64) +
-+		uds_compute_delta_index_save_bytes(params->list_count,
-+						   params->memory_size));
- }
- 
- static int compute_volume_index_save_bytes(const struct uds_configuration *config,
- 					   size_t *bytes)
- {
--	size_t hook_bytes, non_hook_bytes;
--	struct split_config split;
- 	int result;
-+	struct sub_index_parameters parameters[2] = {
-+		{ .address_bits = 0 },
-+		{ .address_bits = 0 },
-+	};
- 
--	if (!uds_is_sparse_index_geometry(config->geometry))
--		return compute_volume_sub_index_save_bytes(config, bytes);
--
--	split_configuration(config, &split);
--	result = compute_volume_sub_index_save_bytes(&split.hook_config, &hook_bytes);
-+	result = compute_volume_sub_index_parameters(config, parameters);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
--	result = compute_volume_sub_index_save_bytes(&split.non_hook_config,
--						     &non_hook_bytes);
--	if (result != UDS_SUCCESS)
--		return result;
-+	*bytes = compute_volume_sub_index_save_bytes(&parameters[HOOK]);
-+	if (uds_is_sparse_index_geometry(config->geometry)) {
-+		*bytes += compute_volume_sub_index_save_bytes(&parameters[NON_HOOK]);
-+		*bytes += sizeof(struct volume_index_data);
-+	}
- 
--	*bytes = sizeof(struct volume_index_data) + hook_bytes + non_hook_bytes;
- 	return UDS_SUCCESS;
- }
- 
-@@ -1170,48 +1167,43 @@ void uds_get_volume_index_stats(const struct volume_index *volume_index,
- 	stats->early_flushes += sparse_stats.early_flushes;
- }
- 
--static int initialize_volume_sub_index(const struct uds_configuration *config,
-+static int initialize_volume_sub_index(struct sub_index_parameters *params,
- 				       u64 volume_nonce, u8 tag,
- 				       struct volume_sub_index *sub_index)
- {
--	struct sub_index_parameters params = { .address_bits = 0 };
--	unsigned int zone_count = config->zone_count;
-+	unsigned int zone_count = params->zone_count;
- 	u64 available_bytes = 0;
- 	unsigned int z;
- 	int result;
- 
--	result = compute_volume_sub_index_parameters(config, &params);
--	if (result != UDS_SUCCESS)
--		return result;
--
--	sub_index->address_bits = params.address_bits;
--	sub_index->address_mask = (1u << params.address_bits) - 1;
--	sub_index->chapter_bits = params.chapter_bits;
--	sub_index->chapter_mask = (1u << params.chapter_bits) - 1;
--	sub_index->chapter_count = params.chapter_count;
--	sub_index->list_count = params.list_count;
-+	sub_index->address_bits = params->address_bits;
-+	sub_index->address_mask = (1u << params->address_bits) - 1;
-+	sub_index->chapter_bits = params->chapter_bits;
-+	sub_index->chapter_mask = (1u << params->chapter_bits) - 1;
-+	sub_index->chapter_count = params->chapter_count;
-+	sub_index->list_count = params->list_count;
- 	sub_index->zone_count = zone_count;
--	sub_index->chapter_zone_bits = params.chapter_size_in_bits / zone_count;
-+	sub_index->chapter_zone_bits = params->chapter_size_in_bits / zone_count;
- 	sub_index->volume_nonce = volume_nonce;
- 
- 	result = uds_initialize_delta_index(&sub_index->delta_index, zone_count,
--					    params.list_count, params.mean_delta,
--					    params.chapter_bits, params.memory_size,
-+					    params->list_count, params->mean_delta,
-+					    params->chapter_bits, params->memory_size,
- 					    tag);
- 	if (result != UDS_SUCCESS)
- 		return result;
- 
- 	for (z = 0; z < sub_index->delta_index.zone_count; z++)
- 		available_bytes += sub_index->delta_index.delta_zones[z].size;
--	available_bytes -= params.target_free_bytes;
-+	available_bytes -= params->target_free_bytes;
- 	sub_index->max_zone_bits = (available_bytes * BITS_PER_BYTE) / zone_count;
- 	sub_index->memory_size = (sub_index->delta_index.memory_size +
- 				  sizeof(struct volume_sub_index) +
--				  (params.list_count * sizeof(u64)) +
-+				  (params->list_count * sizeof(u64)) +
- 				  (zone_count * sizeof(struct volume_sub_index_zone)));
- 
- 	/* The following arrays are initialized to all zeros. */
--	result = vdo_allocate(params.list_count, "first chapter to flush",
-+	result = vdo_allocate(params->list_count, "first chapter to flush",
- 			      &sub_index->flush_chapters);
- 	if (result != VDO_SUCCESS)
- 		return result;
-@@ -1222,10 +1214,13 @@ static int initialize_volume_sub_index(const struct uds_configuration *config,
- int uds_make_volume_index(const struct uds_configuration *config, u64 volume_nonce,
- 			  struct volume_index **volume_index_ptr)
- {
--	struct split_config split;
- 	unsigned int zone;
- 	struct volume_index *volume_index;
- 	int result;
-+	struct sub_index_parameters parameters[2] = {
-+		{ .address_bits = 0 },
-+		{ .address_bits = 0 },
-+	};
- 
- 	result = vdo_allocate(1, "volume index", &volume_index);
- 	if (result != VDO_SUCCESS)
-@@ -1233,8 +1228,12 @@ int uds_make_volume_index(const struct uds_configuration *config, u64 volume_non
- 
- 	volume_index->zone_count = config->zone_count;
- 
-+	result = compute_volume_sub_index_parameters(config, parameters);
-+	if (result != UDS_SUCCESS)
-+		return result;
-+
- 	if (!uds_is_sparse_index_geometry(config->geometry)) {
--		result = initialize_volume_sub_index(config, volume_nonce, 'm',
-+		result = initialize_volume_sub_index(&parameters[DENSE], volume_nonce, 'm',
- 						     &volume_index->vi_non_hook);
- 		if (result != UDS_SUCCESS) {
- 			uds_free_volume_index(volume_index);
-@@ -1257,8 +1256,7 @@ int uds_make_volume_index(const struct uds_configuration *config, u64 volume_non
- 	for (zone = 0; zone < config->zone_count; zone++)
- 		mutex_init(&volume_index->zones[zone].hook_mutex);
- 
--	split_configuration(config, &split);
--	result = initialize_volume_sub_index(&split.non_hook_config, volume_nonce, 'd',
-+	result = initialize_volume_sub_index(&parameters[NON_HOOK], volume_nonce, 'd',
- 					     &volume_index->vi_non_hook);
- 	if (result != UDS_SUCCESS) {
- 		uds_free_volume_index(volume_index);
-@@ -1266,7 +1264,7 @@ int uds_make_volume_index(const struct uds_configuration *config, u64 volume_non
- 					      "Error creating non hook volume index");
+-		/* Decrypt each data unit in the segment */
+-		for (i = 0; i < bv.bv_len; i += data_unit_size) {
+-			blk_crypto_dun_to_iv(curr_dun, &iv);
+-			if (crypto_skcipher_decrypt(ciph_req))
+-				return BLK_STS_IOERR;
+-			bio_crypt_dun_increment(curr_dun, 1);
+-			sg.offset += data_unit_size;
+-		}
++		blk_crypto_dun_to_iv(curr_dun, &iv);
++		sg_set_page(&sg, bv.bv_page, bv.bv_len, bv.bv_offset);
++		skcipher_request_set_crypt(ciph_req, &sg, &sg, bv.bv_len,
++					   iv.bytes);
++		skcipher_request_set_data_unit_size(ciph_req, data_unit_size);
++		if (crypto_skcipher_decrypt(ciph_req))
++			return BLK_STS_IOERR;
++		bio_crypt_dun_increment(curr_dun, bv.bv_len / data_unit_size);
  	}
  
--	result = initialize_volume_sub_index(&split.hook_config, volume_nonce, 's',
-+	result = initialize_volume_sub_index(&parameters[HOOK], volume_nonce, 's',
- 					     &volume_index->vi_hook);
- 	if (result != UDS_SUCCESS) {
- 		uds_free_volume_index(volume_index);
+ 	return BLK_STS_OK;
+@@ -621,6 +607,7 @@ static int blk_crypto_fallback_init(void)
+ int blk_crypto_fallback_start_using_mode(enum blk_crypto_mode_num mode_num)
+ {
+ 	const char *cipher_str = blk_crypto_modes[mode_num].cipher_str;
++	char dun_str[CRYPTO_MAX_ALG_NAME];
+ 	struct blk_crypto_fallback_keyslot *slotp;
+ 	unsigned int i;
+ 	int err = 0;
+@@ -641,15 +628,24 @@ int blk_crypto_fallback_start_using_mode(enum blk_crypto_mode_num mode_num)
+ 	if (err)
+ 		goto out;
+ 
++	/*
++	 * Wrap in dun() to handle a whole segment per request (a higher-priority
++	 * hardware dun() wins if present).  The blk-crypto DUN is little-endian.
++	 */
++	if (snprintf(dun_str, sizeof(dun_str), "dun(%s,le)", cipher_str) >=
++	    (int)sizeof(dun_str)) {
++		err = -EINVAL;
++		goto out;
++	}
++
+ 	for (i = 0; i < blk_crypto_num_keyslots; i++) {
+ 		slotp = &blk_crypto_keyslots[i];
+-		slotp->tfms[mode_num] = crypto_alloc_sync_skcipher(cipher_str,
+-				0, 0);
++		slotp->tfms[mode_num] = crypto_alloc_sync_skcipher(dun_str, 0, 0);
+ 		if (IS_ERR(slotp->tfms[mode_num])) {
+ 			err = PTR_ERR(slotp->tfms[mode_num]);
+ 			if (err == -ENOENT) {
+ 				pr_warn_once("Missing crypto API support for \"%s\"\n",
+-					     cipher_str);
++					     dun_str);
+ 				err = -ENOPKG;
+ 			}
+ 			slotp->tfms[mode_num] = NULL;
 -- 
-2.53.0
+2.47.3
 
