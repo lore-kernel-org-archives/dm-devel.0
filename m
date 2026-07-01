@@ -1,164 +1,124 @@
-Received: from mx0a-0064b401.pphosted.com (mx0a-0064b401.pphosted.com [205.220.166.238])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E27D3B52F8
-	for <dm-devel@lists.linux.dev>; Wed,  1 Jul 2026 08:21:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=205.220.166.238
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEC3F49253D
+	for <dm-devel@lists.linux.dev>; Wed,  1 Jul 2026 16:14:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782894071; cv=none; b=HTO9m8Pti4VvBQg3ZsufCxJzL6Hsc4+VGTRUrLdkGqrqzYhM4zxRLlDQ5drT2sEccUpMnz1l7eLWr7VS0+5AagclKjvtNPL0DkTU0Jzu//lEJ+5ASs7UpW2uVS9FdILTxTTJlMb720NaxS7lGACggLPWMcnabj7Vazr5yZbWxIE=
+	t=1782922444; cv=none; b=jqNpQdUBQxIsaK5sFGdQHCpLHfa+jlU1YPF1WXf6KWz6gKQ2KMHLV4RrDldCQuzUB3bwUVVauR6wSwsY353oQxMM7nUvmo5kynb+HZxy5IYTfThGe+L5yYhkPd4plSvHajZVlPkkBzFexHmplGD2OxmTEIKy/jRCMzcYHArBCqY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782894071; c=relaxed/simple;
-	bh=6aWBc2ETLyxbPHLI+3ABcRShCBxJaGpkM/unpqd+Kf0=;
-	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=L7e9c1F+xYDTK+LWKDtX7leqZL7KhQY5cvdnbzuitjx2Fu7ZCUfko0Dhj/mfaT/yELY7v7Qimu0FA3V0EYyxuDnGFdRiglfJtneGKP34aXGL6V6LxtU7DMi791S21jqIUifl7MwrJzSLztd1MV06/TJ56VvFgPPGRRKSfFZXDVA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com; spf=pass smtp.mailfrom=windriver.com; dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b=DH6YZZgB; arc=none smtp.client-ip=205.220.166.238
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=windriver.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=windriver.com
+	s=arc-20240116; t=1782922444; c=relaxed/simple;
+	bh=vVTffM0dmRax+lHrc9XaDizuwKM3mLoUNwQ/GEHRkVo=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=FIpDVGBUTzbiJEV4WP7btcJ5R8gj5dJTSH41LnZgxLvVkrqOqyyXQWZ5sAA4HzxlxZ0Dt0M6qnR4aDi8vkl/eGmv4lS3IMrx8HknAy3QG8ttguLXnJUNOP9l3FUqpQesQlm2/nlnCj2m1be4Jn2O6YGJCUjqYeCe7JsjCkegnJk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cc0wL8UF; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=windriver.com header.i=@windriver.com header.b="DH6YZZgB"
-Received: from pps.filterd (m0250810.ppops.net [127.0.0.1])
-	by mx0a-0064b401.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6618FfWW3041078;
-	Wed, 1 Jul 2026 01:21:06 -0700
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=windriver.com;
-	 h=cc:content-transfer-encoding:content-type:date:from
-	:message-id:mime-version:subject:to; s=PPS06212021; bh=AKKu56ZgS
-	9ubUrxUx2ApmjVOoTD+umpID06Hs4j9ekk=; b=DH6YZZgBEVimEFKbNAJ79KL8C
-	wFbPaaCVEDxiuXd92yq/+BjVeI9+4FKrQSoNglsDozDyXrucqagAnHPo18H6mBhE
-	aZ+O9fHy5v8sk5cLNOQPhtPmb9cKL/YqNtt9IZa3hFLz0APKet5MfsL/ae4TMGOk
-	A/vaoyW/VmQebfj9KCLj+GRrno+s3yoEbxVtSJopZjZ/9miGV7pZwpBwd6ebB8ow
-	Dw6pFhkhjj///vAttoitl4t1L8mINtDUh9t9WrauR2jvDQkO+eA4fK6wmpTjgJh7
-	b7WjhM58JaExzVLhYnWgtCNptufhDHXeXXqPg72DdO+pECTT0pUhZR4+Ebgrw==
-Received: from ala-exchng01.corp.ad.wrs.com (ala-exchng01.wrs.com [128.224.246.36])
-	by mx0a-0064b401.pphosted.com (PPS) with ESMTPS id 4f29synat6-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128 verify=NOT);
-	Wed, 01 Jul 2026 01:21:05 -0700 (PDT)
-Received: from ala-exchng01.corp.ad.wrs.com (10.11.224.121) by
- ala-exchng01.corp.ad.wrs.com (10.11.224.121) with Microsoft SMTP Server
- (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
- 15.1.2507.61; Wed, 1 Jul 2026 01:21:05 -0700
-Received: from pek-lpd-ccm4.wrs.com (10.11.232.110) by
- ala-exchng01.corp.ad.wrs.com (10.11.224.121) with Microsoft SMTP Server id
- 15.1.2507.61 via Frontend Transport; Wed, 1 Jul 2026 01:21:03 -0700
-From: Jiangong.Han <jiangong.han@windriver.com>
-To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
-        <bmarzins@redhat.com>
-CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
-        <jiangong.han@windriver.com>
-Subject: [PATCH] dm: Use `clear_and_wake_up_bit()` in device mapper
-Date: Wed, 1 Jul 2026 16:21:02 +0800
-Message-ID: <20260701082102.3321398-1-jiangong.han@windriver.com>
-X-Mailer: git-send-email 2.37.3
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cc0wL8UF"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1782922441;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=zQinUF4nRw9suvYV0QcC+4HwU6YJpeOvuznpk/sVBR0=;
+	b=cc0wL8UFwcE/M4Qaw8ajDRUDIjxyQoY52L+QhmH44aBmowrxghGMcceaCx2qQbOz9/5tZX
+	1OBL/raZC0csBZtHHHV4HlfFOAsXYSqVEa9gHT43NycC8SIPbrDHBTu2o9zK8Ov90l/pM/
+	8cOFhQhxEKjvA5AvLyOmCUATO5dIRx0=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-634-0n58DUEPMjOY9fsSD-Zq7A-1; Wed,
+ 01 Jul 2026 12:14:00 -0400
+X-MC-Unique: 0n58DUEPMjOY9fsSD-Zq7A-1
+X-Mimecast-MFC-AGG-ID: 0n58DUEPMjOY9fsSD-Zq7A_1782922439
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 43C1C195C246;
+	Wed,  1 Jul 2026 16:13:59 +0000 (UTC)
+Received: from [10.44.32.26] (unknown [10.44.32.26])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D48F180056E;
+	Wed,  1 Jul 2026 16:13:58 +0000 (UTC)
+Date: Wed, 1 Jul 2026 18:13:50 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Sami Tolvanen <samitolvanen@google.com>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-verity: fix buffer overflow in FEC calculation
+Message-ID: <40e88304-8e8c-4bb9-12ac-e7a67b130af1@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-Proofpoint-GUID: TrNtiHZoIMiHUOIS7buzscLqEjsrSqaN
-X-Authority-Analysis: v=2.4 cv=HsJG3UTS c=1 sm=1 tr=0 ts=6a44cdf1 cx=c_pps
- a=AbJuCvi4Y3V6hpbCNWx0WA==:117 a=AbJuCvi4Y3V6hpbCNWx0WA==:17
- a=RAioF0-LDSMA:10 a=VkNPw1HP01LnGYTKEx00:22 a=bi6dqmuHe4P4UrxVR6um:22
- a=HK-ge7EqtdluswH-FwHe:22 a=SiqW3_QkAAAA:8 a=t7CeM3EgAAAA:8
- a=0sXvDpdg966-iehJYB8A:9 a=0-oVHmElw7bdUHZZ8WX8:22 a=FdTzh2GWekK77mhwV6Dw:22
-X-Proofpoint-ORIG-GUID: TrNtiHZoIMiHUOIS7buzscLqEjsrSqaN
-X-Proofpoint-Spam-Info: AW1haW4tMjYwNzAxMDA4NSBTYWx0ZWRfX2LxYDCd4aQw3
- hx4QlSyP6N3xcxWLI1AVgJTonjZfgyalqAfJRUBiuHmg47CWEk33D3JsRAHaKbCAOzn7petKDM1
- ni0kbzlPUlZT4LNi2aRMSXOnLka3mroUFHma2FiisC+4qXksDZb7
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwNzAxMDA4NSBTYWx0ZWRfXy+zGYTHiHZWz
- Ky3Y3/IbCPB94ZAkFxNI067MJbHlfuIu8AjhASYEvnxJk/CcuonVBzjkkZsRejVFKwXCnFHOHfi
- Xv2mTFENHPlhgBY5BxAR0iQfTUOp8t20fbN6oyY1I3hSiWIZcsGqDxmXJ9IfESmcI+Ad7hvlkBj
- psSDoCGSWfzlMwM+cDJWXQFhHSJrV4to/LevOA+7TIUXZ2Wa2pX2PgXQWWFhoIhFGw7vC1yj8bV
- 0RFxQVRK03haZfXnZnAY/oorBwl5XMF+/5REbVXFI7xRF398O8Ti1NaMn3CeYXm49jIOu5DD72M
- CRk0TMnr5CavnANvS6O8d0mk7TCxdA5pjsda48qLB3vZTwBds+6JGyqtRAj4GtjDccehxUbuzzB
- 9jH4leKtVvTT/Ss8ImEuHGKDvZizmmuHq0Xtv1tLvHHKJWD+vf1JPLuQWJYfDroJAQZAyWrd5H/
- xANGgzsNjilekEPxwwg==
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1143,Hydra:6.1.125,FMLib:17.12.100.49
- definitions=2026-07-01_02,2026-06-26_01,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- priorityscore=1501 suspectscore=0 clxscore=1011 impostorscore=0 adultscore=0
- phishscore=0 lowpriorityscore=0 bulkscore=0 malwarescore=0 spamscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2606150000 definitions=main-2607010085
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 6_6abPLO_tRK0RQSo1h_5JakQwRehq-pg7iYknN4KYM_1782922439
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; boundary="-1463811712-804060629-1782922438=:695192"
 
-The helper was introduced in 'commit 8236b0ae31c83 ("bdi: wake up
-concurrent wb_shutdown() callers.")' as a generic way of doing the same
-sequence of operations:
-	clear_bit_unlock();
-	smp_mb__after_atomic();
-	wake_up_bit();
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463811712-804060629-1782922438=:695192
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-The helper was first implemented to avoid bugs caused by forgetting to
-call `wake_up_bit()` after `clear_bit_unlock()`. Replace the open-coded
-sequence with the helper to avoid duplicate code and reduce code paths
-to maintain.
-Suggested-by: code@agatha.dev
-Link: https://kernelnewbies.org/Beginner%20Cleanup%20and%20Refactor%20Tasks%20by%20Agatha%20Isabelle%20Moreira#task_001
-Link: https://kernelnewbies.org/Beginner%20Cleanup%20and%20Refactor%20Tasks%20by%20Agatha%20Isabelle%20Moreira#task_002
-Signed-off-by: Jiangong.Han <jiangong.han@windriver.com>
+Hi Sami
+
+I used Claude to search for bugs in dm-verity and it found this. The bug 
+is real, the buffer "lambda" in lib/reed_solomon/decode_rs.c can overflow. 
+Claude proposed this fix. I'd like to ask you (as you wrote the dm-verity 
+FEC code) to review this patch.
+
+It seems that we can also redice the size of fio->erasures to 
+DM_VERITY_FEC_MAX_ROOTS entries.
+
+Mikulas
+
+
+
+
+if (neras && *neras <= v->fec->roots)
+	fio->erasures[(*neras)++] = i;
+
+This allows *neras to reach roots + 1 (the post-increment pushes it past roots). This
+value is then passed as no_eras to decode_rs8(). Inside the RS decoder
+(lib/reed_solomon/decode_rs.c:113-121), the erasure locator polynomial loop writes
+lambda[j] where j can reach nroots + 1 — one element past the end of lambda[] (which
+is sized nroots + 1, valid indices 0..nroots). The out-of-bounds write lands on
+syn[0], corrupting the syndrome buffer.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Assisted-by: Claude:claude-opus-4-6
+Cc: stable@vger.kernel.org
+Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
+
 ---
- drivers/md/dm-snap.c           | 4 +---
- drivers/md/dm-zoned-metadata.c | 8 ++------
- drivers/md/dm-zoned-reclaim.c  | 4 +---
- 3 files changed, 4 insertions(+), 12 deletions(-)
+ drivers/md/dm-verity-fec.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 1489fda9d24a..c8a9ca1eeae7 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -911,9 +911,7 @@ static int init_hash_tables(struct dm_snapshot *s)
+Index: linux-2.6/drivers/md/dm-verity-fec.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-verity-fec.c	2026-07-01 13:38:45.000000000 +0200
++++ linux-2.6/drivers/md/dm-verity-fec.c	2026-07-01 13:52:19.000000000 +0200
+@@ -220,7 +220,7 @@ static int fec_read_bufs(struct dm_verit
+ 				     PTR_ERR(bbuf));
  
- static void merge_shutdown(struct dm_snapshot *s)
- {
--	clear_bit_unlock(RUNNING_MERGE, &s->state_bits);
--	smp_mb__after_atomic();
--	wake_up_bit(&s->state_bits, RUNNING_MERGE);
-+	clear_and_wake_up_bit(RUNNING_MERGE, &s->state_bits);
- }
+ 			/* assume the block is corrupted */
+-			if (neras && *neras <= v->fec->roots)
++			if (neras && *neras < v->fec->roots)
+ 				fio->erasures[(*neras)++] = i;
  
- static struct bio *__release_queued_bios_after_merge(struct dm_snapshot *s)
-diff --git a/drivers/md/dm-zoned-metadata.c b/drivers/md/dm-zoned-metadata.c
-index f4f81c79a080..094b63215882 100644
---- a/drivers/md/dm-zoned-metadata.c
-+++ b/drivers/md/dm-zoned-metadata.c
-@@ -519,9 +519,7 @@ static void dmz_mblock_bio_end_io(struct bio *bio)
- 	else
- 		flag = DMZ_META_READING;
- 
--	clear_bit_unlock(flag, &mblk->state);
--	smp_mb__after_atomic();
--	wake_up_bit(&mblk->state, flag);
-+	clear_and_wake_up_bit(flag, &mblk->state);
- 
- 	bio_put(bio);
- }
-@@ -1910,9 +1908,7 @@ void dmz_unlock_zone_reclaim(struct dm_zone *zone)
- 	WARN_ON(dmz_is_active(zone));
- 	WARN_ON(!dmz_in_reclaim(zone));
- 
--	clear_bit_unlock(DMZ_RECLAIM, &zone->flags);
--	smp_mb__after_atomic();
--	wake_up_bit(&zone->flags, DMZ_RECLAIM);
-+	clear_and_wake_up_bit(DMZ_RECLAIM, &zone->flags);
- }
- 
- /*
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index ad9c7bc21d54..c041413c729e 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -106,9 +106,7 @@ static void dmz_reclaim_kcopy_end(int read_err, unsigned long write_err,
- 	else
- 		zrc->kc_err = 0;
- 
--	clear_bit_unlock(DMZ_RECLAIM_KCOPY, &zrc->flags);
--	smp_mb__after_atomic();
--	wake_up_bit(&zrc->flags, DMZ_RECLAIM_KCOPY);
-+	clear_and_wake_up_bit(DMZ_RECLAIM_KCOPY, &zrc->flags);
- }
- 
- /*
--- 
-2.37.3
+ 			continue;
+@@ -238,7 +238,7 @@ static int fec_read_bufs(struct dm_verit
+ 			 * skip if we have already found the theoretical
+ 			 * maximum number (i.e. fec->roots) of erasures
+ 			 */
+-			if (neras && *neras <= v->fec->roots &&
++			if (neras && *neras < v->fec->roots &&
+ 			    fec_is_erasure(v, io, want_digest, bbuf))
+ 				fio->erasures[(*neras)++] = i;
+ 		}
+
+---1463811712-804060629-1782922438=:695192--
 
