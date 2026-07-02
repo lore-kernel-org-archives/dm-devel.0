@@ -1,108 +1,116 @@
-Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A59C23C1F43
-	for <dm-devel@lists.linux.dev>; Thu,  2 Jul 2026 11:33:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.44
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782992002; cv=pass; b=sHvZcP3vhn2B/ga7ClxdpM1nR+vk0udN602j1OrGnV73QDQT6Xm4+H6wStGsQWsnz/f0WXaV0A+eB/cCOGV5TfUkFOe5pXwdIgFgnIfCp7FZRm1IfNhEGsQyQ+jzV4iNITrWluhJhwlJ0eHeoqGtFVP48P8kRPzktIKkB5vG3+s=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782992002; c=relaxed/simple;
-	bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=GquDz1ycWeBhB6BeJGr7fYhP22ZIGlPvfvGh1QCfSpfuV9gwzbnIux0/4VH9gDo+7i+jOEEbDsT1geAw0JLf61O4toOmqFqXdd8fWi1bneVrFNFMwO77XgdlLFXNLWqx9RZv8O065aSeHeyj5IUCXnGhkLCMPr8+NLd59Os6AUU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=R1t1swOf; arc=pass smtp.client-ip=209.85.167.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 469703A6B71;
+	Thu,  2 Jul 2026 16:47:40 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1783010861; cv=none; b=Su0sMy6JLHUpfF7jish8gTLjkrRTLEUL59qlwAGjJ1Fu96IRlH9bLnnK5fYZJW/8ZTgb02Zlmn5gE5ikpfENMQRozC88wUo3EOVBk6IJ5bOikvX4VbnSHNGuxSs1/VgaHx1GyuPYDHz/xHj3nCADoYnoVW3u9nrWMtdLnrRO3F0=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1783010861; c=relaxed/simple;
+	bh=2nppVHCCBnzLgElA1oeSYIoH78jb0KksVNGYbzDEosU=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=vE67L/hKoW1dpDVuR4kCsG4Io2J5lgHyjnPkT2Id1pGkOIczaF9oHF9I4e608b4GJwPEnuhszQZ5/1o+kX7G+leib41MqovXkjEaveVemki4JWzm73J7zSgWOhjwe+b9+Y3NWGqG/zegD7MByQiIMSZ3MFQPbt7lk4NRn/jd8Ow=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=K6+6tFoU; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="R1t1swOf"
-Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5aeb2b17167so494934e87.0
-        for <dm-devel@lists.linux.dev>; Thu, 02 Jul 2026 04:33:21 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1782992000; cv=none;
-        d=google.com; s=arc-20260327;
-        b=RdUCN9rTbOMa9PwoFbH4JyWAATP+MV+jLlIc198FQs8ColloyKgKwEi9OnLvVuIvMb
-         CmFz0KIUqzhd983q57LIGNCE+jGce1AhvGOYeqpd5VfSqmBcpaKdETOKaWR0YbasTP9e
-         tQTzgJIQyvj1Olq/HdscP5dRzyNLQXDyflphA4d/Hi/EESE9aUPrQ8BFFmUzg3TGW0kx
-         oxpX8wffKB8DO4LVjB1O6FEINk0ws1CWydfplzXDbAimNA26Lkgmk3u2lt74Cswuvrma
-         msU3wxCqRCOcH8adNvtWVXz6GcMkGIsTzbMloeXsohARlRJdyxz5d/tJs+SrNT3vd3BN
-         rFnQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
-        fh=CKD2YGlPyJK2Dog7ZQxjs/HGMKb9h3+aSIdI6BZDRtM=;
-        b=dP7dyUJA1AzxdkwGclnAdM5hAQDcpqezyUm9Ws11RMex8vOP+/Zk/SI9SFZbfcGjp/
-         K+42uYQoy+bAhQMnAdj05kI02VOPBfw32Z1JCr/R2qrOqT86heVHnKCgTBYA32txhXJx
-         9j9VAiubaql3xuD31QaB8u6V/nW/H6RK+R+iY6B1tjswgGjvH4g7soVaTTx/CaqaaUxs
-         SIJC2W+0Zsq+NLxY1q4CsDWRsBIxpOipVq1CeLYhy/okzIbAoE6y/38J20+zn6JGdfdw
-         um1cmF6OioJGKzoq5YjUGPcZdwpwKStrOABElfL+Z+vPVJqM8qGDxEiZKj0LsjYPCIpc
-         Pe8A==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=trailofbits.com; s=google; t=1782992000; x=1783596800; darn=lists.linux.dev;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
-        b=R1t1swOfLGfRpGp42TDAhdgNMCb4UMzZd02PBg4AqfcAF9xIPXjAP6MGyKDB/fOU6X
-         00UZ4Y1R/GWjuY0bZSQ49NeeD1hAcEZLEbvN+j54pn5Bacxhv+4FUoQV1r7EmHBRaX88
-         eqe6mD18rcoPOPj9PzcgTWL71GKCcob796yU2IY0A9mjOegC9ADaTnww9Fx6GXj0XKRG
-         JLLuBPLe7qcxGg53wqpukfEL/5efWAgejSsuR/gzdVk6dNt2DIH9sDSnYaEpeovRSIde
-         oCnbcyRpnxGjeCYwahrLqWm6t4tBE7FFbS1bSC+eumAyKUaW/ZHbW/vQRG4I5KwzdsIz
-         sbXw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782992000; x=1783596800;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
-        b=D5efuTFeoYnbRmib3ddIb9eLv8eHXusVJlZDPbpsXcdamEV2TWSEal/K3enRS/sEnR
-         3iURSThN8TgsyNEgfnryGByL0F2yo0FzsAkZbcnA5ahgtQWDWjAlXFR5+QSaT/I2ortd
-         2MZJbNRbV/sVGxehFDI8BN6qos/RHBj5CxElU5D8j8O9P1vTqYTI+0VsIJWZjTUph0fl
-         Jh/9beKgDbsKNNmZgH30i/rL/vmUWZ5i+npj2kSbXv+Up8zsSvcJBeDceat1kbah76cQ
-         idX6qFlxRs/Dindh6Db8gaMHXPBSPnGLQEvfFr5Eekq6VPIHU4F+trS2LztRLwssacXV
-         kE3g==
-X-Forwarded-Encrypted: i=1; AHgh+RprixAVjgFjVMSWImc+0pDWUBvEZuhng/9wxKxWcOjXw6hObA48ntQNf+ZKR2b4RFJxlksnyEmAoA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwYEdkRTpksHLZ1weYxZGPbrguKyW2SnzkmyhMfrdLJZkQMG4Gv
-	vNZdvvM5elwzpWZR6BeAoBRIySoQUYagjjLr1Gji4HVE+V66ukLVqn9BHn/TFbug+mAMe9M9xWf
-	4x6p3BL6irfPqDRihjQP6gAcXS/CImHMcEEuTGzcqoA==
-X-Gm-Gg: AfdE7ck6VXUixYN0u3K9IDpvGGKmNAEj6Ivt7GilK17hiIv7kikKCMV4P1TKQN7vP/9
-	SCfoDaTQ1F0wOrEB0TEiAyAHhkr/w9Y5iGx4PcwL5L3JN2CO1hnM3e5eGlZnHSY4WBG4HGgNvKt
-	rTxMAdcGhluP7mLyX7c1ZQIb7l+8XuunDnE50oubNoT8GrVZszzii+JEOy2I9MZkm3e2ZGr+Nl6
-	tm9vT/iXEy3L2iyjBNUDoHexlDucD8j2tZYqpygLJP89tn2b5LfxhZp+ttvIwF+golaVA8=
-X-Received: by 2002:a05:6512:3190:b0:5ae:b764:3b91 with SMTP id
- 2adb3069b0e04-5aec62df20dmr1373238e87.13.1782991999979; Thu, 02 Jul 2026
- 04:33:19 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="K6+6tFoU"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D05BA1F00A3A;
+	Thu,  2 Jul 2026 16:47:39 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1783010860;
+	bh=/tfETPccCkCr5OE+ufJaFZz2wUOvulzcZ2FRJ1gtW2c=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=K6+6tFoU925ON+L1jsr/1A3CypG7iRWRMqjgzH+dCBazLbBj7Qutv1e8HDytkTzcH
+	 AfexOKxchLvSfXSZS6BJ6mGr2OBr9Md3uGu04ticsKgXHTr7IAMvExIdHzLjlwIeuV
+	 n4T8nIbKV4t+vC2kufdHqlq8kyCwxEeFCjL1IylAbVokDKOlyVWPgO/hKiziubKJvU
+	 SB1ZQB8DdO0tacRO7FTpyMXKbjTDhwPkmu07Co8FtFGawStt3Sb1ohBVGZJtvqSOVT
+	 YwtSMWUhIyJRNfrBWZr4kRE8miRJE6rNqtGrXCgpb2j+SjOBQPAs78iOuz9mM6cVpm
+	 ZJ8LnrTZitnUA==
+Date: Thu, 2 Jul 2026 09:45:57 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Leonid Ravich <lravich@amazon.com>
+Cc: linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	herbert@gondor.apana.org.au, davem@davemloft.net,
+	snitzer@kernel.org, mpatocka@redhat.com, axboe@kernel.dk
+Subject: Re: [PATCH v5 0/5] crypto: skcipher - multi-data-unit dispatch as a
+ template
+Message-ID: <20260702164557.GA1768@sol>
+References: <20260630083431.2772-1-lravich@amazon.com>
+ <20260701071919.GA111652@sol>
+ <20260702084534.22846-1-lravich@amazon.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260608160606.1134881.c0f6c631029b.dm-ebs-discard-dirty-buffer-resurrection@trailofbits.com>
- <06985f1d-436a-9dae-b984-65e95dd0572b@redhat.com>
-In-Reply-To: <06985f1d-436a-9dae-b984-65e95dd0572b@redhat.com>
-From: Samuel Moelius <sam.moelius@trailofbits.com>
-Date: Thu, 2 Jul 2026 07:33:08 -0400
-X-Gm-Features: AVVi8CcZkWqQ74c7lhQOcCHYloOJ5kfCzYM5EHYQUZkABQH_SoQAa5KYdB77I-I
-Message-ID: <CAE+C+DbvRB_-wFEGE_LVRPc2KC9-2XjOa+zFOGiFqoFjJF6aDw@mail.gmail.com>
-Subject: Re: [PATCH v2] dm ebs: drop dirty bufio state when discarding blocks
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, 
-	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260702084534.22846-1-lravich@amazon.com>
 
-On Wed, Jun 10, 2026 at 3:54=E2=80=AFPM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
-> Hi
->
-> I will accept this (and the other patches) after the upcoming merge windo=
-w
-> ends.
+On Thu, Jul 02, 2026 at 08:45:34AM +0000, Leonid Ravich wrote:
+> On Wed, Jul 01, 2026 at 12:19:19AM -0700, Eric Biggers wrote:
+> > No, this didn't address my feedback.  It moved things around but still
+> > adds additional overhead for everyone to support an out-of-tree driver,
+> > which also hasn't been shown to be any better than just using the CPU.
+> 
+> Eric, thanks for the fast reply.
+> 
+> Overhead: for a non-user the only cost is the data_unit_size field plus
+> one zeroing store in set_tfm()/ON_STACK; the en/decrypt paths are
+> untouched.
 
-If I am not mistaken, the merge window has closed. Should I resend the patc=
-h?
+Sure, which is still a cost for everyone.
+
+> A dun() user pays one indirect dispatch into the template per
+> request plus a scatterwalk step and IV copy per unit -- the same per-DU
+> bookkeeping the consumer already open-codes today.
+
+It's not the same at all.  There's now an extra indirect call, more
+per-request memory used, additional overhead to create a scatterlist and
+then break it up into multiple ones using the fully generalized
+scatterlist walker instead of just creating the correct ones in the
+first place from the bio_vec, etc.  We need to be simplifying the crypto
+APIs, not making them even more complex and adding more overhead.
+
+> On the driver: I agree pushing code optimized for an out-of-tree driver
+> is wrong
+
+So don't do it.
+
+> but I don't think that's the case here -- this helps any async
+> crypto engine, and there are in-tree async xts(aes) ones dm-crypt is
+> eligible to use today: HiSilicon SEC2, TI DTHEv2, Atmel (I don't have any
+> to test on).
+
+It helps nothing, as there is no patch and no benchmarks.
+
+> To bound the win, I used cryptd as a pure async carrier and
+> moved the per-DU split inside it, then ran dm-crypt + fio: batching cut
+> CPU ~30% on 128k I/O (large batch) and had zero impact on 4k -- so the
+> saving is dispatch, not crypto.
+>
+> A real engine that submits a whole
+> multi-DU request in one descriptor avoids that per-DU dispatch entirely,
+> so it saves at least that.
+
+That is not an equivalent benchmark at all.
+
+> So the question for me is what the bar is: does landing the API and dun()
+> template now (with the in-tree consolidation it already buys dm-crypt and
+> blk-crypto-fallback), with a throughput demonstration deferred to a real
+> async provider, work for you ?
+
+I definitely don't want this for blk-crypto-fallback.
+blk-crypto-fallback already only supports CPU-based crypto acceleration.
+(As it should, because nothing else is actually worthwhile these days,
+other than hardware inline encryption which is separately supported.)
+And I'm also planning to switch it from crypto_skcipher to lib/crypto/
+to eliminate the remaining API overhead, which will actually accomplish
+that, unlike the dun() thing which just makes it worse.
+
+The bar for adding things to the upstream kernel is that it has to
+actually be used *and* beneficial in the upstream kernel.
+
+- Eric
