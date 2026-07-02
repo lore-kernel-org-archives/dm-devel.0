@@ -1,106 +1,108 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lf1-f44.google.com (mail-lf1-f44.google.com [209.85.167.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 95F44367B6B
-	for <dm-devel@lists.linux.dev>; Thu,  2 Jul 2026 10:40:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782988860; cv=none; b=purPDh/Fl4X2RNF58/DKLmqUaXgtU45P+cHoNRZpnPzKkndJUTqK0nytGpudLBZfi5tB0iRj8q++H7udg+YTG3RzZqQ3wlkBhDmtiIeEFCiLDJkXK1VrhpLEHwebcF9PJ1Mc4hyLwwMXqPlGn6jlnes6zNN41tDZ6uR+fLdsqXE=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782988860; c=relaxed/simple;
-	bh=9YzbojeXNlnzLK1B5oj2JfvWshAWiMXeL6mmMwGfh2I=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A59C23C1F43
+	for <dm-devel@lists.linux.dev>; Thu,  2 Jul 2026 11:33:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.167.44
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1782992002; cv=pass; b=sHvZcP3vhn2B/ga7ClxdpM1nR+vk0udN602j1OrGnV73QDQT6Xm4+H6wStGsQWsnz/f0WXaV0A+eB/cCOGV5TfUkFOe5pXwdIgFgnIfCp7FZRm1IfNhEGsQyQ+jzV4iNITrWluhJhwlJ0eHeoqGtFVP48P8kRPzktIKkB5vG3+s=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1782992002; c=relaxed/simple;
+	bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=XtTEybkHhAOsZH9SSZSeS1dSVNavP9WiSRaaHFS7eu1RAIsA2L56nvXg7ZrdgXD8Tl9OX1dcpMaZznZRpG8SAHMjryUOlTj/FD9TBeyF3SnzRkROvwJ2blZKTpQ4jZ3rBgiT9UrGg/jlTbDLXiE/cDbEpOHHAlxX3zKuHov5Mek=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=hl/xZkjH; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	 To:Cc:Content-Type; b=GquDz1ycWeBhB6BeJGr7fYhP22ZIGlPvfvGh1QCfSpfuV9gwzbnIux0/4VH9gDo+7i+jOEEbDsT1geAw0JLf61O4toOmqFqXdd8fWi1bneVrFNFMwO77XgdlLFXNLWqx9RZv8O065aSeHeyj5IUCXnGhkLCMPr8+NLd59Os6AUU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=R1t1swOf; arc=pass smtp.client-ip=209.85.167.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="hl/xZkjH"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1782988858;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1S5rFZYWMM0y6IKRawKEvo5guFtOQNqmUYSlSoGfdlI=;
-	b=hl/xZkjH5QxiK8tIpJNILl6LN6VtbgIFbVS8Qrw8xYjOrpWVThQUeeM3025kFPNq3rbbNN
-	x5FZr7r5XM3neSEjfi0Gri4Qdw6orLe7A8PalQp1lBVYNK7xH/z7QkwePdq7EZ+/269Pxd
-	pTiC+UJG7jSWL8n9NbxcHkua33ZAbik=
-Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
- [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-683-r0gE1Pt7NcGNOzg9u2W_vw-1; Thu, 02 Jul 2026 06:40:57 -0400
-X-MC-Unique: r0gE1Pt7NcGNOzg9u2W_vw-1
-X-Mimecast-MFC-AGG-ID: r0gE1Pt7NcGNOzg9u2W_vw_1782988856
-Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-3997407a7b9so13885821fa.1
-        for <dm-devel@lists.linux.dev>; Thu, 02 Jul 2026 03:40:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="R1t1swOf"
+Received: by mail-lf1-f44.google.com with SMTP id 2adb3069b0e04-5aeb2b17167so494934e87.0
+        for <dm-devel@lists.linux.dev>; Thu, 02 Jul 2026 04:33:21 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1782992000; cv=none;
+        d=google.com; s=arc-20260327;
+        b=RdUCN9rTbOMa9PwoFbH4JyWAATP+MV+jLlIc198FQs8ColloyKgKwEi9OnLvVuIvMb
+         CmFz0KIUqzhd983q57LIGNCE+jGce1AhvGOYeqpd5VfSqmBcpaKdETOKaWR0YbasTP9e
+         tQTzgJIQyvj1Olq/HdscP5dRzyNLQXDyflphA4d/Hi/EESE9aUPrQ8BFFmUzg3TGW0kx
+         oxpX8wffKB8DO4LVjB1O6FEINk0ws1CWydfplzXDbAimNA26Lkgmk3u2lt74Cswuvrma
+         msU3wxCqRCOcH8adNvtWVXz6GcMkGIsTzbMloeXsohARlRJdyxz5d/tJs+SrNT3vd3BN
+         rFnQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
+        fh=CKD2YGlPyJK2Dog7ZQxjs/HGMKb9h3+aSIdI6BZDRtM=;
+        b=dP7dyUJA1AzxdkwGclnAdM5hAQDcpqezyUm9Ws11RMex8vOP+/Zk/SI9SFZbfcGjp/
+         K+42uYQoy+bAhQMnAdj05kI02VOPBfw32Z1JCr/R2qrOqT86heVHnKCgTBYA32txhXJx
+         9j9VAiubaql3xuD31QaB8u6V/nW/H6RK+R+iY6B1tjswgGjvH4g7soVaTTx/CaqaaUxs
+         SIJC2W+0Zsq+NLxY1q4CsDWRsBIxpOipVq1CeLYhy/okzIbAoE6y/38J20+zn6JGdfdw
+         um1cmF6OioJGKzoq5YjUGPcZdwpwKStrOABElfL+Z+vPVJqM8qGDxEiZKj0LsjYPCIpc
+         Pe8A==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=trailofbits.com; s=google; t=1782992000; x=1783596800; darn=lists.linux.dev;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
+        b=R1t1swOfLGfRpGp42TDAhdgNMCb4UMzZd02PBg4AqfcAF9xIPXjAP6MGyKDB/fOU6X
+         00UZ4Y1R/GWjuY0bZSQ49NeeD1hAcEZLEbvN+j54pn5Bacxhv+4FUoQV1r7EmHBRaX88
+         eqe6mD18rcoPOPj9PzcgTWL71GKCcob796yU2IY0A9mjOegC9ADaTnww9Fx6GXj0XKRG
+         JLLuBPLe7qcxGg53wqpukfEL/5efWAgejSsuR/gzdVk6dNt2DIH9sDSnYaEpeovRSIde
+         oCnbcyRpnxGjeCYwahrLqWm6t4tBE7FFbS1bSC+eumAyKUaW/ZHbW/vQRG4I5KwzdsIz
+         sbXw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782988856; x=1783593656;
+        d=1e100.net; s=20251104; t=1782992000; x=1783596800;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=1S5rFZYWMM0y6IKRawKEvo5guFtOQNqmUYSlSoGfdlI=;
-        b=j7EjmSW/9z+244gaYtWapah21fizYdVgIzIv6/aIptVJGId5EQ2Hq1w9AgF/fdcXsC
-         +CP7SLXeHeqLMIn25gTJDYflucUmUIeFnW4pQU3idUo2ZuCzNQXUQt0EMExI30RPK744
-         cYIA+pIR/D3OZBkDYOd0avjelKxycpJL9zi2tTA8zoqwfrooUayBBPfWeBbJgukDtj0V
-         d9DbHes2d5WGiB9Yslh/KMaxOycm5oBQlN7UJlw1ttcRxT3Duf+qOQylyECoXvDRKBc4
-         lpaxfPFzRhnJsaz9gvY2/aZqajTjN1nIYkN4un3yEZeFMUXh8j4XNXDQ/Li59k3I81PV
-         bJOQ==
-X-Forwarded-Encrypted: i=1; AHgh+RqYhZQFLTyy4zXf39RuFaPv+aEMPXWuQjMj7UXG5eK0HJrFvmZndAwnQRgaw0t/PSsQ+nTtIVAycg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwVh28nXa4yovyKLjwcaee1sI8/GKNR2zxCf8vw3SHE6ltEaEOv
-	VGNL4oeXD2ku8X/3CYR0XVu9cFopTxHViUD/ZQWo1PJqGgnZxfN+K4fPW5nfLX3bBkbg5qW/KQ3
-	lugQR3ToLGGyIJYWFb1XMKeSBcFoZ37DzqxBhKnYExvbwrurJQ3ipE+SJu70CqNwLnrjGIxZmNd
-	NvYpvCt4/buoGcec7W1b3vMjO1U4Mx3ZPiig==
-X-Gm-Gg: AfdE7clpQ5Khbn+EeFVQCJBTVXkNXnG8jfTGV2FEE6+3/C/GYopjjSOpIxXVJwXhlQv
-	NdDR4lyMgaXUS61AonoW5Q2ahgLMNU0Sj0zXZyqI1gPhAPynbEHwg0r+QD4c0Ye3vSvswI3MrlO
-	OL9fcLgT379kww1Jf5HeRKTw/HlxgDEzYPltLFPc/x2a0AcOYaM+2VvVNBlrPGz1QI1A==
-X-Received: by 2002:a05:651c:88b:b0:396:a7f5:5e9c with SMTP id 38308e7fff4ca-39b340d561fmr11782951fa.25.1782988855697;
-        Thu, 02 Jul 2026 03:40:55 -0700 (PDT)
-X-Received: by 2002:a05:651c:88b:b0:396:a7f5:5e9c with SMTP id
- 38308e7fff4ca-39b340d561fmr11782921fa.25.1782988855291; Thu, 02 Jul 2026
- 03:40:55 -0700 (PDT)
+        bh=mB6dT1sg2Ybaa5Hs7LVNjTaOvI0XuElN0JvSfPFbp8Y=;
+        b=D5efuTFeoYnbRmib3ddIb9eLv8eHXusVJlZDPbpsXcdamEV2TWSEal/K3enRS/sEnR
+         3iURSThN8TgsyNEgfnryGByL0F2yo0FzsAkZbcnA5ahgtQWDWjAlXFR5+QSaT/I2ortd
+         2MZJbNRbV/sVGxehFDI8BN6qos/RHBj5CxElU5D8j8O9P1vTqYTI+0VsIJWZjTUph0fl
+         Jh/9beKgDbsKNNmZgH30i/rL/vmUWZ5i+npj2kSbXv+Up8zsSvcJBeDceat1kbah76cQ
+         idX6qFlxRs/Dindh6Db8gaMHXPBSPnGLQEvfFr5Eekq6VPIHU4F+trS2LztRLwssacXV
+         kE3g==
+X-Forwarded-Encrypted: i=1; AHgh+RprixAVjgFjVMSWImc+0pDWUBvEZuhng/9wxKxWcOjXw6hObA48ntQNf+ZKR2b4RFJxlksnyEmAoA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwYEdkRTpksHLZ1weYxZGPbrguKyW2SnzkmyhMfrdLJZkQMG4Gv
+	vNZdvvM5elwzpWZR6BeAoBRIySoQUYagjjLr1Gji4HVE+V66ukLVqn9BHn/TFbug+mAMe9M9xWf
+	4x6p3BL6irfPqDRihjQP6gAcXS/CImHMcEEuTGzcqoA==
+X-Gm-Gg: AfdE7ck6VXUixYN0u3K9IDpvGGKmNAEj6Ivt7GilK17hiIv7kikKCMV4P1TKQN7vP/9
+	SCfoDaTQ1F0wOrEB0TEiAyAHhkr/w9Y5iGx4PcwL5L3JN2CO1hnM3e5eGlZnHSY4WBG4HGgNvKt
+	rTxMAdcGhluP7mLyX7c1ZQIb7l+8XuunDnE50oubNoT8GrVZszzii+JEOy2I9MZkm3e2ZGr+Nl6
+	tm9vT/iXEy3L2iyjBNUDoHexlDucD8j2tZYqpygLJP89tn2b5LfxhZp+ttvIwF+golaVA8=
+X-Received: by 2002:a05:6512:3190:b0:5ae:b764:3b91 with SMTP id
+ 2adb3069b0e04-5aec62df20dmr1373238e87.13.1782991999979; Thu, 02 Jul 2026
+ 04:33:19 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260702002734.300353.794e3849918e.dm-era-target-offset-mapping@trailofbits.com>
-In-Reply-To: <20260702002734.300353.794e3849918e.dm-era-target-offset-mapping@trailofbits.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Thu, 2 Jul 2026 18:40:43 +0800
-X-Gm-Features: AVVi8CfZp-gmtZJadxHQg6QAG3NSH6UWW9-gAH4l8LRkaAEanXIKbVG7XOfG-Us
-Message-ID: <CALjSBEteAnvKTa9nTeK9x+aoN8wZSmA=1fKpqxiwkTTDrxDQzQ@mail.gmail.com>
-Subject: Re: [PATCH] dm era: fix out-of-bounds memory access for non-zero
- start sector
-To: Samuel Moelius <sam.moelius@trailofbits.com>
+References: <20260608160606.1134881.c0f6c631029b.dm-ebs-discard-dirty-buffer-resurrection@trailofbits.com>
+ <06985f1d-436a-9dae-b984-65e95dd0572b@redhat.com>
+In-Reply-To: <06985f1d-436a-9dae-b984-65e95dd0572b@redhat.com>
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+Date: Thu, 2 Jul 2026 07:33:08 -0400
+X-Gm-Features: AVVi8CcZkWqQ74c7lhQOcCHYloOJ5kfCzYM5EHYQUZkABQH_SoQAa5KYdB77I-I
+Message-ID: <CAE+C+DbvRB_-wFEGE_LVRPc2KC9-2XjOa+zFOGiFqoFjJF6aDw@mail.gmail.com>
+Subject: Re: [PATCH v2] dm ebs: drop dirty bufio state when discarding blocks
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, 
 	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: lf-Snq8m9U0ML31lWhbGLYmKuYuExv4RAUsmR05NsMc_1782988856
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Jul 2, 2026 at 8:34=E2=80=AFAM Samuel Moelius
-<sam.moelius@trailofbits.com> wrote:
+On Wed, Jun 10, 2026 at 3:54=E2=80=AFPM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
 >
-> dm-era tracks writes in target-relative blocks, but era_map() calculates
-> the writeset block before applying the target offset.  Tables with a
-> non-zero start sector can therefore pass an absolute mapped-device block
-> to metadata_current_marked().
+> Hi
 >
-> If the absolute block is beyond the current writeset size,
-> writeset_marked() tests past the end of the in-core bitset.  KASAN report=
-s
-> this as a vmalloc-out-of-bounds access.
->
-> Apply the target offset before calculating the era block so writeset
-> lookups use the target-relative block number.
->
-> Assisted-by: Codex:gpt-5.5-cyber-preview
-> Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+> I will accept this (and the other patches) after the upcoming merge windo=
+w
+> ends.
 
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
-
+If I am not mistaken, the merge window has closed. Should I resend the patc=
+h?
