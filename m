@@ -1,119 +1,108 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9286E31077A
-	for <dm-devel@lists.linux.dev>; Mon,  6 Jul 2026 13:50:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50CC43D3CF2;
+	Mon,  6 Jul 2026 20:52:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783345861; cv=none; b=nam7Uun/kAoFqkf4Im9QSCv4LNfYsaL+1D5dF4BPW2CY8u20Bhi3fE97an3T0UIQJCvof9AP3LkqaH/0JiLR/XXIA2b+ecqZsz1GHUSIfK/XuU1zOHkoLWJzj8JFemEW55DDp/lHrrNg0RkU6aziugPkkkcKNojLjOrZnohZfrU=
+	t=1783371156; cv=none; b=iNdN3s6aFZFdLuKtmuPwjc178sp+h+mNUSKU8eqnKFnx4Y6YDddmSoP1abgYOAQtpvy5/SWIixnpRlEkNfjrUn/3iGcgpkS+GeJsboeiMe/RQn0oeFTj9G2KD2+EHSPMMyndmp1/BqJvbyWJ1k/t/8pMM155e/3ErmYeYCixG50=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783345861; c=relaxed/simple;
-	bh=s5FYu8ve5PLVawVvLXvj66iw0B6Au3VI5uvcc4S/kSE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=abW5GtMYbS1S7JVgIf/8Yq6QKifKJAg6Vjvel8E60C0I/D6xBUaHqf67x8mEumPBFM7AEULdF14mJT/fCb4NhpIyvK3Nzq8W/38FLVg1ErG28jb0wXfuxwHhJYu41g2V+6nfSPVkBeHF0Iyc+g7pv19JCSiKDJ62fjHtWEKv4CQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=Y1Xvalx6; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1783371156; c=relaxed/simple;
+	bh=6wNW8CEKz/TdzFqSLnT7Wmn5hQxkNgcxhw+xSjzEbsQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=P1GjoPOzlD/vtUr6Sr4bokDPwzjN34dvM+RIsmkKamsuDxCSJYTdevePutE57gFWq0976CdYFFmSTX/nNlwfvoRwRCD4stB8ZkMnkPLRvGhqDtwuy81zujWpR61MNJ2gcmwd9McQVjMnyHspXgJqkXnI+zY5WLvFGd3HJCiixqs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=OdVITmPm; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="Y1Xvalx6"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-493c2b3dc8bso21282065e9.2
-        for <dm-devel@lists.linux.dev>; Mon, 06 Jul 2026 06:50:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1783345858; x=1783950658; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=vEHUZp522leGRaIfBMmgEDr49u4099an2x6jOaxKZv8=;
-        b=Y1Xvalx6e8DAD6x0BodvBf+cVdRwqQOb6UcEs+WeBTOrjB9ghi7idliuEAeTrpiTYe
-         fIbktj81H8WG4dnChp92bASKB+UalSsJG2IHWpbf1lVbPoL/7K55SOjJQjkw07VHqqBb
-         +1vRCR0WkrE5u8QrzMOnnzK6/q+0wUMBEb7zm4Ur6mhx+bDvGUY87RTzCqtsFH7XrpDu
-         0ljlwvDLuM0gh9TqdxSndv9/GV7SH5hPxImrb6gmZYcjGR95rou30+vzGrGUHqdUbhix
-         rInxZeT6vmI44fds/be1xVdYQlZcM3nUmifGF6GXuYIcYqBRGoKrvQRR2lM8hu2IuAXF
-         JexQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783345858; x=1783950658;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=vEHUZp522leGRaIfBMmgEDr49u4099an2x6jOaxKZv8=;
-        b=FBwNg4l8g6Dkr5YcaeFQPpS8LcZBNALz9pzo2f1VQlPVnDRMAlR8ie1ANzFGZfCY5K
-         t46tELiDC5aO9HyEgJkNP4KJjdRTHUAISVVGv69l953cDDu6W1nsJgzuh+yxlU6GDpAO
-         AmiXrq8+8YH3JPtgnIoRiyLGA6mSEsKDQ9znzJYzHUqRTMHIQ8ziLZ3QG9reUXrb1oVi
-         6UUWpfFQnUnoh3yCWx2ziX621dbAFAppjMsCm9aVGu0+hijRaWbj6yQMsq8gCl2pqTOU
-         njbo2K1Xc0ZhgDiHkK9hu1S7WTm80+2NM/qWrDBRyZjkrErA+vW97sh8WpbAs0XnSE2f
-         RAeQ==
-X-Gm-Message-State: AOJu0YxMf1ukRvUDByjxL4OX87cVAEnpdzFx/6LP8WR3oEj8RjxTIIOG
-	UpH1dEllsoH4ACx1S4V37TywnSpHS531vYOjrX7TEOkaTKRfDsdjq1mQEqVsHQlMAzk=
-X-Gm-Gg: AfdE7cmHPSFAYBzDsy5txFBjC59Y2PbWl+VDnkoEwzFb53oyBOMi5ZvpJZh/vd327Wp
-	EUmyMezHRnzx859OIbrukQVzDY3xk1Tno9LmTSmoSAm/J7q6JQ9Tb4BsAY/v527OTP93qMu9Uo3
-	ilNguYc2xNI4GAngp2j56gjM77WtjtkBP/X99HohiZZi8Or3W+qPM///kU0TpVQdb3VGdsbb+Gf
-	fqdBN/XEIk/NFAqCgZ5F2ukdelVFZt8UiHKkoszvidPEfyVGE3TVncz9XcL1wmuhjlVQke2dwa0
-	PzeCY1/sJZVEG07HM5Wpr2Sj/lt8x9q5RekV2q92BLPny5vP3u4/VmETL0T++vqAXtuQ7CMYTaU
-	EINj7MZZy8BE+q2PGOig4qAzL56pkmwzBTSfjjL7zGf1piV4RwBkyxD1CMZXnKpI9KjQTNOU1Ib
-	2RJxMT4vo9xGTR2W9ZB3UMTgREsTUy42rX2WXdZqhzmlPLhL9wbTyu2bQ7Cz95Qzlq1RbDKsk7b
-	n9I
-X-Received: by 2002:a05:600c:6297:b0:493:d26b:1575 with SMTP id 5b1f17b1804b1-493df099bedmr7074725e9.27.1783345857750;
-        Mon, 06 Jul 2026 06:50:57 -0700 (PDT)
-Received: from localhost (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-493ccdab3a8sm305067855e9.6.2026.07.06.06.50.57
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 06 Jul 2026 06:50:57 -0700 (PDT)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>
-Subject: [PATCH] multipath.conf.in: Update path_checker and force_sync documentation
-Date: Mon,  6 Jul 2026 15:50:49 +0200
-Message-ID: <20260706135049.724071-1-mwilck@suse.com>
-X-Mailer: git-send-email 2.54.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="OdVITmPm"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A396C1F000E9;
+	Mon,  6 Jul 2026 20:52:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1783371154;
+	bh=1c5d93qfn7scBZhbRsILrksrQRfDvheZrFXKwJHJHkI=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=OdVITmPmXHTaN+5akq7sGNv25rV0H/dpCE1VIu4UpPWlERMWyS2LIfSTW7b+tvmM5
+	 958ZmVw59SllheqQjqRELKBvHWHed75AMt+UM2QjcYuMzW0SjnbeMHqlzWQ/AY47HR
+	 WJK1tSTUfBwvDFT1UwDhGbtQKHkyfc/ziqyh811VPI8l0LhbO4lx4MEKbwEa+fHN25
+	 MgxgtF/VTIc9yirj3qXgC6tNA/n0vL1/AO+7v7gqj5lpRzbdfAb7cFlvtb4wd9sz7W
+	 GfwkYjHHLo6ZjzGWnxp46ic1VeOxowRD/N90qwK4Ajb05wTlhz5cyeR/BVKXFzXLE2
+	 FUoaQPM4q3CMQ==
+Date: Mon, 6 Jul 2026 14:52:33 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Keith Busch <kbusch@meta.com>,
+	dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+	"Dr. David Alan Gilbert" <linux@treblig.org>,
+	Vjaceslavs Klimovs <vklimovs@gmail.com>
+Subject: Re: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O
+ errors
+Message-ID: <akwVkSnXtyl6rBdh@kbusch-mbp>
+References: <20260616150554.1686662-1-kbusch@meta.com>
+ <ajFyuoMqnvQm738z@kbusch-mbp>
+ <0bd687cf-82ac-eacf-844b-c179a52dc72c@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <0bd687cf-82ac-eacf-844b-c179a52dc72c@redhat.com>
 
-Document the fact that all path checkers are now asynchronous by default.
+On Wed, Jun 24, 2026 at 01:14:03PM +0200, Mikulas Patocka wrote:
+> This approach is OK, I will stage the patches when 7.2-rc1 comes out and 
+> when I'll fork the dm git branches.
+> 
+> I suggest one change - it is kind of hacky when multiple I/O completion 
+> callbacks write into io->orig_bio->bi_status concurrently - so it would be 
+> better to not do it and maintain and return separate bit mask for 
+> non-retryable errors.
+> 
+> For example:
+> 
+> static void complete_io(struct io *io)
+> {
+>         unsigned long error_bits = io->error_bits;
+>         unsigned long nonretryable_error_bits = io->nonretryable_error_bits;
+>         io_notify_fn fn = io->callback;
+>         void *context = io->context;
+> 
+>         if (io->vma_invalidate_size)
+>                 invalidate_kernel_vmap_range(io->vma_invalidate_address,
+>                                              io->vma_invalidate_size);
+> 
+>         mempool_free(io, &io->client->pool);
+>         fn(error_bits, nonretryable_error_bits, context);
+> }
+> 
+> static void dec_count(struct io *io, unsigned int region, blk_status_t error)
+> {
+>         if (unlikely(error == BLK_STS_NOTSUPP) || unlikely(error == BLK_STS_INVAL))
+> 		set_bit(region, &io->nonretryable_error_bits);
+>         else if (unlikely(error != BLK_STS_OK))
+>                 set_bit(region, &io->error_bits);
+> 
+>         if (atomic_dec_and_test(&io->count))
+>                 complete_io(io);
+> }
+> 
+> Please send the updated patch that uses this approach.
 
-Signed-off-by: Martin Wilck <mwilck@suse.com>
----
- multipath/multipath.conf.5.in | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+Sure thing, I can get started on that. Though I think it's largely
+obviated if we get the block layer to handle things early rather than
+submit malformed bio's, and this will accomplish that:
 
-diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-index e6b4fc0..2ea78fc 100644
---- a/multipath/multipath.conf.5.in
-+++ b/multipath/multipath.conf.5.in
-@@ -504,12 +504,11 @@ The default is: \fB0\fR
- .
- .TP
- .B path_checker
--The default method used to determine the path's state. The synchronous
--checkers (all except \fItur\fR and \fIdirectio\fR) will cause multipathd to
--pause most activity, waiting up to \fIchecker_timeout\fR seconds for the path
--to respond. The asynchronous checkers (\fItur\fR and \fIdirectio\fR) will not
--pause multipathd. Instead, multipathd will check for a response once per
--second, until \fIchecker_timeout\fR seconds have elapsed. Possible values are:
-+The default method used to determine the path's state. Since multipath-tools
-+0.15.0, all path checkers run in asynchronous mode by default, so that
-+unresponsive devices don't pause multipathd. Use the \fIforce_sync\fR parameter
-+to enforce synchronous path checking instead.
-+Possible values are:
- .RS
- .TP
- .I readsector0
-@@ -905,7 +904,8 @@ The default is: \fByes\fR
- If set to
- .I yes
- , multipathd will call the path checkers in sync mode only.  This means that
--only one checker will run at a time.  This is useful in the case where many
-+only one checker will run at a time, and that multipathd may pause operating
-+while it is waiting for a device to respond. This is useful in the case where many
- multipathd checkers running in parallel causes significant CPU pressure.
- .RS
- .TP
--- 
-2.54.0
+  https://lore.kernel.org/dm-devel/20260624170905.3972095-1-kbusch@meta.com/
 
+But I can certainly respin this series as it provides a more indepth
+defence.
+
+I also owe an update on the relaxed dm-crypt direct-io memory alignment
+as well, as that series fell through the cracks on me for the previous
+merge window.
+ 
+> BTW. I think that blk_path_error should also test for BLK_STS_INVAL and 
+> return false, otherwise, dm-multipath would be suffering from this bug 
+> too. Ben, could you test it?
+
+Good point.
