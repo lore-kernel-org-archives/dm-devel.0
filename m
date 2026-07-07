@@ -1,99 +1,105 @@
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A2082FB969
-	for <dm-devel@lists.linux.dev>; Tue,  7 Jul 2026 11:46:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C0E3541F7D0
+	for <dm-devel@lists.linux.dev>; Tue,  7 Jul 2026 13:18:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783424814; cv=none; b=MzFjnFjkor8Ug6S6PI9np9OwLy1A8zlnhJerCH4Tk8K/lmgFjZ53uwBJ9N4xfKFlhiqm8iEmK1GX0FgvEFScFXG8oCBVPowV7xDDzGzVtRRlFoAUvY75t47dsrwBaZbWZxeSsZl4IPloEUm6kDLFiBc3KLyAEUtGpwFWKbxCYPE=
+	t=1783430296; cv=none; b=JmtnIcrq9hLU+ZE8wtSarmlFsxt4QO25kfTh20l8c5obGrVmUOEo0C3kjiNe9K7z7K7Why8R+o4qg1d93YRsGrRoGDdXWIX8idtpeSGh4078jRizKmJPUllUbhjo9hd5SA8E+ufvIVF+t+At8qSR4w0VPk8fGpLx8uuzXG0Kwj8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783424814; c=relaxed/simple;
-	bh=LJxljUAzF7/z1VIqjJP3usSzeEz1a+MTP4YEINP5l3g=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=MJQ0BkE4NEJFh876S1E5JzSBAG6ByxB4TlxOM/MR0gfsiu5H/Ap9y91Q16J6xsye+X9mANfZnYWTpTD3H9X+S2yiqNjPXmG2pE209nE5dpXTukJUA7b3s2sTc3IAUV0dxAq/zj2M4R499dGKba//U8RDLouq4lLL+x0y0rYX90w=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=O9XuW56J; arc=none smtp.client-ip=209.85.128.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1783430296; c=relaxed/simple;
+	bh=DJRRh2/pl1YodPLkMJ9lJkzOfXjea/5am9b5nEDGvh8=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=hqqS1xV5iyZSt1TsgfmV0Faz14N2wK7fmVTK78ND0RiKDrYu+Ksb/gNoJGo7WSwCT05JWv+QSz3a/njA4dY3DTjNEAXuj3dYLLth6HkluQ226Ey/6E+G9WZdLOl9GhTl+m/pkDyZSb+E790zLXzoG9zHZmnAx4bi7GDoi67k4Kg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ch8Is7x2; arc=none smtp.client-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="O9XuW56J"
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-493b1710405so25877165e9.2
-        for <dm-devel@lists.linux.dev>; Tue, 07 Jul 2026 04:46:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ch8Is7x2"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-4629324e267so479707f8f.0
+        for <dm-devel@lists.linux.dev>; Tue, 07 Jul 2026 06:18:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1783424812; x=1784029612; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:from:to:cc:subject
-         :date:message-id:reply-to;
-        bh=LJxljUAzF7/z1VIqjJP3usSzeEz1a+MTP4YEINP5l3g=;
-        b=O9XuW56JyazWqhuY2Tb53o5SOqwrTv2sRLK0Qr3t4tpsQAIN/hnN+YaM4qBeyTtje9
-         Zmm1X81fgSAHPgK/349HafoOiB+9c7LZVQiMTIvVGSk6XbxbI1Y9DsbujYTGCVozOdU2
-         1DNP4tCPtj21wDZQ6ClIWfEpGYPUD1hHUYnkjML54/hCkdtvv9WGjIgeIf46Dq09dZCf
-         pNLgyebLrLGuQ6iG9LzWwnYdLA06uICfL8/jLAAgCRiU08Zqvg1OjHBTh5T1I9cs0lnU
-         m1sQcOvuvvNv2K7lEUgnlEoZq0gmRDnueQ7I0PKeNv+h818RUJXh0TU7OmoCg3IwGTXz
-         yOXQ==
+        d=gmail.com; s=20251104; t=1783430293; x=1784035093; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=WDZKNoe7zjGW3eRVEbagNJuzovlD+fc1ggy+HEORn/I=;
+        b=Ch8Is7x2qSP9yeVOs3vB5Jr5jbJZAsLObbsbVw57lzSl3m9A7RdoEOhaEJoMc27byq
+         0dx1wW6oi7LSfdpnpjyHTAcIsGpwkX6yZmwgSHl0YPsSHich3eFAPY3fb0yASHOtu1gq
+         /HiUdWjlk+qYdv7rAUWuqM/GMYIWZuME2OL6LUHz7rq/d9LOa0Att+u60iTLIe+b48Sf
+         HgN7E/ZaGPIS4f5llF2Xurmhol4wKgXYlDv2kWou8zOcaGI5iorvGmljbXTzwNvqUqbH
+         R9qaYeT3qgXx8qJyQ+JbHrBEVEQcXc3fRrlBiU2qHx3h6EtNQpFI/8/FDIBpAnhgX8Ag
+         fbNw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783424812; x=1784029612;
-        h=mime-version:user-agent:content-transfer-encoding:references
-         :in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=LJxljUAzF7/z1VIqjJP3usSzeEz1a+MTP4YEINP5l3g=;
-        b=sWXxaEyq3TQyWWjg9WpOmSSr7XLERFWHAcon9Aa7YQqzZiLezcUTAnBynWrABQWOxS
-         DI/3GOjKW0gcTCseZTMoURHkaGDSnESojU7CmmsgEeQOJnIdIfoXhBBoB1Svq42mRljH
-         Tnu4utk6JQRxeIJbaH4AJqiWOwti7Z8jJ7iQLgeY3B2z2lOgI2nzk5CbnGaJA9SnygtN
-         285HGS2KIq6czdMDGpf1h1VySlr8RpBdhYNIp/JGnyKLoZpYA+vIEkpvw+XebjTkTjZn
-         FhVp2KKmQrozqorAmMmGY8HTz1M56wKqH6x/mmb/YpP6WIB4f336cMaQ2ZpdbHb/1mm1
-         NppQ==
-X-Gm-Message-State: AOJu0YxY4cr+aFcLwl60rwlElc9yZRjy3b/IcM3oHDQ8xfL/FOsJf3sY
-	oE/fVbB6EiNGVoSq6c3RMbMdzzJoWXkp6h40CDhrsapAldPTD9k+8LXNzVSRVFjte2k=
-X-Gm-Gg: AfdE7ckBvkl2Lenp+f52vlaA4uWKsKHg3hM90scLoVyJqG8aJwpcbqasWtFlN6yzzJk
-	GdZdpa+HVttmrJCmSQ9P/SJV04IuoqLLbWDC8/fB6NPtmvdu3/SMncuVfbBE+6z+2dJ94qn1QNs
-	lhkxbU4oyw819rWQX0U45Bfsh/QVs4KFo0Wg2dym89SxrN6tAUr9ZSqB7GLljoyB+ioA8L7w39Q
-	kvpDpgXxl4weAhn2/OLeMdCsTTw6w0plg9VWmOB3Wt8QyP/jHmogujs8vo6tRADpgHSWgSXDWos
-	HDg2frFmndB8YBYqM48ZQnmW/n/minH/jtGPtW6UBfeQObETwa0zFizImO4XkWN/daTmCjuAQma
-	0m8JLSgdwbnU+nxkQm1guubZjI/L2kzuIFlwh8lcymXxPgnisVeq6c19igl2ZCYZp56Fozz1B/i
-	RGJ0J3sjUoOwVy6vxJKjDT2mNhJYQJNNVImpddl8/HfdDeLPAVGgMuzZl6Dlm1KB332oq5FELaK
-	Vy0Pj9g4D07a23qh7DEgG7y7/hrnCJ9sWk0aJGtRm5WniEugTP0GERdjT35gQ==
-X-Received: by 2002:a05:600c:34d0:b0:492:40df:d49c with SMTP id 5b1f17b1804b1-493e2a69526mr19568955e9.23.1783424811506;
-        Tue, 07 Jul 2026 04:46:51 -0700 (PDT)
-Received: from ?IPv6:2003:de:3746:1100:f390:c52e:1c24:9082? (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47aa039af67sm38875762f8f.17.2026.07.07.04.46.50
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 07 Jul 2026 04:46:51 -0700 (PDT)
-Message-ID: <70cc82feb7bc45076f566d507a4da764c7bdf819.camel@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: make sure sscanf sets a max field
- width for strings
-From: Martin Wilck <martin.wilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Tue, 07 Jul 2026 13:46:50 +0200
-In-Reply-To: <edd01616-ab8f-4cec-bae9-5f4e84e1cf59@gmail.com>
-References: <20260707004817.1958264-1-bmarzins@redhat.com>
-	 <edd01616-ab8f-4cec-bae9-5f4e84e1cf59@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+        d=1e100.net; s=20251104; t=1783430293; x=1784035093;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=WDZKNoe7zjGW3eRVEbagNJuzovlD+fc1ggy+HEORn/I=;
+        b=j1Jbsf0QE1guoEr9KetASuq5h4iewknovxFEXj54FiNfFft3cFgxU8A1ZQ4CR1zynj
+         efaebyV8lu4ddnv9BcKIvbeLv3y72ukJY+kPyaVa8kfl+r6M1aynTv0LogrfzR3K3IOl
+         ODqLfpyzTvPkxtnqmlvqSwxQIMIChNaklGDT3VAGuUPhsTXxvKPWStBCsK4KzxEKGBYB
+         ZHxMBaNQJNJbtAXpYF2Q5zDnVbjn7ULkIxqG8vCcsiWEh/y384clKeNcRtGnwrBbtm4Z
+         mqditaQbtYeQA2N7q9ArM/oB/qQ4eMoQ0UUVdgAA6gYcem1JxpzR/YQfsEfwQghvdVLs
+         TvbA==
+X-Gm-Message-State: AOJu0Yw0FNHTtaNHaPjrcZ3Otuwc2wE2QrgoqFwwZrxPjpiP3eX5rD+Z
+	dpA+AZBrbwt1aLUiiwd3Kek/zGw0HAQ6bSQITeOB7rJpPjt8AnD9rg8=
+X-Gm-Gg: AfdE7cnVRe6A3v8H0SUYMSzXBPJT9OVoZ1iziwlTkFqXfPOKSjYu0JrNviIx+OUxfpK
+	gplS9PEjp3VOKTxP6r3kD99tzvqX4rkeEp//7RDbxmC6BIgM7zOyfYY91zuDmU60fxuicJOBsmo
+	G9ZV/cvFHOFzU7Ac9J4dRcSAdJK1XQs7WPUEbTfzXug0dD+Tp/EXtpUyO+U7yw/hgobX9ffjOnf
+	DR7m+Q+6ZB/aUSzCin1ElWX6mnYc+RD/dkCP/L6AH6oY19M1hWbwlGxJu+GuG+H4mw0pigSnVbQ
+	HGXlY5aAoYUOe9rzCGzJQfLVh5k89XT7gj4U9phWrLtTe7DXiv3AQ3PRBX9EyYHRQByW+1gdvwK
+	ouK/77yCnGQoZXAYCL0OTbqw75eMUiStglocnVStvZCmkfINt+sg7jQ2UpBE8sy5H9a2w5N1SX2
+	amcBeiyYag3ogtTlJkkVU4LfvXrJ79qI11HPNMze0zfAvUMrZl42RkOJnr
+X-Received: by 2002:a05:600c:3596:b0:493:bda2:8d92 with SMTP id 5b1f17b1804b1-493d0f3dfa7mr137439675e9.5.1783430292932;
+        Tue, 07 Jul 2026 06:18:12 -0700 (PDT)
+Received: from localhost (153.red-80-39-135.dynamicip.rima-tde.net. [80.39.135.153])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-493e0f3676dsm59237305e9.5.2026.07.07.06.18.12
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 07 Jul 2026 06:18:12 -0700 (PDT)
+Message-ID: <a657d0e8-faba-40d9-9a6f-5a44435926ff@gmail.com>
+Date: Tue, 7 Jul 2026 15:18:11 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+Subject: Re: [PATCH 1/2] libmultipath: make sure sscanf sets a max field width
+ for strings
+To: Martin Wilck <martin.wilck@suse.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>
+References: <20260707004817.1958264-1-bmarzins@redhat.com>
+ <edd01616-ab8f-4cec-bae9-5f4e84e1cf59@gmail.com>
+ <70cc82feb7bc45076f566d507a4da764c7bdf819.camel@suse.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <70cc82feb7bc45076f566d507a4da764c7bdf819.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Tue, 2026-07-07 at 07:52 +0200, Xose Vazquez Perez wrote:
-> On 7/7/26 2:48 AM, Benjamin Marzinski wrote:
->=20
-> > Note:
-> > This patch applies on top of Martin's ("libmultipath: iet
-> > prioritizer:
-> > obtain PATH_ID from udev") commit, from the "tip" branch.
-> Martin, this should be removed from iet.c:
-> "// Uses /dev/disk/by-path to find the IP of the device."
+On 7/7/26 1:46 PM, Martin Wilck wrote:
 
-I'm working on a fix. See my "tip" branch.
+> On Tue, 2026-07-07 at 07:52 +0200, Xose Vazquez Perez wrote:
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
-=BCrnberg)
+>> Martin, this should be removed from iet.c:
+>> "// Uses /dev/disk/by-path to find the IP of the device."
+
+> I'm working on a fix. See my "tip" branch.
+I mean this:
+
+diff --git i/libmultipath/prioritizers/iet.c w/libmultipath/prioritizers/iet.c
+index 97d35192..ab3e1f0c 100644
+--- i/libmultipath/prioritizers/iet.c
++++ w/libmultipath/prioritizers/iet.c
+@@ -21,7 +21,6 @@
+  //   prio      "iet"
+  //   prio_args "preferredip=10.11.12.13"
+  //
+-// Uses /dev/disk/by-path to find the IP of the device.
+  // Assigns prio 20 (high) to the preferred IP and prio 10 (low) to the rest.
+  //
+  // by Olivier Lambert <lambert.olivier.gmail.com>
