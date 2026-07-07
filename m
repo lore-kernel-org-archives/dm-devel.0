@@ -1,88 +1,210 @@
-Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 526B3420877
-	for <dm-devel@lists.linux.dev>; Tue,  7 Jul 2026 05:52:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5A8E2EA47C
+	for <dm-devel@lists.linux.dev>; Tue,  7 Jul 2026 08:25:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783403527; cv=none; b=Vt3ccZ8H4Iat6kqcs4dqDr6lUTSnUVN28AsGo+M53g1ysFNE8ZczKYDIK0YxA1m65AtI/p2s3uOoMvk82twI6/iiRTh6VQ6gUUL9t2g0qfXVWKJ9uOJ1XRJ9VsTmGafcSkptm+T1C1IH6lQsAPenYdH05tdwF0a2K37qPFQziVM=
+	t=1783412754; cv=none; b=FfclHNxH+AE6gN06xiM8rZOFG+pNRg5tw8TJbWlcPbnnmyJiwGwNS5i1iga4kEDG4834xxdhwEx/6VUTD5l6Hh9CYs4+S0jA5zuACRtIBB+jholnopiqutW8okF97cMiywjbP9nqGto0/PH50L8mW085nApuiLOD1jBGDeMoz7E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783403527; c=relaxed/simple;
-	bh=bC2gl9TzYt9A8ocKmxrmRoaTvzTV1fmAovqWndvmOkM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=PExI5GVApYE8AOcUUQk+UJsrGeqS/9Zt8KDzbwnOF7hpWkzTun5ZDJK4UMjFHIbu8t1LBsivJoNzQ7XVPJAQZUtqpc8uWlvqDWJx87dc2frGjSa6xP0cUapIo376yvU19VLlvvNyf4230Xkz16KF1DuVD2fsrhApsgntI6Qjdho=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=sky/MxQ9; arc=none smtp.client-ip=209.85.128.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1783412754; c=relaxed/simple;
+	bh=li10z66NfKSJ6rj5DVXujsBLiAJw1WkjXPIYn2CsY6A=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=OFtxAVWTVNVuMtshpi4HKsxk3rROVYsVvz682LRFylsJ2onByOnAt08wHbe1adwGNbqLcvfexwUeKWGwslTftevbSGTLLudAAw/J4ERNenHXI657gygGtecfnEXSZm0Si/8iF7b4Pp/oynK8Ghi3IV+N+nWtnqtz+V2tx1YcsZA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=B9MdiFII; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="sky/MxQ9"
-Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-490791a3e92so1449385e9.0
-        for <dm-devel@lists.linux.dev>; Mon, 06 Jul 2026 22:52:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1783403525; x=1784008325; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:mime-version:date
-         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=bC2gl9TzYt9A8ocKmxrmRoaTvzTV1fmAovqWndvmOkM=;
-        b=sky/MxQ9nU+7rSVhb+SENhY8rD8s76WgHVqw2yIaBxliil/x7Bhz6ezPEdMS/6CV2B
-         jFvFcgLHokwQduDtauQ0Fac1xdZ608GjP3yrz1ohKkAjDlM3ZZC0+5AKSf7V0C1GYb1n
-         /r99dAEBCwhFDxuLdRB+KcK4rdPlPgRmacW4wh8XbZYY7rlU91z0DwMhxzxpq55D9JUU
-         MNZNcgnxV1ZnMkD9uTwgGOUPxhcE/YGwIyzzs7o6B7dScKL+g3iCJXOcpdvUc8bGhy0+
-         e409OhFu6FTjFNUWvrW73Q8Y20OQDEwynS6C5jIk5vNE9zRRAPUxYPatt3FNhAbIFBcJ
-         e5DQ==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="B9MdiFII"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1783412751;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=rMD4Ork1BMpdY5m4DMMPDRahVDhtSQ5eWbnm8MAyX5U=;
+	b=B9MdiFII/kNleJqzb5P+K6POLQSziRe5Lt9voXJyk97Gy0IS3eOjgT8rm4te0iRyDEGOXd
+	QpwteSD+D6EEaFjd7rpM9AQ9lMF3VWvEPUmtx/A0M5vaUI3a5vkcM930DmB5Ll+qqjsqIW
+	w7yruPKOjBkmSk3uSCvBM3PvAdlYU8E=
+Received: from mail-lf1-f72.google.com (mail-lf1-f72.google.com
+ [209.85.167.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-113-jyBeBOjXOmu98rlS94oXnA-1; Tue, 07 Jul 2026 04:25:50 -0400
+X-MC-Unique: jyBeBOjXOmu98rlS94oXnA-1
+X-Mimecast-MFC-AGG-ID: jyBeBOjXOmu98rlS94oXnA_1783412749
+Received: by mail-lf1-f72.google.com with SMTP id 2adb3069b0e04-5aeb423df3bso1940266e87.3
+        for <dm-devel@lists.linux.dev>; Tue, 07 Jul 2026 01:25:50 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783403525; x=1784008325;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:mime-version:date
-         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=bC2gl9TzYt9A8ocKmxrmRoaTvzTV1fmAovqWndvmOkM=;
-        b=Vnx3pZyuNcc3UUGwnQpPpYkwGIqUEF6u0S1v7iVbpIiWuFDJtJtn/HwHq08hRnKYPa
-         Cdkn5wFOCIvWh22w98zURNQoz/jVVAGIBbU5yuCoI27sxXKni+44Xvq0ngwzMUqelbTt
-         kId70nU8UKUvJV0WTCHUxrPAt9RaPBvpZnmiFRqjhuxBrwUWr2rzzNgKsCMyDy3ZZVm1
-         1FnBHwtlWb059FTKzi9gLSQq5+5wD/mFOJtUGSqhg5rUt840SX4XZoVHSSzQjewkCxLm
-         LIzdyyqm5sc4Wb/3g75GUvSWey2w5az6F+a6rv6vU5sQQjKVdGF76OU0emJvX09RhwKZ
-         rdxw==
-X-Gm-Message-State: AOJu0YzQMUfXNHLqB0OUwInBqB8NDMoEX+/A/oRmd+Qytpv3vNgouqn5
-	tDMXyuJEh8MJik5BHJUc6iGk7X5YGLUWelC+j43/7RJ+HfJnm8TUE+o=
-X-Gm-Gg: AfdE7clqgeEOOwyqTwbOzDqSj+8ia6y4Yr+T0uDkDxedJxeZaDNKIdJFCHQbD1PzMbK
-	cbBW4LlpL0yPk9KQmk4fLcfYDSKV7rxnTjurjLvxX4UlZaOd5AC1fg6H/b8bmTbV+O8SoPGisKN
-	KUKtm7vpNJGgZgdmQDVZY7YoEuyiAkr/msWmA27+PdmtaFuJYV2CXXyDGx5FyIzPaa8jTjMSfij
-	7TXt1MCfL1H3vXtIyJgDpt8bJFzcQDo5whhdC+ND8DZnScVFsJylrsSx8wfL/4JcOdU5oQyUus2
-	U39SWH9aj4TW0iCf567ggvm6AQwzjZ0YfpmcT4eZ3UY/3qtwObs2gDnBN4jYxTPk3WAnZBpBr90
-	MLFaSW93s1TZrwthhEIL7y4/Cq0SvU+NzhLeEYfxj/q7nlDIYY/klTOjR6nWPBg2NnTc/BxvYnm
-	x/aUGHmLxRWKIZP5SiRpZ6xwNNgPj3lqBZIqAPgjzro+KOi0ViJMo=
-X-Received: by 2002:a05:600d:112:b0:493:a6d2:3a37 with SMTP id 5b1f17b1804b1-493d0f09874mr49514485e9.1.1783403524398;
-        Mon, 06 Jul 2026 22:52:04 -0700 (PDT)
-Received: from localhost (32.red-88-28-15.dynamicip.rima-tde.net. [88.28.15.32])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-493e0fccf2dsm27932295e9.15.2026.07.06.22.52.03
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 06 Jul 2026 22:52:03 -0700 (PDT)
-Message-ID: <edd01616-ab8f-4cec-bae9-5f4e84e1cf59@gmail.com>
-Date: Tue, 7 Jul 2026 07:52:03 +0200
+        d=1e100.net; s=20251104; t=1783412749; x=1784017549;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=rMD4Ork1BMpdY5m4DMMPDRahVDhtSQ5eWbnm8MAyX5U=;
+        b=R+M58W5D46QNefHrasf9LSV2sNheOj/HYOoKScFfEy5bxwfDDYTBM9gTz0YkhyBSbe
+         8MS0/oLIiQkR5Q29/j8ySyEPZ72zoOyEefIL5pkHJmkmxHHGuxEunOtMAdGAUoTo6xj/
+         earGKAT2rHmG68nx46kNWt0FzEk3gXa5FyUKvunYjilGdYLM49Q8XvqbdNc7qTPIMAiF
+         /EzHhI1Eab87EdDH/xxhkEnZUWQzhw0lzGgwNhlUKEAx/gjS9O2zPqMEeHe7mJUALeuR
+         Sm5AEztYrPLuwh+5nwoBbqJfdwWD/OQkKEnMWLj6K35cd78dPtVtIajZyJ6BA0xTl8vT
+         9Aiw==
+X-Forwarded-Encrypted: i=1; AHgh+Ro41fQhwabO54jzXw6Wmau3+86a908Nw57xUEEndh11F3fSH7PZeJNDTrDsVOc1O4jGib5bsgkiTg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyLFxefFt5vNz4Ija7zQi81P+a25ZyowLc9N45NPNZMuZ1ftGvk
+	+1djlnVH2A4CkqmFWtdPM5upmTqGFHHTq6TRbP9RYUMcx/XTSQ0RxbIo17ISwAHSbuhwv52B9it
+	75HYjkfBnejEmnO2QbEUjLoyqAPYYUh1dF9SkGzmNjhDlFvRx0AEzt+9rwxUekEAZmFwxG4wQlS
+	Ru3fMKhf/kLEmGQ2KPrxrP9d5H+1WN3ImJ3Q==
+X-Gm-Gg: AfdE7cktZIJGG2tYol9U3pK0HrQC0hosH8fsU84CfA3iPqaq5iUq/ayW4gPsvA+rvAK
+	87jBQWVYVXBypJNITMGI2V/9PAIjmDccHzGyuoL1kjP2ndKfdc5/hwfBpnimuopOkXNqP+Phpig
+	CaDr87Vw05IHgr56SmJKEZJqoLn7OA7sMndXQJ/LI/vj/IwD4s33c139eLn9kPR6R/uQ==
+X-Received: by 2002:a05:6512:8394:b0:5ae:be77:44b3 with SMTP id 2adb3069b0e04-5b007c764c0mr690430e87.58.1783412749157;
+        Tue, 07 Jul 2026 01:25:49 -0700 (PDT)
+X-Received: by 2002:a05:6512:8394:b0:5ae:be77:44b3 with SMTP id
+ 2adb3069b0e04-5b007c764c0mr690395e87.58.1783412747556; Tue, 07 Jul 2026
+ 01:25:47 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 1/2] libmultipath: make sure sscanf sets a max field width
- for strings
-To: Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
- Martin Wilck <Martin.Wilck@suse.com>
-References: <20260707004817.1958264-1-bmarzins@redhat.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <20260707004817.1958264-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+References: <20260628151139.75447.cf67e9b6b484.dm-cache-invalidate-cblock-truncation@trailofbits.com>
+In-Reply-To: <20260628151139.75447.cf67e9b6b484.dm-cache-invalidate-cblock-truncation@trailofbits.com>
+From: Ming Hung Tsai <mtsai@redhat.com>
+Date: Tue, 7 Jul 2026 16:25:35 +0800
+X-Gm-Features: AVVi8CcuHH0Zsww1TN11mIeetcynVSj6-eDBKx1dAtiqOnWYt9KlQuUsUfwC_0g
+Message-ID: <CALjSBEu_kwrQf_2b3b+Fo5OFK2SYztLRcTftsfDS943yhuacQQ@mail.gmail.com>
+Subject: Re: [PATCH] dm cache: parse invalidate_cblocks with kstrtoull()
+To: Samuel Moelius <sam.moelius@trailofbits.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
+	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: sbpRDXJ9i9vKdH9f_D6BlkiQyvi0HtPbEkEYej2GJKQ_1783412749
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 7/7/26 2:48 AM, Benjamin Marzinski wrote:
+On Sun, Jun 28, 2026 at 11:19=E2=80=AFPM Samuel Moelius
+<sam.moelius@trailofbits.com> wrote:
+>
+> invalidate_cblocks parses cache block numbers with sscanf() and then
+> stores them in the narrower dm_cblock_t type.  Values larger than the
+> cblock representation are truncated before invalidation, so a request
+> for one cache block can invalidate a different block.
+>
+> Checking the parsed value after sscanf() is not sufficient because
+> sscanf() does not reliably reject values beyond U64_MAX before storing
+> into the destination.  Such inputs can still be converted to a wrapped
+> u64 value and then pass a later range check.
+>
+> Parse each single value or range endpoint with kstrtoull() instead, and
+> reject values that do not fit in dm_cblock_t before converting them to
+> cblock values.  The existing range validation continues to reject empty
+> or out-of-cache ranges, including the single-value U32_MAX case whose
+> exclusive end wraps to zero.
+>
+> Assisted-by: Codex:gpt-5.5-cyber-preview
+> Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+> ---
 
-> Note:
-> This patch applies on top of Martin's ("libmultipath: iet prioritizer:
-> obtain PATH_ID from udev") commit, from the "tip" branch.
-Martin, this should be removed from iet.c:
-"// Uses /dev/disk/by-path to find the IP of the device."
+The kstrndup is unnecessary. strsep() can split the range in place,
+and kstrtouint() handles both u32 and u64 overflow in one call. No
+manual range check or heap allocation is needed.
+
+result->end for the single-value case can use the existing cblock_succ().
+
+>  drivers/md/dm-cache-target.c | 48 +++++++++++++++++++++++++++---------
+>  1 file changed, 36 insertions(+), 12 deletions(-)
+>
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index 097315a9bf0f..35c1eea48116 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -16,6 +16,7 @@
+>  #include <linux/dm-kcopyd.h>
+>  #include <linux/jiffies.h>
+>  #include <linux/init.h>
+> +#include <linux/kstrtox.h>
+>  #include <linux/mempool.h>
+>  #include <linux/module.h>
+>  #include <linux/rwsem.h>
+> @@ -3311,6 +3312,26 @@ struct cblock_range {
+>         dm_cblock_t end;
+>  };
+>
+> +static int parse_cblock(const char *str, size_t len, uint64_t *result)
+> +{
+> +       char *buf;
+> +       int r;
+> +
+> +       if (!len)
+> +               return -EINVAL;
+> +
+> +       buf =3D kstrndup(str, len, GFP_KERNEL);
+> +       if (!buf)
+> +               return -ENOMEM;
+> +
+> +       r =3D kstrtoull(buf, 10, result);
+> +       kfree(buf);
+> +       if (r)
+> +               return r;
+> +
+> +       return *result > U32_MAX ? -EINVAL : 0;
+> +}
+> +
+>  /*
+>   * A cache block range can take two forms:
+>   *
+> @@ -3320,32 +3341,35 @@ struct cblock_range {
+>  static int parse_cblock_range(struct cache *cache, const char *str,
+>                               struct cblock_range *result)
+>  {
+> -       char dummy;
+> +       const char *dash =3D strchr(str, '-');
+>         uint64_t b, e;
+>         int r;
+>
+> -       /*
+> -        * Try and parse form (ii) first.
+> -        */
+> -       r =3D sscanf(str, "%llu-%llu%c", &b, &e, &dummy);
+> +       if (dash) {
+> +               r =3D parse_cblock(str, dash - str, &b);
+> +               if (r)
+> +                       goto bad;
+> +
+> +               r =3D parse_cblock(dash + 1, strlen(dash + 1), &e);
+> +               if (r)
+> +                       goto bad;
+>
+> -       if (r =3D=3D 2) {
+>                 result->begin =3D to_cblock(b);
+>                 result->end =3D to_cblock(e);
+>                 return 0;
+>         }
+>
+> -       /*
+> -        * That didn't work, try form (i).
+> -        */
+> -       r =3D sscanf(str, "%llu%c", &b, &dummy);
+> -
+> -       if (r =3D=3D 1) {
+> +       r =3D parse_cblock(str, strlen(str), &b);
+> +       if (!r) {
+>                 result->begin =3D to_cblock(b);
+>                 result->end =3D to_cblock(from_cblock(result->begin) + 1u=
+);
+>                 return 0;
+>         }
+>
+> +bad:
+> +       if (r =3D=3D -ENOMEM)
+> +               return r;
+> +
+>         DMERR("%s: invalid cblock range '%s'", cache_device_name(cache), =
+str);
+>         return -EINVAL;
+>  }
+> --
+> 2.43.0
+>
+>
+
