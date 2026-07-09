@@ -1,110 +1,126 @@
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A53F36C580
-	for <dm-devel@lists.linux.dev>; Thu,  9 Jul 2026 14:58:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D006F42E8F1
+	for <dm-devel@lists.linux.dev>; Thu,  9 Jul 2026 16:13:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783609130; cv=none; b=svx/wcN9NU1YeSOPtPFtsUI/IQc9j5Z1lkll+dVaIAuFHLMzuqT5UFO7H4rUMPa6GUj6NE7J/lKG3V5Na+Jmqc6Y5fYnejLCB6ZyPYSKeqZBWan3dPnk5UcPUtF+EATHzDrt0K76SF6SAywfIrt/mwxJRrd4f6PV7xH6gnTHciQ=
+	t=1783613611; cv=none; b=jN6r40+fvvZyjx2qlQe4yMEeJYqrJ2780MUu7F5mPHeC4XXIqoxA427TaKr6Q8jObkCTwx/yRaD8aq2Oh/RdBe4uE7lK5c+XMGqtXu9nKzBJ7VyQzc/dUvZ2D9pQjjkRX8giAe/1ZaGbn0clPh3bNyQweL4uKTUXVU9gYdxkge8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783609130; c=relaxed/simple;
-	bh=OV447yAJHFywO+Pu5N7c23AOladzIK06lqaR5B1mhqk=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=YEqWFauSawISHUoq6CqzeHdosvJD/xolG9kmYl9GnrkOuh9HlN0hyrKCC5MiMzX2Ymc+zirohB90o7CDVV7wCAXNatxXVvGbVK0KeCliKtrMYnsBjH6bbTea/4JjPGdniYDPV6XMVptH403yixdT0HF9+q0y7jnaPYIf2ryXOq0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=KekMigfj; arc=none smtp.client-ip=209.85.221.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1783613611; c=relaxed/simple;
+	bh=zbY2bSEaCu31T0WXTlUACKyoNXNWjDA105FQaP4TAkQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=ep6/4G0WTPzAxp2dL7+BJhYUxiNyUtd7P9qI1lDKCr2N43EjG9WehMGuuu305DoI8lS+XNNpEJi8PHGmWWC3Hq+wiMu0pk6oYm1O9zvsMHVpjIKO59fXzYaxfkZC0fonJ9pHL8N1yu4DVqc4WwpPaXtQYxYwG+PS+uZTzjw2q1o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aRtJn6Za; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="KekMigfj"
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-4758b2a9e2aso629259f8f.2
-        for <dm-devel@lists.linux.dev>; Thu, 09 Jul 2026 07:58:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1783609128; x=1784213928; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=OV447yAJHFywO+Pu5N7c23AOladzIK06lqaR5B1mhqk=;
-        b=KekMigfjKXPZBGRzR/33744BWPojAbc/pryFU26SJtJKTykE/Zuw4G5cGAFLWSrOi5
-         6jUkVNxOZhxrf39KebBmcSapkAfAZC5jnkhMG02Qk3bd8u1/T6bcEftY0WabS4DjfDYs
-         jBcYQohzTJXuL/D1KQ0/g7JLwFcUySwcDCNK3B6KWNrTKTFj9L/K3QS0vWqYKWRTFV+J
-         +3WtL8LxYDBxPVsFBmV8kxVeLyWY8WE9pv+zQOk58Q3pKMlMr1ESAjk45N/ChV3qztFs
-         b3Fjhstlyh80kMNN2gYKDNyzIzv8zFuhD/8rMOhPs6rCTBgdvQYpKCZfJ1JgcNMYtD3G
-         PWRw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783609128; x=1784213928;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=OV447yAJHFywO+Pu5N7c23AOladzIK06lqaR5B1mhqk=;
-        b=cyP4nlohahOWsCGdspK8mDV31ZmPgzhYCL51Bof/7zCKoD5dpYocb9cm5tq/NO0sEx
-         3TAV2QW62fb5fYuYWKcHWp1AzUoQZniDV3rV+ETlnA+RmlZALAle8yIWM4vm8R3fK/dx
-         mtuQtZi1wqmLFeseqzOgeI+B+gcaIMwGuJqQAyFx3uVLMmTCfhfjFN4HDC3ZZfFkaFTn
-         xmyBnINZouEOXjKvW8atziynh5wa1JRNv1mjK90dVR0Yw+nO6Twydiq3RgiW1rU2nMZF
-         eIZ1msgZO752jqk8Aze2Vkuatf5egPnBkwTddg1DV+6jUg0aCxHmRiZh/jKYdD8wTpLx
-         25/w==
-X-Gm-Message-State: AOJu0YyKU98pWCIYeNi74w+Hv4VhlPtl5L2wfTeTuOSGCv/D27VYAWcD
-	iWkQUbWCZpQlndG2rzVcpWNhwLlKJpGJkfhtVAHodcrR31LzKlvrG7BO37y/yZ/9eRHimxGRfyo
-	g0N/NF5c=
-X-Gm-Gg: AfdE7clHfiJcEIaIO7oiXY3sXsh63Es7RKc34Vje72mlxsI6zPJzdmSnHeIJQyRFbX9
-	1NoF5Pfx91VU2k4PN+wDav3eSYVdOmGDEnBPnS13eZBWoiMdBDrhaiwt81NBXLMHmAD/gSq2Otn
-	FWn/BWhr/+u41f4v4oIFIZ5CRmVY35PQMdVvFBKCYwzYvsUSJIFL8e8CpMhLWhQSHt0HxAMDnSt
-	Whin8HweeVurofEKLqdx3vzgO5ZiHhzj589eSktkpNO5Lc7C9wkH40IyBzAFh7ktSTWQMQCwNF8
-	+i0vGs1iyFZ4ROlXgbksUt3t3XoHOVc5B8IUBSsH4+S1NlLFMQeGEWY7/pFVuzkKflsKhQbnIPj
-	X0p8WUtodMapK+Eac4ANFjO3/v0N71YosNocriZ8CBGEcrOtd36Z4QKIOE9ZT/H3vn/5MRVAZqS
-	MlMxTsCAoX0BW9C2NQMBnEUMYoOtZhoTx8wb83Nd3uaF/qMmmIqoTnqkkN8tHAOjB+JMQ1VDn4O
-	/LW7Jke7flWH2O4u1RLFLcuuOtlbxJqSBjO5ng0USxmH2tUFmE=
-X-Received: by 2002:a05:6000:230d:b0:476:dd2b:611 with SMTP id ffacd0b85a97d-47df071bb5fmr8027987f8f.3.1783609127655;
-        Thu, 09 Jul 2026 07:58:47 -0700 (PDT)
-Received: from ?IPv6:2003:de:3746:1100:f390:c52e:1c24:9082? (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47aa0960634sm53055301f8f.26.2026.07.09.07.58.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 09 Jul 2026 07:58:47 -0700 (PDT)
-Message-ID: <5cf303a4c0782e6631a73f619d5ef2bed999beb6.camel@suse.com>
-Subject: Re: [PATCH 1/2] libmultipath: make sure sscanf sets a max field
- width for strings
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>, Xose Vazquez Perez
-	 <xose.vazquez@gmail.com>
-Date: Thu, 09 Jul 2026 16:58:46 +0200
-In-Reply-To: <20260707004817.1958264-1-bmarzins@redhat.com>
-References: <20260707004817.1958264-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aRtJn6Za"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1783613608;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iTviDvuDhSfVkGar73Qrb9ZQD1B5BTK09OmZSnwxUg4=;
+	b=aRtJn6Za4NWR8fd4+DkezkRzok3sEmg1kUVhJgHMa18CXA01iocqV1RbjLBtaI3NI5INZT
+	2fVxEjm2Rphph6kBVP3Xyj8VptwjNw/RgmD+BbvfJ1SUMxJLC7w96hZq86z4+e66bhEodm
+	6zuO4L4/83KqQS3iEIspi8YMpbNFjTk=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-422-yCqKLsm-O0GVQmhzLl7HCA-1; Thu,
+ 09 Jul 2026 12:13:22 -0400
+X-MC-Unique: yCqKLsm-O0GVQmhzLl7HCA-1
+X-Mimecast-MFC-AGG-ID: yCqKLsm-O0GVQmhzLl7HCA_1783613601
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 99A601800BDF;
+	Thu,  9 Jul 2026 16:13:20 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ADD9E3000C01;
+	Thu,  9 Jul 2026 16:13:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 669GDHvF2055297
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 9 Jul 2026 12:13:17 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 669GDGCO2055294;
+	Thu, 9 Jul 2026 12:13:16 -0400
+Date: Thu, 9 Jul 2026 12:13:16 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Keith Busch <kbusch@kernel.org>, axboe@kernel.dk,
+        Mikulas Patocka <mpatocka@redhat.com>, Keith Busch <kbusch@meta.com>,
+        dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
+        "Dr. David Alan Gilbert" <linux@treblig.org>,
+        Vjaceslavs Klimovs <vklimovs@gmail.com>
+Subject: Re: [PATCH 2/2] dm-raid1: don't fail the mirror for invalid I/O
+ errors
+Message-ID: <ak_InD1CX7GJXzJv@redhat.com>
+References: <20260616150554.1686662-1-kbusch@meta.com>
+ <ajFyuoMqnvQm738z@kbusch-mbp>
+ <0bd687cf-82ac-eacf-844b-c179a52dc72c@redhat.com>
+ <akwVkSnXtyl6rBdh@kbusch-mbp>
+ <ak1XNlyFC34W47iP@kernel.org>
+ <ak7cHXaWjVX6Uamj@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
+In-Reply-To: <ak7cHXaWjVX6Uamj@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-MFC-PROC-ID: P5_ZzxoTixMOu-qyrhrFNWOZYEUPMYFE0UZFepLgoVU_1783613601
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On Mon, 2026-07-06 at 20:48 -0400, Benjamin Marzinski wrote:
-> In the iet and datacore prioritizers, multipath was using sscanf to
-> get
-> a string for a 255 byte buffer, without limiting the size of the
-> string.
-> This could result in a buffer overflow, if there was a bad value in
-> multipath.conf.
->=20
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->=20
-> Note:
-> This patch applies on top of Martin's ("libmultipath: iet
-> prioritizer:
-> obtain PATH_ID from udev") commit, from the "tip" branch.
+On Wed, Jul 08, 2026 at 07:24:14PM -0400, Benjamin Marzinski wrote:
+> On Tue, Jul 07, 2026 at 03:44:54PM -0400, Mike Snitzer wrote:
+> > On Mon, Jul 06, 2026 at 02:52:33PM -0600, Keith Busch wrote:
+> > > On Wed, Jun 24, 2026 at 01:14:03PM +0200, Mikulas Patocka wrote:
 
-As that patch hasn't been verified yet, I'm going to apply your patch
-on the "queue" branch for now.
+> > So where does dm-raid1 and dm-crypt stand relative to these DIO memory
+> > alignment changes?  Inferring they are pretty exposed.
+> > 
+> > > > BTW. I think that blk_path_error should also test for BLK_STS_INVAL and 
+> > > > return false, otherwise, dm-multipath would be suffering from this bug 
+> > > > too. Ben, could you test it?
+> > > 
+> > > Good point.
+> > 
+> > Would appreciate knowing if multipath exposed too.
+> 
+> I can't make it happen. I can reproduce this using dm-mirror, but when I
+> try with dm-multipath, it fails with BLK_STS_INVAL before it ever makes
+> it into the request layer.
+> 
+> blk_mq_submit_bio() -> __bio_split_to_limits() -> bio_split_rw() ->
+> bio_split_rw_at() -> bio_split_io_at()
+> 
+> bio_split_io_at() checks the bio_vec alignment and fails with -EINVAL,
+> causing the bio to get failed.
 
-Regards
-Martin
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
-=BCrnberg)
+However, as a general issue, I don't believe it's impossible to have an
+unaligned bio_vec that returns false for bio_may_need_split(), so that
+the splitting code will never get run. But if this is already getting
+fixed earlier in the bio code, then the point is kind of moot.
+
+In reference to changing blk_path_error(), multipath should only be
+passing down requests that are valid on any of its paths, so it seems
+reasonable to make the case that BLK_STS_INVAL is not a path error. But
+if we are going to be checking the bios early against multipath's
+limits, then it seems like the only reason we would get a BLK_STS_INVAL
+is that multipath's limits don't work with the underlying path's. That
+would likely mean there was a limit stacking bug, and who knows whether
+another path would work better.
+
+-Ben
+ 
+> > 
+> > Thanks,
+> > Mike
+
