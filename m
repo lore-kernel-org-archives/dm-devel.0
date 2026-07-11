@@ -1,89 +1,128 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1E79136358
-	for <dm-devel@lists.linux.dev>; Sat, 11 Jul 2026 00:54:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E60F1A268
+	for <dm-devel@lists.linux.dev>; Sat, 11 Jul 2026 03:31:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.169
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783731284; cv=none; b=BX1jMN8CrCJcPwK6Ry/VP/VrV9WX0+kW5dwT9WKHR2ok+uhqZrS7p2sWDytEPzNqXklIJe4uk17JzBytNZ00Iai1UtsNRd1na+tApliNX9UyDgoRLCNHioA86KIP04m/OKrFWXV6xf/RjZz6ciSvaBedyCPmE/wfHENyqkM0/hc=
+	t=1783740679; cv=none; b=GAreT99O92lcAGZQbRzzX1vd1UjwQbYCmyvp84Ki/Z3nupMvUYmjJeSXlIaG30TNNVdAy6Qq2B7Frs64US6wDBdVogbM1SshDircqpRn5hGMhWnREN8sqicfwa3OquN3jkNm0YFfN2sNcu5qNnvLjVrR6KlUYtaGLQ275p7zITI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783731284; c=relaxed/simple;
-	bh=QGtm/3ID5P4nBS65RlqhIwz9eK+RbrymoUkaquxpplE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=S9sbQbKLE3UqgrCS6mmM6sAUpM7Vi16NrhMIekH4e09KNiSvr0wQApWKEE1ooulhojFze5mka5x0uVXzqsX6a/LtS8gJDDc/VmGDzWJMssUkJMi7n1Ymhi1DpvB1Mt7Xpbjgp0FzhupO7qeCsW+h4ccJ6d/mX11jCCEjt4WNwdU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KpvxLuDd; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1783740679; c=relaxed/simple;
+	bh=C74YAWP7pIq5hI/gSWUOVkLateu898yAm3D7cu+4X94=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=slYNbzehzbO/9W96mMW2QutqCS4otv53WlsTP3yAwaYit7nWlx9nzAxgfXIkCsw4rZbB4GUgQCB6a+YxwIEaX0mk6yeWn+0ubVK0qX67c24fSkLPDasDFLTD08/awV+Juyu12zShmbwzMznqrB1aqRlTOpOQTHnQKzoDm1pdVM4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OZpGiqeq; arc=none smtp.client-ip=209.85.214.169
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KpvxLuDd"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7FEDE1F000E9;
-	Sat, 11 Jul 2026 00:54:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1783731282;
-	bh=2rzCkw2b72Fp++XsziXQfIfZQh6P+JdnCOgO32TXev4=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=KpvxLuDdIa+Y5caK+aUy5/18LqNAf9tTUTxzbSP5eck/TBBRikXmjDw1gEZIIpTRJ
-	 AZFGTuD4kzNSMLVzKBbHX2/l5f1+bidlDxoi2J62RBPLEoPXtjr+cOa1dSiURt0no7
-	 mwQBwNnZh1QUzyPQvytu90jt+541xt5ep1gxtqkmNBOA0zfYeRM4/5mLVCrsp0+0Ex
-	 8UOO909QDH2hXMx4o4Lrlg5QCsVlB7iMASOf6HBI0y3wlgqj4WeF6Khoy5rBrzW9rF
-	 kXjE7jp5fCJIijaC4xlyrg0ePCqbsH+FDrmESv2Jy6g8BFNf7RJjv6WOtb+YXwIqlV
-	 OZbIXrxHHbTZA==
-Date: Fri, 10 Jul 2026 20:54:40 -0400
-From: Eric Biggers <ebiggers@kernel.org>
-To: Keith Busch <kbusch@meta.com>
-Cc: dm-devel@lists.linux.dev, mpatocka@redhat.com, snitzer@kernel.org,
-	bmarzins@redhat.com, Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCHv5 3/3] dm-crypt: allow unaligned bio_vecs for direct io
-Message-ID: <20260711005440.GA7610@quark>
-References: <20260709161519.1559723-1-kbusch@meta.com>
- <20260709161519.1559723-4-kbusch@meta.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OZpGiqeq"
+Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-2ce7d2adef4so19799835ad.3
+        for <dm-devel@lists.linux.dev>; Fri, 10 Jul 2026 20:31:18 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1783740678; x=1784345478; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=IjrTbg245U7vZfHIc+G7umBSDdgC6RQE0y6pgGMTLho=;
+        b=OZpGiqeqAuftfLstyREim+rSD3/UMQbzoPTwKq4cN5TlKNNSlkjckvXVFXvQsCZNkm
+         ldB8u7JBSw02r88wyPPJFTzCik891zOmArOQcmn91jLaheawTOm3BB4iXF7BwLsxW8jL
+         516rgu0XkGqoTTBDYKrrzbbD3ZLwmrEXCdPXy+1SSIbEajX7TUOaWxUWIhBreEBUUKUl
+         eAQfArxsBU59Y6I/CCzvX/jqdCjdF0aR9Se13mwtZEtTKIVW42c++Mchrh2XSdps0d/+
+         ywpMDtDUaR9hX8+VxZD2rtjuzlf7ra2GRRIlT+7tBf0KAo8IclhgTjqUQ2IyaqoQHdM0
+         xNZw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1783740678; x=1784345478;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=IjrTbg245U7vZfHIc+G7umBSDdgC6RQE0y6pgGMTLho=;
+        b=iyczXgPFTmnh631V3GEIMsXKkgRwgGlm07WhoSkIi7R1PKYygeG4XEswtBfTeJ/Vzv
+         YJQZA9IrAuX6BydAZIQKqej/yzO6MQd+J7ZbpUk9YKaNZ8XzqsphcBRwCuosI7CZDdvM
+         RwY9xT3YCdFtRriR0kR+EdRrzb9Z0pyk82YpaAbH+9Ao8xKm9M4WHA9NDZ4GrckExfaV
+         4sud7sW4P7Yw+XBhb7sAWW8b6Kg+MFWTzNq5E5bWw3h677pdpitHnbiBl8gahRz24QM8
+         QWr4NOq/9p7gvJlwakoAYZggFiwQFEooxI1ZrKzz6uqZm7lLmw61WOnWwkD+5GsD0i51
+         skIw==
+X-Gm-Message-State: AOJu0YzGFFsAlZOc20P2goRXnhOuEa1sKb8Tzj/k3jHkkA141Z0Bg0ah
+	d065u+3Vz0Gu6oaZ9oYwZUiDONMQcFEd5DgIWApDGwLRus12Qw6rGkH0yZno5s94+mH8Rg==
+X-Gm-Gg: AfdE7ckaFnpHEPKrMqEdKm4C4/dBA8ZDm6lq9X56OX1iYbOwqXqURJ6j6KMpSZLek7+
+	h4f00cDeeH+E7yX/7OmUumY26f31hQJvMHdwNcoUFihKv6L9oa7DWbmLrob6oZNciObY9Dvh/w/
+	1nUpBDG56x5JsHKA2gWqfUHKfE98UiOkZ3qMvp+Uouybu4j+qDdh3y0t2cgk6oT6Wibt5DbRk5e
+	MOd35yUwasqBPxVopF1Kqq2PM0XFRGHWe5n8oT8EzFSLTXX/Y+lquX166f6bAoxsxlX7k/wpgYB
+	XTjTz94JpNDt+4rm6ZnOPYUv5FjsbmpcNydFOEvYKEs+vqnaaeJoxjIQzWOxdrKU6TWztfud+hU
+	hLI+BGVpVOZQU7DuybyTPE1mHCx+/eeoV7q192cDjDN553sf5K6gOhMGDWu20xrrNOWOLA6ZvMl
+	kPFGmJeqweDgHc0w/yT/pj
+X-Received: by 2002:a17:902:d985:b0:2ca:329:3d96 with SMTP id d9443c01a7336-2ce9e59a083mr17384705ad.3.1783740677744;
+        Fri, 10 Jul 2026 20:31:17 -0700 (PDT)
+Received: from CykdeMBP ([113.84.0.33])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2ccc9bf7858sm68533905ad.23.2026.07.10.20.31.15
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Fri, 10 Jul 2026 20:31:17 -0700 (PDT)
+From: Cykang <cykang4830@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Cykang <cykang4830@gmail.com>
+Subject: [PATCH] libmpathpersist: fix self-preemption when key has no active reservation
+Date: Sat, 11 Jul 2026 11:31:07 +0800
+Message-ID: <20260711033107.2318-1-cykang4830@gmail.com>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260709161519.1559723-4-kbusch@meta.com>
+Content-Transfer-Encoding: 8bit
 
-On Thu, Jul 09, 2026 at 09:15:19AM -0700, Keith Busch wrote:
-> From: Keith Busch <kbusch@kernel.org>
-> 
-> Many storage devices can handle DMA for data that is not aligned to the
-> logical block size. The block and filesystem layers have introduced
-> updates to allow that kind of memory alignment flexibility when
-> possible.
-> 
-> dm-crypt, however, currently constrains itself to aligned memory because
-> it sends a single scatterlist element for the in/out list to the encrypt
-> and decrypt algorithms. This forces applications that have unaligned
-> data to copy through a bounce buffer, increasing CPU and memory
-> utilization.
-> 
-> Use multiple scatterlist elements as needed to relax the memory
-> alignment requirement. To keep this simple, this more flexible
-> constraint is enabled only for certain encryption and initialization
-> vector types, specifically the ones that don't have additional use for
-> the request scatterlist elements beyond pointing to user data.
-> 
-> In the unlikely case where the incoming bio uses a highly fragmented
-> vector, the four inline scatterlist elements may not be enough, so
-> allocate a temporary scatterlist when needed, falling back to a mempool
-> for the in and out buffers to guarantee forward progress if the initial
-> allocation fails.
-> 
-> Signed-off-by: Keith Busch <kbusch@kernel.org>
+According to the SCSI-3 Persistent Reservations specification, when a
+self-preemption is performed with a key that does not currently hold
+an active reservation, the operation should be treated as an unregister
+and should not fail.
 
-So what is the minimum SG entry length alignment this can result in?
-Once that get misaligned enough, crypto_skcipher_encrypt() and
-crypto_skcipher_decrypt() start allocating bounce buffers internally.
-That code has no mempool fallback and can fail with ENOMEM.
+The current code in do_mpath_persistent_reserve_out() does not check
+whether the preempting key has a reservation before invoking the
+self-preemption path. It unconditionally calls preempt_self() and
+re-registers the key on the local paths, even when the key has no
+reservation. This violates the SCSI-3 PR spec and can lead to
+incorrect reservation states.
 
-I think you'll need to take the limitations of crypto_skcipher into
-account.  See the comment above CRYPTO_ALG_ALLOCATES_MEMORY.
+This patch moves the self-preemption check inside the conditional
+block so that it only executes when the key matches, but does not
+bypass the general preemption path for keys without a reservation.
+With this change, the code will fall through to the common PR_OUT
+handling (e.g., MPATH_PROUT_RES_SA or CLEAR_SA) when the key is not
+reserved, allowing the storage target to properly process the
+operation as an unregister.
 
-Note: I'm working on fixing at least AES-XTS to not allocate memory
-(https://lore.kernel.org/linux-crypto/20260707053503.209874-12-ebiggers@kernel.org/).
-But segment lengths not a multiple of 16 bytes will always be
-inefficient to process and really should be avoided.
+Signed-off-by: Cykang <cykang4830@gmail.com>
+---
+ libmpathpersist/mpath_persist_int.c | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
 
-- Eric
+diff --git a/libmpathpersist/mpath_persist_int.c b/libmpathpersist/mpath_persist_int.c
+index 3091c5c2..2ee7fe68 100644
+--- a/libmpathpersist/mpath_persist_int.c
++++ b/libmpathpersist/mpath_persist_int.c
+@@ -960,14 +960,15 @@ int do_mpath_persistent_reserve_out(vector curmp, vector pathvec, int fd,
+ 				ret = preempt_all(mpp, rq_servact, rq_scope,
+ 						  rq_type, noisy);
+ 				break;
++			}
++					/* if we are preempting ourself */
++			if (memcmp(paramp->sa_key, paramp->key, 8) == 0) {
++				ret = preempt_self(mpp, rq_servact, rq_scope, rq_type,
++						noisy, PREE_WORK_NONE);
++				break;
+ 			}
+ 		}
+-		/* if we are preempting ourself */
+-		if (memcmp(paramp->sa_key, paramp->key, 8) == 0) {
+-			ret = preempt_self(mpp, rq_servact, rq_scope, rq_type,
+-					   noisy, PREE_WORK_NONE);
+-			break;
+-		}
++
+ 		/* fallthrough */
+ 	case MPATH_PROUT_RES_SA:
+ 	case MPATH_PROUT_CLEAR_SA: {
+-- 
+2.50.1 (Apple Git-155)
+
