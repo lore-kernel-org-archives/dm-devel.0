@@ -1,37 +1,41 @@
-Received: from va-2-39.ptr.blmpb.com (va-2-39.ptr.blmpb.com [209.127.231.39])
+Received: from va-2-27.ptr.blmpb.com (va-2-27.ptr.blmpb.com [209.127.231.27])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 566081DF75B
-	for <dm-devel@lists.linux.dev>; Sat, 11 Jul 2026 06:50:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.39
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52E5428DC4
+	for <dm-devel@lists.linux.dev>; Sat, 11 Jul 2026 06:51:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.27
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783752628; cv=none; b=WouGtHJqGsUp13qx8A31OfMtM6jPXhNfEPML/PcuFVYPhpNIz7amrpbFeC6AaVCQ1Qop4EEM1FpqwBKAXoXRrv13BpST5pWMZvRSbwQ8huF33FR3kG2SIl0h8kDXgXWeEC7jeDWoNSy3bP7vdGTMIYYL65gZqepA7XHCWMcY4vc=
+	t=1783752689; cv=none; b=Z9VrYRWCbtOW9xJsBvJSpLYP2GcHkqBHjKgsqxLqEeghhDH4P8JfgXcMPFTmQT+TaBd/Mj9a1wxScINZKz6aioSkw61yzBMagn7j15PyiAv+Xd6KOcmYrPRAGs3bfZIhSr6fJdh2lRKLFI0/3O3uKiaxhfUqohAYfTYsSnL/+4M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783752628; c=relaxed/simple;
-	bh=G5NYO02dkpAym3zoJezC5OkKuaKhwQHAWliyfy/EA80=;
-	h=In-Reply-To:References:Content-Type:Message-Id:Date:Mime-Version:
-	 To:Subject:From; b=EyI6ujFPgnyX8DzvFuEIDkBAC/Buik7TrZkP4N7Xi19+/Cu7s5YW2sMHAvO7IQ+MXv8Qau5fSEVYDwQrg1or29EuammtEKFUzAQ71NuJ1fnkYz5q/jBSw8oAPfs2xx3b1jz2tSd3dtbxvRZgoCfBYOhlGwoyBU2ze09/hle6Tac=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com; spf=pass smtp.mailfrom=fnnas.com; dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b=ySfwRahT; arc=none smtp.client-ip=209.127.231.39
+	s=arc-20240116; t=1783752689; c=relaxed/simple;
+	bh=dONvI5w00GVD5FBbXsie3hNV0h5IPmN8H2ki3ec1Ffc=;
+	h=Message-Id:References:In-Reply-To:Date:Content-Type:To:
+	 Mime-Version:From:Subject; b=lOORKtjygenVJKIl4VgOg0MlaXKYkzlLqHo/NRY4s/kxDDyJPEOwrQ9wjhmuDAGJB1anaYqF7WwFtb5FwUmJhjVZiEcR6Mdo1jzkmdXILVRZbk/CfUWyg4GG5KOetZrwvukwzV7YYO3Fwgy+niRIcURxtz6tcBzmCnPpctj/vB4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com; spf=pass smtp.mailfrom=fnnas.com; dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b=ZoXJl8UH; arc=none smtp.client-ip=209.127.231.27
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fnnas.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b="ySfwRahT"
+	dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b="ZoXJl8UH"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=s1; d=fnnas-com.20200927.dkim.feishu.cn; t=1783752613;
+ s=s1; d=fnnas-com.20200927.dkim.feishu.cn; t=1783752673;
   h=from:subject:mime-version:from:date:message-id:subject:to:cc:
  reply-to:content-type:mime-version:in-reply-to:message-id;
- bh=64KzHQ8mhJkQ29nZmRRVu+UHmWGcALXMei7GYjXvwds=;
- b=ySfwRahT5UCD+2X82zui2XLkefxKirVx2U55LDIN4ijpS2WKtWaQPCtlx5f8aPZxhK7yWa
- 8+cDkhixrszVWyYc0sr7ljSHLDW5ZG6kbb2OZSNIFsFXH0KIopJCyM1TUEtySXvU8mWC2/
- v/Y6i/IJjgEraRL0bZCG4KgLrRZB/OrpIXwZpFbcxT7Tl5EAwnPCVNTr7KBBHGWY1CSFcB
- ud00VSaIURNgCG2MNJJ0xqVpT0EO3/JFMh1rnXwssrPbBffIXjCCUUR3wI12ql7u0yl6Oq
- CulWMYx6NkWYM0v70zmP6K/pTxQfanapxhN0CyqfI1jYSmL/pagD/Fsnru+eOg==
-In-Reply-To: <20260711064845.155682-1-chencheng@fnnas.com>
+ bh=5atf+a0Z4JPPFlrP9X+dHZhjkJYJ5UufftJuKXYiJNk=;
+ b=ZoXJl8UHSugammpnhvrh6ktPR/YeLOLXWBHZALvBUpJawKsn+6VwBy3ERtCsx78MlLbFV9
+ rNclv25SO19SVmKvDmv2FZOL2yEcPjEezBuFF3tHgTJDxLajMa9LzvCUHrFlimulAEYLRv
+ 6raRfFBpo6XwsmSr9HiHidpWkwqLjQYhbexirtY7OMyVEeSQk8NRrhRuubWy3mUvmTbUcs
+ MnBykzRSeB9pMOzid9j6kDS2BH5Ybc08jGQcrqB7hOrJHiOTX0XwyQZ/VhbKAdykEhJYsw
+ hY49xHi94bmAB3T9Mmktyv73+i/AGVG304mJOMy1ndKfrnR3ZcM6zly+SRj4lA==
+X-Lms-Return-Path: <lba+26a51e7df+52bccb+lists.linux.dev+chencheng@fnnas.com>
+Message-Id: <d7fc709f-872e-4840-8906-e550d9f1fb18@fnnas.com>
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
 References: <20260711064845.155682-1-chencheng@fnnas.com>
-X-Lms-Return-Path: <lba+26a51e7a3+f05ac6+lists.linux.dev+chencheng@fnnas.com>
+In-Reply-To: <20260711064845.155682-1-chencheng@fnnas.com>
+Date: Sat, 11 Jul 2026 14:51:08 +0800
+Received: from [192.168.8.91] ([183.34.162.102]) by smtp.feishu.cn with ESMTPS; Sat, 11 Jul 2026 14:51:10 +0800
 Content-Type: text/plain; charset=UTF-8
-Message-Id: <7665105a-38fb-41a1-abcf-89e678acfef6@fnnas.com>
-Date: Sat, 11 Jul 2026 14:50:09 +0800
+To: <dm-devel@lists.linux.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -39,15 +43,11 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 Mime-Version: 1.0
 X-Original-From: Chen Cheng <chencheng@fnnas.com>
-To: <dm-devel@lists.linux.dev>
-Subject: Fwd: [PATCH v1] md,dm: caller-owned memalloc_noio token in mddev_suspend()/resume()
-Received: from [192.168.8.91] ([183.34.162.102]) by smtp.feishu.cn with ESMTPS; Sat, 11 Jul 2026 14:50:10 +0800
 From: "Chen Cheng" <chencheng@fnnas.com>
-User-Agent: Mozilla Thunderbird
-Content-Transfer-Encoding: quoted-printable
+Subject: Fwd: [PATCH v1] md,dm: caller-owned memalloc_noio token in mddev_suspend()/resume()
 X-Forwarded-Message-Id: <20260711064845.155682-1-chencheng@fnnas.com>
 
-CC dm-devel  .
+cc dm-devel ..
 
 -------- =E8=BD=AC=E5=8F=91=E7=9A=84=E6=B6=88=E6=81=AF --------
 =E4=B8=BB=E9=A2=98: [PATCH v1] md,dm: caller-owned memalloc_noio token in=
