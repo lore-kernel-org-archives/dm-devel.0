@@ -1,83 +1,105 @@
-Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8365265620;
-	Mon, 13 Jul 2026 02:25:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 823EB347BD9
+	for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 02:41:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783909542; cv=none; b=pUdzGJwJgDS//tLRS40tpf8G/FdxG55XWKn7jAyt1DX2T/7wLiovERYXcBfHKhohJ7CzL3NXUu8tFUX4zT4HPg6A9d7xmdN9pHe5PIEp6akTL6oQX34n1hJY9nYsvGsdww6r0iK5pBydXgnozgXOYyqxfCCBKnn1FCPPeFYZQJ4=
+	t=1783910482; cv=none; b=bsQXlLQXhjQlyNiTLWv7OAzBSnxR6tHWX8swpRMZCUDN6+/IOuDiZLK0wwnxHbaw+xrxy7dFot9T+JVQULsipMOZbP+ysvDbD6Ef6rnGOD0X6AD1P2m5CiA4UwZZqP+y/wRN/Hggdn3bU/UMlMjihXToHFQ0/I8/nXJKPfeTdZ0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783909542; c=relaxed/simple;
-	bh=BTmsNUZw84kKsPm5OqELn5hld4bHjW+j5E6nvpoGmHI=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Rd5VpXCxW7u4IvlkiLiv/2eIQldvzegcFC0/3bNWbYawRlI3QE6zqxFqz8SXmqQqxeqW2tS+h7xc6Jus/hX97w9k5lLSGrfq6pxhVJfHV54Qve4kCEN1PvXnvhtTxprZ/EivYvtSv1KlMCiLL9blYYyTfbjAEsIhMZFBcB8zRQU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b=KhrGvfbS; arc=none smtp.client-ip=180.181.231.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1783910482; c=relaxed/simple;
+	bh=2Fgx1jHAi3FtBJ/keCHwrHIb/S6are9wCLWQi94bhrA=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=kU4KCNByGAmQWsDDBTzcIwANwS7Zz2RwNUs0wIpEWPPuJd/njNQV8rCMc86h9GGPpgFCZ1VstNBQlL/UPI4UFY/BkJXc44rWRwTOb9fyzEZdc9kyHeaJeMex6YCFLfACeVrOhR2m1pSA2hEvMgRhlGUu5J/MTXJK1hdpursP4uw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=U1f28dS2; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b="KhrGvfbS"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=gondor.apana.org.au; s=h01; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:cc:to:subject:message-id:date:
-	from:content-type:reply-to; bh=dbsKWOlsBrJrT7FSZx32kZiPCen7W8kvZEdP9N+VlDE=; 
-	b=KhrGvfbSf1kw6jznU/xEllPdh4/BUGYFBQ8WGpiILH/zfaxE6yUeK/bMZhFtL+fctBAsSnWaTpf
-	W6N/kf5FtXc4zXrfQrIyB1wN8n1DItLp5booHlkzvQPoNsNHm0GtwhyLQQnYnRhQ/ILwxkfBO2vqp
-	Bw3ewjic1IagnpsJ2rijvU0CWHWV38JIJBlxoGPGIKJsXCZDbtMBl04EqCysVb7s/x/+i0/13IPPk
-	VUN3c/FUvw0zt2P5Q4+I0Pkc4lyzUC8TnO2bmco9lXVO4MdUWkwQdbBFfqfoxfOnBTWgY2VoY7CPF
-	X7y+ggcfgu2Y+j72j8p22uOA2uXakjMjLHVA==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.98.2 #2 (Debian))
-	id 1wj6MR-0000000CxNg-1rhY;
-	Mon, 13 Jul 2026 10:25:36 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Mon, 13 Jul 2026 12:25:35 +1000
-Date: Mon, 13 Jul 2026 12:25:35 +1000
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Leonid Ravich <lravich@amazon.com>
-Cc: linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
-	davem@davemloft.net, ebiggers@kernel.org, snitzer@kernel.org,
-	mpatocka@redhat.com, axboe@kernel.dk
-Subject: Re: [PATCH v5 2/5] crypto: dun - data-unit-number dispatch template
-Message-ID: <alRMn--pY1ELYmBJ@gondor.apana.org.au>
-References: <20260630083431.2772-1-lravich@amazon.com>
- <20260630083431.2772-3-lravich@amazon.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="U1f28dS2"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1783910472;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2Fgx1jHAi3FtBJ/keCHwrHIb/S6are9wCLWQi94bhrA=;
+	b=U1f28dS23mWTyWOTpOazE49K4Kw0lZkIjG9+3tkJvCQ21bIAk5RA5rPPFoLWnC4tpsCQ7C
+	pGOwGHDtVk3ScAnVIh+jSTBriAy85OFg7xOCFztjSZGJoYdtD6v9ZKU0hxGdLUWpu/bOMb
+	nAgnMIttUdLrqV5VvRn24RHAjHW1Alo=
+Received: from mail-lj1-f200.google.com (mail-lj1-f200.google.com
+ [209.85.208.200]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-288-fFg1TMjPM46nOdekzThLFg-1; Sun, 12 Jul 2026 22:41:07 -0400
+X-MC-Unique: fFg1TMjPM46nOdekzThLFg-1
+X-Mimecast-MFC-AGG-ID: fFg1TMjPM46nOdekzThLFg_1783910460
+Received: by mail-lj1-f200.google.com with SMTP id 38308e7fff4ca-39c7291b47eso13082181fa.2
+        for <dm-devel@lists.linux.dev>; Sun, 12 Jul 2026 19:41:07 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1783910460; x=1784515260;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=2Fgx1jHAi3FtBJ/keCHwrHIb/S6are9wCLWQi94bhrA=;
+        b=DMUO6JHNCFw/I3Ab+6ewRP3FhwISeeY8kEOeltk0bAdjXHxwahAQFpoqbHg3HdCjcH
+         rTIrEEBkhwq8hwt4aGIhnME8dZAka7kUn9Z6ECcGuL5TfvcgS3VrHV99ZjknIrA+6dRJ
+         CYlWAWulRwtlbND+8J++H0fpuBTdOhUgV6+Z4lEYFy1+siDgCbNkJQxd8j8ETKpiy1LQ
+         iwFgGed4BAdBwtnY6tXsC10wWORqHTLKWp+CgJfMWOoyL6yOto4VJ5RcZV8lWGzk/7Ru
+         jx6lBacCtB7+7TgX8tRPMGETI5UDUtzNFVBfBbLjNGjqyCkIhRvg5soW/Jpl7neAqKKf
+         Byzw==
+X-Forwarded-Encrypted: i=1; AHgh+RrOFjXdvuZuOaqiKujPu/0PxFR8fXxyHEBE8aCIVzYNO1CfiAxhGGvySpaf+jnlHZcdbtziTMaPLg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YwuE3yybxSSe8Br2ZtQFfMNKOegYIrOJafymNQU37uDpRy+Hs5t
+	Z3AfnM2Pzh5OwlHCVLqRvFptkSUwzbrtu37/yRx1ivtNvgpaji5tQ4prBt2p8ZLHdOd/CjKiVV0
+	Q3/GARM0cXwfaBOIIrO4Muc+m5GWZWsqcRUXQOdmqQ31xJh/BQNaq1hpYLzFCVAkg9f2VBTDVcL
+	hTnNHaeZuPpYbB7BYq0cpAJnnMI4bFRU8dKw==
+X-Gm-Gg: AfdE7cnFBNrQleqkke4n/5L74KgLe7WXwIYe5z+Y7A+4PbnT5Bi4EknMYAy/4SK1Z+H
+	LEltwU+zWKQG3ZfNDXnmHS/wfd3asCA0xSr5b/AvbXp+7d/4aFcaeL68Oenmu1NIa5CQaPJ/bzg
+	m0W6SVVuYTgNrBaT2y24SCtQLgbcDihrLFqL56YMOTaYZnEGHTBsJG3+TtVsSjjQEs5I0I
+X-Received: by 2002:a2e:a994:0:b0:39c:650c:454e with SMTP id 38308e7fff4ca-39caa80368dmr14624331fa.13.1783910460072;
+        Sun, 12 Jul 2026 19:41:00 -0700 (PDT)
+X-Received: by 2002:a2e:a994:0:b0:39c:650c:454e with SMTP id
+ 38308e7fff4ca-39caa80368dmr14624231fa.13.1783910459659; Sun, 12 Jul 2026
+ 19:40:59 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260630083431.2772-3-lravich@amazon.com>
+References: <20260711100526.835027-1-zhanggenjian@126.com>
+In-Reply-To: <20260711100526.835027-1-zhanggenjian@126.com>
+From: Ming Hung Tsai <mtsai@redhat.com>
+Date: Mon, 13 Jul 2026 10:40:48 +0800
+X-Gm-Features: AUfX_myKQscoRgzy7I2Vob2d7KwV0Fds51HFiX8Pq6SaoDbD2MktDL4s-wqHRJs
+Message-ID: <CALjSBEtD00yuLaBJXtJjFG7L0nCLRaGDUVGoN7VZ4wkVRD0CDQ@mail.gmail.com>
+Subject: Re: [PATCH] dm thin metadata: fix superblock refcount leak on
+ snapshot shadow failure
+To: Genjian <zhanggenjian@126.com>
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	bmarzins@redhat.com, ejt@redhat.com, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, Genjian Zhang <zhanggenjian@kylinos.cn>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Mp2ddUh41RRQXS-P0PabVlXiQ8DWuVljxkrvkbwnApI_1783910460
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, Jun 30, 2026 at 08:34:28AM +0000, Leonid Ravich wrote:
-> Add a dun(...) skcipher template that wraps an inner skcipher whose IV
-> is a wide data-unit-number counter (e.g. dun(xts(aes),le)).  When the
-> caller sets skcipher_request::data_unit_size, the template splits the
-> request into cryptlen / data_unit_size sub-requests on the inner cipher,
-> walking the IV +1 per unit.  Each inner ->encrypt/->decrypt is a direct
-> call, so only the outer dispatch into the crypto API is indirect -- the
-> per-unit work is not.
+On Sat, Jul 11, 2026 at 6:16=E2=80=AFPM Genjian <zhanggenjian@126.com> wrot=
+e:
+>
+> From: Genjian Zhang <zhanggenjian@kylinos.cn>
+>
+> __reserve_metadata_snap() increments THIN_SUPERBLOCK_LOCATION in the
+> metadata space map before shadowing it. When dm_tm_shadow_block()
+> fails, a reference is leaked in the metadata space map.
+>
+> Fix by adding the missing dm_sm_dec_block().
+>
+> Fixes: cc8394d86f04 ("dm thin: provide userspace access to pool metadata"=
+)
+> Signed-off-by: Genjian Zhang <zhanggenjian@kylinos.cn>
+> ---
 
-This shouldn't be a template.  The default data-unit handling
-should go into the mid-API layer (so skcipher.c).  It should
-transparently split things up *if* the underlying algorithm does
-not support multiple units.
+The fix looks reasonable as a best-effort cleanup for the immediate
+refcount leak.
 
-The eventual goal of course it to add unit support to all underlying
-algorithms so that the mid-API code does not trigger.  But for your
-patch-set this would keep the work to a minimum.
-
-Again you should align this with the existing acomp patch-set:
-
-https://lore.kernel.org/all/20260125033537.334628-15-kanchana.p.sridhar@intel.com/
-
-In face as the acomp work has not been merged yet, just cherry-pick
-that patch.
-
-Thanks,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
