@@ -1,114 +1,198 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 031802F39C2
-	for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 09:26:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D13553E5A1F
+	for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 09:29:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783934801; cv=none; b=aJpQ6s12NzgPWLNwIvy+g48hJbP6l5Updvr0Krub3ZB4J8jvoGHJGpnBPMhw3BKwSXcmyBnDaDVmbdj77mqgBNcFI4FxpyT36XYFfX3I3fjSrMjSnArKgqKUNzXIaqZCg+hmYe8dmNMnVt8LQXRlMKSmBKMHHLC7FaShttf022w=
+	t=1783934979; cv=none; b=MfKZYWQmhCRrPx9a0VrU3/Is3mkPBiX97Wj2bJI8nx4OtKRiClsYphAyHscel4hceRQsV+Grn1CujH3KLDfHWOTuJJztEX7EJcNw/Zr/ezZ7du+4h782lEJNmn9CS/s78yvOum/5ABTloYoouDhjul1Ldji7JiHw5Dgq3aNHLAo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783934801; c=relaxed/simple;
-	bh=md6N0RCrvvJNB7WxjUvLI6ETC1E3qtlOXqIAEuYYhYU=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=cgx3Lk/2FdXenzCeki1PR765ZDzl31HgWLR7FgeN+xSFBM2hhx6aOcDDrAxLrUfFBdhfnEBa1ugeMEzQV9aRY1yprRDweGuXP0czF2CEPA7w54udH31DeSTU7JDaAwUxzjIboWRq/NPov5NoofkFeqHmKIcu7CGlLUHpPVOgW3U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JnbpwTQt; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1783934979; c=relaxed/simple;
+	bh=Sv7EfPKsdbJ6hdpMjzJTPLU8hZ/RskOBEKEerGdUwpE=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=QrNlETttSDo4yhCT//2AScd2Kpk++ezU6gRmAZhnJZlbdrhhQaMTnojVcQAlkKaPdChPhBUYnzOv5D44wVJ86M+8G0iJ4mKq0aetvPlttn4F/ktSl5n5q8Mh+4lca8mqNUoNJE8JN5uwiLeHhitQlLarQ4o/rJKaezUZhSWysm4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=wmWjcdrQ; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=+Z8PIDeg; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=wmWjcdrQ; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=+Z8PIDeg; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JnbpwTQt"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783934798;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="wmWjcdrQ";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="+Z8PIDeg";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="wmWjcdrQ";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="+Z8PIDeg"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 0975177653;
+	Mon, 13 Jul 2026 09:29:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1783934976; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=z5hZtv4O7MDxRSw7Evhh+r3SzxTai94Z3EuWKtFv7aI=;
-	b=JnbpwTQtgyU1x2+Q9Nw6zh5hG702NMk6tnejFw3N161ippnz13skVpG29bZ4neaNaiTuZF
-	gZrIuCaUaHYrefuc7BWVat52HFdKFsFVRKFp7UhWXTtg7M5UKAOoMhCVsq2zJoGT5B304M
-	ctTNb94rkyKIFj6UIwcmJ6xX8D3CgbI=
-Received: from mail-lj1-f200.google.com (mail-lj1-f200.google.com
- [209.85.208.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-116-OqjREnLPMVm9zu5AtoEf2g-1; Mon, 13 Jul 2026 05:26:37 -0400
-X-MC-Unique: OqjREnLPMVm9zu5AtoEf2g-1
-X-Mimecast-MFC-AGG-ID: OqjREnLPMVm9zu5AtoEf2g_1783934796
-Received: by mail-lj1-f200.google.com with SMTP id 38308e7fff4ca-3998d89ef9eso11053651fa.1
-        for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 02:26:37 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1783934796; x=1784539596;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=z5hZtv4O7MDxRSw7Evhh+r3SzxTai94Z3EuWKtFv7aI=;
-        b=dLsLqsWJCxGcBYPmBK7IFZs/DTBj7U96S0OKnFokZzO03hpucDenH1vFqKcOLG4FZy
-         6NMCImmLfkh1/C01SlHqtz6yDedeHFctRsbdRXN+7pi3UQADiNu+JdbSvjNC6eUEHJSK
-         wCnr0pI7O+jrIa4IqbhmjJGP+kedMBA4IVbxMkwQum870mEoAtQEdiOhupKz5axWUYLS
-         dcQ5oMs8Dd1axS6d1kd/73wDm10M0S0aLfPLaDvr0qIFC4xC3ZSZTKtmY+/ObRJ6uKcm
-         vte00USHpCMPN280D07sQXDwDM1m2C5ZdKF5slHKLt1hh/yJ/1jtVozuEu7lC6XDxKNy
-         sQ7w==
-X-Forwarded-Encrypted: i=1; AHgh+RoytIgcNkeW5hZi9UovZaGh8vzOVCGAXJqIquN1TE7wUBAmoQLjQQcsVX+cijZvtXaH3GVCpDpYwg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yw04ZXAAvR6rGQr2DIr8axbRQ+3e71FOogC7IGFggbjczJLNBWc
-	OWlM6nFjXkVIDFDG0Ok7sW0WT8zKK87FMgkwXeQRVUz/a8MYbAeC9lmPNV05WDbKZK33MAB1mLk
-	QtiEykzdrdS203Pj7GOdCdvrwBoZG+T52nFLJwWQSUOMbV36iUjNEwapxJVzAyXQg/xFYY2wFck
-	HkXCC86hhcrlGq7zHBxVfi8x15tjg2ZtysdQ==
-X-Gm-Gg: AfdE7cnrZVcGmGgIi70NQeAC9JJk7asgNbbQcSDD9YmaE3s/ICIlBnZZX87zFme37XA
-	iLavgUOOCgKu7ZRjkJ43ch3NTX24ZpbANa2Ng+RQEUVrN70Af67e9UjsJFu9mttXe/hLGB9bjir
-	xCKxhymcvHp9mltFgXv42ZzIZYsdjrzwKHXbQ9ynU7cXbj08pro1JSEBMEN3wme0OZnw==
-X-Received: by 2002:a05:651c:254e:10b0:39c:828a:ec28 with SMTP id 38308e7fff4ca-39caa87c3f2mr13907791fa.31.1783934796172;
-        Mon, 13 Jul 2026 02:26:36 -0700 (PDT)
-X-Received: by 2002:a05:651c:254e:10b0:39c:828a:ec28 with SMTP id
- 38308e7fff4ca-39caa87c3f2mr13907691fa.31.1783934795792; Mon, 13 Jul 2026
- 02:26:35 -0700 (PDT)
+	bh=y9gcUkxCkRN2ZaCCFrl4N86ehymkTSYCDoMlEuWqjAE=;
+	b=wmWjcdrQtwWtJIeyLq2t5fcwg5iX2uJajA/r/0RMTrEjlLscL3f4QsEFByBg3/2ReeQJYt
+	FdU4qmXkDN98inPHlgV1owGzGkEbXZkw2ln0WTBPPuMj5ziyiqJjnljKAyYfNY4CuX1n1a
+	jLomKU0J4eYnu+ZCUTEfDTO75sA1oTk=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1783934976;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=y9gcUkxCkRN2ZaCCFrl4N86ehymkTSYCDoMlEuWqjAE=;
+	b=+Z8PIDeglO+Dj12Ww+r+s63GWL/dREZ5YhTFEjHue5szurCi8eQEz8zyOim1Z/6XbntnUP
+	y+EzIprM/3lPc5BA==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1783934976; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=y9gcUkxCkRN2ZaCCFrl4N86ehymkTSYCDoMlEuWqjAE=;
+	b=wmWjcdrQtwWtJIeyLq2t5fcwg5iX2uJajA/r/0RMTrEjlLscL3f4QsEFByBg3/2ReeQJYt
+	FdU4qmXkDN98inPHlgV1owGzGkEbXZkw2ln0WTBPPuMj5ziyiqJjnljKAyYfNY4CuX1n1a
+	jLomKU0J4eYnu+ZCUTEfDTO75sA1oTk=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1783934976;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=y9gcUkxCkRN2ZaCCFrl4N86ehymkTSYCDoMlEuWqjAE=;
+	b=+Z8PIDeglO+Dj12Ww+r+s63GWL/dREZ5YhTFEjHue5szurCi8eQEz8zyOim1Z/6XbntnUP
+	y+EzIprM/3lPc5BA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id B7312779AE;
+	Mon, 13 Jul 2026 09:29:35 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id U0pALP+vVGpCdwAAD6G6ig
+	(envelope-from <hare@suse.de>); Mon, 13 Jul 2026 09:29:35 +0000
+Message-ID: <0ded62a6-b3da-4790-adf0-566ded30ee43@suse.de>
+Date: Mon, 13 Jul 2026 11:29:35 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260711212849.92086.ae319593b1e2.dm-cache-invalidate-cblock-truncation@trailofbits.com>
-In-Reply-To: <20260711212849.92086.ae319593b1e2.dm-cache-invalidate-cblock-truncation@trailofbits.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Mon, 13 Jul 2026 17:26:22 +0800
-X-Gm-Features: AUfX_mxmw7fbXjZxLzo_ImWY0Bzim4q7K96FPSHOfyL84LgMoO5VLLCyUASIdaE
-Message-ID: <CALjSBEvnJj=C4N1g2c7vuVorCA0vsSP=xNwQhDdChQTANTwadA@mail.gmail.com>
-Subject: Re: [PATCH v3] dm cache: parse invalidate_cblocks with kstrtouint()
-To: Samuel Moelius <sam.moelius@trailofbits.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 5fw7dNClUqAcKT9bv0_Q3zlRetUieHhQTeVFaU5kgeg_1783934796
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v1 01/17] nvme-multipath: retarget failedover bios
+ from requeue work
+To: Yu Kuai <yukuai@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+ Tejun Heo <tj@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Keith Busch <kbusch@kernel.org>,
+ Sagi Grimberg <sagi@grimberg.me>, Alasdair Kergon <agk@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Dongsheng Yang <dongsheng.yang@linux.dev>, Zheng Gu <cengku@gmail.com>,
+ Coly Li <colyli@fygo.io>, Kent Overstreet <kent.overstreet@linux.dev>,
+ Josef Bacik <josef@toxicpanda.com>, Yu Kuai <yukuai@fygo.io>,
+ Nilay Shroff <nilay@linux.ibm.com>, linux-block@vger.kernel.org,
+ cgroups@vger.kernel.org, linux-nvme@lists.infradead.org,
+ dm-devel@lists.linux.dev, linux-bcache@vger.kernel.org
+References: <20260704195124.1375075-1-yukuai@kernel.org>
+ <20260704195124.1375075-2-yukuai@kernel.org>
+Content-Language: en-US
+From: Hannes Reinecke <hare@suse.de>
+In-Reply-To: <20260704195124.1375075-2-yukuai@kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	ARC_NA(0.00)[];
+	RCPT_COUNT_TWELVE(0.00)[22];
+	MIME_TRACE(0.00)[0:+];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	FROM_HAS_DN(0.00)[];
+	FREEMAIL_CC(0.00)[lst.de,kernel.org,grimberg.me,redhat.com,linux.dev,gmail.com,fygo.io,toxicpanda.com,linux.ibm.com,vger.kernel.org,lists.infradead.org,lists.linux.dev];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	URIBL_BLOCKED(0.00)[fygo.io:email,suse.de:email,suse.de:mid,imap1.dmz-prg2.suse.org:helo];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[fygo.io:email,imap1.dmz-prg2.suse.org:helo,suse.de:email,suse.de:mid]
+X-Spam-Level: 
+X-Spam-Score: -4.30
 
-On Sun, Jul 12, 2026 at 5:39=E2=80=AFAM Samuel Moelius
-<sam.moelius@trailofbits.com> wrote:
->
-> +       if (str) {
-> +               blocknr =3D str;
-> +
-> +               r =3D kstrtouint(blocknr, 10, &e);
-> +               if (r)
-> +                       goto bad;
->
-> -       if (r =3D=3D 1) {
-> -               result->begin =3D to_cblock(b);
-> -               result->end =3D to_cblock(from_cblock(result->begin) + 1u=
-);
-> +               result->end =3D to_cblock(e);
->                 return 0;
->         }
->
-> -       DMERR("%s: invalid cblock range '%s'", cache_device_name(cache), =
-str);
-> +       result->end =3D cblock_succ(result->begin);
-> +       return 0;
+On 7/4/26 9:51 PM, Yu Kuai wrote:
+> From: Yu Kuai <yukuai@fygo.io>
+> 
+> bio_set_dev() is about to become explicitly sleepable because it can
+> associate the bio with a blkg for the destination queue.  NVMe failover
+> can run from request completion context, and nvme_failover_req() also holds
+> head->requeue_lock with interrupts disabled while it steals bios from the
+> failed request.  Calling bio_set_dev() there is not safe once the helper is
+> allowed to sleep.
+> 
+> The requeue lock only protects head->requeue_list.  Keep the list
+> manipulation under that lock, but defer retargeting to nvme_requeue_work(),
+> which already drains the list from process context before resubmitting each
+> bio.  The bios remain private to the requeue list until the worker pops
+> them, so moving the device switch there preserves the existing retry flow
+> while avoiding a sleepable helper in completion context.
+> 
+> Signed-off-by: Yu Kuai <yukuai@fygo.io>
+> ---
+>   drivers/nvme/host/multipath.c | 4 +---
+>   1 file changed, 1 insertion(+), 3 deletions(-)
+> 
+> diff --git a/drivers/nvme/host/multipath.c b/drivers/nvme/host/multipath.c
+> index 9b9a657fa330..76baa180ae1c 100644
+> --- a/drivers/nvme/host/multipath.c
+> +++ b/drivers/nvme/host/multipath.c
+> @@ -149,7 +149,6 @@ void nvme_failover_req(struct request *req)
+>   	struct nvme_ns *ns = req->q->queuedata;
+>   	u16 status = nvme_req(req)->status & NVME_SCT_SC_MASK;
+>   	unsigned long flags;
+> -	struct bio *bio;
+>   
+>   	nvme_mpath_clear_current_path(ns);
+>   	atomic_long_inc(&ns->failover);
+> @@ -165,8 +164,6 @@ void nvme_failover_req(struct request *req)
+>   	}
+>   
+>   	spin_lock_irqsave(&ns->head->requeue_lock, flags);
+> -	for (bio = req->bio; bio; bio = bio->bi_next)
+> -		bio_set_dev(bio, ns->head->disk->part0);
 
-A minor nit: the range vs. single-value cases are peer alternatives.
-Rather than multiple "returns 0", using if-else makes the parallel
-structure more explicit: both paths share the same prologue (parse
-result->begin) and epilogue (return 0), differ only in how result->end
-is computed.
+If you remove this the original device remains being referenced by
+the bio, so there might be a chance of some accidentally referencing
+the (now invalid) bdev.
+I think it might be better if you were set it to NULL here, to
+signal that this bio currently has no bdev associated.
 
+>   	blk_steal_bios(&ns->head->requeue_list, req);
+>   	spin_unlock_irqrestore(&ns->head->requeue_lock, flags);
+>   
+> @@ -684,6 +681,7 @@ static void nvme_requeue_work(struct work_struct *work)
+>   		next = bio->bi_next;
+>   		bio->bi_next = NULL;
+>   
+> +		bio_set_dev(bio, head->disk->part0);
+>   		submit_bio_noacct(bio);
+>   	}
+>   }
+
+Cheers,
+
+Hannes
+-- 
+Dr. Hannes Reinecke                  Kernel Storage Architect
+hare@suse.de                                +49 911 74053 688
+SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
+HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
