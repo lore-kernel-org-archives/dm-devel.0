@@ -1,83 +1,82 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 452F6145B11
-	for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 19:23:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5ADF8145B11
+	for <dm-devel@lists.linux.dev>; Mon, 13 Jul 2026 19:24:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783970621; cv=none; b=c7YodqUhPTOQRoXWfTjy4rY89hQ8YvFgErotRFtUzbDcDdPsm4hUiqT6z2PrF2Jym7dm81yMn4uxeMcQriGGYgjCFYjWomihoLCGyHk5kzrgR/Zoke/CLdIkj1zKpMPelQSnE4mDOD39DI+fR/LAd3Ocd7/oU1PhN3LV7ZChrRE=
+	t=1783970655; cv=none; b=iQMLsTryURp2EQrCo7C5VQ+ZaIM+zJpaGm3Xlw44Uhk7EXLVNOkJuKNgyhac0XIaJXAsDCAPy3vnGYUrQzsdILrz5urbZoVF7URNruS25AvONg95N+T8owKQ5URWg/0jpGggUw58rAe56nLmfBpDxQ7uwNZ4c6i/oeV2kIFnpIU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783970621; c=relaxed/simple;
-	bh=Fybb8vX55wzr1j6GqMQ6RPr8uWTevtmIbi6BI6VFnb8=;
-	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=DUf4VAe9A2Pfs3ZAadyxn89y0NcsyrUt5zlDn+IKN6Jq+ocL2/+wUX8pgTIylwFwqP+9Z0Rvd9OeV85XbNgCwUs8v1xd/hj4/XiSeFCFGZ6aC3S1AuLDKEmIU0gcqzwW1PxsaBrOznL6uPwmwRfGnmBFvxolvwiTkaPDa5Aumog=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MmFQpJ+k; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1783970655; c=relaxed/simple;
+	bh=RwZbYatIfbDv8CxmqRAXthVm/c3FwjSbmIl8byZvqGM=;
+	h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type; b=qY2V+OjICbkW/Hchgdcp7ia5NQq71QVvNSwUH7t9Qb3qAEKzpUrz1+d/MpjwBPy3t6KOrv51KhqNLknrwDSpTpwM7MOb1qSRU+afOtQ2JIOhFlO59zXmFWshNu9f/FkxeF1lIrGC+yq9FgmDd/5Z6i8GdOhGZxeRerq/7xHYD/U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cEfffnXx; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MmFQpJ+k"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cEfffnXx"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1783970619;
+	s=mimecast20190719; t=1783970653;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:mime-version:mime-version:content-type:content-type;
-	bh=HXwMvTKRsdl18E3/1YpDMR4A1ni3KpAWbmm0wkcab3I=;
-	b=MmFQpJ+kxwWT/lD2dsv8/Hlt9M8q1vrxI0lXap2F6k83oOpW8AtWxqWRtvMseJXeauUJTB
-	tEh/WMaLCB2xhxFPgSAuuagda3W9sc2qX75ioWi+JV+Uu/aJFBVqAo39Ah+rr575ZHzTLR
-	FjZUpCyPo1rYyoT4NRHGbaurwNFgZ2Q=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+	bh=3NXaf3Q/yuTRylbjzgExkLGFjCuHGCHyVpaIZRSyiO4=;
+	b=cEfffnXxHd4/+9lV/vhM7GnuFpwSs42vWKYl6yAwav16my8crEKBWpx+29Qb3ZpXRxeidU
+	MtbXKlQI7y6SjW5GgOuBprVkqHpEk98Mx/Ooa9/ot6ee4dWIFha/E/YcKe3Ix+5ryHjS/Q
+	yi4tqo58uWP/xM/pooMNWSzWwJPjzX8=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-645-VZWB-ufGP-OD0bTv7O0CAA-1; Mon,
- 13 Jul 2026 15:23:35 -0400
-X-MC-Unique: VZWB-ufGP-OD0bTv7O0CAA-1
-X-Mimecast-MFC-AGG-ID: VZWB-ufGP-OD0bTv7O0CAA_1783970614
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-256-K2dI9UxxNCWVTOtrX3ZpuQ-1; Mon,
+ 13 Jul 2026 15:24:10 -0400
+X-MC-Unique: K2dI9UxxNCWVTOtrX3ZpuQ-1
+X-Mimecast-MFC-AGG-ID: K2dI9UxxNCWVTOtrX3ZpuQ_1783970649
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AFC491955D5E;
-	Mon, 13 Jul 2026 19:23:34 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2EB8D195608C;
+	Mon, 13 Jul 2026 19:24:09 +0000 (UTC)
 Received: from [10.44.32.225] (unknown [10.44.32.225])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1FB1E1800661;
-	Mon, 13 Jul 2026 19:23:32 +0000 (UTC)
-Date: Mon, 13 Jul 2026 21:23:27 +0200 (CEST)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C39B5765;
+	Mon, 13 Jul 2026 19:24:07 +0000 (UTC)
+Date: Mon, 13 Jul 2026 21:24:05 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
     Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Subject: [PATCH] dm-integrity: fix error message
-Message-ID: <6d0feb4b-78f4-62ed-1ad4-114c38adcdcf@redhat.com>
+Subject: [PATCH] dm-integrity: clean-up error handling
+Message-ID: <8ed036c6-7d03-9517-be95-1a8f6e29fcb7@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Lg76HpKFx9sMNqOjXO4_GMWYjfIp9O_fMStDLyOlUjM_1783970614
+X-Mimecast-MFC-PROC-ID: oxtOlyriuGTOxNdp-WrLiJtW3Xh6lm8pL5xZg6JVElc_1783970649
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-Change "reading tags" to "writing tags" because the error is reported
-when writing fails.
+Add "goto bad" to error handling. This commit doesn't fix any bug, just
+cleans up the code.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Assisted-by: Claude:claude-opus-4.6
 
 ---
- drivers/md/dm-integrity.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/md/dm-integrity.c |    1 +
+ 1 file changed, 1 insertion(+)
 
 Index: linux-2.6/drivers/md/dm-integrity.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-integrity.c	2026-07-13 20:59:40.000000000 +0200
-+++ linux-2.6/drivers/md/dm-integrity.c	2026-07-13 20:59:40.000000000 +0200
-@@ -3040,7 +3040,7 @@ static void do_journal_write(struct dm_i
- 				r = dm_integrity_rw_tag(ic, journal_entry_tag(ic, je2), &metadata_block, &metadata_offset,
- 							ic->tag_size, TAG_WRITE);
- 				if (unlikely(r))
--					dm_integrity_io_error(ic, "reading tags", r);
-+					dm_integrity_io_error(ic, "writing tags", r);
- 			}
- 
- 			atomic_inc(&comp.in_flight);
+--- linux-2.6.orig/drivers/md/dm-integrity.c	2026-07-13 20:59:52.000000000 +0200
++++ linux-2.6/drivers/md/dm-integrity.c	2026-07-13 20:59:52.000000000 +0200
+@@ -4634,6 +4634,7 @@ retest_commit_id:
+ 	if (!ic->journal_tree) {
+ 		*error = "Could not allocate memory for journal tree";
+ 		r = -ENOMEM;
++		goto bad;
+ 	}
+ bad:
+ 	kfree(crypt_data);
 
