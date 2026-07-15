@@ -1,211 +1,108 @@
-Received: from xmbghk7.mail.qq.com (xmbghk7.mail.qq.com [43.163.128.43])
+Received: from pdx-out-003.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-003.esa.us-west-2.outbound.mail-perimeter.amazon.com [44.246.68.102])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BDBB1435A8D
-	for <dm-devel@lists.linux.dev>; Wed, 15 Jul 2026 09:36:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=43.163.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82E7834EF0F
+	for <dm-devel@lists.linux.dev>; Wed, 15 Jul 2026 12:01:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=44.246.68.102
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784108206; cv=none; b=ZH2n4yGuIeBT3ddYSx+E9JNn/uFbce3FP4ezLN4QjP17lDFl6ifw6xC7c8/6wqQC2etS5K8pPXxrqHSSGLtutQbY3glefGveNr+1EovFDTIYMsf4oLDNkzX6cITnZP9EVFC7j9aajfTCPqYUBjpExNPzS/CyaGLTuWcxQdg/7Xk=
+	t=1784116877; cv=none; b=jstX8NMpvN8XSSHD5dC9Y7Y2tvJ2SgpSowcUxM09df63ji9H/zrSIyItdhtbtW8/v6pCFrzC8MeSFXWW8G8KWO9IwhY9X0HCcabccTICRKQJWrGqozuYIt6ny6VwAVcKtO3t7UUpTo/siFon5frDRcCF2jODPWfmEuSfiyCYczo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784108206; c=relaxed/simple;
-	bh=yPXHImoKBeqUm+jp33u8dLT0wV8cmIWjj3dER2nCL9o=;
-	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=jOoyml0zW9XuvDxbKhbTDK0kRLbqjuMnt3sQEToLoNRQ9QlnQR9U5uKk4r42dVbSLLx1p5M9gu73ypY2zjrUoXbfq4m4XAIkRDJvVhAqtZx0eHkQs1IvWQgwXy3hJP501Xw6e1FulxHVWHyG9nfDKn0KD2R+jzEPUzLBw0WNPAw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=cYvB2+g9; arc=none smtp.client-ip=43.163.128.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1784116877; c=relaxed/simple;
+	bh=snKEYRguqD5VR4XqudKYgg++c8lGDC3R8iymuV8aQ38=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=LiG2xwwTSDAnknYbNyMhz1BxxX5qUhdODfYvUu0mVlDV1I32KQBCuKCNxsDFmA5GgEPK83isitJGLxXMyMy3CdHS1vBfi0HWEDvZdsheTlM6XxP2Nlo5c6Duweo8AtF3E1Zcxcj7vJT4SA5sk0r52ZChBIYDfeLOLhIvsalEvfc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=UF1jJNYz; arc=none smtp.client-ip=44.246.68.102
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="cYvB2+g9"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1784108196; bh=IPGIiSOhkr5gIitqfC+A5c9H2t14rtgWffVpZBGTzIw=;
-	h=From:To:Cc:Subject:Date;
-	b=cYvB2+g98CQmD8yZKGHj0IP9oDj+crU9GYYLldfPxVgEx+3gWSGE7AkgvzbovlMKH
-	 Qg9rjICr6I7BDhHWi7bFPqqufPSpiUegFLOP5MQTfkToQSbfmt9P3bu5JS8Z6lJgCn
-	 q/im6DVdUdwe7nAMfVmH84pkHzK3eZl2EeoPUOgg=
-Received: from localhost.localdomain ([1.193.37.112])
-	by newxmesmtplogicsvrsza53-0.qq.com (NewEsmtp) with SMTP
-	id 92203675; Wed, 15 Jul 2026 17:36:34 +0800
-X-QQ-mid: xmsmtpt1784108194tduho80xu
-Message-ID: <tencent_1439656590A8038E3E7E20A0961B8C34E805@qq.com>
-X-QQ-XMAILINFO: N6Ax/oucgBO+ECTfEMDc+8wMIYDuaNlX2UPo2kX9lY1FQqhtxRerEjUSaQxTvf
-	 UFNmQeX6MGfENyW57jD30dfq/5zHRi3IyZ9wKEsyZUxoOFkmdIAqp0dalPfGPjnmqmu2SjMhRAk9
-	 qUUcUk244qF58rElMhdtMAdWqoYbRo4XN1AslLBhh7wwK3wU68eNNxC+8JfYQpW4woB2J3Cq2V6B
-	 neKoUZaFu6zoQAJ9SvzUnTCoYkq1LrTRj9INuKzAii1fHPMZ5cwLeYja5As+DykwWQYvcIxDOuus
-	 wxDBc5fkPSGmsgYs+J98CS62420Zn7ztul0+WbvdDa6WZMaO7j60+gOU8VxyRzxkCuYb30UtdSXR
-	 8+kGMLO2rl7NaTaMYBOBR7QooxkmoEDMseVCKLiavWhK9KvQZlY6yvkQu09D4vt1H9flJFUZqvkZ
-	 8bbqWSLg3bje9juZxPJ+EYNBVtzDQP38lpomwIQF75pLuOrSoTyYUJwNp9Mhn+dkW2ZAq0dzj6uQ
-	 UOG5HjAd4dYn5E4ezpf/90D2BAfyLvU8FkJFzK/e1aJDOFCjJnStyt0mX3irLMyIfP/2EsLpWsNj
-	 /j9sXOJVV1bc/4jC/xfRTV8YwEaVcjL/v72yPWV9vGouunjZDJiNHmQMoeGzkREYWzkFLFAlFjTQ
-	 rZdU3jj/yBNc5MYbZhk0NQZjYUqj7tbvPP/G7oQ+uBL1AdDpzQb9M3o99lCksOFci68mFMsgc9yo
-	 6VGNlBOohU+3LrCkcijaWt4cF1p3eRlH/k6WCLnNLNnh1dQtRjOJL2oMz4tvJul4kLgBWjbwYw+5
-	 HUYhDr+T7uxYR5cssd9KPlVhFzPUSSIR+tPIQXUtKE3mOqM09qsraTwCUXgn0OPKIHbohCbCEasy
-	 4k0FWPrYhUJj9mTKpoYLpUMZpFa7uJajMDOFVAKFAQUDmFod8Gnf0fjNEDMXtP/t2rFVQshiAztF
-	 HOMi4HQHri1A+VDyYRP19t8AJnSaQY6T+av8jkX6wD/m08JCLWhuYKL1tBctgEbfZwxut3PwdhZU
-	 htWkcfzs+uLQosxjAgINvk5Y4taQypeFf2LXa7jA==
-X-QQ-XMRINFO: OD9hHCdaPRBwH5bRRRw8tsiH4UAatJqXfg==
-From: 303146950@qq.com
-To: dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	mwilck@suse.com,
-	Kou Wenqi <kouwenqi@kylinos.cn>
-Subject: [PATCH] kpartx: fix crash and truncated device creation with long -p delimiter
-Date: Wed, 15 Jul 2026 17:36:21 +0800
-X-OQ-MSGID: <20260715093621.2707-1-303146950@qq.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="UF1jJNYz"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1784116876; x=1815652876;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=jW12a7gMz+PxQStmkNYCvL4Zb6H83SZzrOZFyQ4Rc4k=;
+  b=UF1jJNYzQvA1MI6SI4wgoHKEzsTDAlJuvHwVL9r7c3GJ5W8NdoIH4bFu
+   FVoTcw1uyzikeaqPtbh9Sq+xGzpfr/tWS2TiIQvTHxc3qH2TsnIyLd6T7
+   mCRDfRPCKDkHp4vU/I4biiQZo0RbsYypcdBwOPln3N+Fi5pRVpRC2kIS0
+   1NfbnwJoh35kufQNy9QM18MQ+xw87p8WjUJCbOf+Px0pLHe2l5QxFlRpo
+   hCS9o/FvWk57KqeoMPCcCV8q1WBgMBVLuB3ATXoLZh40QUAfwNz8/mwwr
+   nMPwKrozy6w1L75Y2naRE4JbLF9JKeZ4E8hgab6zYkoS58u9Oo1ON8aMK
+   w==;
+X-CSE-ConnectionGUID: IjX3y7uJSuSX5U/9yg+d5Q==
+X-CSE-MsgGUID: cuILeauFRhWBVEgn5g1XcQ==
+X-IronPort-AV: E=Sophos;i="6.25,165,1779148800"; 
+   d="scan'208";a="23727927"
+Received: from ip-10-5-12-219.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.12.219])
+  by internal-pdx-out-003.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Jul 2026 12:01:13 +0000
+Received: from EX19MTAUWC002.ant.amazon.com [205.251.233.51:23601]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.58.199:2525] with esmtp (Farcaster)
+ id f061b287-cd6f-4f30-941c-36b95fe3dae9; Wed, 15 Jul 2026 12:01:13 +0000 (UTC)
+X-Farcaster-Flow-ID: f061b287-cd6f-4f30-941c-36b95fe3dae9
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWC002.ant.amazon.com (10.250.64.143) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 15 Jul 2026 12:01:13 +0000
+Received: from dev-dsk-lravich-1b-7405803b.eu-west-1.amazon.com (10.13.225.95)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.43;
+ Wed, 15 Jul 2026 12:01:11 +0000
+From: Leonid Ravich <lravich@amazon.com>
+To: <herbert@gondor.apana.org.au>
+CC: <linux-crypto@vger.kernel.org>, <dm-devel@lists.linux.dev>,
+	<linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<davem@davemloft.net>, <ebiggers@kernel.org>, <snitzer@kernel.org>,
+	<mpatocka@redhat.com>, <axboe@kernel.dk>
+Subject: Re: [PATCH v5 2/5] crypto: dun - data-unit-number dispatch template
+Date: Wed, 15 Jul 2026 12:01:02 +0000
+Message-ID: <20260715120102.6687-1-lravich@amazon.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <alRMn--pY1ELYmBJ@gondor.apana.org.au>
+References: <20260630083431.2772-3-lravich@amazon.com>
+ <alRMn--pY1ELYmBJ@gondor.apana.org.au>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+X-ClientProxiedBy: EX19D040UWA001.ant.amazon.com (10.13.139.22) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-From: Kou Wenqi <kouwenqi@kylinos.cn>
-
-When the -p delimiter is long enough to make the formatted partition
-name exceed PARTNAME_SIZE (128 bytes), three issues occur:
-
-1. format_partname() fails but snprintf has already written a truncated
-   name into the buffer. dm_find_part() returns 0 and the caller
-   proceeds to dm_addmap() with the truncated name, creating a device
-   that was never intended.
-
-2. dm_find_part() returns early without setting *part_uuid. The
-   uninitialized local variable part_uuid then gets passed to
-   check_uuid() -> strchr(), causing a SIGSEGV.
-
-3. The callers cannot distinguish between "partition not found, create
-   new" and "name construction failed" since both return 0.
-
-Fix by:
-- Clearing the name buffer in format_partname() on overflow, so that
-  callers can detect the failure by checking partname[0]
-- In the ADD/UPDATE loops, after dm_find_part() returns 0, checking
-  whether partname is empty and skipping the partition with an error
-  message instead of proceeding with dm_addmap()
-- Initializing part_uuid to NULL in all three partition loop bodies
-  (ADD/UPDATE main loop, container partition loop, DELETE loop) so
-  that the "if (part_uuid && uuid)" guard correctly skips the UUID
-  check when dm_find_part() returns early
-
-Reproduce steps:
-
-  # Create test image
-  dd if=/dev/zero of=/tmp/vhlg-test.img bs=1M count=10
-  parted /tmp/vhlg-test.img mklabel msdos
-  parted /tmp/vhlg-test.img mkpart primary ext4 1MiB 5MiB
-
-  # Reproduce
-  kpartx -a -p $(python3 -c "print('A'*200)") /tmp/vhlg-test.img
-
-  # Cleanup
-  kpartx -d /tmp/vhlg-test.img
-  rm -f /tmp/vhlg-test.img
-
-Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
----
- kpartx/devmapper.c |  4 +++-
- kpartx/kpartx.c    | 44 ++++++++++++++++++++++++++++++++------------
- 2 files changed, 35 insertions(+), 13 deletions(-)
-
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 45dac585..9eb6eeca 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -113,8 +113,10 @@ strip_slash (char * device)
- static int format_partname(char *buf, size_t bufsiz,
- 			   const char *mapname, const char *delim, int part)
- {
--	if (safe_snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part))
-+	if (safe_snprintf(buf, bufsiz, "%s%s%d", mapname, delim, part)) {
-+		buf[0] = '\0';
- 		return 0;
-+	}
- 	strip_slash(buf);
- 	return 1;
- }
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index cfd82128..5972a251 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -437,7 +437,7 @@ main(int argc, char **argv){
- 		case UPDATE:
- 			/* ADD and UPDATE share the same code that adds new partitions. */
- 			for (j = 0, c = 0; j < n; j++) {
--				char *part_uuid, *reason;
-+				char *part_uuid = NULL, *reason;
- 
- 				if (slices[j].size == 0)
- 					continue;
-@@ -454,10 +454,20 @@ main(int argc, char **argv){
- 					exit(1);
- 				}
- 
--				op = (dm_find_part(mapname, delim, j + 1, uuid,
--						   partname, sizeof(partname),
--						   &part_uuid, verbose) ?
--				      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
-+				if (!dm_find_part(mapname, delim, j + 1, uuid,
-+							partname, sizeof(partname),
-+							&part_uuid, verbose)) {
-+					if (partname[0] == '\0') {
-+						fprintf(stderr,
-+							"partition name too long for partition %d, skipping\n",
-+							j + 1);
-+						r++;
-+						continue;
-+					}
-+					op = DM_DEVICE_CREATE;
-+				} else {
-+					op = DM_DEVICE_RELOAD;
-+				}
- 
- 				if (part_uuid && uuid) {
- 					if (check_uuid(uuid, part_uuid, &reason) != 0) {
-@@ -500,7 +510,7 @@ main(int argc, char **argv){
- 			d = c;
- 			while (c) {
- 				for (j = 0; j < n; j++) {
--					char *part_uuid, *reason;
-+					char *part_uuid = NULL, *reason;
- 					int k = slices[j].container - 1;
- 
- 					if (slices[j].size == 0)
-@@ -526,11 +536,21 @@ main(int argc, char **argv){
- 						exit(1);
- 					}
- 
--					op = (dm_find_part(mapname, delim, j + 1, uuid,
--							   partname,
--							   sizeof(partname),
--							   &part_uuid, verbose) ?
--					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
-+					if (!dm_find_part(mapname, delim, j + 1, uuid,
-+								partname,
-+								sizeof(partname),
-+								&part_uuid, verbose)) {
-+						if (partname[0] == '\0') {
-+							fprintf(stderr,
-+								"partition name too long for partition %d, skipping\n",
-+								j + 1);
-+							r++;
-+							continue;
-+						}
-+						op = DM_DEVICE_CREATE;
-+					} else {
-+						op = DM_DEVICE_RELOAD;
-+					}
- 
- 					if (part_uuid && uuid) {
- 						if (check_uuid(uuid, part_uuid, &reason) != 0) {
-@@ -570,7 +590,7 @@ main(int argc, char **argv){
- 			}
- 
- 			for (j = MAXSLICES-1; j >= 0; j--) {
--				char *part_uuid, *reason;
-+				char *part_uuid = NULL, *reason;
- 				if (slices[j].size ||
- 				    !dm_find_part(mapname, delim, j + 1, uuid,
- 						  partname, sizeof(partname),
--- 
-2.43.0
-
+On Mon, Jul 13, 2026 at 12:25:35PM +1000, Herbert Xu wrote:=0D
+> This shouldn't be a template.  The default data-unit handling=0D
+> should go into the mid-API layer (so skcipher.c).  It should=0D
+> transparently split things up *if* the underlying algorithm does=0D
+> not support multiple units.=0D
+=0D
+Done for v6 (mid-API split in skcipher.c, cherry-picking  acomp=0D
+CRYPTO_ALG_REQ_SEG / segmentation-wrapper patch as you suggested).  One=0D
+design fork I'd like your call on before I resend.=0D
+=0D
+I benchmarked the mid-API split vs the legacy per-sector loop on=0D
+r7i.metal (VAES-AVX512): dm-crypt shows no measurable throughput or=0D
+latency regression, but a microbench isolates a fixed ~50 ns per 512B=0D
+unit.  It's a fixed per-call cost: the split=0D
+copies the counter IV to a per-unit scratch and re-walks the sglist per=0D
+unit and is paid only by callers setting unit_size !=3D 0.=0D
+That gives two directions:=0D
+=0D
+  1. SW batching layer (current v6): mid-API transparently splits when=0D
+     the alg lacks CRYPTO_ALG_REQ_SEG and unit_size !=3D 0.  =0D
+     Works today on every existing skcipher at the ~50 ns/unit cost, =0D
+     and goes quiet as algs gain native support.=0D
+=0D
+  2. HW-offload-hint model (as in Inel acomp series): callers set=0D
+     unit_size only for CRYPTO_ALG_REQ_SEG algs and the mid-API never=0D
+     emulates non-native ones.  Zero overhead, but the path is dead=0D
+     until an in-tree skcipher advertises native support, unlike=0D
+     acomp, where IAA already does.=0D
+=0D
+(1) is usable now with a small permanent SW cost; (2) mirrors the acomp=0D
+mid-layer dispatch but, absent a native skcipher, ships an interface=0D
+with no in-tree user.  Which would you prefer?=0D
+=0D
+Thanks,=0D
+Leonid=0D
