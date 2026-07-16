@@ -1,222 +1,206 @@
-Received: from out162-62-57-87.mail.qq.com (out162-62-57-87.mail.qq.com [162.62.57.87])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B0A93B2D18
-	for <dm-devel@lists.linux.dev>; Thu, 16 Jul 2026 08:21:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.57.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F28733CFF72
+	for <dm-devel@lists.linux.dev>; Thu, 16 Jul 2026 08:41:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784190089; cv=none; b=j71+84c0lPlQW/45ppyy7BzW7+4a1EhZ6kY+xSIO2Xeayp1zVea3SgA+fKjfu37FhobntEpshZBAplkVAT471IOJSkaxpGN7IO+p3vFMGiUe53eOBz5wfa5SaQ0vbyiNOCSsMt5ZpSgwfJbjhJNpOqL/Qlyih7e78WRWr14OwsA=
+	t=1784191292; cv=none; b=QrRSAyD4BQ2NDov8fYpkNxAMEC2TLDwKoRXjtgkMjLDHZzA0JOOPiOFBRUBVYMFmF4TMuq7dkjB4moa0xCPMxMq9QOFAOOmEoTBEm1hzrNoQTIbAwpJ0m2A3tvt3p8Q6zkkIp8rXy4wlSC9EgO93bj7si5KkPhxRdML+YicblmE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784190089; c=relaxed/simple;
-	bh=5lsBjvm0hVBTO4RFhAV/PhDOVbUTjV5nYuNHiCE5ZyM=;
-	h=Message-ID:From:To:Cc:Subject:Date:In-Reply-To:References:
-	 MIME-Version; b=QrK8cBeD1Svnx9P6W9R0FSM1tEPQScx3Dd5s31NjsB/IvJD8mSQVPm3O1NPKIbYdt4XlQY3RWmREDeWsA65SbRt3yjwbeuPgQ/id5ZAvN/yF6LovzKYCJAI7wuzzC35jisvS6WC6NMMueN/eUMwBDO+zxfbRKF4mTkhQB8mUsA0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=kLckn+nW; arc=none smtp.client-ip=162.62.57.87
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
+	s=arc-20240116; t=1784191292; c=relaxed/simple;
+	bh=jjWK3BV9pWqS4gURT9kMJohgpi7TAZMNZhjkkzOB9xo=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Q67XrDXNqLU5Sm2j6UobdcptxaW0/0eAOlGXaS2V7v7+EzSyA0LLnfZfdqy8Hu3geN7aM8xQylihYC69UkCmkYTOJt4CX3qP73RTSxTjPVf8XTLer/ZbihTeVsQLW0+kbExlCTjAtubgFYNCC8dKxBR91seDB2vaEH9fT9Fk0lI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=UU791LQB; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=UU791LQB; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="kLckn+nW"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
-	t=1784190080; bh=nI6gZHqT11i3NBH/QY6h7IwEeNibJbkGa/BqTayuQnI=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=kLckn+nWLaniZkMRxuGg4QEc+MajBbdRnaqTppOOr0SFUCoNCDhVc0xorJsIB33rN
-	 N69n4vANqDvV3PxxtqLf3RLhzGIb8kBzSaQPLMdqNkcFlNrZdeFJGBsHO8eYkp01Ux
-	 BdHVVkdftSEJ6bBWkULyH1KL/VEvRIZOb6DtkaMs=
-Received: from localhost.localdomain ([1.193.37.112])
-	by newxmesmtplogicsvrszc43-0.qq.com (NewEsmtp) with SMTP
-	id 551B8E87; Thu, 16 Jul 2026 16:21:17 +0800
-X-QQ-mid: xmsmtpt1784190077tznceebv5
-Message-ID: <tencent_918E34F67972258FC8072E2DFE38C0989B05@qq.com>
-X-QQ-XMAILINFO: NY/MPejODIJVI9jHw8E3hcjgg5G4jA4A3588SmBP1aOLPE/Cxe6Tr2Y1NlWbOM
-	 MDBsvLk7OCKacswawQGTDHxFHhYqIiBIIAm3BwxtEao+dVNYIgkDyZnf/a4K+A/naTzhNkT3Vy92
-	 /E3DL8ZYDDgXJmwnNkfPZlz0SpnlVUIMmWQz2Fr0/Yc31Ie2ThWj/j6T76VooZBBwwLV26D06Gkv
-	 5FBQZFkAc1M4xeqyDCTwBz9dCPxWFNWi1p01+WHPys3dEWsvwLZIGjiAQJHUHwoJVrSHCiX08gIH
-	 zJc1w01hfMd/4xfNwAAdYYmW5ECCSlI7AvEfSjAuQxLMFmDKi4gB1UXidNCVidVqSd9xBwwo6m6l
-	 3SOIXeJN2HCBnAjYsr0q7zyXrSBRHAKQvIEUAM5k+Gd+E+RcgAwsny436t2uxliJE7vqHZJq7cmA
-	 zFyxHVZqCcEbE+ttIshJFKyBslahvOXzsi59evOGkAiY604zBq1pGel4xP/eaV9vbwEcy4J6ABIb
-	 TeRmioO0G/4XOX1xoubytRSYcDPD1znU7q1gNYPV9gIz2CySh7pdUpv55DFN7S3N++sMKe5ZhMQI
-	 KAGIiHRoSeahk+qokRtuMJnnu7M+0vnYCYhPSP0AdcqSWc5GO+xhWFX7SWfpBJNWaKIneqdotYkN
-	 0yPUKzgcY4CJOusbezjC7qEBUdZMUNrbt0uLLaGm4q4Rg05gTQNCl8u92ecLbKWrfGSOogdoo8U5
-	 n9N4lnzWNUQHhdp7foLMDc6apJTtGhX1mcwGMOxNMO3S4rMJul54G3n4L9Q9RiAiEpuMlkXhMoOn
-	 HpViKPt1ZVD9ie4Ju0Pxt0ZbMS6pYJeNnvm5owz0EYD/Rs9Bc+uygqGDq9C1CP6mWYjq4inv9cbn
-	 GmAVL47BpU/75AR1Cc4nhI6bpKazaKivtYKw/O01+/yAGDbpJsCEq5Ez3OgSIaa4+OlLve8B6V0n
-	 WMN2jDnJ9y4iy4t+w7zhwD6jrFo6cKS5TKO9qSB1QQOwKmp6Ei6A90Zs188CsLGStMMvR463bdbr
-	 KjRr/rqb2nTJ6iHFWSA/MBhmmiNoOuU6qxD6rGI9xW0j7YiojyErwoPQq0FdgOJ94qNje+dg==
-X-QQ-XMRINFO: NS+P29fieYNwqS3WCnRCOn9D1NpZuCnCRA==
-From: 303146950@qq.com
-To: mwilck@suse.com
-Cc: 303146950@qq.com,
-	bmarzins@redhat.com,
-	dm-devel@lists.linux.dev,
-	kouwenqi@kylinos.cn
-Subject: [PATCH v3] kpartx: fix crash and truncated device creation with long -p delimiter
-Date: Thu, 16 Jul 2026 16:20:55 +0800
-X-OQ-MSGID: <20260716082055.3993-1-303146950@qq.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <0594c64fe12ae0ea0ecee5b032f50e6842b120ed.camel@suse.com>
-References: <0594c64fe12ae0ea0ecee5b032f50e6842b120ed.camel@suse.com>
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="UU791LQB";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="UU791LQB"
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id AC8233E3D;
+	Thu, 16 Jul 2026 08:41:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1784191287; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+CXCaOqFVhZkjxHH/8VghUtKWVENlKnyudw42+HkCnU=;
+	b=UU791LQBXWEv7Iu3a8CvaY01IjlbKJHlOfJL59AVh0Ky5ey4Ut2XiywJaFNWp9WrveCd2N
+	eIYkzi/6U3W75x6Z5bMrbbF02hgBXhvC10gXzOJerByRLmkjAIHXGgURWhSPZiWIDg3qSq
+	H7u+rx261r8oecSymCLnHx6yxEDq1Cc=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=UU791LQB
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1784191287; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=+CXCaOqFVhZkjxHH/8VghUtKWVENlKnyudw42+HkCnU=;
+	b=UU791LQBXWEv7Iu3a8CvaY01IjlbKJHlOfJL59AVh0Ky5ey4Ut2XiywJaFNWp9WrveCd2N
+	eIYkzi/6U3W75x6Z5bMrbbF02hgBXhvC10gXzOJerByRLmkjAIHXGgURWhSPZiWIDg3qSq
+	H7u+rx261r8oecSymCLnHx6yxEDq1Cc=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 90D71779AD;
+	Thu, 16 Jul 2026 08:41:27 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id Aq8mIjeZWGpYZAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Thu, 16 Jul 2026 08:41:27 +0000
+Message-ID: <33a65ffb59df981e93d9eb638249dc77fdabf38f.camel@suse.com>
+Subject: Re: [PATCH] libmpathpersist: fix self-preemption when key has no
+ active reservation
+From: Martin Wilck <mwilck@suse.com>
+To: Cykang <cykang4830@gmail.com>, dm-devel@lists.linux.dev
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Thu, 16 Jul 2026 10:41:27 +0200
+In-Reply-To: <20260711033107.2318-1-cykang4830@gmail.com>
+References: <20260711033107.2318-1-cykang4830@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Spam-Flag: NO
+X-Rspamd-Action: no action
+X-Spam-Level: 
+X-Spamd-Result: default: False [-4.51 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	MIME_TRACE(0.00)[0:+];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	FREEMAIL_TO(0.00)[gmail.com,lists.linux.dev];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,suse.com:email,suse.com:dkim,suse.com:mid];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	DKIM_TRACE(0.00)[suse.com:+]
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Queue-Id: AC8233E3D
+X-Spam-Score: -4.51
 
-From: Kou Wenqi <kouwenqi@kylinos.cn>
+Thanks for your patch!
 
-When the -p delimiter is long enough to make the formatted partition
-name exceed PARTNAME_SIZE (128 bytes), three issues occur:
+On Sat, 2026-07-11 at 11:31 +0800, Cykang wrote:
+> According to the SCSI-3 Persistent Reservations specification, when a
+> self-preemption is performed with a key that does not currently hold
+> an active reservation, the operation should be treated as an
+> unregister
+> and should not fail.
+>=20
+> The current code in do_mpath_persistent_reserve_out() does not check
+> whether the preempting key has a reservation before invoking the
+> self-preemption path. It unconditionally calls preempt_self() and
+> re-registers the key on the local paths, even when the key has no
+> reservation. This violates the SCSI-3 PR spec and can lead to
+> incorrect reservation states.
+>=20
+> This patch moves the self-preemption check inside the conditional
+> block so that it only executes when the key matches, but does not
+> bypass the general preemption path for keys without a reservation.
+> With this change, the code will fall through to the common PR_OUT
+> handling (e.g., MPATH_PROUT_RES_SA or CLEAR_SA) when the key is not
+> reserved, allowing the storage target to properly process the
+> operation as an unregister.
+>=20
+> Signed-off-by: Cykang <cykang4830@gmail.com>
 
-1. format_partname() fails but snprintf has already written a truncated
-   name into the buffer. dm_find_part() returns 0 and the caller
-   proceeds to dm_addmap() with the truncated name, creating a device
-   that was never intended.
+Your patch would cause PREEMPT to do nothing at all when it doesn't own
+the reservation (more precisely, when sa_key doesn't match the mpp's
+key). That seems wrong to me. You are right that in this case the keys
+shouldn't be re-registered. But we must take care that the mpp's key is
+unregistered on all paths. AFAICS, this is the effect of the command
 
-2. dm_find_part() returns early without setting *part_uuid. The
-   uninitialized local variable part_uuid then gets passed to
-   check_uuid() -> strchr(), causing a SIGSEGV.
+	status =3D mpath_prout_common(mpp, rq_servact, rq_scope,
+rq_type,
+				    &paramp, noisy, &pp, NULL);
 
-3. The callers cannot distinguish between "partition not found, create
-   new" and "name construction failed" since both return 0.
+in preempt_self(), if and only if this command was successful and the
+key of the mpp doesn't hold the current reservation. (According to SPC-
+6, in this case the storage server should "remove the registrations for
+all I_T nexuses specified by the SERVICE ACTION RESERVATION KEY
+field").
 
-Fix by:
-- Having dm_find_part() return -1 when format_partname() fails, with
-  an error message printed by dm_find_part() itself, so that callers
-  can test the return value directly (negative for error,
-  0 for not found, positive for found)
-- In the ADD/UPDATE loops (both main and container), checking the
-  return value: negative means name too long (skip with error count),
-  0 means not found (create), positive means found (reload)
-- In the DELETE loop, only proceeding with removal when dm_find_part()
-  returns positive (partition found), skipping when it returns zero
-  (not found) or negative (error)
-- Initializing part_uuid to NULL in all three partition loop bodies
-  (ADD/UPDATE main loop, container partition loop, DELETE loop) so
-  that the "if (part_uuid && uuid)" guard correctly skips the UUID
-  check when dm_find_part() returns early
+So IMO what we should do is simply resume and return in preempt_self()
+after the above command if we don't hold the reservation, which we
+should check using check_holding_reservation().
 
-Reproduce steps:
+I guess this requires a new PREE_WORK_ enum value.
 
-  # Create test image
-  dd if=/dev/zero of=/tmp/vhlg-test.img bs=1M count=10
-  parted /tmp/vhlg-test.img mklabel msdos
-  parted /tmp/vhlg-test.img mkpart primary ext4 1MiB 5MiB
+I'll leave the final verdict to Ben, who knows the logic of our PR code
+better than me.
 
-  # Reproduce
-  kpartx -a -p $(python3 -c "print('A'*200)") /tmp/vhlg-test.img
+Regards
+Martin
 
-  # Cleanup
-  kpartx -d /tmp/vhlg-test.img
-  rm -f /tmp/vhlg-test.img
 
-Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
----
- kpartx/devmapper.c |  5 ++---
- kpartx/kpartx.c    | 46 ++++++++++++++++++++++++++++++----------------
- 2 files changed, 32 insertions(+), 19 deletions(-)
+> ---
+> =C2=A0libmpathpersist/mpath_persist_int.c | 13 +++++++------
+> =C2=A01 file changed, 7 insertions(+), 6 deletions(-)
+>=20
+> diff --git a/libmpathpersist/mpath_persist_int.c
+> b/libmpathpersist/mpath_persist_int.c
+> index 3091c5c2..2ee7fe68 100644
+> --- a/libmpathpersist/mpath_persist_int.c
+> +++ b/libmpathpersist/mpath_persist_int.c
+> @@ -960,14 +960,15 @@ int do_mpath_persistent_reserve_out(vector
+> curmp, vector pathvec, int fd,
+> =C2=A0				ret =3D preempt_all(mpp, rq_servact,
+> rq_scope,
+> =C2=A0						=C2=A0 rq_type, noisy);
+> =C2=A0				break;
+> +			}
+> +					/* if we are preempting
+> ourself */
+> +			if (memcmp(paramp->sa_key, paramp->key, 8)
+> =3D=3D 0) {
+> +				ret =3D preempt_self(mpp, rq_servact,
+> rq_scope, rq_type,
+> +						noisy,
+> PREE_WORK_NONE);
+> +				break;
+> =C2=A0			}
+> =C2=A0		}
+> -		/* if we are preempting ourself */
+> -		if (memcmp(paramp->sa_key, paramp->key, 8) =3D=3D 0) {
+> -			ret =3D preempt_self(mpp, rq_servact,
+> rq_scope, rq_type,
+> -					=C2=A0=C2=A0 noisy, PREE_WORK_NONE);
+> -			break;
+> -		}
+> +
+> =C2=A0		/* fallthrough */
+> =C2=A0	case MPATH_PROUT_RES_SA:
+> =C2=A0	case MPATH_PROUT_CLEAR_SA: {
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 45dac585..e03bcf44 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -644,9 +644,8 @@ int dm_find_part(const char *parent, const char *delim, int part,
- 	char dev_t[32];
- 
- 	if (!format_partname(name, namesiz, parent, delim, part)) {
--		if (verbose)
--			fprintf(stderr, "partname too small\n");
--		return 0;
-+		fprintf(stderr, "partition name too long for partition %d\n", part);
-+		return -1;
- 	}
- 
- 	r = dm_map_present(name, part_uuid);
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index cfd82128..020f92e3 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -437,7 +437,7 @@ main(int argc, char **argv){
- 		case UPDATE:
- 			/* ADD and UPDATE share the same code that adds new partitions. */
- 			for (j = 0, c = 0; j < n; j++) {
--				char *part_uuid, *reason;
-+				char *part_uuid = NULL, *reason;
- 
- 				if (slices[j].size == 0)
- 					continue;
-@@ -454,10 +454,17 @@ main(int argc, char **argv){
- 					exit(1);
- 				}
- 
--				op = (dm_find_part(mapname, delim, j + 1, uuid,
--						   partname, sizeof(partname),
--						   &part_uuid, verbose) ?
--				      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
-+				int res = dm_find_part(mapname, delim, j + 1, uuid,
-+						       partname, sizeof(partname),
-+						       &part_uuid, verbose);
-+				if (res < 0) {
-+					r++;
-+					continue;
-+				} else if (res == 0) {
-+					op = DM_DEVICE_CREATE;
-+				} else {
-+					op = DM_DEVICE_RELOAD;
-+				}
- 
- 				if (part_uuid && uuid) {
- 					if (check_uuid(uuid, part_uuid, &reason) != 0) {
-@@ -500,7 +507,7 @@ main(int argc, char **argv){
- 			d = c;
- 			while (c) {
- 				for (j = 0; j < n; j++) {
--					char *part_uuid, *reason;
-+					char *part_uuid = NULL, *reason;
- 					int k = slices[j].container - 1;
- 
- 					if (slices[j].size == 0)
-@@ -526,11 +533,18 @@ main(int argc, char **argv){
- 						exit(1);
- 					}
- 
--					op = (dm_find_part(mapname, delim, j + 1, uuid,
--							   partname,
--							   sizeof(partname),
--							   &part_uuid, verbose) ?
--					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
-+					int res = dm_find_part(mapname, delim, j + 1, uuid,
-+								partname,
-+								sizeof(partname),
-+								&part_uuid, verbose);
-+					if (res < 0) {
-+						r++;
-+						continue;
-+					} else if (res == 0) {
-+						op = DM_DEVICE_CREATE;
-+					} else {
-+						op = DM_DEVICE_RELOAD;
-+					}
- 
- 					if (part_uuid && uuid) {
- 						if (check_uuid(uuid, part_uuid, &reason) != 0) {
-@@ -570,11 +584,11 @@ main(int argc, char **argv){
- 			}
- 
- 			for (j = MAXSLICES-1; j >= 0; j--) {
--				char *part_uuid, *reason;
--				if (slices[j].size ||
--				    !dm_find_part(mapname, delim, j + 1, uuid,
--						  partname, sizeof(partname),
--						  &part_uuid, verbose))
-+				char *part_uuid = NULL, *reason;
-+				int res = dm_find_part(mapname, delim, j + 1, uuid,
-+						      partname, sizeof(partname),
-+						      &part_uuid, verbose);
-+				if (slices[j].size || res <= 0)
- 					continue;
- 
- 				if (part_uuid && uuid) {
--- 
-2.43.0
-
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
+=BCrnberg)
