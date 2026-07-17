@@ -1,102 +1,96 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A92C314D35
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 16:01:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30A413905EC
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 18:58:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.41
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784304077; cv=none; b=ZjOoHvPBs1pvo2Xt/nE2VMO7wv0+3fVL4Xd6uN9dEL4MvtvzRDnh2TmdfcYmaIvfv3OQyXKSJnyMkNG1KWn38wD104TSWk9YZJBPgUlHHxzRgcREkm7l+/drpMaSlMVk+l1WMBcSPXnJwPwNHABkI2+unZ509HvWuQsTBiK5g9M=
+	t=1784314692; cv=none; b=YWE4j8NXeOub7neWB2V9ZBSSzeHMrT8Vy4P2G04WWQSIyrlkIg1uYP7WBTZhPZO9OFzos/u0UXE1uk4kuHOURMM0BSaW5hzt+FjZOk8wGLCxlQMtO0MG6I2/vs3Pfp7gw0KsHYchokBOaUzb7KWtGTAav6v3rpZE0n9nWpG8KTE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784304077; c=relaxed/simple;
-	bh=CV+b1mGM4CL0QbFuui7pfIxlQYePQ5TQCCbzuMQZd8U=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=uqDsFPfTNas9tviddsnQ7D35MO92/6vIcHa8J8+n/hFHB4sahH10vzNdlhbHlfNBhJswb6BZREc4u++q0nnYGXUW5ViTMMFPRC2wAxzgS9GiyBNkaAZMWMU3LaBuy4z+00KFBzSpeAapIBg6Ztm1GG3VG6X+108kKSemT0EUzJI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DomusJMK; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1784314692; c=relaxed/simple;
+	bh=H1niux4ln6EXp5snoP3rxVDA6lNWxV3mEEb/01ea2x0=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=OxMOvvzjhf1EwwHjCtz8TllN6R1T/oINSA7nDjIUkvKbUdXXy9OyCZcIkstoRmF+DFn+ffdR/haCPi8wvMskBA7S6zhk6UB93ZwoQfCwP55Gr3gA+TkHfcgnDZQN7wKAcyJsdaWEF5HypQUJyVPGg+AALz3qkVbjV2Ohgmd9nYA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VWsyWzxN; arc=none smtp.client-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DomusJMK"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1784304075;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=aOFouLRnJiIAp3snfrtYeUt+ZFUNanSxfffcJ9k3RRk=;
-	b=DomusJMKRPWFKJMYkhz3XVAMFAtszbSEzLEArm24dvl6L5eEWxfqBDVomVj5X3z9ZHtcVZ
-	8XS9uQpXcOX+MQYIdCR6/kgqI6+OtUCPZIMnYwV4EBtUDUlDkY8BZVvXUvL82VA+FANs/I
-	1g9kogHQr9W0USX4L2iem+5e5vG0mig=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-468-vxyUSeWGOK6tSxWIm5tQYQ-1; Fri,
- 17 Jul 2026 12:01:12 -0400
-X-MC-Unique: vxyUSeWGOK6tSxWIm5tQYQ-1
-X-Mimecast-MFC-AGG-ID: vxyUSeWGOK6tSxWIm5tQYQ_1784304072
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CCB3C1954B27
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 16:01:11 +0000 (UTC)
-Received: from vdo-builder-msakai.permabit.com (ci-vm-10-0-103-170.hosted.upshift.rdu2.redhat.com [10.0.103.170])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id B17A5180025F;
-	Fri, 17 Jul 2026 16:01:11 +0000 (UTC)
-Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
-	id 3D3CB20BF2; Fri, 17 Jul 2026 12:01:11 -0400 (EDT)
-From: Matthew Sakai <msakai@redhat.com>
-To: dm-devel@lists.linux.dev
-Cc: Matthew Sakai <msakai@redhat.com>
-Subject: [PATCH] dm vdo: don't read repair field in loop condition
-Date: Fri, 17 Jul 2026 12:01:11 -0400
-Message-ID: <db6850416670928dece4ac4eec7bc3af2e543b0d.1784303851.git.msakai@redhat.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VWsyWzxN"
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-47df6a5202bso5615124f8f.0
+        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 11:58:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1784314689; x=1784919489; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=H1niux4ln6EXp5snoP3rxVDA6lNWxV3mEEb/01ea2x0=;
+        b=VWsyWzxNcU7qHanoe8mIfp+pwxjI92wQVYb4iNB5Wj2j5cZmbcm5ux0hYHsWd63GQk
+         9bX+rIOI36qVxW3owK6t9TrOgLpwHALlRY4QWeREpT4DNnZ3r5NBCtRhJyCkL3qhVIGs
+         sFX5LU6cCNixXpVzOKM3Nk9/+kQsJRre/eLwH/pkPInd+CKT2jXsaW/WLBbiNTr1dAAp
+         4jkWgLhKnp8tyhGi/1A8t+p4IdOlMH3zg4U6G71R15rB2Tl8bD0HImiiy71z/m3n3/n1
+         DRLTUPhEotReIYv4olQNAIF0mY3DGFLa7YIj9RWTOxDT2VDHZ1vzC4I06KMS8nKY+oxu
+         9+Vg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784314689; x=1784919489;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=H1niux4ln6EXp5snoP3rxVDA6lNWxV3mEEb/01ea2x0=;
+        b=FtZJlrQTHewD/6qKXBqO6Cb3ZTK1RmDnQugWpwacF0SYGt53GPNRy7qhFZhE1eP6nx
+         YhxAl3SemutobXQPPNTUzuuQcjg7Y+GVY84NBId4TBOjZr9fTRdLi6eAnIfbHm3Ge60R
+         sUkeY8whfpKK1o/WfBmE4jzXUqpPnSRA7Tp7k5/aSd5vzw4s1eETN0g2H61slby0u/P6
+         PXW2G29Ap/7vGWDpvdkTwlxFuhgn7EhvnSJROFb/IBaBe6AwAaZUXstncp/mda20S82R
+         TkaXWXFCDMgY1RFVL879VgB1KOAnngS1fBOYhJhr6Qhlw/PpaUd+Nt/9w/crPEdk2/2D
+         2JJQ==
+X-Gm-Message-State: AOJu0Yx5rVHnU6m3uJ/FUSnpUfvpGmtiIAC8rhgri/KSkWzWCo1xbSv4
+	gv9pGkkd9Dnd3N4583OPxpZuv93N5+NAYukGPFg4x7Wy7HhrGPLCfVzq3GIhNLC+rd8=
+X-Gm-Gg: AfdE7cmEhWCM1ovp+JfOUPcPOe9ulYbVGQ3dVUD4GlNoVJNjaTYPD/e4c4pkbA7JbvA
+	Ezeela2Mfh/TZ8TvkF1gezZVsN+imZKML7JyTxqVugNd5aWv4ks3DOu4KZRpRkM0zIok/fxB6Jq
+	G3i/ZJdTJ+5dl8lwqCdSGPGXNbRDwRor+caj/CEmEK1cncTEONHKhru2NgPdaerj6/dyNqwXxLg
+	bS9SYcXPKZ1GG0fRzluhlJoxcxegZijwyJR3+0hskRh90OMxpxMWZpwaqvjceM35s5YbHNynIVb
+	hwcXT2wN51vvQFVCzq1iVtIx1uR6ipXsoaymzA/q2qdd9iJPMBCUZyVDLZjjpYJG+XVHRW5y10l
+	5i3R5lggvpcepN2cYgKy5Su5iNyWO0iqY4bM6xmeHuRIogHrS2xbMxjVxYcL42sRG2LofjACGyj
+	+KnUazaVHenSAngBrJY8eQFkXYZKIyWP/MUftg3RIr/pJQC+rRYD01QK2n0ozKlIg8H25joGpyk
+	b2ZrWtsW0cmjsDPqaPGGHwk0nVLTwE7+mNecCbf
+X-Received: by 2002:a05:600c:4743:b0:493:bc4a:fb55 with SMTP id 5b1f17b1804b1-4954a508d60mr46297985e9.38.1784314689229;
+        Fri, 17 Jul 2026 11:58:09 -0700 (PDT)
+Received: from ?IPv6:2003:de:3746:1100:f390:c52e:1c24:9082? (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49549a3e56fsm67788435e9.5.2026.07.17.11.58.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Jul 2026 11:58:08 -0700 (PDT)
+Message-ID: <20c43ff93c9145be8f618d9b3c07f916a274fd28.camel@suse.com>
+Subject: Re: [PATCH 1/2] multipath: clean up find_multipaths documentation
+From: Martin Wilck <martin.wilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski
+	 <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Date: Fri, 17 Jul 2026 20:58:07 +0200
+In-Reply-To: <0467af29-1ada-4d20-a5b8-acba5c166e33@gmail.com>
+References: <20250307001034.3141833-1-bmarzins@redhat.com>
+	 <0467af29-1ada-4d20-a5b8-acba5c166e33@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: suTKO7TOUD38-SRFU-BINLhQkIMGokXGg3G1asVEkgE_1784304072
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Respell the vio launch loop to use the existing vio_count
-value. The repair completion is not guaranteed to persist
-after all of the metadata_vios are launched. This can not
-currently cause problems due to the way vio callbacks are
-handled, but it is technically not safe to access those
-fields.
+On Fri, 2026-07-17 at 15:27 +0200, Xose Vazquez Perez wrote:
+>=20
+> Could we please backport this patch to the stable-0.10.y and stable-
+> 0.11.y branches?
 
-Signed-off-by: Matthew Sakai <msakai@redhat.com>
----
- drivers/md/dm-vdo/repair.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Done, thanks for the reminder.
 
-diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
-index bfed62260280..e5263a5716f6 100644
---- a/drivers/md/dm-vdo/repair.c
-+++ b/drivers/md/dm-vdo/repair.c
-@@ -1696,6 +1696,7 @@ void vdo_repair(struct vdo_completion *parent)
- 	struct vdo *vdo = parent->vdo;
- 	struct recovery_journal *journal = vdo->recovery_journal;
- 	physical_block_number_t pbn = journal->origin;
-+	block_count_t i;
- 	block_count_t remaining = journal->size;
- 	block_count_t vio_count = DIV_ROUND_UP(remaining, MAX_BLOCKS_PER_VIO);
- 	page_count_t page_count = min_t(page_count_t,
-@@ -1749,9 +1750,8 @@ void vdo_repair(struct vdo_completion *parent)
- 		remaining -= blocks;
- 	}
- 
--	for (vio_count = 0; vio_count < repair->vio_count;
--	     vio_count++, pbn += MAX_BLOCKS_PER_VIO) {
--		vdo_submit_metadata_vio(&repair->vios[vio_count], pbn, read_journal_endio,
-+	for (i = 0; i < vio_count; i++, pbn += MAX_BLOCKS_PER_VIO) {
-+		vdo_submit_metadata_vio(&repair->vios[i], pbn, read_journal_endio,
- 					handle_journal_load_error, REQ_OP_READ);
- 	}
- }
--- 
-2.53.0
-
+Martin
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
+=BCrnberg)
