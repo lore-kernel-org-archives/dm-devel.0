@@ -1,261 +1,294 @@
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06B13390C94
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 11:15:18 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2E1C3F12E8;
+	Fri, 17 Jul 2026 11:26:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784286922; cv=none; b=NFGZ4sniWiDVvhaYsBM7KBNdpv8Is3idISCa4l4oT0PDHXNcdODjj/F5ED7C8m9SRArbFJBJcxwZuM74Jnl3yUdTywMW2/3zBVUUeXE7BA+VvhjoJ9pw4E+q3ymGWmomrFgREnJa6rKITHjg45aZCpNii4z4zEbX3Km+zU60+Tg=
+	t=1784287615; cv=none; b=YcW/nLieaoZjDdMifzIpnH3cbIOJ+RD3IeWtSHePYqdbAMhKSliRgj8btqqPaaxvbmz5tEXfyj3DmzvjuOGY9prfQR0KrLX1jE2STA8C9ksoyYrEgCXW735PXXO7Jeh3r/5HTA1ONIyIsKPk7fgm8sw1aGj75sB9Fz4eVDABxVs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784286922; c=relaxed/simple;
-	bh=uouEDjzJ4EugLfQx38hjB4b6R36v0dc3U+eljI2dQmM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mbLlD7EIYZzCh2KFeSeazKN7gp3vYNF8GQA3+qMWlli0ScbOM4HXNO1+N0fGDNX0YxmhVzKmjk8i6QCekkts9tE9mbVgB45XDgJatqNbz1yi+Z1aTcd9q1U+d4npyJs8FkKgHg6ueDkanEh6Jy17bNsYt5DZEw5oLqCrsqbqr4E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=pjM37Hck; arc=none smtp.client-ip=209.85.128.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1784287615; c=relaxed/simple;
+	bh=WCWTrGJPjpKGrMhPKAv0k5YF3Pyz/OABBWk16CwOws4=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=iyNnuHGEPvi/jqRCT6ZTUq+zCptk+1NlMRG1woPg5c6vAORzH401NnZUiI5IbZqVvhnaEQCjU34awncEAEiBZp25IlymbimJ20LJmZ4/hKLFdO7Fp/cz446GdTRgpgdRpcFVU7/DK5HAuNlJ6fvZ5V6k2xzjUF1yX/UHxGqPtvo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GPpfB5sg; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pjM37Hck"
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490791a3e92so9630425e9.0
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 04:15:18 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784286915; x=1784891715; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=DIiKEFXfOYK4kjZR+c30u/MqqGI+SpOrxjJX+YcjlHA=;
-        b=pjM37HckwHTwhZJy9Cfu8+KwAUdVMWDwwUpJppfuy3tvz7PiaXML83JyAnGUSQeaiT
-         quYEkYJmgqe9UdXhmmSEBKA8hJ4jraJpoCQTWvO5bR6SldXSkuoRgZIAZh2zeo/KVgcq
-         r1Z5KEqtnA/qC4pv6COudL4/PxSte4iPwNnG1vkZ4/0Pz+BUd7/AFws6YSZhSsJW7A79
-         A7fWz2z+bclg2FxnhPau21m7RRW1vNcibPLzNTc2XmjfcP+5Qv1ZLAzPALKJ/AZYbsEA
-         KQJukDU3bpZsipFKiaWSUkMySZ1UpMkE8eb45lJQ1F7R1XbkcGx+ZZIAt6jOEloy5a+g
-         lN2g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784286915; x=1784891715;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=DIiKEFXfOYK4kjZR+c30u/MqqGI+SpOrxjJX+YcjlHA=;
-        b=ipHqx79dHNIyQW488KEhhYeqqR7GdHVwDfw7slK/qZGL0MGAtFP2qkcmsqi5Evvi4M
-         LtkEWVKdYCpn3Xxdg56vlN6Xs0qsR3lsZNmbWTdEpWwOWNf99F/xHs/yyOqiGbnTRk1k
-         DJO6CdDziEvuXQQ05BqL3bf98MpfLO0B/tESLZd4WE7Ecm3kamTzLeKA5c5uc4maQNeh
-         R+w3RhY6XeF/pd1WldBjGJ160HXlAMOGGzeINelTMPL7i2E5z+JufupSbo9na+bCPaEe
-         2gWJLu/eFT7QIyciLcbToTFO/JeHzVYR9ZmW7fApcDps81COpRo6AtS2ObyfFPwcvOi+
-         kaZQ==
-X-Forwarded-Encrypted: i=1; AHgh+Ro5azjN0bGCPi4xsicfrerCcp00sk9MD1BuEScXVGQbVwfSdwa1oXm/ae+Y8L1nKd+jB7kePS456w==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yy688fm/Q35M5yuPJ6xCNTM0CLwQ/EC0etjh++Y/ld7qE8nCAzU
-	yn4RY89jSL4aWLW5iMFBb0WsCer8wiOsHZZOPSUjZJ/UHzYtOnvlyqU=
-X-Gm-Gg: AfdE7cmxHGh4GOUkQI6WJu/k/pX4b+GDtw4N322Hd4fBshIovPP4WysYQqkYFIkx916
-	UfUf8CmlvaZKVrae4wC9gMH2KIkjce8/qz9pBc+f5EqFMqIuK6bFk5L9FAdmIbvLd/FTfztANf0
-	c7f4AUZQUaaYTXgHtAuDB95+AntTJdfJQMXaRVxNh9fmMv9tFAX38HHdSi1wQu6Y05/tETq6LdY
-	Skgupm+jFq1zmuWVsRVG4z+DjuxsWqV4OS0eLwicBVQZGxN5NrZTgQpU+LF7NwtlMV5NzWeR2bm
-	70/AdQRQ2Bo5DCce/qkomSDbjZvOE05xzIsskLW+UlV7XvgBUg1DwnWEop1XMYLA5SqLZmBYgZ3
-	PW0bfHB1pQj0DQHRAEee4h0SDW3AMSTjm+iMfsaSomDWQKAYM7qFh2Ds/u2XHjOtSJX9j93LaUn
-	sOniZxwpDWtIgb66edZEF18UBlZaKmqV/XFJeM
-X-Received: by 2002:a05:600c:4f84:b0:493:bea7:6b67 with SMTP id 5b1f17b1804b1-4954a405403mr15045025e9.3.1784286914828;
-        Fri, 17 Jul 2026 04:15:14 -0700 (PDT)
-Received: from localhost (3.red-80-39-57.staticip.rima-tde.net. [80.39.57.3])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4954a2edbe4sm41390425e9.12.2026.07.17.04.15.13
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 17 Jul 2026 04:15:14 -0700 (PDT)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH tip] multipath-tools: iet prio; update header comments and style
-Date: Fri, 17 Jul 2026 13:15:11 +0200
-Message-ID: <20260717111512.63662-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.55.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GPpfB5sg"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 06013C2BCB8;
+	Fri, 17 Jul 2026 11:26:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1784287615;
+	bh=WCWTrGJPjpKGrMhPKAv0k5YF3Pyz/OABBWk16CwOws4=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
+	b=GPpfB5sgC0sfx90SzmOO0dkGJr/W9nqrK+0wrn40h6pfxSyHgEgRFu0daFmd0SsZV
+	 Sikgf9ECCLV2QOLwGV2HekgwbpgN8HuKs/nMb3qil2Jm90Cma00OuG4kPGseItnj+H
+	 A/PezjD9aPCqt/YG6UZnklLo053ln39UPXrp2mhw8SueASx7NPsehqBytdQa2ycv4G
+	 9wDWD+FV/XAxzPVxcJwh7HsmWYOXvnOzsUbMhvyT3AHz1zu3Nrw6/cPsKL/d4d7kuF
+	 wkyoIGrNMwqD1GVjwXIF32jZoamBTbTcik4VeEhmBNfupeESqODcnOrYzxdo6Bqjar
+	 uiE5wgT8Jmcdw==
+Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DBABBC44516;
+	Fri, 17 Jul 2026 11:26:54 +0000 (UTC)
+From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
+Date: Fri, 17 Jul 2026 06:26:54 -0500
+Subject: [PATCH v2 01/11] dm-pcache: validate seg_id fields from persistent
+ memory
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20260717-b4-disp-4c0a0039-v2-1-19227d6e313c@proton.me>
+References: <20260717-b4-disp-4c0a0039-v2-0-19227d6e313c@proton.me>
+In-Reply-To: <20260717-b4-disp-4c0a0039-v2-0-19227d6e313c@proton.me>
+To: Zheng Gu <cengku@gmail.com>, Dongsheng Yang <dongsheng.yang@linux.dev>
+Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>, 
+ linux-kernel@vger.kernel.org
+X-Mailer: b4 0.13.0
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1784287613; l=8861;
+ i=hexlabsecurity@proton.me; s=proton; h=from:subject:message-id;
+ bh=gx6bjz1FQtrra3y13vv1tAq57E8F+9xcRi54L7st570=;
+ b=xcJBDQKwxqbOv3YTrqYbPmDlFPud3KskH9RwLLCZegjeoXxoYVMQBFawEGpSOKIkVJZMOFaV5
+ woKUt6NHYN9ATzhl4W69W8eCvk8QaJys+NjQv9PaTSnO3y0r5C/aAKo
+X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
+ pk=dmppBMZNLLoPzxHi9l8tZDzEZUunPbgsYqIZYXeUrL0=
+X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/proton with
+ auth_id=814
+X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
+Reply-To: hexlabsecurity@proton.me
 
-Update the header comment to accurately reflect that the device IP is now
-obtained from udev's ID_PATH property.
-Additionally, move the header comment block to the top of the file, remove
-redundant empty comments, and convert style to c++.
+From: Bryam Vargas <hexlabsecurity@proton.me>
 
-Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+cache_pos_decode(), cache_key_decode() and the last-kset branches of
+cache_replay(), the writeback worker and the GC worker take a cache
+segment id from the cache device metadata and index cache->segments[]
+with it without checking it against cache->n_segs. That metadata is only
+CRC-protected with a fixed public seed, so whoever supplies the cache
+device on a table load (CAP_SYS_ADMIN) controls the id; an out-of-range
+value forms a wild pcache_cache_segment pointer that is dereferenced and
+written through -- an out-of-bounds read and write driven by on-disk data.
+
+Add cache_seg_id_valid() and reject an out-of-range id at each decode
+site, failing the operation with -EIO instead of indexing past the array.
+Bound the id against the initialized-segment count (cache_info.n_segs)
+rather than the physical device total. A forged cache_info.n_segs below
+seg_num otherwise leaves segments[cache_info.n_segs..seg_num) as zeroed
+structs whose data pointer is NULL, so a forged id in that window would
+still be dereferenced. A later patch guarantees cache_info.n_segs <=
+seg_num, and a driver-created cache sets the two equal, so valid images
+are unaffected.
+
+Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-mapper")
+Cc: stable@vger.kernel.org
+Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
 ---
- libmultipath/prioritizers/iet.c | 65 +++++++++++++--------------------
- 1 file changed, 26 insertions(+), 39 deletions(-)
+ drivers/md/dm-pcache/cache.c           |  4 ++++
+ drivers/md/dm-pcache/cache.h           | 15 +++++++++++++++
+ drivers/md/dm-pcache/cache_gc.c        | 16 ++++++++++++++--
+ drivers/md/dm-pcache/cache_key.c       | 11 +++++++++++
+ drivers/md/dm-pcache/cache_writeback.c | 23 +++++++++++++++++++----
+ 5 files changed, 63 insertions(+), 6 deletions(-)
 
-diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
-index 10152402..a048732b 100644
---- a/libmultipath/prioritizers/iet.c
-+++ b/libmultipath/prioritizers/iet.c
-@@ -1,3 +1,26 @@
-+// This prioritizer allows path selection based on target IP address
-+//
-+// (It's a bit of a misnomer since supports the client side [eg. open-iscsi]
-+//  instead of just "iet".)
-+//
-+// Usage:
-+//   prio      "iet"
-+//   with either:
-+//   prio_args "preferredip=<IP address>"
-+//		assigns priority 20 (high) to the preferred IP and priority 10
-+//		(low) to the rest.
-+//   or
-+//   prio_args "ippriorities=<IP|CIDR>:Prio,<IP|CIDR>:Prio,..."
-+//		IP can be specified directly or in CIDR notation (IP/32)
-+//		CIDR can use standard n.n.n.n/p format or any valid shorthand
-+//		0.0.0.0/0 to set the "no match" priority (defaults to 10).
-+//
-+// Uses udev's ID_PATH property to find the IP of the device.
-+// Matching follows network routing semantics (more specific CIDR match wins).
-+//
-+// by Olivier Lambert <lambert.olivier.gmail.com>
-+// Extended "preferredip" added by Arnaldo Viegas de Lima <arnaldo.viegasdelima.com>
+diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
+index bb1ada31e483..e9d2b87174d7 100644
+--- a/drivers/md/dm-pcache/cache.c
++++ b/drivers/md/dm-pcache/cache.c
+@@ -118,6 +118,9 @@ int cache_pos_decode(struct pcache_cache *cache,
+ 	if (!latest_addr)
+ 		return -EIO;
+ 
++	if (!cache_seg_id_valid(cache, latest.cache_seg_id))
++		return -EIO;
 +
- #include "debug.h"
- #include "prio.h"
- #include "structs.h"
-@@ -15,32 +38,6 @@
- #include <sys/types.h>
- #include <unistd.h>
+ 	pos->cache_seg = &cache->segments[latest.cache_seg_id];
+ 	pos->seg_off = latest.seg_off;
+ 	*seq = latest.header.seq;
+@@ -155,6 +158,7 @@ static int cache_init(struct dm_pcache *pcache)
+ 	cache->cache_dev = &pcache->cache_dev;
+ 	cache->n_segs = cache_dev->seg_num;
+ 	atomic_set(&cache->gc_errors, 0);
++	atomic_set(&cache->writeback_errors, 0);
+ 	spin_lock_init(&cache->seg_map_lock);
+ 	spin_lock_init(&cache->key_head_lock);
  
--//
--// This prioritizer allows path selection based on target IP address
--//
--// (It's a bit of a misnomer since supports the client side [eg. open-iscsi]
--//  instead of just "iet".)
--//
--// Usage:
--//   prio      "iet"
--//   with either:
--//   prio_args "preferredip=<IP address>"
--//		assigns priority 20 (high) to the preferred IP and priority 10
--//(low) to the rest
--//   or
--//   prio_args "ippriorities=<IP|CIDR>:Prio,<IP|CIDR>:Prio,..."
--//		IP can be specified directly or in CIDR notation (IP/32)
--//   	CIDR can use standard n.n.n.n/p format or any valid shorthand
--//   	0.0.0.0/0 to set the "no match" priority (defaults to 10)
--//
--// Uses /dev/disk/by-path to find the IP of the device.
--// Matching follows network routing semantics (more specific match wins)
--//
--// by Olivier Lambert <lambert.olivier.gmail.com>
--// Extended "preferredip" added by Arnaldo Viegas de Lima
--// (arnaldo.viegasdelima.com)
--//
--
- #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
- #define dc_log(prio, fmt, ...) condlog(prio, "%s " fmt, sysname, __VA_ARGS__)
- #else /* GCC extension */
-@@ -50,7 +47,6 @@
- #define DEFAULT_PRIORITY 10
- #define DEFAULT_HIGH_PRIORITY 20
+diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
+index 27613b56be54..919736379b76 100644
+--- a/drivers/md/dm-pcache/cache.h
++++ b/drivers/md/dm-pcache/cache.h
+@@ -180,6 +180,7 @@ struct pcache_cache {
+ 		u32 advance;
+ 		int ret;
+ 	} writeback_ctx;
++	atomic_t		writeback_errors;
  
--//
- // Entry for the CIDR to priority list
- struct ipprio_entry {
- 	uint32_t network;
-@@ -59,7 +55,6 @@ struct ipprio_entry {
- 	struct ipprio_entry *next;
- };
- 
--//
- // name: find_regex
- // @param string: string you want to search into
- // @param regex: the pattern used
-@@ -101,7 +96,6 @@ char *find_regex(const char *string, const char *regex)
- 	return NULL;
+ 	char gc_kset_onmedia_buf[PCACHE_KSET_ONMEDIA_SIZE_MAX];
+ 	struct delayed_work	gc_work;
+@@ -420,6 +421,20 @@ static inline bool cache_seg_is_ctrl_seg(u32 cache_seg_id)
+ 	return (cache_seg_id == 0);
  }
  
--//
- // name: prefix_to_mask
- // @param prefix: CIDR prefix (# of bits)
- // @return: corresponding network mask (defaults to 32 bits)
-@@ -114,7 +108,6 @@ static uint32_t prefix_to_mask(int prefix)
- 	return 0xffffffffU << (32 - prefix);
- }
- 
--//
- // name: parse_cidr
- // @param s: string containing CIDR block or single IP
- // @return network: network as integer
-@@ -149,7 +142,7 @@ static int parse_cidr(const char *s, uint32_t *network, uint32_t *mask)
- 		prefix = (int)val;
- 
- 	} else {
--		/* no CIDR suffix -> exact host match */
-+		// no CIDR suffix -> exact host match
- 		prefix = 32;
- 	}
- 
-@@ -179,7 +172,6 @@ static int parse_cidr(const char *s, uint32_t *network, uint32_t *mask)
- 	return 0;
- }
- 
--//
- // name: free_ipprio_list
- // @param list: pointer to list to free
- // @return: void
-@@ -193,7 +185,6 @@ static void free_ipprio_list(struct ipprio_entry *list)
- 	}
- }
- 
--//
- // name: parse_ippriorities
- // @param args: full prio_args string
- // @return: 0 if ok -1 if not
-@@ -223,8 +214,7 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
- 		int priority;
- 		struct ipprio_entry *e;
- 
--		/* A single IP without CIDR mask and priority attain backward compatibility
--     */
-+		// A single IP without CIDR mask and priority attain backward compatibility
- 		colon = strrchr(entry, ':');
- 
- 		if (!colon) {
-@@ -237,7 +227,7 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
- 
- 			cidr = entry;
- 			priority = 20;
--			entry = NULL; /* consume the only entry */
-+			entry = NULL; // consume the only entry
- 		} else {
- 			*colon = '\0';
- 			cidr = entry;
-@@ -291,7 +281,6 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
- 	return ipprio_list;
- }
- 
--//
- // name: find_priority - lookup IP in list of CIDRs
- // @param ipstr: IP to lookup as a string
- // @param ipprio_list: list of CIDR blocks for the search
-@@ -367,7 +356,6 @@ static int find_priority(const char *sysname, const char *ipstr,
- 	return best_prio;
- }
- 
--//
- // name: inet_prio
- // @param
- // @return prio
-@@ -440,7 +428,6 @@ int iet_prio(struct udev_device *udev, char *args)
- 	return prio;
- }
- 
--//
- // Prioritizer entry point
- int getprio(struct path *pp, char *args)
++/**
++ * cache_seg_id_valid - Validate a cache segment id read from the cache device.
++ * @cache: Pointer to the pcache_cache structure.
++ * @cache_seg_id: Segment id decoded from on-media metadata.
++ *
++ * On-media segment ids are only protected by a CRC, which an attacker who can
++ * format the cache device computes over their chosen value. Reject any id that
++ * would index cache->segments[] out of bounds before it is dereferenced.
++ */
++static inline bool cache_seg_id_valid(struct pcache_cache *cache, u32 cache_seg_id)
++{
++	return cache_seg_id < cache->cache_info.n_segs;
++}
++
+ /**
+  * cache_key_cutfront - Cuts a specified length from the front of a cache key.
+  * @key: Pointer to pcache_cache_key structure.
+diff --git a/drivers/md/dm-pcache/cache_gc.c b/drivers/md/dm-pcache/cache_gc.c
+index 94f8b276a021..02fa0ce03134 100644
+--- a/drivers/md/dm-pcache/cache_gc.c
++++ b/drivers/md/dm-pcache/cache_gc.c
+@@ -74,11 +74,17 @@ static bool need_gc(struct pcache_cache *cache, struct pcache_cache_pos *dirty_t
+  * @cache: Pointer to the pcache_cache structure.
+  * @kset_onmedia: Pointer to the kset_onmedia structure for the last kset.
+  */
+-static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
++static int last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
  {
+ 	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
+ 	struct pcache_cache_segment *cur_seg, *next_seg;
+ 
++	if (!cache_seg_id_valid(cache, kset_onmedia->next_cache_seg_id)) {
++		pcache_dev_err(pcache, "invalid next_cache_seg_id %u in gc (n_segs %u)\n",
++				kset_onmedia->next_cache_seg_id, cache->n_segs);
++		return -EIO;
++	}
++
+ 	cur_seg = cache->key_tail.cache_seg;
+ 
+ 	next_seg = &cache->segments[kset_onmedia->next_cache_seg_id];
+@@ -94,6 +100,8 @@ static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_on
+ 	spin_lock(&cache->seg_map_lock);
+ 	__clear_bit(cur_seg->cache_seg_id, cache->seg_map);
+ 	spin_unlock(&cache->seg_map_lock);
++
++	return 0;
+ }
+ 
+ void pcache_cache_gc_fn(struct work_struct *work)
+@@ -130,7 +138,11 @@ void pcache_cache_gc_fn(struct work_struct *work)
+ 			if (dirty_tail.cache_seg == key_tail.cache_seg)
+ 				break;
+ 
+-			last_kset_gc(cache, kset_onmedia);
++			ret = last_kset_gc(cache, kset_onmedia);
++			if (ret) {
++				atomic_inc(&cache->gc_errors);
++				return;
++			}
+ 			continue;
+ 		}
+ 
+diff --git a/drivers/md/dm-pcache/cache_key.c b/drivers/md/dm-pcache/cache_key.c
+index e068e878231b..8eec5238c5da 100644
+--- a/drivers/md/dm-pcache/cache_key.c
++++ b/drivers/md/dm-pcache/cache_key.c
+@@ -94,6 +94,12 @@ int cache_key_decode(struct pcache_cache *cache,
+ 	key->off = key_onmedia->off;
+ 	key->len = key_onmedia->len;
+ 
++	if (!cache_seg_id_valid(cache, key_onmedia->cache_seg_id)) {
++		pcache_dev_err(pcache, "invalid cache_seg_id %u in cache key (n_segs %u)\n",
++				key_onmedia->cache_seg_id, cache->n_segs);
++		return -EIO;
++	}
++
+ 	key->cache_pos.cache_seg = &cache->segments[key_onmedia->cache_seg_id];
+ 	key->cache_pos.seg_off = key_onmedia->cache_seg_off;
+ 
+@@ -789,6 +795,11 @@ int cache_replay(struct pcache_cache *cache)
+ 
+ 			pcache_dev_debug(pcache, "last kset replay, next: %u\n", kset_onmedia->next_cache_seg_id);
+ 
++			if (!cache_seg_id_valid(cache, kset_onmedia->next_cache_seg_id)) {
++				ret = -EIO;
++				goto out;
++			}
++
+ 			next_seg = &cache->segments[kset_onmedia->next_cache_seg_id];
+ 
+ 			pos->cache_seg = next_seg;
+diff --git a/drivers/md/dm-pcache/cache_writeback.c b/drivers/md/dm-pcache/cache_writeback.c
+index 87a82b3fe836..7751468d5118 100644
+--- a/drivers/md/dm-pcache/cache_writeback.c
++++ b/drivers/md/dm-pcache/cache_writeback.c
+@@ -196,12 +196,18 @@ static int cache_kset_insert_tree(struct pcache_cache *cache, struct pcache_cach
+ 	return ret;
+ }
+ 
+-static void last_kset_writeback(struct pcache_cache *cache,
++static int last_kset_writeback(struct pcache_cache *cache,
+ 		struct pcache_cache_kset_onmedia *last_kset_onmedia)
+ {
+ 	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
+ 	struct pcache_cache_segment *next_seg;
+ 
++	if (!cache_seg_id_valid(cache, last_kset_onmedia->next_cache_seg_id)) {
++		pcache_dev_err(pcache, "invalid next_cache_seg_id %u in writeback (n_segs %u)\n",
++				last_kset_onmedia->next_cache_seg_id, cache->n_segs);
++		return -EIO;
++	}
++
+ 	pcache_dev_debug(pcache, "last kset, next: %u\n", last_kset_onmedia->next_cache_seg_id);
+ 
+ 	next_seg = &cache->segments[last_kset_onmedia->next_cache_seg_id];
+@@ -211,6 +217,8 @@ static void last_kset_writeback(struct pcache_cache *cache,
+ 	cache->dirty_tail.seg_off = 0;
+ 	cache_encode_dirty_tail(cache);
+ 	mutex_unlock(&cache->dirty_tail_lock);
++
++	return 0;
+ }
+ 
+ void cache_writeback_fn(struct work_struct *work)
+@@ -229,6 +237,9 @@ void cache_writeback_fn(struct work_struct *work)
+ 	if (pcache_is_stopping(pcache))
+ 		goto unlock;
+ 
++	if (atomic_read(&cache->writeback_errors))
++		goto unlock;
++
+ 	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->wb_kset_onmedia_buf;
+ 
+ 	mutex_lock(&cache->dirty_tail_lock);
+@@ -241,15 +252,19 @@ void cache_writeback_fn(struct work_struct *work)
+ 	}
+ 
+ 	if (kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) {
+-		last_kset_writeback(cache, kset_onmedia);
++		ret = last_kset_writeback(cache, kset_onmedia);
++		if (ret) {
++			atomic_inc(&cache->writeback_errors);
++			goto unlock;
++		}
+ 		delay = 0;
+ 		goto queue_work;
+ 	}
+ 
+ 	ret = cache_kset_insert_tree(cache, kset_onmedia);
+ 	if (ret) {
+-		delay = PCACHE_CACHE_WRITEBACK_INTERVAL;
+-		goto queue_work;
++		atomic_inc(&cache->writeback_errors);
++		goto unlock;
+ 	}
+ 
+ 	cache_wb_tree_writeback(cache, get_kset_onmedia_size(kset_onmedia));
+
 -- 
-2.55.0
+2.43.0
+
 
