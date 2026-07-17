@@ -1,236 +1,261 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2216F3DD53C
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 10:13:24 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06B13390C94
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 11:15:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784283207; cv=none; b=BRzZuwgXBy7+dpjgu48V2l/+W1EIFDyKp3PY8Weh1+LBF22hDXUidzldeRTHWkG5Z6LLaEZehceZ3ypMGB//roIQEBWCCTa4OUUYY0yRn2I87o19g5fHB8b+252ZeG3TMChYcHl9rkcXD7hQQCJO1siPt98se7hklHXFr9cI7ps=
+	t=1784286922; cv=none; b=NFGZ4sniWiDVvhaYsBM7KBNdpv8Is3idISCa4l4oT0PDHXNcdODjj/F5ED7C8m9SRArbFJBJcxwZuM74Jnl3yUdTywMW2/3zBVUUeXE7BA+VvhjoJ9pw4E+q3ymGWmomrFgREnJa6rKITHjg45aZCpNii4z4zEbX3Km+zU60+Tg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784283207; c=relaxed/simple;
-	bh=x1B6HtrTjA8aJOyck6YbT+TedDrZE0SbblwiQzoUPQ0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=qxq851zaEqwqkssraU8Qo8piyjpWWJ8UNghc8/bZNWMxFHJ9UcWEJhDY2I6cxk8ZZkd5lpXpwCTvSEZx1mbA/caqHYYTmCzIDdeFVX4qNzEPK2lIp+hgwaVpcoIww4r59upaMPgxZhTCum2kVI09lhO4Rv7ny/o/G92bkPfDsf0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=M3d58A3C; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=czZRat5/; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1784286922; c=relaxed/simple;
+	bh=uouEDjzJ4EugLfQx38hjB4b6R36v0dc3U+eljI2dQmM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=mbLlD7EIYZzCh2KFeSeazKN7gp3vYNF8GQA3+qMWlli0ScbOM4HXNO1+N0fGDNX0YxmhVzKmjk8i6QCekkts9tE9mbVgB45XDgJatqNbz1yi+Z1aTcd9q1U+d4npyJs8FkKgHg6ueDkanEh6Jy17bNsYt5DZEw5oLqCrsqbqr4E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=pjM37Hck; arc=none smtp.client-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="M3d58A3C";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="czZRat5/"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id E48CA78DD0;
-	Fri, 17 Jul 2026 10:13:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1784283203; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=x1B6HtrTjA8aJOyck6YbT+TedDrZE0SbblwiQzoUPQ0=;
-	b=M3d58A3CDirq7CixMzXyayy1KybahQkXoSROvRL/v5Slp2jGUdasVIsYLYfVR80wemGkxZ
-	FQwiXe128DI1rxzLAceq3DNa2Tx3TVaxeIP1gHEFfp7+oKVST7Cj4qJ7GgWCWkEyM8OLO+
-	tixNVSGM91Xssyn2JF3M714FucdfjYM=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="czZRat5/"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1784283202; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=x1B6HtrTjA8aJOyck6YbT+TedDrZE0SbblwiQzoUPQ0=;
-	b=czZRat5/AsNEVLSpsYYqgWUEjFWTp9zy9S+6NYOjorCkunGFKsgIAUEzVrDnZLLm0F6d/5
-	1WQGhdXMGCavAzGZcVjmdKSpb9ggB57MLJeEjlssRWE5peVBOxrn+6qmTlGTKhPiN8V2S+
-	aWBGCkhX4FqTlASEbykHXmtdt1TWIz8=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id C24F5779AA;
-	Fri, 17 Jul 2026 10:13:22 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id UXdYLkIAWmomJgAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 17 Jul 2026 10:13:22 +0000
-Message-ID: <b846135c8c104ba30acd28401c3290ba781bbca0.camel@suse.com>
-Subject: Re: [PATCH v4] kpartx: fix crash and truncated device creation with
- long -p delimiter
-From: Martin Wilck <mwilck@suse.com>
-To: 303146950@qq.com
-Cc: bmarzins@redhat.com, dm-devel@lists.linux.dev, kouwenqi@kylinos.cn
-Date: Fri, 17 Jul 2026 12:13:22 +0200
-In-Reply-To: <tencent_2F027EB83F48459E115634898CE03EE35509@qq.com>
-References: <9c287af301748a1246a1383ca41109d3f94d1491.camel@suse.com>
-	 <tencent_2F027EB83F48459E115634898CE03EE35509@qq.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pjM37Hck"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-490791a3e92so9630425e9.0
+        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 04:15:18 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1784286915; x=1784891715; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=DIiKEFXfOYK4kjZR+c30u/MqqGI+SpOrxjJX+YcjlHA=;
+        b=pjM37HckwHTwhZJy9Cfu8+KwAUdVMWDwwUpJppfuy3tvz7PiaXML83JyAnGUSQeaiT
+         quYEkYJmgqe9UdXhmmSEBKA8hJ4jraJpoCQTWvO5bR6SldXSkuoRgZIAZh2zeo/KVgcq
+         r1Z5KEqtnA/qC4pv6COudL4/PxSte4iPwNnG1vkZ4/0Pz+BUd7/AFws6YSZhSsJW7A79
+         A7fWz2z+bclg2FxnhPau21m7RRW1vNcibPLzNTc2XmjfcP+5Qv1ZLAzPALKJ/AZYbsEA
+         KQJukDU3bpZsipFKiaWSUkMySZ1UpMkE8eb45lJQ1F7R1XbkcGx+ZZIAt6jOEloy5a+g
+         lN2g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784286915; x=1784891715;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=DIiKEFXfOYK4kjZR+c30u/MqqGI+SpOrxjJX+YcjlHA=;
+        b=ipHqx79dHNIyQW488KEhhYeqqR7GdHVwDfw7slK/qZGL0MGAtFP2qkcmsqi5Evvi4M
+         LtkEWVKdYCpn3Xxdg56vlN6Xs0qsR3lsZNmbWTdEpWwOWNf99F/xHs/yyOqiGbnTRk1k
+         DJO6CdDziEvuXQQ05BqL3bf98MpfLO0B/tESLZd4WE7Ecm3kamTzLeKA5c5uc4maQNeh
+         R+w3RhY6XeF/pd1WldBjGJ160HXlAMOGGzeINelTMPL7i2E5z+JufupSbo9na+bCPaEe
+         2gWJLu/eFT7QIyciLcbToTFO/JeHzVYR9ZmW7fApcDps81COpRo6AtS2ObyfFPwcvOi+
+         kaZQ==
+X-Forwarded-Encrypted: i=1; AHgh+Ro5azjN0bGCPi4xsicfrerCcp00sk9MD1BuEScXVGQbVwfSdwa1oXm/ae+Y8L1nKd+jB7kePS456w==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yy688fm/Q35M5yuPJ6xCNTM0CLwQ/EC0etjh++Y/ld7qE8nCAzU
+	yn4RY89jSL4aWLW5iMFBb0WsCer8wiOsHZZOPSUjZJ/UHzYtOnvlyqU=
+X-Gm-Gg: AfdE7cmxHGh4GOUkQI6WJu/k/pX4b+GDtw4N322Hd4fBshIovPP4WysYQqkYFIkx916
+	UfUf8CmlvaZKVrae4wC9gMH2KIkjce8/qz9pBc+f5EqFMqIuK6bFk5L9FAdmIbvLd/FTfztANf0
+	c7f4AUZQUaaYTXgHtAuDB95+AntTJdfJQMXaRVxNh9fmMv9tFAX38HHdSi1wQu6Y05/tETq6LdY
+	Skgupm+jFq1zmuWVsRVG4z+DjuxsWqV4OS0eLwicBVQZGxN5NrZTgQpU+LF7NwtlMV5NzWeR2bm
+	70/AdQRQ2Bo5DCce/qkomSDbjZvOE05xzIsskLW+UlV7XvgBUg1DwnWEop1XMYLA5SqLZmBYgZ3
+	PW0bfHB1pQj0DQHRAEee4h0SDW3AMSTjm+iMfsaSomDWQKAYM7qFh2Ds/u2XHjOtSJX9j93LaUn
+	sOniZxwpDWtIgb66edZEF18UBlZaKmqV/XFJeM
+X-Received: by 2002:a05:600c:4f84:b0:493:bea7:6b67 with SMTP id 5b1f17b1804b1-4954a405403mr15045025e9.3.1784286914828;
+        Fri, 17 Jul 2026 04:15:14 -0700 (PDT)
+Received: from localhost (3.red-80-39-57.staticip.rima-tde.net. [80.39.57.3])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4954a2edbe4sm41390425e9.12.2026.07.17.04.15.13
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 17 Jul 2026 04:15:14 -0700 (PDT)
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+To: 
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
+	Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Subject: [PATCH tip] multipath-tools: iet prio; update header comments and style
+Date: Fri, 17 Jul 2026 13:15:11 +0200
+Message-ID: <20260717111512.63662-1-xose.vazquez@gmail.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Rspamd-Action: no action
-X-Rspamd-Queue-Id: E48CA78DD0
-X-Spam-Flag: NO
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[qq.com];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	FREEMAIL_TO(0.00)[qq.com];
-	ARC_NA(0.00)[];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	RCVD_TLS_ALL(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	TO_DN_NONE(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[kylinos.cn:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:dkim,suse.com:email,suse.com:mid]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
+X-Patchwork-Bot: notify
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2026-07-17 at 11:34 +0800, 303146950@qq.com wrote:
-> From: Kou Wenqi <kouwenqi@kylinos.cn>
->=20
-> On Thu, 2026-07-16 at 15:49 +0200, mwilck@suse.com=C2=A0wrote:
-> > Thanks again. This looks quite good. However, what about this?
-> >=20
-> > enum {
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_DEVICE_CREATE =3D DM_DEVICE_CREATE,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_DEVICE_RELOAD =3D DM_DEVICE_RELOAD,
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_ERR =3D -1,
-> > };
->=20
-> Good idea. I've defined this enum in kpartx/devmapper.h (which now
-> also includes <libdevmapper.h> to make the header self-contained),
-> and dm_find_part() uses these enum values explicitly in all return
-> statements.
->=20
-> > Then use values of this enum as return values of dm_find_part().
-> > If it returns DFP_ERR, bail out; otherwise use the return value as
-> > "op", like this:
-> >=20
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 if ((op =3D dm_find_part(...=
-)) =3D=3D DFP_ERR)
-> > =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0 continue;
->=20
-> Done. In the ADD/UPDATE loops, the return value is assigned directly
-> to 'op', and DFP_ERR is handled with r++ and continue. In the DELETE
-> loop, I check against DFP_DEVICE_RELOAD to proceed with removal.
->=20
-> > If you want to be extra careful, you could add something like
-> > this at the beginning of dm_find_part():
-> >=20
-> > BUILD_BUG_ON(DM_DEVICE_CREATE < 0 || DM_DEVICE_RELOAD < 0);
-> >=20
-> > But I think we can trust that these values will always be positive.
->=20
-> I've omitted this check, as I agree that DM_DEVICE_CREATE and
-> DM_DEVICE_RELOAD are defined by libdevmapper as positive constants
-> and are unlikely to change.
->=20
-> Changes since v3:
-> =C2=A0 - Defined enum { DFP_DEVICE_CREATE, DFP_DEVICE_RELOAD, DFP_ERR }
-> =C2=A0=C2=A0=C2=A0 in kpartx/devmapper.h
-> =C2=A0 - dm_find_part() returns enum values explicitly in all return path=
-s
-> =C2=A0 - Callers assign return value directly to 'op' and check for
-> DFP_ERR
-> =C2=A0 - kpartx/devmapper.h now includes <libdevmapper.h> directly
->=20
-> Here is the new patch.
->=20
-> When the -p delimiter is long enough to make the formatted partition
-> name exceed PARTNAME_SIZE (128 bytes), three issues occur:
->=20
-> 1. format_partname() fails but snprintf has already written a
-> truncated
-> =C2=A0=C2=A0 name into the buffer. dm_find_part() returns 0 and the calle=
-r
-> =C2=A0=C2=A0 proceeds to dm_addmap() with the truncated name, creating a =
-device
-> =C2=A0=C2=A0 that was never intended.
->=20
-> 2. dm_find_part() returns early without setting *part_uuid. The
-> =C2=A0=C2=A0 uninitialized local variable part_uuid then gets passed to
-> =C2=A0=C2=A0 check_uuid() -> strchr(), causing a SIGSEGV.
->=20
-> 3. The callers cannot distinguish between 'partition not found,
-> create
-> =C2=A0=C2=A0 new' and 'name construction failed' since both return 0.
->=20
-> Fix by:
-> - Having dm_find_part() return DFP_ERR when format_partname() fails,
-> =C2=A0 with an error message printed by dm_find_part() itself
-> - Defining an enum to represent the return values of dm_find_part():
->=20
-> =C2=A0 enum {
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_DEVICE_CREATE =3D DM_DEVICE_CREATE,
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_DEVICE_RELOAD =3D DM_DEVICE_RELOAD,
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 DFP_ERR =3D -1
-> =C2=A0 };
->=20
-> =C2=A0 This enum is placed in kpartx/devmapper.h, which now also includes
-> =C2=A0 <libdevmapper.h> directly to make the header self-contained.
-> =C2=A0 dm_find_part() uses these enum values explicitly in all return
-> =C2=A0 statements.
-> - In the ADD/UPDATE loops (both main and container), assigning the
-> =C2=A0 return value directly to 'op' and checking for DFP_ERR to handle
-> =C2=A0 errors
-> - In the DELETE loop, checking the return value against
-> =C2=A0 DFP_DEVICE_RELOAD to proceed with removal, skipping on error or
-> =C2=A0 not-found
-> - Initializing part_uuid to NULL in all three partition loop bodies
-> =C2=A0 (ADD/UPDATE main loop, container partition loop, DELETE loop) so
-> =C2=A0 that the 'if (part_uuid && uuid)' guard correctly skips the UUID
-> =C2=A0 check when dm_find_part() returns early
->=20
-> Reproduce steps:
->=20
-> =C2=A0 # Create test image
-> =C2=A0 dd if=3D/dev/zero of=3D/tmp/vhlg-test.img bs=3D1M count=3D10
-> =C2=A0 parted /tmp/vhlg-test.img mklabel msdos
-> =C2=A0 parted /tmp/vhlg-test.img mkpart primary ext4 1MiB 5MiB
->=20
-> =C2=A0 # Reproduce
-> =C2=A0 kpartx -a -p $(python3 -c "print('A'*200)") /tmp/vhlg-test.img
->=20
-> =C2=A0 # Cleanup
-> =C2=A0 kpartx -d /tmp/vhlg-test.img
-> =C2=A0 rm -f /tmp/vhlg-test.img
->=20
-> Signed-off-by: Kou Wenqi <kouwenqi@kylinos.cn>
+Update the header comment to accurately reflect that the device IP is now
+obtained from udev's ID_PATH property.
+Additionally, move the header comment block to the top of the file, remove
+redundant empty comments, and convert style to c++.
 
-Thanks a lot!
+Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>
+Cc: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+---
+ libmultipath/prioritizers/iet.c | 65 +++++++++++++--------------------
+ 1 file changed, 26 insertions(+), 39 deletions(-)
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+diff --git a/libmultipath/prioritizers/iet.c b/libmultipath/prioritizers/iet.c
+index 10152402..a048732b 100644
+--- a/libmultipath/prioritizers/iet.c
++++ b/libmultipath/prioritizers/iet.c
+@@ -1,3 +1,26 @@
++// This prioritizer allows path selection based on target IP address
++//
++// (It's a bit of a misnomer since supports the client side [eg. open-iscsi]
++//  instead of just "iet".)
++//
++// Usage:
++//   prio      "iet"
++//   with either:
++//   prio_args "preferredip=<IP address>"
++//		assigns priority 20 (high) to the preferred IP and priority 10
++//		(low) to the rest.
++//   or
++//   prio_args "ippriorities=<IP|CIDR>:Prio,<IP|CIDR>:Prio,..."
++//		IP can be specified directly or in CIDR notation (IP/32)
++//		CIDR can use standard n.n.n.n/p format or any valid shorthand
++//		0.0.0.0/0 to set the "no match" priority (defaults to 10).
++//
++// Uses udev's ID_PATH property to find the IP of the device.
++// Matching follows network routing semantics (more specific CIDR match wins).
++//
++// by Olivier Lambert <lambert.olivier.gmail.com>
++// Extended "preferredip" added by Arnaldo Viegas de Lima <arnaldo.viegasdelima.com>
++
+ #include "debug.h"
+ #include "prio.h"
+ #include "structs.h"
+@@ -15,32 +38,6 @@
+ #include <sys/types.h>
+ #include <unistd.h>
+ 
+-//
+-// This prioritizer allows path selection based on target IP address
+-//
+-// (It's a bit of a misnomer since supports the client side [eg. open-iscsi]
+-//  instead of just "iet".)
+-//
+-// Usage:
+-//   prio      "iet"
+-//   with either:
+-//   prio_args "preferredip=<IP address>"
+-//		assigns priority 20 (high) to the preferred IP and priority 10
+-//(low) to the rest
+-//   or
+-//   prio_args "ippriorities=<IP|CIDR>:Prio,<IP|CIDR>:Prio,..."
+-//		IP can be specified directly or in CIDR notation (IP/32)
+-//   	CIDR can use standard n.n.n.n/p format or any valid shorthand
+-//   	0.0.0.0/0 to set the "no match" priority (defaults to 10)
+-//
+-// Uses /dev/disk/by-path to find the IP of the device.
+-// Matching follows network routing semantics (more specific match wins)
+-//
+-// by Olivier Lambert <lambert.olivier.gmail.com>
+-// Extended "preferredip" added by Arnaldo Viegas de Lima
+-// (arnaldo.viegasdelima.com)
+-//
+-
+ #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+ #define dc_log(prio, fmt, ...) condlog(prio, "%s " fmt, sysname, __VA_ARGS__)
+ #else /* GCC extension */
+@@ -50,7 +47,6 @@
+ #define DEFAULT_PRIORITY 10
+ #define DEFAULT_HIGH_PRIORITY 20
+ 
+-//
+ // Entry for the CIDR to priority list
+ struct ipprio_entry {
+ 	uint32_t network;
+@@ -59,7 +55,6 @@ struct ipprio_entry {
+ 	struct ipprio_entry *next;
+ };
+ 
+-//
+ // name: find_regex
+ // @param string: string you want to search into
+ // @param regex: the pattern used
+@@ -101,7 +96,6 @@ char *find_regex(const char *string, const char *regex)
+ 	return NULL;
+ }
+ 
+-//
+ // name: prefix_to_mask
+ // @param prefix: CIDR prefix (# of bits)
+ // @return: corresponding network mask (defaults to 32 bits)
+@@ -114,7 +108,6 @@ static uint32_t prefix_to_mask(int prefix)
+ 	return 0xffffffffU << (32 - prefix);
+ }
+ 
+-//
+ // name: parse_cidr
+ // @param s: string containing CIDR block or single IP
+ // @return network: network as integer
+@@ -149,7 +142,7 @@ static int parse_cidr(const char *s, uint32_t *network, uint32_t *mask)
+ 		prefix = (int)val;
+ 
+ 	} else {
+-		/* no CIDR suffix -> exact host match */
++		// no CIDR suffix -> exact host match
+ 		prefix = 32;
+ 	}
+ 
+@@ -179,7 +172,6 @@ static int parse_cidr(const char *s, uint32_t *network, uint32_t *mask)
+ 	return 0;
+ }
+ 
+-//
+ // name: free_ipprio_list
+ // @param list: pointer to list to free
+ // @return: void
+@@ -193,7 +185,6 @@ static void free_ipprio_list(struct ipprio_entry *list)
+ 	}
+ }
+ 
+-//
+ // name: parse_ippriorities
+ // @param args: full prio_args string
+ // @return: 0 if ok -1 if not
+@@ -223,8 +214,7 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
+ 		int priority;
+ 		struct ipprio_entry *e;
+ 
+-		/* A single IP without CIDR mask and priority attain backward compatibility
+-     */
++		// A single IP without CIDR mask and priority attain backward compatibility
+ 		colon = strrchr(entry, ':');
+ 
+ 		if (!colon) {
+@@ -237,7 +227,7 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
+ 
+ 			cidr = entry;
+ 			priority = 20;
+-			entry = NULL; /* consume the only entry */
++			entry = NULL; // consume the only entry
+ 		} else {
+ 			*colon = '\0';
+ 			cidr = entry;
+@@ -291,7 +281,6 @@ static struct ipprio_entry *parse_ippriorities(const char *args)
+ 	return ipprio_list;
+ }
+ 
+-//
+ // name: find_priority - lookup IP in list of CIDRs
+ // @param ipstr: IP to lookup as a string
+ // @param ipprio_list: list of CIDR blocks for the search
+@@ -367,7 +356,6 @@ static int find_priority(const char *sysname, const char *ipstr,
+ 	return best_prio;
+ }
+ 
+-//
+ // name: inet_prio
+ // @param
+ // @return prio
+@@ -440,7 +428,6 @@ int iet_prio(struct udev_device *udev, char *args)
+ 	return prio;
+ }
+ 
+-//
+ // Prioritizer entry point
+ int getprio(struct path *pp, char *args)
+ {
+-- 
+2.55.0
 
-I also added a test case for this problem in the "test-kpartx" script.
-The code is currently on my "tip" branch:
-
-https://github.com/openSUSE/multipath-tools/tree/tip
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
-=BCrnberg)
