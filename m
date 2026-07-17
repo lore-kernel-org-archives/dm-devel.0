@@ -1,38 +1,38 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2E1C3F12E8;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B2CD13D9536;
 	Fri, 17 Jul 2026 11:26:55 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784287615; cv=none; b=YcW/nLieaoZjDdMifzIpnH3cbIOJ+RD3IeWtSHePYqdbAMhKSliRgj8btqqPaaxvbmz5tEXfyj3DmzvjuOGY9prfQR0KrLX1jE2STA8C9ksoyYrEgCXW735PXXO7Jeh3r/5HTA1ONIyIsKPk7fgm8sw1aGj75sB9Fz4eVDABxVs=
+	t=1784287615; cv=none; b=FBudCvHjFvy8IwrgIAn0qohBdgTI46Ym50aDWLgJuemsXPvIvR6ZduYtZ+jp13gasz27+p1kRlJMO2e2/hyz4p0gYlYalQz0F1roLj+40H551C4KWvfgzCp+eX4jZBSnPUeNpBexd39fhn3kQUsk9HZbX41by3mfpE2vHGXJ2Xg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1784287615; c=relaxed/simple;
-	bh=WCWTrGJPjpKGrMhPKAv0k5YF3Pyz/OABBWk16CwOws4=;
+	bh=FU4TB9foOjTAzfRZBxEplTNJb811gkIkuYzaTO0yq48=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=iyNnuHGEPvi/jqRCT6ZTUq+zCptk+1NlMRG1woPg5c6vAORzH401NnZUiI5IbZqVvhnaEQCjU34awncEAEiBZp25IlymbimJ20LJmZ4/hKLFdO7Fp/cz446GdTRgpgdRpcFVU7/DK5HAuNlJ6fvZ5V6k2xzjUF1yX/UHxGqPtvo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GPpfB5sg; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:To:Cc; b=sWpQeTiFQae8A7FbTKLNuOTyNSqpY4yPFm9Y/oBbuTDPG3Ei2J0UM3g8bnN7wkzLcf42e5ZfXkdS8XNnNK0xG7R2tX81fnXwJrYJ4wCyLMfuRyTQMUmqoKwoRxmIAV85uCv2vGnRF4h/L6wUfNMAgwpp605n4ITjkn+Kc2w9J78=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=QhnYq2cD; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GPpfB5sg"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 06013C2BCB8;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="QhnYq2cD"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 0FF75C2BCF4;
 	Fri, 17 Jul 2026 11:26:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=k20201202; t=1784287615;
-	bh=WCWTrGJPjpKGrMhPKAv0k5YF3Pyz/OABBWk16CwOws4=;
+	bh=FU4TB9foOjTAzfRZBxEplTNJb811gkIkuYzaTO0yq48=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
-	b=GPpfB5sgC0sfx90SzmOO0dkGJr/W9nqrK+0wrn40h6pfxSyHgEgRFu0daFmd0SsZV
-	 Sikgf9ECCLV2QOLwGV2HekgwbpgN8HuKs/nMb3qil2Jm90Cma00OuG4kPGseItnj+H
-	 A/PezjD9aPCqt/YG6UZnklLo053ln39UPXrp2mhw8SueASx7NPsehqBytdQa2ycv4G
-	 9wDWD+FV/XAxzPVxcJwh7HsmWYOXvnOzsUbMhvyT3AHz1zu3Nrw6/cPsKL/d4d7kuF
-	 wkyoIGrNMwqD1GVjwXIF32jZoamBTbTcik4VeEhmBNfupeESqODcnOrYzxdo6Bqjar
-	 uiE5wgT8Jmcdw==
+	b=QhnYq2cDp8uze6laRAKffOpD/HGdfkDpnpRHQ0uESM/eJSOlK5v6rHecOIWG73bnv
+	 kCRd1WRpNvX30zKsWcxf3e3q3KMe2FHK3pmcDDZACNQ6T4nbv9mA4gyOSgm1MLs0IQ
+	 nqH6btYqHaIVY7yKYJcbPEFfHUWZTUcbTS6wpN8iZkYjxaKsboCjP83YaTsGHkMV+y
+	 8yBfQxlCyWJOQWrT6AFDxyycDu0Y/P+m5dPH4DchEoAKPdqcFcOqBvlFeTo7LcTOJj
+	 v0PeylQt/13okE7cBBOhc6jzUftU5bYrOf6bHdEhiauPKZIszBDPi7m835WEcPDNrV
+	 orA9+qaJ4DfsQ==
 Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DBABBC44516;
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E856AC44520;
 	Fri, 17 Jul 2026 11:26:54 +0000 (UTC)
 From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
-Date: Fri, 17 Jul 2026 06:26:54 -0500
-Subject: [PATCH v2 01/11] dm-pcache: validate seg_id fields from persistent
- memory
+Date: Fri, 17 Jul 2026 06:26:55 -0500
+Subject: [PATCH v2 02/11] dm-pcache: validate geometry fields from on-disk
+ cache_info
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -41,18 +41,18 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260717-b4-disp-4c0a0039-v2-1-19227d6e313c@proton.me>
+Message-Id: <20260717-b4-disp-4c0a0039-v2-2-19227d6e313c@proton.me>
 References: <20260717-b4-disp-4c0a0039-v2-0-19227d6e313c@proton.me>
 In-Reply-To: <20260717-b4-disp-4c0a0039-v2-0-19227d6e313c@proton.me>
 To: Zheng Gu <cengku@gmail.com>, Dongsheng Yang <dongsheng.yang@linux.dev>
 Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>, 
  linux-kernel@vger.kernel.org
 X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1784287613; l=8861;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1784287613; l=2084;
  i=hexlabsecurity@proton.me; s=proton; h=from:subject:message-id;
- bh=gx6bjz1FQtrra3y13vv1tAq57E8F+9xcRi54L7st570=;
- b=xcJBDQKwxqbOv3YTrqYbPmDlFPud3KskH9RwLLCZegjeoXxoYVMQBFawEGpSOKIkVJZMOFaV5
- woKUt6NHYN9ATzhl4W69W8eCvk8QaJys+NjQv9PaTSnO3y0r5C/aAKo
+ bh=GCHE1PL/rUxoLoC9YQBxjQe4fFzhqS5ltYxbiHXbkRg=;
+ b=SqdujfX6WK0cZuhU3P+/HjIYYk/pnJEoHQNxbOtE7SY5MSzZq5lkwa00RVFxttWRR0BIiJKG5
+ GBcD3GTe0eBDE1LYvPEK1QE5ycjrq75kJvibXYGPDRVQWoalvewntKq
 X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
  pk=dmppBMZNLLoPzxHi9l8tZDzEZUunPbgsYqIZYXeUrL0=
 X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/proton with
@@ -62,231 +62,58 @@ Reply-To: hexlabsecurity@proton.me
 
 From: Bryam Vargas <hexlabsecurity@proton.me>
 
-cache_pos_decode(), cache_key_decode() and the last-kset branches of
-cache_replay(), the writeback worker and the GC worker take a cache
-segment id from the cache device metadata and index cache->segments[]
-with it without checking it against cache->n_segs. That metadata is only
-CRC-protected with a fixed public seed, so whoever supplies the cache
-device on a table load (CAP_SYS_ADMIN) controls the id; an out-of-range
-value forms a wild pcache_cache_segment pointer that is dereferenced and
-written through -- an out-of-bounds read and write driven by on-disk data.
+cache_segs_init() iterates cache_info->n_segs times indexing
+cache->segments[], which is sized to the cache device geometry, and
+get_seg_id() takes each segment id from the on-media cache_info and the
+per-segment next_seg link. Both come from cache device metadata that is
+only CRC-protected with a fixed public seed, so whoever supplies the
+cache device on a table load (CAP_SYS_ADMIN) controls them: an oversized
+n_segs or an out-of-range id drives an out-of-bounds access of
+cache->segments[] and a wild CACHE_DEV_SEGMENT() pointer into the device
+mapping -- an out-of-bounds read and write from on-disk data.
 
-Add cache_seg_id_valid() and reject an out-of-range id at each decode
-site, failing the operation with -EIO instead of indexing past the array.
-Bound the id against the initialized-segment count (cache_info.n_segs)
-rather than the physical device total. A forged cache_info.n_segs below
-seg_num otherwise leaves segments[cache_info.n_segs..seg_num) as zeroed
-structs whose data pointer is NULL, so a forged id in that window would
-still be dereferenced. A later patch guarantees cache_info.n_segs <=
-seg_num, and a driver-created cache sets the two equal, so valid images
-are unaffected.
+Reject an n_segs that exceeds the device segment count and a segment id
+that is out of range before either is used. Valid metadata is unaffected.
 
 Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-mapper")
 Cc: stable@vger.kernel.org
 Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
 ---
- drivers/md/dm-pcache/cache.c           |  4 ++++
- drivers/md/dm-pcache/cache.h           | 15 +++++++++++++++
- drivers/md/dm-pcache/cache_gc.c        | 16 ++++++++++++++--
- drivers/md/dm-pcache/cache_key.c       | 11 +++++++++++
- drivers/md/dm-pcache/cache_writeback.c | 23 +++++++++++++++++++----
- 5 files changed, 63 insertions(+), 6 deletions(-)
+ drivers/md/dm-pcache/cache.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
 diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
-index bb1ada31e483..e9d2b87174d7 100644
+index e9d2b87174d7..e4784578b9af 100644
 --- a/drivers/md/dm-pcache/cache.c
 +++ b/drivers/md/dm-pcache/cache.c
-@@ -118,6 +118,9 @@ int cache_pos_decode(struct pcache_cache *cache,
- 	if (!latest_addr)
- 		return -EIO;
- 
-+	if (!cache_seg_id_valid(cache, latest.cache_seg_id))
-+		return -EIO;
-+
- 	pos->cache_seg = &cache->segments[latest.cache_seg_id];
- 	pos->seg_off = latest.seg_off;
- 	*seq = latest.header.seq;
-@@ -155,6 +158,7 @@ static int cache_init(struct dm_pcache *pcache)
- 	cache->cache_dev = &pcache->cache_dev;
- 	cache->n_segs = cache_dev->seg_num;
- 	atomic_set(&cache->gc_errors, 0);
-+	atomic_set(&cache->writeback_errors, 0);
- 	spin_lock_init(&cache->seg_map_lock);
- 	spin_lock_init(&cache->key_head_lock);
- 
-diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
-index 27613b56be54..919736379b76 100644
---- a/drivers/md/dm-pcache/cache.h
-+++ b/drivers/md/dm-pcache/cache.h
-@@ -180,6 +180,7 @@ struct pcache_cache {
- 		u32 advance;
- 		int ret;
- 	} writeback_ctx;
-+	atomic_t		writeback_errors;
- 
- 	char gc_kset_onmedia_buf[PCACHE_KSET_ONMEDIA_SIZE_MAX];
- 	struct delayed_work	gc_work;
-@@ -420,6 +421,20 @@ static inline bool cache_seg_is_ctrl_seg(u32 cache_seg_id)
- 	return (cache_seg_id == 0);
- }
- 
-+/**
-+ * cache_seg_id_valid - Validate a cache segment id read from the cache device.
-+ * @cache: Pointer to the pcache_cache structure.
-+ * @cache_seg_id: Segment id decoded from on-media metadata.
-+ *
-+ * On-media segment ids are only protected by a CRC, which an attacker who can
-+ * format the cache device computes over their chosen value. Reject any id that
-+ * would index cache->segments[] out of bounds before it is dereferenced.
-+ */
-+static inline bool cache_seg_id_valid(struct pcache_cache *cache, u32 cache_seg_id)
-+{
-+	return cache_seg_id < cache->cache_info.n_segs;
-+}
-+
- /**
-  * cache_key_cutfront - Cuts a specified length from the front of a cache key.
-  * @key: Pointer to pcache_cache_key structure.
-diff --git a/drivers/md/dm-pcache/cache_gc.c b/drivers/md/dm-pcache/cache_gc.c
-index 94f8b276a021..02fa0ce03134 100644
---- a/drivers/md/dm-pcache/cache_gc.c
-+++ b/drivers/md/dm-pcache/cache_gc.c
-@@ -74,11 +74,17 @@ static bool need_gc(struct pcache_cache *cache, struct pcache_cache_pos *dirty_t
-  * @cache: Pointer to the pcache_cache structure.
-  * @kset_onmedia: Pointer to the kset_onmedia structure for the last kset.
-  */
--static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
-+static int last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_onmedia *kset_onmedia)
- {
- 	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
- 	struct pcache_cache_segment *cur_seg, *next_seg;
- 
-+	if (!cache_seg_id_valid(cache, kset_onmedia->next_cache_seg_id)) {
-+		pcache_dev_err(pcache, "invalid next_cache_seg_id %u in gc (n_segs %u)\n",
-+				kset_onmedia->next_cache_seg_id, cache->n_segs);
-+		return -EIO;
-+	}
-+
- 	cur_seg = cache->key_tail.cache_seg;
- 
- 	next_seg = &cache->segments[kset_onmedia->next_cache_seg_id];
-@@ -94,6 +100,8 @@ static void last_kset_gc(struct pcache_cache *cache, struct pcache_cache_kset_on
- 	spin_lock(&cache->seg_map_lock);
- 	__clear_bit(cur_seg->cache_seg_id, cache->seg_map);
- 	spin_unlock(&cache->seg_map_lock);
-+
-+	return 0;
- }
- 
- void pcache_cache_gc_fn(struct work_struct *work)
-@@ -130,7 +138,11 @@ void pcache_cache_gc_fn(struct work_struct *work)
- 			if (dirty_tail.cache_seg == key_tail.cache_seg)
- 				break;
- 
--			last_kset_gc(cache, kset_onmedia);
-+			ret = last_kset_gc(cache, kset_onmedia);
-+			if (ret) {
-+				atomic_inc(&cache->gc_errors);
-+				return;
-+			}
- 			continue;
+@@ -251,6 +251,13 @@ static int get_seg_id(struct pcache_cache *cache,
+ 		} else {
+ 			*seg_id = cache->cache_info.seg_id;
  		}
- 
-diff --git a/drivers/md/dm-pcache/cache_key.c b/drivers/md/dm-pcache/cache_key.c
-index e068e878231b..8eec5238c5da 100644
---- a/drivers/md/dm-pcache/cache_key.c
-+++ b/drivers/md/dm-pcache/cache_key.c
-@@ -94,6 +94,12 @@ int cache_key_decode(struct pcache_cache *cache,
- 	key->off = key_onmedia->off;
- 	key->len = key_onmedia->len;
- 
-+	if (!cache_seg_id_valid(cache, key_onmedia->cache_seg_id)) {
-+		pcache_dev_err(pcache, "invalid cache_seg_id %u in cache key (n_segs %u)\n",
-+				key_onmedia->cache_seg_id, cache->n_segs);
-+		return -EIO;
-+	}
 +
- 	key->cache_pos.cache_seg = &cache->segments[key_onmedia->cache_seg_id];
- 	key->cache_pos.seg_off = key_onmedia->cache_seg_off;
- 
-@@ -789,6 +795,11 @@ int cache_replay(struct pcache_cache *cache)
- 
- 			pcache_dev_debug(pcache, "last kset replay, next: %u\n", kset_onmedia->next_cache_seg_id);
- 
-+			if (!cache_seg_id_valid(cache, kset_onmedia->next_cache_seg_id)) {
-+				ret = -EIO;
-+				goto out;
-+			}
-+
- 			next_seg = &cache->segments[kset_onmedia->next_cache_seg_id];
- 
- 			pos->cache_seg = next_seg;
-diff --git a/drivers/md/dm-pcache/cache_writeback.c b/drivers/md/dm-pcache/cache_writeback.c
-index 87a82b3fe836..7751468d5118 100644
---- a/drivers/md/dm-pcache/cache_writeback.c
-+++ b/drivers/md/dm-pcache/cache_writeback.c
-@@ -196,12 +196,18 @@ static int cache_kset_insert_tree(struct pcache_cache *cache, struct pcache_cach
- 	return ret;
- }
- 
--static void last_kset_writeback(struct pcache_cache *cache,
-+static int last_kset_writeback(struct pcache_cache *cache,
- 		struct pcache_cache_kset_onmedia *last_kset_onmedia)
- {
- 	struct dm_pcache *pcache = CACHE_TO_PCACHE(cache);
- 	struct pcache_cache_segment *next_seg;
- 
-+	if (!cache_seg_id_valid(cache, last_kset_onmedia->next_cache_seg_id)) {
-+		pcache_dev_err(pcache, "invalid next_cache_seg_id %u in writeback (n_segs %u)\n",
-+				last_kset_onmedia->next_cache_seg_id, cache->n_segs);
-+		return -EIO;
-+	}
-+
- 	pcache_dev_debug(pcache, "last kset, next: %u\n", last_kset_onmedia->next_cache_seg_id);
- 
- 	next_seg = &cache->segments[last_kset_onmedia->next_cache_seg_id];
-@@ -211,6 +217,8 @@ static void last_kset_writeback(struct pcache_cache *cache,
- 	cache->dirty_tail.seg_off = 0;
- 	cache_encode_dirty_tail(cache);
- 	mutex_unlock(&cache->dirty_tail_lock);
-+
-+	return 0;
- }
- 
- void cache_writeback_fn(struct work_struct *work)
-@@ -229,6 +237,9 @@ void cache_writeback_fn(struct work_struct *work)
- 	if (pcache_is_stopping(pcache))
- 		goto unlock;
- 
-+	if (atomic_read(&cache->writeback_errors))
-+		goto unlock;
-+
- 	kset_onmedia = (struct pcache_cache_kset_onmedia *)cache->wb_kset_onmedia_buf;
- 
- 	mutex_lock(&cache->dirty_tail_lock);
-@@ -241,15 +252,19 @@ void cache_writeback_fn(struct work_struct *work)
- 	}
- 
- 	if (kset_onmedia->flags & PCACHE_KSET_FLAGS_LAST) {
--		last_kset_writeback(cache, kset_onmedia);
-+		ret = last_kset_writeback(cache, kset_onmedia);
-+		if (ret) {
-+			atomic_inc(&cache->writeback_errors);
-+			goto unlock;
++		if (*seg_id >= cache_dev->seg_num) {
++			pcache_dev_err(pcache, "invalid segment id %u from cache device (seg_num %u)\n",
++				       *seg_id, cache_dev->seg_num);
++			ret = -EIO;
++			goto err;
 +		}
- 		delay = 0;
- 		goto queue_work;
  	}
+ 	return 0;
+ err:
+@@ -266,6 +273,13 @@ static int cache_segs_init(struct pcache_cache *cache)
+ 	int ret;
+ 	u32 i;
  
- 	ret = cache_kset_insert_tree(cache, kset_onmedia);
- 	if (ret) {
--		delay = PCACHE_CACHE_WRITEBACK_INTERVAL;
--		goto queue_work;
-+		atomic_inc(&cache->writeback_errors);
-+		goto unlock;
- 	}
- 
- 	cache_wb_tree_writeback(cache, get_kset_onmedia_size(kset_onmedia));
++	if (cache_info->n_segs > cache->cache_dev->seg_num) {
++		pcache_dev_err(CACHE_TO_PCACHE(cache),
++			       "cache_info n_segs %u exceeds cache device segments %u\n",
++			       cache_info->n_segs, cache->cache_dev->seg_num);
++		return -EIO;
++	}
++
+ 	for (i = 0; i < cache_info->n_segs; i++) {
+ 		ret = get_seg_id(cache, prev_cache_seg, new_cache, &seg_id);
+ 		if (ret)
 
 -- 
 2.43.0
