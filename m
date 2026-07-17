@@ -1,106 +1,102 @@
-Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C6913FE35C
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 13:27:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A92C314D35
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 16:01:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784294843; cv=none; b=q+HzA3xA/QtZX6/9/WZN2gcabCeHtsq48D1Un5snhJshCZty/kYEfc7k0QtmTDoIi5Vu/I/n00GT4vucA1BZSPdf8R0BJTwol+SliuUmn6nqR9oi401MUmddw39ZLE+1q9zqu8XMNb6s86zJyi6oX1K4z+RipZDzfUmWtNB6XsM=
+	t=1784304077; cv=none; b=ZjOoHvPBs1pvo2Xt/nE2VMO7wv0+3fVL4Xd6uN9dEL4MvtvzRDnh2TmdfcYmaIvfv3OQyXKSJnyMkNG1KWn38wD104TSWk9YZJBPgUlHHxzRgcREkm7l+/drpMaSlMVk+l1WMBcSPXnJwPwNHABkI2+unZ509HvWuQsTBiK5g9M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784294843; c=relaxed/simple;
-	bh=kQYQL3OxeFfFG4BnThogm/1RRWruuf9sOjMV5nDo/vQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=UfUyOUNGTddkDOvDPTvxPqHdLLnHP5LUdIfB97Z1WuqQ7NEcmcBgdKteLcz12kczaEa6dMrcmlC76bZCjj5aeBzynzFlG4UVZo7wf1OHXLjLlFRv49Ac3t9FD/Fu1iK9t2Fo5XyCDC1esqoytbMs0wekhJaNEi2otBgE+4tA468=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NDHPsJ75; arc=none smtp.client-ip=209.85.128.52
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1784304077; c=relaxed/simple;
+	bh=CV+b1mGM4CL0QbFuui7pfIxlQYePQ5TQCCbzuMQZd8U=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:content-type; b=uqDsFPfTNas9tviddsnQ7D35MO92/6vIcHa8J8+n/hFHB4sahH10vzNdlhbHlfNBhJswb6BZREc4u++q0nnYGXUW5ViTMMFPRC2wAxzgS9GiyBNkaAZMWMU3LaBuy4z+00KFBzSpeAapIBg6Ztm1GG3VG6X+108kKSemT0EUzJI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DomusJMK; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NDHPsJ75"
-Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-4925a778491so2951595e9.0
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 06:27:21 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784294840; x=1784899640; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:mime-version:date
-         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=b1yKGpPgMB9NCx1IuZchwKVGK9ZwcozYfjEM+nK9wVU=;
-        b=NDHPsJ75FNR4I0SAbSY0D9clbkKhF1yLqEKmrWD8G+W4+wWMGuXmuGyQC9aVrU2CiX
-         HRj9bi0s73ISCGnolxUAMrV4FVUmMOgGtG5cELqL4OaQHwA2tvFFguyZzbKbc58TIXKh
-         ucBiv2w5r+NQqCedEPvEmt1MpxEx+cGVqwie7WK7qneMq+ATuIQU/zW9YFDrBu6ZfRRV
-         EmsPuBgrvpXkEb8JmPd32qSXPi3RrX3pec3Rb3VpgnS6zHYml7s0d+NZ7bxWhbQ991uW
-         yHF0sqHtOb0o+8fpvXOnmmrWFzr1oLrjSfhQnjNKN3rB9bs9aD5iO2CaE4hjwD6uy61d
-         93zg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784294840; x=1784899640;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:mime-version:date
-         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=b1yKGpPgMB9NCx1IuZchwKVGK9ZwcozYfjEM+nK9wVU=;
-        b=IUJppGuqhIGRJ9gOpf+NhIRdNGsWmEob/9E2F/nqkiwDnJ1vDOthzM7lyG5y3Q3KHR
-         Eqpgnw11aB1reklUfmvh55dRLwuU3S0PV/VMPKpukTSChuoShBxBl9eA4GHmVLmkjnRI
-         zGmPFMqkxzEalFIqyarpCwZkaVT9mS3AHEMCwL6QY/Tw9/wkCZZGNZ0BTmq2b+NMk711
-         d/ruxasMG30g3CleAEY5BZb/qQdAghGuYeetEME09KG650DLFWdE9wQwzzpB+vh84EqD
-         1oajak5m77tF4witXIb2fmXu9NzExoOpuwOZPHz+eBkloyXjePfqoEJRvS8vUE6SVRWq
-         vE2g==
-X-Gm-Message-State: AOJu0YzhPqRemw9nt2dHo+rcTHtsFB8SwT/ZzjJszpthpWEFggx9K6UF
-	r78iShn57hwe0w6NKJELW6NSf8FngNpoOmgVYzmEp0YWm7I6/jYPCws=
-X-Gm-Gg: AfdE7cnr2xP5xn+p8NbWlUEAYObBA4SKq52VWE4yx1RnMbUTmZrOpO2ILVkI6VaUmx5
-	4Zf4ZU7BIjqzBPkX4a4ZUf1edSlXeT/mXQe1WPdPsRvH4Zxx/8AH05i73KjEDG+lqvYYzf/w5oc
-	1hxNWbi+dD7AR/sfFXrRmYxoWcwRc9aAf0OvbGVKAxYKJzGgr3tsMZrHuZM0/A59PVafje6jtOm
-	M3KlB58aTHtBxAkbSw8ZR2kB2F6XrY6yBYyBdDmAnjse4hAaQWg/DmudbSGmeGg9y177NV5ja43
-	qWmOzUnA/zh5lt3IjMYMtaZIGRz07jrNb4QbY5aLtJyYYWFR3wXO0fIcVFcJ175nw1qf7RFsJJr
-	9998jgNYgUQsEsnWK8GWzmo0qHCs+CeKte37itxbmgCHWLHmIjS8q1ADJaWgx1qrI8H3HWvqZQF
-	MWAuUNHRkOTq7dC/vqEiLGM43+5UhEUqiQWLNwmQnVWeoh+Sg=
-X-Received: by 2002:a05:600c:548f:b0:492:7082:92e9 with SMTP id 5b1f17b1804b1-4954a8e3851mr18157135e9.0.1784294840156;
-        Fri, 17 Jul 2026 06:27:20 -0700 (PDT)
-Received: from localhost (3.red-80-39-57.staticip.rima-tde.net. [80.39.57.3])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47f63ee0086sm4281635f8f.30.2026.07.17.06.27.19
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 Jul 2026 06:27:19 -0700 (PDT)
-Message-ID: <0467af29-1ada-4d20-a5b8-acba5c166e33@gmail.com>
-Date: Fri, 17 Jul 2026 15:27:18 +0200
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DomusJMK"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1784304075;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=aOFouLRnJiIAp3snfrtYeUt+ZFUNanSxfffcJ9k3RRk=;
+	b=DomusJMKRPWFKJMYkhz3XVAMFAtszbSEzLEArm24dvl6L5eEWxfqBDVomVj5X3z9ZHtcVZ
+	8XS9uQpXcOX+MQYIdCR6/kgqI6+OtUCPZIMnYwV4EBtUDUlDkY8BZVvXUvL82VA+FANs/I
+	1g9kogHQr9W0USX4L2iem+5e5vG0mig=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-468-vxyUSeWGOK6tSxWIm5tQYQ-1; Fri,
+ 17 Jul 2026 12:01:12 -0400
+X-MC-Unique: vxyUSeWGOK6tSxWIm5tQYQ-1
+X-Mimecast-MFC-AGG-ID: vxyUSeWGOK6tSxWIm5tQYQ_1784304072
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CCB3C1954B27
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 16:01:11 +0000 (UTC)
+Received: from vdo-builder-msakai.permabit.com (ci-vm-10-0-103-170.hosted.upshift.rdu2.redhat.com [10.0.103.170])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id B17A5180025F;
+	Fri, 17 Jul 2026 16:01:11 +0000 (UTC)
+Received: by vdo-builder-msakai.permabit.com (Postfix, from userid 1138)
+	id 3D3CB20BF2; Fri, 17 Jul 2026 12:01:11 -0400 (EDT)
+From: Matthew Sakai <msakai@redhat.com>
+To: dm-devel@lists.linux.dev
+Cc: Matthew Sakai <msakai@redhat.com>
+Subject: [PATCH] dm vdo: don't read repair field in loop condition
+Date: Fri, 17 Jul 2026 12:01:11 -0400
+Message-ID: <db6850416670928dece4ac4eec7bc3af2e543b0d.1784303851.git.msakai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH 1/2] multipath: clean up find_multipaths documentation
-To: Martin Wilck <Martin.Wilck@suse.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>
-References: <20250307001034.3141833-1-bmarzins@redhat.com>
-Content-Language: en-US, en-GB, es-ES
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <20250307001034.3141833-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: suTKO7TOUD38-SRFU-BINLhQkIMGokXGg3G1asVEkgE_1784304072
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On 3/7/25 1:10 AM, Benjamin Marzinski wrote:
+Respell the vio launch loop to use the existing vio_count
+value. The repair completion is not guaranteed to persist
+after all of the metadata_vios are launched. This can not
+currently cause problems due to the way vio callbacks are
+handled, but it is technically not safe to access those
+fields.
 
-> The preferred term is "on" instead of "yes".
-> 
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->   multipath/multipath.conf.5.in | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
-> index 0c1eff40..bdb6b605 100644
-> --- a/multipath/multipath.conf.5.in
-> +++ b/multipath/multipath.conf.5.in
-> @@ -1214,7 +1214,7 @@ Both multipathd and multipath treat every non-blacklisted device as multipath
->   device path.
->   .TP
->   .I smart
-> -This differs from \fIfind_multipaths yes\fR only in
-> +This differs from \fIfind_multipaths on\fR only in
->   the way it treats new devices for which only one path has been
->   detected yet. When such a device is first encountered in udev rules, it is
->   treated as a multipath device. multipathd waits whether additional paths with
+Signed-off-by: Matthew Sakai <msakai@redhat.com>
+---
+ drivers/md/dm-vdo/repair.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-Could we please backport this patch to the stable-0.10.y and stable-0.11.y branches?
+diff --git a/drivers/md/dm-vdo/repair.c b/drivers/md/dm-vdo/repair.c
+index bfed62260280..e5263a5716f6 100644
+--- a/drivers/md/dm-vdo/repair.c
++++ b/drivers/md/dm-vdo/repair.c
+@@ -1696,6 +1696,7 @@ void vdo_repair(struct vdo_completion *parent)
+ 	struct vdo *vdo = parent->vdo;
+ 	struct recovery_journal *journal = vdo->recovery_journal;
+ 	physical_block_number_t pbn = journal->origin;
++	block_count_t i;
+ 	block_count_t remaining = journal->size;
+ 	block_count_t vio_count = DIV_ROUND_UP(remaining, MAX_BLOCKS_PER_VIO);
+ 	page_count_t page_count = min_t(page_count_t,
+@@ -1749,9 +1750,8 @@ void vdo_repair(struct vdo_completion *parent)
+ 		remaining -= blocks;
+ 	}
+ 
+-	for (vio_count = 0; vio_count < repair->vio_count;
+-	     vio_count++, pbn += MAX_BLOCKS_PER_VIO) {
+-		vdo_submit_metadata_vio(&repair->vios[vio_count], pbn, read_journal_endio,
++	for (i = 0; i < vio_count; i++, pbn += MAX_BLOCKS_PER_VIO) {
++		vdo_submit_metadata_vio(&repair->vios[i], pbn, read_journal_endio,
+ 					handle_journal_load_error, REQ_OP_READ);
+ 	}
+ }
+-- 
+2.53.0
 
-Thanks.
