@@ -1,100 +1,106 @@
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E7C73ED5B9
-	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 11:27:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C6913FE35C
+	for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 13:27:22 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784287676; cv=none; b=LMwv2l7RAGCOfERRUuAIfn8maOIT4dxQGwDo68yWV737mNRuVIXWqyHhTXRJC9Vz0GSNwPGJx3RpllTvr918NQCfVMYHFofnkMZ9ulTAhx1gkLIQrqRTiPKQBarXjbCetAUjIOVzCYnPqyUuNmm4DEGerLk/gWrX8vjeMXsYwME=
+	t=1784294843; cv=none; b=q+HzA3xA/QtZX6/9/WZN2gcabCeHtsq48D1Un5snhJshCZty/kYEfc7k0QtmTDoIi5Vu/I/n00GT4vucA1BZSPdf8R0BJTwol+SliuUmn6nqR9oi401MUmddw39ZLE+1q9zqu8XMNb6s86zJyi6oX1K4z+RipZDzfUmWtNB6XsM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784287676; c=relaxed/simple;
-	bh=7XeQZ2DudffJlBCXiZrwWLm4246uihdAwNor/6AUg1s=;
-	h=Message-ID:Date:MIME-Version:Subject:Cc:References:From:
-	 In-Reply-To:Content-Type; b=mNv5cTSzZztYeTlcn9mjlYHW9b6Ch3aCvlTh4tNyzwRNiTPyoRUgdaACCMTWGW0euJ/JCKbxUsX4GfDraWNRERVtf+mjq0CbqxiRvSmESwldv6ff38oqprKxsUsZaMpiI42u2P5BvJ6lzfjpMEDIh9U/TQpqxZfEsWTM8ZjIrTo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=UnUm1daG; arc=none smtp.client-ip=209.85.221.52
+	s=arc-20240116; t=1784294843; c=relaxed/simple;
+	bh=kQYQL3OxeFfFG4BnThogm/1RRWruuf9sOjMV5nDo/vQ=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=UfUyOUNGTddkDOvDPTvxPqHdLLnHP5LUdIfB97Z1WuqQ7NEcmcBgdKteLcz12kczaEa6dMrcmlC76bZCjj5aeBzynzFlG4UVZo7wf1OHXLjLlFRv49Ac3t9FD/Fu1iK9t2Fo5XyCDC1esqoytbMs0wekhJaNEi2otBgE+4tA468=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NDHPsJ75; arc=none smtp.client-ip=209.85.128.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="UnUm1daG"
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-472c021a608so823551f8f.3
-        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 04:27:47 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NDHPsJ75"
+Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-4925a778491so2951595e9.0
+        for <dm-devel@lists.linux.dev>; Fri, 17 Jul 2026 06:27:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784287664; x=1784892464; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1784294840; x=1784899640; darn=lists.linux.dev;
         h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:subject:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Y8C74k/RrBiNpLFnzsZ/yYJeJv0nx8FBD5PSz+38fPc=;
-        b=UnUm1daGeCSN0iMRZpf9AskxhnkkYRnWONNVlbTOpfH+wfw976FrdrbbSjG5t8qCkL
-         jpTATe1+VgKpnLKPUd8iWppdphXF6YeAQgbB/LeR9zsfRlZK2gtes+8EzsgqRPdvx6qF
-         HmKR3gsv874ltJcgOLQz5WsM2DMK6U5kRG3ABKnaZwakZn4qAN2t+wp7SRF+FZolGgur
-         //X01RaSOhULW34Q5/37ThptIh4PfVUe7PYiNk3cAAsuPXIyn2kXKKFBbq2GAerx2rvv
-         I8qwgcRhoiAxx3YNM4vmZqS8CzJmzpGkMXjlyAtTGqOa3hYEfqag60jWbvZTloNW6F9C
-         YyRA==
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=b1yKGpPgMB9NCx1IuZchwKVGK9ZwcozYfjEM+nK9wVU=;
+        b=NDHPsJ75FNR4I0SAbSY0D9clbkKhF1yLqEKmrWD8G+W4+wWMGuXmuGyQC9aVrU2CiX
+         HRj9bi0s73ISCGnolxUAMrV4FVUmMOgGtG5cELqL4OaQHwA2tvFFguyZzbKbc58TIXKh
+         ucBiv2w5r+NQqCedEPvEmt1MpxEx+cGVqwie7WK7qneMq+ATuIQU/zW9YFDrBu6ZfRRV
+         EmsPuBgrvpXkEb8JmPd32qSXPi3RrX3pec3Rb3VpgnS6zHYml7s0d+NZ7bxWhbQ991uW
+         yHF0sqHtOb0o+8fpvXOnmmrWFzr1oLrjSfhQnjNKN3rB9bs9aD5iO2CaE4hjwD6uy61d
+         93zg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784287664; x=1784892464;
+        d=1e100.net; s=20251104; t=1784294840; x=1784899640;
         h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:subject:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=Y8C74k/RrBiNpLFnzsZ/yYJeJv0nx8FBD5PSz+38fPc=;
-        b=hOmsk1MjDtLxaywG0GBXeR3ewtm6TzCqxItgxW8WPJgZYJVg51kxGNV3vYisye0zYs
-         MAMQB4+l/Z3nIkmed5RCttj9Jcuy6OEstb5egeYruZmSu2QMRakvXn3Uiu/dJXFUBXyk
-         Sz7yeg27PQcMu9AmRtkoRA2o0crlROuA5kIX4T50A5qpzHlgYCQJeowxp8JJFERj1axt
-         yLqc6lKKFpTItFMM27jrEMRT/jpCJwIARlLhSBMt4kygmQTkAb7caWo54Fy/TfAqN9ym
-         YryOuStjhTOEnrRtGwvZo8I0jiudJTGzznDFW3WiV6Ma5Stx8jGEJcZr00GgYMci6QFF
-         9Fog==
-X-Forwarded-Encrypted: i=1; AHgh+Rr78zw7WGVo8IOM2BSETLmfqaK7hypcgWhlFuRwDsmGH7eoq2DxpNjCu/JK4WB8mZvLmOUdn5pE2A==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx2hpCcIIYqrHyUcaa8hjMasN5mtLDCrDUb9viPbibf+MTbDOOW
-	Tdyg5ze8I8SnycRToXyE10m3O+Ver7K0VnK/qcgJrJTHqG6igWE4PRo=
-X-Gm-Gg: AfdE7ck4Fjq9cKuABVPFjMP32tMPtUNSyLqcCWWIWmj5ypCJjyDtbWgkWmLMq3bsXXJ
-	gpp09rOlK50iqEkTftYfuNR38HYml0DCcKtT5/giJWFpptuA/orwP7gkREBNSHaqKo0T8LFpZ9U
-	Ta5Vm0XTaUy3l3rPYd1s2G26satjyT7W8FSvzhhbl9mj2gW88MrozUax2uKgMEB5OdV/armxDNS
-	83+7XWPUjGVtEE0GDTplTEFX4nXEEf2Grdh3uE6LStcIqW7y/qD5Xx6tv20l+TyBEKpUQcAqheK
-	1nJezmKCSFAMG2SObgGNhziVe2MOnPHnrTgXpo+P4/YU1GUTSYGXguddBHqhigPfEPl+h91px+N
-	y4yUwLdHfOe+Mb1Nn0hM7U5P9AOreqRfSP8mp4tMEcY3bpXhVU1ynx39GwAXmNch2cYM6OolU0x
-	vpw1Jn2Do9thQdauQFMyW6TvvSGq9aUcreWQiC
-X-Received: by 2002:a05:6000:310c:b0:472:55a:ef95 with SMTP id ffacd0b85a97d-47f622f24b4mr1840986f8f.2.1784287663504;
-        Fri, 17 Jul 2026 04:27:43 -0700 (PDT)
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=b1yKGpPgMB9NCx1IuZchwKVGK9ZwcozYfjEM+nK9wVU=;
+        b=IUJppGuqhIGRJ9gOpf+NhIRdNGsWmEob/9E2F/nqkiwDnJ1vDOthzM7lyG5y3Q3KHR
+         Eqpgnw11aB1reklUfmvh55dRLwuU3S0PV/VMPKpukTSChuoShBxBl9eA4GHmVLmkjnRI
+         zGmPFMqkxzEalFIqyarpCwZkaVT9mS3AHEMCwL6QY/Tw9/wkCZZGNZ0BTmq2b+NMk711
+         d/ruxasMG30g3CleAEY5BZb/qQdAghGuYeetEME09KG650DLFWdE9wQwzzpB+vh84EqD
+         1oajak5m77tF4witXIb2fmXu9NzExoOpuwOZPHz+eBkloyXjePfqoEJRvS8vUE6SVRWq
+         vE2g==
+X-Gm-Message-State: AOJu0YzhPqRemw9nt2dHo+rcTHtsFB8SwT/ZzjJszpthpWEFggx9K6UF
+	r78iShn57hwe0w6NKJELW6NSf8FngNpoOmgVYzmEp0YWm7I6/jYPCws=
+X-Gm-Gg: AfdE7cnr2xP5xn+p8NbWlUEAYObBA4SKq52VWE4yx1RnMbUTmZrOpO2ILVkI6VaUmx5
+	4Zf4ZU7BIjqzBPkX4a4ZUf1edSlXeT/mXQe1WPdPsRvH4Zxx/8AH05i73KjEDG+lqvYYzf/w5oc
+	1hxNWbi+dD7AR/sfFXrRmYxoWcwRc9aAf0OvbGVKAxYKJzGgr3tsMZrHuZM0/A59PVafje6jtOm
+	M3KlB58aTHtBxAkbSw8ZR2kB2F6XrY6yBYyBdDmAnjse4hAaQWg/DmudbSGmeGg9y177NV5ja43
+	qWmOzUnA/zh5lt3IjMYMtaZIGRz07jrNb4QbY5aLtJyYYWFR3wXO0fIcVFcJ175nw1qf7RFsJJr
+	9998jgNYgUQsEsnWK8GWzmo0qHCs+CeKte37itxbmgCHWLHmIjS8q1ADJaWgx1qrI8H3HWvqZQF
+	MWAuUNHRkOTq7dC/vqEiLGM43+5UhEUqiQWLNwmQnVWeoh+Sg=
+X-Received: by 2002:a05:600c:548f:b0:492:7082:92e9 with SMTP id 5b1f17b1804b1-4954a8e3851mr18157135e9.0.1784294840156;
+        Fri, 17 Jul 2026 06:27:20 -0700 (PDT)
 Received: from localhost (3.red-80-39-57.staticip.rima-tde.net. [80.39.57.3])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47f63e52673sm3373979f8f.15.2026.07.17.04.27.41
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47f63ee0086sm4281635f8f.30.2026.07.17.06.27.19
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 17 Jul 2026 04:27:41 -0700 (PDT)
-Message-ID: <d273e9ae-4a32-42cd-b204-a61a6f030bef@gmail.com>
-Date: Fri, 17 Jul 2026 13:27:40 +0200
+        Fri, 17 Jul 2026 06:27:19 -0700 (PDT)
+Message-ID: <0467af29-1ada-4d20-a5b8-acba5c166e33@gmail.com>
+Date: Fri, 17 Jul 2026 15:27:18 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Subject: Re: [PATCH tip] multipath-tools: iet prio; update header comments and
- style
-Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>,
- Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- DM_DEVEL-ML <dm-devel@lists.linux.dev>
-References: <20260717111512.63662-1-xose.vazquez@gmail.com>
+Subject: Re: [PATCH 1/2] multipath: clean up find_multipaths documentation
+To: Martin Wilck <Martin.Wilck@suse.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>
+References: <20250307001034.3141833-1-bmarzins@redhat.com>
 Content-Language: en-US, en-GB, es-ES
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-In-Reply-To: <20260717111512.63662-1-xose.vazquez@gmail.com>
+In-Reply-To: <20250307001034.3141833-1-bmarzins@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 7/17/26 1:15 PM, Xose Vazquez Perez wrote:
+On 3/7/25 1:10 AM, Benjamin Marzinski wrote:
 
-> Update the header comment to accurately reflect that the device IP is now
-> obtained from udev's ID_PATH property.
-> Additionally, move the header comment block to the top of the file, remove
-> redundant empty comments, and convert style to c++.
+> The preferred term is "on" instead of "yes".
 > 
-> Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>
-> Cc: Martin Wilck <mwilck@suse.com>
-> Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 > ---
->   libmultipath/prioritizers/iet.c | 65 +++++++++++++--------------------
->   1 file changed, 26 insertions(+), 39 deletions(-)
+>   multipath/multipath.conf.5.in | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+> index 0c1eff40..bdb6b605 100644
+> --- a/multipath/multipath.conf.5.in
+> +++ b/multipath/multipath.conf.5.in
+> @@ -1214,7 +1214,7 @@ Both multipathd and multipath treat every non-blacklisted device as multipath
+>   device path.
+>   .TP
+>   .I smart
+> -This differs from \fIfind_multipaths yes\fR only in
+> +This differs from \fIfind_multipaths on\fR only in
+>   the way it treats new devices for which only one path has been
+>   detected yet. When such a device is first encountered in udev rules, it is
+>   treated as a multipath device. multipathd waits whether additional paths with
 
-TODO: update multipath/multipath.conf.5.in
+Could we please backport this patch to the stable-0.10.y and stable-0.11.y branches?
+
+Thanks.
