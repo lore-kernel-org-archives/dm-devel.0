@@ -1,146 +1,116 @@
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+Received: from mail-pj2-f1.google.com (mail-pj2-f1.google.com [74.125.227.129])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC7CF883F
-	for <dm-devel@lists.linux.dev>; Mon, 20 Jul 2026 08:41:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE7813D5237
+	for <dm-devel@lists.linux.dev>; Mon, 20 Jul 2026 09:46:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.129
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784536866; cv=none; b=DdT+sG5hC317CWaePJZ63VGQoA9lFOpIl4V+YyYxRkLAPzZizOHD09W5VCs4A2JAqr49O0OtrbJczDk7bfewTYaqSAuCNDnCa1eoZi84Wtl1C2PY+1GPNAGV9prTn+cadZ1dJf6p4alPgMPff9Mo6eN9CH224KugXbFIIjP18IU=
+	t=1784540818; cv=none; b=TE19spD0TpU045vPHg+QezbeTBnaO4gqMu2qqR6S8rNapm40/RckYzDWzdeoI1qYn8BKxmq3A+ErfJs15SmGpI4R5mIZhG6sFryDsh1vAIk+Fg1pBSOGuzodJzyHx5Z9qL62LMMqqsxteO2TPj17UxcCONHpe+e5HfgI+S9utno=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784536866; c=relaxed/simple;
-	bh=9vGdxVNaTHAlheHKY0/lhtp8XrTgpIVWUz0tJIGmebw=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=eec42C1lXcYRxGYV8ga0wwf/8Rmy8D4FWU7V2owab+lDWT4EhJtC2fPU2W8XHnoUYSNq0yeKMAMtT312fNDlz/wZis76TPX9cKX++ImWsOGfdWg98cmv40xF0jvhUX4kCMHVeoxDhUhSBX/rylF/S/3DqLD9sl4y8PK0OhGoZMc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=WXxFlXxi; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=WXxFlXxi; arc=none smtp.client-ip=195.135.223.131
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1784540818; c=relaxed/simple;
+	bh=Hnhah2ebqec90qcHnlXEAoctQ88fsTS1yJX30sfvTR4=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=ek4KRnbGiVc6+vwfcU7xEsdo8tns2mlVILNg/In/URQahclIPkns/aDg7auVwOnSl3QBu48QqaB4gA6ZytVEUAdFzzpIEC1gDzrinbH4hcmP/Wno2fgM1GQfb8bteJiLJEv+RSS7PpTldwQt9gRw+Uq5cVW7N9KUfE2Y1R+dYlk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=DnqiUq8D; arc=none smtp.client-ip=74.125.227.129
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="WXxFlXxi";
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="WXxFlXxi"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id A365B3E09;
-	Mon, 20 Jul 2026 08:41:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1784536862; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9vGdxVNaTHAlheHKY0/lhtp8XrTgpIVWUz0tJIGmebw=;
-	b=WXxFlXxikBkMv1qzh3XC3cIAyemOybYqTdTmSxfQMEy57ZNLYf2e8PyzYCQK9HfHauW06b
-	X1YfcyckESIOk6VuU3efco4SIIKLFZN8jqAcaHskxGkbSrPWMk9xS8QqNAavURkIeI/9Ez
-	yQNACqgBchCPfmns8AcMgr74WaTERhA=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=WXxFlXxi
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1784536862; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=9vGdxVNaTHAlheHKY0/lhtp8XrTgpIVWUz0tJIGmebw=;
-	b=WXxFlXxikBkMv1qzh3XC3cIAyemOybYqTdTmSxfQMEy57ZNLYf2e8PyzYCQK9HfHauW06b
-	X1YfcyckESIOk6VuU3efco4SIIKLFZN8jqAcaHskxGkbSrPWMk9xS8QqNAavURkIeI/9Ez
-	yQNACqgBchCPfmns8AcMgr74WaTERhA=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 7DD17779AA;
-	Mon, 20 Jul 2026 08:41:02 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id hTKZHR7fXWovdAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Mon, 20 Jul 2026 08:41:02 +0000
-Message-ID: <f6054dd1579a59b7771cb5c12f3f206a4d67e165.camel@suse.com>
-Subject: Re: [PATCH tip] multipath-tools: iet prio; update header comments
- and style
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>, Benjamin Marzinski	
- <bmarzins@redhat.com>, Christophe Varoqui <christophe.varoqui@opensvc.com>,
-  DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Date: Mon, 20 Jul 2026 10:41:02 +0200
-In-Reply-To: <d273e9ae-4a32-42cd-b204-a61a6f030bef@gmail.com>
-References: <20260717111512.63662-1-xose.vazquez@gmail.com>
-	 <d273e9ae-4a32-42cd-b204-a61a6f030bef@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="DnqiUq8D"
+Received: by mail-pj2-f1.google.com with SMTP id d9443c01a7336-2cabf1f1051so19554935ad.0
+        for <dm-devel@lists.linux.dev>; Mon, 20 Jul 2026 02:46:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1784540817; x=1785145617; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=kM4PYmbDg8H1bvVv6wH9s8WtaVDw/EXpqdeFxSQlUa0=;
+        b=DnqiUq8DOVxXDYdnA5/cgX2XsQ904blaUydKXchnqJioLFjvyxJaYrEQLfssnquUWf
+         YwmJjFngJHyPC2Vkj92hSCkPxaKfN/56mq9WkgctFV4rgg4Dk6R4Z4Fe7eOnTwBXrdZz
+         l9uCrwRlGKhafwolmgvi+fZVUbzq757YpaRjgee6uxyeQeA8LTupJd29bSmvHYBzVjzj
+         qKGYnzCXy6CeqXZBcCFfzY0OYIpE8O2afvqX+pLKSKKFiYgU9TIrxDl62Z9lXFsJM2kb
+         Sdr5IOq40TzyjjF18g+iWrXU4XWNFM6k0+93kElseFPkvfm0MonQHvoWXUM6l1oiQP67
+         3goQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784540817; x=1785145617;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=kM4PYmbDg8H1bvVv6wH9s8WtaVDw/EXpqdeFxSQlUa0=;
+        b=rl4O1FWXfngfLicGFKdHvsdZRGi3nFwDaUn9qc9fTTstTbS+GV2nXIYe2DcgIin07A
+         coe+Ozk/c6uSw1RRhiT0xx/d1dA6l4iVvu1JNkIMdbQ5QYrpnb5FvV/RBMSFvc75lD6h
+         BQJbhe9yDNQPmxO31k6MshC9VjyHHbSQXbTey/D8U9UNp9+MgeQ/5v9WLvvmThlNMXaj
+         WMiWLG85AH1oS+cMJV8xEJHlxOMxzhiIVDXuY3WcHFhhniaeVsEGIJ2HA6PgrG2xFKhG
+         1BZmwvghcWpuGAwdPe+9gctyPXDA7uLChqTQlAs7k/vc8SRvP/BEv3rH7JcdkAUwj0Am
+         jKpg==
+X-Gm-Message-State: AOJu0YyyWikZjh5rROTnNNW64fwGsrTVQNRD+tfdO50lngPsVinYX1mP
+	0x8DV99sf/oBhHN6S3zyKjqfS2BJsfadmoOSfz7LBit7ANEjZrNtP12+gXM4K1YTcR4jhwlPaUo
+	=
+X-Gm-Gg: AfdE7cnt5GdF4nR+wqsqQXdR3sBeaG4CPt8JOtKQlEn8uP4nARg6A/IpB4J4bknQB1R
+	XzkixGigUh2HLAzxMn0pQ/4HKHj/hJkk3ayIVy0tekZR2JRRDfOgpcKyuFdxKQjLqs0aLcte+1h
+	2GoObK5wywc38SQd+8haOmGuIQe3npXpFiFj1M1FzqSQQnSzXYwXVCYH7PAwhY2IwBDGE4bGBCW
+	bGN/sxU2fgHZYbWe/cMC0dSU85TfJm6GSdUX5R1qalbmJh7f31+0Mz/1aJDUiENr17LrXadnYIv
+	wzvpBsE68BMHqX5bj7iderZXIqPVH4H8+Tvx0tz63ur8dWgK4IDsyLN8E71ad7T4CAX8vbaf5IN
+	RdOR5Gp+a7luJUJvxO6QNLlm5EIgdou06Gx9FrzgMd7CM51142KuBIn2fysXGX0fgSYNUjjP3bX
+	BUnMfBDadjkjWlQ2Z2zbYqb8C1NWY=
+X-Received: by 2002:a17:903:46ce:b0:2ca:b300:43b7 with SMTP id d9443c01a7336-2cf348507f5mr138480455ad.4.1784540816982;
+        Mon, 20 Jul 2026 02:46:56 -0700 (PDT)
+Received: from DESKTOP-P5RIK7I.localdomain ([118.112.177.142])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2cf346d9ba9sm54406335ad.48.2026.07.20.02.46.54
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 20 Jul 2026 02:46:56 -0700 (PDT)
+From: jianyungao89@gmail.com
+To: dm-devel@lists.linux.dev
+Cc: Jianyun Gao <jianyungao89@gmail.com>,
+	Dongsheng Yang <dongsheng.yang@linux.dev>,
+	Zheng Gu <cengku@gmail.com>,
+	linux-kernel@vger.kernel.org (open list)
+Subject: [PATCH] dm-pcache: fix implicit u8 truncation of gc_percent in message handler
+Date: Mon, 20 Jul 2026 17:46:48 +0800
+Message-Id: <20260720094649.10104-1-jianyungao89@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Rspamd-Action: no action
-X-Spam-Level: 
-X-Spamd-Result: default: False [-3.01 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	TO_DN_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FREEMAIL_TO(0.00)[gmail.com];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	MID_RHS_MATCH_FROM(0.00)[];
-	TAGGED_RCPT(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	DKIM_TRACE(0.00)[suse.com:+];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[linux.dev:email,suse.com:email,suse.com:dkim,suse.com:mid,imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Queue-Id: A365B3E09
-X-Spam-Score: -3.01
+Content-Transfer-Encoding: 8bit
 
-On Fri, 2026-07-17 at 13:27 +0200, Xose Vazquez Perez wrote:
-> On 7/17/26 1:15 PM, Xose Vazquez Perez wrote:
->=20
-> > Update the header comment to accurately reflect that the device IP
-> > is now
-> > obtained from udev's ID_PATH property.
-> > Additionally, move the header comment block to the top of the file,
-> > remove
-> > redundant empty comments, and convert style to c++.
-> >=20
-> > Cc: Arnaldo Viegas de Lima <arnaldo@viegasdelima.com>
-> > Cc: Martin Wilck <mwilck@suse.com>
-> > Cc: Benjamin Marzinski <bmarzins@redhat.com>
-> > Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-> > Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-> > Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
-> > ---
-> > =C2=A0 libmultipath/prioritizers/iet.c | 65 +++++++++++++--------------=
--
-> > -----
-> > =C2=A0 1 file changed, 26 insertions(+), 39 deletions(-)
->=20
-> TODO: update multipath/multipath.conf.5.in
+From: Jianyun Gao <jianyungao89@gmail.com>
 
-Yes, I already communicated that to Arnaldo.
+When setting gc_percent via message, kstrtoul parses the input into an
+unsigned long, which is then implicitly truncated to u8 when passed to
+pcache_cache_set_gc_percent(). For example, value 266 (0x10A) silently
+truncates to 10 (0x0A), successfully bypassing the > 90 upper bound
+check in pcache_cache_set_gc_percent(), and setting a different value
+than the user intended.
 
-Regards
-Martin
+Use kstrtou8 directly instead of kstrtoul, so that overflow values are
+properly rejected.
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
-=BCrnberg)
+Signed-off-by: Jianyun Gao <jianyungao89@gmail.com>
+---
+ drivers/md/dm-pcache/dm_pcache.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-pcache/dm_pcache.c b/drivers/md/dm-pcache/dm_pcache.c
+index d5cfd162c063..645fc27d82ba 100644
+--- a/drivers/md/dm-pcache/dm_pcache.c
++++ b/drivers/md/dm-pcache/dm_pcache.c
+@@ -439,13 +439,13 @@ static int dm_pcache_message(struct dm_target *ti, unsigned int argc,
+ 			     char **argv, char *result, unsigned int maxlen)
+ {
+ 	struct dm_pcache *pcache = ti->private;
+-	unsigned long val;
++	u8 val;
+ 
+ 	if (argc != 2)
+ 		goto err;
+ 
+ 	if (!strcasecmp(argv[0], "gc_percent")) {
+-		if (kstrtoul(argv[1], 10, &val))
++		if (kstrtou8(argv[1], 10, &val))
+ 			goto err;
+ 
+ 		return pcache_cache_set_gc_percent(&pcache->cache, val);
+-- 
+2.34.1
+
