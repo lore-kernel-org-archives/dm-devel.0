@@ -1,126 +1,123 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD215361972
-	for <dm-devel@lists.linux.dev>; Wed, 22 Jul 2026 16:14:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63C944399C8
+	for <dm-devel@lists.linux.dev>; Wed, 22 Jul 2026 21:09:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784736859; cv=none; b=myXSQWmb6oVcQTOaQcuhakZkH+MS2xjRVPgVM9YVxt29TX3pCidEqB/pQMIjecOfGFcJ06YKWyZYhz6Otx89Vl4o9Dhv7L0lyLl4e5t4LS/GDZ4LN6OoFA5lz0mhwGsKFp4Nl/NMSwwEdHmtQgfPV68qqs9bl3EiEbZgw7iM7dg=
+	t=1784754576; cv=none; b=n8Tl1lTt4bGRVUYjLUa9ZD1Li2Jl8COR0k4wQc9O1HYJpmPq/pMVjvsvmqDkW00JijOdMVsFOwzErkKhgX9v0vYrmR1GNfF7mkgl32+5H+wZKv1BD0f4s3RvNP0+H3+xDh/DoahvjU9hjpxZ8BoAj4g5uCpE8QIqglZo5arpJhs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784736859; c=relaxed/simple;
-	bh=zZSRjKIUu561WSAK9qeD5q8tJGO4IuVnXWLCjLH8+eY=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=Rhs0HqHU3xWGixQmW7OIQm1hzO5qXTTAMiOUULnL+lBT6fbgvj3yhGFz40FSkWR5Y6ZjWcMKbO/0WS/GslnfCGDOGFtldggJ0/EgUYNohenhRJ3VLUUbBJpYVUFJlpldhyjE/xFPZMwpOkbt9X+heb7JDEZYyE9StVmtqo7ts+E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=OvX5OQ4k; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1784754576; c=relaxed/simple;
+	bh=VGvOKuMMQJrTxogZFUUgVFhJ+sQu1xCmZi3yMjvmAQk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=pMBtEfzZMJTyAlcGgDlphl/C69tFbIf/4YTJxgXCcZPhEtx+n9rVIFN8ysjF1gnG2Q4QYZYXfYJByMkd+B2KC/0ErfVkxcuOk7CE0x/6EjuLQBkTOOU4RPW/oCTJP7DP5os51qU+2gcQ2jJF0RmsWN82BlBySx/MLrZGhew+5uk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=BlpWwlAV; arc=none smtp.client-ip=209.85.128.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="OvX5OQ4k"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1784736856;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GG8CuwzAfwHLKzzy9zLI0CXfaqSyvjUOjY82/Cc040s=;
-	b=OvX5OQ4kkBoab04yckWVL/CKswSssfmOUC0XdIin+yDJbPgJ8SliRN2DqsZ359JyUqMowz
-	OyVzA/Xny1v2kYZTwv7Tq1gqTSDor/bz4I/+pdI1nT2Iq+jJYWcMu2YcY6maAgR02yIkVJ
-	qD15YBon4aJxfwdvvNIlqK6rn7PV0aw=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-167-iD6RB3oMNxmbcb3ClNkm4Q-1; Wed,
- 22 Jul 2026 12:14:13 -0400
-X-MC-Unique: iD6RB3oMNxmbcb3ClNkm4Q-1
-X-Mimecast-MFC-AGG-ID: iD6RB3oMNxmbcb3ClNkm4Q_1784736852
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EBFF618002FB;
-	Wed, 22 Jul 2026 16:14:11 +0000 (UTC)
-Received: from [10.44.32.225] (unknown [10.44.32.225])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 137AC180058F;
-	Wed, 22 Jul 2026 16:14:09 +0000 (UTC)
-Date: Wed, 22 Jul 2026 18:14:03 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Junzhe Yu <junzheyu1@gmail.com>
-cc: snitzer@kernel.org, bmarzins@redhat.com, agk@redhat.com, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
-Subject: Re: [BUG] dm-integrity: dangling reboot notifier after resume vs
- remove race
-In-Reply-To: <2582d759-1e99-4a31-9a1b-5eccf0af3891@gmail.com>
-Message-ID: <0ce40d40-1a42-7ee8-2fbd-6e1e8f9ce4b9@redhat.com>
-References: <2582d759-1e99-4a31-9a1b-5eccf0af3891@gmail.com>
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="BlpWwlAV"
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-4954aff6088so39118665e9.3
+        for <dm-devel@lists.linux.dev>; Wed, 22 Jul 2026 14:09:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1784754572; x=1785359372; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=KPxigAoXKLE73ZVxDWujt50jYJitIiat/S2+RyUqYz8=;
+        b=BlpWwlAVsPAu5cq0O4wFyrTCkHnbnoZl5N/2yc0OPSdrv9RFK4IGIoehY+jdeEw/zW
+         gkfl/8jUangP9WjUTvVjDKluy4EvniKSRut7iUz6NjcZBdQqrQpPrrB9wbwmQnF1CyCA
+         3uXTPfG/3bBzaGryZfFwP/DAleoSw4zQZQdEI4wqBOahq3lmmJ5tcpDo8vSUQz3yxj/4
+         TWlz20WYcaTpUYR7/DKQ6Jrjdcs8a1b3MkJdvanQZFiCj+IEw1wH+WWqPaJA7KatbT9l
+         wadjAIYQ32U+WiDSywzFTX3tzMR7OimOeAXFaNO+p5p5Sv5XuMBz0W+IHNh8XunSGUmx
+         pusQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784754572; x=1785359372;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=KPxigAoXKLE73ZVxDWujt50jYJitIiat/S2+RyUqYz8=;
+        b=HPrR+9Yj5cgIcMHZTAZ9XVv3wjySppgHLDjFd09NUGuavbJlF1hvhjWIPOTbqI5f0t
+         yl7BPfhRu5yTfVBZBWCEI+RLa+ke/7YKtuPeSl5zFZxIlwwGO161N3yJSs2E9e6WtvE9
+         MjQJK6vFwFwuQNGMQXNb+MbGUnLRWw95EZHe/KRHgHqMYSRR/RaTc/RzUKr33Q7XDsQ9
+         ZNQJHOmXtpNlW0jNAC5KM0Easn9DMxwRODDQvQIbek/V0/sH0PiXCSK7TwLxyfk6yHKH
+         ECrR/PZC4KOUa6JNqvaldxmginC+PMc0zamvVV0PMGcHhTPnaxxq9zN0F8jXpFP1Z3Yf
+         pAjQ==
+X-Forwarded-Encrypted: i=1; AHgh+Rp5OCXVRWmTfLZ15KI37Qkf2byDaGeIwCo2eMwdC9E7aD84HvR1OyqKBertVDa1dnX3LTLQvsDIkQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yz7jUbU6P+0do515J1CVXe1B8UOdnaZbbtGRep4NFN+IeWbwJfj
+	3qm8arIluvmrTE7R6uf7vuRZLv5CtMUbzsVuxpsR520SBu/3fvS31Ggmr4+Dkz8TnJs=
+X-Gm-Gg: AR+sD10mlqmD1i+hbNx6mCpLT0+UxX7Ca2jpWJgTv4+lhY8sLnFTsOe34XVirEXx/X1
+	mMI7g63nmgbnKDHwNb1ojk+Lvkn3iKbhLFIsihOnqXkXiw8YftgoS4S6mMVyan/KjrzRTatntTq
+	3wa0XJF/ouI5xwglgXEWelj/MD8vVYkCGV38FWimqxoQbVo+u2lJ3FFmsoBEpwQRb2IvbhEdmK1
+	cdWBEHoK+gAg1RRzV3cZoYMaqQnFK75B7whtiELm5TqLyuIdmwN64CyoB2pHBkpo4X/KzKplQhN
+	KhuWb/cYjVCXxKbERRO+qBOgRgGRNlwYr8PlQb7IG/8ZcDLXFIZHTSCqRyPlVvNr51Nh99QZEDf
+	PkV9EhvBTIyf/jGnWZWAKAhIDVPddXBbqGGAoWFijES95icDfcBnVLrlZm2ZGEeVk/PgcL7rEP6
+	cL9hHF9O3rG5gvBSKQGdfAcckYLL6wnl0uARs5WFzjk9C6vpkmrVGmiSFk44CsQ14GqQ==
+X-Received: by 2002:a05:600c:2105:b0:495:69bd:17f7 with SMTP id 5b1f17b1804b1-49573cf1544mr1707825e9.32.1784754572569;
+        Wed, 22 Jul 2026 14:09:32 -0700 (PDT)
+Received: from localhost (p200300de37461100f390c52e1c249082.dip0.t-ipconnect.de. [2003:de:3746:1100:f390:c52e:1c24:9082])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-495653bfed7sm187197995e9.11.2026.07.22.14.09.32
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 22 Jul 2026 14:09:32 -0700 (PDT)
+From: Martin Wilck <martin.wilck@suse.com>
+X-Google-Original-From: Martin Wilck <mwilck@suse.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH] libmultipath: async_checker: fix sync checker case
+Date: Wed, 22 Jul 2026 23:09:26 +0200
+Message-ID: <20260722210926.507674-1-mwilck@suse.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: _gfv4nP9mmsigtu4czl_xY53bPvwNMt67l5n1zZwxLI_1784736852
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
+In the synchronous case (e.g. if called from multipath), the async_checker
+code called the async callback before initializing the rdata struct.
+Fix it.
 
-
-On Sat, 18 Jul 2026, Junzhe Yu wrote:
-
-> Hello,
-> 
-> I am reporting a KASAN slab use-after-free in dm-integrity involving the
-> reboot notifier registration path.
-> 
-> Summary
-> =======
-> 
-> A late do_resume() can register ic->reboot_notifier on a dm_integrity_c
-> object that a concurrent DM_DEV_REMOVE path is destroying. The removal path
-> unregisters the old notifier via dm_integrity_postsuspend() and later frees
-> ic in dm_integrity_dtr(), but does not unregister the notifier that the
-> racing resume just installed. The global reboot notifier chain is then left
-> with a dangling node; a later notifier_chain_register() walk touches it and
-> panics under KASAN.
-
-Hi
-
-Does this patch fix it?
-
-Mikulas
-
-
-dm: fix resume-vs-remove race
-
-If the user issues the resume ioctl and the remove ioctl at the same
-time, it may be possible that the device is resumed after it is suspended
-in __dm_destroy. The result is that the table is destroyed without
-calling the postsuspend method.
-
-Dm targets expect that they may be removed only after the postsuspend
-method method was called. If we break this expectation, it can cause
-misbehavior in various targets. For example - in the dm-integrity target,
-the reboot notifier is not unregistered, leading to use-after-free.
-
-Fix this bug by refusing to resume if the device is being destroyed.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Cc: stable@vger.kernel.org
-
+Fixes: 474682e ("libmultipath: add generic async path checker code")
+Signed-off-by: Martin Wilck <mwilck@suse.com>
 ---
- drivers/md/dm.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/async_checker.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
 
-Index: linux-2.6/drivers/md/dm.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm.c	2026-07-13 20:58:56.000000000 +0200
-+++ linux-2.6/drivers/md/dm.c	2026-07-22 17:40:29.000000000 +0200
-@@ -3140,7 +3140,7 @@ retry:
- 	r = -EINVAL;
- 	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
+diff --git a/libmultipath/async_checker.c b/libmultipath/async_checker.c
+index 89b7241..066b009 100644
+--- a/libmultipath/async_checker.c
++++ b/libmultipath/async_checker.c
+@@ -174,13 +174,6 @@ int async_check_check(struct checker *c, union checker_mpcontext *mpc)
+ 	if (mpc && !IS_INVALID_MPCONTEXT(*mpc))
+ 		acc->rdata.mpc = *mpc;
  
--	if (!dm_suspended_md(md))
-+	if (!dm_suspended_md(md) || test_bit(DMF_FREEING, &md->flags))
- 		goto out;
- 
- 	if (dm_suspended_internally_md(md)) {
+-	if (checker_is_sync(c)) {
+-		int rc = acc->rdata.afunc(&acc->rdata);
+-
+-		if (mpc && !IS_INVALID_MPCONTEXT(acc->rdata.mpc))
+-			*mpc = acc->rdata.mpc;
+-		return rc;
+-	}
+ 	/* Handle the case that the checker just completed */
+ 	if (acc->rtx)
+ 		return async_check_pending(c, mpc);
+@@ -192,6 +185,15 @@ int async_check_check(struct checker *c, union checker_mpcontext *mpc)
+ 	acc->rdata.state = PATH_PENDING;
+ 	acc->rdata.msgid = CHECKER_MSGID_RUNNING;
+ 	acc->rdata.afunc = c->cls->async_func;
++
++	if (checker_is_sync(c)) {
++		int rc = acc->rdata.afunc(&acc->rdata);
++
++		if (mpc && !IS_INVALID_MPCONTEXT(acc->rdata.mpc))
++			*mpc = acc->rdata.mpc;
++		return rc;
++	}
++
+ 	condlog(4, "%d:%d : starting checker", major(acc->rdata.devt),
+ 		minor(acc->rdata.devt));
+ 	acc->rtx = get_runner(runner_callback, &acc->rdata, rdata_size(acc),
+-- 
+2.55.0
 
