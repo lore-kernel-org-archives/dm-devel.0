@@ -1,60 +1,60 @@
-Received: from mail-pj2-f0.google.com (mail-pj2-f0.google.com [74.125.227.128])
+Received: from mail-pj2-f11.google.com (mail-pj2-f11.google.com [74.125.227.139])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DB39470122
-	for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 12:03:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.128
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6573C43CE7F
+	for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 12:18:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.139
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784808215; cv=none; b=pDgQt6On3jyK1aR9s1knOodXZUY8/QGrob6aAiKFv9JU6YZ7FCMXGMGci9soXN3vl6+Eg6RgcNz/+g7d7gLYA7SukYIr1SQHCA77NeOUPc1EloCkzhgYR7ifMa6ythyCrVu3+BEoiq/08+/6j6YzpRm2zjb35Yq5RJsN12UILh4=
+	t=1784809110; cv=none; b=UvKfrA0VBL2SRFSeIsKw4A3Uy51E8+CN7kwIzNqC3Kxoi2iInXvWWEXu/mhPzZvTJ25mvdZMXDx/b+fpCtLXA4kW+S5txpQ5NRZaTTpYSz3efHP9F0mv0EVFwh/RS4Ob5xhIAJM4xN7mO20E0GL+u8Fmq6gaTV6PGf5ApP34G6w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784808215; c=relaxed/simple;
+	s=arc-20240116; t=1784809110; c=relaxed/simple;
 	bh=Mv8kH+k8yOGo3/nMEiAZnX77byomhIFeKhZndCHT2Hk=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=qxn/SHNPDKU0RJ01icLzZHJHEt7tH8pEu7mfMhxJpAVUn5ZcOMeACAWwhiXtLUz5GKMJvUXDRg3Vv8LU34EW6Pj26UNJiikpT7YjFCDCJ14y4cgoLpii2EZtzKXDhWYcaqfcMLJdZ5CtOnwBnr8zceen+iqrmH0j6nY1p5xrRGs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CVEX7QzG; arc=none smtp.client-ip=74.125.227.128
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=ZJAh8QHv8wZSrKZWA1W7ftDKCQisc6OBysP18n/slHfS8bfFAtwQpiOwdSKdVyc28TAfXjoVpafQWfqn4DGEDwppMOk76st2ixMxLl/9ec2CHqAGhJNW6C34E9EOjNeMqWVG2w1mPET13+KPFZm9l8fJUhhDQAhYU0993hr43eI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=V5aaMjYU; arc=none smtp.client-ip=74.125.227.139
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CVEX7QzG"
-Received: by mail-pj2-f0.google.com with SMTP id d9443c01a7336-2cc7a345f51so4628505ad.0
-        for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 05:03:29 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="V5aaMjYU"
+Received: by mail-pj2-f11.google.com with SMTP id 98e67ed59e1d1-38dbe53179bso181679a91.0
+        for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 05:18:26 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784808207; x=1785413007; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1784809105; x=1785413905; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
         bh=rw3dWDKw4nsP/eg6mc2GWhay0MPg7XDXliSJs6V44Ug=;
-        b=CVEX7QzG+c2ZX4dciBreaLSyxNdLgOIiQKDpbR1kgIB0SHbWok8Uc97ofKnW/2ud25
-         dEmud4ufIMh/KgVhtMUJnFx5GrZ6uKFpzuMjesBU0A4OhPHLAplEpM8U7HOaLn3cpjGp
-         b80Woe6Yy57atH8b+xqG5xYfZhR8AQR1glW6/tDEecxn2BTv8c1sdRl58bhIHz9hPCr/
-         C0m0rCnQ/ll7LVPMmf3F2DX1cA3crFkf6tuvKwXujx0Wz48q5oH7q+g2uNr4Tm06smn5
-         rJo+HlJ8e33HhF6McAJiI8EOI2o790BOFhOsjr+/APDu8K3AGdd0XvAPDtjU+rmGNyiC
-         wXbw==
+        b=V5aaMjYUwEJR+jCW/IY6f0LDHh6uo9blyGixFuz3IEISAXlzR3rwhgVzVaiTG+oTS7
+         rfIr51NnFGAleHD/NRdzv89ydx2N8ml59dpZMKNCWaGDcWLq6ubfGOCRRlzJrNBfPKFg
+         UZFmoWMlSL2iM3X7kik/tBZvXyp3hNvW16FWk0BroYF/z50HJhYcGNHhqqFQpmp07HDR
+         TYD8HEV6p/F3HIe304mySJAVzO7JUXRCPzF8kWyY10nRaixxM1l3gv36UDUiO/ktFXaC
+         Ebs3LW84eksEufRdP0nkck6a/zxTh+iJLMDekQ3Zc2KznHWBCBcwUZ163/yKF+SfujoV
+         es+w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784808207; x=1785413007;
+        d=1e100.net; s=20251104; t=1784809105; x=1785413905;
         h=content-transfer-encoding:mime-version:message-id:date:subject:cc
          :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
         bh=rw3dWDKw4nsP/eg6mc2GWhay0MPg7XDXliSJs6V44Ug=;
-        b=AgucG/c5osnyedUEHzAYycOjxXA/a3Dx1JqnS0DUlCh3jN5giDqdviFmnS9rg4xdgs
-         btmLL07iBOi0k4FWtj8X9Ns1zJBDlYO+tbSmtkN0zL8tvI+uG0ncQoS63jc/ZojE2ZEW
-         EiiYWWnku3+sqpyEppgVw/q2dgucXYlluuTOLekvG0+CTOYy7TUohbyZtH5F9VXy8fT8
-         B9QdB00gGKnbeDMGGXXCRjiaYsQa1uEPfdbiWHzdv85DTer2pPMWpZUSKJvdgjH862DY
-         tGE7ZBD1udzOBSE2lCx2wCNjOHZYoYMqzBTLIhxvg/ZjL03wKhEQCsDS7Ddatadh2HyT
-         x3bw==
-X-Gm-Message-State: AOJu0Yz+pYQHlFZ5zPxyI9Sk9ZTlX+uPEx+yPCUxGImf4MA/MGanz1LW
-	AATZCjQ0Y9vlWjZxoPzLvjBQYGA4DG/kW5zuBTLySyAm4FsOpFUWYXHWssqlGquerZqPIg==
-X-Gm-Gg: AR+sD11IL9c9Z/K7m8llorUz7VEcKjNR6TlLAWmrtteVVx/jPPngLBuwV3paEcYxCTy
-	UHugfgmJeBEsJvtu8a2e2TsvfOyyPyIMXKIa1QkyWiVcLvrm+2nNHjkFZlNQKGDReFkB/WAJnvc
-	2TiPazS1Md5jyOi3M1LYiENvJH+eKHmt4Pt6cqo2SbNCJfHMfqvZJmBDc/vAU4cX9Ij6+8f/7og
-	p60PvItP5PY7ZwBNeHmerZmaaq0RzjZighoKuKlTuQGl4pA2iU6V8rJ8waMi/AM565JUUBU98zT
-	ZkpVAtkuXk3Irm55xCjUJWB44NJ4OzugHngSGflYZT88X5kQR8bn6vFEhx+1+qQ0Z5Y9eTS5MgB
-	XV95RcNrkkaUkP3+ZTE2ejAxTPxMoo9UfeM4Ke+rcTM6l8SijZiJad4JMESUX9A/KimlX7SfE5a
-	FaWEs/v4cSC672/Go2GZBAafj3Cuo=
-X-Received: by 2002:a17:903:228b:b0:2ca:6c8:abd8 with SMTP id d9443c01a7336-2cfa71dc876mr30552045ad.12.1784808205922;
-        Thu, 23 Jul 2026 05:03:25 -0700 (PDT)
+        b=jGT6bPC9kahRUsgDQQHpPLISARDdU2URFfcnoWT2Mql+VGAv3Sb1EedHYpYqIvm0ON
+         PTVGYIJoaJPyxuGKXkJ4/LE3tLGJ+qjoXRu6ohVWykzkL9ijQEH8kp5uXNBPde5QOSnf
+         q4Cwe2mvcYd7XFp6ryHLJ339ZmKIo3bhrfW5KXMWUT7KzU/jcEZYrgOcyw0N7pPzr8OY
+         FktUYYhn3OF95FSEWGrdwIyQi4mxl5jv11jNLwt1rdh+SVoDi9aeeWcG6gtSfAJxMbPe
+         BI04hE2DAs/bywOOPJMs6+EurKfqvufPMioW0/4/x7RXrGK3en4j5cLPF2hbDKzslhdn
+         A+Sw==
+X-Gm-Message-State: AOJu0YzSMalcz0Ko1PE3og0SYCKn3TFnmRjh0/+LaT0qBvdqObE76/E2
+	SEoGiLnrRx20UbZRJcndj4ipxChj+Lvk0g+dnpL3hR45p5lda9opZcd+TJxncPQEhoqPXrwG
+X-Gm-Gg: AR+sD11kn5wSPYzCcZpV4Bn7vTQnod6c8wwIxqtfSAJ18TXFlMmDITeHjDpdNYqY9+v
+	emAvQ91mv7sWyFFbGGPPcQZhT6i3YiqdADAsM55Sz/XJks9JQcwDz39ZwHGkn1v48y1a80dvv0t
+	em1GBui9CBxk/jVb2xxWlfQjXRwZam8Xl+LH/r7ZNjaiwyyc5zDfh/3ZKsdQnYgDUqUO6ZM0ihN
+	bZI1OZi2GgQN2Pffx1cyzCXI5/esPZ0T5KWIuFIk7K5NRN+Ad8av2Is/kCipz65VpEFIbLYEpWc
+	urRRz1OEfEAmNSODt77k7CcwL/AaAAqbDb8KK0SVavsTqH1rphIiCPd9Uoelk1yQEtQ9f8L2KG3
+	SJP1SI6/ocAiurfF75CUWbN/HroPcb2hQxSQqyo/Ud7FhLWRf/VKoo2PxFJjcSLFRryQqBa+Ag3
+	owFh0PfqRVbARDH8KcqW8PfP9waUM=
+X-Received: by 2002:a05:6a20:c90b:b0:3c3:875d:c531 with SMTP id adf61e73a8af0-3c44af6e6afmr2913617637.6.1784809105252;
+        Thu, 23 Jul 2026 05:18:25 -0700 (PDT)
 Received: from DESKTOP-P5RIK7I.localdomain ([118.112.177.142])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2cf8efa38b6sm32900725ad.13.2026.07.23.05.03.23
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cbb8f1a9967sm2646923a12.25.2026.07.23.05.18.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Jul 2026 05:03:25 -0700 (PDT)
+        Thu, 23 Jul 2026 05:18:24 -0700 (PDT)
 From: jianyungao89@gmail.com
 To: dm-devel@lists.linux.dev
 Cc: Jianyun Gao <jianyungao89@gmail.com>,
@@ -62,8 +62,8 @@ Cc: Jianyun Gao <jianyungao89@gmail.com>,
 	Zheng Gu <cengku@gmail.com>,
 	linux-kernel@vger.kernel.org (open list)
 Subject: [PATCH] dm-pcache: remove unused 'cache' parameter from cache_key_gc()
-Date: Thu, 23 Jul 2026 20:03:18 +0800
-Message-Id: <20260723120319.10647-1-jianyungao89@gmail.com>
+Date: Thu, 23 Jul 2026 20:18:16 +0800
+Message-Id: <20260723121816.17356-1-jianyungao89@gmail.com>
 X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
