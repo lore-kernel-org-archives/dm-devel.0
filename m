@@ -1,112 +1,150 @@
-Received: from mail-pj1-f50.google.com (mail-pj1-f50.google.com [209.85.216.50])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D39D4D2EFC
-	for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 18:47:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9494536655D
+	for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 20:23:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784832425; cv=none; b=G9cvM04IAPjMRGpLQ+ODOy2kyg7RkqqS0vhzTE72ZmXESSXH9v1/b8YZ9Aituz+OLns7mSesYhDbQdOoaFioebpYZOCrmT+RW2IfxDIUs9kFDhmKVEW1Y/Q6Ic6PmFkNnu2VwcoGggqctoBp8q7pRtxRVYTuNZe/G1rChZIQ5dE=
+	t=1784838226; cv=none; b=X3l8R5MaojqHSAcyx0Swrgm/4iPiezXczkHaFRjoJrWpU2gc7qfcUj9JBC5ZKm4l0PoOCeQyacFloivpxDXXb24lK3D6EyRMrEsrDsz+QxZvMmUktbga582MQ5zhcZoNDW/ucOM5lj8xKlpV0VdRPkQFRyx7u/0nZy2xkiMDsKc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784832425; c=relaxed/simple;
-	bh=WVruzY/Eibfw1kvwy8CJSFL+wCY9qOBSRkZxC3F+RJE=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=DGax+QfLOiDFaNFSww/OMfeQ83ozgLdGARC0a3wD+OWFSMvir285qh+qx0RCeEA3NbaaSR6V89I6YtP1iWt9sib9cqsheWAcoiXIvr5BpaIepanH3Bka2AGiNL07PdBnIsS5Qa+32afB+QaYaNwE00K93PA+qrSLGISIRg1U2yA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=OjOfO49q; arc=none smtp.client-ip=209.85.216.50
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1784838226; c=relaxed/simple;
+	bh=MRnqp89HL1tNoLZi07lqIEXm5Ht9KSnlFOZ5ZUX1LkE=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=OLg4tEoMUTDGcpU43YSDa9H/R2IwaphBZ7iBkegjl80MsF1x9Ga25t36Hsf+ooU56nfhR6nnnOx2tkCZZTSEX07oqSuYO8b3v1KJfsQIQug/VMV2lRn9ZYAjzacBZPqlSVI0P5Q0yHciJSvZbbGrlx0nQiFVTBd4H/XNW24cgeU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=TeCFTGnd; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="OjOfO49q"
-Received: by mail-pj1-f50.google.com with SMTP id 98e67ed59e1d1-38e42560ebcso889836a91.1
-        for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 11:47:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1784832417; x=1785437217; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=AjI3AsRUClNng1k/UijCjBlEPjB/wot6PGQU56kuWcU=;
-        b=OjOfO49qiP4UlW6HmiZU40R9oV0218EgIaIOpabZzzkHaUd3mYqxLJmLiJmz7M1e++
-         Dx2Mw6iQYgWv4BkOICY+9OBGFOrwY+wh02npYph1j2e8RYbLRu3TkMbzM041jhNgf+pk
-         1nEgLyJQAsKiaQ8oFC2TeKrVcBpYQOc1owRpDUU8ROPT7W1XudpLnNsRggiwYaS1DPfl
-         DDLZR5f76R0ZsXLHjWkQquvyilWhl4ec+fSyflGDsju3Fs3Cu2b4V7qGlV2FBiTFPonv
-         rN+VJUcQ11E5xtqxYI97FszPQJlexj5hYgfsszpezKvl/yNx9q4AZVaRKGZvkcYMIiBU
-         ZQGA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784832417; x=1785437217;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=AjI3AsRUClNng1k/UijCjBlEPjB/wot6PGQU56kuWcU=;
-        b=hzQHSVFod5XgBbKKuSQNt+9VW+sKIItcu+gl4/0h1NW7821h31aVbP/Nt79KoJhRyW
-         LS5129y9J8IeHgiWCteyBSHJ67AbqHD2Zdy+XqCfbWQT1phhFlZ+Boc6vLGK9WE2WwtS
-         IGnoTCs5YUX/fVgBaNMAfdxxIHEsxfS32V4U1e96wVvXQqGoKtSa7A1tFoS+Vz9Sn7mD
-         WGXA/xaTv16ejrOQoxdtXmleyx+T7L37u34rX4WoMZ8p98v5WR0NZDDxBdD9jEpMGEqV
-         A64maAqR6tNVwG4DCTR+Ser1z49rmkNBEaHzN6671Qed3hee8vJDrOtCeK2Cv/Vci0Py
-         8IFg==
-X-Forwarded-Encrypted: i=1; AHgh+RqCp8TRcuU9tqnZYOKHzZbzuYU7J0KuXV6HyoVVPSssPNFD+erE7AIT1N8Tdm2/wrhC1E5rNJqgAg==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzLX0bNFyuMyUNgAUrolK4m2QbJsAJYrA4DAaT5xENwIdAxyT5L
-	oNywMWvW4x3gohnKH6k2hytyhDZhqwPsW2O9gwY5lFsOP9nFOo7PUrsj
-X-Gm-Gg: AR+sD11agxjCfIKUgRop97KeIzeus018FGa8Nay4p/38VbAx9bb910MafgeVGanZBJ3
-	bbWV91vQ0Ov3vzeTNxkT+97EfkQYgJdmT39pBsHJfLuSq07Ev+3TXLbwmL64+DsowlxGSfyHb0H
-	SldJnIqiVkZhbly4+9YKsdu1wP7xeYSsH307fw+wFwIe7benCccRIwlukbbKrwfsM+fYr7ynLhG
-	lijpw3xxJKndmijELCkNtXEBkeuGrTN2ls1827MfJ4wS0nmtoDztM4Wpb72+bbnYNXWitx673vy
-	RE0cPSMQHVQL/B3dWyyfQWtr2FqK8e/dO73apt9RoMgpm9oK27pzf4bFGDBICUDATrsJmco5Q0R
-	n79XJZjl2isHpWf3wIbL6NSRgNQh6ocRkdlAVfejATKwvr2F9qU2AfF4Lst4C8/qPXdbXBcZK
-X-Received: by 2002:a17:90b:1d4f:b0:381:1f51:1ff0 with SMTP id 98e67ed59e1d1-38ec648e273mr4470428a91.2.1784832417345;
-        Thu, 23 Jul 2026 11:46:57 -0700 (PDT)
-Received: from ubuntu.. ([110.9.142.4])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-38f03af8a45sm308155a91.10.2026.07.23.11.46.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 23 Jul 2026 11:46:56 -0700 (PDT)
-From: Sang-Heon Jeon <ekffu200098@gmail.com>
-To: Julia.Lawall@inria.fr,
-	Matthew Sakai <msakai@redhat.com>
-Cc: cocci@inria.fr,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH 23/36] dm vdo: remove conditional return with no effect
-Date: Fri, 24 Jul 2026 03:45:25 +0900
-Message-ID: <20260723184538.3888637-24-ekffu200098@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20260723184538.3888637-1-ekffu200098@gmail.com>
-References: <20260723184538.3888637-1-ekffu200098@gmail.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="TeCFTGnd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1784838223;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=6OViHldasiPfP2D1GAOMKGOG0pD468tLDeLYAtl8Q/k=;
+	b=TeCFTGndVpJpvH1zG55n/b27dO+FG7pp9e/fqdH6gPo60eZjzOLo5T7uj6ra/uXGIc+qcY
+	BUSP8LcjEb0suX3VS9q6MQ+zXgaQjYfiEMLFjcD6PRQ1HaLPRDpePxihXpb00BTsZNsYtB
+	vpHt4k/rhBrr4kGnwcoTIMrTZHKFtLM=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-446-GVOEpyRFOVKn-A5t8sB1qw-1; Thu,
+ 23 Jul 2026 16:23:41 -0400
+X-MC-Unique: GVOEpyRFOVKn-A5t8sB1qw-1
+X-Mimecast-MFC-AGG-ID: GVOEpyRFOVKn-A5t8sB1qw_1784838221
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AED12195398A;
+	Thu, 23 Jul 2026 20:23:40 +0000 (UTC)
+Received: from [10.44.32.225] (unknown [10.44.32.225])
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DDEFE15A2;
+	Thu, 23 Jul 2026 20:23:38 +0000 (UTC)
+Date: Thu, 23 Jul 2026 22:23:33 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Junzhe Yu <junzheyu1@gmail.com>
+cc: Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [BUG] dm: dm_setup_md_queue UAF walking table_devices without
+ lock
+In-Reply-To: <5947c25a-0a1e-4bb2-ad3e-8e4d9ecbd8c2@gmail.com>
+Message-ID: <2f28baa4-d328-1a06-8a86-a7814cb2955b@redhat.com>
+References: <5947c25a-0a1e-4bb2-ad3e-8e4d9ecbd8c2@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-MFC-PROC-ID: BkY6bZuzVe3ueGyFM5Q9O1xL38_zxQQ2zRVm2PVSnWs_1784838221
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Both branches of the check return the same value, so the check has
-no effect. Remove it and return the value directly.
 
-This is the result of running the Coccinelle script from
-scripts/coccinelle/misc/cond_return_no_effect.cocci.
 
-Signed-off-by: Sang-Heon Jeon <ekffu200098@gmail.com>
+On Sat, 18 Jul 2026, Junzhe Yu wrote:
+
+> Hello,
+> 
+> I am reporting a KASAN slab use-after-free in the device-mapper core in
+> dm_setup_md_queue().
+> 
+> Summary
+> =======
+> 
+> dm_setup_md_queue() walks md->table_devices without holding
+> md->table_devices_lock while a concurrent failed DM_TABLE_LOAD frees a
+> table_device via dm_table_destroy() -> close_table_device(). The crash
+> shows as a KASAN UAF on the list walk, and often a follow-on page fault
+> in bd_link_disk_holder().
+
+Hi
+
+Does this patch fix it?
+
+Mikulas
+
+
+
+dm: fix race when loading and unloading a table
+
+If the userspace calls two concurrent table load ioctls and one of them
+succeeds and the other fails, there is a race condition because
+dm_setup_md_queue walks &md->table_devices without any lock. If the walk
+races with dm_table_destroy -> free_devices -> dm_put_table_device, there
+is access to invalid memory.
+
+Fix this race by extending the lock over the list walk.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
 ---
- drivers/md/dm-vdo/encodings.c | 8 ++------
- 1 file changed, 2 insertions(+), 6 deletions(-)
+ drivers/md/dm.c |   12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
-index d75e023df637..b09373b0cfe8 100644
---- a/drivers/md/dm-vdo/encodings.c
-+++ b/drivers/md/dm-vdo/encodings.c
-@@ -1333,12 +1333,8 @@ int vdo_validate_config(const struct vdo_config *config,
- 	if (result != VDO_SUCCESS)
- 		return result;
+Index: linux-2.6/drivers/md/dm.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm.c	2026-07-23 14:13:37.000000000 +0200
++++ linux-2.6/drivers/md/dm.c	2026-07-23 18:43:19.000000000 +0200
+@@ -2630,9 +2630,10 @@ int dm_setup_md_queue(struct mapped_devi
+ 	 */
+ 	mutex_lock(&md->table_devices_lock);
+ 	r = add_disk(md->disk);
+-	mutex_unlock(&md->table_devices_lock);
+-	if (r)
++	if (r) {
++		mutex_unlock(&md->table_devices_lock);
+ 		return r;
++	}
  
--	result = VDO_ASSERT(is_power_of_2(config->recovery_journal_size),
--			    "recovery journal size must be a power of two");
--	if (result != VDO_SUCCESS)
--		return result;
--
--	return result;
-+	return VDO_ASSERT(is_power_of_2(config->recovery_journal_size),
-+			  "recovery journal size must be a power of two");
- }
+ 	/*
+ 	 * Register the holder relationship for devices added before the disk
+@@ -2643,18 +2644,21 @@ int dm_setup_md_queue(struct mapped_devi
+ 		if (r)
+ 			goto out_undo_holders;
+ 	}
++	mutex_unlock(&md->table_devices_lock);
  
- /**
--- 
-2.43.0
+ 	r = dm_sysfs_init(md);
+ 	if (r)
+-		goto out_undo_holders;
++		goto lock_out_undo_holders;
+ 
+ 	md->type = type;
++
+ 	return 0;
+ 
++lock_out_undo_holders:
++	mutex_lock(&md->table_devices_lock);
+ out_undo_holders:
+ 	list_for_each_entry_continue_reverse(td, &md->table_devices, list)
+ 		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+-	mutex_lock(&md->table_devices_lock);
+ 	del_gendisk(md->disk);
+ 	mutex_unlock(&md->table_devices_lock);
+ 	return r;
 
