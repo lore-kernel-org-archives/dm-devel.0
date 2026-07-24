@@ -1,72 +1,67 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05946175A99
-	for <dm-devel@lists.linux.dev>; Fri, 24 Jul 2026 01:28:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BE9C35C69F
+	for <dm-devel@lists.linux.dev>; Fri, 24 Jul 2026 04:16:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784856539; cv=none; b=lct8eBpeE4ELFhIklxZ5eCIH/eCMZUq5+WOvNXSTThrp630XGU8dz5gZfyxaQKxC0mGn4O9bkIYmWNy5Y8rNdrhvQW3xIA8Ar80TITDzolNViji5D/IV4TIKesD4nTooQBMUaUY+7RUwDHDlrteby4oHX4WYS4uUAMWicqtLsVk=
+	t=1784866586; cv=none; b=e+zudxQnosmyDBv7iPgSETtGg9hhcPYwwTihcbpMxFL8PbUH/g8NBrsAfPX4DUJHeUVX2qq+magEY3+Fxst3TLUwenvuDvZNUQJukhcJr+0lialeB7TvdCBq0kX3ekxslOR+ftaV4KEKFuGyDIhWgPl//wnekK3li6bxGu0alic=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784856539; c=relaxed/simple;
-	bh=qi3e3cjbAcDME5Ej8PXjqzrbwtis2VVg5ZeBd0Je62M=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=lJB/wxpMXLJcUZLxJFGj11E1ac0DuZGuFJVFnKHn8v10FOv0XqgFKd1bZWBl+zT7HWW8Ek6Lyqeo254UJSl5djvQ9DmzJMOPWcBa2SqfmjXNbtsNqOBJm9RWTaPsJfOLNc/wverNcRWzZjE7Xq5WWND5lDxPcS1v65U9DX6XD0Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=F4aumVje; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1784866586; c=relaxed/simple;
+	bh=D8nsJm6OgKCvo7xqHdQY9wPmVPfsoKAXxMMIwjv8Bmw=;
+	h=Content-Type:Message-ID:Date:MIME-Version:Subject:To:Cc:
+	 References:From:In-Reply-To; b=kP5axy7eDsu5OZzi0/wpNtJrFxx+HzWJF5sk1pI2EqhnU5uOSYQ6gujcyDN6ibrEmDlldlGvLjIQ+7KmVtmICEPFmmr8qpM1D659NT2O6HNzAAjY4KMxfE/o817YW11kg7orh4LRP6i/5kAbrU4ACLQGHqfPb/CgTUBeVa91t7E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=RVLLK2iW; arc=none smtp.client-ip=209.85.214.179
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="F4aumVje"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1784856535;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lFDdw+zqdpgzMvdZH/Tt4F5NsysNdCnq5Q7hIMdeUdo=;
-	b=F4aumVjezFD09w2sCrP3j0sArMnb8RDB60rADrad1+Jq5rCN/aAlHH0KzHXu84TETrtnJj
-	m7v3JWjyUsDkxeWkHJZTjC7yZi5PvnltVr0v20pW+0Y0k52ShpAFQxC7dyJY4/YR2g2cRJ
-	YbuaZ4lHVaCOdVjNetHLjRdLTl8kUMM=
-Received: from mail-qt1-f199.google.com (mail-qt1-f199.google.com
- [209.85.160.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-303-tKD_bVJENCyUQle5SrrzRg-1; Thu, 23 Jul 2026 21:28:54 -0400
-X-MC-Unique: tKD_bVJENCyUQle5SrrzRg-1
-X-Mimecast-MFC-AGG-ID: tKD_bVJENCyUQle5SrrzRg_1784856534
-Received: by mail-qt1-f199.google.com with SMTP id d75a77b69052e-5276aa86d00so23220431cf.2
-        for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 18:28:54 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="RVLLK2iW"
+Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-2ccae46de39so18055ad.3
+        for <dm-devel@lists.linux.dev>; Thu, 23 Jul 2026 21:16:14 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1784866572; x=1785471372; darn=lists.linux.dev;
+        h=in-reply-to:from:content-language:references:cc:to:subject
+         :user-agent:mime-version:date:message-id:content-type:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=s5kn9KtHFPPj32yH+JbPhxfy5+S45WvNPYXOXrfI6TQ=;
+        b=RVLLK2iWKB/QZSDapzHdvuvl35SazJvcnGlp52eO9Piwk3f+qwUIGDmyYbKIBxS9Pp
+         FFWbta3iUpv8NbFt8AJ3L6iNHgFh+SqxXgnXl1G8JtmqvHBqrCKz0xeXwa/tQUjvbjWl
+         aEY35iJKUuhrCrBq7QEyFlm5lYz+ngt1myaoXZ1srf4iwe6YSviMBl05W2gf/Qsy2aQr
+         s3eP1DisLFYlu95scYg1o5E/5ey1WXgXnpRtg3TxpTqoCslXywFvTQSLd0npXmH1Gp2Y
+         qSsgXU1B+7R50c2PckU+Sf28CtwkQDtwq0p21dbzxR7tQVnhf3yJ88ybCZJztQnLa3GR
+         6IyQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784856533; x=1785461333;
-        h=content-transfer-encoding:content-type:in-reply-to:from:references
-         :to:content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=lFDdw+zqdpgzMvdZH/Tt4F5NsysNdCnq5Q7hIMdeUdo=;
-        b=Ckzzf3OQpCb1Ko4cxRLnAI6fgozG7A1R/8bJpcDztRKSDN9LQPPgi1gV91BSYSgCiu
-         C/IyW0fR/NkoTV+ZoXrtKgtkGgwUctBOFPXPEv9LAVdxxhzky/AlXFeIhIMpFzLuFX9n
-         UHdSF7JzkUJbQFRFHHx2ahWe+M7JYFYErP3lbzFrcR6Z8CHk7g43M95eVce/kwCWMmAC
-         BpVY3lVS5nvhArzcMEeKN7LJrx/OrPjEe3iC6SKCKbmqNRgPqvMHhIbZcBtK2Ld1nMS3
-         SwauFTyShYDyeD+figiY6NEnD9Sd/qVo3SMzWgQdRa0TTNRA98UpAM62MclbtrK8DOFw
-         Wp3w==
-X-Forwarded-Encrypted: i=1; AHgh+RrzCvptvLEcMHxkSBrrJmG4nNX6BDGXFDHo/t0AvJSa8R9AXZat9vbN9ImACFz8gRi1C9Yp9crhIA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YwpFgdgvdO3ys16UwVu+bGDvfAcsQoeY/UCGqkH+oKFcAT9nC7G
-	3JpFoMFwdlllQgo9RLhd9exGGjmSfY2ZLJH4bh2jS3KTqPuyZ6qtMiqHQ78A1tbUJT08MFNG2/a
-	AMhTxGtLAKyXXOJGDpax7j5ZD1KIaFY7iIkSBF81Szjj0YXTYBm6DM3x4k6zyXwlWkO1c
-X-Gm-Gg: AR+sD10a8IzPdAr+XJ1zZRMR9TLKdUYQqZqzaIE8xLJuyGX1JoXatbRZl/LFJ56Nh4N
-	m2rwZH/lBVfFMUkIN8Hnv8IH0ykNx2ehmRAmDTeyCFRIEsZ+L73yjS00eR5I2q1ozStV1EQUwvV
-	GiQFXS6Oa+gjNp6F5fRrTEVLYBb+rkhoRBiKIP5LjV68CQfsq5NKTpNC6kbILuwsLVKqpDPYVIY
-	DNVLOLUGl0ANLXnVJfeI8B/LDIA7VTNSQcg0b7yU+MUWox16J313kq7TIYqEFZ+YVwZlaGsBDyh
-	G5rFHKeTvibQMfugzH4KpVDWsxuB+47zVNdPNvY+xG9NAuMnkSuRvQNj1XyidfDhCpRuNgK5CpM
-	1+5BKjHJSN97kYcZ/MAGxhBarWKX1uMLksql4JqBvkpMOpWDa
-X-Received: by 2002:a05:622a:2b4f:b0:527:6d4a:1970 with SMTP id d75a77b69052e-5283de68b0emr49059371cf.38.1784856533309;
-        Thu, 23 Jul 2026 18:28:53 -0700 (PDT)
-X-Received: by 2002:a05:622a:2b4f:b0:527:6d4a:1970 with SMTP id d75a77b69052e-5283de68b0emr49059051cf.38.1784856532497;
-        Thu, 23 Jul 2026 18:28:52 -0700 (PDT)
-Received: from ?IPV6:2600:4040:530f:b400:d348:ae32:97a6:8a0d? ([2600:4040:530f:b400:d348:ae32:97a6:8a0d])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-527d402cb05sm45796231cf.31.2026.07.23.18.28.50
+        d=1e100.net; s=20251104; t=1784866572; x=1785471372;
+        h=in-reply-to:from:content-language:references:cc:to:subject
+         :user-agent:mime-version:date:message-id:content-type:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=s5kn9KtHFPPj32yH+JbPhxfy5+S45WvNPYXOXrfI6TQ=;
+        b=Fvhmx6WxuWKujlu55rEDg+nskuTAWwzeB1l5CTBC8UQzJHuyTTa4cI6LV0YdaJjbky
+         vJefJBCOUM/kLgBBq4PafEstTK8SU68vWC1bKHXW1rska84a1TcxVqSXo6844y2SoF3L
+         bQEFyDPGWnHHuT88rIOfU1uwBgolvGbv5r8Tynmu19nC1SEYLTPJ05eB43qZrAi3HnX1
+         gRM3E207huwxqDgDPgA89l+P4+YVIC6QldNdYYwYGc3DyDbKCmn+bjI6N301Uols860X
+         Eyfwq4xpZH7LHrOVhThUPaWRQ3CNRkYoYMa25yKzIOeVOj2ZUfY42lHCfSJXyBoNOCQ0
+         B6jQ==
+X-Forwarded-Encrypted: i=1; AHgh+RrMdcywHtmrhxYCA/yQccx0orzXk8j/jfdzQf9Qs/9cRF4526WaMcSKJymTpBbSWc6aexGbmZXlxQ==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzYSGttLMOea6q0Hw2GMiAxYbzNQaFVMB9pmRnyuSDwZTsMDNPS
+	aQ1cBqaq5HnBsaUOUJUfJ9mS+rhW4xjZt6IG13ZlKzrxmST/EBBczpkZ
+X-Gm-Gg: AR+sD10dzH6ktRA1ZtS+Od5tn90ZpKndAKBTjvDO/cv2Vbu8aNtuNFTGy98STIwsfOb
+	Hg7fha3u1y+GU5hQdcBrnHqnV3Brxw60SEJiD2svvgi96qboqEu6P3Q2Y6XNC1JQXQTMJzZVZbw
+	xeB7AtzTqJmsUbhZDqvsUAAJPOaD/5UfkkwFuz8xKSQVsmwpBjIBxVfzl4+j/9YbvdPFWDr3cBE
+	vqfxxJJG1AL8ZDgmg5MywxaxwAfD6o4OOD0fIm/j0tbuU4ziyImL8SQvOT03j3/mGpbyNVhKbEi
+	/fl1esteYLeCKsXEMv4rC98ZBLmskozNNMXyIZM2013AtzO6hdI3glKgKZaanlWjrlvN6rgEWUc
+	gHfmm2Ur8kpmZI5aOS5W3Z78Bv6tmnxbBvsTRT1rDrcTRlEZTDXSV6LW7N/d4CTA7PpI9pJMzt8
+	zOhKwGwQ/flP7B0vXT
+X-Received: by 2002:a17:903:2f44:b0:2cf:7dfa:7f56 with SMTP id d9443c01a7336-2cfbc9ff7ffmr21322805ad.2.1784866571463;
+        Thu, 23 Jul 2026 21:16:11 -0700 (PDT)
+Received: from [10.70.111.138] ([202.189.104.49])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2cf8efd7157sm44135835ad.18.2026.07.23.21.16.08
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 23 Jul 2026 18:28:51 -0700 (PDT)
-Message-ID: <178a5039-1817-4e13-8937-12eee8b26cc6@redhat.com>
-Date: Thu, 23 Jul 2026 21:28:50 -0400
+        Thu, 23 Jul 2026 21:16:10 -0700 (PDT)
+Content-Type: multipart/mixed; boundary="------------OD38yxW8i2BIPWzedjSF73z0"
+Message-ID: <fdd054ac-d073-42c6-a19d-493acc934a29@gmail.com>
+Date: Fri, 24 Jul 2026 12:16:07 +0800
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -74,878 +69,370 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/2] vdo: add zstd compression support
-To: Rhajune Park <june@pythonplayer123.dev>, dm-devel@lists.linux.dev
-References: <20260723161350.1080473-1-june@pythonplayer123.dev>
-From: Matthew Sakai <msakai@redhat.com>
-In-Reply-To: <20260723161350.1080473-1-june@pythonplayer123.dev>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: IXQAKnuwfIyw3DN54GJPFiVjmDYUByIZj5Q619D2Dxg_1784856534
-X-Mimecast-Originator: redhat.com
+Subject: Re: [BUG] dm: dm_setup_md_queue UAF walking table_devices without
+ lock
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mike Snitzer <snitzer@kernel.org>,
+ Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+References: <5947c25a-0a1e-4bb2-ad3e-8e4d9ecbd8c2@gmail.com>
+ <2f28baa4-d328-1a06-8a86-a7814cb2955b@redhat.com>
 Content-Language: en-US
+From: Junzhe Yu <junzheyu1@gmail.com>
+In-Reply-To: <2f28baa4-d328-1a06-8a86-a7814cb2955b@redhat.com>
+
+This is a multi-part message in MIME format.
+--------------OD38yxW8i2BIPWzedjSF73z0
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-Hi Rhajune,
+Hi Mikulas,
 
-I have to ask, what is the motivation for this change? Do you have a 
-workload that shows some kind of improvement from this proposal?
+Thanks for the suggested fix. We verified it on Linux 6.6.144 with KASAN
+against our minimized PoC (concurrent DM_TABLE_LOAD racing
+dm_setup_md_queue's unlocked table_devices walk).
 
-About a year and a half ago, shortly after the linked discussion, we did 
-make an effort to try to add zstd compression as an option to dm-vdo. 
-You can see some of the discussion here:
+Results:
+   - unpatched: KASAN slab-use-after-free in dm_setup_md_queue (often with
+     a follow-on fault around bd_link_disk_holder)
+   - with your change (extend table_devices_lock over the list walk):
+     no KASAN UAF for a 5-minute PoC window
 
-https://github.com/dm-vdo/vdo-devel/pull/241/
+Self-contained test package (patch + poc.c + A/B scripts + captured logs):
 
-The summary version, though, is that, because of the way dm-vdo handles 
-compressed blocks, it is not very sensitive to the choice of compression 
-algorithm, and we were unable to really find any use cases where 
-changing the algorithm made dm-vdo operate better in any way.
+   dm-setup-md-queue-patch-test.tar.gz
 
-So, unless you can demonstrate some improvement from this change, it 
-looks like a lot of complication for no actual benefit. There's no 
-reason for us to accept this.
+Re-run with Docker (see README.md inside the tarball):
 
-Matt
+   docker build -t dm-setup-md-queue-patch-test -f Dockerfile .
+   mkdir -p artifacts
+   docker run --rm --privileged --device=/dev/kvm --network=host \
+     -v "$PWD/artifacts:/artifacts" -e OUTPUT_DIR=/artifacts \
+     dm-setup-md-queue-patch-test
 
-On 7/23/26 12:13 PM, Rhajune Park wrote:
-> Allow for newly created VDO volumes to select zstd for compression.
-> Uses geometry version 5.1 for zstd volumes.
-> 
-> Link: https://lore.kernel.org/dm-devel/CAAiJnjoGn4Jn6O-SWAaAzwNk4DhEiCFUA0Q0X2RLdrHH7NR5qg@mail.gmail.com
-> Assisted-by: opencode:gpt-5.6-sol
-> Signed-off-by: Rhajune Park <june@pythonplayer123.dev>
+Happy to test follow-ups if needed.
+
+Thanks,
+Junzhe
+
+On 7/24/2026 4:23 AM, Mikulas Patocka wrote:
+>
+> On Sat, 18 Jul 2026, Junzhe Yu wrote:
+>
+>> Hello,
+>>
+>> I am reporting a KASAN slab use-after-free in the device-mapper core in
+>> dm_setup_md_queue().
+>>
+>> Summary
+>> =======
+>>
+>> dm_setup_md_queue() walks md->table_devices without holding
+>> md->table_devices_lock while a concurrent failed DM_TABLE_LOAD frees a
+>> table_device via dm_table_destroy() -> close_table_device(). The crash
+>> shows as a KASAN UAF on the list walk, and often a follow-on page fault
+>> in bd_link_disk_holder().
+> Hi
+>
+> Does this patch fix it?
+>
+> Mikulas
+>
+>
+>
+> dm: fix race when loading and unloading a table
+>
+> If the userspace calls two concurrent table load ioctls and one of them
+> succeeds and the other fails, there is a race condition because
+> dm_setup_md_queue walks &md->table_devices without any lock. If the walk
+> races with dm_table_destroy -> free_devices -> dm_put_table_device, there
+> is access to invalid memory.
+>
+> Fix this race by extending the lock over the list walk.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Cc: stable@vger.kernel.org
+>
 > ---
->   drivers/md/dm-vdo/Kconfig         |   2 +
->   drivers/md/dm-vdo/Makefile        |   1 +
->   drivers/md/dm-vdo/compression.c   | 176 ++++++++++++++++++++++++++++++
->   drivers/md/dm-vdo/compression.h   |  27 +++++
->   drivers/md/dm-vdo/data-vio.c      |  20 ++--
->   drivers/md/dm-vdo/dm-vdo-target.c |  47 +++++++-
->   drivers/md/dm-vdo/encodings.c     |  58 +++++++---
->   drivers/md/dm-vdo/encodings.h     |  23 +++-
->   drivers/md/dm-vdo/message-stats.c |  20 +++-
->   drivers/md/dm-vdo/types.h         |   9 ++
->   drivers/md/dm-vdo/vdo.c           |  44 ++++----
->   drivers/md/dm-vdo/vdo.h           |   6 +-
->   12 files changed, 374 insertions(+), 59 deletions(-)
->   create mode 100644 drivers/md/dm-vdo/compression.c
->   create mode 100644 drivers/md/dm-vdo/compression.h
-> 
-> diff --git a/drivers/md/dm-vdo/Kconfig b/drivers/md/dm-vdo/Kconfig
-> index 2400b2bc4bc7..eafd82e7af4a 100644
-> --- a/drivers/md/dm-vdo/Kconfig
-> +++ b/drivers/md/dm-vdo/Kconfig
-> @@ -7,6 +7,8 @@ config DM_VDO
->   	select DM_BUFIO
->   	select LZ4_COMPRESS
->   	select LZ4_DECOMPRESS
-> +	select ZSTD_COMPRESS
-> +	select ZSTD_DECOMPRESS
->   	select MIN_HEAP
->   	help
->   	  This device mapper target presents a block device with
-> diff --git a/drivers/md/dm-vdo/Makefile b/drivers/md/dm-vdo/Makefile
-> index 9476957bfbf4..c9cd6ba3c7d7 100644
-> --- a/drivers/md/dm-vdo/Makefile
-> +++ b/drivers/md/dm-vdo/Makefile
-> @@ -9,6 +9,7 @@ dm-vdo-objs := \
->   	admin-state.o \
->   	block-map.o \
->   	completion.o \
-> +	compression.o \
->   	data-vio.o \
->   	dedupe.o \
->   	dm-vdo-target.o \
-> diff --git a/drivers/md/dm-vdo/compression.c b/drivers/md/dm-vdo/compression.c
-> new file mode 100644
-> index 000000000000..1bb63d4783c0
-> --- /dev/null
-> +++ b/drivers/md/dm-vdo/compression.c
-> @@ -0,0 +1,176 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
-> +/*
-> + * Copyright 2026 Rhajune Park <june@pythonplayer123.dev>
-> + */
-> +
-> +#include "compression.h"
-> +
-> +#include <linux/lz4.h>
-> +#include <linux/zstd.h>
-> +
-> +#include "constants.h"
-> +#include "funnel-workqueue.h"
-> +#include "memory-alloc.h"
-> +#include "status-codes.h"
-> +#include "types.h"
-> +#include "vdo.h"
-> +
-> +struct vdo_compression_context {
-> +	void *compression_workspace;
-> +	void *decompression_workspace;
-> +	zstd_cctx *zstd_cctx;
-> +	zstd_dctx *zstd_dctx;
-> +	zstd_parameters zstd_parameters;
-> +};
-> +
-> +bool vdo_is_valid_compression_level(int level)
-> +{
-> +	return level >= zstd_min_clevel() && level <= zstd_max_clevel();
-> +}
-> +
-> +int vdo_resolve_compression_level(struct device_config *config, char **reason)
-> +{
-> +	if (config->compression_algorithm == VDO_COMPRESSION_ALGORITHM_LZ4) {
-> +		if (config->compression_level_set) {
-> +			*reason = "Compression level is only supported with ZSTD";
-> +			return VDO_BAD_CONFIGURATION;
-> +		}
-> +
-> +		config->compression_level = 0;
-> +	}
-> +
-> +	return VDO_SUCCESS;
-> +}
-> +
-> +static void free_compression_context(struct vdo_compression_context *context)
-> +{
-> +	if (context == NULL)
-> +		return;
-> +
-> +	vdo_free(vdo_forget(context->decompression_workspace));
-> +	vdo_free(vdo_forget(context->compression_workspace));
-> +	vdo_free(context);
-> +}
-> +
-> +void vdo_free_compression_contexts(struct vdo *vdo)
-> +{
-> +	unsigned int i;
-> +
-> +	if (vdo->compression_context == NULL)
-> +		return;
-> +
-> +	for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++)
-> +		free_compression_context(vdo_forget(vdo->compression_context[i]));
-> +
-> +	vdo_free(vdo_forget(vdo->compression_context));
-> +}
-> +
-> +static int make_lz4_context(struct vdo_compression_context *context)
-> +{
-> +	return vdo_allocate_memory(LZ4_MEM_COMPRESS, 1, "LZ4 context",
-> +				   &context->compression_workspace);
-> +}
-> +
-> +static int make_zstd_context(struct vdo_compression_context *context, int level)
-> +{
-> +	size_t workspace_size;
-> +	int result;
-> +
-> +	context->zstd_parameters = zstd_get_params(level, VDO_BLOCK_SIZE);
-> +	workspace_size = zstd_cctx_workspace_bound(&context->zstd_parameters.cParams);
-> +	result = vdo_allocate_memory(workspace_size, 8, "ZSTD compression context",
-> +				     &context->compression_workspace);
-> +	if (result != VDO_SUCCESS)
-> +		return result;
-> +
-> +	context->zstd_cctx = zstd_init_cctx(context->compression_workspace,
-> +					    workspace_size);
-> +	if (context->zstd_cctx == NULL)
-> +		return VDO_BAD_CONFIGURATION;
-> +
-> +	workspace_size = zstd_dctx_workspace_bound();
-> +	result = vdo_allocate_memory(workspace_size, 8, "ZSTD decompression context",
-> +				     &context->decompression_workspace);
-> +	if (result != VDO_SUCCESS)
-> +		return result;
-> +
-> +	context->zstd_dctx = zstd_init_dctx(context->decompression_workspace,
-> +					    workspace_size);
-> +	return (context->zstd_dctx == NULL) ? VDO_BAD_CONFIGURATION : VDO_SUCCESS;
-> +}
-> +
-> +int vdo_make_compression_contexts(struct vdo *vdo)
-> +{
-> +	unsigned int i;
-> +	int result;
-> +
-> +	result = vdo_allocate(vdo->device_config->thread_counts.cpu_threads,
-> +			      "compression contexts", &vdo->compression_context);
-> +	if (result != VDO_SUCCESS)
-> +		return result;
-> +
-> +	for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++) {
-> +		struct vdo_compression_context *context;
-> +
-> +		result = vdo_allocate(1, "compression context", &context);
-> +		if (result != VDO_SUCCESS)
-> +			return result;
-> +
-> +		vdo->compression_context[i] = context;
-> +		switch (vdo->geometry.compression_algorithm) {
-> +		case VDO_COMPRESSION_ALGORITHM_LZ4:
-> +			result = make_lz4_context(context);
-> +			break;
-> +		case VDO_COMPRESSION_ALGORITHM_ZSTD:
-> +			result = make_zstd_context(context,
-> +						   vdo->device_config->compression_level);
-> +			break;
-> +		default:
-> +			return VDO_BAD_CONFIGURATION;
-> +		}
-> +
-> +		if (result != VDO_SUCCESS)
-> +			return result;
-> +	}
-> +
-> +	return VDO_SUCCESS;
-> +}
-> +
-> +size_t vdo_compress_block(struct vdo *vdo, const void *src, void *dst,
-> +			  size_t dst_size)
-> +{
-> +	struct vdo_compression_context *context = vdo_get_work_queue_private_data();
-> +	size_t size;
-> +
-> +	switch (vdo->geometry.compression_algorithm) {
-> +	case VDO_COMPRESSION_ALGORITHM_LZ4:
-> +		return LZ4_compress_default(src, dst, VDO_BLOCK_SIZE, dst_size,
-> +					    context->compression_workspace);
-> +	case VDO_COMPRESSION_ALGORITHM_ZSTD:
-> +		size = zstd_compress_cctx(context->zstd_cctx, dst, dst_size, src,
-> +					  VDO_BLOCK_SIZE, &context->zstd_parameters);
-> +		return zstd_is_error(size) ? 0 : size;
-> +	default:
-> +		return 0;
-> +	}
-> +}
-> +
-> +int vdo_decompress_block(struct vdo *vdo, const void *src, size_t src_size,
-> +			 void *dst)
-> +{
-> +	struct vdo_compression_context *context = vdo_get_work_queue_private_data();
-> +	size_t size;
-> +
-> +	switch (vdo->geometry.compression_algorithm) {
-> +	case VDO_COMPRESSION_ALGORITHM_LZ4:
-> +		return (LZ4_decompress_safe(src, dst, src_size, VDO_BLOCK_SIZE) ==
-> +			VDO_BLOCK_SIZE) ? VDO_SUCCESS : VDO_INVALID_FRAGMENT;
-> +	case VDO_COMPRESSION_ALGORITHM_ZSTD:
-> +		size = zstd_decompress_dctx(context->zstd_dctx, dst, VDO_BLOCK_SIZE,
-> +					    src, src_size);
-> +		return (!zstd_is_error(size) && size == VDO_BLOCK_SIZE) ?
-> +			VDO_SUCCESS : VDO_INVALID_FRAGMENT;
-> +	default:
-> +		return VDO_INVALID_FRAGMENT;
-> +	}
-> +}
-> diff --git a/drivers/md/dm-vdo/compression.h b/drivers/md/dm-vdo/compression.h
-> new file mode 100644
-> index 000000000000..74ec1577460e
-> --- /dev/null
-> +++ b/drivers/md/dm-vdo/compression.h
-> @@ -0,0 +1,27 @@
-> +/* SPDX-License-Identifier: GPL-2.0-only */
-> +/*
-> + * Copyright 2026 Rhajune Park <june@pythonplayer123.dev>
-> + */
-> +
-> +#ifndef VDO_COMPRESSION_H
-> +#define VDO_COMPRESSION_H
-> +
-> +#include <linux/types.h>
-> +
-> +struct vdo;
-> +struct vdo_compression_context;
-> +struct device_config;
-> +
-> +#define VDO_DEFAULT_ZSTD_COMPRESSION_LEVEL 1
-> +
-> +bool vdo_is_valid_compression_level(int level);
-> +int vdo_resolve_compression_level(struct device_config *config, char **reason);
-> +int vdo_make_compression_contexts(struct vdo *vdo);
-> +void vdo_free_compression_contexts(struct vdo *vdo);
-> +
-> +size_t vdo_compress_block(struct vdo *vdo, const void *src, void *dst,
-> +			  size_t dst_size);
-> +int vdo_decompress_block(struct vdo *vdo, const void *src, size_t src_size,
-> +			 void *dst);
-> +
-> +#endif /* VDO_COMPRESSION_H */
-> diff --git a/drivers/md/dm-vdo/data-vio.c b/drivers/md/dm-vdo/data-vio.c
-> index 370d4239ba31..fb78ef719509 100644
-> --- a/drivers/md/dm-vdo/data-vio.c
-> +++ b/drivers/md/dm-vdo/data-vio.c
-> @@ -13,7 +13,6 @@
->   #include <linux/jiffies.h>
->   #include <linux/kernel.h>
->   #include <linux/list.h>
-> -#include <linux/lz4.h>
->   #include <linux/minmax.h>
->   #include <linux/sched.h>
->   #include <linux/spinlock.h>
-> @@ -26,6 +25,7 @@
->   #include "permassert.h"
->   
->   #include "block-map.h"
-> +#include "compression.h"
->   #include "dump.h"
->   #include "encodings.h"
->   #include "int-map.h"
-> @@ -1423,7 +1423,6 @@ void release_data_vio_allocation_lock(struct data_vio *data_vio, bool reset)
->   int uncompress_data_vio(struct data_vio *data_vio,
->   			enum block_mapping_state mapping_state, char *buffer)
->   {
-> -	int size;
->   	u16 fragment_offset, fragment_size;
->   	struct compressed_block *block = data_vio->compression.block;
->   	int result = vdo_get_compressed_block_fragment(mapping_state, block,
-> @@ -1434,10 +1433,10 @@ int uncompress_data_vio(struct data_vio *data_vio,
->   		return result;
->   	}
->   
-> -	size = LZ4_decompress_safe((block->data + fragment_offset), buffer,
-> -				   fragment_size, VDO_BLOCK_SIZE);
-> -	if (size != VDO_BLOCK_SIZE) {
-> -		vdo_log_debug("%s: lz4 error", __func__);
-> +	result = vdo_decompress_block(vdo_from_data_vio(data_vio),
-> +				      block->data + fragment_offset, fragment_size, buffer);
-> +	if (result != VDO_SUCCESS) {
-> +		vdo_log_debug("%s: decompression error", __func__);
->   		return VDO_INVALID_FRAGMENT;
->   	}
->   
-> @@ -1753,7 +1752,7 @@ static void pack_compressed_data(struct vdo_completion *completion)
->   static void compress_data_vio(struct vdo_completion *completion)
->   {
->   	struct data_vio *data_vio = as_data_vio(completion);
-> -	int size;
-> +	size_t size;
->   
->   	assert_data_vio_on_cpu_thread(data_vio);
->   
-> @@ -1761,10 +1760,9 @@ static void compress_data_vio(struct vdo_completion *completion)
->   	 * By putting the compressed data at the start of the compressed block data field, we won't
->   	 * need to copy it if this data_vio becomes a compressed write agent.
+>   drivers/md/dm.c |   12 ++++++++----
+>   1 file changed, 8 insertions(+), 4 deletions(-)
+>
+> Index: linux-2.6/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.orig/drivers/md/dm.c	2026-07-23 14:13:37.000000000 +0200
+> +++ linux-2.6/drivers/md/dm.c	2026-07-23 18:43:19.000000000 +0200
+> @@ -2630,9 +2630,10 @@ int dm_setup_md_queue(struct mapped_devi
 >   	 */
-> -	size = LZ4_compress_default(data_vio->vio.data,
-> -				    data_vio->compression.block->data, VDO_BLOCK_SIZE,
-> -				    VDO_MAX_COMPRESSED_FRAGMENT_SIZE,
-> -				    (char *) vdo_get_work_queue_private_data());
-> +	size = vdo_compress_block(vdo_from_data_vio(data_vio), data_vio->vio.data,
-> +				  data_vio->compression.block->data,
-> +				  VDO_MAX_COMPRESSED_FRAGMENT_SIZE);
->   	if ((size > 0) && (size < VDO_COMPRESSED_BLOCK_DATA_SIZE)) {
->   		data_vio->compression.size = size;
->   		launch_data_vio_packer_callback(data_vio, pack_compressed_data);
-> diff --git a/drivers/md/dm-vdo/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
-> index 1d8375cc3c3e..bbbb60818aac 100644
-> --- a/drivers/md/dm-vdo/dm-vdo-target.c
-> +++ b/drivers/md/dm-vdo/dm-vdo-target.c
-> @@ -18,6 +18,7 @@
->   #include "block-map.h"
->   #include "completion.h"
->   #include "constants.h"
-> +#include "compression.h"
->   #include "data-vio.h"
->   #include "dedupe.h"
->   #include "dump.h"
-> @@ -678,6 +679,32 @@ static int parse_one_key_value_pair(const char *key, const char *value,
->   	if (strcmp(key, "compression") == 0)
->   		return parse_bool(value, "on", "off", &config->compression);
->   
-> +	if (strcmp(key, "compressionAlgorithm") == 0) {
-> +		if (strcmp(value, "lz4") == 0)
-> +			config->compression_algorithm = VDO_COMPRESSION_ALGORITHM_LZ4;
-> +		else if (strcmp(value, "zstd") == 0)
-> +			config->compression_algorithm = VDO_COMPRESSION_ALGORITHM_ZSTD;
-> +		else
-> +			return -EINVAL;
-> +
-> +		return VDO_SUCCESS;
+>   	mutex_lock(&md->table_devices_lock);
+>   	r = add_disk(md->disk);
+> -	mutex_unlock(&md->table_devices_lock);
+> -	if (r)
+> +	if (r) {
+> +		mutex_unlock(&md->table_devices_lock);
+>   		return r;
 > +	}
-> +
-> +	if (strcmp(key, "compressionLevel") == 0) {
-> +		int level;
-> +
-> +		result = kstrtoint(value, 10, &level);
-> +		if (result || !vdo_is_valid_compression_level(level)) {
-> +			vdo_log_error("optional parameter error: invalid ZSTD compression level \"%s\"",
-> +				      value);
-> +			return -EINVAL;
-> +		}
-> +
-> +		config->compression_level = level;
-> +		config->compression_level_set = true;
-> +		return VDO_SUCCESS;
-> +	}
-> +
->   	if (strcmp(key, "indexSparse") == 0)
->   		return parse_bool(value, "on", "off", &config->index_sparse);
 >   
-> @@ -851,6 +878,8 @@ static int parse_device_config(int argc, char **argv, struct dm_target *ti,
->   	config->max_discard_blocks = 1;
->   	config->deduplication = true;
->   	config->compression = false;
-> +	config->compression_algorithm = VDO_COMPRESSION_ALGORITHM_UNSPECIFIED;
-> +	config->compression_level = VDO_DEFAULT_ZSTD_COMPRESSION_LEVEL;
->   	config->index_memory = UDS_MEMORY_CONFIG_256MB;
->   	config->index_sparse = false;
->   	config->slab_blocks = DEFAULT_VDO_SLAB_BLOCKS;
-> @@ -1893,6 +1922,16 @@ static int validate_new_device_config(struct device_config *to_validate,
->   				      struct device_config *config, bool may_grow,
->   				      char **error_ptr)
->   {
-> +	if (to_validate->compression_algorithm != config->compression_algorithm) {
-> +		*error_ptr = "Compression algorithm cannot change";
-> +		return VDO_PARAMETER_MISMATCH;
-> +	}
-> +
-> +	if (to_validate->compression_level != config->compression_level) {
-> +		*error_ptr = "Compression level cannot change while the VDO is active";
-> +		return VDO_PARAMETER_MISMATCH;
-> +	}
-> +
->   	if (to_validate->owning_target->begin != config->owning_target->begin) {
->   		*error_ptr = "Starting sector cannot change";
->   		return VDO_PARAMETER_MISMATCH;
-> @@ -1943,6 +1982,12 @@ static int prepare_to_modify(struct dm_target *ti, struct device_config *config,
->   	int result;
->   	bool may_grow = (vdo_get_admin_state(vdo) != VDO_ADMIN_STATE_PRE_LOADED);
->   
-> +	if (config->compression_algorithm == VDO_COMPRESSION_ALGORITHM_UNSPECIFIED)
-> +		config->compression_algorithm = vdo->device_config->compression_algorithm;
-> +	result = vdo_resolve_compression_level(config, &ti->error);
-> +	if (result != VDO_SUCCESS)
-> +		return -EINVAL;
-> +
->   	result = validate_new_device_config(config, vdo->device_config, may_grow,
->   					    &ti->error);
->   	if (result != VDO_SUCCESS)
-> @@ -2983,7 +3028,7 @@ static void vdo_resume(struct dm_target *ti)
->   static struct target_type vdo_target_bio = {
->   	.features = DM_TARGET_SINGLETON,
->   	.name = "vdo",
-> -	.version = { 9, 2, 0 },
-> +	.version = { 9, 3, 0 },
->   	.module = THIS_MODULE,
->   	.ctr = vdo_ctr,
->   	.dtr = vdo_dtr,
-> diff --git a/drivers/md/dm-vdo/encodings.c b/drivers/md/dm-vdo/encodings.c
-> index d75e023df637..a388976f3028 100644
-> --- a/drivers/md/dm-vdo/encodings.c
-> +++ b/drivers/md/dm-vdo/encodings.c
-> @@ -22,17 +22,17 @@ struct geometry_block {
->   	u32 checksum;
->   } __packed;
->   
-> -static const struct header GEOMETRY_BLOCK_HEADER_5_0 = {
-> +static const struct header GEOMETRY_BLOCK_HEADER_5 = {
->   	.id = VDO_GEOMETRY_BLOCK,
->   	.version = {
-> -		.major_version = 5,
-> -		.minor_version = 0,
-> +		.major_version = VDO_GEOMETRY_BLOCK_MAJOR_VERSION,
-> +		.minor_version = VDO_GEOMETRY_BLOCK_MINOR_LZ4,
->   	},
 >   	/*
->   	 * Note: this size isn't just the payload size following the header, like it is everywhere
->   	 * else in VDO.
->   	 */
-> -	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry),
-> +	.size = sizeof(struct geometry_block) + sizeof(struct volume_geometry_5_0),
->   };
->   
->   static const struct header GEOMETRY_BLOCK_HEADER_4_0 = {
-> @@ -291,24 +291,30 @@ static void decode_volume_geometry(u8 *buffer, size_t *offset,
->    * vdo_encode_volume_geometry() - Encode the on-disk representation of a volume geometry into a buffer.
->    * @buffer: A buffer to store the encoding.
->    * @geometry: The geometry to encode.
-> - * @version: The geometry block version to encode.
-> - *
->    * Return: VDO_SUCCESS or an error.
->    */
-> -int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometry,
-> -			       u32 version)
-> +int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometry)
->   {
->   	int result;
->   	enum volume_region_id id;
->   	u32 checksum;
->   	size_t offset = 0;
-> -	const struct header *header;
-> +	struct header header = GEOMETRY_BLOCK_HEADER_5;
->   
->   	memcpy(buffer, VDO_GEOMETRY_MAGIC_NUMBER, VDO_GEOMETRY_MAGIC_NUMBER_SIZE);
->   	offset += VDO_GEOMETRY_MAGIC_NUMBER_SIZE;
->   
-> -	header = (version > 4) ? &GEOMETRY_BLOCK_HEADER_5_0 : &GEOMETRY_BLOCK_HEADER_4_0;
-> -	vdo_encode_header(buffer, &offset, header);
-> +	switch (geometry->compression_algorithm) {
-> +	case VDO_COMPRESSION_ALGORITHM_LZ4:
-> +		header.version.minor_version = VDO_GEOMETRY_BLOCK_MINOR_LZ4;
-> +		break;
-> +	case VDO_COMPRESSION_ALGORITHM_ZSTD:
-> +		header.version.minor_version = VDO_GEOMETRY_BLOCK_MINOR_ZSTD;
-> +		break;
-> +	default:
-> +		return VDO_BAD_CONFIGURATION;
-> +	}
-> +	vdo_encode_header(buffer, &offset, &header);
->   
->   	/* This is for backwards compatibility */
->   	encode_u32_le(buffer, &offset, geometry->unused);
-> @@ -316,8 +322,7 @@ int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometr
->   	memcpy(buffer + offset, (unsigned char *) &geometry->uuid, sizeof(uuid_t));
->   	offset += sizeof(uuid_t);
->   
-> -	if (version > 4)
-> -		encode_u64_le(buffer, &offset, geometry->bio_offset);
-> +	encode_u64_le(buffer, &offset, geometry->bio_offset);
->   
->   	for (id = 0; id < VDO_VOLUME_REGION_COUNT; id++) {
->   		encode_u32_le(buffer, &offset, geometry->regions[id].id);
-> @@ -332,7 +337,7 @@ int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometr
->   	else
->   		buffer[offset++] = 0;
->   
-> -	result = VDO_ASSERT(header->size == offset + sizeof(u32),
-> +	result = VDO_ASSERT(header.size == offset + sizeof(u32),
->   			    "should have encoded up to the geometry checksum");
->   	if (result != VDO_SUCCESS)
->   		return result;
-> @@ -352,6 +357,7 @@ int __must_check vdo_parse_geometry_block(u8 *block, struct volume_geometry *geo
->   {
->   	u32 checksum, saved_checksum;
->   	struct header header;
-> +	struct header expected_header = GEOMETRY_BLOCK_HEADER_5;
->   	size_t offset = 0;
->   	int result;
->   
-> @@ -363,9 +369,22 @@ int __must_check vdo_parse_geometry_block(u8 *block, struct volume_geometry *geo
->   	if (header.version.major_version <= 4) {
->   		result = vdo_validate_header(&GEOMETRY_BLOCK_HEADER_4_0, &header,
->   					     true, __func__);
-> +		geometry->compression_algorithm = VDO_COMPRESSION_ALGORITHM_LZ4;
->   	} else {
-> -		result = vdo_validate_header(&GEOMETRY_BLOCK_HEADER_5_0, &header,
-> -					     true, __func__);
-> +		switch (header.version.minor_version) {
-> +		case VDO_GEOMETRY_BLOCK_MINOR_LZ4:
-> +			geometry->compression_algorithm = VDO_COMPRESSION_ALGORITHM_LZ4;
-> +			break;
-> +		case VDO_GEOMETRY_BLOCK_MINOR_ZSTD:
-> +			geometry->compression_algorithm = VDO_COMPRESSION_ALGORITHM_ZSTD;
-> +			break;
-> +		default:
-> +			return validate_version(expected_header.version, header.version,
-> +						"geometry block");
-> +		}
-> +
-> +		expected_header.version.minor_version = header.version.minor_version;
-> +		result = vdo_validate_header(&expected_header, &header, true, __func__);
+>   	 * Register the holder relationship for devices added before the disk
+> @@ -2643,18 +2644,21 @@ int dm_setup_md_queue(struct mapped_devi
+>   		if (r)
+>   			goto out_undo_holders;
 >   	}
->   	if (result != VDO_SUCCESS)
->   		return result;
-> @@ -380,8 +399,10 @@ int __must_check vdo_parse_geometry_block(u8 *block, struct volume_geometry *geo
->   	/* Decode and verify the checksum. */
->   	checksum = vdo_crc32(block, offset);
->   	decode_u32_le(block, &offset, &saved_checksum);
-> +	if (checksum != saved_checksum)
-> +		return VDO_CHECKSUM_MISMATCH;
+> +	mutex_unlock(&md->table_devices_lock);
 >   
-> -	return ((checksum == saved_checksum) ? VDO_SUCCESS : VDO_CHECKSUM_MISMATCH);
-> +	return VDO_SUCCESS;
->   }
+>   	r = dm_sysfs_init(md);
+>   	if (r)
+> -		goto out_undo_holders;
+> +		goto lock_out_undo_holders;
 >   
->   struct block_map_page *vdo_format_block_map_page(void *buffer, nonce_t nonce,
-> @@ -1650,12 +1671,14 @@ static int vdo_compute_index_blocks(const struct index_config *config,
->    * @nonce: The nonce to use to identify the vdo.
->    * @uuid: The uuid to use to identify the vdo.
->    * @index_config: The config used for structure initialization.
-> + * @compression_algorithm: The algorithm to use for compressed data.
->    * @geometry: The volume geometry to initialize.
->    *
->    * Return: VDO_SUCCESS or an error code.
->    */
->   int vdo_initialize_volume_geometry(nonce_t nonce, uuid_t *uuid,
->   				   const struct index_config *index_config,
-> +				   enum vdo_compression_algorithm compression_algorithm,
->   				   struct volume_geometry *geometry)
->   {
->   	int result;
-> @@ -1669,6 +1692,7 @@ int vdo_initialize_volume_geometry(nonce_t nonce, uuid_t *uuid,
->   		/* This is for backwards compatibility. */
->   		.unused = 0,
->   		.nonce = nonce,
-> +		.compression_algorithm = compression_algorithm,
->   		.bio_offset = 0,
->   		.regions = {
->   			[VDO_INDEX_REGION] = {
-> diff --git a/drivers/md/dm-vdo/encodings.h b/drivers/md/dm-vdo/encodings.h
-> index 67ff0ff2ffda..9c5180a76a48 100644
-> --- a/drivers/md/dm-vdo/encodings.h
-> +++ b/drivers/md/dm-vdo/encodings.h
-> @@ -64,7 +64,12 @@ struct packed_header {
->   enum {
->   	VDO_GEOMETRY_BLOCK_LOCATION = 0,
->   	VDO_GEOMETRY_MAGIC_NUMBER_SIZE = 8,
-> -	VDO_DEFAULT_GEOMETRY_BLOCK_VERSION = 5,
-> +	VDO_GEOMETRY_BLOCK_MAJOR_VERSION = 5,
-> +};
+>   	md->type = type;
 > +
-> +enum vdo_geometry_block_minor_version {
-> +	VDO_GEOMETRY_BLOCK_MINOR_LZ4 = VDO_COMPRESSION_ALGORITHM_LZ4,
-> +	VDO_GEOMETRY_BLOCK_MINOR_ZSTD = VDO_COMPRESSION_ALGORITHM_ZSTD,
->   };
+>   	return 0;
 >   
->   struct index_config {
-> @@ -102,6 +107,18 @@ struct volume_geometry {
->   	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
->   	/* The index config */
->   	struct index_config index_config;
-> +	/* The algorithm used for compressed data. */
-> +	enum vdo_compression_algorithm compression_algorithm;
-> +} __packed;
-> +
-> +/* This volume geometry struct is used for sizing version 5. */
-> +struct volume_geometry_5_0 {
-> +	u32 unused;
-> +	nonce_t nonce;
-> +	uuid_t uuid;
-> +	block_count_t bio_offset;
-> +	struct volume_region regions[VDO_VOLUME_REGION_COUNT];
-> +	struct index_config index_config;
->   } __packed;
->   
->   /* This volume geometry struct is used for sizing only */
-> @@ -811,10 +828,10 @@ vdo_get_index_region_size(struct volume_geometry geometry)
->   
->   int vdo_initialize_volume_geometry(nonce_t nonce, uuid_t *uuid,
->   				   const struct index_config *index_config,
-> +				   enum vdo_compression_algorithm compression_algorithm,
->   				   struct volume_geometry *geometry);
->   
-> -int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometry,
-> -			       u32 version);
-> +int vdo_encode_volume_geometry(u8 *buffer, const struct volume_geometry *geometry);
->   int __must_check vdo_parse_geometry_block(unsigned char *block,
->   					  struct volume_geometry *geometry);
->   
-> diff --git a/drivers/md/dm-vdo/message-stats.c b/drivers/md/dm-vdo/message-stats.c
-> index b4c919780c22..3d6f035c838e 100644
-> --- a/drivers/md/dm-vdo/message-stats.c
-> +++ b/drivers/md/dm-vdo/message-stats.c
-> @@ -34,6 +34,17 @@ static void write_u32(char *prefix, u32 value, char *suffix, char **buf,
->   	*maxlen -= count;
->   }
->   
-> +static void write_s32(char *prefix, s32 value, char *suffix, char **buf,
-> +		      unsigned int *maxlen)
-> +{
-> +	int count;
-> +
-> +	count = scnprintf(*buf, *maxlen, "%s%d%s", prefix == NULL ? "" : prefix,
-> +			  value, suffix == NULL ? "" : suffix);
-> +	*buf += count;
-> +	*maxlen -= count;
-> +}
-> +
->   static void write_block_count_t(char *prefix, block_count_t value, char *suffix,
->   				char **buf, unsigned int *maxlen)
->   {
-> @@ -461,10 +472,13 @@ static void write_index_config(struct index_config *config, char **buf,
->   int vdo_write_config(struct vdo *vdo, char **buf, unsigned int *maxlen)
->   {
->   	struct vdo_config *config = &vdo->states.vdo.config;
-> +	char *compression_algorithm =
-> +		(vdo->geometry.compression_algorithm == VDO_COMPRESSION_ALGORITHM_ZSTD) ?
-> +		"zstd" : "lz4";
->   
->   	write_string(NULL, "{ ", NULL, buf, maxlen);
->   	/* version */
-> -	write_u32("version : ", 1, ", ", buf, maxlen);
-> +	write_u32("version : ", 3, ", ", buf, maxlen);
->   	/* physical size */
->   	write_block_count_t("physicalSize : ", config->physical_blocks * VDO_BLOCK_SIZE, ", ",
->   			    buf, maxlen);
-> @@ -473,6 +487,10 @@ int vdo_write_config(struct vdo *vdo, char **buf, unsigned int *maxlen)
->   			    buf, maxlen);
->   	/* slab size */
->   	write_block_count_t("slabSize : ", config->slab_size, ", ", buf, maxlen);
-> +	write_string("compressionAlgorithm : ", compression_algorithm, ", ", buf, maxlen);
-> +	if (vdo->geometry.compression_algorithm == VDO_COMPRESSION_ALGORITHM_ZSTD)
-> +		write_s32("compressionLevel : ", vdo->device_config->compression_level,
-> +			  ", ", buf, maxlen);
->   	/* index config */
->   	write_index_config(&vdo->geometry.index_config, buf, maxlen);
->   	write_string(NULL, "}", NULL, buf, maxlen);
-> diff --git a/drivers/md/dm-vdo/types.h b/drivers/md/dm-vdo/types.h
-> index 0d60a88aa086..8d92a8bef3c3 100644
-> --- a/drivers/md/dm-vdo/types.h
-> +++ b/drivers/md/dm-vdo/types.h
-> @@ -205,6 +205,12 @@ struct thread_count_config {
->   	unsigned int hash_zones;
->   } __packed;
->   
-> +enum vdo_compression_algorithm {
-> +	VDO_COMPRESSION_ALGORITHM_UNSPECIFIED = -1,
-> +	VDO_COMPRESSION_ALGORITHM_LZ4 = 0,
-> +	VDO_COMPRESSION_ALGORITHM_ZSTD = 1,
-> +};
-> +
->   struct device_config {
->   	struct dm_target *owning_target;
->   	struct dm_dev *owned_device;
-> @@ -225,6 +231,9 @@ struct device_config {
->   	unsigned int block_map_maximum_age;
->   	bool deduplication;
->   	bool compression;
-> +	enum vdo_compression_algorithm compression_algorithm;
-> +	int compression_level;
-> +	bool compression_level_set;
->   	struct thread_count_config thread_counts;
->   	block_count_t max_discard_blocks;
->   	block_count_t slab_blocks;
-> diff --git a/drivers/md/dm-vdo/vdo.c b/drivers/md/dm-vdo/vdo.c
-> index d0d4e0262be2..1340279701f6 100644
-> --- a/drivers/md/dm-vdo/vdo.c
-> +++ b/drivers/md/dm-vdo/vdo.c
-> @@ -31,7 +31,6 @@
->   
->   #include <linux/completion.h>
->   #include <linux/device-mapper.h>
-> -#include <linux/lz4.h>
->   #include <linux/mutex.h>
->   #include <linux/spinlock.h>
->   #include <linux/string.h>
-> @@ -45,6 +44,7 @@
->   
->   #include "block-map.h"
->   #include "completion.h"
-> +#include "compression.h"
->   #include "data-vio.h"
->   #include "dedupe.h"
->   #include "encodings.h"
-> @@ -465,7 +465,8 @@ static int __must_check vdo_format(struct vdo *vdo, char **error_ptr)
->   	};
->   
->   	uuid_gen(&uuid);
-> -	result = vdo_initialize_volume_geometry(nonce, &uuid, &index_config, &vdo->geometry);
-> +	result = vdo_initialize_volume_geometry(nonce, &uuid, &index_config,
-> +						config->compression_algorithm, &vdo->geometry);
->   	if (result != VDO_SUCCESS) {
->   		*error_ptr = "Could not initialize volume geometry during format";
->   		return result;
-> @@ -508,7 +509,6 @@ static int initialize_vdo(struct vdo *vdo, struct device_config *config,
->   			  unsigned int instance, char **reason)
->   {
->   	int result;
-> -	zone_count_t i;
->   
->   	vdo->device_config = config;
->   	vdo->starting_sector_offset = config->owning_target->begin;
-> @@ -540,6 +540,8 @@ static int initialize_vdo(struct vdo *vdo, struct device_config *config,
->   	}
->   
->   	if (mem_is_zero(vdo->geometry_block.vio.data, VDO_BLOCK_SIZE)) {
-> +		if (config->compression_algorithm == VDO_COMPRESSION_ALGORITHM_UNSPECIFIED)
-> +			config->compression_algorithm = VDO_COMPRESSION_ALGORITHM_LZ4;
->   		result = vdo_format(vdo, reason);
->   		if (result != VDO_SUCCESS)
->   			return result;
-> @@ -550,8 +552,19 @@ static int initialize_vdo(struct vdo *vdo, struct device_config *config,
->   			*reason = "Could not parse geometry block";
->   			return result;
->   		}
-> +
-> +		if (config->compression_algorithm != VDO_COMPRESSION_ALGORITHM_UNSPECIFIED &&
-> +		    config->compression_algorithm != vdo->geometry.compression_algorithm) {
-> +			*reason = "Compression algorithm does not match formatted volume";
-> +			return VDO_PARAMETER_MISMATCH;
-> +		}
-> +		config->compression_algorithm = vdo->geometry.compression_algorithm;
->   	}
->   
-> +	result = vdo_resolve_compression_level(config, reason);
-> +	if (result != VDO_SUCCESS)
-> +		return result;
-> +
->   	result = initialize_thread_config(config->thread_counts, &vdo->thread_config);
->   	if (result != VDO_SUCCESS) {
->   		*reason = "Cannot create thread configuration";
-> @@ -563,23 +576,12 @@ static int initialize_vdo(struct vdo *vdo, struct device_config *config,
->   		     config->thread_counts.physical_zones,
->   		     config->thread_counts.hash_zones, vdo->thread_config.thread_count);
->   
-> -	/* Compression context storage */
-> -	result = vdo_allocate(config->thread_counts.cpu_threads, "LZ4 context",
-> -			      &vdo->compression_context);
-> +	result = vdo_make_compression_contexts(vdo);
->   	if (result != VDO_SUCCESS) {
-> -		*reason = "cannot allocate LZ4 context";
-> +		*reason = "cannot allocate compression contexts";
->   		return result;
->   	}
->   
-> -	for (i = 0; i < config->thread_counts.cpu_threads; i++) {
-> -		result = vdo_allocate(LZ4_MEM_COMPRESS, "LZ4 context",
-> -				      &vdo->compression_context[i]);
-> -		if (result != VDO_SUCCESS) {
-> -			*reason = "cannot allocate LZ4 context";
-> -			return result;
-> -		}
-> -	}
-> -
->   	result = register_vdo(vdo);
->   	if (result != VDO_SUCCESS) {
->   		*reason = "Cannot add VDO to device registry";
-> @@ -788,12 +790,7 @@ void vdo_destroy(struct vdo *vdo)
->   
->   	uninitialize_thread_config(&vdo->thread_config);
->   
-> -	if (vdo->compression_context != NULL) {
-> -		for (i = 0; i < vdo->device_config->thread_counts.cpu_threads; i++)
-> -			vdo_free(vdo_forget(vdo->compression_context[i]));
-> -
-> -		vdo_free(vdo_forget(vdo->compression_context));
-> -	}
-> +	vdo_free_compression_contexts(vdo);
->   	vdo_free(vdo);
->   }
->   
-> @@ -1031,8 +1028,7 @@ void vdo_save_geometry_block(struct vdo *vdo, struct vdo_completion *parent)
->   {
->   	struct vdo_geometry_block *geometry_block = &vdo->geometry_block;
->   
-> -	vdo_encode_volume_geometry(geometry_block->buffer, &vdo->geometry,
-> -				   VDO_DEFAULT_GEOMETRY_BLOCK_VERSION);
-> +	vdo_encode_volume_geometry(geometry_block->buffer, &vdo->geometry);
->   	geometry_block->vio.completion.parent = parent;
->   	geometry_block->vio.completion.callback_thread_id = parent->callback_thread_id;
->   	vdo_submit_metadata_vio(&geometry_block->vio,
-> diff --git a/drivers/md/dm-vdo/vdo.h b/drivers/md/dm-vdo/vdo.h
-> index 9a63f5d45ce3..dc09c828b5c6 100644
-> --- a/drivers/md/dm-vdo/vdo.h
-> +++ b/drivers/md/dm-vdo/vdo.h
-> @@ -170,6 +170,8 @@ struct vdo_administrator {
->   	struct completion callback_sync;
->   };
->   
-> +struct vdo_compression_context;
-> +
->   struct vdo {
->   	char thread_name_prefix[MAX_VDO_WORK_QUEUE_NAME_LEN];
->   	struct vdo_thread *threads;
-> @@ -269,8 +271,8 @@ struct vdo {
->   	u64 starting_sector_offset;
->   	struct volume_geometry geometry;
->   
-> -	/* N blobs of context data for LZ4 code, one per CPU thread. */
-> -	char **compression_context;
-> +	/* Compression state private to each CPU worker. */
-> +	struct vdo_compression_context **compression_context;
->   };
->   
->   /**
+> +lock_out_undo_holders:
+> +	mutex_lock(&md->table_devices_lock);
+>   out_undo_holders:
+>   	list_for_each_entry_continue_reverse(td, &md->table_devices, list)
+>   		bd_unlink_disk_holder(td->dm_dev.bdev, md->disk);
+> -	mutex_lock(&md->table_devices_lock);
+>   	del_gendisk(md->disk);
+>   	mutex_unlock(&md->table_devices_lock);
+>   	return r;
+>
+--------------OD38yxW8i2BIPWzedjSF73z0
+Content-Type: application/x-gzip; name="dm-setup-md-queue-patch-test.tar.gz"
+Content-Disposition: attachment;
+ filename="dm-setup-md-queue-patch-test.tar.gz"
+Content-Transfer-Encoding: base64
 
+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
++QDwAAA=
+
+--------------OD38yxW8i2BIPWzedjSF73z0--
