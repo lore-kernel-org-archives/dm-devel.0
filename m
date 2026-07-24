@@ -1,310 +1,146 @@
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out-181.mta0.migadu.com (out-181.mta0.migadu.com [91.218.175.181])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B738B395AFA
-	for <dm-devel@lists.linux.dev>; Fri, 24 Jul 2026 06:50:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 881D93B777F
+	for <dm-devel@lists.linux.dev>; Fri, 24 Jul 2026 08:00:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784875846; cv=none; b=A6N7jU5ojhvLuki6ZO51g8eBULMvRo3Fe7s9QSOeic9dcIOAC5bcZ8FWDOTqRakRbmA/XS0ZTu8et2RghEHcgSq+IcFUBrEUfAcjZCjAUX46Wh8BbnAvPC2GzY+WOvyPqv7pJ7gxOwRgPFG5GLmicFd8fv54fkStXN7EoyrP1Tk=
+	t=1784880014; cv=none; b=ugCv+jQItL1RX/H8jQra9OFCrUO4QDKeKIl5Drl0tif5f575P8bBhab3+SvXA1CNG9AIfjpRM3AZuG9GXCcF91OqwdM+akOh672uG6W+lfV+RUD+oiqNQv/gJphEHKyJVGFea4cXugJdCPuBPhrBS1CqVvS9ElyDTabWHKw99zM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784875846; c=relaxed/simple;
-	bh=16bU0WrMwEyfHh5tvaf+npHAw/dPC2h0p1YZL9NlOr0=;
+	s=arc-20240116; t=1784880014; c=relaxed/simple;
+	bh=HHj9fMzh87Z/uENEL8UlBJs+fVZWxpVwcU4UjJ6Qw+8=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Ybsbs4nl96fi8Rx0otV/aBpFMZrwFYrF6ck2fD0/g1uiZW+VWZY9C51iEECJCQ3N0mDJKpxc4DWE5neGX2RPkbiEshb7hb9jwumP1XZmJ35qY1nsmjk+yQeT7FBL5jcZprhuAVGsK6tFEqZLmNrcmn1I/u03OFT4n/bDz42D6kE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=1DF6ESVR; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=H5iSvW/Z; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=h8X5sHhp; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=DwT+81od; arc=none smtp.client-ip=195.135.223.130
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	 In-Reply-To:Content-Type; b=ZgsJCaYk3qZVn6nDT1JdgVNfwNdFs+MJ6tGR5PUKpxzVtUl3GukKc9IdiKi0ZhX32fui6JmSseJEWvC/LvZQc0Xcml8Imuqui2kEfmH1ZZ9o/uysnYAFfrHdvjM9ghEgehyzuxyRNJxopjV80S0JyGptmQnBBIHjyBO8w/vswPA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=o56gilkL; arc=none smtp.client-ip=91.218.175.181
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="1DF6ESVR";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="H5iSvW/Z";
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="h8X5sHhp";
-	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="DwT+81od"
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 83B5C7B5EE;
-	Fri, 24 Jul 2026 06:50:41 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1784875842; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="o56gilkL"
+Message-ID: <a762baf6-3e0c-44f4-9e3f-d7e9e85206bd@linux.dev>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1784880007;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=l+RSFpykKOUTqd7WkvOVrV3OPDMsttrf26+eOKjrsxM=;
-	b=1DF6ESVREmpfuoc7+PkUn/2y2YWxyW6gRzWfNCcFcizXTlE7llEUe+9DPiTF9J/JLhh68R
-	CLPM8TQZVamvUk6r4ZipOUxZFUkXZLofoVd+2P7QJBk2uyI+SElQuxPpeBI59TdtSfzNYc
-	9WeVXTY3FEwECJTxZDWXVueHMPFIezY=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1784875842;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=l+RSFpykKOUTqd7WkvOVrV3OPDMsttrf26+eOKjrsxM=;
-	b=H5iSvW/ZVn+7VdlHmyv5jIl/MeobbktNVs6i68Az8lS1JnkfJ9nDhhWsEptz8le3tQB+LB
-	+kzUL7pKMrDX2/Dg==
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=h8X5sHhp;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=DwT+81od
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1784875841; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=l+RSFpykKOUTqd7WkvOVrV3OPDMsttrf26+eOKjrsxM=;
-	b=h8X5sHhp0NE0ljXkDrlh5LerVflX5t0P7q0wiHbrD7G/XSaxw04zLjixks0tNDVY+ZYQNE
-	I7L1uqmisYCkdWBjMgORKiTIClt5YWYmMd3jPWurgrlQquGSH6R2CkGCt2lWshHr0LOFX6
-	vpI8EMA3Lt5zhQoAjlKF313TJNUOiB8=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1784875841;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=l+RSFpykKOUTqd7WkvOVrV3OPDMsttrf26+eOKjrsxM=;
-	b=DwT+81odnwWdvd/joqrKLy3V+4DqL5n7EshK+yWfS2V5J3zSdV3xQ4m4JN6UuI90OwbL+u
-	uuouiuFSK/O6LHBA==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id F217C779BA;
-	Fri, 24 Jul 2026 06:50:40 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id M1I0OUALY2qQFwAAD6G6ig
-	(envelope-from <hare@suse.de>); Fri, 24 Jul 2026 06:50:40 +0000
-Message-ID: <ba62d294-6954-44d3-af79-6c7da33a5ccd@suse.de>
-Date: Fri, 24 Jul 2026 08:50:40 +0200
+	bh=lQJSJ2FQaCu0p9XBfAENgQYAxMg7L+yAnJ8kwhfzxwU=;
+	b=o56gilkLmpCj02Y8MWLkp2tHREvFqtf5fT7ZN2K+ssAzOJHBJQ6c3eAgoX1Jhc80EVQskg
+	KY0dNMhCSOv6sFDLaQdF5A5MArsP+H86OhIJDjiNtMAkWjfQHjWAy8kljmXaW0Vv+v/fHC
+	AToaeNQ+WGAHooEAS6iZ3sOqyr05+W8=
+Date: Fri, 24 Jul 2026 09:00:00 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
 Subject: Re: [PATCH v4 01/28] libmultipath: Add initial framework
-To: John Garry <john.g.garry@oracle.com>, martin.petersen@oracle.com,
- james.bottomley@hansenpartnership.com, hare@suse.com
+To: Hannes Reinecke <hare@suse.de>, John Garry <john.g.garry@oracle.com>,
+ martin.petersen@oracle.com, james.bottomley@hansenpartnership.com,
+ hare@suse.com
 Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
  linux-scsi@vger.kernel.org, michael.christie@oracle.com, snitzer@kernel.org,
  bmarzins@redhat.com, dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
- nilay@linux.ibm.com, john.garry@linux.dev, hch@lst.de, kbusch@kernel.org,
- sagi@grimberg.me
+ nilay@linux.ibm.com, hch@lst.de, kbusch@kernel.org, sagi@grimberg.me
 References: <20260723093627.2327456-1-john.g.garry@oracle.com>
  <20260723093627.2327456-2-john.g.garry@oracle.com>
+ <ba62d294-6954-44d3-af79-6c7da33a5ccd@suse.de>
 Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20260723093627.2327456-2-john.g.garry@oracle.com>
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+From: John Garry <john.garry@linux.dev>
+In-Reply-To: <ba62d294-6954-44d3-af79-6c7da33a5ccd@suse.de>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Spam-Score: -4.51
-X-Spam-Level: 
-X-Rspamd-Action: no action
-X-Rspamd-Queue-Id: 83B5C7B5EE
-X-Spamd-Result: default: False [-4.51 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-0.995];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	FUZZY_RATELIMITED(0.00)[rspamd.com];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	RCPT_COUNT_TWELVE(0.00)[17];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns,lst.de:email,suse.de:mid,suse.de:email,suse.de:dkim,oracle.com:email];
-	DKIM_TRACE(0.00)[suse.de:+]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Spam-Flag: NO
+X-Migadu-Flow: FLOW_OUT
 
-On 7/23/26 11:35 AM, John Garry wrote:
-> Add initial framework for libmultipath. libmultipath is a library for
-> multipath-capable block drivers, such as NVMe. The main function is to
-> support path management, path selection, and failover handling.
+>> new file mode 100644
+>> index 0000000000000..e98b4b241020a
+>> --- /dev/null
+>> +++ b/include/linux/multipath.h
+>> @@ -0,0 +1,28 @@
 > 
-> Basic support to add and remove the head structure - mpath_head - is
-> included.
+> Please add an SPDX tag.
+
+OK, will add
+
+> And possibly a copyright.
+
+I think that just the c file is fine.
+
 > 
-> This main purpose of this structure is to manage available paths and path
-> selection. It is quite similar to the multipath functionality in
-> nvme_ns_head. It also manages the multipath gendisk.
+>> +
+>> +#ifndef _LIBMULTIPATH_H
+>> +#define _LIBMULTIPATH_H
+>> +
+>> +#include <linux/blkdev.h>
+>> +#include <linux/srcu.h>
+>> +
+>> +struct mpath_device {
+>> +    struct list_head    siblings;
+>> +    struct gendisk        *disk;
+>> +};
+>> +
+>> +struct mpath_head {
+>> +    struct srcu_struct    srcu;
+>> +    struct list_head    dev_list;    /* list of all mpath_devs */
+>> +    struct mutex        lock;
+>> +
+>> +    refcount_t        refcount;
+>> +
+>> +    struct mpath_device __rcu         *current_path[MAX_NUMNODES];
+>> +};
+>> +
+>> +int mpath_get_head(struct mpath_head *mpath_head);
+>> +void mpath_put_head(struct mpath_head *mpath_head);
+>> +int mpath_head_init(struct mpath_head *mpath_head);
+>> +void mpath_head_uninit(struct mpath_head *mpath_head);
+>> +
+>> +#endif // _LIBMULTIPATH_H
+>> diff --git a/lib/Kconfig b/lib/Kconfig
+>> index 55748b68714e0..d0258bef374a1 100644
+>> --- a/lib/Kconfig
+>> +++ b/lib/Kconfig
+>> @@ -636,3 +636,9 @@ config UNION_FIND
+>>   config MIN_HEAP
+>>       bool
+>> +
+>> +config LIBMULTIPATH
+>> +    bool "MULTIPATH BLOCK DRIVER LIBRARY"
+>> +    depends on BLOCK
+>> +    help
+>> +      If you say yes here then you get a multipath lib for block drivers
+>> diff --git a/lib/Makefile b/lib/Makefile
+>> index 7f75cc6edf94a..7ba5e13be4171 100644
+>> --- a/lib/Makefile
+>> +++ b/lib/Makefile
+>> @@ -334,3 +334,5 @@ CONTEXT_ANALYSIS_test_context-analysis.o := y
+>>   obj-$(CONFIG_CONTEXT_ANALYSIS_TEST) += test_context-analysis.o
+>>   subdir-$(CONFIG_FORTIFY_SOURCE) += test_fortify
+>> +
+>> +obj-$(CONFIG_LIBMULTIPATH)    += multipath.o
+>> diff --git a/lib/multipath.c b/lib/multipath.c
+>> new file mode 100644
+>> index 0000000000000..9cc398d266adf
+>> --- /dev/null
+>> +++ b/lib/multipath.c
+>> @@ -0,0 +1,66 @@
+>> +// SPDX-License-Identifier: GPL-2.0-only
+>> +/*
+>> + * Copyright (c) 2017-2018 Christoph Hellwig.
+> A bit unusual, creating a new file and add a copyright
+> from _another_ person ...
 > 
-> Each path is represented by the mpath_device structure. It should hold a
-> pointer to the per-path gendisk and also a list element for all siblings
-> of paths. For NVMe, there would be a mpath_device per nvme_ns.
+
+This code is really just a refactoring of the NVMe multipath code. Since 
+Christoph copyrighted that, I think it only proper to add his copyright 
+here.
+
+I'll remove it if Christoph wants.
+
 > 
-> All the libmultipath code is more or less taken from
-> drivers/nvme/host/multipath.c, which was originally authored by Christoph
-> Hellwig <hch@lst.de>.
+> Otherwise:
+> Reviewed-by: Hannes Reinecke <hare@kernel.org>
 > 
-> Signed-off-by: John Garry <john.g.garry@oracle.com>
-> ---
->   include/linux/multipath.h | 28 +++++++++++++++++
->   lib/Kconfig               |  6 ++++
->   lib/Makefile              |  2 ++
->   lib/multipath.c           | 66 +++++++++++++++++++++++++++++++++++++++
->   4 files changed, 102 insertions(+)
->   create mode 100644 include/linux/multipath.h
->   create mode 100644 lib/multipath.c
-> 
-> diff --git a/include/linux/multipath.h b/include/linux/multipath.h
-> new file mode 100644
-> index 0000000000000..e98b4b241020a
-> --- /dev/null
-> +++ b/include/linux/multipath.h
-> @@ -0,0 +1,28 @@
 
-Please add an SPDX tag.
-And possibly a copyright.
+Thanks
 
-> +
-> +#ifndef _LIBMULTIPATH_H
-> +#define _LIBMULTIPATH_H
-> +
-> +#include <linux/blkdev.h>
-> +#include <linux/srcu.h>
-> +
-> +struct mpath_device {
-> +	struct list_head	siblings;
-> +	struct gendisk		*disk;
-> +};
-> +
-> +struct mpath_head {
-> +	struct srcu_struct	srcu;
-> +	struct list_head	dev_list;	/* list of all mpath_devs */
-> +	struct mutex		lock;
-> +
-> +	refcount_t		refcount;
-> +
-> +	struct mpath_device __rcu 		*current_path[MAX_NUMNODES];
-> +};
-> +
-> +int mpath_get_head(struct mpath_head *mpath_head);
-> +void mpath_put_head(struct mpath_head *mpath_head);
-> +int mpath_head_init(struct mpath_head *mpath_head);
-> +void mpath_head_uninit(struct mpath_head *mpath_head);
-> +
-> +#endif // _LIBMULTIPATH_H
-> diff --git a/lib/Kconfig b/lib/Kconfig
-> index 55748b68714e0..d0258bef374a1 100644
-> --- a/lib/Kconfig
-> +++ b/lib/Kconfig
-> @@ -636,3 +636,9 @@ config UNION_FIND
->   
->   config MIN_HEAP
->   	bool
-> +
-> +config LIBMULTIPATH
-> +	bool "MULTIPATH BLOCK DRIVER LIBRARY"
-> +	depends on BLOCK
-> +	help
-> +	  If you say yes here then you get a multipath lib for block drivers
-> diff --git a/lib/Makefile b/lib/Makefile
-> index 7f75cc6edf94a..7ba5e13be4171 100644
-> --- a/lib/Makefile
-> +++ b/lib/Makefile
-> @@ -334,3 +334,5 @@ CONTEXT_ANALYSIS_test_context-analysis.o := y
->   obj-$(CONFIG_CONTEXT_ANALYSIS_TEST) += test_context-analysis.o
->   
->   subdir-$(CONFIG_FORTIFY_SOURCE) += test_fortify
-> +
-> +obj-$(CONFIG_LIBMULTIPATH)	+= multipath.o
-> diff --git a/lib/multipath.c b/lib/multipath.c
-> new file mode 100644
-> index 0000000000000..9cc398d266adf
-> --- /dev/null
-> +++ b/lib/multipath.c
-> @@ -0,0 +1,66 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
-> +/*
-> + * Copyright (c) 2017-2018 Christoph Hellwig.
-A bit unusual, creating a new file and add a copyright
-from _another_ person ...
-
-> + * Copyright (c) 2026 Oracle and/or its affiliates.
-> + */
-> +#include <linux/module.h>
-> +#include <linux/multipath.h>
-> +
-> +static struct workqueue_struct *mpath_wq;
-> +
-> +int mpath_get_head(struct mpath_head *mpath_head)
-> +{
-> +	if (!refcount_inc_not_zero(&mpath_head->refcount))
-> +		return -ENXIO;
-> +	return 0;
-> +}
-> +EXPORT_SYMBOL_GPL(mpath_get_head);
-> +
-> +void mpath_put_head(struct mpath_head *mpath_head)
-> +{
-> +	refcount_t *refcount = &mpath_head->refcount;
-> +
-> +	if (refcount_dec_and_test(&mpath_head->refcount))
-> +		wake_up_var(refcount);
-> +}
-> +EXPORT_SYMBOL_GPL(mpath_put_head);
-> +
-> +void mpath_head_uninit(struct mpath_head *mpath_head)
-> +{
-> +	refcount_t *refcount = &mpath_head->refcount;
-> +
-> +	if (!refcount_dec_and_test(refcount))
-> +		wait_var_event(refcount, !refcount_read(refcount));
-> +	cleanup_srcu_struct(&mpath_head->srcu);
-> +}
-> +EXPORT_SYMBOL_GPL(mpath_head_uninit);
-> +
-> +int mpath_head_init(struct mpath_head *mpath_head)
-> +{
-> +	memset(mpath_head, 0, sizeof(*mpath_head));
-> +	INIT_LIST_HEAD(&mpath_head->dev_list);
-> +	mutex_init(&mpath_head->lock);
-> +	refcount_set(&mpath_head->refcount, 1);
-> +
-> +	return init_srcu_struct(&mpath_head->srcu);
-> +}
-> +EXPORT_SYMBOL_GPL(mpath_head_init);
-> +
-> +static int __init mpath_init(void)
-> +{
-> +	mpath_wq = alloc_workqueue("mpath-wq",
-> +			WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS, 0);
-> +	if (!mpath_wq)
-> +		return -ENOMEM;
-> +	return 0;
-> +}
-> +
-> +static void __exit mpath_exit(void)
-> +{
-> +	destroy_workqueue(mpath_wq);
-> +}
-> +
-> +module_init(mpath_init);
-> +module_exit(mpath_exit);
-> +MODULE_LICENSE("GPL");
-> +MODULE_DESCRIPTION("libmultipath");
-
-Otherwise:
-Reviewed-by: Hannes Reinecke <hare@kernel.org>
-
-Cheers,
-
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
