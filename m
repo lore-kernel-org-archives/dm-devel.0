@@ -1,63 +1,64 @@
-Received: from CY3PR05CU001.outbound.protection.outlook.com (mail-westcentralusazon11023123.outbound.protection.outlook.com [40.93.201.123])
+Received: from DU2PR03CU002.outbound.protection.outlook.com (mail-northeuropeazon11021097.outbound.protection.outlook.com [52.101.65.97])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE91440EB98
-	for <dm-devel@lists.linux.dev>; Mon, 27 Jul 2026 13:43:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.201.123
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 703D13E3D98
+	for <dm-devel@lists.linux.dev>; Mon, 27 Jul 2026 13:48:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.65.97
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785159796; cv=fail; b=dYppN7v0Kkn1KdmqKcwxBpWEReTHu0/xt6hmOeIUF66Biwq2G4/2lJP0/NN66WhulsLXS4YYh2we/Ura6gF08x56Bs+PMJ9wYRK4mojLOtZnIF367IEDUkU91LCyIz6udT74V8p3VGcypzaTbgLkWuiUWRsA1snRgY1MBjlrxe8=
+	t=1785160137; cv=fail; b=LzmH9+YyhCkZmPdY1VfdiIcWdJ++g0xEMRyG8dYOSc6OFPPC3DRXl8n3ZSznulI3thcaNj4FnS6UJaXaCSJhvqFrzNWNvYzO+o5i4z4d8ANarDouWsjEQFhVEO+JtQcutUu404qs29HyEDk8OYWjfmNImkkdAzHCc+dV1fkk5Gg=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785159796; c=relaxed/simple;
-	bh=51p+mUjs9O7WYP8ow8tbULW3m6X7zyH0Fyy7jnrd85A=;
-	h=Message-ID:Date:From:Subject:To:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=S5RewrDbXo8aBfIMbg/NGMDd8Bi33fxR+t0xtt5jBX08alIvmEbptrhiINkQH5S02aXRlhLsXMEqx3C6HrGgKDeRMLAbFz1digekeiFKbJKwpmbiU3poFwFowr+tfxQveJxfsKzO6sH5ov0XuIRl+3e26RK1BWUYtJYYaFMwqyA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=pythonplayer123.dev; spf=pass smtp.mailfrom=is-likely.gay; dkim=pass (2048-bit key) header.d=pythonplayer123.dev header.i=@pythonplayer123.dev header.b=lFVQEomM; arc=fail smtp.client-ip=40.93.201.123
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=pythonplayer123.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=is-likely.gay
+	s=arc-20240116; t=1785160137; c=relaxed/simple;
+	bh=FrxSodOdjRbcxWzyETqMfL5w2alsbB1dc87vEF9puok=;
+	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=B83KqHfRV0e4B2K6uhCESD1guvom9eWaPM3rPPtjTEDGUJGxt5qxqiEoN8+Z07yHE9ZpgfnMiAcDAY6CW8Aupr96maLQrPRt8ZxGyZFq0vxSXUD+YJF2AxUrF61vV8LTd6d9xHGxNMYC71LPXqTqD6IVybz6ObXIYc0j1NQqAWQ=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kuleuven.be; spf=pass smtp.mailfrom=kuleuven.be; dkim=pass (1024-bit key) header.d=kuleuven.be header.i=@kuleuven.be header.b=NHn/8edU; arc=fail smtp.client-ip=52.101.65.97
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kuleuven.be
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kuleuven.be
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=pythonplayer123.dev header.i=@pythonplayer123.dev header.b="lFVQEomM"
+	dkim=pass (1024-bit key) header.d=kuleuven.be header.i=@kuleuven.be header.b="NHn/8edU"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=yTmsmZdls90vlmZ5jybz6FOFHYBte9EGp7rj0nr700gAMvlMK+I7wd/AzJ37xkw+T7PVwxjcPep9xH3TpU7ZEsgk4mU6p/RKcmtIU3FixsDJQM8FOXw/MFxXrFAyafFaumQczPBiBVxqYrp4yC3i5oF03xoBa1s3HCasokEklHYTvAtdn9neEB2gdZvLvID84oGmoN7Or+01O/YVESQfS6/47mhhfrJ86qK6LmGAqJr0XGCJS5JJ6u94/RfZNAJX9myyGPRThuzlONGlwXvXrMTLs1KXoM/E4CjIl26uGtjfUjPETcnbLdB0Or1D8wVQuNvf6ko5oO6XInSa+Uptgw==
+ b=HLs/5WbkiMFOLjBJU638ALtK+HWSXYdAQn4RSOFatM3ua+zgNRaeTVjLeVPHb9crIKdr6tifOjq9nVO/9bgaALyU6m5rfyomTjLxH5lGOpGFc4YWFhpmG5/TrA3tn/KuK4A4ftD8ZsD3rmj8QPkJYfaENOldt84MoxiP/0O+dml6kTUwl2ZDRb84l0aDBvgiC35fyhJO23sdGANAoeKyLHCFAQ7N7MQMlVS++8TBck1/REN5aCh2JT10M6sTyE4KohqFo4K/0+uGTx8OPic/ULgpaLFeECaUvRfpQSaFUYCQKUFzpMNktcJePmi1FjcYX324xZr8diN2cI8IJKzPBQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=51p+mUjs9O7WYP8ow8tbULW3m6X7zyH0Fyy7jnrd85A=;
- b=lDNb8+Bx4UI7e1u5coxwzsF+eNpVuo2Ngt5UZR4NfCSvZnUMEg9iHMCfed/ABTTx+8oGIiBI8DCFcM1bgjH37EYYt/zubS7v42S3pMR8TgNhVavxM2JCi3xs5f+Ya9+dwxaP560ndXfEQmxtaPVTGUh9bHLcPg1ZhHbceRMGCdgMZxWrZIGxz/Jw8XYXiB0HqfEfUHBHds7aNePQJk5kWipo0YfKu+8N74nBKTchluOPEDRpTrigM+PxjDk5qyEMuMDGxzXBLy3aJ8oiyK3asfFHdeLaF3VkSo0vn5ijfLSG5pqWZ0HgUF3ma3IiMAOZq4vFyrWd6Xs4YUQXQywJrw==
+ bh=/Kk/dvD13Fuo/Nmxjo3kafGUbLlG1exEty/l3mULmK8=;
+ b=cDGn4QdBVw65gL9ldr6xLmbMDVcz22tp3MuYCzlGgJi1Tkh4ZO+2cXCOZOozk15Moc6Zby1UdxqTqr+0MmbEtpKPKAJTSqS1eYR9QDkQjLDTECM/ieQp8PvJdyoffe5EW0O+UQzJBdkHk6E+x/tP6L7vaEsrF1zBEJ4gt4gBAAvo+QPbJhOcDwaXFca4Qrz0MbTiTmjusd+rGvdYJxL7N6lYpYwVr9krno9UTmqe9ALVSv30IaciaJr3V1o0ROzRT2gUTxodl0SohMeyuefibSlaEAXeXvB3V6nIyaSno9VXNQIbjpxIrmq1vUB6vH9GeporppxWCoHNTx5pjfdCzg==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=is-likely.gay; dmarc=pass action=none
- header.from=pythonplayer123.dev; dkim=pass header.d=pythonplayer123.dev;
- arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=pythonplayer123.dev;
+ smtp.mailfrom=kuleuven.be; dmarc=pass action=none header.from=kuleuven.be;
+ dkim=pass header.d=kuleuven.be; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kuleuven.be;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=51p+mUjs9O7WYP8ow8tbULW3m6X7zyH0Fyy7jnrd85A=;
- b=lFVQEomMLS60+/z8XJxbFqIZX5UZ4tH7mNVgHa8173JjpSGURbq8YKM7q0rnbSfuZYoFrvjmzJtsIm8cXKOIdfyOdO7A3YmVtyUaxpd/TXJFIdd23wZdH1LGRGjS4amRKQvIUncOjqsVK2NWxddw96mRYTBr90GfcY4JFnY2uX5uM0Dy57esjZcQ5XqTIy/Gx0DAJFFerxNpTc8vRKPrHMAy9qP+m2wI8o4L1NPcuTgYn6zLSlxj2cydesvDVm6ZWsOOJhnDjbHbld5XNTg2Hxgm3ipYCWoEjD9uLdT+3sHahknBWArJ/pIRkXFtjdGgB/EUpbI9OAFvO6K9Mciu2w==
+ bh=/Kk/dvD13Fuo/Nmxjo3kafGUbLlG1exEty/l3mULmK8=;
+ b=NHn/8edU+zo2EuaRH4jxeynk+MIKcynHR/nMGLsitaPmOTkXPz3GUViq0mbMHI1kRjmODAIBm1/eqLh1TlHDfe1Fq1atRx4bYmR6AU6jVfbYVCKJVTyimcD9wao1vguXhFGGj9Er1nxtjmG2RfKU5nMUD5mb5MUEF3ZNW8JQ1jA=
 Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=pythonplayer123.dev;
-Received: from SJ0PR20MB5160.namprd20.prod.outlook.com (2603:10b6:a03:47e::16)
- by MW4PR20MB5252.namprd20.prod.outlook.com (2603:10b6:303:209::16) with
+ header.d=none;dmarc=none action=none header.from=kuleuven.be;
+Received: from AS8PR08MB8996.eurprd08.prod.outlook.com (2603:10a6:20b:5b1::13)
+ by DU0PR08MB9298.eurprd08.prod.outlook.com (2603:10a6:10:41d::11) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.245.13; Mon, 27 Jul
- 2026 13:43:11 +0000
-Received: from SJ0PR20MB5160.namprd20.prod.outlook.com
- ([fe80::6a30:68dc:9faa:1ec2]) by SJ0PR20MB5160.namprd20.prod.outlook.com
- ([fe80::6a30:68dc:9faa:1ec2%3]) with mapi id 15.21.0245.012; Mon, 27 Jul 2026
- 13:43:10 +0000
-Message-ID: <012e81d2-dd6e-4977-b385-d7ac890be2a2@pythonplayer123.dev>
-Date: Mon, 27 Jul 2026 22:43:06 +0900
-User-Agent: Mozilla Thunderbird
-From: June Park <june@pythonplayer123.dev>
-Subject: Re: [PATCH 1/2] vdo: add zstd compression support
-To: Matthew Sakai <msakai@redhat.com>, dm-devel@lists.linux.dev
-References: <20260723161350.1080473-1-june@pythonplayer123.dev>
- <178a5039-1817-4e13-8937-12eee8b26cc6@redhat.com>
-Content-Language: en-US
-In-Reply-To: <178a5039-1817-4e13-8937-12eee8b26cc6@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-ClientProxiedBy: SE2P216CA0125.KORP216.PROD.OUTLOOK.COM
- (2603:1096:101:2c7::17) To SJ0PR20MB5160.namprd20.prod.outlook.com
- (2603:10b6:a03:47e::16)
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.245.12; Mon, 27 Jul
+ 2026 13:48:50 +0000
+Received: from AS8PR08MB8996.eurprd08.prod.outlook.com
+ ([fe80::ee9d:8228:404b:262c]) by AS8PR08MB8996.eurprd08.prod.outlook.com
+ ([fe80::ee9d:8228:404b:262c%6]) with mapi id 15.21.0245.012; Mon, 27 Jul 2026
+ 13:48:50 +0000
+From: Shukai Ni <shukai.ni@kuleuven.be>
+To: agk@redhat.com,
+	snitzer@kernel.org
+Cc: mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	gmazyland@gmail.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Shukai Ni <shukai.ni@kuleuven.be>
+Subject: [PATCH 0/1] dm-integrity: replace forgeable discard filler with a keyed sector marker
+Date: Mon, 27 Jul 2026 15:48:40 +0200
+Message-ID: <20260727134841.1109615-1-shukai.ni@kuleuven.be>
+X-Mailer: git-send-email 2.53.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: AS9PR06CA0525.eurprd06.prod.outlook.com
+ (2603:10a6:20b:49d::16) To AS8PR08MB8996.eurprd08.prod.outlook.com
+ (2603:10a6:20b:5b1::13)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -65,75 +66,86 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ0PR20MB5160:EE_|MW4PR20MB5252:EE_
-X-MS-Office365-Filtering-Correlation-Id: 3aa2c212-2841-4cdb-49cd-08deebe4fef4
+X-MS-TrafficTypeDiagnostic: AS8PR08MB8996:EE_|DU0PR08MB9298:EE_
+X-MS-Office365-Filtering-Correlation-Id: 3303860d-cb5b-4073-203b-08deebe5c9d0
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|366016|34036016|23010399003|376014|41320700013|19092799006|1800799024|4143699003|10067099003|22082099003|18002099003|11063799006|56012099006;
+	BCL:0;ARA:13230040|366016|1800799024|23010399003|376014|786006|10070799003|18002099003|56012099006|11063799006|10067099003;
 X-Microsoft-Antispam-Message-Info:
-	9hCoNaMwJbUhoFjPj8OMBeRukdN4nXd0wHgCk94MABrJHJDvU8ykhbkzA8SKWyzx2njY16ShIFPOc3WwyfxQZDHQddts47Z3CDaOPMbt6u7mXf4QYr9/oQ7vI637Ogp7Vz2fIWTIsIIRfOkg3+os9aqEAzvR4fMpPuVBwwn6xRh8vmBFVzSx1O058U74j6/PrYtXfLBo6bgaBAV67YyU7p2YFm47kA4sFsZmnCU5aamZ3qwwSOEELjg3V2ke0aE0RcgywGbQXnauCk2sXmarGiIf2T3Ke8hvyJzSI7+xU+D2KWnbEpzcSsAyBgzp8+P+gnfFKU4ZxVTsBJ5NY5qjmGgiQxJ8b6UCKtKCRn1cC9K8TFzabuqk8iD7c1l57HpzTChxQW8koOTf0ievpVKRuz+oFyTTj9LPzZdE4vai/eCU0457prNbAGAXpZyHKupgPx7Ut8ETy35FybmZpDpQRluASDv+Ri2nPz3CCBeuXJ/ocspOt1RMvTR1i3w2sgcxw17ddtLWqJ1w0NFVc458Wb9ZGDSLYti4QyGcdufjA8UP9GIWu/Fv5XERbUQlHF3D8KdXiS/z1mILdgCH/qYuXRaxcq4uRbxxDhKo3hiDIUUsEYh8bgGwOI6BF6/fn/r7nXz9rBQjXNLyq4GXDzbjO5uYXA/6izgWdvMv1Ekl9TU=
+	p6rFdMQzV/B3RP1e/5nEOiyiWvWV+8nI6shvBsRpEwhWlaRptpLtwPfCEmI6rIk8TdM5s8HGfRnH0mUfqfAIOuN61A+B9FEx9df18NBTeLFVNsLwdAws5Svks9sNB/S+oBAovQqNmV63SAxzVdEmnATId1kIW8QMBwqNCBgeZrersMB58oa65a58JgJHZuHqSdNPkSVNTtpYTLT8nUopxW0FNMyyZE45huRYlYxM21r5QBrHhAS5GjfxGXRtngkYU+Et4tOX6Z8GsAtcqb0igxjhHh+QrZUbEvVzTREXeX/8f26AnPJHPWudyY/M6SeOOQGNCUGeA2/hp9AqaKNKBbG+XX8GHxCTgGg2r9QOxB4xOfmOp6M4gQT58SDRvyJoigaSN6JZi7xB/DC9WxjOI8SOOKZlUH/iUOUAYznwbPFvMv2otqLGjdZlUgOlZlRfaPrnjwvNj5LXxZFGeezlZuuM06Ka2lnbsb48G2Aex31ATaf/oN3o88yi/5VqR2vafRn4NKW2E6nYmqUwoj8yN93X1DtlnLnE/ASkzZ4MRc3/6+nBkIGH2fS0ueP6H6TmyopZP0J8eP+ZjUPUPVUM1CXmeS/IvwRTpTp9K0d1aSOXxu5wkERt2kBaujZnXzmh67phZSrYUEzcYIP/SlyeB6wM38oo/oQuxE5dr/Nv0VQ=
 X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SJ0PR20MB5160.namprd20.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(34036016)(23010399003)(376014)(41320700013)(19092799006)(1800799024)(4143699003)(10067099003)(22082099003)(18002099003)(11063799006)(56012099006);DIR:OUT;SFP:1102;
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AS8PR08MB8996.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(23010399003)(376014)(786006)(10070799003)(18002099003)(56012099006)(11063799006)(10067099003);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?M1lLcXh0L2R4dWkzUVVPVFRFRE1CYzdCZVZBYUIxUmRCT0VyT3h6aVFmQkxV?=
- =?utf-8?B?dk9MNVowZFZZc0NJK2FTU2hxbHJzT3U1Ni8yUkVMamJsak9NZ3Z6NkFKb1Mr?=
- =?utf-8?B?enAwU3BlNU43QUFuejQrN2VZODFCSkJHTFRmUnM2WGlwa3pOdUkvRjJBclJr?=
- =?utf-8?B?U1RkWnJmelJZNmh4UjNzb2xMM0FWSkZmVHJQNUlsQXdYTXBIekpiL0lSb2ZS?=
- =?utf-8?B?NjdRdTJ5cVRtVjF2UXRwNXloSlFCZ0k1bkdGMXdlR3ZaMWJ6Nkk5NkpJOXpW?=
- =?utf-8?B?WVpEYzROQUlMdjN5YzB2OHNhRTJWUGlzNzlrVUt1UGNjdGdvTUpmZTRxdmxs?=
- =?utf-8?B?RjloVjZqTE5GOThTVk9nNktZeCtVYzV5ZExYZ2hqSGNRTkoyR0ZLcUt1R3Z3?=
- =?utf-8?B?VSsvNUd6V1ZZYS9Md2doVGRydzAyaUY3YXhJNlAyVDdpU25DVUNycUJQMkJT?=
- =?utf-8?B?NDRUamxDckJsT3l4QTdjMDRxL3BmbnZYZ203Mks0SURucUJSOEo5ZEJlem16?=
- =?utf-8?B?amN6eUc1cytLYVFJbDl0M2pTQWZUMXR2MEZBS0lWNmxINkFpVlZhMXRnUWM1?=
- =?utf-8?B?b2tnMDhCZlZSTVhHd1pKais5ekYrNDIxVFhIVldNeUU5aUtZckhBQ2o4cHg5?=
- =?utf-8?B?b1BBRzFscy9DK3Z4WnRVd2lJZGQ3VHJhbGhKVlllcFlCL09aY3NFeXo0VFEx?=
- =?utf-8?B?c1dnUk1JUlA0Yml1OEJLeHhreFcyTzFOaERIWWM0WU5PUEprazcxQUFKNlE2?=
- =?utf-8?B?SG9hMW5EOXRmRU1waVpYekl2SjZ1d1drWXl6VjdwNklNdnl6RW8xUmF1YXll?=
- =?utf-8?B?VjhJOStMYnlCMFZnREl1N2hBOHZIQUorZE1XeXBuUm1NQ2RROW4zWkFNcWty?=
- =?utf-8?B?MkRISXlmeW9nWTNrTk1HcXpUMm95WEEwblVkaFB1ZG5GRGh0aVNMRWJRWHF1?=
- =?utf-8?B?RTRzSnpJcVdMTTJTdVI1anZQOTZRbEFJK1REVWlpcitENHAwaDJ6LzFESHJ1?=
- =?utf-8?B?Ny9LeVRoMitJL1R4cGtzK1hhaVIzWnFsV01Cc1BzL0dqZHNORlR5V0VoUlRy?=
- =?utf-8?B?Tm5iU2MzZ29WTUZ2R3UrOTVrNm8ybDd2YTRMeVVKd2ZzbUZESVZKVGZOcGtH?=
- =?utf-8?B?c0FIdXR2NkM3RjluVVUzSU1TWHQxVFJMMTNlVVFEQmtVOC9hUkJ3Y3dxdEtz?=
- =?utf-8?B?QjhTREVtZiswc1d5b2o0ajhXai9aV0JOTXJZNi82Q25va3kvTWRQa2tDYzdO?=
- =?utf-8?B?UlpsTmxJKzJjc0VYWnhkU0d6SFlrU05NV3BWLzg5c2ttZWZvRGNQVzZCaHlZ?=
- =?utf-8?B?WkluS2w4L1RMUktwVzFyNlVaNXVEZU9PeEYwNDNXYmRLV1YwS2ZqUUxRMytV?=
- =?utf-8?B?UlJtMVRWamVIZHBHRjE4eVF0SmJOa0l1ZzNQSEYyWitnamRzMi8zM1JxZmhP?=
- =?utf-8?B?WmpENjdKQW9mNEhTcFlWL1dDekx2UENyQWU3aGEvN1FFOEZEYVFBZ0FveCtI?=
- =?utf-8?B?R0EyTFFxMEoxQ3NxSUpMZldjZFhDUHZUL3FBMEFneXNxU045bmZFWlZ6RStV?=
- =?utf-8?B?T05VYVczVy82cFNKMThWRThXMExBamQxdnJtWVhkNjlSMkNIUVVvNHNCeWZk?=
- =?utf-8?B?OXVGWUxDcEVNOUVLTzF5K3FDakVFUDd0dUdZVG52TGMzaUNtTWVjSFpMYTVp?=
- =?utf-8?B?QzZSdVFGbUlrUHIrRGp5bFY1OGJDRFF0ck4xcG1hd1hHWldxUHhxaStGaG5S?=
- =?utf-8?B?Z2N5UmxrZU9JM2F4RGVUWEpXSGdZeUVpenJHMWFBM3VSbFhWMHFsNVBWRTgv?=
- =?utf-8?B?eHJvYkJuL1QrLzVOQkNxandQY3pWbUhiY3hUU2JTUTVBRVgzWDNGQzY1VmNm?=
- =?utf-8?B?SzlnL3hiRG52bHAwMlNFSWhzNDZqSTkzaEZhYmluZ1hZSlVaaW55WUxvNG9h?=
- =?utf-8?B?cml0c0FtSW5XNVVSc2tJdGI5TXlOYjRQMFhDWUlNend4RUdJZGd1ajNQTmdR?=
- =?utf-8?B?bnNzZ2hibjVuWENMdE9SQlB3a1RvZE1VVXVpV0FtTDhJK05IcUx2cmlJV09p?=
- =?utf-8?B?S3dLajlGMzJUcDIyT09VZUdRTDd4T2FBbERrLzVMM0Q0ZTZyOVVwZDVlSU1u?=
- =?utf-8?B?Mlk3bTZKbUtDRi9oR05La3JUaE8vKzFYN0pROFUwM1ptdGxnY2lLQWFOOEsx?=
- =?utf-8?B?a1BRaGFJREx0UU0zeVp6bzRqTTdMK3oydzNuU3Z0dVhZL1FKUUg0RllQQ2xS?=
- =?utf-8?B?YWNqRW5wU1BtUStVZ3VpYzB5Wkd4MEUrVTJTVDZNTnppQS81NExDZE15K056?=
- =?utf-8?B?dEVvNjZvazhQVTVjdndsakpROEN3VitLeGhaMGxmSk1KMEZhakttQT09?=
-X-OriginatorOrg: pythonplayer123.dev
-X-MS-Exchange-CrossTenant-Network-Message-Id: 3aa2c212-2841-4cdb-49cd-08deebe4fef4
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR20MB5160.namprd20.prod.outlook.com
+	=?us-ascii?Q?uC9C6vpzjSfSmsaAMuwuKeyCR0SbgWEnhLe3Kn8G0ekhEwR8gRv0ELZv3Mfc?=
+ =?us-ascii?Q?1JIaXDtHHySY3zCuueGvXt6nXsoZ9kYicmlCVpce2ZXrUKPWUJ3KgPbqi/DK?=
+ =?us-ascii?Q?X7pAeK8/V+HGYe7Bz1qFy5EtYw1NPFwDgPTnfKVxp4RHBKksGqD0bO5J0H+T?=
+ =?us-ascii?Q?PtNpn6sZcAD/O7Rebx1OoK5iIg4xgTF3XuFaG61V0H1hIP2Ymx401T/iYls3?=
+ =?us-ascii?Q?W8MNvmJ8jppDQnWkpN/iXSv2EEWByCFdaymcvQNciHzOMR/x2ABEzcbbdrb4?=
+ =?us-ascii?Q?NbLvJ7SSRbDURHpZtiZeGL5//6eM0Xx+xCz5P5gDqRETD/aj1E8k4laQs4pl?=
+ =?us-ascii?Q?235Xu5E2VV9lr39IhELK/bIsQrIs05Sq6PgvMxLlNA6limMWQm/n2B4nntuh?=
+ =?us-ascii?Q?5D34TS58uw0yXAESRo2DyzC+eXhIo0NMNIBLwTOpyWEe02DJLr43c+DxZUzY?=
+ =?us-ascii?Q?ZgF4dJoxI+J4yL3N0GEYeIFRnJviERAChfmQTqBQpwIEAI9cQHmi8AFYa4uK?=
+ =?us-ascii?Q?4CVVq5jduae+gEcWI3XyJUtUmuSo+Y+QJ34GgErRynCA5y8NnIu5JWfhV6IP?=
+ =?us-ascii?Q?lHu+MYU1k2mOTm0KGT87dN+fErXfPmN1INtyS3eWiJOSbjrIC+LqEP896VRz?=
+ =?us-ascii?Q?mF6m/7+7Qsybj5CbZwG3KDFQjEjv2MAZ8j1scqsB4hkO8Q9EpThmrOEFmqmA?=
+ =?us-ascii?Q?jNYJtNkQrN2GHKR5cwiB3FVGV6UlqErkgizWiJKPFw442cWLyrTQKr4KUPRX?=
+ =?us-ascii?Q?HuHBEWbWXY9k5F301FbLGdJDLAl/DfBxpY6Gi0E9+UaFDIQr4l74csB5wQGy?=
+ =?us-ascii?Q?IbvCAchRo+75SgLiGXLDpLg4SEurWKcQ5/YYSIDjp0iRahlMb3zwVZb4w/nW?=
+ =?us-ascii?Q?z4BLWdf1Hu2e1btRYYQkqYexfQ0mx99I1SfapIliGmqKEqdYxE9q4vfW/T2q?=
+ =?us-ascii?Q?z4ezlc7FGCMX/Q1I8YDdIMFSE8aOIx24ByUr1hsNIwgVujtOQX41OH1ERAa/?=
+ =?us-ascii?Q?RE3HE9TJC+XUub/B0I+PyczL56x9YwbXK5p60k/RsWe4UhbHBxYPe3TDe3WB?=
+ =?us-ascii?Q?Eabu3Cgi7ZFE0VhQ8f+BDHaKouogGyfq5wn8QnvnPgmsAaw3nUlPssBxkXS/?=
+ =?us-ascii?Q?E+ZGunxA3rLLVG0AJitLSvbfamW2SNzk37pu/CB2RIO9oxBVyAaVbBczLvwz?=
+ =?us-ascii?Q?SdtP1ekRb6K93XNCGYEWe0TqnSYFWlN7w+N89dUwCI9Li3lX4/6N3D1RAJRL?=
+ =?us-ascii?Q?0ssxpL/M3wuEn+aaxVyXBRbWvcP2MgP9sduUK3Pqs/Ka2b/VzBxu3AVUnPlU?=
+ =?us-ascii?Q?L/H0bqajUzeHd7Vp7OgOOwzYGMWGLogN+PV35zGzCbgKTnCP+1534tTF5LwN?=
+ =?us-ascii?Q?jkeJUvOt4+Wr1d0m988LdCeCL7ttdz6ZcFuPohBPlhodJ83VWCdyc2gLzusf?=
+ =?us-ascii?Q?xxWkMZA0rl7QXgo7pfknYEMfVt8PD53IhrDn+kFnuGTj117DQg5i3ZXQSAOo?=
+ =?us-ascii?Q?jPsMjxol44NrVGgn0ZbQSk3C0J5QlkgovJWprcwfkIBLZ4HhzXp11HY69hsQ?=
+ =?us-ascii?Q?T0dhlfIXOspZDoo8gqfSxc128bhkCYdaBAwUw8EczOC9FNQ+GNmKWoxlBHkG?=
+ =?us-ascii?Q?Y8F/D3tXpQNSyH6hLT6FiarQPRwNv3bZTLb0y5oTv/ecKVrV21Xj+Wti936E?=
+ =?us-ascii?Q?N7raEJdf36A9eCoQ5L6F8JU7GugfjgFQYdw7EWh+YPVI5/S6LeNEPCf+NNk9?=
+ =?us-ascii?Q?EuElo0cezDXWWV4U83vwINNmRr4Ihixk9+sGoIuwT8/k9G+lZp27?=
+X-OriginatorOrg: kuleuven.be
+X-MS-Exchange-CrossTenant-Network-Message-Id: 3303860d-cb5b-4073-203b-08deebe5c9d0
+X-MS-Exchange-CrossTenant-AuthSource: AS8PR08MB8996.eurprd08.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 27 Jul 2026 13:43:09.9437
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 27 Jul 2026 13:48:50.2074
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: a3ce53b7-1063-4e66-9486-3ad7281a5cc5
+X-MS-Exchange-CrossTenant-Id: 3973589b-9e40-4eb5-800e-b0b6383d1621
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: a8UWHdH91VCmm2BKcemap3G/S6SbVMGCCE4GY7ECmZsG7kHTe1ji/7NjklFoZd5IImpObtKh6p8zwSlvxRP4Yw==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW4PR20MB5252
+X-MS-Exchange-CrossTenant-UserPrincipalName: 6z9oRzcs+MVSCsYaA7rJ7bOABiNIhTfehWWKIWoFd/UPCjoSFbBokRkkeajji1wWQefdrLrd2PFVJkejd0DqIA==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU0PR08MB9298
 
-Hello! Thank you for the thoughtful comments.
+dm-integrity's discard support has a keyless bypass. When a device is
+opened with --allow-discards, dm_integrity_rw_tag() treats a stored
+tag consisting entirely of the constant DISCARD_FILLER (0xf6) as
+sufficient proof that the corresponding block was discarded, and
+skips the keyed integrity check for it. That constant is public and
+needs no key to reproduce, so anyone able to write raw sectors to the
+backing device can stamp an arbitrary data block with an all-0xf6 tag and
+have its contents served as if they had passed HMAC verification.
 
-> I have to ask, what is the motivation for this change? Do you have a workload that shows some kind of improvement from this proposal?
+The exposure is limited to dm-integrity's standalone cryptographic
+authentication mode: discard is only accepted when internal_hash is
+configured, so the combined dm-crypt + dm-integrity AEAD setup, where
+dm-crypt supplies the tags itself, is not affected.
 
-My initial testing in QEMU, storing files from the kernel source tree, showed noticeable improvements in compression ratio (around 2.4 to 3.5), even though vdo uses small block sizes. However, I did notice that certain types of data (such as long synthetic streams of repeating bytes) showed far less improvement with zstd, at the expense of more CPU cycles. I had concluded that it could outperform LZ4 in some workloads in terms of compression ratio, for more CPU, a trade-off that could be made on a case-by-case basis.
+The attached patch replaces the constant filler with a per-sector
+keyed marker: HMAC_key(salt || sector). A real data tag is
+HMAC_key(salt || sector || block); because its input always includes
+the full block while the discard marker's never does, the two cannot
+structurally collide, regardless of block content.
 
-The discussion you linked to proposes the ability to swap the algorithm without reformatting. My current implementation tries to reduce breaking changes as much as possible, so I had decided on storing the compression algorithm directly in the volume geometry, instead of for every block. This has the downside of requiring reformatting, but since the focus of vdo is deduplication, I don't think the large amounts of additional machinery needed to support live changes is justified.
+Shukai Ni (1):
+  dm-integrity: replace forgeable discard filler with a keyed sector
+    marker
 
-June
+ drivers/md/dm-integrity.c | 77 ++++++++++++++++++++++++++++-----------
+ 1 file changed, 56 insertions(+), 21 deletions(-)
+
+--
+2.53.0
