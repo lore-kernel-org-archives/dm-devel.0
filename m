@@ -1,102 +1,140 @@
-Received: from mail-pj2-f1.google.com (mail-pj2-f1.google.com [74.125.227.129])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.17])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C3B93BE62B
-	for <dm-devel@lists.linux.dev>; Sun, 26 Jul 2026 15:01:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.129
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50B5D37A4B7;
+	Mon, 27 Jul 2026 08:30:37 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.17
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785078070; cv=none; b=u23jUl36LOYT34SGdwztQgpPjm8+9PJeWIeEEjqjkJOolwUnQ4Dm5zek+pMtIw9KJBEPGXq5d2BAyckK4ZkSRnNrQsG+2EyNDmc9LottR/DYHu6GdbXuar0luPHS2uBlRpoJVEGS2r4IE7JN89/g7eC7rrqwhI7RFozXU+5RHyU=
+	t=1785141039; cv=none; b=goDxZle9ZUczNevAppA/lggfxG2pKOg3MOl48qRV2o4EprTGc/jlw0HbDb9b7YEKkeDxSPvbOSGbrgJiGBAZA3KAj6tQhyKdVWkng862XWxQnP04eUgfV6Nmsiy54moMt4u3wZWDb/7K4Hd2JmmHB26wDtTDUcq4L/3sYvwmez8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785078070; c=relaxed/simple;
-	bh=yCy+uZwLy7fiRVpHjcI3xVXDpsz7L9vIOv2lnrIF8ks=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=bDmUa+Re/ecQwNX3wapy1AeakquaJqCC8/r8ML6meB9uWHogL/PbFPTgqlf76E09MHNIw5IzbTmCspXHneJDTGwjRENYMqIKRKb1467FbNyn+2VMBeOQPE4J1RM3dsb9LiCq59i4sSmP0nasSYOAnnYD8arCvnSZ/V8rw24dVlo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Ld6oIyWe; arc=none smtp.client-ip=74.125.227.129
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1785141039; c=relaxed/simple;
+	bh=qWnqu6VCUiwZWG189ixa/W9uGeC6PMG4tY9t7kvdnXI=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=Hi7ycame/O0C07jnLL1T8v2gH9mC3lt47y2L6bnJGLi2XE3hniGQDdWWP4rM9U+TFch0b2dvv6YjaZMckDh3u9FZ1FYj3C57C/MroYddOu0LWJQwidBi23b/HA3b74FK/p4Zr3ed2Om3mzY27IiqV/OwPeDooFHsuRsfu+/UfgM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=Gb5lZq8D; arc=none smtp.client-ip=192.198.163.17
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Ld6oIyWe"
-Received: by mail-pj2-f1.google.com with SMTP id d9443c01a7336-2cb3f5bb19aso7192525ad.1
-        for <dm-devel@lists.linux.dev>; Sun, 26 Jul 2026 08:01:09 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785078068; x=1785682868; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=HrCx7rrv5K6ZNHZRkFUnHMJBLKrPBtFvypp6dmG2pIk=;
-        b=Ld6oIyWeabNHJjN0Acq+zSIrqCABT9XTlAfVS5tZ1sQrLUhSWgPYPuk83MfS6/Dcte
-         0sLRFscGP4TLtzXA2WtXx5+z3bje6/9q4Q8B2+Gkrt3So5ab3J6AcLSUcXqTJRzze5wH
-         CFE6ZN0w9kC+D42Fs3hFZsjtqthBU6NC1D+vWCgxmij56mO5WILgDfVXINdiK+9UmYxg
-         QbKX/H5sf5jHkMxq/XcUTjToDhLr7DuS36yVge6TiP0WHdcLgt5U/dOttTjorKl5uaQZ
-         kXAJ4keC8FDmRJFEuCDF3y21cCae2rnm17SPbRYKS5BjC8So7NiXPxJAKBeNti4nvqcM
-         UQjg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785078068; x=1785682868;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=HrCx7rrv5K6ZNHZRkFUnHMJBLKrPBtFvypp6dmG2pIk=;
-        b=A4IZf/K91zq2gQcWbyjCxQto8yASYUvoIB6BPissnEzUEp0LjQU2DA3wtgMoAdJwgU
-         BtpfBHmLTC386jyAcFVWvkXq6Q1t4Xw4jPXdmWUApI+vfKRreDkXbCUWBmxio+7+I2FN
-         pHCBA3x/yLwO1lMdrlGg4PpkD+BMxmUzB7P902KORRici6JrCj6FlQTTtmKTkKsDABKU
-         wQOmKFk+KVBppxhIM9W0yV0Lm3xG1yrnXL6iST8IxTZLy3AusINm4RDKKdL/dO07M46e
-         hA4UxjAC7HZaRcXLomVyqvNDgt+ph46WlpgSJc9GNvjNu427N3UD3CcabwcTxLO53nPY
-         rSiw==
-X-Gm-Message-State: AOJu0YwO58JBmLMDPVvJcJp8axWFh8JjLlEw/liJDHpSPmivvcxxA6mR
-	hKbb/EW6EDEgH1tLEjHNFfS1UCmoJr3NbyJOHZr8g1xzIUDq8m5uo4DMFDQyfVA46XKWy8zV+bE
-	=
-X-Gm-Gg: AR+sD13/WSja57GgRpHAmi20C6liDMDNJ4jx4BZAYa6NyZKn/WbSxvoG99P6QtjUcPl
-	mSA3qpGFfgVKRgUkb+A9yCZ0TDQP0Dkvq1XSBcWAA9gGTJ11D0DvClceclvMk0m8rTAE0RumNQW
-	vF5FL+tbKWvETnl13meHAfd64qsCoiCFrtU6KOPkFlwg1KiqFgycXxjoc0wiy3KjHV/qSVjHsJT
-	WyGU0UlozVMeHkHX6zrWOOXKW0ziU75TJwMmdoZBP/6kxRsZyDukP34MfkYFn+jyf4eNjWUhB7S
-	ub/d4k3rJuLEuo2B8pYAUgycemp+tdbDlU6uXwahgS3ieypLw3spboWkZGFbzDzxtJOwxsQ/zA/
-	3+H0OMFeSybVBWdyGIMkgcOyccdKSFxS1RgeKLJsAvE19gAEPDfkDtkUXrToS2OGetdBKIYk+2Y
-	EZer+8UXOlxGY9zXyYwLOScckklw==
-X-Received: by 2002:a17:902:cecc:b0:2c9:97a7:f544 with SMTP id d9443c01a7336-2cfde888049mr47702055ad.42.1785078068292;
-        Sun, 26 Jul 2026 08:01:08 -0700 (PDT)
-Received: from DESKTOP-P5RIK7I.localdomain ([112.45.110.232])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2cfde59bb40sm20722055ad.9.2026.07.26.08.01.03
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 26 Jul 2026 08:01:07 -0700 (PDT)
-From: jianyungao89@gmail.com
-To: dm-devel@lists.linux.dev
-Cc: Jianyun Gao <jianyungao89@gmail.com>,
-	Dongsheng Yang <dongsheng.yang@linux.dev>,
-	Zheng Gu <cengku@gmail.com>,
-	linux-kernel@vger.kernel.org (open list)
-Subject: [PATCH] dm-pcache: remove unused miss_read_end_work_fn declaration
-Date: Sun, 26 Jul 2026 23:00:36 +0800
-Message-Id: <20260726150036.11524-1-jianyungao89@gmail.com>
-X-Mailer: git-send-email 2.34.1
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="Gb5lZq8D"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1785141037; x=1816677037;
+  h=from:to:cc:subject:in-reply-to:references:date:
+   message-id:mime-version;
+  bh=qWnqu6VCUiwZWG189ixa/W9uGeC6PMG4tY9t7kvdnXI=;
+  b=Gb5lZq8DkmzK1iLUsES5W+o80QzyVIUq+7ZqEb5ofc3HT6VVbB7OSsq0
+   PUrWSLDxg+UbomLMEzrOSFsd7DvRjwuUOB7JhvrGVTjiojOZIHSJWbDTT
+   ymNjQeks3scGhV6brMKIM9A2VYHOgiyaBA5rTeuBF++H2dMWH6dnS+jcH
+   E547Qdib56ccvLR2uj3YrykwLoDsWpxkrtXqUZUTxvvfrOgTubYdG8cfN
+   xloMQCBJ0Q3jE4IVnJiyKX+8Y4XZBUDggf3lNmiZs6xY6kMjSYjk6QPbs
+   H0vf/9WIWiAq8k4NycLtg7VdjqQxUpnBOrV71TyHNKndatZCoG52ZwbN/
+   A==;
+X-CSE-ConnectionGUID: 876xuZmDTV2yG/7UivgC+g==
+X-CSE-MsgGUID: 1wUVXmZ/QjqCaOWAE+FQSQ==
+X-IronPort-AV: E=McAfee;i="6800,10657,11857"; a="85573889"
+X-IronPort-AV: E=Sophos;i="6.25,188,1779174000"; 
+   d="scan'208";a="85573889"
+Received: from orviesa007.jf.intel.com ([10.64.159.147])
+  by fmvoesa111.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jul 2026 01:30:34 -0700
+X-CSE-ConnectionGUID: zuBRshsISau4U4oJl9pq1g==
+X-CSE-MsgGUID: S6JnVra9Qs26laDkF7yO1A==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.25,188,1779174000"; 
+   d="scan'208";a="259417611"
+Received: from rvuia-mobl.ger.corp.intel.com (HELO localhost) ([10.245.245.197])
+  by orviesa007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Jul 2026 01:30:04 -0700
+From: Jani Nikula <jani.nikula@linux.intel.com>
+To: Jakub Kicinski <kuba@kernel.org>, Sang-Heon Jeon <ekffu200098@gmail.com>
+Cc: Julia.Lawall@inria.fr, Alex Deucher <alexander.deucher@amd.com>,
+ Alexander Shishkin <alexander.shishkin@linux.intel.com>, Alexandre Belloni
+ <alexandre.belloni@bootlin.com>, Andrew Lunn <andrew@lunn.ch>, Andrew
+ Morton <akpm@linux-foundation.org>, Arkadiusz Kubalewski
+ <arkadiusz.kubalewski@intel.com>, Borislav Petkov <bp@alien8.de>,
+ Christian =?utf-8?Q?K=C3=B6nig?= <christian.koenig@amd.com>, Daniel Lezcano
+ <daniel.lezcano@kernel.org>, David Airlie <airlied@gmail.com>, "David S.
+ Miller" <davem@davemloft.net>, Dmitry Torokhov
+ <dmitry.torokhov@gmail.com>, Eric Dumazet <edumazet@google.com>, Florian
+ Westphal <fw@strlen.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+ Hans de Goede <hansg@kernel.org>, Hans Verkuil <hverkuil@kernel.org>,
+ Heikki Krogerus <heikki.krogerus@linux.intel.com>, Herbert Xu
+ <herbert@gondor.apana.org.au>, Ilpo =?utf-8?Q?J=C3=A4rvinen?=
+ <ilpo.jarvinen@linux.intel.com>, "James E.J. Bottomley"
+ <James.Bottomley@HansenPartnership.com>, Jaroslav Kysela <perex@perex.cz>,
+ Jason Gunthorpe <jgg@ziepe.ca>, Jiri Pirko <jiri@resnulli.us>, "Joerg
+ Roedel
+ (AMD)" <joro@8bytes.org>, Johan Hovold <johan@kernel.org>, Jonathan Cameron
+ <jic23@kernel.org>, Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+ Julian Anastasov <ja@ssi.bg>, Leon Romanovsky <leon@kernel.org>, Liam
+ Girdwood <lgirdwood@gmail.com>, Linus Walleij <linusw@kernel.org>, Maarten
+ Lankhorst <maarten.lankhorst@linux.intel.com>, Mark Brown
+ <broonie@kernel.org>, "Martin K. Petersen" <martin.petersen@oracle.com>,
+ Matthew Sakai <msakai@redhat.com>, Mauro Carvalho Chehab
+ <mchehab@kernel.org>, Maxime Ripard <mripard@kernel.org>, Michael
+ Turquette <mturquette@baylibre.com>, Mike Rapoport <rppt@kernel.org>, Miri
+ Korenblit <miriam.rachel.korenblit@intel.com>, Nicolas Palix
+ <nicolas.palix@imag.fr>, Pablo Neira Ayuso <pablo@netfilter.org>, Paolo
+ Abeni <pabeni@redhat.com>, Ping-Ke Shih <pkshih@realtek.com>, "Rafael J.
+ Wysocki" <rafael@kernel.org>, Rodrigo Vivi <rodrigo.vivi@intel.com>,
+ Sebastian Reichel <sre@kernel.org>, Shuah Khan <shuah@kernel.org>, Simona
+ Vetter <simona@ffwll.ch>, Simon Horman <horms@verge.net.au>, Stephen Boyd
+ <sboyd@kernel.org>, Steve French <sfrench@samba.org>, Takashi Iwai
+ <tiwai@suse.com>, Thomas Renninger <trenn@suse.com>, Thomas Zimmermann
+ <tzimmermann@suse.de>, Tony Luck <tony.luck@intel.com>, Tvrtko Ursulin
+ <tursulin@ursulin.net>, Vadim Fedorenko <vadim.fedorenko@linux.dev>, Vinod
+ Koul <vkoul@kernel.org>, Will
+ Deacon <will@kernel.org>, Yazen Ghannam <Yazen.Ghannam@amd.com>,
+ cocci@inria.fr, amd-gfx@lists.freedesktop.org, dmaengine@vger.kernel.org,
+ dm-devel@lists.linux.dev, dri-devel@lists.freedesktop.org,
+ intel-gfx@lists.freedesktop.org, intel-wired-lan@lists.osuosl.org,
+ iommu@lists.linux.dev, linux-cifs@vger.kernel.org,
+ linux-clk@vger.kernel.org, linux-crypto@vger.kernel.org,
+ linux-edac@vger.kernel.org, linux-gpio@vger.kernel.org,
+ linux-iio@vger.kernel.org, linux-input@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-media@vger.kernel.org,
+ linux-mm@kvack.org, linux-pm@vger.kernel.org, linux-rdma@vger.kernel.org,
+ linux-rtc@vger.kernel.org, linux-s390@vger.kernel.org,
+ linux-scsi@vger.kernel.org, linux-sound@vger.kernel.org,
+ linux-usb@vger.kernel.org, linux-wireless@vger.kernel.org,
+ lvs-devel@vger.kernel.org, netdev@vger.kernel.org,
+ netfilter-devel@vger.kernel.org, nouveau@lists.freedesktop.org,
+ platform-driver-x86@vger.kernel.org
+Subject: Re: [PATCH 00/36] treewide: remove conditional returns with no effect
+In-Reply-To: <20260724144822.6af8213f@kernel.org>
+Organization: Intel Finland Oy - BIC 0357606-4 - c/o Alberga Business Park,
+ 6 krs Bertel Jungin Aukio 5, 02600 Espoo, Finland
+References: <20260723184538.3888637-1-ekffu200098@gmail.com>
+ <20260724144822.6af8213f@kernel.org>
+Date: Mon, 27 Jul 2026 11:30:01 +0300
+Message-ID: <0ee1ef4aa7daa908bf28397ccc639c89b6aabd9c@intel.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 
-From: Jianyun Gao <jianyungao89@gmail.com>
+On Fri, 24 Jul 2026, Jakub Kicinski <kuba@kernel.org> wrote:
+> On Fri, 24 Jul 2026 03:45:02 +0900 Sang-Heon Jeon wrote:
+>> Patch 1 adds a Coccinelle script that matches the pattern, including
+>> negation and constant-comparison variants. Where a local variable is
+>> assigned right before the check, the assignment and the two returns
+>> turn into a single return of the assigned expression.
+>
+> Huh, I thought we already had such script. Various script children have
+> been sending such "cleanups" in the past.
 
-This function is declared but never defined or called anywhere.
-The miss read completion is handled via miss_read_end_req callback
-instead. Remove the orphan declaration.
+We did, and it was removed, I believe in 1a617a8475e8 ("coccinelle:
+misc: remove "complex return code" warnings"), because people just don't
+want this constant churn.
 
-Signed-off-by: Jianyun Gao <jianyungao89@gmail.com>
----
- drivers/md/dm-pcache/cache.h | 1 -
- 1 file changed, 1 deletion(-)
+It's perfectly fine to have the error case and happy day scenario
+separated.
 
-diff --git a/drivers/md/dm-pcache/cache.h b/drivers/md/dm-pcache/cache.h
-index 27613b56be54..317bc8b11a81 100644
---- a/drivers/md/dm-pcache/cache.h
-+++ b/drivers/md/dm-pcache/cache.h
-@@ -340,7 +340,6 @@ void cache_seg_set_next_seg(struct pcache_cache_segment *cache_seg, u32 seg_id);
- 
- /* cache request*/
- int pcache_cache_flush(struct pcache_cache *cache);
--void miss_read_end_work_fn(struct work_struct *work);
- int pcache_cache_handle_req(struct pcache_cache *cache, struct pcache_request *pcache_req);
- 
- /* gc */
+
+BR,
+Jani.
+
+
 -- 
-2.34.1
-
+Jani Nikula, Intel
