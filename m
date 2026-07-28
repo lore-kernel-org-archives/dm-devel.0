@@ -1,98 +1,36 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E0E431ED80;
-	Mon, 27 Jul 2026 22:56:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BD863BB57;
+	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785192965; cv=none; b=U47DxFXbM4HSYkKH1TZ2axzuplxkbkf8KKI8o1YJlm97sd6Vkubuxi8O654JlElW0yvVMZzBYkSuCr/NebeLhb2YdPtHCZrDD7LLM/ubRugmef+vTmzSCKxUYUwXXIsPXodYrFJ6Y+1EMO6jKxWheLj50mPo595YuRGvLB71gDE=
+	t=1785197239; cv=none; b=JAZkjFdUFObr+0lmP/Ug3EMeP/gPZFbicKmtnALEp165EAevvkrbTivlraeXJwttvC39Yj/rLxLguJKQT2/gMTl/7PJPlhHYHJKk1bHQMR5HfeDr2QvcFdGES7AwLwLwKXtpUjQADWZaXuF2Go705FmdRL+0bHFcMBjLpnBdKqI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785192965; c=relaxed/simple;
-	bh=oEgoEtojyQ9PC8g7uhG7viM9B7fGAJubrsCe9lk5/YY=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=DIUMCMU2SIQHdp3QhJBxNx+FOc7dtpZh/E2wUrQZvOXlkSOCbHcf1/2BOUUe0jVtPq7Su0hSdgrWmxjKIeQQu1q/E/Tl6qozvJU2kZidb6zjqZGsFuVg61zAcbaZzOtFBM5Or0IMMa3V9lkaygGaDwUriiaKa2QrMZIm+0LQ1gY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=iwaG5uRX; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1785197239; c=relaxed/simple;
+	bh=Ia5pxjJfWxX+dMlen8HhCJKib+Bh5cG0z4/Hkqd/LO0=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=FERG8VWhMnR+ru5Chou9DVlA6VIRb3bK0En2ChZrPBpeokvJLi6+UI4mBF0GfX13sr1zX+6FZseNrwWJQN7hddO5vpkU78c4M4MSbzghbFM/CDtcU3qLVAK+Jr020AzA/YCEFSw3sylRmfaEfmypwEQCyzM5UhZEc13e0utON/g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IZsgG3bq; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="iwaG5uRX"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 04CDB1F000E9;
-	Mon, 27 Jul 2026 22:55:46 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1785192964;
-	bh=QggSvxtNQ67iS+XUwqrDlrH2xraHrxGb+vgcG7y0WsY=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Date;
-	b=iwaG5uRX32rTgcSQn1oI8cDhvVdBgF7xNVMcmwA5nB2roQEpjWkBM9/elDUKMWR+e
-	 A0p9zb+3tSs36tELwjTyibEs5znVgnOoeBgaUwvlk+h9jnbCN1e+v9elShDExZRawl
-	 S9FIBGMRZSowIq2RtsqIUQJ/GKy2epEJEkS13zWkXc/uH+dFvxm4jWJtqykilYp8FZ
-	 n/dZuVVGnI4Oh8Jv/TOV8zbNHWDjAXhVQbUPhHErbAZOrGNAAwjAULYVaj3h2kBbW9
-	 ED2feS2pNPbAGb5xCgo1ctL4J3aD2Ir+AJmF+Wa3lGIyvJ/mNC9waIoSbc3rE33Rm4
-	 vgzkKLQuteGUQ==
-From: Mark Brown <broonie@kernel.org>
-To: Julia.Lawall@inria.fr, Alex Deucher <alexander.deucher@amd.com>, 
- Alexander Shishkin <alexander.shishkin@linux.intel.com>, 
- Alexandre Belloni <alexandre.belloni@bootlin.com>, 
- Andrew Lunn <andrew@lunn.ch>, Andrew Morton <akpm@linux-foundation.org>, 
- Arkadiusz Kubalewski <arkadiusz.kubalewski@intel.com>, 
- Borislav Petkov <bp@alien8.de>, 
- =?utf-8?q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
- Daniel Lezcano <daniel.lezcano@kernel.org>, 
- David Airlie <airlied@gmail.com>, "David S. Miller" <davem@davemloft.net>, 
- Dmitry Torokhov <dmitry.torokhov@gmail.com>, 
- Eric Dumazet <edumazet@google.com>, Florian Westphal <fw@strlen.de>, 
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
- Hans de Goede <hansg@kernel.org>, Hans Verkuil <hverkuil@kernel.org>, 
- Heikki Krogerus <heikki.krogerus@linux.intel.com>, 
- Herbert Xu <herbert@gondor.apana.org.au>, 
- =?utf-8?q?Ilpo_J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>, 
- Jakub Kicinski <kuba@kernel.org>, 
- "James E.J. Bottomley" <James.Bottomley@HansenPartnership.com>, 
- Jani Nikula <jani.nikula@linux.intel.com>, Jaroslav Kysela <perex@perex.cz>, 
- Jason Gunthorpe <jgg@ziepe.ca>, Jiri Pirko <jiri@resnulli.us>, 
- "Joerg Roedel (AMD)" <joro@8bytes.org>, Johan Hovold <johan@kernel.org>, 
- Jonathan Cameron <jic23@kernel.org>, 
- Joonas Lahtinen <joonas.lahtinen@linux.intel.com>, 
- Julian Anastasov <ja@ssi.bg>, Leon Romanovsky <leon@kernel.org>, 
- Liam Girdwood <lgirdwood@gmail.com>, Linus Walleij <linusw@kernel.org>, 
- Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
- "Martin K. Petersen" <martin.petersen@oracle.com>, 
- Matthew Sakai <msakai@redhat.com>, 
- Mauro Carvalho Chehab <mchehab@kernel.org>, 
- Maxime Ripard <mripard@kernel.org>, 
- Michael Turquette <mturquette@baylibre.com>, 
- Mike Rapoport <rppt@kernel.org>, 
- Miri Korenblit <miriam.rachel.korenblit@intel.com>, 
- Nicolas Palix <nicolas.palix@imag.fr>, 
- Pablo Neira Ayuso <pablo@netfilter.org>, Paolo Abeni <pabeni@redhat.com>, 
- Ping-Ke Shih <pkshih@realtek.com>, "Rafael J. Wysocki" <rafael@kernel.org>, 
- Rodrigo Vivi <rodrigo.vivi@intel.com>, Sebastian Reichel <sre@kernel.org>, 
- Shuah Khan <shuah@kernel.org>, Simona Vetter <simona@ffwll.ch>, 
- Simon Horman <horms@verge.net.au>, Stephen Boyd <sboyd@kernel.org>, 
- Steve French <sfrench@samba.org>, Takashi Iwai <tiwai@suse.com>, 
- Thomas Renninger <trenn@suse.com>, Thomas Zimmermann <tzimmermann@suse.de>, 
- Tony Luck <tony.luck@intel.com>, Tvrtko Ursulin <tursulin@ursulin.net>, 
- Vadim Fedorenko <vadim.fedorenko@linux.dev>, Vinod Koul <vkoul@kernel.org>, 
- Will Deacon <will@kernel.org>, Yazen Ghannam <Yazen.Ghannam@amd.com>, 
- Sang-Heon Jeon <ekffu200098@gmail.com>
-Cc: cocci@inria.fr, amd-gfx@lists.freedesktop.org, 
- dmaengine@vger.kernel.org, dm-devel@lists.linux.dev, 
- dri-devel@lists.freedesktop.org, intel-gfx@lists.freedesktop.org, 
- intel-wired-lan@lists.osuosl.org, iommu@lists.linux.dev, 
- linux-cifs@vger.kernel.org, linux-clk@vger.kernel.org, 
- linux-crypto@vger.kernel.org, linux-edac@vger.kernel.org, 
- linux-gpio@vger.kernel.org, linux-iio@vger.kernel.org, 
- linux-input@vger.kernel.org, linux-kernel@vger.kernel.org, 
- linux-media@vger.kernel.org, linux-mm@kvack.org, linux-pm@vger.kernel.org, 
- linux-rdma@vger.kernel.org, linux-rtc@vger.kernel.org, 
- linux-s390@vger.kernel.org, linux-scsi@vger.kernel.org, 
- linux-sound@vger.kernel.org, linux-usb@vger.kernel.org, 
- linux-wireless@vger.kernel.org, lvs-devel@vger.kernel.org, 
- netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, 
- nouveau@lists.freedesktop.org, platform-driver-x86@vger.kernel.org
-In-Reply-To: <20260723184538.3888637-1-ekffu200098@gmail.com>
-References: <20260723184538.3888637-1-ekffu200098@gmail.com>
-Subject: Re: (subset) [PATCH 00/36] treewide: remove conditional returns
- with no effect
-Message-Id: <178515520105.50339.6347304746485042237.b4-ty@b4>
-Date: Mon, 27 Jul 2026 13:26:41 +0100
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IZsgG3bq"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 3DAB9C19425;
+	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1785197239;
+	bh=Ia5pxjJfWxX+dMlen8HhCJKib+Bh5cG0z4/Hkqd/LO0=;
+	h=From:Date:Subject:To:Cc:Reply-To:From;
+	b=IZsgG3bqdqgqafytzgmH/++WmJdffgeszJOgSOFldUgPV71U40CQWKxDCB/Dc9mE0
+	 tD6A9Tvg5Q3CObXmlHdqyyYTkbt6NlzBIOqpHsT4y/JcdIWetWuwwaVGTbcD4tirkq
+	 JTONpR3AspjlUfhSbTjsPEWcl3i4HzAPxDvZ4Hdc05Uyc8urzC2BveyTW+Y7dqfOR1
+	 2eTuDlKyd91ovCq29BmIqzRFUmB4T+fdISuItAjEk7Mrs0x2b0/giXkZhJG7apYzBN
+	 GODKv+gHh/rXYEupgJPAggQCyz0Xi3wCGJD8QxNvzvyss5szImV3THI6ODFJsNvh9C
+	 QmyIsiUBxIe9A==
+Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 13B49C531D0;
+	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
+From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
+Date: Mon, 27 Jul 2026 19:07:19 -0500
+Subject: [PATCH] dm array: validate array block headers on read
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -101,56 +39,152 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.16-dev
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1395; i=broonie@kernel.org;
- h=from:subject:message-id; bh=oEgoEtojyQ9PC8g7uhG7viM9B7fGAJubrsCe9lk5/YY=;
- b=owEBbQGS/pANAwAKASTWi3JdVIfQAcsmYgBqZ+HxlIWhtS7M/+/D/kSsIotZNE7ycdvTNKMa6
- lyMcsUy1YGJATMEAAEKAB0WIQSt5miqZ1cYtZ/in+ok1otyXVSH0AUCamfh8QAKCRAk1otyXVSH
- 0NGoB/9aZSWKSSxB+DoiO9o+r0R7LvQ0b9P0b+u/ow+7Ti4Va043c7UzGI2RzCGdUpf18XgLn6f
- SgEv95GzlB+upqVsxmPG9VHhXWw4Ho9J4p/hSGXTDgAS8ErF8GjIkiAzWtWwlF1NwqBzKdr1HBU
- 4bzLooMHmkm+sRhw0K+K8vYxKzoIVIF4rw3OtvuVpbcnMjoni4zgFcLTc5cd+g7gZ+ms/PpNPge
- 1bCGwvXOdpSE1Sx0RqUVVFnzDZUByQ/Qgq4t95aAwkznICTyGzRGtCagn7hNdby/Adb/VqLQiGG
- EXfGwi5kgCay4GMGfP+CcNTcNXARRSisUOfJQUCdGh8to0xz
-X-Developer-Key: i=broonie@kernel.org; a=openpgp;
- fpr=3F2568AAC26998F9E813A1C5C3F436CA30F5D8EB
+Message-Id: <20260727-b4-disp-0d625fe8-v1-1-be31f8611720@proton.me>
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/yXMQQ6CQAxA0auQrmlSGwTiVQiL6UzRukAyBWJCu
+ LujLt/i/wNcs6nDrTog625ur7ngUlcQH2G+K1oqBiZuqeMOpcFkviCllq+T9kh9JG5EKEqAki1
+ ZJ3v/lsP4t2/y1Lh+P3CeHw5yt1t0AAAA
+X-Change-ID: 20260727-b4-disp-0d625fe8-08c024bb0cba
+To: Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>, 
+ Alasdair Kergon <agk@redhat.com>, Ming-Hung Tsai <mtsai@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+X-Mailer: b4 0.15.2
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1785197238; l=5869;
+ i=hexlabsecurity@proton.me; s=default; h=from:subject:message-id;
+ bh=cupIkXaOfmmZcfnSmxZVIgmIPgt7jYhcjoeV+LtA/gk=;
+ b=ubGfyAkJVWCzYNzuMNuMHcYggYfF8Aehdtl8bChkEPbXmhuhCwTupyI9MCS2KiUTphHBZH7xA
+ fYeJnTafP/PBMgxUQpY3BuLpcti20tgeC8aFVUNKTzfQUjV66V4sJfM
+X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
+ pk=xw1AhCtQdvuoQc+bOQIYy9o8G++cp4/VniI2G/tc3G8=
+X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/default with
+ auth_id=893
+X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
+Reply-To: hexlabsecurity@proton.me
 
-On Fri, 24 Jul 2026 03:45:02 +0900, Sang-Heon Jeon wrote:
-> treewide: remove conditional returns with no effect
-> 
-> Hello,
-> 
-> While reading mm/memblock, I found a conditional return where both
-> branches return the same value:
-> 
-> [...]
+From: Bryam Vargas <hexlabsecurity@proton.me>
 
-Applied to
+array_block_check() validates an array block's blocknr and checksum and
+nothing else, so the on-disk nr_entries reaches its users unchecked.
+dm_array_cursor_next() takes its loop bound from that field and
+element_at() is unguarded pointer arithmetic, so a value larger than the
+block holds walks off the end of the dm-bufio buffer, reachable from
+dm_cache_load_mappings() when a cache is activated on crafted metadata.
 
-   https://git.kernel.org/pub/scm/linux/kernel/git/broonie/regulator.git for-7.3
+Validate the header as node_check() has always validated btree nodes:
+reject a block whose entries cannot fit, and one whose nr_entries exceeds
+max_entries.  Metadata that dm-array wrote itself sits exactly at that
+limit and still passes.
 
-Thanks!
+Fixes: 6513c29f44f2 ("dm persistent data: add transactional array")
+Cc: stable@kernel.org
+Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
+---
+Found by reading array_block_check() next to node_check(), its opposite number for btree
+nodes in the same directory.  node_check() already bounded max_entries and nr_entries when
+dm-array was added in 2013; the array validator never picked it up.
 
-[14/36] ASoC: remove conditional return with no effect
-        https://git.kernel.org/broonie/misc/c/ca9b51f41c9d
-[28/36] regulator: wm831x-isink: remove conditional return with no effect
-        https://git.kernel.org/broonie/misc/c/9396a1d9e142
+Reproducer.  Create a cache on a zeroed metadata device so dm-cache formats it, tear that
+down, then set nr_entries in the first mapping array block to 0xFFFFFFFF and recompute the
+block checksum.  dm_bm_checksum() is crc32c(~0, data, len) ^ CSUM_XOR, so the checksum costs
+nothing to forge -- it is a corruption check, not a tag.  The crafted image differs from the
+one the kernel itself wrote by four bytes plus that checksum.
 
-All being well this means that it will be integrated into the linux-next
-tree (usually sometime in the next 24 hours) and sent to Linus during
-the next merge window (or sooner if it is a bug fix), however if
-problems are discovered then the patch may be dropped or reverted.
+A 4096-byte block with a 24-byte header and 8-byte values holds 509 entries, so index 509 is
+the first one outside it.
 
-You may get further e-mails resulting from automated or manual testing
-and review of the tree, please engage with people reporting problems and
-send followup patches addressing any issues that are reported if needed.
+A/B on v7.2-rc4-610 with KASAN and kasan.fault=report, this patch built as posted:
 
-If any updates are required or you are submitting further changes they
-should be sent as incremental updates against current git, existing
-patches will not be replaced.
+  pristine image, unpatched:  activates, walks all 2048 cache blocks, dmesg empty
+  crafted image,  unpatched:  reads past the block, below
+  crafted image,  patched:    "array_block_check failed: too many entries", -EILSEQ
+  pristine image, patched:    activates, dmesg empty
 
-Please add any relevant lists and maintainers to the CCs when replying
-to this mail.
+    BUG: KASAN: slab-use-after-free in dm_cache_load_mappings+0x9b1/0xb40 [dm_cache]
+    Read of size 8 at addr ffff888107fc8000 by task dmsetup/1667
+     dm_cache_load_mappings+0x9b1/0xb40 [dm_cache]
+     cache_preresume+0x4cd/0xd70 [dm_cache]
+     dm_table_resume_targets+0xcd/0x2e0 [dm_mod]
+     ctl_ioctl+0x512/0xa90 [dm_mod]
+     __x64_sys_ioctl+0x134/0x1c0
+    The buggy address is located 0 bytes inside of
+     freed 32-byte region [ffff888107fc8000, ffff888107fc8020)
 
-Thanks,
-Mark
+The block base was ffff888107fc7000, so that address is base + 0x1000: byte 4096, index 509,
+the first entry outside.
+
+Worth flagging about that KASAN line: it corroborates, it does not reproduce on demand.  Two
+earlier runs of the same arm produced no report at all, even though the overread happened
+both times and dm-cache said so by refusing a nonsense mapping at cache block 509.  dm-bufio
+serves this buffer from __get_free_pages(), the page allocator has no redzones, and byte 4096
+is the first byte of the next page, so KASAN can only speak when that page happens to be
+poisoned.  The first line is the deterministic one.
+
+The check is not conservative.  calc_max_entries() gives 509 for 8-byte values and 1018 for
+4-byte ones, and 24 + 8*509 and 24 + 4*1018 are both exactly 4096, so metadata dm-array wrote
+sits right at the limit and still passes.
+
+There is a second hole I am not fixing here, since it wants its own reproducer and this one is
+headed for stable.  A validator can only check a header against itself, so a block with
+value_size 4 and max_entries 1018 is internally consistent and gets through, but element_at()
+indexes with the caller's value size rather than the stored one -- and dm-cache keeps arrays of
+both, mappings at 8 and hints at 4.  Read an array block of one through the other and the walk
+runs to byte 8160 of a 4096-byte block.  Closing that means comparing value_size against
+info->value_type.size in get_ablock() and in __shadow_ablock(), the two places that hold both
+the block and the caller.
+
+dm-era reaches the same accessor directly and dm-clone reaches it through dm-bitset, which is
+an array underneath; dm-cache is only the shortest path from a crafted image to an observable
+read.  All of them need CAP_SYS_ADMIN to load the table, which is why I'm sending this as
+hardening rather than as a security report.
+
+The value_size patch follows once I have a reproducer for it.
+---
+ drivers/md/persistent-data/dm-array.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
+index 8f8792e55806..03d4ffdb3521 100644
+--- a/drivers/md/persistent-data/dm-array.c
++++ b/drivers/md/persistent-data/dm-array.c
+@@ -55,6 +55,7 @@ static int array_block_check(const struct dm_block_validator *v,
+ 			     size_t size_of_block)
+ {
+ 	struct array_block *bh_le = dm_block_data(b);
++	uint32_t nr_entries, max_entries, value_size;
+ 	__le32 csum_disk;
+ 
+ 	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
+@@ -74,6 +75,22 @@ static int array_block_check(const struct dm_block_validator *v,
+ 		return -EILSEQ;
+ 	}
+ 
++	nr_entries = le32_to_cpu(bh_le->nr_entries);
++	max_entries = le32_to_cpu(bh_le->max_entries);
++	value_size = le32_to_cpu(bh_le->value_size);
++
++	if (!value_size ||
++	    sizeof(struct array_block) +
++	    (uint64_t) value_size * max_entries > size_of_block) {
++		DMERR_LIMIT("%s failed: max_entries too large", __func__);
++		return -EILSEQ;
++	}
++
++	if (nr_entries > max_entries) {
++		DMERR_LIMIT("%s failed: too many entries", __func__);
++		return -EILSEQ;
++	}
++
+ 	return 0;
+ }
+ 
+
+---
+base-commit: 4235cb24ec1e8e96843f3671ba4da2a6ccca2c7b
+change-id: 20260727-b4-disp-0d625fe8-08c024bb0cba
+
+Best regards,
+--  
+Bryam Vargas <hexlabsecurity@proton.me>
+
 
