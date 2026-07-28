@@ -1,64 +1,64 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFA7A478E45
-	for <dm-devel@lists.linux.dev>; Tue, 28 Jul 2026 21:29:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E4B047A0DB
+	for <dm-devel@lists.linux.dev>; Tue, 28 Jul 2026 21:29:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.49
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785274199; cv=none; b=HbYlL4tp/68XccuPeli1nCc3UBfffNO5Bc4D8lDSnnQ9jkBEygMyerCjE6ijkdJ7fx9J9YJI+H3XAeSiC8DrJR59+ujeHCyg/u/4o5XE38VmbRwtxAeDTNXYLFtFXUBMZHCuOGxQ1Dy2er4bi8YFV9ReV4m2L1foWwGZEPX4zdg=
+	t=1785274201; cv=none; b=JmqmiaP19VevlGXwoOicHkYXwlI1/Orxn3tNT8rIl4UOOsUIeric4+3XcQIaVNlCPeqg9neK+1ij9izpuwGUJFAnsjbzgt9cTHkvVpz2A5SMCGxP+r+aI+64ARGVfy93X/PiSUXqwXGIK/G1ojYdAVhJ3CHMmcT5BQ0D2GO2xmk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785274199; c=relaxed/simple;
-	bh=aY3CNWMc58bYzxxyOFJSJJSimVOo10PALBNiiMnlMxo=;
+	s=arc-20240116; t=1785274201; c=relaxed/simple;
+	bh=XDQjNbbhKar8uY0avv/kD/aMx3Th5Bc2yUeUMO7wAXQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=iUKJKgY8YcxRVAEfc7AOuaMJKST1Dxe+EmKIUjyFwf66AcmDn1+ODRV/6Ocmg00vOyt6VbpGCsVgnzp2/G2ZZNbVDwlkL2QAlXmRi4/NI8vWvpzF5caAtOI7K/fiu64Dt79VmbFW4Qlb44zxfhuyBX7yTN9H2/rFQlPLPAdqLTk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=qGFVKzZJ; arc=none smtp.client-ip=209.85.128.43
+	 MIME-Version; b=Y9WnGd5XuSfComc12VMIVmHmNiV9XL5q4Wq5TUv6MZjnx5k648ZFU5DbzCojij7zSd4taZvi3uHG3/awrZeyYRnCH1JlJuRr2l+HsB9Wgaqf6WIUxPm6cZeq1xgsBI5T3QGnX67p2So6b9qZXDtjKHx7NZXHerOIgxQrxiqr1II=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Fnt5riJK; arc=none smtp.client-ip=209.85.221.49
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qGFVKzZJ"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-4957eefd361so2202585e9.1
-        for <dm-devel@lists.linux.dev>; Tue, 28 Jul 2026 14:29:55 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Fnt5riJK"
+Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-471eeac43bfso265620f8f.3
+        for <dm-devel@lists.linux.dev>; Tue, 28 Jul 2026 14:29:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785274194; x=1785878994; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1785274196; x=1785878996; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=xDZPkMbwSk/lf5c8/cMXuQv/8k90Wcurvg4IHgK0Syc=;
-        b=qGFVKzZJyVTueb5DJ5KpuWESNGAPU2ybm4WPGxsfYYL9I38Al7G5oUa1K/FHz7zmGF
-         HuEoiDSoZWhqkj37ZqsnB4wKtbsTbzxnd4fqoZMgRAFfF4APDroZtlHxMARtfxm5QD/S
-         Q4kje2VGIPaGei159BbEWavaWg7/65a1XqNtaFU0iEusV8q57WXpsuHops9ZriWtR2A3
-         PDOIFiysdYEYrnhPmpBWJsebejSx2twf3MqT/CwV5IQ4s4KTdT6tVLeEwURRb2s8JzL5
-         fNMkq6YGhILbg7J3JTa9rdijrfEJtkHByPdUBP6xCeQHe2TiTYitBdrHHKP8QwNnQAUp
-         Uk6A==
+        bh=zGURBnMw6fzU2CZK+DQfnrMi2Ya0rXE6R9ZmtmaHTkk=;
+        b=Fnt5riJKSgNjJ4bA7zETUN7hJIKoKOC1dKqJ88g8P+4TbLIYF2/DxcjXFNiQNJzHOf
+         XQ993g+U06F2P2dmjY0sPWpDUg+KuDhC6Yr19KkQfl4AU7W2mVQZATA9EvQ4ItESkPQz
+         f9lLS1F0xIEmsvtMfyTzww66N0tcSCsRjLPeQ87OpX2TGJo43EZFj2cz6tAsJTNjsdRC
+         tWwAZ6xEIfXDV1X/IoTx84Eqqi8LXXboitd6YaRK0foWmWP9GiL/egcc0ajkN+rU4sI2
+         /hOUzMN36BLyPtOJw3hsQH0PlclIE02CjVKpMMyMAZlkerJb4Kte2h9kXAPzcL8+xTR/
+         8IoA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785274194; x=1785878994;
+        d=1e100.net; s=20251104; t=1785274196; x=1785878996;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=xDZPkMbwSk/lf5c8/cMXuQv/8k90Wcurvg4IHgK0Syc=;
-        b=CzwkYXJWJw555qXjHzbc9T4/CMuzzuPoSRyl8ArmIcVyRWL4rJW2CcJaWlKxWL3SG+
-         CE6efOR1xmiD9pWKhGWyLK5gj69z3h6P8nrmGldpSeqTqdoXJ5eU+SLbGY28c5ymgEvo
-         1bOiCL8d+QnlGrNvZmfJ+DrnkaiMVPzFY0R0w2f2OwXSxxFINw5YjE/tM86R5irHL4vI
-         DCTQTZ/4MGoWVx5w1ikwcVlYNZBqSBDyAHB8ercIraDO9o/gObLVWs2e0m2NzXmnhOCf
-         Xk8ydLWDztlCxY2fl6p6JE6vpAmaj49SNDyGo3KOAKPhxrQlqy+8HUvIRYsrn7YQAaCR
-         iVVw==
-X-Forwarded-Encrypted: i=1; AHgh+RoJaaosujRPwquZSbso7KI6NFWX5vFzYz9Zee9bY5QkpHLKm45ooyVyZlnt7bGTmvqLpBeI0Wqc3w==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yx+yqKdQnAhJOUiWXhY28Zvx1EtiL9PfTfIJywLmXMWVIdFaovb
-	dW30fKtvWDY6MuWZJDE1tIlLTpmxSVllheB5dh5sL0fYwDzRiJA3FOLB
-X-Gm-Gg: AR+sD12EKNTmNJetCQgHGiTPMP1GYSp6e1I+CMJ341+j/rWCpDNT9g3Iu7kaH2cl03p
-	nHynDcv6Qd4sexyCw/BMDXbV4tFTR75ZgIwsJtCI0hQSLB7mfxzw8R6JHZwd4URilO+Ar09ZhNB
-	IFJMPdCA+OKv9qfYQjXPj282gQn2aPaW2KAGLpsFvjbU2xPr0ESEeZCZz1aJROOpSXroLusZsNR
-	uVKa3t+y9YMm6dQsqFd/8ADzqMrxprYFyhI+osiimSt/dUbuxjjh9SX6Jge25LLIL5b6RqLMhx6
-	7PMfdqZLtnjwbDR2xHSebv/Ek4ilmhhgnMbr1OpWztdOhwjBj6nrsse0HmlKYGm0DLpx2fuoZS1
-	A0DSbeIPYDs9cLV1p/55Y0q9OvrzdppcQQikWKA2PE62WRFLAiDWlqiS1kuQ5PUbBlO189J5g55
-	RSWHvYvEiS8vdyf5jWdorV3bMT/RNvCdtpCFTTuaV/AFDnGLHdROttx4jiOuUBq8/JcM5eiHmZ7
-	XLcmZDy3iFem7sY76kWLxGw5/KGbvEz29r7+l/dG0hpYhk/1LhaALMRlMNdrbsp2Jk=
-X-Received: by 2002:a05:600c:4504:b0:496:c93d:e2f with SMTP id 5b1f17b1804b1-496c93d0e44mr30643425e9.15.1785274193855;
-        Tue, 28 Jul 2026 14:29:53 -0700 (PDT)
+        bh=zGURBnMw6fzU2CZK+DQfnrMi2Ya0rXE6R9ZmtmaHTkk=;
+        b=GPJCm76/PSmfZ7Z3Eu1HwHVRrFSNa2K2LtiKrMudGiUjfNw8cp0nxTX+8llXfazc8G
+         CokWJTcuYzecb63jA0V607dsqkZQaquq3cF5b/BiCRxphdOtikklv3bYhd1Hm0iqGC9n
+         KrRUlyaNszWGLvV11097i6VeDsWjyaBfct/PHGPYKvQIi7IK0QtOLvsBESlu9OkN5GbM
+         BrQ9HlGtYiJchUdTe01ZixCc+Q4zQ7SWs50XqDNW4ZIQtjXtLg5TiRLt7jJQ3+DtIade
+         DEoEbasYkMtIlDICeCXiNYDV5Dgd4jVbZE26DNZskmUbejYlxZaq9UlERI3QlmNdVn2r
+         yKhw==
+X-Forwarded-Encrypted: i=1; AHgh+Rp05OzSquCjt28ixHsWUdRae6MNLOM9W9Fn2rIkRrXQkslBNjfgtZHzEi+4JcU6sTEjQa1c0EnLpg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxS+5IjjVd3nzDr/9l48Dv2lAG8m2mQ3d0/B3aSPhvR15YFsWrG
+	RKw7sNZhlFXE5q2ALU/Uk1UtnY1Gbcd9/qghs/DSiN55cXZmIS9V0/T+
+X-Gm-Gg: AR+sD13x4YTI5cCcbupQPa9g8ZqdUpbbjAWQJT4az44m4JTBf8i7SUFXZ0zUiGdVDAn
+	uKk20MzH9B47m2c7336M/D9ceOojbP92of25FF1xzZqbBefn7NV8EpbD1KL/8fP1F3Uy+zC6pUB
+	w0fsP8ovw83DJZQ5XHmZ435WOtvU4/Jzfx4y+Ku1N5gXU/w5+21+R4W14w53rAM/yVB2c1Urjhl
+	cJqpI87yTgVVUIvI0PeygC9cFHiJU9Ap81kqslxGMzZnXsUfbDIO8YgQHWt8Gf+lZRotxxIOkG7
+	fdLzn/Tt+26q3VH4mIDqVgnwiTkGPD1UltdJzu+2PgYb83+YTW68Iqnsuy47ijVwdrXgNvvVNk1
+	fIcEZyH3CV+6N18irZL3u/UcwyYpRk6s+zR+/iFc8H/GfTlLICyVQ6PdNsQo/8TSVh9bI7aeMh9
+	r7387JgbKC23LkcvBppHy2BaJkx9TXVum71IFCrpB0foQgzgZm7Cu/M/lKFFfnFi1/CT5Szwk/L
+	1wVx26T
+X-Received: by 2002:a5d:5d09:0:b0:47f:94a8:d6db with SMTP id ffacd0b85a97d-47fb1f14a61mr4656094f8f.34.1785274196213;
+        Tue, 28 Jul 2026 14:29:56 -0700 (PDT)
 Received: from 127.mynet ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47fb6ac44bcsm2245329f8f.11.2026.07.28.14.29.51
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47fb6ac44bcsm2245329f8f.11.2026.07.28.14.29.53
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 28 Jul 2026 14:29:52 -0700 (PDT)
+        Tue, 28 Jul 2026 14:29:54 -0700 (PDT)
 From: Pavel Begunkov <asml.silence@gmail.com>
 To: Jens Axboe <axboe@kernel.dk>,
 	Keith Busch <kbusch@kernel.org>,
@@ -97,9 +97,9 @@ Cc: asml.silence@gmail.com,
 	nvdimm@lists.linux.dev,
 	linux-btrfs@vger.kernel.org,
 	ceph-devel@vger.kernel.org
-Subject: [PATCH v4 06/14] block: introduce dma map backed bio type
-Date: Tue, 28 Jul 2026 22:29:18 +0100
-Message-ID: <f97985ac5cfff3d9f7777b93f11456af57e253e2.1785274111.git.asml.silence@gmail.com>
+Subject: [PATCH v4 07/14] block: forward init_dma_buf_io_ctx to drivers
+Date: Tue, 28 Jul 2026 22:29:19 +0100
+Message-ID: <e0cc82a15419ba7b38eb0bb00ae34cf3d0c3a938.1785274111.git.asml.silence@gmail.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <cover.1785274111.git.asml.silence@gmail.com>
 References: <cover.1785274111.git.asml.silence@gmail.com>
@@ -111,232 +111,60 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Premapped buffers don't require a generic bio_vec since these have
-already been dma mapped. Repurpose the bi_io_vec space to strore dmabuf
-maps as they are mutually exclusive.
+Add a simple proxy implementation of init_dma_buf_io_ctx() forwarding
+the call to a new struct block_device_operations operation.
 
-Suggested-by: Keith Busch <kbusch@kernel.org>
 Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
 ---
- block/bio.c               | 23 ++++++++++++++++++++++-
- block/blk-merge.c         | 15 +++++++++++++++
- block/fops.c              |  2 ++
- include/linux/bio.h       | 10 ++++++----
- include/linux/blk-mq.h    |  7 +++++++
- include/linux/blk_types.h | 14 +++++++++++++-
- include/linux/bvec.h      |  3 ++-
- 7 files changed, 67 insertions(+), 7 deletions(-)
+ block/fops.c           | 14 ++++++++++++++
+ include/linux/blkdev.h |  2 ++
+ 2 files changed, 16 insertions(+)
 
-diff --git a/block/bio.c b/block/bio.c
-index 57c127aee116..cc2bb9183c1a 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -860,7 +860,12 @@ static int __bio_clone(struct bio *bio, struct bio *bio_src, gfp_t gfp)
- 	bio->bi_write_hint = bio_src->bi_write_hint;
- 	bio->bi_write_stream = bio_src->bi_write_stream;
- 	bio->bi_iter = bio_src->bi_iter;
--	bio->bi_io_vec = bio_src->bi_io_vec;
-+
-+	if (op_is_dmabuf(bio->bi_opf)) {
-+		bio->bi_dmabuf_map = bio_src->bi_dmabuf_map;
-+	} else {
-+		bio->bi_io_vec = bio_src->bi_io_vec;
-+	}
- 
- 	if (bio->bi_bdev) {
- 		if (bio->bi_bdev == bio_src->bi_bdev &&
-@@ -1192,6 +1197,17 @@ void bio_iov_bvec_set(struct bio *bio, const struct iov_iter *iter)
- 	bio_set_flag(bio, BIO_CLONED);
- }
- 
-+void bio_dmabuf_map_set(struct bio *bio, struct iov_iter *iter)
-+{
-+	WARN_ON_ONCE(bio->bi_max_vecs);
-+
-+	bio->bi_dmabuf_map = iter->dmabuf_map;
-+	bio->bi_vcnt = 0;
-+	bio->bi_iter.bi_offset = iter->iov_offset;
-+	bio->bi_iter.bi_size = iov_iter_count(iter);
-+	bio->bi_opf |= REQ_NOMERGE | REQ_DMABUF;
-+}
-+
- /*
-  * Aligns the bio size to the len_align_mask, releasing excessive bio vecs that
-  * __bio_iov_iter_get_pages may have inserted, and reverts the trimmed length
-@@ -1254,6 +1270,11 @@ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter,
- 		iov_iter_advance(iter, bio->bi_iter.bi_size);
- 		return 0;
- 	}
-+	if (iov_iter_is_dmabuf_map(iter)) {
-+		bio_dmabuf_map_set(bio, iter);
-+		iov_iter_advance(iter, bio->bi_iter.bi_size);
-+		return 0;
-+	}
- 
- 	if (iov_iter_extract_will_pin(iter))
- 		bio_set_flag(bio, BIO_PAGE_PINNED);
-diff --git a/block/blk-merge.c b/block/blk-merge.c
-index 258a726071d1..6f0cabfe25ef 100644
---- a/block/blk-merge.c
-+++ b/block/blk-merge.c
-@@ -346,6 +346,20 @@ int bio_split_io_at(struct bio *bio, const struct queue_limits *lim,
- 		len_align_mask |= (bc->bc_key->crypto_cfg.data_unit_size - 1);
- 	}
- 
-+	if (op_is_dmabuf(bio->bi_opf)) {
-+		/* single contiguous range into the dma-buf */
-+		nsegs = 1;
-+
-+		if ((bio->bi_iter.bi_offset & start_align_mask) ||
-+		    (bio->bi_iter.bi_size & len_align_mask))
-+			return -EINVAL;
-+		if (bio->bi_iter.bi_size > max_bytes) {
-+			bytes = max_bytes;
-+			goto split;
-+		}
-+		goto out;
-+	}
-+
- 	bio_for_each_bvec(bv, bio, iter) {
- 		if (bv.bv_offset & start_align_mask ||
- 		    bv.bv_len & len_align_mask)
-@@ -376,6 +390,7 @@ int bio_split_io_at(struct bio *bio, const struct queue_limits *lim,
- 		bvprvp = &bvprv;
- 	}
- 
-+out:
- 	*segs = nsegs;
- 	bio->bi_bvec_gap_bit = ffs(gaps);
- 	return 0;
 diff --git a/block/fops.c b/block/fops.c
-index 15783a6180de..37d491f45015 100644
+index 37d491f45015..d83cdbab65a6 100644
 --- a/block/fops.c
 +++ b/block/fops.c
-@@ -348,6 +348,8 @@ static ssize_t __blkdev_direct_IO_async(struct kiocb *iocb,
- 		 * bio_iov_iter_get_pages() and set the bvec directly.
- 		 */
- 		bio_iov_bvec_set(bio, iter);
-+	} else if (iov_iter_is_dmabuf_map(iter)) {
-+		bio_dmabuf_map_set(bio, iter);
- 	} else {
- 		ret = blkdev_iov_iter_get_pages(bio, iter, bdev);
- 		if (unlikely(ret))
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index dea9f567379d..c053e9444514 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -80,7 +80,8 @@ static inline bool bio_no_advance_iter(const struct bio *bio)
- {
- 	return bio_op(bio) == REQ_OP_DISCARD ||
- 	       bio_op(bio) == REQ_OP_SECURE_ERASE ||
--	       bio_op(bio) == REQ_OP_WRITE_ZEROES;
-+	       bio_op(bio) == REQ_OP_WRITE_ZEROES ||
-+	       op_is_dmabuf(bio->bi_opf);
+@@ -926,6 +926,19 @@ static int blkdev_mmap_prepare(struct vm_area_desc *desc)
+ 	return generic_file_mmap_prepare(desc);
  }
  
- static inline void *bio_data(struct bio *bio)
-@@ -399,12 +400,12 @@ static inline void bio_wouldblock_error(struct bio *bio)
- 
- /*
-  * Calculate number of bvec segments that should be allocated to fit data
-- * pointed by @iter. If @iter is backed by bvec it's going to be reused
-- * instead of allocating a new one.
-+ * pointed by @iter. If @iter is backed by a bvec or a dmabuf, the bvec array /
-+ * the dma map are going to be reused, and so no extra allocation is required.
-  */
- static inline int bio_iov_vecs_to_alloc(struct iov_iter *iter, int max_segs)
- {
--	if (iov_iter_is_bvec(iter))
-+	if (iov_iter_is_bvec(iter) || iov_iter_is_dmabuf_map(iter))
- 		return 0;
- 	return iov_iter_npages(iter, max_segs);
- }
-@@ -484,6 +485,7 @@ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter,
- 		unsigned len_align_mask);
- 
- void bio_iov_bvec_set(struct bio *bio, const struct iov_iter *iter);
-+void bio_dmabuf_map_set(struct bio *bio, struct iov_iter *iter);
- void __bio_release_pages(struct bio *bio, bool mark_dirty);
- extern void bio_set_pages_dirty(struct bio *bio);
- extern void bio_check_pages_dirty(struct bio *bio);
-diff --git a/include/linux/blk-mq.h b/include/linux/blk-mq.h
-index af878597afb8..7c7504c84e09 100644
---- a/include/linux/blk-mq.h
-+++ b/include/linux/blk-mq.h
-@@ -1017,6 +1017,13 @@ static inline void *blk_mq_rq_to_pdu(struct request *rq)
- 	return rq + 1;
- }
- 
-+static inline bool blk_mq_rq_is_dmabuf(struct request *rq)
++static int blkdev_init_dma_buf_io_ctx(struct file *file,
++				      struct dma_buf_io_ctx *ctx)
 +{
-+	if (!IS_ENABLED(CONFIG_DMA_SHARED_BUFFER))
-+		return false;
-+	return rq->bio && op_is_dmabuf(rq->bio->bi_opf);
++	struct block_device *bdev = file_bdev(file);
++	struct gendisk *disk = bdev->bd_disk;
++
++	if (!(file->f_flags & O_DIRECT))
++		return -EINVAL;
++	if (!disk->fops->init_dma_buf_io_ctx)
++		return -EINVAL;
++	return disk->fops->init_dma_buf_io_ctx(bdev, ctx);
 +}
 +
- static inline struct blk_mq_hw_ctx *queue_hctx(struct request_queue *q, int id)
- {
- 	struct blk_mq_hw_ctx *hctx;
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index 8808ee76e73c..d605e31712d4 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -233,7 +233,12 @@ struct bio {
- 	atomic_t		__bi_remaining;
+ const struct file_operations def_blk_fops = {
+ 	.open		= blkdev_open,
+ 	.release	= blkdev_release,
+@@ -944,6 +957,7 @@ const struct file_operations def_blk_fops = {
+ 	.fallocate	= blkdev_fallocate,
+ 	.uring_cmd	= blkdev_uring_cmd,
+ 	.fop_flags	= FOP_BUFFER_RASYNC,
++	.init_dma_buf_io_ctx = blkdev_init_dma_buf_io_ctx,
+ };
  
- 	/* The actual vec list, preserved by bio_reset() */
--	struct bio_vec		*bi_io_vec;
-+	union {
-+		struct bio_vec		*bi_io_vec;
-+		/* Driver specific dma map, valid IFF REQ_DMABUF is set */
-+		struct dma_buf_io_map	*bi_dmabuf_map;
-+	};
-+
- 	struct bvec_iter	bi_iter;
+ static __init int blkdev_init(void)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 9213a5716f95..9f4c92e51dc9 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -1682,6 +1682,8 @@ struct block_device_operations {
+ 	/* returns the length of the identifier or a negative errno: */
+ 	int (*get_unique_id)(struct gendisk *disk, u8 id[16],
+ 			enum blk_unique_id id_type);
++	int (*init_dma_buf_io_ctx)(struct block_device *,
++				   struct dma_buf_io_ctx *);
+ 	struct module *owner;
+ 	const struct pr_ops *pr_ops;
  
- 	union {
-@@ -401,6 +406,7 @@ enum req_flag_bits {
- 	__REQ_DRV,		/* for driver use */
- 	__REQ_FS_PRIVATE,	/* for file system (submitter) use */
- 	__REQ_ATOMIC,		/* for atomic write operations */
-+	__REQ_DMABUF,		/* Using premmaped dma buffers */
- 	/*
- 	 * Command specific flags, keep last:
- 	 */
-@@ -433,6 +439,7 @@ enum req_flag_bits {
- #define REQ_DRV		(__force blk_opf_t)(1ULL << __REQ_DRV)
- #define REQ_FS_PRIVATE	(__force blk_opf_t)(1ULL << __REQ_FS_PRIVATE)
- #define REQ_ATOMIC	(__force blk_opf_t)(1ULL << __REQ_ATOMIC)
-+#define REQ_DMABUF	(__force blk_opf_t)(1ULL << __REQ_DMABUF)
- 
- #define REQ_NOUNMAP	(__force blk_opf_t)(1ULL << __REQ_NOUNMAP)
- 
-@@ -486,6 +493,11 @@ static inline bool op_is_discard(blk_opf_t op)
- 	return (op & REQ_OP_MASK) == REQ_OP_DISCARD;
- }
- 
-+static inline bool op_is_dmabuf(blk_opf_t op)
-+{
-+	return op & REQ_DMABUF;
-+}
-+
- /*
-  * Check if a bio or request operation is a zone management operation.
-  */
-diff --git a/include/linux/bvec.h b/include/linux/bvec.h
-index fc566ee1c1ff..b63914ff56e3 100644
---- a/include/linux/bvec.h
-+++ b/include/linux/bvec.h
-@@ -108,7 +108,8 @@ struct bvec_iter {
- 	unsigned int		bi_idx;
- 
- 	/*
--	 * Current offset in the bvec entry pointed to by `bi_idx`.
-+	 * Current offset in the bvec entry pointed to by `bi_idx` or into
-+	 * a dma-buf map.
- 	 */
- 	unsigned int		bi_offset;
- } __packed __aligned(4);
 -- 
 2.54.0
 
