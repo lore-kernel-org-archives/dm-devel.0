@@ -1,190 +1,129 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BD863BB57;
-	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C50653AA9CA
+	for <dm-devel@lists.linux.dev>; Tue, 28 Jul 2026 13:28:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785197239; cv=none; b=JAZkjFdUFObr+0lmP/Ug3EMeP/gPZFbicKmtnALEp165EAevvkrbTivlraeXJwttvC39Yj/rLxLguJKQT2/gMTl/7PJPlhHYHJKk1bHQMR5HfeDr2QvcFdGES7AwLwLwKXtpUjQADWZaXuF2Go705FmdRL+0bHFcMBjLpnBdKqI=
+	t=1785245294; cv=none; b=Q4t+6YDScePTGibMkAAwPXXF41A6v10DYHR2Rj5tan7oZ6aZtzolpRi3sgGIWoIaUbukHRAvA/Eri139OaOS60UUXe6h5lJPDfFNHS1h1rD5iv3e1b7fzfPk9TMD1249uCiOViH5BbNQPEBV2RSa8XkKo8kwYSGBnYlqz2bCqqU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785197239; c=relaxed/simple;
-	bh=Ia5pxjJfWxX+dMlen8HhCJKib+Bh5cG0z4/Hkqd/LO0=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=FERG8VWhMnR+ru5Chou9DVlA6VIRb3bK0En2ChZrPBpeokvJLi6+UI4mBF0GfX13sr1zX+6FZseNrwWJQN7hddO5vpkU78c4M4MSbzghbFM/CDtcU3qLVAK+Jr020AzA/YCEFSw3sylRmfaEfmypwEQCyzM5UhZEc13e0utON/g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=IZsgG3bq; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1785245294; c=relaxed/simple;
+	bh=fJ7DUHTSm2Vkjty5O0sz0ismVjlvQrQzwa7sNhfvbkk=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=nTZX+ImiQAF67iW+lPqVn1U72bn4LE5mRtrc+vdmbObSJbyPbKqXpP1dS0be3AoO5uJzBA+QYiJ0BLBZFshBGLlzLTK6xnmMw7/5vMVf27ude3eB0EK++7+ykG8p4rCrKvrlKAOC5O+7Ej20IyJkRGQlkqHsRWwTa/73O7hgCA0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WNFKyHPm; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="IZsgG3bq"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 3DAB9C19425;
-	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1785197239;
-	bh=Ia5pxjJfWxX+dMlen8HhCJKib+Bh5cG0z4/Hkqd/LO0=;
-	h=From:Date:Subject:To:Cc:Reply-To:From;
-	b=IZsgG3bqdqgqafytzgmH/++WmJdffgeszJOgSOFldUgPV71U40CQWKxDCB/Dc9mE0
-	 tD6A9Tvg5Q3CObXmlHdqyyYTkbt6NlzBIOqpHsT4y/JcdIWetWuwwaVGTbcD4tirkq
-	 JTONpR3AspjlUfhSbTjsPEWcl3i4HzAPxDvZ4Hdc05Uyc8urzC2BveyTW+Y7dqfOR1
-	 2eTuDlKyd91ovCq29BmIqzRFUmB4T+fdISuItAjEk7Mrs0x2b0/giXkZhJG7apYzBN
-	 GODKv+gHh/rXYEupgJPAggQCyz0Xi3wCGJD8QxNvzvyss5szImV3THI6ODFJsNvh9C
-	 QmyIsiUBxIe9A==
-Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 13B49C531D0;
-	Tue, 28 Jul 2026 00:07:19 +0000 (UTC)
-From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
-Date: Mon, 27 Jul 2026 19:07:19 -0500
-Subject: [PATCH] dm array: validate array block headers on read
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WNFKyHPm"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1785245291;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=qzYazpwyMpfKoBhnEBcrUPqBRejfl/tJUhCc/onywjE=;
+	b=WNFKyHPmX1ryN+5i/UBSe0WAnBy4h1v3qk+bhKblqiDIjcS8AmYUrX4M4V7+GP3HUCvbZP
+	xcEf+MUJawHfqoKRAkSm49ayH3IjbEBElTy0PjKRdFn9/Y8Yny6Qli+yHs8yDT6huXWVmI
+	0Uo8qdlXxmhB8p9ijRReMQBZB5pPcsg=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-694-VEXpgC-nMweFLbLB2GVilQ-1; Tue,
+ 28 Jul 2026 09:28:09 -0400
+X-MC-Unique: VEXpgC-nMweFLbLB2GVilQ-1
+X-Mimecast-MFC-AGG-ID: VEXpgC-nMweFLbLB2GVilQ_1785245288
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5CA1A1955E74;
+	Tue, 28 Jul 2026 13:28:06 +0000 (UTC)
+Received: from [10.44.32.225] (unknown [10.44.32.225])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 53B8F3000218;
+	Tue, 28 Jul 2026 13:28:04 +0000 (UTC)
+Date: Tue, 28 Jul 2026 15:27:58 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Junzhe Yu <junzheyu1@gmail.com>
+cc: Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: Re: [BUG] dm-stats: null-ptr-deref in dm_stat_free on stats alloc
+ failure
+In-Reply-To: <9c337692-ce94-4dfa-80db-47390f67f0b5@gmail.com>
+Message-ID: <d0ee68fc-5773-d2bd-c881-169747b2887f@redhat.com>
+References: <9c337692-ce94-4dfa-80db-47390f67f0b5@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20260727-b4-disp-0d625fe8-v1-1-be31f8611720@proton.me>
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/yXMQQ6CQAxA0auQrmlSGwTiVQiL6UzRukAyBWJCu
- LujLt/i/wNcs6nDrTog625ur7ngUlcQH2G+K1oqBiZuqeMOpcFkviCllq+T9kh9JG5EKEqAki1
- ZJ3v/lsP4t2/y1Lh+P3CeHw5yt1t0AAAA
-X-Change-ID: 20260727-b4-disp-0d625fe8-08c024bb0cba
-To: Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Joe Thornber <ejt@redhat.com>, 
- Alasdair Kergon <agk@redhat.com>, Ming-Hung Tsai <mtsai@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-X-Mailer: b4 0.15.2
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1785197238; l=5869;
- i=hexlabsecurity@proton.me; s=default; h=from:subject:message-id;
- bh=cupIkXaOfmmZcfnSmxZVIgmIPgt7jYhcjoeV+LtA/gk=;
- b=ubGfyAkJVWCzYNzuMNuMHcYggYfF8Aehdtl8bChkEPbXmhuhCwTupyI9MCS2KiUTphHBZH7xA
- fYeJnTafP/PBMgxUQpY3BuLpcti20tgeC8aFVUNKTzfQUjV66V4sJfM
-X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
- pk=xw1AhCtQdvuoQc+bOQIYy9o8G++cp4/VniI2G/tc3G8=
-X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/default with
- auth_id=893
-X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
-Reply-To: hexlabsecurity@proton.me
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-MFC-PROC-ID: f05qMju6ajza5FZtSHUc3Ir60Jy2FhYaA4zd7ADJzmM_1785245288
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-From: Bryam Vargas <hexlabsecurity@proton.me>
 
-array_block_check() validates an array block's blocknr and checksum and
-nothing else, so the on-disk nr_entries reaches its users unchecked.
-dm_array_cursor_next() takes its loop bound from that field and
-element_at() is unguarded pointer arithmetic, so a value larger than the
-block holds walks off the end of the dm-bufio buffer, reachable from
-dm_cache_load_mappings() when a cache is activated on crafted metadata.
 
-Validate the header as node_check() has always validated btree nodes:
-reject a block whose entries cannot fit, and one whose nr_entries exceeds
-max_entries.  Metadata that dm-array wrote itself sits exactly at that
-limit and still passes.
+On Sat, 25 Jul 2026, Junzhe Yu wrote:
 
-Fixes: 6513c29f44f2 ("dm persistent data: add transactional array")
-Cc: stable@kernel.org
-Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
+> Hello,
+> 
+> I am reporting a null-pointer dereference in device-mapper dm-stats when
+> @stats_create fails part-way through per-CPU buffer allocation.
+> 
+> Summary
+> =======
+> 
+> dm_stats_create() allocates per-CPU stat buffers in a loop. On mid-loop
+> ENOMEM it jumps to out: and calls dm_stat_free(). dm_stat_free() then
+> dereferences s->stat_percpu[cpu] without a NULL check, including for CPUs
+> that never received a successful allocation (still NULL from zero-init).
+> 
+> The crash is a KASAN null-ptr-deref / general protection fault in
+> dm_stat_free() at drivers/md/dm-stats.c, reached via DM_TARGET_MSG
+> @stats_create.
+
+Hi
+
+Here I'm sending a patch for this bug.
+
+Mikulas
+
+
+dm-stats: fix a crash if allocation of per-cpu data fails
+
+If "dm_kvzalloc(percpu_alloc_size, cpu_to_node(cpu))" fails, the code
+jumps to the "out" label and calls dm_stat_free. dm_stat_free does
+"for_each_possible_cpu(cpu) { dm_kvfree(s->stat_percpu[cpu][0].histogram,
+s->histogram_alloc_size);", which crashes with NULL pointer dereference
+if s->stat_percpu[cpu] is NULL.
+
+This commit fixes the bug by testing s->stat_percpu[cpu] for NULL before
+using it.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+
 ---
-Found by reading array_block_check() next to node_check(), its opposite number for btree
-nodes in the same directory.  node_check() already bounded max_entries and nr_entries when
-dm-array was added in 2013; the array validator never picked it up.
+ drivers/md/dm-stats.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-Reproducer.  Create a cache on a zeroed metadata device so dm-cache formats it, tear that
-down, then set nr_entries in the first mapping array block to 0xFFFFFFFF and recompute the
-block checksum.  dm_bm_checksum() is crc32c(~0, data, len) ^ CSUM_XOR, so the checksum costs
-nothing to forge -- it is a corruption check, not a tag.  The crafted image differs from the
-one the kernel itself wrote by four bytes plus that checksum.
-
-A 4096-byte block with a 24-byte header and 8-byte values holds 509 entries, so index 509 is
-the first one outside it.
-
-A/B on v7.2-rc4-610 with KASAN and kasan.fault=report, this patch built as posted:
-
-  pristine image, unpatched:  activates, walks all 2048 cache blocks, dmesg empty
-  crafted image,  unpatched:  reads past the block, below
-  crafted image,  patched:    "array_block_check failed: too many entries", -EILSEQ
-  pristine image, patched:    activates, dmesg empty
-
-    BUG: KASAN: slab-use-after-free in dm_cache_load_mappings+0x9b1/0xb40 [dm_cache]
-    Read of size 8 at addr ffff888107fc8000 by task dmsetup/1667
-     dm_cache_load_mappings+0x9b1/0xb40 [dm_cache]
-     cache_preresume+0x4cd/0xd70 [dm_cache]
-     dm_table_resume_targets+0xcd/0x2e0 [dm_mod]
-     ctl_ioctl+0x512/0xa90 [dm_mod]
-     __x64_sys_ioctl+0x134/0x1c0
-    The buggy address is located 0 bytes inside of
-     freed 32-byte region [ffff888107fc8000, ffff888107fc8020)
-
-The block base was ffff888107fc7000, so that address is base + 0x1000: byte 4096, index 509,
-the first entry outside.
-
-Worth flagging about that KASAN line: it corroborates, it does not reproduce on demand.  Two
-earlier runs of the same arm produced no report at all, even though the overread happened
-both times and dm-cache said so by refusing a nonsense mapping at cache block 509.  dm-bufio
-serves this buffer from __get_free_pages(), the page allocator has no redzones, and byte 4096
-is the first byte of the next page, so KASAN can only speak when that page happens to be
-poisoned.  The first line is the deterministic one.
-
-The check is not conservative.  calc_max_entries() gives 509 for 8-byte values and 1018 for
-4-byte ones, and 24 + 8*509 and 24 + 4*1018 are both exactly 4096, so metadata dm-array wrote
-sits right at the limit and still passes.
-
-There is a second hole I am not fixing here, since it wants its own reproducer and this one is
-headed for stable.  A validator can only check a header against itself, so a block with
-value_size 4 and max_entries 1018 is internally consistent and gets through, but element_at()
-indexes with the caller's value size rather than the stored one -- and dm-cache keeps arrays of
-both, mappings at 8 and hints at 4.  Read an array block of one through the other and the walk
-runs to byte 8160 of a 4096-byte block.  Closing that means comparing value_size against
-info->value_type.size in get_ablock() and in __shadow_ablock(), the two places that hold both
-the block and the caller.
-
-dm-era reaches the same accessor directly and dm-clone reaches it through dm-bitset, which is
-an array underneath; dm-cache is only the shortest path from a crafted image to an observable
-read.  All of them need CAP_SYS_ADMIN to load the table, which is why I'm sending this as
-hardening rather than as a security report.
-
-The value_size patch follows once I have a reproducer for it.
----
- drivers/md/persistent-data/dm-array.c | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
-
-diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
-index 8f8792e55806..03d4ffdb3521 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -55,6 +55,7 @@ static int array_block_check(const struct dm_block_validator *v,
- 			     size_t size_of_block)
- {
- 	struct array_block *bh_le = dm_block_data(b);
-+	uint32_t nr_entries, max_entries, value_size;
- 	__le32 csum_disk;
- 
- 	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
-@@ -74,6 +75,22 @@ static int array_block_check(const struct dm_block_validator *v,
- 		return -EILSEQ;
+Index: linux-2.6/drivers/md/dm-stats.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-stats.c	2026-07-13 20:58:56.000000000 +0200
++++ linux-2.6/drivers/md/dm-stats.c	2026-07-28 15:21:23.000000000 +0200
+@@ -178,8 +178,10 @@ static void dm_stat_free(struct rcu_head
+ 	kfree(s->program_id);
+ 	kfree(s->aux_data);
+ 	for_each_possible_cpu(cpu) {
+-		dm_kvfree(s->stat_percpu[cpu][0].histogram, s->histogram_alloc_size);
+-		dm_kvfree(s->stat_percpu[cpu], s->percpu_alloc_size);
++		if (s->stat_percpu[cpu]) {
++			dm_kvfree(s->stat_percpu[cpu][0].histogram, s->histogram_alloc_size);
++			dm_kvfree(s->stat_percpu[cpu], s->percpu_alloc_size);
++		}
  	}
- 
-+	nr_entries = le32_to_cpu(bh_le->nr_entries);
-+	max_entries = le32_to_cpu(bh_le->max_entries);
-+	value_size = le32_to_cpu(bh_le->value_size);
-+
-+	if (!value_size ||
-+	    sizeof(struct array_block) +
-+	    (uint64_t) value_size * max_entries > size_of_block) {
-+		DMERR_LIMIT("%s failed: max_entries too large", __func__);
-+		return -EILSEQ;
-+	}
-+
-+	if (nr_entries > max_entries) {
-+		DMERR_LIMIT("%s failed: too many entries", __func__);
-+		return -EILSEQ;
-+	}
-+
- 	return 0;
- }
- 
-
----
-base-commit: 4235cb24ec1e8e96843f3671ba4da2a6ccca2c7b
-change-id: 20260727-b4-disp-0d625fe8-08c024bb0cba
-
-Best regards,
---  
-Bryam Vargas <hexlabsecurity@proton.me>
-
+ 	dm_kvfree(s->stat_shared[0].tmp.histogram, s->histogram_alloc_size);
+ 	dm_kvfree(s, s->shared_alloc_size);
 
