@@ -1,151 +1,52 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86151370ADA
-	for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 17:46:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBA603876A1;
+	Wed, 29 Jul 2026 19:15:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785347178; cv=none; b=gVOAQ3kRb5QosbT05buFfmSuqTjK2dzI0UUd8O7nkEWTFMJ5XsmTbELNt3ExeDFVFsrk4oNus91NiAPApbJSNkTi+Y5FC+FGaoxvVtnMyZKEoU4ViV6WHjYguEa7pMjz6Wce8OFgOaqNCypMrJ7ZbveIvmKwB8+6d2TqteTZZIM=
+	t=1785352519; cv=none; b=YAdhGROW69JuojkVnMoexDe6yITjndBiiQovwu2583U2Q/McmjEvh4/9jd5TNjdbzhKjZnJdKkfD68m7fVOu6bqzCu1bgdIJuoxkJXG7Mw3H+vu2YkfFCss74mF7bXwhX/hEM1mdHnX+yqA7QPloTAkEj7qsB0WR2x1f0yGCQUM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785347178; c=relaxed/simple;
-	bh=UidFeDXv81Ur5iK25hdw53vt+RFWGx9NnnGs3apTKJM=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=k8arOslobTRcncdWhXhwSSyQOSXOU3W4dNjMpJ5gAB8p+Zti12qtpkJ8VCTeHSt9dWGfAFHQboySLB2WxT8tNkFdAPl5AzdGFTyAssaf+XJCxOSWlypYuvU15dxrquH/qw2miScd0rMnqkZTaZKE0XS84A5uHyN6ZIKQjLnlnlQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=oFdzsUoD; arc=none smtp.client-ip=209.85.128.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1785352519; c=relaxed/simple;
+	bh=ACVxb6dKkcrnNtisqYGm4UpUzPvdKbtvYtkIUyr69VE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=ALbndq+2T097NgfS2fKKl/rwDLUOpevqrg7gBEKUpf7n74vatLo6sZFtsrs4AXFYogL626ty4MSZatluBvteI5cZkU9rYeNC8cKW4hsXPrvK4Xiz7fhXpUG6/73LH3iOWGlXoAb7aeMNlAF1pCxogLu2Q3zo5RL/SU4N4jB6aBA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BKfRLPuc; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="oFdzsUoD"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-49554ebb87dso11070475e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 10:46:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785347168; x=1785951968; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=WKE9xNdjsRTW2zyuw6/ikQhgmzmnupdLH1iSl4caYw4=;
-        b=oFdzsUoDomlsm4n7sfvF6dFpQvjoB3nmMKaDAUJgsQHkhW8BvzXlCvSFknROHMdt3G
-         xZrqxIki6tNbtUI6UT6hwnobxRgBkNI+GzlaoX4qUVaFo6708PRqoVHjXQfXvJrec5yr
-         dDT+/Ijor5aY2DVub+tnLO4UBGtInpREquUibYcyNYhc4PpmgLMGcxyRbT0wTLfYyp0n
-         8cMszgpI9eRVXTO7Sq4U/htQhQSAtTs44ajX8FRQ30pa8+0Ygerwl4z4I9o5TOA55cwo
-         OnMyX09xIKJBCkKkbrg30Vfm4OMufNn1+gCgBgIELyn0YnHdfDftLIe0FGW/MSF09y8P
-         7Urg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785347168; x=1785951968;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=WKE9xNdjsRTW2zyuw6/ikQhgmzmnupdLH1iSl4caYw4=;
-        b=aIYlBFVWKdk6jzdewC8ztTDT6mU4TDU2l4IuTyc4leh61fTUelSljZ7ORRNRbZSrR7
-         IskQ0oO8QgYfq+l5zzXGLu/BkODDHZsAnAvWKx5NyWwqsywauTbxVeBNL0WDbeJ4eZHa
-         rgyyZ+K8U2uyQmW1pKjITzjUfIZC5xVUIjS1OGIORDFjRPLwbw5b+gbuIrfwTg7Ddn7c
-         DTh/KWrSxORv45iXh7Ub3tQjYu6E5I6VGYXJteyH5wDu6Yp3BbjROYhK1xrBJ607THUE
-         WXQdixVp4Q874pQIAz3VXadLNh/3GZnW2Wa7+Xz4CBLNaQoGSNFTjx2FiKqd93Daaxtj
-         QYmg==
-X-Forwarded-Encrypted: i=1; AHgh+Rpk0tp9SxtDcATNpDOXpw57ThN/nf0qr9x7fz9HPzKPR1ZO2zfk8pTznZK43K/JJSbqrQz7UOEMfg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yxx/hcE71E8rouHB4W0bCF1xDhvOiDthVLnIqEFcZo3n9K9k5IE
-	Tl5zQTuanXkkSkkh/KKWsCM7s9BxUM90UReT7j9wIhWDi0bCW/35TmtK
-X-Gm-Gg: AR+sD13IetNHDYASGSRkAkLTPbBo+4RfDJSj8QgNUytt8++gDy8l28bXNZXnrk549W/
-	WZdiuiN3nj6aEXEdryyJ4L5VVEUc3MUb4KPBXMH14GVYdqnQ/nkt9S3A0TEq4fCwDvKu+iDLUKg
-	Yu4vYnefW2uDjPsq2bSAdHWlyL4ERQ259j4Daf/L0Ah9+DU2xJL2760OIQ5LjuUjBBH4b7cMrwD
-	rBsO6sf3bDG6JGNTYV2Aqa51jIzmSyvXgXxZOLTi3sjyXxL0TXR4I4FvuHkO6s3gAUeJzlp1EVD
-	h1FJFrPInnFSlUmc5YqDIaGsNJE6Kk9oLFq2GvYzs9YFxbR4iEsTvFvmpcXYVexRP5rSOM26hFI
-	XYWL1ROC2n9ZbKEk/QTezFPp7zz2Oe+JzMAVx4us6Nb84MsKTF2En6qYhasMQ1tJH/5keF2+smx
-	MKEQvcDs7BE4T2J1HTOyZhxWWOXuj9rmXbkQU5RN7lEtqYc6VdQCA/T1O6nk2oyB+do1Qzkyj/X
-	3K592ykk1NJaFEaoEL/d95qB9ZKJtoAvMygZBpfqu7643KZuzvd1BWY/5+YgB2zA84dCUpZlwDK
-	DS5vepziJc9C2rUm5If0rCrw8VL/rrqI3XnkAI0=
-X-Received: by 2002:a05:600c:4fd2:b0:493:e79e:da6b with SMTP id 5b1f17b1804b1-496c6590660mr98300165e9.21.1785347168019;
-        Wed, 29 Jul 2026 10:46:08 -0700 (PDT)
-Received: from ?IPV6:2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c? ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-496c45b1c2asm171605965e9.5.2026.07.29.10.46.06
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 29 Jul 2026 10:46:07 -0700 (PDT)
-Message-ID: <5afa3726-6c15-41c8-af19-766eb76b4b46@gmail.com>
-Date: Wed, 29 Jul 2026 18:45:58 +0100
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BKfRLPuc"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7438D1F000E9;
+	Wed, 29 Jul 2026 19:15:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1785352517;
+	bh=ACVxb6dKkcrnNtisqYGm4UpUzPvdKbtvYtkIUyr69VE=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=BKfRLPucJOJ2w89ZiYJ6ouvZWgJPH7Unitufzwk6H0yhK18yLOR1LnTsQsWQkEvys
+	 h6Y7H4pIwpb7l5KHOZU193Fk3Z62tw5GsSUnXq9lBLSTbARzjDQugFcJkjb4HVWsJO
+	 MG3J4IDGRYlcg7LFfx2KUZtSz81K8nh3NZrqSz5pLu+1m2m/Oc0K22pOUmuRR9soaY
+	 9BoZKjHJKXUodca21h9wPW5Q/cmMF24IeFsUiBZ6wSIBHkiA1sg3mkAM3OXtGnpQfC
+	 S2zA96KfO0ZX1fkFPBbWcps+YX8qXnJX0hkP2KqeTlsaHMSiK/PYerrvOXgPLk3+jA
+	 6tqf+WJq6v+Fw==
+Date: Wed, 29 Jul 2026 13:15:15 -0600
+From: Keith Busch <kbusch@kernel.org>
+To: Keith Busch <kbusch@meta.com>
+Cc: linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	dm-devel@lists.linux.dev, hch@lst.de, axboe@kernel.dk,
+	brauner@kernel.org, djwong@kernel.org, viro@zeniv.linux.org.uk
+Subject: Re: [PATCH RESEND 0/5] block: validate direct I/O memory alignment
+Message-ID: <ampRQyXDbGgeg49V@kbusch-mbp>
+References: <20260720201057.1862857-1-kbusch@meta.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 14/14] io_uring/rsrc: add dmabuf backed registered
- buffers
-To: Anuj gupta <anuj1072538@gmail.com>
-Cc: Anuj Gupta/Anuj Gupta <anuj20.g@samsung.com>, Jens Axboe
- <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
- Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
- linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
- io-uring@vger.kernel.org, linux-media@vger.kernel.org,
- dri-devel@lists.freedesktop.org, linaro-mm-sig@lists.linaro.org,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>,
- Andrew Morton <akpm@linux-foundation.org>,
- Sumit Semwal <sumit.semwal@linaro.org>,
- =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Jason Gunthorpe <jgg@nvidia.com>, Damien Le Moal <dlemoal@kernel.org>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, David Sterba <dsterba@suse.com>,
- Ilya Dryomov <idryomov@gmail.com>, dm-devel@lists.linux.dev,
- nvdimm@lists.linux.dev, linux-btrfs@vger.kernel.org,
- ceph-devel@vger.kernel.org
-References: <cover.1785274111.git.asml.silence@gmail.com>
- <CGME20260728213020epcas5p1721e72ba5544abf0b61482da005120d9@epcas5p1.samsung.com>
- <26dcd0ae5c87a3ada5710b14b6894ef343cec6fe.1785274111.git.asml.silence@gmail.com>
- <583fdfb2-5368-467f-a388-6d388859c995@samsung.com>
- <0df2f832-e8a8-4fdd-a5b6-e08657c2891f@gmail.com>
- <CACzX3Atj+hJmF+Au1Yw5KMk--EHy_J=7Yof1aQNkUV0hCrdVEA@mail.gmail.com>
-Content-Language: en-US
-From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <CACzX3Atj+hJmF+Au1Yw5KMk--EHy_J=7Yof1aQNkUV0hCrdVEA@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260720201057.1862857-1-kbusch@meta.com>
 
-On 7/29/26 17:52, Anuj gupta wrote:
-> On Wed, Jul 29, 2026 at 7:37 PM Pavel Begunkov <asml.silence@gmail.com> wrote:
->>>> +static int io_import_dmabuf(struct io_kiocb *req,
->>>> +                       int ddir, struct iov_iter *iter,
->>>> +                       struct io_mapped_ubuf *imu,
->>>> +                       size_t len, size_t offset,
->>>> +                       unsigned issue_flags)
->>>> +{
->>>> +    struct io_regbuf_dma *db = imu->priv;
->>>> +    struct dma_buf_io_map *map;
->>>> +
->>>> +    if (!IS_ENABLED(CONFIG_DMA_SHARED_BUFFER))
->>>> +            return -EOPNOTSUPP;
->>>> +    if (!len)
->>>> +            return -EFAULT;
->>>> +    if (req->file != db->target_file)
->>>> +            return -EBADF;
->>>> +
->>>> +    if (req->flags & REQ_F_DROP_DMABUF) {
->>>> +            map = req->dmabuf_map;
->>>> +            goto init_iter;
->>>> +    }
->>>
->>> O_DIRECT is checked only during registration; we should recheck
->>> (file->f_flags & O_DIRECT) per request.
->>
->> Nobody should be able to clear O_DIRECT, unless I missed something?
->> And fwiw, io_uring wouldn't be the right place to do it.
->>
-> 
-> fcntl(fd, F_SETFL, flags & ~O_DIRECT) on an already registered, already
-> open fd succeeds. The consequence is that subsequent I/Os switch to
+On Mon, Jul 20, 2026 at 01:10:52PM -0700, Keith Busch wrote:
+> This addresses the misaligned direct-io problem behind various threads:
 
-Very exciting.
-
-> buffered I/O and cause silent data loss. Something on this path needs
-> to reject this combination.
-
-Yeah, I'll fix it, thanks
-
--- 
-Pavel Begunkov
-
+Hi Jens, have you had a chance to look at this one yet? This addresses
+previous issues with certain device mappers under direct io.
