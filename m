@@ -1,69 +1,69 @@
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA2B3425CF0
-	for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 10:37:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EAB9844604B
+	for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 10:40:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785321454; cv=none; b=Q339GXB9oXGg9/Af6dMXjuhMNx1DocYO3n4TKlTiLaVhHqVXx9e7SGm1YWgCKn+LMQdB4Tn6HeioWSXL0Ray9UoUWfNjZC0fZiX6SsMEX7MBpJc5r//ku1u5OD2/UB3G9Z5A7RV90VY5Sl2ZG9hLQJCQKh1KiWQONVzSP9ax2dU=
+	t=1785321663; cv=none; b=kNfL2ss73KrJOqDLu1jqvcgTgStH5EYbbEH2t1djFINPLd1fvkJo7VeXlmtrel9CMt1zdgEbHQstQyA1vHZrm4vkERNB9oAf5FtoI5z5uS/dagwD06CXMShc4ieNXw9I3W2Q66Go3fdqvVxmW6YSfdWddK814QgBlafDqzCC/JU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785321454; c=relaxed/simple;
-	bh=KMDBHWwtyZpTu40an4MnGq08B+PKsj/C5jew5swtPtE=;
+	s=arc-20240116; t=1785321663; c=relaxed/simple;
+	bh=BlIgo2y4Fy5hrKd1QKUkkESSegtx04afaFtVA1ds1gY=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=BrKfziP35DOQYRNghWlg93qE1zfJymUmZkpW094AtghdF5fPQQKQNjhvLgCMBlhoHNnIP523hK1UX5IHFZhxQOgEOaJBHyLZWZQSg+lgCI6M5h7mLOWWjDCvzNqOJ1UrA62tXs31Kz2vipQaJAecAK2Ld7s66wEc0p5KIFfln4k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lZQ+kMJe; arc=none smtp.client-ip=209.85.218.41
+	 In-Reply-To:Content-Type; b=tIdS2hb+S3jT2OSI09hJJUn0DKCEXwGVjUOC8SSt3un1BPpoAk9MyZhwnHomZWXCWOXd+VvJGRm5skhImcwOd2MMZ3IoBsNrdqPFq42K3FOUB2WW3ySYuyGh2X2vI7+QEazRAJ+UuMYzLECLNXCfn4M1vU0eN5I7V7mE4AzoQbs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=VOa8t/tn; arc=none smtp.client-ip=209.85.208.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lZQ+kMJe"
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-c12614b81c9so141396566b.3
-        for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 03:37:31 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="VOa8t/tn"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-69f7fa1c548so1138657a12.2
+        for <dm-devel@lists.linux.dev>; Wed, 29 Jul 2026 03:40:59 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785321450; x=1785926250; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1785321658; x=1785926458; darn=lists.linux.dev;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=p8KbmJYcU1SAlCdU+OP1hBT5okmuW3fRl/0GYAxB+Rg=;
-        b=lZQ+kMJeAg6CY46h4VnSr+KJe26e5ll+Y1i9V8CrkY/iq+/LgogBT8JEK0kMQyRqln
-         P+i3jxFYmxQ8mlT+gUOkuAYoHltIZg/Ri/AFS8nTAGN84HbQZcfpsYQ8hZWuNKWmj4iZ
-         +aUtG+1FYlMKkEPTT5vIuDs3TDkIqOSg8bRDQA5fCgps++VzgZOL7tqial3hYwgQMzQ+
-         Q+Fr89hPCPs7Uwv6KMXNIfdK8merzMM70JSCEahtUy85O8NAO4Jdi9BPn5zS5ttrnbUJ
-         6zPzaWxtPVb/ERuBlDPiQmO5f9VMQ4GmqIDJm6fEFs2IhgyC7CFRlwkYziIzfJQCa+sQ
-         /gsQ==
+        bh=vFsiSXVzFdxW/ZniSNP4YKGbRVTSiHE8ZZ1h1zgY8AQ=;
+        b=VOa8t/tnNuv01Y96DYgjfkLijzNZRZWKz4xTKyDTzMKmZLI47zHNm4j5dj+iTe2f7N
+         qtMVn0lk/C4iihWaJuFVO1+calHv3R4tY7ovVj4cQNli2Oae3YYJU8dt+b/6aaWXT8vb
+         Qyqxx4Ef6+JZt0PxzYB9A2Ef1NAj2bOq1pw+LxGObHRhNbQrwPuIukT2m6zK+tOBgWWd
+         kFDv8AIpkf65DVerptd07wMWcCq0IVjspEsYztBV/WzWuvBRTIfacUpO9cFtsAYTa4OB
+         5gjTxq2s/fkJIo+XbcoEJ5Ne5OQmW1JEpIHaTSssJjuhKidG4RQLEGSmnzDv1HgPs+iK
+         1m4g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785321450; x=1785926250;
+        d=1e100.net; s=20251104; t=1785321658; x=1785926458;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=p8KbmJYcU1SAlCdU+OP1hBT5okmuW3fRl/0GYAxB+Rg=;
-        b=OpgD45X1tdsX34IxQxZr6vtpwh2nWtVcmJUqulqNi524xGUNdpRwlkYBpjCz9CFn1s
-         58cfB1XRrC2/esxQsX8r2vYsh5NdB+9Z+hcOruGD71fo/El9iWLDfH7rzLnvr5za9eqy
-         uvJs9q1Z0ni9W3Mn4NXke1RrbY1CAaMqDYjjsjdk13WNgy19G3I2F5CHvXH8tG1UMTce
-         wDA4M2OXzCH9wimhGrcxWKpGrqFyehkOO9KuCY4XxoWQtDj6bimG5X93lp5fTpsL/x4O
-         F3hYrPfwlZn2DkVZWPk4pGWXNP2KihqVM0FUJSO5pAtnl9N62ynQkm8dLD0//4rQCN2v
-         iGhg==
-X-Forwarded-Encrypted: i=1; AHgh+RpCYqJhCxwuYme2msTdi31xgTGOhfvn2dH18sZkNmxaKY/kEpIOtbLxMLVFJlDyzjrhUattoQ5DNg==@lists.linux.dev
-X-Gm-Message-State: AOJu0Yyk95xwXPGmY2gCKrXNmjTh0jJfATMtVwzhlbl97Wh3YypGfHob
-	Emscau4qKKlsjQRFAVxyWKKq0lHsxXwjxFLNUgypRxYVihftN6OWIPFj
-X-Gm-Gg: AR+sD10I1/q8glGmewiGRxryYrI3uc3ptDOhF9hEDtJCOjP4wreuZzen8zOeUazc4dH
-	UA04eR+h6yYw7mcM2THu2bvGBlp0jZCln3jUitFzZ/aP/IOvfQSx0DUJ3S2XRYnMrIXPlojjkJJ
-	VExYfS6HE65jnZdUoe+l2DUNLjtPmED589tlQWPUCn+zsfj871aQdr+fPb+iEbTBIVh+Ft5yRXV
-	SY+i6rg8rZ2ggLPwIOIQn0tXuDts1AMpCnI/n93zGbOLRQzctQ68JrJ2zafxsvlzDIid1oLh7qu
-	08LaPCp18JuCJ0jCzTi7M2uudLa4QzzhYo+iD4xSWoVlclml931zalDzROUXIUD9C1euCLO/9FO
-	k/P0fUpwHCtVd7rIaQTqipLenNgNen6RydS1Q5s17mNdzOU7IbBMTO3T4XLAsXzFlzMYaPo66pY
-	Fgb3mQZK2ez+DzfGKGz1nsHE61U3MAckIOBUaZnm6GY2wSXDt/zxkWEaPO0XcAgImzc1uOmAibf
-	FmhmaL6gGQInQdzlEU3K59hwPHcrPS4VQ0e2pCpJQuHfjcyHavI+dSSl0vFwahfm1gCmTLI2qEJ
-	7Z7Vp45DGloUM+DAgds=
-X-Received: by 2002:a17:907:9617:b0:c1c:62b4:1ebf with SMTP id a640c23a62f3a-c1f721913ddmr365145166b.60.1785321449861;
-        Wed, 29 Jul 2026 03:37:29 -0700 (PDT)
+        bh=vFsiSXVzFdxW/ZniSNP4YKGbRVTSiHE8ZZ1h1zgY8AQ=;
+        b=tXigjN7LbdPtvVGxs28bkcwPbPQFf38TXtrNhKpZ0WlhPC6Yz2yGJFAup6/HkksCQs
+         V4DnTxsJnaKgg1BcWjAtjhdUGMdF6MEFUyiVMpxk7Euc6BjGDxoe+8xABtArvhDQf0OR
+         gSQ8iVJyXdyDK7YFFTf5ZnSNzoSDAWsMVo6TKEmLwhNBLf+7Yypou4Rg9hCqmsvpbk/a
+         RFHAFIW1JViKS10EKldHfWRhOG2qwVQk/IDa5Ywn9VmyZo/ujuxc1wk3+h8LYCejaIL2
+         gCnIAlUAW4+hZlhbM9rUbbvBZfeBL85zsYvHFjPt1AI/U6fda044gdhLPwn2doP+dufr
+         ijTw==
+X-Forwarded-Encrypted: i=1; AHgh+Rpeejs1orbn707avjaheIl+BuTJzPipi2JGBN7xzV+WhitcctcKsRRsAvMUFHbYX4y2ZpzHCh0RWA==@lists.linux.dev
+X-Gm-Message-State: AOJu0YzNlomz+aDIeGF+BksxaVS32VspDzVs0fHzom60z0liXjHEXKaF
+	mdP0tS/BYAZYNRQz8NUrgkPK/XpjMyv71folzenvd5YzgzLDKWUgF3uT
+X-Gm-Gg: AR+sD12b9qUbk9n5VQqLoovy56HLnBTXvRHyXqqPsEpsZ0R7Ir/d1KOtPXJsJU0Dlj4
+	IzhXzUA8LnwpIcCGEH1Z3766Dw9bb/h4jD2AiisOcEwM0M7OcyNsB5uv/8+DTGgpc4xHuNq0d6I
+	XFpaHyLr8JllM2/hst0BxLrnwKrWTgDVIzeB7dYdqLYhZ+0sKictXmYQlFzbY96eX6ESB0eW8jr
+	RRctrSb05Wx8IYs5eOitZxiHL3RsoBDSrNQMydv+b3edEjgMTkgU49Xy+tK8kl3W3YqMzf0oxqe
+	ho9VJG8RHIvYVcJi2rxvp/AA9r4Dh+BrRJZpVjmfCXGmwsptpQmRBgEp9orfKx15jFJ3EPySblT
+	HuGuMz5l2eUI0eUVK4nn3Rp0gPzMVQ4wx87AqdOB12x5FDO3tL6H1Uk/8CveE6JIw6HqQqiipKb
+	2+Fu/jyoW0PLUJ9qYLFl4rV8/PlxzgNZwx7GfwvGpjbLpB8TKFM+Dry0EXBgvcugIBfE6XPLqQF
+	Rhomh6p7hWbKFWKg+sGiA+u42/8YvPpDK/4zIhw7Jqmg4cxPm/2D0aVGQtghGU0l43AMmdR7Bjx
+	nliJhRIyIfwiqgtvwIA=
+X-Received: by 2002:a05:6402:548e:b0:69a:596f:ba0d with SMTP id 4fb4d7f45d1cf-6a034a7f6camr3086746a12.33.1785321658080;
+        Wed, 29 Jul 2026 03:40:58 -0700 (PDT)
 Received: from ?IPV6:2620:10d:c096:325:77fd:1068:74c8:af87? ([2620:10d:c092:600::1:640])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c1f84026c47sm93918766b.63.2026.07.29.03.37.27
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6a050c5cf0bsm661299a12.23.2026.07.29.03.40.56
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 29 Jul 2026 03:37:28 -0700 (PDT)
-Message-ID: <340dd033-2a45-49e7-afd6-95dbbbf624da@gmail.com>
-Date: Wed, 29 Jul 2026 11:37:19 +0100
+        Wed, 29 Jul 2026 03:40:57 -0700 (PDT)
+Message-ID: <7217c204-786f-4fb1-9c09-fc1ac7c8a249@gmail.com>
+Date: Wed, 29 Jul 2026 11:40:48 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,8 +71,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 01/14] dma-buf: introduce initial file I/O
- infrastructure
+Subject: Re: [PATCH v4 02/14] iov_iter: add iterator type for dmabuf maps
 To: Christoph Hellwig <hch@lst.de>
 Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
  Sagi Grimberg <sagi@grimberg.me>, linux-block@vger.kernel.org,
@@ -96,26 +95,38 @@ Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
  nvdimm@lists.linux.dev, linux-btrfs@vger.kernel.org,
  ceph-devel@vger.kernel.org
 References: <cover.1785274111.git.asml.silence@gmail.com>
- <bc20381e8daf85ac58811c344325d8192cde9d1e.1785274111.git.asml.silence@gmail.com>
- <20260729065927.GA9534@lst.de>
+ <132442812a40277a5904cb2a8ca1e02f4f6e82a2.1785274111.git.asml.silence@gmail.com>
+ <20260729065953.GB9534@lst.de>
 Content-Language: en-US
 From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <20260729065927.GA9534@lst.de>
+In-Reply-To: <20260729065953.GB9534@lst.de>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 On 7/29/26 07:59, Christoph Hellwig wrote:
-> The method name feels a bit convoluted, but given all the
-> previous discussions I don't care too strongly.  I'll leave
-> the dma-buf side review to those who understand it.
+> On Tue, Jul 28, 2026 at 10:29:14PM +0100, Pavel Begunkov wrote:
+>> Introduce a new iterator type for dmabuf maps. The map in an opaque
+>> object with internals and format specific to the subsystem / driver, and
+>> only it can use that subsystem / driver for issuing IO. The task of the
+>> middle layers is to pass the map / iterator further down, maybe doing
+>> basic splitting and length checking. The iterator can only be used by
+>> operations of the file the associated map was created for.
+>>
+>> Suggested-by: Keith Busch <kbusch@kernel.org>
+>> Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
+> 
+> Looks good:
+> 
+> Reviewed-by: Christoph Hellwig <hch@lst.de>
 
-I assume you mean this:
+Thanks,
 
-+	int (*init_dma_buf_io_ctx)(struct file *, struct dma_buf_io_ctx *);
+> I'm also pretty sure I reviewed this and vairous other patches
+> before..
 
-I agree, and all dma_buf_io_[ctx,map] look clunky, but I don't
-see what I can drop out of the name. Suggestions? Maybe I at least
-should make the fs op sth like "register_dma_buf".
+There was a lot of shuffling, so I dropped the tag after a 10th
+amendment to the patch as I didn't know whether you want to keep it.
+I'll keep it all for v5 unless anything conceptual changes.
 
 -- 
 Pavel Begunkov
