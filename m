@@ -1,144 +1,122 @@
-Received: from mail-oa1-f45.google.com (mail-oa1-f45.google.com [209.85.160.45])
+Received: from mail-oa1-f54.google.com (mail-oa1-f54.google.com [209.85.160.54])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0654644C518
-	for <dm-devel@lists.linux.dev>; Thu, 30 Jul 2026 16:17:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.160.45
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785428267; cv=pass; b=WNBvvXqBIz9JEF562VRpvT1LYMoucKv/QCf/jsKMVJeZqlz6C5TWe3LnbiKM1B1TRFq9xxislKIQcz/MtAbeculkZgpe9+G8B6/UvHeFpnmUq0qE3kT1ZbzK15y/sejbeNMph/Ezd9WAnhdFPV0EJuHGUNb1v8csW6+dtagJ4DU=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785428267; c=relaxed/simple;
-	bh=y9uL8axv/bSBp1hJEk9/5EREqK5uThhZ6LCPv7JfjT8=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=pjUKAFxKyQff/YqcllRibFAwd2WEYDxHDgauwOWWgH3eiY/tBIc2UICZ2BzEBAPIi/UhzyglUCVFcP2wG/pZHpreo3cCqXYiTOnwC2MMUmpNIRY10U7qc5sUB2eGw8qlz0rTDztEz9BUPZUvZ3UzSdaEQy0D9aOZZiznEXTNMxg=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com; spf=pass smtp.mailfrom=purestorage.com; dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b=alxrqlQ8; arc=pass smtp.client-ip=209.85.160.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3F0E44C4EA
+	for <dm-devel@lists.linux.dev>; Thu, 30 Jul 2026 16:22:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.54
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1785428541; cv=none; b=T+RYu1B+3XHkhljlKW+75L5jOqPQ0F0xv+2LEAl/oy4iAD3zBcTpCngOh0lH1+L9vm3gY0cLmnK5+hbVu4m1c6x8zE9V5RwXnreCFGOKbyfp8HUNhNuvyQQtdPNQOPJbI4MNlSj1NxvEdV3vbgFKJKW5CDe/m0vpTm9jhCKKHXk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1785428541; c=relaxed/simple;
+	bh=LzrA83SNg0xwZHckZyesHpd9prkk7E8+AsPKLw0gsqQ=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=hD8xttqtWhlDzYmk8V3i+0sJpPU1UvVmcKpAPgihbXpD5Glrbi8GEBOsPz2Qg7UtQYQSLp81OdlAHXmo72aIOKmrv09VIr0GCdTAxN5srTU1YWP/HG+BYrM3iAt5Otyv4Xre8kcmmJHAMDSezSKIoH9K01JwYCRrEFvyfSzRPDc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b=oeN1Yf36; arc=none smtp.client-ip=209.85.160.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.b="alxrqlQ8"
-Received: by mail-oa1-f45.google.com with SMTP id 586e51a60fabf-44c43edfcceso6622fac.3
-        for <dm-devel@lists.linux.dev>; Thu, 30 Jul 2026 09:17:44 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1785428264; cv=none;
-        d=google.com; s=arc-20260327;
-        b=HXYF8+r9l17qr43hzx+WX5zqyPprv+jwVJ2bntYLoZRRoNAZHrMrHwwG9HfZNPV1pp
-         eIXCGiljMUZqbpjBdWFvSx2Tjeipe55JOKZdXFsZPtbBdWTXd8HHQdDmKvZlj/1sxO4D
-         pQY3snPHlFVjpfuvW5899DNt9a1zA5/5tRsHXF1CLgmvnObZumrf8jSTX6kiWpbuvk/D
-         sgz0p8t3X8BuOyO/8JsReUgfJF+uPUpIX9YKReGdYFJrqTjtaPRlmnYQUBIPzuzieAKA
-         ViT2tM+30KYNM7X9rPd23Aha/MEKwJbUigoypNYAB4qR7YB6+F/Kd9KGBMCzbz3Lrc8t
-         AXeg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=y9uL8axv/bSBp1hJEk9/5EREqK5uThhZ6LCPv7JfjT8=;
-        fh=m5EQRcUi9g8vHZSFhbRkrBxnbZ7uL29Mqyd1qpx5iW8=;
-        b=SNiJp3ooDDHdP/1NIDSps2EpCbXJyMNvmYPwbfkzIJskR080wJmA0wNvZhtDVC7Cnn
-         3wG26+92r/B5pFpoNEhmN0l6oGt+z2eh+6SigudkUqSpwcJtIuvfrfExcCVjiTAQRgZI
-         SoAHNyNx8TI6E2Itc2SzsXemYW30ZHTPBkGtSSxzTP1JchZ/on7tJBg1OEyPjfeKdvSn
-         /WahXNrX7efrDKwMHn9K+zFe3qr3G02gL3aMDaBgZIVIuNn8CR+qFiiPDAFf00BPsyNp
-         ebdXq2W/rbVg933nrj8uQprcw9+5I7P+9jybq41jNae40r6sfqU2fBvNZcEcOPMtkR3R
-         jyoA==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b="oeN1Yf36"
+Received: by mail-oa1-f54.google.com with SMTP id 586e51a60fabf-458de93b53fso31250fac.2
+        for <dm-devel@lists.linux.dev>; Thu, 30 Jul 2026 09:22:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1785428264; x=1786033064; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=y9uL8axv/bSBp1hJEk9/5EREqK5uThhZ6LCPv7JfjT8=;
-        b=alxrqlQ8B9ZF2dBww0GZBnaMs1s5AM5svOYqzmjrWLZXqBD4BP19iw/T7qgUI5XQ8v
-         lSpw4FQuj0/YxaUlvPrEgst81DDBM9RJN0RIVj5i9CwH9ShO8sFPLSYyI/0Fq3U2D0bk
-         F9fQRvDzpnyZrVINWwZfh8A6pc4HOZElN0IP7Q5TxS+XG0Hk8Jy2bEQK85vVNrXKmGha
-         jb+baDfa18LK863lDy91NvTI8kHaEv8vtjcDDjAhzRyFvlkFQ2wAl0j3a9pm4ny1Oblf
-         nr6IhlhXcpMxuDNmczClIoWlMdyuXj+1Oa5ICFa6X2k4EvLUj6Yj0fZq2CQVZnLLAvT9
-         evMg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785428264; x=1786033064;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=kernel-dk.20251104.gappssmtp.com; s=20251104; t=1785428538; x=1786033338; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=y9uL8axv/bSBp1hJEk9/5EREqK5uThhZ6LCPv7JfjT8=;
-        b=TM5gO3stR75ba5zknzvOmKQNBwS47EVPKPakQT7bh85Hmrdn6+9HKZNbHRYJXJ8kv1
-         saXlnaa+F6+Zu68AT9FlLNXCSUFmxjtFBSTI0Xk0ZjyfefYVgzbysmLeGusqciKcvRyi
-         /u0Uzgu4V9lnE9iV/RZ9icIr8jZz05RO3rWzZFnUsumFgY3rV8FK7e1i/l1PIH4bmsj9
-         ylWqGgeqhiN6HIqel0unghB5GGmXEeNGMq1sIWSZYzQmOwnji3fwEQFAAopZU/h1A96j
-         qotCzJvFZO1fZMfLktztZN1wDI6YA4vnM/ZU7G3suAZF50dTSr7iwnpqH0a0apSwurI8
-         eYtg==
-X-Forwarded-Encrypted: i=1; AHgh+RpFt0qh6GYV4NblR9PC7QB51/3r1szjj0FuDm7ytTxEpFwq28q4awKCq46pN0zlYABf/uhzhrJkrw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzMpdqkBoL6l6fslIuF49zmtsfz+KxcVNr5TCBKHGvfBcuY3T00
-	/wV9SHnY6boBZjdzjZwjDSDVmi3rFLPH8bIXPTgR19AkcZdRL1hbg75Nr1WOLwcHmwfcuc5YBzc
-	pEhgM2DYkYgPNSCpsQRKv3fsFiRcRhHNBofzFuQZUKQ==
-X-Gm-Gg: AR+sD13Ot26QuoAsswfT9W3kNzXOyGehW0KqfsYfwKpu/9dvY7QpU4w8d6efoZ+PZay
-	MQtJxq1DRvCM/gmC7SLcV28l2496a/wjwq5Q2ywq5RbF7Sba7GDmCBDYH7jNZ+yCVMrbFi/YKCI
-	454dXvRxxLYggGOG+A2wFGoQlJxnJ6KHkwez6BOQGQtkXIOhpj0+dK78ltNzG4YU1sl79X35Vw4
-	MNxpg0t6t0WGM5H+9a/U4tew1M4DKZ8WP5MnFxBsV0HMPu4evJTN992SZZTzlxpKpvQuhLx+sMh
-	JzYXXHlm/GO3i7QCQjTAittk0qk2OfDNEXzKCPsl/KHr
-X-Received: by 2002:a05:6870:610c:b0:448:8595:1e8b with SMTP id
- 586e51a60fabf-458dd203cc6mr828125fac.4.1785428263717; Thu, 30 Jul 2026
- 09:17:43 -0700 (PDT)
+        bh=2TO7rhJEb0t2mz700nvgDIByTqbVS2Yz6f37I4sh7O8=;
+        b=oeN1Yf36kEhrrWIHGbUjBV2+eIOQVdifYUj49zh2Ju9LChTUicEbY88Cfj2HwtxpgU
+         YQKYItF2eK76v0NXHk/Hylg0nxbKpk1dfdqYhwvycgMpXCVJiPbx3X/k9uenIzBsnzwL
+         vFh+GT59cZ7KGCfV0dhAUP8kXwyFgVrASUxOyDxK6pk/IKuDWeHFlVXR8IZYd+AGTBJe
+         5bzZJouMfta5C4F6VklXn9m8y6lYlTGlE7ppF7DS2BQBtpyPbofzDSnse8qdI+ULFYKO
+         c70Zzt1zok7nGDpd4o5tP99b2o8kfyDO88n+u0FUjn5OmQIwUfaM6yfi3JqQmTE2YNpP
+         ASwQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1785428538; x=1786033338;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=2TO7rhJEb0t2mz700nvgDIByTqbVS2Yz6f37I4sh7O8=;
+        b=RP6LfNV6jRtqpN/gAfT8H7P/cpbWay2VzB8hoT5J/YgvcsOa7IqRRzFlT+PmjAfdf/
+         6lud6Njdy6hOomXrV4BA5wTrfpcWTirg33/AdvgX3khhx9B7pKs/+6wnmwv+ks4x88TE
+         RYofg9r3hySfJMUFOZDOM13usoUpEHq7eED1juRTe3Gpr7Xl5dH2PMMNK0YKzhHR5Ykz
+         zv17swAZanvlesT85FWtiDL+MXXmDMjz/75M3hyT8Pj7pAtBhIoaNgNie7QiNqSk/hDL
+         hw/2lXfYXRAGePQ4PQ9scDRC/uS99adZnnMEuJ3+t8vLb5wyem6ZCBJ84gMgHIaFotIZ
+         z3Lw==
+X-Forwarded-Encrypted: i=1; AHgh+Rqv5SNeJpI2/M0jujDDurNa5kSMaeNG+3a02jHVNpSjFZSQEm+1jWL90EYpLiegD/F6uQ9aEkADkw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxbYZStqdbucXLv9MW79oczZIJ9h2KV0DjUOHtLK+kJk1xVYEtu
+	HIeFPNoztvgnCnH3mOHQdEAKi3XmJcWbakQ+6baLn2ZXUYJfmemxdles2iHNPfeHCBo=
+X-Gm-Gg: AR+sD13qbndWRAlIBV8pJg5jMjK9fxL4f5xzTZbtgAL7ZRtxIaPr0RX0K7h6cStcRGv
+	uyaPSd0wWuMIPBuFJLF1FUY5nsG5b5bc0fMZvIlpU+9FopkdTXOv3ZUECHW40VBKWEp67R7hB9/
+	6lWALFZ7MTmyNfSrwZTHlP0PuzbzS+hOtrfP9whGgMixG3opEL8xGd6wqbqWF3TeQEcsLF5w2By
+	f3i9cyxUAVepI6CQ3QYvOltr5YKgXoqW8o9lXqvJzTCjXlFZhfUEb/WV5bHT/VFnhX6WM31ZHsI
+	yaDTLJ+tWURLl2cKKi9uFEnfYNUioE0JFOsAIgBNdFu6WMHYAJRJfX8xk2lsU6lq6tvBmyK3uGg
+	kZrsQVah2sKDUBGGzi/mOD0kCqXP8MSPZ/zZ9xmljSpEP5bVH14hGeDzG8Ndgeei5VR0238ac7d
+	30wprchL69JgKh9z4NXiNP4NZ4rfSO603023IWBTsfzgUO+8YkKv2smu1LlHFdtstUCN+jEe2cZ
+	NtQnTfxnOpc8RSNE66gaSHQg9B6hflFoFAGHABt+RktApSYF9oqczpt
+X-Received: by 2002:a05:6870:d361:b0:456:4c3f:7e03 with SMTP id 586e51a60fabf-458c0e12897mr2206023fac.18.1785428537794;
+        Thu, 30 Jul 2026 09:22:17 -0700 (PDT)
+Received: from [192.168.1.102] ([96.43.243.2])
+        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-458c257c4d0sm2482546fac.2.2026.07.30.09.22.16
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 30 Jul 2026 09:22:17 -0700 (PDT)
+Message-ID: <e85ec957-d648-4d6a-bcfe-09dd2d21d090@kernel.dk>
+Date: Thu, 30 Jul 2026 10:22:15 -0600
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <cover.1785274111.git.asml.silence@gmail.com> <19e5c945ea8114320c10f7951d19197d48b59249.1785274111.git.asml.silence@gmail.com>
- <CADUfDZpwF0jp2e=+c3w_NjWPbnQ858bkSD731M6+x27jzgcJiw@mail.gmail.com>
- <CGME20260730104131epcas5p4b52720519486f7ac774c317923a79c81@epcas5p4.samsung.com>
- <de4ec386-42ba-41c3-bcbe-1fe8b2f71ba9@gmail.com> <09134617-6d9e-4963-9319-1855e88a4df9@samsung.com>
-In-Reply-To: <09134617-6d9e-4963-9319-1855e88a4df9@samsung.com>
-From: Caleb Sander Mateos <csander@purestorage.com>
-Date: Thu, 30 Jul 2026 09:17:31 -0700
-X-Gm-Features: AUfX_mzVuCLkHKoQjKU1BgpL-X0Ty4OF1wEt1trnCKGouEKw-m3DZTMxHTHiuQw
-Message-ID: <CADUfDZoVUHMWK0KBnznB73o6Vg+iQBBzJE2NmF1Tf22Zvh4=Yw@mail.gmail.com>
-Subject: Re: [PATCH v4 08/14] nvme-pci: implement dma_token backed requests
-To: "Anuj Gupta/Anuj Gupta" <anuj20.g@samsung.com>
-Cc: Pavel Begunkov <asml.silence@gmail.com>, Jens Axboe <axboe@kernel.dk>, 
-	Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>, 
-	linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org, 
-	io-uring@vger.kernel.org, linux-media@vger.kernel.org, 
-	dri-devel@lists.freedesktop.org, linaro-mm-sig@lists.linaro.org, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Andrew Morton <akpm@linux-foundation.org>, Sumit Semwal <sumit.semwal@linaro.org>, 
-	=?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
-	Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>, 
-	Jason Gunthorpe <jgg@nvidia.com>, Damien Le Moal <dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, David Sterba <dsterba@suse.com>, 
-	Ilya Dryomov <idryomov@gmail.com>, dm-devel@lists.linux.dev, nvdimm@lists.linux.dev, 
-	linux-btrfs@vger.kernel.org, ceph-devel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH RESEND 0/5] block: validate direct I/O memory alignment
+To: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>
+Cc: Keith Busch <kbusch@meta.com>, linux-block@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, dm-devel@lists.linux.dev, brauner@kernel.org,
+ djwong@kernel.org, viro@zeniv.linux.org.uk, regressions@lists.linux.dev,
+ torvalds@linux-foundation.org
+References: <20260720201057.1862857-1-kbusch@meta.com>
+ <ampRQyXDbGgeg49V@kbusch-mbp>
+ <fbe9e74d-c389-46f4-9874-3e9ffd9c91d3@kernel.dk>
+ <ampce7mxSmxAwAiu@kbusch-mbp> <20260730112626.GA24827@lst.de>
+ <amtJDCtczVyX1baB@kbusch-mbp>
+Content-Language: en-US
+From: Jens Axboe <axboe@kernel.dk>
+In-Reply-To: <amtJDCtczVyX1baB@kbusch-mbp>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Thu, Jul 30, 2026 at 4:36=E2=80=AFAM Anuj Gupta/Anuj Gupta
-<anuj20.g@samsung.com> wrote:
->
-> On 7/30/2026 4:11 PM, Pavel Begunkov wrote:
-> >>
-> >> I wonder if it's possible to perform the PRP list page allocations and
-> >> initialization in nvme_dma_buf_io_map() instead of the I/O path. The
-> >> NVMe dma_pools are per-NUMA-node linked lists protected by spinlocks,
-> >> making them significant CPU hotspots. If the dmabuf registration set
-> >> up a contiguous DMA-coherent list of PRP entries for the pages of the
-> >> registered buffer, any command using the dmabuf and requiring at most
-> >> 1 PRP list page (i.e. length <=3D 2 MB) could just set its PRP list
-> >> pointer to an offset into the dmabuf's PRP list.
-> >
-> > Possible to an extent, predecessor patches tried that, I left it for
-> > later to keep the series simpler. I guess chaining won't work in
-> > general case.
-> > I mentioned this to Kanchan, Anuj and Nitesh before, they were up to
-> > playing with nvme optimisations in general, and since sgl from Anuj
-> > is ready, maybe they already have a prototype somewhere for that.
-> >
->
-> Right, I have prototyped the PRP list optimisation before. I will send
-> it once the initial version of this series lands, to avoid adding new
-> review churn while the rest of the series is pretty settled.
+On 7/30/26 6:52 AM, Keith Busch wrote:
+> On Thu, Jul 30, 2026 at 01:26:26PM +0200, Christoph Hellwig wrote:
+>> On Wed, Jul 29, 2026 at 02:03:07PM -0600, Keith Busch wrote:
+>>>>> Hi Jens, have you had a chance to look at this one yet? This addresses
+>>>>> previous issues with certain device mappers under direct io.
+>>>>
+>>>> I they look fine, but at this point we should toss them into 7.3. Yes
+>>>> I know there are regressions around this, but from 6.1x days. And the
+>>>> series doesn't apply to the current block-7.2 anyway.
+>>>
+>>> This series is kind of old at this point, but yes, it's not fixing a new
+>>> regression either. I'm okay if this goes to the next window, and I will
+>>> handle the stable follow-up.
+>>
+>> Honestly, I think that'a a reall bad idea.  This is a regression in 6.18,
+>> and while it took a while for people to hit this with their a little
+>> more complicated lvm/md setups, it has stopped real systems from being
+>> used.  We need to fix this ASAP.
+> 
+> This should have gone in several weeks ago, IMO. You can most readily
+> hit a problem running qemu against one of those lvm setups. We're just
+> so late in this release cycle that I'm not pushing hard for 7.2, but I
+> would support that choice too.
 
-Sure, landing it subsequently makes sense. Glad to hear it's already
-in the works.
+Exactly, it's been floating for a bit, and the last week is surely on
+me. But merging at the time it was posted would've been late for fairly
+substantial changes.
 
-Thanks,
-Caleb
+Hence why I think 7.3 is just the better choice. We're talking weeks in
+difference on when it gets to stable anyway, which is what matters.
+
+-- 
+Jens Axboe
