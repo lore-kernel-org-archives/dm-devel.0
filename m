@@ -1,337 +1,255 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f175.google.com (mail-pl1-f175.google.com [209.85.214.175])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5EA82236F0;
-	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A9213246EC
+	for <dm-devel@lists.linux.dev>; Sat,  1 Aug 2026 15:46:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.175
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785551524; cv=none; b=JFuhEYUXIVGnpT6VvkspBieUr5PYGAiwUMB6GhaWTT6txg+kwa+Z5v1QDaDhEC7pwegTH0y8mM8rbPg1NWVKdm40P8Q94sMntd7LGjJYrTrVeMIPL5t+C9ZfYfI6kuBBrArpHn7iIINospEmx2yU/yl6s6e4cyqUp9cjdYiOB6A=
+	t=1785599217; cv=none; b=bjz8JCZO/O9GnNXm8btu7qh7QRguXHGztAxSDThezvd23qNpHvcmYSfLCdF0uKyxn4UN64pA5Rvm/q0c/7vaIEynjCo6qoB+FbkFhRUsQflXCxNSsCZpRhgGohJSGKlgs9ptkLr9SQY8CEfUUNL+iexUdE02rE9TG4fD9jIOPXQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785551524; c=relaxed/simple;
-	bh=saWzOSuWgq/kh+bp5MI1Ci2ayR+nRFZdO54m4i5PEtQ=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=qWW/zUyKPnMrOin4AmAP4VOhzBpYul1tMDp38VLZ/zxDnwguCqAQR9P+a3pyski+Zwm8g5mSXOTlI9l9ROBwOR7sM5rVkZ2uLz6v12oppPwgsMMVBTMTSc5IlqJeLEc+yOMgtBwURwkem1/yDavSSj6FZnNv9v7h0pZKuYO0/bM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=r6tMP5uf; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1785599217; c=relaxed/simple;
+	bh=Y+F1HB+tbEbIakNHePIXL19RIP7js/Qa1d0d1IS0Cbc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=eXHlfNUyyTQslxv8elzxzX90mT/+9cTvLuzak6sa5Iiy6leLr0Er1HTSPP2MHj+HDji+JHh91uLo1UAH1PHd1louKtQ2LhJDQMNDlMd34cZTd2nnH9ejA0JC8iRMOX919B9JdTALqSlj5BZUY9p7F+ti/Hrb0Wk7I7784kvFHaQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=KHFkgvfb; arc=none smtp.client-ip=209.85.214.175
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="r6tMP5uf"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 863A5C2BCF4;
-	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1785551524;
-	bh=saWzOSuWgq/kh+bp5MI1Ci2ayR+nRFZdO54m4i5PEtQ=;
-	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
-	b=r6tMP5ufdWU0y68Nem04mEy4/jXgk8zhy/ZByKOP3BCNP1hqHAelkv52wrH2kp6cN
-	 VGwIVRKQ0Y3YcAWmFB+BI00mlFD79iQgeDCSyOFQGohn4WRmySrZ6MReDgtj/Uy9CG
-	 S2q3TJ8tDkHq5TvY5k5QXVeVWPPY6RbO/IG8ut0IzVz2rtnIWGubn2ZZsMAR/XG701
-	 lJC0Jnd0ifLLAlC6NyvhwYX5CkX/GTrDEXzw9FRNpQQRv6ps6PWCOwy1fhgBAmkZmw
-	 CPZ3KpvcqDm5CQ0KBeUfpsF0+krcFjU1cQQ2Tx1Uxccbhxkr6qZYIowhyPsLC/r1SU
-	 YsevrfMn+fL3g==
-Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 62CEEC5516F;
-	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
-From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
-Date: Fri, 31 Jul 2026 21:32:04 -0500
-Subject: [PATCH 2/2] dm btree: reject a node whose value size is not the
- reading level's
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="KHFkgvfb"
+Received: by mail-pl1-f175.google.com with SMTP id d9443c01a7336-2caf228a910so14559445ad.2
+        for <dm-devel@lists.linux.dev>; Sat, 01 Aug 2026 08:46:53 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1785599213; x=1786204013; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=YTrKNi3+MrECxNlqKVpRT5BFV68pBJo2ri08VcWIuD4=;
+        b=KHFkgvfbH/VSzM6cejNRzP83lUKBEoqIwFnmgE0rYTeH06N5oAZo/pz+lvM4blPtkR
+         CLIaWrZZXMQTRYjMYEdSnaRnG9Fajo3kXG33rgu0Kg6DpTVBq/VsbB8OjIOMB7Dez8of
+         9rETv7uaDhrjuAJtxjyPF1Kp3d3C/FYB4M4hGSfXvzZfv7EKDJSHVJRIsiP4VWLmPDhL
+         jfH8MnTPnhx2LINAMDxXA3dnzCgOxaUcsSqTPpDa7oaIFg6PSyqTr8fdDEQk6telKIu3
+         SOrQXLzgvZat1rnGsacAbx7BtZcD/4Db0/wMnXoCi9jy8XGXl2eOTR7RSEA7oL7Cbk75
+         ye2A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1785599213; x=1786204013;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=YTrKNi3+MrECxNlqKVpRT5BFV68pBJo2ri08VcWIuD4=;
+        b=nqMWNDeToujx11G27XyLqLxlsvlAaiiXv52eqj2HTHol1dZt8qStHXwpaAgE1DLZGN
+         WfK0+b5y/OXS6aSmcZq9cENMQS9Zrt5/yfkYq66WfJzyKn1HB7gZeORx+N1G+ek/bYlu
+         TLBb5vJGiSpzj/rQ5CxTH9kbln8u3EmpLETs743jMI6ZH6l9oM3snKwehkZFx8Rtu8Tq
+         I5Cudvs+jbCsIEl6MvPeMAYsIT+UNjcvNVinYgbcVP/98ji2EEFbMIFkYNMdE2DKtJkm
+         YzG0RZn6MjESkMjUCYH4X/98svtlU/uzzxanrSdVeMJmC7uLGByieHwAMO9GGoyQADSL
+         6Igg==
+X-Forwarded-Encrypted: i=1; AHgh+RqEJqx08/RWxAIN19YS+T3yNpEgnrjgvP1b8r3eOd3munJJW2RnbiLvM6WSdKXBxFIgRHwLAhSn3A==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxYxGkKOiuLqyDaG6rniCb4wMUQgo0iuNCPNRpEuKsOKPfcmkia
+	En0NRYDZgYVZn8B2pFhcMH0t/0EpzzcdKjcawuN3w8oUKUCCTRCywMKg
+X-Gm-Gg: AR+sD11yPQy/ba+qXu64Qs1OG1h6d8zfOhK86K/wrK4Ixhf251RpEPS1XhNO0tvOAv/
+	ag7Vtsz6RYtDFC81VFGX1roWuNzJqsIYtjd7qDCORtIgbMZpHyhMwacJirfjhEh+HoAf/pC1SKE
+	II0K2zaFrp9LDjhZeyTQTOstFbHWTntl0NEqn0ukHJChqceNXgeUTNVIfHOuUrD7QZxeIEubd04
+	mpLLgD9plZ5XwzWeKH/TdinRxTobMzrOoB+Iyrnk6PlAkSUOEOwyAEe9r7im2NycmksZL58cGcI
+	3D4Ho7jwTPX1D5fyMg0jqZxpXn8sSTIY8OJKHUP/9tNbRVMdB8KgYpRQI/1+ASIXSX57BpW33a8
+	Qu3iPvLVrBymSg/RiittZxxM/gfVZOip8F5wVPx9xe7Xza5w0hcBYHqhbkKrOE9ej0hwl9k6h02
+	bKlc/gO8FafPWeVhPHYLgjoAH/q1uVMZRx6hyt7V2+UfKGqp4E9SqYf7Ps+ev2ypmlpWzkSpraH
+	LDL/WxjKaQrQiyeOnCdDpv1jMxgnepS7+6WF+jHkEz1fLk=
+X-Received: by 2002:a17:902:e943:b0:2cf:ba0c:aa5a with SMTP id d9443c01a7336-2d05241650emr38409935ad.47.1785599212500;
+        Sat, 01 Aug 2026 08:46:52 -0700 (PDT)
+Received: from 127.net ([2620:10d:c092:600::1:61d0])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2d04b12202bsm18287605ad.66.2026.08.01.08.46.30
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 01 Aug 2026 08:46:50 -0700 (PDT)
+From: Pavel Begunkov <asml.silence@gmail.com>
+To: Jens Axboe <axboe@kernel.dk>,
+	Keith Busch <kbusch@kernel.org>,
+	Christoph Hellwig <hch@lst.de>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org,
+	io-uring@vger.kernel.org,
+	linux-media@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	linaro-mm-sig@lists.linaro.org
+Cc: asml.silence@gmail.com,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Sumit Semwal <sumit.semwal@linaro.org>,
+	=?UTF-8?q?Christian=20K=C3=B6nig?= <christian.koenig@amd.com>,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	Kanchan Joshi <joshi.k@samsung.com>,
+	Anuj Gupta <anuj20.g@samsung.com>,
+	Tushar Gohad <tushar.gohad@intel.com>,
+	William Power <william.power@intel.com>,
+	Phil Cayton <phil.cayton@intel.com>,
+	Jason Gunthorpe <jgg@nvidia.com>,
+	Damien Le Moal <dlemoal@kernel.org>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Vishal Verma <vishal.l.verma@intel.com>,
+	David Sterba <dsterba@suse.com>,
+	Ilya Dryomov <idryomov@gmail.com>,
+	dm-devel@lists.linux.dev,
+	nvdimm@lists.linux.dev,
+	linux-btrfs@vger.kernel.org,
+	ceph-devel@vger.kernel.org
+Subject: [PATCH v5 00/16] Add dmabuf read/write via io_uring
+Date: Sat,  1 Aug 2026 16:46:12 +0100
+Message-ID: <cover.1785596451.git.asml.silence@gmail.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20260731-b4-disp-1fdddbbb-v1-2-4879ae1012a2@proton.me>
-References: <20260731-b4-disp-1fdddbbb-v1-0-4879ae1012a2@proton.me>
-In-Reply-To: <20260731-b4-disp-1fdddbbb-v1-0-4879ae1012a2@proton.me>
-To: Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>
-Cc: Joe Thornber <ejt@redhat.com>, Ming-Hung Tsai <mtsai@redhat.com>, 
- Heinz Mauelshagen <heinzm@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
- dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
- Benjamin Marzinski <bmarzins@redhat.com>
-X-Mailer: b4 0.15.2
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1785551523; l=9192;
- i=hexlabsecurity@proton.me; s=default; h=from:subject:message-id;
- bh=nPH9k1cM6UEOPHSiszBBTRgFy6NWqXca3CfwP+ScfsA=;
- b=EQa0PMaDo1tlSXV0HLqVcQFMOqDFl49SHQbH7NZgWIgF8AXfuhk9t+DhDJB7BkJ9lkBKkAqah
- d9wzeMVyJM3B9zg2wEumak1QdnvFlGjJXyHhSvmrQF60GXuuKrEX0A1
-X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
- pk=xw1AhCtQdvuoQc+bOQIYy9o8G++cp4/VniI2G/tc3G8=
-X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/default with
- auth_id=893
-X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
-Reply-To: hexlabsecurity@proton.me
+Content-Transfer-Encoding: 8bit
 
-From: Bryam Vargas <hexlabsecurity@proton.me>
+The patch set allows to register a dmabuf to an io_uring instance for
+a specified file and use it with io_uring read / write requests. The
+infrastructure is not tied to io_uring and there could be more users
+in the future. A similar idea was attempted some years ago by Keith [1]
+(from where I borrowed a good number of changes). Later it was brough
+back up to life by Tushar and Vishal.
 
-value_ptr() takes an entry's address from the value_size on disk while
-the caller supplies the length it copies; a validator cannot compare the
-two, since it sees the block and never the caller. A leaf can pass every
-check the previous patch adds and still be laid out for a narrower
-value, leaving insert_at() and btree_split_beneath() striding with the
-caller's size over a base placed by the node's -- writes that land
-kilobytes past the block.
+It's an opt-in feature for files, and they need to implement a new
+file operation to use it. Only NVMe block devices are supported in this
+series. The user API is built on top of io_uring's "registered buffers",
+where a dmabuf is registered in a special way, but after it can be used
+as any other "registered buffer" with IORING_OP_{READ,WRITE}_FIXED
+requests. It's created via a new file operation and the resulted map is
+then passed through the I/O stack in a new iterator type. There is some
+additional infrastructure to glue it together, count requests, manage
+lifetime and implement invalidation.
 
-Compare the sizes wherever both are in hand. Everything that modifies a
-node reaches it through bn_shadow(), so one check there covers insert,
-the splits, remove and the space map's refcount overflow leaf; the
-readers and the two paths that bypass the spine take it where the
-expected size is known. A node is only ever read through the level that
-wrote it, so conforming metadata is unaffected.
+Tushar, William, Phil as well as Kanchan, Anuj and Nitesh did a lot of
+testing and experimentation on various devices with previous versions of
+the patch set (separate thanks for trying it out and investigating
+problems). Earlier benchmarks by Anuj for IOMMU optimisations with
+udmabuf showed:
 
-Fixes: 3241b1d3e0aa ("dm: add persistent data library")
-Cc: stable@vger.kernel.org
-Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
----
- drivers/md/persistent-data/dm-btree-internal.h |  6 +-
- drivers/md/persistent-data/dm-btree-remove.c   | 24 ++++++--
- drivers/md/persistent-data/dm-btree-spine.c    | 13 ++++-
- drivers/md/persistent-data/dm-btree.c          | 79 +++++++++++++++++++++++---
- 4 files changed, 108 insertions(+), 14 deletions(-)
+STRICT: before = 570 KIOPS, after = 5.01 MIOPS
+LAZY: before = 1.93 MIOPS, after = 5.01 MIOPS
+PASSTHROUGH: before = 5.01 MIOPS, after = 5.01 MIOPS
 
-diff --git a/drivers/md/persistent-data/dm-btree-internal.h b/drivers/md/persistent-data/dm-btree-internal.h
-index 404739149d02..7d5741572b16 100644
---- a/drivers/md/persistent-data/dm-btree-internal.h
-+++ b/drivers/md/persistent-data/dm-btree-internal.h
-@@ -51,8 +51,10 @@ uint32_t calc_max_entries(size_t value_size, size_t block_size);
- int bn_read_lock(struct dm_btree_info *info, dm_block_t b,
- 		 struct dm_block **result);
- 
--void inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
--		  struct dm_btree_value_type *vt);
-+int check_value_size(struct btree_node *n, size_t expected);
-+
-+int inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
-+		 struct dm_btree_value_type *vt);
- 
- int new_block(struct dm_btree_info *info, struct dm_block **result);
- void unlock_block(struct dm_btree_info *info, struct dm_block *b);
-diff --git a/drivers/md/persistent-data/dm-btree-remove.c b/drivers/md/persistent-data/dm-btree-remove.c
-index aeec5b9a1dd5..64f3313f5a1c 100644
---- a/drivers/md/persistent-data/dm-btree-remove.c
-+++ b/drivers/md/persistent-data/dm-btree-remove.c
-@@ -175,8 +175,14 @@ static int init_child(struct dm_btree_info *info, struct dm_btree_value_type *vt
- 
- 	result->n = dm_block_data(result->block);
- 
--	if (inc)
--		inc_children(info->tm, result->n, vt);
-+	r = check_value_size(result->n, vt->size);
-+	if (!r && inc)
-+		r = inc_children(info->tm, result->n, vt);
-+
-+	if (r) {
-+		dm_tm_unlock(info->tm, result->block);
-+		return r;
-+	}
- 
- 	*((__le64 *) value_ptr(parent, index)) =
- 		cpu_to_le64(dm_block_location(result->block));
-@@ -501,8 +507,18 @@ static int rebalance_children(struct shadow_spine *s,
- 		if (r)
- 			return r;
- 
--		if (is_shared)
--			inc_children(info->tm, dm_block_data(child), vt);
-+		/*
-+		 * The child is copied over the node the spine already
-+		 * checked, so it has to answer for itself first.
-+		 */
-+		r = check_value_size(dm_block_data(child), vt->size);
-+		if (!r && is_shared)
-+			r = inc_children(info->tm, dm_block_data(child), vt);
-+
-+		if (r) {
-+			dm_tm_unlock(info->tm, child);
-+			return r;
-+		}
- 
- 		memcpy(n, dm_block_data(child),
- 		       dm_bm_block_size(dm_tm_get_bm(info->tm)));
-diff --git a/drivers/md/persistent-data/dm-btree-spine.c b/drivers/md/persistent-data/dm-btree-spine.c
-index 076f836912c8..2527af9460fe 100644
---- a/drivers/md/persistent-data/dm-btree-spine.c
-+++ b/drivers/md/persistent-data/dm-btree-spine.c
-@@ -121,8 +121,19 @@ static int bn_shadow(struct dm_btree_info *info, dm_block_t orig,
- 
- 	r = dm_tm_shadow_block(info->tm, orig, &btree_node_validator,
- 			       result, &inc);
-+	if (r)
-+		return r;
-+
-+	/*
-+	 * Everything that modifies a node reaches it through here, so this is
-+	 * where a leaf laid out for a different value size is caught.
-+	 */
-+	r = check_value_size(dm_block_data(*result), vt->size);
- 	if (!r && inc)
--		inc_children(info->tm, dm_block_data(*result), vt);
-+		r = inc_children(info->tm, dm_block_data(*result), vt);
-+
-+	if (r)
-+		unlock_block(info, *result);
- 
- 	return r;
- }
-diff --git a/drivers/md/persistent-data/dm-btree.c b/drivers/md/persistent-data/dm-btree.c
-index 5ed3b3e9abb9..b74c41fe6213 100644
---- a/drivers/md/persistent-data/dm-btree.c
-+++ b/drivers/md/persistent-data/dm-btree.c
-@@ -71,16 +71,47 @@ static int upper_bound(struct btree_node *n, uint64_t key)
- 	return bsearch(n, key, 1);
- }
- 
--void inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
--		  struct dm_btree_value_type *vt)
-+/*
-+ * value_ptr() takes an entry's address from the value_size stored on disk,
-+ * but the caller supplies the length it copies.  node_check() sees the block
-+ * and never the caller, so the two are compared here, wherever both are in
-+ * hand.  Internal nodes are exempt: node_check() already holds them to
-+ * sizeof(__le64), which is what value64() assumes.
-+ */
-+int check_value_size(struct btree_node *n, size_t expected)
-+{
-+	uint32_t value_size = le32_to_cpu(n->header.value_size);
-+
-+	if (le32_to_cpu(n->header.flags) & INTERNAL_NODE)
-+		return 0;
-+
-+	if (value_size != expected) {
-+		DMERR_LIMIT("%s failed: value_size %u != %zu expected by the caller",
-+			    __func__, value_size, expected);
-+		return -EILSEQ;
-+	}
-+
-+	return 0;
-+}
-+
-+int inc_children(struct dm_transaction_manager *tm, struct btree_node *n,
-+		 struct dm_btree_value_type *vt)
- {
- 	uint32_t nr_entries = le32_to_cpu(n->header.nr_entries);
- 
- 	if (le32_to_cpu(n->header.flags) & INTERNAL_NODE)
- 		dm_tm_with_runs(tm, value_ptr(n, 0), nr_entries, dm_tm_inc_range);
- 
--	else if (vt->inc)
-+	else if (vt->inc) {
-+		int r = check_value_size(n, vt->size);
-+
-+		if (r)
-+			return r;
-+
- 		vt->inc(vt->context, value_ptr(n, 0), nr_entries);
-+	}
-+
-+	return 0;
- }
- 
- static int insert_at(size_t value_size, struct btree_node *node, unsigned int index,
-@@ -314,6 +345,10 @@ int dm_btree_del(struct dm_btree_info *info, dm_block_t root)
- 				goto out;
- 
- 		} else if (is_internal_level(info, f)) {
-+			r = check_value_size(f->n, sizeof(__le64));
-+			if (r)
-+				goto out;
-+
- 			b = value64(f->n, f->current_child);
- 			f->current_child++;
- 			r = push_frame(s, b, f->level + 1);
-@@ -321,9 +356,14 @@ int dm_btree_del(struct dm_btree_info *info, dm_block_t root)
- 				goto out;
- 
- 		} else {
--			if (info->value_type.dec)
-+			if (info->value_type.dec) {
-+				r = check_value_size(f->n, info->value_type.size);
-+				if (r)
-+					goto out;
-+
- 				info->value_type.dec(info->value_type.context,
- 						     value_ptr(f->n, 0), f->nr_children);
-+			}
- 			pop_frame(s);
- 		}
- 	}
-@@ -365,8 +405,13 @@ static int btree_lookup_raw(struct ro_spine *s, dm_block_t block, uint64_t key,
- 	} while (!(flags & LEAF_NODE));
- 
- 	*result_key = le64_to_cpu(ro_node(s)->keys[i]);
--	if (v)
-+	if (v) {
-+		r = check_value_size(ro_node(s), value_size);
-+		if (r)
-+			return r;
-+
- 		memcpy(v, value_ptr(ro_node(s), i), value_size);
-+	}
- 
- 	return 0;
- }
-@@ -460,6 +505,10 @@ static int dm_btree_lookup_next_single(struct dm_btree_info *info, dm_block_t ro
- 		}
- 
- 		*rkey = le64_to_cpu(n->keys[i]);
-+		r = check_value_size(n, info->value_type.size);
-+		if (r)
-+			goto out;
-+
- 		memcpy(value_le, value_ptr(n, i), info->value_type.size);
- 	}
- out:
-@@ -721,8 +770,14 @@ static int shadow_child(struct dm_btree_info *info, struct dm_btree_value_type *
- 
- 	node = dm_block_data(*result);
- 
--	if (inc)
--		inc_children(info->tm, node, vt);
-+	r = check_value_size(node, vt->size);
-+	if (!r && inc)
-+		r = inc_children(info->tm, node, vt);
-+
-+	if (r) {
-+		unlock_block(info, *result);
-+		return r;
-+	}
- 
- 	*((__le64 *) value_ptr(parent, index)) =
- 		cpu_to_le64(dm_block_location(*result));
-@@ -1441,6 +1496,10 @@ static int walk_node(struct dm_btree_info *info, dm_block_t block,
- 			if (r)
- 				goto out;
- 		} else {
-+			r = check_value_size(n, info->value_type.size);
-+			if (r)
-+				goto out;
-+
- 			keys = le64_to_cpu(*key_ptr(n, i));
- 			r = fn(context, &keys, value_ptr(n, i));
- 			if (r)
-@@ -1474,6 +1533,9 @@ static void prefetch_values(struct dm_btree_cursor *c)
- 
- 	BUG_ON(c->info->value_type.size != sizeof(value_le));
- 
-+	if (check_value_size(bn, sizeof(value_le)))
-+		return;
-+
- 	nr = le32_to_cpu(bn->header.nr_entries);
- 	for (i = 0; i < nr; i++) {
- 		memcpy(&value_le, value_ptr(bn, i), sizeof(value_le));
-@@ -1627,6 +1689,9 @@ int dm_btree_cursor_get_value(struct dm_btree_cursor *c, uint64_t *key, void *va
- 		if (le32_to_cpu(bn->header.flags) & INTERNAL_NODE)
- 			return -EINVAL;
- 
-+		if (check_value_size(bn, c->info->value_type.size))
-+			return -EILSEQ;
-+
- 		*key = le64_to_cpu(*key_ptr(bn, n->index));
- 		memcpy(value_le, value_ptr(bn, n->index), c->info->value_type.size);
- 		return 0;
+# Patch set structure:
+- Patches 1-2 introduce internal API and infrastructure mediating
+  io_uring and target subsystem / devices
+- Patches 3-8: block layer support + prep patches
+- Patches 9-11 implement NVMe support
+- Patches 12-16 add io_uring support and uapi. Patch 14 specifically
+  enables dma-buf support, the rest are preparation patches.
+
+There are some liburing tests that can serve as an example:
+git: https://github.com/isilence/liburing.git rw-dmabuf-tests-v5
+url: https://github.com/isilence/liburing/tree/rw-dmabuf-tests-v5
+
+The patches are based on Jens' for-next. Also available as a branch:
+git: https://github.com/isilence/linux.git rw-dmabuf-v5
+url: https://github.com/isilence/linux/tree/rw-dmabuf-v5
+
+[1] https://lore.kernel.org/io-uring/20220805162444.3985535-1-kbusch@fb.com/
+
+v5: - Reject dma-buf with buffered IO for raw bdev
+    - Add lim->max_segments bio splitting
+    - Add bio_iov_iter_set() helper
+    - Fix io_uring uapi validation
+    - Other minor changes
+    NVMe:
+    - Rename nvme_pci_sgl_set_data() to nvme_pci_dma_iter_set_sgl(), split 
+      into its own prep patch.
+    - Convert segment walk loops to do-while.
+    - Drop adjacent segment coalescing logic.
+    - Drop first_dma/first_len from nvme_pci_dmabuf_sgl_nents()
+    - Remove entries > NVME_MAX_SEGS bailout; moving to the block layer.
+    - Factor SGL vs PRP decision making into a helper.
+
+v4: - https://lore.kernel.org/all/cover.1785274111.git.asml.silence@gmail.com/
+    - Add sgl support from Anuj
+    - Move it under drivers/dma-buf/ and rename
+    - Fix mis-sized allocations
+    - Fix io_uring re-import mishandling
+    - Drop map before io_uring "task work"
+    - Move blk-mq callback to block_device_operations
+    - Convert bio flag to REQ_OP*
+    - Other small changes
+
+v3: https://lore.kernel.org/io-uring/cover.1777475843.git.asml.silence@gmail.com/
+    - Rework io_uring registration
+    - Move token/map infrastructure code out of blk-mq
+    - Simplify callbacks: remove a separate blk-mq table, which was
+      mostly just forwarding calls (to nvme).
+    - Don't skip dma sync depending on request direction
+    - Fix a couple of hangs
+    - Rename s/dma/dmabuf/
+    - Other small changes
+
+v2: - Don't pass raw dma addresses, wrap it into a driver specific object
+    - Split into two objects: token and map
+    - Implement move_notify
+
+Anuj Gupta (2):
+  nvme-pci: rename nvme_pci_sgl_set_data to nvme_pci_dma_iter_set_sgl
+  nvme-pci: add SGL support for the dmabuf path
+
+Pavel Begunkov (14):
+  dma-buf: introduce initial file I/O infrastructure
+  iov_iter: add iterator type for dmabuf maps
+  block: rename bi_bvec_done
+  block: always adjust bi_offset on bio_advance_iter
+  block: move bvec init into __bio_clone
+  block: introduce bio_iov_iter_set()
+  block: introduce dma map backed bio type
+  block: add dma-buf support for raw bdev
+  nvme-pci: implement dma-buf backed requests
+  io_uring/rsrc: introduce buf registration structure
+  io_uring/rsrc: extend buffer update
+  io_uring/rsrc: add uncloneable regbuf flag
+  io_uring/rsrc: add regbuf import flags
+  io_uring/rsrc: add dmabuf backed registered buffers
+
+ Documentation/block/biovecs.rst |   8 +-
+ block/bio.c                     |  33 ++-
+ block/blk-map.c                 |   2 +-
+ block/blk-merge.c               |  45 +++-
+ block/blk-mq-dma.c              |   2 +-
+ block/blk.h                     |   2 +-
+ block/fops.c                    |  35 ++-
+ drivers/block/loop.c            |   2 +-
+ drivers/block/zloop.c           |   2 +-
+ drivers/dma-buf/Makefile        |   2 +-
+ drivers/dma-buf/dma-buf-io.c    | 278 +++++++++++++++++++++
+ drivers/md/dm-io-rewind.c       |  16 +-
+ drivers/md/dm-pcache/segment.c  |   4 +-
+ drivers/nvdimm/btt.c            |   2 +-
+ drivers/nvme/host/core.c        |  12 +
+ drivers/nvme/host/nvme.h        |   2 +
+ drivers/nvme/host/pci.c         | 424 +++++++++++++++++++++++++++++++-
+ drivers/nvme/host/tcp.c         |   2 +-
+ fs/btrfs/misc.h                 |   2 +-
+ include/linux/bio.h             |  23 +-
+ include/linux/blk-mq.h          |   7 +
+ include/linux/blk_types.h       |  14 +-
+ include/linux/blkdev.h          |   2 +
+ include/linux/bvec.h            |  17 +-
+ include/linux/dma-buf-io.h      |  92 +++++++
+ include/linux/fs.h              |   2 +
+ include/linux/io_uring_types.h  |   5 +
+ include/linux/uio.h             |  11 +
+ include/uapi/linux/io_uring.h   |  31 ++-
+ io_uring/io_uring.c             |   3 +-
+ io_uring/net.c                  |   4 +-
+ io_uring/rsrc.c                 | 280 ++++++++++++++++++---
+ io_uring/rsrc.h                 |  45 +++-
+ io_uring/rw.c                   |   6 +-
+ lib/iov_iter.c                  |  31 ++-
+ net/ceph/messenger.c            |   4 +-
+ 36 files changed, 1321 insertions(+), 131 deletions(-)
+ create mode 100644 drivers/dma-buf/dma-buf-io.c
+ create mode 100644 include/linux/dma-buf-io.h
 
 -- 
-2.55.0
-
+2.54.0
 
