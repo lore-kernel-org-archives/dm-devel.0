@@ -1,38 +1,38 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1448377AA6;
-	Fri, 31 Jul 2026 22:54:54 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5F3E3A5452;
+	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785538495; cv=none; b=E9mhhIxpjkujARYzKUaCndiU/xXmI26mLGS67wZLBrtX9vhwJtwxq6+6ReAhRTXjAlaDWa4O7Fh55FQhgkk6CM1XD7H8LCih0ToaUD+Jg9USWqQ2K8L8nwMTbtFRlw3c8FomeSokB/00ibCFZoCqiJbaNdRScqswqywIqiuS+eI=
+	t=1785551524; cv=none; b=d1HXtxj5ZGL8AEseJQ29W2pnyKvu6ZgfawRQhdMv0aSDPsklM8EMcbL5L44Owz9vLTVSF0FmyjGukwL1CvSSZrdMhAQ7O4WkE/q5YhpD4hRvIb5znU4wuByz3y/8NKj5tzOpEWFqijCq3m4f3UgqQVfz+4KA5T6KFbL+jR0h9NU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785538495; c=relaxed/simple;
-	bh=3szjRRUOnQWAmqw62BCFpRphKGY+rm6LLuIDNM7/6Pg=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=a8BRpVR0NyQbdNFkpHQZ1tQG+9s47hh+30e9jW3wTgb61zJrMTwvot6vdydJ8ttT1LVCpcqo0TpMxJgWchw+egFDCcolKmpYFs3sk8VtaX0seqGbaPzBc6AhMOoMhF4LjscmLhKy8CaEBFfqWA0JJxh+l6cnZfSECZUKyRdD+ks=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bEZbz5BD; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1785551524; c=relaxed/simple;
+	bh=yKn5YverXKRVJM4kUkJ1vD2X43xAN3M+1rIG00GC2Ec=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=XqcaqFRhiDGfdyav5979Eh4hgWNKLxiXcNHtWBgTCnPYfi/ON/J0mxNRrCMgazl9otJ6evuwrMfJZF4tMr7lXwAzVO+61qKCh9l6JNZ76xLlZS4unVzqDLhTuTBLgRkFqnL+NWlfUbR/ZdDtet+YyXsZfMRbod2XepHGyd5+H6c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=VqMsLI5u; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bEZbz5BD"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 9AAF7C2BCB9;
-	Fri, 31 Jul 2026 22:54:54 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="VqMsLI5u"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 61478C2BCB9;
+	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1785538494;
-	bh=3szjRRUOnQWAmqw62BCFpRphKGY+rm6LLuIDNM7/6Pg=;
+	s=k20201202; t=1785551524;
+	bh=yKn5YverXKRVJM4kUkJ1vD2X43xAN3M+1rIG00GC2Ec=;
 	h=From:Subject:Date:To:Cc:Reply-To:From;
-	b=bEZbz5BDAH6pOvX8XsI+NQlvyON3tsMvKQzezwuhBDvb9ofS1QVeRm0tNZc7+ZUu2
-	 I/xYA6f1B5V1OzwbSzQQNciNYl2sKGe+N2zDV+fiWnA/f+i0l5L5Ctgr8/5y2j3gnw
-	 pZvqGKwjygR54oNdcrbi/S8dIVHul2DCc8Z4idUd81cVA01Sw4gjXMYd/uAWaRkaoo
-	 G0qkE1Ao1oQzgxCimUK46plHJeYsj2zK1cQH0rQbEjwJ1o7JMZRWBeMNrqrP3kvn9u
-	 cAgx0leRgK+6trXkZQC9m0ODx+ncBOPdNZ5vojgPs/Kv3z/jyXkq3w0aIaz0zvcmxg
-	 M7nIGI6UnKlow==
+	b=VqMsLI5uK19EBA3sLEzV5qv+G/0X3SfDUV7idLEG3Q92rZAu1WLNo4H1ZYTB6Fm6/
+	 eFMl/DV62/nc6P042nPvve+yRyZ9FOBTTfHhHcd3GTbD1iUf1gATLyJsLg4CGV+3d6
+	 Jnv9ZYAUsAf+ZziWWzI9rtaIpewTLONlaqgsxi8AY1LSJ+tngFZZjOIU7xm957O6QU
+	 qrrYt2vkEgz8Dkh7gzTJ3aIEGiAVo5rNmBGmB0ckd/lAM+inqARM7UpB2279sNmiul
+	 IH5ESBQMajRn56+4z5LQR+3u80wxukfFry8M7peKYPfNYVTIVfj7BZqMiqeJ8AWqlP
+	 7G+5fR0K1UGgg==
 Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DA0DC5516F;
-	Fri, 31 Jul 2026 22:54:54 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 45A1EC55172;
+	Sat,  1 Aug 2026 02:32:04 +0000 (UTC)
 From: Bryam Vargas via B4 Relay <devnull+hexlabsecurity.proton.me@kernel.org>
-Subject: [PATCH v2 0/2] dm array: validate array block headers, and against
- the caller
-Date: Fri, 31 Jul 2026 17:54:53 -0500
-Message-Id: <20260731-b4-disp-4fd3bed9-v2-0-7b1835e4e7f6@proton.me>
+Subject: [PATCH 0/2] dm btree: bound a node header, and check it against
+ the reading level
+Date: Fri, 31 Jul 2026 21:32:02 -0500
+Message-Id: <20260731-b4-disp-1fdddbbb-v1-0-4879ae1012a2@proton.me>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -41,22 +41,22 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/6tWKk4tykwtVrJSqFYqSi3LLM7MzwNyjHQUlJIzE
- vPSU3UzU4B8JSMDIzMDc2ND3SQT3ZTM4gJdk7QU46TUFEtdYwvzZOO0VCBpYqQE1FZQlJqWWQE
- 2MjoWwi8uTcpKTS4BmaNUWwsA9nuJUnQAAAA=
-X-Change-ID: 20260731-b4-disp-4fd3bed9-387c3fe87c42
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/yXMMQ6DMAxA0asgz7WUBEppr4IYMDatGSiKASEh7
+ k5oxzf8v4NJVDF4ZTtEWdX0Oyb4Wwbdpx3fgsrJEFwo3SP3SAWy2oS+Z2YiwmfOVFTsKJR3SNk
+ Updftt6ybv22hQbr5+sBxnJ76Lcp0AAAA
+X-Change-ID: 20260731-b4-disp-1fdddbbb-93db48d0b265
 To: Mike Snitzer <snitzer@kernel.org>, 
  Mikulas Patocka <mpatocka@redhat.com>
-Cc: Ming-Hung Tsai <mtsai@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
- linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
- Joe Thornber <ejt@redhat.com>
+Cc: Joe Thornber <ejt@redhat.com>, Ming-Hung Tsai <mtsai@redhat.com>, 
+ Heinz Mauelshagen <heinzm@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
+ dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ Benjamin Marzinski <bmarzins@redhat.com>
 X-Mailer: b4 0.15.2
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1785538493; l=5489;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1785551523; l=6394;
  i=hexlabsecurity@proton.me; s=default; h=from:subject:message-id;
- bh=3szjRRUOnQWAmqw62BCFpRphKGY+rm6LLuIDNM7/6Pg=;
- b=qYgRhwTPKzpkpDwvwFv73L/Ak43L6PePAY9nxbV8z+FLKXYScp8QHERA18yOT79H7rwq6ySj4
- d+emCVLxZh/B7Mh5PDONNOTLSqkpYWcHt17OT4ya/BylXmQQ+CaKW0F
+ bh=yKn5YverXKRVJM4kUkJ1vD2X43xAN3M+1rIG00GC2Ec=;
+ b=y79n7u9YeXlsihOZdrs7N2MpDv7mpK38R0OiSwcLIuoODgy1/S4Kct5CbTC9lIEoMDu5tCWBT
+ o0r6eQDU7zOAwhO57lyx0P170V3/1QyfjxJUO/uqeH5aZw43GHg6DZX
 X-Developer-Key: i=hexlabsecurity@proton.me; a=ed25519;
  pk=xw1AhCtQdvuoQc+bOQIYy9o8G++cp4/VniI2G/tc3G8=
 X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/default with
@@ -64,101 +64,118 @@ X-Endpoint-Received: by B4 Relay for hexlabsecurity@proton.me/default with
 X-Original-From: Bryam Vargas <hexlabsecurity@proton.me>
 Reply-To: hexlabsecurity@proton.me
 
-v1 fixed one of these and mentioned the other; this is both, and the second one
-is here because Ming-Hung Tsai said how to reproduce it.
+A node header can be wrong in two independent ways and a validator only
+reaches the first, so this is two patches. 1/2 holds the header to the
+geometry every writer produces. 2/2 catches the header that is internally
+perfect and still wrong for the level reading it.
 
-An array block header can be wrong in two independent ways, and a validator can
-only catch the first. 1/2 makes the header consistent with itself: value_size
-non-zero, max_entries exactly calc_max_entries() for that value_size and block
-size, nr_entries within it. 2/2 catches the header that is perfectly consistent
-with itself and still wrong for the array reading it.
+value_ptr() places an entry from the value_size stored on disk while the
+caller supplies the length it copies. node_check() weighs the header against
+itself and nothing else, so it never rejects value_size 0, never requires
+max_entries to equal calc_max_entries(), and never sees the caller.
 
-The review of v1 [1] asked for three changes to the first, all taken: compare
-max_entries for equality rather than bounding it from above, since a count
-BELOW the real capacity reaches BUG_ON(new_nr > ab->max_entries) in
-fill_ablock() and trim_ablock(); split the !value_size test out with its own
-message; and print
-the counts rather than a bare "max_entries too large". calc_max_entries() moved
-above the validators so it is in scope there -- it is unchanged, and
-open-coding the formula was what I wanted to avoid, since max_entries is what
-dm_array_get_value() addresses with.
+With value_size 0 the stride collapses and max_entries alone places
+value_base(). At 508 that is 32 + 8*508, exactly 4096, and the reject is a
+strict >, so the block is accepted with its value area starting on the first
+byte of the next page. 1/2 rejects that and two siblings of it: an internal
+node whose value_size is not sizeof(__le64), which btree_split_beneath()
+never writes and value64() already assumes, and a max_entries that disagrees
+with calc_max_entries(), the formula every writer computes it from.
 
-2/2 is the hole v1 described and did not fix. dm-cache keeps two arrays,
-mappings at 8 bytes and hints at 4, and both roots sit in the superblock. A
-hint block stores value_size 4 and max_entries 1018, and 24 + 4*1018 is exactly
-4096, so it is internally consistent and 1/2 passes it -- the validator sees the
-block, never the caller. Swap the two roots and __load_mappings() walks the hint
-array through an info whose value size is 8. get_ablock() and __shadow_ablock()
-are the two readers that hold the block and the caller at once, which is why the
-check has to be in both; covering only one is why this was not in v1.
+That is as far as a validator reaches, and it is not far enough. A details
+node written value_size 1 gets max_entries 450 from the same formula, so it
+satisfies 1/2 completely, and dm-thin then reads it through an info whose
+value size is 24. That is 2/2.
 
-A/B on v7.2-rc1 with KASAN; dm-array.c, dm-bufio.c and dm-cache-metadata.c are
-identical between that and the base of this series. dm-persistent-data is a
-module here, so an arm is the .ko that is loaded and the tested code carries no
-scaffolding. Every image is derived from metadata dm-cache itself wrote:
+Where 2/2 puts the check is the part I would most like reviewed. Everything
+that modifies a node reaches it through bn_shadow(), which is already handed
+the level's value type, so one check there covers insert, both splits,
+remove, remove_leaves and the space map's refcount overflow leaf. That
+includes insert_at(), which strides with the caller's size over a base
+placed by the node's own and is the widest write here: on a details tree
+laid out for value_size 1, inserting at index 0 moves nr_entries * 24 bytes
+from 3632 bytes into a 4096 byte block. The readers share no chokepoint that
+knows the expected size, so they take the check individually -- the lookup
+and cursor readers, the walk callback, and dm_btree_del(), which walks on
+its own frame stack. shadow_child(), init_child() and rebalance_children()
+take it as well, the last because it copies a child over a node the spine
+has already cleared.
 
-  pristine,                  unpatched:  activates, loads its mappings
-  nr_entries 0xFFFFFFFF,     unpatched:  reads past the block, below
-  max_entries 100,           unpatched:  ACTIVATES CLEAN -- accepted today
-  roots swapped,             unpatched:  reads past the block, below
-  nr_entries 0xFFFFFFFF,     patched:    "too many entries", -EILSEQ
-  max_entries 100,           patched:    "max_entries 100 != wanted 509 for value_size 8"
-  roots swapped,             patched:    "get_ablock failed: value_size 4 != wanted 8"
-  pristine,                  patched:    activates, dmesg empty
+A/B on v7.2-rc1 with KASAN. drivers/md/persistent-data/ is identical between
+that and the base of this series; dm-bufio.c and dm-thin-metadata.c have each
+taken one fix since, in dm_bufio_issue_discard() and the metadata-snapshot
+path, neither of which these arms reach. dm-persistent-data is a module here,
+so an arm is the .ko that is loaded and the tested code carries no
+scaffolding. Both images derive from metadata a thin-pool itself wrote; the
+crafted one differs in three header fields, 450 keys and the recomputed
+checksum.
 
-Three crafted images, three different rejections, and the real image still
-loads. The two overread arms, with the consequence dm-cache reports on its own:
+                        unpatched      1/2 only        1/2 + 2/2
+  pristine              activates      activates       activates
+  crafted, key 400      accepted       accepted        rejected
+  crafted, key 449      accepted       accepted        rejected
 
-    device-mapper: cache: 252:0: unable to shrink origin; cache block 509 is dirty
-    device-mapper: cache metadata: policy couldn't load cache block 509     (nr_entries)
+"accepted" is the finding. With 1/2 alone the crafted node passes node_check
+without a word and dm_btree_lookup() reads past the block:
 
-    device-mapper: cache: 252:0: unable to shrink origin; cache block 911 is dirty
-    device-mapper: cache metadata: policy couldn't load cache block 911     (roots swapped)
+    BUG: KASAN: slab-use-after-free in btree_lookup_raw+0x21e/0x360
+    Read of size 24 at addr ffff88810a3b1ff1 by task dmsetup/3016
+      __asan_memcpy
+      btree_lookup_raw
+      dm_btree_lookup
+      __open_device [dm_thin_pool]
+      dm_pool_open_thin_device
+      thin_ctr
 
-509 is exactly the first index an 8-byte-value block cannot hold. 911 is only
-where the swapped-root walk first decodes a mapping dm-cache refuses; it depends
-on the data, not on a boundary.
+0xff1 is 4081 from the start of the block: value_base 3632 plus the last of
+450 entries. 4081 + 24 is 4105, so nine of those bytes are the next page,
+which on that run began a slab whose first object was free. With both patches
+the same image is refused at check_value_size, thin_ctr returns -EILSEQ, and
+the pristine image still activates under all three builds.
 
-Those two lines are the oracle. KASAN adds little here. One run of the
-nr_entries arm reported
+The unpatched arm accepts and reads identically but did not report, and that
+asymmetry is the rig rather than the code: the nine bytes land wherever the
+next page happens to be, and KASAN only speaks if that is a redzone or a freed
+object. Whether it reports is a property of the neighbour, not of the bug.
 
-    BUG: KASAN: slab-use-after-free in dm_cache_load_mappings+0x9b1/0xb40 [dm_cache]
+The key-400 arm is not an overread: its entry resolves fully inside the
+block. It is there to show where the bytes go. I planted a mapped_blocks of
+0xABCD at that offset and dmsetup status reported 5629568, which is 0xABCD
+times the 128 sector block size. Whatever value_ptr() lands on becomes
+device details, and mapped_blocks is printed, so the read reaches userspace.
 
-but that build carried an extra warning I had put at the read site to locate it,
-and no run since has reported anything. dm-bufio serves these buffers from
-__get_free_pages(), the page allocator has no redzones, and the first byte past
-the block is the first byte of the next page, so KASAN only speaks when that
-page happens to be poisoned.
+Forging costs nothing: dm_bm_checksum() is crc32c(~0, data, len) ^ xor, a
+corruption check rather than a tag.
 
-Scope of the max_entries arm, since it is weaker than the other two: it shows
-the header is accepted today and rejected with 1/2, which is what the equality
-is for. It does not show the BUG_ON firing -- reads bound themselves by
-nr_entries, so a too-small max_entries only bites on a later resize, and I did
-not drive one. By inspection from fill_ablock() and trim_ablock().
+All of it needs CAP_SYS_ADMIN to load the table, which is why this is
+hardening rather than a security report. dm-thin is the shortest path from a
+crafted image to an observable read because its two value sizes differ by
+enough to matter; 24 is the widest in tree, and with 15 or fewer the last
+entry still lands inside the block. dm-cache, dm-era and dm-clone reach
+value_ptr() through the same entry points.
 
-Forging any of this costs nothing: dm_bm_checksum() is crc32c(~0, data, len) ^
-xor, a corruption check rather than a tag. Each crafted image differs from the
-one the kernel wrote by four or sixteen bytes plus a checksum.
-
-All of it needs CAP_SYS_ADMIN to load the table, which is why this is hardening
-rather than a security report. dm-era reaches the same accessor directly and
-dm-clone reaches it through dm-bitset; dm-cache is only the shortest path from a
-crafted image to an observable read. dm-thin uses neither. cache_check and
-era_check have caught the value_size case offline since v1.0; this is the online
-half.
-
-[1] https://lore.kernel.org/all/CALjSBEt-PGxY7y6tQYx6iCmFRXqVcwr633FoFsE+L13A=gre4Q@mail.gmail.com/
+Two things the arms do not cover. 1/2's internal-node rule follows from
+btree_split_beneath() writing sizeof(__le64) into every internal node and
+from value64() indexing with 8 regardless; that is by inspection, not
+reproduced. And the arms drive the read path only. The write sites are argued
+from the same arithmetic and compile tested, not separately reproduced: an
+attempt to witness the insert path did not produce a report, because dm-bufio
+serves the block from __get_free_pages() and a write past it corrupts the next
+page rather than tripping a redzone, so it surfaces later and elsewhere.
 
 ---
 Bryam Vargas (2):
-      dm array: validate array block headers on read
-      dm array: reject an array block whose value size is not the caller's
+      dm btree: hold a node header to the geometry its writers guarantee
+      dm btree: reject a node whose value size is not the reading level's
 
- drivers/md/persistent-data/dm-array.c | 54 +++++++++++++++++++++++++++++------
- 1 file changed, 46 insertions(+), 8 deletions(-)
+ drivers/md/persistent-data/dm-btree-internal.h |  8 ++-
+ drivers/md/persistent-data/dm-btree-remove.c   | 24 ++++++--
+ drivers/md/persistent-data/dm-btree-spine.c    | 33 ++++++++++-
+ drivers/md/persistent-data/dm-btree.c          | 81 +++++++++++++++++++++++---
+ 4 files changed, 130 insertions(+), 16 deletions(-)
 ---
 base-commit: 8ba098e6b6ff0db8edf28528d1552be261af30d4
-change-id: 20260731-b4-disp-4fd3bed9-387c3fe87c42
+change-id: 20260731-b4-disp-1fdddbbb-93db48d0b265
 
 Best regards,
 --  
