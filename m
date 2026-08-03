@@ -1,134 +1,168 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-qk1-f171.google.com (mail-qk1-f171.google.com [209.85.222.171])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F9D236F411
-	for <dm-devel@lists.linux.dev>; Mon,  3 Aug 2026 13:41:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED574301493
+	for <dm-devel@lists.linux.dev>; Mon,  3 Aug 2026 14:12:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785764514; cv=none; b=mLgPt2buffTh9SlAfsahYZqA/+0ymMJQzXWG1u97jp4HUpVtRalw+a1hFTs839R2cc9nRu6kMKLoZ98gaPpaTmNzpyNRsSTFfdAEUGuHkry+3Pa6pBFt6PiLqwHr6yGBosrlwQM5jjiu9uaugeriD3wp9l+U4NJpXDTSk6337/k=
+	t=1785766344; cv=none; b=En+fGJhXi/vmIO8HEBPDL9qf8QcUVuHDzrekpBnCcqo9QLdPKdMfKlZYEZ+JPMpDn+Jy82UKziXMtQJokEFJwrx/+Cg5gcAYheFeiCPsKvcSXrzp5ahQXmE96MLwTQwd+FHmPBHg7lgde7tx2CsLj0ge8hsI5JdAC6H1BF+8Mxg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785764514; c=relaxed/simple;
-	bh=QzYE0JDFLWPcWAIy5x14hHZtnJX/w6Hh1Qn7etHkN8w=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=gApa1dI/SETMbDHaE32r5UNl0Tj+yfKeRvPPuv1gxF9B8oyo2jy5BkyXHCrNt4tXM9fE5pYBUP9jI+VuehavZ11ikvT9/LzUxa1OpWblUOIj7FQC0xjywz7grGo6tRi8ZyMynRvWzS6/63UqkMRGN0ZaocCbJVtE0Uw0GZe1i9U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WktnuAlG; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1785766344; c=relaxed/simple;
+	bh=BbpslXywfD0iTpZteroQReQ4uidHwvn2ta6HC9rpZn4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=qUhOdd6kZPvUgffdjRyN4cWyfoDtUjRw4rIRfPcEh3kIQ004xowQA2+vYV/EE+PGPQEe/9IBbAIZuT+MHGc8ULy9rM6i2fKQt7Ne1uzRrOh2gqkQLJOyODstHRF0MIM4J/Ji6YJ5kQYmZpcvcZsyyzdlFgs5+9Z/WzqvjS1/Ze0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com; spf=pass smtp.mailfrom=trailofbits.com; dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b=dYMbaPF8; arc=none smtp.client-ip=209.85.222.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=trailofbits.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=trailofbits.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WktnuAlG"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1785764511;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=EEHppEq5Cdk7AYRM9xArJ4bN2vI+imWgmdyF+pv0t/0=;
-	b=WktnuAlGzohKC0Hg16BTyQ98fAlHLj5Dz/Q1eKjSczKj2vDev/Yio/Khnw13w9GrJlFpIB
-	G6p5HWo5vbPpD9fabScQZfxCP9937elQiWZ/xtSgv2hf58R5QmDbU89fmFAu9wp8cw2STk
-	X56OqobfVmV8ucvYFJkF1LOSEUE28eU=
-Received: from mail-lj1-f197.google.com (mail-lj1-f197.google.com
- [209.85.208.197]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-382-R1DdaDvzNq2gyxWjsD27DQ-1; Mon, 03 Aug 2026 09:41:50 -0400
-X-MC-Unique: R1DdaDvzNq2gyxWjsD27DQ-1
-X-Mimecast-MFC-AGG-ID: R1DdaDvzNq2gyxWjsD27DQ_1785764509
-Received: by mail-lj1-f197.google.com with SMTP id 38308e7fff4ca-39f27a480bfso10721741fa.0
-        for <dm-devel@lists.linux.dev>; Mon, 03 Aug 2026 06:41:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=trailofbits.com header.i=@trailofbits.com header.b="dYMbaPF8"
+Received: by mail-qk1-f171.google.com with SMTP id af79cd13be357-92e6a434cabso154765685a.1
+        for <dm-devel@lists.linux.dev>; Mon, 03 Aug 2026 07:12:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=trailofbits.com; s=google; t=1785766341; x=1786371141; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=qAleDQ8MfrNQGQUDixmHN9nrOWbjKoQY0SCnYduBErY=;
+        b=dYMbaPF8XXMv+4dMh7YJ2UMx0jH9XqYWvcd4eP/U/zL0EMU3u+C4+hJziWQBsicTln
+         hznZXj3VjGZpLncsO1Ki7KxKflFzBQtIt5AQEQ0lYJHxc8jBw6MdFRNMovsR8hfqoR2W
+         cC08eOT5v3Vr4ByXIonS+OzWBF1rLSCu4Vnn0LPYA8xyIs5MgqS9rjmUy/vdXjwrJ9Nq
+         bGHAVhCy2h3iUeNRczbUL2kEn4o/Pe/ECnwLsvGzPqXo0RrVnsN7r2dtjYdiEZ7+Bdka
+         wEsj3vOVppETBCWCXEkShmmZAxgx9K3OdBvl1ahsc81CUYKKpYZLgGpWdvjRd8HwSYEA
+         n2Vw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785764508; x=1786369308;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=EEHppEq5Cdk7AYRM9xArJ4bN2vI+imWgmdyF+pv0t/0=;
-        b=dWkUkl2ylX0ZgbmDRTmVtqo7umotlyWelZuTBfaiYvABsmzNvnvXHDXKnkVjHkKnEH
-         I6xxbLLvw4c+Q64RVKP4Y4B5l9pY6pVkQou4FX4F5EkFAEtHN7JbNtG614infT2+naxf
-         eUWI3r7WwT+ATKALLDi7f2EjcVoauvxXDHxOUhcxMzjl6VUmny6pfz20lYOL0r5dlfdz
-         S2uL0YhImcyBfB1L88uXsM9lEErgYPA6xC0JYVzoES3aj/EkZXFcaBDKukXBiLZ62Iz+
-         x+KBiliHgdn/HP97Q7GC6CzQl33utns/9w2Ru4MGwD8zy8lid5Au3bl8AD+BRFeA9Bja
-         CPnw==
-X-Forwarded-Encrypted: i=1; AHgh+RqDqtaM+Rt6qRd7cHyeF2aRU1PJP7Eb5onrsYs+t2ZgZYd5WVbPsA2GKwKAuN2IUIiEBFSjcVoSDQ==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzYdtoBeeNsQLn84sn9MGGj9jzRoFaSIiHFilLUcdsuhb7ZlQcf
-	enMTBc+eRQVyYIUwdxRr8PbSZdC4/+WpOfT+fadb0AYzxLc0pi/E6LbuGeG0sHU0Fd3JIzfZimq
-	RR6QadyMbJoUXQ6x51xRRAjVZKbeH4tKzJ+p3murHcNMahQRUkkdRehsWfxSqwhhxRu16jYg0C/
-	MLcDT5yOW6p7qylkr424TJkOvKmKCAdGYyqQ==
-X-Gm-Gg: AR+sD10mP9NnqHsqO6slsIwSj172CJzzO9paGJ+W/prnBfJZPQqicYBMDax5530U7/E
-	y70x7Wb9hVGQt3ofF1A79EMVCwPWzbW7coMuM6vpC7nSnpwzlC1O7pIFM7AHDQmTpEaxMV2sYC8
-	JKa+SBILa73Mg4gF3r6WiQNG7eEx/eJpXR4ovFVfHow3xMSdV9fFZEgpc=
-X-Received: by 2002:a05:651c:1601:b0:39e:ea4f:4202 with SMTP id 38308e7fff4ca-39f863f23b7mr19113591fa.31.1785764508528;
-        Mon, 03 Aug 2026 06:41:48 -0700 (PDT)
-X-Received: by 2002:a05:651c:1601:b0:39e:ea4f:4202 with SMTP id
- 38308e7fff4ca-39f863f23b7mr19113471fa.31.1785764508119; Mon, 03 Aug 2026
- 06:41:48 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1785766341; x=1786371141;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=qAleDQ8MfrNQGQUDixmHN9nrOWbjKoQY0SCnYduBErY=;
+        b=JcRd9ZBe2p3j3pslFyy+GZ4BRMqXq0bj7HRgXuQOwrbAuWoc59PStMhccUgUbUaHn/
+         cZ+sSCqq7f1PWA5V3QNnLT7d40tEJXZMp0JVx+f/Prh2d5/skNCLv1vGwDkgoyUkL27I
+         JSFt4wWqv23SYBKhVslsgwBUle7fEsffI8aaD3ZfyaUijLtnVFXg69O0ZVz7yHmpKrBa
+         3ESOIf62ojPXaiFCGYt2l+ZJp5ZpSklTRmkRGO6ysQ7UEMLfMY3DL4GoFVBxRmxF7awZ
+         OGeWzST4cn8ayJIlY5kj8Lwx+tPdaizromxInehnozuekUkoPjcrecDLPHDZ0oEFaQN7
+         RUiw==
+X-Forwarded-Encrypted: i=1; AHgh+Rpm7jj+QdYD+shQIwPe09FTN29A2Tuo518SBvRPnGEuJ22IiMSSuJhtUgnnh1p8BPfS2mCt6yzdfw==@lists.linux.dev
+X-Gm-Message-State: AOJu0YxCyobwlWxbFgd3xMNq5D/PwzRhtRxu8cAPAWQucwb/3T0XD//r
+	PGxVhYoz5a41v/PLRgbbKd0YPRyO8pkALfU5R9wKcmCuUO6CDUYt2mPsYmU0j4eu0LA=
+X-Gm-Gg: AR+sD12I0xQgcpB6r2dHNlxfSyrdkf5b6R7QYg/Pkej1qc2vuT2ptZn6s6+ILvnvudf
+	NzYon4RACQhO9lapw+OfwVQG+iqPQrRaZ/ZGsYEz21BUQP9yMbuQ5h68BiFfK7SvyB73oWjrsJ6
+	oCJcS3tThXAp764KWXzhZ/dRD6Hy/nlmtrQVv0JQFcVIi7OeAjBbplANeiHVRDVFa622nktGPpg
+	BiKJGR2fK9OIteXWdYHm8242NvcQqmhakUnLY1Vz1FJr/sosLhRT9vQh34xvDynwQd7fO/ns22Z
+	yokwDcwXerXlToylgTEWDPseS7sp8kOsY8l4HHQldTX/Qb2/VnR4rD9+EqP7PJcMyDIIAPFjAPJ
+	bnQYuKmG8ST+RrKsfYe4jWUg0Cfw22cKvHt/1O5XjjowjKSJ4UVrbs1R7UkHGs82eS7YmY6ewt7
+	DgP2fuqtSauBDR8J6m6xxCZ1gBYZyvCT0ESbGtJRE6k8RHgTZ6LewGqrnJJsVpmz5i
+X-Received: by 2002:a05:620a:2988:b0:92f:199:b035 with SMTP id af79cd13be357-934a06d57f7mr1631563185a.3.1785766340716;
+        Mon, 03 Aug 2026 07:12:20 -0700 (PDT)
+Received: from localhost ([161.35.96.86])
+        by smtp.gmail.com with UTF8SMTPSA id af79cd13be357-9349c19f881sm677024385a.29.2026.08.03.07.12.19
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 03 Aug 2026 07:12:19 -0700 (PDT)
+From: Samuel Moelius <sam.moelius@trailofbits.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: Samuel Moelius <sam.moelius@trailofbits.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
+	linux-kernel@vger.kernel.org (open list)
+Subject: [PATCH v2] dm dust: make badblock messages target-relative
+Date: Mon,  3 Aug 2026 14:09:13 +0000
+Message-ID: <20260803140905.383600.be823861719c.dm-dust-badblock-coordinate-mismatch@trailofbits.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-References: <20260731-b4-disp-4fd3bed9-v2-0-7b1835e4e7f6@proton.me> <20260731-b4-disp-4fd3bed9-v2-1-7b1835e4e7f6@proton.me>
-In-Reply-To: <20260731-b4-disp-4fd3bed9-v2-1-7b1835e4e7f6@proton.me>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Mon, 3 Aug 2026 21:41:36 +0800
-X-Gm-Features: AUfX_mwoazIh-tPHwhsJhmas2iw0ExklfErDnkyVREE-9PAWDYBmN2eRXym1D7s
-Message-ID: <CALjSBEvVOTpd+j3zgspvdbX2fhQwc1HoNQHFup0uEfkRM=2kVQ@mail.gmail.com>
-Subject: Re: [PATCH v2 1/2] dm array: validate array block headers on read
-To: hexlabsecurity@proton.me
-Cc: Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, Alasdair Kergon <agk@redhat.com>, 
-	Joe Thornber <ejt@redhat.com>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: d3mbfoQ4gRy6JJkdFq4QiF-Vzv2jCLrPr_ssHh1010s_1785764509
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Sat, Aug 1, 2026 at 6:55=E2=80=AFAM Bryam Vargas via B4 Relay
-<devnull+hexlabsecurity.proton.me@kernel.org> wrote:
->
-> From: Bryam Vargas <hexlabsecurity@proton.me>
->
-> array_block_check() validates blocknr and csum and nothing else, while
-> node_check(), next to it, has bounded the structural fields since both
-> were written. dm_array_cursor_next() takes its loop bound from the
-> on-disk nr_entries and element_at() is unguarded pointer arithmetic, so
-> a count larger than the block holds keeps the cursor in one block while
-> the index grows past it and the read walks off the dm-bufio buffer --
-> dm_cache_load_mappings() drives it once per cache block at activation.
->
-> Check the header against itself: reject a zero value_size, require
-> max_entries to equal calc_max_entries() for that value_size and block
-> size, and require nr_entries to fit. Equality rather than an upper bound,
-> since a count below the real capacity trips BUG_ON() in fill_ablock() and
-> trim_ablock(). Metadata dm-array writes satisfies all three.
->
-> Fixes: 6513c29f44f2 ("dm persistent data: add transactional array")
-> Suggested-by: Ming-Hung Tsai <mtsai@redhat.com>
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
+dm-dust currently treats addbadblock, removebadblock and queryblock
+arguments as block numbers on the underlying device. That is surprising
+for a device-mapper target: a dm-dust table with a non-zero backing
+offset can add bad blocks that are outside the mapped target, and a
+badblock added for logical block 0 is missed because the I/O path checks
+the remapped backing-device block instead.
 
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
+Interpret badblock message arguments as blocks relative to the start of
+the dm-dust target instead. Bound the arguments by the target length and
+perform badblock lookup using target-relative sectors before remapping
+the bio to the underlying device.
 
-Reproducer to validate the BUG_ON prevention using crafted metadata:
-create a cache device, and reduce the max_entries of the final array
-block of the mapping array. Next, expand the fast device to make the
-last array block exceeds its capacity, which triggers the BUG_ON in
-fill_ablock().
+This intentionally changes the non-zero backing-offset behavior to make
+the badblock control interface match the mapped dm-dust device, rather
+than the underlying device.
 
-> +       wanted =3D calc_max_entries(value_size, size_of_block);
-> +       if (max_entries !=3D wanted) {
-> +               DMERR_LIMIT("%s failed: max_entries %u !=3D wanted %u for=
- value_size %u",
-> +                           __func__, max_entries, wanted, value_size);
-> +               return -EILSEQ;
-> +       }
+Assisted-by: Codex:gpt-5.5-cyber-preview
+Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
+---
+Changes in v2:
+  - Revise commit message
+  - Remove call to sector_div() in __dust_map_write()
 
-One minor nit, which needn't hold up the patch: I'd drop "wanted %u"
-from the error message. The wanted value is derivable from value_size,
-so printing "%s failed: max_entries %u invalid for value_size %u"
-carries the same information.
+ drivers/md/dm-dust.c | 16 +++++++---------
+ 1 file changed, 7 insertions(+), 9 deletions(-)
 
-Mikulas, if you agree, feel free to adjust when applying rather than
-requesting a v3 patch. Thank you.
+diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
+index c7e3077fb1f5..954f4ec5a51c 100644
+--- a/drivers/md/dm-dust.c
++++ b/drivers/md/dm-dust.c
+@@ -196,7 +196,6 @@ static int __dust_map_write(struct dust_device *dd, sector_t thisblock)
+ 		dd->badblock_count--;
+ 		kfree(bblk);
+ 		if (!dd->quiet_mode) {
+-			sector_div(thisblock, dd->sect_per_block);
+ 			DMINFO("block %llu removed from badblocklist by write",
+ 			       (unsigned long long)thisblock);
+ 		}
+@@ -224,15 +223,16 @@ static int dust_map_write(struct dust_device *dd, sector_t thisblock,
+ static int dust_map(struct dm_target *ti, struct bio *bio)
+ {
+ 	struct dust_device *dd = ti->private;
++	sector_t dust_sector = dm_target_offset(ti, bio->bi_iter.bi_sector);
+ 	int r;
+ 
+ 	bio_set_dev(bio, dd->dev->bdev);
+-	bio->bi_iter.bi_sector = dd->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
++	bio->bi_iter.bi_sector = dd->start + dust_sector;
+ 
+ 	if (bio_data_dir(bio) == READ)
+-		r = dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++		r = dust_map_read(dd, dust_sector, dd->fail_read_on_bb);
+ 	else
+-		r = dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail_read_on_bb);
++		r = dust_map_write(dd, dust_sector, dd->fail_read_on_bb);
+ 
+ 	return r;
+ }
+@@ -415,7 +415,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			char *result, unsigned int maxlen)
+ {
+ 	struct dust_device *dd = ti->private;
+-	sector_t size = bdev_nr_sectors(dd->dev->bdev);
++	sector_t size = dm_sector_div_up(ti->len, dd->sect_per_block);
+ 	bool invalid_msg = false;
+ 	int r = -EINVAL;
+ 	unsigned long long tmp, block;
+@@ -462,8 +462,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			return r;
+ 
+ 		block = tmp;
+-		sector_div(size, dd->sect_per_block);
+-		if (block > size) {
++		if (block >= size) {
+ 			DMERR("selected block value out of range");
+ 			return r;
+ 		}
+@@ -490,8 +489,7 @@ static int dust_message(struct dm_target *ti, unsigned int argc, char **argv,
+ 			return r;
+ 		}
+ 		wr_fail_cnt = tmp_ui;
+-		sector_div(size, dd->sect_per_block);
+-		if (block > size) {
++		if (block >= size) {
+ 			DMERR("selected block value out of range");
+ 			return r;
+ 		}
+-- 
+2.43.0
 
