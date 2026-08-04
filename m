@@ -1,239 +1,137 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from mailout2.samsung.com (mailout2.samsung.com [203.254.224.25])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4B8A3F8714;
-	Tue,  4 Aug 2026 06:54:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00AE341D208
+	for <dm-devel@lists.linux.dev>; Tue,  4 Aug 2026 07:29:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.25
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785826464; cv=none; b=TiLAAiaL2FlU5rWlY8Di2BydzfTljNme6A3Gf4jLlAEc1T1rrG7n4q0lizhohezWoT6kP1cL9yMVbOO35bBI9P/gFFqJehEtPv8Ks0bTnlZQa9ZWbydOLaEGChridGP/Wb9GGxaZlSO52f5QQ4KYE2QFArRoldGkCeRsZo/JfIE=
+	t=1785828564; cv=none; b=ReTDAcTljxNxDOR4ziZp5lYiaV2CgCUm56B47C8sPtzqrFPtJrAujkwiWqFGapSA/Ecq1Asq4q+BGKBOylXFjjxwlQu0GHYFlOAQV3dMQ1jTJ9yrcWeWe6mKEhFSB4q71F7M9ud1ri6v51mv5iIZhA5Jyr/eWmp5Gao68pDpVQ8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785826464; c=relaxed/simple;
-	bh=LGmf2KEi1vOYJnUZpZkGgA11jUahqBwgWVCT9Sl6bzQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=kyT35DAmIoo90yH+0IvlSEjlbFsGWWaIQyDweHO9KlJ8O5mfjbvJ7MJo4iIEMGdpl5Ib7Wvki9jOtzsv81InoJVwTqZE9tevkf5+eiwvEtNxNdd82JyCuC5/O4ptr7bMuA6B4XwUQxY8TFmwEDL8s6/FK2Xvl3eIlPpXlv1ArBo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=EhpRjq1T; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1785828564; c=relaxed/simple;
+	bh=u4QIQZTdswptGzA7Ts6wBB+sdxAXlbuqrjMHMB4he5M=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:From:In-Reply-To:
+	 Content-Type:References; b=ARswejvN+qvczckBFMOTRdo7F7ZB82g6ITXkz0OGYJ0Gr/SCxlaF3CcJJxJwCKkJWE/OibXxlPHfUjDm48jqsNS+hgt77xBW5X6Tr/lKntHsGs2iNaUsztKnmcFakhHEBnOkINxmU0Z7futKUS/a7LTKyUtxwX6Yh2vLGObChEU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=YuL9mR3P; arc=none smtp.client-ip=203.254.224.25
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="EhpRjq1T"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1950E1F00A3A;
-	Tue,  4 Aug 2026 06:54:06 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1785826462;
-	bh=0W+d2BSTkxNT+SthfX82FpSr/h0ZeS2Jo82xnGDi01I=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=EhpRjq1T7kHiQezjtfNCoscixE9MILZKN5AQAeuLfpl0CdFGwVYQTGV+wNKnrHM1r
-	 JrCkeWZ6d06vYOvkvnShsD053dLwqlqovCi8VdrTs6xOXSWs5xZyvvJv0+eeTuvsrr
-	 UjxsnEfXKMZbAY4xrGUC1ZY81kkxGCs6MR03zQf4P0zM/zg8Ufripxogr4rVuRBK6o
-	 J4vbWfQENrvlcBCqfeojeulJL4POIHcg1HvJbPr8DzbRolG6hlwUW458Nvj71gn44d
-	 NxB5XhSONuT9fI07DPIJdGnu5q8FNDVjyU1hLJPrJ5um9XXuJiqETrmLraKLEI7cFj
-	 xqC7LknjuY70A==
-From: Yu Kuai <yukuai@kernel.org>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Tejun Heo <tj@kernel.org>,
-	Johannes Weiner <hannes@cmpxchg.org>,
-	=?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Yu Kuai <yukuai@fygo.io>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Coly Li <colyli@fygo.io>,
-	Kent Overstreet <kent.overstreet@linux.dev>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Song Liu <song@kernel.org>,
-	Dan Williams <djbw@kernel.org>,
-	Vishal Verma <vishal.l.verma@intel.com>,
-	Dave Jiang <dave.jiang@intel.com>,
-	Alison Schofield <alison.schofield@intel.com>,
-	Pankaj Gupta <pankaj.gupta.linux@gmail.com>,
-	Andreas Gruenbacher <agruenba@redhat.com>,
-	Matthew Wilcox <willy@infradead.org>,
-	Jan Kara <jack@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Chris Li <chrisl@kernel.org>,
-	Kairui Song <kasong@tencent.com>,
-	Christoph Hellwig <hch@lst.de>,
-	Nilay Shroff <nilay@linux.ibm.com>,
-	Tao Cui <cui.tao@linux.dev>,
-	cgroups@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-block@vger.kernel.org,
-	linux-bcache@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	linux-raid@vger.kernel.org,
-	nvdimm@lists.linux.dev,
-	virtualization@lists.linux.dev,
-	gfs2@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org,
-	linux-mm@kvack.org
-Subject: [RFC PATCH v1 3/3] blk-cgroup: move async bio punt state to blkcg
-Date: Tue,  4 Aug 2026 14:53:13 +0800
-Message-ID: <20260804065313.2092022-4-yukuai@kernel.org>
-X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20260804065313.2092022-1-yukuai@kernel.org>
-References: <20260804065313.2092022-1-yukuai@kernel.org>
+	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="YuL9mR3P"
+Received: from epcas5p2.samsung.com (unknown [182.195.41.40])
+	by mailout2.samsung.com (KnoxPortal) with ESMTP id 20260804072913epoutp029f2db9d8ba83cf535feaa2eb10a8b029~IiZuL6TMO1612116121epoutp02Z
+	for <dm-devel@lists.linux.dev>; Tue,  4 Aug 2026 07:29:13 +0000 (GMT)
+DKIM-Filter: OpenDKIM Filter v2.11.0 mailout2.samsung.com 20260804072913epoutp029f2db9d8ba83cf535feaa2eb10a8b029~IiZuL6TMO1612116121epoutp02Z
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
+	s=mail20170921; t=1785828553;
+	bh=oq3WXJu/SsF/yYJkxmJpNIikAfWrsHK6PFkUbOrSyxQ=;
+	h=Date:Subject:To:Cc:From:In-Reply-To:References:From;
+	b=YuL9mR3PGb2opeFZiYN0zNin1lKqXZc/cCNGngvIs07OjuKhr0shXabI7kR3ToXg4
+	 m9eu0VhaMLeIMH0kAURIYdc6jWK1UzL4Ga89eE+9NWPW/uLnZVQbYCgfFY8TbDhK0f
+	 rLSzDKGyEGvDXov2c9EdXQ2JUy6DIGmt0glyRSes=
+Received: from epsnrtp02.localdomain (unknown [182.195.42.154]) by
+	epcas5p2.samsung.com (KnoxPortal) with ESMTPS id
+	20260804072912epcas5p2adb2d94e9dbee254b808fbe3e7596043~IiZtxp_B41422314223epcas5p25;
+	Tue,  4 Aug 2026 07:29:12 +0000 (GMT)
+Received: from epcas5p4.samsung.com (unknown [182.195.38.94]) by
+	epsnrtp02.localdomain (Postfix) with ESMTP id 4hDlXm00m2z2SSKd; Tue,  4 Aug
+	2026 07:29:12 +0000 (GMT)
+Received: from epsmtip1.samsung.com (unknown [182.195.34.30]) by
+	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
+	20260804072911epcas5p11ac571c654cc6f9181d41e68c1d776f7~IiZsQAmmo3024630246epcas5p1l;
+	Tue,  4 Aug 2026 07:29:11 +0000 (GMT)
+Received: from [107.122.10.194] (unknown [107.122.10.194]) by
+	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
+	20260804072906epsmtip1f5a677211ba3b877f3e13174d1789292~IiZnod7M11634816348epsmtip18;
+	Tue,  4 Aug 2026 07:29:06 +0000 (GMT)
+Message-ID: <c4cec417-24b8-428a-853f-4e1ff1e29a6a@samsung.com>
+Date: Tue, 4 Aug 2026 12:59:05 +0530
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v5 09/16] nvme-pci: implement dma-buf backed requests
+To: Pavel Begunkov <asml.silence@gmail.com>, Jens Axboe <axboe@kernel.dk>,
+	Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@lst.de>, Sagi
+	Grimberg <sagi@grimberg.me>, linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
+	linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
+	linaro-mm-sig@lists.linaro.org
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner
+	<brauner@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Sumit
+	Semwal <sumit.semwal@linaro.org>, =?UTF-8?Q?Christian_K=C3=B6nig?=
+	<christian.koenig@amd.com>, Nitesh Shetty <nj.shetty@samsung.com>, Kanchan
+	Joshi <joshi.k@samsung.com>, Jason Gunthorpe <jgg@nvidia.com>, Damien Le
+	Moal <dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer
+	<snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Benjamin
+	Marzinski <bmarzins@redhat.com>, David Sterba <dsterba@suse.com>, Ilya
+	Dryomov <idryomov@gmail.com>, dm-devel@lists.linux.dev,
+	nvdimm@lists.linux.dev, linux-btrfs@vger.kernel.org,
+	ceph-devel@vger.kernel.org
+Content-Language: en-US
+From: Anuj Gupta/Anuj Gupta <anuj20.g@samsung.com>
+In-Reply-To: <9e3dd1b2d71dc0f9bd556b6a6d6e48fb6a8d727b.1785596451.git.asml.silence@gmail.com>
+Content-Transfer-Encoding: 7bit
+X-CMS-MailID: 20260804072911epcas5p11ac571c654cc6f9181d41e68c1d776f7
+X-Msg-Generator: CA
+Content-Type: text/plain; charset="utf-8"
+CMS-TYPE: 105P
+cpgsPolicy: CPGSC10-542,Y
+X-CFilter-Loop: Reflected
+X-CMS-RootMailID: 20260801155005epcas5p4ecdcdf532aa2c2ff4e94638eedaa435b
+References: <cover.1785596451.git.asml.silence@gmail.com>
+	<CGME20260801155005epcas5p4ecdcdf532aa2c2ff4e94638eedaa435b@epcas5p4.samsung.com>
+	<9e3dd1b2d71dc0f9bd556b6a6d6e48fb6a8d727b.1785596451.git.asml.silence@gmail.com>
 
-From: Yu Kuai <yukuai@fygo.io>
+On 8/1/2026 9:16 PM, Pavel Begunkov wrote:
+> +	map = kmalloc_flex(*map, dma_list, nr_entries);
+> +	if (!map)
+> +		return ERR_PTR(-ENOMEM);
+> +
+> +	sgt = dma_buf_map_attachment(attach, ctx->dir);
+> +	if (IS_ERR(sgt)) {
+> +		ret = PTR_ERR(sgt);
+> +		sgt = NULL;
+> +		goto err;
+> +	}
+> +
+> +	for_each_sgtable_dma_sg(sgt, sg, tmp) {
+> +		dma_addr_t dma_addr = sg_dma_address(sg);
+> +		unsigned long sg_len = sg_dma_len(sg);
+> +
+> +		if (sg_len % NVME_CTRL_PAGE_SIZE) {
+> +			ret = -EINVAL;
+> +			goto err;
+> +		}
+> +		seg_shift = min(seg_shift, __ffs(sg_len));
+> +
+> +		while (sg_len) {
+> +			map->dma_list[i++] = dma_addr;
+> +			dma_addr += NVME_CTRL_PAGE_SIZE;
+> +			sg_len -= NVME_CTRL_PAGE_SIZE;
+> +		}
+> +	}
+> +
+> +	if (WARN_ON_ONCE(seg_shift < NVME_CTRL_PAGE_SHIFT))
+> +		return ERR_PTR(-EFAULT);
 
-blkcg_punt_bio_submit() currently queues punted bios on blkg->async_bios,
-so it has to call bio_blkg() to find or create a queue-local blkg.  Bios
-now carry and pin the blkcg css, so punted bio lifetime no longer needs to
-be anchored by a blkg.
+This should be 'goto err;' instead of a direct return. If this ever 
+triggers, it leaks the map and already established sgt mapping.
 
-Keeping the punt state in blkg can instantiate a blkg even when no blkcg
-policy is enabled, just to bounce submission from a shared kthread.  Move
-async_bio_lock, async_bios and async_bio_work to struct blkcg, and queue
-punted bios on bio_blkcg() for non-root cgroups.  Root or unassociated bios
-are submitted directly.
-
-This preserves the priority-inversion avoidance while preventing
-blkcg_punt_bio_submit() from creating blkgs that are not needed by any
-policy.
-
-Signed-off-by: Yu Kuai <yukuai@fygo.io>
----
- block/blk-cgroup.c | 44 +++++++++++++++++++++-----------------------
- block/blk-cgroup.h | 14 ++++++--------
- 2 files changed, 27 insertions(+), 31 deletions(-)
-
-diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-index 93ab57e0a9f1..236220db8578 100644
---- a/block/blk-cgroup.c
-+++ b/block/blk-cgroup.c
-@@ -170,10 +170,6 @@ static void __blkg_release(struct rcu_head *rcu)
- {
- 	struct blkcg_gq *blkg = container_of(rcu, struct blkcg_gq, rcu_head);
- 
--#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
--	WARN_ON(!bio_list_empty(&blkg->async_bios));
--#endif
--
- 	blkg_free(blkg);
- }
- 
-@@ -206,19 +202,18 @@ static void blkg_release(struct percpu_ref *ref)
- #ifdef CONFIG_BLK_CGROUP_PUNT_BIO
- static struct workqueue_struct *blkcg_punt_bio_wq;
- 
--static void blkg_async_bio_workfn(struct work_struct *work)
-+static void blkcg_async_bio_workfn(struct work_struct *work)
- {
--	struct blkcg_gq *blkg = container_of(work, struct blkcg_gq,
--					     async_bio_work);
-+	struct blkcg *blkcg = container_of(work, struct blkcg, async_bio_work);
- 	struct bio_list bios = BIO_EMPTY_LIST;
- 	struct bio *bio;
- 	struct blk_plug plug;
- 	bool need_plug = false;
- 
--	/* as long as there are pending bios, @blkg can't go away */
--	spin_lock(&blkg->async_bio_lock);
--	bio_list_merge_init(&bios, &blkg->async_bios);
--	spin_unlock(&blkg->async_bio_lock);
-+	/* as long as there are pending bios, @blkcg can't go away */
-+	spin_lock(&blkcg->async_bio_lock);
-+	bio_list_merge_init(&bios, &blkcg->async_bios);
-+	spin_unlock(&blkcg->async_bio_lock);
- 
- 	/* start plug only when bio_list contains at least 2 bios */
- 	if (bios.head && bios.head->bi_next) {
-@@ -239,15 +234,15 @@ static void blkg_async_bio_workfn(struct work_struct *work)
-  */
- void blkcg_punt_bio_submit(struct bio *bio)
- {
--	struct blkcg_gq *blkg = bio_blkg(bio);
-+	struct blkcg *blkcg = bio_blkcg(bio);
- 
--	if (blkg && blkg->parent) {
--		spin_lock(&blkg->async_bio_lock);
--		bio_list_add(&blkg->async_bios, bio);
--		spin_unlock(&blkg->async_bio_lock);
--		queue_work(blkcg_punt_bio_wq, &blkg->async_bio_work);
-+	if (blkcg && cgroup_parent(blkcg->css.cgroup)) {
-+		spin_lock(&blkcg->async_bio_lock);
-+		bio_list_add(&blkcg->async_bios, bio);
-+		spin_unlock(&blkcg->async_bio_lock);
-+		queue_work(blkcg_punt_bio_wq, &blkcg->async_bio_work);
- 	} else {
--		/* Never bounce if there is no non-root blkg to queue on. */
-+		/* Never bounce if there is no non-root blkcg to queue on. */
- 		submit_bio(bio);
- 	}
- }
-@@ -325,11 +320,6 @@ static struct blkcg_gq *blkg_alloc(struct blkcg *blkcg, struct gendisk *disk,
- 	INIT_LIST_HEAD(&blkg->q_node);
- 	blkg->blkcg = blkcg;
- 	blkg->iostat.blkg = blkg;
--#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
--	spin_lock_init(&blkg->async_bio_lock);
--	bio_list_init(&blkg->async_bios);
--	INIT_WORK(&blkg->async_bio_work, blkg_async_bio_workfn);
--#endif
- 
- 	u64_stats_init(&blkg->iostat.sync);
- 	for_each_possible_cpu(cpu) {
-@@ -1360,6 +1350,9 @@ static void blkcg_css_free(struct cgroup_subsys_state *css)
- 
- 	mutex_unlock(&blkcg_pol_mutex);
- 
-+#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-+	WARN_ON(!bio_list_empty(&blkcg->async_bios));
-+#endif
- 	free_percpu(blkcg->lhead);
- 	kfree(blkcg);
- }
-@@ -1409,6 +1402,11 @@ blkcg_css_alloc(struct cgroup_subsys_state *parent_css)
- 	refcount_set(&blkcg->online_pin, 1);
- 	INIT_RADIX_TREE(&blkcg->blkg_tree, GFP_NOWAIT);
- 	INIT_HLIST_HEAD(&blkcg->blkg_list);
-+#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-+	spin_lock_init(&blkcg->async_bio_lock);
-+	bio_list_init(&blkcg->async_bios);
-+	INIT_WORK(&blkcg->async_bio_work, blkcg_async_bio_workfn);
-+#endif
- #ifdef CONFIG_CGROUP_WRITEBACK
- 	INIT_LIST_HEAD(&blkcg->cgwb_list);
- #endif
-diff --git a/block/blk-cgroup.h b/block/blk-cgroup.h
-index b6fb85db4d3d..b457c2b4ac7c 100644
---- a/block/blk-cgroup.h
-+++ b/block/blk-cgroup.h
-@@ -73,14 +73,7 @@ struct blkcg_gq {
- 	struct blkg_iostat_set		iostat;
- 
- 	struct blkg_policy_data		*pd[BLKCG_MAX_POLS];
--#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
--	spinlock_t			async_bio_lock;
--	struct bio_list			async_bios;
--#endif
--	union {
--		struct work_struct	async_bio_work;
--		struct work_struct	free_work;
--	};
-+	struct work_struct		free_work;
- 
- 	atomic_t			use_delay;
- 	atomic64_t			delay_nsec;
-@@ -111,6 +104,11 @@ struct blkcg {
- 	 */
- 	struct llist_head __percpu	*lhead;
- 
-+#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-+	spinlock_t			async_bio_lock;
-+	struct bio_list			async_bios;
-+	struct work_struct		async_bio_work;
-+#endif
- #ifdef CONFIG_BLK_CGROUP_FC_APPID
- 	char                            fc_app_id[FC_APPID_LEN];
- #endif
--- 
-2.51.0
+> +
+> +	ret = dma_buf_io_init_map(ctx, &map->base);
+> +	if (ret)
+> +		goto err;
+> +	map->base.seg_shift = seg_shift;
+> +	map->nr_entries = nr_entries;
+> +	map->sgt = sgt;
+> +	return &map->base;
+> +err:
+> +	if (sgt)
+> +		dma_buf_unmap_attachment(attach, sgt, ctx->dir);
+> +	kfree(map);
+> +	return ERR_PTR(ret);
+> +}
 
