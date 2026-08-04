@@ -1,247 +1,136 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from va-2-53.ptr.blmpb.com (va-2-53.ptr.blmpb.com [209.127.231.53])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 964603D0905
-	for <dm-devel@lists.linux.dev>; Tue,  4 Aug 2026 15:18:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC50340BCA1
+	for <dm-devel@lists.linux.dev>; Tue,  4 Aug 2026 15:31:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785856717; cv=none; b=OAy+81DNOC2GoDzxKd2bm000cATEpRuAmVX+ZjfS4bglei+nglTNk3DnuewXGGoWBscSiAfAhcRmiEwoCEa+ReTz4QiezQ0tMUQ2nNfZ9IYtxBBjvSoFFCk5vmMZfLfBdnmSrPqOGGEjPiKgRY9Mitv9dRymGy4FOYvrJjxn3WY=
+	t=1785857495; cv=none; b=jlVV/G3kzQyrXSYqWQREPXKijiH3RiQs/oJyFXoZjutDLPX0xLEluMC6YEHvzBoCU08maSvL/KGsQFcA3VA806xT43KxijBn2fmqb7SIYjGnugx3F7KRrXnoKT7tNJD6M7FOryUQVg84dtoUDBhPpsDw45C68Q4RGWlc2jxRmgw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785856717; c=relaxed/simple;
-	bh=4UrpMWkmQVjVeMfanMeYsEb1NJP6/UIHBXDp7z9dGaw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=A9f2eQyqFqVaMvn2Kcv9RFfmHep1FIyp/NVRwYIKVKx/TgoDBylH4K+XRAp5i0JyaxPS44B4e5el4YBg1zewlCbowmrUtInDmZ9z/AE9BT8TVpHdyf5K8cNuJxRs7PnXqunneOtOgOsEyQWQCXCu+C46q6yJ7BQYQtOjESC4mzs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=BMeKznRc; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1785857495; c=relaxed/simple;
+	bh=by/fcGncfc5OCuRW9skgJuC6t1LUujBBm0TnhfUwb/o=;
+	h=From:Mime-Version:References:To:Cc:In-Reply-To:Content-Type:
+	 Subject:Date:Message-Id; b=ObYYRcxHwqKEjOL9qJP/BKGycMdGXz3eAwHXSn7ZJstqwbK5LpVm1pQ8oOQ6riecA2BKvAO6++42f8pshteo/LhknlAQcjH07AvyzbmmaTP4a6jnqIKl78NomtGnkAMUT0CHSiDGgy1DLp3wsOtu731b2SaZp3MKocVnEOnYxGo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fygo.io; spf=pass smtp.mailfrom=fygo.io; dkim=pass (2048-bit key) header.d=fygo-io.20200929.dkim.larksuite.com header.i=@fygo-io.20200929.dkim.larksuite.com header.b=hEHDUFmk; arc=none smtp.client-ip=209.127.231.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fygo.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fygo.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="BMeKznRc"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1785856714;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Zj7ba29dQJND2oSpVrWPCFdiWCJWCvNj5vKIOwOJW/4=;
-	b=BMeKznRcYIYSB/Y0E32WWUXi1v99oT58lDfhegw3o4w/HG3NgoBEQlB5LaPjReLAuIPlLR
-	7N93taLugD+zQkp4B2HattzUe0NoqSKv/XK2NMXub4D7uyz1ATvmHTT+SMSG50SufqoH7S
-	QXuNc6vzCIYnwNitN0gTJhkq9oSUXsM=
-Received: from mail-yx1-f72.google.com (mail-yx1-f72.google.com
- [74.125.224.72]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-480-q681EXGYNS2TnHOo-XPYmg-1; Tue, 04 Aug 2026 11:18:33 -0400
-X-MC-Unique: q681EXGYNS2TnHOo-XPYmg-1
-X-Mimecast-MFC-AGG-ID: q681EXGYNS2TnHOo-XPYmg_1785856712
-Received: by mail-yx1-f72.google.com with SMTP id 956f58d0204a3-66931a828c0so6992742d50.0
-        for <dm-devel@lists.linux.dev>; Tue, 04 Aug 2026 08:18:33 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785856712; x=1786461512;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Zj7ba29dQJND2oSpVrWPCFdiWCJWCvNj5vKIOwOJW/4=;
-        b=DT8i1XxIJJsddWXuIt3ETkX+K/gGJegzb+xfpQSOJCDOxGNXiSUvrjkjIcw6CG271w
-         pLAWP1q3VwWLhTLsIzznfNSz8TaHsZwVANA8JUPqeAXCD8qkQLV/0YvSP5cD4o0uDChr
-         Dt+CLrkxr3+owGc38WHs7ymOQ1vs03vZMBHpzFYpes/wxmLj43j4lKMbIY0obDsqX21k
-         252U3X52+aOctlqRYw1fw9Dwn4y97R75AAd5jZ5Ve0ixR1w7eydorWnlBGGnzberzXCA
-         1qn5DyUkwBVuuZt99ij0IqFm3UyDLNify1mGX/eaR1UHiiduVmtY+LHerjFfcYh8ooyb
-         0oXA==
-X-Forwarded-Encrypted: i=1; AHgh+RrsbkA+CA5VvTf8mHZFef+bAPCNgXb8kjNv5bS5ij7NbI09qQx2FflHtAfDHw75u4CK4ZHiKk//qw==@lists.linux.dev
-X-Gm-Message-State: AOJu0YzIQLFQMqEmAAvUw33BiJDnS8dLSsdlSTiLboevH3KJ92sTcXc+
-	XDvGcA/tHlJiH4RpvznjJ4TBRaoK1R9QqOOOJ0YDm0iPeRfRiqfLrhVVBh9HspPXJMXgrdmNWV0
-	Y9To1ukB8eW38uydmyXO/NJFGFT+484aHJU58X1TTgnH5M3qZsevrYEJESE/+8fHNQKSuutIYSE
-	m6WplzPSzVCwtivL8xG6Hz2xZEBZp03D2jaUs=
-X-Gm-Gg: AR+sD12gK2j0L9AwU5orUT/uSLakinkKD4BqJbicC06JNWSSqHu38X093nxfisp1sAa
-	yR+8al5fx5BY7tNkr7RATGZQ8gSL7eoZwQ23cdzMom20jsXBYePE61OVfJoadGohoWcO324YLBF
-	Cyh4xurAC5Q6o/Z4RccbrCqjw5iTow0tf/PhRtK2QvnhNXhDENoLV80TG/BIb6mWc7EYhyXR0//
-	meja6GM7wHVh1EiDVutQ9XUFFJu6RDkJhr8tbsecMn9+YM=
-X-Received: by 2002:a53:a9cd:0:b0:667:b16d:ed57 with SMTP id 956f58d0204a3-6694f160addmr10594773d50.27.1785856712344;
-        Tue, 04 Aug 2026 08:18:32 -0700 (PDT)
-X-Received: by 2002:a53:a9cd:0:b0:667:b16d:ed57 with SMTP id
- 956f58d0204a3-6694f160addmr10594752d50.27.1785856711919; Tue, 04 Aug 2026
- 08:18:31 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=fygo-io.20200929.dkim.larksuite.com header.i=@fygo-io.20200929.dkim.larksuite.com header.b="hEHDUFmk"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=s1; d=fygo-io.20200929.dkim.larksuite.com; t=1785857485;
+  h=from:subject:mime-version:from:date:message-id:subject:to:cc:
+ reply-to:content-type:mime-version:in-reply-to:message-id;
+ bh=LX/Wg0tks/cc/fTlAyp1t5QsfNTLQnLsZm1iWKs61Hs=;
+ b=hEHDUFmk4gLuxx1Z98PUKOfAB1mv/r177UPw7kLUjmCmge8vGtZXkVDJlu8G1P2dew30i9
+ 4YCMXqrqZfNpQuf/SKpzSBYEnIEIbwtYrm8pwg4oh10FhTqIow0rfBMT9UyZry/FDZGxd9
+ Vyjbafz5Sv8HDXq9OJJaAZ4ZhI+/Cq6OPl/VBr5nseFFwiT6yC0+iafrWy0ZrebUZmiXNR
+ QoiyLfxstMx2uKC94Zq0uXoiNOIA2HHSFHL28uxIRDPOvGKyad3mXZ/KtRh9q6Hq6COm+E
+ Ff3RttHx++aBotPG4uJZ8uE/yXAookNwCRQFB43+Cikd8wuuKj1st/BqTiztZg==
+Reply-To: yukuai@fygo.io
+From: "yu kuai" <yukuai@fygo.io>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-References: <20260803140905.383600.be823861719c.dm-dust-badblock-coordinate-mismatch@trailofbits.com>
-In-Reply-To: <20260803140905.383600.be823861719c.dm-dust-badblock-coordinate-mismatch@trailofbits.com>
-From: Bryan Gurney <bgurney@redhat.com>
-Date: Tue, 4 Aug 2026 11:18:18 -0400
-X-Gm-Features: AUfX_mwhVK8R3fTMTMbhqxYZzyeMuiKybY07nROX_VyTptiCOHRzTpEi2fv6ikM
-Message-ID: <CAHhmqcQigDdvfazttm_tFiXMy-3hUQQnQS0meJrzhkDC_ie0Xg@mail.gmail.com>
-Subject: Re: [PATCH v2] dm dust: make badblock messages target-relative
-To: Samuel Moelius <sam.moelius@trailofbits.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, open list <linux-kernel@vger.kernel.org>
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: GBCVTHReBrvP4xtHiWKvWFber3wITy3DSVjxQM1bPyE_1785856712
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
+Mime-Version: 1.0
+References: <20260804065313.2092022-1-yukuai@kernel.org> <20260804065313.2092022-3-yukuai@kernel.org> <a677f581-344b-4d99-846d-a00801e26033@linux.dev> <20260804133208.GB8078@lst.de>
+Received: from [192.168.1.104] ([39.182.0.181]) by smtp.larksuite.com with ESMTPS; Tue, 04 Aug 2026 15:31:03 +0000
+User-Agent: Mozilla Thunderbird
+To: "Christoph Hellwig" <hch@lst.de>, "Tao Cui" <cui.tao@linux.dev>, 
+	"yu kuai" <yukuai@fygo.io>
+Cc: "Yu Kuai" <yukuai@kernel.org>, "Jens Axboe" <axboe@kernel.dk>, 
+	"Tejun Heo" <tj@kernel.org>, "Johannes Weiner" <hannes@cmpxchg.org>, 
+	=?utf-8?q?Michal_Koutn=C3=BD?= <mkoutny@suse.com>, 
+	"Jonathan Corbet" <corbet@lwn.net>, "Josef Bacik" <josef@toxicpanda.com>, 
+	"Coly Li" <colyli@fygo.io>, 
+	"Kent Overstreet" <kent.overstreet@linux.dev>, 
+	"Alasdair Kergon" <agk@redhat.com>, "Mike Snitzer" <snitzer@kernel.org>, 
+	"Mikulas Patocka" <mpatocka@redhat.com>, 
+	"Benjamin Marzinski" <bmarzins@redhat.com>, "Song Liu" <song@kernel.org>, 
+	"Dan Williams" <djbw@kernel.org>, 
+	"Vishal Verma" <vishal.l.verma@intel.com>, 
+	"Dave Jiang" <dave.jiang@intel.com>, 
+	"Alison Schofield" <alison.schofield@intel.com>, 
+	"Pankaj Gupta" <pankaj.gupta.linux@gmail.com>, 
+	"Andreas Gruenbacher" <agruenba@redhat.com>, 
+	"Matthew Wilcox" <willy@infradead.org>, "Jan Kara" <jack@suse.cz>, 
+	"Andrew Morton" <akpm@linux-foundation.org>, 
+	"Chris Li" <chrisl@kernel.org>, "Kairui Song" <kasong@tencent.com>, 
+	"Nilay Shroff" <nilay@linux.ibm.com>, <cgroups@vger.kernel.org>, 
+	<linux-doc@vger.kernel.org>, <linux-kernel@vger.kernel.org>, 
+	<linux-block@vger.kernel.org>, <linux-bcache@vger.kernel.org>, 
+	<dm-devel@lists.linux.dev>, <linux-raid@vger.kernel.org>, 
+	<nvdimm@lists.linux.dev>, <virtualization@lists.linux.dev>, 
+	<gfs2@lists.linux.dev>, <linux-fsdevel@vger.kernel.org>, 
+	<linux-mm@kvack.org>
 Content-Transfer-Encoding: quoted-printable
-
-On Mon, Aug 3, 2026 at 10:30=E2=80=AFAM Samuel Moelius
-<sam.moelius@trailofbits.com> wrote:
->
-> dm-dust currently treats addbadblock, removebadblock and queryblock
-> arguments as block numbers on the underlying device. That is surprising
-> for a device-mapper target: a dm-dust table with a non-zero backing
-> offset can add bad blocks that are outside the mapped target, and a
-> badblock added for logical block 0 is missed because the I/O path checks
-> the remapped backing-device block instead.
->
-> Interpret badblock message arguments as blocks relative to the start of
-> the dm-dust target instead. Bound the arguments by the target length and
-> perform badblock lookup using target-relative sectors before remapping
-> the bio to the underlying device.
->
-> This intentionally changes the non-zero backing-offset behavior to make
-> the badblock control interface match the mapped dm-dust device, rather
-> than the underlying device.
->
-> Assisted-by: Codex:gpt-5.5-cyber-preview
-> Signed-off-by: Samuel Moelius <sam.moelius@trailofbits.com>
-> ---
-> Changes in v2:
->   - Revise commit message
->   - Remove call to sector_div() in __dust_map_write()
->
+In-Reply-To: <20260804133208.GB8078@lst.de>
+X-Lms-Return-Path: <lba+26a7205b8+265e26+lists.linux.dev+yukuai@fygo.io>
+Content-Type: text/plain; charset=UTF-8
+X-Original-From: yu kuai <yukuai@fygo.io>
+Subject: Re: [RFC PATCH v1 2/3] blk-cgroup: store blkcg in bio instead of blkg
+Date: Tue, 4 Aug 2026 23:30:55 +0800
+Message-Id: <0fc5dd22-7a8d-43f0-8555-d2ca966efff6@fygo.io>
 
 Hi,
 
-I'm Bryan Gurney, the original submitter of dm-dust.  It's a test
-target, so its main value is in being able to instigate a certain kind
-of failure.  It's been a while since I've worked on this, but I made a
-modification to the blktests test that I created for it, to test this
-patch:
+=E5=9C=A8 2026/8/4 21:32, Christoph Hellwig =E5=86=99=E9=81=93:
+> On Tue, Aug 04, 2026 at 05:19:24PM +0800, Tao Cui wrote:
+>> While reading 2/3, one spot in bio_pinned_blkg() made me wonder, so I
+>> gave it a try =E2=80=94 and the WARN_ON_ONCE triggers every time for me.
+>>
+>> I may well be missing something, but my worry is that the bio's ref on
+>> the blkg keeps the object alive, not its entry in the radix tree.
+>> blkg_destroy() runs throtl_pd_offline (which only schedules an async
+>> flush) before radix_tree_delete(), so the queued bio ends up dispatched
+>> (blk_throtl_dispatch_work_fn -> blk_cgroup_bio_start ->
+>> bio_pinned_blkg) after the blkg is already gone from the tree, and
+>> blkg_lookup() returns NULL.
+>>
+>> I applied the series and wrote a small reproducer:
+>>
+>>    - null_blk, cgroup v2, a child cgroup with io.max rbps=3D4096;
+>>    - a read issued in the child cgroup gets throttled and queued, pinnin=
+g
+>>      the blkg;
+>>    - migrate the reader out and rmdir the cgroup; the queued bio is then
+>>      flushed after the blkg has left the tree.
+> Can you add this to blktests?
+>
+>> Maybe keeping the pinned blkg pointer in the bio would sidestep this, so
+>> the lookup can't miss?
 
---- tests/dm/002
-+++ tests/dm/002
-@@ -17,9 +17,9 @@ test_device() {
-     local sz bsz
-     echo "Running ${TEST_NAME}"
+The problem here is that blkg_destroy can be called while blkg is still pin=
+ned
+by blkg_get, in this case remove the cgroup directly remove the blkg from r=
+adix
+tree, that's why blkg_lookup can't find this blkg anymore, and the extra bl=
+kg ref
+is leaked :(
 
--    sz=3D$(blockdev --getsz "$TEST_DEV")
-+    # sz=3D$(blockdev --getsz "$TEST_DEV")
-     bsz=3D$(blockdev --getbsz "$TEST_DEV")
--    dmsetup create dust1 --table "0 $sz dust $TEST_DEV 0 $bsz"
-+    dmsetup create dust1 --table "0 1048576 dust $TEST_DEV 1024 $bsz"
-     dmsetup message dust1 0 addbadblock 60
-     dmsetup message dust1 0 addbadblock 67
-     dmsetup message dust1 0 addbadblock 72
+> That would grow the bio, which we try hard to avoid.  I think the way to
+> avoid this is to have active/passive refcounts on the blkg, where an
+> active one keeps it in the radix tree, but a 0 passive one would prevent
+> the caller from getting a new reference to it.  The users who rely on the
+> pin for the I/O completion path would then just keep the active reference
+> and use a pure lookup without getting a new passive reference in the
+> completion path.  This would remove the need for BIO_BLKG_REF which
+> feels a bit kludgy and eats up precious bio flag space.
 
-...and I built it off of v7.2.0-rc6; in the non-zero offset test, the
-3 badblocks fail to clear after the "dd if=3D/dev/zero
-of=3D/dev/mapper/dust1" command, but with your patch (both v1 and v2),
-both the zero-offset and non-zero offset tests successfully pass.
+The problem here is that remove a cgroup can also remove the blkg from radi=
+x tree,
+even through it still has active refcounts. I think this can be fixed by ch=
+ecking
+the cgroup online_pin first, if it's zero, we can search the blkg from the
+request_queue blkg list, where blkg will not be removed until blkg_free_wor=
+kfn().
+What's better, if we can convert the blkg list to hash table with key as bl=
+k-cgroup,
+it will be much better as we can lookup from this table instead of blkcg ra=
+dix tree.
 
-So with that, I will add:
-
-Tested-by: Bryan Gurney <bgurney@redhat.com>
-
-...in the sense that it does what the original designer of the test
-target feels should be the correct behavior.
-
-I admit that I should have done more testing with non-zero offsets.  I
-saw Ben Marzinski's review comment about dm-dust being able to "mark
-bad blocks that aren't aligned with the dm-dust target"; that's an
-oversight, and this patch fixes it.  (Or at least, as best as I can
-test; Ben, Mikulas and Mike are more experienced with the
-device-mapper code.)
-
-To try and answer Ben's question about the expectations of existing
-dm-dust users: from how I tried to design the target, a "bad block"
-should be relative to the created device; e.g., "/dev/mapper/dust1".
-
-
+>
+--=20
 Thanks,
-
-Bryan Gurney
-Senior Software Engineer - Enterprise Storage
-Red Hat
-
->  drivers/md/dm-dust.c | 16 +++++++---------
->  1 file changed, 7 insertions(+), 9 deletions(-)
->
-> diff --git a/drivers/md/dm-dust.c b/drivers/md/dm-dust.c
-> index c7e3077fb1f5..954f4ec5a51c 100644
-> --- a/drivers/md/dm-dust.c
-> +++ b/drivers/md/dm-dust.c
-> @@ -196,7 +196,6 @@ static int __dust_map_write(struct dust_device *dd, s=
-ector_t thisblock)
->                 dd->badblock_count--;
->                 kfree(bblk);
->                 if (!dd->quiet_mode) {
-> -                       sector_div(thisblock, dd->sect_per_block);
->                         DMINFO("block %llu removed from badblocklist by w=
-rite",
->                                (unsigned long long)thisblock);
->                 }
-> @@ -224,15 +223,16 @@ static int dust_map_write(struct dust_device *dd, s=
-ector_t thisblock,
->  static int dust_map(struct dm_target *ti, struct bio *bio)
->  {
->         struct dust_device *dd =3D ti->private;
-> +       sector_t dust_sector =3D dm_target_offset(ti, bio->bi_iter.bi_sec=
-tor);
->         int r;
->
->         bio_set_dev(bio, dd->dev->bdev);
-> -       bio->bi_iter.bi_sector =3D dd->start + dm_target_offset(ti, bio->=
-bi_iter.bi_sector);
-> +       bio->bi_iter.bi_sector =3D dd->start + dust_sector;
->
->         if (bio_data_dir(bio) =3D=3D READ)
-> -               r =3D dust_map_read(dd, bio->bi_iter.bi_sector, dd->fail_=
-read_on_bb);
-> +               r =3D dust_map_read(dd, dust_sector, dd->fail_read_on_bb)=
-;
->         else
-> -               r =3D dust_map_write(dd, bio->bi_iter.bi_sector, dd->fail=
-_read_on_bb);
-> +               r =3D dust_map_write(dd, dust_sector, dd->fail_read_on_bb=
-);
->
->         return r;
->  }
-> @@ -415,7 +415,7 @@ static int dust_message(struct dm_target *ti, unsigne=
-d int argc, char **argv,
->                         char *result, unsigned int maxlen)
->  {
->         struct dust_device *dd =3D ti->private;
-> -       sector_t size =3D bdev_nr_sectors(dd->dev->bdev);
-> +       sector_t size =3D dm_sector_div_up(ti->len, dd->sect_per_block);
->         bool invalid_msg =3D false;
->         int r =3D -EINVAL;
->         unsigned long long tmp, block;
-> @@ -462,8 +462,7 @@ static int dust_message(struct dm_target *ti, unsigne=
-d int argc, char **argv,
->                         return r;
->
->                 block =3D tmp;
-> -               sector_div(size, dd->sect_per_block);
-> -               if (block > size) {
-> +               if (block >=3D size) {
->                         DMERR("selected block value out of range");
->                         return r;
->                 }
-> @@ -490,8 +489,7 @@ static int dust_message(struct dm_target *ti, unsigne=
-d int argc, char **argv,
->                         return r;
->                 }
->                 wr_fail_cnt =3D tmp_ui;
-> -               sector_div(size, dd->sect_per_block);
-> -               if (block > size) {
-> +               if (block >=3D size) {
->                         DMERR("selected block value out of range");
->                         return r;
->                 }
-> --
-> 2.43.0
->
->
-
+Kuai
