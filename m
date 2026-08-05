@@ -1,69 +1,72 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41A8248550E
-	for <dm-devel@lists.linux.dev>; Tue,  4 Aug 2026 17:19:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 519D71B6D08
+	for <dm-devel@lists.linux.dev>; Wed,  5 Aug 2026 00:38:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1785863962; cv=none; b=eWuI4CPYUxnGc7DZGjduYwtXPZM2DRTMEVvb3nM7IYT7hriGu9+z9r/z7JhccSon8wNocjg9HnL9k84HuubK3eP6PDcNo0w1ZNQVC7cvrBSrawO0vsAVRmQxq9b+97qLuur5oxtzrHzhJjJLUNNHN8wAmWujaYykAHPmGoMJKw0=
+	t=1785890285; cv=none; b=Ma8NfvFXAZVC2RsiEDn3fPfOVNR9heHBtLo/kkeSj0TF/XaZuzmC1umRS4SFc6SaUWfh4D/YvQ8FAaUDLUrVBJAp4/wBleyYXIXLN9/DaJwzuUSUNsRR8zF/+Ju2alvPolLBFeS5d64S/03JhPEN4Ahw9E3YirbYofKLscmflCM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1785863962; c=relaxed/simple;
-	bh=fiynAW9WpUzgt3N4BHN/WeqgVQsTYwv6Egh7edSdGZk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=L5r/bBYfgIAXf9jV8ir/uQJ8JbenbruvTsZYYPQNXZZzk/p0jnwB7bF2WtQfdof0YccdZsD9QKENPh0MuGHa0Qfzpoay4+cDOp+4Kk2W/M0QfDH8owDQ2FWD6QO7fnnBBc9k5sJ+0MepwHYpCtuwC8IyUtNsPR2Iayo96YGwASw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AGxGwy4d; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1785890285; c=relaxed/simple;
+	bh=6WqxOwvRODMPS+mVjvMMhwG2W9CP//QhLJ9wj24lR2k=;
+	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
+	 In-Reply-To:Content-Type; b=BtOEM+fNr8nbg9R2AOgCXi6MEmn/EtHnIRNccUd7VfPv+b4e88MYSIqmbcMpn4KuiyZKRwjltmtINWZHGzGYWQ19oNk/rGtVp5IL762GEO2zLcVEkmwKeeCSpSnup131M1QIm+YjKXHgVM6GS7p0UeaaDJPAuj9mnJEJqbdUzkc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Mi7eRKjU; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AGxGwy4d"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-47f3b39f2a1so31627f8f.2
-        for <dm-devel@lists.linux.dev>; Tue, 04 Aug 2026 10:19:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1785863949; x=1786468749; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=kJpsobbV6cDtzB2hYIU7sj8yXmkuFvAex2Z4hVps0ns=;
-        b=AGxGwy4dfrI1cN+ezzNAe+E7ix9SVbKzUWy+ec2YqukczbXL85mSrjwNB8CnqjW2xO
-         bvd7n2C9g0/Y615hXolwx62WJye7SiwAkpGdJkORfR4xZbYx9tl4VMHa0wkLHD1LbGBe
-         /ik+9bWUG3J+eEaJLAD8CCh3jfPyHNym96dRz3Zanc7D012kJPuMCwOUCWBQdGE9Gxgw
-         Ym+sGPCia7l9GDl8iO7Bj/Tx+V76Eskb6UIu4WAT2MmQ49fi9pz/OxSeuKtGqse4f2N4
-         gIv8jtV6fy+pc607uQPG7UMm4MO7c3Cy5BVHWbfM83AUfyGsCqEalu/Ogvajp0VJySu1
-         YR1w==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Mi7eRKjU"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1785890283;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3bMRUKPMAbpvvFE6T6OHBpDN/lFKrzTrz1UKeAGpowM=;
+	b=Mi7eRKjUzkCNPzGhY1/px/zuNhGLcYb34CCEUte+Xj68oq2BiXcDaMv/cdljxRa+nX9HCc
+	koYyeECir4qZptN+rkJfNCNZUO8xig8EPh8v15XMLlOz3VQkbbyfOGji29Jg9wVBQACABG
+	EISGF45sLPHt5lZnfT5NhGsdKbQwnKE=
+Received: from mail-qv1-f69.google.com (mail-qv1-f69.google.com
+ [209.85.219.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-189-saESknG0PPauHQpCcuayeA-1; Tue, 04 Aug 2026 20:37:56 -0400
+X-MC-Unique: saESknG0PPauHQpCcuayeA-1
+X-Mimecast-MFC-AGG-ID: saESknG0PPauHQpCcuayeA_1785890276
+Received: by mail-qv1-f69.google.com with SMTP id 6a1803df08f44-8f45dde7595so4057926d6.3
+        for <dm-devel@lists.linux.dev>; Tue, 04 Aug 2026 17:37:56 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1785863949; x=1786468749;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=kJpsobbV6cDtzB2hYIU7sj8yXmkuFvAex2Z4hVps0ns=;
-        b=eTqAkppy6kHFMIdn0L8g7dJrq++s54cx9ZAbSQYeohhn9deR6eB8Rl78m0KEFZtBfL
-         eSxUT3F2A7lGLYuZhmlK9x2knNB8p47UfdZVcviJP4V4C59ZfH0hSPTq/zjiv8980u8E
-         EPSrZjRUQ+yr0vkgIkUbGRbTfgLmiBA8TV1DSWeJqjIRRmzOo5jrqNGPOPz2lurLAcC0
-         n4sYJk1wVvkQVjas+FcSN0gQhrbWuOcQtwVjzNeJVFWxKa5/dv3I6ysmbmq1AYaYK7TQ
-         V+Lf7KZ7AUkEIinEpXqrIW3WSjYXfL1kKoStK35q+Z5ht9kvO96lmsrNeWv0HO8NaNgZ
-         wRhA==
-X-Forwarded-Encrypted: i=1; AHgh+RoPvflYxFUYGNW3R7QY5/vl1onVMXBNHJ0br7rISb7y6Z0izPiRr/XF7+5gDIirHp+rLOmCHTh2bA==@lists.linux.dev
-X-Gm-Message-State: AOJu0YyL8JlbWfYAMSw4GFwQrgMCAHxgWa2NPLfNLI9k3tgp47SFKaZW
-	6CZShPsp+wFfHQgnuXmb4yF0ED+m+xInFhRtk60lsrOhSJ7/ncoGowaQ
-X-Gm-Gg: AR+sD10HPOD5Al3yFtp+gM081k6/X9QGyyV4oJWpk5cRBLjxHiK4aa/B58KOt0cf47j
-	CWAnMNWyTO9sUoOn29IC8jdk1YS3C/EaLO56YBE57TP71k893LVr7d12EAHMDDaSaOI30oHUiij
-	xCNSRbSBcP6YWWaTjoZbZ2NtsJfG/+SyOXs9Pjvc+uX7GkaoVK/PiXUpwzGzvZjO2RawjT9+M3i
-	o9ezsa3YYQZXJR55JGzb7XC0ZsW9NgJUwNz/2DmOYy/+7yvKOMPzQbBmMe6Ts8/62XyGfyZcGbe
-	KkEBNTNdKqWPQHDJUR6drHyNIlW+XonAIinvnny/KHxr/4iPKxYg/w29o2TaZV3kPSC0dU0mDNR
-	TANMLnlS02QbX6mr0pgkzaQ90g5zaxHmJ6cOXcPGENQIULp6YT6VSNrwgwPoS840BiqTWptsLRP
-	mcyQKA91MrrRBARQSdqgXFFoHs1dt+0AspqrWJoEaqF7HXeLhR9ki1/UY4prepcx5h4ZGVJdqfo
-	QWg4h7ZZuyNS8Z/4Mm2dCmSMFgJXZdCFirV6vWgYztWewgGgJNEdS2YgG7xb8L5G3V2Gq/5txsR
-	A9sY/mvqu+JzB9t5NpSjM9ZccJsu08akBkZRur4=
-X-Received: by 2002:adf:fe49:0:b0:47f:941a:796d with SMTP id ffacd0b85a97d-47fec4fa3admr1381301f8f.12.1785863948785;
-        Tue, 04 Aug 2026 10:19:08 -0700 (PDT)
-Received: from ?IPV6:2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c? ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-47febfda6afsm1357370f8f.3.2026.08.04.10.19.06
+        d=1e100.net; s=20251104; t=1785890276; x=1786495076;
+        h=content-transfer-encoding:content-type:in-reply-to:from:references
+         :to:content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=3bMRUKPMAbpvvFE6T6OHBpDN/lFKrzTrz1UKeAGpowM=;
+        b=UTUwsoMpTRhMmU+3h6rp3tGPXOH3pBwISnDvtzLFFEUmcnIKXWYMFQNvVLBMO84cYx
+         +vXQalyfExyGa7IdagrAHyuGCQwTEuy3+9zCaL6yVDPXW8UpQr4VtWH59p3e4sjVw0tx
+         G1E7Zt3BKKLCIWsq0dnaOqijD8ahYspEDhDx8h+25no5eGWR9sa1fTHC6HyTwpmPprzj
+         Wik8FVhPsnNScq+iMmKJR2RrTMHV2S49eoDuBFzZ0z+LAgXiIOQDvQJEOLSJ3LEvk96V
+         1PhvZ9Sptc4OwD+XQTNDV1xf3/2xUynx6lprSwSfmGDahE9OOLhKgwvJHNf8cMeq//CH
+         qXGg==
+X-Forwarded-Encrypted: i=1; AHgh+RrR6hm1s80gOtlDl6oNi8HzoCs95Idx0pgd93QSARezk50oS4EOxZpxaXQp55yx8bO3PY2iQeATlg==@lists.linux.dev
+X-Gm-Message-State: AOJu0YyKwTyh3HaL+aXJr7jfNouTdMglbvY1ywDt8yuXvhtj/AHcjf1H
+	DOX/BHpRvCj8iH2+RFmgMvdzd2r58hzTdbm93+vTcKno1kI8d3GBCrTkmSovYmJCrOF/y9LsvfM
+	inWUEwZtK2et+I/GM1BgBZR1jjjIDAL55HEbzolvi3uv7VJpgPdGqYRTdHAIj
+X-Gm-Gg: AR+sD11twXThm7GUAw0dx1VOpRzE9HOT016QAT7yHlrxo0vAwCwZkFLd0ctW3k5nWuy
+	KvtxPbqo8A05VSAEqhKA1QYn9Yk4OeDENn5MJPbzezrWeWbl3LrhFGg9fHBYtv5kebCtP/70Csx
+	McHyVSndCZe5DsvVTmla+0hku4miXimQyc1kc+kvNqo7NSHkBiUYqWxdVQhvjRkFOMoXf4alUL4
+	RNQODZSkS2inTQVxFbzDxHaK4+l4L95b9Pi37tlfZN3T8y/4Mckpr/EFOp8ONVKKCZ4Xqs5V5mF
+	9Acm3lSJCW1QukQ02E6GCZF9Zaawz/+7kAYZ1ofOgM99TGXAMYUSSzKj1dOfBJMzaZQFjSeerZy
+	EIF6WQ6cBoWjsrZJK/17gaMJ2VZwUpi3+v214urTC0wJpKhKH
+X-Received: by 2002:ad4:5e8c:0:b0:8ed:6c66:d11d with SMTP id 6a1803df08f44-9088137452bmr30503736d6.26.1785890275649;
+        Tue, 04 Aug 2026 17:37:55 -0700 (PDT)
+X-Received: by 2002:ad4:5e8c:0:b0:8ed:6c66:d11d with SMTP id 6a1803df08f44-9088137452bmr30503406d6.26.1785890275168;
+        Tue, 04 Aug 2026 17:37:55 -0700 (PDT)
+Received: from ?IPV6:2600:4040:530f:b400:d348:ae32:97a6:8a0d? ([2600:4040:530f:b400:d348:ae32:97a6:8a0d])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-9088008e9aasm13982146d6.28.2026.08.04.17.37.54
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 04 Aug 2026 10:19:07 -0700 (PDT)
-Message-ID: <38163009-770f-4596-abe2-249efc113f59@gmail.com>
-Date: Tue, 4 Aug 2026 18:19:02 +0100
+        Tue, 04 Aug 2026 17:37:54 -0700 (PDT)
+Message-ID: <0255e828-bc7c-46ec-ba72-847e56b44b15@redhat.com>
+Date: Tue, 4 Aug 2026 20:37:53 -0400
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,93 +74,37 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v5 07/16] block: introduce dma map backed bio type
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Keith Busch <kbusch@kernel.org>,
- Sagi Grimberg <sagi@grimberg.me>, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
- linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
- linaro-mm-sig@lists.linaro.org, Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>,
- Andrew Morton <akpm@linux-foundation.org>,
- Sumit Semwal <sumit.semwal@linaro.org>,
- =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
- William Power <william.power@intel.com>, Phil Cayton
- <phil.cayton@intel.com>, Jason Gunthorpe <jgg@nvidia.com>,
- Damien Le Moal <dlemoal@kernel.org>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>,
- Vishal Verma <vishal.l.verma@intel.com>, David Sterba <dsterba@suse.com>,
- Ilya Dryomov <idryomov@gmail.com>, dm-devel@lists.linux.dev,
- nvdimm@lists.linux.dev, linux-btrfs@vger.kernel.org,
- ceph-devel@vger.kernel.org
-References: <cover.1785596451.git.asml.silence@gmail.com>
- <e26aefbcb383be7092dc76343ce745013e671334.1785596451.git.asml.silence@gmail.com>
- <20260804162440.GB12292@lst.de>
+Subject: Re: [PATCH 1/2] vdo: add zstd compression support
+To: June Park <june@pythonplayer123.dev>, dm-devel@lists.linux.dev
+References: <20260723161350.1080473-1-june@pythonplayer123.dev>
+ <178a5039-1817-4e13-8937-12eee8b26cc6@redhat.com>
+ <012e81d2-dd6e-4977-b385-d7ac890be2a2@pythonplayer123.dev>
+From: Matthew Sakai <msakai@redhat.com>
+In-Reply-To: <012e81d2-dd6e-4977-b385-d7ac890be2a2@pythonplayer123.dev>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Nyge8rC6OdJ-VMf9byBEi2Hsbj8NbjDQiysQUZIMUUc_1785890276
+X-Mimecast-Originator: redhat.com
 Content-Language: en-US
-From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <20260804162440.GB12292@lst.de>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 8/4/26 17:24, Christoph Hellwig wrote:
-> On Sat, Aug 01, 2026 at 04:46:19PM +0100, Pavel Begunkov wrote:
->> Premapped buffers don't require a generic bio_vec since these have
->> already been dma mapped. Repurpose the bi_io_vec space to strore dmabuf
->> maps as they are mutually exclusive.
->>
->> Suggested-by: Keith Busch <kbusch@kernel.org>
->> Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
->> ---
-...>>   
->> +static inline int bio_split_io_at_dmabuf(struct bio *bio,
->> +		const struct queue_limits *lim, unsigned *segs,
->> +		unsigned max_bytes, unsigned len_align_mask,
->> +		unsigned start_align_mask)
->> +{
->> +	unsigned bytes = min(bio->bi_iter.bi_size, max_bytes);
->> +	unsigned seg_shift = bio->bi_dmabuf_map->seg_shift;
->> +	unsigned offset = bio->bi_iter.bi_offset & ((1U << seg_shift) - 1);
->> +
->> +	if ((bio->bi_iter.bi_offset & start_align_mask) ||
->> +	    (bio->bi_iter.bi_size & len_align_mask))
->> +		return -EINVAL;
->> +
->> +	/* single contiguous range into the dma-buf */
->> +	*segs = 1;
->> +
->> +	bytes = min(bytes, ((unsigned)lim->max_segments << seg_shift) - offset);
+Hi June,
+
+Sorry for the delay in responding. I've been away from the office and 
+I'm currently digging out of the backlog of stuff that's piled up, but I 
+hope to be able to make a real reply to this soon.
+
+Matt
+
+On 7/27/26 9:43 AM, June Park wrote:
+> Hello! Thank you for the thoughtful comments.
 > 
-> I guess ->seg_shift is some sort of encoding of a max
-> segment size?
-
-I'll add a comment.
-
-We rather need the minimum segment size, you can always split large
-ones. I calculated it even stricter as the least common multiple
-pow2 to avoid divs here.
-
-If the device supports N segments and we know that each segment is
-at least M bytes, then we should be able to issue IO of size N*M
-of full segments. The line above truncates the bio size using
-that + offset adjustments.
-
-I guess it might be more straightforward to calculate the worst
-case number of segments and then adjust the splitting size, but
-since we don't return the number of segments it's more
-computations. E.g.
-
-seg_size = 1U << seg_shift;
-nsegs = (bio->bi_iter.bi_size + offset + seg_size - 1) / seg_size;
-
-if (nsegs > lim->max_segments) {
-	nsegs = lim->max_segments; // unused after the block
-	bytes = seg_size * nsegs - offset;
-}
-
--- 
-Pavel Begunkov
+>> I have to ask, what is the motivation for this change? Do you have a workload that shows some kind of improvement from this proposal?
+> 
+> My initial testing in QEMU, storing files from the kernel source tree, showed noticeable improvements in compression ratio (around 2.4 to 3.5), even though vdo uses small block sizes. However, I did notice that certain types of data (such as long synthetic streams of repeating bytes) showed far less improvement with zstd, at the expense of more CPU cycles. I had concluded that it could outperform LZ4 in some workloads in terms of compression ratio, for more CPU, a trade-off that could be made on a case-by-case basis.
+> 
+> The discussion you linked to proposes the ability to swap the algorithm without reformatting. My current implementation tries to reduce breaking changes as much as possible, so I had decided on storing the compression algorithm directly in the volume geometry, instead of for every block. This has the downside of requiring reformatting, but since the focus of vdo is deduplication, I don't think the large amounts of additional machinery needed to support live changes is justified.
+> 
+> June
+> 
 
