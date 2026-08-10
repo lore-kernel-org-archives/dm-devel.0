@@ -1,151 +1,110 @@
-Received: from BL0PR03CU003.outbound.protection.outlook.com (mail-eastusazon11022120.outbound.protection.outlook.com [52.101.53.120])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCB4E281530
-	for <dm-devel@lists.linux.dev>; Mon, 10 Aug 2026 01:20:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.53.120
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786324831; cv=fail; b=A1oH8ZevVbe062VnJPo+qkkABWbR5ZhwSfh6Pq3h+cCPi0jnWdfdnQCTgR5HqPZZV13WbQwuVRAtXids5UJfwN8x7RyZnwyHXhHtbatwWuV4NvitvL2hqjxwKka9CA/JgxiSV+WSu92VYRWAfymMclT2eva2X2Yph8cRilee9kA=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786324831; c=relaxed/simple;
-	bh=dp1VCO+fLC/YZilCmVf+Srg4wubrq3TGJGBdGzSqG4E=;
-	h=Message-ID:Date:Subject:To:References:From:In-Reply-To:
-	 Content-Type:MIME-Version; b=jJwGvxu4qjOv9Llv0u8C3mryoXhiUDXvR6Bq3ot9gBRdKA2tDM4TRdcPO4fifXKgsqkwnUFvLYFN9mT8VshMf+PwcC9fXF23jDe+K4AvLX4544JQrjyDkTdlV55YMOQBhSRs5b2iJ5m7cwSQA5e+c9CTlUANuHYiKXehblzdvXw=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=pythonplayer123.dev; spf=pass smtp.mailfrom=is-likely.gay; dkim=pass (2048-bit key) header.d=pythonplayer123.dev header.i=@pythonplayer123.dev header.b=FcnNB00y; arc=fail smtp.client-ip=52.101.53.120
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=pythonplayer123.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=is-likely.gay
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C142B239E6C
+	for <dm-devel@lists.linux.dev>; Mon, 10 Aug 2026 09:09:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1786352997; cv=none; b=lCzdwj9uZE6IkiFUi9qo7x6z5Yr9oS2jphDWInh4xoWTw/xReCJ6zJJAZhOhnB1VUGXcOqBDFiECAsV+foGayCHe8g4qiPg+tjLVy9J9O5d6UvAWBUof+ecU8qqFM+lfMC1CFqyohipgPK0PhInXCbZOUXvZaZu06e5TsL6XPHY=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1786352997; c=relaxed/simple;
+	bh=y76yFbQETrO71wPlFT9QcnMmGHl89KuMWVvOS7LyFjo=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=a9AyR1SXjfgMt3cqw4qxXXuB05MhtV5iyLR/YtHtfWBf2B8H+kkNe4XAlrgKP4bogE7c4Tc6nlsMO/s/g8B0k7G6bpFcgxxi+46hjCAPPCXlPaAZvmLkzU9EOCAs/+jrG4UVkuL67qJZqgf3Hp9Qetn9jhX15tqdKkjCrrAyRmo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=VI0tXIoD; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=pythonplayer123.dev header.i=@pythonplayer123.dev header.b="FcnNB00y"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=odiFZu2mI6BfhTd6Dk5Gqz/l1KFAf2+9TVwKT/MzBywKtILIyfIByATHYWd0U/pOBm5vV0cABxW/feYAuNMlJME1XRuJJwiuRo5Te5/+fw3OuFkT0gSQoBRyJwIpYVTIkExLrCgM+r2R05UlDWCcHUGsZkbdD+01AmD7/ujba4L6FgkqpIOJOd4PxJa1fHqxj0ltYQXeFtvbRC7RWvUR76hTy9NnduoIdU8y/U3evJ0vTC/egCQFT1qeLETk4Exi/bHWP9S2m+ZW52hznvEO1vNDTeF+H/LxAcmejHSS90b+nQzJtegl27S0v5ZkZ44i/O4CMtiY2jhxtn+Ov1++gQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=dp1VCO+fLC/YZilCmVf+Srg4wubrq3TGJGBdGzSqG4E=;
- b=rLNEZ2QpaxZ5sA589Y1EWo1mdCS+NgXdM4gUEyXt25W01MnPenDQ9TjbQbIpnurzDPh66llW3OfYOWzle7MDO20Xo3+pabZoeSl1PkfHZTtdw5Z7BwxaS//KpGNhjPnFHF6FbNjqYmnRGGeRUtwMz4rk4N8L2uOBKTv/DRt4trhY85xhp8DiLG9keryvpfLmx+ak/a96emyy2FO2UIqFs48WXlZ6YC199GihG5kb7am7RIikObB/3/vpkbEYdhaCllI3OB/hvFmSNI+W+BEXFZVaIhlTEuU9RbdXcierXOkVpu3KCbVGcjjXamgVeX8eOuZAZEXv/tmDpJQ6SnlUfw==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=is-likely.gay; dmarc=pass action=none
- header.from=pythonplayer123.dev; dkim=pass header.d=pythonplayer123.dev;
- arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=pythonplayer123.dev;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=dp1VCO+fLC/YZilCmVf+Srg4wubrq3TGJGBdGzSqG4E=;
- b=FcnNB00yaz09ts8ZLH6nWYd1u2AE7E/B+T43TE6orp+dAksfzKsTAAAMI2SIwSbQQEkkyHfq84Q4ftChsI1UXKCidsAEFPH7zCfmp7ynDTzjAmJgNk1vCd+rnOUaglgqwF3F83PB6+GldlmotdWcvLBk6UFtqwrFR0BqWLHxYjnYkq3j04mVFciGvrqDExP57Wwrq7TWmJkpdB+iMGqdO4qYg0+GiD/eo1SMpkp8AurZbVR04K+ESvOVmDad2QgwskxyMGlqF+UnQ5IrY7IITp+7wF1g/LbhpxtxLRe5GH+s4qeHWI04r0xMBuvhFjOumQ00rbQnZCVmr/Wl0PvbYA==
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=pythonplayer123.dev;
-Received: from LV0PR20MB994500.namprd20.prod.outlook.com
- (2603:10b6:408:344::7) by IA1PR20MB5981.namprd20.prod.outlook.com
- (2603:10b6:208:3fb::22) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.292.21; Mon, 10 Aug
- 2026 01:20:25 +0000
-Received: from LV0PR20MB994500.namprd20.prod.outlook.com
- ([fe80::c932:7e2e:4995:2a9f]) by LV0PR20MB994500.namprd20.prod.outlook.com
- ([fe80::c932:7e2e:4995:2a9f%4]) with mapi id 15.21.0292.024; Mon, 10 Aug 2026
- 01:20:25 +0000
-Message-ID: <20ef74e9-3a09-4782-8a12-f8c24148a0be@pythonplayer123.dev>
-Date: Mon, 10 Aug 2026 10:20:20 +0900
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 1/2] vdo: add zstd compression support
-To: Matthew Sakai <msakai@redhat.com>, dm-devel@lists.linux.dev
-References: <20260723161350.1080473-1-june@pythonplayer123.dev>
- <178a5039-1817-4e13-8937-12eee8b26cc6@redhat.com>
- <012e81d2-dd6e-4977-b385-d7ac890be2a2@pythonplayer123.dev>
- <25a53d68-e1ab-4262-9ee4-36dac5980fa0@redhat.com>
-Content-Language: en-US
-From: June Park <june@pythonplayer123.dev>
-In-Reply-To: <25a53d68-e1ab-4262-9ee4-36dac5980fa0@redhat.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-X-ClientProxiedBy: SEWP216CA0093.KORP216.PROD.OUTLOOK.COM
- (2603:1096:101:2bf::8) To LV0PR20MB994500.namprd20.prod.outlook.com
- (2603:10b6:408:344::7)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="VI0tXIoD"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1786352994;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=y76yFbQETrO71wPlFT9QcnMmGHl89KuMWVvOS7LyFjo=;
+	b=VI0tXIoD+K+iG6OzUxfpmRvrxA9K4k0hWZCo/1C1nMWI18Ob1JGAFBP6fkkL3mLJcbaqYz
+	3gmPdLMXxUdcCI9sf7dkdS5lDpY04gf7QT80NSZKy4ljXoPw+1vhT6ZVGcfwd6cokJCp7G
+	13ruHu7RDqkWvQeMkTg7oyIUqYUUrY4=
+Received: from mail-lj1-f197.google.com (mail-lj1-f197.google.com
+ [209.85.208.197]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-696-g8kc36hQMQq5_9rJ0qAvCA-1; Mon, 10 Aug 2026 05:09:48 -0400
+X-MC-Unique: g8kc36hQMQq5_9rJ0qAvCA-1
+X-Mimecast-MFC-AGG-ID: g8kc36hQMQq5_9rJ0qAvCA_1786352987
+Received: by mail-lj1-f197.google.com with SMTP id 38308e7fff4ca-39fa97c4c0dso4057481fa.2
+        for <dm-devel@lists.linux.dev>; Mon, 10 Aug 2026 02:09:48 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1786352987; x=1786957787;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=y76yFbQETrO71wPlFT9QcnMmGHl89KuMWVvOS7LyFjo=;
+        b=H0OWpfij+NSmtSESZ2mPiEbFRT3+h968z9GyLoaPV/Rvd2b0L/ciPyOama2nx7FBFL
+         m4k2dxgs95NEzRT1YFG7XVoZBhI8ORk2EQD3jmyIKLmM27vZTMAzWYXRzb28V254TRVn
+         vZ85dSWnhFUKXtVskrpQmAm8vKbioWyOSTX1jQXCOTUOl0yiJdpY6ba0cF6wNHNZ3J8x
+         T7frOed/FuOCOKJglG7jFN73YA1dkXlYDlvlAH6xHgBnVrVvva0ATuRyXtYpempgAv5/
+         xmEad0k2Ytgpwv2KkhrclCN+dLI6K+u3KmcvMQI5an0FgTkOLXjJJjiGjvKTwOpfOz73
+         N/Eg==
+X-Forwarded-Encrypted: i=1; AHgh+Ro1TBnpYDig7+g19NlbWJXg6i7Hs6ZSi+N1aLG2VFJeUHiqOP5ZPDtIyJmHox+N1RWwVITqtVItaw==@lists.linux.dev
+X-Gm-Message-State: AOJu0Yx2Ndrro1EOScTONiyRw7Kq4vWW2L2uL64EcLL5FSpJpKZ7fb6w
+	C0N8t8iHOSXgx8Dfpf7rBqLaG2Gu0r3Fioq5h+eQDVu8LN8+qWImvJQJJrf+09IWqfZj0sbdHnz
+	ZA+ZyBUKR7DQ9CE/jnGmSNgLG91cZfJy/im9+jENxgbusDEHVViDD+r0v3btUlOSrfk5GBYAB4q
+	Njf5oPIWdwzhpjBkgNveyAm35GWISk6GUluA==
+X-Gm-Gg: AR+sD11QzmK9gNgNKcAsZT1YeuSA1uodjYKxr7fqtJdbZCF4RDzuCyHKBXxG46juUXh
+	Woi9eD33bzLV3PcliLimZlKppLQOgKffovLDnLE4cMzKJ0Sek1N4ZAUb+fi9F8Nq+lVxiRBZNDN
+	BoEZ+yCuYx8pbR7VI34zSsGQJikBXLf0OkQ7Ab5ntAgN0Z3iul+YXC008=
+X-Received: by 2002:a2e:b889:0:b0:39f:e8a5:2da9 with SMTP id 38308e7fff4ca-39fe8a5437cmr17385791fa.25.1786352986792;
+        Mon, 10 Aug 2026 02:09:46 -0700 (PDT)
+X-Received: by 2002:a2e:b889:0:b0:39f:e8a5:2da9 with SMTP id
+ 38308e7fff4ca-39fe8a5437cmr17385671fa.25.1786352986339; Mon, 10 Aug 2026
+ 02:09:46 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: LV0PR20MB994500:EE_|IA1PR20MB5981:EE_
-X-MS-Office365-Filtering-Correlation-Id: 1a200ff5-4c80-4162-5987-08def67d8e6b
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|1800799024|366016|41320700013|34036016|23010399003|376014|19092799006|18002099003|22082099003|56012099006|11063799006|4143699003|6133799003|10067099003;
-X-Microsoft-Antispam-Message-Info:
-	ff4FPLeYnaqd3PkZ6HlPBp3uCmywEy6SoTsoKBmNRmW6fYJsszfdEKJ/to6Mbsq3nyLSc+1OEhwZFavUXf6g4gldmoRHAOYV/0/jYhczo7Psdib932G9cZ4ubeENKwSOxDLDzuDRvgl6xrg5SSTlHmOkm+xm877MPvqDN2p8RDXJAKhx/HtuF3rTE0JiRWx3P9hM0/nm3BZRN/bI1KFEn47M/uuUKVJJpMETCui4IjPRUcIIJZUBJmCulhT99cV4jVqiDe8QRh0IZySW/MCdoGLbh0Do1CLW+KfxBYGJKniQzLnnQu0otnUQlOQrIhhv6EQTONFDJ2wYJYI6L1QQrqTZzgxZzfTGRZI9lnMamSGkcYkKN3QQ732AYg5HgkIa2MAgddWRLEyuN06+h+200Q4YG5e8c+QQaWTuu6ii5Yu8NTRwCHJySCQCNYvR+3ch2tqR8I1wxrQbR+Hs7giwEFnhTRcVZEu1mhVaZD5lK4ADW/MhfujR17JkTjMosTeBkLsBb2Xxo1mW4DTmCcmGurpyP303BqO/F4V/SgiTwEJ78PUOnfAz3YFCJAu5VBRY5MMxnD+m0JUKxrvxGVjq2pNMyui7fUk8VU/ALLHvthCJ/QVGM3zkeP4HiNglTHCYfqKYZNrDL0BdPEhlPiMKKPmSWMoXAGNR+G6RP7ehs34=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:LV0PR20MB994500.namprd20.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(41320700013)(34036016)(23010399003)(376014)(19092799006)(18002099003)(22082099003)(56012099006)(11063799006)(4143699003)(6133799003)(10067099003);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?utf-8?B?Z1B6TEVtQWJEdStrZ2VGWFZkMzhXZzMydndmY2FhSXZqUFZvUHVEMjkxcGRT?=
- =?utf-8?B?SURVcXg2b1ltcTdYZnI3UTY2RUxYVEUvLzd4anFSdTJONWM4QmF3cElKOFBh?=
- =?utf-8?B?eDBlNzU0SmJKVHYxOEV6TDhsSDBhQTRuUHA3VjAyUHlBY2pWYkxLcnNXbnV3?=
- =?utf-8?B?QnZ5cGhHRi8xTlpQZjFzVVlTU0tqenBjeElNUzJDQUM0NXJuallFMzk0NUl3?=
- =?utf-8?B?WnZub0dwaDFCVDVJZmpBbDM0b01hOGtkT0NES29ENmhrSXdQdkhLZExHMHVu?=
- =?utf-8?B?bFNGZXJpSlVhM2l0WUE5NVpmQmFkMHRZQ3dHZERPMDVlYnA2YUNuVk9nVFBQ?=
- =?utf-8?B?T0FxSG9adFNKWFJHdVRhdG50S2F3Zy9MMHllY1dLQ0JvUjNCUXorbVJzNnls?=
- =?utf-8?B?dy9qNjhFc1U1WGhVVXpMTG5ieFNqVytDRytxYWE2QjFyTE45T1ZoK0ZqOHds?=
- =?utf-8?B?MUE3NXFTeEdlYUZ5bFArYlp2N3Zoa2dCSUpDY3locEpNV2VHL2RqZ2tnajBM?=
- =?utf-8?B?emc4dC9iTFVHSzlBZ2YwMFlsWitNTGl3KzhjcEp2K1lJYm9VcUdRdGNsMXJj?=
- =?utf-8?B?aEdmQVZTRjh0Zi9iUStpOWZPT244N000djdLQjdnZGswKy9IZUZ4SjNlNmlX?=
- =?utf-8?B?dkFuODlpcGJuOFNMdjdhVVJVaHUvbDNHamg5TDNRSXJrTnI4NmZ3dHBsamtq?=
- =?utf-8?B?dEt0bVBPNk1yY0hweXlwMnpyOXNZN29XU0pqaVkybEhsZldtb1VoM04rZFVz?=
- =?utf-8?B?MXBLdHdPUCtRUE1mNlVSUWE0aHhIdCtRS01vaUo1eUlhZTJ4Y2M2MzN3VjJP?=
- =?utf-8?B?VHdyL0RYcVpoeWs3UlJWY3Fwa2JSYklmTVhTWWh4bWxiVUFPbUtaWXVjZGx6?=
- =?utf-8?B?Y1RHYlFnenlveEs0NnVNUE9nTk1sbFlvVjR6TzUzd3F2dE56ZjZIajArVzBr?=
- =?utf-8?B?NmQrSzlFMWNKMHNJTEt1Q2RObExyUWgyVjVRdE9DNk9zOWNTODk3MVNSbExT?=
- =?utf-8?B?bHpmdlcxaCszLzZibkVvOG0xNWtqZ3FNeGNZL01McHNLN1lrTkYvZlQ2Q011?=
- =?utf-8?B?MlJJTFZmY0MvWmk0VnNXU05IUmlRMUVob2k3WkZ4cjBRaHJudW1uU0ptQi92?=
- =?utf-8?B?bHhiR3lUYXdkR2l6RE1nZkVvMnZnOGRqQ01id0VkMHByMmlSWXB3UDBvMVpP?=
- =?utf-8?B?WnoyMFowZEdkZ0tvbzU5aUpIb3h1dUdseGM4bUp6bTVabEhJQWp0UmpFOVRr?=
- =?utf-8?B?Rk9xYXQza2Y4aGcwM3ViYnFiQTlwQUhEdjdSODIzOFRVeEN1azRtemZRemxZ?=
- =?utf-8?B?c3pSVlUwL0g2M0h5cWlaeW8yY1pzcFd2c0dxR1hvMmxkOWtybElvMmlrY3J3?=
- =?utf-8?B?OVRmeU5KczZ6TUFrSXlvSzFxN25PUHREdnl3cDNTQS90YjVSVUdtYm1jYVpq?=
- =?utf-8?B?UGdJOERlUHpwZVo4STF2ZlRLalRLVmwwNWtSMnZaUVdMVkVLNEpiU2xLanE2?=
- =?utf-8?B?VWFLdkVtQmdmYVlNUmFnQTVUWk4vb3Vna2dnSDlwazVpMUhjbEYyV05vN2hM?=
- =?utf-8?B?N1R0WU84bmpMdzdNbWFsTnJkU3g4VU9HYUdWaG0rZjJneTFaQTBmUWVNNytV?=
- =?utf-8?B?TTlaNFlYcEZwYlpzVHdCYUJPSmJ2MmdYOXdJd2ZEaDhpN01BLytLeWY1Nm05?=
- =?utf-8?B?MHNNcWFzQXlJNko1WldiWHRMb0R2K2dtZ0dxTWNjdlFBRlVqMC9TUk12SXBT?=
- =?utf-8?B?VWRBdWRZY3dkSFJnVEkyLzVLMkdUSDJTY3pCU3hBZndUd0czSHJvazF4djFN?=
- =?utf-8?B?ZmRNN3ZzdmJVSzVocjhrRFErY2UrcHozcUJwSk1XeURRQ2ZtOS9HWStST3c0?=
- =?utf-8?B?Nk8wNUd2MElTYUVUbWtsTUJDN1phOU52WnFHYzB0cTBnTjJrL1VUWkF6dldm?=
- =?utf-8?B?c3QyRnRCcmR1Rk9tNEtZRzUxanNURkN1V1NXM0xsM1dSNWlxVHhrcFRhd0F6?=
- =?utf-8?B?NjlEa0NCY01hQThhMFZZckRzRXBxOHVwYjdrMU5EdHAyWXJ6QjR1L3J0YmhX?=
- =?utf-8?B?bHM0aFZpb3RZL0ljc3h6eGtBbGlNVzB5YnRkMExSbGs4SnNJQXZnTkR4N3RF?=
- =?utf-8?B?eVJhVmNYMzRtc3ZEdlc0RDNzcUdweWEyMXdQRFlxeGVPcUpEbE5KMzh6Mlcw?=
- =?utf-8?B?d2FHWjdyV3NHa1NySkpFcW1DT0xTbHc5RmpITDN6U0xvU3dqYTdaRHJCbktC?=
- =?utf-8?B?Z1owKy9VUUZTa00zWFduSzhGLy9ObXJBWHMvL1FKdG9mN2xxd1V5ZS84U0Zq?=
- =?utf-8?B?djU4UVEvSFdndnZ1U29LVXMrbmZac2dVeDF5VjJZaVRwUTBtbkxtdz09?=
-X-OriginatorOrg: pythonplayer123.dev
-X-MS-Exchange-CrossTenant-Network-Message-Id: 1a200ff5-4c80-4162-5987-08def67d8e6b
-X-MS-Exchange-CrossTenant-AuthSource: LV0PR20MB994500.namprd20.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 10 Aug 2026 01:20:25.4889
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: a3ce53b7-1063-4e66-9486-3ad7281a5cc5
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: maVusUk95MIsYCYRHA/IWsBPFkbVPK1U1mA5o4gD4l/+OWB/kttTvhg/u2YEkpB53iKr6j46nlYpqCO0u9NRbA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: IA1PR20MB5981
+References: <20260731-b4-disp-4fd3bed9-v2-0-7b1835e4e7f6@proton.me>
+ <20260731-b4-disp-4fd3bed9-v2-1-7b1835e4e7f6@proton.me> <CALjSBEvVOTpd+j3zgspvdbX2fhQwc1HoNQHFup0uEfkRM=2kVQ@mail.gmail.com>
+ <20260808085943.422108-1-hexlabsecurity@proton.me>
+In-Reply-To: <20260808085943.422108-1-hexlabsecurity@proton.me>
+From: Ming Hung Tsai <mtsai@redhat.com>
+Date: Mon, 10 Aug 2026 17:09:34 +0800
+X-Gm-Features: AUfX_mww3vSlmKwcZxLipnhZIJtWuDxrD8BVK8W2Uz95er9lDzTTvK3UqR3pg38
+Message-ID: <CALjSBEuVToXYPjw=phCkkFH++akBaVT+KKKRk-7QLuDY3S1kPQ@mail.gmail.com>
+Subject: Re: [PATCH v2 1/2] dm array: validate array block headers on read
+To: Bryam Vargas <hexlabsecurity@proton.me>
+Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, Joe Thornber <ejt@redhat.com>, 
+	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 5ASbpgKfqx6SZtBN5b4X-HQBNhoQzM2qZ1WFymCpwZg_1786352987
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On 8/8/26 10:37 AM, Matthew Sakai wrote:
-> Thank you for your patience. This took me longer to get to than I had hoped.
-No worries!
-> If you have data handy from these experiments, it would be interesting to see it. This is the sort of information that would go well in a cover letter explaining what you want to do, and why. At any rate, if you have cases that seem to benefit from this, we can certainly revisit whether this is worth adding.
-> Another thing to consider is that we originally chose the LZ4 algorithm because it is fairly cheap to compute. If you can, it's worth trying to quantify what the extra computational load does to vdo throughput, especially with fast storage. The throughput for a vdo volume will often lag the raw storage speed significantly (due to the deduplication machinery) and it's worth knowing if changing the algorithm will make that worse.
+On Sat, Aug 8, 2026 at 5:00=E2=80=AFPM Bryam Vargas <hexlabsecurity@proton.=
+me> wrote:
+>
+> On Mon, Aug 03, 2026 at 09:41:36PM +0800, Ming-Hung Tsai wrote:
+> > One minor nit, which needn't hold up the patch: I'd drop "wanted %u"
+> > from the error message. The wanted value is derivable from value_size,
+> > so printing "%s failed: max_entries %u invalid for value_size %u"
+> > carries the same information.
+>
+> I'd keep it. The two DMERR_LIMITs above it in array_block_check() are
+> "blocknr %llu !=3D wanted %llu" and "csum %u !=3D wanted %u", so "%u !=3D=
+ wanted
+> %u" is the shape a reader of this function already expects. You're right
+> that the wanted value follows from value_size here and doesn't there --
+> what I was matching is the form, not the information content. Mikulas,
+> drop it when applying if you'd rather.
 
-Yes, I'll make sure to include more details in the future.
+Thanks for the explanation. That's the reason for the shorter form
+here: the "wanted" values for csum and blocknr cannot be reproduced
+from what is printed, but readers can derive the expected max_entries
+from the printed value_size. Mikulas already dropped it from the
+staged patches on the dm-next branch.
 
-> I appreciate that you're attempting to minimize disruption. I admit that it is simpler, in terms of pure implementation, to make this a format-time choice. However, imagine what happen next:  Long-time vdo users will inquire whether they can use this new feature, and we will have to tell them no. For new users, I think they may not know all the data they will store on a volume up front, but they will be locked into their first choice. Given the case-by-case variability of the tradeoff, I expect users will appreciate being able to change this setting to fit their current needs.
-> In short, doing this as a format-only option looks like implementing half a feature to me, and I think we would be better off starting with full flexibility. Also remember that every version of this feature that we expose to users is a feature we will have to maintain for the lifetime of the dm-vdo driver, and I would rather not have to support both versions.
-> (I believe the difference in complexity is also not that large, but that's a bit more subjective. Setting the algorithm as a run-time option means extending the compressed block format, but adding a format-time option involves more work updating the user space tools, including the formatter. Both options also require updating the table line and the super block format, so there's also considerable overlap.)
-
-Personally, the superblock modifications felt quite concerning at first glance, but that seems less like a huge issue, if it is justified.
-
-> So anyway. If you can show there is utility in doing this, we can look at adding it. I will probably want to do it by building on what we did last year, though. You can look at what I've already done on the branch feature/allow-compression-configuration in the vdo-devel project. I haven't rebased the branch in a while, but you can get an idea of how I was planning the table line and super block changes, at least.
-
-Thank you
-
-June
