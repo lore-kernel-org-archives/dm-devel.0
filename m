@@ -1,94 +1,127 @@
-Received: from mta0.migadu.com (out-1.mta0.migadu.com [91.218.175.1])
+Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD24F3A255F
-	for <dm-devel@lists.linux.dev>; Thu, 13 Aug 2026 21:33:00 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78F1A3502A5
+	for <dm-devel@lists.linux.dev>; Fri, 14 Aug 2026 04:58:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.170
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786656782; cv=none; b=dVISrtXdefZuyvPLdKvnr+KmVdzQeNFKbZkjw2HMKLBdu5FYUjCS5gbgY9966eQsWte+llD6eIdU8/2tq+o5pYYepoPtOReNLgXWK08NFzacuVnt9CMyU32cSrIfWzAYkjkcPa/5nxJIyymwrIPJw9tKClzp38w3r0P2zzSN3kM=
+	t=1786683498; cv=none; b=Lcav6o1UHmxv2WsX+v6ZGZ0gzDKzm0E9qp66nGfDdGkUwaRxEnGFkve7Is4wJRbv2ApMfUgXcJvby4t4y3rAoeXd5tmEpjZpXq0IfNUnNwZqCrRHP9wdYw+eCfzN88dJ5EnnE40tAUuMI2q3XBxTf8KQJ2vlBsdvQVt5hie1PLM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786656782; c=relaxed/simple;
-	bh=LZMC25HwDdExjBm3N+ydxbcA57pvBYyS6Kl3DOLCtWo=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=BSCaCVjjfossbqdKmmDZYa/miEJIcI+xSsCd5HmVXNRU54FjAnjUSzZqeX4bTgddO6ymk0CmIoBL1FkBLotsjtNL27cfA8qJIxSl8zkqJYmxyHpkiH/YSFpMBAspeeB4ZCig19KZ8HUq2rw6BF2caIaPg9ZbAFi1UoP+er6Vrfc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=hbvGNpvo; arc=none smtp.client-ip=91.218.175.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1786683498; c=relaxed/simple;
+	bh=x+q7w8x3NtSBHD+4DmbJVmqcKywElwy548VILEv1nBw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=RlfwT59PTIkntYyIxlIr+N/jh5iQF8T8hUs65VmJrokJlg46eGg9uP9o8/doYhsW1q2ePKRfQRjXGjzRhpomG1p4bRm3DJm4beoBlHS3rFabVn/evL4e1ANq1Hmyk5jMZtiE8yKH43aSJH0+TxcG6yZcb5w6KphvG7lSJZ5dZi0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=e9rgqvVF; arc=none smtp.client-ip=209.85.214.170
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="hbvGNpvo"
-X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=LZMC25HwDdExjBm3N+ydxbcA57pvBYyS6Kl3DOLCtWo=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1786656778; v=1; x=1787261578;
- b=hbvGNpvo+l29m2O1R5O/dgEvtEIxzAzWaCZGfcpkudKQe4AQXeKecERccVonbFytZL5WB6Di
- ZHY+JrMc+WiyW8C8Z64uaBpH0Er0/qYuSGWrYYBsfag6l5zsHDH0e6164VAAv3rKtV5rHzZvZrB
- cllG3qes1MJNa/k6zm+URnxE=
-X-Envelope-To: dm-devel@lists.linux.dev
-Received: from linux.dev (62.216.208.217)
-	by mta11.migadu.com with ESMTPS id b6c41f87c7a28578;
-	Thu, 13 Aug 2026 21:32:58 +0000
-X-Migadu-Flow: FLOW_OUT
-Date: Thu, 13 Aug 2026 23:32:56 +0200
-From: Thorsten Blum <thorsten.blum@linux.dev>
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm-crypt: Reject malformed raw keys in crypt_set_key()
-Message-ID: <an44CG_PDBM4KCCv@linux.dev>
-References: <20260813081335.40282-3-thorsten.blum@linux.dev>
- <CAHp75VeXb5DhdpMo3x2dwGETC6s3hmwG1s3eZktyOd7czZOGxw@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="e9rgqvVF"
+Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-2ce7d2adef4so11182005ad.3
+        for <dm-devel@lists.linux.dev>; Thu, 13 Aug 2026 21:58:17 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1786683497; x=1787288297; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=u447nzojyw2ofbi46saTWniS13rz4btfnPI1tc93bqI=;
+        b=e9rgqvVF+eYOCMD1ej2ldZRTDE/4ljVWmIlkQeGAi5+6P/wgz+b+vvJqdLnFkhwGhW
+         6NXFQc/9GZafoEG6GKZcH52aC124HAVdA49Bz7laBUY55STRoLvR6BEV4Iw90EHmc0LY
+         C2C69HQfSCwjDNlkXFduaDnKiRTnFXpaSpq5NsNCEN5uOxi/W/KNVjoPBHh7GVmGig+4
+         UiPJpWSlpuYtGHvKl6Crs7wy1MzrvKonjPBxrnKYvd2YOlVEHHQJ0U/wtbHTAVTDU1ae
+         sZKlChWgNO3vgsOg6++kc2DvMRkvacawk9GB1+H0wIerQI8+YkR9YlcYXlxf1+j1PpI+
+         g9WQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1786683497; x=1787288297;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=u447nzojyw2ofbi46saTWniS13rz4btfnPI1tc93bqI=;
+        b=dEIw39+h6TNc6MYEes13v/cE/+vyoXN4IkGOtiKD10TPPsIlPHKbRhY0BqoT0dvcOF
+         W8m5FdASY4ZM4VuFNvIkXtapA1OD7mnMI2EvY2nlaVCpcKgfuNbRdfyVGU5tpwvZX95C
+         h/EhpMr4tm0+6iEXogeg3oAaJExq0Kt5aROvoghgRDZeP5vG4H5cDujYcWSRmLjIQR+K
+         KsCOapuqGMQA8cevw7vfafVMx1k7hs9UQahqOclifFbLREkGvDHPGtIeEQzR2G0lfmO9
+         q107M7/p1iAmUkihasXyj3EtjWWHBiAN6GmrOkVS+sgNPSUL6Z6Wy9tluqBE7SaXH7d7
+         jwjw==
+X-Gm-Message-State: AOJu0YxGwR4shELc3PJXNeFt6TrFvgO0btbwyuaNzZmHqnaXp7IMY1SZ
+	wkMji4nAZ+yFFEMTdOeIP4/Iclihj9Xd0P1f36HjuTPxOwZH3/hlHOXFI3att57+
+X-Gm-Gg: AR+sD13vvG/+GTFu7byasadjGwLZYI/TFJZPq2NxCWjJd2pORCr2IZg9vtqAFTFWB9a
+	8JXFu3IC11jk4Kj5eCXKi0PMrP41w8NyAsfDIauC4UzyEavG8OvSEAaH/Hcsct2tnXmo9qs26Np
+	iRnAie906wE0dKbY1z4f1h7PdlT3KzolE35qEuDKY20IIxorHasl68X3ExKrPcAGr3fqNtfaK/o
+	KKCMBYr6tln8PlKBJrGmpLTVfAnl81lkMJbWWzTXplQvLLZWFUj/tqApoiOscMMsS6PXFPBkFfR
+	OjnE+7f1QiO6kGGtXmu3JiwKAehENPEBZaN2jOctOLnNxxe2ZPXt5bYSAzKPOOCHsa3x0OfiajX
+	nKNSPmMIhBjTQvhJwYjkmnd2s5imryiFqFqzndNB3VVTGjcAXsgMNbd4DkBCY8eAADG2bg9m9OG
+	6mZL7XV5zzCWTGiQsK3GkSk+B9IuHD0wHR42Ol8g2kV4BUrYrYMFsPJ41WbSLbW6UFkh4BWKGD8
+	Hlp0oTFCWHHJ3xAQTffycXu6uGEXM1A/bHuk6gH0exFpfTvrTenMfcqvFpkqJxM958eVtuX52ft
+	2+rqeuwQgIvZUzwSB7In2NxoyrZD4bM4CVLkoxBC3RR8x/mdTill
+X-Received: by 2002:a17:902:da83:b0:2ca:6d87:cda0 with SMTP id d9443c01a7336-2d3b08589ddmr26685545ad.6.1786683496611;
+        Thu, 13 Aug 2026 21:58:16 -0700 (PDT)
+Received: from spider.bream-herring.ts.net ([103.252.203.158])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2d3ae7a4c27sm4494325ad.27.2026.08.13.21.58.14
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 13 Aug 2026 21:58:16 -0700 (PDT)
+From: Matthias Goergens <matthias.goergens@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	linux-kernel@vger.kernel.org,
+	Matthias Goergens <matthias.goergens@gmail.com>
+Subject: [PATCH] dm-delay: advertise flush support
+Date: Fri, 14 Aug 2026 12:58:12 +0800
+Message-ID: <20260814045813.3148127-1-matthias.goergens@gmail.com>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAHp75VeXb5DhdpMo3x2dwGETC6s3hmwG1s3eZktyOd7czZOGxw@mail.gmail.com>
 
-On Thu, Aug 13, 2026 at 11:39:27PM +0300, Andy Shevchenko wrote:
-> On Thu, Aug 13, 2026 at 11:15 AM Thorsten Blum <thorsten.blum@linux.dev> wrote:
-> >
-> > dm-crypt calculates the raw key size by dividing the hex string length
-> > by two. If the string has an odd number of characters, the key size is
-> > rounded down and hex2bin() only decodes complete byte pairs.
-> >
-> > For example, a 33-character raw key string is malformed, but dm-crypt
-> > treats it as a 16-byte key and ignores the last character.
-> >
-> > Reject raw key strings whose length does not match the expected number
-> > of hex characters. This restores the trailing character check that was
-> > lost when the open-coded decoder was replaced with hex2bin().
-> 
-> Thanks for the report and the fix.
-> 
-> ...
-> 
-> > +       if (cc->key_size && key_string_len != cc->key_size * 2)
-> > +               goto out;
-> 
-> Okay, the original code did two things (differently to the
-> implementation with hex2bin() call):
-> - if key length is odd and the last character is not NUL, it failed with -EINVAL
-> - if the key length is even and the last characters are \n\0, the
-> string was parsed normally with the exception that the H\n part
-> becomes 0x0H instead of 0xH0 if follow the order
-> 
-> I dunno if the second was ever supported and not theoretical (so a
-> user can forge that one), but this change is only about the first. So
-> if we don't care about the second part, the expectation is that the
-> key always ends up with the NUL having an odd number of hex digits in
-> it. So, why not simply restore that NUL-check?
+dm-delay parses and reports a flush delay class (the 9-argument table
+form's <flush_device> <flush_offset> <flush_delay>), delay_map() routes
+REQ_PREFLUSH bios to it, the target sets num_flush_bios = 1, and
+Documentation/admin-guide/device-mapper/delay.rst documents flush
+delays. But the target never sets ti->flush_supported, so
+dm_table_supports_flush() is false: the block layer strips REQ_PREFLUSH
+as a no-op before the bio ever reaches the target (blk_insert_flush()),
+REQ_FUA is stripped too, and the flush delay class is dead code. Anyone
+who configures a flush delay on dm-delay (e.g. to model slow-flush
+devices in tests) silently measures nothing.
 
-The result would be the same, but I prefer the length check because it
-validates before calling hex2bin() and rejects before modifying cc->key.
+Set ti->flush_supported = true so the flush delay class is actually
+reachable. dm core clones empty flushes with
+REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC (__send_empty_flush), which
+delay_map() already routes to the flush class, and delayed completion
+is already handled for every class by the delay worker.
 
-> >         /* Decode key from its hex representation. */
-> >         if (cc->key_size && hex2bin(cc->key, key, cc->key_size) < 0)
-> >                 goto out;
+Verified with dm-delay over a virtio-scsi disk: without this change
+REQ_PREFLUSH completes immediately and REQ_FUA writes are stripped by
+the block layer; with it, flushes take the configured delay and FUA
+writes reach the wire (measured as device-time per MB at D_f = 200 ms
+and 800 ms flush delays).
+
+Signed-off-by: Matthias Goergens <matthias.goergens@gmail.com>
+---
+ drivers/md/dm-delay.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -301,6 +301,7 @@
+ 	}
+
+ 	ti->num_flush_bios = 1;
++	ti->flush_supported = true;
+ 	ti->num_discard_bios = 1;
+ 	ti->accounts_remapped_io = true;
+ 	ti->per_io_data_size = sizeof(struct dm_delay_info);
+@@ -451,7 +452,7 @@
+
+ static struct target_type delay_target = {
+ 	.name	     = "delay",
+-	.version     = {1, 5, 0},
++	.version     = {1, 5, 1},
+ 	.features    = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_ZONED_HM,
+ 	.module      = THIS_MODULE,
+ 	.ctr	     = delay_ctr,
