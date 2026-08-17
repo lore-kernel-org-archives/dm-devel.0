@@ -1,33 +1,39 @@
-Received: from mailout1.hostsharing.net (mailout1.hostsharing.net [83.223.95.204])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mta1.migadu.com (out-196.mta1.migadu.com [95.215.58.196])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC395330B01
-	for <dm-devel@lists.linux.dev>; Sun, 16 Aug 2026 12:13:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=83.223.95.204
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97CAD3B47EF
+	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 07:39:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.196
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786882422; cv=none; b=h3iBtymWi5Gi8xRJgqXmkfztozOp909+iSDnhDwmEpXu2Z3YKak+08v2PpB+sEVpbONmYrsGouy7cKmqwKv4Dq4ZwB/6FpSPj/9s9W10tKbQjnXO//shprXHvD0xDmgWQupEp8vuekJhIMEoUF8s2EXLENHbJ3zh/BKltaEJUqg=
+	t=1786952343; cv=none; b=gZ5RsIEo+hXlgcrkggG4ByjavSZmLS9BnMFyJRlyBjHJu9TUUHahsiCr/W65fLqSRhHRIlaY6GRTinn/RgDEQG6aDH1hE98mmJeHDo5pRNRwfnjEJeFH/vDrRTd+3HV4VAwNgZZNzGiN3Cpi9LhceLW2kQmnNfu8tDMJRR2GHKg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786882422; c=relaxed/simple;
-	bh=Cn0zUN/hrMLQAPmuNzHmIPISGC8g6oolk9qIb89TBIU=;
+	s=arc-20240116; t=1786952343; c=relaxed/simple;
+	bh=4YGgPm1wRAd8vr5pINF7lmz4ylld4f9QdvgoaXgstqU=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=AtSoVFvUMKEZZI0ZBhQHE3Vwz8fvfHH9N0T+t2d9mJtRxxSeppHD8m0x13vIRDfxgPvOSkjwpzdiSFl8BWU4xFSiYho3PCRuOH7UxHegFCXBGgHOE1VKYBd/h4dMJHKXqM4yTlkqlGchj0t7qpIwX8aJ2s1nXt1+dYlNjl9TouU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=wunner.de; spf=pass smtp.mailfrom=wunner.de; arc=none smtp.client-ip=83.223.95.204
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=wunner.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=wunner.de
-Received: from h08.hostsharing.net (h08.hostsharing.net [83.223.95.28])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange x25519 server-signature ECDSA (secp384r1) server-digest SHA384
-	 client-signature ECDSA (secp384r1) client-digest SHA384)
-	(Client CN "*.hostsharing.net", Issuer "GlobalSign GCC R6 AlphaSSL CA 2025" (verified OK))
-	by mailout1.hostsharing.net (Postfix) with ESMTPS id 83A3F3BC;
-	Sun, 16 Aug 2026 14:13:37 +0200 (CEST)
-Received: by h08.hostsharing.net (Postfix, from userid 100393)
-	id 61BAE629CE27; Sun, 16 Aug 2026 14:13:37 +0200 (CEST)
-Date: Sun, 16 Aug 2026 14:13:37 +0200
-From: Lukas Wunner <lukas@wunner.de>
-To: Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <contact@jaseg.de>
-Cc: Baoquan He <baoquan.he@linux.dev>,
-	Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <linux@jaseg.de>,
+	 Content-Type:Content-Disposition:In-Reply-To; b=MGw252lmwvG16/VhE9amfRpf83e4rHKirFC/9uVhtOBRFlvsc+ylQqK3PsmeNUpFFnd/d7ispYjTNejiJNepjl/wlvgQotPGe5RMxxELwkmLKJkQFqhhRuhDLMiX3ItqIFaaW4GkYS9g7w2Dol7bbIwIZMuZ4sZYX5a0o77pG8U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=uyGzmdas; arc=none smtp.client-ip=95.215.58.196
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="uyGzmdas"
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=4YGgPm1wRAd8vr5pINF7lmz4ylld4f9QdvgoaXgstqU=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1786952339; v=1; x=1787557139;
+ b=uyGzmdasaERXwjWMKUBTkPuPp2qAZK2AqxvO2gh/6ul5FohEcqCplJTcx/CzANBmq8anQaGF
+ nyPtZhHOR7X3FEwE7FQKEpSUnlb4u0jXP571OFcwNgSOTSMzfms5hYAt0UqLWWFf0kVKrXQ9B98
+ /IHYgVCpeGhhfwATJP42+e+s=
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: from localhost (3.112.29.171)
+	by mta12.migadu.com with ESMTPS id 17e9312474d067d5;
+	Mon, 17 Aug 2026 07:38:57 +0000
+X-Migadu-Flow: FLOW_OUT
+Date: Mon, 17 Aug 2026 15:38:53 +0800
+From: Baoquan He <baoquan.he@linux.dev>
+To: Lukas Wunner <lukas@wunner.de>,
+	Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <contact@jaseg.de>
+Cc: Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <linux@jaseg.de>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Mike Rapoport <rppt@kernel.org>,
 	Pasha Tatashin <pasha.tatashin@soleen.com>,
@@ -69,11 +75,12 @@ Cc: Baoquan He <baoquan.he@linux.dev>,
 	dm-devel@lists.linux.dev
 Subject: Re: [PATCH v2 01/13] kexec: add CRASH_WIPE_SECRETS to wipe secrets
  before kdump
-Message-ID: <aoGpcczo5GkBsPwt@wunner.de>
+Message-ID: <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
 References: <20260811-crash-zeroize-rework-v2-0-9561d13c2340@jaseg.de>
  <20260811-crash-zeroize-rework-v2-1-9561d13c2340@jaseg.de>
  <anw9ILJiO5xIjP4f@MiWiFi-R3L-srv>
  <9765f7ea-36bb-4c7b-a19b-7facec97b762@jaseg.de>
+ <aoGpcczo5GkBsPwt@wunner.de>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -83,20 +90,27 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <9765f7ea-36bb-4c7b-a19b-7facec97b762@jaseg.de>
+In-Reply-To: <aoGpcczo5GkBsPwt@wunner.de>
 
-On Wed, Aug 12, 2026 at 12:08:39PM +0200, Jan Sebastian Götte wrote:
-> I can imagine one alternative way to approach this, tell me what you think:
-> Instead of registering wipe handlers that memzero places on panic, I could
-> put an optional registry of (addr, len) descriptors into crashkernel memory
-> that the original kernel populates with the PAs of buffers to clear ahead of
-> time. Then the kdump kernel could do the actual memzero. This would remove
-> all code from the actual kdump path here. The registry could be made
-> per-core to avoid locks.
+On 08/16/26 at 02:13pm, Lukas Wunner wrote:
+> On Wed, Aug 12, 2026 at 12:08:39PM +0200, Jan Sebastian Götte wrote:
+> > I can imagine one alternative way to approach this, tell me what you think:
+> > Instead of registering wipe handlers that memzero places on panic, I could
+> > put an optional registry of (addr, len) descriptors into crashkernel memory
+> > that the original kernel populates with the PAs of buffers to clear ahead of
+> > time. Then the kdump kernel could do the actual memzero. This would remove
+> > all code from the actual kdump path here. The registry could be made
+> > per-core to avoid locks.
 
-Or create a dedicated mempool from which all sensitive data is allocated,
-then call mempool_free_bulk() on kexec to poison everything in that pool?
+Since there are a lot of security expert in CC, I am wondering what's
+the risk if we wipe secrets during dumping. System is located in
+user's place, and vmcore is dumped and collected in user's place. If we
+filter out secrets memory when we dumping, what could be leaked out?
 
-Thanks,
-
-Lukas
+> 
+> Or create a dedicated mempool from which all sensitive data is allocated,
+> then call mempool_free_bulk() on kexec to poison everything in that pool?
+> 
+> Thanks,
+> 
+> Lukas
