@@ -1,158 +1,147 @@
-Received: from mta1.migadu.com (out-181.mta1.migadu.com [95.215.58.181])
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9588A3C10B0
-	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 08:25:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.181
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E43693EAC8F
+	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 10:06:10 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786955126; cv=none; b=g0PumkD7yTwXgkcNCLuwhrBOEUyVD52vZZokmf/XYVOI+pRllo+hfK+J8mX/47toBRXwEMiOCSORwF3W7b8bIXLh1soAXqNPjDTi7CQ3iF0djhtukCFE0MzBP9yJ9HXwXgws9JuAD/LeWYKqsmp7ttFXnsvvNJdIN5PSbxvg+jI=
+	t=1786961173; cv=none; b=lCYPPmIl5S2iNkIOJPAnObnBFjhCW1TdcuxSevr5tjzi5f+4gtaYIUQ6pcAswbsDt04c2JWuXjb2mj4gk4esxpResK6w2GSKAqhPulBu+OgE2xUnZzznnTZmZ22TjR2GagNmGmyWsOaVSjSw73nw35/9mxZt0BHkb5brGz7LEPc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786955126; c=relaxed/simple;
-	bh=eYNadUi07A8AhvVYvTwlB5KEurgeLlJSPKo7wDdWLLE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=XZr2eP9ZDRdUTF+Mw/+mr8MHP+68o9DT8QH5x1/o8OZlRGWSkWtbEUyW/Z6cDQg7kl+/MvcvCj9pLOYTJkva2r3Kr8NAWu4IwQvVE1+Fo63zkgsFTzkJR1I/54/zE8tBhI6wp+Bhbx7vLvKHvS5czS4y9dyp/TeGFROyX5moJ/M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=EIXwPUuG; arc=none smtp.client-ip=95.215.58.181
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1786961173; c=relaxed/simple;
+	bh=ELLe/0w3OLP4SKwY7wHYoVEJL4L1FFXkvtejiTQub38=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Lgy+hLGacN+ehO5f6n+nS75VepRx6U17N/GEqoSyPDO5K0e79zKaU2ejFMdQj28/WHyw49Pt1680664ebldCpbuGfSLo+uXrUEEgdkX4AlsYiC9Etg0rErtbAve4FgCMKdOeY9zMr46mNzgANWycLxdkPElhg4bJpCji7jPcrEk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Pn7Yd4Pr; arc=none smtp.client-ip=209.85.216.51
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="EIXwPUuG"
-X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=eYNadUi07A8AhvVYvTwlB5KEurgeLlJSPKo7wDdWLLE=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1786955119; v=1; x=1787559919;
- b=EIXwPUuG2cpBiOlXYabXdBGV0DC31sNvNs1YGGPKK3kvanW38AmjXJmtCCptJQaVsXMsyNs2
- ycYA0DstL8++NdzoGNqfWarmN7VA4USnhTs0DuX4ram2Kd2MAWkVQd7w9DmnFNIN7WpEY6iFvbf
- aLiq4EEgWUeN28zHUNW1lx60=
-X-Envelope-To: dm-devel@lists.linux.dev
-Received: from localhost (3.112.29.171)
-	by mta10.migadu.com with ESMTPS id 5d0fb72b720b7f63;
-	Mon, 17 Aug 2026 08:25:17 +0000
-X-Migadu-Flow: FLOW_OUT
-Date: Mon, 17 Aug 2026 16:25:14 +0800
-From: Baoquan He <baoquan.he@linux.dev>
-To: Lukas Wunner <lukas@wunner.de>,
-	Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <contact@jaseg.de>
-Cc: Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <linux@jaseg.de>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Mike Rapoport <rppt@kernel.org>,
-	Pasha Tatashin <pasha.tatashin@soleen.com>,
-	Pratyush Yadav <pratyush@kernel.org>,
-	Dave Young <ruirui.yang@linux.dev>,
-	Catalin Marinas <catalin.marinas@arm.com>,
-	Will Deacon <will@kernel.org>, David Howells <dhowells@redhat.com>,
-	Jarkko Sakkinen <jarkko@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Ignat Korchagin <ignat@linux.win>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	"David S. Miller" <davem@davemloft.net>,
-	Keith Busch <kbusch@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@lst.de>, Sagi Grimberg <sagi@grimberg.me>,
-	Trond Myklebust <trondmy@kernel.org>,
-	Anna Schumaker <anna@kernel.org>, Mimi Zohar <zohar@linux.ibm.com>,
-	James Bottomley <James.Bottomley@hansenpartnership.com>,
-	Marc Dionne <marc.dionne@auristor.com>,
-	Eric Dumazet <edumazet@google.com>,
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
-	Simon Horman <horms@kernel.org>, Eric Biggers <ebiggers@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Jaegeuk Kim <jaegeuk@kernel.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Pn7Yd4Pr"
+Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-384c94c9423so342376a91.2
+        for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 03:06:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1786961169; x=1787565969; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=NaEjaX8owKCcCbLs6LhjlQIuaQb3VhH8swaN6sdmbj8=;
+        b=Pn7Yd4PrLjKIaPAIEc2cEEa7aocBtZnauxC995FOeNZ4f/Axj3fxsQWJRBZom+uZ3S
+         cvgcmFuuslfZvsnNFm+Fbzruzhp3hz/p+zZqPVJ4l1FWGPPX7dMh83b8ZgTxENLIoKV2
+         PBa5+3fT3FvCArCMG8Bq4BEPrRnyUiGeBxxGeu/k+MU2m0XSjEq1rj/vDBKtnT0Dobu9
+         OYiIWE9IAa9Yd7HiEuYQOEShNAxXeJHD5HN4JpTyyiIywLpvm5tKTg+ANwpS0KnCSao8
+         StGILbdxxkKEaBRSjFZwZImjaHn8nq8J+KIdM/WO2KhjIqJrNqeSof6qPVjSIb5YPmSt
+         CG4Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1786961169; x=1787565969;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=NaEjaX8owKCcCbLs6LhjlQIuaQb3VhH8swaN6sdmbj8=;
+        b=RryDWtIGqCabLXti4/0O8AIDS1waN5HI7ToAddwGVak2WUr2FI2h2DE/FUf4t3gjsJ
+         is+LvfaOOoxKOdCOOE1lKjSF42jDki3gIoCPZq4pQDZmrddSnK8NSGiJRoQy75CK76PX
+         fn3ncHTydUJIWe10YGW0DoD+EP9TP7ZuW3UPaPISepQ/pWeug6W7J91Kw0MTWvvkNqww
+         UqqBulODgRNlXVT8Iuazi8ltOUR0gkWrpSXKAg+iuskN4m4o8ovWT/yuA3u1PRdAj7C+
+         lTh5/JZyTnKw57onyJU0nuQB5SBtvOoCXWM3fQ++vcnVvwhes8Bd9jRr9mrz744cQ99y
+         cThw==
+X-Gm-Message-State: AOJu0YyO8M9bQJSyPSB9y7iv7RMdCaFedoXFK/sPVpn6/8XcRexkTwot
+	Z/v9DjK2wreaUFpOXUU493tBqRCEbQIQqlB7lCL1u/QRC88pJrIrqwWj
+X-Gm-Gg: AR+sD10oXGzKwHH9gSDfxYiacwG8eKE0tIh7wM6zC2gpCsXMHidB8wp57AeahVS1WBV
+	bVVpYa4NJjdELMAnXKBGdI16mglF9m7rNkbYckifO3639J03ykNCsIt7FTRJkeU0KU9WyaJwNzD
+	g/ztIXpDb0eUx6aFyAjisauQg2e4IxrO0p/WaZ28P8wmp1Pnb6W2jQEXF2x/++2/2pHpZZ/k9Nb
+	NuNNqzQ6zqd7PfjGATkvR9Te5oY40AJIyxAIeyv52XSmg4lYnpfRuOEvSkJatYWKWmGd8qkLnsr
+	30SvZowmevps/HFFCYoMRw9h0FjPJeT0IPF6VP4WbyhwkEXDMqOtpVEPfoX3xz7QAdigzf7BPbf
+	L0zra+h8Db0Hb6nsE9THnUhcP0t3bC6fiMaw9Rk3xm2tvTvVMAFHpEHj0UFjdxB01tVofPR9W+T
+	MOU6RgBr5sxhX7JbJ6OS1X6wcSjxSMJTaeRoz8t/n/VZCuqvbaATa39LvRVku3/5npeNUG27Uli
+	A==
+X-Received: by 2002:a17:90b:5444:b0:381:bcfb:e710 with SMTP id 98e67ed59e1d1-3933b8e2befmr17511617a91.3.1786961168939;
+        Mon, 17 Aug 2026 03:06:08 -0700 (PDT)
+Received: from localhost.localdomain ([175.159.181.20])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3954d3b3b91sm1767284a91.13.2026.08.17.03.06.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 17 Aug 2026 03:06:08 -0700 (PDT)
+From: Yu Junzhe <junzheyu1@gmail.com>
+To: Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>, kexec@lists.infradead.org,
-	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-	linux-mm@kvack.org, keyrings@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-security-module@vger.kernel.org,
-	linux-crypto@vger.kernel.org, linux-nvme@lists.infradead.org,
-	linux-nfs@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-afs@lists.infradead.org, netdev@vger.kernel.org,
-	linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH v2 01/13] kexec: add CRASH_WIPE_SECRETS to wipe secrets
- before kdump
-Message-ID: <aoLFai0gzzH2bGgy@MiWiFi-R3L-srv>
-References: <20260811-crash-zeroize-rework-v2-0-9561d13c2340@jaseg.de>
- <20260811-crash-zeroize-rework-v2-1-9561d13c2340@jaseg.de>
- <anw9ILJiO5xIjP4f@MiWiFi-R3L-srv>
- <9765f7ea-36bb-4c7b-a19b-7facec97b762@jaseg.de>
- <aoGpcczo5GkBsPwt@wunner.de>
- <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: [BUG] dm-integrity: mode R resume NULL deref when DIRTY_BITMAP is set
+Date: Mon, 17 Aug 2026 10:06:04 +0000
+Message-ID: <20260817100605.292-1-junzheyu1@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
+Content-Transfer-Encoding: 7bit
 
-On 08/17/26 at 03:38pm, Baoquan He wrote:
-> On 08/16/26 at 02:13pm, Lukas Wunner wrote:
-> > On Wed, Aug 12, 2026 at 12:08:39PM +0200, Jan Sebastian Götte wrote:
-> > > I can imagine one alternative way to approach this, tell me what you think:
-> > > Instead of registering wipe handlers that memzero places on panic, I could
-> > > put an optional registry of (addr, len) descriptors into crashkernel memory
-> > > that the original kernel populates with the PAs of buffers to clear ahead of
-> > > time. Then the kdump kernel could do the actual memzero. This would remove
-> > > all code from the actual kdump path here. The registry could be made
-> > > per-core to avoid locks.
+Hello,
 
-If this has to be done in kernel, your (addr, len) registry idea is a
-better direction, and we can make it a bit more general.
+I am reporting a null-pointer dereference in dm-integrity resume: recovery
+mode R skips journal allocation, but dm_integrity_resume() still issues
+journal I/O when the on-disk superblock has SB_FLAG_DIRTY_BITMAP.
 
-Instead of a secrets-only wipe registry, consider a small "crash memory
-region" table with an action per entry:
+Summary
+=======
 
-enum crash_region_action {
-    CRASH_REG_WIPE,   /* memzero, then dump normally (leave zeros) */
-    CRASH_REG_SKIP,   /* do not include in the vmcore at all */
-};
+create_journal() runs only when mode != 'R', so ic->journal stays NULL.
+Resume treats DIRTY_BITMAP as "journal pages hold a bitmap" and calls
+rw_journal_sectors() before any journal/mode check:
 
-struct crash_region {
-    phys_addr_t addr;
-    size_t      len;
-    enum crash_region_action action;
-};
+  if (ic->sb->flags & cpu_to_le32(SB_FLAG_DIRTY_BITMAP)) {
+      rw_journal_sectors(ic, REQ_OP_READ, ...);  /* uses ic->journal[] */
 
-void crash_reg_add(phys_addr_t addr, size_t len,
-                   enum crash_region_action action);
-void crash_reg_del(phys_addr_t addr, size_t len);
+rw_journal_sectors() then passes that NULL page list into dm_io():
 
-Two actions because the use cases differ:
+  io_req.mem.type = DM_IO_PAGE_LIST;
+  io_req.mem.ptr.pl = &ic->journal[pl_index];  /* NULL in mode R */
 
-- WIPE is what you need: zero the secret, 
-- SKIP covers things people do not want in the dump at all
-   — Registering as SKIP reduce dump size. I have been considering how
-     to shrink vmcore size on some big system with huge memory, the
-     vmcore size usually is several or tens of GB.
+list_get_page() does *p = pl->page with pl == NULL (KASAN range [0x8-0xf]).
 
-If this is OK to you, you can start a regiestry table
-infrastructure with wiping secrets, we can add SKIP later and plus some
-driver used memory.
+DIRTY_BITMAP is set while bitmap mode (B) is active and is cleared on a
+clean postsuspend. It remains on disk after an unclean stop of mode B
+(crash / power loss). Reloading that device in recovery mode R is a
+documented recovery path and hits this bug.
 
-I am not sure if it's satisfactory, but you can give it a shot to show
-what it looks like.
+Affected
+========
 
-Thanks
-Baoquan
+- Confirmed on Linux 6.6.144 (da47cbc254661aa66d61ef061485a7080305c4be),
+  KASAN guest
+- Still present on torvalds/linux master as of 2026-08-17: resume still
+  calls rw_journal_sectors() under DIRTY_BITMAP with no journal / mode-R
+  guard
+- Files: drivers/md/dm-integrity.c
+- Config: CONFIG_DM=y, CONFIG_DM_INTEGRITY=y (KASAN for the report)
 
-> 
-> Since there are a lot of security expert in CC, I am wondering what's
-> the risk if we wipe secrets during dumping. System is located in
-> user's place, and vmcore is dumped and collected in user's place. If we
-> filter out secrets memory when we dumping, what could be leaked out?
-> 
-> > 
-> > Or create a dedicated mempool from which all sensitive data is allocated,
-> > then call mempool_free_bulk() on kexec to poison everything in that pool?
-> > 
-> > Thanks,
-> > 
-> > Lukas
+Crash excerpt (from minimized PoC)
+==================================
+
+KASAN: null-ptr-deref in range [0x0000000000000008-0x000000000000000f]
+CPU: 0 PID: 234 Comm: repro Not tainted 6.6.144 #15
+RIP: 0010:list_get_page+0x7e/0x150
+Call Trace:
+ <TASK>
+  dispatch_io
+  sync_io
+  dm_io
+  rw_journal_sectors
+  dm_integrity_resume
+  dm_table_resume_targets
+  __dm_resume
+  dm_resume
+  dev_suspend
+  ctl_ioctl
+  dm_ctl_ioctl
+  __x64_sys_ioctl
+ </TASK>
+Kernel panic - not syncing: Fatal exception
+
+Full oops and a self-contained Docker/QEMU reproducer (poc.c + KASAN
+guest) are available on request.
+
+I am happy to test patches or send the reproducer package.
+
+Thanks,
+Yu Junzhe
+FuzzAnything <fuzzanything@gmail.com>
