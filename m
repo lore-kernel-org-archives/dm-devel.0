@@ -1,35 +1,35 @@
-Received: from mta1.migadu.com (out-196.mta1.migadu.com [95.215.58.196])
+Received: from mta1.migadu.com (out-181.mta1.migadu.com [95.215.58.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97CAD3B47EF
-	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 07:39:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.196
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9588A3C10B0
+	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 08:25:21 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786952343; cv=none; b=gZ5RsIEo+hXlgcrkggG4ByjavSZmLS9BnMFyJRlyBjHJu9TUUHahsiCr/W65fLqSRhHRIlaY6GRTinn/RgDEQG6aDH1hE98mmJeHDo5pRNRwfnjEJeFH/vDrRTd+3HV4VAwNgZZNzGiN3Cpi9LhceLW2kQmnNfu8tDMJRR2GHKg=
+	t=1786955126; cv=none; b=g0PumkD7yTwXgkcNCLuwhrBOEUyVD52vZZokmf/XYVOI+pRllo+hfK+J8mX/47toBRXwEMiOCSORwF3W7b8bIXLh1soAXqNPjDTi7CQ3iF0djhtukCFE0MzBP9yJ9HXwXgws9JuAD/LeWYKqsmp7ttFXnsvvNJdIN5PSbxvg+jI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786952343; c=relaxed/simple;
-	bh=4YGgPm1wRAd8vr5pINF7lmz4ylld4f9QdvgoaXgstqU=;
+	s=arc-20240116; t=1786955126; c=relaxed/simple;
+	bh=eYNadUi07A8AhvVYvTwlB5KEurgeLlJSPKo7wDdWLLE=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=MGw252lmwvG16/VhE9amfRpf83e4rHKirFC/9uVhtOBRFlvsc+ylQqK3PsmeNUpFFnd/d7ispYjTNejiJNepjl/wlvgQotPGe5RMxxELwkmLKJkQFqhhRuhDLMiX3ItqIFaaW4GkYS9g7w2Dol7bbIwIZMuZ4sZYX5a0o77pG8U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=uyGzmdas; arc=none smtp.client-ip=95.215.58.196
+	 Content-Type:Content-Disposition:In-Reply-To; b=XZr2eP9ZDRdUTF+Mw/+mr8MHP+68o9DT8QH5x1/o8OZlRGWSkWtbEUyW/Z6cDQg7kl+/MvcvCj9pLOYTJkva2r3Kr8NAWu4IwQvVE1+Fo63zkgsFTzkJR1I/54/zE8tBhI6wp+Bhbx7vLvKHvS5czS4y9dyp/TeGFROyX5moJ/M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=EIXwPUuG; arc=none smtp.client-ip=95.215.58.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="uyGzmdas"
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="EIXwPUuG"
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=4YGgPm1wRAd8vr5pINF7lmz4ylld4f9QdvgoaXgstqU=;
+DKIM-Signature: a=rsa-sha256; bh=eYNadUi07A8AhvVYvTwlB5KEurgeLlJSPKo7wDdWLLE=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1786952339; v=1; x=1787557139;
- b=uyGzmdasaERXwjWMKUBTkPuPp2qAZK2AqxvO2gh/6ul5FohEcqCplJTcx/CzANBmq8anQaGF
- nyPtZhHOR7X3FEwE7FQKEpSUnlb4u0jXP571OFcwNgSOTSMzfms5hYAt0UqLWWFf0kVKrXQ9B98
- /IHYgVCpeGhhfwATJP42+e+s=
+ t=1786955119; v=1; x=1787559919;
+ b=EIXwPUuG2cpBiOlXYabXdBGV0DC31sNvNs1YGGPKK3kvanW38AmjXJmtCCptJQaVsXMsyNs2
+ ycYA0DstL8++NdzoGNqfWarmN7VA4USnhTs0DuX4ram2Kd2MAWkVQd7w9DmnFNIN7WpEY6iFvbf
+ aLiq4EEgWUeN28zHUNW1lx60=
 X-Envelope-To: dm-devel@lists.linux.dev
 Received: from localhost (3.112.29.171)
-	by mta12.migadu.com with ESMTPS id 17e9312474d067d5;
-	Mon, 17 Aug 2026 07:38:57 +0000
+	by mta10.migadu.com with ESMTPS id 5d0fb72b720b7f63;
+	Mon, 17 Aug 2026 08:25:17 +0000
 X-Migadu-Flow: FLOW_OUT
-Date: Mon, 17 Aug 2026 15:38:53 +0800
+Date: Mon, 17 Aug 2026 16:25:14 +0800
 From: Baoquan He <baoquan.he@linux.dev>
 To: Lukas Wunner <lukas@wunner.de>,
 	Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <contact@jaseg.de>
@@ -75,42 +75,84 @@ Cc: Jan Sebastian =?iso-8859-1?Q?G=F6tte?= <linux@jaseg.de>,
 	dm-devel@lists.linux.dev
 Subject: Re: [PATCH v2 01/13] kexec: add CRASH_WIPE_SECRETS to wipe secrets
  before kdump
-Message-ID: <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
+Message-ID: <aoLFai0gzzH2bGgy@MiWiFi-R3L-srv>
 References: <20260811-crash-zeroize-rework-v2-0-9561d13c2340@jaseg.de>
  <20260811-crash-zeroize-rework-v2-1-9561d13c2340@jaseg.de>
  <anw9ILJiO5xIjP4f@MiWiFi-R3L-srv>
  <9765f7ea-36bb-4c7b-a19b-7facec97b762@jaseg.de>
  <aoGpcczo5GkBsPwt@wunner.de>
+ <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <aoGpcczo5GkBsPwt@wunner.de>
+In-Reply-To: <aoK6jXA-tF9qfKOZ@MiWiFi-R3L-srv>
 
-On 08/16/26 at 02:13pm, Lukas Wunner wrote:
-> On Wed, Aug 12, 2026 at 12:08:39PM +0200, Jan Sebastian G�tte wrote:
-> > I can imagine one alternative way to approach this, tell me what you think:
-> > Instead of registering wipe handlers that memzero places on panic, I could
-> > put an optional registry of (addr, len) descriptors into crashkernel memory
-> > that the original kernel populates with the PAs of buffers to clear ahead of
-> > time. Then the kdump kernel could do the actual memzero. This would remove
-> > all code from the actual kdump path here. The registry could be made
-> > per-core to avoid locks.
+On 08/17/26 at 03:38pm, Baoquan He wrote:
+> On 08/16/26 at 02:13pm, Lukas Wunner wrote:
+> > On Wed, Aug 12, 2026 at 12:08:39PM +0200, Jan Sebastian Götte wrote:
+> > > I can imagine one alternative way to approach this, tell me what you think:
+> > > Instead of registering wipe handlers that memzero places on panic, I could
+> > > put an optional registry of (addr, len) descriptors into crashkernel memory
+> > > that the original kernel populates with the PAs of buffers to clear ahead of
+> > > time. Then the kdump kernel could do the actual memzero. This would remove
+> > > all code from the actual kdump path here. The registry could be made
+> > > per-core to avoid locks.
 
-Since there are a lot of security expert in CC, I am wondering what's
-the risk if we wipe secrets during dumping. System is located in
-user's place, and vmcore is dumped and collected in user's place. If we
-filter out secrets memory when we dumping, what could be leaked out?
+If this has to be done in kernel, your (addr, len) registry idea is a
+better direction, and we can make it a bit more general.
+
+Instead of a secrets-only wipe registry, consider a small "crash memory
+region" table with an action per entry:
+
+enum crash_region_action {
+    CRASH_REG_WIPE,   /* memzero, then dump normally (leave zeros) */
+    CRASH_REG_SKIP,   /* do not include in the vmcore at all */
+};
+
+struct crash_region {
+    phys_addr_t addr;
+    size_t      len;
+    enum crash_region_action action;
+};
+
+void crash_reg_add(phys_addr_t addr, size_t len,
+                   enum crash_region_action action);
+void crash_reg_del(phys_addr_t addr, size_t len);
+
+Two actions because the use cases differ:
+
+- WIPE is what you need: zero the secret, 
+- SKIP covers things people do not want in the dump at all
+   — Registering as SKIP reduce dump size. I have been considering how
+     to shrink vmcore size on some big system with huge memory, the
+     vmcore size usually is several or tens of GB.
+
+If this is OK to you, you can start a regiestry table
+infrastructure with wiping secrets, we can add SKIP later and plus some
+driver used memory.
+
+I am not sure if it's satisfactory, but you can give it a shot to show
+what it looks like.
+
+Thanks
+Baoquan
 
 > 
-> Or create a dedicated mempool from which all sensitive data is allocated,
-> then call mempool_free_bulk() on kexec to poison everything in that pool?
+> Since there are a lot of security expert in CC, I am wondering what's
+> the risk if we wipe secrets during dumping. System is located in
+> user's place, and vmcore is dumped and collected in user's place. If we
+> filter out secrets memory when we dumping, what could be leaked out?
 > 
-> Thanks,
-> 
-> Lukas
+> > 
+> > Or create a dedicated mempool from which all sensitive data is allocated,
+> > then call mempool_free_bulk() on kexec to poison everything in that pool?
+> > 
+> > Thanks,
+> > 
+> > Lukas
