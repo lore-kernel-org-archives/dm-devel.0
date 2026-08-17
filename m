@@ -1,142 +1,245 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 72921456286
-	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 16:38:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5263275AFD
+	for <dm-devel@lists.linux.dev>; Mon, 17 Aug 2026 20:41:59 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786984699; cv=none; b=Yd9w56vXlcKN2Nd9YaHy/f612qsYpLlOrvKNU3ESo7qg+YbAlZOnw0cINHikGJiNSmyVnI/ZxV+uywlwACE2y+1MgA1zSln39MgRSJ3t1YaKyJ8SxBCEDxlEqchsUDQ/jxQhCYXKCEIv6pqyX/LDsehgpzmbJ1QLKVR0VSCJPtw=
+	t=1786999321; cv=none; b=W4M3FysnwwsF2tOdphdTVpWNhoxLRBA7zqP+MaqkU7cTjgHTyS+WrLCLpwlx3mXzZWYJEe8gANg9mvJu825xBForQn6MnJNPrcB7kLYEDQekA+D78Ll3zStYi6BqIqiJfrjFgRKG9gZwA9KHfNgXUdCvZuH6hRSofNd7SqIupGM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786984699; c=relaxed/simple;
-	bh=IfRho8fqzRqTS9CLbda4QyvcgsD0V46YKHNgCve52R4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=jvguYCa/2u1YroRNnzG/4mezP3t+mnuy7O3Gn0G6k8bypxKBRkRxPr4SVDYvWWP5jod+DQWTzYooKjPnq5fmYqH08ua/iWcN1XKQcQ+V2tDhcMGM3E+cuBfNgtBEyxC6uqwkwbspx0G0+Fc+NULxZr7qZzdCu7ICl9fn7dof3LI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PmCtOgpI; arc=none smtp.client-ip=170.10.129.124
+	s=arc-20240116; t=1786999321; c=relaxed/simple;
+	bh=3N4D48g9+SNZbJMTEnTsldlpz6/F9gCiRzZ+aC7HeSE=;
+	h=Date:From:To:cc:Subject:Message-ID:MIME-Version:Content-Type; b=nUI2bdu3RbzUiFwu6q/XrtpuJ1VvMJdIshLCP2Njq1iJJv9LuiSGFuAhSvYuEVWp0nmJZ7eW8pkwlL9lrrfvHZ3pDRwZaeVTO6dm94SY4UhgiwH1qmIXgzxI8IaBAPcmkst+daH/KiMVAxhjcmFI2Ft3Lpm3GJGYBtO+iUhchBo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Vaymx+Gy; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PmCtOgpI"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Vaymx+Gy"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1786984696;
+	s=mimecast20190719; t=1786999318;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=nOzhb9NoEkV97Gv3qIjkwGZZ40L9NNVjp3ehoWV/JF0=;
-	b=PmCtOgpIjjHzcZovPW4x24PHf93xQlzkQVkJoh2x6AzSfwrsxnobKvgIzWc6fFx6cck+9Y
-	Rgz5Rt6ZC7nJ+AiEiahUOGg9LvYrtbSAKnpwa+iOkXcv8AKtG8gN6GUGXTjioPnOTUKcjG
-	USr27m0AFh4kZQ/1XCp0v+JDUQdFNbs=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=m7wRiupfIp79ADfSVHUEryaevsZmHp8RUZ+chTpW/6g=;
+	b=Vaymx+Gygdh8T/Y9ImRNgc0r65vFrTdxxcYyyG1HKSgplsO5B3vB3+1f9kh4V1tvLcs9m7
+	2NSAnVdgtylQa5kd/y/Hu+AIpLGfB/feCzoRaRYnW0volRpPy9mwXI5Y4b2cYT8hlcjK28
+	zVIpiRrFfJhvLFx6tz27mAM9SIZ2mxw=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-577-oayov7bSPs6Jbo9DSNjm6g-1; Mon,
- 17 Aug 2026 12:38:11 -0400
-X-MC-Unique: oayov7bSPs6Jbo9DSNjm6g-1
-X-Mimecast-MFC-AGG-ID: oayov7bSPs6Jbo9DSNjm6g_1786984690
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-630-WTuGLQZoMLiPIJ5ZEu8GNg-1; Mon,
+ 17 Aug 2026 16:41:55 -0400
+X-MC-Unique: WTuGLQZoMLiPIJ5ZEu8GNg-1
+X-Mimecast-MFC-AGG-ID: WTuGLQZoMLiPIJ5ZEu8GNg_1786999313
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 956EE180064B;
-	Mon, 17 Aug 2026 16:38:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1B21718005BB;
-	Mon, 17 Aug 2026 16:38:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 67HGc8Og2351869
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 17 Aug 2026 12:38:08 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 67HGc8Or2351848;
-	Mon, 17 Aug 2026 12:38:08 -0400
-Date: Mon, 17 Aug 2026 12:38:08 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Matthias Goergens <matthias.goergens@gmail.com>
-Cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org,
-        mpatocka@redhat.com, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm-delay: advertise flush support
-Message-ID: <aoM48Je-Dhxypa0e@redhat.com>
-References: <20260814045813.3148127-1-matthias.goergens@gmail.com>
- <an9t_JepVb2zJcD_@redhat.com>
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1E94219560AD;
+	Mon, 17 Aug 2026 20:41:52 +0000 (UTC)
+Received: from [10.44.48.124] (unknown [10.44.48.124])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 70987180049F;
+	Mon, 17 Aug 2026 20:41:45 +0000 (UTC)
+Date: Mon, 17 Aug 2026 22:41:41 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
+    Bryam Vargas <hexlabsecurity@proton.me>, 
+    bui duc phuc <phucduc.bui@gmail.com>, corwin <corwincoburn@google.com>, 
+    David Laight <david.laight.linux@gmail.com>, 
+    Haotian Zhang <vulab@iscas.ac.cn>, Ilya Krutskih <devsec@tpz.ru>, 
+    "Jiangong.Han" <jiangong.han@windriver.com>, 
+    Jianyun Gao <jianyungao89@gmail.com>, Keith Busch <kbusch@kernel.org>, 
+    liyouhong <liyouhong@kylinos.cn>, Matthew Sakai <msakai@redhat.com>, 
+    Samuel Moelius <sam.moelius@trailofbits.com>, 
+    "shaikh.kamal" <shaikhkamal2012@gmail.com>, 
+    Shukai Ni <shukai.ni@kuleuven.be>
+Subject: [git pull] device mapper changes for 7.3
+Message-ID: <80e03616-ac55-cfcc-4fc7-f47bad3e0ac7@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <an9t_JepVb2zJcD_@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-MFC-PROC-ID: mMoXbKNEN6Bg6eFPPyj-wTSbtEFiYNqUiLb3cZGD1Sc_1786984690
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: dGCA-4XsWau3BvAw9S0CHzDcxv1WEQG4U8mO2lGSpzU_1786999313
 X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=US-ASCII
 
-On Fri, Aug 14, 2026 at 03:35:25PM -0400, Benjamin Marzinski wrote:
-> On Fri, Aug 14, 2026 at 12:58:12PM +0800, Matthias Goergens wrote:
-> > dm-delay parses and reports a flush delay class (the 9-argument table
-> > form's <flush_device> <flush_offset> <flush_delay>), delay_map() routes
-> > REQ_PREFLUSH bios to it, the target sets num_flush_bios = 1, and
-> > Documentation/admin-guide/device-mapper/delay.rst documents flush
-> > delays. But the target never sets ti->flush_supported, so
-> > dm_table_supports_flush() is false: the block layer strips REQ_PREFLUSH
-> > as a no-op before the bio ever reaches the target (blk_insert_flush()),
-> > REQ_FUA is stripped too, and the flush delay class is dead code. Anyone
-> > who configures a flush delay on dm-delay (e.g. to model slow-flush
-> > devices in tests) silently measures nothing.
-> > 
-> > Set ti->flush_supported = true so the flush delay class is actually
-> > reachable. dm core clones empty flushes with
-> > REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC (__send_empty_flush), which
-> > delay_map() already routes to the flush class, and delayed completion
-> > is already handled for every class by the delay worker.
-> > 
-> > Verified with dm-delay over a virtio-scsi disk: without this change
-> > REQ_PREFLUSH completes immediately and REQ_FUA writes are stripped by
-> > the block layer; with it, flushes take the configured delay and FUA
-> > writes reach the wire (measured as device-time per MB at D_f = 200 ms
-> > and 800 ms flush delays).
-> > 
-> 
-> The code seems fine, but could you please change the commit message.
-> It's not true that "Anyone who configures a flush delay on dm-delay
-> silently measures nothing". dm-delay doesn't *force* the dm device to
-> support flushes. It works just like most of the dm targets: linear,
-> stripe, raid, etc. If an underlying device sets BLK_FEAT_WRITE_CACHE or
-> BLK_FEAT_FUA, the dm device will as well (see blk_stack_limits, called
-> by dm_set_device_limits). I assume if you look at
-> /sys/block/<underlying_disk>/queue/write_cache, you see "write through".
->
+Hi Linus
 
-Actually, it might be better to only set ti->flush_supported if
-dc->flush.delay is non-zero, so that if the user doesn't want a
-flush delay, dm-delay behaves like a linear target for flushes.
+The following changes since commit a13c140cc289c0b7b3770bce5b3ad42ab35074aa:
 
--Ben
+  Linux 7.2-rc3 (2026-07-12 14:16:39 -0700)
 
-> -Ben
-> 
-> > Signed-off-by: Matthias Goergens <matthias.goergens@gmail.com>
-> > ---
-> >  drivers/md/dm-delay.c | 3 ++-
-> >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-> > --- a/drivers/md/dm-delay.c
-> > +++ b/drivers/md/dm-delay.c
-> > @@ -301,6 +301,7 @@
-> >  	}
-> > 
-> >  	ti->num_flush_bios = 1;
-> > +	ti->flush_supported = true;
-> >  	ti->num_discard_bios = 1;
-> >  	ti->accounts_remapped_io = true;
-> >  	ti->per_io_data_size = sizeof(struct dm_delay_info);
-> > @@ -451,7 +452,7 @@
-> > 
-> >  static struct target_type delay_target = {
-> >  	.name	     = "delay",
-> > -	.version     = {1, 5, 0},
-> > +	.version     = {1, 5, 1},
-> >  	.features    = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_ZONED_HM,
-> >  	.module      = THIS_MODULE,
-> >  	.ctr	     = delay_ctr,
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.3/dm-changes
+
+for you to fetch changes up to 39c5aa3bd8ec3912d2cd0b3fe092642b0d2b0713:
+
+  dm-era: fix shadowed superblock leak on take-snap failure (2026-08-06 13:55:01 +0200)
+
+Please, pull. Thanks.
+
+Mikulas
+
+----------------------------------------------------------------
+- 6 minor cleanups found by Claude Opus 4.6
+
+- small cleanups in dm core, dm-cache, dm-switch, dm-inlinecrypt, dm-vdo
+
+- improve validation of metadata in dm-pcache
+
+- dm: fix resume-vs-remove ioctl race condition
+
+- dm: fix race condition when issuing table load ioctls concurrently
+
+- fix dm-raid1 and dm-io, so that they work with unaligned bio vectors
+
+- dm-integrity: use keyed markers as discard fillers
+
+- improve metadata validation in dm-array
+
+- fix dm-stats crash on memory allocation failure
+
+- fix dm-dust, so that it works if it is not the first target in a table
+
+- dm-era: fix superblock refcount leak on snapshot failure
+-----BEGIN PGP SIGNATURE-----
+
+iIoEABYIADIWIQRnH8MwLyZDhyYfesYTAyx9YGnhbQUCaoNttBQcbXBhdG9ja2FA
+cmVkaGF0LmNvbQAKCRATAyx9YGnhbThWAQCYDN/SclnydRYV7IKzV/yyd75esUOi
+lWC3kMbiykSD0AEAmdQeMEqwxpX8i1njnPrcm67i4+LEKMK4X+ApLwV30gQ=
+=SOAs
+-----END PGP SIGNATURE-----
+
+----------------------------------------------------------------
+Bryam Vargas (13):
+      dm-pcache: validate seg_id fields from persistent memory
+      dm-pcache: validate geometry fields from on-disk cache_info
+      dm-pcache: validate kset key_num and intra-segment bounds
+      dm-pcache: bound the persisted tail-position offset
+      dm-pcache: reject a kset that overruns its segment
+      dm-pcache: detect a cycle in the last-kset chain during replay
+      dm-pcache: bound the logical key offset from persistent memory
+      dm-pcache: clamp the tail kset read to the segment data region
+      dm-pcache: validate on-media seg_num against the cache device size
+      dm-pcache: validate the persisted dirty_tail chain at load
+      dm-pcache: only hand out initialized cache segments
+      dm array: validate array block headers on read
+      dm array: reject an array block whose value size is not the caller's
+
+David Laight (3):
+      dm: __list_versions(): Only process targets once
+      dm: list_devices(): Only process devices once
+      dm: lookup_ioctl(): Use designated array initialers
+
+Haotian Zhang (1):
+      dm-switch: use WRITE_ONCE() in switch_region_table_write()
+
+Ilya Krutskih (1):
+      dm raid1: reserve space for NUL-terminator in build_constructor_string()
+
+Jiangong.Han (1):
+      dm: use `clear_and_wake_up_bit()` in device mapper
+
+Jianyun Gao (6):
+      dm-pcache: fix implicit u8 truncation of gc_percent in message handler
+      dm-pcache: fix use-after-free and invalid seg operations in kset_replay()
+      dm-pcache: replace tabs with spaces in comments to fix ASCII diagram alignment
+      dm-pcache: remove unused 'allocated' variable in cache_data_alloc()
+      dm-pcache: remove unused miss_read_end_work_fn declaration
+      dm-pcache: remove unused 'cache' parameter from cache_key_gc()
+
+Keith Busch (1):
+      dm-io: clone the source bio instead of copying its biovec
+
+Matthew Sakai (1):
+      dm vdo: don't read repair field in loop condition
+
+Mikulas Patocka (11):
+      dm-integrity: fix error message
+      dm-integrity: clean-up error handling
+      dm-integrity: fix wrong fallthrough in integrity_bio_wait
+      dm-ioctl: delete a useless condition
+      dm-table: fix spelling
+      dm-verity: remove pointless nested "bio" declaration
+      dm-inlinecrypt: don't overwrite the error with -EINVAL
+      dm: fix resume-vs-remove race
+      dm: fix race when loading and unloading a table
+      dm-io: report non-retryable errors separatedly
+      dm-stats: fix a crash if allocation of per-cpu data fails
+
+Samuel Moelius (2):
+      dm cache: parse invalidate_cblocks with kstrtouint()
+      dm dust: make badblock messages target-relative
+
+Shukai Ni (1):
+      dm-integrity: replace forgeable discard filler with a keyed sector marker
+
+bui duc phuc (1):
+      dm: drop redundant nonseekable_open() return check
+
+corwin (2):
+      dm vdo indexer: simplify sub-index parameter calculations
+      dm vdo indexer: embed geometry in parent structures
+
+liyouhong (1):
+      dm-era: fix shadowed superblock leak on take-snap failure
+
+shaikh.kamal (1):
+      docs: device-mapper: dm-inlinecrypt: fix 'bellow' spelling
+
+ Documentation/admin-guide/device-mapper/dm-ima.rst |   7 +-
+ .../admin-guide/device-mapper/dm-inlinecrypt.rst   |   2 +-
+ .../admin-guide/device-mapper/dm-integrity.rst     |  13 ++
+ drivers/md/dm-bufio.c                              |  10 +-
+ drivers/md/dm-cache-target.c                       |  56 +++---
+ drivers/md/dm-dust.c                               |  16 +-
+ drivers/md/dm-era-target.c                         |   5 +
+ drivers/md/dm-inlinecrypt.c                        |   1 -
+ drivers/md/dm-integrity.c                          | 175 +++++++++++++----
+ drivers/md/dm-io.c                                 |  96 +++++----
+ drivers/md/dm-ioctl.c                              | 216 +++++++++------------
+ drivers/md/dm-kcopyd.c                             |  10 +-
+ drivers/md/dm-log-userspace-base.c                 |   1 +
+ drivers/md/dm-log.c                                |   4 +-
+ drivers/md/dm-pcache/cache.c                       |  29 +++
+ drivers/md/dm-pcache/cache.h                       |  43 +++-
+ drivers/md/dm-pcache/cache_dev.c                   |  22 ++-
+ drivers/md/dm-pcache/cache_gc.c                    |  36 +++-
+ drivers/md/dm-pcache/cache_key.c                   | 128 ++++++++++--
+ drivers/md/dm-pcache/cache_req.c                   |  19 +-
+ drivers/md/dm-pcache/cache_segment.c               |  12 +-
+ drivers/md/dm-pcache/cache_writeback.c             |  38 +++-
+ drivers/md/dm-pcache/dm_pcache.c                   |   4 +-
+ drivers/md/dm-raid1.c                              |  26 ++-
+ drivers/md/dm-snap-persistent.c                    |   4 +-
+ drivers/md/dm-snap.c                               |   4 +-
+ drivers/md/dm-stats.c                              |   6 +-
+ drivers/md/dm-switch.c                             |   2 +-
+ drivers/md/dm-table.c                              |   2 +-
+ drivers/md/dm-vdo/indexer/config.c                 |  34 ++--
+ drivers/md/dm-vdo/indexer/config.h                 |   2 +-
+ drivers/md/dm-vdo/indexer/geometry.c               |  92 ++++-----
+ drivers/md/dm-vdo/indexer/geometry.h               |  13 +-
+ drivers/md/dm-vdo/indexer/index-layout.c           |   2 +-
+ drivers/md/dm-vdo/indexer/index.c                  |  30 +--
+ drivers/md/dm-vdo/indexer/open-chapter.c           |   2 +-
+ drivers/md/dm-vdo/indexer/open-chapter.h           |   2 +-
+ drivers/md/dm-vdo/indexer/volume-index.c           | 190 +++++++++---------
+ drivers/md/dm-vdo/indexer/volume.c                 |  74 ++++---
+ drivers/md/dm-vdo/indexer/volume.h                 |   2 +-
+ drivers/md/dm-vdo/repair.c                         |   6 +-
+ drivers/md/dm-verity-target.c                      |   4 +-
+ drivers/md/dm-writecache.c                         |  14 +-
+ drivers/md/dm-zoned-metadata.c                     |   8 +-
+ drivers/md/dm-zoned-reclaim.c                      |   4 +-
+ drivers/md/dm.c                                    |  14 +-
+ drivers/md/persistent-data/dm-array.c              |  53 ++++-
+ include/linux/dm-io.h                              |   6 +-
+ 48 files changed, 928 insertions(+), 611 deletions(-)
 
