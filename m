@@ -1,175 +1,63 @@
-Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8979E48989D
-	for <dm-devel@lists.linux.dev>; Wed, 19 Aug 2026 16:37:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B8003D6CDF
+	for <dm-devel@lists.linux.dev>; Wed, 19 Aug 2026 19:55:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787157435; cv=none; b=MpmZ/TuMvKqfL/EGjyDwOZEnRAqlRcysclF274g+kOivZowHMy4a1VKhk3B/yCOKKhYPtUDK6t4FxYLf4UA89CKSbjvOUBGsKyPUW7rbGUGsl6VnCqjJl7t/zrlTz8BukQYm7mLC1v7q8RwgpF2oot7vkMgCpu18MOF/tKJLttA=
+	t=1787169360; cv=none; b=mJsQN1Tiqxkhquv0GES6vcc6k39pi7vL8Pk9COrOk530fXZt5reN2u4B+jVOwjK/7yY9vbtpwntjWOya3a44m1bUBHKwmWV1NmYaI55AsPJ/VvJQfBOXxLLATNHWScqIZkpcFndaFoVsjUkcYWpW8weD3own8wBifFECNE0GCrA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787157435; c=relaxed/simple;
-	bh=YWcc0p1ZJKT/5nyDOWUcLwbVuLkIv2XFQ7lzDdyxAos=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=Z423KL/vTBMrkcpaTx4AMFB9J4NMck9jEPhYwP8mctkjBsNjNwuZ4QhC49azDuqjVMaUhykm7lp/vf2p5yXQP25yIEIyzbeEXQ8G4fLxr/WHPt830EE+FKw0RCZuG9GkoZRm0VQlU+/YkpqF+SvT+fPhmbklXyxH4OCtVr9bspo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=VWHpT+oN; arc=none smtp.client-ip=209.85.128.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1787169360; c=relaxed/simple;
+	bh=I/6W8J7g48qf2efbPQNRHxSzRC1QVywIOjW/kjCI64Q=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=iOY8SBdWX0JrnjhzFvt5Afh/S78hCO+JV7UJ58fW5imYkXxhrN33ojSclbrs8s7/bw9cbiipN6MDVfbAPTa2DxL+OfocvZkqJKvYPUStEmwSnCMpUdxW3oX56c6GJSRoecj76Br3jRu2UadB8kkOch6j4A09VmBG+CvskVJEPrY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JZBTb68S; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="VWHpT+oN"
-Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-4980dc26022so13455025e9.1
-        for <dm-devel@lists.linux.dev>; Wed, 19 Aug 2026 09:37:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1787157431; x=1787762231; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=VHF9/9II+PPn7OtQFw85e3uW5cLrCgzkdulcCX/a5mA=;
-        b=VWHpT+oNQZjOMVgalImvdKIoApPPWqNYusHRmFthyh3Tt5nygx3d7Od8pwz3nZYpiv
-         KckC9W4xB9tfSe0B9VuC+MHMeh0/Tw6S89rBNEwa2BQXYl75yl1AGZeZsO+ScN2VHYLn
-         MIPjJ2GouGPLAOoGy2Fq/GBp1rTsY7vXPRYc7YQXALuJ4fuBEuQZLindZONPB89j54mX
-         sOtYiRR6nDGMFbO/scoBx/A/A4mvICyFwBsCdQ3Tf+kvJX0JlwDu2MJ4v3mU/vhodbmD
-         TGzVbPezShuwi+9RHaQdioyxLR54mrwmjUlSnUCA17Sr7FfG39OS9U1yDBdczkROSrN5
-         zMvA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1787157431; x=1787762231;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=VHF9/9II+PPn7OtQFw85e3uW5cLrCgzkdulcCX/a5mA=;
-        b=chtdO2nIy8jhlhevY5qNZdWuk5Kz/cmSHBUdS1ZhWL5AOHvW22hSJZ2Q5e2pw/eDGS
-         7Y0DQn70NqGpCsBv6RA3Ht09/mctwc/H3+UhDT2qNfj6RNczEIImTqiitRAbme3z+LtY
-         /wQDTfkv4pEuwKa3wvF64+egz3jTJKuWzr9FHWablcBxdPzay+8DFtCwMqsrVNm82/W2
-         vdOswUdihUoatFuVSZyjFf1Q1ThjL8JhUF0nGdIDRX9A+RZJZmT/Uo4t9ygx0EHdORVC
-         QQDnmJ6wUKPLRcLv/5TG+qzr1GoqE7ZIOPk874d5R1Uif1h3GVmd5sa1S/hUOYJfw9O+
-         5u5Q==
-X-Gm-Message-State: AOJu0YzTBMhhfeXNzhz3Rb07lnoOpHsG37upFQ3c6PzggNgIQP9rLAFj
-	+9f4ZZCb8Ob6H47pptWaAeKZ1uGUqWcu9nVNyXX3AoeMjL9vF6RZijkcEzfdbGQETLk=
-X-Gm-Gg: AR+sD10IXfwUKDri7/ZsiBSTDLZVz0yDFKBmHyjADjxfmUzbeq9NchU9kR/9vQULljz
-	HXZZjHRw09G71kV7AUl6HTTZCa0i62dAiuhnrT0+CFPu/3VqEk53P9/QiiNlO50shiXl5VRkHCL
-	uBbK8D9YCgmsRJdxIVQBz7+r3wRhDJm51XouNaZsfXQw45QiJbvweTZfaPEUk2TOC8oSu08DfUS
-	zFjDs4i6Vue7FX4XRIu2oQKDxfggcOpwQ0lmhcGVL+lk9bGYNdTg8/TfhA/JeC5XRK/FiCFX3t2
-	UoOq/hvkuH3BpEGD25nvaArK3obsu/Qxz+6Vi86FhsDhkTDdrehDW+eecb2O8nJcs8iQ68rSTKP
-	DwP4g11a1ERtZdpHdEVUENyBpoEscmqCp+DTiCzOw5uccPuf1AawzSrWbaaQONMCsaIRlJUtJU6
-	uTZTOu/XXb36koNU7M0QBgY4i2Pr8jTepK5K3L/QEsYEtySa34Kw4OcApid38XLTQexFcU654Ss
-	SmUZU5l4A/uyxt2ZgQ34lbJvapNSz9wqvgKXAnE9sKrJr3uJ00UbdxVIB29PPDJHLtwnkjS4d/j
-	wagGoVfLKONhn2mpZ/FebWZ9RR8DSn070g==
-X-Received: by 2002:a05:600c:3f18:b0:498:1595:be7b with SMTP id 5b1f17b1804b1-499aa194df0mr124760215e9.4.1787157431294;
-        Wed, 19 Aug 2026 09:37:11 -0700 (PDT)
-Received: from ?IPv6:2003:de:3717:2700:e7f8:85d7:29fa:4be7? (p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de. [2003:de:3717:2700:e7f8:85d7:29fa:4be7])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-499aa0dd3c9sm72706935e9.12.2026.08.19.09.37.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 19 Aug 2026 09:37:11 -0700 (PDT)
-Message-ID: <a9126e0ae10ae9ee8e7f0999da767857ecb86f9a.camel@suse.com>
-Subject: Re: [PATCH] libmpathutil: don't call pthread_testcancel as part of
- udev commands
-From: Martin Wilck <martin.wilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>
-Date: Wed, 19 Aug 2026 18:37:10 +0200
-In-Reply-To: <20260810210530.1313185-1-bmarzins@redhat.com>
-References: <20260810210530.1313185-1-bmarzins@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.60.2 
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JZBTb68S"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7FF0C1F000E9;
+	Wed, 19 Aug 2026 19:55:56 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1787169356;
+	bh=/arVLTxznLUOXhItfzQkf9me6z4Vhshg3lap8kNU25c=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc;
+	b=JZBTb68SVBqSacdsXAexgF4a0TnNR/Xvey4SK4x257euGFYdEgw0wsPtJ8ULP0YCL
+	 /jK1XTzQULpMfKD+YpAfPwyYnM+O0Ca/olJTw5EcpGZI9tw6l5HF7Bo4o5SMQ7Jabu
+	 FNxr5ZxMViBA7v4D+WhfR2GrPFZ8ABMVtvdcE8jcDsEorXLPcYasxWBjIDFD2kMRdz
+	 s5GgvqOdlikmRdVzk16m7CFIXDLAtxXP/cIvPfuowsv6qKOOG2nXam+rEtvXuy84Dv
+	 MnAIj2IKI60XtyRBMFaOojcTTNlsNcB82gXRjrg4xIyGqKonvUH/5iLKdIlazTpUDc
+	 JzBRw8jOgaESQ==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 93D0C3811A47;
+	Wed, 19 Aug 2026 19:55:08 +0000 (UTC)
+Subject: Re: [git pull] device mapper changes for 7.3
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <80e03616-ac55-cfcc-4fc7-f47bad3e0ac7@redhat.com>
+References: <80e03616-ac55-cfcc-4fc7-f47bad3e0ac7@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <80e03616-ac55-cfcc-4fc7-f47bad3e0ac7@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.3/dm-changes
+X-PR-Tracked-Commit-Id: 39c5aa3bd8ec3912d2cd0b3fe092642b0d2b0713
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 7fa7d4c6038bb4b394478ba1b31a6e8d89ed4f60
+Message-Id: <178716930717.3672948.3351844985707092876.pr-tracker-bot@kernel.org>
+Date: Wed, 19 Aug 2026 19:55:07 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, Bryam Vargas <hexlabsecurity@proton.me>, bui duc phuc <phucduc.bui@gmail.com>, corwin <corwincoburn@google.com>, David Laight <david.laight.linux@gmail.com>, Haotian Zhang <vulab@iscas.ac.cn>, Ilya Krutskih <devsec@tpz.ru>, "Jiangong.Han" <jiangong.han@windriver.com>, Jianyun Gao <jianyungao89@gmail.com>, Keith Busch <kbusch@kernel.org>, liyouhong <liyouhong@kylinos.cn>, Matthew Sakai <msakai@redhat.com>, Samuel Moelius <sam.moelius@trailofbits.com>, "shaikh.kamal" <shaikhkamal2012@gmail.com>, Shukai Ni <shukai.ni@kuleuven.be>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
 
-On Mon, 2026-08-10 at 17:05 -0400, Benjamin Marzinski wrote:
-> Commit 47a654f0 ("libmpathutil: udev: prevent interruption by thread
-> cancellation") added pthread_testcancel() calls to the udev command
-> wrappers. This makes these commands cancellation points (but only
-> after
-> any waiting has already happened without cancellation), while the
-> rest
-> of the code assumes that they are not.
->=20
-> This can cause problems like in uev_update_path() when multipathd
-> first
-> calls udev_device_unref(pp->udev) and afterwards resets pp->udev. If
-> the
-> thread is cancelled after unref'ing device in the udev_device_unref()
-> call, pp->udev will still point to the now-freed udev_device.
->=20
-> Fixes: 47a654f0 ("libmpathutil: udev: prevent interruption by thread
-> cancellation")
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+The pull request you sent on Mon, 17 Aug 2026 22:41:41 +0200 (CEST):
 
-Reviewed-by: Martin Wilck <mwilck@suse.com>
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.3/dm-changes
 
-> ---
-> =C2=A0libmpathutil/mt-libudev.c | 4 ----
-> =C2=A01 file changed, 4 deletions(-)
->=20
-> diff --git a/libmpathutil/mt-libudev.c b/libmpathutil/mt-libudev.c
-> index 813ce588..b81cf9c6 100644
-> --- a/libmpathutil/mt-libudev.c
-> +++ b/libmpathutil/mt-libudev.c
-> @@ -14,7 +14,6 @@ static pthread_mutex_t libudev_mutex =3D
-> PTHREAD_MUTEX_INITIALIZER;
-> =C2=A0		__r =3D
-> func();						\
-> =C2=A0		pthread_mutex_unlock(&libudev_mutex);	=09
-> 	\
-> =C2=A0		pthread_setcancelstate(__oldstate,
-> NULL);		\
-> -
-> 		pthread_testcancel();					\
-> =C2=A0		return
-> __r;						\
-> =C2=A0	}
-> =C2=A0
-> @@ -27,7 +26,6 @@ static pthread_mutex_t libudev_mutex =3D
-> PTHREAD_MUTEX_INITIALIZER;
-> =C2=A0		__r =3D
-> func(__arg1);						\
-> =C2=A0		pthread_mutex_unlock(&libudev_mutex);	=09
-> 	\
-> =C2=A0		pthread_setcancelstate(__oldstate,
-> NULL);		\
-> -
-> 		pthread_testcancel();					\
-> =C2=A0		return
-> __r;						\
-> =C2=A0	}
-> =C2=A0
-> @@ -40,7 +38,6 @@ static pthread_mutex_t libudev_mutex =3D
-> PTHREAD_MUTEX_INITIALIZER;
-> =C2=A0		__r =3D func(__arg1,
-> __arg2);				\
-> =C2=A0		pthread_mutex_unlock(&libudev_mutex);	=09
-> 	\
-> =C2=A0		pthread_setcancelstate(__oldstate,
-> NULL);		\
-> -
-> 		pthread_testcancel();					\
-> =C2=A0		return
-> __r;						\
-> =C2=A0	}
-> =C2=A0
-> @@ -53,7 +50,6 @@ static pthread_mutex_t libudev_mutex =3D
-> PTHREAD_MUTEX_INITIALIZER;
-> =C2=A0		__r =3D func(__arg1, __arg2,
-> __arg3);			\
-> =C2=A0		pthread_mutex_unlock(&libudev_mutex);	=09
-> 	\
-> =C2=A0		pthread_setcancelstate(__oldstate,
-> NULL);		\
-> -
-> 		pthread_testcancel();					\
-> =C2=A0		return
-> __r;						\
-> =C2=A0	}
-> =C2=A0
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/7fa7d4c6038bb4b394478ba1b31a6e8d89ed4f60
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
-=BCrnberg)
+Thank you!
+
+-- 
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
