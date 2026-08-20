@@ -1,96 +1,81 @@
-Received: from mta0.migadu.com (out-26.mta0.migadu.com [91.218.175.26])
+Received: from mta1.migadu.com (out-16.mta1.migadu.com [95.215.58.16])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED3413DA5B8
-	for <dm-devel@lists.linux.dev>; Thu, 20 Aug 2026 09:59:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.26
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A887488DB6
+	for <dm-devel@lists.linux.dev>; Thu, 20 Aug 2026 21:45:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.16
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787219955; cv=none; b=dDIkpiCwDuT5IVbfihOgfC2x11cT++sShQMozqzBhxECqQ2+38PUwSoubAW6LK0D+3SrALeo8Jsykr6cPf6arur2IQ5AejZ3QRrP3/5gp7Pk6PLDV4P1gkmC6XtTikCORja+2lbhsUiJ3kAMzkcIuohkx44qVr/tSJK9fxbGzlU=
+	t=1787262351; cv=none; b=IVD3mPb75SCMHlu6RD3/BYTMOdH58I0blr3o1t+6+LsI4yRC27arEtdM7hY/daOXDy/LIeu7xPFP2w5VB36w1eY8NBbPppMA6+iDnDYnIPoggGj9FBpr0TV4nM/Do00ZK8EGbSvYJPhTc3I+PNxdYX43v9sA3fa5hPlfXuQYvBs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787219955; c=relaxed/simple;
-	bh=ibyIE9gKf2iOY1+mVf6oD4UPNPJ9RqEZuDFV5F2gXBk=;
-	h=Message-ID:Date:MIME-Version:Cc:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=tzCIMjr36u06AM97fs1ufEi+VCC/k0W7EJuIzKg04+mJ/LvD9eAwR4ABONEBqZ5SkHD4dwVvhcp+t+YT3A+9hXPjSSVyghnUG3EqXwC/+nV0ycrblSbIP1Sk2GLYFcaBO7iHmCvj8e4MBR/MzBEQTjOaZHB6w/oYfYhn47Rnrc0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=vqfL6IYG; arc=none smtp.client-ip=91.218.175.26
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1787262351; c=relaxed/simple;
+	bh=kNRZN1iExbgAEESoNBlpBPYNvF3zFeAgrQXMHDuvDyc=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=UCRsAzSU5z/7AUDoXUDYwF32QWZM1t+hq4AdPmYTHL+XYk+WgQxo2eUGdAbx7WKNJPjbNc7I2U+JGMRyL86GFHY7Y8NflMZ+AbYohUnCqsu2XXkGlCf4MfIb8t9Xg2uh7xCFWIsyIUOziifjGW1j5Fc4Z/fYGp6zvqLFAcNj4bY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cressey.dev; spf=pass smtp.mailfrom=cressey.dev; dkim=pass (2048-bit key) header.d=cressey.dev header.i=@cressey.dev header.b=cpjlR78D; arc=none smtp.client-ip=95.215.58.16
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cressey.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cressey.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="vqfL6IYG"
+	dkim=pass (2048-bit key) header.d=cressey.dev header.i=@cressey.dev header.b="cpjlR78D"
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=ibyIE9gKf2iOY1+mVf6oD4UPNPJ9RqEZuDFV5F2gXBk=;
- c=simple/simple; d=linux.dev;
+DKIM-Signature: a=rsa-sha256; bh=kNRZN1iExbgAEESoNBlpBPYNvF3zFeAgrQXMHDuvDyc=;
+ c=simple/simple; d=cressey.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1787219950; v=1; x=1787824750;
- b=vqfL6IYG5bmPmIHZ93WmL/Wq/O1RN2hPCoTZ0Zdnyb3zDniktYfWdkZSzBh82ifiQFP19I5v
- zH8xlDuZPucwGWdi/Qd/VZsLQ2F6NZXLZmRhtyOKSNBIIGssxHrH1yYNCUEH1gBrIoNWJuqGyYU
- j/ddxJNgNFD1Mo3If6Orz2xg=
+ t=1787262347; v=1; x=1787867147;
+ b=cpjlR78DIUoWInrz6BvknqI5c/6Lx1YB3T1vzqT5PQ0w/iTxQR18Ofcb4YXyBx26cReH6xJx
+ F6W1S/3+29Nw+FVyUnyaxW4xUq6RbD+bQOF2khjd4/Nto5nJPdNSN+M6wilpJBLjX4AeQBXLa/5
+ obVPgjdRiGqTMG8Y7ZtW+FtSDy1gb8tBaDKZNzkxhbmsWyxeWaRpdfrlg6xnlkkUuYwPOwfxIoE
+ b6E5bmQQh/my/QZTDACYgtzGouM/13cq/eatn8Qv6wMKPRFOKYcuNSrwo5I9i3avQmZFzYA21FG
+ 5zlC5BcdCQYI/3xnQROHcChSosINpIm8+8RQkx8+r168w==
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: from [192.168.110.173] (223.70.159.239)
-	by smtp.migadu.com with ESMTPS id e22ed27fc468e85d;
-	Thu, 20 Aug 2026 09:59:10 +0000
-X-Mizu-Trace-ID: e22ed27fc468e85d
+Received: from coder-bcressey-whiskers-0.coder-bcressey-whiskers.remote-dev.svc.cluster.local (35.83.186.167)
+	by smtp.migadu.com with ESMTPS id 0b27810bfabba616;
+	Thu, 20 Aug 2026 21:45:46 +0000
+X-Mizu-Trace-ID: 0b27810bfabba616
 X-Migadu-Flow: FLOW_OUT
-Message-ID: <7b2733a4-71d2-43bb-b319-1ca8defba17e@linux.dev>
-Date: Thu, 20 Aug 2026 17:58:58 +0800
+From: Ben Cressey <ben@cressey.dev>
+Subject: [PATCH 0/2] dm-integrity: two fixes for the discard path in
+ integrity_metadata
+Date: Thu, 20 Aug 2026 21:44:56 +0000
+Message-Id: <20260820-dm-integrity-discard-v1-0-196d3618d09a@cressey.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Cc: cui.tao@linux.dev, Yu Kuai <yukuai@fygo.io>,
- Christoph Hellwig <hch@lst.de>, Jan Kara <jack@suse.cz>,
- Ming Lei <ming.lei@redhat.com>, Jonathan Corbet <corbet@lwn.net>,
- Shuah Khan <skhan@linuxfoundation.org>, Coly Li <colyli@fygo.io>,
- Kent Overstreet <kent.overstreet@linux.dev>, Alasdair Kergon
- <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, Song Liu <song@kernel.org>,
- Li Nan <magiclinan@didiglobal.com>, Xiao Ni <xiao@kernel.org>,
- Pankaj Gupta <pankaj.gupta.linux@gmail.com>, Dan Williams <djbw@kernel.org>,
- Vishal Verma <vishal.l.verma@intel.com>, Dave Jiang <dave.jiang@intel.com>,
- Alison Schofield <alison.schofield@intel.com>, Ira Weiny
- <iweiny@kernel.org>, Andreas Gruenbacher <agruenba@redhat.com>,
- Matthew Wilcox <willy@infradead.org>,
- Andrew Morton <akpm@linux-foundation.org>, Chris Li <chrisl@kernel.org>,
- Kairui Song <kasong@tencent.com>, Kemeng Shi <shikemeng@huaweicloud.com>,
- Nhat Pham <nphamcs@gmail.com>, Baoquan He <baoquan.he@linux.dev>,
- Barry Song <baohua@kernel.org>, Youngjun Park <youngjun.park@lge.com>,
- cgroups@vger.kernel.org, linux-doc@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-block@vger.kernel.org,
- linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
- linux-raid@vger.kernel.org, nvdimm@lists.linux.dev,
- virtualization@lists.linux.dev, gfs2@lists.linux.dev,
- linux-fsdevel@vger.kernel.org, linux-mm@kvack.org
-Subject: Re: [RFC PATCH v3 3/3] blk-cgroup: move async bio punt state to blkcg
-To: Yu Kuai <yukuai@kernel.org>, Jens Axboe <axboe@kernel.dk>,
- Tejun Heo <tj@kernel.org>, Josef Bacik <josef@toxicpanda.com>,
- Johannes Weiner <hannes@cmpxchg.org>, =?UTF-8?Q?Michal_Koutn=C3=BD?=
- <mkoutny@suse.com>
-References: <20260818070641.756747-1-yukuai@kernel.org>
- <20260818070641.756747-4-yukuai@kernel.org>
-From: Tao Cui <cui.tao@linux.dev>
-In-Reply-To: <20260818070641.756747-4-yukuai@kernel.org>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAFh1h2oC/22NSw6CMBCGr0JmbUNtxFSvYlz0MYXR2JJpRQ3h7
+ hbcuvz+5wwZmTDDuZmBcaJMKVbY7xpwg4k9CvKVQUl1lFpJ4R+CYsGeqXyEp+wMe3E6aGm87kK
+ nA9TqyBjovc1erj/OT3tDV9atNWFNRmHZRDes0sg0mYKtS6/Ed+R28/99wbJ8AYcA6J21AAAA
+X-Change-ID: 20260820-dm-integrity-discard-9480ad85f58f
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, Shukai Ni <shukai.ni@kuleuven.be>, 
+ Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ Mike Snitzer <snitzer@redhat.com>, 
+ "Jose Fernandez (Anthropic)" <jose.fernandez@linux.dev>, 
+ Ben Cressey <ben@cressey.dev>, stable@vger.kernel.org
+X-Mailer: b4 0.15.2
 
+Two small fixes for the REQ_OP_DISCARD branch of integrity_metadata().
+The first one fixes an out-of-bounds write introduced by the keyed
+discard marker patch merged for 7.3: when the tag is smaller than the
+digest, the checksum of the last block in each batch is written past the
+end of the buffer. The second one fixes a much older endless loop on the
+kmalloc-failure fallback with tags larger than 64 bytes.
 
+1/2 is ordered first because 2/2 on its own would move the 1/2
+overflow from the kmalloc'ed page onto the stack.
 
-在 2026/8/18 15:06, Yu Kuai 写道:
-> blkcg_punt_bio_submit() currently queues punted bios on blkg->async_bios,
-> so it has to call bio_blkg() to find or create a queue-local blkg.  Bios
-> now carry and pin the blkcg css, so punted bio lifetime no longer needs to
-> be anchored by a blkg.
-> 
-> Keeping the punt state in blkg can instantiate a blkg even when no blkcg
-> policy is enabled, just to bounce submission from a shared kthread.  Move
-> async_bio_lock, async_bios and async_bio_work to struct blkcg, and queue
-> punted bios on bio_blkcg() for non-root cgroups.  Root or unassociated bios
-> are submitted directly.
-> 
-> This preserves the priority-inversion avoidance while preventing
-> blkcg_punt_bio_submit() from creating blkgs that are not needed by any
-> policy.
+---
+Ben Cressey (2):
+      dm-integrity: fix buffer overflow with keyed discard
+      dm-integrity: fix infinite loop on discard with large tag size
 
-Reviewed-by: Tao Cui <cuitao@kylinos.cn>
+ drivers/md/dm-integrity.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+---
+base-commit: 39c5aa3bd8ec3912d2cd0b3fe092642b0d2b0713
+change-id: 20260820-dm-integrity-discard-9480ad85f58f
+
