@@ -1,102 +1,155 @@
-Received: from va-2-20.ptr.blmpb.com (va-2-20.ptr.blmpb.com [209.127.231.20])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFED73EEAD0
-	for <dm-devel@lists.linux.dev>; Mon, 24 Aug 2026 11:35:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.20
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41288466AE6
+	for <dm-devel@lists.linux.dev>; Mon, 24 Aug 2026 16:28:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787571311; cv=none; b=CUd2Np2uVPVgP+4W5ctBF9NMTgfAjePj3jWewnISp3Qluu8jtnbWwCdIpJFkGOe51OlRLQeuCsiMrJb59upaiTJPNrGv50zsDOzk65gugKgEi5893BqFENrnINoeqXpH4lMdZmAs7aqKoAL13Cy+W8m4h3Ry2EoiK3fswBxC0G0=
+	t=1787588899; cv=none; b=UrHEvNVsjscn8Alif9kgkoik93gkIz7baYBjlBkFr4Zk39IzVqgX/lQAdNYwbNOBzsM67YKJvhLFeNXt/15xAqH2HUgY3y1LAlqCTdkTQZ8mlHg3RRzJZSjxjec2KLdVjhAHKi6Dj8IzhmpGk0nnypUunzUhezJmoF8mvZg9yqU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787571311; c=relaxed/simple;
-	bh=PqIQTngKUfUKdQCjKiL53dzJiOLHjFCAYQnobsfec4E=;
-	h=Cc:From:Date:Subject:Content-Type:To:Message-Id:Mime-Version; b=WeEEd/82esdh3PPY8W2RdlasvlLgRCc9e8rmtPku0AjkQQEgcwDTLpfgLYJrKVzbF1ULyn7Q4daPta+B73AurkO5QQmVliDpJMt03zzXryJgoDkA1SOTxRFaTrwgA16XMLg1HkvqeIgSb4c/M9RGO+i63eM6abTIRlu5OAlSGl0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com; spf=pass smtp.mailfrom=fnnas.com; dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b=EISRR3Ct; arc=none smtp.client-ip=209.127.231.20
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=fnnas.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fnnas.com
+	s=arc-20240116; t=1787588899; c=relaxed/simple;
+	bh=53MYxQHygGRmNhM2Vile0ew07MSvX8FpWaARTeGaGpo=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 In-Reply-To:Content-Type:Content-Disposition; b=N0P9SGDvphnnFq93qpD3jXtWXD0gs/ubdLOSISo2psF6CnLXITD/k6rtuuHp56zrnYk9/6+LmU3O4wBGg5PAfY8bWDt439oRDYugRORjxxpIBy19cEFpyq8FFDxUXQ6ZxLCDjSU0GMogfBfdq4rbFpl8nihbnPAxV4hGCFgFbo8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i94EEWAd; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=fnnas-com.20200927.dkim.feishu.cn header.i=@fnnas-com.20200927.dkim.feishu.cn header.b="EISRR3Ct"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
- s=s1; d=fnnas-com.20200927.dkim.feishu.cn; t=1787571302;
-  h=from:subject:mime-version:from:date:message-id:subject:to:cc:
- reply-to:content-type:mime-version:in-reply-to:message-id;
- bh=Cp5tF+fw8F5h4aRI1osdPnsdi/xjU14GNiBl6NZ4EeE=;
- b=EISRR3CtAJj1YqA6+H0J2fRXOsAPz3yZW3684IVTINMuWCGA1dRpOQlEf0sg4xfkwGzXMl
- r5KSaTZ3F8KnfkafZIGr5ccYrIEAuwOMiwNkULnGjK2U131dMXedIcDdjKB5/bMb8e7hNj
- OT4gSsBDWkJzElUKrL2FD6lNA08qUlgQvgVTIqgP3QH4ieAh6ilGjfAcGPcZuvhs7BtEVW
- gfI/mxA7hia9f/1GgK7ToO7WqhFx6ChN7lpTj9G7zGr3usp9j+R1vBH1DkI4OAHjvqWpQJ
- Pk1gT8hoNUDpHlrkdbf874uqc1lfsGNmprs6yiGTCCuYutE0Fjk5EjFeiNqbdQ==
-Cc: <chencheng@fnnas.com>, <linux-kernel@vger.kernel.org>
-From: "Chen Cheng" <chencheng@fnnas.com>
-Date: Mon, 24 Aug 2026 19:34:49 +0800
-Subject: [PATCH] dm-integrity: require stable writes for internal hash modes
-Content-Type: text/plain; charset=UTF-8
-X-Lms-Return-Path: <lba+26a8c2c64+5e99af+lists.linux.dev+chencheng@fnnas.com>
-To: "Alasdair Kergon" <agk@redhat.com>, "Mike Snitzer" <snitzer@kernel.org>, 
-	"Mikulas Patocka" <mpatocka@redhat.com>, 
-	"Benjamin Marzinski" <bmarzins@redhat.com>, 
-	"Milan Broz" <gmazyland@gmail.com>, <dm-devel@lists.linux.dev>, 
-	<sunyangkai@fygo.io>
-Message-Id: <20260824113449.3385446-1-chencheng@fnnas.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i94EEWAd"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1787588897;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=v2aXZ+3aYtOdfO/eaGtsnYR/4Lx+Rfaway8HdQMDMpM=;
+	b=i94EEWAd8BOBC++qbSwJtUd5AOkXJbWMP3lePSjCach05fqg9MVmdeEADk82aTDz4NFo5U
+	5KfkgNBmLmTpY9mv0Mh9FRWdiehi9YrfMRplYB+HW1Z95iTrrzMeSFdggSRP7uCMGsQspm
+	7PDomFYf3YIW27gN4p83lGPrYwJOE88=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-509-x5hC3hABMpOrBGrqkYuUzw-1; Mon,
+ 24 Aug 2026 12:28:10 -0400
+X-MC-Unique: x5hC3hABMpOrBGrqkYuUzw-1
+X-Mimecast-MFC-AGG-ID: x5hC3hABMpOrBGrqkYuUzw_1787588889
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 98515180ABEF;
+	Mon, 24 Aug 2026 16:28:09 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 455E018005AD;
+	Mon, 24 Aug 2026 16:28:09 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 67OGS8xD2535608
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 24 Aug 2026 12:28:08 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 67OGS7iG2535603;
+	Mon, 24 Aug 2026 12:28:07 -0400
+Date: Mon, 24 Aug 2026 12:28:07 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Ming-Hung Tsai <mtsai@redhat.com>
+Cc: dm-devel@lists.linux.dev, Mikulas Patocka <mpatocka@redhat.com>,
+        Heinz Mauelshagen <heinzm@redhat.com>,
+        Mike Snitzer <snitzer@kernel.org>
+Subject: Re: [PATCH] dm cache: fix demotion stats in passthrough mode
+Message-ID: <aoxxF39tLNz5uT25@redhat.com>
+References: <20260818100547.79884-1-mtsai@redhat.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.55.0
-X-Original-From: chencheng@fnnas.com
-Received: from fedora ([183.34.169.70]) by smtp.feishu.cn with ESMTPS; Mon, 24 Aug 2026 19:35:00 +0800
-Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+In-Reply-To: <20260818100547.79884-1-mtsai@redhat.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: bUq3cVtK1yrzBMp7oU5fmPpXi4qe36MEhOgfbM8EwGU_1787588889
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-From: Chen Cheng <chencheng@fnnas.com>
+On Tue, Aug 18, 2026 at 06:05:47PM +0800, Ming-Hung Tsai wrote:
+> The demotion counter is incremented per incoming write bio before the
+> invalidation begins, causing the demotion count to exceed the actual
+> number of cached blocks when multiple bios target the same cached
+> block. Additionally, the counter is incremented unconditionally
+> regardless of invalidation failure.
+> 
+> Reproduce steps:
+> 
+> 1. Create a cache device consisting of 512 cache entries
+> 
+> modprobe brd rd_size=262144
+> dmsetup create cmeta --table "0 8192 linear /dev/ram0 0"
+> dmsetup create cdata --table "0 65536 linear /dev/ram0 8192"
+> dmsetup create corig --table "0 65536 linear /dev/ram0 262144"
+> dd if=/dev/zero of=/dev/mapper/cmeta bs=4k count=1 oflag=direct
+> dmsetup create cache --table "0 65536 cache /dev/mapper/cmeta \
+> /dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 writethrough smq 0"
+> 
+> 2. Populate the cache, and record the number of cached blocks
+> 
+> fio --name=populate --filename=/dev/mapper/cache --rw=randwrite --bs=4k \
+> --direct=1 --ioengine=libaio --iodepth=32 --io_size=2048m
+> nr_cached=$(dmsetup status cache | awk '{split($7, a, "/"); print a[1]}')
+> 
+> 3. Reload the cache into passthrough mode
+> 
+> dmsetup suspend cache
+> dmsetup reload cache --table "0 65536 cache /dev/mapper/cmeta \
+> /dev/mapper/cdata /dev/mapper/corig 128 2 metadata2 passthrough smq 0"
+> dmsetup resume cache
+> 
+> 4. Write to the passthrough cache with multiple jobs to trigger
+>    multiple bios hitting the same cached block.
+> 
+> fio --filename=/dev/mapper/cache --name=test --rw=write --bs=4k \
+> --direct=1 --ioengine=libaio --iodepth=32 --numjobs=4
+> 
+> 5. Check if demoted matches cached block count. These numbers should
+>    match but may differ due to overcounting per bio.
+> 
+> nr_demoted=$(dmsetup status cache | awk '{print $12}')
+> echo "$nr_cached, $nr_demoted"
+> 
+> Fix by moving the demotion counter increment into invalidate_complete(),
+> gated on the success flag.
+> 
+> Reported-by: Ben Marzinski <bmarzins@redhat.com>
+> Fixes: b29d4986d0da ("dm cache: significant rework to leverage dm-bio-prison-v2")
+> Signed-off-by: Ming-Hung Tsai <mtsai@redhat.com>
 
-dm-integrity direct, bitmap and inline internal-hash modes compute
-integrity tags from the pages carried by the write bio.  The lower data
-write also uses those pages, so the tag and the data write depend on the
-same memory contents staying unchanged while writeback is in flight.
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-Without stable writes, a buffered writer can modify a writeback folio
-after dm-integrity has submitted the data bio and before the lower device
-has consumed the data.  After a crash, this can leave data from the later
-contents with a tag calculated from the earlier contents, causing
-permanent checksum failures on read.
+> ---
+>  drivers/md/dm-cache-target.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+> index 097315a9bf0f..b79206816956 100644
+> --- a/drivers/md/dm-cache-target.c
+> +++ b/drivers/md/dm-cache-target.c
+> @@ -1461,6 +1461,9 @@ static void invalidate_complete(struct dm_cache_migration *mg, bool success)
+>  	struct bio_list bios;
+>  	struct cache *cache = mg->cache;
+>  
+> +	if (success)
+> +		atomic_inc(&cache->stats.demotion);
+> +
+>  	bio_list_init(&bios);
+>  	if (mg->cell) {
+>  		if (dm_cell_unlock_v2(cache->prison, mg->cell, &bios))
+> @@ -1732,7 +1735,6 @@ static int map_bio(struct cache *cache, struct bio *bio, dm_oblock_t block,
+>  		if (passthrough_mode(cache)) {
+>  			if (bio_data_dir(bio) == WRITE) {
+>  				bio_drop_shared_lock(cache, bio);
+> -				atomic_inc(&cache->stats.demotion);
+>  				invalidate_start(cache, cblock, block, bio);
+>  				return DM_MAPIO_SUBMITTED;
+>  			} else
+> -- 
+> 2.49.0
 
-Set BLK_FEAT_STABLE_WRITES for internal-hash D, B and I modes so
-filesystems wait for writeback folios to become stable before modifying
-them again.  Journal mode is left unchanged because it copies data into
-the journal before computing and persisting the tag.
-
-Tested using dm-delay over a virtio-blk test disk, dm-integrity
-internal_hash:crc32c and no-journal ext4.  The D and B reproducers both
-failed with checksum errors before this change and completed with
-READ_RC=0 and zero mismatches after it.
-
-Fixes: 7eada909bfd7 ("dm: add integrity target")
-Reported-by: Sun Yangkai <sunyangkai@fygo.io>
-Link: https://github.com/chencheng-fnnas/reproducer/blob/main/dm-integrity-writeback-race.py
-Signed-off-by: Chen Cheng <chencheng@fnnas.com>
----
- drivers/md/dm-integrity.c | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 1f2593f113f6..49fb7561a30f 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -4044,10 +4044,14 @@ static void dm_integrity_io_hints(struct dm_target *ti, struct queue_limits *lim
- 
- 	dm_stack_bs_limits(limits, ic->sectors_per_block << SECTOR_SHIFT);
- 	limits->dma_alignment = limits->logical_block_size - 1;
- 	limits->discard_granularity = ic->sectors_per_block << SECTOR_SHIFT;
- 
-+	if (ic->internal_hash &&
-+	    (ic->mode == 'D' || ic->mode == 'B' || ic->mode == 'I'))
-+		limits->features |= BLK_FEAT_STABLE_WRITES;
-+
- 	if (!ic->internal_hash) {
- 		struct blk_integrity *bi = &limits->integrity;
- 
- 		memset(bi, 0, sizeof(*bi));
- 		bi->metadata_size = ic->tag_size;
--- 
-2.55.0
