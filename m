@@ -1,223 +1,120 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mta1.migadu.com (out-21.mta1.migadu.com [95.215.58.21])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F25553F6C39
-	for <dm-devel@lists.linux.dev>; Tue, 25 Aug 2026 23:20:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 085B73B1B3
+	for <dm-devel@lists.linux.dev>; Wed, 26 Aug 2026 00:26:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=95.215.58.21
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787700004; cv=none; b=UzbmvCO1iflxdpnIKV8PdosFMQmuqMrRxSSwKZtQl88ly+RofPRrv+MUvLmNyUNtIJL4frrsmxM2lYSnvM5g3j0wCTRgFbj88JGIRqdGZ8Qe3nLk5YQEL6bf8a+v7ON3y1wX91zASjJAOeVoCXjat93PnTJmnwRXZ6s6YmTU61k=
+	t=1787703982; cv=none; b=VfPUJ59Iqq1psCpzS8CZEUQmz6QGhRE0FJUBw4urEf6Yiy3axBBECu8zB61ZFpTybF+8U0FIFyQtqKXlVbN4QiUlillgnpkKbooRopMBSXtYmMckN12cAcTmCky4Z9yvheapUJxK7qdosFJkjRshhVVK4Z4O82qnTfUAnHdAeUI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787700004; c=relaxed/simple;
-	bh=YY9AZO//p1FiN9QNr/mJdNngbBDq1btjDvc3Q5A3Duk=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=iaz84JG7VniSCS0Poc16qliDSyVV9g8G/2HEeoLDd0dKZctd3cVK8wcnXQZ4uas2SSR6wyCh4YNkCDm2rHVlJ6oWhEetifjKcMi6RM9m9KHGkQO2MEZLvrr7jjro8GFuNTs1vf1UwCvGCYCuQ8rvqppKSkZjvd+ezVQJJCi1+fg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=A0N/DX8g; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1787703982; c=relaxed/simple;
+	bh=NxDKxbFlED+fFDd4TCm7HQl8oeKXvA3b2POunZDitW4=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:To:Cc; b=JeQtLQdL0B1Wt8GKUljvYMfblk5BSBCw5OoC4jQkx3Ha0i0jVvLMJEaLo07GGHVo1TgWP4IYzDFJ5zFUor7jmGjkXdodaO1CtkBt03FYmsyb8BLgjihfzAC0WZ5f82WcIOe0TQWd5e1R7MxoM2xsQQOM0/kNONuiQ6pyNbo0rWo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cressey.dev; spf=pass smtp.mailfrom=cressey.dev; dkim=pass (2048-bit key) header.d=cressey.dev header.i=@cressey.dev header.b=Jcc+cHr9; arc=none smtp.client-ip=95.215.58.21
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cressey.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cressey.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="A0N/DX8g"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1787700001;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=grrFwbFWJuoTNmfUnbSuzcEwPXQSa5bG58ef6xERFd4=;
-	b=A0N/DX8gxzquboDr5BEpzbDr3bgGRRicUb9DyVNq0QwjROrWyIHnSOFM6BZ7tELQTkximu
-	kXtJTAwdse3+w+XuXs4EGP/lukTFAtBitGpXRpVZl+55OdTjBfMlwvWXAmyVeY/yIUUamb
-	qofq/X9zZBo23JTFgucJPIjMgx1Scz0=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-474-SO676NTTPXifdrfeK7u4JQ-1; Tue,
- 25 Aug 2026 19:20:00 -0400
-X-MC-Unique: SO676NTTPXifdrfeK7u4JQ-1
-X-Mimecast-MFC-AGG-ID: SO676NTTPXifdrfeK7u4JQ_1787699999
-Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4ED501911B2E;
-	Tue, 25 Aug 2026 23:19:59 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 909B8434;
-	Tue, 25 Aug 2026 23:19:58 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 67PNJvDj852444
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 25 Aug 2026 19:19:57 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 67PNJvdH852381;
-	Tue, 25 Aug 2026 19:19:57 -0400
-Date: Tue, 25 Aug 2026 19:19:57 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Matthew Sakai <msakai@redhat.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Ming-Hung Tsai <mtsai@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm cache: fix issue with background work locking
-Message-ID: <ao4jHR_uArXldL0J@redhat.com>
-References: <20260825192226.4191036-1-bmarzins@redhat.com>
- <e7c72200-790d-45d4-9ce5-1fe556a9a3d9@redhat.com>
+	dkim=pass (2048-bit key) header.d=cressey.dev header.i=@cressey.dev header.b="Jcc+cHr9"
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=NxDKxbFlED+fFDd4TCm7HQl8oeKXvA3b2POunZDitW4=;
+ c=simple/simple; d=cressey.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1787703977; v=1; x=1788308777;
+ b=Jcc+cHr91+Rlc8hPT3dBOKoZOJaj5xTQHNfoAbR3WEFaJEBNRsSNZJsSQZEQ9KnATmqSvDd1
+ NgbaAahk0RslhHxCcl3yntSDqffWXjjYjoKUDp4R1FiLd7myNp/o7RPT3Br8ifJPVnQ6MoVEBdi
+ P6X5+qQGsUT2jPPLKE4yCLsi2SVCrhe76V6YPziJVYAHiqpzxXKW8lqPpQJv2FhRlAW5k1Jyge6
+ azE1zv0jdUmxLsnsHtkAb4scANvYVfjZhNlIqbzWs6gMcgMsxl7B0uRPFQo8+bG6nwPOYWO6kel
+ +KGX+2m3YFw5H6EFAiQVO9lpZSKsilRO8yD274Quovq0w==
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: from coder-bcressey-whiskers-0.coder-bcressey-whiskers.remote-dev.svc.cluster.local (35.83.186.167)
+	by smtp.migadu.com with ESMTPS id d88eb38d4e98656b;
+	Wed, 26 Aug 2026 00:26:07 +0000
+X-Mizu-Trace-ID: d88eb38d4e98656b
+X-Migadu-Flow: FLOW_OUT
+From: Ben Cressey <ben@cressey.dev>
+Date: Wed, 26 Aug 2026 00:25:33 +0000
+Subject: [PATCH] dm-crypt: fix a tiny race condition in crypt_dec_pending
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <e7c72200-790d-45d4-9ce5-1fe556a9a3d9@redhat.com>
-X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: rPJyQ2S2LxsTvUeIwNH1eTCDyfta1GCqkm7RvNtr8KI_1787699999
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20260826-dm-crypt-dec-pending-v1-1-395bfee3576b@cressey.dev>
+X-B4-Tracking: v=1; b=H4sIAHwyjmoC/22NyQ6CMBCGX4XM2QnYyKKvYjyU6Qjj0jZT3EJ4d
+ wGvHr9/HSGxCic4ZCMoPyVJ8DNsNxlQb33HKG5mMIWpisaU6O5I+okDOiaM7J34DndVzQ3ZfV2
+ VDHM1Kp/lvc4eTz9Oj/bCNCxbS6K1ibFV66lfpFvMKbyCXlnz1fp3A9P0BZHs6qOwAAAA
+X-Change-ID: 20260825-dm-crypt-dec-pending-467e8ca9765e
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, Milan Broz <gmazyland@gmail.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ stable@vger.kernel.org, 
+ "Jose Fernandez (Anthropic)" <jose.fernandez@linux.dev>, 
+ Ben Cressey <ben@cressey.dev>
+X-Mailer: b4 0.15.2
 
-On Tue, Aug 25, 2026 at 04:22:01PM -0400, Matthew Sakai wrote:
-> 
-> 
-> On 8/25/26 3:22 PM, Benjamin Marzinski wrote:
-> > dm cache used a rw_semaphore for background_work_lock. Write locks on
-> > rw_semaphores have strict owner semantics, but there was no guarantee
-> > that the process that locked background_work_lock was the same process
-> > that unlocked it. This can be easily seen using a kernel compiled with
-> > CONFIG_DEBUG_RWSEMS. Given a dm cache device <cache>, run: 'dmsetup
-> > suspend <cache> && dmsetup resume <cache>'. This will tigger a kernel
-> 
-> typo: trigger
-> 
-> > warning:
-> > 
-> > DEBUG_RWSEMS_WARN_ON((rwsem_owner(sem) != current) && !rwsem_test_oflags(sem, RWSEM_NONSPINNABLE))
-> > 
-> > triggered by cache_resume(). To fix this, switch from a rw_semaphore to
-> > a spinlock and a wait queue. dm cache already hasd a wait queue and
-> 
-> typo: has
-> 
-> > associated counter, migration_wait and nr_allocated_migrations, that was
-> > getting woken up when background work was getting completed, but wasn't
-> > actually used by anything. This is replaced by the background_work queue
-> > and counter.
-> > 
-> > Fixes: b29d4986d0da ("dm cache: significant rework to leverage dm-bio-prison-v2")
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> Aside from the above, feel free to add
-> 
-> Reviewed-by: Matthew Sakai <msakai@redhat.com>
+crypt_dec_pending reads io->error before calling atomic_dec_and_test.
+Another context, for example crypt_endio called from an interrupt, may
+set io->error and drop its reference between the read and the
+decrement. crypt_dec_pending then drops the last reference and completes
+the bio with the stale status - so a read that failed and was never
+decrypted, or a write that failed, is reported as successful.
 
-Thanks. I'll wait to see if there are more comments first, but I will
-respin this to fix the typos.
+The read was placed before the decrement by commit b35f8caa0890 ("dm
+crypt: wait for endio to complete before destruction"), because that
+commit freed dm_crypt_io before calling bio_endio. This is no longer the
+case, dm_crypt_io lives in the per-bio data now.
 
--Ben
+Read io->error after atomic_dec_and_test instead. atomic_dec_and_test is
+fully ordered, so no additional barrier is needed.
 
-> 
-> > ---
-> >   drivers/md/dm-cache-target.c | 55 ++++++++++++++++++------------------
-> >   1 file changed, 28 insertions(+), 27 deletions(-)
-> > 
-> > diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-> > index 33dbc71b730f..d8d9c63d2a67 100644
-> > --- a/drivers/md/dm-cache-target.c
-> > +++ b/drivers/md/dm-cache-target.c
-> > @@ -340,8 +340,6 @@ struct cache {
-> >   	struct list_head invalidation_requests;
-> >   	sector_t migration_threshold;
-> > -	wait_queue_head_t migration_wait;
-> > -	atomic_t nr_allocated_migrations;
-> >   	/*
-> >   	 * The number of in flight migrations that are performing
-> > @@ -397,7 +395,11 @@ struct cache {
-> >   	bool loaded_mappings:1;
-> >   	bool loaded_discards:1;
-> > -	struct rw_semaphore background_work_lock;
-> > +	/* background work management */
-> > +	bool background_work_allowed;
-> > +	unsigned background_work_nr;
-> > +	spinlock_t background_work_lock;
-> > +	wait_queue_head_t background_work_wait;
-> >   	struct batcher committer;
-> >   	struct work_struct commit_ws;
-> > @@ -488,19 +490,13 @@ static struct dm_cache_migration *alloc_migration(struct cache *cache)
-> >   	memset(mg, 0, sizeof(*mg));
-> >   	mg->cache = cache;
-> > -	atomic_inc(&cache->nr_allocated_migrations);
-> >   	return mg;
-> >   }
-> >   static void free_migration(struct dm_cache_migration *mg)
-> >   {
-> > -	struct cache *cache = mg->cache;
-> > -
-> > -	if (atomic_dec_and_test(&cache->nr_allocated_migrations))
-> > -		wake_up(&cache->migration_wait);
-> > -
-> > -	mempool_free(mg, &cache->migration_pool);
-> > +	mempool_free(mg, &mg->cache->migration_pool);
-> >   }
-> >   /*----------------------------------------------------------------*/
-> > @@ -1030,34 +1026,39 @@ static void calc_discard_block_range(struct cache *cache, struct bio *bio,
-> >   static void prevent_background_work(struct cache *cache)
-> >   {
-> > -	lockdep_off();
-> > -	down_write(&cache->background_work_lock);
-> > -	lockdep_on();
-> > +	spin_lock_irq(&cache->background_work_lock);
-> > +	cache->background_work_allowed = false;
-> > +	wait_event_lock_irq(cache->background_work_wait,
-> > +			    cache->background_work_nr == 0,
-> > +			    cache->background_work_lock);
-> > +	spin_unlock_irq(&cache->background_work_lock);
-> >   }
-> >   static void allow_background_work(struct cache *cache)
-> >   {
-> > -	lockdep_off();
-> > -	up_write(&cache->background_work_lock);
-> > -	lockdep_on();
-> > +	spin_lock_irq(&cache->background_work_lock);
-> > +	cache->background_work_allowed = true;
-> > +	spin_unlock_irq(&cache->background_work_lock);
-> >   }
-> >   static bool background_work_begin(struct cache *cache)
-> >   {
-> >   	bool r;
-> > -	lockdep_off();
-> > -	r = down_read_trylock(&cache->background_work_lock);
-> > -	lockdep_on();
-> > -
-> > +	spin_lock_irq(&cache->background_work_lock);
-> > +	r = cache->background_work_allowed;
-> > +	if (r)
-> > +		cache->background_work_nr++;
-> > +	spin_unlock_irq(&cache->background_work_lock);
-> >   	return r;
-> >   }
-> >   static void background_work_end(struct cache *cache)
-> >   {
-> > -	lockdep_off();
-> > -	up_read(&cache->background_work_lock);
-> > -	lockdep_on();
-> > +	spin_lock_irq(&cache->background_work_lock);
-> > +	if (--cache->background_work_nr == 0)
-> > +		wake_up(&cache->background_work_wait);
-> > +	spin_unlock_irq(&cache->background_work_lock);
-> >   }
-> >   /*----------------------------------------------------------------*/
-> > @@ -2507,9 +2508,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
-> >   	spin_lock_init(&cache->lock);
-> >   	bio_list_init(&cache->deferred_bios);
-> > -	atomic_set(&cache->nr_allocated_migrations, 0);
-> >   	atomic_set(&cache->nr_io_migrations, 0);
-> > -	init_waitqueue_head(&cache->migration_wait);
-> >   	r = -ENOMEM;
-> >   	atomic_set(&cache->nr_dirty, 0);
-> > @@ -2592,8 +2591,10 @@ static int cache_create(struct cache_args *ca, struct cache **result)
-> >   		     issue_op, cache, cache->wq);
-> >   	dm_iot_init(&cache->tracker);
-> > -	init_rwsem(&cache->background_work_lock);
-> > -	prevent_background_work(cache);
-> > +	init_waitqueue_head(&cache->background_work_wait);
-> > +	spin_lock_init(&cache->background_work_lock);
-> > +	cache->background_work_allowed = false;
-> > +	cache->background_work_nr = 0;
-> >   	*result = cache;
-> >   	return 0;
+Fixes: b35f8caa0890 ("dm crypt: wait for endio to complete before destruction")
+Cc: stable@vger.kernel.org
+Reviewed-by: Jose Fernandez (Anthropic) <jose.fernandez@linux.dev>
+Signed-off-by: Ben Cressey <ben@cressey.dev>
+Assisted-by: Claude:unspecified
+---
+Found by inspection. On x86-64 the load and the lock decl are adjacent
+instructions, so in practice this needs an interrupt or preemption on
+the CPU doing the final crypt_dec_pending.
+It could only be demonstrated with an mdelay() inserted between the two
+in kcryptd context: with dm-crypt on top of the "error" target, 20 of
+20 failed direct writes were then reported as successful, and 0 of 20
+with this patch and the same delay.
+The affected pairs include kcryptd_io_read_work vs the read clone's
+crypt_endio (deferred or recheck read), kcryptd_crypt_write_convert vs
+the write clone's crypt_endio, and with an async cipher the read and
+write convert paths vs kcryptd_async_done.
+---
+ drivers/md/dm-crypt.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 608b617fb817f..9e170de50ad32 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -1745,7 +1745,6 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
+ 	struct bio *base_bio = io->base_bio;
+-	blk_status_t error = io->error;
+ 
+ 	if (!atomic_dec_and_test(&io->io_pending))
+ 		return;
+@@ -1767,7 +1766,7 @@ static void crypt_dec_pending(struct dm_crypt_io *io)
+ 	else
+ 		kfree(io->integrity_metadata);
+ 
+-	base_bio->bi_status = error;
++	base_bio->bi_status = io->error;
+ 
+ 	bio_endio(base_bio);
+ }
+
+---
+base-commit: 39c5aa3bd8ec3912d2cd0b3fe092642b0d2b0713
+change-id: 20260825-dm-crypt-dec-pending-467e8ca9765e
 
