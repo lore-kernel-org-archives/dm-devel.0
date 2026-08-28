@@ -1,152 +1,284 @@
-Received: from AS8PR04CU009.outbound.protection.outlook.com (mail-westeuropeazon11021139.outbound.protection.outlook.com [52.101.70.139])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19C463BE146
-	for <dm-devel@lists.linux.dev>; Fri, 28 Aug 2026 10:31:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.70.139
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787913067; cv=fail; b=u/P7kTVwt+Z22hOXXRFKCFV7uL7zXEDtyVxjctU//IEaMkOsfNHdo3qH5A+l/tSVJ/O7qMFNsofJTFtwOSGzztBthsrEQFUXW6a8Ulqdnu9XwD3bwTvhUbgZCBPV/IoxTNiOqk67bCbys9WXgCtsea4pek6zF5//RP8dBpUmTbo=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787913067; c=relaxed/simple;
-	bh=kLY+36w1vOytXPVRtnH76iJBr5sl2lLUu7gOcGF9+5g=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=cHegR2C6jLx2xeFCh4lvcAKiqTPU49fcNNGwBZ3+FvIULx2J+qUjOYPdb4kmPhmUx2GkO0HNHgp8UYR+jYAR/Y/dg5U7oHtonFS+9kg9PBn91NINDncDuo847JUUMVQevYcAqxN/8X2SPwc951kS91t8Fa54/jonh9PSI0nteO0=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kuleuven.be; spf=pass smtp.mailfrom=kuleuven.be; dkim=pass (1024-bit key) header.d=kuleuven.be header.i=@kuleuven.be header.b=I7hnXsd/; arc=fail smtp.client-ip=52.101.70.139
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kuleuven.be
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kuleuven.be
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 12E1057C9F
+	for <dm-devel@lists.linux.dev>; Fri, 28 Aug 2026 13:57:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1787925471; cv=none; b=b4YRmRlcvfSnaVlXLkZehDbJj/z/OVaPYUaa7t/dZAcOdxFA1S9i2Mp8HnhFmcCNCcUdD/6NKEbGg0x/Q8TGxGqZ29iekyL39nWo/d8sn+fh8eqN1jHJfHfQb8BNPDxC3t9h3Tu+WwPJaIcwClR2KCz3ivMtCZIoE6PbBrt+odg=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1787925471; c=relaxed/simple;
+	bh=cZKIJQR23E6FMjFTPorIv1MTFX1HJ4stJK/b0dg3Bys=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=LCpuiXaUQNn9RqKff4nGks9DmM9kQQtJ5EVh3HezOgyO6q8LMpq/wqvonOEXMtp94vG9RF+kfOi46MXfSpeP2L/0P7iusW/E386sUoKHYhZwdSWLUAkPaOPWYgGlt0WGimN6mFo754jRbUQsVeIOXbSlnDgS1IeNYviIy4Hs4J0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=TWR/o2UM; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=sDQKdFnA; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=kuleuven.be header.i=@kuleuven.be header.b="I7hnXsd/"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=ENz6CPdUnGf0PBISpR8tdyzBXiiw8JJdkBWM1+AiHBSM3vJDW44O1ROpPg9qScVtaGcNEvhh0Fbwcq9fmMefrxv7kpPUqDnTaJEQ43i+/a5N3OLkeNyAEZt55Kt5uDgIEKD26qry2A0ii7EV61RLBs+vX4IbEUC6FeVookOreKsqYIlXrtshbeBkcFKYg/YRur7lNQyN4wVXeX0oZa7IpQAxMtYAI5Jq3jjnrq/S9Alrl7lNFBbXyh9x/UlVcpJLlrZQPmDzTC1riJEIHudSVbf2Qga9Q1gZAO/B/XNSsaAJ+cW9414YKcvuPKMwXg8bbnaseuUNqE52EYCxiGycDg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=kLY+36w1vOytXPVRtnH76iJBr5sl2lLUu7gOcGF9+5g=;
- b=bInAOb+1GkIHfwbr8hk2/2fxwpDkEeliVehGnpUmH0w3tCCXE1wx2HjhUHGqX3s06NIXiR54uyRlU70tgv+G2PbmJLIHFaUha8YAKVA+xl6d+bzhE5+cP+t0N2JzHwbwXXYBJVAqOTBOpszKzrLBkbSoKycz8IsYMROx/PA9bhk+YBuYsRodr/RSn2DQ66+BFWQamGw2/dc88ynT6q6NL5A0vqTVq7Arp8zz+8Io8f8nx5PyHpKfT1hrurqufBodELzeiidtgx7zpOocvQ18SYubInRr4F5psewJ1UQ61eKdNAo3mS/tGTjONqGQxZJFkbZmM9jnNraLg88QX+ubog==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=kuleuven.be; dmarc=pass action=none header.from=kuleuven.be;
- dkim=pass header.d=kuleuven.be; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kuleuven.be;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=kLY+36w1vOytXPVRtnH76iJBr5sl2lLUu7gOcGF9+5g=;
- b=I7hnXsd/qy4VVZ7jGULa1NSFHGEh2vYZQnIU7twh8T2/HeiU95mJaao/Aw606LwJfAIzw5aaN+AKwX89+uA6A5+T+1cqoeFl41pQcNlGd1o9lBNOInHtiwSKSkOeRk+77DX+nnhHAgcf6QbUqYbDHlKZvb0yuH3fA2GV8UNf4Tw=
-Received: from DB3PR08MB9011.eurprd08.prod.outlook.com (2603:10a6:10:431::12)
- by PR3PR08MB5596.eurprd08.prod.outlook.com (2603:10a6:102:88::8) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.382.5; Fri, 28 Aug
- 2026 10:31:01 +0000
-Received: from DB3PR08MB9011.eurprd08.prod.outlook.com
- ([fe80::f6d3:4f5f:88a2:e500]) by DB3PR08MB9011.eurprd08.prod.outlook.com
- ([fe80::f6d3:4f5f:88a2:e500%4]) with mapi id 15.21.0382.007; Fri, 28 Aug 2026
- 10:30:59 +0000
-From: Shukai Ni <shukai.ni@kuleuven.be>
-To: Milan Broz <gmazyland@gmail.com>, "dm-devel@lists.linux.dev"
-	<dm-devel@lists.linux.dev>
-CC: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski
-	<bmarzins@redhat.com>, Jo Van Bulck <jo.vanbulck@kuleuven.be>
-Subject: Re: [RFC] `aes-gcm-random`: per-key invocation limit
-Thread-Topic: [RFC] `aes-gcm-random`: per-key invocation limit
-Thread-Index: AQHdNlh9dzLuE/sXj0GBMZeEr3u7IrazELWAgAAy1KE=
-Date: Fri, 28 Aug 2026 10:30:59 +0000
-Message-ID:
- <DB3PR08MB9011BDD60C25C12ED21164BFE8AC2@DB3PR08MB9011.eurprd08.prod.outlook.com>
-References:
- <AS8PR08MB8996C8D4732C4AE5806F7890E8AD2@AS8PR08MB8996.eurprd08.prod.outlook.com>
- <9a9ff56c-b8c0-4025-9ed2-3627bb7b3cf5@gmail.com>
-In-Reply-To: <9a9ff56c-b8c0-4025-9ed2-3627bb7b3cf5@gmail.com>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-msip_labels:
-authentication-results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=kuleuven.be;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: DB3PR08MB9011:EE_|PR3PR08MB5596:EE_
-x-ms-office365-filtering-correlation-id: 0b665e9b-7e2f-45da-0e76-08df04ef73ee
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|23010399003|1800799024|786006|376014|366016|10070799003|38070700021|11063799006|4143699003|10067099003|56012099006|18002099003|22082099003;
-x-microsoft-antispam-message-info:
- ht7Xof1/l52cT43BbMD+sXvUkvMJLmwk/IisgVStSJumFrT+62+t/niS/EJUdePGCL6vnzu+Q0UCKP9/1rEBCahhAj2OpIegTTbXiCdECRJUrt3grfdY6cZlGDLMtEiqLjvLu2AaO4tuNBJNFtyfhl1PWNi42jtYOlGD0RkDXStVa+XW20qOMPFWvyx4fA6O6gLMmEnRnAX9euMHiOgLfLD+LppOEcsZo1Oi/qmVw0wov0mS4Ui4Auamlsd9+IcI8K+1Lgs37r0bughAQsZPkFWoaXhmrb//8eVlesIJPAqArcTc3BlDhaVfeFvmOb91ogq278xa24t+KKyFrNovrsqqicZ/qQrm4//4yEvSGapGvRghQPXFQT5Guyo1Ukyb0SjBq+AkHRudKcYEl3uVKYdmbd/EUf7wC2Df8I7iXRztKepF6pqN7+k2y8fSkEOKOKlbQtWi8J5SKFIgyg2upBuU4Z9NLMB4ZUWLKgXheWzC3ZI/yhpbDXfqK9bzkfX9f+1a7tqR4kj2Ul1jj+fQzJD7m5lX/pEt0ZAkNjVg/8ToVotTQH+mnWD1BK5wDMRjiFLvF2u2nPYZLL8Yh9U9XUUuFMgOoEBDXkA0+14fvVPefn076fqz2+wN+VVBITlLjbzasfxYhT5NyAGNssNrWo/p6z5vciPhXt8NSI9zZ0iZXrX57bxlsl1GRlfeJczYJsROgzUylaSICUlGxJi5RQiGzLc7hfGdGcYk9SR2bl0=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB3PR08MB9011.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(23010399003)(1800799024)(786006)(376014)(366016)(10070799003)(38070700021)(11063799006)(4143699003)(10067099003)(56012099006)(18002099003)(22082099003);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?iso-8859-1?Q?nn1trIaKHyfJ6HGGgQ5XD/oz/GenYW80iiOtq8CrPi4SeC0Pwjg3zJ/dP4?=
- =?iso-8859-1?Q?lC8vmeXuO6De/XPKQXuJrXmM0Lgb/SuhwC7eXvZlq7N4m9HRtpVxgId72y?=
- =?iso-8859-1?Q?rVy1hUFK2MnwZFHxdyIAlTCF8C53sXclF/1DTJ5+kFDdStwiW6abawDxoJ?=
- =?iso-8859-1?Q?B3ChcHUvneUntrBpaMjMBoDSieqXQF/8U7t7Iurag4FZjx8LS2yecwdJi6?=
- =?iso-8859-1?Q?o10mIYC9lrxhf71b8shVZf7BnfeNy+59KnSFOBeIDD9pxWOQ3vuJOb6fQO?=
- =?iso-8859-1?Q?Zqwlr2VR4/7MVr4b4bv6ZAKmtl3IxP1terfyr0wK6t/1/B8JnH6skDjXmH?=
- =?iso-8859-1?Q?/zqFfjfUcj0noG0cC4T3+78ftv4aG10pU0LPmiVLg3fj9Y2vkjywUETDy/?=
- =?iso-8859-1?Q?TB+uggkJLvQ95D/gmnnI7VL4rEE4jQZvW0P1ncjuypJAe7kdN1iJmamjg7?=
- =?iso-8859-1?Q?QEqR+GytEUbueqK7obBjZgN+Ovg8Hy3lSQD3llAk5ia0hqmgopccP1xkJb?=
- =?iso-8859-1?Q?N/EGVrRZyf7zTp4jffchy2znGg+Jkts0dsEZkJeUyrrj7CZmSCjuGx03QH?=
- =?iso-8859-1?Q?YNZ+Fxixf5Ed1tN19XNzgpiyFZ/NG5DCtDL7/80PP0kdtiAZq3iAr54r83?=
- =?iso-8859-1?Q?S0Imk9IIG5c+yzU+DH7AsMKHgpFjxU6O1A/CMCMS1qpzk0M9UEL9DtEp5S?=
- =?iso-8859-1?Q?luLZLU4NTXJyRUUy/BHoGAzvZz8d5APFIKX6VKd7wwuS/ynKYgtHDB07B4?=
- =?iso-8859-1?Q?GyEud1Q/ld2ffCen5TLXl4HoENL5fEKQSMvlC0SjXGqLyBl/Ye/pVqEB/8?=
- =?iso-8859-1?Q?iDLYawuqpU/xanI1oVsecIvbhUCDDRMqStMPcXPLDbHIxLhkNKbzncKAwo?=
- =?iso-8859-1?Q?tPeHW8P4xut8bSx/nEDo+sf5dQRWHH/V1ImCaJiiEbAU/wbNtQosc7DVc9?=
- =?iso-8859-1?Q?HdT/vOxoWITLEKGCCb7qvDBXu49TKrYxkpPi023hJxTnAqaLWBX3FtIOkB?=
- =?iso-8859-1?Q?5mMYWT1jT7EtcHUggQ3gEJdp8KI0Sx6rt32MmXuAM/ipyamOSiXP4IHFZj?=
- =?iso-8859-1?Q?bk+8SJuoTLRDtXGrT1myECzxWqPpgdn/pYPTW+cW9s3y0sP9KDw7agCk5J?=
- =?iso-8859-1?Q?CPB8rYNtelnTqJSDI3QaLRHu2raq/VSU/VWoNMWSZa/5I84XJodJorR+qm?=
- =?iso-8859-1?Q?eLZ1cooEoyHISqzYZez5ImOdsehm3UG47O/7iaNsy63TibNitesa8b0jOY?=
- =?iso-8859-1?Q?dIO+LLONusHvIwFMBrlkuviQ1d0WmMk5tcoa6sz1tpEB8kWE+xSZ2nhANW?=
- =?iso-8859-1?Q?8jMyAP+dY3rH+3c346ktiYXC0AcuqwLBQYOjc4MWVfB4cSAwwU3acSur+c?=
- =?iso-8859-1?Q?g0n7AWavMzwOvlt/tqieZ/7UR+vB7rrbbVkLAwt2fTx5IHg+kIzaLIqlCI?=
- =?iso-8859-1?Q?H7Sl+In3EW0zek0S4+aeG8syzx9ON1I1ybYW9kVo4harcdc0S0x1QGu1iZ?=
- =?iso-8859-1?Q?wdaKSMtykvqFBMD4Dt9JDXfSTQDPV831mc2HK2tNaajNUawrp05amwCEPe?=
- =?iso-8859-1?Q?kvUG27PR7N5WuTkwdqZ/qifAvp1/d/t5VGPtAdT4+MWrhr1B6Vg0nRu3E/?=
- =?iso-8859-1?Q?6xPcG1XBL7mGbkwAHBrGDf/yaPLVtGzVuRsbzKDP1Cc1FyXiQm4OKiNA2r?=
- =?iso-8859-1?Q?NX082p367YF4ERqZ2CsSvHiReR5UkNJG1pHSPd4lGL10oGDZOQVm9crbGn?=
- =?iso-8859-1?Q?sistJbaX1JO3cjZpd/IuyXKwvdQKakCHU23CGnUUuDD37ipMIU6O2fBLZj?=
- =?iso-8859-1?Q?Tg91qDcBY7A2ZjiEyiluBFeGKrKUmEs=3D?=
-Content-Type: text/plain; charset="iso-8859-1"
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="TWR/o2UM";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="sDQKdFnA"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id B953021AEA;
+	Fri, 28 Aug 2026 13:57:39 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1787925463; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cZKIJQR23E6FMjFTPorIv1MTFX1HJ4stJK/b0dg3Bys=;
+	b=TWR/o2UMnAHN4d6CTWqyb15/CnLN0uGfGjAgnQjcbFNXWUdDCrdp/hS1/L+SdrfQyTKnBz
+	+X4QqKVgXuXyOKyLlVoj+RYMM0VSdyC6MgzBCLqRcNVma6h+MLB+eOmEVo+NU/GKXq2nOD
+	IJL/iWVm9GSgVMrIBOZU1exQp1ZYmdQ=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1787925459; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=cZKIJQR23E6FMjFTPorIv1MTFX1HJ4stJK/b0dg3Bys=;
+	b=sDQKdFnAYUDuT4zXs6xEZR2hVtc2C0ki94rXuuu5CdMovgYviZhwydYZTcdfQKUf/XmmQk
+	HOnO5WPaG5MIXSwwnpmSygJxOBgeILvcm73YTNDM2EJCpY9U6mznmoJiBPKFuhNKFIkUiK
+	Nh+wkv5sUPjoldOjwJ2qxuT16QMZANA=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 87B2A13674;
+	Fri, 28 Aug 2026 13:57:39 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id cgoBINOTkWqzDAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 28 Aug 2026 13:57:39 +0000
+Message-ID: <a709459222a440dc7f821796b1a98ebaeb44572b.camel@suse.com>
+Subject: Re: [PATCH] multipath.rules.in: fix race in unit
+ cancel-multipath-wait-$kernel
+From: Martin Wilck <mwilck@suse.com>
+To: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>, 
+	dm-devel@lists.linux.dev
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Fri, 28 Aug 2026 15:57:38 +0200
+In-Reply-To: <20260828092548.34637-1-antonio.feijoo@suse.com>
+References: <20260828092548.34637-1-antonio.feijoo@suse.com>
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-OriginatorOrg: kuleuven.be
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: DB3PR08MB9011.eurprd08.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 0b665e9b-7e2f-45da-0e76-08df04ef73ee
-X-MS-Exchange-CrossTenant-originalarrivaltime: 28 Aug 2026 10:30:59.7438
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 3973589b-9e40-4eb5-800e-b0b6383d1621
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: RiW9iEYb+fv+IMsmAmE8vrnnS9/XT2hvqFSDgXRN5m5fkoVGmDq0Q9yA8MgX5YNny3YCflrYv+fDFT6uQL0lmQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PR3PR08MB5596
+X-Spam-Score: -7.30
+X-Spam-Level: 
+X-Spamd-Result: default: False [-7.30 / 50.00];
+	REPLY(-4.00)[];
+	BAYES_HAM(-3.00)[100.00%];
+	SUBJECT_HAS_CURRENCY(1.00)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.992];
+	MIME_GOOD(-0.10)[text/plain];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:mid,suse.com:email]
+X-Spam-Flag: NO
 
-Hi Milan,=0A=
-=0A=
-Thank you for taking the time to provide these detailed clarifications.=0A=
-=0A=
-> An attacker model that can record all writes can easily replays individua=
-l sectors,=0A=
-> including auth tags. It is just not secure in this scenario.=0A=
-=0A=
-Understood. Our review also found that the current setup does not provide=
-=0A=
-sufficient protection against an attacker under this threat model.=0A=
-=0A=
-> If you want to help, then please focus on promoting better AEAD modes=0A=
-> (we have AEGIS in kernel, for example).=0A=
-=0A=
-That is a fair point. We appreciate the suggestion and will look more=0A=
-closely at AEGIS and its existing kernel support.=0A=
-=0A=
-Thank you again for your feedback and guidance.=0A=
-=0A=
-Kind regards,=0A=
-Shukai Ni and Jo Van Bulck=0A=
-DistriNet, KU Leuven=
+On Fri, 2026-08-28 at 11:25 +0200, Antonio Alvarez Feijoo wrote:
+> The transient unit cancel-multipath-wait-$kernel creates a timer and
+> service with "Conflicts=3Dinitrd-cleanup.service":
+>=20
+> - sda: /usr/lib/udev/rules.d/56-multipath.rules ...
+> =C2=A0=C2=A0=C2=A0 --on-active=3D1.000000 ...
+> - sda: ... 'Running timer as unit: cancel-multipath-wait-sda.timer'
+> - sda: ... 'Will run service as unit:
+> =C2=A0=C2=A0=C2=A0 cancel-multipath-wait-sda.service'
+>=20
+> This introduces a race not always reproducible: there is a 1 second
+> window where this transient unit can start after
+> initrd-cleanup.service/start is enqueued but is still held back. When
+> that happens, starting cancel-multipath-wait-$kernel.service pulls in
+> a stop job for initrd-cleanup.service and the queued start job is
+> cancelled, the initrd is left with an empty job queue and hangs
+> forever, before switch-root:
+>=20
+> - initrd-parse-etc.service: Triggering OnSuccess=3D dependencies.
+> - initrd-cleanup.service: Installed new job
+> =C2=A0=C2=A0=C2=A0 initrd-cleanup.service/start as 115
+> - initrd-cleanup.service: starting held back, waiting for:
+> =C2=A0=C2=A0=C2=A0 dracut-pre-pivot.service
+> - initrd-cleanup.service: Job 115 initrd-cleanup.service/start
+> =C2=A0=C2=A0=C2=A0 finished, result=3Dcanceled
+> - initrd-cleanup.service: Installed new job
+> =C2=A0=C2=A0=C2=A0 initrd-cleanup.service/stop as 133
+> - initrd-cleanup.service: Job 133 initrd-cleanup.service/stop
+> =C2=A0=C2=A0=C2=A0 finished, result=3Ddone
+>=20
+> "Conflicts=3D" is symmetric: if a unit has a "Conflicts=3D" requirement
+> on a set of other units, then starting it will stop all of them and
+> starting any of them will stop it. This is safe against
+> shutdown.target, whose jobs are enqueued irreversibly: a unit
+> starting during shutdown fails to start rather than cancelling the
+> shutdown. It is not safe against initrd-cleanup.service, whose start
+> job is an ordinary job enqueued by initrd-parse-etc.service via
+> "OnSuccess=3D".
+>=20
+> Ordering "Before=3Dinitrd-cleanup.service" is enough and is not
+> destructive: a trigger already in flight completes before cleanup
+> runs, and a unit with no job does not delay it. Tearing the
+> transient units down before switch-root is already handled by the
+> isolate to initrd-switch-root.target, which stops everything that
+> is not "IgnoreOnIsolate=3Dyes".
+>=20
+> Signed-off-by: Antonio Alvarez Feijoo <antonio.feijoo@suse.com>
+
+Reviewed-by: Martin Wilck <mwilck@suse.com>
+
+@Ben and others, I wasn't certain about this at first. Below is my flow
+of thoughts from the SUSE bugzilla, through which I came to think that
+it's correct. But this is quite subtle, so please give it some own
+thoughts ;-)
+
+Martin
+
+The general idea of the "cancel" timer is this:
+
+1. uevent for a block device arrives, the WWID is yet unknown to
+multipath
+2. multipathd sees the event and temporarily sets SYSTEMD_READY=3D0,
+avoiding other subsystems like MD or LVM grabbing it, and waiting for
+potential other paths to appear
+3. udev starts the transient timer unit
+3a. some other path to the same volume appears, and the timer is
+cancelled (we are not discussing this case here)
+4. when the timer expires, it starts "udevadm trigger"
+5. the kernel generates a new uevent for the same block device
+6. while handling the uevent, "multipath -u" is run.=20
+7. realizes that the wait for other paths has timed out, and remove
+SYSTEMD_READY, opening it for other layers to grab.
+
+There's a race window between 4 and 6 which systemd cannot handle.
+systemd does not "know" that a uevent has been triggered, so even if 3)
+or 4) happen before the start of initrd-cleanup.service, 5, 6, 7 may
+happen afterwards.
+
+In earlier versions of multipathd and dracut "multipath -u" would
+attempt to start multipathd.service via socket activation
+(multipathd.socket), which would then stop initrd-cleanup.service, as
+it Conflicts: it. Since 0.9.8, multipathd.socket is disabled by
+default, and we haven't included it in the initrd any more for a while,
+too [*].
+
+It's important to understand that the "cancel" timer+service are just a
+safeguard for the case that no new uevent for the device in question
+occurs. If we're in the initrd, we can be sure that every uevent is
+going to be replayed in the udev coldplug phase.=20
+
+We still need to start the transient timer in the initrd for handling
+the case that the device in question is needed for the root file
+system, and is not multipathed. But when initrd-cleanup.service is
+started, the root device has been discovered already, and we don't need
+to bother about the "cancel" timer and service. It doesn't matter if
+they run or not.
+
+In the worst case, Antonio's patch will cause these units to be started
+after initrd-cleanup.service is started, which may cause an extra "add"
+uevent for the block device in question. But that shouldn't be a
+problem because such an event is going to be replayed after switching
+root, anyway.
+
+IIUC, if the "Conflicts" is removed, the timer unit will continue
+running through the switch root phase, and will be taken up by systemd
+through serialization=20
+
+[*] upstream dracut version history related to multipathd.socket:
+
+247d2b ("fix(multipathd.service): adapt to upstream multipath-tools
+unit file") (dracut 056) added socket dep to the multipathd.service
+unit file.
+02e646f ("fix(multipath): install multipathd.socket") (dracut 058) made
+sure the socket unit file was installed.
+297525c ("fix(multipath): remove dependency on multipathd.socket")
+(dracut 060) removed both
+
+5e87b68 ("refactor(multipath): remove custom multipathd.service")
+(dracut 107) removed the .service file.
+
+> ---
+> =C2=A0multipath/multipath.rules.in | 14 ++++++++++++--
+> =C2=A01 file changed, 12 insertions(+), 2 deletions(-)
+>=20
+> diff --git a/multipath/multipath.rules.in
+> b/multipath/multipath.rules.in
+> index 2ac1972f..7b605dd4 100644
+> --- a/multipath/multipath.rules.in
+> +++ b/multipath/multipath.rules.in
+> @@ -68,8 +68,18 @@ ENV{.SAVED_FM_WAIT_UNTIL}=3D=3D"?*",
+> GOTO=3D"pretend_mpath"
+> =C2=A0# the --on-active timeout.
+> =C2=A0#
+> =C2=A0# We must trigger an "add" event because LVM2 will only act on
+> those.
+> -
+> -RUN+=3D"@SYSDIR_BIN@/systemd-run --unit=3Dcancel-multipath-wait-$kernel
+> --description 'cancel waiting for multipath siblings of $kernel' --
+> no-block --timer-property DefaultDependencies=3Dno --timer-property
+> Conflicts=3Dshutdown.target --timer-property Before=3Dshutdown.target --
+> timer-property Conflicts=3Dinitrd-cleanup.service --timer-property
+> Before=3Dinitrd-cleanup.service --timer-property AccuracySec=3D500ms --
+> property DefaultDependencies=3Dno --property Conflicts=3Dshutdown.target
+> --property Before=3Dshutdown.target --property Conflicts=3Dinitrd-
+> cleanup.service --property Before=3Dinitrd-cleanup.service --on-
+> active=3D$env{FIND_MULTIPATHS_WAIT_UNTIL} @SYSDIR_BIN@/udevadm trigger
+> --action=3Dadd $sys$devpath"
+> +#
+> +# These units are ordered Before=3Dinitrd-cleanup.service so that a
+> trigger that
+> +# is already in flight completes before the initrd switches root.
+> They must
+> +# *not* use Conflicts=3Dinitrd-cleanup.service: unlike
+> shutdown.target, whose
+> +# jobs are enqueued irreversibly, initrd-cleanup.service/start is a
+> plain job
+> +# enqueued by initrd-parse-etc.service via OnSuccess=3D. Starting a
+> unit that
+> +# conflicts with it therefore cancels that job instead of failing to
+> start,
+> +# and OnSuccess=3D is never retried, so the initrd would hang forever
+> with an
+> +# empty job queue. Stopping these units before switch-root is
+> already
+> +# guaranteed by the isolate to initrd-switch-root.target.
+> +
+> +RUN+=3D"@SYSDIR_BIN@/systemd-run --unit=3Dcancel-multipath-wait-$kernel
+> --description 'cancel waiting for multipath siblings of $kernel' --
+> no-block --timer-property DefaultDependencies=3Dno --timer-property
+> Conflicts=3Dshutdown.target --timer-property Before=3Dshutdown.target --
+> timer-property Before=3Dinitrd-cleanup.service --timer-property
+> AccuracySec=3D500ms --property DefaultDependencies=3Dno --property
+> Conflicts=3Dshutdown.target --property Before=3Dshutdown.target --
+> property Before=3Dinitrd-cleanup.service --on-
+> active=3D$env{FIND_MULTIPATHS_WAIT_UNTIL} @SYSDIR_BIN@/udevadm trigger
+> --action=3Dadd $sys$devpath"
+> =C2=A0
+> =C2=A0LABEL=3D"pretend_mpath"
+> =C2=A0ENV{DM_MULTIPATH_DEVICE_PATH}=3D"1"
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Jochen Jaser, Andrew McDonald (HRB 36809,AG N=C3=
+=BCrnberg)
