@@ -1,520 +1,443 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C21D950F724;
-	Mon, 31 Aug 2026 13:42:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788183775; cv=none; b=W3c0ZVDfZPiR3drKVKd4x580F96VYLnNds3ha9J00Mxud9RjLlfCbnBnGysaDRc05Q06d/IwLCZp56nG+E2dOQ3FL3IGK0AzYH5+gXNo6QrFknOEiTZSYbisQhO1ARyPvbk61Uu6ANJtiM3iZIRMYpw3EupwveCa2SG0465Gesg=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788183775; c=relaxed/simple;
-	bh=mKJ31VF80Wf3Fh/GI29ZoPGECPfwMkVhquQ8y3acgZc=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6A98396B96
+	for <dm-devel@lists.linux.dev>; Tue,  1 Sep 2026 10:46:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1788259563; cv=fail; b=WhiNj6p5Hwk8kFfUEPORuFcIPF3MDVibie7JPIJlumj3dJGZw2yRyXP2I6a7lzApBJ69Gz5W1843AVJHgSd5If3bxjFLTCpsLE28/zlcYOBpPlfVzbk1YpNJq4hHnLJuoT0NnvWYHZ6obriXhhso/GTV34yocKK8JPHXv0efAzs=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1788259563; c=relaxed/simple;
+	bh=A54aNMOs+oXOOE+acUkCEe+SowsCg0jxufQuFaUahBY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=augASJS8cO9VaRC/cecjYxAJutJmWX17cLrl3FATpkHmdxZ/FGBk9tgYlsWGgS43BoQFdfXAadS8oqwhTNdVyzkZ4qb8iJDS4btpTAlL8iESfHAb+H2ySTJVgFZbsZAM1FPxRpMHqNHo47fWG4EmJIVpQDAxLcZksSGzBpxMaUU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gIF7t26W; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:MIME-Version; b=QvAciDOkiQ4y/5W7Xd5sxRZ8GBsYFUDPO5Y30T1xHszErj+MMn9usaYaCbCq47hX4kep9TkgiknE0nGkcnHmrDmyaVIKeznnQ5I9l28BbVfZ7z7u6huDSxdXpDTohUzMtAbUmHkSXffLrSqO659jjGAZFjcQcR0fCA1BPg0hheU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=GaI/hM0f; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=N9zL28AW; arc=fail smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gIF7t26W"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E47B71F00A3D;
-	Mon, 31 Aug 2026 13:42:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1788183772;
-	bh=gmDbspS2i41vpBVRai8FL2zjVKSMIYFwP2o1AIYRj9w=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=gIF7t26WOpbHqcNqqegcWOgTBNEDI+A5+Dle4u27LOL16QNMZmdEjPOYYNm5zJKWa
-	 DdGBMXaFpbQqiNqvcGsKQsjlBAIMd0bwzYIZM8Z2+yOj3YKadkLVoTSOudC6poq91J
-	 0oA19A+y8yZVVg9UQcLcU0Pp43sR2LPqRwicei1MITJ8yEsdRZeao4q679g+doLiyr
-	 5G4FfYrr3oxxlBEhHWjXN4klJqdHLM0KPite3Pl0atsJGgybh/ole/QIpVMKqB9E6a
-	 7vgaUS0BalpHgffpIXs6OFeFJzzLzUR7Xp7h59DexiVH+1S0jAe/LTOf8sDSlN6Pez
-	 AhfpypNYuKKWw==
-From: Sasha Levin <sashal@kernel.org>
-To: patches@lists.linux.dev,
-	stable@vger.kernel.org
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Sasha Levin <sashal@kernel.org>,
-	agk@redhat.com,
-	snitzer@kernel.org,
-	song@kernel.org,
-	yukuai@fygo.io,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org
-Subject: [PATCH AUTOSEL 6.18] dm-raid: only requeue bios when dm is suspending
-Date: Mon, 31 Aug 2026 09:25:23 -0400
-Message-ID: <20260831133314.4125787-295-sashal@kernel.org>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260831133314.4125787-1-sashal@kernel.org>
-References: <20260831133314.4125787-1-sashal@kernel.org>
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="GaI/hM0f";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="N9zL28AW"
+Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 67VLBwvY2296648;
+	Tue, 1 Sep 2026 10:45:48 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2025-04-25; bh=qnoFbCS2l8YgfLivgtz/nYusuYA/aAxy9zsvPCESYb8=; b=
+	GaI/hM0f6vHRaK9T1FUT3pSfqTlavdo8ba5Q98nQMDDcOovy1CizVtEPxAcAjO0s
+	0fH8cJe2yNgq0n6Q7geLL6bIUz4YQ61pZvWBRC1ret0igudbl3rUv6bnTc9q334K
+	dUJQarhPbhEVwvqxoGURy6XLZtt8/wxF7pGWKVWuSZEe5HVQMaGAepEJdgY43AKh
+	2n7xo68mkKDWKAv4953rNjk54FHjRcJ0bgGLZNgtBMC7ztqxnaXrU3FkZKi6NMDC
+	pOinGtZwCogleGkl3N/7Ff7y40Ybbf7V2HXt9l+S0bSAirk7NM55MtJ5whENTLZQ
+	4lRCbJr/KZ4f/wKc/IWXxA==
+Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4gbp0xvd9y-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Tue, 01 Sep 2026 10:45:47 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.7/8.18.1.7) with ESMTP id 681AjJtD036963;
+	Tue, 1 Sep 2026 10:45:47 GMT
+Received: from ph7pr06cu001.outbound.protection.outlook.com (mail-westus3azon11010002.outbound.protection.outlook.com [52.101.201.2])
+	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4gbnve348d-2
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL);
+	Tue, 01 Sep 2026 10:45:47 +0000 (GMT)
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=CqeHWAyQZBTVOHQz5QVxutT2SyPGvqfQcPWZlgVa6hsmB3XQLOCDIxuO5CoZIjl/0qAw19ssildkmGnqQVUkn9cZ6KLGysONwH+rpV0aMX+YXSDtM98/Z47ghbBFotnLZDzXouuKy5RPLw38X6ppu2D4uROEcFe/uhdOFUnafa3vbaOWuzeoeaBqZ0VlN9xJ4g1enluMo9EPYe96QPqgRdowr9WsfJ/8qyl4LZpywcykEOMG6jhJZlXKSeaUFVAbDVu7HHe0W0CDJVO9rvRkAS/tQ5uOQ+5ya8VYm7p1AsKl9RJuw086T7anB11J3vvrdNJkItmJTfMZXbeIykI+pg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=qnoFbCS2l8YgfLivgtz/nYusuYA/aAxy9zsvPCESYb8=;
+ b=satTRJKFRsYEXdX12UiCoPZo5wUxM91IZvpJ6mOlJzTcn/S2kp+e78O1O9JkszfHDhvpaueX+KlzR8j2P/87tvKLAtM76Qx0EA48/WQ/uyHqNarQAqNOKHLnoKXLzPs70vhZqIjk4MpP1yu4PvhxJfzGXdP01UUlFzyXEnAH05CI9DdtcBaPK2RznFA2TtTcsbNjaAr0O8TZRRWMzVT78atkdUjbFDCcU9DzkrnH0Zk9UMUUFwjHKZKqaOTUaq4q8aLUBZe0TBUQc42qZUAeAsybkhxXETOTKl4upJsLpumWps9yep7GQER3GGAAb3VDWTnGkTjCTT9H6bQrYYSmJQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=qnoFbCS2l8YgfLivgtz/nYusuYA/aAxy9zsvPCESYb8=;
+ b=N9zL28AWx051o0ib/8AmhY8wghEpibJqDcs8qh14DHKuwe6HS0AF5/lfQFIG3xXc5qMdGbqZ0uX7VFGKm/jj74sLEJ42OBd+QwhpruRCTY4UCd+TpZilUC1oTp/mgbyBjJaigBBQsG6kgjdpozL98LrcqwBcyg3XvcQfjKBQZYU=
+Received: from DM4PR10MB6229.namprd10.prod.outlook.com (2603:10b6:8:8c::12) by
+ SA0PR10MB6425.namprd10.prod.outlook.com (2603:10b6:806:2c0::8) with Microsoft
+ SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.21.382.10; Tue, 1 Sep 2026 10:45:44 +0000
+Received: from DM4PR10MB6229.namprd10.prod.outlook.com
+ ([fe80::867:63e7:13fa:fa7d]) by DM4PR10MB6229.namprd10.prod.outlook.com
+ ([fe80::867:63e7:13fa:fa7d%6]) with mapi id 15.21.0382.007; Tue, 1 Sep 2026
+ 10:45:44 +0000
+From: John Garry <john.g.garry@oracle.com>
+To: james.bottomley@hansenpartnership.com, hare@suse.com, mkp@kernel.org
+Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
+        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
+        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
+        linux-kernel@vger.kernel.org, nilay@linux.ibm.com,
+        john.garry@linux.dev, hch@lst.de, kbusch@kernel.org, sagi@grimberg.me
+Subject: [PATCH v7 04/27] libmultipath: Add bio handling
+Date: Tue,  1 Sep 2026 10:45:03 +0000
+Message-ID: <20260901104526.3850621-5-john.g.garry@oracle.com>
+X-Mailer: git-send-email 2.43.7
+In-Reply-To: <20260901104526.3850621-1-john.g.garry@oracle.com>
+References: <20260901104526.3850621-1-john.g.garry@oracle.com>
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: CH2PR20CA0014.namprd20.prod.outlook.com
+ (2603:10b6:610:58::24) To DM4PR10MB6229.namprd10.prod.outlook.com
+ (2603:10b6:8:8c::12)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-stable: review
-X-Patchwork-Hint: Ignore
-X-stable-base: Linux 6.18.48
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DM4PR10MB6229:EE_|SA0PR10MB6425:EE_
+X-MS-Office365-Filtering-Correlation-Id: 0585c0b7-05af-4c91-7004-08df08162cc5
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|376014|7416014|23010399003|1800799024|366016|10067099003|22082099003|18002099003|56012099006;
+X-Microsoft-Antispam-Message-Info:
+	pzNtyAIPHPHcQfKhITT53G3LQPIuFbm5iiWLJBe76P3U7Fjigl66jnH8voBdEEJ18TBxq0Fc77Xw+rlPdVqP+JArhv6ZwReF16UsDJ8Duddgu9EBJvfEDrDCs6yt7TmEDA1Hr3BIslZHBI6uZ7ABWNKPFtaLOyuZc1iKk5Dy53hemzWFcgcunelvEMDDlrxlXgap36eaH5T1YG4c10r0Jk0ZTVA4cZHfP0A7CupusBKVEjhrtvzeJ6V1RCXNePPn9BBTSOoER+UJIPEdlUVmmvv10rHzjYToEuO+hioNxQczCXy3jsGDCBFQfasjfIBecMuxzjYwRaaIst5ThJUXRVkQa9XQ3WpLzgxCJozrieXXgooD8IW40mOooZHHSz4Q49Mna1bK9KeeK2dUVCMUMSquYJYwoNNKO69CXA+R6VOHSA6kgoIxVbr1RVuMi7QwfE6Rqn0AkYDb1wJw21B5dTPtJfgtUGCyxdbrtSKHm6gYOdQK4T0rVXL8U8m2wBvLEsJNOlXP0E8oSQ49zMk8jF/U0Bbnn9nZ/FibD16IOQ2mON7S0q8O94z/rifeJrE2T/Ad/eNs/LZomDL0kBbHcpmahAE1tTXD+lIOiAaVU/pijzW4ZFPjEs56NHFJIW6rBbGM6BgOM/hdtA6xznVwuOYQI6+Sqx/cnFprp1U3das=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM4PR10MB6229.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(7416014)(23010399003)(1800799024)(366016)(10067099003)(22082099003)(18002099003)(56012099006);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?88RrywEJqWJXf7QcZoM4770NdKnkwN43B1WeIqbwuXl/sVo8IWh6T93F8Da/?=
+ =?us-ascii?Q?o/Ze+wlBhQij+YYW37T545wXP6DDgE4RABN5OytdPT7uK9Yl4RQ//jeUtmud?=
+ =?us-ascii?Q?tvPPUB+f0864N+auH6Xv/Yyh3H0QTEv4ZKUSQfHPXWDCu1s9NWIF+mf7RTjK?=
+ =?us-ascii?Q?Cw4YP7f41fnbKqeMRx6mzrgTtBAoNMKWDKjA2UqKH2G5WXoYOpxSzu3iGSaV?=
+ =?us-ascii?Q?M7X/noSrVQRXdDhEwU9xQpyrYrZZG+dRqSyeXWtMitGFCM9YMf9L/m3faYT8?=
+ =?us-ascii?Q?hEG22EuoX5EzLlTH9rUvp2vQuhw0CrJkhCYAzhuUtK/mbWnPsC2lIBGzzfqo?=
+ =?us-ascii?Q?Pbtw477Ntnwx+7/U8dYu6+D8OAzQfgtVZTFs9Lubpveow9xY/TyZFcYvTxFW?=
+ =?us-ascii?Q?e9iVmZwhJCBlPWO0Ev77oAs81mPoESYzTP4QFfZx+UzQ0E9x3+1PbJbe8My8?=
+ =?us-ascii?Q?rarlEwosoZDbV2tPkaGW9qtDsSUsPoZTWCTgqJ17lL3q5flkeggXBL+sO5u4?=
+ =?us-ascii?Q?ClLhIHK2/+iYHVGzMv8PmaskFMBCaWlfoDmz0+bZUrki6bYTklguJWLVR6DE?=
+ =?us-ascii?Q?3isgoibE47sW8yBGr0YHWSwr1W/RfZJVwFspwI9/FP9zJyY3ChhtF6aRujRr?=
+ =?us-ascii?Q?gSsT17w3x+fniqbGNI+JIwvPy9zCctWzuw2f50a4wDgQ4HIuDJV+3kiQHpkw?=
+ =?us-ascii?Q?j0Ve3IaPWDLLqmyNis6TFSYjsFSe4dunhkWGO97LmDN/WPAspl4UIVS3RTWZ?=
+ =?us-ascii?Q?/qIRCYeti1i4Ge4gLmB45CbYBNDg5qeI1ke4g/xlFJApI1DnIsOb8ox7Fmoa?=
+ =?us-ascii?Q?RSJsJitTVDwQD6dpuX0mmoHZJlsfZm9W/K1/7zym3n1LhtpYCRaUzeFwUROo?=
+ =?us-ascii?Q?sHclxG3mVbwGfPtHBPfWY9GXw279TJ36ZI++3SpYip0JqhRd0XRvmQlUwNSG?=
+ =?us-ascii?Q?N7B2ff58p8u6KhFgcv7s+nA+o/mg15UB1sKaNfgD4pvxvsOgN2xMwHD57Fjw?=
+ =?us-ascii?Q?Y4nrZ0a/Zsk5s4QpLZ3v/tLVvdL3Vn6V0Mb7sMpGUc5kzaqaBKexvoUb3PV3?=
+ =?us-ascii?Q?0/K2h2tICXTa4bz+Y+VjIqfYX3LxOp6/2NrbEK2grEhcniQXwGI+EEgvn1CF?=
+ =?us-ascii?Q?S2D9PFJSpGI+z8XFQnHjG57/DK05Q5iZ/95b8ga4SDRfHaOqgnZrj1S+LRC8?=
+ =?us-ascii?Q?iLz2aTXdM4vM4IvXjFegBsUlZ86pT+04wJONKBlVHTIYm0sPlVssIjpH0jRD?=
+ =?us-ascii?Q?IttwsAlEggz5t21gMxm2Tlf3JacGEsMQFJ3syLb9ldthE1OwY4m9aTOP7ObN?=
+ =?us-ascii?Q?fduGcbgqxn9Wf/vp5qgAU7epSl6/QHyAZp27V+77ANQhR+pGikoxB/UaNN0c?=
+ =?us-ascii?Q?CtF6Q9z41+AoRPuXCxvdmD+g7d4YOBYKJERBmBpB9XH749WyBZc6opD5bvpt?=
+ =?us-ascii?Q?o3bE4ttgYemHhBKxMd7R2zsJlaZV9iSSz9nFnMobnRUJ4es6eF10gG7awySQ?=
+ =?us-ascii?Q?iVnDAl3GbBaykPRWe4qjKw3Ibs3OkHXq/EqHwRyZr0lPrv56Sa3P9nvMDcdk?=
+ =?us-ascii?Q?iQtbsrJb6K1srxEGpMhD1E6MXSl3z//vC7GCvEee8sfdQbVWnGvofUN/p6sE?=
+ =?us-ascii?Q?h/br/jyT/xt4lbN62xRBvHH9uM/c9Nzh3Debuszolw33YNFdwrpcfeEzmk2+?=
+ =?us-ascii?Q?KOkqy0imoRa9mrJ0PUU+ZMQSF1Q8KXhJ8lTL9l1/v8WcA2+GjhzcFG46ddPk?=
+ =?us-ascii?Q?cUwP70akzg=3D=3D?=
+X-Exchange-RoutingPolicyChecked:
+	QVsYvqNtKEp3ZIni6GOzaeGXU+rMw6Qk3w89msyxNNANpLhqgLtsRi7fxlCFFa7AXnt3eXE9g9FzG74CMKG0heodKQ337EqbTcCZ8GhlhNCeqBUe4PSCZjqZnN7QD+6oVDQdR8DdB761awALEf1rpHBeCPDMcqBqlSvJyDZG/N3uK1e0V4dwKkDRar8zr09cWPF77C+kdvgh4yaAMBfRoxZUMVBtq0ZqHCwzwHrYe2D84L5Qx6KKCPqKnaSlKXL5cFf/idmJxqln7S3UX41LUm+gxRB849/rPQ1jVrCzl6mxNjKi/QGMl6UTBC/psycs5QDltMp2ERC+qSI/HHx0eQ==
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	ilL4sVDiHO5//BnPjt5ZjesN4UuepMg2m666IPTtBCVj1YknBhJTZAJ3rmYBWXX90WdGOmOZJDdVbn9bBtAgdU/i2ePAapTIGoN28OwTiCjnrEpRlahikwpF3KacB8eCxb2pMdmimjx0W0a8yVjxbgLRbIIvm1pHWM2E9dqTJxvjQCwL8oiMz1uVJQ9UrQeSCv7vUaBVPPV/Zf0VlGTjqvnEHFmVHg1SdH5ZOnbkOOE5zElZtgMbTXyVquwmh1Oqx5ZbLpATRHnoL1bAuVyuMa4Kxpv1I2Zzb3aARKWjJa9nXB4uyV4wU1YNARJtAezphW1sTCHYwSG1xWsFRQvVC8dMG9O6Pt51x88aXD5iLNmi3IXXKXpzjB/15tTXcv5sFJUJ7UKPRbo4LqAkZ6ElwRjtnI73oW2VoN8y0+mP8LVsojA5P01Sv6y9cpgfcMQ98CZLBZsz0nvQ77MsVgFYlHetZw7uxieEm2kdu52eqdYs1aXbevVK2DI40uCWKXylOD7ytHGxFg5u/F+eHrzENP5EGUlBMhkBRDRcbbAwXUyKuHSUdp+1rgiBexcmKtM2S7Jv4ozIiD/q6JrgBLFHPJ4RKZh3FZOM2x16C20vdE8=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 0585c0b7-05af-4c91-7004-08df08162cc5
+X-MS-Exchange-CrossTenant-AuthSource: DM4PR10MB6229.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 01 Sep 2026 10:45:44.4645
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: hQIv6AUXlHytVsK0x5IZIso4jWw4YUixbIeT/1XDHmQp0+xoZKXQFjs53Ryp44zfTKaLFK9LOgPf2gISz5ijtQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA0PR10MB6425
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
+ definitions=2026-09-01_03,2026-08-31_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0
+ lowpriorityscore=0 adultscore=0 mlxscore=0 spamscore=0 mlxlogscore=999
+ suspectscore=0 phishscore=0 bulkscore=0 classifier=spam adjust=0 reason=mlx
+ scancount=1 engine=8.19.0-2606160000 definitions=main-2609010095
+X-Proofpoint-ORIG-GUID: RISG4w9HvGrb1qxQLjQ84rBS4CnTTXZB
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTAxMDA5NSBTYWx0ZWRfX8QZzmOfDt9Y2
+ TwPDsOm9y7QkypbjqBX1XIPdqxuhxJJuCe5opajC7ej7zK5rxfUMj31qu2y8Zw26ETYoRmy2/Ie
+ 67xSlGPa5JLsJRZAx29XFtHbZgbCZy6mBuGFldYHCGNlrSwtzrPYBfbM4lAGYMVIHLXQKrdKd+0
+ x+e/3/OZ78lRkwNcmzOdCeR2ksIbAzrMmfsSQYttc2B/zMm0V3WzUtijTxvXdcuC3CxrE4VPkhU
+ jj4jNs4tsqBW0jAU6YYQR9sOmm7gDIFzOCvRFYZ+l1ouf8AaatXDXsj8vUENQBjcJkE+E/mhM0D
+ OAIogFlWvpq7a1zaZ0mEOv+kp7FJs2L8p+8rvlZ6T3tcXe7RgxUdP8T8+pzHVTVbBNu2hl+emny
+ SCYDqH4ikasyeELMrH9X8v8cAJjdshpGV2t9+IFdvdd+f5gOY2jJTsdQnOgDkfQ5zjNGpWWhGrh
+ PWheUypxz23AT84nUkg==
+X-Authority-Analysis: v=2.4 cv=Ebb4hvmC c=1 sm=1 tr=0 ts=6a96acdb b=1 cx=c_pps
+ a=WeWmnZmh0fydH62SvGsd2A==:117 a=WeWmnZmh0fydH62SvGsd2A==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
+ a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=VdqzKS8jKosA:10
+ a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22 a=jiCTI4zE5U7BLdzWsZGv:22
+ a=RD47p0oAkeU5bO7t-o6f:22 a=0Q2gd2vOsnR98QmcnEwA:9 a=WmVTiCyuxqgg3mnwYu6p:22
+X-Proofpoint-GUID: RISG4w9HvGrb1qxQLjQ84rBS4CnTTXZB
+X-Proofpoint-Spam-Info: AW1haW4tMjYwOTAxMDA5NSBTYWx0ZWRfXzKoIfE8jpi+/
+ 4xnZ+Ddvt+PzlNSEt3hJ+UQFYk1sZt8L8SfBjUezcFLiCAbD38g9LFndV1JPOLUMC98KlLlbHVN
+ l285sN0XxUnJ2BOzv1usdyv2FknvAjFJC7GLLu++OyUNrXYZG5OC
 
-From: Benjamin Marzinski <bmarzins@redhat.com>
+From: John Garry <john.garry@linux.dev>
 
-[ Upstream commit 97cb8be0fd4c50d310988e0822f7e91d1711e6f8 ]
+Add support to submit a bio per-path. In addition, for failover, add
+support to requeue a failed bio.
 
-returning DM_MAPIO_REQUEUE from the target map() function only requeues
-the bio during noflush suspends. During regular operations or during
-flushing suspends, it fails the bio. Failing the bio during flushing
-suspends is the correct behavior here. We cannot handle the bio, and we
-cannot suspends while it is outstanding. But during normal operations,
-we should not push the bio back to dm. Instead, wait for the reshape
-to be resumed.
+NVMe has almost like-for-like equivalents here:
+    - nvme_available_path() -> mpath_available_path()
+    - nvme_requeue_work() -> mpath_requeue_work()
+    - nvme_ns_head_submit_bio() -> mpath_bdev_submit_bio()
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+For failover, a driver may want to re-submit a bio, so add support to
+clone a bio prior to submission.
+
+A bio which is submitted to a per-path device has flag REQ_MPATH set,
+same as what is done for NVMe with REQ_NVME_MPATH.
+
+Signed-off-by: John Garry <john.garry@linux.dev>
 ---
-
-LLM Generated explanations, may be completely bogus:
-
-# Stable Backport Analysis: `dm-raid: only requeue bios when dm is
-suspending`
-
-**Local tree:** Linux **6.18.43** (`v6.18.43-1-gc7f0dac02d232`)
-
----
-
-## PHASE 1: COMMIT MESSAGE FORENSICS
-
-### Step 1.1: Subject line
-**Record:** `[dm-raid]` `[fix/implied]` — Only requeue bios when DM is
-suspending (reshape-interrupted I/O path).
-
-### Step 1.2: Tags
-**Record:**
-- **Fixes:** — none
-- **Reported-by:** — none
-- **Tested-by:** — none
-- **Reviewed-by:** — none
-- **Acked-by:** — none
-- **Link:** — none
-- **Cc: stable:** — none (expected for manual review)
-- **Signed-off-by:** Benjamin Marzinski `<bmarzins@redhat.com>`, Mikulas
-  Patocka `<mpatocka@redhat.com>`
-
-No syzbot, no user bug reports in the message. Authors are dm/md
-maintainers.
-
-### Step 1.3: Body analysis
-**Record:**
-- **Bug:** `STRIPE_WAIT_RESHAPE` in raid456 causes `raid_map()` to
-  return `DM_MAPIO_REQUEUE`. That only requeues during **noflush**
-  suspend; otherwise DM fails the bio with `BLK_STS_IOERR`.
-- **Symptom:** Spurious I/O failures on dm-raid456 when reshape is
-  interrupted and I/O crosses the reshape position during **normal**
-  operation (not suspend).
-- **Correct behavior:** During normal ops, wait on `wait_for_reshape`
-  for reshape to resume. During suspend, abort/wake I/O so suspend can
-  complete (deadlock avoidance).
-- **Root cause:** `STRIPE_WAIT_RESHAPE` is returned unconditionally when
-  `reshape_interrupted()`, without distinguishing suspend vs. normal
-  operation.
-
-### Step 1.4: Hidden bug fix?
-**Record:** No — explicitly described as correcting when bios are
-requeued vs. failed. Real I/O-path bug fix, not cosmetic cleanup.
-
----
-
-## PHASE 2: DIFF ANALYSIS
-
-### Step 2.1: Inventory
-**Record:**
-| File | Change |
-|------|--------|
-| `drivers/md/md.h` | +1 enum flag `MD_DM_SUSPENDING`, doc comment |
-| `drivers/md/dm-raid.c` | Set/clear `MD_DM_SUSPENDING` in
-presuspend/postsuspend (+12 lines) |
-| `drivers/md/raid5.c` | Gate `STRIPE_WAIT_RESHAPE` on dm+suspending (+4
-lines net) |
-
-**Functions:** `raid_presuspend`, `raid_presuspend_undo`,
-`raid_postsuspend`, `make_stripe_request`
-**Scope:** Small, 3-file surgical fix.
-
-### Step 2.2: Code flow (per hunk)
-
-**Hunk 1 — `raid_presuspend`:** Before → only set `RT_FLAG_RS_FROZEN`.
-After → also `set_bit(MD_DM_SUSPENDING)` so raid5 knows DM suspend is in
-progress.
-
-**Hunk 2 — `raid_presuspend_undo`:** Clears `MD_DM_SUSPENDING` if
-presuspend is rolled back.
-
-**Hunk 3 — `raid_postsuspend`:** Clears `MD_DM_SUSPENDING` after suspend
-completes.
-
-**Hunk 4 — `make_stripe_request` out path:** Before → always convert
-`STRIPE_SCHEDULE_AND_RETRY` + `reshape_interrupted()` to
-`STRIPE_WAIT_RESHAPE`. After → only convert when **not** dm-raid, **or**
-dm-raid **and** `MD_DM_SUSPENDING` is set. Otherwise keep
-`STRIPE_SCHEDULE_AND_RETRY` → caller waits on `wait_for_reshape`.
-
-### Step 2.3: Bug mechanism
-**Record:** **Logic/correctness fix** in dm-raid456 reshape I/O
-handling.
-
-Broken path (present in 6.18.43):
-1. Reshape interrupted; I/O crosses reshape position.
-2. `make_stripe_request` → `STRIPE_WAIT_RESHAPE`.
-3. `raid5_make_request` → `md_free_cloned_bio`, returns `false`.
-4. `md_handle_request` (no `gendisk`, has `prepare_suspend`) → returns
-   `false`.
-5. `raid_map` → `DM_MAPIO_REQUEUE`.
-6. `dm_handle_requeue` — not noflush suspending → `BLK_STS_IOERR` (bio
-   failed).
-
-Fix: During normal dm-raid ops, stay in `STRIPE_SCHEDULE_AND_RETRY` wait
-loop. Only take abort path during actual DM suspend.
-
-### Step 2.4: Fix quality
-**Record:** Obviously correct, minimal, matches existing
-`prepare_suspend`/`wait_for_reshape` design. Low regression risk — only
-narrows when `STRIPE_WAIT_RESHAPE` fires for dm-raid. Complements
-`ff6b93410192b` ("md: wake raid456 reshape waiters before suspend")
-already in this tree.
-
----
-
-## PHASE 3: GIT HISTORY INVESTIGATION
-
-### Step 3.1: Blame
-**Record:** Buggy lines at `raid5.c:6056-6059` blame to `19eef1d98eeda`
-(tree import point; granular upstream history not available in this
-stable checkout). `STRIPE_WAIT_RESHAPE` and `reshape_interrupted`
-handling are present in 6.18.43.
-
-### Step 3.2: Fixes: tag
-**Record:** N/A — no `Fixes:` tag.
-
-### Step 3.3: Related file history
-**Record:**
-- `ff6b93410192b` — related suspend deadlock fix for native md (already
-  in 6.18.43).
-- `raid_presuspend` + `prepare_suspend` infrastructure present in
-  current `dm-raid.c`.
-- Commit under review **not** in this tree (`MD_DM_SUSPENDING` absent).
-
-### Step 3.4: Author context
-**Record:** Marzinski/Patocka are dm/md maintainers. Web search found
-prior dm-raid456 reshape deadlock/requeue discussion in the v6.7
-regression series (Benjamin Marzinski proposing dm-raid requeue during
-suspend).
-
-### Step 3.5: Dependencies
-**Record:** Self-contained. Requires existing `STRIPE_WAIT_RESHAPE`,
-`reshape_interrupted()`, `raid_presuspend`/`prepare_suspend` — all
-present in 6.18.43. No series dependency.
-
----
-
-## PHASE 4: MAILING LIST AND EXTERNAL RESEARCH
-
-### Step 4.1: Original discussion
-**Record:** `b4 dig -c <hash>` — **failed** (commit not in local git).
-`b4 dig` with author email — **failed**. No matching `.mbx` in
-workspace. lore.kernel.org — **blocked** (Anubis bot protection).
-
-### Step 4.2: Reviewers
-**Record:** UNVERIFIED — could not fetch mailing list thread.
-
-### Step 4.3: Bug reports
-**Record:** No `Reported-by`/`Link` in commit. Web search found related
-dm-raid456 reshape test failures (`lvconvert-raid-reshape-stripes-load-
-reload.sh`, `lvconvert-repair-raid.sh`) in the v6.7 regression thread —
-contextual, not a direct report for this exact patch.
-
-### Step 4.4: Series context
-**Record:** Part of ongoing dm-raid456 reshape I/O fixes. Standalone;
-does not require other unmerged patches.
-
-### Step 4.5: Stable list
-**Record:** UNVERIFIED — lore stable list inaccessible.
-
----
-
-## PHASE 5: CODE SEMANTIC ANALYSIS
-
-### Step 5.1: Key functions
-**Record:** `make_stripe_request`, `raid5_make_request`,
-`md_handle_request`, `raid_map`, `dm_handle_requeue`, `raid_presuspend`,
-`raid5_prepare_suspend`.
-
-### Step 5.2: Callers
-**Record:**
-- `raid_map` ← dm target map (all dm-raid I/O)
-- `raid5_make_request` ← `md_handle_request` ← `raid_map`
-- `raid_presuspend` ← dm suspend path
-
-All common block-I/O and device-mapper admin paths.
-
-### Step 5.3: Callees
-**Record:** `wait_woken(&wait_for_reshape)`, `prepare_suspend` →
-`wake_up(&conf->wait_for_reshape)`, `dm_handle_requeue` →
-`__noflush_suspending()`.
-
-### Step 5.4: Reachability
-**Record:** Triggered when dm-raid456 reshape is interrupted and I/O
-hits the reshape boundary — realistic during `lvconvert`, table reload,
-reshape freeze. Userspace block I/O is the trigger. Not obscure or init-
-only.
-
-### Step 5.5: Similar patterns
-**Record:** `mddev_is_dm()` checks exist elsewhere in raid5.c.
-`DM_MAPIO_REQUEUE` only requeues under noflush suspend (`dm.c:929-939`).
-Same pattern as other dm-raid reshape fixes.
-
----
-
-## PHASE 6: CROSS-REFERENCE WITH LOCAL TREE (6.18.43)
-
-### Step 6.1: Buggy code present?
-**Record:** **YES.** Current tree at `raid5.c:6056-6059`:
-
-```6056:6059:drivers/md/raid5.c
-        if (ret == STRIPE_SCHEDULE_AND_RETRY &&
-reshape_interrupted(mddev)) {
-                bi->bi_status = BLK_STS_RESOURCE;
-                ret = STRIPE_WAIT_RESHAPE;
-                pr_err_ratelimited("dm-raid456: io across reshape
-position while reshape can't make progress");
-```
-
-`MD_DM_SUSPENDING` **not** present. `raid_presuspend` has
-`prepare_suspend` call but no suspending flag.
-
-### Step 6.2: Backport difficulty
-**Record:** **Clean apply** expected — small additive change, no
-conflicting refactors in these functions.
-
-### Step 6.3: Duplicate fix?
-**Record:** **None.** `ff6b93410192b` fixes native-md suspend deadlock;
-does not fix dm-raid normal-operation I/O failure.
-
----
-
-## PHASE 7: SUBSYSTEM CONTEXT
-
-### Step 7.1: Subsystem
-**Record:** `drivers/md` — device-mapper / md RAID. **Criticality:
-IMPORTANT** (storage stack, LVM dm-raid users).
-
-### Step 7.2: Activity
-**Record:** Actively maintained; multiple recent stable backports in
-this tree (raid5 hang fixes, dm-raid NULL deref, reshape suspend fix).
-
----
-
-## PHASE 8: IMPACT AND RISK
-
-### Step 8.1: Who is affected
-**Record:** dm-raid456 users (LVM `raid` target, reshaping arrays).
-Config-specific, but affects production storage setups.
-
-### Step 8.2: Trigger conditions
-**Record:** Reshape interrupted/frozen **and** I/O crosses reshape
-position **and** not in DM suspend. Moderately common during reshape
-admin operations. Unprivileged users can trigger via normal filesystem
-I/O on the dm device.
-
-### Step 8.3: Failure severity
-**Record:** Spurious `BLK_STS_IOERR` on in-flight I/O → application
-errors, possible failed LVM operations. **Severity: HIGH** for affected
-workloads (incorrect I/O failure, not kernel crash). Suspend deadlock is
-a separate issue addressed by related patches.
-
-### Step 8.4: Risk-benefit
-**Record:**
-- **Benefit:** HIGH for dm-raid reshape users — prevents incorrect I/O
-  failure.
-- **Risk:** LOW — ~15 lines, internal flag, narrow condition change.
-- **Ratio:** Strong benefit, minimal risk.
-
----
-
-## PHASE 9: FINAL SYNTHESIS
-
-### Step 9.1: Evidence summary
-
-**FOR backport:**
-- Real bug in 6.18.43 — verified in source
-- Incorrect I/O failure on production storage path
-- Small, surgical, maintainer-authored fix
-- Complements existing reshape suspend fix already in tree
-- Obviously correct logic: wait during normal ops, abort only during
-  suspend
-- dm/md maintainers signed off
-
-**AGAINST backport:**
-- Affects dm-raid456 reshape edge case, not all kernel users
-- No syzbot/user Reported-by in commit message
-- Mailing list review not verified
-
-**UNRESOLVED:**
-- Original lore thread and explicit stable nomination not verified
-- Exact upstream commit date/hash not in this checkout
-
-### Step 9.2: Stable rules checklist
-1. Obviously correct and tested? **PASS** — logic verified in code;
-   maintainer SOBs; no Tested-by
-2. Fixes real bug affecting users? **PASS** — spurious I/O errors on dm-
-   raid456 reshape
-3. Important issue? **PASS** — incorrect I/O failure on storage path
-   (HIGH)
-4. Small and contained? **PASS** — ~15 lines, 3 files
-5. No new features/APIs? **PASS** — internal `MD_DM_SUSPENDING` flag
-   only
-6. Can apply to local tree? **PASS** — all prerequisite code present;
-   clean apply expected
-
-### Step 9.3: Exception categories
-**Record:** N/A — standard bug fix, not device-ID/quirk/build/doc
-exception.
-
-### Step 9.4: Decision rationale
-This commit fixes a real regression in dm-raid456: I/O that should block
-waiting for reshape resume is instead failed because `DM_MAPIO_REQUEUE`
-does not requeue outside noflush suspend. The buggy code exists in Linux
-6.18.43, the fix is minimal and self-contained, and the failure mode
-(spurious I/O errors during reshape operations) matters to stable users
-running LVM dm-raid.
-
----
-
-## Verification
-
-- **[Phase 1]** Parsed subject, tags, body from user-provided commit
-  message
-- **[Phase 2]** Read current `raid5.c:6056-6060`, `dm-
-  raid.c:3341-3360,3824-3867`, `md.c:395-426`, `dm.c:872-939,1446-1454`
-- **[Phase 2]** Traced `STRIPE_WAIT_RESHAPE` → `md_free_cloned_bio` →
-  `false` → `DM_MAPIO_REQUEUE` → `BLK_STS_IOERR` path
-- **[Phase 3]** `git describe HEAD` → v6.18.43
-- **[Phase 3]** `git blame -L 6056,6060 drivers/md/raid5.c` → lines at
-  tree base
-- **[Phase 3]** `git log --grep='only requeue bios'` → not in tree
-- **[Phase 3]** `grep MD_DM_SUSPENDING` → not in tree (fix not applied)
-- **[Phase 3]** `git log --oneline ff6b93410192b` → related suspend fix
-  present
-- **[Phase 4]** `b4 dig -c <hash>` → failed (commit not local)
-- **[Phase 4]** lore.kernel.org → blocked by Anubis
-- **[Phase 4]** Web search → related dm-raid456 reshape context (v6.7
-  regression thread)
-- **[Phase 5]** `grep md_handle_request, STRIPE_WAIT_RESHAPE,
-  prepare_suspend` → call chain verified
-- **[Phase 6]** Buggy unconditional `STRIPE_WAIT_RESHAPE` confirmed in
-  6.18.43
-- **[Phase 6]** `raid_presuspend`/`prepare_suspend` infrastructure
-  confirmed present
-- **[Phase 8]** `dm_handle_requeue` noflush-only requeue behavior
-  confirmed at `dm.c:929-939`
-- **UNVERIFIED:** Mailing list review thread; explicit stable
-  nomination; upstream commit SHA
-
-**YES**The background searches finished and match what the earlier
-analysis already used:
-
-- **Commit not in this tree** — no match for `MD_DM_SUSPENDING` or the
-  subject line; the fix is still a candidate, not applied.
-- **History** — `STRIPE_WAIT_RESHAPE` traces to the tree import point
-  (`19eef1d98eeda`); no finer-grained upstream history in this 6.18.43
-  checkout.
-- **kernel.org search** — no useful commit hit from the web grep.
-
-**Verdict unchanged: YES** for backport to this 6.18.43 tree. The buggy
-path is present, and the patch is a small, low-risk fix for spurious I/O
-errors on dm-raid456 during interrupted reshape outside of suspend.
-
- drivers/md/dm-raid.c | 6 ++++++
- drivers/md/md.h      | 2 ++
- drivers/md/raid5.c   | 7 +++++--
- 3 files changed, 13 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 4bacdc499984b..9eee490c029e7 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -3831,6 +3831,7 @@ static void raid_presuspend(struct dm_target *ti)
- 	 * resume, raid_postsuspend() is too late.
- 	 */
- 	set_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
-+	set_bit(MD_DM_SUSPENDING, &mddev->flags);
+ include/linux/multipath.h |  22 ++++++++
+ lib/multipath.c           | 108 +++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 128 insertions(+), 2 deletions(-)
+
+diff --git a/include/linux/multipath.h b/include/linux/multipath.h
+index 9bbab0aa8961a..374f0531f7e07 100644
+--- a/include/linux/multipath.h
++++ b/include/linux/multipath.h
+@@ -3,6 +3,7 @@
+ #define _LIBMULTIPATH_H
  
- 	if (!reshape_interrupted(mddev))
- 		return;
-@@ -3847,13 +3848,16 @@ static void raid_presuspend(struct dm_target *ti)
- static void raid_presuspend_undo(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
-+	struct mddev *mddev = &rs->md;
+ #include <linux/blkdev.h>
++#include <linux/blk-mq.h>
+ #include <linux/srcu.h>
  
-+	clear_bit(MD_DM_SUSPENDING, &mddev->flags);
- 	clear_bit(RT_FLAG_RS_FROZEN, &rs->runtime_flags);
- }
- 
- static void raid_postsuspend(struct dm_target *ti)
- {
- 	struct raid_set *rs = ti->private;
-+	struct mddev *mddev = &rs->md;
- 
- 	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
- 		/*
-@@ -3864,6 +3868,8 @@ static void raid_postsuspend(struct dm_target *ti)
- 		mddev_suspend(&rs->md, false);
- 		rs->md.ro = MD_RDONLY;
- 	}
-+	clear_bit(MD_DM_SUSPENDING, &mddev->flags);
-+
- }
- 
- static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-diff --git a/drivers/md/md.h b/drivers/md/md.h
-index 2960a98747607..2ece7788f9075 100644
---- a/drivers/md/md.h
-+++ b/drivers/md/md.h
-@@ -343,6 +343,7 @@ struct md_cluster_operations;
-  * @MD_HAS_SUPERBLOCK: There is persistence sb in member disks.
-  * @MD_FAILLAST_DEV: Allow last rdev to be removed.
-  * @MD_SERIALIZE_POLICY: Enforce write IO is not reordered, just used by raid1.
-+ * @MD_DM_SUSPENDING: This DM raid device is suspending.
-  *
-  * change UNSUPPORTED_MDDEV_FLAGS for each array type if new flag is added
-  */
-@@ -362,6 +363,7 @@ enum mddev_flags {
- 	MD_HAS_SUPERBLOCK,
- 	MD_FAILLAST_DEV,
- 	MD_SERIALIZE_POLICY,
-+	MD_DM_SUSPENDING,
+ extern const struct block_device_operations mpath_ops;
+@@ -29,8 +30,10 @@ struct mpath_device {
  };
  
- enum mddev_sb_flags {
-diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-index b19d870e41719..0d83c4adf8e83 100644
---- a/drivers/md/raid5.c
-+++ b/drivers/md/raid5.c
-@@ -6054,8 +6054,11 @@ static enum stripe_result make_stripe_request(struct mddev *mddev,
- 	raid5_release_stripe(sh);
- out:
- 	if (ret == STRIPE_SCHEDULE_AND_RETRY && reshape_interrupted(mddev)) {
--		bi->bi_status = BLK_STS_RESOURCE;
--		ret = STRIPE_WAIT_RESHAPE;
-+		if (!mddev_is_dm(mddev) ||
-+		    test_bit(MD_DM_SUSPENDING, &mddev->flags)) {
-+			bi->bi_status = BLK_STS_RESOURCE;
-+			ret = STRIPE_WAIT_RESHAPE;
-+		}
- 		pr_err_ratelimited("dm-raid456: io across reshape position while reshape can't make progress");
+ struct mpath_head_template {
++	bool (*available_path)(struct mpath_device *);
+ 	bool (*is_disabled)(struct mpath_device *);
+ 	bool (*is_optimized)(struct mpath_device *);
++	struct bio *(*clone_bio)(struct bio *);
+ 	const struct attribute_group **device_groups;
+ };
+ 
+@@ -44,6 +47,14 @@ struct mpath_head {
+ 	refcount_t		refcount;
+ 
+ 	enum mpath_iopolicy_e	*iopolicy;
++
++	struct bio_list		requeue_list; /* list for requeing bio */
++	spinlock_t		requeue_lock;
++	struct work_struct	requeue_work; /* work struct for requeue */
++
++	atomic_long_t		requeue_no_usable_path_cnt;
++	atomic_long_t		fail_no_avail_path_cnt;
++
+ 	unsigned long		flags;
+ 	struct gendisk		*disk;
+ 	struct work_struct	partition_scan_work;
+@@ -53,6 +64,13 @@ struct mpath_head {
+ 	struct mpath_device __rcu 		*current_path[MAX_NUMNODES];
+ };
+ 
++#define REQ_MPATH		REQ_DRV
++
++static inline bool is_mpath_request(struct request *req)
++{
++	return req->cmd_flags & REQ_MPATH;
++}
++
+ static inline struct mpath_head *mpath_bd_device_to_head(struct device *dev)
+ {
+ 	return dev_get_drvdata(dev);
+@@ -96,4 +114,8 @@ static inline bool mpath_qd_iopolicy(enum mpath_iopolicy_e *iopolicy)
+ 	return READ_ONCE(*iopolicy) == MPATH_IOPOLICY_QD;
+ }
+ 
++static inline void mpath_schedule_requeue_work(struct mpath_head *mpath_head)
++{
++	kblockd_schedule_work(&mpath_head->requeue_work);
++}
+ #endif // _LIBMULTIPATH_H
+diff --git a/lib/multipath.c b/lib/multipath.c
+index 26714116023a3..93b82eea7d38b 100644
+--- a/lib/multipath.c
++++ b/lib/multipath.c
+@@ -6,6 +6,7 @@
+ #include <linux/module.h>
+ #include <linux/multipath.h>
+ #include <linux/wait_bit.h>
++#include <trace/events/block.h>
+ 
+ static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head);
+ 
+@@ -44,7 +45,6 @@ int mpath_get_iopolicy(char *buf, int iopolicy)
+ }
+ EXPORT_SYMBOL_GPL(mpath_get_iopolicy);
+ 
+-
+ void mpath_synchronize(struct mpath_head *mpath_head)
+ {
+ 	synchronize_srcu(&mpath_head->srcu);
+@@ -231,7 +231,6 @@ static struct mpath_device *mpath_numa_path(struct mpath_head *mpath_head)
+ 	return mpath_device;
+ }
+ 
+-__maybe_unused
+ static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head)
+ {
+ 	enum mpath_iopolicy_e iopolicy = mpath_read_iopolicy(mpath_head);
+@@ -246,6 +245,81 @@ static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head)
  	}
- 	return ret;
+ }
+ 
++static bool mpath_available_path(struct mpath_head *mpath_head)
++{
++	struct mpath_device *mpath_device;
++
++	if (!test_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags))
++		return false;
++
++	list_for_each_entry_srcu(mpath_device, &mpath_head->dev_list, siblings,
++				 srcu_read_lock_held(&mpath_head->srcu)) {
++		if (mpath_head->mpdt->available_path(mpath_device))
++			return true;
++	}
++
++	return false;
++}
++
++static void mpath_bdev_submit_bio(struct bio *bio)
++{
++	struct mpath_head *mpath_head = bio->bi_bdev->bd_disk->private_data;
++	struct device *dev = mpath_head->parent;
++	struct mpath_device *mpath_device;
++	int srcu_idx;
++
++	/*
++	 * The mpath_device might be going away and the bio might be moved to a
++	 * different queue in failover, so we need to use the bio_split
++	 * pool from the original queue to allocate the bvecs from.
++	 */
++	bio = bio_split_to_limits(bio);
++	if (!bio)
++		return;
++
++	srcu_idx = srcu_read_lock(&mpath_head->srcu);
++	mpath_device = mpath_find_path(mpath_head);
++
++	if (likely(mpath_device)) {
++		if (mpath_head->mpdt->clone_bio) {
++			struct bio *orig = bio;
++
++			bio = mpath_head->mpdt->clone_bio(bio);
++			if (!bio) {
++				bio_io_error(orig);
++				goto out;
++			}
++		}
++
++		bio_set_dev(bio, mpath_device->disk->part0);
++		/*
++		 * Use BIO_REMAPPED to skip bio_check_eod() when this bio
++		 * enters submit_bio_noacct() for the per-path device. The EOD
++		 * check already passed on the multipath head.
++		 */
++		bio_set_flag(bio, BIO_REMAPPED);
++		bio->bi_opf |= REQ_MPATH;
++		trace_block_bio_remap(bio, disk_devt(mpath_head->disk),
++				      bio->bi_iter.bi_sector);
++		submit_bio_noacct(bio);
++	} else if (mpath_available_path(mpath_head)) {
++		dev_warn_ratelimited(dev, "no usable path - requeuing I/O\n");
++
++		spin_lock_irq(&mpath_head->requeue_lock);
++		bio_list_add(&mpath_head->requeue_list, bio);
++		spin_unlock_irq(&mpath_head->requeue_lock);
++		atomic_long_inc(&mpath_head->requeue_no_usable_path_cnt);
++	} else {
++		dev_warn_ratelimited(dev, "no available path - failing I/O\n");
++
++		bio_io_error(bio);
++		atomic_long_inc(&mpath_head->fail_no_avail_path_cnt);
++	}
++
++out:
++	srcu_read_unlock(&mpath_head->srcu, srcu_idx);
++}
++
+ int mpath_get_head(struct mpath_head *mpath_head)
+ {
+ 	if (!refcount_inc_not_zero(&mpath_head->refcount))
+@@ -291,6 +365,7 @@ const struct block_device_operations mpath_ops = {
+ 	.owner          = THIS_MODULE,
+ 	.open		= mpath_bdev_open,
+ 	.release	= mpath_bdev_release,
++	.submit_bio	= mpath_bdev_submit_bio,
+ };
+ EXPORT_SYMBOL_GPL(mpath_ops);
+ 
+@@ -308,12 +383,35 @@ static void multipath_partition_scan_work(struct work_struct *work)
+ 	mutex_unlock(&mpath_head->disk->open_mutex);
+ }
+ 
++static void mpath_requeue_work(struct work_struct *work)
++{
++	struct mpath_head *mpath_head =
++	    container_of(work, struct mpath_head, requeue_work);
++	struct bio *bio, *next;
++
++	spin_lock_irq(&mpath_head->requeue_lock);
++	next = bio_list_get(&mpath_head->requeue_list);
++	spin_unlock_irq(&mpath_head->requeue_lock);
++
++	while ((bio = next) != NULL) {
++		next = bio->bi_next;
++		bio->bi_next = NULL;
++		submit_bio_noacct(bio);
++	}
++}
++
+ void mpath_remove_disk(struct mpath_head *mpath_head)
+ {
+ 	if (test_and_clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
+ 		struct gendisk *disk = mpath_head->disk;
+ 
++		/*
++		 * requeue I/O after MPATH_HEAD_DISK_LIVE has been cleared
++		 * to allow multipath to fail all I/O.
++		 */
+ 		mpath_synchronize(mpath_head);
++		mpath_schedule_requeue_work(mpath_head);
++
+ 		del_gendisk(disk);
+ 	}
+ }
+@@ -325,6 +423,8 @@ void mpath_put_disk(struct mpath_head *mpath_head)
+ 		return;
+ 
+ 	/* make sure all pending bios are cleaned up */
++	kblockd_schedule_work(&mpath_head->requeue_work);
++	flush_work(&mpath_head->requeue_work);
+ 	flush_work(&mpath_head->partition_scan_work);
+ 	put_disk(mpath_head->disk);
+ 	mpath_head->disk = NULL;
+@@ -385,6 +485,7 @@ void mpath_device_set_live(struct mpath_device *mpath_device)
+ 	mutex_unlock(&mpath_head->lock);
+ 
+ 	mpath_synchronize(mpath_head);
++	mpath_schedule_requeue_work(mpath_head);
+ }
+ EXPORT_SYMBOL_GPL(mpath_device_set_live);
+ 
+@@ -397,6 +498,9 @@ int mpath_head_init(struct mpath_head *mpath_head)
+ 
+ 	INIT_WORK(&mpath_head->partition_scan_work,
+ 		multipath_partition_scan_work);
++	INIT_WORK(&mpath_head->requeue_work, mpath_requeue_work);
++	spin_lock_init(&mpath_head->requeue_lock);
++	bio_list_init(&mpath_head->requeue_list);
+ 
+ 	return init_srcu_struct(&mpath_head->srcu);
+ }
 -- 
-2.53.0
+2.43.7
 
