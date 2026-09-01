@@ -1,222 +1,128 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+Received: from icts-p-cavspool-1.kulnet.kuleuven.be (icts-p-cavspool-1.kulnet.kuleuven.be [134.58.240.194])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFF14480DD2
-	for <dm-devel@lists.linux.dev>; Tue,  1 Sep 2026 10:46:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788259614; cv=fail; b=CvrEv0R32RysdRpAJz5CCbUq/ljebarzKBmzzhfi0aXuImP9/s/y63/RG8DLq2D48Ky7krYJTm6zkzXFC4uQUViyzj75qn4kzP9vpQ4kRFrxZuDUkHsZtZtrbZ7RHQFXdYCTxVuLNj48e6u9ZB55M6B/DLZTx5BbcjdaSCgbmFQ=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788259614; c=relaxed/simple;
-	bh=K1qNmY7yhnWQ2n7OukKAYSZ5uD0PIAoq0KACcunw584=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=cRA8tlzgY4ynaKQ3v8rGlFr69S7cqcm4Tj2aeeQ1jgUyg+/iMrRYENMMYNW39TWORS+YxTB4ZzZ6N+m8hC2/7kYNbe10ilIbe+LUiOxRpVVzv6VG8aK04zJRbC05ezJUZdIrt61dPF+bmbPuEEf0uSNO5/1VhOfBL7VfxKt6fvM=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=eqVzhc9+; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=xInSwXj2; arc=fail smtp.client-ip=205.220.165.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 882A84119E4
+	for <dm-devel@lists.linux.dev>; Tue,  1 Sep 2026 15:05:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=134.58.240.194
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1788275131; cv=none; b=o8p17NZAVMl/JJedu4/yR5yyvxlZl5gy1SKtUHr5WLQ87zMbtoJnssrstv75quQ9tb+sgZ8LFAHKPlDdN15qOxCJoHSCSKFWRtGDDo27KLdYVBx5z2iZ5XYkLGCs/MA0UqtDLDzxD3QJalTW+EXvMuj+zmKS0TIkxzVp5Wgc6rQ=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1788275131; c=relaxed/simple;
+	bh=/c3w8PU8MzfCBx4rHdXQP7pYPzliQVY/cNHV2v0BtiI=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=SGdIJ6HhmyD88tQiDNp2TNcw1LZz9ZBENO0BUEwl9SYGvmBuIC1lsnDhlGeJQYzD52xft+bNm8Y1dUFHEOLqrAYTMuvLdrL0W2Ps/Yh2S7A7twBXujvj53Pgsj8ntEVZuIcl2hgX1H7OStDv2yE4V7AGOThZxUAfJs9BcmUAS5M=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cs.kuleuven.be; spf=pass smtp.mailfrom=cs.kuleuven.be; dkim=pass (1024-bit key) header.d=cs.kuleuven.be header.i=@cs.kuleuven.be header.b=JYv5sPNr; arc=none smtp.client-ip=134.58.240.194
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cs.kuleuven.be
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.kuleuven.be
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="eqVzhc9+";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="xInSwXj2"
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 67VLBr3g2296254;
-	Tue, 1 Sep 2026 10:46:36 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2025-04-25; bh=YnucySFgtjsQLDGVN5u9WVeJ3/xS7LfvTirXwVmh7AA=; b=
-	eqVzhc9+Uqz+J5YDMMzCGm9EF6JMr/VsQUKo4wjdZsTAPrP1IQfus4a0QJlhHafB
-	NBg8INMSjTBREXh3Q/AxPDzgKOMB1pSoK2UHVT9lXiuOp4aPEnIJfyODlrpZMk8P
-	ImIkpzeBOtKnBqqd2PUxisjHnCHvTIDVrxMT7TdK6gbOSwUTvt/fZ7PNHOhkFGwl
-	gEQ/AwoofXRTai/yUf4C4HO0K1WmVSBwyWcT4cScXaNjpzWIF/yiE1i47dK4b4yv
-	6rqzhb5TCJGyrMfiy8OB1UXM9vpUouOId63LZJo8zcCsox1lvrwJ32OmzeX/yFFE
-	U1SnyXQgF2AvCmBPKMYYXA==
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 4gbp0xvdbp-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 01 Sep 2026 10:46:36 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.7/8.18.1.7) with ESMTP id 681AYt6M040129;
-	Tue, 1 Sep 2026 10:46:35 GMT
-Received: from cy3pr05cu001.outbound.protection.outlook.com (mail-westcentralusazon11013051.outbound.protection.outlook.com [40.93.201.51])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4gbnve8nfq-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL);
-	Tue, 01 Sep 2026 10:46:35 +0000 (GMT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=Sp63mtcdwX0HfOQPTbbBQi+VCGcD3K7NPlLvaVClTcRbkEoMqrRWJrlJGsPyUvVosdEdyyVv/AqCzqQnzHInmo6Iq3G8ZY5c+4YD16L8tP6WP2Dao3QqMOdYb2sPc0fDaeF4nMxquI4w3P0H382CjCtAzVabrcLk7b3tnI+IyqHvEoZAguaXaXIa3nmeONpe0WrVp9BWdmFqRGjfjaEZDumFb7KFy4d4Iy7ZSLyXBXo/oKXd7VYz6NybxgrvSIUjNnBO8cIA7yeTre4mTB3Mqo/rzEu3/n9fGnki/cZWd3ZTRe/Ck1eDEUclWVkT4W8EAV1CEdyEjISPcUJmlUGm7w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=YnucySFgtjsQLDGVN5u9WVeJ3/xS7LfvTirXwVmh7AA=;
- b=PyeET9hqGtfEormsnNZm+Qtrm6VfefpsEZvAuHiX1X9T4np3lMq6ZUBFH+IMm2uInoB9MQGmx+pn7/3qoL03Js7wbibu+RbIiBuQcK45xzgLLYrJb7ugX7xmnofW5DT+XvBAIxlbkCPpTuAHjcIPySdmCpla9iq6zgQxLJJ4AL66kNwIU3FFLvNc33T+55fBNUGkyyLJFkMFGzgN18lH0G7hY9cMsUEoUSrN30GDNlMmL2qIka6Y0/Bb3mnM1xS3ilKPMvjAoXzoUBh5MPc8Vk+CjeEkn9nEwczbPO8y2wgscjTFwFzST8IcqCZdfZJS1oHBiLTj52ZxYpRd/AFPmQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=YnucySFgtjsQLDGVN5u9WVeJ3/xS7LfvTirXwVmh7AA=;
- b=xInSwXj2o0CS+mTagDYTCOcwPTXxg4oEFw4xlKQGdse7SEGPxFECB4oXpDZHoni2Hbj1CvwIqHt0rLAaW1JujdN/Q0wF9BiOzUmr53JbQVe4F/Ac9DKMbN0GLDpJopsWrYBZGFwZx5wnnCvtGh7wbkFglNrp9GFLqouv9uQV/Bo=
-Received: from DM4PR10MB6229.namprd10.prod.outlook.com (2603:10b6:8:8c::12) by
- SA2PR10MB4732.namprd10.prod.outlook.com (2603:10b6:806:fa::19) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.21.382.10; Tue, 1 Sep 2026 10:46:32 +0000
-Received: from DM4PR10MB6229.namprd10.prod.outlook.com
- ([fe80::867:63e7:13fa:fa7d]) by DM4PR10MB6229.namprd10.prod.outlook.com
- ([fe80::867:63e7:13fa:fa7d%6]) with mapi id 15.21.0382.007; Tue, 1 Sep 2026
- 10:46:32 +0000
-From: John Garry <john.g.garry@oracle.com>
-To: james.bottomley@hansenpartnership.com, hare@suse.com, mkp@kernel.org
-Cc: jmeneghi@redhat.com, linux-nvme@lists.infradead.org,
-        linux-scsi@vger.kernel.org, michael.christie@oracle.com,
-        snitzer@kernel.org, bmarzins@redhat.com, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org, nilay@linux.ibm.com,
-        john.garry@linux.dev, hch@lst.de, kbusch@kernel.org, sagi@grimberg.me
-Subject: [PATCH v7 27/27] scsi: sd: add mpath_queue_depth dev attribute
-Date: Tue,  1 Sep 2026 10:45:26 +0000
-Message-ID: <20260901104526.3850621-28-john.g.garry@oracle.com>
-X-Mailer: git-send-email 2.43.7
-In-Reply-To: <20260901104526.3850621-1-john.g.garry@oracle.com>
-References: <20260901104526.3850621-1-john.g.garry@oracle.com>
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: PH7P221CA0018.NAMP221.PROD.OUTLOOK.COM
- (2603:10b6:510:32a::17) To DM4PR10MB6229.namprd10.prod.outlook.com
- (2603:10b6:8:8c::12)
+	dkim=pass (1024-bit key) header.d=cs.kuleuven.be header.i=@cs.kuleuven.be header.b="JYv5sPNr"
+Received: from icts-p-cavuit-3.kulnet.kuleuven.be (icts-p-cavuit-3.kulnet.kuleuven.be [IPv6:2a02:2c40:0:c0::25:133])
+	by icts-p-cavspool-1.kulnet.kuleuven.be (Postfix) with ESMTP id 952F551A2
+	for <dm-devel@lists.linux.dev>; Tue,  1 Sep 2026 16:57:09 +0200 (CEST)
+X-KULeuven-Envelope-From: jo.vanbulck@cs.kuleuven.be
+X-KULeuven-Scanned: Found to be clean
+X-KULeuven-ID: D99A2200D7.A9BF2
+X-KULeuven-Information: Katholieke Universiteit Leuven
+Received: from icts-p-ceifnet-smtps-1.kuleuven.be (icts-p-ceifnet-smtps.service.icts.svcd [IPv6:2a02:2c40:0:51:139::25])
+	by icts-p-cavuit-3.kulnet.kuleuven.be (Postfix) with ESMTP id D99A2200D7;
+	Tue,  1 Sep 2026 16:56:59 +0200 (CEST)
+BCmilterd-Mark-Subject: no
+BCmilterd-Errors: 
+BCmilterd-Report: SA-HVU#DKIM_SIGNED#0.00,SA-HVU#DKIM_VALID_AU#0.00,SA-HVU#DKIM_VALID#0.00,SA-HVU#OURIPS#-35.00
+X-CAV-Cluster: smtps
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cs.kuleuven.be;
+	s=cav; t=1788274619;
+	bh=ptRC/EYGEt+GZphk5vxeF2pgFgze7JJt6aLBjRPtaX8=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=JYv5sPNrRgoCf+OmO4pv80Bmzye3ok+9h7iAOoanTC/dkGy8lxw9uz36zYu/bxZP5
+	 c2AhNJO9Q5VmH5/C3Hvw1TxpsaEdsaP9dN+akmyHmxRMc0H8w2McyU81Qi9WhU9GHm
+	 bl8WPwWzVht97NBnBmkFD8QaSqfjV/FKtDp5WtFo=
+Received: from [10.45.52.163] (unknown [10.45.52.163])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange x25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by icts-p-ceifnet-smtps-1.kuleuven.be (Postfix) with ESMTPSA id 8BE72D4B94591;
+	Tue, 01 Sep 2026 16:56:59 +0200 (CEST)
+Message-ID: <e9e1928a-0dbf-40da-b8d9-d19d85d914cb@cs.kuleuven.be>
+Date: Tue, 1 Sep 2026 16:56:59 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM4PR10MB6229:EE_|SA2PR10MB4732:EE_
-X-MS-Office365-Filtering-Correlation-Id: 4ec94192-e4cd-4696-f576-08df08164982
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|1800799024|366016|23010399003|7416014|376014|6133799003|18002099003|22082099003|56012099006|10067099003;
-X-Microsoft-Antispam-Message-Info:
-	IV7ySgNy91uMz4zTMUlTl/JH7KRaIhwwNVf+UVhh4Ucbi9Ugp5KAbq0PQc3FmFxmA120jZFJstf5Gjdvnx0E7Gvp138gpcA/y1FNsioVA16NkGlANL5piX4s1SkSlTutfe5Wpj5ZyKuecfp1JzF0AfK0b30dsABl/Z2jEju9pw8zAM7ZfXRFnrohFq4ZQclM987TknCdXbPD0unUEoaoOej/CEHliM8zjrzxmCn25d4RCwKjHiH/I7AA0iECgO8fvAuA2UQc2hvVhftJimk9AOq+itTUG+JZupTPkeWK+qOHHT/jFO1QHL4PWr7P9R9vJqItNJoKe2GRnI/0yCLMhgwUiYbo46Mz9REULsrUS6lEHpptwle/7dgxkYUvNjsSzjZJGB7wH4hRGEXpkWKLeVnadLBh72oo130n+CT9zkM2DYuAEtaNglp5/+jsceHO2O6zVpBMyDMNvCIHUDCaCfmTV8Jpv1BNHvpD7ziosGUfsRZr7ZCFKhQ5cnJzZvkvavJgvSEgRSc0ObXrjikvTqw+9VaWcPxCiASbzCtoOL1svUxLPPcK28mpKpMVjYtVV0c1bzwXNMIJLGz3sjCnod4uGR4PoHq5fbZm230C41SlQr0pbwphXAtgKeBeqgRle79kmlwOLliB6IouS4CKyFMiT2TnpOPZ9Lm+/4bZMNY=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM4PR10MB6229.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(23010399003)(7416014)(376014)(6133799003)(18002099003)(22082099003)(56012099006)(10067099003);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?IW3cG5VggSq30FDnGWeA6u8pjV204M3LhxFclBTt0raZRtE82yVN/vxFGRcJ?=
- =?us-ascii?Q?e5DRrdwCpKHbdsb/rpPcnTy2k0iYBUYsjCikq4duEVReIf4BdY2LwIAWC5k1?=
- =?us-ascii?Q?Fa1vHxG/bcAmK848E/GPZDMe51fAm7WZXFVRQ7bW/c6+rt1lE7u30Bare8/H?=
- =?us-ascii?Q?8dCAkXmbxftuhoKL+QLEIfbmneoaixHn4yxGK7lSNE5w5g2ALSkFbQxcxQZh?=
- =?us-ascii?Q?ylm3Xhxcqz6yDu6NX4ON0uUrXTu7XrApCnBG+0hALAjTcF4g23MjYoJv6yBF?=
- =?us-ascii?Q?2mEAGaii3W3ErdNyRthMVraQJCK4Qh+b+kGZPZn5+vRWWfdlfjr/y43twCI9?=
- =?us-ascii?Q?BE26XqLFnxZAZAdwYmIxib9BNFCg2NLSONZfQa7J4n2Ul719jz3t7gTBPGlX?=
- =?us-ascii?Q?WhZnEFZmSmwrpdmF/VccVPT4Z+iF9lGwXWHi/RPlTO04yoNRDPb8WBtcOXOp?=
- =?us-ascii?Q?A3EQDwVhu6qRiM4D8QVo8FJWJNiAZUN14s+W4LewC7RFsOsTeDaNG4Lg+QR6?=
- =?us-ascii?Q?1t6khPveqWrz6nF2nk4AYiV4uRfGdW2bCS7E+qP1SIvL6NVFep2wrtOAzPMY?=
- =?us-ascii?Q?+YmYfo3brjFBUSYLTUt/lyU6CAPY44gVTKoVyuaMH8sECjuvD4N/3rv1k4ph?=
- =?us-ascii?Q?OfCgYEh/i3k3Ek1RXWxZOXx9NIEHcDZxTFyDoeXmFBKqwzmiGyQ0u8l4FdXp?=
- =?us-ascii?Q?bWuV4M8aBwvMh9vOpvGlzh1NSmqH7iirBWV4xBFJLqOZlnfsOVJPTzQXZAvK?=
- =?us-ascii?Q?4T86IIeGJprhR9GDCp6PJmVFDJZ1MWh+KK95gdNxxD2WP7fKj7rG7pg9f6Fp?=
- =?us-ascii?Q?YxgZjNStc0piDbalpg4vdhSp/n9sx8MwxxUFG7FCj5hhSx+kgW25VAWDfEiY?=
- =?us-ascii?Q?dPH7dgHN7z7CY7kndtmH/aZcGk8w7yHXcn//cU63kbgk0C319f5u9THmT+fD?=
- =?us-ascii?Q?UsGw8zgimwVV/ByjwWrOAt03ifE9ebZhjfoyHTi9pjhstdvjrIwNiOzTRIEl?=
- =?us-ascii?Q?ZvV656mr0y0TkP0bLNva8yZAZDAA1UtiBaqdzGS+N63VxA/MSpfUfyQV82Wd?=
- =?us-ascii?Q?UDM/vUij8Xvaf0hEcUg65EqVzs5eyynR/tKnJkGQ6YZHb+VZ0UGftBZ2UiO+?=
- =?us-ascii?Q?RZAa8mefalURxiA+sn0mXzmQNrb1LGvRlmBN1LWX+7gv2HN/CkWpvv8khRAY?=
- =?us-ascii?Q?gmErUe88lQQkGii1NZfdgAUtkcdHSJBGv7KbcSBZUX3lZJFeEEWI4atS7J9W?=
- =?us-ascii?Q?OtDu84RBXR/VI3o+Cjv0DHTFdfzk5ZI1ZLICq/kVbP+xwrxnuM/JQZEppJLW?=
- =?us-ascii?Q?n6QiSpG5KTjJIHYthtDRiKvfACPhC2Dr4DvrNpIJUrf6dWkCPQwWlD3FRhcc?=
- =?us-ascii?Q?wCdztBJ7KrUGUxh9QzR8ZwgFbtMuhdCRU57HvE8yyCkvPmnPaKKXZQSOGUUj?=
- =?us-ascii?Q?EgJU1Nyw1Gb6n85b3AzNce5RVQW5OodBVxdKNuTS3TNUXWYDcr73i3QErRtA?=
- =?us-ascii?Q?tUtualaAGWbvyCqPrbQ4IxBgIQMMsk/j6eFJewiQMsHglIz3uQVUT3X7XNRB?=
- =?us-ascii?Q?Riv8S2c6GDkgpWFZgsyFkV0J1E0tvKh39l8Ssop94++8FHuoJLXiuOdhJpCX?=
- =?us-ascii?Q?o1EYQHiEKrVTFqO4wlpZWk7HRhiX4Z6BOy7mlhsP0h/NLutC3AG8LPdzrkmL?=
- =?us-ascii?Q?i93TxhAXgnn71+u+YLW2LYaGkeBLHebegt/rwi6drZxtcv5VEJn22wJQ2lqM?=
- =?us-ascii?Q?IE0ahKoGEvHPOi8FLmHPdKw3+3k+Stw=3D?=
-X-Exchange-RoutingPolicyChecked:
-	mTXwNwiRncF3EhIBEABv0V+IwU9mKp58IlK//XAA01kFEaBuV5T4IEERXVcG6gAOmCqEQSlRaHiT/mb4Oaf86uwzcxe5LRdxyRjbqflaLL3v3+xPX0mwxiRX1ymRwz6iIHx9jkF0p7zjOGHMAaaftw9RmmzEiIILcMOq05RFMYzfupku/v0FqCfkWIAYWLgk0a/U0gWGgMQSHwekYaV35rHDiqYQquFjMUqOoFJmXmlUxyDFiG5BqMBUesmFTrYt1E1wswyyJjO89bXXLrWiMUvjLVkzgpTlOZELESD6XL9prNO/advJVPTBhCXb85sn5MqU2pzD+3yx+6ZGLK+knQ==
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	TK0KLEYwXn8NqP6eostLxoeOEGuZl9AUlzC4xP5ysdilIORbfju2/kZtek5qXF8ksx43zvP41mYQztepkK9++jei37xcYQ5lNe9C8wNzkBjFxg1utHrRXxadtr0xk4gAdqH1sOlsgMlev372E6YicoDvrkDa5WLXYzSQj5bMsVopjeF3qFTOEVJrzndFhCcYHEA3vIWKWChVwIMxy8/VsRQK5dBT9hw1ZNqzEA+ZCCtQ71bo4Cb0LIybEhc5qXB1DNQudn+eqX7IJGAcpujbo8FfzYVWYfD36eeoa91lsYtivNFYX/b+7f7fX/y4/SVy3O/LaJhEDQhCRBCcaLfKgh74aHJXD6gmdYkwCEUwyEh2r4S9v30PqkUpujslSH1PXSzUIpB+HZzoIdj50UVhbo8Jbn0emH6XzAsFmo+MK/jxtBbROnXhfHLxcc5MgmsDFVh/Kf5tvrFk/ciGhfdqZhqfs3aD7uFDs3PQb8oXwnVsiMEY4xf40tw4hmyBK6LnZpoygWGCrSkG5FF1NhZ3A0bcK0JIpqBVXOAqmZnNYcKV5plsU3Q/Q5E4pzIb0hauZqqPhJIoF+TneONcyfjxrz54/O8O/+M9WVaBI4LAySM=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 4ec94192-e4cd-4696-f576-08df08164982
-X-MS-Exchange-CrossTenant-AuthSource: DM4PR10MB6229.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 01 Sep 2026 10:46:32.6666
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: bSVfhVH6ul6UQDItZJkY5t54iM9kMRnCiSLy05sv7JYn+s8KA3ad82u80wVyX3TW/cPY1j9Dxzwq+gTcEZ9qrQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA2PR10MB4732
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-09-01_03,2026-08-31_01,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999
- mlxscore=0 lowpriorityscore=0 suspectscore=0 adultscore=0 bulkscore=0
- malwarescore=0 spamscore=0 phishscore=0 classifier=spam adjust=0 reason=mlx
- scancount=1 engine=8.19.0-2606160000 definitions=main-2609010094
-X-Proofpoint-ORIG-GUID: axVMLX_dnsatlOBQsdDiH2S2qA2OyBsh
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTAxMDA5NSBTYWx0ZWRfX4cZ3n8UHpiB8
- njyfKqrzbQkh70HU06/0oyQ3nJbUkTBLjY5adrSX5Sf5RVdjzvbtt6G/9MXI5d1tSWeLoGsFIBZ
- xtpJtV9YvOlOZKhF/q+SHKSk4NbcUWHHHOp4yECUW5a1c2MaxQ3+7jsPb/SwXvGW4JOzc44nuzZ
- uiI0sozQW3lnp8+UD5CEfbnmLtADf3Nm+0pBoORfArvSr5rCnwhhtyeomjjVbHh3RPxS8KFFFdC
- jInZxnYW3ODk7aKN610e4pRNFDnGIGafratbwpaBioOqCzkPn6sGRITIqPGvZ1TC7zm6b82OmYl
- cy41hoQksxdK1ujPp8JpJ4F25L134C31s4k1XiHi7V7EZQmyvonRbRVNJPF3sBcD0jBQd8qtgGx
- ADAXfo3xLzUhlUoNCxZv7mkZLw+NLbE4CffMadZMaJ88rmhrhcNTIOZobmEAJGzzITSH28NVMeG
- zw84kDDI03j9W/Xj0mA==
-X-Authority-Analysis: v=2.4 cv=Ebb4hvmC c=1 sm=1 tr=0 ts=6a96ad0c cx=c_pps
- a=OOZaFjgC48PWsiFpTAqLcw==:117 a=OOZaFjgC48PWsiFpTAqLcw==:17
- a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=z/mQ4Ysz8XfWz/Q5cLBRGdckG28=:19
- a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19 a=xqWC_Br6kY4A:10 a=VdqzKS8jKosA:10
- a=GoEa3M9JfhUA:10 a=VkNPw1HP01LnGYTKEx00:22 a=jiCTI4zE5U7BLdzWsZGv:22
- a=RD47p0oAkeU5bO7t-o6f:22 a=bA5FzAUjrTEoIiOIIUIA:9
-X-Proofpoint-GUID: axVMLX_dnsatlOBQsdDiH2S2qA2OyBsh
-X-Proofpoint-Spam-Info: AW1haW4tMjYwOTAxMDA5NSBTYWx0ZWRfX9+Ro49KAPitJ
- LcV4vcOWxv0Y2nd/kQJOJT+oJlzbVwhWT+8yKxFbhMVnlq3G4etdwp19orNONeHLS1DdXhiYXo+
- Vkp5rPO8kN6CJ4zLIkBoNI6V/Mq8yshGS+g/jDw6Q1J+5OiRwvx/
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/2] dm-integrity: fix buffer overflow with keyed discard
+To: Ben Cressey <ben@cressey.dev>, Alasdair Kergon <agk@redhat.com>,
+ Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>, Shukai Ni <shukai.ni@kuleuven.be>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ Mike Snitzer <snitzer@redhat.com>,
+ "Jose Fernandez (Anthropic)" <jose.fernandez@linux.dev>
+References: <20260820-dm-integrity-discard-v1-0-196d3618d09a@cressey.dev>
+ <20260820-dm-integrity-discard-v1-1-196d3618d09a@cressey.dev>
+Content-Language: en-US
+From: jo.vanbulck@cs.kuleuven.be
+In-Reply-To: <20260820-dm-integrity-discard-v1-1-196d3618d09a@cressey.dev>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-From: John Garry <john.garry@linux.dev>
+On 8/20/26 23:44, Ben Cressey wrote:
+> Since commit 68c5c42567bc ("dm-integrity: replace forgeable discard
+> filler with a keyed sector marker"), integrity_metadata computes a
+> checksum for every discarded block into the "checksums" buffer.
+> integrity_sector_checksum always writes the whole digest. So if the tag
+> size is smaller than the digest size, the checksum of the last block
+> that fits into the buffer is written past the end of it. For example,
+> with hmac(sha256) and tag size 16, a 4MiB discard writes 16 bytes past
+> the kmalloc'ed page.
 
-Add a queue_depth file so that the multipath dynamic queue depth can be
-looked up from per-path gendisk (scsi_disk) directory.
+Hi,
 
-Signed-off-by: John Garry <john.garry@linux.dev>
----
- drivers/scsi/sd.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+This initially got stuck in spam somehow. Reviewed this together with 
+Shukai. Agreed this is an oversight in the original patch for the 
+(unlikely) case where tag_size < digest_size.
+> Fix this by subtracting extra_space from the buffer size when computing
+> max_blocks, like we do for writes.
 
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index e8227e00defe7..7e1cdb05906f7 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -4176,9 +4176,28 @@ static ssize_t sd_mpath_numa_nodes_show(struct device *dev,
- }
- static DEVICE_ATTR(mpath_numa_nodes, 0444, sd_mpath_numa_nodes_show, NULL);
- 
-+static ssize_t sd_mpath_queue_depth_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct gendisk *gd = dev_to_disk(dev);
-+	struct scsi_disk *sdkp = gd->private_data;
-+	struct scsi_device *sdev = sdkp->device;
-+	struct scsi_mpath_device *scsi_mpath_dev = sdev->scsi_mpath_dev;
-+	struct scsi_mpath_head *scsi_mpath_head =
-+				scsi_mpath_dev->scsi_mpath_head;
-+	struct Scsi_Host *shost = sdev->host;
-+
-+	if (!mpath_qd_iopolicy(&scsi_mpath_head->iopolicy))
-+		return 0;
-+
-+	return sysfs_emit(buf, "%d\n", atomic_read(&shost->mpath_nr_active));
-+}
-+static DEVICE_ATTR(mpath_queue_depth, 0444, sd_mpath_queue_depth_show, NULL);
-+
- static struct attribute *sd_mpath_dev_attrs[] = {
- 	&dev_attr_mpath_dev.attr,
- 	&dev_attr_mpath_numa_nodes.attr,
-+	&dev_attr_mpath_queue_depth.attr,
- 	NULL
- };
- 
--- 
-2.43.7
+The code path is quite convoluted, but looks OK to us (and arguably more 
+elegant/efficient than the alternatives, which would allocate 
+digest_size local variables or allocate extra_space bytes for every 
+page-sized buffer allocation).
+
+> Fixes: 68c5c42567bc ("dm-integrity: replace forgeable discard filler with a keyed sector marker")
+> Reviewed-by: Jose Fernandez (Anthropic) <jose.fernandez@linux.dev>
+> Signed-off-by: Ben Cressey <ben@cressey.dev>
+> Assisted-by: Claude:unspecified
+> ---
+> Found with KASAN on current mainline (after the 7.3 dm merge): brd,
+> "0 <n> integrity /dev/ram0 0 16 J 2 internal_hash:hmac(sha256):<key>
+> allow_discards_keyed", 8MiB written, then BLKDISCARD of 4MiB:
+> 
+>    BUG: KASAN: slab-out-of-bounds in __hmac_sha256_final+0x1be/0x1e0
+>    Write of size 4 at addr ff11000104b05000 by task kworker/0:0/9
+>    Workqueue: dm-integrity-offload integrity_bio_wait
+>     integrity_sector_checksum_shash+0x181/0x490
+>     integrity_metadata+0x101e/0x18a0
+>     dm_integrity_map_continue+0x1eb2/0x34d0
+>    The buggy address is located 0 bytes to the right of
+>     allocated 4096-byte region
+> ---
+>   drivers/md/dm-integrity.c | 2 +-
+>   1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index c50feaa98bf9e..73c1db7e55d5c 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -1980,7 +1980,7 @@ static void integrity_metadata(struct work_struct *w)
+>   		if (unlikely(dio->op == REQ_OP_DISCARD)) {
+>   			unsigned int bi_size = dio->bio_details.bi_iter.bi_size;
+>   			unsigned int max_size = likely(checksums != checksums_onstack) ? PAGE_SIZE : HASH_MAX_DIGESTSIZE;
+> -			unsigned int max_blocks = max_size / ic->tag_size;
+> +			unsigned int max_blocks = (max_size - extra_space) / ic->tag_size;
+>   			sector_t sector = dio->range.logical_sector;
+>   
+>   			if (!ic->discard_keyed)
+> 
 
