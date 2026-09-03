@@ -1,101 +1,63 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1B52A4E140E
-	for <dm-devel@lists.linux.dev>; Thu,  3 Sep 2026 15:25:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17F564A3F20
+	for <dm-devel@lists.linux.dev>; Thu,  3 Sep 2026 16:35:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788449133; cv=none; b=uX/P1cqBaX0fFcDAcyxe7DMgAi1Qt54e+LpIo3TcvMiks7JH0PM0aHz/+QXnR719BfGEefxtr23D2carG3GtoiF8LWorQnNe4pXsi00asgiVJkBGtGouh0RJtTWiTEaRcD16m6zm37SplhdmB8AIpKLYUogpiHjRsG2UvU/xkBM=
+	t=1788453359; cv=none; b=qyNxDbtTQR0JN+YZ6O1WhNRg/VwkqQFecJPX0UnPPLRUGmeaZRKtLOoijUdFZRONLZUA3QFglwnpzkeNtwAOcvSaCJ2mjYWBfCnRazKXF2n/E2sf/X194oTwiCD3GjbVGo36EPigHg+AHvSiHfjcmQyGBKSWyEvl3woFauTc9Ac=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788449133; c=relaxed/simple;
-	bh=7x6k3CoQtycsyrx00Mon8kDDGXAjBXWuI79x9y09/hU=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=IDUacqbpfgSA/X9PMaD5ca2HZ3lC3e1pyLrF51pvwzwh6MMzz8CDhZ3FM2IF0j8Cwdjt6eyySWQ779wFxDZn9zWbN0VYMlSkSOTfo3fpGVrXoFsNkdztMduL00mMNfTRLqfItvfPUYlSha43Z2l9/eOInkMnCICVj2WaKtliiB4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iApfJD/H; arc=none smtp.client-ip=209.85.128.41
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1788453359; c=relaxed/simple;
+	bh=sdtO6qrRMstwuuVQoSEP8zcB8ybKL3ggGBhK0NOFcUY=;
+	h=Subject:From:In-Reply-To:References:Message-Id:Date:To:Cc; b=Dcn9kHk/scvjHA3Lc3tRAUEc4tW8LYwPbF48FWTIK85ugZDHImB3GfWKD0eR2wFHzoF0G9MUNXjk53evXlkfaw/54smKR27nLwERiEaONYjnqO9KKOF1N3khwxaCs1xchPFU9B7FURnKj22qt6Hi5xmN1TToqto0fphiH4o7h/Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=W6Q2GESn; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iApfJD/H"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-49556f97a9dso20849055e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 03 Sep 2026 08:25:30 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1788449129; x=1789053929; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=RJ0eJNAdxkEACL4i1LkrRsC16NHPzemhDd0NbgM2FuQ=;
-        b=iApfJD/HM23mxi3w3mF3HPBFNJCW4wE+p/N5MOFS10ykHMpr/70C/QztJGcOXHJDuM
-         UTrY544xu9PIh2uI709cFKqtWSs+VnZJMwjbcAQfh9V4jAyzmJberd98N5rFh4c71qR2
-         VpduqHv8y3VSD6VmmQ0v+FoSZoT8RoIUqTkLrqfNkBbVKRg9B0Z7SGH0WOxNF31F02bS
-         PR1Pocz4hbh/o74MsgOafMdbfJxZgX7WAPwcX9qPJEDxVIJSLP22+EEGdQlhQ8msEmqt
-         4G3PRsSNkB5uu4AcvyJFCDBJhO/631Cv+HsoQKSLTGZvJV1ezMCnXO7AxtULGpmFafmw
-         3awQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788449129; x=1789053929;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=RJ0eJNAdxkEACL4i1LkrRsC16NHPzemhDd0NbgM2FuQ=;
-        b=Iwshgy/tCwjTUkktwdG6HWP6XbR4SE9sQYVurcULAVqbcSBgZ7CmvQYzpJ/n4cCx47
-         rfTjL9C+IzXxrNPP5zZ+9+CwMBIiRUaEANSlh8STOPi/VAtG+cRRKl/D5MMD+SIhBR4B
-         eW70pxvnDAbgH3TofsXZgFlubVd9Gb/ZRyGFaVLoK7pFBT72WT7J3T5tkDcVkFxCslRH
-         IHm4WMawaI7MUnSvHASELgQUfC/u0edZgL07IEQlc+tiRAK/xx8UegM06qV1q/ubyvZU
-         X/ZPsIrVTft1Li8qzcEgdqWxu2SBWlwMYbQ+eaR9LhYOCrK8Nbg+WWwJ82DTFkzQyp5v
-         u3Jw==
-X-Forwarded-Encrypted: i=1; AKwUvBwH1lHVhMSVmVGA4rHASZ4lLPUWzN6JW0Ay6gprecLfpsRCBqcc/rfF2+0TOrqj03wg+LPWxmeXNg==@lists.linux.dev
-X-Gm-Message-State: AFuF++mXCJNcdc2taJd1xxgjhRMcqfGVhKpss+A5fEr3nXOWG2aaswh3
-	5aQr+i10jFEhIbittkM3hgVEuVHaZwISc9aCsEHRV1mBBeVNjbeqMEXN
-X-Gm-Gg: AYBFou22Y++79wGvrueTCK6JOM+J3h3vl9Oy4sFZIGiLSTtptgP3RB0kaBciZqtWsr4
-	7jgYDLkQb2Wth9J64HwThtl7z5sw7DWLLYNt61cV4+SeNiJnMXe7HrWJvS26iGgiGpzBkyY/Afj
-	yH6bO3g1JEGkGHu2GtLl0cCOBRRW7i7brnh+EdHdsvGUfte5o+dO1yFOAyfl8lam9JH1HaNprRJ
-	RaDfXqjvSKKoGz2IgoZcQL+7pdgYtVhaFcKJmEzcb3UUuWHx3Oqjv+SzL7m6SkJquhQt8qZ16uT
-	ykPJbcDGRfkuAWgwRZZ/Imiavx4jI6RYR8EzmV8wfoT14ZOioaIilNPPsys/3IqGZVtmtmU0c0r
-	aZUmHDtja62mlMu0G8d3/F9FaSssM+4Tzi1InASnxtJevxlj2vELobr0YgjqtmogKdO4P+RZ1g+
-	c4a5y/VJEMnsIjRaaL80sm1bwVmpehnOCrwV3P7ycrD8BL1zOCzUcC50mhIo4=
-X-Received: by 2002:a05:600c:1d11:b0:49c:c0d4:53d9 with SMTP id 5b1f17b1804b1-49ce582a54amr228971615e9.14.1788449128877;
-        Thu, 03 Sep 2026 08:25:28 -0700 (PDT)
-Received: from localhost ([5.83.201.220])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49cee5dec54sm93729425e9.12.2026.09.03.08.25.28
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 03 Sep 2026 08:25:28 -0700 (PDT)
-From: Colin Ian King <colin.i.king@gmail.com>
-To: Matthew Sakai <msakai@redhat.com>,
-	dm-devel@lists.linux.dev
-Cc: kernel-janitors@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH][next] dm vdo: Fix spelling mistake "postive" -> "positive"
-Date: Thu,  3 Sep 2026 16:23:25 +0100
-Message-ID: <20260903152325.16304-1-colin.i.king@gmail.com>
-X-Mailer: git-send-email 2.55.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="W6Q2GESn"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 89EF41F000E9;
+	Thu,  3 Sep 2026 16:35:57 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1788453357;
+	bh=KDx20F3dylVgSuwgJxT+lWQkQC+bZF7iZDN+28GVmh0=;
+	h=Subject:From:In-Reply-To:References:Date:To:Cc;
+	b=W6Q2GESn5QVpuIFNLaS/DjUKNFQchU+GpgGfsp0A4sVtvwftoEdKmHMeB7uWybDPU
+	 x2T6nHREdtRwNxjCLoiXiup+NwPcvNnyU8/472qeVTjN/tm27cGMhIZXdFMrYywYmI
+	 kieut1/7UjKBnl07vzlB5MvCpNkqkPFrWQlNyXSEngJlJEIdB5L8vcuovmcp20gS9/
+	 9kiwRTMNu7hd3p46V7lz22XM+A9x5O9mnwxISJ9sqeDcWg9m4fIcWJgGjRFsI2iMoF
+	 8WRgsTPE01TQxYyNs136N7H47Z2+fFBJ+vimlAapThCIqzaDxycl4DQUiNbQewuaSY
+	 M0rozvfYI0jSg==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 1994F38119D1;
+	Thu,  3 Sep 2026 16:35:00 +0000 (UTC)
+Subject: Re: [git pull] device mapper fixes for 7.3
+From: pr-tracker-bot@kernel.org
+In-Reply-To: <e50b0304-3b2d-80d0-4fc1-90339278ea8e@redhat.com>
+References: <e50b0304-3b2d-80d0-4fc1-90339278ea8e@redhat.com>
+X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
+X-PR-Tracked-Message-Id: <e50b0304-3b2d-80d0-4fc1-90339278ea8e@redhat.com>
+X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.3/dm-fixes
+X-PR-Tracked-Commit-Id: 7ac81e2d2240f2c57bd073b0733e0b2abca38e82
+X-PR-Merge-Tree: torvalds/linux.git
+X-PR-Merge-Refname: refs/heads/master
+X-PR-Merge-Commit-Id: 8ab1afb2eb246ab15b301cd255b5943d208a93c1
+Message-Id: <178845329862.3436244.15086884589300247472.pr-tracker-bot@kernel.org>
+Date: Thu, 03 Sep 2026 16:34:58 +0000
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Ben Cressey <ben@cressey.dev>, Benjamin Marzinski <bmarzins@redhat.com>, Genjian Zhang <zhanggenjian@kylinos.cn>, Chen Cheng <chencheng@fnnas.com>, Ming-Hung Tsai <mtsai@redhat.com>, dm-devel@lists.linux.dev
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
 
-There is another spelling mistake in a vdo_log_error message that
-I somehow overlooked last time. Fix it.
+The pull request you sent on Thu, 3 Sep 2026 17:00:18 +0200 (CEST):
 
-Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
----
- drivers/md/dm-vdo/dm-vdo-target.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.3/dm-fixes
 
-diff --git a/drivers/md/dm-vdo/dm-vdo-target.c b/drivers/md/dm-vdo/dm-vdo-target.c
-index 1d8375cc3c3e..043549b1fc2e 100644
---- a/drivers/md/dm-vdo/dm-vdo-target.c
-+++ b/drivers/md/dm-vdo/dm-vdo-target.c
-@@ -443,7 +443,7 @@ static int __must_check parse_slab_size(const char *slab_str, block_count_t *sla
- 
- 	result = kstrtoull(slab_str, 10, &value);
- 	if (result) {
--		vdo_log_error("optional parameter error: invalid slab size, must be a postive integer");
-+		vdo_log_error("optional parameter error: invalid slab size, must be a positive integer");
- 		return -EINVAL;
- 	}
- 
+has been merged into torvalds/linux.git:
+https://git.kernel.org/torvalds/c/8ab1afb2eb246ab15b301cd255b5943d208a93c1
+
+Thank you!
+
 -- 
-2.55.0
-
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/prtracker.html
