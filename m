@@ -1,113 +1,90 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87B0B585967;
-	Tue,  8 Sep 2026 16:36:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE6AC5505CB
+	for <dm-devel@lists.linux.dev>; Tue,  8 Sep 2026 17:48:36 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788885420; cv=none; b=S8w/WDFFE8AOQCgZYFYN6wlGmbYEKYfPbaenGYu7I6wYv4hoWSIoeDBTBjHBS7G9jz01GFaPi5rCldBZ0b/xd5dgG4z9io9GtlEyk0LHpZFON/altDb5CQ92G61r/wj0H4nmwlG12u2p50eiNASVQjv9trAwrXFQ/aTtFTM3Rd0=
+	t=1788889718; cv=none; b=CIFiODo1sMc+dqXYBQ6uK/BoErkWnQUTiaSi7UpHE1T5yqfcT/lMunQ70RKRqdMza5PW7GVj+LikP9KzaVwtoYhPz+9A/ahTtNcQqe/1Dx325Tk1+R+YfV1Ovi19pqoUSFn5crQYNJtzjuz3kgIJhb3etXubnbALpZYTrQIdRkc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788885420; c=relaxed/simple;
-	bh=HYDZU2/iTa5ubD4rljD/dlSHA2NuKBuiLDZd2cOaWhE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eAWMZObsfkHMob9iH8ndqfsxL7lifVMCYPBAFGgOTvgMInWIXXK4fTgxnO1CZzPdypVib3nBSSSkD588F4QEBqZAwOqJPhqgGTOeTeEP0Rysvvmfk22cNnXLuEX8CCTQVFyBy4lyPKGat2g7IxCGCyW0qtYbawuacvRwYGYotf0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=O/4ITD2X; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1788889718; c=relaxed/simple;
+	bh=wvBPNj9OterCwkimblQPBinr1PHnmb/ajP5hbeoLV6w=;
+	h=MIME-Version:Date:From:To:Cc:Message-Id:In-Reply-To:References:
+	 Subject:Content-Type; b=Y6M6RnjgAUbplAuCRYayUm7m36hvXToilJ6De53Cbc8rnAPHhsQ9kpWYwkU3bHyPQWejOIOIJVzbID67FYChHlVEjDNx1JW6ytgxWCshI7Z+9z6GgPxii0RBnqX9Hu3ctYFUHkqP5qEnjBApNszbar7rxobPP55NBZw1qUTnNU4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nD49gsmd; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="O/4ITD2X"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E3D3F1F00A3A;
-	Tue,  8 Sep 2026 16:36:58 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nD49gsmd"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 29B2D1F00A3A;
+	Tue,  8 Sep 2026 17:48:36 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1788885419;
-	bh=BrM/U9qmGTHJ1Pwg7TvkGKP2TAsjnsUeAcw1ca0oVdE=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=O/4ITD2Xdk3JWjg5Dp0CM5PUgZnw5bm0aEiG+iKjzTRIIu1FO7Pwvnadrb+YG9YF7
-	 0jynXXmFYQAzPzxgKZw0EMu30JJ+MY/rSSHqF8+I9N/ytKMKAzKRBSYCBi5ubHJ0Zc
-	 kTTGhiGzrW4hDO0MtkxHrhzKvKUgXATO7lUWZB+8MDUKy6wgOwn1do9KhqfVPoMJSh
-	 76PTvbdTdxgvoGodY9QG4PEwyFsfE607M27YW1spQIqawxNU+DOXAkLH8LmooInvvN
-	 9urXVS/hYvr4Tm6dzM0ui9GuGjhNf4o9zK6x8dBt3NYnFb0S/xYx0ll0woebE+pX0J
-	 +38Do5xkco6Cw==
-Date: Tue, 8 Sep 2026 12:36:58 -0400
-From: Mike Snitzer <snitzer@kernel.org>
-To: linux-nfs@vger.kernel.org, linux-block@vger.kernel.org
-Cc: dm-devel@lists.linux.dev, axboe@kernel.dk, cel@kernel.org,
-	jlayton@kernel.org, david.flynn@hammerspace.com
-Subject: Re: [PATCH 0/4] block, nfsd: fixes for sub-sector bvec direct I/O
-Message-ID: <aqA5qgfUTbNi0nHJ@kernel.org>
-References: <20260908163232.30774-1-snitzer@kernel.org>
- <20260908163448.30841-1-snitzer@kernel.org>
+	s=k20260515; t=1788889716;
+	bh=suVYu0flawAIGb6LTxk0rYk4yMRfiEp4g6OhEqLdxBA=;
+	h=Date:From:To:Cc:In-Reply-To:References:Subject;
+	b=nD49gsmdPUiBpueZMeHvAWUU+/7psO6FR0bRYAE+3uCAMGZ/58dNuFXNXSXwK44ag
+	 hGk9Pg+m9rI7LuGpHK4dgYjGZbnCLPF8hidc3jxCDjy05FiWjzygQeda6bvoSA1Jfo
+	 rUz1/aBLr01R8mfrD/8EG1JUeH/8Ij+Yczfn+dywHq/EG3U5eRyogucPX6rqExwUaz
+	 +gd/mJvL5fBsVoQMsQPA07rMrPZbPpIC3mJ7sVdPeYTbESlM+hw6M846FahX1nEndK
+	 l8O//MDYd9QEhY0ZzyV0CTv1mUdRO5Q5GGzTEWR+ZRL5owaMVVfQcD7tPR0ovAAAau
+	 iTBBgWCPSEkRg==
+Received: from phl-compute-10.internal (phl-compute-10.internal [10.202.2.50])
+	by mailfauth.phl.internal (Postfix) with ESMTP id 502E0F40066;
+	Tue,  8 Sep 2026 13:48:35 -0400 (EDT)
+Received: from phl-imap-15 ([10.202.2.104])
+  by phl-compute-10.internal (MEProxy); Tue, 08 Sep 2026 13:48:35 -0400
+X-ME-Sender: <xms:c0qgarDebhbBbGL4UsXY9HML7nR3LoAaFIZQDr6bdIqzJKvepbisWg>
+    <xme:c0qgasXEFe_e_E7kE7ZXOHJjIzlGekLaHeOt-szGx_HJsSHjFW4USBtrd0A9p-NOI
+    sPFjUZ0abtZy5bMwOrTxBQDq2vRpo3CpkPGEyAxMhR2mdwjSQ7nCkFf>
+X-ME-Proxy-Cause: dmFkZTE2m1p/MuFhJCNmrVU1fEI66CkfUtA6WoSQ9U7djLADntYMaDfdVNN7eKo3JhTVDj
+    lfdaeJCl3uYaeMGzsVnYmwRanTfM+mPqQ+PAFr48E9zdm3GeQtDpphzQYvixBPao+gHWeM
+    AqyjvNikaYMbPEkqf2OLL0WmOQVVQAGcPleZZH6+FDOO6uBVXzj757ThH0qNhV2SuQrZkR
+    NI4IcZFegMlGOl1HexxublDOX3KDe8fCH4ENOmqO0ZGel7DQI0J2v/ISUE2kpE1rSN4kNY
+    PqdJsWCq/nS5ZFFw0ZQAoD3p9+QKdlqnVM/QSNJRaZiKAGg+ACwU+Z3w6lN+GxN1tFHZUt
+    YS5dIQdQodcecgfCyFTC+dNpC7b5skyxX2kzjssT3mXjN48TkKJ+zaCfpXUwR5NF9dRFRd
+    5n8z4m3EqMxHrUoIHSaDNIlxUee5IgXXDomydPGwMky6q2JK+RFL9zpaJAGPgXDWS0+Uuh
+    XtvAUb0VFGdQcppr7xHKIlLZ+rbguP1ghsiABKw+iTG8M05qXH3E+UE5DZ/M1hBI8XDLRi
+    pWUiE11iSBrRAZB5Kd9nAWPtY79wa0Bz0BuJpv0YoCdu4OSkAqORdAgnQRHVBuqMKZ4E3v
+    0VafajjsPIcQnZh4NhmI4mp3GDud+xP0MnSikGPQEqoYoaYBLO6GA8o0nVAA
+X-ME-Proxy: <xmx:c0qgalHvG4iohYf5xttosP35IJkWOxcbu9PBmSKQZuMTmthF5X4Xqw>
+    <xmx:c0qgapam_He0vB--RjNFVEta-6J5z7UUz698HsVS1_x7FlK4sq4NrQ>
+    <xmx:c0qgatVvEk5XKGdvz_gZ8OcDxZhVBkTl9_jK-HOqvt4zJSCEu-0Aew>
+    <xmx:c0qgankZmBGND1CMlEDVDhP0RK28xCkZ7TQHRUgCFCCBB3h57bCt0g>
+    <xmx:c0qgagAdcLavyLCALcwu0sYIApkBubEIgwOAoYuSxYvUeEKIj6q4ciT1>
+Feedback-ID: ifa6e4810:Fastmail
+Received: by mailuser.phl.internal (Postfix, from userid 501)
+	id 2DC5C7811F4; Tue,  8 Sep 2026 13:48:35 -0400 (EDT)
+X-Mailer: MessagingEngine.com Webmail Interface
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260908163448.30841-1-snitzer@kernel.org>
+X-ThreadId: AVDdeL5Kf7nV
+Date: Tue, 08 Sep 2026 13:48:14 -0400
+From: "Chuck Lever" <cel@kernel.org>
+To: "Mike Snitzer" <snitzer@kernel.org>, linux-nfs@vger.kernel.org,
+ "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>
+Cc: dm-devel@lists.linux.dev, "Jens Axboe" <axboe@kernel.dk>,
+ "Jeff Layton" <jlayton@kernel.org>, david.flynn@hammerspace.com
+Message-Id: <f6a9430a-93b2-445b-9cb3-a6a41ae5445e@app.fastmail.com>
+In-Reply-To: <aqA5qgfUTbNi0nHJ@kernel.org>
+References: <20260908163232.30774-1-snitzer@kernel.org>
+ <20260908163448.30841-1-snitzer@kernel.org> <aqA5qgfUTbNi0nHJ@kernel.org>
+Subject: Re: [PATCH 0/4] block, nfsd: fixes for sub-sector bvec direct I/O
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-Apologies for the git-send-email misfire.. still not sure what
-happened, but will sort it out for future.
 
-On Tue, Sep 08, 2026 at 12:34:35PM -0400, Mike Snitzer wrote:
-> While qualifying NFSD's NFSD_IO_DIRECT write path with byte-level data
-> verification, it was found that the ITER_BVEC payloads nfsd submits 
-> expose silent data corruption in two bio-based block drivers and
-> two defects in nfsd itself. Example problematic payloads is the first
-> fragment starts mid-page because the RPC header precedes it in the
-> receive buffer, and fragment lengths need not be sector multiples.
-> bio_iov_bvec_set() passes such an array to the queue as-is; nothing
-> below it validates per-bvec sector alignment.
-> 
-> Patches 1-2 fix silent corruption (write completes successfully, data
-> lands wrong) and are stable candidates:
-> 
-> - brd re-derives each segment's device position from
->   bio->bi_iter.bi_sector, which bio_advance_iter_single() advances by
->   whole sectors only, so a sub-sector segment length skews everything
->   that follows.
-> 
-> - zram hardwires is_partial_io() to false on 4K-page kernels, sending
->   sub-page bvecs down a whole-page path that ignores bv_offset/bv_len
->   entirely, and has the same sector-cursor skew.
-> 
-> Both are verified with a synthetic-bio reproducer (stamped pattern,
-> write, read back, compare) across mid-page and page-aligned
-> geometries.
-> 
-> Patches 3-4 fix nfsd: the filecache never fetches DIO alignment
-> attributes on the supplied-file acquire branch, so every WRITE to a
-> file created via NFSv4 OPEN(CREATE) is refused direct I/O for the
-> file's cached lifetime; and nfsd's statx-based DIO gate is weaker than
-> bio_split_io_at()'s split-time checks, so an admitted iterator can
-> still be rejected by the block layer -- retry the segment buffered
-> instead of failing a valid WRITE with NFS4ERR_INVAL.
-> 
-> One open question for the iomap/block maintainers: should ITER_BVEC
-> direct I/O with sub-sector bvec boundaries be validated or bounced
-> centrally rather than trusted to every driver's iteration?  An audit
-> of in-tree bio-based drivers found the same bi_sector-derived position
-> pattern in dm-io, dm-log-writes, dm-writecache (pmem path) and
-> dm-integrity -- unreachable through nfsd today only because dm queues
-> advertise dma_alignment >= 511, which nfsd's alignment gate refuses.
-> 
-> Tested with the reproducer matrix on brd, zram and nvme-loop at 4K and
-> 16K page size (aarch64) and 4K (x86_64), plus 30-connection NFS write
-> rigs comparing source against export byte-for-byte: clean with the
-> fixes, corrupting or erroring without them.
-> 
-> Mike Snitzer (3):
->   brd: iterate the bio by byte position, not bi_sector
->   zram: handle sub-page bvec segments without corrupting data
->   nfsd: fall back to buffered I/O when a direct write gets -EINVAL
-> 
-> David Flynn (1):
->   nfsd: fetch direct I/O alignment for files handed to the filecache
-> 
->  drivers/block/brd.c           | 29 +++++++++++++++++++++++------
->  drivers/block/zram/zram_drv.c | 36 +++++++++++++++++------------------
->  fs/nfsd/filecache.c           |  4 ++--
->  fs/nfsd/vfs.c                 | 29 +++++++++++++++++++++++++++++
->  4 files changed, 77 insertions(+), 31 deletions(-)
-> 
-> --
-> 2.52.0
+
+On Tue, Sep 8, 2026, at 12:36 PM, Mike Snitzer wrote:
+> Apologies for the git-send-email misfire.. still not sure what
+> happened, but will sort it out for future.
+
+3/4 looks sensible, and can go in now. 4/4 might need some
+adjustment. Assuming, of course, there is no functional or
+mechanical dependency on having 1/2 and 2/2 in the tree
+first.
+
+
+-- 
+Chuck Lever (Come to NFS bake-a-thon! https://nfsv4bat.org)
