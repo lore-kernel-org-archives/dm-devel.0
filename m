@@ -1,111 +1,69 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C54956B865
-	for <dm-devel@lists.linux.dev>; Wed,  9 Sep 2026 13:45:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7687F55D882;
+	Wed,  9 Sep 2026 14:11:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788961502; cv=none; b=MBOA2oYhxO6Drebha/iH5HZt4l/hrlbMMVUP05ZmnfpJAQsD8ksrP5yeuwtrauBNa1CI7MXSFvrwZYbhiniS48KNj7sWSpC9KU/be3zEnnvmBffd96qw3nq2K+zvX4UZchFX4d61+lpW4L9jk+FMXDS7u+7d9ljHwTB+W88K2gM=
+	t=1788963100; cv=none; b=RLburTCb0rStikXeyYNlDnoKtcZKXny6dyflrEwxXQhGTHBuvvKfkbp1SBdNQ5kUeb/TBVh+Fix4xcY4TKifpmtTFFhZQBsJPNKbqewEVrZbZxKZ8PPxjJqtsDyD0sys3uYsF4N2v8IxNxGyLCVPtcwF31he3yo0Jx0HusKQKEI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788961502; c=relaxed/simple;
-	bh=hyvyFx3Hrp8AftpAe7Lv1fh0M0Fz8ztoCuKn9jiiQXM=;
-	h=MIME-Version:Date:From:To:Cc:Message-Id:In-Reply-To:References:
-	 Subject:Content-Type; b=Fh1ABlW460nc7RBAsWXvKR/tMuqTMH59MBYDFPmwgL+qjWBmKE56C76+q+O8vlBBGQU+ETiPwvjPG1KtJqgjFWXnwX+Qz9689DNtwZDTu/9+AqfQshrkV608uIOBj690ztkP6xomHZXYKon3k+5Pky/BUmlUT2qTSdeYwzWvMDQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Xqh/C2GO; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1788963100; c=relaxed/simple;
+	bh=tRwaTQimLd6eGE7ImLxFJ1HKcqfP6Yn3Y3qF/ymXPvw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=UZ93JC5+1qAI05n7BS+dhLQySEt+0okhIzqDE+J1CWV3f1FzZw/xgndft0ZWq5mMT16nOOEIVQMpQTDtJ1CxIDBfZQ2cRVRU5Gk2O8HT5jjQy74fH6V7vjRDyV1aLqSwjZDV+58IE0ThF5hN8X1yAbi2gP89fQL0gmQ1Z4i0I2Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=n0uNeOzQ; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Xqh/C2GO"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7E8E11F00A3A;
-	Wed,  9 Sep 2026 13:45:00 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="n0uNeOzQ"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9AF781F00A3D;
+	Wed,  9 Sep 2026 14:11:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1788961500;
-	bh=hyvyFx3Hrp8AftpAe7Lv1fh0M0Fz8ztoCuKn9jiiQXM=;
-	h=Date:From:To:Cc:In-Reply-To:References:Subject;
-	b=Xqh/C2GOYYMQWFaf/x2IBbHqI1E9TgTtJTnJ3i3jT/fcvmiX1i681BZqFD694m5p1
-	 NzHmvV8Etjvazod8CrE3kmnlEmdlugYXloKxNLXvc+VyztWUsD8JLqucUcl6Om9nqM
-	 lZape6HxgaihpArEdLrZtnvd2h35dradmf3f1N9OILz4fyXAksIcKvFMqNw2JGkI8k
-	 8vQkisyPE9d/ma/C68uXFkHXAvZKbG6VoHDnpuswXDWWVy7ZtBaTdZAyJcjIvxT0xn
-	 9EOYqQt/OzBN93dor4Kd6JF4AjE9bHoB/3bhVe6d+F6zxdnKLK9Anp2rmNG3JcGmz3
-	 U5dstxRWRvU5w==
-Received: from phl-compute-10.internal (phl-compute-10.internal [10.202.2.50])
-	by mailfauth.phl.internal (Postfix) with ESMTP id 9EC78F40066;
-	Wed,  9 Sep 2026 09:44:59 -0400 (EDT)
-Received: from phl-imap-15 ([10.202.2.104])
-  by phl-compute-10.internal (MEProxy); Wed, 09 Sep 2026 09:44:59 -0400
-X-ME-Sender: <xms:22KhalRvF3fMXjShW40zzwYEM4tnWZnw2cvGjPTlDOytKBXeBXns-A>
-    <xme:22Khapmy_heSYFGidmFx5nXgNBZ1-Ed6aVIFgMlEYFusff8PTJomeeXd_WqsxxT6J
-    uODSDGc5qHYb6ccXbS7rR40lA7XKtjeG1qeO-kf1kP3XKRvy5E7eZey>
-X-ME-Proxy-Cause: dmFkZTG4WUQZMwjYCLD9UlI1qeoOgcX4SggFe6FfyVpgRNu0o1E1aksAGydR67sMY+0OGa
-    RTqopGe06ybSCoNb42xWFYTDl844DaicJ69GlNKqRl7UDGv9EqOxPRoqbL2cBSwbhd2842
-    LNr+QCzUDKiltbMEt0cdc53YPoLakn+/GOrhbMi0lHTD2Y2rohbkUSvM/Y699QnxO9kEf5
-    /LQJhWfFwu3fup8DC0wto9X8B8tu3KG/F5tJ027uzrefvdorq/UL+gq/CijU+rrwojygbx
-    g7V6cn/foyjyuZqpjPYnl5XVd8STcA6Q9799FYV15HPJHONG+jG3f4pzMlqohMRsUGGeU6
-    05NjnjL+fcQF6gLHuAeSejclel8grItfxJhogEe1lRwcOguQYr1S/Y/oTibUnXn+Igfotq
-    ew0M3USENR0IL9usvarajnJwDHyUHKgq5zH4+ceuJMdFS0pM55OWlyQk5BBzxDRvNtKi1m
-    WtQAXL6ZmJb4Wp9vTVbUTznWZ4Z7DmRcGMGhKbJiipUaAFHsX0nDXJWc6IpKUhoO3AdQG+
-    ecWrls4bPeB/WIiAYDnOxCaecuyg2ukxZDzUILlsFIOmdm4IpVl0Z1O87jlfW1f0GqEBR7
-    zfhKBWI7/SMUpFvusVfO5Gm2Q+LAhZzFPDNLYNvRzHKAuIFvtnFJzGQ1ZzWA
-X-ME-Proxy: <xmx:22KhapV1Lil2llXfGcwSPJIrnqw8Le7NfL8MRO5rkz9zrPb7mBp8FQ>
-    <xmx:22KhaorpMHDfYyNXmotXjFnT3gBS5T8WJGoWHCUsqRBe2DDPWfRp4Q>
-    <xmx:22KharkpakE4TGEI4rbEMut3EG-nQvdL1T1nKwNi2CbBEKLzndZPuw>
-    <xmx:22Khao0XJZXI_sgFIMpP3t5_BPiZG8BaEs-RwfZcIDqZjzfjOGqTzA>
-    <xmx:22KhaoRDLviMzShlqbvqZbCAXp35O4M2uHZBPpGdb_QVZZ6OW5PK_nvN>
-Feedback-ID: ifa6e4810:Fastmail
-Received: by mailuser.phl.internal (Postfix, from userid 501)
-	id 792FD7811F4; Wed,  9 Sep 2026 09:44:59 -0400 (EDT)
-X-Mailer: MessagingEngine.com Webmail Interface
+	s=k20260515; t=1788963099;
+	bh=4ji3RhL9WeK3LjyjqzmSB/Da4XA+vDhbClieLz5uYaU=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=n0uNeOzQ2lVP4aEdhCKW31ZcSs80k2l33b8WMdVg2OHELVc6AxG2LSs8l0+piugrN
+	 HCHbi0zBLKXXjwPGZ/xMuwXwDPNfWvumZwak+Wir6HKszZUjjuzBJWcRbZ1ElPq7O1
+	 arxRWkmDeTsAjEL40kqBAMd7iloP7Ey6LfhPHzkKMDakGrdfrtainLue+rszk22Csy
+	 jHZ1BeeXmsHPMsILRRSoczlhkRUsTLrVIk0rsM2HX2ll0zeGjSJDXpVO43PRm/7i61
+	 P8PwNqyPKRNh3aZA0WsCWxMl0jyCUUuNy2dewl50xxTbZZnrD/1b7nC//ivZzuDYSp
+	 O3dwGQTiSj22Q==
+From: Chuck Lever <cel@kernel.org>
+To: linux-nfs@vger.kernel.org,
+	linux-block@vger.kernel.org,
+	Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev,
+	axboe@kernel.dk,
+	jlayton@kernel.org,
+	david.flynn@hammerspace.com
+Subject: Re: [PATCH 3/4] nfsd: fetch direct I/O alignment for files handed to the filecache
+Date: Wed,  9 Sep 2026 10:11:35 -0400
+Message-ID: <178896306557.22359.10853351140425933199.b4-ty@b4>
+X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260908163448.30841-4-snitzer@kernel.org>
+References: <20260908163448.30841-4-snitzer@kernel.org>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-ThreadId: AvkNhIlgtVI3
-Date: Wed, 09 Sep 2026 09:44:37 -0400
-From: "Chuck Lever" <cel@kernel.org>
-To: "David Flynn" <david.flynn@hammerspace.com>
-Cc: "Mike Snitzer" <snitzer@kernel.org>, linux-nfs@vger.kernel.org,
- "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>,
- dm-devel@lists.linux.dev, "Jens Axboe" <axboe@kernel.dk>,
- "Jeff Layton" <jlayton@kernel.org>
-Message-Id: <701e1251-bd73-49a9-b8c9-8e299b959df6@app.fastmail.com>
-In-Reply-To: <B3A1EA3A-00AA-4A56-A644-9AC77FF50CAF@hammerspace.com>
-References: <20260908163232.30774-1-snitzer@kernel.org>
- <20260908163448.30841-1-snitzer@kernel.org>
- <20260908163448.30841-5-snitzer@kernel.org>
- <995a853c-2c54-4bd0-9708-f6e0c1be7fd5@slotpi15m67>
- <B3A1EA3A-00AA-4A56-A644-9AC77FF50CAF@hammerspace.com>
-Subject: Re: [PATCH 4/4] nfsd: fall back to buffered I/O when a direct write gets
- -EINVAL
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
 
+On Tue, 08 Sep 2026 12:34:38 -0400, Mike Snitzer wrote:
+> nfsd_file_do_acquire() fetches a file's direct I/O alignment
+> attributes (nf_dio_mem_align, nf_dio_offset_align and
+> nf_dio_read_offset_align) only on the branch where NFSD opens the
+> file itself. The other branch, taken when the caller supplies an
+> already-open struct file, stores that file in the nfsd_file and
+> leaves the three alignment fields zero.
+> 
+> [...]
 
+Applied to nfsd-testing, thanks!
 
-On Tue, Sep 8, 2026, at 11:57 PM, David Flynn wrote:
-> (Sorry in advance if I=E2=80=99m posting this wrong in some way - litt=
-le new to=20
-> posting here=E2=80=A6)
->
-> Totally agree that NFSD must not interpret generic -EINVAL as an=20
-> alignment rejection... But, a boundary check would also excludes=20
-> geometries that capable storage stacks could write directly. We want=20
-> the actual filesystem/block decision to distinguish unsupported=20
-> geometry from a real error, while retaining every working zero-copy=20
-> case.
+[3/4] nfsd: fetch direct I/O alignment for files handed to the filecache
+      commit: abf2077ee32058e60d3f49ecab265d3c4bd953d9
 
-Fair enough, but that's a filesystem-community question, outside
-of NFSD's domain. If they can agree to an API contract that NFSD
-can use, then I don't have a quibble.
+--
+Chuck Lever
 
-To make your argument, of course, you will need to provide a
-real-world use case with an existing in-tree filesystem or device
-that can demonstrate what you need.
-
-In the meantime, I'd like to see the narrow issue that Mike
-reported addressed in the current code. Fixing the current gate
-is not fraught with these deeper architectural issues, and the
-fix should be backported to LTS kernels.
-
-
---=20
-Chuck Lever (Come to NFS bake-a-thon! https://nfsv4bat.org)
