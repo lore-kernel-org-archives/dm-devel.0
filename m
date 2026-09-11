@@ -1,132 +1,111 @@
-Received: from phd-imap.ethz.ch (phd-imap.ethz.ch [129.132.80.51])
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.5])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8117395AF2
-	for <dm-devel@lists.linux.dev>; Fri, 11 Sep 2026 11:50:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=129.132.80.51
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 033043AA1AE
+	for <dm-devel@lists.linux.dev>; Fri, 11 Sep 2026 16:05:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=220.197.31.5
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789127446; cv=none; b=Lp1hDqpX+kayWgT5yPwhetDPXTDIKOadfXOoXQ6Qi7GzlV9xO59lBt2hz4L2UGCCXqKs0ksPNnVQWl4bJW4SbqspqwjIsGISAt/RzbBl3jm7p4t0tKr2Z1ZXWwQQs85mvGics789fSuRrV5G0jf0gkPijPRMt3KkOHkFaWqrrkY=
+	t=1789142738; cv=none; b=KeVFL/UThYdriKRNTmGgO841z6r8JYY85/mhcaLnckSEAC9AYWUv+uQpQf+yoaRuhs334YZ6tvW9wAV/KLtGnNQQbwYicbNa4hmDGl+OYQ87/YIFUhbNv+jYrtPZ9gx5Um2W8oDSnPQhO5k1J9t09itQhb4YI16bze+bS9BVsj8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789127446; c=relaxed/simple;
-	bh=nAPoQQ13ge9PDtN96d+7KONCBuH3jx76Jp2u0TymNGg=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=LNN8HfvK2C7t7mvEh5ZtPcnhnSfPx7tMT32tgpPalWPVWK7PcmLZ5lCcJ4E4B6ZEoNJGmv+NdDnGQrrL5AxRzzr68FGiZg7Y3ZoxJEfDk3Tb2uB4VloRsIYvUwxw6Xs5TN3XUt5kqrinWzl2tJuO4SZI5BEffpUzm6PbZ5R4Y1s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=phys.ethz.ch; spf=pass smtp.mailfrom=phys.ethz.ch; dkim=pass (2048-bit key) header.d=phys.ethz.ch header.i=@phys.ethz.ch header.b=pu/pcVtb; arc=none smtp.client-ip=129.132.80.51
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=phys.ethz.ch
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=phys.ethz.ch
+	s=arc-20240116; t=1789142738; c=relaxed/simple;
+	bh=ZyoDMU6G3eZNpaZLhRifByQ7O2mJsMjwDSX7TXRIQjg=;
+	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
+	 Content-Disposition; b=hpynyr8hU8l4cbSBt4m51/k7BK/FE9YP8J4JGsYEIzi6/aIVGXoT42y8P5epZYo1DiiNKRuYv207Mu+NZwwp+kTiVsomFTDEUMyidOlwTC9YLLDE9Ge1oTaqo/HrT4BVloTgHHXWDC5Fg1zfSkdnkJVXLZlNk3m2DQBPNcEwYMM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com; spf=pass smtp.mailfrom=163.com; dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b=JGGiA5sq; arc=none smtp.client-ip=220.197.31.5
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=phys.ethz.ch header.i=@phys.ethz.ch header.b="pu/pcVtb"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=phys.ethz.ch;
-	s=2023; t=1789127055;
-	bh=5XTp85lh48CiDWhdALFEwmrZcLeWXH3p723HIpOrGwo=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=pu/pcVtbNNaLbVqD8N4tFlMyRZlE7o3n2TrNo5JgTV2b5VQcBUeu3xcAJjjCtHw3m
-	 /jzoyEJ5N9hBpE5g/SRUtWgf6rfi+C80sMqWl13VM1jqVqWpu73wK6bvf4Qr6POEsX
-	 M3Vhj1+fNu+ewYMnx1c9IwJMH2X3p621mT5xkRier4yE2urZY2KZ4v/WzNMprC1cMT
-	 iYZ5FddLJsY6mG9L77R34fySUlbAGnS/iTZ7Wyza5VmSAj86N6uvOVWamSCqtdEQzW
-	 MAa2pZ7gDhfmd6EJcLixulPtv4v2FhZmIK9JjW3AhBRvzrrkM45oN44DWevKQQH9xp
-	 T8rzIbPPzbWBA==
-Received: from localhost (192-168-127-49.net4.ethz.ch [192.168.127.49])
-	by phd-imap.ethz.ch (Postfix) with ESMTP id 4hhCPW3xC0zP7;
-	Fri, 11 Sep 2026 13:44:15 +0200 (CEST)
-X-Virus-Scanned: Debian amavis at phys.ethz.ch
-Received: from phd-mxin.ethz.ch ([192.168.127.53])
- by localhost (phd-mailscan.ethz.ch [192.168.127.49]) (amavis, port 10024)
- with LMTP id SbmWMhNq688n; Fri, 11 Sep 2026 13:44:15 +0200 (CEST)
-Received: from dumbledore.ethz.ch (dumbledore.ethz.ch [192.33.96.71])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by phd-mxin.ethz.ch (Postfix) with ESMTPS id 4hhCPW2xVFzJn;
-	Fri, 11 Sep 2026 13:44:15 +0200 (CEST)
-Received: by dumbledore.ethz.ch (Postfix, from userid 13394)
-	id 4hhCPW2cBPzCs6Z; Fri, 11 Sep 2026 13:44:15 +0200 (CEST)
-From: =?UTF-8?q?Stephan=20M=C3=BCller?= <stephan.mueller@phys.ethz.ch>
-To: mtsai@redhat.com
-Cc: dm-devel@lists.linux.dev,
-	ghuicao@163.com
-Subject: Re: [PATCH] dm cache policy smq: fix promote level threshold clamp
-Date: Fri, 11 Sep 2026 13:44:14 +0200
-Message-ID: <20260911114415.4126987-1-stephan.mueller@phys.ethz.ch>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <CALjSBEvEOFPJy37tFMYD2RJL8BStreT6G20WGVrTV84t1DDN3Q@mail.gmail.com>
-References: <CALjSBEvEOFPJy37tFMYD2RJL8BStreT6G20WGVrTV84t1DDN3Q@mail.gmail.com>
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.b="JGGiA5sq"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=Date:From:To:Subject:Message-ID:MIME-Version:
+	Content-Type; bh=D8RO0QRG4E2Br/0EmqPhuKnJGH+9/OFKD0ff0d6/hCM=;
+	b=JGGiA5sq1olT/sW26ABQv0Qc73jCAsz2SNWOPmkuTt2okq+8skxSPavdM8+vSP
+	LHbJVQJxhXxEifa53CMgNwExkXVI68+EkNSXbRKKIJS0plH4SkDmsMWsRdaL7ORo
+	5t5im51eDFjw2s2ctcWP0tB9u3izKLkhBnEd8YmlNxn1U=
+Received: from localhost (unknown [])
+	by gzga-smtp-mtada-g0-4 (Coremail) with SMTP id _____wDHb8uqJqRqfB1jAA--.31618S2;
+	Sat, 12 Sep 2026 00:04:58 +0800 (CST)
+Date: Sat, 12 Sep 2026 00:04:57 +0800
+From: Hao Zhang <hao_zhang_kdev@163.com>
+To: linux-block@vger.kernel.org
+Cc: tj@kernel.org, josef@toxicpanda.com, axboe@kernel.dk, yukuai@fygo.io,
+	ming.lei@redhat.com, cgroups@vger.kernel.org,
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev
+Subject: [PATCH] blk-cgroup: save IRQ state in blkg_tryget_closest()
+Message-ID: <aqQmqb1k57PXj8Ef@192.168.1.215>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+X-CM-TRANSID:_____wDHb8uqJqRqfB1jAA--.31618S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW7KF4DZF1rZr4Dtw43Wry5CFg_yoW5JFWrpr
+	WvgF90k3y0qry0ga1kGF1qvF1Iga1kKrWUJrWkWwsakF4rtr1fXF1fZ34qvF4FgFZ7Ars8
+	ZF4UA3yvyr4j9w7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07UhtxgUUUUU=
+X-CM-SenderInfo: pkdrs65kdqwshngh4qqrwthudrp/xtbC3Qp3amqkJqrNEAAA3V
 
-I try to understand the smq policy and stumbled also about the logic/comment
-in update_promote_levels(). Luckily there this recent post :)
+From: Hao Zhang <zhanghao1@kylinos.cn>
 
->On Wed, Jun 17, 2026 at 10:23 AM <ghuicao@163.com> wrote:
->>
->> From: Cao Guanghui <caoguanghui@kylinos.cn>
->>
->> In update_promote_levels(), the threshold_level is clamped against
->> NR_HOTSPOT_LEVELS (64) using max().  This is wrong: threshold_level is
->> later subtracted from NR_HOTSPOT_LEVELS to derive the actual promote
->> level, so a smaller threshold_level means a higher promote level (more
->> eager promotion).
+bio_set_dev() associates the bio with a blkg through bio_associate_blkg().
+If the blkg lookup misses, blkg_tryget_closest() takes q->queue_lock with
+spin_lock_irq() and releases it with spin_unlock_irq(), which
+unconditionally enables local interrupts.
 
-I think this correct, but it reads a bit ambiguous - or it's just me. Anyway
-I try to clarify:
+Callers may call bio_set_dev() with interrupts already disabled, e.g.
+dm-thin's pool_map() does so while holding pool->lock taken with
+spin_lock_irq().  The nested spin_unlock_irq() then enables interrupts
+while pool->lock is still held, so an I/O completion softirq can run on
+the same CPU, re-acquire pool->lock (thin_endio(), or overwrite_endio()
+-> complete_mapping_preparation()) and deadlock.  lockdep reports this
+as inconsistent SOFTIRQ-ON-W to IN-SOFTIRQ-W usage.
 
-should_promote() returns yes iff hs_e->level >= mq->read_promote_level
+Commit 3a762de55b4e ("block: save irq state in blkg_lookup_create()")
+fixed the same problem while the lock lived in blkg_lookup_create(), but
+commit 9327a865e395 ("blk-cgroup: don't nest queue_lock under rcu in
+blkg_lookup_create()") moved the locking into blkg_tryget_closest() and
+reverted it to spin_lock_irq().
 
-I.e. an entry in the hotspot queue needs a level above mq->read_promote_level
-to be promoted. So a higher promote level sets a higher bar for promotion,
-leading to a less eager promotion.
-Or in other words:
-  - smaller threshold == higher promote level == less eager promotion
-  - higher threshold == lower promote level == more eager promotion
+Save and restore the caller's IRQ state instead.
 
->> The comment above explicitly states that when the cache has unused
->> entries, "we want to be really eager to promote".  default_promote_level()
->> returns values in the range 1..8 for this case, which would produce a
->> promote level of 56..63 -- but max(threshold_level, 64) forces
->> threshold_level to 64, making the promote level 0 regardless of the
->> allocator state and defeating the eager-promotion logic entirely.
+Fixes: 9327a865e395 ("blk-cgroup: don't nest queue_lock under rcu in blkg_lookup_create()")
+Cc: Ming Lei <ming.lei@redhat.com>
+Signed-off-by: Hao Zhang <zhanghao1@kylinos.cn>
+---
+ block/blk-cgroup.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-Yes, when using max(), the threshold_level does not depend on the allocator
-state, so this is just a waste of CPU cycles. However it it does depend on
-the hotspot_stats and may end up as 64, 32 or 16.
+diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
+index 2b5c29434e42..b56db1cc6778 100644
+--- a/block/blk-cgroup.c
++++ b/block/blk-cgroup.c
+@@ -2091,6 +2091,7 @@ static inline struct blkcg_gq *blkg_tryget_closest(struct bio *bio,
+ 	struct request_queue *q = bio->bi_bdev->bd_queue;
+ 	struct blkcg *blkcg = css_to_blkcg(css);
+ 	struct blkcg_gq *blkg;
++	unsigned long flags;
+ 
+ 	rcu_read_lock();
+ 	blkg = blkg_lookup(blkcg, q);
+@@ -2105,11 +2106,11 @@ static inline struct blkcg_gq *blkg_tryget_closest(struct bio *bio,
+ 	 * Fast path failed, we're probably issuing IO in this cgroup the first
+ 	 * time, hold lock to create new blkg.
+ 	 */
+-	spin_lock_irq(&q->queue_lock);
++	spin_lock_irqsave(&q->queue_lock, flags);
+ 	blkg = blkg_lookup_create(blkcg, bio->bi_bdev->bd_disk);
+ 	if (blkg)
+ 		blkg = blkg_lookup_tryget(blkg);
+-	spin_unlock_irq(&q->queue_lock);
++	spin_unlock_irqrestore(&q->queue_lock, flags);
+ 
+ 	return blkg;
+ }
 
-Using min() is also a waste of CPU cycles, because the initial value of
-threshold_level is certainly smaller than NR_HOTSPOT_LEVELS (unless someone
-messes up the defaults_promote_levels).
+base-commit: 08df884136f1c1197bab2a27814404fd329d9aac
+-- 
+2.15.0
 
->Currently the promote_level could be {0, 32, 48}, depending on hotspot
->queue performance. Using min() instead would raise the promote_level
->to {32, 48, 56} when the cache is not full, or {56..63} when full,
->making the cache more conservative than the current setting in either
->case.
-
-The promote_level is now 0 (WELL), 32 (FAIR) or 48 (POOR) for a non-full
-cache or within {56..63} if the cache is filled entirely.
-With min() this would be 32 (WELL), 48 (FAIR) or 56 (POOR). This is more
-conservative.
-
-BUT isn't this weird in the first place? Shouldn't a poorly performing
-cache migrate more aggressively to increase the chance of cache hits?
-And a well performing cache be conservative to maintain its good
-performance?
-
->I noticed this ambiguity for a long time. A proper cleanup to remove
->default_promote_level() and simplify initialization is on my radar,
->but it's not urgent since the current behavior works.
-
-Ok, what about just initialize threshold_level like this
-
-threshold_level = allocator_empty(&mq->cache_alloc) ? 
-                  default_promote_level(mq) : NR_HOTSPOT_LEVELS;
-
-and remove the max/min line entirely. This does not change the current
-behavior and spares some cycles?
-
-   have a nice day
-   stephan
