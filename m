@@ -1,325 +1,240 @@
-Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yx1-f42.google.com (mail-yx1-f42.google.com [74.125.224.42])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FCAA23643F;
-	Sun, 13 Sep 2026 13:30:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.156.1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD5ED34389C
+	for <dm-devel@lists.linux.dev>; Mon, 14 Sep 2026 16:42:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789306237; cv=none; b=R0DpT39sM2RR/f4Y4RExnh8b7BRROYY73gUkxf60ziFtJJn/AbEQ6pXYwsaQBekjcM7GJlTcbmhE+JpLyL/YEjOAT2mld5wIBcd58PcUCIGzIHyGTUNkrgyRy+3pxCkL0ceqILeuyT4+K7N18mhuDiccKBYLp6wGTEZB2ImOVrc=
+	t=1789404125; cv=none; b=YI808GDf8fmdDc7lAE48jixKrMHuK/8o+xd49pfEwC/miJyZsAR2whQgrFYCuXjRkcb6anMJyoC8a9W/VZp3JJUVi8dVpRUnzhScvAfFDWVRxK2nhbnhC6TSMOn+fyH3KnZ7UAcvtKJvsueYGMof3Hi2+VNzNT452AtU0RHqfUs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789306237; c=relaxed/simple;
-	bh=J9hiblMOx3XvVdaM9J2BbPYlG8NGFT52bvA4fXddIg4=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=hxmNskmCHve4y8PIY7aWXFUvDFw8byJJ9odLlAIhWiTEE2NTXygwLo02k8B9vjNt84O+oigeod8wGuhQxbxzocTDjcHRGmmVovubjomcHohX07+SjODQlyZNr6Sy1GJuqvXIGKzMzoNFT44TH9HALxHKPBZE6QOt5kWgsJUr1aw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=kkCdYWnG; arc=none smtp.client-ip=148.163.156.1
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1789404125; c=relaxed/simple;
+	bh=+N9ZKaZxeybEwISedHcLFR5weaHCuqwm361zoPMxU4M=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=LxjApIEyCnw00p0REfBGgBDQIyfsoNo52Jq3jmzeDuKK5RktL4QvnncSNKOaWb7uLzJU3q5U6VT8G/q1g7iHmz5Asvr+MIwm18P6T3h3uQhwh0QtRQUDyVd83NyKoqqaBt8KrMb677Qf+kOB0lTPHZQGKJsVaL2rgHue98egXFc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com; spf=pass smtp.mailfrom=amutable.com; dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b=lAabXu8t; arc=none smtp.client-ip=74.125.224.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amutable.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="kkCdYWnG"
-Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 68DAVQkF1255664;
-	Sun, 13 Sep 2026 13:29:43 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=+V/HIm
-	HSDz8kfFeEdbya+rI2+T3XQl9CUl1CtP6MnQY=; b=kkCdYWnGsL4dS89b7MgWSi
-	8GJVjDvIQ9h+M7k9j8tNkW942RE2zvWfRXzQr0qjMV4dHnmHq99pw1YTz+UTXy9/
-	/S2UyPagSL+3Nq+IIu97ne4NbyZ+AqdmWBXCba6AGvFf2ejDRurwYcHXw8QeTIyj
-	EyRPmRrcXkc6VeiZi55r7/FCsKGoutX6JFwfOme2x/bVj5SFDoAQSDC1qKdcXczB
-	FvcLTPegwmnY5jKb1mHlYiiwwO05cS1/iUHz1TjmycNOCk0ATqbKujf4ylqluy5c
-	liEEExomDNrLDNESynCU303UKrXLt/cSpMWD8aQW8BOy49f/6vTzDaCITCiAvP2Q
-	==
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4gmxdpvp3k-1
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Sun, 13 Sep 2026 13:29:42 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 68DAZ4oB544502;
-	Sun, 13 Sep 2026 13:29:41 GMT
-Received: from smtprelay05.dal12v.mail.ibm.com ([172.16.1.7])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 4gnh2psqu1-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Sun, 13 Sep 2026 13:29:41 +0000 (GMT)
-Received: from smtpav06.dal12v.mail.ibm.com (smtpav06.dal12v.mail.ibm.com [10.241.53.105])
-	by smtprelay05.dal12v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 68DDTf2U23134818
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Sun, 13 Sep 2026 13:29:41 GMT
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 445F958055;
-	Sun, 13 Sep 2026 13:29:41 +0000 (GMT)
-Received: from smtpav06.dal12v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 2A64B58043;
-	Sun, 13 Sep 2026 13:29:27 +0000 (GMT)
-Received: from [9.61.162.129] (unknown [9.61.162.129])
-	by smtpav06.dal12v.mail.ibm.com (Postfix) with ESMTP;
-	Sun, 13 Sep 2026 13:29:26 +0000 (GMT)
-Message-ID: <f27ee89f-5a52-4cfc-a14a-e5019ae61d89@linux.ibm.com>
-Date: Sun, 13 Sep 2026 18:59:25 +0530
+	dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b="lAabXu8t"
+Received: by mail-yx1-f42.google.com with SMTP id 956f58d0204a3-66c7e3a2332so2585429d50.2
+        for <dm-devel@lists.linux.dev>; Mon, 14 Sep 2026 09:42:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amutable-com.20251104.gappssmtp.com; s=20251104; t=1789404122; x=1790008922; darn=lists.linux.dev;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=SfEDwKZx2Ac2Zov3iFEW2DHPNztOR7nlXE153PDtqAw=;
+        b=lAabXu8tERlDuVppDuowGTcU6DclMr3r018TlbDhfailjAQgq4Gj31xHf+tF5tGwAA
+         pHiWG8x5mRUBOPaMq+tvehcnWoZEI1oK2vUx3jlbaPCFvi4pxpx0WWF2af0WCjAUAFUX
+         MroviC6LuRDnqpOZkBhIcq5QeKDYZGxTDaQv6z5bq7AOIga95c6VQQi7SBH97C7HNcre
+         1lcP960LM5p9oQ4ZrOJZN8OaaoMZYiROFXqKmJ5Zz4SKzvGgthLXIFD8ijM7AhQckgEk
+         8SYygtmjImKhJPcxPeSXG2JiPmHWdXHTZC0ce18fRExyti23XX4dHx4GV2MaJb+PhnxX
+         LJmQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1789404122; x=1790008922;
+        h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
+         :content-type:mime-version:subject:date:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=SfEDwKZx2Ac2Zov3iFEW2DHPNztOR7nlXE153PDtqAw=;
+        b=EjicH0xcdWWr+OyU+sysfDNysnywH8Dm+5p7PeB45wUYM7k97N9LMohTwP84NZCo2o
+         1RJUukysUF4R6HX5QeNU8Lg7rRGeyv9zFxaCXjxMU2RAuLWruthDk08RJn6ng7qc6ZAV
+         XL+SjgSfArBxWnHcP4MhB1M7CI2yWp+1qZZaH215QZLMpMReUEIOx48xwz59i/9WhGM7
+         zqjEYrb2mwmP7AfLCl0xlg82ncVX7xoByjIBPoc58Q+qNffl9eJbvM9hiIdCgNGdfkfx
+         5S0ih+3PPFfSdOinpvZIbGXNG06H9yAiHmtyejqAXh15nt/Shk8DXx86rcbU8Eo2DTeI
+         8X7Q==
+X-Gm-Message-State: AFuF++kUh7tLZTw4ypsEkJRmRYEAp1O0RywqF1dhbJJFpQhvejOuREy/
+	obrF0VLOgqLlfVtv3ZdtR26wrFaGktRQziXtHfRZ2wWZRc9C4+KKCv5S9VlCXKKYX+9k
+X-Gm-Gg: AYBFou3Ut9uSzaEAg41B8UhTHrPfoJfcVBd1mFbmXfeiXzDHskpxzgIS71cMX/BAIhl
+	bdu97PfDJWgZgr2UJrke8/PtAuZwA9WZDT35BZ3xxO6OaFotplL3mxsE2WQKGWlUdAHHvL8fgxI
+	gdRyhXRgwFilZOznOVfLk6lfP3tSgKMli/GJgHqBOsZnFYuVrYE4iRh1nek1zAmUO8Lp4dJFvjm
+	NHSE7Y8qDG8C33qefT8b+m27R94aoiU/kjm53exZt6bHIas/a3nNn2GQ4eN43f2kY1qLKI1vbuA
+	fQ8Nvm09k18DKje64m4nMFeDpRqFUVdnHozCSd1eBZvKpniNfTifI+/EXJDJwXf4lOI1uU1ojlE
+	pDhqCLAO0PpsbNGWbK8uy/qxtWX0LjfrIvP/x9ekSAY7HG1GMvIZi9fJsA/kRHmIhuemeII4H43
+	EucrjNqYkzJNbUpWxTBV1f6xFJRp3IYJh6LcSzf45a+tVo1NrrRFvv2eGdKWQ+RA==
+X-Received: by 2002:a53:ac83:0:b0:66f:c1bc:c097 with SMTP id 956f58d0204a3-6714e1a194cmr1022205d50.95.1789404121718;
+        Mon, 14 Sep 2026 09:42:01 -0700 (PDT)
+Received: from [192.168.1.110] ([2600:1700:1ff0:d0ef::d15])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67125df42a8sm4879023d50.8.2026.09.14.09.42.00
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 14 Sep 2026 09:42:01 -0700 (PDT)
+From: Andrew Halaney <andrew@amutable.com>
+Date: Mon, 14 Sep 2026 11:41:42 -0500
+Subject: [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 3/3] blk-cgroup: move async bio punt state to blkcg
-To: Yu Kuai <yukuai@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-        Josef Bacik <josef@toxicpanda.com>, Tejun Heo <tj@kernel.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        =?UTF-8?Q?Michal_Koutn=C3=BD?=
- <mkoutny@suse.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Shuah Khan <skhan@linuxfoundation.org>,
-        Randy Dunlap
- <rdunlap@infradead.org>, Coly Li <colyli@fygo.io>,
-        Kent Overstreet <kent.overstreet@linux.dev>,
-        Alasdair Kergon
- <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Benjamin Marzinski <bmarzins@redhat.com>, Song Liu <song@kernel.org>,
-        Li Nan <magiclinan@didiglobal.com>, Xiao Ni <xiao@kernel.org>,
-        Andreas Gruenbacher <agruenba@redhat.com>,
-        Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Chris Li <chrisl@kernel.org>, Kairui Song <kasong@tencent.com>,
-        Kemeng Shi <shikemeng@huaweicloud.com>, Nhat Pham <nphamcs@gmail.com>,
-        Baoquan He <baoquan.he@linux.dev>, Barry Song <baohua@kernel.org>,
-        Youngjun Park <youngjun.park@lge.com>,
-        Nathan Chancellor <nathan@kernel.org>,
-        Nick Desaulniers <ndesaulniers@google.com>,
-        Bill Wendling
- <morbo@google.com>,
-        Justin Stitt <justinstitt@google.com>
-Cc: Yu Kuai <yukuai@fygo.io>, Christoph Hellwig <hch@lst.de>,
-        Tao Cui <cuitao@kylinos.cn>, linux-block@vger.kernel.org,
-        cgroups@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org,
-        dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-        gfs2@lists.linux.dev, linux-fsdevel@vger.kernel.org,
-        linux-mm@kvack.org, llvm@lists.linux.dev
-References: <cover.1789237876.git.yukuai@fygo.io>
- <326e4904402440323532168095f2eb0c6f697836.1789237877.git.yukuai@fygo.io>
-Content-Language: en-US
-From: Nilay Shroff <nilay@linux.ibm.com>
-In-Reply-To: <326e4904402440323532168095f2eb0c6f697836.1789237877.git.yukuai@fygo.io>
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Reinject: loops=2 maxloops=12
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTEzMDE4NiBTYWx0ZWRfXwV/0FqNA71UW
- 0pSFlqnYwSqWUYI6LgVLyKbNtIbqAXpKwLtlpplrS30cUDQsW2lRrlESKbbUK1oSAm5xS8Ylm55
- VNl+w9i9HLWFGn8vh9aZHnh6SAqmPz13WVaI6pKqA55iJdy5LNt9R1Wi94ijn02bhHTHKAe0eRP
- mp1vNvMZ7l2UiHUt58ZXQBMVs6hQdaaQ3nChJkoptBrQFIPGEirAwojONs4lZ6aHCKdNxRtzvJA
- VEaSWJbv7lVRD5sIfTWnm9jjRqkJZ32e7oiPfEo9MnPFWhdGetfmkOqDaQekF77ovy5LJRxmJm4
- GHgK/ALXAeVLOEPIBjf+qhG5iy+5XWRhZiTObq8UQ+HqyRjSELagks36ThrVEyBiln9x1oyRA3K
- 6RWEEkijXp9Vg20WYSpU+aj5P1ynIjIW9tHl7ChXZlM42/wLY0H0BiuqAYnMqScT+rA1lzv4TAc
- lKGFPo2jxo7pOUNxhDA==
-X-Proofpoint-GUID: jqEO1yjE93QiEpR2tJ-y2Cj8IdEumaS9
-X-Authority-Analysis: v=2.4 cv=DobDa2/+ c=1 sm=1 tr=0 ts=6aa6a547 cx=c_pps
- a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
- a=IkcTkHD0fZMA:10 a=VdqzKS8jKosA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=uAbxVGIbfxUO_5tXvNgY:22 a=DV5896PDfqYWo4ufmHUA:9
- a=QEXdDO2ut3YA:10
-X-Proofpoint-ORIG-GUID: vL8PPh6d47DxNDz6NH1gi_sDy5Mchg5w
-X-Proofpoint-Spam-Info: AW1haW4tMjYwOTEzMDE4NiBTYWx0ZWRfX+u9bu0oOeNVm
- 0mm11mtP4XmiNfvfkDWefm6R0Hke5V/MZntTFgts27Fvw05oL4zedqtiD/PrbwZHmnddXxuaxEY
- eyOP6ZBuPFe31aD3IKoBDNy2zMXtA+0=
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-09-13_04,2026-09-11_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- phishscore=0 malwarescore=0 priorityscore=1501 suspectscore=0 impostorscore=0
- spamscore=0 clxscore=1015 adultscore=0 bulkscore=0 lowpriorityscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2609040000 definitions=main-2609130186
+Message-Id: <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
+References: <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com>
+In-Reply-To: <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, 
+ David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko@kernel.org>, 
+ Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
+ "Serge E. Hallyn" <serge@hallyn.com>, Eric Biggers <ebiggers@kernel.org>, 
+ "Theodore Y. Ts'o" <tytso@mit.edu>, Jonathan Corbet <corbet@lwn.net>, 
+ Shuah Khan <skhan@linuxfoundation.org>, 
+ Randy Dunlap <rdunlap@infradead.org>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, 
+ bpf@vger.kernel.org, fsverity@lists.linux.dev, linux-doc@vger.kernel.org, 
+ Andrew Halaney <andrew@amutable.com>, 
+ "Christian Brauner (Amutable)" <brauner@kernel.org>
+X-Mailer: b4 0.14.3
 
-On 9/13/26 12:24 PM, Yu Kuai wrote:
-> From: Yu Kuai <yukuai@fygo.io>
-> 
-> blkcg_punt_bio_submit() currently queues punted bios on blkg->async_bios,
-> so it has to call bio_blkg() to find or create a queue-local blkg.  Bios
-> now carry and pin the blkcg css, so punted bio lifetime no longer needs to
-> be anchored by a blkg.
-> 
-> Keeping the punt state in blkg can instantiate a blkg even when no blkcg
-> policy is enabled, just to bounce submission from a shared kthread.  Move
-> async_bio_lock, async_bios and async_bio_work to struct blkcg, and queue
-> punted bios on bio_blkcg() for non-root cgroups.  Root or unassociated bios
-> are submitted directly.
-> 
-> This preserves the priority-inversion avoidance while preventing
-> blkcg_punt_bio_submit() from creating blkgs that are not needed by any
-> policy.
-> 
-> Signed-off-by: Yu Kuai <yukuai@fygo.io>
-> ---
->   block/blk-cgroup.c | 52 ++++++++++++++++++++++++++--------------------
->   block/blk-cgroup.h | 14 ++++++-------
->   2 files changed, 35 insertions(+), 31 deletions(-)
-> 
-> diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
-> index 59ccfefe16a8..aa3cee107ebe 100644
-> --- a/block/blk-cgroup.c
-> +++ b/block/blk-cgroup.c
-> @@ -180,14 +180,10 @@ static void blkg_free(struct blkcg_gq *blkg)
->   
->   static void __blkg_release(struct rcu_head *rcu)
->   {
->   	struct blkcg_gq *blkg = container_of(rcu, struct blkcg_gq, rcu_head);
->   
-> -#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-> -	WARN_ON(!bio_list_empty(&blkg->async_bios));
-> -#endif
-> -
->   	blkg_free(blkg);
->   }
->   
->   /*
->    * A group is RCU protected, but having an rcu lock does not mean that one
-> @@ -226,23 +222,23 @@ static void blkg_release(struct percpu_ref *ref)
->   }
->   
->   #ifdef CONFIG_BLK_CGROUP_PUNT_BIO
->   static struct workqueue_struct *blkcg_punt_bio_wq;
->   
-> -static void blkg_async_bio_workfn(struct work_struct *work)
-> +static void blkcg_async_bio_workfn(struct work_struct *work)
->   {
-> -	struct blkcg_gq *blkg = container_of(work, struct blkcg_gq,
-> -					     async_bio_work);
-> +	struct blkcg *blkcg = container_of(work, struct blkcg, async_bio_work);
->   	struct bio_list bios = BIO_EMPTY_LIST;
->   	struct bio *bio;
->   	struct blk_plug plug;
->   	bool need_plug = false;
->   
-> -	/* as long as there are pending bios, @blkg can't go away */
-> -	spin_lock(&blkg->async_bio_lock);
-> -	bio_list_merge_init(&bios, &blkg->async_bios);
-> -	spin_unlock(&blkg->async_bio_lock);
-> +	/* as long as there are pending bios, @blkcg can't go away */
-> +	{
-> +		guard(spinlock)(&blkcg->async_bio_lock);
-> +		bio_list_merge_init(&bios, &blkcg->async_bios);
-> +	}
->
-Instead of using guard(spinlock)(...) here, I think we could use the
-simpler spin_lock()/spin_unlock() helpers. IMO, they are easier
-to read and reason about for these short critical sections.
+The .dm-verity keyring is not linked into any process keyring, so
+request_key() and KEYCTL_SEARCH cannot find it. Userspace has to scrape
+/proc/keys for the serial to use.
 
->   	/* start plug only when bio_list contains at least 2 bios */
->   	if (bios.head && bios.head->bi_next) {
->   		need_plug = true;
->   		blk_start_plug(&plug);
-> @@ -259,19 +255,20 @@ static void blkg_async_bio_workfn(struct work_struct *work)
->    * cgroup.  Use this helper instead of submit_bio to punt the actual issuing to
->    * a dedicated per-blkcg work item to avoid such priority inversions.
->    */
->   void blkcg_punt_bio_submit(struct bio *bio)
->   {
-> -	struct blkcg_gq *blkg = bio_blkg(bio);
-> +	struct blkcg *blkcg = bio_blkcg(bio);
->   
-> -	if (blkg && blkg->parent) {
-> -		spin_lock(&blkg->async_bio_lock);
-> -		bio_list_add(&blkg->async_bios, bio);
-> -		spin_unlock(&blkg->async_bio_lock);
-> -		queue_work(blkcg_punt_bio_wq, &blkg->async_bio_work);
-> +	if (blkcg && cgroup_parent(blkcg->css.cgroup)) {
-> +		{
-> +			guard(spinlock)(&blkcg->async_bio_lock);
-> +			bio_list_add(&blkcg->async_bios, bio);
-> +		}
-> +		queue_work(blkcg_punt_bio_wq, &blkcg->async_bio_work);
+That's not great, one could put in a bogus description containing
+a newline to confuse userspace further. For example, thanks to AI
+models, which I run as root but you could show off as any old user:
 
-Again same here, replace guard() with spin_lock() and spin_unlock()
-helpers.
+    # DESC=$'.dm-verity: 1\n0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity'
+    # k=$(echo -n "1234567" | keyctl padd user "$DESC" @s)
+    # keyctl setperm "$k" 0x3f010001
 
->   	} else {
-> -		/* Never bounce if there is no non-root blkg to queue on. */
-> +		/* Never bounce if there is no non-root blkcg to queue on. */
->   		submit_bio(bio);
->   	}
->   }
->   EXPORT_SYMBOL_GPL(blkcg_punt_bio_submit);
->   
-> @@ -350,15 +347,10 @@ static struct blkcg_gq *blkg_alloc(struct blkcg *blkcg, struct gendisk *disk,
->   	blkg->q = disk->queue;
->   	INIT_LIST_HEAD(&blkg->q_node);
->   	blkg->blkcg = blkcg;
->   	blkg->blkcg_id = blkcg->css.id;
->   	blkg->iostat.blkg = blkg;
-> -#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-> -	spin_lock_init(&blkg->async_bio_lock);
-> -	bio_list_init(&blkg->async_bios);
-> -	INIT_WORK(&blkg->async_bio_work, blkg_async_bio_workfn);
-> -#endif
->   
->   	u64_stats_init(&blkg->iostat.sync);
->   	for_each_possible_cpu(cpu) {
->   		u64_stats_init(&per_cpu_ptr(blkg->iostat_cpu, cpu)->sync);
->   		per_cpu_ptr(blkg->iostat_cpu, cpu)->blkg = blkg;
-> @@ -1399,10 +1391,16 @@ static void blkcg_css_free(struct cgroup_subsys_state *css)
->   		if (blkcg->cpd[i])
->   			blkcg_policy[i]->cpd_free_fn(blkcg->cpd[i]);
->   
->   	mutex_unlock(&blkcg_pol_mutex);
->   
-> +#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-> +	{
-> +		guard(spinlock)(&blkcg->async_bio_lock);
-> +		WARN_ON(!bio_list_empty(&blkcg->async_bios));
-> +	}
-> +#endif
+    # cat /proc/keys | grep dm-verity
+    10402023 I------     2 perm 082f0000     0     0 keyring   .dm-verity: empty
+    12e0bee6 I--Q---     1 perm 3f010001     0     0 user      .dm-verity: 1
+    0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity: 7
 
-This is a slightly different case. At this point blkcg_css_free() is
-freeing the blkcg object after its final reference has gone away, so
-there should be no concurrent context accessing blkcg->async_bios.
-Therefore, I don't think we need to acquire async_bio_lock here just
-to perform the WARN_ON() check.
-The clang context annotation cannot infer this object-lifetime property
-and will therefore report an unprotected access. I think we should
-explicitly mark this access as context-unsafe.
+0x0badf00d is not a keyring, it is the text inside our user's key
+description. Telling the two apart needs a KEYCTL_DESCRIBE per row
+which is annoying to do. i.e.:
 
-But wait, even better, we could introduce a bio_list_empty_careful() helper,
-similar to list_empty_careful(), for this purpose:
+    # keyctl rdescribe 0x10402023
+    keyring;0;0;082f0000;.dm-verity
+    # keyctl rdescribe 0x0badf00d
+    keyctl_describe: Required key not available
 
-static inline bool bio_list_empty_careful(const struct bio_list *bl)
-	__context_unsafe(/* intentional lockless access to @bl->head */)
-{
-	return bl->head == NULL;
-}
+Let's just give it a well known identifier, i.e.:
 
-Then this could simply become:
+    # keyctl rdescribe -10
+    keyring;0;0;082f0000;.dm-verity
 
-WARN_ON(!bio_list_empty_careful(&blkcg->async_bios));
+This is exactly what
+commit 264d8fd2794f ("bpf, keys: Add a bpf keyring for program signature validation")
+did, and was the inspiration for this commit minus the spinlock bits
+required due to dm-verity being a module.
 
->   	free_percpu(blkcg->lhead);
->   	kfree(blkcg);
->   }
->   
->   static struct cgroup_subsys_state *
-> @@ -1447,10 +1445,18 @@ blkcg_css_alloc(struct cgroup_subsys_state *parent_css)
->   	}
->   
->   	spin_lock_init(&blkcg->lock);
->   	refcount_set(&blkcg->online_pin, 1);
->   	INIT_HLIST_HEAD(&blkcg->blkg_list);
-> +#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
-> +	spin_lock_init(&blkcg->async_bio_lock);
-> +	{
-> +		guard(spinlock)(&blkcg->async_bio_lock);
-> +		bio_list_init(&blkcg->async_bios);
-> +	}
-> +	INIT_WORK(&blkcg->async_bio_work, blkcg_async_bio_workfn);
-> +#endif
+Suggested-by: Christian Brauner (Amutable) <brauner@kernel.org>
+Signed-off-by: Andrew Halaney <andrew@amutable.com>
+---
+ drivers/md/dm-verity-verify-sig.c |  3 +++
+ include/linux/key.h               |  1 +
+ include/uapi/linux/keyctl.h       |  1 +
+ security/keys/process_keys.c      | 33 +++++++++++++++++++++++++++++++++
+ 4 files changed, 38 insertions(+)
 
-This is interesting. As you know, while an object is being allocated
-and before it is published, it can't be accessed concurrently. So
-guarding blkcg->async_bios with blkcg->async_bio_lock is not necessary
-here. Moreover, since blkcg is zero-initialized, we could simply remove
-both the guard(...) and the bio_list_init() call above.
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index b2b55c41e2cb..da509dcdd7e5 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -189,11 +189,14 @@ int __init dm_verity_verify_sig_init(void)
+ 	    keyring_restrict(make_key_ref(dm_verity_keyring, true), NULL, NULL))
+ 		panic("dm-verity can't seal keyring\n");
+ 
++	key_register_dm_verity_keyring(dm_verity_keyring);
++
+ 	return 0;
+ }
+ 
+ void dm_verity_verify_sig_exit(void)
+ {
++	key_register_dm_verity_keyring(NULL);
+ 	key_revoke(dm_verity_keyring);
+ 	key_put(dm_verity_keyring);
+ }
+diff --git a/include/linux/key.h b/include/linux/key.h
+index bd10fe45819d..ae8d3314fd93 100644
+--- a/include/linux/key.h
++++ b/include/linux/key.h
+@@ -441,6 +441,7 @@ extern int keyring_restrict(key_ref_t keyring, const char *type,
+ 			    const char *restriction);
+ 
+ extern void key_register_bpf_keyring(struct key *keyring);
++extern void key_register_dm_verity_keyring(struct key *keyring);
+ 
+ extern struct key *key_lookup(key_serial_t id);
+ 
+diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
+index fa85b9760391..75923941f1b3 100644
+--- a/include/uapi/linux/keyctl.h
++++ b/include/uapi/linux/keyctl.h
+@@ -25,6 +25,7 @@
+ #define KEY_SPEC_REQKEY_AUTH_KEY	-7	/* - key ID for assumed request_key auth key */
+ #define KEY_SPEC_REQUESTOR_KEYRING	-8	/* - key ID for request_key() dest keyring */
+ #define KEY_SPEC_BPF_KEYRING		-9	/* - key ID for the BPF-specific keyring */
++#define KEY_SPEC_DM_VERITY_KEYRING	-10	/* - key ID for the .dm-verity keyring */
+ 
+ /* request-key default keyrings */
+ #define KEY_REQKEY_DEFL_NO_CHANGE		-1
+diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
+index 44358388e395..dba3df41638b 100644
+--- a/security/keys/process_keys.c
++++ b/security/keys/process_keys.c
+@@ -25,6 +25,10 @@ static DEFINE_MUTEX(key_session_mutex);
+ /* BPF keyring reachable through KEY_SPEC_BPF_KEYRING */
+ static struct key *bpf_keyring __ro_after_init;
+ 
++/* dm-verity keyring reachable through KEY_SPEC_DM_VERITY_KEYRING */
++static struct key *dm_verity_keyring;
++static DEFINE_SPINLOCK(dm_verity_keyring_lock);
++
+ /* The root user's tracking struct */
+ struct key_user root_key_user = {
+ 	.usage		= REFCOUNT_INIT(3),
+@@ -607,6 +611,24 @@ void key_register_bpf_keyring(struct key *keyring)
+ 	bpf_keyring = keyring;
+ }
+ 
++/**
++ * key_register_dm_verity_keyring - Publish the keyring for KEY_SPEC_DM_VERITY_KEYRING
++ * @keyring: The keyring to publish, or NULL to withdraw it
++ *
++ * Make @keyring reachable by userspace through the KEY_SPEC_DM_VERITY_KEYRING
++ * special key ID, so that provisioning it does not require scraping its
++ * serial out of /proc/keys first. dm-verity can be unloaded as a module
++ * and the keyring deregistered, as such serialize access with
++ * dm_verity_keyring_lock.
++ */
++void key_register_dm_verity_keyring(struct key *keyring)
++{
++	spin_lock(&dm_verity_keyring_lock);
++	dm_verity_keyring = keyring;
++	spin_unlock(&dm_verity_keyring_lock);
++}
++EXPORT_SYMBOL_GPL(key_register_dm_verity_keyring);
++
+ /*
+  * Look up a key ID given us by userspace with a given permissions mask to get
+  * the key it refers to.
+@@ -766,6 +788,17 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
+ 		key_ref = make_key_ref(key, 0);
+ 		break;
+ 
++	case KEY_SPEC_DM_VERITY_KEYRING:
++		spin_lock(&dm_verity_keyring_lock);
++		key = dm_verity_keyring;
++		if (key)
++			__key_get(key);
++		spin_unlock(&dm_verity_keyring_lock);
++		if (!key)
++			goto error;
++		key_ref = make_key_ref(key, 0);
++		break;
++
+ 	default:
+ 		key_ref = ERR_PTR(-EINVAL);
+ 		if (id < 1)
 
-Thanks,
---Nilay
+-- 
+2.55.0
 
