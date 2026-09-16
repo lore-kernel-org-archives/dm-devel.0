@@ -1,300 +1,193 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+Received: from canpmsgout09.his.huawei.com (canpmsgout09.his.huawei.com [113.46.200.224])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B6F930F81A;
-	Wed, 16 Sep 2026 05:47:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1A424AE11E
+	for <dm-devel@lists.linux.dev>; Wed, 16 Sep 2026 12:19:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.224
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789537670; cv=none; b=bZ7q/l4Y/uTq+jQQZMo2ceDg7NGXHK92U88CvQwLvp0I8mVbhfPJiQqXVUCpaAnG/cJqKeuxnPXbM4m2fxz3Oq52YMrGrJnCEWIBNlB6H7N1MLRp1CxKy5PRcqkbNZcHv5QT3zXhMDk3IPTVogByNFMWn1ig2RqOYJpQWO7eWfo=
+	t=1789561162; cv=none; b=T21pN2rGGAk965XIL1m1SiP+TXKety3kUZEngZY8UhZVpUoP7clfgJAHpQtd3pxAoWzEnCD4QFPEY0mPHD7vJSXQDjHBqHx8IZfPQ8G3FVMexQQilcqwe3kQDjcqMFe5Ixm+U8ZTnqOR4zZSeGiKGlGSF7nMiY74FsHkdReTalM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789537670; c=relaxed/simple;
-	bh=njcNesu0T2wlf680w7LVVN2Ev1fYXdOMmrZOnhfUu7g=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=jN6ETjTRP4gGRGLDguot88MlaI4YFRmQoRjmATo2BZkgN6EaUJRKt/eyYmvt5gZ/2lZTA1j80BZtk5hY9fqoHk2SjQ/q3PHrBJOl/jSCR9PH/+McZKctgFH+TLdRio0wOnG+2WYO0Moyz4S3wlfLqkYy8rOsrHDQH5nBdTmRoL0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=lx12HJfL; arc=none smtp.client-ip=148.163.158.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1789561162; c=relaxed/simple;
+	bh=jmx7/yWhal1Ww0spXVCH3wKe4jQDQSBTK9V0nYDAg1Y=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=AIANyrkl+gkbTsG1cxwa1hbiO24CYQsh3cVIhnwHQ68kz5CLKOC2Oe7kG0p62/cSLJKAmn2Wh0D43m73zRDnI+HDJBaoadd1ZuMhMdGjUw8Hyc3r1Fy4KUsghO03z3hWNO3/dzaQVBYJf/cLZ6luHOOakBImTuVkn1LThgDrN0Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=hGWKbDUd; arc=none smtp.client-ip=113.46.200.224
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="lx12HJfL"
-Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 68FLVo181805238;
-	Wed, 16 Sep 2026 05:46:46 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=LIabAc
-	JQ4SujGOG0uLelxBeziOrGyHi5lo2W+7zfeTE=; b=lx12HJfLZS91YM5KIhWYZ9
-	hDsxiLfBZdoX31K0/DytlhbwZEBHDky5J3S6a2bv1wyEH1AYLkSaG4lQuvSTEdUu
-	V7cXD8RKC8CpmxwYqHX6puNGwT5EPDlf1E+Oj7GhouPgT5MmqIbwyQwIUdPo53Wx
-	QKtzzjoYmJEEzPx04t87vjSqNrKvYIuDl8UHvrf0OK3f+KrZ+gm6EU2w/qAKWrXZ
-	rL33NwZbqi7VhQTP6DJgP8v6KHrWeZ0aJ31AI7AEhoBv0SuiQ+ffDehVa6hg2xZn
-	HhT2Zi6A3zsa1AtXdXD2Oxx+07DqgTuLSy7utHIhzAqbUetGjLdot7Lt4PkhQ9yw
-	==
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4gmv5htw82-1
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 16 Sep 2026 05:46:45 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 68G2qVLt464070;
-	Wed, 16 Sep 2026 05:46:44 GMT
-Received: from smtprelay04.wdc07v.mail.ibm.com ([172.16.1.71])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 4gq03vcvf5-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Wed, 16 Sep 2026 05:46:44 +0000 (GMT)
-Received: from smtpav05.wdc07v.mail.ibm.com (smtpav05.wdc07v.mail.ibm.com [10.39.53.232])
-	by smtprelay04.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 68G5khN328312216
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Wed, 16 Sep 2026 05:46:43 GMT
-Received: from smtpav05.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 96B2558059;
-	Wed, 16 Sep 2026 05:46:43 +0000 (GMT)
-Received: from smtpav05.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 72C9258053;
-	Wed, 16 Sep 2026 05:46:29 +0000 (GMT)
-Received: from [9.61.52.228] (unknown [9.61.52.228])
-	by smtpav05.wdc07v.mail.ibm.com (Postfix) with ESMTP;
-	Wed, 16 Sep 2026 05:46:29 +0000 (GMT)
-Message-ID: <d0dbf12d-b358-4164-b865-0e44c7163b7d@linux.ibm.com>
-Date: Wed, 16 Sep 2026 11:16:27 +0530
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="hGWKbDUd"
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=WucdU+U+fDtH/dtaM74XSmEX2/Z1Bt+S4MDbGB5y5Vs=;
+	b=hGWKbDUd4/4znpJBctaK+2GsDhJTzEF2OF0TIlwfkftz8hk9m1u4qZtahBDqVnbf1nQQ/TJQB
+	OdQHI1b+PBMgXce4fVJMdMX6AYuAoIrcrfsza9D1wE0DvWtm0JbT8f7kjgod0fgXd0u6teRpgVW
+	8JqN2S8nsXxk7KC82IFm0xc=
+Received: from mail.maildlp.com (unknown [172.19.163.127])
+	by canpmsgout09.his.huawei.com (SkyGuard) with ESMTPS id 4hlHhm5bq6z1cyPY;
+	Wed, 16 Sep 2026 20:08:08 +0800 (CST)
+Received: from whupemo200011.china.huawei.com (unknown [7.152.185.179])
+	by mail.maildlp.com (Postfix) with ESMTPS id D1A65402AB;
+	Wed, 16 Sep 2026 20:19:06 +0800 (CST)
+Received: from huawei.com (10.50.85.155) by whupemo200011.china.huawei.com
+ (7.152.185.179) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.45; Wed, 16 Sep
+ 2026 20:19:05 +0800
+From: Zhihao Cheng <chengzhihao1@huawei.com>
+To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
+	<bmarzins@redhat.com>, <song@kernel.org>, <yukuai@fygo.io>,
+	<eadavis@sina.com>
+CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
+	<linux-raid@vger.kernel.org>, <chengzhihao1@huawei.com>,
+	<yangerkun@huawei.com>, <yi.zhang@huawei.com>
+Subject: [PATCH] md: Fix the null-ptr-deref of 'mddev->private' while submitting IO
+Date: Wed, 16 Sep 2026 20:11:20 +0800
+Message-ID: <20260916121120.1242281-1-chengzhihao1@huawei.com>
+X-Mailer: git-send-email 2.52.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 3/3] blk-cgroup: move async bio punt state to blkcg
-To: yukuai@fygo.io, Yu Kuai <yukuai@kernel.org>, Jens Axboe
- <axboe@kernel.dk>,
-        Josef Bacik <josef@toxicpanda.com>, Tejun Heo <tj@kernel.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        =?UTF-8?Q?Michal_Koutn=C3=BD?= <mkoutny@suse.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Shuah Khan <skhan@linuxfoundation.org>,
-        Randy Dunlap <rdunlap@infradead.org>, Coly Li <colyli@fygo.io>,
-        Kent Overstreet <kent.overstreet@linux.dev>,
-        Alasdair Kergon
- <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Benjamin Marzinski <bmarzins@redhat.com>, Song Liu <song@kernel.org>,
-        Li Nan <magiclinan@didiglobal.com>, Xiao Ni <xiao@kernel.org>,
-        Andreas Gruenbacher <agruenba@redhat.com>,
-        Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>,
-        Andrew Morton <akpm@linux-foundation.org>,
-        Chris Li <chrisl@kernel.org>, Kairui Song <kasong@tencent.com>,
-        Kemeng Shi <shikemeng@huaweicloud.com>, Nhat Pham <nphamcs@gmail.com>,
-        Baoquan He <baoquan.he@linux.dev>, Barry Song <baohua@kernel.org>,
-        Youngjun Park <youngjun.park@lge.com>,
-        Nathan Chancellor <nathan@kernel.org>,
-        Nick Desaulniers <ndesaulniers@google.com>,
-        Bill Wendling
- <morbo@google.com>,
-        Justin Stitt <justinstitt@google.com>
-Cc: Christoph Hellwig <hch@lst.de>, Tao Cui <cuitao@kylinos.cn>,
-        linux-block@vger.kernel.org, cgroups@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-bcache@vger.kernel.org, dm-devel@lists.linux.dev,
-        linux-raid@vger.kernel.org, gfs2@lists.linux.dev,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        llvm@lists.linux.dev
-References: <cover.1789237876.git.yukuai@fygo.io>
- <326e4904402440323532168095f2eb0c6f697836.1789237877.git.yukuai@fygo.io>
- <f27ee89f-5a52-4cfc-a14a-e5019ae61d89@linux.ibm.com>
- <52df0198-9949-4801-ac0f-c86935d1aceb@fygo.io>
-Content-Language: en-US
-From: Nilay Shroff <nilay@linux.ibm.com>
-In-Reply-To: <52df0198-9949-4801-ac0f-c86935d1aceb@fygo.io>
-Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Reinject: loops=2 maxloops=12
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTE2MDA2OSBTYWx0ZWRfX1gy6KzyZTO/l
- rL51RO0W701nRkcEHte/j9aRVxrfkRfJ+Jtis/WO9hc0tXlk424evaovVJRGnJvNjQ8gKGI8ddp
- A8scu8xfT/rVabl6n18riuCnKxgx1mjW8Pz2ohY0V3KxlY0zRQriM7EqDUvASE6rleZb9BxerXk
- MBWdtRatkDryBNFQmS2OfTrlu+shK/KU+pEOtyA0pT8bLU2KDiwDQEW/j+Dv4spAcF8nPVmPGHl
- AQzKnyUhbKqIy8tKmVx8QomvhHB68zeGZFudR9r5BoOtp05hHacxNcVgJWQC97OqrLe+XY28ZuI
- sG6otgW8E9sxOuxfYt4yCthjMiTmvN60SWfrZWqZWIuDquyvMpdUtxNKl3FoLWF78V6PSY/IXWB
- l5ZNRQDl9/BaeIKV0WM9zLbULJDQpiqbNdWBnzo8msr++EdqT32Rs46nmVeEUO7HQL2/tDdPsBu
- Ss8GhgqqHuM1Ilj9/Qg==
-X-Proofpoint-Spam-Info: AW1haW4tMjYwOTE2MDA2OSBTYWx0ZWRfXw5nEcY0jQeuZ
- tax0LoWnDAcmk4cbc2FCdT8zX9xVz7SxmWGxfp7CNjY7iP8psVX/aHLR9njmVbGNHuMSUuDjhxs
- jV4mV1YYN5V3CY+DGkFm4LkU9uZLAbk=
-X-Authority-Analysis: v=2.4 cv=Zsx4uN7G c=1 sm=1 tr=0 ts=6aaa2d46 cx=c_pps
- a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
- a=IkcTkHD0fZMA:10 a=VdqzKS8jKosA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=Y2IxJ9c9Rs8Kov3niI8_:22 a=EVVczme9KZ5WO4Hfbr4A:9
- a=3ZKOabzyN94A:10 a=QEXdDO2ut3YA:10
-X-Proofpoint-ORIG-GUID: 37_berB40VslJIQLTEVE8C2V_Rtd3Cmf
-X-Proofpoint-GUID: dUuyNwdiGQH56_Z-inY37SOtflE__LN5
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-09-15_05,2026-09-15_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- malwarescore=0 impostorscore=0 clxscore=1015 priorityscore=1501
- lowpriorityscore=0 bulkscore=0 adultscore=0 phishscore=0 spamscore=0
- suspectscore=0 classifier=typeunknown authscore=0 authtc= authcc=
- route=outbound adjust=0 reason=mlx scancount=1 engine=8.22.0-2609040000
- definitions=main-2609160069
+Content-Type: text/plain
+X-ClientProxiedBy: kwepems100001.china.huawei.com (7.221.188.238) To
+ whupemo200011.china.huawei.com (7.152.185.179)
 
-On 9/15/26 9:24 PM, yu kuai wrote:
-> Hi,
-> 
-> 在 2026/9/13 21:29, Nilay Shroff 写道:
->> On 9/13/26 12:24 PM, Yu Kuai wrote:
->>> From: Yu Kuai <yukuai@fygo.io>
->>>
->>> blkcg_punt_bio_submit() currently queues punted bios on
->>> blkg->async_bios,
->>> so it has to call bio_blkg() to find or create a queue-local blkg.  Bios
->>> now carry and pin the blkcg css, so punted bio lifetime no longer
->>> needs to
->>> be anchored by a blkg.
->>>
->>> Keeping the punt state in blkg can instantiate a blkg even when no blkcg
->>> policy is enabled, just to bounce submission from a shared kthread.
->>> Move
->>> async_bio_lock, async_bios and async_bio_work to struct blkcg, and queue
->>> punted bios on bio_blkcg() for non-root cgroups.  Root or
->>> unassociated bios
->>> are submitted directly.
->>>
->>> This preserves the priority-inversion avoidance while preventing
->>> blkcg_punt_bio_submit() from creating blkgs that are not needed by any
->>> policy.
->>>
->>> Signed-off-by: Yu Kuai <yukuai@fygo.io>
->>> ---
->>>    block/blk-cgroup.c | 52 ++++++++++++++++++++++++++--------------------
->>>    block/blk-cgroup.h | 14 ++++++-------
->>>    2 files changed, 35 insertions(+), 31 deletions(-)
->>>
->>> diff --git a/block/blk-cgroup.c b/block/blk-cgroup.c
->>> index 59ccfefe16a8..aa3cee107ebe 100644
->>> --- a/block/blk-cgroup.c
->>> +++ b/block/blk-cgroup.c
->>> @@ -180,14 +180,10 @@ static void blkg_free(struct blkcg_gq *blkg)
->>>      static void __blkg_release(struct rcu_head *rcu)
->>>    {
->>>        struct blkcg_gq *blkg = container_of(rcu, struct blkcg_gq,
->>> rcu_head);
->>>    -#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
->>> -    WARN_ON(!bio_list_empty(&blkg->async_bios));
->>> -#endif
->>> -
->>>        blkg_free(blkg);
->>>    }
->>>      /*
->>>     * A group is RCU protected, but having an rcu lock does not mean
->>> that one
->>> @@ -226,23 +222,23 @@ static void blkg_release(struct percpu_ref *ref)
->>>    }
->>>      #ifdef CONFIG_BLK_CGROUP_PUNT_BIO
->>>    static struct workqueue_struct *blkcg_punt_bio_wq;
->>>    -static void blkg_async_bio_workfn(struct work_struct *work)
->>> +static void blkcg_async_bio_workfn(struct work_struct *work)
->>>    {
->>> -    struct blkcg_gq *blkg = container_of(work, struct blkcg_gq,
->>> -                         async_bio_work);
->>> +    struct blkcg *blkcg = container_of(work, struct blkcg,
->>> async_bio_work);
->>>        struct bio_list bios = BIO_EMPTY_LIST;
->>>        struct bio *bio;
->>>        struct blk_plug plug;
->>>        bool need_plug = false;
->>>    -    /* as long as there are pending bios, @blkg can't go away */
->>> -    spin_lock(&blkg->async_bio_lock);
->>> -    bio_list_merge_init(&bios, &blkg->async_bios);
->>> -    spin_unlock(&blkg->async_bio_lock);
->>> +    /* as long as there are pending bios, @blkcg can't go away */
->>> +    {
->>> +        guard(spinlock)(&blkcg->async_bio_lock);
->>> +        bio_list_merge_init(&bios, &blkcg->async_bios);
->>> +    }
->>>
->> Instead of using guard(spinlock)(...) here, I think we could use the
->> simpler spin_lock()/spin_unlock() helpers. IMO, they are easier
->> to read and reason about for these short critical sections.
-> Ok.
->>
->>>        /* start plug only when bio_list contains at least 2 bios */
->>>        if (bios.head && bios.head->bi_next) {
->>>            need_plug = true;
->>>            blk_start_plug(&plug);
->>> @@ -259,19 +255,20 @@ static void blkg_async_bio_workfn(struct
->>> work_struct *work)
->>>     * cgroup.  Use this helper instead of submit_bio to punt the
->>> actual issuing to
->>>     * a dedicated per-blkcg work item to avoid such priority inversions.
->>>     */
->>>    void blkcg_punt_bio_submit(struct bio *bio)
->>>    {
->>> -    struct blkcg_gq *blkg = bio_blkg(bio);
->>> +    struct blkcg *blkcg = bio_blkcg(bio);
->>>    -    if (blkg && blkg->parent) {
->>> -        spin_lock(&blkg->async_bio_lock);
->>> -        bio_list_add(&blkg->async_bios, bio);
->>> -        spin_unlock(&blkg->async_bio_lock);
->>> -        queue_work(blkcg_punt_bio_wq, &blkg->async_bio_work);
->>> +    if (blkcg && cgroup_parent(blkcg->css.cgroup)) {
->>> +        {
->>> +            guard(spinlock)(&blkcg->async_bio_lock);
->>> +            bio_list_add(&blkcg->async_bios, bio);
->>> +        }
->>> +        queue_work(blkcg_punt_bio_wq, &blkcg->async_bio_work);
->>
->> Again same here, replace guard() with spin_lock() and spin_unlock()
->> helpers.
->>
->>>        } else {
->>> -        /* Never bounce if there is no non-root blkg to queue on. */
->>> +        /* Never bounce if there is no non-root blkcg to queue on. */
->>>            submit_bio(bio);
->>>        }
->>>    }
->>>    EXPORT_SYMBOL_GPL(blkcg_punt_bio_submit);
->>>    @@ -350,15 +347,10 @@ static struct blkcg_gq *blkg_alloc(struct
->>> blkcg *blkcg, struct gendisk *disk,
->>>        blkg->q = disk->queue;
->>>        INIT_LIST_HEAD(&blkg->q_node);
->>>        blkg->blkcg = blkcg;
->>>        blkg->blkcg_id = blkcg->css.id;
->>>        blkg->iostat.blkg = blkg;
->>> -#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
->>> -    spin_lock_init(&blkg->async_bio_lock);
->>> -    bio_list_init(&blkg->async_bios);
->>> -    INIT_WORK(&blkg->async_bio_work, blkg_async_bio_workfn);
->>> -#endif
->>>          u64_stats_init(&blkg->iostat.sync);
->>>        for_each_possible_cpu(cpu) {
->>>            u64_stats_init(&per_cpu_ptr(blkg->iostat_cpu, cpu)->sync);
->>>            per_cpu_ptr(blkg->iostat_cpu, cpu)->blkg = blkg;
->>> @@ -1399,10 +1391,16 @@ static void blkcg_css_free(struct
->>> cgroup_subsys_state *css)
->>>            if (blkcg->cpd[i])
->>>                blkcg_policy[i]->cpd_free_fn(blkcg->cpd[i]);
->>>          mutex_unlock(&blkcg_pol_mutex);
->>>    +#ifdef CONFIG_BLK_CGROUP_PUNT_BIO
->>> +    {
->>> +        guard(spinlock)(&blkcg->async_bio_lock);
->>> +        WARN_ON(!bio_list_empty(&blkcg->async_bios));
->>> +    }
->>> +#endif
->>
->> This is a slightly different case. At this point blkcg_css_free() is
->> freeing the blkcg object after its final reference has gone away, so
->> there should be no concurrent context accessing blkcg->async_bios.
->> Therefore, I don't think we need to acquire async_bio_lock here just
->> to perform the WARN_ON() check.
-> 
-> Perhaps is it better just to remove the check? blkcg will be pinned
-> by any bio inside the list, so I believe this is safe.
-> 
-Ideally yes we would not enter into blkcg_css_free() until all
-references to blkcg are dropped. So the WARN_ON() appears to be
-used just as a paranoia check. I'm okay either to drop it or
-if you want to keep it then I suggest replacing bio_list_empty()
-with bio_list_empty_careful(), so that the check explicitly allows
-lockless inspection during teardown.
+Concurrent processes md_stop and IO submitting could trigger a
+null-ptr-deref of 'mddev->private':
 
-Thanks,
---Nilay
+ BUG: kernel NULL pointer dereference, address: 0000000000000070
+ RIP: 0010:_wait_barrier+0x2f/0x250
+ Call Trace:
+  raid1_make_request+0x150/0xf50
+  md_handle_request+0x104/0x530
+  md_submit_bio+0x76/0x130
+  submit_bio+0xdd/0x250
+  submit_bio_wait+0x1f/0x40
+  __blkdev_direct_IO_simple+0x1f6/0x370
+  blkdev_write_iter+0x3b2/0x520
+  ksys_write+0x7d/0x190
+
+              P1
+  fd = open(/dev/md0, O_RDWR)
+	                      P2 (forked from P1, fd' <= fd)
+  write(fd)
+   submit_bio
+    md_handle_request
+     raid1_make_request
+      raid1_write_request
+                                  ioctl(fd, STOP_ARRAY)
+		                   mddev_set_closing_and_sync_blockdev
+				   // check passed, mddev->openers = 1,
+				   // because md_open() is only called
+				   // once in P1->open
+				   do_md_stop
+				    __md_stop
+				     mddev->private = NULL
+
+       conf = mddev->private // NULL
+        wait_barrier(conf, sector) // null-ptr-deref !
+
+It is a common problem for raid0/1/10/5, and __md_stop could be
+triggered by several paths(eg. ioctl, sysfs, ->dtr). Fix it by
+replacing mddev_lock() with mddev_suspend_and_lock() for all
+__md_stop() callers.
+
+Fetch a reproducer in https://bugzilla.kernel.org/show_bug.cgi?id=222020
+
+Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+Reported-by: syzbot+3fe892ea5fc292e1353f@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=3fe892ea5fc292e1353f
+Signed-off-by: Zhihao Cheng <chengzhihao1@huawei.com>
+---
+ drivers/md/dm-raid.c |  7 +++++--
+ drivers/md/md.c      | 18 +++++++++++++++---
+ 2 files changed, 20 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8f5a5e1342a9..3dda494fe172 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3326,12 +3326,15 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ static void raid_dtr(struct dm_target *ti)
+ {
++	unsigned int noio_flags = 0;
+ 	struct raid_set *rs = ti->private;
+ 
+-	mddev_lock_nointr(&rs->md);
++	mddev_suspend_and_lock_nointr(&rs->md);
++	noio_flags = memalloc_noio_save();
+ 	md_stop(&rs->md);
+ 	rs->md.dm_gendisk = NULL;
+-	mddev_unlock(&rs->md);
++	memalloc_noio_restore(noio_flags);
++	mddev_unlock_and_resume(&rs->md);
+ 
+ 	if (work_pending(&rs->md.event_work))
+ 		flush_work(&rs->md.event_work);
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 680b34a63cb3..e292acd54bb0 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -4657,6 +4657,8 @@ array_state_store(struct mddev *mddev, const char *buf, size_t len)
+ {
+ 	int err = 0;
+ 	enum array_state st = match_word(buf, array_states);
++	unsigned int noio_flags = 0;
++	bool suspend = false;
+ 
+ 	/* No lock dependent actions */
+ 	switch (st) {
+@@ -4666,9 +4668,11 @@ array_state_store(struct mddev *mddev, const char *buf, size_t len)
+ 	case broken:		/* cannot be set */
+ 	case bad_word:
+ 		return -EINVAL;
++	case inactive:
+ 	case clear:
++		suspend = true;
++		fallthrough;
+ 	case readonly:
+-	case inactive:
+ 	case read_auto:
+ 		if (!mddev->pers || !md_is_rdwr(mddev))
+ 			break;
+@@ -4702,9 +4706,11 @@ array_state_store(struct mddev *mddev, const char *buf, size_t len)
+ 		spin_unlock(&mddev->lock);
+ 		return err ?: len;
+ 	}
+-	err = mddev_lock(mddev);
++	err = suspend ? mddev_suspend_and_lock(mddev) : mddev_lock(mddev);
+ 	if (err)
+ 		return err;
++	if (suspend)
++		noio_flags = memalloc_noio_save();
+ 
+ 	switch (st) {
+ 	case inactive:
+@@ -4775,7 +4781,12 @@ array_state_store(struct mddev *mddev, const char *buf, size_t len)
+ 			mddev->hold_active = 0;
+ 		sysfs_notify_dirent_safe(mddev->sysfs_state);
+ 	}
+-	mddev_unlock(mddev);
++	if (suspend) {
++		memalloc_noio_restore(noio_flags);
++		mddev_unlock_and_resume(mddev);
++	} else {
++		mddev_unlock(mddev);
++	}
+ 
+ 	if (st == readonly || st == read_auto || st == inactive ||
+ 	    (err && st == clear))
+@@ -8299,6 +8310,7 @@ static bool md_ioctl_need_suspend(unsigned int cmd)
+ 	case HOT_REMOVE_DISK:
+ 	case SET_BITMAP_FILE:
+ 	case SET_ARRAY_INFO:
++	case STOP_ARRAY:
+ 		return true;
+ 	default:
+ 		return false;
+-- 
+2.52.0
 
