@@ -1,122 +1,135 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from va-2-58.ptr.blmpb.com (va-2-58.ptr.blmpb.com [209.127.231.58])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7133B3BB127
-	for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 08:05:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C5A03AEF2D
+	for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 09:20:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.127.231.58
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789718744; cv=none; b=E1Jr9VTXd/7tqD3pWsxCwgGJSgNImzrPS8Bv0CLVvKFenKeCb2DBLmo2zK7ceC1BxVAo1CDS2c3g1OBIrxZ9Z5Nh6hs/XiOicaLC9ag+FW3MLPDrkJaOWE4RihX+bzthvFwg+XJ4rkwsCIboF+xArJf22UPyvfsVLstOqqZMGyM=
+	t=1789723215; cv=none; b=eIgHWrB3YzXrg7Nl7uhpQRgPf8Ly7/x0JvYbl99OxNRnv5+q9ZkELbqqigAZfitRQM3DtgUnNv/a6e9IKPISlGFXnrZiguzmtVpjsKmLGqZ3iZ/oLotQ9rWJ8tqx4fMx9Rg2QqOGvdynUr7Rl57B/h/DgxQZ6Lpv1ikOkJPGXfg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789718744; c=relaxed/simple;
-	bh=SSml5sWGhbr1aX5qXNp5m87HXKcpLyEzFeK1/Q/8sOE=;
-	h=From:In-Reply-To:References:To:Cc:Subject:MIME-Version:Date:
-	 Message-ID:Content-Type; b=fyujYyTEE6kPQWwUDe5vezonV5rcEXBrnVc9UJTUdLfdBG62gNWcW2RUrxmc2vHSc6sR3xhs07ccn8dAKU/vxSX5IAPDTL4wjCGj8us2nMXcw6p4y38RzOIpBN9Upn7OsbG4GJyvHPNd/LqOJ1wl4VxTYgYxo5jQk0LuSTbQ3Dg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PNReafD0; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1789723215; c=relaxed/simple;
+	bh=lVI4wS9/F6uS9qnJB4qvn+MECJkuubYFiWZq6Sw6lrU=;
+	h=Message-Id:In-Reply-To:Cc:Date:Mime-Version:Subject:Content-Type:
+	 To:From:References; b=f9in5WEOBWShp2LmiXLb3s8qwg0r+XO8b0o7/bp2+MYLCbOI6+8fUVKab0cvXjzF9v5O5z6Rm/2PZKaAorwX5s307KUat3PFHhm+aRTuRsur/4A1OuKWFfe/A/bnPyPB9Kc1qnNUBQMXjo4+PT5DV2GtJESIVHU4GP+WDjKuZyY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fygo.io; spf=pass smtp.mailfrom=fygo.io; dkim=pass (2048-bit key) header.d=fygo-io.20200929.dkim.larksuite.com header.i=@fygo-io.20200929.dkim.larksuite.com header.b=bwBSdZ1I; arc=none smtp.client-ip=209.127.231.58
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=fygo.io
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=fygo.io
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PNReafD0"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789718742;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Ym7emDJFhy4PiOXGVpk05NT3ISXd1kAvgtskHF5RU0g=;
-	b=PNReafD077lIjVU+tGlGZqSpttPqD4MOuRVkfVy4b2Yo2UmGInE8f4YaO6UZvDl6/5k5/p
-	QNVA8oHGdnoHw8R/3IxVlR4Ro9FoQ6xwxagC6VhIf3QhNk3TDYxLOKhQVi9B8W7Ll0wkbh
-	6Z42oQjinsehD5NOZCLVzaBzBmwkhZY=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-546-RN0R4fb1NhK5JGQk9pctmg-1; Fri,
- 18 Sep 2026 04:05:38 -0400
-X-MC-Unique: RN0R4fb1NhK5JGQk9pctmg-1
-X-Mimecast-MFC-AGG-ID: RN0R4fb1NhK5JGQk9pctmg_1789718736
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AA7F818512C6;
-	Fri, 18 Sep 2026 08:05:35 +0000 (UTC)
-Received: from warthog.procyon.org.uk (unknown [10.44.32.54])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 1CADB1956047;
-	Fri, 18 Sep 2026 08:05:27 +0000 (UTC)
-Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
-	Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
-	Kingdom.
-	Registered in England and Wales under Company Registration No. 3798903
-From: David Howells <dhowells@redhat.com>
-In-Reply-To: <aqyiCavj3xeNqyAo@kernel.org>
-References: <aqyiCavj3xeNqyAo@kernel.org> <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com> <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: dhowells@redhat.com, Andrew Halaney <andrew@amutable.com>,
-    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-    Mikulas Patocka <mpatocka@redhat.com>,
-    Benjamin Marzinski <bmarzins@redhat.com>,
-    Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-    "Serge E. Hallyn" <serge@hallyn.com>,
-    Eric Biggers <ebiggers@kernel.org>,
-    "Theodore Y. Ts'o" <tytso@mit.edu>, Jonathan Corbet <corbet@lwn.net>,
-    Shuah Khan <skhan@linuxfoundation.org>,
-    Randy Dunlap <rdunlap@infradead.org>, dm-devel@lists.linux.dev,
-    linux-kernel@vger.kernel.org, keyrings@vger.kernel.org,
-    linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
-    fsverity@lists.linux.dev, linux-doc@vger.kernel.org,
-    "Christian Brauner (Amutable)" <brauner@kernel.org>
-Subject: Re: [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
+	dkim=pass (2048-bit key) header.d=fygo-io.20200929.dkim.larksuite.com header.i=@fygo-io.20200929.dkim.larksuite.com header.b="bwBSdZ1I"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+ s=s1; d=fygo-io.20200929.dkim.larksuite.com; t=1789723203;
+  h=from:subject:mime-version:from:date:message-id:subject:to:cc:
+ reply-to:content-type:mime-version:in-reply-to:message-id;
+ bh=c/HoGHos08YYVCDf+erQy3ROLdbEA8DrOr1npGBRCuw=;
+ b=bwBSdZ1IC2vZJtJQ/GMrgZtFKRuuaPwCdBnsVuBZK6OAE/8KLo1qyhHqMMucszqIQ+NkQ2
+ HU22scbIi4juP7uDQoN2yJO1G9pAH/o3M11JKl8GQa+S1r5Y8BMJwBwEJhOfbqphjVZxdn
+ 4yJH4AnELbXL5Ej/uTa6zIxHk/LQAYt4GP5OAuLG1IzbfNdiAQ/oxgQ4h14NALYiEW2F81
+ ZWkWZwb9JqbvgqODZjDQttxI64Lhn4YXAABcOdUvpIV5upKvcA6VJysv/TxG7WPbSXtXFa
+ VdB7sBO5K3nkoNbXDSVcHsd3NaAQP4MUtRi2ofcw3DZ/hzlSesbtohAXVw9SsA==
+Message-Id: <daf4ba77-4c25-4993-900d-ee1fe713d9b6@fygo.io>
+X-Original-From: yu kuai <yukuai@fygo.io>
+In-Reply-To: <20260918071634.GA10884@lst.de>
+Cc: "Jens Axboe" <axboe@kernel.dk>, "Josef Bacik" <josef@toxicpanda.com>, 
+	"Tejun Heo" <tj@kernel.org>, "Johannes Weiner" <hannes@cmpxchg.org>, 
+	=?utf-8?q?Michal_Koutn=C3=BD?= <mkoutny@suse.com>, 
+	"Jonathan Corbet" <corbet@lwn.net>, 
+	"Shuah Khan" <skhan@linuxfoundation.org>, 
+	"Randy Dunlap" <rdunlap@infradead.org>, "Coly Li" <colyli@fygo.io>, 
+	"Kent Overstreet" <kent.overstreet@linux.dev>, 
+	"Alasdair Kergon" <agk@redhat.com>, "Mike Snitzer" <snitzer@kernel.org>, 
+	"Mikulas Patocka" <mpatocka@redhat.com>, 
+	"Benjamin Marzinski" <bmarzins@redhat.com>, "Song Liu" <song@kernel.org>, 
+	"Li Nan" <magiclinan@didiglobal.com>, "Xiao Ni" <xiao@kernel.org>, 
+	"Andreas Gruenbacher" <agruenba@redhat.com>, 
+	"Matthew Wilcox" <willy@infradead.org>, "Jan Kara" <jack@suse.cz>, 
+	"Andrew Morton" <akpm@linux-foundation.org>, 
+	"Chris Li" <chrisl@kernel.org>, "Kairui Song" <kasong@tencent.com>, 
+	"Kemeng Shi" <shikemeng@huaweicloud.com>, 
+	"Nhat Pham" <nphamcs@gmail.com>, "Baoquan He" <baoquan.he@linux.dev>, 
+	"Barry Song" <baohua@kernel.org>, 
+	"Youngjun Park" <youngjun.park@lge.com>, 
+	"Nathan Chancellor" <nathan@kernel.org>, 
+	"Nick Desaulniers" <ndesaulniers@google.com>, 
+	"Bill Wendling" <morbo@google.com>, 
+	"Justin Stitt" <justinstitt@google.com>, 
+	"Nilay Shroff" <nilay@linux.ibm.com>, "Tao Cui" <cuitao@kylinos.cn>, 
+	<linux-block@vger.kernel.org>, <cgroups@vger.kernel.org>, 
+	<linux-doc@vger.kernel.org>, <linux-kernel@vger.kernel.org>, 
+	<linux-bcache@vger.kernel.org>, <dm-devel@lists.linux.dev>, 
+	<linux-raid@vger.kernel.org>, <gfs2@lists.linux.dev>, 
+	<linux-fsdevel@vger.kernel.org>, <linux-mm@kvack.org>, 
+	<llvm@lists.linux.dev>
+Date: Fri, 18 Sep 2026 17:19:53 +0800
+Received: from [192.168.1.104] ([39.182.0.142]) by smtp.larksuite.com with ESMTPS; Fri, 18 Sep 2026 09:20:01 +0000
+Reply-To: yukuai@fygo.io
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
-MIME-Version: 1.0
-Date: Fri, 18 Sep 2026 09:05:26 +0100
-Message-ID: <715249.1789718726@warthog.procyon.org.uk>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: bgtfQvTcWkvqKwWn-89wa03ZWO-QsDHAnE7sBKb3f-A_1789718736
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="us-ascii"
-Content-ID: <715248.1789718726.1@warthog.procyon.org.uk>
+Mime-Version: 1.0
+Subject: Re: dm review needed, was: Re: [PATCH v3 2/3] blk-cgroup: store blkcg in bio instead of blkg
+Content-Transfer-Encoding: quoted-printable
+X-Lms-Return-Path: <lba+26aad0242+26ae42+lists.linux.dev+yukuai@fygo.io>
+Content-Type: text/plain; charset=UTF-8
+To: "Christoph Hellwig" <hch@lst.de>, "yu kuai" <yukuai@fygo.io>
+From: "yu kuai" <yukuai@fygo.io>
+References: <20260918041744.1526924-1-yukuai@kernel.org> <20260918041744.1526924-3-yukuai@kernel.org> <20260918071634.GA10884@lst.de>
+User-Agent: Mozilla Thunderbird
 
-Jarkko Sakkinen <jarkko@kernel.org> wrote:
+Hi,
 
-> This is great for discussion but what we want for the commit message
-> is just motivation and resolution.
+=E5=9C=A8 2026/9/18 15:16, Christoph Hellwig =E5=86=99=E9=81=93:
+> On Fri, Sep 18, 2026 at 12:17:43PM +0800, Yu Kuai wrote:
+>>   static inline void dm_bio_record(struct dm_bio_details *bd, struct bio=
+ *bio)
+>>   {
+>>   	bd->bi_bdev =3D bio->bi_bdev;
+>> -	bd->bi_flags =3D bio->bi_flags;
+>> +	/*
+>> +	 * Restoring BIO_BLKG_REF would not recreate its associated reference.
+>> +	 */
+>> +	bd->bi_flags =3D bio->bi_flags & ~(1U << BIO_BLKG_REF);
+> But do we need to restore the reference?  I have to admit that
+> this surrounding code is very confusing and I would really like
+> to have the dm maintainers look over it.
 
-Actually, I think it's useful that Andrew wrote up the issues in the commit
-message - and I think it shows part of the motivation.  The 'writing a fake
-/proc/keys line in the description' is something I hadn't considered.
+dm_bio_record() will store the bi_flags for current bio, later the flag is =
+restored
+by dm_bio_restore(). For example like dm-raid1 read error path:
 
-> I don't think we need all this just to say that /proc/keys in a racy
-> query mechanism for production, which is an issue for dm-verity, given
-> that nothing else is available.
+issue path, if blk-throttle is enabled, flag can be set before bio issuing =
+to dm-raid1
 
-I think at some point, we will need a system call to search all for all
-accessible keys matching certain criteria by actually walking the key
-database.  The problem there is that there may be multiple hits, so we may
-need something like:
+mirror_map
+  dm_bio_record
+   bd->bi_flags =3D bio->bi_flags
+   // contain the new flag
 
-	int count = find_key(key_serial_t start_id,
-			     const char *type, const char *desc_prefix,
-			     key_serial_t *results, size_t results_size,
-			     unsigned int flags);
+bio_endio
+  bio_clear_blkcg
+  // new flag is cleared
+  clone_endio
+   mirror_end_io
+   // if this IO failed and there is another mirror to read
+    dm_bio_restore
+     bio->bi_flags =3D bd->bi_flags
+     // new flag is set without get a blkg reference
 
-Allowing you to do:
+So I think we don't need to restore the reference, BTW, there is another ap=
+proach to
+avoid such problem in blk-throttle I don't take for now:
 
-	key_serial_t dm_key;
-	int n = find_key(0, "keyring", ".dm_verity", &dm_key, 1,
-			 FIND_KEY_EXACT_DESC);
+For bio entering blk-throttle, we can clear the new flag and blkg reference=
+ directly
+after the bio is throttled and before this bio is issuing to disk, because =
+bio will
+not enter blk-throttle in the completion path. And since blk-throttle is th=
+e only rq_qos
+policy that can be enabled for bio-based disk, then dm_bio_record() will ne=
+ver see a
+bio with the new flag set.
 
-This wouldn't be as fast as a direct lookup since it would have to walk the
-key tree, doing name comparisons and perm checks on each key of the type.
-
-> And secondly special keys are meant for implicit keyrings so isn't
-> that all there's to it?
-
-I have no particular objection to setting aside a block of negative key IDs
-for special keyrings that need to be accessed a lot - though I would make
-common reg/unreg functions that take the ID to be registered and, say, set the
-block at -257..-512.  Moving the BFP keyring to -257 and DM to -258.
-
-David
-
+--=20
+Thanks,
+Kuai
