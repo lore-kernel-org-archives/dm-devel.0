@@ -1,142 +1,225 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09C1B51122E
-	for <dm-devel@lists.linux.dev>; Thu, 17 Sep 2026 13:04:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 715C33BFAEB;
+	Fri, 18 Sep 2026 02:29:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789650278; cv=none; b=oa8rE8AELCXO4CSqg7nnONHyDClKDEulJOUR/F4fNvwGk7Jsyquc3XSkttRxyKc+qPjfKu696sX5TjZud0yfvu18y25atH8dP+SSxk2LTTjPxjOApJDquUEqhzzqiNR2N9oeWUsJbENBi3fBvgOjw+RQthjP8o2BsC5Wp+phzrA=
+	t=1789698585; cv=none; b=VS6oDG5emjTTizhcSowoU7yTTLss1lm6CYqqU+KaFVzGQs4TeeUJNm+V1ckvpLZAhMsHpSvWYwH0AR52W/qMrslsdl/EoxOTCKuOpSGbMah1aIjuB13xMsvau8zBdzyfNhmwoeZuWZFYM4SdFCkBnsvpEU1fuiOE//H+5dv3OEw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789650278; c=relaxed/simple;
-	bh=Rp/BLc9CNLUciKOM5zKPdKUP5vUmnfeaCqEiy7XMhg8=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=liUwOCg5p8oSiNkZMCxgAZVQGtGPInkK/utlwjJ62/bx8QCosKNurONSRdNwUBbrUMhhjnQsm+ImaXuYW5Iy3A7vFdwTeE7MRllcxjW9ao//DCEL06d5h9yBYxsX7zXkyqIR+jgOiXsWtQ/A9+VUIUQ8zKGVEuPjPKLS9Fkg0bE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=LGqT7KPo; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1789698585; c=relaxed/simple;
+	bh=zr6RZjqy8zkfck/Pdh/SCIhM1e3d18vR1boWvALaMiA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=ALesK0gG8O1NK9BtxfC4gme2ctV6XKet6bbZz17U53CPwfHelV3jowQoLgNLimNDyuccrNghTJ12y8yIwBMxj60AsJLU3D2Y6Q/bcEPWEp2pRzSOwzeswMZ4f8vi83Npdafyy5dfbKeFFcQ3BlltX8LQ66uoKPZzcca9JdZoxeU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ITubRvvc; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="LGqT7KPo"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789650265;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=naiFAqVVLvn+9AEgh0Untd5WWTs3XcLs8AymZ6Lcz88=;
-	b=LGqT7KPo5EGkTEQHU0J+WXRE8b4aCvOTSOAjHHOVuUwuA02aekjbOQIm/D3RkAUTNx1Qyi
-	XpWLbBnkAfG11Fpyd/10zZlTCCoTzPyVUkrdIJgz23Ni+/rANdF37b9RB1rDGbJ/sPy93S
-	ewrBerDtt/6J8gn6zmmH2Ya6HP603s0=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-425-eUxI28GEMWyV_i1yegzz4Q-1; Thu,
- 17 Sep 2026 09:04:23 -0400
-X-MC-Unique: eUxI28GEMWyV_i1yegzz4Q-1
-X-Mimecast-MFC-AGG-ID: eUxI28GEMWyV_i1yegzz4Q_1789650262
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5E9761953971;
-	Thu, 17 Sep 2026 13:04:22 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3E6E71956095;
-	Thu, 17 Sep 2026 13:04:20 +0000 (UTC)
-Date: Thu, 17 Sep 2026 15:04:17 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Matthias Goergens <matthias.goergens@gmail.com>
-cc: dm-devel@lists.linux.dev, bmarzins@redhat.com, agk@redhat.com, 
-    snitzer@kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v2] dm-delay: advertise flush support when a flush delay
- is configured
-In-Reply-To: <20260917111742.1328396-1-matthias.goergens@gmail.com>
-Message-ID: <0ab89280-9279-f4dd-bf82-26997dbfcedd@redhat.com>
-References: <20260814045813.3148127-1-matthias.goergens@gmail.com> <20260917111742.1328396-1-matthias.goergens@gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ITubRvvc"
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A94C41F000FF;
+	Fri, 18 Sep 2026 02:29:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1789698573;
+	bh=g9YcUG3szeoayvwUqM/cv8sctvahn3Ihcoi9jbjGOnk=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=ITubRvvc3F/vvkNNV3easTtv4kW2t5sTGcQTrFimYGHRTwrI36hleEBj04p+G4rD+
+	 NamNYIZiDAoFX0JrbXdOJ6jo1MW4JQvtJnZely7Mw/DeVKHz4e/H85J6KnkgRoEc5I
+	 cLgsJVPAcMhvkwd6xKrLPl8G7InF+UXtNbbg8ngK7txU/xCUsC+I9gO05MwuE3doN2
+	 /gdrMcCm4IwXBvGjSc4UnL+t92rx9lkE502wmrjLTerz13U0wjK5mG4QN8XgBagAGv
+	 EMbNmlXejAvA43Xb6vzKXOfltB7g1Z9/tWbDe2iu9Z8WZCKSMHvXSmuAd1wqPLTC/4
+	 Z4KrVoDpwIZWQ==
+Date: Fri, 18 Sep 2026 05:29:29 +0300
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Andrew Halaney <andrew@amutable.com>
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	David Howells <dhowells@redhat.com>,
+	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, keyrings@vger.kernel.org,
+	linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
+	fsverity@lists.linux.dev, linux-doc@vger.kernel.org,
+	"Christian Brauner (Amutable)" <brauner@kernel.org>
+Subject: Re: [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
+Message-ID: <aqyiCavj3xeNqyAo@kernel.org>
+References: <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com>
+ <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-MFC-PROC-ID: pcMdwm1jATqBNCpUn-fKdNva6ejuv8IsA1c8Mu215GU_1789650262
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
 
-OK.
-
-I updated the patch in the linux-dm repository.
-
-Mikulas
-
-
-
-On Thu, 17 Sep 2026, Matthias Goergens wrote:
-
-> dm-delay has a flush delay class: the 9-argument table form takes
-> <flush_device> <flush_offset> <flush_delay>, delay_map() routes
-> REQ_PREFLUSH bios to it, num_flush_bios is 1, and
-> Documentation/admin-guide/device-mapper/delay.rst documents it. But
-> the target never sets ti->flush_supported, so the dm device only
-> supports flushes when an underlying device stacks BLK_FEAT_WRITE_CACHE
-> into its limits. Over a write-through device (write_cache "write
-> through") it does not: submit_bio_noacct() strips REQ_PREFLUSH and
-> REQ_FUA before any bio reaches the target, and a configured flush
-> delay measures nothing.
+On Mon, Sep 14, 2026 at 11:41:42AM -0500, Andrew Halaney wrote:
+> The .dm-verity keyring is not linked into any process keyring, so
+> request_key() and KEYCTL_SEARCH cannot find it. Userspace has to scrape
+> /proc/keys for the serial to use.
 > 
-> Set ti->flush_supported when dc->flush.delay is non-zero. A configured
-> flush delay then always sees its flushes. Without one, dm-delay keeps
-> stacking flush support from the underlying device like the other
-> targets, so an undelayed dm-delay behaves like linear for flushes.
-> As for any table with flush support, the dm queue then also
-> advertises FUA; delay_map() keeps routing REQ_FUA writes to the
-> write class, and only REQ_PREFLUSH goes to the flush class.
+> That's not great, one could put in a bogus description containing
+> a newline to confuse userspace further. For example, thanks to AI
+> models, which I run as root but you could show off as any old user:
 > 
-> Verified in a VM with dm-delay over a write-through virtio-scsi disk,
-> using a 9-argument table with write delay 0 and a flush delay of 200
-> or 800 ms. Without this change the dm queue reports write_cache "write
-> through", fua 0, and five 4 KiB dd oflag=dsync writes to the dm device
-> complete in 0-1 ms. With it the queue reports "write back", fua 1, and
-> the same writes take 204-210 ms and 812-880 ms. Zero-delay tables over
-> the write-through disk and over a write-back disk behave the same with
-> and without the change and keep the underlying queue's settings.
+>     # DESC=$'.dm-verity: 1\n0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity'
+>     # k=$(echo -n "1234567" | keyctl padd user "$DESC" @s)
+>     # keyctl setperm "$k" 0x3f010001
 > 
-> Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
-> Signed-off-by: Matthias Goergens <matthias.goergens@gmail.com>
+>     # cat /proc/keys | grep dm-verity
+>     10402023 I------     2 perm 082f0000     0     0 keyring   .dm-verity: empty
+>     12e0bee6 I--Q---     1 perm 3f010001     0     0 user      .dm-verity: 1
+>     0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity: 7
+> 
+> 0x0badf00d is not a keyring, it is the text inside our user's key
+> description. Telling the two apart needs a KEYCTL_DESCRIBE per row
+> which is annoying to do. i.e.:
+> 
+>     # keyctl rdescribe 0x10402023
+>     keyring;0;0;082f0000;.dm-verity
+>     # keyctl rdescribe 0x0badf00d
+>     keyctl_describe: Required key not available
+> 
+> Let's just give it a well known identifier, i.e.:
+> 
+>     # keyctl rdescribe -10
+>     keyring;0;0;082f0000;.dm-verity
+> 
+> This is exactly what
+> commit 264d8fd2794f ("bpf, keys: Add a bpf keyring for program signature validation")
+> did, and was the inspiration for this commit minus the spinlock bits
+> required due to dm-verity being a module.
+
+This is great for discussion but what we want for the commit message
+is just motivation and resolution.
+
+I don't think we need all this just to say that /proc/keys in a racy
+query mechanism for production, which is an issue for dm-verity, given
+that nothing else is available.
+
+And secondly special keys are meant for implicit keyrings so isn't
+that all there's to it?
+
+
+> 
+> Suggested-by: Christian Brauner (Amutable) <brauner@kernel.org>
+> Signed-off-by: Andrew Halaney <andrew@amutable.com>
 > ---
-> Changes since v1:
-> - Set flush_supported only when dc->flush.delay is non-zero, so an
->   undelayed dm-delay behaves like linear for flushes (Ben).
-> - Commit message describes only the write-through case; otherwise dm
->   stacks flush support from the underlying device (Ben).
-> - Dropped the claim that FUA writes reach the wire: tracing the
->   underlying disk shows a plain data write and a REQ_PREFLUSH bio.
-> - Re-measured with write delay 0 so the timing isolates the flush class.
+>  drivers/md/dm-verity-verify-sig.c |  3 +++
+>  include/linux/key.h               |  1 +
+>  include/uapi/linux/keyctl.h       |  1 +
+>  security/keys/process_keys.c      | 33 +++++++++++++++++++++++++++++++++
+>  4 files changed, 38 insertions(+)
 > 
->  drivers/md/dm-delay.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
+> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> index b2b55c41e2cb..da509dcdd7e5 100644
+> --- a/drivers/md/dm-verity-verify-sig.c
+> +++ b/drivers/md/dm-verity-verify-sig.c
+> @@ -189,11 +189,14 @@ int __init dm_verity_verify_sig_init(void)
+>  	    keyring_restrict(make_key_ref(dm_verity_keyring, true), NULL, NULL))
+>  		panic("dm-verity can't seal keyring\n");
+>  
+> +	key_register_dm_verity_keyring(dm_verity_keyring);
+> +
+>  	return 0;
+>  }
+>  
+>  void dm_verity_verify_sig_exit(void)
+>  {
+> +	key_register_dm_verity_keyring(NULL);
+>  	key_revoke(dm_verity_keyring);
+>  	key_put(dm_verity_keyring);
+>  }
+> diff --git a/include/linux/key.h b/include/linux/key.h
+> index bd10fe45819d..ae8d3314fd93 100644
+> --- a/include/linux/key.h
+> +++ b/include/linux/key.h
+> @@ -441,6 +441,7 @@ extern int keyring_restrict(key_ref_t keyring, const char *type,
+>  			    const char *restriction);
+>  
+>  extern void key_register_bpf_keyring(struct key *keyring);
+> +extern void key_register_dm_verity_keyring(struct key *keyring);
+>  
+>  extern struct key *key_lookup(key_serial_t id);
+>  
+> diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
+> index fa85b9760391..75923941f1b3 100644
+> --- a/include/uapi/linux/keyctl.h
+> +++ b/include/uapi/linux/keyctl.h
+> @@ -25,6 +25,7 @@
+>  #define KEY_SPEC_REQKEY_AUTH_KEY	-7	/* - key ID for assumed request_key auth key */
+>  #define KEY_SPEC_REQUESTOR_KEYRING	-8	/* - key ID for request_key() dest keyring */
+>  #define KEY_SPEC_BPF_KEYRING		-9	/* - key ID for the BPF-specific keyring */
+> +#define KEY_SPEC_DM_VERITY_KEYRING	-10	/* - key ID for the .dm-verity keyring */
+>  
+>  /* request-key default keyrings */
+>  #define KEY_REQKEY_DEFL_NO_CHANGE		-1
+> diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
+> index 44358388e395..dba3df41638b 100644
+> --- a/security/keys/process_keys.c
+> +++ b/security/keys/process_keys.c
+> @@ -25,6 +25,10 @@ static DEFINE_MUTEX(key_session_mutex);
+>  /* BPF keyring reachable through KEY_SPEC_BPF_KEYRING */
+>  static struct key *bpf_keyring __ro_after_init;
+>  
+> +/* dm-verity keyring reachable through KEY_SPEC_DM_VERITY_KEYRING */
+> +static struct key *dm_verity_keyring;
+> +static DEFINE_SPINLOCK(dm_verity_keyring_lock);
+> +
+>  /* The root user's tracking struct */
+>  struct key_user root_key_user = {
+>  	.usage		= REFCOUNT_INIT(3),
+> @@ -607,6 +611,24 @@ void key_register_bpf_keyring(struct key *keyring)
+>  	bpf_keyring = keyring;
+>  }
+>  
+> +/**
+> + * key_register_dm_verity_keyring - Publish the keyring for KEY_SPEC_DM_VERITY_KEYRING
+> + * @keyring: The keyring to publish, or NULL to withdraw it
+> + *
+> + * Make @keyring reachable by userspace through the KEY_SPEC_DM_VERITY_KEYRING
+> + * special key ID, so that provisioning it does not require scraping its
+> + * serial out of /proc/keys first. dm-verity can be unloaded as a module
+> + * and the keyring deregistered, as such serialize access with
+> + * dm_verity_keyring_lock.
+> + */
+> +void key_register_dm_verity_keyring(struct key *keyring)
+> +{
+> +	spin_lock(&dm_verity_keyring_lock);
+> +	dm_verity_keyring = keyring;
+> +	spin_unlock(&dm_verity_keyring_lock);
+> +}
+> +EXPORT_SYMBOL_GPL(key_register_dm_verity_keyring);
+> +
+>  /*
+>   * Look up a key ID given us by userspace with a given permissions mask to get
+>   * the key it refers to.
+> @@ -766,6 +788,17 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
+>  		key_ref = make_key_ref(key, 0);
+>  		break;
+>  
+> +	case KEY_SPEC_DM_VERITY_KEYRING:
+> +		spin_lock(&dm_verity_keyring_lock);
+> +		key = dm_verity_keyring;
+> +		if (key)
+> +			__key_get(key);
+> +		spin_unlock(&dm_verity_keyring_lock);
+> +		if (!key)
+> +			goto error;
+> +		key_ref = make_key_ref(key, 0);
+> +		break;
+> +
+>  	default:
+>  		key_ref = ERR_PTR(-EINVAL);
+>  		if (id < 1)
 > 
-> diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
-> index 4864671c2222f..96bb430215a32 100644
-> --- a/drivers/md/dm-delay.c
-> +++ b/drivers/md/dm-delay.c
-> @@ -301,6 +301,7 @@ static int delay_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  	}
->  
->  	ti->num_flush_bios = 1;
-> +	ti->flush_supported = dc->flush.delay != 0;
->  	ti->num_discard_bios = 1;
->  	ti->accounts_remapped_io = true;
->  	ti->per_io_data_size = sizeof(struct dm_delay_info);
-> @@ -451,7 +452,7 @@ static int delay_iterate_devices(struct dm_target *ti,
->  
->  static struct target_type delay_target = {
->  	.name	     = "delay",
-> -	.version     = {1, 5, 0},
-> +	.version     = {1, 5, 1},
->  	.features    = DM_TARGET_PASSES_INTEGRITY | DM_TARGET_ZONED_HM,
->  	.module      = THIS_MODULE,
->  	.ctr	     = delay_ctr,
 > -- 
 > 2.55.0
 > 
 
+BR, Jarkko
