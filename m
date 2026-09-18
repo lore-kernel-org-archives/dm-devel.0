@@ -1,225 +1,232 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 715C33BFAEB;
-	Fri, 18 Sep 2026 02:29:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47FEB331EB0;
+	Fri, 18 Sep 2026 04:17:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789698585; cv=none; b=VS6oDG5emjTTizhcSowoU7yTTLss1lm6CYqqU+KaFVzGQs4TeeUJNm+V1ckvpLZAhMsHpSvWYwH0AR52W/qMrslsdl/EoxOTCKuOpSGbMah1aIjuB13xMsvau8zBdzyfNhmwoeZuWZFYM4SdFCkBnsvpEU1fuiOE//H+5dv3OEw=
+	t=1789705078; cv=none; b=iN8NvXJwOS3njSTcVxKHPgAMvCsQl4J04/i27zzYU4kxJZECxBu80e76OK6FqfzR05xJHPbXCCLiPuegktET86NsRFIiXAxTFdofcq8xZ5FOo6JSMK8p038Cpk7vzk6busfUcu/QnGs3HrvSQxDwyvjBqlP+iFgj5/imxgTs4gE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789698585; c=relaxed/simple;
-	bh=zr6RZjqy8zkfck/Pdh/SCIhM1e3d18vR1boWvALaMiA=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ALesK0gG8O1NK9BtxfC4gme2ctV6XKet6bbZz17U53CPwfHelV3jowQoLgNLimNDyuccrNghTJ12y8yIwBMxj60AsJLU3D2Y6Q/bcEPWEp2pRzSOwzeswMZ4f8vi83Npdafyy5dfbKeFFcQ3BlltX8LQ66uoKPZzcca9JdZoxeU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ITubRvvc; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1789705078; c=relaxed/simple;
+	bh=hAKfeURgimH+zD5v3mZSGKclYtLi5kuQXJoRur/UxdQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=M+B35J+r2cqVzhdIuSg6kwqrG9v3Mq0KdT0rSKMx6EBnXElftmnGatRpVSopnHAcG9ANu2n9/FAfX/b9wZvxk/zDXasxA2zMu2NYQwG4ie4N9g2PErWX4D43fkz3HZI74aXAdY4UQ+Qj0TT70+Nx1CbbyQCrO48lEUJs0+E7q2c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dZdUIubP; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ITubRvvc"
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A94C41F000FF;
-	Fri, 18 Sep 2026 02:29:32 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dZdUIubP"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F1E811F000FF;
+	Fri, 18 Sep 2026 04:17:46 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1789698573;
-	bh=g9YcUG3szeoayvwUqM/cv8sctvahn3Ihcoi9jbjGOnk=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=ITubRvvc3F/vvkNNV3easTtv4kW2t5sTGcQTrFimYGHRTwrI36hleEBj04p+G4rD+
-	 NamNYIZiDAoFX0JrbXdOJ6jo1MW4JQvtJnZely7Mw/DeVKHz4e/H85J6KnkgRoEc5I
-	 cLgsJVPAcMhvkwd6xKrLPl8G7InF+UXtNbbg8ngK7txU/xCUsC+I9gO05MwuE3doN2
-	 /gdrMcCm4IwXBvGjSc4UnL+t92rx9lkE502wmrjLTerz13U0wjK5mG4QN8XgBagAGv
-	 EMbNmlXejAvA43Xb6vzKXOfltB7g1Z9/tWbDe2iu9Z8WZCKSMHvXSmuAd1wqPLTC/4
-	 Z4KrVoDpwIZWQ==
-Date: Fri, 18 Sep 2026 05:29:29 +0300
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Andrew Halaney <andrew@amutable.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	David Howells <dhowells@redhat.com>,
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	s=k20260515; t=1789705076;
+	bh=WWxabFUVlB3kxXBm4kFTC6I3NzI8FakdyNfET9iDosQ=;
+	h=From:To:Cc:Subject:Date;
+	b=dZdUIubP7WawPPBoUISGeGIF5ET69n9vHrkUVvspPnrH7fxHweJj2pqEOElVx2vIL
+	 0gFC5UbRFw2yyrUHY8PuEWsj3Mk6WHImCplwTlI60/XUI76P7v6YKqCFuBRQ3z6vC8
+	 D4IfiDdtb9OpF9KJwyaUUmE0WCWrChqkCcnscAtjBVSlbLeT1gn8kIAGDPn7QXBRDy
+	 uyVZJ/cSvCjKvvkrk1SWqjkP71K7D2BHoKJ257aiaDDnQ+ozchaBZMGL59Cyc8YNCA
+	 cgNPGGgrw2vZkS3Mn+lrb1xgQs6YmdMPOv5u8KaDeiJ+0j1eeksXZuaT4qd7J9F0+p
+	 3erBVRFc7D2AQ==
+From: Yu Kuai <yukuai@kernel.org>
+To: Jens Axboe <axboe@kernel.dk>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Tejun Heo <tj@kernel.org>,
+	Johannes Weiner <hannes@cmpxchg.org>,
+	=?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>,
 	Jonathan Corbet <corbet@lwn.net>,
 	Shuah Khan <skhan@linuxfoundation.org>,
-	Randy Dunlap <rdunlap@infradead.org>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, keyrings@vger.kernel.org,
-	linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
-	fsverity@lists.linux.dev, linux-doc@vger.kernel.org,
-	"Christian Brauner (Amutable)" <brauner@kernel.org>
-Subject: Re: [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
-Message-ID: <aqyiCavj3xeNqyAo@kernel.org>
-References: <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com>
- <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
+	Randy Dunlap <rdunlap@infradead.org>,
+	Coly Li <colyli@fygo.io>,
+	Kent Overstreet <kent.overstreet@linux.dev>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Song Liu <song@kernel.org>,
+	Li Nan <magiclinan@didiglobal.com>,
+	Xiao Ni <xiao@kernel.org>,
+	Andreas Gruenbacher <agruenba@redhat.com>,
+	Matthew Wilcox <willy@infradead.org>,
+	Jan Kara <jack@suse.cz>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Chris Li <chrisl@kernel.org>,
+	Kairui Song <kasong@tencent.com>,
+	Kemeng Shi <shikemeng@huaweicloud.com>,
+	Nhat Pham <nphamcs@gmail.com>,
+	Baoquan He <baoquan.he@linux.dev>,
+	Barry Song <baohua@kernel.org>,
+	Youngjun Park <youngjun.park@lge.com>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Nick Desaulniers <ndesaulniers@google.com>,
+	Bill Wendling <morbo@google.com>,
+	Justin Stitt <justinstitt@google.com>
+Cc: Yu Kuai <yukuai@fygo.io>,
+	Christoph Hellwig <hch@lst.de>,
+	Nilay Shroff <nilay@linux.ibm.com>,
+	Tao Cui <cuitao@kylinos.cn>,
+	linux-block@vger.kernel.org,
+	cgroups@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-bcache@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	linux-raid@vger.kernel.org,
+	gfs2@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org,
+	linux-mm@kvack.org,
+	llvm@lists.linux.dev
+Subject: [PATCH v3 0/3] blk-cgroup: store blkcg in bio before blkcg_mutex conversion
+Date: Fri, 18 Sep 2026 12:17:41 +0800
+Message-ID: <20260918041744.1526924-1-yukuai@kernel.org>
+X-Mailer: git-send-email 2.51.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Sep 14, 2026 at 11:41:42AM -0500, Andrew Halaney wrote:
-> The .dm-verity keyring is not linked into any process keyring, so
-> request_key() and KEYCTL_SEARCH cannot find it. Userspace has to scrape
-> /proc/keys for the serial to use.
-> 
-> That's not great, one could put in a bogus description containing
-> a newline to confuse userspace further. For example, thanks to AI
-> models, which I run as root but you could show off as any old user:
-> 
->     # DESC=$'.dm-verity: 1\n0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity'
->     # k=$(echo -n "1234567" | keyctl padd user "$DESC" @s)
->     # keyctl setperm "$k" 0x3f010001
-> 
->     # cat /proc/keys | grep dm-verity
->     10402023 I------     2 perm 082f0000     0     0 keyring   .dm-verity: empty
->     12e0bee6 I--Q---     1 perm 3f010001     0     0 user      .dm-verity: 1
->     0badf00d I--Q---     1 perm 082f0000     0     0 keyring   .dm-verity: 7
-> 
-> 0x0badf00d is not a keyring, it is the text inside our user's key
-> description. Telling the two apart needs a KEYCTL_DESCRIBE per row
-> which is annoying to do. i.e.:
-> 
->     # keyctl rdescribe 0x10402023
->     keyring;0;0;082f0000;.dm-verity
->     # keyctl rdescribe 0x0badf00d
->     keyctl_describe: Required key not available
-> 
-> Let's just give it a well known identifier, i.e.:
-> 
->     # keyctl rdescribe -10
->     keyring;0;0;082f0000;.dm-verity
-> 
-> This is exactly what
-> commit 264d8fd2794f ("bpf, keys: Add a bpf keyring for program signature validation")
-> did, and was the inspiration for this commit minus the spinlock bits
-> required due to dm-verity being a module.
+From: Yu Kuai <yukuai@fygo.io>
 
-This is great for discussion but what we want for the commit message
-is just motivation and resolution.
+This is v3 of the preparatory series for the blkcg_mutex conversion
+proposed in the related series [1]. That conversion moves queue-local
+blkg topology synchronization from q->queue_lock to q->blkcg_mutex,
+which is awkward while bios directly store queue-local blkg references.
 
-I don't think we need all this just to say that /proc/keys in a racy
-query mechanism for production, which is an issue for dm-verity, given
-that nothing else is available.
+Storing a blkg also ties a bio to one request_queue. A remapped bio must
+drop that reference and recreate the association for the new queue even
+when no blkcg policy needs it. Dying blkgs add another complication:
+they disappear from the per-blkcg lookup tree before all pinned bio
+references drain.
 
-And secondly special keys are meant for implicit keyrings so isn't
-that all there's to it?
+Patch 1 makes request_queue the authoritative lookup owner. A
+queue-owned rhashtable keyed by the blkcg CSS ID keeps dying blkgs
+discoverable until their references drain, while q->blkg_list remains
+available for ordered walks.
+
+Patch 2 stores and pins the queue-independent blkcg CSS in each bio.
+Queue-local blkgs are created lazily by policy users, then pinned until
+the bio changes devices or releases its cgroup state. Completion and
+accounting paths which do not create a blkg remain lookup-only.
+
+Patch 3 moves async bio punt state from blkg to blkcg, so punting alone
+does not instantiate a queue-local blkg.
+
+Changes since v2:
+
+  - Rebase onto the latest for-7.4/block branch.
+  - In patch 2, clarify why dm_bio_record() excludes BIO_BLKG_REF and
+    add Nilay Shroff's Reviewed-by.
+  - In patch 3, replace scoped spinlock guards with explicit
+    spin_lock()/spin_unlock(), drop the redundant teardown check, and
+    rely on zero-initialization for async_bios before publication, as
+    suggested by Nilay Shroff and Christoph Hellwig.
+
+Changes since v1:
+
+  - Rebase onto the latest block-7.3 branch.
+  - In patch 2, require every blkg rhashtable lookup to run inside an
+    explicit RCU read-side critical section. Annotate blkg_lookup_any(),
+    blkg_lookup(), and recursive wrappers with __must_hold_shared(RCU)
+    so Clang thread-safety analysis verifies the contract.
+  - In patch 2, exclude BIO_BLKG_REF from the flags saved by
+    dm_bio_record(), since restoring an ownership bit cannot recreate
+    the associated blkg reference.
+  - In patch 3, use scoped spinlock guards for async_bios and annotate
+    the list with __guarded_by().
+  - Add Nilay Shroff's Reviewed-by to patch 1.
+
+Changes since RFC v3:
+
+  - Drop the RFC prefix.
+  - Add Christoph Hellwig's Reviewed-by to patch 1.
+  - Add Tao Cui's Reviewed-by to patch 2.
+  - In patch 2, relax blkg_lookup_any()/blkg_lookup() to also allow
+    q->queue_lock as an alternative to the RCU read lock.
+
+Changes since RFC v2:
+
+  - Drop the old patch 1 and send it separately as a bugfix for 7.3 and
+    -stable, as suggested by Christoph Hellwig.
+  - Rebase onto the latest for-7.3/block branch.
+  - In the new patch 1, note that the remaining q->blkg_list walkers are
+    cgroupfs/sysfs slow paths and can move to rhashtable iteration after
+    the queue_lock-to-blkcg_mutex conversion.
+  - In the new patch 1, explain the list_empty case in blkg_release(), and
+    add an RCU lockdep assertion plus documentation that blkg_lookup_any()
+    does not acquire a reference.
+
+Changes since RFC v1:
+
+  - Add patch 1 to wait for every old blkg to leave q->blkg_list before a
+    shared request_queue is rebound, instead of treating root_blkg == NULL
+    as completion of asynchronous blkg teardown.
+  - Add patch 2 to replace the per-blkcg radix tree and lookup hint with a
+    request_queue rhashtable keyed by blkcg->css.id, as suggested by
+    Christoph Hellwig. Keep dying pinned blkgs in the hash until
+    blkg_release() so bio-owned references remain discoverable.
+  - Fold the v1 helper-only patch into patch 3, as suggested by Jan Kara
+    and Christoph Hellwig, and make bio_blkcg() naturally return NULL for
+    an unassociated bio.
+  - Rework patch 3 so blkg_lookup_create() acquires the bio-owned
+    reference, falls back to a live parent when creation or tryget fails,
+    and updates bi_blkcg when the returned blkg belongs to an ancestor.
+  - Make bio_blkg_lookup() lookup-only: it returns NULL unless BIO_BLKG_REF
+    is already set. Use bio_blkg() in the BFQ and IOCOST merge paths which
+    may need to create a blkg, while keeping blk_cgroup_bio_start() and
+    completion paths lookup-only.
+  - Move CSS online-reference handling into
+    bio_associate_blkcg_from_css(), including fallback to the root blkcg,
+    so bio_associate_blkcg() does not take a redundant reference.
+  - Keep the v1 async bio punt conversion as patch 4 and document that
+    async_bio_lock protects async_bios.
+
+Previous versions:
+  - v2: https://lore.kernel.org/r/cover.1789237876.git.yukuai@fygo.io
+  - v1: https://lore.kernel.org/r/20260823133045.970199-1-yukuai@kernel.org
+  - RFC v3:
+    https://lore.kernel.org/r/20260818070641.756747-1-yukuai@kernel.org
+  - RFC v2:
+    https://lore.kernel.org/r/20260811064744.1139446-1-yukuai@kernel.org
+  - RFC v1:
+    https://lore.kernel.org/r/20260804065313.2092022-1-yukuai@kernel.org
+
+Related series:
+  [1] RFC v2 blk-cgroup: protect blkgs with blkcg_mutex
+      https://lore.kernel.org/r/20260724123037.3004560-1-yukuai@kernel.org
+
+Yu Kuai (3):
+  blk-cgroup: use a request_queue rhashtable for blkg lookup
+  blk-cgroup: store blkcg in bio instead of blkg
+  blk-cgroup: move async bio punt state to blkcg
+
+ Documentation/admin-guide/cgroup-v2.rst |   2 +-
+ block/bfq-cgroup.c                      |  18 +-
+ block/bfq-iosched.c                     |  19 +-
+ block/bio.c                             |  22 +-
+ block/blk-cgroup-fc-appid.c             |  10 +-
+ block/blk-cgroup-rwstat.h               |   2 +-
+ block/blk-cgroup.c                      | 346 ++++++++++++++----------
+ block/blk-cgroup.h                      |  93 +++++--
+ block/blk-core.c                        |   9 +-
+ block/blk-crypto-fallback.c             |   2 +-
+ block/blk-iocost.c                      |  12 +-
+ block/blk-iolatency.c                   |  11 +-
+ block/blk-ioprio.c                      |   2 +-
+ block/blk-throttle.c                    |   3 +-
+ block/blk-throttle.h                    |   2 +-
+ drivers/md/bcache/request.c             |   2 +-
+ drivers/md/dm-bio-record.h              |   5 +-
+ drivers/md/dm.c                         |   2 +-
+ drivers/md/md.c                         |   2 +-
+ fs/gfs2/lops.c                          |   3 +-
+ include/linux/bio.h                     |  26 +-
+ include/linux/blk_types.h               |   9 +-
+ include/linux/blkdev.h                  |   2 +
+ include/linux/writeback.h               |   2 +-
+ mm/page_io.c                            |  12 +-
+ 25 files changed, 381 insertions(+), 237 deletions(-)
 
 
-> 
-> Suggested-by: Christian Brauner (Amutable) <brauner@kernel.org>
-> Signed-off-by: Andrew Halaney <andrew@amutable.com>
-> ---
->  drivers/md/dm-verity-verify-sig.c |  3 +++
->  include/linux/key.h               |  1 +
->  include/uapi/linux/keyctl.h       |  1 +
->  security/keys/process_keys.c      | 33 +++++++++++++++++++++++++++++++++
->  4 files changed, 38 insertions(+)
-> 
-> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-> index b2b55c41e2cb..da509dcdd7e5 100644
-> --- a/drivers/md/dm-verity-verify-sig.c
-> +++ b/drivers/md/dm-verity-verify-sig.c
-> @@ -189,11 +189,14 @@ int __init dm_verity_verify_sig_init(void)
->  	    keyring_restrict(make_key_ref(dm_verity_keyring, true), NULL, NULL))
->  		panic("dm-verity can't seal keyring\n");
->  
-> +	key_register_dm_verity_keyring(dm_verity_keyring);
-> +
->  	return 0;
->  }
->  
->  void dm_verity_verify_sig_exit(void)
->  {
-> +	key_register_dm_verity_keyring(NULL);
->  	key_revoke(dm_verity_keyring);
->  	key_put(dm_verity_keyring);
->  }
-> diff --git a/include/linux/key.h b/include/linux/key.h
-> index bd10fe45819d..ae8d3314fd93 100644
-> --- a/include/linux/key.h
-> +++ b/include/linux/key.h
-> @@ -441,6 +441,7 @@ extern int keyring_restrict(key_ref_t keyring, const char *type,
->  			    const char *restriction);
->  
->  extern void key_register_bpf_keyring(struct key *keyring);
-> +extern void key_register_dm_verity_keyring(struct key *keyring);
->  
->  extern struct key *key_lookup(key_serial_t id);
->  
-> diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
-> index fa85b9760391..75923941f1b3 100644
-> --- a/include/uapi/linux/keyctl.h
-> +++ b/include/uapi/linux/keyctl.h
-> @@ -25,6 +25,7 @@
->  #define KEY_SPEC_REQKEY_AUTH_KEY	-7	/* - key ID for assumed request_key auth key */
->  #define KEY_SPEC_REQUESTOR_KEYRING	-8	/* - key ID for request_key() dest keyring */
->  #define KEY_SPEC_BPF_KEYRING		-9	/* - key ID for the BPF-specific keyring */
-> +#define KEY_SPEC_DM_VERITY_KEYRING	-10	/* - key ID for the .dm-verity keyring */
->  
->  /* request-key default keyrings */
->  #define KEY_REQKEY_DEFL_NO_CHANGE		-1
-> diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
-> index 44358388e395..dba3df41638b 100644
-> --- a/security/keys/process_keys.c
-> +++ b/security/keys/process_keys.c
-> @@ -25,6 +25,10 @@ static DEFINE_MUTEX(key_session_mutex);
->  /* BPF keyring reachable through KEY_SPEC_BPF_KEYRING */
->  static struct key *bpf_keyring __ro_after_init;
->  
-> +/* dm-verity keyring reachable through KEY_SPEC_DM_VERITY_KEYRING */
-> +static struct key *dm_verity_keyring;
-> +static DEFINE_SPINLOCK(dm_verity_keyring_lock);
-> +
->  /* The root user's tracking struct */
->  struct key_user root_key_user = {
->  	.usage		= REFCOUNT_INIT(3),
-> @@ -607,6 +611,24 @@ void key_register_bpf_keyring(struct key *keyring)
->  	bpf_keyring = keyring;
->  }
->  
-> +/**
-> + * key_register_dm_verity_keyring - Publish the keyring for KEY_SPEC_DM_VERITY_KEYRING
-> + * @keyring: The keyring to publish, or NULL to withdraw it
-> + *
-> + * Make @keyring reachable by userspace through the KEY_SPEC_DM_VERITY_KEYRING
-> + * special key ID, so that provisioning it does not require scraping its
-> + * serial out of /proc/keys first. dm-verity can be unloaded as a module
-> + * and the keyring deregistered, as such serialize access with
-> + * dm_verity_keyring_lock.
-> + */
-> +void key_register_dm_verity_keyring(struct key *keyring)
-> +{
-> +	spin_lock(&dm_verity_keyring_lock);
-> +	dm_verity_keyring = keyring;
-> +	spin_unlock(&dm_verity_keyring_lock);
-> +}
-> +EXPORT_SYMBOL_GPL(key_register_dm_verity_keyring);
-> +
->  /*
->   * Look up a key ID given us by userspace with a given permissions mask to get
->   * the key it refers to.
-> @@ -766,6 +788,17 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
->  		key_ref = make_key_ref(key, 0);
->  		break;
->  
-> +	case KEY_SPEC_DM_VERITY_KEYRING:
-> +		spin_lock(&dm_verity_keyring_lock);
-> +		key = dm_verity_keyring;
-> +		if (key)
-> +			__key_get(key);
-> +		spin_unlock(&dm_verity_keyring_lock);
-> +		if (!key)
-> +			goto error;
-> +		key_ref = make_key_ref(key, 0);
-> +		break;
-> +
->  	default:
->  		key_ref = ERR_PTR(-EINVAL);
->  		if (id < 1)
-> 
-> -- 
-> 2.55.0
-> 
-
-BR, Jarkko
+base-commit: af78ca007be5f63dc34b8180c8063c1113697192
+-- 
+2.51.0
