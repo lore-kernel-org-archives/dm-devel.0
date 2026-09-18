@@ -1,235 +1,135 @@
-Received: from mail-oo2-f8.google.com (mail-oo2-f8.google.com [74.125.231.136])
+Received: from mail-wr2-f43.google.com (mail-wr2-f43.google.com [74.125.225.107])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E086B47CC6F
-	for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 20:17:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.231.136
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83B84385D7A
+	for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 23:43:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.107
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789762667; cv=none; b=I6S/tYXYNRGOhszjLhhBCbIeVhda+865hH9/xX6qfNzbfAYTA8vgfzad+i/I9AAWiXTQnM6nF6Ygv9mvonpFBmuzM5Tqu60X54ORhfna6XDfwj7tCw0BDIzO4VdLSpEHi2j7LBAzNtGrBufXcbvBSeCzj5gSwykJeC7VeYs1uls=
+	t=1789775026; cv=none; b=lw58cAYsjPsAGDTSXymgZmWndVYd0ZFMUhVRg4dRNS9zt1xUEzhsDkxopWAHSF2dsii4GJTmvKlRdwIXN4c89yPmL/mw1lFGP9E6Wn4clH+Zn8EcpXxGUb02x9JLQZanKIPEPfjq/qeNihef8Z2ZQPj/Kyx1cY5z3u1Xwm1VVAw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789762667; c=relaxed/simple;
-	bh=q0DqR53jvk8/6wDSZpNrXQ1oOkJBbuD4N9THdvot1fk=;
-	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=SKwrGHZkDMWwoIc8mCvSiNkglPtzeiPSwksIyvhDxm2VUZhfbHfMF6wCGnSdP1B5GU2Nkl4nbB9aGG8+hIlEo7vdxQSNUl6CTPOcUIL7jskn1bvUp1heJWFNWz4WBkbd9f6dbuXoGmOHiUpOy/OoQZldhLB4+OsWB74cEanmk0M=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=74.125.231.136
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oo2-f8.google.com with SMTP id 006d021491bc7-6b1b1ca0f3aso307985eaf.0
-        for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 13:17:45 -0700 (PDT)
+	s=arc-20240116; t=1789775026; c=relaxed/simple;
+	bh=yVjbgC4CMiNqZuadtlsece2kkWi9WaJOKCsG9Uk68RI=;
+	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=iwXv8ztAy+Wgnp0yrw2ZBmvGbCW1F2ND8NNejUhZSS6/1cmCviQ3BodaGeDVTWFGQuisKotZGOvzScS8Tfc/bjzt2j9CwLe5YwoxZyDebZnfklQI6BBlMPZy8Ssm8KWXXkv5FVyPBIjouFdvruX9prP2SG2qBRT7ea9P0mES2bs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=mw+wsdY2; arc=none smtp.client-ip=74.125.225.107
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="mw+wsdY2"
+Received: by mail-wr2-f43.google.com with SMTP id ffacd0b85a97d-482f62ccdb1so442257f8f.1
+        for <dm-devel@lists.linux.dev>; Fri, 18 Sep 2026 16:43:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1789775022; x=1790379822; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=jgKahnX9yPSvT7KZdkfKMgtKpfOFWThRfybvZ/wWJSo=;
+        b=mw+wsdY2eFeyW6/lX8M4xkHp4pB5GCUDjpOrM87ZyEbF9lJ5e/0BbUUnWU0suN+05e
+         UWKjP4E6NjJnvMmDh+br30mG8J+0Hs6DOaB/R2FOvxLYEaMNtQBJe9hFCTTehHYsziWH
+         +/kCryR2BzX0G0ihlLZlbszXrvfXozrCunR7hcypR9SDAjIvtrLXWpgS36G5jAYtp3kZ
+         cJhixcWuPXdyj6KIV2/ByldRayMlOkXvFdJwleDNRb5QPjlm3TI4rqO51t6d5VtyYN82
+         Rf8viqSbNDOF7SQ9ALZDwXdr8FsPBS7RM3UHjl7W1yh8R979mxRtTYMDqHlplb+ZiO4H
+         +Hvg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1789762665; x=1790367465;
-        h=content-type:to:from:subject:message-id:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=31T92JRQIq//qGkaa1ybOrg/ZWigPJrzAlxjgm/xLN8=;
-        b=ftUUzOeMyZk2Mh2obq72pu2mSUGl5B0sfys5CSEklZ9rbOz61EpHwj1KLknl8MHTpI
-         fKn/YPuP/pSSDvZCveXvvMkMb0Am15d2B513OwzblpxB9sc3u5jl22tbLEfj7cM4IgY8
-         H+dz06ig/aGhjRiDDBDRozktcdDTt7LLla6XEcd93GzHjQyZIbg++30jkQJ47EF/GBpQ
-         DZrL3UgyCeSA4X/ovMxg5JKPTAilq5jFg3/P/fk2Ox9gI+2M74vJA4535acHMvuLgj1M
-         AmsBoHGRvNv5W734ZSkGGM16JjhHvOH2fIc1rbFpBg+t45BKj2Y4LwYaAj7Fj/VXICFI
-         DxPw==
-X-Forwarded-Encrypted: i=1; AKwUvBz0Z01GWB11NfX8PeqJ8QADbJWqp294qyLB9HnBf5M5Ng4rO8P/NoF6L6dxEceKsXPhAosz5EJ7UA==@lists.linux.dev
-X-Gm-Message-State: AFuF++lD75vL541y0rY8sB0DOSEE/aFJCzJ6hNo7iUuCAYBqCED0B8aJ
-	G61PNdP+wwQlCBzchrDS+ceKlM0PdeK+F+JOoNpcChxxuKoJUNIUDSvU++wL0R+H3Jj+3I4K8ZP
-	8xNWkO9zpJ5bqIU6oM5WvcmQKuA8x1LhlOt6ACsSl3kSYGHkiIv/4j3/79qo=
+        d=1e100.net; s=20260707; t=1789775022; x=1790379822;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=jgKahnX9yPSvT7KZdkfKMgtKpfOFWThRfybvZ/wWJSo=;
+        b=t6VRwZGTfR1pP/PoY6BVJkEQKILJYJkeZjUQ6Xa7ZJJynfUrRng9A/lmZ3ZFFbrUZB
+         dFQMZycn7i21CfMIIVf3wxvwC4OWy8YknjsfNlz66Z9jiPCsKWWTVMn5ZdwKwQyXfi+N
+         2vzpaHphTvYfV6c996Po17rUaqod5bnJRQfk7Ikx+/YEzLAlBPkw/yMsZrpKadUgXTvK
+         oS1CxpIwms7qcVBmRVsUM2o9lYIVclG/Qzch1zl9/9631qNYWjs533NPCZgXbuq2N2eL
+         cWNpRs3d7xT02gNbQAnChZt/yz81XmUrV09sMRZ3Vzau/AWazf/RPXwXmDl7DBQoGH2a
+         kTaw==
+X-Forwarded-Encrypted: i=1; AKwUvBzLYLvPllrJIu4Fpen68wTenB3xIhiI4R3viHnBu6jA2e5cHrWeoZ9EzC2aCEvWYZib8qosT+e9Hg==@lists.linux.dev
+X-Gm-Message-State: AFuF++m4z5PG9pzv5dvE7tzdvbCF218gzEldSoB1YCnUR6NZGbN5IPno
+	f+42132ofgo2otzT9Wf1DKQSuLYMEqoVOKEQ1LpITeIfyfCwOpiedqFC
+X-Gm-Gg: AYBFou3qa3/hGmmD/2cMjDABbQDXe7mgZiDd54trmitBHrY7JU8i4HRuwwV4ffV49LC
+	DbTMRj5a9SIq4GX1Dk0ZNU17nD30Bv1WLMbq5JJLdOS91AfzGmZJAklm3HFlGpJ4DTrdv1s2cQX
+	R3GS7ehXU8WOlH8gCzYxY9C9DjtD4Wqi6CUsELgdMdxpv0JV15Y37Y7O3CzbFec5+Oy/fZSyPPJ
+	PKWw8CMl3o2uoGHMoz1IitdW4YCpRCa5WTNZLcHsEkv2Dc2BbOWylLQ/nuC78bvSHcufeFVmrlo
+	WAyG1RXfOkTyJ8op8GaZKDhFKLGv1t6kuPujegaNZ1jqFliTWK+q6EXEO8BRT5HKKhbH5C6oLuM
+	5W11eLuKqqKuAn8/S37b+L0ihm8eg1PyX49y86XQ0uezFDnE87/E/+I0ThOevnnZrrZxOz53IeY
+	XBgQwt/ZO4wEPwiMrNNUCvaijKCSwEqRdr8SV6F+nmpXnGxo5ch1p6AyhV52msy1gRbQdfjEOlD
+	Keo0P/XRCBTBmsgWLmmfR0IWKJ9FrDjI2rvoFVoPx1lnBEWccQ+w5rWmuimBqCxq+w=
+X-Received: by 2002:a05:6000:2688:b0:487:146f:7c88 with SMTP id ffacd0b85a97d-4871d98cdcfmr6375274f8f.4.1789775021601;
+        Fri, 18 Sep 2026 16:43:41 -0700 (PDT)
+Received: from Raghu007.. (sgyl-44-b2-v4wan-174108-cust110.vm6.cable.virginm.net. [80.1.81.111])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-487243cede9sm2482874f8f.0.2026.09.18.16.43.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 18 Sep 2026 16:43:41 -0700 (PDT)
+From: Palla Raghunath <raghunathpalla.0209@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+	Milan Broz <mbroz@redhat.com>,
+	dm-devel@lists.linux.dev,
+	Shuah Khan <shuah@kernel.org>,
+	Brigham Campbell <me@brighamcampbell.com>,
+	linux-kernel@vger.kernel.org,
+	linux-kernel-mentees@lists.linux.dev,
+	raghunathpalla.0209@gmail.com,
+	syzbot+48d935cf48a4a76be346@syzkaller.appspotmail.com,
+	stable@vger.kernel.org
+Subject: [PATCH] dm ioctl: don't let data_start run past the buffer
+Date: Sat, 19 Sep 2026 00:43:39 +0100
+Message-Id: <20260918234339.54105-1-raghunathpalla.0209@gmail.com>
+X-Mailer: git-send-email 2.34.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Received: by 2002:a05:6820:f031:b0:6ca:3ce1:ed48 with SMTP id
- 006d021491bc7-6ca9a22ad94mr3839824eaf.11.1789762664824; Fri, 18 Sep 2026
- 13:17:44 -0700 (PDT)
-Date: Fri, 18 Sep 2026 13:17:44 -0700
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6aad9c68.87c06881.1db2b3.0024.GAE@google.com>
-Subject: [syzbot] [dm?] KASAN: slab-out-of-bounds Read in ctl_ioctl
-From: syzbot <syzbot+48d935cf48a4a76be346@syzkaller.appspotmail.com>
-To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hello,
+struct dm_ioctl has seven bytes of trailing padding, so the smallest
+buffer userspace is allowed to ask for, offsetof(struct dm_ioctl, data),
+is seven bytes shorter than sizeof(struct dm_ioctl).
 
-syzbot found the following issue on:
+get_result_buffer() sets data_start to sizeof(struct dm_ioctl) without
+looking at how big the buffer actually is. Ask for the minimum and
+data_start ends up seven bytes past the end. Callers add it to
+data_size, and ctl_ioctl() copies that much back to userspace:
 
-HEAD commit:    5dd1818b15d9 Merge tag 'for-next-keys-v7.3-rc4' of git://g..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=13ce47f9580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=84649d3ff8d550cb
-dashboard link: https://syzkaller.appspot.com/bug?extid=48d935cf48a4a76be346
-compiler:       gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=1124d7f9580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=17ce47f9580000
+  BUG: KASAN: slab-out-of-bounds in _copy_to_user+0xad/0xd0
+  Read of size 312 at addr ffff8880169e4c00 by task repro-dm/140
+   ctl_ioctl+0x5e3/0xcb0
+   dm_ctl_ioctl+0x25/0x40
+  allocated 305-byte region [ffff8880169e4c00, ffff8880169e4d31)
 
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-5dd1818b.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/efc8284ce34a/vmlinux-5dd1818b.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/aeaa3f5a6989/bzImage-5dd1818b.xz
+A DM_LIST_DEVICES with data_size set to 305 is enough to hit it, and the
+seven bytes that leak are whatever sat next to the allocation.
 
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Clamp data_start to the buffer size.
+
 Reported-by: syzbot+48d935cf48a4a76be346@syzkaller.appspotmail.com
-
-==================================================================
-BUG: KASAN: slab-out-of-bounds in instrument_copy_to_user include/linux/instrumented.h:129 [inline]
-BUG: KASAN: slab-out-of-bounds in _inline_copy_to_user include/linux/uaccess.h:201 [inline]
-BUG: KASAN: slab-out-of-bounds in _copy_to_user+0x93/0xd0 lib/usercopy.c:24
-Read of size 312 at addr ffff8880511e2c00 by task syz.0.17/5924
-
-CPU: 3 UID: 0 PID: 5924 Comm: syz.0.17 Not tainted syzkaller #0 PREEMPT(full) 
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
-Call Trace:
- <TASK>
- __dump_stack lib/dump_stack.c:94 [inline]
- dump_stack_lvl+0x100/0x190 lib/dump_stack.c:120
- print_address_description mm/kasan/report.c:378 [inline]
- print_report+0x13d/0x4b0 mm/kasan/report.c:482
- kasan_report+0xdf/0x1c0 mm/kasan/report.c:595
- check_region_inline mm/kasan/generic.c:186 [inline]
- kasan_check_range+0x10f/0x1e0 mm/kasan/generic.c:200
- instrument_copy_to_user include/linux/instrumented.h:129 [inline]
- _inline_copy_to_user include/linux/uaccess.h:201 [inline]
- _copy_to_user+0x93/0xd0 lib/usercopy.c:24
- copy_to_user include/linux/uaccess.h:230 [inline]
- ctl_ioctl+0x5c2/0xcc0 drivers/md/dm-ioctl.c:2225
- dm_ctl_ioctl+0x22/0x30 drivers/md/dm-ioctl.c:2235
- vfs_ioctl fs/ioctl.c:51 [inline]
- __do_sys_ioctl fs/ioctl.c:597 [inline]
- __se_sys_ioctl fs/ioctl.c:583 [inline]
- __x64_sys_ioctl+0x18e/0x210 fs/ioctl.c:583
- do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
- do_syscall_64+0x123/0x790 arch/x86/entry/syscall_64.c:84
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7f0a62b9e159
-Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007fff4ea84718 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-RAX: ffffffffffffffda RBX: 00007f0a62e25fa0 RCX: 00007f0a62b9e159
-RDX: 0000200000000000 RSI: 00000000c138fd02 RDI: 0000000000000003
-RBP: 00007f0a62c3506b R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
-R13: 00007f0a62e25fac R14: 00007f0a62e25fa0 R15: 00007f0a62e25fa0
- </TASK>
-
-Allocated by task 5924:
- kasan_save_stack+0x30/0x50 mm/kasan/common.c:57
- kasan_save_track+0x14/0x30 mm/kasan/common.c:78
- poison_kmalloc_redzone mm/kasan/common.c:398 [inline]
- __kasan_kmalloc+0xaa/0xb0 mm/kasan/common.c:415
- kasan_kmalloc include/linux/kasan.h:263 [inline]
- __do_kmalloc_node mm/slub.c:5414 [inline]
- __kvmalloc_node_noprof+0x35b/0x9b0 mm/slub.c:7014
- copy_params drivers/md/dm-ioctl.c:2098 [inline]
- ctl_ioctl+0x944/0xcc0 drivers/md/dm-ioctl.c:2202
- dm_ctl_ioctl+0x22/0x30 drivers/md/dm-ioctl.c:2235
- vfs_ioctl fs/ioctl.c:51 [inline]
- __do_sys_ioctl fs/ioctl.c:597 [inline]
- __se_sys_ioctl fs/ioctl.c:583 [inline]
- __x64_sys_ioctl+0x18e/0x210 fs/ioctl.c:583
- do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
- do_syscall_64+0x123/0x790 arch/x86/entry/syscall_64.c:84
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-
-The buggy address belongs to the object at ffff8880511e2c00
- which belongs to the cache kmalloc-512 of size 512
-The buggy address is located 0 bytes inside of
- allocated 305-byte region [ffff8880511e2c00, ffff8880511e2d31)
-
-The buggy address belongs to the physical page:
-page: refcount:0 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x511e0
-head: order:2 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
-flags: 0xfff00000000040(head|node=0|zone=1|lastcpupid=0x7ff)
-page_type: f5(slab)
-raw: 00fff00000000040 ffff88801c042c80 dead000000000100 dead000000000122
-raw: 0000000000000000 0000000000100010 00000000f5000000 0000000000000000
-head: 00fff00000000040 ffff88801c042c80 dead000000000100 dead000000000122
-head: 0000000000000000 0000000000100010 00000000f5000000 0000000000000000
-head: 00fff00000000002 ffffffffffffff01 00000000ffffffff 00000000ffffffff
-head: ffffffffffffffff 0000000000000000 00000000ffffffff 0000000000000004
-page dumped because: kasan: bad access detected
-page_owner tracks the page as allocated
-page last allocated via order 2, migratetype Unmovable, gfp_mask 0xd20c0(__GFP_IO|__GFP_FS|__GFP_NOWARN|__GFP_NORETRY|__GFP_COMP|__GFP_NOMEMALLOC), pid 5135, tgid 5135 (udevd), ts 53647527683
- set_page_owner include/linux/page_owner.h:33 [inline]
- post_alloc_hook+0xfd/0x120 mm/page_alloc.c:1871
- prep_new_page mm/page_alloc.c:1879 [inline]
- get_page_from_freelist+0x110d/0x35d0 mm/page_alloc.c:3943
- __alloc_frozen_pages_noprof+0x2eb/0x3300 mm/page_alloc.c:5436
- alloc_slab_page mm/slub.c:3347 [inline]
- allocate_slab mm/slub.c:3462 [inline]
- new_slab+0xa9/0x6e0 mm/slub.c:3513
- refill_objects+0xe3/0x410 mm/slub.c:7417
- refill_sheaf mm/slub.c:2885 [inline]
- __pcs_replace_empty_main+0x35e/0x650 mm/slub.c:4774
- alloc_from_pcs mm/slub.c:4850 [inline]
- slab_alloc_node mm/slub.c:4984 [inline]
- __kmalloc_cache_noprof+0x4f4/0x6d0 mm/slub.c:5559
- _kmalloc_noprof include/linux/slab.h:991 [inline]
- _kzalloc_noprof include/linux/slab.h:1312 [inline]
- kernfs_fop_open+0x23d/0xd50 fs/kernfs/file.c:634
- do_dentry_open+0x6ab/0x14d0 fs/open.c:996
- vfs_open+0x82/0x3f0 fs/open.c:1101
- do_open fs/namei.c:4837 [inline]
- path_openat+0x19fa/0x2440 fs/namei.c:5000
- do_file_open+0x20e/0x430 fs/namei.c:5029
- do_sys_openat2+0x10f/0x1e0 fs/open.c:1417
- do_sys_open fs/open.c:1423 [inline]
- __do_sys_openat fs/open.c:1439 [inline]
- __se_sys_openat fs/open.c:1434 [inline]
- __x64_sys_openat+0x12d/0x210 fs/open.c:1434
- do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
- do_syscall_64+0x123/0x790 arch/x86/entry/syscall_64.c:84
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-page last free pid 12 tgid 12 ts 52862857394 stack trace:
- reset_page_owner include/linux/page_owner.h:26 [inline]
- __free_pages_prepare mm/page_alloc.c:1418 [inline]
- __free_pages_ok+0x73b/0x1050 mm/page_alloc.c:1596
- fq_reset include/net/fq_impl.h:386 [inline]
- ieee80211_txq_teardown_flows+0x16f/0x280 net/mac80211/tx.c:1656
- ieee80211_unregister_hw+0x5d/0x360 net/mac80211/main.c:1723
- mac80211_hwsim_del_radio drivers/net/wireless/virtual/mac80211_hwsim_main.c:6256 [inline]
- hwsim_exit_net+0x891/0x1500 drivers/net/wireless/virtual/mac80211_hwsim_main.c:7269
- ops_exit_list net/core/net_namespace.c:200 [inline]
- ops_undo_list+0x2ee/0xab0 net/core/net_namespace.c:253
- cleanup_net+0x499/0x920 net/core/net_namespace.c:706
- process_one_work+0xac7/0x1b10 kernel/workqueue.c:3396
- process_scheduled_works kernel/workqueue.c:3479 [inline]
- worker_thread+0x5ef/0xe50 kernel/workqueue.c:3560
- kthread+0x373/0x450 kernel/kthread.c:436
- ret_from_fork+0x730/0xd60 arch/x86/kernel/process.c:158
- ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
-
-Memory state around the buggy address:
- ffff8880511e2c00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
- ffff8880511e2c80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
->ffff8880511e2d00: 00 00 00 00 00 00 01 fc fc fc fc fc fc fc fc fc
-                                     ^
- ffff8880511e2d80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
- ffff8880511e2e00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
-==================================================================
-
-
+Closes: https://syzkaller.appspot.com/bug?extid=48d935cf48a4a76be346
+Fixes: 76c072b48e39 ("dm ioctl: move compat code")
+Cc: stable@vger.kernel.org
+Signed-off-by: Palla Raghunath <raghunathpalla.0209@gmail.com>
 ---
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+ drivers/md/dm-ioctl.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+index a6b8e97755cd..211569dd3c54 100644
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -656,6 +656,13 @@ static void *get_result_buffer(struct dm_ioctl *param, size_t param_size,
+ {
+ 	param->data_start = align_ptr(param + 1) - (void *) param;
+ 
++	/*
++	 * The buffer can be as small as offsetof(*param, data), which is
++	 * less than sizeof(*param), so don't run off the end of it.
++	 */
++	if (param->data_start > param_size)
++		param->data_start = param_size;
++
+ 	if (param->data_start < param_size)
+ 		*len = param_size - param->data_start;
+ 	else
+-- 
+2.34.1
 
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
-
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
