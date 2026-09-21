@@ -1,176 +1,154 @@
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 759664756D2;
-	Mon, 21 Sep 2026 09:28:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.158.5
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58C3C481AB5
+	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 10:46:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789982899; cv=none; b=l/WnDbPFBrvdmRI6HBOyJVkxl3zgqJ/Xm29NHC5OsA9pEUTN4Yn0A7qONIQyWGemoxAZoG2keFyn/yUUdv8sVPsszjS0/6ws80xrRyn6TSSwNgrqMnFSXD/tm8ODEeFuVt8qQ3EuqlE4dQBELSmk6vcF4iqT2yvBHAxOa+w5Ryc=
+	t=1789987597; cv=none; b=VuCoh0dSye+hln8dSQzkQd+BMeXii5n3+ti1p/DV/bW1zxWoR4eOsdohRONWkZRiQGrGQ68NZ0oBqPezruLARy+6W1m0E/QuRZeG2U9u6V5ToUqCnnSdqYoSnLzBK0qSvqlBfQHVBZEXxB3T48csvckMwcUWRRn8jhA6HuAOvoQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789982899; c=relaxed/simple;
-	bh=2ja0iXhncaSOLX4279w1X4woaAq7vhERXDmpS9kJ4oI=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=S/APViTh2cedATCDUdh60ywJx5EsvmwZNDCLsrBzPDNJuEyX86T0xebxBlO+QSfSIwHdGyPJZs8jeCKg7WTc/0dKgsmfHT31MwUbkf5Tex0aIpBXfn72qr53dpe8sVdwvIR5Bm6XB7ZiGaAUWC75wFRxwFXvCCdjPsex4kb1ZF4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com; spf=pass smtp.mailfrom=linux.ibm.com; dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b=LbpNXzuF; arc=none smtp.client-ip=148.163.158.5
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	s=arc-20240116; t=1789987597; c=relaxed/simple;
+	bh=4ExNL/dyZRTZ8of8W7TIP229I6QEOWpteKGWbxZ72kY=;
+	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
+	 MIME-Version:Content-Type; b=JKFJ9oOBI2YEfJoA17Pmp8MkJW5G3cFQndgzDfet2HAHAmRqjSWXfONfb3e7zS+QRX3AAKoKfJxUek2HXIN0sPzpmcPmwaFw1+hapboww6CYLxA6Ktmh6WKyyuRGYkBlIqfL2qFHMdbvlMe8w1aLvat5ffWmWTR5NB8iNcSVQ1U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Ruk4pJNS; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.b="LbpNXzuF"
-Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 68L7ZbnX672354;
-	Mon, 21 Sep 2026 09:27:31 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=G1939M
-	Elcb2kM01/7HPbHzZLx6pN/KmlSSE/eI9FBUg=; b=LbpNXzuFadRu4xefU1BRaQ
-	h06fCzfQKzfgJVO+GdlysRBuw3CYS0h9INHzdvY3mycdGE8B4aCXmajbflhXM83m
-	ptcP7kCNPw7U5yE7EQVhYZbolmvC65PE01R+sPRX1TAwDsp3zu59hoqOFt/AvSFu
-	5pqA8S4gXwqDoq7dFjtx3V6977yRg6lME+gwPDU4gqT+I3OVD5aSSVh7R8w6dn0T
-	kiKHMCbbohscsdNiKn1Zx2pPlBr3PIYgVRxD/D5LlFRG64591dn0jOnilV2QvhBv
-	bToDpdeuPAeQZrnWFVRBLnCUhYPuTDfHfi8SVj+Rm2GBZJhlYSmRWoRw9xze2Cvw
-	==
-Received: from ppma12.dal12v.mail.ibm.com (dc.9e.1632.ip4.static.sl-reverse.com [50.22.158.220])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4gske17ksg-1
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 21 Sep 2026 09:27:30 +0000 (GMT)
-Received: from pps.filterd (ppma12.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma12.dal12v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 68L7HTui924403;
-	Mon, 21 Sep 2026 09:27:29 GMT
-Received: from smtprelay01.wdc07v.mail.ibm.com ([172.16.1.68])
-	by ppma12.dal12v.mail.ibm.com (PPS) with ESMTPS id 4gt4qq4sv7-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Mon, 21 Sep 2026 09:27:29 +0000 (GMT)
-Received: from smtpav01.wdc07v.mail.ibm.com (smtpav01.wdc07v.mail.ibm.com [10.39.53.228])
-	by smtprelay01.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 68L9RTIS62783920
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Mon, 21 Sep 2026 09:27:29 GMT
-Received: from smtpav01.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id EAD7558063;
-	Mon, 21 Sep 2026 09:27:28 +0000 (GMT)
-Received: from smtpav01.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 2F3D55804B;
-	Mon, 21 Sep 2026 09:27:14 +0000 (GMT)
-Received: from [9.61.138.180] (unknown [9.61.138.180])
-	by smtpav01.wdc07v.mail.ibm.com (Postfix) with ESMTP;
-	Mon, 21 Sep 2026 09:27:13 +0000 (GMT)
-Message-ID: <37de70f6-67f8-466f-a267-03584973dd3a@linux.ibm.com>
-Date: Mon, 21 Sep 2026 14:57:12 +0530
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Ruk4pJNS"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1789987594;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=xOxCxi0et4Im0QZpiAibCfANf5oH7SZI/BNFkKL+4DA=;
+	b=Ruk4pJNS2sjSXUbYD6FYzvma9e93q5lnSC7OpzdQTJlv7byQJlXp/jsSg0INrJEZtDQNIB
+	/sLEt+yxPVX6YUyynAbjjYeJ0K2nBSbAc81pdHmHPIhyLuuXqSsQztgheoZvT00+QoNpFW
+	Cx55z98+NXFHwXsTd2aCGwYwt402yxM=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-252-q8y1uSteN0-oJqoYVBNtGA-1; Mon,
+ 21 Sep 2026 06:46:31 -0400
+X-MC-Unique: q8y1uSteN0-oJqoYVBNtGA-1
+X-Mimecast-MFC-AGG-ID: q8y1uSteN0-oJqoYVBNtGA_1789987590
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 723F518011E3;
+	Mon, 21 Sep 2026 10:46:29 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DD3BA180056E;
+	Mon, 21 Sep 2026 10:46:26 +0000 (UTC)
+Date: Mon, 21 Sep 2026 12:46:24 +0200 (CEST)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Ayoub Zaki <ayoub.zaki@embetrix.com>
+cc: snitzer@kernel.org, agk@redhat.com, bmarzins@redhat.com, 
+    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, corbet@lwn.net, 
+    linux-doc@vger.kernel.org
+Subject: Re: [PATCH] dm-verity: add DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE
+In-Reply-To: <20260907171939.355472-1-ayoub.zaki@embetrix.com>
+Message-ID: <a37a63f2-e45d-4e51-0c2d-bd19cca5fe88@redhat.com>
+References: <20260907171939.355472-1-ayoub.zaki@embetrix.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 2/3] blk-cgroup: store blkcg in bio instead of blkg
-To: Yu Kuai <yukuai@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-        Josef Bacik <josef@toxicpanda.com>, Tejun Heo <tj@kernel.org>,
-        Johannes Weiner <hannes@cmpxchg.org>,
-        =?UTF-8?Q?Michal_Koutn=C3=BD?=
- <mkoutny@suse.com>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Shuah Khan <skhan@linuxfoundation.org>,
-        Randy Dunlap
- <rdunlap@infradead.org>, Coly Li <colyli@fygo.io>,
-        Kent Overstreet <kent.overstreet@linux.dev>,
-        Alasdair Kergon
- <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Benjamin Marzinski <bmarzins@redhat.com>, Song Liu <song@kernel.org>,
-        Li Nan <magiclinan@didiglobal.com>, Xiao Ni <xiao@kernel.org>,
-        Andreas Gruenbacher <agruenba@redhat.com>,
-        "Matthew Wilcox (Oracle)" <willy@infradead.org>,
-        Jan Kara <jack@suse.cz>, Andrew Morton <akpm@linux-foundation.org>,
-        Chris Li <chrisl@kernel.org>, Kairui Song <kasong@tencent.com>,
-        Kemeng Shi <shikemeng@huaweicloud.com>, Nhat Pham <nphamcs@gmail.com>,
-        Baoquan He <baoquan.he@linux.dev>, Barry Song <baohua@kernel.org>,
-        Youngjun Park <youngjun.park@lge.com>,
-        Nathan Chancellor <nathan@kernel.org>,
-        Nick Desaulniers <ndesaulniers@google.com>,
-        Bill Wendling
- <morbo@google.com>,
-        Justin Stitt <justinstitt@google.com>
-Cc: Yu Kuai <yukuai@fygo.io>, Christoph Hellwig <hch@lst.de>,
-        Tao Cui <cuitao@kylinos.cn>, linux-block@vger.kernel.org,
-        cgroups@vger.kernel.org, linux-doc@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-bcache@vger.kernel.org,
-        dm-devel@lists.linux.dev, linux-raid@vger.kernel.org,
-        gfs2@lists.linux.dev, linux-fsdevel@vger.kernel.org,
-        linux-mm@kvack.org, llvm@lists.linux.dev
-References: <20260920092351.2434283-1-yukuai@kernel.org>
- <20260920092351.2434283-3-yukuai@kernel.org>
-Content-Language: en-US
-From: Nilay Shroff <nilay@linux.ibm.com>
-In-Reply-To: <20260920092351.2434283-3-yukuai@kernel.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-X-TM-AS-GCONF: 00
-X-Proofpoint-Reinject: loops=2 maxloops=12
-X-Proofpoint-ORIG-GUID: -Xd8a0RVEhrxDFm6gn4h3GOonDYckOi9
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwOTIxMDEzMCBTYWx0ZWRfXyA4xNH3cYzqc
- l3LhAHGkDdB9wr6wJVvzkOiW0PLTrY+6N2xnfwVvAXBEgUZUUlnqQoZ9S/t2ec53rKELusYcvWT
- di0gP2G3AgYQrqIZGwv4XAk6ZTbicrvfmdi3M2UDvbThVuKLxf2bVg5EnsFXBr4KXrs6etQpgoD
- euKLu2Q+XaIsRVuhlHm+asbpr7zvK5ks3HxoZmC3tfKIKTo9gLj/L+nXXm8Qa6LpaYS6fCQWKwA
- rPtKbOsDw0UQzNsyd8H9bnPf3SqR3/y1I/PXuxjss5kLLxairvDG61ZUizIHrj9aHnJa9muRUGp
- 7oMtV5GSfddGruww+e3uDCJcaCC0OqzGH5jLo19DzokCNvtkRFr5gRuQY3TQAjpzacqfLjYt61q
- p4U3ri+iYIaoZm7NV0kKr27cQE0po2JDzt0VLOolD+KbjSIIi30aCQOJhnnHY4hngd24Su44C9I
- iTTkkhvJogiX4hApA1A==
-X-Authority-Analysis: v=2.4 cv=O/KsLx9W c=1 sm=1 tr=0 ts=6ab0f883 cx=c_pps
- a=bLidbwmWQ0KltjZqbj+ezA==:117 a=bLidbwmWQ0KltjZqbj+ezA==:17
- a=IkcTkHD0fZMA:10 a=VdqzKS8jKosA:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=Y2IxJ9c9Rs8Kov3niI8_:22 a=VnNF1IyMAAAA:8
- a=yt32EUx3BFOMUVNgjeUA:9 a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Info: AW1haW4tMjYwOTIxMDEzMCBTYWx0ZWRfX5rV0t/6BeebN
- XqLIK4QGbSN4xT9UKi23paOxlW7Ykt3xnAjLGUCmr0jYvC/s6nTF8lOI7DuZlUqbCJZ4FsSaWjL
- tAtASM6ortzkp/bMC84v/5e+hKTSbak=
-X-Proofpoint-GUID: STTiMO6o3fOhik_S7E0XjsEtuaK9UoBW
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-09-21_03,2026-09-16_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- clxscore=1015 malwarescore=0 phishscore=0 impostorscore=0 suspectscore=0
- bulkscore=0 priorityscore=1501 lowpriorityscore=0 adultscore=0 spamscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2609040000 definitions=main-2609210130
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-MFC-PROC-ID: m-hLmkLK4uu2jOapFW1sbaiforYvhUrNiYLhkNGfO1c_1789987590
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On 9/20/26 2:53 PM, Yu Kuai wrote:
-> From: Yu Kuai<yukuai@fygo.io>
-> 
-> A bio currently stores and pins a queue-local blkg. This forces bio
-> association and remap paths to look up or create a blkg even when no
-> blkcg policy will use the bio, and ties the stored state to the current
-> block device.
-> 
-> Store and reference the queue-independent blkcg in the bio instead. Add
-> helpers that lazily look up or create the queue-local blkg when a policy
-> needs it, and pin the result until the bio changes devices or releases
-> its cgroup state. Look up and pin existing blkgs under RCU, taking the
-> queue lock only when a blkg may need to be created.
-> 
-> Keep completion and accounting users lookup-only when they do not create
-> a blkg themselves. In particular, blk_cgroup_bio_start() only accounts a
-> bio when an online blkg already exists. This avoids creating a blkg
-> from the unconditional accounting hook when no policy is enabled.
-> 
-> Protect every rhashtable lookup with an RCU read-side critical section.
-> Annotate the lookup helpers and recursive wrappers with
-> __must_hold_shared(RCU) so Clang can verify that contract.
-> 
-> Before entering a bio-based driver's ->submit_bio(), drop the pinned blkg
-> after blk_cgroup_bio_start() has completed bio accounting. blk-throttle is
-> the only policy supported by bio-based queues, so no queue-local blkg
-> state needs to enter stacking drivers. The queue-independent blkcg
-> association remains attached to the bio.
-> 
-> If blkg creation fails while walking down the hierarchy, use the closest
-> available ancestor and update the bio's blkcg association before
-> recording the blkg reference. This keeps later CSS ID hash lookups
-> matched with the pinned blkg.
-> 
-> Signed-off-by: Yu Kuai<yukuai@fygo.io>
+Hi
 
-Looks good to me.
+The argument can be turned off even with your patch - by specifying 
+dm_verity.require_signatures=0 on the kernel command line (read-only 
+module parameters can be modified on the command line during boot).
 
-Reviewed-by: Nilay Shroff <nilay@linux.ibm.com>
+I'd like to know what kind of security problem does this patch try to 
+solve. If the attacker can tamper with the kernel command line, he can 
+already gain root (i.e. by using init=/bin/bash).
 
+Mikulas
+
+
+On Mon, 7 Sep 2026, Ayoub Zaki wrote:
+
+> Add DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE Kconfig option.  When enabled,
+> dm-verity always requires a valid root hash signature: require_signatures
+> defaults to true and can no longer be cleared on the command line.  When
+> disabled, the existing require_signatures module parameter controls
+> enforcement.
+> 
+> Signed-off-by: Ayoub Zaki <ayoub.zaki@embetrix.com>
+> ---
+>  Documentation/admin-guide/device-mapper/verity.rst |  5 +++++
+>  drivers/md/Kconfig                                 | 14 ++++++++++++++
+>  drivers/md/dm-verity-verify-sig.c                  |  4 ++--
+>  3 files changed, 21 insertions(+), 2 deletions(-)
+> 
+> diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documentation/admin-guide/device-mapper/verity.rst
+> index eb9475d7e196..bb48c001aeac 100644
+> --- a/Documentation/admin-guide/device-mapper/verity.rst
+> +++ b/Documentation/admin-guide/device-mapper/verity.rst
+> @@ -163,6 +163,11 @@ root_hash_sig_key_desc <key_description>
+>      also gain new certificates at run time if they are signed by a certificate
+>      already in the secondary trusted keyring.
+>  
+> +    Whether a signature is required for every dm-verity device is controlled by
+> +    the dm_verity.require_signatures parameter which defaults to off. Setting
+> +    DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE makes it default to on in which case it
+> +    can no longer be turned off.
+> +
+>  try_verify_in_tasklet
+>      If verity hashes are in cache and the IO size does not exceed the limit,
+>      verify data blocks in bottom half instead of workqueue. This option can
+> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
+> index df27c7d066d2..59098d1f4534 100644
+> --- a/drivers/md/Kconfig
+> +++ b/drivers/md/Kconfig
+> @@ -610,6 +610,20 @@ config DM_VERITY_VERIFY_ROOTHASH_SIG_PLATFORM_KEYRING
+>  
+>  	  If unsure, say N.
+>  
+> +config DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE
+> +	bool "Require dm-verity root hash signature verification"
+> +	depends on DM_VERITY_VERIFY_ROOTHASH_SIG
+> +	help
+> +	  Reject dm-verity devices that are created without a valid root hash
+> +	  signature.  Without this, whether a signature is required is decided
+> +	  at boot time by the dm_verity.require_signatures parameter which
+> +	  defaults to off.
+> +
+> +	  Enabling this makes that parameter default to on and it can then no
+> +	  longer be turned off.
+> +
+> +	  If unsure, say N.
+> +
+>  config DM_VERITY_FEC
+>  	bool "Verity forward error correction support"
+>  	depends on DM_VERITY
+> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+> index b2b55c41e2cb..aadcf5e4a47c 100644
+> --- a/drivers/md/dm-verity-verify-sig.c
+> +++ b/drivers/md/dm-verity-verify-sig.c
+> @@ -21,8 +21,8 @@ static bool dm_verity_keyring_unsealed __ro_after_init;
+>  module_param_named(keyring_unsealed, dm_verity_keyring_unsealed, bool, 0444);
+>  MODULE_PARM_DESC(keyring_unsealed, "Leave the dm-verity keyring unsealed");
+>  
+> -static bool require_signatures;
+> -module_param(require_signatures, bool, 0444);
+> +static bool require_signatures = IS_ENABLED(CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG_FORCE);
+> +module_param(require_signatures, bool_enable_only, 0444);
+>  MODULE_PARM_DESC(require_signatures,
+>  		"Verify the roothash of dm-verity hash tree");
+>  
+> 
+> base-commit: df2908090cda368b01ff43709f51890076c56157
+> -- 
+> 2.43.0
+> 
 
