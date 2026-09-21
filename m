@@ -1,166 +1,147 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F53F2F7EE6
-	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 14:16:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82B874A6887
+	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 14:29:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790000189; cv=none; b=HiZnqWUJVVJCWZQheHO9wo/L0y010xUuYXq6poWi/gSCCU3QHFQUJkDKAeMLhuOkYXdlRcSbXbr5TiSYkqPKHhrzXSMBa44hbz6Mg+dfdUVLJULWmZBeiULl8stiBWeCXwKKE0wH84BW7owOh1Vg00QWF5iQUytJRpjs2DwN/nY=
+	t=1790000999; cv=none; b=Tx3M2fqxyELzgtFSN3g5Pz0sn2iPU41E5uoWmij0KAKD57abqyu8+TYOg/ebKPErRAPuMdpA8JniSKnddWCkvWsXcteCQMLM/7nKpbnXM7bYCgKaEJfl5vpTTCt1jZ1yIIoEcCMG8CmsJuaJFRxMA6YwLpTSmviXBrFmoc8Xk0o=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790000189; c=relaxed/simple;
-	bh=aLhhnuP9dq8Tk/mgcT9qT+9aYOSuvcvH9bNLx4gJMr8=;
+	s=arc-20240116; t=1790000999; c=relaxed/simple;
+	bh=aHmSDEox5unyo5rBT5HswPBoY3cjScx7iK573f2E5hg=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=QNCbuh6K494RIhGb9mffWcXuOHzltXq82lNBlZ2ykMv+L7XYdIb7S7oAi3oYN8mOPtE4zwAzG/XYEekIEhNzL7sfHJhaL6EN6wPXgn+zxiJV8usZeXBJhTpq/jUVmKGgpdihM6x1a89U6UKRHMCQrgdo3kR0120enWWSX9Dc36U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gq/E8NFa; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=h2JY0lwPCPsNhckIs35lVTuVBbsahn8+d89jM9umYyDHUemdOUZb7KALrsY82ktoA6Chgz4+Tnj6CsLqh39NxnVmg+aJl1X/9073rTZNHDPWs8VS5wzQ3zvCfo6/vpguk0gmcVfM23jSESD/oNkydlF0sRRzA/XoDyZebNaRtn0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=XzaLaTLl; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gq/E8NFa"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="XzaLaTLl"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1790000187;
+	s=mimecast20190719; t=1790000996;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=V1nq6G0WiuHBJiMFE3WU1kHulyCOViVMS06shaIK9Z0=;
-	b=gq/E8NFapnIK3yiKGsHfukw2rBs54RwxSJMInDqW5mCZq7mg4//VpakqwVNkdKKyOmbZ0d
-	T2TD+8Lo5nw1d14tgXHEdHqKTvnqM07vpXsswjvdEHTTCIm9994ywWBzOnAq1AkDunRCI5
-	8bxUfjCIJ6IjTounA+YV6kdq9J2EKNg=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+	bh=2SPlmkLvWk9PpLgPSN8V3xc5g1sWFhg/iDECwVzzJ4c=;
+	b=XzaLaTLlwNIhyT5EM+Z79p0Zg2OCNmlotXJuQ1coFGo2DtRZlIeqVEeXKPZYGLmKUDAvLZ
+	Ezbyw7qPLM97KdietRa2F7RPl1cV9bSqoIa96L4frLGcYz7sqM3rA0yaWkJRQEHVSKlJcI
+	kKEzpCX7Dv3icHy+q7T/gYh1UNVfvtY=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-336-cVKy-zSvN6mPcHE7xxqbyQ-1; Mon,
- 21 Sep 2026 10:16:25 -0400
-X-MC-Unique: cVKy-zSvN6mPcHE7xxqbyQ-1
-X-Mimecast-MFC-AGG-ID: cVKy-zSvN6mPcHE7xxqbyQ_1790000184
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-564-2wbglG7APSmlHI_acoQYzw-1; Mon,
+ 21 Sep 2026 10:29:51 -0400
+X-MC-Unique: 2wbglG7APSmlHI_acoQYzw-1
+X-Mimecast-MFC-AGG-ID: 2wbglG7APSmlHI_acoQYzw_1790000989
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7A842180A97D;
-	Mon, 21 Sep 2026 14:16:24 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 832A318011D4;
+	Mon, 21 Sep 2026 14:29:49 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0FE28180029C;
-	Mon, 21 Sep 2026 14:16:21 +0000 (UTC)
-Date: Mon, 21 Sep 2026 16:16:19 +0200 (CEST)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2849641B;
+	Mon, 21 Sep 2026 14:29:45 +0000 (UTC)
+Date: Mon, 21 Sep 2026 16:29:43 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: "Peng Fan (OSS)" <peng.fan@oss.nxp.com>
+To: Palla Raghunath <raghunathpalla.0209@gmail.com>
 cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org, 
-    Peng Fan <peng.fan@nxp.com>, dm-devel@lists.linux.dev
-Subject: Re: [Patch V2] dm: use assign_bit() where applicable
-In-Reply-To: <20260921081009.278532-1-peng.fan@oss.nxp.com>
-Message-ID: <23daf47a-1a1e-2a2d-1fc8-0e9a01183e0d@redhat.com>
-References: <20260921081009.278532-1-peng.fan@oss.nxp.com>
+    Benjamin Marzinski <bmarzins@redhat.com>, Milan Broz <mbroz@redhat.com>, 
+    dm-devel@lists.linux.dev, Shuah Khan <shuah@kernel.org>, 
+    Brigham Campbell <me@brighamcampbell.com>, linux-kernel@vger.kernel.org, 
+    linux-kernel-mentees@lists.linux.dev, 
+    syzbot+48d935cf48a4a76be346@syzkaller.appspotmail.com
+Subject: Re: [PATCH] dm ioctl: don't let data_start run past the buffer
+In-Reply-To: <20260918234339.54105-1-raghunathpalla.0209@gmail.com>
+Message-ID: <956ce83b-ef24-56f1-d70a-f7378f55cdf8@redhat.com>
+References: <20260918234339.54105-1-raghunathpalla.0209@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: -NZDeMNVj3aT2BOYVeprDyWyhkm8rPSj78Cku0O__9I_1790000184
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-MFC-PROC-ID: _rHJs9i7AToliWRel-M4dckH1e-eL_xfPs6OBu45O4g_1790000989
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-Accepted, thanks.
+
+
+On Sat, 19 Sep 2026, Palla Raghunath wrote:
+
+> struct dm_ioctl has seven bytes of trailing padding, so the smallest
+> buffer userspace is allowed to ask for, offsetof(struct dm_ioctl, data),
+> is seven bytes shorter than sizeof(struct dm_ioctl).
+> 
+> get_result_buffer() sets data_start to sizeof(struct dm_ioctl) without
+> looking at how big the buffer actually is. Ask for the minimum and
+> data_start ends up seven bytes past the end. Callers add it to
+> data_size, and ctl_ioctl() copies that much back to userspace:
+> 
+>   BUG: KASAN: slab-out-of-bounds in _copy_to_user+0xad/0xd0
+>   Read of size 312 at addr ffff8880169e4c00 by task repro-dm/140
+>    ctl_ioctl+0x5e3/0xcb0
+>    dm_ctl_ioctl+0x25/0x40
+>   allocated 305-byte region [ffff8880169e4c00, ffff8880169e4d31)
+> 
+> A DM_LIST_DEVICES with data_size set to 305 is enough to hit it, and the
+> seven bytes that leak are whatever sat next to the allocation.
+> 
+> Clamp data_start to the buffer size.
+> 
+> Reported-by: syzbot+48d935cf48a4a76be346@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=48d935cf48a4a76be346
+> Fixes: 76c072b48e39 ("dm ioctl: move compat code")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Palla Raghunath <raghunathpalla.0209@gmail.com>
+> ---
+>  drivers/md/dm-ioctl.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+> index a6b8e97755cd..211569dd3c54 100644
+> --- a/drivers/md/dm-ioctl.c
+> +++ b/drivers/md/dm-ioctl.c
+> @@ -656,6 +656,13 @@ static void *get_result_buffer(struct dm_ioctl *param, size_t param_size,
+>  {
+>  	param->data_start = align_ptr(param + 1) - (void *) param;
+>  
+> +	/*
+> +	 * The buffer can be as small as offsetof(*param, data), which is
+> +	 * less than sizeof(*param), so don't run off the end of it.
+> +	 */
+> +	if (param->data_start > param_size)
+> +		param->data_start = param_size;
+> +
+>  	if (param->data_start < param_size)
+>  		*len = param_size - param->data_start;
+>  	else
+> -- 
+> 2.34.1
+
+Hi
+
+I accepted the patch, but I changed it slightly, so that there is just one 
+condition in get_result_buffer. The resulting function is:
+
+static void *get_result_buffer(struct dm_ioctl *param, size_t param_size,
+                               size_t *len)
+{
+        param->data_start = align_ptr(param + 1) - (void *) param;
+
+        if (param->data_start < param_size) {
+                *len = param_size - param->data_start;
+        } else {
+                /*
+                 * The buffer can be as small as offsetof(*param, data), which
+                 * is less than sizeof(*param), so don't run off the end of it.
+                 */
+                *len = 0;
+                param->data_start = param_size;
+        }
+
+        return ((void *) param) + param->data_start;
+}
 
 Mikulas
-
-
-
-On Mon, 21 Sep 2026, Peng Fan (OSS) wrote:
-
-> From: Peng Fan <peng.fan@nxp.com>
-> 
-> Convert open-coded if/else with set_bit/clear_bit to the assign_bit API.
-> 
-> Done with Coccinelle semantic patch:
->     // set_bit -> clear_bit => assign_bit
-> 
->     @@
->     expression cond, bit, addr;
->     @@
-> 
->     -if (cond)
->     -        set_bit(bit, addr);
->     -else
->     -        clear_bit(bit, addr);
->     +assign_bit(bit, addr, cond);
-> 
->     // clear_bit -> set_bit => assign_bit
-> 
->     @@
->     expression cond, bit, addr;
->     @@
-> 
->     -if (cond)
->     -        clear_bit(bit, addr);
->     -else
->     -        set_bit(bit, addr);
->     +assign_bit(bit, addr, !cond);
-> 
-> Signed-off-by: Peng Fan <peng.fan@nxp.com>
-> ---
-> 
-> V2:
->  Separate device-mapper and mraid
->  https://lore.kernel.org/all/20260918141737.3023011-1-peng.fan@oss.nxp.com/
-> 
->  drivers/md/dm-mpath.c                  | 5 +----
->  drivers/md/dm-zone.c                   | 6 ++----
->  drivers/md/persistent-data/dm-bitset.c | 5 +----
->  3 files changed, 4 insertions(+), 12 deletions(-)
-> 
-> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-> index 7cb7bb6233b6..ae9318f5f21b 100644
-> --- a/drivers/md/dm-mpath.c
-> +++ b/drivers/md/dm-mpath.c
-> @@ -1604,10 +1604,7 @@ static void pg_init_done(void *data, int errors)
->  		goto out;
->  
->  	if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
-> -		if (delay_retry)
-> -			set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
-> -		else
-> -			clear_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
-> +		assign_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags, delay_retry);
->  
->  		if (__pg_init_all_paths(m))
->  			goto out;
-> diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-> index f29acf64429a..35916c6e490e 100644
-> --- a/drivers/md/dm-zone.c
-> +++ b/drivers/md/dm-zone.c
-> @@ -447,10 +447,8 @@ void dm_finalize_zone_settings(struct dm_table *t, struct queue_limits *lim)
->  	struct mapped_device *md = t->md;
->  
->  	if (lim->features & BLK_FEAT_ZONED) {
-> -		if (dm_table_supports_zone_append(t))
-> -			clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
-> -		else
-> -			set_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
-> +		assign_bit(DMF_EMULATE_ZONE_APPEND, &md->flags,
-> +			   !dm_table_supports_zone_append(t));
->  	} else {
->  		clear_bit(DMF_EMULATE_ZONE_APPEND, &md->flags);
->  		md->disk->nr_zones = 0;
-> diff --git a/drivers/md/persistent-data/dm-bitset.c b/drivers/md/persistent-data/dm-bitset.c
-> index 00c0a3f186b7..6680f05c25ec 100644
-> --- a/drivers/md/persistent-data/dm-bitset.c
-> +++ b/drivers/md/persistent-data/dm-bitset.c
-> @@ -59,10 +59,7 @@ static int pack_bits(uint32_t index, void *value, void *context)
->  		if (r)
->  			return r;
->  
-> -		if (bv)
-> -			set_bit(bit, (unsigned long *) &word);
-> -		else
-> -			clear_bit(bit, (unsigned long *) &word);
-> +		assign_bit(bit, (unsigned long *)&word, bv);
->  	}
->  
->  	*((__le64 *) value) = cpu_to_le64(word);
-> -- 
-> 2.51.0
-> 
 
