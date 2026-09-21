@@ -1,131 +1,124 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7979349159D
-	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 11:48:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FD2A497B9B
+	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 12:29:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789991334; cv=none; b=G3DpEh2gcsckN41njAjCIcsn22gEWSNhqrMRp/xXBxzwrUtri/2eHDrELa/YjQ3ZmzNDKbPhHJg0WJe69FNFo2seqNs6mwIRjKkINbcjmRabn6yyxGhSsbNnKsxbn2t9RnorjRJhdWAJW3M4O2luYcoEVlgFslpDT/ZvzuDK8S4=
+	t=1789993753; cv=none; b=LBpIVRUadL9+20McjTTZMKMte/ea9eydpBa9JGaxf9A/TndZAm7TeR25uwNwc84f5Tm2IAC29g85whK0wbVJSoB0DJOZ9s0K/FK2virbKY/PY5iOWrDphkQfiGH/aMIYhEl9PTrHpGaE92+utn1daulrXHX1/hP1w7CxVRTv21E=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789991334; c=relaxed/simple;
-	bh=qfLSwLN6Ol+jXm3x5LONEa89ry6IeI3Z+Thv5Do35kg=;
+	s=arc-20240116; t=1789993753; c=relaxed/simple;
+	bh=20YS5SjF37OLCH0EVjFT8uhc7Zcs/edGBImx9Bu7g+k=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=mlQ9b7Lz0lCpAgaUu+Ko55ssofL4OkgPYCst38F1EwEs6e4/yNh3CSJ5YjkpTTEp5kyEXtiEK5Csn8dKNrKQ6Yyu5PyOUJ0HpTJ9PwwoIz5QsEHpxsJuWnHL9rcA/5a3QFaCLlFhe1LipSHCRS51Imdc8LRbclFY9wek6AxJfH4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gP4429zJ; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version:Content-Type; b=BggYBQrJEPwOXU72za3u7Gv7WnJdJNptSkJ1ZU4a6VcVtlffXEIPUir7ryGP3H5Iopk9I1TVUYma+kTbCofqf+ncdygD+y1q177Bihc21STdNNLNu1lbYmzumhXhAaRB9eohLdj5oe0xxa2b+WutenRkqFyDO9wq/5j3AkpPaeg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J+w1UaX5; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gP4429zJ"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J+w1UaX5"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789991322;
+	s=mimecast20190719; t=1789993745;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=MDDstnukHO3fXB3QQzZGwwQPB6jN0uwfpA+IQdz63lI=;
-	b=gP4429zJEIusDBs/kKWgwiXc/y1rxdWbb1aS+khDdFTn+ym34B1y/29kWjOUnxEPIinxF9
-	6Ld/P96u/t7IS/9GcM0jUMnvxFf8gA5Jz0Br8a+AzN1xmBLwHkAtVwvg42ML+RiqmVHyDU
-	GZOoAH3ln6XRJ1vw1BX+tJOiEuI/uGU=
+	bh=3AlbNP8gZQwO885HERqSXE9KP83n74I0uRtyX51JKkQ=;
+	b=J+w1UaX5GA5lcKzVC2G7Mdk7oT/ap70eOH0DlJj73Q6jl/R9KwWO96W04fxHEqclwj4Hqx
+	IryJbhzD6iogOFvDUyY8E0RVsT0dKybNfj3T7CT9ivhdg+oPnqtp216fgQDdn2OHEghyjl
+	afXn3lzK1E1J96vg9mrbDLkgAL9x+Q0=
 Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-414-xbZwO6_MPkmQltWAbZRu5A-1; Mon,
- 21 Sep 2026 07:48:39 -0400
-X-MC-Unique: xbZwO6_MPkmQltWAbZRu5A-1
-X-Mimecast-MFC-AGG-ID: xbZwO6_MPkmQltWAbZRu5A_1789991318
-Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-enNsVpqPPwO8lF7xI10yJA-1; Mon,
+ 21 Sep 2026 08:29:01 -0400
+X-MC-Unique: enNsVpqPPwO8lF7xI10yJA-1
+X-Mimecast-MFC-AGG-ID: enNsVpqPPwO8lF7xI10yJA_1789993740
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 350711843AD4;
-	Mon, 21 Sep 2026 11:48:38 +0000 (UTC)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EA63F180AD66;
+	Mon, 21 Sep 2026 12:28:59 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1C51A41B;
-	Mon, 21 Sep 2026 11:48:35 +0000 (UTC)
-Date: Mon, 21 Sep 2026 13:48:33 +0200 (CEST)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7EEA219539A1;
+	Mon, 21 Sep 2026 12:28:57 +0000 (UTC)
+Date: Mon, 21 Sep 2026 14:28:55 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Ben Cressey <ben@cressey.dev>
 cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Subject: Re: [PATCH] dm-integrity: fix buffer overflow in inline mode with
- large tag size
-In-Reply-To: <20260915-dm-integrity-inline-tag-v1-1-3076b1b27454@cressey.dev>
-Message-ID: <5e7d601a-4119-e798-2a3d-cbfe80da1a0c@redhat.com>
-References: <20260915-dm-integrity-inline-tag-v1-1-3076b1b27454@cressey.dev>
+    Benjamin Marzinski <bmarzins@redhat.com>, Milan Broz <gmazyland@gmail.com>, 
+    Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] dm-crypt: reject the lmk IV mode with AEAD ciphers
+In-Reply-To: <20260915-dm-crypt-lmk-aead-v1-1-7ecae0b33493@cressey.dev>
+Message-ID: <fb4cf0d1-98a6-d850-7731-e4d518c6f767@redhat.com>
+References: <20260915-dm-crypt-lmk-aead-v1-1-7ecae0b33493@cressey.dev>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
-X-Mimecast-MFC-PROC-ID: oU7g7nTwSl340OiTThF93nYOETaK6MLRRwRT4QdeNN0_1789991318
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: VuBzjWogjZVdM72AT9QIGkYsMW12jvzeJ24AG4YBrHA_1789993740
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
 Hi
 
-Accepted into the dm-7.3 branch.
+Accepted, thanks.
 
 Mikulas
 
 
 On Tue, 15 Sep 2026, Ben Cressey wrote:
 
-> In inline mode, dm_integrity_check and dm_integrity_inline_recheck
-> compute the checksum of each block into an on-stack buffer of
-> HASH_MAX_DIGESTSIZE bytes. integrity_sector_checksum pads its result
-> with zeroes up to the tag size, so if the tag size is larger than
-> HASH_MAX_DIGESTSIZE, the padding runs past the end of the buffer. With
-> CONFIG_STACKPROTECTOR the kernel panics in dm_integrity_check on the
-> first read.
+> A "capi:" table line that pairs an AEAD cipher with the lmk IV mode,
+> for example "capi:gcm(aes)-lmk" with the integrity:28:aead option,
+> causes an oops when it is loaded. lmk sets tfms_count to 64, but
+> crypt_alloc_tfms_aead only allocates one transform, so crypt_setkey
+> reads past the end of the tfms_aead array and calls crypto_aead_setkey
+> on the values it finds there.
 > 
-> Enlarge both buffers to hold MAX_TAG_SIZE bytes, as commit b93b6643e9b5
-> ("dm integrity: fix a crash with unusually large tag size") did for
-> integrity_metadata.
+> lmk exists for compatibility with Loop-AES, which uses CBC, so refuse
+> it with an AEAD cipher rather than allocate 64 AEAD transforms. The
+> check cannot go in crypt_iv_lmk_ctr with the other lmk checks, because
+> the IV constructor runs after crypt_set_key.
 > 
-> Fixes: fb0987682c62 ("dm-integrity: introduce the Inline mode")
+> Fixes: 33d2f09fcb35 ("dm crypt: introduce new format of cipher with "capi:" prefix")
 > Cc: stable@vger.kernel.org
 > Signed-off-by: Ben Cressey <ben@cressey.dev>
 > Assisted-by: LLM
 > ---
-> To reproduce: QEMU nvme-ns with ms=128 and 4096-byte blocks, table
-> "0 8192 integrity /dev/nvme0n1 0 100 I 3
-> internal_hash:hmac(sha256):<key> fix_hmac block_size:4096", then read
-> the device.
-> 
-> For stable: before commit 5076d4599ce1 ("dm-integrity: enable
-> asynchronous hash interface") in 6.18, the dm_integrity_check buffer
-> was in dm_integrity_end_io.
+> To reproduce, with slub_debug=P: dmsetup create x --table "0 <n> crypt
+> capi:gcm(aes)-lmk <32-byte key> 0 /dev/ram0 0 1 integrity:28:aead".
+> No integrity profile is needed on the underlying device; crypt_setkey
+> runs before dm-crypt checks for one.
 > ---
->  drivers/md/dm-integrity.c | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  drivers/md/dm-crypt.c | 7 ++++++-
+>  1 file changed, 6 insertions(+), 1 deletion(-)
 > 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 92970e12267ab..0862f31b8498d 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -2721,7 +2721,7 @@ static void dm_integrity_inline_recheck(struct work_struct *w)
->  	outgoing_data = dio->integrity_payload + PAGE_SIZE;
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 9e170de50ad32..0bd22bda3e2de 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -2894,8 +2894,13 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+>  		}
+>  	}
 >  
->  	while (dio->bio_details.bi_iter.bi_size) {
-> -		char digest[HASH_MAX_DIGESTSIZE];
-> +		char digest[MAX_T(size_t, HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
->  		int r;
->  		struct bio_integrity_payload *bip;
->  		struct bio_vec bv;
-> @@ -2788,7 +2788,7 @@ static inline bool dm_integrity_check(struct dm_integrity_c *ic, struct dm_integ
->  	unsigned pos = 0;
+> -	if (*ivmode && !strcmp(*ivmode, "lmk"))
+> +	if (*ivmode && !strcmp(*ivmode, "lmk")) {
+> +		if (crypt_integrity_aead(cc)) {
+> +			ti->error = "AEAD transforms not supported for LMK";
+> +			return -EINVAL;
+> +		}
+>  		cc->tfms_count = 64;
+> +	}
 >  
->  	while (dio->bio_details.bi_iter.bi_size) {
-> -		char digest[HASH_MAX_DIGESTSIZE];
-> +		char digest[MAX_T(size_t, HASH_MAX_DIGESTSIZE, MAX_TAG_SIZE)];
->  		struct bio_vec bv = bio_iter_iovec(bio, dio->bio_details.bi_iter);
->  		char *mem = integrity_kmap(ic, bv.bv_page);
->  		integrity_sector_checksum(ic, &dio->ahash_req, dio->bio_details.bi_iter.bi_sector, mem, bv.bv_offset, digest);
+>  	if (*ivmode && !strcmp(*ivmode, "essiv")) {
+>  		if (!*ivopts) {
 > 
 > ---
 > base-commit: df2908090cda368b01ff43709f51890076c56157
-> change-id: 20260915-dm-integrity-inline-tag-645e17849955
+> change-id: 20260915-dm-crypt-lmk-aead-2e36abe57e55
 > 
 
