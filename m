@@ -1,57 +1,55 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FD2A497B9B
-	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 12:29:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE986497B90
+	for <dm-devel@lists.linux.dev>; Mon, 21 Sep 2026 12:34:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789993753; cv=none; b=LBpIVRUadL9+20McjTTZMKMte/ea9eydpBa9JGaxf9A/TndZAm7TeR25uwNwc84f5Tm2IAC29g85whK0wbVJSoB0DJOZ9s0K/FK2virbKY/PY5iOWrDphkQfiGH/aMIYhEl9PTrHpGaE92+utn1daulrXHX1/hP1w7CxVRTv21E=
+	t=1789994091; cv=none; b=Ot4zGs8nbiavcCqFK2oKoKd9DHE1FD7GT7vgrRQkFfmsKp2UydcoLN0B09BLaGg+aBlZp0Ra8unMv3jEG4B0STy5UoeZ1Gi1efJ7uUWlI/a8lyPk6kCyZBcfy+PKRssQRk360bQS2fYuG2vVBuAnpEBVqSQqrmFXDrbk11p0OaA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789993753; c=relaxed/simple;
-	bh=20YS5SjF37OLCH0EVjFT8uhc7Zcs/edGBImx9Bu7g+k=;
+	s=arc-20240116; t=1789994091; c=relaxed/simple;
+	bh=eWBf+45lhOFK8uOAMnp35FpO515Uk7wNaiKiE1aQyJA=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=BggYBQrJEPwOXU72za3u7Gv7WnJdJNptSkJ1ZU4a6VcVtlffXEIPUir7ryGP3H5Iopk9I1TVUYma+kTbCofqf+ncdygD+y1q177Bihc21STdNNLNu1lbYmzumhXhAaRB9eohLdj5oe0xxa2b+WutenRkqFyDO9wq/5j3AkpPaeg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=J+w1UaX5; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=MV+2ukCPOnvAmBeFlQQzjAE9dSf+P/+WaIBh/zTZAK3ZlYGv7kPaHH1j/lUZnFK2DxRa2swhfAP1Yj2lUJXiq6skQPK/SkyPpxJ54RkLSTrZI89l1mjMu68JOf9Qwq2ypWIyjAsh/LZJAx4s+o4YqaRnk6SpD/Dv8wLc4JPdqgA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=WsKN2Py2; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="J+w1UaX5"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="WsKN2Py2"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1789993745;
+	s=mimecast20190719; t=1789994086;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=3AlbNP8gZQwO885HERqSXE9KP83n74I0uRtyX51JKkQ=;
-	b=J+w1UaX5GA5lcKzVC2G7Mdk7oT/ap70eOH0DlJj73Q6jl/R9KwWO96W04fxHEqclwj4Hqx
-	IryJbhzD6iogOFvDUyY8E0RVsT0dKybNfj3T7CT9ivhdg+oPnqtp216fgQDdn2OHEghyjl
-	afXn3lzK1E1J96vg9mrbDLkgAL9x+Q0=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	bh=aJtJ1q798iXoJVsOSYr9Ko5j3s4fLjSotEtGJn22wAE=;
+	b=WsKN2Py2I3lyNNSW80zkS2jGtZ+7gfCeHRPNLToT1Mlr1h9Tqc33Uo/srOuephNbfPReLN
+	g4s+7DlVB+4u0UVwmTLxFSW+miflar5bjMQ/ctHFVEdRZwdM0YM3YH06wee8+c7VJUbz+g
+	hczHcgGV5IJ4YysqRJFCu1Dt+QazDmg=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-21-enNsVpqPPwO8lF7xI10yJA-1; Mon,
- 21 Sep 2026 08:29:01 -0400
-X-MC-Unique: enNsVpqPPwO8lF7xI10yJA-1
-X-Mimecast-MFC-AGG-ID: enNsVpqPPwO8lF7xI10yJA_1789993740
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-518-sP2K_if7PG2WD_EpbMiNgQ-1; Mon,
+ 21 Sep 2026 08:34:41 -0400
+X-MC-Unique: sP2K_if7PG2WD_EpbMiNgQ-1
+X-Mimecast-MFC-AGG-ID: sP2K_if7PG2WD_EpbMiNgQ_1789994079
 Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EA63F180AD66;
-	Mon, 21 Sep 2026 12:28:59 +0000 (UTC)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6AF701955F54;
+	Mon, 21 Sep 2026 12:34:39 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7EEA219539A1;
-	Mon, 21 Sep 2026 12:28:57 +0000 (UTC)
-Date: Mon, 21 Sep 2026 14:28:55 +0200 (CEST)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8413619539A1;
+	Mon, 21 Sep 2026 12:34:36 +0000 (UTC)
+Date: Mon, 21 Sep 2026 14:34:34 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Ben Cressey <ben@cressey.dev>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, Milan Broz <gmazyland@gmail.com>, 
-    Mike Snitzer <snitzer@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm-crypt: reject the lmk IV mode with AEAD ciphers
-In-Reply-To: <20260915-dm-crypt-lmk-aead-v1-1-7ecae0b33493@cressey.dev>
-Message-ID: <fb4cf0d1-98a6-d850-7731-e4d518c6f767@redhat.com>
-References: <20260915-dm-crypt-lmk-aead-v1-1-7ecae0b33493@cressey.dev>
+To: Wentao Liang <vulab@iscas.ac.cn>
+cc: cengku@gmail.com, dm-devel@lists.linux.dev, dongsheng.yang@linux.dev, 
+    linux-kernel@vger.kernel.org, Jianyun Gao <jianyungao89@gmail.com>
+Subject: Re: [PATCH] dm-pcache: Fix use-after-free in kset_replay()
+In-Reply-To: <20260917094133.2145340-1-vulab@iscas.ac.cn>
+Message-ID: <ab890e71-8075-76f8-a91b-0beb78a0d3b7@redhat.com>
+References: <20260917094133.2145340-1-vulab@iscas.ac.cn>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -59,66 +57,65 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-MFC-PROC-ID: VuBzjWogjZVdM72AT9QIGkYsMW12jvzeJ24AG4YBrHA_1789993740
+X-Mimecast-MFC-PROC-ID: 6jx2Ypx4wLVPcNyJaKg-SxzeetFZvS62GAw6QE8Ij8E_1789994079
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
 Hi
 
-Accepted, thanks.
+This patch conflicts with the patch 
+c2e894eac398b258f12fdec73ed6ba081047f7b3 (which also fixes the 
+use-after-free condition).
+
+Please, download the current kernel 7.3-rc4 and test if the bug is still 
+present there. If it is, send a patch against 7.3-rc4.
 
 Mikulas
 
 
-On Tue, 15 Sep 2026, Ben Cressey wrote:
+On Thu, 17 Sep 2026, Wentao Liang wrote:
 
-> A "capi:" table line that pairs an AEAD cipher with the lmk IV mode,
-> for example "capi:gcm(aes)-lmk" with the integrity:28:aead option,
-> causes an oops when it is loaded. lmk sets tfms_count to 64, but
-> crypt_alloc_tfms_aead only allocates one transform, so crypt_setkey
-> reads past the end of the tfms_aead array and calls crypto_aead_setkey
-> on the values it finds there.
+> When the generation of the segment referenced by a replayed key is
+> stale, kset_replay() releases the key with cache_key_put().  The caller
+> holds the only reference, so the key is freed, yet the function then
+> dereferences key->cache_pos to pin the segment.
 > 
-> lmk exists for compatibility with Loop-AES, which uses CBC, so refuse
-> it with an AEAD cipher rather than allocate 64 AEAD transforms. The
-> check cannot go in crypt_iv_lmk_ctr with the other lmk checks, because
-> the IV constructor runs after crypt_set_key.
+> Pin the segment before the key can be released.
 > 
-> Fixes: 33d2f09fcb35 ("dm crypt: introduce new format of cipher with "capi:" prefix")
+> Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-mapper")
 > Cc: stable@vger.kernel.org
-> Signed-off-by: Ben Cressey <ben@cressey.dev>
-> Assisted-by: LLM
+> Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
 > ---
-> To reproduce, with slub_debug=P: dmsetup create x --table "0 <n> crypt
-> capi:gcm(aes)-lmk <32-byte key> 0 /dev/ram0 0 1 integrity:28:aead".
-> No integrity profile is needed on the underlying device; crypt_setkey
-> runs before dm-crypt checks for one.
-> ---
->  drivers/md/dm-crypt.c | 7 ++++++-
->  1 file changed, 6 insertions(+), 1 deletion(-)
+>  drivers/md/dm-pcache/cache_key.c | 8 ++++++--
+>  1 file changed, 6 insertions(+), 2 deletions(-)
 > 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index 9e170de50ad32..0bd22bda3e2de 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -2894,8 +2894,13 @@ static int crypt_ctr_cipher_new(struct dm_target *ti, char *cipher_in, char *key
+> diff --git a/drivers/md/dm-pcache/cache_key.c b/drivers/md/dm-pcache/cache_key.c
+> index e068e878231b..668c16a2e111 100644
+> --- a/drivers/md/dm-pcache/cache_key.c
+> +++ b/drivers/md/dm-pcache/cache_key.c
+> @@ -730,6 +730,12 @@ static int kset_replay(struct pcache_cache *cache, struct pcache_cache_kset_onme
+>  
+>  		__set_bit(key->cache_pos.cache_seg->cache_seg_id, cache->seg_map);
+>  
+> +		/*
+> +		 * Pin the segment while the key is still alive: the stale key
+> +		 * below is released and freed by cache_key_put().
+> +		 */
+> +		cache_seg_get(key->cache_pos.cache_seg);
+> +
+>  		/* Check if the segment generation is valid for insertion. */
+>  		if (key->seg_gen < key->cache_pos.cache_seg->gen) {
+>  			cache_key_put(key);
+> @@ -739,8 +745,6 @@ static int kset_replay(struct pcache_cache *cache, struct pcache_cache_kset_onme
+>  			cache_key_insert(&cache->req_key_tree, key, true);
+>  			spin_unlock(&cache_subtree->tree_lock);
 >  		}
+> -
+> -		cache_seg_get(key->cache_pos.cache_seg);
 >  	}
 >  
-> -	if (*ivmode && !strcmp(*ivmode, "lmk"))
-> +	if (*ivmode && !strcmp(*ivmode, "lmk")) {
-> +		if (crypt_integrity_aead(cc)) {
-> +			ti->error = "AEAD transforms not supported for LMK";
-> +			return -EINVAL;
-> +		}
->  		cc->tfms_count = 64;
-> +	}
->  
->  	if (*ivmode && !strcmp(*ivmode, "essiv")) {
->  		if (!*ivopts) {
-> 
-> ---
-> base-commit: df2908090cda368b01ff43709f51890076c56157
-> change-id: 20260915-dm-crypt-lmk-aead-2e36abe57e55
+>  	return 0;
+> -- 
+> 2.34.1
 > 
 
