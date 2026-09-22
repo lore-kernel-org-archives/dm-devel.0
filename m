@@ -1,128 +1,211 @@
-Received: from mail-ej2-f12.google.com (mail-ej2-f12.google.com [74.125.228.140])
+Received: from mail-oo2-f0.google.com (mail-oo2-f0.google.com [74.125.231.128])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3ECE7549380
-	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 13:54:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03B92559CB9
+	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 15:03:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.231.128
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790085284; cv=none; b=RlsiyfZldaabyF0oYYsUfSG2so8jhXUKcADcXv4BxZ6j7SM8sMjq9aI4VXfSqXZGTKwOXQ0INOo9S99D9c0Etu6TI+YAc3TEAJpeiQ/UY3BqWEhvctSSD/iV7MkNso0VswgTkr6+bKHCR9dPrsSIUO2z6qWuWrxWd0ddkI138vU=
+	t=1790089407; cv=none; b=n/0nBtTn1HMHudkTO82nrNdB+ktDQHL637mOYUpeWaESg8d5vHcep7UZOqFjL8wMMnNMY32AacEk5hzw4qSIteu4KFb709wHMzoMkgmP6S0co+UMXKzGjUGHg2gNnNuxZJLU25QV33tYdFxTnY6V/rSlchNZNAorK8gdYJUcOvk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790085284; c=relaxed/simple;
-	bh=of1kRO6ILjWAgj4iFFg39n1f9ag2O5+deE7KCawy++g=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=S9Q8wpo74xL9rbFEsbI7Oa91X1ukaoPMKPwwoIy6a+7CrQU7I6p+ok3qBhssitnDJP7Ew6ByzNes/tvC7/mBmoLLl2snwL8i30AsCeL1uReR7w6a7cwqX+mrRk1YIDubM+9+1vFlbZSE+LbJyxPsmneIvN2Mehn75kc9WTcQvTw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QPp3pLaj; arc=none smtp.client-ip=74.125.228.140
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QPp3pLaj"
-Received: by mail-ej2-f12.google.com with SMTP id a640c23a62f3a-c254f9f0b20so629809566b.3
-        for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 06:54:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790085280; x=1790690080; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=ufPZGPSZBLf6/pwvKrChnuajCoyQv+QtMvUQGkdovhk=;
-        b=QPp3pLaj09AlkOTAy0Puwu7KYEYWf4YwtlolSilI+dTbZG3pl0R4beNIDY9ycehR2L
-         uOmZ9mvSLrGo0pIJR4ZJIbp3Zk9jqCIsTekO0SuZCvOulOIR9uw1XusVH2kzvdMk8570
-         0ANT6Uw7jwHaSxbkPn7AJsJBVEdoJUYLm1bhGmfzZhcLbt5SMmuKwbTe1cokbYHfThK4
-         LK1sjU4n8MJ8GSBmdBvJaT4uVyvspsfSgSPd4b8g2AEbfQWNykmZ/E4kxgMfOAk9r+wW
-         M1kEJr6VOQJVbx7EUfHDu8sBEhfx44IpZiqyscxYvi6FK0gAUgUAiJ4vPr0ggK3PBrpo
-         QZ9A==
+	s=arc-20240116; t=1790089407; c=relaxed/simple;
+	bh=UFEL4EbqlZlIl2PIgjhTvGMox+QLWc5x/ZYc30QxGhU=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=tS4oCqCm0cJDqlQJqTK1GXEqZRMv+7u52PQ8DCo4oD/1161rqrDLLQrzFTXhqIi27NktnAHj8kEQafyWM7EU71ZzfLHBa8/a/4jjE/wzZOJyCD8b7D10C7oZglkbVEQaS31yJ3RFeHsPG7Mfh1oB8AEIqNvT402fa9WNXNadROQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=74.125.231.128
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oo2-f0.google.com with SMTP id 006d021491bc7-6a3900cb2b5so2128584eaf.0
+        for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 08:03:24 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790085280; x=1790690080;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=ufPZGPSZBLf6/pwvKrChnuajCoyQv+QtMvUQGkdovhk=;
-        b=qZJ7H6uNW2dbtcNCBX1ZNSgKLRs4PwCn53TPEci5zsfihZcZseYysqCo02GwYgN1b/
-         T0q6rB26Ec43gXJ9xeUNznTbAI75lMXOi1clsCg3wDfwf9gLA3pHHkmuBgj+5i4JetXX
-         wI5w34JhprQzSAJZeV8UInoJTrXXsPC4xEfj9QDbZoSGPRCdiUxJ2/U6goS97+Cviy66
-         VplPSlJYwqjUslnr6wWNM4Qy9FoU+e2W43zF3M9HuQj08Cev7h2l/BnMx0wLRSbwXSOT
-         B+qaRfAGM9yadBq7mYTn7ZSSh7T+6VJ5VviihCAPpwOUiBTKEnoNygiY3FK+fANDsxsY
-         RrCg==
-X-Forwarded-Encrypted: i=1; AKwUvBznKHWmvatnVpDUXJWxQzGKqB/lpFHJmm6zHI7YGGHT9tZft9kk1K82OIPPYgl+gwaEnGwObxdIXQ==@lists.linux.dev
-X-Gm-Message-State: AFuF++l/roF/98yG1QqDivqdzC/obZeW1BkJrTAN3LfDLedFGkcu9wQj
-	pFTm4X/78dCisFXestHijS1lrHjjTvbRQ89h7dFQGBahOgVfSAYHbakO
-X-Gm-Gg: AYBFou0lSYEXbYvQoIFUQmqDCcmQo6H8U2U2GCypWuo6mIb8MS+iytvlD4TzIV7PV3k
-	2foGM1bn1qKVI5jcjyCGpCgSAp3GwO3bt8Tq0s/zRj2+U4NbHmoVzsEWMoMVPHihSzuvHjCvDDY
-	o+vlAgabWzggJWERZR/lCokYf7qEvhNLzyyhO8TfC5KBDvVI2P5yq4NUful8vZbr6MpZWeqhBdd
-	UzLNvKz1fJS+9rjy2E2SHzdNpUEpqktFeBpzv5VmXXNSohP6sYfD/H74TPaQBHeDIXc9Rj6JRvw
-	Qi+mmg/iVz0bQkucOUUC2kcLGnktjbUy7iupKTmHJUJX3g1NN63Y3ClC1qVsVUutu8yjbwFfp84
-	J6Prn7o9vezWb+jQC/BmJn585PgFNW7KDE0jemPxl/NqKxSJ4Fs1ekTZ5FoVKKV0YYahhOHoseX
-	gq4KUI5LK1h9reZU49+19GthT2l/nIc0WRDNe3/HO9oL3AHs/7M7Rl/VD41W1MY3t0rEvXtgb9C
-	VbIa4xhvchSZRN3lNwrBEOXeoZca5+GX8W//U2KviL4r9LOTf9S3fqZXxhK+nl8hduFL+xtNRzd
-	F0+KTfP0ldNMPJquLd02VRWFKsrT
-X-Received: by 2002:a17:906:c111:b0:c29:f5d8:9c6d with SMTP id a640c23a62f3a-c2a15802eb7mr1217098966b.28.1790085280498;
-        Tue, 22 Sep 2026 06:54:40 -0700 (PDT)
-Received: from [10.54.182.141] (82-132-213-197.dab.02.net. [82.132.213.197])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c2a9c5baa1bsm93202166b.39.2026.09.22.06.54.29
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 22 Sep 2026 06:54:39 -0700 (PDT)
-Message-ID: <cce62c72-278a-44d1-9cf7-e0beb0b72688@gmail.com>
-Date: Tue, 22 Sep 2026 14:54:25 +0100
+        d=1e100.net; s=20260707; t=1790089404; x=1790694204;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=A9RFz1m3zhfRPFD7q79owZVbEzWSRMClL3oSCIMR9lY=;
+        b=Y4JwYDqudObpOQRmImEt616E3KLlkc0kqc6dalfkYd6agcvu1FinHInEqI6LFM/o42
+         h97tSeBpMDrcSuIqq1pnPXENvfWsyBFFZyhNVjeuYGkXdk/h3t5YPB5UQheMXk0peSXB
+         tDS7dlr3Xll2O18ZtMek7ytF4zsTHsJ3LDBPFPmNck8vqeH0/g+KVAnAeCrjHTidS8+J
+         QxZ+pMx3ddUbBTKzFw/MwVAWIec+5ZO87RF1ksRuusL2V4ICgyDfcmZ6Ku0fnw1pkxuH
+         UtNQiyoi7D7jrVPJEJppbcaOdcETsNj1KXPj9U7aL+2Cv+4pwbzlKwVaP5r7B9kB0GvJ
+         sTbw==
+X-Forwarded-Encrypted: i=1; AKwUvByV9S/zSWxQFgWvxryGxE6S6to3WU7B0mS/2gfXWrGRBoEkQRZMkYc0hjFAYSt5VvcqdFnR1CUCFA==@lists.linux.dev
+X-Gm-Message-State: AFuF++nwtwi57mmLEQEqm0kdLCq4Gt8POMXeQK2460wh1axunmE9KfFy
+	LVr2XRzIZ0bPFmY1unRPtS3TD87z1zl7OY1Xz4waOrJ4MAqrz7S3L5AuUUDRRB8S4FSNfkk42wX
+	5BqE6QOX2tmdMgevl0S6fQPLdg8xYlHkRIZZEyrmOaXz676hfyKaPbp+VYHM=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v6 04/13] block: introduce dma map backed bio type
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
- linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
- Sumit Semwal <sumit.semwal@linaro.org>,
- =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
- Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>,
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
- William Power <william.power@intel.com>, Phil Cayton
- <phil.cayton@intel.com>, Matthew Brost <matthew.brost@intel.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-References: <cover.1789997898.git.asml.silence@gmail.com>
- <a3ee719abc440ca139f1a945fdaf43a45f0c6b57.1789997898.git.asml.silence@gmail.com>
- <20260922131610.GA30468@lst.de>
-Content-Language: en-US
-From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <20260922131610.GA30468@lst.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-Received: by 2002:a05:6820:188a:b0:6b7:8415:d78f with SMTP id
+ 006d021491bc7-6ca9ca56035mr12207866eaf.58.1790089374715; Tue, 22 Sep 2026
+ 08:02:54 -0700 (PDT)
+Date: Tue, 22 Sep 2026 08:02:54 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6ab2989e.a6af0033.177e91.0022.GAE@google.com>
+Subject: [syzbot] [dm?] KASAN: slab-use-after-free Read in dm_table_get_mode
+From: syzbot <syzbot+bdff1ecf726d2af66afd@syzkaller.appspotmail.com>
+To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-On 9/22/26 14:16, Christoph Hellwig wrote:
-> On Mon, Sep 21, 2026 at 02:38:48PM +0100, Pavel Begunkov wrote:
->> Premapped buffers don't require a generic bio_vec since these have
->> already been dma mapped. Repurpose the bi_io_vec space to strore dmabuf
-> 
-> s/strore/store/
-> 
-> Can you please expland on the splitting considerations a bit?  Preferably
-> both in a comment for the details, and in the commit log for how we
-> arrived at them and why they are fine for now?
+Hello,
 
-I'll add something to the commit log, but not sure which specific
-details in comments you mean. Do you want me to expand the comment
-above limiting the number of segments? Maybe I should add there that
-it's stricter than necessary and might cause more splitting than
-necessary? This one:
+syzbot found the following issue on:
 
-/*
-  * Limit by the number of segments. We don't expose the underlying
-  * mapping layout, but with a known minimum segment size, any I/O
-  * consisting of N full segments should be able to cover at least
-  * this much.
-  */
+HEAD commit:    38872197cae2 Merge branch 'for-next/fixes' into for-kernelci
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/arm64/linux.git for-kernelci
+console output: https://syzkaller.appspot.com/x/log.txt?x=116dd805580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=56ed23170c168d4c
+dashboard link: https://syzkaller.appspot.com/bug?extid=bdff1ecf726d2af66afd
+compiler:       Debian clang version 22.1.8 (++20260613092233+e80beda6e255-1~exp1~20260613092250.77), Debian LLD 22.1.8
+userspace arch: arm64
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=14e8f805580000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=17efe805580000
 
--- 
-Pavel Begunkov
+Downloadable assets:
+disk image: https://storage.googleapis.com/syzbot-assets/c5963fdd6790/disk-38872197.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/a8c2cab00c45/vmlinux-38872197.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/bde15d173380/Image-38872197.gz.xz
 
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+bdff1ecf726d2af66afd@syzkaller.appspotmail.com
+
+==================================================================
+BUG: KASAN: slab-use-after-free in dm_table_get_mode+0x60/0x68 drivers/md/dm-table.c:2121
+Read of size 4 at addr ffff0000d75134f4 by task syz.1.7295/2493
+
+CPU: 0 UID: 0 PID: 2493 Comm: syz.1.7295 Not tainted syzkaller #0 PREEMPT 
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 08/14/2026
+Call trace:
+ show_stack+0x2c/0x3c arch/arm64/kernel/stacktrace.c:499 (C)
+ __dump_stack+0x30/0x40 lib/dump_stack.c:94
+ dump_stack_lvl+0xd8/0x12c lib/dump_stack.c:120
+ print_address_description+0xb0/0x238 mm/kasan/report.c:378
+ print_report+0x68/0x84 mm/kasan/report.c:482
+ kasan_report+0x8c/0xc4 mm/kasan/report.c:595
+ __asan_report_load4_noabort+0x20/0x2c mm/kasan/report_generic.c:380
+ dm_table_get_mode+0x60/0x68 drivers/md/dm-table.c:2121
+ do_resume drivers/md/dm-ioctl.c:1317 [inline]
+ dev_suspend+0x40c/0x750 drivers/md/dm-ioctl.c:1360
+ ctl_ioctl drivers/md/dm-ioctl.c:2213 [inline]
+ dm_ctl_ioctl+0x884/0xbbc drivers/md/dm-ioctl.c:2235
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl fs/ioctl.c:583 [inline]
+ __arm64_sys_ioctl+0x154/0x1cc fs/ioctl.c:583
+ __invoke_syscall arch/arm64/kernel/syscall.c:35 [inline]
+ invoke_syscall+0x98/0x244 arch/arm64/kernel/syscall.c:49
+ el0_svc_common+0xec/0x23c arch/arm64/kernel/syscall.c:121
+ do_el0_svc+0x4c/0x5c arch/arm64/kernel/syscall.c:140
+ el0_svc+0x64/0x260 arch/arm64/kernel/entry-common.c:758
+ el0t_64_sync_handler+0x44/0x104 arch/arm64/kernel/entry-common.c:777
+ el0t_64_sync+0x198/0x19c arch/arm64/kernel/entry.S:590
+
+Allocated by task 2493:
+ kasan_save_stack mm/kasan/common.c:57 [inline]
+ kasan_save_track+0x40/0x78 mm/kasan/common.c:78
+ kasan_save_alloc_info+0x40/0x50 mm/kasan/generic.c:570
+ poison_kmalloc_redzone mm/kasan/common.c:398 [inline]
+ __kasan_kmalloc+0x9c/0xb4 mm/kasan/common.c:415
+ kasan_kmalloc include/linux/kasan.h:263 [inline]
+ __kmalloc_cache_noprof+0x2f4/0x5fc mm/slub.c:5563
+ _kmalloc_noprof include/linux/slab.h:991 [inline]
+ _kzalloc_noprof include/linux/slab.h:1312 [inline]
+ dm_table_create+0x8c/0x2ac drivers/md/dm-table.c:136
+ table_load+0x104/0x764 drivers/md/dm-ioctl.c:1631
+ ctl_ioctl drivers/md/dm-ioctl.c:2213 [inline]
+ dm_ctl_ioctl+0x884/0xbbc drivers/md/dm-ioctl.c:2235
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl fs/ioctl.c:583 [inline]
+ __arm64_sys_ioctl+0x154/0x1cc fs/ioctl.c:583
+ __invoke_syscall arch/arm64/kernel/syscall.c:35 [inline]
+ invoke_syscall+0x98/0x244 arch/arm64/kernel/syscall.c:49
+ el0_svc_common+0xec/0x23c arch/arm64/kernel/syscall.c:121
+ do_el0_svc+0x4c/0x5c arch/arm64/kernel/syscall.c:140
+ el0_svc+0x64/0x260 arch/arm64/kernel/entry-common.c:758
+ el0t_64_sync_handler+0x44/0x104 arch/arm64/kernel/entry-common.c:777
+ el0t_64_sync+0x198/0x19c arch/arm64/kernel/entry.S:590
+
+Freed by task 2494:
+ kasan_save_stack mm/kasan/common.c:57 [inline]
+ kasan_save_track+0x40/0x78 mm/kasan/common.c:78
+ kasan_save_free_info+0x54/0x6c mm/kasan/generic.c:584
+ poison_slab_object mm/kasan/common.c:253 [inline]
+ __kasan_slab_free+0x74/0xa4 mm/kasan/common.c:285
+ kasan_slab_free include/linux/kasan.h:235 [inline]
+ slab_free_hook mm/slub.c:2748 [inline]
+ slab_free mm/slub.c:6508 [inline]
+ kfree+0x188/0x698 mm/slub.c:6801
+ dm_table_destroy+0x32c/0x3a0 drivers/md/dm-table.c:210
+ do_resume drivers/md/dm-ioctl.c:1341 [inline]
+ dev_suspend+0x5a4/0x750 drivers/md/dm-ioctl.c:1360
+ ctl_ioctl drivers/md/dm-ioctl.c:2213 [inline]
+ dm_ctl_ioctl+0x884/0xbbc drivers/md/dm-ioctl.c:2235
+ vfs_ioctl fs/ioctl.c:51 [inline]
+ __do_sys_ioctl fs/ioctl.c:597 [inline]
+ __se_sys_ioctl fs/ioctl.c:583 [inline]
+ __arm64_sys_ioctl+0x154/0x1cc fs/ioctl.c:583
+ __invoke_syscall arch/arm64/kernel/syscall.c:35 [inline]
+ invoke_syscall+0x98/0x244 arch/arm64/kernel/syscall.c:49
+ el0_svc_common+0xec/0x23c arch/arm64/kernel/syscall.c:121
+ do_el0_svc+0x4c/0x5c arch/arm64/kernel/syscall.c:140
+ el0_svc+0x64/0x260 arch/arm64/kernel/entry-common.c:758
+ el0t_64_sync_handler+0x44/0x104 arch/arm64/kernel/entry-common.c:777
+ el0t_64_sync+0x198/0x19c arch/arm64/kernel/entry.S:590
+
+The buggy address belongs to the object at ffff0000d7513400
+ which belongs to the cache kmalloc-512 of size 512
+The buggy address is located 244 bytes inside of
+ freed 512-byte region [ffff0000d7513400, ffff0000d7513600)
+
+The buggy address belongs to the physical page:
+page: refcount:0 mapcount:0 mapping:0000000000000000 index:0xffff0000d7511c00 pfn:0x117510
+head: order:2 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+flags: 0x5ffc00000000240(workingset|head|node=0|zone=2|lastcpupid=0x7ff)
+page_type: f5(slab)
+raw: 05ffc00000000240 ffff0000c0001c80 fffffdffc3c21e10 fffffdffc35db510
+raw: ffff0000d7511c00 000000000010000f 00000000f5000000 0000000000000000
+head: 05ffc00000000240 ffff0000c0001c80 fffffdffc3c21e10 fffffdffc35db510
+head: ffff0000d7511c00 000000000010000f 00000000f5000000 0000000000000000
+head: 05ffc00000000002 fffffdffc35d4401 00000000ffffffff 00000000ffffffff
+head: ffffffffffffffff 0000000000000000 00000000ffffffff 0000000000000004
+page dumped because: kasan: bad access detected
+
+Memory state around the buggy address:
+ ffff0000d7513380: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+ ffff0000d7513400: fa fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+>ffff0000d7513480: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+                                                             ^
+ ffff0000d7513500: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+ ffff0000d7513580: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+==================================================================
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
