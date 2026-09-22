@@ -1,155 +1,68 @@
-Received: from mail-wm2-f13.google.com (mail-wm2-f13.google.com [74.125.225.141])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8AFA23AA9F8
-	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 13:07:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.141
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11EE4559C9A
+	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 13:16:20 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790082448; cv=none; b=GFq8/20jLw+Fs/igdFO2WJr9QIX7LD7Z/u1wXTgp4gdvbqts/minlrrZYFVViRvxzD8MnTnlLLUxvKZ/lF3A6x2KIIAHXtGAdwdtJe60up+N2HmNd3MbCyEYUCuI36xZqWn5CqxPd+WXkAlHxKJQfPKjE94hjzKWZ6RNLeBz0eU=
+	t=1790082983; cv=none; b=sg7v19nY/KsXzMYYw7fAHjvT+2cDXk50VA9MlJNTRvh9V+5GDWd69mU2Ye7i+k/8doWuOula242sZFJvwP+7rAFRni6yz39vw+LBQ8VK3yzDuf7ra+Lp2BvqfQwqxPvRDPZXLZh1lJhjH4uo9KoALR1HPwIbq0N7cGY+o1YN/IY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790082448; c=relaxed/simple;
-	bh=2w3z6ow+WxSS6tfmO9zAuGEfiXgTQeVHqmMTigZHSkk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:References:From:
-	 In-Reply-To:Content-Type; b=Bmo4ttPLVxmBvQjvteYTmElcOO+0Cfwm+nMdqehN+bHBjErqXYVs3iHLy9XQ4PP9d+54bnHLnU74E+gl8vyWjLZ0rVAdZaxtJPUx/ZgbiHy6TpKIOGBoMzEhS0voAauzzH7GpXWEOgRD+7qnZCgkApLqrnoZa+M2AkQ2rVqgwFE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=IkqVsi54; arc=none smtp.client-ip=74.125.225.141
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="IkqVsi54"
-Received: by mail-wm2-f13.google.com with SMTP id 5b1f17b1804b1-49e721b5503so39881605e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 06:07:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790082445; x=1790687245; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:autocrypt:from
-         :content-language:references:to:subject:user-agent:mime-version:date
-         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=2w3z6ow+WxSS6tfmO9zAuGEfiXgTQeVHqmMTigZHSkk=;
-        b=IkqVsi54qMApUWJTaAuOV0wKJMy6/p2cpTMzL2XkNwoPG4QguGRVLgBv8dhaep1Gf9
-         LEQzvX/f9Jofp9so4p0c/uFpW5Kd7VNNfKEAH+UZfU++EYL9rGyRbb+TnWTQlKsXTVQn
-         /hKiQDL+8YR1ihiWLr6THGy0GhoCXr5GccxFHkTithXq7eBPSmF6z+WPXJnVkX9waAAA
-         rDSQaBpV3axtSxDAoWo4vGmXt00Gvql1pfaTzNbBrbTMnAh1Npco4h3mclgWa2haw0rx
-         ysi5ss0jKN+y0mv/Ba0T3sXEklBua+LwbuA4uqUS8EiHwbUOG5mJaHRRhaQq+58pPZHz
-         bvaQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790082445; x=1790687245;
-        h=content-transfer-encoding:content-type:in-reply-to:autocrypt:from
-         :content-language:references:to:subject:user-agent:mime-version:date
-         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=2w3z6ow+WxSS6tfmO9zAuGEfiXgTQeVHqmMTigZHSkk=;
-        b=lLOQv4hifcjmnBgr49H7riJIBk9LpNQjRddpbVXmqRCp0EehqgWtbXKvC3yIVmCww7
-         F4hADFdo4KBWcRbIwOmXObKeakxC0+K2+v5pjsBGSyiqJtGuuPm8ncENs00k8FkFDrob
-         XHyxQnYGKMDhZ+PI8sV0RjiqY9PPqVpTgJr8PiqzVJqfPNyRyzlwb4Bc0nNWvghTZYMG
-         xCa8MMvaxNvpRLWskeg+xWZMJ1OyWxddIqzvJzsL52975hnNMuSRX8LcIDDXpD0qL5q/
-         zzg89EO/XwDnyza1p3jeFweSuYr8DNNtkVKnhcW+13v+jUwgE6sK9fmQilDTh/6S9Rnc
-         XcQA==
-X-Forwarded-Encrypted: i=1; AKwUvBwiVuWcsfzoiciQ9I2r7dlH+aA9Gb/jFtcXDaurecu/i/tmO9b5kJLLjTfEy8Ab0w52mmnOOA5KrQ==@lists.linux.dev
-X-Gm-Message-State: AFuF++n8gqAabkh8OS9xKNbDMJmHVQKAUGwJ1sTCzBkFnNFfNZ5ZwWc6
-	eRqwvmMLovGyUmdC9UhZ/6fH3TrsS+c4ZrJ4KeTKGQGXPJ1fVB2C7e+Iz0qYOHcQ
-X-Gm-Gg: AYBFou2Mj+AtOWnmQtW3VW8PqEWlDmCauY6uDc/ud1eLTeI6iag6dSZz1nNfGj2zdWi
-	Ct6n5Boq1JwnkNJFMoQqz9Bd5S0U0LxK5nob2G4agyttv+IiW9WmA/cjRh6LC9kOFpG3EXVrgOt
-	/lauYHpXyHnO0vp39KcejSDY70+Oxq0NJ+sOmzmzIZrdTEwcN0ApcMazqGBH4KaLlMxvY1v2uPb
-	8c/9srjH9rBZ4dbrzWGXdzuu1scEc4jwWyWAIDOPO2GmE+mvdgOlQfKUgpXaNqIcAMEHsbkmomj
-	j86fj9Ws+SH4p+PbpzMowtNzGF59e2MZAW21mU8wcFuzzOieXf4AL53HVrgLfjWO6lKNdhMg9x3
-	EFHeJfc073tA22SpN71tDkvlzjlDb9VX1TwN27DEi/By4BL1ucrcvm1UO3qkv59rwFki1TEx6Y6
-	lhZWxD96HB2bs34uoswyutpgf0I4XKLb7X9mqrzkeim16ca5PFWLWLESOv/s6DWRN6X0vCmBIBB
-	a0=
-X-Received: by 2002:a05:600c:5306:b0:49f:d778:be09 with SMTP id 5b1f17b1804b1-49fd778be18mr71329525e9.24.1790082444477;
-        Tue, 22 Sep 2026 06:07:24 -0700 (PDT)
-Received: from [192.168.1.220] ([176.74.141.242])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49fdaaf97e2sm27886695e9.2.2026.09.22.06.07.23
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 22 Sep 2026 06:07:23 -0700 (PDT)
-Message-ID: <07e750dc-570b-4f69-9ec3-68de51416a06@gmail.com>
-Date: Tue, 22 Sep 2026 15:07:22 +0200
+	s=arc-20240116; t=1790082983; c=relaxed/simple;
+	bh=Y8SIGh6YdZZ1CNW2JjI2lgNP0I2lOTxj/HFJcJxssAM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=qhgj8mI29uE2hT1AVqkXwXtj4KfKVyAcym8zeDBNjcIGp8GdQr6uIJ520dzU2e8HhkjfTp6hkvL8eqI4pnSqgz0UfrHLg6j3MrG/2uzL+vYHps7JP3ji/PQBQKU8bqZlah4s3i+RJIEFt1Y7xTnu7h5vT8Cq+ovx73H58uWCtCk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id A774668C4E; Tue, 22 Sep 2026 15:16:11 +0200 (CEST)
+Date: Tue, 22 Sep 2026 15:16:10 +0200
+From: Christoph Hellwig <hch@lst.de>
+To: Pavel Begunkov <asml.silence@gmail.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
+	linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
+	Christoph Hellwig <hch@lst.de>,
+	Sumit Semwal <sumit.semwal@linaro.org>,
+	Christian =?iso-8859-1?Q?K=F6nig?= <christian.koenig@amd.com>,
+	Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Jens Axboe <axboe@kernel.dk>, Nitesh Shetty <nj.shetty@samsung.com>,
+	Kanchan Joshi <joshi.k@samsung.com>,
+	Anuj Gupta <anuj20.g@samsung.com>,
+	Tushar Gohad <tushar.gohad@intel.com>,
+	William Power <william.power@intel.com>,
+	Phil Cayton <phil.cayton@intel.com>,
+	Matthew Brost <matthew.brost@intel.com>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+Subject: Re: [PATCH v6 04/13] block: introduce dma map backed bio type
+Message-ID: <20260922131610.GA30468@lst.de>
+References: <cover.1789997898.git.asml.silence@gmail.com> <a3ee719abc440ca139f1a945fdaf43a45f0c6b57.1789997898.git.asml.silence@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 0/1] dm-crypt: allow encryption sector size up to
- PAGE_SIZE
-To: Itai Handler <itai.handler@gmail.com>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, Jonathan Corbet <corbet@lwn.net>,
- Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap
- <rdunlap@infradead.org>, dm-devel@lists.linux.dev,
- linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
- Ondrej Kozina <okozina@redhat.com>
-References: <20260922120330.127262-1-itai.handler@gmail.com>
-Content-Language: en-US
-From: Milan Broz <gmazyland@gmail.com>
-Autocrypt: addr=gmazyland@gmail.com; keydata=
- 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
-In-Reply-To: <20260922120330.127262-1-itai.handler@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <a3ee719abc440ca139f1a945fdaf43a45f0c6b57.1789997898.git.asml.silence@gmail.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On 9/22/26 2:03 PM, Itai Handler wrote:
-...> Exercised on arm64 with a 64K page granule: plain dm-crypt with
-> sector_size 65536 over NVMe, block level round trip, fio random
+On Mon, Sep 21, 2026 at 02:38:48PM +0100, Pavel Begunkov wrote:
+> Premapped buffers don't require a generic bio_vec since these have
+> already been dma mapped. Repurpose the bi_io_vec space to strore dmabuf
 
-Could you please point me to at least one consumer-grade NVMe drive that
-supports a 64k sector size?
+s/strore/store/
 
-Allowing a bigger sector size in dm-crypt means you can end up with
-partial dm-crypt sector writes (after power fail), which opens another
-can of worms.
+Can you please expland on the splitting considerations a bit?  Preferably
+both in a comment for the details, and in the commit log for how we
+arrived at them and why they are fine for now?
 
-Your dm-verity argument does not apply here; it is a read-only target.
-
-Also, arguments based on cryptsetup/LUKS2 do not make much sense for
-kernel code. They must be compatible and work together, but dm-crypt
-can be used without any userspace validation, so all limits must be
-checked in the kernel.
-
-LUKS2 limits the sector size to 4k for multiplatform compatibility.
-
-dm-crypt itself can support bigger sectors, but I just do not see much
-use for it with common NVMe drives or other storage.
-
-Milan
+Otherwise looks good.
 
