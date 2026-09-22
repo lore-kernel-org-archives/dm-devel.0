@@ -1,237 +1,128 @@
-Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
+Received: from mail-ej2-f12.google.com (mail-ej2-f12.google.com [74.125.228.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A4C3530DF0
-	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 13:50:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3ECE7549380
+	for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 13:54:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790085027; cv=none; b=u64SCziS1HmX14wzgKqIK6ZUAIljFdpvcyHwy4m9kXya2esReyaYmbxt1p3n0/x3F080lR5Oaz8jOasCEo6hLd8QV48Fq72X3G9lf2MBi7boxSkaK892Yd36L8AzYaXj9nZLHbvB2fYysvehLAf6a7edsxQDRyt1FzTgvbX0OH8=
+	t=1790085284; cv=none; b=RlsiyfZldaabyF0oYYsUfSG2so8jhXUKcADcXv4BxZ6j7SM8sMjq9aI4VXfSqXZGTKwOXQ0INOo9S99D9c0Etu6TI+YAc3TEAJpeiQ/UY3BqWEhvctSSD/iV7MkNso0VswgTkr6+bKHCR9dPrsSIUO2z6qWuWrxWd0ddkI138vU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790085027; c=relaxed/simple;
-	bh=XBibOZPHW68W0g75OPHH2eBRodk0ZZkXmYVJz/0Vt7g=;
-	h=From:To:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=ChJYHQIxC76Ci5Fkr4vlyPfnZ4vpTic6tU0Fe1KFvcgWaFIURzLV+UDA3SMTghKZYzBcloedsn3uoZU+eFDA7D1Yf5Qqnto2lVUTNhLMgnH4DwsOg2f2u3ntlRwsesCTKhZWDO5nTBJ7HJPWKmy8imOj/2omjhET4DLk1LLCAA4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Cs3Tly/t; arc=none smtp.client-ip=74.125.225.140
+	s=arc-20240116; t=1790085284; c=relaxed/simple;
+	bh=of1kRO6ILjWAgj4iFFg39n1f9ag2O5+deE7KCawy++g=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=S9Q8wpo74xL9rbFEsbI7Oa91X1ukaoPMKPwwoIy6a+7CrQU7I6p+ok3qBhssitnDJP7Ew6ByzNes/tvC7/mBmoLLl2snwL8i30AsCeL1uReR7w6a7cwqX+mrRk1YIDubM+9+1vFlbZSE+LbJyxPsmneIvN2Mehn75kc9WTcQvTw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QPp3pLaj; arc=none smtp.client-ip=74.125.228.140
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Cs3Tly/t"
-Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-49d0726cdbcso2319845e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 06:50:25 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QPp3pLaj"
+Received: by mail-ej2-f12.google.com with SMTP id a640c23a62f3a-c254f9f0b20so629809566b.3
+        for <dm-devel@lists.linux.dev>; Tue, 22 Sep 2026 06:54:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790085024; x=1790689824; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=zZ+5REgljKFAwNjfKUuVzdIQx4h6gyhbms3hAl/gWQs=;
-        b=Cs3Tly/tGCFn/dy1jYjUQS1iBT9WnA22jW3XEhhq23nD2gIXNqcGV5bybISzEcZcU0
-         QrkEJkAlpiS/zk06SRRvPfvhHkNRSWIe9D5IRSEmi/uLoef8GeRwLCQUfBwMBcy859q9
-         HM0jAj3k/vrigZcZewUMiVvAv/DStd9UuBMianOXc5LXjksejmCLYqp2PGYszfhAO4lU
-         6afiQ49N8zer3JqZ697Ng41BLs1V0iFqeFLvZXl7dA/kbZZcvDV9cclJh5NpLqa6gHSJ
-         OYAG5ZlyeKiyw/j5ugHemN+HT0n0pMhVVp7U8AqTM9nCeh+L2EKPX+j9NukOoRycofLG
-         zKgA==
+        d=gmail.com; s=20251104; t=1790085280; x=1790690080; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=ufPZGPSZBLf6/pwvKrChnuajCoyQv+QtMvUQGkdovhk=;
+        b=QPp3pLaj09AlkOTAy0Puwu7KYEYWf4YwtlolSilI+dTbZG3pl0R4beNIDY9ycehR2L
+         uOmZ9mvSLrGo0pIJR4ZJIbp3Zk9jqCIsTekO0SuZCvOulOIR9uw1XusVH2kzvdMk8570
+         0ANT6Uw7jwHaSxbkPn7AJsJBVEdoJUYLm1bhGmfzZhcLbt5SMmuKwbTe1cokbYHfThK4
+         LK1sjU4n8MJ8GSBmdBvJaT4uVyvspsfSgSPd4b8g2AEbfQWNykmZ/E4kxgMfOAk9r+wW
+         M1kEJr6VOQJVbx7EUfHDu8sBEhfx44IpZiqyscxYvi6FK0gAUgUAiJ4vPr0ggK3PBrpo
+         QZ9A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790085024; x=1790689824;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:x-gm-gg:x-gm-message-state:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=zZ+5REgljKFAwNjfKUuVzdIQx4h6gyhbms3hAl/gWQs=;
-        b=bbN55Rz4ZzamGxkUxwndywunpJg+DV4jYsvx7h6tlg5WtazNARpJ9C5YkNGBq/97MF
-         DplqrYln8XZGdykZRfaPWEnyjBsYuCrJ7+kas4IRFri+b89A5l4RXdEMKCcAZe1jTrUK
-         IzyComJuW3ykcLZzxVGPJr7zVCaLMWWeU/AaGI5OLnhljzWzqmmHKnQaEzNbW+QFQ6jy
-         mn5QfeRw6VFL653AMxgSa3Zxz4RtfTYesSNzkQ7XGNlLFC0r6tXdiRh9KKwsTZrf7xaJ
-         W3yRlEe8gCboBIcERvxHHJGQjo4Qa/WJqCaHtSP59MEFNreALOqlBLXf9SbH2+Qfpk2W
-         TOFA==
-X-Forwarded-Encrypted: i=1; AKwUvBxjeilKNVIM4Gc7Yllj7Red9faWTNMKJEp9ToVE7EriLxJly0v4KP0r7KYCxQyydauhTEtJDibXAA==@lists.linux.dev
-X-Gm-Message-State: AFuF++kXBGYvUvyeQPracsL39V3zwxx3i2kWJxgbMnGaSlJS89ytqrbb
-	kY3/8f3sNPUnKjlBp6iTBHpC6cIX3bBXA+o9k/ByOw16sQECDY6UW0RT
-X-Gm-Gg: AYBFou0SAM6Mc+xMbivGD521q97sq7dFjmt3VioSuljIJNaUzIu9HKtm4WO40UVKV62
-	OJRK0SFTR3KEwxnlzF49CRxR0YxpBLgkz/+BIAk+LkLeBSL1Q3iKw0vPLTOTxePYjVPCVfihP0M
-	8zii5v2MPNc30QQSUGoipkvSJOX2JAYxYIg5hjcp9UxJ5Fqvnreg7iusCfwutONQSU5fazjbkkK
-	lqmdWxgeeFsHz2z2VyLZalmxFw3usB/gTsq6RTeRNEXZrApV1E8350NwbbWMV0Vw0Rt8knWBpSq
-	SIpF7ZYh3NXbKpfwLecr3GBLi8o+k9MUG0NSF+D9g0QnN1OgZMDkGUmaRam7oKnS5ZyByClqWAR
-	4eaPwGU2mVpaBp149oqgwqqL0WfsMrsFcN2R2fsC9OX90qsmnNy5kTzaXCrwOMfVulcX3J8ZDMb
-	QW7Ej6+YkdK0n+A21V0f55psPE7xT+BZRiqTshBeU78Nb7nituRvjTlQDp9VjyYJ+faNq+DupGx
-	0mSJRNrtbcUvds/2FM=
-X-Received: by 2002:a05:600c:83cd:b0:49e:6806:5712 with SMTP id 5b1f17b1804b1-49fc7ddb90emr146359295e9.2.1790085023382;
-        Tue, 22 Sep 2026 06:50:23 -0700 (PDT)
-Received: from L-P-ITAIH2-L-RF.rf.local ([193.169.70.108])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-49fdaa544e5sm42723515e9.1.2026.09.22.06.50.21
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 22 Sep 2026 06:50:22 -0700 (PDT)
-From: Itai Handler <itai.handler@gmail.com>
-To: Milan Broz <gmazyland@gmail.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	dm-devel@lists.linux.dev,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v2 0/1] dm-crypt: allow encryption sector size up to PAGE_SIZE
-Date: Tue, 22 Sep 2026 16:49:45 +0300
-Message-Id: <20260922134945.667305-1-itai.handler@gmail.com>
-X-Mailer: git-send-email 2.34.1
-In-Reply-To: <07e750dc-570b-4f69-9ec3-68de51416a06@gmail.com>
-References: <20260922120330.127262-1-itai.handler@gmail.com> <07e750dc-570b-4f69-9ec3-68de51416a06@gmail.com>
+        d=1e100.net; s=20260707; t=1790085280; x=1790690080;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=ufPZGPSZBLf6/pwvKrChnuajCoyQv+QtMvUQGkdovhk=;
+        b=qZJ7H6uNW2dbtcNCBX1ZNSgKLRs4PwCn53TPEci5zsfihZcZseYysqCo02GwYgN1b/
+         T0q6rB26Ec43gXJ9xeUNznTbAI75lMXOi1clsCg3wDfwf9gLA3pHHkmuBgj+5i4JetXX
+         wI5w34JhprQzSAJZeV8UInoJTrXXsPC4xEfj9QDbZoSGPRCdiUxJ2/U6goS97+Cviy66
+         VplPSlJYwqjUslnr6wWNM4Qy9FoU+e2W43zF3M9HuQj08Cev7h2l/BnMx0wLRSbwXSOT
+         B+qaRfAGM9yadBq7mYTn7ZSSh7T+6VJ5VviihCAPpwOUiBTKEnoNygiY3FK+fANDsxsY
+         RrCg==
+X-Forwarded-Encrypted: i=1; AKwUvBznKHWmvatnVpDUXJWxQzGKqB/lpFHJmm6zHI7YGGHT9tZft9kk1K82OIPPYgl+gwaEnGwObxdIXQ==@lists.linux.dev
+X-Gm-Message-State: AFuF++l/roF/98yG1QqDivqdzC/obZeW1BkJrTAN3LfDLedFGkcu9wQj
+	pFTm4X/78dCisFXestHijS1lrHjjTvbRQ89h7dFQGBahOgVfSAYHbakO
+X-Gm-Gg: AYBFou0lSYEXbYvQoIFUQmqDCcmQo6H8U2U2GCypWuo6mIb8MS+iytvlD4TzIV7PV3k
+	2foGM1bn1qKVI5jcjyCGpCgSAp3GwO3bt8Tq0s/zRj2+U4NbHmoVzsEWMoMVPHihSzuvHjCvDDY
+	o+vlAgabWzggJWERZR/lCokYf7qEvhNLzyyhO8TfC5KBDvVI2P5yq4NUful8vZbr6MpZWeqhBdd
+	UzLNvKz1fJS+9rjy2E2SHzdNpUEpqktFeBpzv5VmXXNSohP6sYfD/H74TPaQBHeDIXc9Rj6JRvw
+	Qi+mmg/iVz0bQkucOUUC2kcLGnktjbUy7iupKTmHJUJX3g1NN63Y3ClC1qVsVUutu8yjbwFfp84
+	J6Prn7o9vezWb+jQC/BmJn585PgFNW7KDE0jemPxl/NqKxSJ4Fs1ekTZ5FoVKKV0YYahhOHoseX
+	gq4KUI5LK1h9reZU49+19GthT2l/nIc0WRDNe3/HO9oL3AHs/7M7Rl/VD41W1MY3t0rEvXtgb9C
+	VbIa4xhvchSZRN3lNwrBEOXeoZca5+GX8W//U2KviL4r9LOTf9S3fqZXxhK+nl8hduFL+xtNRzd
+	F0+KTfP0ldNMPJquLd02VRWFKsrT
+X-Received: by 2002:a17:906:c111:b0:c29:f5d8:9c6d with SMTP id a640c23a62f3a-c2a15802eb7mr1217098966b.28.1790085280498;
+        Tue, 22 Sep 2026 06:54:40 -0700 (PDT)
+Received: from [10.54.182.141] (82-132-213-197.dab.02.net. [82.132.213.197])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c2a9c5baa1bsm93202166b.39.2026.09.22.06.54.29
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 22 Sep 2026 06:54:39 -0700 (PDT)
+Message-ID: <cce62c72-278a-44d1-9cf7-e0beb0b72688@gmail.com>
+Date: Tue, 22 Sep 2026 14:54:25 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v6 04/13] block: introduce dma map backed bio type
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
+ linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org,
+ linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
+ Sumit Semwal <sumit.semwal@linaro.org>,
+ =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
+ Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>,
+ Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
+ Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
+ William Power <william.power@intel.com>, Phil Cayton
+ <phil.cayton@intel.com>, Matthew Brost <matthew.brost@intel.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+References: <cover.1789997898.git.asml.silence@gmail.com>
+ <a3ee719abc440ca139f1a945fdaf43a45f0c6b57.1789997898.git.asml.silence@gmail.com>
+ <20260922131610.GA30468@lst.de>
+Content-Language: en-US
+From: Pavel Begunkov <asml.silence@gmail.com>
+In-Reply-To: <20260922131610.GA30468@lst.de>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On 22/09/2026 16:07, Milan Broz wrote:
-> Could you please point me to at least one consumer-grade NVMe drive that
-> supports a 64k sector size?
+On 9/22/26 14:16, Christoph Hellwig wrote:
+> On Mon, Sep 21, 2026 at 02:38:48PM +0100, Pavel Begunkov wrote:
+>> Premapped buffers don't require a generic bio_vec since these have
+>> already been dma mapped. Repurpose the bi_io_vec space to strore dmabuf
+> 
+> s/strore/store/
+> 
+> Can you please expland on the splitting considerations a bit?  Preferably
+> both in a comment for the details, and in the commit log for how we
+> arrived at them and why they are fine for now?
 
-None that I know of, and none is needed - I think my cover letter invited
-that reading, sorry.
+I'll add something to the commit log, but not sure which specific
+details in comments you mean. Do you want me to expand the comment
+above limiting the number of segments? Maybe I should add there that
+it's stricter than necessary and might cause more splitting than
+necessary? This one:
 
-The encryption sector size is dm-crypt's crypto chunking unit, not a
-property required of the backing device. dm-crypt never validates it
-against the device. The only use of bdev_logical_block_size() in the
-target is
+/*
+  * Limit by the number of segments. We don't expose the underlying
+  * mapping layout, but with a known minimum segment size, any I/O
+  * consisting of N full segments should be able to cover at least
+  * this much.
+  */
 
-	sector_align = max(bdev_logical_block_size(cc->dev->bdev),
-			   (unsigned)cc->sector_size);
+-- 
+Pavel Begunkov
 
-in get_max_request_sectors(), which is request alignment, not a check.
-A mapping whose encryption sector exceeds the drive's block size is
-already the normal case - sector_size:4096 on a 512e drive is exactly
-that.
-
-The drive is also not where the gain comes from; see the last point.
-
-> Allowing a bigger sector size in dm-crypt means you can end up with
-> partial dm-crypt sector writes (after power fail), which opens another
-> can of worms.
-
-This is the objection I take most seriously, and you are right that it
-is real.
-
-It is not a new hazard though - it is the existing one scaled. The same
-tearing is possible whenever the encryption sector exceeds the drive's
-atomic unit, which is every sector_size:4096 mapping on a 512e drive.
-cryptsetup already documents precisely this for --sector-size:
-
-  "Note that using a sector size larger than the underlying storage
-   device's physical sector size may result in data corruption during
-   unexpected power failures.  A power failure during write operations
-   may result in only partial completion of the encryption sector
-   write, leaving encrypted data in an inconsistent state that cannot
-   be properly decrypted."
-
-What a larger sector changes is the width of the window, not its
-existence, and only for a mapping that asks for it - the default stays
-512 bytes.
-
-For the common case the failure mode is also unchanged: with xts(aes)
-each 16-byte block carries its own tweak, so a torn write leaves a
-mixture of old and new plaintext at that granularity rather than
-destroying the sector. The modes that would be worse are already
-restricted - crypt_iv_lmk_ctr() and crypt_iv_tcw_ctr() reject anything
-but 512 bytes. The exception I am aware of is the Elephant diffuser,
-which does diffuse across the whole sector; it is reachable only by
-hand-writing a table, since cryptsetup's BITLK support allows 512 and
-4096 only, but I mention it rather than leave you to find it.
-
-I would rather document this than leave it implicit. If the patch is
-worth pursuing at all, I will add to
-Documentation/admin-guide/device-mapper/dm-crypt.rst:
-
-    An encryption sector larger than the atomic write unit of the
-    underlying device can be torn by a power failure, leaving part of
-    the sector written and part not. This is already possible with a
-    4096 byte sector on a 512e device; a larger sector widens the
-    window. Use one only where that is acceptable.
-
-Reworded however you prefer.
-
-> Your dm-verity argument does not apply here; it is a read-only target.
-
-You are right, and I overreached. dm-verity shows only that PAGE_SIZE is
-an accepted bound for how much data one target request may cover; it
-says nothing about write atomicity, which is the part that matters here.
-I will drop the comparison.
-
-> Also, arguments based on cryptsetup/LUKS2 do not make much sense for
-> kernel code. They must be compatible and work together, but dm-crypt
-> can be used without any userspace validation, so all limits must be
-> checked in the kernel.
-
-Agreed, and that is what the patch does. The limit is enforced in
-crypt_ctr_optional():
-
-	cc->sector_size > DM_CRYPT_MAX_SECTOR_SIZE
-
-with DM_CRYPT_MAX_SECTOR_SIZE = min(PAGE_SIZE, BLK_MAX_BLOCK_SIZE). It
-needs no userspace cooperation: dmsetup and a raw ioctl are bound by it
-exactly as cryptsetup is, and on a 4k-page kernel it is still 4096, so
-nothing changes there at all.
-
-The LUKS2 4k rule is a different kind of thing. It is a property of an
-on-disk format the kernel knows nothing about, so it cannot be enforced
-here and I am not proposing that it should be - it stays in cryptsetup,
-untouched. I raised it only to answer the portability objection from the
-v1 thread, not as an argument for kernel behaviour. Ondrej made the same
-point back to me on the cryptsetup list earlier today, and he was right:
-
-  https://lore.kernel.org/cryptsetup/d3823e0b-3387-4b3a-b5e8-a3d5f266308a@redhat.com/
-
-> LUKS2 limits the sector size to 4k for multiplatform compatibility.
-
-Yes, and nothing in this patch changes that.
-
-> dm-crypt itself can support bigger sectors, but I just do not see much
-> use for it with common NVMe drives or other storage.
-
-Storage is not the use case - crypto offload is.
-
-Where the cipher is a hardware engine driven over DMA, the per-request
-cost is a descriptor setup and a round trip, and that cost dominates.
-Making the request sixteen times larger amortises it. With the in-tree
-qce driver on an arm64 64k-page board, plain dm-crypt over a ramdisk,
-MB/s:
-
-  sector_size   seq read   rand read   seq write   rand write
-        4096        13.3        22.8        27.2         24
-       65536       581         582         586          588
-
-The ramdisk is deliberate - it keeps the storage out of the measurement,
-because the storage is not what is being fixed.
-
-That also answers the NVMe half of the question, and I should have made
-it the main point rather than the ramdisk. A common consumer NVMe drive
-delivers something in the region of 1-3 GB/s. Driving qce with a
-4096-byte sector, dm-crypt manages 13-27 MB/s, so behind any such drive
-the crypto engine is the limit rather than the drive, by about two
-orders of magnitude. At 65536 bytes it reaches roughly 580 MB/s and the
-engine is still the limit. The ramdisk figures are therefore a
-reasonable predictor of what the same setup does on ordinary storage:
-nothing unusual is being asked of the drive, only that the cipher is
-offloaded to an engine reached over DMA. The drive can be entirely
-common - it is the accelerator behind it that is currently being driven
-inefficiently.
-
-The other measurement in the cover letter is the NVMe one, and it is a
-different board: an arm64 Cortex-A53, also 64k pages, but with the CPU
-cipher xts-aes-ce over a Samsung 970 EVO. There the gain is 9-16%,
-which matches your intuition - for a CPU cipher there is very little in
-this, and the drive is not the limit either.
-
-So I would put the case as: it is not about the drive at all. It is for
-systems that have a crypto accelerator and a 64k page granule, where
-dm-crypt currently leaves most of the engine's throughput unused - and
-the storage behind them can be an entirely ordinary NVMe. If that is
-still too narrow to justify the option, that is a fair conclusion to
-reach, but it is the case I am asking about, and the numbers are with
-an in-tree driver.
-
-Thanks for taking the time on this.
-
-Itai
