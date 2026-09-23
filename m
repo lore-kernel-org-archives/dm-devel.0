@@ -1,22 +1,22 @@
 Received: from verein.lst.de (verein.lst.de [213.95.11.211])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53072393DE6
-	for <dm-devel@lists.linux.dev>; Wed, 23 Sep 2026 04:51:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFC9C3D0BE7
+	for <dm-devel@lists.linux.dev>; Wed, 23 Sep 2026 04:55:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.95.11.211
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790139112; cv=none; b=owjZCm1jxSFsOapW7gm9xQ0uag21JDAm4oRphMCg7HkVQKBLGlQCj5m9bdky29k3oFCKbRpaXlpJhjfUY2hS8/4YU+r2NNHEMR/IeWAf1ESn7YI+7CiB7XM1bVqAlYElFI9DQkJ7+Oy7UBI3WBxU0lKYPPJP8Fq9FjvHA9G2bvA=
+	t=1790139316; cv=none; b=ALsup8VbvR9Qo/kUdtUe10To38Qp+ekoXy7qgmpIUPZVWZQny0mRFnq4JcsX5w/2eJzAy/AwXWgAq39HBXvDKMWbs+ICruEH1gpY2IPCd0nCx2NphJEKpvqcvycfte6MGDX9zaVzF9KE1DrUNgmB2srSXA8MvRazDcPRBKSoe6k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790139112; c=relaxed/simple;
-	bh=pu/mpkCqXSxgYN59HbS0UJuN1/RXNva8bBq3n7KmNpk=;
+	s=arc-20240116; t=1790139316; c=relaxed/simple;
+	bh=Qs19OWKtYjUAEmVURvXm80xgS1L3ZM2WRz5g0LPu/o0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=eYpUjT/ADjUXOO/flICe8sIq7/ZPYA0r6ARmRJ+65JQiRquhb9dE8cQcwRE3iTvE+i7Xscco0KcavzHiJY+a1lKu6RYTSQj1cPuOKMJZKMrCZAoGRRhrp0npunvKxVMIZxnWofiUj/lfv0VgRpEeb6fidBfUTYIfv6XTLcebCVc=
+	 Content-Type:Content-Disposition:In-Reply-To; b=oAEhSi1JlPXtEQDzkJbXbeCdvn0z6mgbkSjxbst9tCpP5n+W9jhLEzEhyfd5q8ZLtBu4vEjxvgda2Ua6TtchVYq/b5OaZ4DyxENS1UqXiiy2AJDLEgeyWd5ksXI6ygd28gop5D+VA+I79kLc/6YEduGGhlhIiQCyMFocY6fJhgo=
 ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de; spf=pass smtp.mailfrom=lst.de; arc=none smtp.client-ip=213.95.11.211
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
 Received: by verein.lst.de (Postfix, from userid 2407)
-	id 2B01F68BFE; Wed, 23 Sep 2026 06:51:44 +0200 (CEST)
-Date: Wed, 23 Sep 2026 06:51:43 +0200
+	id B955768BFE; Wed, 23 Sep 2026 06:55:05 +0200 (CEST)
+Date: Wed, 23 Sep 2026 06:55:05 +0200
 From: Christoph Hellwig <hch@lst.de>
 To: Pavel Begunkov <asml.silence@gmail.com>
 Cc: Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org,
@@ -39,9 +39,9 @@ Cc: Christoph Hellwig <hch@lst.de>, linux-block@vger.kernel.org,
 	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH v6 04/13] block: introduce dma map backed bio type
-Message-ID: <20260923045143.GA26231@lst.de>
-References: <cover.1789997898.git.asml.silence@gmail.com> <a3ee719abc440ca139f1a945fdaf43a45f0c6b57.1789997898.git.asml.silence@gmail.com> <20260922131610.GA30468@lst.de> <cce62c72-278a-44d1-9cf7-e0beb0b72688@gmail.com>
+Subject: Re: [PATCH v6 06/13] nvme-pci: implement dma-buf backed requests
+Message-ID: <20260923045505.GB26231@lst.de>
+References: <cover.1789997898.git.asml.silence@gmail.com> <e80c3b1e0de004eaca6c51a2a86115ac9ed36381.1789997898.git.asml.silence@gmail.com> <20260922132016.GA30684@lst.de> <d39a6dd7-cb5a-43d6-8dcb-16eb9fc95b4d@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -50,21 +50,30 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <cce62c72-278a-44d1-9cf7-e0beb0b72688@gmail.com>
+In-Reply-To: <d39a6dd7-cb5a-43d6-8dcb-16eb9fc95b4d@gmail.com>
 User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Tue, Sep 22, 2026 at 02:54:25PM +0100, Pavel Begunkov wrote:
->>
->> Can you please expland on the splitting considerations a bit?  Preferably
->> both in a comment for the details, and in the commit log for how we
->> arrived at them and why they are fine for now?
+On Tue, Sep 22, 2026 at 02:37:08PM +0100, Pavel Begunkov wrote:
+>> Sashiko had a few comments, which I think are correct - if we use
+>> dma_map_sg to map the data, we need to use the sync_sg APIs to
+>> transfer ownership.  That only matters on non-coherent architectures
+>> with MMU, but we need to get it right.
 >
-> I'll add something to the commit log, but not sure which specific
-> details in comments you mean. Do you want me to expand the comment
-> above limiting the number of segments? Maybe I should add there that
-> it's stricter than necessary and might cause more splitting than
-> necessary? This one:
+> I've seen that and fixed everything locally that should be fixed,
+> apart from the sync. I wonder what we can do about that? I can
+> somehow replace it with the sg variant for now, but sync'ing the
+> entire possibly multi-GB mapping for, let's say, a 512B I/O, sounds
+> not wise.
 
-Yes, explain why we apply a relatively arbitrary limit not fully
-exploiting the hardware capabilities, and why we thing that is okay.
+If we'd want to fix this for real we'd need to add an offset to the
+sync by sg methods.  Or move away from scatterlists in dma-buf, given
+that they are a horrible API.  All of these are bigger projects,
+though.  So for now I think you'd want to do the sync all, and have
+the people who run high-performance io_uring code on non-coherent
+platforms suffer.
+
+> And I can think of another place that does mix sync_single
+> with sgs.
+
+Which one?
 
