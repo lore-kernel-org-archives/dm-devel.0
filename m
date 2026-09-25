@@ -1,133 +1,116 @@
-Received: from mail-ed1-f54.google.com (mail-ed1-f54.google.com [209.85.208.54])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from out162-62-57-64.mail.qq.com (out162-62-57-64.mail.qq.com [162.62.57.64])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F2334A5EC6
-	for <dm-devel@lists.linux.dev>; Thu, 24 Sep 2026 15:53:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CEA7814ABE
+	for <dm-devel@lists.linux.dev>; Fri, 25 Sep 2026 03:06:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=162.62.57.64
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790265232; cv=none; b=FXI3A1NPc66O/lmQrfXLLJQpCShdNqSkmDbslNZ2FgIiUbAJL8FuaGCcZGv8swtX300SOX6EYKpTlwwKzaKrsw8c0335haX3RWrGKEJA0fNYDGHAwvy57wN5ftOuMVbK2JvmyqP2c65OVxas1cRjugQt4hX1cSth0NsFctobJ3A=
+	t=1790305619; cv=none; b=AEGetDsEIMDmuqtFSpdFlXJWq/vies7PKQiKybM45s50W1yhXrvxSG7tD3nKWvpUOC0SSJJpmkxnauwSZ9RqtJxE04y094r5GZ+9Pem2eav/tS7PSNQMaumMf4qfOWAboZsoR8PpHH7PGxE6yIZJBxJspRO6Wufp/mOu9UtqYA4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790265232; c=relaxed/simple;
-	bh=wMUbxl5vt/9aakHALUb0wzH/L2TqRFPYLffnV8Cgl4g=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=kwndrKopoTJjAXi1a8yXiAbzzKBM1iH/S/ocoq9wplhCwRbiSawPXXzOMVF5ARvK8rtrWfBNa/tDrOsxjhi+9zla0urQAIDMjmJ89443mqlgbLns5lGSNcTKf+sj9SHzrfpR5nhficPvfe5f2EpWX3tS+CE5RoNMoR+nS2kO9tg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=rrEkbl8s; arc=none smtp.client-ip=209.85.208.54
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1790305619; c=relaxed/simple;
+	bh=NwQpNvlVY4c6JjoDd4WxMbnyYORhtkbdS1SqyrgIDGY=;
+	h=Message-ID:From:To:Cc:Subject:Date:MIME-Version; b=HeUcVZ8hdY/VM1qpxjTopBd47gZdm1plv32f7JX4erzwtEHTRCxTJnTTLyZlVcQAlYiLLW/qfPs/GGc51PPgYkZ+Wu+Nsnk3SyOkfpyqLc9pmXWZe4c7N50NMlffOxVFkgWYu316RoIcOcXuwRux9IfXROUhYmoKhQXtXQ6gVgU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com; spf=pass smtp.mailfrom=qq.com; dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b=sW+jaAX8; arc=none smtp.client-ip=162.62.57.64
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="rrEkbl8s"
-Received: by mail-ed1-f54.google.com with SMTP id 4fb4d7f45d1cf-6aa8d04fcddso1978676a12.0
-        for <dm-devel@lists.linux.dev>; Thu, 24 Sep 2026 08:53:50 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790265228; x=1790870028; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=GNmm9vpoKogbEkGqMdf9XAhWMEnJbsDsb3NN6zmWdWA=;
-        b=rrEkbl8sUMTZYJy9/Qi3kwL0qR9FvoHSnl0q8CXiHNo01JzfxZlnDpey0JbsbzUhVH
-         5JtjAF8mjyS0BOBVdCk1tUteTFSeKYfgKMRfgEJRym3IN8Qpw3sfuirrZ8V1cBslsfPt
-         4ZDgtDLYAsk0KITgxp3qmvmuLr1zhj727olkXUR70byVvP69fcJv2qy22uUOmbxN6YSi
-         4hQTO8jdRtmPaFXMoMRMIRbzpi6HjoyO4RZqhx5MpZaxTmGsT9ti/6OneqHUwkHnT7g4
-         SnCydi2nR5d6Dm7i7VOt9DYoN+gvW33yt7ED7c6TdCsEpRTZ3hcmWPlZ9hgj/6hPPmn3
-         jdvQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790265228; x=1790870028;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=GNmm9vpoKogbEkGqMdf9XAhWMEnJbsDsb3NN6zmWdWA=;
-        b=UID8PwiDWqUKs/wb9ifm+nT8jwhRx4osfcpDfYLtMGk4QxYskLrg8/VjegiwN0Sn/7
-         yOrcV2NP1x/8AvZ+CA1hO3riRsBuAXW0HylUg0KXrmw3LqDP7Lz8tldKPmU+oHCMzr8B
-         PCb0X+MZ+oEIxkRmND25dN2i4+on4QUoVpgPEBb8Q1XSO+NUyUi09ilmtQp1q5ltHrUk
-         Y1qkHgfA7glrIGuHTz6c/AmCmBhvumq841+F/jR2OKpw/guzRqP3phkO+LzoVWP0VqNE
-         z03fSYzHwGS4nn9Q5mevMWVTnPdm2SvViYHZ9NK5k50HorPmaGV4jInbfFOW+E8iqKaN
-         EvPg==
-X-Forwarded-Encrypted: i=1; AKwUvBzlAY2PEzpOPYE5TNsdcrFzYrPjvb1Yx91GNeCm/YtRZG/40G7UZ/BXAcVYpKORAVGS+z3Lb6SBVg==@lists.linux.dev
-X-Gm-Message-State: AFuF++ls6Ox+weQHTzdzyZ8HKGmjqZAkdTK++GgdhnlzVl3dSVCH202i
-	SPsYqNHwIYCHXLlXqcsSsjIFyPZvUI8TlZVBNID5hskWM4NjsfP/W9GY
-X-Gm-Gg: AYBFou3KlSfBpUBddLyfX46kYJt+ZhRXS8ACCTd/pdeG+zE2mO8Bsu48JAsZ2sUIR3E
-	iQAm/LyRyaLZ24m6l5pTk/x5xLTB+w5aJuiYa6I1Mp7+5jsIe/QX9Zqm534eHABJaGOrkCLBvcG
-	XyWbQrWYN4R3wfHdm8a76hqdKixTgsdUFKwkMy5DOTCaJnv7ffF1ocPOEbuQcGOkhUKWQd7LhZS
-	wZI50c7xiiNan3PcK7OyF8SAvtvRbl3Q5CElF5IQu+QDp0/P+t6gKMbr4Dv/tUZ3upE+rdQ1biX
-	lxnO7OtW52tzu+ffF1AIz6RfLXnO2iXxva3ZZxJs7enWcz7jEiJ5FLXrPTowmWNK4y6HxL/QJtc
-	8ySZ7FttDBQgTUgoZg5UN0IJcEjfLzYHxszEcBRIty+KV42gApLk2ZPxoCrRWWrT7mnQikyQoho
-	Tu3QY9/GW6C/pwi9LEOO40QsjZCjLfVtVGe8Ao5gAIqJk+Y0i4nq9WhxPuIo9WCGNt2lBUlYKvK
-	S6zvD3rK8hZYiNMywgz8tTS2jAgWe8YBGNmJUYAtS+42UXjOw7UTEe4OpSQEZj7tTzNvPlyqDhG
-	2xup8+Tm74cc5DdYFgE4s0VhCwpud1QnNyB8uO1tNDAJXFUQww==
-X-Received: by 2002:aa7:d94b:0:b0:6a9:c9d8:b3b6 with SMTP id 4fb4d7f45d1cf-6aac8f0ae7emr1949690a12.6.1790265228473;
-        Thu, 24 Sep 2026 08:53:48 -0700 (PDT)
-Received: from ?IPV6:2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c? ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6aab38b2fc5sm3815784a12.27.2026.09.24.08.53.43
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 24 Sep 2026 08:53:45 -0700 (PDT)
-Message-ID: <6d538f3d-dd83-4dfb-b091-9b84acf47c62@gmail.com>
-Date: Thu, 24 Sep 2026 16:53:40 +0100
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.b="sW+jaAX8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1790305611; bh=Wh1cX9SEA/J9VRPcqeXv2Rk3xbNPU4Cgu3+dEnZjW3s=;
+	h=From:To:Cc:Subject:Date;
+	b=sW+jaAX8FoV+zFDPf+GT6Uxff/+t87NKsXhg5tRBv2WmZNHjl4VRRwhiFHYkh5U2V
+	 uLeiYJBGqr14x7X5Y81KhvinWOU0INZoDzpxcxCPtPzRw5gmtjXCBGruF59YPPj1F4
+	 NyR590QG4ipwhsOpg6ffvYWtfK4uMr7zSFMQ2lqQ=
+Received: from localhost.localdomain ([182.239.119.212])
+	by newxmesmtplogicsvrsza53-0.qq.com (NewEsmtp) with SMTP
+	id 1778B8DE; Fri, 25 Sep 2026 11:05:55 +0800
+X-QQ-mid: xmsmtpt1790305555t7e8phg5o
+Message-ID: <tencent_B97043EE6125DF666647316C208B39130805@qq.com>
+X-QQ-XMAILINFO: MuagZN7e4fMyxp+F4zsMyrFkHYU7szRhqzYjkKvI6gml/bJFurvuB2LxG8NA+o
+	 wqJ6HVEayEyYk5OAQUkFGFa6A5GhZRfdCZpAze8+FgGw5rdLVjjqhpIrlA58PbD+10JrtDUp+ypG
+	 O/avZiQrtu+fT3cupP1au+AIPczoSvqkwXzjoLQmmFuveUi/cf1rdq3nJ73JH3S3X9AD7ws7/2b7
+	 BIxpRghEV/nJnMrCk2n/907rYKiZzXEKE221Lzx9KVFsJYDw5zV5ty1B3gQCOZPdta8rwr8PXv0L
+	 lQ2NFLOxTkHgN29kdnbUOW7uIdWNCfwET1QbMjqzRaXx7A997nfktKlDDrLQ2pR5TX29/zBte8Q9
+	 tvBe3WH6x5J8C5tvBnRKiMoJ96437Xa7Dm43TK4a+9r9VToI8pgB0hX1oDcFonRW7i88iqPbRdsY
+	 je/6v9g6XjShyicgZ7t8noO3DXpAe1s81Iz88EgVy6P2FyoyxXZG1HsaL1fhhon/33T+9ZTWnM8r
+	 fRZSYNsTbzMsanYv5b8VBrgsskaE6gX0tFDGsp5xkZ4++3vYVIxoAl5YFxAsvq8hZgMAMtde8BlP
+	 dcUR8jZYeczwFRxISVtv0ObHZRjAx9w/EVXNZJ5nbLiuqM6CnAxX0Y1QBCaaPObiFmTQ2xk2ewuE
+	 aE/Dr9od+Ul9dj1jIGLkg0odZUyJqYuLDoSdVdwGHvL1Cam2Fb+l7CcqLN7msGeNYTHVv+CYaUyS
+	 KH8hXNGK1SzsZIfSEZtw8SmbEx3W/HQarZkovgCBVdA88VvpSGLnsW/iWXlxLzboBR6pnG30yh7J
+	 YGg8cfX0bY1/BL4kHutDG/Rfh0qNbQPZtCNhwDJnVk14pin8MckLHy7bsyl7KnzqdkIEVaphYMjF
+	 3LKUj6WosZR402KGUaPITeEzumuXy3L2YPBuXiR1Lh9EN5++19znwjFYWtyaamhkZ799XGfQbEe0
+	 X1TTlnfHIYlOy2tLLS7MgFSvIb5zT97oRCs+i4xCaoaYmQYh9UACfA6kLpM9ZSx7lmqYvSDRqnEq
+	 xe/BKPcMJlB8+kSfGFtedrUmqOAX2aau9swuRE3m/3LVHr6XLO
+X-QQ-XMRINFO: M/715EihBoGS47X28/vv4NpnfpeBLnr4Qg==
+From: Ma Xinmeng <1564938642@qq.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-snap: reject the transient exception store for snapshot-merge
+Date: Fri, 25 Sep 2026 11:05:39 +0800
+X-OQ-MSGID: <20260925030539.1298-1-1564938642@qq.com>
+X-Mailer: git-send-email 2.49.0.windows.1
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v6 06/13] nvme-pci: implement dma-buf backed requests
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
- linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
- Sumit Semwal <sumit.semwal@linaro.org>,
- =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
- Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>,
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
- William Power <william.power@intel.com>, Phil Cayton
- <phil.cayton@intel.com>, Matthew Brost <matthew.brost@intel.com>,
- Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
- Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-References: <cover.1789997898.git.asml.silence@gmail.com>
- <e80c3b1e0de004eaca6c51a2a86115ac9ed36381.1789997898.git.asml.silence@gmail.com>
- <20260922132016.GA30684@lst.de>
- <d39a6dd7-cb5a-43d6-8dcb-16eb9fc95b4d@gmail.com>
- <20260923045505.GB26231@lst.de>
-Content-Language: en-US
-From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <20260923045505.GB26231@lst.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 9/23/26 05:55, Christoph Hellwig wrote:
-> On Tue, Sep 22, 2026 at 02:37:08PM +0100, Pavel Begunkov wrote:
->>> Sashiko had a few comments, which I think are correct - if we use
->>> dma_map_sg to map the data, we need to use the sync_sg APIs to
->>> transfer ownership.  That only matters on non-coherent architectures
->>> with MMU, but we need to get it right.
->>
->> I've seen that and fixed everything locally that should be fixed,
->> apart from the sync. I wonder what we can do about that? I can
->> somehow replace it with the sg variant for now, but sync'ing the
->> entire possibly multi-GB mapping for, let's say, a 512B I/O, sounds
->> not wise.
-> 
-> If we'd want to fix this for real we'd need to add an offset to the
-> sync by sg methods.  Or move away from scatterlists in dma-buf, given
-> that they are a horrible API.  All of these are bigger projects,
-> though.  So for now I think you'd want to do the sync all, and have
-> the people who run high-performance io_uring code on non-coherent
-> platforms suffer.
-> 
->> And I can think of another place that does mix sync_single
->> with sgs.
-> 
-> Which one?
+snapshot_merge_next_chunks() calls s->store->type->prepare_merge() without
+checking it. The transient store ("N") implements neither prepare_merge nor
+commit_merge, and snapshot_ctr() validates those callbacks only on the handover
+path (__validate_exception_handover()), so a directly constructed snapshot-merge
+calls a NULL prepare_merge on resume:
 
-All the recent networking zero-copy / dma-buf apis.
+  snapshot_merge_resume -> snapshot_merge_next_chunks -> prepare_merge(...)
 
+commit_merge() is NULL for the same reason. Userspace only issues documented
+device-mapper ioctls (CAP_SYS_ADMIN); this is a misconfiguration the kernel must
+reject rather than oops on.
+
+Reject the combination in snapshot_ctr() at table-load time (-EINVAL), the same
+check the handover path already performs; this also covers the commit_merge()
+call site, which a guard local to the prepare_merge call would miss.
+
+Tested on Linux v6.6.157 KASAN: unpatched, the dmsetup reproducer oopses in
+snapshot_merge_next_chunks(); with this patch, the table load fails with -EINVAL
+and no oops. Also present on v6.6.145; still present on the linux-dm tree
+(555f3d7be91a) and on torvalds/linux master (62f4c998b297) as of 2026-09-22.
+
+Signed-off-by: Ma Xinmeng <1564938642@qq.com>
+---
+ drivers/md/dm-snap.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index dcf34c6b0..f42935361 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1320,6 +1320,20 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad_store;
+ 	}
+ 
++	/*
++	 * snapshot-merge requires the optional prepare_merge/commit_merge
++	 * callbacks; the transient exception store does not implement them.
++	 * The handover path checks this in __validate_exception_handover(),
++	 * but a directly constructed snapshot-merge never goes through it.
++	 */
++	if (dm_target_is_snapshot_merge(ti) &&
++	    (!s->store->type->prepare_merge ||
++	     !s->store->type->commit_merge)) {
++		ti->error = "Snapshot exception store does not support snapshot-merge.";
++		r = -EINVAL;
++		goto bad_hash_tables;
++	}
++
+ 	argv += args_used;
+ 	argc -= args_used;
+ 
 -- 
-Pavel Begunkov
+2.49.0.windows.1
 
