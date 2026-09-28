@@ -1,78 +1,99 @@
-Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
+Received: from mail-wr2-f35.google.com (mail-wr2-f35.google.com [74.125.225.99])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEEE53AA1A7
-	for <dm-devel@lists.linux.dev>; Mon, 28 Sep 2026 06:27:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06E444BE430
+	for <dm-devel@lists.linux.dev>; Mon, 28 Sep 2026 13:32:45 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.99
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790576862; cv=none; b=W1b4rfMHb6d3z413z+6/ivEZomFYLhdl38lE1i/XAWvftUFgct0AWswfziFSBAtAS9Q2xIkn9vM0jgHgh763hGH6iHDERp4eQChql91Zv8URV417/5jRDlqnxDJD4bHVFcrrLhMRIAzd5t70+uWlpqP3/66oCsMHWEJIZXegdiA=
+	t=1790602368; cv=none; b=ftTuyzR2K+S+7aUM7Dha937zBJqaFyRqi6C+NveseHeGn11MquzKfNzjjxL+lmZZrjzkUNh8RzRZpdiKrIuBDTTHUBLbdYXwyeYapdLGR5wgxayzdUJNCWGSvYNF4oEq0hGf9TTA1iVvfhP4jTL2/koQ1YZKFPmKUmD2MCQ+XmE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790576862; c=relaxed/simple;
-	bh=YeBrKtErCddADb0UxtBzrxhMam6DPdqNTOHPK0vJvnk=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=BF+vpvpyJN5JLrRsLJHoUFEmdulgeT/oyRn6VL70OkoePke3TNzPZ+u7OfLCFPrCMW3nhpNFPgdMA+6ob40a1ciAvwG35rSaLgm8BA5naDPM79Y7renmG9zoRmFs/U0nvFSP6zW/E5tm8NcKmO8bxIfrwkbZ6AQdOBt7eze9eMc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sigma-star.at; spf=pass smtp.mailfrom=sigma-star.at; dkim=pass (2048-bit key) header.d=sigma-star.at header.i=@sigma-star.at header.b=iftDMGKg; arc=none smtp.client-ip=74.125.225.140
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sigma-star.at
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sigma-star.at
+	s=arc-20240116; t=1790602368; c=relaxed/simple;
+	bh=7bSpI+UlKJeavw95eq5lp71WLeCCxaCV8VTeA6M6pM0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=LoR3209BZiZukBccct7LjXJwmjyu94or4kWedZs1OkZiOPz/86ywbYqYIwe9m0rT7zRqsgkHEfh4wZo00Jk9zmNw+8pjNfMq4k4CZTSH81vh/W2RCP7Me+BcvnFGHxvIeeKxdWYGtcLQ1Au3PYHjqtx+l9xBxA+axX1NZByXfiY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=iqLT0mk1; arc=none smtp.client-ip=74.125.225.99
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=sigma-star.at header.i=@sigma-star.at header.b="iftDMGKg"
-Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-49e6598dd44so15526005e9.1
-        for <dm-devel@lists.linux.dev>; Sun, 27 Sep 2026 23:27:39 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="iqLT0mk1"
+Received: by mail-wr2-f35.google.com with SMTP id ffacd0b85a97d-4888129c46eso1629441f8f.1
+        for <dm-devel@lists.linux.dev>; Mon, 28 Sep 2026 06:32:45 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=sigma-star.at; s=google; t=1790576858; x=1791181658; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=mtksZ2BZrwU7+h7DNG+Yo/8fCJDmorgsU5bKQzZ304k=;
-        b=iftDMGKgrOaZmptshj5xLMbITYUDaPXBgc17PwQfaj7OREgihNiqsdtLYNWxKUTyEL
-         smRRKdqAHx3ZRitjKrxFNk+vUK1tQjYo+FierbRb4sy1OxrV4/5CvcrOGch15lgxotNd
-         wq9GQcFfj2laOfYcl1Ewtg2LefT9MC1kI33ZPjEcFX0+xtXdtCUpkGgIT4NjkLKCSnFy
-         17e2ga7QzINmuJIvoxdx1FDV5BKmBJVvonSqnTfum9fMAsoarL45BOjY7wEkkM/PrClB
-         WkhbjsR5kgVo6xeCmYrZ5Oj8ZOgoC3ijVCb0XMtxQ1Q+ccFuoW5KIvAb1NWLpsrwAOTT
-         4P4w==
+        d=gmail.com; s=20251104; t=1790602364; x=1791207164; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=rDgWSkzXb9T2f2eSv4f8loR9LBdnnTqRZoSNaSt6PRU=;
+        b=iqLT0mk1B/N+xWLHZsMJqHRvW7VEmRXSYhS9TVtlU/UBcOc3O38T0O3xlY1rULN9Zr
+         E9HPzCYxpUVHvG4+DBpnpHxDFI1x/bh8oiEjZ2wTxIAed/pxrVzK2nzEuDtQYZLveT9i
+         emoUOF6Z59sZA+DcD07yMxsBtKyi101i2MDMDWhcOhsELxY6B9HA6XeaeiUti/15UK4n
+         MTR2WN0NgJf+zjqWfjz/DjRufzsUYMdv4kETDr0AdNPKOp03jH2tX2r9kiqUHwmd6fwU
+         aKoYYO66zcD+p8LeyP7EBTiyjinn9dTj09WSzctzhOGkoaFCbSn9TKl1wPuUZ6l7z7AA
+         89rQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790576858; x=1791181658;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=mtksZ2BZrwU7+h7DNG+Yo/8fCJDmorgsU5bKQzZ304k=;
-        b=JJsoCZ6THjfRXWdFPFHlnJzNZPF9ayhRe4tHODGozYqRQIJQUgPqs5UwdGYLYVS0Cq
-         R/khPVDelSdZGTf1gWJOGoHWoa7/Kllqc4KmZMskda43DAHmw2lbT1H/yU7id6ptNBSn
-         znNm0L3sARjHHBAFoLCW2jINEZXBkAm3zGFdC0vycJ5hzL+hTlplbNLs6n1qBY54rbxe
-         WiutiVy5WwXMYCzfHPCOrYTMA+ZEtZ1g7frjxzPSC6mmG6KOKdO8MPJRz2A7OTRpOSG6
-         EbNvzPB4yRbX14OOq+5tPBv4WMVI/dsmypzJbjGqKleHGegS1McamAQnsO9Vo9Hh72f8
-         NlSQ==
-X-Gm-Message-State: AFuF++nHjhW0UmoGmnbGW3PFvn4evXbCRWYkZmqed0UXuCLvgbYsoGkJ
-	cGozGYH8ncIlKSjiUv4ILwKO29ifqMRTpVVcV5TxVs8S0Pk2KdoApyZn2GMmcAuaUys=
-X-Gm-Gg: AYBFou0ouz0n523L894FCF5G30qMeUJBPHpRUn/y/fK8zrPcoX85IvcIx2RgaKaMA8Z
-	ISIJO8gpRSS5v/sqkBixAFP1phXz2a1dKmjMZMUzToX/g/04OTLnruZ2IrS4XwFejxUvH2ZLZpJ
-	gs+cl+CcdZfhPH7pEy1Rj3z/50PcY+vBBR2oCKNqpyhGfEgXAJYYKW3rNaX8avHgppEMDQeZiQ5
-	EXCT2wL6xwzqB2OH+Xp7SuLAIFuKdWmoGjJnsVPd93bQ4g42Cz0tIYLKWndx/ictUrtPzg1XyvF
-	J1smW3kRZeonzm8DUotBH7DPNAFdk9FdpUlGr8UUx7jz7mec1rOQSbWs711Y0w7OkJi+mhmIwR4
-	UWAaqG2Lu5hTEz5uOcVFp/L2dDmJoP2hywfMG5yKTrtaM70OZdzwyXni/wfmoP4PTdzJJpT+urF
-	z+MEHiF4pPrroG6gLl7tQlONC0PmhoUBB5A5/79swD1ExbA81cHYs7D2KXLMKr67qthlxxYKNHh
-	SMYSz6G1A==
-X-Received: by 2002:a05:600c:3494:b0:49f:ff73:9971 with SMTP id 5b1f17b1804b1-49fff7399f4mr64064235e9.18.1790576857980;
-        Sun, 27 Sep 2026 23:27:37 -0700 (PDT)
-Received: from losig.fritz.box ([2a04:9546:1c54:8601:c375:8df8:9c4c:d013])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a007fd1847sm25431615e9.1.2026.09.27.23.27.37
+        d=1e100.net; s=20260707; t=1790602364; x=1791207164;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=rDgWSkzXb9T2f2eSv4f8loR9LBdnnTqRZoSNaSt6PRU=;
+        b=q3vIe59JLajwa6O7nHrKbs5Q2wfjDCBmZPH3FBJBo0vvf3UWZSq6QEVxDgA81/G+BO
+         rygcGow7JXdfj4BOlFbE+nd89OPki3D/q3XPDQrB0UtnTN10fe9WKivmOZCIxshkhpP1
+         pcusLRVhzRzDjzdusWjpotR/7HnBXplhKNB1yKBRT0hAU7qL3QfhQtyeNlXbpV37bqDm
+         65UaJnlSU0Qol1eEkTBEgdUzY6FDIB4osNRAE0VVfoTCq4s5h7HuYtw/IR0J1emTltsR
+         GJzLMy/oEG2CGr9G8kheHyt+vg1fZkAHcFcjWOfMOr1Lft0W647i0LgwVkcbvGexCQQz
+         MRcQ==
+X-Forwarded-Encrypted: i=1; AKwUvByXVOBoqBy9h3oCMOg4ufYLXwk+ihYH/zL2CesqspJItMRNtnIEctUJcltoTa4+oAFoUBYOcX9PaA==@lists.linux.dev
+X-Gm-Message-State: AFq9FYJToQbaA6+fIvrsr53kZPyvlEfVJ1vqfBI8Ig750lCz6tNZuYv7
+	16JJrByxfbepznMtRjtLsLwtRwxqXDIQMuDfxfg+4jHUUwS7ehla4zq+
+X-Gm-Gg: AYBFou191E1KGrTYLgSaAZGqL29PfhKC5+1ORnklZ8/Qcx/JyEjzDyo57GRgfXNyd98
+	UGuxxLPPbo/neS/97ANT5F+F3qKd11FLY8ZK8V3K3UqFFbctFRLPPK/UmW+b5nvElzdC69vGOf6
+	yy6AJCGpSu6WvFDezeFBO232DrFcQofPsFtFPJMJ3qZLmBBkRwCuePl4NN/LhndpOX29THd7c7P
+	EEbgT8nCaOFPzdHusgo3B/9tfUSR5xdICXe5s31ahWixE/tplu2iZCxYA0vcXVgMvFpDwuqNbFR
+	QadzUyf5k55nDrSgWA6Joacv7qvBxtC5zObOnKG1gto4n02JO9a/IjGR7gJrvPTA7v8oBLPkdGB
+	693S2JiUTN54uLA/m7xI4RFh8MC/t+PFDVD2uBzLnF5pjD9/C8rRKnxanwq/aMDEloC4P7GdF9j
+	VotUsQYj8xLemc3lpKSHc5hmtmKPWOo5FeLehwp4RuNfiprWt1HlaztKqGiKKmrBErwarD7xLGx
+	DlhBklZMt2km3jpGCMZ5HAoGRT67S+LY4Bpd1Vj0lCKYFrsNPmhDCOlnvR10JOhU1KmuRM/X3yZ
+	skwVvcpDmENP
+X-Received: by 2002:a05:6000:4693:b0:487:342:d141 with SMTP id ffacd0b85a97d-488774f4f02mr13825713f8f.23.1790602364016;
+        Mon, 28 Sep 2026 06:32:44 -0700 (PDT)
+Received: from 127.mynet ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4887a349731sm28090164f8f.12.2026.09.28.06.32.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 27 Sep 2026 23:27:37 -0700 (PDT)
-From: Lorenz Kofler <lorenz@sigma-star.at>
-To: Mikulas Patocka <mpatocka@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@lists.linux.dev,
+        Mon, 28 Sep 2026 06:32:43 -0700 (PDT)
+From: Pavel Begunkov <asml.silence@gmail.com>
+To: linux-block@vger.kernel.org
+Cc: asml.silence@gmail.com,
 	linux-kernel@vger.kernel.org,
-	upstream+dm@sigma-star.at,
-	Lorenz Kofler <lorenz@sigma-star.at>
-Subject: [RFC PATCH 1/1] dm-integrity: support keys in the kernel keyring
-Date: Mon, 28 Sep 2026 08:27:34 +0200
-Message-ID: <20260928062734.3805458-2-lorenz@sigma-star.at>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <20260928062734.3805458-1-lorenz@sigma-star.at>
-References: <20260928062734.3805458-1-lorenz@sigma-star.at>
+	linux-media@vger.kernel.org,
+	dri-devel@lists.freedesktop.org,
+	linaro-mm-sig@lists.linaro.org,
+	linux-nvme@lists.infradead.org,
+	linux-fsdevel@vger.kernel.org,
+	io-uring@vger.kernel.org,
+	Christoph Hellwig <hch@lst.de>,
+	Sumit Semwal <sumit.semwal@linaro.org>,
+	=?UTF-8?q?Christian=20K=C3=B6nig?= <christian.koenig@amd.com>,
+	Keith Busch <kbusch@kernel.org>,
+	Sagi Grimberg <sagi@grimberg.me>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>,
+	Jan Kara <jack@suse.cz>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Jens Axboe <axboe@kernel.dk>,
+	Nitesh Shetty <nj.shetty@samsung.com>,
+	Kanchan Joshi <joshi.k@samsung.com>,
+	Anuj Gupta <anuj20.g@samsung.com>,
+	Tushar Gohad <tushar.gohad@intel.com>,
+	William Power <william.power@intel.com>,
+	Phil Cayton <phil.cayton@intel.com>,
+	Matthew Brost <matthew.brost@intel.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	dm-devel@lists.linux.dev
+Subject: [PATCH v7 00/13] Add dmabuf read/write via io_uring
+Date: Mon, 28 Sep 2026 14:32:16 +0100
+Message-ID: <cover.1790602223.git.asml.silence@gmail.com>
+X-Mailer: git-send-email 2.54.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -81,283 +102,153 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The keys of internal_hash, journal_crypt and journal_mac can only be
-given as hex strings in the table. Keys that never leave the kernel,
-such as trusted keys, cannot be used.
+The patch set allows to register a dmabuf to an io_uring instance for
+a specified file and use it with io_uring read / write requests. The
+infrastructure is not tied to io_uring and there could be more users
+in the future. A similar idea was attempted some years ago by Keith [1],
+from where I borrowed a number of changes. Later it was brough back up
+to life by Tushar and Vishal.
 
-In addition to hex strings, accept keys from the kernel keyring in the
-same format as dm-crypt: ":<key_size>:<key_type>:<key_description>".
-The lookup is the same as in dm-crypt.
+It's an opt-in feature for files, and they need to implement a new
+file operation to use it. Only NVMe block devices are supported in this
+series. The user API is built on top of io_uring's "registered buffers",
+where a dmabuf is registered in a special way, but after it can be used
+as any other "registered buffer" with IORING_OP_{READ,WRITE}_FIXED
+requests. It's created via a new file operation and the resulted map is
+then passed through the I/O stack in a new iterator type. There is some
+additional infrastructure to glue it together, count requests, manage
+lifetime and implement invalidation.
 
-Like DM_CRYPT, DM_INTEGRITY must not be built in when the encrypted or
-trusted key types are modules.
+Tushar, William, Phil did a lot of testing and experimentation on various
+devices with previous versions of the patch set, and I've received lots
+of help from Anuj, Kanchan and Nitesh with investigations, testing, and
+patching. Earlier benchmarks by Anuj for IOMMU optimisations with udmabuf
+showed:
 
-Signed-off-by: Lorenz Kofler <lorenz@sigma-star.at>
----
- .../device-mapper/dm-integrity.rst            |  25 +++
- drivers/md/Kconfig                            |   2 +
- drivers/md/dm-integrity.c                     | 164 ++++++++++++++++++
- 3 files changed, 191 insertions(+)
+STRICT: before = 570 KIOPS, after = 5.01 MIOPS
+LAZY: before = 1.93 MIOPS, after = 5.01 MIOPS
+PASSTHROUGH: before = 5.01 MIOPS, after = 5.01 MIOPS
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-index 9c21301423c9..2b7f82912962 100644
---- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -146,6 +146,8 @@ internal_hash:algorithm(:key)	(the key is optional)
- 	from an upper layer target, such as dm-crypt. The upper layer
- 	target should check the validity of the integrity tags.
- 
-+	The format of the key is described below the list of arguments.
-+
- recalculate
- 	Recalculate the integrity tags automatically. It is only valid
- 	when using internal hash.
-@@ -162,6 +164,8 @@ journal_crypt:algorithm(:key)	(the key is optional)
- 	the size of files that were written. To protect against this
- 	situation, you can encrypt the journal.
- 
-+	The format of the key is described below the list of arguments.
-+
- journal_mac:algorithm(:key)	(the key is optional)
- 	Protect sector numbers in the journal from accidental or malicious
- 	modification. To protect against accidental modification, use a
-@@ -173,6 +177,8 @@ journal_mac:algorithm(:key)	(the key is optional)
- 	the journal. Thus, modified sector number would be detected at
- 	this stage.
- 
-+	The format of the key is described below the list of arguments.
-+
- block_size:number (default 512)
- 	The size of a data block in bytes. The larger the block size the
- 	less overhead there is for per-block integrity metadata.
-@@ -225,6 +231,25 @@ legacy_recalculate
- 	set recalc_sector to zero, and the kernel would not detect the
- 	modification.
- 
-+The key of internal_hash, journal_crypt and journal_mac is encoded either as
-+a hexadecimal number or it can be passed as <key_string> prefixed with single
-+colon character (':') for keys residing in kernel keyring service.
-+
-+<key_string>
-+	The kernel keyring key is identified by string in following format:
-+	<key_size>:<key_type>:<key_description>.
-+
-+<key_size>
-+	The key size in bytes. The kernel key payload size must match
-+	the value passed in <key_size>.
-+
-+<key_type>
-+	Either 'logon', 'user', 'encrypted' or 'trusted' kernel key type.
-+
-+<key_description>
-+	The kernel keyring key description integrity target should look for
-+	when loading key of <key_type>.
-+
- The journal mode (D/J), buffer_sectors, journal_watermark, commit_time and
- allow_discards can be changed when reloading the target (load an inactive
- table and swap the tables with suspend and resume). The other arguments
-diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-index df27c7d066d2..e93bf0c3119d 100644
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -653,6 +653,8 @@ config DM_LOG_WRITES
- config DM_INTEGRITY
- 	tristate "Integrity target support"
- 	depends on BLK_DEV_DM
-+	depends on (ENCRYPTED_KEYS || ENCRYPTED_KEYS=n)
-+	depends on (TRUSTED_KEYS || TRUSTED_KEYS=n)
- 	select BLK_DEV_INTEGRITY
- 	select DM_BUFIO
- 	select CRYPTO
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 92970e12267a..6995c870cbf5 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -25,6 +25,11 @@
- #include <crypto/utils.h>
- #include <linux/async_tx.h>
- #include <linux/dm-bufio.h>
-+#include <linux/ctype.h>
-+#include <linux/key.h>
-+#include <keys/user-type.h>
-+#include <keys/encrypted-type.h>
-+#include <keys/trusted-type.h>
- 
- #include "dm-audit.h"
- 
-@@ -4415,6 +4420,152 @@ static void free_alg(struct alg_spec *a)
- 	memset(a, 0, sizeof(*a));
- }
- 
-+#ifdef CONFIG_KEYS
-+
-+static bool contains_whitespace(const char *str)
-+{
-+	while (*str)
-+		if (isspace(*str++))
-+			return true;
-+	return false;
-+}
-+
-+static int set_key_user(struct alg_spec *a, struct key *key)
-+{
-+	const struct user_key_payload *ukp;
-+
-+	ukp = user_key_payload_locked(key);
-+	if (!ukp)
-+		return -EKEYREVOKED;
-+
-+	if (a->key_size != ukp->datalen)
-+		return -EINVAL;
-+
-+	memcpy(a->key, ukp->data, a->key_size);
-+
-+	return 0;
-+}
-+
-+static int set_key_encrypted(struct alg_spec *a, struct key *key)
-+{
-+	const struct encrypted_key_payload *ekp;
-+
-+	ekp = key->payload.data[0];
-+	if (!ekp)
-+		return -EKEYREVOKED;
-+
-+	if (a->key_size != ekp->decrypted_datalen)
-+		return -EINVAL;
-+
-+	memcpy(a->key, ekp->decrypted_data, a->key_size);
-+
-+	return 0;
-+}
-+
-+static int set_key_trusted(struct alg_spec *a, struct key *key)
-+{
-+	const struct trusted_key_payload *tkp;
-+
-+	tkp = key->payload.data[0];
-+	if (!tkp)
-+		return -EKEYREVOKED;
-+
-+	if (a->key_size != tkp->key_len)
-+		return -EINVAL;
-+
-+	memcpy(a->key, tkp->key, a->key_size);
-+
-+	return 0;
-+}
-+
-+/*
-+ * Load the key from the kernel keyring. a->key_string has the format
-+ * ":<key_size>:<key_type>:<key_description>".
-+ */
-+static int get_alg_key_from_keyring(struct alg_spec *a)
-+{
-+	int (*set_key)(struct alg_spec *a, struct key *key);
-+	const char *key_type_desc, *key_desc;
-+	struct key_type *type;
-+	unsigned int key_size;
-+	struct key *key;
-+	char dummy;
-+	int r;
-+
-+	/*
-+	 * Reject key_string with whitespace. dm core currently lacks code for
-+	 * proper whitespace escaping in arguments on DM_TABLE_STATUS path.
-+	 */
-+	if (contains_whitespace(a->key_string))
-+		return -EINVAL;
-+
-+	if (sscanf(a->key_string, ":%u%c", &key_size, &dummy) != 2 || dummy != ':')
-+		return -EINVAL;
-+	if (!key_size || key_size > KMALLOC_MAX_SIZE)
-+		return -EINVAL;
-+
-+	/* skip ":<key_size>:", the sscanf() above guarantees the second ':' */
-+	key_type_desc = strchr(a->key_string + 1, ':') + 1;
-+
-+	/* look for next ':' separating key_type from key_description */
-+	key_desc = strchr(key_type_desc, ':');
-+	if (!key_desc || key_desc == key_type_desc || !strlen(key_desc + 1))
-+		return -EINVAL;
-+
-+	if (!strncmp(key_type_desc, "logon:", key_desc - key_type_desc + 1)) {
-+		type = &key_type_logon;
-+		set_key = set_key_user;
-+	} else if (!strncmp(key_type_desc, "user:", key_desc - key_type_desc + 1)) {
-+		type = &key_type_user;
-+		set_key = set_key_user;
-+	} else if (IS_ENABLED(CONFIG_ENCRYPTED_KEYS) &&
-+		   !strncmp(key_type_desc, "encrypted:", key_desc - key_type_desc + 1)) {
-+		type = &key_type_encrypted;
-+		set_key = set_key_encrypted;
-+	} else if (IS_ENABLED(CONFIG_TRUSTED_KEYS) &&
-+		   !strncmp(key_type_desc, "trusted:", key_desc - key_type_desc + 1)) {
-+		type = &key_type_trusted;
-+		set_key = set_key_trusted;
-+	} else {
-+		return -EINVAL;
-+	}
-+
-+	a->key = kmalloc(key_size, GFP_KERNEL);
-+	if (!a->key)
-+		return -ENOMEM;
-+	a->key_size = key_size;
-+
-+	key = request_key(type, key_desc + 1, NULL);
-+	if (IS_ERR(key)) {
-+		r = PTR_ERR(key);
-+		goto free_key;
-+	}
-+
-+	down_read(&key->sem);
-+	r = set_key(a, key);
-+	up_read(&key->sem);
-+	key_put(key);
-+	if (r < 0)
-+		goto free_key;
-+
-+	return 0;
-+
-+free_key:
-+	kfree_sensitive(a->key);
-+	a->key = NULL;
-+	a->key_size = 0;
-+	return r;
-+}
-+
-+#else
-+
-+static int get_alg_key_from_keyring(struct alg_spec *a)
-+{
-+	return -EINVAL;
-+}
-+
-+#endif /* CONFIG_KEYS */
-+
- static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, char *error_inval)
- {
- 	char *k;
-@@ -4429,6 +4580,19 @@ static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, ch
- 	if (k) {
- 		*k = 0;
- 		a->key_string = k + 1;
-+
-+		if (a->key_string[0] == ':') {
-+			int r = get_alg_key_from_keyring(a);
-+
-+			if (r == -ENOMEM)
-+				goto nomem;
-+			if (r == -EINVAL)
-+				goto inval;
-+			if (r)
-+				*error = "Cannot get key from the kernel keyring";
-+			return r;
-+		}
-+
- 		if (strlen(a->key_string) & 1)
- 			goto inval;
- 
+# Patch set structure:
+- Patches 1-2 introduce internal API and infrastructure mediating
+  io_uring and target subsystem / devices
+- Patches 3-5: block layer support + prep patches
+- Patches 6-8 implement NVMe support
+- Patches 9-13 add io_uring support and uapi.
+
+There are some liburing tests that can serve as an example:
+git: https://github.com/isilence/liburing.git rw-dmabuf-tests-v5
+url: https://github.com/isilence/liburing/tree/rw-dmabuf-tests-v5
+
+The patches are based on Jens' for-next. Also available as a branch:
+git: https://github.com/isilence/linux.git rw-dmabuf-v7
+url: https://github.com/isilence/linux/tree/rw-dmabuf-v7
+
+[1] https://lore.kernel.org/io-uring/20220805162444.3985535-1-kbusch@fb.com/
+
+v7: - refcount *_io_ctx 
+    - wait rcu grace period for ctx->map before freeing maps
+    - increment map counters under dma resv lock
+    - more comments about bio splitting
+    - make ->unmap responsible for freeing maps to match ->map
+    - replace dma_sync_single* with full table sync
+    - detach dma-buf on nvme reset after cancel nvme_cancel_tagset
+
+v6: - remove fences and wait on invalidation synchronously
+    - report all map requests are detached earlier, outside of wq
+    - handle nvme removal
+    - gate nvme_free_descriptors() on iod->nr_descriptors 
+    - fix error handling in nvme_rq_setup_dmabuf_map() 
+    - fix iov_iter_alignment()
+    - relax the 1G io_uring registered dma-buf limit
+    - fix type overflow issue in bio split
+    - allocate struct dma_buf_io_ctx inside the dma-buf-io code
+    - harden block checks against dma-buf + buffered io
+
+v5: - Reject dma-buf with buffered IO for raw bdev
+    - Add lim->max_segments bio splitting
+    - Add bio_iov_iter_set() helper
+    - Fix io_uring uapi validation
+    - Other minor changes
+    NVMe:
+    - Rename nvme_pci_sgl_set_data() to nvme_pci_dma_iter_set_sgl(), split 
+      into its own prep patch.
+    - Convert segment walk loops to do-while.
+    - Drop adjacent segment coalescing logic.
+    - Drop first_dma/first_len from nvme_pci_dmabuf_sgl_nents()
+    - Remove entries > NVME_MAX_SEGS bailout; moving to the block layer.
+    - Factor SGL vs PRP decision making into a helper.
+
+v4: - https://lore.kernel.org/all/cover.1785274111.git.asml.silence@gmail.com/
+    - Add sgl support from Anuj
+    - Move it under drivers/dma-buf/ and rename
+    - Fix mis-sized allocations
+    - Fix io_uring re-import mishandling
+    - Drop map before io_uring "task work"
+    - Move blk-mq callback to block_device_operations
+    - Convert bio flag to REQ_OP*
+    - Other small changes
+
+v3: https://lore.kernel.org/io-uring/cover.1777475843.git.asml.silence@gmail.com/
+    - Rework io_uring registration
+    - Move token/map infrastructure code out of blk-mq
+    - Simplify callbacks: remove a separate blk-mq table, which was
+      mostly just forwarding calls (to nvme).
+    - Don't skip dma sync depending on request direction
+    - Fix a couple of hangs
+    - Rename s/dma/dmabuf/
+    - Other small changes
+
+v2: - Don't pass raw dma addresses, wrap it into a driver specific object
+    - Split into two objects: token and map
+    - Implement move_notify
+
+Anuj Gupta (2):
+  nvme-pci: rename nvme_pci_sgl_set_data to nvme_pci_dma_iter_set_sgl
+  nvme-pci: add SGL support for the dmabuf path
+
+Pavel Begunkov (11):
+  dma-buf: introduce initial file I/O infrastructure
+  iov_iter: add iterator type for dmabuf maps
+  block: always adjust bi_offset on bio_advance_iter
+  block: introduce dma map backed bio type
+  block: add dma-buf support for raw bdev
+  nvme-pci: implement dma-buf backed requests
+  io_uring/rsrc: introduce buf registration structure
+  io_uring/rsrc: extend buffer update
+  io_uring/rsrc: add uncloneable regbuf flag
+  io_uring/rsrc: add regbuf import flags
+  io_uring/rsrc: add dmabuf backed registered buffers
+
+ block/bio.c                    |  15 +-
+ block/blk-merge.c              |  50 ++++
+ block/fops.c                   |  27 +-
+ drivers/dma-buf/Makefile       |   2 +-
+ drivers/dma-buf/dma-buf-io.c   | 230 ++++++++++++++++
+ drivers/md/dm-io-rewind.c      |   6 +-
+ drivers/nvme/host/core.c       |  12 +
+ drivers/nvme/host/nvme.h       |   2 +
+ drivers/nvme/host/pci.c        | 467 ++++++++++++++++++++++++++++++++-
+ include/linux/bio.h            |  21 +-
+ include/linux/blk-mq.h         |   7 +
+ include/linux/blk_types.h      |  14 +-
+ include/linux/blkdev.h         |   2 +
+ include/linux/bvec.h           |   3 +-
+ include/linux/dma-buf-io.h     | 117 +++++++++
+ include/linux/fs.h             |   2 +
+ include/linux/io_uring_types.h |   5 +
+ include/linux/iov_iter.h       |   2 +
+ include/linux/uio.h            |  11 +
+ include/uapi/linux/io_uring.h  |  31 ++-
+ io_uring/io_uring.c            |   3 +-
+ io_uring/rsrc.c                | 275 ++++++++++++++++---
+ io_uring/rsrc.h                |  45 +++-
+ io_uring/rw.c                  |   6 +-
+ lib/iov_iter.c                 |  29 +-
+ 25 files changed, 1304 insertions(+), 80 deletions(-)
+ create mode 100644 drivers/dma-buf/dma-buf-io.c
+ create mode 100644 include/linux/dma-buf-io.h
+
 -- 
-2.55.0
+2.54.0
 
