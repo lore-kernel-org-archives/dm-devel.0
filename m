@@ -1,88 +1,118 @@
-Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2C36348C5D;
-	Mon, 28 Sep 2026 05:33:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.133
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E737333DEE9
+	for <dm-devel@lists.linux.dev>; Mon, 28 Sep 2026 06:27:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790573604; cv=none; b=TGH6EKgMV2tA0OxX7wKZDnNJ0w/dk1pCRp1VQAz9fkylZjOE1X/mOIndSXoqNZljVDR6VE5YyM5ASy0Chdl8mVRjG2ibn5Mx5sztP7EUBCcxoI8GknfEJuSdpiigAPtKQ1g3TEA3IEuuiaPwiIiFKwV/ee4erJymfcX2Wgch7OQ=
+	t=1790576861; cv=none; b=b7fWoFnq43NC9dTxG7DZhFwl3m2naB7YV5OGjh6YoCM6nRXTiNtk4PbxqNuoPqPU0u212BNg/MVSjYiwMGuyePQ9Lf+kBtg2bey/J5xPoW0O5pILF+TNik161GZEq+3haudJzVsxUx6ry9gXRdMO6a3P0cM/VTodFuzPChOds6c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790573604; c=relaxed/simple;
-	bh=7VffACvwrxgH44hyyh1YKeoQx6o+nO94kkYo3o7IfAE=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=m0RTjbUdg/5NSi6AconFJfJsfLdUA0XekUnoVT07W+NxZ56QeV7yDqsaz1ESy8YS6oy/nIeyrhXSEhfvNDVyTAEwEddmFf+XCyWJL0wlX9OcYXaEXnxOzXM2ojM/ovX/jH2llU7hiMefFZ26rQQLjArAyBn4pmNeqUxScArnnM4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=jeETeVMT; arc=none smtp.client-ip=198.137.202.133
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
+	s=arc-20240116; t=1790576861; c=relaxed/simple;
+	bh=H7vUI5mRibD9dC1GWX3NIDs0desuVHCHEezg46LYpv0=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=ShsmrfCnA8QDwoFEk6kaQJBwnXxVKURZwDYn9zrJ1dR279n+/n+ycu4mVLYBybmEKvmA2tL7r+87QomH95oPlR2gRNlgJ51OPe10Z42d9CCgK8ULPCYmE4j+xt1fY1nrhyjYu01uyNSMByRi3dF22VfTKLxUCdlsWctTsNy6Ugo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sigma-star.at; spf=pass smtp.mailfrom=sigma-star.at; dkim=pass (2048-bit key) header.d=sigma-star.at header.i=@sigma-star.at header.b=lf4l/lPS; arc=none smtp.client-ip=74.125.225.140
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sigma-star.at
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sigma-star.at
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="jeETeVMT"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
-	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=iM47se4qfvuI4d4y75YdY6jAlSO3cXcJnXGy35GIXBU=; b=jeETeVMTo5e38w1vmCqZBxsLV/
-	qJSP5a2ykdeo8IAJXs7+5Lk8xpBMhyy/1lDVdMOdG84ZHdelq4oaxniKIG6lJrjSE6dcnZjmeh9Ik
-	XLM6fmCdLdxQXgcHfGmojB/Oud4npwzSgyQzHC1JRzUCYHyuNmsOh15JZEUDz8IrFJW0UjOZ6YrjW
-	5cQc9Tp3wIdkZHXgKHWC2eD2Ts/D5aPwI3+GVWjRXmwpDXPy890Lbe/N60tNm/YKL0m1GW8SV22tl
-	dRIlABnBS8Gm/B65EdX172jRa3gVZ5MM/Ld7NjyaXfheIz8JKah/CXiH3U0Jx5iJZSXEH6soFg1PR
-	D9cFV21w==;
-Received: from hch by bombadil.infradead.org with local (Exim 4.99.1 #2 (Red Hat Linux))
-	id 1xB3zO-0000000HMu2-41wT;
-	Mon, 28 Sep 2026 05:33:22 +0000
-Date: Sun, 27 Sep 2026 22:33:22 -0700
-From: Christoph Hellwig <hch@infradead.org>
-To: Leonid Ravich <lravich@amazon.com>
-Cc: Christoph Hellwig <hch@infradead.org>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	linux-crypto@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, davem@davemloft.net,
-	ebiggers@kernel.org, agk@redhat.com, snitzer@kernel.org,
-	mpatocka@redhat.com, bmarzins@redhat.com
-Subject: Re: [PATCH v6 0/6] crypto: skcipher - multi-data-unit request
- splitting
-Message-ID: <arn8IlMrTCEmdhy7@infradead.org>
-References: <20260924075846.28203-1-lravich@amazon.com>
- <arY6lzQtvVzUGngU@infradead.org>
- <20260927071422.12143-1-lravich@amazon.com>
+	dkim=pass (2048-bit key) header.d=sigma-star.at header.i=@sigma-star.at header.b="lf4l/lPS"
+Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-49b912df756so20634875e9.3
+        for <dm-devel@lists.linux.dev>; Sun, 27 Sep 2026 23:27:38 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=sigma-star.at; s=google; t=1790576857; x=1791181657; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=EGl5xKQgiRxbz7OyVDlPWje0J4ptC6ADyhIXW/2/+qk=;
+        b=lf4l/lPSpb5fAThaNrDJn+5GfcdhiOUdFTKxy5PXem111pZi6o4GOeYKnn2yPly1sG
+         D2EEAlFSykf4awScsqlVDubwTmctgf4I+rcw4JgL73CktkH7qepJYAQqO/0L7Wt/mbvh
+         UXfY+rrU3UdQ+xFFQQn1Svs4fU8k0q2l1Kx3EzLI6eg3TlL9VreixXUQjsJHMgCfhPoC
+         MyDFjwZaEnpFNB6L9Tl4sm604QBqqi4J6hlFAfy/WrSYOHQnODOKtj7c6JAbDHXxiay9
+         NsxN0KKkd1vM9hW5BUWx1kYZx81yJodyQW6f/SpLnc6GWB1Nz+8kJQLOqgujO4NjZbVn
+         0BPg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1790576857; x=1791181657;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=EGl5xKQgiRxbz7OyVDlPWje0J4ptC6ADyhIXW/2/+qk=;
+        b=MDP0ELaca3F3UHriRbYzz0L6J8x42cspWQmyUB20W3KOJWIkfd60FOLNDnlwMVvxUk
+         32h/CWOAFY1e7/Oljb8B25JidtV9iPiNEzfTO8gdFVkzcwDLBbAfcJ5FamjBRMIBIe3s
+         SUaVZQz3c86YkjZocqtyrPkCfFb9Typ+gpp08vYS3Sx9Rh049yU8CqWIXjMHZfBbIvW1
+         PYJGX7ZKA9Y17l+JtHvYJKGWc8t7qt6xtAn1Qv2TOHWm0xAS8F3mM8UvbYAqWjsqIJeo
+         sJcjClL/uRw4RPbi3pF1GEi7bhGyd2Lr9OnfDFC5XAVuxUMhNVkgWKeQfa7KhnxOVvJP
+         U4XQ==
+X-Gm-Message-State: AFuF++mtsVMb7vMAXBUVndxQ66p1xGsDpdpV6FkjN/mdFmnSjtfmzfx+
+	X/u7kfq/jrgjL1vwEaCWHANDZ0jPFi4nWtOjFy8DNKmHPOoczXOd/Fjo4tzJx/0jyyc=
+X-Gm-Gg: AYBFou1LhQ6fQkYem9A3sMvwsLUU3Nx1da4cK18muszt0LnC3u8DMzzriNJ6XEIEnQr
+	Gq/NkFaO8K1Uz/Z9RvEE8A0ZF1r4AEzWiLK2nyy6Fi7a06B1kzVgdPZ84LJjYLN0xByYoaOL5xq
+	6MVXDfMUysuMWzDffHPe7A6+PLx68aju6+OI+Wq35NM3VTemUcA4c9cPhj36r36GYEp+TPR3Yms
+	ZBfk/2pzO5MppI8nXYkMsm+UdCDbCPzuNwccqFoQ6wqBYmkj9oBxLmX1plt/OKXKCjIH8Zqlt/E
+	PlI05F5L9GLPtc39dcnQLSq9ImII3+fDFJsoi78LwsaeonDasALu0u7xdeaooiKn64Dnrv5h81s
+	cOJa99fRAI2YIGxrEOlcWHnubEqHIrjiMziBUftVnFhgrkpZbU2x0LkqADw8xaBLjmYSKFFPB+h
+	rnSunDOMldxuKYqsC/xgDZ3lS/3goiM9gq4Duf0qcSfFvqoUWjxDBqCCA+gVAGgtMIFWvUcUd/G
+	zyQOieKsQEPB7F83Hpt
+X-Received: by 2002:a05:600c:638f:b0:49c:ffab:551f with SMTP id 5b1f17b1804b1-49fe66d8112mr205843305e9.22.1790576856992;
+        Sun, 27 Sep 2026 23:27:36 -0700 (PDT)
+Received: from losig.fritz.box ([2a04:9546:1c54:8601:c375:8df8:9c4c:d013])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a007fd1847sm25431615e9.1.2026.09.27.23.27.36
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 27 Sep 2026 23:27:36 -0700 (PDT)
+From: Lorenz Kofler <lorenz@sigma-star.at>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	upstream+dm@sigma-star.at,
+	Lorenz Kofler <lorenz@sigma-star.at>
+Subject: [RFC PATCH 0/1] dm-integrity: support keys in the kernel keyring
+Date: Mon, 28 Sep 2026 08:27:33 +0200
+Message-ID: <20260928062734.3805458-1-lorenz@sigma-star.at>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20260927071422.12143-1-lravich@amazon.com>
-X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
+Content-Transfer-Encoding: 8bit
 
-On Sun, Sep 27, 2026 at 07:14:14AM +0000, Leonid Ravich wrote:
-> On Fri, Sep 25, 2026 at 02:10:47AM -0700, Christoph Hellwig wrote:
-> > On Thu, Sep 24, 2026 at 07:58:40AM +0000, Leonid Ravich wrote:
-> > > * No throughput *win* is claimed for software AES.  The win is for
-> > >   accelerators that amortise setup across units; the software split
-> > >   exists so the interface works on every existing skcipher today and
-> > >   goes quiet as algorithms gain CRYPTO_ALG_REQ_SEG.
-> >
-> > So what is the use case?  So far all crypto driver we've seen have
-> > shown to be slower than cpu.  Which one are you using that isn't?
-> 
-> The engine we use is out of tree, but it is not a special case.  It
+dm-integrity currently accepts keys only as hex strings in the table, so
+keys that never leave the kernel, such as trusted keys, cannot be used.
 
-It is.  Without you having an upstream stack this is a complete no-go
-to start with.
+This patch adds support for retrieving keys from the kernel keyring
+using the same format as dm-crypt:
 
-> is an SoC-integrated, DMA-driven, asynchronous xts(aes) engine of the
-> same class as caam, ccree, qce, hisilicon sec2, inside-secure and the
-> Marvell CPT drivers already in the tree.
+  :<key_size>:<key_type>:<key_description>
 
-Pretty much all of them are broken as f***k everytime someone tried
-to use them.
+The keyring lookup code is copied from dm-crypt's
+crypt_set_keyring_key() and its helpers. I would prefer to share this
+code between dm-crypt and dm-integrity rather than duplicate it, but I
+am not sure what the best way is. I see only two options:
 
-> For a DMA engine the scatterlist is not overhead: it is what the
-> hardware consumes.  The per-sector cost it pays is the per-request
-> cost, and unit_size is what removes it.
+1. static inline helpers in a drivers/md header, so dm-crypt and
+   dm-integrity each compile their own copy
+2. a small library module, similar to dm-bufio, so there is one copy
+   that follows the value (y/m) of dm-crypt and dm-integrity
 
-Yes, it is.  Take a look how the scatterlist duplicates information
-already handled by the upper layers.  We've been through is a lot
-and are moving to the dma_iova_ API because of that.
+Putting the helpers into dm-mod does not work. The helpers use
+key_type_encrypted and key_type_trusted, which can be modules. With
+e.g., BLK_DEV_DM=y, DM_CRYPT=m and ENCRYPTED_KEYS=m, built-in dm-mod
+would reference a module symbol, and vmlinux fails to link.
+
+Please let me know which approach you would prefer, or if there is a
+better way to share this code.
+
+Lorenz Kofler (1):
+  dm-integrity: support keys in the kernel keyring
+
+ .../device-mapper/dm-integrity.rst            |  25 +++
+ drivers/md/Kconfig                            |   2 +
+ drivers/md/dm-integrity.c                     | 164 ++++++++++++++++++
+ 3 files changed, 191 insertions(+)
+
+
+base-commit: f0100363d8c374bd8e9ea7c9ba02744f0b802ca4
+-- 
+2.55.0
 
