@@ -1,129 +1,129 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 285113546FE;
-	Mon, 28 Sep 2026 17:50:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9AE183B52F4
+	for <dm-devel@lists.linux.dev>; Mon, 28 Sep 2026 18:50:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790617810; cv=none; b=u324aXF56Pc4Lj0xk0suXS7kMne5VW7KZSdHC2/FQLoyBLuLQ+3uGQt9W9vft0VuqUblLj9SFBlq9ylkHP77Hxjr+0mZmDq4QXCTPRQmUxi+h06aWCJ3NdnnF2ECOTH+i+8JkNbM3gxXi/MNND1zd+572awL6bW6axKJPpbegZs=
+	t=1790621470; cv=none; b=tU3i71taOAYx7Ic/8cCFMLCTlMRotgpajdSEjLr1WbhWdCtjrNjFfvBBX2FNrqvbZdyROK8RpFfsHZYUXjp9KoqVacLJSkNc2DXYUJ5QqZsmsbeU2ajGC7+x6Jyg+DbVK2PdkJi78GehvdbYx81JvvBBnO7AuabHloFebYS6stk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790617810; c=relaxed/simple;
-	bh=u/E59QhchBsakfNPPqr6eKRHZdqiWw1FvCI9GEDCeFw=;
+	s=arc-20240116; t=1790621470; c=relaxed/simple;
+	bh=VUKHB0xV/TOUJZKlitGEQ27eafwwJjo6A7gzmKSruAs=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=fc/h7WXBiNx614J+45tghZv8S5GiPorXd9GsGPymd9yACZxK/j1mdZp1Ry9zxRd3ifd8EvnV0ViA8yusYieeZhyNXB4gx1x3cFvhjzVIKKWU6WBnev6q03JzoXENBbkr80Ms12XY4RNmbB7L+fXBNk5tpIc7mgLZjvUYAwK3kAY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=KjJm0noY; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:Content-Type:Content-Disposition; b=pHagPLrle9RP6D9aChs3D9mHfIm1O0LSFHoat1qPj3EnB6BGSpWET0sC05DYogqaqayNbVmM0Gcwo59fFq4zLiigAuKkUfobaw5cFtGNRdUf4G7Psu2O0uKugVf3VApCxo6PysaIFphtWnHwb+G3ilUsidOqbvmvgvd4ilFRWx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cL5gFgIv; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="KjJm0noY"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F290B1F000FF;
-	Mon, 28 Sep 2026 17:49:53 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1790617809;
-	bh=dJBj7jrhd8l/3+1i/MYD1Oe07SV8AbeGkY/QzpcIlXk=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=KjJm0noY+sn5WykpEMYX/0cqYF5OZAonPsiiMo8gsrJp3dbtWXzQ+MUuPiGJZJA0x
-	 6jLqI4XrjH/ECSiSdsjKSDEcOX8VHNjxTUmFetbOQTlOnUn092Xi9vWRpAgkcyI7cV
-	 VEdR4+s8FUt72QAhYPACB1DPHc7Kdjz2uCMGh47V7dCsVAU9tDI9stHRuVWg4VowUL
-	 wsubuRL7tSu1HVvPbp8bYrkCi5Pwl78yS8X19cLVqL1XZl7poDdf3RukkTBc6rpsfh
-	 AjjBKhJEyZefMZQzGawiz22PfrG9g5f1MlSZXvtXI+fxD2E2qzuSdugjHmvJG38tDb
-	 U9iSc28s9bD3A==
-Date: Mon, 28 Sep 2026 18:49:51 +0100
-From: "Lorenzo Stoakes (ARM)" <ljs@kernel.org>
-To: Jan Sebastian =?utf-8?B?R8O2dHRl?= <linux@jaseg.de>
-Cc: Jonathan Corbet <corbet@lwn.net>, 
-	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
-	Rob Herring <robh@kernel.org>, Saravana Kannan <saravanak@kernel.org>, 
-	Andrew Morton <akpm@linux-foundation.org>, Baoquan He <baoquan.he@linux.dev>, 
-	Mike Rapoport <rppt@kernel.org>, Pasha Tatashin <pasha.tatashin@soleen.com>, 
-	Pratyush Yadav <pratyush@kernel.org>, Dave Young <ruirui.yang@linux.dev>, 
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "Rafael J. Wysocki" <rafael@kernel.org>, 
-	Danilo Krummrich <dakr@kernel.org>, Muchun Song <muchun.song@linux.dev>, 
-	Oscar Salvador <osalvador@suse.de>, David Hildenbrand <david@kernel.org>, 
-	Vlastimil Babka <vbabka@kernel.org>, Suren Baghdasaryan <surenb@google.com>, 
-	Michal Hocko <mhocko@suse.com>, Brendan Jackman <brendan.jackman@linux.dev>, 
-	Johannes Weiner <hannes@cmpxchg.org>, Zi Yan <ziy@nvidia.com>, 
-	Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will@kernel.org>, 
-	Mark Rutland <mark.rutland@arm.com>, Alasdair Kergon <agk@redhat.com>, 
-	Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, 
-	"David S. Miller" <davem@davemloft.net>, Mimi Zohar <zohar@linux.ibm.com>, 
-	David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko@kernel.org>, 
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
-	"Serge E. Hallyn" <serge@hallyn.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, 
-	"Liam R. Howlett" <liam@infradead.org>, Jann Horn <jannh@google.com>, Pedro Falcato <pfalcato@suse.de>, 
-	Rik van Riel <riel@surriel.com>, Harry Yoo <harry@kernel.org>, Lance Yang <lance.yang@linux.dev>, 
-	Baolin Wang <baolin.wang@linux.alibaba.com>, Nico Pache <nico.pache@linux.dev>, 
-	Ryan Roberts <ryan.roberts@arm.com>, Dev Jain <dev.jain@arm.com>, Barry Song <baohua@kernel.org>, 
-	Usama Arif <usama.arif@linux.dev>, Kiryl Shutsemau <kas@kernel.org>, 
-	Matthew Brost <matthew.brost@intel.com>, Joshua Hahn <joshua.hahnjy@gmail.com>, 
-	Byungchul Park <byungchul@sk.com>, Gregory Price <gourry@gourry.net>, 
-	Ying Huang <ying.huang@linux.alibaba.com>, Alistair Popple <apopple@nvidia.com>, 
-	Peter Xu <peterx@redhat.com>, Arnd Bergmann <arnd@arndb.de>, 
-	Eric Biggers <ebiggers@kernel.org>, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	devicetree@vger.kernel.org, kexec@lists.infradead.org, driver-core@lists.linux.dev, 
-	linux-mm@kvack.org, linux-arm-kernel@lists.infradead.org, dm-devel@lists.linux.dev, 
-	linux-crypto@vger.kernel.org, linux-integrity@vger.kernel.org, keyrings@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-arch@vger.kernel.org
-Subject: Re: [PATCH v3 00/12] CRASH_MEMACTION: describe pages to a kdump
- kernel (was: CRASH_WIPE_SECRETS)
-Message-ID: <arqli0H0v5qPG22z@gremlin>
-References: <20260928-crash-memaction-upstream-20260921-v3-0-e511e9ee2329@jaseg.de>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cL5gFgIv"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1790621455;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Y9y0gKQGOU32GGVOjX7APFNs+U3DEyaUKiY0npgt11E=;
+	b=cL5gFgIvcxEWxCL31NLVb3fXc9Dxc/hdl8YZ623idxhflQHw/5n0VpcoJHNUT4/lbni/Wd
+	eH6bMw1xwtnRPJuqNvKsEhEscfI/BOBjLxqK4X6PuQ0YNzBpx+9p5FmK9I3Tc+FBT4vrkI
+	5GnhP56MOQkzXF+DOOurGpZ0Vt7J5B8=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-534-5_vGulFxP2qjSx4ioxQfUQ-1; Mon,
+ 28 Sep 2026 14:50:52 -0400
+X-MC-Unique: 5_vGulFxP2qjSx4ioxQfUQ-1
+X-Mimecast-MFC-AGG-ID: 5_vGulFxP2qjSx4ioxQfUQ_1790621451
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EBB5D1800757;
+	Mon, 28 Sep 2026 18:50:50 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8C76330000E8;
+	Mon, 28 Sep 2026 18:50:50 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 68SIonND3594252
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 28 Sep 2026 14:50:49 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 68SIomKN3594251;
+	Mon, 28 Sep 2026 14:50:48 -0400
+Date: Mon, 28 Sep 2026 14:50:48 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Brian Bunker <brian@purestorage.com>
+Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>,
+        Simon Dodsley <simon@purestorage.com>
+Subject: Re: [PATCH 1/1] multipath: resolve map paths before delegating -f to
+ multipathd
+Message-ID: <arq3COa2XcN_D-Km@redhat.com>
+References: <cover.1790610404.git.brian@purestorage.com>
+ <27189ec36e897519735f76a26833e39b0f4557bc.1790610404.git.brian@purestorage.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+In-Reply-To: <27189ec36e897519735f76a26833e39b0f4557bc.1790610404.git.brian@purestorage.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 7Ik9mcG463-awDMf56C8HZ7sSUhkKXLeXr5NXTR18GU_1790621451
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20260928-crash-memaction-upstream-20260921-v3-0-e511e9ee2329@jaseg.de>
 
-On Mon, Sep 28, 2026 at 07:17:48PM +0200, Jan Sebastian Götte wrote:
-> I'm using linux on an embedded target in a Hardware Security Module-like
-> application. One requirement is that I want the system to be able to
-> quickly erase its memory when it detects physical tampering. I'm
-> approaching that by using kdump to load into a small payload that
-> instead of dumping RAM, erases RAM frmo start to end. However, writing
-> all of RAM, especially on an embedded target, is rather slow. For this
-> reason, I propose a new crash_memaction mechanism that lets the old
-> kernel indicate marked memory areas to the kdump kernel at page
-> granularity.
+On Mon, Sep 28, 2026 at 09:54:43AM -0700, Brian Bunker wrote:
+> --- a/multipath/main.c
+> +++ b/multipath/main.c
+> @@ -729,6 +729,30 @@ get_dev_type(char *dev) {
+>  	return DEV_NONE;
+>  }
+>  
+> +/*
+> + * multipathd resolves "del map $map" arguments by alias, WWID or dm-N
+> + * name, not by device path. If a map was passed as a path, e.g.
+> + * /dev/mapper/$alias or /dev/disk/by-id/dm-uuid-mpath-$WWID, replace it
+> + * with the map name.
+> + */
+> +static void
+> +resolve_devmap_path(char *dev)
+> +{
+> +	struct stat buf;
+> +	char __attribute__((cleanup(cleanup_charp))) *name = NULL;
+> +
+> +	if (valid_alias(dev) || stat(dev, &buf) != 0 ||
+> +	    !S_ISBLK(buf.st_mode))
+> +		return;
+> +
+> +	name = dm_mapname(major(buf.st_rdev), minor(buf.st_rdev));
+> +	if (!name)
+> +		return;
+> +
+> +	condlog(3, "%s: using map name %s", dev, name);
+> +	strlcpy(dev, name, FILE_NAME_SIZE);
+> +}
+> +
+>  /*
+>   * Some multipath commands are dangerous to run while multipathd is running.
+>   * For example, "multipath -r" may apply a modified configuration to the kernel,
+> @@ -1027,6 +1051,8 @@ main (int argc, char *argv[])
+>  		condlog(0, "the -f option requires a map name to remove");
+>  		goto out;
+>  	}
 
-Sorry this all seems really invasive for what seems to be a very specific
-use case.
+Thanks for the fix. This looks good, although I wonder if we should
+always update dev for a DEV_DEVMAP type device that we can stat(),
+likely in get_dev_type(). That would keep us from needing to deal with
+this again if we delegate anything else to multipathd. Thoughts, Martin?
+Otherwise, I'm fine with this as is.
 
-In general, with big changes like this, you should send the series as an
-RFC.
+-Ben 
 
-Please send any future revisions of this as an RFC.
+> +	if (cmd == CMD_FLUSH_ONE)
+> +		resolve_devmap_path(dev);
+>  
+>  	while (1) {
+>  		int ret = delegate_to_multipathd(cmd, dev, dev_type, conf);
+> -- 
+> 2.55.0
 
-The bar for a new VMA flag, a new madvise() flag, etc. is really quite
-high, and I've already noticed what looks like quite buggy code glancing
-through.
-
-And again, I really don't think your case sounds all that compelling for
-general users, given how invasive the changes are, so I strongly suggest
-you rethink your approach.
-
-In any case, as a newcomer to mm, we really ask that people start with
-smaller changes and build up gradually, a change like this really should
-only be done by somebody with an established reputation in the kernel.
-
-In general re: AI-generated code see
-https://docs.kernel.org/process/generated-content.html
-
-	If tools permit you to generate a contribution automatically, expect
-	additional scrutiny in proportion to how much of it was generated.
-
-	As with the output of any tooling, the result may be incorrect or
-	inappropriate. You are expected to understand and to be able to defend
-	everything you submit. If you are unable to do so, then do not submit the
-	resulting changes.
-
-	If you do so anyway, maintainers are entitled to reject your series without
-	detailed review.
-
-Thanks!
-
---
-Cheers, Lorenzo
