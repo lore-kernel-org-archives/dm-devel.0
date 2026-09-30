@@ -1,170 +1,145 @@
-Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
+Received: from mail-oi1-f197.google.com (mail-oi1-f197.google.com [209.85.167.197])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 87B7B4E4C4A
-	for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 12:49:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58485339395
+	for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 14:25:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.167.197
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790772571; cv=none; b=EZqmmmABOwPWBEcMcK9MCWdZJa/QTsqG6oWPMCjwaEsA9mYQRgxgSwK9/ZBdVnWTGOUwyDTUNdPSGY0o8kOvCop3xLPGyvUBXXviFJ6LQ05NjIXwQQRufbzOVhP4Fh9X7acA4nxkc+v+53qkcAqXxPvoEgLzk4dHgpGhyzsgIW4=
+	t=1790778355; cv=none; b=JiLFxg461mCsBxvJhSoczZyW5Ke/HBy/ntqzg30ZO1ck2LZuovXm3I4TfJqlIzgIM8Kj1Irwd9QBwuBaUhFTTpAFMbPmmiP13bCJSrlIXt5dThKWZuYCIZvQ7mS+IgfBVA5O6i9boB6gtEz/w1ghD67W5YkUTBmcW9bbpuAF37A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790772571; c=relaxed/simple;
-	bh=TdyzSTHL7WYOVSGbZvbctK9FEuEdU7OX2Rp7WBlcsZU=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=M3UqA4iFLCrEnW4DQL8sQuK0QzXe4F8eAL7yFnrlVn3VPMVh2lwYhmS7NDNRLfubCAS4Oxqy0eVlHCOSeBeGrcyz2pf188ClJgEfR4GWWSrtXGVZmjEtF+3AwKRt1tyka4c+E6IRCWtqsK5BfDKlCrmhj9DfGZF7q0/xsEGx0sM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=H7NQpMS8; arc=none smtp.client-ip=74.125.225.140
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="H7NQpMS8"
-Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-49ffde3cec6so22696695e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 05:49:19 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790772554; x=1791377354; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:in-reply-to:content-language
-         :references:cc:to:from:subject:user-agent:mime-version:date
-         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=/dhWIKwIs8lapn2MMhEevzHPS2BYYvsR1AqGmdi+y+4=;
-        b=H7NQpMS8esZMcp7CzScT3yI4L4XyIIjsMMZ5kOUi559ir8CfJgxblVRtxzCiW/D5JF
-         UYijY6j/fnmbFSdNvy9nDBfo/Kyv/rJSdCWW6WayaHIVydce9AeuxT62n4IfiKL9OPwn
-         IG2Ni+Gst3XSaJUAjojgTvxua+qZ2xgCUZj0RHUmATGHYA8TSdwUnk7sprRtp2GgOHpm
-         6L9wcl0G0GB3tDtqS21JfQbLby+fRMLNav6JtSsmzt5aZuHzTGacpAT1HfHPlgEIJYWD
-         YLaL8xwouYLY2UUf31RA8iZ3bDN8Z1z7oj/JquIfjSHmKPVKANOWV6Sjb/SAi1fhr5cE
-         FIkQ==
+	s=arc-20240116; t=1790778355; c=relaxed/simple;
+	bh=apO13nm+V4glrEDhKHt2A20vrAEHwAVipOBOTCOTXCU=;
+	h=MIME-Version:Date:Message-ID:Subject:From:To:Content-Type; b=s4pV5wxSjBpz0s1AmiJaAYSpSpClOjNI2HDCBtFp9KA4znBVuNcu7TTz+jFmfNstWNmyOvaW0vYi7G8S8WEBw76Z6hpG9X7DkShZ/6o4p1rsdMRTWnFXexFeEhdr11c6LxyYkDkJ1BNqqp3iiNCkqh3fiCWcUybJSsTz+e/UaSg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com; arc=none smtp.client-ip=209.85.167.197
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oi1-f197.google.com with SMTP id 5614622812f47-4cd3e90ff97so5274483b6e.2
+        for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 07:25:47 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790772554; x=1791377354;
-        h=content-transfer-encoding:content-type:in-reply-to:content-language
-         :references:cc:to:from:subject:user-agent:mime-version:date
-         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=/dhWIKwIs8lapn2MMhEevzHPS2BYYvsR1AqGmdi+y+4=;
-        b=DTg1SGLZwzhqGcsT//tsZHE33s6F7zvAhdoQl9jaYIw9lKs6kxnzb/F3zkV/0QY3YB
-         CZEkccO+RxAN36L3+viJM9b40SvTLTctTWVfntKObMzhg2jOBp1fio4YYxq6zSgF6KjO
-         jUtckXg9XEiZKpWtGjTijcgTZ2CTmYzu3nj5ikp9jbQYBYpBy9DcVptLOXhq8QmKaNMv
-         lqUSm9H81X8zzVjoVcoQCSulWoAyexeShNLNn2KIXl7H1zecJgn7MgcnJ6RqC1mhScLT
-         HLp/rIU/6Wt4fPYFUn7PwCy0WavWqArtNZE7HPY6qCF+8vD0iiC5lFOZyfRRvpRlTMKk
-         hDGw==
-X-Forwarded-Encrypted: i=1; AKwUvBx6tGrTGJ4+vLUBG49QhwNpmJiz3cuYCxOj+uPix+L+UC46UUsdQR53aV/5c9NR116ET7lhvM6igw==@lists.linux.dev
-X-Gm-Message-State: AFuF++lJ1bAMTsVqObb5TqXasxEB8ICAYYw7wDF2W0fbyF/ZTrLACqbo
-	ZfWTTPmiYS6TGggrogZyxJmS7spMJNtQw1zl3656EX7/nIPDIY0llDnK
-X-Gm-Gg: AYBFou3cX8VSprOTDVn+c/i0+JMqkOBMxZgwfLJEsa8HLBmBSPeeHDe0zu8MMW/bygn
-	x+eP2dMxIH22DAu6Gj7RQKOPbwuy0FMJVsFnJIXAMnrgroSNQymnxl5WXocMdBnzl6GRUHNC5Vs
-	E7RCIxPVZFJf2GpeSXE25+crUCoUCcM6K9Z97TseLX2I/qkV3MLobMjM3WdPiv97eKfOiL5LENv
-	gyn4Mg6ChUnpNWEJD1ZW0GjN+Pl0Zct/sulPj5LOoaXJwTCtHVI6bhu6k07RS1JMT+WsOMl7tVz
-	pOiAL3PDuGF0uWI7lfIXUOSl9fr40LlTuPp4HkbXn+gzOWrETtiQyx8j3hnJzytjl8rQcADadFb
-	yupEbQcnbnS/dXzTn/+mV+29ld7DfhLkw2QY0n79eitu43npev6JAI2XIbTQRPVsy6XSUMIkr8f
-	wGjcNJrZxBFOYPAgzzutiedU8hIpP195nrG7LQFYWOfcN7qcJubGG8hj1XeoCjH2x5pS6rfRdmS
-	M0Cnr3wHz/uGtdUPd9HBLabkvh+VYO1hhgDDZ1oZ4/mrPdj3RH1IA7JzhZ4U9opieOiTnjoJagU
-	H9I7w1PoBlMs9iAIHDc47iy+Hzl/2b+qqIyK
-X-Received: by 2002:a05:600d:864b:10b0:4a0:2dd:7573 with SMTP id 5b1f17b1804b1-4a01b12b666mr16604625e9.33.1790772554145;
-        Wed, 30 Sep 2026 05:49:14 -0700 (PDT)
-Received: from [10.54.182.141] (82-132-212-25.dab.02.net. [82.132.212.25])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a01cb8abc1sm3766935e9.0.2026.09.30.05.48.53
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 30 Sep 2026 05:48:57 -0700 (PDT)
-Message-ID: <c07404e0-33f6-4e5f-a80a-e1901b42dc39@gmail.com>
-Date: Wed, 30 Sep 2026 13:48:49 +0100
+        d=1e100.net; s=20260707; t=1790778344; x=1791383144;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=rK1Is7P5EYGLLAJjb2Cuc+Kd0rrtOHS2i7gUMnob7Ro=;
+        b=OpCeaLzYRnl+t+SGyhxqPlzlNgInIN3jgy9ZNbT97DR6GMsP8+setVN6V6Hca7HXhY
+         jLzEvgGyO4ZLQuI0PyLt2gJQEo5OkhysSEGm46LfYhwHxx+oXCRvswSCT4I6VYPaYEaB
+         E0ALimv7QLvk1ROtsqenaF1QrVLBZoUUKG+4yvUxDUSGJIfx301/k55niOzOyzAvKWvg
+         4sJ4ZZ+PyQgpzlM4yOvJVoUeS8TIPpV/+0TF2oVtNSNrhCfpvA5gWSdo/zaayCAwcxPT
+         q9jr75D+PE/Qv3mtxSKjjAWOVcPGNh5wiUH7r0o3lQ0/VYxLN1pK13lr9p020AedZQKt
+         Ftgg==
+X-Forwarded-Encrypted: i=1; AKwUvBy62ujUxbILIQInktLiAT/Sycd/OYWX0n9vBgw56eSo3mzB0vSmjR17mIpiEHH//zZzRSkApbpLsA==@lists.linux.dev
+X-Gm-Message-State: AFuF++lma98bngaFzCM9Bw1UKPeiBJullciFVi5KL0Bk43oPF+jn35/N
+	nXvIJlVtSQzTOLlh5ptc7tlDSaLErQDSbN3x7+qjM2xwfhiW5sO3a6lXG/U4VCnN0L1IyBl0ZFJ
+	yLMYZ9nVjxbGmBg8HwXVgvYkVet5u7hN4/r82u8Afmu29qvBNkC4qtdqatWM=
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v6 01/13] dma-buf: introduce initial file I/O
- infrastructure
-From: Pavel Begunkov <asml.silence@gmail.com>
-To: Matthew Brost <matthew.brost@intel.com>
-Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
- linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org,
- linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org,
- Christoph Hellwig <hch@lst.de>, Sumit Semwal <sumit.semwal@linaro.org>,
- =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
- Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>,
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
- William Power <william.power@intel.com>, Phil Cayton
- <phil.cayton@intel.com>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-References: <cover.1789997898.git.asml.silence@gmail.com>
- <5490ee42c4452fd4198b245ead20fcf7438c066e.1789997898.git.asml.silence@gmail.com>
- <arx7ZQ8o9aeHsAqS@gsse-cloud1.jf.intel.com>
- <447c04dd-6bfa-4c45-99e7-37d25a7ab539@gmail.com>
-Content-Language: en-US
-In-Reply-To: <447c04dd-6bfa-4c45-99e7-37d25a7ab539@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+X-Received: by 2002:a05:6808:4497:b0:4b9:a88b:8891 with SMTP id
+ 5614622812f47-4f1b6b72f31mr1415333b6e.39.1790778343909; Wed, 30 Sep 2026
+ 07:25:43 -0700 (PDT)
+Date: Wed, 30 Sep 2026 07:25:43 -0700
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6abd1be7.fac9d4e5.17396.0005.GAE@google.com>
+Subject: [syzbot] [dm?] KASAN: wild-memory-access Write in __journal_read_write
+From: syzbot <syzbot+675c91651049ad042c5f@syzkaller.appspotmail.com>
+To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-On 9/30/26 11:08, Pavel Begunkov wrote:
-> On 9/30/26 04:00, Matthew Brost wrote:
->> On Mon, Sep 21, 2026 at 02:38:45PM +0100, Pavel Begunkov wrote:
-> ...>> +struct dma_buf_io_map *dma_buf_io_create_map(struct dma_buf_io_ctx *ctx)
->>> +{
->>> +    struct dma_buf *dmabuf = ctx->dmabuf;
->>> +    struct dma_buf_io_map *map;
->>> +    long ret;
->>> +
->>> +    guard(mutex)(&ctx->map_create_mutex);
->>> +
->>> +    scoped_guard(mutex, &ctx->map_mutex) {
->>> +        if (ctx->maps_killed)
->>> +            return ERR_PTR(-ENOENT);
->>> +        /* recheck under the lock in case it has already been re-created */
->>> +        map = __dma_buf_io_get_map(ctx);
->>> +        if (map)
->>> +            return map;
->>> +    }
->>> +
->>> +    dma_buf_io_wait_active_maps(ctx);
->>> +
->>> +    ret = dma_resv_lock_interruptible(dmabuf->resv, NULL);
->>> +    if (ret)
->>> +        return ERR_PTR(ret);
->>> +
->>> +    ret = dma_resv_wait_timeout(dmabuf->resv, DMA_RESV_USAGE_KERNEL,
->>> +                    true, MAX_SCHEDULE_TIMEOUT);
->>> +    if (ret <= 0) {
->>> +        if (!ret)
->>> +            ret = -EAGAIN;
->>> +        dma_resv_unlock(dmabuf->resv);
->>> +        return ERR_PTR(ret);
->>> +    }
->>> +
->>> +    map = ctx->dev_ops->map(ctx);
->>
->> I'm playing around this code now.
->>
->> I think you need the dma_resv_wait_timeout after the 'map'?
->>
->> If a device doesn't support p2p ->map() will typically trigger an async
->> migrate to system memory and data will be moving but the map is valid -
->> Xe 100% does this, I checked AMDGPU and fairly confident it has the same
->> async behavior.
-> 
-> There is a wait right before because I read somewhere in dma-buf
-> comments that I need to do that, sounds a bit odd if I need to
-> wait on fences before and after. I can add it, just curious how
-> come that other dma_buf_map_attachment() callers don't need to do
-> that. Or maybe they wait somewhere else?
+Hello,
 
-I can't find it, so maybe it was the comment below and I mixed
-sth up back then. I'll move it after ->map().
+syzbot found the following issue on:
+
+HEAD commit:    551c722f4080 Merge tag 'rtc-7.3-fixes' of git://git.kernel..
+git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+console output: https://syzkaller.appspot.com/x/log.txt?x=1111c6c9580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=7d012d9c67977ee4
+dashboard link: https://syzkaller.appspot.com/bug?extid=675c91651049ad042c5f
+compiler:       gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=171b0035580000
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+675c91651049ad042c5f@syzkaller.appspotmail.com
+
+==================================================================
+BUG: KASAN: wild-memory-access in __journal_read_write+0xc29/0x1f10 drivers/md/dm-integrity.c:2288
+Write of size 512 at addr 0005088000000000 by task syz-executor338/6039
+
+CPU: 0 UID: 0 PID: 6039 Comm: syz-executor338 Not tainted syzkaller #0 PREEMPT(full) 
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Call Trace:
+ <TASK>
+ __dump_stack lib/dump_stack.c:94 [inline]
+ dump_stack_lvl+0x100/0x190 lib/dump_stack.c:120
+ kasan_report+0xdf/0x1c0 mm/kasan/report.c:595
+ check_region_inline mm/kasan/generic.c:186 [inline]
+ kasan_check_range+0x10f/0x1e0 mm/kasan/generic.c:200
+ __asan_memcpy+0x3c/0x60 mm/kasan/shadow.c:106
+ __journal_read_write+0xc29/0x1f10 drivers/md/dm-integrity.c:2288
+ dm_integrity_map_continue+0x243f/0x33b0 drivers/md/dm-integrity.c:2574
+ dm_integrity_map+0x6cc/0xc90 drivers/md/dm-integrity.c:2204
+ __map_bio+0x597/0x660 drivers/md/dm.c:1435
+ __split_and_process_bio drivers/md/dm.c:1769 [inline]
+ dm_split_and_process_bio drivers/md/dm.c:2043 [inline]
+ dm_submit_bio+0x5b6/0x2950 drivers/md/dm.c:2099
+ __submit_bio block/blk-core.c:681 [inline]
+ __submit_bio+0x20e/0x3d0 block/blk-core.c:670
+ __submit_bio_noacct block/blk-core.c:724 [inline]
+ submit_bio_noacct_nocheck+0x736/0xc00 block/blk-core.c:792
+ submit_bio_noacct+0xc93/0x2130 block/blk-core.c:925
+ bio_await+0x1fa/0x240 block/bio.c:1581
+ submit_bio_wait+0x19/0x60 block/bio.c:1599
+ __blkdev_direct_IO_simple+0x4cb/0x8c0 block/fops.c:98
+ blkdev_direct_IO+0xbee/0x2030 block/fops.c:429
+ blkdev_direct_write block/fops.c:699 [inline]
+ blkdev_write_iter+0x703/0xd30 block/fops.c:767
+ new_sync_write fs/read_write.c:595 [inline]
+ vfs_write+0x6af/0x1050 fs/read_write.c:687
+ ksys_pwrite64 fs/read_write.c:794 [inline]
+ __do_sys_pwrite64 fs/read_write.c:802 [inline]
+ __se_sys_pwrite64 fs/read_write.c:799 [inline]
+ __x64_sys_pwrite64+0x1eb/0x250 fs/read_write.c:799
+ do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
+ do_syscall_64+0x123/0x790 arch/x86/entry/syscall_64.c:84
+ entry_SYSCALL_64_after_hwframe+0x77/0x7f
+RIP: 0033:0x7f5408351ab7
+Code: 48 89 fa 4c 89 df e8 98 1d 00 00 8b 93 08 03 00 00 59 5e 48 83 f8 fc 74 1a 5b c3 0f 1f 84 00 00 00 00 00 48 8b 44 24 10 0f 05 <5b> c3 0f 1f 80 00 00 00 00 83 e2 39 83 fa 08 75 de e8 23 ff ff ff
+RSP: 002b:00007ffc07ac8820 EFLAGS: 00000202 ORIG_RAX: 0000000000000012
+RAX: ffffffffffffffda RBX: 0000555592860400 RCX: 00007f5408351ab7
+RDX: 0000000000000400 RSI: 0000555592863000 RDI: 0000000000000007
+RBP: 0000000000000003 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000202 R12: 00005555928627a0
+R13: 0000000000000007 R14: 0000555592863000 R15: 00000000c138fd06
+ </TASK>
+==================================================================
 
 
-* Note that for non-dynamic exporters the driver must guarantee that
-* that the memory is available for use and cleared of any old data by
-* the time this function returns.  Drivers which pipeline their buffer
-* moves internally must wait for all moves and clears to complete.
-* Dynamic exporters do not need to follow this rule: For non-dynamic
-* importers the buffer is already pinned through @pin, which has the
-* same requirements. Dynamic importers otoh are required to obey the
-* dma_resv fences.
-*
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
 
--- 
-Pavel Begunkov
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
 
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want syzbot to run the reproducer, reply with:
+#syz test: git://repo/address.git branch-or-commit-hash
+If you attach or paste a git patch, syzbot will apply it before testing.
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
