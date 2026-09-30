@@ -1,381 +1,209 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCE5A4F68A7
-	for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 15:00:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99B5E503BC8
+	for <dm-devel@lists.linux.dev>; Wed, 30 Sep 2026 16:42:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790780444; cv=none; b=nSWAPDkQgInlKuUa62ywiEGiAx9MZoZ0EpcYKzc1XvOa1H9rdY0LtFLzYCS/icMOF28K9fJtAmntZz9njED9Mn9vblDQCw7ZupnN2X8vCK7xGM9Q6uuH7NzqQSqJyUPRpX3BZpQIAng23LU3k9p6pbhGksIyOcbb9VomcKdFylA=
+	t=1790786553; cv=none; b=gMgLF+8MCdYuVm1exiZ/tvllyY3WhCcR4xT57X5YSni9zjb1OMNU5oPUHH9RPMHyjrBFGLr75SPuSsMiUnfPvbNQA4ud637aw8LvlA4/SrNadZMZT/GyPL8qIxHn5f/oK4+fN1IZNfM7/PCjzeDQtzvnv0keAyCoD6FbyAKi6Aw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790780444; c=relaxed/simple;
-	bh=/a0FN8TPTH+ZWPDCO0F2/9QcJbvbJKS+B4rNAXxKr6o=;
+	s=arc-20240116; t=1790786553; c=relaxed/simple;
+	bh=zuc28hOdf6xcyAXlgv7/xMiA7jTvVpdHFdFDOy7ASuk=;
 	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=fpMzR2SI8+4akgHV7oaZ/WDiuiUoiitA+d476G6OF25lYWLwjn4DeQgpw2TSyNWXLolNXW3GwLcObXzGmkey9GdOMJeo1iSV0YWuNfx5peIXERUBdaYxM6YVi4SW5XGJiFTj9k9Ktzoj9Ck71UIrT0KfyOIjD3i6vh6vBSEwOlw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=cUxG2qxA; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version:Content-Type; b=nM1UAPEdDlYc4oxw3l63CH10M8nNFxhSEsaVIfNOJPXYCrsv7PFl1A80dJAGoG1RBKTEiuXUThG7P7V+7O/7gYKa0tbcFFMhVHYhy1nct9Ee7NXgcR6/aG/wCcXhAWkynjZjkxbwKeZEAvRHY9FVxOk51KdTc+IuWMYtEeyqk9g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=PPrHF66i; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="cUxG2qxA"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="PPrHF66i"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1790780432;
+	s=mimecast20190719; t=1790786550;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=S93pEZ/6C/TPD2WqdlM9j2cbq6p6AoqHGSar5KAdPig=;
-	b=cUxG2qxAt1vYGC+tGlmJBoKgZSjdqm/wGO0O4mPWFxhCnuKf78bQxVE5kc0Z0wDZGnqFW9
-	YDN5dY9twKfYb6bRPwRizYSWfAnlehfF6ERWPQhFgYW3hIOWVbjTfhf+3W5Rv7tbunAPQN
-	NdT6ZX6PdEOXLcQ29IGBRWhwp5qyovw=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+	bh=OB647Oc6r4tzUJMCif6ZTk0ejIFz1zVcOnsF8RfpQ7g=;
+	b=PPrHF66ihlZuAP6wzmCB4qz4dVs+93+gmXoCZBrnj5GlBbobtNny24J7h4cJjsoFZHQofK
+	3Xctf6ccHdBgLO9Wo2zsr/nU8gqk1f697cbf7k/xXtgECh+coUDIzSndPtxNatygX+rf4d
+	5xbD+as3+kg8VL49DRPcgKi3vgP/Fx4=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-149-ntzu5yWEMLGH5lq2ozvX4Q-1; Wed,
- 30 Sep 2026 11:00:29 -0400
-X-MC-Unique: ntzu5yWEMLGH5lq2ozvX4Q-1
-X-Mimecast-MFC-AGG-ID: ntzu5yWEMLGH5lq2ozvX4Q_1790780427
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-374-mKRhHwUoPQOm1TPdjNOWBQ-1; Wed,
+ 30 Sep 2026 12:42:26 -0400
+X-MC-Unique: mKRhHwUoPQOm1TPdjNOWBQ-1
+X-Mimecast-MFC-AGG-ID: mKRhHwUoPQOm1TPdjNOWBQ_1790786545
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5A2641953948;
-	Wed, 30 Sep 2026 15:00:27 +0000 (UTC)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6F8D51830900;
+	Wed, 30 Sep 2026 16:42:25 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DB19830000E7;
-	Wed, 30 Sep 2026 15:00:24 +0000 (UTC)
-Date: Wed, 30 Sep 2026 17:00:22 +0200 (CEST)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0CB9D768;
+	Wed, 30 Sep 2026 16:42:22 +0000 (UTC)
+Date: Wed, 30 Sep 2026 18:42:20 +0200 (CEST)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Lorenz Kofler <lorenz@sigma-star.at>
-cc: Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, Alasdair Kergon <agk@redhat.com>, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    upstream+dm@sigma-star.at
-Subject: Re: [RFC PATCH 1/1] dm-integrity: support keys in the kernel
- keyring
-In-Reply-To: <20260928062734.3805458-2-lorenz@sigma-star.at>
-Message-ID: <6e7bd72b-6f1a-211d-16a8-a35a530af408@redhat.com>
-References: <20260928062734.3805458-1-lorenz@sigma-star.at> <20260928062734.3805458-2-lorenz@sigma-star.at>
+To: syzbot <syzbot+675c91651049ad042c5f@syzkaller.appspotmail.com>
+cc: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org, snitzer@kernel.org, 
+    syzkaller-bugs@googlegroups.com
+Subject: [PATCH] dm-integrity: validate the superblock on resume
+In-Reply-To: <6abd1be7.fac9d4e5.17396.0005.GAE@google.com>
+Message-ID: <15db695b-79e2-6815-12b9-544855b57358@redhat.com>
+References: <6abd1be7.fac9d4e5.17396.0005.GAE@google.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: Ua9QWsSPOGXI-IZE0CPKdkd2jPmra9CT4QG1p0kLSbQ_1790780427
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-MFC-PROC-ID: BYC2ZdJtS1dT-ZYcnj_kTG3HicJJFPCBgwBJA0ZgpWI_1790786545
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
+
+
+On Wed, 30 Sep 2026, syzbot wrote:
+
+> Hello,
+> 
+> syzbot found the following issue on:
+> 
+> HEAD commit:    551c722f4080 Merge tag 'rtc-7.3-fixes' of git://git.kernel..
+> git tree:       git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+> console output: https://syzkaller.appspot.com/x/log.txt?x=1111c6c9580000
+> kernel config:  https://syzkaller.appspot.com/x/.config?x=7d012d9c67977ee4
+> dashboard link: https://syzkaller.appspot.com/bug?extid=675c91651049ad042c5f
+> compiler:       gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
+> C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=171b0035580000
+> 
+> IMPORTANT: if you fix the issue, please add the following tag to the commit:
+> Reported-by: syzbot+675c91651049ad042c5f@syzkaller.appspotmail.com
+
 Hi
 
-Generally, the approach in this patch is OK.
-
-Here I have some comments for the patch:
+Here I'm sending a patch for this bug.
 
 Mikulas
 
 
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-The patch should increase target version - from "{1, 15, 0}" to "{1, 16, 
-0}".
+dm_integrity_resume() re-reads the superblock from the device so that it
+picks up the flags and the recalculate position. It performs no
+validation on the result, while the constructor validates the superblock
+it reads and sizes all the in-memory structures according to it. The user
+may modify the superblock on the underlying device while the dm-integrity
+device is suspended, so that the two no longer agree.
 
+In particular, access_journal_data() shifts the journal entry index by
+ic->sb->log2_sectors_per_block, while ic->journal_section_sectors and the
+journal page list were computed with the value that was present at
+constructor time. Increasing log2_sectors_per_block makes the index run
+past the end of the journal, and dm-integrity then writes 512 bytes
+through lowmem_page_address(NULL).
 
-On Mon, 28 Sep 2026, Lorenz Kofler wrote:
+Snapshot the validated superblock in the constructor and refuse to resume
+if any of the fields that describe the on-disk geometry changed.
 
-> The keys of internal_hash, journal_crypt and journal_mac can only be
-> given as hex strings in the table. Keys that never leave the kernel,
-> such as trusted keys, cannot be used.
-> 
-> In addition to hex strings, accept keys from the kernel keyring in the
-> same format as dm-crypt: ":<key_size>:<key_type>:<key_description>".
-> The lookup is the same as in dm-crypt.
-> 
-> Like DM_CRYPT, DM_INTEGRITY must not be built in when the encrypted or
-> trusted key types are modules.
-> 
-> Signed-off-by: Lorenz Kofler <lorenz@sigma-star.at>
-> ---
->  .../device-mapper/dm-integrity.rst            |  25 +++
->  drivers/md/Kconfig                            |   2 +
->  drivers/md/dm-integrity.c                     | 164 ++++++++++++++++++
->  3 files changed, 191 insertions(+)
-> 
-> diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-> index 9c21301423c9..2b7f82912962 100644
-> --- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
-> +++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-> @@ -146,6 +146,8 @@ internal_hash:algorithm(:key)	(the key is optional)
->  	from an upper layer target, such as dm-crypt. The upper layer
->  	target should check the validity of the integrity tags.
->  
-> +	The format of the key is described below the list of arguments.
-> +
->  recalculate
->  	Recalculate the integrity tags automatically. It is only valid
->  	when using internal hash.
-> @@ -162,6 +164,8 @@ journal_crypt:algorithm(:key)	(the key is optional)
->  	the size of files that were written. To protect against this
->  	situation, you can encrypt the journal.
->  
-> +	The format of the key is described below the list of arguments.
-> +
->  journal_mac:algorithm(:key)	(the key is optional)
->  	Protect sector numbers in the journal from accidental or malicious
->  	modification. To protect against accidental modification, use a
-> @@ -173,6 +177,8 @@ journal_mac:algorithm(:key)	(the key is optional)
->  	the journal. Thus, modified sector number would be detected at
->  	this stage.
->  
-> +	The format of the key is described below the list of arguments.
-> +
->  block_size:number (default 512)
->  	The size of a data block in bytes. The larger the block size the
->  	less overhead there is for per-block integrity metadata.
-> @@ -225,6 +231,25 @@ legacy_recalculate
->  	set recalc_sector to zero, and the kernel would not detect the
->  	modification.
->  
-> +The key of internal_hash, journal_crypt and journal_mac is encoded either as
-> +a hexadecimal number or it can be passed as <key_string> prefixed with single
-> +colon character (':') for keys residing in kernel keyring service.
+Reported-by: syzbot+675c91651049ad042c5f@syzkaller.appspotmail.com
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
+Fixes: 118ba36e446c ("dm-integrity: fix recalculation in bitmap mode")
+Assisted-by: Claude:claude-opus-5
 
-The documentation omits the fact that you need double colon "::" - one 
-colon to end the argument name and one colon as the key prefix.
+---
+ drivers/md/dm-integrity.c |   50 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 50 insertions(+)
 
-> +
-> +<key_string>
-> +	The kernel keyring key is identified by string in following format:
-> +	<key_size>:<key_type>:<key_description>.
-> +
-> +<key_size>
-> +	The key size in bytes. The kernel key payload size must match
-> +	the value passed in <key_size>.
-> +
-> +<key_type>
-> +	Either 'logon', 'user', 'encrypted' or 'trusted' kernel key type.
-> +
-> +<key_description>
-> +	The kernel keyring key description integrity target should look for
-> +	when loading key of <key_type>.
-> +
->  The journal mode (D/J), buffer_sectors, journal_watermark, commit_time and
->  allow_discards can be changed when reloading the target (load an inactive
->  table and swap the tables with suspend and resume). The other arguments
-> diff --git a/drivers/md/Kconfig b/drivers/md/Kconfig
-> index df27c7d066d2..e93bf0c3119d 100644
-> --- a/drivers/md/Kconfig
-> +++ b/drivers/md/Kconfig
-> @@ -653,6 +653,8 @@ config DM_LOG_WRITES
->  config DM_INTEGRITY
->  	tristate "Integrity target support"
->  	depends on BLK_DEV_DM
-> +	depends on (ENCRYPTED_KEYS || ENCRYPTED_KEYS=n)
-> +	depends on (TRUSTED_KEYS || TRUSTED_KEYS=n)
->  	select BLK_DEV_INTEGRITY
->  	select DM_BUFIO
->  	select CRYPTO
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 92970e12267a..6995c870cbf5 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -25,6 +25,11 @@
->  #include <crypto/utils.h>
->  #include <linux/async_tx.h>
->  #include <linux/dm-bufio.h>
-> +#include <linux/ctype.h>
-> +#include <linux/key.h>
-> +#include <keys/user-type.h>
-> +#include <keys/encrypted-type.h>
-> +#include <keys/trusted-type.h>
->  
->  #include "dm-audit.h"
->  
-> @@ -4415,6 +4420,152 @@ static void free_alg(struct alg_spec *a)
->  	memset(a, 0, sizeof(*a));
->  }
->  
-> +#ifdef CONFIG_KEYS
-> +
-> +static bool contains_whitespace(const char *str)
-> +{
-> +	while (*str)
-> +		if (isspace(*str++))
-> +			return true;
-> +	return false;
-> +}
-> +
-> +static int set_key_user(struct alg_spec *a, struct key *key)
-> +{
-> +	const struct user_key_payload *ukp;
-> +
-> +	ukp = user_key_payload_locked(key);
-> +	if (!ukp)
-> +		return -EKEYREVOKED;
-> +
-> +	if (a->key_size != ukp->datalen)
-> +		return -EINVAL;
-> +
-> +	memcpy(a->key, ukp->data, a->key_size);
-> +
-> +	return 0;
-> +}
-> +
-> +static int set_key_encrypted(struct alg_spec *a, struct key *key)
-> +{
-> +	const struct encrypted_key_payload *ekp;
-> +
-> +	ekp = key->payload.data[0];
-> +	if (!ekp)
-> +		return -EKEYREVOKED;
-> +
-> +	if (a->key_size != ekp->decrypted_datalen)
-> +		return -EINVAL;
-> +
-> +	memcpy(a->key, ekp->decrypted_data, a->key_size);
-> +
-> +	return 0;
-> +}
-> +
-> +static int set_key_trusted(struct alg_spec *a, struct key *key)
-> +{
-> +	const struct trusted_key_payload *tkp;
-> +
-> +	tkp = key->payload.data[0];
-> +	if (!tkp)
-> +		return -EKEYREVOKED;
-> +
-> +	if (a->key_size != tkp->key_len)
-> +		return -EINVAL;
-> +
-> +	memcpy(a->key, tkp->key, a->key_size);
-> +
-> +	return 0;
-> +}
-
-These four functions are copied from dm-crypt.c and dm-inlinecrypt.c. 
-Copying code is generally malpattern, they should be unified and moved to 
-an include file (that would be included in all three targets) or to the 
-key management code (that would be called from all three targets).
-
-> +/*
-> + * Load the key from the kernel keyring. a->key_string has the format
-> + * ":<key_size>:<key_type>:<key_description>".
-> + */
-> +static int get_alg_key_from_keyring(struct alg_spec *a)
-> +{
-> +	int (*set_key)(struct alg_spec *a, struct key *key);
-> +	const char *key_type_desc, *key_desc;
-> +	struct key_type *type;
-> +	unsigned int key_size;
-> +	struct key *key;
-> +	char dummy;
-> +	int r;
-> +
-> +	/*
-> +	 * Reject key_string with whitespace. dm core currently lacks code for
-> +	 * proper whitespace escaping in arguments on DM_TABLE_STATUS path.
-> +	 */
-> +	if (contains_whitespace(a->key_string))
-> +		return -EINVAL;
-> +
-> +	if (sscanf(a->key_string, ":%u%c", &key_size, &dummy) != 2 || dummy != ':')
-> +		return -EINVAL;
-> +	if (!key_size || key_size > KMALLOC_MAX_SIZE)
-> +		return -EINVAL;
-
-KMALLOC_MAX_SIZE allocations are unreliable, they may fail randomly 
-anytime.
-
-You should use "PAGE_SIZE << PAGE_ALLOC_COSTLY_ORDER" as the limit (I 
-assume that this is enough for the key) - this is the reliability 
-threshold for kmalloc.
-
-If you really need larger allocation, you should use vmalloc or kvmalloc.
-
-> +	/* skip ":<key_size>:", the sscanf() above guarantees the second ':' */
-> +	key_type_desc = strchr(a->key_string + 1, ':') + 1;
-> +
-> +	/* look for next ':' separating key_type from key_description */
-> +	key_desc = strchr(key_type_desc, ':');
-> +	if (!key_desc || key_desc == key_type_desc || !strlen(key_desc + 1))
-> +		return -EINVAL;
-> +
-> +	if (!strncmp(key_type_desc, "logon:", key_desc - key_type_desc + 1)) {
-> +		type = &key_type_logon;
-> +		set_key = set_key_user;
-> +	} else if (!strncmp(key_type_desc, "user:", key_desc - key_type_desc + 1)) {
-> +		type = &key_type_user;
-> +		set_key = set_key_user;
-> +	} else if (IS_ENABLED(CONFIG_ENCRYPTED_KEYS) &&
-> +		   !strncmp(key_type_desc, "encrypted:", key_desc - key_type_desc + 1)) {
-> +		type = &key_type_encrypted;
-> +		set_key = set_key_encrypted;
-> +	} else if (IS_ENABLED(CONFIG_TRUSTED_KEYS) &&
-> +		   !strncmp(key_type_desc, "trusted:", key_desc - key_type_desc + 1)) {
-> +		type = &key_type_trusted;
-> +		set_key = set_key_trusted;
-> +	} else {
-> +		return -EINVAL;
-> +	}
-> +
-> +	a->key = kmalloc(key_size, GFP_KERNEL);
-> +	if (!a->key)
-> +		return -ENOMEM;
-> +	a->key_size = key_size;
-> +
-> +	key = request_key(type, key_desc + 1, NULL);
-> +	if (IS_ERR(key)) {
-> +		r = PTR_ERR(key);
-> +		goto free_key;
-> +	}
-> +
-> +	down_read(&key->sem);
-> +	r = set_key(a, key);
-> +	up_read(&key->sem);
-> +	key_put(key);
-> +	if (r < 0)
-> +		goto free_key;
-> +
-> +	return 0;
-> +
-> +free_key:
-> +	kfree_sensitive(a->key);
-> +	a->key = NULL;
-> +	a->key_size = 0;
-> +	return r;
-> +}
-> +
-> +#else
-> +
-> +static int get_alg_key_from_keyring(struct alg_spec *a)
-> +{
-> +	return -EINVAL;
-> +}
-> +
-> +#endif /* CONFIG_KEYS */
-> +
->  static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, char *error_inval)
->  {
->  	char *k;
-> @@ -4429,6 +4580,19 @@ static int get_alg_and_key(const char *arg, struct alg_spec *a, char **error, ch
->  	if (k) {
->  		*k = 0;
->  		a->key_string = k + 1;
-> +
-> +		if (a->key_string[0] == ':') {
-> +			int r = get_alg_key_from_keyring(a);
-> +
-> +			if (r == -ENOMEM)
-> +				goto nomem;
-> +			if (r == -EINVAL)
-> +				goto inval;
-> +			if (r)
-> +				*error = "Cannot get key from the kernel keyring";
-> +			return r;
-> +		}
-> +
->  		if (strlen(a->key_string) & 1)
->  			goto inval;
->  
-> -- 
-> 2.55.0
-> 
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c
++++ linux-2.6/drivers/md/dm-integrity.c
+@@ -180,6 +180,7 @@ struct dm_integrity_c {
+ 	struct dm_bufio_client *bufio;
+ 	struct workqueue_struct *metadata_wq;
+ 	struct superblock *sb;
++	struct superblock *sb_copy;
+ 	unsigned int journal_pages;
+ 	unsigned int n_bitmap_blocks;
+ 
+@@ -3858,6 +3859,35 @@ static void dm_integrity_postsuspend(str
+ 	ic->journal_uptodate = true;
+ }
+ 
++/*
++ * The superblock is re-read from the device on every resume, so that we pick
++ * up the flags and the recalculate position. The geometry described by the
++ * superblock must not change though - the in-memory structures (and the
++ * journal in particular) were sized according to the superblock that was
++ * validated in the constructor. Reject a superblock that was modified behind
++ * our back.
++ *
++ * Only the fields that the driver never rewrites may be tested here. In
++ * particular, "version" is recalculated by sb_set_version on every superblock
++ * write and it depends on SB_FLAG_RECALCULATING and SB_FLAG_DIRTY_BITMAP, and
++ * SB_FLAG_DISCARD_KEYED may be set by dm_integrity_resume itself.
++ */
++static bool superblock_changed(struct dm_integrity_c *ic)
++{
++	const __le32 immutable_flags = cpu_to_le32(SB_FLAG_HAVE_JOURNAL_MAC |
++						   SB_FLAG_FIXED_PADDING |
++						   SB_FLAG_FIXED_HMAC |
++						   SB_FLAG_INLINE);
++
++	return memcmp(ic->sb->magic, ic->sb_copy->magic, sizeof(ic->sb->magic)) != 0 ||
++	       ic->sb->log2_interleave_sectors != ic->sb_copy->log2_interleave_sectors ||
++	       ic->sb->integrity_tag_size != ic->sb_copy->integrity_tag_size ||
++	       ic->sb->journal_sections != ic->sb_copy->journal_sections ||
++	       ic->sb->log2_sectors_per_block != ic->sb_copy->log2_sectors_per_block ||
++	       ((ic->sb->flags ^ ic->sb_copy->flags) & immutable_flags) != 0 ||
++	       memcmp(ic->sb->salt, ic->sb_copy->salt, SALT_SIZE) != 0;
++}
++
+ static void dm_integrity_resume(struct dm_target *ti)
+ {
+ 	struct dm_integrity_c *ic = ti->private;
+@@ -3876,6 +3906,18 @@ static void dm_integrity_resume(struct d
+ 	if (r)
+ 		dm_integrity_io_error(ic, "reading superblock", r);
+ 
++	if (unlikely(superblock_changed(ic))) {
++		/*
++		 * Restore the superblock that we validated in the constructor,
++		 * so that the rest of the driver doesn't operate on values
++		 * that don't match the in-memory structures.
++		 */
++		memcpy(ic->sb, ic->sb_copy, sizeof(struct superblock));
++		DMERR("The superblock was changed while the device was suspended");
++		dm_integrity_io_error(ic, "superblock check", -EINVAL);
++		goto skip_writes;
++	}
++
+ 	if (ic->mode == 'R')
+ 		goto skip_writes;
+ 
+@@ -5427,6 +5469,13 @@ try_smaller_buffer:
+ 		ic->just_formatted = true;
+ 	}
+ 
++	ic->sb_copy = kmemdup(ic->sb, sizeof(struct superblock), GFP_KERNEL);
++	if (!ic->sb_copy) {
++		ti->error = "Cannot allocate superblock copy";
++		r = -ENOMEM;
++		goto bad;
++	}
++
+ 	if (!ic->meta_dev && ic->mode != 'I') {
+ 		r = dm_set_target_max_io_len(ti, 1U << ic->sb->log2_interleave_sectors);
+ 		if (r)
+@@ -5525,6 +5574,7 @@ static void dm_integrity_dtr(struct dm_t
+ 	kvfree(ic->journal_tree);
+ 	if (ic->sb)
+ 		free_pages_exact(ic->sb, SB_SECTORS << SECTOR_SHIFT);
++	kfree(ic->sb_copy);
+ 
+ 	if (ic->internal_shash)
+ 		crypto_free_shash(ic->internal_shash);
 
