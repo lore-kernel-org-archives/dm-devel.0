@@ -1,88 +1,118 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from sonic306-19.consmr.mail.sg3.yahoo.com (sonic306-19.consmr.mail.sg3.yahoo.com [106.10.241.139])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B1AB3DA7CC;
-	Sun,  4 Oct 2026 17:29:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 104379460
+	for <dm-devel@lists.linux.dev>; Mon,  5 Oct 2026 05:30:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=106.10.241.139
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791134982; cv=none; b=g3sDLtR9N54+RfP9+Vs0s938VYsQbhdZTh+C0Aa86RiGtLXyuCrKcA8swmZj5iffwtbAv2e81ml9RFjG7iqHVCAL3/n1KNQrTztdeU2OeskejM5FF+WVEtekNPxmKYre+vye3yA2i0VY0HmBqCrL1tJt/jHxcQRipGsXwbSfOQ0=
+	t=1791178212; cv=none; b=KyPifcPXlmSZSTH26GSDZBwTZKU5aW89t4rUK5YW9ArmD/d/p6QCJZyKTODr+Jgmt3pU+5C3f/Dx+0u64WyPABUMzc5kA0u38d3FKpaYsbPG2cIObwlaarIGUtCRwmidWGmAkMpOMFmxTazIqCILNcl5kourZJ6/Bpz/Zjhit/w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791134982; c=relaxed/simple;
-	bh=9Gg0CV4F8u+OGP3kkxNT4Wqro3Q7p8v0lDtJ2w78I98=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Mcc1s6t3KIwd5i5s4TXJ9qkwCVna7ziVpThh4Usgr26ngtPHWXRmsgPHtr6F+Qe6ivY/nouKE/giQ2gjyyCdDXiL+XSTG6T2zrkae8HZXHqu0OYl9A0YIG2n8PbHTBU/jftDMqA46tqHcrs/3M+awQS43jyZRxT9ieIvfzlEgnA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MrBCAF0l; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1791178212; c=relaxed/simple;
+	bh=9xUu3IfEVux1kiatx4FUnnwbvoJOyASzfYbABw1bXkQ=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:References; b=pKev89BIqXk6+sHdI3HA+nii5fGFUiuX6nTA/LORzi29RcxBO0BWs3Yb0yg7qEk9ygKoPTfDid0+Kp+6JbXVcplGwPmYTlhTqR0d6nbLU2oMREe7MlzHkr/oA05n7TS+ziXZbf/sJ6zoeCCbZvtcgM3GBqQV/lsKgYzACk7Pl1k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=yahoo.com; spf=pass smtp.mailfrom=yahoo.com; dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b=qp/C1DF3; arc=none smtp.client-ip=106.10.241.139
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=yahoo.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yahoo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MrBCAF0l"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E32141F000FF;
-	Sun,  4 Oct 2026 17:29:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791134980;
-	bh=Pt6fR7x8I6BlCIwQDroB4QMZ4hSu7qb3GBY64qZyK3E=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MrBCAF0lhqrPwv3XkO8Px5NBB1kePBxfnhbbeh7cM/ys1auj/mHuhUtfJCfQCkR9r
-	 84cVNCi3E3YTpDsfZ/SDiEymff8fJew/T+TzHcwOQ5yY8zAXXNC6MxgO4v5kTbCpV1
-	 QdsZI6Ld8jHw965GEUOUGcp0qPlSb01i5lPXKYceAzAMI2saMukZVGy3YMxTczFlL9
-	 WgPuMrh9uwnYaNtI9JUMJGCvqN912O6flsxRjMBJ+miqz9VZ+OrB6I+4NUxhmpQ350
-	 W01Isnl13Q0RIMG/qxf8prHJa3RBCnaqRCtkxsQD1tjtWDRzNIZWWTSnoh7z1ifmvv
-	 wMXuMtesO/q8w==
-Date: Sun, 4 Oct 2026 19:29:34 +0200
-From: Eric Biggers <ebiggers@kernel.org>
-To: Milan Broz <gmazyland@gmail.com>
-Cc: Mikulas Patocka <mpatocka@redhat.com>,
-	Lorenz Kofler <lorenz@sigma-star.at>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, upstream+dm@sigma-star.at,
-	David Howells <dhowells@redhat.com>,
-	Jarkko Sakkinen <jarkko@kernel.org>, keyrings@vger.kernel.org
-Subject: Re: [RFC PATCH 1/1] dm-integrity: support keys in the kernel keyring
-Message-ID: <20261004172934.GC1906@quark>
-References: <20260928062734.3805458-1-lorenz@sigma-star.at>
- <20260928062734.3805458-2-lorenz@sigma-star.at>
- <6e7bd72b-6f1a-211d-16a8-a35a530af408@redhat.com>
- <b0f8f47a-beb0-426e-bdee-5d0d80ade8ad@sigma-star.at>
- <1e53661e-42f4-72b2-3331-33af21e9fe0f@redhat.com>
- <20261002201419.GA205250@google.com>
- <d737b17e-7872-4afb-b4c2-bfa8f4e119df@gmail.com>
+	dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b="qp/C1DF3"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791178207; bh=s0sddM273P4tCWj8NbsKqIcc/Go+t1E3R0VbXXFTV2I=; h=From:To:Cc:Subject:Date:References:From:Subject:Reply-To; b=qp/C1DF3yBiiY+xMVRtq4sFuBi2aj+ifJL33UxEe5pKm9ZVeV1bLcCYUB5vY+0zP3gHGk4Nm4/kYYdxdfhEmlSN8PIxqD5JyG6DJr3zdYEeMGGMeJExgGJVTZGkcXkh1KfBVM/7dMwuDfzQMl0O115hAfd1QgkD9i0GP16P5Va8mBfC7UUw1ProCELA1EZotzO0P31boC1roR221/0DSzE29TM7tPJc29LWYse9UB1cH0A/z4wJkloNx8IismxP52tp/MwZTuI3sCFtMTUCFjqiPVd4PwcG3WKdiG9hJMVF71eLv5rZokIREJP0kct+STV8xx5SdcjZpVGoJFH7rNg==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791178207; bh=wPS7AppnJzbMaLzdw6MvzfYcI0j4NliX9jr4N7nBGmE=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=Z4x0IvZ7FaOPsF+qLaGPY3Y0PA2PcrXxCz15E572lBx1GezubntUKxq3p8hXlv3ouRcKBEXDMgM7l62muxUEQ7F/K3IS1yoNVLZH2Ea0Jk4a6TTn0UXhEITsFZkSgAbbIfvE8JIkOftGyochQ2ZEVGEamIqTv5C5Lp6QozH8iUzynCHDZ6fri0+qRmfBjpaFihTnuhiWsFw4dbNRVKs60V3cjZrFI253dmSKdSiFh/zawluaJfEbR5fcZjHYWXsjlh6UxgpqFERsb0u3SZJb6OPw21pBl+53YR7zh5vcN9Vb8/LmBCBHIDreZ43QFR87UHdTCbY+0t1wCmjhCajG/Q==
+X-YMail-OSG: cmwi_eYVM1mzTMevNvQ3u6hgV65oPCnPR4QEMsUmfKw7j4VMGZ1FJfSrWZHWr1w
+ Q2GA9yMR_VSgnYt3IXGhgGZlYpsicCYG55MRd.hUGTh_i7.fEFYvOaCXU31Sx9eItwddwcF3wXxK
+ XxApQrQomYOOxvoucj72T3zHO8B46kkHtoX2_qiMLt6hlubhd6dTiCbAzOWYl78GBvHXcBKaUoav
+ jgtWJlUruYXhuwkBYmojEkZ1y.0_TTzaFAz.hs4YTz_DZwkvVDBgE5HWlGjMklVt.bmjitmLPGUi
+ 4c9yLKsYXbuwt8Ckik7iJdhJxr8kOCNm7jJRi_WoztMRkniDmQuruHqX6dZMVdEoQVTmFMpj9nvT
+ xt4GG4RhvioCG37CuQTyJ4OsZZk0_eYbl5mbYDKI2H7u6hWo6HCMWfUS8qhttoqBh3KRG2hdrsSG
+ 0ScIBpm8ixFRkQ8iz0f.UK.nw01.wltxO7hhilB7K2jkT.rpT3ic57DpM3ystMYIjFWgeWCVGppb
+ mxtzMm0iSiKSKTq9bYKzqh9OPqJyYsiP0eKHeHvMulxQVcwj3epq.i82KAgBYWHGoYzdGcN2biZm
+ r5XOoKBaVNplwT.kF1OHmC72gqp0zSivvVq_m7GkZ7o.Q4GdJy_zefRdUZiD_OM2LSwv61sEFrEO
+ bn9Rm6lbbgJ02X0AA2BWGSxPNu.7KKX1nU5lsdUoOkZjZ_g0BWX3RYF_Z_0T16Pulh_JcYZxlTxN
+ d8imZwMF_96Il9wEc.n5JT024upaBQ.xKlVq_q6p6Wvca4g70GHZQ_W6AqfUYniSj1mi83o_iU5K
+ NIQgJ6gyidXCtJz2cDRr8a55pbFjnNm7bPlJ6CEwTjo0detTPsO7NpejueJLaKROL1lBZTfG7cLf
+ FSm_x4K4gFmcC5iLN2BPP5mJpxTy90kkjrmGFvFzolNLGNJXjI1m_vJNNO3CXmF1aAhYUfQuTNLb
+ yJoOQ5dHoZykTV7dhEPnFoVmD1Z12Kg6hwF1MkZHIyFVNgjZsxs0tc6ASgzKSh.j_Ty9LaOHyV7h
+ SVSyNdUWp5JHr5sr_iOGIFq30D826L.6NDgxkf1w0ubHLeMaLlyB6cKcFwLtDQpPcsZNzuzOPEhF
+ ZV.DP0BlsiZhIq4gLsFeJr8KE8g2S4a.qb2_svkkUq8qiGudXLUYqR0D5hBk36WPfeqiQc.kUbGe
+ q80ZEnK1dSR9A6K8TMj9X7WUR.UqiWty0CZ4UYMsH9MiWi8QyYt8To4x5M9rknOk9oZjiNhjpcnJ
+ gCKh8Rhr.cZRAuySsugWXvTyoCHSMtP_p4aiDbjMghriS0occXYbQ.mghG7anT4.e418JOQaVDHq
+ 2WSvykh3UuNea_yotXFqoqsOLaqVzGeS8.qC4X_G6dPzZxQCHUhHKOrIacMZTycKf80rHPM0NWez
+ IVNzPNsr71Z3Xl6lhIUUUNy05VJBFg2.9rKytlwdcPuIcbfeE1FDkyxE1JiGsnqdaa6_SgQLeb41
+ 79PsaJwx2eBMKtxV1cEEfG2oTWoNgoKogayq9Ovddk8kTUwPqfVCTSOZFVJNDI7jWVgBQmuOvs00
+ ivVxxzFlsKKkrl52q0flDLbZPY7sLZ5JTJf4j7JyG.fU2SeH2yhLlt_iZD9pGzVogpV76oRfMZAU
+ V3pEcdrorVZlrYATNi9bkw.1NObswSCJaXO5jmEy0w6jr4X9uJldW0X_A3RwZCbZoVPVy29FlZJ7
+ yfv6k0sYV.nt7lpPgj7wHoocTE_IrC9eK_753Uj.cjCo4esnRpYrxqJsipapExaO6shBiF0BMGT6
+ Z0G24r0x71Wlfem1i3euX21F5Zxg9xpmvQwtONZps15meUQ9NI5qtxXXO.TTDrecEqovMwwvlFfK
+ 9_nuiAMDmTbYLr6SepasqdP3EGAIbv9COCzyflA3M2vBJGVaisjX8BQQpOjvUu44Q4slpbDcTZpN
+ GrwFwTYoKh4vA2rPchzD6UJcKK.B1ZlHyOPxAQmm_Mtm5sEoEDn_BqGXUl6VWR4mwQ4zwxmhauaa
+ ySwvYyMDV3e4BqTfC2SbXzx8Jg1pu.qlnoW25TypZmVko8BX1bn3osSi7MJrCgtahCR06DFiorxW
+ 80k9Cf_NoWPOanalTjP3igSPkUjpqjBl9pTEOygYGBYsaPK9lsH483jboIDfv.nmRMnWYNLrMjYL
+ kndIQJ1LPGCGDlI2MRDxr.tilLX4fdJSm0ZQahokLhxY.dS7FZNxpEYFIDd_OJzaQd80QMN1XbXe
+ 3Sd6vySeoXfyq2C0sV36kq0H.ibEApbsUmTnZ5.BpEOUOlVKkVeD44aWDAw--
+X-Sonic-MF: <suresh.thelkar@yahoo.com>
+X-Sonic-ID: 77800e2a-6318-4160-a841-a00efbe7c60a
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic306.consmr.mail.sg3.yahoo.com with HTTP; Mon, 5 Oct 2026 05:30:07 +0000
+Received: by hermes--production-sg3-cd7bfcc7f-vr22h (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 77555b61bdbcf6f8d66bc604be106356;
+          Mon, 05 Oct 2026 04:58:45 +0000 (UTC)
+From: Suresh Thelkar <suresh.thelkar@yahoo.com>
+To: dm-devel@lists.linux.dev
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Suresh Thelkar <suresh.thelkar@yahoo.com>
+Subject: [PATCH 0/2] libmultipath: fix leaked device-mapper suspend after a failed remove
+Date: Mon,  5 Oct 2026 04:57:24 +0000
+Message-ID: <20261005045726.71858-1-suresh.thelkar@yahoo.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d737b17e-7872-4afb-b4c2-bfa8f4e119df@gmail.com>
+Content-Transfer-Encoding: 8bit
+References: <20261005045726.71858-1-suresh.thelkar.ref@yahoo.com>
 
-On Sun, Oct 04, 2026 at 09:44:57AM +0200, Milan Broz wrote:
-> On 10/2/26 10:14 PM, Eric Biggers wrote:
-> ...
-> >  From what I understand, the point of the keyring support in
-> > dm-{crypt,inlinecrypt,integrity} is:
-> > 
-> > - To support "trusted" keys.  But that is not what was actually
-> >    implemented in dm-inlinecrypt.
-> > 
-> > - To avoid having the key be readable with STATUSTYPE_TABLE.  But that
-> >    is not what was actually implemented in dm-inlinecrypt.  Keyrings are
-> >    also unnecesary to solve that problem.
-> 
-> There is more to that
-> 
-> - to avoid key cached in dm-crypt (or other target)
-> (dmsetup must be able to retrieve mapping table in the form directly
-> reusable for recreating DM mapping, so raw key must be available)
+Under heavy device-mapper ioctl load (e.g. LUN-number recycling combined
+with ALUA transitions), dm_flush_map__() could leave a multipath map
+suspended indefinitely after a failed DM_DEVICE_REMOVE. A suspended map
+wedges any later task that touches it in uninterruptible D state, and
+because sync() walks every block device, this can hang I/O node-wide
+until reboot. The storage itself is healthy; the defect is entirely in
+user space.
 
-It's of course still there anyway, so that the data can be encrypted or
-decrypted.  crypt_config::cipher_tfm for dm-crypt, inlinecrypt_ctx::key
-for dm-inlinecrypt, or dm_integrity_c::internal_shash for dm-integrity.
+This series fixes two defects on the failed-remove path:
 
-> - to avoid inclusion of key in DM ioctl calls (mapping table again)
+  1. Query errors were misclassified as external removal. Anything that
+     was not DM_IS_MPATH_YES was treated as "removed externally" and
+     returned DM_FLUSH_OK without resuming. But dm_is_mpath() also
+     returns DM_IS_MPATH_ERR (-1) when the status query itself fails
+     transiently under ioctl pressure, so a still-suspended map was
+     abandoned. Only DM_IS_MPATH_NO now counts as external removal; a
+     query error is logged and falls through to the resume path.
 
-Unless the "trusted" key type is being used it just makes the raw key be
-passed to the kernel using a different syscall: add_key() instead of
-ioctl().  It doesn't seem fundamentally different.
+  2. The recovery resume was fire-and-forget. Even when recovery was
+     attempted, a single DM_DEVICE_RESUME was issued and its result
+     never checked. The resume is now retried once if the ioctl fails,
+     so the map is not left suspended on a transient failure.
 
-- Eric
+Only libmultipath/devmapper.c changes. There is no change to the success
+path or to behavior outside the failed-remove branch.
+
+Validated with a deterministic LD_PRELOAD fault injector that forces
+DM_DEV_REMOVE -> EBUSY followed by DM_TABLE_STATUS -> error (so
+dm_is_mpath() returns -1) on a single scsi_debug-backed test map:
+patched builds leave the map Active; unpatched builds leave it
+Suspended.
+
+GitHub PR for reference: https://github.com/opensvc/multipath-tools/pull/167
+
+Suresh Thelkar (2):
+  libmultipath: dm_flush_map__: do not treat query error as external
+    removal
+  libmultipath: dm_flush_map__: retry the resume after a failed remove
+
+ libmultipath/devmapper.c | 33 ++++++++++++++++++++++++---------
+ 1 file changed, 24 insertions(+), 9 deletions(-)
+
+-- 
+2.43.0
+
