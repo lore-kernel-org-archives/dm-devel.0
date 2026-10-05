@@ -1,68 +1,68 @@
-Received: from mail-wr2-f31.google.com (mail-wr2-f31.google.com [74.125.225.95])
+Received: from mail-wr1-f53.google.com (mail-wr1-f53.google.com [209.85.221.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9427A36A01A
-	for <dm-devel@lists.linux.dev>; Mon,  5 Oct 2026 11:43:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.95
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57EA336A01A
+	for <dm-devel@lists.linux.dev>; Mon,  5 Oct 2026 11:45:01 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791200601; cv=none; b=ShpM8W12auVFkRnnqpgkm4hWcWW7nXQ3sar6d2lFa9mIX7SQxclzkeQgDIBwYFPXEr/uWH/8MVteRZkYBOFSSB8aceE/zH2Y5I6liyQw+GBfZBYtLAqvuZEuV77ZeYKmHzX/vT6YvrtujI7yEagmWpbV6eh6ZcdoLH5pqAIt8eQ=
+	t=1791200703; cv=none; b=pCZLxIs5anNdPCINh8yf0/YTJ91s+Frdq+Kstwh0KC37PAMpItZUQBI+dpx+8AqLTb+vQj30jPzSE92ITISx2ZlJOi75jPQO0xYxGKjMkc+XQdTg9uO9zskx8Z2VriC0Ut0W2qG38fdvYxl7F0Wt9JBWr8C4kFZRouF80YkHjPw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791200601; c=relaxed/simple;
-	bh=GDkG/OW+aHwhFfekfJ1LFx1PPwGsHQVlhAiMqfGU5IE=;
+	s=arc-20240116; t=1791200703; c=relaxed/simple;
+	bh=AgYzF9zCDCjhvarDhGELV8SCCxmRmAduCDS+Ac4RoTo=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=P1h+fzTIS3efl5uRFOTRU69LlEnK9alWVRD3bOtKgC5Bo4mkCAiSK4g1hzx2jnnBRd9ovWN9PNcNVMsGuolw4qYoEcFxzdxXjYXgqAAL7bh5ITgL705Q/qwNIWfex72zyxSCTMe10AD5U5WMkjQZmmCNgDQ0CDCtIc3/6rDK1n4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ltI5c8gl; arc=none smtp.client-ip=74.125.225.95
+	 In-Reply-To:Content-Type; b=lMkV9rGcpmT3l1staWLIe/PXRA8ya0MksDJvvlTLCT90yDHQz1iziI0X1TxaxTsZW7fmWnOO1RXNDKbuxyF8Ko63euz5b23CG/Mn4AbKzkAHuy6OTTxxaPSoagBpR5BA9JxU8AcCzPKEFPx/czSSFgWvt8kyLiJbIZaHRIlcc2o=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gT42so9t; arc=none smtp.client-ip=209.85.221.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ltI5c8gl"
-Received: by mail-wr2-f31.google.com with SMTP id ffacd0b85a97d-488811c9ebaso838958f8f.2
-        for <dm-devel@lists.linux.dev>; Mon, 05 Oct 2026 04:43:19 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gT42so9t"
+Received: by mail-wr1-f53.google.com with SMTP id ffacd0b85a97d-48b0ef9c76eso1479462f8f.0
+        for <dm-devel@lists.linux.dev>; Mon, 05 Oct 2026 04:45:01 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791200598; x=1791805398; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1791200699; x=1791805499; darn=lists.linux.dev;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=25uBlo4GDqcGkj4VAPKdolkwb50w3Is4u8TLMjz2GGs=;
-        b=ltI5c8glOnum7WR2qFR4zfp+VGk89SR6+A85c+rMjM0727Cm0zyVMBrWjXs338li0C
-         6gqJ/RC55VuCbCF9O2XOsvm2olrUjqkThmkMJhIaW9PUIxhHouUJ2A2fr6LE0sN3hyD5
-         fs7G+mTYdjQpd4m74cUE6hmZKg1VdT0qkYWPR9BNNYCcJnQg7FYAPHtitKRvdTi4C3iK
-         hVzIOcLUh1phAzHfH2Wt9KrEqQUpDb9fmmpAUDhHMMRNDGBWrF2bawLTfI0BdYsmuukC
-         E+JS2rgjsMJYyuqzvwT3EFZCmJiHzEA9E22sf2hAg5f5YEmR32iHNVTuJ7VbJONPLE2T
-         BqyQ==
+        bh=ZTSRnK/72f03OAFyRZNcD9D1Hs2QM4XwAkI8vZWB3T4=;
+        b=gT42so9tF6lVfp5//jhr0cWv364cF3aGZ8Ug7V5aSYvyUbQZWSeCNeWsShSh2Bf1ru
+         JsvVip5wfeBFjvGSmz/MriCCVNx9oEYQYXIEMj/rEB0MRns7sCPZxJmHNkk4hGxAeqGq
+         ITgPdr98GldORhB9QqOAt/ssoUAZHdbfNnKcIoRlBqq37tXQhn5QX5HzujRr8slq2TU3
+         tzYllxgzQy2g1H3rK+IdWWGlVAXkXlUL/c6De9ms4DFjZOCM2pu6ryOenW3VMBCQPd2p
+         rdudMIiAXpWGtoSWgBow+drxUtbey9C/wWugmBZ/tw3TiwsWacYp1sJjIjLu/cM/k6Z+
+         mGvA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791200598; x=1791805398;
+        d=1e100.net; s=20260707; t=1791200699; x=1791805499;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=25uBlo4GDqcGkj4VAPKdolkwb50w3Is4u8TLMjz2GGs=;
-        b=ES41JBY5CO3ZJxHNIgU4NUeW0SY2kPBss8xVvh0ZfPt5BzM3tCjnAZ/9CTBtYSIeeh
-         a0K/w9MfF5OkMrP3Dkyg/4SyO0CVgp/IeXdlC/RU0MBpY1ERDSg8AADHq4HQetmVrtYS
-         U0ot0iNcVwYBfTHuKFcMoC0syiSXtYq2iTTfGrFwbJVgQOsnk1ms6l7KoAYXKa21eSu0
-         fPZ/SDNBHSkH6rQP7sEYrly0+k0rrdAiBzE7Vp0GxT9yNCoMPvKYQRoructArPaALt4u
-         bDRdmItHg+/EQNWtMNcEEloZEwO0nlYLfzgySlepVUmhX5MxK/+ll5g55R0MCCHIZq4f
-         FoUg==
-X-Forwarded-Encrypted: i=1; AKwUvBwKlXeyDDU1A3I+sj4VTDSsMlDA9gXAEig6z76iTMHBSqq8Gmlma9ea4qyjZIZ7DkYsP8dsnPQnAw==@lists.linux.dev
-X-Gm-Message-State: AFq9FYJKpkzTxo3P/eQNe9rEqtQFhFQETigrc2awT9egm4AAYiAGR3uR
-	yR4M4C6b4GPo49vBpNvCk1GEF7kTOhcawMjq1nCLO4e2MB2Yew8xSBIn
-X-Gm-Gg: AYBFou3Le6bLZdsqxSUZSbDu1+PttoyCvyzr4CfkSNEcW6z1LQlabNU+lovmU0bfL5N
-	aQ8MQp9JbXfxAYU0WBSr2lJEolzJzQZ752EkBKiqLzmXbyopNo80trCVE62suTMUQqiDFHHfYgV
-	a4pKrGdCyInJL1z5cvnHPfC95+KFvl+OxXDFtbWNyxt/DSY0//L1ONNZLy8Je9Nd0KDHg94Jf6n
-	PAFJF4idhpGSa65zp23FUVwlavHOKFKh9Ensfj5D+PTvBIJxj+/0K6O/DQeDIZ60zjqu3B08pqq
-	3mH6yxN5DaGA9PkjM1Sripk/gHcNL6aAbsDbqH6AlG5YMFvBAPQSmgC9hxP4vq9u0TJ3Vt/cxPh
-	3hmJbgEYZ6ySWadLwh60dmyRWSoIX/pt2qjxOQRvNfbY3rENaedxbd2MMI3d7+53vOBfZw3ZrXS
-	3uTXSn/aHpv0kmgdooTuaVg4t7YByEc733X0vyklEC8qrIPZuKLQLu54Pt0MF0KxmFw043xAo6c
-	1zBXd/AA9o7+5PZHGOgEakPfOWarvJtXZMeBb1KQAgM2sAgDibKNziheudR8FCL8A2B8m5RQ98=
-X-Received: by 2002:a05:6000:40de:b0:48b:d2d:2fcc with SMTP id ffacd0b85a97d-48b1272d0c6mr17543670f8f.9.1791200597696;
-        Mon, 05 Oct 2026 04:43:17 -0700 (PDT)
+        bh=ZTSRnK/72f03OAFyRZNcD9D1Hs2QM4XwAkI8vZWB3T4=;
+        b=FcMpo8XvrbgQlr1mrMQ69pW8XHMK4srB58ol8AewyzmxbMyOliitN80ixwuJzcba7x
+         VVmbQxOJ1fXROJqRCirTm202GHluK8PAJsWzcKZzAHZvvjJiw8xummmjf6zu87Y5Dq6W
+         6YselCd9JDpxQlDWSowA+dHFEUOU2PdoJlQgKPfx3AEy0UGGcjI/etRKARtRQe3KnwwV
+         Nx7KfW2uwSG6Z2rwHxjjxyEof33EFgQl6r1DiEGLW3doyXBgpbbDOIj+A5u1YAO0wCn5
+         kZdMZrYN5/w5lVvMNJSC/dl2nJUGzRu+d12XMl847cja7cdHaxfRA1q5pDoWwHEq83Qv
+         xoXw==
+X-Forwarded-Encrypted: i=1; AKwUvBwvV73W6L2t4EW3eKU5cWjkmzMLynnFWvuDIRgvpB6zui28KBuKvYn6VLijWERuk21I+75A4vzYow==@lists.linux.dev
+X-Gm-Message-State: AFq9FYKTto5TrkDPGDx6bqmUWz/znWiCt3Fs4gVngDLL+XaIFibBuVbC
+	SoHpaKeXurKXrveV1AIfghfsYGCCsn1tVQ/wEm24qn06FXhDoTYci/LM
+X-Gm-Gg: AYBFou2r5wzH5GI1DWLOytVTVzsGzeCpsq6T93FuRyO3a9OMVm3poHdg64FV5zi/xod
+	fNlsEst0gmvCWdDGDP+vLc7D9Xx+3uGCQp2Xrd9H99AaL9yzBLNWA21tgNuQj7yN9WBaZaz2FwZ
+	IX6Tox1aea46zrCvxLx5154ENoUVGIQ5csXX66dt+g94ZnH4ZloDVSLOVFI0xUjjCwwFovvDHL0
+	k38EkP9cAibY0j7GpII4ipbewQinL5smC+0dsBH5FJMV63aPPe3T+KjQC+A9bXfKd6+sQD2TDnb
+	+QkdUziiF0zhZPyKJnMlVUNocOBBGLE5SuRGn5Ll1BYmKGs+UZ4YTMowzBmCpmMHmM/2bSPcFmr
+	nT8MdYmc2Sr/wC6BW1/Z+ccvQ26CiIhqVypLK+KWD26P1gkMXLdyh4psvacZOEDsa11PA8AJ9bF
+	fENnmLdMiyDXVsuCziy5QKw7d/52hTlS+MVaQQVjjZkCL+mozfV/M9HpPWg2fVK5FkziLeWKjHO
+	k64HXbaThOCpg/4gYnaJnji/qOo97rGBdtObAsv2iIY1meNWby6SO+7JhJWPmlQKyS+NXV2CK8=
+X-Received: by 2002:a05:6000:186a:b0:48b:6bd:1af6 with SMTP id ffacd0b85a97d-48c48000099mr10478688f8f.40.1791200699411;
+        Mon, 05 Oct 2026 04:44:59 -0700 (PDT)
 Received: from [10.41.30.1] ([161.12.45.16])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48c622704a5sm6943895f8f.15.2026.10.05.04.43.16
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48c62270751sm3087877f8f.13.2026.10.05.04.44.57
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 05 Oct 2026 04:43:17 -0700 (PDT)
-Message-ID: <be0012e5-872f-42f3-bace-5066a09cd9e6@gmail.com>
-Date: Mon, 5 Oct 2026 12:43:14 +0100
+        Mon, 05 Oct 2026 04:44:58 -0700 (PDT)
+Message-ID: <fb0ec34e-deca-4365-8802-23d5688612e6@gmail.com>
+Date: Mon, 5 Oct 2026 12:44:55 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -70,7 +70,7 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v7 05/13] block: add dma-buf support for raw bdev
+Subject: Re: [PATCH v7 02/13] iov_iter: add iterator type for dmabuf maps
 To: Christoph Hellwig <hch@lst.de>
 Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org,
@@ -90,30 +90,35 @@ Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
  Mikulas Patocka <mpatocka@redhat.com>,
  Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
 References: <cover.1790602223.git.asml.silence@gmail.com>
- <a6b81e65b1f09b6ed1f71f294e5a94896ea1ead7.1790602223.git.asml.silence@gmail.com>
- <20261005091111.GB10727@lst.de>
+ <74a9d65f5c4f9acce5f57ad5921a9fadc6eda712.1790602223.git.asml.silence@gmail.com>
+ <20261005091008.GA10727@lst.de>
 Content-Language: en-US
 From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <20261005091111.GB10727@lst.de>
+In-Reply-To: <20261005091008.GA10727@lst.de>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 10/5/26 10:11, Christoph Hellwig wrote:
-> On Mon, Sep 28, 2026 at 02:32:21PM +0100, Pavel Begunkov wrote:
->> Add a simple proxy implementation of init_dma_buf_io_ctx() forwarding
->> the call to a new struct block_device_operations operation. Also reject
->> dma-buf backed iterators for buffered IO.
+On 10/5/26 10:10, Christoph Hellwig wrote:
+> On Mon, Sep 28, 2026 at 02:32:18PM +0100, Pavel Begunkov wrote:
+>> Introduce a new iterator type for dmabuf maps. The map in an opaque
+>> object with internals and format specific to the subsystem / driver, and
+>> only it can use that subsystem / driver for issuing IO. The task of the
+>> middle layers is to pass the map / iterator further down, maybe doing
+>> basic splitting and length checking. The iterator can only be used by
+>> operations of the file the associated map was created for.
 >>
+>> Suggested-by: Keith Busch <kbusch@kernel.org>
 >> Reviewed-by: Christoph Hellwig <hch@lst.de>
->> [pavel: reject dma-buf without O_DIRECT]
 >> Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
 > 
-> The Sashiko report about the errno on fallback here looks real,
-> and is probably easily fixed by setting a proper errno.
+> FYI, I think the Sashiko complaint about iterate_and_advance2
+> is correct here.  We don't really hit that in the series, but leaving
+> iov_iter methods partially implemented and fall through to others
+> seems dangerous.  At minimum that needs a WARN_ON to catch that case.
 
-I'm going to move the check into blkdev_buffered_write(),
-this should cover both paths. direct_write_fallback() will
-see -EOPNOTSUPP and fail appropriately.
+v7 already covers iterate_and_advance2(). It complains about
+iterate_and_advance_kernel() but there are many types this one
+doesn't support.
 
 -- 
 Pavel Begunkov
