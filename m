@@ -1,91 +1,145 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 675EC79CD
-	for <dm-devel@lists.linux.dev>; Mon,  5 Oct 2026 17:59:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 892FA3D091A
+	for <dm-devel@lists.linux.dev>; Tue,  6 Oct 2026 20:45:51 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.131
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791223187; cv=none; b=iZqTD5kZM78zoKDrLs/sh12hFfwcITNtoYfPcH0wwWHi2CckdpL/O/WCYt3kARnOVVkZIwZI1xdGGqMXOdNHAQRwZP2wHtGX+T0VEGbAzEqdO8uKcdsAZeCPNJ9R+sMwSJVItAq/O58lsPwekthAC/MQfbGJqJMPzvkn10lBK34=
+	t=1791319553; cv=none; b=C5ijfcCVuT07ACcr/0efq8EIY7qPYWN9dwIFlE6hTRvgwJmhmTZNjhViqQ65AjhgZQlipvcapQTy3SeH0scSPQnVLXtOGyh5BLcb//omMhw1FHCIe/qW+h1yd8SBaYQjIwwB6Ea2PRr3dHlEr5tiirp2GOf+lxNlYjAIUv3If8w=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791223187; c=relaxed/simple;
-	bh=47FyqqZAhMN3qzzAAz9Wjr5SrAQqE1/Cz8d6iqnEYEw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=rbSmsq/+QM+BWsuu8HMzE13Cb61QYrCc1c56zTZHDW76VFEPbPholBcWtia0PhyDrBmamAZlOarYEsvLKQbEvrRgU722QK8AymxmP9MnYRuXp1u/v0MHzquuS/hs1Uz17rv1/j9D9FjLdKnWlj5tXmi1eM/d31iiJkW0KLNQ+8U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=SZlE7cdt; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1791319553; c=relaxed/simple;
+	bh=H9jYNjv8XR4OcPd/rYUv8vS0ws79SlL03rMLwFK3UMk=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=DWT+vTb1tok5QscZA+ai8pDq6bDZ++izLku89tbDUwkWozse6uF08B5z0oX43mb0OxF+pISYmYuSUJDaGRAeh8SPzw9HL6I/EU5ZpAzD6AdcWbN0qleXhRySwTiZJVK12fqo+xcAJul86eSjilyyiW1oA22GSY64LV/68Ap4MJA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de; spf=pass smtp.mailfrom=suse.de; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=d5CvfECC; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=ztT8nlzW; dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b=JrRatqE3; dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b=EG7fPrhs; arc=none smtp.client-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="SZlE7cdt"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791223177;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=fgLMtQMohgY1Sds7dkWD+oZLh7uiKFgcpTwdcRNhnjA=;
-	b=SZlE7cdtYLzFqYdMFWcWU5qajYWyOTVAoPxs76Q4xWF5JjV/OS5AYjLc1ZO3v07/DlykSl
-	naDE5Lw/D4AIk7Ra57MBGE3BVLtEAdFXrvsxZGUq+hQgWOMfY2w19LtbcnfNf0KYp3XtA9
-	rXrbIgb17Hxucq66rYDvglKP48sLV7U=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-60-XSe7ofGsMJq-r9P3MWtwRg-1; Mon,
- 05 Oct 2026 13:59:34 -0400
-X-MC-Unique: XSe7ofGsMJq-r9P3MWtwRg-1
-X-Mimecast-MFC-AGG-ID: XSe7ofGsMJq-r9P3MWtwRg_1791223173
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="d5CvfECC";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="ztT8nlzW";
+	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.b="JrRatqE3";
+	dkim=permerror (0-bit key) header.d=suse.de header.i=@suse.de header.b="EG7fPrhs"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1FEA21955F27;
-	Mon,  5 Oct 2026 17:59:33 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C08B53001D29;
-	Mon,  5 Oct 2026 17:59:32 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 695HxVdC2267373
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 5 Oct 2026 13:59:31 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 695HxVa42267372;
-	Mon, 5 Oct 2026 13:59:31 -0400
-Date: Mon, 5 Oct 2026 13:59:31 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Suresh Thelkar <suresh.thelkar@yahoo.com>
-Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
-Subject: Re: [PATCH 2/2] libmultipath: dm_flush_map__: retry the resume after
- a failed remove
-Message-ID: <asPlg6j25piNdNW_@redhat.com>
-References: <20261005045726.71858-1-suresh.thelkar@yahoo.com>
- <20261005045726.71858-3-suresh.thelkar@yahoo.com>
+	by smtp-out2.suse.de (Postfix) with ESMTPS id E563D1F745;
+	Tue,  6 Oct 2026 20:45:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1791319545; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+	bh=1/85MdxFG6p7P3IwwYqK8JBVgUUab/Y3U8y795wDU6E=;
+	b=d5CvfECCvguyXmm/UbCbge3rjIZEvWk8QO5y+R+Jbe2nz01FA4d14akL0KqeppQwhkN4xm
+	zl2bNN/pC3oAbXOqKQxHYrY7suUdVwxPaiY3+VMaVEnrAjrwBL7x7RaFZRnunClt/Almx/
+	Zyu0I+tAZGhUWTn+gV3B3+lbnuk58mI=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1791319545;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+	bh=1/85MdxFG6p7P3IwwYqK8JBVgUUab/Y3U8y795wDU6E=;
+	b=ztT8nlzW10S9QsAKJ6CQax/1XsyG39QrpSs1xbaC8CF3JRZLGyGCGNhJe1pf6oR+aEO83d
+	IDYWiHediu97SrAQ==
+Authentication-Results: smtp-out2.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
+	t=1791319540; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+	bh=1/85MdxFG6p7P3IwwYqK8JBVgUUab/Y3U8y795wDU6E=;
+	b=JrRatqE3A3HQGMnbfmwySb/kDwngAUVyYcV6ZoAnwvT1Mkoaazov9A7XuCQhOrRjHrBYrl
+	YSJZnEJgC8xD9uywHf5zfAJfVdApoA//WZ7BSTqoLzUPqYb/z/d+raCtcI4O12xm4WWfBV
+	vpy2viH0IlGw9SOS3VbSl/kfoe2XKqY=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
+	s=susede2_ed25519; t=1791319540;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:  content-transfer-encoding:content-transfer-encoding;
+	bh=1/85MdxFG6p7P3IwwYqK8JBVgUUab/Y3U8y795wDU6E=;
+	b=EG7fPrhsh2AJuM0YE+7zLXxtSfbHgnZfba5AJKQdpPbHjnttgqmHVr6TUupj9XT/xh1e8R
+	SQor/rL4/TUyH1DA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id A7153137AC;
+	Tue,  6 Oct 2026 20:45:40 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id h2fNHvRdxWqCPAAAD6G6ig
+	(envelope-from <mwilck@suse.de>); Tue, 06 Oct 2026 20:45:40 +0000
+From: mwilck@suse.de
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Martin Wilck <mwilck@suse.com>
+Subject: [PATCH v2 0/3] multipath-tools: unmangle WWIDs if necessary
+Date: Tue,  6 Oct 2026 22:45:20 +0200
+Message-ID: <20261006204530.993731-1-mwilck@suse.de>
+X-Mailer: git-send-email 2.55.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20261005045726.71858-3-suresh.thelkar@yahoo.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: P36L6cXiwUmbQrda1M0nXGucvEi5K5u7oChfeKd2TLQ_1791223173
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-2.80 / 50.00];
+	BAYES_HAM(-3.00)[99.99%];
+	MID_CONTAINS_FROM(1.00)[];
+	NEURAL_HAM_LONG(-1.00)[-0.999];
+	R_MISSING_CHARSET(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	TO_DN_SOME(0.00)[];
+	FROM_NO_DN(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	RCPT_COUNT_THREE(0.00)[4];
+	FROM_EQ_ENVFROM(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.de:mid,suse.com:email];
+	RCVD_TLS_ALL(0.00)[]
+X-Spam-Score: -2.80
+X-Spam-Level: 
+X-Spam-Flag: NO
 
-On Mon, Oct 05, 2026 at 04:57:26AM +0000, Suresh Thelkar wrote:
-> After a failed DM_DEVICE_REMOVE the map was suspended earlier in
-> dm_flush_map__(), and the recovery path issued a single fire-and-forget
-> DM_DEVICE_RESUME whose result was ignored. If that resume ioctl failed
-> (possible under an ioctl storm) the map stayed suspended, which wedges
-> any later task in uninterruptible D state and, because sync() walks
-> every block device, hangs I/O node-wide until reboot.
-> 
-> Since the map is known to have been suspended at the start of the loop,
-> the DM_DEVICE_RESUME return value is authoritative. Simply retry the
-> resume once if the ioctl fails, so a transient failure does not leave
-> the map suspended. The remove is still retried by the enclosing loop
-> when retries are requested.
-> 
-> Signed-off-by: Suresh Thelkar <suresh.thelkar@yahoo.com>
+From: Martin Wilck <mwilck@suse.com>
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Recent changes in sg3_utils have changed the way certain WWIDs are presented to
+the system. This may lead to maps not being set up or even being destroyed
+or removed. Fix this by "unmangling" the WWIDs similar to libdevmapper.
+
+The main part of this series is patch 2/4, it's commit message contains
+detailed information. Patch 3 adds tests for the unmangling functionality.
+
+Patch 1 is a small prerequisite.
+
+Comments and questions welcome!
+
+Martin
+
+---
+Changes v1 -> v2:
+
+* Patch 02: several fixes suggested by Ben Marzinski
+* Patch 04: dropped, it would risk being killed by SIGBUS if multipath
+  would truncate the wwids file while multipathd had it mapped.
+
+Martin Wilck (3):
+  libmultipath: constify functions in wwid.c
+  libmultipath: unmangle WWIDs if necessary
+  multipath-tools tests: add test for WWID unmangling
+
+ libmultipath/discovery.c | 100 ++++++++++-
+ libmultipath/discovery.h |   1 +
+ libmultipath/wwids.c     |  19 +-
+ libmultipath/wwids.h     |   6 +-
+ tests/Makefile           |   5 +-
+ tests/cmocka-compat.h    |   1 +
+ tests/wwid-unmangle.c    | 375 +++++++++++++++++++++++++++++++++++++++
+ 7 files changed, 487 insertions(+), 20 deletions(-)
+ create mode 100644 tests/wwid-unmangle.c
+
+-- 
+2.55.0
 
