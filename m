@@ -1,144 +1,183 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9417385503
-	for <dm-devel@lists.linux.dev>; Wed,  7 Oct 2026 16:42:09 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2F7A3B637E
+	for <dm-devel@lists.linux.dev>; Wed,  7 Oct 2026 19:21:39 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791391331; cv=none; b=A7BEkLnB4bt+suiRqqOj7gx45oWeWy0xhKy3VgNx/7GS2bZh4zDup+NGPrrzqNU3+G602IJaB/GGghNvR2coISyHsOJJ2dcuRHVIH5aT8CjNo+oS3eDjUwjHzHK3M5vEKU4v8IsuHIccytaJnpwAAOARp5zWI9TZ4MphenL58YI=
+	t=1791400901; cv=none; b=HX66p1r/BWIfCDkmeqqspP6B8jQ+7fZ1PkFlVDw0zKbD9+k58pde5z8t8thQt4xkWozBkjm4Wgb8IHZnCdnVEQyZdCOol58x7mL9qSOovbjRQFjeSamChRaEOC/hOI4AvvE4FtbACBX90knU8rrxkKIB6ut8U2OJLc6OL+mxWM0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791391331; c=relaxed/simple;
-	bh=v1carSDHma1WXTXbSk7Sn0CXvnrkQNVRbl5UII07Le8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 In-Reply-To:Content-Type:Content-Disposition; b=RqG/A1Z8XSJeyHaRVvrdvgRVxja6AEqv5ArAKdQzRE4JfNuuTh9Tnynbx+8AfrlVtQIX7ArzlOkVS4zBjuoiRbrkmlXZUQK0yFD2S6ceCVsSfpzt2YUBsVvz3bn/jWKEGWN6oU3I/+83jCIQjqJsOtP+86SIn+wwqKuNLDZ8YCU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=P/SiE6qi; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1791400901; c=relaxed/simple;
+	bh=QzjKlXJTIGS/OUqXW8c019kHOynuTm/WnRaGeNAnglc=;
+	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=Xn1jaENS9TkHrNU7HrPWOyCtMn0UkfvSKavInxT0mk+LnRIIQ8JiUsZAC5qPhrPxtvCgzSHcmAl1jLaLQX+kNaaeOljIb29mhbrCU3liY0zXUiMvSGBvhMuv6Fa9cRE21YOPkgjZab4oXaVgtJT/J7oj/MeHB1BG7ZCZKoMvS4s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=oA1j57O1; dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b=oA1j57O1; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="P/SiE6qi"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791391328;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=KvjFeiBujPlfRlZhM5i2pbtfmls5tSscptUXRY+JJLY=;
-	b=P/SiE6qim/hkOzVtYvAQyP21dYXu50zjvY7ctxCBCXgUeYNzmtuO///9oolbG8MNDJYZ5y
-	tSrZLXyooi6jqm9dEBaOs6r3lgvxUKxWDA+b/8+dp3rvhzKiklo0t1RY6ZJMghpz2r4mNv
-	2v4apweVaE/ByBgwwRxVUIC0WqOVzzM=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-94-6F4YBtAwMAixP1ZOcT1z5g-1; Wed,
- 7 Oct 2026 16:42:04 +0000
-X-MC-Unique: 6F4YBtAwMAixP1ZOcT1z5g-1
-X-Mimecast-MFC-AGG-ID: 6F4YBtAwMAixP1ZOcT1z5g_1791391323
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="oA1j57O1";
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.b="oA1j57O1"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A03471800594;
-	Wed,  7 Oct 2026 16:42:03 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 42AB518004D4;
-	Wed,  7 Oct 2026 16:42:03 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 697Gg1aQ2585476
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 7 Oct 2026 12:42:02 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 697Gg1pN2585395;
-	Wed, 7 Oct 2026 12:42:01 -0400
-Date: Wed, 7 Oct 2026 12:42:01 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Suresh Thelkar <suresh.thelkar@yahoo.com>
-Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>
+	by smtp-out1.suse.de (Postfix) with ESMTPS id A6F8421B7A;
+	Wed,  7 Oct 2026 19:21:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1791400897; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iTaNLngAnQzHAoJh8h8NvIPuVcZ6SSPWzlYOwk7J69Q=;
+	b=oA1j57O1TvoaXeLNe1Fuz+YD0okZFzNc+KTXb/EU1v50AxQikUdsK1phgvu053Mu6n402M
+	U7GJbzCDZJHRqGfduSUe1BxFcBp5Z+dC81s7JlhI1p33Rf7Eh7lSQ1WujyMQpUvFulDkKN
+	kdZaTz8zqBn2Ed7C6Wlrmom5Srw7+Wo=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1791400897; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=iTaNLngAnQzHAoJh8h8NvIPuVcZ6SSPWzlYOwk7J69Q=;
+	b=oA1j57O1TvoaXeLNe1Fuz+YD0okZFzNc+KTXb/EU1v50AxQikUdsK1phgvu053Mu6n402M
+	U7GJbzCDZJHRqGfduSUe1BxFcBp5Z+dC81s7JlhI1p33Rf7Eh7lSQ1WujyMQpUvFulDkKN
+	kdZaTz8zqBn2Ed7C6Wlrmom5Srw7+Wo=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 4A8AF13354;
+	Wed,  7 Oct 2026 19:21:37 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id OK6NB8GbxmovCQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 07 Oct 2026 19:21:37 +0000
+Message-ID: <136782c48a0b514ad107b3b2aef18d437e2ce9de.camel@suse.com>
 Subject: Re: [PATCH v2 2/2] libmultipath: dm_flush_map__: log if the resume
  fails after a failed remove
-Message-ID: <asZ2WTKM-SeIbsE6@redhat.com>
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Suresh Thelkar
+	 <suresh.thelkar@yahoo.com>
+Cc: dm-devel@lists.linux.dev
+Date: Wed, 07 Oct 2026 21:21:36 +0200
+In-Reply-To: <asZ2WTKM-SeIbsE6@redhat.com>
 References: <20261005045726.71858-1-suresh.thelkar@yahoo.com>
- <20261007092236.165908-1-suresh.thelkar@yahoo.com>
- <20261007092236.165908-3-suresh.thelkar@yahoo.com>
+	 <20261007092236.165908-1-suresh.thelkar@yahoo.com>
+	 <20261007092236.165908-3-suresh.thelkar@yahoo.com>
+	 <asZ2WTKM-SeIbsE6@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.60.2 
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-In-Reply-To: <20261007092236.165908-3-suresh.thelkar@yahoo.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: b8Vj35qipdqwJZGbkd0Mezn5Eveu2Y0myA5joHkXyZU_1791391323
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-Spam-Score: -4.30
+X-Spam-Level: 
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-4.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-0.999];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FREEMAIL_TO(0.00)[redhat.com,yahoo.com];
+	TO_DN_SOME(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[yahoo.com];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[3];
+	RCVD_TLS_ALL(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
 
-On Wed, Oct 07, 2026 at 09:22:36AM +0000, Suresh Thelkar wrote:
-> After a failed DM_DEVICE_REMOVE the map was suspended earlier in
-> dm_flush_map__(), and the recovery path issued a single fire-and-forget
-> DM_DEVICE_RESUME whose result was ignored. If that resume ioctl failed,
-> the map could be left suspended with no trace in the logs, which wedges
-> any later task in uninterruptible D state and, because sync() walks
-> every block device, hangs I/O node-wide until reboot.
-> 
-> Check the DM_DEVICE_RESUME return value and log at condlog(1) when it
-> fails, so a leaked suspend is at least visible in the logs. The map is
-> known to have been suspended at the start of the loop, so the ioctl
-> return value is authoritative.
-> 
-> Signed-off-by: Suresh Thelkar <suresh.thelkar@yahoo.com>
+On Wed, 2026-10-07 at 12:42 -0400, Benjamin Marzinski wrote:
+> On Wed, Oct 07, 2026 at 09:22:36AM +0000, Suresh Thelkar wrote:
+> > After a failed DM_DEVICE_REMOVE the map was suspended earlier in
+> > dm_flush_map__(), and the recovery path issued a single fire-and-
+> > forget
+> > DM_DEVICE_RESUME whose result was ignored. If that resume ioctl
+> > failed,
+> > the map could be left suspended with no trace in the logs, which
+> > wedges
+> > any later task in uninterruptible D state and, because sync() walks
+> > every block device, hangs I/O node-wide until reboot.
+> >=20
+> > Check the DM_DEVICE_RESUME return value and log at condlog(1) when
+> > it
+> > fails, so a leaked suspend is at least visible in the logs. The map
+> > is
+> > known to have been suspended at the start of the loop, so the ioctl
+> > return value is authoritative.
+> >=20
+> > Signed-off-by: Suresh Thelkar <suresh.thelkar@yahoo.com>
+>=20
+> I want to discuss this change from v1 a bit. The issue that the
+> second
+> resume is solving is the same one that lead us to add a second resume
+> to
+> dm_addmap_reload(). If the device has an invalid inactive table, and
+> you
+> do a resume, dm will attempt to swap the table, fail, and leave the
+> device suspended with the invalid table removed. Immediately issuing
+> a
+> second resume will cause dm to actually resume with the old table. If
+> we
+> don't manage to resume the device, it seems much less likely that
+> waiting a second and re-attempting the remove will succeed (I believe
+> the most common case is us racing with something that temporarily
+> opens
+> the device, like udev. It may need the device to be unsuspended to
+> do a quick read and close it again).=20
+>=20
+> Now, I admit that this is WAY more likely to happen when we are
+> actually
+> reloading the table, since we just added an inactive table, and dm
+> might
+> not be able to swap it correctly for any number of reasons. To hit
+> this
+> issue when removing the device there would need to be an inactive
+> table
+> (which is unlikely) and dm would have to fail when trying to swap
+> tables
+> (which is also unlikely). Also, we resume the table in other places
+> in
+> the code, without caring about this corner case. For consistency's
+> sake,
+> we should probably either always do it, or only do it when we've
+> loaded
+> a new table.
+>=20
+> Thoughts? Also, I'm fine with this change going in as-is and dealing
+> with the resume question as a separate issue.
 
-I want to discuss this change from v1 a bit. The issue that the second
-resume is solving is the same one that lead us to add a second resume to
-dm_addmap_reload(). If the device has an invalid inactive table, and you
-do a resume, dm will attempt to swap the table, fail, and leave the
-device suspended with the invalid table removed. Immediately issuing a
-second resume will cause dm to actually resume with the old table. If we
-don't manage to resume the device, it seems much less likely that
-waiting a second and re-attempting the remove will succeed (I believe
-the most common case is us racing with something that temporarily opens
-the device, like udev. It may need the device to be unsuspended to
-do a quick read and close it again). 
+Right, thanks for explaining it. I'd forgotten about this failure
+scenario. With this in mind, it actually makes sense to retry the
+resume. You're right, there should be no inactive table, but retrying
+won't hurt. [*]
 
-Now, I admit that this is WAY more likely to happen when we are actually
-reloading the table, since we just added an inactive table, and dm might
-not be able to swap it correctly for any number of reasons. To hit this
-issue when removing the device there would need to be an inactive table
-(which is unlikely) and dm would have to fail when trying to swap tables
-(which is also unlikely). Also, we resume the table in other places in
-the code, without caring about this corner case. For consistency's sake,
-we should probably either always do it, or only do it when we've loaded
-a new table.
+I'd appreciate a short comment explaining the problem scenario that
+the retry attempts to avoid (i.e. a short version of Ben's explanation
+here).
 
-Thoughts? Also, I'm fine with this change going in as-is and dealing
-with the resume question as a separate issue.
+Regards
+Martin
 
--Ben 
+[*] I wonder what would happen if there was a _valid_ inactive table.
+In that case, instead of removing the map, we'd reload it with a
+different table, which seems wrong. But again, there should  be none.
 
-> ---
->  libmultipath/devmapper.c | 10 ++++++----
->  1 file changed, 6 insertions(+), 4 deletions(-)
-> 
-> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-> index a5570a85..85c552cf 100644
-> --- a/libmultipath/devmapper.c
-> +++ b/libmultipath/devmapper.c
-> @@ -1062,10 +1062,12 @@ int dm_flush_map__ (const char *mapname, int flags, int retries)
->  			else
->  				condlog(2, "failed to remove multipath map %s",
->  					mapname);
-> -			if ((flags & DMFL_SUSPEND) && queue_if_no_path != -1) {
-> -				dm_simplecmd_noflush(DM_DEVICE_RESUME,
-> -						     mapname, udev_flags);
-> -			}
-> +			/* Resume the map suspended above; log if the resume
-> +			 * ioctl fails, so a leaked suspend is visible. */
-> +			if ((flags & DMFL_SUSPEND) && queue_if_no_path != -1 &&
-> +			    !dm_simplecmd_noflush(DM_DEVICE_RESUME, mapname, udev_flags))
-> +				condlog(1, "%s: failed to resume map after failed remove",
-> +					mapname);
->  		}
->  		if (retries)
->  			sleep(1);
-> -- 
-> 2.43.0
-
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
