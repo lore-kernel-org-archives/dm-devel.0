@@ -1,67 +1,68 @@
-Received: from mail-yx1-f49.google.com (mail-yx1-f49.google.com [74.125.224.49])
+Received: from mail-yx1-f44.google.com (mail-yx1-f44.google.com [74.125.224.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE1C843B3EE
-	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 20:58:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47B7343CED8
+	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 20:58:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791493090; cv=none; b=Rb3EJ82E0Ou/YGctLeWRKa0kSZZ+SBcsC/37mYJKiuGsLEZyxLMl1GVUT7qKBv7vocbEsNu3yEA+Q/Z1LyWEtV4It871WYoVD6S9CkUJna6ZGetlzLwcRgiqRqe46TcZG5Z/j4wxE3C0sGv0s4jKz6MJGmk50MeatKw9mk8wGk0=
+	t=1791493091; cv=none; b=acOQQrFO6+jESWNZwXN4vBJZHZESMPwAKaAbxm8Tf2iTVDFIYk4D6R043alcqlaYSQqOXwANoqGNLXFlSGbsKsZmdOcXupytqT/jbmay+PUwH1+O3YbEFGBCZCtKcPgBRWhBRXvW5SKQDL/T5Z9pL0zkSVAr/QpvkDM7fyOF69Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791493090; c=relaxed/simple;
-	bh=OO89bX2AlrtkrgWYdOos3CyMDWbPk6PcFxH+MWmltFQ=;
+	s=arc-20240116; t=1791493091; c=relaxed/simple;
+	bh=vQAwyxNj3AED0ZWDQ7B3q4d5Ag5/7cRBweYxf4EerGQ=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=Zi35Nkon8vjOIpSZG9QspThYpII1qWtYs8Jr5GAECehH5Y4ulzQ0TZdVTbre1D65/N+5zALVCvhHTYbIupipFMpZWLqkYZqNyIhZ+dRgzHFFmflFoWzqMoRivM7V/tLrZ/by+myDaHOhxJizH6ogOzum9hsffXrwJycM1FwtK5Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com; spf=pass smtp.mailfrom=amutable.com; dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b=arrZfiW9; arc=none smtp.client-ip=74.125.224.49
+	 In-Reply-To:To:Cc; b=svN6/LCyE2AATAClLpO8y1595TS6nKk7rcAGXs6+KxTlugveXHTFzQIK4+nwOh2JVJX8LruFwxpHT8kOV1TMvE2F/9VsP3yZA7HUsQ0dG6RSY0node3EZCliklz/drq2RlI6ioTYR8oaKgaypMMZOwv40rAt1cpN9Ng6Uk7Iyts=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com; spf=pass smtp.mailfrom=amutable.com; dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b=Y6ooOmEz; arc=none smtp.client-ip=74.125.224.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amutable.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b="arrZfiW9"
-Received: by mail-yx1-f49.google.com with SMTP id 956f58d0204a3-676804a3a22so3342909d50.1
-        for <dm-devel@lists.linux.dev>; Thu, 08 Oct 2026 13:58:07 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b="Y6ooOmEz"
+Received: by mail-yx1-f44.google.com with SMTP id 956f58d0204a3-678febd9307so1414130d50.0
+        for <dm-devel@lists.linux.dev>; Thu, 08 Oct 2026 13:58:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amutable-com.20251104.gappssmtp.com; s=20251104; t=1791493087; x=1792097887; darn=lists.linux.dev;
+        d=amutable-com.20251104.gappssmtp.com; s=20251104; t=1791493088; x=1792097888; darn=lists.linux.dev;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=7804DMseCiWMFbi8mF9JSi9WooE66/vdxlGSeU5B64g=;
-        b=arrZfiW9kP0cxhjTyNTGvE6wTTy+w1EPBavtf5Z2plSgo6kOjJduisAoSrtilf5gAo
-         0S2Mixc1KCHllgSMfSP4elWIgNtXEJQps5FakJ8FzotgDXLOiPgqdKd1VK7ShpT+W3GL
-         nt2jU+A5vaNYCf6Ie7EBIIcmsijrE1vsE1LvDbdDndACwMji/Y/MyFLwf/wgMXZv9Db8
-         clQGOuX5APCb3i06ImXYUcr5VJ3DAan7MtEtsaRmzH5YJJ2q0IGLglF18jFhM7MQJf4F
-         EPo861VdG+h+em5WpaXnJtZmc7WsqyQJLvrDNYp6hF4P5uq5vNYwY8nTquS6VEgALVz4
-         YfRg==
+        bh=LSvHBJQxiIqbp6o9z5pfgV7EhGFvpIA3j/HhyOfsFYA=;
+        b=Y6ooOmEz+8w8Z9iGnf2gtVbMUFNnQaNt5jYvGr/R0Y/Pus/rd28HXJ33TEoGeruBH5
+         3KKkpXU39Rzmq9Q08wdr09E6gQEkuRUgFF3ZdduzLkMOOO/oCHwqdttEUwLJXbVwQ7ig
+         kBalr+d/nHycaL7N46v/UTQhyZLu0Sath/h1HP4GgllkiYGyjVUEIRZh/+pweQMGDNT/
+         L1b3slxRdHdiv3phxrlIfSxvg8w2aaN32clH8FHBe5jKwNt++91xsT1C+IashSDO6Tt1
+         Au52cO2ElvRmCNKOklezbZUKKL8xeQ862sAM4UihFZEzNgb7odLnqRWPLxbvcgSDeGCQ
+         xR4w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791493087; x=1792097887;
+        d=1e100.net; s=20260707; t=1791493088; x=1792097888;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=7804DMseCiWMFbi8mF9JSi9WooE66/vdxlGSeU5B64g=;
-        b=iMipzBbZcfjaE/IhmC7MxhhGWn/9tke37TBTVAzqfeGfUQyjkKtDbwHFiO0U13Cv7p
-         443gN87C0wXIb5aCtoZgIMYnQlSCNBVR+cV84oxUy3ksJ/2WmDTjfvFZdVPhhHuCaDi/
-         q6/a+E+xLP7d2VUBwl0KpuUPvUvjByIrRBTB+MkzdjRUCoHHZH0VvBnhmiBwyzIKBEEu
-         DTH/iQDxJjLuJJm/aXwg5Mpi9BUqTzK79Y6eP2u1S+Gc00TlhqEibz0/HAl6d+bUE2MZ
-         E0Vnyw1yJ02besRlfbH/L7Dy8f59CBJxPEeSa/3e8Hu/wuIUQk5bsgy+uWF+6mfdCU/2
-         EWjw==
-X-Gm-Message-State: AFq9FYIUiXZv3zfXbUeeCkAFL/tp8k5J2a05UXjtktVgyK4Ykn3P+B7F
-	8EUk5FX+raTJtymedk2ZaDYJNHrsGZA0+X3ZgwtJ9YyHsFj3b7BT+xZWMVAXh5lcQGxI
-X-Gm-Gg: AYBFou1wXv7yuHjKH1OEc2YUNPZ/gi9jPSl4PK2ROzz5JeYIiPWar5ovZLwYsNcjG9I
-	7w9gGJkWibw3AmxYIUogr+hRUp8v63+H9OXUhxKJ3Fmmx9sZw9tf1xx0EoxHftF1VH5AfrnAKz3
-	U0OGvaKyf9tFBh45OmcdfjuY9FOpwoEr4kMS8tubGAdFQ+X37cIT232UeJK/IAaLkNAJEISCVj8
-	z6yIP3BcowksxUuMROMelm3UPrLkP9o5FtHcq7/o4fH/DOrRTiczQTKejjTZAGzCV3D1vUzTKb9
-	fsJSoyROSnn/42RER7P7qInLyAMw7SrbUqqs2asZjC/6Bn4udGSoAhIeFPTyxlaqXMo8Mpk7frX
-	X/aNGv4HoQbIUkuO8GIM37DQioeJmdiZMOYaq8/oTmFkSS1VgSH6zvrmkfP0NkqGHtQvwI0fIm7
-	HDWX4KwJMtc1qSQOd27wTGnnY/NZErlH3JyA2DUyacC5aN2ISarFfm2JHoD+ueMo5NjHuKpt0iF
-	lmCbFaqjB36BHsAW5AXSnJBMjC4vgYxKBgmrDtzrJfJOWZGZUSlkBw=
-X-Received: by 2002:a05:690e:1445:b0:675:83c7:7382 with SMTP id 956f58d0204a3-67935ed66famr38766d50.1.1791493086647;
-        Thu, 08 Oct 2026 13:58:06 -0700 (PDT)
+        bh=LSvHBJQxiIqbp6o9z5pfgV7EhGFvpIA3j/HhyOfsFYA=;
+        b=isD0la1jVLKd5q+Jl+m2YX9dJjhXMjU4MGZPftKz6ZW43XKtLd7+rTQzDvarTSyf8x
+         KEvjk1ypYyLmzMcFuMun7UdZXOHelST4ky/Ah8t5wePJbKUsLyG2fbFz+79AcYslySQv
+         PW4M/yPRdiIEPeWc9zwTzDWZhzoa/y3SLLsX1msIWPv6Bvd4gdpU5UUeD9BgM5euf7z7
+         ANiikm+1HHH4VmeNA9FM4jBGpOdg8BaBcIGPOfuOpoxB7NMfQ6jhkqb6RpYwWQYQW1Xs
+         y2FEhL6B46qfpvrprNfNlB7xPbMRWLnHOVGDJGLpeerlhAdQgvRYJ3Eb5YC+FOKoLonz
+         VE4Q==
+X-Gm-Message-State: AFq9FYJBuOsHPmReH2irPU79scuZlwH7zfja1a0xn+mwlTBeKhFpPGds
+	fgBWzLhIjBs6uvFvghjLEwyr6jUbFp/1P9TL+QSb2uaAiTTXR1eknSNaHOTDqpF1qSAh
+X-Gm-Gg: AYBFou3w3sXh6iQ3WU6ThT1RD6/tumcs0LJuM6PvVlQCrE72nUly2BA0qBIT6aj6aKH
+	3uAm/h4BFIl6HYKs/+F9Swzov05OB4GNgfaK5HN3P1vReHRlkP4Qq31uKSJfC8nWwk/FTkeI4BC
+	3CTTqO45LEPNDZTqozuGxC575XXFx1k1eyBlTamhPUMN0eIFnxPw51AL6BXrUpAiYPBdLHeZDwY
+	VSKWKPepeSZMYC/Mmzhz5l6rANofykvlQOGJ4nH00mrS05LOO6SGREJ79ZZEuG73DT9OAfgts1p
+	LqnceYITTvZ9Gu8JR3/iiKzMa8nQFSkMpZxUF4ZTZGVaetayGucZ9PuQS8UX7IDI1KDwPMXkdy5
+	qb3XOx4TCyERgTWA3d3Tm/4nEFC1TbegZbSKFPQx75eAGjYJ7o5a4lapA5qRzn2LVn9VqABf9KR
+	QgB42zB7iFjAxsKr8gEbJa+19rADQRUML9QZVdQ+Sl2gig1SueXXr3SocTdS/vRRBJpw2iWiGN7
+	ZzzP8nzeY8zi9C0D5vu1hgfvSzapX3TbKytvATISrc7sFe+/RdvRCY=
+X-Received: by 2002:a05:690e:4391:b0:675:6803:98bf with SMTP id 956f58d0204a3-6793628b5b5mr14774d50.45.1791493088070;
+        Thu, 08 Oct 2026 13:58:08 -0700 (PDT)
 Received: from [192.168.1.110] (104-53-165-62.lightspeed.stlsmo.sbcglobal.net. [104.53.165.62])
-        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67935707401sm78814d50.24.2026.10.08.13.58.05
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67935707401sm78814d50.24.2026.10.08.13.58.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 08 Oct 2026 13:58:06 -0700 (PDT)
+        Thu, 08 Oct 2026 13:58:07 -0700 (PDT)
 From: Andrew Halaney <andrew@amutable.com>
-Date: Thu, 08 Oct 2026 15:57:36 -0500
-Subject: [PATCH bpf-next v2 2/3] keys: add KEY_SPEC_FS_VERITY_KEYRING
+Date: Thu, 08 Oct 2026 15:57:37 -0500
+Subject: [PATCH bpf-next v2 3/3] Documentation: keys: document IDs added
+ since KEY_SPEC_REQKEY_AUTH_KEY
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -70,7 +71,7 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261008-ajhalaney-dmverity-key-identifier-v2-2-008456d189cb@amutable.com>
+Message-Id: <20261008-ajhalaney-dmverity-key-identifier-v2-3-008456d189cb@amutable.com>
 References: <20261008-ajhalaney-dmverity-key-identifier-v2-0-008456d189cb@amutable.com>
 In-Reply-To: <20261008-ajhalaney-dmverity-key-identifier-v2-0-008456d189cb@amutable.com>
 To: Alexei Starovoitov <ast@kernel.org>, 
@@ -91,105 +92,41 @@ Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
  "Christian Brauner (Amutable)" <brauner@kernel.org>
 X-Mailer: b4 0.14.3
 
-Same problem as the dm-verity keyring: .fs-verity is allocated unlinked,
-so the only way for userspace to name it is to scrape /proc/keys.
+The table of special key IDs stops at KEY_SPEC_REQKEY_AUTH_KEY.
+Fill in all the new ones.
 
 Suggested-by: Christian Brauner (Amutable) <brauner@kernel.org>
 Reviewed-by: Jarkko Sakkinen <jarkko@kernel.org>
 Reviewed-by: Christian Brauner (Amutable) <brauner@kernel.org>
 Signed-off-by: Andrew Halaney <andrew@amutable.com>
 ---
- fs/verity/signature.c        |  2 ++
- include/linux/key.h          |  1 +
- include/uapi/linux/keyctl.h  |  1 +
- security/keys/process_keys.c | 25 +++++++++++++++++++++++++
- 4 files changed, 29 insertions(+)
+ Documentation/security/keys/core.rst | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/fs/verity/signature.c b/fs/verity/signature.c
-index 0302a4e506ec..07657e913b22 100644
---- a/fs/verity/signature.c
-+++ b/fs/verity/signature.c
-@@ -135,4 +135,6 @@ void __init fsverity_init_signature(void)
- 			      KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
- 	if (IS_ERR(fsverity_keyring))
- 		panic("failed to allocate \".fs-verity\" keyring");
+diff --git a/Documentation/security/keys/core.rst b/Documentation/security/keys/core.rst
+index 326b8a973828..37ed42382f16 100644
+--- a/Documentation/security/keys/core.rst
++++ b/Documentation/security/keys/core.rst
+@@ -372,6 +372,19 @@ process making the call::
+ 	KEY_SPEC_GROUP_KEYRING		-6	GID-specific keyring
+ 	KEY_SPEC_REQKEY_AUTH_KEY	-7	assumed request_key()
+ 						  authorisation key
++	KEY_SPEC_REQUESTOR_KEYRING	-8	request_key() destination
++						  keyring
 +
-+	key_register_fs_verity_keyring(fsverity_keyring);
- }
-diff --git a/include/linux/key.h b/include/linux/key.h
-index ae8d3314fd93..dd386c56278c 100644
---- a/include/linux/key.h
-+++ b/include/linux/key.h
-@@ -442,6 +442,7 @@ extern int keyring_restrict(key_ref_t keyring, const char *type,
- 
- extern void key_register_bpf_keyring(struct key *keyring);
- extern void key_register_dm_verity_keyring(struct key *keyring);
-+extern void key_register_fs_verity_keyring(struct key *keyring);
- 
- extern struct key *key_lookup(key_serial_t id);
- 
-diff --git a/include/uapi/linux/keyctl.h b/include/uapi/linux/keyctl.h
-index 75923941f1b3..00cc0942203e 100644
---- a/include/uapi/linux/keyctl.h
-+++ b/include/uapi/linux/keyctl.h
-@@ -26,6 +26,7 @@
- #define KEY_SPEC_REQUESTOR_KEYRING	-8	/* - key ID for request_key() dest keyring */
- #define KEY_SPEC_BPF_KEYRING		-9	/* - key ID for the BPF-specific keyring */
- #define KEY_SPEC_DM_VERITY_KEYRING	-10	/* - key ID for the .dm-verity keyring */
-+#define KEY_SPEC_FS_VERITY_KEYRING	-11	/* - key ID for the .fs-verity keyring */
- 
- /* request-key default keyrings */
- #define KEY_REQKEY_DEFL_NO_CHANGE		-1
-diff --git a/security/keys/process_keys.c b/security/keys/process_keys.c
-index dba3df41638b..655c58a96fcb 100644
---- a/security/keys/process_keys.c
-+++ b/security/keys/process_keys.c
-@@ -29,6 +29,9 @@ static struct key *bpf_keyring __ro_after_init;
- static struct key *dm_verity_keyring;
- static DEFINE_SPINLOCK(dm_verity_keyring_lock);
- 
-+/* fs-verity keyring reachable through KEY_SPEC_FS_VERITY_KEYRING */
-+static struct key *fs_verity_keyring __ro_after_init;
++There are also values that refer to a specific kernel keyring rather than to
++anything belonging to the caller.  These keyrings are not linked into any
++keyring, so a search cannot reach them and the ID is the only way to name
++one::
 +
- /* The root user's tracking struct */
- struct key_user root_key_user = {
- 	.usage		= REFCOUNT_INIT(3),
-@@ -629,6 +632,20 @@ void key_register_dm_verity_keyring(struct key *keyring)
- }
- EXPORT_SYMBOL_GPL(key_register_dm_verity_keyring);
++	CONSTANT			VALUE	KEY REFERENCED
++	==============================	======	===========================
++	KEY_SPEC_BPF_KEYRING		-9	the ".bpf" keyring
++	KEY_SPEC_DM_VERITY_KEYRING	-10	the ".dm-verity" keyring
++	KEY_SPEC_FS_VERITY_KEYRING	-11	the ".fs-verity" keyring
  
-+/**
-+ * key_register_fs_verity_keyring - Publish the keyring for KEY_SPEC_FS_VERITY_KEYRING
-+ * @keyring: The keyring to publish
-+ *
-+ * Make @keyring reachable by userspace through the KEY_SPEC_FS_VERITY_KEYRING
-+ * special key ID, so that provisioning it does not require scraping its
-+ * serial out of /proc/keys first. Called once, from an initcall, and never
-+ * undone.
-+ */
-+void key_register_fs_verity_keyring(struct key *keyring)
-+{
-+	fs_verity_keyring = keyring;
-+}
-+
- /*
-  * Look up a key ID given us by userspace with a given permissions mask to get
-  * the key it refers to.
-@@ -799,6 +816,14 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
- 		key_ref = make_key_ref(key, 0);
- 		break;
  
-+	case KEY_SPEC_FS_VERITY_KEYRING:
-+		key = fs_verity_keyring;
-+		if (!key)
-+			goto error;
-+		__key_get(key);
-+		key_ref = make_key_ref(key, 0);
-+		break;
-+
- 	default:
- 		key_ref = ERR_PTR(-EINVAL);
- 		if (id < 1)
+ The main syscalls are:
 
 -- 
 2.55.0
