@@ -1,71 +1,71 @@
-Received: from sonic308-21.consmr.mail.sg3.yahoo.com (sonic308-21.consmr.mail.sg3.yahoo.com [106.10.241.211])
+Received: from sonic305-19.consmr.mail.sg3.yahoo.com (sonic305-19.consmr.mail.sg3.yahoo.com [106.10.241.82])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D30C337CD52
-	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 04:38:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=106.10.241.211
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C744335F164
+	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 04:38:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=106.10.241.82
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791434290; cv=none; b=GlUb0U1Ym8mnecQd7YLRnRW6gGFKkSvIABf3GYZMvwDwMDtAGUUX4YFcOxPikL4q4xM1CrjdWv897cZgI18GoPAbW6uRgD11e9Zy44EoLvFo1F+rMzSb2KCyHNkduC9VH77XxU+DESTrv+PQM2d4U6Vs+MvFNOYI1Dy2oxBGcJg=
+	t=1791434291; cv=none; b=jNNc9GFi67xgxvvXw2Azff4Mf3kUk7S9x4HPJJG5PPMKoyUAC9o4G7Tnu3gowfQDTQlBLYyapbG1Y9Tk1uxHvBJP0cmzKZiVCNTfjqF1emnP662mSPmnzWGfEtlRuCgiSmOWitczVqS/EtI1U23xFGFvCANCDVoIk89HLSna5n0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791434290; c=relaxed/simple;
-	bh=SqBDR2h011+96Wkyrefi29VbcAWcMEi/UybMPn06Q5s=;
+	s=arc-20240116; t=1791434291; c=relaxed/simple;
+	bh=l95/+/RyjgGt9W12BZKaUvc0XYk+4SCwkQqXKYqpE0Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=pIx96fOa+2lg04uyIC3DFAJxsY4peQM9RwVu7JQRaznT7ns512ipCUTdryCxkmaTS5rwzwonwuTa1G5683KZ1aB//HSz+HZ5YU31vc7bvTlyMWjFFub85dkNC5coU51RgQtU1CA3WKxBOMUFEIxYIbAg0btBM+NXYH6eumbm5bk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=yahoo.com; spf=pass smtp.mailfrom=yahoo.com; dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b=ZeCWmAhj; arc=none smtp.client-ip=106.10.241.211
+	 MIME-Version; b=GS6RHFdrJ2kETqq8xe4RmXF/F7wO2rwJGyrMvQsFB8M7g0uB6IZ8hFzWXazSibXIZbY+f5wycJeqXnaW7RIeZyel+GtcwXO615GaDoFID4sHbMAyPZ6e8DhGw2Uy64XzpveD1gLN5UlHg1SFA5b3nncgMxvJPRwObqDD/uWJwDI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=yahoo.com; spf=pass smtp.mailfrom=yahoo.com; dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b=KnSx5xD2; arc=none smtp.client-ip=106.10.241.82
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=yahoo.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yahoo.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b="ZeCWmAhj"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791434280; bh=ZbTpvZEWEQZ9ymgZHVD0ZmWAX1UO3ZgnIAm6W7qRErM=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=ZeCWmAhj6CMPfjiCfU4P3o+NrQpxbWsrbtzsPqpry2teD5vKME2Tl3EaNgQJFahOI7cNm4As6Omiqc5p6U72H0U63y86DDiy5og4FAtUXbUQadLwCHHZLNQYV5Vk9R0+yq/+BQLl4dUHT5Pfq83RPGTP9Nz7jSgIjKO2S+Lq+o2c0VPpi9Vg77ovCmbt00jkGUsuLpeouy/ouVQJm5Xs7e7eH14STDOSfGjPtU7/FKEoq9pqDJzYbV6itafsO5fvcI19RQaJ5YNuGUgCgY1s9wYYpxLrbd2uacLexLvaNCJ1XO3fofZCsLerEHbilgUR0pcm/8vlzUqBv58/RRs8Hg==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791434280; bh=rJxO5+LMc06ODx0J4lW0nCAdK7dc4f9HxtBfaTwxIk7=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=d59jLSjSAstdSqEwbNwKiqlTIwbe0vkfyr4HRv2KnODyhKUm9OpUayq2FUwMaoVhoe32p4CBMPT1xTEfXOSgGDIwT1DDDQxkzzuuV8El2anCtNlviyzKdJ9LlRhMEd6besl+9y5pSP4XE19v33f0MpFnhEhVNrwcFZwweMBE/EpDfAEGWzgw3xaR7dCTnv9LbMAcS786sLO2x4lk6PRcGB178ypSFam/FycEnKEoxhlbZky3FUcLrBYUz2QNw7ZSNEV5NDfs4v6KIuFuVIq8shYXodA6EOK/zrz1uunvoXih7m5Q0fpy21x41axDLIESVohRGL2hNu3u5MC/ib9liQ==
-X-YMail-OSG: 0lFTlxEVM1lLHAY.LPQDLMd8kgw4_fQaBVwZNKndVxa1Wwb1j6UbWbejuI4lm.e
- gIgdLDaMCJqYynjBq23Oh_spZF4NSa8HQIbxL1B0Gj6FAp_.V8NhI9m4Yj4WY3ZgKAeyS8_s5ycl
- as3ddrEJi9XTU3qO0j6_oGsgXDolY8i_44crWDD58UWeJE4WAEu94.0fwN7iM5gBQdS5op5XBsAj
- yrvkNdYuB9jNVxWg4QhUrQ_6dDSLXSIUWTIW2rIBMVRo9gRyF6lWZkA5dH44n6mDVQZw6ySOLlxI
- 1dK_1t1fMjK9OjzXK8jKr4koXXv1EEXLuIXe6OKrDT5sFEdSTXfU.o4THYFoI2SQ.MyZ0PivFBUL
- 1KFmiXIuCGRZAbdMrsbRTBUEI7oP5HhwP2faPz_HM8cmjntPzkiXCtgaiWnyDmjTqvrJoS_Nk945
- 4KyMyWwDlwL2l1.pkWdKdKyk8uZYHBd0elKPsRZlG7tQknqZ2GTFrt3gcKEkjT1qm..mymMHMnfi
- oevJ2QOmXplPX4S.LaxV038Z0vALEIjWnoA5O8j9rYIqluBMVohKz10gQa.vIV0kW1MLIZWNxjGl
- jDVucUIommcTHsRz.HOqebLlxxXDZZNbWBgvYC64uOULBZ.JPrQz4YsP86BGqupbHGyiXig4WwJh
- juzKDVHbgfFj_iQF82mvrqK8JpDECH_MZ7mZ.z.wtOE7RL9Q8rd.g.Qpxoa1cjMWvbkZu36L3.46
- ZCrTqjzwL1m1llVKwQ0JzT0VvCJ8eadTXmuM1vOeQBn8gUdTJ6esWmZk.Y0tvUoGm4XXLrALMUW9
- s67e6nxCRJ3KI0XvDaG6uUxyQmwl8lc53IqQmR7h7FUpHvXsmt6_Of_Ukf1MSas_vgm5yuM8afXO
- I5pHmUPnRHSkTkbr_nx24vW.PTtCzQJB3lsRtql6w6vnYHa14JpoTBpe4vdIw5llEO4aGVSlnfYh
- 9oKp5_dJcpqTnDwTzirvNPBX_qIdCaNJfEU0zL0Q.Et6Q1v9drklGnSkzOHiJREBnjMC_ZX8CJfC
- lXfpcBjHaRLBMbSmACZL0qF5aElE5loiFfxTXcsR5j8iZIiW2w9xGFmIiuafhkHToLykjssnANyc
- VkjqWntVyt2niVVwFkalhAdPFHX33wY5fcMrcUmBcvE3t53f8CdQQZtJam80YLXkHcW8p4XAc6Li
- FZddA1G0RSlFlLQByC3c3qv80EEMjxPksrcNcb2K799_edOpiFl50bn0deGbApMAnqM9s5LDKn.8
- Gx7Oo.d.LGsm1mZ_.av0eRhkMlWaWmCoefGN.oMZpz5G.v69edIJFrIDsbMf5Jb6w5VmaWQdvwr2
- 6k9OKlrYl7NNZKBWly.cDML_tDoE.YUPpB4KaU3qFIdXQG8AQ8YvO7WE36_xJdy9pA32x68MrlLd
- aSfr.0btVsQz67qH4bsMHSjbW0q3H_YYDDJAwxPDeBY2EabO7wTf_J80G_DMLAscp9sRVzs3Yqtp
- iB1YN9sihOASUXXLQqSpdDaqS.sZOXNEb_b4UUgFdjFAka3ocepYQqo0w7__jWIZXK48QMxTMBMl
- gdMIfQksgDiWB_8YLPbS9kY4_DFSrY3cjOb0zmt7s0q7EDlwAqIuwHgbT5x0hBnQOZWbGFkhDtdw
- G7cVGG2eGETks8S8lgTLKpKYHPJoLVmIzSPAbpGImErBDs_AC3jloHj0Rj6u2L.JovyyGAmxqltr
- HwuVl2OOkuCqbzfEjVWRXJDNqJ4r2TF7cCyg24t2XgxjnIjKZ2UFps602ZNsjZRdQachZ9SlWdiV
- OgCANCBE_hoVtwmsr6uTMEWKXId6LjPvqdn1WfZ85qwPsHgCf7gSoAr7voVRc.A1E7zHgvIM3uw_
- Tklmt80XjFDNTMH13O8Ah0Ugx6VB1uUuwh8TPlgcDTgurHNVv.hLpJj4QPTmGn_l.bp2OiDboBsR
- SO40gSF2PqLeZA6JQveiXZaX6OIR08MWHTNACIOGUVGkrak4v_B4exPoM86yr72PJg6C73My.WLD
- pt9rP9SepNUa558zlNQlLK_ZzIkNoWTJAWai9lfmeLEBBd6PTBUoRlE8KqDdfvMdy4VC1Knq.mg4
- XOVATm3brETD6qeH_.Mk5Fe.9DRIDoNCl72Hnla5N0UgcpF2v6gtZwkEhGilzLIbLkimcBGbIzjh
- aT4VK1sRFIFMudffisDH1cjG92B5itoyWQkgcIwV6Mnj4KbNJgQKPqcp5pxNiWsTvftfERdh7XeZ
- 8ETtJzzcKYGzYGHgWldfw1mKz06W.othayz8VJ87icfGhlRBTV1quqfnG6koExOoy5oFHP2ZaMyn
- h3UwQEiQ-
+	dkim=pass (2048-bit key) header.d=yahoo.com header.i=@yahoo.com header.b="KnSx5xD2"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791434282; bh=5kcHwpSpU++ojVGe8gUWq+naTa316eEPqQBGG3YkYb0=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=KnSx5xD28DOz6kH8dEIYZ9bS9PVZcWGVZFRPXloppM9AOI6NN/5siX9Dg2M/o4Dpvbl+cE86WrxbJfuuRV9sUuPScLwXLrRUuq5mQQPJs5QiBi2hYwfTDNY8BLjuxJ8ht2TroFD6NqofsRvQJcSFcNRMGR2Nh3OkVr6k0RmeEY3Ng8VORMt2jvbbwdymWWbnDta6/UplGmnZskTfhdTUzyhGnHdUFxNdhq9Ll9la6CNnIxGTC7YqzjUkQwYAflfGD74lhwbLXu+JpuJLklBrlhCBOZGeLtZK9rQNLS5wsyylQpz/+2ElGtOEV2GO73tgbtpztaCRPGh2ueFKgzeMrQ==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1791434282; bh=sZlMlHIMiScPP2zPhVg3mwLaW1lrDsM3+I7pNEc53ed=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=ATaQgJwedV7UOC/WpgAvDA9ClOHtgLoIe3x27BHr/mpFGaZBilWbl8pb8xsCJ53C46dYKlOshUhO6mR2bYMSVKQ/lJFwbCAChPcGJ47Rq8YWnyHZh41Eb9bHz1ky0duIDgNgDBqtjtqNWa75dazZOQD/Pcw8YdWiUVggcoqwF3vrNkWrp/5gt5rCEM0cqSTLCqjjo43N4TfVLeDrOt59lwW+yp0le38Qw7ntOn/h8FKvKVmPiRoxo5fOLcUwGdO/S1uglIWL+SOGuNeiSPIPvD+bffjvoyLKSbASbE8mfGwxO6kAE5WnIXu/hHlJnnkgNGuxkJdICHaBlMaT1zlzYA==
+X-YMail-OSG: .75huU8VM1kAs0Du9Ex906FBqQiGAfZSXrhmfwjG.na4mSoE28hR3nvlaLzRRH7
+ tQPxn3kGOJpDJj0yL2WPevVvTpxI2WltAlWjzqZLaPalnCLgEO4P3WEFnlbFgJZFSoUDlaz1iLX3
+ kGbz3vCncvHeldxTT2KMB25OnlOJ.FjTDX2Hqodfu_mw55CSWvxQR8Vm293OW31ixPu4V46l2gE9
+ xUkE25noIk4mQpVGCOxObSQzB8NFddpp4DsbTMwxdXMuWfLh3nKCl8tiAZwovws43yWFPs3IACsB
+ cZn5Mu4P.ydZR_jpYa0Ydy6miGDef_YOcC5LSl1vfgFxtAlwVMJMGQe_ww5xM6vyWcDS0qMGYw0r
+ Gan7EUnuzJsHY8KrcYBNS93.56HKBNEecGTiDPdqOTqW.kgLAtHFGaytxjaYtp6l5DF7XIeMDnem
+ pJ36J2rCEumOWlNFG8eEeE3k9i10dTle.S8ZwkSeOHgSxFH2vr0hFoFsxSR95uYM7DDGROyNNzWW
+ iAHEUWdh6EpSIzQH_vQRn1OCJ2EDQKbnmWC.xEutLWTMH3o9_7g11bSdZG0d.gSKBJfnNgqU25PX
+ hC0FvdijoX5KGJRphyGkC6NuqrF0Sn6T5MCfLeG6BwIRS9_5scwO7NzaNfeYqPKIK.A_GdGwwJh_
+ HR.LwQpsW10L098S_s5cIv0VK0RJcq5KARREo2yUk1BBLaYlXzlCY089CDxapH2PKkHC7FqsY9M7
+ IZjznWYPoBFbwo.BQKR9wJkXfnVcbCqv2fAgmbUc1EtS1kIqfcezw7cdXvEeM0M9NpJtTMSLoQI4
+ 1vDepTRYokWf8JLKIoAJBjyVOGGCVDtR.pESOWI6GlDKEzvQeHYjsUbzmr.MzyBn5CY5UNsX4O2b
+ VxCqnslqvG3dedHvsZpriczjlC.jE7enS8sadKoWK2o1I90nPOzAWgLIcA8ei_g93yNkAwoBPVt4
+ VSQUgERfOKv7ObHasTQu2wq.EAJgfew90d29pFOTsUZtQMjyA33ExVJECO7OHspcSYs0y_10Fn3l
+ FDST6ZAk3_hNiHK1DxdtGPnJmjKkE9kHztJJ_3t.KQ0GtQO3PqkadFJzAxb0Xuwvkb.TJJTWu2Od
+ zzlhe76aid9oE5GcFzkaOdG_ReWA282AiaRoXLgJnQLqlXVMJ3pIGswhaDJpVjHjg0eD3Z0BYtrB
+ glDYkrkGMSXPM1vr2w8cqjCM4NPLGvJgXZfw3.695O4EbI6sZiLxA6cpPlTq3gtVgaYtY_QXaGpa
+ zSuOSI6K3yDpcSTXdh8sGnoi0Q0qP.mNlU793XQ7OEM3ZSLkBJ3T7SCznM4oPl1piHSxfqbt.HES
+ Y_zxcMI58ArdNEgwFJNuNKLfN0i.Qbxxnnxudo.ieQnpzxDCRWE1UEt6UBIBPcVvtYEiQndfyNYl
+ 8X2b8XG8w9DZeHU1lbmU0JInIZ_ZUzNLV4X2sDZW9zkw5r6G19Qm9EANH2FCPJCxqlGsBqS1a.34
+ 9ONcgdAtQaTv5oLHIyuRmI4SgbTPC488K4GNqwACZ3GV8Jz.vk2qsxVLQOGo8.o1VoTXusdqmAHn
+ muidThVDLcgBrL4RPApZC5w1flFf6XQH11KXBPqqJEaYkJisQ4JvXmwn9Cn_dZnfv5oIEC4.gGOu
+ rDXlXOaqByxQgPis3C8UvqWT4LxA2l8Q4D1i0hNysA5P32iOx5lv3qas_XLKE9Osm5OOFuFeEtug
+ JtnP3lo1x0BoqZfpwlBzU.aKozzsCLUMuL0e8z.iz8sS3zPoYWzF_.lRQxr8zOsZlrhyeJeLvCDi
+ yPC0vJokBxj5OLOYdDvqA26Upr24esvdRQ.NXuFeOgkSAXdgarf.feNy7enOcJoKfEpoMzKjHJij
+ 4PmPaD3eeWJuZZk0MkzVxa34XcCKSQyAEYo2Tq1IaVdbIeKcevXd9BmIQddPjjQknXE7I_hjNbRh
+ bfyfL0lN71.rm46YdpVdOUS2Bl3BrS4EjwaO9RAO67m0NC6w72sfl8kuvZJ5_idEOhooRgJtVI0I
+ .MssYIDIaS4R_kZ4nfeWW2zOnm5iUzl6hQAfRvCCh07Llo7KzRcLewd4MJJet1x9emccJ23DYVvI
+ NnNJrv44ZnuXalNjkYD9DC_VwDIxtrtjzjdSR9pIFAuBg5XpliviLwR.yCO_1RDV6gZrxd5szqoG
+ QfVWot0bHAyjmgeAqfvPLmhKzC3llo9NCDsym1eXbgyZVdx5dwA4m5ajJAToG60jN3AKhuB.Hc16
+ ExMI8aUYnVNWbUhHwMzs.a6rx..7h5lrU4_A8I_33yeBVQ0paLacObCZHdk1SBhCxsg--
 X-Sonic-MF: <suresh.thelkar@yahoo.com>
-X-Sonic-ID: a29483d2-7f5e-4e3a-86cc-e4da370e994b
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic308.consmr.mail.sg3.yahoo.com with HTTP; Thu, 8 Oct 2026 04:38:00 +0000
+X-Sonic-ID: 97640624-abd2-4db1-849e-71bac7464847
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic305.consmr.mail.sg3.yahoo.com with HTTP; Thu, 8 Oct 2026 04:38:02 +0000
 Received: by hermes--production-sg3-cd7bfcc7f-9nsxm (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 7fbaa42255083875bb3346c67ecc2047;
-          Thu, 08 Oct 2026 04:37:55 +0000 (UTC)
+          Thu, 08 Oct 2026 04:37:57 +0000 (UTC)
 From: Suresh Thelkar <suresh.thelkar@yahoo.com>
 To: dm-devel@lists.linux.dev
 Cc: Benjamin Marzinski <bmarzins@redhat.com>,
 	Martin Wilck <mwilck@suse.com>,
 	Suresh Thelkar <suresh.thelkar@yahoo.com>
-Subject: [PATCH v3 0/2] libmultipath: fix leaked device-mapper suspend after a failed remove
-Date: Thu,  8 Oct 2026 04:37:47 +0000
-Message-ID: <20261008043749.23389-1-suresh.thelkar@yahoo.com>
+Subject: [PATCH v3 1/2] libmultipath: dm_flush_map__: do not treat query error as external removal
+Date: Thu,  8 Oct 2026 04:37:48 +0000
+Message-ID: <20261008043749.23389-2-suresh.thelkar@yahoo.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20261007092236.165908-1-suresh.thelkar@yahoo.com>
+In-Reply-To: <20261008043749.23389-1-suresh.thelkar@yahoo.com>
 References: <20261007092236.165908-1-suresh.thelkar@yahoo.com>
+ <20261008043749.23389-1-suresh.thelkar@yahoo.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -74,60 +74,62 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Under heavy device-mapper ioctl load (e.g. LUN-number recycling combined
-with ALUA transitions), dm_flush_map__() could leave a multipath map
-suspended indefinitely after a failed DM_DEVICE_REMOVE. A suspended map
-wedges any later task that touches it in uninterruptible D state, and
-because sync() walks every block device, this can hang I/O node-wide
-until reboot. The storage itself is healthy; the defect is entirely in
-user space.
+On a failed DM_DEVICE_REMOVE, dm_flush_map__() classified anything that
+was not DM_IS_MPATH_YES as "removed externally" and returned DM_FLUSH_OK
+without resuming the map it had just suspended. dm_is_mpath() also
+returns DM_IS_MPATH_ERR (-1) when the status query itself fails, which
+happens transiently under a heavy ioctl load (e.g. LUN-number recycling
+plus ALUA transitions). A transient error was thus misread as a
+successful external removal, and the map was left suspended
+indefinitely, wedging later I/O node-wide via sync().
 
-Patch 1 is the primary fix. Query errors on the failed-remove path were
-misclassified as external removal: anything that was not DM_IS_MPATH_YES
-was treated as "removed externally" and returned DM_FLUSH_OK without
-resuming. But dm_is_mpath() also returns DM_IS_MPATH_ERR (-1) when the
-status query itself fails transiently under ioctl pressure, so a
-still-suspended map was abandoned. Only DM_IS_MPATH_NO now counts as
-external removal; a query error is logged and falls through to the
-resume path.
+Only DM_IS_MPATH_NO now counts as "removed externally". A query error is
+logged and falls through to the resume path instead of being reported as
+success.
 
-Patch 2 makes the resume on the failed-remove path robust: it checks the
-DM_DEVICE_RESUME result, retries once if it fails, and logs at condlog(1)
-if the map is still not resumed. The retry handles the inactive-table
-case (dm fails the table swap and leaves the map suspended with the
-invalid table dropped; a second resume reactivates it with the old
-table) - the same scenario dm_addmap_reload() already guards against.
+Signed-off-by: Suresh Thelkar <suresh.thelkar@yahoo.com>
+Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/devmapper.c | 25 +++++++++++++++++++------
+ 1 file changed, 19 insertions(+), 6 deletions(-)
 
-Only libmultipath/devmapper.c changes. There is no change to the success
-path or to behavior outside the failed-remove branch.
-
-Changes since v2:
- - Patch 2: restored the single resume retry (dropped in v2) and added a
-   comment explaining why, as requested on the list. Per Ben Marzinski's
-   explanation, a resume can fail the table swap on a map with an
-   inactive table and leave it suspended; a second resume recovers it
-   (as dm_addmap_reload() does). Martin Wilck agreed the retry is
-   worthwhile and asked for the explanatory comment. Kept the v2
-   condlog(1) so a still-unresumed map stays visible.
- - Patch 1 unchanged; carries Benjamin Marzinski's Reviewed-by.
-
-Changes since v1:
- - v2 had replaced the retry with a log-only change; v3 restores the
-   retry together with the explanatory comment.
-
-v1: https://lore.kernel.org/dm-devel/20261005045726.71858-1-suresh.thelkar@yahoo.com/
-v2: https://lore.kernel.org/dm-devel/20261007092236.165908-1-suresh.thelkar@yahoo.com/
-
-Suresh Thelkar (2):
-  libmultipath: dm_flush_map__: do not treat query error as external
-    removal
-  libmultipath: dm_flush_map__: retry the resume after a failed remove
-
- libmultipath/devmapper.c | 41 +++++++++++++++++++++++++++++++---------
- 1 file changed, 32 insertions(+), 9 deletions(-)
-
-
-base-commit: d53932bdbee02f440518ea384e63d7c4d3f66685
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index e3870f59..a5570a85 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -1042,13 +1042,26 @@ int dm_flush_map__ (const char *mapname, int flags, int retries)
+ 			}
+ 			condlog(4, "multipath map %s removed", mapname);
+ 			return DM_FLUSH_OK;
+-		} else if (dm_is_mpath(mapname) != DM_IS_MPATH_YES) {
+-			condlog(4, "multipath map %s removed externally",
+-				mapname);
+-			return DM_FLUSH_OK; /* raced. someone else removed it */
+ 		} else {
+-			condlog(2, "failed to remove multipath map %s",
+-				mapname);
++			int is_mpath = dm_is_mpath(mapname);
++
++			if (is_mpath == DM_IS_MPATH_NO) {
++				condlog(4, "multipath map %s removed externally",
++					mapname);
++				return DM_FLUSH_OK; /* raced. someone else removed it */
++			}
++			/*
++			 * A query error (DM_IS_MPATH_ERR) must not be treated
++			 * as "removed externally": under an ioctl storm the
++			 * status query can transiently fail, and returning
++			 * DM_FLUSH_OK here would leave the map suspended.
++			 */
++			if (is_mpath == DM_IS_MPATH_ERR)
++				condlog(1, "%s: unable to verify map state after failed remove",
++					mapname);
++			else
++				condlog(2, "failed to remove multipath map %s",
++					mapname);
+ 			if ((flags & DMFL_SUSPEND) && queue_if_no_path != -1) {
+ 				dm_simplecmd_noflush(DM_DEVICE_RESUME,
+ 						     mapname, udev_flags);
 -- 
 2.43.0
 
