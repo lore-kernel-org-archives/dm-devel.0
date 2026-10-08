@@ -1,129 +1,189 @@
-Received: from mailout3.samsung.com (mailout3.samsung.com [203.254.224.33])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21C14466B00
-	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 12:27:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=203.254.224.33
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0295F3624B3;
+	Thu,  8 Oct 2026 17:33:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791462478; cv=none; b=gmpGpuVinLosOcTWSShSsV2447BUX2A6xh5+LCU+ZOcD8bgBTsOMgG07+mgUeHRVjhxP8S0CmVNTPJSHGuERpd1ViOiUwblUXDgbSLy/XeTHzCPnByoDvVCeakGIBqzXMi3E9sDcVfqzlL+YQd99jvYl+fzTtnrpWndDAKN/CRc=
+	t=1791480830; cv=none; b=cWUY77rdyLd+h8uUP4rw65/MII9GE2zm+dFV51ngOfCV4o3YYgSYQ+wzGIZfvOK6UDgUCqfy9qvLYxW8wzvQYjvJG9+6XzBfVKPYZh/xQ38J7U/D6n8G6zPvKlzoEPhwybTZaZUn8XHl41Lq+zSHeIpFF+cpt5gAklckQpfKZqM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791462478; c=relaxed/simple;
-	bh=M/of0yKyhsge6MIBInUspqDhJmPuNOVFyiktJawrHXk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:From:In-Reply-To:
-	 Content-Type:References; b=J/5FCwPKYA5LlBOCFDTNHKNZ2qWiBSqCWCSk52FCgb9Jx0X/TFSYe3KvBPxDIaK1ZquqCQa2hyr9g5/T58lOlJ5nBEkQTOPWI0Jb3Rt8y19HMDn/7XRrYPJBqQx4czngMfidqjnHZTxPaD1eDaXE684pi0wD5385yA0VoRxNIe0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com; spf=pass smtp.mailfrom=samsung.com; dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b=tdC5+MT+; arc=none smtp.client-ip=203.254.224.33
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=samsung.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=samsung.com
+	s=arc-20240116; t=1791480830; c=relaxed/simple;
+	bh=qjUkLXreYg8MXdiceVPsiNnpljXYWMTyIQ0/Bl5CPWY=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=VxwIyO/w5ZEleo4k9PWNQPogf9PoNm1WxEqpwS5bW7nQZtWUaZoiInTsvRCDxNt4Jmdf7d7ypA0KQKxJnWJ7kbbd3V1gvoCWnzdJW+Ho6AoC6HiXGsVGWMsDpbz5S/J11AmdEZ7x2mNSKGt9QLuAVpz+QrVuruqxPt/9b8gFLmM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hL8aekWD; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=samsung.com header.i=@samsung.com header.b="tdC5+MT+"
-Received: from epcas5p1.samsung.com (unknown [182.195.41.39])
-	by mailout3.samsung.com (KnoxPortal) with ESMTP id 20261008122753epoutp03b5685c715241e278540abd17949ca561~cjaDAC_3o2964929649epoutp038
-	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 12:27:53 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout3.samsung.com 20261008122753epoutp03b5685c715241e278540abd17949ca561~cjaDAC_3o2964929649epoutp038
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-	s=mail20170921; t=1791462473;
-	bh=y3JROMvSkErlghFufMEpz2e3fgBQWeAkOo4JhswqA7k=;
-	h=Date:Subject:To:Cc:From:In-Reply-To:References:From;
-	b=tdC5+MT+GmAi5muBRq1BT1yN1ZKyFBL9HVTHiJoMUk9qir3KHpRlhz35ERD8YB6Bl
-	 i1eJ514gd7g1gNeb0KlrladiC9kKg0NHCB+yBiTYgiBHVNFGcUFtxIU50PqOf5+JRY
-	 f9jIGFX133rc42c6pXTmJz1rl62OYAb4OJmJKBEI=
-Received: from epsnrtp03.localdomain (unknown [182.195.42.155]) by
-	epcas5p3.samsung.com (KnoxPortal) with ESMTPS id
-	20261008122752epcas5p3d0e2b9158c0268ad04675e87ce26f1a2~cjaCjkMAU1506315063epcas5p3z;
-	Thu,  8 Oct 2026 12:27:52 +0000 (GMT)
-Received: from epcas5p1.samsung.com (unknown [182.195.38.93]) by
-	epsnrtp03.localdomain (Postfix) with ESMTP id 4j0q5M5zGqz3hhT3; Thu,  8 Oct
-	2026 12:27:51 +0000 (GMT)
-Received: from epsmtip1.samsung.com (unknown [182.195.34.30]) by
-	epcas5p1.samsung.com (KnoxPortal) with ESMTPA id
-	20261008122751epcas5p1c1717e88968c87ac8cd3f6f7cd53fd94~cjaBJv_6d1842018420epcas5p1H;
-	Thu,  8 Oct 2026 12:27:51 +0000 (GMT)
-Received: from [107.122.10.194] (unknown [107.122.10.194]) by
-	epsmtip1.samsung.com (KnoxPortal) with ESMTPA id
-	20261008122747epsmtip1643989c6f636e89fda3b56fc37de2645~cjZ9_NBhB1436814368epsmtip1X;
-	Thu,  8 Oct 2026 12:27:47 +0000 (GMT)
-Message-ID: <bbb87d6b-b7a3-487a-8be4-27f3f9ce4a1b@samsung.com>
-Date: Thu, 8 Oct 2026 17:57:47 +0530
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hL8aekWD"
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 3E0771F000FF;
+	Thu,  8 Oct 2026 17:33:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1791480828;
+	bh=G4v32k8/a/EW1WFqBk/X57CZyQESBg0MOmvtF2yjKvU=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=hL8aekWDig0eQ/IB3W4TdhsV9BzgYHbYp6k6GUoeKwLB0Sw94BQw6k5bNTEfG6we+
+	 CmS19CDTrA+i3vY3gxsUou4g5KeSTL6RktPkWzFyFnIACLQ9/1iJJAWRJ1SKctNQPR
+	 h5zQPYUUhBouwf/IV/JMUXzktSx3NhyHLzdEns+nlYQuUA2jrIjlD+8+orpETlNI07
+	 EUw+hF6ngIpgDdXYrw7pHI4CJBQCMnKtmD/hvFwzXYtJCtdCa2xdJ4ASq9w8KT0Y1c
+	 fvBg49iGVWPDPPI3vPl0qanx5AYZhTIYwPbz3FcES98yY3s52n6tuJdMCh5IjHo08p
+	 Q9K74wOx4Ycbg==
+Date: Thu, 8 Oct 2026 20:33:45 +0300
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Andrew Halaney <andrew@amutable.com>
+Cc: David Howells <dhowells@redhat.com>, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>, dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org, keyrings@vger.kernel.org,
+	linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
+	fsverity@lists.linux.dev, linux-doc@vger.kernel.org,
+	"Christian Brauner (Amutable)" <brauner@kernel.org>
+Subject: Re: [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
+Message-ID: <asfT-SLkty5DC_Rx@kernel.org>
+References: <aqyiCavj3xeNqyAo@kernel.org>
+ <20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com>
+ <20260914-ajhalaney-dmverity-key-identifier-v1-1-01922dc1366a@amutable.com>
+ <715249.1789718726@warthog.procyon.org.uk>
+ <aq2VxlttdlTNlHo6@toolbx>
+ <arYzQN1ViuiCBemo@kernel.org>
+ <asZlNEFdvidvMdJ5@toolbx>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v9 05/13] block: add dma-buf support for raw bdev
-To: Pavel Begunkov <asml.silence@gmail.com>, linux-block@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-media@vger.kernel.org,
-	dri-devel@lists.freedesktop.org, linaro-mm-sig@lists.linaro.org,
-	linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
-	io-uring@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Sumit Semwal
-	<sumit.semwal@linaro.org>, =?UTF-8?Q?Christian_K=C3=B6nig?=
-	<christian.koenig@amd.com>, Keith Busch <kbusch@kernel.org>, Sagi Grimberg
-	<sagi@grimberg.me>, Alexander Viro <viro@zeniv.linux.org.uk>, Christian
-	Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Andrew Morton
-	<akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, Nitesh Shetty
-	<nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>, Mike Snitzer
-	<snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, Benjamin
-	Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Content-Language: en-US
-From: Anuj Gupta/Anuj Gupta <anuj20.g@samsung.com>
-In-Reply-To: <af2b48a490186edf38f1d4a5dfd9513574f7a350.1791336930.git.asml.silence@gmail.com>
-Content-Transfer-Encoding: 7bit
-X-CMS-MailID: 20261008122751epcas5p1c1717e88968c87ac8cd3f6f7cd53fd94
-X-Msg-Generator: CA
-Content-Type: text/plain; charset="utf-8"
-CMS-TYPE: 105P
-cpgsPolicy: CPGSC10-542,Y
-X-CFilter-Loop: Reflected
-X-CMS-RootMailID: 20261007014324epcas5p2a7f3b03f118c9a1d1c633fe839ed1e46
-References: <cover.1791336930.git.asml.silence@gmail.com>
-	<CGME20261007014324epcas5p2a7f3b03f118c9a1d1c633fe839ed1e46@epcas5p2.samsung.com>
-	<af2b48a490186edf38f1d4a5dfd9513574f7a350.1791336930.git.asml.silence@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <asZlNEFdvidvMdJ5@toolbx>
 
-On 10/7/2026 7:12 AM, Pavel Begunkov wrote:
-> +static int blkdev_init_dma_buf_io_ctx(struct file *file,
-> +				      struct dma_buf_io_ctx *ctx)
-> +{
-> +	struct block_device *bdev = file_bdev(file);
-> +	struct gendisk *disk = bdev->bd_disk;
-> +
-> +	if (!(file->f_flags & O_DIRECT))
-> +		return -EINVAL;
-> +	if (!disk->fops->init_dma_buf_io_ctx)
-> +		return -EOPNOTSUPP;
+On Wed, Oct 07, 2026 at 10:30:14AM -0500, Andrew Halaney wrote:
+> On Fri, Sep 25, 2026 at 11:39:28AM +0300, Jarkko Sakkinen wrote:
+> > On Fri, Sep 18, 2026 at 02:59:49PM -0500, Andrew Halaney wrote:
+> > > On Fri, Sep 18, 2026 at 09:05:26AM +0100, David Howells wrote:
+> > > > Jarkko Sakkinen <jarkko@kernel.org> wrote:
+> > > > 
+> > > > > This is great for discussion but what we want for the commit message
+> > > > > is just motivation and resolution.
+> > > > 
+> > > > Actually, I think it's useful that Andrew wrote up the issues in the commit
+> > > > message - and I think it shows part of the motivation.  The 'writing a fake
+> > > > /proc/keys line in the description' is something I hadn't considered.
+> > > 
+> > > I'll defer to what you all want in the message here, I found it valuable
+> > > but I trend on the side of overly verbose admittedly!
+> > > 
+> > > > 
+> > > > > I don't think we need all this just to say that /proc/keys in a racy
+> > > > > query mechanism for production, which is an issue for dm-verity, given
+> > > > > that nothing else is available.
+> > > > 
+> > > > I think at some point, we will need a system call to search all for all
+> > > > accessible keys matching certain criteria by actually walking the key
+> > > > database.  The problem there is that there may be multiple hits, so we may
+> > > > need something like:
+> > > > 
+> > > > 	int count = find_key(key_serial_t start_id,
+> > > > 			     const char *type, const char *desc_prefix,
+> > > > 			     key_serial_t *results, size_t results_size,
+> > > > 			     unsigned int flags);
+> > > > 
+> > > > Allowing you to do:
+> > > > 
+> > > > 	key_serial_t dm_key;
+> > > > 	int n = find_key(0, "keyring", ".dm_verity", &dm_key, 1,
+> > > > 			 FIND_KEY_EXACT_DESC);
+> > > > 
+> > > > This wouldn't be as fast as a direct lookup since it would have to walk the
+> > > > key tree, doing name comparisons and perm checks on each key of the type.
+> > > > 
+> > > > > And secondly special keys are meant for implicit keyrings so isn't
+> > > > > that all there's to it?
+> > > > 
+> > > > I have no particular objection to setting aside a block of negative key IDs
+> > > > for special keyrings that need to be accessed a lot - though I would make
+> > > > common reg/unreg functions that take the ID to be registered and, say, set the
+> > > > block at -257..-512.  Moving the BFP keyring to -257 and DM to -258.
+> > > 
+> > > To be clear are you suggesting I do that for v2 here? Happy to make the
+> > > change and add some reuse to the registration functions, etc. I'm
+> > > guessing its fine to change the bpf id since its still only in -next?
+> > > 
+> > > The only awkward bit with making that more generic is that dm-verity
+> > > isn't __ro_after_init since its coming from a module possibly, and
+> > > because of the module usage I also protected it with a spinlock in case
+> > > someone's accessing it while you unload the module. Could just use one
+> > > spinlock for the whole generic array, and drop the __ro_after_init I
+> > > suppose.
+> > > 
+> > > Let me know if I'm not following properly!
+> > 
+> > I just read David's response and I think he made fair arguments,
+> > and patches look fine to me.
+> > 
+> > David, did you have anything? I could pick these.
+> > 
+> > Reviewed-by: Jarkko Sakkinen <jarkko@kernel.org>
+> > 
+> 
+> Gentle ping :)
 
-dma-buf doesn't work with PI: bi_dmabuf_map aliases bi_io_vec, and 
-blk_integrity_iterate() walks it as bvecs to generate/verify the 
-checksum. rw-dmabuf liburing test hangs on a PI enabled NVMe. Something 
-like below is needed:
+Understandable :-)
 
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index e929f94b25c7..1b7f8cbbda8b 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3150,6 +3150,12 @@ void blk_mq_submit_bio(struct bio *bio)
-                 goto queue_exit;
-         }
+> 
+> Are we happy with these to get picked up?
 
-+       if (unlikely(op_is_dmabuf(bio->bi_opf) &&
-+               bdev_has_integrity_csum(bio->bi_bdev))) {
-+               bio_endio_status(bio, BLK_STS_NOTSUPP);
-+               goto queue_exit;
-+       }
-+
-         if ((bio->bi_opf & REQ_POLLED) && !blk_mq_can_poll(q)) {
-                 bio_endio_status(bio, BLK_STS_NOTSUPP);
-                 goto queue_exit;
-diff --git a/block/fops.c b/block/fops.c
-index e9da48ab73be..6c6700df943c 100644
---- a/block/fops.c
-+++ b/block/fops.c
-@@ -976,6 +976,8 @@ static int blkdev_init_dma_buf_io_ctx(struct file *file,
-                 return -EINVAL;
-         if (!disk->fops->init_dma_buf_io_ctx)
-                 return -EOPNOTSUPP;
-+       if (bdev_has_integrity_csum(bdev))
-+               return -EOPNOTSUPP;
-         return disk->fops->init_dma_buf_io_ctx(bdev, ctx);
-  }
+Can you just do a resend that applies on top of latest mainline
+or my tree? I.e. b4 shazam was not happy about this.
 
+Full log:
+
+$ b4 shazam https://lore.kernel.org/keyrings/20260914-ajhalaney-dmverity-key-identifier-v1-2-01922dc1366a@amutable.com/
+Grabbing thread from lore.kernel.org/all/20260914-ajhalaney-dmverity-key-identifier-v1-2-01922dc1366a@amutable.com/t.mbox.gz
+
+Breaking thread to remove parents of 20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com
+Checking for newer revisions
+Grabbing search results from lore.kernel.org
+Analyzing 10 messages in the thread
+Analyzing 0 code-review messages
+Checking attestation on all messages, may take a moment...
+---
+  ✗ [PATCH 1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
+    + Reviewed-by: Jarkko Sakkinen <jarkko@kernel.org> (✓ DKIM/kernel.org)
+    + Reviewed-by: Christian Brauner (Amutable) <brauner@kernel.org> (✓ DKIM/kernel.org)
+  ✗ [PATCH 2/3] keys: add KEY_SPEC_FS_VERITY_KEYRING
+    + Reviewed-by: Christian Brauner (Amutable) <brauner@kernel.org> (✓ DKIM/kernel.org)
+  ✗ [PATCH 3/3] Documentation: keys: document IDs added since KEY_SPEC_REQKEY_AUTH_KEY
+    + Reviewed-by: Christian Brauner (Amutable) <brauner@kernel.org> (✓ DKIM/kernel.org)
+  ---
+  ✗ BADSIG: DKIM/amutable-com.20251104.gappssmtp.com
+---
+Total patches: 3
+---
+ Base: base-commit 1a1de54f7369cd2b5bac0f265910e60ad3a6b4c3 not known, ignoring
+Applying: keys: add KEY_SPEC_DM_VERITY_KEYRING
+Patch failed at 0001 keys: add KEY_SPEC_DM_VERITY_KEYRING
+error: patch failed: include/linux/key.h:441
+error: include/linux/key.h: patch does not apply
+error: patch failed: include/uapi/linux/keyctl.h:25
+error: include/uapi/linux/keyctl.h: patch does not apply
+error: patch failed: security/keys/process_keys.c:25
+error: security/keys/process_keys.c: patch does not apply
+hint: Use 'git am --show-current-patch=diff' to see the failed patch
+hint: When you have resolved this problem, run "git am --continue".
+hint: If you prefer to skip this patch, run "git am --skip" instead.
+hint: To restore the original branch and stop patching, run "git am --abort".
+hint: Disable this message with "git config advice.mergeConflict false"
+
+> 
+> Thanks,
+> Andrew
+
+Br, Jarkko
