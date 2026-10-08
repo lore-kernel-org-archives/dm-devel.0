@@ -1,122 +1,127 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-yx1-f48.google.com (mail-yx1-f48.google.com [74.125.224.48])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4134336B932
-	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 20:28:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C743943712C
+	for <dm-devel@lists.linux.dev>; Thu,  8 Oct 2026 20:58:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.224.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791491301; cv=none; b=L/TVs85Gu0cOVULzifaOdoMbX6QHAcWs5p9zf1FzBfm6MA1RGpgEhR9mg+UC06Qu1SzKPkqDFVfMeUeSYX+e/xUfnSgDFQnNX1YzXzN4O7Q3jCh8LpdRCJrnn1mtyODWHPuMH9slpmgd8SQ4G9l5FVX2VcdCfYW+YvprqHP+/GI=
+	t=1791493086; cv=none; b=Xg/ZQa/XKO72tQgNMYmIQRvtFLdtxEb0hX8/2tBX73TbddarDEREd45lf3yyQG2hP8q+HEiuDBF2Z3jKYlkPWL8bIN8SHL0PVaC6CZOj30jvHa9olVLAn82+YTFBrd/N6etGxHvAw0kD2hC2/crOe+cTBhCNW7FgADloMClvQKo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791491301; c=relaxed/simple;
-	bh=YYssrwDV9R6sIxuaMiNfMGQJtK1a//rny4D9udmTozw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:content-type; b=snjlq0W8jZUrp96ozX9lSSywIoKd+pwPSE3QX4OViEO7Ux9QZBqBQbBCFS7NP1nldbW2iykR+ThfR+5nLvcT49NOxCLNJ8Zdnx+HATKqz2wmVvO1AoG8mNNfmLFUHb/cuDa5JUKxNqgwYZhE8OSt6892CrcQb/o11aeRiDedUEk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=QS5M/YcL; arc=none smtp.client-ip=170.10.129.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1791493086; c=relaxed/simple;
+	bh=vpbeEaPR3E1pmaT/xNDC5hjULFUimCv8YKxCMpWM/dg=;
+	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=ZTAT6V50K+tTpOhJElvTix9ZwTIczSS30XhKfLcSv8Qh3tLuKCqrch7u3zWqb2FlDZWXmhVlUpx4g74zlpROFszoA+/TNp2izCELLh1YIVGSW1iesvdQSdI0VIhCwpx2Ie5H9y81E7+d14WEXunyvIT+UVV5e0mn5BdWsITpqm8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com; spf=pass smtp.mailfrom=amutable.com; dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b=PiM8ErB9; arc=none smtp.client-ip=74.125.224.48
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amutable.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="QS5M/YcL"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791491299;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=dnQdJ8ObnHEOrCfH3bjC4mmYFQflYMN0iOGR6GxyMos=;
-	b=QS5M/YcLDuoVKxSMdXBPRpDs3KBx4VIVx/wZwACPfU9RZBRYnM9QSYJRen/2BcnUDuSzPb
-	a7v5kP/LHv0IDpStslwfTogbl2olFA98AlSpPOZv18ErUbMfSnrqTiiYA9FTeb7ErDpWpu
-	1WINWyzg6bzAtVvAcwFDWYb2/ooZ74c=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-633-tJ1P0Zn5Pd-6iDphu36Y5w-1; Thu,
- 08 Oct 2026 16:28:15 -0400
-X-MC-Unique: tJ1P0Zn5Pd-6iDphu36Y5w-1
-X-Mimecast-MFC-AGG-ID: tJ1P0Zn5Pd-6iDphu36Y5w_1791491295
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B89FE180AAB5;
-	Thu,  8 Oct 2026 20:28:14 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 502D71956041;
-	Thu,  8 Oct 2026 20:28:14 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 698KSDq41976827
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 8 Oct 2026 16:28:13 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 698KSDSw1976826;
-	Thu, 8 Oct 2026 16:28:13 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@lists.linux.dev
-Subject: [PATCH 2/3] dm-mpath: standardize repeat_count handling in the HST path selector
-Date: Thu,  8 Oct 2026 16:28:08 -0400
-Message-ID: <20261008202809.1976567-3-bmarzins@redhat.com>
-In-Reply-To: <20261008202809.1976567-1-bmarzins@redhat.com>
-References: <20261008202809.1976567-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=amutable-com.20251104.gappssmtp.com header.i=@amutable-com.20251104.gappssmtp.com header.b="PiM8ErB9"
+Received: by mail-yx1-f48.google.com with SMTP id 956f58d0204a3-6711f05fb14so3807794d50.2
+        for <dm-devel@lists.linux.dev>; Thu, 08 Oct 2026 13:58:04 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amutable-com.20251104.gappssmtp.com; s=20251104; t=1791493083; x=1792097883; darn=lists.linux.dev;
+        h=cc:to:content-transfer-encoding:content-type:mime-version
+         :message-id:date:subject:from:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=V0S61SflNz3PvfgcGBGx11GkE7hBo5diSyO3i89hlIg=;
+        b=PiM8ErB9YOBH3pDrFcRfakqLOs+ZntKl+RNI8tkgFL2g34gPyssbbSeRYFdNMBez9u
+         2hEU8aaJs1qBHs9C0S7OAe6Iu7zLLiWpJhY+JdnCaOlczhoOsAx2XsV30b7/sCWK99/c
+         TNVL83tL7ddOcwUHQUlJ5saUcuMb2k49fP6Yz5C2C95fFmkKBZTM7038bIFs1G/+2Flu
+         Xs5apVqFiuVNAW6fPA4Bepl4b5e/d+AFtVAjgKxZ7q8lCRAiDMkQwhbA8fk66L+gTZjZ
+         iXlEfqTV6rkzZ4zBKa1pS+2x4837/CsjW+FucR1K8rXloircrwJqvhoOCyZSk40ACiD2
+         +u2g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1791493084; x=1792097884;
+        h=cc:to:content-transfer-encoding:content-type:mime-version
+         :message-id:date:subject:from:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=V0S61SflNz3PvfgcGBGx11GkE7hBo5diSyO3i89hlIg=;
+        b=pWI1qOcOmZP1zCJHGLdXrzB36FiiYwprb32P7+IRfK5JhAhnTj56UmNiLOIUaI+jMf
+         kVEeEEOY7RAak1Ro+3JzBuFoAG1OYTtMnzaYCFFdzIjabN3gcWO7LXtTKvC4y7XiW+S6
+         OOIbvuCS+Vqdmu32D99jOn3F1SdXqYnxpeVHN8qWv0nBrp5ZQw378r3gdV2FT0GHcMlb
+         uMYNf5QrHOAUIAuc7o//Ay7HiXkVCI4cbF0xGrdkoRhviG7S1c0He/zMPeGf875fTnjs
+         Qf0tYob2cvuXpre0dKDxo6ZfFc0WBpi4989Z+YWSRePx9xfhpYbQGA+vKm026gl305SS
+         3oeQ==
+X-Gm-Message-State: AFq9FYKLoq7b4Trkv+UXLH0x+DzTWJ6VK/9GbDT+3oNdBKDxBwmovpUZ
+	zF3vfGVZPjBTyMi7wILG3e6HOdChbKctujWrRbljNziHL5G1Cnzz0s9UQkjz1PKnSt/v
+X-Gm-Gg: AYBFou2CVLbbHZrmoPvM0AITjJ8OveXEKS8JG7Pi0sjM55WCx/A5UI9k5vD1OJP6M7b
+	j3BOD2r9vtrcAwoOYgAu6+mde+ibcf/69aRZkKox02rH8/wdQM4dpYjfHRfppRH10TSgPiOSojR
+	MxcvaSIXoIHzRxrQDViFb7crp9kAwQWkeBECchtHomA7gFQRkOTe7XqDtcmU16tEncr+oGFGI8z
+	15Dw+OrTfmfjrEf6ko/exD+LoGARiWrmB65hHiRXmUg6TbJS9qiKywYmL1Mx5WiWjIPbZ8vx+MH
+	vs4T3oi35eoEfXV1zu1v1z3PzmwtQMY2eyKxCYRqp4cPMKnPJF7EnZFCRaAp74DC7QlOiYJX6mX
+	jFNNFUOOFORhoQ1QcR5k3LT7j46m3neDeXygKK+gH4JMmTqrioByE+aWyeNeSnFaSDgIiofJT9Y
+	QXKdRS9k+c8dQ8NeWOWXazyGh3qL8IOAU/2p957ljhmmnVY+knfFDB9CQaT4XLJfAfH4bJjv997
+	HJ+2rYp84htWHeYa3gXKdj0UpqRBcDjl1Ufoilz9WpX44CkBM8D0nFy
+X-Received: by 2002:a05:690e:d06:b0:678:4671:d9d1 with SMTP id 956f58d0204a3-679360087aamr34732d50.21.1791493083618;
+        Thu, 08 Oct 2026 13:58:03 -0700 (PDT)
+Received: from [192.168.1.110] (104-53-165-62.lightspeed.stlsmo.sbcglobal.net. [104.53.165.62])
+        by smtp.gmail.com with ESMTPSA id 956f58d0204a3-67935707401sm78814d50.24.2026.10.08.13.58.02
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 08 Oct 2026 13:58:03 -0700 (PDT)
+From: Andrew Halaney <andrew@amutable.com>
+Subject: [PATCH bpf-next v2 0/3] keys: Add well known IDs for
+ fs-verity/dm-verity keys
+Date: Thu, 08 Oct 2026 15:57:34 -0500
+Message-Id: <20261008-ajhalaney-dmverity-key-identifier-v2-0-008456d189cb@amutable.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: tVJOGiybNwOcbBp71MZzXiD0kCROhWFiqEyqc9jhKBc_1791491295
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/5WNQQ6CMBBFr0JmbU1bsIor72FYtHSQUSikrQ2Ec
+ HcbbuDy5eX/t0FATxjgXmzgMVGgyWWQpwLaXrsXMrKZQXKpeC0qpt+9HrTDldkx5W1c2ScDWXS
+ ROkLPKnG7GiXL0uAF8s/ssaPlaDzBzB1zuERosukpxMmvRzyJw//RSYJxxkUtpW1FqZR+6PEbt
+ Rnw3E4jNPu+/wBcIMGP3wAAAA==
+X-Change-ID: 20260914-ajhalaney-dmverity-key-identifier-4187b6233be5
+To: Alexei Starovoitov <ast@kernel.org>, 
+ Daniel Borkmann <daniel@iogearbox.net>, Andrii Nakryiko <andrii@kernel.org>, 
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, 
+ David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko@kernel.org>, 
+ Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
+ "Serge E. Hallyn" <serge@hallyn.com>, Eric Biggers <ebiggers@kernel.org>, 
+ "Theodore Y. Ts'o" <tytso@mit.edu>, Jonathan Corbet <corbet@lwn.net>, 
+ Shuah Khan <skhan@linuxfoundation.org>, 
+ Randy Dunlap <rdunlap@infradead.org>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, 
+ bpf@vger.kernel.org, fsverity@lists.linux.dev, linux-doc@vger.kernel.org, 
+ Andrew Halaney <andrew@amutable.com>, 
+ "Christian Brauner (Amutable)" <brauner@kernel.org>
+X-Mailer: b4 0.14.3
 
-The Historical Service Time path selector ignores the repeat_count
-argument just like all the other path selectors. But all of the other
-path_selectors explicitly print a warning message when the repeat_count
-is set greater than 1. Also, all of the other selectors print 1 for the
-repeat_count when printing the table. Standardize the HST path selector
-to match.
+This more or less follows the bpf keyring approach, allowing userspace
+to easily find the keys instead of having to parse /proc/keys.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Andrew Halaney <andrew@amutable.com>
 ---
- drivers/md/dm-ps-historical-service-time.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+Changes in v2:
+- Rebased / target bpf-next/for-next since 264d8fd2794f ("bpf, keys: Add a bpf
+  keyring for program signature validation") only exists there.
+- Grabbed Reviewed-by trailers.
+- Link to v1: https://lore.kernel.org/r/20260914-ajhalaney-dmverity-key-identifier-v1-0-01922dc1366a@amutable.com
 
-diff --git a/drivers/md/dm-ps-historical-service-time.c b/drivers/md/dm-ps-historical-service-time.c
-index e6324424d23a..e0103eefe28f 100644
---- a/drivers/md/dm-ps-historical-service-time.c
-+++ b/drivers/md/dm-ps-historical-service-time.c
-@@ -31,7 +31,7 @@
- 
- #define DM_MSG_PREFIX	"multipath historical-service-time"
- #define HST_MIN_IO 1
--#define HST_VERSION "0.1.1"
-+#define HST_VERSION "0.2.0"
- 
- #define HST_FIXED_SHIFT 10  /* 10 bits of decimal precision */
- #define HST_FIXED_MAX (ULLONG_MAX >> HST_FIXED_SHIFT)
-@@ -216,7 +216,7 @@ static int hst_status(struct path_selector *ps, struct dm_path *path,
- 			       pi->outstanding, pi->stale_after);
- 			break;
- 		case STATUSTYPE_TABLE:
--			DMEMIT("0 ");
-+			DMEMIT("%u ", pi->repeat_count);
- 			break;
- 		case STATUSTYPE_IMA:
- 			*result = '\0';
-@@ -251,6 +251,11 @@ static int hst_add_path(struct path_selector *ps, struct dm_path *path,
- 		return -EINVAL;
- 	}
- 
-+	if (repeat_count > 1) {
-+		DMWARN_LIMIT("repeat_count > 1 is deprecated, using 1 instead");
-+		repeat_count = 1;
-+	}
-+
- 	/* allocate the path */
- 	pi = kmalloc_obj(*pi);
- 	if (!pi) {
+---
+Andrew Halaney (3):
+      keys: add KEY_SPEC_DM_VERITY_KEYRING
+      keys: add KEY_SPEC_FS_VERITY_KEYRING
+      Documentation: keys: document IDs added since KEY_SPEC_REQKEY_AUTH_KEY
+
+ Documentation/security/keys/core.rst | 13 ++++++++
+ drivers/md/dm-verity-verify-sig.c    |  3 ++
+ fs/verity/signature.c                |  2 ++
+ include/linux/key.h                  |  2 ++
+ include/uapi/linux/keyctl.h          |  2 ++
+ security/keys/process_keys.c         | 58 ++++++++++++++++++++++++++++++++++++
+ 6 files changed, 80 insertions(+)
+---
+base-commit: e1d84a37cba984388988d2f1ddc84561413f0db2
+change-id: 20260914-ajhalaney-dmverity-key-identifier-4187b6233be5
+
+Best regards,
 -- 
-2.53.0
+Andrew Halaney <andrew@amutable.com>
 
