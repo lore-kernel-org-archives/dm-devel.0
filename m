@@ -1,78 +1,69 @@
-Received: from mail-ej2-f11.google.com (mail-ej2-f11.google.com [74.125.228.139])
+Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E192A43DECD
-	for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 17:54:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.139
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F03762673AA
+	for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 18:02:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791741298; cv=none; b=bpE0YOV1H2VMK0NttC3Ym4/Q9KwlpMGrBlwsICVQz16a+OksrozfHsXjHJcE7iWw4XlY0w18uhhzCPiXTqIAIWx9KW00zfyCKk5kCG/hCsKl0iKoOTvsE+VNY24RB0JhnIJL3gTFxNTIEZb3E//63P3vCtp5/0zmssmTA9PX8ds=
+	t=1791741771; cv=none; b=DBP/eFZu1FYo9kmwq5BWXmTV8J/m1o7MPeyeWM8HYU7EGO9oXr0wN04jikVpK+66xMHhqQgUGDzvpBNT7IBZzwwXmlAtxuetaJ0fYlKn+NDDelX7xFGxhflcQgXuW6oEzAusXUgR0WegZpj2Bc7l/VRTqwpCq8eevLNXhaF6vVk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791741298; c=relaxed/simple;
-	bh=mh0naAZ5rGdtBm3SRObJJh3xiuOOeB+3Lk4WoYcj6y8=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ARRXI6TSmSuEP/5LqDsfr9n4MDFetqx+wptJPGou+Dk4Gr0z4694qfAewjR76QV6qOQUSqD/AgJEKT3wjXrj21/XmYZW1PAK8HO8lhYuq8kqqkXmge5iOsTCa1XoQC90m/18B6Oq9OlK7U27ZuAo0YoX2sE6qWkpDDqkQOxz59E=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cOYwWtvv; arc=none smtp.client-ip=74.125.228.139
+	s=arc-20240116; t=1791741771; c=relaxed/simple;
+	bh=NCTQG5NYRe6CvsJnzbiFBIUSR0PK0k0ivERWSeh9S2o=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=estveGDxIMdqYoZW3Cb30i94x/6BmYB0rp7F/CUJGQ6U0dKAW3zfMItITqMKqnzeXWdZ7wo7QOUf59N9F6GBXTQN0vZ8iKnkEZa08679bb1jlCFQCUFYHXtqnoqz+ZgLC9BL/JgPui0hha/lnE5zKMiEG+10/AIvKCO4T/p65mI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j20S7IUI; arc=none smtp.client-ip=209.85.221.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cOYwWtvv"
-Received: by mail-ej2-f11.google.com with SMTP id a640c23a62f3a-c2e25574351so114206666b.1
-        for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 10:54:56 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j20S7IUI"
+Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-48af4d4e61fso703518f8f.2
+        for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 11:02:49 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791741295; x=1792346095; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=AXeUGkwkx/B0ZcB6bHet0Ei8c4WjWUt9Suh2yBdHG08=;
-        b=cOYwWtvvbmqhDprgFSFJZPgBzwhEaGODdsa+fnd/ldgKmiy/D1cedIKXulnkrS5r6R
-         22kxL+cn9aYSdIa7aFbQ3k8uiFR6rAkv8s2VxpTjROfJKe8hcK1rqGdiamPR4DaPqmfN
-         fZXw1Voyr08WrlXZc7DnHvKusQHuQyeOfEs4mz3E3/KX9C9YDTk0Zyf3uvh2h291cXag
-         wM0sZaTOMRdUI5jHqLwZWrhrDuu0WSj+phLW0loWVPeMvfV+SXCb3nwoIjjBS8Xr1LMm
-         P80PbMCXByBA2bCozsSi0zI/6JBj/gzkG0vh1TjsMC1sfSGzI5MxeqwkmOc6rRVdgQca
-         oWEA==
+        d=gmail.com; s=20251104; t=1791741768; x=1792346568; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=Ew/EmDhQFxa3pLooXJmh8OkoTE6RmMtwxoNU3Ecf/MI=;
+        b=j20S7IUIUPxlyiDiPR63myUcXxEl7FllKNASnf0aTSuR71sEBsKYAfYn4+CTspH0yA
+         8S8XQipdsZ0EjnSOP5eCvrHdBHVj+0T0mLYygN5i6uU216BaCuAsTNDkPfLvzG+XBl8o
+         Xbq/8v0PV0G1OFnCWt3Sf8KcQuJo/8pDJ7f6f6kF+rkUHHdGjr8mUT7tSM7Vxvuw0CXy
+         RAwhBzuZsnZN1bulLV7fcIBeGSl6RZqWgrOBuJB2WMQ5zfHruPJ8w1Z5TcloPEVZpwN8
+         pcc+2QDgggXSF1PHpMr/o8OJx4YBFQ3hVMErqzDhuUpCWzi/aS2K62ENBjtBJb4PPVm2
+         fw/Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791741295; x=1792346095;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=AXeUGkwkx/B0ZcB6bHet0Ei8c4WjWUt9Suh2yBdHG08=;
-        b=hj4CjCeL2WSMcyypjp1+DX0kRIicAaulje/eolxLQ1i2gZB6wjqsGsCberTxO7n+65
-         HoIK+bH8/LXZ/UhVof8JgGAZRxXXyYMkLmXnJrRFrJLyqtkHuF0NSh1dKrCeCo1eFVf+
-         awVeAwDi7hLXih4ewYYR51dZjredC6gFkEbFhGP38LyKdMThZtl7x/jTN3GxmxkIbJtn
-         BOHLosWzTx+p7ugBo6zbWlEriR8CEQUaZs90t1Ny+pix5Y8IwJqJh+aEhxPEG/y+JvSP
-         P/5ZtbYaqx24jxdBdQIkBhnlaOTbGFHamn4bzjCZFd7wzdynSrfDfFgeTa6Ltii6uZxR
-         id+w==
-X-Gm-Message-State: AFq9FYJFVOHPXiw9BJnZNgrxZUKRaHc433iLSF5qrs7ZwOHa8ECUFk9w
-	tf8htHZl34ynLTyhJw6OcJUCldvfMssSkw/zv82U68NxeLwhfsIgpKOV3ExVXRtq6QAG8A==
-X-Gm-Gg: AYBFou0cn8bW6r80d/2YZJ9UV8MgWxMcN7/5e1lgAqrFJmmQ4gFRNmw2gwud/R8jz5r
-	wC8b/bi+9cC3pvw/GjBo18+pvsDK9uN8z0BZY0+2CBgEhEm8fhmblgwpA80m97Ds4kIKK5pvE0G
-	NuCnF2eDvqE5EbDc20U9AZVvmRTpYpCEg4nQUby9P0AVRsmJHk63Is04mHwStAbyF7jn/8G+qaa
-	CYcGIEsnc097DYCxq7jWUWviLgom+bfiHAtV5Vik0vpfxES3FgdFE6fck5HZIPOmy/La7wkTQTt
-	K0jLb/tTswjzzB/PnKi2THrRSS5dGveOuu2jGhGxuqt8wCdS5Y1/7nCLzQhlFty9ybgQvqgURRw
-	tR03rVkHDoaKF616NRh4asACEQukdalbA1wnKHoQ4sdIuiSArUQ4xae9M+QueFQktKYqJ1YavD8
-	k7Pg+bCUeEr+YL/DARf4E7vs4vjDkAArC3ZDFBECpiPkhU0jVU1to11inXcfolvF76vgXtrETWv
-	LQ2tYGsIxfEm8ev2fbFmSzdMsEJyVOcLgezQB9oAdvihME=
-X-Received: by 2002:a17:906:7956:b0:c2b:898e:24fd with SMTP id a640c23a62f3a-c31aa0857f1mr838591166b.33.1791741294891;
-        Sun, 11 Oct 2026 10:54:54 -0700 (PDT)
+        d=1e100.net; s=20260707; t=1791741768; x=1792346568;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=Ew/EmDhQFxa3pLooXJmh8OkoTE6RmMtwxoNU3Ecf/MI=;
+        b=MNFtb2ahXcerD7YEFEhytVFDW8PuY04gr0AlqGOi+jkl6692P/30kcgFBn/wi5H2Nz
+         wGq64qAaOdBi+IupWQFOQ+ysr+SHyE7WIQCHA0LSUJ524Mgv63kyBBOSXD24ZtNE6QEe
+         1IQcn43zac23JhmHn9UCfhzX6ZzjC8+AH1utP2QwvH85ENsUs6p9MxGcBRz4b+zzuQTU
+         P5ulZSfjMbN17wu+7ezWaj7E9FqTvkJ7BOEmXNA0fF7YRA/5x0g+IVGhVCN+mXotHXJw
+         dE9RoNvj4wsOP9Pm8PwiXMPB9GStJItziwv6NoMfFVgOyeyWY+5QM7S3JZombHr0zvHs
+         rNGg==
+X-Gm-Message-State: AFq9FYIGCW704hIWwm+uqy6r0Hr3JSjxy9zcCcDzUJFpJoP3Rh+Wx4qn
+	37YvVfKMSR+BCyUzIDktw4QOlCP5n7ueQgbHRgtjkpyEU2ADt/mDRebqr6VX1nex2Tw=
+X-Gm-Gg: AYBFou1XYOjPO8n4+WdHBK+8f9H81FvJ7jOaUyZNijj27R9t7SNMtmnbTTAneMtI4MJ
+	QhzWk4DFN7vq/jWG/P7LYR5QSyYSczzsBic/U5nA0DzKS0Q3DIOjG7fxbFQBO89Nq4IDFX6QuMh
+	pihPhBJTZYPbWuJhDvFZLz51eVQ0ICdsXdkUunLjNiCmG9kp+FFKG2b4AXINRZenOa+qIEeqme9
+	chlN0CbiHIf+zkQSd6G0sGeSD4XOFdJXLz+h54+2DvSPb/ntKGY3nTJvTv2qKhtrlLp/lUed+/O
+	e8WFAgWL8BIBsobMqIASThuGRsExKVpPvH48GGRf9n1p+YggTZMg9pT5Ngr2ftpQZUDvaD81Hta
+	p/2ivbVgebIIQUw0VBlGmSXryDdpCSgEvdFTbxkihIOZjBNXunXTOWCdDUYu5F9fizdZjWjsUBW
+	Q/Z03JkxkaDGcah870OtcUVErlMYQuiE2Rhm6nNp+/zLGiYNdXl1s8DmyIx7D8aLzKowGxaKe0u
+	fqgKaKSf0vNZRL6uut7cXOp7iCmYy6cxpRDHdTC4k3MRYk=
+X-Received: by 2002:a05:600c:810a:b0:4a0:2391:6533 with SMTP id 5b1f17b1804b1-4a18e4a954bmr117375805e9.21.1791741767865;
+        Sun, 11 Oct 2026 11:02:47 -0700 (PDT)
 Received: from localhost.localdomain (87-205-122-125.dynamic.inetia.pl. [87.205.122.125])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c31a9a9f776sm376806366b.48.2026.10.11.10.54.54
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a18bbbdd75sm178873495e9.1.2026.10.11.11.02.47
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 11 Oct 2026 10:54:54 -0700 (PDT)
+        Sun, 11 Oct 2026 11:02:47 -0700 (PDT)
 From: Kyrylo Biryuk <illofspeed@gmail.com>
-To: dm-devel@lists.linux.dev
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	bmarzins@redhat.com,
-	hare@suse.de,
-	dlemoal@kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH v3 3/3] dm zoned: keep polling for idle reclaim after a reclaim pass
-Date: Sun, 11 Oct 2026 19:54:50 +0200
-Message-ID: <20261011175450.952-4-illofspeed@gmail.com>
+To: dlemoal@kernel.org
+Cc: dm-devel@lists.linux.dev,
+	hare@suse.de
+Subject: [PATCH dm-zoned-tools v3] dmz: check: do not use the write pointer of conventional zones
+Date: Sun, 11 Oct 2026 20:02:46 +0200
+Message-ID: <20261011180246.758-1-illofspeed@gmail.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20261011175450.952-1-illofspeed@gmail.com>
-References: <20261011175450.952-1-illofspeed@gmail.com>
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -81,53 +72,65 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-dmz_reclaim_work() re-arms its DMZ_IDLE_PERIOD poll only when
-dmz_should_reclaim() returns false at the start of a pass. After a pass
-it calls dmz_schedule_reclaim(), which queues the work only if reclaim
-is needed right now. When a pass ends while the target is still busy and
-has enough free zones, nothing is queued at all. Once the target goes
-idle, nothing re-evaluates dmz_should_reclaim() until new I/O arrives or
-user space sends a "reclaim" message, so the random or cache zones that
-filled up under load stay full.
+With more than one device, dmz_zone_is_cache() only matches the zones of
+the regular (cache) device. A chunk mapped to a conventional zone of the
+zoned device therefore reaches the write pointer test in
+dmz_check_mapped_zone_bitmap(). The kernel reports the write pointer of a
+conventional zone as -1, so wp_block becomes garbage and the bitmap loop
+reads far past its two-block buffer: dmzadm --check segfaults
+("Checking zone bitmaps..." is the last line), and --repair could clear
+bits based on that memory before crashing.
 
-Seen on md RAID5 members on 27 TB host-managed drives: after heavy
-writes the random zones stayed full for hours on idle targets; the
-workaround was a timer sending "dmsetup message <dev> 0 reclaim". With
-this patch the emptied and filled zones were reclaimed within minutes of
-the targets going idle, without the timer.
+Treat conventional and emulated (regular-device) zones as having no write
+pointer: every block may be valid.
 
-After a pass, requeue the work immediately if reclaim is still needed,
-otherwise re-arm the idle poll.
+Found on a cache-device + 27 TB host-managed drive set after reclaim had
+moved chunks into conventional zones (stock 2.2.2: exit 139; with the
+patch: "No error detected", also on an emulated ZBC drive with the same
+layout).
 
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
+Reproducer (scsi_debug zbc=managed, no special hardware):
+https://github.com/illofspeed/synology-host-managed-smr/blob/main/repro/1-dmzadm-check-two-devices.sh
+
 Assisted-by: LLM
 Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
 ---
- drivers/md/dm-zoned-reclaim.c | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 88d56d3c86d..5084e10ea7e 100644
---- a/drivers/md/dm-zoned-reclaim.c
-+++ b/drivers/md/dm-zoned-reclaim.c
-@@ -556,7 +556,16 @@ static void dmz_reclaim_work(struct work_struct *work)
- 		}
- 	}
+Notes:
+    v3: no code changes. From and Signed-off-by now carry my full name
+    instead of the GitHub handle "illofspeed" used for v2 (same author).
+    
+    The addresses in README.md are out of date (wdc.com, dm-devel@redhat.com),
+    hence this goes to dlemoal@kernel.org and dm-devel@lists.linux.dev.
+
+ src/dmz_check.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/src/dmz_check.c b/src/dmz_check.c
+index b13d025..943308b 100644
+--- a/src/dmz_check.c
++++ b/src/dmz_check.c
+@@ -509,9 +509,18 @@ static int dmz_check_mapped_zone_bitmap(struct dmz_dev *dev,
+ 	if (ret != 0)
+ 		return -1;
  
--	dmz_schedule_reclaim(zrc);
+-	/* No valid block should be present after the write pointer */
 +	/*
-+	 * Keep the worker alive: when a pass ends while the target is busy
-+	 * with enough free zones, dmz_schedule_reclaim() queues nothing and
-+	 * the idle poll is never re-armed, so zones filled under load are not
-+	 * reclaimed once the target goes idle.
++	 * No valid block should be present after the write pointer.
++	 * Conventional zones have no write pointer (the kernel reports -1):
++	 * every block may be valid. With more than one device,
++	 * dmz_zone_is_cache() only matches the cache device's zones, so the
++	 * zoned device's conventional zones reach this point.
 +	 */
-+	if (dmz_should_reclaim(zrc, dmz_reclaim_percentage(zrc)))
-+		mod_delayed_work(zrc->wq, &zrc->work, 0);
+ 	bad_bits = 0;
+-	wp_block = dmz_sect2blk(zone->wp - zone->start);
++	if (dmz_zone_conv(zone) || dmz_zone_unknown(zone))
++		wp_block = dev->zone_nr_blocks;
 +	else
-+		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
- }
- 
- /*
++		wp_block = dmz_sect2blk(zone->wp - zone->start);
+ 	for (b = 0; b < wp_block; b++) {
+ 		if (dmz_test_bit(dbuf, b))
+ 			dzone_weight++;
 -- 
 2.43.0
 
