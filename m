@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 161812ECD1D;
-	Sun, 11 Oct 2026 16:32:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46C267E792;
+	Sun, 11 Oct 2026 16:47:55 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791736337; cv=none; b=pRI4zzKPusxt79ePY+n/7Zx/dvAlWTFbIYq1CgpkqbqxXQPm5JZHP1l6MfhxsI+BSzapNEu7W/I7WlJ1i2P69AyzMiGWwCWBrqygFfltEiFBNORLehmFzuwNoqQyagEBODQv8YZP/2h0eGBvmCjwL8RiCFQZTpAaD2REyIZ6rJs=
+	t=1791737276; cv=none; b=cVfxksUP+WvHpPR0JDZ5m0vz2jqibWV35IQ26tjN61aJk4UbgkTToEr+TMcdRP0PRmXJ61i7Qu34X1OteLtisLod5M0vDHXzrsQ1uuw7GeWE8KcVkBng5Gmeds1ndrlePqGAnIxuLh3bCPuCyke8hwZjeJkIPezU1XGM3C+7TzU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791736337; c=relaxed/simple;
-	bh=/5/D2cCp4cLtnup4YVAmLACcNOcSGPqcz8HxIyVxSZc=;
+	s=arc-20240116; t=1791737276; c=relaxed/simple;
+	bh=OVGo8dveVvVAx8FNd5XcZlkwgwrwQ05THxwYXOHlNXA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=Xil47ziMTLSEcRCLQ5hpLDnlMVxBJuDzXhXTqIndFCzvsUdI3enripvzUPV4N2V7ic4/pvxS59dtQbDiZYCN0S0tZxjq1MJsCQEcgL2g0pkQ/W9I2nYg21yeiSX66A22xZWLCifcvkWg3azQbtF5jaD2O9qWh4E3yNwCdS+IumQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=FDmi4emF; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:Content-Type; b=qBAkfI21mWiUABueqxfKXMiCMKxiL7VuEGZHAgOwC2ke5U14ZIx8f/b4bSKWmxsvc4buAY4lTPRqjo7OvkY3Doph8fjXu2YGDc7AUj+JgPwDeOG2n6qhy5i8CdPFBItXi4D6icYsnGK1vHJi6ogTX30pyE3VTfyaFoc3xdTfJfg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=I0i5zUIr; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="FDmi4emF"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 24D841F0089B;
-	Sun, 11 Oct 2026 16:32:14 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="I0i5zUIr"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6CD661F0089B;
+	Sun, 11 Oct 2026 16:47:53 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791736336;
-	bh=e4+vpLVVPaNUrDQ4eqc8qogxeexsOyk5QMQbO4ookdI=;
+	s=k20260515; t=1791737274;
+	bh=PZx66SNzwXD+jDh1BHHrQGaE+eCg+axuqiwcG6OzGvY=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=FDmi4emFOmfute0xHKk7FqgDic/xcRIPkzefY8LEjdvFGfnpIObnTAM3w/9AsLVJx
-	 TvWqhpGTlwYdD9kOK5HbqklFZ/Yk6DIxRJ+oIvS4LhKe5b/S4lNU1DrzDVLVx9h0P7
-	 4fOs7NCn/tKOcwAixBrRKvLP4k2vSgCIUEGVEBM3paHH38ALGDKhq4nnRKKBzimeMf
-	 rhtb9C9wkxjVrDPQdAtBpiXfjNGi91jaGmgiTXf9m2AXtBBZyU5jGrs5UelY7EkbuS
-	 w/XpmojWp4eptO1wfkM2K+RkWSgZAqq9E7BOy6VbnJwXZeGtvMzHtBe1Pa8xq8NY+e
-	 eqY/LVr++O39g==
-Message-ID: <cbcfcb07-3956-4243-a54e-119d83fb458d@kernel.org>
-Date: Sun, 11 Oct 2026 18:32:13 +0200
+	b=I0i5zUIr92BP0gcfo+EkMmENLIZHvBWo9OPMvkVBHAC2Iv05USoGhD83bA+8tTMVJ
+	 3OM5sBwIyLWxkHeOMvH/o0GPim9v9gZbYX1CrOYb1gpLfYLpsjC3PUua3Um1OPWuXK
+	 +KZUL/v+5GvsPW46SqSqPVDUfrBaM17mmPbhVbXfXiQEhkVLzzXudlY6xOXV3ZMfFx
+	 IKSsBx8U/NtLa+l81mK2sKN3p6VvUQAp5iC8hckkPECKmuGyzRjF6lffwIO2b6ukoU
+	 ACZVgNBBJVPa3rju+8WyEUnfDJabjxOaWc55pF20FYdYAIIJCE/TA0U5VuBJbZuEIj
+	 tEgWB/KyS8VXQ==
+Message-ID: <9258312e-0527-41b4-8d67-a1e8f46eb466@kernel.org>
+Date: Sun, 11 Oct 2026 18:47:51 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -60,9 +60,19 @@ On 2026/10/11 18:17, illofspeed wrote:
 > to allow that. If you need a legal name in the Signed-off-by, please let
 > me know and I will resend.
 
-Hmmm... I have not read that doc in a while, but the point here would be how
-"identity" is defined. I do not mind you using your github handle, as long as
-the rules allow it, that is, "identity" includes a github handle as OK.
+Re-reading the doc, "Sign your work - the Developer's Certificate of Origin"
+states that:
+
+...
+using a known identity (sorry, no anonymous contributions.)
+
+The key here is "sorry, no anonymous contributions.)", but your github handle is
+anonymous, in a way. I am not a lawyer, but that is how I interpret it.
+
+Nevertheless, some googling is telling me that pseudonyms like a github user
+name are OK. Personally, I do prefer and appreciate peoples giving their full
+name, but if you prefer your github handle, that is fine.
+
 
 -- 
 Damien Le Moal
