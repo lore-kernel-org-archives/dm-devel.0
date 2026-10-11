@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA022457E70;
-	Sun, 11 Oct 2026 14:24:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FBF945D933;
+	Sun, 11 Oct 2026 14:30:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791728684; cv=none; b=tywuXBCOBPQFkLuKWynyBliPlLKsnAyqIrV619zxtkOZQ0Zma8GQXi37kIST796G2gytXBUc94l23ULLWgqY6OFF9XXEUXA2hMzdkehS+jLpPBc7vzJUdEmM3+lbWwMinL6REnQ4M+wKxWzCDhr190gUiihs7lDHEjm0EPYUiuE=
+	t=1791729007; cv=none; b=B6V/TQWKmDZHBvzgKiT9LHOcx13kiyUEsNb+i/OnJaFAi4xJy0u6TyCK+IU/rDwBJW6HBGh2oOn44VcdzrpOWRZfucP9hxj/Odz1/5vXlWm3WUzWNC66HInOCSJk/EF7o8kh0LF0NCRB3LBvZMqubDFkrRjZsYCyMVV1Nx2R8gY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791728684; c=relaxed/simple;
-	bh=7OuPkA05lxWAWmslGV/kGo2Lx+rWwjRRkTYxusK2sAs=;
+	s=arc-20240116; t=1791729007; c=relaxed/simple;
+	bh=w8FGrqVWKFCzjl0x9dELitvCaV77+8+v6qhp1fulAHA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=KWfnkYxylrLPeKDBManxRoZJr8ygd5dEYhuvLeM4v1ibQ6k8K8FAzE+nB2TPaa0HyQW03RYrWMZQbWY+VqnQCxeTAh0kFsixndr9xLAd7DFEoPZqBxDUQRHd+4CFBkoyz0fMcpuhdSZzZng0Qy0gSzROn+juhdzo8MP6VHdpWFA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BbSWmR3J; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:Content-Type; b=o7f1QpIP+K4W7LzJD1L0QwVkNhQ2AWGFGmG0VrKdd4XNYFOqWNyDi0gsVt4Phlj66pPbvdM82/sYH4yITphfUipAJEZWMwzGPLjnRYC+UMb5DHEqWKHW6nPJfLiZ+ekwwFeJnPFW91MJkGc1ep688ftWg/x3w5hSEaikxsCpDbs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Tn+lfsLu; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BbSWmR3J"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C90641F0089B;
-	Sun, 11 Oct 2026 14:24:41 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Tn+lfsLu"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6CC311F0089C;
+	Sun, 11 Oct 2026 14:30:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791728683;
-	bh=+SdkMP0w2cZlGgfO55P1ngr5T49211PQ3wMbwRxd+GQ=;
+	s=k20260515; t=1791729005;
+	bh=n0PovXFZQUHP8cry42Q1ldeCjZWewXjs25eS/GbljiI=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=BbSWmR3JkgGo8ATLKb37Xzrxw6N8O5ioRCImF6/grZMZ53SAVDnptjg+exQoI6+uO
-	 jc5vr6xsyeBJc0Z78G3iYeppaF7FenX152Sa7wLMdD3lTJfmPS82OvKkXkYcwRLVtM
-	 K6mfe2UMLzTuRfAlQmqHcQ1H5cJZbsqPHjrA7erLTw56A/u6+ae+Ym0V9+Sj6as3Q5
-	 wl9angf3PxDJUSo77umx5DreXNXJbFUjg2ey2xqxI5z9pJEhLpuC4haFOwBtljt/lB
-	 YWJ8C5G34ojgJcxkXQGJSYWTi9cZefHjV/OE2u3SKqJxxauaBHoDVWzbg628OYsVQv
-	 Ed6qdVRNKeH3Q==
-Message-ID: <8d1ee370-2785-438d-9c5b-8363584a23aa@kernel.org>
-Date: Sun, 11 Oct 2026 16:24:40 +0200
+	b=Tn+lfsLu6G/95ifOxJnDFbxLoiZVUanB/AMXN7P1zsP28kvef8ru3mVKNzhwk7gqf
+	 KVDXxblRMySaOQo8xSRatI2/QjMeqGmR7LE5zobrRDSdn5aA1BFTX3uP+EvGdqla81
+	 LTVupUS1Dj2Eud/teNI4CDGzB77dB8DUuY4d6XefmUKCOCYH4nRpzkJ2ORh/zBpByw
+	 SXybnUpg4mc6t5PzFbfSxyRDWheb5wr861t2F/2xcEu/7rnqGpLhADhR6A616ny7+o
+	 aKfs5BTZtvGUPGZXJWoQsGEoyzDALxBGUWkrYXdi8as36HCL/eiisXdFVdttdB7jTq
+	 3iFguZ2hcj4Sg==
+Message-ID: <d4adf5de-9d72-4977-b4c0-3e1f163872a1@kernel.org>
+Date: Sun, 11 Oct 2026 16:30:01 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,64 +35,75 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 1/3] dm zoned: back off when reclaim finds no
- destination zone
+Subject: Re: [PATCH v2 2/3] dm zoned: do not reclaim a random zone into
+ another random zone
 To: illofspeed <illofspeed@gmail.com>, dm-devel@lists.linux.dev
 Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
  bmarzins@redhat.com, hare@suse.de, linux-kernel@vger.kernel.org
 References: <20261010161613.396-1-illofspeed@gmail.com>
- <20261010161613.396-2-illofspeed@gmail.com>
+ <20261010161613.396-3-illofspeed@gmail.com>
 From: Damien Le Moal <dlemoal@kernel.org>
 Content-Language: en-US
 Organization: Western Digital Research
-In-Reply-To: <20261010161613.396-2-illofspeed@gmail.com>
+In-Reply-To: <20261010161613.396-3-illofspeed@gmail.com>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
 On 2026/10/10 18:16, illofspeed wrote:
-> When dmz_do_reclaim() fails with -ENOSPC because no free zone is
-> available to copy the data into, dmz_reclaim_work() still ends with
-> dmz_schedule_reclaim(). If the target is idle, dmz_should_reclaim()
-> keeps returning true, the work is queued again with no delay and the
-> worker spins on the same failing pass.
+> dmz_reclaim_rnd_data() falls back to a random destination zone when no
+> free sequential zone is available and the target has cache zones. When
+> the target is idle and the cache zone list is empty,
+> dmz_get_rnd_zone_for_reclaim() selects random zones of the zoned device
+> as well, so a random zone is then copied into another random zone. That
+> frees nothing: the next pass picks the next random zone and copies it
+> again, for as long as the target stays idle.
 > 
-> Re-arm the idle poll instead, so that reclaim is retried after
-> DMZ_IDLE_PERIOD. The next patch makes -ENOSPC the expected result when
-> an idle target has random zones but no free sequential zone.
+> Seen on a two-device target (256 GiB regular cache device plus a 27 TB
+> host-managed drive) used as an md RAID5 member: after a full rebuild
+> every chunk was mapped and no sequential zone was free, and the idle
+> drive read and wrote about 72 MB/s each without pause for hours while
+> the free zone counters in "dmsetup status" did not change. Reproduced on
+> emulated host-managed drives (tcmu-runner ZBC handler): 340 MB/s of
+> copying on an idle target, 0 MB/s with this patch.
 > 
-> Tested on a 7.2.6 kernel as an out-of-tree dm-zoned module, together
-> with the next two patches, on emulated host-managed drives (tcmu-runner
-> ZBC handler) and on three 27 TB host-managed drives used as md RAID5
-> members.
+> Only allow the random-zone fallback when the zone being reclaimed is a
+> cache zone: moving it to the zoned device still frees cache space.
 > 
+> Fixes: c5c788595292 ("dm zoned: start reclaim with sequential zones")
 > Assisted-by: LLM
 > Signed-off-by: illofspeed <illofspeed@gmail.com>
-
-Patch looks OK, but is "ilofspeed" your full name?
-
 > ---
->  drivers/md/dm-zoned-reclaim.c | 8 ++++++++
->  1 file changed, 8 insertions(+)
+>  drivers/md/dm-zoned-reclaim.c | 9 ++++++++-
+>  1 file changed, 8 insertions(+), 1 deletion(-)
 > 
 > diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-> index c041413c729..315f0da99f3 100644
+> index 315f0da99f3..2bcc163d209 100644
 > --- a/drivers/md/dm-zoned-reclaim.c
 > +++ b/drivers/md/dm-zoned-reclaim.c
-> @@ -540,6 +540,14 @@ static void dmz_reclaim_work(struct work_struct *work)
->  	if (ret && ret != -EINTR) {
->  		if (!dmz_check_dev(zmd))
->  			return;
-> +		if (ret == -ENOSPC) {
-> +			/*
-> +			 * No zone to copy into: nothing can progress now.
-> +			 * Rescheduling immediately would spin; poll instead.
-> +			 */
-> +			mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
-> +			return;
-> +		}
+> @@ -288,7 +288,14 @@ static int dmz_reclaim_rnd_data(struct dmz_reclaim *zrc, struct dm_zone *dzone)
+>  again:
+>  	szone = dmz_alloc_zone(zmd, zrc->dev_idx,
+>  			       alloc_flags | DMZ_ALLOC_RECLAIM);
+> -	if (!szone && alloc_flags == DMZ_ALLOC_SEQ && dmz_nr_cache_zones(zmd)) {
+> +	/*
+> +	 * Without a free sequential zone, moving a cache zone into a random
+> +	 * zone of the zoned device still frees cache space. Moving a random
+> +	 * zone into another random zone gains nothing, and when the target
+> +	 * is idle it repeats forever. Only fall back for cache zones.
+
+"fall back" to what? This comment is not clear.
+
+> +	 */
+> +	if (!szone && alloc_flags == DMZ_ALLOC_SEQ && dmz_nr_cache_zones(zmd) &&
+
+Long line. Please split after "DMZ_ALLOC_SEQ &&".
+Also, is the test for dmz_nr_cache_zones() needed? dmz_is_cache(dzone) will
+never be true if there are no cache zones.
+
+> +	    dmz_is_cache(dzone)) {
+>  		alloc_flags = DMZ_ALLOC_RND;
+>  		goto again;
 >  	}
->  
->  	dmz_schedule_reclaim(zrc);
 
 
 -- 
