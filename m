@@ -1,136 +1,85 @@
-Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F03762673AA
-	for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 18:02:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 496D12FE042;
+	Mon, 12 Oct 2026 10:38:58 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791741771; cv=none; b=DBP/eFZu1FYo9kmwq5BWXmTV8J/m1o7MPeyeWM8HYU7EGO9oXr0wN04jikVpK+66xMHhqQgUGDzvpBNT7IBZzwwXmlAtxuetaJ0fYlKn+NDDelX7xFGxhflcQgXuW6oEzAusXUgR0WegZpj2Bc7l/VRTqwpCq8eevLNXhaF6vVk=
+	t=1791801539; cv=none; b=Dg8bMhEqIMunnHY9+cC6S+PNlV+h2bSq16qfhpKKFEzm5Z0UBs7a+N0CdO9XALDaf1Sc/DCef7bRTagJ8KFted7z7yj8p/4MJ0BlejslRQxX7JS+KhHJ6wKBn0av3Yy8vKbxwrZ8/Ss9ZY3nSzCxMOwnSHJmRe+5edr5D++eXi0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791741771; c=relaxed/simple;
-	bh=NCTQG5NYRe6CvsJnzbiFBIUSR0PK0k0ivERWSeh9S2o=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=estveGDxIMdqYoZW3Cb30i94x/6BmYB0rp7F/CUJGQ6U0dKAW3zfMItITqMKqnzeXWdZ7wo7QOUf59N9F6GBXTQN0vZ8iKnkEZa08679bb1jlCFQCUFYHXtqnoqz+ZgLC9BL/JgPui0hha/lnE5zKMiEG+10/AIvKCO4T/p65mI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=j20S7IUI; arc=none smtp.client-ip=209.85.221.46
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1791801539; c=relaxed/simple;
+	bh=EQd+3dczeUe3H+Ot+Ypu0mX1arO0FEiWvLmZLukZDdQ=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type; b=O7m6w+cvkxBlx5RuJbSxZuHDVETGT3yujQ7Ld6nbGAmyBZQOmENrWHZO/601btseoK3cstwY1fiTRS3+nwV6wDElKSB/1sDJAk9G7IE4FiD4oTLgho0GHedMZfGP7ml7JBemiZVEDoQnlm0VVGawpMddaKfOcEEFD9/O5m8W9gk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HfrXc6gR; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="j20S7IUI"
-Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-48af4d4e61fso703518f8f.2
-        for <dm-devel@lists.linux.dev>; Sun, 11 Oct 2026 11:02:49 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791741768; x=1792346568; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Ew/EmDhQFxa3pLooXJmh8OkoTE6RmMtwxoNU3Ecf/MI=;
-        b=j20S7IUIUPxlyiDiPR63myUcXxEl7FllKNASnf0aTSuR71sEBsKYAfYn4+CTspH0yA
-         8S8XQipdsZ0EjnSOP5eCvrHdBHVj+0T0mLYygN5i6uU216BaCuAsTNDkPfLvzG+XBl8o
-         Xbq/8v0PV0G1OFnCWt3Sf8KcQuJo/8pDJ7f6f6kF+rkUHHdGjr8mUT7tSM7Vxvuw0CXy
-         RAwhBzuZsnZN1bulLV7fcIBeGSl6RZqWgrOBuJB2WMQ5zfHruPJ8w1Z5TcloPEVZpwN8
-         pcc+2QDgggXSF1PHpMr/o8OJx4YBFQ3hVMErqzDhuUpCWzi/aS2K62ENBjtBJb4PPVm2
-         fw/Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791741768; x=1792346568;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=Ew/EmDhQFxa3pLooXJmh8OkoTE6RmMtwxoNU3Ecf/MI=;
-        b=MNFtb2ahXcerD7YEFEhytVFDW8PuY04gr0AlqGOi+jkl6692P/30kcgFBn/wi5H2Nz
-         wGq64qAaOdBi+IupWQFOQ+ysr+SHyE7WIQCHA0LSUJ524Mgv63kyBBOSXD24ZtNE6QEe
-         1IQcn43zac23JhmHn9UCfhzX6ZzjC8+AH1utP2QwvH85ENsUs6p9MxGcBRz4b+zzuQTU
-         P5ulZSfjMbN17wu+7ezWaj7E9FqTvkJ7BOEmXNA0fF7YRA/5x0g+IVGhVCN+mXotHXJw
-         dE9RoNvj4wsOP9Pm8PwiXMPB9GStJItziwv6NoMfFVgOyeyWY+5QM7S3JZombHr0zvHs
-         rNGg==
-X-Gm-Message-State: AFq9FYIGCW704hIWwm+uqy6r0Hr3JSjxy9zcCcDzUJFpJoP3Rh+Wx4qn
-	37YvVfKMSR+BCyUzIDktw4QOlCP5n7ueQgbHRgtjkpyEU2ADt/mDRebqr6VX1nex2Tw=
-X-Gm-Gg: AYBFou1XYOjPO8n4+WdHBK+8f9H81FvJ7jOaUyZNijj27R9t7SNMtmnbTTAneMtI4MJ
-	QhzWk4DFN7vq/jWG/P7LYR5QSyYSczzsBic/U5nA0DzKS0Q3DIOjG7fxbFQBO89Nq4IDFX6QuMh
-	pihPhBJTZYPbWuJhDvFZLz51eVQ0ICdsXdkUunLjNiCmG9kp+FFKG2b4AXINRZenOa+qIEeqme9
-	chlN0CbiHIf+zkQSd6G0sGeSD4XOFdJXLz+h54+2DvSPb/ntKGY3nTJvTv2qKhtrlLp/lUed+/O
-	e8WFAgWL8BIBsobMqIASThuGRsExKVpPvH48GGRf9n1p+YggTZMg9pT5Ngr2ftpQZUDvaD81Hta
-	p/2ivbVgebIIQUw0VBlGmSXryDdpCSgEvdFTbxkihIOZjBNXunXTOWCdDUYu5F9fizdZjWjsUBW
-	Q/Z03JkxkaDGcah870OtcUVErlMYQuiE2Rhm6nNp+/zLGiYNdXl1s8DmyIx7D8aLzKowGxaKe0u
-	fqgKaKSf0vNZRL6uut7cXOp7iCmYy6cxpRDHdTC4k3MRYk=
-X-Received: by 2002:a05:600c:810a:b0:4a0:2391:6533 with SMTP id 5b1f17b1804b1-4a18e4a954bmr117375805e9.21.1791741767865;
-        Sun, 11 Oct 2026 11:02:47 -0700 (PDT)
-Received: from localhost.localdomain (87-205-122-125.dynamic.inetia.pl. [87.205.122.125])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a18bbbdd75sm178873495e9.1.2026.10.11.11.02.47
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 11 Oct 2026 11:02:47 -0700 (PDT)
-From: Kyrylo Biryuk <illofspeed@gmail.com>
-To: dlemoal@kernel.org
-Cc: dm-devel@lists.linux.dev,
-	hare@suse.de
-Subject: [PATCH dm-zoned-tools v3] dmz: check: do not use the write pointer of conventional zones
-Date: Sun, 11 Oct 2026 20:02:46 +0200
-Message-ID: <20261011180246.758-1-illofspeed@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HfrXc6gR"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A314A1F0089B;
+	Mon, 12 Oct 2026 10:38:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1791801538;
+	bh=w4CH1veM7IQFs/FktA7SpJrlFII10QujZ+yrLExaIqI=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Date;
+	b=HfrXc6gRUF+pkWejsUoWAgc/NWJk5AZvEQJ3R5fb/piRDvekD7j4fXnaEBKrUFWiu
+	 yo2nKHd3T0KJm2jOpUXdv/mEFxQKq7QZHYDDPRj4khSGJH+0hVtdWPut1fw1TAFVgz
+	 wVIKZqXZzVPxnCWEETgvxSo/EP4BCrKUrOFJTic0ULf8/23H+Uv9f/UEDADD+X9oID
+	 b/4lvtH8jYhY6OHPcwf8VPsjitNOU/o2S0JUTNJBs2shuS23Q9Z22REZE26gmo5FEg
+	 tOGXrhH1g00dRg2oPXsxNL9+3YSlMhrqQM2y5PtAR4TjTHkn11tf70BaORRQEzBzTn
+	 w8W5+ezo31/ow==
+From: Christian Brauner <brauner@kernel.org>
+To: Alexei Starovoitov <ast@kernel.org>, 
+ Daniel Borkmann <daniel@iogearbox.net>, Andrii Nakryiko <andrii@kernel.org>, 
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>, 
+ David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko@kernel.org>, 
+ Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
+ "Serge E. Hallyn" <serge@hallyn.com>, Eric Biggers <ebiggers@kernel.org>, 
+ "Theodore Y. Ts'o" <tytso@mit.edu>, Jonathan Corbet <corbet@lwn.net>, 
+ Shuah Khan <skhan@linuxfoundation.org>, 
+ Randy Dunlap <rdunlap@infradead.org>, Andrew Halaney <andrew@amutable.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, 
+ bpf@vger.kernel.org, fsverity@lists.linux.dev, linux-doc@vger.kernel.org
+In-Reply-To: <20261008-ajhalaney-dmverity-key-identifier-v2-0-008456d189cb@amutable.com>
+References: <20261008-ajhalaney-dmverity-key-identifier-v2-0-008456d189cb@amutable.com>
+Subject: Re: [PATCH bpf-next v2 0/3] keys: Add well known IDs for
+ fs-verity/dm-verity keys
+Message-Id: <20261012-broschen-inanspruchnahme-gebilde-d72cf2b99cda@brauner>
+Date: Mon, 12 Oct 2026 12:38:50 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.17-dev-3d1b8
 
-With more than one device, dmz_zone_is_cache() only matches the zones of
-the regular (cache) device. A chunk mapped to a conventional zone of the
-zoned device therefore reaches the write pointer test in
-dmz_check_mapped_zone_bitmap(). The kernel reports the write pointer of a
-conventional zone as -1, so wp_block becomes garbage and the bitmap loop
-reads far past its two-block buffer: dmzadm --check segfaults
-("Checking zone bitmaps..." is the last line), and --repair could clear
-bits based on that memory before crashing.
+On Thu, 08 Oct 2026 15:57:34 -0500, Andrew Halaney wrote:
+> This more or less follows the bpf keyring approach, allowing userspace
+> to easily find the keys instead of having to parse /proc/keys.
 
-Treat conventional and emulated (regular-device) zones as having no write
-pointer: every block may be valid.
+Applied to the vfs-7.4.keyring branch of the vfs/vfs.git tree.
+Patches in the vfs-7.4.keyring branch should appear in linux-next soon.
 
-Found on a cache-device + 27 TB host-managed drive set after reclaim had
-moved chunks into conventional zones (stock 2.2.2: exit 139; with the
-patch: "No error detected", also on an emulated ZBC drive with the same
-layout).
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
 
-Reproducer (scsi_debug zbc=managed, no special hardware):
-https://github.com/illofspeed/synology-host-managed-smr/blob/main/repro/1-dmzadm-check-two-devices.sh
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
 
-Assisted-by: LLM
-Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
----
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
 
-Notes:
-    v3: no code changes. From and Signed-off-by now carry my full name
-    instead of the GitHub handle "illofspeed" used for v2 (same author).
-    
-    The addresses in README.md are out of date (wdc.com, dm-devel@redhat.com),
-    hence this goes to dlemoal@kernel.org and dm-devel@lists.linux.dev.
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs-7.4.keyring
 
- src/dmz_check.c | 13 +++++++++++--
- 1 file changed, 11 insertions(+), 2 deletions(-)
-
-diff --git a/src/dmz_check.c b/src/dmz_check.c
-index b13d025..943308b 100644
---- a/src/dmz_check.c
-+++ b/src/dmz_check.c
-@@ -509,9 +509,18 @@ static int dmz_check_mapped_zone_bitmap(struct dmz_dev *dev,
- 	if (ret != 0)
- 		return -1;
- 
--	/* No valid block should be present after the write pointer */
-+	/*
-+	 * No valid block should be present after the write pointer.
-+	 * Conventional zones have no write pointer (the kernel reports -1):
-+	 * every block may be valid. With more than one device,
-+	 * dmz_zone_is_cache() only matches the cache device's zones, so the
-+	 * zoned device's conventional zones reach this point.
-+	 */
- 	bad_bits = 0;
--	wp_block = dmz_sect2blk(zone->wp - zone->start);
-+	if (dmz_zone_conv(zone) || dmz_zone_unknown(zone))
-+		wp_block = dev->zone_nr_blocks;
-+	else
-+		wp_block = dmz_sect2blk(zone->wp - zone->start);
- 	for (b = 0; b < wp_block; b++) {
- 		if (dmz_test_bit(dbuf, b))
- 			dzone_weight++;
--- 
-2.43.0
+[1/3] keys: add KEY_SPEC_DM_VERITY_KEYRING
+      https://git.kernel.org/vfs/vfs/c/d3b8a0988385
+[2/3] keys: add KEY_SPEC_FS_VERITY_KEYRING
+      https://git.kernel.org/vfs/vfs/c/8439e5c46c33
+[3/3] Documentation: keys: document IDs added since KEY_SPEC_REQKEY_AUTH_KEY
+      https://git.kernel.org/vfs/vfs/c/b553f7d131ed
 
