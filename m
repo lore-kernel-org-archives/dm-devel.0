@@ -1,63 +1,63 @@
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EBD14EE85F
-	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 14:55:29 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 650D24F054E
+	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 14:55:30 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791903331; cv=none; b=KftyPb+o9hl8ayl5L4HbijTOI4Aq+86dPzlrzQAco8pyAeE0cL4P2ZYr/LdrJLeWrRDn3HhfsXe2dMpXxsC5D83bPkPh+P1EkvsIoJB4mFZLwWh663xwNVJuSMFwiAvlqFvTbNWF9nlzihpBhezxlGXq4TRC14SmfvDgITSlwZ0=
+	t=1791903331; cv=none; b=felHWh5hW6q2hV+PlIL0Vp1jbdvh3AjlRmCWyM8GpvC0iZZISfgV32hInd1kIwviR5RFNQtnLGIeJ0EQGo/8qBpWfHAeZrxfDjOLs2lN0ouJfrMN4LC8l0nkQj1b4SXvuax/saOhO2iMQQZr3Tk09KFs3VLz2mimyhr5OYBjRek=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1791903331; c=relaxed/simple;
-	bh=7wzxSB2qhmpiXV/o6gYxzAhM8kMclX7fnVPUbCiiuKI=;
+	bh=iUcWbF6VqinwqarzVq3Arlchef8+Y24uEq8bk16kOrg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ACXQmsiam7l7P5r0R7jkF+98kliDeBBKyNBV5jg/k0/c8cjaedYxrD92oAYVgo7AEvbPA0alWS3FDXsYyH0lT07GBneR8pRe5RFVOXpk+ac84HjZrhrqemIYzDrCgAp6ufvin6MiGWAoAU6dsrXyBEp2c78unM2JMBG9c+IO8Oo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=pSkrMRVq; arc=none smtp.client-ip=209.85.208.52
+	 MIME-Version; b=mLQyVs8X0IL1W7Xcw5YjhaRNPXy4ToyXEUvQSXJgbxS9U9e6CeyDdNIMn13ZGCAbk+VeK4oHYtgSXjYJk9ojRgjkJ73QNKcdAordMKK3Mr5C8+v2XnjB+P8JacpF+qP/BnAdHCrhDgzxEgkAkDj1TuA+J/KIO6Fui+BD9lRTF0c=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=qX7ZSo/Y; arc=none smtp.client-ip=209.85.208.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pSkrMRVq"
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-6ac76a02368so2902534a12.2
-        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 07:55:29 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="qX7ZSo/Y"
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-6afbc363efeso3679735a12.3
+        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 07:55:30 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791903328; x=1792508128; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1791903329; x=1792508129; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=MRLm6A3T6Ct0MidSnOxtbUyQRmhGnsYliHxtNklqnL4=;
-        b=pSkrMRVqgjCnFopbUhxnZ/F/0f8F2s+KeKum5jhIiVUz8dbKMyGRRHo5q/kfD/vPly
-         CWsQOadkEYFFjbLrIRqhJG/eEGz08hDvPXKPUC1/6Z3Lzh6XqT95K57rPIc9DqE+i7Ma
-         0ME4AYqzgfzWBP46+EaLkWrY6L7Fl7K0qT+JmfHMwGO7Kg5tRSZZOwuVh3m44jaxfGwn
-         YnfO+PME6KYihMzOMsmFfyFW07yqkMrVWKQC//RnFaqROuSZxwK9MI+4UxiqpV8QFoFH
-         E9amQO9xlZdv1aZvXrKL8r41hbAET9ZBsygjXmcTmArezq22DCPmrF/PjgVAE5n+E4gN
-         C+hQ==
+        bh=n5kbj9NCQZ2sDr390DiL8elbJ9zikv1LhsX0xMjIXaM=;
+        b=qX7ZSo/Y2r7dY2E12FQ3p5wuZvgK1Ky1wrMdukYH15H8N5Jy1rwg6/WAasqfstNNQI
+         bX5yn6lC78FhNk79nD11ySziC4e2L9iRoe6YV0OPqSX8MnyEUa1GhvN+ZECutJ7euZOE
+         mAoM8DFxgFj/lYg8/xHPNqa+EetPRJpPeWRupXsjzQWQ5VamwLNjaUMuvnoivzotjmPg
+         V2Og3V2p7HrJ32aK0SqUD0RNPLeMxgqW9QocERtsv9UCnlRZFDYAip8+UalNxYrJ56ET
+         B25GdrIJUvSDH4y3t2CJXZULN7WLrq/ddmCxOMGpaF3GMK9z60KcNNYq81OE83oegUkI
+         l1GA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791903328; x=1792508128;
+        d=1e100.net; s=20260707; t=1791903329; x=1792508129;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=MRLm6A3T6Ct0MidSnOxtbUyQRmhGnsYliHxtNklqnL4=;
-        b=nqNbNxampHO49jTWMf+CtoZEg7z3pHwbmKFfKDKYnPVFEMymspuvhSsHvt6ZoAa7lI
-         RHeB1vsTGyk6KFj1/MsTsHVqO/+rLTgwJOc2vMGl/hqd/XzHrvlkdkivaKym79tYPet6
-         Ok4sKN8DHZWXC5yL2ZbELXCrkThCGlND7ebZaV6DmerRwInHTz7gyM3ROSyJQudzruuk
-         hLxqUYC7mxLiDraiFh3A80HY4ERfIkwB5paAc9j4UYTDQQn+sABCqcEBve9OxBtUBwBg
-         yBPZQ0GO/lF1jV3WLD60u05W2PtU2RZIPHbsqbNV4AGbGQPVrvGx7VK/J44bmZsy111S
-         Q6NA==
-X-Gm-Message-State: AFq9FYLKm94mTX5g24kDYyId8yghPjD6QxNJOqk41Zpf9jvfXCSfDiot
-	oNd0IVlPwrM5XAPb9SCbdkZF8s4Lnj5/7zYSoDy+oEvsb8ELvKdTtQhnvAoY0zoo
-X-Gm-Gg: AYBFou1OMmT2Fo48JTvHNCRJeM+wL/nt3onWvljuP537E0L31Yat7X5x8ECMeoJQMij
-	qmq7D+Fwj/ohPb/Y3K8uLmdTqRhBTEHXhAZME1rEz8Efz7onYkSrBykAN7nDKSMyhXNTIA6AT7s
-	FZS+Gs1dwS/cOsqzqXQD8TUc+QUPUHPeqOBK5ZSDVU1mm4S6HDd5CGwSOk27nRXjr5M5wqRFAH9
-	PVW/mZKCZzEu6NS1uLRnVBflui5gQbIZgasX+IZdErsR9JMW3vIXVgsJTtg05rlePXyIk+jxArc
-	z1EPIvsAzAEvPMi2gZ35LBqcArRj/AA6d/4yJzQVD6UKguSZ8Gxb26z7JraccfOXgi7r/XxjS4r
-	sg+P31vV4GQxA81G71xe1BKfMQxy/OzM2K6aZjH7+fHzJrhtifvzGvcNdHeXieBa9zEqbv6lR6D
-	r/322WlpJZb34hh29UURM8509Q10SJ+mA6LVH9fImc+ZySg+vE/+YL+EW8czOFyo633RFJAHm2Q
-	jTaOBpZV1u5BQTNHSIb66TST3wFKqh04K33OS9jHhsNVSOB
-X-Received: by 2002:a05:6402:3251:b0:6b1:cea1:a023 with SMTP id 4fb4d7f45d1cf-6b1cea1a354mr3819615a12.19.1791903327741;
-        Tue, 13 Oct 2026 07:55:27 -0700 (PDT)
+        bh=n5kbj9NCQZ2sDr390DiL8elbJ9zikv1LhsX0xMjIXaM=;
+        b=SSwnX2yzISUpNUeDzUZfX2uaV1AUL7S6Q9nzlJDxhCgInR+RjNTXzqxEfMnR4p6kBR
+         bkdOJZMqkAlD6lzaG2efNLlz8LsN+sGka8eiUQcRo1eSQ917//qjSBej0zhB9aNAF1hm
+         gHlbw1srFiqZloy3Hkdyi15lGCpb+ceE7WiBtP2YA6xiQTdHBwgylVMi7d5Yjrc4/GOu
+         7MW+Mx58dkFVOpyhPaI6jRjimcMuFPjjLHl8sTmYqpxtoFyTcYcd1yCMfRdEV8PLJvOM
+         veNrR9dg15GVskCt8MqzileJeuct+C1yQ11siBFAJNm27bw3EN5DL6BdR/KVtqTHGiJA
+         +E0g==
+X-Gm-Message-State: AFq9FYLBvt6THR1AQcYHE2kJllpCI5bSjCigBstze7RUYENUiLDrkBiO
+	SRvCeTBUq4GoKdmv16lPTyxCVGAGNTJKRgz0n8JmRO4IcXHKepQgVHm30GpDOKhb
+X-Gm-Gg: AYBFou0HFZGUwRJ1PjVtT6TZA0FUWA20w2jedpn8XvD/PEdHXl0SefUFL43ILpLcVGU
+	2lxOxawVtjzl7eStfEj+8VDeHPz2ItRzuOIDUMuoPgAwYh0SyVoiz/3htooVAIcxI8/mC3YuyQU
+	ktAZmhg0YOo97vaU47d4RAJZi9Gqqsxwp+X/OF32gv1EAjlt119ES588vt6+cI3Pu5SHC242qKv
+	64eps49fABBu4GMNxRHziymVKtvLZBIibHJZwA6+2d3+u7mvnOCbFxUkZPi+giUeOFV6SXfQURb
+	2XA4/njXq/DvAanyFu2DzlAOH851A8Ya0rSNKZhmkhsrZIWn5S3qyl6Ww9H/znebvg3gZSHKpn7
+	x20DdrHBGbPdtqtyJseeG1dlLFUYqPMjxS5DU/bDxz801wEDW4WNuSunpnYR1KCS7+BSKAQVNVK
+	vW4oZuT6HUFTlzW6kaF+IgaLQa84ZWBKVtPM5a5rhbGp66QDxpr6+tZvadinnUxeeWuVdz+05PC
+	benjbw/6qbf6Nx1VGoomgt0ow2g0QlqtopfxrCKsZivk/w=
+X-Received: by 2002:a05:6402:3553:b0:6b1:cea1:a011 with SMTP id 4fb4d7f45d1cf-6b1cea1a32amr3900125a12.0.1791903328563;
+        Tue, 13 Oct 2026 07:55:28 -0700 (PDT)
 Received: from localhost.localdomain (87-205-122-125.dynamic.inetia.pl. [87.205.122.125])
         by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6b179e03428sm6169161a12.37.2026.10.13.07.55.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 13 Oct 2026 07:55:27 -0700 (PDT)
+        Tue, 13 Oct 2026 07:55:28 -0700 (PDT)
 From: Kyrylo Biryuk <illofspeed@gmail.com>
 To: dm-devel@lists.linux.dev
 Cc: mpatocka@redhat.com,
@@ -67,9 +67,9 @@ Cc: mpatocka@redhat.com,
 	dlemoal@kernel.org,
 	hare@suse.de,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH v5 3/4] dm zoned: keep polling for idle reclaim after a reclaim pass
-Date: Tue, 13 Oct 2026 16:55:21 +0200
-Message-ID: <20261013145522.17499-4-illofspeed@gmail.com>
+Subject: [PATCH v5 4/4] dm zoned: do not busy-loop idle reclaim when no zone needs reclaim
+Date: Tue, 13 Oct 2026 16:55:22 +0200
+Message-ID: <20261013145522.17499-5-illofspeed@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261013145522.17499-1-illofspeed@gmail.com>
 References: <20261013145522.17499-1-illofspeed@gmail.com>
@@ -81,57 +81,99 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-dmz_reclaim_work() re-arms its DMZ_IDLE_PERIOD poll only when
-dmz_should_reclaim() returns false at the start of a pass (and, with the
-first patch of this series, when a pass fails with -ENOSPC). After a pass
-it calls dmz_schedule_reclaim(), which queues the work only if reclaim
-is needed right now. When a pass ends while the target is still busy and
-has enough free zones, nothing is queued at all. Once the target goes
-idle, nothing re-evaluates dmz_should_reclaim() until another zone
-allocation, a "reclaim" message or a resume schedules the work, so the
-random or cache zones that filled up under load stay full.
+An idle target whose random (and cache) zones are all unmapped keeps its
+reclaim work running without pause:
 
-Seen on md RAID5 members on 27 TB host-managed drives: after heavy
-writes the random zones stayed full for hours on idle targets; the
-workaround was a timer sending "dmsetup message <dev> 0 reclaim". With
-this patch the emptied and filled zones were reclaimed within minutes of
-the targets going idle, without the timer.
+  - since commit 90a9b8693f1b ("dm zoned: reclaim random zones when
+    idle"), dmz_should_reclaim() returns true when the target is idle and
+    the total number of random (and cache) zones is non-zero, whether or
+    not any of them holds data;
+  - dmz_do_reclaim() then finds no candidate and returns -EBUSY;
+  - dmz_reclaim_work() runs dmz_check_dev(), which checks every device
+    for media events (a TEST UNIT READY on SCSI disks), and
+    dmz_schedule_reclaim() requeues the work with no delay because
+    dmz_should_reclaim() is still true.
 
-When reclaim is not needed right now, make dmz_schedule_reclaim() queue
-the idle poll, so the work stays queued after every pass. It uses
-queue_delayed_work(), which leaves already pending work alone, so the
-other callers (zone allocation and the "reclaim" message) neither
-postpone a pending poll nor delay a pending immediate reclaim.
+Without the previous patch, a pass ending while the target is busy and
+has enough free zones can leave reclaim unqueued, which ends the loop;
+keeping the idle poll armed makes it recur whenever the target becomes
+idle. On three 27 TB host-managed drives used
+without cache devices (all random zones free) it kept about three CPUs
+busy and sent about 155,000 TEST UNIT READY commands per second to each
+drive while the target was idle.
 
-Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+Only reclaim on idle when a random or cache zone actually holds data (the
+intent of the "p_unmap < 100" test that commit replaced), and
+handle -EBUSY like -ENOSPC: nothing can progress and no I/O failed, so
+poll again after the idle period instead of rescheduling at once, and
+skip the device check. Use queue_delayed_work() for that poll so work an
+allocation has already queued is not postponed.
+
+Fixes: 90a9b8693f1b ("dm zoned: reclaim random zones when idle")
 Assisted-by: LLM
 Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
 ---
- drivers/md/dm-zoned-reclaim.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-zoned-reclaim.c | 26 +++++++++++++++-----------
+ 1 file changed, 15 insertions(+), 11 deletions(-)
 
 diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-index 88d56d3c86d..f1f9adf6039 100644
+index f1f9adf6039..0d62ade1466 100644
 --- a/drivers/md/dm-zoned-reclaim.c
 +++ b/drivers/md/dm-zoned-reclaim.c
-@@ -641,7 +641,8 @@ void dmz_reclaim_bio_acc(struct dmz_reclaim *zrc)
- }
- 
- /*
-- * Start reclaim if necessary.
-+ * Start reclaim if necessary. Otherwise make sure that an idle poll stays
-+ * queued, without delaying work that is already pending.
+@@ -470,9 +470,10 @@ static unsigned int dmz_reclaim_percentage(struct dmz_reclaim *zrc)
   */
- void dmz_schedule_reclaim(struct dmz_reclaim *zrc)
+ static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
  {
-@@ -649,4 +650,6 @@ void dmz_schedule_reclaim(struct dmz_reclaim *zrc)
+-	unsigned int nr_reclaim;
++	unsigned int nr_reclaim, nr_unmap;
  
- 	if (dmz_should_reclaim(zrc, p_unmap))
- 		mod_delayed_work(zrc->wq, &zrc->work, 0);
-+	else
+ 	nr_reclaim = dmz_nr_rnd_zones(zrc->metadata, zrc->dev_idx);
++	nr_unmap = dmz_nr_unmap_rnd_zones(zrc->metadata, zrc->dev_idx);
+ 
+ 	if (dmz_nr_cache_zones(zrc->metadata)) {
+ 		/*
+@@ -483,10 +484,11 @@ static bool dmz_should_reclaim(struct dmz_reclaim *zrc, unsigned int p_unmap)
+ 		if (zrc->dev_idx == 0)
+ 			return false;
+ 		nr_reclaim += dmz_nr_cache_zones(zrc->metadata);
++		nr_unmap += dmz_nr_unmap_cache_zones(zrc->metadata);
+ 	}
+ 
+-	/* Reclaim when idle */
+-	if (dmz_target_idle(zrc) && nr_reclaim)
++	/* Reclaim when idle, but only if a random or cache zone holds data */
++	if (dmz_target_idle(zrc) && nr_reclaim > nr_unmap)
+ 		return true;
+ 
+ 	/* If there are still plenty of cache zones, do not reclaim */
+@@ -543,17 +545,19 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 		dmz_nr_rnd_zones(zmd, zrc->dev_idx));
+ 
+ 	ret = dmz_do_reclaim(zrc);
++	if (ret == -ENOSPC || ret == -EBUSY) {
++		/*
++		 * No zone to copy into (-ENOSPC) or no zone to reclaim
++		 * (-EBUSY): nothing can progress now and no I/O failed.
++		 * Rescheduling immediately would spin; poll instead, without
++		 * postponing work that an allocation has already queued.
++		 */
 +		queue_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
- }
++		return;
++	}
+ 	if (ret && ret != -EINTR) {
+ 		if (!dmz_check_dev(zmd))
+ 			return;
+-		if (ret == -ENOSPC) {
+-			/*
+-			 * No zone to copy into: nothing can progress now.
+-			 * Rescheduling immediately would spin; poll instead.
+-			 */
+-			mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
+-			return;
+-		}
+ 	}
+ 
+ 	dmz_schedule_reclaim(zrc);
 -- 
 2.43.0
 
