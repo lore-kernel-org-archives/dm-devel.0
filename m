@@ -1,69 +1,69 @@
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CB36544898
-	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 20:09:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65A4353E2E4
+	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 20:13:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791922165; cv=none; b=P+MakjhRX1VI+3xnXaGEH8NKBpnHeHzqjSRFDTzUibaE0tGkngxVUEyadWqxBCZtPrPCc2iHWs/L/pHhsnCVkecI44lRNozKrsvvaYV6SRaLPCAieptfdx8E3EIm1/R0VJpwIGLFkZx0YSUvMeT+oIdvywyCtY0JjG0x+nbKofc=
+	t=1791922400; cv=none; b=JBu3QKi6mDnJQ+d1DkhXRBI8liZ1bCX6tRIE1H7P26nmV3K7AmGbkEg7VqoNhTLhlsHvwZlWqVbJzPlTVnBrFzKf+aKZmGCU4TOlRWd3HWPegD3lacSGGSnYXDhJqeaEpowfLHwoMlKUYqoewqXRMecF/iHyPz+L7ujLjm6E8xc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791922165; c=relaxed/simple;
-	bh=NrenYkyGWgfz/6r9jzkmCjYiJ49/s0j3/93r31ckaP8=;
+	s=arc-20240116; t=1791922400; c=relaxed/simple;
+	bh=jhbx9laNPy92AqwKrICB3iCZDPZ5wNo0jYJGltxXPiA=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=s3lxKAFho/uzpc/FZGPJhvme1Za9tN2I6Nr2CaBf06vvM00PZ8ts4mHemHuzgkvxeJ0fpnCGmBBwZHGiAOsye8877BTtiEFkpk2GOGd0FLg30r47KY0YcwKESCuYwJMyQzJUCmHvlipHZqalMti7wCIH+p9TSVcSeUX6Y8otrkw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Y+9Nb4mW; arc=none smtp.client-ip=209.85.221.52
+	 In-Reply-To:Content-Type; b=C++P4HZa+B++1JFIaXetwzMDkyh337eXvzNvCTMVqt3pZ+xpTIQncHep7wc7CAYzsJ3/53GhVpTkKj/1vhWFtyepEN62yX038qK/x53xZy9s94UgUNrBbXye+ZbS2Gg+la9oQ40CvhhlJjsaNjwDIGyJPZXG9IZuFVn3JWAgPfI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=jFGWNDR7; arc=none smtp.client-ip=209.85.128.45
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Y+9Nb4mW"
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-48afcd7ba9bso1907237f8f.3
-        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 13:09:23 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="jFGWNDR7"
+Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-49d0da752ffso1964195e9.3
+        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 13:13:19 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791922161; x=1792526961; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1791922397; x=1792527197; darn=lists.linux.dev;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=v0gpLt7+oS9KQUHShMJeHfOIQi0PPRoxYfM2szDl9BQ=;
-        b=Y+9Nb4mWmic7V4MBgE0uR7w0Apo2V873yey9GOU+yRNWXogJwf2WLmZ18NjfJcLvC/
-         JXLqqH27/bVKsTkK4aGIxbf9LkG679dRp/wE6krr9Neo2UBu4h4fuQ1PxY0bJeE+MCkj
-         8CZxFLSX7CCBgyNUJcdmceCE9Ir3rVnfoOo3VBk8z+MtufBZ6xJ37jm93RC1Py0bKIBL
-         uWRc4NuRSvLLZiN6EAndpy9uA+zHJV0mQnK0aQigCMWdCb2U8L+a46YIi+ohye2WOOrH
-         BDdNIakI4QDfNHGSchQZ1zMfVREiodRYu9YiDkVIPPupUhySfy+FRi4PhF5CeWOUYCfd
-         PpQQ==
+        bh=Z2hIuYUY9dxFL1uM5B7+C8H4OaVqNBpDv98EiuOQjRo=;
+        b=jFGWNDR7V7ha+nGWp5u8ofWu7jYsk2/IVPA8gbed3dnyKQmXCTiMfORvUg/Ycvhmh7
+         Ye5LH2anUI4HDrZ5f3vSJ9kvawS2Wb2WKtb7zUJiLo6qvcu6t5o9NgJEZh78Y0ZOTfGN
+         bpox8f/h3w0PFinWlKnBna5LDppZpp3x/nUkfWueBRpEwC9wW6jrNw8xDI4s9qRgsQ6i
+         UnwoGBm6vR7Cn8idPfNhgIP+2XcB4KBEjQofjMkMR2i5kpQc7rKieXGtcRCqT7iK4q96
+         ECKlMOOYY5wzAp9UK3eurSzfCOsTbroyC5qKLZtDcXSe7viZYUfQfCxHOhCwsj4CtkFY
+         xhwA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791922161; x=1792526961;
+        d=1e100.net; s=20260707; t=1791922397; x=1792527197;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=v0gpLt7+oS9KQUHShMJeHfOIQi0PPRoxYfM2szDl9BQ=;
-        b=iN6NC4VLJeY/hZr7iFaW08CWdllyIKhZ9vl/hPf77LmpllCUCZUqB8SP3xYjQelrp3
-         Qv4suBmeQSsoGS77M7RKRqWLEX7slVrB4snxugPoO9FH1/OITTw43CblpdWWjd+pmVi9
-         Z+/PWY+ZzvcE1gNwgIVov8RrmnyAW9qKfrG8akG5GAxPxYE4hYeG6dlqtvYbf+5dWrIL
-         Rfd0DH3LADPDm9OYZ/diQ3vVk5UE+cDPKwFnTL05q1ZjchNmc++Rh8qKirPAb0dIky0w
-         vN4VhGu+TEUTeMG2jYaETeqDiLc1/uHh1/gMez7sXAiJzEgIcj5hRuaIXgDjGSvQNWgx
-         KvTw==
-X-Forwarded-Encrypted: i=1; AKwUvBzsGV7j+in3DTXIYrrNYnyame3EppPF3YG6TjqgEO0SXl+KfMlLuLnfW4JHTOjkQYzYB4dGGhBFHQ==@lists.linux.dev
-X-Gm-Message-State: AFq9FYK3aJUjFSdOyMMjfWlFQyMVwofKwYmNwyqacRaJ+PTXfUMNcdBw
-	9UFFJVqofAuxFQWdQG0la87EX+MtOpgtJpr91iIZROza7toaN0kMDcrE
-X-Gm-Gg: AYBFou17mp3AqrtpwDSIHotJhs9ZMcxYYNNowsv199+0VAszMH3pQpW+SahaNxiAYJv
-	K9WhhQqge4EOePQEX1xn9LvZzPzzi83lD7D6luP31zoUbsgpA1QWkiiWwly/FCzaoSW0swki7hJ
-	ABVd8A130JwtobJckMTKS1JT3l4iACSictghcnQ2U88P1WYWNpdnKArdyPZcojFhcGDvEeVhvFJ
-	SdyvfySmR9Jx/tX9p1xwiJ01ae5LNfHNksvvpwX9P2fAUJUB/bS6+rYO1FPzJ5hZbPbZMrMQRDv
-	zZ/cvlEatPhV45Ux5Md9Aa3BNeWZtTA4sVZXX567GCtedZz/Q/uOZjN6UxZfdb0OkcQD6KcIqeV
-	+mFxpQhVpf4zEmBKiEjCHGwK/bZCiqSMDQBBJtiQ1wTiZoHr0esTfJLm3iwSf+0i1THcaoGHZJz
-	6Rt4by9ED7hnqm0xBFQoGVaSH1UGrtAwkiCsV1Dz1NguvVtttNqle1q1xZyd7+2S7/53gFuCDWa
-	yJx07u6pbakKRczDwwyGwbkNj7bxCNi3TC2IJ/hbjND3w1Fx8oNLw9300NqYBKXJG+MWzxUsDec
-	/MVetXyWBy77YnzvoKGn5mY3wj77PtepgjK1xhkAkLsMoPwn
-X-Received: by 2002:a05:6000:310c:b0:487:8b9:526a with SMTP id ffacd0b85a97d-48dbacdaa60mr25864079f8f.36.1791922161609;
-        Tue, 13 Oct 2026 13:09:21 -0700 (PDT)
+        bh=Z2hIuYUY9dxFL1uM5B7+C8H4OaVqNBpDv98EiuOQjRo=;
+        b=w6jesQK5QTSbosuBTdaLuX34NwCCrYoE0rC56u8PUMjoCjIVbWRAZl/YwkW6ZAxR+1
+         bcaHcK9ww0b1MCkUd8ufIVNIr8ugOqxr8904NvAAQZNryhQEQ/RmkWk/1jp++w3gm0hb
+         6MVJU13q3+0R8+AAVYDjEZMqh1nL5rjNzZSo7+Vdex+nvUfTIEIDhd/XbE77Wn/yPGd+
+         /XwqnfaKyscD7PYl0FeVfJlu2Emf9dS17OA7hstqa2PMBx5V/+JIDyvFisKFFj7C+RZz
+         hMOPiObCSIA6nppfCShO/E8fBbChBx4DP+x3+iu6FZH6mgqlNMYCB8XZTPu+bdKFRs/J
+         rQ0A==
+X-Forwarded-Encrypted: i=1; AKwUvBz0vk44hujCLavngb9vP6kg62sus8XAqbO+EZlI0mBByM4q+w107vXFwLwAvb91m5kFFjLqxhTcHQ==@lists.linux.dev
+X-Gm-Message-State: AFq9FYIMkJfMVAcFYTmqPpT7JH3MCQpsCo7xzhWDFh9WLqAFRVgYcNTB
+	WK8Pa8JNEkeVUnqYca3u5v0yvU0B7cNcwE7XDalmJ+c+2r03QgcHUiED
+X-Gm-Gg: AYBFou1D1PIdlxzjYXXbnBCzwFG48JRWdMMdjGg+R7MseWrY4BBM+TJjhjMonGmGlQA
+	yH6kg4gh8KhUFf5AARjNdZsyDKlOAHOflg6hfTvRuvnM78VWAzGM36F0OB+SBW+OSulxre/2BJW
+	eEcwMz4cXZf+Xzh+WAR0Iwa8kZ+ecqVykM4Ku00WVgIDvm252uDbgHYthi99T+4V/WHFU6q0OUv
+	ZWUfhL+UNmBrSmmZuJv6rP7YJ/r0GsjzUKRZUFDEVG5BCRTwJJoqYewKOviuUuDqhUbFJc98w7e
+	s1VprFnGmFcp+bigAYGPIXcG0sZXZX3UJYolRgebDIglQ1EwH5D8LNYeB7VaM9TACvNGaEEWIRH
+	ol1MTz0nuFUMWt9lwCjudFtXSUgbVRyw9bzlwzvWdnKwSUg+1kNrKo/rE8yQb3v8KcVGFMienGA
+	aO+JJCww5wxxsU/Dig2h1IFjVev9WPQn4EPKuH2knsJnLBYmeVo12nh4gGkyUXZFR02ssVXxmK5
+	1L8iwVSR/XRXv3CmQF2bWGUFUmFn16UoX3bj6ROFa0W+5zX49PZFhXDfIrvRL65LcICkgYjAYdR
+	G5LzNmqYylta7mI8e6aqdE9NNNdRmNE1ve826V1b//k94TOl
+X-Received: by 2002:a05:600c:4f42:b0:4a0:b6:4619 with SMTP id 5b1f17b1804b1-4a18e3ecfc8mr324117205e9.0.1791922397398;
+        Tue, 13 Oct 2026 13:13:17 -0700 (PDT)
 Received: from ?IPV6:2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c? ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48de0ab5af7sm7243430f8f.31.2026.10.13.13.09.19
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a18be97d1esm608335675e9.8.2026.10.13.13.13.15
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 13 Oct 2026 13:09:20 -0700 (PDT)
-Message-ID: <293d49fb-6488-46da-bd3c-6f8600dd123d@gmail.com>
-Date: Tue, 13 Oct 2026 21:09:12 +0100
+        Tue, 13 Oct 2026 13:13:16 -0700 (PDT)
+Message-ID: <736950e0-c890-441e-bfa0-ef5d2b7b7d4a@gmail.com>
+Date: Tue, 13 Oct 2026 21:13:09 +0100
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -71,66 +71,52 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v9 00/13] Add dmabuf read/write via io_uring
-To: Matthew Brost <matthew.brost@intel.com>, Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-media@vger.kernel.org,
+Subject: Re: [PATCH v9 05/13] block: add dma-buf support for raw bdev
+To: Anuj Gupta/Anuj Gupta <anuj20.g@samsung.com>, linux-block@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-media@vger.kernel.org,
  dri-devel@lists.freedesktop.org, linaro-mm-sig@lists.linaro.org,
  linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org,
- io-uring@vger.kernel.org, Sumit Semwal <sumit.semwal@linaro.org>,
+ io-uring@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
+ Sumit Semwal <sumit.semwal@linaro.org>,
  =?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>,
  Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>,
  Alexander Viro <viro@zeniv.linux.org.uk>,
  Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
- Andrew Morton <akpm@linux-foundation.org>,
+ Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>,
  Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>,
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>,
- William Power <william.power@intel.com>, Alasdair Kergon <agk@redhat.com>,
  Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
  Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
 References: <cover.1791336930.git.asml.silence@gmail.com>
- <d00e43fa-8f5b-4a8b-8b83-421d637ba519@kernel.dk>
- <20261013141046.GA12680@lst.de> <as6BMYAsWehHddlT@gsse-cloud1.jf.intel.com>
+ <CGME20261007014324epcas5p2a7f3b03f118c9a1d1c633fe839ed1e46@epcas5p2.samsung.com>
+ <af2b48a490186edf38f1d4a5dfd9513574f7a350.1791336930.git.asml.silence@gmail.com>
+ <bbb87d6b-b7a3-487a-8be4-27f3f9ce4a1b@samsung.com>
 Content-Language: en-US
 From: Pavel Begunkov <asml.silence@gmail.com>
-In-Reply-To: <as6BMYAsWehHddlT@gsse-cloud1.jf.intel.com>
+In-Reply-To: <bbb87d6b-b7a3-487a-8be4-27f3f9ce4a1b@samsung.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 10/13/26 20:06, Matthew Brost wrote:
-> On Tue, Oct 13, 2026 at 04:10:47PM +0200, Christoph Hellwig wrote:
->> On Mon, Oct 12, 2026 at 02:21:41PM -0600, Jens Axboe wrote:
->>> I've queued this series up for some testing, in a separate branch. JFYI.
->>
->> More testing it obviously good.  I've been waiting for addressing
->> of the Sashiko comments on the nvme patches before doing more ACKs,
->> and while I can't really judge the code those in the dma-buf code
->> also look somewhat serious.  So it would be useful to get them addressed
->> and the series reposted.  Same for folding in the PI vs dmabuf fix
->> from Anuj, although making the combination work would of course be
->> even better.
->>
+On 10/8/26 13:27, Anuj Gupta/Anuj Gupta wrote:
+> On 10/7/2026 7:12 AM, Pavel Begunkov wrote:
+>> +static int blkdev_init_dma_buf_io_ctx(struct file *file,
+>> +				      struct dma_buf_io_ctx *ctx)
+>> +{
+>> +	struct block_device *bdev = file_bdev(file);
+>> +	struct gendisk *disk = bdev->bd_disk;
+>> +
+>> +	if (!(file->f_flags & O_DIRECT))
+>> +		return -EINVAL;
+>> +	if (!disk->fops->init_dma_buf_io_ctx)
+>> +		return -EOPNOTSUPP;
 > 
-> Oops, I forgot to look at Sashiko's feedback when I acked the dma-buf
-> patch. I think the two cleanup issues are valid,
+> dma-buf doesn't work with PI: bi_dmabuf_map aliases bi_io_vec, and
+> blk_integrity_iterate() walks it as bvecs to generate/verify the
+> checksum. rw-dmabuf liburing test hangs on a PI enabled NVMe. Something
+> like below is needed:
 
-I stopped answering to sashiko as it repeats the same from version
-to version when false positive. Those two are warning paths, which
-should never happen, I'd rather leak than crash on double free or
-so.
+Thanks, I already took it into v10! There is some some confusion
+with the branches, but will get incorporated in either case.
 
-  but the reclaim-related
-> ones are not. 
-
-Thanks for confirming, you already elaborated on one of them in
-previous revision, the new one looked to me as the same class of
-issue as well.
-
-I'm not sure why Sashiko is confused here.
-> 
-> I wonder if there are some shrinkers in the tree that incorrectly take
-> dma-resv locks in a blocking manner. They should only use trylocks in
-> shrinkers and direct reclaim paths.
 -- 
 Pavel Begunkov
 
