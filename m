@@ -1,64 +1,64 @@
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+Received: from mail-wr1-f46.google.com (mail-wr1-f46.google.com [209.85.221.46])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 077D7556B92
-	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 20:55:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.46
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 260A554CF40
+	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 20:55:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.46
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791924925; cv=none; b=RIOzNuW6f9YTDWElUGatWyyuVn+2Ks5hHteGlIJlExnnacriT+OMFUIa/ibwwLAmCv95DXHgUg52m6dDWGwQiW7Ds2SOAUVh9g5rs344X9dsL1Ekwtwb3PndDjkxHSp3NWV+RoWge0IrBXsL411cOI9nJGbTuo/YtOpuW0UnmDA=
+	t=1791924933; cv=none; b=k/92VwA1HZpmazogIwiirH9vJZGzu9Yg+k4TUo6KVvvZqZlRjsTEWzPMqMzTAzm68N2Y+LlHfNYP1ZSI2h3oISrnYoLwpshic9YVj1c5scRcv4QHadNZ3SjevICCx+38uoRcvXoAOnJKfzhdeg19f5TCOl36PRHpjvhvxAJC0WI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791924925; c=relaxed/simple;
-	bh=lqtmMOq9NyJHWkCTixF/EfRvdzo9ti4x7BRbdW0dvpo=;
+	s=arc-20240116; t=1791924933; c=relaxed/simple;
+	bh=0a99AkCdYYlGDSLNyvcoHvxyA0h7cLM0HZDY04APdmg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=mIRrIdUtAl7sjNGL/EBBxNQE9wGD5HRUepBJVHXCaqvkgsDNxnxIakJExCfAa2RGaIgaq8MFY8UlnF+6I/AbbuqQ/SPHFPZkE7CPUoU/h/5vM2yDDBX9EezqEe3Bxdq1gCaYoBs5stnDXop2ikc28P9OwcuxxH9g882ZGzWJqlk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=BfiF5kRH; arc=none smtp.client-ip=209.85.128.46
+	 MIME-Version; b=Y4TODz8UgdFE850SU03rx+S2HHBqOQSAaQBBAQ3o+/P0Q2XA1YiOuKVo/mhykRw9egYVHl7bfsDehC+9ErqRcA3XSwwoioHMTbbGWocGLmt7EmkXjks29U3RFg3ci5QbN6o9YVhA3lVJyTX4509Ty+FPIQmld4wJ7xStKa6BiPU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=JCq4M0P0; arc=none smtp.client-ip=209.85.221.46
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="BfiF5kRH"
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-4a018792ab3so28468315e9.0
-        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 13:55:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="JCq4M0P0"
+Received: by mail-wr1-f46.google.com with SMTP id ffacd0b85a97d-48af4d4e61fso2442292f8f.2
+        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 13:55:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791924920; x=1792529720; darn=lists.linux.dev;
+        d=gmail.com; s=20251104; t=1791924928; x=1792529728; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=BooWm7URUcyrH2E2qkRWxlx7KQoz7GWFpr53v56Fl9k=;
-        b=BfiF5kRHbTCNN2YzgzXvKqiEQYEmvxvyEHhpciq77Q1oU56SSfIFme/ziq2QKIfiZU
-         tIgBYIXX2qPN6vs0MyTl/ajBkQ1fOAP4ltkdIixMUTv8iTAFCftIXip/xg85514yxJZh
-         MUXLw9632b1jBzH69TI3TcinTIqzMZ5l9etKqpc3isL3BmAw4FC3PD05L5iOp3V86SZ/
-         CNmRl1yLBKg0bSA3iQ4fEFnlvIkk6H69epKKDIHwoh8hZJgmZytKvDlxlyUS7SsjG2r4
-         H+lLR+eItKgJiX5+RmT8+kGci1jitZvKe2h4gxpbrFsnc32JrGnLEDd6vgEl348KZnno
-         YQzA==
+        bh=SVgIYOF9sl5M4BcUqDAxFWbO5yiW+j2eX94ter+J4Q4=;
+        b=JCq4M0P0MEhcx5tQ0ULL8O+SzamSgEn2HBOGzWaATFibaDXCRIvmBz6cFFQWaZypCq
+         pDvAHa6CbY4OS52DhjBXUEowaptV4EGNucYZOopgo7h7DerTtVnwJnA7qouAtEgtVXQG
+         xz2+UZqKSgqn04lpDq9LOsIOFV9W3SVcaOER2R76JFx8MCX3oOynkvqRbO6IyYdltLvj
+         qF9MYAPQtTjjgFgz2roOkr30N5QSDDAwGvPEJwyTt2eQjkRelzfhXQUfT9NMhxWoPGY5
+         0ZJ1NMmO1VwMbq3Zhy9Es71nF/7hEsUD/yGgGJD7P52VwCtJ8WaNeb3skht4At+/z2OH
+         o0PQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791924920; x=1792529720;
+        d=1e100.net; s=20260707; t=1791924928; x=1792529728;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=BooWm7URUcyrH2E2qkRWxlx7KQoz7GWFpr53v56Fl9k=;
-        b=q8H5jCy2aAxishf+V0WZs+mgtOwcUPLCUyfck3L4B+OyhjhFetJtzQG+DZuly5sejn
-         PJ5NcE36IrXqPDB0XfTVTuhit/heDS/oCpL/tZ/jDEnVJ292Wy3wH353lOGzOJryv+H0
-         wXVCr96oOVgg9dwVkex03eXfvzA0XQalGbl+WHQyKYxo3hTuXp6eDxWxxkUPTqVpCYx3
-         w1I0o5Iu71FnZ/U2sgfXXlJzWJKytqa67sPD0PfbY7QcEm5I03XhnedX4FpHGBQKA/n9
-         BNUK2/LMGDbjQ9EHivLrgsE+ffM/lIVVFHFpJ7dya6s3WIAXll5zyFP+Q1hxMYTKyem1
-         LimA==
-X-Forwarded-Encrypted: i=1; AKwUvBxEPsA3jhby8/uQHS4Wl82g8SNQqSY6cTVVp2KsCXx1lUPhh5IHVU2SLDwBiLVL8zZeAOrzIpIRKQ==@lists.linux.dev
-X-Gm-Message-State: AFq9FYKjfR4idaRzeYN5J/RnBq6wNgG0IaX+HODdU5Ox0vasJ8Yr1byD
-	jHAgmFHzSdwZJ12ctsTPLzCwuzZTquWdf4S7NBlNZWiSk/JBt0Qr2ukP
-X-Gm-Gg: AYBFou3Xxs9IFoOxMJHbRh+s4yw+QLdjCxoyPvZ/64X7KqcFXBa5h71e06qipYC+joX
-	JDGYavSGdkdgnnoqoNChLjPbFmZ8nRrZYTZGrxbcA23zBrxiM2kZGyW4bdUmymcX7qczsFJmL79
-	O+9CRhNMXzOjs0D14zGyEy48IpreBmHVOEksqOtr+tSmwAz5ZiBjOC9nOLYYPrzePf3cG0xdR5v
-	4V/peplhI/5fcd5YE2FSdac2KFAQEtTXeTpBP0SACtN4dHvsWRhpGKxbSwUfBAxdkEGerjs0mUc
-	wGyC3UCyS9MI2AwdsXp6V+diB/Vn3rFrK2UNY/zQFiw0jZkBZx1cU5xZJ5td2ws3L9SOaOtuRA3
-	mV/Q+VeOrf16Dkx5aZt2XkrBzUl+2gvzmYp/2Y6QKZTCwEG+cYZH72J+c5UK3B+o9oUW1RYqLaW
-	aBwOEm1mGqx+WLPp0L1SJRUL9KZEz389kARa0p1HwpMe0NiKzWgMl8ap2HAwrmf8pdE987FYWhW
-	4EwcU7UihLiQ3aGIeLxb3pNENFTK4563PMbKBxXPGMcOdCCH+cBx0qf8F5SrdV7lBKfGCMrZzWm
-X-Received: by 2002:a05:600c:3e83:b0:4a1:6d35:779a with SMTP id 5b1f17b1804b1-4a18e446880mr243665015e9.3.1791924919983;
-        Tue, 13 Oct 2026 13:55:19 -0700 (PDT)
+        bh=SVgIYOF9sl5M4BcUqDAxFWbO5yiW+j2eX94ter+J4Q4=;
+        b=0pswxiwqa32/Ub5LQzej+f1Tj70l9IuY/UFM9zP2UVq83Vs4DwhhnUBHq5eZaQKQnT
+         IUseaBt79pwoLusLSIcEIu4YzRKX6l+TBV1pfHymH1VCvlmUGmDo7X2knoLbZJ0P4rtg
+         cqTClCnm+nEkWm1ZyXBOrDq58EmpSGBlXhSmn/swqM782QKkn1OShUZzX9NcbNX0OnSs
+         z7j0VHg6PEu8hsNnn4sB5U1ii9oIhl0rtNZrrvCbKuvkiD5yZYybHEfg/K5Ugr0gw3AB
+         TmTOEIpY9AnIANWP5SbTbvEURE9MDcEduN+HTm6vvDcqFe36ceeFkotGPV3qjqIlPFdu
+         hMlA==
+X-Forwarded-Encrypted: i=1; AKwUvBwEFShfwjAte0Pa/R71fsWGufw8oxeNqwtCehlkfajJ1m/Y8ieKDA+BklmXJEAXyy7YWHc7mqpZpw==@lists.linux.dev
+X-Gm-Message-State: AFq9FYLoXwPY5vb10PCzwtHhMzl3y2eVWBrE0bkVu3gWOs7B8hX6QJgI
+	slDUWbOeWGkv8FiQkytUVvCrso214PfR5RqIoI+UUrJyo3A2b2gxaqrB
+X-Gm-Gg: AYBFou0vjX+LZmF1k6YJ83F9c2RHcmjO7kgcLqsLTHH/MboMpgziWPyPBAbDiwAm903
+	nOmJpA9h8lRan43PwY0hITCDDOn17kfilvS0FcxgYb1aMBYYcJSzQMBtDCUP+WLM+SfThl/tMjx
+	tHZKjG752Jtt3/G9zVMDP7o/Mj9xavHG/0bStWCaNu+FYaUtDMY8936/qQrF6dvgXYowmfL/Vq4
+	LD/izrgfaJJgT5kDe/SVLayX7pI3fgTPlRL07Y0AVPS1FEq/Pcebv3pqCE6T7SwUBIJ5mwlozwA
+	S1Ge24kVPnXzXjmcy+gutXjamAp9GhUpF4r7CzMnMrTtqDFftcY+Yhfldw7SmmQ/99oCxt7JnlJ
+	a1B0JD4CsQZFjxle31QktclKCIP3oyJPHdhv0YrBrOCphkU52Gt30UMJmVkDEyXm8lYtbcdLmo/
+	SjKH6tZ/ucLfi7bHHzFwsYNQQEAqkfq6iRqX+g+T8kcKIRgN8nPBSjxZ82JsxjD9J6XAXzkHgPc
+	YSfE3RJ/yYTDEW2ha4uH37d0l0Xk9A3x4TjSqmbG1H42TNOYHUv00bgzSOy3cBVeeXHCp7UmWZ6
+X-Received: by 2002:a05:6000:186f:b0:48c:7c69:2dce with SMTP id ffacd0b85a97d-48dbace9dfemr26073729f8f.16.1791924928152;
+        Tue, 13 Oct 2026 13:55:28 -0700 (PDT)
 Received: from 127.mynet ([2a01:4b00:bd21:4f00:7cc6:d3ca:494:116c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48de7273a0esm2380730f8f.29.2026.10.13.13.55.16
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48de7273a0esm2380730f8f.29.2026.10.13.13.55.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 13 Oct 2026 13:55:18 -0700 (PDT)
+        Tue, 13 Oct 2026 13:55:27 -0700 (PDT)
 From: Pavel Begunkov <asml.silence@gmail.com>
 To: linux-block@vger.kernel.org
 Cc: asml.silence@gmail.com,
@@ -90,9 +90,9 @@ Cc: asml.silence@gmail.com,
 	Mikulas Patocka <mpatocka@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH v10 03/13] block: always adjust bi_offset on bio_advance_iter
-Date: Tue, 13 Oct 2026 21:54:47 +0100
-Message-ID: <007fe19ad4e949ec70ee74ef5cb05774656c62e2.1791924581.git.asml.silence@gmail.com>
+Subject: [PATCH v10 06/13] nvme-pci: rename nvme_pci_sgl_set_data to nvme_pci_dma_iter_set_sgl
+Date: Tue, 13 Oct 2026 21:54:50 +0100
+Message-ID: <54f1186d20a7c24075dd38eda1dfc7ac3705a13e.1791924581.git.asml.silence@gmail.com>
 X-Mailer: git-send-email 2.54.0
 In-Reply-To: <cover.1791924581.git.asml.silence@gmail.com>
 References: <cover.1791924581.git.asml.silence@gmail.com>
@@ -104,73 +104,66 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Extend bio_no_advance_iter() iteration to also increment the offset.
-It's not currently needed because the currently listed request types
-don't have a buffer, but will be useful once we add bios backed by
-dma-buf, which don't have a bvec but work with a single range.
+From: Anuj Gupta <anuj20.g@samsung.com>
+
+Rename the blk_dma_iter based nvme_pci_sgl_set_data() to
+nvme_pci_dma_iter_set_sgl().
 
 Suggested-by: Christoph Hellwig <hch@lst.de>
 Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Anuj Gupta <anuj20.g@samsung.com>
 Signed-off-by: Pavel Begunkov <asml.silence@gmail.com>
 ---
- drivers/md/dm-io-rewind.c |  6 ++++--
- include/linux/bio.h       | 12 ++++++++----
- 2 files changed, 12 insertions(+), 6 deletions(-)
+ drivers/nvme/host/pci.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-io-rewind.c b/drivers/md/dm-io-rewind.c
-index 04f3fc8aeb6f..b22719c6411c 100644
---- a/drivers/md/dm-io-rewind.c
-+++ b/drivers/md/dm-io-rewind.c
-@@ -113,10 +113,12 @@ static inline void dm_bio_rewind_iter(const struct bio *bio,
- 	iter->bi_sector -= bytes >> 9;
- 
- 	/* No advance means no rewind */
--	if (bio_no_advance_iter(bio))
-+	if (bio_no_advance_iter(bio)) {
- 		iter->bi_size += bytes;
--	else
-+		iter->bi_offset -= bytes;
-+	} else {
- 		dm_bvec_iter_rewind(bio->bi_io_vec, iter, bytes);
-+	}
+diff --git a/drivers/nvme/host/pci.c b/drivers/nvme/host/pci.c
+index 77317e5d00f9..a65b77726e4b 100644
+--- a/drivers/nvme/host/pci.c
++++ b/drivers/nvme/host/pci.c
+@@ -1147,7 +1147,7 @@ static blk_status_t nvme_pci_setup_data_prp(struct request *req,
+ 	return BLK_STS_IOERR;
  }
  
- /**
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 17944e44b584..892ca469c570 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -113,11 +113,13 @@ static inline void bio_advance_iter(const struct bio *bio,
+-static void nvme_pci_sgl_set_data(struct nvme_sgl_desc *sge,
++static void nvme_pci_dma_iter_set_sgl(struct nvme_sgl_desc *sge,
+ 		struct blk_dma_iter *iter)
  {
- 	iter->bi_sector += bytes >> 9;
+ 	sge->addr = cpu_to_le64(iter->addr);
+@@ -1177,7 +1177,7 @@ static blk_status_t nvme_pci_setup_data_sgl(struct request *req,
+ 	iod->cmd.common.flags = NVME_CMD_SGL_METABUF;
  
--	if (bio_no_advance_iter(bio))
-+	if (bio_no_advance_iter(bio)) {
- 		iter->bi_size -= bytes;
--	else
-+		iter->bi_offset += bytes;
-+	} else {
- 		bvec_iter_advance(bio->bi_io_vec, iter, bytes);
- 		/* TODO: It is reasonable to complete bio with error here. */
-+	}
- }
+ 	if (entries == 1 || blk_rq_dma_map_coalesce(&iod->dma_state)) {
+-		nvme_pci_sgl_set_data(&iod->cmd.common.dptr.sgl, iter);
++		nvme_pci_dma_iter_set_sgl(&iod->cmd.common.dptr.sgl, iter);
+ 		iod->total_len += iter->len;
+ 		return BLK_STS_OK;
+ 	}
+@@ -1199,7 +1199,7 @@ static blk_status_t nvme_pci_setup_data_sgl(struct request *req,
+ 			iter->status = BLK_STS_IOERR;
+ 			break;
+ 		}
+-		nvme_pci_sgl_set_data(&sg_list[mapped++], iter);
++		nvme_pci_dma_iter_set_sgl(&sg_list[mapped++], iter);
+ 		iod->total_len += iter->len;
+ 	} while (blk_rq_dma_map_iter_next(req, nvmeq->dev->dev, iter));
  
- /* @bytes should be less or equal to bvec[i->bi_idx].bv_len */
-@@ -127,10 +129,12 @@ static inline void bio_advance_iter_single(const struct bio *bio,
- {
- 	iter->bi_sector += bytes >> 9;
+@@ -1359,13 +1359,13 @@ static blk_status_t nvme_pci_setup_meta_iter(struct request *req)
+ 	iod->cmd.common.metadata = cpu_to_le64(sgl_dma);
+ 	if (entries == 1) {
+ 		iod->meta_total_len = iter.len;
+-		nvme_pci_sgl_set_data(sg_list, &iter);
++		nvme_pci_dma_iter_set_sgl(sg_list, &iter);
+ 		return BLK_STS_OK;
+ 	}
  
--	if (bio_no_advance_iter(bio))
-+	if (bio_no_advance_iter(bio)) {
- 		iter->bi_size -= bytes;
--	else
-+		iter->bi_offset += bytes;
-+	} else {
- 		bvec_iter_advance_single(bio->bi_io_vec, iter, bytes);
-+	}
- }
+ 	sgl_dma += sizeof(*sg_list);
+ 	do {
+-		nvme_pci_sgl_set_data(&sg_list[++i], &iter);
++		nvme_pci_dma_iter_set_sgl(&sg_list[++i], &iter);
+ 		iod->meta_total_len += iter.len;
+ 	} while (blk_rq_integrity_dma_map_iter_next(req, dev->dev, &iter));
  
- void __bio_advance(struct bio *, unsigned bytes);
 -- 
 2.54.0
 
