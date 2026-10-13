@@ -1,33 +1,33 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 941E53DB625;
-	Tue, 13 Oct 2026 09:36:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACB2F43304D;
+	Tue, 13 Oct 2026 09:39:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791884177; cv=none; b=PQ8susv4tzNYyyRvSYT7FATMoLoGt13YPDH/KEcGKB7zBy9/blBmp+pFu9B89l86f0Ww9nsCofLWhZPi0E/N8lvvps5WrVAdRPG2/1b21zu6XVhCvIxGytmDfW1bQVzlUiaNV3enxzRnSy9kuMW2diTxFUqycYpkLJHdE4c+s44=
+	t=1791884353; cv=none; b=cqq4ngwEFbYopmLq/gLQxsFVt/2FZ6EKk1EIM+BPh37DLZC+t3MP8hr825ruUB9lNbD8eleoIxOilL5jDPyBpZ3QZMCrMNiK2jFYE0RDTsfs8XqyxnUqgLTdvqQfFu1YePDe7Hb287WzeoklY1MjCShkTwtIhYmTUQEsuAmRjEQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791884177; c=relaxed/simple;
-	bh=o6fItdcwNjRx9XbC1pmp5BurSSI8BFN0K5LPIG2SM+M=;
+	s=arc-20240116; t=1791884353; c=relaxed/simple;
+	bh=mTDTH+/8XoH7cAMwhbDfe6CLAL86ksKw2m8E9Lpf6RQ=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=IMXvK2f0oCEsMf2bv+hjd5gn+ih+6OmRmbmQSYgyYCcLMKljFphV5sfUsHpX3/3EB9uHuj8dKE7Q7ZYzQFdLLsi3jR+QX4QeUDrycIKTvUCBv6pvNtHMzSTbj8+EuGuYp8tWHkFAf8OHSIuc4u6zE+nBnXw/O/xRqn/YH6PD2u4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TIYA4JVM; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:Content-Type; b=E6GNxuSEyJTvwYVptEakg+CXG0x/+I9D1xXR33k3xosrHQqebcaBjzKg0J3rUAe7vadfibmUl/AU1cJcrPLAdQrE5tU7jK34yKWuMirjdDGGpniliUBue0PWS0QHUOowvvZ2V3+b1kwJyjhvmhecFwGbmddvKkGRUB4w2KlRn+Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=XBCA+0wx; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TIYA4JVM"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0BF621F000FF;
-	Tue, 13 Oct 2026 09:36:14 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="XBCA+0wx"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DDBC91F000FF;
+	Tue, 13 Oct 2026 09:39:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791884176;
-	bh=3AesqUMWyjvMZWunFdp1g4dV3G3m72b3b6B/gEZi3zM=;
+	s=k20260515; t=1791884352;
+	bh=KqkUkyq/4czwVshNqTczqjlpaIKuhc2cWHb+11lGCvY=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=TIYA4JVMadkg6zv4DJYB+g0XlO/4XL/VEzs7bvFU66S+DTxmB2sgdWaqLshPMZ5m9
-	 2UJ90gZI1GaIh4CB1c26xatZm7SuCl5EZRJYIsj/xufCE+4vEJad4R+ZYa2GhQZON/
-	 wt45//A0iE1EnH+bX/TOQ/giwxuaThEQfdCNPR/QMIhd5NXc41fgAaxzjowLZeWtcp
-	 BG0AqQlxmwhIGRK/ojMHDtiUfp7r0snQAPVjZRDs6nfktgiawWLn3z9NMizV+zVkgu
-	 7BMLdhAf9vnNlc7otZaUq9lMq7NSbUUd4PjF/mUYR905eeSeakYmsJDsNiDRP3IQgh
-	 6xgQZsxrcH0Qw==
-Message-ID: <725db95b-c763-4d97-b6b0-9ffd4cdaff3f@kernel.org>
-Date: Tue, 13 Oct 2026 11:36:13 +0200
+	b=XBCA+0wxPLog3jxBcuPKGhxD30Cy6aKAKaX8cOrJFE+1zr2Agj2L9+1MKXZsthwnD
+	 2B9VqKKzNRbN5hjzczjrM88y6z4i1MTdEFiQEdTLyDHCX7oJ+L6SsliZVsed0djgio
+	 NU0DBDK4rcoFI1aWj2+T6Uy4aU3fZPxGqJIhlkWap2gW7QBZypvZ/U+H0CEkQASaU6
+	 Aq/9QQ0bI7wq/yetp8htMo6gq9RUsekk+zNs9oOHm9KqF6am2SXn3XtPnVAJBU+NvL
+	 vBdZk/tRM/sCeJj5ctAqLKyWuluabK5r1TwogiWO4IesAm8k86u0YJbEkjChyBXyjd
+	 +aaaBsKXfoCjw==
+Message-ID: <fbd4371c-c9eb-4c60-a3e1-670835591e96@kernel.org>
+Date: Tue, 13 Oct 2026 11:39:09 +0200
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -35,47 +35,74 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 2/3] dm zoned: do not reclaim a random zone into
- another random zone
+Subject: Re: [PATCH v3 3/3] dm zoned: keep polling for idle reclaim after a
+ reclaim pass
 To: Kyrylo Biryuk <illofspeed@gmail.com>, dm-devel@lists.linux.dev
 Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
  bmarzins@redhat.com, hare@suse.de, linux-kernel@vger.kernel.org
 References: <20261011175450.952-1-illofspeed@gmail.com>
- <20261011175450.952-3-illofspeed@gmail.com>
+ <20261011175450.952-4-illofspeed@gmail.com>
 From: Damien Le Moal <dlemoal@kernel.org>
 Content-Language: en-US
 Organization: Western Digital Research
-In-Reply-To: <20261011175450.952-3-illofspeed@gmail.com>
+In-Reply-To: <20261011175450.952-4-illofspeed@gmail.com>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
 On 2026/10/11 19:54, Kyrylo Biryuk wrote:
-> dmz_reclaim_rnd_data() falls back to a random destination zone when no
-> free sequential zone is available and the target has cache zones. When
-> the target is idle and the cache zone list is empty,
-> dmz_get_rnd_zone_for_reclaim() selects random zones of the zoned device
-> as well, so a random zone is then copied into another random zone. That
-> frees nothing: the next pass picks the next random zone and copies it
-> again, for as long as the target stays idle.
+> dmz_reclaim_work() re-arms its DMZ_IDLE_PERIOD poll only when
+> dmz_should_reclaim() returns false at the start of a pass. After a pass
+> it calls dmz_schedule_reclaim(), which queues the work only if reclaim
+> is needed right now. When a pass ends while the target is still busy and
+> has enough free zones, nothing is queued at all. Once the target goes
+> idle, nothing re-evaluates dmz_should_reclaim() until new I/O arrives or
+> user space sends a "reclaim" message, so the random or cache zones that
+> filled up under load stay full.
 > 
-> Seen on a two-device target (256 GiB regular cache device plus a 27 TB
-> host-managed drive) used as an md RAID5 member: after a full rebuild
-> every chunk was mapped and no sequential zone was free, and the idle
-> drive read and wrote about 72 MB/s each without pause for hours while
-> the free zone counters in "dmsetup status" did not change. Reproduced on
-> emulated host-managed drives (tcmu-runner ZBC handler): 340 MB/s of
-> copying on an idle target, 0 MB/s with this patch.
+> Seen on md RAID5 members on 27 TB host-managed drives: after heavy
+> writes the random zones stayed full for hours on idle targets; the
+> workaround was a timer sending "dmsetup message <dev> 0 reclaim". With
+> this patch the emptied and filled zones were reclaimed within minutes of
+> the targets going idle, without the timer.
 > 
-> Only switch to a random destination zone when the zone being reclaimed
-> is a cache zone: moving it to the zoned device still frees cache space.
+> After a pass, requeue the work immediately if reclaim is still needed,
+> otherwise re-arm the idle poll.
 > 
-> Fixes: c5c788595292 ("dm zoned: start reclaim with sequential zones")
+> Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
 > Assisted-by: LLM
 > Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
+> ---
+>  drivers/md/dm-zoned-reclaim.c | 11 ++++++++++-
+>  1 file changed, 10 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+> index 88d56d3c86d..5084e10ea7e 100644
+> --- a/drivers/md/dm-zoned-reclaim.c
+> +++ b/drivers/md/dm-zoned-reclaim.c
+> @@ -556,7 +556,16 @@ static void dmz_reclaim_work(struct work_struct *work)
+>  		}
+>  	}
+>  
+> -	dmz_schedule_reclaim(zrc);
+> +	/*
+> +	 * Keep the worker alive: when a pass ends while the target is busy
+> +	 * with enough free zones, dmz_schedule_reclaim() queues nothing and
+> +	 * the idle poll is never re-armed, so zones filled under load are not
+> +	 * reclaimed once the target goes idle.
+> +	 */
+> +	if (dmz_should_reclaim(zrc, dmz_reclaim_percentage(zrc)))
+> +		mod_delayed_work(zrc->wq, &zrc->work, 0);
+> +	else
+> +		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
 
-Looks good.
+This looks OK, but why hardcode this here instead of modifying
+dmz_schedule_reclaim() to add the "else" case?
 
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+
+>  }
+>  
+>  /*
+
 
 -- 
 Damien Le Moal
