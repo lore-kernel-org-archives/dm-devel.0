@@ -1,175 +1,123 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A226C3F44FC
-	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 14:15:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66D0540F73A
+	for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 14:55:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791900919; cv=none; b=lrlOVy+vBVdqNdMdzwP3fRArXEY0R/Qy0yXA88AQq8GbxXWGOHA1lgFAXwnkv/gcyK2Pl/eRIAqm/vRyJIU5XpuF9kU5eWed1rUzmx2pGZesivpMdHsuDI8aslvXMwQghGdelNUiZxvp24zjgVinKyRV9MI8vpfh5erHR7ZNY9c=
+	t=1791903327; cv=none; b=fusq68wmM+Y+3xegeY6fHr/9a6uuRSIolvGrkedw2w8u0tl9mkEKcah+3mY7kj76q8QpSGCGFGHnLcd0JW1ni4FvEqemPVntAffaYM1CLLM2bRcB5T6/2UQART8QkqRp6cb8bmF5OFHsUQqFtz6ZBibstrYwmlqxw63DU4QCn7U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791900919; c=relaxed/simple;
-	bh=G3r+JrQBvdMbusJLzq7rvczPnUg0XgTz1KJurpXkLBk=;
-	h=Date:From:To:cc:Subject:In-Reply-To:Message-ID:References:
-	 MIME-Version:Content-Type; b=W37mB76qQ+QS/HF2Nu+vVLgNHarNTy5cqgv5ADy2ksQtnbdc09+gKKpeoM+m42+EKnLwOnsF1unHVy3RZhHqELPGgNsNJ9irFNMCew2AZGOp9F5Cf8o/6SOSnOL49RQROM32ctCWnfBT8GygZunPh+JDFw1rhiw/SPV+MB8zR+U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=gRp0NCan; arc=none smtp.client-ip=170.10.133.124
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	s=arc-20240116; t=1791903327; c=relaxed/simple;
+	bh=gjNX/CWNpI50rVnvxvJfgkNoOMgqeJJz8BT5hbq7fLE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=oV/S2meAXet1NRXvHb0dquSYwCaMO+j2y5kndmPGfjOJ0swq2ZE1u8KcVXAbYSBEDrXQhsDcX95/HHtTMIcMv0DvyzkSA+LdeLFYCb0haDXg7B55pt3AxRUzxoa15HQXQvCvTKBMJI6A04Ixyrv23o3a5F4GWPyg81a2XH8eYx4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=AxFyNoQ0; arc=none smtp.client-ip=209.85.208.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="gRp0NCan"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1791900916;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=UUCK6QgQl7DA2PWtzzRDceLSdUPdXfokVnHPGcq9DBo=;
-	b=gRp0NCan0DMGPM378CF0A3yV3wTDnWJnGAllRsdgQz0gaUrbkZ3TSDiSbAzo2/XuvC31jF
-	GQxoALoOuhwNwkuEw5BZ9Hlj7zAfVzz3Yh9xu4rZZWzMMMnyNDjrZEiu8EGcB/AHA9KV+c
-	dSbk9BNOHP1KbCNWd1xyBJtqBK8hSkM=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-536-up0FcNekNCivUacI1EW-MQ-1; Tue,
- 13 Oct 2026 14:15:15 +0000
-X-MC-Unique: up0FcNekNCivUacI1EW-MQ-1
-X-Mimecast-MFC-AGG-ID: up0FcNekNCivUacI1EW-MQ_1791900913
-Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 86BFD1829E20;
-	Tue, 13 Oct 2026 14:15:13 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DAE695BC;
-	Tue, 13 Oct 2026 14:15:10 +0000 (UTC)
-Date: Tue, 13 Oct 2026 16:15:07 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Fan Wu <wufan@kernel.org>
-cc: dm-devel@lists.linux.dev, snitzer@kernel.org, agk@redhat.com, 
-    bmarzins@redhat.com, paul@paul-moore.com, 
-    linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm-verity: clear LSM integrity state on suspend
-In-Reply-To: <20260921220516.121589-1-wufan@kernel.org>
-Message-ID: <75c7cbec-dbb8-923a-c2ed-da5156538c92@redhat.com>
-References: <20260921220516.121589-1-wufan@kernel.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="AxFyNoQ0"
+Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-6ae14eecc64so4179825a12.1
+        for <dm-devel@lists.linux.dev>; Tue, 13 Oct 2026 07:55:26 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1791903325; x=1792508125; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=jCzRjuNiQYuIlt1ayBRVrkI/N8zFISckqW/w4VRTdfQ=;
+        b=AxFyNoQ0rqcoB8yPRwetgjk/0dQ4bIyFOjdND/j1pBDkHCnbJCq3Y1hC39gu4LsDdW
+         PrFJi7p+nuRVb8AK4CWzdiiRHcuqa16+hl80nOxdpxlyBa5RXRKt+4CEt/I8/gZz5Gr4
+         jDCfcwmp7hgH1OeMpygtHLg8T0RTLj5TrmBSkEERju8j8hxMraojDPH+vlzIFdmjmRsa
+         EeW9sX0GtB6sofwfv9MNJhkyovODw2IKX2f3QtqlGtBrlnLA4hiVFPPVtMlHnasRbi8T
+         J98AGjKcBR7J4oAXwOWlSmytBHOxjrSjt8H+HgIJAywo1gZtt5LFkshq8jIpIH82/45p
+         jRAw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1791903325; x=1792508125;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=jCzRjuNiQYuIlt1ayBRVrkI/N8zFISckqW/w4VRTdfQ=;
+        b=eWNwwSOiV8HAiGeqIrTAmBgjbCjr6SykmZwpkSeENWMCTilDEppkaMECIkYF4bcE03
+         qxIwRYD9No5vbqB1VmQue/nFqQsD5I7uOeVWPB2gbDfpLaUf9PFNPs5TZk2g4voIg4Do
+         vCnQwEeilj+rOIf7hS3cyPnlNqV9Db/XRm1LTyEDHFkUtYVETaSp9O2/KThNh6aiBwzY
+         tXRLwkRtovqSuV1PaiwfEY5GYTnnncpktpd9JPP9j0++tL1wUlSAhgl6krLhs344dFTg
+         OeFbN9+l9tCRlwY6NdiJuIi3oS8iokjIG1L55YR8TdyXpyPa9AMhrkm3OyAf5E8bOId5
+         giqg==
+X-Gm-Message-State: AFq9FYLrMN/rft4BJUCkU2dHJ7uSxoJcKw3Ze00se44thWGZ9qceHfii
+	nhXoqlsVwQM2dlXm0ocxNvz0u8I/LArbobfAEGsnKMGvXmYiO18D5e8+PxpdW7An
+X-Gm-Gg: AYBFou3H5I/umcIWELIbWBs+vNlxP+LUZ1EgkInP4DUPh/Uq2pjnPripF2fRwbBFN8P
+	/EKVJ8lbRQJcq8l2yIHZU2sslSjD+4zy6PXIu2Mef/3VQDaMbSCUczNs9qScitMMgL1ivUweL/3
+	Nj5M2Di697qJju1JXN/zEodFqWZRq1MHdV19beYW0jQtOa7NlgPIb9JV1ccN/mpJraTFYOi250F
+	Yb6IwSByxh7bn9YY0JLXxVPCqHd+JKCDIl4VtUWFLERbJlIBb4ZF9QpRWUDhnEsYGEOzxoK1F+X
+	/Pzf/T0crZtEksGOh/z4nDlK7TBKWrFt7IwCIpCxBzce/ojGG3iLOqnOwXFIsp1eg/I3M94Nh54
+	cu4TkSh9dMPh2VRB1/xPGw8qvFctimmVWlzDPw5CZ+bZQQYBfOXSAg4orCT0MEPvAnMIq71X5Eg
+	0OTGA7ElNzyffhbVlHMDzMUcWw7xuyiThEUDBwwHB9IfNGasS6dALFjPjO/n0agvdOKKBIm8PHq
+	yfCI9zq9k811gIf9IJ3vwXf8myRdbWEkjosjihWncnqf8U=
+X-Received: by 2002:a05:6402:a0d8:b0:6b1:d2d6:4013 with SMTP id 4fb4d7f45d1cf-6b1d2d656aamr3347810a12.17.1791903324468;
+        Tue, 13 Oct 2026 07:55:24 -0700 (PDT)
+Received: from localhost.localdomain (87-205-122-125.dynamic.inetia.pl. [87.205.122.125])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6b179e03428sm6169161a12.37.2026.10.13.07.55.23
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 13 Oct 2026 07:55:24 -0700 (PDT)
+From: Kyrylo Biryuk <illofspeed@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: mpatocka@redhat.com,
+	snitzer@kernel.org,
+	agk@redhat.com,
+	bmarzins@redhat.com,
+	dlemoal@kernel.org,
+	hare@suse.de,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v5 0/4] dm zoned: fix idle reclaim problems
+Date: Tue, 13 Oct 2026 16:55:18 +0200
+Message-ID: <20261013145522.17499-1-illofspeed@gmail.com>
+X-Mailer: git-send-email 2.43.0
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
-X-Mimecast-MFC-PROC-ID: vG7XJBIRO8dqZcZKNC9ywGDL-XL1DdOHkiEtgHwUOn4_1791900913
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
-Accepted, thanks.
+Mikulas,
 
-I've just deleted the "Fixes:" line, so that it doesn't go into -stable 
-kernels.
+I noticed too late that v3 of this series is already in dm-7.4 and
+for-next (24646f6ed3, 2cca719c63, 5829edd027), so v4 crossed with it.
+This v5 is v4 plus one more fix; if you prefer to keep v3, I can send
+the v4 changes and patch 4 as incremental patches on top of dm-7.4
+instead - please tell me which you want.
 
-Mikulas
+Patch 4 is new. While measuring an idle pool I found that an idle
+target whose random (and cache) zones are all free never stops running
+its reclaim work: since 90a9b8693f1b ("dm zoned: reclaim random zones
+when idle"), dmz_should_reclaim() treats "idle" plus a non-zero total
+number of random zones as "reclaim now", dmz_do_reclaim() finds no
+candidate and returns -EBUSY, dmz_check_dev() checks every device for
+media events (a TEST UNIT READY on SCSI disks), and the work is requeued
+with no delay. In mainline the loop can end when a pass finishes while
+the target is busy with enough free zones; with patch 3 the idle poll
+stays armed, so the loop recurs whenever the target becomes idle.
 
+Measured on 7.3-rc7 with three emulated host-managed members of an md
+RAID5 (idle, 30 s average):
 
+  stock dm-zoned        181,195 SCSI commands/s   32 % kernel CPU
+  v4 (patches 1-3)      187,707 SCSI commands/s   31 % kernel CPU
+  v5 (patches 1-4)            0 SCSI commands/s    0 % kernel CPU
 
-On Mon, 21 Sep 2026, Fan Wu wrote:
+With patch 4, the random zones filled by a 2 GiB write burst are still
+reclaimed once the target is idle, and on three 27 TB host-managed
+drives (7.2.10 with these patches) an idle pool went from about 155,000
+TEST UNIT READY commands per second per drive to none.
 
-> dm-verity publishes its root hash and signature state to LSMs in
-> verity_preresume(). LSMs such as IPE store this information in the block
-> device's security blob and use it to authorize access to files.
-> 
-> The original LSM integration relied on DM_TARGET_IMMUTABLE to prevent
-> verity from being replaced by a different target type. However, DM allows
-> tables containing a DM_TARGET_WILDCARD target to replace immutable
-> targets. The block device can then retain the old integrity state even
-> though its data is no longer verified by dm-verity.
-> 
-> Clear the published root hash and signature state in verity_postsuspend()
-> so that the block device does not retain stale dm-verity attributes after
-> the verity target is replaced.
-> 
-> Fixes: a6af7bc3d72f ("dm-verity: expose root hash digest and signature data to LSMs")
-> Assisted-by: gpt-6-astra
-> Signed-off-by: Fan Wu <wufan@kernel.org>
-> ---
->  drivers/md/dm-verity-target.c | 39 ++++++++++++++++++++++++++++-------
->  1 file changed, 32 insertions(+), 7 deletions(-)
-> 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index cb105ccc47ec..6d589867623c 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -825,13 +825,6 @@ static int verity_map(struct dm_target *ti, struct bio *bio)
->  	return DM_MAPIO_SUBMITTED;
->  }
->  
-> -static void verity_postsuspend(struct dm_target *ti)
-> -{
-> -	struct dm_verity *v = ti->private;
-> -	flush_workqueue(v->verify_wq);
-> -	dm_bufio_client_reset(v->bufio);
-> -}
-> -
->  /*
->   * Status: V (valid) or C (corruption found)
->   */
-> @@ -1733,6 +1726,11 @@ static int verity_security_set_signature(struct block_device *bdev,
->  					  v->sig_size);
->  }
->  
-> +static void verity_security_clear_signature(struct block_device *bdev)
-> +{
-> +	security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_SIG_VALID, NULL, 0);
-> +}
-> +
->  #else
->  
->  static inline int verity_security_set_signature(struct block_device *bdev,
-> @@ -1741,6 +1739,10 @@ static inline int verity_security_set_signature(struct block_device *bdev,
->  	return 0;
->  }
->  
-> +static inline void verity_security_clear_signature(struct block_device *bdev)
-> +{
-> +}
-> +
->  #endif /* CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG */
->  
->  /*
-> @@ -1779,8 +1781,31 @@ static int verity_preresume(struct dm_target *ti)
->  	return r;
->  }
->  
-> +static void verity_security_clear_integrity(struct dm_target *ti)
-> +{
-> +	struct block_device *bdev = dm_disk(dm_table_get_md(ti->table))->part0;
-> +
-> +	security_bdev_setintegrity(bdev, LSM_INT_DMVERITY_ROOTHASH, NULL, 0);
-> +	verity_security_clear_signature(bdev);
-> +}
-> +
-> +#else
-> +
-> +static inline void verity_security_clear_integrity(struct dm_target *ti)
-> +{
-> +}
-> +
->  #endif /* CONFIG_SECURITY */
->  
-> +static void verity_postsuspend(struct dm_target *ti)
-> +{
-> +	struct dm_verity *v = ti->private;
-> +
-> +	flush_workqueue(v->verify_wq);
-> +	dm_bufio_client_reset(v->bufio);
-> +	verity_security_clear_integrity(ti);
-> +}
-> +
->  static struct target_type verity_target = {
->  	.name		= "verity",
->  /* Note: the LSMs depend on the singleton and immutable features */
-> 
-> base-commit: 93f51579e7df248780214094418f205253383cc5
-> -- 
-> 2.55.0
-> 
+Changes since v4:
+ - new patch 4 (above)
+ - patch 3: Reviewed-by from Damien Le Moal
+ - patches 1-3 otherwise unchanged
 
+Kyrylo Biryuk (4):
+  dm zoned: back off when reclaim finds no destination zone
+  dm zoned: do not reclaim a random zone into another random zone
+  dm zoned: keep polling for idle reclaim after a reclaim pass
+  dm zoned: do not busy-loop idle reclaim when no zone needs reclaim
+
+ drivers/md/dm-zoned-reclaim.c | 31 ++++++++++++++++++++++++++-----
+ 1 file changed, 26 insertions(+), 5 deletions(-)
