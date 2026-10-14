@@ -1,141 +1,124 @@
-Received: from mail-oo1-f44.google.com (mail-oo1-f44.google.com [209.85.161.44])
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E5D150EC17
-	for <dm-devel@lists.linux.dev>; Wed, 14 Oct 2026 13:43:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.44
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791985403; cv=none; b=mT+PSTgbpR+96ERLeHd0uSJg6tmq9WPNzV+wD5kcUEacnJhxzI5ot4f4+CspZgz2smnQbK1chCk53xfPrk/v8i/dA+xgnL0gcgx13LCV36KmLq+gdzqC9Aswb0R2cXPgRm0gjp+/dPpZN7nU0deWx+YGiuVj2UARUGuFx9giUxc=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791985403; c=relaxed/simple;
-	bh=W4/9IswMV+nhf+i4xgS+WWcxFQT9qKFQQYu/KCal4N4=;
-	h=From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
-	 MIME-Version:Content-Type; b=fQXvJX5Xr+m6dph7z65HYrJDxeYYUMLLtHjSWtVSYG+n1JspSmgL9Q5rE6kzpSGHyoPLGGyhzjXYCV+uA3DuhXw/iHzwRwlY8obdD1e9kOyvxd9WH7yWYyhqjKYj1fjn8L+MtQuS7N9Cu3NE4xNW7xAgVGqfM0cJPBlxZP0UBDg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk; spf=pass smtp.mailfrom=kernel.dk; dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b=Pg/HBdFs; arc=none smtp.client-ip=209.85.161.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kernel.dk
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 717A4541E58
+	for <dm-devel@lists.linux.dev>; Wed, 14 Oct 2026 14:38:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.42
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1791988708; cv=pass; b=o1B/dP5BKIBjuAdzuLVDyTfeTgg0h2STHa3gENAZ6bv91hriBdetWAjNmfHc9qpl61hK2kUl/OBAh5hErcyIbzWXibJwQCXVTGff81vNJDK4ZUk1IL5c/M5N2c0unnYlHaGqnAv7DCwsw2igKFF26Syy3RCiSaWLgjNbEAcYb/Q=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1791988708; c=relaxed/simple;
+	bh=Ht8GLTCoCKkoVxwpD5KYA+Pz/0xMc+C2begOQBfsCnM=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=LLiqn7fiCV028xCS36qWImGRmqKGHD8E8ul0XT/YwhFwK/eIjHIbQKoitTIwAAsxxgLGYPA7CR2cWlafLufoJBAP5vrpICWnVUcy1eunHeCFwMXkLKYNiU4b6Me7mJa7auAUZe5r//n3PN0eTYSWOPjuAVWvjrpELwwi2igbb4Q=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=b3Io18GN; arc=pass smtp.client-ip=209.85.208.42
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel-dk.20251104.gappssmtp.com header.i=@kernel-dk.20251104.gappssmtp.com header.b="Pg/HBdFs"
-Received: by mail-oo1-f44.google.com with SMTP id 006d021491bc7-6d290b10a35so1619654eaf.2
-        for <dm-devel@lists.linux.dev>; Wed, 14 Oct 2026 06:43:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="b3Io18GN"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-6b1cc392d8bso1443146a12.1
+        for <dm-devel@lists.linux.dev>; Wed, 14 Oct 2026 07:38:26 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1791988705; cv=none;
+        d=google.com; s=arc-20260327;
+        b=qKkEQMfmvsBtiNVry92k0iC8Ak/FGRWg3Nd63LFxvXwXrrI3VSFZNPab943hbMmN5Q
+         lG5S7XyxgteSIo0lsbQjTbbq4O1YPG2Rl4ZaTg7qUfW68yQmz+UlMsW15HYmMD5MhGbt
+         JTQolPSPnEhKtseKJMrfBogga4yMoq+TtJx4pA3aVQ51hGC90jCmN38IJQotQ5zY9HOF
+         wNL2pXcrs4rqMe2fNO6ImjfN8xWZJ7btLQBqIIvvmaqkklffQkwBGwqMLZRaLGL3iNZ2
+         YYPEB+YNygV5BXpB0OtWD+jELyz4BpD6SXLKq9ECwFMVDfTOaDR1JW8/WAwH4W4U6X7p
+         Mz7Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:dkim-signature;
+        bh=Ht8GLTCoCKkoVxwpD5KYA+Pz/0xMc+C2begOQBfsCnM=;
+        fh=fdbU1juhz0wm9l6Fw7paoqsNAJaxyFFcLSCL75v6vv8=;
+        b=ArSQVttgjkZ5LXIsljaXgOVBg1aZGX5fqkVd3fGs/iU/ZsTB0VKRSXhWNocSaBHwRU
+         BfQvWs+HSrOeNh5jFhrgq1QMD5K3C4B/b/YBJV4Hfpn9FppPlExviXuo1cVplWvyUMWc
+         /yN/iC9/Lg9jL/xNypNjER48aBGwY9vO/ebb3afNAhrmwgK6LGP2svziFMnotKQNLbux
+         VR2b5oTuVVYwn9FrMONvShS7GH/WTHqnTynguC3z2+oZqhO0eFu494aZLFJXVbBkgrAW
+         430HFXQUAnFSPTnx6wrDan0R4x/YGwwhL5g6Q4cuEgRQyigzPFNml0nGGKM4gcDcdwZ5
+         mCdg==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20251104.gappssmtp.com; s=20251104; t=1791985400; x=1792590200; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:mime-version:date:message-id
-         :subject:references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=/UfknVFgwY+ADn2+7Gfp8pJoPMV5PqQ31vPcFrLztQY=;
-        b=Pg/HBdFsGcQioaH65SnOXeUbrHHoJcROEwJh3FEV5H8JlpUvssaSCOSe5mu2Q0nhnQ
-         hDiNFayjIPJJLf/mRG5LUv/riLVtI/OYroMZnSxJ6CahAvbp8uqJiU6wF11k996qChHD
-         V4fXWfPQNvkrmRcxeAmtaoNAdtoGC6DzcV8QjSZNIole+e9NloTfLo+/UKG5dRPIhClS
-         myjuUMlRAanCL3lrhDEx8YZbd7qboRhyjHDgvwwnKaYtgSPKQjumSw5f9EwJGTew8Kff
-         7085i4NC9kfylbAU1zl5y6VY9dYE/8BP3WtlXpviGw1Vnf7Cy29FLyqYsAqqjLWnmJr7
-         HUSQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791985400; x=1792590200;
-        h=content-transfer-encoding:content-type:mime-version:date:message-id
-         :subject:references:in-reply-to:cc:to:from:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=gmail.com; s=20251104; t=1791988705; x=1792593505; darn=lists.linux.dev;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=/UfknVFgwY+ADn2+7Gfp8pJoPMV5PqQ31vPcFrLztQY=;
-        b=SQXHRVMRYNdZ6yIZpU9W1MxLzZZ0FNched+lR3ldcbyireBff6bFfp9kTkFugJ/tsJ
-         hDcsizJjc6u+UjUOHzHG/yepY/0cL4VyHbhW2XDa5akEkLECmzooBoG+6rssFxddG6UX
-         O7Wv9bITarMFz+Kds86+T7kg/9jOxAawxWrakvc6gM93tcrOYYA8BHTXUO14fDb+6p22
-         jLOLIeWahXnM7cwZZnm9CCC0B36aaT+ZMxCudJGUrniANFhxiyMpkcNPLxB3L9aiqzmA
-         5dLT1jiSf3eLkuY5fC/UJuHcigpQusIyqLRyjmWQLJv9VKTtCwNoKclpvvVcODOkotG8
-         TCDg==
-X-Forwarded-Encrypted: i=1; AKwUvBw5RcGbPtlbiY+UgkZeOyD6C8noVzh9nBf2Fm5hvfCOz9ZRcxL/90C4zNTy7kLkrW+gNJoqSQm4jA==@lists.linux.dev
-X-Gm-Message-State: AFq9FYIAQ/JYSPmrWUqHCbqO959mmn7mFggsycdbh3Wyb6ma+W9zL111
-	JNCCevvpCtCSkSSLJxglTTOEhAF2v70MAcuSVuWh1LhBcrNhT0CLSLwLT9BG25Odfnk=
-X-Gm-Gg: AYBFou0h8GGICG+YZSuKAq21pT8tEywWYs7hVNic92xrbMy/NZHCshLhkcV7V0Bn/77
-	xrWllxtv/BoB00zfh8gjju4A0GfnITn3puLDVOmy/VZSdBlkvWPakezAfwy27+EUfOW1zYREbkD
-	SDiO/N5WlAl38Z+ekd0iZKPiHQWmHyg1nPjSBhHKDFJNzYX69NlmpQnJi5qyUeMaCyVT2Ef4IhN
-	3V3C8cc75k1zu58hrKqhto1j+2Qj5kr9gR/6yDNucUxIxrd7R0na0PmbjEQPGu5b6kcPuUdQyCR
-	Dhkq4Q7e4wPO4Rj9JdrzcBOVVa6fYzFCR6BzYBXOZjfPvwJ16lSi+VClMYLc+FiJ3/jrATjyXDg
-	tPxWvz6GT19wagjSVYwiYqpTzJCxXOXRSSA+Si4LFmCYYuPA2e++KZ8hhJjqQQt4S4WUlLn/DDX
-	/7yPW/DAk+z6drjjgQirUcvdMYN88hrXs87ugajcbGVBJL2hhnjrdZiFmN+eMbKhOBIc4U0xe2u
-	wWyRczw+b4l8EZBWNCA5OSeeU1JwpP0QmDovINWCFfSTrGQGBFoYLiqeQ==
-X-Received: by 2002:a05:6820:1c8d:b0:6fd:3c3e:3c66 with SMTP id 006d021491bc7-6fd3c3e3e7fmr1002063eaf.3.1791985400251;
-        Wed, 14 Oct 2026 06:43:20 -0700 (PDT)
-Received: from [192.168.1.106] ([198.8.77.135])
-        by smtp.gmail.com with ESMTPSA id 586e51a60fabf-4a6dfb4e92asm2073695fac.6.2026.10.14.06.43.18
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 14 Oct 2026 06:43:19 -0700 (PDT)
-From: Jens Axboe <axboe@kernel.dk>
-To: linux-block@vger.kernel.org, Pavel Begunkov <asml.silence@gmail.com>
-Cc: linux-kernel@vger.kernel.org, linux-media@vger.kernel.org, 
- dri-devel@lists.freedesktop.org, linaro-mm-sig@lists.linaro.org, 
- linux-nvme@lists.infradead.org, linux-fsdevel@vger.kernel.org, 
- io-uring@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
- Sumit Semwal <sumit.semwal@linaro.org>, 
- =?utf-8?q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
- Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>, 
- Alexander Viro <viro@zeniv.linux.org.uk>, 
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
- Andrew Morton <akpm@linux-foundation.org>, 
- Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>, 
- Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>, 
- William Power <william.power@intel.com>, 
- Matthew Brost <matthew.brost@intel.com>, Alasdair Kergon <agk@redhat.com>, 
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-In-Reply-To: <cover.1791975048.git.asml.silence@gmail.com>
-References: <cover.1791975048.git.asml.silence@gmail.com>
-Subject: Re: [PATCH v11 00/13] Add dmabuf read/write via io_uring
-Message-Id: <179198539824.583283.3195125120949504062.b4-ty@b4>
-Date: Wed, 14 Oct 2026 07:43:18 -0600
+        bh=Ht8GLTCoCKkoVxwpD5KYA+Pz/0xMc+C2begOQBfsCnM=;
+        b=b3Io18GNXPeV4WIBEnuOMZuGzall0FPenCh6j541+CP1zMqj/wEzth3kS6D3Fw/OzR
+         XOc+3s+jXnZsyRqW7MCwPQglA5o0Rlw9TYs5do/zXgUcO7cf+MmAgGkaIdOuo0RO4rYS
+         W6CNnvmVvYaAze1UoBMUbmvIRWOCTUskoWFNnyNphHUp3AXbY3V7OIq7MwJL8KaF8XEF
+         zzGA2KKW9x2L+8etJ4+cx++O8npVb0v7VevgjvP/u6Wktdxm02AtCvrJQhw5GuDXjadS
+         T1N8yqrX4wdCMxY8D39BGUzCtc8oNFGAcyP3fSLKGh2aKukbvXwirzhtGuMCc6rP7IHd
+         5PrA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1791988705; x=1792593505;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=Ht8GLTCoCKkoVxwpD5KYA+Pz/0xMc+C2begOQBfsCnM=;
+        b=SrWTiuNjnhjj7tHMzZrL8rnV947Argx+iFjkWCgVLtNO0UFopXMjJoXk8YDqrnICBy
+         TH2X4QFEH0fQMEyeW11jB7JKmiOpU6Lo/mFPRea4QHjQjCo6pFCX5GgqyhFeaUa1j/C3
+         x4wMDdCxgXlxOTiC7Q6J9GbqVezAvhWzWNaO3OdsvbVEU8Laq6S6pD1/N9QSpSJfSRLe
+         QUfh31iKeketTV6JVi5FpRgnXn1iUUQEswVhNpyUAQa8eJRpAW57tWqx6kfFaskz2eiO
+         L8riGMRJ63qAI1BGpO8ddoCtoT19ydOI9kP5FLXXNC0TikDhYGAbUYnGLEl3fOd1N+Fv
+         k5OA==
+X-Forwarded-Encrypted: i=1; AKwUvBy4wOw1dM98Jc9OzmtZsdzUyc/GgnuQ4OEPQ7nu8YUX4SkX3ebiI/tz2S2xCkNU+SQP9YD85mD85g==@lists.linux.dev
+X-Gm-Message-State: AFq9FYLmKLfwofZNBAERJW/4l8WXqtErMGihC3myax2njAqUT2MaEx7b
+	WhJ99XlVwcLeCCq9Cj8YHySe1tEw0Vkr4+fD4jVKMNzrmfKYu9lb0oouVUzFDLxKR5UvHMOa/EF
+	4u+x81zNhFH2Rziq+WIv2zOqp0zu1Fg==
+X-Gm-Gg: AYBFou3SalZM0FAF/8PtMpgp4lGWtwl0LXBpFiaoK77ZOobxgRIaCNPG9EJCyss3YgJ
+	NLsel7jBytaJQtva0wa8UrDuFavs2Sd8KvWbEbUsxwC14qH5ycl3Bi6TYBxXZvz2KiUXUMFfuiT
+	3H/IaRpBAp2wzML6XFA4Yy/cFCzKs+tiFxZClH7/cSq1Z5JU1lItK9jqWCD/M2FML6RvoVG4StT
+	iW6iFPQ7IwEBhAL+09jHk7XSeihIPL4h2C5Pq9sB9pGZnS4lRrXhpOQBQsOsMU8rbHcwVVu53j7
+	bFtLQuWQB9vU+xZGGM/o9TJnDM+kPdInvOQb/XfFV/SLA6YLz9Q8+0TrY03hYlMyYrA4L/v1nsh
+	YFmk7uVDHisjXd1Xf8qr4OFw3vqmPdPBr+2P/HsY=
+X-Received: by 2002:a05:6402:1912:b0:6ac:b9b5:8e8b with SMTP id
+ 4fb4d7f45d1cf-6b17c2a3670mr12616709a12.15.1791988704432; Wed, 14 Oct 2026
+ 07:38:24 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.15.2
+References: <cover.1791975048.git.asml.silence@gmail.com>
+In-Reply-To: <cover.1791975048.git.asml.silence@gmail.com>
+From: Anuj gupta <anuj1072538@gmail.com>
+Date: Wed, 14 Oct 2026 20:07:46 +0530
+X-Gm-Features: AclHuK8DZ9QwF2AgJ3SDr4lT4xl3Cf9evBnlWqjNFK8bj0mT2h6JXCYZXSbhb_A
+Message-ID: <CACzX3Ases=5auovox0XFNheDHY9iNmxv2BvB0dugC-W3mnjGLw@mail.gmail.com>
+Subject: Re: [PATCH v11 00/13] Add dmabuf read/write via io_uring
+To: Pavel Begunkov <asml.silence@gmail.com>
+Cc: linux-block@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-media@vger.kernel.org, dri-devel@lists.freedesktop.org, 
+	linaro-mm-sig@lists.linaro.org, linux-nvme@lists.infradead.org, 
+	linux-fsdevel@vger.kernel.org, io-uring@vger.kernel.org, 
+	Christoph Hellwig <hch@lst.de>, Sumit Semwal <sumit.semwal@linaro.org>, 
+	=?UTF-8?Q?Christian_K=C3=B6nig?= <christian.koenig@amd.com>, 
+	Keith Busch <kbusch@kernel.org>, Sagi Grimberg <sagi@grimberg.me>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+	Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <axboe@kernel.dk>, 
+	Nitesh Shetty <nj.shetty@samsung.com>, Kanchan Joshi <joshi.k@samsung.com>, 
+	Anuj Gupta <anuj20.g@samsung.com>, Tushar Gohad <tushar.gohad@intel.com>, 
+	William Power <william.power@intel.com>, Matthew Brost <matthew.brost@intel.com>, 
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
+> Tushar, William, Phil did a lot of testing and experimentation on various
+> devices with previous versions of the patch set, and I've received lots
+> of help from Anuj, Kanchan and Nitesh with investigations, testing, and
+> patching. Earlier benchmarks by Anuj for IOMMU optimisations with udmabuf
+> showed:
+>
+> STRICT: before = 570 KIOPS, after = 5.01 MIOPS
+> LAZY: before = 1.93 MIOPS, after = 5.01 MIOPS
+> PASSTHROUGH: before = 5.01 MIOPS, after = 5.01 MIOPS
 
-On Wed, 14 Oct 2026 12:01:58 +0100, Pavel Begunkov wrote:
-> The patch set allows to register a dmabuf to an io_uring instance for
-> a specified file and use it with io_uring read / write requests. The
-> infrastructure is not tied to io_uring and there could be more users
-> in the future. A similar idea was attempted some years ago by Keith [1],
-> from where I borrowed a number of changes. Later it was brough back up
-> to life by Tushar and Vishal.
-> 
-> [...]
+I've been involved in the development of this series, so I won't add a
+Reviewed-by tag, but I tested it on NVMe with both an AMD GPU dma-buf
+and udmabuf exporter, using the liburing tests and custom fio plumbing.
 
-Applied, thanks!
-
-[01/13] dma-buf: introduce initial file I/O infrastructure
-        commit: 0d3120db2cbe0a8793650e19f0923968a406ca2e
-[02/13] iov_iter: add iterator type for dmabuf maps
-        commit: aeb3bb52052b3548b3acf0cc5606dbb5babb228b
-[03/13] block: always adjust bi_offset on bio_advance_iter
-        commit: 801503b9a66f7c2423b5e495d8e77e0f4447e5d4
-[04/13] block: introduce dma map backed bio type
-        commit: d88e44f43e939e6ac0ca8302c6f3c957b33aa5fe
-[05/13] block: add dma-buf support for raw bdev
-        commit: 839231d193932ca0d592c2859669066f7c43731c
-[06/13] nvme-pci: rename nvme_pci_sgl_set_data to nvme_pci_dma_iter_set_sgl
-        commit: a03648e2efda070322cd4066abf4dff15be093c4
-[07/13] nvme-pci: implement dma-buf backed requests
-        commit: ce5e386c110815e3a29e3ba27d97575c28589c39
-[08/13] nvme-pci: add SGL support for the dmabuf path
-        commit: d5c8cfd41d2575c65c3f1d543017949e578a92d3
-[09/13] io_uring/rsrc: introduce buf registration structure
-        commit: 727a66ad21b013555eedfd84559cd4707717463c
-[10/13] io_uring/rsrc: extend buffer update
-        commit: a5819c456b716fa8bcb7792b942ab02b15e07fc5
-[11/13] io_uring/rsrc: add uncloneable regbuf flag
-        commit: 13b1690bb4767d3f1c847baf71a704c5f2da99e2
-[12/13] io_uring/rsrc: add regbuf import flags
-        commit: d218f3e381908da0e68429f3a4b764e666564c60
-[13/13] io_uring/rsrc: add dmabuf backed registered buffers
-        commit: 62e4bf5b25d4458cf8aa9dece9022359f39f2294
-
-Best regards,
--- 
-Jens Axboe
-
-
-
+Feel free to add:
+Tested-by: Anuj Gupta <anuj20.g@samsung.com>
