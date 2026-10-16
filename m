@@ -1,39 +1,39 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9468F3168EB;
-	Fri, 16 Oct 2026 16:53:25 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 436B253B5F8;
+	Fri, 16 Oct 2026 16:57:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792169609; cv=none; b=nZX7xWDFhpUNCDMijh4kb6+QJjaxzKj/XAtCa8DxVqrm06yIX9DOLRVbyU/S+8HAzd4Kp7b4N8k4oZlrRP2YyUo/86vBLCb5zS4uRPLIqjdRYqTFxNdbZ3kXWGQAKhlZYj5iq2QRA9eaUtcYI/3DbJ0c3hyFh4aLwQ+XBl/0Ymg=
+	t=1792169835; cv=none; b=dGXwm3428hbAUarcmdg/C5qCI16ASVafXwSEaD02l99+umQuBvuhJKqmn4Q1m/PE5B+h1FoZPnR9kGuzB5F2F86lAXPVm9lB/eAYPOkgY9b7OsSg8Uf3S91Loz5OqdzKZCWvttPIkNQ1vSdG+WqyQTwEfZ27pqL8nKiDjb6b/PU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792169609; c=relaxed/simple;
-	bh=504DNXhrn4k/1goFwJZxH3iyRCOM3jlnLqyThAeA0vM=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=JWWBCROmMgf0Tpi+1tLSJRm0Mh1ZF8sp9ccf+B3Eyz0Vvcr5Vibz9KFLWvy5erWOJ6CuuxcK6KcziM6sjN4H66NW8p74gzWS9fOYngCvge2LI+IFaqmF2WIEt0UiMno+13iDzp+k7pk2rEOR423hL/08UZdxmXpXcDceX79arwk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dxHNzNhx; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1792169835; c=relaxed/simple;
+	bh=7QJ9vehBQMACLBU95c/wIaWfIUZM4Des7s0/V+E30Jw=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=TcpTqBddWIwhmYthFHN+8LvDpXHPk3Rdnw4WCc0BAnoScobbji6tIWlEPtnzWOEP5wXiosnU+qoAl+yp/27F5lePqflQK5iaFnpTvGY15Y28dAOkwrvPEww5gbP+/17e32KfSb+kqPdvM1Y6LEjMHsbjbta8diommjxrO4ddq6I=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fs57HUS8; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dxHNzNhx"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E74E11F000C7;
-	Fri, 16 Oct 2026 16:53:24 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fs57HUS8"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 903AE1F000C4;
+	Fri, 16 Oct 2026 16:57:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792169605;
-	bh=QFRoKVC2SMoY/lC6MPKkau+GI7kjeKNDnMI9Yb0lNiw=;
+	s=k20260515; t=1792169834;
+	bh=FvZ3qDg2BAiEfXKdPmexCBhjklajmgSafiiHpbmIf7o=;
 	h=From:To:Cc:Subject:Date:Reply-To;
-	b=dxHNzNhxFjtmmPl/NVRGxoNy2QtLq54mjYTXtD1aWrXvUSU7s5IajmH/LtrcgZkPC
-	 p7a77JEtFHOAHMdls+3R+nX1Pzm9J21jyfqGzuIwx2LMbW14THPAwfr9NATuRiyJxo
-	 99d0GujzCJWEuVfBgcUua3Sg6k6JJOmr5zX7WchlSkotMyiaQyRb8ekT/lDYORL+vD
-	 BhBzmaEOttjLHuuaFl5QDrgy7ghxMlh5GIPxIFeMt0XnBhqfXfnFps21bgFaNzjDGl
-	 0QXIb8osXYJy1PewbONylsGHpwHXvuq5oSolHNyfJZyn9xBClHFQQiQB+cQJWzba4I
-	 IVCgt1t185Dzg==
+	b=fs57HUS80gZPvJ8NTfqDU6u1cUNiIsM1VD/kD1wtulHYkUvT+iK+dnrogh1NeH8Fh
+	 32BGZRCodpCwXbCfwxAFkKFb8eDZwNkwJwviJDvI0PTa1/NW2XeDnPflPX2LpIgFv3
+	 OfhOaoopWB9d6B9WQboE/9sLkFCjwGCs54fopM6uKFnDUZ72WWiju3IWTEjPosCaTj
+	 QLCmH6wYoO7etIBgoBtLjGcBwsVeOeXpCco4dKx6cbp2VTdWW5suPlr0Cy8yxdHUsk
+	 VJ8EnR8Wf7OO43V+yReUE88aRFRfNt4cIifKDhOl6G7eMFafQg+gPWQxRA8OjGUp3T
+	 3OaLvEqsv3xrQ==
 From: Sasha Levin <sashal@kernel.org>
 To: stable-commits@vger.kernel.org,
-	bmarzins@redhat.com
+	ebiggers@kernel.org
 Cc: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	dm-devel@lists.linux.dev
-Subject: Patch "dm: limit swapping tables for devices with zone write plugs" has been added to the 6.12-stable tree
-Date: Fri, 16 Oct 2026 12:53:23 -0400
-Message-ID: <20261016165323.3947425-1-sashal@kernel.org>
+Subject: Patch "dm-verity-fec: fix reading parity bytes split across blocks (take 3)" has been added to the 6.12-stable tree
+Date: Fri, 16 Oct 2026 12:57:12 -0400
+Message-ID: <20261016165712.3958698-1-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 Reply-To: stable@vger.kernel.org
 Precedence: bulk
@@ -48,13 +48,13 @@ Content-Transfer-Encoding: 8bit
 
 This is a note to let you know that I've just added the patch titled
 
-    dm: limit swapping tables for devices with zone write plugs
+    dm-verity-fec: fix reading parity bytes split across blocks (take 3)
 
 to the 6.12-stable tree which can be found at:
     http://www.kernel.org/git/?p=linux/kernel/git/stable/stable-queue.git;a=summary
 
 The filename of the patch is:
-     dm-limit-swapping-tables-for-devices-with-zone-write.patch
+     dm-verity-fec-fix-reading-parity-bytes-split-across-.patch
 and it can be found in the queue-6.12 subdirectory.
 
 If you, or anyone else, feels it should not be added to the stable tree,
@@ -62,228 +62,178 @@ please let <stable@vger.kernel.org> know about it.
 
 
 
-commit 0448955c4793456b47747eedd246272b8ea53787
-Author: Benjamin Marzinski <bmarzins@redhat.com>
-Date:   Thu Apr 10 15:49:42 2025 -0400
+commit cbf8852f69af256d071863a0519cf0e5ad6bf0fb
+Author: Eric Biggers <ebiggers@kernel.org>
+Date:   Thu Feb 5 20:59:24 2026 -0800
 
-    dm: limit swapping tables for devices with zone write plugs
+    dm-verity-fec: fix reading parity bytes split across blocks (take 3)
     
-    [ Upstream commit 121218bef4c1df165181f5cd8fc3a2246bac817e ]
+    [ Upstream commit 430a05cb926f6bdf53e81460a2c3a553257f3f61 ]
     
-    dm_revalidate_zones() only allowed new or previously unzoned devices to
-    call blk_revalidate_disk_zones(). If the device was already zoned,
-    disk->nr_zones would always equal md->nr_zones, so dm_revalidate_zones()
-    returned without doing any work. This would make the zoned settings for
-    the device not match the new table. If the device had zone write plug
-    resources, it could run into errors like bdev_zone_is_seq() reading
-    invalid memory because disk->conv_zones_bitmap was the wrong size.
+    fec_decode_bufs() assumes that the parity bytes of the first RS codeword
+    it decodes are never split across parity blocks.
     
-    If the device doesn't have any zone write plug resources, calling
-    blk_revalidate_disk_zones() will always correctly update device.  If
-    blk_revalidate_disk_zones() fails, it can still overwrite or clear the
-    current disk->nr_zones value. In this case, DM must restore the previous
-    value of disk->nr_zones, so that the zoned settings will continue to
-    match the previous value that it fell back to.
+    This assumption is false.  Consider v->fec->block_size == 4096 &&
+    v->fec->roots == 17 && fio->nbufs == 1, for example.  In that case, each
+    call to fec_decode_bufs() consumes v->fec->roots * (fio->nbufs <<
+    DM_VERITY_FEC_BUF_RS_BITS) = 272 parity bytes.
     
-    If the device already has zone write plug resources,
-    blk_revalidate_disk_zones() will not correctly update them, if it is
-    called for arbitrary zoned device changes.  Since there is not much need
-    for this ability, the easiest solution is to disallow any table reloads
-    that change the zoned settings, for devices that already have zone plug
-    resources.  Specifically, if a device already has zone plug resources
-    allocated, it can only switch to another zoned table that also emulates
-    zone append.  Also, it cannot change the device size or the zone size. A
-    device can switch to an error target.
+    Considering that the parity data for each message block starts on a
+    block boundary, the byte alignment in the parity data will iterate
+    through 272*i mod 4096 until the 3 parity blocks have been consumed.  On
+    the 16th call (i=15), the alignment will be 4080 bytes into the first
+    block.  Only 16 bytes remain in that block, but 17 parity bytes will be
+    needed.  The code reads out-of-bounds from the parity block buffer.
     
-    Fixes: bb37d77239af2 ("dm: introduce zone append emulation")
-    Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
-    Tested-by: Damien Le Moal <dlemoal@kernel.org>
-    Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+    Fortunately this doesn't normally happen, since it can occur only for
+    certain non-default values of fec_roots *and* when the maximum number of
+    buffers couldn't be allocated due to low memory.  For example with
+    block_size=4096 only the following cases are affected:
+    
+        fec_roots=17: nbufs in [1, 3, 5, 15]
+        fec_roots=19: nbufs in [1, 229]
+        fec_roots=21: nbufs in [1, 3, 5, 13, 15, 39, 65, 195]
+        fec_roots=23: nbufs in [1, 89]
+    
+    Regardless, fix it by refactoring how the parity blocks are read.
+    
+    Fixes: 6df90c02bae4 ("dm-verity FEC: Fix RS FEC repair for roots unaligned to block size (take 2)")
+    Cc: stable@vger.kernel.org
+    Signed-off-by: Eric Biggers <ebiggers@kernel.org>
     Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
     Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 20b8f560a2da5..505f8a900ec9e 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1505,6 +1505,18 @@ bool dm_table_has_no_data_devices(struct dm_table *t)
- 	return true;
+diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+index 9e9ff481d5a0a..56813d02d5465 100644
+--- a/drivers/md/dm-verity-fec.c
++++ b/drivers/md/dm-verity-fec.c
+@@ -55,36 +55,6 @@ static int fec_decode_rs8(struct dm_verity *v, struct dm_verity_fec_io *fio,
+ 			  fio->erasures, 0, NULL);
  }
  
-+bool dm_table_is_wildcard(struct dm_table *t)
-+{
-+	for (unsigned int i = 0; i < t->num_targets; i++) {
-+		struct dm_target *ti = dm_table_get_target(t, i);
-+
-+		if (!dm_target_is_wildcard(ti->type))
-+			return false;
-+	}
-+
-+	return true;
-+}
-+
- static int device_not_zoned(struct dm_target *ti, struct dm_dev *dev,
- 			    sector_t start, sector_t len, void *data)
- {
-@@ -1823,6 +1835,19 @@ static bool dm_table_supports_secure_erase(struct dm_table *t)
- 	return true;
- }
- 
-+bool dm_table_supports_size_change(struct dm_table *t, sector_t old_size,
-+				   sector_t new_size)
-+{
-+	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) && dm_has_zone_plugs(t->md) &&
-+	    old_size != new_size) {
-+		DMWARN("%s: device has zone write plug resources. "
-+		       "Cannot change size",
-+		       dm_device_name(t->md));
-+		return false;
-+	}
-+	return true;
-+}
-+
- int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 			      struct queue_limits *limits)
- {
-@@ -1864,11 +1889,17 @@ int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
- 		dax_write_cache(t->md->dax_dev, true);
- 
- 	/* For a zoned table, setup the zone related queue attributes. */
--	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED) &&
--	    (limits->features & BLK_FEAT_ZONED)) {
--		r = dm_set_zones_restrictions(t, q, limits);
--		if (r)
--			return r;
-+	if (IS_ENABLED(CONFIG_BLK_DEV_ZONED)) {
-+		if (limits->features & BLK_FEAT_ZONED) {
-+			r = dm_set_zones_restrictions(t, q, limits);
-+			if (r)
-+				return r;
-+		} else if (dm_has_zone_plugs(t->md)) {
-+			DMWARN("%s: device has zone write plug resources. "
-+			       "Cannot switch to non-zoned table.",
-+			       dm_device_name(t->md));
-+			return -EINVAL;
-+		}
- 	}
- 
- 	r = queue_limits_set(q, limits);
-diff --git a/drivers/md/dm-zone.c b/drivers/md/dm-zone.c
-index 912b9fe1f5648..85777d875cc00 100644
---- a/drivers/md/dm-zone.c
-+++ b/drivers/md/dm-zone.c
-@@ -163,22 +163,22 @@ int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
- {
- 	struct mapped_device *md = t->md;
- 	struct gendisk *disk = md->disk;
-+	unsigned int nr_zones = disk->nr_zones;
- 	int ret;
- 
- 	if (!get_capacity(disk))
- 		return 0;
- 
--	/* Revalidate only if something changed. */
--	if (!disk->nr_zones || disk->nr_zones != md->nr_zones) {
--		DMINFO("%s using %s zone append",
--		       disk->disk_name,
--		       queue_emulates_zone_append(q) ? "emulated" : "native");
--		md->nr_zones = 0;
+-/*
+- * Read error-correcting codes for the requested RS block. Returns a pointer
+- * to the data block. Caller is responsible for releasing buf.
+- */
+-static u8 *fec_read_parity(struct dm_verity *v, u64 rsb, int index,
+-			   unsigned int *offset, unsigned int par_buf_offset,
+-			   struct dm_buffer **buf, unsigned short ioprio)
+-{
+-	u64 position, block, rem;
+-	u8 *res;
+-
+-	/* We have already part of parity bytes read, skip to the next block */
+-	if (par_buf_offset)
+-		index++;
+-
+-	position = (index + rsb) * v->fec->roots;
+-	block = div64_u64_rem(position, v->fec->io_size, &rem);
+-	*offset = par_buf_offset ? 0 : (unsigned int)rem;
+-
+-	res = dm_bufio_read_with_ioprio(v->fec->bufio, block, buf, ioprio);
+-	if (IS_ERR(res)) {
+-		DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
+-		      v->data_dev->name, (unsigned long long)rsb,
+-		      (unsigned long long)block, PTR_ERR(res));
+-		*buf = NULL;
 -	}
 -
--	if (md->nr_zones)
-+	/*
-+	 * Do not revalidate if zone write plug resources have already
-+	 * been allocated.
-+	 */
-+	if (dm_has_zone_plugs(md))
- 		return 0;
- 
-+	DMINFO("%s using %s zone append", disk->disk_name,
-+	       queue_emulates_zone_append(q) ? "emulated" : "native");
-+
- 	/*
- 	 * Our table is not live yet. So the call to dm_get_live_table()
- 	 * in dm_blk_report_zones() will fail. Set a temporary pointer to
-@@ -192,6 +192,7 @@ int dm_revalidate_zones(struct dm_table *t, struct request_queue *q)
- 
- 	if (ret) {
- 		DMERR("Revalidate zones failed %d", ret);
-+		disk->nr_zones = nr_zones;
- 		return ret;
- 	}
- 
-@@ -401,6 +402,21 @@ int dm_set_zones_restrictions(struct dm_table *t, struct request_queue *q,
- 		return 0;
- 	}
- 
-+	if (get_capacity(disk) && dm_has_zone_plugs(t->md)) {
-+		if (q->limits.chunk_sectors != lim->chunk_sectors) {
-+			DMWARN("%s: device has zone write plug resources. "
-+			       "Cannot change zone size",
-+			       disk->disk_name);
-+			return -EINVAL;
-+		}
-+		if (lim->max_zone_append_sectors != 0 &&
-+		    !dm_table_is_wildcard(t)) {
-+			DMWARN("%s: device has zone write plug resources. "
-+			       "New table must emulate zone append",
-+			       disk->disk_name);
-+			return -EINVAL;
-+		}
-+	}
- 	/*
- 	 * Warn once (when the capacity is not yet set) if the mapped device is
- 	 * partially using zone resources of the target devices as that leads to
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 20f6c6ebace0e..e23d4c63484b3 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2451,6 +2451,12 @@ static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
- 	size = dm_table_get_size(t);
- 
- 	old_size = dm_get_size(md);
-+
-+	if (!dm_table_supports_size_change(t, old_size, size)) {
-+		old_map = ERR_PTR(-EINVAL);
-+		goto out;
-+	}
-+
- 	set_capacity(md->disk, size);
- 
- 	ret = dm_table_set_restrictions(t, md->queue, limits);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 8ad782249af88..8887c1f65639d 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -58,6 +58,7 @@ void dm_table_event_callback(struct dm_table *t,
- 			     void (*fn)(void *), void *context);
- struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector);
- bool dm_table_has_no_data_devices(struct dm_table *table);
-+bool dm_table_is_wildcard(struct dm_table *t);
- int dm_calculate_queue_limits(struct dm_table *table,
- 			      struct queue_limits *limits);
- int dm_table_set_restrictions(struct dm_table *t, struct request_queue *q,
-@@ -73,6 +74,8 @@ struct dm_target *dm_table_get_immutable_target(struct dm_table *t);
- struct dm_target *dm_table_get_wildcard_target(struct dm_table *t);
- bool dm_table_bio_based(struct dm_table *t);
- bool dm_table_request_based(struct dm_table *t);
-+bool dm_table_supports_size_change(struct dm_table *t, sector_t old_size,
-+				   sector_t new_size);
- 
- void dm_lock_md_type(struct mapped_device *md);
- void dm_unlock_md_type(struct mapped_device *md);
-@@ -112,12 +115,14 @@ bool dm_is_zone_write(struct mapped_device *md, struct bio *bio);
- int dm_zone_get_reset_bitmap(struct mapped_device *md, struct dm_table *t,
- 			     sector_t sector, unsigned int nr_zones,
- 			     unsigned long *need_reset);
-+#define dm_has_zone_plugs(md) ((md)->disk->zone_wplugs_hash != NULL)
- #else
- #define dm_blk_report_zones	NULL
- static inline bool dm_is_zone_write(struct mapped_device *md, struct bio *bio)
+-	return res;
+-}
+-
+ /* Loop over each preallocated buffer slot. */
+ #define fec_for_each_prealloc_buffer(__i) \
+ 	for (__i = 0; __i < DM_VERITY_FEC_BUF_PREALLOC; __i++)
+@@ -132,14 +102,28 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
  {
- 	return false;
- }
-+#define dm_has_zone_plugs(md) false
- #endif
+ 	int r, corrected = 0, res;
+ 	struct dm_buffer *buf;
+-	unsigned int n, i, offset, par_buf_offset = 0;
++	unsigned int n, i, j, parity_pos, to_copy;
+ 	u8 *par, *block, par_buf[DM_VERITY_FEC_RSM - DM_VERITY_FEC_MIN_RSN];
++	u64 parity_block;
+ 	struct bio *bio = dm_bio_from_per_bio_data(io, v->ti->per_io_data_size);
  
- /*
+-	par = fec_read_parity(v, rsb, block_offset, &offset,
+-			      par_buf_offset, &buf, bio_prio(bio));
+-	if (IS_ERR(par))
++	/*
++	 * Compute the index of the first parity block that will be needed and
++	 * the starting position in that block.  Then read that block.
++	 *
++	 * io_size is always a power of 2, but roots might not be.  Note that
++	 * when it's not, a codeword's parity bytes can span a block boundary.
++	 */
++	parity_block = (rsb + block_offset) * v->fec->roots;
++	parity_pos = parity_block & (v->fec->io_size - 1);
++	parity_block >>= v->data_dev_block_bits;
++	par = dm_bufio_read_with_ioprio(v->fec->bufio, parity_block, &buf,
++					bio_prio(bio));
++	if (IS_ERR(par)) {
++		DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
++		      v->data_dev->name, rsb, parity_block, PTR_ERR(par));
+ 		return PTR_ERR(par);
++	}
+ 
+ 	/*
+ 	 * Decode the RS blocks we have in bufs. Each RS block results in
+@@ -147,7 +131,32 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 	 */
+ 	fec_for_each_buffer_rs_block(fio, n, i) {
+ 		block = fec_buffer_rs_block(v, fio, n, i);
+-		memcpy(&par_buf[par_buf_offset], &par[offset], v->fec->roots - par_buf_offset);
++
++		/*
++		 * Copy the next 'roots' parity bytes to 'par_buf', reading
++		 * another parity block if needed.
++		 */
++		to_copy = min(v->fec->io_size - parity_pos, v->fec->roots);
++		for (j = 0; j < to_copy; j++)
++			par_buf[j] = par[parity_pos++];
++		if (to_copy < v->fec->roots) {
++			parity_block++;
++			parity_pos = 0;
++
++			dm_bufio_release(buf);
++			par = dm_bufio_read_with_ioprio(v->fec->bufio,
++							parity_block, &buf,
++							bio_prio(bio));
++			if (IS_ERR(par)) {
++				DMERR("%s: FEC %llu: parity read failed (block %llu): %ld",
++				      v->data_dev->name, rsb, parity_block,
++				      PTR_ERR(par));
++				return PTR_ERR(par);
++			}
++			for (; j < v->fec->roots; j++)
++				par_buf[j] = par[parity_pos++];
++		}
++
+ 		res = fec_decode_rs8(v, fio, block, par_buf, neras);
+ 		if (res < 0) {
+ 			r = res;
+@@ -160,25 +169,6 @@ static int fec_decode_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 		block_offset++;
+ 		if (block_offset >= 1 << v->data_dev_block_bits)
+ 			goto done;
+-
+-		/* Read the next block when we run out of parity bytes */
+-		offset += (v->fec->roots - par_buf_offset);
+-		/* Check if parity bytes are split between blocks */
+-		if (offset < v->fec->io_size && (offset + v->fec->roots) > v->fec->io_size) {
+-			par_buf_offset = v->fec->io_size - offset;
+-			memcpy(par_buf, &par[offset], par_buf_offset);
+-			offset += par_buf_offset;
+-		} else
+-			par_buf_offset = 0;
+-
+-		if (offset >= v->fec->io_size) {
+-			dm_bufio_release(buf);
+-
+-			par = fec_read_parity(v, rsb, block_offset, &offset,
+-					      par_buf_offset, &buf, bio_prio(bio));
+-			if (IS_ERR(par))
+-				return PTR_ERR(par);
+-		}
+ 	}
+ done:
+ 	r = corrected;
