@@ -1,93 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.173
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792529334;
-	b=mAxGZ+IchB2QyHJrZ/AzWT/lyN23X2BEwnSqGPVf5ALFm4MOFucIFoKWlOymHZzRPZWZ
-	 yCDpFBY+DWKyom2aS8hqaa4zoDHOotstOe9xuXkNhdv+M74grcK7c6HXmi0lQo9rZ+35+
-	 ZOVY7PAlm9S9NgFmqMcuGzZ7+4taNFx9XpYGtYSZZEe/GgBolB1HBX7/YbjcrFRF+pgyg
-	 jfhnrxMkvCNP4jAMyVZqIH4pOaGaI9DcMUVCff0Tiu5i3QseABuwYgFGpYL45yH3Li/DF
-	 KamZfTv2dFDGEPBJK84WYxM5PCA3Vc+8FfVg+g8MENK3B+mZbFD6TNvfBWWnQ+h9jsA==
+	t=1792529338;
+	b=w3d4T9g7RMvCLj9bYdRkSvcN77rXpsqZKL1vKqV2GC1qVKct9aUV9Agct0CObE74Sy7r
+	 rWjGCvwMlxSxIxF3PnNkRTN414wmRnoOqUQ9t540dBzElsvK7X8r/ZiriaU9Tz13O71tJ
+	 Epv+f0E/r/XfRNQwJPj0yhpPbxdwUq8FzeTblfdPuqebcJMMa2LjEQKOFq3alY0Tm5zEE
+	 xJ+SgXISkmIyW2cYax1A0R/mDBzITUqo0hcLua7rThYd4HMXqHhnXMViaGHt5KqAMjo9e
+	 5R+r1aZ2FV3SUeV0udSHB6bwxBTAVn3NP/3fsYiprlSbFCEXeQnzRzSN2xuF4hQQlPg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792529334;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792529338;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=JNpEQNvJAyr0z1Lh3P8fnjlkfZGPhM3zoV87eED5GMw=;
-	b=NSearDUqmN6AUSnf1NLcAc4FrBpcdbmzcsGfDAQGJ+b7Uuc5CBvK2BMqyuqus9SEpjEh
-	 ktwaUQSpVBwZ0c+/27XFz8m+5iENcB9H9Xpl4ghUaylA6Y3li+T4PTw3YeXMs6xSVkF1D
-	 beIs55ctEl3CEmK4X83deurCsSnchCOvJSAI23h9KtAwpWJTqCaS2fmjJVJ5A43UZT0O1
-	 hXuP5mhMWRDKRaJLF+YmhDysIVdCCJqHsol/0jO7tjSc6jdfxTgW31wMNjtILChHYeF5N
-	 J8oAA6bmuO5wSh9l2auk+9bc+PM/XEH3zISKeT1yZkip+kH91arJg5MQp1tHYOJldfA==
+	 Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=WbBI4Qddsspl3tG2TS3iGy3tfYGiPyJ96cZqKyYG2AI=;
+	b=GV4omQAEmfuDYl9PZI1UAqxiOP/ltZChfE8DXrA0kFfTU9dMvBRndKVt7ReeqiXoN+2Y
+	 RzgNjY7E3Vl/+dyz9sTYNwPFB6/X0Qg5l3FsnPtbzOBXtjFkEDzi/pqrv1j5bIgLf5hUJ
+	 FDcII1AHDUxYhk5TlQqJ/g49ZpbdiH6a7nb/m/VeN0urdAHSxHSgK7Z31oVyz8bIllXNR
+	 NeVuBLiuMAu32Ht1itVxArjGN1OClQANCYj87PplIMKxGXQ86HvUSCWKmnvkhM5C8Knag
+	 JcQLV9NgM+yRqhGttsYtkByNmblZw8W+z97jb14cFezR1gVhjumrjDmMKQ1DhvXAiLQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=purestorage.com;
 	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=W3xzTq1V;
-	arc=none smtp.remote-ip=74.125.82.169
-Received: from mail-dy1-f169.google.com (mail-dy1-f169.google.com [74.125.82.169])
+	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=QoMyX3AS;
+	arc=none smtp.remote-ip=74.125.82.173
+Received: from mail-dy1-f173.google.com (mail-dy1-f173.google.com [74.125.82.173])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 981F2606A31B
-	for <dm-devel@lists.linux.dev>; Tue, 20 Oct 2026 20:48:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 981F2606A31B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DD8B606A31F
+	for <dm-devel@lists.linux.dev>; Tue, 20 Oct 2026 20:48:57 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7DD8B606A31F
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=W3xzTq1V
-Received: by mail-dy1-f169.google.com with SMTP id 5a478bee46e88-36661f953e4so1775697eec.1
-        for <dm-devel@lists.linux.dev>; Tue, 20 Oct 2026 13:48:53 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=QoMyX3AS
+Received: by mail-dy1-f173.google.com with SMTP id 5a478bee46e88-33bf40b0c8bso126eec.0
+        for <dm-devel@lists.linux.dev>; Tue, 20 Oct 2026 13:48:57 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1792529333; x=1793134133; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=JNpEQNvJAyr0z1Lh3P8fnjlkfZGPhM3zoV87eED5GMw=;
-        b=W3xzTq1VSS/SgX4TigUljYFrOTDK65IwV3cla/Aeq4bs1GD0wBJOXKdqqOUJ5q/DKd
-         XX6f/jgBTtUD7dwlNTG5EmNna+qFTTRua12SEcKnMByPyF/hzrWBkOVMjSF+q8UhvaoG
-         MjFRe1fbiesAn4xsv2E8LpjIo3SZ0E46lshE6dZ8SG2n5kJmTYQZ8a9y2iiOUeeUoTOK
-         edYaiRMhlRIXgEiMzA/pwXZY4+gFmoL9ThJbEhHYsokV3f5UJI6P9Ip0pHucXV+tHvN4
-         nJcd7eUDdFW/j2IUqJkiYoqXHT8MuAtFmcAJ4UJC8MfPIN87NxeQWeBFCZ2Z+T7JpFM3
-         mVGQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792529333; x=1793134133;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=purestorage.com; s=google2022; t=1792529336; x=1793134136; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=JNpEQNvJAyr0z1Lh3P8fnjlkfZGPhM3zoV87eED5GMw=;
-        b=USA84FlFabJJIoasbPAMUXxOuw1xiz66EJV/r7C7nd9QgDehiG5trekcEmVc+aOzbX
-         2d+N+OnVTFgD2mb3J2fy420XPg92JIW/H4khJTZqQCVPHiYICwasaYTM0STgN45Ll1iS
-         OJ19UmVnumJb9RMxruJOhMoSprn/QTGJ761taclZHfxTmgRG/uy23h+eHC1LJ8LBXk64
-         EW+ntVx3d62eI+WDgSbXd4udWX3SMagErnQ//PTDb6sTX3EdbT9kSRdNzh5Xt3qff+nS
-         dJNzufG65oHOfMJys6OnZjz+FDFVugIJ8NJ6WOSUxDWn4oE5C0QTn2Ub1guMleM6xhSk
-         +5cA==
-X-Gm-Message-State: AFq9FYLRKlXyj5gBqHwV2x1LOGefZUTGRmDBlEeQ79/kedKJfbirzpQ1
-	4TYUSNoraBUOYEUNGgfmV4r0c6iD1knt551B27i4t963fSgndbe+hFRC3iipNnAI3UzSGPCToRa
-	DWHesSGOonj5j4LvLi+SRdpifs9vAVY6UHOBNIFl3O2MlvIOl/CHbUF3lehFQi/XPkAzpagn69f
-	A1cEz5Qknh4kePtmOwn0H14QUrtlmISV6cYJ0E6P/dekfh8wo=
-X-Gm-Gg: AYBFou1DGODV7E+3Y0SSLJaO1GNThWQDp2gpM/saYXEBGP2mlmmKn5YqL/VMe94XQxe
-	i/C8mlnFWjIW8aQH43Ek6tQhONu2ilrIrr/+8bBV3OJV3jL8hJi6RCde+mgeY1JgOYPCLnxJWuz
-	YyyoZohYhqbhmwU31zuMy+ZqTCTjpGWCli60Q0hRYG8YxmkLDZf8PDifFIVYtzIVvH1c0JAumr/
-	IZKfLnY7GaPRY6DXI8R40SSr0t6OswlAYJt+m7FnYFvl0OqvYW92ehVtQ8P0m/f0B/DWwusmCg+
-	Yi+igUhhefHcG1/nMD2PYrP2RSDp5TCpnZ5ljSpsfMXoHO2aR8Z514vAJQ0dYVDN4S9lnmteYt9
-	9UUFzncvv7Oeh5oqdT5DXkm0yQRCjX5U6hL8FhHtQRG1ctIHFTBngi0hYx96SQI9Uj5OIszPraf
-	7bqEr+M3tQGLzAiNme8XKcbX8ye/sJO3YnEP7d5mr1YNshdlsYA+rUuLcYJxy70cBXv1w37xmLm
-	xHCNQH44NMetiDYhxWepqzYsbAWLywhs/Pm04T1D1JILqLTBISFClVWFjCM9yryD0kTAAzf73Nq
-	t5l4D8359vQziVcOj/LX++f7TnwBXrcB/PmkyYzKz2M/cFu/KeVdSE89eZBhW1RamqZpKY/A6xg
-	uNXJP75aouxawgW/XMIV9CelJbvPzJYbcC4uZr0cc8nZhfOFboe+M
-X-Received: by 2002:a05:7022:28f:b0:18d:5988:8d3 with SMTP id a92af1059eb24-190a109f74amr13396c88.3.1792529332305;
-        Tue, 20 Oct 2026 13:48:52 -0700 (PDT)
+        bh=WbBI4Qddsspl3tG2TS3iGy3tfYGiPyJ96cZqKyYG2AI=;
+        b=QoMyX3ASuZsiQ/irnyYDfaQfY+IDAoH6Q3xhPOA/rzL34V5/L/Poq7WIOvkzX0ovVo
+         vSQ9nMfOA0O0jMu8msZq3dNZVJIv+PZ8MktIH8onGQzwoStlX/XnCWpKh0GHgN2cTY8v
+         6DEt02qERiB1q/p4Jzs+nIYVexC6xkm3RLmTCE1MQq1vjIwio3PQGsQ8lKUVY7WSWA0r
+         yHZnxA7brIDIiwXnh3gFvvHbKj8VLntR1HansNcVgOtsXZgLtFtf7qXSI41PSgVy05p0
+         rwWmRAqmSPtxefuf4BW6QNK1UbwDdbKDaI875LsqAi5zE7qvvgPsBm35qP5fu3ga42m/
+         siCg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792529336; x=1793134136;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=WbBI4Qddsspl3tG2TS3iGy3tfYGiPyJ96cZqKyYG2AI=;
+        b=uXF2Qh+y9I+F5zku4hiPAn1+hl/Ks0eoVAoZIjzCKlz7vnmmbc+LJGYwaME7LscJkJ
+         2jVpUN0aMpHCWwXF/Qu7wYDnuZk9bBsk/YN+1jGhIyzQLC/N54Ca70Z/gPfW4uphhRjs
+         opDIjc3ND9xPBBcwVQfJXhZUtiPiWuyEo912GN1kX0w9FhwWiislJEKKPJ71qEBW435N
+         TQy4OqwoF4/U6d8/tQ/zf6pTt9owtCmguAVzDP9INhyrfaKHp+kWKpO05n2zKRylK2Kz
+         A3Czci6MjvrapFrqt0lvKTQ9C6T/pUCDFoET5l/yv5ynpeqUMGGPBU5gqFS/S5aG+1Qm
+         28Ag==
+X-Gm-Message-State: AFq9FYINknvFgX++LD9DKCFoE0eISRLtLqzsM5snp0pFvJnctBv/39Ru
+	6acFBhSoaQBjVvbG/PvDElTJ7GtXyCAtReweWSMjrSw2qiLS3tR64RQd6pMyqztYyJ4arr6wNO5
+	97tYeTGhp7eOsL/W/q+58Rd2nYyf5KpT8qWm98K8QCUyr9qLaLgOU28MUryorzje9xYO9a4hIU/
+	LE38gHA8dGTSGworzhQSbjSRk9TutedYr1oVt92Hv7DHAxDpM=
+X-Gm-Gg: AYBFou1WTuE9mE38BaKu1ROeJHuASTvxRc7sFPuO5ghgdYLl6njpn+yW4TRjysXb0Mv
+	Q7vdL/WuaGfXgegIXYpssCD/SVYBAK2/yJRibzCQ/aQjYUgceQOS+LBm4VSWWOZ8VdJMhy7vhFy
+	78ottoZVlEmTuyMtZ9VdjC9e1jj6APBudyk2eHWmjOOSd8uIEzPV1CULcoWwCdtZrb6FzwDDgPx
+	RWgVPnuV+sASw28n0MXduDTjFIZMlKwZ5rwYtC5oezFQYXed6FL0j7j1+NUmmuyetJyNDop3MZR
+	SOKyIuGWX0ks9pDXKzn4vkmcm1kPuuRUEleSpDubQdNhji7r4cbxUMJir+5oC7jfWAkQBB+E+Gk
+	JHBec4pMw7j8eAObbZw8oM8Jv5sJG7aALEx5Ks2QjSLqrZvhUxqpFr6VxiQ+1GD0YouDj1s9uwn
+	7aQhLh5s1/PggLW8puRyiWjM8qx8eawf7XYMtByPhP6ghAxKOATBvZld4yeo5QYHjyC71UGgyiu
+	JN2usIPb6f9Icj3n0p2A50BT8zbMIVj+wF9W+aD44fTtc533VlgeHet98Si1MqmjPHvS1FwHium
+	7EmhIitZJ9KyiLKqwxuMT8R+ua8Y6V22NPndQr3Nx+UBheAin7YW3CGn3TgTOGL6KMmJAgk=
+X-Received: by 2002:a05:701b:21c8:b0:143:5266:48ee with SMTP id a92af1059eb24-18514634391mr15036879c88.42.1792529336110;
+        Tue, 20 Oct 2026 13:48:56 -0700 (PDT)
 Received: from brian--MacBookPro18.purestorage.com ([170.85.204.106])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1903a180adasm954412c88.8.2026.10.20.13.48.51
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1903a180adasm954412c88.8.2026.10.20.13.48.55
         (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Tue, 20 Oct 2026 13:48:51 -0700 (PDT)
+        Tue, 20 Oct 2026 13:48:55 -0700 (PDT)
 From: Brian Bunker <brian@purestorage.com>
 To: dm-devel@lists.linux.dev
 Cc: Brian Bunker <brian@purestorage.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Martin Wilck <mwilck@suse.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: [PATCH 0/1] multipathd: don't leave maps read-only after write protect is cleared
-Date: Tue, 20 Oct 2026 13:48:38 -0700
-Message-ID: <20261020204841.50459-1-brian@purestorage.com>
+Subject: [PATCH 1/1] multipathd: don't leave maps read-only after write protect is cleared
+Date: Tue, 20 Oct 2026 13:48:39 -0700
+Message-ID: <20261020204841.50459-2-brian@purestorage.com>
 X-Mailer: git-send-email 2.56.0
+In-Reply-To: <20261020204841.50459-1-brian@purestorage.com>
+References: <20261020204841.50459-1-brian@purestorage.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -99,104 +102,130 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-A multipath map can stay read-only after write protect is cleared on
-the storage, even though all of its paths are read-write. It happens
-when the map's paths are removed and re-added while write protect is
-set:
+ev_add_path() sets mpp->force_readonly when a newly added path is
+read-only, but never clears it. If a map is created or reloaded while
+its storage is write protected, the flag stays set. When write protect
+is cleared, the reload that uev_update_path() does for the DISK_RO=0
+uevent uses the stale flag and loads the map read-only, even though all
+of its paths are read-write. uev_update_path() clears the flag after
+that reload, so the map only recovers if another DISK_RO=0 uevent
+reloads it again. If none comes, the map stays read-only, and since
+mpp->dmi.read_only is then 1, needs_ro_update() also ignores later
+DISK_RO=1 uevents for it.
 
-1. Write protect is set. The map is reloaded read-only.
-   uev_update_path() sets force_readonly for that reload and clears it
-   afterwards.
+Add a helper, map_has_ro_path(), that checks whether any of a map's
+paths is read-only in sysfs, and use it to set force_readonly:
 
-2. All of the map's paths are removed, and new paths are added while
-   write protect is still set. ev_add_path() sees a read-only path and
-   sets force_readonly = 1. Nothing ever clears it.
+- In ev_add_path(), set force_readonly from all of the map's paths
+  rather than only the path being added, and clear it once the map has
+  been loaded, as uev_update_path() already does after its reload. With
+  need_do_map == 0 the flag is left set for the call that loads the map.
 
-3. Write protect is cleared on the new paths, one after another. Each
-   path's DISK_RO=0 uevent is ignored while any path of the map is
-   still read-only.
+- In uev_update_path(), set force_readonly from the paths' current
+  state in sysfs instead of from the uevent. The kernel updates the ro
+  attribute before it sends the DISK_RO uevent, so sysfs is current
+  when the uevent is handled.
 
-4. The last path's uevent reloads the map. The reload sees the stale
-   force_readonly = 1 and loads the map read-only, logging "reloaded
-   (retval 0)".
+- In update_map(), which does reloads that were delayed while the map
+  was waiting for udev (UDEV_WAIT_RELOAD), recompute force_readonly
+  before setting up the map, since the paths' state may have changed
+  since it was last set.
 
-force_readonly only works in one direction: ev_add_path() can set it
-but never clears it. If the new paths had been added already writable,
-ev_add_path() wouldn't have set the flag and the map wouldn't have
-stuck. The paths have to be added while write protected and then
-cleared in place.
-
-After step 4 nothing reloads the map again. A rescan doesn't change the
-paths' ro state, so it generates no DISK_RO uevent. And since
-multipathd now sees the map as read-only, needs_ro_update() also
-ignores the next DISK_RO=1 uevent for it.
-
-If two paths' uevents happen to be handled after all paths are
-writable, the map does recover: uev_update_path() clears
-force_readonly after its reload, so the second reload is read-write.
-That makes the problem look intermittent.
-
-Example
--------
-
-We hit this on RHEL 9 device-mapper-multipath 0.8.7, whose
-ev_add_path() and uev_update_path() handle force_readonly the same way
-as current master. The host's iSCSI sessions were torn down and
-re-established while the array was write protecting the volume. From
-the messages log, trimmed:
-
-  05:48:27  ...114d8: reload [0 51200 multipath 0 1 alua 1 1
-            service-time 0 6 1 135:272 1 66:624 1 69:720 1 129:560 1
-            132:656 1 135:752 1]
-  05:48:27  sdsd: map ...114d8 reloaded (retval 0)
-  05:51:04  kernel: sd 24:0:0:48: [sdaer] Write Protect is on
-  05:51:05  ...114d8: remaining active paths: 0
-  05:51:07  kernel: sd 29:0:0:48: [sdaoi] Write Protect is on
-            (and four more new paths)
-  06:09:01  kernel: sd 24:0:0:48: [sdaer] Write Protect is off
-  06:09:07  kernel: sd 29:0:0:48: [sdaoi] Write Protect is off
-  06:09:10  sdaoi: update path write_protect to '0' (uevent)
-  06:09:10  ...114d8: reload [0 51200 multipath 0 1 alua 1 1
-            service-time 0 6 1 67:880 1 70:992 1 130:848 1 133:960 1
-            65:1072 1 67:1056 1]
-  06:09:10  sdaoi: map ...114d8 reloaded (retval 0)
-
-The state afterwards, as recorded by the test:
-
-  dm-106: ro
-  sdaer: rw  sdagu: rw  sdaix: rw  sdala: rw  sdand: rw  sdaoi: rw
-
-The patch
----------
-
-The patch adds map_has_ro_path(), which checks whether any of a map's
-paths is read-only in sysfs, and uses it wherever force_readonly is
-set. ev_add_path() now computes the flag from all of the map's paths
-and clears it once the map is loaded, as uev_update_path() already
-does after its reload. uev_update_path() and update_map() recompute it
-before reloading. With the patch, the 06:09:10 reload would have found
-no read-only path and loaded the map read-write.
-
-Open points for review:
-
-- uev_update_path() now takes the read-only state from sysfs rather
-  than from the uevent's DISK_RO value. That relies on set_disk_ro()
-  updating the disk's read-only state before sending the uevent, which
-  current kernels do. Older kernels (e.g. v4.18) sent the uevent first.
-
-- force_readonly is a one-shot hint that several callers have to set
-  and clear correctly. A follow-up could remove it and have
-  dm_addmap_create() and dm_addmap_reload() call map_has_ro_path()
-  themselves. That would move sysfs_get_ro() into libmultipath and
-  change the multipath command's behavior too, so it isn't part of
-  this fix.
-
-Brian Bunker (1):
-  multipathd: don't leave maps read-only after write protect is cleared
-
+Signed-off-by: Brian Bunker <brian@purestorage.com>
+---
  multipathd/main.c | 44 +++++++++++++++++++++++++++++++++++++-------
  1 file changed, 37 insertions(+), 7 deletions(-)
 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9bce4d6b..68916256 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -709,6 +709,22 @@ void cleanup_reset_vec(struct vector_s **v)
+ 	vector_reset(*v);
+ }
+ 
++static int sysfs_get_ro(struct path *pp);
++
++/* A map must be loaded read-only if any of its paths is read-only. */
++static bool
++map_has_ro_path(struct multipath *mpp)
++{
++	struct path *pp;
++	unsigned int i;
++
++	vector_foreach_slot (mpp->paths, pp, i) {
++		if (sysfs_get_ro(pp) == 1)
++			return true;
++	}
++	return false;
++}
++
+ static int
+ update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
+ {
+@@ -732,6 +748,13 @@ retry:
+ 
+ 	mpp->action = ACT_RELOAD;
+ 
++	/*
++	 * This may be a delayed reload, and the paths' write protect
++	 * state may have changed since force_readonly was last set.
++	 * Recompute it from the current paths.
++	 */
++	mpp->force_readonly = map_has_ro_path(mpp);
++
+ 	if (setup_map(mpp, &params, vecs)) {
+ 		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+ 		retries = -1;
+@@ -1305,7 +1328,6 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ 	int retries = 3;
+ 	int start_waiter = 0;
+ 	int ret;
+-	int ro;
+ 	unsigned char prflag = PR_UNSET;
+ 
+ 	/*
+@@ -1370,10 +1392,11 @@ rescan:
+ 			goto fail; /* leave path added to pathvec */
+ 	}
+ 
+-	/* ro check - if new path is ro, force map to be ro as well */
+-	ro = sysfs_get_ro(pp);
+-	if (ro == 1)
+-		mpp->force_readonly = 1;
++	/*
++	 * Load the map read-only if any of its paths is read-only,
++	 * not just the one being added.
++	 */
++	mpp->force_readonly = map_has_ro_path(mpp);
+ 
+ 	if (!need_do_map)
+ 		return 0;
+@@ -1400,6 +1423,8 @@ rescan:
+ 		sleep(1);
+ 		ret = domap(mpp, params, 1);
+ 	}
++	/* force_readonly only applies to this load, as in uev_update_path() */
++	mpp->force_readonly = 0;
+ 	if (ret == DOMAP_FAIL || ret == DOMAP_RETRY) {
+ 		condlog(0, "%s: failed in domap for addition of new "
+ 			"path %s", mpp->alias, pp->dev);
+@@ -1732,8 +1757,13 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 			if (mpp->wait_for_udev != UDEV_WAIT_DONE)
+ 				mpp->wait_for_udev = UDEV_WAIT_RELOAD;
+ 			else {
+-				if (ro == 1)
+-					pp->mpp->force_readonly = 1;
++				/*
++				 * force_readonly may be stale from ev_add_path().
++				 * Set it from the paths' current state in sysfs,
++				 * which the kernel updates before sending the
++				 * uevent, rather than from the uevent itself.
++				 */
++				pp->mpp->force_readonly = map_has_ro_path(mpp);
+ 				retval = reload_and_sync_map(mpp, vecs);
+ 				if (retval == 2)
+ 					condlog(2, "%s: map removed during reload", pp->dev);
 -- 
 2.56.0
 
