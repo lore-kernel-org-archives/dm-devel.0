@@ -1,104 +1,52 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792575151;
-	b=EVqzOkm4U3NZOa6e2/myshtS6YsGRfcwl7CvdFdblN4SkXrFUkTMCHp5dKuPHZjjjeOp
-	 S1UWr0q5tJ2grgcg4YR6ALzUZxvj0HAeXU1X1yrF1paplUxIj6FxVO0w1jhLbX5bk72Yh
-	 6qO79BD1aIPOFxpXvUbCEGG0uhnXZBob3KCG0N2Ny+Vt710dR/LZs9ds7t08MVSnqtHMM
-	 +f+4/5cc+wGSi3B10UPGlsQg4kajuTSgPICnAD0XsL7JuctHLK1g92uMIDBA0kKy0j7xi
-	 GQ0GG3+nC9JvxQ+CHIjJQntpQMST2fUlalhV6zwVFWpd3AEkRC/VXan7OpawrupzzEw==
+	t=1792604385;
+	b=LLHZzD/t+d3cAQzh54sTX2kUecDjcDeaUky+2jkmV4hkqFi3qNBf14FdrlErgqDNuIUR
+	 ewhJGYFNhe40CikZ91nfVt5rWedCsvjrqwyG4lgAZvOWSXtw8hCwTK8NgWMmZxKERTeiL
+	 wBh7mvZI/ee9Vo50mKntkUbe+KeXHb9gNCF2bkECIgO8bdv6Natv9T3u3+hP0wl1LvUCp
+	 0AF0wtAHeBuw3oMUFB5otIT1+o1Rx8Ks16plqShCHddM6Q+O0cOhfNKbyz/689he6h4ka
+	 uzkggTCKxrpDbgb+QP4vtPU7okxrVw1jMxwHUpDKjQYSB7qm8slB6aXcMrBh7ADTKPQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792575151;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:DKIM-Signature:
-	 DKIM-Signature:Received:Received:Message-ID:Date:MIME-Version:
-	 User-Agent:Subject:To:Cc:References:Content-Language:From:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding:X-Rspamd-Action:X-Spam-Score:
-	 X-Spam-Flag:X-Spamd-Result:X-Spam-Level:X-Rspamd-Queue-Id:
-	 X-Rspamd-Server;
-	bh=AZY0SdXNkTTC2afHQv6zkLHauHeQHgV0pUcff6Mv0ik=;
-	b=glssHaTpeQLbfUYdjvAG7P9cDHo0vG9AJQWhgcg7vVhzlPiYmTKl0JFMSkneQLemesTv
-	 zIf1O4O+o5LMdisD6iQo5iIED9wIchxmG2gLggsVRiIGxr7W2NDpj7KmrMKLhtKvMIV82
-	 +w7pbdw7Sf4JqrjcxAIDhzenlvb+Vh3jy9PvshbRRZZwAYK+9jdkfWRBc/UBn+fA1GR6H
-	 arKs/t2rleqFBNPiNQjobYVN9MAhXVXBmkNS6SVA1egc5fQLohV0QbJWmZxHssIUEdX6o
-	 5SX3LW6jmDv6TwNk3SLRzZchTv/J32D2kgb/YhyzDpeCkuWXctjQryheoOF6UiGaApg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792604385;
+	h=Received:DKIM-Signature:Date:From:To:Subject:Message-ID:MIME-Version:
+	 Content-Type:Content-Disposition;
+	bh=A3X0U7wQycqlIF4Vt2kJRKMjmR2g9crN0JqzOIZUb0A=;
+	b=oJK+AM6MjUKLV9HCpxUVaZpcXkxRh6DBFIg6hzWualtn4RlPes1GpFu/AR4pAQyIzhiZ
+	 jLBq0O2QCxHE5ym360AjNcn15DfoXuJxznM4ZzMgd4E5NZ5CVzhsWo+sBDTKrUoarD0Wr
+	 wyKW0NpWmjb+RDsU8EuLRFhM1XbNFEsCnsECqca7m0fMADVLnQhH3jzMRN+mI5UDWEvTC
+	 Spwr7Hu+jq/rMp23vlNKbtRCFcgKfok+cdUUamLJIb/Cgf4Rnos1X3Nq4fFFVqxK285sB
+	 VIGWUVJJZzrF9gaq384IvOIHoO7xAn2Hjl9MjC+VsdQ1xC8zoXrFi/qg6J8V4XrWvow==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.de;
-	spf=pass smtp.mailfrom=suse.de;
-	dkim=pass header.d=suse.de header.i=@suse.de header.a=rsa-sha256 header.s=susede2_rsa header.b=DvR+1Pse;
-	dkim=pass header.d=suse.de header.i=@suse.de header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvtQw2rm;
-	dkim=pass header.d=suse.de header.i=@suse.de header.a=rsa-sha256 header.s=susede2_rsa header.b=DvR+1Pse;
-	dkim=neutral header.d=suse.de header.i=@suse.de header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvtQw2rm;
-	arc=none smtp.remote-ip=195.135.223.131
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QRS12HQL;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48266606A31D
-	for <dm-devel@lists.linux.dev>; Wed, 21 Oct 2026 09:32:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 48266606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=suse.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.de
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D313606A31D
+	for <dm-devel@lists.linux.dev>; Wed, 21 Oct 2026 17:39:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.de header.i=@suse.de header.a=rsa-sha256 header.s=susede2_rsa header.b=DvR+1Pse;
-	dkim=pass header.d=suse.de header.i=@suse.de header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvtQw2rm;
-	dkim=pass (1024-bit key) header.d=suse.de header.i=@suse.de header.a=rsa-sha256 header.s=susede2_rsa header.b=DvR+1Pse;
-	dkim=neutral header.d=suse.de header.i=@suse.de header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=OvtQw2rm
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 6448A1F451;
-	Wed, 21 Oct 2026 09:32:28 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1792575148; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AZY0SdXNkTTC2afHQv6zkLHauHeQHgV0pUcff6Mv0ik=;
-	b=DvR+1PsebT9m7Ap6OnEa4BHoxUvgFArBVDit+ITICTiRWn10Q9jEFm0XCeJPVQfgF63xWE
-	U1aZRNnBVl2GikDDIpRZ5EV+wKBouuneXciyGsfaMtA/yRyRKb9QF2Nc6LJs7xCLoVNPQO
-	JlIM9dRWa98gPrlENxzn7x64Gdtg1S0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1792575148;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AZY0SdXNkTTC2afHQv6zkLHauHeQHgV0pUcff6Mv0ik=;
-	b=OvtQw2rmMjURRirrko5Co6CPqzcarD6WZpdcg6n+pzGF33Yz7Ftgg1dd97iOY+C4sOPn3v
-	3PPTmrCIYra36kCQ==
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.de header.s=susede2_rsa header.b=DvR+1Pse;
-	dkim=pass header.d=suse.de header.s=susede2_ed25519 header.b=OvtQw2rm
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.de; s=susede2_rsa;
-	t=1792575148; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AZY0SdXNkTTC2afHQv6zkLHauHeQHgV0pUcff6Mv0ik=;
-	b=DvR+1PsebT9m7Ap6OnEa4BHoxUvgFArBVDit+ITICTiRWn10Q9jEFm0XCeJPVQfgF63xWE
-	U1aZRNnBVl2GikDDIpRZ5EV+wKBouuneXciyGsfaMtA/yRyRKb9QF2Nc6LJs7xCLoVNPQO
-	JlIM9dRWa98gPrlENxzn7x64Gdtg1S0=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.de;
-	s=susede2_ed25519; t=1792575148;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=AZY0SdXNkTTC2afHQv6zkLHauHeQHgV0pUcff6Mv0ik=;
-	b=OvtQw2rmMjURRirrko5Co6CPqzcarD6WZpdcg6n+pzGF33Yz7Ftgg1dd97iOY+C4sOPn3v
-	3PPTmrCIYra36kCQ==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 2C40D134A5;
-	Wed, 21 Oct 2026 09:32:28 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id o3cXAqyG2GoUGAAAD6G6ig
-	(envelope-from <hare@suse.de>); Wed, 21 Oct 2026 09:32:28 +0000
-Message-ID: <ebb71b2a-f4a4-437b-918a-8be94d41b17f@suse.de>
-Date: Wed, 21 Oct 2026 11:32:27 +0200
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QRS12HQL
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D79821F000C1;
+	Wed, 21 Oct 2026 17:39:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792604385;
+	bh=A3X0U7wQycqlIF4Vt2kJRKMjmR2g9crN0JqzOIZUb0A=;
+	h=Date:From:To:Subject;
+	b=QRS12HQLDETno7mR0AODSEPMfwkctf43e/xavFhbrHJ69dkqbB5ZuQhfQJeKeaVK3
+	 oj5hHCF8CI/Qg6ALbCszH1zC8qpdYdDZWPVkn/CRtvtsakDsrUj668qBPQoanjSYVz
+	 hqjmFeAWFdhV8uxVCXXy/6UCOB07952Eit383H0sfZaXrlDPhv+V+IHhsZzPbozZn5
+	 I0UtKMMacUm5Sxe3Som8lnSI2WXhtS5gzDMWPjzmCLpFWlC0zgjWb8oNfNkE7MnN9V
+	 2zGGeOn3bBc3XxWFntKtFniovm9gK6hpdCV1x9FspvOLQlOIyKG4IX41mwmW84ALeD
+	 Tq4gGd3muEn0A==
+Date: Wed, 21 Oct 2026 10:39:43 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Enabling Sashiko for dm-devel?
+Message-ID: <20261021173943.GF1879@quark>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -108,112 +56,24 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 3/3] dm zoned: keep polling for idle reclaim after a
- reclaim pass
-To: Kyrylo Biryuk <illofspeed@gmail.com>, dm-devel@lists.linux.dev
-Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com,
- bmarzins@redhat.com, dlemoal@kernel.org, linux-kernel@vger.kernel.org
-References: <20261011175450.952-1-illofspeed@gmail.com>
- <20261011175450.952-4-illofspeed@gmail.com>
-Content-Language: en-US
-From: Hannes Reinecke <hare@suse.de>
-In-Reply-To: <20261011175450.952-4-illofspeed@gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Rspamd-Action: no action
-X-Spam-Score: -4.50
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-4.50 / 50.00];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	XM_UA_NO_VERSION(0.01)[];
-	MX_GOOD(-0.01)[];
-	MIME_TRACE(0.00)[0:+];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	FREEMAIL_TO(0.00)[gmail.com,lists.linux.dev];
-	DKIM_SIGNED(0.00)[suse.de:s=susede2_rsa,suse.de:s=susede2_ed25519];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_TRACE(0.00)[suse.de:+];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	RCPT_COUNT_SEVEN(0.00)[8];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,imap1.dmz-prg2.suse.org:rdns]
-X-Spam-Level: 
-X-Rspamd-Queue-Id: 6448A1F451
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-On 10/11/26 7:54 PM, Kyrylo Biryuk wrote:
-> dmz_reclaim_work() re-arms its DMZ_IDLE_PERIOD poll only when
-> dmz_should_reclaim() returns false at the start of a pass. After a pass
-> it calls dmz_schedule_reclaim(), which queues the work only if reclaim
-> is needed right now. When a pass ends while the target is still busy and
-> has enough free zones, nothing is queued at all. Once the target goes
-> idle, nothing re-evaluates dmz_should_reclaim() until new I/O arrives or
-> user space sends a "reclaim" message, so the random or cache zones that
-> filled up under load stay full.
-> 
-> Seen on md RAID5 members on 27 TB host-managed drives: after heavy
-> writes the random zones stayed full for hours on idle targets; the
-> workaround was a timer sending "dmsetup message <dev> 0 reclaim". With
-> this patch the emptied and filled zones were reclaimed within minutes of
-> the targets going idle, without the timer.
-> 
-> After a pass, requeue the work immediately if reclaim is still needed,
-> otherwise re-arm the idle poll.
-> 
-> Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
-> Assisted-by: LLM
-> Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
-> ---
->   drivers/md/dm-zoned-reclaim.c | 11 ++++++++++-
->   1 file changed, 10 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
-> index 88d56d3c86d..5084e10ea7e 100644
-> --- a/drivers/md/dm-zoned-reclaim.c
-> +++ b/drivers/md/dm-zoned-reclaim.c
-> @@ -556,7 +556,16 @@ static void dmz_reclaim_work(struct work_struct *work)
->   		}
->   	}
->   
-> -	dmz_schedule_reclaim(zrc);
-> +	/*
-> +	 * Keep the worker alive: when a pass ends while the target is busy
-> +	 * with enough free zones, dmz_schedule_reclaim() queues nothing and
-> +	 * the idle poll is never re-armed, so zones filled under load are not
-> +	 * reclaimed once the target goes idle.
-> +	 */
-> +	if (dmz_should_reclaim(zrc, dmz_reclaim_percentage(zrc)))
-> +		mod_delayed_work(zrc->wq, &zrc->work, 0);
-> +	else
-> +		mod_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
->   }
->   
->   /*
+Currently, Sashiko doesn't monitor dm-devel or send email replies to it
+(https://github.com/sashiko-dev/sashiko/blob/main/projects/linux/mailing_lists.toml).
 
-You could simply reschedule here
-(ie call 'mod_delayed_work(zrc->wq, &zrc->work, 0)' directly),
-as the second branch of the condition will be exercised at the
-start of the function anyway.
+Sometimes Sashiko reviews for device-mapper patches can be found on
+https://sashiko.dev anyway, due to the patches also being Cc'ed to
+linux-kernel which is monitored.  However, get_maintainer.pl is being
+updated to no longer suggest Cc'ing linux-kernel.
 
-Cheers,
+Would there be any objection to enabling monitoring and email replies
+for dm-devel, like this which various other lists already use?:
 
-Hannes
--- 
-Dr. Hannes Reinecke                  Kernel Storage Architect
-hare@suse.de                                +49 911 74053 688
-SUSE Software Solutions GmbH, Frankenstr. 146, 90461 Nürnberg
-HRB 36809 (AG Nürnberg), GF: I. Totev, A. McDonald, W. Knoblich
+    ["dm-devel@lists.linux.dev"]
+    reply_to = ["author", "list", "recipients"]
+
+If the dm maintainers prefer monitoring-only (no emails), that could be
+done instead.  But I think the email replies are really helpful.
+
+- Eric
