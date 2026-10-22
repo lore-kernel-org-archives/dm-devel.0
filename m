@@ -1,58 +1,91 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.161.49
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792689903;
-	b=PO0hoakkWcp9JlrqKvGfhXf/wjJ7o5+pfJ0dHxXZxLDA5O5NtxemlQjFdqrQ25GqTnZU
-	 ggax2uGc9Au27Ko6Z8unyvbxiHwQl8l0koMXmlAta+LkmNP0PV1bD4VRtrMHikbqHM9mb
-	 9wyTAhiifAsIcZaM55jMyh1+AdEM9S/thsNIwl9TevD20lacEChyawqcIOM0/yZALvsG2
-	 jGzMtCH/FCnxg/pG8DTT83DEDd9Min14oJ8rU1grZmsbX1yIHMT+Wp2NwEmwAtVuSj1n7
-	 YRydtleQrCYgQyCbWirMrksgQDT6vSgr9FmVeqzqUXPZE5UxXetf/1GCtjkb1Vo0KMA==
+	t=1792693184;
+	b=FPW19+hOZ2idahtuDx4OEHd+U3BHwaoEinitIzqXZooi7ijgHAGO8hoKQ4DSegdCNO4z
+	 VKgemSeIrE7SRnzz1HBUjd0KOwCaZDhT9yI+jvJCI+v1iIk9r5fOLBD27Ll3Z6MHOzTzg
+	 9EA3AFXuFq2X0oBmZbSKZL7qshyFwzEJl8eQWK0xDkcoKir/93POL2Os/p1ACMmpM3DO3
+	 A47nbVUV8uG8sXqmP5QlWuubAwhz9KCdIkX0Xy909IrLxNSlhhWn/BdT+ZAfzaYgKWNoV
+	 qPWC5xAgYeyXkigNSvdf+n2QTjFgHMqiqQXR2/kE4JSaQknlMa8AA121jTQu4nHPGiw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792689903;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=S2g0dNv50+bt5WStkW536+XufqVUz5Tl/wWpHMwU0mQ=;
-	b=gZjcJyITSJeW/OekArzTdy3OPvOKlE2Bq/zqmOU1ZXYfSwZ2HaQwtet1CKA8pvs+szMn
-	 SWB18/eGd0X9Ia5+3v5sZB7F8O9LBUyy6N3+uodyrJ2VACUMAtHNPzGvmmaEbd25FRR+2
-	 7UnF43HMRoaTyjseU586+qfHqwkf8nBl4rcKfJs5ChtQQdbZuzyNtxTbh0dT/ZlvDJ6nL
-	 BDGAWJRUFNEsc/KqsTgknLSUt+vTiqLszLmNfpDLu0l140FNH8Qe/qUsCdA6zdLu7rmy3
-	 yq9tFj3VGQr06O1EVLbhlXTkkxF0TRLMvZwyr2AxKkbFVTFbTwybIKrKx+/C9Y6nVMw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792693184;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
+	b=YqzBxwDMe8xVM5AbGhRKMDBwjeSbwawp66pqgSAlRcs6dOmLRMP7iKOk/pNRYQQlJsS8
+	 1UFZzzNwvd7zfr+VjCrlpOHQXMsPC8eDDXWkYS1ngLCqk8sctEnfH7zkoQ0fetpRdOBnX
+	 auxPsb3rZiC22qligqC+Elp60HLmTE2w2CfNrDBzyapBYl1dh1krSF7Uih/x7WAOrEOEO
+	 oWnljRZKduxy37m21kuQcS59FOwdRuYw7KzgCaT5G7IPxoX58kwB1+mxLPqe6YPhPjpY7
+	 Nc0UCaKcnuSaAMfaJPomByGzk3TobUjvt0m3Tcmc1M4m7POhK+4YlaIxCNeZZ4n90Xw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Y2ldxGDw;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=artiphishell.com;
+	spf=pass smtp.mailfrom=artiphishell.com;
+	dkim=pass header.d=artiphishell.com header.i=@artiphishell.com header.a=rsa-sha256 header.s=google header.b=QXZALAlD;
+	arc=none smtp.remote-ip=209.85.161.49
+Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59CA8606A319
-	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 17:25:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9DD5606A31D
+	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 18:19:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E9DD5606A31D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=artiphishell.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=artiphishell.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Y2ldxGDw
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 78D361F01825;
-	Thu, 22 Oct 2026 17:25:02 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792689903;
-	bh=S2g0dNv50+bt5WStkW536+XufqVUz5Tl/wWpHMwU0mQ=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=Y2ldxGDwZ7RV3DALR+hwaN19M+ohFpRLTzYU8k3QvEj03yxB3m9LDf/tQ6x2QlgKU
-	 P8H+f9Oxqh/D1W6/VrqILl2VFHsX8VdWk6gpiYvOunPA9BKlajN7YnfvKealUhMp3q
-	 CmJCw9x1fU//i/rTLVFKw2tV11+jkMZ5IWFSnMZWIMvMvg6kX+zgTDzouvU0/CcBGr
-	 Ip26+zw1tJqKChxtJWTjVay7WL6N0iIAzMzN2JC9S0+9h7h2NFkjf6sioMLve4S0jI
-	 /TyPIbq5BV67pZIe200g00Ko8su2g/H+nfW6G5Q3/O/DGk9dn3FmaS3pFBqXEdxmun
-	 Yt6tAJag9n+gA==
-Message-ID: <sashiko-outbox-181857@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] block: let a stacking device inherit its members' DMA
- alignment
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Mike Snitzer" <snitzer@kernel.org>, "Keith Busch" <kbusch@meta.com>, axboe@kernel.dk
-Cc: dm-devel@lists.linux.dev, mpatocka@redhat.com, bmarzins@redhat.com, "Keith
- Busch" <kbusch@kernel.org>
-In-Reply-To: <atpBVtPqGDWZ2AFo@kernel.org>
-References: <20260709161519.1559723-1-kbusch@meta.com>
- <20260709161519.1559723-2-kbusch@meta.com> <atpBVtPqGDWZ2AFo@kernel.org>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Thu, 22 Oct 2026 17:25:02 +0000
+	dkim=pass (2048-bit key, unprotected) header.d=artiphishell.com header.i=@artiphishell.com header.a=rsa-sha256 header.s=google header.b=QXZALAlD
+Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-6dde81a6820so62256eaf.2
+        for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 11:19:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=artiphishell.com; s=google; t=1792693183; x=1793297983; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
+        b=QXZALAlDVB6ve4A+E9NZX1qQ0mwHd+Xl0g7R4pSYEBYVpPG5QZO0wYXey8zcOZNO2p
+         zmVqpHe95pgJUtKcKM6tCRMBVxW2ih1k64d4e7BuVaiyaSz3rN5ZcH6Gb+Cl6G1DZGSt
+         s6kqdSZAyspmQvhlTmfSbfmIKxew1NiDG0pP5Nq57xy0bLOERz324GKxOg4+TR6UamkX
+         aKumg/m2t+iv6jrTujewEQpZettloYW3K8DOWIwRWLsDj0n1okNmwlTGlFXFidq5kitj
+         6bE0Az8BwtlUF5BBAoYXWENnIYfH8WVeKIsXXBcwtklwN4HFCY0CJdfZRghvF40/koz3
+         y37Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792693183; x=1793297983;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
+        b=kC0SdaR0sXRcRG9u6l7AhhPo0Pbvvtdghm+vRp9TrGpiiKAV0qIVyGnLdFBtH1nC2/
+         zWL25h40HnK+e9HjLsrjydzyLW9bWoMsu9AwiI5ajykGr63Aat7761fkSiKo7g0jk2Se
+         FHLX0+jeSUI9oJyNv5Yuw+ihv6OH6TrBF7Sk2EwcyJNQ18Q5xThZafcmjlpTW2uhDHrG
+         4LMDCM587DOsCmvIn8jRFZTVzUwlz4GGTLzaVJH2NBBY/r34UBT6lucqV3zEZDKXQkFR
+         nNIN+U5YccvF3zBoM3y5J9BRPSzFrkkApfvvVjfckAMBmOgKgIU+T7P+EkYc+Q4Kjf7o
+         rJ0w==
+X-Gm-Message-State: AFq9FYISWkYmPt61BX6kAKf1I54ikWQ2Vk2pJe9cgiGWgJQ6Jh8UML6X
+	EFLI97v4SZ2Kyf+zSvzAlMGFCv9joAAVz3HQ0zBtqzUfu3eqgajVSZhZvFwI8l62Od5w
+X-Gm-Gg: AYBFou3TLmtj/RkIuemHKPXzCvloPyl38LBy69lziu8nfqPzzUjmXhO2uphUbIK8vRi
+	OqxL6ah+rdbwC6zdGDzDyv7yZm1QkLUU7GR3puW04syWOy6NwAR7ccTgMFrdZT5+rptiWYJ3Mue
+	PWzj4aINbzZMwHofkCY4aMYE6S3Pw0NSwpEMpc7W/u3BnZCWWQfLV/x6Fx2XurdV4R+pPGaAktm
+	nB+THhAFlE0K+3SaZdO/AwffzzLFOvh4yPRbHUiMuGHOk+qXn3AEqh+0QslyVLFgiuXa4SeI/C9
+	kjGff7GeZKmNc59MrnPUPi1WuXdXDeKIcWwvRGGy+x2kzU8WfxwGjvXP6H1TMpVsSRnC98PHcbH
+	zqooOUVQQjoBB6QjrXUaT2QrGEa7f0LrXeScco+GVzZBn6VU6Lm/yWQXDXxmNTNfWgTtFIsjSub
+	1gXx5/Yj/cbBzc7USfV0uO+JL7wxMbVA9lEYMvOS/tJRsS22TXX5C3OCM/N88fB5V9bCfefE77u
+	yycAAZqi6ofEhkJRP2rKRkqDVAZfHvnPn1jXmtXNBQcARkHAeZu
+X-Received: by 2002:a05:6820:4589:b0:6dd:25a3:94cd with SMTP id 006d021491bc7-70b88a87127mr172354eaf.52.1792693182739;
+        Thu, 22 Oct 2026 11:19:42 -0700 (PDT)
+Received: from nixos ([2601:280:4a87:2c8d:3b7b:2fa6:c84c:64a7])
+        by smtp.gmail.com with ESMTPSA id 006d021491bc7-70b895f270bsm12151eaf.2.2026.10.22.11.19.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 22 Oct 2026 11:19:41 -0700 (PDT)
+From: Jay Vadayath <jay@artiphishell.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Jay Vadayath <jay@artiphishell.com>
+Subject: [PATCH] dm-raid: bound array_position before indexing failed_devices
+Date: Thu, 22 Oct 2026 11:19:34 -0700
+Message-ID: <20261022181934.35685-1-jay@artiphishell.com>
+X-Mailer: git-send-email 2.51.2
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -61,161 +94,76 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 1 potential issue(=
-s) to consider:
-- [Critical] block: blk_set_stacking_limits() corrupts data in dm-ebs and d=
-m-writecache
---
+super_init_validation() reads role = le32_to_cpu(sb2->array_position)
+out of an on-disk dm_raid_superblock and then uses it as a bit index into
+the failed_devices bitmap via test_bit(role, (void *)failed_devices).
+failed_devices is a uint64_t[DISKS_ARRAY_ELEMS] (DISKS_ARRAY_ELEMS == 4,
+i.e. 256 bits) living on the stack. The only guard is role < 0, so any
+on-disk array_position >= 256 makes test_bit() read past the end of the
+stack array (array_position == 256 reads failed_devices[4], 8 bytes past
+the object). For a raid1 set the role != raid_disk reorder branch falls
+through to the same test_bit().
 
-commit da5c2e4cde4a12a4f8b254dc27480cf9078b36d2
-Author: Mike Snitzer <snitzer@kernel.org>
+A crafted dm-raid superblock therefore causes a stack out-of-bounds read
+during table load. Reachable by anyone able to issue a dmsetup create
+with attacker-controlled metadata (CAP_SYS_ADMIN in the target
+namespace); the crash fires in the constructor / analyse_superblocks
+path, before any md_run or array sizing.
 
-block: let a stacking device inherit its members' DMA alignment
+  BUG: KASAN: stack-out-of-bounds in super_validate+0x1cd0/0x3390
+  Read of size 8 at addr ffff888007b17828 by task poc/152
+  Call Trace:
+   dump_stack_lvl+0x64/0x80
+   print_report+0xd0/0x630
+   kasan_report+0xe5/0x120
+   kasan_check_range+0x105/0x1b0
+   super_validate+0x1cd0/0x3390        (super_init_validation, inlined)
+   raid_ctr+0x2c4b/0xa0f0
+   dm_table_add_target+0x66f/0xf80
+   table_load+0x2ee/0x780
+   ctl_ioctl+0x362/0x9f0
+   dm_ctl_ioctl+0x9/0x10
+   __x64_sys_ioctl+0x134/0x1c0
+   do_syscall_64+0xe2/0x4b0
+   entry_SYSCALL_64_after_hwframe+0x77/0x7f
 
-This commit removes the default sector-size dma_alignment initialization in
-blk_set_stacking_limits() so that stacking devices inherit the strictest
-dma_alignment of their underlying member devices. When no member devices are
-stacked, blk_validate_limits() still applies the default sector alignment.
+role is a device position that must refer to an actual member of the
+array, so reject anything outside [0, rs->raid_disks) instead of only the
+negative case. rs->raid_disks is always <= the 256-bit capacity of
+failed_devices, so this both closes the out-of-bounds access and matches
+the intended semantics.
 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index e469baa1f08b7..36fcbecdf793b 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -41,7 +41,14 @@ void blk_set_stacking_limits(struct queue_limits *lim)
->  	lim->physical_block_size =3D SECTOR_SIZE;
->  	lim->io_min =3D SECTOR_SIZE;
->  	lim->discard_granularity =3D SECTOR_SIZE;
-> -	lim->dma_alignment =3D SECTOR_SIZE - 1;
-> +	/*
-> +	 * No dma_alignment of its own: blk_stack_limits() keeps the strictest
-> +	 * of the devices stacked under it, and blk_validate_limits() gives the
-> +	 * sector-size default to a device left with none.  A driver that looks
-> +	 * at the data and needs it laid out by logical block says so in its
-> +	 * own limits, as dm-crypt, dm-integrity, dm-verity and dm-log-writes
-> +	 * do.
-> +	 */
+This bug was discovered by Artiphishell's vTriage pipeline, which
+generated a crafted raid1 superblock (magic "DmRd", compat_features=1,
+num_devices=2, array_position=256, level=1) and a dmsetup-create
+reproducer that reliably triggers the KASAN report on an unpatched kernel
+(the precursor DMINFO "raid device #256 now at position #0" is visible in
+the serial log just before the splat). The fix below was drafted with the
+Claude coding assistant; a userspace reproducer is available on request.
 
-[Severity: Critical]
-Could leaving lim->dma_alignment at 0 in blk_set_stacking_limits() cause da=
-ta
-corruption regressions in targets like dm-ebs and dm-writecache that inspect
-bio data but do not set limits->dma_alignment in their io_hints callbacks?
+Assisted-by: Claude:claude-opus-4-8
+Signed-off-by: Jay Vadayath <jay@artiphishell.com>
+---
+ drivers/md/dm-raid.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-When stacked over a device with sub-sector dma_alignment (such as an nvme
-device with dma_alignment =3D 3), direct I/O using a 4-byte-aligned user bu=
-ffer
-that crosses a page boundary or uses sub-sector iovecs can produce bio_vec
-segments whose lengths are not multiples of 512 bytes (for example,
-bv_len =3D 4092 followed by bv_len =3D 4).
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index 8f5a5e1342a9..d497d7c68596 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -2420,7 +2420,8 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
+ 		 */
+ 		if (!test_bit(FirstUse, &r->flags) && (r->raid_disk >= 0)) {
+ 			role = le32_to_cpu(sb2->array_position);
+-			if (role < 0)
++			/* Bound @role before it indexes the failed_devices stack bitmap. */
++			if (role < 0 || role >= rs->raid_disks)
+ 				continue;
+ 
+ 			if (role != r->raid_disk) {
+-- 
+2.51.2
 
-In drivers/md/dm-ebs-target.c, ebs_io_hints() does not set
-limits->dma_alignment:
-
-drivers/md/dm-ebs-target.c:ebs_io_hints() {
-	struct ebs_c *ec =3D ti->private;
-
-	limits->logical_block_size =3D to_bytes(ec->e_bs);
-	limits->physical_block_size =3D to_bytes(ec->u_bs);
-	limits->alignment_offset =3D limits->physical_block_size;
-	limits->io_min =3D limits->logical_block_size;
-}
-
-When __ebs_rw_bio() iterates over the bio with bio_for_each_bvec() and calls
-__ebs_rw_bvec(), __ebs_rw_bvec() computes the buffer offset and block number
-from iter->bi_sector:
-
-drivers/md/dm-ebs-target.c:__ebs_rw_bvec() {
-	unsigned int bv_len =3D bv->bv_len;
-	unsigned int buf_off =3D to_bytes(__block_mod(iter->bi_sector, ec->u_bs));
-	sector_t block =3D __sector_to_block(ec, iter->bi_sector);
-
-Because bio_for_each_bvec() advances iter via bio_advance_iter_single() in
-include/linux/bio.h:
-
-include/linux/bio.h:bio_advance_iter_single() {
-	iter->bi_sector +=3D bytes >> 9;
-
-a segment with bv_len =3D 4092 advances iter.bi_sector by 4092 >> 9 =3D 7 s=
-ectors
-(3584 bytes) instead of 4092 bytes, wouldn't the subsequent bio_vec read or
-write at the wrong offset in the dm-bufio block?
-
-Similarly, in drivers/md/dm-writecache.c, writecache_io_hints() only calls
-dm_stack_bs_limits() and leaves limits->dma_alignment untouched:
-
-drivers/md/dm-writecache.c:writecache_io_hints() {
-	struct dm_writecache *wc =3D ti->private;
-
-	dm_stack_bs_limits(limits, wc->block_size);
-}
-
-In persistent memory mode, writecache_map_read() and writecache_map_write()
-process multi-block bios in a loop using bio->bi_iter.bi_sector to look up
-and record cache entry sectors via write_original_sector_seq_count(), calli=
-ng
-bio_copy_block() for each block:
-
-drivers/md/dm-writecache.c:bio_copy_block() {
-	do {
-		struct bio_vec bv =3D bio_iter_iovec(bio, bio->bi_iter);
-		...
-		size =3D bv.bv_len;
-		if (unlikely(size > remaining_size))
-			size =3D remaining_size;
-		...
-		data =3D (char *)data + size;
-		remaining_size -=3D size;
-		bio_advance(bio, size);
-	} while (unlikely(remaining_size));
-}
-
-When a cache block spans multiple bio_vec segments with sub-sector lengths
-(such as 4092 and 4 for a 4096-byte block), bio_advance() ->
-bio_advance_iter() updates bio->bi_iter.bi_sector +=3D size >> 9 on each st=
-ep,
-advancing bi_sector by 7 sectors instead of 8 and corrupting
-bio->bi_iter.bi_sector for subsequent blocks in the bio.
-
-In addition, when bio_copy_block() calls memcpy_flushcache_optimized() with=
- a
-non-64-byte-multiple size >=3D 768 (such as 4092), doesn't the loop return
-early without copying the remaining size % 64 bytes?
-
-drivers/md/dm-writecache.c:memcpy_flushcache_optimized() {
-	if (cpu_feature_enabled(X86_FEATURE_CLFLUSHOPT) &&
-	    likely(boot_cpu_data.x86_clflush_size =3D=3D 64) &&
-	    likely(size >=3D 768)) {
-		do {
-			memcpy((void *)dest, (void *)source, 64);
-			clflushopt((void *)dest);
-			dest +=3D 64;
-			source +=3D 64;
-			size -=3D 64;
-		} while (size >=3D 64);
-		return;
-	}
-}
-
-Finally, in solid-state cache mode, writecache_iterate_devices() only stacks
-limits from wc->dev and not wc->ssd_dev:
-
-drivers/md/dm-writecache.c:writecache_iterate_devices() {
-	struct dm_writecache *wc =3D ti->private;
-
-	return fn(ti, wc->dev, 0, ti->len, data);
-}
-
-If wc->dev has dma_alignment =3D 3 while wc->ssd_dev has dma_alignment =3D =
-511,
-wouldn't dm-writecache advertise dma_alignment =3D 3 and remap 4-byte-align=
-ed
-bios to wc->ssd_dev->bdev, causing bio_split_io_at() to reject them?
-
->  	lim->seg_boundary_mask =3D BLK_SEG_BOUNDARY_MASK;
-> =20
->  	/* Inherit limits from component devices */
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/atpBVtPqGDWZ2AFo@ke=
-rnel.org?part=3D1
