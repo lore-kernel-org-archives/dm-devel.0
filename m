@@ -1,86 +1,56 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792675479;
-	b=y4Z/YR59in4H4TARbQrf3Q0FO+SU+Cy9/S2L8UOPWx4DZx94OQyTyduDtygCSWgHU5sF
-	 4GwnZsa9zrwmTXA8r9k+prcG6VkQsHo/tieXMeUUA6wk3lBrvD3ekUvqgGQ6paz3IPFhT
-	 Arj4EgSMKehqwijHCx98/Cdx52ukJKE2h1OY3cIXgmeX6OX9firp8Qo6ASLvz0wWeuYe1
-	 YeMGpFhwx2B6Sid2AOP7lgrURCmebLjiEkoQvXAFdePTMmDXHfO8C2ZdOxDoDbw5VLCfP
-	 gNVjPtLXhvxvzl0Eih7m2rxeaT4M/goGll16Q6OBBWKYDg6A8+wPmkJ63q4jnRF1v0g==
+	t=1792686956;
+	b=ZF5tqki7eEB8ClzDpKsBZ9jG67FOExe4zmEdNKIHekxIcbWIgNHekeX91BM3yAkW58OG
+	 0pY7X2oHODYi/yK5dq2aURDyIZma1gCDNGCcIzTlyGAzOUFeGyLGZyNJZH1q50UncTntZ
+	 VgoQUtekv+9ADyol7Y+KgLp4b3soor+BGzkLxpcxbrEtg+CYka9hfmY1CTgF0D7rqoCL5
+	 SQr6Cgy87vxkH2ZahyZYVkJKGSStN3R/qmzMrMUnxck1Ghdf0TiQZpRjtwLdO0PDT/9Qu
+	 HRnAOX8zX4H80bqd03mRXGQqQGYQqtEhCzd3jCa78xHMJ312pXgnZzT56mWHDgN0zuA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792675479;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=h8PVwHmVxgj3EDuc7a9+2bgJCaWhNY770RjA2x6wCHc=;
-	b=qzjyW4ucaepmQ4Zvnzlyzz7CLYo4fghJm/q5gziMEvDzGnDEFhgdBXa97Sac2ZX41Hwk
-	 ouojPe0XUVIpzIGZuHk8fkLIhu/DSqW5p02abJYqR6QZCKmW/rlfzxnEwLfldo8GC/jHX
-	 kTB+XH6QR9HvzY9E+VcpjKbYkyJiCZc3yooUZC1P4h0A8GvyUr5S8hYImjRNfop5Tyvwm
-	 JbXAhNrTbmuCYcK1ruCHxCYjpnqExF/NPYUIalN3SVlz8ermKyHWkN3Dr5BceqeAVESRJ
-	 Lkj07CopXHFOR67QrwczTopaB8JuNHSlEK9INdAeTzah0sEB1lJZdLVB93JWzm56JFw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792686956;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=h5ueT8RGilJosUK1SW6gHhuohUCkndBTcqtWqzRxyLk=;
+	b=XaPp0ymzdBWgxyYA04Cc7xsaX6lnMd1HzUu/WYwKtJA/CKkQ/wWPkudw5G66MQk3vzbA
+	 h21jlcRl/PhaXsAwFJ1u03IadV+9xwxwHnLNTjI3N8kgkFJzo95PIp0mAlQY+ZFUoolfI
+	 fqDPD8vmu9b90ql1euKO1N8EAxDMSjFmmX7VPlHK6o6CGo+7EJcOWcZk+P5rTnLuHF41K
+	 sjRksuDA4vZFTXGNMl2UOOutJtudwAE6oAgPzcF/Vb8a1tFuacK4Do2EtKwZ2+0W1WNP2
+	 FLk3L9FJuoF/xFeYqoWR4/2PM5SPmzbGt8eLFWMXbFjssZg59+jrAc8r4y8Su4wwndg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Zhr9fyDu;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jpReE7Va;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A66C606A329
-	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 13:24:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2A66C606A329
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 601BA606A319
+	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 16:35:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Zhr9fyDu
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1792675478;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=h8PVwHmVxgj3EDuc7a9+2bgJCaWhNY770RjA2x6wCHc=;
-	b=Zhr9fyDusYgnfRfki14l+/Y808RUytw+ARUTCEA5mG5rw1TuPBzlMYZDHDv+ZmTLiZ0C4p
-	0gFOOBNGuK8ABp2Q8SBogVZatgNKs5bidLFlhyGcd69SeV/2q3gx5INY+2n5Ow2Fi1fDPg
-	CJUh2PrEuktVSgvLsImvFp/leH4wb94=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-83-8zvWsLXrPvm5QkJJIiVDCg-1; Thu,
- 22 Oct 2026 09:24:31 -0400
-X-MC-Unique: 8zvWsLXrPvm5QkJJIiVDCg-1
-X-Mimecast-MFC-AGG-ID: 8zvWsLXrPvm5QkJJIiVDCg_1792675468
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A7AF918004A9;
-	Thu, 22 Oct 2026 13:24:27 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0F90D195608C;
-	Thu, 22 Oct 2026 13:24:20 +0000 (UTC)
-Date: Thu, 22 Oct 2026 15:24:18 +0200 (CEST)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Frank.Li@oss.nxp.com
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, Song Liu <song@kernel.org>, 
-    Yu Kuai <yukuai@fygo.io>, Li Nan <magiclinan@didiglobal.com>, 
-    Xiao Ni <xiao@kernel.org>, Dan Williams <djbw@kernel.org>, 
-    Herbert Xu <herbert@gondor.apana.org.au>, 
-    "David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>, 
-    Shuah Khan <skhan@linuxfoundation.org>, 
-    Randy Dunlap <rdunlap@infradead.org>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 
-    linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org, 
-    Anatolij Gustschin <agust@denx.de>, Saeed Bishara <saeed@marvell.com>, 
-    Rameshwar Prasad Sahu <rsahu@apm.com>, 
-    Thomas Petazzoni <thomas.petazzoni@free-electrons.com>, 
-    Anup Patel <anup.patel@broadcom.com>, Frank Li <Frank.Li@nxp.com>
-Subject: Re: [PATCH RFC 1/4] md/dm-integrity: replace async_tx with synchronous
- xor for journal
-In-Reply-To: <20261015-asycn_tx_remove-v1-1-056a7085e0a1@nxp.com>
-Message-ID: <fb9c7c5c-e377-7926-c8f1-a7f9e93c2d46@redhat.com>
-References: <20261015-asycn_tx_remove-v1-0-056a7085e0a1@nxp.com> <20261015-asycn_tx_remove-v1-1-056a7085e0a1@nxp.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jpReE7Va
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C5B731F01825;
+	Thu, 22 Oct 2026 16:35:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792686956;
+	bh=h5ueT8RGilJosUK1SW6gHhuohUCkndBTcqtWqzRxyLk=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=jpReE7VaIuMFgQmjkczXiNNzzkgnOAiOozpr0DeQSmsb/aZoA3ssUad4wY12NnuHW
+	 8Y2SgKxCeMYcqocO1t0wFPpfoLnSKopV2SqbHzsvbMxGpI+baD1JxgdlwbgoCKS+bv
+	 oM1V7eg3jnA1tCLLxdjSq0my8UNcUtMlfekuwWRBjogw0lfrrrxa5Gk60kXxS3cbUM
+	 8gsVLpPECwxGcvzBL+HgCGGAYtjXLU0XNLYN1FkD+Ev1TnnaMVQb4EIYn0azrurOG8
+	 DYiWx6Umjr/IZrvmAWLMLLhU8q2cal7eW0wdlaglmiMoBK43toa3WP856z6Bh+P3Z/
+	 t+57+3hCvIDVg==
+Message-ID: <sashiko-outbox-181810@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: Patch "dm array: validate array block headers on read" has been
+ added to the 6.6-stable tree
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Sasha Levin" <sashal@kernel.org>, hexlabsecurity@proton.me
+Cc: "Alasdair Kergon" <agk@redhat.com>, "Mike Snitzer" <snitzer@kernel.org>, dm-devel@lists.linux.dev
+In-Reply-To: <20261016180222.4058164-1-sashal@kernel.org>
+References: <20261016180222.4058164-1-sashal@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Thu, 22 Oct 2026 16:35:55 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -89,109 +59,120 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: 8KHOJaRFSE12k0TWKe-EMoK_JpVc7JlafHdagDup3qc_1792675468
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
 
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+- [High] dm array: array_block_check() fails to validate value_size against=
+ info
+--
 
+commit 3c810b656c43751de89392b584e21daeb9a84fcd
+Author: Sasha Levin <sashal@kernel.org>
 
-On Thu, 15 Oct 2026, Frank.Li@oss.nxp.com wrote:
+Patch "dm array: validate array block headers on read" has been added to th=
+e 6.6-stable tree
 
-> From: Frank Li <Frank.Li@nxp.com>
-> 
-> Remove the dependency on the async_tx framework from dm-integrity's
-> xor_journal() function.  The async_xor() + async_tx_issue_pending_all()
-> pattern is replaced with direct kmap_local_page() + memcpy() +
-> crypto_xor() + kunmap_local() per page, which is simpler and removes
-> the need for #include <linux/async_tx.h>.
-> 
-> async_tx adds significant complexity and maintenance overhead while
-> providing little practical benefit on modern systems, where RAID parity
-> computation is typically performed more efficiently by CPU-based XOR/PQ
-> implementations than by DMA engine offload.
-> 
-> Signed-off-by: Frank Li <Frank.Li@nxp.com>
+This commit backports upstream commit 296578772308 to validate on-disk
+array_block headers in array_block_check() by checking that value_size is
+non-zero, max_entries matches calc_max_entries(), and nr_entries does not
+exceed max_entries.
 
-Reviewed-by: Mikulas Patocka <mpatocka@redhat.com>
-
-> ---
->  drivers/md/dm-integrity.c | 26 ++++++++++++++------------
->  1 file changed, 14 insertions(+), 12 deletions(-)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 802b377613b06..6bd0623b6402a 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -23,7 +23,6 @@
->  #include <crypto/hash.h>
->  #include <crypto/skcipher.h>
->  #include <crypto/utils.h>
-> -#include <linux/async_tx.h>
->  #include <linux/dm-bufio.h>
->  
->  #include "dm-audit.h"
-> @@ -896,7 +895,6 @@ static void complete_journal_op(void *context)
->  static void xor_journal(struct dm_integrity_c *ic, bool encrypt, unsigned int section,
->  			unsigned int n_sections, struct journal_completion *comp)
->  {
-> -	struct async_submit_ctl submit;
->  	size_t n_bytes = (size_t)(n_sections * ic->journal_section_sectors) << SECTOR_SHIFT;
->  	unsigned int pl_index, pl_offset, section_index;
->  	struct page_list *source_pl, *target_pl;
-> @@ -913,14 +911,11 @@ static void xor_journal(struct dm_integrity_c *ic, bool encrypt, unsigned int se
->  
->  	atomic_add(roundup(pl_offset + n_bytes, PAGE_SIZE) >> PAGE_SHIFT, &comp->in_flight);
->  
-> -	init_async_submit(&submit, ASYNC_TX_XOR_ZERO_DST, NULL, complete_journal_op, comp, NULL);
-> -
->  	section_index = pl_index;
->  
->  	do {
->  		size_t this_step;
-> -		struct page *src_pages[2];
-> -		struct page *dst_page;
-> +		void *src0, *src1, *dst;
->  
->  		while (unlikely(pl_index == section_index)) {
->  			unsigned int dummy;
-> @@ -935,11 +930,20 @@ static void xor_journal(struct dm_integrity_c *ic, bool encrypt, unsigned int se
->  		}
->  
->  		this_step = min(n_bytes, (size_t)PAGE_SIZE - pl_offset);
-> -		dst_page = target_pl[pl_index].page;
-> -		src_pages[0] = source_pl[pl_index].page;
-> -		src_pages[1] = ic->journal_xor[pl_index].page;
->  
-> -		async_xor(dst_page, src_pages, pl_offset, 2, this_step, &submit);
-> +		src0 = kmap_local_page(source_pl[pl_index].page);
-> +		src1 = kmap_local_page(ic->journal_xor[pl_index].page);
-> +		dst  = kmap_local_page(target_pl[pl_index].page);
+> diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persisten=
+t-data/dm-array.c
+> index 798c9c53a3435..fb65e82dab890 100644
+> --- a/drivers/md/persistent-data/dm-array.c
+> +++ b/drivers/md/persistent-data/dm-array.c
+[ ... ]
+> @@ -74,6 +83,26 @@ static int array_block_check(struct dm_block_validator=
+ *v,
+>  		return -EILSEQ;
+>  	}
+> =20
+> +	nr_entries =3D le32_to_cpu(bh_le->nr_entries);
+> +	max_entries =3D le32_to_cpu(bh_le->max_entries);
+> +	value_size =3D le32_to_cpu(bh_le->value_size);
 > +
-> +		memcpy(dst + pl_offset, src0 + pl_offset, this_step);
-> +		crypto_xor(dst + pl_offset, src1 + pl_offset, this_step);
+> +	if (!value_size) {
+> +		DMERR_LIMIT("%s failed: value_size is zero", __func__);
+> +		return -EILSEQ;
+> +	}
 > +
-> +		kunmap_local(dst);
-> +		kunmap_local(src1);
-> +		kunmap_local(src0);
+> +	if (max_entries !=3D calc_max_entries(value_size, size_of_block)) {
+> +		DMERR_LIMIT("%s failed: max_entries %u invalid for value_size %u",
+> +			    __func__, max_entries, value_size);
+> +		return -EILSEQ;
+> +	}
 > +
-> +		/* mirror async_tx per-page completion accounting */
-> +		complete_journal_op(comp);
->  
->  		pl_index++;
->  		pl_offset = 0;
-> @@ -947,8 +951,6 @@ static void xor_journal(struct dm_integrity_c *ic, bool encrypt, unsigned int se
->  	} while (n_bytes);
->  
->  	BUG_ON(n_sections);
-> -
-> -	async_tx_issue_pending_all();
+> +	if (nr_entries > max_entries) {
+> +		DMERR_LIMIT("%s failed: too many entries", __func__);
+> +		return -EILSEQ;
+> +	}
+> +
+>  	return 0;
 >  }
->  
->  static void complete_journal_encrypt(void *data, int err)
-> 
-> -- 
-> 2.43.0
-> 
 
+[Severity: High]
+Does validating max_entries and nr_entries only against the on-disk
+bh_le->value_size in array_block_check() still allow out-of-bounds reads
+in element_at() and trigger the BUG_ON() checks in fill_ablock() and
+trim_ablock() when bh_le->value_size does not match info->value_type.size?
+
+In drivers/md/persistent-data/dm-array.c, neither get_ablock() nor
+__shadow_ablock() checks that the on-disk ab->value_size matches
+info->value_type.size after dm_tm_read_lock() or dm_tm_shadow_block()
+validates the block:
+
+drivers/md/persistent-data/dm-array.c:get_ablock() {
+	r =3D dm_tm_read_lock(info->btree_info.tm, b, &array_validator, block);
+	if (r)
+		return r;
+
+	*ab =3D dm_block_data(*block);
+	return 0;
+}
+
+However, element_at() computes entry offsets using info->value_type.size
+rather than ab->value_size:
+
+drivers/md/persistent-data/dm-array.c:element_at() {
+	unsigned char *entry =3D (unsigned char *) (ab + 1);
+
+	entry +=3D index * info->value_type.size;
+
+	return entry;
+}
+
+If a corrupted or crafted on-disk array_block header has a smaller
+value_size than info->value_type.size (for example, value_size =3D 1,
+max_entries =3D 4072, and nr_entries =3D 4072 in a 4096-byte block when
+info->value_type.size is 8 in dm-cache or dm-bitset), array_block_check()
+succeeds. Callers that iterate up to le32_to_cpu(ab->nr_entries), such as
+dm_array_cursor_next() and dm_array_cursor_get_value() (via
+dm_cache_load_mappings()), walk_ablock(), on_entries() (via
+inc_ablock_entries() and dec_ablock_entries()), and trim_ablock(), will
+still advance index up to 4071 while element_at() strides by
+info->value_type.size, reading past the end of the dm-bufio block buffer.
+
+Conversely, if on-disk bh_le->value_size is larger than
+info->value_type.size, array_block_check() accepts a smaller
+ab->max_entries than the capacity computed from info->value_type.size in
+dm_array_resize() -> array_resize(). When array_resize() passes new_nr up
+to resize->max_entries into fill_ablock() or trim_ablock(), it can still
+trigger BUG_ON(new_nr > le32_to_cpu(ab->max_entries)):
+
+drivers/md/persistent-data/dm-array.c:fill_ablock() {
+	uint32_t nr_entries, delta, i;
+	struct dm_btree_value_type *vt =3D &info->value_type;
+
+	BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
+	BUG_ON(new_nr < le32_to_cpu(ab->nr_entries));
+	...
+}
+
+Should get_ablock() and __shadow_ablock() also verify that
+le32_to_cpu((*ab)->value_size) =3D=3D info->value_type.size before using or
+incrementing the block entries?
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261016180222.4058=
+164-1-sashal@kernel.org?part=3D1
