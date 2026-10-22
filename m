@@ -1,82 +1,54 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792687027;
-	b=xnwGItnFiWhrrdlPwucLdv0XORZ9Kl/QmNhuX6uqnoqJfY9JF6LKD+RsuQqr5dDShrSE
-	 K5Ln5xDvL4Xp06N9XOGm4YC1+IO5y45EeToVeCVnMVcopf1iovdFWTrzrKrK0gW7oRjaf
-	 Njp+6/XpCGxp/zve58ezXpu1pBV1cidrmzIcmcIjRTofe+D3g9uQOkd9Y0OJrgU05Kxh2
-	 dd7fkFwbSHr1u9Bk/08nggwjBh+SYeAZBoGgySFESo8hAzazrdEydgGP7FbwVzMPUB0WB
-	 Kjhjj43Ek0m/w77aWLnB7YLA5l+M3RGHaLIjwAou8J5je0RVzqtApwC/5Az+/42B+0g==
+	t=1792688472;
+	b=XD/dXsBYgK9Yv9eMd8SqKlSrCStXimmDZz/nyT+sptAFIWjRKBZSSr2z3bSTQOMUU0uE
+	 rwunS7PwA02fGA81IuSx1pSUQENIrzgv3h93FvjMKdlIhlspu7wKgJzYMIeak5I2yo2Cf
+	 DuzHu4moFmyRBZjnBJp9Mst7LZI30C1V7XmAgplcqTFQuY9E3h/jVLKld3uMeFzLjo8lD
+	 6aqaJUOznYRlss/ziQKvBnVQVwAyhX7CFZ8c1mY1aKH0MDTZzBhpITf2X7ohOTGc+bQHR
+	 SUk9EQHQ48CzcZ6BwvnXF5ySeXrucvjfL4y9Xhhl/Qh1SCyLOABuk3LFwR38YaVxD0Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792687027;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Type:Content-Disposition;
-	bh=zPOM5juDmCxmFl3ZadACco9Sx9537YC2QDRS8cVTGec=;
-	b=xlCUS9fG+kZOo2+dCB5h7wa5VwfJoymyo70qt36fcKnmIuF8/KLmnaKhp3YJjYWXRqy0
-	 T/FAdKhp/QNmZt82nLl0OhI3fSUiGh2X4gC2bN70aRM23KvgYg2EncRvyQf5lr8KBhdPk
-	 h87pS8J3DQOPyxvsD0D3TM67p/juzN34fHzhVD+MhHuBJRHyaq6iY7Tk/BxCI6tuNYO0u
-	 x+RnIrfxTQYts9a6XHgQfpK92vrgCQHC50JVnTwu+FpTPWSKN5tn95TsZq7WUeSdJxVfL
-	 gF3f5U/6SW7E7evodqhtyTdKCh76dH1S51EfffhoOnTu0djLKvMKrlFeKsQXukxs1iA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792688472;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=NBJ0aniVhrR8tDLjJgaeln00bRmLYZmDqTLDwkgAqcw=;
+	b=sCt+6eFbBnXK6duh3doNRXgNDo0SUQVPOhRaa5cXh9AV9nS6Tn8q+q314nZjc8YjhSDB
+	 AjedMnG2krQ6bErqOyAw2OJUUn6Q9sRj/2gLRRuMQn7kmrNwr1mRJbXqIU6PMgj20t/qM
+	 ZFuj/myh1H1iEgT2AerJKOf/cBdz3t8SExt1xl9HsNv5mvAp9UJ/n+ffborMFxSQZ8ycK
+	 Rdd73E989JkqBGeb5VwXHyW0okh34Yrl7mzS5VRwWHO17h/qjyfY9w7z4T57msIkuP/5p
+	 khzdip0LsLn3I0o04Ohknd8TEVDnexo5lKUZ9wp0qlS69SNXrulPzhYE362Ay+ivoRA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=gaHagDrT;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RxDYY2yA;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30D57606A319
-	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 16:37:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 30D57606A319
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63583606A31A;
+	Thu, 22 Oct 2026 17:01:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=gaHagDrT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1792687026;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zPOM5juDmCxmFl3ZadACco9Sx9537YC2QDRS8cVTGec=;
-	b=gaHagDrTNcvLkp2aoSwH0Wpa9LImkwd7uWTGjh/6MgW6gfwhhS73Gtbfm01ZF7OmbvTlrY
-	0/ODvy3CWLfSU4bLv1Mb1JMQ5eKn25My56/hDioYWKAKcinsUWaL62oVMxtw3tIZyefYx6
-	PnEQI6tBJlz0m0jZgyV0Pb2laaUQsPo=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-518-AWCH1pMUOZa7pIEBbb-CKA-1; Thu,
- 22 Oct 2026 12:37:02 -0400
-X-MC-Unique: AWCH1pMUOZa7pIEBbb-CKA-1
-X-Mimecast-MFC-AGG-ID: AWCH1pMUOZa7pIEBbb-CKA_1792687021
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 64BC71955EB5;
-	Thu, 22 Oct 2026 16:37:01 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 1476A1800495;
-	Thu, 22 Oct 2026 16:37:00 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69MGaxAs2365762
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 22 Oct 2026 12:37:00 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69MGaxkN2365669;
-	Thu, 22 Oct 2026 12:36:59 -0400
-Date: Thu, 22 Oct 2026 12:36:59 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: dm-devel@lists.linux.dev, Alasdair Kergon <agk@redhat.com>,
-        Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Enabling Sashiko for dm-devel?
-Message-ID: <ato7qykzvctpGmdy@redhat.com>
-References: <20261021173943.GF1879@quark>
- <atkdtNT83DBoCTVS@redhat.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RxDYY2yA
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CBD0D1F01825;
+	Thu, 22 Oct 2026 17:01:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792688472;
+	bh=NBJ0aniVhrR8tDLjJgaeln00bRmLYZmDqTLDwkgAqcw=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=RxDYY2yAUdF5Bt5QLyX1/+fgxZAxLU5FaB7WM9TFao6wib8ozVuARDtudys37tfSI
+	 0nqPD5AfnMYwBxLstJzfLYy8Qw0Z4wQ3vqZ5WtCHwrMwJweP1/OFoqTn+Egz1hS6gx
+	 9LBjigDiUibkTZCNTD1xzIt1YVoJVrtDC2+jysIj4d0YII3ZTUi5ERNP2nKUSQ9okS
+	 GY7MuEUBe5Zn4Ar8jI+CBfL208i2RJC4+l8213ygVTis8kT42onsJjJJDh4vBmn3tB
+	 f9IxaSl8POmhfSl6n5mHBbcEwi+ZO/OW8PDEhJiVfvRDmYb5Qlw3psNE79KplfZejE
+	 gF/oeGIzKpbWQ==
+Date: Thu, 22 Oct 2026 13:01:10 -0400
+From: Mike Snitzer <snitzer@kernel.org>
+To: Keith Busch <kbusch@meta.com>, axboe@kernel.dk
+Cc: dm-devel@lists.linux.dev, mpatocka@redhat.com, bmarzins@redhat.com,
+	Keith Busch <kbusch@kernel.org>, linux-block@vger.kernel.org
+Subject: [PATCH] block: let a stacking device inherit its members' DMA
+ alignment
+Message-ID: <atpBVtPqGDWZ2AFo@kernel.org>
+References: <20260709161519.1559723-1-kbusch@meta.com>
+ <20260709161519.1559723-2-kbusch@meta.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -86,44 +58,103 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <atkdtNT83DBoCTVS@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: x8fqo_Z6JPPDdfXmLtbAxBj1tg7JzI5cDY0GwGHvE3I_1792687021
-X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <20260709161519.1559723-2-kbusch@meta.com>
 
-On Wed, Oct 21, 2026 at 04:16:52PM -0400, Benjamin Marzinski wrote:
-> On Wed, Oct 21, 2026 at 10:39:43AM -0700, Eric Biggers wrote:
-> > Currently, Sashiko doesn't monitor dm-devel or send email replies to it
-> > (https://github.com/sashiko-dev/sashiko/blob/main/projects/linux/mailing_lists.toml).
-> > 
-> > Sometimes Sashiko reviews for device-mapper patches can be found on
-> > https://sashiko.dev anyway, due to the patches also being Cc'ed to
-> > linux-kernel which is monitored.  However, get_maintainer.pl is being
-> > updated to no longer suggest Cc'ing linux-kernel.
-> > 
-> > Would there be any objection to enabling monitoring and email replies
-> > for dm-devel, like this which various other lists already use?:
-> > 
-> >     ["dm-devel@lists.linux.dev"]
-> >     reply_to = ["author", "list", "recipients"]
-> > 
-> > If the dm maintainers prefer monitoring-only (no emails), that could be
-> > done instead.  But I think the email replies are really helpful.
+On Thu, Jul 09, 2026 at 09:15:17AM -0700, Keith Busch wrote:
+> From: Keith Busch <kbusch@kernel.org>
 > 
-> Sounds good, and I think emailing when issues are found is fine. I'll go
-> open a Pull Request to add this.
+> All device mappers that want to override the dma_alignment do so.
+> However, because the default stacking limit is set to 511, a device
+> mapper couldn't make it smaller even if it is capable of handling
+> finer grained alignment.
+> 
+> Set the default dm stacking dma_alignment limit to 0 so that it can be
+> stacked with any value a device mapper wants. If a mapper doesn't
+> override the value, the initial 0 value will get changed to the original
+> default 511 value when the limits are validated after the device
+> stacking is complete.
+> 
+> Signed-off-by: Keith Busch <kbusch@kernel.org>
+> ---
+>  drivers/md/dm-table.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+> index dc2eff6b739df..80326f8096cb7 100644
+> --- a/drivers/md/dm-table.c
+> +++ b/drivers/md/dm-table.c
+> @@ -591,6 +591,7 @@ static void dm_set_stacking_limits(struct queue_limits *limits)
+>  {
+>  	blk_set_stacking_limits(limits);
+>  	limits->features |= BLK_FEAT_IO_STAT | BLK_FEAT_NOWAIT | BLK_FEAT_POLL;
+> +	limits->dma_alignment = 0;
+>  }
+>  
+>  /*
+> -- 
+> 2.52.0
+> 
 
-This has been added:
-https://github.com/sashiko-dev/sashiko/pull/724
+This isn't a DM-specific concern (just happens to be that you're
+focused on dm-crypt in this patchset).  dm-crypt is still imposing a
+too strict dma_alignment, and so that'll need fixing too (along with
+other DM targets that aren't properly considering the underlying
+devices' queue_limits provided dma_alignment).
 
-> 
-> Thanks
-> -Ben
-> 
-> > 
-> > - Eric
-> 
+But this is a proper fix that I needed to allow MD RAID0 to allow
+O_DIRECT to NVMe devices beneath the MD device:
+
+From: Mike Snitzer <snitzer@kernel.org>
+Date: Fri, 9 Oct 2026 06:26:29 -0600
+Subject: [PATCH] block: let a stacking device inherit its members' DMA alignment
+
+blk_set_stacking_limits() initializes dma_alignment to SECTOR_SIZE - 1,
+and blk_stack_limits() then takes the maximum of that and each member's
+value.  As a result every MD array and device-mapper table requires
+512-byte aligned memory regardless of what its members need: a raid0
+of NVMe namespaces reports a dma_alignment of 511 while each member
+reports 3.
+
+Direct I/O from memory every member accepts is therefore rejected at
+the stacking device, and callers that check the advertised alignment
+(for instance through STATX_DIOALIGN) fall back to buffered I/O.
+
+Leave dma_alignment at zero in blk_set_stacking_limits() so that the
+stacked value is the strictest of the members'.  blk_validate_limits()
+still applies the SECTOR_SIZE - 1 default when nothing was stacked,
+such as for a table with no devices.  Targets that process the data
+themselves and need logical-block-aligned memory already set
+dma_alignment in their io_hints (dm-crypt, dm-integrity, dm-verity,
+dm-log-writes), and NVMe multipath sets its own.
+
+Assisted-by: LLM
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
+---
+ block/blk-settings.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/block/blk-settings.c b/block/blk-settings.c
+index 8274631290db..c4b0fba01c4b 100644
+--- a/block/blk-settings.c
++++ b/block/blk-settings.c
+@@ -41,7 +41,14 @@ void blk_set_stacking_limits(struct queue_limits *lim)
+ 	lim->physical_block_size = SECTOR_SIZE;
+ 	lim->io_min = SECTOR_SIZE;
+ 	lim->discard_granularity = SECTOR_SIZE;
+-	lim->dma_alignment = SECTOR_SIZE - 1;
++	/*
++	 * No dma_alignment of its own: blk_stack_limits() keeps the strictest
++	 * of the devices stacked under it, and blk_validate_limits() gives the
++	 * sector-size default to a device left with none.  A driver that looks
++	 * at the data and needs it laid out by logical block says so in its
++	 * own limits, as dm-crypt, dm-integrity, dm-verity and dm-log-writes
++	 * do.
++	 */
+ 	lim->seg_boundary_mask = BLK_SEG_BOUNDARY_MASK;
+ 
+ 	/* Inherit limits from component devices */
+-- 
+2.52.0
 
