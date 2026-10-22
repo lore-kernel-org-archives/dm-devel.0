@@ -1,91 +1,58 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.161.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792693184;
-	b=FPW19+hOZ2idahtuDx4OEHd+U3BHwaoEinitIzqXZooi7ijgHAGO8hoKQ4DSegdCNO4z
-	 VKgemSeIrE7SRnzz1HBUjd0KOwCaZDhT9yI+jvJCI+v1iIk9r5fOLBD27Ll3Z6MHOzTzg
-	 9EA3AFXuFq2X0oBmZbSKZL7qshyFwzEJl8eQWK0xDkcoKir/93POL2Os/p1ACMmpM3DO3
-	 A47nbVUV8uG8sXqmP5QlWuubAwhz9KCdIkX0Xy909IrLxNSlhhWn/BdT+ZAfzaYgKWNoV
-	 qPWC5xAgYeyXkigNSvdf+n2QTjFgHMqiqQXR2/kE4JSaQknlMa8AA121jTQu4nHPGiw==
+	t=1792693904;
+	b=qELKGiYz7xrBjjcPSU/xWrEs6aGeVaGyeNrIKsc+oqokjfhkRpuA/5OesGtcZl8cYa81
+	 eBHdiAzRVDfNrbPZYdP7Vz5d7OPcaaeOsMaNaJEEjK9F8jB70UnXVvbHQXaJqEkhY7YUW
+	 sUAgfay1iZGH77rWrCJ3SlfZRFOTW6ix9R0qLEfZZ5AgO7DxxoDIihIRlz2pVSLWHpIL5
+	 8Lm6woTBWVER6rZSGoGZ9J1LHptbtoilYz1nKSd8WNpt4kmHLjsS1a6Yl42fAHITDLavQ
+	 547YESlCimNxoPxO/9dCqmgLYDOdPF5sU7+KbYXFQCwqZJg7dEkHP/KB+2LjD0nXPyg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792693184;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
-	b=YqzBxwDMe8xVM5AbGhRKMDBwjeSbwawp66pqgSAlRcs6dOmLRMP7iKOk/pNRYQQlJsS8
-	 1UFZzzNwvd7zfr+VjCrlpOHQXMsPC8eDDXWkYS1ngLCqk8sctEnfH7zkoQ0fetpRdOBnX
-	 auxPsb3rZiC22qligqC+Elp60HLmTE2w2CfNrDBzyapBYl1dh1krSF7Uih/x7WAOrEOEO
-	 oWnljRZKduxy37m21kuQcS59FOwdRuYw7KzgCaT5G7IPxoX58kwB1+mxLPqe6YPhPjpY7
-	 Nc0UCaKcnuSaAMfaJPomByGzk3TobUjvt0m3Tcmc1M4m7POhK+4YlaIxCNeZZ4n90Xw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792693904;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=MrM4N5zcsDzh05bxNdVa4RxgArim1I9tvL+fmS+AbYE=;
+	b=vhBfTDi30lizykYL8GE64aePZBIKm5RpTECxiR8QElGrs4K2SW+5rDTZ5kC0rFawW0ip
+	 vDmeLilNM/X0O5P+jrqAaY1CvwKoFgdUVURmPzKYbqfSQQCL74QVZ3+VYI6vJK9aqWiAV
+	 j8eGt2g+QNBLFz8wN2Uol/ne1gcrXCnTPf3tRHrK04JsqGc2n0xRhppSsRf+rNjsQWQn5
+	 KP7w55mim1Lr2k6HBnHRXyrcWSxmLBh9nhKCkZrHh6oUqoU6h03yTn0uHOMhFxGyHSEL+
+	 jzCETxxLqo7dHCOqiBjKgT07jD1rwUqWyCY+vkRy5U2tGUutAP4nP9mDcB6jA7L1sqQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=artiphishell.com;
-	spf=pass smtp.mailfrom=artiphishell.com;
-	dkim=pass header.d=artiphishell.com header.i=@artiphishell.com header.a=rsa-sha256 header.s=google header.b=QXZALAlD;
-	arc=none smtp.remote-ip=209.85.161.49
-Received: from mail-oo1-f49.google.com (mail-oo1-f49.google.com [209.85.161.49])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Fet5DSNO;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9DD5606A31D
-	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 18:19:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E9DD5606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=artiphishell.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=artiphishell.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3C6F606B7EA
+	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 18:31:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=artiphishell.com header.i=@artiphishell.com header.a=rsa-sha256 header.s=google header.b=QXZALAlD
-Received: by mail-oo1-f49.google.com with SMTP id 006d021491bc7-6dde81a6820so62256eaf.2
-        for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 11:19:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=artiphishell.com; s=google; t=1792693183; x=1793297983; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
-        b=QXZALAlDVB6ve4A+E9NZX1qQ0mwHd+Xl0g7R4pSYEBYVpPG5QZO0wYXey8zcOZNO2p
-         zmVqpHe95pgJUtKcKM6tCRMBVxW2ih1k64d4e7BuVaiyaSz3rN5ZcH6Gb+Cl6G1DZGSt
-         s6kqdSZAyspmQvhlTmfSbfmIKxew1NiDG0pP5Nq57xy0bLOERz324GKxOg4+TR6UamkX
-         aKumg/m2t+iv6jrTujewEQpZettloYW3K8DOWIwRWLsDj0n1okNmwlTGlFXFidq5kitj
-         6bE0Az8BwtlUF5BBAoYXWENnIYfH8WVeKIsXXBcwtklwN4HFCY0CJdfZRghvF40/koz3
-         y37Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792693183; x=1793297983;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=V68G4ECg0nxR7NLcm3kWEbTu8pdqcWjj0F2hAFNOQxw=;
-        b=kC0SdaR0sXRcRG9u6l7AhhPo0Pbvvtdghm+vRp9TrGpiiKAV0qIVyGnLdFBtH1nC2/
-         zWL25h40HnK+e9HjLsrjydzyLW9bWoMsu9AwiI5ajykGr63Aat7761fkSiKo7g0jk2Se
-         FHLX0+jeSUI9oJyNv5Yuw+ihv6OH6TrBF7Sk2EwcyJNQ18Q5xThZafcmjlpTW2uhDHrG
-         4LMDCM587DOsCmvIn8jRFZTVzUwlz4GGTLzaVJH2NBBY/r34UBT6lucqV3zEZDKXQkFR
-         nNIN+U5YccvF3zBoM3y5J9BRPSzFrkkApfvvVjfckAMBmOgKgIU+T7P+EkYc+Q4Kjf7o
-         rJ0w==
-X-Gm-Message-State: AFq9FYISWkYmPt61BX6kAKf1I54ikWQ2Vk2pJe9cgiGWgJQ6Jh8UML6X
-	EFLI97v4SZ2Kyf+zSvzAlMGFCv9joAAVz3HQ0zBtqzUfu3eqgajVSZhZvFwI8l62Od5w
-X-Gm-Gg: AYBFou3TLmtj/RkIuemHKPXzCvloPyl38LBy69lziu8nfqPzzUjmXhO2uphUbIK8vRi
-	OqxL6ah+rdbwC6zdGDzDyv7yZm1QkLUU7GR3puW04syWOy6NwAR7ccTgMFrdZT5+rptiWYJ3Mue
-	PWzj4aINbzZMwHofkCY4aMYE6S3Pw0NSwpEMpc7W/u3BnZCWWQfLV/x6Fx2XurdV4R+pPGaAktm
-	nB+THhAFlE0K+3SaZdO/AwffzzLFOvh4yPRbHUiMuGHOk+qXn3AEqh+0QslyVLFgiuXa4SeI/C9
-	kjGff7GeZKmNc59MrnPUPi1WuXdXDeKIcWwvRGGy+x2kzU8WfxwGjvXP6H1TMpVsSRnC98PHcbH
-	zqooOUVQQjoBB6QjrXUaT2QrGEa7f0LrXeScco+GVzZBn6VU6Lm/yWQXDXxmNTNfWgTtFIsjSub
-	1gXx5/Yj/cbBzc7USfV0uO+JL7wxMbVA9lEYMvOS/tJRsS22TXX5C3OCM/N88fB5V9bCfefE77u
-	yycAAZqi6ofEhkJRP2rKRkqDVAZfHvnPn1jXmtXNBQcARkHAeZu
-X-Received: by 2002:a05:6820:4589:b0:6dd:25a3:94cd with SMTP id 006d021491bc7-70b88a87127mr172354eaf.52.1792693182739;
-        Thu, 22 Oct 2026 11:19:42 -0700 (PDT)
-Received: from nixos ([2601:280:4a87:2c8d:3b7b:2fa6:c84c:64a7])
-        by smtp.gmail.com with ESMTPSA id 006d021491bc7-70b895f270bsm12151eaf.2.2026.10.22.11.19.40
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 22 Oct 2026 11:19:41 -0700 (PDT)
-From: Jay Vadayath <jay@artiphishell.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Jay Vadayath <jay@artiphishell.com>
-Subject: [PATCH] dm-raid: bound array_position before indexing failed_devices
-Date: Thu, 22 Oct 2026 11:19:34 -0700
-Message-ID: <20261022181934.35685-1-jay@artiphishell.com>
-X-Mailer: git-send-email 2.51.2
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Fet5DSNO
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 54FE41F031E2;
+	Thu, 22 Oct 2026 18:31:43 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792693903;
+	bh=MrM4N5zcsDzh05bxNdVa4RxgArim1I9tvL+fmS+AbYE=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=Fet5DSNO8vgcjQkxGhVeh9PeLfxeMozxUxbmOBGTJiK1GY01JrqAHCRWZDXg4Vw27
+	 WguY1t5kMrxNxvcrmz6tb8up434z2TgsJaQ/C9zCcuKSrEnaT2ZUQYCBLrrJqmcmNA
+	 SoX6KqCkY1UEran/jCwgfgbfU5xubtxWUxRGYqyyfJbdaa0sgvVfj2Kk5R3hwk6WDU
+	 SoHb1xvgBhWwMXad01Tz4GRv2OMndC3nfB0hJchfqvhvZFzO8teoPKO628untme3iO
+	 QN9qnZnsQTSEr7c35yhCyjSE+7uiF3WE1YtTkYnDsMoWBCC7EzK+vCswHBgNm1LdRR
+	 hQwhkqHAEsatw==
+Message-ID: <sashiko-outbox-181921@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH] dm-raid: bound array_position before indexing
+ failed_devices
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Jay Vadayath" <jay@artiphishell.com>, "Alasdair Kergon" <agk@redhat.com>, "Mike
+ Snitzer" <snitzer@kernel.org>, "Mikulas Patocka" <mpatocka@redhat.com>, "Benjamin
+ Marzinski" <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev
+In-Reply-To: <20261022181934.35685-1-jay@artiphishell.com>
+References: <20261022181934.35685-1-jay@artiphishell.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Thu, 22 Oct 2026 18:31:42 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -94,76 +61,129 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-super_init_validation() reads role = le32_to_cpu(sb2->array_position)
-out of an on-disk dm_raid_superblock and then uses it as a bit index into
-the failed_devices bitmap via test_bit(role, (void *)failed_devices).
-failed_devices is a uint64_t[DISKS_ARRAY_ELEMS] (DISKS_ARRAY_ELEMS == 4,
-i.e. 256 bits) living on the stack. The only guard is role < 0, so any
-on-disk array_position >= 256 makes test_bit() read past the end of the
-stack array (array_position == 256 reads failed_devices[4], 8 bytes past
-the object). For a raid1 set the role != raid_disk reorder branch falls
-through to the same test_bit().
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+- [High] dm-raid: wrong role bound and continue bypass in super_init_valida=
+tion()
+--
 
-A crafted dm-raid superblock therefore causes a stack out-of-bounds read
-during table load. Reachable by anyone able to issue a dmsetup create
-with attacker-controlled metadata (CAP_SYS_ADMIN in the target
-namespace); the crash fires in the constructor / analyse_superblocks
-path, before any md_run or array sizing.
+commit 46b04454594856163e75cd4dccd01fd7ff3efea6
+Author: Jay Vadayath <jay@artiphishell.com>
 
-  BUG: KASAN: stack-out-of-bounds in super_validate+0x1cd0/0x3390
-  Read of size 8 at addr ffff888007b17828 by task poc/152
-  Call Trace:
-   dump_stack_lvl+0x64/0x80
-   print_report+0xd0/0x630
-   kasan_report+0xe5/0x120
-   kasan_check_range+0x105/0x1b0
-   super_validate+0x1cd0/0x3390        (super_init_validation, inlined)
-   raid_ctr+0x2c4b/0xa0f0
-   dm_table_add_target+0x66f/0xf80
-   table_load+0x2ee/0x780
-   ctl_ioctl+0x362/0x9f0
-   dm_ctl_ioctl+0x9/0x10
-   __x64_sys_ioctl+0x134/0x1c0
-   do_syscall_64+0xe2/0x4b0
-   entry_SYSCALL_64_after_hwframe+0x77/0x7f
+dm-raid: bound array_position before indexing failed_devices
 
-role is a device position that must refer to an actual member of the
-array, so reject anything outside [0, rs->raid_disks) instead of only the
-negative case. rs->raid_disks is always <= the 256-bit capacity of
-failed_devices, so this both closes the out-of-bounds access and matches
-the intended semantics.
+This commit bounds the on-disk array_position (role) by rs->raid_disks in
+super_init_validation() before using it as a bit index into the on-stack
+failed_devices bitmap.
 
-This bug was discovered by Artiphishell's vTriage pipeline, which
-generated a crafted raid1 superblock (magic "DmRd", compat_features=1,
-num_devices=2, array_position=256, level=1) and a dmsetup-create
-reproducer that reliably triggers the KASAN report on an unpatched kernel
-(the precursor DMINFO "raid device #256 now at position #0" is visible in
-the serial log just before the splat). The fix below was drafted with the
-Claude coding assistant; a userspace reproducer is available on request.
+> diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+> index ac019a0f5a929..b973181bdce24 100644
+> --- a/drivers/md/dm-raid.c
+> +++ b/drivers/md/dm-raid.c
+> @@ -2420,7 +2420,8 @@ static int super_init_validation(struct raid_set *r=
+s, struct md_rdev *rdev)
+>  		 */
+>  		if (!test_bit(FirstUse, &r->flags) && (r->raid_disk >=3D 0)) {
+>  			role =3D le32_to_cpu(sb2->array_position);
+> -			if (role < 0)
+> +			/* Bound @role before it indexes the failed_devices stack bitmap. */
+> +			if (role < 0 || role >=3D rs->raid_disks)
+>  				continue;
 
-Assisted-by: Claude:claude-opus-4-8
-Signed-off-by: Jay Vadayath <jay@artiphishell.com>
----
- drivers/md/dm-raid.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+[Severity: High]
+Does using continue when role >=3D rs->raid_disks in
+drivers/md/dm-raid.c:super_init_validation() introduce two regressions duri=
+ng
+table load (dm_ctl_ioctl() -> table_load() -> dm_table_add_target() ->
+raid_ctr() -> analyse_superblocks() -> super_validate() ->
+super_init_validation())?
 
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 8f5a5e1342a9..d497d7c68596 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -2420,7 +2420,8 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 		 */
- 		if (!test_bit(FirstUse, &r->flags) && (r->raid_disk >= 0)) {
- 			role = le32_to_cpu(sb2->array_position);
--			if (role < 0)
-+			/* Bound @role before it indexes the failed_devices stack bitmap. */
-+			if (role < 0 || role >= rs->raid_disks)
- 				continue;
- 
- 			if (role != r->raid_disk) {
--- 
-2.51.2
+First, the commit message states that this change rejects anything outside
+[0, rs->raid_disks), but executing continue only skips the remainder of the
+per-rdev loop body and allows super_init_validation() to return 0:
 
+drivers/md/dm-raid.c:super_init_validation() {
+    ...
+		if (!test_bit(FirstUse, &r->flags) && (r->raid_disk >=3D 0)) {
+			role =3D le32_to_cpu(sb2->array_position);
+			/* Bound @role before it indexes the failed_devices stack bitmap. */
+			if (role < 0 || role >=3D rs->raid_disks)
+				continue;
+
+			if (role !=3D r->raid_disk) {
+				...
+				} else if (!(rs_is_raid10(rs) && rt_is_raid0(rs->raid_type)) &&
+					   !(rs_is_raid0(rs) && rt_is_raid10(rs->raid_type)) &&
+					   !rt_is_raid1(rs->raid_type)) {
+					rs->ti->error =3D "Cannot change device positions in raid set";
+					return -EINVAL;
+				}
+    ...
+}
+
+Because r->raid_disk is in [0, rs->raid_disks), any device with
+role >=3D rs->raid_disks has role !=3D r->raid_disk. Previously, on raid le=
+vels
+that forbid device reordering (such as raid4/5/6 or raid10 far/offset), a
+device with role in [rs->raid_disks, 255] entered the role !=3D r->raid_disk
+block and failed validation with return -EINVAL. With this continue, should=
+n't
+an out-of-bounds role return -EINVAL instead of silently bypassing both the
+device reordering check and the failed_devices check?
+
+Second, is rs->raid_disks the right upper bound for role here? In
+super_init_validation(), role is the device's previous position in the
+on-disk array of size mddev->raid_disks (le32_to_cpu(sb->num_devices)), and
+failed_devices is indexed by that previous role, whereas rs->raid_disks is
+the device count of the newly loaded table.
+
+dm-raid allows loading tables with rs->raid_disks < mddev->raid_disks when
+removing legs from a raid1 array without delta_disks or when removing mirror
+copies from a raid10_near array:
+
+drivers/md/dm-raid.c:rs_prepare_reshape() {
+	if (rs_is_raid10(rs)) {
+		if (rs->raid_disks !=3D mddev->raid_disks &&
+		    __is_raid10_near(mddev->layout) &&
+		    rs->raid10_copies &&
+		    rs->raid10_copies !=3D __raid10_near_copies(mddev->layout)) {
+			...
+			__reorder_raid_disk_indexes(rs);
+			...
+		}
+	...
+	} else if (rs_is_raid1(rs)) {
+		if (rs->delta_disks) {
+			...
+		} else {
+			/* Process raid1 without delta_disks */
+			mddev->raid_disks =3D rs->raid_disks;
+			reshape =3D false;
+		}
+	}
+}
+
+When a non-trailing leg or mirror copy is removed so that rs->raid_disks <
+mddev->raid_disks (for example, removing leg 0 from a 3-disk raid1 array so
+old device 2 moves to r->raid_disk =3D 1 with rs->raid_disks =3D 2, or redu=
+cing a
+6-disk 3-copy raid10_near set to a 4-disk 2-copy set so old device 4 moves =
+to
+r->raid_disk =3D 3 with rs->raid_disks =3D 4), surviving devices legitimate=
+ly
+have rs->raid_disks <=3D role < mddev->raid_disks.
+
+If role >=3D rs->raid_disks takes the continue branch, won't
+super_init_validation() skip updating sb2->array_position for raid10_near a=
+nd
+skip testing failed_devices to set Faulty on a returning failed device,
+preventing super_validate() from clearing In_sync and resetting
+recovery_offset to 0?
+
+> =20
+>  			if (role !=3D r->raid_disk) {
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261022181934.3568=
+5-1-jay@artiphishell.com?part=3D1
