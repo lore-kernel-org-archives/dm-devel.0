@@ -1,47 +1,50 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=115.124.30.113
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792655882;
-	b=1YuR72IhQCJN8y6qeReMxZCcZCJcTuEy70t/ZWYeVeONqodjlfKqXlqXcW0Av4he/HRT
-	 4KxUYtQBKRVq2uwGmtvxCwfeRnM0XYZRpltgrAVR8qahWLi/vAacLlmdxMdD6/haUsgNp
-	 CejYOk3UwbPRpSUnJeQhMZhjLvUI89aR3naJ+yQiY6BalBKIRKbgBl82qg7DtG8PjpTa1
-	 7tyiI/1C7mElcneVdqW77brH0K+RhB+U9XKZK6wgh7WxGG3RQaqhfCfmwRvC3z+mVoi9s
-	 hfLJkPXFKyg5j5vvWMhBy9C1btqFa9mCe5wpHGSC3qyhaVxrv2VCyIK2DFVzwnDE7oA==
+	t=1792662797;
+	b=D50V6+L1LQMZDhwu7Tye0cIhteuotCh5DU7mvzGRCOyjoGU2TX8TlWtulzqJ1bRtPW+3
+	 6z/eddKrSj+lTz1BXogy3H89BgLv1jbFR6BGMNMUl71PmmSArywoSSSkO5ySQVMASykQ+
+	 Vso+oGdg5hv9Hv48BvcvPluhSLiibClLSCNEhyukJV4jCXy62/rAYsAtYk3llOsA8IIZt
+	 WfsuqYzo1MRM4eII70JSNHH4nq30XcsgfDPqNO9+cJ0+V+f7Hgb9mMSu7M7S+wLIbnXAm
+	 T0XVi1HFuc2+bWwDO1lGlJwZwU1PkY2AEfv0w6ehQZk1W75AK5kcOcuM4IBCPz/COEg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792655882;
-	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
-	 Subject:To:Cc:References:From:Content-Language:Organization:
-	 In-Reply-To:Content-Type:Content-Transfer-Encoding;
-	bh=al8LwFXKhQMtvebVFFNkSePOwM1a+nny9q2UkN6c8qQ=;
-	b=PmUQp14TQgvPbXEY6otMDRh79jRtnOa4B7YjWXtc8u6zk8Y4kmF6J0wRJD1VoEE4DsOw
-	 Q76hj/fjwuAjBwQjwgrcd3ZnFvpSMK9l5CVlV09ciQE9HMZcVRuz6O5lROFBW0arxB3sw
-	 Stj//vFURMd8CxI7nMb7/DOGeLY+az3A8WBitvYy2kMpZKhUWg6elfc1Hrr7Q+g8KXd7F
-	 SjzddwNQTC6vGLd1zWwtNPY8CrGoM4Tq42vwH/euif048G9hwEnRDvPTVYViiFPWDjVyG
-	 6QoCkRnC8KyPBZyzB1+t+6+P0Ubb0pVCC+2vQRtbDi/vhDSjUpGT3anwBrtDTJmdqQw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792662797;
+	h=DMARC-Filter:DKIM-Signature:X-Alimail-AntiSpam:Received:Message-ID:
+	 Date:MIME-Version:User-Agent:Subject:To:Cc:References:
+	 Content-Language:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=3hFAvKk9tBYmSX3HTuZG8avtf81VKRoZtIyjamHt2Ns=;
+	b=CgEaNSKRaiauCq8dQ9Lw0ZmKUAmqpompdIollbuIFJkYM8Fhuyg0mLVGiJ2rRvbHv7vX
+	 gbRmReCZbMRqAOcHu047VJcP6LSiMdx015nCYCkD+UJZKyvxJrcAFR2pDIg66iL+td9t9
+	 OKTOMGfhkvgKJU5D2bRG83V476FDjUaOB9qlt3zes5Adg25/Pe9/WIV4iteeXUa38eX5c
+	 6SIRilmoLJfkmYvcE9mvoBG2BNNzYFXYSV334Wh9r36g8XOQLt6Hppdf+K1ewb+5WnK9I
+	 AXxdch9v3NEWdbr3bz0o88wqrEzdT1t7mNGyvhMiZESOje2SY9rYm0vbKriQfMA4sLQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MN+AbLU1;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=linux.alibaba.com;
+	spf=pass smtp.mailfrom=linux.alibaba.com;
+	dkim=pass header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=YubF1mf5;
+	arc=none smtp.remote-ip=115.124.30.113
+Received: from out30-113.freemail.mail.aliyun.com (out30-113.freemail.mail.aliyun.com [115.124.30.113])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C80F606A31B;
-	Thu, 22 Oct 2026 07:58:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77424606A320
+	for <dm-devel@lists.linux.dev>; Thu, 22 Oct 2026 09:53:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 77424606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MN+AbLU1
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2B7D31F000C3;
-	Thu, 22 Oct 2026 07:58:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792655881;
-	bh=al8LwFXKhQMtvebVFFNkSePOwM1a+nny9q2UkN6c8qQ=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=MN+AbLU1PaXtQMdHTbIw9lN2dZHitBsiJyxN9RFxBjlIR/IyvxbIQWOMxrfU797R5
-	 2S06k9AsMgZk3UAEHtD67h8rt1G8O3bEL6ZmbFlETGW+MxQjf7egNoogt1aI5Yvb4a
-	 omIqB66NL8P7tg8jN28ej/LAO00kTQJlnY94wvsY0qIuwI2O/xZQyDI6d1qKNfc7dY
-	 3FSoXyakPbW6lzVzjoYN97QIH5zOi2Ejw/zp8wIyh5Vx2Aph6CD7H6NCPwUJ/rsIri
-	 sDmE7hjoqKSLKA4ZA++CcFfmBiuR26UwTZNIrVJcqgsdW01BOCxzsqFqyfPWT2mHfR
-	 bNn4nQGbrhWZg==
-Message-ID: <ff60b44b-e85d-433e-9c08-450474c7af09@kernel.org>
-Date: Thu, 22 Oct 2026 09:57:58 +0200
+	dkim=pass (1024-bit key, unprotected) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=YubF1mf5
+DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=linux.alibaba.com; s=default;
+	t=1792662787; h=Message-ID:Date:MIME-Version:Subject:To:From:Content-Type;
+	bh=3hFAvKk9tBYmSX3HTuZG8avtf81VKRoZtIyjamHt2Ns=;
+	b=YubF1mf5Lp2GjZ4jFEFpyL+gPMHQ6ez6kgRijKFWzE8npNmfUvAj6SSMMqm+BPfDAnZnD4mmOE9ITnuzT61442osYJ8+s09K/E/nwl/LhwZDp58afXkiliSZ5fXFqJr9xJudhkk9T9ObAxvPnIBGRBSn8IE2tx3Kh2FKuTuQatw=
+X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R151e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033037009110;MF=libaokun@linux.alibaba.com;NM=1;PH=DS;RN=9;SR=0;TI=SMTPD_---0XDIreVh_1792662786;
+Received: from 30.221.132.50(mailfrom:libaokun@linux.alibaba.com fp:SMTPD_---0XDIreVh_1792662786 cluster:ay36)
+          by smtp.aliyun-inc.com;
+          Thu, 22 Oct 2026 17:53:06 +0800
+Message-ID: <2810a9f7-4988-4e10-bac4-efa35458dfcd@linux.alibaba.com>
+Date: Thu, 22 Oct 2026 17:53:05 +0800
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -52,49 +55,204 @@ List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH] dm: fix infinite loop in dm_blk_do_report_zones()
-To: Mark Bundschuh <mkbund@amazon.com>, Alasdair Kergon <agk@redhat.com>,
- Mike Snitzer <snitzer@kernel.org>, Mikulas Patocka <mpatocka@redhat.com>,
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-block@vger.kernel.org,
- linux-kernel@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
- stable@vger.kernel.org
-References: <20261019192819.3962873-1-mkbund@amazon.com>
-From: Damien Le Moal <dlemoal@kernel.org>
+Subject: Re: [PATCH v2 2/2] blk-crypto: fix missing smp_load_acquire() for
+ tfms_inited[]
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: axboe@kernel.dk, linux-block@vger.kernel.org,
+ linux-fscrypt@vger.kernel.org, hch@lst.de, dm-devel@lists.linux.dev,
+ mpatocka@redhat.com, sweettea-kernel@dorminy.me, stable@vger.kernel.org
+References: <20261014071846.3666398-1-libaokun@linux.alibaba.com>
+ <20261014071846.3666398-2-libaokun@linux.alibaba.com>
+ <20261014161153.GC322435@quark>
+ <006e3804-7e5e-4b8d-a299-3a47b8b643b3@linux.alibaba.com>
+ <20261015183200.GC2170687@google.com>
+ <f113d4bc-2db5-4ed4-b34f-fe972099ad12@linux.alibaba.com>
+ <20261022071101.GA1857@sol>
 Content-Language: en-US
-Organization: Western Digital Research
-In-Reply-To: <20261019192819.3962873-1-mkbund@amazon.com>
+From: Baokun Li <libaokun@linux.alibaba.com>
+In-Reply-To: <20261022071101.GA1857@sol>
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 2026/10/19 21:28, Mark Bundschuh wrote:
-> If the device underlying a zoned target is removed, its capacity is set
-> to 0 and blkdev_report_zones() returns 0 without reporting any zones.
-> The mapped device keeps its old capacity, so args->zone_idx and
-> args->next_sector never advance and dm_blk_do_report_zones() loops
-> forever. On non-preemptible kernels this causes soft lockups and RCU
-> stalls.
-> 
-> The following sequence of commands triggers the hang:
-> 
-> modprobe scsi_debug zbc=managed dev_size_mb=1024 zone_size_mb=64
-> udevadm settle
-> echo '0 2097152 linear /dev/sda 0' | dmsetup create lin
-> echo 1 > /sys/block/sda/device/delete
-> blkzone report -o 0 -c 1 /dev/mapper/lin
-> 
-> Fix this by returning -EIO when a target reports no zones. The target
-> always maps args->next_sector, so a zero return means the underlying
-> device no longer covers that sector.
-> 
-> Fixes: d41003513e61 ("block: rework zone reporting")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Mark Bundschuh <mkbund@amazon.com>
+On 2026/10/22 15:11, Eric Biggers wrote:
+> On Thu, Oct 22, 2026 at 11:50:59AM +0800, Baokun Li wrote:
+>> Hi Eric,
+>>
+>> Sorry for the late reply.
+>>
+>> On 2026/10/16 02:32, Eric Biggers wrote:
+>>> On Fri, Oct 16, 2026 at 01:36:17AM +0800, Baokun Li wrote:
+>>>> That's what I was about to do for v3, but while looking for other
+>>>> callers that inherit a key without calling start_using_key()
+>>>> themselves, I found that dm-inlinecrypt has the same shape, so fixing
+>>>> fscrypt alone wouldn't cover it -- only the constructor calls
+>>>> start_using_key(), and the task submitting I/O reaches the key through
+>>>> md->map:
+>>>>
+>>>>   dmsetup (ctr)                      I/O task
+>>>>   ---------------------------------- -------------------------------
+>>>>   blk_crypto_start_using_key()
+>>>>    fallback_start_using_mode()
+>>>>     init profile, keyslots, tfms[]
+>>>>     smp_store_release(tfms_inited[m])
+>>>>   rcu_assign_pointer(md->map, t)
+>>>>                                      srcu_dereference(md->map)
+>>>>                                       -> ti->private -> &ctx->key
+>>>>                                      inlinecrypt_map() -> bio_prep()
+>>>>                                        tfms_inited[m]  addr-dep, ok
+>>>>                                        profile/keyslots/tfms[]  not
+>>>>
+>>>> dm's own grace periods would cover this, but all three are conditional:
+>>>>
+>>>>   drivers/md/dm.c:2533       if (old_map) dm_sync_table(md);
+>>>>   drivers/md/dm.c:3015,3039  if (map) synchronize_srcu(&md->io_barrier);
+>>>>   drivers/md/dm-ioctl.c:1651 add_disk() only when type == DM_TYPE_NONE
+>>>>
+>>>> so e.g. this sequence has no happens-before:
+>>>>
+>>>>   DM_DEV_CREATE
+>>>>   DM_TABLE_LOAD (linear)       add_disk(), md->type set, not resumed
+>>>>                                  -> a task opens the device here
+>>>>   DM_TABLE_CLEAR
+>>>>   DM_TABLE_LOAD (inlinecrypt)  ctr sets tfms_inited[]; no add_disk()
+>>>>   DM_DEV_SUSPEND (resume)      old_map == NULL, all three skipped
+>>>>                                  -> the already-open task does I/O
+>>>>
+>>>> This needs a weakly ordered machine and a deliberate ioctl order, so
+>>>> it's not urgent.  Which would you prefer?
+>>>>
+>>>>   1. Leave it for now and fix only fscrypt_find_mode_key().
+>>>>
+>>>>   2. A separate smp_rmb() in inlinecrypt_map(), paired with the
+>>>>      rcu_assign_pointer(md->map) in __bind().  Keeps the cost on
+>>>>      dm-inlinecrypt only, but means a second site to get right.
+>>>>
+>>>>   3. Keep the barrier in blk_crypto_fallback_bio_prep() after all,
+>>>>      documented as ordering the loads after the check rather than the
+>>>>      flag itself.  One site covers both callers and any future one,
+>>>>      at the cost of blk-crypto no longer relying on the caller for
+>>>>      this part.
+>>> So the device-mapper core doesn't order target_type::ctr before
+>>> target_type::map?  Nearly every dm target's map function relies on the
+>>> constructor having run first.  If this is an issue, it isn't specific to
+>>> dm-inlinecrypt and it will need to be fixed in the device-mapper core.
+>> It does, for everything map() reaches through the table:
+>>
+>>   ctr                               map
+>>   ------------------------------    -------------------------------
+>>   ctx->foo = ...                    map = srcu_dereference(md->map)
+>>   ti->private = ctx                 ti  = map->targets[i]
+>>   rcu_assign_pointer(md->map, t)    ctx = ti->private
+>>           ^ release                   ctx->foo     ordered (addr-dep)
+>>                                       some_global  not ordered
+>>
+>> The address dependency covers the whole object graph hanging off
+>> ti->private, so no barrier needed there.
+>>
+>> But dm-inlinecrypt initializes globals from the ctr:
+>>
+>>   inlinecrypt_ctr()
+>>     blk_crypto_start_using_key()
+>>       blk_crypto_fallback_start_using_mode()
+>>         blk_crypto_fallback_init()
+>>           blk_crypto_fallback_profile = ...      global
+>>           blk_crypto_keyslots = ...              global
+>>         slotp->tfms[mode] = ...                  global
+>>         smp_store_release(tfms_inited[mode])
+>>
+>>   inlinecrypt_map()
+>>     __blk_crypto_submit_bio()
+>>       blk_crypto_fallback_bio_prep()
+>>         tfms_inited[bc->bc_key->...]   addr-dep on the key, ordered
+>>         blk_crypto_fallback_profile    no dependency
+>>         blk_crypto_keyslots            no dependency
+>>         slotp->tfms[mode]              no dependency
+>>
+>> Those three don't depend on md->map, so nothing stops the CPU from
+>> reading them before it.
+>>
+>> No other target does this, and neither of the usual patterns helps
+>> here.
+>>
+>> Some targets create their globals at module_init (journal_io_cache,
+>> dm_bufio_wq).  That isn't available to us:
+>>
+>>   * the state belongs to blk-crypto, not to dm;
+>>   * nothing in blk-crypto-fallback.c is exported;
+>>   * blk_crypto_start_using_key() needs the bdev and the key from the
+>>     table line, neither of which exists at module_init.
+>>
+>> The others keep state per-target under ti->private (dm-crypt's cc->bs,
+>> dm-verity's v->verify_wq, dm-integrity's ic->*).  The equivalent here
+>> would be hanging the fallback state off struct blk_crypto_key, which
+>> already lives in ti->private -- then the whole chain is
+>> address-dependent and needs no barrier at all.  But that means:
+>>
+>>   * a profile pointer in an exported struct;
+>>   * moving blk_crypto_keyslots into the profile as well, since
+>>     blk_crypto_fallback_tfm() reads it as a bare global.
+>>
+>> That is far more than this bug is worth.
+>>
+>> A core fix can't go on the publish side either.  An unconditional
+>> dm_sync_table() in __bind() still lets a reader that overlaps the grace
+>> period see the new md->map with the stale globals.  That leaves an
+>> acquire in dm_get_live_table(), i.e. a barrier per bio on every dm
+>> device, for one target.
+>>
+>> So I still think the smallest fix is the single barrier from the
+>> original patch.  That line carries two meanings:
+>>
+>>   if (WARN_ON_ONCE(!smp_load_acquire(&tfms_inited[cfg->crypto_mode])))
+>>
+>>   * False means start_using_key() was never called and we bail out.
+>>     You're right that this half needs no barrier: the index is
+>>     address-dependent on bc->bc_key, so the flag is read accurately
+>>     either way.
+>>
+>>   * True means the mode was initialized and the globals behind the
+>>     flag are safe to use.  That is the half that needs it -- without
+>>     the barrier, nothing orders blk_crypto_fallback_profile,
+>>     blk_crypto_keyslots and slotp->tfms[] against the initialization
+>>     that smp_store_release() published.
+>>
+>> Any thoughts?
+> Well, it isn't great to be adding another barrier to every bio submitted
+> to work around insufficient ordering during one-time setup. 
 
-Looks good.
+Agree. But in fact, the overhead of smp_load_acquire() is very small,
+and it is almost imperceptible even for hot paths.
 
-Reviewed-by: Damien Le Moal <dlemoal@kernel.org>
+>  The fscrypt case is easily fixable by the change I mentioned.  
+Yes.
+> The dm case I'm not
+> sure is a real problem.  For one, dm_get_live_table() actually already
+> has an smp_mb() in it; it's inside srcu_read_lock().
 
--- 
-Damien Le Moal
-Western Digital Research
+It's there, but it lands before both loads rather than between them:
+
+  dm_submit_bio()
+    dm_get_live_table()
+      srcu_read_lock()
+        __srcu_read_lock()
+          smp_mb()                      /* B */
+      srcu_dereference(md->map)         <- load A
+    inlinecrypt_map()
+      __blk_crypto_submit_bio()
+        blk_crypto_fallback_bio_prep()
+          blk_crypto_fallback_profile   <- load B
+
+I couldn't find a good way to fix it from the setup side. 
+
+However, hitting this needs a weakly ordered machine and a deliberate
+ioctl sequence, so I'm fine leaving it alone for now and revisiting
+if someone actually runs into it -- by then there may be a better
+answer than either of these.
+
+Any better ideas?
+
+
+Thanks,
+Baokun
+
+
