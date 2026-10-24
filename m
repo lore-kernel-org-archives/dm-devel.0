@@ -1,97 +1,57 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.178
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792858545;
-	b=Qrk+cF5BfSYq5yyiaUHIDmi7luyzVmUXkizvNCNVZwy/vp3AqBdhQWjchAceed5YmWog
-	 tzKajXJ/+0DoI9zNGB77rgKEScEAe2/5fhCMHbdgIgRvGECrwOm2/hBqqyicmwd7CI4Cr
-	 d7ASogakfw6Q82Jvc+PGLKSRZAuPEfcU9sHi/8J7/6C6DEVBP10xd3LugD4rQ8FEVz933
-	 kH3RRagzgi+WeRx2VJsxgJVhuXiMhGStEdjW/k1KflKtKUNMnaHgIQpZi+VgcfAALBUV3
-	 /luihRO/z6tYVabMtWXzxpQduis5sOgkVr8PN8ehYu12kBWHPmN3pVa+ZZadgzv3zKg==
+	t=1792859836;
+	b=uk+ry3dC2Y70sdsJCNl6EXKKv08IIJwMuMBdnwdFhfOKCrQMbUOHoZcp/Ui2aWYqHfsq
+	 C/VCmV5/AO/AnW35Zp+DPo8S10sRIz/njEKaIeG9XZ37oPw97UvEbzMK2mqgJ5pEVxVAJ
+	 cp8kQCesxwhEkgmCCQsVMGrREp/Yn9YvRtcsn/DhboyxQ+AZZlbc7vyqie5E8t1dKNVny
+	 6Y1153e47o3Xd6aqwEbzQmQEKmlnuDPxQ6Qgvt78dqEBhmbeRH3qxUUXa7KjJvAtwju1L
+	 dVA7RXT0x6FOg89zWSKIDpQMkwmdq39dpWccg8wsP6nW5XE3DNrB3SuADJVOONS/38w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792858545;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=sWPRyWlGaMNiQpJpvF0wXPtyt8f20HZGodlR95AlKmA=;
-	b=sEo00xwxslvF89EbgffaRaA/aUOmDO7VoQgJv3KCumY0PRpEJUh4FZ3LQ3qOJ2llL0dS
-	 spjJPaQ++1Vi8oPcoLjNyCzki+ubHWDBBTQVzNljtE3IUoyWxAdWF97ryWaLcuvmmb8j1
-	 bceJZvIay26k7fOmJVBQxEXV/R5teFp/Qz6R30CSbtRjyn4nsyrNanMtiPVd4JAD/P5ms
-	 qMeQqFalk/jkVmQNgS/1iM3H3ZhYM46oGmXTWyceOQll/frzG+GbgYqoKGJtnjO2xQIFf
-	 SShApEKoc5Jae90oSwBgjbLzA3hzIWA5gKiSdqXCMmAcExjbjWyiLsgh3t1jm1MhMxg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792859836;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=6Y7gjBPVCqk5ly9XCo3/1r0hzzsH3cSM5PMCCYdJFNg=;
+	b=eiN7f9ndbb18Zl3GP8QS4tuZoZ5+ouPqnR+FrE0H9wRlQC+LikZbh3IHKIj3v21QF4AK
+	 uJmY/Zhi9qUA6q1ZCuiHSI08yaE3NnbUPQzJw0rshkzSStVtoBVTWGjvlQbZ4jUQFiWGK
+	 bCN3Gl2IpjyxYNLFXYY+zSd8AbsQu/k5dErv9ZlZHlAqPJ6E/G7upbBA+wtWePSgRA8Fe
+	 /tuDMYE+4/ysv2CTBbRAyr+4c14oF8yOzClDeKhHF95JEhSatJ6zFh2r6e/2c91FRU7K+
+	 5zattSFqoivULXG6kuQK69mISJD4sYvAqupucRFQANAqTUbrvkKDBzLUhwpFG7QFtsg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=TnAc5K1w;
-	arc=none smtp.remote-ip=209.85.208.178
-Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com [209.85.208.178])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FjGsGmfd;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA08D606A320
-	for <dm-devel@lists.linux.dev>; Sat, 24 Oct 2026 16:15:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AA08D606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AAC5606A31A
+	for <dm-devel@lists.linux.dev>; Sat, 24 Oct 2026 16:37:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=TnAc5K1w
-Received: by mail-lj1-f178.google.com with SMTP id 38308e7fff4ca-3a9787a156eso14579011fa.3
-        for <dm-devel@lists.linux.dev>; Sat, 24 Oct 2026 09:15:44 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792858543; x=1793463343; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=sWPRyWlGaMNiQpJpvF0wXPtyt8f20HZGodlR95AlKmA=;
-        b=TnAc5K1wJOo/Tucp9dI7LvocRNL4SA5kgAYwFnhnpaB/lNkRJ/wKrJmKMpfR14JIvU
-         DpZYJoapS0ZCBfe5X9daRMYsOU4eR3s2su2DmjN2hStNLi7jz75nu+zNQ7NSCxEj2S7v
-         /mbahDGGl+K5+APfu2EYZ1dN22Hz4OXo+yYwwFH7UWYnmbr0ogFNbU4V8mJemZUbhZZs
-         PTMOWubom18eAqQe1tahf7ku0L4eedkbnuiU5YSX4BikdtQK9uXpcm0hgSSte4zqsxvT
-         dgqzYjlQBJNszcnAAou9Wm5EwWhe1PfXoVgMu6gmk5/rRofxNdqEjMfeMvSEH02VCrq4
-         1p5Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792858543; x=1793463343;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=sWPRyWlGaMNiQpJpvF0wXPtyt8f20HZGodlR95AlKmA=;
-        b=SYwE2safZlkdWOHC0EnXd3gVkdi3CXAWmyg/AaL539O90lwPdGYZy8cJez3Qgcqtke
-         KHGjtlmFBZ09pu6tCkWd3AC/BqxFusuhUTUo9ezuXevzhzyydqPNUr6y2xZp4VbuXXx6
-         HK5AeKNmX3z3FvipJF1WDuBF81B3ZUxjnkIWtGyNW0B7ANTcqlgfYUJ6S2YviDBhPc1z
-         TUjgHTlaGTyjz1RabsEQX5WH3dgPzShbOpKRP410dyEIyJcYG4TGzYb9HAYw2frkvo4c
-         smyNbmJEOtKOQNdbT/aGAbGoGikSt0J3Zh/cWDV9eATkJOVBIPwEIEhUo/bzdF2kBigm
-         8ZPg==
-X-Forwarded-Encrypted: i=1; AKwUvBwEIqH8JxZMrwQdHlZLVosxVw4cDzlQG36um/gjCt80QACxoAFM9+PUHA8Tl6bYDA0roSJgKGHW7Q==@lists.linux.dev
-X-Gm-Message-State: AFq9FYL/571gNEzklboVXVSj/RYEykkvUfbT9IHZs7PcHSR4JTlLTIQJ
-	ryh/Z7RcMRP1YlMY8djVs3+ioDdk4nPpZcZc2Qiyzxa17oQ1h8656lj5
-X-Gm-Gg: AYBFou1SXHoBPrAK9vy1Ae+ZHg1euo+e6jacVHIadrTMreH9b0JvAbSPPhLdXrM5DYL
-	yEguqWx73QQDMHARJjxez9naFPhEijowPj5Ey7OwA9P/mkZClqD9SZSlQHs+5rMIuvcQvWiNncF
-	2Z55Qq1B47P+4V4zFJsOg0koBiDZPYNPO50cdk/IAayHcGLYbA5Wx/pMnmsYNCKt6SuKRs9WNUZ
-	aUo4ttpfHzVe84Vj+ZmfSVIUrfgrdK/P0fx+HmYDo7BtZ+GevGvnqrhB9Lhc+s8CXYjDcsAhpC3
-	3Bcrd4vqZEIQbCrdPzBKVdBzbVPF5/uRcyzj9hkSjUKGV2AdUqweOVi6t9hmSzkPohPIryC3qfv
-	TlyLAAOpZxu/mXss+OmVEyQ4vdC+7RgaNTwPVSgiqjo3AuTPFv5yzqlY1bxWUJAAZ4lUg79yK6O
-	lQkG0nzQ25+v/BQs4vYuiNnP03nOAEECA/zkdl2WRgUBv5GHGhbJ0LMjEXOGKW8S3uSJ9mK/4lR
-	UUVdJh0V6nLup/0kGW6dLJk+bady6BzXYB6smE98l6ocPUX3jVSdYo7MD8/+wHJBqBF41L3oYYG
-	P9KhVQHA0NqMQbPglSC9Y0rhzlqlocWwoqGqiNQpByCH6qn6fT/g2e2YV1BY
-X-Received: by 2002:a05:651c:211c:b0:3a6:553d:cb1c with SMTP id 38308e7fff4ca-3ac6fceb510mr5573981fa.12.1792858542702;
-        Sat, 24 Oct 2026 09:15:42 -0700 (PDT)
-Received: from x870steellegend.lan (95-25-165-240.broadband.corbina.ru. [95.25.165.240])
-        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-3ac70a493b6sm5645121fa.37.2026.10.24.09.15.41
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 24 Oct 2026 09:15:42 -0700 (PDT)
-From: Igor Putko <igorpetindev@gmail.com>
-To: Mike Snitzer <snitzer@kernel.org>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mikulas Patocka <mpatocka@redhat.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
-	Jens Axboe <axboe@kernel.dk>,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	syzbot+8e6fc64255334ccf3ab3@syzkaller.appspotmail.com,
-	stable@vger.kernel.org,
-	Igor Putko <igorpetindev@gmail.com>
-Subject: [PATCH] dm snap: fix use-after-free when origin and COW devices match
-Date: Sat, 24 Oct 2026 19:14:59 +0300
-Message-ID: <20261024161459.5539-1-igorpetindev@gmail.com>
-X-Mailer: git-send-email 2.47.3
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FjGsGmfd
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 425301F01825;
+	Sat, 24 Oct 2026 16:37:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792859835;
+	bh=6Y7gjBPVCqk5ly9XCo3/1r0hzzsH3cSM5PMCCYdJFNg=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=FjGsGmfdbzSKlxSDAavR/P3lyUjxUMnvubDVtmUW5+UEzDEq1ROW2ZkNEB05vuP+I
+	 ABt3Nm+EE6qUnSkFL1DfwTn0SdbNQDo9051dy3L9jIieohdmIN5Qqe5ZeDb+V7WNk0
+	 Do2uDHBp/U5UVIDW/pRUlNqumLnqqaW0JPo9vu198bl2kI+PVCiAEZQa+OfGZZ19nB
+	 hyEKk8CuKaKnbQ9+hiObA3GmoqShnx9xTnZRCFkyeyw6+kMGiGJpCDDe8mSNNMhw4L
+	 XteWD3Mus7+OLzfug6XTLxYzFTIQ0myg49lJK/hnwsvzO+/VH8UhCoxKOUOjssSgRH
+	 7pCOWFb7cvHxQ==
+Message-ID: <sashiko-outbox-183792@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH] dm snap: fix use-after-free when origin and COW devices
+ match
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Igor Putko" <igorpetindev@gmail.com>, "Mike Snitzer" <snitzer@kernel.org>, "Alasdair
+ Kergon" <agk@redhat.com>, "Mikulas Patocka" <mpatocka@redhat.com>
+Cc: "Benjamin Marzinski" <bmarzins@redhat.com>, "Jens Axboe" <axboe@kernel.dk>, dm-devel@lists.linux.dev, syzbot+8e6fc64255334ccf3ab3@syzkaller.appspotmail.com
+In-Reply-To: <20261024161459.5539-1-igorpetindev@gmail.com>
+References: <20261024161459.5539-1-igorpetindev@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Sat, 24 Oct 2026 16:37:14 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -100,80 +60,115 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-When snapshot_ctr() parses target arguments where both origin and COW
-paths resolve to the same underlying block device, a slab-use-after-free
-occurs.
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+- [Critical] dm snap: TOCTOU race in snapshot_ctr() allows upgrade_mode() U=
+AF on s->origin
+--
 
-The origin device is acquired first with origin_mode (e.g. BLK_OPEN_READ
-or BLK_OPEN_WRITE). When opening the COW device with dm_table_get_mode()
-(typically BLK_OPEN_READ | BLK_OPEN_WRITE), dm_get_device() sees that
-the device is already in the table list and calls upgrade_mode() because
-the requested mode is broader than the existing one.
+commit b2c589f4852e6503996057072cf65216f108da3f
+Author: Igor Putko <igorpetindev@gmail.com>
 
-upgrade_mode() opens a new table_device, points dd->dm_dev to it, and
-calls dm_put_table_device() on the previous one. Since the refcount drops
-to zero, the old table_device is freed. However, s->origin still holds a
-pointer to that freed table_device. The subsequent check:
+dm snap: fix use-after-free when origin and COW devices match
 
-    if (s->cow->bdev && s->cow->bdev == s->origin->bdev)
+This commit resolves cow_path via dm_devt_from_path() in snapshot_ctr() and
+compares the resulting dev_t against s->origin->bdev->bd_dev before calling
+dm_get_device(), avoiding a use-after-free when upgrade_mode() replaces the
+origin table_device.
 
-dereferences s->origin->bdev, tripping a KASAN slab-use-after-free read.
-Furthermore, under the bad_store error path, dm_put_device(ti, s->origin)
-fails to find s->origin in ti->table->devices because dd->dm_dev was
-replaced, leaking the device reference count.
+> diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+> index 797c432594d86..ecda207e800d7 100644
+> --- a/drivers/md/dm-snap.c
+> +++ b/drivers/md/dm-snap.c
+> @@ -1234,6 +1234,7 @@ static int snapshot_ctr(struct dm_target *ti, unsig=
+ned int argc, char **argv)
+>  	int i;
+>  	int r =3D -EINVAL;
+>  	char *origin_path, *cow_path;
+> +	dev_t cow_dev;
+>  	unsigned int args_used, num_flush_bios =3D 1;
+>  	blk_mode_t origin_mode =3D BLK_OPEN_READ;
+> =20
+> @@ -1276,15 +1277,21 @@ static int snapshot_ctr(struct dm_target *ti, uns=
+igned int argc, char **argv)
+>  	argv++;
+>  	argc--;
+> =20
+> -	r =3D dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow=
+);
+> +	r =3D dm_devt_from_path(cow_path, &cow_dev);
+>  	if (r) {
+>  		ti->error =3D "Cannot get COW device";
+>  		goto bad_cow;
+>  	}
+> -	if (s->cow->bdev && s->cow->bdev =3D=3D s->origin->bdev) {
+> +	if (cow_dev =3D=3D s->origin->bdev->bd_dev) {
+>  		ti->error =3D "COW device cannot be the same as origin device";
+>  		r =3D -EINVAL;
+> -		goto bad_store;
+> +		goto bad_cow;
+> +	}
+> +
+> +	r =3D dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow=
+);
+> +	if (r) {
+> +		ti->error =3D "Cannot get COW device";
+> +		goto bad_cow;
+>  	}
 
-Fix this by resolving cow_path to a dev_t via dm_devt_from_path() and
-verifying that it does not match s->origin->bdev->bd_dev before calling
-dm_get_device() for the COW device.
+[Severity: Critical]
+Could a race between the two path lookups still trigger the use-after-free =
+on
+s->origin and leak the device reference?
 
-Fixes: 26110d5afe81 ("dm-snap: simplify the origin_dev == cow_dev check in snapshot_ctr")
-Reported-by: syzbot+8e6fc64255334ccf3ab3@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=8e6fc64255334ccf3ab3
-Signed-off-by: Igor Putko <igorpetindev@gmail.com>
----
- drivers/md/dm-snap.c | 13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+When cow_path is a filesystem path rather than a major:minor string,
+snapshot_ctr() first resolves it via dm_devt_from_path() -> lookup_bdev() ->
+kern_path(), reads inode->i_rdev, and drops the path reference via
+path_put().
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 7c3725e4ac54..4a7c04c780d1 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1232,6 +1232,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	int i;
- 	int r = -EINVAL;
- 	char *origin_path, *cow_path;
-+	dev_t cow_dev;
- 	unsigned int args_used, num_flush_bios = 1;
- 	blk_mode_t origin_mode = BLK_OPEN_READ;
- 
-@@ -1274,15 +1275,21 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	argv++;
- 	argc--;
- 
--	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
-+	r = dm_devt_from_path(cow_path, &cow_dev);
- 	if (r) {
- 		ti->error = "Cannot get COW device";
- 		goto bad_cow;
- 	}
--	if (s->cow->bdev && s->cow->bdev == s->origin->bdev) {
-+	if (cow_dev == s->origin->bdev->bd_dev) {
- 		ti->error = "COW device cannot be the same as origin device";
- 		r = -EINVAL;
--		goto bad_store;
-+		goto bad_cow;
-+	}
-+
-+	r = dm_get_device(ti, cow_path, dm_table_get_mode(ti->table), &s->cow);
-+	if (r) {
-+		ti->error = "Cannot get COW device";
-+		goto bad_cow;
- 	}
- 
- 	r = dm_exception_store_create(ti, argc, argv, s, &args_used, &s->store);
--- 
-2.47.3
+Immediately afterwards, dm_get_device() resolves cow_path a second time:
 
+drivers/md/dm-table.c:dm_get_device() {
+	r =3D dm_devt_from_path(path, &dev);
+	if (r)
+		return r;
+	...
+	dd =3D find_device(&t->devices, dev);
+	if (!dd) {
+		...
+	} else if (dd->dm_dev->mode !=3D (mode | dd->dm_dev->mode)) {
+		r =3D upgrade_mode(dd, mode, t->md);
+		if (r)
+			return r;
+	}
+}
+
+If cow_path (such as a symlink or block device node) is modified between the
+first lookup in snapshot_ctr() and the second lookup in dm_get_device() to
+point to the same block device as s->origin, find_device() matches the
+existing dm_dev_internal entry for s->origin and calls upgrade_mode():
+
+drivers/md/dm-table.c:upgrade_mode() {
+	old_dev =3D dd->dm_dev;
+
+	r =3D dm_get_table_device(md, dd->dm_dev->bdev->bd_dev,
+				dd->dm_dev->mode | new_mode, &new_dev);
+	if (r)
+		return r;
+
+	dd->dm_dev =3D new_dev;
+	dm_put_table_device(md, old_dev);
+}
+
+Because the post-open check comparing s->cow->bdev and s->origin->bdev was
+removed, wouldn't snapshot_ctr() continue execution with s->origin pointing
+to the freed old_dev, dereferencing freed slab memory in register_snapshot()
+(via snap->origin->bdev) or dm_put_device(), while also leaking the referen=
+ce
+on dd in ti->table->devices when dm_put_device(ti, s->origin) fails to find
+the replaced dm_dev?
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261024161459.5539=
+-1-igorpetindev@gmail.com?part=3D1
