@@ -1,56 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.44
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793019925;
-	b=Nk9vv7hmOQtmhzylyQ8Ve+y/fKMqrozMsA0woKlGmOH51c6RCqLTfM+iUaaUQvc30GGp
-	 /jbzAsXTQ4jbMDVLc1KHG9o4Zxx5Y7slK6tE5BFn9QXnrzJhOjBRv6F+mIodL1u11SzRs
-	 syTvkqprA1hHGHEhwrAYpOxm0L+IChLiaoTnSVr5/7Nfb04XmFbN9lHOTrTvEJngaEGtZ
-	 xcB9p3uRbHw5CgVONsVwlXO6nIpQJrybKM0EpoTbdcuwhyAGxWFTj3E8rPjIoFmHRRHpA
-	 4JfQLk9+Tu3z4/etwYIFhDGn+cAwU44v8thAcm6AsAZlw7rcquoEToT8UYbBLm7Ajxg==
+	t=1793037900;
+	b=exf/mOsRI3U/8EjlrXXUQJJR4haxQ0OMdV7ccg4aJx6b+fVCSpOy2C8mLqvM+M4HAmH/
+	 GBqHIG6KggHeKtRyg/1gmlPGVyGCrVZU+J/uGnQMzf3eKet28+rwkbqpmVkGxvomBwS6B
+	 KvQypuFNcQdt9u1xsRQzjYx6lWVE9+Ns36oDDJyj6R6eO2pn6B7xDYDwhaYEW6ckm7T9g
+	 V408W1BgTpTrNvz6l68Lgr3MXQF/WfpNbQGti/0lzhd75jfBm0fSc1eqUiDXx2+lVQwGd
+	 DcodY0oPVVzbxMdLueYLNb25e9B1B+Ebx0pt6Mb+eSdlrTnkzD2PNzBLFqGfpNYxH7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793019925;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=6szwWT0QzBZzb+/APZDYs8BFk+Phr0ePbCUVZoCv8i8=;
-	b=Uu94qoUhHQ7Wz7e675PSdD31Lw+XGvnrBPQysuVVf7SCN8k5Z3g34iDfNU+Q5aACt6gr
-	 G0ty7wAwOHNAo4WLj0wpcR9aAmGAek/TmNo0gFPd8H+sVtKBDak3Z2bnqge+d7X4RoJiy
-	 QRZcFRuKDC26E7TGNZiQ/l+P9hbjbY+OL6/MrxFXg/n3rw4c8CyLrp174yn2sfsmYIZYp
-	 m8llTJeKcZNvpk54eUi0YT4hMy2Tx8birdMMtmuODU/2J2C4gqF/WkNfQEV/AL/Aa/rhO
-	 B8rooVgvEwsJa/rmkP8e7ZKVqB5f3vK64Ipx1nwAkp2XdRZFwsmtKfcjl+Rtde0xhLQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793037900;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding;
+	bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
+	b=0bIXjmsIgnEjn2W8Rx3G9UqS8oekYe+BoXkdwEZtCB4foUuBEgUvgA7ycCveaRmh7fYE
+	 7WeSHDtKlVFK9TDsNhqqhvaeBRTJ0lL2Q5cNyQvp0miGeJcp4Rpst94JCaKLdyDu0gbAM
+	 p/W4ZEbJS3MHYK85tJzqQMeZ2UAU98V0JbB/MTRaa24rJSiZKRYfb1rhOkhPu7k4n6c9K
+	 VBw9THBdWNxg0iqmzK9mgqq+k0NuiivOSozlQVrZ29i0F19A3uzqBj6OTPKoju3HV5SrW
+	 kUNGSv5EOLgsIOooadztgEvb4kK9JTFbc3NXC+pDrQ+tKL2+BxRF2FRpUdhmm5n5xEg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RNf0eHbK;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=purestorage.com;
+	spf=pass smtp.mailfrom=purestorage.com;
+	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b="d0ty/EnO";
+	arc=none smtp.remote-ip=74.125.82.44
+Received: from mail-dl1-f44.google.com (mail-dl1-f44.google.com [74.125.82.44])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33730606A31D
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 13:05:24 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3E98606A31A
+	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 18:04:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D3E98606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RNf0eHbK
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6745E1F01825;
-	Mon, 26 Oct 2026 13:05:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793019924;
-	bh=6szwWT0QzBZzb+/APZDYs8BFk+Phr0ePbCUVZoCv8i8=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=RNf0eHbKKEMIniMPTU4u0f6RZVAMIwhOlCkZsRppZVaTt2YK72aIiCyQdFOWaMnTo
-	 Sutty76qgoZNcyfMQkGUhnkfBbiIvDXhAkxjf0huNj0NgaoekLP0I3BR17h6odsBjQ
-	 EwBDnhM9a3tgw51k+sMhT5LrEkcOmIEb80vvft9S4So0euy/GZdLuKlvGcPo4oGINT
-	 V3eS4ZBotPUb2xhA8u4u7Lejw0b03sdtMcPfXif5UvG/WD2RONx5hs/wQ7k+zQOISY
-	 ffT9iQXwFZzBFkRLXBSejRPAUQYJpe+WOa5ccoS8ff1/VHgSjXxO7U8FcrsFt4LlFv
-	 rhm5gBTwTOJHw==
-Message-ID: <sashiko-outbox-185265@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] dm: reject aliased metadata/data and pool/origin
- devices
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Drif Abdelmalek Mohamed Said" <drifabdelmalekmohamedsaid@gmail.com>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, bmarzins@redhat.com, jason.cai.kern@gmail.com
-Cc: dm-devel@lists.linux.dev, syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
-In-Reply-To: <20261026125114.251-1-drifabdelmalekmohamedsaid@gmail.com>
-References: <20261026125114.251-1-drifabdelmalekmohamedsaid@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Mon, 26 Oct 2026 13:05:23 +0000
+	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=d0ty/EnO
+Received: by mail-dl1-f44.google.com with SMTP id a92af1059eb24-15ea896ddc8so5722992c88.0
+        for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 11:04:59 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1793037899; x=1793642699; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
+        b=d0ty/EnOa/JH0cM9uwCqa84wKfFprvIo5Xz40/Io4Aw4b0Gp8ugBTG5D/g9L+7ATTf
+         nNL9iOOHVRJo6Prmftqj0T+3nTV90iHGMTTrhTUNYytkQ6daGU+tpy6DE1LOHxkD02xi
+         66FgkhuQX5pNPPhaDXAC6FQor9dfpykAzpy/17wSP9nS4nQ+m8YM0wB7YJ3vJ3g9X8MC
+         ZOpr9YaLIohqlCVnM1VWJDLwRmzIXBvpTk3b+SyXTf6r/qHFNOIGl5NF20y5ntvs7j+8
+         tky/WIF+m4RQ+PXiJDJeNBc2QzUi1VWFp4GXezuS6n91oH6/uiLJ9xlNBfuBJAG+Uc6Z
+         igzw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793037899; x=1793642699;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
+        b=2tS18m9byK8GPMI9ItAcdi2U16KC1cjEzwTgK5YXhOzDzlEPcRmmXqGzYSV17Ar+Y3
+         eQjA0UWXflVL2/gKV4Y5GPceNOtYq+FAPnNWN/Q03TDZvE5jluEu+OgUNjdR95dIk8Nb
+         6MCoYFn1aMzee1TyUymMRmNbgQ9PUICCwYWcFiFecdUXVLq8TqY/Y44yBQEe1fMh2QJ3
+         2GUD2zwVthzPsHQGb6mIZ6B/T+Es5xGesY1wN4Tt38ktjg/jgrFJ2VYxg8D9kTZT5sWv
+         SxjYhkDTC1EmJIJGsC89icFGN6xm6O+2b8LBCPj5L+NH3AjGTzpQQNb/Zcc4l4PklTZy
+         g4vA==
+X-Forwarded-Encrypted: i=1; AKwUvByS/EbF5MHShsGKsPEbg041TDV5l273w0Z8Y68TnJWqmXQtej4uDdVXyM70i19ytPchgjA+UbgaYw==@lists.linux.dev
+X-Gm-Message-State: AFq9FYIKB4MgdW0RIBW1Jf+vqpQjWwNa41M7YimPi5TZhapkaoVZEjOh
+	ZZlKookeJxXqg9NefW8NZI8+Rx5d4NIU+/gIbr5mq2bkwKYcNPDjXIm8FTl4itIkGNM=
+X-Gm-Gg: AYBFou1UiZw7/zd9oWcnciKLOvtH6dF8gagjjMJgXE61NpM09xlgI1+eA6YwFPj5kw7
+	6/8098k8uCp7nGeZ3JKs8H2gOvHSNwsgOSr6iVJZ3LRRd6SxRYvNY1tGXaB/nuMpomz1dsvUi1q
+	xUEu+ypKToZ1q69OM8v50wqExbp2ZifDsVWb510nO6Vk7wnTbb1xMEoPzzcBbmpyY34jeSS8soc
+	eXKgyiWWcCl5wSgHcAu9stj3iMrd0/Zp1Xb3lZDSq1C19X91hdr5fOb+vsYFkKf01s/3yV3YQ4w
+	nbSfJBTdT1EVn7KjKwwOFKIV+tERgmae+MmHoCmsw5lcgdcJUgR6D95VlslMGU1xq4WNKhMCFnN
+	jKVfaGE/tG4OYE2haxU2kPXWiAfmONKpZc1rz0jeU8xTiLIdIe8Kdkn6xJ628s8xAnzJkDEN1s+
+	vBfhJF/NDJNmJnA9SFYtJrCutTB/+GdIxDZLmy+4z+NSN7IfRKxxasTOaaXTg7Go5Yn1+yPsikY
+	L8T3pEHwnGqLbhuqna5hFX3U8hNiYlzyJ4he79fzlYwdWTHIuwZEq7If2r7Yc+QgHp5EM65TYRs
+	lAqJrS/HUzk/AA2IqAOQTYcDamaf+OAhBmskw5BzPD9M/BM2xqwSVMsf/mv/uu0FBfN94Zkq17I
+	Ga2u1qEm7EVg4+C5SN5FfZkNaKjnfnYReoFIF9+hjLBLiRF0tOGEk
+X-Received: by 2002:a05:7022:eb57:10b0:196:bf5f:8bb with SMTP id a92af1059eb24-19936e34ba1mr11282177c88.45.1793037898526;
+        Mon, 26 Oct 2026 11:04:58 -0700 (PDT)
+Received: from brian--MacBookPro18.purestorage.com ([170.85.204.106])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-198a0f83cedsm32591997c88.13.2026.10.26.11.04.57
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Mon, 26 Oct 2026 11:04:57 -0700 (PDT)
+From: Brian Bunker <brian@purestorage.com>
+To: Martin Wilck <martin.wilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Brian Bunker <brian@purestorage.com>,
+	dm-devel@lists.linux.dev,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>
+Subject: Re: [PATCH v3 1/1] multipathd: don't leave maps read-only after write protect is cleared
+Date: Mon, 26 Oct 2026 11:04:41 -0700
+Message-ID: <20261026180444.31357-1-brian@purestorage.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
+References: <179261848556.617150.17378002460197797656.b4-review@b4> <20261021231959.69270-1-brian@purestorage.com> <20261021231959.69270-2-brian@purestorage.com> <179270025923.152861.15521453184442767016.b4-review@b4> <atqpOBViqKWLZ7Q3@redhat.com> <b018626bed433a84fbfa66c0c334cdb7bbbb53cd.camel@suse.com> <atvweCfhjWkT9i-U@redhat.com> <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,223 +100,45 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 3 potential issue(=
-s) to consider:
-- [High] dm thin: TOCTOU race between dm_devt_from_path() and dm_get_device=
-()
-- [Medium] dm thin: memory leak of struct thin_c on error paths in thin_ctr=
-()
-- [Low] dm thin: wrong ti->error messages in thin_ctr() and pool_ctr()
---
+On Mon, 2026-10-26 at 10:26 +0100, Martin Wilck wrote:
+> On Fri, 2026-10-23 at 19:40 -0400, Benjamin Marzinski wrote:
+> >
+> > I do still waver a bit on whether or not we could leave
+> > force_readonly
+> > set on failed reloads. Once a device turns read-only, it should stay
+> > that way until we get another uevent, at which point we will call
+> > needs_ro_update() again. Perhaps we just need to make sure that we
+> > clear
+> > force_readonly when needs_ro_update() returns false.
+>
+> AFAICS, this is exactly what Brian's v4 patch does. No?
 
-commit 1eca47222f62970abc013ee1decbccbb30099b93
-Author: Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>
+Mostly, yes. v4 sets force_readonly back in dm_addmap_reload() when a
+reload fails, so the next reload tries read-only again.
 
-dm: reject aliased metadata/data and pool/origin devices
+needs_ro_update() doesn't clear it on every false return, though. It
+clears it in the dmi.read_only == ro case only when both the map and
+the uevent are read-write and none of the map's paths is read-only. If
+a path is still read-only, the flag stays set, so a map whose read-only
+reload failed keeps retrying instead of staying read-write.
 
-This commit validates resolved device numbers with dm_devt_from_path() in
-pool_ctr() and thin_ctr() before opening the devices so that aliased
-metadata/data or pool/origin paths pointing to the same block device are
-rejected before upgrade_mode() can free an already-opened table_device.
+About dm_addmap_create(): agreed that the flag isn't needed for
+correctness there, since a new map opens all paths fresh and a
+read-write create fails with EROFS anyway. It only saves that first
+attempt. Create still clears the flag, so that a value set by
+ev_add_path() can't carry over to a later reload. I can drop the
+read-only shortcut in create if you'd prefer.
 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 358ed77ffb2be..281b2e1745c31 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -3292,6 +3292,8 @@ static int pool_ctr(struct dm_target *ti, unsigned =
-int argc, char **argv)
->  	dm_block_t low_water_blocks;
->  	struct dm_dev *metadata_dev;
->  	blk_mode_t metadata_mode;
-> +	dev_t metadata_devt;
-> +	dev_t data_devt;
-> =20
->  	/*
->  	 * FIXME Remove validation from scope of lock.
-> @@ -3314,6 +3316,22 @@ static int pool_ctr(struct dm_target *ti, unsigned=
- int argc, char **argv)
->  		goto out_unlock;
->  	}
-> =20
-> +	r =3D dm_devt_from_path(argv[0], &metadata_devt);
-> +	if (r) {
-> +		ti->error =3D "Error opening metadata block device";
-> +		goto out_unlock;
-> +	}
-> +	r =3D dm_devt_from_path(argv[1], &data_devt);
-> +	if (r) {
-> +		ti->error =3D "Error opening metadata data device";
-> +		goto out_unlock;
-> +	}
-> +	if (metadata_devt =3D=3D data_devt) {
-> +		ti->error =3D "Error setting metadata or data device";
-> +		r =3D -EINVAL;
-> +		goto out_unlock;
-> +	}
+Uday Shankar, who did 430f8f89, also suggested dropping force_readonly
+altogether, and tracking the ro state per path in sysfs_pathinfo()
+sounds like the right direction to me. But it changes behavior: every
+reload, not just the one done for a DISK_RO uevent, would follow the
+paths' ro state, and so would "multipath -r", since dm_addmap_reload()
+is in libmultipath. So I'd rather do it as a separate series on top of
+this fix, and keep this one small enough to backport.
 
-[Severity: High]
-Can a concurrent path modification between dm_devt_from_path() and
-dm_get_device() still trigger the same slab-use-after-free in pool_ctr() and
-thin_ctr()?
-
-When given a filesystem path rather than major:minor, dm_devt_from_path()
-calls lookup_bdev(), which resolves the path via kern_path(), reads
-inode->i_rdev, and immediately drops the path reference via path_put()
-without pinning the dentry or opening the block device:
-
-drivers/md/dm-table.c:dm_devt_from_path() {
-	if (sscanf(path, "%u:%u%c", &major, &minor, &dummy) =3D=3D 2) {
-		...
-	} else {
-		r =3D lookup_bdev(path, &dev);
-		...
-	}
-	*dev_p =3D dev;
-	return 0;
-}
-
-Later in pool_ctr() (and similarly in thin_ctr()), dm_get_device() calls
-dm_devt_from_path() -> lookup_bdev() a second time on each path string:
-
-drivers/md/dm-thin.c:pool_ctr() {
-	...
-	r =3D dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
-	...
-	r =3D dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev=
-);
-}
-
-Because no VFS lock or device reference is held across the pre-check and the
-dm_get_device() calls during dm_ctl_ioctl() -> table_load() ->
-populate_table() -> dm_table_add_target(), a concurrent symlink flip or blo=
-ck
-device node rename after the metadata_devt =3D=3D data_devt (or pool_devt =
-=3D=3D
-origin_devt) check passes can cause both dm_get_device() calls to resolve to
-the same dev_t.
-
-When the first dm_get_device() opens the device with BLK_OPEN_READ
-(metadata_dev in a read-only pool in pool_ctr(), or origin_dev in thin_ctr(=
-))
-and the second dm_get_device() opens the same dev_t with
-BLK_OPEN_READ | BLK_OPEN_WRITE, upgrade_mode() in drivers/md/dm-table.c
-replaces dd->dm_dev and frees old_dev via dm_put_table_device() ->
-close_table_device() -> kfree():
-
-drivers/md/dm-table.c:upgrade_mode() {
-	old_dev =3D dd->dm_dev;
-
-	r =3D dm_get_table_device(md, dd->dm_dev->bdev->bd_dev,
-				dd->dm_dev->mode | new_mode, &new_dev);
-	if (r)
-		return r;
-
-	dd->dm_dev =3D new_dev;
-	dm_put_table_device(md, old_dev);
-
-	return 0;
-}
-
-Wouldn't that leave metadata_dev in pool_ctr() or tc->origin_dev in
-thin_ctr() dangling before __pool_find(), thin target operations, or
-dm_put_device() dereference it?
-
-[ ... ]
-
-> @@ -4204,12 +4222,30 @@ static int thin_ctr(struct dm_target *ti, unsigne=
-d int argc, char **argv)
->  	tc->sort_bio_list =3D RB_ROOT;
-> =20
->  	if (argc =3D=3D 3) {
-> +		dev_t pool_devt;
-> +		dev_t origin_devt;
->  		if (!strcmp(argv[0], argv[2])) {
->  			ti->error =3D "Error setting origin device";
->  			r =3D -EINVAL;
->  			goto bad_origin_dev;
->  		}
-> =20
-> +		r =3D dm_devt_from_path(argv[0], &pool_devt);
-> +		if (r) {
-> +			ti->error =3D "Error opening metadata block device";
-> +			goto out_unlock;
-> +		}
-> +		r =3D dm_devt_from_path(argv[2], &origin_devt);
-> +		if (r) {
-> +			ti->error =3D "Error opening metadata data device";
-> +			goto out_unlock;
-> +		}
-> +		if (pool_devt =3D=3D origin_devt) {
-> +			ti->error =3D "Error setting metadata or data device";
-
-[Severity: Low]
-Are these ti->error strings in thin_ctr() and pool_ctr() copy-pasted from t=
-he
-metadata check?
-
-In thin_ctr() when argc =3D=3D 3, argv[0] is the pool device and argv[2] is=
- the
-origin device (where the surrounding checks use "Error setting origin devic=
-e",
-"Error opening origin device", and "Error opening pool device"), so reporti=
-ng
-metadata and data device errors when dm_devt_from_path(argv[0], &pool_devt)
-fails, dm_devt_from_path(argv[2], &origin_devt) fails, or pool_devt =3D=3D
-origin_devt looks mismatched.
-
-Similarly, in pool_ctr() when dm_devt_from_path(argv[1], &data_devt) fails =
-on
-the data device argv[1], ti->error is set to "Error opening metadata data
-device".
-
-> +			r =3D -EINVAL;
-> +			goto out_unlock;
-> +		}
-
-[Severity: Medium]
-Does jumping to out_unlock in these three new error paths in thin_ctr() leak
-tc?
-
-In drivers/md/dm-thin.c, thin_ctr() allocates tc before entering the
-argc =3D=3D 3 block:
-
-drivers/md/dm-thin.c:thin_ctr() {
-	...
-	tc =3D ti->private =3D kzalloc_obj(*tc);
-	if (!tc) {
-		ti->error =3D "Out of memory";
-		r =3D -ENOMEM;
-		goto out_unlock;
-	}
-	...
-	if (argc =3D=3D 3) {
-		...
-		if (!strcmp(argv[0], argv[2])) {
-			ti->error =3D "Error setting origin device";
-			r =3D -EINVAL;
-			goto bad_origin_dev;
-		}
-		...
-	}
-	...
-bad_origin_dev:
-	kfree(tc);
-out_unlock:
-	mutex_unlock(&dm_thin_pool_table.mutex);
-
-	return r;
-}
-
-When dm_ctl_ioctl() -> table_load() -> populate_table() ->
-dm_table_add_target() -> thin_ctr() is called with argc =3D=3D 3 and
-dm_devt_from_path(argv[0], &pool_devt) fails,
-dm_devt_from_path(argv[2], &origin_devt) fails, or pool_devt =3D=3D origin_=
-devt,
-jumping to out_unlock bypasses bad_origin_dev where kfree(tc) is called, and
-dm_table_add_target() does not invoke thin_dtr() on constructor failure.
-Should these three error paths jump to bad_origin_dev instead?
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261026125114.251-=
-1-drifabdelmalekmohamedsaid@gmail.com?part=3D1
+Brian
