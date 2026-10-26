@@ -1,71 +1,104 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=202.108.3.19
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.53
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792988511;
-	b=a/S818xKxpAM9m5lY5q4zIxC1PNjOd1xPqZFXZvU7UAnOOecVY1GfGA0zDDIbtdpmEtb
-	 5L0N3sBwbD7Xa6oKmTrhSe4WG6vLRv8qZTtwDoBwxNwPdtOE9xqK8zK6Sg41x5kM2H/uG
-	 aIjwuWRA13R5Q8ppD8s+cYBPPM9mx4r4Lo8CFXnD7n4aB8iw/WrapLU1JMvrZmBvxOK4L
-	 R0btvB0zVfwwQUHwoCO06hCtgPJmfPCP6GHc86AYYAz+wEmX3hJsl++i0bk3kHPND67C/
-	 Sw/z9tdc5e1s5d5EMSiEnyOXaS/+rthHWKDbfAoyTLE1jIVHXhMW7ltEjX7Xr4q8H1A==
+	t=1793006771;
+	b=r60qYJdfik/ueU/uGx/tAtx10QmKsz3/tVTKmXkgq5VktG6lmq60HQAIN97/6yvN1MsP
+	 1wEK6FT06EPBqdGJxo5LcNrE3Oe44tMKPb3M+YNmm9NlXNLKw+tgJ6Ng94bnQAtYtrxP/
+	 kISG1lSPzp+v/FqDRlpNpjFxWIEYj1T6aZmItosTkvFr4RZmDlawLc9lF/7mK5bIXsYYt
+	 eygObvOD3oEBTH5EaOSRKxiEP4o2PWv8eCWZt9v24/MxGvtVdElIg90Bfmx1KFjPV0G7F
+	 RD53HVgVf//Z+wkT1qLEK70+QFdIKNWM7QfAf80ZT1gjqncw3ONT/qLTyt73OghkHOQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792988511;
-	h=DMARC-Filter:DKIM-Signature:X-SMAIL-HELO:Received:X-Sender:X-Auth-ID:
-	 X-SMAIL-MID:X-SMAIL-UIID:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=CUCN+Yc9xrYZdlF3x/awRVSb0dFgGk0gG/fA1JFqvus=;
-	b=znG2vaqFjMblncA9xs1Pt+XaktON0RGSI2DORCU9ePdcsXmuTqeFqNS34+vEXtmsqcRn
-	 VDjbOanYjhK3JcKwxnTVaBNkP4oYT/zbeKmjyJ/BtOF5c0AyHq2lmyJorGjGmr4EnBDo+
-	 HSOljEY7V6n1iCFLIobNrOanqMtYpEZdH8/wdmPTIEw+2X7XhqbAzKLM8reNLDBLAr1by
-	 brhJUWK+6eGwYk4quBhEo0erQa+ytA/BvmCS/hTpfbaew8UL1qt1P7+knMlyIfUcl1KEi
-	 +iQDJ6pIJsBB4Y0lgTmnxtKbtfyk0wfeYLcwq8gjVhx4ig/6hxncbNr2xFoUhbn3p6Q==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793006771;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Message-ID:Subject:
+	 From:To:Cc:Date:In-Reply-To:References:Content-Type:
+	 Content-Transfer-Encoding:User-Agent:MIME-Version;
+	bh=mZnSBuWBaj9PwFWXvkEfOfP0P7NKmqZXRs1w6NnH/EQ=;
+	b=T+qpDoBD+kO5lNREQoz+wiJlj8pz5MySqTwmh2iVnwnqbyitPxok5OE1dqRY0epUl01s
+	 GhMgEROv8aIrK3srpXIkVKcZc57ax8lJSY2FAhTlnp5k/oDEDLCkxHimgxXkZYi3UeMkx
+	 rDSp1eithZ5k3l6ce4vVd3EjEGXhZDwRKrUzZOLliEYAN8kudCNAorY3qjz/cdu+Hi2Q7
+	 vE3z5e0p1ifjYueTT61eKRLcdGADMexoFLZ07GQxF02dwUAeCnJzT7mI3gW1fGgo+PhU3
+	 X1OaGiNc+ziRUlOrM83Get95V15Dhv2/GDqvrvTyXbUlx8KnrO/5pYNdDGDwi3gJahg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=sina.com;
-	spf=pass smtp.mailfrom=sina.com;
-	dkim=pass header.d=sina.com header.i=@sina.com header.a=rsa-sha256 header.s=201208 header.b=pxM64Bfl;
-	arc=none smtp.remote-ip=202.108.3.19
-Received: from r3-19.sinamail.sina.com.cn (r3-19.sinamail.sina.com.cn [202.108.3.19])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=pass header.from=suse.com;
+	spf=pass smtp.mailfrom=suse.com;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=eTGWIwgU;
+	arc=none smtp.remote-ip=209.85.128.53
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6D791606A328
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 04:21:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6D791606A328
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sina.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sina.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4759606A31A
+	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 09:26:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B4759606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=sina.com header.i=@sina.com header.a=rsa-sha256 header.s=201208 header.b=pxM64Bfl
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sina.com; s=201208; t=1792988509;
-	bh=CUCN+Yc9xrYZdlF3x/awRVSb0dFgGk0gG/fA1JFqvus=;
-	h=From:Subject:Date:Message-ID;
-	b=pxM64BflpUjulUaJ71Z0w8mLH8In6j2YzVSZVOF2CLg2OH3oB649BCGx5nNBsE+Zv
-	 2qx8GUgcZCG7KTonLXtbM+6nw6tbzMjK5R0rPfyUohTa6EXCuNdyEw0zVtDVMKmKhn
-	 ET52B9WFy+Zd/3XWvNe1i6nzu+piJXaICk7KO55k=
-X-SMAIL-HELO: lxu-ped-host..
-Received: from unknown (HELO lxu-ped-host..)([111.198.231.89])
-	by sina.com (10.54.253.32) with ESMTP
-	id 6ADED5510000216A; Mon, 26 Oct 2026 12:21:40 +0800 (CST)
-X-Sender: eadavis@sina.com
-X-Auth-ID: eadavis@sina.com
-Authentication-Results: sina.com;
-	 spf=none smtp.mailfrom=eadavis@sina.com;
-	 dkim=none header.i=none;
-	 dmarc=none action=none header.from=eadavis@sina.com
-X-SMAIL-MID: 6065414457132
-X-SMAIL-UIID: 2283B7CF7A9F49A08C918F959AAAB6EA-20261026-122140-1
-From: Edward Adam Davis <eadavis@sina.com>
-To: syzbot+a2626a25eb2595e3ec3c@syzkaller.appspotmail.com
-Cc: agk@redhat.com,
-	bmarzins@redhat.com,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	mpatocka@redhat.com,
-	snitzer@kernel.org,
-	syzkaller-bugs@googlegroups.com,
-	ejt@redhat.com
-Subject: [PATCH] dm: reject kcopyd client destory if it setup failed
-Date: Mon, 26 Oct 2026 12:21:37 +0800
-Message-ID: <20261026042137.178310-1-eadavis@sina.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <6addec28.412b1182.196980.00aa.GAE@google.com>
-References: <6addec28.412b1182.196980.00aa.GAE@google.com>
+	dkim=pass (2048-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=eTGWIwgU
+Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-4a59100fa83so7636005e9.0
+        for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 02:26:10 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=suse.com; s=google; t=1793006769; x=1793611569; darn=lists.linux.dev;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=mZnSBuWBaj9PwFWXvkEfOfP0P7NKmqZXRs1w6NnH/EQ=;
+        b=eTGWIwgU0OPHAkHSzx//C22imjUkNjOuFBCMslknvnEhpfJprBG565FJjvplA8nmbi
+         r4JiMEdOvjtt+NPIsUgshljEXwxqQ5cHkufF3Jp6U1vA0jRLASb6nsRlKPVHYvxloOdF
+         KmtnmQTIg9ZPZIaL78G1aeYcL0Wlzhf6ElaTBdK1dGcNK4FJN7FqSkYpSxwnhePX8j7q
+         zgb+yOIBwT3k9uR9unqs+HnlcEX9m3+Lw1Uc4u0x7ODQWceL/05CB5sAGpcXUMz7ECIs
+         Ngt1/SoUeOfLfmp2i80kmBOF6XJ3WqZyS4bfJGZ8pfAiHWsUOwomXYM02a5PcnzAUULU
+         eFEw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793006769; x=1793611569;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=mZnSBuWBaj9PwFWXvkEfOfP0P7NKmqZXRs1w6NnH/EQ=;
+        b=D8BrqWlecRp2wfrERGRvPCUMkU8la4j7B/n1CI5XA4CFA3tPE1KCrJbwpIM1P7+koG
+         LwM0/ZxQHaaLK8WSMfdf49MDrc4zPPmfTozJmiHsuLSl65EwFf4E/DvetGLAaciby2LZ
+         pe4FhIyoKNYqspH4UJ+6QAPX3DYtT/Ksu1z922Dp0DjOBi5cBMj4vrlkTMxXFCx6cIrQ
+         kySCLfUnoddIplMnSEfToUuF8pwmZa43lf6r894L/pLxziKPBjq1n7whDy06rq5QkK/1
+         Tn6TlFu5LTJeYKyHS9nMhbs2FyLhIg3xoAa501Jq+CJVQuAO312BqPxbjdkxuE7Gk+vq
+         gKdA==
+X-Gm-Message-State: AFq9FYIso8EZgrvWsRIY6TIbhez6qm0AZnDJqpJXDWsyxxgKqy4gZbdy
+	L9FMWZ/Efs+GPjV8URF7745ohiGAOT4Ck72HiP50yk2ohX+Uu/r5JlR3CU/q8nYZu6s=
+X-Gm-Gg: AYBFou1o7hoZ7SyDaXtK+kAcbSguq1aURtFCwZR87Oh1OXxXmaYXid7tN5s90IPlRxJ
+	LBlCK1uA1i4efWCMnfzVvxO5wPYLx17aIQJZxcPYoR/ppqHP1pMgetLeKXnXvVP3/2XCjTo1mac
+	CLiLqLzTz/tq4sRiMcqFM2k9CCAQ3bmZb4BNjG+bkYwH/QTyLFFlsxZaqSIcMnrld9o/id/CEQv
+	aFbn0mav+Fefz7tQj8xoONg0F8E2QsUgS2VAx9COOHN0IUS6X8axM8V2FKlUA0svCP+YlejiZyv
+	VrcVcP3k8ZEQHMs8EmjG8wHTwChEvEJmiSoId/77uL36cl87v+Tshj6QsKUC6U/gCgmSyecx6wZ
+	LH46YwOWZ6LzEr2GAcsk1+tI1L/hEvDbKX1+0/1cjTAtG3ke+Xt9Qykp32hEsoQ7AS19Zm104xv
+	lTuHNqABEZT7EBDKy8gxwAhB39FT+Lz8ebbSs4quvD1DuhT/QBM3TB1A1tHulkyOduVjCWMEs4q
+	24GoKtbQHK7AhpLs+uPPTvx9OSd24Hr9phA9cW/Fnm25jwxVwhlQNgZx3RdnX+/iCgPVzQhUgUt
+	YYf0FncRU0gFifO+nFAr8Ww9i0x5dtscPOvCwq7C8Xdgbac0qv0uIPt1UeiEBREXKg225AN8Y+g
+	UKrKcjMMb2XM1lO2FGL39IhmojHdSFWMfyeyNnNcSklcuofEw
+X-Received: by 2002:a05:600c:3541:b0:4a1:fa27:df7c with SMTP id 5b1f17b1804b1-4a35acc76eemr105162735e9.34.1793006768826;
+        Mon, 26 Oct 2026 02:26:08 -0700 (PDT)
+Received: from p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de (p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de. [2003:de:3717:2700:e7f8:85d7:29fa:4be7])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e3ecd39a9sm15523163f8f.46.2026.10.26.02.26.07
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 26 Oct 2026 02:26:08 -0700 (PDT)
+Message-ID: <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
+Subject: Re: [PATCH v3 1/1] multipathd: don't leave maps read-only after
+ write protect is cleared
+From: Martin Wilck <martin.wilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Brian Bunker
+	 <brian@purestorage.com>
+Cc: dm-devel@lists.linux.dev, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Date: Mon, 26 Oct 2026 10:26:07 +0100
+In-Reply-To: <atvweCfhjWkT9i-U@redhat.com>
+References: <179261848556.617150.17378002460197797656.b4-review@b4>
+	 <20261021231959.69270-1-brian@purestorage.com>
+	 <20261021231959.69270-2-brian@purestorage.com>
+	 <179270025923.152861.15521453184442767016.b4-review@b4>
+	 <atqpOBViqKWLZ7Q3@redhat.com>
+	 <b018626bed433a84fbfa66c0c334cdb7bbbb53cd.camel@suse.com>
+	 <atvweCfhjWkT9i-U@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.62.1 
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -75,47 +108,25 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-The value of cache->copier is -EINTR when failed to create a rescuer
-kthread for wq kcopyd, in cache_create(), the code jumps directly to
-__destroy(cache), it merely performs a simple check to see whether copier
-is NULL, potentially hitting:
+On Fri, 2026-10-23 at 19:40 -0400, Benjamin Marzinski wrote:
+>=20
+> I do still waver a bit on whether or not we could leave
+> force_readonly
+> set on failed reloads. Once a device turns read-only, it should stay
+> that way until we get another uevent, at which point we will call
+> needs_ro_update() again. Perhaps we just need to make sure that we
+> clear
+> force_readonly when needs_ro_update() returns false.
 
-BUG: KASAN: null-ptr-deref in dm_kcopyd_client_destroy+0xae/0x480 drivers/md/dm-kcopyd.c:980
-Read of size 4 at addr 0000000000000174 by task syz.2.19/6560
-Call Trace:
- dm_kcopyd_client_destroy+0xae/0x480 drivers/md/dm-kcopyd.c:980
- __destroy+0x172/0x2f0 drivers/md/dm-cache-target.c:1973
- cache_create drivers/md/dm-cache-target.c:2604 [inline]
- cache_ctr+0x1674/0x2bf0 drivers/md/dm-cache-target.c:2649
- dm_table_add_target+0x58d/0xc70 drivers/md/dm-table.c:749
- populate_table drivers/md/dm-ioctl.c:1602 [inline]
- table_load+0x325/0x8a0 drivers/md/dm-ioctl.c:1645
- ctl_ioctl drivers/md/dm-ioctl.c:2221 [inline]
+AFAICS, this is exactly what Brian's v4 patch does. No?
 
-Set copier to NULL to avoid destroying a invalid kcopy client.
+Martin
 
-Fixes: c6b4fcbad044 ("dm: add cache target")
-Reported-by: syzbot+a2626a25eb2595e3ec3c@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=a2626a25eb2595e3ec3c
-Signed-off-by: Edward Adam Davis <eadavis@sina.com>
----
- drivers/md/dm-cache-target.c | 1 +
- 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 1a5072425c4a..b562bf59124c 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -2544,6 +2544,7 @@ static int cache_create(struct cache_args *ca, struct cache **result)
- 	if (IS_ERR(cache->copier)) {
- 		*error = "could not create kcopyd client";
- 		r = PTR_ERR(cache->copier);
-+		cache->copier = NULL;
- 		goto bad;
- 	}
- 
--- 
-2.43.0
-
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
