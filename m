@@ -1,76 +1,68 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793054446;
-	b=t8RxTjuA11u+URYICytyUT9zbhV3S7jbWi46yHsO2KlWBZ4D5fGL9zxjhS2Ozwm6FiS+
-	 QNaWdNw8iqjQ/nAeXIrICDPO0xvIRIZf1/+yqyrm0OIxn096qtkS1z+SZuP4sf2PGN/Le
-	 THrGmHMO9TTwYGTMbI1tHrczLwVre7SS4U5c+/oCss7B3XuCa9x85vPpDF/6P5TIF3z8W
-	 f31oCNWSe7UQIe6V8TKpgwo1+ezLd0wbSQMEpJGMfgLKV3apP+AXOn9Jc/AuszBE/zi/F
-	 hf0OZIPxeayqIzNmjD2UXoTFUVDOg0gpiGfgIUJZkIXznNHStzf7t9g1JLFEAt6M5qg==
+	t=1793058932;
+	b=YQViq9JxtW0mJRfHg9AXPnSQ8scZKMAldrq6I/yjNqkCfq++tlC70zgJs+G09ZpQRZIE
+	 uNxHhfxZPoqf1vqWMpfl9iP85Zz3Tw5FsgvzH7eOULnZ6T/TSjhdO+wkayB9Mm+yrnqIZ
+	 HzGAzg/uA+i7QyH4gS1tphWaGJ5UJMlyrgDV8E9vN7RwXysicGT4gWI9wtmSEnMZgqosM
+	 VHpbm+sM/fmxc2mevC3yg/jGJYiSx6WHkNuIAYAeHDt1vXm2ZRokWVixyzkBcjXM9X1K+
+	 z8/CGQLLLs+qK4Y0a+TI9obAkgZ03xhI0EXuGaCx34u3fEHNVSpk2G4a4ndg74sHY2w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793054446;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=YP6wRYFIhZCRxP4D9VfxK3+WFpB2i8jRHWk/LlwwL9s=;
-	b=wGb7o5H228anQMdnq7WsoWFjXP14hB9KNVuJnZga5WcDjkX0O9oqvgd9MYOi+2k7SlKO
-	 keXNcjcKdmo1GwJlm93ienahNl4KAwhAoGOVlDRpdVgnsz8ZGqP0+OnOIgj7fipZpGDxl
-	 2md5WrEPJ+unyDYpcjLo6s8FpUwU3KXV4kpSXvGIJbWBSYShEDBUylQm0cqTIoD6udDJv
-	 Y1OEdZD+j4hp+32GgE2euCMaiMpTtF5UX6vtxW474eiiH7eyJJPb2hNvrDuRI5554Hjyw
-	 IS4sFSYaQvh5QlpnvvXvOoJISp7lgf1J5tjPgArTsF/Pbown3nRKP5n+7AN2fVz/n7A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793058932;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=VynIgSurKHQaOCUBkhJuuPI91r+51atCbpgVjkqWOnM=;
+	b=RXVz5+Ur6yKBAlXpUg8OjjqL3XJFS8Ke3TFwruzDSWvarhpX15Wb6DXGg6RkfzZr/ZT/
+	 h4bdS1k96mgvPKZZ0U6BcxTjyQQdVw0/xjeplY70cwgCnh05xO0Ffs9MpdHLhn0TkXsbX
+	 zD7aa9HotBkOtTSOsnF6T1QK+xMajQN6BI8rKdLArCnU0f7lmkhQa4Jn8d5xqA7cFM/Px
+	 RETfugZh7Bxn03xgIhhn8qa8wIbav1G3M37foPR1edBvR7I9+ln+LPrtyRzlYIeD+pUBD
+	 66cd7cdFV1YESi/tZyUDuGPSIhaU2TWWfiXlZvKnBFsh12Aisw+PixnALE53oQuLC7Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="WgCTP9/m";
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eoGYorJ7;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5100F606A31D
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 22:40:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5100F606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD925606A31B;
+	Mon, 26 Oct 2026 23:55:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=WgCTP9/m
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793054445;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YP6wRYFIhZCRxP4D9VfxK3+WFpB2i8jRHWk/LlwwL9s=;
-	b=WgCTP9/mwcYeS3hmuFSEak5X3/Ruw9vvjgKd64Pd/ICT/5GJgT2PsPCcu/D6hV8anduITU
-	T81L8n9khL7JVQa/9VyLW6MXHET4p84wsxJtJGRdFQ9VK8tPn3/pcSJkljtAQ+0mQXmQul
-	mZgD1EDY/XjLXXcEq7rKJxKk24wNxgI=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-655-T05W93ZXMuSzeTTiDwmXRA-1; Mon,
- 26 Oct 2026 18:40:36 -0400
-X-MC-Unique: T05W93ZXMuSzeTTiDwmXRA-1
-X-Mimecast-MFC-AGG-ID: T05W93ZXMuSzeTTiDwmXRA_1793054434
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 675CE1800146;
-	Mon, 26 Oct 2026 22:40:34 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EE1E5300019F;
-	Mon, 26 Oct 2026 22:40:31 +0000 (UTC)
-Date: Mon, 26 Oct 2026 23:40:29 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Eduard Zateev <hackerowskiy@gmail.com>, 
-    Rahul Rao <shreeramrahul94@gmail.com>, 
-    Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>
-cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org, 
-    bmarzins@redhat.com, linux-kernel@vger.kernel.org, 
-    syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
-Subject: Re: [PATCH] dm thin: reject metadata and data device aliases
-In-Reply-To: <20261026102740.241243-1-hackerowskiy@gmail.com>
-Message-ID: <db1a5df3-c7b7-9e63-73c8-e75659295171@redhat.com>
-References: <20261026102740.241243-1-hackerowskiy@gmail.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eoGYorJ7
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4B0371F01825;
+	Mon, 26 Oct 2026 23:55:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793058931;
+	bh=VynIgSurKHQaOCUBkhJuuPI91r+51atCbpgVjkqWOnM=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=eoGYorJ7zvT8PcPJ1fs23u46Fhju/bkcw33/56WLZauBwe0CiVgIPS8uq+13xNP5C
+	 iq287Rm5RDqUJFitdyuCVhomIE/WZxYUqYATsKVhYXZcNQUS4KP0YEmQJj7qG6WKps
+	 PDCpiAmlYi9tzUvXrefuWbc8nNUNnuEBdIMZZ+dgPJbxn0TVSjD3SuSkEBInURKZhE
+	 u3XnjUZWPAZJP1V1uueG5Ov36zPXbNG2rhU+/tz6f/e2mxAlgaYMlLOtUpU0XEAvXM
+	 tz19eiItvTGMLR1d5YYW/reWzyBkD8WETi5UE0n/nD9TEqp4DucpujBbl4v3l4VQ11
+	 1HpjkOIbBDhog==
+Date: Mon, 26 Oct 2026 16:55:28 -0700
+From: Eric Biggers <ebiggers@kernel.org>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>, Thomas Graf <tgraf@suug.ch>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>,
+	open list <linux-kernel@vger.kernel.org>,
+	"open list:FSVERITY: READ-ONLY FILE-BASED AUTHENTICITY PRO..." <fsverity@lists.linux.dev>,
+	"open list:RHASHTABLE" <linux-crypto@vger.kernel.org>,
+	"open list:SECURITY SUBSYSTEM" <linux-security-module@vger.kernel.org>,
+	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
+Subject: Re: [PATCH v3 4/6] KEYS: Introduce keyring_is_empty()
+Message-ID: <20261026235528.GA2395@quark>
+References: <20261025001105.1824178-1-jarkko@kernel.org>
+ <20261025001105.1824178-5-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -80,95 +72,23 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: G9-tZg-hGL5bDuMcmpxMEBpvtjaJaSNjnCh3vNcc0VQ_1793054434
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261025001105.1824178-5-jarkko@kernel.org>
 
-Hi
+On Sun, Oct 25, 2026 at 03:10:12AM +0300, Jarkko Sakkinen wrote:
+> +/**
+> + * keyring_is_empty - Check whether a keyring contains any links
+> + * @keyring: The keyring to check.
+> + */
 
-If dm_get_device spuriously closes a device that was already open, it is a 
-bug in dm_get_device and it should be fixed there.
+"contains any links" => "contains no links"?  Or even just "is empty".
+Otherwise it sounds backwards.
 
-Note that we got 3 patches for this syzbot warning from 3 different 
-people. Please, cooperate next time and send just one patch.
+Note that another "is the keyring empty" check just showed up in
+mainline in kernel/bpf/keys.c.  So a new version of this patch will be
+needed to update that one too.
 
-Mikulas
+Otherwise this patch looks good.
 
-
-On Mon, 26 Oct 2026, Eduard Zateev wrote:
-
-> From: angel <angel@localhost.localdomain>
-> 
-> The thin-pool target rejects identical argument strings, but two names for
-> the same block device bypass the check. In read-only metadata mode, opening
-> metadata first and data with write mode invokes dm_get_device()
-> upgrade_mode().
-> That swaps and frees the old dm_dev while pool_ctr retains metadata_dev,
-> causing a slab-use-after-free when __pool_find() reads metadata_dev->bdev.
-> 
-> Open the data device before metadata so an alias cannot trigger a mode
-> upgrade between the two references. Compare the opened block devices
-> and reject aliases before using either device. Adjust the error paths to
-> release the devices in the matching order.
-> 
-> Reported-by: syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=83827f9a59abe148bff4
-> Fixes: 70de2cbda8a5 ("dm thin: add sanity checks to thin-pool and external snapshot creation")
-> Signed-off-by: Eduard Zateev <hackerowskiy@gmail.com>
-> ---
->  drivers/md/dm-thin.c | 21 ++++++++++++++-------
->  1 file changed, 14 insertions(+), 7 deletions(-)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 358ed77ff..0899cbaf9 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -3326,17 +3326,24 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  
->  	metadata_mode = BLK_OPEN_READ |
->  		((pf.mode == PM_READ_ONLY) ? 0 : BLK_OPEN_WRITE);
-> +	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
-> +	if (r) {
-> +		ti->error = "Error getting data device";
-> +		goto out_unlock;
-> +	}
-> +
->  	r = dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
->  	if (r) {
->  		ti->error = "Error opening metadata block device";
-> -		goto out_unlock;
-> +		goto out_data;
->  	}
->  	warn_if_metadata_device_too_big(metadata_dev->bdev);
->  
-> -	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
-> -	if (r) {
-> -		ti->error = "Error getting data device";
-> -		goto out_metadata;
-> +	/* make sure metadata and data are different devices */
-> +	if (metadata_dev->bdev == data_dev->bdev) {
-> +		ti->error = "Error setting metadata or data device";
-> +		r = -EINVAL;
-> +		goto out;
->  	}
->  
->  	if (kstrtoul(argv[2], 10, &block_size) || !block_size ||
-> @@ -3426,9 +3433,9 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  out_free_pt:
->  	kfree(pt);
->  out:
-> -	dm_put_device(ti, data_dev);
-> -out_metadata:
->  	dm_put_device(ti, metadata_dev);
-> +out_data:
-> +	dm_put_device(ti, data_dev);
->  out_unlock:
->  	mutex_unlock(&dm_thin_pool_table.mutex);
->  
-> 
-> base-commit: 21a7f44fd0765fcc5194130b28767786eba1d1e7
-> -- 
-> 2.56.0
-> 
-
+- Eric
