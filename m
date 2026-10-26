@@ -1,95 +1,56 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.229.7
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792973129;
-	b=IAY/vf0D0M+el1MwMkMTn6GxlrF09ELG16nSDiYr7IOutlvvQ25a2wInOg28gDRPHSMW
-	 Oj72GnPR6k0jjclr+IvkeuKjZxlSwg17lunTOFKKT3K9IPxu1vjkJWo9f6vHoeOLRV9je
-	 fz4Vxp7f7gD48s0NN0/CJioCZfyFeU0dFcG4P35gj3Q2+FwPP9MzQf0DGjb1c+wEGimOT
-	 52fSzBgeRiEeb1qz/g+9gtvKnFrkMedAdutj0UnTofFth6TTybDQs9qBxUDgDVzQvl1g8
-	 mSCC6otUarWOqtzHfF6ILsCkYkH/hdRHNb1kj0f9G3DUgj6MC/ZeWpWiIanvYTcz9TA==
+	t=1792974156;
+	b=xbY+urVAnohxHFQbe8TOzSyCljlMBaUU1TxrRyLgPl1yXUMTdyKU74tXF17hwpKgFDEX
+	 mNqrrghhMQOsHLTHKiKi+pWIY3j41HFqReg9/xjtQwy/3R/QS7NG4EvzHShDJVu5P6Bdr
+	 CIq68VWQl9GjpTbIfVvuPMpLB9gQrWtFADVK1czwyOQPgeAwi/FWB6juSwC254a2OwOWw
+	 qFIGOdsqPXwv87/YTg2DLcXjJmG7kmmthFuJqL4pNw37MTRIF297Sgmg40V+0jc/8HwzU
+	 sIOqw7jdQJtDsD/JDcQbvI4pBoS/m20idlP3uZl56pPCSyzmkb5Ux1aXyGMREijzVag==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792973129;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=T1XZ1WfHH7XnOv0sWlDb4paoPJtD91jpUpFHrBDh51s=;
-	b=vbgPoY/6oejnIe0ARgOj9fMkQk7OQEfmK+6UNxn0KYT4EFELgMmbt/ttK1lWkKQ5Q8DW
-	 p/cgcrs/va9CGRdPMyyskoLdPi5jXADf4pHIRDpBwDI3tPNR5kU4kBe9muK/LX8YeSzGH
-	 UHmEJUallEG5In/UNkh5CO6WmSCcRiV7uQsEgALcMRhAnPmmwrA7MS92em5vSmXzIkuL4
-	 B88ilqSDLeesEFZsO82+/fbhDGZho28aBddMG8TwzGWSDwGy9GoP0v2t+rThTZMsfmlCp
-	 DTDSlAZQ6+fWczJb6PmVE/JHx/bRINSfHzw5dEEhfwSFL/2/hF8FvCtIfy1Il5pDDIA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792974156;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=5zupIBKtZCHsLd3NEPNe8A9I1VJniBLcoDSyVg4vOEA=;
+	b=wdnygmakpqeClALdEPjeykKmZPG69dCEVrDtjEB5UtkO5BtoMiXrFTVhfDqzJ2HXJ57E
+	 tXFbpOd6k7xp3q1UsFX7+FLZDruvifYaiIg3oUwtJMRyPP9nV4UISg0sAd/3MaOyfg3vT
+	 Acs7GtYx9UUEwcFJsek7TzzLyKW1GwAuFqTZzgYRscwSBIL6Xsha1NL56UzaxLbYKinnF
+	 f9brZWxiPbTQd4Fh4pGw/MtpMQgi9QGf/KQfB418PIEdDNey63fslYma3uxNNetSOjRqE
+	 T4+TnvaCYnIZxregx3B5TcAeUb5md1zll2e+eq31dCzbfHYkeg0wuCjppRwF3ctSicw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=dMY3lPHk;
-	arc=none smtp.remote-ip=74.125.229.7
-Received: from mail-dy2-f7.google.com (mail-dy2-f7.google.com [74.125.229.7])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Poloigkd;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8CBB606A31D
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 00:05:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D8CBB606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3744E606A31A
+	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 00:22:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=dMY3lPHk
-Received: by mail-dy2-f7.google.com with SMTP id 5a478bee46e88-369f30a96acso720655eec.0
-        for <dm-devel@lists.linux.dev>; Sun, 25 Oct 2026 17:05:28 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792973128; x=1793577928; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=T1XZ1WfHH7XnOv0sWlDb4paoPJtD91jpUpFHrBDh51s=;
-        b=dMY3lPHk9Qpiw49NDulT2Jml5CtiRDGXgVeRYUMzxLSLYV+xN5HyS9F8mq2rLygruM
-         cLkzLLS4lzj9iR85trDsNF2gqaEwiayDeXr6FQ6n/Fv93+ablrGBRSUzoUzNngl33faq
-         z1Cgbu6Q2MqF6kl/d19hOjjbylMl1selBjM2tRKbg+rQd5DhEvWx8o0/XxwFYTSiQvwL
-         oux7BAjk8U+speJ5hUZiva9tZLbtTSIwNMwUKuhcLPSb/0E9A3p8l0PA58a7n42DXkLV
-         9lVWd3e+vqIa9034E1nlMIfs+X048Mpqu8ocI3XN+B/+5FlPJ+umQtpZL5oiwzqkW4lD
-         +71g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792973128; x=1793577928;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=T1XZ1WfHH7XnOv0sWlDb4paoPJtD91jpUpFHrBDh51s=;
-        b=CvrrSGpKqcd0mYuh+DyfGh9tPWVEQjGPT+mu9RkMVp0HyGZ+mLEdkecwLsJRCCOL0/
-         NT8v/5/rwM9dj0fumTDnVo3s7GJsu8LawcC/m+SDxIsUUu+s1t/Y0HOqREU7QyF6yKH3
-         TjqiCDIPPjkReIpuADUMkFAxwEzUSX11zevOnGNMr+yYMRPI6B989lmp0bVXNkKkARuQ
-         07QkYkOVuzYZeuNob4mTK7X0YYoapOsuNxcQhnN89np8lafDEg0bvWh0ez94BYN6Krne
-         S9ItP5OZ8n02x0f8dGVQ7ql86FcZ+rzVwvXXRubappugj8wgrov+FTiCYCeeaMbMnYYy
-         ftuw==
-X-Forwarded-Encrypted: i=1; AKwUvBy6MFiidukz16P56M6uuJw0LFjV3uE9lM89NZC6yXDBowgU+Ijyf7oZq9++MQF0BGajtcGfxLBqGg==@lists.linux.dev
-X-Gm-Message-State: AFq9FYKJU4ERVAWYvWAOhJ5XQQU/JamnKoIuumjFwkuuIHS9ochPNzbQ
-	gm+xlZuizWij1dXQb2obl062zy0slyF3orothHV7BQrrrU0wO1Ru9zDN
-X-Gm-Gg: AYBFou1ZpHxzBTFHnJtUU6gpZoo9CRHEYBhPn7RoMWkXTdx4zFkJ6QfTAecv0C9Bff9
-	r/57nRqMJW3R1t0sqskr6rwdgImnBHRVo2RTd5ArZ5mcNVVCFetRgrufxZ7p06FRNmSYhEXch3H
-	MdGW51s9Gz1umwP0khsSf4xQKlGQknkrlgEqz/JB1ChETiHFDib0KzV0uG9iBXc3K+7fZcd85D1
-	7F/JPDQYP90/LW5tWNSTmGb17AtxO9fpTgqr1ae40HMhQI51jZA2DyYpv03ew7T0QZp7XkvF6LO
-	45fFetMITrmTnGBnJRehtlTK6q8gU4XojIJR601dfp/k6qsJ608uGU5o5h6TAX5f63lTJk/OI36
-	wXGB0Z3jWbPICp10XCyc8pHW/Su8t2Xhh/AU7wvOOckCgzGj7CIBgEerlibLZYf6fy6rwq0w99f
-	hSAbgOSdmy1vxfj6gbJkgUfShgOlZel1NEwZFDoUYiBA88O9SftEDNpQx6g1rXkJsJIHtHsz6gu
-	/CNseTPyLZA6ri4WHLy4e8VgXs/jd+V67z9S6p2UbjixrDD3hsSrNVrWKfMA3p4mYWYVgGpz3bb
-	JONO5tM=
-X-Received: by 2002:a05:7022:3f07:b0:144:fa57:c617 with SMTP id a92af1059eb24-19935dd7f53mr9109408c88.34.1792973127715;
-        Sun, 25 Oct 2026 17:05:27 -0700 (PDT)
-Received: from localhost.localdomain ([98.148.34.5])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1989ff2ee69sm26698531c88.4.2026.10.25.17.05.27
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 25 Oct 2026 17:05:27 -0700 (PDT)
-From: Hungyu Lin <dennylin0707@gmail.com>
-To: axboe@kernel.dk
-Cc: linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	mtsai@redhat.com,
-	colyli@suse.de,
-	stable@vger.kernel.org,
-	dennylin0707@gmail.com
-Subject: [PATCH] block: fix discard alignment for non-power-of-two granularities
-Date: Mon, 26 Oct 2026 00:05:11 +0000
-Message-ID: <20261026000511.73371-1-dennylin0707@gmail.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Poloigkd
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 91F2A1F01825;
+	Mon, 26 Oct 2026 00:22:35 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792974155;
+	bh=5zupIBKtZCHsLd3NEPNe8A9I1VJniBLcoDSyVg4vOEA=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=Poloigkd2Q6tg0FQveFM0NTIgJaI8KjiUDyHm3H0jRBFswtHhX/C92LiCpzlkA7z6
+	 6LEfB7BBO121TyE1LSOiZmkLXgQBoMR3BnFXO2aYQi4b69QPox04+j/nxeItqLeGhq
+	 hdo+f1RxUikzWOQ7Btoa1tBFZFw7utVoG/j61AqgJ7eSKhG1RL0NmKr8lDeuKErn1s
+	 2CFvmKg/lSTQIDz6gQajJmXVdHXD4xhnfMNaFGEeGN7n1mVUo9tUusQrWOhn9fyYFh
+	 dnrpC6vmYr89NW9I9hv2cdFTizXTNp5VuWs/LlhosMjMJUfvl3aQlkM9Xrwmhv35F/
+	 KLbPTi4MhVI8A==
+Message-ID: <sashiko-outbox-184561@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH] block: fix discard alignment for non-power-of-two
+ granularities
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Hungyu Lin" <dennylin0707@gmail.com>, axboe@kernel.dk
+Cc: dm-devel@lists.linux.dev, mtsai@redhat.com, colyli@suse.de
+In-Reply-To: <20261026000511.73371-1-dennylin0707@gmail.com>
+References: <20261026000511.73371-1-dennylin0707@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Mon, 26 Oct 2026 00:22:35 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -98,67 +59,116 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-bio_discard_limit() uses round_up() and round_down(), which require a
-power-of-two alignment. However, discard_granularity need not be a power
-of two. For example, dm-thin supports data block sizes that are arbitrary
-multiples of 64 KiB and advertises the block size as its granularity.
+Thank you for your contribution! Sashiko AI review found 1 potential issue(=
+s) to consider:
+- [Critical] block: divide-by-zero in bio_discard_limit() when discard_gran=
+ularity is 0
+--
 
-With a 192 KiB granularity, discarding one complete block at offset
-384 KiB is split into 128 KiB and 64 KiB bios. Neither covers a complete
-thin block, so dm-thin ignores both and the mapping remains allocated.
+commit c2a5682afd9058576d36c11b303c1f6073d6bfa9
+Author: Hungyu Lin <dennylin0707@gmail.com>
 
-Use sector_div() to find the distance to the next granularity boundary,
-and rounddown() to align the maximum bio size. This handles non-power-of-
-two granularities while preserving the alignment for power-of-two ones.
+block: fix discard alignment for non-power-of-two granularities
 
-Fixes: 9b15d109a6b2 ("block: improve discard bio alignment in __blkdev_issue_discard()")
-Reported-by: Ming-Hung Tsai <mtsai@redhat.com>
-Link: https://lore.kernel.org/r/CALjSBEvjbiGDVewuapWKhGDtaxZwcn4=22raUiBEOyj22rY7-g@mail.gmail.com
-Cc: stable@vger.kernel.org
-Signed-off-by: Hungyu Lin <dennylin0707@gmail.com>
----
- block/blk-lib.c | 11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
+This commit replaces round_up() and round_down() in bio_discard_limit()
+with sector_div() and rounddown() to properly align discard bios when
+discard_granularity is not a power of two.
 
-diff --git a/block/blk-lib.c b/block/blk-lib.c
-index 688bc67cbf73..e0de5bb4d969 100644
---- a/block/blk-lib.c
-+++ b/block/blk-lib.c
-@@ -13,26 +13,25 @@
- static sector_t bio_discard_limit(struct block_device *bdev, sector_t sector)
- {
- 	unsigned int discard_granularity = bdev_discard_granularity(bdev);
--	sector_t granularity_aligned_sector;
-+	unsigned int remainder;
- 
- 	if (bdev_is_partition(bdev))
- 		sector += bdev->bd_start_sect;
- 
--	granularity_aligned_sector =
--		round_up(sector, discard_granularity >> SECTOR_SHIFT);
-+	remainder = sector_div(sector, discard_granularity >> SECTOR_SHIFT);
- 
- 	/*
- 	 * Make sure subsequent bios start aligned to the discard granularity if
- 	 * it needs to be split.
- 	 */
--	if (granularity_aligned_sector != sector)
--		return granularity_aligned_sector - sector;
-+	if (remainder)
-+		return (discard_granularity >> SECTOR_SHIFT) - remainder;
- 
- 	/*
- 	 * Align the bio size to the discard granularity to make splitting the bio
- 	 * at discard granularity boundaries easier in the driver if needed.
- 	 */
--	return round_down(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
-+	return rounddown(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
- }
- 
- struct bio *blk_alloc_discard_bio(struct block_device *bdev,
--- 
-2.43.0
+Link: https://lore.kernel.org/r/CALjSBEvjbiGDVewuapWKhGDtaxZwcn4=3D22raUiBE=
+Oyj22rY7-g@mail.gmail.com
 
+> diff --git a/block/blk-lib.c b/block/blk-lib.c
+> index 688bc67cbf733..e0de5bb4d969e 100644
+> --- a/block/blk-lib.c
+> +++ b/block/blk-lib.c
+> @@ -13,26 +13,25 @@
+>  static sector_t bio_discard_limit(struct block_device *bdev, sector_t se=
+ctor)
+>  {
+>  	unsigned int discard_granularity =3D bdev_discard_granularity(bdev);
+> -	sector_t granularity_aligned_sector;
+> +	unsigned int remainder;
+> =20
+>  	if (bdev_is_partition(bdev))
+>  		sector +=3D bdev->bd_start_sect;
+> =20
+> -	granularity_aligned_sector =3D
+> -		round_up(sector, discard_granularity >> SECTOR_SHIFT);
+> +	remainder =3D sector_div(sector, discard_granularity >> SECTOR_SHIFT);
+> =20
+>  	/*
+>  	 * Make sure subsequent bios start aligned to the discard granularity if
+>  	 * it needs to be split.
+>  	 */
+> -	if (granularity_aligned_sector !=3D sector)
+> -		return granularity_aligned_sector - sector;
+> +	if (remainder)
+> +		return (discard_granularity >> SECTOR_SHIFT) - remainder;
+> =20
+>  	/*
+>  	 * Align the bio size to the discard granularity to make splitting the =
+bio
+>  	 * at discard granularity boundaries easier in the driver if needed.
+>  	 */
+> -	return round_down(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
+> +	return rounddown(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
+>  }
+
+[Severity: Critical]
+Can this trigger a divide-by-zero when discard_granularity is 0?
+
+When a block device does not support discard or has discard disabled via
+sysfs, blk_validate_limits() in block/blk-settings.c explicitly sets
+discard_granularity to 0:
+
+	if (lim->max_discard_sectors)
+		lim->discard_granularity =3D
+			max(lim->discard_granularity, lim->physical_block_size);
+	else
+		lim->discard_granularity =3D 0;
+
+Since commit 094259204578 ("block: remove the discard_granularity check
+in __blkdev_issue_discard") and commit 30f1e7241422 ("block: move discard
+checks into the ioctl handler"), neither blkdev_issue_discard(),
+__blkdev_issue_discard(), nor blk_alloc_discard_bio() checks
+bdev_max_discard_sectors(bdev) or bdev_discard_granularity(bdev) before
+calling bio_discard_limit(bdev, *sector):
+
+block/blk-lib.c:blk_alloc_discard_bio() {
+	sector_t bio_sects =3D min(*nr_sects, bio_discard_limit(bdev, *sector));
+	...
+}
+
+Instead, they rely on submit_bio_noacct() -> blk_check_bio() in
+block/blk-core.c to reject unsupported REQ_OP_DISCARD bios with
+BLK_STS_NOTSUPP.
+
+Several callers can reach blk_alloc_discard_bio() on a device with
+discard_granularity =3D=3D 0, such as:
+
+- Callers that do not pre-check bdev_max_discard_sectors(), for example
+  hpfs_ioctl() -> hpfs_trim_fs() -> do_trim() -> sb_issue_discard(),
+  nvmet_bdev_execute_discard() -> __blkdev_issue_discard(),
+  fat_free_clusters() / fat_trim_fs() when mounted with -o discard,
+  nilfs_discard_segments(), jfs_issue_discard(), __ext4_remount() with
+  -o remount,discard, f2fs_secure_erase(), Xen dispatch_discard_io(),
+  r5l_write_super_and_discard_space(), and fd_execute_unmap().
+
+- Any discard caller (such as blk_ioctl_discard(), blkdev_cmd_discard(),
+  or active filesystem/swap discard) racing with runtime discard
+  disablement when 0 is written to discard_max_bytes via
+  queue_max_discard_sectors_store().
+
+Previously, round_up(sector, 0) and round_down(BIO_MAX_SIZE, 0) used
+bitwise masks and did not trap. With sector_div() and rounddown(), a zero
+discard_granularity divides by zero.
+
+Should discard_granularity be guarded here (similar to
+max(lim->discard_granularity >> 9, 1U) in __bio_split_discard()), or
+should bio_discard_limit() / blk_alloc_discard_bio() handle
+discard_granularity =3D=3D 0 before dividing?
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261026000511.7337=
+1-1-dennylin0707@gmail.com?part=3D1
