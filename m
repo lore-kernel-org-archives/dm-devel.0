@@ -1,106 +1,76 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.43
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793053393;
-	b=X/COuuWkTHLcr70IMDDxAUtcB9uxSvCJf1DCLAqHrcajc+wjF40Rr6WOBAG5HprgrLIr
-	 V01X0yTgRV1gb5eBAEPjdHLfAh+9ssJoHWxafNW3MRY3AQ3fzb4kUDBWgBMFjyz48w69s
-	 SGOa8KmMGrEDJmKaGYCgmLrV5gLmzBk4y9O0cp6orteaclzy7kDAgHgSLOFRMoA5mZtfF
-	 gn7LvaRQQ5x5AAT6YoklUb6pXBXnvYFrSPY620KRkgXsrJNJc6eV5b/FgeZeJfEBNmOfm
-	 tU6u0lQdguay0d8wG+fVFQA16hiJ4GDi/h1fgbW9UqQfKvTwFJc7UlnmVy7s1dIhYlA==
+	t=1793054446;
+	b=t8RxTjuA11u+URYICytyUT9zbhV3S7jbWi46yHsO2KlWBZ4D5fGL9zxjhS2Ozwm6FiS+
+	 QNaWdNw8iqjQ/nAeXIrICDPO0xvIRIZf1/+yqyrm0OIxn096qtkS1z+SZuP4sf2PGN/Le
+	 THrGmHMO9TTwYGTMbI1tHrczLwVre7SS4U5c+/oCss7B3XuCa9x85vPpDF/6P5TIF3z8W
+	 f31oCNWSe7UQIe6V8TKpgwo1+ezLd0wbSQMEpJGMfgLKV3apP+AXOn9Jc/AuszBE/zi/F
+	 hf0OZIPxeayqIzNmjD2UXoTFUVDOg0gpiGfgIUJZkIXznNHStzf7t9g1JLFEAt6M5qg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793053393;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Message-ID:Subject:
-	 From:To:Cc:Date:In-Reply-To:References:Content-Type:
-	 Content-Transfer-Encoding:User-Agent:MIME-Version;
-	bh=Gu2/BPW/2cFQhoP8EXrWwsfOKhNWeMgwHBYmIZmCB4I=;
-	b=Swu899xCVyaljH4Y4a1WHffoc1LG4eJceVaHu35HZIzARM59sTFxnKTtdlVZTYJUaLYF
-	 ieWC36P4VzG3v5ME2E8LaDvFUal9mzI8aviFZaUibeZoCxU4qRr/Vs1GbLF2f4lps28Hb
-	 34g9P/IcEUIZ6SUVCWTfpSUk4rs9SAeXjatP8OmSyElP7wB1BCYJnv5JSnVps85TRD6oo
-	 5kMFqiII7gojFqnIhb0mH7WTw43doKjHmxiYHFT47eq+Xj0kbOynerR5zorNa18kA8UN+
-	 zxjMfT+5hae1KstvQc4KgYAmjul2RO777xreROoaQ+GkyyD7VMMXZfyWHDqTjGTQTPA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793054446;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
+	bh=YP6wRYFIhZCRxP4D9VfxK3+WFpB2i8jRHWk/LlwwL9s=;
+	b=wGb7o5H228anQMdnq7WsoWFjXP14hB9KNVuJnZga5WcDjkX0O9oqvgd9MYOi+2k7SlKO
+	 keXNcjcKdmo1GwJlm93ienahNl4KAwhAoGOVlDRpdVgnsz8ZGqP0+OnOIgj7fipZpGDxl
+	 2md5WrEPJ+unyDYpcjLo6s8FpUwU3KXV4kpSXvGIJbWBSYShEDBUylQm0cqTIoD6udDJv
+	 Y1OEdZD+j4hp+32GgE2euCMaiMpTtF5UX6vtxW474eiiH7eyJJPb2hNvrDuRI5554Hjyw
+	 IS4sFSYaQvh5QlpnvvXvOoJISp7lgf1J5tjPgArTsF/Pbown3nRKP5n+7AN2fVz/n7A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=e0F+IShZ;
-	arc=none smtp.remote-ip=209.85.221.43
-Received: from mail-wr1-f43.google.com (mail-wr1-f43.google.com [209.85.221.43])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="WgCTP9/m";
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0486D606A31B
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 22:23:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0486D606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5100F606A31D
+	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 22:40:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5100F606A31D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=e0F+IShZ
-Received: by mail-wr1-f43.google.com with SMTP id ffacd0b85a97d-48df8fe8513so3263996f8f.0
-        for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 15:23:12 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1793053391; x=1793658191; darn=lists.linux.dev;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=Gu2/BPW/2cFQhoP8EXrWwsfOKhNWeMgwHBYmIZmCB4I=;
-        b=e0F+IShZQHXl7G6JX31SJjUgLPvEbNJc0Smwdyh1aJX6qcSOa0/to9gVkySGZwJ1O/
-         exEwbef3lkzt+yYfk8ieSsyi+aMphlqqEKYDAbS+EwT2/sg2Br7VxVtX6rxN6rHrq3Vw
-         lKSPxuN5e/vAfz2YkmVTG1UBBaC8daRt1rNnYaPzL9wF2TqwECKWDplEY25joAEsjZpb
-         0ODdhwgsNvZ9AzA4qZcmyict6tadlzu6H7qsGVlhXZHhfOJf4RoDLVWVOvSndeugwg2n
-         AXIWcz8pCVyXjwLnixS/sZ5zZdW6kRaLKZKpBUY/N7f00fRTFPIEI78qYX7K60TioBwx
-         plBg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793053391; x=1793658191;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Gu2/BPW/2cFQhoP8EXrWwsfOKhNWeMgwHBYmIZmCB4I=;
-        b=zFB0dYoS3OOrq2MudqErOLVgf5Q7/tuoQSOG4zmL08l2m3TRiwgh7mhqxA6iXugtf/
-         iTljWUjpMp9od//KBINat9t99hhw2IPW0ZhYkkZEGZJENac4Gvkk+QpU8qt9Zv1Xtl52
-         FNnjxuTqnRykn3E2OHH9FtvdnnF6wMDv3hZxEjUfkbden0IhHWY/W0aovD64UpsN3n9f
-         ZcVadGLhtJ4VIEKJZNTSipp2xU9o5YVB2s4Gm5JmCmAx/BpMl2fMTKepieOlJTYiMmtk
-         Rnh1I3YKtUXfO16rrKIpsfNoJmzgtRFMXv96qwqft+zql4fW8a6s/pabwRidw9gUlx4l
-         Hsmg==
-X-Gm-Message-State: AFq9FYK1Gf/3E5xAyNXCgsZB9ZDW4inqTShGjX4Mk6JVirGh2yj1vJlg
-	WgE/0J9Hhw+fSi6/djCEXLOvARNfMJlVnmiEckuX8FgaSR845RB5KBAh74ZdHUildjc=
-X-Gm-Gg: AYBFou05sG3mqBVEx/kfwapyEkG4QuIkHGFF33BrxS+fWzXK5fQhpjxQlHua4ZAoG6h
-	aUrZXpcKAjIIydUOQRT1wbQvg0F5qIJRnyT68d3tSX4jMNqoJ1tYOBYYOUcqP+4j1ded1hNnjBP
-	m9ZfIGncGLraH8rc9jtU+qzyyS6EW7Vl54uLH+94qTuwCC28h8FPcWVyZcGuScProvmRaX/8ZzV
-	XpEmHmJKJj6LjKGfjnq/rd5luIGvufKcjx735eMZrPrAvTtDpb6VQ4Qe5kgUTtqb1Xql/TcYuci
-	6QeJvrlkeEyDWfWfXmjuHPQ69JtAu3IOh48FalUn628wi8R8oDOFamqJ/qdwM1IO/X+EX3Kv2W3
-	0WUfYuArAQFGRPFAbulTNSPvfHdFWnmOf2yvn1Ors4dwR0lv8PDFg/OQELM5SB9ryVZQbPXQkN5
-	9TBIWNjcE2pnEZyXv73EYEyUx3M1uuX6Y825dhA0vVPKn2CuJ/3opbZ4sKAXuafBGVgljqmsPU6
-	k4xrXz0NjIHdR5tD+Kg12EjE7Jv3dRy1RF/ywYeXwAfxzD97DvkI9BcppodeR7qbkOdS90RnV9A
-	MYjiXqLw+2R69YMCpt5LZ+AN2WNfmX3XSQdTrk8MmuD98HuPFZQ1CTlLkwPuvS4FUtSa8IPjmud
-	/SnWtPjTTBDGkoGxQqGtG6zPGsw==
-X-Received: by 2002:adf:d02f:0:b0:48c:414f:cc12 with SMTP id ffacd0b85a97d-48e3eb9261dmr10639790f8f.40.1793053391228;
-        Mon, 26 Oct 2026 15:23:11 -0700 (PDT)
-Received: from p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de (p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de. [2003:de:3717:2700:e7f8:85d7:29fa:4be7])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e3ecdd5b3sm18698813f8f.53.2026.10.26.15.23.10
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Oct 2026 15:23:10 -0700 (PDT)
-Message-ID: <ef9e022a6ca2ed35a2a3239dc019cc5860c20986.camel@suse.com>
-Subject: Re: [PATCH v3 1/1] multipathd: don't leave maps read-only after
- write protect is cleared
-From: Martin Wilck <martin.wilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Date: Mon, 26 Oct 2026 23:23:09 +0100
-In-Reply-To: <20261026180444.31357-1-brian@purestorage.com>
-References: <179261848556.617150.17378002460197797656.b4-review@b4>
-	 <20261021231959.69270-1-brian@purestorage.com>
-	 <20261021231959.69270-2-brian@purestorage.com>
-	 <179270025923.152861.15521453184442767016.b4-review@b4>
-	 <atqpOBViqKWLZ7Q3@redhat.com>
-	 <b018626bed433a84fbfa66c0c334cdb7bbbb53cd.camel@suse.com>
-	 <atvweCfhjWkT9i-U@redhat.com>
-	 <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
-	 <20261026180444.31357-1-brian@purestorage.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=WgCTP9/m
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793054445;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YP6wRYFIhZCRxP4D9VfxK3+WFpB2i8jRHWk/LlwwL9s=;
+	b=WgCTP9/mwcYeS3hmuFSEak5X3/Ruw9vvjgKd64Pd/ICT/5GJgT2PsPCcu/D6hV8anduITU
+	T81L8n9khL7JVQa/9VyLW6MXHET4p84wsxJtJGRdFQ9VK8tPn3/pcSJkljtAQ+0mQXmQul
+	mZgD1EDY/XjLXXcEq7rKJxKk24wNxgI=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-655-T05W93ZXMuSzeTTiDwmXRA-1; Mon,
+ 26 Oct 2026 18:40:36 -0400
+X-MC-Unique: T05W93ZXMuSzeTTiDwmXRA-1
+X-Mimecast-MFC-AGG-ID: T05W93ZXMuSzeTTiDwmXRA_1793054434
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 675CE1800146;
+	Mon, 26 Oct 2026 22:40:34 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EE1E5300019F;
+	Mon, 26 Oct 2026 22:40:31 +0000 (UTC)
+Date: Mon, 26 Oct 2026 23:40:29 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Eduard Zateev <hackerowskiy@gmail.com>, 
+    Rahul Rao <shreeramrahul94@gmail.com>, 
+    Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>
+cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org, 
+    bmarzins@redhat.com, linux-kernel@vger.kernel.org, 
+    syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
+Subject: Re: [PATCH] dm thin: reject metadata and data device aliases
+In-Reply-To: <20261026102740.241243-1-hackerowskiy@gmail.com>
+Message-ID: <db1a5df3-c7b7-9e63-73c8-e75659295171@redhat.com>
+References: <20261026102740.241243-1-hackerowskiy@gmail.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -110,78 +80,95 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-MFC-PROC-ID: G9-tZg-hGL5bDuMcmpxMEBpvtjaJaSNjnCh3vNcc0VQ_1793054434
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Mon, 2026-10-26 at 11:04 -0700, Brian Bunker wrote:
-> On Mon, 2026-10-26 at 10:26 +0100, Martin Wilck wrote:
-> > On Fri, 2026-10-23 at 19:40 -0400, Benjamin Marzinski wrote:
-> > >=20
-> > > I do still waver a bit on whether or not we could leave
-> > > force_readonly
-> > > set on failed reloads. Once a device turns read-only, it should
-> > > stay
-> > > that way until we get another uevent, at which point we will call
-> > > needs_ro_update() again. Perhaps we just need to make sure that
-> > > we
-> > > clear
-> > > force_readonly when needs_ro_update() returns false.
-> >=20
-> > AFAICS, this is exactly what Brian's v4 patch does. No?
->=20
-> Mostly, yes. v4 sets force_readonly back in dm_addmap_reload() when a
-> reload fails, so the next reload tries read-only again.
->=20
-> needs_ro_update() doesn't clear it on every false return, though. It
-> clears it in the dmi.read_only =3D=3D ro case only when both the map and
-> the uevent are read-write and none of the map's paths is read-only.
-> If
-> a path is still read-only, the flag stays set, so a map whose read-
-> only
-> reload failed keeps retrying instead of staying read-write.
+Hi
 
-Which is correct. If the map is read-write but there are ro paths, we
-need to retry.
+If dm_get_device spuriously closes a device that was already open, it is a 
+bug in dm_get_device and it should be fixed there.
 
-There are two other cases where needs_ro_update() returns false:
+Note that we got 3 patches for this syzbot warning from 3 different 
+people. Please, cooperate next time and send just one patch.
 
-1. ro =3D=3D 1 && dmi.read_only =3D=3D 1
-   I don't see how force_readonly could be one in this case.
-   But maybe we should just reset it anyway, just to be sure.
-2. ro =3D=3D 0 && dmi.read_only =3D=3D 1 && map_has_ro_path()
-   Same here, read_only is already set, no need to force it,
-   but resetting force_read_only wouldn't hurt.
+Mikulas
 
-> About dm_addmap_create(): agreed that the flag isn't needed for
-> correctness there, since a new map opens all paths fresh and a
-> read-write create fails with EROFS anyway. It only saves that first
-> attempt. Create still clears the flag, so that a value set by
-> ev_add_path() can't carry over to a later reload. I can drop the
-> read-only shortcut in create if you'd prefer.
 
-I am uncertain about this. If we know in advance that trying to set up
-the map read-write will fail, how much sense does it make to try? It's
-just a minimal simplification of our code.
+On Mon, 26 Oct 2026, Eduard Zateev wrote:
 
-> Uday Shankar, who did 430f8f89, also suggested dropping
-> force_readonly
-> altogether,=C2=A0
-> and tracking the ro state per path in sysfs_pathinfo()
-> sounds like the right direction to me. But it changes behavior: every
-> reload, not just the one done for a DISK_RO uevent, would follow the
-> paths' ro state, and so would "multipath -r", since
-> dm_addmap_reload()
-> is in libmultipath. So I'd rather do it as a separate series on top
-> of
-> this fix, and keep this one small enough to backport.
+> From: angel <angel@localhost.localdomain>
+> 
+> The thin-pool target rejects identical argument strings, but two names for
+> the same block device bypass the check. In read-only metadata mode, opening
+> metadata first and data with write mode invokes dm_get_device()
+> upgrade_mode().
+> That swaps and frees the old dm_dev while pool_ctr retains metadata_dev,
+> causing a slab-use-after-free when __pool_find() reads metadata_dev->bdev.
+> 
+> Open the data device before metadata so an alias cannot trigger a mode
+> upgrade between the two references. Compare the opened block devices
+> and reject aliases before using either device. Adjust the error paths to
+> release the devices in the matching order.
+> 
+> Reported-by: syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=83827f9a59abe148bff4
+> Fixes: 70de2cbda8a5 ("dm thin: add sanity checks to thin-pool and external snapshot creation")
+> Signed-off-by: Eduard Zateev <hackerowskiy@gmail.com>
+> ---
+>  drivers/md/dm-thin.c | 21 ++++++++++++++-------
+>  1 file changed, 14 insertions(+), 7 deletions(-)
+> 
+> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+> index 358ed77ff..0899cbaf9 100644
+> --- a/drivers/md/dm-thin.c
+> +++ b/drivers/md/dm-thin.c
+> @@ -3326,17 +3326,24 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  
+>  	metadata_mode = BLK_OPEN_READ |
+>  		((pf.mode == PM_READ_ONLY) ? 0 : BLK_OPEN_WRITE);
+> +	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
+> +	if (r) {
+> +		ti->error = "Error getting data device";
+> +		goto out_unlock;
+> +	}
+> +
+>  	r = dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
+>  	if (r) {
+>  		ti->error = "Error opening metadata block device";
+> -		goto out_unlock;
+> +		goto out_data;
+>  	}
+>  	warn_if_metadata_device_too_big(metadata_dev->bdev);
+>  
+> -	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
+> -	if (r) {
+> -		ti->error = "Error getting data device";
+> -		goto out_metadata;
+> +	/* make sure metadata and data are different devices */
+> +	if (metadata_dev->bdev == data_dev->bdev) {
+> +		ti->error = "Error setting metadata or data device";
+> +		r = -EINVAL;
+> +		goto out;
+>  	}
+>  
+>  	if (kstrtoul(argv[2], 10, &block_size) || !block_size ||
+> @@ -3426,9 +3433,9 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+>  out_free_pt:
+>  	kfree(pt);
+>  out:
+> -	dm_put_device(ti, data_dev);
+> -out_metadata:
+>  	dm_put_device(ti, metadata_dev);
+> +out_data:
+> +	dm_put_device(ti, data_dev);
+>  out_unlock:
+>  	mutex_unlock(&dm_thin_pool_table.mutex);
+>  
+> 
+> base-commit: 21a7f44fd0765fcc5194130b28767786eba1d1e7
+> -- 
+> 2.56.0
+> 
 
-Sounds good to me, even if it may mean that this particular patch
-will be short-lived.
-
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
