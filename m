@@ -1,97 +1,95 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.44
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.229.136
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793037900;
-	b=exf/mOsRI3U/8EjlrXXUQJJR4haxQ0OMdV7ccg4aJx6b+fVCSpOy2C8mLqvM+M4HAmH/
-	 GBqHIG6KggHeKtRyg/1gmlPGVyGCrVZU+J/uGnQMzf3eKet28+rwkbqpmVkGxvomBwS6B
-	 KvQypuFNcQdt9u1xsRQzjYx6lWVE9+Ns36oDDJyj6R6eO2pn6B7xDYDwhaYEW6ckm7T9g
-	 V408W1BgTpTrNvz6l68Lgr3MXQF/WfpNbQGti/0lzhd75jfBm0fSc1eqUiDXx2+lVQwGd
-	 DcodY0oPVVzbxMdLueYLNb25e9B1B+Ebx0pt6Mb+eSdlrTnkzD2PNzBLFqGfpNYxH7g==
+	t=1793044309;
+	b=nczOgNnreDzOedAmp6vpQhE+uzdd+ByjhFKPPyPjmkgdzhreL8t6FIK7aZC2J3D/wU62
+	 IPuQKg9EV36+bi4I5wc8yL65W4B/w+/tJg+Pu3aku6QZv2aiJ+MbORyLvbMlTGHzxVQDS
+	 CAiKGjTr6ySnc2hDMdY7JY0J4IMTL/3A473X1ySZNu3NEYDqSrwnfwBBostUMPBI5FRnX
+	 i6E2abAj/6VrZWyIxLsKtO773M/ZrhBP7/JzRkwu56rIjMF2qjkUIn0GTjtua0vVJk+tN
+	 DkSlqRlkmA+0QdcUqTDOf+q2ZoJF6XcG1b4gftdMIHDr37O2zitfDGOzUbWq6vMIM4g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793037900;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793044309;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Type:Content-Transfer-Encoding;
-	bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
-	b=0bIXjmsIgnEjn2W8Rx3G9UqS8oekYe+BoXkdwEZtCB4foUuBEgUvgA7ycCveaRmh7fYE
-	 7WeSHDtKlVFK9TDsNhqqhvaeBRTJ0lL2Q5cNyQvp0miGeJcp4Rpst94JCaKLdyDu0gbAM
-	 p/W4ZEbJS3MHYK85tJzqQMeZ2UAU98V0JbB/MTRaa24rJSiZKRYfb1rhOkhPu7k4n6c9K
-	 VBw9THBdWNxg0iqmzK9mgqq+k0NuiivOSozlQVrZ29i0F19A3uzqBj6OTPKoju3HV5SrW
-	 kUNGSv5EOLgsIOooadztgEvb4kK9JTFbc3NXC+pDrQ+tKL2+BxRF2FRpUdhmm5n5xEg==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=lt5+IIOEQntNwj4k8ixyv60ZFra3k7uwj0Sn4JHHT+4=;
+	b=LxD8hSbSUIKYtn3ckzroluXPxIpnwS77UI/dniHGa5B0Xpe0cVEiiE4okPGClMTAP1BY
+	 FhFg/ZwD/Zkx0OLJiyDhO/Pc80M2H0K2L95KQqfdOVwf2SomMg0cdo/9Rqqjx1D5TKZYo
+	 tLGarqVf17AZIhG/zL/na3QSiha1ucP6o6CMmiZQVgvvy492OCzLCf+EQetqkLe8tuajh
+	 fKlQB69QGOHqGRwqUmUbxVI2CfnhB/uLpGHttj0y7uBs/HCrBzLfcXxbPn5z410FX4NKK
+	 PUQ3+bQiPqfOhImBLIwws+0301aLa2CzgkU/kHf+NzUCaDpddhRWry7eUylFkB7ey5w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=purestorage.com;
-	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b="d0ty/EnO";
-	arc=none smtp.remote-ip=74.125.82.44
-Received: from mail-dl1-f44.google.com (mail-dl1-f44.google.com [74.125.82.44])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=EQ7AAb6T;
+	arc=none smtp.remote-ip=74.125.229.136
+Received: from mail-dl2-f8.google.com (mail-dl2-f8.google.com [74.125.229.136])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3E98606A31A
-	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 18:04:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D3E98606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77206606A31F
+	for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 19:51:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 77206606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=d0ty/EnO
-Received: by mail-dl1-f44.google.com with SMTP id a92af1059eb24-15ea896ddc8so5722992c88.0
-        for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 11:04:59 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=EQ7AAb6T
+Received: by mail-dl2-f8.google.com with SMTP id a92af1059eb24-15901d262aeso44581c88.1
+        for <dm-devel@lists.linux.dev>; Mon, 26 Oct 2026 12:51:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1793037899; x=1793642699; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
-        b=d0ty/EnOa/JH0cM9uwCqa84wKfFprvIo5Xz40/Io4Aw4b0Gp8ugBTG5D/g9L+7ATTf
-         nNL9iOOHVRJo6Prmftqj0T+3nTV90iHGMTTrhTUNYytkQ6daGU+tpy6DE1LOHxkD02xi
-         66FgkhuQX5pNPPhaDXAC6FQor9dfpykAzpy/17wSP9nS4nQ+m8YM0wB7YJ3vJ3g9X8MC
-         ZOpr9YaLIohqlCVnM1VWJDLwRmzIXBvpTk3b+SyXTf6r/qHFNOIGl5NF20y5ntvs7j+8
-         tky/WIF+m4RQ+PXiJDJeNBc2QzUi1VWFp4GXezuS6n91oH6/uiLJ9xlNBfuBJAG+Uc6Z
-         igzw==
+        d=gmail.com; s=20251104; t=1793044307; x=1793649107; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=lt5+IIOEQntNwj4k8ixyv60ZFra3k7uwj0Sn4JHHT+4=;
+        b=EQ7AAb6TbbzBE7pdbNAy68mPfvkck6XFU+0lA5LUpNwzspeeh14xnShh8X0+FUamaZ
+         1jyICGsZ8J/6uycdFI0VlLhV/1xh5LQfBbi7NnIvLxwE1z6wdsw+M1p+pTW7rROJuyZw
+         +EMPn7nXNP9yMzGF1MfSftImv1lmMZWe45lNvODRx/+Zmz5BE5igvDeIuxgh3+X06t3a
+         rLcqKLFFAkU5eZ8dGJLWslYnqQXl2ksJg83BAGsEpveAUzRHdUOBKhjbWYyBpMPnIp39
+         pKTUufgzAtCDBqxb+ej3bujhiADXNvzY/go+eZq5FUyWlFz8olx+Wv0qD8l823HwZBWP
+         YbSA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793037899; x=1793642699;
-        h=content-transfer-encoding:content-type:mime-version:references
-         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=bCPXNTQPk0AI4pGOr0WSkbfNEADlNe7hECo6+1Hiybk=;
-        b=2tS18m9byK8GPMI9ItAcdi2U16KC1cjEzwTgK5YXhOzDzlEPcRmmXqGzYSV17Ar+Y3
-         eQjA0UWXflVL2/gKV4Y5GPceNOtYq+FAPnNWN/Q03TDZvE5jluEu+OgUNjdR95dIk8Nb
-         6MCoYFn1aMzee1TyUymMRmNbgQ9PUICCwYWcFiFecdUXVLq8TqY/Y44yBQEe1fMh2QJ3
-         2GUD2zwVthzPsHQGb6mIZ6B/T+Es5xGesY1wN4Tt38ktjg/jgrFJ2VYxg8D9kTZT5sWv
-         SxjYhkDTC1EmJIJGsC89icFGN6xm6O+2b8LBCPj5L+NH3AjGTzpQQNb/Zcc4l4PklTZy
-         g4vA==
-X-Forwarded-Encrypted: i=1; AKwUvByS/EbF5MHShsGKsPEbg041TDV5l273w0Z8Y68TnJWqmXQtej4uDdVXyM70i19ytPchgjA+UbgaYw==@lists.linux.dev
-X-Gm-Message-State: AFq9FYIKB4MgdW0RIBW1Jf+vqpQjWwNa41M7YimPi5TZhapkaoVZEjOh
-	ZZlKookeJxXqg9NefW8NZI8+Rx5d4NIU+/gIbr5mq2bkwKYcNPDjXIm8FTl4itIkGNM=
-X-Gm-Gg: AYBFou1UiZw7/zd9oWcnciKLOvtH6dF8gagjjMJgXE61NpM09xlgI1+eA6YwFPj5kw7
-	6/8098k8uCp7nGeZ3JKs8H2gOvHSNwsgOSr6iVJZ3LRRd6SxRYvNY1tGXaB/nuMpomz1dsvUi1q
-	xUEu+ypKToZ1q69OM8v50wqExbp2ZifDsVWb510nO6Vk7wnTbb1xMEoPzzcBbmpyY34jeSS8soc
-	eXKgyiWWcCl5wSgHcAu9stj3iMrd0/Zp1Xb3lZDSq1C19X91hdr5fOb+vsYFkKf01s/3yV3YQ4w
-	nbSfJBTdT1EVn7KjKwwOFKIV+tERgmae+MmHoCmsw5lcgdcJUgR6D95VlslMGU1xq4WNKhMCFnN
-	jKVfaGE/tG4OYE2haxU2kPXWiAfmONKpZc1rz0jeU8xTiLIdIe8Kdkn6xJ628s8xAnzJkDEN1s+
-	vBfhJF/NDJNmJnA9SFYtJrCutTB/+GdIxDZLmy+4z+NSN7IfRKxxasTOaaXTg7Go5Yn1+yPsikY
-	L8T3pEHwnGqLbhuqna5hFX3U8hNiYlzyJ4he79fzlYwdWTHIuwZEq7If2r7Yc+QgHp5EM65TYRs
-	lAqJrS/HUzk/AA2IqAOQTYcDamaf+OAhBmskw5BzPD9M/BM2xqwSVMsf/mv/uu0FBfN94Zkq17I
-	Ga2u1qEm7EVg4+C5SN5FfZkNaKjnfnYReoFIF9+hjLBLiRF0tOGEk
-X-Received: by 2002:a05:7022:eb57:10b0:196:bf5f:8bb with SMTP id a92af1059eb24-19936e34ba1mr11282177c88.45.1793037898526;
-        Mon, 26 Oct 2026 11:04:58 -0700 (PDT)
-Received: from brian--MacBookPro18.purestorage.com ([170.85.204.106])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-198a0f83cedsm32591997c88.13.2026.10.26.11.04.57
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Mon, 26 Oct 2026 11:04:57 -0700 (PDT)
-From: Brian Bunker <brian@purestorage.com>
-To: Martin Wilck <martin.wilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Brian Bunker <brian@purestorage.com>,
+        d=1e100.net; s=20260707; t=1793044307; x=1793649107;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=lt5+IIOEQntNwj4k8ixyv60ZFra3k7uwj0Sn4JHHT+4=;
+        b=WCNROLUPxAgT6CUnOV9j+h7nZQJIBmDZgAT8+vYdzTugSUPvjK6QeQXMCXRfn2EwtX
+         /OUi8rili0uoXm5+7EWTxlHMAvyGft7NP8E+s4XCNuJ6Qsf7uOBW+7UDrIINEfVpSmBH
+         4Prue76kxy+NhVk86Tze8uLtyfeUhKk6l2lw/zd2iRcgsMEfQsovFrBahBOYGxGJcpzc
+         r94FpllK4YR/3qU/7Ff9nZY6maavCe+viLnTaFOUTG6SGNw+BpLyUs945BBcoLpXq7dD
+         1HtXqoGU1De1lv30pwdEcuiNav5zfnjhqhOZhWFZPBN97PexCJWaeSsUCICXPKZFi6Ms
+         ugIg==
+X-Forwarded-Encrypted: i=1; AKwUvBwwCAJ5VxsXGIamIZQxqOO2JM8J9s5/y3Sllnsqv54TWDqTwbyAmDZAHpk20odMIFTA3vS38jUEOA==@lists.linux.dev
+X-Gm-Message-State: AFq9FYJWFAkeS0raFfcGFnSF6BmZxzkSXf48fUaHy0sJlQHYuSs6HqdP
+	coSuwnXGpF0uqWEPOOislEGrW0UT3KwXlSpydCtQnN7N4XGODGHFKG7v
+X-Gm-Gg: AYBFou3ei74NfVEKTJ2SS5TAQxdHrjBx/B26HDZT8g3ZteZMWUzGPwckhvl0JjXt6+U
+	Xu++Il0w4uMs89C1/yjIFTy6yF54Trgd98bVcuS7lrtZMORp+Jp1CtZyOxXOa/tYaBVTIozjAAb
+	lr9exMIT+Kpx9R5Yn9e5aeeDtk+h9oxVG4zB6VKjOWl9mc5Oi8cU3cpDIrxh1/iAYbl9h/StZEK
+	F1UzJwKCRb/XpzklD1iY3g6bwyIYDb0H874HoKUJiRdA9XbaN+utA+2zgTv35HICUGZ9ujMVInl
+	wVI0htlvQRz4lqqTVFiAW5bdcdJ8+YASHpRcV+o7wm8HciaYH7mZkGU0qXO5DtbuYaqBKJcZAPS
+	ht6oUikEMZFZwSeliX0iC5bwGShqbJhjXZPFr9arL3sPvZGsyDr6Jzn4ZObI0qyNLYzIBvnj1Uu
+	rWr4DhpKVPepcPUbRBf1wadf2WL/jIDGmlSXH6DAk+ui5sWvXinr2kH0Thi6FAP0dODzIZhRb7J
+	f/bqrHZg2rIkuYyp0Kw0cl1uDa6YASMouNM0eox+WwDyvGdXvPJ62H9ZzdZLd5Y9D7VpvrwYoBD
+	UBQeYtQ=
+X-Received: by 2002:a05:7022:102:b0:196:7590:8bed with SMTP id a92af1059eb24-1a3c3240338mr1258384c88.2.1793044307251;
+        Mon, 26 Oct 2026 12:51:47 -0700 (PDT)
+Received: from localhost.localdomain ([98.148.34.5])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1989ff2ee69sm36573707c88.4.2026.10.26.12.51.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 26 Oct 2026 12:51:46 -0700 (PDT)
+From: Hungyu Lin <dennylin0707@gmail.com>
+To: axboe@kernel.dk
+Cc: linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
 	dm-devel@lists.linux.dev,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v3 1/1] multipathd: don't leave maps read-only after write protect is cleared
-Date: Mon, 26 Oct 2026 11:04:41 -0700
-Message-ID: <20261026180444.31357-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
-References: <179261848556.617150.17378002460197797656.b4-review@b4> <20261021231959.69270-1-brian@purestorage.com> <20261021231959.69270-2-brian@purestorage.com> <179270025923.152861.15521453184442767016.b4-review@b4> <atqpOBViqKWLZ7Q3@redhat.com> <b018626bed433a84fbfa66c0c334cdb7bbbb53cd.camel@suse.com> <atvweCfhjWkT9i-U@redhat.com> <c52f077ad82585f1f02d5b9cc9c3f640e9fcc031.camel@suse.com>
+	mtsai@redhat.com,
+	sashiko-bot@kernel.org,
+	stable@vger.kernel.org,
+	dennylin0707@gmail.com
+Subject: [PATCH v2] block: fix discard alignment for non-power-of-two granularities
+Date: Mon, 26 Oct 2026 19:51:31 +0000
+Message-ID: <20261026195131.46699-1-dennylin0707@gmail.com>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -101,44 +99,76 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-On Mon, 2026-10-26 at 10:26 +0100, Martin Wilck wrote:
-> On Fri, 2026-10-23 at 19:40 -0400, Benjamin Marzinski wrote:
-> >
-> > I do still waver a bit on whether or not we could leave
-> > force_readonly
-> > set on failed reloads. Once a device turns read-only, it should stay
-> > that way until we get another uevent, at which point we will call
-> > needs_ro_update() again. Perhaps we just need to make sure that we
-> > clear
-> > force_readonly when needs_ro_update() returns false.
->
-> AFAICS, this is exactly what Brian's v4 patch does. No?
+bio_discard_limit() uses round_up() and round_down(), which require a
+power-of-two alignment. However, discard_granularity need not be a power
+of two. For example, dm-thin supports data block sizes that are arbitrary
+multiples of 64 KiB and advertises the block size as its granularity.
 
-Mostly, yes. v4 sets force_readonly back in dm_addmap_reload() when a
-reload fails, so the next reload tries read-only again.
+With a 192 KiB granularity, discarding one complete block at offset
+384 KiB is split into 128 KiB and 64 KiB bios. Neither covers a complete
+thin block, so dm-thin ignores both and the mapping remains allocated.
 
-needs_ro_update() doesn't clear it on every false return, though. It
-clears it in the dmi.read_only == ro case only when both the map and
-the uevent are read-write and none of the map's paths is read-only. If
-a path is still read-only, the flag stays set, so a map whose read-only
-reload failed keeps retrying instead of staying read-write.
+Use sector_div() to find the distance to the next granularity boundary,
+and rounddown() to align the maximum bio size. This handles non-power-of-
+two granularities while preserving the alignment for power-of-two ones.
 
-About dm_addmap_create(): agreed that the flag isn't needed for
-correctness there, since a new map opens all paths fresh and a
-read-write create fails with EROFS anyway. It only saves that first
-attempt. Create still clears the flag, so that a value set by
-ev_add_path() can't carry over to a later reload. I can drop the
-read-only shortcut in create if you'd prefer.
+When discard is unsupported or disabled, discard_granularity can be zero.
+Return BIO_MAX_SECTORS in that case so the existing bio submission checks
+can handle unsupported discard requests without dividing by zero.
 
-Uday Shankar, who did 430f8f89, also suggested dropping force_readonly
-altogether, and tracking the ro state per path in sysfs_pathinfo()
-sounds like the right direction to me. But it changes behavior: every
-reload, not just the one done for a DISK_RO uevent, would follow the
-paths' ro state, and so would "multipath -r", since dm_addmap_reload()
-is in libmultipath. So I'd rather do it as a separate series on top of
-this fix, and keep this one small enough to backport.
+Fixes: 9b15d109a6b2 ("block: improve discard bio alignment in __blkdev_issue_discard()")
+Reported-by: Ming-Hung Tsai <mtsai@redhat.com>
+Link: https://lore.kernel.org/r/CALjSBEvjbiGDVewuapWKhGDtaxZwcn4=22raUiBEOyj22rY7-g@mail.gmail.com
+Cc: stable@vger.kernel.org
+Signed-off-by: Hungyu Lin <dennylin0707@gmail.com>
+---
+Changes in v2:
+- Handle zero discard_granularity before dividing, as pointed out by
+  Sashiko. Leave unsupported discard handling to the bio submission path.
+ block/blk-lib.c | 14 ++++++++------
+ 1 file changed, 8 insertions(+), 6 deletions(-)
 
-Brian
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 688bc67cbf73..5649e4d3b5bf 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -13,26 +13,28 @@
+ static sector_t bio_discard_limit(struct block_device *bdev, sector_t sector)
+ {
+ 	unsigned int discard_granularity = bdev_discard_granularity(bdev);
+-	sector_t granularity_aligned_sector;
++	unsigned int remainder;
++
++	if (!discard_granularity)
++		return BIO_MAX_SECTORS;
+ 
+ 	if (bdev_is_partition(bdev))
+ 		sector += bdev->bd_start_sect;
+ 
+-	granularity_aligned_sector =
+-		round_up(sector, discard_granularity >> SECTOR_SHIFT);
++	remainder = sector_div(sector, discard_granularity >> SECTOR_SHIFT);
+ 
+ 	/*
+ 	 * Make sure subsequent bios start aligned to the discard granularity if
+ 	 * it needs to be split.
+ 	 */
+-	if (granularity_aligned_sector != sector)
+-		return granularity_aligned_sector - sector;
++	if (remainder)
++		return (discard_granularity >> SECTOR_SHIFT) - remainder;
+ 
+ 	/*
+ 	 * Align the bio size to the discard granularity to make splitting the bio
+ 	 * at discard granularity boundaries easier in the driver if needed.
+ 	 */
+-	return round_down(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
++	return rounddown(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
+ }
+ 
+ struct bio *blk_alloc_discard_bio(struct block_device *bdev,
+-- 
+2.43.0
+
