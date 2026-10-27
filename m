@@ -1,47 +1,47 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793058932;
-	b=YQViq9JxtW0mJRfHg9AXPnSQ8scZKMAldrq6I/yjNqkCfq++tlC70zgJs+G09ZpQRZIE
-	 uNxHhfxZPoqf1vqWMpfl9iP85Zz3Tw5FsgvzH7eOULnZ6T/TSjhdO+wkayB9Mm+yrnqIZ
-	 HzGAzg/uA+i7QyH4gS1tphWaGJ5UJMlyrgDV8E9vN7RwXysicGT4gWI9wtmSEnMZgqosM
-	 VHpbm+sM/fmxc2mevC3yg/jGJYiSx6WHkNuIAYAeHDt1vXm2ZRokWVixyzkBcjXM9X1K+
-	 z8/CGQLLLs+qK4Y0a+TI9obAkgZ03xhI0EXuGaCx34u3fEHNVSpk2G4a4ndg74sHY2w==
+	t=1793059285;
+	b=tFJBiT0Plvje1rXjzrASFxYxulS94ZOUJRyOYvSP76eXAysdhzWLTUp57ZrVTc3vsqR7
+	 u6nPNbA16gTmzqaLf10Nb3/ZCv/sfAP73ldtMfIBPDZfkT1PAe7nyMjbZZKNdxENQvbYV
+	 jFSUcJAGLbU7/pPynM2i/MPHv9HZKGoSfqQ8t03esFMZ8/ygPMoil9CzwyoipEcmtMEQv
+	 4bWBzYm+VdEpvQtrpFwBkZJwLnZV9oG3qCSvFzxFsz8eEzzeJU6G/eXoERyfWorgNeu1/
+	 CdqVJWfvFC9WrIanIVtcV7oF+XD1GR9Xuf5E8UuyvbW1WDzWD2tfItARO2AGwWnodfA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793058932;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793059285;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=VynIgSurKHQaOCUBkhJuuPI91r+51atCbpgVjkqWOnM=;
-	b=RXVz5+Ur6yKBAlXpUg8OjjqL3XJFS8Ke3TFwruzDSWvarhpX15Wb6DXGg6RkfzZr/ZT/
-	 h4bdS1k96mgvPKZZ0U6BcxTjyQQdVw0/xjeplY70cwgCnh05xO0Ffs9MpdHLhn0TkXsbX
-	 zD7aa9HotBkOtTSOsnF6T1QK+xMajQN6BI8rKdLArCnU0f7lmkhQa4Jn8d5xqA7cFM/Px
-	 RETfugZh7Bxn03xgIhhn8qa8wIbav1G3M37foPR1edBvR7I9+ln+LPrtyRzlYIeD+pUBD
-	 66cd7cdFV1YESi/tZyUDuGPSIhaU2TWWfiXlZvKnBFsh12Aisw+PixnALE53oQuLC7Q==
+	bh=0LRJqBrRZu8I7CaiJXMHZVTdIs/++2cjuvZ3KSCYX24=;
+	b=w5jhnkKTBJ7512ZH9NWwxEG8v4RHpe2IUSUzhCNrHb4ncmJOcQrajsMqMDcwjKkQ3Eyo
+	 ce9mFqr8nGwJW2hBfgxyvyqr5iJO4VoWZUh45OXwvni8pcCgMaTDGi+VIzHiG/H9w4SQi
+	 oppPxd9n2r6X5aSY5GBL1EjEh00CQJKInKYpS7NRIdadd3MHH6QOZr9i37vKhTvzsmNwC
+	 2BbtXKKNzEnOXxRP4z++IkEv98noJgVXraVVfr0zS7hAmLtXW4Dt+z2DDqSWdRRVEHpRr
+	 t3ChATGn9pQsBRBVgFtwwO19IabKh1KWumVpS4seIeAh9PW6vM18HroSdHvEQpc2Xkw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eoGYorJ7;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lGHGuc5d;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DD925606A31B;
-	Mon, 26 Oct 2026 23:55:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 41EC7606A31A;
+	Tue, 27 Oct 2026 00:01:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eoGYorJ7
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4B0371F01825;
-	Mon, 26 Oct 2026 23:55:30 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lGHGuc5d
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 464D81F031E0;
+	Tue, 27 Oct 2026 00:01:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793058931;
-	bh=VynIgSurKHQaOCUBkhJuuPI91r+51atCbpgVjkqWOnM=;
+	s=k20260515; t=1793059284;
+	bh=0LRJqBrRZu8I7CaiJXMHZVTdIs/++2cjuvZ3KSCYX24=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=eoGYorJ7zvT8PcPJ1fs23u46Fhju/bkcw33/56WLZauBwe0CiVgIPS8uq+13xNP5C
-	 iq287Rm5RDqUJFitdyuCVhomIE/WZxYUqYATsKVhYXZcNQUS4KP0YEmQJj7qG6WKps
-	 PDCpiAmlYi9tzUvXrefuWbc8nNUNnuEBdIMZZ+dgPJbxn0TVSjD3SuSkEBInURKZhE
-	 u3XnjUZWPAZJP1V1uueG5Ov36zPXbNG2rhU+/tz6f/e2mxAlgaYMlLOtUpU0XEAvXM
-	 tz19eiItvTGMLR1d5YYW/reWzyBkD8WETi5UE0n/nD9TEqp4DucpujBbl4v3l4VQ11
-	 1HpjkOIbBDhog==
-Date: Mon, 26 Oct 2026 16:55:28 -0700
-From: Eric Biggers <ebiggers@kernel.org>
-To: Jarkko Sakkinen <jarkko@kernel.org>
+	b=lGHGuc5dcRkAffdeH2WdifKM6MiqYDJ94AyVLlffNPp+eUdT5k+99mhaU+/bhy4Re
+	 n4+j6x8DIQM4lkKLxXBYDJJ7aL3M3nCU7SaAXSiyP6dhH4P5cyeavBR8QM2fKDBDc3
+	 RGUwUYtZoVFcAjH+wDEzgcBHLgbzoFs4NZhstuExzdEBLuXC9pL5G533krFDJ2ODri
+	 QbS1TcKVy8ZIHm90MqubYovU3DvzElKK8+zK5mEO1QGE7g4ZOU0xKYNAZoZsHSPeab
+	 /FCCwXrim3GvhhLoQMaKOxlxGla2WfbijmjWTuGclw9oaaMlDWoHdHHDFqj16G665C
+	 KQNJuk4czJiyw==
+Date: Tue, 27 Oct 2026 02:01:21 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Eric Biggers <ebiggers@kernel.org>
 Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
 	Linus Torvalds <torvalds@linux-foundation.org>,
 	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
@@ -60,9 +60,10 @@ Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
 	"open list:SECURITY SUBSYSTEM" <linux-security-module@vger.kernel.org>,
 	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
 Subject: Re: [PATCH v3 4/6] KEYS: Introduce keyring_is_empty()
-Message-ID: <20261026235528.GA2395@quark>
+Message-ID: <at_p0VD-PsPmIq-u@kernel.org>
 References: <20261025001105.1824178-1-jarkko@kernel.org>
  <20261025001105.1824178-5-jarkko@kernel.org>
+ <20261026235528.GA2395@quark>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -74,21 +75,28 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261025001105.1824178-5-jarkko@kernel.org>
+In-Reply-To: <20261026235528.GA2395@quark>
 
-On Sun, Oct 25, 2026 at 03:10:12AM +0300, Jarkko Sakkinen wrote:
-> +/**
-> + * keyring_is_empty - Check whether a keyring contains any links
-> + * @keyring: The keyring to check.
-> + */
+On Mon, Oct 26, 2026 at 04:55:28PM -0700, Eric Biggers wrote:
+> On Sun, Oct 25, 2026 at 03:10:12AM +0300, Jarkko Sakkinen wrote:
+> > +/**
+> > + * keyring_is_empty - Check whether a keyring contains any links
+> > + * @keyring: The keyring to check.
+> > + */
+> 
+> "contains any links" => "contains no links"?  Or even just "is empty".
+> Otherwise it sounds backwards.
+> 
+> Note that another "is the keyring empty" check just showed up in
+> mainline in kernel/bpf/keys.c.  So a new version of this patch will be
+> needed to update that one too.
+> 
+> Otherwise this patch looks good.
 
-"contains any links" => "contains no links"?  Or even just "is empty".
-Otherwise it sounds backwards.
+I'll fix that up. Related, bpf_keyring_lookup() also needs to be
+addressed now that I have it in my tree. 
 
-Note that another "is the keyring empty" check just showed up in
-mainline in kernel/bpf/keys.c.  So a new version of this patch will be
-needed to update that one too.
+> 
+> - Eric
 
-Otherwise this patch looks good.
-
-- Eric
+Br, Jarkko
