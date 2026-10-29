@@ -1,82 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793309267;
-	b=dIXqX2jogXHsbsC5u2etMhNDwu8EcXrsZCY9e9Z24C4qoz7VCgGF1JjvANz8DADWlLZp
-	 3E70UIpdaVcbnllcLl4c7l15+71yxs1SZJHyLtmj3Tbugoqi0wXFQJNb5xdG/552wO+51
-	 FFSBvr6nYWqOMXTUF8pMuLe1OUYdcM3Sr+ToUjddapQA3wdphsyNW7GQ0LMN5ga0Ho2Do
-	 lM9PeqvIaktj7CDWM7sZ33B3Lt3szlVHnGOC7P7bO0cZLZ8Cl6uTnpKPnebnZ/ztl3of+
-	 +eY3oaX/qUTprieSkE5A1YJmyzMgKcvI+QgZ2vZHPIVZAFjOitSD1Mh3QQKssYdxuPw==
+	t=1793316343;
+	b=mmLeTa5WUGz3y+6+zv6p3OkNbPn/m4esBKvDk8Hd6K03/XDnedfeH+oss53y3ATRwC5x
+	 c4oD34e2tlCs41nPWwAexZMvaWhxvXSFOcwHVCbxMvrSb7xB4U6wMLbd/MielRMLVamSh
+	 qm/63gU0Qv3rYRboepaSuhCxvPs53aRfkwCjMqsiL975vCUTqOkSNQsoxeTBNT0rGsvuJ
+	 FxFhHtxmMqBXG+2exP9/V1knAfr9tUnL9fKmPExfU/n6uCVX1ANs9jwCzv+as/EkDYBf/
+	 9h/QzQdUnNchiL4zES9Dgh7D58zFs3Z5TIM7jUExPQ5UmVvKTvQ6bSHPG5FF8GFPzLA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793309267;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Type:Content-Disposition;
-	bh=GrDsjidFYE5PeCQkjmW7oWsevDhJRHOIv7g3iakVUYs=;
-	b=umpQg/YCEKo5cAa9wOSw8FIFaYSdW/AxKobJXyP74BnKg7VWslcrc3/Iyx0wnRCHQD25
-	 TZzEQos7iVkNccThKSG7Fxj7GONKNwv0BahM+Y+/+OJJZ5FFO6R0FudGD0uaFt6U+pQWF
-	 Z0vXeIgsVZDH+mdEyn/X4iw6JFPTg5KoXlhfPgtNjqF6YH9d30/v6HdERQZH0bll9UCwf
-	 zUB97fzd6wTKHVb3u1IG+UFWdJI8H48xm6cohZfcA7sMrw8t6RIkshKvcfC7FC0BFe6L3
-	 e6u0KFrDwMJYI+/cbp9CdrLMXbWRYhp6nckHU7JjjVzN7jabyG4zT/SvCJli6ZLH4TA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793316343;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=uy/FZh24B32RYF0ZgiKoGJHXlBRYP7HqQOuRiOOjXeE=;
+	b=LS6MDKGgtsAODh/0Ih6bmsdgV0HF4eRNJzShiFPdmHsuHvVDCrKs6/dThW4wYoJsOCm1
+	 zgc6nz/8WHcuXQb9oAsMxNL4oIVTu0Co9zUm5LIEIhQwN5RAq1pxrbvebWCDMmhxaMVHs
+	 766bzLtlbrmU9GJYGP9A0fIlMD1gNhskfvOTKZWgZWhY1RmII0QN6XOQm8atU7kpeySD2
+	 MEJE0JOI9VWYQRKvwdyPVaUVafdQ/k0JNKa/M+p4Ipg93OU4973X/eTaGdaivp3wk1LTR
+	 Mo9rnVifEtUxM5i7tap4Zg60FlzuyBaYOmSdCSm/8P/Sr4nxo0xyfZHgMom9XpxZvJg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Ex1h6U+g;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="n/UfjZG4";
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A33C606A31A
-	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 21:27:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5A33C606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id D93EA606A31A;
+	Thu, 29 Oct 2026 23:25:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Ex1h6U+g
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793309266;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=GrDsjidFYE5PeCQkjmW7oWsevDhJRHOIv7g3iakVUYs=;
-	b=Ex1h6U+gTyiRQfuxYKbj3XAfVZpmwUJ1QhNbN3WJw45g/vb/nIIwNyjaUxQPPEQ6R9A4Ds
-	cRjigYB0EFahq6i8ZHbiEV3nR8zj5Un/838I7cs6hAUyozGOfYT1I+GN8myqm1LC73vvhp
-	u5vGYKceCrNUKqz7Rcpx/gOuKR8aOmo=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-467-BNjcgul_NVKcFwOVXvkZJA-1; Thu,
- 29 Oct 2026 17:27:43 -0400
-X-MC-Unique: BNjcgul_NVKcFwOVXvkZJA-1
-X-Mimecast-MFC-AGG-ID: BNjcgul_NVKcFwOVXvkZJA_1793309262
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id BD9EC19560B2;
-	Thu, 29 Oct 2026 21:27:41 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 397F130001A4;
-	Thu, 29 Oct 2026 21:27:41 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69TLReBK780714
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 29 Oct 2026 17:27:40 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69TLRd8H780713;
-	Thu, 29 Oct 2026 17:27:39 -0400
-Date: Thu, 29 Oct 2026 17:27:39 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Brian Bunker <brian@purestorage.com>
-Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v1 1/1] multipathd: verify udev WWIDs with the device
- before moving paths
-Message-ID: <auO6S56Jdjpxh8Bh@redhat.com>
-References: <20261029175727.25457-1-brian@purestorage.com>
- <20261029175727.25457-2-brian@purestorage.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=n/UfjZG4
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A7A761F00A22;
+	Thu, 29 Oct 2026 23:25:41 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793316342;
+	bh=uy/FZh24B32RYF0ZgiKoGJHXlBRYP7HqQOuRiOOjXeE=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=n/UfjZG4Xre6CtdKbTCQPofGneqZlZHEt/PF/tXrPp/zphplFkx0MAcItFQeicMWW
+	 zUpED7Jle7zZ4V/nsPgVEFr8TofdfoK1fk3ZKLuC+7hWk/OCl/e/fIP2hnYoRTviZi
+	 hWVdzNIbN4JKVWQZn34gJM7dL9kPxLR2UU20xjUOM2OItlo4pTLUhCnXMGUpL+YiF2
+	 uh5N+dtNYyzCmhxVUxFKFtchSQ5ds0unIwm2uGKTr8FGYRDhqV7r0z7xD9m1y3heSO
+	 VcM16OMo1CXD4Q8ODXLxqMYnLxy66ib0QiYT4HJ1g71PJ0VL88NezJVsWlS2m2CWDk
+	 ZnrNnganPBxfA==
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: keyrings@vger.kernel.org,
+	Eric Biggers <ebiggers@kernel.org>,
+	Jarkko Sakkinen <jarkko@kernel.org>,
+	Lukas Wunner <lukas@wunner.de>,
+	Ignat Korchagin <ignat@linux.win>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	"David S. Miller" <davem@davemloft.net>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Alexei Starovoitov <ast@kernel.org>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Song Liu <song@kernel.org>,
+	Yonghong Song <yonghong.song@linux.dev>,
+	Jiri Olsa <jolsa@kernel.org>,
+	Emil Tsalapatis <emil@etsalapatis.com>,
+	Ihor Solodrai <ihor.solodrai@linux.dev>,
+	Paul Moore <paul@paul-moore.com>,
+	James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <shuah@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	linux-crypto@vger.kernel.org (open list:ASYMMETRIC KEYS),
+	linux-kernel@vger.kernel.org (open list),
+	dm-devel@lists.linux.dev (open list:DEVICE-MAPPER  (LVM)),
+	fsverity@lists.linux.dev (open list:FSVERITY: READ-ONLY FILE-BASED AUTHENTICITY PRO...),
+	bpf@vger.kernel.org (open list:BPF [GENERAL] (Safe Dynamic Programs and Tools)),
+	linux-security-module@vger.kernel.org (open list:SECURITY SUBSYSTEM),
+	linux-kselftest@vger.kernel.org (open list:KERNEL SELFTEST FRAMEWORK)
+Subject: [PATCH v4 1/3] KEYS: Introduce keyring_is_empty()
+Date: Fri, 30 Oct 2026 01:24:09 +0200
+Message-ID: <20261029232437.2581640-2-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261029232437.2581640-1-jarkko@kernel.org>
+References: <20261029232437.2581640-1-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -86,167 +91,106 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <20261029175727.25457-2-brian@purestorage.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: hk34Z8aGVJTpVLCQT2Te1ZRv1efzeELXMDx69oBn2iA_1793309262
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Thu, Oct 29, 2026 at 10:57:27AM -0700, Brian Bunker wrote:
-> multipathd takes a path's WWID from udev. When a change uevent reports
-> a different WWID, uev_update_path() removes the path from its map and
-> re-adds it through uev_add_path(), which places it in whatever map owns
-> the new WWID. Nothing checks the new value against the device itself;
-> recheck_wwid only covers paths coming back up in the checker and
-> "multipathd add path". If udev reports the wrong WWID, or the uevent is
-> stale by the time it is processed, the path goes into the map of a
-> different LUN and I/O for one LUN is silently sent to another.
-> 
-> Use SG_IO to read VPD page 0x83 from the device in two places, for
-> paths where can_recheck_wwid() is true:
-> 
-> - In uev_update_path(), if the device still reports the cached WWID,
->   ignore the udev value and leave the path where it is.
-> 
-> - In ev_add_path(), refuse to add a path whose WWID the device doesn't
->   confirm. The path is orphaned, its WWID is cleared and it is marked
->   INIT_MISSING_UDEV, so the checker retriggers udev (bounded by
->   retrigger_tries) and the path is re-added from fresh data.
-> 
-> ev_add_path() is the common point for uevent, CLI and checker adds, so
-> the second check holds even when the udev data is stale by the time it
-> is used. If the SG_IO read fails, behavior is unchanged.
-> 
-> Split the SG_IO read out of check_path_wwid_change() into
-> get_sgio_wwid() so all three checks share it.
+Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
+fs-verity how keyring internally manages the keys.
 
-The code all looks good to me. I must admit, I'm a little paranoid about
-forcing perfectly normal ev_add_path() calls to double-check the wwid.
-Currently, that only happens if you enable "recheck_wwid", or if
-something is going wrong with initializing the path. The issue is that
-scsi devices can have multiple wwids, and the multipath code has to be
-in sync with the code that udev runs to the wwid, otherwise they can be
-different. I don't think these functions differ. I know I've checked
-them in the past. But unless there is a problem getting the wwid from
-udev or someone turns on recheck_wwid (I don't know how common that is)
-paths don't ever run this code. 
+Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+---
+ drivers/md/dm-verity-verify-sig.c                      |  2 +-
+ fs/verity/signature.c                                  |  2 +-
+ include/linux/key.h                                    |  1 +
+ kernel/bpf/keys.c                                      |  2 +-
+ security/keys/keyring.c                                | 10 ++++++++++
+ .../selftests/dm-verity/test-dm-verity-keyring.sh      |  2 +-
+ 6 files changed, 15 insertions(+), 4 deletions(-)
 
-We could avoid this by hijacking the need_do_map argument to
-uev_add_path() and ev_add_path(). If, instead of just being 0 or 1, it
-could also be a third value for reinits (we should probably use an enum
-in this case), we could only double-check the wwid on reinits, which
-only happen when there is an issue getting the wwid from udev.
-
-Thoughts? Am I just being paranoid here?
-
--Ben
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index aadcf5e4a47c..cad21e9144ed 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -153,7 +153,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+ 	if (ret != -ENOKEY && ret != -EKEYREJECTED)
+ 		return ret;
  
-> Signed-off-by: Brian Bunker <brian@purestorage.com>
-> ---
->  multipathd/main.c | 57 ++++++++++++++++++++++++++++++++++++++++++-----
->  1 file changed, 52 insertions(+), 5 deletions(-)
-> 
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 9bce4d6b..656efb6e 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -1086,14 +1086,16 @@ handle_path_wwid_change(struct path *pp, struct vectors *vecs)
->  	return removed;
->  }
->  
-> -bool
-> -check_path_wwid_change(struct path *pp)
-> +/*
-> + * Read the WWID directly from the device with SG_IO, bypassing udev
-> + * and sysfs. Returns true and fills in wwid on success.
-> + */
-> +static bool get_sgio_wwid(struct path *pp, char *wwid)
->  {
-> -	char wwid[WWID_SIZE];
-> -	int len = 0;
-> +	int len;
->  	size_t i;
->  
-> -	if (!strlen(pp->wwid))
-> +	if (pp->fd < 0)
->  		return false;
->  
->  	/* Get the real fresh device wwid by sgio. sysfs still has old
-> @@ -1111,6 +1113,15 @@ check_path_wwid_change(struct path *pp)
->  		/* no-op */
->  	wwid[i] = '\0';
->  	condlog(4, "%s: Got wwid %s by sgio", pp->dev, wwid);
-> +	return true;
-> +}
-> +
-> +bool check_path_wwid_change(struct path *pp)
-> +{
-> +	char wwid[WWID_SIZE];
-> +
-> +	if (!strlen(pp->wwid) || !get_sgio_wwid(pp, wwid))
-> +		return false;
->  
->  	if (strncmp(wwid, pp->wwid, WWID_SIZE)) {
->  		condlog(0, "%s: wwid '%s' doesn't match wwid '%s' from device",
-> @@ -1121,6 +1132,24 @@ check_path_wwid_change(struct path *pp)
->  	return false;
->  }
->  
-> +/*
-> + * udev reported a new WWID for a path. Returns true if the device
-> + * itself still reports old_wwid, in which case the udev value must
-> + * not be trusted.
-> + */
-> +static bool device_kept_wwid(struct path *pp, const char *old_wwid)
-> +{
-> +	char wwid[WWID_SIZE];
-> +
-> +	if (!can_recheck_wwid(pp) || !get_sgio_wwid(pp, wwid) ||
-> +	    strncmp(wwid, old_wwid, WWID_SIZE))
-> +		return false;
-> +
-> +	condlog(0, "%s: ignoring wwid '%s' from udev, device still reports '%s'",
-> +		pp->dev, pp->wwid, wwid);
-> +	return true;
-> +}
-> +
->  /*
->   * uev_add_path can call uev_update_path, and uev_update_path can call
->   * uev_add_path
-> @@ -1315,6 +1344,20 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
->  		condlog(0, "%s: failed to get path uid", pp->dev);
->  		goto fail; /* leave path added to pathvec */
->  	}
-> +	/*
-> +	 * The WWID normally comes from udev, possibly from an event that
-> +	 * was queued long before we got here. Adding a path to the map
-> +	 * of a different LUN corrupts data, so confirm the WWID with the
-> +	 * device first. On a mismatch, leave the path out and let the
-> +	 * checker retrigger udev to get a fresh WWID.
-> +	 */
-> +	if (can_recheck_wwid(pp) && check_path_wwid_change(pp)) {
-> +		condlog(0, "%s: not adding path, wwid '%s' not confirmed by device",
-> +			pp->dev, pp->wwid);
-> +		memset(pp->wwid, 0, WWID_SIZE);
-> +		pp->initialized = INIT_MISSING_UDEV;
-> +		goto fail;
-> +	}
->  	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
->  	if (mpp && pp->size && mpp->size != pp->size) {
->  		condlog(0, "%s: failed to add new path %s, device size mismatch", mpp->alias, pp->dev);
-> @@ -1702,6 +1745,10 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
->  			strcpy(pp->wwid, wwid);
->  		else if (strlen(wwid) &&
->  			 strncmp(wwid, pp->wwid, WWID_SIZE) != 0) {
-> +			if (device_kept_wwid(pp, wwid)) {
-> +				strcpy(pp->wwid, wwid);
-> +				goto out;
-> +			}
->  			condlog(0, "%s: path wwid changed from '%s' to '%s'",
->  				uev->kernel, wwid, pp->wwid);
->  			ev_remove_path(pp, vecs, 1);
-> -- 
-> 2.56.0
+-	if (dm_verity_keyring->keys.nr_leaves_on_tree &&
++	if (!keyring_is_empty(dm_verity_keyring) &&
+ 	    dm_verity_keyring->restrict_link)
+ 		ret = verify_pkcs7_signature(root_hash, root_hash_len,
+ 					     sig_data, sig_len,
+diff --git a/fs/verity/signature.c b/fs/verity/signature.c
+index 0302a4e506ec..890d33b9d812 100644
+--- a/fs/verity/signature.c
++++ b/fs/verity/signature.c
+@@ -67,7 +67,7 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
+ 		return 0;
+ 	}
+ 
+-	if (fsverity_keyring->keys.nr_leaves_on_tree == 0) {
++	if (keyring_is_empty(fsverity_keyring)) {
+ 		/*
+ 		 * The ".fs-verity" keyring is empty, due to builtin signatures
+ 		 * being supported by the kernel but not actually being used.
+diff --git a/include/linux/key.h b/include/linux/key.h
+index c4486e938a06..20ca43f5eab1 100644
+--- a/include/linux/key.h
++++ b/include/linux/key.h
+@@ -439,6 +439,7 @@ extern int restrict_link_reject(struct key *keyring,
+ 				struct key *restriction_key);
+ 
+ extern int keyring_clear(struct key *keyring);
++bool keyring_is_empty(const struct key *keyring);
+ 
+ extern key_ref_t keyring_search(key_ref_t keyring,
+ 				struct key_type *type,
+diff --git a/kernel/bpf/keys.c b/kernel/bpf/keys.c
+index bffc356839ac..24e0416abc99 100644
+--- a/kernel/bpf/keys.c
++++ b/kernel/bpf/keys.c
+@@ -29,7 +29,7 @@ struct bpf_key *bpf_lookup_keyring(void)
+ 
+ 	if (!bpf_keyring)
+ 		return NULL;
+-	if (!READ_ONCE(bpf_keyring->keys.nr_leaves_on_tree) ||
++	if (keyring_is_empty(bpf_keyring) ||
+ 	    !READ_ONCE(bpf_keyring->restrict_link))
+ 		return NULL;
+ 
+diff --git a/security/keys/keyring.c b/security/keys/keyring.c
+index 5281da9d5bf7..ac48d6204915 100644
+--- a/security/keys/keyring.c
++++ b/security/keys/keyring.c
+@@ -443,6 +443,16 @@ static void keyring_destroy(struct key *keyring)
+ 	assoc_array_destroy(&keyring->keys, &keyring_assoc_array_ops);
+ }
+ 
++/**
++ * keyring_is_empty - Check whether a keyring is empty
++ * @keyring: The keyring to check.
++ */
++bool keyring_is_empty(const struct key *keyring)
++{
++	return READ_ONCE(keyring->keys.nr_leaves_on_tree) == 0;
++}
++EXPORT_SYMBOL(keyring_is_empty);
++
+ /*
+  * Describe a keyring for /proc.
+  */
+diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+index 1f9601ef22f8..792449d356cf 100755
+--- a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
++++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+@@ -746,7 +746,7 @@ test_keyring_inactive_when_empty() {
+     log_info "TEST: Verify dm-verity keyring is inactive when sealed empty"
+ 
+     # When keyring_unsealed=0, the keyring is sealed immediately while empty
+-    # This means it should NOT be used for verification (nr_leaves_on_tree=0)
++    # An empty keyring should NOT be used for verification.
+ 
+     log_info "Keyring state (should be empty and sealed):"
+     list_keyring_keys
+-- 
+2.47.3
 
