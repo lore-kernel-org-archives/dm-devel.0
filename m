@@ -1,95 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793317201;
-	b=x3pOIcr9P8G6FAB/JTdanX+zWdeJ6X6EjgbZgkxPV2GDrKML+tIHoZNgUfNpj+WttmBm
-	 UsaYk7Vq8Ct++pAmk60ERCeQbRhURYZHrlRKIclZe4XN7J5RYJJbHjTuCk2uZ4435VrtX
-	 JQfII6t5ySSIot2kUdDSzRzxBHlFQ8tHwcccRe0w/wTWvXMfwkzJV2vBQQXovbI9FRCAl
-	 bTe76AWLkwBo3HRQC1U12Eo+qcJxRapFTuN7DdlTxXCtv+wmq73sJ6OshFwMhNUdTRf2H
-	 EehiA3AFxI5taiWdKNLzaR7lBexUa0eRRvwAA80WJO70fWZkEL+dc9LJlMQJ2txoBZQ==
+	t=1793317823;
+	b=TwebQ7nrvvy0Fm7lwppUGhw2wtnFx6JILQbqCqeVW2M5xmUVBVmfKID1BYNnpJnD2jun
+	 eJSaJFCuU5FF94EUfIhP5f+IJLmQGX8++PhFz8V16bMejxcrPHonEThl4PnWeM8gop+sf
+	 cQ3gb5X2MEzl9ZHlIZhFtw1N1Y9TQ+wAnA17LTPgWvY7iLMYq4rlMny9HfD6E0WKhKFG0
+	 cdR49Ee3wLViqCXI5KY2Ap6SV2FPsjwRTPyHskobbIk1+IWCbFbs3HSh+Lcx+Us3h0Lgl
+	 Znoxl1Ve/vcORC067sRTJCSxsRIB75EmG9E/z84iOwlx4lYzTGGG7deCAI35YPo90YA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793317201;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=Aml3qOJir+FPIf91ZakQsy56hRFoQmvVd9FUx7Aze3U=;
-	b=0vPnAK4p3p+2C1bWLLWY2rvUZb3TWQmbbePk7HjjY1daiGcJiznS8xhKgJ3YKsh5Jzu3
-	 RnvKt3HP/iFA+3HkXaZ+rH1LJBxnwtg8Zv6jFVMhV+Vn6aZJgGfrx2CBgXl2/Y3yEaroB
-	 tbI0w1Dqp9GuDtsrDFtOUwrNRFEUMWE7uQGj8Y6dShrxhxUHKrXZ+6INyOizXHYtDCDG1
-	 Z7WxFlfTAGDw692WPulmOULKKpPnv+4567gYMUm+1rouAaK5PRt7D6purKiapOsIWFnJY
-	 cIYoA09N+32cwWbqUkzBEFyXUs55rkBzhJLjiUCBrfgnAsInQNuZ8LxDJPNKzC9gFOw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793317823;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:MIME-Version:X-Scanned-By:
+	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Transfer-Encoding:content-type;
+	bh=Az/mDBXHiyDnQDAdYzcnjkVbZom/dZk6Ov5vycbi8us=;
+	b=A8h3AKeY3SS7FqO6fddqWEYtLEyq4wr4AsFA1wPhnu+ozfLSsFMWa70K2GvDwvwoDA3k
+	 xTWoa7dN2W7P0z4K7EHEVfH7EtWwqd8MTofxmCasf6mSl8QyXmzGzoHL9XwR4s8Eoi1MH
+	 gIgxIctjfWHqWOLRITpxKGTchKoNP8539V7j8AkpNkCM9Zgd2pYlpDv5Owu+QwC2RCn+M
+	 qQNVDPOqmK7hVtRvAdTEkBoMnhgaeb5lZb3APea7Gja/f0l1w1pW2pSwQmnM6i2Bue/Ex
+	 jQaQU2oRGIUFp8PzdH8W4rYAplNtntY5+iKpfb/jn2EzqsHzsF113LCY8+UqAj3xs0Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=purestorage.com;
-	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=YBRCiUJY;
-	arc=none smtp.remote-ip=74.125.82.50
-Received: from mail-dl1-f50.google.com (mail-dl1-f50.google.com [74.125.82.50])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=d7c5tDYH;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48AD3606A31C
-	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 23:40:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 48AD3606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 497D8606A31A
+	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 23:50:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 497D8606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=YBRCiUJY
-Received: by mail-dl1-f50.google.com with SMTP id a92af1059eb24-188406bb948so93862c88.1
-        for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 16:40:00 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1793317199; x=1793921999; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=Aml3qOJir+FPIf91ZakQsy56hRFoQmvVd9FUx7Aze3U=;
-        b=YBRCiUJYNm/bdMecWKOlKR26VxAV4Kbmd1TXQpJGEmDL0ZleV11aPU5feZ09HWWXQ2
-         roP2hkXUGebPkErrJzN6fj+PwhHzfNn+mdVm9HSQBg8+dcCBL5PA/z2dDl8AxSpLAaPb
-         9VGf501XBbUaVqKYpICuV0N9CN+DVcHHxcTI4bTHiTLwfaHgjxROcLgb0o/SWnlwJRvl
-         +bs1RayiMx50NiVnfT9qShFypSvWpKtBrg+JoCBjA319vz6rUu8CVl46Rk3b45fwQHlN
-         RIf9BdWbRlII/RWfq3Aga6vL5oIb4dL2lsuH7LJ3I/zh08K7l2g/QGkwkRWZMIGnYhd8
-         OvoQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793317199; x=1793921999;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Aml3qOJir+FPIf91ZakQsy56hRFoQmvVd9FUx7Aze3U=;
-        b=URRpuq+prDeV17x8Lvo/e9TSMHqLqbTLdZXUOD120ffx+PVM/GxVCDSWjLjMJxIM45
-         FHBOgb1gvyuGhd9PicyzeQ8BUTalZ3r08+WYT1cGHpEo25spOvEvpDj8SH8GU73lzdLo
-         0TBBbNn30YIznwIednH/4vGHnhcekKMft2lUTA2J84aYh0m3lZXZEj17h/UgCiqZZBm3
-         ocphNsTi9TY4JUKHc05lTPU4If3f6T7DmzAZ2M0w+NPyn/5k5n+ytz9V8OslvDvTbc4P
-         qdC6KZRt3czrrgzmjYxU0ox8oe4Ego7xkid99r75onyUSQ5OX75x5IctwB0DLBLtJhww
-         BnRQ==
-X-Gm-Message-State: AFq9FYIE3Zv+Wpqva43xTaQrAK445HCpAPhTSjwcSRRPdY3mAByTO9UV
-	vw57UPPjvb5ziZGIjV6KT+6dR+1Mankox9DiDlva26tf18h//rGqlI+guesZzFUKe74=
-X-Gm-Gg: AYBFou0dhuSX+L67NjfhiR+ZkBnlBuTjT1GlAKKTkuQXZ/mVWoii6HJLQN5FIClmhI4
-	9seYz9zICV3lCxZp9HQMv5QF06SJlHMTfnqr0sYNCYdXn08R583uZEvaFcC4YwOeFi8cD+g0z8D
-	0RbfAetm7tzu0kjFVCIsvRKTeikCy7A4vN4Omi85pbk/K88L1zYlPemuO4MteU4rev+i0FC2Li8
-	x1g+q/u82IWm+OUBHnNzeBFMnwOa0Q9Lso9vg2OYUkUpvDCSKRBf10kkuez3NMyRCSwZfMNQiP9
-	hKyK6tDRFSpvgxHhrJuP1BmKttJQR9kAEScK0q5+PWuFkP0YFVdzAZd8sbgIGDHDLbcEJFB0T/t
-	uQgcBb2uvkWfyYm+sKAcMA2iKcsnWF5reVb0CguxkEya82diXndRmz1mLve3rw55OsPFJiXzj5w
-	SSCdSik4dwkOXXLEugBZrWqQ+Uw2DNMIoX+b/O8x+MkWE4KfmH9zj7l1X8gc3d46LXFtW2aK9MM
-	gr+oVlhsExsK8EWuIYlHcN3JP/jSkwjvhpcGBuFrLeZH6OIz4l7pThR28c/k+k6OxcrRKbmgOel
-	EgBv5NDczvdaI8qPtK9va7TXOuT8YH6BXC2y5HzTnXXq4W1wczXUrMjXFfCLs3IxXRkTT254/2D
-	WK627WL++JW5Y3HolHkb6io9BDBnCFDzrRESsvOJLsUOFAA8D2lvwmlEnxUchKn/ZhVTil2DdGh
-	UOt4LoT83ooJ0LG4iu5vgvQIaq
-X-Received: by 2002:a05:7022:2203:b0:18d:c38c:bcc9 with SMTP id a92af1059eb24-1ac56e8a821mr1179807c88.3.1793317198960;
-        Thu, 29 Oct 2026 16:39:58 -0700 (PDT)
-Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1ac18458e07sm1774192c88.8.2026.10.29.16.39.58
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Thu, 29 Oct 2026 16:39:58 -0700 (PDT)
-From: Brian Bunker <brian@purestorage.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
-	Martin Wilck <mwilck@suse.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>
-Subject: Re: [PATCH v1 1/1] multipathd: verify udev WWIDs with the device before moving paths
-Date: Thu, 29 Oct 2026 16:39:49 -0700
-Message-ID: <20261029233950.94756-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <auO6S56Jdjpxh8Bh@redhat.com>
-References: <auO6S56Jdjpxh8Bh@redhat.com>
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=d7c5tDYH
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793317822;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=Az/mDBXHiyDnQDAdYzcnjkVbZom/dZk6Ov5vycbi8us=;
+	b=d7c5tDYHedCKjEoIQ4VWALFosEGw52gLPyKP8F7tGGrF67zT1G6V+m0+g0eOc40VBWaKHU
+	jJGv7okvjyhXFUf6k21CpXNHlb1SObFsGdKfEMg/2GV7OKoSqRX6vPZ8RFGuCKplrTE8/0
+	CB+kQjDliN5I78ZbKtSCLwwPzdP9g6A=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-KDmzIlN-MYOzcSA8wCgbig-1; Thu,
+ 29 Oct 2026 19:50:20 -0400
+X-MC-Unique: KDmzIlN-MYOzcSA8wCgbig-1
+X-Mimecast-MFC-AGG-ID: KDmzIlN-MYOzcSA8wCgbig_1793317819
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D9CA1809CAB;
+	Thu, 29 Oct 2026 23:50:19 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B2818767;
+	Thu, 29 Oct 2026 23:50:18 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69TNoHwC818223
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 29 Oct 2026 19:50:17 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69TNoEl4818210;
+	Thu, 29 Oct 2026 19:50:14 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH] multipathd: Don't look at pointer to removed path
+Date: Thu, 29 Oct 2026 19:50:14 -0400
+Message-ID: <20261029235014.818202-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -99,63 +83,50 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: rdrizsUwaYZovTjJh35VJ60EfUS-Sbi5XyBQgh8UMK4_1793317819
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Thu, Oct 29, 2026 at 05:27:39PM -0400, Benjamin Marzinski wrote:
-> The code all looks good to me. I must admit, I'm a little paranoid about
-> forcing perfectly normal ev_add_path() calls to double-check the wwid.
-> Currently, that only happens if you enable "recheck_wwid", or if
-> something is going wrong with initializing the path.
+In uev_update_path(), if the path wwid changes, we remove it and use
+needs_reinit to re-add the path. Once we remove the path, pp is pointing to
+freed memory, but we still read the value it pp to see if it's NULL before we
+check needs_reinit. This doesn't cause any bugs, since we don't dereference it,
+but it would still be cleaner if we stopped accessing it completely after we
+freed it. This is easy to do, since we only ever set needs_reinit if pp is
+non-NULL. So just check needs_reinit before we check if pp is NULL.
 
-That's a fair concern. I made the check unconditional in ev_add_path()
-because it is the one place every add passes through, but I didn't
-weigh what it costs the normal case.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-> The issue is that
-> scsi devices can have multiple wwids, and the multipath code has to be
-> in sync with the code that udev runs to the wwid, otherwise they can be
-> different. I don't think these functions differ. I know I've checked
-> them in the past. But unless there is a problem getting the wwid from
-> udev or someone turns on recheck_wwid (I don't know how common that is)
-> paths don't ever run this code.
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9bce4d6b..792bee36 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1769,6 +1769,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+ 	}
+ out:
+ 	lock_cleanup_pop(vecs->lock);
++	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
++	if (needs_reinit)
++		return uev_add_path(uev, vecs, 1);
+ 	if (!pp) {
+ 		/* If the path is blacklisted, print a debug/non-default verbosity message. */
+ 		if (uev->udev) {
+@@ -1787,9 +1790,6 @@ out:
+ 
+ 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
+ 	}
+-	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
+-	if (needs_reinit)
+-		retval = uev_add_path(uev, vecs, 1);
+ 	return retval;
+ }
+ 
+-- 
+2.56.0
 
-can_recheck_wwid() already limits the check to SCSI paths using the
-default uid_attribute, but I can't prove the two never pick different
-designators on some device. If they did, every add on that device would
-be refused and retriggered. That isn't a risk worth taking for a path
-that has never had a problem.
-
-> We could avoid this by hijacking the need_do_map argument to
-> uev_add_path() and ev_add_path(). If, instead of just being 0 or 1, it
-> could also be a third value for reinits (we should probably use an enum
-> in this case), we could only double-check the wwid on reinits, which
-> only happen when there is an issue getting the wwid from udev.
-
-I like this, and v2 does it. need_do_map becomes enum path_add_mode
-(PATH_ADD_NO_MAP, PATH_ADD_MAP, PATH_ADD_REINIT). PATH_ADD_REINIT
-behaves like PATH_ADD_MAP and is passed only for the re-add at the end
-of uev_update_path(). That covers both cases that set needs_reinit:
-udev data not there yet, and udev reporting a changed WWID. The
-changed-WWID re-add is the one that put sdq into the wrong map for us.
-Ordinary adds, CLI adds and the checker's add_when_online path don't
-run the check.
-
-The uev_update_path() check stays as it was. It only runs when udev's
-WWID differs from the cached one, and does nothing if the device
-doesn't confirm the cached value.
-
-> Thoughts? Am I just being paranoid here?
-
-I don't think so. On how common the problem is: we hit it because a
-test tool was opening and closing the sd devices read-write many times
-a second. With udev's "watch" rule each close sends a change uevent
-that runs scsi_id, so the host was producing far more udev traffic than
-a normal one. I expect it to be rare elsewhere, but the result is data
-going to the wrong LUN, so I'd rather not act on a changed WWID
-without confirming it. Limiting the check to reinits keeps that and
-leaves the normal path alone.
-
-v2 follows in a separate thread.
-
-Thanks,
-Brian
