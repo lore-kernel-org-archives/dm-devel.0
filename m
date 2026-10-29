@@ -1,94 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793296660;
-	b=iXHCgsMdHPMfetVBnL7WYxCg2fWv9A0wgIxRJLD1gSCsXBRVY2JoMnqilibKAP7da9pY
-	 5x7B7S3In5pLB78Gh4PzyPvVASYe45OSNdLt9PzUu+OU4xUSCeRcleEIvIQSvcDF3W2rC
-	 lNtGp9av8rfVcdIfqETCLkg/RvaYuge7vTwteUyodegvU/fqRWmXCOFx0VcMD72w/hdZk
-	 wSrFHXO+EOFQEwsQzDJ3G/BI300dGl2qNsVgmOYMx22MC9CrPsnbfDFbssDavU/5KiMG9
-	 zZIfwaYFEc2aZADS9rZEXDa1FAzYPKjsa3qf5aDbeCybaiR2zyLkWrdl1HVBzewNJtQ==
+	t=1793303534;
+	b=syaXt0IAyJ6jwoP3j91z9hWrVaqJeogJtFvZYZ3V/x9pWN28LO0QGRx8SHFddCdm1Gpy
+	 4OqIOY8N4fOPgQjLN5+vZBdJuzHYfyVVaYjBAbYnnIrjqShwfqiBZvMmuulj69zT8f1al
+	 uUgc/x7iSf3KLC8mFvU3v4LBJx9rZI6MsBmhu4/c3XIeVgROG3mSTNbho4w6Qa5Zqrw0p
+	 Tnkyo3zbOvd7w5hrATkuLHPBOABiryRinxNqWeHuDzQlgMUlGbddQSJ2yYxYsIyBaeJcl
+	 zGR6dKcN6ynEuNZa/5hWlusmeY8WfZ36wxkvnEvL0EsEJjNUt2cVXubTvbHhY26sgWA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793296660;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=RDJdPxkSxNirgIJ7pZ00HxW5AOOLDCt4ppaJGPipTXs=;
-	b=PPasfTSuknotpJ7HHHcuM421xeKXMl2pHV3SrhJTDifQ/gZSgL5TL6+hIjgiyHICQKck
-	 uK+fOKTcyPtKVY34pK4uTrSo0+TyaAHkO7VsJAZcqgWzshbbMnOqnfRfi7iiCkqIs8Usv
-	 olfxMeSUJAp1YOTrBRLaTqyeNxuaIC2aCIZCUqRj/FrNTO9bg1HKQpJDb+c4d9IoVQZiy
-	 qIdiD9qXgkTdrJ4Esw+aFZ8cOZO16XZDrgnf4lW7gdz2sk/qns4dpqsDrQZgCreVoKKAW
-	 tkgWlv1F4KeQxhqZZMbN0a4QXAWcWfX8JZuWRmZM/KoUrLLArH6RunrREyIOJlW/80A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793303534;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
+	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
+	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
+	 X-Mimecast-Originator:Content-Type:Content-Disposition;
+	bh=OR6vrBX7svWj1BYHj2gS511DZVw8+QNp5lqzLuFQP2E=;
+	b=nf/IvnGrHG6ry2PUU5AErtmC+doshrh5F2cUoYEyL2nBPBsMwTS0k8hVmVQhf41G4Vv5
+	 oBh75g47K0zFENTRqPS34ihXJiLsuQLhxh54rXQ57+8WoWNlRsh/IkF6bzZil9UG4A5k6
+	 /uU6ZXgBSpspfkZ0viZi2GZLhOMCUqE5DMrfDvYiMBFdZcweMhiHbtd38xBwigwsoSKXF
+	 TBF718DurFuhTzH1goqXTwubUZazv5qVmrmcqHIDQvYKPD0vy+RO+OBvj5QoruPAH4xqn
+	 FlempxETajP8/eSx3aecIPT/Hc42497BVwFu0nCEMP6pC7Liy7zZWIXBxWhvI/nmZ7Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=purestorage.com;
-	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=McBKbpT7;
-	arc=none smtp.remote-ip=74.125.82.49
-Received: from mail-dl1-f49.google.com (mail-dl1-f49.google.com [74.125.82.49])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="gOI+VR/6";
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D4FB606A31A
-	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 17:57:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8D4FB606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49C65606A31A
+	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 19:52:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 49C65606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=McBKbpT7
-Received: by mail-dl1-f49.google.com with SMTP id a92af1059eb24-15ea896ddc8so3632507c88.0
-        for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 10:57:39 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1793296659; x=1793901459; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=RDJdPxkSxNirgIJ7pZ00HxW5AOOLDCt4ppaJGPipTXs=;
-        b=McBKbpT7LBURKbMhCFCcTMWNgWQibJzFnwYVyVDmiqZ8bbWep9MukOO0xdQ1aQydFZ
-         lP5zyN48n36vUpIOHwGBMecTIWeViTKvooil5uV9Az5KiLhHfUlCQsoHf1SH8vh5/u4Z
-         Dt6zcDQlXZMFYehVHh4oSZirVeqYlviV4s5iXzvDmGD3+/f05F8BnUPOnNkxSXMmo96d
-         vKM7i/O4+nXO6RS42I9x+HtWoErR4JgvuBmncMX8C0BKrS9C1dK7dxAD3avhB604w8vi
-         kwgN7C96ge8WPueEjPpDx5u0k4Yy3nA+5UGB/B7vd252977LgFbJkmfXg+blmpO44YQZ
-         CAVQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793296659; x=1793901459;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=RDJdPxkSxNirgIJ7pZ00HxW5AOOLDCt4ppaJGPipTXs=;
-        b=tnQx7NYzX7ns1KCfE1osX8oEgO5YBP1dH8woXQu5M1xcdt2UPWAnRwBSv6c9itoUC5
-         Es5buYp+5tFRRnB88TRlEtcp090bJ1Ed7mL0VsMRn2+S30dBUaSV36MoG9R6DU+futB0
-         pKo5YtiQEf+JLRBx1dePTkDIubUiydrEzEUpJbOGrbkgxby3cJcqFRUsGu0DwfgneZ8N
-         9e5hOofHaAHFd8RrL/as5KDCT+gqdo/4CBd6Mw7dqVU36rQyQY2VXISS55adxTWIZpjW
-         1tu0qY7Cm9HR7r0jBkfoC5M8LkpVDrLNbuoG/B8deH+FXt1GAXRiafIOQidS5NdZzH45
-         35SA==
-X-Gm-Message-State: AFq9FYLuXJ0GHGbyIaV+mbGOj2dkvgElyvmL5JA6yS2vHcRqQSVlvQPL
-	6ahu4q5JL3wVJVlBJA39DijXgCl1TQnNkod/hWSxUF1ioNpqYJd6oiB+YzG1TDHueBv6mPoOMsN
-	FaooGLN3r3xzRBNjAA7sj1xJWC58f4UuSgJrXsvrayXdCLHFeeUbE7ZCeb8sJZxmbpWbhUT8XpB
-	ampmDEDNnGl2111eRRvCw0Vi2ZziStnZBsOCC7PkzxmmsJs6g=
-X-Gm-Gg: AYBFou1mrRZ1hUNPBkHeendT+pSX5XOw3KGYQV6NRaf1YL2Gi4XtwZMweOXb1nHNQiM
-	c55ONUBYPIkGZ90IiE/NTFJZVpUaq8PEEbEeUYs9gypIvxAKqAO2QRxpfdfR4I6wKZ5IeByKBLX
-	XqzTuBly1pZrjUnHH/P10oazvhiSHGtc466sZTr4Hi/VcEB9PAZaIB4A3ztu5mtFhz+UgEfqmlH
-	UBH2CvHgXoJFCI5PeI312/hFV2Sgi6khmfQxbj4dLyAGSsPL0EldPPdQLloLhI0JgQn0kpoLWR3
-	nZUfArozygbAKJTkO4Bsz/iiOnYKhlMnLjr9pOlTj4yr007HODntrY2pLflc1p+kDCPhthdYb9e
-	KOV/0qYOjvzHdikarycZPPuI/b6r27SIrtLGkn6LMU7hszBkAaSDwcPQEctbEkTF1CCGTjvn8Ht
-	g3We/wZ/eDm5a+Wc4ylzqUl3x19d9x48JUMCTuu1dMJZIorEsSF3yYICNMDenN0NZaBbxv/jh/1
-	zqR0EvWtITZ1YwtUS1o0G+NOqFUyMG41A8Ot2VVe6pZcTrzsx8PYnjR3nj6wIQoiyxHK103j6b/
-	rP3ArBYtb+eLQXkQva9CAelt+WfBn8z6D4i2qpy03mxAazG/3WQgplyQLzleSb4Fv5Pxv+LzCzE
-	ZsYE/PFPbMG81dp83POSuuA5iNhgIeJxA1xh6DFLrxPNU+LsW1W+l8YQWmazwFI3WRGXfOQIfZC
-	wcnJDWZcDO4nwYhFouypY/lnfL
-X-Received: by 2002:a05:7022:b0c8:b0:195:9228:50a0 with SMTP id a92af1059eb24-1a6d0b62961mr7859794c88.42.1793296658207;
-        Thu, 29 Oct 2026 10:57:38 -0700 (PDT)
-Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1ac13ef1932sm327878c88.2.2026.10.29.10.57.37
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Thu, 29 Oct 2026 10:57:37 -0700 (PDT)
-From: Brian Bunker <brian@purestorage.com>
-To: dm-devel@lists.linux.dev
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	Brian Bunker <brian@purestorage.com>
-Subject: [PATCH v1 0/1] multipathd: don't trust udev WWIDs when moving paths between maps
-Date: Thu, 29 Oct 2026 10:57:26 -0700
-Message-ID: <20261029175727.25457-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.56.0
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=gOI+VR/6
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793303532;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=OR6vrBX7svWj1BYHj2gS511DZVw8+QNp5lqzLuFQP2E=;
+	b=gOI+VR/6h+LmODSeS7+5X19rkJUor5ePm5FlrEZTHuqN1FCy43++vB8cgcncIsbXUTMNUS
+	W3udn6Y46NplqBGAYThURwyeHMCjHi+ESOZldIo+vPmG1UHQ/Og41XaPSiGnX5Qw47IXcK
+	W/FWYJDRybMdiGFDUHWlxPuBbWRc3y0=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-711-uTWQ1EQ5N2yHjbsgzC5hkQ-1; Thu,
+ 29 Oct 2026 15:52:04 -0400
+X-MC-Unique: uTWQ1EQ5N2yHjbsgzC5hkQ-1
+X-Mimecast-MFC-AGG-ID: uTWQ1EQ5N2yHjbsgzC5hkQ_1793303523
+Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6B3BE1955F05;
+	Thu, 29 Oct 2026 19:52:03 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0E300180057F;
+	Thu, 29 Oct 2026 19:52:02 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69TJq1jO756235
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 29 Oct 2026 15:52:01 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69TJpwSx756208;
+	Thu, 29 Oct 2026 15:51:58 -0400
+Date: Thu, 29 Oct 2026 15:51:58 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Brian Bunker <brian@purestorage.com>
+Cc: dm-devel@lists.linux.dev, Martin Wilck <mwilck@suse.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        Uday Shankar <ushankar@purestorage.com>
+Subject: Re: [PATCH v5 1/1] multipathd: don't leave maps read-only after
+ write protect is cleared
+Message-ID: <auOj3hktqKXm8KFM@redhat.com>
+References: <20261028002437.39990-1-brian@purestorage.com>
+ <20261028002437.39990-2-brian@purestorage.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -98,60 +87,373 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20261028002437.39990-2-brian@purestorage.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: L2jTgNsd-9jrgDpqpoFs6--Ws0DIy6Gg3qwerMjCBSI_1793303523
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-During an array controller failover on an iSCSI host, multipathd
-briefly put a path to one LUN into the map of another LUN, and I/O
-meant for the first LUN landed on the second. The host ran RHEL 9
-device-mapper-multipath 0.8.7, but the code involved is essentially
-unchanged in master.
+On Tue, Oct 27, 2026 at 05:24:37PM -0700, Brian Bunker wrote:
+> ev_add_path() sets mpp->force_readonly when a newly added path is
+> read-only, but never clears it. If a map is created or reloaded while
+> its storage is write protected, the flag stays set. When write protect
+> is cleared, the reload that uev_update_path() does for the DISK_RO=0
+> uevent uses the stale flag and loads the map read-only, even though all
+> of its paths are read-write. uev_update_path() clears the flag after
+> that reload, so the map only recovers if another DISK_RO=0 uevent
+> reloads it again. If none comes, the map stays read-only, and since
+> mpp->dmi.read_only is then 1, needs_ro_update() also ignores later
+> DISK_RO=1 uevents for it.
+> 
+> Fix this by setting force_readonly before each load and clearing it
+> once the load has succeeded:
+> 
+> - uev_update_path() takes the path's ro state from sysfs instead of
+>   from the uevent's DISK_RO. The uevent only says that something
+>   changed. The kernel updates the ro attribute before it sends the
+>   uevent, so sysfs is current when the uevent is handled, while the
+>   uevent itself may have been queued behind later changes. If sysfs
+>   can't be read, nothing is done.
+> 
+> - needs_ro_update() now sets force_readonly whenever it returns true:
+>   to 1 when the path is read-only, and to 0 when all of the map's paths
+>   are writable. uev_update_path() no longer sets or clears it itself.
+>   When needs_ro_update() returns false, it clears the flag, unless the
+>   map is read-write while one of its paths is still read-only. In that
+>   case an earlier read-only reload failed, and the flag stays set so
+>   that the next reload tries again. If the map has no dm info,
+>   needs_ro_update() now fetches it, and returns false if that fails,
+>   instead of assuming a reload is needed.
+> 
+> - ev_add_path() sets it from all of the map's paths rather than only
+>   the path being added, and only when it is about to load the map
+>   (need_do_map). mpp->paths is up to date there after adopt_paths(),
+>   while mpp->pg doesn't contain the new paths yet.
+> 
+> - update_map(), which does reloads that were delayed while the map was
+>   waiting for udev (UDEV_WAIT_RELOAD), recomputes it from the map's
+>   paths before setting up the map.
+> 
+> - dm_addmap_create() clears it as soon as it has read it. A failed
+>   create leaves no map behind, and the next create computes the flag
+>   again.
+> 
+> - dm_addmap_reload() clears it once the reload and resume have
+>   succeeded. If the reload fails, the map keeps its old table, and the
+>   flag stays set so that the next reload tries again.
+> 
 
-What happened:
+I feel really bad after all this discussion, but there are still issues
+with needs_ro_update(). But hopefully my suggestion will make this all
+much simpler.
 
-1. A change uevent for sdq (verify3) carried verify1's WWID. The next
-   uevent 4.5 s later carried the correct one. We don't know whether
-   the array answered the INQUIRY (VPD 0x83, run by scsi_id) wrongly
-   during the takeover or the bad value arose elsewhere in the udev
-   path; we have no packet capture.
+> Signed-off-by: Brian Bunker <brian@purestorage.com>
+> ---
+>  libmultipath/devmapper.c |  18 ++++-
+>  multipathd/main.c        | 144 ++++++++++++++++++++++++++-------------
+>  2 files changed, 111 insertions(+), 51 deletions(-)
+> 
+> diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+> index e3870f59..34e0f640 100644
+> --- a/libmultipath/devmapper.c
+> +++ b/libmultipath/devmapper.c
+> @@ -539,10 +539,15 @@ static uint16_t build_udev_flags(const struct multipath *mpp, int reload)
+>  
+>  int dm_addmap_create (struct multipath *mpp, char *params)
+>  {
+> -	int ro;
+> +	int ro = mpp->force_readonly ? 1 : 0;
+>  	uint16_t udev_flags = build_udev_flags(mpp, 0);
+>  
+> -	for (ro = mpp->force_readonly ? 1 : 0; ro <= 1; ro++) {
+> +	/*
+> +	 * force_readonly only applies to this load. Clear it, so that it
+> +	 * can't affect later loads, even if this one fails.
+> +	 */
+> +	mpp->force_readonly = 0;
+> +	for (; ro <= 1; ro++) {
+>  		int err;
+>  
+>  		if (dm_addmap(DM_DEVICE_CREATE, TGT_MPATH, mpp, params, ro,
+> @@ -599,8 +604,15 @@ int dm_addmap_reload(struct multipath *mpp, char *params, int flush)
+>  		r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias,
+>  				 DMFL_NEED_SYNC | (flush ? 0 : DMFL_NO_FLUSH),
+>  				 udev_flags);
+> -	if (r)
+> +	if (r) {
+> +		/*
+> +		 * force_readonly only applies to this reload. If the reload
+> +		 * fails, the map keeps its old table, and the flag stays set
+> +		 * so that the next reload tries again.
+> +		 */
+> +		mpp->force_readonly = 0;
+>  		return r;
+> +	}
+>  
+>  	/* If the resume failed, dm will leave the device suspended, and
+>  	 * drop the new table, so doing a second resume will try using
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 9bce4d6b..1100584f 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -709,6 +709,55 @@ void cleanup_reset_vec(struct vector_s **v)
+>  	vector_reset(*v);
+>  }
+>  
+> +static int
+> +sysfs_get_ro (struct path *pp)
+> +{
+> +	int ro;
+> +	char buff[3]; /* Either "0\n\0" or "1\n\0" */
+> +
+> +	if (!pp->udev)
+> +		return -1;
+> +
+> +	if (!sysfs_attr_get_value_ok(pp->udev, "ro", buff, sizeof(buff))) {
+> +		condlog(3, "%s: Cannot read ro attribute in sysfs", pp->dev);
+> +		return -1;
+> +	}
+> +
+> +	if (sscanf(buff, "%d\n", &ro) != 1 || ro < 0 || ro > 1) {
+> +		condlog(3, "%s: Cannot parse ro attribute", pp->dev);
+> +		return -1;
+> +	}
+> +
+> +	return ro;
+> +}
+> +
+> +/* A map must be loaded read-only if any of its paths is read-only. */
+> +static bool
+> +has_ro_path(vector paths)
+> +{
+> +	struct path *pp;
+> +	unsigned int i;
+> +
+> +	vector_foreach_slot (paths, pp, i) {
+> +		if (sysfs_get_ro(pp) == 1)
+> +			return true;
+> +	}
+> +	return false;
+> +}
+> +
+> +static bool
+> +map_has_ro_path(struct multipath *mpp)
+> +{
+> +	struct pathgroup *pgp;
+> +	unsigned int i;
+> +
+> +	vector_foreach_slot (mpp->pg, pgp, i) {
+> +		if (has_ro_path(pgp->paths))
+> +			return true;
+> +	}
+> +	return false;
+> +}
+> +
+>  static int
+>  update_map (struct multipath *mpp, struct vectors *vecs, int new_map)
+>  {
+> @@ -732,6 +781,14 @@ retry:
+>  
+>  	mpp->action = ACT_RELOAD;
+>  
+> +	/*
+> +	 * This may be a delayed reload, and the paths' write protect
+> +	 * state may have changed since force_readonly was last set.
+> +	 * Recompute it from the current paths. mpp->paths is up to date
+> +	 * after adopt_paths(), while mpp->pg isn't until setup_map().
+> +	 */
+> +	mpp->force_readonly = has_ro_path(mpp->paths);
+> +
+>  	if (setup_map(mpp, &params, vecs)) {
+>  		condlog(0, "%s: failed to setup new map in update", mpp->alias);
+>  		retries = -1;
+> @@ -1270,28 +1327,6 @@ out:
+>  	return ret;
+>  }
+>  
+> -static int
+> -sysfs_get_ro (struct path *pp)
+> -{
+> -	int ro;
+> -	char buff[3]; /* Either "0\n\0" or "1\n\0" */
+> -
+> -	if (!pp->udev)
+> -		return -1;
+> -
+> -	if (!sysfs_attr_get_value_ok(pp->udev, "ro", buff, sizeof(buff))) {
+> -		condlog(3, "%s: Cannot read ro attribute in sysfs", pp->dev);
+> -		return -1;
+> -	}
+> -
+> -	if (sscanf(buff, "%d\n", &ro) != 1 || ro < 0 || ro > 1) {
+> -		condlog(3, "%s: Cannot parse ro attribute", pp->dev);
+> -		return -1;
+> -	}
+> -
+> -	return ro;
+> -}
+> -
+>  /*
+>   * returns:
+>   * 0: added
+> @@ -1305,7 +1340,6 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+>  	int retries = 3;
+>  	int start_waiter = 0;
+>  	int ret;
+> -	int ro;
+>  	unsigned char prflag = PR_UNSET;
+>  
+>  	/*
+> @@ -1370,14 +1404,16 @@ rescan:
+>  			goto fail; /* leave path added to pathvec */
+>  	}
+>  
+> -	/* ro check - if new path is ro, force map to be ro as well */
+> -	ro = sysfs_get_ro(pp);
+> -	if (ro == 1)
+> -		mpp->force_readonly = 1;
+> -
+>  	if (!need_do_map)
+>  		return 0;
+>  
+> +	/*
+> +	 * Load the map read-only if any of its paths is read-only, not
+> +	 * just the one being added. mpp->paths is up to date after
+> +	 * adopt_paths(), while mpp->pg doesn't have the new paths yet.
+> +	 */
+> +	mpp->force_readonly = has_ro_path(mpp->paths);
+> +
+>  	if (!dm_map_present(mpp->alias)) {
+>  		mpp->action = ACT_CREATE;
+>  		start_waiter = 1;
+> @@ -1596,24 +1632,34 @@ finish_path_init(struct path *pp, struct vectors * vecs)
+>  static bool
+>  needs_ro_update(struct multipath *mpp, int ro)
+>  {
+> -	struct pathgroup * pgp;
+> -	struct path * pp;
+> -	unsigned int i, j;
+> -
+>  	if (!mpp || ro < 0)
+>  		return false;
+> -	if (!has_dm_info(mpp))
+> -		return true;
+> -	if (mpp->dmi.read_only == ro)
+> +	if (!has_dm_info(mpp) &&
+> +	    dm_get_info(mpp->alias, &mpp->dmi) != DMP_OK) {
+> +		condlog(2, "%s: failed to get dm info", mpp->alias);
+>  		return false;
+> -	if (ro == 1)
+> -		return true;
+> -	vector_foreach_slot (mpp->pg, pgp, i) {
+> -		vector_foreach_slot (pgp->paths, pp, j) {
+> -			if (sysfs_get_ro(pp) == 1)
+> -				return false;
+> -		}
+>  	}
+> +	if (mpp->dmi.read_only == ro) {
+> +		/*
+> +		 * No reload is needed. A failed read-only reload leaves
+> +		 * force_readonly set while the map is still read-write. Keep
+> +		 * it only while one of the map's paths is still read-only,
+> +		 * so that the next reload tries again.
+> +		 */
+> +		if (mpp->force_readonly && (ro == 1 || !map_has_ro_path(mpp)))
 
-2. uev_update_path() acted on the uevent WWID without asking the
-   device and removed sdq from verify3's map. That reload blocked for
-   4.4 s behind I/O stuck in the failover.
+This clears force_readonly if either the updated path is read-only or no
+paths are read-only. That doesn't make sense, and it doesn't match the
+comment.
 
-3. uev_update_path() then called uev_add_path() with the same, now
-   stale, uevent. ev_add_path() put sdq into verify1's map, where it
-   stayed for about 170 ms. Test tool records show a write meant for
-   verify1 landing on verify3, and a verify1 read returning verify3's
-   data.
+But there's a bigger issue where this doesn't make sense. if ro == 0 and
+map_has_ro_path(mpp) == 1, that means the map must be read-write (since
+it matches the path in this block), but we do have a read-only path. In
+that case, we should actually be setting mpp->force_readonly and
+returning true.
 
-recheck_wwid was off, but would not have helped: it is only consulted
-when the checker sees a failed path come back and on "multipathd add
-path", never for uevents.
+I think we're making this too complicated here. Reading sysfs isn't that
+expensive. Perhaps its better to just bite the bullet and stop trying so
+hard to avoid reading all the paths ro states in needs_ro_update(). The
+idea is that we skip the sysfs_get_ro() (or the old uevent_get_disk_ro)
+call in uev_update_path(). Instead we just call needs_ro_update(), which
+no longer takes a ro value, and looks something like
 
-The patch reads VPD 0x83 over SG_IO in uev_update_path() and again in
-ev_add_path(), for paths where can_recheck_wwid() is true. If the
-device still reports the cached WWID, the udev value is ignored. If
-the device doesn't confirm the WWID a path is being added with, the
-path is left out of the map and udev is retriggered.
+static bool
+needs_ro_update(struct multipath *mpp)
+{
+	if (!mpp)
+		return false;
+	if (!has_dm_info(mpp) &&
+	    dm_get_info(mpp->alias, &mpp->dmi) != DMP_OK) {
+		condlog(2, "%s: failed to get dm info", mpp->alias);
+		return false;
+	}
+	mpp->force_readonly = map_has_ro_path(mpp);
 
-Open points:
+	/*
+	 * The map is read-only and has to stay so. dm has to reopen its
+	 * paths for any read-write reload anyway, so the flag isn't needed
+	 */
+	if (mpp->force_readonly && mpp->dmi.read_only) {
+		mpp->force_readonly = 0;
+		return false;
+	}
+	/* The current map state doesn't match the paths state. Update it */
+	return (mpp->force_readonly != mpp->dmi.read_only);
+}
 
-- If the SG_IO read fails, the add proceeds as before. Refusing the
-  add would be stricter; opinions welcome.
+Does this look reasonable?
 
-- The checks depend on can_recheck_wwid(), not on the recheck_wwid
-  option, because a mismatch at add time means data corruption and
-  recheck_wwid is off by default.
+-Ben
 
-- "multipathd reconfigure" builds maps through configure(), not
-  ev_add_path(), so it isn't covered.
-
-Brian Bunker (1):
-  multipathd: verify udev WWIDs with the device before moving paths
-
- multipathd/main.c | 57 ++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 52 insertions(+), 5 deletions(-)
-
--- 
-2.56.0
+> +			mpp->force_readonly = 0;
+> +		return false;
+> +	}
+> +	if (ro == 0 && map_has_ro_path(mpp)) {
+> +		/*
+> +		 * The map is read-only and has to stay so. dm has to reopen
+> +		 * its paths for any read-write reload anyway, so the flag
+> +		 * isn't needed.
+> +		 */
+> +		mpp->force_readonly = 0;
+> +		return false;
+> +	}
+> +	mpp->force_readonly = ro;
+>  	return true;
+>  }
+>  
+> @@ -1725,22 +1771,24 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+>  			pthread_cleanup_pop(1);
+>  		}
+>  
+> -		ro = uevent_get_disk_ro(uev);
+> +		/*
+> +		 * The uevent only tells us that something changed. Take the
+> +		 * path's ro state from sysfs, which the kernel updates before
+> +		 * sending the uevent. If sysfs can't be read, don't act on
+> +		 * the uevent's DISK_RO either.
+> +		 */
+> +		ro = sysfs_get_ro(pp);
+>  		if (needs_ro_update(mpp, ro)) {
+>  			condlog(2, "%s: update path write_protect to '%d' (uevent)", uev->kernel, ro);
+>  
+>  			if (mpp->wait_for_udev != UDEV_WAIT_DONE)
+>  				mpp->wait_for_udev = UDEV_WAIT_RELOAD;
+>  			else {
+> -				if (ro == 1)
+> -					pp->mpp->force_readonly = 1;
+>  				retval = reload_and_sync_map(mpp, vecs);
+>  				if (retval == 2)
+>  					condlog(2, "%s: map removed during reload", pp->dev);
+> -				else {
+> -					pp->mpp->force_readonly = 0;
+> +				else
+>  					condlog(2, "%s: map %s reloaded (retval %d)", uev->kernel, mpp->alias, retval);
+> -				}
+>  			}
+>  		}
+>  		if (auto_resize != AUTO_RESIZE_NEVER && mpp &&
+> -- 
+> 2.56.0
 
