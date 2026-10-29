@@ -1,85 +1,60 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=202.130.44.230
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793163581;
-	b=A9bozuAYY1rGuhKvNwzmNQ7zYFZzN5NjOo5n+FgZPQDaTQf4NR+mzIPY41UTHTIs8yCq
-	 Klqu4UoRFUx/4I8viYN1C0xY7fY9/mr0Q7N/enLZiO6X6qLoYcBr8r+0ek61w+xpIjA6W
-	 nj/7qCpAJnMJU98Tv3f9soqWlRuzAQWgXh7WNjXdsvpW0PFrcyO6NqAEzYsBzq2u1eHtF
-	 +7HzZBn+0orint6lvqntKwSFmonpVl97UXHIo+ggxSv7ChTd1yojGN2k0WVuGgGB9HbfT
-	 XZJxWsl7nt6HPvYREFuJJRzIKD8gk40EwW5SeBW+vSKyHPRYJZAj5o/aLvruGeq1zEw==
+	t=1793280044;
+	b=qH+W7VlQFAHY8HClwIOvZOlueuL3b+Y1aQiLsfgCbJn/Nk9HY47oWY8QuTbIcO45hHmP
+	 WNH++tNFnAHnMuuWChxO7d4TzOBfrQ/Irg3a9TznwBOv8rv/8poPDh/S9i1vj4SdLwCEd
+	 QaNw3xJtur2EXw7ASOPaahTseqenCtRb2b1EvU2kge0dksXTSW3fXHphaCY4SDHwSUsiY
+	 24O5mVhX9S4TWCdWkMYF4vMS22HfOCuF06D+oBROtI9MB8ph0MoxkYd5irpHRyR7ATDF4
+	 T57TulYuL6+vIFHjOaWvaYH0kW8lixdAEQ7oK7m5tsTJlUIrkBBcZSfogev3117gD3g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793163581;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Type:Content-Disposition;
-	bh=8//9UdS2L4hf6P3q4d9kP+WN6X+gVmgNBaenMPmJ8yE=;
-	b=UAPLWqpOcdCAJwwZ3TE/ZNjRcRDp1x9MFn8SfM2HbO1SXsOhn04UAN52KVHmvewsSc4h
-	 zD1a+QAy4jzh5oVNa8KHvMDNg48FHMZHOHB53+bwyS7wPfrwVHJ+YKVqRAmZU3ejkUA3X
-	 1HZj1g4X+vGc859CAoOvBBJVqVQxLRxffC+eDRDPWvAmKcsBEHy24xg4y+oWO/Vj6QJ9R
-	 lBKj+R45PF0wOryQT809pt53wf4L1B8ZhmfUxI9K6952I+TWQmbjR8CnrDUDgVf2VMgJP
-	 RUFAfipXl9PtQd+KAadYK3uoOadgvy1/cepMhYpTcQ2sWevBfWuovxRg7MMlBE/hmug==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793280044;
+	h=DMARC-Filter:Received:Received:From:To:Subject:Date:Message-ID:
+	 Reply-To:Content-Type:Content-Transfer-Encoding:MIME-Version:
+	 X-Authenticated-User:X-Authenticator:X-Originating-IP:
+	 X-SpamExperts-Domain:X-SpamExperts-Username:
+	 X-SpamExperts-Outgoing-Class:X-SpamExperts-Outgoing-Evidence:
+	 X-Recommended-Action:X-Filter-ID:X-Report-Abuse-To:X-Complaints-To;
+	bh=pWpBIbE1tpakQFXOiqC33gk1ji50hFVwpLCEgZ+UptI=;
+	b=wgd5d//d9xpIU/y2AnFcL015XNj+Z3Gs3BndgVCO+8UBDB1EDdVrQQVKlMuIdisBAPUQ
+	 9PG0I9MCT2fOSNUKvSi62B34PsunXISTeFuJ6fRsdnGZ2P0/+pazC8J3BPcKgqzeX5d+7
+	 TNc7cJFi4XqIa4cUIXnzbyShjJ71p8ttRemb+myyDt9g9Jl0kxomJfh7AdZXp3987Zpdr
+	 HRDDhsC/gV299GCZHQil/3uvIXF95Pf6n7jxpURLFWJRuyE2c9s/0DOfIddL1ofU1ICSi
+	 2dChrMrJ+K9wX89ECDplig7od5jVLD9F7G44SRFtataJlmXORCFvoKZCEfXsN4B6Pbw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=G3hv1fiQ;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dmarc=fail header.from=buryconsultantservice.com;
+	spf=fail smtp.mailfrom=buryconsultantservice.com;
+	arc=none smtp.remote-ip=202.130.44.230
+Received: from out202-230-vmse04.mailcluster.com.au (out202-230-vmse04.mailcluster.com.au [202.130.44.230])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A1A69606A31E
-	for <dm-devel@lists.linux.dev>; Wed, 28 Oct 2026 04:59:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A1A69606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=G3hv1fiQ
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793163579;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8//9UdS2L4hf6P3q4d9kP+WN6X+gVmgNBaenMPmJ8yE=;
-	b=G3hv1fiQQeKk+qEYOmmnoio4aeLngfjmR50+a4CmOOzg/Xx1iNmoUj38lbD4FQkaQBT8tp
-	HyT5Ep7SWrFqZkTJquBfPNqF61S9Pjtwjxpa8u68b33/4gUyk80A67gobIEl/V6B+BW9XM
-	479mOJNx+wamqhFg1FyfSJp9j52DX70=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-376-sm4rEyDLOJ6Arwg0pI6MlA-1; Wed,
- 28 Oct 2026 00:59:32 -0400
-X-MC-Unique: sm4rEyDLOJ6Arwg0pI6MlA-1
-X-Mimecast-MFC-AGG-ID: sm4rEyDLOJ6Arwg0pI6MlA_1793163570
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7E3FA1956050;
-	Wed, 28 Oct 2026 04:59:30 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9A1C830001B9;
-	Wed, 28 Oct 2026 04:59:29 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69S4xSO4321085
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 28 Oct 2026 00:59:28 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69S4xRwO321084;
-	Wed, 28 Oct 2026 00:59:27 -0400
-Date: Wed, 28 Oct 2026 00:59:27 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Rahul Rao <shreeramrahul94@gmail.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Joe Thornber <thornber@redhat.com>, dm-devel@lists.linux.dev,
-        linux-kernel@vger.kernel.org,
-        syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com,
-        stable@vger.kernel.org
-Subject: Re: [PATCH] dm thin: prevent use-after-free when metadata and data
- devices alias
-Message-ID: <auGBLzpQBLvds2vl@redhat.com>
-References: <20261026110402.103622-1-shreeramrahul94@gmail.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 675F4606A31A
+	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 13:20:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 675F4606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=quarantine dis=none) header.from=buryconsultantservice.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=buryconsultantservice.com
+Received: from sh00074.dp.smartservers.com.au ([116.90.32.86])
+	by vmse04.mailcluster.com.au with esmtps  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.94.2)
+	(envelope-from <support@buryconsultantservice.com>)
+	id 1xMQ3V-00AYmT-JO
+	for dm-devel@lists.linux.dev; Fri, 30 Oct 2026 00:20:35 +1100
+Received: from lim106.truehost.cloud ([145.239.3.48]:60828)
+	by sh00074.dp.smartservers.com.au with esmtpsa  (TLS1.3) tls TLS_AES_256_GCM_SHA384
+	(Exim 4.100.1)
+	(envelope-from <support@buryconsultantservice.com>)
+	id 1xMQ3U-000000008RY-42SB
+	for dm-devel@lists.linux.dev;
+	Fri, 30 Oct 2026 00:20:33 +1100
+From: Loan Consultant <support@buryconsultantservice.com>
+To: dm-devel@lists.linux.dev
+Subject: Loan offer
+Date: Thu, 29 Oct 2026 13:20:32 -0000
+Message-ID:
+ <179328003221.4030102.7056231625734218347@buryconsultantservice.com>
+Reply-To: support@buryconsultantservice.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -89,100 +64,37 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <20261026110402.103622-1-shreeramrahul94@gmail.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: _uWwP7Y_G36IVRj6ROmI3WzybNv-_bF7_Xgjy3PyFYE_1793163570
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+X-Authenticated-User: bsharp@kelils.com
+X-Authenticator: dovecot_plain
+X-SpamExperts-Domain: digipac-sh-outbound8.mailcluster.com.au
+X-SpamExperts-Username: 116.90.32.86
+Authentication-Results: mailcluster.com.au; auth=pass smtp.auth=116.90.32.86@digipac-sh-outbound8.mailcluster.com.au
+X-SpamExperts-Outgoing-Class: unsure
+X-SpamExperts-Outgoing-Evidence: Combined (0.65)
+X-Recommended-Action: accept
+X-Filter-ID: 9kzQTOBWQUFZTohSKvQbgI7ZDo5ubYELi59AwcWUnuV7ArdzTBF7roE1dR0ToJcUiObgXL0WEsT3
+ g5VgO1SEpyu2SmbhJN1U9FKs8X3+Nt3uG03lT3HXOS+61P2frUBtgYbIeq91fhUOUweyJiWylt+4
+ 9mIzG34pQwX9wNQunZuRuadCwwU7MyWIINFYebV2vmCxN3kuXp5VzgZ26Dl6IArZqEIWNsawW/Av
+ rVlL6q6gSrEnYb3fyebF+XWmY5GL5Jl1E7MMuTIBkHKu0QRiGc7Yc9LzZDl/BJuHI+g/8HV/zEhP
+ hDec8R03E7AFnGT60MxOKVrDfQzDgqFDumjx967VZqJmzCeHtqZ+QtMgTB13guhadlHkux/su5aC
+ 0xs45Oj564+e6R2rCFo8ZeVUGgpEGVvNbTBAUOGwJ9Lg6yfbhkbij69AW/2LjxMfMQqfn2I7Oqjk
+ GFLe+osA9Pqag906UBc89/7GJ6vCcz+zUckzAbly6dvQLN/501YSuV9YXijgKVMZ3rsRCAB1U7+1
+ eOWBOXp8nHKe0R+FkIqN7hmWJHQUployr7w/Ej+v3l0AFe9OCuncHzwLztl2wKWmLBR9Ovbqz/k9
+ Jlx8RTZkJCvyUT8InQIFBuNsgjEbfWwVEo6Fw5tldaeQTD7oX0IbJuAoo3wRmO0ms/UvYQ1GikEw
+ HlEuQVuYCr/QRe04GaBn5PvHiO18zkU9oNPqkAKZ4ZA8y7HoHiH+Y0eTzU5RekV/EVFTjI6pTY8p
+ IffNNxiVxRp8tHMI3PD7hU0csE2GwNEyNZWVFHR8KzCX3koJAFemvfweviSx6lkX58I4aVLFK+eJ
+ Ia3QQaIyBJFHBSzOpcY7WWit8f0fP54kkuavTL8Vx+BHeBz//TYHrE9rbKQ1MoFFuKyCxDRrKvw/
+ y7iZ+/BL7qxtdzaAW4yWXtAkuf1Pcm7P/DUkIuXKXfJy3i2CDLHZNAWsBw+Y2NrUUP4NOn6m+UeF
+ XprlCOm3BAEbJtCNbjgywPngiPgpTvX+OpekCJOcJ3N8t1+07MvbA9htcauKqKJXBeH3epFwi2tN
+ OOa1x8NTSDIZsJbE9YCEyU6NYv28I509CrOhpMw3BSLgJ36/Bpi3RPbwnfltmdYhsM69D0oR4Nt3
+ NsPNkcWC6/aSWPiFbmX0VV8n4s1FTwO2NLPXJxEWrh9wIMuQP9hYdtk=
+X-Report-Abuse-To: spam@vmse01.mailcluster.com.au
+X-Complaints-To: abuse@vmse01.mailcluster.com.au
 
-On Mon, Oct 26, 2026 at 04:34:02PM +0530, Rahul Rao wrote:
-> pool_ctr() takes separate specification strings for the metadata and data
-> devices. However, different strings (or format representations such as
-> /dev/ram0 and 1:0) can resolve to the same underlying block device.
-> 
-> When the read_only feature is requested, the metadata device is opened
-> read-only before the data device is opened read-write. If the devices
-> alias, the second dm_get_device() call upgrades the existing device's
-> mode. upgrade_mode() replaces the dm_dev and drops the old table device,
-> leaving pool_ctr() with a stale metadata_dev pointer. The subsequent
-> metadata_dev->bdev access triggers a KASAN use-after-free report.
-> 
-> Acquire the read-write data device first so that acquiring the metadata
-> device cannot trigger this mode upgrade. Then reject matching block
-> devices, including those specified through different names, and release
-> the devices in reverse acquisition order on error.
+Looking for business financing? We offer loan options designed to support bus=
+iness growth and help with your financial needs. Contact us today to learn ab=
+out available amounts, interest rates, eligibility, and repayment terms. Appl=
+y now to get started!
 
-What this patch fixes looks good to me, but there is still an issue
-here. There is a similar problem in thin_ctr() if the pool and origin
-device name strings are different but they alias. Unfortunately, this
-style of fix doesn't work as well there. It is only a valid fix for a
-thin-pool target because that is a DM_TARGET_SINGLETON. That means there
-can't be another target that's part of the same table. This isn't the
-case with the thin target. There can be other targets in the table, and
-you can't force correct dm_get_device() ordering between them. Like
-Mikulas said about a similar issue with dm-snapshot, this is probably
-something that is better fixed in dm_get_device() than in its callers.
-
--Ben
-
-> 
-> Reported-by: syzbot+83827f9a59abe148bff4@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=83827f9a59abe148bff4
-> Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Rahul Rao <shreeramrahul94@gmail.com>
-> ---
->  drivers/md/dm-thin.c | 22 ++++++++++++++--------
->  1 file changed, 14 insertions(+), 8 deletions(-)
-> 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 59392de7a477..52e47874048d 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -3326,18 +3326,24 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  
->  	metadata_mode = BLK_OPEN_READ |
->  		((pf.mode == PM_READ_ONLY) ? 0 : BLK_OPEN_WRITE);
-> -	r = dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
-> +	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
->  	if (r) {
-> -		ti->error = "Error opening metadata block device";
-> +		ti->error = "Error getting data device";
->  		goto out_unlock;
->  	}
-> -	warn_if_metadata_device_too_big(metadata_dev->bdev);
->  
-> -	r = dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev);
-> +	r = dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
->  	if (r) {
-> -		ti->error = "Error getting data device";
-> -		goto out_metadata;
-> +		ti->error = "Error opening metadata block device";
-> +		goto out_data;
-> +	}
-> +
-> +	if (metadata_dev->bdev == data_dev->bdev) {
-> +		ti->error = "Metadata and data devices must be different";
-> +		r = -EINVAL;
-> +		goto out;
->  	}
-> +	warn_if_metadata_device_too_big(metadata_dev->bdev);
->  
->  	if (kstrtoul(argv[2], 10, &block_size) || !block_size ||
->  	    block_size < DATA_DEV_BLOCK_SIZE_MIN_SECTORS ||
-> @@ -3426,9 +3432,9 @@ static int pool_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  out_free_pt:
->  	kfree(pt);
->  out:
-> -	dm_put_device(ti, data_dev);
-> -out_metadata:
->  	dm_put_device(ti, metadata_dev);
-> +out_data:
-> +	dm_put_device(ti, data_dev);
->  out_unlock:
->  	mutex_unlock(&dm_thin_pool_table.mutex);
->  
-> -- 
-> 2.43.0
-
+Loan Consultant, uk
+Not interested? Just reply and say so, and I won't email you again.
