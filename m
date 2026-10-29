@@ -1,79 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.176
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793317823;
-	b=TwebQ7nrvvy0Fm7lwppUGhw2wtnFx6JILQbqCqeVW2M5xmUVBVmfKID1BYNnpJnD2jun
-	 eJSaJFCuU5FF94EUfIhP5f+IJLmQGX8++PhFz8V16bMejxcrPHonEThl4PnWeM8gop+sf
-	 cQ3gb5X2MEzl9ZHlIZhFtw1N1Y9TQ+wAnA17LTPgWvY7iLMYq4rlMny9HfD6E0WKhKFG0
-	 cdR49Ee3wLViqCXI5KY2Ap6SV2FPsjwRTPyHskobbIk1+IWCbFbs3HSh+Lcx+Us3h0Lgl
-	 Znoxl1Ve/vcORC067sRTJCSxsRIB75EmG9E/z84iOwlx4lYzTGGG7deCAI35YPo90YA==
+	t=1793317976;
+	b=HSUt9M+3c4VJrxe80F5qO8FdqFn+Yv/xsgq1B2zHa2C55yvR/TMCkABfe9amRKYNylQ1
+	 f4zRBv1tx+3qs9B3QB+IDVH8dLldFOxc9VYSTs/lEpWOod+OFAZrhiIiSc7M6MZqCI41M
+	 Uxe8YidfSYDROPN0AOS0YkZtLkp912pCNZ0bTtZgIuppblS+iYWIb/QORjq8h1cIpSyBB
+	 J+nm3jWYo+tM0Htlz05riUQf/xR3yzUak4OVEtQbZkjU4aL7kOJCG4RFjm6/l4kLlQeqr
+	 kK/4VAV1JoLTVns/cAXAh57NuXrqa38x3iMphNbEwwz0KtPCfC4fondYCHT9HXppSTw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793317823;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
-	 Subject:Date:Message-ID:MIME-Version:X-Scanned-By:
-	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Transfer-Encoding:content-type;
-	bh=Az/mDBXHiyDnQDAdYzcnjkVbZom/dZk6Ov5vycbi8us=;
-	b=A8h3AKeY3SS7FqO6fddqWEYtLEyq4wr4AsFA1wPhnu+ozfLSsFMWa70K2GvDwvwoDA3k
-	 xTWoa7dN2W7P0z4K7EHEVfH7EtWwqd8MTofxmCasf6mSl8QyXmzGzoHL9XwR4s8Eoi1MH
-	 gIgxIctjfWHqWOLRITpxKGTchKoNP8539V7j8AkpNkCM9Zgd2pYlpDv5Owu+QwC2RCn+M
-	 qQNVDPOqmK7hVtRvAdTEkBoMnhgaeb5lZb3APea7Gja/f0l1w1pW2pSwQmnM6i2Bue/Ex
-	 jQaQU2oRGIUFp8PzdH8W4rYAplNtntY5+iKpfb/jn2EzqsHzsF113LCY8+UqAj3xs0Q==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793317976;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=4cbV7oecPRtSH0xS4TaYfYsnWn7bMQoohgR9cVgnPgo=;
+	b=zyCX3P693pKnx4QwEChAXGBL5VPAlRx+/FBYkcfTRyhwuqQ2TbDeEDv1vFPVJaETG6b5
+	 iMMJWO1P0UM36igGPbJ00wUxBtKR0hVmuyDXX5t/ph19dHxNInG/rMwyo4/3ogiExCoqv
+	 xUAEBqsCsIhzl4g9B5+mJcitlj6L9taNhcTaAIZS9oYgHDJ7MehL7ZOV7penJovyCLkEl
+	 YwaM7p5+xOvjfILIgyTYMiJ+7IkWdVaIZ7XAP1eKQA3KjkKMJP1HljZ7R9NqarFLavgvT
+	 cDc4CfXfjaEq1pgmivI9e9nC7TeVWAWB++3VM9h9n2s+9Q2n0+Dpa7kGE5iwJzzhBYw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=d7c5tDYH;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=purestorage.com;
+	spf=pass smtp.mailfrom=purestorage.com;
+	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=dKHcQp8+;
+	arc=none smtp.remote-ip=74.125.82.176
+Received: from mail-dy1-f176.google.com (mail-dy1-f176.google.com [74.125.82.176])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 497D8606A31A
-	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 23:50:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 497D8606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 70920606A323
+	for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 23:52:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 70920606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=d7c5tDYH
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793317822;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=Az/mDBXHiyDnQDAdYzcnjkVbZom/dZk6Ov5vycbi8us=;
-	b=d7c5tDYHedCKjEoIQ4VWALFosEGw52gLPyKP8F7tGGrF67zT1G6V+m0+g0eOc40VBWaKHU
-	jJGv7okvjyhXFUf6k21CpXNHlb1SObFsGdKfEMg/2GV7OKoSqRX6vPZ8RFGuCKplrTE8/0
-	CB+kQjDliN5I78ZbKtSCLwwPzdP9g6A=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-553-KDmzIlN-MYOzcSA8wCgbig-1; Thu,
- 29 Oct 2026 19:50:20 -0400
-X-MC-Unique: KDmzIlN-MYOzcSA8wCgbig-1
-X-Mimecast-MFC-AGG-ID: KDmzIlN-MYOzcSA8wCgbig_1793317819
-Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3D9CA1809CAB;
-	Thu, 29 Oct 2026 23:50:19 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B2818767;
-	Thu, 29 Oct 2026 23:50:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69TNoHwC818223
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 29 Oct 2026 19:50:17 -0400
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69TNoEl4818210;
-	Thu, 29 Oct 2026 19:50:14 -0400
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH] multipathd: Don't look at pointer to removed path
-Date: Thu, 29 Oct 2026 19:50:14 -0400
-Message-ID: <20261029235014.818202-1-bmarzins@redhat.com>
+	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=dKHcQp8+
+Received: by mail-dy1-f176.google.com with SMTP id 5a478bee46e88-35cd4e8bdbdso268888eec.1
+        for <dm-devel@lists.linux.dev>; Thu, 29 Oct 2026 16:52:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1793317975; x=1793922775; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=4cbV7oecPRtSH0xS4TaYfYsnWn7bMQoohgR9cVgnPgo=;
+        b=dKHcQp8+8+dVljZ04/EPq4owyhiOzU821nsB8g4K38A0vACAbyADL/TQVbPSfh/5u0
+         CJ6obmLevpicciHZiEc6SF2V2vHt8T5SeCXW1DddSxBuGKcwghZkwwmNECZYoc5sZZ4b
+         diQcmnWGJQR4diB4YKUpsSfLb6q7UsVAjjDrGZAmCbFs5C/nnFIYFCmnueCvgsa4PD2o
+         zNen2pmYOUVTOUnJQXbTrA6ncR0Dp2N45t2e0k+Uch5N+KgWD7q+MZ8yMS/FH7C6P4yS
+         XVIH2Ns6zVs3bNtjbn1OVaJo5r7MiWCYDT+WtZlPMJdtk5BoONCmZEQC/ZwBGUxUN9v4
+         rr3A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793317975; x=1793922775;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=4cbV7oecPRtSH0xS4TaYfYsnWn7bMQoohgR9cVgnPgo=;
+        b=0wNANeB51qDX3Kw1CWiGLy7iWLX7rZnBfPoIFhXBcm/AW2xsDb6khLDpHK06wbcy4w
+         D/DownzbbGxFIh5CdaD2p9rnEfIT9B2WZNif3aL9QJJQouQLShwZGXlJ2L3yDZAwa8sq
+         cvSQD7ESsREc1c9RdZe15ZX84I3cftEPw1M5azaTeb5jB8z1dZymdlCkzz/wFHakyKIB
+         o+n72WKCNYxNhngPBbnB43EqM1GPaXzCeSRq8p6Vz6+qBzVYi1dO39R8XhZo5JWArrps
+         D56GDknVwU0/zLGDJbIVe0b9/ivmMyWG3N6M/gwBJvV+EDQSJwy5FKXKjMJj2lbH7boB
+         R2ag==
+X-Gm-Message-State: AFq9FYIx54G2ZtAx5Q/TAICmFEDShBzgG+TpZbrHJMXkYc5z57f2rIgc
+	W+rzuiodzst7CCnI69rwgiFPI0Q0a8clKRkhUAgmqaku7VbXMxGqFNswaoCQ5ZW1FbPZ7V9OvxP
+	40TwVOHu/yVmFF7majjfCxrSu8guU1THbN30l4bzTq3/R8IR46QU7oHEY7pSTadeRGH7kGCr2Up
+	FYtXrEhWvOPdl5OYArjXIV5djqCwE3h42IRuPnAYPFWdOoEVk=
+X-Gm-Gg: AYBFou2vQ++vKFvFg+sLOFKZ6r8foezhtU/CmT+Fv9KQTGklCnYNuQAaI+t/FvhhwqK
+	7dhN9PUMq2RYaRtr4jKzwpbPUTNfToBLwgY+g4TmTK65ztuGS5TCLfwyaHEI6gKB/p4dMkdDZlJ
+	TLVLHWJKFQJ7Y8TF8v1MSY7RkT2aJLxJrNIdcrORjD8hCYfVN0e6paPWOrJh0PhQhJFPRTL/6Ic
+	/RQwTjffDI4lD7YcxD2PuwcFNPRtXogQCApJLaSg15bwNvLo9SfVRDrpKscRLNbt6PWWG+EtM9j
+	31XldeRb2oIsuuu7ExZSJmwR/uaidX9QL4Rq8H0bnzgw9MDbLJCirr/dWlhZyEP0siZnaOW0Agy
+	6JbfZYFjOd/aO401k0inEnbk69nFIlNifJWTcsEgI0K3ywmixeMeV/leaFkyErRlge6VBpOH+lB
+	yUsrt0Q+dwbsL6EBn6U5+LNptUkwEBRZvyhqlYk92ONZUwPI5X5K51UtD2gD32dqSRSyy0KEgZc
+	ICikcg3O175JoI66vXxWW4xDqEsJ6alzdnpxjwiFV6qYogubEdqyrvrCd9CdJGaAZksZWwGnvDH
+	QoBbE6/ITp+IsgPTfc/RGZyxeuJe5rEVKPi+laEH4u1hdco1pUniJjxIfIW6Z3iJ0KnkXI3lNdG
+	bzz5oKDQ+LxSbbxPyTF5G4s9AoM2do+90GMSurKLIAWTDYPx3lfZs/yCLxhkRclc8MMqQeOaq6C
+	9FA0qDvovk2tMKVtoVUUfvA8Qq
+X-Received: by 2002:a05:693c:87c9:10b0:360:e2e6:f849 with SMTP id 5a478bee46e88-36a4241985bmr1219504eec.28.1793317974075;
+        Thu, 29 Oct 2026 16:52:54 -0700 (PDT)
+Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-36a426681aesm2269132eec.1.2026.10.29.16.52.53
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Thu, 29 Oct 2026 16:52:53 -0700 (PDT)
+From: Brian Bunker <brian@purestorage.com>
+To: dm-devel@lists.linux.dev
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+	Martin Wilck <mwilck@suse.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	Brian Bunker <brian@purestorage.com>
+Subject: [PATCH v2 0/1] multipathd: verify udev WWIDs with the device before moving paths
+Date: Thu, 29 Oct 2026 16:52:40 -0700
+Message-ID: <20261029235241.97614-1-brian@purestorage.com>
+X-Mailer: git-send-email 2.56.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -83,50 +98,59 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: rdrizsUwaYZovTjJh35VJ60EfUS-Sbi5XyBQgh8UMK4_1793317819
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-In uev_update_path(), if the path wwid changes, we remove it and use
-needs_reinit to re-add the path. Once we remove the path, pp is pointing to
-freed memory, but we still read the value it pp to see if it's NULL before we
-check needs_reinit. This doesn't cause any bugs, since we don't dereference it,
-but it would still be cleaner if we stopped accessing it completely after we
-freed it. This is easy to do, since we only ever set needs_reinit if pp is
-non-NULL. So just check needs_reinit before we check if pp is NULL.
+During an array controller failover on an iSCSI host, multipathd
+briefly put a path to one LUN into the map of another LUN, and I/O
+meant for the first LUN landed on the second. The host ran RHEL 9
+device-mapper-multipath 0.8.7, but the code involved is essentially
+unchanged in master. See the v1 cover letter for the full sequence.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- multipathd/main.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+Changes in v2, after Ben's review:
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9bce4d6b..792bee36 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1769,6 +1769,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
- 	}
- out:
- 	lock_cleanup_pop(vecs->lock);
-+	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
-+	if (needs_reinit)
-+		return uev_add_path(uev, vecs, 1);
- 	if (!pp) {
- 		/* If the path is blacklisted, print a debug/non-default verbosity message. */
- 		if (uev->udev) {
-@@ -1787,9 +1790,6 @@ out:
- 
- 		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
- 	}
--	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
--	if (needs_reinit)
--		retval = uev_add_path(uev, vecs, 1);
- 	return retval;
- }
- 
+- ev_add_path() no longer double-checks the WWID on every add. Ben
+  was concerned about adding a check to perfectly normal adds, since
+  a SCSI device can report several identifiers in VPD 0x83 and
+  multipath's SG_IO code has to pick the same one udev does.
+
+  The need_do_map argument of uev_add_path() and ev_add_path() is now
+  enum path_add_mode, with a new PATH_ADD_REINIT value. It behaves
+  like PATH_ADD_MAP, and is passed only when a path is re-added from
+  uev_update_path(): after udev reported a changed WWID, or after
+  udev data was missing at first. Only then is the WWID checked
+  against the device. Ordinary adds never run the SG_IO check.
+
+- The uev_update_path() check is unchanged. It only runs when the
+  WWID from udev differs from the cached one, and falls back to the
+  old behavior if the device doesn't confirm the cached WWID.
+
+About how likely this is: we hit it because a test tool was opening
+and closing the sd devices read-write many times a second, and with
+udev's "watch" rule every close generates a change uevent that runs
+scsi_id against the device. That is far more udev traffic than a
+normal host generates, so we expect the window to be rare in practice.
+We don't know why the bad WWID was reported; the array may have
+answered the INQUIRY wrongly during the takeover, or the bad value may
+have arisen elsewhere in the udev path. What the patch does is stop
+multipathd from acting on a changed WWID without confirming it, since
+the result of acting on a wrong one is data going to the wrong LUN.
+
+Open points, as in v1:
+
+- If the SG_IO read fails, behavior is unchanged. Refusing the add in
+  that case would be stricter; opinions welcome.
+
+- "multipathd reconfigure" builds maps through configure(), not
+  ev_add_path(), so it isn't covered.
+
+Brian Bunker (1):
+  multipathd: verify udev WWIDs with the device before moving paths
+
+ multipathd/cli_handlers.c |  2 +-
+ multipathd/main.c         | 79 +++++++++++++++++++++++++++++++--------
+ multipathd/main.h         | 12 +++++-
+ 3 files changed, 76 insertions(+), 17 deletions(-)
+
 -- 
 2.56.0
 
