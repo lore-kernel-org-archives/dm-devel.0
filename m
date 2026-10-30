@@ -1,54 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.198
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793365236;
-	b=l2jyEnyy6De+z5oTXpAC9e+4k3naZ9F/hG4VxeXxF/TULlVLbq0JRpTUltxyY+nEOIpC
-	 WizSzWKPwgiPE4mk7ehFVOgWymvsVGZ5XWJZBXaP2Ue6ji4S+ccBGrrm1dLQkYJfP2G46
-	 BgP+jY1FhiSGE2Rkg9afe+TZRgmPp8gUJWfgASrIB9EYm9Vf/TZWD/QZuM5rhmjCMrATH
-	 Ggn9LhBr3Lsq5MHBwWKaEC+WuoR6VHfirzbdGfLXIxOb5+CnVC0O6faK9CK2XJEhgINvj
-	 WVmGynjAkpIBkgkGOPBaPuZjcEyv/TISRi1IjEYOqqKyv/C9TsbeFvmhrec/MDiC+/w==
+	t=1793382401;
+	b=KjP4EUCarqlu+TGnoGSkXdvDy2EO+38aAyW/On+hAwf4cdaWy3O8/ENd5IMlIRA+ReID
+	 RbMU90N0Q814JCI6FigI1JwsNqAwNlSCd0tT+V1/Vf2FUWvFyLzo7VPocq94O1rKbtES8
+	 Yung7W3JrtDU666ivMM2VNZPqBDg5fVr82zJFKzBs75ss97o/FmlLzsqY0o9B5gGL62ju
+	 f+6DZrGqhSE/lJoxbpgWGnFupT8+EynhPO9zjsSH06SJXb9wGGFC+OpWp1rggJltBtOkh
+	 lcflJuozYjnyB/rBYsoh3xsk9fgnTJPAPQRnokWfb9Xu3Bx07Yq8yQpI8tcf6o8BTwg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793365236;
-	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:MIME-Version:X-Received:Date:
-	 X-Google-Appengine-App-Id:X-Google-Appengine-App-Id-Alias:Message-ID:
-	 Subject:From:To:Content-Type;
-	bh=RkbYxVSI5rTYmWPGM60TSax/zjdMIP247/fb4MerUmU=;
-	b=WxyrVFZCnA8YKDVLZusHeRxbyuoNSSJhfVC0WidRrMYXnw0HhozGr71kfjJT/cJuGwQz
-	 jnSyrZnkNnAUrHcs1Bs1XD6a7L/hBxU1wppoFaYuyHqN/64p6q6EUqisoWyKJz9Jjt0Ap
-	 R5XFfGe2UaqeTMu9PcnroPqoasZt1zA0QrsyW+e4lQpeVyTm81+QrHMwZ6QxDWg3gwHDB
-	 JKadH1kSCGR26xVLwgKB4KBru/kS3npmyBYnQYkmaXM1EOOm9ZOomgEM2SssimY4p1tEA
-	 p/Zk/FVnfKMMSw1PocEx6cPhKNSlSbjxvXp1/z8CK9HfQo6ilewsvvxAlrjYYgffcFA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793382401;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
+	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
+	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
+	 X-Mimecast-Originator:Content-Type:Content-Disposition;
+	bh=oa/0SbZCkrkWQYpNMWgx1Jq/mZtpjQ3qALisXkFoJ58=;
+	b=bT4316lXeX87i2Aw4cxZa+fXa8tEIx+s/uVYzG3dLADUGpktIBXfpKoGM/ha6VNo2abm
+	 uafSHuaaR6LSsxaUZLezNElu8drfdE/qNtFbXQRxjqccgmwjBRvCuoYlTgFd+8eS4vUey
+	 /DpX/tgzw2d9P8tKomQc9ioDr62hC6XsOybSE3sCBhdsWLD0aF1uXKwtCHApe/Px2rYSS
+	 lA56edkCoTmWSqVFLSHT8g5buZA/5QQ+cFrhdrq/UDF4vBfm0JReVZ0twf/FqWaqSGbcO
+	 LB3nDMA56Ay1fqUwGXZ+l565ekSfaR26RpVfbZ9xBjXIZTjqtA47zC4QhOGvhGJ3GFg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=syzkaller.appspotmail.com;
-	spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com;
-	arc=none smtp.remote-ip=209.85.167.198
-Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com [209.85.167.198])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=hkIEU7CN;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B410606A31C
-	for <dm-devel@lists.linux.dev>; Fri, 30 Oct 2026 13:00:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0B410606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-4b597558c4cso877588b6e.1
-        for <dm-devel@lists.linux.dev>; Fri, 30 Oct 2026 06:00:35 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793365235; x=1793970035;
-        h=content-type:to:from:subject:message-id:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=RkbYxVSI5rTYmWPGM60TSax/zjdMIP247/fb4MerUmU=;
-        b=dRI1NpxQCbdS8NDAuy1UKp+PBUBNBuhsofC4EB+mZXZd8fHTBdhv16y0Bu76GE62Mu
-         wbbdy7abowo46suymdraluvsAzk073Aug5VVgQwkwSQX7dNbUbu/Dy3U9JCVPpLf/VBH
-         9CJSs9n9FKibAUVvoqy9AAVM6Nnxok9oM7Pgx0lL0IchKIQcvaWJAfkffZlT5Y+98utJ
-         KF/8HIJNOEbR1AITgXSezYW9lVhlza0GR7NFgpUlkDhIEEAZWZuUQ6/CGDd2wBEMtcsZ
-         pT8h+LofC6c8I3O7MBobT677ecVOD4dhC8SJbk1WBr8Cpz72xoGcQg6lsYTrUd0ercXZ
-         rrdQ==
-X-Forwarded-Encrypted: i=1; AKwUvByoi9P6ItJJxBSlDdb+7pp0cVq+/BfsWzUTSwVARmyFOIZxVvcT/GA5tGovR5pTm9u3w9V55Ak4Rw==@lists.linux.dev
-X-Gm-Message-State: AFq9FYJozQW37NOGVo7rNRLgLvVEAyqmB3R2caHN6Mn/HLN+LNtJQfpU
-	IaZaaFG3BTHIsCSr6viZdJvkqFJjfa7RjG/0PxiME4rYqVP1OZkJxoW/y0lBWuNvlh83QHMdkv1
-	+enTNvIbtTxEmsjIIUMBSK3ltu9w/z4PR30k7USK2du4Xa6PlkOF4vtdUO3w=
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 557D0606A31A
+	for <dm-devel@lists.linux.dev>; Fri, 30 Oct 2026 17:46:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 557D0606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=hkIEU7CN
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793382400;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=oa/0SbZCkrkWQYpNMWgx1Jq/mZtpjQ3qALisXkFoJ58=;
+	b=hkIEU7CNFihpKe/wCFDl/oM/xMArpTWSSp7lvmfQPR2jdJ7wGfk1JeQm+QTqiGfC1wFSCX
+	yg4zOizU3wMxOdxUkhLIl21lj9tZ9s2l06ycOtXwiC2eQQnfXjpI5S6iLsLCLXq0jIvPcv
+	NPJTpvb3JcnB8ZIC/IYsGGulRoXijNQ=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-42-_QVYoevBOwS5vN5n5mLqUg-1; Fri,
+ 30 Oct 2026 13:46:36 -0400
+X-MC-Unique: _QVYoevBOwS5vN5n5mLqUg-1
+X-Mimecast-MFC-AGG-ID: _QVYoevBOwS5vN5n5mLqUg_1793382395
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 719C01954B24;
+	Fri, 30 Oct 2026 17:46:35 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 109A226C;
+	Fri, 30 Oct 2026 17:46:34 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 69UHkXjT1092818
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Fri, 30 Oct 2026 13:46:33 -0400
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 69UHkVcX1092805;
+	Fri, 30 Oct 2026 13:46:31 -0400
+Date: Fri, 30 Oct 2026 13:46:31 -0400
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: Re: [PATCH] multipathd: Don't look at pointer to removed path
+Message-ID: <auTX97jTl602SYIu@redhat.com>
+References: <20261029235014.818202-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -58,151 +84,59 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Received: by 2002:a05:6808:2218:b0:53c:2a2e:8650 with SMTP id
- 5614622812f47-5640df72f37mr1342932b6e.34.1793365233620; Fri, 30 Oct 2026
- 06:00:33 -0700 (PDT)
-Date: Fri, 30 Oct 2026 06:00:33 -0700
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6ae494f1.31fc0900.6b84.00fb.GAE@google.com>
-Subject: [syzbot] [dm?] general protection fault in crypt_setkey
-From: syzbot <syzbot+ff132cb52bce4f44ecc9@syzkaller.appspotmail.com>
-To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+In-Reply-To: <20261029235014.818202-1-bmarzins@redhat.com>
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: bFiQnIo1-T0ImsAzI_owZhnOAzl0VAczdBlonZ-ZlrQ_1793382395
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Hello,
+On Thu, Oct 29, 2026 at 07:50:14PM -0400, Benjamin Marzinski wrote:
+> In uev_update_path(), if the path wwid changes, we remove it and use
+> needs_reinit to re-add the path. Once we remove the path, pp is pointing to
+> freed memory, but we still read the value it pp to see if it's NULL before we
+> check needs_reinit. This doesn't cause any bugs, since we don't dereference it,
+> but it would still be cleaner if we stopped accessing it completely after we
+> freed it. This is easy to do, since we only ever set needs_reinit if pp is
+> non-NULL. So just check needs_reinit before we check if pp is NULL.
+> 
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 
-syzbot found the following issue on:
+Since this is just a cosmetic change, I'll wait till Brian's
+WWID verifying patch lands, and rebase on top of that.
 
-HEAD commit:    6b4b543fa187 Merge tag 'parisc-for-7.4-rc1' of git://git.k..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=15f0008d580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=e0dd24ec63572ca
-dashboard link: https://syzkaller.appspot.com/bug?extid=ff132cb52bce4f44ecc9
-compiler:       Debian clang version 22.1.8 (1~deb13u4), Debian LLD 22.1.8
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=138a6f0d580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=1583c259580000
+-Ben
 
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-6b4b543f.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/8a7c3186fb53/vmlinux-6b4b543f.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/54ff5a2a5728/bzImage-6b4b543f.xz
+> ---
+>  multipathd/main.c | 6 +++---
+>  1 file changed, 3 insertions(+), 3 deletions(-)
+> 
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> index 9bce4d6b..792bee36 100644
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -1769,6 +1769,9 @@ uev_update_path (struct uevent *uev, struct vectors * vecs)
+>  	}
+>  out:
+>  	lock_cleanup_pop(vecs->lock);
+> +	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
+> +	if (needs_reinit)
+> +		return uev_add_path(uev, vecs, 1);
+>  	if (!pp) {
+>  		/* If the path is blacklisted, print a debug/non-default verbosity message. */
+>  		if (uev->udev) {
+> @@ -1787,9 +1790,6 @@ out:
+>  
+>  		condlog(0, "%s: spurious uevent, path not found", uev->kernel);
+>  	}
+> -	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
+> -	if (needs_reinit)
+> -		retval = uev_add_path(uev, vecs, 1);
+>  	return retval;
+>  }
+>  
+> -- 
+> 2.56.0
+> 
 
-AI-generated root cause summary:
-In drivers/md/dm-crypt.c, specifying the optional "integrity_key_size" parameter
-alongside an AEAD integrity profile sets cc->key_mac_size, causing
-crypt_integrity_hmac() to evaluate to true. However, when the specified cipher
-is not an authenc composite algorithm (e.g., rfc7539(chacha20,poly1305)),
-crypt_ctr_auth_cipher() exits early without allocating cc->authenc_key. During
-key initialization, crypt_setkey() calls crypt_copy_authenckey() with the NULL
-cc->authenc_key pointer, leading to a kernel NULL-pointer dereference crash
-(denial of service).
-
-full analysis:  https://syzkaller.appspot.com/x/ai_root_cause?x=ff132cb52bce4f44ecc9
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+ff132cb52bce4f44ecc9@syzkaller.appspotmail.com
-
-Oops: general protection fault, probably for non-canonical address 0xdffffc0000000000: 0000 [#1] SMP KASAN NOPTI
-KASAN: null-ptr-deref in range [0x0000000000000000-0x0000000000000007]
-CPU: 0 UID: 0 PID: 5579 Comm: syz.0.17 Not tainted syzkaller #0 PREEMPT(full) 
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
-RIP: 0010:crypt_copy_authenckey drivers/md/dm-crypt.c:2396 [inline]
-RIP: 0010:crypt_setkey+0x1d7/0x980 drivers/md/dm-crypt.c:2417
-Code: 14 24 4c 8b b2 58 06 00 00 8b 5c 24 0c 29 eb 49 8d 7e 04 41 89 df 41 0f cf 48 89 f8 48 c1 e8 03 49 bc 00 00 00 00 00 fc ff df <42> 0f b6 04 20 84 c0 0f 85 00 07 00 00 45 89 7e 04 4c 89 f0 48 c1
-RSP: 0018:ffffc90003aef670 EFLAGS: 00010247
-RAX: 0000000000000000 RBX: 0000000000000010 RCX: ffff888030aa4b00
-RDX: ffff888035b3f000 RSI: 0000000000000020 RDI: 0000000000000004
-RBP: 0000000000000020 R08: ffff888035b3f12f R09: 1ffff11006b67e25
-R10: dffffc0000000000 R11: ffffed1006b67e26 R12: dffffc0000000000
-R13: ffff888035b3f120 R14: 0000000000000000 R15: 0000000010000000
-FS:  0000555578d00500(0000) GS:ffff88808ac1d000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f841a4e84ac CR3: 0000000038575000 CR4: 0000000000352ef0
-Call Trace:
- <TASK>
- crypt_set_key+0x3a0/0x680 drivers/md/dm-crypt.c:2642
- crypt_ctr_cipher drivers/md/dm-crypt.c:3067 [inline]
- crypt_ctr+0x2437/0x3c20 drivers/md/dm-crypt.c:3254
- dm_table_add_target+0x58d/0xc70 drivers/md/dm-table.c:749
- populate_table drivers/md/dm-ioctl.c:1602 [inline]
- table_load+0x325/0x8a0 drivers/md/dm-ioctl.c:1645
- ctl_ioctl drivers/md/dm-ioctl.c:2221 [inline]
- dm_ctl_ioctl+0x9ec/0xe10 drivers/md/dm-ioctl.c:2243
- vfs_ioctl fs/ioctl.c:51 [inline]
- __do_sys_ioctl fs/ioctl.c:597 [inline]
- __se_sys_ioctl+0xfc/0x170 fs/ioctl.c:583
- do_syscall_x64 arch/x86/entry/syscall_64.c:61 [inline]
- do_syscall_64+0x166/0x520 arch/x86/entry/syscall_64.c:84
- entry_SYSCALL_64_after_hwframe+0x77/0x7f
-RIP: 0033:0x7f7fae39f559
-Code: ff c3 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 44 00 00 48 89 f8 48 89 f7 48 89 d6 48 89 ca 4d 89 c2 4d 89 c8 4c 8b 4c 24 08 0f 05 <48> 3d 01 f0 ff ff 73 01 c3 48 c7 c1 e8 ff ff ff f7 d8 64 89 01 48
-RSP: 002b:00007ffd11f4b518 EFLAGS: 00000246 ORIG_RAX: 0000000000000010
-RAX: ffffffffffffffda RBX: 00007f7fae625fa0 RCX: 00007f7fae39f559
-RDX: 0000200000000540 RSI: 00000000c138fd09 RDI: 0000000000000003
-RBP: 00007f7fae436b20 R08: 0000000000000000 R09: 0000000000000000
-R10: 0000000000000000 R11: 0000000000000246 R12: 0000000000000000
-R13: 00007f7fae625fac R14: 00007f7fae625fa0 R15: 00007f7fae625fa0
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:crypt_copy_authenckey drivers/md/dm-crypt.c:2396 [inline]
-RIP: 0010:crypt_setkey+0x1d7/0x980 drivers/md/dm-crypt.c:2417
-Code: 14 24 4c 8b b2 58 06 00 00 8b 5c 24 0c 29 eb 49 8d 7e 04 41 89 df 41 0f cf 48 89 f8 48 c1 e8 03 49 bc 00 00 00 00 00 fc ff df <42> 0f b6 04 20 84 c0 0f 85 00 07 00 00 45 89 7e 04 4c 89 f0 48 c1
-RSP: 0018:ffffc90003aef670 EFLAGS: 00010247
-RAX: 0000000000000000 RBX: 0000000000000010 RCX: ffff888030aa4b00
-RDX: ffff888035b3f000 RSI: 0000000000000020 RDI: 0000000000000004
-RBP: 0000000000000020 R08: ffff888035b3f12f R09: 1ffff11006b67e25
-R10: dffffc0000000000 R11: ffffed1006b67e26 R12: dffffc0000000000
-R13: ffff888035b3f120 R14: 0000000000000000 R15: 0000000010000000
-FS:  0000555578d00500(0000) GS:ffff88808ac1d000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f841a650286 CR3: 0000000038575000 CR4: 0000000000352ef0
-----------------
-Code disassembly (best guess):
-   0:	14 24                	adc    $0x24,%al
-   2:	4c 8b b2 58 06 00 00 	mov    0x658(%rdx),%r14
-   9:	8b 5c 24 0c          	mov    0xc(%rsp),%ebx
-   d:	29 eb                	sub    %ebp,%ebx
-   f:	49 8d 7e 04          	lea    0x4(%r14),%rdi
-  13:	41 89 df             	mov    %ebx,%r15d
-  16:	41 0f cf             	bswap  %r15d
-  19:	48 89 f8             	mov    %rdi,%rax
-  1c:	48 c1 e8 03          	shr    $0x3,%rax
-  20:	49 bc 00 00 00 00 00 	movabs $0xdffffc0000000000,%r12
-  27:	fc ff df
-* 2a:	42 0f b6 04 20       	movzbl (%rax,%r12,1),%eax <-- trapping instruction
-  2f:	84 c0                	test   %al,%al
-  31:	0f 85 00 07 00 00    	jne    0x737
-  37:	45 89 7e 04          	mov    %r15d,0x4(%r14)
-  3b:	4c 89 f0             	mov    %r14,%rax
-  3e:	48                   	rex.W
-  3f:	c1                   	.byte 0xc1
-
-
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
-
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
-
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
-
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
-
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
-
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
-
-If you want to undo deduplication, reply with:
-#syz undup
