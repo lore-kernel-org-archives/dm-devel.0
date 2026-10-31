@@ -1,67 +1,52 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.220
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793430959;
-	b=br2cwTyrtV2UZQghdbzMx0KU6aRvLCejYShYa4VxOHq4YsXLiGEmXZQ49kliOHxu4zYG
-	 0HwEcWI4IXUB3oSGxj5GoDxATCOnkdt+lqb5FYBfMXkTGDGhIfdbQ5S1a/MlrnMcki2SR
-	 432y8GvdvjOpyoNjJQ2qNcK3fb8zQucbbbD1kk1GltP6snogBTGzEUWKhUh3Np9cp6iEZ
-	 Keobknqo0Qe2CNdC6w4nNWRTyPMtIkRIt6YPCSAoB4jaBZu6JdBJsTf9ldfFonfzolpNB
-	 eXMjU6UCMbJ2ApK0nfAPjM5n8vLvt0Y/LQ0E7Ei+UxXLO3Kz6fkwznlOWn0d8DlvXaA==
+	t=1793463120;
+	b=VPWl2LN+62FCcNqKGbDhiXokoTHCSk9PzNWrUNBTSrJ9iTECEN/ONe8bgOiPSXEwK9/1
+	 GmQ0ejivXONrayWTO8bhmOiKfAdgYvi/rbBNey7X+3zjdp5naWG1gCs5ElVzqzCVQW9sa
+	 R+QIL3jo2bo7DHyPt3r/97EFWK9GOgxt84rQp9yDsyFWb36HsKWBFZnaj8F+EvQL1U8In
+	 0dpRLakI02HuTbeCNF3UYTlkaA287q0D/OzS+Ei8JaiukDzrd7bD5qgjvKzBwsBGipTUv
+	 h8x17EoUGNthe9/Zf9z/6Vil5X51oD/YGSueJwR3kr+zWkn5rcvYMfbBzC9gTEoBuwg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793430959;
-	h=DMARC-Filter:dkim-signature:Received:Received:Received:From:To:CC:
-	 Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding:Content-Type:X-Originating-IP:
-	 X-ClientProxiedBy;
-	bh=o4VAib4sWZJVwEdVvn2PsUOlwVmvvkfLEzixgLq3/94=;
-	b=Xc+VAEhWoY3Dc+tL17XF/Cj85762ijMhLAPfQcAY4cgUVW661LhYr/dBlorXJ1TlsLpc
-	 2pPbAwHFdZrBpqE4h/w2DoaAW3j3UJaSicv7008L56lCVNwowKti0D+23b67OrA4YLIbE
-	 suGfIDHc9C1MHNF0qXAZnWc/lSyLg7R7n9pzkLpSYC7JEWHOPZozVPN2BZkM7hjH+h4Oq
-	 Q4CNWM//IOm2GD4DZ8AQHMWoN40WsvpPJ3eqaxtmzuTjY83917IG94yqXjzbxu/etHTRu
-	 k3mqBV6ARwR4PZC5+Q8QYIOPkcJQjT41f3yP93MHWb08mXxrg7aHGNosRMO0YE6jolA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793463120;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=bqKuAGO7fIG+WCUUm+LSWdZk8Wyi5YGM40d8cuBo11s=;
+	b=e9drazmuqF1WL0xZ9thKcULGMNldGf63saQkhbr2PZUUjwEJZoHsHZNlSbok2R4a64aS
+	 C0gmPbYuM+T7oVsxvCeFRKLQtScmrWp2Dgcaionm1EEB0vbMw2msGvTa8K6T0Rt2b/8kR
+	 jj31PFb1/lcYJGi/cI9/HyWYeNWnSwH0AEiU86Yf6kXk7a3x0+3NDuluYgBeFSYImpGfh
+	 qKkbilHdorYjUS5LhR0kqZNWXeQm+kMtWkrR4q7gKGMRChzfbqgpqsrra8ik1fPpTGhLd
+	 0ZnXPT2B8zPli1NCqzYam7NS/4zVHdNYx/FgfOU0lcosqmnvo+Ir3pscDSU+86F3Zfg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=h-partners.com;
-	spf=pass smtp.mailfrom=h-partners.com;
-	dkim=pass header.d=h-partners.com header.i=@h-partners.com header.a=rsa-sha256 header.s=dkim header.b=T8n7s3Zi;
-	arc=none smtp.remote-ip=113.46.200.220
-Received: from canpmsgout05.his.huawei.com (canpmsgout05.his.huawei.com [113.46.200.220])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ZOelg7bD;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EFC9606A31A
-	for <dm-devel@lists.linux.dev>; Sat, 31 Oct 2026 07:15:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8EFC9606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=h-partners.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=h-partners.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77ABD606A31A
+	for <dm-devel@lists.linux.dev>; Sat, 31 Oct 2026 16:12:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=h-partners.com header.i=@h-partners.com header.a=rsa-sha256 header.s=dkim header.b=T8n7s3Zi
-dkim-signature: v=1; a=rsa-sha256; d=h-partners.com; s=dkim;
-	c=relaxed/relaxed; q=dns/txt;
-	h=From;
-	bh=o4VAib4sWZJVwEdVvn2PsUOlwVmvvkfLEzixgLq3/94=;
-	b=T8n7s3ZilCeQ/6cccoko5kLoYxL8PSYdLMBz9S8Y6j6gYtpKr8476jizDkAYB9vokyT7DNWbq
-	Ekm/0c4gme8GAxQEn7TTCBAJjR3nso1nCAEVKhgzYLJZIBmr/3cl2bf1HwhqN1uYG28zCj886gb
-	JcTExZ014FcqJYmFQxM+HXE=
-Received: from mail.maildlp.com (unknown [172.19.163.104])
-	by canpmsgout05.his.huawei.com (SkyGuard) with ESMTPS id 4jGq4h3hWzz12LCd;
-	Sat, 31 Oct 2026 15:15:48 +0800 (CST)
-Received: from kwepemr100001.china.huawei.com (unknown [7.202.195.168])
-	by mail.maildlp.com (Postfix) with ESMTPS id 0FD464057F;
-	Sat, 31 Oct 2026 15:15:50 +0800 (CST)
-Received: from huawei.com (10.50.159.234) by kwepemr100001.china.huawei.com
- (7.202.195.168) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.45; Sat, 31 Oct
- 2026 15:15:49 +0800
-From: xietangxin <xietangxin@h-partners.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski
-	<bmarzins@redhat.com>
-CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>, gaoxingwang
-	<gaoxingwang1@huawei.com>, huyizhen <huyizhen2@huawei.com>, xietangxin
-	<xietangxin@h-partners.com>
-Subject: [PATCH dm] dm-crypt: reject integrity_key_size with non-authenc AEAD ciphers
-Date: Sat, 31 Oct 2026 15:15:08 +0800
-Message-ID: <20261031071508.1999545-1-xietangxin@h-partners.com>
-X-Mailer: git-send-email 2.43.0
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ZOelg7bD
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CF8071F000C1;
+	Sat, 31 Oct 2026 16:11:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793463120;
+	bh=bqKuAGO7fIG+WCUUm+LSWdZk8Wyi5YGM40d8cuBo11s=;
+	h=From:To:Cc:Subject:Date;
+	b=ZOelg7bDE7GNkACOldlbqvXAg1hhROCSHcMrllXXKxhn4OD3aflJqx9fJoQ1JJyAW
+	 7xeR+GbIG4f3hZkRikjU6z4OpIR9uVqc2bqF/762vdSDBnBZFT8KQtSiuFCpjEx/sw
+	 SffnPVZVDKumjOtzHgUtSi5+Za1dCbut1NqbJVXn3rJftr8Tprew9T4hBbfRAzu+U5
+	 9kN4XMW0lrH8uKFDVey3k72F+ZSSgA1GdyKFtd/lEED+1O4bsVhWHFOkorYplbiOm2
+	 xIo1CGLnkrqbcUvCbaNPRmbUpl66jk4dt9NM2P5d02KmQdjnIcCZ94psNvuhTy9yxT
+	 Qg8E6hI3YasYw==
+From: Mike Snitzer <snitzer@kernel.org>
+To: Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-delay: do not round a short delay up to the next timer tick
+Date: Sat, 31 Oct 2026 12:11:58 -0400
+Message-ID: <20261031161158.94403-1-snitzer@kernel.org>
+X-Mailer: git-send-email 2.44.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -72,46 +57,102 @@ List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: kwepems100002.china.huawei.com (7.221.188.206) To
- kwepemr100001.china.huawei.com (7.202.195.168)
 
-When integrity_key_size parameter is paired with a pure AEAD cipher that
-is not an authenc composite, crypt_ctr_auth_cipher() returns 0 early
-without allocating cc->authenc_key, but cc->key_mac_size remains
-non-zero because CRYPT_KEY_MAC_SIZE_SET was set during option parsing.
-As a result crypt_copy_authenckey() dereferences NULL crashes the kernel.
+For delays under 50 ms dm-delay hands its bios to a kthread, which
+polls for expired bios eight times per delay period.  But the time a
+bio is due is still kept in jiffies:
 
-Reject the contradictory configuration explicitly instead of silently
-returning 0, so userspace gets a clear -EINVAL.
+	delayed->expires = jiffies + msecs_to_jiffies(c->delay);
 
-Fixes: 4441686b24a1 ("dm-crypt: Allow to specify the integrity key size as option")
-Cc: stable@vger.kernel.org
-Reported-by: syzbot+ff132cb52bce4f44ecc9@syzkaller.appspotmail.com
-Closes: https://syzkaller.appspot.com/bug?extid=ff132cb52bce4f44ecc9
-Assisted-by: LLM
-Signed-off-by: xietangxin <xietangxin@h-partners.com>
+so however often the kthread looks, a bio is released at a tick.  With
+HZ=1000 that is invisible.  With HZ=100 every delay under 10 ms becomes
+a delay until the next tick, and a task that writes synchronously
+falls into step with the tick and sees 10 ms each time.
+
+Keep the due time in nanoseconds when the kthread is in use.  The
+timer and workqueue path, for delays of 50 ms and more, is unchanged.
+
+Single 4 KiB direct writes through a delay target on a memory-backed
+null_blk device, arm64, HZ=100, mean latency in ms (300 writes each):
+
+	delay	before	after
+	 1	 9.97	 1.16
+	 2	 9.97	 2.38
+	 5	 9.99	 5.85
+	20	20.06	21.29
+
+What remains above the requested delay is the kthread's polling
+interval, one eighth of the delay.
+
+Signed-off-by: Mike Snitzer <snitzer@kernel.org>
 ---
- drivers/md/dm-crypt.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-delay.c | 25 ++++++++++++++++++++++---
+ 1 file changed, 22 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 045face6924b..1cab614884b7 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2847,8 +2847,11 @@ static int crypt_ctr_auth_cipher(struct crypt_config *cc, char *cipher_api)
- 	char *start, *end, *mac_alg = NULL;
- 	struct crypto_ahash *mac;
+diff --git a/drivers/md/dm-delay.c b/drivers/md/dm-delay.c
+index 4864671c2222f..4c732b240801f 100644
+--- a/drivers/md/dm-delay.c
++++ b/drivers/md/dm-delay.c
+@@ -15,6 +15,7 @@
+ #include <linux/slab.h>
+ #include <linux/kthread.h>
+ #include <linux/delay.h>
++#include <linux/timekeeping.h>
  
--	if (!strstarts(cipher_api, "authenc("))
-+	if (!strstarts(cipher_api, "authenc(")) {
-+		if (test_bit(CRYPT_KEY_MAC_SIZE_SET, &cc->cipher_flags))
-+			return -EINVAL;
- 		return 0;
-+	}
+ #include <linux/device-mapper.h>
  
- 	start = strchr(cipher_api, '(');
- 	end = strchr(cipher_api, ',');
+@@ -51,7 +52,15 @@ struct dm_delay_info {
+ 	struct delay_c *context;
+ 	struct delay_class *class;
+ 	struct list_head list;
+-	unsigned long expires;
++	/*
++	 * When the bio is due: in jiffies for the timer, or in nanoseconds
++	 * for the kthread, which polls more often than the tick and must
++	 * not round a short delay up to it.
++	 */
++	union {
++		unsigned long expires;
++		u64 expires_ns;
++	};
+ };
+ 
+ static void handle_delayed_timer(struct timer_list *t)
+@@ -83,6 +92,13 @@ static void flush_bios(struct bio *bio)
+ 	}
+ }
+ 
++static bool delay_expired(struct delay_c *dc, struct dm_delay_info *delayed)
++{
++	if (delay_is_fast(dc))
++		return ktime_get_ns() >= delayed->expires_ns;
++	return time_after_eq(jiffies, delayed->expires);
++}
++
+ static void flush_delayed_bios(struct delay_c *dc, bool flush_all)
+ {
+ 	struct dm_delay_info *delayed, *next;
+@@ -98,7 +114,7 @@ static void flush_delayed_bios(struct delay_c *dc, bool flush_all)
+ 	spin_unlock(&dc->delayed_bios_lock);
+ 	list_for_each_entry_safe(delayed, next, &local_list, list) {
+ 		cond_resched();
+-		if (flush_all || time_after_eq(jiffies, delayed->expires)) {
++		if (flush_all || delay_expired(dc, delayed)) {
+ 			struct bio *bio = dm_bio_from_per_bio_data(delayed,
+ 						sizeof(struct dm_delay_info));
+ 			list_del(&delayed->list);
+@@ -322,7 +338,10 @@ static int delay_bio(struct delay_c *dc, struct delay_class *c, struct bio *bio)
+ 	delayed = dm_per_bio_data(bio, sizeof(struct dm_delay_info));
+ 
+ 	delayed->context = dc;
+-	delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
++	if (delay_is_fast(dc))
++		delayed->expires_ns = ktime_get_ns() + (u64)c->delay * NSEC_PER_MSEC;
++	else
++		delayed->expires = expires = jiffies + msecs_to_jiffies(c->delay);
+ 
+ 	spin_lock(&dc->delayed_bios_lock);
+ 	if (unlikely(!dc->may_delay)) {
 -- 
-2.43.0
+2.44.0
 
