@@ -1,54 +1,92 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.200
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793557530;
-	b=1SSiV5lJ+ENYBF+930MFlduapx9Hi5XaxMNmavhJhEOqQifmB7JOngdr+X/p/3Fn9S4p
-	 mxj/mfoQRaXO+0gRC8ty9+orPvBHYNd5Gh39iOlC1j9Ilw7qAg2daroZ+J6tzGkFwM2sm
-	 VSEfFDLyGUT+TqMN9Dx/2up5R20LtEazZn8/+BSCitmCzbU3V7OervSFZ2mRcJu0EPO2+
-	 Vf7GJJ/pZXjbhuMw/rmN+opdKejgQtMc8p1DdGFMXMkgC1p6X9gHkREAe06Bmz6HmaP8/
-	 UM+8dAdwWSzLUSiQWZxKIK8/IDYuHNfbdNqCyuSW0wNf9QJfHM5n0dObPQmbYX05e5w==
+	t=1793560223;
+	b=pq32QtgFFHVuQFu1QcahOryluHWy9q4vB6lN+WNI1cc8shHXTaATTnE3X8XRVzO734jH
+	 Vmv6HkzCZltdasUJ24Mkdif/4ylvymcYbVxB+Ofeh/LYqQ5+PxnWlKYkDYAKNJtJVTDVX
+	 4VvTJ06gj16AK5AyhzFpR2vSAo6Wekjtz9UaMKJ5FbAM5sreTsT2Ox/dQmKucqH4Lb+dY
+	 ZoPRbflwQqWyapAZb3iHPKQTGOb0T5Z0BqseClTvG2BKx8eBtgnjYxpNaYmFwy3Fke2es
+	 wfnXj5RYGUKPkxjL/cY53dStyGKnTYEAJyApDYbr+DXo4M+8dVF4TYtzefZWHUeHNNg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793557530;
-	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:MIME-Version:X-Received:Date:
-	 X-Google-Appengine-App-Id:X-Google-Appengine-App-Id-Alias:Message-ID:
-	 Subject:From:To:Content-Type;
-	bh=YlgnKU2M9F6XavLQeW9oq1oj0gNtN8PMPAnq00uylBA=;
-	b=OGrPj5j8KduBi/IZqBYW+UUvH6OPBIrPi7mvXw3kP84zdxPj90Q6oTlnFjE9nAWQSl9S
-	 wqd5LBOav/4GF2FJKYpQ+ZLFLZzxpZD2I22cNDfiptQEKHpoRUmN3Ceo6BOmNflH0y7vb
-	 8t4fbpGRa6ZCo3wzOc3jcA5bxwslTE6+ksnWHQ2a0JPL3b/0H5rDLzcC7ISz9nXBywzhf
-	 KU2s0dg57pRE7c0/sZC6l9wCnZ8Y5+dMBNlJ0/o0Z9mnWNqV+GTGdoucLo6V4LQk8OivB
-	 mkV5RVZR/s11a3SXJLLeKYuLjMnfQyfca5A81Kso5mj2qcgjDmqFMyP2QwQmLJ1yBRA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793560223;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:X-Received:Received:Message-ID:
+	 Date:MIME-Version:User-Agent:Subject:To:Cc:References:From:
+	 Organization:In-Reply-To:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
+	 X-Mimecast-Originator:Content-Language:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=PyZs0AyYwTcyO/qGQurFs7U023N9VNDaniciBF4CFOA=;
+	b=4H+//PoI9PV1cwPEieXFBZ6RXmWuNYRPFKgTNXLGR+VWRpDGzaZqFJXUF8/5f6/nF6re
+	 FBz175oVna9noE1rvU9eT7O+GjTa1p5JDlF1rp8Kj0M7VXXCnkktPX2jCPSGD1YBiuhxS
+	 QpeV5IQt/0ehGgY97L9gqBKHcQ/HDEQkURNc/qGzu2u8lwk+G1IdGQ+KISiUYFPvepYIK
+	 FG02m7+rycBrJENgyVbVPFrUIYKd+h5tKzdGpex/i87p1lszMFD+BBA8wDALFTJPsjf5O
+	 83g15oJQmbOzpRaalHKguYvQZLjGu8Evfa5IDarXAh0t6StlCJU4a08YOwRKxvv9HWQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=syzkaller.appspotmail.com;
-	spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com;
-	arc=none smtp.remote-ip=209.85.167.200
-Received: from mail-oi1-f200.google.com (mail-oi1-f200.google.com [209.85.167.200])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b+DSCSNq;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8E5D8606A326
-	for <dm-devel@lists.linux.dev>; Sun,  1 Nov 2026 18:25:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8E5D8606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f200.google.com with SMTP id 5614622812f47-4ab4f652f9bso1934499b6e.0
-        for <dm-devel@lists.linux.dev>; Sun, 01 Nov 2026 10:25:29 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0C9E5606A325
+	for <dm-devel@lists.linux.dev>; Sun,  1 Nov 2026 19:10:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0C9E5606A325
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=b+DSCSNq
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793560222;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=PyZs0AyYwTcyO/qGQurFs7U023N9VNDaniciBF4CFOA=;
+	b=b+DSCSNq2KnJ2vs+CIVy49S0YvzeVivHsCo6YSk3k059YZzQavqdCGpPscuzI7RhTrlRRG
+	NhlzPY6bse+c5BXAYISZ5pyPtVOlMD3n2ogGGtbt0Qg5zpzODYx2Sv6oIMVsZh5xwmYJmf
+	Kmj8i8I6Az/TMJa23tS66zAqTEzkl0I=
+Received: from mail-wr1-f72.google.com (mail-wr1-f72.google.com
+ [209.85.221.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-661-XblsmwFTMsmiQ9pWzswkXw-1; Sun, 01 Nov 2026 14:10:20 -0500
+X-MC-Unique: XblsmwFTMsmiQ9pWzswkXw-1
+X-Mimecast-MFC-AGG-ID: XblsmwFTMsmiQ9pWzswkXw_1793560220
+Received: by mail-wr1-f72.google.com with SMTP id ffacd0b85a97d-48b02d63407so1886392f8f.0
+        for <dm-devel@lists.linux.dev>; Sun, 01 Nov 2026 11:10:20 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793557528; x=1794162328;
-        h=content-type:to:from:subject:message-id:date:mime-version
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=YlgnKU2M9F6XavLQeW9oq1oj0gNtN8PMPAnq00uylBA=;
-        b=xorGgAqXF0EueeBAh161qGpTaSfpYtdeTrT/oLYK9TPX/SLCGz7Sq7URj88rJdC0VP
-         wtZ4XE+FgrRz5CMA79BS0AWqY6L9VDOofq2FCWKIiaCeAtaj11ueZWxak64TiT+JnU9l
-         8IlxUk+2rqdZIoIeFZ4I+u/h1dDk+S99Zv6bjbJhoEvxx9xWO4P//IbPUsDUhYUq7jEl
-         KJyJTW+Hr73PTXSMhwN4DU+cJev3hyl/hZmu+YhYVQ8hVIZTZMAaJoQ7WZL9gqk0q8dP
-         07Jm60LETh61w+hLNTN21baapkHow7qIx+1zIvGWuhmDORP3O5aYITjv/PDYoI2K1MRk
-         Wqqg==
-X-Forwarded-Encrypted: i=1; AKwUvBx1Tlxhq2uRNLm9iiCN4pwmZujrWo41qqF8vGZDKWjh1PLP0q/5u8TPX0wqr0/2es6/OxJq9hHDgg==@lists.linux.dev
-X-Gm-Message-State: AFq9FYJDvIrj4tpPWkRueGoH9KQ49LvhqAIcrv/sFKjin2C7Khds8B17
-	nkpT7qjGf+eBqmF+DiaDDM740oil9PpuqEKWoafnkznF7jr6K05/X6ywRKuLXgyYyJ/ID1wrFeH
-	5m7gKRy7pWhS/fWIfhLUQ1FXUUxJyKWApZ0pkID+UG7c7AJtET6LdXIpIJgY=
+        d=1e100.net; s=20260707; t=1793560219; x=1794165019;
+        h=content-transfer-encoding:content-type:in-reply-to:organization
+         :from:content-language:references:cc:to:subject:user-agent
+         :mime-version:date:message-id:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=PyZs0AyYwTcyO/qGQurFs7U023N9VNDaniciBF4CFOA=;
+        b=oOpbIDKtGJDo4rrU/5DfX7scEgrGQuwLp0ZU90wHZfl3XkVtBfLnVDzfkUWc0f+3/T
+         2LUUn45DFa13bTB+phsM/eZfb58HrF086YgYUDjzqyWHB4bMPfbToQBixp8ZJ+UKPIcX
+         FyfMpeB2lA42ZzBtpCaIk2dNcU3gUQQc8N6urZtbgizL+gDYAN7kd+6WW1AYidiNmOeN
+         wEIcdl+5xR9SHM4h5WcO9dpL3eHNcskVX01tLKu9jwP2LTk2MOlg+hhVowk3zy+BsC/i
+         EY3qFpHtoQaqTkKUy0KWuGNDznyqzO8Svic42bxgdBmDB4ywDMI8Q6dZQ2eQ7KGscNv4
+         6HgQ==
+X-Gm-Message-State: APuU4Z+HfyFj7pUk9CkgTfkhrlH6Ebaollsn3fyOnxDwL1Vwnskn2eza
+	ZsfPI1+ArjDFi+PRmLK/pNFPg3IQ25njmovPFfbhAkgqvI0xTYjWRxXVamkHAyAb43+YVhYH+yG
+	cnWp79TCeg3vKJYm5PixWV+b6YtDAu+uVVMHfwfevNbdaJRWSXRuSlHAi6sKp6w1DTwke
+X-Gm-Gg: AYBFou1w9S+k6Zd/ulOZU1iFiqf3Gtyt+Nl9FPZ9MuI9Rk9BS6ScMaTh/CeTXO6t9c3
+	DBr6IKlf0mU6nz1oX+f+9YaXz3vi38rMWhvtZTzOq0MZ5WiCVKf1m75NJWnVkzmHF6YEchZnuWr
+	bWVZCTUCKXeoUAkiXZ9CA0NBG5ENyRrqieIDFiOpC0GwbYMcX/5NvFPYSiBRlEZ5/8Q82WzS9OS
+	0+sl0t0VN8SsmvxtSrxw9UnDreQN8ml2ahNox9w5k6VqgZopcoLt4nxezOdtSEWHMY40OsV8aeO
+	SMMriV2T23zTeQgx9uu+eaAUScC+1E4p0akvF6KOuhu1ysYyXCprxUgDKkVdZB2mCwaSc/9oEmF
+	/d/hHNwUbh2Zta6BuDgDKTvJURU6jRPshFybUCkMPfdENxSDf/Q==
+X-Received: by 2002:a05:6000:2dc3:b0:48e:68da:1c5c with SMTP id ffacd0b85a97d-48e6e2f83aamr17988525f8f.16.1793560219390;
+        Sun, 01 Nov 2026 11:10:19 -0800 (PST)
+X-Received: by 2002:a05:6000:2dc3:b0:48e:68da:1c5c with SMTP id ffacd0b85a97d-48e6e2f83aamr17988473f8f.16.1793560218780;
+        Sun, 01 Nov 2026 11:10:18 -0800 (PST)
+Received: from [192.168.0.99] ([212.20.115.16])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71ba24f6sm16037130f8f.51.2026.11.01.11.10.18
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Sun, 01 Nov 2026 11:10:18 -0800 (PST)
+Message-ID: <2179facd-fe1e-42eb-8416-38d534e8b0dc@redhat.com>
+Date: Sun, 1 Nov 2026 20:10:17 +0100
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -58,195 +96,215 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Received: by 2002:a05:6808:f13:b0:4e4:627a:e094 with SMTP id
- 5614622812f47-5640dc2c8a7mr5312584b6e.11.1793557528715; Sun, 01 Nov 2026
- 10:25:28 -0800 (PST)
-Date: Sun, 01 Nov 2026 10:25:28 -0800
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6ae78418.6552420f.2a0efc.005b.GAE@google.com>
-Subject: [syzbot] [dm?] BUG: unable to handle kernel NULL pointer dereference
- in dm_bufio_client_create
-From: syzbot <syzbot+41e0d7cdfb1ecfc4a007@syzkaller.appspotmail.com>
-To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
-	syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: Parent transid failures in extent/dev/free-space trees after lost
+ writes; open_ctree -5, restore works - advice before repair?
+To: Aaron Bohenick <bohenick@gmail.com>, linux-btrfs@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+References: <CAAhqjAK5mOJrgZqG-ZrgKt12Dm4AFJeapiFbBNpRv+qUns_d-A@mail.gmail.com>
+ <CAAhqjALj6mq=wx43sshav-uOxei2nXeMu4nfmQmu_az7Nbig=g@mail.gmail.com>
+From: Zdenek Kabelac <zkabelac@redhat.com>
+Organization: RedHat
+In-Reply-To: <CAAhqjALj6mq=wx43sshav-uOxei2nXeMu4nfmQmu_az7Nbig=g@mail.gmail.com>
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: lQHsrPLfyw59WFfUxKh473iMDDiO3-ZTi0laJGZW8J8_1793560220
+X-Mimecast-Originator: redhat.com
+Content-Language: en-US, cs-CZ
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Hello,
-
-syzbot found the following issue on:
-
-HEAD commit:    abf8c33470f7 Merge tag 'spi-fix-v7.4-merge-window' of git:..
-git tree:       https://kernel.googlesource.com/pub/scm/linux/kernel/git/torvalds/linux master
-console output: https://syzkaller.appspot.com/x/log.txt?x=1578f6ea580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=b38f05ed2b645c41
-dashboard link: https://syzkaller.appspot.com/bug?extid=41e0d7cdfb1ecfc4a007
-compiler:       arm-linux-gnueabi-gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
-userspace arch: arm
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=12fc4be0580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=134c528d580000
-
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/98a89b9f34e4/non_bootable_disk-abf8c334.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/dc6a6b2fa900/vmlinux-abf8c334.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/a24896395af6/zImage-abf8c334.xz
-
-AI-generated root cause summary:
-In drivers/md/dm-thin.c, pool_ctr() attempts to ensure metadata and data devices
-are distinct by checking strcmp(argv[0], argv[1]), which fails when different
-path strings resolve to the same device. When the pool is created with read_only
-mode, dm_get_device() opens the metadata device as read-only, and the subsequent
-open of the data device as read-write invokes upgrade_mode() in
-drivers/md/dm-table.c, which frees the old table device via
-dm_put_table_device(). This leaves metadata_dev as a dangling pointer
-(use-after-free); when metadata_dev->bdev is subsequently read as NULL from the
-freed slab entry and passed to dm_bufio_client_create(), dereferencing
-bdev->bd_dev causes an immediate kernel NULL pointer dereference.
-
-full analysis:  https://syzkaller.appspot.com/x/ai_root_cause?x=41e0d7cdfb1ecfc4a007
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+41e0d7cdfb1ecfc4a007@syzkaller.appspotmail.com
-
-8<--- cut here ---
-Unable to handle kernel NULL pointer dereference at virtual address 00000024 when read
-[00000024] *pgd=86ce2003, *pmd=df568003
-Internal error: Oops: 205 [#1] SMP ARM
-Modules linked in:
-CPU: 0 UID: 0 PID: 4130 Comm: syz.2.17 Not tainted syzkaller #0 PREEMPT 
-Hardware name: ARM-Versatile Express
-PC is at dm_bufio_client_create+0x298/0x5fc drivers/md/dm-bufio.c:2585
-LR is at __raw_spin_unlock_irqrestore include/linux/spinlock_api_smp.h:211 [inline]
-LR is at _raw_spin_unlock_irqrestore+0x30/0x54 kernel/locking/spinlock.c:221
-pc : [<812f4044>]    lr : [<81c19680>]    psr: 60000013
-sp : df9f1b30  ip : df9f1aa8  fp : df9f1bd4
-r10: 00000000  r9 : df9f1b48  r8 : 837359c4
-r7 : 83735984  r6 : 8633b638  r5 : 00000000  r4 : 8633b600
-r3 : 00000000  r2 : 00000000  r1 : ffc00000  r0 : 00000000
-Flags: nZCv  IRQs on  FIQs on  Mode SVC_32  ISA ARM  Segment user
-Control: 30c5387d  Table: 86a96cc0  DAC: fffffffd
-Register r0 information: NULL pointer
-Register r1 information: non-paged memory
-Register r2 information: NULL pointer
-Register r3 information: NULL pointer
-Register r4 information: slab kmalloc-512 start 8633b600 pointer offset 0 size 512
-Register r5 information: NULL pointer
-Register r6 information: slab kmalloc-512 start 8633b600 pointer offset 56 size 512
-Register r7 information: non-slab/vmalloc memory
-Register r8 information: non-slab/vmalloc memory
-Register r9 information: 2-page vmalloc region starting at 0xdf9f0000 allocated at kernel_clone+0xc4/0x440 kernel/fork.c:2784
-Register r10 information: NULL pointer
-Register r11 information: 2-page vmalloc region starting at 0xdf9f0000 allocated at kernel_clone+0xc4/0x440 kernel/fork.c:2784
-Register r12 information: 2-page vmalloc region starting at 0xdf9f0000 allocated at kernel_clone+0xc4/0x440 kernel/fork.c:2784
-Process syz.2.17 (pid: 4130, stack limit = 0xdf9f0000)
-Stack: (0xdf9f1b30 to 0xdf9f2000)
-1b20:                                     00000001 00000000 00001fff 00000006
-1b40: 00000000 00000008 00000008 00000000 00000000 00000000 00000000 00000000
-1b60: 00000000 625f6d64 6f696675 6675625f 2d726566 00312d38 00000000 00000000
-1b80: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1ba0: 00000000 5d3b91d7 80579764 863f8c80 00000000 00001000 00000006 00000000
-1bc0: 00000000 00000800 df9f1c0c df9f1bd8 8130d108 812f3db8 8130d020 8130d03c
-1be0: 00000000 868f1040 00000000 868f0c00 00000000 00000000 00000000 00000000
-1c00: df9f1c34 df9f1c10 81329660 8130d0a4 868f1040 8276076c 826a9678 00000000
-1c20: 83735a70 00000000 df9f1cb4 df9f1c38 81322274 813295d4 00000000 00000000
-1c40: 835c30a0 863f87c0 8417c000 86852000 83735a60 00000003 863f894c 00000800
-1c60: 863f87cc 00000000 00000014 00000000 812e5f44 00000000 00000007 00000000
-1c80: 863f8858 5d3b91d7 00000000 863c7180 868f1040 00000000 00000000 00000800
-1ca0: 00000000 00000000 df9f1d0c df9f1cb8 812e623c 81321df0 00000008 df9f1d2c
-1cc0: 868f1040 00000000 85b2db60 85b2db50 df9f1d0c 00000006 863f8840 5d3b91d7
-1ce0: 86852000 0000006f 85b2db38 85b2db60 85b2da00 00000000 85b2dba8 86852000
-1d00: df9f1d64 df9f1d10 812ec884 812e60b0 00000800 00000000 85b2db60 85b2da00
-1d20: 812eabcc 863c7180 00000000 863c7180 00000000 5d3b91d7 df9f1d54 812ec740
-1d40: 85b2da00 200006c0 863f0e80 00000009 000001a8 000001a8 df9f1f04 df9f1d68
-1d60: 812eaa04 812ec74c df9f1e74 81ee19d4 8259d20c 8088542c 81ee1718 00000077
-1d80: 85b2db31 b5403587 00000000 00000000 00000001 00000000 00000004 00000032
-1da0: 00000000 000001a8 00000138 00000001 00000000 00020000 00000000 00000000
-1dc0: 0000f800 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1de0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1e00: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1e20: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1e40: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1e60: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1e80: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1ea0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
-1ec0: 00000000 00000000 00000000 00000000 00000003 5d3b91d7 df9f1ef4 00000000
-1ee0: 863f0e80 c138fd09 200006c0 863f0e80 00000003 84d3be80 df9f1f14 df9f1f08
-1f00: 812eaf64 812ea79c df9f1fa4 df9f1f18 805f2e84 812eaf60 df9f1f4c df9f1f28
-1f20: 8035d380 8036088c ffffffff 81c0c4c0 df9f1f54 df9f1f40 8025cbac 00000001
-1f40: df9f1fa4 df9f1f50 8035dc54 8035d1f8 00000000 00000001 ffffffff 8341a10c
-1f60: 00000000 00000000 00000000 00000000 00000000 5d3b91d7 df9f1fac 00000000
-1f80: 00000000 00356310 00000036 8020029c 84d3be80 00000036 00000000 df9f1fa8
-1fa0: 80200060 805f2c4c 00000000 00000000 00000003 c138fd09 200006c0 00000000
-1fc0: 00000000 00000000 00356310 00000036 003562d8 00000000 00000008 00000000
-1fe0: 7ecaa7a0 7ecaa790 0001903c 00130cf0 60000010 00000003 00000000 00000000
-Call trace: 
-[<812f3dac>] (dm_bufio_client_create) from [<8130d108>] (dm_block_manager_create+0x70/0xb0 drivers/md/persistent-data/dm-block-manager.c:397)
- r10:00000800 r9:00000000 r8:00000000 r7:00000006 r6:00001000 r5:00000000
- r4:863f8c80
-[<8130d098>] (dm_block_manager_create) from [<81329660>] (__create_persistent_data_objects drivers/md/dm-thin-metadata.c:791 [inline])
-[<8130d098>] (dm_block_manager_create) from [<81329660>] (dm_pool_metadata_open+0x98/0x15c drivers/md/dm-thin-metadata.c:980)
- r8:00000000 r7:00000000 r6:00000000 r5:00000000 r4:868f0c00
-[<813295c8>] (dm_pool_metadata_open) from [<81322274>] (pool_create drivers/md/dm-thin.c:2946 [inline])
-[<813295c8>] (dm_pool_metadata_open) from [<81322274>] (__pool_find drivers/md/dm-thin.c:3113 [inline])
-[<813295c8>] (dm_pool_metadata_open) from [<81322274>] (pool_ctr+0x490/0xa64 drivers/md/dm-thin.c:3363)
- r9:00000000 r8:83735a70 r7:00000000 r6:826a9678 r5:8276076c r4:868f1040
-[<81321de4>] (pool_ctr) from [<812e623c>] (dm_table_add_target+0x198/0x3bc drivers/md/dm-table.c:749)
- r10:00000000 r9:00000000 r8:00000800 r7:00000000 r6:00000000 r5:868f1040
- r4:863c7180
-[<812e60a4>] (dm_table_add_target) from [<812ec884>] (populate_table drivers/md/dm-ioctl.c:1602 [inline])
-[<812e60a4>] (dm_table_add_target) from [<812ec884>] (table_load+0x144/0x3d4 drivers/md/dm-ioctl.c:1645)
- r10:86852000 r9:85b2dba8 r8:00000000 r7:85b2da00 r6:85b2db60 r5:85b2db38
- r4:0000006f
-[<812ec740>] (table_load) from [<812eaa04>] (ctl_ioctl+0x274/0x7c4 drivers/md/dm-ioctl.c:2221)
- r10:000001a8 r9:000001a8 r8:00000009 r7:863f0e80 r6:200006c0 r5:85b2da00
- r4:812ec740
-[<812ea790>] (ctl_ioctl) from [<812eaf64>] (dm_ctl_ioctl+0x10/0x14 drivers/md/dm-ioctl.c:2243)
- r10:84d3be80 r9:00000003 r8:863f0e80 r7:200006c0 r6:c138fd09 r5:863f0e80
- r4:00000000
-[<812eaf54>] (dm_ctl_ioctl) from [<805f2e84>] (vfs_ioctl fs/ioctl.c:51 [inline])
-[<812eaf54>] (dm_ctl_ioctl) from [<805f2e84>] (do_vfs_ioctl fs/ioctl.c:551 [inline])
-[<812eaf54>] (dm_ctl_ioctl) from [<805f2e84>] (__do_sys_ioctl fs/ioctl.c:595 [inline])
-[<812eaf54>] (dm_ctl_ioctl) from [<805f2e84>] (sys_ioctl+0x244/0xb5c fs/ioctl.c:583)
-[<805f2c40>] (sys_ioctl) from [<80200060>] (ret_fast_syscall+0x0/0x1c arch/arm/mm/proc-v7.S:67)
-Exception stack(0xdf9f1fa8 to 0xdf9f1ff0)
-1fa0:                   00000000 00000000 00000003 c138fd09 200006c0 00000000
-1fc0: 00000000 00000000 00356310 00000036 003562d8 00000000 00000008 00000000
-1fe0: 7ecaa7a0 7ecaa790 0001903c 00130cf0
- r10:00000036 r9:84d3be80 r8:8020029c r7:00000036 r6:00356310 r5:00000000
- r4:00000000
-Code: e3a05000 e3a01000 e34f1fc0 e1a00005 (e5932024) 
----[ end trace 0000000000000000 ]---
-----------------
-Code disassembly (best guess):
-   0:	e3a05000 	mov	r5, #0
-   4:	e3a01000 	mov	r1, #0
-   8:	e34f1fc0 	movt	r1, #65472	@ 0xffc0
-   c:	e1a00005 	mov	r0, r5
-* 10:	e5932024 	ldr	r2, [r3, #36]	@ 0x24 <-- trapping instruction
+Dne 01. 11. 26 v 18:50 Aaron Bohenick napsal(a):
+> Hi,
+> 
+> Follow-up to my report below, with new findings that change the
+> question. Cc'ing dm-devel because this now looks like a dm-cache
+> (lvmcache) issue underneath Btrfs. Everything below was read-only; the
+> origin LV and the cache SSD are both blockdev --setro and nothing has
+> been written to either. The NAS vendor's (TerraMaster) support is also
+> involved.
+> 
+> Short version: the detached cache SSD holds the current, checksum-valid
+> copy of every Btrfs metadata block that is stale on the origin, but the
+> cache metadata marks every cached block clean (0 dirty), so a forced
+> uncache dropped them.
+> 
+> How the cache was detached
+> --------------------------
+> LVM metadata history on the origin PV (vg0 on md RAID6), times EDT:
+> - seqno 23, 2026-10-29 21:31:53: "lvconvert --uncache -y --force vg0/lv0"
+> - seqno 24, 2026-10-29 21:31:55: "vgreduce vg0 --removemissing"
+> The cache PV (an md RAID1 on one NVMe) was not assembled after a vendor
+> OS update/restart, and the vendor OS forced the uncache. Cache mode in
+> the LVM metadata: writethrough.
+> 
+> Cache metadata (cache_check passes on an image of the cmeta LV)
+> ---------------------------------------------------------------
+> block_size=2048 sectors (1 MiB), nr_cache_blocks=953640, policy=smq,
+> hint_width=4; 953634 mappings, 0 dirty.
+> 
+> Damaged Btrfs blocks: origin copy vs cached copy
+> ------------------------------------------------
+> 64 KiB nodes read from the origin LV and from the cdata area on the SSD
+> (cache block N at cdata + N MiB). crc32c and bytenr checked for every
+> copy. Format gen/owner; both DUP copies agree unless noted.
+> 
+> logical wanted origin cached
+> 26935296 917953 910413/3 (copy0) 917953/3
+> 13608045117440 918517 879195/7 918517/8
+> 15797806039040 917945 917909/2 917945/4 (dev tree)
+> 12777307766784 918507 610497/258 918507/2 (extent tree)
+> 12777308094464 918507 608008/258 918507/2 (extent tree)
+> 12777309929472 918507 917901/7 lvl 1 918507/2 lvl 0
+> 13607943929856 918513 604537/260 918513/258
+> 13608042430464 918517 610816/258 918517/260 lvl 2 (subvol root)
+> 
+> Every cached copy has a valid checksum and exactly the generation Btrfs
+> expects. The origin copies are valid but much older blocks from other
+> trees. All 20 damaged copies (10 blocks x DUP) are inside cached origin
+> blocks, while overall only 51.4% of metadata blocks (23181/45056) and
+> 5.8% of data blocks were cached. The cache also holds blocks from the
+> final transaction (918517), so it was in use until the end.
+> 
+> So for some hot metadata blocks, writes stopped reaching the origin
+> (some since around generation 604537, weeks to months earlier) while
+> reads were served from the cache, and the cache never considered those
+> blocks dirty.
+> 
+> Questions
+> ---------
+> 1. For dm-cache: is there a known way a writethrough cache can end up
+>     with cached blocks that are newer than the origin but marked clean?
+>     (Kernel 6.12.63+ on a TerraMaster F4-424 Pro, TOS 7.0.1341.)
+> 2. Safest recovery: re-create the cache mapping by hand (origin lv0,
+>     cmeta, cdata, block size 2048, smq) over dm-snapshot overlays and
+>     test a read-only Btrfs mount; or copy the cached metadata blocks onto
+>     the origin after testing on an overlay? Anything to watch for, e.g.
+>     policy hints, or LVM auto-cleaning the outdated cache PV's metadata
+>     if its md/GPT labels are restored (they are currently erased, so LVM
+>     cannot see it)?
+> 3. For Btrfs: if the cached versions are put back, is a full
+>     btrfs check --readonly plus scrub enough to trust the filesystem, or
+>     should I still plan to copy everything off and recreate it?
+> 
+> I can provide the cache_dump, the comparison script and output, the
+> LVM metadata text from both PVs and the 97 MiB cmeta/LVM image.
+> 
 
 
----
-This report is generated by a bot. It may contain errors.
-See https://goo.gl/tpsmEJ for more information about syzbot.
-syzbot engineers can be reached at syzkaller@googlegroups.com.
+Hi Aaron,
 
-syzbot will keep track of this issue. See:
-https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+On Q1: I do not know of a kernel release that fixed this, because I cannot
+find a dm-cache writethrough bug with this shape. The only dm-cache
+coherency fixes after 6.12 are the passthrough-mode series from Ming-Hung
+Tsai (Feb 2026, v7.1, no Cc: stable, so not in 6.12.63), and they have the
+opposite signature: passthrough maps writes to the origin and invalidates
+the cache entry, so those bugs make the cache return stale data while the
+origin stays correct. Your data has the cache correct and the origin
+stale.
 
-If the report is already addressed, let syzbot know by replying with:
-#syz fix: exact-commit-title
+The writethrough path does not obviously allow your state either. A write
+that hits a clean block goes to origin and cache in parallel with
+bio_chain(), so the bio does not complete until both are done and an
+origin error propagates. A dirty block is cleared only after a successful
+copy to the origin. A write miss goes to the origin and is not cached. A
+clean mapped block should therefore always match the origin. That leaves
+two candidates: the origin lost an acknowledged write below dm, or the
+table was not actually writethrough while it ran. The second is easy to
+rule out from /etc/lvm/archive if the NAS still has it.
 
-If you want syzbot to run the reproducer, reply with:
-#syz test: git://repo/address.git branch-or-commit-hash
-If you attach or paste a git patch, syzbot will apply it before testing.
+Related, and important for reading your dump: the dirty bitset is written
+by sync_metadata(), and the clean-shutdown flag is only set if all the
+metadata writes in that pass succeeded. On load, if that flag is clear,
+the kernel ignores the bitset and marks every mapping dirty
+(__load_mapping(): "bool dirty = true; if (cmd->clean_when_opened) dirty
+= ..."). So "0 dirty" means nothing unless the metadata was cleanly shut
+down. If it was not, the kernel considered all 953634 blocks dirty.
 
-If you want to overwrite report's subsystems, reply with:
-#syz set subsystems: new-subsystem
-(See the list of subsystem names on the web dashboard)
+On Q2: use the offline tools; no dm-cache target and no LVM. Work only on
+a copy (you already have the 97 MiB cmeta image):
 
-If the report is a duplicate of another one, reply with:
-#syz dup: exact-subject-of-another-report
+   dd if=<cmeta> of=cmeta.img bs=1M
+   cache_check cmeta.img
+   cache_check --clear-needs-check-flag cmeta.img     # copy only
+   cache_writeback --metadata-device cmeta.img \
+       --fast-device <cdata> --origin-device <origin snapshot> \
+       --no-metadata-update --list-failed-blocks
 
-If you want to undo deduplication, reply with:
-#syz undup
+cache_writeback writes only dirty blocks and cannot run on a live cache.
+If the metadata was not cleanly shut down it should treat every mapping as
+dirty and write the whole cache back, about 930 GiB; that makes the origin
+an exact copy of the cache state, and blocks that were already identical
+are a no-op. If it writes nothing, the metadata was clean; then select the
+blocks yourself:
+
+   cache_dump cmeta.img > cache.xml
+   # <mapping cache_block="N" origin_block="M" dirty="false"/>
+   # set dirty="true" on the blocks you want, then:
+   cache_restore -i cache.xml -o cmeta-fixed.img
+   cache_writeback ... --metadata-device cmeta-fixed.img
+
+Write to a snapshot of the origin so the real one stays untouched, and
+size the COW for up to 930 GiB. cdata is only read, so it needs no copy.
+Do not re-activate the cache target: activation commits to cmeta and, on
+an unclean metadata, starts writing back on its own schedule.
+
+On Q3: no, btrfs check --readonly plus scrub is not sufficient. Your
+damage is "valid checksum, stale content", which checksums cannot detect:
+scrub compares data against metadata checksums, and those match the stale
+block. Only generation/transid and tree-structure checks catch it, and
+only for blocks that are visited. Plan to copy out and recreate, or keep a
+full pre-repair image and diff against it later.
+
+Also, "all 20 damaged copies are in cached blocks, while only 51.4% of
+metadata blocks were cached" is a selection effect: you found the damage
+by comparing origin against cdata, so only cached blocks can show it, and
+hot tree roots are exactly what a cache holds.
+
+What would settle it, in order of value:
+
+1. Kernel log from the last healthy boot through the failed boots:
+    journalctl -k -b -1 and -b, /var/log/kern.log, /var/log/messages.
+    Look for "md/raid", "md0", "resync", "recovery", "faulty", "removed",
+    "re-added", "md: marking", "I/O error", "blk_update_request"; and for
+    "dm_cache" / "device-mapper: cache": "switching cache to read-only
+    mode", "switching cache to fail mode", "metadata operation ...
+    failed". md logs loudly, dm-cache is silent on the healthy path, so
+    absence of cache errors proves nothing.
+
+2. md facts: mdadm --detail, mdadm --examine on every member (event
+    counts), chunk size, and which serial sits in which slot. If one
+    member has a lower event count or appears in a kick/re-add, stop there.
+
+3. /etc/lvm/archive and /etc/lvm/backup from the NAS: the only reliable
+    way to see whether the cache mode was ever changed to writeback, and
+    when the cache PV last received a metadata update.
+
+4. pvck --dump metadata on the cache PV: its VG seqno versus the origin
+    PV's seqno tells you when LVM last wrote that PV, independently of the
+    metadata text you already have.
+
+5. cache_dump and cache_check output, and whether the cmeta superblock
+    clean-shutdown flag is set.
+
+6. uname -a, /proc/version, and the TOS kernel source or patch set. A
+    vendor 6.12.63 with out-of-tree patches is the one gap I cannot reason
+    about from upstream.
+
+7. The physical-offset test, which needs only the images you already have:
+    compute the RAID6 chunk-to-member mapping (mdadm --detail gives the
+    chunk size and layout) for the 10 stale 64 KiB blocks. If they land on
+    one member, or on one contiguous region of it, that is md, not
+    dm-cache.
+
+If the pre-reinstall logs are gone, say so early: then the md history is
+unrecoverable and the block-offset test plus the LVM archive are what is
+left.
+
+Keep the cache PV invisible to LVM throughout (device filter, do not
+import the VG): a stray pvcreate, vgreduce or lvconvert --repair can
+rewrite exactly the metadata you are depending on.
+
+Thanks,
+
+Zdenek
+
