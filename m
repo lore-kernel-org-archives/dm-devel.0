@@ -1,80 +1,70 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=202.108.3.23
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793578003;
-	b=YfX3AOVHvqRjETMF6Li/xVlREa3CS/OTYNex7k5l7bC0iGJQe59DPKQ0dYHYVe0ZUE7L
-	 5sQ+tSWwwvItL4edX+lIfAqwn3DeXdw7P0I2mwWls35dyxnZmGNnP7BRDwbAxf1TwcAyG
-	 7ix5yM7eMkYE7sIVdVh7KI0EkwIOUB+OZhDavZqQ1RdX8pQrqO7baxDPb5CB7XwVWeI6Q
-	 cHSEvCjP1N3aUSvsyC4xKwcvj8A01DMahTFfEW01ma8QhBjLld0bfX54APYODWX8ndW/J
-	 jtzfV0jxmJAsObier8UrccptXOUSJXCpJH0sRLWqjqQlfTyBYV7YjoeCd2fzeEww+zA==
+	t=1793606845;
+	b=IvoiSdCuUESbZ7T3apx9vp0CY9BaKoaFYqQuViMG/Wl1Y9eMxMGoLt04acKjWuI62lmI
+	 5aNLaTOazf8Au9kk3Hm6X7AojHJi95cRM+Emv1F3heUWVkhUeUQrAFMjJryZBT3u2wOKA
+	 JCB7fOAzShhp/Xk57bR2p8mNqdYKbV0HYMA+Yopj9yER+xWGulZes5G8MrSN7k3O14Lss
+	 /XSEV3ouhIH8HqPC7A0N+8U/6GZsheOvnmkro75xZ/R+ivew42sZCsGXW70CsBXngq8aS
+	 GuX5A8mq4kmBT9uiasICHfDKQz3vbTqpVZjpr0jiL4ipRgRWKVktFDPwgdI2lHklW6g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793578003;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=+SJEXO4zB7JFbzlAkf228If7IMH2rNzMGxDZgs6nB/Q=;
-	b=JvhKY2uqXNCfgMva71xOKkgbJW2JaJ3gr4Z/KBMSvjB1+j2aOnuktJ6cspkIdyQZ1oyZ
-	 ifE0F1s4zqWBCMZyBiZeEpsVzdvbfYbykr9xOUAXlzNINdgPWBL6rzLI5AQAN+BjovQcA
-	 w5s1m0CMHtNgiYvOta1GOCZmZGY2DYogsm6zPnF6UCd5XF31YByiIWgUGqiFWfTRAK+KQ
-	 ZlaCfFuUsRkbFDs3jUhCMkjtfXEjvy45Db0y4hn+n2+o0+S/7Q7JmFs+XpjdVUNvy2bZJ
-	 ngYdiRmw19C+3H23UesY6PE8z+NHK/p80kFIRCgyTH5qmYbx2bQdT6mB+I3l5rlz4jg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793606845;
+	h=DMARC-Filter:DKIM-Signature:X-SMAIL-HELO:Received:X-Sender:X-Auth-ID:
+	 X-SMAIL-MID:X-SMAIL-UIID:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=nQjXmqGK5AW9/D5/P6wpNA06FJUe5Tp5fUtCfZHHY/g=;
+	b=HzEbFWbXgxo5D5Pns7rW/z74pm7NR4qIybz3NHet2o+onoMBHYaBThX2F+jCEyFRANWT
+	 WdO9kWJkNxK6axB+/eR3xObDX6nCgjuWHJi79LbxIXhOK08OpI26ryT4lr/tLaWaRiNY8
+	 NGBvrqxAVNbLMMHzMuUH/0wmZgJhJrAi5ft1bXYhWEkHedUbByHFiqjg8i0SBxcvMkg9a
+	 uSZsU833REkc3ESPDkQYtyEaBMoX5gK7RxiAug+e0ImU/VPsNuvJm6Hc/9FhWPq6veRdF
+	 4wT+Lfunq28YsyF/6oraRb4y+exs713LMQmAA+YgP+mkGTUPv3Iuh6zylSFNKv0rbAg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=liqClC9W;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=sina.com;
+	spf=pass smtp.mailfrom=sina.com;
+	dkim=pass header.d=sina.com header.i=@sina.com header.a=rsa-sha256 header.s=201208 header.b=H1iQClGI;
+	arc=none smtp.remote-ip=202.108.3.23
+Received: from r3-23.sinamail.sina.com.cn (r3-23.sinamail.sina.com.cn [202.108.3.23])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id E0BAC606A324;
-	Mon,  2 Nov 2026 00:06:42 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B013606A324
+	for <dm-devel@lists.linux.dev>; Mon,  2 Nov 2026 08:07:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4B013606A324
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=sina.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=sina.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=liqClC9W
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id D32841F000C1;
-	Mon,  2 Nov 2026 00:06:41 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793578002;
-	bh=+SJEXO4zB7JFbzlAkf228If7IMH2rNzMGxDZgs6nB/Q=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=liqClC9WWVGhUyktqyf5AnN22RgTBsT9tvLzLP54vGzkPCm0Mgi9EBUmEIzFo/0Qd
-	 MnFohsjcxSRNP6ihrSlouq+TL92bQhXxANAH2lqBb3Qt+fzgNWjcisSmSrOvvEnwi5
-	 g+BAF58QBCbxo5746rapXy+ndlJ3dLymq5k2DOfE+I2hPqq6Wg/B40EuhpD6XRer2C
-	 /gogYorKDzvAC38OmYz9twt/tbyN9UQmOANe64JAzyMDCHsqvwywG9BryzVvAupd6e
-	 mFwLHKk1m/hqihR9GI3BFNesiAceAaB7ui64sbvF8VQTNePKXFhY4/XfP8LHbIAyhW
-	 DrfAN0zGzmKCg==
-Date: Mon, 2 Nov 2026 02:06:39 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
-	Lukas Wunner <lukas@wunner.de>, Ignat Korchagin <ignat@linux.win>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	"David S. Miller" <davem@davemloft.net>,
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Alexei Starovoitov <ast@kernel.org>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Martin KaFai Lau <martin.lau@linux.dev>, Song Liu <song@kernel.org>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	Jiri Olsa <jolsa@kernel.org>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>,
-	Christian Brauner <brauner@kernel.org>,
-	"open list:ASYMMETRIC KEYS" <linux-crypto@vger.kernel.org>,
-	open list <linux-kernel@vger.kernel.org>,
-	"open list:DEVICE-MAPPER  (LVM)" <dm-devel@lists.linux.dev>,
-	"open list:FSVERITY: READ-ONLY FILE-BASED AUTHENTICITY PRO..." <fsverity@lists.linux.dev>,
-	"open list:BPF [GENERAL] (Safe Dynamic Programs and Tools)" <bpf@vger.kernel.org>,
-	"open list:SECURITY SUBSYSTEM" <linux-security-module@vger.kernel.org>,
-	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
-Subject: Re: [PATCH v4 1/3] KEYS: Introduce keyring_is_empty()
-Message-ID: <aufUDyCKIBHnQtfR@kernel.org>
-References: <20261029232437.2581640-1-jarkko@kernel.org>
- <20261029232437.2581640-2-jarkko@kernel.org>
- <20261101232213.GD2689@quark>
+	dkim=pass (1024-bit key, unprotected) header.d=sina.com header.i=@sina.com header.a=rsa-sha256 header.s=201208 header.b=H1iQClGI
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sina.com; s=201208; t=1793606843;
+	bh=nQjXmqGK5AW9/D5/P6wpNA06FJUe5Tp5fUtCfZHHY/g=;
+	h=From:Subject:Date:Message-ID;
+	b=H1iQClGID5TG9nLwdPcngT6cp6PUND9+O4VWyC8ymkpaoiAEun+3yedbPgUlvLxOd
+	 XAOyTx5zHkHkeUNmSf1TF68SngCVUEBBUnzYTeXMbLplm4qw1NAjrPcjY6U1SgMeMO
+	 ynoBS6aSeoj3C/RcjByi9CEAmGYqehP4RgjUq7m0=
+X-SMAIL-HELO: lxu-ped-host..
+Received: from unknown (HELO lxu-ped-host..)([111.198.231.89])
+	by sina.com (10.54.253.31) with ESMTP
+	id 6AE844AF00005DF0; Mon, 2 Nov 2026 16:07:14 +0800 (CST)
+X-Sender: eadavis@sina.com
+X-Auth-ID: eadavis@sina.com
+Authentication-Results: sina.com;
+	 spf=none smtp.mailfrom=eadavis@sina.com;
+	 dkim=none header.i=none;
+	 dmarc=none action=none header.from=eadavis@sina.com
+X-SMAIL-MID: 7342496816423
+X-SMAIL-UIID: D4500AC0174D403298AA3D7845CD29A4-20261102-160714-1
+From: Edward Adam Davis <eadavis@sina.com>
+To: syzbot+c8564fc0a96e3ecbe4d4@syzkaller.appspotmail.com
+Cc: agk@redhat.com,
+	bmarzins@redhat.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	mpatocka@redhat.com,
+	snitzer@kernel.org,
+	syzkaller-bugs@googlegroups.com
+Subject: Re: [syzbot] [dm?] WARNING: zero-size vmalloc in cache_ctr
+Date: Mon,  2 Nov 2026 16:07:11 +0800
+Message-ID: <20261102080711.418538-1-eadavis@sina.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <6ae61f5d.61c4c7f9.11e392.001b.GAE@google.com>
+References: <6ae61f5d.61c4c7f9.11e392.001b.GAE@google.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -84,22 +74,12 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261101232213.GD2689@quark>
+Content-Transfer-Encoding: 8bit
 
-On Sun, Nov 01, 2026 at 03:22:13PM -0800, Eric Biggers wrote:
-> On Fri, Oct 30, 2026 at 01:24:09AM +0200, Jarkko Sakkinen wrote:
-> > Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
-> > fs-verity how keyring internally manages the keys.
-> > 
-> > Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-> 
-> Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+From: Edward Aadm Davis <eadavis@sina.com>
 
-Thanks!
+Introduced by commit a2f0a98b13db ("dm cache: drop redundant origin size check").
+Reverts it can fix this issue.
 
-> 
-> - Eric
-
-Br, Jarkko
+BR,
+Edward
