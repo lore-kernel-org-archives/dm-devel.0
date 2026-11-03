@@ -1,56 +1,53 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793695211;
-	b=gM+ZR4QzOwjGtpoWb+VcrJaPXiq8wYun2G+JMabq0GA3LLrBW+DlBLAImXYzQ9N7qviG
-	 MN+XKE7s+H87lONExlefk6/Z+4BAiqD8+EVw7QJ6O8qhALeWWIdhWQFlNxN+vNtbCHAzr
-	 OtrPlR9Q7+K7BeQ02eME0KLFptwc4zaOBn6bmcBM8hrjoPTfnYufEP4yqytZkqILtRXEL
-	 3FuZ0YQY5IuMh6VgNQjUXY+Atw/ZXCl2cqsKbexu1zkb+Ef1UC8RNkf9YbnHTYIQiMt8D
-	 LjrW5Bapykw6cTg9ATPdlGXVabS0Ub2TibND7ccOEViOa8/dg81KlQWjNcbTA/dNJDg==
+	t=1793697683;
+	b=Yfg0hLaPFyP+ObF+pqdWDpGJMXL/kXxQLwvdjE7CTsK5nlk2AwabH+AbJlRnda0mza9D
+	 Y6g1wo+woYxlAH4rijzLz83u4P7nA9xTnC/7usV8Ng2PDU3DR9YEEN6B8H3t7TPn/ASIf
+	 nq+mtweVomqe3/uqXkkasgDECeTBPA9f9nNJokzWdqSiSsYAutASHaI5UD2SKiEL2a7SA
+	 R1+MY6BMTIGP56xDRcLBJzcNWKmth8uPKV5AslNQ1deJLzPzlR2DYeIQizEBbOGULZI2S
+	 Q4X/Joh9gW50PdxhCVtVYu9CPgmch9J1U8rk12y2La1y2yXncb6f6/ZYIh9PA3p98HA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793695211;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=FPZA4U3Q8VMbAYV4FCZfrPlCPt9bGNvwsJ9yOGXCYLE=;
-	b=xfcQVclyX9h7f1AuySOt8X45Qz/7Diyw+Xk3xcpdMYp5mfn9a/yVaABGRorJpfrCYpzs
-	 Z/lGmwAkAOr493pv6WCP3HjF8W+t8bLI/i0fpT6PRgmZ4gYJAa/7/nRgBbQHYY+rbrqXU
-	 JUqSR8ca98Z195nsfaKdm4K9EjxvEURFxB/ypUQSMO0golL/f1r2uYtrJaNzGpqSlSC5B
-	 2XRGrrB5suezZtdmQZdCsJb+hs4lKqZKWJzyBWpLcHlSiVs+0nOn5VVhFUbXvAT7aPQku
-	 VUB7wkCgLO1kw+Q8z/4TCf7or0e87qpUXoKGXQvOC2jxRVATk6W6QYccA4glkviLIMw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793697683;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=WRjg9wnrGZ7nUPdbceOheZj9U6OT129Wwye9oH/fuQ0=;
+	b=gJwjhSzcwdPVuCGN4M/pXsSpKNCEE/xnIii0cCvguJFw3qSoHaMYh5YMF4WqQc2S9Ol1
+	 XdH4R6aSpWPzma7lWMzOzDH/xGNuPx7RDaEwlLEP3yJI6GQ0w5FpDplrkdpoCr65uq7qV
+	 WO3ILXsVMMhoaH3QsnQLTI/oFT0aYJD5aW5TBkZ2N0y56fVoK52inf28Ad2NgdbaavYim
+	 MEx30LdUfPivhza/7Lh6KVGEHlHWeWh88mUR8+bmSQPnfexbKXUkpojP9XftV1x1EvvAI
+	 xmf9+zz0pmYNucCNbXnhEfbCCUebwxWL+7VGYNw1+LNXLA7LvTUEVN9K+MhofOT3t4A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="fsqGm/H5";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hURM2oJB;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4C3C0606A337
-	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 08:40:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64F94606A324;
+	Tue,  3 Nov 2026 09:21:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=fsqGm/H5
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 980DB1F000C1;
-	Tue,  3 Nov 2026 08:40:10 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hURM2oJB
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3AF761F00919;
+	Tue,  3 Nov 2026 09:21:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793695211;
-	bh=FPZA4U3Q8VMbAYV4FCZfrPlCPt9bGNvwsJ9yOGXCYLE=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=fsqGm/H56AYjEAQ54y2/6YmXX0KMBybzK47I+K+I49INOkBFmi11emBJlZ35io4Q9
-	 +6PXe+RxF1LSM0raJCeThkeK9/ZfdhR8H1tFsrtv2NJgxtxCDvwuuf4XKzIB12pH/w
-	 pVyDDWEsdooixuf0MWx5ICMj9ny/TqbqC3ffpzbvx8Lv87FjwHHNskbVazZRtQT29r
-	 ZQNP1DAoulGcUZFzXbAdLmki6V3RWYW7sugb55r6hxyGZNPp/CJEEaSVV4Okk7R8xM
-	 UzkDMAyPUtDLQM5ufEyDD/EluRATpU3CVOTSdZe/vRi7UzV/koBMSjs646k8Gej92S
-	 jwQLWQ1VpZwXg==
-Message-ID: <sashiko-outbox-194850@kernel.org>
-From: sashiko-bot@kernel.org
+	s=k20260515; t=1793697683;
+	bh=WRjg9wnrGZ7nUPdbceOheZj9U6OT129Wwye9oH/fuQ0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=hURM2oJBC2OYLD2mT6ekT3v0VDVTkk2baBzSacBZn4V6h52JiQtM2UefBI9v2xgEy
+	 Iy/8nCudEs2Da3L/03mL6YjYKKNz2I1NN7amoiyVX6LEnmHyOoraPHYKCtuWdyC53b
+	 9ZuCZaL1ctb49F6o0CoMISbeYRYY9PElOGzMEgxi32vJfB9T5tFGdQ7EnYdoQzB+f8
+	 STiRqwuR9gRSzxkWWy9/kBgQygOz/cji0FsOmpkviZbIgSwnydy1PGw9FyCFOvMLPx
+	 aUxcyRQ1VhAsktmZSIhEdyA/qMAM9UcOOYT0wnIpv0/3mn5yg2f8xEsPaqPy12hfBW
+	 1cp3hO9oac6Rw==
+Date: Tue, 3 Nov 2026 10:21:19 +0100
+From: Krzysztof Kozlowski <krzk@kernel.org>
+To: Wentao Liang <vulab@iscas.ac.cn>
+Cc: agk@redhat.com, mpatocka@redhat.com, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, stable@vger.kernel.org, snitzer@kernel.org, bmarzins@redhat.com
 Subject: Re: [PATCH] dm: release the sysfs kobject when its initialization
  fails
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Wentao Liang" <vulab@iscas.ac.cn>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com
-Cc: bmarzins@redhat.com, dm-devel@lists.linux.dev
-In-Reply-To: <20261103082329.1159472-1-vulab@iscas.ac.cn>
+Message-ID: <20261103-amphibian-pig-of-fragrance-4afaba@quoll>
 References: <20261103082329.1159472-1-vulab@iscas.ac.cn>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 03 Nov 2026 08:40:10 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,90 +56,73 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <20261103082329.1159472-1-vulab@iscas.ac.cn>
 
-Thank you for your contribution! Sashiko AI review found 1 potential issue(=
-s) to consider:
-- [High] dm: double free and kobject re-init on dm_setup_md_queue() retry
---
 
-commit ade936ffb3a2324034883b5668b49bcb6d404c6d
-Author: Wentao Liang <vulab@iscas.ac.cn>
+On Tue, 03 Nov 2026 08:23:29 +0000, Wentao Liang wrote:
+> dm_sysfs_init() uses kobject_init_and_add(), which requires a matching
+> put even when adding the object fails. dm_setup_md_queue() currently
+> unwinds the disk and holder links without releasing this object. Since
+> md->type is still DM_TYPE_NONE, cleanup_mapped_device() also skips the
+> sysfs cleanup, leaving the initialized kobject behind.
+> 
+> Call dm_sysfs_exit() before unwinding a failed sysfs initialization. This
+> both puts the kobject and waits for its release callback, including when
+> CONFIG_DEBUG_KOBJECT_RELEASE delays that callback, before the mapped
+> device can be freed or its queue setup retried.
+> 
+> Fixes: 784aae735d9b ("dm: add name and uuid to sysfs")
+> Cc: stable@vger.kernel.org
+> Assisted-by: DeepSeek-V4.1-Flash and OpenAI Codex
+> Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
+> ---
+>  drivers/md/dm.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
+> 
 
-dm: release the sysfs kobject when its initialization fails
 
-This commit calls dm_sysfs_exit() on the error path of dm_setup_md_queue()
-when dm_sysfs_init() fails, so that the initialized kobject is released and
-waited on before unwinding the disk and holder links.
 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 1881d86111fb2..08b87fd6f955c 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2647,8 +2647,10 @@ int dm_setup_md_queue(struct mapped_device *md, st=
-ruct dm_table *t)
->  	mutex_unlock(&md->table_devices_lock);
-> =20
->  	r =3D dm_sysfs_init(md);
-> -	if (r)
-> +	if (r) {
-> +		dm_sysfs_exit(md);
->  		goto lock_out_undo_holders;
-> +	}
+Multiple things here:
+1. Your team ignored completely previous feedback. Multiple times.
 
-[Severity: High]
-What happens if dm_setup_md_queue() is retried on the same mapped_device
-after dm_sysfs_init() fails and dm_sysfs_exit() runs?
+2. You use multiple identities with this email address, thus I doubt that we
+   speak with an actual person.
 
-In dm_sysfs_init(), kobject_init_and_add() calls kobject_init(), which sets
-kobj->state_initialized =3D 1, and kobject_set_name_vargs(), which sets
-kobj->name (heap-allocated via kstrdup() when dm-mod is built as a module,
-since the string literal "dm" is in module rodata rather than core kernel
-rodata).
+3. Your bot does not even bother running checkpatch, right?
 
-If adding the kobject to sysfs fails, dm_sysfs_exit() calls kobject_put() a=
-nd
-waits for completion:
+4. Nothing of this was reproduced nor tested.
 
-lib/kobject.c:kobject_cleanup() {
-	...
-	/* free name if we allocated it */
-	if (name) {
-		pr_debug("'%s': free name\n", name);
-		kfree_const(name);
-	}
-}
+5. Finally, the same feedback:
+You sent multiple independent patches, to multiple independent
+subsystems. The amount of these patches clearly suggest this was
+AI generated and most likely not tested.
 
-kobject_cleanup() frees kobj->name via kfree_const(), but neither
-kobject_cleanup() nor dm_sysfs_exit() clears kobj->name or
-kobj->state_initialized.
+More importantly, you sent all this work without properly organizing
+relevant patches into patchsets. This makes reviewing difficult
+and might cause multiple reviewers to address the same issue.
+Replying to the entire set is impossible and requires handling each
+patch independently, instead of applying or discarding the set.
+Maintainers also won't see the bigger picture of your work. Quite
+worrying.
 
-Because dm_setup_md_queue() returns before setting md->type, md remains ali=
-ve
-with md->type =3D=3D DM_TYPE_NONE:
+This is on the verge of hostile patch: bomb us with so many
+contributions, we won't be able to handle them in efficient manner,
+like responding ONCE to ask you to slow down.  Considering all this
+is untested and LLM generated, I have even more doubts whether this
+should be considered for review.
 
-drivers/md/dm-ioctl.c:table_load() {
-	...
-	if (dm_get_md_type(md) =3D=3D DM_TYPE_NONE) {
-		/* setup md->queue to reflect md's type (may block) */
-		r =3D dm_setup_md_queue(md, t);
-		if (r) {
-			DMERR("unable to set up device queue for new table.");
-			goto err_unlock_md_type;
-		}
-	}
-}
+Please read kernel documentation BEFORE posting more work. It will
+explain you how to identify subsystems, how to organize your work per
+subsystem (so a patchset grouping multiple patches with a short cover
+letter), how to document the issue discovery method and what was
+or was not tested.
 
-If userspace retries DM_TABLE_LOAD on the same mapped_device, table_load()
-calls dm_setup_md_queue() -> dm_sysfs_init() -> kobject_init_and_add() on t=
-he
-same embedded md->kobj_holder.kobj.
+Best regards,
+Krzysztof
 
-Won't kobject_init() complain that kobj->state_initialized is already 1 and
-dump a stack trace, followed by kobject_set_name_vargs() calling
-kfree_const(kobj->name) on the dangling pointer that was already freed duri=
-ng
-the first dm_sysfs_exit()?
 
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261103082329.1159=
-472-1-vulab@iscas.ac.cn?part=3D1
+
+
