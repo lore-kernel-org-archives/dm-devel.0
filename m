@@ -1,72 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.197
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.229.135
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793731957;
-	b=VOQu513HFsyNrqkVE+1yddjfZR4cs5EuybxuRZIdtQet3T6Qy7eJ/lXQYNpxh5GhL2uT
-	 yI9dzOsNy9BQHmH0iAAWGYTrXb4BQCOUom9snjTivHNmE1OlaLuatpnAEAtusCsodxn+w
-	 Cw8kUfnEso4n2Pdo9Ass4EVsCaP5jaSHxxumdhrvgDkGPbw2D/dWhpKoylEwNv0kYBb7x
-	 UBUE/8vnatKx5qh7HCgfvRxgzoNTcvZNLNhLRZiMteA1kcOWByjx99IY20o+blcJVBpul
-	 npJErzTYtAJAnWDP0vsyBZFALaJStlv2p/8EcFUlxgZZxE+QE37gPWEvsL1y305/BlA==
+	t=1793732363;
+	b=T3rAW5PwkTiKmn85xYlBVg+eQYYMGxlHm0+QqvzsLX2tDE5UE8lkvftr21aDafyKCBOW
+	 L5WlrUdRCCfYAFy41KhiRttwn5yjxYdZTJWF+aduLGjyHxaQabVB49T6dJBC87GQZwr4U
+	 qKQVUIs1pn92Fepv7joC7H0mHrvm01yCmRJ12v6j/1IqgADT4ikBYEKexwV7OUEapAkcW
+	 0cqpPvYuytd9kvM3VkylhEq82tXk8icmoG9nIdHrmJfhBPgbvIMHl2S0Hi11MqoilK+Ie
+	 hgeBR5pi/NAaqujBfmdtwYXLWPiIaVmy4A6GwOGYLX54DOrNEpOKT2ggr4qpgHZYhLQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793731957;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793732363;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:Mime-Version:
-	 Message-ID:Subject:From:To:Cc:Content-Type;
-	bh=Fkva0xQptZGEjQ3Ay7jurFHXe3jD9HzPP+lrppkDqJM=;
-	b=uk4C8EVaw/ZsZIFhPzMbT30dRtrNTLs6OTxVK3e6tIsyYMUhDvUPB8SyTSsmxtg8t4lv
-	 WM1/oyzGQ3DJ8fWezWge+d7fQXWOtVYd3HT8rWQ8AQUKlVkstv5BCe2dDg0eBd9GBKJrO
-	 1x+sD38HtdfItWgn82ukN+H+c2EArfAvDYnLT/CSRw964f3hnMJLNQMCqriqroc3wchan
-	 LhmWz76oir1Q+8wZD1fD2tus0qfgsGDKKm+ENrUXcnid+c6VcmSJbOUzNTnq7YeAk3aST
-	 oW3drMH6QH6M2WSS1h+r13QdHtm+UXiXbv1FQ5JFLJ3swhL/uycLmD8i2Kpm8wKJwEg==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=31+P6AMFeIVlhmQscpLB4qy/vx9LUkvE2yKWF6dd1So=;
+	b=16YGVgtItqW/PAREcbr3OWcBIpey5JRmQ7KXj6aiinHat/HbT1v5HDoJxa7+JukVCLRS
+	 fZfNldxhjiuoc4EqyJPtYUZ7dX7RxMQenuMlwgzjB0F8DqNP4JdloDER2+sVVNsYvKKuT
+	 uheemmxOpC6Y+5qYjWQBhCHxRAXn01upOB9gpOiHfl/dA9wcxtddWqMWAXVEMiQP2P87b
+	 vHGE27pDdg9TaCG5UDC/oMoiF/i9U/oJNf6JpQGuew3o5Qr1Oz5+P5QkdlN+mSgc/TTHj
+	 fFTXTZrhYPEtn2XUmlUMPUK4FPnwjbsq/1hPVZUmddRMis0+/aZL18fisPA9mi3qH+A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=google.com;
-	spf=pass smtp.mailfrom=flex--chriswiseman.bounces.google.com;
-	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=jnRgLw34;
-	arc=none smtp.remote-ip=74.125.82.197
-Received: from mail-dy1-f197.google.com (mail-dy1-f197.google.com [74.125.82.197])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=IHc+we3+;
+	arc=none smtp.remote-ip=74.125.229.135
+Received: from mail-dl2-f7.google.com (mail-dl2-f7.google.com [74.125.229.135])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65E9F606A328
-	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 18:52:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 65E9F606A328
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--chriswiseman.bounces.google.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D1BE606A328
+	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 18:59:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1D1BE606A328
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=jnRgLw34
-Received: by mail-dy1-f197.google.com with SMTP id 5a478bee46e88-30bcb065bfdso8026393eec.0
-        for <dm-devel@lists.linux.dev>; Tue, 03 Nov 2026 10:52:37 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=IHc+we3+
+Received: by mail-dl2-f7.google.com with SMTP id a92af1059eb24-14345ae29c5so1800740c88.1
+        for <dm-devel@lists.linux.dev>; Tue, 03 Nov 2026 10:59:23 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20260707; t=1793731956; x=1794336756; darn=lists.linux.dev;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Fkva0xQptZGEjQ3Ay7jurFHXe3jD9HzPP+lrppkDqJM=;
-        b=jnRgLw346wv2XIp1KVp1PuRKkmYDEPRp217MuJ8why/7dF1KskEnpzCssllxMOxnWn
-         iTcfTBJP5UXrZZiUtvCk4wigXFP4WLbFnhCy4uLt4zr7Z2h2Yzx2JZCj2e1md+mB5tYp
-         tmiOuS+01qylNvaNiSywp/cRH2E8tWQLqlpmXkZzvCd98oBPZ7ITnhrtX5FkyjPSQLKJ
-         qYtvDfw9EXPVzxxbYSTCos8QDLCMSK+t62KGRSop/vEyIN5TjzW6yiFRZ521PPACN6yH
-         lHnfY1EWSoEwB7MHgfknbPstO2nm5wMoKF+87x8qSLMi3yfXLrMRHqnoOzK5NyFGoqK+
-         ZMIg==
+        d=gmail.com; s=20260707; t=1793732362; x=1794337162; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=31+P6AMFeIVlhmQscpLB4qy/vx9LUkvE2yKWF6dd1So=;
+        b=IHc+we3+aBaUoTdl/UAR11MNHW7XbrsNIv/k5BsZnDlzT3lQfF4cOnGez92NY4HWVr
+         IsW9cGrBeYpFNnGFBlvkwHX7ISG7Tj5vhs/rL2OxP3GqI027a+XOQUAfHcEgscbmoYDA
+         QeVUqx9nFEgALrsFC2vpFvXwvAtjeSXpHzzE0ZhtM2kbqMEs0hpHq/3PDNzj5EZUDWBe
+         WNn+aNB/Qv9GCLb14i3VbCn8V0q0OVLq4JfhoK854Fm3QdZBFggysthZTym8o9FZqkFm
+         yyESH153XJas7OBaHDKNW0ZfB7BJMea1jr+ffmuXypFWvEpdofzS+2tpbEHzAJI+ftMh
+         bUEA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793731956; x=1794336756;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Fkva0xQptZGEjQ3Ay7jurFHXe3jD9HzPP+lrppkDqJM=;
-        b=Pk4dBVDwQOOgdZiBuldZK8F76moTahuA5q1DiJbeQKT2dNhH/cQLC36YxxmxjvOnz6
-         6U1gpan/W8HBbRKTs6Cvy31MlLmwLiFKweGLpN3U4Eg9Q7y8mNeLeAjde7OrgIzFcv+e
-         oe5qac1SuApDmUk/NUW8SDlxXWmToRVuKW1S4svVPXGAD3vR35/ht+1pn5dCc2W9VwRO
-         UmspEFYnDK8l9HsZCTpHVMaM9jIwNJQnry1Y8x29jN06LOxbp/CSvcZZQG1zCFUHEQZF
-         Ceo+WNJ5eVeqcMWBliZosEhe8/LovVafJTPPpI0d85ow+aJF5qiPYicVmMZOPQ3tqikg
-         s1qQ==
-X-Forwarded-Encrypted: i=1; AKwUvByF5dq6wVpQajXyyY2OSXg5Izd9APfOvk5ABJjMCqNC7sQ8Rq2xMSbyB1YYvKTk/kEw0AaKhNa9nw==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9GZSXaOGJtT4cxxBg8GZNMXulwSxBOmLMLJx3e3Um+vji6MLMz
-	gLYWjs0khbEcz0bLLXY/hVdDuPEH/6Keia69+NGvdI7CBbdDf5NRLOaKBQkUY9GJQ4eZbriCR8A
-	56FeH99SLFB4H3SGxCHhPFh2SOqPMJA==
-X-Received: from dybhh13.prod.google.com ([2002:a05:7301:290d:b0:369:7ef0:57a8])
- (user=chriswiseman job=prod-delivery.src-stubby-dispatcher) by
- 2002:a05:693c:6090:b0:36a:4a68:84e5 with SMTP id 5a478bee46e88-36a4a68851cmr21561377eec.8.1793731956100;
- Tue, 03 Nov 2026 10:52:36 -0800 (PST)
-Date: Tue, 03 Nov 2026 18:50:28 GMT
+        d=1e100.net; s=20260707; t=1793732362; x=1794337162;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=31+P6AMFeIVlhmQscpLB4qy/vx9LUkvE2yKWF6dd1So=;
+        b=C5E9bt3Os4eTLYb0hQi05WHWRaGj3gTF3A4t7hS10q39Qyzws0N3J88ncl2KjzGnsq
+         pLN7Urg46816KbP+3lAiZFaUMl5j//AELLJYiXAAsMrDQAEQf5enklHTH1ehBBOQU/1Q
+         3RuFumF+Y7Mhy6I4WQIq65gsUWozfMJL1ZUe2QuOEGtV0QtHIw6ST+gGC1eHxi/jrNFX
+         iOcKUS+PUBihyc+eMqGGumg86DZpxda4Q0otC+EbMpcsf1yWXpfrypGjHsEp8P0dS2Co
+         /DVA77bFWhCQXcx2vHSs1XeWtNY0V9x6A708BTtGgqrdztfmS2Zwev7B6+DWZl/2IdoU
+         QLZw==
+X-Forwarded-Encrypted: i=1; AKwUvByGNJJ/SdlByJ9AUdpKsHZKVFafrRjgyMREcnRO76mcGqIEcm8JRDHqQjKdcEJ2ofTW+wvrlNgDDA==@lists.linux.dev
+X-Gm-Message-State: APuU4Z94IaKAuJ58TwVlEhaJJvrVQL3xrGqYP3IfnhBPyvNanrnlVWjQ
+	/aSVv/kp1QD0C4mF1yInpChR5uv7fRYKdgOe3qxSk9yaaYZHBzTKEvqc
+X-Gm-Gg: AYBFou3JA1YMP/ahMWpkUcNVwERSbR6GYpmuw04RYfabiNOePEJ9SgPCoGOCrACYTjW
+	jzqQ7yoP+rieWrlepbsIQW7ZNXEy7KZD9KAeS+qs0zY2UhKkDEw3KlJz4bs2dHofI2OzAHJLOLU
+	45LXt/MUJnDFJPTxbgC72Cw3lKJyewJG9YOavsskcBR9izQCW1q0457uUZX+DdH6YCmYzqo4mO5
+	rpHsAA0706V4PQo0IBmwPE8e86Ka6TPgfSb2SI/rhH3ytvLq5ksTMeAiViKJHhFd8D1UUJ5OYBe
+	9+Q01qEM1kdZ7OkpqX991/jit7JKRlT5hY9C/xqwcLn0gGfXN47cqsKrRroad5uzCBBDDNr0TGA
+	5AQXvC4xQLPXe8hfp9zLGk5sMh3br2/0X5dYZB7es6Rl+ct3BOWWFcvS2qTPTudHhz2MrCcUDwQ
+	1Y4VYwupLbji0xx03Gt/MLtLYerdkodDWIaTzGIxlL2VJp0xrPcUtn3pa1521Wlx01UACHq2PA7
+	9nX3Z6wblJoOHmrQ6sD/WPYNoOqJ6YwccaABJpOdn3ZY2dPk3avZM1wEbStAs8YYn+blSo5QrrN
+	VodwDfbhFG4sW8YOyT+ZFmaQiUkoWhtS0z04g6A2ZDaglmn5ZWJmPdOE
+X-Received: by 2002:a05:7022:f50a:b0:149:50cb:2175 with SMTP id a92af1059eb24-1ac5cb1881bmr18974882c88.33.1793732362218;
+        Tue, 03 Nov 2026 10:59:22 -0800 (PST)
+Received: from localhost.localdomain ([98.148.34.5])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b245c1c290sm747339c88.5.2026.11.03.10.59.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 03 Nov 2026 10:59:21 -0800 (PST)
+From: Hungyu Lin <dennylin0707@gmail.com>
+To: axboe@kernel.dk
+Cc: hch@infradead.org,
+	linux-block@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	mtsai@redhat.com,
+	sashiko-bot@kernel.org,
+	stable@vger.kernel.org,
+	dennylin0707@gmail.com
+Subject: [PATCH v3] block: fix discard alignment for non-power-of-two granularities
+Date: Tue,  3 Nov 2026 18:59:09 +0000
+Message-ID: <20261103185909.71843-1-dennylin0707@gmail.com>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -75,127 +99,105 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-Mime-Version: 1.0
-Message-ID: <18e49db5e159b72d.3137322e32332e3235332e313736.1d9cee.0000sendgmr@google.com>
-Subject: [PATCH] dm-verity: use bdev_rw_virt() in verity_recheck()
-From: Chris Wiseman <chriswiseman@google.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, dm-devel@lists.linux.dev
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Eric Biggers <ebiggers@kernel.org>, 
-	Sami Tolvanen <samitolvanen@google.com>, Christoph Hellwig <hch@lst.de>, 
-	LongPing Wei <weilongping@oppo.com>, linux-kernel@vger.kernel.org, 
-	Chris Wiseman <chriswiseman@google.com>
-Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-verity_ctr() creates a dedicated dm_io_client (v->io) for every
-dm-verity target, but its only caller is verity_recheck(), which reads
-a single data block into a page from v->recheck_pool after a hash
-mismatch.  Because dm_io_client_create() preallocates a mempool of 16
-bios and 16 biovec-max (4 KiB) vectors per target, each dm-verity
-target permanently pins ~70 KiB of unreclaimable slab that a single-page
-read never uses (~2.4 MiB across 35 targets on Android, or ~4.1 MiB
-across 59 targets).
+bio_discard_limit() uses round_up() and round_down(), which require a
+power-of-two alignment. However, discard_granularity need not be a power
+of two. For example, dm-thin supports data block sizes that are arbitrary
+multiples of 64 KiB and advertises the block size as its granularity.
 
-Replace dm_io() in verity_recheck() with bdev_rw_virt() and remove
-v->io.  bdev_rw_virt() puts the bio and single bio_vec on the stack and
-waits for completion, while keeping v->recheck_pool per-target.
+With a 192 KiB granularity, discarding one complete block at offset
+384 KiB is split into 128 KiB and 64 KiB bios. Neither covers a complete
+thin block, so dm-thin ignores both and the mapping remains allocated.
 
-Fixes: 9177f3c0dea6 ("dm-verity: recheck the hash after a failure")
-Link: https://lore.kernel.org/dm-devel/20250423115013.4004577-1-weilongping@oppo.com/
-Signed-off-by: Chris Wiseman <chriswiseman@google.com>
+Use div_u64_rem() to find the starting sector's remainder without
+modifying the sector. Round the maximum bio size down with rounddown()
+and subtract the remainder so that the next bio starts on a granularity
+boundary. This handles non-power-of-two granularities and avoids a small
+initial bio when a large discard starts at an unaligned sector.
+
+When discard is unsupported or disabled, discard_granularity can be zero.
+Return BIO_MAX_SECTORS in that case so the existing bio submission checks
+can handle unsupported discard requests without dividing by zero.
+
+Fixes: 9b15d109a6b2 ("block: improve discard bio alignment in __blkdev_issue_discard()")
+Reported-by: Ming-Hung Tsai <mtsai@redhat.com>
+Link: https://lore.kernel.org/r/CALjSBEvjbiGDVewuapWKhGDtaxZwcn4=22raUiBEOyj22rY7-g@mail.gmail.com
+Suggested-by: Christoph Hellwig <hch@infradead.org>
+Cc: stable@vger.kernel.org
+Signed-off-by: Hungyu Lin <dennylin0707@gmail.com>
 ---
-TEST (ARM64 QEMU, 59 dm-verity targets, sha256, 4K blocks, mem_profiling=1):
+Changes in v3:
+- Use div_u64_rem() instead of sector_div(), as suggested by Christoph
+  Hellwig, so the input sector is not modified.
+- Subtract the starting-sector remainder from the rounded maximum size
+  instead of emitting a short initial bio, following Christoph's proposal.
+- Include <linux/math64.h> explicitly and retain v2's zero-granularity guard.
 
-/proc/allocinfo growth from 0 to 35 targets (bytes):
-                                     BASE     PATCHED       DELTA
-  bio.c:biovec_init_pool        4,587,520   2,293,760  -2,293,760
-  bio.c:bioset_init             1,196,160   1,052,800    -143,360
-  dm-io.c:dm_io_client_create     107,520      53,760     -53,760
-  mempool.c:mempool_init_node      36,680      23,240     -13,440
-  Total (35 targets)            5,927,880   3,423,560  -2,504,320 (-71,552 B/target)
+Changes in v2:
+- Handle zero discard_granularity before dividing, as pointed out by
+  Sashiko. Leave unsupported discard handling to the bio submission path.
 
-Unreclaimable slab saved by target count:
-   8 targets:   572,416 B (  559 KiB)
-  15 targets: 1,073,280 B (1,048 KiB)
-  35 targets: 2,504,320 B (2,446 KiB)  [SUnreclaim: BASE +8,436 kB vs PATCHED +5,960 kB]
-  59 targets: 4,221,568 B (4,123 KiB)
+v2: https://lore.kernel.org/r/20261026195131.46699-1-dennylin0707@gmail.com
 
- drivers/md/dm-verity-target.c | 24 +++---------------------
- drivers/md/dm-verity.h        |  2 --
- 2 files changed, 3 insertions(+), 23 deletions(-)
+ block/blk-lib.c | 28 ++++++++++++++--------------
+ 1 file changed, 14 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 6d589867623c..7c240b3a470f 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -379,21 +379,13 @@ static noinline int verity_recheck(struct dm_verity *v, struct dm_verity_io *io,
- 	struct page *page;
- 	void *buffer;
- 	int r;
--	struct dm_io_request io_req;
--	struct dm_io_region io_loc;
+diff --git a/block/blk-lib.c b/block/blk-lib.c
+index 688bc67cbf7..e98aa483707 100644
+--- a/block/blk-lib.c
++++ b/block/blk-lib.c
+@@ -3,6 +3,7 @@
+  * Functions related to generic helpers functions
+  */
+ #include <linux/kernel.h>
++#include <linux/math64.h>
+ #include <linux/module.h>
+ #include <linux/bio.h>
+ #include <linux/blkdev.h>
+@@ -13,26 +14,25 @@
+ static sector_t bio_discard_limit(struct block_device *bdev, sector_t sector)
+ {
+ 	unsigned int discard_granularity = bdev_discard_granularity(bdev);
+-	sector_t granularity_aligned_sector;
++	u32 unaligned_sectors;
++
++	if (!discard_granularity)
++		return BIO_MAX_SECTORS;
  
- 	page = mempool_alloc(&v->recheck_pool, GFP_NOIO);
- 	buffer = page_to_virt(page);
+ 	if (bdev_is_partition(bdev))
+ 		sector += bdev->bd_start_sect;
  
--	io_req.bi_opf = REQ_OP_READ;
--	io_req.mem.type = DM_IO_KMEM;
--	io_req.mem.ptr.addr = buffer;
--	io_req.notify.fn = NULL;
--	io_req.client = v->io;
--	io_loc.bdev = v->data_dev->bdev;
--	io_loc.sector = cur_block << (v->data_dev_block_bits - SECTOR_SHIFT);
--	io_loc.count = 1 << (v->data_dev_block_bits - SECTOR_SHIFT);
--	r = dm_io(&io_req, 1, &io_loc, NULL, NULL, IOPRIO_DEFAULT);
-+	r = bdev_rw_virt(v->data_dev->bdev,
-+			 cur_block << (v->data_dev_block_bits - SECTOR_SHIFT),
-+			 buffer, 1 << v->data_dev_block_bits, REQ_OP_READ);
- 	if (unlikely(r))
- 		goto free_ret;
- 
-@@ -1058,8 +1050,6 @@ static void verity_dtr(struct dm_target *ti)
- 		destroy_workqueue(v->verify_wq);
- 
- 	mempool_exit(&v->recheck_pool);
--	if (v->io)
--		dm_io_client_destroy(v->io);
- 
- 	if (v->bufio)
- 		dm_bufio_client_destroy(v->bufio);
-@@ -1604,14 +1594,6 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
--	v->io = dm_io_client_create();
--	if (IS_ERR(v->io)) {
--		r = PTR_ERR(v->io);
--		v->io = NULL;
--		ti->error = "Cannot allocate dm io";
--		goto bad;
--	}
+-	granularity_aligned_sector =
+-		round_up(sector, discard_granularity >> SECTOR_SHIFT);
 -
- 	v->bufio = dm_bufio_client_create(v->hash_dev->bdev,
- 		1 << v->hash_dev_block_bits, 1, sizeof(struct buffer_aux),
- 		dm_bufio_alloc_callback, NULL,
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index e104a651c657..0c42ac99e631 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -11,7 +11,6 @@
- #ifndef DM_VERITY_H
- #define DM_VERITY_H
+-	/*
+-	 * Make sure subsequent bios start aligned to the discard granularity if
+-	 * it needs to be split.
+-	 */
+-	if (granularity_aligned_sector != sector)
+-		return granularity_aligned_sector - sector;
+-
+ 	/*
+-	 * Align the bio size to the discard granularity to make splitting the bio
+-	 * at discard granularity boundaries easier in the driver if needed.
++	 * Align the bio size to the discard granularity to make splitting the
++	 * bio at discard granularity boundaries easier in the driver if needed.
++	 *
++	 * If the current sector is not aligned, shorten the range so that the
++	 * next one is aligned.
+ 	 */
+-	return round_down(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT;
++	div_u64_rem(sector, discard_granularity >> SECTOR_SHIFT,
++		    &unaligned_sectors);
++	return (rounddown(BIO_MAX_SIZE, discard_granularity) >> SECTOR_SHIFT) -
++		unaligned_sectors;
+ }
  
--#include <linux/dm-io.h>
- #include <linux/dm-bufio.h>
- #include <linux/device-mapper.h>
- #include <linux/interrupt.h>
-@@ -80,7 +79,6 @@ struct dm_verity {
- 
- 	char *signature_key_desc; /* signature keyring reference */
- 
--	struct dm_io_client *io;
- 	mempool_t recheck_pool;
- };
- 
+ struct bio *blk_alloc_discard_bio(struct block_device *bdev,
+
+base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
 -- 
-2.56.0
+2.50.1 (Apple Git-155)
+
