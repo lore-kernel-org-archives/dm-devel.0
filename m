@@ -1,56 +1,99 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.44
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793735499;
-	b=YnRE+grgOnQmqvJblyXdCRSXb8XylgOViKllFqdpy2YlQgTaqibcEdNPhsHCxrTx7YAM
-	 DKHaLkVen2DkvlFG3Xs6eFQxEB3SrY4HEMuCARY+RRAVv9JshEx1OTvzW5MtjYS21xCmW
-	 posGuHc03Qa0jayCPH6mJpzmX6ZnDJwlCbpXGsQuBYWdKbbb0f/a3kqgFhKGruROoPRpy
-	 t0gGI53nfBEZdGAbIuw05stDnB/HKzjwS3ZcGzG02MVde0qlhlmL1dJMN6r1upsa6WGdC
-	 M1R/y8zmTKmFo8D0CRNtcxuwho2i56HZO6L231i4N5HlMOzkEVA7oFN8i84o/5phHEw==
+	t=1793743484;
+	b=aYJLcboiispTYzxRY1SRiRhyNM2ISbNKFeN6uF6CuFFWCAxiJcLZQ71YhrEFd+Z0sYu7
+	 0yXLWRADb/eatoPLrbCJSRXXjoMeOxl1k+8KJSOLBP4blAwLj35cl5BgkaG42PFLgJtbK
+	 rQrcA58VLHWMTtwbtXY5MBdsHLP04+wtm7ciPAgNYR0gQ95OBDgitZkAIbmoehwYdjRk5
+	 +j4xOHxHSRALTunmpCnJzJOTA85efwzNLaOqFGN9pD4l6+NHUDC2iIxgdqmIn+1BgHIP4
+	 ORHoUWe9sOxkA6YIum9bo4NuqFCV/jdNbhacINMelz4E5Tet+X/jEtZHTvR7nFDJi3w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793735499;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=qj3/SpTtZDjYiLOQjArtmggLviDJGnAV5OUkVtocxq0=;
-	b=3Tgqm0XPhJ8KB53CDq0acINxMWgzyWoBONc/xI7ex3z/emaEGydC2/QAq4kw9Q0p69RY
-	 jEzuH/y2fcoHZ8cavBFY9hSO71dGcl0Y+2gUPYGiSu0UtEj2LGaAN/Ub6AciQwgC1hM6k
-	 swJrvx+saMXVWh0Hx16q7xDO8q2Uxrenb6v+7fQwrqLEn8tsuOdqQSlxI1ynQqvrPhETa
-	 YyNKdKWlUhQOoD9QEvMx45UbQN5VkQ5Hd9ZSKyZ/O1TQvVHtRb9CW7QXdsLhLJs5bkRIC
-	 eA30/Ij5yRhi35d0ZDDF3BrFw7v4XYp69MX5LU+mYkTfTp3Qf+rpUajQ/hoX0jxCfrA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793743484;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=r4YfPovGw1xdQbc6iuyAAPONvKXoCo5XL7Z8YypY/D0=;
+	b=BEc1wXSRG58eO1SyFYss1Vq4mkRUMmyVx1L3CLeXrNhGGX4ol0AklZcruGGFHFuqcFkJ
+	 qUoBaFJkg8n4mqeuQHhXfMIaV5awh8EasX9GoFamtECogP0Ifyub5lMfjfXItFmTpM8d+
+	 bJyKq/4VlNfdmdj7dxfbj2n/+0EGv2af+mt2sKKFMzeSu6myoFFYEbUVdeHeIYXV7fmpk
+	 SnrCQRmkc2gAb6S/GB7d4A/q2Z6WMdi7ecPOJQ3fdBypZQUpt0ijOQCZbuePFuNE2do9r
+	 ZXG789cBuv0Iu8kEn58+9ocD5XSxrAWfiNDR2L4kXBl588hVGXE5e9nDt3DOa9suQzg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WryYaOsk;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="hu9s3S/t";
+	arc=none smtp.remote-ip=209.85.218.44
+Received: from mail-ej1-f44.google.com (mail-ej1-f44.google.com [209.85.218.44])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69B7D606A324
-	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 19:51:39 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5A5E606A32F
+	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 22:04:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A5A5E606A32F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WryYaOsk
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AAC541F000C1;
-	Tue,  3 Nov 2026 19:51:38 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793735499;
-	bh=qj3/SpTtZDjYiLOQjArtmggLviDJGnAV5OUkVtocxq0=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=WryYaOskGayv9f3I07utM4vE4BM2HJGjVMDImN09+s9+3NLloJMDaDKSF6vE78rpu
-	 dwn0J3P8uUT3XXGa/iC/MbuxYgS24Y2/pj9KeZrwub4vRxXw6FN7RrVwGRr9615+oF
-	 i12jpb0C/ymooJZYn+Kv6Sv2dKgeagYNCG9LCHDOl+POBRQ+SGo3fY5rD8d+tavvUZ
-	 xwLNxozOGGGiaZ868Oy51qAl2Kfb58BG/7gYyATCqdCjIsE1CUeGSYPuYbDSjaVW15
-	 WwGqAwmEqXonO/Jnou86KIkoBybDb7ybCqyAW6prp0M1WYv0gIQFWIHWJG3Yp1NiC9
-	 LGg4M8ixaKMEg==
-Message-ID: <sashiko-outbox-195941@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] dm thin: reject metadata and data devices that resolve
- to the same device
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Mohammad Pishdar" <mohamadpishdar@gmail.com>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, bmarzins@redhat.com
-Cc: dm-devel@lists.linux.dev, syzbot+9519233e6d144970bbc2@syzkaller.appspotmail.com
-In-Reply-To: <20261103193956.63354-1-mohamadpishdar@gmail.com>
-References: <20261103193956.63354-1-mohamadpishdar@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 03 Nov 2026 19:51:38 +0000
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hu9s3S/t
+Received: by mail-ej1-f44.google.com with SMTP id a640c23a62f3a-c45551fa84eso12675066b.3
+        for <dm-devel@lists.linux.dev>; Tue, 03 Nov 2026 14:04:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1793743482; x=1794348282; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=r4YfPovGw1xdQbc6iuyAAPONvKXoCo5XL7Z8YypY/D0=;
+        b=hu9s3S/t2YwejgFRS5r48HlhT51LA6N1M/rJkInTsL1V3NwKx/8tSEO7uQbzEdJPmx
+         0KIrbr9l5MZJ9Ypk4UQHCxYwYw+dhviIyBMGiOA0/6htvjFRmWt17gPYpCvPLNVnGovS
+         ElEFgv123B0BlFMovkNSIBd1umoeRaLMtN31UnlZ2aALBmDVeNcJl5jSszPDFp9Jspza
+         aHAeascm0uxBg/LIshisIYY/FKdlydgllHbr6ZXBjKJ9SgeuIomZMkfbidL2dyreq1/B
+         r0ZmYWcorkixdWYKUyI3aywg8X6xYfeMChM0LfVYzPPLcNqpSF0xR2H+Jd72tUs/NkBl
+         /sKw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793743482; x=1794348282;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=r4YfPovGw1xdQbc6iuyAAPONvKXoCo5XL7Z8YypY/D0=;
+        b=dfPO9mj9xVEgeexjKjrGgUkdMAs3oscheHbIWt7fzpaUtjw86ftJYOZ0co8BLisoGb
+         lXEpGsyf9NDVvqfw42kv0gZniEewN6yxBPG0Qad3WeSZvjnE+p1qdqLGHS9/jHd4ziDi
+         luNGUXZEvwnVKlNokkjSP+pdbKhczLZbIfACeNX6M+4fob1K1SUc74BTUqbkjS1NIElo
+         E+0xgOtWMNoZQx+DJV4WtntkSyHVmHHTMB1CX3uwNTBlm3P6mGJvdZVjY3bjWv7csN8o
+         CtsgiSewponM51QklGsAvlSwXFf2FgSgCsQhtgO0jXUHRraKlgIf7IZuKeRfsK1OPF1y
+         NNnQ==
+X-Gm-Message-State: APuU4Z/TFse7usMwKUqh2RP920btk+x+Nfx7YZr2QHjxOq4ScjZ4nwHA
+	p7LllAt/oqMTaNJ0PUp3Y/mfUt0Ou4ELm730sPSiEmUnTrsjQqDAl+OvalZ1+C2g7gA=
+X-Gm-Gg: AYBFou3ZJLV47AjgzgHb1cgYaJXbyQEK90U6H9HgegpWcm7VyQH9NZC5cDLjqAsVcIp
+	n9p4lDRi/2e1m00vf7bZXFex4+jJowROhbTdye071ZYeIPTGMb8ztd99ivRTWJlMhDIWlHppB/M
+	/gBkta12hPMduvYUY4hkbAbVojejGgAini5dGYc75Qj7WeqLLe6XJQ+uRSt0W6DzMRKlevVEySl
+	B18JWDgCtZQVTa/rAv7hIfzrxWjNSWXGbMhgW+Fp/HqVG1xogPXGlrMQ0MFBtcidthu1viFwvej
+	Bjcl4ZhiD3qBuNcWOrTHXuz8+DdDISwo0m5X7AqJXny/gxJFR/Ngui4irD6WoeIgFFWdkxu1bTR
+	TDredARCmVNsx61gSHPs9lk+JjzaDn6f4fTQECei1z16LVVSwzM5TBqdILKTiJ9rGqOmBPr34yF
+	F6IYwJqldPQxbQ7lrZn9MyxBz1XwirMSRT1H85G0DE3Rq/qZZl5BWQy0YLNCDef6azV36pLS0HD
+	UUyAi8eFA8KjU5DdK7kTYluPPJGpvpr5rlmFGFxJ3GtisrylzJ4gRgJhmjLcis2TytGBfidlJ79
+	vmiChDW4SDw6wb3EP0c9HuURpZ7oVkkGN5tZ2/9A7d6MXvfGnKkm4P4bRg6pL0iXfPaQ2E0il7e
+	oiZUj
+X-Received: by 2002:a17:907:97c4:b0:c40:dead:7466 with SMTP id a640c23a62f3a-c4ca7a40202mr1202821466b.20.1793743481738;
+        Tue, 03 Nov 2026 14:04:41 -0800 (PST)
+Received: from localhost.localdomain (host-188-122-3-146.finemedia.com.pl. [188.122.3.146])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c4d0e424c34sm4574266b.13.2026.11.03.14.04.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 03 Nov 2026 14:04:41 -0800 (PST)
+From: Kyrylo Biryuk <illofspeed@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: mpatocka@redhat.com,
+	snitzer@kernel.org,
+	agk@redhat.com,
+	bmarzins@redhat.com,
+	dlemoal@kernel.org,
+	hare@kernel.org,
+	hare@suse.de,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v7 1/2] dm zoned: back off when reclaim cannot make progress
+Date: Tue,  3 Nov 2026 23:04:37 +0100
+Message-ID: <20261103220438.510609-2-illofspeed@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20261103220438.510609-1-illofspeed@gmail.com>
+References: <20261103220438.510609-1-illofspeed@gmail.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,108 +102,96 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 1 potential issue(=
-s) to consider:
-- [High] dm thin: TOCTOU race in pool_ctr() device check still allows UAF
---
+When a reclaim pass cannot make progress, dmz_reclaim_work() still ends
+with dmz_schedule_reclaim(). If the target is idle, dmz_should_reclaim()
+keeps returning true, the work is queued again with no delay and the
+worker spins on the same failing pass. This patch handles two such
+cases:
 
-commit 5ead52d14677a9859b05ed7a484ff22ce5ff6bca
-Author: Mohammad Pishdar <mohamadpishdar@gmail.com>
+  - dmz_do_reclaim() fails with -ENOSPC because no free zone is
+    available to copy the data into, for example on a target without
+    cache zones that has no free sequential zone left. The next patch
+    also makes this the expected result when an idle target with cache
+    zones has random zones but no free sequential zone.
+  - dmz_do_reclaim() finds no zone it can lock for reclaim and returns
+    -EBUSY. Since commit 90a9b8693f1b ("dm zoned: reclaim random zones
+    when idle"), dmz_should_reclaim() returns true on an idle target
+    whenever the total number of random (and cache) zones is non-zero,
+    whether or not any of them holds data. Each pass then also runs
+    dmz_check_dev(), which checks every device for media events (a TEST
+    UNIT READY on SCSI disks).
 
-dm thin: reject metadata and data devices that resolve to the same device
+The -EBUSY loop lasts as long as the target stays idle; it ends when a
+pass finishes while the target is busy and has enough free zones. On
+three 27 TB host-managed SATA drives used as md RAID5 members (7.2.10
+with the module built out of tree, all random zones free, target idle
+for 300 seconds, kprobes attached, two other drives on the controller
+being zero-filled), each member's SCSI device counted about 108,000
+requests per second with the stock module and the system used about
+915 s of CPU time, against about 46 s with this series. libata completes
+TEST UNIT READY in software, so these counters do not measure commands
+sent to the drives; the cost is CPU time.
 
-This commit updates pool_ctr() in drivers/md/dm-thin.c to resolve the
-metadata and data device paths via dm_devt_from_path() and reject the table
-if both paths resolve to the same dev_t, aiming to prevent dm_get_device()
-from calling upgrade_mode() and freeing metadata_dev while it is still held.
+When a pass fails with -ENOSPC or -EBUSY, retrying at once is unlikely
+to make progress: re-arm the idle poll instead, so that reclaim is
+retried after DMZ_IDLE_PERIOD unless a zone allocation or a "reclaim"
+message queues it earlier. On a busy target, zone allocations can
+restart reclaim immediately when free space is low enough to require
+reclaim. Re-arming also keeps the poll running after a complete idle
+drain. The poll can still stop after a pass that ends while reclaim is
+not needed; that is unchanged.
 
-> diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-> index 358ed77ffb2be..6285bbc8c746d 100644
-> --- a/drivers/md/dm-thin.c
-> +++ b/drivers/md/dm-thin.c
-> @@ -3292,6 +3292,7 @@ static int pool_ctr(struct dm_target *ti, unsigned =
-int argc, char **argv)
->  	dm_block_t low_water_blocks;
->  	struct dm_dev *metadata_dev;
->  	blk_mode_t metadata_mode;
-> +	dev_t metadata_devt, data_devt;
-> =20
->  	/*
->  	 * FIXME Remove validation from scope of lock.
-> @@ -3307,8 +3308,17 @@ static int pool_ctr(struct dm_target *ti, unsigned=
- int argc, char **argv)
->  	as.argc =3D argc;
->  	as.argv =3D argv;
-> =20
-> -	/* make sure metadata and data are different devices */
-> -	if (!strcmp(argv[0], argv[1])) {
-> +	/*
-> +	 * Make sure metadata and data are different devices. Comparing the
-> +	 * strings is not enough: "/dev/foo" and "major:minor" can name the
-> +	 * same device, which would make dm_get_device() upgrade the open
-> +	 * mode of the already acquired metadata device and free the
-> +	 * struct dm_dev we are still holding.
-> +	 */
-> +	if (!strcmp(argv[0], argv[1]) ||
-> +	    (!dm_devt_from_path(argv[0], &metadata_devt) &&
-> +	     !dm_devt_from_path(argv[1], &data_devt) &&
-> +	     metadata_devt =3D=3D data_devt)) {
->  		ti->error =3D "Error setting metadata or data device";
->  		r =3D -EINVAL;
->  		goto out_unlock;
+Skip the device check for these two results: they normally mean that
+there is no zone to copy into or no zone to reclaim, not that a device
+failed, and the I/O paths check the devices themselves. Use
+queue_delayed_work() so that work an allocation has already queued is
+not postponed.
 
-[Severity: High]
-Can a concurrent symlink or device node change between this pre-check and
-the subsequent dm_get_device() calls still trigger the use-after-free in
-dm_put_device()?
+A pass that fails with an I/O error, for example on an unreadable block
+of a device that stays online, is still retried at once while the
+target is idle; this patch does not change that.
 
-For filesystem paths, dm_devt_from_path() calls lookup_bdev(), which
-resolves the path via kern_path(), reads inode->i_rdev, and drops the path
-reference via path_put() without pinning the dentry or block device. In
-addition, if either dm_devt_from_path() call returns an error here (for
-instance -ENOENT if a symlink or device node does not exist yet), the
-condition evaluates to false and execution continues.
+Tested on 7.4-rc1 with this patch and the next one, on three emulated
+host-managed drives (scsi_debug, 1 GiB, 32 MiB zones) each under
+dm-zoned as md RAID5 members, all random zones free and the target idle
+for 300 seconds. With the stock module each member's SCSI device counted
+about 70.2 million requests and the reclaim workers used 726 s of CPU.
+With this series: 75 requests per member, 30 passes per worker (one per
+DMZ_IDLE_PERIOD) and 0.08 s of CPU. Data written during the tests read
+back with matching checksums, and no kernel warnings were logged.
 
-When pool_ctr() later calls dm_get_device() for metadata_dev and data_dev:
+Fixes: 3b1a94c88b79 ("dm zoned: drive-managed zoned block device target")
+Fixes: 90a9b8693f1b ("dm zoned: reclaim random zones when idle")
+Cc: stable@vger.kernel.org
+Signed-off-by: Kyrylo Biryuk <illofspeed@gmail.com>
+---
+ drivers/md/dm-zoned-reclaim.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-drivers/md/dm-thin.c:pool_ctr() {
-	...
-	metadata_mode =3D BLK_OPEN_READ |
-		((pf.mode =3D=3D PM_READ_ONLY) ? 0 : BLK_OPEN_WRITE);
-	r =3D dm_get_device(ti, argv[0], metadata_mode, &metadata_dev);
-	if (r) {
-		ti->error =3D "Error opening metadata block device";
-		goto out_unlock;
-	}
-	warn_if_metadata_device_too_big(metadata_dev->bdev);
+diff --git a/drivers/md/dm-zoned-reclaim.c b/drivers/md/dm-zoned-reclaim.c
+index c041413c729..077a8a50197 100644
+--- a/drivers/md/dm-zoned-reclaim.c
++++ b/drivers/md/dm-zoned-reclaim.c
+@@ -537,6 +537,16 @@ static void dmz_reclaim_work(struct work_struct *work)
+ 		dmz_nr_rnd_zones(zmd, zrc->dev_idx));
+ 
+ 	ret = dmz_do_reclaim(zrc);
++	if (ret == -ENOSPC || ret == -EBUSY) {
++		/*
++		 * No zone to copy into (-ENOSPC) or no zone to reclaim
++		 * (-EBUSY): retrying at once cannot make progress and would
++		 * spin. Poll again after the idle period instead, without
++		 * postponing work that an allocation has already queued.
++		 */
++		queue_delayed_work(zrc->wq, &zrc->work, DMZ_IDLE_PERIOD);
++		return;
++	}
+ 	if (ret && ret != -EINTR) {
+ 		if (!dmz_check_dev(zmd))
+ 			return;
+-- 
+2.43.0
 
-	r =3D dm_get_device(ti, argv[1], BLK_OPEN_READ | BLK_OPEN_WRITE, &data_dev=
-);
-	...
-}
-
-each dm_get_device() call invokes dm_devt_from_path() a second time. If
-argv[0] or argv[1] is created or modified in that window so that both now
-resolve to the same dev_t:
-
-- When pf.mode is PM_READ_ONLY, metadata_dev is opened with BLK_OPEN_READ
-  and data_dev is opened with BLK_OPEN_READ | BLK_OPEN_WRITE, causing the
-  second dm_get_device() call to invoke upgrade_mode() and free the
-  struct dm_dev still held in metadata_dev, followed by the same slab
-  use-after-free on metadata_dev->name in dm_put_device(ti, metadata_dev)
-  when pool_ctr() fails.
-- When pf.mode is not PM_READ_ONLY, pool_ctr() has no check after opening
-  that metadata_dev->bdev !=3D data_dev->bdev, allowing a thin-pool to be
-  created with metadata_dev and data_dev aliasing the same block device.
-
-Would opening data_dev (which always requests BLK_OPEN_READ | BLK_OPEN_WRIT=
-E)
-before metadata_dev and checking metadata_dev->bdev =3D=3D data_dev->bdev a=
-fter
-both dm_get_device() calls avoid both upgrade_mode() and the double path
-lookup race?
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261103193956.6335=
-4-1-mohamadpishdar@gmail.com?part=3D1
