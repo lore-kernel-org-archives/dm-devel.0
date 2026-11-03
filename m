@@ -1,53 +1,53 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=160.30.148.34
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=160.30.148.35
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793703231;
-	b=mYddT7C1D1wChCAn/o2E1wo19+rcdpyAwLVVLHTYdnmhk6C5ejOsXoy4cQcb+mc2axHF
-	 +PZ1bDdjec3ClNP1ZkOSAtThGTqMM5SwXyo+fzAdE0GOL0WCEBWh9M2olh0YPltyL+izQ
-	 5DB/+u4mYX4KTAkebPDwrc8ezFlHq1dItlcw4+bDDxngbqQY39xJlX/rYn34UaVygezdJ
-	 4PB/WRtLm6hydOElkCGAr0ti91dldVfSNZCFP8kSkwAjb/Sg69gPPZYhNEMBYyu1H7CKL
-	 07xQgeu5AgW2Mk0JXd00PkGH0mc2bQd75dSUe++VkuNrXo7p5XRD6ZpPMep35zhzDTQ==
+	t=1793703236;
+	b=ycPN1BpHJcFxtWYhrOIpipytxMT8HrDttihPqq1JVKFb0DH5a80r9xJvZnbLSHuBQKI1
+	 5KHuzN30TE+alfy/gmUIcD3HE29PqhQamwgE8BJuiRd2utRY+1kTyjKiCyK9GvnKv0f8O
+	 SlwTEnKVVKjMYPJmVC3DmiKDwknNQx+NPDLr2oi1arKXmMSuqkMmNqawe/QJ06QkpDo5E
+	 HSKCG3p6UUiAHm0Z/JpL49ePU/TpqZoHy/S1Mk/SmLGkbut8bqhFBTumVztbWMngHcMVc
+	 JPy6mJ5QYTQiKMIMpJ7RnvFArjq7CSosyVMKEXxY8RDkI/U1hu1M53/Y7HcY7gRFSvg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793703231;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793703236;
 	h=DMARC-Filter:Received:Received:Received:X-Zmail-TransId:X-Mailer:
 	 Message-ID:Date:Mime-Version:From:To:Cc:Subject:Content-Type:X-MAIL:
 	 X-TLS:X-ENVELOPE-SENDER:X-SOURCE-IP:X-CLEAN:
 	 X-Fangmail-Anti-Spam-Filtered:X-Fangmail-MID-QID;
-	bh=lUa5DhZx9WKWQsHa9sNTQT9uSwjaE9ND4ZF6lWuR460=;
-	b=O/x7MhZnKd3TwnVwHf8mb0okR0w8KZ37xLkzZbgorTCK0i2mHyDKJfeN97/xzk8ktaGC
-	 cB06LCDrDDm0kxIFVaZgW+2QE37G1QMH5bZRwW5fc0O+Wg1qXhC/evLA++Uw+uRPF0Q0a
-	 MNvCLO6KFWhxxzzwjLVdew3+3avro9gF6P97cuzwyGcOozD1SvlWIi3xlTwR3UB1q6Yyl
-	 IeRfhn5VBHjfTaa6Ezt8eN12dR31Nl3DeNtnd95bhTBycHk9iuDGsNb1Bu3+35Dm/+zBm
-	 rPXkKfbt1gC+fxUEqAnqcyc/NFPXmWbi1u9wkU59pp8bGzl8uNkSLqblLtiIwRumNjA==
+	bh=i+DHw1eJBnfBYMpsbId+fwdj/ffdvRjE8kTCYAnvm70=;
+	b=yHAJUxCiz9Xr/MgNLhh0K4MST0LOV6/FV1XbTSxg++DJGHOY+X1OQDDWfCUuo2tQ2Qlk
+	 GEaV7qZedDRKCIHkKiEOdYf3DHFMCrvZC4C0cnPfUwC0qQ8PpaBwOr2bLnjFF/1wPncbm
+	 Ckp27QmaqPlcQRXQRzX4uCe8ZhN/pIEyTL0CCXxnd0V3So6QHjTXe273vLC91b/hYtrhy
+	 H5N69VuOdTxWomb9Y3ygZapQMj6bCsuEJsEU7lFO8LEHxComehc2Cu5LHFCkcat4p0NO9
+	 vglc1KR1DuDOfoP8/H3k6zKzuz4KAmddPTw8+68Iw2F/Df6KVR6jftfUezQvvg05bPQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=zte.com.cn;
 	spf=pass smtp.mailfrom=zte.com.cn;
-	arc=none smtp.remote-ip=160.30.148.34
-Received: from mxhk.zte.com.cn (mxhk.zte.com.cn [160.30.148.34])
+	arc=none smtp.remote-ip=160.30.148.35
+Received: from mxhk.zte.com.cn (mxhk.zte.com.cn [160.30.148.35])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63B08606A33A
-	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 10:53:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 63B08606A33A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 932EC606D81C
+	for <dm-devel@lists.linux.dev>; Tue,  3 Nov 2026 10:53:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 932EC606D81C
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zte.com.cn
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=zte.com.cn
-Received: from mse-fl1.zte.com.cn (unknown [10.5.228.132])
+Received: from mse-fl2.zte.com.cn (unknown [10.5.228.133])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange x25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mxhk.zte.com.cn (FangMail) with ESMTPS id 4jJlmr5sBxz5B103;
-	Tue, 03 Nov 2026 18:53:48 +0800 (CST)
-Received: from xaxapp04.zte.com.cn ([10.99.98.157])
-	by mse-fl1.zte.com.cn with SMTP id 6A3ArdXh088366;
-	Tue, 3 Nov 2026 18:53:39 +0800 (+08)
+	by mxhk.zte.com.cn (FangMail) with ESMTPS id 4jJlmy14Xkz8Xrrc;
+	Tue, 03 Nov 2026 18:53:54 +0800 (CST)
+Received: from xaxapp05.zte.com.cn ([10.99.98.109])
+	by mse-fl2.zte.com.cn with SMTP id 6A3ArbDm051787;
+	Tue, 3 Nov 2026 18:53:37 +0800 (+08)
 	(envelope-from shao.mingyin@zte.com.cn)
-Received: from mapi (xaxapp02[null])
+Received: from mapi (xaxapp01[null])
 	by mapi (Zmail) with MAPI id mid32;
-	Tue, 3 Nov 2026 18:53:42 +0800 (CST)
-X-Zmail-TransId: 2afa6ae9bd3694e-b20b3
+	Tue, 3 Nov 2026 18:53:40 +0800 (CST)
+X-Zmail-TransId: 2af96ae9bd34b2d-af295
 X-Mailer: Zmail v1.0
-Message-ID: <20261103185342600lmk67Fuw_xX7_kWvJgP-j@zte.com.cn>
-Date: Tue, 3 Nov 2026 18:53:42 +0800 (CST)
+Message-ID: <20261103185340382nGk9q5f5TbPSdgcbDLAUy@zte.com.cn>
+Date: Tue, 3 Nov 2026 18:53:40 +0800 (CST)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -60,38 +60,47 @@ Mime-Version: 1.0
 From: <shao.mingyin@zte.com.cn>
 To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
         <bmarzins@redhat.com>, <dm-devel@lists.linux.dev>
-Cc: <linux-kernel@vger.kernel.org>
-Subject: =?UTF-8?B?W1BBVENIXSBkbSBsb2cgdXNlcnNwYWNlOiBkcm9wIHRoZSBkZXZpY2UgcmVmZXJlbmNlIG9uIGVycm9y?=
+Cc: <linux-kernel@vger.kernel.org>, <stable@vger.kernel.org>
+Subject: =?UTF-8?B?W1BBVENIXSBkbSBtcGF0aDogZml4IGJ1ZmZlciBvdmVyZmxvdyBpbiBwYXJzZV9od19oYW5kbGVyKCk=?=
 Content-Type: text/plain;
 	charset="UTF-8"
-X-MAIL:mse-fl1.zte.com.cn 6A3ArdXh088366
+X-MAIL:mse-fl2.zte.com.cn 6A3ArbDm051787
 X-TLS: YES
 X-ENVELOPE-SENDER: shao.mingyin@zte.com.cn
-X-SOURCE-IP: 10.5.228.132 unknown Tue, 03 Nov 2026 18:53:48 +0800
+X-SOURCE-IP: 10.5.228.133 unknown Tue, 03 Nov 2026 18:53:54 +0800
 X-CLEAN: YES
 X-Fangmail-Anti-Spam-Filtered: true
-X-Fangmail-MID-QID: 6AE9BD3C.000/4jJlmr5sBxz5B103
+X-Fangmail-MID-QID: 6AE9BD42.000/4jJlmy14Xkz8Xrrc
 
-userspace_ctr() takes a reference on the log device with
-dm_get_device().  When the integrated-flush workqueue allocation fails it
-jumps to the shared error path, which frees the log context without
-dropping that reference, so the device stays busy and cannot be removed.
+parse_hw_handler() builds the hw_handler parameter string in a buffer
+sized with
 
-userspace_dtr() drops the reference correctly; do the same here.
+	len = 4;
 
-Fixes: 5066a4df1f42 ("dm log userspace: allow mark requests to piggyback on flush requests")
+plus one byte per argument.  Those four bytes were meant for the decimal
+form of the parameter count, three digits plus the terminating NUL.
+dm_read_arg_group() accepts up to 1024 arguments and the count written is
+'hw_argc - 1', so a count of 1000 or more needs four digits plus the NUL
+and sprintf() writes one byte past the allocation.
+
+Size the buffer from the actual string length instead.
+
+Fixes: 2bfd2e1337f0 ("[SCSI] scsi_dh: Use scsi_dh_set_params() in multipath.")
+Cc: stable@vger.kernel.org
 Signed-off-by: Shao Mingyin <shao.mingyin@zte.com.cn>
 ---
-diff --git a/drivers/md/dm-log-userspace-base.c b/drivers/md/dm-log-userspace-base.c
-index 3ca35aa4e057..267ae428dde4 100644
---- a/drivers/md/dm-log-userspace-base.c
-+++ b/drivers/md/dm-log-userspace-base.c
-@@ -315,6 +315,8 @@ static int userspace_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- out:
- 	kfree(devices_rdata);
- 	if (r) {
-+		if (lc->log_dev)
-+			dm_put_device(lc->ti, lc->log_dev);
- 		mempool_exit(&lc->flush_entry_pool);
- 		kfree(lc);
- 		kfree(ctr_str);
+diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+index ae9318f5f21b..2f871a23a8cb 100644
+--- a/drivers/md/dm-mpath.c
++++ b/drivers/md/dm-mpath.c
+@@ -1085,8 +1085,9 @@ static int parse_hw_handler(struct dm_arg_set *as, struct multipath *m)
+ 
+ 	if (hw_argc > 1) {
+ 		char *p;
+-		int i, j, len = 4;
++		int i, j, len;
+ 
++		len = snprintf(NULL, 0, "%d", hw_argc - 1) + 1;
+ 		for (i = 0; i <= hw_argc - 2; i++)
+ 			len += strlen(as->argv[i]) + 1;
+ 		p = m->hw_handler_params = kzalloc(len, GFP_KERNEL);
