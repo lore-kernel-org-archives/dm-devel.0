@@ -1,53 +1,63 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=198.137.202.133
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793697683;
-	b=Yfg0hLaPFyP+ObF+pqdWDpGJMXL/kXxQLwvdjE7CTsK5nlk2AwabH+AbJlRnda0mza9D
-	 Y6g1wo+woYxlAH4rijzLz83u4P7nA9xTnC/7usV8Ng2PDU3DR9YEEN6B8H3t7TPn/ASIf
-	 nq+mtweVomqe3/uqXkkasgDECeTBPA9f9nNJokzWdqSiSsYAutASHaI5UD2SKiEL2a7SA
-	 R1+MY6BMTIGP56xDRcLBJzcNWKmth8uPKV5AslNQ1deJLzPzlR2DYeIQizEBbOGULZI2S
-	 Q4X/Joh9gW50PdxhCVtVYu9CPgmch9J1U8rk12y2La1y2yXncb6f6/ZYIh9PA3p98HA==
+	t=1793700209;
+	b=dOInXPzrWQ03HFfbPELSZmLCJF87qCQZ5PYhS3befbUIkkYpFCeIv92U3wznquEJUJj5
+	 erQrgeMtNpm2X9FvMDP1rUqgeGXFULFrjrzptoMvtzcEEN+9u8dC1NvG7yNqSTFKNSgQo
+	 05zwA2gRGSvUtT3v9wVIB40M6FutbbdOoX8LC2BJyPnaHsLdHhVeC9RaC+GfClnZ5m+zc
+	 eC93db/f//Ae/7NwhElmznmR8pzkmmWUWiPsOlaicgxTW967/4AttoKXxyIdF9U7T4NLP
+	 sfeLVhRE+RK8YVzYbOZBztxdh9KNs+GYDE3JA1S9s9O7RXq+YUw5Kjr1zFvLNOcdmxw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793697683;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=WRjg9wnrGZ7nUPdbceOheZj9U6OT129Wwye9oH/fuQ0=;
-	b=gJwjhSzcwdPVuCGN4M/pXsSpKNCEE/xnIii0cCvguJFw3qSoHaMYh5YMF4WqQc2S9Ol1
-	 XdH4R6aSpWPzma7lWMzOzDH/xGNuPx7RDaEwlLEP3yJI6GQ0w5FpDplrkdpoCr65uq7qV
-	 WO3ILXsVMMhoaH3QsnQLTI/oFT0aYJD5aW5TBkZ2N0y56fVoK52inf28Ad2NgdbaavYim
-	 MEx30LdUfPivhza/7Lh6KVGEHlHWeWh88mUR8+bmSQPnfexbKXUkpojP9XftV1x1EvvAI
-	 xmf9+zz0pmYNucCNbXnhEfbCCUebwxWL+7VGYNw1+LNXLA7LvTUEVN9K+MhofOT3t4A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793700209;
+	h=DMARC-Filter:DKIM-Signature:Received:Date:From:To:Cc:Subject:
+	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
+	 In-Reply-To:X-SRS-Rewrite;
+	bh=7OLKJKb/QX1hzA4C4hWBkRiZv41kwBD/QQM6xWAMmhk=;
+	b=kz6pxUN0cGLiXaEuZnaPAM0vi/Gp3H6BVd9ypdoqzT7/jlBpAZhw0RwwSKU3oXrDx83j
+	 H0L1wDiweL9Y5GChel2F6lSsNhhZeoKFHHA1VxV/cqjANjb+PRJJqa37DsqKeDdHUXQND
+	 XLJE9As5yretds1AtQZ+kLcfa1B1bMzG3FUGQfiHjYEPpbTFFgIcKRY493ePVQPFUpjuv
+	 5PL0BJlb0xhtLwNO0jPWP2r71FGah4xGc1btFkKodhgtJbfP1XEQA9lMziv1rTtAF59kG
+	 WtRvARbmHoIkV+UwRzUevd2FwfTKtlYYrkcltomVgNvDBxmd9q4CL78JMe3UF68+0WA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hURM2oJB;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=infradead.org;
+	spf=none smtp.mailfrom=bombadil.srs.infradead.org;
+	dkim=pass header.d=infradead.org header.i=@infradead.org header.a=rsa-sha256 header.s=bombadil.20210309 header.b=rCmmAYwO;
+	arc=none smtp.remote-ip=198.137.202.133
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64F94606A324;
-	Tue,  3 Nov 2026 09:21:23 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B3AC606A830;
+	Tue,  3 Nov 2026 10:03:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7B3AC606A830
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=bombadil.srs.infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hURM2oJB
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3AF761F00919;
-	Tue,  3 Nov 2026 09:21:22 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793697683;
-	bh=WRjg9wnrGZ7nUPdbceOheZj9U6OT129Wwye9oH/fuQ0=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=hURM2oJBC2OYLD2mT6ekT3v0VDVTkk2baBzSacBZn4V6h52JiQtM2UefBI9v2xgEy
-	 Iy/8nCudEs2Da3L/03mL6YjYKKNz2I1NN7amoiyVX6LEnmHyOoraPHYKCtuWdyC53b
-	 9ZuCZaL1ctb49F6o0CoMISbeYRYY9PElOGzMEgxi32vJfB9T5tFGdQ7EnYdoQzB+f8
-	 STiRqwuR9gRSzxkWWy9/kBgQygOz/cji0FsOmpkviZbIgSwnydy1PGw9FyCFOvMLPx
-	 aUxcyRQ1VhAsktmZSIhEdyA/qMAM9UcOOYT0wnIpv0/3mn5yg2f8xEsPaqPy12hfBW
-	 1cp3hO9oac6Rw==
-Date: Tue, 3 Nov 2026 10:21:19 +0100
-From: Krzysztof Kozlowski <krzk@kernel.org>
-To: Wentao Liang <vulab@iscas.ac.cn>
-Cc: agk@redhat.com, mpatocka@redhat.com, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, stable@vger.kernel.org, snitzer@kernel.org, bmarzins@redhat.com
-Subject: Re: [PATCH] dm: release the sysfs kobject when its initialization
- fails
-Message-ID: <20261103-amphibian-pig-of-fragrance-4afaba@quoll>
-References: <20261103082329.1159472-1-vulab@iscas.ac.cn>
+	dkim=pass (2048-bit key, unprotected) header.d=infradead.org header.i=@infradead.org header.a=rsa-sha256 header.s=bombadil.20210309 header.b=rCmmAYwO
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=bombadil.20210309; h=In-Reply-To:Content-Type:MIME-Version
+	:References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=7OLKJKb/QX1hzA4C4hWBkRiZv41kwBD/QQM6xWAMmhk=; b=rCmmAYwOVZugETZJXWaPr5M1GM
+	BKS3Yv8PPbasw24xCTGq4i+S18Hsn9Adiqtw7OhdJS9NwvjwMq4oh9veFy3iT7cjDY+tflWdGG/Bf
+	yk7ZSC5aD8htCgFd71TVjiY3k8WejYHGp67rGiyj2z5xSWPgXncpo/3HxWEr3GA4cbBE0sTRCyL7J
+	3Jji5G5t5wj80JzGbrTE7KipUGNORd2E3m3bnJOBYHTgmaZ4IhxOeHoKNFt6JDv+oQY0kTJzMpuNF
+	4j0GdJ0jx3KoASP4iVBHX7fvStdYlHl0UAk+yLAThx6FuEFaYPsG3Xt6uKt271VfW79Gjp/va7ehr
+	G/4xP/Uw==;
+Received: from hch by bombadil.infradead.org with local (Exim 4.100.1 #2 (Red Hat Linux))
+	id 1xOBMW-00000001s93-3zui;
+	Tue, 03 Nov 2026 10:03:28 +0000
+Date: Tue, 3 Nov 2026 02:03:28 -0800
+From: Christoph Hellwig <hch@infradead.org>
+To: Mike Snitzer <snitzer@kernel.org>
+Cc: Keith Busch <kbusch@meta.com>, axboe@kernel.dk,
+	dm-devel@lists.linux.dev, mpatocka@redhat.com, bmarzins@redhat.com,
+	Keith Busch <kbusch@kernel.org>, linux-block@vger.kernel.org
+Subject: Re: [PATCH] block: let a stacking device inherit its members' DMA
+ alignment
+Message-ID: <aumxcHVjVonjs6OV@infradead.org>
+References: <20260709161519.1559723-1-kbusch@meta.com>
+ <20260709161519.1559723-2-kbusch@meta.com>
+ <atpBVtPqGDWZ2AFo@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -57,72 +67,39 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261103082329.1159472-1-vulab@iscas.ac.cn>
+In-Reply-To: <atpBVtPqGDWZ2AFo@kernel.org>
+X-SRS-Rewrite: SMTP reverse-path rewritten from <hch@infradead.org> by bombadil.infradead.org. See http://www.infradead.org/rpr.html
 
+On Thu, Oct 22, 2026 at 01:01:10PM -0400, Mike Snitzer wrote:
+> On Thu, Jul 09, 2026 at 09:15:17AM -0700, Keith Busch wrote:
+> > From: Keith Busch <kbusch@kernel.org>
+> > 
+> > All device mappers that want to override the dma_alignment do so.
 
-On Tue, 03 Nov 2026 08:23:29 +0000, Wentao Liang wrote:
-> dm_sysfs_init() uses kobject_init_and_add(), which requires a matching
-> put even when adding the object fails. dm_setup_md_queue() currently
-> unwinds the disk and holder links without releasing this object. Since
-> md->type is still DM_TYPE_NONE, cleanup_mapped_device() also skips the
-> sysfs cleanup, leaving the initialized kobject behind.
+Don't start a patch description by quoting another mail.
+
+> Direct I/O from memory every member accepts is therefore rejected at
+> the stacking device, and callers that check the advertised alignment
+> (for instance through STATX_DIOALIGN) fall back to buffered I/O.
 > 
-> Call dm_sysfs_exit() before unwinding a failed sysfs initialization. This
-> both puts the kobject and waits for its release callback, including when
-> CONFIG_DEBUG_KOBJECT_RELEASE delays that callback, before the mapped
-> device can be freed or its queue setup retried.
-> 
-> Fixes: 784aae735d9b ("dm: add name and uuid to sysfs")
-> Cc: stable@vger.kernel.org
-> Assisted-by: DeepSeek-V4.1-Flash and OpenAI Codex
-> Signed-off-by: Wentao Liang <vulab@iscas.ac.cn>
-> ---
->  drivers/md/dm.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
-> 
+> Leave dma_alignment at zero in blk_set_stacking_limits() so that the
+> stacked value is the strictest of the members'.  blk_validate_limits()
+> still applies the SECTOR_SIZE - 1 default when nothing was stacked,
+> such as for a table with no devices.  Targets that process the data
+> themselves and need logical-block-aligned memory already set
+> dma_alignment in their io_hints (dm-crypt, dm-integrity, dm-verity,
+> dm-log-writes), and NVMe multipath sets its own.
 
+Chances are very high that this will introduce bugs somewhere,
+as a lot of drivers are historically not ready to deal with lower
+alignments, and will creeat nasty exploitable bugs.
 
-
-Multiple things here:
-1. Your team ignored completely previous feedback. Multiple times.
-
-2. You use multiple identities with this email address, thus I doubt that we
-   speak with an actual person.
-
-3. Your bot does not even bother running checkpatch, right?
-
-4. Nothing of this was reproduced nor tested.
-
-5. Finally, the same feedback:
-You sent multiple independent patches, to multiple independent
-subsystems. The amount of these patches clearly suggest this was
-AI generated and most likely not tested.
-
-More importantly, you sent all this work without properly organizing
-relevant patches into patchsets. This makes reviewing difficult
-and might cause multiple reviewers to address the same issue.
-Replying to the entire set is impossible and requires handling each
-patch independently, instead of applying or discarding the set.
-Maintainers also won't see the bigger picture of your work. Quite
-worrying.
-
-This is on the verge of hostile patch: bomb us with so many
-contributions, we won't be able to handle them in efficient manner,
-like responding ONCE to ask you to slow down.  Considering all this
-is untested and LLM generated, I have even more doubts whether this
-should be considered for review.
-
-Please read kernel documentation BEFORE posting more work. It will
-explain you how to identify subsystems, how to organize your work per
-subsystem (so a patchset grouping multiple patches with a short cover
-letter), how to document the issue discovery method and what was
-or was not tested.
-
-Best regards,
-Krzysztof
-
-
-
+So you'll need to audit each driver that wants to relax this
+individually, and then override the value for them.  Alternatively
+we could start with 0 in the block layer, but then you need to
+lift the current setting into each caller first, and only remove
+them one-by-one with a commit per driver explaining why that is safe
+(and sensible).
 
