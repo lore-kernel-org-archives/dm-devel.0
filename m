@@ -1,88 +1,106 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.180
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793783765;
-	b=ORTTLqT2pxj/IUHzIc1vcqMMOpSfzud/LX2w7YejGRPNgiXbTE3H0jiSjO230noMXjSo
-	 KFGvHeJGzl9mnSmUTTdhmn6ztwlMNSjnKcgq+OIasR3fEiCpz9rOR3tb2PDKLv0qpu77T
-	 TqMAE+qrYGYRxYVMzoQv6zkM8Go1OvQ/Mj8wa1CpD0yDDnU02P12UUDNI9j058Tzq3KUu
-	 gwRfSDzFbK0CBQwb5BoyNm0UnG1Fcx7XdSAagYeHeMscEz0uTVwJQD/Bh8ghRSxrFe8Wb
-	 rUm+AV/paHI5d+k2qTkZ6kg7oxiLl1uvBr1cPeqogNGDtVPEmBQdufRtbRpsAMinhLQ==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793783765;
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.160.41
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793832120;
+	b=MyYEFHcUj6SANdcDsKjnsxlTA7n6MAofDjpUJWl/WSchu+zMBGgTVegE8H9L8fTY1iE9
+	 jqjOwnWCZE4LydU7fC6WR/MwaDYViEazYc7rRVc1K+j0QSm8tNv5imsTFt7vwF7g4Htxd
+	 H5i2Fmw4CYSvQQRvD42ylaIpLDtO/o+1DS674sPcyrtL8xgiF1MpBun6o1/MpqzNkDyq+
+	 cOkcSmKDxwhEv8cV9Jri3qHe/FfUyc4kBbWDkMHDa/u2ci8tNaXWqYUuL+kvnm2An74fV
+	 hTrri9OW04KyB05YGhYT5dCswA+IewGP+FpwnTjwX3obhOFeWxxMKES4OJz2RaxNFcQ==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793832120;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:Date:Subject:Message-ID:To:Cc;
-	bh=ufI9lQZjERuESeipE2ezcTBUQEHZtIN68AOZp2N7TDk=;
-	b=fanCuGhMe1qnUCXSgzGN4/g6GiH8anGcglYx13sk7bZWvmw99JzNQDhdNwK8tGGL3wXQ
-	 8Ns3fnMzt0I8qBkIbTkktUyPZBhyzntI+87pBLnaTewGVfd9g82CfrbYWdxCBf0t0mhvX
-	 o60os/u4ImanQRxiXLUPyis7vZ7r9KkMGznZTl+5q+EIFTt9yS8kVrZ1JvCTJjtlKRTKg
-	 Lxxo8UuscHu/Eb0APkb2GY4Aq2DxxHt+QXDwwGRsiwh9hwPJSzUZqs33dcmX0CqF8RHsN
-	 pizk5B8/kINgS7DmAxlH1Ajiruo0wWXf9OAzD5A9XfT1A5dvp8DNUpYpu+rwwMBPOog==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Received:From:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Date:X-Gm-Features:Message-ID:
+	 Subject:To:Cc:Content-Type;
+	bh=Le7HKNyvunzvQx/aShnNzGNgI0iOTWFy0ku1BiRO6Xk=;
+	b=LL4pr99KRfszvPF2slH5xRkzB2acWejSCdqArudqqoKhew1kJCJwbmAQii191G/wYNvF
+	 ZzGnSy5+GUtEwTAo72TlA1Wppo79VN98AN7svUxxkcJDEWTJqTthr4NUW6jNMTUymPeA2
+	 swHobsH2lgo847jS+HtuHBbHgwPT8iJcnVoolKzR4UaRmZRuQH/lJcqtFRe3imS3/6Db6
+	 cgF2XQKelHoNitfUUZ5F5G0I81zHtzNakO0AK6Z59vchL7QcaEHyImNbiGS5uQCOeyF8b
+	 yavPXLHGV5dSU0uTPsZK5GkXytjCfq4Yv8esxBbchZ14//TyzP9BWlJH2fCOyjI9kRA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="k3/7b5IY";
-	arc=none smtp.remote-ip=74.125.82.180
-Received: from mail-dy1-f180.google.com (mail-dy1-f180.google.com [74.125.82.180])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S2gMV0ei;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.160.41
+Received: from mail-oa1-f41.google.com (mail-oa1-f41.google.com [209.85.160.41])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB0D3606A326
-	for <dm-devel@lists.linux.dev>; Wed,  4 Nov 2026 09:16:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AB0D3606A326
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E4572606A332
+	for <dm-devel@lists.linux.dev>; Wed,  4 Nov 2026 22:41:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E4572606A332
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=k3/7b5IY
-Received: by mail-dy1-f180.google.com with SMTP id 5a478bee46e88-3282db206d3so947216eec.0
-        for <dm-devel@lists.linux.dev>; Wed, 04 Nov 2026 01:16:04 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S2gMV0ei
+Received: by mail-oa1-f41.google.com with SMTP id 586e51a60fabf-48eee44b908so730657fac.1
+        for <dm-devel@lists.linux.dev>; Wed, 04 Nov 2026 14:41:59 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1793832119; cv=none;
+        d=google.com; s=arc-20260327;
+        b=b2kso/FfsyPWUH9sPsq7H7Z71TVMSi9Kv2tSHv0kaIcGuy0xKauZ/AgQJ/XR2fPT5Q
+         UDS3UItBvMz+HC6WvUODn8uK0TN8w5rBSagImJCrrt0mukScYVswNC7nvPhCIGBG4PBw
+         BCGRdc9/11kO+S82hllpCJOkovUZ7gZBsTVLnuOSHa70NL3Wp3BGSXMo5YgGu3nGjcV4
+         b4TKHqMDwXVk5C7zaZF1TnKMlEHBSow5DTTTW08URKYhG/ZAL336IjjEgGRdufoJJnD/
+         n0j3ki2LMJxGGaUzqMII/rIqHeoALB9Y5Ds3+zXD9tRBWXApuwGYn4Lqxhe0duh0J+Vd
+         sugQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:mime-version:references:in-reply-to
+         :from:dkim-signature;
+        bh=Le7HKNyvunzvQx/aShnNzGNgI0iOTWFy0ku1BiRO6Xk=;
+        fh=J+DDlYQ9bPScT6ri09CRkxCdeRtk/GtYWJpbQR443Ik=;
+        b=dGYKmjbY91hsPP16Z9KX4oTms7h3COXzXA9UGKzXpTkAYqtnIikjR+OfBwIauwPxzg
+         yxD2dLiBpAbEpPPFW+QkbsY4Jm/oIqxvB2Ch2brNttawmG6r5chEwGKJxJpSG9zThDHh
+         Tp3NjCI+1hTSKJKJ10K8ydAxarGl1xxBwgCE9Sg2TwdeZJxBRFz5JHam06KdrbZZwpxa
+         oTaTaljxVEaB33WynwH2ro0L0DZ1CKWizORPNVhiXTUUaCbqUaTjGpUCfcR13I1anUVt
+         9x7eVEH9HYvDUy19p7ItbybfAAnS7IqR8dDr6og9Bg2aHjYPHt/iyDayb+T6ZVHEzdv3
+         Pmug==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793783764; x=1794388564; darn=lists.linux.dev;
-        h=cc:to:message-id:subject:date:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=ufI9lQZjERuESeipE2ezcTBUQEHZtIN68AOZp2N7TDk=;
-        b=k3/7b5IYLSpOWm6D6V4aB9LcQ+7dcnQeMjAHNlSVYA8NE+cxWuaGVCLfBtLIaYRggw
-         EnBUIIVopz+Vq4+/Qm740L27fXAW7CeEabP8RVOc+YogA4r6TBjejH/5g2JfMWgIJ5S9
-         rh6zH0zM6SJUW3rDolBi1zxaJ0qAqzaA9SMxHOPByH+X+lXDr7/43eS41Eqck8HxMfEo
-         khI7s2o+OGmw+lVQXPFlpi6BYZYYvZ3AoVbixlJJAn9xyMjmm8ZMrMlaRIIOmOfdNAkP
-         iFF3RnDNjpdCvFMCVxDDSF/8yjUhIBAVWEBVT7Stzs6r1rKoGlpZgj1nUoMTnt6jOcXb
-         3SvA==
+        d=gmail.com; s=20260707; t=1793832119; x=1794436919; darn=lists.linux.dev;
+        h=content-type:cc:to:subject:message-id:date:mime-version:references
+         :in-reply-to:from:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=Le7HKNyvunzvQx/aShnNzGNgI0iOTWFy0ku1BiRO6Xk=;
+        b=S2gMV0eigK85J83U+IlYJ7TGbmUChzY8+8aw6NPjxDdpvWfNPGcvP/3EVrLwPsoAEe
+         lW76HzD4Xf8Q+qSLrYAId6MJrFvw5rT6G6o9QwNGDrABo+O9bj5wFDqb+cqJ0BHMIXm8
+         djk7RqCCjN0GbOoa0SHxLrWeeKNNcn3xjsBiFkfAvH/lIQB00E7y4UovZWeO2N9pMpBq
+         6fhcUXbhOpFyI/Mk5wb26KWQpV7JbfcgB4L731gclz/bqhreqqkQGd25E4JEDAjUqG4A
+         z22ByaFguL3lNmOtfQ5uFZwdsAmDHgP7PmB229CDy2TCU99WRCS7mZc+qpMe1eVfnBqB
+         +R2Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793783764; x=1794388564;
-        h=cc:to:message-id:subject:date:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=ufI9lQZjERuESeipE2ezcTBUQEHZtIN68AOZp2N7TDk=;
-        b=a8X3yLoci7Mk7bLqTEADkWju0s/RCbrEYvUcPuws9eXTQcgmPDA+oYvpCJ1kso35BH
-         QMP2ceoS05HuzBEIqicPvpkxXUNypRtXuq3hAMCwSJcQk0GncPjCERwpx+C1X/ZCUPug
-         UoQQRtMGX+G/8SUeRnoVBMncIpYLaaebrAu/6OUAyYEknZzHXd6EzoplQBMfOIJCoWFZ
-         TMCY76q4F3PIlFoXtUveNyX1htrStCJv/YbXHmE7PlXLO6w1lSH4vGSnuHKxF8gFgm1W
-         /eZCPrYGdeROPheFrAyjuMTT/cltWmBpfQTC4ti7lHqDlbohgkZN1ekR7gLeOansAmLZ
-         UkIw==
-X-Forwarded-Encrypted: i=1; AKwUvBy8CLqLiwBtB54xFoeufgZuWuWVGEQydJT6SmRAQpQ9KT6KyipCBtu6HzbwKXg9S6FJpcFHo8zWTA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/85JSQbOCmvpTqZMfqoODC3Met+3Cc1aHZTlAw2Gw+zM+aS3Qo
-	EoNM/xjJ+htcHEHxheCSB867WlyneaIddBQ8eunB1Cu9uRGSAgTLgem9
-X-Gm-Gg: AYBFou2XbNfUt6eBlog61rHiE94IZ7lPB4s271+rsItxieDiLjnfv8qlmTK9DQ8MdOg
-	WyLUyqrZUZ33P/O2eBGxPdSI0BwHbjT9R0KHzqQOBmxPd7XQqyklqoji1n5tkpjydsoPwCRgr5X
-	B6Xhar4ABBG6M58ZniYAAg3Ue87JTaPge7xYdO11clkJEaVhv9QLoli9kRzvyVsh53TCPZ0JFXl
-	RAl4RCdix6r48YOtFSNAnd5MZQyUlGzF4h8teUwPMwk/pB4k8c/aOSAQEGE4uoCBcukWqaudMvd
-	rsiwDj3UNX+3w4eCbvZDe+Jpk9YG+spVxl0VC/hPkCnODKIqry0BOZ9iRZ2s3HM/qwzyEvVuaZx
-	HIB9A1RBDcUbEQ25YSKWjqDEqKqdnU6WlnUYcky20/SSNPzlUnv+2Niw8JwNjdQzr/gHxotxOlu
-	iTJW/W62RWp5SpmAVQO2a381Vjes46/UTE0yHUKpZCBwCJeAUonhSioiFysrZP/Bhg4Fx3PesLa
-	+e1VneToZ3mjnfWvIahjEqp+FvY75M8L/ssTH8DgRilVnpmRQxaf/zCc7R51mWVE1jeDJ83i5+y
-	71v37PLNks/PIsOh7b+fSTfhN/DJFCDC3kfBJjQCqi6pP/do46w04YgVWkuXMmNqaA==
-X-Received: by 2002:a05:693c:88cf:10b0:368:2548:c08b with SMTP id 5a478bee46e88-36a4239bcd6mr26660209eec.21.1793783763666;
-        Wed, 04 Nov 2026 01:16:03 -0800 (PST)
-Received: from [127.0.1.1] ([23.247.137.67])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-36ca394f297sm6731967eec.21.2026.11.04.01.15.59
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Nov 2026 01:16:03 -0800 (PST)
-From: Yaohan Li <shunsheng1218@gmail.com>
-Date: Wed, 04 Nov 2026 17:15:42 +0800
-Subject: [PATCH] dm: avoid double-dropping the zone reset submission reference
-Message-ID: <179378374219.68809.15920762511563622507@gmail.com>
-To:
- agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, bmarzins@redhat.com
-Cc: johannes.thumshirn@wdc.com, mkp@kernel.org, dlemoal@kernel.org,
- axboe@kernel.dk, dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+        d=1e100.net; s=20260707; t=1793832119; x=1794436919;
+        h=content-type:cc:to:subject:message-id:date:mime-version:references
+         :in-reply-to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=Le7HKNyvunzvQx/aShnNzGNgI0iOTWFy0ku1BiRO6Xk=;
+        b=u57wIKDXvMXQ5pVuu120fiNkQDSjQT0qPV6RBxISNuvUkbgEnt/76VXcKW2xj0w17r
+         55ShxhLKzcMkuXFgsGWozrS9AGmOFLsOFVJIMrspoJRx0c/jbkP/svw3PUVvRebTM1GC
+         WDYoQAL2lubA4ctkDaEjtzyI2d/1uwZWz3TxAnL02YEQ0mWhqSqelxFBfYL3jKGsxZeY
+         fl5UOz3uIg6gO4FW3KIxFucb9qLXttwonb5tLByWlWgKeWaWqPRDIOc947JS7/gx0Uvl
+         Yt3bB9L9cXDzWHVeoueTEUyi0p7rOj06WNjs1B4d8h6Pw/xKcCvGk1M0HVyxE5okyGJ8
+         CbyA==
+X-Gm-Message-State: APuU4Z8RD+/Hbv4VyfVG2MahHV1r/vSN+8HOCiyGLln5BJsPWMkX/sGw
+	69KEHcvzAvM3nwLH7XwqDD0+obdUjQGQTulhutmrhXeGfo7fB45uAt0+ZJ+xt9q2q1SjA34Xaob
+	DgeloIUQe3qUmCJibn6V1lEm2sjfsQR0=
+X-Gm-Gg: AYBFou0jRlCHeYqispUqYHvTN5crkwgfLr9nhO+2s5r/RZqip3/qaU/dm45VZG52bHv
+	FrgAh4s+RG7EdcGBSTFb+7Geaxt0/dmfMJ2UMOyVQIbHaer/miEe0HgaLge2pcYJCPNpByy+2MY
+	8OarVzQcA02sCzB19zwGelSXGtzv7qKo7cHKL8seSSbTAJtE1gHgwSmmGCCIy+APlIMlqAGE+ok
+	YsL/HDbGxOiy9qEsM5bLRV0IjGew2+Jubnwtv1x86P5Nq0Q065y8lL+ZjXtggN7FESAFx7H1BiZ
+	FLD4QbKXHdbopDfiSUQndRTUkctCP2b9ImJNGnhlFJwQZdMQ/njEKESRxO2XzHZKzNwzdyu0q+s
+	+K6QlqVwKVLv9Whu+HzxRcplN5lNTmPkwYS3Mt/g5JTa/RFA6H1zenbS9FnLo/8zzibKAkoQ=
+X-Received: by 2002:a05:6808:3a13:b0:540:5827:6d8a with SMTP id
+ 5614622812f47-5640de8d663mr11690958b6e.66.1793832118868; Wed, 04 Nov 2026
+ 14:41:58 -0800 (PST)
+Received: from 41474967715 named unknown by gmailapi.google.com with HTTPREST;
+ Wed, 4 Nov 2026 22:41:57 +0000
+Received: from 41474967715 named unknown by gmailapi.google.com with HTTPREST;
+ Wed, 4 Nov 2026 22:41:57 +0000
+From: Kirtikumar Anandrao Ramchandani <kirtiar15502@gmail.com>
+X-Mailer: git-send-email 2.54.0.windows.1
+In-Reply-To: <CADZg-m1A5qKMfXGtQw_s9-tYDL-NinDX8bNAxurFkrWRRq7ZeA@mail.gmail.com>
+References: <CADZg-m1A5qKMfXGtQw_s9-tYDL-NinDX8bNAxurFkrWRRq7ZeA@mail.gmail.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,49 +109,64 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Date: Wed, 4 Nov 2026 22:41:57 +0000
+X-Gm-Features: AclHuK8G_S36ePhSP8ix8BUldjXx979HTJRdUgyJDXB9GJjPu8eEhpUl8IqLEfM
+Message-ID: <CADZg-m06Zf1c63em8uJaDKVQu68sHbdBi1oZw7JAbhUtvk5nXQ@mail.gmail.com>
+Subject: [PATCH v2] dm: Reject table setup after queue or disk teardown
+To: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, 
+	bmarzins@redhat.com
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	syzkaller-bugs@googlegroups.com, 
+	syzbot+5307e3bcacec2ce4c2f0@syzkaller.appspotmail.com
+Content-Type: text/plain; charset="UTF-8"
 
-On an error in __send_zone_reset_all(), the submission reference
-held by the dm_io can be decremented there and again by the caller's
-error path. If another clone is still outstanding, the second drop
-can release the dm_io before that clone completes.
+A failed table load can leave a mapped device in a state where its
+queue has already been initialized or its disk has been removed, while
+md->type is still DM_TYPE_NONE. A later table load then calls
+blk_mq_init_allocated_queue() on the same queue. If del_gendisk() exited
+the old hardware contexts, blk_mq_exit_hctx() dereferences their cleared
+flush queue pointer.
 
-Only drop the submission reference in __send_zone_reset_all() on
-success. On failure, leave the reference for the caller's existing
-error handling to release once.
+Reject setup attempts after queue initialization or disk removal. A
+failed request queue initialization still leaves md->tag_set NULL and
+can be retried. Set the request-based disk operations only after that
+initialization succeeds, so an unsuccessful attempt cannot leave a
+bio-based retry with request-based operations.
 
-The error path was reproduced under KASAN with an injected GFP_NOIO
-allocation failure while another zone-reset clone remained in
-flight. With the change, the same failure was reported normally,
-without the observed use-after-free, and ordinary zone resets
-continued to work.
-
-Fixes: 81e7706345f06 ("dm: handle REQ_OP_ZONE_RESET_ALL")
-Assisted-by: ZCode:GLM-4
-Signed-off-by: Yaohan Li <shunsheng1218@gmail.com>
+Reported-by: syzbot+5307e3bcacec2ce4c2f0@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=5307e3bcacec2ce4c2f0
+Signed-off-by: Kirtikumar Anandrao Ramchandani <kirtiar15502@gmail.com>
 ---
- drivers/md/dm.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+Changes in v2:
+- Resend as plain text after the previous mail client reformatted the diff.
+
+ drivers/md/dm.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1881d86111fb2..c373cd3f635fc 100644
+index 1881d86..2f3f1ec 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -1929,8 +1929,13 @@ static blk_status_t __send_zone_reset_all(struct clone_info *ci)
- 			break;
- 	}
- 
--	/* Release the reference that alloc_io() took for submission. */
--	atomic_sub(1, &ci->io->io_count);
-+	/*
-+	 * Release the reference that alloc_io() took for submission. On error,
-+	 * that reference was not consumed: dm_split_and_process_bio() releases
-+	 * it on the error path, so do not release it here a second time.
-+	 */
-+	if (sts == BLK_STS_OK)
-+		atomic_sub(1, &ci->io->io_count);
- 
- 	return sts;
- }
--- 
-2.34.1
+@@ -2606,13 +2606,17 @@ int dm_setup_md_queue(struct mapped_device
+*md, struct dm_table *t)
 
+ 	WARN_ON_ONCE(type == DM_TYPE_NONE);
+
++	/* A failed setup may have left the queue initialized or the disk dead. */
++	if (md->tag_set || test_bit(GD_DEAD, &md->disk->state))
++		return -ENODEV;
++
+ 	if (type == DM_TYPE_REQUEST_BASED) {
+-		md->disk->fops = &dm_rq_blk_dops;
+ 		r = dm_mq_init_request_queue(md, t);
+ 		if (r) {
+ 			DMERR("Cannot initialize queue for request-based dm mapped device");
+ 			return r;
+ 		}
++		md->disk->fops = &dm_rq_blk_dops;
+ 	}
+
+ 	r = dm_calculate_queue_limits(t, &limits);
+
+base-commit: 05441d697f7f9a927264f4058cbbc6a03dfcac9d
