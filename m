@@ -1,79 +1,86 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793846941;
-	b=TBZycIdZT5Sr/7QEbmRkr3rriE9VaIaKzPbP8eBxSeHlVy7QK/HkKyf9y6dOazRmiu+Z
-	 tAGM25He0jdTcLIIJ/r4MEHOmomMuLATou1Af5Hi2toKYp6pDdjvKlITZL2uqxalU9nMO
-	 UJZDhP/SlSQe+HWp7gsz0qc2HuyyCn5kUuMNG74mRVHz9owTE6+2ADGwvsPJUrZ6TtFcB
-	 kJNiOP8/s1GZytRBLLQr1afpFNvw4ZJIJxvtEFqwjr8bll58hU7QqwlHlWmVOb/ThvBlX
-	 Dzp2xgOan1nat5E1J9QywUtIGzmHe907MyZ+59h6mcCsPvhUcmZgrfJPKj+pIzBxANg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793846941;
-	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
-	 Content-Type:Message-Id:X-B4-Tracking:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=FKBNEnYTdFQwZoVoFH6/jkTZRVpG1zL+lcRWLILZ58U=;
-	b=u0oBqaJh2E7shNJDieUfTaZ4szuabS00Yg1+eVn1ZaIpZ14T84qc6ZxKkt2FybgBPgjK
-	 to7IjpYifpoyNm3k+Fq1UCK4ZiVM15qbr00wMzZ/jO8wWDfh7RzAEr/ELTekpnkywMyJB
-	 IKzrPo2lCziZKa8jqMt9sIv2va42COfriO6f28B4FK6EMBB9Tz5yOjHAhDkZMVyI60Llr
-	 c1Z4Mj5xm2oRtdT49/kSDU1+lGxMss7itWkcCZ8gpFBun6i/xknXMSZ93nOU2G7nv/YSf
-	 7dutIBemVrBfgu6Og6dFzPSrva5xc99ycLPwCoLbrybHe3B+YqyPZUF+xdUvDZweuHA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=b585LFOd;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1793848450;
+	b=AfO4pMNUae3oIVRG37aqdOZOvtKxtQrimRJUkj3pjhUfllKAirRVGSARyI/e/NlMw3zs
+	 FYVpf9iux1Tl2lWJ+VoGNBEFN8xjuimZXJFBCAF6K0WeaX2uW5lHNrPQFOEeNfEDxNRXH
+	 hzE1sZCHXxiXuLLBB2J972x0L3OCLg/hkRIhfLqTLbEAv8PA8NqWDCA3RyIQlF6eSgVW5
+	 U+dQO7q8/pWm3ql1sWpzRbFiHxZFO+h8GoCwBoz6g4s49XJQSm0489o48ppWT6ZZ75cVm
+	 zK5BcrGh9GT987EnAubA4R+9VWPXfpDkz/q9uvEujlmJu0ox7Z9pRRMrPet+42xLg3Q==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793848450;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=L0N4h6zVhz8n4j2GJtb5w0EICipqh7ENfZG1U4Wef4U=;
+	b=GUIk+NsxyXYUm9+SOv01iOC3shu8KTEmtxSHunS2fzQ9cMwhXu5OF5wpV44hDMwJPV5K
+	 rwTcSDYvlelnH0qB/uOpnPnXqnEhaebdbEAkBca+gdskFtPUZsTP2LGAh54wvHoNNs34S
+	 DgBELPzKXLIgPyYVfKsu8FwpbD4WmY5LBmxn6ZugUAgTex44VaGolRNHBpCfZprY4RENb
+	 BD8nVy7+90C/Z0UszvnPQhxw1hilk0PugU2rp61EsTuFtBRLFtfE1YJLkiN/V3rKIws8i
+	 RCqMvHxdGLbsf7CDrUqhDeEob6vHh+TkGqvpZJOKEdawNfV3x3bODKIS9JHOAclNCyg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGmC66uV;
+	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 707C3606A326;
-	Thu,  5 Nov 2026 02:49:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 4D548606A326;
+	Thu,  5 Nov 2026 03:14:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=b585LFOd
-Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
-ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
-	t=1793846941;
-	b=Df4MJKgAFqapVFsyYMzwYH/h2mGgurMkKm+lSFJy7ok2xjBDZRS1sTpdzD4v0xao2Wup
-	 ltBTj8LTJkB7f8BOgZyKmgAR3wHS8QlfIoXI5Pyjv9Adckbg5CGU9AMJAFr+KslB7jRd9
-	 rEaINQpW+mMPr8twyEOgV/ZeSpdq6cjZrpkTPlgoHw1uAeQBeZ/b/P4rElY6+UjFY8cJL
-	 TCSNaR0ZxPKfOT05uu7lJV5lFd63gDvcKFGOnM+i+dfWGqxUXb+chrZfGf5R5QUi14Kce
-	 9Fqijrah1eD+m3c+MGCa/A5TkCBGSYcb0qsG+vMLUUvR/Y+PmPrc/C24LouAgpxJQng==
-ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
-	c=relaxed/relaxed; t=1793846941;
-	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
-	 Message-Id:X-B4-Tracking:To:Cc:X-Mailer:X-Developer-Signature:
-	 X-Developer-Key:X-Endpoint-Received:X-Original-From:Reply-To:
-	 Content-Transfer-Encoding;
-	bh=FKBNEnYTdFQwZoVoFH6/jkTZRVpG1zL+lcRWLILZ58U=;
-	b=2KaIaqBD4rOGNpNwP/1NP5KEsj4UrDZfozAzp6kNjVITNU4ozgklwci3GyehxTC44JPY
-	 PGgMUmoC+RQy29qFEhBG8yb2bfYtIDPEVS5R0jsXv9/8JGyzOieZ0WnZ8yUrbvInP13yc
-	 o0P4//0JTgp8tNRkuUpsaro9c2VBSebzIysWOqtpcJpc6QVU8HJn471OfM20BKP4j9/Tf
-	 3atRVCmq4YdTrJtK0cKWODxOzCyb9BTRl7Ja5poBWcsCJedk6DotgMW66jaLq9N6MQptU
-	 32Ut/HTRiEaNirDnHR+UAWE1qbnn4oXo8xTaWILt8QJkWeDDRPNoqTopBHmwAEe5CDA==
-ARC-Authentication-Results: i=1; smtp.kernel.org; 
-	arc=none smtp.remote-ip=100.80.115.77
-Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.kernel.org (Postfix) with ESMTPS id 589471F000C1;
-	Thu,  5 Nov 2026 02:49:00 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGmC66uV
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6A3771F000C1;
+	Thu,  5 Nov 2026 03:14:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793846940;
-	bh=FKBNEnYTdFQwZoVoFH6/jkTZRVpG1zL+lcRWLILZ58U=;
-	h=From:Date:Subject:To:Cc:Reply-To;
-	b=b585LFOd6PoGVcUY+koOjRbY7jcmMttI1FUjVplyfa7agfoRVP8L+JvWZ1MQtlamR
-	 Z8lU5v7t3g+aqdd7kjOn0+7eGYCDjTMzmbzU/JLnkRHH0LfdTEnYd6Vp7DIzsVPizZ
-	 +yF8LyMJMfYC7te38EXJ5x78PjOX+cAqTq8ero3BuoGOgMhkgSM0ks6ubgRqNhU6Gl
-	 /FaFKa0HXMvCkPoKlZo8PpjIHmF0ym+0kUiKFiTmc/WDgJiqZg/kbz2mrlCWbZephR
-	 JIatxY69i1kHfyZUbK4bKgSe7erR7WuvDuxjYWVskz1Z1ESq32/3WvCCShtN8KaduA
-	 7mqN2djaTRNbg==
-Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
-	by lkml.kernel.org (Postfix) with ESMTP id ABEAA4704A;
-	Thu,  5 Nov 2026 02:48:59 +0000 (UTC)
-From: Daejun Park via B4 Relay <devnull+daejun7.park.samsung.com@kernel.org>
-Date: Thu, 05 Nov 2026 11:49:00 +0900
-Subject: [PATCH] dm-log-writes: log earlier flushes' writes when a later
- flush completes
+	s=k20260515; t=1793848450;
+	bh=L0N4h6zVhz8n4j2GJtb5w0EICipqh7ENfZG1U4Wef4U=;
+	h=From:To:Cc:Subject:Date;
+	b=jGmC66uVgeCFbUHtFNO+hOg7MvGttGjB44HcZJG1rIT6uKwQfi1MZ2Lvr6F8aBY4e
+	 A0cjaJ/aAALAR7+ZFjmJWaml6VRQ9nVFe1wlRz2BGJLY8S1y8G6d2S8Og/PwqvDoSp
+	 c3oK6/vxt1PDDOIwP3qlFWmsYf9lu3GNyrHrv5N/F77eBFP1a7pUn3mOB6xPOnUokQ
+	 pJG5jkSHowFEYfgVlfrWpwh2c5oE65zdr+uzjaLW2WGPPnUjkz3a5uHl7ld9/oKaG8
+	 4tEBGahu5k1NChvzYP6Fwc3/8Axpv7tkWBhUOKfHb33dJgE0EiuTD2n7Fd6TBiPDnG
+	 FYIcNuJtr/VhQ==
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
+	bpf@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	fsverity@lists.linux.dev,
+	keyrings@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Alexei Starovoitov <ast@kernel.org>,
+	Alex Shi <alexs@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Dongliang Mu <dzm91@hust.edu.cn>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Emil Tsalapatis <emil@etsalapatis.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Ihor Solodrai <ihor.solodrai@linux.dev>,
+	James Morris <jmorris@namei.org>,
+	Jiri Olsa <jolsa@kernel.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Song Liu <song@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Yanteng Si <si.yanteng@linux.dev>,
+	Yonghong Song <yonghong.song@linux.dev>
+Subject: [PATCH v5 0/3] KEYS: Replace assoc_array with rhashtable
+Date: Thu,  5 Nov 2026 05:13:58 +0200
+Message-ID: <20261105031401.956609-1-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -83,171 +90,154 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Message-Id: <20261105-dmlw-flush-order-v1-1-4f154e06bc78@samsung.com>
-X-B4-Tracking: v=1; b=H4sIAJvu62oC/x3MSQqAMAxA0auUrA3YguNVxIW0qQbUSooDFO9uc
- fkW/yeIJEwRepVA6OLIYc/QhQK7TPtMyC4bTGlqrcsK3bbe6NczLhjEkeBETdcaWzlvasjZIeT
- 5+ZfD+L4fp3Lx02IAAAA=
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Cc: Josef Bacik <josef@toxicpanda.com>, fstests@vger.kernel.org, 
- linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
- Daejun Park <daejun7.park@samsung.com>
-X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1793846939; l=5569;
- i=daejun7.park@samsung.com; s=20261006; h=from:subject:message-id;
- bh=QMRPbrKH67WwaocGnLh1SuH2BjgDRIWTU01gSB6rW3k=;
- b=tqLmSXBijEpYe5T4s0jo8SrtcUdu54mPjNscxK+IvpTmPO+zaxGm2962Y69S4Y0hU5qGV/HEb
- us+23pU/duUDY/1bGrXInEfptTzvY5eKlV5MdiRw8qNavJFmTaKqhzH
-X-Developer-Key: i=daejun7.park@samsung.com; a=ed25519;
- pk=4yUfDqGRZTIj0Ik43z1GoMZRWCNm/rgX6uJuM9dtNIg=
-X-Endpoint-Received: by B4 Relay for daejun7.park@samsung.com/20261006 with
- auth_id=1122
-X-Original-From: Daejun Park <daejun7.park@samsung.com>
-Reply-To: daejun7.park@samsung.com
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-From: Daejun Park <daejun7.park@samsung.com>
+The keyrings subsystem is the sole user of assoc_array. It has over 1700
+lines of code, no test suite, and a long history of bugs, with LLMs now
+finding more.
 
-Each flush takes the writes that completed since the previous flush
-was issued, and logs them when it completes. If a later flush
-completes first, the earlier flush's writes are logged after anything
-logged in between, such as a mark. A replay to that mark then misses
-writes that were already stable. Crash consistency tests report this
-as data loss.
+This unfortunate outcome has evolved over time by large from the shortage
+of in-kernel callers, time bandwidth and 3rd party contributors.
 
-Those writes completed before the later flush was issued, so its
-completion makes them stable. Log them when it completes, and document
-this in log-writes.rst.
+What the keyrings subsystem needs is just a generic key-value store, which
+performs well with sparse key sets. Replace assoc_array with an
+rhashtable-backed keyring index and remove assoc_array from the kernel.
 
-Fixes: 0e9cebe72459 ("dm: add log writes target")
-Signed-off-by: Daejun Park <daejun7.park@samsung.com>
----
-Found on XFS (xfs for-next, QEMU guest, loop devices on tmpfs) with 8
-writers that each write a block, fsync it and log a mark. A replay to
-the mark missed the fsynced block at 3 of 1408 marks without this
-patch and at none of 1408 with it. generic/455 457 482 757 pass with
-and without it, and KASAN and lockdep report nothing.
----
- .../admin-guide/device-mapper/log-writes.rst       |  6 +++++
- drivers/md/dm-log-writes.c                         | 30 ++++++++++++++++++++++
- 2 files changed, 36 insertions(+)
+CHANGES
+=======
 
-diff --git a/Documentation/admin-guide/device-mapper/log-writes.rst b/Documentation/admin-guide/device-mapper/log-writes.rst
-index 23141f2ffb7..1223803684e 100644
---- a/Documentation/admin-guide/device-mapper/log-writes.rst
-+++ b/Documentation/admin-guide/device-mapper/log-writes.rst
-@@ -36,6 +36,12 @@ Again this is to simulate what is actually on disk, this allows us to detect
- cases where a power failure at a particular point in time would create an
- inconsistent file system.
- 
-+If a later REQ_PREFLUSH request completes while an earlier one is still in
-+flight, the WRITEs attached to the earlier request are logged then, ahead of the
-+later request's own WRITEs. They completed before the later REQ_PREFLUSH was
-+issued, so they are on disk as well. The earlier FLUSH is logged when it
-+completes.
-+
- Any REQ_FUA requests bypass this flushing mechanism and are logged as soon as
- they complete as those requests will obviously bypass the device cache.
- 
-diff --git a/drivers/md/dm-log-writes.c b/drivers/md/dm-log-writes.c
-index c72e07c3f5a..982a240f031 100644
---- a/drivers/md/dm-log-writes.c
-+++ b/drivers/md/dm-log-writes.c
-@@ -115,6 +115,7 @@ struct log_writes_c {
- 	spinlock_t blocks_lock;
- 	struct list_head unflushed_blocks;
- 	struct list_head logging_blocks;
-+	struct list_head inflight_flushes;
- 	wait_queue_head_t wait;
- 	struct task_struct *log_kthread;
- 	struct completion super_done;
-@@ -128,6 +129,7 @@ struct pending_block {
- 	char *data;
- 	u32 datalen;
- 	struct list_head list;
-+	struct list_head flush_list;
- 	struct bio_vec vecs[];
- };
- 
-@@ -526,6 +528,7 @@ static int log_writes_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	}
- 	spin_lock_init(&lc->blocks_lock);
- 	INIT_LIST_HEAD(&lc->unflushed_blocks);
-+	INIT_LIST_HEAD(&lc->inflight_flushes);
- 	INIT_LIST_HEAD(&lc->logging_blocks);
- 	init_waitqueue_head(&lc->wait);
- 	init_completion(&lc->super_done);
-@@ -629,6 +632,7 @@ static void log_writes_dtr(struct dm_target *ti)
- 
- 	WARN_ON(!list_empty(&lc->logging_blocks));
- 	WARN_ON(!list_empty(&lc->unflushed_blocks));
-+	WARN_ON(!list_empty(&lc->inflight_flushes));
- 	dm_put_device(ti, lc->dev);
- 	dm_put_device(ti, lc->logdev);
- 	kfree(lc);
-@@ -688,6 +692,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
- 		spin_unlock_irq(&lc->blocks_lock);
- 		return DM_MAPIO_KILL;
- 	}
-+	INIT_LIST_HEAD(&block->flush_list);
- 	INIT_LIST_HEAD(&block->list);
- 	pb->block = block;
- 	atomic_inc(&lc->pending_blocks);
-@@ -717,6 +722,7 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
- 	if (flush_bio && !bio_sectors(bio)) {
- 		spin_lock_irq(&lc->blocks_lock);
- 		list_splice_init(&lc->unflushed_blocks, &block->list);
-+		list_add_tail(&block->flush_list, &lc->inflight_flushes);
- 		spin_unlock_irq(&lc->blocks_lock);
- 		goto map_bio;
- 	}
-@@ -764,6 +770,29 @@ static int log_writes_map(struct dm_target *ti, struct bio *bio)
- 	return DM_MAPIO_REMAPPED;
- }
- 
-+/*
-+ * A flush mapped before @block holds writes that completed before @block was
-+ * mapped, so @block's completion makes them stable. Queue them ahead of
-+ * @block's own writes. inflight_flushes holds the empty flushes, in map order,
-+ * whose writes are not yet queued.
-+ */
-+static void log_earlier_flushes(struct log_writes_c *lc,
-+				struct pending_block *block)
-+{
-+	struct pending_block *prev;
-+
-+	lockdep_assert_held(&lc->blocks_lock);
-+	if (list_empty(&block->flush_list))
-+		return;
-+	while ((prev = list_first_entry(&lc->inflight_flushes,
-+					struct pending_block,
-+					flush_list)) != block) {
-+		list_splice_tail_init(&prev->list, &lc->logging_blocks);
-+		list_del_init(&prev->flush_list);
-+	}
-+	list_del_init(&block->flush_list);
-+}
-+
- static int normal_end_io(struct dm_target *ti, struct bio *bio,
- 		blk_status_t *error)
- {
-@@ -776,6 +805,7 @@ static int normal_end_io(struct dm_target *ti, struct bio *bio,
- 
- 		spin_lock_irqsave(&lc->blocks_lock, flags);
- 		if (block->flags & LOG_FLUSH_FLAG) {
-+			log_earlier_flushes(lc, block);
- 			list_splice_tail_init(&block->list, &lc->logging_blocks);
- 			list_add_tail(&block->list, &lc->logging_blocks);
- 			wake_up_process(lc->log_kthread);
+v5:
+- Eric Biggers: Include <linux/jhash.h> explicitly in keyring.c.
+- Eric Biggers: Document why hashing type/domain_tag pointers with SipHash
+  and truncating the digest to 32 bits are safe.
+- Eric Biggers: Rework the commit message for "KEYS: Replace assoc_array
+  with rhashtable", including behavioral and operational changes.
+- Retry rhashtable_insert_fast() on transient -EBUSY in __key_link_begin().
 
----
-base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
-change-id: 20261105-dmlw-flush-order-ae7982c5df26
+v4:
+- Eric Biggers: Correct the kerneldoc summary for keyring_is_empty().
+- Eric Biggers: Truncate keyring_index_key hash to u32 and drop index_id.
+- Eric Biggers, David Howells: Use a proper struct instead of a two-element
+  array to pass the edits.
+- Eric Biggers: __keyring_link(): Call key_put() in the rollback of
+  rhashtable_replace_fast().
+- Eric Biggers: Retract from using __free(kfree) in keyring_get_index().
+- Eric Biggers: Reuse keyring_link_key() in keyring_obj_cmpfn().
+- Eric Biggers: Document why keyring_index_free() uses queue_rcu_work().
+- Eric Biggers: Fix the commit message for "KEYS: Replace assoc_array with
+  rhashtable".
 
-Best regards,
--- 
-Daejun Park <daejun7.park@samsung.com>
+v3:
+- Since David is away for the next week I decided to address the
+  low hanging fruit that I reported myself.
+- Unified and sanitized function and variable naming and removed
+  unnecessary asymmetry e.g., by renaming keyring_remove_all_links
+  as keyring_index_free, 'links' as 'index' and '_edit' as 'edit'.
+- Flattened the implementation by refactoring out some useless
+  wrappers and other constructs.
+- Addressed continuation after triggered WARN_ON() on at the three
+  sites that I've described in my email response to the previous
+  patch set version.
+- Reworked keyring_read() so that it triggers the scheduler between
+  the iterations.
+- Dropped "Assisted-by: LLM" tag because checkpatch.pl told me so.
 
+v2:
+- Tried to address all the issues pointed out by David and Eric. Tell me
+  if something was ignored, as that would be an unintentional mishap.
+- Updated and trimmed the source code comments.
+- For assoc_array_edit I decided to go with two-element pointer array,
+  which shifts a bit what David suggested.
+- Dropped is_keyring flag. It was so obvious call so I mention it here
+  just in case because too obvious maxes out my self-doubt ;-)
+- Used cleanup.h primitives where I possibly could especially in order
+  to make fallible initializations more bug-resistant.
+- The already-ack'd bug fixes are included but will be dropped as soon
+  as I've sent them over to Linus.
+
+VERSIONS
+========
+
+- v4:
+  https://lore.kernel.org/keyrings/20261029232437.2581640-1-jarkko@kernel.org/
+- v3:
+  https://lore.kernel.org/keyrings/20261025001105.1824178-1-jarkko@kernel.org/
+- v2:
+  https://lore.kernel.org/keyrings/20261023120953.1206778-1-jarkko@kernel.org/
+- v1:
+  https://lore.kernel.org/keyrings/20261016215326.4110064-1-jarkko@kernel.org/
+
+Cc: bpf@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+Cc: fsverity@lists.linux.dev
+Cc: keyrings@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-kselftest@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Alexei Starovoitov <ast@kernel.org>
+Cc: Alex Shi <alexs@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andrii Nakryiko <andrii@kernel.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Dongliang Mu <dzm91@hust.edu.cn>
+Cc: Eduard Zingerman <eddyz87@gmail.com>
+Cc: Emil Tsalapatis <emil@etsalapatis.com>
+Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Ihor Solodrai <ihor.solodrai@linux.dev>
+Cc: James Morris <jmorris@namei.org>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Jiri Olsa <jolsa@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Kumar Kartikeya Dwivedi <memxor@gmail.com>
+Cc: Martin KaFai Lau <martin.lau@linux.dev>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Paul Moore <paul@paul-moore.com>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Song Liu <song@kernel.org>
+Cc: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: Yanteng Si <si.yanteng@linux.dev>
+Cc: Yonghong Song <yonghong.song@linux.dev>
+
+Jarkko Sakkinen (3):
+  KEYS: Introduce keyring_is_empty()
+  KEYS: Replace assoc_array with rhashtable
+  lib: Remove assoc_array
+
+ Documentation/core-api/assoc_array.rst        |  564 ------
+ Documentation/core-api/index.rst              |    1 -
+ .../zh_CN/core-api/assoc_array.rst            |  473 -----
+ .../translations/zh_CN/core-api/index.rst     |    1 -
+ drivers/md/dm-verity-verify-sig.c             |    2 +-
+ fs/verity/signature.c                         |    2 +-
+ include/keys/keyring-type.h                   |    1 -
+ include/linux/assoc_array.h                   |   88 -
+ include/linux/assoc_array_priv.h              |  178 --
+ include/linux/key-type.h                      |    1 -
+ include/linux/key.h                           |   29 +-
+ kernel/bpf/keys.c                             |    2 +-
+ lib/Kconfig                                   |   14 -
+ lib/Makefile                                  |    1 -
+ lib/assoc_array.c                             | 1724 -----------------
+ security/keys/Kconfig                         |    1 -
+ security/keys/internal.h                      |   14 +-
+ security/keys/key.c                           |   22 +-
+ security/keys/keyring.c                       |  994 +++++-----
+ security/keys/request_key.c                   |    8 +-
+ .../dm-verity/test-dm-verity-keyring.sh       |    2 +-
+ 21 files changed, 479 insertions(+), 3643 deletions(-)
+ delete mode 100644 Documentation/core-api/assoc_array.rst
+ delete mode 100644 Documentation/translations/zh_CN/core-api/assoc_array.rst
+ delete mode 100644 include/linux/assoc_array.h
+ delete mode 100644 include/linux/assoc_array_priv.h
+ delete mode 100644 lib/assoc_array.c
+
+--
+2.47.3
 
