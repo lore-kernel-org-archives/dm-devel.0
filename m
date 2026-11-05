@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793848450;
-	b=AfO4pMNUae3oIVRG37aqdOZOvtKxtQrimRJUkj3pjhUfllKAirRVGSARyI/e/NlMw3zs
-	 FYVpf9iux1Tl2lWJ+VoGNBEFN8xjuimZXJFBCAF6K0WeaX2uW5lHNrPQFOEeNfEDxNRXH
-	 hzE1sZCHXxiXuLLBB2J972x0L3OCLg/hkRIhfLqTLbEAv8PA8NqWDCA3RyIQlF6eSgVW5
-	 U+dQO7q8/pWm3ql1sWpzRbFiHxZFO+h8GoCwBoz6g4s49XJQSm0489o48ppWT6ZZ75cVm
-	 zK5BcrGh9GT987EnAubA4R+9VWPXfpDkz/q9uvEujlmJu0ox7Z9pRRMrPet+42xLg3Q==
+	t=1793848454;
+	b=Hd7ceMW04HfPhRGl7NGL0SLveu/oMOMJUe7YVJEpzR7SMZDyVe1YBMo65+8AzQ6M1coY
+	 5GQReNSICIJBn4hqET7KC+fOUGxAxnaMruSxTb41iaFd/vd4iJZ8v9xjaT0w36Up7zGmG
+	 37zNNhOUKOZTFcqO8zBGYSKIODE2oYMXrD+m7r9ICct4PF65T6VwKoIsL5zssWf+eIOUO
+	 LZVpCS/CKrzExoj2eOUz1rjPMQ+ZP4kH+RpY1vq9hUU1OGDxuRYuvm8K3ttNhh8lveIkr
+	 xuQ3Gv70OmQm499QKNZGDhCHWd4eWw6fa9ScswPgGqeenNpaRi8Zba0oi9j+LhJ+ntA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793848450;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793848454;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=L0N4h6zVhz8n4j2GJtb5w0EICipqh7ENfZG1U4Wef4U=;
-	b=GUIk+NsxyXYUm9+SOv01iOC3shu8KTEmtxSHunS2fzQ9cMwhXu5OF5wpV44hDMwJPV5K
-	 rwTcSDYvlelnH0qB/uOpnPnXqnEhaebdbEAkBca+gdskFtPUZsTP2LGAh54wvHoNNs34S
-	 DgBELPzKXLIgPyYVfKsu8FwpbD4WmY5LBmxn6ZugUAgTex44VaGolRNHBpCfZprY4RENb
-	 BD8nVy7+90C/Z0UszvnPQhxw1hilk0PugU2rp61EsTuFtBRLFtfE1YJLkiN/V3rKIws8i
-	 RCqMvHxdGLbsf7CDrUqhDeEob6vHh+TkGqvpZJOKEdawNfV3x3bODKIS9JHOAclNCyg==
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=d57Xwxdq7ggCiZHh4PGNXJufaWf8Hx04l8Vo55VakVk=;
+	b=PNALdDJkv6X1Lwsq1NqV01RMVivLHn9yxkPOaudkeLdRJPVnUQp4CIcQW1/k6LVhi5cy
+	 6Ub0wQLVArxK5zUxBm4jDIjdFr801SO0uzs9QQ6aWoxrKk7qCMPLoOE4y1+SWT8zZXaIP
+	 1zNrDPEyoJnP/OAMEcvVHUgIb5t5FMGOBRS/MPdH3HB855+KBFaI6FM8TrIciOPPGaP0N
+	 GA1U8Ac5X6YEcwP6IG1oNz5fJ2AwfCv2rOXUs68UJa3EhkBnIGrFHyaZ1MZKleVaYWtjD
+	 j28G+/f89EfJvkcvpaV0Kdfec01K4TwWVJKfnTorQJn0+i5H8Ch/18Wn/CWuA4UD0Uw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGmC66uV;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VgdQBmAF;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 4D548606A326;
-	Thu,  5 Nov 2026 03:14:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 6EA03606A334;
+	Thu,  5 Nov 2026 03:14:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGmC66uV
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6A3771F000C1;
-	Thu,  5 Nov 2026 03:14:09 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VgdQBmAF
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6A2C11F00A15;
+	Thu,  5 Nov 2026 03:14:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793848450;
-	bh=L0N4h6zVhz8n4j2GJtb5w0EICipqh7ENfZG1U4Wef4U=;
-	h=From:To:Cc:Subject:Date;
-	b=jGmC66uVgeCFbUHtFNO+hOg7MvGttGjB44HcZJG1rIT6uKwQfi1MZ2Lvr6F8aBY4e
-	 A0cjaJ/aAALAR7+ZFjmJWaml6VRQ9nVFe1wlRz2BGJLY8S1y8G6d2S8Og/PwqvDoSp
-	 c3oK6/vxt1PDDOIwP3qlFWmsYf9lu3GNyrHrv5N/F77eBFP1a7pUn3mOB6xPOnUokQ
-	 pJG5jkSHowFEYfgVlfrWpwh2c5oE65zdr+uzjaLW2WGPPnUjkz3a5uHl7ld9/oKaG8
-	 4tEBGahu5k1NChvzYP6Fwc3/8Axpv7tkWBhUOKfHb33dJgE0EiuTD2n7Fd6TBiPDnG
-	 FYIcNuJtr/VhQ==
+	s=k20260515; t=1793848454;
+	bh=d57Xwxdq7ggCiZHh4PGNXJufaWf8Hx04l8Vo55VakVk=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=VgdQBmAFZs7l45kySOt1KaURQxQBpI2W7uJgqVFaQwbaaNBsyaOCNcAh/9wOhyKAe
+	 OIlClBLYE4vwVfPsOkEfp628ND79LS1HjHHuIqEIy4EDzNE+6pZsLzXidmBbPSKqUg
+	 ila5gkcd4EXi4u7OJghEIiyPf1HfmcrFxfd01TdSO/Weo3IP4x//Ezi6njHCNtEMmK
+	 wIESO/hyhzH4UbRVvc1Dvj84es71LNee33JVW2YUoMOUnNkyVDBc1jS+h4c15wT6u8
+	 1LzvYeIwlR0nOTVl7TR2KaRxZx/oYCw/Qlojbs2FERLNLzmqr84oZREBGlzOYy7k1+
+	 YsGnaBS8WblHA==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: David Howells <dhowells@redhat.com>
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -77,10 +77,12 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Theodore Y. Ts'o" <tytso@mit.edu>,
 	Yanteng Si <si.yanteng@linux.dev>,
 	Yonghong Song <yonghong.song@linux.dev>
-Subject: [PATCH v5 0/3] KEYS: Replace assoc_array with rhashtable
-Date: Thu,  5 Nov 2026 05:13:58 +0200
-Message-ID: <20261105031401.956609-1-jarkko@kernel.org>
+Subject: [PATCH v5 1/3] KEYS: Introduce keyring_is_empty()
+Date: Thu,  5 Nov 2026 05:13:59 +0200
+Message-ID: <20261105031401.956609-2-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261105031401.956609-1-jarkko@kernel.org>
+References: <20261105031401.956609-1-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -92,152 +94,105 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The keyrings subsystem is the sole user of assoc_array. It has over 1700
-lines of code, no test suite, and a long history of bugs, with LLMs now
-finding more.
+Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
+fs-verity how keyring internally manages the keys.
 
-This unfortunate outcome has evolved over time by large from the shortage
-of in-kernel callers, time bandwidth and 3rd party contributors.
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+---
+ drivers/md/dm-verity-verify-sig.c                      |  2 +-
+ fs/verity/signature.c                                  |  2 +-
+ include/linux/key.h                                    |  1 +
+ kernel/bpf/keys.c                                      |  2 +-
+ security/keys/keyring.c                                | 10 ++++++++++
+ .../selftests/dm-verity/test-dm-verity-keyring.sh      |  2 +-
+ 6 files changed, 15 insertions(+), 4 deletions(-)
 
-What the keyrings subsystem needs is just a generic key-value store, which
-performs well with sparse key sets. Replace assoc_array with an
-rhashtable-backed keyring index and remove assoc_array from the kernel.
-
-CHANGES
-=======
-
-v5:
-- Eric Biggers: Include <linux/jhash.h> explicitly in keyring.c.
-- Eric Biggers: Document why hashing type/domain_tag pointers with SipHash
-  and truncating the digest to 32 bits are safe.
-- Eric Biggers: Rework the commit message for "KEYS: Replace assoc_array
-  with rhashtable", including behavioral and operational changes.
-- Retry rhashtable_insert_fast() on transient -EBUSY in __key_link_begin().
-
-v4:
-- Eric Biggers: Correct the kerneldoc summary for keyring_is_empty().
-- Eric Biggers: Truncate keyring_index_key hash to u32 and drop index_id.
-- Eric Biggers, David Howells: Use a proper struct instead of a two-element
-  array to pass the edits.
-- Eric Biggers: __keyring_link(): Call key_put() in the rollback of
-  rhashtable_replace_fast().
-- Eric Biggers: Retract from using __free(kfree) in keyring_get_index().
-- Eric Biggers: Reuse keyring_link_key() in keyring_obj_cmpfn().
-- Eric Biggers: Document why keyring_index_free() uses queue_rcu_work().
-- Eric Biggers: Fix the commit message for "KEYS: Replace assoc_array with
-  rhashtable".
-
-v3:
-- Since David is away for the next week I decided to address the
-  low hanging fruit that I reported myself.
-- Unified and sanitized function and variable naming and removed
-  unnecessary asymmetry e.g., by renaming keyring_remove_all_links
-  as keyring_index_free, 'links' as 'index' and '_edit' as 'edit'.
-- Flattened the implementation by refactoring out some useless
-  wrappers and other constructs.
-- Addressed continuation after triggered WARN_ON() on at the three
-  sites that I've described in my email response to the previous
-  patch set version.
-- Reworked keyring_read() so that it triggers the scheduler between
-  the iterations.
-- Dropped "Assisted-by: LLM" tag because checkpatch.pl told me so.
-
-v2:
-- Tried to address all the issues pointed out by David and Eric. Tell me
-  if something was ignored, as that would be an unintentional mishap.
-- Updated and trimmed the source code comments.
-- For assoc_array_edit I decided to go with two-element pointer array,
-  which shifts a bit what David suggested.
-- Dropped is_keyring flag. It was so obvious call so I mention it here
-  just in case because too obvious maxes out my self-doubt ;-)
-- Used cleanup.h primitives where I possibly could especially in order
-  to make fallible initializations more bug-resistant.
-- The already-ack'd bug fixes are included but will be dropped as soon
-  as I've sent them over to Linus.
-
-VERSIONS
-========
-
-- v4:
-  https://lore.kernel.org/keyrings/20261029232437.2581640-1-jarkko@kernel.org/
-- v3:
-  https://lore.kernel.org/keyrings/20261025001105.1824178-1-jarkko@kernel.org/
-- v2:
-  https://lore.kernel.org/keyrings/20261023120953.1206778-1-jarkko@kernel.org/
-- v1:
-  https://lore.kernel.org/keyrings/20261016215326.4110064-1-jarkko@kernel.org/
-
-Cc: bpf@vger.kernel.org
-Cc: dm-devel@lists.linux.dev
-Cc: fsverity@lists.linux.dev
-Cc: keyrings@vger.kernel.org
-Cc: linux-doc@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-kselftest@vger.kernel.org
-Cc: linux-security-module@vger.kernel.org
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Alexei Starovoitov <ast@kernel.org>
-Cc: Alex Shi <alexs@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andrii Nakryiko <andrii@kernel.org>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Daniel Borkmann <daniel@iogearbox.net>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Dongliang Mu <dzm91@hust.edu.cn>
-Cc: Eduard Zingerman <eddyz87@gmail.com>
-Cc: Emil Tsalapatis <emil@etsalapatis.com>
-Cc: Eric Biggers <ebiggers@kernel.org>
-Cc: Ihor Solodrai <ihor.solodrai@linux.dev>
-Cc: James Morris <jmorris@namei.org>
-Cc: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Jiri Olsa <jolsa@kernel.org>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Kumar Kartikeya Dwivedi <memxor@gmail.com>
-Cc: Martin KaFai Lau <martin.lau@linux.dev>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Paul Moore <paul@paul-moore.com>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: Song Liu <song@kernel.org>
-Cc: "Theodore Y. Ts'o" <tytso@mit.edu>
-Cc: Yanteng Si <si.yanteng@linux.dev>
-Cc: Yonghong Song <yonghong.song@linux.dev>
-
-Jarkko Sakkinen (3):
-  KEYS: Introduce keyring_is_empty()
-  KEYS: Replace assoc_array with rhashtable
-  lib: Remove assoc_array
-
- Documentation/core-api/assoc_array.rst        |  564 ------
- Documentation/core-api/index.rst              |    1 -
- .../zh_CN/core-api/assoc_array.rst            |  473 -----
- .../translations/zh_CN/core-api/index.rst     |    1 -
- drivers/md/dm-verity-verify-sig.c             |    2 +-
- fs/verity/signature.c                         |    2 +-
- include/keys/keyring-type.h                   |    1 -
- include/linux/assoc_array.h                   |   88 -
- include/linux/assoc_array_priv.h              |  178 --
- include/linux/key-type.h                      |    1 -
- include/linux/key.h                           |   29 +-
- kernel/bpf/keys.c                             |    2 +-
- lib/Kconfig                                   |   14 -
- lib/Makefile                                  |    1 -
- lib/assoc_array.c                             | 1724 -----------------
- security/keys/Kconfig                         |    1 -
- security/keys/internal.h                      |   14 +-
- security/keys/key.c                           |   22 +-
- security/keys/keyring.c                       |  994 +++++-----
- security/keys/request_key.c                   |    8 +-
- .../dm-verity/test-dm-verity-keyring.sh       |    2 +-
- 21 files changed, 479 insertions(+), 3643 deletions(-)
- delete mode 100644 Documentation/core-api/assoc_array.rst
- delete mode 100644 Documentation/translations/zh_CN/core-api/assoc_array.rst
- delete mode 100644 include/linux/assoc_array.h
- delete mode 100644 include/linux/assoc_array_priv.h
- delete mode 100644 lib/assoc_array.c
-
---
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index 0c65c7a31da8..bd5143aae4fa 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -153,7 +153,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+ 	if (ret != -ENOKEY && ret != -EKEYREJECTED)
+ 		return ret;
+ 
+-	if (dm_verity_keyring->keys.nr_leaves_on_tree &&
++	if (!keyring_is_empty(dm_verity_keyring) &&
+ 	    dm_verity_keyring->restrict_link)
+ 		ret = verify_pkcs7_signature(root_hash, root_hash_len,
+ 					     sig_data, sig_len,
+diff --git a/fs/verity/signature.c b/fs/verity/signature.c
+index 2f49c5d9d987..b45b39b829b2 100644
+--- a/fs/verity/signature.c
++++ b/fs/verity/signature.c
+@@ -70,7 +70,7 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
+ 		return 0;
+ 	}
+ 
+-	if (fsverity_keyring->keys.nr_leaves_on_tree == 0) {
++	if (keyring_is_empty(fsverity_keyring)) {
+ 		/*
+ 		 * The ".fs-verity" keyring is empty, due to builtin signatures
+ 		 * being supported by the kernel but not actually being used.
+diff --git a/include/linux/key.h b/include/linux/key.h
+index 420412aab926..9ff10b780865 100644
+--- a/include/linux/key.h
++++ b/include/linux/key.h
+@@ -439,6 +439,7 @@ extern int restrict_link_reject(struct key *keyring,
+ 				struct key *restriction_key);
+ 
+ extern int keyring_clear(struct key *keyring);
++bool keyring_is_empty(const struct key *keyring);
+ 
+ extern key_ref_t keyring_search(key_ref_t keyring,
+ 				struct key_type *type,
+diff --git a/kernel/bpf/keys.c b/kernel/bpf/keys.c
+index bffc356839ac..24e0416abc99 100644
+--- a/kernel/bpf/keys.c
++++ b/kernel/bpf/keys.c
+@@ -29,7 +29,7 @@ struct bpf_key *bpf_lookup_keyring(void)
+ 
+ 	if (!bpf_keyring)
+ 		return NULL;
+-	if (!READ_ONCE(bpf_keyring->keys.nr_leaves_on_tree) ||
++	if (keyring_is_empty(bpf_keyring) ||
+ 	    !READ_ONCE(bpf_keyring->restrict_link))
+ 		return NULL;
+ 
+diff --git a/security/keys/keyring.c b/security/keys/keyring.c
+index 5281da9d5bf7..ac48d6204915 100644
+--- a/security/keys/keyring.c
++++ b/security/keys/keyring.c
+@@ -443,6 +443,16 @@ static void keyring_destroy(struct key *keyring)
+ 	assoc_array_destroy(&keyring->keys, &keyring_assoc_array_ops);
+ }
+ 
++/**
++ * keyring_is_empty - Check whether a keyring is empty
++ * @keyring: The keyring to check.
++ */
++bool keyring_is_empty(const struct key *keyring)
++{
++	return READ_ONCE(keyring->keys.nr_leaves_on_tree) == 0;
++}
++EXPORT_SYMBOL(keyring_is_empty);
++
+ /*
+  * Describe a keyring for /proc.
+  */
+diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+index 1f9601ef22f8..792449d356cf 100755
+--- a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
++++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+@@ -746,7 +746,7 @@ test_keyring_inactive_when_empty() {
+     log_info "TEST: Verify dm-verity keyring is inactive when sealed empty"
+ 
+     # When keyring_unsealed=0, the keyring is sealed immediately while empty
+-    # This means it should NOT be used for verification (nr_leaves_on_tree=0)
++    # An empty keyring should NOT be used for verification.
+ 
+     log_info "Keyring state (should be empty and sealed):"
+     list_keyring_keys
+-- 
 2.47.3
 
