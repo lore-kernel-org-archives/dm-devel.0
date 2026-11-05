@@ -1,97 +1,81 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=93.188.205.243
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793863641;
-	b=O+xe4w6RzMRyUdziajIyC7Hr8QoyYxq/80+K1oQJNdY0X6En1d1qUU5GAJMFLS1bJGO+
-	 2ne6dyrcQ0JxhMWLDsYweA8PwweykbG70SeKboI4HjU2K500f239QAF0j+HcT0pjr9/yZ
-	 cKSCVc0aV24UQWw205/RyQ/dRUdBLqQnvT2mWkZp90F68OEMcidYdLsz0FhgI5ZDc/zqn
-	 vamws2RGsbB34W+GlbtzDeBK8+mTKoOcq5XCArhvIrqNrBJd021n7y6KbfpGcVRZNNwMd
-	 gLEepPBx6fprjLnmplq9AeY72kl9yusrLnIm27Y1L1myfnIHHQsU6I1E16kgkvgnNwQ==
+	t=1793870380;
+	b=2bUgqmVJMdnPsPNRFTwEvye1UwVSpbsbaXqv5cs/6vS364x+7ZDn6LecXHZ8Bun3c+uB
+	 GSE1RpEIIcG6uNkOB5XmLziB75FAxXBkHxrRWXV42+sedNhbAfzFgRB0MwVXFFdGLQP9p
+	 Zmiqp+m9TciwS8ieqEFxtEiueIuAtEOAHDceLMZbsA6ng1NbAoKfL3ci+mw7DL6wFZbcD
+	 ZvkYfn96SgoAkLr2M6C0RRtCcqrTVK4FAp/ewwR0ozAmQV4YfTPMrXJP/f7v0U4gAhreT
+	 /b7L+rmdj2XZOVXPEk8KlFVN3iyDbwshHt5aTe6VinKG4mFnEWUhX6g4AZfjgToS0UA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793863641;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=y8GAjCpq+HU/Y8vWHx3dnsVw82gvuCD3uIlkSHruyoA=;
-	b=ErzzCGllv3eUMlFIJp3FNjYqUCKnHdphBm5vWljkh5q6ezY6yUXsJ9dK22QEKQv3Scb/
-	 1r3v7VeMqOSwOU0QPMdr24/r2bagxE3hOhw0OsVqbs+yjv1ZDwwrKW7jiwmMadNNLDo1T
-	 /mIh4y7OMq+odKvVe5nxj4e2Y9FTaV7jmuW0yIfuQjlBEl1Z6ERTNi+TPwBgZSlWC4EZv
-	 X+OzdfJRiAhabjWF5KS+s1pjESVFN33RrNWV9PgUjAGf4/EQB1T+11UIN+9udwHdkBMGU
-	 CCx+BKNDUv6HIIHMnA++rRlH5MSZMvLf80z67Z8VeDmQIZ1juhwsVQwPbDcMfXRvaGg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793870380;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:X-Mailer:MIME-Version:Content-Type:
+	 Content-Transfer-Encoding:X-KSMG-AntiPhishing:X-KSMG-AntiSpam-Auth:
+	 X-KSMG-AntiSpam-Envelope-From:X-KSMG-AntiSpam-Info:
+	 X-KSMG-AntiSpam-Interceptor-Info:X-KSMG-AntiSpam-Lua-Profiles:
+	 X-KSMG-AntiSpam-Method:X-KSMG-AntiSpam-Rate:X-KSMG-AntiSpam-Status:
+	 X-KSMG-AntiSpam-Version:X-KSMG-AntiVirus:X-KSMG-AntiVirus-Status:
+	 X-KSMG-LinksScanning:X-KSMG-Message-Action:X-KSMG-Rule-ID;
+	bh=woa/Lo/pD+OHC6mF7/FTcOM9HNtR7yZDJ2YEh+iEG7Q=;
+	b=oP5xhZ1OS6K/UQTDbxKzsCTiWtlRE02v0vb3LoCRdMAzJMUiochu79YS6uwi2zh2BcsJ
+	 3VrsSyGvIvXwMmxZia4zn0kPWRaQeo5BvNbtlXroHzFBhoaxYjaSOWlpuwXS08p/GabXY
+	 PNXRT4s1T2Zb1y/ZBTKlAYmTyytoaxHMVqfZgg1QDf55Q7kAZbngKciTwjp7AHMj3OPHx
+	 by+64OUqm0NvzVKHA4WTQQD8vfCrwbuf51fL3YOLWiqxCgPQg4TIH6QOQOGvE63pX9wqD
+	 gsnM7PkpccDy7ZdnF5HcVWnwaj62asb1J2aoOHpgFjyRdHCNzeyUYCNQ5ysvs4cDcyw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="MFWUH/v6";
-	arc=none smtp.remote-ip=209.85.128.53
-Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=astralinux.ru;
+	spf=pass smtp.mailfrom=astralinux.ru;
+	dkim=pass header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=KQTeaWQl;
+	arc=none smtp.remote-ip=93.188.205.243
+Received: from mail-gw02.astralinux.ru (mail-gw02.astralinux.ru [93.188.205.243])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7301606A33A
-	for <dm-devel@lists.linux.dev>; Thu,  5 Nov 2026 07:27:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E7301606A33A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C46C7606A332
+	for <dm-devel@lists.linux.dev>; Thu,  5 Nov 2026 09:19:32 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C46C7606A332
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=astralinux.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=astralinux.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MFWUH/v6
-Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-4a35db1f202so11442175e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 04 Nov 2026 23:27:20 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793863639; x=1794468439; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=y8GAjCpq+HU/Y8vWHx3dnsVw82gvuCD3uIlkSHruyoA=;
-        b=MFWUH/v6La+bafKrta8KcW9u60ra1iOt5/rk9IpBiEFRXhmraH4LVefdsVal33jnk8
-         sFD8eUoy2xReMe6fRfDh+p+7OqhvnehGIq8C2UC3/nHtUJPv5sgR6ABwj/Yr8x6NacNl
-         3USw1WmQMiXcoF0HSMv5YavOG4IYz1KrJb21MUgvgz+gZ2/Ce91g4z/5Ay6uVCYra76K
-         rxpqHFB5T/8F13UMfegJDfWVf6p9AVOryMBnt5iDuk90PGvMak59UlItNxhWCmxXo9s0
-         bJIDrDOiRjgThhYBaU4iRDTd29K60S/GSnM5TxulSXjqHZiicgEuQsA2xvjZgrw23kcr
-         yD6A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793863639; x=1794468439;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=y8GAjCpq+HU/Y8vWHx3dnsVw82gvuCD3uIlkSHruyoA=;
-        b=Sdo0ApZpuuN9uDW6xSfjFZkKkROsnZ+UOxdDjpL99FmMtNxxf63bizg2E7MDgFh7Gi
-         49SrdSqIQj93EfB/1VaEHo8/CctjbjXOPaUcFFlO6Gm/WZnZdd95GNKLpoe+bI6FByEj
-         HSpRsgjL6r5QE9wZhn333jGeDLm+2AYYLx40wkG1+PkXaBRU/N1AMjBH4+fQAHeormUK
-         spw0Ugtt92a/QLT/axRhGG/OCyJgxdALfvqkoHLBnbEBtZQL1xksjMYUYDemfl2Nb6/F
-         9kD04/iwSLXtJUeSnG5XY+655QVExlUoHg1FoKh9X4r3cUzNK8/NXLHeV0vCJL3AxBca
-         FmjQ==
-X-Gm-Message-State: APuU4Z8jzwsBXfmRrpAjGch9Do4mZ6RNEr9a4nnysNPANMiM7Rn5Y/4U
-	N9YILKWlFmZyLP/TQeqYdBDlVdViU1JWHNJJ9/sqDBcL0oJjGDFubxrP
-X-Gm-Gg: AYBFou1WpMt/Z8Rmebx4TDudczcuklMA8K1hPXiLfvOp/Pl5iIpr0Vvg+hAdwkIgxE9
-	/Fs8JitV8A486UKxpr9zDt4WS7/2gamgeF5MwHYmC+fdMSRm/7PmEKNvwSgof5yqFAlZHnGLcvQ
-	ubMr3PTGvFl+qmE8Nwf8sFozplw/iHgD5h/GGB1SXPccxkvSPGpN7kvoqeBv+E1kwd8CYBBBOhS
-	QcTnSkJTkUVjI+Z+XRJSN1imAJZKDMasgOc3ahariEFBkQLQqUtQpVZLRtVPeZucQk5ye07taAq
-	Oips6Wl0qU3G10JIOawZZNlAk1UeekDowT/uLq+XgEGMnCAtcY/+lnoHXgYibFU9YNLXOsh7Tat
-	vMzlV5Nb5D8coZ08V0C17x9drhoBhosArvL7hSZEAWBJ9nNzIRVNtSMmw7PIv+mHQGMiUJ8LqFR
-	mCMCrYOtxpoyYRWgyWk57G7hfxfWBwN2Wa860jMoqtx2S+UFIxXtEac7hlJVdezYoHiHoiEHfrm
-	mYO7MvNOgbx53nTz07gc4tvOKoNqOusK2Bb0qMaxYks5tCKJdG8bKLcz2QIl+jV1ac6sGt0iCJL
-	Lq5LWH4QVg2kx1IAi8ZJUtv3yhyFbmjpOP4riTYQoFz3hGqcA187RZ7J0reWGWZp0x9OBF18cYy
-	GtnN9Lc/AcWKYw37LbPUkTndg9rhs3pjW52LK+0A0jTO7uKiPriyMmQZlVLrpB8UkGkMF51D6Tf
-	7QKsAYokH162msatiQVYKTsTG6VGs43J1UYYi8yzyuk9a2fSWrGfbnQA==
-X-Received: by 2002:a05:600c:4708:b0:4a2:167a:c93b with SMTP id 5b1f17b1804b1-4ac19234ad8mr404040655e9.30.1793863639149;
-        Wed, 04 Nov 2026 23:27:19 -0800 (PST)
-Received: from localhost.localdomain (dynamic-2a00-1028-8388-a84e-947d-5f15-1dc3-a8b4.ipv6.o2.cz. [2a00:1028:8388:a84e:947d:5f15:1dc3:a8b4])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b56ef2e968sm51013815e9.8.2026.11.04.23.27.18
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 04 Nov 2026 23:27:18 -0800 (PST)
-From: Josef Schlehofer <pepe.schlehofer@gmail.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
+	dkim=pass (2048-bit key, unprotected) header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=KQTeaWQl
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=astralinux.ru;
+	s=mail; t=1793870368;
+	bh=UTXQAGDVCQXDYHLZmlVdJk+MO0ORvqhA0qwsqyZrZKM=;
+	h=From:To:Cc:Subject:Date:From;
+	b=KQTeaWQlCsVrxNFsFGRbvpsHai4yKJ4Wczkk0hjNXT4OXOr3xTEXdImifVbp5NbSd
+	 B33QntsIdl6F5+1AhPWz7WQUKI5aFU71Rh7BMO6yYjvvczj+xDBpGLIprbAvxVebSG
+	 MjTBT48hwqxmLWi7Upb9YUe2ftEiLcG61cgzBFHWbILqoFqyYWyY9wCJ5Jf9JbzGaI
+	 80NddhFe9evMFQ7hFi47qoIWlHEjmnrgkWrJnQenFl0P5HCs0CSHntkKrGlwOcJ9MD
+	 T/XxyQz/T8LIVSD4jjmf3I4H5GAPYGojFWmUN2iwPqC6Ytl0arRi0hlThCpMRAYowu
+	 a7XELWWp5myuA==
+Received: from gca-msk-a-srv-ksmg01.astralinux.ru (localhost [127.0.0.1])
+	by mail-gw02.astralinux.ru (Postfix) with ESMTP id B71241FA28;
+	Thu,  5 Nov 2026 12:19:28 +0300 (MSK)
+Received: from new-mail.astralinux.ru (unknown [10.205.207.13])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail-gw02.astralinux.ru (Postfix) with ESMTPS;
+	Thu,  5 Nov 2026 12:19:26 +0300 (MSK)
+Received: from DESKTOP-D46TNHI (unknown [10.198.31.238])
+	by new-mail.astralinux.ru (Postfix) with ESMTPA id 4jKxb21G5Wz2DQS;
+	Thu, 05 Nov 2026 12:19:26 +0300 (MSK)
+From: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
+To: stable@vger.kernel.org,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Sami Tolvanen <samitolvanen@google.com>,
+	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org,
-	Ignat Korchagin <ignat@linux.win>,
-	Damien Le Moal <dlemoal@kernel.org>,
-	Milan Broz <gmazyland@gmail.com>
-Subject: [PATCH] dm-crypt: defer async write submission to write thread
-Date: Thu,  5 Nov 2026 08:27:08 +0100
-Message-ID: <20261105072708.30722-1-pepe.schlehofer@gmail.com>
-X-Mailer: git-send-email 2.54.0
+	lvc-project@linuxtesting.org
+Subject: [PATCH 5.10/5.15] dm-verity: fix buffer overflow in FEC calculation
+Date: Thu,  5 Nov 2026 12:19:01 +0300
+Message-ID: <20261105091903.1866-1-mdmitrichenko@astralinux.ru>
+X-Mailer: git-send-email 2.54.0.windows.1
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -101,75 +85,79 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-KSMG-AntiPhishing: NotDetected
+X-KSMG-AntiSpam-Auth: dkim=none
+X-KSMG-AntiSpam-Envelope-From: mdmitrichenko@astralinux.ru
+X-KSMG-AntiSpam-Info: LuaCore: 133 0.3.133 d508d579b02cdb6df47808421a9b9e12fc9fb75b, {date_rfc_vio_soft_silent}, {Tracking_from_domain_doesnt_match_to}, new-mail.astralinux.ru:7.1.1;astralinux.ru:7.1.1;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;127.0.0.199:7.1.2, FromAlignment: s
+X-KSMG-AntiSpam-Interceptor-Info: scan successful
+X-KSMG-AntiSpam-Lua-Profiles: 207251 [Nov 05 2026]
+X-KSMG-AntiSpam-Method: none
+X-KSMG-AntiSpam-Rate: 0
+X-KSMG-AntiSpam-Status: not_detected
+X-KSMG-AntiSpam-Version: 6.1.1.27
+X-KSMG-AntiVirus: Kaspersky Secure Mail Gateway, version 2.1.0.7854, bases: 2026/11/05 07:56:00 #28800192
+X-KSMG-AntiVirus-Status: NotDetected, skipped
+X-KSMG-LinksScanning: NotDetected
+X-KSMG-Message-Action: skipped
+X-KSMG-Rule-ID: 1
 
-With no_write_workqueue, kcryptd_crypt_write_io_submit() submits the
-bio directly, even when called from kcryptd_async_done(). An async
-cipher may run this callback in softirq or with BH disabled, where
-submit_bio_noacct() must not be called because it can sleep.
+From: Mikulas Patocka <mpatocka@redhat.com>
 
-Submit inline only when async is false. Async completions are sent to
-the write thread, as is already done for submit_from_crypt_cpus. Use
-the async flag rather than in_interrupt(), since callback context
-depends on the cipher driver. Sync ciphers still submit inline.
+commit 31d6e6c0ba8d5a7bd59660035a089307100c5e8e upstream.
 
-Tested with cryptd in QEMU (x86_64 and arm64) with
-CONFIG_DEBUG_ATOMIC_SLEEP, and on a P2020 running 6.18.55 without it.
+There's a buffer overflow in dm-verity-fec:
 
-In QEMU:
+if (neras && *neras <= v->fec->roots)
+	fio->erasures[(*neras)++] = i;
 
-- 4k writes logging "sleeping function called from invalid context":
-  100/100 unpatched, 0/155 patched.
-- nr_requests=4 on a loop device: 0/6 unpatched runs completed,
-  4/4 patched runs completed.
+This allows *neras to reach roots + 1 (the post-increment pushes it past
+roots). This value is then passed as no_eras to decode_rs8(). Inside the
+RS decoder (lib/reed_solomon/decode_rs.c:113-121), the erasure locator
+polynomial loop writes lambda[j] where j can reach nroots + 1 — one
+element past the end of lambda[] (which is sized nroots + 1, valid
+indices 0..nroots). The out-of-bounds write lands on syn[0], corrupting
+the syndrome buffer.
 
-On the P2020, a warning in blk_mq_run_hw_queue() appeared in the
-6th unpatched run and did not appear in 30 patched runs.
-
-Fixes: 39d42fa96ba1 ("dm crypt: add flags to optionally bypass kcryptd workqueues")
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Assisted-by: Claude:claude-opus-4-6
 Cc: stable@vger.kernel.org
-Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Fixes: a739ff3f543a ("dm verity: add support for forward error correction")
+Reviewed-by: Sami Tolvanen <samitolvanen@google.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+[mdmitrichenko: Omit the erasures array size cleanup. The older
+ implementation already allocates 253 entries, more than the
+ maximum of 24 roots.]
+Signed-off-by: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
 ---
-Based on dm-7.4 (dab527d83462).
+Backport fix for CVE-2026-72098.
 
-To reproduce, with CONFIG_DEBUG_ATOMIC_SLEEP, DM_CRYPT, BLK_DEV_LOOP,
-CRYPTO_CRYPTD, CRYPTO_XTS and CRYPTO_AES:
+ drivers/md/dm-verity-fec.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-  modprobe -a cryptd dm_crypt loop
-  truncate -s 256M /dev/shm/nowq.img
-  L=$(losetup -f)
-  losetup "$L" /dev/shm/nowq.img
-  KEY=$(od -An -v -tx1 -N64 /dev/urandom | tr -d ' \n')
-  dmsetup create nowq --table "0 $((256 * 2048)) crypt capi:cryptd(xts-aes-lib)-plain64 $KEY 0 $L 0 2 no_read_workqueue no_write_workqueue"
-  D=/dev/dm-$(dmsetup info -c --noheadings -o minor nowq)
-  dd if=/dev/urandom of="$D" bs=4k count=1 conv=fsync
-  dmesg | grep 'sleeping function called'
-
-For the nr_requests=4 case, run this instead of the dd. The writes did
-not finish without this patch:
-
-  echo 4 > /sys/block/${L##*/}/queue/nr_requests
-  for i in 1 2 3 4; do dd if=/dev/urandom of="$D" bs=64k count=512 seek=$((i * 512)) conv=fsync & done; wait
-
- drivers/md/dm-crypt.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 8853e9af1c3d..c0552a300e62 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1982,8 +1982,9 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
- 	/* crypt_convert should have filled the clone bio */
- 	BUG_ON(io->ctx.iter_out.bi_size);
+diff --git a/drivers/md/dm-verity-fec.c b/drivers/md/dm-verity-fec.c
+index 3c027b15476a3..9eb07b820848b 100644
+--- a/drivers/md/dm-verity-fec.c
++++ b/drivers/md/dm-verity-fec.c
+@@ -256,7 +256,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 				     (unsigned long long)block, PTR_ERR(bbuf));
  
--	if ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||
--	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {
-+	if (likely(!async) &&
-+	    (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags) ||
-+	     test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) {
- 		dm_submit_bio_remap(io->base_bio, clone);
- 		return;
- 	}
+ 			/* assume the block is corrupted */
+-			if (neras && *neras <= v->fec->roots)
++			if (neras && *neras < v->fec->roots)
+ 				fio->erasures[(*neras)++] = i;
+ 
+ 			continue;
+@@ -274,7 +274,7 @@ static int fec_read_bufs(struct dm_verity *v, struct dm_verity_io *io,
+ 			 * skip if we have already found the theoretical
+ 			 * maximum number (i.e. fec->roots) of erasures
+ 			 */
+-			if (neras && *neras <= v->fec->roots &&
++			if (neras && *neras < v->fec->roots &&
+ 			    fec_is_erasure(v, io, want_digest, bbuf))
+ 				fio->erasures[(*neras)++] = i;
+ 		}
 -- 
-2.54.0 (Apple Git-157)
+2.43.0
 
