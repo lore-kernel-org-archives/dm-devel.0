@@ -1,95 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.45
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793999721;
-	b=jEufW5oAWvBZ58S7xpFdzV2i00YGDLoeokZUgxxCCnFn3335aG/Bm++vSD2j1xdYQrZw
-	 ooNAdtyJofRN1zmNieGJysYNaapLYzz/6d9kW5tBc3MFOfAMKkH15QsKIAlyN99xcyiY2
-	 e+O5QFmcupaPy6aKxRUAy3UiQYp3g/Vguys3HWlTPj+hqqrngLJamt24e+VldBktUQwI9
-	 JCDPtvzoWYpvsKiwvI5SKZjOVLefUBU1+ily8Cqv2/KeREVYo0Rg0EobS2o6fxZ3Wbb2g
-	 HgxEPjuEy7Ib3CSJ1ibnyqbC1PgcgoKsk69lzmo94beKfKSKjTlOeDPnZPPjAi3IMbQ==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793999721;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:
-	 X-Google-Original-From:To:Cc:In-Reply-To:References:Subject:
-	 Message-Id:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:
-	 X-Mailer:X-Developer-Signature:X-Developer-Key;
-	bh=ALsR3YSS9a7g16h53yNdaQsIiph7MBgatm/EMd20hTw=;
-	b=MV2KPWSwN5ubZJ8JXpCMhc0i8Pdf/qwhhOzLGr6b6HOYWVMTmQdvdHh2DpP/BL4yhRJN
-	 874O5lTJOmJ2o2aF9+EIogE/G37cW71YoALXDV3kkxmiU2RF0xwbrw+ddoelRolrbAHA5
-	 iGM3IpzNvvJureZlY4FernP6sRq0RLldwlpp+Rmq6o89yjr7Ahx0qWjVESWrcXtg+N6W5
-	 2/DpJSj1xRT+JJ0grObkbSLkjtLDNbas3LvcTWl0cEFixVf+UgDy0/X/JAiXAlDH9pMNi
-	 nZZVqsxgAL3Vm+GHEcf88rNFuLWk6F+8iLv71rJ/jGQ1YL7KzrvWx4nfT5UswUtc8xA==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=f39SN+M4;
-	arc=none smtp.remote-ip=209.85.128.45
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.162.83
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1794001017;
+	b=lLn1hjXRY3XaujZabCKQe/davVRTQHo2OAO5nzxHP+UDvUeeQRaEuVwaGDrkh7sNjKye
+	 lbdadXGpMVWWlQwfeBzU80Vl+DCfB/+nh5dXV8qiPYpHz2VyMcevlxbx4xpC5RsX2Ukc5
+	 w1+1WPWdiL7h0W0PWF73O0kzzEkVigfz1i03e/zgHhLqYpbSkT2vZoBl0CodRrMiuTErA
+	 HE4sKEEuy7t4y6MQVdtBpXxQORJdz5zbVkJWvFlEDAL7QLQWi8H3Q++z4JD0dOT6YCKLQ
+	 +fadyCaumJW2pmCoj1hXpVObVej2mgEKnpyXyxyL88lsWHAZnZEYlIKofQITDHS2FJg==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794001017;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:Content-Transfer-Encoding:Content-Type:
+	 X-ClientProxiedBy:MIME-Version:X-MS-PublicTrafficType:
+	 X-MS-TrafficTypeDiagnostic:X-MS-Office365-Filtering-Correlation-Id:
+	 X-MS-Exchange-SenderADCheck:X-MS-Exchange-AntiSpam-Relay:
+	 X-Microsoft-Antispam:X-Microsoft-Antispam-Message-Info:
+	 X-Forefront-Antispam-Report:
+	 X-MS-Exchange-AntiSpam-MessageData-ChunkCount:
+	 X-MS-Exchange-AntiSpam-MessageData-0:X-OriginatorOrg:
+	 X-MS-Exchange-CrossTenant-Network-Message-Id:
+	 X-MS-Exchange-CrossTenant-AuthSource:X-MS-Exchange-CrossTenant-AuthAs:
+	 X-MS-Exchange-CrossTenant-OriginalArrivalTime:
+	 X-MS-Exchange-CrossTenant-FromEntityHeader:
+	 X-MS-Exchange-CrossTenant-Id:X-MS-Exchange-CrossTenant-MailboxType:
+	 X-MS-Exchange-CrossTenant-UserPrincipalName:
+	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
+	bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
+	b=ncdUz0YswMKcm9FZBnSueA7yTDFp48uiUoLCEZxI+7wg1oZ6bgqJUAPYCMGKQY7S8eco
+	 evPl+t39OtbefPqmXtweH3RxYACsDK7efEAAmIvtsgvy9zscft+NQk5QIIkhxM5MjSS59
+	 +SSy3W9hhHawutFXXqfpAOZHLNapj5RY9+VfnxcCJ7+JbI8nXp/QN9kEOv2cmsJAfg2lX
+	 ZjlGDGxI5i9x+VebrDTHQtqpp0sL+7Dbq1q5+FhqTcOQMU1365neA7mHzsKF2qcAlcg5l
+	 Zxgalmy/qi3GHE8zphbj1dwvvQ7NBmbpW+ettYgJWMymBjtpmzFg0Jb/cNBjLXcSG/Q==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=kuleuven.be;
+	spf=pass smtp.mailfrom=kuleuven.be;
+	dkim=pass header.d=kuleuven.be header.i=@kuleuven.be header.a=rsa-sha256 header.s=selector1 header.b=kSCt1nXu;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.162.83
+Received: from PA4PR04CU001.outbound.protection.outlook.com (mail-francecentralazon11023083.outbound.protection.outlook.com [40.107.162.83])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A1E8606A32E
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 21:15:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0A1E8606A32E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7355606A329
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 21:36:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E7355606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=kuleuven.be
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kuleuven.be
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=google header.b=f39SN+M4
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4a9a8d6cea8so557245e9.1
-        for <dm-devel@lists.linux.dev>; Fri, 06 Nov 2026 13:15:20 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1793999719; x=1794604519; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:mime-version:date:message-id
-         :subject:references:in-reply-to:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=ALsR3YSS9a7g16h53yNdaQsIiph7MBgatm/EMd20hTw=;
-        b=f39SN+M4SllQyGyUEPYGXcZDwjfy8jIR/EMFyJDuFaLUqk0jO4f78Ibds3wnuSnu+Z
-         O0kVwSigmgf/8yGP5oWSoQJOZzp2jODjQULeU7Ux+pKgdylx4eqPJK8Eub1OjLn3kNGx
-         D2tuMb/2WR1Nkg+VtXiqR0fpwWhMDkALQMwVg4DFwqy1a69H5dAE9wvoLZ0rXMPTzfPp
-         Zrr5rwJtfKZRdzW9eMGWIiRrglYVc+EuLaZC7upvThLf8wXzWJ3FcmGoHG7RTVzA2aeY
-         XaZfcBrE7NrJW1vYmE1g1WpJ/SPVC7O3lil5QXOreMSgd2VXw6TK2JBVqsAg2cifhcBX
-         Dwog==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793999719; x=1794604519;
-        h=content-transfer-encoding:content-type:mime-version:date:message-id
-         :subject:references:in-reply-to:cc:to:from:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=ALsR3YSS9a7g16h53yNdaQsIiph7MBgatm/EMd20hTw=;
-        b=ybxptyfiuX+pUsvSrULrLVMfR8O7Rua502nncWjf5VBAaohxMZLf35IUTuX+Jhdvy9
-         h3Jdtrikcpde+luguGePoXic6rPtUNaamI9P9zTj645zrTXI6qC2zddZ11k9tz84WBPF
-         RlQBSnWfTX3WjT9fvufa1M3XFHVQKB3VnJ2YAG1sFLTfpalHvmilW+3RUpnLOlfE+XIm
-         CeEJz+5TUAYbCIwAPWggs5+TT++Cf2WevbjGWFjSZ+AL14l5r29CEqNxkQ5vCYXe1o24
-         u0kXxjXq3RlVzqBl/cOZGw/vxbConChGzL3La9fQif7GCNtMXma3K5NL8aQpSPiEWlJu
-         qTvA==
-X-Gm-Message-State: APuU4Z+KbeR6Gtzu5pWoMdZfSxDezYz13pHgxv+wwYA7c4rhqzN7BpVg
-	jL8QxKfMUpX9yOz3LHJaBXjSPTn9gpcwLZE8BlJwJ8ZF9C0PSut5aT+KWUpVAlo+fJ0=
-X-Gm-Gg: AYBFou0ZDYSuLKVu2c5dwxz3yUhF7O1fhOyPwQicbSXR/RyJ+LsgNBZgtAsCNaL/l/5
-	1nMdrbccBP/NKBx+iFQ0boXgHw6bdOrR7YcWAvbEiTQoALNR7lI0P5MUOtv+F+TWehZMc4JWNlk
-	YwOR1wbSAzVKj7OgqqCtvr7zT+DuZy6ac+P3OvHwkJfAoOuJdDN3inknVUoy/6oEmFiT1F4pLXL
-	n8mELsZzG1tvTf5c3R31KCUmnTmbT1pX5XG4saR/tRqTkAeAijSRZPoEte2m2zUXRi82Pr0lVlK
-	u12rGAH5cOvG1EhH6L0Kn55RQ5E6Z8SQZgA7tttZv31pbRNqjFbn4GuvNNcgKU1aldQ1z/qkz2v
-	ba1hoLKYaaWpb1HxoQVa/w9U/7fgfWsHrrJjAYry7W8CLa9/b2aKdu+sOohoMnv8m/6ETczK6Te
-	g6xHzwo0PVZMNi7A19whiidgc9NWkfJYmEjOFNO6fJvkdBXyDtPnLvWderRJdpiPtSbcqku9ppK
-	ZQGcpUMhwy4djS7IAP3fd9UKa5ojru4926eSlq+VCpELh6zKlm4XVu4skgkt7CwxzoRzKIuxhnC
-	X3vSDYtb9QztLnA1uGDYklC88jzTeRgddxAbqkGfeSmtw5BSLELCvKT85GmCEDlk68katVxvKQq
-	BIBWmEzH2cckLF5Zsrw==
-X-Received: by 2002:a05:600c:4f8a:b0:4a1:88df:8a2a with SMTP id 5b1f17b1804b1-4b819f51afbmr2879765e9.13.1793999719255;
-        Fri, 06 Nov 2026 13:15:19 -0800 (PST)
-Received: from localhost (p200300de37172700e7f885d729fa4be7.dip0.t-ipconnect.de. [2003:de:3717:2700:e7f8:85d7:29fa:4be7])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-4b7efb1547fsm14618515e9.11.2026.11.06.13.15.15
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 06 Nov 2026 13:15:17 -0800 (PST)
-From: Martin Wilck <martin.wilck@suse.com>
-X-Google-Original-From: Martin Wilck <mwilck@suse.com>
-To: dm-devel@lists.linux.dev, Alex Brett <alex.brett@citrix.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-In-Reply-To: <20261106152444.1541438-1-alex.brett@citrix.com>
-References: <20261106152444.1541438-1-alex.brett@citrix.com>
-Subject: Re: [PATCH] libmultipath: open_file: rewind after writing the
- header
-Message-Id: <179399968631.151553.9923163041735485407.b4-ty@b4>
-Date: Fri, 06 Nov 2026 22:14:46 +0100
+	dkim=pass (1024-bit key, unprotected) header.d=kuleuven.be header.i=@kuleuven.be header.a=rsa-sha256 header.s=selector1 header.b=kSCt1nXu
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=k6TnseDOTUnVkxaYbMfJbm0o3bcr41pNchjWXBs6o0HGq4GiunOz/zaewMMcLJqPBM/KL1bDqgoUitIbnPos/oB05irgotmYa4LRQmNJDpxAKPYbNHvkREebEIAx4DjArNJN89gTez19M0DJOb1G0IdThFBi2QP9sYCnG7l/dlEYPanCTSzraZ3a8VsVAUCTsBoRLjbe5bGq4u3Ji3Rjfh4cczPMph19wi8/vd/KkNTfOO7yP+kZ3lIp9V1u/Yl+FjOdGe5ZHLS+3rmBf+Nv3MDdH+RTnUcp9gkQj6P2+EjKAByctbqHJnWWypiP2g2RhDmEmHW1vDYUx2QwB9Ku+Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
+ b=kdQg+uLXq2XdQz3o0JsF/QHFSGTEWyd6P9nt0hccBjuilhooloy+fgShwI4n2SuGvLqfT7upfXNVG15hYVTvXISQbY7HwGyVk8ErJCOdq6+5yyvJhoyOvErt5iDypzLcP3HCLHRNHVsddkWdxNd81PJlUiDgQpCkjea+C3cOPAfJuDghJvbM0vE3Mdm2T21qB2IMA249ItmSWHOzHo2j+UdraCOAD/kQ4jQls1xkxpebwX3ZT4RFeJQ6oVRKsGtv5EsaiyB+K4bAKKn9BEU/rNAf17SpdzTU+76sMH2W5x20RGCTECkGVp1Z8VsCoSjNSo+RlDcUx3hTsHX5M1/efA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=kuleuven.be; dmarc=pass action=none header.from=kuleuven.be;
+ dkim=pass header.d=kuleuven.be; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kuleuven.be;
+ s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
+ b=kSCt1nXu0Lf0+2aVdIITpZtRWvQTGsQyqONGsvmOcSybE96AsaFaryqEzlYNnsfgtmoBNLlqVOp8z1yrdatOMhiRzDBYy6CvZSYvV/ZfelLSr3JZMa0JE40GVbXrfQgHRxgn5ZHprnnEGr83L+BMSOvIpoDNVNXFA3byRqU7iKs=
+Authentication-Results: mx.microsoft.com 1; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=kuleuven.be;
+Received: from AMDPR08MB999846.eurprd08.prod.outlook.com
+ (2603:10a6:20b:70a::22) by AS2PR08MB10111.eurprd08.prod.outlook.com
+ (2603:10a6:20b:62d::22) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.592.9; Fri, 6 Nov 2026
+ 21:36:52 +0000
+Received: from AMDPR08MB999846.eurprd08.prod.outlook.com
+ ([fe80::a2f1:726a:58fb:8320]) by AMDPR08MB999846.eurprd08.prod.outlook.com
+ ([fe80::a2f1:726a:58fb:8320%5]) with mapi id 15.21.0592.010; Fri, 6 Nov 2026
+ 21:36:52 +0000
+From: Shukai Ni <shukai.ni@kuleuven.be>
+To: mpatocka@redhat.com
+Cc: bmarzins@redhat.com,
+	gmazyland@gmail.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Shukai Ni <shukai.ni@kuleuven.be>,
+	Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
+Subject: [PATCH] dm-integrity: return zeros for blocks with a keyed discard marker
+Date: Fri,  6 Nov 2026 22:35:15 +0100
+Message-ID: <20261106213515.3948508-1-shukai.ni@kuleuven.be>
+X-Mailer: git-send-email 2.53.0
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: AS4P192CA0051.EURP192.PROD.OUTLOOK.COM
+ (2603:10a6:20b:658::10) To AMDPR08MB999846.eurprd08.prod.outlook.com
+ (2603:10a6:20b:70a::22)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -99,34 +98,124 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-Mailer: b4 0.16.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=311; i=mwilck@suse.com;
- h=from:subject:message-id; bh=paWibvRVjMM3kZYJMieAuzxD1dv+0Ik5nMNWVhsAHIE=;
- b=owEBCQL2/ZANAwAIAaFOxj0gAPzbAcsmYgBq7kNfTjLurS/UHHaSiY5025kX9qZcn6eOMgB8k
- pkBZzoln5GJAc8EAAEIADkWIQT9/H021zOM2230IgahTsY9IAD82wUCau5DXxsUgAAAAAAEAA5t
- YW51MiwyLjUrMS4xMiwyLDIACgkQoU7GPSAA/NuM/Av9EW2OmKW8wVHm6RwWkV/gm3toUyURQVB
- 83AsziSaJnqcu6lYfII+LJcnGjqMxmmheE7LH4XPiKBi4Xfr7FS/InazH8b9y4L7LJHQdWfz334
- mbRBg93VLC3+JkEsxyoFet4PUr1Uyr0a8tD6zsazdvaaG09q07gPZnFbMWr+sbPARrAF9uyocsv
- /s/LpKBpWI4NfuBUgqwTkfxVo4gRRamI7/H50jICI48aDhAfpi5H7BxDJ4mlDsSNrWGOa21RQB9
- VjxfH6BwgraZGwiL7kuweoFDjNZ+uxncHsrbqlB8Hfpiv2OBmtlGWIbtx8AqX3xElekfJkPhayI
- wojnbIf8S/zrmblaT3wUuDFvLZZx5T1qgSnD0Gq+GvFn6NvrfAMyOaq4kVVmEp+i8ua2nNinXdL
- r4jlDezBetY8xg0z4nDhQ+OlhHHxQRRcdi8k56Eq5GS1e6Qs+xxOtlXfJWQYwvvvJx2FQLLTNpX
- 0ptQLoJoWNskNnbs1osMCdrQMGbbzhV
-X-Developer-Key: i=mwilck@suse.com; a=openpgp;
- fpr=750EAD4B2EDEB1A545D4F5F467C586E685569754
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: AMDPR08MB999846:EE_|AS2PR08MB10111:EE_
+X-MS-Office365-Filtering-Correlation-Id: 6c9d9442-8293-4603-f244-08df3c4e1237
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|376014|10070799003|786006|366016|1800799024|23010399003|18002099003|3023799007|10067099003|56012099006|261028144727099003|11063799006|261021123027099003|261026140227099003|261021121427099003|261102123227099003|261022105027099003|261026121527099003|261009223027099003;
+X-Microsoft-Antispam-Message-Info:
+	I6rY03xxYbdUuF0y1Hwf2Vjk4rg3XKGWu0HszPoVjKe6R+S0m/l/q+6o7Byeu2MV7A01iABwVAHu70U822dIKGAHWNhrovupyzuyG8cd6HJazh0J7IXczRwi4/IkdW700zTVPdouW+aTU7VdIJSD/i6fIgNWLMUKlXGwtD05b8SODqJCmUIctu+9rwp7M1Plie2juOY8jGhYGmKoLjcNGRevYTIFL3Q5KONeGXlNq+5ySZSt13Ghw9doy+lawbUJ92rovBox3TDF75V3i7NcJb/TFY/uqKHRXZRCJ63n9y3iBj+4QKJkDP0arVCTozUd8ia1cmGBQYxPGB2dJt7GsJZW7aVyrGHeyGyt/rv07nFj5qKmopslO5JeZT7JJBMdLeUGHwkRnj4YJFJaaKDoJQaC922C298vZnlkFnRzbnEhk8pV+o57rPO+vl49VobUngE9Y/GntPPrl7I3FJ6cwMQwTVFGyphnJ0BJAUGslArtX4sw2fXDWlu8HXbzwM9PigTK+eecQDxBFjQwbL6Ed24KjjonpXqFhCpwhCVPmfpEMBrm8IzGqr8kx0IwsYQ2KePQU9o1W/8QPj3NWIm5v33CtrXAt08FOQ2YFPCc02WK4s4YPuqy45dSe2HBjvll9FmggE1TbWczTvtdKpKhRpT7p3eNNzyElvQZIErjE7g=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AMDPR08MB999846.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(10070799003)(786006)(366016)(1800799024)(23010399003)(18002099003)(3023799007)(10067099003)(56012099006)(261028144727099003)(11063799006)(261021123027099003)(261026140227099003)(261021121427099003)(261102123227099003)(261022105027099003)(261026121527099003)(261009223027099003);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?TF7L+jt5iyMDpFgAOTzdpV+ZJ10pabOeP6E1+iyqlXzAMACEVMf4PyLOd1wf?=
+ =?us-ascii?Q?XBkDloVe8whfuw50iejdasxla1pVlYHqTpWQAJCeDSCtC3O73llOWNARlG/z?=
+ =?us-ascii?Q?QUnu+TTr0PhMlx03121gZl+WQxIZanPYJ8QO1htA5BJCdGnpK7bYZ3Bf7Mv4?=
+ =?us-ascii?Q?fHZmI8gaq6m7V7pyGdteRgeBoV9wn0KdUJFmlOCubq1L7vwm4ZmKlKke7W17?=
+ =?us-ascii?Q?8gTZ8FQHWmLEIc4OPXvw7vI12BOI3BoX8k1D4shClVWYgjkv7fgf0JEitMVp?=
+ =?us-ascii?Q?7mV3avedtpIUlKT0dNXsRcCmeXEUF8Nd/J7SoUYGcAT+I5SHHXgZsc70A9V5?=
+ =?us-ascii?Q?twbbPAqb4Oer+sQXg3J+hvS5D5X+oHBCSfgbzP+MCFu2NIVYKJdcbD4pil+3?=
+ =?us-ascii?Q?N6K79hnFodOM6VGoYma/J0Y8XxVHRwUQg1RZ/LQ5y8G7Zeq9cfD/p+sV6qvD?=
+ =?us-ascii?Q?kftK7kiHAFugbXL/Gka4iqhwDDD4nZynGyF63qOBgcBW7himn9UrASyGIHAG?=
+ =?us-ascii?Q?RxEanExHSpHrEHeas5iu1dxlwT63AODLD1/k0dcbjX0mD3URCB5MmmxZ08HA?=
+ =?us-ascii?Q?xGnwaanKhB4vmYJ2wCYY8rcf7U3Scw6fI/ZD5gmCOGsD5/rZwiyQIuTcAbcW?=
+ =?us-ascii?Q?bOVH9VoF8P02VjLWd3j20vh1ZdV+gd6yA8GJTJzKg3hoFOXUD1arnKOVw3Ll?=
+ =?us-ascii?Q?bNd0WuiJ41wgmx4iDZ9D1SU7dti3mVOF1rU8Y5gpxS8b12TkAbUz2OCNN8nb?=
+ =?us-ascii?Q?1g8UJI3u2Vs7b8ivpCSqKTX76L4RPSO1wFT1bOJYDgyDa8XREITIkc1SV2I4?=
+ =?us-ascii?Q?b2p5J/jgeurRe4G2emqt2ckB9Tlb89OxY8OTA9+NF4G0el6Bx9sDop6XFN6L?=
+ =?us-ascii?Q?n35/azQGrHcl9r1HlMWLUrLjlHRBDGFR5rZDeMcZQpXGv0OZ1vm9dnj24AyL?=
+ =?us-ascii?Q?nCHKYJzVM34JmyiYJEYvEe4H+9+7HxV15OkGU+KbHIEgpV+RKcMti74W2pF6?=
+ =?us-ascii?Q?T7NGq5sWTEz194pbwtkhPMAjL3A5TIdi0KAqXtmDmdYL2rI5RRV4217qstBz?=
+ =?us-ascii?Q?ICyimiz5Gl+nj3B/QnHuoSk5yZ90kdjx+wWy2hKehbw8yYQQrkXQw2vygO/5?=
+ =?us-ascii?Q?f+dF0YHdHPUvDm8/L2FelpLlgA8BQKYa/ccGKwblobRwyRNiyLibSnXJJhOn?=
+ =?us-ascii?Q?PnfCd0RZQYNQd9ICjN21Jj9mtPrv5aj3m5vNDHZQybjDMaamfOOLZidVE/U1?=
+ =?us-ascii?Q?/WPfClEx7gJ4t9LP9TeS3Ibu/HS0EvRNs+2zwHRtKjoTdxsYHehEhpHJiDxh?=
+ =?us-ascii?Q?M2cnnts5EacMwKKPnPO8pcvo+Et5/zW2QoN489U5C3vESOTVE6xHXxDwIuZD?=
+ =?us-ascii?Q?4cu7nne546PA5O6gWblrqM0qfC7nPFDYTRSilqz0uoTTPZA8HT+c90/OdiLq?=
+ =?us-ascii?Q?fHrkrLFeSskIxPAEUXJJCcPbPu6Z8i1oiJ6d5a/UlJFI/Iot8JYvhFnjZ3eI?=
+ =?us-ascii?Q?v7efkHy2pz25aZ0nrwrsP2vz0Sib8sQqR05cN+QSd4K2zm2jLZX5u73pOymZ?=
+ =?us-ascii?Q?wNOg/AaQGf0LKvwNzZYTPstROuQhswNpxZ/5G0uxF70hUSLMylM1VSqKNE4p?=
+ =?us-ascii?Q?Vun9spQmjABdnMBrhUqHw0JTIwYufh8EaQQUcOHDPpfqunJWeTP3pKt3odaK?=
+ =?us-ascii?Q?K5Q5GECMG5hv4oFqF225knjkSK6WoYCNktB7J3q9leEjtbjL6sREeOH/WEq4?=
+ =?us-ascii?Q?bRFt3NG+h8xgPQEBZNYD5zCeQOqDfg/xuGFPF07hAB3Ins1H/7Jq?=
+X-OriginatorOrg: kuleuven.be
+X-MS-Exchange-CrossTenant-Network-Message-Id: 6c9d9442-8293-4603-f244-08df3c4e1237
+X-MS-Exchange-CrossTenant-AuthSource: AMDPR08MB999846.eurprd08.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Nov 2026 21:36:52.1844
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 3973589b-9e40-4eb5-800e-b0b6383d1621
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: 9eoFjbD62haHx5C+H2nrb5otOEIsszfKf0eLHl50ljsdSpluV0z5HIINborKPzjUNAKYxTLKj70W3vgJ0QmXfQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS2PR08MB10111
 
+While freshness is outside dm-integrity's threat model, this hardens
+allow_discards_keyed further against rollback of the backing device.
+The keyed marker covers only the sector number, so when a block's tag
+matches its marker, a read returns whatever data the backing device
+holds for that block. Return zeros for such a block instead, so that a
+marker restored by a rollback can at most make the block read as
+discarded again.
 
-On Fri, 06 Nov 2026 15:24:44 +0000, Alex Brett wrote:
-> libmultipath: open_file: rewind after writing the header
+This only adds slight overhead on the recheck path, which a read takes
+only after a tag mismatch, so reads of written blocks do not reach it.
 
-Applied, thanks!
+Co-developed-by: Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
+Signed-off-by: Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
+Signed-off-by: Shukai Ni <shukai.ni@kuleuven.be>
+---
+ Documentation/admin-guide/device-mapper/dm-integrity.rst | 2 +-
+ drivers/md/dm-integrity.c                                | 6 ++++--
+ 2 files changed, 5 insertions(+), 3 deletions(-)
 
-[1/1] libmultipath: open_file: rewind after writing the header
-      commit: 29c489fe288f461789970ff7f607a7ded16d1c59
-
-Best regards,
+diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
+index 9c21301423..b60b83b22a 100644
+--- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
++++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
+@@ -198,7 +198,7 @@ allow_discards_keyed
+ 	Like allow_discards, but marks a discarded block with a keyed
+ 	checksum of the sector number, HMAC_key(salt || sector), instead of
+ 	the constant filler tag, so it can't be forged without the
+-	integrity key.
++	integrity key. Reads of a discarded block return zeros.
+ 
+ 	Not compatible with volumes that already have discarded blocks
+ 	marked the old way; only use on a freshly formatted volume.
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 92970e1226..7ba8edc5aa 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -1839,7 +1839,7 @@ static void *integrity_identity(struct dm_integrity_c *ic, void *data)
+ }
+ 
+ static int integrity_recheck_verify_tag(struct dm_integrity_io *dio, char *checksum,
+-					char *on_disk_tag, sector_t logical_sector)
++					char *on_disk_tag, sector_t logical_sector, char *data)
+ {
+ 	struct dm_integrity_c *ic = dio->ic;
+ 	int r;
+@@ -1857,6 +1857,8 @@ static int integrity_recheck_verify_tag(struct dm_integrity_io *dio, char *check
+ 	if (unlikely(r)) {
+ 		integrity_discard_checksum(ic, &dio->ahash_req, logical_sector, checksum);
+ 		r = crypto_memneq(on_disk_tag, checksum, ic->tag_size);
++		if (!r)
++			memset(data, 0, ic->sectors_per_block << SECTOR_SHIFT);
+ 	}
+ 	return r;
+ }
+@@ -1915,7 +1917,7 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
+ 
+ 			integrity_sector_checksum(ic, &dio->ahash_req, logical_sector, integrity_identity(ic, buffer), buffer_offset, checksum);
+ 			r = integrity_recheck_verify_tag(dio, checksum, on_disk_tag,
+-							 logical_sector);
++							 logical_sector, buffer + buffer_offset);
+ 			if (r) {
+ 				if (r > 0) {
+ 					DMERR_LIMIT("%pg: Checksum failed at sector 0x%llx",
 -- 
-Martin Wilck <mwilck@suse.com>
+2.53.0
 
