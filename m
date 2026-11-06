@@ -1,70 +1,56 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793990792;
-	b=hwWzwwdUPrJE9A6qKExHShIod7gxQ4C+5H+LIOM4vW8i2dkm5SWt67QDoEqCJXZ8e3eg
-	 5NCLFKPtHfjMUSPkoMd9MBaSgJzlZ0BwToS24Vto7vWwJHC3OZW1A9S8NxF66mw29TVmG
-	 Y1caz+/JxDhEdC3SwflQRK1U+reUoqot5HdYLiza/QoZMjGJUSh+vdF+7Vq8aDLdQ4Oqx
-	 rQ9tp/l1Q+TRk0qItROiCLx6tlrRusvpSKDjz5tfPxE4v3T7kXuJf4kdF2+S4a7Lr4cyM
-	 NRRluEM/C2sDkPa1Hn8CNwrxMZYzzrh0/YVB33U5ji4e0BMjMYHI9wtu1bfWzUBdJVA==
+	t=1793990887;
+	b=LySAOGpVP5qmalaUM2fLHaxCe6bbbmB/+RkUG3x7iRszA8L2JubN22O+OBA8r/F6GEp2
+	 cA59G4KoHXAnhV5dLNzdx8Tk67eEHcdPhQ0fjjxbeYgXhk8kzI+HavUE7HlIF/mWPs+cE
+	 MlxnXiI07T/D4o3vg1PNkLklAwNMMkZbnEf37zY6hLYYQRhH5zs2RtZBn3jhktnypqkRt
+	 JjM7/IHua+oBxh52HwDYKO0jOLh3WGk+W4t+Pl1jiPb3NEBw3j/5Yz7u84UEpUDwyZ3QE
+	 BLZKdhdTUieARdZqBPbxK2xWJfnPrlk/uYjFSYjQeM3lTtfRaob8prsjyEqO2MqgQ1Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793990792;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=sdoZNkGc8QTavUWio52cWw6+PQAzO+cJ/cquFtr2fbw=;
-	b=DUVCT+mT4OZrCNmQAAyZFQQOSFaTJ2fIdXt0F9EEy8fNtOEYY1zoXTcRjV0YIfvU5FD0
-	 Ekx4a8aTTMKdR7B09jckV727il0UHXZffzRFdA30mODTiCxd9mkPEuzj9zHpbFhrrllm4
-	 xffAdoq9IqRGbpyu5dr6kWu8AOqsygvy3jstSadrDcWsx1t8EFuoFH8G2lBmvYMoANNvP
-	 Nxi5lju9oyGLIIIqRAMBoo64P8ui5y6BsiqJ6OSTJPVNPDeB4n40zddKHuelhdnBRF6q3
-	 8jC4m0KuVkiSpCZixjwRNN95ZvmXBR+057p6owHt9wkacu2NNn70Sw2saOYxs7Yvz7g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793990887;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=2lixgofUUnT1JCJwLjvCxZ/iIRI+aexy9yxHMFt3z/4=;
+	b=T85IkyEwutNc8nlc5JuJXJ7ergAkFZY96j9/44XRN5FVQY9AaGeVe44Fn1/f2WSS/Pd9
+	 Qrf1DdoUVDWLyg/wUiKwXHhsEz6gUjeNl3dPczaaJWxfmlBEOWJ6Af3I6AmsTsl81mSs3
+	 q7fD0ZnM+kdQsJ5JYKxN4O0duzy3rdaeeAGGiAPZRXaYlVpQDMu6HDim1GzO5vl0qYEhd
+	 EBxp/AGN8ntxzeMwPNqHrULy6ryYuv61SDqbRRbLktT1gzFw7WeD3Sv+H636qp6438H+T
+	 UBM+GGDRKLjZHM3jDFkrnEYo4AsNCug9znaPsry+tphQFZUehXle+QCOfAvqVdi1Liw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=I++gmr8c;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=m8GzObb0;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D485F606D806
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:46:31 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D485F606D806
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3190E606A326
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:48:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=I++gmr8c
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793990790;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=sdoZNkGc8QTavUWio52cWw6+PQAzO+cJ/cquFtr2fbw=;
-	b=I++gmr8c47IyNii+HoJFczGNmH8eMpTBFLkF6GEr+3BHULwh9dWCFfbjlgpOJPNG0s6Bdr
-	DndHUE+j220jewn3eoyu+A8j7rVTb81n5uPQj/n9dAcU1+TF2PIzHltiAPjd2noh/4d5Z6
-	pUNIpDuBE1DBNNsaPQvM9poxbpxSaL0=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-618-FMKCQ6tkMPCyk2Mha_0yoQ-1; Fri,
- 06 Nov 2026 13:46:29 -0500
-X-MC-Unique: FMKCQ6tkMPCyk2Mha_0yoQ-1
-X-Mimecast-MFC-AGG-ID: FMKCQ6tkMPCyk2Mha_0yoQ_1793990788
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8B4231955D79;
-	Fri,  6 Nov 2026 18:46:28 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 33B4530000E3;
-	Fri,  6 Nov 2026 18:46:27 +0000 (UTC)
-Date: Fri, 6 Nov 2026 19:46:24 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>
-cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm persistent data: test return value of node_copy
-Message-ID: <db8878fd-43c1-d976-debd-8e1d1547e7c7@redhat.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=m8GzObb0
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C21831F0089F;
+	Fri,  6 Nov 2026 18:48:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793990887;
+	bh=2lixgofUUnT1JCJwLjvCxZ/iIRI+aexy9yxHMFt3z/4=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=m8GzObb0nPyvXq/Z3bDwqJCrzNTnsTfY9g3ZcR8Q64rbVZtekrJN3Jkeu+le9g2KD
+	 54kHB8zYQ903fDd3YYpECWFMqHypCtgLnSBye0/6L92GeWFxvr3bS+kBc9X9Q1T+ja
+	 tcHneh18qKyBWRqR/tcRBT/proLyhGaaDutKa4B5hz3Lr3L0+3VswLxIFDvO9cior3
+	 uPR+9mRkU/kCiE9dlQRwAF2LW8ycDyVtLIxEpxOMt7/+j3+GxvQOHU+QjC88rVjzoq
+	 8f+8N8rtxiHKsVk33Dh0Z5AhlPPfTzDs9jgsoRY1ZRoCjdAyiV9mrPArY5gJmYuPmx
+	 5M7WB9kpaN0lw==
+Message-ID: <sashiko-outbox-202101@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH] dm-cache: fix NULL pointer dereference on open failure
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Mikulas Patocka" <mpatocka@redhat.com>, "Alasdair Kergon" <agk@redhat.com>, "Mike
+ Snitzer" <snitzer@kernel.org>, "Benjamin Marzinski" <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev
+In-Reply-To: <05b79ec2-42f7-ffe3-20e6-1dc499e60cf5@redhat.com>
+References: <05b79ec2-42f7-ffe3-20e6-1dc499e60cf5@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Fri, 06 Nov 2026 18:48:06 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -73,66 +59,41 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: dOZJQdVvqc3jnPz3PdBtwwwdJ-I0KcLNa9bv0teLS5A_1793990788
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
 
-There were 3 places where the return value of node_copy was not tested.
+Thank you for your contribution! Sashiko AI review found 1 potential
+issue to consider:
+- [Low] dm-cache: Fixes trailer cites c6b4fcbad044 instead of
+  9b1cc9f251af
+--
 
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-Assisted-by: Claude:claude-opus-5
-Cc: stable@vger.kernel.org
-Fixes: 3241b1d3e0aa ("dm: add persistent data library")
+commit 9e9ca29bfbdfdcf14064f5312fa72be5b8ba53a8
+Author: Mikulas Patocka <mpatocka@redhat.com>
 
----
- drivers/md/persistent-data/dm-btree-remove.c |   13 ++++++++++---
- 1 file changed, 10 insertions(+), 3 deletions(-)
+> dm-cache: fix NULL pointer dereference on open failure
+>
+> When __begin_transaction_flags in metadata_open fails,
+> dm_cache_metadata_close is called. dm_cache_metadata_close attempts to
+> execute list_del(&cmd->list);, but the "cmd" object is not on any list
+> yet, thus it crashes with NULL pointer dereference.
+>
+> Fix this by initializing cmd->list after cmd is allocated.
+>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> Assisted-by: Claude:claude-opus-5
+> Cc: stable@vger.kernel.org
+> Fixes: c6b4fcbad044 ("dm: add cache target")
 
-Index: linux-2.6/drivers/md/persistent-data/dm-btree-remove.c
-===================================================================
---- linux-2.6.orig/drivers/md/persistent-data/dm-btree-remove.c
-+++ linux-2.6/drivers/md/persistent-data/dm-btree-remove.c
-@@ -253,7 +253,9 @@ static int __rebalance2(struct dm_btree_
- 		/*
- 		 * Merge
- 		 */
--		node_copy(left, right, -nr_right);
-+		ret = node_copy(left, right, -nr_right);
-+		if (unlikely(ret))
-+			return ret;
- 		left->header.nr_entries = cpu_to_le32(nr_left + nr_right);
- 		delete_at(parent, r->index);
- 
-@@ -315,13 +317,16 @@ static int delete_center_node(struct dm_
- {
- 	uint32_t max_entries = le32_to_cpu(left->header.max_entries);
- 	unsigned int shift = min(max_entries - nr_left, nr_center);
-+	int ret;
- 
- 	if (nr_left + shift > max_entries) {
- 		DMERR("node shift out of bounds");
- 		return -EINVAL;
- 	}
- 
--	node_copy(left, center, -shift);
-+	ret = node_copy(left, center, -shift);
-+	if (unlikely(ret))
-+		return ret;
- 	left->header.nr_entries = cpu_to_le32(nr_left + shift);
- 
- 	if (shift != nr_center) {
-@@ -333,7 +338,9 @@ static int delete_center_node(struct dm_
- 		}
- 
- 		node_shift(right, shift);
--		node_copy(center, right, shift);
-+		ret = node_copy(center, right, shift);
-+		if (unlikely(ret))
-+			return ret;
- 		right->header.nr_entries = cpu_to_le32(nr_right + shift);
- 	}
- 	*key_ptr(parent, r->index) = right->keys[0];
+[Severity: Low]
+Should the Fixes: tag reference 9b1cc9f251af ("dm cache: share
+cache-metadata object across inactive and active DM tables") instead?
 
+In c6b4fcbad044 ("dm: add cache target"), struct dm_cache_metadata did not
+have a list member and dm_cache_metadata_close() did not call list_del().
+Commit 9b1cc9f251af ("dm cache: share cache-metadata object across
+inactive and active DM tables") added cmd->list, deferred list_add() to
+lookup_or_open() after metadata_open() succeeds, and added
+list_del(&cmd->list) to dm_cache_metadata_close().
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/05b79ec2-42f7-ffe3-=
+20e6-1dc499e60cf5@redhat.com?part=3D1
