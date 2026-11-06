@@ -1,94 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.162.83
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1794001017;
-	b=lLn1hjXRY3XaujZabCKQe/davVRTQHo2OAO5nzxHP+UDvUeeQRaEuVwaGDrkh7sNjKye
-	 lbdadXGpMVWWlQwfeBzU80Vl+DCfB/+nh5dXV8qiPYpHz2VyMcevlxbx4xpC5RsX2Ukc5
-	 w1+1WPWdiL7h0W0PWF73O0kzzEkVigfz1i03e/zgHhLqYpbSkT2vZoBl0CodRrMiuTErA
-	 HE4sKEEuy7t4y6MQVdtBpXxQORJdz5zbVkJWvFlEDAL7QLQWi8H3Q++z4JD0dOT6YCKLQ
-	 +fadyCaumJW2pmCoj1hXpVObVej2mgEKnpyXyxyL88lsWHAZnZEYlIKofQITDHS2FJg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794001017;
-	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:Content-Transfer-Encoding:Content-Type:
-	 X-ClientProxiedBy:MIME-Version:X-MS-PublicTrafficType:
-	 X-MS-TrafficTypeDiagnostic:X-MS-Office365-Filtering-Correlation-Id:
-	 X-MS-Exchange-SenderADCheck:X-MS-Exchange-AntiSpam-Relay:
-	 X-Microsoft-Antispam:X-Microsoft-Antispam-Message-Info:
-	 X-Forefront-Antispam-Report:
-	 X-MS-Exchange-AntiSpam-MessageData-ChunkCount:
-	 X-MS-Exchange-AntiSpam-MessageData-0:X-OriginatorOrg:
-	 X-MS-Exchange-CrossTenant-Network-Message-Id:
-	 X-MS-Exchange-CrossTenant-AuthSource:X-MS-Exchange-CrossTenant-AuthAs:
-	 X-MS-Exchange-CrossTenant-OriginalArrivalTime:
-	 X-MS-Exchange-CrossTenant-FromEntityHeader:
-	 X-MS-Exchange-CrossTenant-Id:X-MS-Exchange-CrossTenant-MailboxType:
-	 X-MS-Exchange-CrossTenant-UserPrincipalName:
-	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
-	bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
-	b=ncdUz0YswMKcm9FZBnSueA7yTDFp48uiUoLCEZxI+7wg1oZ6bgqJUAPYCMGKQY7S8eco
-	 evPl+t39OtbefPqmXtweH3RxYACsDK7efEAAmIvtsgvy9zscft+NQk5QIIkhxM5MjSS59
-	 +SSy3W9hhHawutFXXqfpAOZHLNapj5RY9+VfnxcCJ7+JbI8nXp/QN9kEOv2cmsJAfg2lX
-	 ZjlGDGxI5i9x+VebrDTHQtqpp0sL+7Dbq1q5+FhqTcOQMU1365neA7mHzsKF2qcAlcg5l
-	 Zxgalmy/qi3GHE8zphbj1dwvvQ7NBmbpW+ettYgJWMymBjtpmzFg0Jb/cNBjLXcSG/Q==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=kuleuven.be;
-	spf=pass smtp.mailfrom=kuleuven.be;
-	dkim=pass header.d=kuleuven.be header.i=@kuleuven.be header.a=rsa-sha256 header.s=selector1 header.b=kSCt1nXu;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.162.83
-Received: from PA4PR04CU001.outbound.protection.outlook.com (mail-francecentralazon11023083.outbound.protection.outlook.com [40.107.162.83])
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.131
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1794002302;
+	b=3q69QONgnL5DsyadZa+bO3rKLNV13neRL5BmfiI7tEscMcZ2CTLiWxucEHxOu5qHjjb3
+	 9Aa5pPyhzrUH5F/xeeft+ToheNA1HtkeJBziQ01FUMqnM4U2f7uxMV/oNfQtn6ufnzLC1
+	 /hzzmWfZ4C4slUIK50Qsg22pTmewOaDXoDwgQzMBpbkEHGgqrokKtQstaQlaPJWXP1T2k
+	 ayb4ZxLOhMRHBphZoQn2kFC5KZw6rOE5OD4EQ1CAME9uICY5o+Uzis3b4wypxBO4Vtilg
+	 nCKkvGFCDDdpM2C+g/iaEXKVtwRPzo6D4VnZpgS3nLdhD6OOgzo8f24LWy8d8W40zlQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794002302;
+	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
+	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
+	 X-Rspamd-Queue-Id:X-Spam-Level:X-Rspamd-Server:X-Rspamd-Action:
+	 X-Spam-Flag:X-Spamd-Result:X-Spam-Score;
+	bh=5HJyrN/BBi3gNk8FAFwHPJNpbqkUBna5On8qSqeBHWQ=;
+	b=Aye0RXaIdfsayybrI1iBKsVnh4+Q8GsHskdw7pcOyCmcZ7Wqhgn6q1osXaVQiweiS+R6
+	 d6RnxUOfX1/8OEXcrjK4hXKya1jjTAyhOhIEcmED7FIylVRq4bBOy/FHTTe7IrdCMJh7P
+	 ZE0Z/YlVWqNvB2eUFs10ILtshYv1gEbzeemdqnwJtEt0GJR4gC4PkoYhHhuALL2lf4h6P
+	 DZc25hgr7s4YTAy1sVa8dGAUHGV6pKqb3AM2UHTXXcU7hIiiSBHWBEYVg+Qbc07kmL4Zf
+	 eg5w2cvNzTqvFJzdunmTCC34o9ZYOlI2pAnWeDkaA+ba1tf/UBOBERsjv5QihNdKyDw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=suse.com;
+	spf=pass smtp.mailfrom=suse.com;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="ZX//BVmM";
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="ZX//BVmM";
+	arc=none smtp.remote-ip=195.135.223.131
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E7355606A329
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 21:36:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E7355606A329
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=kuleuven.be
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kuleuven.be
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14DBA606A326
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 21:58:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 14DBA606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=kuleuven.be header.i=@kuleuven.be header.a=rsa-sha256 header.s=selector1 header.b=kSCt1nXu
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=k6TnseDOTUnVkxaYbMfJbm0o3bcr41pNchjWXBs6o0HGq4GiunOz/zaewMMcLJqPBM/KL1bDqgoUitIbnPos/oB05irgotmYa4LRQmNJDpxAKPYbNHvkREebEIAx4DjArNJN89gTez19M0DJOb1G0IdThFBi2QP9sYCnG7l/dlEYPanCTSzraZ3a8VsVAUCTsBoRLjbe5bGq4u3Ji3Rjfh4cczPMph19wi8/vd/KkNTfOO7yP+kZ3lIp9V1u/Yl+FjOdGe5ZHLS+3rmBf+Nv3MDdH+RTnUcp9gkQj6P2+EjKAByctbqHJnWWypiP2g2RhDmEmHW1vDYUx2QwB9Ku+Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
- b=kdQg+uLXq2XdQz3o0JsF/QHFSGTEWyd6P9nt0hccBjuilhooloy+fgShwI4n2SuGvLqfT7upfXNVG15hYVTvXISQbY7HwGyVk8ErJCOdq6+5yyvJhoyOvErt5iDypzLcP3HCLHRNHVsddkWdxNd81PJlUiDgQpCkjea+C3cOPAfJuDghJvbM0vE3Mdm2T21qB2IMA249ItmSWHOzHo2j+UdraCOAD/kQ4jQls1xkxpebwX3ZT4RFeJQ6oVRKsGtv5EsaiyB+K4bAKKn9BEU/rNAf17SpdzTU+76sMH2W5x20RGCTECkGVp1Z8VsCoSjNSo+RlDcUx3hTsHX5M1/efA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=kuleuven.be; dmarc=pass action=none header.from=kuleuven.be;
- dkim=pass header.d=kuleuven.be; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kuleuven.be;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=SmUgZv3A/aq/RXLVveIFfH/s0ZCrKBTwAaW773QmsEE=;
- b=kSCt1nXu0Lf0+2aVdIITpZtRWvQTGsQyqONGsvmOcSybE96AsaFaryqEzlYNnsfgtmoBNLlqVOp8z1yrdatOMhiRzDBYy6CvZSYvV/ZfelLSr3JZMa0JE40GVbXrfQgHRxgn5ZHprnnEGr83L+BMSOvIpoDNVNXFA3byRqU7iKs=
-Authentication-Results: mx.microsoft.com 1; dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=kuleuven.be;
-Received: from AMDPR08MB999846.eurprd08.prod.outlook.com
- (2603:10a6:20b:70a::22) by AS2PR08MB10111.eurprd08.prod.outlook.com
- (2603:10a6:20b:62d::22) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.592.9; Fri, 6 Nov 2026
- 21:36:52 +0000
-Received: from AMDPR08MB999846.eurprd08.prod.outlook.com
- ([fe80::a2f1:726a:58fb:8320]) by AMDPR08MB999846.eurprd08.prod.outlook.com
- ([fe80::a2f1:726a:58fb:8320%5]) with mapi id 15.21.0592.010; Fri, 6 Nov 2026
- 21:36:52 +0000
-From: Shukai Ni <shukai.ni@kuleuven.be>
-To: mpatocka@redhat.com
-Cc: bmarzins@redhat.com,
-	gmazyland@gmail.com,
-	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	Shukai Ni <shukai.ni@kuleuven.be>,
-	Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
-Subject: [PATCH] dm-integrity: return zeros for blocks with a keyed discard marker
-Date: Fri,  6 Nov 2026 22:35:15 +0100
-Message-ID: <20261106213515.3948508-1-shukai.ni@kuleuven.be>
-X-Mailer: git-send-email 2.53.0
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: AS4P192CA0051.EURP192.PROD.OUTLOOK.COM
- (2603:10a6:20b:658::10) To AMDPR08MB999846.eurprd08.prod.outlook.com
- (2603:10a6:20b:70a::22)
+	dkim=pass (1024-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ZX//BVmM;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ZX//BVmM
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 052511F441;
+	Fri,  6 Nov 2026 21:58:20 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1794002300; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5HJyrN/BBi3gNk8FAFwHPJNpbqkUBna5On8qSqeBHWQ=;
+	b=ZX//BVmMcSNx1SXp4IvpewheSlUU/CXn6Ntq8Ebl2fskr5R/t/NxOQ45F7+uQXfCyf2LPp
+	5qRFD2pIp6DGk8E+c9cBbH8i0svSlMqRMfCbN0sDmbCgf/d/KIOol38oH2NHiUuhozRbV0
+	Me3i/xHwPiLAI52Y0GxturblI0dN/yA=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b="ZX//BVmM"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1794002300; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5HJyrN/BBi3gNk8FAFwHPJNpbqkUBna5On8qSqeBHWQ=;
+	b=ZX//BVmMcSNx1SXp4IvpewheSlUU/CXn6Ntq8Ebl2fskr5R/t/NxOQ45F7+uQXfCyf2LPp
+	5qRFD2pIp6DGk8E+c9cBbH8i0svSlMqRMfCbN0sDmbCgf/d/KIOol38oH2NHiUuhozRbV0
+	Me3i/xHwPiLAI52Y0GxturblI0dN/yA=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 93CEA134E9;
+	Fri,  6 Nov 2026 21:58:19 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 9JdeGntN7mqgQQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Fri, 06 Nov 2026 21:58:19 +0000
+Message-ID: <fd50c6e579193250a3554d78f3afb3d2599708b6.camel@suse.com>
+Subject: Re: [PATCH v1 1/1] multipathd: verify udev WWIDs with the device
+ before moving paths
+From: Martin Wilck <mwilck@suse.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, Brian Bunker
+	 <brian@purestorage.com>
+Cc: dm-devel@lists.linux.dev, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>
+Date: Fri, 06 Nov 2026 22:58:18 +0100
+In-Reply-To: <auO6S56Jdjpxh8Bh@redhat.com>
+References: <20261029175727.25457-1-brian@purestorage.com>
+	 <20261029175727.25457-2-brian@purestorage.com>
+	 <auO6S56Jdjpxh8Bh@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.62.1 
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -98,124 +98,137 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: AMDPR08MB999846:EE_|AS2PR08MB10111:EE_
-X-MS-Office365-Filtering-Correlation-Id: 6c9d9442-8293-4603-f244-08df3c4e1237
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|376014|10070799003|786006|366016|1800799024|23010399003|18002099003|3023799007|10067099003|56012099006|261028144727099003|11063799006|261021123027099003|261026140227099003|261021121427099003|261102123227099003|261022105027099003|261026121527099003|261009223027099003;
-X-Microsoft-Antispam-Message-Info:
-	I6rY03xxYbdUuF0y1Hwf2Vjk4rg3XKGWu0HszPoVjKe6R+S0m/l/q+6o7Byeu2MV7A01iABwVAHu70U822dIKGAHWNhrovupyzuyG8cd6HJazh0J7IXczRwi4/IkdW700zTVPdouW+aTU7VdIJSD/i6fIgNWLMUKlXGwtD05b8SODqJCmUIctu+9rwp7M1Plie2juOY8jGhYGmKoLjcNGRevYTIFL3Q5KONeGXlNq+5ySZSt13Ghw9doy+lawbUJ92rovBox3TDF75V3i7NcJb/TFY/uqKHRXZRCJ63n9y3iBj+4QKJkDP0arVCTozUd8ia1cmGBQYxPGB2dJt7GsJZW7aVyrGHeyGyt/rv07nFj5qKmopslO5JeZT7JJBMdLeUGHwkRnj4YJFJaaKDoJQaC922C298vZnlkFnRzbnEhk8pV+o57rPO+vl49VobUngE9Y/GntPPrl7I3FJ6cwMQwTVFGyphnJ0BJAUGslArtX4sw2fXDWlu8HXbzwM9PigTK+eecQDxBFjQwbL6Ed24KjjonpXqFhCpwhCVPmfpEMBrm8IzGqr8kx0IwsYQ2KePQU9o1W/8QPj3NWIm5v33CtrXAt08FOQ2YFPCc02WK4s4YPuqy45dSe2HBjvll9FmggE1TbWczTvtdKpKhRpT7p3eNNzyElvQZIErjE7g=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:AMDPR08MB999846.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(10070799003)(786006)(366016)(1800799024)(23010399003)(18002099003)(3023799007)(10067099003)(56012099006)(261028144727099003)(11063799006)(261021123027099003)(261026140227099003)(261021121427099003)(261102123227099003)(261022105027099003)(261026121527099003)(261009223027099003);DIR:OUT;SFP:1102;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?TF7L+jt5iyMDpFgAOTzdpV+ZJ10pabOeP6E1+iyqlXzAMACEVMf4PyLOd1wf?=
- =?us-ascii?Q?XBkDloVe8whfuw50iejdasxla1pVlYHqTpWQAJCeDSCtC3O73llOWNARlG/z?=
- =?us-ascii?Q?QUnu+TTr0PhMlx03121gZl+WQxIZanPYJ8QO1htA5BJCdGnpK7bYZ3Bf7Mv4?=
- =?us-ascii?Q?fHZmI8gaq6m7V7pyGdteRgeBoV9wn0KdUJFmlOCubq1L7vwm4ZmKlKke7W17?=
- =?us-ascii?Q?8gTZ8FQHWmLEIc4OPXvw7vI12BOI3BoX8k1D4shClVWYgjkv7fgf0JEitMVp?=
- =?us-ascii?Q?7mV3avedtpIUlKT0dNXsRcCmeXEUF8Nd/J7SoUYGcAT+I5SHHXgZsc70A9V5?=
- =?us-ascii?Q?twbbPAqb4Oer+sQXg3J+hvS5D5X+oHBCSfgbzP+MCFu2NIVYKJdcbD4pil+3?=
- =?us-ascii?Q?N6K79hnFodOM6VGoYma/J0Y8XxVHRwUQg1RZ/LQ5y8G7Zeq9cfD/p+sV6qvD?=
- =?us-ascii?Q?kftK7kiHAFugbXL/Gka4iqhwDDD4nZynGyF63qOBgcBW7himn9UrASyGIHAG?=
- =?us-ascii?Q?RxEanExHSpHrEHeas5iu1dxlwT63AODLD1/k0dcbjX0mD3URCB5MmmxZ08HA?=
- =?us-ascii?Q?xGnwaanKhB4vmYJ2wCYY8rcf7U3Scw6fI/ZD5gmCOGsD5/rZwiyQIuTcAbcW?=
- =?us-ascii?Q?bOVH9VoF8P02VjLWd3j20vh1ZdV+gd6yA8GJTJzKg3hoFOXUD1arnKOVw3Ll?=
- =?us-ascii?Q?bNd0WuiJ41wgmx4iDZ9D1SU7dti3mVOF1rU8Y5gpxS8b12TkAbUz2OCNN8nb?=
- =?us-ascii?Q?1g8UJI3u2Vs7b8ivpCSqKTX76L4RPSO1wFT1bOJYDgyDa8XREITIkc1SV2I4?=
- =?us-ascii?Q?b2p5J/jgeurRe4G2emqt2ckB9Tlb89OxY8OTA9+NF4G0el6Bx9sDop6XFN6L?=
- =?us-ascii?Q?n35/azQGrHcl9r1HlMWLUrLjlHRBDGFR5rZDeMcZQpXGv0OZ1vm9dnj24AyL?=
- =?us-ascii?Q?nCHKYJzVM34JmyiYJEYvEe4H+9+7HxV15OkGU+KbHIEgpV+RKcMti74W2pF6?=
- =?us-ascii?Q?T7NGq5sWTEz194pbwtkhPMAjL3A5TIdi0KAqXtmDmdYL2rI5RRV4217qstBz?=
- =?us-ascii?Q?ICyimiz5Gl+nj3B/QnHuoSk5yZ90kdjx+wWy2hKehbw8yYQQrkXQw2vygO/5?=
- =?us-ascii?Q?f+dF0YHdHPUvDm8/L2FelpLlgA8BQKYa/ccGKwblobRwyRNiyLibSnXJJhOn?=
- =?us-ascii?Q?PnfCd0RZQYNQd9ICjN21Jj9mtPrv5aj3m5vNDHZQybjDMaamfOOLZidVE/U1?=
- =?us-ascii?Q?/WPfClEx7gJ4t9LP9TeS3Ibu/HS0EvRNs+2zwHRtKjoTdxsYHehEhpHJiDxh?=
- =?us-ascii?Q?M2cnnts5EacMwKKPnPO8pcvo+Et5/zW2QoN489U5C3vESOTVE6xHXxDwIuZD?=
- =?us-ascii?Q?4cu7nne546PA5O6gWblrqM0qfC7nPFDYTRSilqz0uoTTPZA8HT+c90/OdiLq?=
- =?us-ascii?Q?fHrkrLFeSskIxPAEUXJJCcPbPu6Z8i1oiJ6d5a/UlJFI/Iot8JYvhFnjZ3eI?=
- =?us-ascii?Q?v7efkHy2pz25aZ0nrwrsP2vz0Sib8sQqR05cN+QSd4K2zm2jLZX5u73pOymZ?=
- =?us-ascii?Q?wNOg/AaQGf0LKvwNzZYTPstROuQhswNpxZ/5G0uxF70hUSLMylM1VSqKNE4p?=
- =?us-ascii?Q?Vun9spQmjABdnMBrhUqHw0JTIwYufh8EaQQUcOHDPpfqunJWeTP3pKt3odaK?=
- =?us-ascii?Q?K5Q5GECMG5hv4oFqF225knjkSK6WoYCNktB7J3q9leEjtbjL6sREeOH/WEq4?=
- =?us-ascii?Q?bRFt3NG+h8xgPQEBZNYD5zCeQOqDfg/xuGFPF07hAB3Ins1H/7Jq?=
-X-OriginatorOrg: kuleuven.be
-X-MS-Exchange-CrossTenant-Network-Message-Id: 6c9d9442-8293-4603-f244-08df3c4e1237
-X-MS-Exchange-CrossTenant-AuthSource: AMDPR08MB999846.eurprd08.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Nov 2026 21:36:52.1844
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 3973589b-9e40-4eb5-800e-b0b6383d1621
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 9eoFjbD62haHx5C+H2nrb5otOEIsszfKf0eLHl50ljsdSpluV0z5HIINborKPzjUNAKYxTLKj70W3vgJ0QmXfQ==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS2PR08MB10111
+X-Rspamd-Queue-Id: 052511F441
+X-Spam-Level: 
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-13.51 / 50.00];
+	SUSE_INTERNAL_BYPASS(-9.00)[];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	ARC_NA(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FROM_HAS_DN(0.00)[];
+	DKIM_TRACE(0.00)[suse.com:+];
+	TO_DN_SOME(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:email]
+X-Spam-Score: -13.51
 
-While freshness is outside dm-integrity's threat model, this hardens
-allow_discards_keyed further against rollback of the backing device.
-The keyed marker covers only the sector number, so when a block's tag
-matches its marker, a read returns whatever data the backing device
-holds for that block. Return zeros for such a block instead, so that a
-marker restored by a rollback can at most make the block read as
-discarded again.
+On Thu, 2026-10-29 at 17:27 -0400, Benjamin Marzinski wrote:
+> On Thu, Oct 29, 2026 at 10:57:27AM -0700, Brian Bunker wrote:
+> > multipathd takes a path's WWID from udev. When a change uevent
+> > reports
+> > a different WWID, uev_update_path() removes the path from its map
+> > and
+> > re-adds it through uev_add_path(), which places it in whatever map
+> > owns
+> > the new WWID. Nothing checks the new value against the device
+> > itself;
+> > recheck_wwid only covers paths coming back up in the checker and
+> > "multipathd add path". If udev reports the wrong WWID, or the
+> > uevent is
+> > stale by the time it is processed, the path goes into the map of a
+> > different LUN and I/O for one LUN is silently sent to another.
+> >=20
+> > Use SG_IO to read VPD page 0x83 from the device in two places, for
+> > paths where can_recheck_wwid() is true:
+> >=20
+> > - In uev_update_path(), if the device still reports the cached
+> > WWID,
+> > =C2=A0 ignore the udev value and leave the path where it is.
+> >=20
+> > - In ev_add_path(), refuse to add a path whose WWID the device
+> > doesn't
+> > =C2=A0 confirm. The path is orphaned, its WWID is cleared and it is
+> > marked
+> > =C2=A0 INIT_MISSING_UDEV, so the checker retriggers udev (bounded by
+> > =C2=A0 retrigger_tries) and the path is re-added from fresh data.
+> >=20
+> > ev_add_path() is the common point for uevent, CLI and checker adds,
+> > so
+> > the second check holds even when the udev data is stale by the time
+> > it
+> > is used. If the SG_IO read fails, behavior is unchanged.
+> >=20
+> > Split the SG_IO read out of check_path_wwid_change() into
+> > get_sgio_wwid() so all three checks share it.
+>=20
+> The code all looks good to me. I must admit, I'm a little paranoid
+> about
+> forcing perfectly normal ev_add_path() calls to double-check the
+> wwid.
+> Currently, that only happens if you enable "recheck_wwid", or if
+> something is going wrong with initializing the path. The issue is
+> that
+> scsi devices can have multiple wwids, and the multipath code has to
+> be
+> in sync with the code that udev runs to the wwid, otherwise they can
+> be
+> different. I don't think these functions differ. I know I've checked
+> them in the past. But unless there is a problem getting the wwid from
+> udev or someone turns on recheck_wwid (I don't know how common that
+> is)
+> paths don't ever run this code.=20
+>=20
+> We could avoid this by hijacking the need_do_map argument to
+> uev_add_path() and ev_add_path(). If, instead of just being 0 or 1,
+> it
+> could also be a third value for reinits (we should probably use an
+> enum
+> in this case), we could only double-check the wwid on reinits, which
+> only happen when there is an issue getting the wwid from udev.
+>=20
+> Thoughts? Am I just being paranoid here?
 
-This only adds slight overhead on the recheck path, which a read takes
-only after a tag mismatch, so reads of written blocks do not reach it.
+Sorry for jumping onto this thread late, I was out of office and then
+busy. I don't think you're paranoid.
 
-Co-developed-by: Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
-Signed-off-by: Jo Van Bulck <jo.vanbulck@cs.kuleuven.be>
-Signed-off-by: Shukai Ni <shukai.ni@kuleuven.be>
----
- Documentation/admin-guide/device-mapper/dm-integrity.rst | 2 +-
- drivers/md/dm-integrity.c                                | 6 ++++--
- 2 files changed, 5 insertions(+), 3 deletions(-)
+Our primary source of the WWID is udev, by design, and udev rules are
+modifiable by users, also by design. The algorithm we implemented in
+parse_vpd_pg83() mimics the default logic in the rules shipped by
+systemd/udev and sg3_utils, respectively, if and only if all udev rules
+and configuration settings (e.g. uid_attribute) have default values.
+For that reason, we use get_vpd_sgio() only as the fallback if udev
+fails, and that's really a last resort measure.
 
-diff --git a/Documentation/admin-guide/device-mapper/dm-integrity.rst b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-index 9c21301423..b60b83b22a 100644
---- a/Documentation/admin-guide/device-mapper/dm-integrity.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-integrity.rst
-@@ -198,7 +198,7 @@ allow_discards_keyed
- 	Like allow_discards, but marks a discarded block with a keyed
- 	checksum of the sector number, HMAC_key(salt || sector), instead of
- 	the constant filler tag, so it can't be forged without the
--	integrity key.
-+	integrity key. Reads of a discarded block return zeros.
- 
- 	Not compatible with volumes that already have discarded blocks
- 	marked the old way; only use on a freshly formatted volume.
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-index 92970e1226..7ba8edc5aa 100644
---- a/drivers/md/dm-integrity.c
-+++ b/drivers/md/dm-integrity.c
-@@ -1839,7 +1839,7 @@ static void *integrity_identity(struct dm_integrity_c *ic, void *data)
- }
- 
- static int integrity_recheck_verify_tag(struct dm_integrity_io *dio, char *checksum,
--					char *on_disk_tag, sector_t logical_sector)
-+					char *on_disk_tag, sector_t logical_sector, char *data)
- {
- 	struct dm_integrity_c *ic = dio->ic;
- 	int r;
-@@ -1857,6 +1857,8 @@ static int integrity_recheck_verify_tag(struct dm_integrity_io *dio, char *check
- 	if (unlikely(r)) {
- 		integrity_discard_checksum(ic, &dio->ahash_req, logical_sector, checksum);
- 		r = crypto_memneq(on_disk_tag, checksum, ic->tag_size);
-+		if (!r)
-+			memset(data, 0, ic->sectors_per_block << SECTOR_SHIFT);
- 	}
- 	return r;
- }
-@@ -1915,7 +1917,7 @@ static noinline void integrity_recheck(struct dm_integrity_io *dio, char *checks
- 
- 			integrity_sector_checksum(ic, &dio->ahash_req, logical_sector, integrity_identity(ic, buffer), buffer_offset, checksum);
- 			r = integrity_recheck_verify_tag(dio, checksum, on_disk_tag,
--							 logical_sector);
-+							 logical_sector, buffer + buffer_offset);
- 			if (r) {
- 				if (r > 0) {
- 					DMERR_LIMIT("%pg: Checksum failed at sector 0x%llx",
--- 
-2.53.0
+This design can of course be debated. The udev-based design was created
+a long time ago, when there were less useful sysfs attributes to rely
+on. It's certainly showing its age, be it only by the historic variable
+name ID_SERIAL. udev rules read VPD pages from sysfs rather than from
+the devices themselves, which might return stale data in certain
+situations. But we have moved from explicit SG_IO to cached kernel data
+for a reason - SG_IO ioctls may hang, and are thus best avoided if
+possible.=20
 
+OTOH, to a certain extent we have to rely on udev. We do rely on it for
+a lot of information that we retrieve about devices. If we can't trust
+udev, we need to re-write a large part of multipath-tools (and
+honestly, I would be clueless what we can trust if we can't trust udev.
+Can we trust the kernel?).
+
+Anyway, if we deliberately mix udev, sysfs, and SG_IO methods to
+retrieve the WWID, we are on a very dangerous path.
+
+I'll look at the v2 now.
+
+Martin
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
