@@ -1,70 +1,70 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793990601;
-	b=ETvxhtApd/AHUvZSSJAiVK+OfbQOjqeeFQhxCGv1HR32PYb81SBBTDQxko+agMhfXlTC
-	 50SotquNy78Az6/tx7f5s3ZA0/blXuyUTlVVAvEh0pFRd52L3LlZJBDGbe/Nz5hBHeqOk
-	 j9pXXtZRaL1GWjHUTJuSn+OYSdattZJoCyKCBrpjmAtL1ZLOGXVMWRMy9eS15biGrogRc
-	 GBOWdqLinauloFY+/0mu9EjiJYbUj4BQpswP5hkT1aRWf3HVksuEDvg/ZkaFORGUgnQin
-	 UPBp47vNOXCkti6gO3qNsSda5gO4+r2aOCR2HaiqBjHm37efAWqTmG43d+DJb36qnuQ==
+	t=1793990668;
+	b=dwqOKMsy485xhAG27+Lu1T0G3M7lk3e7br342wPpKvPSN6LLCL/14VAJ7E84LqU/F5qv
+	 yAJPXt01HCed1VSuWKS9yBnMPMtkB158dmDpUDqOjDz6TDzrNZvhfsSfoyMFWcqbEdwTF
+	 sU8lF8B1yO0YJ6tjVDRoZapTzBnfsxsTnUWZCi5iuLH95PeiwwFhO6UT+sQ6UbC4vzHAB
+	 D1CsD8deR4BF3nBSZ6KDexY4obluIVMoKnLwWoHb1ziP2h07d2on7szqZZ3AxMSvpLcvI
+	 OcyhY3BNfwNxcgE+Nccq+4idUyKJ/IfAm5lsFwKaS7rQbWsE/mu1cAfHxMdYVnY00cg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793990601;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793990668;
 	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
 	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
 	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
 	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=bPeou7BEYm9C9/PhUffIlSlk6gVMToEaaW03FYyzg3o=;
-	b=C7nILUq2qb/Qe3pcTOpcXFOLx+PTWhHKfvdvpQBIXCxVEfmFeGP6kc5ihd22pYzGNpRC
-	 zJPD+t4AZKWQiOHIU+1e/LTjidOoLeIS/xjax0UkdSxP4bAY+zzsgtnwlpr1pO7Bi1XkI
-	 Uwb6lQ4ajmUTAmzK02JrUkgP+BGXe1YaUas6IZYFH8nusYkN2+yVp/tySZKg0bPSpGTxq
-	 8BUI05LHziTMsbiPiFR5DX1P2QOroMX53AYsRlmFY8CTFs9+ssSPXnS8rtZVm/QNjICZ3
-	 b+I97VPxfGcsk599Xafi/gDgDMROAc8KZ4klCjCExJW9HuUKWVChywjaruxehAq5ofg==
+	bh=Odk3Xg4jMoNvW8anoN3OEVKjpI1IbizsS34zapBreJQ=;
+	b=ZB4E9TV1hwgMzRW1gxXYGEaoqJKFjJ5K0TD+V7QgAZj1KGrruzUdahA9l+KEgkFSAEQ+
+	 LniTt/YhQdXcplOdj2JhXgQvdnDZ7n6DakP3OI5hZqmR6ut9kDA3J3rY+HX2Hx4TTFxFc
+	 P9Dyb7ksqJ6G7080zgLHl3V393cA7WXdnDVwAWI7G6G/x6I55jtFHiQRUHL6bP2ZGBAR9
+	 6MsYijc8hzTriln/0MBd9xTrPL59m1yg66hS1f66BUsFRtgVzgbdBQG5LJx14HCFjam3g
+	 k3kDjBIThYitm2+Uuu4inNEeQhP69H7MgwzDqEpn5IbpWCPnT7XKr8A0F9kDkVuopvQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=redhat.com;
 	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="J9/n2Kcv";
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Q8x18Moj;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47909606A329
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:43:21 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 47909606A329
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FF1A606A326
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:44:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3FF1A606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=J9/n2Kcv
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Q8x18Moj
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793990600;
+	s=mimecast20190719; t=1793990667;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
-	bh=bPeou7BEYm9C9/PhUffIlSlk6gVMToEaaW03FYyzg3o=;
-	b=J9/n2Kcv/ei4UCc0CxEcCYNTSCFM8ucy0m7K4iUr0FDqd+xIgeWafQk88QHMOd+1XRXH2w
-	0u0Ejr5TaAeg3hEoG9Z1Cmz/+yBTFZIJbeCQ/dnwznem+dZ+53Vosljt040qf5p6e+z01n
-	hIDBcAX0VhnfnNfu9tVj7NlcYe/fuKk=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+	bh=Odk3Xg4jMoNvW8anoN3OEVKjpI1IbizsS34zapBreJQ=;
+	b=Q8x18MojxuS0FbR15PmkwujzPphYvyVZ73lTbz0NK8w/Vs1iK5P8mRFatFXt89o7MKsuhm
+	BC5FzFnzFfx6w+q47qqyeLainnlKzhDDCqcFkAfW0mHEBGn0CXMbmONqgEmLswgCgk2l5O
+	hsg2n+QbDwIH+fBpWCNHnN0kT2kgBaA=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
  (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-178-QObENiuBPWi3VCqw78kXvA-1; Fri,
- 06 Nov 2026 13:43:19 -0500
-X-MC-Unique: QObENiuBPWi3VCqw78kXvA-1
-X-Mimecast-MFC-AGG-ID: QObENiuBPWi3VCqw78kXvA_1793990598
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-437-s-ufg_T4MXWT3Wfdk4YJYw-1; Fri,
+ 06 Nov 2026 13:44:24 -0500
+X-MC-Unique: s-ufg_T4MXWT3Wfdk4YJYw-1
+X-Mimecast-MFC-AGG-ID: s-ufg_T4MXWT3Wfdk4YJYw_1793990663
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 256B819560BB;
-	Fri,  6 Nov 2026 18:43:18 +0000 (UTC)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 920AF194510D;
+	Fri,  6 Nov 2026 18:44:23 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id DC63618004E9;
-	Fri,  6 Nov 2026 18:43:16 +0000 (UTC)
-Date: Fri, 6 Nov 2026 19:43:14 +0100 (CET)
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 116C21956087;
+	Fri,  6 Nov 2026 18:44:21 +0000 (UTC)
+Date: Fri, 6 Nov 2026 19:44:19 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
 To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
     Benjamin Marzinski <bmarzins@redhat.com>
 cc: dm-devel@lists.linux.dev
-Subject: [PATCH] dm-thin: fix leak if __set_snapshot_details fails
-Message-ID: <6a3e4a64-3719-3a3f-1d51-1a7b478e046e@redhat.com>
+Subject: [PATCH] dm-thin: fix parsing of feature arguments
+Message-ID: <69e705f7-eb73-19c1-2ba8-0737a53d8614@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -74,43 +74,35 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
 X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: _btImxbjoaJe-IgSb8wm81dG5t0Mus3nyYPZjpuJY68_1793990598
+X-Mimecast-MFC-PROC-ID: dEU5LqLu_F-RNzPlFZWinjvyL_Q2wL9yZxPlhciS49k_1793990663
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
-If __set_snapshot_details fails, the variable td is leaked - this
-prevents any other snapshot with the same id from being created.
-
-Fix this by removing it from the list and freeing it.
+"struct dm_arg _args" limits the number of arguments to 4, but there are
+5 possible arguments that can be specified.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 Assisted-by: Claude:claude-opus-5
 Cc: stable@vger.kernel.org
-Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
+Fixes: 787a996cb251 ("dm thin: add error_if_no_space feature")
 
 ---
- drivers/md/dm-thin-metadata.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ drivers/md/dm-thin.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: linux-2.6/drivers/md/dm-thin-metadata.c
+Index: linux-2.6/drivers/md/dm-thin.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-thin-metadata.c
-+++ linux-2.6/drivers/md/dm-thin-metadata.c
-@@ -1225,10 +1225,13 @@ static int __create_snap(struct dm_pool_
- 	__close_device(td);
+--- linux-2.6.orig/drivers/md/dm-thin.c
++++ linux-2.6/drivers/md/dm-thin.c
+@@ -3147,7 +3147,7 @@ static int parse_pool_features(struct dm
+ 	const char *arg_name;
  
- 	if (r)
--		goto bad;
-+		goto bad2;
+ 	static const struct dm_arg _args[] = {
+-		{0, 4, "Invalid number of pool feature arguments"},
++		{0, 5, "Invalid number of pool feature arguments"},
+ 	};
  
- 	return 0;
- 
-+bad2:
-+	list_del(&td->list);
-+	kfree(td);
- bad:
- 	dm_btree_remove(&pmd->tl_info, pmd->root, &key, &pmd->root);
- 	dm_btree_remove(&pmd->details_info, pmd->details_root,
+ 	/*
 
