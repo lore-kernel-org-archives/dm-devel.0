@@ -1,75 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793908593;
-	b=Le+xl6cPQt7qlZu0mo4gsRaVjYri2TrKR8NnynXPAdhZLWZs6BVHQGrZA3dfVGhLj6EW
-	 y0Wy6Pr4nRKMq/2F4L0TJ4tv+cAXKFSDF3RxEtPkeyGeqHIGXE8tkVB0g3XCRdc7h11Ud
-	 l/CsMPw5bj1Kqh9S3rFX8H+Bh4hSqX3YVw5w3PKA9QNWGf82TmP2jELYlDmq12q4X6ImU
-	 XxuYdHhb/snNQqsCUvfqWW0DP9DtEAMJdpATkOqLzsHCZ6sM3D003bg8bgqrCnnRUslv+
-	 zx6cfYN5/f4hYHPKqcS5bHtKwb4M5E9Q8IKK0AiweXi42iEx6C4YEqbQzyi7j1OuwXg==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793908593;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=XmNOJezMWFZ8d9FUQnR93oHeejrxTbPCvCkgJ4e6wSI=;
-	b=DHOhGIfHKXKSYrVIczfK71R4WiQiEeYMmSG9wVXLiVzjDFM9lUKYPwwVttwDGuWGYK6H
-	 IUNOqmIz5poNDMzZm7Z18NSRCXIl+G7ZCfshOaVFOzmmozh+lL/Z+y1RZOoWWUth59lMm
-	 JjxqJouDwUDn6FEH25/h6XpQKjvYdc0KrqaqyPnHmiXuLjaQvSjDACtmEC/dcQCZ81z9O
-	 ERXx2XlQRnJm4XD7TrQL1iUcQFcl7YVjm1xuSonguqYoAteP9fT/Q3szZJl/0Q5xEJ7Al
-	 6bS+nUTvUU1+N0xCcKlep52NsFthkZTiZ7+L/Is/jseRNeAmOLuQAbc4BykmYqY01cg==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=U8OprlN4;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.160.49
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793951854;
+	b=a2TxTLpPYvHKLfX/0ppCKx4ghgr5QO5Wc2eMJ8bXkQG/YhI0z1PGcUwsoOI60Ru6fz7X
+	 qASd/xDp+DxF863eXugdCrBcXk3UT+zrRHqpBNKc2dYbPIfx3moMlhQAy1y81QJSwuCbV
+	 tmwcfet2eRxPI9pgLlzex/zxeYjJl03FavYyw4bseVo4+1coYUKJkLzx5Bi2DUud9nt9S
+	 jFoB03oMVXADG7ss4Siq1QkDBND09RDSk4Td4YpssfupjejakEE54r5syinmMjDVge/QB
+	 EGE9mnnqhP3yJeVDMXELDaMpNg/Y340ZC0+4egv01JdETIOxvBldIMQOQiZc6O5q/dA==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793951854;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:MIME-Version:From:Date:
+	 X-Gm-Features:Message-ID:Subject:To:Cc:Content-Type;
+	bh=DYpY5tnHLdMu8mF3D5OCo2Uuu5ItSVDB1Brn5+n2fPg=;
+	b=1+K/9/bFX7PU65Ri5/ukcxFiABgDYJ56T8gZsMmtnS1omDPVSS49l0Q3TF5QK4TiU3MH
+	 58tgZ1gM0BgXCp2pkWSwNqw01nCzgvjh2lqdqI91Iq8XD3w1zzsH/jnqSHJdb3te0LClF
+	 +VyUY49BcOITojhOG2x9niAUpnbxCy3ozVkhxcm4+q75nAclEqcD3xMHyucF6Mh2K3xo8
+	 dXe2oKRIelodpnTt2Cgy/xToSsjCpc5pIMSXK+biLUD8RMZQA+qVHnfCopgQzzvengW3X
+	 8+pXk5dBluReYPVB6GY6JZyyHwFF+vePG6DFm8tVgiS0y+3CW97FDwMfxDct6ulJvmw==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=vSz843kZ;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.160.49
+Received: from mail-oa1-f49.google.com (mail-oa1-f49.google.com [209.85.160.49])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 889C6606A33C
-	for <dm-devel@lists.linux.dev>; Thu,  5 Nov 2026 19:56:31 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 889C6606A33C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E9C8606A329
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 07:57:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2E9C8606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=U8OprlN4
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1793908591;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XmNOJezMWFZ8d9FUQnR93oHeejrxTbPCvCkgJ4e6wSI=;
-	b=U8OprlN4P3OBjjNcy2efGQIVpmcHH65Sk3Z/ZyXunkdUioOVxtX3jc5ocvQljtHWUECm/Z
-	JRu4QSCenLk7lXvnY/v17E3rt809pVww1YjlsTUbFTaQNfTygSAu3L/w3gC986iv4pp+fT
-	P4FF2YaiC2rErw0YadmpK4s5KF1VWoM=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-219-HVtl068wNGuHBG9SvbPSiQ-1; Thu,
- 05 Nov 2026 14:56:27 -0500
-X-MC-Unique: HVtl068wNGuHBG9SvbPSiQ-1
-X-Mimecast-MFC-AGG-ID: HVtl068wNGuHBG9SvbPSiQ_1793908586
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 53D8C195422B;
-	Thu,  5 Nov 2026 19:56:26 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C4BEA1848D41;
-	Thu,  5 Nov 2026 19:56:22 +0000 (UTC)
-Date: Thu, 5 Nov 2026 20:56:20 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Kirtikumar Anandrao Ramchandani <kirtiar15502@gmail.com>
-cc: agk@redhat.com, snitzer@kernel.org, bmarzins@redhat.com, 
-    dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-    syzkaller-bugs@googlegroups.com, 
-    syzbot+5307e3bcacec2ce4c2f0@syzkaller.appspotmail.com
-Subject: Re: [PATCH v2] dm: Reject table setup after queue or disk teardown
-In-Reply-To: <CADZg-m06Zf1c63em8uJaDKVQu68sHbdBi1oZw7JAbhUtvk5nXQ@mail.gmail.com>
-Message-ID: <ab4a2433-234f-d275-8473-50494d019439@redhat.com>
-References: <CADZg-m1A5qKMfXGtQw_s9-tYDL-NinDX8bNAxurFkrWRRq7ZeA@mail.gmail.com> <CADZg-m06Zf1c63em8uJaDKVQu68sHbdBi1oZw7JAbhUtvk5nXQ@mail.gmail.com>
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=vSz843kZ
+Received: by mail-oa1-f49.google.com with SMTP id 586e51a60fabf-451a49abd8aso197018fac.3
+        for <dm-devel@lists.linux.dev>; Thu, 05 Nov 2026 23:57:33 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1793951852; cv=none;
+        d=google.com; s=arc-20260327;
+        b=oLjRLFF/ZggsKNdMMC83CMcx62g4gpsgBF/yhDUuvO7rDD7rRrUS8pZr0rNfj6RiwP
+         tQwbiHSfVPrRQEJWwpkRikklInQ/2DUFphqdeABJazISHNGt80ehaj4rQkMq6Jvlizeb
+         VuoU2itJN008YYNl2Gh42IVzcmFD4emYf8f16k5rehJcNK3zZ3cNGxihZ8ezd4lC1o5x
+         XpLmHNTkJkTC9u1rGnfe6KJYHDhvHxDEavk8TlNXtKtOLfNxcO1W2tdBK4ar/C14H7cs
+         Mu1vFn2iF40drDyVcVPvBSOz04uz068Htk/hlMhlAnQHWukw7o6NIO+5eDht2QymAxQR
+         xJ5g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=DYpY5tnHLdMu8mF3D5OCo2Uuu5ItSVDB1Brn5+n2fPg=;
+        fh=QYTz+3h3yOuX8c4Vv41NdEi01bzgxAl18wmVjyCoP0U=;
+        b=MgTJhTLv22ZB9l2vueBSsYH8JfnQ4zSHswi+QWi3TBVl9cc9yNMb8CYCSH9HA+9yrh
+         FoJ0p2t426bceroPdd5LYT8P/0qyQC780c9YJgaSIcMbMt5V/JJv1uiQMoMJUX4gtGTf
+         aqGrJofKZHn8ubxby8PCEuX7H6KXfRtoiTwrOtz2nocCT/ITtJYuDpk4WsOzSP40SuCg
+         4Iv4+Xu+SNJBKIwvtbrbgYcyTL8uFg66xaPNPwYbht4OWmlM0JJ4AcVIXuKcUsqBBsye
+         C7RsnlJQDq6DVwR6UhlStlbPlupS3pwaAbIt21rbKD4jz8ULHOBkvfE/mBh1Edd9qrvy
+         /KQQ==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1793951852; x=1794556652; darn=lists.linux.dev;
+        h=content-type:cc:to:subject:message-id:date:from:mime-version:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=DYpY5tnHLdMu8mF3D5OCo2Uuu5ItSVDB1Brn5+n2fPg=;
+        b=vSz843kZEVIxPBqKPhbd6M51T3YdENUKdLhh130C4enNEGuSWdIUGvUPNNcOOJYc8i
+         4JTVEbNxdRzvmfNCBmDQUx3kr+swLSFx5WDSCRbvETBg4/3XHuWAeXgYi2Mypod6kIww
+         /vwgdyzVUHSMDfASbQeELZr8RpZrp4OfW5ZO6iv4AwF2sLxXLvkE7/XuEAHi5ZFfIb/o
+         9novfHSNOZxNCHXTotFc9P51RRom2vC3Q7sBtWkX7LlKMuMWhP/H4cbvZCOcGqYK1/Bi
+         /GLrLmEkby/JbHt0+0QPdyRwTIQ7DfnhS0BVkGVEKpU3PQ3XdXBDn4107bViXpzvcPCI
+         IkuA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793951852; x=1794556652;
+        h=content-type:cc:to:subject:message-id:date:from:mime-version
+         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=DYpY5tnHLdMu8mF3D5OCo2Uuu5ItSVDB1Brn5+n2fPg=;
+        b=F3pSyBvIpQtn0sq7W8Zxi0J81+/HsI/Q/I4ztzgKLP/LDsJ6MMJRrBYs86i187iei3
+         9Q2oYN6UstWcO0KXkWpoPXLBX7sy6b3b1Y7l22cpB9BJJ9UDqkJYpbmYh9Yq+af1y9Yn
+         mOtiS9XDb//VnWLfYhqB/l478FJY1oukxG/hE5sfkQIEScAri7wsgYGN680NPh1UXbeK
+         4CKdj3dKmN4ceFJ27RsZRLv1m5DgxISmOW07xQZBdyscWYDPUx8nac/kuZsyFOrKynEn
+         bx/U3BQiJkrtxipyiW+H9pWy3mxOv4KuMwmXoWuaemEGC1FWtpZJ+UHXptEZyitjsV7k
+         8MRQ==
+X-Gm-Message-State: APuU4Z/TVWNnyBhU0hBoW4Cgn4a879nnZSjRUni4d4tlYnW188pq8jbu
+	zkWWCSV8Gcs8lA58tKAnW3nt3m5NYjuwcu5yBGl7icpz4Xs3vGQgaIycVbyMfhgogqhBhiu9gkc
+	nkIDzBKlRdaM1yIu43PXnNV95NOTGa83675Gd42g=
+X-Gm-Gg: AYBFou3QSfAz23YpW7k//ol0Gm/HnzMn1sn8qK2iYgRWkl4inddgz3vrOuVs4fzJQi2
+	4uuwbI/5wrSVtD01cDO94077Id8f+ctnb1mES0D+eGqdwP+5A+gOkV7ZW03+TKreLdtC2UF6HlV
+	HDrzjopduXWGrXUO8HuSLV5njrccZPlW7XDMxhHrzD/fx1rZUIBn/3a03VRUylEZ9DZ28/UXsh5
+	BdVFWNUMTbpAbjnXAEF7o3KruwsZ8lD3f12LwJrQuwtNbI2XHAdHw+G64+wT4PHGwz4UHoVUXns
+	6VKZM5WaaBL45Bg/xu+4EXRlPZ7p1d8j503fIBfBzrp2C0wJUiW/MkVR67QDdO1oWZIVlLy/Ray
+	DRR4gg3T3OIooUjMipSxuKhIy4TuylpDz6ZbGnNqWQ4EWFZf0e/ZOV2+LKqxRTa9Hke972LaBuG
+	MA1wPL+YmSJj2UbembVw==
+X-Received: by 2002:a05:6870:65a7:b0:494:c04a:1a6a with SMTP id
+ 586e51a60fabf-4ad98dd0677mr1074288fac.55.1793951852375; Thu, 05 Nov 2026
+ 23:57:32 -0800 (PST)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -79,73 +100,40 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: Qr5D75QiKY12ZXQe8g3X0SueSGkIiZEH-O4vAxQWgMc_1793908586
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+From: Donut Oreo Computer I <donut.oreo.computer@gmail.com>
+Date: Fri, 6 Nov 2026 09:57:35 +0200
+X-Gm-Features: AclHuK_ZbI3jZ0vN-VbRk7HqBIHFw9XWUh-3AyP4y2zVhD1hRbXzpDrRyJS7WPw
+Message-ID: <CALKjhPewyFB0=2tfyNVuDPosTAisDD2YcejTpX+0iiKRXdsGaw@mail.gmail.com>
+Subject: [PATCH] dm btree: Remove redundant index condition
+To: dm-devel@lists.linux.dev
+Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-Hi
+The index is unsigned, so checking whether i is non-negative is
+unnecessary.
 
+Signed-off-by: Donut Oreo Computer <donut.oreo.computer@gmail.com>
+---
+ drivers/md/persistent-data/dm-btree.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
+diff --git a/drivers/md/persistent-data/dm-btree.c
+b/drivers/md/persistent-data/dm-btree.c
+index dd02eee4a23c..b7ac2f6d1d71 100644
+--- a/drivers/md/persistent-data/dm-btree.c
++++ b/drivers/md/persistent-data/dm-btree.c
+@@ -1108,7 +1108,7 @@ static int btree_insert_raw(struct shadow_spine
+*s, dm_block_t root,
+                 * see a way to do this automatically as part of the spine
+                 * op.
+                 */
+-               if (shadow_has_parent(s) && i >= 0) { /* FIXME: second
+clause unness. */
++               if (shadow_has_parent(s)) {
+                        __le64 location =
+cpu_to_le64(dm_block_location(shadow_current(s)));
 
-On Wed, 4 Nov 2026, Kirtikumar Anandrao Ramchandani wrote:
-
-> A failed table load can leave a mapped device in a state where its
-> queue has already been initialized or its disk has been removed, while
-> md->type is still DM_TYPE_NONE. A later table load then calls
-> blk_mq_init_allocated_queue() on the same queue. If del_gendisk() exited
-> the old hardware contexts, blk_mq_exit_hctx() dereferences their cleared
-> flush queue pointer.
-> 
-> Reject setup attempts after queue initialization or disk removal. A
-> failed request queue initialization still leaves md->tag_set NULL and
-> can be retried. Set the request-based disk operations only after that
-> initialization succeeds, so an unsuccessful attempt cannot leave a
-> bio-based retry with request-based operations.
-> 
-> Reported-by: syzbot+5307e3bcacec2ce4c2f0@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=5307e3bcacec2ce4c2f0
-> Signed-off-by: Kirtikumar Anandrao Ramchandani <kirtiar15502@gmail.com>
-> ---
-> Changes in v2:
-> - Resend as plain text after the previous mail client reformatted the diff.
-> 
->  drivers/md/dm.c | 6 +++++-
->  1 file changed, 5 insertions(+), 1 deletion(-)
-> 
-> diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-> index 1881d86..2f3f1ec 100644
-> --- a/drivers/md/dm.c
-> +++ b/drivers/md/dm.c
-> @@ -2606,13 +2606,17 @@ int dm_setup_md_queue(struct mapped_device
-> *md, struct dm_table *t)
-
-Note ^^^^^^^^^
-
-The patch is accepted, but your mailing software mangled the patch (see 
-the split line above), so I had to type it manually. Please, fix your 
-mailing software.
-
-Mikulas
-
->  	WARN_ON_ONCE(type == DM_TYPE_NONE);
-> 
-> +	/* A failed setup may have left the queue initialized or the disk dead. */
-> +	if (md->tag_set || test_bit(GD_DEAD, &md->disk->state))
-> +		return -ENODEV;
-> +
->  	if (type == DM_TYPE_REQUEST_BASED) {
-> -		md->disk->fops = &dm_rq_blk_dops;
->  		r = dm_mq_init_request_queue(md, t);
->  		if (r) {
->  			DMERR("Cannot initialize queue for request-based dm mapped device");
->  			return r;
->  		}
-> +		md->disk->fops = &dm_rq_blk_dops;
->  	}
-> 
->  	r = dm_calculate_queue_limits(t, &limits);
-> 
-> base-commit: 05441d697f7f9a927264f4058cbbc6a03dfcac9d
-> 
-
+                        __dm_bless_for_disk(&location);
+--
+2.56.0
