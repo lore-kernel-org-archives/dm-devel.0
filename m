@@ -1,58 +1,85 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793992121;
-	b=yBQrC0dj0rS10dJhL3s1pv7r6CCXF9bnEJ0eRcpadiCtwln4Vy7Dbz1mSo5qUN8zdONB
-	 kkdoq3d+2RNeXwMOu/i461AteiEl1bN/3GoPyKehOaaWpv5/GPdW1jS6i14HCLgx8jTtX
-	 H1qtKVObLWOFQuO5Ig4UENX2oRVUTb1/TIXev15cyt1p4/J3zTyWE3HcNG1tgco/4WoQm
-	 szVekDXcdle1hnV9+a+77tHB5mqV+b4jcP+C6/h3sM+JpP1Iud8lLbi9nvTkrAkF/FrLW
-	 O3LRmow0Z7GjDTqrtTesG7NGsTddfX+WA4uFUUvZ10rF3ZmBJBf1s8t0goctpg6JSCg==
+	t=1793992764;
+	b=0VfvHbZcFvUCA8bQlvfn74dEO24JFxkmpj9a3pSKYFeHhmPsB1e/eYJ8ZidmrUlMX2qo
+	 AJwLe3nwE/K6xBemnG6axgFZvj6h85CcGyoeUqU7RS/dy/XP3qUeU/e6b3T71czMhOZYg
+	 89WoC9kosLysOR9vu87KA9tthkTMBU83pbDL453E9jw9fkqWRbzTXnFLoKrlHDhUzf7Px
+	 jRN0rxtCeRTe4ZaMxLrcWOj9/z3oPrGRXlv1meOJgCQMud+iVRk8aw1QtavMVRF5XejPa
+	 MYrFSifjv+TM+rPGmwZxIzroq5ozz9DccGSbVGGKB0eEAxc/u0aXueGGZcXh1zIHKuw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793992121;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=sgGu88jRVWzCl5eG1N7637zmrOZwgC8/pVbLmh6BaAg=;
-	b=ymXLI4ynBq3XfCDHwqKCpTl/8bAZIl4vZB81hDVyvkUFvPN2DO64LH4UuAJ52l7krJ4w
-	 MntFCIwVuYev9fRiuJPJs3NmVZlrxdJp/JglGIV7IKDJNuAVZrJxGMc/UfY9UXvtwQhDg
-	 jchKKu8wI/LUrUWsz+2VqT963P1yuT+5jUv09wWAhLjcYyZR0rPFNmH8GLEsFSVSgY5hI
-	 XwLXLQVyZD+19kLsARlO20o0gW3j6nwtYhA7bHntsiPILUCA59I/CNMxQjnSQwwQxFbFm
-	 faEp9ktRYKvKLbZisnWscIjwy57rXUPlqGjuHviX6Whq8GmSyMojL0rzkJ4GzJ+wT8w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793992764;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=Og9UvHNtIsAEGxEgcmvLRK4uR57FuS+ql6V7HQ6MZhw=;
+	b=U0hjN03VL8LBl+yNyk/x81Temh/UNyUlgcH+0HvyRcGlWYfLE2qE/xhCRcxbMYv+gRXf
+	 7ZimLwsPFzPrmjvS0sv1h/VNd+NZCm6mCDyi/QDWoYG/uFTSTBKZlUvfjk/qMen9nEKBT
+	 +OWhnkqZGKFuVwjvjgFSnBqOEiNSz8l+foHMDJ/t17gOAxpvyqPn7Z+1EKpuGoS35z71e
+	 +BoeJ+ybJ5Gmln/gzxsD79EZRJNempoczXQtSXltiEGpl4FJaUSxUe2DdrXPs82eOmjuG
+	 JTi8KJiwHd7przgG8Jv/zI7ARoRFQqiHP/HXwOI6tT15nC9u9tFZFcjsPEoXkyj19fw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=a4+Ybtk3;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hM80xQYx;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E151606A326
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 19:08:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDE08606A326;
+	Fri,  6 Nov 2026 19:19:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=a4+Ybtk3
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 832731F0089F;
-	Fri,  6 Nov 2026 19:08:40 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hM80xQYx
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1660C1F0089F;
+	Fri,  6 Nov 2026 19:19:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793992120;
-	bh=sgGu88jRVWzCl5eG1N7637zmrOZwgC8/pVbLmh6BaAg=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=a4+Ybtk3mYZmEHmSF1re5WCduLPGm3FOLFxtAf9uRDUvVmoSC7YtGfsYPLLKrvcPo
-	 Jcp1vF10kX5lRA5wM0PSUbeknNY30IzWS2EZKehtGJuBusiE+ts6tbYcrTwHbebsHk
-	 I3B5qjojPgXfznZ2bnZAFEXoWOnkNdxpGj9f4Hkq0X6GQyI+US2w4o2Gscl7lJYFdH
-	 1Q0wG0b5qhKWDhlZX35T4kQKPo+dtX3meAMROgeEAQVlNgEO8azK573s5TZa8e4uPo
-	 NobP5I2SqHfSziMKyfU7NZS/ubo3eGmUPg8MkF9AuHIyXqt4DBZt0TWJxN2DJ1cbHp
-	 jc1FnvyzuubnQ==
-Message-ID: <sashiko-outbox-202135@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] dm: fix use-after-free when dm_get_device() widens the
- open mode
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Mikulas Patocka" <mpatocka@redhat.com>, "Ming Hung Tsai" <mtsai@redhat.com>, "Alasdair
- Kergon" <agk@redhat.com>, "Mike Snitzer" <snitzer@kernel.org>, "Benjamin
- Marzinski" <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev
-In-Reply-To: <7acdd5f5-72bd-1fc2-cf90-26c9c2a16ba8@redhat.com>
-References: <7acdd5f5-72bd-1fc2-cf90-26c9c2a16ba8@redhat.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Fri, 06 Nov 2026 19:08:40 +0000
+	s=k20260515; t=1793992763;
+	bh=Og9UvHNtIsAEGxEgcmvLRK4uR57FuS+ql6V7HQ6MZhw=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=hM80xQYxSOn/agzNF6aKv01E/JzpxiW8ltCGlvZGom0n6XHUUGz+vhL0Uk6uxfyNM
+	 go+L6tk64X+Sq3urFpcKA9TMnvNKwvUSsMU3K5CXkAKgSsYG8Va1By7xgYjI54t9O6
+	 0J3noDH0wBLU+efSJ+uBWWEH1Mafc36yNxNWebVUsa1kqG9RzBLV28VzIPU6f+emPO
+	 o47SlPqHgex1v2XoeJJ2PmZrodW0r78u8x9AMMWOvkzOEmeJbaOJTBeuQYytfr//W5
+	 OBaaVaZbUSu/zC9sHDdanQh17R5330YgoRNacteg0SMM6WnD4WQ5xzz4HiVtCdKnnL
+	 8H9aBTyQGwkvA==
+Date: Fri, 6 Nov 2026 19:19:20 +0000
+From: Eric Biggers <ebiggers@kernel.org>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Hannes Reinecke <hare@suse.de>, David Howells <dhowells@redhat.com>,
+	bpf@vger.kernel.org, dm-devel@lists.linux.dev,
+	fsverity@lists.linux.dev, keyrings@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Dongliang Mu <dzm91@hust.edu.cn>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Emil Tsalapatis <emil@etsalapatis.com>,
+	Ihor Solodrai <ihor.solodrai@linux.dev>,
+	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Yanteng Si <si.yanteng@linux.dev>,
+	Yonghong Song <yonghong.song@linux.dev>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v5 2/3] KEYS: Replace assoc_array with rhashtable
+Message-ID: <20261106191920.GA3383096@google.com>
+References: <20261105031401.956609-1-jarkko@kernel.org>
+ <20261105031401.956609-3-jarkko@kernel.org>
+ <27015846-0161-4700-b810-4643e1f7b63a@suse.de>
+ <20261106090516.GA1973@sol>
+ <93e6b4e6-43c3-462d-b57c-26676aec85ec@suse.de>
+ <au4k69xNBUjsNErr@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -61,72 +88,58 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <au4k69xNBUjsNErr@kernel.org>
 
-Thank you for your contribution! Sashiko AI review found 2 potential
-issues to consider:
-- [Low] dm: missing Fixes trailer for commit 86f1152b117a in commit
-  message
-- [Low] dm: commit message claim about table_device->count contradicts
-  code
---
+On Fri, Nov 06, 2026 at 09:05:15PM +0200, Jarkko Sakkinen wrote:
+> On Fri, Nov 06, 2026 at 02:02:11PM +0100, Hannes Reinecke wrote:
+> > On 11/6/26 10:05 AM, Eric Biggers wrote:
+> > > On Fri, Nov 06, 2026 at 09:21:32AM +0100, Hannes Reinecke wrote:
+> > > > While I am pretty much in favour with this approach, is there a specific
+> > > > reason why siphash has been chosen?
+> > > 
+> > > SipHash is the preferred choice for secure hash tables.  It is secure,
+> > > performs well on short inputs, and doesn't require special instructions.
+> > > See Documentation/security/siphash.rst
+> > > 
+> > > > Would there be a chance to make this configurable?
+> > > > I do see slight complications when running in secure environments
+> > > > (ie FIPS-certified environments) where most of the hash functions
+> > > > might not be available ...
+> > > 
+> > > SipHash support is available even when the kernel is booted with fips=1,
+> > > so there's no issue there.  It's already widely used in the kernel for
+> > > hash tables, and that hasn't blocked FIPS certifications either.
+> > > 
+> > Ah, right. Thanks for the information. Just wanted to cross-check here.
+> > 
+> > > Side note: fips=1 actually has little do with security, and in some
+> > > cases it actually decreases security.  See for example
+> > > https://lore.kernel.org/linux-crypto/20261026183332.11402-1-ebiggers@kernel.org/
+> > > where I'm fixing a vulnerability caused by fips=1.
+> > > 
+> > Oh, I am fully aware. FIPS is more a rubber-stamp than anything else.
+> > Unfortunately, a pretty powerful one.
+> 
+> Just representing this as an option but in the current mainline indices
+> are used instead of addresses, and thus it would be also an option to
+> just jhash across the board, if that part is retained (now it is being
+> removed).
+> 
+> On plus side, any security bugs in cryptography would not be a concern
+> of keyrings.
 
-commit 16907af74a028c1489b22d6e8c7c48ae64949725
-Author: Ming-Hung Tsai <mtsai@redhat.com>
+SipHash is also useful for resistance against denial-of-service attacks,
+where a user puts all their keys in one hash bucket.
 
-> dm: fix use-after-free when dm_get_device() widens the open mode
->
-> There's an UAF bug in dm_get_device(): when a table construction calls
-> dm_get_device() on the same device twice with widen access mode (e.g.,
-> read-only first then read-write), the second dm_get_device() calls
-> upgrade_mode(), which reopens the device in upgraded mode, making
-> previously returned dm_dev* a stale pointer.
->
-> Fixing approaches:
-> - Add per-mode views (dm_dev_ref) from a per-device dm_dev_internal to
->   multiple table_devices.
-> - Keep reusing the dm_dev_ref when the requested mode is included, i.e.,
->   a read-only reference can reuse the read-write opened device within a
->   table.
-> - Maintain a canonical block_device pointer in dm_dev_internal for
->   handling the DM_TABLE_DEPS ioctl.
->
-> Also tweak the way of mode sharing check in find_ref() to
-> "(x & mask) =3D=3D mask". The result stays the same to the previous
-> upgrade_mode() guard "(x | mask) =3D=3D x".
->
-> Pros: keep the relationship between dm_dev_internal and table_device:
-> one dm_dev_internal per device, regardless the mode, so the output of
-> DMM_TABLE_DEPS ioctl unchanged.
->
-> Cons: extra dm_dev_ref allocation.
->
-> Note that now the table_device's count not necessarily mean the number
-> tables referecing this <dev, mode> pair, since we're allowing multiple
-> references within a table.
+As I mentioned, it's already used for secure hash tables elsewhere in
+the kernel.  That is what it's for; see
+Documentation/security/siphash.rst.  It's very fast as well, so if you
+are thinking of cryptography as being something very slow and hard to
+use, that is not what this is (or ever needed to be).
 
-[Severity: Low]
-Is the closing note about table_device->count accurate?  In
-dm_get_device(), find_ref() reuses an existing dm_dev_ref whenever its
-mode covers the requested mode, so a table still holds at most one
-dm_dev_ref (and one reference to the table_device) for any given
-<dev, mode> pair, as the comment on struct dm_dev_ref in
-drivers/md/dm.h notes.
+Let's just use it and not over-complicate things.
 
->
-> Signed-off-by: Ming Hung Tsai <mtsai@redhat.com>
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-> Cc: stable@vger.kernel.org
-
-[Severity: Low]
-Since 86f1152b117a ("dm: allow active and inactive tables to share
-dm_devs") changed upgrade_mode() to replace dd->dm_dev and drop the old
-table_device reference while earlier targets in the table still held it,
-should this include:
-
-  Fixes: 86f1152b117a ("dm: allow active and inactive tables to share dm_de=
-vs")
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/7acdd5f5-72bd-1fc2-=
-cf90-26c9c2a16ba8@redhat.com?part=3D1
+- Eric
