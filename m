@@ -1,77 +1,70 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793989815;
-	b=mjOm4bvKHhQZ0ba4XNaQU5Q5snp0vNhUnt3fCHVAJq3gnWjUWNInGeOdAc1sYc9FTNY1
-	 PyG5iPfIHScXgqtViVtrWKK/4+I6aloxlul8hBUlDYYOP3vvr3ENCcmXymmHRgEbkM8y+
-	 JVo6gGq8cyLvxvCZIwlQ7O/Vd+AQ0Vb4E4T2cdJLybWt4Ee0er1RTd2TTbZI9/JSU60Ra
-	 v80csOySxnswe/tp63c5uvEFDy+oo+IKBZ+WXFRiYIej02rwVA6OdkW3LPk+CPm2j98wL
-	 gTec/EjAgVqZaK9BtTVQokPFIPLqtwZBQXbbjLeIJoLuIhihXzbNVCNi/khyBraBtnw==
+	t=1793990333;
+	b=djb5f0df2bUWwBUMPVZl/wWj7Nh6nwX+Nv6BQfJqKc1nIcyYzOR7uK5fa5kJHc1TRC3l
+	 Gi9IH91x6Wd+JW1OQwEzUOsX4OsmY+zsz4HmWkxczURv7cZ6v5kb7hdwIXC9rbBrEGgCC
+	 g7bn480OtHTBJqgzGltNR1EbwbZ0dqIBmnbsp/W3wt6GSPbLBBMyeuoD6ZHuNFezopAlE
+	 CEyzvjRI2bo/6hhFQ94MTKf4stuumT4uANbA2DfMMHC5cJa5LKgRsa/elKMRRdDU+AZ+W
+	 5pWh2KUjHrxoqppJra1DztYcAgLcUah1IVua8v1bQyo4BZ9c4B3ScQ6Ea9Ps9Nm1KPw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793989815;
-	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Received:
-	 X-Forwarded-Encrypted:X-Received:MIME-Version:References:In-Reply-To:
-	 From:Date:X-Gmail-Original-Message-ID:X-Gm-Features:Message-ID:
-	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=UliTkuKSwijkprFnPvplR6mcOQUjgocutB6yCvWNZyo=;
-	b=Th6I/Pb+hYw6OrfzUw5Tv0SAs+gJcF916KklXap8jaNXuh4erF2s2DNMur560etHTBFA
-	 21N/KvpXpjGxB7mZczj7JTMzoqojPoUme8dSWgEu0a2/DhMP39RpPzHsDpoUP2kcv7dfL
-	 stRwxiMzJRqjPv3NLeKQj2yH50Yc+f0hxQAez4MIilkH1Ano1mfDFxCWKZ9kXd968sGNJ
-	 drqM5pmILct/4ll72eW+ayqfxm1Hm7oFMJdz5E57ZvkWMcmDzyTV8cT7rqQNdyoOMrofY
-	 1Cs/0cz+wDv3QBYWjS7FMZ9EDoGhCg69z06/d1NEWDa9ZqnoRAemRrSqgHZaMsNkvPg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793990333;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
+	bh=7Cc0SATlrSpSgki60LaiV8sWuxj1u5EmvRfMJrj2vdw=;
+	b=EpyT7HDNrvbXIKpR4oh4Foh8P1LwHndJJcDsRvmaVAZBVGeMTK0UiTiHyzCO/M7SJLbE
+	 ymikXpLF7VKEy/KbiqcARrCD8vE1RLBH89K/Ff7afle34TDFIbvrEBMjCnIe3MQih4Sme
+	 V6lp/Qkdn/Qf3GaSEcUYSuKDNUlBhFA/rGahACFvATvhUarFdbKaH2lyU1AArsjT+WRaT
+	 a9r7UaACgcUMBkR/GEq1TdNYPERFKxcgKLOP4z6MHZ1WRuon73GiFtK/MgWNkLOiDLBgb
+	 /0Taj5ZDeMU3XWbgLhWVdDIl105Rh7FHPfnhOOZWIGSDf4HcL308+qRr38YqAjrLAcA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=linux.win;
-	spf=pass smtp.mailfrom=gmail.com;
-	arc=none smtp.remote-ip=209.85.208.49
-Received: from mail-ed1-f49.google.com (mail-ed1-f49.google.com [209.85.208.49])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=DUc6wrZf;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB9DB606A326
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:30:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BB9DB606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux.win
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-ed1-f49.google.com with SMTP id 4fb4d7f45d1cf-6b6e7a05225so1089694a12.0
-        for <dm-devel@lists.linux.dev>; Fri, 06 Nov 2026 10:30:14 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793989813; x=1794594613;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=UliTkuKSwijkprFnPvplR6mcOQUjgocutB6yCvWNZyo=;
-        b=Tix98C2s1h4n6OwcF8nFgss9AmgDH1cu0MOc9PYyxxDXIOibJ3gypGPgX2uRNoiq3v
-         i7f7sunQR2Hbi4hcjM46GzfBwIoVe0uU8Cg+VVD/ESynZfMwTNU25XFrMOdZRd8UgzoD
-         XFTpeREvje+Za7T34bSWdjwV1W3FFyXJrqBcVQ1THwLa2d5drZu0iAktlAuuhI8O6jMN
-         Dih96NLhWKztPg6l1al8qNycHlQyfvTNr6UvrMZPpKCWo+6NfaAEp1MNDelMMcU17nfo
-         Qpizc6b7M5Zzsp4pSC2InYiRJuHbN0orGyScRhhQeFB0rWXI+ScAeQ2A0ybIvh6FXxRY
-         YpWg==
-X-Forwarded-Encrypted: i=1; AL+hErHiiA0McGG+FMl89OQhgHqDbiwLxvFY7eAZBc8vvEZJgLNCFYCeQ9Q5UkGkTib10+EyCPJ27M/aPg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9SzNgjyxBvqKd0+zgfgJ5Xkdm+yLifQXEc6otOKDHHiYvXy+G7
-	hsT+YYD0T9pZklPCX2SVBVOkkqBNwsbfYB3GDNLyLV6xyPqxWL0KQ+W71kXb52lckOk=
-X-Gm-Gg: AYBFou3b5Sxc54SSXbEVVee55eeyK0jpa2vqJkBrtHtHWR10IS3OmD6clOQGjtk7+FB
-	p/yrMEkjZl/qZxhPNaVu6VoAKXgYTBtDij5PL7mb6Qf+Uooe2jZExqwPsKUOb/pVKy+bHMwFmXj
-	Jbc771/kxHI+XA/myn3Ieg38RA5js2j6XkP+CnNnNadjz0uxGxkKg30JuRrkN9QuuiCEvKH0Gti
-	NO+EIoXj8jtrF6aOp/Z2aNc2+9YzqS8opgrIpOwDZ5BiWgbq0zj5gTMt5d3318H0/36/xVFjTX4
-	Tl/V+F1osi2rBpV1wHQIBGEoOhh3URYjoQX/Lcd00hUpkVNMAtjPeAhy42IHo54S+I9XO3w2GFG
-	rdnnJmdLipvU2v2BgZxeqc8o1tLGDtKvBFDhO+UccKpYjBdM/XvKmdWLLRR/NIKYtiSkp/+eG2k
-	EMlQ8XKEixQN5w4Bs5W5DN30x7jyotAaxE0nFZfjA7ZGl4u12AlL+pT0eeBjqgzEKYkbjlAdPRn
-	enaZ/XViiEe6OKQ5DVI72b/jSZ3seBN1o6LJYs9UIgJtcJzJC/PbMqJLlE3a5Yy/wbPIWvKLQiD
-	/SyzcNBtxV3YUBKmcYG1RmJL6sQo30ovoKEyT3bCPBY1g0nEEP0N0gpSwKA=
-X-Received: by 2002:a05:6402:5d5:b0:6b5:660b:70dd with SMTP id 4fb4d7f45d1cf-6b5977dba8bmr2543328a12.21.1793989812978;
-        Fri, 06 Nov 2026 10:30:12 -0800 (PST)
-Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com. [209.85.218.50])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6b664ad2d0bsm953045a12.10.2026.11.06.10.30.08
-        for <dm-devel@lists.linux.dev>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 06 Nov 2026 10:30:09 -0800 (PST)
-Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-c4d2b741ed9so143820366b.2
-        for <dm-devel@lists.linux.dev>; Fri, 06 Nov 2026 10:30:08 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AL+hErHoxlV8Av7yfuCnyNxSwER9ITI+80kP5GKVkXUY6Usae7bbEKrLDOmfON3yeghYPuVohNxJw4z/SQ==@lists.linux.dev
-X-Received: by 2002:a17:907:ea89:b0:c4c:bff4:200c with SMTP id
- a640c23a62f3a-c4d3531f031mr283547466b.32.1793989808075; Fri, 06 Nov 2026
- 10:30:08 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFE73606A329
+	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 18:38:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DFE73606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=DUc6wrZf
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793990331;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=7Cc0SATlrSpSgki60LaiV8sWuxj1u5EmvRfMJrj2vdw=;
+	b=DUc6wrZfB/SqFc738Djo0TpYPvGNazpzxfXYJkEQl0rlDbohuqu/eIkqVV2I0pTjSnCMmM
+	fHwR+pPpU+a0l7FKqozpijAKPWgbL4dj6vhLnq+duJHTgxT0UcfkPOtklqp+eCtvvnwK9w
+	EWkByLyD+U9r8AW7BYNnfQTUpCZ0NgA=
+Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-358-JQtbgt8OMKaSQpwcVYE_xQ-1; Fri,
+ 06 Nov 2026 13:38:50 -0500
+X-MC-Unique: JQtbgt8OMKaSQpwcVYE_xQ-1
+X-Mimecast-MFC-AGG-ID: JQtbgt8OMKaSQpwcVYE_xQ_1793990329
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6708B1955DD7;
+	Fri,  6 Nov 2026 18:38:49 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0E07418004F7;
+	Fri,  6 Nov 2026 18:38:47 +0000 (UTC)
+Date: Fri, 6 Nov 2026 19:38:45 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>
+cc: dm-devel@lists.linux.dev
+Subject: [PATCH] dm-cache: fix NULL pointer dereference on open failure
+Message-ID: <05b79ec2-42f7-ffe3-20e6-1dc499e60cf5@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -81,151 +74,38 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <20261029232437.2581640-1-jarkko@kernel.org> <20261029232437.2581640-2-jarkko@kernel.org>
-In-Reply-To: <20261029232437.2581640-2-jarkko@kernel.org>
-From: Ignat Korchagin <ignat@linux.win>
-Date: Fri, 6 Nov 2026 18:29:56 +0000
-X-Gmail-Original-Message-ID: <CAOs+rJVNyJwqp4CR-d_T4GVjNMjgbaDL78_mZCVGGvN1xpd33w@mail.gmail.com>
-X-Gm-Features: AclHuK8TGNjpH-aL7rdb3WJ8RwrdjoKcrJ52VddwbSIE-hld3YHoMNkMBO-NFbA
-Message-ID: <CAOs+rJVNyJwqp4CR-d_T4GVjNMjgbaDL78_mZCVGGvN1xpd33w@mail.gmail.com>
-Subject: Re: [PATCH v4 1/3] KEYS: Introduce keyring_is_empty()
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org, 
-	Eric Biggers <ebiggers@kernel.org>, Lukas Wunner <lukas@wunner.de>, 
-	Herbert Xu <herbert@gondor.apana.org.au>, "David S. Miller" <davem@davemloft.net>, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>, 
-	"Theodore Y. Ts'o" <tytso@mit.edu>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, 
-	Andrii Nakryiko <andrii@kernel.org>, Eduard Zingerman <eddyz87@gmail.com>, 
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>, Martin KaFai Lau <martin.lau@linux.dev>, Song Liu <song@kernel.org>, 
-	Yonghong Song <yonghong.song@linux.dev>, Jiri Olsa <jolsa@kernel.org>, 
-	Emil Tsalapatis <emil@etsalapatis.com>, Ihor Solodrai <ihor.solodrai@linux.dev>, 
-	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
-	"Serge E. Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, 
-	Christian Brauner <brauner@kernel.org>, 
-	"open list:ASYMMETRIC KEYS" <linux-crypto@vger.kernel.org>, open list <linux-kernel@vger.kernel.org>, 
-	"open list:DEVICE-MAPPER (LVM)" <dm-devel@lists.linux.dev>, 
-	"open list:FSVERITY: READ-ONLY FILE-BASED AUTHENTICITY PRO..." <fsverity@lists.linux.dev>, 
-	"open list:BPF [GENERAL] (Safe Dynamic Programs and Tools)" <bpf@vger.kernel.org>, 
-	"open list:SECURITY SUBSYSTEM" <linux-security-module@vger.kernel.org>, 
-	"open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: K9O3Ulu2uIvDB1UlQ0w_9N0W-hrx2mfrOQ_9blD1w84_1793990329
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-On Thu, Oct 29, 2026 at 11:25=E2=80=AFPM Jarkko Sakkinen <jarkko@kernel.org=
-> wrote:
->
-> Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
-> fs-verity how keyring internally manages the keys.
->
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+When __begin_transaction_flags in metadata_open fails,
+dm_cache_metadata_close is called. dm_cache_metadata_close attempts to
+execute list_del(&cmd->list);, but the "cmd" object is not on any list
+yet, thus it crashes with NULL pointer dereference.
 
-Reviewed-by: Ignat Korchagin <ignat@linux.win>
+Fix this by initializing cmd->list after cmd is allocated.
 
-> ---
->  drivers/md/dm-verity-verify-sig.c                      |  2 +-
->  fs/verity/signature.c                                  |  2 +-
->  include/linux/key.h                                    |  1 +
->  kernel/bpf/keys.c                                      |  2 +-
->  security/keys/keyring.c                                | 10 ++++++++++
->  .../selftests/dm-verity/test-dm-verity-keyring.sh      |  2 +-
->  6 files changed, 15 insertions(+), 4 deletions(-)
->
-> diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-ver=
-ify-sig.c
-> index aadcf5e4a47c..cad21e9144ed 100644
-> --- a/drivers/md/dm-verity-verify-sig.c
-> +++ b/drivers/md/dm-verity-verify-sig.c
-> @@ -153,7 +153,7 @@ int verity_verify_root_hash(const void *root_hash, si=
-ze_t root_hash_len,
->         if (ret !=3D -ENOKEY && ret !=3D -EKEYREJECTED)
->                 return ret;
->
-> -       if (dm_verity_keyring->keys.nr_leaves_on_tree &&
-> +       if (!keyring_is_empty(dm_verity_keyring) &&
->             dm_verity_keyring->restrict_link)
->                 ret =3D verify_pkcs7_signature(root_hash, root_hash_len,
->                                              sig_data, sig_len,
-> diff --git a/fs/verity/signature.c b/fs/verity/signature.c
-> index 0302a4e506ec..890d33b9d812 100644
-> --- a/fs/verity/signature.c
-> +++ b/fs/verity/signature.c
-> @@ -67,7 +67,7 @@ int fsverity_verify_signature(const struct fsverity_inf=
-o *vi,
->                 return 0;
->         }
->
-> -       if (fsverity_keyring->keys.nr_leaves_on_tree =3D=3D 0) {
-> +       if (keyring_is_empty(fsverity_keyring)) {
->                 /*
->                  * The ".fs-verity" keyring is empty, due to builtin sign=
-atures
->                  * being supported by the kernel but not actually being u=
-sed.
-> diff --git a/include/linux/key.h b/include/linux/key.h
-> index c4486e938a06..20ca43f5eab1 100644
-> --- a/include/linux/key.h
-> +++ b/include/linux/key.h
-> @@ -439,6 +439,7 @@ extern int restrict_link_reject(struct key *keyring,
->                                 struct key *restriction_key);
->
->  extern int keyring_clear(struct key *keyring);
-> +bool keyring_is_empty(const struct key *keyring);
->
->  extern key_ref_t keyring_search(key_ref_t keyring,
->                                 struct key_type *type,
-> diff --git a/kernel/bpf/keys.c b/kernel/bpf/keys.c
-> index bffc356839ac..24e0416abc99 100644
-> --- a/kernel/bpf/keys.c
-> +++ b/kernel/bpf/keys.c
-> @@ -29,7 +29,7 @@ struct bpf_key *bpf_lookup_keyring(void)
->
->         if (!bpf_keyring)
->                 return NULL;
-> -       if (!READ_ONCE(bpf_keyring->keys.nr_leaves_on_tree) ||
-> +       if (keyring_is_empty(bpf_keyring) ||
->             !READ_ONCE(bpf_keyring->restrict_link))
->                 return NULL;
->
-> diff --git a/security/keys/keyring.c b/security/keys/keyring.c
-> index 5281da9d5bf7..ac48d6204915 100644
-> --- a/security/keys/keyring.c
-> +++ b/security/keys/keyring.c
-> @@ -443,6 +443,16 @@ static void keyring_destroy(struct key *keyring)
->         assoc_array_destroy(&keyring->keys, &keyring_assoc_array_ops);
->  }
->
-> +/**
-> + * keyring_is_empty - Check whether a keyring is empty
-> + * @keyring: The keyring to check.
-> + */
-> +bool keyring_is_empty(const struct key *keyring)
-> +{
-> +       return READ_ONCE(keyring->keys.nr_leaves_on_tree) =3D=3D 0;
-> +}
-> +EXPORT_SYMBOL(keyring_is_empty);
-> +
->  /*
->   * Describe a keyring for /proc.
->   */
-> diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh =
-b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-> index 1f9601ef22f8..792449d356cf 100755
-> --- a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-> +++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-> @@ -746,7 +746,7 @@ test_keyring_inactive_when_empty() {
->      log_info "TEST: Verify dm-verity keyring is inactive when sealed emp=
-ty"
->
->      # When keyring_unsealed=3D0, the keyring is sealed immediately while=
- empty
-> -    # This means it should NOT be used for verification (nr_leaves_on_tr=
-ee=3D0)
-> +    # An empty keyring should NOT be used for verification.
->
->      log_info "Keyring state (should be empty and sealed):"
->      list_keyring_keys
-> --
-> 2.47.3
->
->
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Assisted-by: Claude:claude-opus-5
+Cc: stable@vger.kernel.org
+Fixes: c6b4fcbad044 ("dm: add cache target")
+
+---
+ drivers/md/dm-cache-metadata.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-2.6/drivers/md/dm-cache-metadata.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-cache-metadata.c
++++ linux-2.6/drivers/md/dm-cache-metadata.c
+@@ -766,6 +766,7 @@ static struct dm_cache_metadata *metadat
+ 		return ERR_PTR(-ENOMEM);
+ 	}
+ 
++	INIT_LIST_HEAD(&cmd->list);
+ 	cmd->version = metadata_version;
+ 	refcount_set(&cmd->ref_count, 1);
+ 	init_rwsem(&cmd->root_lock);
+
