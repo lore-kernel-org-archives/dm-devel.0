@@ -1,54 +1,58 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794055457;
-	b=AbnIDA58KFwxpR2O7rbp+q6JGQfh86T58qC+iCWj0D7FwX5UPYBU1YJEUhHLRHNETSnx
-	 RejsgBStFOfLFq8v6eMynwCs+eQ6wM6cRC9T6S9hF0C6u6Qzc+oHgP3w3VF5Ze4mq/xtx
-	 0gMotb79vJVo9BXy5GjjJsJgQ9AV5HuzuGlQIrS7SsGKeILpP5fFWg3HYH83Y03BfIU+H
-	 s9w6XwxrOCa3fCI3hwXnJ/ui/WC1y5FVV+JAK6VzPYSq0kGmew6aafLgckif6+ssjg5uL
-	 TeVjH9UidYcH4F67yVM1ARu8t5Zhf7BJLQ0gT6gU7VrdckSIpPw1JWEsaFC0GtSRdug==
+	t=1794081386;
+	b=HS1oJDEvt2v6hV4P6fv6p57qwG2AHnpqWoD9WKtiF2nS2y7wTBGWaRYSqzJUBwxhJwnF
+	 3oR9UBoLQvyTNHMZDKdTxh3ZuPBwr4LF3DMck0/FRq9QNBIeRDWm+RfOwAkDct9sAQBdL
+	 zbipYr31rTaE0UGz3runM0/hqLKZOg+nqvI74RG2PU2mSJsq6iQwE5aG3628clSfqZLDB
+	 o4gqy1qnLE2TZGsJWD2nBrxxljvwdKKeZGiaPIc/zADk1Zo9pZ4NM4ZeGNxPAf19A1UrL
+	 Dnn06wNu+DY8dadBxPX4ktEJZPoX9p7Gjw+rif8XTwejk4++TYyuvi2wnkaeWKycdJQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794055457;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=dzBwFs2TljpOP5elYmUhvLnbOuXM3QGLPguMHu8Knu4=;
-	b=G0YdbdlyaxA2aKdszaI1WsBtao1QelFu9QxsAUm+ai9es+iXtjzkD1Vtd2f4lz+z8HKt
-	 N75f7OU6EYiIUSoAjiSa0M7QbmrQObkVniLDKvNP4ohMH6gY8jyCAToXDtMnrvVqJrznS
-	 ReUR58xvrXOnYFPmu5hAk2BmsmkepgDUaf9kaO9xOANBL7au8gkB7uL/zbQJ10Z/sAoSb
-	 VLfEd3GZkivRxURstoZcNoq+KDwQBPhaKVNlJgNbDqLd+97uWNFZpm76zGoo2GflbyAG2
-	 VaMEAsSpzJyQ0D9MMfdBRNq2/MM78A8Ju3Xp5+t5/bhRw9XLaQlWd65trugMxmz4uRw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794081386;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=sDM1g2usw11clzcjRGyZq237Nj3L/W+8yTIjTKHdRCk=;
+	b=RiSasTIMKkk+GtO/uNqsDfpaKNPgjoDgg2eHsX1uI2JkDdMzpjQN82Kt9+OOsjXUlFdp
+	 l4fYbXokrINdXHKPm8rvHknX+i4EHia/7eydIsArHEYIQ5ZOYI6t0rXNXejn8Vo7gU8SG
+	 5ZkG07EPU9GigFBevBqPBojBWpeNcFiZsnrPpJ60WVD2cNRU5j+lva4BwcNJSvsuwGTfS
+	 vJjKfmv2bnppPcnDEg2A/s2G202D+ifZvyts/VUhZhXx44Z3YgOaBFWfr5C2qCgX3yzxI
+	 Ywv2ngsVFf2/vSR5d6NvT6Sz2DlhFErMp4cYiJtCNHDjYWQ9KrYt0S0kktrRya0V1+g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=egCKZgvR;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LkC9cwol;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 2E64D606A32C;
-	Sat,  7 Nov 2026 12:44:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 5E005606A32C;
+	Sat,  7 Nov 2026 19:56:26 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=egCKZgvR
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 076321F0089F;
-	Sat,  7 Nov 2026 12:44:16 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LkC9cwol
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 822361F0089F;
+	Sat,  7 Nov 2026 19:56:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794055456;
-	bh=dzBwFs2TljpOP5elYmUhvLnbOuXM3QGLPguMHu8Knu4=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=egCKZgvR+uM5AdIYnxZkn5qTtOFRr/D3N+7/N7RqicbOfSHrHL2dAv65ZHdA46cvx
-	 H8Aju+BdzWVMfOnqof3bfkSW/intUk7fd7I5A+IhhLXuhZM296Pxee0SYLQ13Ljivm
-	 K4B2f7/mN5ZO7OdxLMTCLSdZHpB9AiwG02mU5KZUvzE21CFWbQ5GYBn2SQCTfKJA/z
-	 Ykpgc4X8/HTtlJ8M3qUB4wDiITeiFk2tMFC2NSwRpGI5uzZOb9Ws0T0UgPYBdAoJWh
-	 0zfw15CJ8okfY7ZIxpgcJ4vg46Zh0SNJrTZdSWnmXTnp9TXAFLf08v4ziCE1Ykqwmi
-	 R7jztThEgO3YA==
-Date: Sat, 7 Nov 2026 14:44:12 +0200
+	s=k20260515; t=1794081386;
+	bh=sDM1g2usw11clzcjRGyZq237Nj3L/W+8yTIjTKHdRCk=;
+	h=From:To:Cc:Subject:Date;
+	b=LkC9cwolOSoDnHT4ne9E9j7Xa6p4ON3N+1JSvdTJA8TFEuj+QBxzSlJVtRTlss3rT
+	 m57slsOf4VZT8vnMUq+0p1VW/xlXRSSBJM9Y5N+S/UYw06eLYuKguGIdLsZ26NV10e
+	 11VIlSU1zZzmDvcQ9JXjgnMHQnxlZyDjoolW7GO4ZrFVbrlUSs+xgB5OC8vx0fTByf
+	 9/LR3SscC8lxdLy0mpuuQ8T6P7n50jNbStDEicV9uKPW6cWpXIU3idLjmFbOEKwoo1
+	 4Y4paNvZd+2RddL9FtN4MRMEhYkm37VTEYdk5mQQDon94YnzGLoaDlz4OhqKV8VwCb
+	 me7rCMfti58eQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
-	dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+To: David Howells <dhowells@redhat.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
+	bpf@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	fsverity@lists.linux.dev,
+	keyrings@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
 	Alasdair Kergon <agk@redhat.com>,
-	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
+	Alexei Starovoitov <ast@kernel.org>,
+	Alex Shi <alexs@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Andrii Nakryiko <andrii@kernel.org>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
@@ -56,8 +60,11 @@ Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
 	Dongliang Mu <dzm91@hust.edu.cn>,
 	Eduard Zingerman <eddyz87@gmail.com>,
 	Emil Tsalapatis <emil@etsalapatis.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Ignat Korchagin <ignat@linux.win>,
 	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
+	James Morris <jmorris@namei.org>,
+	Jiri Olsa <jolsa@kernel.org>,
 	Jonathan Corbet <corbet@lwn.net>,
 	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
 	Martin KaFai Lau <martin.lau@linux.dev>,
@@ -66,16 +73,15 @@ Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
 	Paul Moore <paul@paul-moore.com>,
 	Randy Dunlap <rdunlap@infradead.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Song Liu <song@kernel.org>,
 	"Theodore Y. Ts'o" <tytso@mit.edu>,
 	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v5 2/3] KEYS: Replace assoc_array with rhashtable
-Message-ID: <au8dHKGIv2tr_Xom@kernel.org>
-References: <20261105031401.956609-1-jarkko@kernel.org>
- <20261105031401.956609-3-jarkko@kernel.org>
- <20261107032551.GA1990@sol>
+	Yonghong Song <yonghong.song@linux.dev>
+Subject: [PATCH v6 0/3] KEYS: Replace assoc_array with rhashtable
+Date: Sat,  7 Nov 2026 21:56:01 +0200
+Message-ID: <20261107195605.3929659-1-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,38 +91,162 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261107032551.GA1990@sol>
+Content-Transfer-Encoding: 8bit
 
-On Fri, Nov 06, 2026 at 07:25:51PM -0800, Eric Biggers wrote:
-> I don't think the retry loop is actually sufficient or desirable here
-> (though it would be very rare for it to be reached).  It gets reached
-> when there are too many elements in one rhashtable chain.  However,
-> we're already pre-hashing with SipHash, and the rhashtable level hash is
-> passed only the 32-bit SipHash.  Suppose we reach this case because the
-> SipHash values collided: then rhashtable's rehashing would never reduce
-> the chain length, and the -EBUSY would last forever.
-> 
-> I think the right solution is to just set '.insecure_elasticity = true'
-> in the rhashtable_params, to disable the chain length checks.  Those
-> checks make no sense when we're using SipHash anyway.
+The keyrings subsystem is the sole user of assoc_array. It has over 1700
+lines of code, no test suite, and a long history of bugs, with LLMs now
+finding more.
 
-Thanks, this is a valid suggestion. I  was thinking about having maximum
-retries but this is much better idea. I'll address this as you proposed.
+This unfortunate outcome has evolved over time by large from the shortage
+of in-kernel callers, time bandwidth and 3rd party contributors.
 
+What the keyrings subsystem needs is just a generic key-value store, which
+performs well with sparse key sets. Replace assoc_array with an
+rhashtable-backed keyring index and remove assoc_array from the kernel.
 
-> 
-> Then the retry loop would not be needed.
-> 
-> (And even for rhashtable users who aren't using SipHash, like
-> fs/verity/, hard-failing insertions if the hash chains gets too long
-> seems wrong.  I mean, imagine if the kernel started refusing to do file
-> operations if one of the hash chains in the VFS hash tables happened to
-> get too long...  But I guess rhashtable was designed for towards
-> networking users who are able to just drop the data without much issue.
-> Plus it predates SipHash existing.)
-> 
-> - Eric
+CHANGES
+=======
 
-Br, Jarkko
+v6:
+- Eric Biggers: Set .insecure_elasticity = true in keyring_link_params and
+  drop the -EBUSY retry loop in __key_link_begin().
+- Addeded Reviewed-by's from Eric Bigger and Ignat Korchagin.
+
+v5:
+- Eric Biggers: Include <linux/jhash.h> explicitly in keyring.c.
+- Eric Biggers: Document why hashing type/domain_tag pointers with SipHash
+  and truncating the digest to 32 bits are safe.
+- Eric Biggers: Rework the commit message for "KEYS: Replace assoc_array
+  with rhashtable", including behavioral and operational changes.
+- Retry rhashtable_insert_fast() on transient -EBUSY in __key_link_begin().
+
+v4:
+- Eric Biggers: Correct the kerneldoc summary for keyring_is_empty().
+- Eric Biggers: Truncate keyring_index_key hash to u32 and drop index_id.
+- Eric Biggers, David Howells: Use a proper struct instead of a two-element
+  array to pass the edits.
+- Eric Biggers: __keyring_link(): Call key_put() in the rollback of
+  rhashtable_replace_fast().
+- Eric Biggers: Retract from using __free(kfree) in keyring_get_index().
+- Eric Biggers: Reuse keyring_link_key() in keyring_obj_cmpfn().
+- Eric Biggers: Document why keyring_index_free() uses queue_rcu_work().
+- Eric Biggers: Fix the commit message for "KEYS: Replace assoc_array with
+  rhashtable".
+
+v3:
+- Since David is away for the next week I decided to address the
+  low hanging fruit that I reported myself.
+- Unified and sanitized function and variable naming and removed
+  unnecessary asymmetry e.g., by renaming keyring_remove_all_links
+  as keyring_index_free, 'links' as 'index' and '_edit' as 'edit'.
+- Flattened the implementation by refactoring out some useless
+  wrappers and other constructs.
+- Addressed continuation after triggered WARN_ON() on at the three
+  sites that I've described in my email response to the previous
+  patch set version.
+- Reworked keyring_read() so that it triggers the scheduler between
+  the iterations.
+- Dropped "Assisted-by: LLM" tag because checkpatch.pl told me so.
+
+v2:
+- Tried to address all the issues pointed out by David and Eric. Tell me
+  if something was ignored, as that would be an unintentional mishap.
+- Updated and trimmed the source code comments.
+- For assoc_array_edit I decided to go with two-element pointer array,
+  which shifts a bit what David suggested.
+- Dropped is_keyring flag. It was so obvious call so I mention it here
+  just in case because too obvious maxes out my self-doubt ;-)
+- Used cleanup.h primitives where I possibly could especially in order
+  to make fallible initializations more bug-resistant.
+- The already-ack'd bug fixes are included but will be dropped as soon
+  as I've sent them over to Linus.
+
+VERSIONS
+========
+
+- v5:
+  https://lore.kernel.org/keyrings/20261105031401.956609-1-jarkko@kernel.org/
+- v4:
+  https://lore.kernel.org/keyrings/20261029232437.2581640-1-jarkko@kernel.org/
+- v3:
+  https://lore.kernel.org/keyrings/20261025001105.1824178-1-jarkko@kernel.org/
+- v2:
+  https://lore.kernel.org/keyrings/20261023120953.1206778-1-jarkko@kernel.org/
+- v1:
+  https://lore.kernel.org/keyrings/20261016215326.4110064-1-jarkko@kernel.org/
+
+Cc: bpf@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+Cc: fsverity@lists.linux.dev
+Cc: keyrings@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-kselftest@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Alexei Starovoitov <ast@kernel.org>
+Cc: Alex Shi <alexs@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andrii Nakryiko <andrii@kernel.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Dongliang Mu <dzm91@hust.edu.cn>
+Cc: Eduard Zingerman <eddyz87@gmail.com>
+Cc: Emil Tsalapatis <emil@etsalapatis.com>
+Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Ignat Korchagin <ignat@linux.win>
+Cc: Ihor Solodrai <ihor.solodrai@linux.dev>
+Cc: James Morris <jmorris@namei.org>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Jiri Olsa <jolsa@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Kumar Kartikeya Dwivedi <memxor@gmail.com>
+Cc: Martin KaFai Lau <martin.lau@linux.dev>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Paul Moore <paul@paul-moore.com>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Song Liu <song@kernel.org>
+Cc: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: Yanteng Si <si.yanteng@linux.dev>
+Cc: Yonghong Song <yonghong.song@linux.dev>
+
+Jarkko Sakkinen (3):
+  KEYS: Introduce keyring_is_empty()
+  KEYS: Replace assoc_array with rhashtable
+  lib: Remove assoc_array
+
+ Documentation/core-api/assoc_array.rst        |  564 ------
+ Documentation/core-api/index.rst              |    1 -
+ .../zh_CN/core-api/assoc_array.rst            |  473 -----
+ .../translations/zh_CN/core-api/index.rst     |    1 -
+ drivers/md/dm-verity-verify-sig.c             |    2 +-
+ fs/verity/signature.c                         |    2 +-
+ include/keys/keyring-type.h                   |    1 -
+ include/linux/assoc_array.h                   |   88 -
+ include/linux/assoc_array_priv.h              |  178 --
+ include/linux/key-type.h                      |    1 -
+ include/linux/key.h                           |   29 +-
+ kernel/bpf/keys.c                             |    2 +-
+ lib/Kconfig                                   |   14 -
+ lib/Makefile                                  |    1 -
+ lib/assoc_array.c                             | 1724 -----------------
+ security/keys/Kconfig                         |    1 -
+ security/keys/internal.h                      |   14 +-
+ security/keys/key.c                           |   22 +-
+ security/keys/keyring.c                       |  990 +++++-----
+ security/keys/request_key.c                   |    8 +-
+ .../dm-verity/test-dm-verity-keyring.sh       |    2 +-
+ 21 files changed, 475 insertions(+), 3643 deletions(-)
+ delete mode 100644 Documentation/core-api/assoc_array.rst
+ delete mode 100644 Documentation/translations/zh_CN/core-api/assoc_array.rst
+ delete mode 100644 include/linux/assoc_array.h
+ delete mode 100644 include/linux/assoc_array_priv.h
+ delete mode 100644 lib/assoc_array.c
+
+--
+2.47.3
+
