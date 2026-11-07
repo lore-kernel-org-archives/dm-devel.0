@@ -1,80 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.41
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794021954;
-	b=Szaw+CvR0NhGLftBcaJqa0DSrLZywNPOrvvws5TS84WLoHKnBDU+JaUMk51T02k+1sdU
-	 JGUYpOgRg0mHOaWeN3WWSU8VDHe+TZlouNW2astW/7S2GtfsWEqIZeopnLslFXNUv3awY
-	 rUYesTQaorfBbrGua5SG/1ybjnU6qDny46rSafla52mE/brCAtu2s975LH+ibqG1Zhg7T
-	 2xhed/VJi4os1xjR2ZfKwoSlbvA7QtX9TAqsnzgGvtHX3z9jDRHP5/ieyJ7RwDdbhvdT6
-	 jzOO0qYX0n1GQ68kdrC2ZcuZXkQnR3rlh0VervsfnND6QI3prLITTIiMOd1xmHVv7Hw==
+	t=1794036420;
+	b=fxRAhNEr+yggfMaMc+kD9i3MZ7bgDsxYL03eVk07e3cIb+0ia3+5reoKqUqIsqCkm/mB
+	 mEF4nmlW727z6SDG3UHsIcn9Kqc5YDoG6bG6ItGwdfnR8E49JgP+vBEN7Lb962fG2NFci
+	 sph0c5rpJN6lU4Siy0xUXe0fPubwIyNISdfhQqoQrjUZW+3ABOlwy8kmclalnGWH+lKHP
+	 a60hLsU7Gcm7faQQYjrEwqPQfrwMIXG6QCQo446v102Dt4Fp2XKINO7xJlpJVX42VUtyB
+	 yL4EixV9URQvib3m6OrROytCdwUKXMZooeCtguCo00k+ioQVokL06TSwhfxPVzPu+4Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794021954;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=mxiid2hy6pGN9sHLzXHLOnDequd95SafDDGiZTsr7dg=;
-	b=C0JEKT4X6BLJQ6Doi84hmzpbXcH3OzfOu6dp+ZhIe6LMh+LF9mvpVIVAkpa3iA3/a1uS
-	 xOAhRZLL2ptouO2TliVTqK4Ei6zCTnzRLuwFunMUIvh8UL1eSVYV3W2NuNj8wYmhs9CJh
-	 QnZtsEDrgwM04tQbu58lld90B8B9ZIECCqSc6n+NkSHyOieCh8R5Cl+v3/49XQwWyRIl7
-	 v9F/vjAEFcfMdqho/k95AnfkGFS37JGbpRj4flxUUVjGMy+4/370CHbjs7VqkoA8Nlveg
-	 KGnUIP7WF8hBuyxtXTZt6llAagde5y8ZOEbvSFLvMkfYwIaTXmwxLwgBY+Lmh+9ggKw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794036420;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=PSwvgBY5tKnxuW7xy2pwUvdfMnozikmSscxGDiw6G2I=;
+	b=dEIFi3VMigO2VvB9Ba47Qd5sqKm8/fOYQdKVra0SuQMzXPVMv2Z2n5vW4gPQlVaxyUhw
+	 Htq2lXrnm5691/GkkE4HV26qvcOfM+IjtNHxx8EpmsNzjN23Nkn5hAb9Ex6yzv2SmOHNQ
+	 RxBHnr8uDugWocg5v4sDfvGoETnOBwpuTPLvSkRQjr3JQgGIkZ4Z4NndlIH3TrlAlwioQ
+	 RMiXpS0ELcayoMSFniqQ7Hmu1Bga7ul9J+VCvhVWGMlG2k98r4mBorpw6rTSqqZxzbm3z
+	 o83K4+PvTMz8EEl0aG52A5s325GQT/VOT9+Qaq59zY3MreemHf+TAmDBiQ7Nw5Nq6EA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WTV0w40J;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RYh5MZas;
+	arc=none smtp.remote-ip=209.85.128.41
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29C39606A326;
-	Sat,  7 Nov 2026 03:25:54 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2CE1C606A32C
+	for <dm-devel@lists.linux.dev>; Sat,  7 Nov 2026 07:26:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2CE1C606A32C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WTV0w40J
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 026E51F008A1;
-	Sat,  7 Nov 2026 03:25:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794021954;
-	bh=mxiid2hy6pGN9sHLzXHLOnDequd95SafDDGiZTsr7dg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=WTV0w40JxOBYdPzpa4f7DZkdspPxJBrVgTAa2OuCLgZcV/4Is1JOIsvWQHgSMTG3N
-	 yAx7GXtZEyPCSzTK3upClUnUturM7qpNFJ0wGrZc/lRaHpvWCEu89O8ezuyM8AOQyz
-	 tQkDJJ/XXrUhR304CiG20Oa/KQYRie9eRYY1+BNJqxpfsCqEkMR46yB/iGnIyjZSo0
-	 oiZxSpMuEdK5nA3WicHMzdCsjuULm9JDM2uH/D5M0B01EP2oqVB0jFWwpPGCBBcVBn
-	 f0+UWuYKYGVnHACBvulPRgJuLqPquUHyDT925XPpJRdwbxPFGS9VKMqtf0yKfKUZum
-	 cMIhensA1gW7Q==
-Date: Fri, 6 Nov 2026 19:25:51 -0800
-From: Eric Biggers <ebiggers@kernel.org>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
-	dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=RYh5MZas
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4a3517554f7so14077225e9.2
+        for <dm-devel@lists.linux.dev>; Fri, 06 Nov 2026 23:26:58 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794036417; x=1794641217; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=PSwvgBY5tKnxuW7xy2pwUvdfMnozikmSscxGDiw6G2I=;
+        b=RYh5MZasiOLTEmJXF8VYlAqqkaRH8pm033qaXkEvZ0sFHQVkNqZ7dEOrvnGsDCW+zC
+         OzVyZ77KB7CXRj9X8Cv1DDuW9CcY+MHuIzMGmoxOr9I3laB3UH99tRWvmmm28X18wOGp
+         sjzauqxaeiioRMHOSrGPIU8p4y40LsbRRlGaB3zk6lkiSGJWdqcec4YjBUQQPfY4fZ/K
+         6bzy2DTyDIh4BTq2qbVX8FZ9cKRPOjPQZbthReQzIcKfEQLQ3xdOEsH7mq6BmkujtapU
+         vohXNbUCOAjbs8bkau5UiW9wGV/nvEgnOesQytHUnrjYa6Czfshym0d/4JxxAb5p4Irq
+         3xjA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794036417; x=1794641217;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=PSwvgBY5tKnxuW7xy2pwUvdfMnozikmSscxGDiw6G2I=;
+        b=zDTKkbBUTnn0kOHcnPX7elj8LKIH7O/EFueZ1Whc5bvkQn5VrJj6L7zJ5L1DD4kxj/
+         Af4DVP9kot2aIV9ko4ACuYT4aavyxX7qWtrKdweHf3Ho5ulfgkyC90Oxsy7RXUWOF6me
+         KgCYPbwqwV7Qs9aoHKMuraDSaoH1hq/CfUW3jZugKkWydScJ5TJ/n1KbDPXl/ZKCb9q2
+         Ah8vE/S4HsZCTxiYECB0LAG6jmzR0/zOaXtflfk5f7vPbyyHkiXdEQcrLYzdepWbPIkQ
+         EhIpJjuCABqahJoB6p/nZSpCiiGf+q6NRtTDgmmq0OTAj3yDzg5BjopvFIfQvZqWsqsV
+         Gs3g==
+X-Forwarded-Encrypted: i=1; AKwUvByEldlo+mjVz4NhwLMi2aaL0HHWoWWBVQGAUOBtwgOecEbO3Mctng/Vbgz5Z9vddBcw88++45cutA==@lists.linux.dev
+X-Gm-Message-State: APuU4Z8tvwgHrIX44Ev/9CHzyVlvZARgCYSzzwrgD7uLKKlmmiTWFO8O
+	hx72wS82Llae6+ptM1OZmI27i1CRvU/7K4CbwAmVCRC1Ute5lnDwB1U4
+X-Gm-Gg: AYBFou2CLrn+JWAAcQhMRqUXhwVRT0i3iN8CZCY2GzOH/zVq1fgaHTwcq0WHy9Dshc6
+	590fSDOd6hZDSbofOvUK1B0LZAHT7KAlOytG+GWfYPtliUmBv6tpfMIxH10N5tTSfEHrA8YY61t
+	SHd66IkpPkpzLNkVVU937dBcBBoMLSuVC1lkqIn0sMlFToGvYxRNxTmqxkUA2q8gp5BLAK3zd09
+	nK4/pnPKDREolOtVESfpF8HcsswDFpRBz52kbE0CY645sMa4M6WK33gaDe9TJHHquNJCKpbz0FA
+	UphifgIrHdPIIpfTo2Mu71/yP1vFnlgyDivqRXzy1gYPpfmD88kHp2CLRXvs+AU08cnSa1yJemy
+	JW8prfuqsGQRZmFGZ/VkdoToM2Pq8eg5nOjZlpVpW3gBnI18kmIkSg8/NHn0U8tlrULEOgdq9AD
+	4mFOtfyzBVEcJUFPRu4IVEICRb2/pD+AmxRpD3YDWiWtc9oQncTWpr0GXFV0YB6aVtcmCVlS48E
+	T7W2JiQ0N/SpgTaVK0kWjwv2hUKckzyUHmXUUYZpESr0nvjWkYsBfww9wgQGAFc1olOGXrUpDtT
+	adfE1md2v5JUWuuU9WEt0sTtwExBrEC18jbnxqfJjlghMyK7R/gRPNXg1L11DI4pb0ciZ1uq8q5
+	MDQ3Vp8yYLJ114KNNWzrn+QnE+66/bmzmbJHG4r8sdezPHWpueas=
+X-Received: by 2002:a05:600c:34ca:b0:4a1:7c56:d4e2 with SMTP id 5b1f17b1804b1-4b6df212530mr76856485e9.16.1794036417341;
+        Fri, 06 Nov 2026 23:26:57 -0800 (PST)
+Received: from DESKTOP-IR7J1S9.localdomain ([129.45.78.107])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b7e3283b50sm41843175e9.10.2026.11.06.23.26.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Nov 2026 23:26:56 -0800 (PST)
+From: Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v5 2/3] KEYS: Replace assoc_array with rhashtable
-Message-ID: <20261107032551.GA1990@sol>
-References: <20261105031401.956609-1-jarkko@kernel.org>
- <20261105031401.956609-3-jarkko@kernel.org>
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: syzbot+3e16980543e238b95bd1@syzkaller.appspotmail.com,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>,
+	stable@vger.kernel.org
+Subject: [PATCH v2] dm cache: fix divide error in too_many_discard_blocks
+Date: Sat,  7 Nov 2026 08:26:48 +0100
+Message-ID: <20261107072648.554-1-drifabdelmalekmohamedsaid@gmail.com>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -84,83 +101,43 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261105031401.956609-3-jarkko@kernel.org>
+Content-Transfer-Encoding: 8bit
 
-On Thu, Nov 05, 2026 at 05:14:00AM +0200, Jarkko Sakkinen wrote:
-> The keyrings subsystem is the sole user of assoc_array. It has over 1700
-> lines of code, no test suite, and a long history of bugs, with LLMs now
-> finding more.
-> 
-> This unfortunate outcome has evolved over time by large from the shortage
-> of in-kernel callers, time bandwidth and 3rd party contributors.
-> 
-> What the keyrings needs is just a generic key-value store, which performs
-> well with sparse key sets.
-> 
-> Replace struct assoc_array in struct key with struct keyring_index:
-> 
-> - keyring_index: holds an rhashtable for direct lookups, an RCU-protected
->   list of keyring_link entries for stable walks, the active link count, and
->   an rcu_work item for deferred teardown.
-> - keyring_link: links a key into a keyring's hash table and list, caching
->   its 32-bit SipHash digest rehashed with jhash by rhashtable.
-> 
-> Correspondingly, struct assoc_array_edit is replaced by struct keyring_edit
-> for delivering transient state across link operations.
-> 
-> Other behavioral changes:
-> 
-> - KEYCTL_READ and sibling-keyring searches follow list order instead of
->   hash order: keyrings are prepended, other keys are appended, and
->   replacing a matching key retains its position.
-> - key_unlink(), keyring_clear(), keyring_revoke(), and keyring_gc() no
->   longer allocate memory.
-> - keyring_index_free() uses queue_rcu_work() instead of call_rcu() because
->   rhashtable_destroy() may sleep.
-> 
-> Suggested-by: Eric Biggers <ebiggers@kernel.org>
-> Co-developed-by: Linus Torvalds <torvalds@linux-foundation.org>
-> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+too_many_discard_blocks() uses sector_div(), whose divisor is a u32.
+discard_block_size is a 64-bit sector_t that calculate_discard_block_size()
+keeps doubling, so once it reaches a multiple of 2^32 the divisor is
+truncated to 0 and the division traps with a divide error. Smaller values
+above 2^32 are also silently truncated, giving a wrong quotient.
 
-Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+This needs an origin of more than 2^45 sectors, which is unrealistic (this
+is a thing still in 2026!!) for a real device but reachable with a fuzzer.
 
-But one comment below.
+Switching the div operation to one that uses 64 bits divisor would cause regression,
+so we just limit the value of cache->discard_block_size to U32_MAX.
 
-> +		do {
-> +			ret = rhashtable_insert_fast(&links->ht, &link->node,
-> +						     keyring_link_params);
-> +			if (ret == -EBUSY)
-> +				fsleep(100);
-> +		} while (ret == -EBUSY);
-> +		if (ret < 0) {
-> +			key_payload_reserve(keyring,
-> +					    keyring->datalen - KEYQUOTA_LINK_BYTES);
-> +			goto error;
-> +		}
+Reported-by: syzbot+3e16980543e238b95bd1@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=3e16980543e238b95bd1
+Fixes: 08b184514f65 (" dm cache: revert "prevent corruption caused by discard_block_size > cache_block_size" ")
+Tested-by: syzbot+3e16980543e238b95bd1@syzkaller.appspotmail.com
+Cc: stable@vger.kernel.org
+Signed-off-by: Drif Abdelmalek Mohamed Said <drifabdelmalekmohamedsaid@gmail.com>
+---
+ drivers/md/dm-cache-target.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-I don't think the retry loop is actually sufficient or desirable here
-(though it would be very rare for it to be reached).  It gets reached
-when there are too many elements in one rhashtable chain.  However,
-we're already pre-hashing with SipHash, and the rhashtable level hash is
-passed only the 32-bit SipHash.  Suppose we reach this case because the
-SipHash values collided: then rhashtable's rehashing would never reduce
-the chain length, and the -EBUSY would last forever.
+diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
+index 1a5072425c4a..b51ceca60afc 100644
+--- a/drivers/md/dm-cache-target.c
++++ b/drivers/md/dm-cache-target.c
+@@ -2383,6 +2383,8 @@ static int create_cache_policy(struct cache *cache, struct cache_args *ca,
+ static bool too_many_discard_blocks(sector_t discard_block_size,
+ 				    sector_t origin_size)
+ {
++	if (discard_block_size > U32_MAX / 2)
++		return false;
+ 	(void) sector_div(origin_size, discard_block_size);
+ 
+ 	return origin_size > MAX_DISCARD_BLOCKS;
+-- 
+2.47.3
 
-I think the right solution is to just set '.insecure_elasticity = true'
-in the rhashtable_params, to disable the chain length checks.  Those
-checks make no sense when we're using SipHash anyway.
-
-Then the retry loop would not be needed.
-
-(And even for rhashtable users who aren't using SipHash, like
-fs/verity/, hard-failing insertions if the hash chains gets too long
-seems wrong.  I mean, imagine if the kernel started refusing to do file
-operations if one of the hash chains in the VFS hash tables happened to
-get too long...  But I guess rhashtable was designed for towards
-networking users who are able to just drop the data without much issue.
-Plus it predates SipHash existing.)
-
-- Eric
