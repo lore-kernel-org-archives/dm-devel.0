@@ -1,94 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794003569;
-	b=EVCQ1pqAXuLT6WzeYX4XbJEswbrNJzR0WyX+Ttnwtyzgj7GY3WR/vbsYJb11FfriADOT
-	 SahGYIae/FFmXOc1EuLrbVgO5vGZvoRll56VWmLD32zLyG/MNv3Ymim4AXoh0QNxxr+E4
-	 RnnGyyryfMEUpBQpG3ETLfvlIFhOz8pGYqSdVPmq4ks6wV246iq8lAm2ojsTT7o9E+R25
-	 s/NY6KoZrkKmlKLhiCs5l9icF1lbji5hW5wofl5r8U64CwKKIyuSM+fkkKDxYkVsdRLbX
-	 Cr+CH83nI8OpPmhFeDJAh59N32upqu/GKStxduR3F5GVSEbY++NjEVvlt5zNw2urudg==
+	t=1794021954;
+	b=Szaw+CvR0NhGLftBcaJqa0DSrLZywNPOrvvws5TS84WLoHKnBDU+JaUMk51T02k+1sdU
+	 JGUYpOgRg0mHOaWeN3WWSU8VDHe+TZlouNW2astW/7S2GtfsWEqIZeopnLslFXNUv3awY
+	 rUYesTQaorfBbrGua5SG/1ybjnU6qDny46rSafla52mE/brCAtu2s975LH+ibqG1Zhg7T
+	 2xhed/VJi4os1xjR2ZfKwoSlbvA7QtX9TAqsnzgGvtHX3z9jDRHP5/ieyJ7RwDdbhvdT6
+	 jzOO0qYX0n1GQ68kdrC2ZcuZXkQnR3rlh0VervsfnND6QI3prLITTIiMOd1xmHVv7Hw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794003569;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
-	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Rspamd-Queue-Id:X-Spam-Level:X-Rspamd-Server:X-Rspamd-Action:
-	 X-Spam-Flag:X-Spamd-Result:X-Spam-Score;
-	bh=jIqDcvXfkm5IPjRiBnwLw0YDD67QA48sp8o3hWJpEzM=;
-	b=s+0BujHM3xFPXZ2vymTfaIehjWgWLb/Pn2hFi/ihXe+P/3VWozStn8V1IySMAUdjDbTa
-	 PnXMG2jjukuPK073qqisRvqsH7ny1PPV77VpO3CbDsxh3A28cKOhnHxqAQXC7N/PL9GuQ
-	 2nYnLc1Fn7pvA0To1Ky/U6Btbw02yEGHSQyuSjjf6eKY/YlRDtrmswDt8KPrCd9YrNrzD
-	 QDK5ThMTLlwRCY6aLVy83qGHMPew0Z6/ij/HuyhcdjwX8dCGWuPK7WPMdNOaRbiFabxfz
-	 pK8U6bbXX6oexTYAzhqe0tffd0z7ZdIj0QSoP7xR6nUM7rT/e/YgSTpkC6OuPultXVQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794021954;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=mxiid2hy6pGN9sHLzXHLOnDequd95SafDDGiZTsr7dg=;
+	b=C0JEKT4X6BLJQ6Doi84hmzpbXcH3OzfOu6dp+ZhIe6LMh+LF9mvpVIVAkpa3iA3/a1uS
+	 xOAhRZLL2ptouO2TliVTqK4Ei6zCTnzRLuwFunMUIvh8UL1eSVYV3W2NuNj8wYmhs9CJh
+	 QnZtsEDrgwM04tQbu58lld90B8B9ZIECCqSc6n+NkSHyOieCh8R5Cl+v3/49XQwWyRIl7
+	 v9F/vjAEFcfMdqho/k95AnfkGFS37JGbpRj4flxUUVjGMy+4/370CHbjs7VqkoA8Nlveg
+	 KGnUIP7WF8hBuyxtXTZt6llAagde5y8ZOEbvSFLvMkfYwIaTXmwxLwgBY+Lmh+9ggKw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="kjE/LBB5";
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="kjE/LBB5";
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WTV0w40J;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49C35606A326
-	for <dm-devel@lists.linux.dev>; Fri,  6 Nov 2026 22:19:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 49C35606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29C39606A326;
+	Sat,  7 Nov 2026 03:25:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=kjE/LBB5;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=kjE/LBB5
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 47C3921DDE;
-	Fri,  6 Nov 2026 22:19:26 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794003566; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jIqDcvXfkm5IPjRiBnwLw0YDD67QA48sp8o3hWJpEzM=;
-	b=kjE/LBB5pJIYPnzZKeMm9+i1ryU5YyRUjv8joZOp1Q7ugPfPljN3D5Ft+NJJiGazYdISLu
-	ZZt/SEcMmxLaLi0sz+zD6cAcvOyqe2GJfmZGGzoUN364X+3qPlh/ixUANYHStaJQkl/gXO
-	ISbn+3tU+LKwr0rUYaWF+4036lSrePE=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="kjE/LBB5"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794003566; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=jIqDcvXfkm5IPjRiBnwLw0YDD67QA48sp8o3hWJpEzM=;
-	b=kjE/LBB5pJIYPnzZKeMm9+i1ryU5YyRUjv8joZOp1Q7ugPfPljN3D5Ft+NJJiGazYdISLu
-	ZZt/SEcMmxLaLi0sz+zD6cAcvOyqe2GJfmZGGzoUN364X+3qPlh/ixUANYHStaJQkl/gXO
-	ISbn+3tU+LKwr0rUYaWF+4036lSrePE=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D93FC134E9;
-	Fri,  6 Nov 2026 22:19:25 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id xSC4Km1S7moqVwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Fri, 06 Nov 2026 22:19:25 +0000
-Message-ID: <f9a399429d9c7ac2e4079e7cd89ae7c304ee3b24.camel@suse.com>
-Subject: Re: [PATCH v2 1/1] multipathd: verify udev WWIDs with the device
- before moving paths
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>, Brian Bunker
-	 <brian@purestorage.com>
-Cc: dm-devel@lists.linux.dev, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>
-Date: Fri, 06 Nov 2026 23:19:25 +0100
-In-Reply-To: <auTdZn84HV8DjGZ0@redhat.com>
-References: <20261029235241.97614-1-brian@purestorage.com>
-	 <20261029235241.97614-2-brian@purestorage.com>
-	 <auTdZn84HV8DjGZ0@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WTV0w40J
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 026E51F008A1;
+	Sat,  7 Nov 2026 03:25:52 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1794021954;
+	bh=mxiid2hy6pGN9sHLzXHLOnDequd95SafDDGiZTsr7dg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=WTV0w40JxOBYdPzpa4f7DZkdspPxJBrVgTAa2OuCLgZcV/4Is1JOIsvWQHgSMTG3N
+	 yAx7GXtZEyPCSzTK3upClUnUturM7qpNFJ0wGrZc/lRaHpvWCEu89O8ezuyM8AOQyz
+	 tQkDJJ/XXrUhR304CiG20Oa/KQYRie9eRYY1+BNJqxpfsCqEkMR46yB/iGnIyjZSo0
+	 oiZxSpMuEdK5nA3WicHMzdCsjuULm9JDM2uH/D5M0B01EP2oqVB0jFWwpPGCBBcVBn
+	 f0+UWuYKYGVnHACBvulPRgJuLqPquUHyDT925XPpJRdwbxPFGS9VKMqtf0yKfKUZum
+	 cMIhensA1gW7Q==
+Date: Fri, 6 Nov 2026 19:25:51 -0800
+From: Eric Biggers <ebiggers@kernel.org>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
+	dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
+	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Dongliang Mu <dzm91@hust.edu.cn>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Emil Tsalapatis <emil@etsalapatis.com>,
+	Ihor Solodrai <ihor.solodrai@linux.dev>,
+	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Yanteng Si <si.yanteng@linux.dev>,
+	Yonghong Song <yonghong.song@linux.dev>,
+	Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v5 2/3] KEYS: Replace assoc_array with rhashtable
+Message-ID: <20261107032551.GA1990@sol>
+References: <20261105031401.956609-1-jarkko@kernel.org>
+ <20261105031401.956609-3-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -98,122 +84,83 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Rspamd-Queue-Id: 47C3921DDE
-X-Spam-Level: 
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-13.51 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	TO_DN_SOME(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo];
-	DNSWL_BLOCKED(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Spam-Score: -13.51
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261105031401.956609-3-jarkko@kernel.org>
 
-On Fri, 2026-10-30 at 14:09 -0400, Benjamin Marzinski wrote:
-> On Thu, Oct 29, 2026 at 04:52:41PM -0700, Brian Bunker wrote:
-> > multipathd takes a path's WWID from udev. When a change uevent
-> > reports
-> > a different WWID, uev_update_path() removes the path from its map
-> > and
-> > re-adds it through uev_add_path(), which places it in whatever map
-> > owns
-> > the new WWID. Nothing checks the new value against the device
-> > itself;
-> > recheck_wwid only covers paths coming back up in the checker and
-> > "multipathd add path". If udev reports the wrong WWID, or the
-> > uevent is
-> > stale by the time it is processed, the path goes into the map of a
-> > different LUN and I/O for one LUN is silently sent to another.
-> >=20
-> > Use SG_IO to read VPD page 0x83 from the device in two places, for
-> > paths where can_recheck_wwid() is true:
-> >=20
-> > - In uev_update_path(), if the device still reports the cached
-> > WWID,
-> > =C2=A0 ignore the udev value and leave the path where it is.
-> >=20
-> > - In ev_add_path(), when a path is being re-added because its udev
-> > =C2=A0 data was missing or changed, refuse to add it if the device
-> > doesn't
-> > =C2=A0 confirm its WWID. The path is orphaned, its WWID is cleared and
-> > it
-> > =C2=A0 is marked INIT_MISSING_UDEV, so the checker retriggers udev
-> > (bounded
-> > =C2=A0 by retrigger_tries) and the path is re-added from fresh data.
-> >=20
-> > To tell re-adds from ordinary adds, turn the need_do_map argument
-> > of
-> > uev_add_path() and ev_add_path() into enum path_add_mode, with a
-> > new
-> > PATH_ADD_REINIT value that behaves like PATH_ADD_MAP and also
-> > requests
-> > the WWID check. Ordinary adds are unchanged and never read the WWID
-> > from the device.
-> >=20
-> > If the SG_IO read fails, behavior is unchanged.
-> >=20
-> > Split the SG_IO read out of check_path_wwid_change() into
-> > get_sgio_wwid() so all the checks share it.
-> >=20
-> > Signed-off-by: Brian Bunker <brian@purestorage.com>
-> Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+On Thu, Nov 05, 2026 at 05:14:00AM +0200, Jarkko Sakkinen wrote:
+> The keyrings subsystem is the sole user of assoc_array. It has over 1700
+> lines of code, no test suite, and a long history of bugs, with LLMs now
+> finding more.
+> 
+> This unfortunate outcome has evolved over time by large from the shortage
+> of in-kernel callers, time bandwidth and 3rd party contributors.
+> 
+> What the keyrings needs is just a generic key-value store, which performs
+> well with sparse key sets.
+> 
+> Replace struct assoc_array in struct key with struct keyring_index:
+> 
+> - keyring_index: holds an rhashtable for direct lookups, an RCU-protected
+>   list of keyring_link entries for stable walks, the active link count, and
+>   an rcu_work item for deferred teardown.
+> - keyring_link: links a key into a keyring's hash table and list, caching
+>   its 32-bit SipHash digest rehashed with jhash by rhashtable.
+> 
+> Correspondingly, struct assoc_array_edit is replaced by struct keyring_edit
+> for delivering transient state across link operations.
+> 
+> Other behavioral changes:
+> 
+> - KEYCTL_READ and sibling-keyring searches follow list order instead of
+>   hash order: keyrings are prepended, other keys are appended, and
+>   replacing a matching key retains its position.
+> - key_unlink(), keyring_clear(), keyring_revoke(), and keyring_gc() no
+>   longer allocate memory.
+> - keyring_index_free() uses queue_rcu_work() instead of call_rcu() because
+>   rhashtable_destroy() may sleep.
+> 
+> Suggested-by: Eric Biggers <ebiggers@kernel.org>
+> Co-developed-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 
-You will need convince me that this doesn't do more harm than good.=C2=A0
-We can't just use udev in one place and other methods elsewhere.
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
 
-I am open for a general redesign that uses sysfs for retrieving
-WWIDs, rather than udev. But using SG_IO seems wrong to me in general,
-because it can hang. If anything, we'd need to make this configurable,
-and we'd then need to use SG_IO consistently throughout the code (and
-SG_IO has significant disadvantages, as already mentioned). Also, SG_IO
-works for SCSI only. That may be a minor issue these days, because
-almost all disks handled by dm-multipath are SCSI disks, but at least
-formally we still support other block devices like NVMe and DASD.
+But one comment below.
 
-Unfortunately there's already a zoo of options for WWID detection which
-has grown over time.
+> +		do {
+> +			ret = rhashtable_insert_fast(&links->ht, &link->node,
+> +						     keyring_link_params);
+> +			if (ret == -EBUSY)
+> +				fsleep(100);
+> +		} while (ret == -EBUSY);
+> +		if (ret < 0) {
+> +			key_payload_reserve(keyring,
+> +					    keyring->datalen - KEYQUOTA_LINK_BYTES);
+> +			goto error;
+> +		}
 
-> About how likely this is: we hit it because a test tool was opening
-> and closing the sd devices read-write many times a second, and with
-> udev's "watch" rule every close generates a change uevent that runs
-> scsi_id against the device.=20
+I don't think the retry loop is actually sufficient or desirable here
+(though it would be very rare for it to be reached).  It gets reached
+when there are too many elements in one rhashtable chain.  However,
+we're already pre-hashing with SipHash, and the rhashtable level hash is
+passed only the 32-bit SipHash.  Suppose we reach this case because the
+SipHash values collided: then rhashtable's rehashing would never reduce
+the chain length, and the -EBUSY would last forever.
 
-I wouldn't call this a valid test. It's a deliberate abuse of udev
-functionality. If you do this, you need to disable udev's watch
-functionality, which is merely a convenience for users anyway. It's
-questionable if it's a useful feature on production servers in general.
+I think the right solution is to just set '.insecure_elasticity = true'
+in the rhashtable_params, to disable the chain length checks.  Those
+checks make no sense when we're using SipHash anyway.
 
-Thinking about it, I wonder if we should simply set "nowatch" for
-multipath members by default. AFAIU that would avoid the issue Brian
-encountered, at least in this test scenario.
+Then the retry loop would not be needed.
 
-Regards
-Martin
+(And even for rhashtable users who aren't using SipHash, like
+fs/verity/, hard-failing insertions if the hash chains gets too long
+seems wrong.  I mean, imagine if the kernel started refusing to do file
+operations if one of the hash chains in the VFS hash tables happened to
+get too long...  But I guess rhashtable was designed for towards
+networking users who are able to just drop the data without much issue.
+Plus it predates SipHash existing.)
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
+- Eric
