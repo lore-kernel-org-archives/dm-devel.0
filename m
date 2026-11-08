@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.145
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.151
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170904;
-	b=N2kB8spV6nY2MkNEG7+Egw/7nSVmzuT1Rswlr+bhWcM4lsXdrrk/MV4JZepJfidSO6p0
-	 /m+4TkBfEeSZ97s33UJ+aMh1uUl3/D2JVSo6QUqwTS4sxLpA0wrKui7XUnFlQZiYsekDn
-	 FPGVKp2kXuozdtyxjewk/UCJ6oBza8Z4/HOurUP2qUbwYKGFp5DJZqorayhxHX54FVZCd
-	 l2XZSmIqsH5/iOtVTK3GW7dAcR318ccBFEtDyzVlk3pa9HgAdD5bE4P7Y+IZNI2VlXIbb
-	 dxedg2fL6dt52IAKBdh19Dj933YZcVopdOibTglYcyMMi3wJGJN6XnBlbXcTLJyJ0vA==
+	t=1794170905;
+	b=za1Hc7GZgS2VxjCdTn5vJKcb3R7D+tkZqrMigqBj0oYTieOY/iG58mkfB6fSok0nLP61
+	 IDu3YHdP88HLblnp3YRXbfBcz3ip9YI7k9NFNyq69uznwDqL6zQn2vPyonnLX8EMzzUvc
+	 Yy0F2bIw1ilePM74/hYcTwCPBECkd4jhtQTSafAQrnu+KGS+K+D6mQA/B1cV7gLTacC+H
+	 gbC1h+Zs74QCwfBRH+T2Ol7+T2s/3ZPxWQayIYWUjpJM+Q8g7aCKNQq8wcvOJXEkC/5Rr
+	 eUsnW6x0Ee7zhLs7vxzhU6icivzUcwDFhZBf6BXT+SUW1qh1bytBuL42KZATfbEdstw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170904;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170905;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=hCwRFUq2iDoZLi7clY/PuGBmmvq7M0hE+90qPhgsKN4=;
-	b=XtjzNQYCyH3xlCxMlMKAzhmQXRXH/+qJSCWrDyKNGNW8EgxhnAiZy8NqfOh8nCUIcSmK
-	 Ao51jOkIfXQfbmoUWVjioMyxr3NDNTaVOVpaFdB903CQOkR9Pvj8TpKlseWb3LISDUzxL
-	 Z//qkBC4SNAggMfoozV+yuibR7HrxrR9BBVsiGzvPKBEm6PbpM+BbijPWozsBh+hEbHa6
-	 HYgBH08X4nCWRE5vzIbvXFCTyzYch7vS/X6HaO45Aq7jtRbo0ATOUzqpTQYov15apkdxb
-	 0J6FSKgvV7c9CAWmH9AuqwRYQFBjff6B8MSb8ONNkUREAGmSXYTv3PYPtM689TCa3rQ==
+	bh=QlNI+CS9C292zxh1KVBjnCmUthmZFrW3aFe7rlr3lPo=;
+	b=RfN/Sogh1iewOkbQLkl7Fy7aGoSLKy5fkkiQjsIB/WMXozRa2dD4zDzeiTozMifC8G7f
+	 ufWI9wbu5sKfNrTod1jLZk6mxTOcGQw6m5GvY9bY6a/A/dky82V5g9DvybPdhis2FNYqR
+	 E1Vw19ciNWhQGqu0thd9FqKxbsdW4XP08QHwQk6KHtxftBF9rfFnz4v6R6CBl6evCb7HE
+	 LG8Y7P5/SXqS79Uz0xYSaNVPqtWZY6X35AYW9RejaIqM8dK8K9XzdKlGNmiYEJ6EDKyIn
+	 ctRGcm7ia9NqiOLz3Ui0Y+qmrM9cJU/VXKBZKUcNXR4N2ujfc+QQH2Dswg1hHTPWHYg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bxX8Kb77;
-	arc=none smtp.remote-ip=95.215.58.145
-Received: from mta1.migadu.com (out-145.mta1.migadu.com [95.215.58.145])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=b8nc4Xfa;
+	arc=none smtp.remote-ip=95.215.58.151
+Received: from mta1.migadu.com (out-151.mta1.migadu.com [95.215.58.151])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B433606D807
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0B433606D807
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E095E606D818
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E095E606D818
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bxX8Kb77
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=b8nc4Xfa
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=yrAIksUYEXTflpjgfac/bXgq6WaL9u4UCyIJD0wmCl0=;
+DKIM-Signature: a=rsa-sha256; bh=zGxGuv8VhmxQDKGvPD7JkzGiFLkWBpRa5MQ8Ta/vS5c=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170902; v=1; x=1794775702;
- b=bxX8Kb77ZDouS+L26RbpayQDxxmDsZkvPde/WUsTfOoG8SGWhRz5qS6FkGJl9nKmsKebbo5O
- y9Wh1LQZ5SvMN6+1kjU1L29H5QX7m4tk+bCHpqRJLUJ5spkRHR36evIR9nDlUIw/gvdg/sMhqYM
- 1lnTF+VP4Mlu2VDTjOIuBr4Q=
+ t=1794170903; v=1; x=1794775703;
+ b=b8nc4XfaD2zE8DbGFCdftnKpnKM79s1S1LWN1bvT46Gm6nplIK0R0f26Ib5DDNUnwSM9LzU7
+ J84CXShAQEfKd4JRGR3wPiYfdbeoyYDXAf0Ljg49034WfWhOPAsTWDNPnwz+64gfDXZSMtxeX6p
+ 7TChOIlUVIEP2oFHniESBnYo=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 126689d4dbf56e8a;
-	Sun, 08 Nov 2026 20:48:22 +0000
-X-Mizu-Trace-ID: 126689d4dbf56e8a
+Received: by mta10.migadu.com with ESMTPS id 3caf6acd72947ce7;
+	Sun, 08 Nov 2026 20:48:23 +0000
+X-Mizu-Trace-ID: 3caf6acd72947ce7
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -60,9 +60,9 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 23/29] scsi-multipath: add delayed disk removal support
-Date: Sun,  8 Nov 2026 20:47:27 +0000
-Message-ID: <20261108204733.557995-24-john.garry@linux.dev>
+Subject: [PATCH v9 24/29] scsi: sd: add multipath disk class
+Date: Sun,  8 Nov 2026 20:47:28 +0000
+Message-ID: <20261108204733.557995-25-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -77,84 +77,117 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add support in core code for delayed disk removal support. In this, the
-callback calls into the scsi_driver to do the necessary removal work.
+Add a new class, sd_mpath_disk_class, which is the multipath version of
+the scsi_disk class.
 
-The scsi_disk driver (sd) must ensure that the scsi_mpath_device does not
-go away while the delayed removal work is active, i.e. it must keep a
-reference.
-
-No reference to the scsi_disk multipath structures are kept outside that
-driver, so that driver needs to provide a scsi_driver.mpath_remove_head
-callback to do the necessary work.
+Structure sd_mpath_disk is introduced to manage the multipath gendisk.
 
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- drivers/scsi/scsi_multipath.c | 27 +++++++++++++++++++++++++++
- include/scsi/scsi_driver.h    |  4 ++++
- 2 files changed, 31 insertions(+)
+ drivers/scsi/sd.c | 43 ++++++++++++++++++++++++++++++++++++++++++-
+ drivers/scsi/sd.h |  3 +++
+ 2 files changed, 45 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
-index bec6dd94f3be..58b0be88a952 100644
---- a/drivers/scsi/scsi_multipath.c
-+++ b/drivers/scsi/scsi_multipath.c
-@@ -344,7 +344,34 @@ static bool scsi_mpath_available_path(struct mpath_device *mpath_device)
- 	return false;
- }
+diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
+index dc45df819c42..03617029a552 100644
+--- a/drivers/scsi/sd.c
++++ b/drivers/scsi/sd.c
+@@ -70,6 +70,7 @@
+ #include <scsi/scsi_ioctl.h>
+ #include <scsi/scsicam.h>
+ #include <scsi/scsi_common.h>
++#include <scsi/scsi_multipath.h>
  
-+static int scsi_mpath_remove_head_drv(struct device_driver *drv, void *data)
+ #include "sd.h"
+ #include "scsi_priv.h"
+@@ -113,6 +114,39 @@ static mempool_t *sd_page_pool;
+ static mempool_t *sd_large_page_pool;
+ static atomic_t sd_large_page_pool_users = ATOMIC_INIT(0);
+ static struct lock_class_key sd_bio_compl_lkclass;
++#ifdef CONFIG_SCSI_MULTIPATH
++struct sd_mpath_disk {
++	struct scsi_mpath_head		*scsi_mpath_head;
++};
++
++static void sd_mpath_disk_release(struct device *dev)
 +{
-+	struct scsi_mpath_head *scsi_mpath_head = data;
-+	struct scsi_driver *scsi_driver = to_scsi_driver(drv);
++}
 +
-+	if (scsi_driver->mpath_remove_head)
-+		scsi_driver->mpath_remove_head(scsi_mpath_head);
++static const struct class sd_mpath_disk_class = {
++	.name = "scsi_mpath_disk",
++	.dev_release = sd_mpath_disk_release,
++};
 +
++static int sd_mpath_class_register(void)
++{
++	return class_register(&sd_mpath_disk_class);
++}
++
++static void sd_mpath_class_unregister(void)
++{
++	class_unregister(&sd_mpath_disk_class);
++}
++#else /* CONFIG_SCSI_MULTIPATH */
++static int sd_mpath_class_register(void)
++{
 +	return 0;
 +}
 +
-+static void scsi_mpath_remove_head_work(struct mpath_head *mpath_head)
++static void sd_mpath_class_unregister(void)
 +{
-+	struct scsi_mpath_head *scsi_mpath_head = to_scsi_mpath_head(mpath_head);
-+
-+	/*
-+	 * scsi_mpath_remove_head_drv() could drop the final reference to
-+	 * scsi_mpath_head, meaning that we pass a free'd pointer further
-+	 * drivers - take a reference so that won't happen.
-+	 */
-+	scsi_mpath_get_head(scsi_mpath_head);
-+	bus_for_each_drv(&scsi_bus_type, NULL, scsi_mpath_head,
-+		scsi_mpath_remove_head_drv);
-+	scsi_mpath_put_head(scsi_mpath_head);
 +}
++#endif
+ 
+ static const char *sd_cache_types[] = {
+ 	"write through", "none", "write back",
+@@ -4474,11 +4508,15 @@ static int __init init_sd(void)
+ 	if (err)
+ 		goto err_out;
+ 
++	err = sd_mpath_class_register();
++	if (err)
++		goto err_out_class;
 +
- static struct mpath_head_template smpdt = {
-+	.remove_head = scsi_mpath_remove_head_work,
- 	.is_disabled = scsi_mpath_is_disabled,
- 	.is_optimized = scsi_mpath_is_optimized,
- 	.available_path = scsi_mpath_available_path,
-diff --git a/include/scsi/scsi_driver.h b/include/scsi/scsi_driver.h
-index 249cea724abd..d92b63d357f2 100644
---- a/include/scsi/scsi_driver.h
-+++ b/include/scsi/scsi_driver.h
-@@ -8,6 +8,7 @@
+ 	sd_page_pool = mempool_create_page_pool(SD_MEMPOOL_SIZE, 0);
+ 	if (!sd_page_pool) {
+ 		printk(KERN_ERR "sd: can't init discard page pool\n");
+ 		err = -ENOMEM;
+-		goto err_out_class;
++		goto err_out_mpath_class;
+ 	}
  
- struct module;
- struct request;
-+struct scsi_mpath_head;
+ 	err = scsi_register_driver(&sd_template);
+@@ -4489,6 +4527,8 @@ static int __init init_sd(void)
  
- struct scsi_driver {
- 	struct device_driver	gendrv;
-@@ -22,6 +23,9 @@ struct scsi_driver {
- 	int (*done)(struct scsi_cmnd *);
- 	int (*eh_action)(struct scsi_cmnd *, int);
- 	void (*eh_reset)(struct scsi_cmnd *);
-+	#ifdef CONFIG_SCSI_MULTIPATH
-+	void (*mpath_remove_head)(struct scsi_mpath_head *);
-+	#endif
- };
- #define to_scsi_driver(drv) \
- 	container_of((drv), struct scsi_driver, gendrv)
+ err_out_driver:
+ 	mempool_destroy(sd_page_pool);
++err_out_mpath_class:
++	sd_mpath_class_unregister();
+ err_out_class:
+ 	class_unregister(&sd_disk_class);
+ err_out:
+@@ -4514,6 +4554,7 @@ static void __exit exit_sd(void)
+ 		mempool_destroy(sd_large_page_pool);
+ 
+ 	class_unregister(&sd_disk_class);
++	sd_mpath_class_unregister();
+ 
+ 	for (i = 0; i < SD_MAJORS; i++)
+ 		unregister_blkdev(sd_major(i), "sd");
+diff --git a/drivers/scsi/sd.h b/drivers/scsi/sd.h
+index 574af8243016..22438173ea2f 100644
+--- a/drivers/scsi/sd.h
++++ b/drivers/scsi/sd.h
+@@ -83,6 +83,9 @@ struct zoned_disk_info {
+ 
+ struct scsi_disk {
+ 	struct scsi_device *device;
++#ifdef CONFIG_SCSI_MULTIPATH
++	struct sd_mpath_disk *sd_mpath_disk;
++#endif
+ 
+ 	/*
+ 	 * disk_dev is used to show attributes in /sys/class/scsi_disk/,
 -- 
 2.43.0
 
