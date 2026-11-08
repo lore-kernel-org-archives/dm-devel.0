@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.235
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.37
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170881;
-	b=LDzrDW6OR36UGmHMY3umRACgC9qJLGRzxAT9pZMLWlsyN5lA379T5E6hiFmWvANYkpmy
-	 UjYaSUIS5DRkcu+agKb8ya5oNIAH1dmiYJBojHs7a4878wAtFzRCvn74QfbssQmPODWDZ
-	 cYFhmhtUwUJ3BokJxJ6XwXMf4y6xPVnIWqAL6OhtNp9CHmkYv+JycB+4IUWwz/8MV04Qm
-	 +2isGqVjX+JzT54ycX3OMSCGzjG6Da8oocTUQQHbKf775ymmi9dQp9dWc8H/aLcNHupql
-	 doLd64on+jCLx9Zkh4kpI7xM876EnT0vckT9W+5EKobvMpAvTGK/OANK40R7I5huMoA==
+	t=1794170883;
+	b=vDDm7bhLSJi/G4Qn3zkMT+upl3bwT04eRLvmDaAGrvT+LRRnMT63EPkxSGsgkoukCZXw
+	 s9h2APQYwVKY4R0nsqyQJyyK0T3zaEMSWyDQ77NfL8YhaW4tSxvcPaxByLCRPaGasFSww
+	 3iSxN6v+kbtfhnazOU2O9KDpGEmy3n+yts+9vgiwC5As0ouslI7HrT82VagGPmZe7prvU
+	 u9qL/vTHrhoGkaixUPl348BcxqYgQgHNJXRKSnQA7JDWe5+aZJbq7RMZwtLn5dXfRomkj
+	 uWoiLMpDu/ndSfpIIu710P907C+KqUoa92g14UjeMLm4TXrrVni+Ij4i843nUcIgI5g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170881;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170883;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=ikmfrunlJJ/YKeUvGeyPy6Hr5fLbyjiGxROd9YPAoJ4=;
-	b=A6XeZo4KKJJObiw2k5V2NK9gFX2x2ipqhsOcm8YREWnUalQeBuolDz4IPyByqCH+g+s3
-	 +xACff5FhMGZSuM7jJCEkQNQa/39mWbIptNTLPnHDJ7AO3H4r5HEheeHoxmGVNlfX+ZDj
-	 7DQv3h3sP104DKMQM6wkAb2oeGydgw9eDLZmXZcWLqSEn+w69ZVdhA/b6xk8vKFBMO4sU
-	 SYVnFFNV6pIwa3Y71y8RNzvrxH198lEQVpaVGsEN/iZZnF5PRJF3BECAPwzYp/bOLbaEa
-	 c0XIjh6TgDXS5GTy9qjKDjB4PhKnnf6IX1+PfrN42H/sRgyOC1l3xZ+VFV0oen//aeg==
+	bh=TkjmtTDC+sgV/OIhraVm6GbfjlT1JhAQYKubd1eOkl8=;
+	b=ymHZ6F9qq6rvmtv883Z41Lybk6B4aUz5+cyoItY8Lkh9LNdqMNqLO0/PynINlCW3mM59
+	 FeqN1tUN5lze+/OnMYsiLHUg/kPxw7yj9+YXA7/f8HUCiaP0Va8bzcq1T9GEbNn8s2bmT
+	 buD7pa/kpcQmqeX1KxJ9if58FU2a6/U3j82dxFAO+13Mwjhy41oDGGUqGUW2fcNj47hwI
+	 f2gKj4riulPPvgk5EVhnkS8szgCOVRTcda/270MpEax0KfOQPe9s5DjEHRgtmN3RVbm83
+	 n7/Fp0UjiXNTU8otS/slqtKrlbhx0Te+pZ10u51ghuqml/0qkvIOnziJcgonI/inxOw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vMzRtOUg;
-	arc=none smtp.remote-ip=91.218.175.235
-Received: from mta0.migadu.com (out-235.mta0.migadu.com [91.218.175.235])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=Yz1hkOnV;
+	arc=none smtp.remote-ip=95.215.58.37
+Received: from mta1.migadu.com (out-37.mta1.migadu.com [95.215.58.37])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43925606A320
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:47:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 43925606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B8BF606A326
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6B8BF606A326
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vMzRtOUg
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=Yz1hkOnV
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=RcUeH7gkhrSc5PnVsT18R86a50wGu0BU/15a/DDdUMk=;
+DKIM-Signature: a=rsa-sha256; bh=tMMwSEJRf6b+zK94ba2jk+bNBq7EOgXW6syNz3o4jOg=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170878; v=1; x=1794775678;
- b=vMzRtOUgZFag1qjNoQ/W4Dozw9mdeZIO3GU6PidayqzLUuxTB2c3T7vyitO2ivBwa8/r0OWg
- Tv1lE6KRYD0ftkhX0beGWRoYZ87OD+KJ+gxEdN8oPdFcc0uclPrFLl4QgWKJeC8nR2PhDFcaK0T
- cEFz4G3TyE2ht4hNN5J2w1Y0=
+ t=1794170880; v=1; x=1794775680;
+ b=Yz1hkOnVe4xv9si2tPFMU2fJKDb7Il1GX9Ru71QdfQRKDLpl4hReEI5cf3JT9t+P1uPpIsKd
+ EqbFCBcbL5FSXyjyJVHNKM45M/6bB2fZG8N3yGAB7CMvvZpmVjbN3aiQilJD7b6UfjZ4PyznbC4
+ Nlf9wBvZxtUl+ke/E1JVaIcQ=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 302a52f6cfd93f21;
-	Sun, 08 Nov 2026 20:47:58 +0000
-X-Mizu-Trace-ID: 302a52f6cfd93f21
+Received: by mta10.migadu.com with ESMTPS id ceaf282790df2938;
+	Sun, 08 Nov 2026 20:48:00 +0000
+X-Mizu-Trace-ID: ceaf282790df2938
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -60,9 +60,9 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 03/29] libmultipath: Add basic gendisk support
-Date: Sun,  8 Nov 2026 20:47:07 +0000
-Message-ID: <20261108204733.557995-4-john.garry@linux.dev>
+Subject: [PATCH v9 04/29] libmultipath: Add path selection support
+Date: Sun,  8 Nov 2026 20:47:08 +0000
+Message-ID: <20261108204733.557995-5-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -77,211 +77,378 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add support to allocate and free a multipath gendisk.
+Add code for path selection.
+
+NVMe ANA is abstracted into enum mpath_access_state. The motivation here is
+so that SCSI ALUA can be used. Callbacks .is_disabled and .is_optimized
+are added to get the path access state.
+
+Path selection modes round-robin, NUMA, and queue-depth are added, same
+as NVMe supports.
 
 NVMe has almost like-for-like equivalents here:
-- mpath_alloc_head_disk() -> nvme_mpath_alloc_disk()
-- multipath_partition_scan_work() -> nvme_partition_scan_work()
-- mpath_remove_disk() -> nvme_remove_head()
-- mpath_device_set_live() -> nvme_mpath_set_live()
+- __mpath_find_path() -> __nvme_find_path()
+- mpath_find_path() -> nvme_find_path()
 
-struct mpath_head_template is introduced as a method for drivers to
-provide custom multipath functionality.
+and similar for all introduced callee functions.
+
+Functions mpath_set_iopolicy() and mpath_get_iopolicy() are added for
+setting default iopolicy.
 
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- include/linux/multipath.h |  38 ++++++++++++++
- lib/multipath.c           | 103 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 141 insertions(+)
+ include/linux/multipath.h |  33 +++++
+ lib/multipath.c           | 251 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 284 insertions(+)
 
 diff --git a/include/linux/multipath.h b/include/linux/multipath.h
-index 407d985cd31f..ca6e02505be4 100644
+index ca6e02505be4..9bbab0aa8961 100644
 --- a/include/linux/multipath.h
 +++ b/include/linux/multipath.h
-@@ -5,11 +5,19 @@
- #include <linux/blkdev.h>
- #include <linux/srcu.h>
+@@ -7,13 +7,31 @@
  
-+extern const struct block_device_operations mpath_ops;
-+
- struct mpath_device {
-+	struct mpath_head	*mpath_head;
- 	struct list_head	siblings;
- 	struct gendisk		*disk;
- };
+ extern const struct block_device_operations mpath_ops;
  
-+struct mpath_head_template {
++enum mpath_iopolicy_e {
++	MPATH_IOPOLICY_NUMA,
++	MPATH_IOPOLICY_RR,
++	MPATH_IOPOLICY_QD,
 +};
 +
-+#define MPATH_HEAD_DISK_LIVE 			0
++enum mpath_access_state {
++	MPATH_STATE_OPTIMIZED,
++	MPATH_STATE_NONOPTIMIZED,
++	MPATH_STATE_OTHER
++};
 +
- struct mpath_head {
- 	struct srcu_struct	srcu;
- 	struct list_head	dev_list;	/* list of all mpath_devs */
-@@ -17,12 +25,42 @@ struct mpath_head {
+ struct mpath_device {
+ 	struct mpath_head	*mpath_head;
+ 	struct list_head	siblings;
+ 	struct gendisk		*disk;
++	int			numa_node;
++	atomic_t		*nr_active;
++	enum mpath_access_state access_state;
+ };
+ 
+ struct mpath_head_template {
++	bool (*is_disabled)(struct mpath_device *);
++	bool (*is_optimized)(struct mpath_device *);
++	const struct attribute_group **device_groups;
+ };
+ 
+ #define MPATH_HEAD_DISK_LIVE 			0
+@@ -25,6 +43,7 @@ struct mpath_head {
  
  	refcount_t		refcount;
  
-+	unsigned long		flags;
-+	struct gendisk		*disk;
-+	struct work_struct	partition_scan_work;
-+	struct device		*parent;
-+	const struct attribute_group 		**disk_groups;
-+	const struct mpath_head_template	*mpdt;
- 	struct mpath_device __rcu 		*current_path[MAX_NUMNODES];
- };
++	enum mpath_iopolicy_e	*iopolicy;
+ 	unsigned long		flags;
+ 	struct gendisk		*disk;
+ 	struct work_struct	partition_scan_work;
+@@ -44,6 +63,14 @@ static inline struct mpath_head *mpath_gendisk_to_head(struct gendisk *disk)
+ 	return mpath_bd_device_to_head(disk_to_dev(disk));
+ }
  
-+static inline struct mpath_head *mpath_bd_device_to_head(struct device *dev)
++static inline enum mpath_iopolicy_e mpath_read_iopolicy(
++			struct mpath_head *mpath_head)
 +{
-+	return dev_get_drvdata(dev);
++	return READ_ONCE(*mpath_head->iopolicy);
 +}
-+
-+static inline struct mpath_head *mpath_gendisk_to_head(struct gendisk *disk)
-+{
-+	return mpath_bd_device_to_head(disk_to_dev(disk));
-+}
-+
++void mpath_synchronize(struct mpath_head *mpath_head);
++int mpath_set_iopolicy(const char *str, enum mpath_iopolicy_e *iopolicy);
++int mpath_get_iopolicy(char *buf, int iopolicy);
  int mpath_get_head(struct mpath_head *mpath_head);
  void mpath_put_head(struct mpath_head *mpath_head);
  int mpath_head_init(struct mpath_head *mpath_head);
- void mpath_head_uninit(struct mpath_head *mpath_head);
- 
-+void mpath_put_disk(struct mpath_head *mpath_head);
-+void mpath_remove_disk(struct mpath_head *mpath_head);
-+int mpath_alloc_head_disk(struct mpath_head *mpath_head,
-+			struct queue_limits *lim, int numa_node);
-+void mpath_device_set_live(struct mpath_device *mpath_device);
+@@ -63,4 +90,10 @@ static inline bool is_mpath_disk(struct gendisk *disk)
+ 	return false;
+ 	#endif
+ }
 +
-+static inline bool is_mpath_disk(struct gendisk *disk)
++static inline bool mpath_qd_iopolicy(enum mpath_iopolicy_e *iopolicy)
 +{
-+	#if IS_ENABLED(CONFIG_LIBMULTIPATH)
-+	return disk->fops == &mpath_ops;
-+	#else
-+	return false;
-+	#endif
++	return READ_ONCE(*iopolicy) == MPATH_IOPOLICY_QD;
 +}
++
  #endif // _LIBMULTIPATH_H
 diff --git a/lib/multipath.c b/lib/multipath.c
-index 31ef98980ba4..93c0ca8b390b 100644
+index 93c0ca8b390b..b8ea8478037e 100644
 --- a/lib/multipath.c
 +++ b/lib/multipath.c
-@@ -37,6 +37,106 @@ void mpath_head_uninit(struct mpath_head *mpath_head)
- }
- EXPORT_SYMBOL_GPL(mpath_head_uninit);
+@@ -8,8 +8,245 @@
+ #include <linux/multipath.h>
+ #include <linux/wait_bit.h>
  
-+static int mpath_bdev_open(struct gendisk *disk, blk_mode_t mode)
-+{
-+	struct mpath_head *mpath_head = disk->private_data;
++static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head);
 +
-+	return mpath_get_head(mpath_head);
-+}
-+
-+static void mpath_bdev_release(struct gendisk *disk)
-+{
-+	struct mpath_head *mpath_head = disk->private_data;
-+
-+	mpath_put_head(mpath_head);
-+}
-+
-+const struct block_device_operations mpath_ops = {
-+	.owner          = THIS_MODULE,
-+	.open		= mpath_bdev_open,
-+	.release	= mpath_bdev_release,
+ static struct workqueue_struct *mpath_wq;
+ 
++static const char * const mpath_iopolicy_names[] = {
++	[MPATH_IOPOLICY_NUMA]	= "numa",
++	[MPATH_IOPOLICY_RR]	= "round-robin",
++	[MPATH_IOPOLICY_QD]	= "queue-depth",
 +};
-+EXPORT_SYMBOL_GPL(mpath_ops);
 +
-+static void multipath_partition_scan_work(struct work_struct *work)
++static int mpath_iopolicy_parse(const char *str)
 +{
-+	struct mpath_head *mpath_head =
-+		container_of(work, struct mpath_head, partition_scan_work);
-+
-+	if (WARN_ON_ONCE(!test_and_clear_bit(GD_SUPPRESS_PART_SCAN,
-+					     &mpath_head->disk->state)))
-+		return;
-+
-+	mutex_lock(&mpath_head->disk->open_mutex);
-+	bdev_disk_changed(mpath_head->disk, false);
-+	mutex_unlock(&mpath_head->disk->open_mutex);
++	return __sysfs_match_string(mpath_iopolicy_names,
++		ARRAY_SIZE(mpath_iopolicy_names), str);
 +}
 +
-+void mpath_remove_disk(struct mpath_head *mpath_head)
++int mpath_set_iopolicy(const char *str, enum mpath_iopolicy_e *iopolicy)
 +{
-+	if (test_and_clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
-+		struct gendisk *disk = mpath_head->disk;
++	int policy;
 +
-+		del_gendisk(disk);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(mpath_remove_disk);
-+
-+void mpath_put_disk(struct mpath_head *mpath_head)
-+{
-+	if (!mpath_head->disk)
-+		return;
-+
-+	/* make sure all pending bios are cleaned up */
-+	flush_work(&mpath_head->partition_scan_work);
-+	put_disk(mpath_head->disk);
-+	mpath_head->disk = NULL;
-+}
-+EXPORT_SYMBOL_GPL(mpath_put_disk);
-+
-+int mpath_alloc_head_disk(struct mpath_head *mpath_head,
-+			struct queue_limits *lim, int numa_node)
-+{
-+	struct gendisk *disk;
-+
-+	if (mpath_head->disk)
++	if (!str)
 +		return -EINVAL;
-+
-+	disk = blk_alloc_disk(lim, numa_node);
-+	if (IS_ERR(disk))
-+		return PTR_ERR(disk);
-+
-+	mpath_head->disk = disk;
-+	mpath_head->disk->private_data = mpath_head;
-+	mpath_head->disk->fops = &mpath_ops;
-+
-+	set_bit(GD_SUPPRESS_PART_SCAN, &mpath_head->disk->state);
++	policy = mpath_iopolicy_parse(str);
++	if (policy < 0)
++		return policy;
++	WRITE_ONCE(*iopolicy, policy);
 +
 +	return 0;
 +}
-+EXPORT_SYMBOL_GPL(mpath_alloc_head_disk);
++EXPORT_SYMBOL_GPL(mpath_set_iopolicy);
 +
-+void mpath_device_set_live(struct mpath_device *mpath_device)
++int mpath_get_iopolicy(char *buf, int iopolicy)
 +{
-+	struct mpath_head *mpath_head = mpath_device->mpath_head;
-+	int ret;
++	return sprintf(buf, "%s\n", mpath_iopolicy_names[iopolicy]);
++}
++EXPORT_SYMBOL_GPL(mpath_get_iopolicy);
 +
-+	if (!mpath_head->disk)
-+		return;
 +
-+	if (!test_and_set_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
-+		dev_set_drvdata(disk_to_dev(mpath_head->disk), mpath_head);
-+		ret = device_add_disk(mpath_head->parent, mpath_head->disk,
-+				mpath_head->disk_groups);
-+		if (ret) {
-+			clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags);
-+			return;
++void mpath_synchronize(struct mpath_head *mpath_head)
++{
++	synchronize_srcu(&mpath_head->srcu);
++}
++EXPORT_SYMBOL_GPL(mpath_synchronize);
++
++static bool mpath_path_is_disabled(struct mpath_head *mpath_head,
++				struct mpath_device *mpath_device)
++{
++	return mpath_head->mpdt->is_disabled(mpath_device);
++}
++
++static struct mpath_device *__mpath_find_path(struct mpath_head *mpath_head,
++					int node)
++{
++	int found_distance = INT_MAX, fallback_distance = INT_MAX, distance;
++	struct mpath_device *found = NULL, *fallback = NULL, *mpath_device;
++
++	list_for_each_entry_srcu(mpath_device, &mpath_head->dev_list, siblings,
++		srcu_read_lock_held(&mpath_head->srcu)) {
++		if (mpath_path_is_disabled(mpath_head, mpath_device))
++			continue;
++
++		if (mpath_device->numa_node != NUMA_NO_NODE &&
++		    (mpath_read_iopolicy(mpath_head) ==
++			MPATH_IOPOLICY_NUMA))
++			distance = node_distance(node,
++					mpath_device->numa_node);
++		else
++			distance = LOCAL_DISTANCE;
++
++		switch(mpath_device->access_state) {
++		case MPATH_STATE_OPTIMIZED:
++		    if (distance < found_distance) {
++			    found_distance = distance;
++			    found = mpath_device;
++		    }
++		    break;
++		case MPATH_STATE_NONOPTIMIZED:
++		    if (distance < fallback_distance) {
++			    fallback_distance = distance;
++			    fallback = mpath_device;
++		    }
++		    break;
++		default:
++		    break;
 +		}
-+		queue_work(mpath_wq, &mpath_head->partition_scan_work);
++	}
++
++	if (!found)
++		found = fallback;
++
++	if (found)
++		rcu_assign_pointer(mpath_head->current_path[node], found);
++
++	return found;
++}
++
++static struct mpath_device *mpath_next_dev(struct mpath_head *mpath_head,
++				struct mpath_device *mpath_dev)
++{
++	mpath_dev = list_next_or_null_rcu(&mpath_head->dev_list,
++			&mpath_dev->siblings, struct mpath_device,
++			siblings);
++
++	if (mpath_dev)
++		return mpath_dev;
++	return list_first_or_null_rcu(&mpath_head->dev_list,
++				struct mpath_device, siblings);
++}
++
++static struct mpath_device *mpath_round_robin_path(
++				struct mpath_head *mpath_head)
++{
++	struct mpath_device *mpath_device, *found = NULL;
++	int node = numa_node_id();
++	enum mpath_access_state access_state_old;
++	struct mpath_device *old =
++			srcu_dereference(mpath_head->current_path[node],
++				&mpath_head->srcu);
++
++	if (unlikely(!old))
++		return __mpath_find_path(mpath_head, node);
++
++	if (list_is_singular(&mpath_head->dev_list)) {
++		if (mpath_path_is_disabled(mpath_head, old))
++			return NULL;
++		return old;
++	}
++
++	for (mpath_device = mpath_next_dev(mpath_head, old);
++	    mpath_device && mpath_device != old;
++	    mpath_device = mpath_next_dev(mpath_head, mpath_device)) {
++
++		if (mpath_path_is_disabled(mpath_head, mpath_device))
++			continue;
++		if (mpath_device->access_state == MPATH_STATE_OPTIMIZED) {
++			found = mpath_device;
++			goto out;
++		}
++		if (mpath_device->access_state == MPATH_STATE_NONOPTIMIZED)
++			found = mpath_device;
++	}
++
++	/*
++	 * The loop above skips the current path for round-robin semantics.
++	 * Fall back to the current path if either:
++	 *  - no other optimized path found and current is optimized,
++	 *  - no other usable path found and current is usable.
++	 */
++	access_state_old = old->access_state;
++	if (!mpath_path_is_disabled(mpath_head, old) &&
++	    (access_state_old == MPATH_STATE_OPTIMIZED ||
++	    (!found && access_state_old == MPATH_STATE_NONOPTIMIZED)))
++		return old;
++
++	if (!found)
++		return NULL;
++out:
++	rcu_assign_pointer(mpath_head->current_path[node], found);
++
++	return found;
++}
++
++static struct mpath_device *mpath_queue_depth_path(
++				struct mpath_head *mpath_head)
++{
++	struct mpath_device *best_opt = NULL, *mpath_device;
++	struct mpath_device *best_nonopt = NULL;
++	unsigned int min_depth_opt = UINT_MAX, min_depth_nonopt = UINT_MAX;
++	unsigned int depth;
++
++	list_for_each_entry_srcu(mpath_device, &mpath_head->dev_list, siblings,
++				 srcu_read_lock_held(&mpath_head->srcu)) {
++
++		if (mpath_path_is_disabled(mpath_head, mpath_device))
++			continue;
++
++		depth = atomic_read(mpath_device->nr_active);
++
++		switch (mpath_device->access_state) {
++		case MPATH_STATE_OPTIMIZED:
++			if (depth < min_depth_opt) {
++				min_depth_opt = depth;
++				best_opt = mpath_device;
++			}
++			break;
++		case MPATH_STATE_NONOPTIMIZED:
++			if (depth < min_depth_nonopt) {
++				min_depth_nonopt = depth;
++				best_nonopt = mpath_device;
++			}
++			break;
++		default:
++			break;
++		}
++
++		if (min_depth_opt == 0)
++			return best_opt;
++	}
++
++	return best_opt ? best_opt : best_nonopt;
++}
++
++static inline bool mpath_path_is_optimized(struct mpath_head *mpath_head,
++				struct mpath_device *mpath_device)
++{
++	return mpath_head->mpdt->is_optimized(mpath_device);
++}
++
++static struct mpath_device *mpath_numa_path(struct mpath_head *mpath_head)
++{
++	int node = numa_node_id();
++	struct mpath_device *mpath_device;
++
++	mpath_device = srcu_dereference(mpath_head->current_path[node],
++					&mpath_head->srcu);
++	if (unlikely(!mpath_device))
++		return __mpath_find_path(mpath_head, node);
++	if (unlikely(mpath_path_is_disabled(mpath_head, mpath_device)))
++		return __mpath_find_path(mpath_head, node);
++	if (unlikely(!mpath_path_is_optimized(mpath_head, mpath_device)))
++		return __mpath_find_path(mpath_head, node);
++	return mpath_device;
++}
++
++__maybe_unused
++static struct mpath_device *mpath_find_path(struct mpath_head *mpath_head)
++{
++	enum mpath_iopolicy_e iopolicy = mpath_read_iopolicy(mpath_head);
++
++	switch (iopolicy) {
++	case MPATH_IOPOLICY_QD:
++		return mpath_queue_depth_path(mpath_head);
++	case MPATH_IOPOLICY_RR:
++		return mpath_round_robin_path(mpath_head);
++	default:
++		return mpath_numa_path(mpath_head);
 +	}
 +}
-+EXPORT_SYMBOL_GPL(mpath_device_set_live);
 +
- int mpath_head_init(struct mpath_head *mpath_head)
+ int mpath_get_head(struct mpath_head *mpath_head)
  {
- 	memset(mpath_head, 0, sizeof(*mpath_head));
-@@ -44,6 +144,9 @@ int mpath_head_init(struct mpath_head *mpath_head)
- 	mutex_init(&mpath_head->lock);
- 	refcount_set(&mpath_head->refcount, 1);
+ 	if (!refcount_inc_not_zero(&mpath_head->refcount))
+@@ -77,6 +314,7 @@ void mpath_remove_disk(struct mpath_head *mpath_head)
+ 	if (test_and_clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
+ 		struct gendisk *disk = mpath_head->disk;
  
-+	INIT_WORK(&mpath_head->partition_scan_work,
-+		multipath_partition_scan_work);
-+
- 	return init_srcu_struct(&mpath_head->srcu);
++		mpath_synchronize(mpath_head);
+ 		del_gendisk(disk);
+ 	}
  }
- EXPORT_SYMBOL_GPL(mpath_head_init);
+@@ -134,6 +372,19 @@ void mpath_device_set_live(struct mpath_device *mpath_device)
+ 		}
+ 		queue_work(mpath_wq, &mpath_head->partition_scan_work);
+ 	}
++
++	mutex_lock(&mpath_head->lock);
++	if (mpath_path_is_optimized(mpath_head, mpath_device)) {
++		int node, srcu_idx;
++
++		srcu_idx = srcu_read_lock(&mpath_head->srcu);
++		for_each_online_node(node)
++			__mpath_find_path(mpath_head, node);
++		srcu_read_unlock(&mpath_head->srcu, srcu_idx);
++	}
++	mutex_unlock(&mpath_head->lock);
++
++	mpath_synchronize(mpath_head);
+ }
+ EXPORT_SYMBOL_GPL(mpath_device_set_live);
+ 
 -- 
 2.43.0
 
