@@ -1,50 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.222
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.235
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170873;
-	b=UCDj/cZ8Aya1SxtOixIL5d/MhNcpCGg8NMIqXEmARbOUQJ5wbotHvYhlcc+sAplHbBMu
-	 8B4BG7CpZFfmDsMdGuSZ7l5cihWQXJcaj/7Di9VuYCxn3mmwiH6UPKwKqcRujrtSa4lDp
-	 N6yro7GjtoGgKfRhY3PFVP03k21TFwQ2T5sWk0DfklzciPAYf4WuwP11QbthXbnORN1XZ
-	 MTw9wRLZsfutYd71q19xNO3r3bwjsFnnE/b9iblmCyGQiifqLhRAMAoSmQGEpwhYbQslb
-	 v2kznc1nWrPdikXQCsMnLPFePtlXYgBnoLldVuk7zBMRxYtJdvqxr7nm4YuMyMiTDzQ==
+	t=1794170881;
+	b=LDzrDW6OR36UGmHMY3umRACgC9qJLGRzxAT9pZMLWlsyN5lA379T5E6hiFmWvANYkpmy
+	 UjYaSUIS5DRkcu+agKb8ya5oNIAH1dmiYJBojHs7a4878wAtFzRCvn74QfbssQmPODWDZ
+	 cYFhmhtUwUJ3BokJxJ6XwXMf4y6xPVnIWqAL6OhtNp9CHmkYv+JycB+4IUWwz/8MV04Qm
+	 +2isGqVjX+JzT54ycX3OMSCGzjG6Da8oocTUQQHbKf775ymmi9dQp9dWc8H/aLcNHupql
+	 doLd64on+jCLx9Zkh4kpI7xM876EnT0vckT9W+5EKobvMpAvTGK/OANK40R7I5huMoA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170873;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170881;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
-	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=xjhWBUZih10V7YJdGXZxprUPzNAlZFyeQN11ftb+jJ0=;
-	b=h7h6AG2/mzI4LLxguxbJdoRNW9PvTTeUrgL8Fz2xujaWk4VkFbuzdeL468jhMqcjxdZk
-	 EnDLtk4wQHSgfC7+x5ao2Quzh0CLnK9akyD67b5o6MUE8rXWWgHM6ebkerniCaNmgCj28
-	 93rw5jZcqGb03/SIi9tucVYeZYbMBj7h6zJeWH2/eRPp5yPsaeUPLanuvKWAzlolQjm5J
-	 oXOtxZ0Ib1QW17eP3rkI0A0awsu5a94qEYdQmJ2FeWGtoi6mJWjCv2rRXTe6L9NnMLpmS
-	 /5+owRJr+Wm+w+0ZtqCiyuaIqMVSozZ0nJhTBLc1hUFqNAriV0R5oF9C0UN987dPgHA==
+	 X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=ikmfrunlJJ/YKeUvGeyPy6Hr5fLbyjiGxROd9YPAoJ4=;
+	b=A6XeZo4KKJJObiw2k5V2NK9gFX2x2ipqhsOcm8YREWnUalQeBuolDz4IPyByqCH+g+s3
+	 +xACff5FhMGZSuM7jJCEkQNQa/39mWbIptNTLPnHDJ7AO3H4r5HEheeHoxmGVNlfX+ZDj
+	 7DQv3h3sP104DKMQM6wkAb2oeGydgw9eDLZmXZcWLqSEn+w69ZVdhA/b6xk8vKFBMO4sU
+	 SYVnFFNV6pIwa3Y71y8RNzvrxH198lEQVpaVGsEN/iZZnF5PRJF3BECAPwzYp/bOLbaEa
+	 c0XIjh6TgDXS5GTy9qjKDjB4PhKnnf6IX1+PfrN42H/sRgyOC1l3xZ+VFV0oen//aeg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=W52V0x6q;
-	arc=none smtp.remote-ip=91.218.175.222
-Received: from mta0.migadu.com (out-222.mta0.migadu.com [91.218.175.222])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vMzRtOUg;
+	arc=none smtp.remote-ip=91.218.175.235
+Received: from mta0.migadu.com (out-235.mta0.migadu.com [91.218.175.235])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A7AB606A320
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:47:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3A7AB606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 43925606A320
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:47:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 43925606A320
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=W52V0x6q
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vMzRtOUg
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=2rsZwfjFMq/a1Kzo/urx8D8cn0WOpZhxUsbpq63LXSg=;
+DKIM-Signature: a=rsa-sha256; bh=RcUeH7gkhrSc5PnVsT18R86a50wGu0BU/15a/DDdUMk=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170869; v=1; x=1794775669;
- b=W52V0x6qMUBB5Rr/auBLIUKg0y/4UxEcPe1QEZLpfuZ/70uD7UwyLxNTNEoAJkbGQh/SeEhp
- X2qsFbphdp/sOHw81JonEDdNxcPOP2TLYjQVVwXb0G6A9FUFmFM8Om5dMbSS8Dx6Q9EKKxTC2/B
- mQ+kbZ6LgAVcAKGEudEiiJdE=
+ t=1794170878; v=1; x=1794775678;
+ b=vMzRtOUgZFag1qjNoQ/W4Dozw9mdeZIO3GU6PidayqzLUuxTB2c3T7vyitO2ivBwa8/r0OWg
+ Tv1lE6KRYD0ftkhX0beGWRoYZ87OD+KJ+gxEdN8oPdFcc0uclPrFLl4QgWKJeC8nR2PhDFcaK0T
+ cEFz4G3TyE2ht4hNN5J2w1Y0=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id dd57490ad9f8d74e;
-	Sun, 08 Nov 2026 20:47:49 +0000
-X-Mizu-Trace-ID: dd57490ad9f8d74e
+Received: by mta10.migadu.com with ESMTPS id 302a52f6cfd93f21;
+	Sun, 08 Nov 2026 20:47:58 +0000
+X-Mizu-Trace-ID: 302a52f6cfd93f21
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -59,10 +60,12 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 00/29] Native SCSI Multipath support
-Date: Sun,  8 Nov 2026 20:47:04 +0000
-Message-ID: <20261108204733.557995-1-john.garry@linux.dev>
+Subject: [PATCH v9 03/29] libmultipath: Add basic gendisk support
+Date: Sun,  8 Nov 2026 20:47:07 +0000
+Message-ID: <20261108204733.557995-4-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
+References: <20261108204733.557995-1-john.garry@linux.dev>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -74,177 +77,211 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-NATIVE SCSI MULTIPATH:
+Add support to allocate and free a multipath gendisk.
 
-This series introduces native SCSI multipath support. It is intended as
-an alternative to dm-mpath.
+NVMe has almost like-for-like equivalents here:
+- mpath_alloc_head_disk() -> nvme_mpath_alloc_disk()
+- multipath_partition_scan_work() -> nvme_partition_scan_work()
+- mpath_remove_disk() -> nvme_remove_head()
+- mpath_device_set_live() -> nvme_mpath_set_live()
 
-This support aims to provide a multipath-enabled SCSI block device/
-gendisk.
+struct mpath_head_template is introduced as a method for drivers to
+provide custom multipath functionality.
 
-For a SCSI device to support native multipath, either of the following
-conditions must be satisfied:
-a. unique ID in VPD page 83 and ALUA support and scsi_multipath modparam
-   enabled
-b. unique ID in VPD page 83 and scsi_multipath_always modparam enabled
+Signed-off-by: John Garry <john.garry@linux.dev>
+---
+ include/linux/multipath.h |  38 ++++++++++++++
+ lib/multipath.c           | 103 ++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 141 insertions(+)
 
-This series relies on reading sdev->access_state to get path information.
-This path information would be provided by ALUA. ALUA support which does
-not rely on device handlers has already been discussed at
-https://lore.kernel.org/linux-scsi/7755e98f-5619-48ba-bcfc-b64eec930c40@oracle.com/
-and support will be added in the next phase.
-
-New classes of devices are added:
-- scsi_mpath_device
-- scsi_mpath_disk
-
-These are required since a multipath scsi_device has no common scsi host.
-An example of the sysfs files and directories for these new classes is as
-follows:
-
-$ ls -l /sys/class/scsi_mpath_device/scsi_mpath_device0/
-total 0
--rw-r--r--    1 root     root          4096 Feb 25 11:59 iopolicy
-drwxr-xr-x    2 root     root             0 Feb 25 11:59 multipath
-drwxr-xr-x    2 root     root             0 Feb 25 11:59 power
-lrwxrwxrwx    1 root     root             0 Feb 25 11:59 subsystem ->
-../../../../class/scsi_mpath_device
--rw-r--r--    1 root     root          4096 Feb 25 11:58 uevent
--r--r--r--    1 root     root          4096 Feb 25 11:59 vpd_id
-$ ls -l /sys/class/scsi_mpath_device/scsi_mpath_device0/multipath/
-total 0
-lrwxrwxrwx    1 root     root             0 Feb 25 11:59 8:0:0:0 ->
-../../../../platform/host8/session1/target8:0:0/8:0:0:0
-lrwxrwxrwx    1 root     root             0 Feb 25 11:59 9:0:0:0 ->
-../../../../platform/host9/session2/target9:0:0/9:0:0:0
-$ cat /sys/class/scsi_mpath_device/scsi_mpath_device0/vpd_id
-naa.600140505200a986f0043c9afa1fd077
-$ cat /sys/class/scsi_mpath_device/scsi_mpath_device0/iopolicy
-numa
-$
-
-$ ls -l /sys/class/scsi_mpath_disk/scsi_mpath_disk0/
-total 0
-drwxr-xr-x    2 root     root             0 Feb 25 12:00 power
-drwxr-xr-x   11 root     root             0 Feb 25 11:58 sdc
-lrwxrwxrwx    1 root     root             0 Feb 25 11:58 subsystem ->
-../../../../class/scsi_mpath_disk
--rw-r--r--    1 root     root          4096 Feb 25 11:58 uevent
-$ ls -l /sys/class/scsi_mpath_disk/scsi_mpath_disk0/sdc/multipath/
-total 0
-lrwxrwxrwx    1 root     root             0 Feb 25 12:00 sdc:0 ->
-../../../../../platform/host8/session1/target8:0:0/8:0:0:0/block/sdc:0
-lrwxrwxrwx    1 root     root             0 Feb 25 12:00 sdc:1 ->
-../../../../../platform/host9/session2/target9:0:0/9:0:0:0/block/sdc:1
-
-$ ls -l /dev/sdc
-brw-rw----    1 root     disk        8,  32 Feb 25 11:58 /dev/sdc
-
-The scsi_device and scsi_disk classes otherwise remain unmodified.
-However, the per-path block device is hidden in /dev/. Furthermore,
-multipathed block devices have a new naming scheme, sdX:Y, where
-X is the scsi multipath device index and Y is the path index.
-
-No multipath sg support is added. We still have a per-path sg device.
-Since the SCSI block device is multipath enabled, we can access
-multipathed scsi_ioctl() through that block device.
-
-For failover, we take the approach of cloning bio's and re-submitting them
-in full (for failover errors).
-
-LIBMULTIPATH:
-
-This series introduces also libmultipath. It is essentially a refactoring
-of NVME multipath support, so we can have a common library to also support
-native SCSI multipath.
-
-Much of the code is taken directly from the NVMe multipath code. However,
-NVMe specifics are removed. A template structure is provided so the driver
--may provide callbacks for driver specifics, like ANA support for NVMe.
-
-Important new structures introduced include:
-
-- mpath_head
-These contain much of the multipath-specific functionality from
-nvme_ns_head, including a pointer to the gendisk structure and
-a path SRCU-based array.
-
-- mpath_device
-This is the per-path structure, and contains much the same
-multipath-specific functionality in nvme_ns
-
-libmultipath provides functionality for path management, path selection,
-data path, and failover handling.
-
-Full series also available at
-https://github.com/johnpgarry/linux/tree/scsi-multipath-v7.4-v9
-
-Differences to v8:
-- Rebase
-- Hardening changes advised by sashiko, including "Clear cmd->flags"
-  change
-
-Differences to v7:
-- rebase
-- simplify scsi_mpath_clone_end_io() (sashiko)
-- rename bio_list_add_clone() -> bio_list_add_master()
-- rework checks in mpath_alloc_disk_head() (sashiko)
-
-John Garry (29):
-  scsi: core: Clear cmd->flags for terminal queuing error
-  libmultipath: Add initial framework
-  libmultipath: Add basic gendisk support
-  libmultipath: Add path selection support
-  libmultipath: Add bio handling
-  libmultipath: Add support for mpath_device management
-  libmultipath: Add delayed removal support
-  libmultipath: Add sysfs helpers
-  libmultipath: Add support for block device IOCTL
-  libmultipath: Add mpath_bdev_getgeo()
-  libmultipath: Add mpath_bdev_get_unique_id()
-  scsi-multipath: introduce basic SCSI device support
-  scsi-multipath: introduce scsi_device head structure
-  scsi-multipath: provide sysfs link from to scsi_device
-  scsi-multipath: support iopolicy
-  scsi-multipath: clone each bio
-  scsi-multipath: clear path when device is blocked
-  scsi-multipath: revalidate paths upon device unblock
-  scsi-multipath: failover handling
-  scsi-multipath: provide callbacks for path state
-  scsi-multipath: add scsi_mpath_{start,end}_request()
-  scsi-multipath: update request for terminal request queuing error
-  scsi-multipath: add delayed disk removal support
-  scsi: sd: add multipath disk class
-  scsi: sd: add multipath disk attr groups
-  scsi: sd: support multipath disk
-  scsi: sd: add mpath_dev file
-  scsi: sd: add mpath_numa_nodes dev attribute
-  scsi: sd: add mpath_queue_depth dev attribute
-
- drivers/scsi/Kconfig          |  10 +
- drivers/scsi/Makefile         |   1 +
- drivers/scsi/scsi.c           |   8 +-
- drivers/scsi/scsi_lib.c       |  20 +-
- drivers/scsi/scsi_multipath.c | 691 +++++++++++++++++++++++++
- drivers/scsi/scsi_scan.c      |   4 +
- drivers/scsi/scsi_sysfs.c     |  10 +
- drivers/scsi/sd.c             | 611 +++++++++++++++++++++-
- drivers/scsi/sd.h             |   3 +
- include/linux/multipath.h     | 156 ++++++
- include/scsi/scsi_cmnd.h      |   9 +-
- include/scsi/scsi_device.h    |   2 +
- include/scsi/scsi_driver.h    |   4 +
- include/scsi/scsi_host.h      |   4 +
- include/scsi/scsi_multipath.h | 129 +++++
- lib/Kconfig                   |   6 +
- lib/Makefile                  |   2 +
- lib/multipath.c               | 948 ++++++++++++++++++++++++++++++++++
- 18 files changed, 2592 insertions(+), 26 deletions(-)
- create mode 100644 drivers/scsi/scsi_multipath.c
- create mode 100644 include/linux/multipath.h
- create mode 100644 include/scsi/scsi_multipath.h
- create mode 100644 lib/multipath.c
-
+diff --git a/include/linux/multipath.h b/include/linux/multipath.h
+index 407d985cd31f..ca6e02505be4 100644
+--- a/include/linux/multipath.h
++++ b/include/linux/multipath.h
+@@ -5,11 +5,19 @@
+ #include <linux/blkdev.h>
+ #include <linux/srcu.h>
+ 
++extern const struct block_device_operations mpath_ops;
++
+ struct mpath_device {
++	struct mpath_head	*mpath_head;
+ 	struct list_head	siblings;
+ 	struct gendisk		*disk;
+ };
+ 
++struct mpath_head_template {
++};
++
++#define MPATH_HEAD_DISK_LIVE 			0
++
+ struct mpath_head {
+ 	struct srcu_struct	srcu;
+ 	struct list_head	dev_list;	/* list of all mpath_devs */
+@@ -17,12 +25,42 @@ struct mpath_head {
+ 
+ 	refcount_t		refcount;
+ 
++	unsigned long		flags;
++	struct gendisk		*disk;
++	struct work_struct	partition_scan_work;
++	struct device		*parent;
++	const struct attribute_group 		**disk_groups;
++	const struct mpath_head_template	*mpdt;
+ 	struct mpath_device __rcu 		*current_path[MAX_NUMNODES];
+ };
+ 
++static inline struct mpath_head *mpath_bd_device_to_head(struct device *dev)
++{
++	return dev_get_drvdata(dev);
++}
++
++static inline struct mpath_head *mpath_gendisk_to_head(struct gendisk *disk)
++{
++	return mpath_bd_device_to_head(disk_to_dev(disk));
++}
++
+ int mpath_get_head(struct mpath_head *mpath_head);
+ void mpath_put_head(struct mpath_head *mpath_head);
+ int mpath_head_init(struct mpath_head *mpath_head);
+ void mpath_head_uninit(struct mpath_head *mpath_head);
+ 
++void mpath_put_disk(struct mpath_head *mpath_head);
++void mpath_remove_disk(struct mpath_head *mpath_head);
++int mpath_alloc_head_disk(struct mpath_head *mpath_head,
++			struct queue_limits *lim, int numa_node);
++void mpath_device_set_live(struct mpath_device *mpath_device);
++
++static inline bool is_mpath_disk(struct gendisk *disk)
++{
++	#if IS_ENABLED(CONFIG_LIBMULTIPATH)
++	return disk->fops == &mpath_ops;
++	#else
++	return false;
++	#endif
++}
+ #endif // _LIBMULTIPATH_H
+diff --git a/lib/multipath.c b/lib/multipath.c
+index 31ef98980ba4..93c0ca8b390b 100644
+--- a/lib/multipath.c
++++ b/lib/multipath.c
+@@ -37,6 +37,106 @@ void mpath_head_uninit(struct mpath_head *mpath_head)
+ }
+ EXPORT_SYMBOL_GPL(mpath_head_uninit);
+ 
++static int mpath_bdev_open(struct gendisk *disk, blk_mode_t mode)
++{
++	struct mpath_head *mpath_head = disk->private_data;
++
++	return mpath_get_head(mpath_head);
++}
++
++static void mpath_bdev_release(struct gendisk *disk)
++{
++	struct mpath_head *mpath_head = disk->private_data;
++
++	mpath_put_head(mpath_head);
++}
++
++const struct block_device_operations mpath_ops = {
++	.owner          = THIS_MODULE,
++	.open		= mpath_bdev_open,
++	.release	= mpath_bdev_release,
++};
++EXPORT_SYMBOL_GPL(mpath_ops);
++
++static void multipath_partition_scan_work(struct work_struct *work)
++{
++	struct mpath_head *mpath_head =
++		container_of(work, struct mpath_head, partition_scan_work);
++
++	if (WARN_ON_ONCE(!test_and_clear_bit(GD_SUPPRESS_PART_SCAN,
++					     &mpath_head->disk->state)))
++		return;
++
++	mutex_lock(&mpath_head->disk->open_mutex);
++	bdev_disk_changed(mpath_head->disk, false);
++	mutex_unlock(&mpath_head->disk->open_mutex);
++}
++
++void mpath_remove_disk(struct mpath_head *mpath_head)
++{
++	if (test_and_clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
++		struct gendisk *disk = mpath_head->disk;
++
++		del_gendisk(disk);
++	}
++}
++EXPORT_SYMBOL_GPL(mpath_remove_disk);
++
++void mpath_put_disk(struct mpath_head *mpath_head)
++{
++	if (!mpath_head->disk)
++		return;
++
++	/* make sure all pending bios are cleaned up */
++	flush_work(&mpath_head->partition_scan_work);
++	put_disk(mpath_head->disk);
++	mpath_head->disk = NULL;
++}
++EXPORT_SYMBOL_GPL(mpath_put_disk);
++
++int mpath_alloc_head_disk(struct mpath_head *mpath_head,
++			struct queue_limits *lim, int numa_node)
++{
++	struct gendisk *disk;
++
++	if (mpath_head->disk)
++		return -EINVAL;
++
++	disk = blk_alloc_disk(lim, numa_node);
++	if (IS_ERR(disk))
++		return PTR_ERR(disk);
++
++	mpath_head->disk = disk;
++	mpath_head->disk->private_data = mpath_head;
++	mpath_head->disk->fops = &mpath_ops;
++
++	set_bit(GD_SUPPRESS_PART_SCAN, &mpath_head->disk->state);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(mpath_alloc_head_disk);
++
++void mpath_device_set_live(struct mpath_device *mpath_device)
++{
++	struct mpath_head *mpath_head = mpath_device->mpath_head;
++	int ret;
++
++	if (!mpath_head->disk)
++		return;
++
++	if (!test_and_set_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags)) {
++		dev_set_drvdata(disk_to_dev(mpath_head->disk), mpath_head);
++		ret = device_add_disk(mpath_head->parent, mpath_head->disk,
++				mpath_head->disk_groups);
++		if (ret) {
++			clear_bit(MPATH_HEAD_DISK_LIVE, &mpath_head->flags);
++			return;
++		}
++		queue_work(mpath_wq, &mpath_head->partition_scan_work);
++	}
++}
++EXPORT_SYMBOL_GPL(mpath_device_set_live);
++
+ int mpath_head_init(struct mpath_head *mpath_head)
+ {
+ 	memset(mpath_head, 0, sizeof(*mpath_head));
+@@ -44,6 +144,9 @@ int mpath_head_init(struct mpath_head *mpath_head)
+ 	mutex_init(&mpath_head->lock);
+ 	refcount_set(&mpath_head->refcount, 1);
+ 
++	INIT_WORK(&mpath_head->partition_scan_work,
++		multipath_partition_scan_work);
++
+ 	return init_srcu_struct(&mpath_head->srcu);
+ }
+ EXPORT_SYMBOL_GPL(mpath_head_init);
 -- 
 2.43.0
 
