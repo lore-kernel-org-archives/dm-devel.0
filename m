@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.68
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.74
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
 	t=1794170889;
-	b=1qA8mAPICGvjCmT0/8DEdsmAfA1TjV7T2tK3OEUzGaWc06/bTWkvE0ha2EigiSeIFpGS
-	 yolAe6aDwGffDPz18p+2IgDsEfj3KWD2C5wn1TGv1ZoUhI8FWd/UjYb8SvP/RJU16Mev+
-	 wLeb7D93GWmyzfRcRpDLq7bsOk2gGNXV0Kowj2/INVLRL2SAcEduJMoJzOfL8EqGVDpWp
-	 iMNPxhygllWG7mlg3oJ5dKNVgSmUMs6YwuPjB8eTcIuRu8PnL1oPQd5HjdnPwkui/8W4h
-	 wF15Ol46QHt3BOgHuPGojfRDj2e4DRGvqabH5lV+Uq9dgBYreOI+VunXEJUkmJ81BCg==
+	b=PsKNJF10ChvOm4fWFzLR/k2uqeaVlO8a8XJX5IgxDr8+oX3K27LunCqEZjVD/s7k/FlA
+	 InNQ72RLG9Ryw03RfoJm+HghtAOK5FK6jbcA+Ccky5jblCWpgVszwEO4nxscvF+/TO2d5
+	 WoLzzJvq/GzUKsukEAkFGYOZVL/H2++tIhBJIspdGgWGvtq1w8JH/iItCFSwSaw80o954
+	 DjoedqP/wb97ae/WERx+f+Sve4PxQeZcoFohQKcE6t8yo0/ytHPsBVw0kgMDif2/1un7t
+	 6RCuRvZWQyxLHWHIZTef7RMmthuc4HGnVq9d2vDjCvSS8FcAI4NLxWQYFCyZj4BJaTg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
 	a=rsa-sha256; c=relaxed/relaxed; t=1794170889;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=kSNTv+aNJxonZ0HiJim69/NMT9ESSsTK9I4rjqvPbcw=;
-	b=jV0bKechuft/Mw5D/GxhewguTJCBEzGfwocI0xhMwMtjbrJ/E1ip6Mjx504vOu1jMB25
-	 sIqRBcYCky3is51cu63F2ciB8hjGLNKnO40tfO3Is2lcY5hO3P/ioGNgMFqSUtMLd+EDW
-	 ph4UKP19UJ47hN/GclUcgIhBj5r+qVlv2jhEByP4DTDO2MZWEFt+q9cG2QK+6ixz/8MKs
-	 LJT4vpEj6GdgGu+cgnhqMzDx9AVqVYfU1c7pucxl8WjH57ijRWF5y3iu7zyL+4wleR2U7
-	 8DdGfRGcpg7jypLnSeysSB/KUan+gols7TagZeCqbiZ0qakKv14rJECW3/mZYIBxZ8g==
+	bh=uqE0xY48+HsHwpb4Up8/gX/8HzxQ6Bp9ud6iT5itTcM=;
+	b=J+jUrgsuZx5jNPfdlP9ceZlfQQJoQTMW9QFYX34i2tUHUHRQTdJKJ/bIxoklZWAMYWlD
+	 yra+DTU7nAqeVwEdR1ZIgyArcMMZNOcIL091jgnvMSyJh7ieueUuETWSRTgrC+IsNoyWi
+	 U744NwpcItbiCmqVkekBTDNZsNBm8aIsTe2MnHoA+TZiq29hwch2yI6wXLrAfs84zrAOl
+	 ygLi3LdyZuRyhFFfZBkn3qTN1H95548jOOqS5P6QORvKRw5LWRmjvoYPRAtbFcnHEbOY1
+	 OqWnuXd1lz4bpWsV7z6A/HEz9/lk9zxrz+gqWfcHnMx/IX09ke+ejZSijw/sGNC8jlQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=WC1AE5eT;
-	arc=none smtp.remote-ip=95.215.58.68
-Received: from mta1.migadu.com (out-68.mta1.migadu.com [95.215.58.68])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bLbykPlv;
+	arc=none smtp.remote-ip=95.215.58.74
+Received: from mta1.migadu.com (out-74.mta1.migadu.com [95.215.58.74])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9006F606A326
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9006F606A326
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5FEA606A33A
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B5FEA606A33A
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=WC1AE5eT
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bLbykPlv
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=exsDCEn091ZlDw2fBJ4TkGMv2ZuFWeVd9KO0T+qf7z0=;
+DKIM-Signature: a=rsa-sha256; bh=php3BuRcqSzcvJXynpfSwkuXZS0RYrDjb3XQI6eXRsI=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170886; v=1; x=1794775686;
- b=WC1AE5eTmrbCY1/M5DpcsKmHp0iseageC296A/K9ry3kRSaxwNjxEmLLBSnhfRxezOwpKK9d
- Z8FdqKTTOEK5+OpQvOX3d9LpKXd3ZvB2EGvy1VyLc+WVbYvns/LcRhmByJkMozF7FYOLPqVROcQ
- Z5h4CbOchgiWHgRmB0/Rr0ZU=
+ t=1794170887; v=1; x=1794775687;
+ b=bLbykPlvBA3E6BGsExmywTRT3BtsLsvz4RGoyLuItN0IGyhwLnxeZrGCHqKahr7h8C0zXHjW
+ 6LuGKhpb4XFX3um2gEvqx59Ka3r1ithGOtM3Wm1a6nfyLpQclc3HWar76Cu6RMAF73hMDfbsfr/
+ c47ucfRsLwMs4xUX6m3FwzeU=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 87f386aec11499aa;
+Received: by mta10.migadu.com with ESMTPS id f0abbd2653e1c286;
 	Sun, 08 Nov 2026 20:48:06 +0000
-X-Mizu-Trace-ID: 87f386aec11499aa
+X-Mizu-Trace-ID: f0abbd2653e1c286
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -60,9 +60,9 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 10/29] libmultipath: Add mpath_bdev_getgeo()
-Date: Sun,  8 Nov 2026 20:47:14 +0000
-Message-ID: <20261108204733.557995-11-john.garry@linux.dev>
+Subject: [PATCH v9 11/29] libmultipath: Add mpath_bdev_get_unique_id()
+Date: Sun,  8 Nov 2026 20:47:15 +0000
+Message-ID: <20261108204733.557995-12-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -77,25 +77,24 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add mpath_bdev_getgeo() as a multipath block device .getgeo handler.
-
-Here we just redirect into the selected mpath_device disk fops->getgeo
+Add mpath_bdev_get_unique_id() as a multipath block device .get_unique_id
 handler.
 
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- lib/multipath.c | 21 +++++++++++++++++++++
- 1 file changed, 21 insertions(+)
+ lib/multipath.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
 diff --git a/lib/multipath.c b/lib/multipath.c
-index d59d7ba81087..3e2dc7d8b2c2 100644
+index 3e2dc7d8b2c2..b03080afb259 100644
 --- a/lib/multipath.c
 +++ b/lib/multipath.c
-@@ -491,6 +491,26 @@ static int mpath_bdev_ioctl(struct block_device *bdev, blk_mode_t mode,
- 	return err;
+@@ -455,6 +455,27 @@ static void mpath_bdev_release(struct gendisk *disk)
+ 	mpath_put_head(mpath_head);
  }
  
-+static int mpath_bdev_getgeo(struct gendisk *disk, struct hd_geometry *geo)
++static int mpath_bdev_get_unique_id(struct gendisk *disk, u8 id[16],
++    enum blk_unique_id type)
 +{
 +	struct mpath_head *mpath_head = mpath_gendisk_to_head(disk);
 +	int srcu_idx, ret = -EWOULDBLOCK;
@@ -104,28 +103,28 @@ index d59d7ba81087..3e2dc7d8b2c2 100644
 +	srcu_idx = srcu_read_lock(&mpath_head->srcu);
 +	mpath_device = mpath_find_path(mpath_head);
 +	if (mpath_device) {
-+		if (mpath_device->disk->fops->getgeo)
-+			ret = mpath_device->disk->fops->getgeo(
-+					mpath_device->disk, geo);
++		if (mpath_device->disk->fops->get_unique_id)
++			ret = mpath_device->disk->fops->get_unique_id(
++					mpath_device->disk, id, type);
 +		else
-+			ret = -ENOTTY; /* See blkdev_getgeo */
++			ret = 0; /* referencing __dm_get_unique_id() */
 +	}
 +	srcu_read_unlock(&mpath_head->srcu, srcu_idx);
 +
 +	return ret;
 +}
 +
- const struct block_device_operations mpath_ops = {
- 	.owner          = THIS_MODULE,
- 	.open		= mpath_bdev_open,
-@@ -502,6 +522,7 @@ const struct block_device_operations mpath_ops = {
+ static int mpath_bdev_ioctl(struct block_device *bdev, blk_mode_t mode,
+ 		    unsigned int cmd, unsigned long arg)
+ {
+@@ -522,6 +543,7 @@ const struct block_device_operations mpath_ops = {
  	 * avoid their custom compat_ioctl implementation.
  	 */
  	.compat_ioctl	= blkdev_compat_ptr_ioctl,
-+	.getgeo		= mpath_bdev_getgeo,
++	.get_unique_id	= mpath_bdev_get_unique_id,
+ 	.getgeo		= mpath_bdev_getgeo,
  };
  EXPORT_SYMBOL_GPL(mpath_ops);
- 
 -- 
 2.43.0
 
