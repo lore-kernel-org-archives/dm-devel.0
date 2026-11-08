@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.151
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.98
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170905;
-	b=za1Hc7GZgS2VxjCdTn5vJKcb3R7D+tkZqrMigqBj0oYTieOY/iG58mkfB6fSok0nLP61
-	 IDu3YHdP88HLblnp3YRXbfBcz3ip9YI7k9NFNyq69uznwDqL6zQn2vPyonnLX8EMzzUvc
-	 Yy0F2bIw1ilePM74/hYcTwCPBECkd4jhtQTSafAQrnu+KGS+K+D6mQA/B1cV7gLTacC+H
-	 gbC1h+Zs74QCwfBRH+T2Ol7+T2s/3ZPxWQayIYWUjpJM+Q8g7aCKNQq8wcvOJXEkC/5Rr
-	 eUsnW6x0Ee7zhLs7vxzhU6icivzUcwDFhZBf6BXT+SUW1qh1bytBuL42KZATfbEdstw==
+	t=1794170895;
+	b=wtQ9xKUYmjuDMwKbcMYPwtmcc6RTpRiu4Qzri2mcp3EtPC+vTymv8LEBnLm/vR7DaxU2
+	 VKlfPBjTAApZJto6dUe+AM9wla0YI6V3/EfBpkZMPCKH4SGRBL16NlNQenYhPVrzfwTJR
+	 YDVRPdwm62EiiqhwXH8d7mUsOrtOUOF03jqq8k8atO6u2O2Y4qi7qoGfX3qjXXXiMNueu
+	 gtENFaeen6hHKWIg9ku03FQdXEuEwUtQ3G17f46FWvqnQfFjIFWa5zinAoioBVbvQraOH
+	 AGLUK8n73jUlOkHC4N/Q7u6ikMNWZMf+jHDgYop86EEgrFQhnNPLepDhqdMUTNzjICQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170905;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170895;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=QlNI+CS9C292zxh1KVBjnCmUthmZFrW3aFe7rlr3lPo=;
-	b=RfN/Sogh1iewOkbQLkl7Fy7aGoSLKy5fkkiQjsIB/WMXozRa2dD4zDzeiTozMifC8G7f
-	 ufWI9wbu5sKfNrTod1jLZk6mxTOcGQw6m5GvY9bY6a/A/dky82V5g9DvybPdhis2FNYqR
-	 E1Vw19ciNWhQGqu0thd9FqKxbsdW4XP08QHwQk6KHtxftBF9rfFnz4v6R6CBl6evCb7HE
-	 LG8Y7P5/SXqS79Uz0xYSaNVPqtWZY6X35AYW9RejaIqM8dK8K9XzdKlGNmiYEJ6EDKyIn
-	 ctRGcm7ia9NqiOLz3Ui0Y+qmrM9cJU/VXKBZKUcNXR4N2ujfc+QQH2Dswg1hHTPWHYg==
+	bh=YVm0hLTen/l7MjbTkGxRRCAEivtbhd4NAn6q7xWAEYg=;
+	b=scXXp6DvJwH61fj6SCV7ktZ12j6sBXDx27dfyFqrev5aVv7Qu4rpnwgHtf3BDlBjS6Tg
+	 qXYjMCeRimqsPWiTXYrEete8IR9Lgm42kFh+Vcr9JPtLR37gEp+X6r4AdBuugqdMJb0VI
+	 USWTH7rRCKHfaqyh2OvL/Ya76rLvF6sT+toIhqxAPb6y5rs8Ut000VOo1LMYnhdO9/cY0
+	 uysXiLwYiopozlWtdpFsA9Q6XThCPVC/AzQOnzzYiAMh/N2CR6Ujgk3DdqlFeze58do/C
+	 uITp/bq8ZEl0z3YhBivLIBkZdZMVXsvO83cfFQMgTKP4T+ALNWATKKJWynY9MXeMlEw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=b8nc4Xfa;
-	arc=none smtp.remote-ip=95.215.58.151
-Received: from mta1.migadu.com (out-151.mta1.migadu.com [95.215.58.151])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=DgYpzd9k;
+	arc=none smtp.remote-ip=95.215.58.98
+Received: from mta1.migadu.com (out-98.mta1.migadu.com [95.215.58.98])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E095E606D818
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E095E606D818
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D368E606A331
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D368E606A331
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=b8nc4Xfa
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=DgYpzd9k
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=zGxGuv8VhmxQDKGvPD7JkzGiFLkWBpRa5MQ8Ta/vS5c=;
+DKIM-Signature: a=rsa-sha256; bh=WSIUiiRUDwnbfq8m1M5V5dJ7+FsoCilapxmskdaABhM=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170903; v=1; x=1794775703;
- b=b8nc4XfaD2zE8DbGFCdftnKpnKM79s1S1LWN1bvT46Gm6nplIK0R0f26Ib5DDNUnwSM9LzU7
- J84CXShAQEfKd4JRGR3wPiYfdbeoyYDXAf0Ljg49034WfWhOPAsTWDNPnwz+64gfDXZSMtxeX6p
- 7TChOIlUVIEP2oFHniESBnYo=
+ t=1794170893; v=1; x=1794775693;
+ b=DgYpzd9kCd3Sn+Kt3Bbl5berkg+7XYedvheSZ8rQAp4oo7XAEtIvOmNXOX9huTfNbMkFfUoN
+ TBWqsIGXeu7JKy8dRAAMTNxcZrgE71JwKQhAs8nv7wiV6Eo2uZU2REhBcXGwxk+kzPwy6dkkLK7
+ Ycw3qhIJkqYBjPkRlSpZSX84=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 3caf6acd72947ce7;
-	Sun, 08 Nov 2026 20:48:23 +0000
-X-Mizu-Trace-ID: 3caf6acd72947ce7
+Received: by mta10.migadu.com with ESMTPS id 512cbddf7a48e872;
+	Sun, 08 Nov 2026 20:48:13 +0000
+X-Mizu-Trace-ID: 512cbddf7a48e872
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -60,9 +60,9 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 24/29] scsi: sd: add multipath disk class
-Date: Sun,  8 Nov 2026 20:47:28 +0000
-Message-ID: <20261108204733.557995-25-john.garry@linux.dev>
+Subject: [PATCH v9 15/29] scsi-multipath: support iopolicy
+Date: Sun,  8 Nov 2026 20:47:19 +0000
+Message-ID: <20261108204733.557995-16-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -77,117 +77,118 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a new class, sd_mpath_disk_class, which is the multipath version of
-the scsi_disk class.
+Add support to set the multipath iopolicy.
 
-Structure sd_mpath_disk is introduced to manage the multipath gendisk.
+The iopolicy member is per scsi_mpath_head structure.
+
+A module param is added so that the default iopolicy may be set.
 
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- drivers/scsi/sd.c | 43 ++++++++++++++++++++++++++++++++++++++++++-
- drivers/scsi/sd.h |  3 +++
- 2 files changed, 45 insertions(+), 1 deletion(-)
+ drivers/scsi/scsi_multipath.c | 52 +++++++++++++++++++++++++++++++++++
+ include/scsi/scsi_multipath.h |  3 ++
+ 2 files changed, 55 insertions(+)
 
-diff --git a/drivers/scsi/sd.c b/drivers/scsi/sd.c
-index dc45df819c42..03617029a552 100644
---- a/drivers/scsi/sd.c
-+++ b/drivers/scsi/sd.c
-@@ -70,6 +70,7 @@
- #include <scsi/scsi_ioctl.h>
- #include <scsi/scsicam.h>
- #include <scsi/scsi_common.h>
-+#include <scsi/scsi_multipath.h>
+diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
+index 092975e0aca1..baf4ca73f8c9 100644
+--- a/drivers/scsi/scsi_multipath.c
++++ b/drivers/scsi/scsi_multipath.c
+@@ -61,6 +61,23 @@ static const struct kernel_param_ops multipath_param_ops = {
+ module_param_cb(multipath, &multipath_param_ops, &scsi_multipath, 0444);
+ MODULE_PARM_DESC(multipath, "turn on native multipath support, options: on, off, always");
  
- #include "sd.h"
- #include "scsi_priv.h"
-@@ -113,6 +114,39 @@ static mempool_t *sd_page_pool;
- static mempool_t *sd_large_page_pool;
- static atomic_t sd_large_page_pool_users = ATOMIC_INIT(0);
- static struct lock_class_key sd_bio_compl_lkclass;
-+#ifdef CONFIG_SCSI_MULTIPATH
-+struct sd_mpath_disk {
-+	struct scsi_mpath_head		*scsi_mpath_head;
-+};
++static enum mpath_iopolicy_e iopolicy = MPATH_IOPOLICY_NUMA;
 +
-+static void sd_mpath_disk_release(struct device *dev)
++static int scsi_mpath_set_iopolicy_param(const char *val, const struct kernel_param *kp)
 +{
++	return mpath_set_iopolicy(val, &iopolicy);
 +}
 +
-+static const struct class sd_mpath_disk_class = {
-+	.name = "scsi_mpath_disk",
-+	.dev_release = sd_mpath_disk_release,
-+};
-+
-+static int sd_mpath_class_register(void)
++static int scsi_mpath_get_iopolicy_param(char *buf, const struct kernel_param *kp)
 +{
-+	return class_register(&sd_mpath_disk_class);
++	return mpath_get_iopolicy(buf, iopolicy);
 +}
 +
-+static void sd_mpath_class_unregister(void)
++module_param_call(multipath_iopolicy, scsi_mpath_set_iopolicy_param,
++		scsi_mpath_get_iopolicy_param, &iopolicy, 0644);
++MODULE_PARM_DESC(multipath_iopolicy,
++	"Default multipath I/O policy; 'numa' (default), 'round-robin' or 'queue-depth'");
++
+ static int scsi_mpath_unique_lun_id(struct scsi_device *sdev)
+ {
+ 	struct scsi_mpath_device *scsi_mpath_dev = sdev->scsi_mpath_dev;
+@@ -101,8 +118,41 @@ static ssize_t scsi_mpath_device_vpd_id_show(struct device *dev,
+ }
+ static DEVICE_ATTR(vpd_id, S_IRUGO, scsi_mpath_device_vpd_id_show, NULL);
+ 
++static ssize_t scsi_mpath_device_iopolicy_store(struct device *dev,
++		struct device_attribute *attr, const char *buf, size_t count)
 +{
-+	class_unregister(&sd_mpath_disk_class);
-+}
-+#else /* CONFIG_SCSI_MULTIPATH */
-+static int sd_mpath_class_register(void)
-+{
-+	return 0;
++	struct scsi_mpath_head *scsi_mpath_head =
++		container_of(dev, struct scsi_mpath_head, dev);
++	struct mpath_head *mpath_head = &scsi_mpath_head->mpath_head;
++
++	if (!mpath_iopolicy_store(&scsi_mpath_head->iopolicy, buf))
++		return -EINVAL;
++
++	mpath_clear_paths(mpath_head);
++	mpath_schedule_requeue_work(mpath_head);
++	/*
++	 * Ensure requeue work completes, as this work could run later when
++	 * the mpath_head is gone.
++	 */
++	flush_work(&mpath_head->requeue_work);
++	return count;
 +}
 +
-+static void sd_mpath_class_unregister(void)
++static ssize_t scsi_mpath_device_iopolicy_show(struct device *dev,
++		struct device_attribute *attr, char *buf)
 +{
-+}
-+#endif
- 
- static const char *sd_cache_types[] = {
- 	"write through", "none", "write back",
-@@ -4474,11 +4508,15 @@ static int __init init_sd(void)
- 	if (err)
- 		goto err_out;
- 
-+	err = sd_mpath_class_register();
-+	if (err)
-+		goto err_out_class;
++	struct scsi_mpath_head *scsi_mpath_head =
++		container_of(dev, struct scsi_mpath_head, dev);
 +
- 	sd_page_pool = mempool_create_page_pool(SD_MEMPOOL_SIZE, 0);
- 	if (!sd_page_pool) {
- 		printk(KERN_ERR "sd: can't init discard page pool\n");
- 		err = -ENOMEM;
--		goto err_out_class;
-+		goto err_out_mpath_class;
- 	}
++	return mpath_iopolicy_show(&scsi_mpath_head->iopolicy, buf);
++}
++
++static DEVICE_ATTR(iopolicy, S_IRUGO | S_IWUSR,
++		scsi_mpath_device_iopolicy_show, scsi_mpath_device_iopolicy_store);
++
+ static struct attribute *scsi_mpath_device_attrs[] = {
+ 	&dev_attr_vpd_id.attr,
++	&dev_attr_iopolicy.attr,
+ 	NULL
+ };
  
- 	err = scsi_register_driver(&sd_template);
-@@ -4489,6 +4527,8 @@ static int __init init_sd(void)
+@@ -206,6 +256,8 @@ static struct scsi_mpath_head *scsi_mpath_alloc_head(char *vpd_id)
+ 	if (mpath_head_init(&scsi_mpath_head->mpath_head))
+ 		goto out_free;
+ 	scsi_mpath_head->mpath_head.mpdt = &smpdt;
++	scsi_mpath_head->iopolicy = iopolicy;
++	scsi_mpath_head->mpath_head.iopolicy = &scsi_mpath_head->iopolicy;
  
- err_out_driver:
- 	mempool_destroy(sd_page_pool);
-+err_out_mpath_class:
-+	sd_mpath_class_unregister();
- err_out_class:
- 	class_unregister(&sd_disk_class);
- err_out:
-@@ -4514,6 +4554,7 @@ static void __exit exit_sd(void)
- 		mempool_destroy(sd_large_page_pool);
+ 	strscpy(scsi_mpath_head->vpd_id, vpd_id,
+ 		SCSI_MPATH_DEVICE_ID_LEN);
+diff --git a/include/scsi/scsi_multipath.h b/include/scsi/scsi_multipath.h
+index d224a15ce9c2..d6f290b84f7f 100644
+--- a/include/scsi/scsi_multipath.h
++++ b/include/scsi/scsi_multipath.h
+@@ -25,6 +25,7 @@ struct scsi_mpath_head {
+ 	struct list_head	entry;
+ 	struct ida		ida;
+ 	struct kref		ref;
++	enum mpath_iopolicy_e	iopolicy;
+ 	struct device		dev;
+ 	int			index;
+ };
+@@ -40,6 +41,8 @@ struct scsi_mpath_device {
  
- 	class_unregister(&sd_disk_class);
-+	sd_mpath_class_unregister();
+ #define to_scsi_mpath_device(d) \
+ 	container_of(d, struct scsi_mpath_device, mpath_device)
++#define to_scsi_mpath_head(d) \
++	container_of(d, struct scsi_mpath_head, mpath_head)
  
- 	for (i = 0; i < SD_MAJORS; i++)
- 		unregister_blkdev(sd_major(i), "sd");
-diff --git a/drivers/scsi/sd.h b/drivers/scsi/sd.h
-index 574af8243016..22438173ea2f 100644
---- a/drivers/scsi/sd.h
-+++ b/drivers/scsi/sd.h
-@@ -83,6 +83,9 @@ struct zoned_disk_info {
- 
- struct scsi_disk {
- 	struct scsi_device *device;
-+#ifdef CONFIG_SCSI_MULTIPATH
-+	struct sd_mpath_disk *sd_mpath_disk;
-+#endif
- 
- 	/*
- 	 * disk_dev is used to show attributes in /sys/class/scsi_disk/,
+ int scsi_mpath_dev_alloc(struct scsi_device *sdev);
+ void scsi_mpath_dev_release(struct scsi_device *sdev);
 -- 
 2.43.0
 
