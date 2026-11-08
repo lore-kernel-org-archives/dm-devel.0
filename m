@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.48
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.51
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170901;
-	b=n49+ap/sTww8pb7T4l9Vwl6mN65DcaQZTF70P5xbeFovAdmWRauxTGcKL6WCXf1ODkCV
-	 4foq7COIDn7xIM5FThwUBTkf5Xa95Jecac66VoV8+1Gh9nUsmc2vvc1izIRWHX2YZw1L5
-	 HXRT2AFpWvmeFpQbbpdk8+pBpYg2f3uIcLfYK+u3/IGnlY1eFBIqrVqjL2YXTmJU2OxNR
-	 ETr9iLRuJBgjcJU97zx+h6KTHsTdNP7kpfzSbYwpeva+68tnZphSK+aIoisn4oYO0ozMc
-	 +AR3aQhwIesuZW3Swx5bR+QBmnO98l9f/DYMQMNFS6f5NJ8rxKlAQMFQ/ExAqasBu0g==
+	t=1794170902;
+	b=3h0K/8NyvHDWe1+jFCvoS1bOUx8wCvJjiRdTNv/YcqmxgoAf8g7Ze4i8oYTCEG9gN9wb
+	 y0sFLs0vDti0eBWFp2RbB0uXt5z1h3U508GjXCQa1ZfnFZAg7N0AW6dwajdc0PL4n02it
+	 XisOpJG/wDho6Argu/LXhGKKgkBcLSsLPBB0UgIKfbpUAUa2lwGPu45Ga45AsSoAapgDx
+	 9dwzL3WPR8hR3PHe383GCFK2YRmVZdlMiL1k+o7fEkpcOn/gL3Zt5pCNMd/LfDa9eISRG
+	 nRYlTzXD3floQ8hmouieXVrYHYjVZq4grogo0TBmhso06rFL4eEo8nRipv8/RqWdKPQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170901;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170902;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=bg8FXpLHnbOeiNV48wfI35oG9d3WX/Hy47TPVM7dxC4=;
-	b=RWoa5capmYgPkVczrpBKW9TwoeT2KpNeSvrdAwF1iFqOQHXOSu+yACix92XUw3Nhns0m
-	 kUmO+37Rnll2t2keTPomZbP5pq85sjWabuWoZJ4GSRSEMy43Pu+w8wuGt5Hdm3G4ZgukD
-	 Q72YpxDuTKdQNMqRzZu1pePEIu+l+vmvGQIM4nnKnbriyxRC6y4nPgX/EoEvPMC8In6dF
-	 c/e3X52ka7y9k9EDsnPXnUeWP9ksyTU4TE78JU+8gTZk4dgpziOp1dJlrfg2+kXj4Gvjr
-	 ZDU5LDDy/TG3HMPoNYrfYzyFkikRHHKGlx5TbSO561dKaJWl5eS9xtIcSMZAkfyZsTA==
+	bh=2nnhEenE0/1GT2EDac2uSW/ypInHmlgcoWTshjS2obA=;
+	b=hOikw+dBh/mwwrOtAZQakRVHxYY9fgmw5MNU2n2c6KnxtJ68yaBkJ2T42+Qzpc3rm1N7
+	 6FhDbN+75mHQTs0i7DvABuCokXffWrX2gbY9LVOK7K53MYEXl3dujpPGyz6+9YFDclWBt
+	 78LSNPGOUq16usoMTNGmVMEM4vqo0wgh9td6atZl/xdxfiUmWKHYm4O7oBZaVh0OjvfKR
+	 QqzwwlyyEhcKkn23Id7e6TffBhsN6u5qMvr0H7Gj/N8lyBsnUpHuxwa7YTERoyn1ZwlCf
+	 JZB2kMYemfZZ7hemRJwHmSz9rQTBdmfTSN1S0lnRPWk8XGCPvzKpb1TQhgMGgC5ymOA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vcxQBIGT;
-	arc=none smtp.remote-ip=91.218.175.48
-Received: from mta0.migadu.com (out-48.mta0.migadu.com [91.218.175.48])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=STCqHCKo;
+	arc=none smtp.remote-ip=91.218.175.51
+Received: from mta0.migadu.com (out-51.mta0.migadu.com [91.218.175.51])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 878D1606A330
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 878D1606A330
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9252C606D80D
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9252C606D80D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vcxQBIGT
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=STCqHCKo
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=UyfHMX3gPf6wrmvanoi2cr7axUd6+M+2yQBxEJvHYJ0=;
+DKIM-Signature: a=rsa-sha256; bh=pPiJo5YvvZwz+FSuNCP5LV5980zfLh166gCKBgUb8TU=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170898; v=1; x=1794775698;
- b=vcxQBIGTD+JRdf/eMc+16fxaDHKm+w0w/DUbOjsrA4Lq/DcEm8CCcbFcE739JXeGb3/8m64v
- Vb38AXeyPUswuiLgXNSwnBzfiHdCl4Prr5tptPKNGUD4AF7UpSsGiu2QFPArsFvxK6yldwzGNSB
- qyy/JwpgP7MGDH8WsxxRmysI=
+ t=1794170899; v=1; x=1794775699;
+ b=STCqHCKooXiP/JFm9tRgW3k2K0EZRgZUzYpfsWJ/nZhmOi1NZ+x+eFysdDpxd0X+TvipCHrv
+ /gW4YuE/qvdJCueQetYDDEYzWfKaUaAP3QmXi/e15EnooO37axtULx7Bs0syB5feEUrZaibzjFn
+ +62QjsWOhnbO4EDrHG2uAPaY=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 98e5f5536fe4272a;
-	Sun, 08 Nov 2026 20:48:18 +0000
-X-Mizu-Trace-ID: 98e5f5536fe4272a
+Received: by mta10.migadu.com with ESMTPS id 3d3bbd98ebe99174;
+	Sun, 08 Nov 2026 20:48:19 +0000
+X-Mizu-Trace-ID: 3d3bbd98ebe99174
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -60,9 +60,9 @@ Cc: hare@suse.com,
 	hch@lst.de,
 	michael.christie@oracle.com,
 	John Garry <john.garry@linux.dev>
-Subject: [PATCH v9 19/29] scsi-multipath: failover handling
-Date: Sun,  8 Nov 2026 20:47:23 +0000
-Message-ID: <20261108204733.557995-20-john.garry@linux.dev>
+Subject: [PATCH v9 20/29] scsi-multipath: provide callbacks for path state
+Date: Sun,  8 Nov 2026 20:47:24 +0000
+Message-ID: <20261108204733.557995-21-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -77,46 +77,80 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Failover occurs when the scsi_cmnd has failed and it is discovered that the
-target scsi_device has transport down.
+Provide callbacks for .is_disabled, .is_optimized, and .available_path.
 
-For a scsi command which suffers failover, requeue the master bio of each
-bio attached to its request.
+These all use scsi_device.sdev_state and scsi_device.access_state.
 
-A bio which for which failover occurs is handled in
-scsi_mpath_clone_end_io(). Failover is detected for blk_path_error()
-occuring, same as how dm-mpath detects this.
+Member scsi_device.access_state will be driven by ALUA. Currently
+only device handlers support this, and in future we will have core
+SCSI support for implicit ALUA (not relying on device handlers).
 
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- drivers/scsi/scsi_multipath.c | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ drivers/scsi/scsi_multipath.c | 49 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 49 insertions(+)
 
 diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
-index 008bcafe73ad..4c965650c2bd 100644
+index 4c965650c2bd..2f47c39d8293 100644
 --- a/drivers/scsi/scsi_multipath.c
 +++ b/drivers/scsi/scsi_multipath.c
-@@ -262,6 +262,20 @@ static void scsi_mpath_clone_end_io(struct bio *clone)
- {
- 	struct bio *master_bio = clone->bi_private;
+@@ -298,7 +298,56 @@ static struct bio *scsi_mpath_clone_bio(struct bio *bio)
+ 	return clone;
+ }
  
-+	if (clone->bi_status && blk_path_error(clone->bi_status)) {
-+		struct mpath_head *mpath_head =
-+				master_bio->bi_bdev->bd_disk->private_data;
-+		unsigned long flags;
++static bool scsi_mpath_is_disabled(struct mpath_device *mpath_device)
++{
++	struct scsi_mpath_device *scsi_mpath_dev =
++				to_scsi_mpath_device(mpath_device);
++	struct scsi_device *sdev = scsi_mpath_dev->sdev;
++	unsigned char access_state = READ_ONCE(sdev->access_state) &
++					SCSI_ACCESS_STATE_MASK;
 +
-+		spin_lock_irqsave(&mpath_head->requeue_lock, flags);
-+		bio_list_add(&mpath_head->requeue_list, master_bio);
-+		spin_unlock_irqrestore(&mpath_head->requeue_lock, flags);
-+		bio_put(clone);
++	if (READ_ONCE(sdev->sdev_state) != SDEV_RUNNING)
++		return true;
 +
-+		mpath_schedule_requeue_work(mpath_head);
-+		return;
-+	}
++	if (access_state == SCSI_ACCESS_STATE_OPTIMAL ||
++	    access_state == SCSI_ACCESS_STATE_ACTIVE)
++		return false;
 +
- 	master_bio->bi_status = clone->bi_status;
- 	bio_put(clone);
- 	bio_endio(master_bio);
++	return true;
++}
++
++static bool scsi_mpath_is_optimized(struct mpath_device *mpath_device)
++{
++	struct scsi_mpath_device *scsi_mpath_dev =
++				to_scsi_mpath_device(mpath_device);
++	struct scsi_device *sdev = scsi_mpath_dev->sdev;
++	unsigned char access_state = READ_ONCE(sdev->access_state) &
++					SCSI_ACCESS_STATE_MASK;
++
++	if (READ_ONCE(sdev->sdev_state) != SDEV_RUNNING)
++		return false;
++
++	return access_state == SCSI_ACCESS_STATE_OPTIMAL;
++}
++
++static bool scsi_mpath_available_path(struct mpath_device *mpath_device)
++{
++	struct scsi_mpath_device *scsi_mpath_dev =
++				to_scsi_mpath_device(mpath_device);
++	struct scsi_device *sdev = scsi_mpath_dev->sdev;
++	enum scsi_device_state sdev_state = READ_ONCE(sdev->sdev_state);
++
++	if (sdev_state == SDEV_RUNNING || sdev_state == SDEV_QUIESCE ||
++	    sdev_state == SDEV_BLOCK || sdev_state == SDEV_CREATED_BLOCK)
++		return true;
++
++	return false;
++}
++
+ static struct mpath_head_template smpdt = {
++	.is_disabled = scsi_mpath_is_disabled,
++	.is_optimized = scsi_mpath_is_optimized,
++	.available_path = scsi_mpath_available_path,
+ 	.clone_bio = scsi_mpath_clone_bio,
+ };
+ 
 -- 
 2.43.0
 
