@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794135430;
-	b=tZAIUfN0spgqhpw7TYDdp5Fdw780DcET0OvjKErMIil6cHhxaQsE7+zEKd30raNI0cqv
-	 JNmGjhnq+sRaER6czdaHZ/m4SAO3BN1NoCVxJu0whg5EACGYvmvC4blndPktZ14Pd232p
-	 OXE1UTOIXxFonHwYAfqX+/9szrGWxr9IjDmaKGPEG3Op/zzNy9/nqMkSYIlwYWtu58rjA
-	 ipiLLS5X0RgIh/md62b4UTViEq6zPDFXNEgcjZwByYhwmuwcXxx/v6MkXrvALzGH14fUL
-	 mZU6m1wpUqo2tukrax/9oAa2gvMjVoPiBYzAqZnfg1AJFELoEW5gTyqFPsi82jHJsOw==
+	t=1794142460;
+	b=HANtxk7wE3ye6+ZZS6C7L1Hq3UwVQYaQGE70L/lCXirvr4ogoMCV5JOFZK2qcFDUIm1B
+	 CrZSpLgCKv/stYQiCuvW7H1l/hUdZEt5m39ga71x5uUhu8okl9b3x/NYt9RttwFl3/acV
+	 kdALmsUVOsknOSOM0C83ZcTM+6LZAklNiFksz4RVKYyzMRrm2S5/mydOJaYUox+2mYknO
+	 k4vjBTVxGwOCKkZ9igioBCf9FdqQIIJ9uo+tuFOxC/1w5Zj8uKogALmgtspktfzJTLKJo
+	 3m1kuN6yjzp0Lncz22b6mCNeByanTzoST1WpnQ37aEKwCWTsPM+UGCmIpA92EEJgHhA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794135430;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794142460;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=TwD6srxjUR1mlpO3FVThd9ARdJjbCvcuXWMQlKqn3B8=;
-	b=WG3+30/PhBO8ujMdOvgE3j5hPkbER73U4hFLILkcFCfVURtWZLrJM20LQ6GRqlONPYdI
-	 mBAFS+H0NptRrpnDgtQvVNiPwoxi1wtg8qFDg0ZLrr9LABhp4+DOEaWKpR0ij6Z/SfPik
-	 JzurcC9Ihh1nxf7h11RF5SjcvN37Qjf7SIDVlO7CIC0spL2BqIKdx3sXX4pL8fzCWbrGP
-	 hRHloaWcy8rGTrWGCAnoQ44beYpkmQow4sDHJyEjlkwLtGjPiahWah6zTp6JYDuaaZgDo
-	 7wOSt5pvdycjmYozYvIN03wJVhNa9LHm5WB2NtYuycV4UU+651c9rjHcm/t+LelZFRg==
+	bh=S+YnvTW9wjLG9Bb1xdTq3cc7U/wCPzi1Ggn3aEWL+QI=;
+	b=FWJqWWjWaUwe7GA9lwrOYed5+pz7xUe425OBJvRCkwHk9LKOdumAbEZXWROeq9AyPfzo
+	 ZbuW1ezGQ9pfY7iGsKnVok5GXaEPekZQ3IYAmXce/bSlGbU3o5SXApCf2RntyzKUX7GoT
+	 CVu6aXrIcWFjZ8JuuvOuKjX0i+qEP+kJ6Wm9voX3yJYyyE0XeMSyniLXmood4gCRKg4k8
+	 T7DrzNsy5MJetFVYHvasVQJ0XtBrIiIzc9Stz/lht1+4QWNWalFPmm4fCTDTIBVc3nTr8
+	 N7Kz+0/M3zpC4188pA8Kn86aO8Yz3yB1QKooLpkwNN32DUzim5OOsoNA6UkhadbXpkw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TRiyJ6fm;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=HST+DHzN;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 944DF606A321;
-	Sun,  8 Nov 2026 10:57:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id C8BF0606A31C;
+	Sun,  8 Nov 2026 12:54:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TRiyJ6fm
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 7C02B1F0089F;
-	Sun,  8 Nov 2026 10:57:08 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=HST+DHzN
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8DF571F0089F;
+	Sun,  8 Nov 2026 12:54:18 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794135429;
-	bh=TwD6srxjUR1mlpO3FVThd9ARdJjbCvcuXWMQlKqn3B8=;
+	s=k20260515; t=1794142459;
+	bh=S+YnvTW9wjLG9Bb1xdTq3cc7U/wCPzi1Ggn3aEWL+QI=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=TRiyJ6fmFAW63gdpsdwizsp8sks3nQPXCSsVNd2T20n3ecL1W08N+jUzZxESIVAWt
-	 rhR2mdZ4qwRW/NMbHJFqpDNOPF9CXCkui9oI7PMmIUK4NxRCe2tt3hQpxEkFSNqnT0
-	 fw0KvS+KzLx48jNlOy68g7m9gUQm5PjmAAZkx6rtXjtm9xekTzjZXWKbj5B0QbYwyG
-	 JB/8XGKYPRZUhr7WB2L1DE2wA6j8fiZesr0+iLMikAA0HSFogUoI1v59TfiFrI9g6D
-	 VM/ZyMozcNPiWETPtwx8BEFg9Wkle0PgGqG+r2WbGEMNej4Yxuy0+ze7IBBhmtmmqV
-	 eurIf9dCG5Cjg==
-Date: Sun, 8 Nov 2026 12:57:05 +0200
+	b=HST+DHzNkQ1gw3AIpd5D0TgEIQolNUgaQB9q3S8j8KXW+uTqPNqvM8T0TTL4jFzW+
+	 8fneCgSKng5GEK2sP82/xhwzqlqgXhd3RBI6qsRDgn8dp5gNK1oIL8Ao3I5gcCyL+7
+	 wz4384LrRO97ZlPNnpbvfJ5bwVxJafoDd9PNg8q98LKXIJGZRNtG/CErKEdVDta5c9
+	 te2zVyCjNm05bgFQBEQks//164933xqL3KJltQjDTlEm9OFRN2Fl9el+ZZF8beOPTF
+	 +n4QDzjA9vwmInwZ9d04Lg1Uq07df41UopVKlvjsyABmJ1mge57z7oG8RJ8S7YsLui
+	 86ewMO/v9JKYA==
+Date: Sun, 8 Nov 2026 14:54:15 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Eric Biggers <ebiggers@kernel.org>
 Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
@@ -72,10 +72,11 @@ Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
 	Yanteng Si <si.yanteng@linux.dev>,
 	Yonghong Song <yonghong.song@linux.dev>
 Subject: Re: [PATCH v6 0/3] KEYS: Replace assoc_array with rhashtable
-Message-ID: <avBVgZt92j3OkpOG@kernel.org>
+Message-ID: <avBw92ZChNT6E8cZ@kernel.org>
 References: <20261107195605.3929659-1-jarkko@kernel.org>
  <au-FkAtC4Gcw7Bkb@kernel.org>
  <20261107204210.GG6049@quark>
+ <avBVgZt92j3OkpOG@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -87,87 +88,32 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261107204210.GG6049@quark>
+In-Reply-To: <avBVgZt92j3OkpOG@kernel.org>
 
-On Sat, Nov 07, 2026 at 12:42:10PM -0800, Eric Biggers wrote:
-> On Sat, Nov 07, 2026 at 10:09:52PM +0200, Jarkko Sakkinen wrote:
-> > On Sat, Nov 07, 2026 at 09:56:01PM +0200, Jarkko Sakkinen wrote:
-> > > The keyrings subsystem is the sole user of assoc_array. It has over 1700
-> > > lines of code, no test suite, and a long history of bugs, with LLMs now
-> > > finding more.
-> > > 
-> > > This unfortunate outcome has evolved over time by large from the shortage
-> > > of in-kernel callers, time bandwidth and 3rd party contributors.
-> > > 
-> > > What the keyrings subsystem needs is just a generic key-value store, which
-> > > performs well with sparse key sets. Replace assoc_array with an
-> > > rhashtable-backed keyring index and remove assoc_array from the kernel.
-> > 
-> > Sashiko: https://sashiko.dev/#/patchset/20261107195605.3929659-1-jarkko%40kernel.org
-> > 
-> > Not addressing this as only one patch changed and the change was
-> > exactly:
-> > 
-> > diff --git a/security/keys/keyring.c b/security/keys/keyring.c
-> > index 772fa0e35f9d..6761c6801edc 100644
-> > --- a/security/keys/keyring.c
-> > +++ b/security/keys/keyring.c
-> > @@ -12,7 +12,6 @@
-> >  #include <linux/security.h>
-> >  #include <linux/seq_file.h>
-> >  #include <linux/err.h>
-> > -#include <linux/delay.h>
-> >  #include <linux/jhash.h>
-> >  #include <linux/user_namespace.h>
-> >  #include <linux/nsproxy.h>
-> > @@ -101,6 +100,7 @@ static const struct rhashtable_params keyring_link_params = {
-> >         .min_size               = 4,
-> >         .nelem_hint             = 3,
-> >         .automatic_shrinking    = true,
-> > +       .insecure_elasticity    = true,
-> >  };
-> > 
-> >  static struct keyring_index *keyring_index_locked(const struct key *keyring)
-> > @@ -1225,12 +1225,8 @@ int __key_link_begin(struct key *keyring,
-> >                 if (ret < 0)
-> >                         goto error;
-> > 
-> > -               do {
-> > -                       ret = rhashtable_insert_fast(&links->ht, &link->node,
-> > -                                                    keyring_link_params);
-> > -                       if (ret == -EBUSY)
-> > -                               fsleep(100);
-> > -               } while (ret == -EBUSY);
-> > +               ret = rhashtable_insert_fast(&links->ht, &link->node,
-> > +                                            keyring_link_params);
-> >                 if (ret < 0) {
-> >                         key_payload_reserve(keyring,
-> >                                             keyring->datalen - KEYQUOTA_LINK_BYTES);
-> > 
-> > So I don't think there are any real issue with the patch set, except I
-> > will need to rebase the commits to the latest mainline.
+On Sun, Nov 08, 2026 at 12:57:09PM +0200, Jarkko Sakkinen wrote:
+> I think know what is the problem here exactly. It's the prepending bug
+> fixes. Sorry, I only now realized this althouhgh it should be quite
+                                                             ~~
+                                                             have been
+> obvious.
 > 
-> It looks good to me now too, but it would be good to get a Sashiko run
-> on the latest version.  Sashiko hasn't run since v3, as it failed to
-> apply the series.  You should base the series on a commit in either
-> mainline or linux-next, and pass the '--base' option to 'git
-> format-patch' so it adds a 'base-commit' line.
+> I updated mainline few days for the sake of v7.4-rcX PRs late this
+           ~             ~~~~ 
+	   the           days ago
+			 
+> week (I think it was Thu or Fri) but linux-next was not up to date
+> last time I checked.
 > 
-> (The only reason I've been able to apply it myself for review is that I
-> went out of my way to find your keys-rhashtable branch in git.)
-> 
-> - Eric
+> One I'm able to send the PR containing the fixes, I'll do that and
+  ~~~
+  Once
+> once that is in the mainline. I'll send a new version of this patch
+                              ~
+			      ,
+> set.
 
-I think know what is the problem here exactly. It's the prepending bug
-fixes. Sorry, I only now realized this althouhgh it should be quite
-obvious.
-
-I updated mainline few days for the sake of v7.4-rcX PRs late this
-week (I think it was Thu or Fri) but linux-next was not up to date
-last time I checked.
-
-One I'm able to send the PR containing the fixes, I'll do that and
-once that is in the mainline. I'll send a new version of this patch
-set.
+A few keys of my laptop's keyboard were stuck when I wrote this. Thus, I
+had difficulties to write a proper email :-) Now that I'm reading what I
+wrote, the typos started jump into my eyes, so thus the corrections.
 
 Br, Jarkko
