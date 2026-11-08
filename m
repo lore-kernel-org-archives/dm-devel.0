@@ -1,51 +1,51 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.27
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.48
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794170895;
-	b=lmSjCw4xNN1z9Ap6unRVmQJZHvSrnez8hMkmM+5X5AHrx3SR7eH8d7nHFcOVexc9oysq
-	 3cXtHviydqnzBVsaqyqMXiKubK/VXFi2Si4ueKwhzNFDXTa2HNZaU56TWBGsePS9RDfSJ
-	 NeqhYb3us+U+HI6G3EU2N7BVa31Ec1Iz1jRO2lVkdsgBVujr9LliIFKwSsJEinuv9Mdjn
-	 u0dAVD38CUgmeVLEPWR5PIdyfRu2wi4cC1sw+1fHU+FmzOWkFG2mGvpCA3blgHkZSrpW/
-	 M5rmWx2+nvsfg3OZUvDEuP2zcEJdc6gUjMRGp72Z/aUSotW4MEKYxeI7Em1kG9z8lbQ==
+	t=1794170901;
+	b=n49+ap/sTww8pb7T4l9Vwl6mN65DcaQZTF70P5xbeFovAdmWRauxTGcKL6WCXf1ODkCV
+	 4foq7COIDn7xIM5FThwUBTkf5Xa95Jecac66VoV8+1Gh9nUsmc2vvc1izIRWHX2YZw1L5
+	 HXRT2AFpWvmeFpQbbpdk8+pBpYg2f3uIcLfYK+u3/IGnlY1eFBIqrVqjL2YXTmJU2OxNR
+	 ETr9iLRuJBgjcJU97zx+h6KTHsTdNP7kpfzSbYwpeva+68tnZphSK+aIoisn4oYO0ozMc
+	 +AR3aQhwIesuZW3Swx5bR+QBmnO98l9f/DYMQMNFS6f5NJ8rxKlAQMFQ/ExAqasBu0g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794170895;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794170901;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
 	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
 	 X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=3brYAxqIKs7hzrh5Z8CcY1cxO1lYTUq1vxhAu2CJUaQ=;
-	b=yaXzILUp1Fo7W7Qbs3AnXL5nxdE19IlqFVKPo4uxcfo914J34TKEFloXOQY7XtvCUoRF
-	 Fko1PuzOq9wDCIyB2J7P/Rwyk6Oq8spBtzeJA3gDw50u6v9n2GUbfw0FdS/l51yyWwtXs
-	 Mii32o+S9S6vgMGsbNP0laJ4n1HrneqqzcIGTE4kmahdHPzXPf6dgFbhe2XX5x3nRlFgp
-	 gqosT4orfR+HeBpZKzLWdM4/TvcAfWnURQu87IZb3j3jboEgIq21MRtjw8Z9v1si0DINI
-	 xCxOZc6FDgbmwptu+F3zoOK4GS6D5OGq6Io6OVI8livBOJBJyMWy3NrkakmxqJbEC7Q==
+	bh=bg8FXpLHnbOeiNV48wfI35oG9d3WX/Hy47TPVM7dxC4=;
+	b=RWoa5capmYgPkVczrpBKW9TwoeT2KpNeSvrdAwF1iFqOQHXOSu+yACix92XUw3Nhns0m
+	 kUmO+37Rnll2t2keTPomZbP5pq85sjWabuWoZJ4GSRSEMy43Pu+w8wuGt5Hdm3G4ZgukD
+	 Q72YpxDuTKdQNMqRzZu1pePEIu+l+vmvGQIM4nnKnbriyxRC6y4nPgX/EoEvPMC8In6dF
+	 c/e3X52ka7y9k9EDsnPXnUeWP9ksyTU4TE78JU+8gTZk4dgpziOp1dJlrfg2+kXj4Gvjr
+	 ZDU5LDDy/TG3HMPoNYrfYzyFkikRHHKGlx5TbSO561dKaJWl5eS9xtIcSMZAkfyZsTA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bdtTPFtm;
-	arc=none smtp.remote-ip=91.218.175.27
-Received: from mta0.migadu.com (out-27.mta0.migadu.com [91.218.175.27])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vcxQBIGT;
+	arc=none smtp.remote-ip=91.218.175.48
+Received: from mta0.migadu.com (out-48.mta0.migadu.com [91.218.175.48])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3E7DF606A33E
-	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3E7DF606A33E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 878D1606A330
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 20:48:20 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 878D1606A330
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=bdtTPFtm
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=vcxQBIGT
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=+gVCO9skWtYMC8Y5tChRIvZEelk+iMaAj3nXdgDCfX0=;
+DKIM-Signature: a=rsa-sha256; bh=UyfHMX3gPf6wrmvanoi2cr7axUd6+M+2yQBxEJvHYJ0=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794170892; v=1; x=1794775692;
- b=bdtTPFtmaQBoQc1uVTZP3uF4O1iJWkqOMSHqib07z0doZwSzLtHQD/fD8ikYAAmQjJt4w8io
- isuNHqUxyxsT8IVadOmZTNDidMTSC0+s9fbIlr5v6AulbgvVzNXQGbxHpLguIqLeGDE4SJRhIRG
- xrh/nT7UWSZ/3++8RJ/sba7s=
+ t=1794170898; v=1; x=1794775698;
+ b=vcxQBIGTD+JRdf/eMc+16fxaDHKm+w0w/DUbOjsrA4Lq/DcEm8CCcbFcE739JXeGb3/8m64v
+ Vb38AXeyPUswuiLgXNSwnBzfiHdCl4Prr5tptPKNGUD4AF7UpSsGiu2QFPArsFvxK6yldwzGNSB
+ qyy/JwpgP7MGDH8WsxxRmysI=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id fa92a12345c98661;
-	Sun, 08 Nov 2026 20:48:12 +0000
-X-Mizu-Trace-ID: fa92a12345c98661
+Received: by mta10.migadu.com with ESMTPS id 98e5f5536fe4272a;
+	Sun, 08 Nov 2026 20:48:18 +0000
+X-Mizu-Trace-ID: 98e5f5536fe4272a
 X-Migadu-Flow: FLOW_OUT
 From: John Garry <john.garry@linux.dev>
 To: james.bottomley@hansenpartnership.com,
@@ -59,11 +59,10 @@ Cc: hare@suse.com,
 	dm-devel@lists.linux.dev,
 	hch@lst.de,
 	michael.christie@oracle.com,
-	John Garry <john.garry@linux.dev>,
-	Hannes Reinecke <hare@suse.de>
-Subject: [PATCH v9 14/29] scsi-multipath: provide sysfs link from to scsi_device
-Date: Sun,  8 Nov 2026 20:47:18 +0000
-Message-ID: <20261108204733.557995-15-john.garry@linux.dev>
+	John Garry <john.garry@linux.dev>
+Subject: [PATCH v9 19/29] scsi-multipath: failover handling
+Date: Sun,  8 Nov 2026 20:47:23 +0000
+Message-ID: <20261108204733.557995-20-john.garry@linux.dev>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261108204733.557995-1-john.garry@linux.dev>
 References: <20261108204733.557995-1-john.garry@linux.dev>
@@ -78,129 +77,46 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Provide a link in sysfs from a scsi_mpath_device to member scsi_device's.
+Failover occurs when the scsi_cmnd has failed and it is discovered that the
+target scsi_device has transport down.
 
-An example is as follows:
-# ls -l /sys/class/scsi_mpath_device/scsi_mpath_device0/multipath/
-total 0
-lrwxrwxrwx    1 root     root             0 Feb 24 12:01 8:0:0:0 -> ../../../../platform/host8/session1/target8:0:0/8:0:0:0
-lrwxrwxrwx    1 root     root             0 Feb 24 12:01 9:0:0:0 -> ../../../../platform/host9/session2/target9:0:0/9:0:0:0
+For a scsi command which suffers failover, requeue the master bio of each
+bio attached to its request.
 
-Reviewed-by: Hannes Reinecke <hare@suse.de>
+A bio which for which failover occurs is handled in
+scsi_mpath_clone_end_io(). Failover is detected for blk_path_error()
+occuring, same as how dm-mpath detects this.
+
 Signed-off-by: John Garry <john.garry@linux.dev>
 ---
- drivers/scsi/scsi_multipath.c | 43 +++++++++++++++++++++++++++++++++++
- drivers/scsi/scsi_sysfs.c     |  5 ++++
- include/scsi/scsi_multipath.h |  8 +++++++
- 3 files changed, 56 insertions(+)
+ drivers/scsi/scsi_multipath.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
 diff --git a/drivers/scsi/scsi_multipath.c b/drivers/scsi/scsi_multipath.c
-index 625a72cb73c3..092975e0aca1 100644
+index 008bcafe73ad..4c965650c2bd 100644
 --- a/drivers/scsi/scsi_multipath.c
 +++ b/drivers/scsi/scsi_multipath.c
-@@ -116,11 +116,54 @@ static bool scsi_multipath_sysfs_group_visible(struct kobject *kobj)
- }
- DEFINE_SIMPLE_SYSFS_GROUP_VISIBLE(scsi_multipath_sysfs)
- 
-+static struct attribute dummy_attr = {
-+	.name = "dummy",
-+};
-+
-+static struct attribute *scsi_mpath_attrs[] = {
-+	&dummy_attr,
-+	NULL
-+};
-+
-+static const struct attribute_group scsi_mpath_attr_group = {
-+	.name           = "multipath",
-+	.attrs		= scsi_mpath_attrs,
-+	.is_visible     = SYSFS_GROUP_VISIBLE(scsi_multipath_sysfs),
-+};
-+
- static const struct attribute_group *scsi_mpath_device_groups[] = {
- 	&scsi_mpath_device_attrs_group,
-+	&scsi_mpath_attr_group,
- 	NULL
- };
- 
-+void scsi_mpath_add_sysfs_link(struct scsi_device *sdev)
-+{
-+	struct device *target = &sdev->sdev_gendev;
-+	struct scsi_mpath_head *scsi_mpath_head =
-+		sdev->scsi_mpath_dev->scsi_mpath_head;
-+	struct device *source = &scsi_mpath_head->dev;
-+	int error;
-+
-+	error = sysfs_add_link_to_group(&source->kobj, "multipath",
-+			&target->kobj, dev_name(target));
-+	if (error) {
-+		sdev_printk(KERN_INFO, sdev, "Failed to create mpath sysfs link, error=%d\n",
-+				    error);
-+	}
-+}
-+
-+void scsi_mpath_remove_sysfs_link(struct scsi_device *sdev)
-+{
-+	struct device *target = &sdev->sdev_gendev;
-+	struct scsi_mpath_head *scsi_mpath_head =
-+		sdev->scsi_mpath_dev->scsi_mpath_head;
-+	struct device *source = &scsi_mpath_head->dev;
-+
-+	sysfs_remove_link_from_group(&source->kobj, "multipath",
-+		dev_name(target));
-+}
-+
- static const struct class scsi_mpath_device_class = {
- 	.name = "scsi_mpath_device",
- 	.dev_groups = scsi_mpath_device_groups,
-diff --git a/drivers/scsi/scsi_sysfs.c b/drivers/scsi/scsi_sysfs.c
-index 5b5de5806385..b5d12b694396 100644
---- a/drivers/scsi/scsi_sysfs.c
-+++ b/drivers/scsi/scsi_sysfs.c
-@@ -1444,6 +1444,9 @@ int scsi_sysfs_add_sdev(struct scsi_device *sdev)
- 	transport_add_device(&sdev->sdev_gendev);
- 	sdev->is_visible = 1;
- 
-+	if (sdev->scsi_mpath_dev)
-+		scsi_mpath_add_sysfs_link(sdev);
-+
- 	if (IS_ENABLED(CONFIG_BLK_DEV_BSG)) {
- 		sdev->bsg_dev = scsi_bsg_register_queue(sdev);
- 		if (IS_ERR(sdev->bsg_dev)) {
-@@ -1496,6 +1499,8 @@ void __scsi_remove_device(struct scsi_device *sdev)
- 
- 		if (IS_ENABLED(CONFIG_BLK_DEV_BSG) && sdev->bsg_dev)
- 			bsg_unregister_queue(sdev->bsg_dev);
-+		if (sdev->scsi_mpath_dev)
-+			scsi_mpath_remove_sysfs_link(sdev);
- 		device_unregister(&sdev->sdev_dev);
- 		transport_remove_device(dev);
- 		device_del(dev);
-diff --git a/include/scsi/scsi_multipath.h b/include/scsi/scsi_multipath.h
-index 50d422798d83..d224a15ce9c2 100644
---- a/include/scsi/scsi_multipath.h
-+++ b/include/scsi/scsi_multipath.h
-@@ -49,6 +49,8 @@ void scsi_mpath_remove_device(struct scsi_mpath_device *scsi_mpath_dev);
- void scsi_mpath_get_head(struct scsi_mpath_head *scsi_mpath_head);
- int scsi_mpath_try_get_head(struct scsi_mpath_head *scsi_mpath_head);
- void scsi_mpath_put_head(struct scsi_mpath_head *scsi_mpath_head);
-+void scsi_mpath_add_sysfs_link(struct scsi_device *sdev);
-+void scsi_mpath_remove_sysfs_link(struct scsi_device *sdev);
- #else /* CONFIG_SCSI_MULTIPATH */
- 
- struct scsi_mpath_head {
-@@ -87,5 +89,11 @@ static inline
- void scsi_mpath_put_head(struct scsi_mpath_head *scsi_mpath_head)
+@@ -262,6 +262,20 @@ static void scsi_mpath_clone_end_io(struct bio *clone)
  {
- }
-+static inline void scsi_mpath_add_sysfs_link(struct scsi_device *sdev)
-+{
-+}
-+static inline void scsi_mpath_remove_sysfs_link(struct scsi_device *sdev)
-+{
-+}
- #endif /* CONFIG_SCSI_MULTIPATH */
- #endif /* _SCSI_SCSI_MULTIPATH_H */
+ 	struct bio *master_bio = clone->bi_private;
+ 
++	if (clone->bi_status && blk_path_error(clone->bi_status)) {
++		struct mpath_head *mpath_head =
++				master_bio->bi_bdev->bd_disk->private_data;
++		unsigned long flags;
++
++		spin_lock_irqsave(&mpath_head->requeue_lock, flags);
++		bio_list_add(&mpath_head->requeue_list, master_bio);
++		spin_unlock_irqrestore(&mpath_head->requeue_lock, flags);
++		bio_put(clone);
++
++		mpath_schedule_requeue_work(mpath_head);
++		return;
++	}
++
+ 	master_bio->bi_status = clone->bi_status;
+ 	bio_put(clone);
+ 	bio_endio(master_bio);
 -- 
 2.43.0
 
