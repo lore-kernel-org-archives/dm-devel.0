@@ -1,80 +1,52 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=159.226.251.25
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794084133;
-	b=QhvuhvshrTL+oJqEwDjvFYoy5N5D1us+K6SlqIwUc3B8DA1f5JKM3gkVWCEn/Xlt7rcD
-	 cLDdgmblvgFZNBbeMpdvu/hIJlElBxVz9kpxtZ7qlupzmASiBbG9bNU0wnCTpM/cVplSZ
-	 ql4YCAEKVbgxVqQe4HJdRbySqRCzdBcHrVNlL2gRWq+Gt+nCt17NFdn7eL+P8yRTAFqk9
-	 xaseRpi6wvcWzyDwwipxRvhwU0f8Cc0skFwaPStHXxeDCAyPR0xKIUu+uOyk485vsOO/I
-	 ZIwTc+Qn52LaeyxC/ITTsfnVuKyqQoYYazJemTvRK/hpHhPlUTMFOTxNkyV0VjbGqHw==
+	t=1794132110;
+	b=UmhvIqeZh0aX198l5NqqalnxK4XTcim+oHw/NP88tIuQbj9x0cxuKcJq0lc6Z5WqivIU
+	 hCseB/eUugRNnzC2126H7eaZBxUP5O2Ebq/Detn1e8JlUJOKeVqHPRrQusYgM346zVsNs
+	 DiNB4xHtTF1dfxx7mYDjpHt/1WX+0qdXQAM6r9f8nAH2lUkx866kc6yDQCuk74ERgtYFv
+	 16TEiYEMUQ7fJK5DUrLeElz/76bRl/H0KaHTF7jFI9ftRGtj8ZJwZxMNHQOdFGFnWmYm3
+	 WL6u589m3F5mzttxTnQbdone5IX49xBzMXkNdhLUPHU0pzFNAOD2mLd+p42Jz35hUEQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794084133;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=vt9E+5gU7NQ+Wi6z2HfmB+6KsnzMwitmxcnzRralzow=;
-	b=K8Up2qhvAWN6iqi+8zLohCs0N7EStequwm2WhLeqCvRHIH3JFYOYXGLLlnwZehQc1ZnR
-	 d/qAU2cOjltseNaiTE87mxguZdqoG1UMuM29rKYBFCoa70+MHTngX78+bCsGJdjqQtL4b
-	 lWyeQRPyXF8BbrxjQ9CSYefsS+1YoiBKC3WkVW4EvkuqEBFobSP8W3WI2rW/xsQ+3N78q
-	 JlELn9ECrvZqpMBw0RIgU9hU1u0SoFe8CKo2IJZQa9w3BgKkXHbehdlVwYrkgsoGb3HOA
-	 zneznpffKSwauq4VivCLz941Tj/CQD5Gz7QGSBEE5xSHxfM3SYB0/PAmsv9Es8Gl9lA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794132110;
+	h=DMARC-Filter:Received:From:To:Cc:Subject:Date:Message-ID:In-Reply-To:
+	 References:MIME-Version:Content-Type:Content-Transfer-Encoding:
+	 X-CM-TRANSID:X-Coremail-Antispam:X-Originating-IP:X-CM-SenderInfo;
+	bh=MOmLyDgIbQO7M8uzopRbwQ0bFLjFrWThanlQ5mPH0IA=;
+	b=jzaRXMQV21DnhiOcNGjWYvHDchJl7dIn+uHL8/5AxoV7iKxiyfSKraFe/TkSg10T6+N7
+	 310YKsZl0+0LLqfeN7cCVksSnmiDkZw/Skzfi8oEv1IvbsN0U8Qy2MDT6AkI7icPFC716
+	 Je8KsosIOuUEr1h+O6DK/EgdB8gtly3HPVztLcbN84qUybIpAEtbu87cGo12u3ZAtiimw
+	 K9BCxWFnkZ37Q3BJguIEUa6g3DTFgoO93PPfoCucT2TQZjn+qVrgBYjV3+C5VoWdh+emt
+	 vCwIBNPlgtewhzbmch3hBrrMA6n5j4Ysm0cS+ZIa0qX/WoOkrlV0IErXX8Nqd/RK6Ag==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QdgeqcGm;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=none header.from=iscas.ac.cn;
+	spf=pass smtp.mailfrom=iscas.ac.cn;
+	arc=none smtp.remote-ip=159.226.251.25
+Received: from cstnet.cn (smtp25.cstnet.cn [159.226.251.25])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A167606A32E;
-	Sat,  7 Nov 2026 20:42:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QdgeqcGm
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F10651F0089F;
-	Sat,  7 Nov 2026 20:42:11 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794084133;
-	bh=vt9E+5gU7NQ+Wi6z2HfmB+6KsnzMwitmxcnzRralzow=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=QdgeqcGm7aLjvMwhDXbnVrXyrjxTJoRQkqRIsDjcoduMOTEL8GCNOFQSiDbwYCCXA
-	 bdiOlqUv4nmV7s8TUKhpFnqxqC6DSKCS1JUo3diwp71Rk0vlgv1Nh8kEE+kDsic1tz
-	 A+Jb5V3672/95emWmClD9muYAGY/rWdyjIttmwrc+GYxS6MurZyD0azH7QdvjXiOYE
-	 GXdd+qElL0kyHa09o4qK64HoO7MAQfsV8IpmBzQ6+Res9Ewlsf0DCXIDsQqqLpTLm2
-	 O/+ktjWajqgRw+TV+MG2JVz5d1/6q6chhmKGj+4z5BEqZwVpkAS+1MglhWGlk1QczL
-	 LwZyEhkdgqX/A==
-Date: Sat, 7 Nov 2026 12:42:10 -0800
-From: Eric Biggers <ebiggers@kernel.org>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
-	dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Ignat Korchagin <ignat@linux.win>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>
-Subject: Re: [PATCH v6 0/3] KEYS: Replace assoc_array with rhashtable
-Message-ID: <20261107204210.GG6049@quark>
-References: <20261107195605.3929659-1-jarkko@kernel.org>
- <au-FkAtC4Gcw7Bkb@kernel.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8CB71606A31C
+	for <dm-devel@lists.linux.dev>; Sun,  8 Nov 2026 10:01:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8CB71606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=iscas.ac.cn
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=iscas.ac.cn
+Received: from [172.100.0.8] (unknown [36.110.52.2])
+	by APP-05 (Coremail) with SMTP id zQCowADngbeJSPBqEhaZAA--.37845S2;
+	Sun, 08 Nov 2026 18:01:45 +0800 (CST)
+From: Wentao Liang <vulab@iscas.ac.cn>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: cengku@gmail.com,
+ dm-devel@lists.linux.dev,
+ dongsheng.yang@linux.dev,
+ Jianyun Gao <jianyungao89@gmail.com>,
+ linux-kernel@vger.kernel.org,
+ vulab@iscas.ac.cn
+Subject: Re: [PATCH] dm-pcache: Fix use-after-free in kset_replay()
+Date: Sun, 08 Nov 2026 10:01:45 +0000
+Message-ID: <20261108100145.3182096-1-vulab@iscas.ac.cn>
+In-Reply-To: <ab890e71-8075-76f8-a91b-0beb78a0d3b7@redhat.com>
+References: <20260917094133.2145340-1-vulab@iscas.ac.cn>
+ <ab890e71-8075-76f8-a91b-0beb78a0d3b7@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,73 +57,60 @@ List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <au-FkAtC4Gcw7Bkb@kernel.org>
+Content-Transfer-Encoding: 7bit
+X-CM-TRANSID:zQCowADngbeJSPBqEhaZAA--.37845S2
+X-Coremail-Antispam: 1UD129KBjvJXoW7CF4UGr4rtrW3Zr13CryUWrg_yoW8GFy7pF
+	WrK3WYqrsrKrykAayIva1Iqa4xurZ3Ja98Wry7GrWkA3W5GFyxKrWfCw47ua17Ars3Xr42
+	qF45t3Z3WayqyaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDU0xBIdaVrnRJUUUvS1xkIjI8I6I8E6xAIw20EY4v20xvaj40_Wr0E3s1l1IIY67AE
+	w4v_Jr0_Jr4l8cAvFVAK0II2c7xJM28CjxkF64kEwVA0rcxSw2x7M28EF7xvwVC0I7IYx2
+	IY67AKxVWUCVW8JwA2z4x0Y4vE2Ix0cI8IcVCY1x0267AKxVW8JVWxJwA2z4x0Y4vEx4A2
+	jsIE14v26F4UJVW0owA2z4x0Y4vEx4A2jsIEc7CjxVAFwI0_GcCE3s1le2I262IYc4CY6c
+	8Ij28IcVAaY2xG8wAqx4xG64xvF2IEw4CE5I8CrVC2j2WlYx0E2Ix0cI8IcVAFwI0_JF0_
+	Jw1lYx0Ex4A2jsIE14v26F4UJVW0owAm72CE4IkC6x0Yz7v_Jr0_Gr1lF7xvr2IY64vIr4
+	1lF7I21c0EjII2zVCS5cI20VAGYxC7MxkF7I0En4kS14v26r126r1DMxAIw28IcxkI7VAK
+	I48JMxAIw28IcVCjz48v1sIEY20_Gr43Wr1UJr1l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2
+	IqxVAqx4xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v2
+	6r126r1DMIIYrxkI7VAKI48JMIIF0xvE2Ix0cI8IcVAFwI0_Jr0_JF4lIxAIcVC0I7IYx2
+	IY6xkF7I0E14v26r4j6F4UMIIF0xvE42xK8VAvwI8IcIk0rVWUJVWUCwCI42IY6I8E87Iv
+	67AKxVW8JVWxJwCI42IY6I8E87Iv6xkF7I0E14v26r4UJVWxJrUvcSsGvfC2KfnxnUUI43
+	ZEXa7VU1K9aJUUUUU==
+X-CM-SenderInfo: pyxotu46lvutnvoduhdfq/1tbiDAEFA2rv4qifOQAAsi
 
-On Sat, Nov 07, 2026 at 10:09:52PM +0200, Jarkko Sakkinen wrote:
-> On Sat, Nov 07, 2026 at 09:56:01PM +0200, Jarkko Sakkinen wrote:
-> > The keyrings subsystem is the sole user of assoc_array. It has over 1700
-> > lines of code, no test suite, and a long history of bugs, with LLMs now
-> > finding more.
-> > 
-> > This unfortunate outcome has evolved over time by large from the shortage
-> > of in-kernel callers, time bandwidth and 3rd party contributors.
-> > 
-> > What the keyrings subsystem needs is just a generic key-value store, which
-> > performs well with sparse key sets. Replace assoc_array with an
-> > rhashtable-backed keyring index and remove assoc_array from the kernel.
-> 
-> Sashiko: https://sashiko.dev/#/patchset/20261107195605.3929659-1-jarkko%40kernel.org
-> 
-> Not addressing this as only one patch changed and the change was
-> exactly:
-> 
-> diff --git a/security/keys/keyring.c b/security/keys/keyring.c
-> index 772fa0e35f9d..6761c6801edc 100644
-> --- a/security/keys/keyring.c
-> +++ b/security/keys/keyring.c
-> @@ -12,7 +12,6 @@
->  #include <linux/security.h>
->  #include <linux/seq_file.h>
->  #include <linux/err.h>
-> -#include <linux/delay.h>
->  #include <linux/jhash.h>
->  #include <linux/user_namespace.h>
->  #include <linux/nsproxy.h>
-> @@ -101,6 +100,7 @@ static const struct rhashtable_params keyring_link_params = {
->         .min_size               = 4,
->         .nelem_hint             = 3,
->         .automatic_shrinking    = true,
-> +       .insecure_elasticity    = true,
->  };
-> 
->  static struct keyring_index *keyring_index_locked(const struct key *keyring)
-> @@ -1225,12 +1225,8 @@ int __key_link_begin(struct key *keyring,
->                 if (ret < 0)
->                         goto error;
-> 
-> -               do {
-> -                       ret = rhashtable_insert_fast(&links->ht, &link->node,
-> -                                                    keyring_link_params);
-> -                       if (ret == -EBUSY)
-> -                               fsleep(100);
-> -               } while (ret == -EBUSY);
-> +               ret = rhashtable_insert_fast(&links->ht, &link->node,
-> +                                            keyring_link_params);
->                 if (ret < 0) {
->                         key_payload_reserve(keyring,
->                                             keyring->datalen - KEYQUOTA_LINK_BYTES);
-> 
-> So I don't think there are any real issue with the patch set, except I
-> will need to rebase the commits to the latest mainline.
+Hi Mikulas,
 
-It looks good to me now too, but it would be good to get a Sashiko run
-on the latest version.  Sashiko hasn't run since v3, as it failed to
-apply the series.  You should base the series on a commit in either
-mainline or linux-next, and pass the '--base' option to 'git
-format-patch' so it adds a 'base-commit' line.
+Sorry for the very late reply.
 
-(The only reason I've been able to apply it myself for review is that I
-went out of my way to find your keys-rhashtable branch in git.)
+Thank you for the pointer to c2e894eac398. I checked the latest tree
+(7.4-rc1), and the bug is already gone there. In kset_replay() the
+generation check now reads
 
-- Eric
+		if (key->seg_gen < key->cache_pos.cache_seg->gen) {
+			cache_key_put(key);
+			continue;
+		}
+
+so the stale key is dropped and never touched again, and __set_bit() and
+cache_seg_get() only run for valid keys. The fix has been there since
+v7.3-rc1, so no current tree is affected. I also see that the commit
+already carries a Cc: stable tag, so nothing is missing there either.
+
+There is nothing left to fix, so please disregard my patch and feel free
+to mark the patchwork entry as superseded. I should add that the approach
+in it was wrong as well: pinning the segment before the generation check
+takes a reference on the segment of a stale key, and since that key is
+freed and never inserted into the tree, the reference would never be
+dropped.
+
+The patch was generated against an older tree and I did not recheck the
+current one before sending it, which is what I got wrong here. For
+transparency about how it was produced: the candidate came from our
+static analysis tooling, and DeepSeek and GPT-6.1 Sol were used to audit
+it and help write the change. I reviewed it and I am responsible for it.
+
+I am going through the rest of the outstanding feedback by hand and
+answering it one thread at a time.
+
+Thanks,
+Wentao
+
