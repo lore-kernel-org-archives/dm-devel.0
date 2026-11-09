@@ -1,68 +1,66 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=111.22.67.135
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=113.46.200.226
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794191971;
-	b=WGAaoZhecd1t2Yx7bbpTdBp0C8TQN/FV8i/4qYmtwDLys+QklXSIlQdKY1f2lP85yvih
-	 RzMOPGXWAozb3b0oeeJKPUV8Z8LGpaB4q9g8n+I59p5f7PhtrMzbdgXV5sv54mX0MUApc
-	 Oog6ifoXq2H+uudR+1AVkM15MbkIfTpzbL0xAGT9+8TyAY2Dl+R1sIYpSxluYWJyEVC8m
-	 /kJ0R5A1u5wh9VrXLx8XhaCkaiM3FEh4mlE1S7Dc/271oMrdEoSrflsXszMtu2WqxlY1s
-	 86bSv5aKFj05qywCiFKErGqavnrTflHJ4MwQZp29s0b5RhDzf824hzI8XMEqBdVx74Q==
+	t=1794193517;
+	b=Qfn44xIrTmIqgjafZKvdpK+he2zuNZUb60dvB/4sd6iDiRn16LDVIz8WNSf4yDtHzBmh
+	 73wjii0rU12AL1UKWW5TpeaKxjHUmClCQA9ND+AJ5V08z2q9PrQayZxqaHTs5CxJzHYtE
+	 SKW3XY15205e0+zC8mGa0VGxxHRJebBDnfvfiA/h8kD0xB5tqE2uxyjpw8IKAaA9+n9sg
+	 VYqKv+iAWu7yACVAq/TiHVJ72veWbwcXzRNM4hzB6CQkWU+i5drojrHFFzeXrs+tYWqNG
+	 PWM/88uh19o+F8Q9/jchaxbyhrL864X67cfSp0xUWu+0Ov5DlDHpZ+NQl2Otlry2Ukw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794191971;
-	h=DMARC-Filter:DKIM-Signature:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:
-	 X-RM-TRANSID:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:X-RM-TRANSID:From:
-	 To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=4GpeMPp9esUWNHQVrf4y4sbUF5AJ0dox7FxpZYGLtcA=;
-	b=5JkywlvC6ixyU2C5lnTc+R5G+heTh0eMzjt4LzQeGi1qYbe0YgPncTLaVWNL1W27Pgrk
-	 bqsdn8/3EUsYbku3B4K2KxLkbq/8NN4HpZAOfRE1MArOAyBg5mlfnPPWAdVQXs+qYMudu
-	 mUEcZne/35YpLrAHJ+MddOjP9HTKgT6jFhuLuOHb5T4yfj3kGKGeoh9jGCuC0I1im2HI2
-	 0e4tLhTXVnkxtQEY4EXGO3AKVFSsxCaf1Q0CVz5DwENLquR1uFKItrIShqq33OGW9XHyY
-	 CMX6Hpw05Rus9V6RSUcd6asOJ3kuuiTzyBXnlmMuK4Nhe9O3Q8RU86Ilr8et4fVyFuQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794193517;
+	h=DMARC-Filter:dkim-signature:Received:Received:Received:From:To:CC:
+	 Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding:Content-Type:X-Originating-IP:
+	 X-ClientProxiedBy;
+	bh=jzgKfvc+gCMyeJegNnCCdCmwPfxrXP8BnCLwAgAaGdA=;
+	b=ln0QOjCT0EcuVmbplR+mRxrlQ8/HAoRlqObh5hLuiyByjK5EltSkoLgjd76CEpt+lDpZ
+	 M8veQfpO4YRI6i7FGaVvHouQGw6lgLWmodDJrjwnUM1TsSO49GQdpCQym3xlaiasNLHqd
+	 CJEzIJxl97iYJwLn0FZAnrhZXCuVOaq8T9ALYWrw8MvC+YcY7NJDo+yvGU5purBCXvbQh
+	 /r850PCHIp7sTIopYOrgNfZFI5t8m4jy3sPxKK6ZFIG7wHsQpZyUyasJQAo6/7+kEPiQ1
+	 1/41nSXpN35dK4XIKfJyk99skyb8az/L8MmYthd4NACcVYil3oNUNhpTIeBFRRXeBEQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=cmss.chinamobile.com;
-	spf=pass smtp.mailfrom=cmss.chinamobile.com;
-	dkim=pass header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=LaDROMfk;
-	arc=none smtp.remote-ip=111.22.67.135
-Received: from cmccmta2.chinamobile.com (cmccmta2.chinamobile.com [111.22.67.135])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id E6706606A320
-	for <dm-devel@lists.linux.dev>; Mon,  9 Nov 2026 02:39:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E6706606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cmss.chinamobile.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cmss.chinamobile.com
+	dmarc=pass header.from=huawei.com;
+	spf=pass smtp.mailfrom=huawei.com;
+	dkim=pass header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=Yiy20rE3;
+	arc=none smtp.remote-ip=113.46.200.226
+Received: from canpmsgout11.his.huawei.com (canpmsgout11.his.huawei.com [113.46.200.226])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48CCC606A320
+	for <dm-devel@lists.linux.dev>; Mon,  9 Nov 2026 03:05:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 48CCC606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=LaDROMfk
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=cmss.chinamobile.com; s=default; l=0;
-	h=from:subject:message-id:to:cc:mime-version;
-	bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
-	b=LaDROMfkLni22zaf2pme8CxZCcy2q29gPFJ3Iu8CC77PRXHnyx46yEIrfy+0GEMznqNR0ueM1AOMU
-	 2v2lZ3gZpOkT3I7bFeeeWQbBfaseSAjflMNP0Q54Z6Xr33VvhTF2J9Pu4abqgcto+h4RZeGIqyVx3b
-	 y8rQi/G7KAqhdpyQ=
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from spf.mail.chinamobile.com (unknown[10.188.0.87])
-	by rmmx-syy-dmz-app07-12007 (RichMail) with SMTP id 2ee76af13260bdb-c03f2;
-	Mon, 09 Nov 2026 10:39:28 +0800 (CST)
-X-RM-TRANSID:2ee76af13260bdb-c03f2
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from Z04181456177947 (unknown[10.55.1.71])
-	by rmsmtp-syy-appsvr08-12008 (RichMail) with SMTP id 2ee86af132011c9-7db93;
-	Mon, 09 Nov 2026 10:37:55 +0800 (CST)
-X-RM-TRANSID:2ee86af132011c9-7db93
-From: Zhao Feng <zhaofeng2@cmss.chinamobile.com>
-To: dm-devel@lists.linux.dev
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	linux-kernel@vger.kernel.org,
-	syzbot+4b232570d625662eaab4@syzkaller.appspotmail.com,
-	Zhao Feng <zhaofeng2@cmss.chinamobile.com>,
-	stable@vger.kernel.org
-Subject: [PATCH] dm crypt: fix use of uninitialized percpu_counter in ctr error path
-Date: Mon,  9 Nov 2026 10:37:53 +0800
-Message-ID: <20261109023753.1278-1-zhaofeng2@cmss.chinamobile.com>
-X-Mailer: git-send-email 2.55.0.windows.5
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.a=rsa-sha256 header.s=dkim header.b=Yiy20rE3
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=jzgKfvc+gCMyeJegNnCCdCmwPfxrXP8BnCLwAgAaGdA=;
+	b=Yiy20rE3tUxvNjQUXWrkWgEM6W3ZOutKcLH5hrKwXqvKR23Spyf1RzTqdQOf4gvzCNQR7edm+
+	B8gVqcwnVCC+u8GvcK7sX6dbCoxn2Eudx3PWzZw0f39jKptY1klaUKgNxQwH3iHmC0Kuget5fOO
+	lXiPLyf4hNwQHgQDgzejRXM=
+Received: from mail.maildlp.com (unknown [172.19.162.92])
+	by canpmsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4jNF5629JpzKm8j;
+	Mon,  9 Nov 2026 11:04:58 +0800 (CST)
+Received: from dggpemr200001.china.huawei.com (unknown [7.185.36.96])
+	by mail.maildlp.com (Postfix) with ESMTPS id E4EA940565;
+	Mon,  9 Nov 2026 11:05:06 +0800 (CST)
+Received: from huawei.com (10.50.85.155) by dggpemr200001.china.huawei.com
+ (7.185.36.96) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.2.2562.46; Mon, 9 Nov
+ 2026 11:05:06 +0800
+From: Ran Hongyun <ranhongyun1@huawei.com>
+To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>,
+	<bmarzins@redhat.com>, <song@kernel.org>, <yukuai@fygo.io>
+CC: <dm-devel@lists.linux.dev>, <linux-kernel@vger.kernel.org>,
+	<linux-raid@vger.kernel.org>, <ranhongyun1@huawei.com>,
+	<chengzhihao1@huawei.com>, <yangerkun@huawei.com>, <yi.zhang@huawei.com>
+Subject: [PATCH] md: validate raid_disks range before loading personality
+Date: Mon, 9 Nov 2026 10:56:21 +0800
+Message-ID: <20261109025621.2031722-1-ranhongyun1@huawei.com>
+X-Mailer: git-send-email 2.52.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -73,74 +71,85 @@ List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: kwepems100001.china.huawei.com (7.221.188.238) To
+ dggpemr200001.china.huawei.com (7.185.36.96)
 
-If percpu_counter_init() fails in crypt_ctr() (e.g. when the
-underlying percpu allocation fails under memory pressure or fault
-injection), the error path jumps to "bad", which calls
-crypt_dtr().  crypt_dtr() then evaluates
-WARN_ON(percpu_counter_sum(&cc->n_allocated_pages) != 0) and calls
-percpu_counter_destroy() on a counter that was never initialized,
-because __percpu_counter_init_many() returns -ENOMEM before
-calling raw_spin_lock_init() on fbc->lock.
+md_set_array_info() accepts raid_disks from user space without any
+range check. The value is stored directly into mddev->raid_disks and
+flows unchecked into md_run(), which only tests for zero. A negative
+or excessively large raid_disks then reaches the personality ->run()
+callback, where it scales several allocations:
 
-With lockdep enabled this triggers "INFO: trying to register
-non-static key" in __percpu_counter_sum(), as reported by syzbot.
-The console additionally shows "crypt: Unknown error (-ENOMEM)"
-because this failure path sets no ti->error.
+  raid0:  kvzalloc(array3_size(..., raid_disks)) in create_strip_zones
+  raid1:  kzalloc(array3_size(..., raid_disks, 2)) for mirrors and
+          mempool_create_kmalloc_pool(offsetof(r1bio, bios[raid_disks*2]))
+  raid5:  kzalloc_objs(disk_info, max_disks) and alloc_page() loop
+  raid10: kzalloc_objs(raid10_info, raid_disks + ...) for mirrors
 
-Move percpu_counter_init() to right after the allocation of cc,
-before ti->private is set and before any "goto bad" can happen.
-On failure, set ti->error and free cc directly, so that
-crypt_dtr() is only ever called with an initialized counter.
+cf5963d6781dd ("md/raid0: validate device count before allocating
+devlist") already fixes the raid0 warning. However raid1/5/10 still
+hit the MAX_PAGE_ORDER WARN, and simply switching their kzalloc_objs
+calls to kvzalloc_objs does not help because kvmalloc_node rejects
+sizes above INT_MAX. The proper fix is to validate raid_disks before
+any allocation takes place.
 
-Reported-by: syzbot+4b232570d625662eaab4@syzkaller.appspotmail.com
-Closes: https://syzbot.org/bug?extid=4b232570d625662eaab4
-Fixes: 5059353df86e ("dm crypt: limit the number of allocated pages")
-Cc: stable@vger.kernel.org
-Signed-off-by: Zhao Feng <zhaofeng2@cmss.chinamobile.com>
+Add a MAX_RAID_DEVICES (253) bounds check in md_run() before
+pers->run. This is the single choke point covering ioctl RUN_ARRAY,
+dm-raid ctr, and reshape paths. Move the existing dm-raid private
+definition to md.h so both subsystems share the same limit.
+
+Signed-off-by: Ran Hongyun <ranhongyun1@huawei.com>
 ---
-Not runtime-tested (the syzbot report has no reproducer; the
-failure requires percpu_counter_init() to fail).  The affected
-crypt_ctr() code is identical in current upstream master, so the
-patch applies there as-is.  The Fixes hash was verified against
-the upstream commit that introduced both the init call in
-crypt_ctr() and the teardown in crypt_dtr().
+ drivers/md/dm-raid.c | 1 -
+ drivers/md/md.c      | 7 +++++++
+ drivers/md/md.h      | 3 +++
+ 3 files changed, 10 insertions(+), 1 deletion(-)
 
- drivers/md/dm-crypt.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 1ff16b8264..3e69dcc366 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -3249,6 +3249,14 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		ti->error = "Cannot allocate encryption context";
- 		return -ENOMEM;
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index ac019a0f5a92..29c41a04773e 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -18,7 +18,6 @@
+ #include <linux/device-mapper.h>
+ 
+ #define DM_MSG_PREFIX "raid"
+-#define	MAX_RAID_DEVICES	253 /* md-raid kernel limit */
+ 
+ /*
+  * Minimum sectors of free reshape space per raid device
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 03e35386a802..7b202b483e98 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -6703,6 +6703,13 @@ int md_run(struct mddev *mddev)
+ 			return -EINVAL;
  	}
-+
-+	ret = percpu_counter_init(&cc->n_allocated_pages, 0, GFP_KERNEL);
-+	if (ret < 0) {
-+		ti->error = "Cannot initialize page counter";
-+		kfree_sensitive(cc);
-+		return ret;
+ 
++	if (mddev->raid_disks <= 0 ||
++	    mddev->raid_disks > MAX_RAID_DEVICES) {
++		pr_warn("md: %s: raid_disks %d out of range [1, %d]\n",
++			mdname(mddev), mddev->raid_disks, MAX_RAID_DEVICES);
++		return -EINVAL;
 +	}
 +
- 	cc->key_size = key_size;
- 	cc->sector_size = (1 << SECTOR_SHIFT);
- 	cc->sector_shift = 0;
-@@ -3260,10 +3268,6 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	crypt_calculate_pages_per_client();
- 	spin_unlock(&dm_crypt_clients_lock);
+ 	if (mddev->level != LEVEL_NONE)
+ 		request_module("md-level-%d", mddev->level);
+ 	else if (mddev->clevel[0])
+diff --git a/drivers/md/md.h b/drivers/md/md.h
+index 6440da292105..75d7f4b14d39 100644
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -22,6 +22,9 @@
+ #include <trace/events/block.h>
  
--	ret = percpu_counter_init(&cc->n_allocated_pages, 0, GFP_KERNEL);
--	if (ret < 0)
--		goto bad;
--
- 	/* Optional parameters need to be read before cipher constructor */
- 	if (argc > 5) {
- 		ret = crypt_ctr_optional(ti, argc - 5, &argv[5]);
+ #define MaxSector (~(sector_t)0)
++
++#define MAX_RAID_DEVICES	253 /* md-raid kernel limit */
++
+ /*
+  * Number of guaranteed raid bios in case of extreme VM load:
+  */
 -- 
-2.39.2
-
-
+2.52.0
 
