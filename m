@@ -1,56 +1,47 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794194510;
-	b=vlSbkzjzIRHjq/8L/roUrNjYsC2gFP2WoeP+TRp5mZFs+yxDo2KNYI6WfhvfMNamwL4J
-	 fr5mWrRNQ1QkffHHVDatsHdeETY75izInhsF0bnHC7z2JFxlBKZ+AptCQhas/l1hTOw66
-	 zLEdwuWDgYHfg3x9F6sJf6aF3jd9gadMCR1o9XAnBlSn2tUaObINRRswBycc4V7vU9lh1
-	 bmqACB3f7LlPKKjZ3RGv6TyqKV7xK2JgqDORBjTrLrQv59tHtg+xnS6Ic1SKZXbeUMEKs
-	 n+SIdgb/qKxnNOiGDuWkHan/pCHuqkL8Y+B5QEwxGdQ06W06955HUgkWs6/2yxL32WQ==
+	t=1794204488;
+	b=cv7y3bgLD/gZGHW/mKa0u78MFDVvoMqxciyoorl9HR3RexblX7pTje+XK2k/aG/tU/te
+	 TRouxOXulnwuHoS6XUr0OULUuysrSTr+iHeYB0dcdugKsvW5w1QpNmQS6hgf2ypS6JE2a
+	 9z80qUcZPmX0x7YxoGOGsh3waLe7VaASf73EI0tcHGUMHZkaRZSpklXqRk/K4P4OvsO7z
+	 dN6MyNHLoacRT6OWaRo3luVukv1TEj5hE34Z22mE98Pqxbp5+6WrOI1+H0RtahPfGaytf
+	 MADegHoBwK+pd3rmzO7iJiB/tRvQop04qKIygSZkzRHEnQ3RNIW23sx5xpbSiGAPkVA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794194510;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=MLubieIZakhvQCD9QssGY4reTRZXE0jARP2ANL06kB0=;
-	b=e1kXMxWGpnCqHdsqaJS3BkXBlpMn0cRpY72YvuyQ0+eHVpDkIB/if5haQ/vI0s2RQz7H
-	 2yTig/QULizz4MvebZoK81dNwOTslgu+7MLrw6qLUCRfuVyC6Le4uzKtstNUHWuVCxgij
-	 z9lHnJfvLnnQ7B9yiiW+b6DJgcGOnkbryvqGSlu25LQUWVBJ4RBAuJFX5nj5EmHV/FaRV
-	 FJby2m7ui0NHriC5JkPtzZ0phj6UU6GMk5F7AmY76lxNuV2qiJnCHQEFRjP6hrTPJx6J+
-	 7/008hw+Heg1UeHaki7xYtotA9y9Gq4uo3c6DF+fvGwSG0D5RJ2ayrQ5XNDMPn/b2qw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794204488;
+	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:To:Cc:References:From:Content-Language:Organization:
+	 In-Reply-To:Content-Type:Content-Transfer-Encoding;
+	bh=ZpjLU6b1rBwqQ5orG9e7Qyn7cJGoHGcmVy6blKVnMJM=;
+	b=l+hITRY7Lldi3GK3aPWYv/nPQ7Ox0uxm/RYCmzHjy7Gw4I0NaSr5NRE3Hf3zcrFdmge/
+	 mWh6mWLDVy31mprrTpCWNi8SMT3Dl2v7HpzQ/1V5C79MdUFuWYeUusqa70dICXD/dghkT
+	 nZj08/QZ/FWYajAXGJZ31yVjR1gCwotfAynRMA22GkVjwa3bmvhdAanfIW2PzBpM2spoY
+	 aIL9GUAcJq+q9MmmZ5rCij3ih7sSlWWzJnbSnELLQKMeAlUZA22mO5fZKU3UUypr1ycQR
+	 OsMt1vEJYxquv6UZYt0+EoILqaCc++zrOc/m8ElI0bJoJp/BTPBd6FfuXFHWy+cL3fA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=i45tSyvP;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aFc7c24i;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 09D22606A31C;
-	Mon,  9 Nov 2026 03:21:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C3A8606A31C;
+	Mon,  9 Nov 2026 06:08:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=i45tSyvP
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 150871F0089F;
-	Mon,  9 Nov 2026 03:21:49 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aFc7c24i
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CC63D1F0089F;
+	Mon,  9 Nov 2026 06:08:05 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794194509;
-	bh=MLubieIZakhvQCD9QssGY4reTRZXE0jARP2ANL06kB0=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=i45tSyvPL1BGVqQl0k89W39r8COhcc5jdq7K4bWkZgesrOvri5eDD932Fh1N1uLGC
-	 Sp1ChRtdwLe5kRZpJRYP9e0Fb7JgnhCkQJr17t1nzTa3sIbhRva0TeU9W6hpPdkiQM
-	 1bZSkI7O7CQ8zq5+2bXvasJpcbSIDM/PLDZKWP+NIBJ9JDAIx4G4XrQlimTfJbnpGm
-	 e6/pzxL/YyQLRVywueRGnFdTiO54uOJFxFqgcPLb2WvXPMktZZcx6KOio2+g5kN48H
-	 ntR2/ybkM084EPu9lOXmB16WsYAnrMuAkPz7ghqUuLbuR1FAbw6ZCnzwJvQ2xjhFdC
-	 1zwnmEbmCNi3w==
-Message-ID: <sashiko-outbox-204370@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] md: validate raid_disks range before loading
- personality
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Ran Hongyun" <ranhongyun1@huawei.com>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, bmarzins@redhat.com, song@kernel.org, yukuai@fygo.io
-Cc: dm-devel@lists.linux.dev, linux-raid@vger.kernel.org, chengzhihao1@huawei.com, yangerkun@huawei.com, yi.zhang@huawei.com
-In-Reply-To: <20261109025621.2031722-1-ranhongyun1@huawei.com>
-References: <20261109025621.2031722-1-ranhongyun1@huawei.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Mon, 09 Nov 2026 03:21:48 +0000
+	s=k20260515; t=1794204487;
+	bh=ZpjLU6b1rBwqQ5orG9e7Qyn7cJGoHGcmVy6blKVnMJM=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=aFc7c24ikxzvKOCn+qV55jPlrhdZbe/43PFxyNLpvjwBOv+3kqU7SbtsWsa3eu7Di
+	 FOh3T/KkC06EIL2Qt84s+Z+lDKoCuhG+opgBx9O+YHFylscf1B3LCtd8PFD40Dnp/x
+	 WFCETWy61arbSG/zk8uTdPyJizoxoeTv8LXns9EpmU9C8y91TTdXZ7p6OtymmIRTcS
+	 ztm/QMhzRS3z5umWscOpEXjLXMVOoe+nJE38xsvEbEqox8YpsEZ1PLOox/7W/mi+0b
+	 oU42CVd8PyE/yrME5KCx5AIDr/ID3DS/D8PfhHDDEFjp54zETG1fcnqZlR9mD2kTJg
+	 4dUquTEyfIUnA==
+Message-ID: <0197be1d-1257-4597-aea2-1a065fe0a1d5@kernel.org>
+Date: Mon, 9 Nov 2026 15:08:03 +0900
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,151 +50,99 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH] dm-crypt: defer async write submission to write thread
+To: Josef Schlehofer <pepe.schlehofer@gmail.com>,
+ Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+ Mikulas Patocka <mpatocka@redhat.com>,
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ stable@vger.kernel.org, Ignat Korchagin <ignat@linux.win>,
+ Milan Broz <gmazyland@gmail.com>
+References: <20261105072708.30722-1-pepe.schlehofer@gmail.com>
+From: Damien Le Moal <dlemoal@kernel.org>
+Content-Language: en-US
+Organization: Western Digital Research
+In-Reply-To: <20261105072708.30722-1-pepe.schlehofer@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-Thank you for your contribution! Sashiko AI review found 3 potential
-issues to consider:
-- [High] md: md_run() cap at MAX_RAID_DEVICES breaks valid arrays with >
-  253 disks
-- [Medium] md: unchecked delta_disks in md_run() allows OOM warn and
-  divide-by-zero
-- [Medium] md: missing raid_disks upper bound in update_raid_disks() on
-  online reshape
-It also noticed 1 related pre-existing issue this patch does not
-introduce:
-- [Medium] md/raid1: missing raid_disks upper bounds check in
-  raid1_reshape() [1]
---
+On 11/5/26 16:27, Josef Schlehofer wrote:
+> With no_write_workqueue, kcryptd_crypt_write_io_submit() submits the
+> bio directly, even when called from kcryptd_async_done(). An async
+> cipher may run this callback in softirq or with BH disabled, where
+> submit_bio_noacct() must not be called because it can sleep.
+> 
+> Submit inline only when async is false. Async completions are sent to
+> the write thread, as is already done for submit_from_crypt_cpus. Use
+> the async flag rather than in_interrupt(), since callback context
+> depends on the cipher driver. Sync ciphers still submit inline.
+> 
+> Tested with cryptd in QEMU (x86_64 and arm64) with
+> CONFIG_DEBUG_ATOMIC_SLEEP, and on a P2020 running 6.18.55 without it.
 
-commit fc41ec678e6b01e865c547317a0225da7de795ee
-Author: Ran Hongyun <ranhongyun1@huawei.com>
+Originally, this was added to avoid write reordering for zoned block devices.
+So did you test this change with that (scsi_debug or null-blk) ? You can also
+use an emulated NVMe ZNS device in QEMU.
 
-md: validate raid_disks range before loading personality
-
-This commit moves MAX_RAID_DEVICES (253) from dm-raid.c to md.h and rejects
-mddev->raid_disks values outside [1, MAX_RAID_DEVICES] in md_run() before
-invoking the personality run callback.
-
-> diff --git a/drivers/md/md.c b/drivers/md/md.c
-> index 03e35386a8028..7b202b483e98c 100644
-> --- a/drivers/md/md.c
-> +++ b/drivers/md/md.c
-> @@ -6703,6 +6703,13 @@ int md_run(struct mddev *mddev)
->  			return -EINVAL;
+> 
+> In QEMU:
+> 
+> - 4k writes logging "sleeping function called from invalid context":
+>   100/100 unpatched, 0/155 patched.
+> - nr_requests=4 on a loop device: 0/6 unpatched runs completed,
+>   4/4 patched runs completed.
+> 
+> On the P2020, a warning in blk_mq_run_hw_queue() appeared in the
+> 6th unpatched run and did not appear in 30 patched runs.
+> 
+> Fixes: 39d42fa96ba1 ("dm crypt: add flags to optionally bypass kcryptd workqueues")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+> ---
+> Based on dm-7.4 (dab527d83462).
+> 
+> To reproduce, with CONFIG_DEBUG_ATOMIC_SLEEP, DM_CRYPT, BLK_DEV_LOOP,
+> CRYPTO_CRYPTD, CRYPTO_XTS and CRYPTO_AES:
+> 
+>   modprobe -a cryptd dm_crypt loop
+>   truncate -s 256M /dev/shm/nowq.img
+>   L=$(losetup -f)
+>   losetup "$L" /dev/shm/nowq.img
+>   KEY=$(od -An -v -tx1 -N64 /dev/urandom | tr -d ' \n')
+>   dmsetup create nowq --table "0 $((256 * 2048)) crypt capi:cryptd(xts-aes-lib)-plain64 $KEY 0 $L 0 2 no_read_workqueue no_write_workqueue"
+>   D=/dev/dm-$(dmsetup info -c --noheadings -o minor nowq)
+>   dd if=/dev/urandom of="$D" bs=4k count=1 conv=fsync
+>   dmesg | grep 'sleeping function called'
+> 
+> For the nr_requests=4 case, run this instead of the dd. The writes did
+> not finish without this patch:
+> 
+>   echo 4 > /sys/block/${L##*/}/queue/nr_requests
+>   for i in 1 2 3 4; do dd if=/dev/urandom of="$D" bs=64k count=512 seek=$((i * 512)) conv=fsync & done; wait
+> 
+>  drivers/md/dm-crypt.c | 5 +++--
+>  1 file changed, 3 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+> index 8853e9af1c3d..c0552a300e62 100644
+> --- a/drivers/md/dm-crypt.c
+> +++ b/drivers/md/dm-crypt.c
+> @@ -1982,8 +1982,9 @@ static void kcryptd_crypt_write_io_submit(struct dm_crypt_io *io, int async)
+>  	/* crypt_convert should have filled the clone bio */
+>  	BUG_ON(io->ctx.iter_out.bi_size);
+>  
+> -	if ((likely(!async) && test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags)) ||
+> -	    test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags)) {
+> +	if (likely(!async) &&
+> +	    (test_bit(DM_CRYPT_NO_OFFLOAD, &cc->flags) ||
+> +	     test_bit(DM_CRYPT_NO_WRITE_WORKQUEUE, &cc->flags))) {
+>  		dm_submit_bio_remap(io->base_bio, clone);
+>  		return;
 >  	}
-> =20
-> +	if (mddev->raid_disks <=3D 0 ||
-> +	    mddev->raid_disks > MAX_RAID_DEVICES) {
-> +		pr_warn("md: %s: raid_disks %d out of range [1, %d]\n",
-> +			mdname(mddev), mddev->raid_disks, MAX_RAID_DEVICES);
-> +		return -EINVAL;
-> +	}
-> +
->  	if (mddev->level !=3D LEVEL_NONE)
->  		request_module("md-level-%d", mddev->level);
->  	else if (mddev->clevel[0])
 
-[Severity: High]
-Does capping mddev->raid_disks at MAX_RAID_DEVICES (253) in md_run() break
-assembling valid native MD arrays with more than 253 member devices?
 
-MAX_RAID_DEVICES was a dm-raid target limit, whereas native MD v1.x
-superblocks support up to 384 devices in a 1 KiB superblock and up to 1920
-devices in a 4 KiB superblock:
-
-drivers/md/md.c:super_1_validate() {
-	...
-	mddev->max_disks =3D  (4096-256)/2;
-	...
-}
-
-In addition, raid6_takeover() converts a 253-disk RAID5 array into a
-254-disk RAID6 array by incrementing mddev->raid_disks to 254, which
-md_run() will now refuse to assemble with -EINVAL.
-
-[Severity: Medium]
-When an array is started with an active reshape (mddev->reshape_position !=
-=3D
-MaxSector), can an unvalidated mddev->delta_disks bypass this check and
-still trigger the oversized allocations or a divide-by-zero?
-
-On an inactive array, writing a large value to sysfs raid_disks, setting
-reshape_position, and then writing a small valid value to raid_disks (or
-loading a superblock with a crafted delta_disks) leaves mddev->raid_disks
-within [1, MAX_RAID_DEVICES] while mddev->delta_disks is arbitrarily
-negative.  raid5 setup_conf() and raid10 setup_conf() size their disk
-allocations from mddev->raid_disks - mddev->delta_disks:
-
-drivers/md/raid10.c:setup_conf() {
-	...
-	conf->mirrors =3D kzalloc_objs(struct raid10_info,
-				     mddev->raid_disks + max(0, -mddev->delta_disks));
-	...
-}
-
-This still hits the MAX_PAGE_ORDER warning (and overflows a signed int if
-mddev->delta_disks =3D=3D INT_MIN).  Furthermore, if mddev->delta_disks equ=
-als
-mddev->raid_disks, conf->prev.raid_disks (mddev->raid_disks -
-mddev->delta_disks) becomes 0 and raid10_run() -> enough() -> _enough()
-divides by zero at (this + 1) % disks.
-
-Checking that mddev->raid_disks - mddev->delta_disks is also within the
-valid range when mddev->reshape_position !=3D MaxSector would close this ga=
-p.
-
-[Severity: Medium]
-Does online reshape via update_raid_disks() bypass md_run() and leave
-raid1, raid5, and raid10 exposed to the same unbounded allocations?
-
-When reshaping an already-running array via sysfs raid_disks or
-ioctl(SET_ARRAY_INFO), raid_disks_store() and update_array_info() call
-update_raid_disks() directly without going through md_run():
-
-drivers/md/md.c:update_raid_disks() {
-	...
-	if (raid_disks <=3D 0 ||
-	    (mddev->max_disks && raid_disks >=3D mddev->max_disks))
-		return -EINVAL;
-	...
-	mddev->delta_disks =3D raid_disks - mddev->raid_disks;
-	...
-	rv =3D mddev->pers->check_reshape(mddev);
-	...
-}
-
-When mddev->max_disks is 0 (such as on non-persistent or external-metadata
-arrays), any positive raid_disks up to INT_MAX is accepted and passed to
-pers->check_reshape(), hitting the MAX_PAGE_ORDER and INT_MAX allocation
-warnings in raid1_reshape(), raid10_check_reshape(), and raid5
-check_reshape().
-
-[Severity: Medium]
-This problem wasn't introduced by this patch, but raid1_reshape() [1]
-lacks an upper bounds check on raid_disks when reshaping a running array
-with mddev->max_disks =3D=3D 0:
-
-drivers/md/raid1.c:raid1_reshape() {
-	...
-	raid_disks =3D mddev->raid_disks + mddev->delta_disks;
-	...
-	new_r1bio_size =3D offsetof(struct r1bio, bios[raid_disks * 2]);
-	newpool =3D mempool_create_kmalloc_pool(NR_RAID_BIOS, new_r1bio_size);
-	if (!newpool) {
-		return -ENOMEM;
-	}
-	newmirrors =3D kzalloc(array3_size(sizeof(struct raid1_info),
-					 raid_disks, 2),
-			     GFP_KERNEL);
-	...
-}
-
-Because update_raid_disks() does not bound raid_disks when mddev->max_disks
-is 0, a large raid_disks value overflows raid_disks * 2 in signed 32-bit
-arithmetic or exceeds KMALLOC_MAX_SIZE in mempool_create_kmalloc_pool() and
-kzalloc(), triggering a slab warning in ___kmalloc_large_node().
-
-[1] https://sashiko.dev/#/bug/linux-9d642fe4-31fe-4998-ac3d-c07a30507ae7
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261109025621.2031=
-722-1-ranhongyun1@huawei.com?part=3D1
+-- 
+Damien Le Moal
+Western Digital Research
