@@ -1,81 +1,54 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.36
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794290801;
-	b=bvkR+uUGf6/kjKNJcuD2xtW+5MrZzEqwicSArPhBLijiMXem1FgAEr840wm0wiiSc53S
-	 B384iC949ke3PgIkB38eejMt1n/GVt3r2/OQou9+qEuWPdPGGAWk7Y0Y+Tz+8gqgUv0yr
-	 pH7yB5LN8cpIpsHMYS7KmkXdeZK21jFk1iR1w1wRDsABdufINkg/UP4DYnUvljaJe+6nR
-	 qVFFc3/pSWXdCm7cPTPBLnyI2FuzFwSCp9fI9XQ6gv3R+hm0LmZHXQfp6nJ54sdJewAWQ
-	 qBTZ9oQGYrOpdZfyrBbrLlKUmmgdfGW2lupuLrDhwz+xlWmWscALb8K1TWFcROBu6pA==
+	t=1794301548;
+	b=y1RI39+MjbqIc9dKH0LNyKlqwxzitRB4XDRdLHZtyju4Sn4SWv1heOPqzkcRBujEw0FN
+	 h70qMlwF2PWCtfX0YpYZApxJ+tkYdpXLtwJJza0BXOXNIZAZpC+D+7tWP1cH/zHAhL58h
+	 v2E3mnD86HvambJqvy6VICulNSWnL/r33Vl8zt8bM7Fz5aEoTESqIah/YzZs51S5leRdx
+	 hF8EMBfdWSPnTrYOXMoSiG4oUnpkcdIYV+tx5uEywYVBPyyTr4DQEelTwWOp+bZK9r6qG
+	 Xoj1b5eqR7waexpuR5mBz9GxWXWLL77doJRamHLuhfMs1dn7Pa6YbgC651MGtaRcLgg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794290801;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=Hnh10F1zQfs5wctp+i2aDmqIYavrqW0fRXfCXxRBWTE=;
-	b=Y+IrpMwTBYWDBW7NLei4ErsrHYLdkaPn1wTv5MvWYoNTpjOxJCeF8JCknAZDgkKU8Dqj
-	 Vu+amg0YiKqlxshfaPjOHb5yMlsrc7H/WMJ08E8KzjW/+5L84AQ7/7TflOFIjD/oYIRlW
-	 YFaSgHJX4WjZrTlsyHygfRJdjTEpP/157ss2ClwKTzxgxL969LL88ueNmleCV0xRfqfX6
-	 hKJDRjWHdnMwLTDqRjCsamNAzcZ1TXz14TjFGNkioiDGRRbhpOaTQ46yQBMLG3ZHgiJ4C
-	 DqWWj8xt9WGuXZVnJY6r3Xise0Au1aGhYHoPCaModqa9pYdqa27BcYWMHOc8zm0TQ7A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794301548;
+	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
+	 X-Mizu-Trace-ID:X-Migadu-Flow:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:To:Cc:References:Content-Language:From:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=OK9denJsYmTCyLolpT52rwyfXM56TL7yf+QKigAqDXY=;
+	b=Rwho+/0urcay94/FDnc55i8Ov6VqsBm0Kude2tUDC5z9r3DQOpzHBy3WwO9mXyryqokd
+	 X9vdASSkkBHVT7QPd8OSuI++/NF68Bdl47d2dZ5dj+6QV6OUJX+m/YdeZnzauYo0pVB0x
+	 jZteP8VgWAQx/wc/AY/7cGtzqiychcPFNeeum/oRNL97cE/h/bE5/SjMC2m/9bmi9HyUd
+	 ZE9RAl9Ey1MFkozyB754GQ7j1DJNn8AHptmkgTN/4p9m7nx23ZU7CmKLAzlvG/gZdou+L
+	 uWaBnTj4LchTR1mdS9m92SWH5QBXucF7c7y+zixXvfdRLNfgOzlQ3cCUq9VLdzkvSKA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eb8TtXll;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=linux.dev;
+	spf=pass smtp.mailfrom=linux.dev;
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=rTp6QS1p;
+	arc=none smtp.remote-ip=95.215.58.36
+Received: from mta1.migadu.com (out-36.mta1.migadu.com [95.215.58.36])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id DC7CA606A321;
-	Tue, 10 Nov 2026 06:06:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57651606A31C
+	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 09:05:47 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 57651606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eb8TtXll
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9088E1F0089F;
-	Tue, 10 Nov 2026 06:06:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794290800;
-	bh=Hnh10F1zQfs5wctp+i2aDmqIYavrqW0fRXfCXxRBWTE=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=eb8TtXllKp/I2wuhSS3q+9ykKbgSIsPs7gk7VfGNWmGNU+WjweUEnFKh9TgZTVkGq
-	 sMrc6PQ+88V8fzudWMldoKc2AVHklkzkYa0+40xfi3AW18Q/K4K9h/OocoZpCsVTc7
-	 P3U7Lk6TDzGXSUBWVX72i99ctq9fxpCEAf7EPOcoxKbQ5HoOJlAOSS9DWUBbMFrSGs
-	 wq0Ih3E/DaXojtDOLNMTToD5a4szza7K5jiOH90rJg25i7q+WgS1YpUPqvG8ck732L
-	 facfIldhFjw/2ZFAetpxsSvQgpdMsJ0r4OYiQPZlv8X139dzSSBMZ5/L3G1OVKmP/B
-	 +37+kwO7JItFQ==
-Date: Tue, 10 Nov 2026 08:06:36 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: David Howells <dhowells@redhat.com>
-Cc: bpf@vger.kernel.org, dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Ignat Korchagin <ignat@linux.win>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v9 2/3] KEYS: Replace assoc_array with rhashtable
-Message-ID: <avK0bC5VmO7LXlfS@kernel.org>
-References: <20261110053323.2936729-1-jarkko@kernel.org>
- <20261110053323.2936729-3-jarkko@kernel.org>
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=rTp6QS1p
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=HDOxu6zXX3pmMziswx/K9hIQGw+W8txU+GPPJxltLSk=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1794301545; v=1; x=1794906345;
+ b=rTp6QS1prJKB5Qj5y/Mp4lDGTaRPWcKvcniGGrcSc0SSgUolCKSmVtFl9ibXjqw9fQuzFtye
+ eoL5CKE8x9D/2Svur2RS5rg6p05LcxsB3Ccwda1PLI+m5iBHOwFSjCukCrZj55ydRC/GaCtAhZV
+ BAthYGUuEVW4khx7Iay8KJRI=
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: by mta10.migadu.com with ESMTPS id 711b39cf1d6a3c7d;
+	Tue, 10 Nov 2026 09:05:45 +0000
+X-Mizu-Trace-ID: 711b39cf1d6a3c7d
+X-Migadu-Flow: FLOW_OUT
+Message-ID: <3332329d-b922-45a4-8333-e8353e983885@linux.dev>
+Date: Tue, 10 Nov 2026 09:05:43 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,117 +58,161 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261110053323.2936729-3-jarkko@kernel.org>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v9 00/29] Native SCSI Multipath support
+To: Laurence Oberman <loberman@redhat.com>,
+ james.bottomley@hansenpartnership.com, mkp@kernel.org
+Cc: hare@suse.com, linux-nvme@lists.infradead.org,
+ linux-scsi@vger.kernel.org, snitzer@kernel.org, jmeneghi@redhat.com,
+ bmarzins@redhat.com, dm-devel@lists.linux.dev, hch@lst.de,
+ michael.christie@oracle.com
+References: <20261108204733.557995-1-john.garry@linux.dev>
+ <9b90edc29d5b3be49f5bd0e0ecec5f1701e089bf.camel@redhat.com>
+Content-Language: en-US
+From: John Garry <john.garry@linux.dev>
+In-Reply-To: <9b90edc29d5b3be49f5bd0e0ecec5f1701e089bf.camel@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 10, 2026 at 07:33:22AM +0200, Jarkko Sakkinen wrote:
->  /*
->   * Preallocate memory so that a key can be linked into to a keyring.
->   */
->  int __key_link_begin(struct key *keyring,
->  		     const struct keyring_index_key *index_key,
-> -		     struct assoc_array_edit **_edit)
-> +		     struct keyring_edit *edit)
->  {
-> -	struct assoc_array_edit *edit;
-> +	struct keyring_link *link = NULL;
-> +	struct keyring_link *replace;
-> +	struct keyring_index *links;
->  	int ret;
->  
->  	kenter("%d,%s,%s,",
->  	       keyring->serial, index_key->type->name, index_key->description);
->  
-> -	BUG_ON(index_key->desc_len == 0);
-> -	BUG_ON(*_edit != NULL);
-> +	if (WARN_ON(index_key->desc_len == 0) || WARN_ON(edit->new)) {
-> +		ret = -EINVAL;
-> +		goto out;
-> +	}
->  
-> -	*_edit = NULL;
-> +	edit->new = NULL;
-> +	edit->old = NULL;
->  
-> -	ret = -EKEYREVOKED;
-> -	if (test_bit(KEY_FLAG_REVOKED, &keyring->flags))
-> -		goto error;
-> +	if (test_bit(KEY_FLAG_REVOKED, &keyring->flags)) {
-> +		ret = -EKEYREVOKED;
-> +		goto out;
-> +	}
->  
-> -	/* Create an edit script that will insert/replace the key in the
-> -	 * keyring tree.
-> -	 */
-> -	edit = assoc_array_insert(&keyring->keys,
-> -				  &keyring_assoc_array_ops,
-> -				  index_key,
-> -				  NULL);
-> -	if (IS_ERR(edit)) {
-> -		ret = PTR_ERR(edit);
-> -		goto error;
-> +	links = keyring_get_index(keyring);
-> +	if (IS_ERR(links)) {
-> +		ret = PTR_ERR(links);
-> +		goto out;
->  	}
->  
-> -	/* If we're not replacing a link in-place then we're going to need some
-> +	link = kzalloc_obj(struct keyring_link);
-> +	if (!link) {
-> +		ret = -ENOMEM;
-> +		goto out;
-> +	}
-> +	link->hash = index_key->hash;
-> +
-> +	replace = keyring_find_link(links, index_key);
-> +
-> +	/*
-> +	 * If we're not replacing a link in-place then we're going to need some
->  	 * extra quota.
->  	 */
-> -	if (!edit->dead_leaf) {
-> +	if (!replace) {
->  		ret = key_payload_reserve(keyring,
->  					  keyring->datalen + KEYQUOTA_LINK_BYTES);
->  		if (ret < 0)
-> -			goto error_cancel;
-> +			goto out;
-> +
-> +		ret = rhashtable_insert_fast(&links->ht, &link->node,
-> +					     keyring_link_params);
-> +		if (ret < 0) {
-> +			key_payload_reserve(keyring,
-> +					    keyring->datalen - KEYQUOTA_LINK_BYTES);
-> +			goto out;
-> +		}
->  	}
->  
-> -	*_edit = edit;
-> -	kleave(" = 0");
-> -	return 0;
-> +	edit->new = link;
-> +	edit->old = replace;
-> +	ret = 0;
->  
-> -error_cancel:
-> -	assoc_array_cancel_edit(edit);
-> -error:
-> +out:
-> +	if (ret && link)
-> +		kfree(link);
->  	kleave(" = %d", ret);
->  	return ret;
->  }
+On 11/9/26 20:19, Laurence Oberman wrote:
+> I have been testing v9 (your scsi-multipath-v7.4-v9 branch, on
+> 7.4-rc1) on real hardware 
 
-No additional Sashiko complains.
+Good to know.
 
-Despite a few unfortunate extra rounds I'm happy how this shaped in the
-end. It has a sane flow now I think.
+> and found two problems with ALUA arrays,
+> one in scsi_dh_alua and one in the series itself.
+> 
+> Setup:
+> - HP P2000 G3 FC array, implicit ALUA, two port groups (one per
+>    controller)
+> - 2 FC HBAs, 2 target ports each, 30 LUNs with 4 paths per LUN
+> - scsi_mod.multipath=on, dm-multipath not in use
+> - Under dm-multipath, the same LUNs show port group 1 at prio 50
+>    (active/optimized) and port group 0 at prio 10
+>    (active/non-optimized)
+> 
+> 1. sdev->access_state is wrong after boot (scsi_dh_alua, not this
+>     series)
+> 
+> After boot, every path read active/optimized in
+> /sys/class/scsi_device/H:C:T:L/device/access_state, while sg_rtpg
+> reports port group 0 as active/non-optimized. No
+> "alua: port group XX state ..." message was logged at all.
 
-And it definitely made sense to drop cleanup.h shenanigans from
-__key_link_begin().
+In this series, ALUA state really has been ignored. It was felt that 
+driving ALUA state and sdev->access_state by device handler ALUA driver 
+should should not be relied on for Native SCSI multipath. There had been 
+considerable discussion on this on list. I already have the work done 
+for ALUA support from some time ago and can be posted once this series 
+is accepted.
 
-Br, Jarkko
+> 
+> Since 50759b881e1d ("scsi: device_handler: alua: Call
+> scsi_device_put() from non-atomic context"), alua_rtpg_queue() only
+> queues an RTPG if sdev->handler_data is set, but alua_bus_attach()
+> sets handler_data after alua_initialize() has tried to queue the
+> initial RTPG. That RTPG is dropped, and access_state stays at its
+> zeroed default (active/optimized) until something calls
+> scsi_dh_activate(). dm-multipath hides this through pg_init; native
+> multipath never calls activate, so the series sees every path as
+> optimized.
+> 
+> I have sent a separate fix for this to linux-scsi:
+> https://lore.kernel.org/linux-scsi/20261109201120.1067815-1- 
+> loberman@redhat.com/
+> It is independent of your series, but without it, native multipath
+> on ALUA arrays has no correct path state.
+
+Ack
+
+> 
+> 2. ANO paths are ranked the same as AO paths
+> 
+> With the ALUA state corrected (by writing "activate" to dh_state, or
+> with the fix above), I/O still went to active/non-optimized paths.
+> scsi_multipath_sdev_init() sets mpath_device->access_state to
+> MPATH_STATE_OPTIMIZED and nothing updates it, while
+> __mpath_find_path(), mpath_round_robin_path() and
+> mpath_queue_depth_path() rank paths by that field. Only
+> scsi_mpath_is_optimized()/is_disabled() read sdev->access_state.
+> 
+> With numa, the first path in dev_list wins for every node, and
+> dev_list order follows sd probe completion, so for about a third of
+> the LUNs the current path was an ANO path. Example, LUN sdn, reads
+> completed per path for a 2000 x 1M O_DIRECT dd (:0/:3 AO, :1/:2 ANO
+> at the time):
+> 
+>    sdn:0 0sdn:1 2000sdn:2 0sdn:3 0
+> 
+> Every read went through the non-owning controller. From the code, for
+> these LUNs the numa recheck of is_optimized() fails on every I/O and
+> __mpath_find_path() picks the same ANO path again.
+> 
+> With the change below (a template callback so the selectors use the
+> live state), plus the scsi_dh_alua fix, all 30 LUNs pick an AO
+> current path at boot, and on LUN sdl (:0/:2 AO, :1/:3 ANO):
+> 
+>    numa         2000     0     0     0
+>    round-robin  1000     0  1000     0
+>    queue-depth 18039     0 13961     0   (8 parallel dd, 64k)
+> 
+> No I/O reached the ANO paths under any policy. This is a test patch to
+> show the problem, not a polished change - feel free to fold it in or
+> do it differently.
+
+I'll check it. Sounds like a real problem.
+
+As you may know, this code is really a refactoring of the NVMe multipath 
+code. The ambition was to have NVMe use libmultipath eventually, so it 
+would be good for any change to work for both NVMe and SCSI.
+
+> 
+> 3. Smaller points
+> 
+> - numa with equal NUMA distance uses one path per LUN, so with two AO
+>    paths through two HBAs, half the optimized bandwidth is idle (sdl:2
+>    above under numa). That matches NVMe, but users coming from
+>    dm-multipath service-time will notice. Would round-robin or
+>    queue-depth be a better default for SCSI?
+
+Maybe, but round-robin may not be always ideal considering only a bio 
+mode of operation is supported and no merging like dm-mpath RQ mode.
+
+> 
+> - There are no Documentation/ABI entries for the new sysfs attributes
+>    (scsi_mpath_device vpd_id/iopolicy/multipath, delayed_removal_secs,
+>    mpath_dev, mpath_numa_nodes, mpath_queue_depth), and the
+>    scsi_mod.multipath and multipath_iopolicy parameters are not in
+>    kernel-parameters.txt. I have a draft ABI file if useful.
+
+Cool, I would suggest to post if and when this is merged. I would rather 
+not post another version of this series. It is just "experimental".
+
+> 
+> - There is no userspace tool yet to show heads, paths and ALUA state
+>    (the equivalent of multipath -ll or nvme list-subsys). I used a
+>    small sysfs script for this testing. Ben, is native SCSI multipath
+>    support in multipath-tools planned?
+
+Well, the whole point is that we don't need userspace tools. However, I 
+appreciate that there is no general SCSI tooling which could help here. 
+I know that Himanshu M did work on a SCSI version of nvme-cli tool 
+previously. Martin may know the status of that.
+
+> 
+> - CONFIG_SCSI_MULTIPATH/CONFIG_LIBMULTIPATH are only enabled in your
+>    branch's x86_64_defconfig, so building from a distro config leaves
+>    them off, and scsi_mod.multipath= is silently ignored. Maybe worth a
+>    note in the cover letter.
+
+I thought that the kernel warns of unrecognised params (which would 
+happen for a relevant module disabled).
+
+> 
+> I have not tested failover or path loss yet; I will follow up with
+> that and a Tested-by once done.
+
+ok.
+
+Thanks
