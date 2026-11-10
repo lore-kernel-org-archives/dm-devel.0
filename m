@@ -1,54 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.36
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=222.66.158.135
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794301548;
-	b=y1RI39+MjbqIc9dKH0LNyKlqwxzitRB4XDRdLHZtyju4Sn4SWv1heOPqzkcRBujEw0FN
-	 h70qMlwF2PWCtfX0YpYZApxJ+tkYdpXLtwJJza0BXOXNIZAZpC+D+7tWP1cH/zHAhL58h
-	 v2E3mnD86HvambJqvy6VICulNSWnL/r33Vl8zt8bM7Fz5aEoTESqIah/YzZs51S5leRdx
-	 hF8EMBfdWSPnTrYOXMoSiG4oUnpkcdIYV+tx5uEywYVBPyyTr4DQEelTwWOp+bZK9r6qG
-	 Xoj1b5eqR7waexpuR5mBz9GxWXWLL77doJRamHLuhfMs1dn7Pa6YbgC651MGtaRcLgg==
+	t=1794316028;
+	b=rsUgWCFFv3tCBX1EiU4E00HVtgXCXigqqI3+66YTrbAXai3dA2A/LkPfXw4AnQ1PNpLD
+	 bQYDFFbcomtLCZckcOVKOT0YIHG98S9B585x7HceA/rxaOuxS5/xBEy3m8W+rB9Na6bFG
+	 fSJ7s4wOEg9jbpfgmVAXQIKYlXHjFAqFWmprQpZeRhH+Oege55LvebIP9DE1pmKM6Jr6y
+	 KnYvVWtFzIpR2cKGd0s5Co+aw5ss4ps3Rlz5kIIg8sGtcTO1NbtuU+vEP9PFRPxFlCFf8
+	 uQB/fuXl2TV9ikCQqNGeNL5PkpEUqazIhzlkvfTkOnCg4HSdiwdml6Kq5EzGBcXUSBA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794301548;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:Message-ID:Date:MIME-Version:User-Agent:
-	 Subject:To:Cc:References:Content-Language:From:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=OK9denJsYmTCyLolpT52rwyfXM56TL7yf+QKigAqDXY=;
-	b=Rwho+/0urcay94/FDnc55i8Ov6VqsBm0Kude2tUDC5z9r3DQOpzHBy3WwO9mXyryqokd
-	 X9vdASSkkBHVT7QPd8OSuI++/NF68Bdl47d2dZ5dj+6QV6OUJX+m/YdeZnzauYo0pVB0x
-	 jZteP8VgWAQx/wc/AY/7cGtzqiychcPFNeeum/oRNL97cE/h/bE5/SjMC2m/9bmi9HyUd
-	 ZE9RAl9Ey1MFkozyB754GQ7j1DJNn8AHptmkgTN/4p9m7nx23ZU7CmKLAzlvG/gZdou+L
-	 uWaBnTj4LchTR1mdS9m92SWH5QBXucF7c7y+zixXvfdRLNfgOzlQ3cCUq9VLdzkvSKA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794316028;
+	h=DMARC-Filter:Received:Received:Received:Received:From:To:CC:Subject:
+	 Thread-Topic:Thread-Index:Date:Message-ID:Accept-Language:
+	 Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
+	 x-ms-exchange-transport-fromentityheader:x-originating-ip:
+	 Content-Type:Content-Transfer-Encoding:MIME-Version:X-MAIL:
+	 DKIM-Signature;
+	bh=gSag9KxXFiqNJKXpNATdvpYTjNisD9nG9dX0BA8GOFA=;
+	b=fo4bsCJS6xzBa7pZjYf1W75VipC7MYKt5jYgaKLM6iscDH6oEvcYWI8e9QisScKaejPr
+	 agHTfIa2yul6iJycBGUU5nbXF/svIm5/d3DfYrCaeYIvFephON+CZa6YcezmiSZutz+1M
+	 jBhlkJAez8QXsK23mG0MQSgFlAkfq6r4qXgrRR72mWPPvBAnGnN1SxcQQ7MZ4YRdeI6C2
+	 yP6qcFarHDG4GXNBTcCxazSdwT5FfL4X//+xt3SqxEhtMlEmUOhra5q+yxPPCT6lClk4o
+	 +XwMzs1gfzR7X6YeNo3P1ww6QwKwxi90HwZFXPO2TaFP6tmjAS/oc5BIHtJt+A44UxQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=rTp6QS1p;
-	arc=none smtp.remote-ip=95.215.58.36
-Received: from mta1.migadu.com (out-36.mta1.migadu.com [95.215.58.36])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=unisoc.com;
+	spf=pass smtp.mailfrom=unisoc.com;
+	dkim=pass header.d=unisoc.com header.i=@unisoc.com header.a=rsa-sha256 header.s=default header.b=qCH8ox4T;
+	arc=none smtp.remote-ip=222.66.158.135
+Received: from SHSQR01.spreadtrum.com (mx1.unisoc.com [222.66.158.135])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57651606A31C
-	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 09:05:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 57651606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91062606A747
+	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 13:07:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 91062606A747
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=unisoc.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=unisoc.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=rTp6QS1p
-X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=HDOxu6zXX3pmMziswx/K9hIQGw+W8txU+GPPJxltLSk=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794301545; v=1; x=1794906345;
- b=rTp6QS1prJKB5Qj5y/Mp4lDGTaRPWcKvcniGGrcSc0SSgUolCKSmVtFl9ibXjqw9fQuzFtye
- eoL5CKE8x9D/2Svur2RS5rg6p05LcxsB3Ccwda1PLI+m5iBHOwFSjCukCrZj55ydRC/GaCtAhZV
- BAthYGUuEVW4khx7Iay8KJRI=
-X-Envelope-To: dm-devel@lists.linux.dev
-Received: by mta10.migadu.com with ESMTPS id 711b39cf1d6a3c7d;
-	Tue, 10 Nov 2026 09:05:45 +0000
-X-Mizu-Trace-ID: 711b39cf1d6a3c7d
-X-Migadu-Flow: FLOW_OUT
-Message-ID: <3332329d-b922-45a4-8333-e8353e983885@linux.dev>
-Date: Tue, 10 Nov 2026 09:05:43 +0000
+	dkim=pass (2048-bit key) header.d=unisoc.com header.i=@unisoc.com header.a=rsa-sha256 header.s=default header.b=qCH8ox4T
+Received: from dlp.unisoc.com ([10.29.3.83])
+	by SHSQR01.spreadtrum.com with ESMTPS id 6AAD6Cc3024778
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NO);
+	Tue, 10 Nov 2026 21:06:12 +0800 (+08)
+	(envelope-from weijiang.zhou@unisoc.com)
+Received: from SHDLP.spreadtrum.com (shmbx06.spreadtrum.com [10.0.1.11])
+	by dlp.unisoc.com (SkyGuard) with ESMTPS id 4jP6Mw5Jr9z1VVX;
+	Tue, 10 Nov 2026 21:05:48 +0800 (CST)
+Received: from zeshmbx08.spreadtrum.com (10.29.3.106) by
+ shmbx06.spreadtrum.com (10.0.1.11) with Microsoft SMTP Server (TLS) id
+ 15.0.1497.48; Tue, 10 Nov 2026 21:06:13 +0800
+Received: from zeshmbx08.spreadtrum.com ([fe80::e01e:2441:3a50:dadb]) by
+ zeshmbx08.spreadtrum.com ([fe80::e01e:2441:3a50:dadb%17]) with mapi id
+ 15.00.1497.048; Tue, 10 Nov 2026 21:06:13 +0800
+From: =?gb2312?B?1tzOsL2tIChXZWlqaWFuZyBaaG91KQ==?= <weijiang.zhou@unisoc.com>
+To: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
+CC: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>,
+        Benjamin Marzinski
+	<bmarzins@redhat.com>,
+        Sami Tolvanen <samitolvanen@google.com>,
+        =?gb2312?B?vfC67NPuIChIb25neXUgSmluKQ==?= <hongyu.jin@unisoc.com>,
+        =?gb2312?B?zuLP6cK7IChYaWFuZ2x1IFd1KQ==?= <Xianglu.Wu@unisoc.com>,
+        =?gb2312?B?zuLW3L61IChKdXN0aW4gV3Up?= <Justin.Wu@unisoc.com>
+Subject: [RFC PATCH 0/2] dm-verity: don't let FEC decode into a dm_bufio page
+ that is already in the cache
+Thread-Topic: [RFC PATCH 0/2] dm-verity: don't let FEC decode into a dm_bufio
+ page that is already in the cache
+Thread-Index: Ad1xFEI/UPDZksL2SXSzLk5teSGRMg==
+Date: Tue, 10 Nov 2026 13:06:12 +0000
+Message-ID: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com>
+Accept-Language: zh-CN, en-US
+Content-Language: zh-CN
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+x-ms-exchange-transport-fromentityheader: Hosted
+Content-Type: text/plain; charset="gb2312"
+Content-Transfer-Encoding: base64
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -58,161 +83,171 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v9 00/29] Native SCSI Multipath support
-To: Laurence Oberman <loberman@redhat.com>,
- james.bottomley@hansenpartnership.com, mkp@kernel.org
-Cc: hare@suse.com, linux-nvme@lists.infradead.org,
- linux-scsi@vger.kernel.org, snitzer@kernel.org, jmeneghi@redhat.com,
- bmarzins@redhat.com, dm-devel@lists.linux.dev, hch@lst.de,
- michael.christie@oracle.com
-References: <20261108204733.557995-1-john.garry@linux.dev>
- <9b90edc29d5b3be49f5bd0e0ecec5f1701e089bf.camel@redhat.com>
-Content-Language: en-US
-From: John Garry <john.garry@linux.dev>
-In-Reply-To: <9b90edc29d5b3be49f5bd0e0ecec5f1701e089bf.camel@redhat.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+X-MAIL:SHSQR01.spreadtrum.com 6AAD6Cc3024778
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=unisoc.com;
+	s=default; t=1794316001;
+	bh=gSag9KxXFiqNJKXpNATdvpYTjNisD9nG9dX0BA8GOFA=;
+	h=From:To:CC:Subject:Date;
+	b=qCH8ox4TrsF0CJV+bkn6FAFl9jIu2ZZFn85ddohb5EyPtrUxZosDknCuIhYemMVB0
+	 FLOMb7dX1x++9iMxcwKs80bhatWgyBL3vBj5wZdsqEhCjPgEIPgwTtBqaroWerJLq7
+	 9B/B4PUqHa/lpEJCe+zmAGs/sz+yXrMFxe8E63qOHGEiJFdqJNiaKZ5jxs9WVsQtyf
+	 Pg7qv+D8AdNOA1CgVS1BtLutA86qsnOeD7P/vzcl8WJujg7DivzcY3lpeQyXLHADww
+	 vO6cQalFhQrr5ZqBTx88lYxvl+0FIklYAehK0prdOUZ+tXV46a+zyAa+uJzqHHuaKZ
+	 8Xu50fDVv2GrA==
 
-On 11/9/26 20:19, Laurence Oberman wrote:
-> I have been testing v9 (your scsi-multipath-v7.4-v9 branch, on
-> 7.4-rc1) on real hardware 
-
-Good to know.
-
-> and found two problems with ALUA arrays,
-> one in scsi_dh_alua and one in the series itself.
-> 
-> Setup:
-> - HP P2000 G3 FC array, implicit ALUA, two port groups (one per
->    controller)
-> - 2 FC HBAs, 2 target ports each, 30 LUNs with 4 paths per LUN
-> - scsi_mod.multipath=on, dm-multipath not in use
-> - Under dm-multipath, the same LUNs show port group 1 at prio 50
->    (active/optimized) and port group 0 at prio 10
->    (active/non-optimized)
-> 
-> 1. sdev->access_state is wrong after boot (scsi_dh_alua, not this
->     series)
-> 
-> After boot, every path read active/optimized in
-> /sys/class/scsi_device/H:C:T:L/device/access_state, while sg_rtpg
-> reports port group 0 as active/non-optimized. No
-> "alua: port group XX state ..." message was logged at all.
-
-In this series, ALUA state really has been ignored. It was felt that 
-driving ALUA state and sdev->access_state by device handler ALUA driver 
-should should not be relied on for Native SCSI multipath. There had been 
-considerable discussion on this on list. I already have the work done 
-for ALUA support from some time ago and can be posted once this series 
-is accepted.
-
-> 
-> Since 50759b881e1d ("scsi: device_handler: alua: Call
-> scsi_device_put() from non-atomic context"), alua_rtpg_queue() only
-> queues an RTPG if sdev->handler_data is set, but alua_bus_attach()
-> sets handler_data after alua_initialize() has tried to queue the
-> initial RTPG. That RTPG is dropped, and access_state stays at its
-> zeroed default (active/optimized) until something calls
-> scsi_dh_activate(). dm-multipath hides this through pg_init; native
-> multipath never calls activate, so the series sees every path as
-> optimized.
-> 
-> I have sent a separate fix for this to linux-scsi:
-> https://lore.kernel.org/linux-scsi/20261109201120.1067815-1- 
-> loberman@redhat.com/
-> It is independent of your series, but without it, native multipath
-> on ALUA arrays has no correct path state.
-
-Ack
-
-> 
-> 2. ANO paths are ranked the same as AO paths
-> 
-> With the ALUA state corrected (by writing "activate" to dh_state, or
-> with the fix above), I/O still went to active/non-optimized paths.
-> scsi_multipath_sdev_init() sets mpath_device->access_state to
-> MPATH_STATE_OPTIMIZED and nothing updates it, while
-> __mpath_find_path(), mpath_round_robin_path() and
-> mpath_queue_depth_path() rank paths by that field. Only
-> scsi_mpath_is_optimized()/is_disabled() read sdev->access_state.
-> 
-> With numa, the first path in dev_list wins for every node, and
-> dev_list order follows sd probe completion, so for about a third of
-> the LUNs the current path was an ANO path. Example, LUN sdn, reads
-> completed per path for a 2000 x 1M O_DIRECT dd (:0/:3 AO, :1/:2 ANO
-> at the time):
-> 
->    sdn:0 0sdn:1 2000sdn:2 0sdn:3 0
-> 
-> Every read went through the non-owning controller. From the code, for
-> these LUNs the numa recheck of is_optimized() fails on every I/O and
-> __mpath_find_path() picks the same ANO path again.
-> 
-> With the change below (a template callback so the selectors use the
-> live state), plus the scsi_dh_alua fix, all 30 LUNs pick an AO
-> current path at boot, and on LUN sdl (:0/:2 AO, :1/:3 ANO):
-> 
->    numa         2000     0     0     0
->    round-robin  1000     0  1000     0
->    queue-depth 18039     0 13961     0   (8 parallel dd, 64k)
-> 
-> No I/O reached the ANO paths under any policy. This is a test patch to
-> show the problem, not a polished change - feel free to fold it in or
-> do it differently.
-
-I'll check it. Sounds like a real problem.
-
-As you may know, this code is really a refactoring of the NVMe multipath 
-code. The ambition was to have NVMe use libmultipath eventually, so it 
-would be good for any change to work for both NVMe and SCSI.
-
-> 
-> 3. Smaller points
-> 
-> - numa with equal NUMA distance uses one path per LUN, so with two AO
->    paths through two HBAs, half the optimized bandwidth is idle (sdl:2
->    above under numa). That matches NVMe, but users coming from
->    dm-multipath service-time will notice. Would round-robin or
->    queue-depth be a better default for SCSI?
-
-Maybe, but round-robin may not be always ideal considering only a bio 
-mode of operation is supported and no merging like dm-mpath RQ mode.
-
-> 
-> - There are no Documentation/ABI entries for the new sysfs attributes
->    (scsi_mpath_device vpd_id/iopolicy/multipath, delayed_removal_secs,
->    mpath_dev, mpath_numa_nodes, mpath_queue_depth), and the
->    scsi_mod.multipath and multipath_iopolicy parameters are not in
->    kernel-parameters.txt. I have a draft ABI file if useful.
-
-Cool, I would suggest to post if and when this is merged. I would rather 
-not post another version of this series. It is just "experimental".
-
-> 
-> - There is no userspace tool yet to show heads, paths and ALUA state
->    (the equivalent of multipath -ll or nvme list-subsys). I used a
->    small sysfs script for this testing. Ben, is native SCSI multipath
->    support in multipath-tools planned?
-
-Well, the whole point is that we don't need userspace tools. However, I 
-appreciate that there is no general SCSI tooling which could help here. 
-I know that Himanshu M did work on a SCSI version of nvme-cli tool 
-previously. Martin may know the status of that.
-
-> 
-> - CONFIG_SCSI_MULTIPATH/CONFIG_LIBMULTIPATH are only enabled in your
->    branch's x86_64_defconfig, so building from a distro config leaves
->    them off, and scsi_mod.multipath= is silently ignored. Maybe worth a
->    note in the cover letter.
-
-I thought that the kernel warns of unrecognised params (which would 
-happen for a relevant module disabled).
-
-> 
-> I have not tested failover or path loss yet; I will follow up with
-> that and a Tested-by once done.
-
-ok.
-
-Thanks
+SGksDQoNCldlIHdvdWxkIGxpa2UgdG8gYXNrIGZvciB5b3VyIGhlbHAgd2l0aCBzb21ldGhpbmcg
+d2UgcmFuIGludG8gb24gZG0tdmVyaXR5Lg0KDQpPbiA2LjE4IHdlIGFyZSBzZWVpbmcgYSBoYXNo
+IGJsb2NrIGJlaW5nIHJlcG9ydGVkIGFzIGNvcnJ1cHRlZCB3aGlsZSBGRUMgaXMNCmluIHRoZSBt
+aWRkbGUgb2YgcmVjb3ZlcmluZyBpdCwgYW5kIHdlIHN1c3BlY3QgdGhlIHJlYXNvbiBpcyB0aGF0
+IHRoZSBibG9jaw0KYmVjb21lcyB2aXNpYmxlIGluIHRoZSBkbV9idWZpbyBjYWNoZSBiZWZvcmUg
+RkVDIGhhcyB3cml0dGVuIGl0LiBJdCBsb29rcyB0bw0KdXMgbGlrZSBhIHJlZ3Jlc3Npb24gZnJv
+bSA1MWJhMTRmYjM2OGUgKDYuMTUpLCBidXQgd2Ugd291bGQgdmVyeSBtdWNoIGxpa2UgYQ0Kc2Vj
+b25kIG9waW5pb24gYmVmb3JlIGdvaW5nIGFueSBmdXJ0aGVyLg0KDQpUd28gcGF0Y2hlcyBmb2xs
+b3csIGFzIGFuIFJGQzogdGhleSBoYXZlIG5vdCBiZWVuIGJ1aWx0IG9yIHJ1biBvbiBhIGRldmlj
+ZQ0KeWV0LCBhbmQgd2Ugd291bGQgcmF0aGVyIGFncmVlIG9uIHRoZSBkaXJlY3Rpb24gd2l0aCB5
+b3UgZmlyc3QuDQoNCjEuIFJvb3QgY2F1c2UNCg0KQXMgZmFyIGFzIHdlIGNhbiB0ZWxsLCB2ZXJp
+dHlfdmVyaWZ5X2xldmVsKCkgaGFuZGxlcyBhIGZhaWxlZCBoYXNoIGJsb2NrDQpyZWFkIGJ5IHRh
+a2luZyBhIGZyZXNoIGJ1ZmZlciB3aXRoIGRtX2J1ZmlvX25ldygpIGFuZCBkZWNvZGluZyBpbnRv
+IGl0IHdpdGgNCnZlcml0eV9mZWNfZGVjb2RlKCk6DQoNCiAgICBkYXRhID0gZG1fYnVmaW9fbmV3
+KHYtPmJ1ZmlvLCBoYXNoX2Jsb2NrLCAmYnVmKTsgICAgICAgIC8qIDwtLSAqLw0KDQpPdXIgdW5k
+ZXJzdGFuZGluZyBpcyB0aGF0IGRtX2J1ZmlvX25ldygpIGluc2VydHMgdGhhdCBidWZmZXIgaW50
+byB2LT5idWZpbw0KaW1tZWRpYXRlbHksIHdpdGggbm8gQl9SRUFESU5HIGFuZCBubyByZWFkX2Vy
+cm9yLCBhbmQgbmV2ZXIgc3VibWl0cyBJL08gZm9yDQppdC4gV2hpbGUgRkVDIHJ1bnMsIHRoZSBj
+YWNoZSB3b3VsZCB0aGVuIGhvbGQgYSBwYWdlIHRoYXQgY2Fubm90IGJlIHRvbGQNCmFwYXJ0IGZy
+b20gYSBibG9jayB3aGljaCB3YXMgcmVhZCBzdWNjZXNzZnVsbHkgYW5kIHNpbXBseSBoYXMgbm90
+IGJlZW4gaGFzaC0NCmNoZWNrZWQgeWV0LCB3aGlsZSBpdHMgY29udGVudHMgYXJlIHdoYXRldmVy
+IHRoZSBhbGxvY2F0b3IgcmV0dXJuZWQuDQoNCkZFQyB0aGVuIHdhbGtzIHRoZSBSUyBjb2Rld29y
+ZCBhbmQsIGZvciB0aGUgbWVzc2FnZSBibG9ja3MgdGhhdCBsaXZlIG9uIHRoZQ0KZGF0YSBkZXZp
+Y2UsIGNhbGxzIHZlcml0eV9oYXNoX2Zvcl9ibG9jaygpIHRvIGRlY2lkZSB3aGljaCBvZiB0aGVt
+IGFyZQ0KZXJhc3VyZXMgLSB0aHJvdWdoIHRoZSBzYW1lIHYtPmJ1ZmlvLiBTbyBpZiBvbmUgb2Yg
+dGhvc2UgZGF0YSBibG9ja3MgaGFwcGVucw0KdG8gYmUgY292ZXJlZCBieSB0aGUgaGFzaCBibG9j
+ayBiZWluZyByZWNvdmVyZWQsIHRoZSBuZXN0ZWQNCnZlcml0eV92ZXJpZnlfbGV2ZWwoKSB3b3Vs
+ZCB0YWtlIHRoYXQgcGxhY2Vob2xkZXIgb3V0IG9mIHRoZSBjYWNoZSwgaGFzaA0KemVyb3MsIGdl
+dCBhIG1pc21hdGNoIGFuZCwgc2luY2UgbmVzdGVkIEZFQyBpcyByZWZ1c2VkIChmaW8tPmxldmVs
+ICE9IDAgLT4NCi1FSU8pLCBlbmQgdXAgaW4gdmVyaXR5X2hhbmRsZV9lcnIoKSwgd2hpY2ggcmVw
+b3J0cyBjb3JydXB0aW9uLg0KDQpCb3RoIHRoZSBwdWJsaWNhdGlvbiBhbmQgdGhlIHJlYWQtYmFj
+ayBoYXBwZW4gaW4gdGhlIHNhbWUgdGhyZWFkLCBzbyBpdCBkb2VzDQpub3QgbG9vayBsaWtlIGEg
+cmFjZSB0byB1cy4gV2hldGhlciBpdCB0cmlnZ2VycyBzZWVtcyB0byBkZXBlbmQgb25seSBvbiB0
+aGUNCmdlb21ldHJ5Lg0KDQoyLiBTeW1wdG9tDQoNClVuaXNvYyB1bXM5NjM1LCBBbmRyb2lkIDE3
+LCBrZXJuZWwgNi4xOC4yMSwgZG0tdmVyaXR5IG92ZXIgYSB2aXJ0dWFsIEEvQg0Kc3lzdGVtIHBh
+cnRpdGlvbjogNEsgYmxvY2tzLCBzaGEyNTYsIGZlY19yb290cz0yLCBjcmVhdGVkIHdpdGgNCnJl
+c3RhcnRfb25fY29ycnVwdGlvbi4gUmVib290aW5nIGEgc2xvdCB3aG9zZSBzbmFwc2hvdCBoYWQg
+bm90IGJlZW4gbWVyZ2VkDQp5ZXQsIHdlIGdvdDoNCg0KZGV2aWNlLW1hcHBlcjogdmVyaXR5OiAy
+NTQ6MzogbWV0YWRhdGEgYmxvY2sgMjI5NzMwIGlzIGNvcnJ1cHRlZA0KcmVib290OiBSZXN0YXJ0
+aW5nIHN5c3RlbSB3aXRoIGNvbW1hbmQgJ2RtLXZlcml0eSBkZXZpY2UgY29ycnVwdGVkJw0KDQpU
+aGUgaGFzaCByZWFkIGRpZCBmYWlsIHdpdGggLUVJTywgYmVjYXVzZSB0aGUgVUZTIHdhcyBhbHJl
+YWR5IG9mZmxpbmUuIFRoZQ0KbWVkaWEgaXRzZWxmIGlzIGZpbmU6IHdlIHJlYnVpbHQgdGhhdCBz
+bG90IGZyb20gdGhlIENPVyBhbmQgdmVyaWZpZWQgYm90aA0Kc2xvdHMnIGhhc2ggdHJlZXMgb2Zm
+bGluZSwgemVybyBiYWQgYmxvY2tzLCBhbmQgYmxvY2sgMjI5NzMwIGNvbnRhaW5zDQpleGFjdGx5
+IHRoZSBkaWdlc3QgdGhlIHRyZWUgZXhwZWN0cy4NCg0KSWYgb3VyIHJlYWRpbmcgaXMgcmlnaHQs
+IGFueSBmYWlsZWQgaGFzaCByZWFkIGNhbiB0cmlnZ2VyIHRoaXMsIG5vdCBqdXN0IG9uZQ0KZHVy
+aW5nIHNodXRkb3duLiBXaXRoIDIyODQ5NyBkYXRhIGJsb2NrcywgMjUxIG9mIHRoZSAxNzg2IGxl
+dmVsLTAgaGFzaA0KYmxvY2tzLCBhbGwgMTQgbGV2ZWwtMSBibG9ja3MgYW5kIHRoZSByb290IGJs
+b2NrIGhhdmUgYSBjb2Rld29yZCBkYXRhIGJsb2NrDQp1bmRlcm5lYXRoIHRoZW0sIHNvIGFuIEkv
+TyBlcnJvciBvbiBhbnkgb2YgdGhvc2Ugd291bGQgYmUgcmVwb3J0ZWQgYXMNCmNvcnJ1cHRpb24u
+IGFuZHJvaWQxNi02LjEyIGhhcyBubyA1MWJhMTRmYjM2OGUsIGFuZCB0aGVyZSBpdCBzaW1wbHkg
+cmV0dXJucw0KLUVJTy4NCg0KMy4gQ29kZSBldmlkZW5jZQ0KDQogICAgLyogZHJpdmVycy9tZC9k
+bS12ZXJpdHktdGFyZ2V0LmMsIHZlcml0eV92ZXJpZnlfbGV2ZWwoKSAqLw0KICAgIGlmIChJU19F
+UlIoZGF0YSkpIHsNCiAgICAgICAgICAgIGlmIChza2lwX3VudmVyaWZpZWQpDQogICAgICAgICAg
+ICAgICAgICAgIHJldHVybiAxOw0KICAgICAgICAgICAgciA9IFBUUl9FUlIoZGF0YSk7DQogICAg
+ICAgICAgICBkYXRhID0gZG1fYnVmaW9fbmV3KHYtPmJ1ZmlvLCBoYXNoX2Jsb2NrLCAmYnVmKTsg
+ICAgICAgIC8qIDwtLSAqLw0KDQogICAgLyogZHJpdmVycy9tZC9kbS12ZXJpdHktZmVjLmMsIGZl
+Y19yZWFkX2J1ZnMoKSAqLw0KICAgIC8qIGxvY2F0ZSBlcmFzdXJlcyBpZiB0aGUgYmxvY2sgaXMg
+b24gdGhlIGRhdGEgZGV2aWNlICovDQogICAgaWYgKGJ1ZmlvID09IHYtPmZlYy0+ZGF0YV9idWZp
+byAmJg0KICAgICAgICB2ZXJpdHlfaGFzaF9mb3JfYmxvY2sodiwgaW8sIGJsb2NrLCB3YW50X2Rp
+Z2VzdCwgJmlzX3plcm8pID09IDApIHsNCg0KV2hhdCB3ZSBjYW4gYWRkIGZyb20gdGhlIG1pbmlk
+dW1wLCBhbGwgb2YgaXQgaW4gdGhyZWFkIFQzMjkgKGt2ZXJpdHlkKToNCg0KLSBibG9jayAyMjk3
+MzAgd2FzIHJlYWQgZnJvbSB0aGUgZGV2aWNlIHR3aWNlOyB0aGUgbmVzdGVkIHJlYWQgaXNzdWVk
+IG5vIEkvTw0KICBhbmQgd2FzIHNlcnZlZCBmcm9tIHRoZSBjYWNoZQ0KLSBUMzI5IHdhcyBwcmVl
+bXB0ZWQgMTcxIHRpbWVzIGJldHdlZW4gdGhlIGZhaWxlZCByZWFkIGFuZCB0aGUgcmVwb3J0LA0K
+ICBtYXRjaGluZyB0aGUgMTcxIHN1Y2Nlc3NmdWwgcmVhZHMgb2YgYmxvY2tzIGkgPSAwLi4xNzAg
+YmVmb3JlIHRoZSBuZXN0ZWQNCiAgb25lDQotIGtwcm9iZTogcmVhbCBkaWdlc3QgOGIxZjMzMWYu
+Li4gZXF1YWxzIHNoYTI1NihzYWx0IHx8IDQwOTYgKiAweDAwKSwgd2FudGVkDQogIGRpZ2VzdCBi
+YWM4MDA2My4uLiBlcXVhbHMgb2Zmc2V0IDB4ODQwIG9mIEwxIGJsb2NrIDIyODUwNyBpbiB0aGUg
+aW1hZ2Ugd2UNCiAgcmVidWlsdCBvZmZsaW5lDQotIGR1bXAsIHJlcG9ydCBhbmQgcmVzdGFydCBh
+bGwgY2FycnkgVElEIDMyOQ0KDQpJbiBvdXIgY2FzZSBpdCBoYXBwZW5zIGF0IGkgPSAxNzE6IG1l
+c3NhZ2UgYmxvY2sgMTcxICogOTExICsgMTU4ID0gMTU1OTM5LA0Kd2hvc2UgbGVhZiBoYXNoIGlz
+IDIyODUxMiArICgxNTU5MzkgPj4gNykgPSAyMjk3MzAgKHJlZ2lvbl9ibG9ja3MgOTExIGZyb20N
+CmZlY19ibG9ja3MgMjMwMjk4IGFuZCByb290cyAyLCBpbmRleF9pbl9yZWdpb24gMTU4KS4NCg0K
+VGhlIGd1YXJkcyB3ZSBsb29rZWQgYXQgZG8gbm90IHNlZW0gdG8gY292ZXIgdGhpcyBwYXRoOiAy
+NTJiZDEyNTYzOTYgaW4NCnZlcml0eV9lbmRfaW8gYXBwbGllcyB0byB0aGUgb3V0ZXIgYmlvLCB3
+aGljaCBzdWNjZWVkZWQ7IHZlcml0eV9maW5pc2hfaW8NCmNoZWNrcyBiaW8gY29tcGxldGlvbiwg
+d2hpbGUgdmVyaXR5X2hhbmRsZV9lcnIoKSBoYXMgbm8gc3lzdGVtX3N0YXRlIGNoZWNrOw0KYW5k
+IGRtX2J1ZmlvX3JlbGVhc2Ugb25seSBkcm9wcyBidWZmZXJzIHdpdGggcmVhZF9lcnJvciBzZXQs
+IHdoaWNoIGFuDQpORl9GUkVTSCBidWZmZXIgZG9lcyBub3QgaGF2ZS4gSWYgd2UgYXJlIG1pc3Np
+bmcgb25lLCB3ZSB3b3VsZCBiZSBnbGFkIHRvIGJlDQpjb3JyZWN0ZWQuDQoNCjQuIFJlcHJvZHVj
+ZXIsIG5vIGRldmljZSBhbmQgbm8gc2h1dGRvd24gbmVlZGVkDQoNCjEuIHB1dCBhIGRtLWR1c3Qg
+bGF5ZXIgYmVsb3cgdGhlIHZlcml0eSBoYXNoIGFyZWEgYW5kIG1hcmsgb25lIGxldmVsLTEgYmxv
+Y2sNCiAgIGJhZA0KMi4gZHJvcCB0aGUgcGFnZSBjYWNoZSBhbmQgbGV0IHRoZSBidWZpbyBjYWNo
+ZSBnbw0KMy4gcmVhZCBhIGRhdGEgYmxvY2sgdGhhdCBoYXMgdGhhdCBsZXZlbC0xIGJsb2NrIGFz
+IGFuIGFuY2VzdG9yDQoNCkluIG91ciBoYW5kcyBhbiB1bm1vZGlmaWVkIDYuMTggcmVwb3J0cyAi
+bWV0YWRhdGEgYmxvY2sgTiBpcyBjb3JydXB0ZWQiDQpldmVyeSB0aW1lLCBzaW5nbGUgdGhyZWFk
+ZWQuIFdlIHdvdWxkIGJlIGhhcHB5IHRvIHR1cm4gdGhpcyBpbnRvIGEgcHJvcGVyDQpyZXByb2R1
+Y2VyIGlmIGl0IGlzIHVzZWZ1bC4NCg0KNS4gUGF0Y2ggMQ0KDQpXaGF0IHdlIGhhdmUgdHJpZWQg
+c28gZmFyIGlzIHRvIGRlY29kZSBpbnRvIGEgcHJpdmF0ZSBidWZmZXIsIHNvIHRoYXQNCm5vdGhp
+bmcgZW50ZXJzIHYtPmJ1ZmlvIGJlZm9yZSBpdCBob2xkcyByZWNvdmVyZWQgZGF0YToNCg0KICAg
+IGZlY19idWYgPSBrbWFsbG9jKDEgPDwgdi0+aGFzaF9kZXZfYmxvY2tfYml0cywgR0ZQX05PSU8p
+Ow0KICAgIGlmICghZmVjX2J1ZikNCiAgICAgICAgICAgIHJldHVybiByOw0KICAgIGlmICh2ZXJp
+dHlfZmVjX2RlY29kZSh2LCBpbywgRE1fVkVSSVRZX0JMT0NLX1RZUEVfTUVUQURBVEEsDQogICAg
+ICAgICAgICAgICAgICAgICAgICAgIHdhbnRfZGlnZXN0LCBoYXNoX2Jsb2NrLCBmZWNfYnVmKSA9
+PSAwKSB7DQogICAgICAgICAgICBtZW1jcHkod2FudF9kaWdlc3QsIGZlY19idWYgKyBvZmZzZXQs
+IHYtPmRpZ2VzdF9zaXplKTsNCiAgICAgICAgICAgIHIgPSAwOw0KICAgIH0NCiAgICBrZnJlZShm
+ZWNfYnVmKTsNCiAgICByZXR1cm4gcjsNCg0KV2UgYmVsaWV2ZSB0aGlzIGNsb3NlcyB0aGUgd2lu
+ZG93IHJhdGhlciB0aGFuIG5hcnJvd2luZyBpdC4gQSByZWNvdmVyZWQgaGFzaA0KYmxvY2sgaXMg
+bm8gbG9uZ2VyIGNhY2hlZCwgc28gYSBsYXRlciBhY2Nlc3MgcmVhZHMgaXQgYWdhaW4gYW5kLCBp
+ZiB0aGUNCmRldmljZSBpcyBzdGlsbCBmYWlsaW5nLCByZWNvdmVycyBpdCBhZ2FpbiAtIHdoaWNo
+IGNvc3RzIHNvbWV0aGluZyBvbmx5IG9uDQptZWRpYSB0aGF0IGFscmVhZHkgcmV0dXJucyBlcnJv
+cnMsIGFuZCBrZWVwcyB0aGUgY2hhbmdlIGluc2lkZSB0aGUgZnVuY3Rpb24NCnRoYXQgZ290IHVz
+IGhlcmUuIFdlIGFsc28gd29uZGVyZWQgYWJvdXQgdGhlIG90aGVyIGVuZCwgaGF2aW5nDQpkbV9i
+dWZpb19uZXcoKSByZWZ1c2UgdG8gcHVibGlzaCBhIGJ1ZmZlciBiZWZvcmUgaXQgaXMgZmlsbGVk
+OiB0aGF0IHdvdWxkDQpob2xkIGZvciBldmVyeSBjYWxsZXIgcmF0aGVyIHRoYW4ganVzdCB2ZXJp
+dHksIGJ1dCBORl9GUkVTSCBleGlzdHMgcHJlY2lzZWx5DQpzbyBhIGNhbGxlciBjYW4gZmlsbCB0
+aGUgYnVmZmVyIGl0c2VsZiBhbmQgb3RoZXIgdGFyZ2V0cyByZWx5IG9uIGl0LCBzbyBpdA0KbG9v
+a2VkIGxpa2UgYSBsYXJnZXIgY2hhbmdlIHRoYW4gdGhpcyBuZWVkcy4gV2UgYXJlIHF1aXRlIGhh
+cHB5IHRvIHJlZG8gaXQNCnRoZXJlIGlmIHlvdSBwcmVmZXIuDQoNClBhdGNoIDIgaXMgdW5yZWxh
+dGVkIHRvIGNhY2hlIHZpc2liaWxpdHkgYW5kIGNhbWUgb3V0IG9mIHRoZSBzYW1lIGR1bXA6DQp2
+ZXJpdHlfaGFuZGxlX2VycigpIGRvZXMgbm90IGNvbnN1bHQgc3lzdGVtX3N0YXRlLCBzbyBkdXJp
+bmcgYSBzaHV0ZG93biBpdA0Kc3RpbGwgcmVzdGFydHMgb3IgcGFuaWNzIGZvciBhbiBlcnJvciB0
+aGF0IGNhbm5vdCBtZWFuIGNvcnJ1cHRpb24sIGFuZA0Kb3ZlcndyaXRlcyB0aGUgcmVhc29uIG9m
+IHRoZSByZWJvb3QgYWxyZWFkeSBpbiBwcm9ncmVzcy4gSXQgcmV1c2VzDQp2ZXJpdHlfaXNfc3lz
+dGVtX3NodXR0aW5nX2Rvd24oKSBhbmQgZmFpbHMgdGhlIEkvTyBpbnN0ZWFkLiBQbGVhc2UgbG9v
+ayBhdA0KdGhlIHR3byBzZXBhcmF0ZWx5Lg0KDQo2LiBRdWVzdGlvbnMNCg0KMS4gSGF2ZSB5b3Ug
+c2VlbiB0aGlzIGJlZm9yZSwgb3IgaXMgYSBmaXggYWxyZWFkeSBxdWV1ZWQgc29tZXdoZXJlPw0K
+ICAgdmVyaXR5X3ZlcmlmeV9sZXZlbCgpIGFuZCBmZWNfcmVhZF9idWZzKCkgbG9vayB1bmNoYW5n
+ZWQgaW4gbWFzdGVyDQogICAoMDU0NDFkNjk3ZjdmKSwgYW5kIHRoZSB2MiByZXZpZXcgb2YgNTFi
+YTE0ZmIzNjhlIGRvZXMgbm90IG1lbnRpb24gY2FjaGUNCiAgIHZpc2liaWxpdHksIGJ1dCB5b3Ug
+d291bGQga25vdyBiZXR0ZXIgdGhhbiB3ZSBkby4NCjIuIFdvdWxkIHlvdSBiZSB3aWxsaW5nIHRv
+IGNoZWNrIHdoZXRoZXIgb3VyIHJlYWRpbmcgb2YgdGhlIGRtX2J1ZmlvX25ldygpICsNCiAgIEZF
+QyBpbnRlcmFjdGlvbiBpcyByaWdodCwgYW5kIHdoZXRoZXIgdGhlIHNoYXBlIG9mIHBhdGNoIDEg
+bWFrZXMgc2Vuc2U/DQogICBJZiB3ZSBoYXZlIGl0IHdyb25nLCB3ZSB3b3VsZCBtdWNoIHJhdGhl
+ciBoZWFyIGl0IG5vdyB0aGFuIGxhdGVyLg0KDQpUaGUgZHVtcCBjb21lcyBmcm9tIGEgcHJvZHVj
+dCBkZXZpY2Ugc28gaXQgaXMgbm90IHB1YmxpYywgYnV0IHdlIGNhbiBleHRyYWN0DQphbnl0aGlu
+ZyB5b3Ugd291bGQgbGlrZSB0byBzZWU6IHRoZSByYXcgbG9nX2J1ZiwgdGhlIHNjaGVkX3RyYWNl
+IHdpbmRvdw0KYXJvdW5kIFQzMjksIHRoZSBrcHJvYmUgb3V0cHV0LiBBbmQgb2YgY291cnNlIHdl
+IGFyZSBnbGFkIHRvIHRlc3QgYW55dGhpbmcNCnlvdSBzdWdnZXN0IG9uIHRoZSBkZXZpY2UuDQoN
+ClRoYW5rIHlvdSBmb3IgeW91ciB0aW1lLCBhbmQgZm9yIHRoZSB3b3JrIG9uIGRtLXZlcml0eS4N
+Cg0KQlJzDQp3ZWlqaWFuZy56aG91DQpVbmlzb2Mgb3RhIHRlYW0NCl9fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fDQogVGhpcyBlbWFpbCAoaW5jbHVkaW5nIGl0cyBhdHRhY2htZW50cykg
+aXMgaW50ZW5kZWQgb25seSBmb3IgdGhlIHBlcnNvbiBvciBlbnRpdHkgdG8gd2hpY2ggaXQgaXMg
+YWRkcmVzc2VkIGFuZCBtYXkgY29udGFpbiBpbmZvcm1hdGlvbiB0aGF0IGlzIHByaXZpbGVnZWQs
+IGNvbmZpZGVudGlhbCBvciBvdGhlcndpc2UgcHJvdGVjdGVkIGZyb20gZGlzY2xvc3VyZS4gVW5h
+dXRob3JpemVkIHVzZSwgZGlzc2VtaW5hdGlvbiwgZGlzdHJpYnV0aW9uIG9yIGNvcHlpbmcgb2Yg
+dGhpcyBlbWFpbCBvciB0aGUgaW5mb3JtYXRpb24gaGVyZWluIG9yIHRha2luZyBhbnkgYWN0aW9u
+IGluIHJlbGlhbmNlIG9uIHRoZSBjb250ZW50cyBvZiB0aGlzIGVtYWlsIG9yIHRoZSBpbmZvcm1h
+dGlvbiBoZXJlaW4sIGJ5IGFueW9uZSBvdGhlciB0aGFuIHRoZSBpbnRlbmRlZCByZWNpcGllbnQs
+IG9yIGFuIGVtcGxveWVlIG9yIGFnZW50IHJlc3BvbnNpYmxlIGZvciBkZWxpdmVyaW5nIHRoZSBt
+ZXNzYWdlIHRvIHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIGlzIHN0cmljdGx5IHByb2hpYml0ZWQu
+IElmIHlvdSBhcmUgbm90IHRoZSBpbnRlbmRlZCByZWNpcGllbnQsIHBsZWFzZSBkbyBub3QgcmVh
+ZCwgY29weSwgdXNlIG9yIGRpc2Nsb3NlIGFueSBwYXJ0IG9mIHRoaXMgZS1tYWlsIHRvIG90aGVy
+cy4gUGxlYXNlIG5vdGlmeSB0aGUgc2VuZGVyIGltbWVkaWF0ZWx5IGFuZCBwZXJtYW5lbnRseSBk
+ZWxldGUgdGhpcyBlLW1haWwgYW5kIGFueSBhdHRhY2htZW50cyBpZiB5b3UgcmVjZWl2ZWQgaXQg
+aW4gZXJyb3IuIEludGVybmV0IGNvbW11bmljYXRpb25zIGNhbm5vdCBiZSBndWFyYW50ZWVkIHRv
+IGJlIHRpbWVseSwgc2VjdXJlLCBlcnJvci1mcmVlIG9yIHZpcnVzLWZyZWUuIFRoZSBzZW5kZXIg
+ZG9lcyBub3QgYWNjZXB0IGxpYWJpbGl0eSBmb3IgYW55IGVycm9ycyBvciBvbWlzc2lvbnMuDQqx
+vtPKvP68sMbkuL28/r7f09Cxo8Pc0NTWyqOsyty3qMLJsaO7pLK7tcPQucK2o6y99reiy824+LG+
+08q8/sv51rjM2LaoytW8/sjLoaPRz737t8e+rcrayKjKudPDoaLQ+7SroaK3orK8u/K4tNbGsb7T
+yrz+u/LG5MTayN2ho8j0t8e4w8zYtqjK1bz+yMujrMfrzvDUxLbBoaK4tNbGoaIgyrnTw7vyxfvC
+trG+08q8/rXEyM66zsTayN2ho8j0zvPK1bG+08q8/qOsx+u008+1zbPW0NPAvsPQ1Mm+s/2xvtPK
+vP68sMv509C4vbz+o6yyotLUu9i4tNPKvP61xLe9yr28tL/MuObWqreivP7Iy6Gjzt63qLGj1qS7
+pcGqzfjNqNDFvLDKsaGisLLIq6Gizt7O87vyt8C2vqGjt6K8/sjLttTIzrrOtO3Cqb75sruz0LWj
+1PDIzqGjDQo=
