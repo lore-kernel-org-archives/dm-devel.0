@@ -1,89 +1,105 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.48
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794288813;
-	b=RLkyaLwquRrjaiSSnLB6zbRj+xGD8S9Qo6VNnblrra5t1dqWv5+bQnaClR0Qnu2Vzykr
-	 lq7PMGeEZyO3/fSdQb2YiiWKBys3GwAAWrU4UuNxSO7eAqbb/djfIVqPde4DZam9pLK80
-	 JUEm7nYRkbpPwHgsszKOlOaybqniyuB7wvXC6MHezFSNUVWQZvsq84m/r5WPJKbz4VSr2
-	 pbpxbIY3vQ1O9KS0E+VxjgzVbirRnP2xepcLsyVsu8ncCgIZC18Oj/THYSwgnlNESvwTJ
-	 tv1/BASV6n3sixKopEmmmRZKP1nJqaEZ6IlMYzMjAgD6lyoW2A9xVLkuGL5kbiZgLaA==
+	t=1794289506;
+	b=ZuDYR7U44PIexHQaLxtDrzFsj9+AHl4Lih/VLPUvd+WVroBok6bYcuRwG/noaTmHhJJk
+	 8BE57Tf9rjdZI9AppTfX2j1htDx9Q12+54GxyWMA3J9N4cYxZm7I+KFWHLtbA2HuqIf2L
+	 pBOFHAZ1Cc2Mcgt90cwLoLR80rKY/UQLzvuch6firuToQzsh23Xf2gi1EkDtUTY28CaQy
+	 Of4P16fbG8mmArSuYQK9TODzEwyTro9FYbY6DkI7YgkoDHAePNLCyzglouXiqIO8TX3Gc
+	 8AFP+v+Gm3DcbXSU9yPQlIMQwl/xyg7M6ENfgdpwk21GC2zMuc5scckKsLCSF2HgRFQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794288813;
-	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=l3mgB4Ev1EUFaUriPeIG+9VrVzzDcSV4X6hThy1L/KU=;
-	b=ZwQXKF3JYMG02xfA+EZkSmy5BUbhLdbQ1CKHkpGA8KMR8a/3znshI0Rvtez7vu/Glu7y
-	 ZKKmFRfLpmXj8sZIgGWH59YKLemyWLHV3clJr/o7ySgSpx9gVX43fC0dGe+WKrMBraxQ3
-	 JH9HFzz4gOGDT9GaxJrThYiAXLyU6+gxb3XyOhQufpCR8c7fhy+52cMtplTmgOKy+oY/8
-	 9E1VibBPMeTSqx9eGGuoH4M4/th7InefTWFrwLynC8lC2KCPIpvr9FIi+//tcFFEp+viN
-	 1S2Sp5oDN5R17qhhG8xicPhvFFCjogdkqPBKPQpRA+gSrIbnjg4w+2helPmxD3HHFRw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794289506;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=p+m90ZHP6p5x4AVs4ojsWRq2UWvQJVYuVb7I16eMYE0=;
+	b=uwVPmyeQsThsOuFE5F0tXldJqCDGmthdsGIt3fDhTVMmrIpr+CRwrGw8XHaTKFw5Nbhq
+	 D8o2pnJJsgzkp0AIiOkK2JsbOMcX3aO3YtQEDyHS2gorRStC0iQ8Di76SWylrCt4xQjM+
+	 yy/OKJBALr1OcLgWU+wYwJ97lGjSMjyKk0hmF+JotGMS8WC0DYCx/YR/jIOFimgV+Rw2j
+	 nUJ4tsKiCsjDRYWw+JxlW81vrjwAmveZ2OwMBl/rxk7LWeK3qfN4qw6HusdVcE1gpM7HD
+	 gRhPAqv81+0eWIlPBUBCGqpV4juQGsj/Kd76nxqYwZEe0zfePCfIlqHnb20SWorU11Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jB5IgIOj;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="uo6L4zO/";
+	arc=none smtp.remote-ip=209.85.221.48
+Received: from mail-wr1-f48.google.com (mail-wr1-f48.google.com [209.85.221.48])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 2670460A261F;
-	Tue, 10 Nov 2026 05:33:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9545606A32E
+	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 05:45:05 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D9545606A32E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jB5IgIOj
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 018931F008BE;
-	Tue, 10 Nov 2026 05:33:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794288812;
-	bh=l3mgB4Ev1EUFaUriPeIG+9VrVzzDcSV4X6hThy1L/KU=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=jB5IgIOjN0Xio7JyTF8Sn5VXPSxRxp8cyqUp+ENWai46IqHrU464SuifRg2xOsSTi
-	 wn/Plv0bg+pvi0KtqLINnUqek8GepbkdfphP1w0kAgjDoYMYK7InudlSzgPkUh+Sqn
-	 W47RiqO/9Z29fntZmElmqQvoF3QDhPFzVAo6cK5IwS7OyPb2l1SxSToXaXzeAJYl3m
-	 9yGVQqHIoWlScMnAIcOe5rTAIZE2B77e91k/tvS9qJ9LZIXHORciqpuvl0a+g8lOBj
-	 aWoWq8IUZrch3rxOdCpl1TdFcHzrInO+pRGlRQUrfBivNZ+SFVH1dQbkdEHQ5/osvq
-	 lSjUSU/3ecVaQ==
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: David Howells <dhowells@redhat.com>
-Cc: Jarkko Sakkinen <jarkko@kernel.org>,
-	bpf@vger.kernel.org,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=uo6L4zO/
+Received: by mail-wr1-f48.google.com with SMTP id ffacd0b85a97d-490c1d337d8so1099162f8f.2
+        for <dm-devel@lists.linux.dev>; Mon, 09 Nov 2026 21:45:05 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794289504; x=1794894304; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=p+m90ZHP6p5x4AVs4ojsWRq2UWvQJVYuVb7I16eMYE0=;
+        b=uo6L4zO/nX/MUInEUBQwIIUJdWebTBtVMqbx1rTNkkfBNZEk6RBj9L6yXki0A+Fat2
+         iUR0JKiyLhRAGlnTpeSO8kKNuRKC3bLed+gPaz96HTjjPlZiU53v/jYMUR3dVfD+nOoB
+         ek/qYTvY575dyxqWXBCw3DyYB8nT+K1BC7Hr/HUYU/tNaXflGabuhxGswKAmCVf5A2sn
+         YmERDVu/Dbbh3eTT0+k9eyykg8nTIrEukT0IosizGx/gTFKRuYZ96Sr11IZzz8Z4LP5P
+         5U0JBCcbUgw1YOuL5JqQhe0gZG3BCGjw7cK9fL/3qdL6/ZQqoGK8J0TGhcW/LaWfxIF+
+         H4DQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794289504; x=1794894304;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=p+m90ZHP6p5x4AVs4ojsWRq2UWvQJVYuVb7I16eMYE0=;
+        b=B0y7gz0fNOSMkIgwgyiqqQiF/KajaZM8DX3JhdhmiMNbfAhiEFVDkfGOe+lrlCWVut
+         rOZyPj9l7r3A4OSuK9or1O14ZUbhRQeJ6XBPNd1KCaE2DZcfRXnc1xjI/hms3kKCrLBo
+         taxccUWarpnMlTYqGhQsMzFczJcvpfPuoI7Zf4ldaRH3NFVMjbNgcjUOVCo9BxZeInyf
+         PrKrSNs3t68IqmkspnOgWhLFtPfVMTOJS1h4Q9mGO92Z21da8099tB/xfHSKn4oeda01
+         MZjeYx7Ka3a3TgJYVtfSCOA8Uyv0PzTs3MSm7QOQXTE+QVv/Rz6Wv1RJQe+nM/qN1eSr
+         f+ig==
+X-Forwarded-Encrypted: i=1; AL+hErE9dR+XhVO0wCdstfoy1HACfanPyFM68cGliKvYQbaGSbgtm3L0yobJf20/GKWbMlLK2bZ7CUpUnQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z89wN7dWCVKBz8pTwpuHEBfL+mNu3hRmASvan2YcgEvHHS3+fV9
+	SFCqFa59j3RdOQ+/DebQu171fyhdA6aCNdNT24N1aQzGkzAAChYx+m5l
+X-Gm-Gg: AYBFou3gCOCLTZqMZRsi4HgUutc9As0M1JXB+P+66f9R333kZXkEud+v/PtHoXVN/dW
+	a0CS91mPSpUtgPzxJbRS53m9pNw7uUWqjnKVeme+1eQH66p36lzuSR3huNhmCVqvqFlUreafNtP
+	t5kiZ1M+I2elSNevefUGwT32OGurI8MJMHdQvhOu99LBsqSWB8SpNGNn3qnyn/AYB6i7ZYWHNDM
+	TXhlmDS69Yd5dgkSXnPe9+1UFao4TU3odwc/tycDGERG/R7S0qrBB/xPm146vtFxG89o5mqtC+d
+	oDUNkaAQ/S0o3IImfjgmnqcxG2IznL5JNXKMEXF4sa7UTlDI4zm3b+KmF4ZW2njxMK+8BhoFwAh
+	STDTF++qXqweBaZpkTYO/n4Ku2wENZXmUq1vwJQb3rtpoPbSe79EouHU00NlSyuzUB+somwh8ph
+	PlzfvoKzo9bI98VdYyeaBooauHEVnCdLP0LyoAMQLXU3vCMysRPamG6LVBmoNncY1NsHrAEuGkl
+	FT1cqS6QaSuDdrZgYueQCGIPpTPIt5m/ctStIHtUucDQdrPRM1tj32h7qYXb6owUQPnabMTf9QQ
+	IzAT/NvmuLtAQ6XWhnpuNCHwfmaJSy587LiPrYpNhAjO5lyVEMGV3GVQhCiXDb5RAfUr0XzaLhe
+	zYuTTg9yh4hLbEQ==
+X-Received: by 2002:a05:6000:2482:b0:48e:353b:9f28 with SMTP id ffacd0b85a97d-4982b28ac5emr3169751f8f.1.1794289504112;
+        Mon, 09 Nov 2026 21:45:04 -0800 (PST)
+Received: from DESKTOP-OL07BOP.localdomain (109-92-113-33.dynamic.isp.telekom.rs. [109.92.113.33])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-498365cbfc6sm3083123f8f.41.2026.11.09.21.45.01
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 09 Nov 2026 21:45:03 -0800 (PST)
+From: Hristos Nenkov <nenkov2004@gmail.com>
+To: Song Liu <song@kernel.org>,
+	linux-raid@vger.kernel.org
+Cc: Yu Kuai <yukuai@fygo.io>,
+	Li Nan <magiclinan@didiglobal.com>,
+	Xiao Ni <xiao@kernel.org>,
+	NeilBrown <neil@brown.name>,
 	dm-devel@lists.linux.dev,
-	fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org,
-	linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
 	Alasdair Kergon <agk@redhat.com>,
-	Alexei Starovoitov <ast@kernel.org>,
-	Alex Shi <alexs@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Ignat Korchagin <ignat@linux.win>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Morris <jmorris@namei.org>,
-	Jiri Olsa <jolsa@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
 	Mike Snitzer <snitzer@kernel.org>,
 	Mikulas Patocka <mpatocka@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Song Liu <song@kernel.org>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>
-Subject: [PATCH v9 1/3] KEYS: Introduce keyring_is_empty()
-Date: Tue, 10 Nov 2026 07:33:21 +0200
-Message-ID: <20261110053323.2936729-2-jarkko@kernel.org>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20261110053323.2936729-1-jarkko@kernel.org>
-References: <20261110053323.2936729-1-jarkko@kernel.org>
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	syzbot+8b22a0459202f76b4096@syzkaller.appspotmail.com,
+	Hristos Nenkov <nenkov2004@gmail.com>
+Subject: [PATCH] md/raid10: preserve recovery flags on reshape abort
+Date: Tue, 10 Nov 2026 06:44:56 +0100
+Message-ID: <20261110054456.625-1-nenkov2004@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <6aec6738.059f5055.2712e4.0005.GAE@google.com>
+References: <6aec6738.059f5055.2712e4.0005.GAE@google.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -95,106 +111,41 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
-fs-verity how keyring internally manages the keys.
+raid10_start_reshape() can fail while resizing a bitmap before it
+changes any recovery bits on its success path. Its abort path nevertheless
+clears the entire mddev->recovery bitmap.
 
-Reviewed-by: Eric Biggers <ebiggers@kernel.org>
-Reviewed-by: Ignat Korchagin <ignat@linux.win>
-Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+dm-raid keeps MD_RECOVERY_FROZEN set across suspend and resume. If RAID10
+reshape setup fails, raid_preresume() logs the failure and continues with
+resume. Clearing the bitmap removes MD_RECOVERY_FROZEN and makes
+raid_resume() hit its invariant warning.
+
+Do not clear mddev->recovery from the RAID10 abort path. The error paths
+reach abort before raid10_start_reshape() modifies the recovery bits, so
+there is no personality-owned recovery state to roll back there.
+
+Fixes: bb63a7019df9 ("md/raid10: resize bitmap when required during reshape.")
+Reported-by: syzbot+8b22a0459202f76b4096@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=8b22a0459202f76b4096
+Signed-off-by: Hristos Nenkov <nenkov2004@gmail.com>
 ---
- drivers/md/dm-verity-verify-sig.c                      |  2 +-
- fs/verity/signature.c                                  |  2 +-
- include/linux/key.h                                    |  1 +
- kernel/bpf/keys.c                                      |  2 +-
- security/keys/keyring.c                                | 10 ++++++++++
- .../selftests/dm-verity/test-dm-verity-keyring.sh      |  2 +-
- 6 files changed, 15 insertions(+), 4 deletions(-)
+ drivers/md/raid10.c | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
-index 0c65c7a31da8..bd5143aae4fa 100644
---- a/drivers/md/dm-verity-verify-sig.c
-+++ b/drivers/md/dm-verity-verify-sig.c
-@@ -153,7 +153,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
- 	if (ret != -ENOKEY && ret != -EKEYREJECTED)
- 		return ret;
+diff --git a/drivers/md/raid10.c b/drivers/md/raid10.c
+index 066c43154..1fd3f5f4f 100644
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -4490,7 +4490,6 @@ static int raid10_start_reshape(struct mddev *mddev)
+ 	return 0;
  
--	if (dm_verity_keyring->keys.nr_leaves_on_tree &&
-+	if (!keyring_is_empty(dm_verity_keyring) &&
- 	    dm_verity_keyring->restrict_link)
- 		ret = verify_pkcs7_signature(root_hash, root_hash_len,
- 					     sig_data, sig_len,
-diff --git a/fs/verity/signature.c b/fs/verity/signature.c
-index 2f49c5d9d987..b45b39b829b2 100644
---- a/fs/verity/signature.c
-+++ b/fs/verity/signature.c
-@@ -70,7 +70,7 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
- 		return 0;
- 	}
- 
--	if (fsverity_keyring->keys.nr_leaves_on_tree == 0) {
-+	if (keyring_is_empty(fsverity_keyring)) {
- 		/*
- 		 * The ".fs-verity" keyring is empty, due to builtin signatures
- 		 * being supported by the kernel but not actually being used.
-diff --git a/include/linux/key.h b/include/linux/key.h
-index 420412aab926..9ff10b780865 100644
---- a/include/linux/key.h
-+++ b/include/linux/key.h
-@@ -439,6 +439,7 @@ extern int restrict_link_reject(struct key *keyring,
- 				struct key *restriction_key);
- 
- extern int keyring_clear(struct key *keyring);
-+bool keyring_is_empty(const struct key *keyring);
- 
- extern key_ref_t keyring_search(key_ref_t keyring,
- 				struct key_type *type,
-diff --git a/kernel/bpf/keys.c b/kernel/bpf/keys.c
-index bffc356839ac..24e0416abc99 100644
---- a/kernel/bpf/keys.c
-+++ b/kernel/bpf/keys.c
-@@ -29,7 +29,7 @@ struct bpf_key *bpf_lookup_keyring(void)
- 
- 	if (!bpf_keyring)
- 		return NULL;
--	if (!READ_ONCE(bpf_keyring->keys.nr_leaves_on_tree) ||
-+	if (keyring_is_empty(bpf_keyring) ||
- 	    !READ_ONCE(bpf_keyring->restrict_link))
- 		return NULL;
- 
-diff --git a/security/keys/keyring.c b/security/keys/keyring.c
-index 5281da9d5bf7..ac48d6204915 100644
---- a/security/keys/keyring.c
-+++ b/security/keys/keyring.c
-@@ -443,6 +443,16 @@ static void keyring_destroy(struct key *keyring)
- 	assoc_array_destroy(&keyring->keys, &keyring_assoc_array_ops);
- }
- 
-+/**
-+ * keyring_is_empty - Check whether a keyring is empty
-+ * @keyring: The keyring to check.
-+ */
-+bool keyring_is_empty(const struct key *keyring)
-+{
-+	return READ_ONCE(keyring->keys.nr_leaves_on_tree) == 0;
-+}
-+EXPORT_SYMBOL(keyring_is_empty);
-+
- /*
-  * Describe a keyring for /proc.
-  */
-diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-index 1f9601ef22f8..792449d356cf 100755
---- a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-+++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
-@@ -746,7 +746,7 @@ test_keyring_inactive_when_empty() {
-     log_info "TEST: Verify dm-verity keyring is inactive when sealed empty"
- 
-     # When keyring_unsealed=0, the keyring is sealed immediately while empty
--    # This means it should NOT be used for verification (nr_leaves_on_tree=0)
-+    # An empty keyring should NOT be used for verification.
- 
-     log_info "Keyring state (should be empty and sealed):"
-     list_keyring_keys
+ abort:
+-	mddev->recovery = 0;
+ 	spin_lock_irq(&conf->device_lock);
+ 	conf->geo = conf->prev;
+ 	mddev->raid_disks = conf->geo.raid_disks;
+
+base-commit: b3dfbde62cf1981c4638939c159dfd087b7a72e9
 -- 
-2.47.3
+2.43.0
 
