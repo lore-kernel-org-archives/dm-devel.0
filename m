@@ -1,81 +1,54 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=222.66.158.135
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.197
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794316032;
-	b=gcRDHD0UKxmpaEZPWPPzoj2wozPJCpLH3YYjOTJdJLXpVw12EpHYoQwFUbn2lUHn1cWE
-	 +Mup/XtxbiP0ylUjELu1S7zei7iFilXunmVH8VzbKv9X9u59aTK/S2ZP3zQPupSFGymIC
-	 KDxJZmVOgJ/w8uXsM38R6ipipU9yomHuWQXQ/67WQuh2DlQ4VUr+8tAZ/IDF1b2EaFihe
-	 lpqlVdLi3SsvvdKSCiAqyD4/RylufQ8/SRRu04oRKIAiYcxW6EN0sMsD8yvEUW0DpKMue
-	 2lbVPiuyjC+7sKhIU2BoGVWy6qQ6YsK4pSYOyPN46uQOijAfCR8oUclTF6KB0U4duiw==
+	t=1794332205;
+	b=vaOPo7dXTUvuBOs9uSWt9ih2xNDOv1Nl43HbdMrVAYwf1I6m2Q45UzC1wvbdxBB+Yafw
+	 +J83PQHbNOZjv2Cv2hle/VLeK+bPG0Qady+QZtgJxt84lCkrCHUkg7MH1ESrZ/QH0Poaa
+	 k01lhMXHPcar8tcVbbj9Z7VTjXLoRXnDQik41sKYQpYCXY2B62zdoIg5ko/IdJbfCNPie
+	 1M8qfRK5NrXvBVWUT1NRDLOKdU5Fg/rXs3BuEIHp/wd9EloMJLLcPcLSlOcghsvZzcqbH
+	 oc6CGIvHt+SBr5nkXXwsnqCwAxaZ3Uafq6KQzcmOAryaKMeCXQ+v7HIfXsvR0RCb7eA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794316032;
-	h=DMARC-Filter:Received:Received:Received:Received:From:To:CC:Subject:
-	 Thread-Topic:Thread-Index:Date:Message-ID:References:In-Reply-To:
-	 Accept-Language:Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
-	 x-ms-exchange-transport-fromentityheader:x-originating-ip:
-	 Content-Type:Content-Transfer-Encoding:MIME-Version:X-MAIL:
-	 DKIM-Signature;
-	bh=4to64QdWUbeKsk8keNOhIRH94BegCDTNMH9lsgOo2ro=;
-	b=APRkys//ZyOKOmU8Pi/AKQKe+NFxn9W5GGkcOesR4UaYht7PO3zy46wcu3GT3ONdFpbs
-	 64Ra19m1WXruTPxlmg7Wl3XRwSOuiWwjOOdQPKhtNMUXUuofXQ94CLpMu9p0lXBylUgyq
-	 O/lvgkpl4XdDPEh6RGs0IdPWcz4IA8NesDqEi4oFawK6GG+sUZA7usFGgX/dpROoVtdGl
-	 ilHAsLEukatWhiZv6Eal4TeJY8HyRP3dz/uZp7PBuivMqBh19qeVr1p3G2IrcN53AaFNa
-	 lOXve6V4DMN/C+3ChN21kOE+6ThUzYMHtanUgPKqj0PNlB/fP/RgwU6CPzJAy3DB/5Q==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794332205;
+	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
+	 X-Gm-Message-State:MIME-Version:X-Received:Date:
+	 X-Google-Appengine-App-Id:X-Google-Appengine-App-Id-Alias:Message-ID:
+	 Subject:From:To:Content-Type;
+	bh=o15bVl2NPmsMHAkRA8VnBe/GHoz1nq9rW0/fvlACR98=;
+	b=Ob/BIGfpFG7QIRIR8S/PuEdqJwHub/H0LPW1t2iLn/KU/s2msbk23q2EeceNwP0250d+
+	 SehH3u5rg4U3A0LhI/E583DL6pXQmPsATyVrLzdjJYkwdczAFR9KNsv3U52rr7FamaDq3
+	 47C9dUTmnGFLw1e2fh0qdvJok9ObVUhlPPJWYQpgrbyra66ClkrF/WiLVviYJyHZgrh4N
+	 DZnhhZunMk6R+0PUXoyh13DV4MA1ulP0CXa+bWGkHq3cnXodX+qkqkKVByFnKF+W3XA3S
+	 cxJ1Qs3YFqyBEHK8qB03WkyDTSlDE0Zd1BapHHHoqkz82syEu9P73byfTfcH/8is4ng==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=unisoc.com;
-	spf=pass smtp.mailfrom=unisoc.com;
-	dkim=pass header.d=unisoc.com header.i=@unisoc.com header.a=rsa-sha256 header.s=default header.b="b/Xrz4Gn";
-	arc=none smtp.remote-ip=222.66.158.135
-Received: from SHSQR01.spreadtrum.com (unknown [222.66.158.135])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=fail header.from=syzkaller.appspotmail.com;
+	spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com;
+	arc=none smtp.remote-ip=209.85.167.197
+Received: from mail-oi1-f197.google.com (mail-oi1-f197.google.com [209.85.167.197])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D664E606BFF3
-	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 13:07:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D664E606BFF3
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=unisoc.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=unisoc.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=unisoc.com header.i=@unisoc.com header.a=rsa-sha256 header.s=default header.b=b/Xrz4Gn
-Received: from dlp.unisoc.com ([10.29.3.83])
-	by SHSQR01.spreadtrum.com with ESMTPS id 6AAD6Kx3026716
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NO);
-	Tue, 10 Nov 2026 21:06:20 +0800 (+08)
-	(envelope-from weijiang.zhou@unisoc.com)
-Received: from SHDLP.spreadtrum.com (dockerqa.unisoc.com [10.0.1.210])
-	by dlp.unisoc.com (SkyGuard) with ESMTPS id 4jP6N40rs2z1VVX;
-	Tue, 10 Nov 2026 21:05:56 +0800 (CST)
-Received: from zeshmbx08.spreadtrum.com (10.29.3.106) by
- zeshmbx02.spreadtrum.com (10.0.1.210) with Microsoft SMTP Server (TLS) id
- 15.0.1497.48; Tue, 10 Nov 2026 21:06:20 +0800
-Received: from zeshmbx08.spreadtrum.com ([fe80::e01e:2441:3a50:dadb]) by
- zeshmbx08.spreadtrum.com ([fe80::e01e:2441:3a50:dadb%17]) with mapi id
- 15.00.1497.048; Tue, 10 Nov 2026 21:06:20 +0800
-From: =?gb2312?B?1tzOsL2tIChXZWlqaWFuZyBaaG91KQ==?= <weijiang.zhou@unisoc.com>
-To: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>
-CC: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Benjamin Marzinski
-	<bmarzins@redhat.com>,
-        Sami Tolvanen <samitolvanen@google.com>,
-        =?gb2312?B?vfC67NPuIChIb25neXUgSmluKQ==?= <hongyu.jin@unisoc.com>,
-        =?gb2312?B?zuLP6cK7IChYaWFuZ2x1IFd1KQ==?= <Xianglu.Wu@unisoc.com>,
-        =?gb2312?B?zuLW3L61IChKdXN0aW4gV3Up?= <Justin.Wu@unisoc.com>
-Subject: [RFC PATCH 1/2] dm-verity: don't decode FEC into a dm_bufio page that
- is already in the cache
-Thread-Topic: [RFC PATCH 1/2] dm-verity: don't decode FEC into a dm_bufio page
- that is already in the cache
-Thread-Index: Ad1xFEVvuq6WySSbT/mhXKvNiu015Q==
-Date: Tue, 10 Nov 2026 13:06:20 +0000
-Message-ID: <27b2dc50d3bb497ea3f3f84e7e4b271c@zeshmbx08.spreadtrum.com>
-References: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com>
-In-Reply-To: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com>
-Accept-Language: zh-CN, en-US
-Content-Language: zh-CN
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-x-ms-exchange-transport-fromentityheader: Hosted
-Content-Type: text/plain; charset="gb2312"
-Content-Transfer-Encoding: base64
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B490D606A331
+	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 17:36:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B490D606A331
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
+Received: by mail-oi1-f197.google.com with SMTP id 5614622812f47-4ab260600easo3322206b6e.1
+        for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 09:36:44 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794332204; x=1794937004;
+        h=content-type:to:from:subject:message-id:date:mime-version
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=o15bVl2NPmsMHAkRA8VnBe/GHoz1nq9rW0/fvlACR98=;
+        b=qAvZ6f4GjyDyXc1vZOR7tQmozDhDHUz0zRp3LgP2/VbToi8czyxy2ZeOVJgFkJloeP
+         uCKbQpsdk4H90MASamSGSwi5/BvsutsJ2kBgIT9br9aY9I2Cmjamkr2IBFCixg8IzFwD
+         Oc/9swX4EtCVUWuCZlsMPSxmqcSlhWbIIRxSjruBRbzSW9DVhETW6HCUw6khCxcbYMYH
+         qQPVDV2/7c9BjQfs6IES+HPjfFVBvXroQRMNWgpk/MM+/R78PGwOTPBeYSGHkjPGc5g2
+         NoIenmDZc45Va810wkIOZ3nGlr8gHtH+0CM12dn9lsfm/+y19nb1IX+mugZd2SEMd0bC
+         6clw==
+X-Forwarded-Encrypted: i=1; AL+hErEE1KCEcGvc3vUKe+1+zCaqAvanbWVNz4/usTGyBhU3iFsks8oyfK4aWuCklkgEuP/ZufGQOlBHpQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+ua6/AncfniqNi/SVIiLsdrKmh0T6B1yoALdM8zkwuJBMfoZ5m
+	YaYAwj/001KuXBNKEQ0NJKxE5JFCR982HLexiKAb9RRysdHC3ICzCBldoPbrvjPfTbop45gv1B+
+	/a8RiaHA6k9Gkmu4UC4D7RYvakkV2IF1+47u7vOO8Yxz/uFAJJpGtMSXyIL8=
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,106 +58,106 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-MAIL:SHSQR01.spreadtrum.com 6AAD6Kx3026716
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=unisoc.com;
-	s=default; t=1794316006;
-	bh=4to64QdWUbeKsk8keNOhIRH94BegCDTNMH9lsgOo2ro=;
-	h=From:To:CC:Subject:Date:References:In-Reply-To;
-	b=b/Xrz4GnpszI0gI9dWFVPSyGsd9Jr/b18y3TFeY+NIb9wOVzJzv+P9xeruysEY7gP
-	 nB3d29qZV9YH2WSkaPHQhnmasMANYt9+mHPg0ILZO3FZQaY82/XshVaMxyNw4arfBT
-	 T3MU+xQWrQJmVT6/flLE0HL/djGIoHCS6R6uyvlgSGP22QC8ev0ktPFZrg1AhRPZ7w
-	 GhwhyTo3aObMjX+L5w4f2D6Ka8SvPYP+vkooYLbUXMI6J8HurEhV6tEoFRrVZX4z9q
-	 ElIj2NqaZl8cl2s/G8qr1B8kq2AmlW2kfDIkkY8AiIuPOW0RnoQ56Y140i3k2LxcaD
-	 DJ8ix4zo1NWGw==
+X-Received: by 2002:a05:6808:c1cc:b0:4ea:935e:43d6 with SMTP id
+ 5614622812f47-568813afb63mr1698457b6e.45.1794332203769; Tue, 10 Nov 2026
+ 09:36:43 -0800 (PST)
+Date: Tue, 10 Nov 2026 09:36:43 -0800
+X-Google-Appengine-App-Id: s~syzkaller
+X-Google-Appengine-App-Id-Alias: syzkaller
+Message-ID: <6af3562b.17ff5aea.1b027f.0196.GAE@google.com>
+Subject: [syzbot] [dm?] WARNING in integrity_commit
+From: syzbot <syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com>
+To: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, mpatocka@redhat.com, snitzer@kernel.org, 
+	syzkaller-bugs@googlegroups.com
+Content-Type: text/plain; charset="UTF-8"
 
-Q29tbWl0IDUxYmExNGZiMzY4ZSAoImRtLXZlcml0eTogZG8gZm9yd2FyZCBlcnJvciBjb3JyZWN0
-aW9uIG9uIG1ldGFkYXRhDQpJL08gZXJyb3JzIikgaGFuZGxlcyBhIGZhaWxlZCBoYXNoIGJsb2Nr
-IHJlYWQgYnkgYWxsb2NhdGluZyB0aGUgYmxvY2sgd2l0aA0KZG1fYnVmaW9fbmV3KCkgYW5kIGRl
-Y29kaW5nIGludG8gaXQgd2l0aCB2ZXJpdHlfZmVjX2RlY29kZSgpLg0KDQpkbV9idWZpb19uZXco
-KSBpbnNlcnRzIHRoZSBidWZmZXIgaW50byB0aGUgdi0+YnVmaW8gY2FjaGUgaW1tZWRpYXRlbHks
-IHdpdGgNCm5vIEJfUkVBRElORyBzdGF0ZSBhbmQgbm8gcmVhZF9lcnJvciwgaS5lLiBpbmRpc3Rp
-bmd1aXNoYWJsZSBmcm9tIGENCnN1Y2Nlc3NmdWxseSByZWFkIGJsb2NrIHRoYXQgbWVyZWx5IGhh
-cyBub3QgYmVlbiBoYXNoLXZlcmlmaWVkIHlldC4gSXRzDQpjb250ZW50cyBhcmUgd2hhdGV2ZXIg
-dGhlIGFsbG9jYXRvciByZXR1cm5lZCAoYWxsIHplcm9lcyB3aXRoIGluaXRfb25fYWxsb2MpLA0K
-YW5kIG5vIEkvTyBpcyBldmVyIHN1Ym1pdHRlZCBmb3IgaXQuDQoNCkZFQyB0aGVuIHJlYWRzIGV2
-ZXJ5IG90aGVyIGJsb2NrIG9mIHRoZSBSUyBjb2Rld29yZCBhbmQsIGZvciBibG9ja3Mgb24gdGhl
-DQpkYXRhIGRldmljZSwgY2FsbHMgdmVyaXR5X2hhc2hfZm9yX2Jsb2NrKCkgb24gdGhlbSB0byBk
-ZWNpZGUgd2hldGhlciB0aGV5DQphcmUgZXJhc3VyZXMuIFRoYXQgd2Fsa3MgdGhlIGhhc2ggdHJl
-ZSB0aHJvdWdoIHRoZSBzYW1lIHYtPmJ1ZmlvLiBJZiBvbmUgb2YNCnRob3NlIGRhdGEgYmxvY2tz
-IGlzIGNvdmVyZWQgYnkgdGhlIGhhc2ggYmxvY2sgYmVpbmcgcmVjb3ZlcmVkIChvciBieSBhDQpk
-ZXNjZW5kYW50IG9mIGl0LCB3aGVuIGl0IGlzIGFuIHVwcGVyIGxldmVsIGJsb2NrKSwgdGhlIG5l
-c3RlZA0KdmVyaXR5X3ZlcmlmeV9sZXZlbCgpIGdldHMgdGhlIHBsYWNlaG9sZGVyIGZyb20gdGhl
-IGNhY2hlLCBoYXNoZXMgdGhlDQp1bmluaXRpYWxpemVkIGNvbnRlbnRzLCBzZWVzIGEgbWlzbWF0
-Y2gsIGNhbm5vdCByZWN1cnNlIGludG8gRkVDIGFnYWluDQooZmlvLT5sZXZlbCAhPSAwKSBhbmQg
-Y2FsbHMgdmVyaXR5X2hhbmRsZV9lcnIoKS4gV2l0aCByZXN0YXJ0X29uX2NvcnJ1cHRpb24NCnRo
-YXQgcmVib290cyB0aGUgbWFjaGluZSBvbiBhIHNpbmdsZSB0cmFuc2llbnQgcmVhZCBlcnJvciwg
-YWx0aG91Z2ggdGhlDQptZWRpYSBpcyBpbnRhY3QuDQoNCldoZXRoZXIgdGhpcyBoYXBwZW5zIGlz
-IHB1cmVseSBhIGZ1bmN0aW9uIG9mIHRoZSBnZW9tZXRyeS4gV2l0aCA0SyBibG9ja3MsDQpzaGEy
-NTYgYW5kIHJvb3RzPTIsIDI1MSBvZiB0aGUgMTc4NiBsZXZlbC0wIGhhc2ggYmxvY2tzLCBhbGwg
-bGV2ZWwtMSBibG9ja3MNCmFuZCB0aGUgcm9vdCBibG9jayBoYXZlIGEgY29kZXdvcmQgZGF0YSBi
-bG9jayB1bmRlcm5lYXRoIHRoZW0sIHNvIGFuIEkvTw0KZXJyb3Igb24gYW55IG9mIHRob3NlIHJl
-bGlhYmx5IHByb2R1Y2VzICJtZXRhZGF0YSBibG9jayBOIGlzIGNvcnJ1cHRlZCIuDQpJdCB3YXMg
-b2JzZXJ2ZWQgb24gQW5kcm9pZCBkZXZpY2VzIHdoZXJlIGEgaGFzaCByZWFkIGZhaWxlZCB3aXRo
-IC1FSU8gd2hpbGUNClVGUyB3YXMgYWxyZWFkeSBvZmZsaW5lIGR1cmluZyByZWJvb3QuDQoNCkRl
-Y29kZSBpbnRvIGEgcHJpdmF0ZSBidWZmZXIgaW5zdGVhZCBhbmQgb25seSBjb3B5IG91dCB0aGUg
-d2FudGVkIGRpZ2VzdCBvbg0Kc3VjY2Vzcy4gVGhlIHJlY292ZXJlZCBibG9jayBpcyBub3QgY2Fj
-aGVkLCBzbyBhIGxhdGVyIGFjY2VzcyB3aWxsIHJlYWQgYW5kLA0KaWYgbmVlZGVkLCByZWNvdmVy
-IGl0IGFnYWluOyB0aGF0IGlzIG9ubHkgYSBjb3N0IG9uIGRldmljZXMgdGhhdCBhcmUgYWxyZWFk
-eQ0KZmFpbGluZyByZWFkcy4NCg0KRml4ZXM6IDUxYmExNGZiMzY4ZSAoImRtLXZlcml0eTogZG8g
-Zm9yd2FyZCBlcnJvciBjb3JyZWN0aW9uIG9uIG1ldGFkYXRhIEkvTyBlcnJvcnMiKQ0KU2lnbmVk
-LW9mZi1ieTogSG9uZ3l1IEppbiA8aG9uZ3l1LmppbkB1bmlzb2MuY29tPg0KU2lnbmVkLW9mZi1i
-eTogd2VpamlhbmcuemhvdSA8d2VpamlhbmcuemhvdUB1bmlzb2MuY29tPg0KLS0tDQogZHJpdmVy
-cy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMgfCAyOCArKysrKysrKysrKysrKysrKysrLS0tLS0tLS0t
-DQogMSBmaWxlIGNoYW5nZWQsIDE3IGluc2VydGlvbnMoKyksIDExIGRlbGV0aW9ucygtKQ0KDQpk
-aWZmIC0tZ2l0IGEvZHJpdmVycy9tZC9kbS12ZXJpdHktdGFyZ2V0LmMgYi9kcml2ZXJzL21kL2Rt
-LXZlcml0eS10YXJnZXQuYw0KaW5kZXggMDhhNThhMGI1ZTQ5Li40MmVlMjRkODIzZTMgMTAwNjQ0
-DQotLS0gYS9kcml2ZXJzL21kL2RtLXZlcml0eS10YXJnZXQuYw0KKysrIGIvZHJpdmVycy9tZC9k
-bS12ZXJpdHktdGFyZ2V0LmMNCkBAIC0yNjYsMjIgKzI2NiwyOSBAQCBzdGF0aWMgaW50IHZlcml0
-eV92ZXJpZnlfbGV2ZWwoc3RydWN0IGRtX3Zlcml0eSAqdiwgc3RydWN0IGRtX3Zlcml0eV9pbyAq
-aW8sDQogfQ0KDQogaWYgKElTX0VSUihkYXRhKSkgew0KK3U4ICpmZWNfYnVmOw0KKw0KIGlmIChz
-a2lwX3VudmVyaWZpZWQpDQogcmV0dXJuIDE7DQogciA9IFBUUl9FUlIoZGF0YSk7DQotZGF0YSA9
-IGRtX2J1ZmlvX25ldyh2LT5idWZpbywgaGFzaF9ibG9jaywgJmJ1Zik7DQotaWYgKElTX0VSUihk
-YXRhKSkNCisvKg0KKyAqIFJlY292ZXIgdGhlIGhhc2ggYmxvY2sgaW50byBhIHByaXZhdGUgYnVm
-ZmVyLiAgSXQgbXVzdCBub3QgYmUNCisgKiBtYWRlIHZpc2libGUgaW4gdi0+YnVmaW8gYmVmb3Jl
-IGl0IGhhcyBiZWVuIHJlY292ZXJlZDogRkVDDQorICogdmVyaWZpZXMgdGhlIG90aGVyIGJsb2Nr
-cyBvZiB0aGUgUlMgY29kZXdvcmQgdGhyb3VnaA0KKyAqIHZlcml0eV9oYXNoX2Zvcl9ibG9jaygp
-LCB3aGljaCBtYXkgbmVlZCB0aGlzIHZlcnkgaGFzaCBibG9jaw0KKyAqIGFuZCB3b3VsZCB0aGVu
-IGhhc2ggYW4gdW5pbml0aWFsaXplZCBidWZmZXIsIHJlcG9ydGluZw0KKyAqIHNwdXJpb3VzIGNv
-cnJ1cHRpb24uDQorICovDQorZmVjX2J1ZiA9IGttYWxsb2MoMSA8PCB2LT5oYXNoX2Rldl9ibG9j
-a19iaXRzLCBHRlBfTk9JTyk7DQoraWYgKCFmZWNfYnVmKQ0KIHJldHVybiByOw0KIGlmICh2ZXJp
-dHlfZmVjX2RlY29kZSh2LCBpbywgRE1fVkVSSVRZX0JMT0NLX1RZUEVfTUVUQURBVEEsDQotICAg
-ICAgd2FudF9kaWdlc3QsIGhhc2hfYmxvY2ssIGRhdGEpID09IDApIHsNCi1hdXggPSBkbV9idWZp
-b19nZXRfYXV4X2RhdGEoYnVmKTsNCi1hdXgtPmhhc2hfdmVyaWZpZWQgPSAxOw0KLWdvdG8gcmVs
-ZWFzZV9vazsNCi19IGVsc2Ugew0KLWRtX2J1ZmlvX3JlbGVhc2UoYnVmKTsNCi1kbV9idWZpb19m
-b3JnZXQodi0+YnVmaW8sIGhhc2hfYmxvY2spOw0KLXJldHVybiByOw0KKyAgICAgIHdhbnRfZGln
-ZXN0LCBoYXNoX2Jsb2NrLCBmZWNfYnVmKSA9PSAwKSB7DQorbWVtY3B5KHdhbnRfZGlnZXN0LCBm
-ZWNfYnVmICsgb2Zmc2V0LCB2LT5kaWdlc3Rfc2l6ZSk7DQorciA9IDA7DQogfQ0KK2tmcmVlKGZl
-Y19idWYpOw0KK3JldHVybiByOw0KIH0NCg0KIGF1eCA9IGRtX2J1ZmlvX2dldF9hdXhfZGF0YShi
-dWYpOw0KQEAgLTMyMyw3ICszMzAsNiBAQCBzdGF0aWMgaW50IHZlcml0eV92ZXJpZnlfbGV2ZWwo
-c3RydWN0IGRtX3Zlcml0eSAqdiwgc3RydWN0IGRtX3Zlcml0eV9pbyAqaW8sDQogfQ0KIH0NCg0K
-LXJlbGVhc2Vfb2s6DQogZGF0YSArPSBvZmZzZXQ7DQogbWVtY3B5KHdhbnRfZGlnZXN0LCBkYXRh
-LCB2LT5kaWdlc3Rfc2l6ZSk7DQogciA9IDA7DQotLQ0KMi40My4wDQpfX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fXw0KIFRoaXMgZW1haWwgKGluY2x1ZGluZyBpdHMgYXR0YWNobWVudHMp
-IGlzIGludGVuZGVkIG9ubHkgZm9yIHRoZSBwZXJzb24gb3IgZW50aXR5IHRvIHdoaWNoIGl0IGlz
-IGFkZHJlc3NlZCBhbmQgbWF5IGNvbnRhaW4gaW5mb3JtYXRpb24gdGhhdCBpcyBwcml2aWxlZ2Vk
-LCBjb25maWRlbnRpYWwgb3Igb3RoZXJ3aXNlIHByb3RlY3RlZCBmcm9tIGRpc2Nsb3N1cmUuIFVu
-YXV0aG9yaXplZCB1c2UsIGRpc3NlbWluYXRpb24sIGRpc3RyaWJ1dGlvbiBvciBjb3B5aW5nIG9m
-IHRoaXMgZW1haWwgb3IgdGhlIGluZm9ybWF0aW9uIGhlcmVpbiBvciB0YWtpbmcgYW55IGFjdGlv
-biBpbiByZWxpYW5jZSBvbiB0aGUgY29udGVudHMgb2YgdGhpcyBlbWFpbCBvciB0aGUgaW5mb3Jt
-YXRpb24gaGVyZWluLCBieSBhbnlvbmUgb3RoZXIgdGhhbiB0aGUgaW50ZW5kZWQgcmVjaXBpZW50
-LCBvciBhbiBlbXBsb3llZSBvciBhZ2VudCByZXNwb25zaWJsZSBmb3IgZGVsaXZlcmluZyB0aGUg
-bWVzc2FnZSB0byB0aGUgaW50ZW5kZWQgcmVjaXBpZW50LCBpcyBzdHJpY3RseSBwcm9oaWJpdGVk
-LiBJZiB5b3UgYXJlIG5vdCB0aGUgaW50ZW5kZWQgcmVjaXBpZW50LCBwbGVhc2UgZG8gbm90IHJl
-YWQsIGNvcHksIHVzZSBvciBkaXNjbG9zZSBhbnkgcGFydCBvZiB0aGlzIGUtbWFpbCB0byBvdGhl
-cnMuIFBsZWFzZSBub3RpZnkgdGhlIHNlbmRlciBpbW1lZGlhdGVseSBhbmQgcGVybWFuZW50bHkg
-ZGVsZXRlIHRoaXMgZS1tYWlsIGFuZCBhbnkgYXR0YWNobWVudHMgaWYgeW91IHJlY2VpdmVkIGl0
-IGluIGVycm9yLiBJbnRlcm5ldCBjb21tdW5pY2F0aW9ucyBjYW5ub3QgYmUgZ3VhcmFudGVlZCB0
-byBiZSB0aW1lbHksIHNlY3VyZSwgZXJyb3ItZnJlZSBvciB2aXJ1cy1mcmVlLiBUaGUgc2VuZGVy
-IGRvZXMgbm90IGFjY2VwdCBsaWFiaWxpdHkgZm9yIGFueSBlcnJvcnMgb3Igb21pc3Npb25zLg0K
-sb7Tyrz+vLDG5Li9vP6+39PQsaPD3NDU1sqjrMrct6jCybGju6Syu7XD0LnCtqOsvfa3osvNuPix
-vtPKvP7L+da4zNi2qMrVvP7Iy6Gj0c+9+7fHvq3K2sioyrnTw6Gi0Pu0q6Git6KyvLvyuLTWxrG+
-08q8/rvyxuTE2sjdoaPI9LfHuMPM2LaoytW8/sjLo6zH687w1MS2waGiuLTWxqGiIMq508O78sX7
-wraxvtPKvP61xMjOus7E2sjdoaPI9M7zytWxvtPKvP6jrMfrtNPPtc2z1tDTwL7D0NTJvrP9sb7T
-yrz+vLDL+dPQuL28/qOssqLS1LvYuLTTyrz+tcS3vcq9vLS/zLjm1qq3orz+yMuho87et6ixo9ak
-u6XBqs34zajQxbywyrGhorCyyKuhos7ezvO78rfAtr6ho7eivP7Iy7bUyM66zrTtwqm++bK7s9C1
-o9TwyM6how0K
+Hello,
+
+syzbot found the following issue on:
+
+HEAD commit:    7475ea8b5861 Linux 7.4-rc2
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=135bf8ad580000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=1cf189394a856f11
+dashboard link: https://syzkaller.appspot.com/bug?extid=94dac3c75477e184f0b0
+compiler:       gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
+
+Unfortunately, I don't have any reproducer for this issue yet.
+
+Downloadable assets:
+disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-7475ea8b.raw.xz
+vmlinux: https://storage.googleapis.com/syzbot-assets/db4e8a9a4461/vmlinux-7475ea8b.xz
+kernel image: https://storage.googleapis.com/syzbot-assets/2abcfcabee20/bzImage-7475ea8b.xz
+
+AI-generated root cause summary:
+In drivers/md/dm-integrity.c, journal accounting variables (including
+ic->free_sectors, ic->free_section, and section counts) are initialized
+exclusively within replay_journal() rather than during target allocation in
+dm_integrity_ctr(). When a dm-integrity target configured in journal mode ('J')
+is resumed, dm_integrity_resume() checks whether the on-disk superblock was
+modified while suspended; if superblock_changed() evaluates to true, it logs an
+error and jumps to skip_writes, completely bypassing replay_journal(). When the
+device is subsequently suspended or receives a flush bio, integrity_commit() is
+scheduled and calls pad_uncommitted(), which validates that total journal
+sections match the sum of uncommitted, committed, and free sectors; because
+replay_journal() was skipped, these counters remain zero, causing the invariant
+check to fail and trigger the WARN_ON.
+
+full analysis:  https://syzkaller.appspot.com/x/ai_root_cause?x=94dac3c75477e184f0b0
+
+IMPORTANT: if you fix the issue, please add the following tag to the commit:
+Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+
+------------[ cut here ]------------
+ic->journal_sections * ic->journal_section_entries != (ic->n_uncommitted_sections + ic->n_committed_sections) * ic->journal_section_entries + ic->free_sectors
+WARNING: drivers/md/dm-integrity.c:2885 at pad_uncommitted drivers/md/dm-integrity.c:2885 [inline], CPU#2: kworker/2:1/64
+WARNING: drivers/md/dm-integrity.c:2885 at integrity_commit.cold+0x6/0x75 drivers/md/dm-integrity.c:2917, CPU#2: kworker/2:1/64
+Modules linked in:
+CPU: 2 UID: 0 PID: 64 Comm: kworker/2:1 Tainted: G             L      syzkaller #0 PREEMPT(full) 
+Tainted: [L]=SOFTLOCKUP
+Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
+Workqueue: dm-integrity-commit integrity_commit
+RIP: 0010:pad_uncommitted drivers/md/dm-integrity.c:2885 [inline]
+RIP: 0010:integrity_commit.cold+0x6/0x75 drivers/md/dm-integrity.c:2917
+Code: ff e9 4d b2 63 07 48 8b 7c 24 58 e8 a1 b3 23 01 e9 e7 fe ff ff 48 8b 7c 24 40 e8 92 b3 23 01 e9 21 ff ff ff e8 78 48 a9 00 90 <0f> 0b 90 41 54 8b 8c 24 d0 00 00 00 89 da 44 89 f6 41 89 d9 45 89
+RSP: 0018:ffffc90000d27a68 EFLAGS: 00010093
+RAX: 0000000000000000 RBX: 0000000000000050 RCX: 0000000000000001
+RDX: ffff8880212bcb00 RSI: ffffffff81653888 RDI: 0000000000000004
+RBP: 0000000000000050 R08: 0000000000000050 R09: 0000000000000000
+R10: 0000000000000003 R11: 000000000000776b R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000001 R15: 1ffff920001a4f6a
+FS:  0000000000000000(0000) GS:ffff8880d4671000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+CR2: 00007fd7a3d25ff8 CR3: 000000005b7c4000 CR4: 0000000000352ef0
+Call Trace:
+ <TASK>
+ process_one_work+0xac7/0x1b10 kernel/workqueue.c:3495
+ process_scheduled_works kernel/workqueue.c:3578 [inline]
+ worker_thread+0x5ef/0xe50 kernel/workqueue.c:3659
+ kthread+0x373/0x450 kernel/kthread.c:436
+ ret_from_fork+0x730/0xd60 arch/x86/kernel/process.c:158
+ ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
+ </TASK>
+
+
+---
+This report is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this issue. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+
+If the report is already addressed, let syzbot know by replying with:
+#syz fix: exact-commit-title
+
+If you want to overwrite report's subsystems, reply with:
+#syz set subsystems: new-subsystem
+(See the list of subsystem names on the web dashboard)
+
+If the report is a duplicate of another one, reply with:
+#syz dup: exact-subject-of-another-report
+
+If you want to undo deduplication, reply with:
+#syz undup
