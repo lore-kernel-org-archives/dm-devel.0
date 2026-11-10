@@ -1,81 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794263080;
-	b=sXbHUgqyX6xhgcIKyo8RxG0Q400XMM3VuCv807BHwolBxoDtQboa6YhSx9/vXoDHNt8g
-	 EsV2xuNIW1fBSk1Y+xqdMwJ2w/Q5KUqFHcZxeBnFJHmHUGW3vBUjgJMO4+MgY0V0VDCJk
-	 UjWTZWh63vVuk6w7QD38pXAS7zYnvq8JHbGM0t3aJLAwtU7bUMvkbyYvZnt8HUcbODrUo
-	 uE3gOPeKGaTUzbHsWI3kzfMw8adU6+l+7uZBzFFrCExC0mf6zqW/Ti5ADtgiA/WyW4BPt
-	 4wY4rcVqY6SoNxYtrMubw7dtcbZfQ92nLlQsvD7Bhp5G4rZbOC4KaC/8WVdbvictRqw==
+	t=1794281866;
+	b=4yzrrMccuig4C+y6Ldo31kx9OAn96UNNdZf5TQH5aKnKpA3Qu9Fs9H06Km7/SALBC+jZ
+	 aiqWPQK5oGnin2OL2hEKs1a+/n35c2LacnVj8wBg7tBwW1QBSZYJM6CFPU2fctb1QUAAq
+	 kyvUulbDfKuSDECbXVGVPm/9jzIDo5tQkyp73oDrtwc/ofWO/nMn6J4YVohafGGTaF7dY
+	 Q1m429SlvxSUxZbiDCqV1z+vqBbfAwUDJnC9UkFumCz/p+RlP2UEMXzqblqkuZkzlRzJA
+	 LIsJ93zeu4l5mxmAYuC9KoTXYm0VX5r34Nd6/reWonTito+yA942/afcSX8i3QyNwjQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794263080;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Type:Content-Disposition;
-	bh=7tPKQqP/VMOLPU/uQJd69AuBwr3eSp55T3DEMn/sbAk=;
-	b=1yuOzUWEprn7yieBLzf4UH1eyhh9stfACaDvnHk2680o6o+OJ6prTKNUZQxWZTFGF5zA
-	 khfsALiKwSB7xJ+wHes4LlZ44BTobcZK1jWzPpdDFN4I2+ejT43wt8nP8bMJ3JjMiTWNf
-	 740HAwrGyD2k8O0srFkB/h8OPZSTmP/g/AgC/puGlVoA3c0XlvfneiZ5d3JFDRhhoNDZt
-	 Y9K8c4Gy0yCCWyXwSYwV0vMM/NKjjpkB7lZzIcmebZJMMPnC5R5k3HAcgDeI/Ynzpjzcr
-	 T2lXhCpbiF/sBMEeoFY1CFNVBd6KPhzg0DeyD8tsMxIk/nwfDNoy8oAeW/MlqT9X+Ew==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794281866;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=0bFyB5NYJMmix1JXZ8Gfv/sgxvyiynVAalRHTQxAKf0=;
+	b=x9QVm96wlrXXNYunaIdENDww40d4IMCJSpf4mfGKppla76D6DerNznnswiWgYL/70UzI
+	 nx4dke747P2oVJeDCKqIrgdRg46NXL+Z6tkzxIIRKlj+BZEFn9m8sSpv9bWzeJ1WOvzgO
+	 QdlFlzUlM4A8h+hLiIXPA8w4Sdgx9Af00M0G3nOVvYtpWdj5rp9cDRukJAXuICCvopn62
+	 6alo6AuQJohXl2KL+B3hVF8DlMTXpd71WLs7L8jwle6DpoLmTqcUMbulrrZxC01w9Aqiw
+	 ITuPo+nEPtf5bF1/6TOaYEsninWsAEsEgvrwSS1oYK6fXYyd1jb4JxdWsoPMjfhwyzw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=JkFrx0DX;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="Dbx/iSV7";
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1906C606A31C
-	for <dm-devel@lists.linux.dev>; Mon,  9 Nov 2026 22:24:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1906C606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id D6DAF60A2636;
+	Tue, 10 Nov 2026 03:37:45 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=JkFrx0DX
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794263079;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=7tPKQqP/VMOLPU/uQJd69AuBwr3eSp55T3DEMn/sbAk=;
-	b=JkFrx0DXhGEFQRq3UG6L61715qtWS9/Fvz3T+xVVH2VpEcIrVH8C2IosgR7Ol8oM+SlT+m
-	3KY3gBPLRTRvA0De5nMvqwF7Hh7kca5SCtWOZrjPe6uMRxoDM3jwRn+lWpeUCkMk6yvSOO
-	LyaqLqxc0Z8mPbaq8VWKN3U4pJqPqXs=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-642-sKXScFhLMzWYAgyfLYze4A-1; Mon,
- 09 Nov 2026 17:24:35 -0500
-X-MC-Unique: sKXScFhLMzWYAgyfLYze4A-1
-X-Mimecast-MFC-AGG-ID: sKXScFhLMzWYAgyfLYze4A_1794263074
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 0AF08180047A;
-	Mon,  9 Nov 2026 22:24:34 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 80CE41956086;
-	Mon,  9 Nov 2026 22:24:33 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6A9MOWrP637820
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 9 Nov 2026 17:24:32 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6A9MOV2l637815;
-	Mon, 9 Nov 2026 17:24:31 -0500
-Date: Mon, 9 Nov 2026 17:24:31 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Brian Bunker <brian@purestorage.com>
-Cc: dm-devel@lists.linux.dev, mwilck@suse.com, christophe.varoqui@opensvc.com
-Subject: Re: [PATCH v3 1/1] multipathd: check re-added paths' WWIDs against
- sysfs
-Message-ID: <avJIHyW4teKMrmM_@redhat.com>
-References: <20261109185556.27139-1-brian@purestorage.com>
- <20261109185556.27139-2-brian@purestorage.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Dbx/iSV7
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id D35021F008A1;
+	Tue, 10 Nov 2026 03:37:44 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1794281865;
+	bh=0bFyB5NYJMmix1JXZ8Gfv/sgxvyiynVAalRHTQxAKf0=;
+	h=From:To:Cc:Subject:Date;
+	b=Dbx/iSV7cTFsIAJDznLTkufVlrkOhnjBV1cdey+SDcIKfykuCIOCznQDmK8cIGAKr
+	 XHRMOyPCAPRzSfBFKQuEbYxApURNV+VZZKudQVp3kvp552SweD9kMHWZ8ULW1DmDXu
+	 CC23s60NtKoKlZ6YzaXKXjW1mpq8UtU2fUfYeL/5hNf3Bm298a+LeZKmvbnMsQw84x
+	 9zjvupy5vLzpgptoLwZDevpW8tSJIBaDDBx2zq5LUUnJN3TAmAy3/ZpVHO/lfZ0tJL
+	 gefEPFVeOEQ93XKdJ/5S4C5N2qEVK16EMI6EUf1qwVxBouuRLCUoyS9qCbUkklg45k
+	 ByB2IbA7lGjfw==
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
+	bpf@vger.kernel.org,
+	dm-devel@lists.linux.dev,
+	fsverity@lists.linux.dev,
+	keyrings@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Alexei Starovoitov <ast@kernel.org>,
+	Alex Shi <alexs@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Dongliang Mu <dzm91@hust.edu.cn>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Emil Tsalapatis <emil@etsalapatis.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Ignat Korchagin <ignat@linux.win>,
+	Ihor Solodrai <ihor.solodrai@linux.dev>,
+	James Morris <jmorris@namei.org>,
+	Jiri Olsa <jolsa@kernel.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Song Liu <song@kernel.org>,
+	"Theodore Y. Ts'o" <tytso@mit.edu>,
+	Yanteng Si <si.yanteng@linux.dev>,
+	Yonghong Song <yonghong.song@linux.dev>
+Subject: [PATCH v7 0/3] KEYS: Replace assoc_array with rhashtable
+Date: Tue, 10 Nov 2026 05:37:35 +0200
+Message-ID: <20261110033738.2495880-1-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,45 +91,166 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <20261109185556.27139-2-brian@purestorage.com>
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: ploa6nVQZvWIrQQMwkn8J54nJqJIr-lDQVLS-Xq_mBM_1794263074
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-On Mon, Nov 09, 2026 at 10:55:55AM -0800, Brian Bunker wrote:
-> multipathd takes a path's WWID from udev. When a change uevent reports
-> a different WWID, uev_update_path() removes the path from its map and
-> re-adds it through uev_add_path(), which places it in whatever map owns
-> the new WWID. If the udev value is wrong, or the uevent is stale by the
-> time it is processed, the path goes into the map of a different LUN and
-> I/O for one LUN is silently sent to another.
-> 
-> Before such a re-add puts the path into a map, compare its WWID with
-> one built from the VPD page 0x83 data the kernel caches in sysfs. If
-> they differ, leave the path out of the map: orphan it, clear its WWID
-> and mark it INIT_MISSING_UDEV, so the checker retriggers udev and the
-> path is re-added from fresh data. This reads no data from the device,
-> so it can't hang. The check only runs for paths where
-> can_recheck_wwid() is true, where the udev WWID and the one built from
-> sysfs come from the same designator selection.
-> 
-> To tell re-adds from ordinary adds, turn the need_do_map argument of
-> uev_add_path() and ev_add_path() into enum path_add_mode, with a new
-> PATH_ADD_REINIT value that behaves like PATH_ADD_MAP and is passed only
-> for the re-add at the end of uev_update_path(). Ordinary adds are
-> unchanged.
-> 
-> Add get_sysfs_wwid() to libmultipath. It shares get_vpd_uid() and the
-> WWID clean-up in get_uid() with the existing sysfs fallback, so both
-> build the WWID the same way.
-> 
-> Signed-off-by: Brian Bunker <brian@purestorage.com>
+The keyrings subsystem is the sole user of assoc_array. It has over 1700
+lines of code, no test suite, and a long history of bugs, with LLMs now
+finding more.
 
-I'm interested in seeing if this resolves Martin's issues, but as
-far as I'm concerned:
+This unfortunate outcome has evolved over time by large from the shortage
+of in-kernel callers, time bandwidth and 3rd party contributors.  What the
+keyrings subsystem needs is just a generic key-value store, which performs
+well with sparse key sets. Replace assoc_array with an rhashtable-backed
+keyring index and remove assoc_array from the kernel.
 
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
+CHANGES
+=======
+
+v7:
+- Rebased.
+
+v6:
+- Eric Biggers: Set .insecure_elasticity = true in keyring_link_params and
+  drop the -EBUSY retry loop in __key_link_begin().
+- Addeded Reviewed-by's from Eric Bigger and Ignat Korchagin.
+
+v5:
+- Eric Biggers: Include <linux/jhash.h> explicitly in keyring.c.
+- Eric Biggers: Document why hashing type/domain_tag pointers with SipHash
+  and truncating the digest to 32 bits are safe.
+- Eric Biggers: Rework the commit message for "KEYS: Replace assoc_array
+  with rhashtable", including behavioral and operational changes.
+- Retry rhashtable_insert_fast() on transient -EBUSY in __key_link_begin().
+
+v4:
+- Eric Biggers: Correct the kerneldoc summary for keyring_is_empty().
+- Eric Biggers: Truncate keyring_index_key hash to u32 and drop index_id.
+- Eric Biggers, David Howells: Use a proper struct instead of a two-element
+  array to pass the edits.
+- Eric Biggers: __keyring_link(): Call key_put() in the rollback of
+  rhashtable_replace_fast().
+- Eric Biggers: Retract from using __free(kfree) in keyring_get_index().
+- Eric Biggers: Reuse keyring_link_key() in keyring_obj_cmpfn().
+- Eric Biggers: Document why keyring_index_free() uses queue_rcu_work().
+- Eric Biggers: Fix the commit message for "KEYS: Replace assoc_array with
+  rhashtable".
+
+v3:
+- Since David is away for the next week I decided to address the
+  low hanging fruit that I reported myself.
+- Unified and sanitized function and variable naming and removed
+  unnecessary asymmetry e.g., by renaming keyring_remove_all_links
+  as keyring_index_free, 'links' as 'index' and '_edit' as 'edit'.
+- Flattened the implementation by refactoring out some useless
+  wrappers and other constructs.
+- Addressed continuation after triggered WARN_ON() on at the three
+  sites that I've described in my email response to the previous
+  patch set version.
+- Reworked keyring_read() so that it triggers the scheduler between
+  the iterations.
+- Dropped "Assisted-by: LLM" tag because checkpatch.pl told me so.
+
+v2:
+- Tried to address all the issues pointed out by David and Eric. Tell me
+  if something was ignored, as that would be an unintentional mishap.
+- Updated and trimmed the source code comments.
+- For assoc_array_edit I decided to go with two-element pointer array,
+  which shifts a bit what David suggested.
+- Dropped is_keyring flag. It was so obvious call so I mention it here
+  just in case because too obvious maxes out my self-doubt ;-)
+- Used cleanup.h primitives where I possibly could especially in order
+  to make fallible initializations more bug-resistant.
+- The already-ack'd bug fixes are included but will be dropped as soon
+  as I've sent them over to Linus.
+
+VERSIONS
+========
+
+- v6:
+  https://lore.kernel.org/keyrings/20261107195605.3929659-1-jarkko@kernel.org/
+- v5:
+  https://lore.kernel.org/keyrings/20261105031401.956609-1-jarkko@kernel.org/
+- v4:
+  https://lore.kernel.org/keyrings/20261029232437.2581640-1-jarkko@kernel.org/
+- v3:
+  https://lore.kernel.org/keyrings/20261025001105.1824178-1-jarkko@kernel.org/
+- v2:
+  https://lore.kernel.org/keyrings/20261023120953.1206778-1-jarkko@kernel.org/
+- v1:
+  https://lore.kernel.org/keyrings/20261016215326.4110064-1-jarkko@kernel.org/
+
+Cc: bpf@vger.kernel.org
+Cc: dm-devel@lists.linux.dev
+Cc: fsverity@lists.linux.dev
+Cc: keyrings@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-kselftest@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Alexei Starovoitov <ast@kernel.org>
+Cc: Alex Shi <alexs@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Andrii Nakryiko <andrii@kernel.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Dongliang Mu <dzm91@hust.edu.cn>
+Cc: Eduard Zingerman <eddyz87@gmail.com>
+Cc: Emil Tsalapatis <emil@etsalapatis.com>
+Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Ignat Korchagin <ignat@linux.win>
+Cc: Ihor Solodrai <ihor.solodrai@linux.dev>
+Cc: James Morris <jmorris@namei.org>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Jiri Olsa <jolsa@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Kumar Kartikeya Dwivedi <memxor@gmail.com>
+Cc: Martin KaFai Lau <martin.lau@linux.dev>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Paul Moore <paul@paul-moore.com>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Song Liu <song@kernel.org>
+Cc: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: Yanteng Si <si.yanteng@linux.dev>
+Cc: Yonghong Song <yonghong.song@linux.dev>
+
+Jarkko Sakkinen (3):
+  KEYS: Introduce keyring_is_empty()
+  KEYS: Replace assoc_array with rhashtable
+  lib: Remove assoc_array
+
+ Documentation/core-api/assoc_array.rst        |  564 ------
+ Documentation/core-api/index.rst              |    1 -
+ .../zh_CN/core-api/assoc_array.rst            |  473 -----
+ .../translations/zh_CN/core-api/index.rst     |    1 -
+ drivers/md/dm-verity-verify-sig.c             |    2 +-
+ fs/verity/signature.c                         |    2 +-
+ include/keys/keyring-type.h                   |    1 -
+ include/linux/assoc_array.h                   |   88 -
+ include/linux/assoc_array_priv.h              |  178 --
+ include/linux/key-type.h                      |    1 -
+ include/linux/key.h                           |   29 +-
+ kernel/bpf/keys.c                             |    2 +-
+ lib/Kconfig                                   |   14 -
+ lib/Makefile                                  |    1 -
+ lib/assoc_array.c                             | 1724 -----------------
+ security/keys/Kconfig                         |    1 -
+ security/keys/internal.h                      |   14 +-
+ security/keys/key.c                           |   22 +-
+ security/keys/keyring.c                       |  994 +++++-----
+ security/keys/request_key.c                   |    8 +-
+ .../dm-verity/test-dm-verity-keyring.sh       |    2 +-
+ 21 files changed, 479 insertions(+), 3643 deletions(-)
+ delete mode 100644 Documentation/core-api/assoc_array.rst
+ delete mode 100644 Documentation/translations/zh_CN/core-api/assoc_array.rst
+ delete mode 100644 include/linux/assoc_array.h
+ delete mode 100644 include/linux/assoc_array_priv.h
+ delete mode 100644 lib/assoc_array.c
+
+--
+2.47.3
 
