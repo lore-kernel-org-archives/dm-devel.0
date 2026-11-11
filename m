@@ -1,91 +1,82 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794425724;
-	b=MNuRhFwHNa1bDDpStvlBhsL9Ne9K72MCYlPfqfy51DVlC2LqtSkEhXQAKt9sShaxGUIo
-	 O8hKTYP/qbsQHymKP1DG0EUW4ABtfH8Q1HiUXJfyl0jY1nPZUVN+xgWFSK6f0nXv6D1wq
-	 aD0XEV0hyAZpJ2MrTedZoxJH3HiTGbuVsr7HTwno5ujC/Wjif1IT8hd5GaxnZHT8T00TX
-	 PG7Gt1YfIRo40ugZirT/Tb5QNiMBtm6cxzuzqjYlgG6+fq0VeF+pPU54s2owN1wkAvoDh
-	 F9H5QURWIu56pfpYRP6Q0rsAOdTUOsh+liAPlaCpooilM7PbzMJgZgL/C7rIZt0EmGQ==
+	t=1794437351;
+	b=ZPqJuGDpJ/ccfNvCjwFzSntpoTG3j8mSDKB4R7qE71B1R6f4gDgTRuC2KRRWJkl19lE8
+	 ATUZuOhHEpjtrT6vuGKvtr4RdpDAY8ggsWEt5CDXfAtTqk74Cl6VMKzx/QIzXjaOU+UvU
+	 ac3P5tf6xjmsgFhZc6J+HACeJt7NEF5vfl4Rq8MTvtMXkMQKkzaWg/d/YKGwmUtprTv7C
+	 0Ice5ETr/FnI5VNGVJFqL8bNOf87Oc0clbrpu3tOVjPclMnCW/1IVsgW46za5p/otxCIw
+	 u0+5pjyCAdoOZF2G6dguRVxUH3eON+epxmfOg7BvH1gcioegsj8Huo2Yb2FvpV1HLpQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794425724;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
-	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Spam-Flag:X-Spam-Level:X-Spamd-Result:X-Spam-Score;
-	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
-	b=ytZJ/JIlcpwW/8Gb5R2+O9Of4/Ar2G8nwAR2ZvZNB6VSHIe6EUZcu72QhYjsmpA7kemt
-	 Qf+kKjr+ulRu2XF/I9UGiZIO+EuJBPh9YPqt3ghexBLUJZSl8CDYsbFt1e6dpsgFrhm6O
-	 qer2gkztJ4NVblGZf329CFfs6Vy8JGCPriDNYgaJJ+3lyDz+H2+eLSqpGgZtZ6edwEMbZ
-	 2q8+TSL01J4fDoa25npSUEFngId+Bwt4AkAoNW9nL0K0k10/K5EDRehgspfHCzypNYj2i
-	 LpxCiNHbjCTfMBiEtX95PyJLtKRS8KEuxAx9yHiRM6nY9UuI+pooX19iixgMcN9CuWQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794437351;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Type:Content-ID;
+	bh=dILnRP6xZJSP5ToPH2VAbSM+GwjL5HzfR1JP6IvWMxA=;
+	b=AR1BQsKcW9mTbPEDPN9GaHJ+D0z6U5c/N1i+wxvi/j73pqcuNNQWntPNme8/Gjzsv3/2
+	 OtXkKphbJwh9jZTv3R3BBCj9zrGbsTiDoIHEZWr7kCgVm0LeORkLNpEuF+GAnmePwDsNr
+	 H2pLVRJysyimslbkl5GfdHq/sxWcfUxuHrngizZiwpGLVPnilZjTwW8dJ8WvK2nPCRKlF
+	 VVrn4lReakfQVf43fAcdlgA/vjoNn7Q/IJC1bT7atETPdVJEFiJQg8Dy9KCqpNXagS97J
+	 YIwUgU6ayvfpyzg+CfyqdmM3AX3tdyrjs3o04MLHnOsLNTpphHqDD5ossvN+0DgVdtQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Ic20LHky;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5ED52606A31C
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 19:35:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5ED52606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 33213606AECB
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 22:49:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 33213606AECB
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 9361E21DEF;
-	Wed, 11 Nov 2026 19:35:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794425721; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Ic20LHky
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794437350;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
-	b=pnAGHBBzeTBWYP0YAEsQ9qk8MJeNRC7jZX/vPs5Wx4iNxFoop4nFhnW7kSPdN01kB2rJ5l
-	kWCSrjBvmyM3rgAHvv+hiHmnL9VJo8LluKrCVLsplXO/cMbCqqEJ2e5QVZ9Eyw/HJLq4hz
-	QVq2F7wAL4YyiEWMhXsRJu07x0O66pM=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794425721; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
-	b=pnAGHBBzeTBWYP0YAEsQ9qk8MJeNRC7jZX/vPs5Wx4iNxFoop4nFhnW7kSPdN01kB2rJ5l
-	kWCSrjBvmyM3rgAHvv+hiHmnL9VJo8LluKrCVLsplXO/cMbCqqEJ2e5QVZ9Eyw/HJLq4hz
-	QVq2F7wAL4YyiEWMhXsRJu07x0O66pM=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	bh=dILnRP6xZJSP5ToPH2VAbSM+GwjL5HzfR1JP6IvWMxA=;
+	b=Ic20LHkyBGl7V3xTFzm4VTfJLF4sIvsPUjp0C+zduo4azKmmVLZB0AI4XTdIIwJddTlZr+
+	bZjHLFKm8iqrUKtr3hmmAJBGjil0jtCJXtZgek2oDFOARSQ1058bf/HPJqwfudYcREj5Al
+	gM2N/j7o15MUfM/FRug9vzPag7d7u50=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-692-KkYq2CQvNHWCAhvXU0hNbA-1; Wed,
+ 11 Nov 2026 17:49:04 -0500
+X-MC-Unique: KkYq2CQvNHWCAhvXU0hNbA-1
+X-Mimecast-MFC-AGG-ID: KkYq2CQvNHWCAhvXU0hNbA_1794437343
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5B0F21339F;
-	Wed, 11 Nov 2026 19:35:21 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id hgPaDHnD9GrqRQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 11 Nov 2026 19:35:21 +0000
-Message-ID: <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
-Subject: Re: [PATCH v3 0/1] multipathd: check re-added paths' WWIDs against
- sysfs
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, dm-devel@lists.linux.dev
-Date: Wed, 11 Nov 2026 20:35:20 +0100
-In-Reply-To: <20261111174259.41911-1-brian@purestorage.com>
-References: <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com>
-	 <20261111174259.41911-1-brian@purestorage.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 3C25F1956095;
+	Wed, 11 Nov 2026 22:49:03 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id B455C30000E8;
+	Wed, 11 Nov 2026 22:48:59 +0000 (UTC)
+Date: Wed, 11 Nov 2026 23:48:56 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: =?GB2312?Q?=D6=DC=CE=B0=BD=AD_=28Weijiang_Zhou=29?= <weijiang.zhou@unisoc.com>
+cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Sami Tolvanen <samitolvanen@google.com>, 
+    =?GB2312?Q?=BD=F0=BA=EC=D3=EE_=28Hongyu_Jin=29?= <hongyu.jin@unisoc.com>, 
+    =?GB2312?Q?=CE=E2=CF=E9=C2=BB_=28Xianglu_Wu=29?= <Xianglu.Wu@unisoc.com>, 
+    =?GB2312?Q?=CE=E2=D6=DC=BE=B5_=28Justin_Wu=29?= <Justin.Wu@unisoc.com>, 
+    "dhavale@google.com" <dhavale@google.com>, 
+    "ebiggers@google.com" <ebiggers@google.com>
+Subject: Re: [RFC PATCH 2/2] dm-verity: don't restart or panic on errors
+ during system shutdown
+In-Reply-To: <179436615561.34024.4719948965871294246@unisoc.com>
+Message-ID: <a3dcb9a9-d722-729b-0e50-53629cb07847@redhat.com>
+References: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com> <9cc9b5c7460d4b0db002e7954b2eb893@zeshmbx08.spreadtrum.com> <5587e2d9-3286-b867-254a-035543e284cd@redhat.com> <179436615561.34024.4719948965871294246@unisoc.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -95,147 +86,127 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Spamd-Result: default: False [-13.30 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_TLS_ALL(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_COUNT_TWO(0.00)[2];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Score: -13.30
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Ay2ELJdCK7JC-5ehzX2nxp5p1U407B4KRln5X2IlM9w_1794437343
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; BOUNDARY="-1463801984-1409295983-1794426023=:1126394"
+Content-ID: <f29e6b85-a5ac-06fa-68c9-c4ecddb8534c@redhat.com>
 
-On Wed, 2026-11-11 at 09:42 -0800, Brian Bunker wrote:
-> On Tue, 2026-11-10, Martin Wilck wrote:
->=20
->=20
-> > IMO, if we can't trust the reply of the storage array, all bets are
-> > off. Why would the reply that multipathd obtains directly be more
-> > trustworthy than what scsi_id had got?
->=20
-> It isn't more trustworthy, it's newer. The sequence on the host was:
-
-Right, but "newer" doesn't mean "more accurate".=C2=A0You write below that
-there is no indication that anything actually changed, so time
-shouldn't be a factor. If a wrong VPD reply is possible once, it can
-also occur multiple times. If it's just an unlikely failure, a purely
-stochastical thing, it would help to simply repeat the same request; if
-the probability for error is 1e-4, the probability for two errors in
-succession would be 1e-8. However we don't know if it's stochastical.
-
->=20
-> =C2=A0 09:26:34.808=C2=A0 udev change event for sdq; ID_SERIAL is verify1=
-'s
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 WWID
-> =C2=A0 09:26:34.833=C2=A0 uev_update_path() sees the change and calls
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 ev_remove_path(); the reload of verify3's map then
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 blocks in the resume until in-flight I/O drains
-> =C2=A0 09:26:39.221=C2=A0 the reload completes; sdq is freed
-> =C2=A0 09:26:39.235=C2=A0 uev_update_path() calls uev_add_path() with the=
- same
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 uevent, and sdq goes into verify1's map
-> =C2=A0 09:26:39.379=C2=A0 next change event for sdq; ID_SERIAL is verify3=
-'s
-> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0 WWID again
->=20
-> So the add acted on an answer that was 4.4 seconds old. An INQUIRY at
-> the time of the add would have reflected what the device said then,
-> and the one 140 ms later was correct. The check doesn't help against
-> storage that keeps giving the wrong answer. It stops multipathd from
-> moving a path into another LUN's map on an old answer.
-
-Well you keep telling me that newer =3D=3D better. Maybe you are right. We
-can neither prove nor disprove that with the material we have.
-
-> > One possible case for a WWID change is that a
-> > a Linux SCSI disk is removed, and another disk is added later,
-> > taking
-> > over the previous device's dev_t.
-> [...]
-> > This sounds as if the WWID of sdq was that of "verify3", then
-> > "verify1", and then "verify3" again.
->=20
-> That's what happened, and it wasn't a remove and add. The kernel log
-> shows no SCSI device removed or added in that window, and sdq stayed
-> 2:0:0:8 (65:0) throughout. Only that one udev event carried the wrong
-> WWID.
-
-Weird. Gamma radiation maybe? ;-)
-
-> > Question about your test: Apparently the problem is reproducible,
-> > otherwise you wouldn't be able to verify your patch. But you said
-> > "we
-> > have no packet capture".
->=20
-> I should have been clearer: we've seen it once. We haven't reproduced
-> it. We've been running a v1-style patch on our test initiators since,
-
-If it was my choice, I'd prefer repeating the test with the unpatched
-code, but additional debugging instrumentation, in the hope to obtain
-more insight into what actually happened.
-
-> and it hasn't recurred, but at this rate that doesn't tell us much.
-
-I'd go one step further and say that it tells us nothing at all. You
-would need to be able to reproduce the issue in a well-defined time
-frame in order to do a test that gives at least some confidence that
-your patch fixed it.
-
-However from the time line you provided, it makes sense that your patch
-would have been effective in the error case.
-
-Regards,
-Martin
-
-> We've also changed our test tool to open the devices read-only, which
-> removes the flood of change events that made the window likely in the
-> first place. I'd like to get a capture, but I can't promise we'll
-> reproduce it.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463801984-1409295983-1794426023=:1126394
+Content-Type: text/plain; CHARSET=GB2312
+Content-Transfer-Encoding: 8BIT
+Content-ID: <5c16abd2-59f9-9579-37e9-d3722b99a21e@redhat.com>
 
 
 
->=20
-> > With this in mind, I suggest that you go back to v2 and SG_IO.
-> [...]
-> > I further suggest that you make this code
-> > path conditional on "recheck_wwid".
->=20
-> Will do; Ben suggested the same. v4 does the SG_IO check only on
-> PATH_ADD_REINIT, only when recheck_wwid is set, and drops the
-> uev_update_path() check from v2.
->=20
-> > In the long run, we may want to redesign our WWID detection. We do
-> > have
-> > a general framework for asynchronous jobs now. Thus we actually
-> > could
-> > run asynchronous VPD inquries.
->=20
-> That sounds like the right direction, and I'd be glad to help with
-> it.
->=20
-> Brian
+On Wed, 11 Nov 2026, 周伟江 (Weijiang Zhou) wrote:
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
+> Hi Mikulas,
+> 
+> thanks for the review, and sorry about the TABs.  They were not lost while
+> composing: the message left my client intact, and the rich-text path of our
+> corporate mail setup re-encoded the text part on the way out, dropped every
+> TAB and reflowed the long lines.
+> 
+> I have moved to a submission path that hands the MIME to the server byte for
+> byte, and checked the round trip through a mailbox first.  The patch below is
+> the same patch, unchanged - no code was touched since your review, only the
+> whitespace is back.
+> 
+> Thanks,
+> Weijiang
+
+Hi
+
+This email has deleted TABs too.
+
+I applied the patch manually, no need to resend it.
+
+Mikulas
+
+> Commit 252bd1256396 ("dm verity: skip verity work if I/O error when system
+> is shutting down") stopped I/O errors during shutdown from triggering a
+> restart, since devices may legitimately be gone by then. Errors that reach
+> verity_handle_err(), e.g. through a failed hash block read followed by a
+> failed FEC attempt, are not covered and still call kernel_restart() or
+> panic().
+> 
+> During a reboot that is both wrong (nothing is corrupt) and harmful: it
+> races with the reboot already in progress and replaces its reason with
+> "dm-verity device corrupted", which bootloaders such as Android's treat as
+> a verity failure and switch the device to EIO mode.
+> 
+> Apply the same shutdown check in verity_handle_err(). Corruption is still
+> logged, recorded in hash_failed and reported via uevent, and the I/O still
+> fails.
+> 
+> Signed-off-by: Hongyu Jin <hongyu.jin@unisoc.com>
+> Signed-off-by: weijiang.zhou <weijiang.zhou@unisoc.com>
+> ---
+>  drivers/md/dm-verity-target.c | 27 ++++++++++++++++++---------
+>  1 file changed, 18 insertions(+), 9 deletions(-)
+> 
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 42ee24d823e3..756f1202490b 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
+> @@ -169,6 +169,15 @@ static void verity_hash_at_level(struct dm_verity *v, sector_t block, int level,
+>  *offset = idx << (v->hash_dev_block_bits - v->hash_per_block_bits);
+>  }
+> 
+> +/*
+> + * Skip verity work in response to I/O error when system is shutting down.
+> + */
+> +static inline bool verity_is_system_shutting_down(void)
+> +{
+> +return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
+> +|| system_state == SYSTEM_RESTART;
+> +}
+> +
+>  /*
+>   * Handle verification errors.
+>   */
+> @@ -216,6 +225,15 @@ static int verity_handle_err(struct dm_verity *v, enum verity_block_type type,
+>  if (v->mode == DM_VERITY_MODE_LOGGING)
+>  return 0;
+> 
+> +/*
+> + * Devices may already be quiesced (e.g. UFS set offline by its
+> + * shutdown hook), so a failure here does not imply corruption.  Fail
+> + * the I/O but do not restart or panic, which would also override the
+> + * reboot reason of the shutdown already in progress.
+> + */
+> +if (verity_is_system_shutting_down())
+> +return 1;
+> +
+>  if (v->mode == DM_VERITY_MODE_RESTART)
+>  kernel_restart("dm-verity device corrupted");
+> 
+> @@ -598,15 +616,6 @@ static int verity_verify_io(struct dm_verity_io *io)
+>  return r;
+>  }
+> 
+> -/*
+> - * Skip verity work in response to I/O error when system is shutting down.
+> - */
+> -static inline bool verity_is_system_shutting_down(void)
+> -{
+> -return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
+> -|| system_state == SYSTEM_RESTART;
+> -}
+> -
+>  static void restart_io_error(struct work_struct *w)
+>  {
+>  kernel_restart("dm-verity device has I/O error");
+> --
+> 2.43.0
+> ________________________________
+>  This email (including its attachments) is intended only for the person or entity to which it is addressed and may contain information that is privileged, confidential or otherwise protected from disclosure. Unauthorized use, dissemination, distribution or copying of this email or the information herein or taking any action in reliance on the contents of this email or the information herein, by anyone other than the intended recipient, or an employee or agent responsible for delivering the message to the intended recipient, is strictly prohibited. If you are not the intended recipient, please do not read, copy, use or disclose any part of this e-mail to others. Please notify the sender immediately and permanently delete this e-mail and any attachments if you received it in error. Internet communications cannot be guaranteed to be timely, secure, error-free or virus-free. The sender does not accept liability for any errors or omissions.
+> 本邮件及其附件具有保密性质，受法律保护不得泄露，仅发送给本邮件所指特定收件人。严禁非经授权使用、宣传、发布或复制本邮件或其内容。若非该特定收件人，请勿阅读、复制、 使用或披露本邮件的任何内容。若误收本邮件，请从系统中永久性删除本邮件及所有附件，并以回复邮件的方式即刻告知发件人。无法保证互联网通信及时、安全、无误或防毒。发件人对任何错漏均不承担责任。
+> 
+
+---1463801984-1409295983-1794426023=:1126394--
+
