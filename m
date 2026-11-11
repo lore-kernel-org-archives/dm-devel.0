@@ -1,87 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794392354;
-	b=L9SqiqQJx1PKE5KLJkzmQ70JpO7xdLGeOVU4k2864nCcXZ58FCBKWvxiyohIs4Gp51MJ
-	 PwE7jqUHUw9LkW7wMePIML87dtt8TLXt/GoFB0YEo2lA67QaSb85bW7Lqg1q/n4k4vQMi
-	 pgFua3PhKLMInnrEu+2B3bsvDtRKjSRm+HXMWxYPLbi9+AznrcBKI8AIPMpoYsVaHtkeU
-	 pAVl8KbsM4WXE+7v3LVkh8jYBLc/dtCt+0Z18/MyQuyt+vNT8beGEzMf5G537mN+j7yMh
-	 eGdzWoNo/fWVRGXzMkP1LZF+xRnB8SfsyJguqUuT1RR3/9YBDw+GP5XVtx5mC/7J9tg==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794392354;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.231.200
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1794400175;
+	b=ufhlzneHQ4XhzVkC+PdVL31jpX3HlyUgMZRPTikHhq6d9wTLsfdNZCxs36pUw7OeO+kT
+	 K7aXTdDt5qPYFO0nM8th9m9I9WLtglsgptcej5OgLFc86hRZOmXpCjZBYF8BZTeEo5DvO
+	 wEFAQtqf3Eo0lEt4jKSR3MKRFJMkrUzmBXWJe+KtTM60OcC19YQttLwOA7Qkib6maXXDz
+	 77tM/3sISd9IxQsBdZAXTPzyvRw5PE9lwjp+VftuBlI2FmYWf1BRQPcKo1FePZiJq0Qei
+	 HXq3dZrSxNmrmFi3WqXsYPseEHKoAC6LqpsxAxSgEtvJwmCjqwkv6patvvrW8EpF9Gw==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794400175;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
-	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=3E50XU3DuowBBTFEZTbbcP4lzUUBRzqdIlBd+nfLf00=;
-	b=4v2NtzBiF+vVsDCrMJZfNt/brmBTQJub9rIEGh3Y1O9i6MKqBsWmR8xGyxMnYIhGJBEu
-	 ssA25y0DvFIF3/fJUVnbLb9yr15nQ6a4F0HV1rgdJvwAK+7iV0xHjj4gOSk7uVl1VLfF1
-	 vR67kLyE3t+Y63QaFOVLI4B9QrWpe0WnDXVVXCJB2Rweq2uDQEMCJ6zhzyJhAntOGK4tG
-	 mfjo96m9Qg90ZHUr0ZDNgSeLBl2Wm7jGWvlSo1eS3rz6c8SW6zIGBS3e7YaQ7pA+sm4GJ
-	 yo86Fftfglzn+ouD0CMRX0m6u+UmyxTQafPe8hnjvQbAArHu0weG5rniEGgGFngfHKg==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=AWzD7HiW;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type;
+	bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
+	b=mChThIHTv4IEqxdE8ZSDFHIDWpM1eLfXF0zcjdlhDuysS3HCrSpJXPnmmV7gL4hPjMBB
+	 Ol/B4AN3kshyG7kvocCWoOceXSKGNE0eFO0GOqEnnqNu9NODzBqj7jx4BhYpxc5p6dkD+
+	 yqvcXYyyqtSdd7j6Up6cBSDkY/B2onDJ688optHXd+tBy5eFWl9B8pB9MMfMoJJASmYvS
+	 GivJxqLGJ+PbCeL3rIqFcxpX2E/H/PU2AacMo5RlBzlPCEfgZZbhDn83v84JCJpXDt1aA
+	 WaR5LfqAv4D2DeR9AnNXFGw0g/bCSY0ohTLPKMErlcLd4MBbGqlkv/Bnm47W0PSuAgQ==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=kv030Y1+;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.231.200
+Received: from mail-oi2-f8.google.com (mail-oi2-f8.google.com [74.125.231.200])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 52E44606A32E
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 10:19:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 52E44606A32E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C4F4606A33A
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 12:29:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1C4F4606A33A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=AWzD7HiW
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794392353;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=3E50XU3DuowBBTFEZTbbcP4lzUUBRzqdIlBd+nfLf00=;
-	b=AWzD7HiW72dtC8rlBpLFtWisK7DtALqqn2Pe28S2tqdUw7Y/0qNNP9+awyQRBjznCeWfcG
-	IQhMyXVisBkSDKbpyamVhisEr3I4J3ThaFoflY+qwxt+oyddMky+SwDe34X19R2Znm3CDg
-	MrKh3WsjDqM39nVIisUr9QfL7SoemA8=
-Received: from mail-lj1-f200.google.com (mail-lj1-f200.google.com
- [209.85.208.200]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-689-6c10otalNf6-HNJe5ii16A-1; Wed, 11 Nov 2026 05:19:11 -0500
-X-MC-Unique: 6c10otalNf6-HNJe5ii16A-1
-X-Mimecast-MFC-AGG-ID: 6c10otalNf6-HNJe5ii16A_1794392350
-Received: by mail-lj1-f200.google.com with SMTP id 38308e7fff4ca-3acd67793f2so13007631fa.2
-        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 02:19:11 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794392350; x=1794997150;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=kv030Y1+
+Received: by mail-oi2-f8.google.com with SMTP id 5614622812f47-539edfadfa9so1119939b6e.0
+        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 04:29:34 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1794400174; cv=none;
+        d=google.com; s=arc-20260327;
+        b=MIXX3TyEoUHtqv5tXJa3mvn24RsuW0jl7U4r8tiw1rxn7g5DSOuWum7jXxALN+pASJ
+         /gqkGAMSVcZDmOIPdIoVDKBQgJdQ9tR39uTXwJQykG7VB2H9hxmeNIvuKYoO4soBzIyi
+         EEbpPAmrOy+bb1YweDFgDtX2FHying4qOgMU6j7xNDB4ibkpUxkFpgsyaPAwKDYwN64V
+         WootaZett8c7m9WVw8VtOQh34dkCwecYyYqgGHS9MGinXwj+oqUymnZZ7Jm6D/Yf45k0
+         YrzpE9X0KmqRtPLCEV9O0YNj1Kp3kotoywjIrIeegDlyp8d/FbkIMrWkMHazPACrNlAC
+         i+Gw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:dkim-signature;
+        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
+        fh=D12fQXpCvR17N+Sig4Xk6G/4hdIA6lkofiij7G+4Dtc=;
+        b=VRtld55jc2F/DfebCp1c8W28XRtaIpkOCaTNg4BJG+VhL2WcrQDw36w0J54S0mXGDe
+         XhHKwc9pVpxNG7f1Zb40kqa12/TtOLyf90L8g0Q2gFQsMj5O+aq/9Fsbq2LosmikSsZp
+         1y93LZAmPk/HM1/Gk77WOfD4mrGw+vpCrjGJclosst02GBdXA1SA9lqXkIwXKdGe2md6
+         ynqedUTvEvzM1xbs24dD5zVCLMxh6P3LN/45cnXec+AQkWla7R42NgX4j6kNh2VtOH6w
+         SDYdSmsFMVpdwd045M8CkGkRrdVeswTgqGmljHGYGUvXxO4UYXhGpD7lf1buuUM0uEqq
+         lQFg==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794400174; x=1795004974; darn=lists.linux.dev;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=3E50XU3DuowBBTFEZTbbcP4lzUUBRzqdIlBd+nfLf00=;
-        b=HQ9IZDL97PDdr2jW0Xrc4nM8+2GkjCnNa8s7gQTvJHtK+QzR1+XG9BrSX+39uahFzL
-         v+px8I1hnX2p1HDN/Zev/T7Vfsh6lZ2Y/u6xW58iXLmg2tf6XHpNzVi0aZ+3id3/e6ys
-         HwU5DeSYe1rhouB3ihcEj6PJVkX5ALe93DH3A2MVa7EUakFRyqIscnsbyqu7lvxRq4GC
-         2cCg1Vdt2ISP0+vihhcDGGvX5oZ6BahZBXyMCfreL2HO4A+c8ZHcuWHG1H91JHVogdkE
-         oNbRKjaIFnrdjJZAhj6uyFoCgoX72p9csXE88RfPZptMFKYwHfAAKn/Cm1oJ2PqWEOxE
-         GfSw==
-X-Forwarded-Encrypted: i=1; AL+hErH0khtlaasLdvI4YnadmUL4Bba6LZEVGaCGBhoOOadnB3SRKKn0FI1ZzCJESkzmU6BPgRdyeY6N+w==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+tEkVsk0ooVWRdo4esxoy2XEnoIazrFw8We8+lfF5pzTdfdI05
-	nAkX+gvROBSTFsEzpF8Z/NmHxppyZ1bx8aUu0Utna5GuLJ36oKbiyv7N/k0s84XDVlogvpEHKny
-	nM32H1DBMQLQv9sZXpHcCY8aBpKhsFLvgIbvHRPtQWrmlcoYWCaUahTKWmHD2LKFz41164b1UMW
-	25gYDZRAR+fifEGvj9mKekYPY8gPjU+e3t9g==
-X-Gm-Gg: AYBFou1XMfwfi0zuS42wlghWHFSSNh29coyHLvYLCPXjRASNNWKQxm+W4udmpMJDyS9
-	45HIXBp3BBHgBm4gSXhh6ct8fw20P3uHN2KSux1j5H+tsiw3hJdgJ3IMvpSxFaPX6bA22PvZ5z5
-	STPABk+RMo4w5HKa3a/UUGM2+5Yptb3l5+4pZVldOVWdzCzrQ89Qklin3oGTN6VaSqE/tIp/xON
-	8uISUf1Q762frc=
-X-Received: by 2002:a2e:a105:0:b0:3a9:a1ed:634a with SMTP id 38308e7fff4ca-3ae12690d79mr3610241fa.21.1794392349852;
-        Wed, 11 Nov 2026 02:19:09 -0800 (PST)
-X-Received: by 2002:a2e:a105:0:b0:3a9:a1ed:634a with SMTP id
- 38308e7fff4ca-3ae12690d79mr3610181fa.21.1794392349476; Wed, 11 Nov 2026
- 02:19:09 -0800 (PST)
+        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
+        b=kv030Y1+ztdfqUzrxkYudQ91jRCPFM3Q4UetZvWf0kTr4kJgmUk5GSIQoNkIDSuMky
+         TtgdIEQXfJfsNA0tm6XjJL7rcnwZ9xW0xegXQOh/xsyfPOSIX6tqOO5zsmfwsYN+8QrO
+         BIrd3fb+Gf1NOZKqXl3tVR8UIjStRVxC9XJcGU1nYkx1vzX06oXhUUym9SIAuFRRM2AW
+         kWd+1aQoLFAEAzahk2b82RS+0yadR9kM57HV8FG9BlIhhcJPOlBypaFV1QyHoxy4UVie
+         7tE5tJC7M8H+5KypJqloIFnNaLgpo2kg6i/ktjrJHNouOexwgv/mwLMNFx5U/bIkP9qa
+         g79A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794400174; x=1795004974;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
+        b=cFQjNuT3nHmNcgGVm4rSR4pcnJa/0CepZFqf+DWUmPIYjxKI5l0yIrfY+aQAXzUVNM
+         azNdxlZ1qHwY+8dl7Jjl0IAUeqHmmDMjP3g3k4lNfRjSRqbKToc+D7W6qaGP6dHEDzO1
+         RUQU5u9Bkf/JVp5H3OAOvJKfUtz4azQorCnkOChURBmMQSratEKT+p+aXoq4E/q/D/1J
+         5be+3QmtwcqnPyAC7+cUEDCmOAQ6qw16Wai/5MHGD2/sWboouhnIcI4XuJf9oZoToLmj
+         /q7P0JxpaW0pgFxW3IF7phOWW8ncnF+v60tBs8HB7jOh835GQtoNWyYW5/h626+fSNPn
+         6BUA==
+X-Forwarded-Encrypted: i=1; AL+hErF9+EWZrdQRzs3wMSwrzC4wuoywb2JmWgBbgNFr99Tik5Bg69xg7WxyWxiRWt0o1mJ8pCwe6W/sDQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+BmMsC/xSsOhwB32trXF3KnnvMs+4HP0SkAkyDNZWp5aBz0FXD
+	SpVQ7doy92GNElwSZOJYfrfiMzsj9hiNFwzk7PP5DDVClijVuPlbMQ/a0rzwwJWD6QP9xRvwvW3
+	UNt2UcGIX9ae4CWhQ+HUWpMNWe7hMoLU=
+X-Gm-Gg: AYBFou1019/6BeB95k5w/ljqZk0pCQZLUBmAKa7AnqyaUce2GQoKiQjcf7Y1uLPtaAT
+	FnLiUbot6Cx63IX3kanZduhUxp8p6gf/v4E4uPzI5x1MKT5plzWbNNn8BPFPokXOh1OcuJacSQU
+	HNV5Qh+E3TE8RtW/jpbwD527em1NNsFHiwfjUFV/e4xw4CGVkZQQDkBSXuX0r10+wDtUpCGJ0SJ
+	7PFyhy471ka4/SZG2T3MOD8WdfdedVu6NV0rOjLm5g4Ne1e4QmUJtN3lT77KinRRP0at7iAgzqw
+	5CT7ZfbSK5mM5+BcebmWMeXfhpsx1fj1jk5uNB+iApJGnFclgfZytAXUV7bbdvdyNGsSr5tTrJA
+	i3ZfzLRlFnTpXD1jjQA7BIuDF8yzAoS2lPm5o8ddd8Y/LuCWtRhpz/DecrXwN2FeOvn5m9kyK95
+	sMPaORKK0RotnUnGSK4OdMY6qoHT9cLDnesldwnTcAAClkI7wFQIGT3A==
+X-Received: by 2002:a05:6808:4f13:b0:55c:888:2a15 with SMTP id
+ 5614622812f47-56b97d216eamr1759866b6e.53.1794400173914; Wed, 11 Nov 2026
+ 04:29:33 -0800 (PST)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,63 +104,22 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <d89335f5-57ce-dc63-c323-a0c6d150851d@redhat.com>
-In-Reply-To: <d89335f5-57ce-dc63-c323-a0c6d150851d@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Wed, 11 Nov 2026 18:18:58 +0800
-X-Gm-Features: AclHuK-SDgvurDryymcDdpMVEkjunNr4Q5B3clX8SwyPde66H7ZbCAxfskRhLW0
-Message-ID: <CALjSBEsWQcO5tvfgLmQVzc4xYB6anqXJ6=4D=aZ7H88zf6Yohw@mail.gmail.com>
-Subject: Re: [PATCH] dm-cache: fix ending a cursor that never began
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: ZXq8KZkJ432xpxeaM81uYPEv6LDpKuzEPH-JSDaUEjg_1794392350
-X-Mimecast-Originator: redhat.com
+References: <20261103185909.71843-1-dennylin0707@gmail.com>
+In-Reply-To: <20261103185909.71843-1-dennylin0707@gmail.com>
+From: Hungyu Lin <dennylin0707@gmail.com>
+Date: Wed, 11 Nov 2026 04:29:23 -0800
+X-Gm-Features: AclHuK_f_I8U-R4ghS55caM--h46bxgyAYf2JvxTYf0GJGfw8SL-RER2v_qKYxk
+Message-ID: <CAGEkeHfW2ADNSV7g5JMss8B80T+x8US17Bo51Ypp+1nnoxSPzA@mail.gmail.com>
+Subject: Re: [PATCH v3] block: fix discard alignment for non-power-of-two granularities
+To: axboe@kernel.dk
+Cc: hch@infradead.org, linux-block@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, mtsai@redhat.com, 
+	sashiko-bot@kernel.org, stable@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Sat, Nov 7, 2026 at 2:56=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
-> wrote:
->
-> If dm_bitset_cursor_begin fails, dm_array_cursor_end(&cmd->hint_cursor)
-> is called. However, cmd->hint_cursor was only initialized if the variable
-> hints_valid is true. Thus, we must also destroy hint_cursor only if
-> hints_valid is true.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Assisted-by: Claude:claude-opus-5
-> Cc: stable@vger.kernel.org
-> Fixes: 629d0a8a1a10 ("dm cache metadata: add "metadata2" feature")
->
-> ---
->  drivers/md/dm-cache-metadata.c |    3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
->
-> Index: linux-2.6/drivers/md/dm-cache-metadata.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-2.6.orig/drivers/md/dm-cache-metadata.c
-> +++ linux-2.6/drivers/md/dm-cache-metadata.c
-> @@ -1433,7 +1433,8 @@ static int __load_mappings(struct dm_cac
->                                            from_cblock(cmd->cache_blocks)=
-,
->                                            &cmd->dirty_cursor);
->                 if (r) {
-> -                       dm_array_cursor_end(&cmd->hint_cursor);
-> +                       if (hints_valid)
-> +                               dm_array_cursor_end(&cmd->hint_cursor);
->                         dm_array_cursor_end(&cmd->mapping_cursor);
->                         return r;
->                 }
->
->
+Hi Jens,
 
-This corner case occurs when the metadata is not clean and the dirty
-bitset gets corrupted. Although calling dm_array_cursor_end() is safe
-because hint_cursor is zero-initialized during dm_cache_metadata
-allocation, adding an explicit check is a reasonable safeguard.
+Could you pick up this discard alignment fix? Christoph has reviewed v3.
 
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
-
+Thanks,
+Hungyu
