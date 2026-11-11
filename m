@@ -1,100 +1,75 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.231.200
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1794400175;
-	b=ufhlzneHQ4XhzVkC+PdVL31jpX3HlyUgMZRPTikHhq6d9wTLsfdNZCxs36pUw7OeO+kT
-	 K7aXTdDt5qPYFO0nM8th9m9I9WLtglsgptcej5OgLFc86hRZOmXpCjZBYF8BZTeEo5DvO
-	 wEFAQtqf3Eo0lEt4jKSR3MKRFJMkrUzmBXWJe+KtTM60OcC19YQttLwOA7Qkib6maXXDz
-	 77tM/3sISd9IxQsBdZAXTPzyvRw5PE9lwjp+VftuBlI2FmYWf1BRQPcKo1FePZiJq0Qei
-	 HXq3dZrSxNmrmFi3WqXsYPseEHKoAC6LqpsxAxSgEtvJwmCjqwkv6patvvrW8EpF9Gw==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794400175;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type;
-	bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
-	b=mChThIHTv4IEqxdE8ZSDFHIDWpM1eLfXF0zcjdlhDuysS3HCrSpJXPnmmV7gL4hPjMBB
-	 Ol/B4AN3kshyG7kvocCWoOceXSKGNE0eFO0GOqEnnqNu9NODzBqj7jx4BhYpxc5p6dkD+
-	 yqvcXYyyqtSdd7j6Up6cBSDkY/B2onDJ688optHXd+tBy5eFWl9B8pB9MMfMoJJASmYvS
-	 GivJxqLGJ+PbCeL3rIqFcxpX2E/H/PU2AacMo5RlBzlPCEfgZZbhDn83v84JCJpXDt1aA
-	 WaR5LfqAv4D2DeR9AnNXFGw0g/bCSY0ohTLPKMErlcLd4MBbGqlkv/Bnm47W0PSuAgQ==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=kv030Y1+;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.231.200
-Received: from mail-oi2-f8.google.com (mail-oi2-f8.google.com [74.125.231.200])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1794407875;
+	b=PYdhfeG1WtkiEv5g5Zjwl/hf1t08HtNhrAL27Zvt79wRUiyZ4MxxSZ5dIt57b1GRGw7y
+	 kHG8bNlyFcjcxjTn5Ahk9no8tU20KYRZUqFrTwyD4JyoQ9CJ2/JqUcF9RHIA7QRZ5xDjO
+	 FH3FioPbLxT3daDm2aD5NQZMNiYjKmvhaaJGGL+RLSWdqFRPAmnigEUPqFUmQqNkx7k5L
+	 IibSa6elP5td9qn8zecVp+orFkDNfhaEBHXqVb+W5jeGokNNjcXBWdNdG//nJbNIj+qsq
+	 SslMGWfkt4ghbmVlM0+waLFTWKhWIYL5+ii92HNjQ8npNGmBBvqpItUc+Pt4coYtTHg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794407875;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
+	bh=YjZMS/HoDZxdGMSZkUiBHF2BMKQ3PeLlDs9QzYP0098=;
+	b=uRgzrWYKpZxzG0jauq+YMyOuinFXJF1ekOUA2G1L6X/3EoUt1tjXgNPw7oKc1n3ew2Vb
+	 ZyNN8G7G/7cpr7Hmwi64b8hW+yXbDxIB4/m2GC47zpOjLl+mlTMPnbulzHc6tRSpSDM9P
+	 UhO3bxi7M0vgDqmcbn7euYf6LkAHMHRyEHUS+Rl2Fr57vcn/wsiT+RkERT2XFuO4cqYnM
+	 O0Dl2hsYOcAj2zvbBj0MaBy+GV1rYlK/sOVDA/03j5o9jqbwHN9ib94FBJOD2b7vwCtfU
+	 ntdT3CXRWHvD6QJv/GXDMISHDX9zVlKCMJmpcK7/AJTYAvSRZsdZynpBWPq3eY04Bww==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Mqe5sljY;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C4F4606A33A
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 12:29:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1C4F4606A33A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B110606A332
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 14:37:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B110606A332
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=kv030Y1+
-Received: by mail-oi2-f8.google.com with SMTP id 5614622812f47-539edfadfa9so1119939b6e.0
-        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 04:29:34 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1794400174; cv=none;
-        d=google.com; s=arc-20260327;
-        b=MIXX3TyEoUHtqv5tXJa3mvn24RsuW0jl7U4r8tiw1rxn7g5DSOuWum7jXxALN+pASJ
-         /gqkGAMSVcZDmOIPdIoVDKBQgJdQ9tR39uTXwJQykG7VB2H9hxmeNIvuKYoO4soBzIyi
-         EEbpPAmrOy+bb1YweDFgDtX2FHying4qOgMU6j7xNDB4ibkpUxkFpgsyaPAwKDYwN64V
-         WootaZett8c7m9WVw8VtOQh34dkCwecYyYqgGHS9MGinXwj+oqUymnZZ7Jm6D/Yf45k0
-         YrzpE9X0KmqRtPLCEV9O0YNj1Kp3kotoywjIrIeegDlyp8d/FbkIMrWkMHazPACrNlAC
-         i+Gw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:dkim-signature;
-        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
-        fh=D12fQXpCvR17N+Sig4Xk6G/4hdIA6lkofiij7G+4Dtc=;
-        b=VRtld55jc2F/DfebCp1c8W28XRtaIpkOCaTNg4BJG+VhL2WcrQDw36w0J54S0mXGDe
-         XhHKwc9pVpxNG7f1Zb40kqa12/TtOLyf90L8g0Q2gFQsMj5O+aq/9Fsbq2LosmikSsZp
-         1y93LZAmPk/HM1/Gk77WOfD4mrGw+vpCrjGJclosst02GBdXA1SA9lqXkIwXKdGe2md6
-         ynqedUTvEvzM1xbs24dD5zVCLMxh6P3LN/45cnXec+AQkWla7R42NgX4j6kNh2VtOH6w
-         SDYdSmsFMVpdwd045M8CkGkRrdVeswTgqGmljHGYGUvXxO4UYXhGpD7lf1buuUM0uEqq
-         lQFg==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794400174; x=1795004974; darn=lists.linux.dev;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
-        b=kv030Y1+ztdfqUzrxkYudQ91jRCPFM3Q4UetZvWf0kTr4kJgmUk5GSIQoNkIDSuMky
-         TtgdIEQXfJfsNA0tm6XjJL7rcnwZ9xW0xegXQOh/xsyfPOSIX6tqOO5zsmfwsYN+8QrO
-         BIrd3fb+Gf1NOZKqXl3tVR8UIjStRVxC9XJcGU1nYkx1vzX06oXhUUym9SIAuFRRM2AW
-         kWd+1aQoLFAEAzahk2b82RS+0yadR9kM57HV8FG9BlIhhcJPOlBypaFV1QyHoxy4UVie
-         7tE5tJC7M8H+5KypJqloIFnNaLgpo2kg6i/ktjrJHNouOexwgv/mwLMNFx5U/bIkP9qa
-         g79A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794400174; x=1795004974;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=ugQNukoG8zuOSCl9kH/Kdlpjvp5xVSCQl/EVqkaF+xc=;
-        b=cFQjNuT3nHmNcgGVm4rSR4pcnJa/0CepZFqf+DWUmPIYjxKI5l0yIrfY+aQAXzUVNM
-         azNdxlZ1qHwY+8dl7Jjl0IAUeqHmmDMjP3g3k4lNfRjSRqbKToc+D7W6qaGP6dHEDzO1
-         RUQU5u9Bkf/JVp5H3OAOvJKfUtz4azQorCnkOChURBmMQSratEKT+p+aXoq4E/q/D/1J
-         5be+3QmtwcqnPyAC7+cUEDCmOAQ6qw16Wai/5MHGD2/sWboouhnIcI4XuJf9oZoToLmj
-         /q7P0JxpaW0pgFxW3IF7phOWW8ncnF+v60tBs8HB7jOh835GQtoNWyYW5/h626+fSNPn
-         6BUA==
-X-Forwarded-Encrypted: i=1; AL+hErF9+EWZrdQRzs3wMSwrzC4wuoywb2JmWgBbgNFr99Tik5Bg69xg7WxyWxiRWt0o1mJ8pCwe6W/sDQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+BmMsC/xSsOhwB32trXF3KnnvMs+4HP0SkAkyDNZWp5aBz0FXD
-	SpVQ7doy92GNElwSZOJYfrfiMzsj9hiNFwzk7PP5DDVClijVuPlbMQ/a0rzwwJWD6QP9xRvwvW3
-	UNt2UcGIX9ae4CWhQ+HUWpMNWe7hMoLU=
-X-Gm-Gg: AYBFou1019/6BeB95k5w/ljqZk0pCQZLUBmAKa7AnqyaUce2GQoKiQjcf7Y1uLPtaAT
-	FnLiUbot6Cx63IX3kanZduhUxp8p6gf/v4E4uPzI5x1MKT5plzWbNNn8BPFPokXOh1OcuJacSQU
-	HNV5Qh+E3TE8RtW/jpbwD527em1NNsFHiwfjUFV/e4xw4CGVkZQQDkBSXuX0r10+wDtUpCGJ0SJ
-	7PFyhy471ka4/SZG2T3MOD8WdfdedVu6NV0rOjLm5g4Ne1e4QmUJtN3lT77KinRRP0at7iAgzqw
-	5CT7ZfbSK5mM5+BcebmWMeXfhpsx1fj1jk5uNB+iApJGnFclgfZytAXUV7bbdvdyNGsSr5tTrJA
-	i3ZfzLRlFnTpXD1jjQA7BIuDF8yzAoS2lPm5o8ddd8Y/LuCWtRhpz/DecrXwN2FeOvn5m9kyK95
-	sMPaORKK0RotnUnGSK4OdMY6qoHT9cLDnesldwnTcAAClkI7wFQIGT3A==
-X-Received: by 2002:a05:6808:4f13:b0:55c:888:2a15 with SMTP id
- 5614622812f47-56b97d216eamr1759866b6e.53.1794400173914; Wed, 11 Nov 2026
- 04:29:33 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Mqe5sljY
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794407874;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YjZMS/HoDZxdGMSZkUiBHF2BMKQ3PeLlDs9QzYP0098=;
+	b=Mqe5sljYq3B0812GMaTaoEOLaMsnm/yejB+9tk+Ic4Yw+KnGaLQTmVPF+y/csXWR/7BvLo
+	li6fQamMRLx/+2bNQtWJZMevTI1WH6XGkv13aIuE03g9x8GG3KWueoRdyXFntS7S9zZHIs
+	vZA+EhwJVD3QbLDUgplVBGS2vWrxD6Q=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-522-a0T2gJqRN3OsZNUfEIZOxg-1; Wed,
+ 11 Nov 2026 09:37:49 -0500
+X-MC-Unique: a0T2gJqRN3OsZNUfEIZOxg-1
+X-Mimecast-MFC-AGG-ID: a0T2gJqRN3OsZNUfEIZOxg_1794407868
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35D7118001DE;
+	Wed, 11 Nov 2026 14:37:48 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 798BF1956086;
+	Wed, 11 Nov 2026 14:37:46 +0000 (UTC)
+Date: Wed, 11 Nov 2026 15:37:44 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
+    syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com, 
+    stable@vger.kernel.org
+Subject: Re: [PATCH] dm-integrity: initialize journal accounting in
+ dm_integrity_ctr
+In-Reply-To: <20261111004905.1047753-1-bmarzins@redhat.com>
+Message-ID: <6200b697-d686-cff2-1de5-d4948c171a4f@redhat.com>
+References: <20261111004905.1047753-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -104,22 +79,66 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <20261103185909.71843-1-dennylin0707@gmail.com>
-In-Reply-To: <20261103185909.71843-1-dennylin0707@gmail.com>
-From: Hungyu Lin <dennylin0707@gmail.com>
-Date: Wed, 11 Nov 2026 04:29:23 -0800
-X-Gm-Features: AclHuK_f_I8U-R4ghS55caM--h46bxgyAYf2JvxTYf0GJGfw8SL-RER2v_qKYxk
-Message-ID: <CAGEkeHfW2ADNSV7g5JMss8B80T+x8US17Bo51Ypp+1nnoxSPzA@mail.gmail.com>
-Subject: Re: [PATCH v3] block: fix discard alignment for non-power-of-two granularities
-To: axboe@kernel.dk
-Cc: hch@infradead.org, linux-block@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, mtsai@redhat.com, 
-	sashiko-bot@kernel.org, stable@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: g3c7GgE_1qJPsxcO6Lh1iM7Y3QXWtdRC2T-lxlpSO-o_1794407868
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Hi Jens,
 
-Could you pick up this discard alignment fix? Christoph has reviewed v3.
 
-Thanks,
-Hungyu
+On Tue, 10 Nov 2026, Benjamin Marzinski wrote:
+
+> If the superblock for a dm-integrity device is changed while the device
+> is suspended, it will resume in a failed state, and skip
+> replay_journal(). If this happens on a journaled dm-integriry table's
+> first resume, replay_journal() will have never been called, and the
+> journal will be uninitialized. While nothing can write to the device in
+> this state, integrity_commit() will be called if it receives a flush
+> request as well as on suspend. Even through there is nothing to commit,
+> pad_uncommitted() will check that the journal accounting is sane. This
+> triggers a kernel warning because the accounting was never set up by
+> replay_journal(). Fix this by setting free_sectors equal to
+> journal_entries. Since all the accounting variables are zeroed when
+> creating the ic structure, setting free_sectors is all that's necessary
+> to mimic a cleared journal.
+> 
+> Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+> Closes: https://syzbot.org/bug?extid=94dac3c75477e184f0b0
+> Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+> ---
+>  drivers/md/dm-integrity.c | 6 ++++++
+>  1 file changed, 6 insertions(+)
+> 
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 1659a11a1a29..419a8b958371 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -5430,6 +5430,12 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
+>  		if (r)
+>  			goto bad;
+>  
+> +		/*
+> +		 * initialize journal accounting like a cleared journal, to
+> +		 * handle a changed superblock on resume, where the journal
+> +		 * is not replayed.
+> +		 */
+> +		ic->free_sectors = ic->journal_entries;
+>  	}
+>  
+>  	if (ic->mode == 'B') {
+> -- 
+> 2.56.0
+
+Hi
+
+I think that we shouldn't attempt to flush the journal at all when the 
+device is in erroneous state - because flushing it could cause other 
+problems.
+
+I've created a patch that disables journal flushing if the dm-integrity 
+device is disabled due to an error - please review it.
+
+Mikulas
+
