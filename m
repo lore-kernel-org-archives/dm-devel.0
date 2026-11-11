@@ -1,87 +1,91 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794421174;
-	b=yC4lQdKyUJt45QlIV0O3sKLXl8oxfC3P1PTBcRbf6HYJxWR4N3QrwW1bcg4I4AXrRTij
-	 P+3C52jw4FhqG5F+/e6VLuJwRd8o5dVHlDBY1r+c4Y7PrTgDD+xpG1Kzk3OTttzojV0dE
-	 MpmALsrn1Uw+bz85haPNvt4/ae2CKLjpG5Stjfz7yYX6oUnf34d9SdA5RLLelqnbavuyT
-	 BLNhnY7UDz32itB9q1o3MW7gBTd84zeQmLNP/QHUBxMcGyKeQZp4XY3jIDD1XDr/AUVK7
-	 aaPrnFLQ1KWZQvABo58clNwtDe4RAbc26dhuYvBGijom8EqvV/zR2aCiZzrZxrk9tUQ==
+	t=1794425724;
+	b=MNuRhFwHNa1bDDpStvlBhsL9Ne9K72MCYlPfqfy51DVlC2LqtSkEhXQAKt9sShaxGUIo
+	 O8hKTYP/qbsQHymKP1DG0EUW4ABtfH8Q1HiUXJfyl0jY1nPZUVN+xgWFSK6f0nXv6D1wq
+	 aD0XEV0hyAZpJ2MrTedZoxJH3HiTGbuVsr7HTwno5ujC/Wjif1IT8hd5GaxnZHT8T00TX
+	 PG7Gt1YfIRo40ugZirT/Tb5QNiMBtm6cxzuzqjYlgG6+fq0VeF+pPU54s2owN1wkAvoDh
+	 F9H5QURWIu56pfpYRP6Q0rsAOdTUOsh+liAPlaCpooilM7PbzMJgZgL/C7rIZt0EmGQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794421174;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
-	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=zl1dTUx/s3eQdZ2BQcrKSS3OAEwI932sxvXKDeKD+90=;
-	b=o326hel/DaibXL5i7blXzR5LttEfTxZdU9Mpn7xsKI3SGkNszn6aLGykoc0J16ZOedmG
-	 oR8jJRAuWaqbJGlLOjiKuPJf/6bpulD11JS9S1QtFLKdxnu/J1TcoE2WslGlvK0qoRmG9
-	 OTQfFZB80zYV2ZKcH2R3CN1WHlrS2cBiyWyhdO3htMCj0HFwTgKkfeD0g3UnKI5zxeAiA
-	 u3jxYZVEq0rYF8AV7j9zDxKUmg65B0i9RdHAtPrbiCgkSXqNjshM49X3gNaTYHxKLBjbw
-	 yPZIfod31epSSftHMRFc2PlAw+nzQFh1vdOmdNrOtgXFk7xJYl5fZ/zxVO5pYHLHa5g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794425724;
+	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
+	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
+	 X-Spam-Flag:X-Spam-Level:X-Spamd-Result:X-Spam-Score;
+	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
+	b=ytZJ/JIlcpwW/8Gb5R2+O9Of4/Ar2G8nwAR2ZvZNB6VSHIe6EUZcu72QhYjsmpA7kemt
+	 Qf+kKjr+ulRu2XF/I9UGiZIO+EuJBPh9YPqt3ghexBLUJZSl8CDYsbFt1e6dpsgFrhm6O
+	 qer2gkztJ4NVblGZf329CFfs6Vy8JGCPriDNYgaJJ+3lyDz+H2+eLSqpGgZtZ6edwEMbZ
+	 2q8+TSL01J4fDoa25npSUEFngId+Bwt4AkAoNW9nL0K0k10/K5EDRehgspfHCzypNYj2i
+	 LpxCiNHbjCTfMBiEtX95PyJLtKRS8KEuxAx9yHiRM6nY9UuI+pooX19iixgMcN9CuWQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=UoTcksHA;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dmarc=pass header.from=suse.com;
+	spf=pass smtp.mailfrom=suse.com;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
+	arc=none smtp.remote-ip=195.135.223.130
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C1E1A606A31C
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 18:19:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C1E1A606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5ED52606A31C
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 19:35:23 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5ED52606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=UoTcksHA
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794421172;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=pnAGHBBz
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 9361E21DEF;
+	Wed, 11 Nov 2026 19:35:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1794425721; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=zl1dTUx/s3eQdZ2BQcrKSS3OAEwI932sxvXKDeKD+90=;
-	b=UoTcksHAGU82Vmn8fyCOJvxIUj/8wPhpg7ljiD5lhz8chLrFTsY62LtRc7IMr63Afok9RW
-	sbQXgAv3cYKlir0Rm9FPB5f8/25RgcmBTCoRfGuD0sCrzTOF1zMkDuGok+A/SJycIVUqqw
-	+noG0lZAhHNCOoTacmkI5GRDgD1fGRY=
-Received: from mail-lj1-f199.google.com (mail-lj1-f199.google.com
- [209.85.208.199]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-632-WupDvi07P3uWAAqYho_Skg-1; Wed, 11 Nov 2026 13:19:30 -0500
-X-MC-Unique: WupDvi07P3uWAAqYho_Skg-1
-X-Mimecast-MFC-AGG-ID: WupDvi07P3uWAAqYho_Skg_1794421169
-Received: by mail-lj1-f199.google.com with SMTP id 38308e7fff4ca-3adef2bf843so471731fa.0
-        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 10:19:29 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794421169; x=1795025969;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=zl1dTUx/s3eQdZ2BQcrKSS3OAEwI932sxvXKDeKD+90=;
-        b=GeWuJ5+BhzSek7vpcU3tNxIUMtV8Zo7VC4TCQaaKHKpeO1JrrCOfBG1rbefXXg6mYq
-         XDrWsMDycde/IgxbVyu7adJeOGmrQjE6TwKQfHM+jSpPR52NsNJL+dOpsz5lba+dz2rm
-         bo4PGRhM4ZsFLonNXoU3IgwlwiTcslCdndyFoL0FzYGuQwY3osvtLF9rRiIMlyGLXXA4
-         P63ACh7m1gte9OAIxIoYcilEpfefPtvcr2KodFEK/rfvtJ/3xskh17j2H6hinZRhtWXD
-         pLxv2qLMmRHs1QvB+D57pZJsDxyZQJDxAj8XTArCQgJ9BSadNBPftNSFpzpxpEGZPZhw
-         sVSA==
-X-Forwarded-Encrypted: i=1; AL+hErFhOyh6obaE+ylSBnPopw7OouJQb6bq+MJD9C8TzvUCeleOKOgmjYLPTuINGOW5zrjuBByTuiycDg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9H4OtGcHSKJZCm+wYlMgyT36jczCNyJmXxyFbAKK0+HJTr+0G1
-	cz/jtRqqWRrfgyIUj/Qihlw2leOG+u1UPhLsaeCNrDsQa7FfeEPdfr3vJb3pVekFbX6Q7Z9MUw2
-	4HELPXEhlT/N5e+HSayd5IvXXfwkkwm/X0A6ySV99Qqyt85rPsL54kKXNYc8E4naBwu0uD/QVYe
-	inZOCwvJSUCGttfIEKWbDP1BW33U4y88yEBw==
-X-Gm-Gg: AYBFou2DEUUUsBsY9gwiEZ9WpbP385ecRpJDo32pbhN8ZXtLydpWcoTPwEAzghKxX8y
-	FV8/3KbfXLlfSQh2nGMSQs9Xm45qG56tD4hPmqN5ncazh2Wves7En3wOiXGku0ga2GZtRjBGiVw
-	PyBGikWzm8hoHzyRjSe+LLfsSSfIvE4P1ciefrfdYeK50J8L+OEVtZIDTNRTca6Ml3rQB5U7dwt
-	Jg6S+0fMkM/1FF5Wg==
-X-Received: by 2002:a2e:a80f:0:b0:3a9:7c85:a16d with SMTP id 38308e7fff4ca-3ae1bfb8026mr500871fa.5.1794421168603;
-        Wed, 11 Nov 2026 10:19:28 -0800 (PST)
-X-Received: by 2002:a2e:a80f:0:b0:3a9:7c85:a16d with SMTP id
- 38308e7fff4ca-3ae1bfb8026mr500791fa.5.1794421168194; Wed, 11 Nov 2026
- 10:19:28 -0800 (PST)
+	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
+	b=pnAGHBBzeTBWYP0YAEsQ9qk8MJeNRC7jZX/vPs5Wx4iNxFoop4nFhnW7kSPdN01kB2rJ5l
+	kWCSrjBvmyM3rgAHvv+hiHmnL9VJo8LluKrCVLsplXO/cMbCqqEJ2e5QVZ9Eyw/HJLq4hz
+	QVq2F7wAL4YyiEWMhXsRJu07x0O66pM=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1794425721; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=k0UAmbIiZbbTKAyEM+7eHiG7XyzA7pRau+rqhYRSWMQ=;
+	b=pnAGHBBzeTBWYP0YAEsQ9qk8MJeNRC7jZX/vPs5Wx4iNxFoop4nFhnW7kSPdN01kB2rJ5l
+	kWCSrjBvmyM3rgAHvv+hiHmnL9VJo8LluKrCVLsplXO/cMbCqqEJ2e5QVZ9Eyw/HJLq4hz
+	QVq2F7wAL4YyiEWMhXsRJu07x0O66pM=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 5B0F21339F;
+	Wed, 11 Nov 2026 19:35:21 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id hgPaDHnD9GrqRQAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 11 Nov 2026 19:35:21 +0000
+Message-ID: <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
+Subject: Re: [PATCH v3 0/1] multipathd: check re-added paths' WWIDs against
+ sysfs
+From: Martin Wilck <mwilck@suse.com>
+To: Brian Bunker <brian@purestorage.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, dm-devel@lists.linux.dev
+Date: Wed, 11 Nov 2026 20:35:20 +0100
+In-Reply-To: <20261111174259.41911-1-brian@purestorage.com>
+References: <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com>
+	 <20261111174259.41911-1-brian@purestorage.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.62.1 
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,89 +95,147 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <05b79ec2-42f7-ffe3-20e6-1dc499e60cf5@redhat.com>
-In-Reply-To: <05b79ec2-42f7-ffe3-20e6-1dc499e60cf5@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Thu, 12 Nov 2026 02:19:16 +0800
-X-Gm-Features: AclHuK_9y6V1vZ4yV-XQJ4SHi7Jt1HE1WIRwHtu8AOg6cHOLgEkYvd78qv1rVzs
-Message-ID: <CALjSBEtYAUZY=vtYW_TW5EH2FE00HS5ofsi4dNfAWRKuPzfOvg@mail.gmail.com>
-Subject: Re: [PATCH] dm-cache: fix NULL pointer dereference on open failure
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 81Tx-jkNGOFluz01OFszPiwfWWCpR1Olw9G1tls8Zls_1794421169
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Spam-Flag: NO
+X-Spam-Level: 
+X-Spamd-Result: default: False [-13.30 / 50.00];
+	SUSE_INTERNAL_BYPASS(-9.00)[];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	ARC_NA(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCVD_TLS_ALL(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_COUNT_TWO(0.00)[2];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Score: -13.30
 
-On Sat, Nov 7, 2026 at 2:55=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
-> wrote:
->
-> When __begin_transaction_flags in metadata_open fails,
-> dm_cache_metadata_close is called. dm_cache_metadata_close attempts to
-> execute list_del(&cmd->list);, but the "cmd" object is not on any list
-> yet, thus it crashes with NULL pointer dereference.
->
-> Fix this by initializing cmd->list after cmd is allocated.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Assisted-by: Claude:claude-opus-5
-> Cc: stable@vger.kernel.org
-> Fixes: c6b4fcbad044 ("dm: add cache target")
->
-> ---
->  drivers/md/dm-cache-metadata.c |    1 +
->  1 file changed, 1 insertion(+)
->
-> Index: linux-2.6/drivers/md/dm-cache-metadata.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-2.6.orig/drivers/md/dm-cache-metadata.c
-> +++ linux-2.6/drivers/md/dm-cache-metadata.c
-> @@ -766,6 +766,7 @@ static struct dm_cache_metadata *metadat
->                 return ERR_PTR(-ENOMEM);
->         }
->
-> +       INIT_LIST_HEAD(&cmd->list);
->         cmd->version =3D metadata_version;
->         refcount_set(&cmd->ref_count, 1);
->         init_rwsem(&cmd->root_lock);
->
->
+On Wed, 2026-11-11 at 09:42 -0800, Brian Bunker wrote:
+> On Tue, 2026-11-10, Martin Wilck wrote:
+>=20
+>=20
+> > IMO, if we can't trust the reply of the storage array, all bets are
+> > off. Why would the reply that multipathd obtains directly be more
+> > trustworthy than what scsi_id had got?
+>=20
+> It isn't more trustworthy, it's newer. The sequence on the host was:
 
-This bug triggers when dm-cache fails to update the superblock flags
-while opening the metadata. A dm-flakey target can simulate the write
-failure:
+Right, but "newer" doesn't mean "more accurate".=C2=A0You write below that
+there is no indication that anything actually changed, so time
+shouldn't be a factor. If a wrong VPD reply is possible once, it can
+also occur multiple times. If it's just an unlikely failure, a purely
+stochastical thing, it would help to simply repeat the same request; if
+the probability for error is 1e-4, the probability for two errors in
+succession would be 1e-8. However we don't know if it's stochastical.
 
-1. Create a fresh dm-cache device.
-2. Remove the cache target.
-3. Replace the metadata device with a dm-flakey target that drops writes.
-4. Reopen the cache device.
+>=20
+> =C2=A0 09:26:34.808=C2=A0 udev change event for sdq; ID_SERIAL is verify1=
+'s
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 WWID
+> =C2=A0 09:26:34.833=C2=A0 uev_update_path() sees the change and calls
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 ev_remove_path(); the reload of verify3's map then
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 blocks in the resume until in-flight I/O drains
+> =C2=A0 09:26:39.221=C2=A0 the reload completes; sdq is freed
+> =C2=A0 09:26:39.235=C2=A0 uev_update_path() calls uev_add_path() with the=
+ same
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 uevent, and sdq goes into verify1's map
+> =C2=A0 09:26:39.379=C2=A0 next change event for sdq; ID_SERIAL is verify3=
+'s
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0 WWID again
+>=20
+> So the add acted on an answer that was 4.4 seconds old. An INQUIRY at
+> the time of the add would have reflected what the device said then,
+> and the one 140 ms later was correct. The check doesn't help against
+> storage that keeps giving the wrong answer. It stops multipathd from
+> moving a path into another LUN's map on an old answer.
 
-Kernel logs:
+Well you keep telling me that newer =3D=3D better. Maybe you are right. We
+can neither prove nor disprove that with the material we have.
 
-Oops: general protection fault, probably for non-canonical address
-0xdffffc0000000001: 0000 [#1]I
-KASAN: null-ptr-deref in range [0x0000000000000008-0x000000000000000f]
-CPU: 0 UID: 0 PID: 93 Comm: dmsetup Not tainted 6.19.0-rc7 #100
-PREEMPT(voluntary)
-RIP: 0010:dm_cache_metadata_close+0xaf/0x260
-Call Trace:
- dm_cache_metadata_open+0xfb2/0x14e0
- ? __pfx_dm_cache_metadata_open+0x10/0x10
- ? smq_create+0x1d/0x30
- ? dm_cache_policy_create+0x108/0x2c0
- cache_ctr+0x1505/0x3710
- ...
+> > One possible case for a WWID change is that a
+> > a Linux SCSI disk is removed, and another disk is added later,
+> > taking
+> > over the previous device's dev_t.
+> [...]
+> > This sounds as if the WWID of sdq was that of "verify3", then
+> > "verify1", and then "verify3" again.
+>=20
+> That's what happened, and it wasn't a remove and add. The kernel log
+> shows no SCSI device removed or added in that window, and sdq stayed
+> 2:0:0:8 (65:0) throughout. Only that one udev event carried the wrong
+> WWID.
 
-This bug happens only from the dm_cache_metadata_close() call inside
-metadata_open(). The other two callers get a linked cmd->list, so they
-are safe. A different data_block_size alone cannot trigger the bug
-either. __open_metadata() checks it before all persistent data objects
-exist, so metadata_open() frees cmd with kfree() instead of
-dm_cache_metadata_close().
+Weird. Gamma radiation maybe? ;-)
 
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
+> > Question about your test: Apparently the problem is reproducible,
+> > otherwise you wouldn't be able to verify your patch. But you said
+> > "we
+> > have no packet capture".
+>=20
+> I should have been clearer: we've seen it once. We haven't reproduced
+> it. We've been running a v1-style patch on our test initiators since,
 
+If it was my choice, I'd prefer repeating the test with the unpatched
+code, but additional debugging instrumentation, in the hope to obtain
+more insight into what actually happened.
+
+> and it hasn't recurred, but at this rate that doesn't tell us much.
+
+I'd go one step further and say that it tells us nothing at all. You
+would need to be able to reproduce the issue in a well-defined time
+frame in order to do a test that gives at least some confidence that
+your patch fixed it.
+
+However from the time line you provided, it makes sense that your patch
+would have been effective in the error case.
+
+Regards,
+Martin
+
+> We've also changed our test tool to open the devices read-only, which
+> removes the flood of change events that made the window likely in the
+> first place. I'd like to get a capture, but I can't promise we'll
+> reproduce it.
+
+
+
+>=20
+> > With this in mind, I suggest that you go back to v2 and SG_IO.
+> [...]
+> > I further suggest that you make this code
+> > path conditional on "recheck_wwid".
+>=20
+> Will do; Ben suggested the same. v4 does the SG_IO check only on
+> PATH_ADD_REINIT, only when recheck_wwid is set, and drops the
+> uev_update_path() check from v2.
+>=20
+> > In the long run, we may want to redesign our WWID detection. We do
+> > have
+> > a general framework for asynchronous jobs now. Thus we actually
+> > could
+> > run asynchronous VPD inquries.
+>=20
+> That sounds like the right direction, and I'd be glad to help with
+> it.
+>=20
+> Brian
+
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
