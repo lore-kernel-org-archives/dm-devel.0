@@ -1,75 +1,72 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794407875;
-	b=PYdhfeG1WtkiEv5g5Zjwl/hf1t08HtNhrAL27Zvt79wRUiyZ4MxxSZ5dIt57b1GRGw7y
-	 kHG8bNlyFcjcxjTn5Ahk9no8tU20KYRZUqFrTwyD4JyoQ9CJ2/JqUcF9RHIA7QRZ5xDjO
-	 FH3FioPbLxT3daDm2aD5NQZMNiYjKmvhaaJGGL+RLSWdqFRPAmnigEUPqFUmQqNkx7k5L
-	 IibSa6elP5td9qn8zecVp+orFkDNfhaEBHXqVb+W5jeGokNNjcXBWdNdG//nJbNIj+qsq
-	 SslMGWfkt4ghbmVlM0+waLFTWKhWIYL5+ii92HNjQ8npNGmBBvqpItUc+Pt4coYtTHg==
+	t=1794408229;
+	b=mDYdRb9pY1wZGvCEgYAlcz41Pa4Oar3PyHvA7AV2hqslJyLuop7Y4qNqIP7Cn6V7rlhX
+	 E0PJYJ0WalKc0z7wLEWZUdjBOXy0DDBrmki2fePf7uULonqZX1X2ghp01FPQ0JGQ4U8rx
+	 QCVbk/91XT6I50oU7t8N511rAZVt6fo/SEtZZRw8SshZtVc1hGrMdwKGsc1Ysk+2SRWS6
+	 ZzkYSyJQe7wyxX04ofGs86O3dKwRk6HZyHM792HCJt0uehaaF56GbmYIk6farWf2XC5lv
+	 mS4KhAmLiuhSsEFURgm4z30JN63YkJrqVkdyIjzuN9WG99WAjayJL3gSVsm6YT1a+ig==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794407875;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794408229;
 	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
 	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
 	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=YjZMS/HoDZxdGMSZkUiBHF2BMKQ3PeLlDs9QzYP0098=;
-	b=uRgzrWYKpZxzG0jauq+YMyOuinFXJF1ekOUA2G1L6X/3EoUt1tjXgNPw7oKc1n3ew2Vb
-	 ZyNN8G7G/7cpr7Hmwi64b8hW+yXbDxIB4/m2GC47zpOjLl+mlTMPnbulzHc6tRSpSDM9P
-	 UhO3bxi7M0vgDqmcbn7euYf6LkAHMHRyEHUS+Rl2Fr57vcn/wsiT+RkERT2XFuO4cqYnM
-	 O0Dl2hsYOcAj2zvbBj0MaBy+GV1rYlK/sOVDA/03j5o9jqbwHN9ib94FBJOD2b7vwCtfU
-	 ntdT3CXRWHvD6QJv/GXDMISHDX9zVlKCMJmpcK7/AJTYAvSRZsdZynpBWPq3eY04Bww==
+	bh=BhNhi18oHKv88CGy7fgUqQZ3c+gMEFNH0lHTwZSHB8I=;
+	b=uyJjNUn1otObF2L3qubn3gaCKJ7VxvWjJnE6ehBEhp3xyhzon3mxcz9qXQz6VhhEuf2m
+	 muehfiQngLm70Ir64H5WdgT1SBaXKF7xqWJ6TJOXS9epm+dG+S7ol2iZvk7awFuQr+obd
+	 PXsm2GPjCHBFCDtT+OmzVbviG1POiUCkFBAMfEZhRLZm3WRdX9amqyavxSMRswBNJeYEr
+	 Fox/zxWk6MD9aWqfUTX0kWIjldnXJbAChUHCiQxW7MlbccoAvUAxgmNJdb/srYrHf7DV7
+	 AX1yBlKHvkECVsl1F7YEsBApj8lAM8BrshYqehGjMxPWcOw+tbsgrMkDVS0UHswmowQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=redhat.com;
 	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Mqe5sljY;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=HGgOa+PH;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B110606A332
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 14:37:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B110606A332
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81569606A321
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 14:43:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 81569606A321
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Mqe5sljY
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=HGgOa+PH
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794407874;
+	s=mimecast20190719; t=1794408227;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=YjZMS/HoDZxdGMSZkUiBHF2BMKQ3PeLlDs9QzYP0098=;
-	b=Mqe5sljYq3B0812GMaTaoEOLaMsnm/yejB+9tk+Ic4Yw+KnGaLQTmVPF+y/csXWR/7BvLo
-	li6fQamMRLx/+2bNQtWJZMevTI1WH6XGkv13aIuE03g9x8GG3KWueoRdyXFntS7S9zZHIs
-	vZA+EhwJVD3QbLDUgplVBGS2vWrxD6Q=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type;
+	bh=BhNhi18oHKv88CGy7fgUqQZ3c+gMEFNH0lHTwZSHB8I=;
+	b=HGgOa+PHcHfG47qHuWfUZgCbPYLZuTW6ROut1dqltNtxyyjVApAsZQi6Z4MH6iehRQjiQv
+	ml8Cr9AsoT+ccq2eS/y71eYjZ0kM3mkL/0aofF701PgHJRO33W9fb4qRk6OtygwghkNtpg
+	JOiDo0ZAue6C5+aj7rC0aVnF9shwmWY=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
  relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-522-a0T2gJqRN3OsZNUfEIZOxg-1; Wed,
- 11 Nov 2026 09:37:49 -0500
-X-MC-Unique: a0T2gJqRN3OsZNUfEIZOxg-1
-X-Mimecast-MFC-AGG-ID: a0T2gJqRN3OsZNUfEIZOxg_1794407868
-Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-479-wELaLW_NOle_CVwWcD5_cQ-1; Wed,
+ 11 Nov 2026 09:43:42 -0500
+X-MC-Unique: wELaLW_NOle_CVwWcD5_cQ-1
+X-Mimecast-MFC-AGG-ID: wELaLW_NOle_CVwWcD5_cQ_1794408222
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 35D7118001DE;
-	Wed, 11 Nov 2026 14:37:48 +0000 (UTC)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CDA8B19539B5;
+	Wed, 11 Nov 2026 14:43:41 +0000 (UTC)
 Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 798BF1956086;
-	Wed, 11 Nov 2026 14:37:46 +0000 (UTC)
-Date: Wed, 11 Nov 2026 15:37:44 +0100 (CET)
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 10A0441F;
+	Wed, 11 Nov 2026 14:43:39 +0000 (UTC)
+Date: Wed, 11 Nov 2026 15:43:37 +0100 (CET)
 From: Mikulas Patocka <mpatocka@redhat.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev, 
-    syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com, 
-    stable@vger.kernel.org
-Subject: Re: [PATCH] dm-integrity: initialize journal accounting in
- dm_integrity_ctr
-In-Reply-To: <20261111004905.1047753-1-bmarzins@redhat.com>
-Message-ID: <6200b697-d686-cff2-1de5-d4948c171a4f@redhat.com>
-References: <20261111004905.1047753-1-bmarzins@redhat.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>, 
+    Mike Snitzer <snitzer@kernel.org>, Alasdair Kergon <agk@redhat.com>
+cc: dm-devel@lists.linux.dev, 
+    syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+Subject: [PATCH] dm-integrity: don't attempt to commit journal on disabled
+ device
+Message-ID: <fe63f092-ef07-ac3f-7878-22083541f79e@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -79,66 +76,50 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
-X-Mimecast-MFC-PROC-ID: g3c7GgE_1qJPsxcO6Lh1iM7Y3QXWtdRC2T-lxlpSO-o_1794407868
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: kq3fAo_mYmVUlpSSOq2_z0gQE1jGij2AVJXRE-BP9cI_1794408222
 X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset=US-ASCII
 
+If the device is disabled due to an error, we shouldn't attempt to flush 
+the journal. We jump straight to the label release_flush_bios, that will 
+call do_endio on all queued bios. do_endio will terminate the bios with 
+the error.
 
+This fixes WARN_ON in the function pad_uncommitted reported by syzkaller.
 
-On Tue, 10 Nov 2026, Benjamin Marzinski wrote:
+Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+Closes: https://syzbot.org/bug?extid=94dac3c75477e184f0b0
+Fixes: 7eada909bfd7 ("dm: add integrity target")
+Cc: stable@vger.kernel.org
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-> If the superblock for a dm-integrity device is changed while the device
-> is suspended, it will resume in a failed state, and skip
-> replay_journal(). If this happens on a journaled dm-integriry table's
-> first resume, replay_journal() will have never been called, and the
-> journal will be uninitialized. While nothing can write to the device in
-> this state, integrity_commit() will be called if it receives a flush
-> request as well as on suspend. Even through there is nothing to commit,
-> pad_uncommitted() will check that the journal accounting is sane. This
-> triggers a kernel warning because the accounting was never set up by
-> replay_journal(). Fix this by setting free_sectors equal to
-> journal_entries. Since all the accounting variables are zeroed when
-> creating the ic structure, setting free_sectors is all that's necessary
-> to mimic a cleared journal.
-> 
-> Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
-> Closes: https://syzbot.org/bug?extid=94dac3c75477e184f0b0
-> Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> ---
->  drivers/md/dm-integrity.c | 6 ++++++
->  1 file changed, 6 insertions(+)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 1659a11a1a29..419a8b958371 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -5430,6 +5430,12 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
->  		if (r)
->  			goto bad;
->  
-> +		/*
-> +		 * initialize journal accounting like a cleared journal, to
-> +		 * handle a changed superblock on resume, where the journal
-> +		 * is not replayed.
-> +		 */
-> +		ic->free_sectors = ic->journal_entries;
->  	}
->  
->  	if (ic->mode == 'B') {
-> -- 
-> 2.56.0
+---
+ drivers/md/dm-integrity.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-Hi
-
-I think that we shouldn't attempt to flush the journal at all when the 
-device is in erroneous state - because flushing it could cause other 
-problems.
-
-I've created a patch that disables journal flushing if the dm-integrity 
-device is disabled due to an error - please review it.
-
-Mikulas
+Index: linux-2.6/drivers/md/dm-integrity.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-integrity.c
++++ linux-2.6/drivers/md/dm-integrity.c
+@@ -2908,6 +2908,10 @@ static void integrity_commit(struct work
+ 
+ 	spin_lock_irq(&ic->endio_wait.lock);
+ 	flushes = bio_list_get(&ic->flush_bio_list);
++	if (unlikely(dm_integrity_failed(ic))) {
++		spin_unlock_irq(&ic->endio_wait.lock);
++		goto release_flush_bios;
++	}
+ 	if (unlikely(ic->mode != 'J')) {
+ 		spin_unlock_irq(&ic->endio_wait.lock);
+ 		dm_integrity_flush_buffers(ic, true);
+@@ -5409,7 +5413,6 @@ try_smaller_buffer:
+ 		r = create_journal(ic, &ti->error);
+ 		if (r)
+ 			goto bad;
+-
+ 	}
+ 
+ 	if (ic->mode == 'B') {
 
