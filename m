@@ -1,91 +1,80 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.131
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794349275;
-	b=xK1ZUfXNbjc/hh1IyVWSPbRS4aTtsmun+BdZrKxiUUJKIlLOhUGfWSmU1Ze8ZcGnLmO7
-	 b7MZHReEGZsraV3qXO2RqXJobFIYGlQNHkYvcENGrSAMn8Jw0AMP2ydlOZZJnAuGiV6GZ
-	 k6iCT4rF2cgei96IQKc+KXw3Av60Tt/Pb9nlmxJeLCbCJhh4RE2XpgavjDF2XH2yt1G0r
-	 jHa078JhLlPHgmZqxXbX0l/UVx1zYTmkIkKjljFCMESgMkT+McOQd7cXY2j7oAfL+jCqk
-	 2enSKUXO8KyAngS05LSRRbpOI17Y/z2WM6cSRm4K1xJuew1G6O1Ia5BweJM4KYaHmMA==
+	t=1794358154;
+	b=Y9s21/+aIP0dcoV8H3mUCc1hox796mbx2+3iy3yUuzy5KCD8xS48yU0CaGR64yQvmdcb
+	 E7CAzMBG4a/6YNzeR350Z5m30dyrMPT6Ny/175xgznsB659uF4Jo6aLpqcK420k+6hW+j
+	 /qqRc3k4jMe257Sl/CgqzIWTNw9+xcmQo+FH3/8hgb7f92IFjCNmhAh2f6QUrAJtagiD2
+	 AemOtte+SyCLTBieSR7OM7CpXJthUNGnLFirVY0/NPTUsDZ/6vJyrZnjJqjYsi7CvLj75
+	 GQpSeucIQ8+6s2JdHnw9sZP9e4ilVsD4e6CfmCaKuaXbtTOxw8F0IpsU5ZZVY3OZV3g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794349275;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
-	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Spamd-Result:X-Rspamd-Server:X-Rspamd-Action:X-Spam-Flag:
-	 X-Spam-Score:X-Spam-Level:X-Rspamd-Queue-Id;
-	bh=XJWaWNh6UscFaMuBg3yHAXqUELGNUAyMMO78IojlHdA=;
-	b=MoOJPg+8EEIJm1I0FeCBPRIOfwMKN7/swSASIPM4xaOt3pmJgDuQI9G0YJ6p7S3ZP+rz
-	 OIPLii/ZmbBxoT/doSiTfNhN7Ytyik1VPSOXkWYiT0SnPSLBnulk2pgHQer+AVVfRqxFg
-	 oBXn7J0NplKhHrRHF5vAE9NuEXoQ6cIjbDWmFK1qbHXzDKOcwyH5K9jlVedTSlCBGUnZ9
-	 S3mviLCoSMBKOVtOtJivCw8bbNQ6IGW6suumdQsxCO7MmL1Jj4bBnlo+SAKBTiYLANHY3
-	 IVqLESTNwLPYj4MUsArzmPoVmwxv8aQ5QYullIqvv8VQBubrn8bmZXaIzMexrwSmoKg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794358154;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:MIME-Version:X-Scanned-By:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Transfer-Encoding:content-type;
+	bh=xtnCeg/8KyCVflxN5Slzje9tkyEmRVFC3OaNifpvhos=;
+	b=oNKJ00jdPMfwMYKff0EhafOw+a8kyC81a6OmgiIvVAQC6uTxMT8YuaLEjGoDpUu7cftm
+	 +e22GBe8gY+DpowlfR37DDm4VRCMzZVVfAK2m3T4HYmz1Fxv3Gha6S3ZzKGQiPMVx7IWO
+	 /pTayJlE1ymfUIk6OroUjMU7UeUPd79eKTxJxWBH7FxW6RHJncox7vRDT4739pouwrhaN
+	 RNGpoDyXK9JLL1I29Dbujzx488xfLx5sBju8hakupqErf2ynHcVV4dftlXCaGN4Ybb50C
+	 vnlbbzmh9g57lAwLU3UP7zZ1x+xsKdE2srhFTGf9CPLogyMM/r6l29+4RIapIX1aXPw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=qd6Y2gaE;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=qd6Y2gaE;
-	arc=none smtp.remote-ip=195.135.223.131
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=gcmiNki1;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D5BE606A326
-	for <dm-devel@lists.linux.dev>; Tue, 10 Nov 2026 22:21:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1D5BE606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 399F8606A31C
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 00:49:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 399F8606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=qd6Y2gaE;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=qd6Y2gaE
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=gcmiNki1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794358152;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=xtnCeg/8KyCVflxN5Slzje9tkyEmRVFC3OaNifpvhos=;
+	b=gcmiNki1YvXcaaVzDBIm5cAijM3B1taSCBydInEfOS3D7D32vCqkk5jpLTzWKk3aRVjAJ9
+	aefLfGwGuOnBCUB4zBvlL2vyLvg5uGY11KsCDFRnpB/ctU22zRFoEE9v0p3uH/YZhDf9dU
+	k+BkNgMr7p0ip0eUgAxpsvTEQD/mvzQ=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-159-g2umW1eiNc2e44EyTvZTRg-1; Tue,
+ 10 Nov 2026 19:49:08 -0500
+X-MC-Unique: g2umW1eiNc2e44EyTvZTRg-1
+X-Mimecast-MFC-AGG-ID: g2umW1eiNc2e44EyTvZTRg_1794358147
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out2.suse.de (Postfix) with ESMTPS id 113021F80B;
-	Tue, 10 Nov 2026 22:21:13 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794349273; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XJWaWNh6UscFaMuBg3yHAXqUELGNUAyMMO78IojlHdA=;
-	b=qd6Y2gaE94Fw8lRlGAs6eEqsyMw3ogXDH0p0+E+Uw9NerOdzQI2nR8HjhMazjSevDl+Oya
-	B1qtHXjSbsUhq34YwEEo6R1VsHa59MmbbHQKpkRYD5t/w+P1YX5TJihqtHoNZhgLE2P/aA
-	7e9s/42ZyLOmn4v3Gx/FWswJlOuKjbY=
-Authentication-Results: smtp-out2.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b=qd6Y2gaE
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794349273; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=XJWaWNh6UscFaMuBg3yHAXqUELGNUAyMMO78IojlHdA=;
-	b=qd6Y2gaE94Fw8lRlGAs6eEqsyMw3ogXDH0p0+E+Uw9NerOdzQI2nR8HjhMazjSevDl+Oya
-	B1qtHXjSbsUhq34YwEEo6R1VsHa59MmbbHQKpkRYD5t/w+P1YX5TJihqtHoNZhgLE2P/aA
-	7e9s/42ZyLOmn4v3Gx/FWswJlOuKjbY=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id A243C13479;
-	Tue, 10 Nov 2026 22:21:12 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id BveLHdiY82rmAQAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Tue, 10 Nov 2026 22:21:12 +0000
-Message-ID: <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com>
-Subject: Re: [PATCH v3 0/1] multipathd: check re-added paths' WWIDs against
- sysfs
-From: Martin Wilck <mwilck@suse.com>
-To: Brian Bunker <brian@purestorage.com>, dm-devel@lists.linux.dev, 
-	bmarzins@redhat.com
-Cc: christophe.varoqui@opensvc.com
-Date: Tue, 10 Nov 2026 23:21:11 +0100
-In-Reply-To: <20261109185556.27139-1-brian@purestorage.com>
-References: <20261109185556.27139-1-brian@purestorage.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 768B81800344;
+	Wed, 11 Nov 2026 00:49:07 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E30DF195608C;
+	Wed, 11 Nov 2026 00:49:06 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AB0n5bR1047766
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Tue, 10 Nov 2026 19:49:05 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AB0n5vm1047761;
+	Tue, 10 Nov 2026 19:49:05 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>, Mike Snitzer <snitzer@kernel.org>
+Cc: dm-devel@lists.linux.dev,
+        syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com,
+        stable@vger.kernel.org
+Subject: [PATCH] dm-integrity: initialize journal accounting in dm_integrity_ctr
+Date: Tue, 10 Nov 2026 19:49:05 -0500
+Message-ID: <20261111004905.1047753-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -95,147 +84,52 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-13.51 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	ARC_NA(0.00)[];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FROM_HAS_DN(0.00)[];
-	DKIM_TRACE(0.00)[suse.com:+];
-	TO_DN_SOME(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCVD_TLS_ALL(0.00)[];
-	MID_RHS_MATCH_FROM(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,suse.com:dkim]
-X-Rspamd-Server: rspamd1.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spam-Score: -13.51
-X-Spam-Level: 
-X-Rspamd-Queue-Id: 113021F80B
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: YZ43IUKgPlwNdPw-b7JGb2w8d9u5FMUuhzEMuLdOVfM_1794358147
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Mon, 2026-11-09 at 10:55 -0800, Brian Bunker wrote:
-> During an array controller failover on an iSCSI host, multipathd
-> briefly put a path to one LUN into the map of another LUN, and I/O
-> meant for the first LUN landed on the second. See the v1 cover letter
-> for the full sequence.
->=20
-> Changes in v3, after Martin's review:
->=20
-> - No SG_IO. The re-add check now compares the udev WWID with one
-> built
-> =C2=A0 from the VPD page 0x83 data the kernel caches in sysfs, so it does
-> no
-> =C2=A0 I/O on the device and can't hang. The new get_sysfs_wwid() in
-> =C2=A0 libmultipath shares get_vpd_uid() and get_uid()'s WWID clean-up
-> with
-> =C2=A0 the existing sysfs fallback, so both produce the same string.
+If the superblock for a dm-integrity device is changed while the device
+is suspended, it will resume in a failed state, and skip
+replay_journal(). If this happens on a journaled dm-integriry table's
+first resume, replay_journal() will have never been called, and the
+journal will be uninitialized. While nothing can write to the device in
+this state, integrity_commit() will be called if it receives a flush
+request as well as on suspend. Even through there is nothing to commit,
+pad_uncommitted() will check that the journal accounting is sane. This
+triggers a kernel warning because the accounting was never set up by
+replay_journal(). Fix this by setting free_sectors equal to
+journal_entries. Since all the accounting variables are zeroed when
+creating the ic structure, setting free_sectors is all that's necessary
+to mimic a cleared journal.
 
-I am confused. Does this really fix the problem in your use case?
+Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+Closes: https://syzbot.org/bug?extid=94dac3c75477e184f0b0
+Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
+Cc: stable@vger.kernel.org
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ drivers/md/dm-integrity.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-You reported that the udev-derived WWID was false in some uevents, and
-you said that, as the test was running under RHEL9, udev had obtained
-the WWID from scsi_id, which uses SG_IO. While my previous argument
-that SG_IO can block is valid, it's clear that *if* SG_IO works, it's a
-better approximation for the REAL device WWID than the kernel's cached
-value in sysfs, which might be stale. It makes only limited sense to me
-that reading a cached sysfs value in multipathd would be more reliable
-than what happened during udev rule processing.
+diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+index 1659a11a1a29..419a8b958371 100644
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -5430,6 +5430,12 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
+ 		if (r)
+ 			goto bad;
+ 
++		/*
++		 * initialize journal accounting like a cleared journal, to
++		 * handle a changed superblock on resume, where the journal
++		 * is not replayed.
++		 */
++		ic->free_sectors = ic->journal_entries;
+ 	}
+ 
+ 	if (ic->mode == 'B') {
+-- 
+2.56.0
 
-Also, talking about consistency, on a RHEL system it would actually be
-more consistent to use SG_IO than to read the WWID from sysfs.
-
-I'd like to go back to your original problem description for a moment.
-
-> 1. A change uevent for sdq (verify3) carried verify1's WWID. The next
->    uevent 4.5 s later carried the correct one. We don't know whether
->    the array answered the INQUIRY (VPD 0x83, run by scsi_id) wrongly
->    during the takeover or the bad value arose elsewhere in the udev
->    path; we have no packet capture.
-
-"Elsewhere in the udev path" makes little sense to me. As we discussed,
-udev on RHEL9 uses a VPD 83 INQUIRY, sent by scsi_id via SG_IO. The
-WWID that multipathd reads from the uevent represents (part of) what
-the storage had sent to scsi_id. If multipathd uses SG_IO and obtains a
-different value, then either the storage must have answered one of the
-two INQUIRYs wrongly, or something must have changed in the meantime.
-
-(Of course we could have a blatant bug in multipathd that mixes up the
-WWIDs in some corner case. But if that's the case, your patch wouldn't
-help).
-
-IMO, if we can't trust the reply of the storage array, all bets are
-off. Why would the reply that multipathd obtains directly be more
-trustworthy than what scsi_id had got? (Under SUSE you could see this
-differently, because SUSE reads from sysfs, but you observed the issue
-on RHEL).
-
-You wrote that you'd seen this problem in an "array controller
-failover" scenario while some test script was generating uevent
-storms.=C2=A0I'd like to understand better what happens in this concrete
-failover scenario. One possible case for a WWID change is that a
-a Linux SCSI disk is removed, and another disk is added later, taking
-over the previous device's dev_t. In this case we'd expect "remove" and
-"add" uevents. With the uevent storm ongoing, these events may be
-delayed. So multipathd may see a change event for the old device while
-the kernel had already added the new one. This makes some sense, but
-unfortunately it doesn't match your description:
-
-> A change uevent for sdq (verify3) carried verify1's WWID. The next
-> uevent 4.5 s later carried the correct one.
-
-This sounds as if the WWID of sdq was that of "verify3", then
-"verify1", and then "verify3" again. In my scenario above, sdq might
-change from "verify3" to "verify1", but it wouldn't change back again,
-unless there was another array failover in a very short time span.
-
-Question about your test: Apparently the problem is reproducible,
-otherwise you wouldn't be able to verify your patch. But you said "we
-have no packet capture". If the test is actually reproducible, it
-should be possible to create a capture and verify that the storage is
-not the culprit. That would be very important IMO, because like I said
-above, if this can happen, all bets are off.
-
-I would really appreciate if we could clarify these open questions.
-
-Back to the patch set:
-
-IMO if you want to determine the *real* WWID, you _must_ use SG_IO. I
-am contradicting my previous statement here, I know. I still hold that
-SG_IO may block and that I'd rather avoid using it in multipathd. But
-again, if you want to be certain (ignoring the fact that the storage
-may provide false replies), SG_IO is you best bet.=C2=A0
-
-With this in mind, I suggest that you go back to v2 and SG_IO. Sorry
-for having led you on the wrong track previously.=C2=A0
-
-Because I am generally sceptical of the use of SG_IO in multipathd in
-its current form, and because the the overall idea is very similar to
-the "recheck_wwid" feature, I further suggest that you make this code
-path conditional on "recheck_wwid".
-
-In the long run, we may want to redesign our WWID detection. We do have
-a general framework for asynchronous jobs now. Thus we actually could
-run asynchronous VPD inquries. This would eliminate the problem of
-multipathd getting stuck on a hanging INQUIRY. But this needs more
-thought and experiments.
-
-Regards
-Martin
-
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
