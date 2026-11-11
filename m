@@ -1,96 +1,82 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.179
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794438347;
-	b=pEauYId8b4vp/H9JlbwKnE3DvYo3DVGHFIsZKGQgq9kZTW4LcPNSeU1xklvQ9t5jFuCc
-	 k3jNNNy8kCfa85vpRDy3LlEWzKZmBiAgr4mI5dSMVbnetblgyGPnHkcKnECrpkMWo4qt3
-	 yRODSHmNKhLWRJ+YYtbFNvNt7hG8v1DOjT7S5qisCKrvbpTyoywQUkVdz1PpGhPWtVou+
-	 bqnQX1jAZidOcJOfa9YJEcLhJbJy7Xyb1p9qsXYzLx8S0TQzdvPI4MiqrKtM92RMlhgJH
-	 gVEOWvce6JnrkCLQsUZyBiS8xE5KfmbHTXliigt9eIA9Y/ylUhhvxD9gjDWnTolnqbA==
+	t=1794439997;
+	b=262py4sw0QhSjEXsUN2PFyD0V6BS2UtKv17UhiKxglP76S1BaQOLP3MaUMJoAGmjr1b2
+	 +eRdJtXXVBkXWH5AAwq5e+E5aUJcTEf+8KpNF1VwfoNujwqUvScDlWvusi9bo1kDoSwZx
+	 JIYIuqp+lqj0TjNZomxpM/B/nWTPWEnmTh9HKHOtSsYtsGJ8DmCUAFOKxApjdQBnxnpkB
+	 D3CWsbvOmUgZ9xbnSk9Un4n27s1+M2bfs2z/jlPMEG7OuWmejE2pfv9MeZIFmgGiiFSpC
+	 LrCKAWyU6BAnKFfDmk8qi3rglelzx9DvwN6jcwYD9oZyXMx1bUIxQg09c2LpVtWF/kg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794438347;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=PAtBW+9ywMPOIfbMm41eVJQFmgBYU+QNa5qiiJV/Hdw=;
-	b=Lj8assMR4q0VMcfji7IbTxI5/fawzhnSYz2NnaVwBEkWvkT1XOT8L3/Qdwz9Py5se0ml
-	 hnRUHcBOEl7ZtXivJ8EDX+YIV6wXDE9X8Tw8VGxfFFNB0G9QedoS6EP+bOrDk6xeDQS+L
-	 LT3gQadokQmE6crteqZrJklGbqA3Sa9MS3I5FQZN5CO0Dt+8bdR4HACnSf3yyF1nOupPb
-	 NuavnmR6wOvhKAxuKNtQrsGQ7M1scCxUZdjxjQRPJmv6zF9iWWUz64dZ5XG0HmnjsJEV+
-	 hTzjUikHRse3ppYpFMUWkgYa5tq9/XACDSC+5L2PojQ4SKQCiNvX8fL4NI4xNbjK+8g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794439997;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Type:Content-ID;
+	bh=wFa+6PYdEnwYcfWZqs2W0fqSZLArJ7HSAU8oXuewFKU=;
+	b=zcHlMPgaOz2SrQHe91Zvnx2XuPN9GK+uvuLWHolsZmdTY08T6kPnFkGfIJYYEVdH/IR0
+	 zVhxHSL96DtJkqcRsVfDdpwHUP2osup0yb6AYBRqPGTEth2BqAThOcVKlefcJnccTZLhd
+	 z5oWEiIPo8pC0RzXAabYC40P0gvY/dYdCs+FjD0biz7hNJ88W8DELZe19Sg3s+/5IrxsR
+	 OZS19lCR9HzH5T+yYj2o2pWxkI+M1+9x8wAEVMFHZqy+CGw+6Vv0fbjFycEDLzqXfz3+n
+	 FBimRy0h8yNEQuNCsIXJutCilRxyaf41PQ/TfiaOV6TTLLw4UBGG4a7Avm20D39m3HA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=purestorage.com;
-	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=NWOfpz51;
-	arc=none smtp.remote-ip=74.125.82.179
-Received: from mail-dy1-f179.google.com (mail-dy1-f179.google.com [74.125.82.179])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=IyoptMf1;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C1B5606A321
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 23:05:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7C1B5606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8DC61606A31C
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 23:33:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8DC61606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=NWOfpz51
-Received: by mail-dy1-f179.google.com with SMTP id 5a478bee46e88-3700ed8dbe3so6586033eec.0
-        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 15:05:46 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1794438345; x=1795043145; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=PAtBW+9ywMPOIfbMm41eVJQFmgBYU+QNa5qiiJV/Hdw=;
-        b=NWOfpz51KUZzFvh55OWaX9upGS694kbphgGJ+zpIxXPV8O1Kwp2+YqhUgIxQ8UQKr8
-         JauohF/6JoYYDYUh3dzoq/y4DgOnhZ2d8Lm+nqJMvErC/gJV0nmweRmHm/JolitozO89
-         lO4GdmEqADUGYjXFku+8MUj7U/SRBfRwDe9JlEUGeWd4b+8It8t5FUw0s3lXesTo6xrb
-         9XyIEBsCsQb1Ynpl09BZYvsjkX93J05coh9YBZtl/opQEPXv4xQeoYejfxO8WFKCayD5
-         1nUdl3JpnwkEm0bRi3CryX+l3nNdbSYu+4UB/Iq+PRCp5FRDtjm7xJYaP/hMigETY/by
-         eGig==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794438345; x=1795043145;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=PAtBW+9ywMPOIfbMm41eVJQFmgBYU+QNa5qiiJV/Hdw=;
-        b=OzRgYeJRzRMvtEWweQ3GUgKfc66olhSC4W66RjwmUi2thu3H5Ax7mf/B1RqTMu+Y5f
-         YW6DGp5zsGfNaKx/jJwMpYKP5EK6/FPMcZFO5rLLftTpRExgfkKNDnpw8ouqrkL3p5fB
-         EHQOiNPpS91LyMEpcQu9ymeyu3CzTpdXU1mT3LdpX7do9XYJyXy1PQYSMTyPWcse+TXj
-         uJVRQ7K7oUjusluFDahYuvQsWfFLRp2G86H4yOTS5YX1XLFjS6UrrqwjygYVAkqtifoW
-         VKjv/RVvP2E7GK/1pytOHRgzWmztbc7fFWZ5MXr1mEQ7ifuJ5XaPJtq7d5FectPS6jKO
-         t1lg==
-X-Forwarded-Encrypted: i=1; AL+hErGcPRPY32gXgUfuYiGOKEnNfiQcpIdV86uznGr9rc4CIykm5aTKFyqJnpA2EPNLuDIm8ehuf03mtg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z8iNnTF9RO5ye1EbOVyTfF56yVZFt2qdUuFHUQE/WHo5eIH/9hh
-	aYiNcSLvRrqR1HXwU1bYBnKI4rHlDjZ+VdttFcXL3bVz33d1hY6IUnMcIZnAekZKO3I=
-X-Gm-Gg: AYBFou2FQNzjpiNEPQk3dH9NvpJnQlPQjKkRZXkTkg4cQRKcCqmHUFTPJj8K9gQnXSz
-	EOKGXGRASk0TTPnk4iSE0vAYa2DoreTdMUoi96qZswfO+gxFrglC7CWs2sE8qh/KhO2J1A+LP0a
-	u/1gTU0FMB3yLud7mtN/crULKq8S/tiLltufgEAExPhKmJ/4o2vwmAyb8mCkAHPrhHBv58gBEIg
-	q0gvwyv9jeXc8u1hzKjqhe2DvtNirCbD/HIg8i21+1gK8Ea4ndKqWCstOrD+d+eTQAmVDpyRrUJ
-	QkPVZxu6OgdSJS8z+XTfLLTcyzhwRUmlQMX3JvBx1gTxr+FG3BgFxzrPHIN5J8ZTp2FdD2POcMm
-	Ol9f0TJjNwuAx5CvhXcuc/zD9/Id3SYoA8MYb3cLpVmFZkvsH9U7ZD15IdfDoMnHl4SOBVeC9TS
-	IZSjsZmVow7eKpODvyT+WXxR9nQ2+DIBYcWJIJAwA2oRE9PdBYe6FNeQ72gTPkcSn01Vanmm3H0
-	A1/rxaBIicsG9GnZN6Y89ixOpd8if+82+5vdvnPRu5+I0/oiNzV54FmF6vesEjzgHtATu8qUQ3N
-	+4Err2gyA3fobfgBj37hagw+0hJLjmmcqn+3x8TsgSJ6FcWxDZqZC/UrcP2HV4tZ9rJ6oiojuLX
-	LOIWDUoBhDEEZLRWDcdoLIP7fzlSqbhkQqN8n7vKZfuYEOeuQoORujEdYnG3AEomKYHtMixidK4
-	9qouSj4BKNm8X+0+Ze9H7+HEDe
-X-Received: by 2002:a05:693c:41da:20b0:36a:79e7:2fd with SMTP id 5a478bee46e88-3768721410bmr4343347eec.40.1794438345215;
-        Wed, 11 Nov 2026 15:05:45 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-37520bfb58dsm36388538eec.18.2026.11.11.15.05.44
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 11 Nov 2026 15:05:44 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH v3 0/1] multipathd: check re-added paths' WWIDs against sysfs
-Date: Wed, 11 Nov 2026 15:05:34 -0800
-Message-ID: <20261111230535.12947-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
-References: <20261109185556.27139-1-brian@purestorage.com> <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com> <20261111174259.41911-1-brian@purestorage.com> <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=IyoptMf1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794439995;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=wFa+6PYdEnwYcfWZqs2W0fqSZLArJ7HSAU8oXuewFKU=;
+	b=IyoptMf1usAimejNXoqxo+gneTch34j2E6oDwlDyLPQFKS9dwyhMpQpzXQUs/lIL06G05X
+	035n4Xt+UOybpDAWzvPF2lGCcUAZdzhZVd8lRxizPEORzp3xJZvDQNEMKDG51/dCTbZhvf
+	Dh1v5jGjDte9+SsjsC5Zlb1o0NSqVEQ=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-163-rFsKf73-NJKeDJqNoD_qpQ-1; Wed,
+ 11 Nov 2026 18:33:12 -0500
+X-MC-Unique: rFsKf73-NJKeDJqNoD_qpQ-1
+X-Mimecast-MFC-AGG-ID: rFsKf73-NJKeDJqNoD_qpQ_1794439990
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 4263D1955F1E;
+	Wed, 11 Nov 2026 23:33:10 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E848930000E8;
+	Wed, 11 Nov 2026 23:33:06 +0000 (UTC)
+Date: Thu, 12 Nov 2026 00:33:04 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: =?GB2312?Q?=D6=DC=CE=B0=BD=AD_=28Weijiang_Zhou=29?= <weijiang.zhou@unisoc.com>
+cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>, 
+    Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Sami Tolvanen <samitolvanen@google.com>, 
+    =?GB2312?Q?=BD=F0=BA=EC=D3=EE_=28Hongyu_Jin=29?= <hongyu.jin@unisoc.com>, 
+    =?GB2312?Q?=CE=E2=CF=E9=C2=BB_=28Xianglu_Wu=29?= <Xianglu.Wu@unisoc.com>, 
+    =?GB2312?Q?=CE=E2=D6=DC=BE=B5_=28Justin_Wu=29?= <Justin.Wu@unisoc.com>, 
+    "dhavale@google.com" <dhavale@google.com>, 
+    "ebiggers@google.com" <ebiggers@google.com>
+Subject: Re: [RFC PATCH 1/2] dm-verity: don't decode FEC into a dm_bufio page
+ that is already in the cache
+In-Reply-To: <179436615557.34024.8414792860115638345@unisoc.com>
+Message-ID: <c610cc13-cffb-45eb-6750-40a814d60efd@redhat.com>
+References: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com> <27b2dc50d3bb497ea3f3f84e7e4b271c@zeshmbx08.spreadtrum.com> <5188c1e8-c08a-2a56-7e4c-1d84aba4df35@redhat.com> <179436615557.34024.8414792860115638345@unisoc.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -100,46 +86,81 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: B_h66KzwGPn1VwJ7L2rFNF0XzeNfnmEXdpUbi8bMc6c_1794439990
+X-Mimecast-Originator: redhat.com
+Content-Type: multipart/mixed; BOUNDARY="-1463801984-1877310339-1794439735=:1158755"
+Content-ID: <ba80d8e5-3d6c-4dbf-2f31-1c6c0b5541c4@redhat.com>
 
-On Wed, 2026-11-11, Martin Wilck wrote:
-> Right, but "newer" doesn't mean "more accurate". You write below that
-> there is no indication that anything actually changed, so time
-> shouldn't be a factor. If a wrong VPD reply is possible once, it can
-> also occur multiple times. If it's just an unlikely failure, a purely
-> stochastical thing, it would help to simply repeat the same request;
-> if the probability for error is 1e-4, the probability for two errors
-> in succession would be 1e-8. However we don't know if it's
-> stochastical.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+---1463801984-1877310339-1794439735=:1158755
+Content-Type: text/plain; CHARSET=GB2312
+Content-Transfer-Encoding: 8BIT
+Content-ID: <9665e929-c813-fb35-96a2-4fe7265388e1@redhat.com>
 
-Fair, "newer" was the wrong word, and we can't show what caused the bad
-reply.
+Hi
 
-I think the patch stands without that, though. recheck_wwid already
-exists to stop a path whose WWID has changed from staying in, or going
-into, the wrong map: multipathd checks the WWID with the device when a
-failed path comes back, and when a path is added with "multipathd add
-path". The re-add in uev_update_path() is a third place where a path is
-put into a map because of a WWID change, and the only one of the three
-that acts purely on the udev value. v4 applies the same check there,
-under the same option.
 
-It also costs little: nothing unless recheck_wwid is set, and with it
-set, one INQUIRY on a re-add that only happens after udev reports a
-changed WWID. If it ever refuses an add, it logs the udev WWID and the
-one the device returned. We'll run with recheck_wwid enabled on our test
-initiators and watch for that message. If it shows up more than once,
-we'll come back with those logs, which would be better evidence than the
-one run we have, where we didn't know at the time that our test tool was
-flooding udev.
+On Wed, 11 Nov 2026, 周伟江 (Weijiang Zhou) wrote:
 
-> I'd go one step further and say that it tells us nothing at all.
+> Hi Mikulas,
+> 
+> thank you for the careful review, and for pointing straight at what
+> needs to be fixed.  We agree with you: the 1/2 sent earlier only hides
+> the symptom, please ignore it.
+> 
+> To make sure we read the defect the same way: in fec_read_bufs() a block
+> whose read fails is recorded as an erasure outright; a block that reads
+> back fine and lives on the data device is judged by fec_is_erasure(),
+> which compares it against the digest verity_hash_for_block() produced
+> for it.  Getting that digest can walk the hash tree and read, level by
+> level, the hash block covering that data block.  When the block being
+> recovered is itself a metadata block, a data block of the same codeword
+> can have its hash path run through it - at level 0 one of the data
+> blocks it covers, above level 0 one of the hash blocks below it.  So
+> the walk asks for exactly the block we are rebuilding: the one
+> dm_bufio_new() put in the cache holding allocator leftovers, with no
+> read ever issued for it.  The digest cannot match, recursion into FEC
+> is blocked by fio->level, and the walk ends in verity_handle_err() -
+> the "metadata block N is corrupted" from our devices, which under
+> restart_on_corruption means a reboot on a single transient read error.
+> This is only reachable on the second try, the one that asks for
+> erasures: the first try recovers the block without searching for them.
+> 
+> Rather than defending a patch of our own, what we would really
+> appreciate is your help with the complete fix.  This is a path where a
 
-Agreed.
+I think that the correct fix would be to ensure that the erasure blocks 
+for a given tree level are stored at the same level as the blocks that 
+they protect. Then, you will never hit the situation where the correction 
+recurses into the same block that it attempts to correct. You would need 
+to modify the veritysetup tool for that and maybe it would also need to 
+introduce a new on-disk format.
 
-> However from the time line you provided, it makes sense that your
-> patch would have been effective in the error case.
+The forward error correction was written by Sami Tolvanen, so maybe he can 
+help with that.
 
-Thanks.
+Mikulas
 
-Brian
+> partial change worries us: the erasure search, the recursion guard in
+> verity_fec_decode() and the hash_verified state are all involved, and
+> from the outside we cannot judge which of them a correct fix has to
+> touch.  Our concern is that we close the case we can see and open
+> another risk somewhere we cannot.
+> 
+> Would you describe the fix you would consider correct - where the
+> change belongs, and what else it has to cover?  We will implement it
+> exactly as you specify, verify it on the configuration that reproduces
+> the problem, and send it to you for review before it goes any further.
+> 
+> Thanks again for your time,
+> Weijiang
+> ________________________________
+>  This email (including its attachments) is intended only for the person or entity to which it is addressed and may contain information that is privileged, confidential or otherwise protected from disclosure. Unauthorized use, dissemination, distribution or copying of this email or the information herein or taking any action in reliance on the contents of this email or the information herein, by anyone other than the intended recipient, or an employee or agent responsible for delivering the message to the intended recipient, is strictly prohibited. If you are not the intended recipient, please do not read, copy, use or disclose any part of this e-mail to others. Please notify the sender immediately and permanently delete this e-mail and any attachments if you received it in error. Internet communications cannot be guaranteed to be timely, secure, error-free or virus-free. The sender does not accept liability for any errors or omissions.
+> 本邮件及其附件具有保密性质，受法律保护不得泄露，仅发送给本邮件所指特定收件人。严禁非经授权使用、宣传、发布或复制本邮件或其内容。若非该特定收件人，请勿阅读、复制、 使用或披露本邮件的任何内容。若误收本邮件，请从系统中永久性删除本邮件及所有附件，并以回复邮件的方式即刻告知发件人。无法保证互联网通信及时、安全、无误或防毒。发件人对任何错漏均不承担责任。
+> 
+
+---1463801984-1877310339-1794439735=:1158755--
+
