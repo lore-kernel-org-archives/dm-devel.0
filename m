@@ -1,93 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.174
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.179
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794421014;
-	b=X72TxZN+tGV8yUyY2gYDbhipAwYsLOQc1VDP5xWJHQQ2NGCdIbyzpI9NQK7+OVZIqVI2
-	 JCOsX7XIW13wD1BXDb0taE5JPm6/FFn+0MpGhxiSaq69pkOUScBo2l8ZjI10obcMNTuwr
-	 isF+IILPpHGR5HeJNXOtiOb898/B1exexROe7WBSvRW9NTVafFxPxbMwIrui89gr4SGlC
-	 tifhBHk0qwV9Q7G2qhD4cAEfrcXVNdK3Y899jTSve+1xtYwRMHlvP4SUtXxsh1c00sYxX
-	 5h8pvhfgHOXjc8rmK5d0gXgOdvnStx7myQ2D0ODKluXtHhh3NkH1SFPYyN4bq7SGflQ==
+	t=1794421016;
+	b=VroSg0eG10DrVGBw2XXV8o9yZpfCOCFOU6Cgef+d2qsvrK53W5ndJvRW9tkYT3lMVzcZ
+	 de79dDNlIcWHtiA4JngkxmYwgjH7kZTux7Qp54rEA8zso3o89mH1+NLaqSR/OVNrPcOyD
+	 83fLH18MGpXXqtGOA94iovDdrnf/ryAEvAM/cWZvkcK5MMP3SW77fhNFGpK7pJfHdK4oK
+	 fbIi9a2nNS3/UfmTcWVuUEgBLAQwJhNfQJG/omtMS5yHDHKJ3BDy4EEZJdUzS9nXj6rYz
+	 UM+NXgYvcY0gne922hHNS/J2St6yn8AAB6hN9EFS+NMZ2aw4YeDmQJxujhzbGfOFoSw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794421014;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794421016;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=tghWYw9WJxfX/qgydlAyo2SGvbzRB2GuCoj7vsIRDmU=;
-	b=wp2PdzzZwDnVE7d94TqNxOY8kGvmI+w1ICj7A9w62XqexCbmv+6LaMmUGy47Jq6tNaJX
-	 PG8lO7oMtWC0mBZEv3VppuIBWn7/AJpOmFgnD1VH86csGN2Hfkg5MP4589u6M1NSF8+Do
-	 SN/oHJgHijvz4ya8cDxZqmC7oh8alEg1Gepa8wQKfBGguMpGREUhITflEicsQHuechCL7
-	 dDs9B5rtthVkDpg+r58naygF/9z4QrfCxLD8EAQnFbA4jv6lwv3YcPoFXJHzgnRbHUb5V
-	 LSSWFdTCOcA7JxmAMLT+P/eb1Wsl4BweatLXIOi0OTeaN40a7M92owBagJpYSnj9zZQ==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=JhGy8kMh4Qvk8VgFheCL0OW/ts/Le+ExmKJJKm5PpIc=;
+	b=pMqjAp6DEeCf0XOqHnHOEH8axapGspf8QsJGkBl8j/KcKdsn9iZ1oSr1tlSg2zchU3Ij
+	 9yxQ7CeDh7L2NQoOPYqLEKI7FpEin+5W6A12xWIK+30ObYBP/Krc24u7SCQKCgjsgxfrx
+	 0R46gZM4Gwpw1NU8cNmbFY+bH20AKbTNQpioWT6WHRfU39AKfdl+ZcPC+9VirSTbZDPu9
+	 Fr9pS1ZQQcCiSQLeuWXNnowKdFSJv5jxDKwR5HH5aHeZnhBh5YNMstmrOkSJoU3QwZY0I
+	 ufwe0bM65i/W+UZmmaRWlcYPdm5gmDa7d56tzRgYay5JppMIxy3V2/9pMJo2Bi06w1g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=purestorage.com;
 	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=JOtbFmFm;
-	arc=none smtp.remote-ip=74.125.82.174
-Received: from mail-dy1-f174.google.com (mail-dy1-f174.google.com [74.125.82.174])
+	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=fQfOElsH;
+	arc=none smtp.remote-ip=74.125.82.179
+Received: from mail-dy1-f179.google.com (mail-dy1-f179.google.com [74.125.82.179])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D69EF606A886
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 18:16:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D69EF606A886
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 97A8D606A886
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 18:16:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 97A8D606A886
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=JOtbFmFm
-Received: by mail-dy1-f174.google.com with SMTP id 5a478bee46e88-372bdb942dbso4420894eec.1
-        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 10:16:53 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=fQfOElsH
+Received: by mail-dy1-f179.google.com with SMTP id 5a478bee46e88-33bf40b0c8bso1900625eec.0
+        for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 10:16:55 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1794421013; x=1795025813; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=tghWYw9WJxfX/qgydlAyo2SGvbzRB2GuCoj7vsIRDmU=;
-        b=JOtbFmFm29hl9QhusI5nzdl4mDGPuvwEh4dbMIHvkTkTdkxyQMQJdIL0t3m4ajrkiB
-         G9Sz6f3WlnmX2lW0HGcYejO/BvHpGOWfzMED6OK3lChKrrma9u086zNxvuH81dWrkdGx
-         gUimRrr+tirhWNg5qKGL7P1bP7zsXY8xFIC1hB1IoJA6rCRakUZpJ/iZ3/1xX2Ok/YRi
-         vte5WzxXQq9BpsWlEbFhNAw2UhTzQrjhLm7ppgN1w1IKjxYyzfeJkBPs3HQytXESZXAW
-         eCWWPyxkoBfYZE/jonomVU6V+3eytJ0mzpgQdLRIKBGWVuY50gGJEtkC/80i6xz0jRAC
-         QBzg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794421013; x=1795025813;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=purestorage.com; s=google2022; t=1794421015; x=1795025815; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=tghWYw9WJxfX/qgydlAyo2SGvbzRB2GuCoj7vsIRDmU=;
-        b=DuIDimSaZ3ECwmNPFEIYjRTWZC309WTyhqnJIzSJ2YDOWvly5fur0t6mhShGNiFg5p
-         nP/q0rM1y2Z6f/u1R29BikWGRkpTUbxpKCwUp6jQtUnW/04eXgp2J9BWrVe3/8diErBV
-         L9tpmDjwnRuQ8BVRvgHdVw6iYnhTy+PJyVX1IfJ8wDC0kOjgf9VlEjU1GE8oOR2auVHa
-         5E2sbKhQgybLjo7Yxop7LOEoWuD3KhUkd/TCbrDGdEzDHcylxLoCjGEcTa9XG3ZlJVFz
-         l0GtHGA7HjLE5faly7THql9HQbHF7X+x4rTp7nFccInr9lhicichJoWdoS0l3ZrFkXP1
-         SGug==
-X-Forwarded-Encrypted: i=1; AL+hErEh8W7mPOOQ8ZG9PVAwyn+ve68D0l3U0WDx5zXWEY+ESE09bIuhwBt6M+f4DpE4TeOQ4FCUsoZFBQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/ci7pVnBm3lND8HF2Ywn0vjANpgSeXidElN5tAWIZ3vo9FeKfD
-	UD0t8ktsrUZbpq/wu8vAUgzxqaccL2qWsti17gCvGYE1IC+OAbSNQ0iNV3ep87e8d0k=
-X-Gm-Gg: AYBFou0bBF3BfXL7f5gegl4bPLugHFZpTUh6h8K+gQDk5nIpUb9TYW3bWiAsRDKNeip
-	crgoY5Wh3IjOF3OXyYCwAMhXvpJmSy1K26OBjg4n8Dm54A4J4QgShE/QPq6PO4CNXZ/MW+Hm/pW
-	/2Jxn/PWLMUQgn42g4kodgwSTjxzi8TQcjVYTtIRx/gSORfunn7oDUFniVlxgkLWjFDxBxOZZwV
-	wDh8xNQsJGUasKXM5eCPsTLxI8Fvb9M/XHsw8htYv1EjxLqMDG9a8wqYOy1yQ1dCihd69WZfrz5
-	DBciEB3M5p9hk4eGGKyvYDD+szolo5WFhZIa0bMHqAt9GMh3H9M/eszH3xrPZ7pYILTOcenLAEJ
-	30Q3OfDlRQcwO1eBiPBx1KPPdAwRAr7F+JFKvFdZva84JDWzD306z8GaS12aCKCZBMjgopJ6N+Y
-	XsLm5fpEHlH+ihtUOICzGXQk0mQ8iGOSNX62oP42F0zPbOGTD45uf9sj6gNz9jVzh3/RRUod+jr
-	gQO2O1utNoBPrO3RcK9VfRtpnikGw9qlAg3xpHysUF37AvvOIPJLSSY/BU1CGT/niyNcCFxfBKR
-	PGnjDZPR+r3t01wRkEMHCqALA2sE5JRG6L3QMuLAs0VeweunwkBj+9buMwaY0S8fleZzp9a9gUg
-	JjBhVEzfSGycE0IxNGGuiXHP8vA8vkvS3BCFxwW58MMxo96naquCCKZXzfMTOCY0hk1kM7Wfi7Q
-	fBtvsqNtf27ozV6euZBlvp8MkSkAdHm80BGUbyjsRs
-X-Received: by 2002:a05:7301:a01:b0:36e:2b8b:a098 with SMTP id 5a478bee46e88-37686d31f7cmr3346145eec.31.1794421012623;
-        Wed, 11 Nov 2026 10:16:52 -0800 (PST)
+        bh=JhGy8kMh4Qvk8VgFheCL0OW/ts/Le+ExmKJJKm5PpIc=;
+        b=fQfOElsHToyxxPHx5ySSoMKlL31eOv9MMUif4OCqX7QFk2qD5tZda9y5SvGpwl6cBW
+         +XmDsx3ZDwomEaQM8Yr2I1yfaFbE4oMFen3ekeyACotxv/Ngk7ZoX7d+T6NTIDPy85f/
+         6CxjbzLhUkBxz+YGvBsBc5mbpoYri7mrm7iUrW+D/cyMeHqF0u4LXJUPYoKXp3b2yAGs
+         IACDGcuFUKxsOfr0nLskPClOfuUZgyUZ46nSHDbDlEjVm9E7AIRM8eo1+GEhw9fuXOUc
+         3Eu2UzbuYD2w53gtFjnaMPceGgGOIcbMzZvpKJEMvHMZoI7U7QIsNolzX3uEfGgGM/8P
+         ClJw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794421015; x=1795025815;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=JhGy8kMh4Qvk8VgFheCL0OW/ts/Le+ExmKJJKm5PpIc=;
+        b=w7qRmspNoYWo7UYgQJ9wwZNqzzGA2lY7eO7UzmZ588U+Qi1/DnDTtT97MrPhom7HeD
+         QYzz8LpCDloe3cHzPfvvDLeLmo56q2L6haztY+/5saLIVSIernHu5hhcRGwND9dTTw1g
+         vKN1RJ0E4XkI8LA35Kq/zl4/iXRW8iLbCUo62M00YZ7En1mV19kBCI+ztQqucedMPZhv
+         sPAIrstAperiVIRuKoMfsuaP6qVrF2mnkLDBJGC3Y+g8I5rfRZ+k+HDObT6FjMzNo13v
+         YzaLzyraaKJtB5BVR22aGTvjtvWuAqU261s8R5DUgFDjeGEdlfqcMWpRHJDxmfeVVelQ
+         1r7g==
+X-Forwarded-Encrypted: i=1; AL+hErFdYwuWj5AX6eUJQNsZG6nGLeO04oBiGek2BoS/zDTfNosrIod9nkDQTHgm8Sl/C+nybHqMSiFqjw==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+bRtckMi7Pq8rXYkTX8pyiueetFxqwhRpxkPeHdXN1Dg40QlfP
+	CsxwIwsXlgK/KRjTXACRCBi533it4arcpxbVOj6BDHtB5iNMRdQLWCiQgkDxPF+E3Jluxa2XCDr
+	WpZpDDQQ=
+X-Gm-Gg: AYBFou1wxhSIbNIiiMR4N7P46KlTLrNX5FaHsIFP5QHi/GlgTOETpDVJ3E5z2JY0B1h
+	H7tHTvxP3v82BY2E26WPMxTXeHhIAl1bOwk50UBoq8U8UYFmZ9QQzcQPcreT3y/yncBEoKAxHWc
+	IrGI25hhRSujO/gYTAV9gtpM7uBKfdUmTEyW6SoFN0b0KDwVzhGfUSwjABkGeatMzyPyPae1LpI
+	7PtqYxpMRR1fNoVbUgG4+/XhmDhDC/bKLEekmeIIEQdyS/FpFyVKM2hTNgB61Hwg8PAF6ABAEv2
+	9Va9krpOMYGckx2vPWWTZ3G+6Jv3Bxp1MN7NXrR1n17qvFqNZb0ItKCPQhE9lQQaXneEDAiJ1uz
+	hReZYn6tCUNB0+zlKg5k83Gt2bWz7dcWlHGsAjsAJnLc7Un5ByfDVjHLz2ZVqAUc3fRSXkjZYJ1
+	D2RF287snAV7RRhB5xXK8/IN8CUBd163TxFRGRPlrUVpL4DZ/vcEVMZSw+QnzMiYyB02dx1eK9Z
+	473zy/os7yaw5zJwvFxvKz6tVMUw3jeeaj0xm5JL8y+AyBk85sGmmTucHDaQxWxRi5TrEwdNlg4
+	KVvkvpgzOm/Eh/ODRdD8fZhOfp+4LiSoeRPtMoPv1TpQIRrxQItsu1CJnIMoTeMC47HkzI047Nh
+	x8sm54txMnyJWC5esRhrCNJ82XeucVVel1mxhkVKJc+Jrf7VCGwwhjwmw0trTTEHMC6Kd4fBgJB
+	1NN4NAckUbUKeNm0MyfH0=
+X-Received: by 2002:a05:7300:d704:b0:377:7f17:98ce with SMTP id 5a478bee46e88-3777f17999dmr1473835eec.21.1794421014474;
+        Wed, 11 Nov 2026 10:16:54 -0800 (PST)
 Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-375212ec002sm20565706eec.26.2026.11.11.10.16.51
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-375212ec002sm20565706eec.26.2026.11.11.10.16.53
         (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 11 Nov 2026 10:16:52 -0800 (PST)
+        Wed, 11 Nov 2026 10:16:54 -0800 (PST)
 From: Brian Bunker <brian@purestorage.com>
 To: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	dm-devel@lists.linux.dev
-Subject: [PATCH v4 0/1] multipathd: recheck WWIDs of re-added paths with the device
-Date: Wed, 11 Nov 2026 10:16:41 -0800
-Message-ID: <20261111181642.51912-1-brian@purestorage.com>
+Subject: [PATCH v4 1/1] multipathd: recheck WWIDs of re-added paths with the device
+Date: Wed, 11 Nov 2026 10:16:42 -0800
+Message-ID: <20261111181642.51912-2-brian@purestorage.com>
 X-Mailer: git-send-email 2.56.0
+In-Reply-To: <20261111181642.51912-1-brian@purestorage.com>
+References: <20261111181642.51912-1-brian@purestorage.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -99,55 +103,210 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-During an array controller failover on an iSCSI host, multipathd
-briefly put a path to one LUN into the map of another LUN, and I/O
-meant for the first LUN landed on the second. See the v1 cover letter
-for the full sequence, and my reply to Martin on v3 for the open
-questions about it.
+multipathd takes a path's WWID from udev. When a change uevent reports
+a different WWID, uev_update_path() removes the path from its map and
+re-adds it through uev_add_path(), which places it in whatever map owns
+the new WWID. The removal can block for seconds while the map is
+suspended, so by the time the path is re-added, the WWID in the uevent
+may no longer be what the device reports. If it is wrong, the path goes
+into the map of a different LUN and I/O for one LUN is silently sent to
+another.
 
-In short: a change uevent reported the wrong WWID for one path. The
-removal of the path from its map then blocked for 4.4 seconds while
-the map was suspended, and the re-add used that same, by then 4.4
-second old, uevent to put the path into the wrong map. The next
-INQUIRY on the path, 140 ms after the re-add, returned the correct
-WWID.
+If recheck_wwid is set, confirm the WWID with the device over SG_IO
+before such a re-add puts the path into a map, as recheck_wwid already
+does when a failed path comes back. If the device doesn't confirm it,
+leave the path out of the map: orphan it, clear its WWID and mark it
+INIT_MISSING_UDEV, so the checker retriggers udev and the path is
+re-added from fresh data.
 
-Changes in v4, after Martin's and Ben's review of v3:
+To tell re-adds from ordinary adds, turn the need_do_map argument of
+uev_add_path() and ev_add_path() into enum path_add_mode, with a new
+PATH_ADD_REINIT value that behaves like PATH_ADD_MAP and is passed only
+for the re-add at the end of uev_update_path(). Ordinary adds are
+unchanged.
 
-- Back to SG_IO, as in v2. The re-add check reads VPD page 0x83 from
-  the device with check_path_wwid_change(), the same function
-  recheck_wwid already uses, instead of comparing with the cached
-  sysfs page. The cached page can be stale, so it isn't a better
-  reference than udev's own INQUIRY.
+Document the new case under recheck_wwid in multipath.conf(5).
 
-- The check only runs if recheck_wwid is set. It is off by default,
-  so nothing changes for users who don't enable it.
-
-- Still only on PATH_ADD_REINIT, i.e. only for the re-add at the end
-  of uev_update_path(). Ordinary adds never run it.
-
-- No changes to libmultipath. get_sysfs_wwid() and the ABI version
-  bump from v3 are gone.
-
-- The uev_update_path() check from v2 that ignored a changed udev WWID
-  stays dropped.
-
-- multipath.conf(5) documents the new case under recheck_wwid.
-
-We've seen the problem once and haven't reproduced it. We have been
-running a v1-style patch on our test initiators since then without a
-recurrence, which at this rate doesn't prove much either way.
-
-
-Brian Bunker (1):
-  multipathd: recheck WWIDs of re-added paths with the device
-
+Signed-off-by: Brian Bunker <brian@purestorage.com>
+---
  multipath/multipath.conf.5.in |  8 +++++---
  multipathd/cli_handlers.c     |  2 +-
  multipathd/main.c             | 37 ++++++++++++++++++++++++-----------
  multipathd/main.h             | 13 +++++++++++-
  4 files changed, 44 insertions(+), 16 deletions(-)
 
+diff --git a/multipath/multipath.conf.5.in b/multipath/multipath.conf.5.in
+index a577dfc8..8f358808 100644
+--- a/multipath/multipath.conf.5.in
++++ b/multipath/multipath.conf.5.in
+@@ -1382,9 +1382,11 @@ The default is: \fB\(dqNONE\(dq\fR
+ If set to \fIyes\fR, when a failed path is restored, its wwid is rechecked. If
+ the wwid has changed, the path is removed from the current multipath device,
+ and re-added as a new path. Multipathd will also recheck a path's wwid if it is
+-manually re-added. This option only works for SCSI devices that are configured
+-to use the default uid_attribute, \fIID_SERIAL\fR, or sysfs for getting their
+-wwid.
++manually re-added, and before re-adding a path whose wwid udev reported as
++changed. If the device doesn't confirm the new wwid, the path is left out of
++the multipath device and udev is asked to report its wwid again. This option
++only works for SCSI devices that are configured to use the default
++uid_attribute, \fIID_SERIAL\fR, or sysfs for getting their wwid.
+ .RS
+ .TP
+ The default is: \fBno\fR
+diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
+index f5a13c46..9b4a04c2 100644
+--- a/multipathd/cli_handlers.c
++++ b/multipathd/cli_handlers.c
+@@ -673,7 +673,7 @@ cli_add_path (void *v, struct strbuf *reply, void *data)
+ 			return 1;
+ 		}
+ 	}
+-	return ev_add_path(pp, vecs, 1);
++	return ev_add_path(pp, vecs, PATH_ADD_MAP);
+ blacklisted:
+ 	append_strbuf_str(reply, "blacklisted\n");
+ 	condlog(2, "%s: path blacklisted", param);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9bce4d6b..fdf5503b 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1128,7 +1128,7 @@ check_path_wwid_change(struct path *pp)
+ static int uev_update_path (struct uevent *uev, struct vectors * vecs);
+ 
+ static int
+-uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
++uev_add_path(struct uevent *uev, struct vectors *vecs, enum path_add_mode mode)
+ {
+ 	struct path *pp;
+ 	int ret = 0, i;
+@@ -1180,7 +1180,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 				     DI_ALL | DI_BLACKLIST);
+ 			pthread_cleanup_pop(1);
+ 			if (r == PATHINFO_OK && !prev_mpp)
+-				ret = ev_add_path(pp, vecs, need_do_map);
++				ret = ev_add_path(pp, vecs, mode);
+ 			else if (r == PATHINFO_OK &&
+ 				 !strncmp(pp->wwid, prev_mpp->wwid, WWID_SIZE)) {
+ 				/*
+@@ -1255,7 +1255,7 @@ uev_add_path (struct uevent *uev, struct vectors * vecs, int need_do_map)
+ 		conf = get_multipath_config();
+ 		pp->checkint = conf->checkint;
+ 		put_multipath_config(conf);
+-		ret = ev_add_path(pp, vecs, need_do_map);
++		ret = ev_add_path(pp, vecs, mode);
+ 	} else {
+ 		condlog(0, "%s: failed to store path info, "
+ 			"dropping event",
+@@ -1297,8 +1297,7 @@ sysfs_get_ro (struct path *pp)
+  * 0: added
+  * 1: error
+  */
+-int
+-ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
++int ev_add_path(struct path *pp, struct vectors *vecs, enum path_add_mode mode)
+ {
+ 	struct multipath * mpp;
+ 	char *params __attribute__((cleanup(cleanup_charp))) = NULL;
+@@ -1315,6 +1314,22 @@ ev_add_path (struct path * pp, struct vectors * vecs, int need_do_map)
+ 		condlog(0, "%s: failed to get path uid", pp->dev);
+ 		goto fail; /* leave path added to pathvec */
+ 	}
++	/*
++	 * This path is being re-added because its udev data was missing or
++	 * changed. The uevent may have been queued long before we got here,
++	 * and adding a path to the map of a different LUN corrupts data. If
++	 * recheck_wwid is set, confirm the WWID with the device first. On a
++	 * mismatch, leave the path out and let the checker retrigger udev
++	 * to get a fresh WWID.
++	 */
++	if (mode == PATH_ADD_REINIT && pp->recheck_wwid == RECHECK_WWID_ON &&
++	    check_path_wwid_change(pp)) {
++		condlog(0, "%s: not adding path, wwid '%s' not confirmed by device",
++			pp->dev, pp->wwid);
++		memset(pp->wwid, 0, WWID_SIZE);
++		pp->initialized = INIT_MISSING_UDEV;
++		goto fail;
++	}
+ 	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
+ 	if (mpp && pp->size && mpp->size != pp->size) {
+ 		condlog(0, "%s: failed to add new path %s, device size mismatch", mpp->alias, pp->dev);
+@@ -1375,7 +1390,7 @@ rescan:
+ 	if (ro == 1)
+ 		mpp->force_readonly = 1;
+ 
+-	if (!need_do_map)
++	if (mode == PATH_ADD_NO_MAP)
+ 		return 0;
+ 
+ 	if (!dm_map_present(mpp->alias)) {
+@@ -1789,7 +1804,7 @@ out:
+ 	}
+ 	/* pp->initialized must not be INIT_PARTIAL if needs_reinit is set */
+ 	if (needs_reinit)
+-		retval = uev_add_path(uev, vecs, 1);
++		retval = uev_add_path(uev, vecs, PATH_ADD_REINIT);
+ 	return retval;
+ }
+ 
+@@ -1905,13 +1920,13 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 	 */
+ 	list_for_each_entry_safe(merge_uev, tmp, &uev->merge_node, node) {
+ 		if (!strncmp(merge_uev->action, "add", 3))
+-			r += uev_add_path(merge_uev, vecs, 0);
++			r += uev_add_path(merge_uev, vecs, PATH_ADD_NO_MAP);
+ 		if (!strncmp(merge_uev->action, "remove", 6))
+ 			r += uev_remove_path(merge_uev, vecs, 0);
+ 	}
+ 
+ 	if (!strncmp(uev->action, "add", 3))
+-		r += uev_add_path(uev, vecs, 1);
++		r += uev_add_path(uev, vecs, PATH_ADD_MAP);
+ 	if (!strncmp(uev->action, "remove", 6))
+ 		r += uev_remove_path(uev, vecs, 1);
+ 	if (!strncmp(uev->action, "change", 6))
+@@ -3015,7 +3030,7 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 		pthread_cleanup_pop(1);
+ 		/* INIT_OK implies ret == PATHINFO_OK */
+ 		if (pp->initialized == INIT_OK) {
+-			ev_add_path(pp, vecs, 1);
++			ev_add_path(pp, vecs, PATH_ADD_MAP);
+ 			pp->tick = 1;
+ 		} else if (ret == PATHINFO_SKIPPED) {
+ 			int i;
+@@ -3036,7 +3051,7 @@ update_uninitialized_path(struct vectors * vecs, struct path * pp)
+ 					CHECK_PATH_REMOVED :
+ 					CHECK_PATH_SKIPPED;
+ 		}
+-		ev_add_path(pp, vecs, 1);
++		ev_add_path(pp, vecs, PATH_ADD_MAP);
+ 		pp->tick = 1;
+ 	}
+ 	return CHECK_PATH_CHECKED;
+diff --git a/multipathd/main.h b/multipathd/main.h
+index b66208ec..2eaf5183 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -36,7 +36,18 @@ enum daemon_status wait_for_state_change_if(enum daemon_status oldstate,
+ 					    unsigned long ms);
+ void schedule_reconfigure(enum force_reload_types requested_type);
+ int need_to_delay_reconfig (struct vectors *);
+-int ev_add_path (struct path *, struct vectors *, int);
++/*
++ * PATH_ADD_REINIT is PATH_ADD_MAP for a path that is being re-added
++ * because its udev data was missing or changed. If recheck_wwid is
++ * set, its WWID is confirmed with the device before the path is put
++ * into a map.
++ */
++enum path_add_mode {
++	PATH_ADD_NO_MAP,
++	PATH_ADD_MAP,
++	PATH_ADD_REINIT,
++};
++int ev_add_path(struct path *, struct vectors *, enum path_add_mode);
+ int ev_remove_path (struct path *, struct vectors *, int);
+ int ev_add_map (char *, const char *, struct vectors *);
+ int flush_map(struct multipath *, struct vectors *);
 -- 
 2.56.0
 
