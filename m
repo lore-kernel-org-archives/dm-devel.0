@@ -1,83 +1,57 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794414505;
-	b=gaAEL25nDGUY0GCrJBGKt/ecLC22GISyiSHtU+IyR2gZLqxRVaAMGoWhzcwoBpQ0BeSh
-	 IEYd7qyVnJXdrv8R0x0RTNkpEJmTHAFxyKj8GLQq2EzucZp3Py0u5VldKU7rm8t9MccHG
-	 xoN3s6Cv3Nd6SBxRhzk/feRUDZMfUDiWj4gkmx2vQHGado20D7TiXuBlPrk6JodWxbH7e
-	 zpqsxOy+/vhPqrWm6drBuZMjxn7NdQLcEtqq46MzNCWI5/baQxXiXViPeqfS6rYbtDDLo
-	 Ijysx0aBxHYNeMR+iUHjKOPRM88QvJ81+27nP5LCm05Dy8Jag0lYTILUOPgnqj2Gzmw==
+	t=1794414689;
+	b=R2ZqfXiUXc0SzaZ+MR9g0jOBvJHMWJVbNysFQ9wJqJ3zfaUJsSm0i+3FEpD6hnz1m8hg
+	 1LS1tkUx0uLXy00oKwsh3l+ZrqS7a8dm58fL/QLChxVZm0z5VFtMjw2J+CxswPlMUsjLQ
+	 K6RUxpQ1cIffidrx+rYo8I4diBfuHsfrAgonlJlo5W/BzdQoS6yL4e6Fd0QUNIEvTwcft
+	 qvC+98WhriU3v50IX/Mgx6bvxk3hNE9iP/0bd+XmVhhoqDUVXiMMtsRpJRqlHUPF9O61c
+	 ambYbJmjYgtAdNlsVTqEWQv+z2RjKm8eqS+EUbPk5jDUYv+Gsk7uo8FBoNr3Q24ESVg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794414505;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Type:Content-Disposition;
-	bh=gvj4xIltj42d86arrpfwUC1RgAIG12UQS/T56hQYxjE=;
-	b=C1SWB/PGs2Ab5PDQFWuOByLP2aH5ps7hHiEXh6OGOhyXoHJvzyNDxVIM4ejE4mIqzxb7
-	 JoSrFzr3eFWtvCHPJ2HKfDNVCsyTVygLwhq8zVUKeuwYN+yJ2ftzH/PFobvd7bsoDlOmW
-	 yAluHEksK8zbhHJmnnH4u/oLHQ4sWZ2QPhMNKuHTVmAF2vculYCZ/l3jpd1hrK6Y3R8gK
-	 nOIexNtlbl3q0MJZhKO3clqtITHNUOtLUwhnvQzRHPBuY7UAMTko8odyUO3haQEza+hmY
-	 h0klTPx4PgJsmqQExuPBSPht7yC2sqoyhcZ3G4zJJdoigyJYqlw0vI6/xIHSTLuhEzw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794414689;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=VfdeayAGq5Ya9uJBrf55kW3ZaL6kl1WA8T1whEpPIt0=;
+	b=5Ay7mDj1+923u2HL3JrwqtaR/vku4m2a1jIB88ARb+1P1Qp1Sw6pEzUXHNYV4Y4cH0mQ
+	 XAtK4nSFnL4gb8UGB903oxtPOAvkRvWB6Fg2TMdvEpSTrgr2F8maba4tPryPS7wykwyB1
+	 n9S88iMMapXqfrLfbOEI/obvB7mtbKXYi35HXe6DX4idxKy0X4Okr/wRX2H6kl4Hp8SE3
+	 TYW9vQiPSgJlrAOvuizYbbN6X/cat+WywjYG/IvdwKIOdNxaPhgJG/F9Cypno/vQz63pV
+	 uLXSYAczZMZNgYPJ8X9idrB8Lol9BLxzAP0BvoUl4RmvFxvgrhVGvYa/TibSrU7TIUQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="CiHj/l5V";
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=bgBe26vB;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E393606A336
-	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 16:28:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6E393606A336
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 80475606A321
+	for <dm-devel@lists.linux.dev>; Wed, 11 Nov 2026 16:31:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=CiHj/l5V
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794414503;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=gvj4xIltj42d86arrpfwUC1RgAIG12UQS/T56hQYxjE=;
-	b=CiHj/l5V0BwcpYjqr7LiO9h61AY1LgJ0GRgRL7jq+j0FqJ4jV0FrzeQ0eUnmjCudr0+Dhc
-	YaJHjCs+OR5o1C1+YLMDLqHQn6iyLbX4jHuCYSuSFGpyxtcWg0utSkYfs/08ih97EOwEC6
-	GExJx3+wgOVSyZOqilH67aAWpgQrQXs=
-Received: from mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-400-J7vunRmPOlWvNyTTHqqtdw-1; Wed,
- 11 Nov 2026 11:28:20 -0500
-X-MC-Unique: J7vunRmPOlWvNyTTHqqtdw-1
-X-Mimecast-MFC-AGG-ID: J7vunRmPOlWvNyTTHqqtdw_1794414499
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C08581977406;
-	Wed, 11 Nov 2026 16:28:18 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 32CFD18004FC;
-	Wed, 11 Nov 2026 16:28:17 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6ABGSGwB1287382
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Wed, 11 Nov 2026 11:28:17 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6ABGSGp11287381;
-	Wed, 11 Nov 2026 11:28:16 -0500
-Date: Wed, 11 Nov 2026 11:28:16 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev,
-        syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com,
-        stable@vger.kernel.org
-Subject: Re: [PATCH] dm-integrity: initialize journal accounting in
- dm_integrity_ctr
-Message-ID: <avSXoMubUuU6kiR5@redhat.com>
-References: <20261111004905.1047753-1-bmarzins@redhat.com>
- <6200b697-d686-cff2-1de5-d4948c171a4f@redhat.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=bgBe26vB
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0556E1F00A05;
+	Wed, 11 Nov 2026 16:31:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1794414689;
+	bh=VfdeayAGq5Ya9uJBrf55kW3ZaL6kl1WA8T1whEpPIt0=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=bgBe26vBsnM6drrWC7D3ugyELNHnhwjN/JI/G3arYVq0DVXobzOP9sKo7CVkRdVL1
+	 XUU8ioG1IfLEGwMVI5ex7m/dfbSUJwW7wCJ5mrdYVuKbFNb6CdiARwKB89QWjbBc4Z
+	 /7qI/AKERrvISWK2JsWGKqja7Nxohe/CgqfVHkQkweVw+aZCCp/vGfNWZ2NRODfNki
+	 +woygcAZ6KGUBss5cG7jhGg9jvla9NgWJTMmdo0ra1KU3Ahk1bUoDdGl5dANCR5J+U
+	 ypLJiPR1LEILpxsjztAvJ1pLPoFzbHXhLa9Q3d8Dq6EonJg1v8J658KIM3zT+ulKoz
+	 EVDcv/iuE2aVQ==
+Message-ID: <sashiko-outbox-209291@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH] dm-integrity: don't attempt to commit journal on
+ disabled device
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Mikulas Patocka" <mpatocka@redhat.com>, "Benjamin Marzinski" <bmarzins@redhat.com>, "Mike
+ Snitzer" <snitzer@kernel.org>, "Alasdair Kergon" <agk@redhat.com>
+Cc: dm-devel@lists.linux.dev, syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+In-Reply-To: <fe63f092-ef07-ac3f-7878-22083541f79e@redhat.com>
+References: <fe63f092-ef07-ac3f-7878-22083541f79e@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 11 Nov 2026 16:31:28 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -86,100 +60,69 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-In-Reply-To: <6200b697-d686-cff2-1de5-d4948c171a4f@redhat.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-MFC-PROC-ID: dTGVstahPnoZ5C2zQK2YGIbj4_PEm1CmZMxNs9EOq4o_1794414499
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-On Wed, Nov 11, 2026 at 03:37:44PM +0100, Mikulas Patocka wrote:
-> 
-> 
-> On Tue, 10 Nov 2026, Benjamin Marzinski wrote:
-> 
-> > If the superblock for a dm-integrity device is changed while the device
-> > is suspended, it will resume in a failed state, and skip
-> > replay_journal(). If this happens on a journaled dm-integriry table's
-> > first resume, replay_journal() will have never been called, and the
-> > journal will be uninitialized. While nothing can write to the device in
-> > this state, integrity_commit() will be called if it receives a flush
-> > request as well as on suspend. Even through there is nothing to commit,
-> > pad_uncommitted() will check that the journal accounting is sane. This
-> > triggers a kernel warning because the accounting was never set up by
-> > replay_journal(). Fix this by setting free_sectors equal to
-> > journal_entries. Since all the accounting variables are zeroed when
-> > creating the ic structure, setting free_sectors is all that's necessary
-> > to mimic a cleared journal.
-> > 
-> > Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
-> > Closes: https://syzbot.org/bug?extid=94dac3c75477e184f0b0
-> > Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
-> > Cc: stable@vger.kernel.org
-> > Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-> > ---
-> >  drivers/md/dm-integrity.c | 6 ++++++
-> >  1 file changed, 6 insertions(+)
-> > 
-> > diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> > index 1659a11a1a29..419a8b958371 100644
-> > --- a/drivers/md/dm-integrity.c
-> > +++ b/drivers/md/dm-integrity.c
-> > @@ -5430,6 +5430,12 @@ static int dm_integrity_ctr(struct dm_target *ti, unsigned int argc, char **argv
-> >  		if (r)
-> >  			goto bad;
-> >  
-> > +		/*
-> > +		 * initialize journal accounting like a cleared journal, to
-> > +		 * handle a changed superblock on resume, where the journal
-> > +		 * is not replayed.
-> > +		 */
-> > +		ic->free_sectors = ic->journal_entries;
-> >  	}
-> >  
-> >  	if (ic->mode == 'B') {
-> > -- 
-> > 2.56.0
-> 
-> Hi
-> 
-> I think that we shouldn't attempt to flush the journal at all when the 
-> device is in erroneous state - because flushing it could cause other 
-> problems.
-> 
-> I've created a patch that disables journal flushing if the dm-integrity 
-> device is disabled due to an error - please review it.
+Thank you for your contribution! Sashiko AI review found 1 potential
+issue to consider:
+- [Medium] dm-integrity: missed wakeup of endio_wait in
+  integrity_commit() on error
+--
 
-I was on the fence about doing something similar to your method. It does
-drop any previous journal writes to the partially filled uncommitted
-section, which is a bigger change than just fixing a kernel warning. But
-that's the way you think we should go, I'm fine with that.
+commit 6f78b56af54c9b05dda8dbe4a7aa354299dc4892
+Author: Mikulas Patocka <mpatocka@redhat.com>
 
-The way I planned to solve it was (copy-pasted so the whitespace is all
-messed up):
+dm-integrity: don't attempt to commit journal on disabled device
 
-diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c              
-index 1659a11a1a29..bf817c5ce2b3 100644                                         
---- a/drivers/md/dm-integrity.c                                                 
-+++ b/drivers/md/dm-integrity.c                                                 
-@@ -2908,7 +2908,7 @@ static void integrity_commit(struct work_struct *w)       
-                                                                                
-        spin_lock_irq(&ic->endio_wait.lock);                                    
-        flushes = bio_list_get(&ic->flush_bio_list);                            
--       if (unlikely(ic->mode != 'J')) {                                        
-+       if (unlikely(ic->mode != 'J' || dm_integrity_failed(ic))) {             
-                spin_unlock_irq(&ic->endio_wait.lock);                          
-                dm_integrity_flush_buffers(ic, true);                           
-                goto release_flush_bios;                                        
+This commit skips committing the journal in integrity_commit() when
+dm_integrity_failed() is true, jumping directly to release_flush_bios.
 
-Even if we don't call dm_integrity_flush_buffers(), any dirty dm_bufio
-buffers still still get written out. By calling
-dm_integrity_flush_buffers(), we control when they get written out,
-and we want to guarantee that they get written out before we suspend.
-right?
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 802b377613b06..c50fcf2212365 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -2908,6 +2908,10 @@ static void integrity_commit(struct work_struct *w)
+> =20
+>  	spin_lock_irq(&ic->endio_wait.lock);
+>  	flushes =3D bio_list_get(&ic->flush_bio_list);
+> +	if (unlikely(dm_integrity_failed(ic))) {
+> +		spin_unlock_irq(&ic->endio_wait.lock);
+> +		goto release_flush_bios;
+> +	}
 
--Ben
+[Severity: Medium]
+Can this leave tasks sleeping on ic->endio_wait hung forever?
 
-> Mikulas
+In journal mode, when ic->free_sectors reaches 0, a write bio offloaded to
+ic->wait_wq calls sleep_on_endio_wait() in dm_integrity_map_continue() and
+waits on ic->endio_wait before looping back to retry: and rechecking
+dm_integrity_failed():
 
+drivers/md/dm-integrity.c:dm_integrity_map_continue() {
+	...
+			if (unlikely(!dio->range.n_sectors)) {
+				if (from_map)
+					goto offload_to_thread;
+				sleep_on_endio_wait(ic);
+				goto retry;
+			}
+	...
+}
+
+Previously, even after dm_integrity_failed() became non-zero,
+integrity_commit() still advanced uncommitted sections to
+ic->n_committed_sections and queued ic->writer_work, allowing
+integrity_writer() to replenish ic->free_sectors and call
+wake_up_locked(&ic->endio_wait).
+
+Jumping directly to release_flush_bios without waking ic->endio_wait or
+advancing uncommitted sections means integrity_writer() is never scheduled
+if an I/O or checksum error occurs while the journal is full.  The worker
+in sleep_on_endio_wait() then blocks indefinitely on ic->wait_wq, stalling
+subsequent bios as well as device suspend or teardown.
+
+Calling wake_up_locked(&ic->endio_wait) before unlocking
+ic->endio_wait.lock would let any sleeping writer wake up and fail the bio
+at retry:.
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/fe63f092-ef07-ac3f-=
+7878-22083541f79e@redhat.com?part=3D1
