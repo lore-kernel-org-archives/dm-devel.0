@@ -1,82 +1,60 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=37.230.196.243
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=178.154.239.223
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794490931;
-	b=EPaMkBpzufHto87JObdL2k0mXeQP7hu7LRdMzaiXPAn8JpgxIp6dXx7+aREUvWPbZl3z
-	 q9Z6NQ9Wwwci3d2dxmOk0jC5Ox7B88frZdOkydIaltVd8AKtweSLWZAcxHREXe/OgwuNK
-	 Gc+SH7MH87+uE5UHFXn03W9gtPKEb3quf7GFa5jOoCyXkkbf6agw8zOOQJ4JAzsWeoDh/
-	 pm9cDd1rD0ZJw5xzYA2WHSJnWHHWtJ9vbjQBgzzqRGeoaPfoZJ5ilL0yiTto2MHzsUMGN
-	 9Xx+jKvrBOp4NgCgouRGpijzECGCXb92OHydJqym+S0+vnvk1Xyl1BEWjzEYQWapbPQ==
+	t=1794491237;
+	b=gr6nTbPvuTb3ZC7H8bXCzfRKzwGb8Lre6Ftaj8GQ4Jy3YY5hrPe1GAO2I2/xTVe86XW+
+	 8sPfwtEbXU7d2HNOsCaxCgLCPsVfmq1F3r8u1dv63jayWC9hWuLNNxkqi+JUytRAJ66HO
+	 bHnCzgjh7zRIieUa6szYPop+Ss5YLcl3aLJKqjDcHkiFjAz3T/K6j8+VnFBvjXC5m2Avw
+	 Tdi39sRRtnyxVjT2yTJudTvGFGIaJIY74MXgn/YSkGjafRaMuza6BO4ftlIFGq4N28hOe
+	 X1uoGvPdsHHERq5nbEMaIXdwNnLuJac+z3X3SePOoxZ/FJN8tRBqxhFP5CdqXSDV0Xg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794490931;
-	h=DMARC-Filter:DKIM-Signature:Received:Received:Received:From:To:Cc:
-	 Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding:X-KSMG-AntiPhishing:X-KSMG-AntiSpam-Auth:
-	 X-KSMG-AntiSpam-Envelope-From:X-KSMG-AntiSpam-Info:
-	 X-KSMG-AntiSpam-Interceptor-Info:X-KSMG-AntiSpam-Lua-Profiles:
-	 X-KSMG-AntiSpam-Method:X-KSMG-AntiSpam-Rate:X-KSMG-AntiSpam-Status:
-	 X-KSMG-AntiSpam-Version:X-KSMG-AntiVirus:X-KSMG-AntiVirus-Status:
-	 X-KSMG-LinksScanning:X-KSMG-Message-Action:X-KSMG-Rule-ID;
-	bh=KAOxkN7k61kk5jB4lBPmNan8FcEwgZkxLh55eZiLZ1E=;
-	b=GkO6fWa0UgSKTMHbHRY+j4axO1/VhhhbqDvyUG4uIm/KAhHuemuXC7Lu662HXsAtGuEl
-	 ohjYn5W0mu9ZSAGhedsiVyWzVmsvhwWYrsHMCY9aH+lQxHec3uEnvZSfINaJ8oITpV6nS
-	 ZB4uPkX+ICDMgFbmW+e3KwNOTbi1IAkw99bhYTSYjcNTBh6coRsWRsFFElEYyzIjMMtKq
-	 MXfD+1leSqZ9c+JkWksOihrumgQJoRPHO3F7TcKLlraH+KaNlUpSHfMBWkAPYgYjXl4ht
-	 2bEFhF74aONkiVzQljvz5s0sP87x01G4NnGi5tL/wYZ+RFVdFpFCGpS3iw8GIynVLhQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794491237;
+	h=DMARC-Filter:Received:Received:X-Yandex-Fwd:DKIM-Signature:From:To:
+	 Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:Reply-To:
+	 Content-Transfer-Encoding;
+	bh=Rrp1X1YWSNAMJWln65D+arV/W5RD4l1c8EBUA/LakV8=;
+	b=IHKT2l+0O+PhfSHpeGDZ8xoYCdhODiJ4Ts0kL2AgJA+4UYFcGx1EhqAlK/sO6nPfegg9
+	 /FAs1PeGBigNAa5KzGfeZUl1dQtgZ1jBCAeJZrHV+ngSiOML70ucPvcAZzn5rymSoI9W0
+	 A1FEbzalcxfXZMzKIYG+ciYdvVBNBuW6005VODYtFkPBi3oc3wMkF7Eg/OaGOnZfaEAy9
+	 jZ6BZ7SCY/pCe/H3Jvm3su6MA2ua6AnkR5s8gYPlTLQOZpyoLi/THXEApkfO+jz3MT1Wt
+	 v8YmL2e0gZWKl9F62NpH/0uEZtsBBd4IpW+zRMQeMZZELPS0xof4/LX4qGKHrXW+9fQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=astralinux.ru;
-	spf=pass smtp.mailfrom=astralinux.ru;
-	dkim=pass header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=xYl95GU3;
-	arc=none smtp.remote-ip=37.230.196.243
-Received: from mail-gw01.astralinux.ru (mail-gw01.astralinux.ru [37.230.196.243])
+	dmarc=pass header.from=yandex.ru;
+	spf=pass smtp.mailfrom=yandex.ru;
+	dkim=pass header.d=yandex.ru header.i=@yandex.ru header.a=rsa-sha256 header.s=mail header.b=mIvxLHIf;
+	arc=none smtp.remote-ip=178.154.239.223
+Received: from forward400d.mail.yandex.net (forward400d.mail.yandex.net [178.154.239.223])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AB67606A31C
-	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 13:42:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0AB67606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=astralinux.ru
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=astralinux.ru
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EEAC606A882
+	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 13:47:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0EEAC606A882
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yandex.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=xYl95GU3
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=astralinux.ru;
-	s=mail; t=1794490926;
-	bh=JFkgqyB9Qz4kgc74Z73hpp3q8ytJXtkelNU5Si7Ll8g=;
-	h=From:To:Cc:Subject:Date:From;
-	b=xYl95GU3amK1NcwLSA/KZrnbuXOde3M4NbVwP39PBTjGYaVCV0QtZmdCAuTgR0y0p
-	 PmY/qw7AIpdLVBjP8tajGwySo0ACOLfroXGbZJbuWaEU81chB1crZR8Mw10RLQQetR
-	 m8NLmA7tTDngwJqfVTlsBdNlgFY94THBNIku/kpOkTudn4PddUiw6b30AlKGvE39LG
-	 VMQaqNkTbc4z0/8W6iAOSLXzu4dw5lCY7UMwIQBoVhxvEks1m6hZaWjPXjhmtUF6ZJ
-	 8f7lloiTCu4Uf6q0wX6kmJyWQ1hf608S6obgF+GB83/iEBmP5wNG9i2BCWnqdnHw4d
-	 GiHQFHtD9rLlg==
-Received: from gca-sc-a-srv-ksmg01.astralinux.ru (localhost [127.0.0.1])
-	by mail-gw01.astralinux.ru (Postfix) with ESMTP id AC78D255EC;
-	Thu, 12 Nov 2026 16:42:06 +0300 (MSK)
-Received: from mail.astralinux.ru (unknown [10.205.207.5])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mail-gw01.astralinux.ru (Postfix) with ESMTPS;
-	Thu, 12 Nov 2026 16:42:00 +0300 (MSK)
-Received: from DESKTOP-D46TNHI (rbta-msk-lt-981255.astralinux.ru [10.198.28.246])
-	by mail.astralinux.ru (Postfix) with ESMTPA id 4jQM4m38XtzVQV;
-	Thu, 12 Nov 2026 16:42:00 +0300 (MSK)
-From: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
-To: stable@vger.kernel.org,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>,
-	Bryam Vargas <hexlabsecurity@proton.me>,
-	Ming-Hung Tsai <mtsai@redhat.com>,
-	Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
+	dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.a=rsa-sha256 header.s=mail header.b=mIvxLHIf
+Received: from mail-nwsmtp-smtp-production-canary-28 (mail-nwsmtp-smtp-production-canary-28.yp-c.yandex.net)
+	by forward400d.mail.yandex.net (postfix) with ESMTPS id B5287815E4;
+	Thu, 12 Nov 2026 16:47:06 +0300 (MSK)
+Received: by mail-nwsmtp-smtp-production-canary-28 with ESMTPSA id 3lUfioFgImI0-IKTDfIHj;
+	Thu, 12 Nov 2026 16:47:06 +0300
+X-Yandex-Fwd: 1
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail;
+	t=1794491226; bh=Rrp1X1YWSNAMJWln65D+arV/W5RD4l1c8EBUA/LakV8=;
+	h=Reply-To:Message-ID:Date:Cc:Subject:To:From;
+	b=mIvxLHIfbDhcpa8dUYw6GMzmW0xnPjrJCnYqM0/05cLkWZPkdS5eaf4osOn3D6iad
+	 faUkGwS+7+eaA8R8awD3+CORNDSv4F389dk6dpleoeVDUjcPkL6EHDFlHuShzbjmQ0
+	 UpclMu36cXSC7rtuGTwAxU7BQxZAnEIVG7F1/IEk=
+Authentication-Results: mail-nwsmtp-smtp-production-canary-28; dkim=pass header.i=@yandex.ru
+From: Alexey Kuznetsov <nondet@yandex.ru>
+To: linux-btrfs@vger.kernel.org
+Cc: linux-block@vger.kernel.org,
 	dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org,
-	lvc-project@linuxtesting.org
-Subject: [PATCH 5.10/5.15] dm array: validate array block headers on read
-Date: Thu, 12 Nov 2026 16:40:10 +0300
-Message-ID: <20261112134011.586-1-mdmitrichenko@astralinux.ru>
-X-Mailer: git-send-email 2.54.0.windows.1
+	Alexey Kuznetsov <axet@me.com>
+Subject: [RFC PATCH 0/1] btrfs: hybrid physical bad-block handling
+Date: Thu, 12 Nov 2026 08:47:02 -0500
+Message-ID: <20261112134703.38510-1-nondet@yandex.ru>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -86,125 +64,181 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+Reply-To: Alexey Kuznetsov <axet@me.com>
 Content-Transfer-Encoding: 8bit
-X-KSMG-AntiPhishing: NotDetected
-X-KSMG-AntiSpam-Auth: dkim=none
-X-KSMG-AntiSpam-Envelope-From: mdmitrichenko@astralinux.ru
-X-KSMG-AntiSpam-Info: LuaCore: 134 0.3.134 ce9cca31102af372fedb0df49d70b90f771aea0b, {Tracking_from_domain_doesnt_match_to}, 127.0.0.199:7.1.2;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;mail.astralinux.ru:7.1.1;astralinux.ru:7.1.1, FromAlignment: s
-X-KSMG-AntiSpam-Interceptor-Info: scan successful
-X-KSMG-AntiSpam-Lua-Profiles: 207439 [Nov 12 2026]
-X-KSMG-AntiSpam-Method: none
-X-KSMG-AntiSpam-Rate: 0
-X-KSMG-AntiSpam-Status: not_detected
-X-KSMG-AntiSpam-Version: 6.1.1.27
-X-KSMG-AntiVirus: Kaspersky Secure Mail Gateway, version 2.1.0.7854, bases: 2026/11/12 10:50:00 #28857468
-X-KSMG-AntiVirus-Status: NotDetected, skipped
-X-KSMG-LinksScanning: NotDetected
-X-KSMG-Message-Action: skipped
-X-KSMG-Rule-ID: 1
 
-From: Bryam Vargas <hexlabsecurity@proton.me>
+From: Alexey Kuznetsov <axet@me.com>
 
-commit 2965787723084835b18dfe993cd450ebf5bd4540 upstream.
+This is an RFC for physical bad-block handling in btrfs: a design
+proposal plus a loop-device prototype.  It is not a submission candidate.
 
-array_block_check() validates blocknr and csum and nothing else, while
-node_check(), next to it, has bounded the structural fields since both
-were written. dm_array_cursor_next() takes its loop bound from the
-on-disk nr_entries and element_at() is unguarded pointer arithmetic, so
-a count larger than the block holds keeps the cursor in one block while
-the index grows past it and the read walks off the dm-bufio buffer --
-dm_cache_load_mappings() drives it once per cache block at activation.
+Why the existing layers are not enough
+--------------------------------------
+Bad-block handling today lives either below the filesystem (dm-linear,
+dm-quarantine, md, drive firmware) or in a logical structure such as
+ext4's bad-block inode.  Neither knows which physical copy of a mirrored
+logical extent failed.  As a result:
 
-Check the header against itself: reject a zero value_size, require
-max_entries to equal calc_max_entries() for that value_size and block
-size, and require nr_entries to fit. Equality rather than an upper bound,
-since a count below the real capacity trips BUG_ON() in fill_ablock() and
-trim_ablock(). Metadata dm-array writes satisfies all three.
+  - a filesystem cannot use its own redundancy to distinguish "this copy
+    is bad" from "this logical extent is lost";
+  - it cannot relocate only the data that lives in the bad physical
+    range;
+  - it cannot stop the allocator from reusing that range, and
+  - it cannot report which files are affected instead of only which LBA
+    failed.
 
-Fixes: 6513c29f44f2 ("dm persistent data: add transactional array")
-Suggested-by: Ming-Hung Tsai <mtsai@redhat.com>
-Cc: stable@vger.kernel.org
-Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
-Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-[mdmitrichenko: Keep the existing non-const validator argument when
- moving calc_max_entries() above array_block_prepare_for_write().]
-Signed-off-by: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
----
-Backport fix for CVE-2026-89574
+The prototype keeps the layer split:
 
- drivers/md/persistent-data/dm-array.c | 37 +++++++++++++++++++++------
- 1 file changed, 29 insertions(+), 8 deletions(-)
+  block layer   physical remap/quarantine, no filesystem knowledge
+  btrfs         detection, mirror salvage, relocation, reporting
+  userspace     scanning, persistence, policy, initramfs
 
-diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
-index b7c82ad11bcc..c18349dd36d3 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -37,6 +37,14 @@ struct array_block {
-  */
- #define CSUM_XOR 595846735
- 
-+/*
-+ * Each array block can hold this many values.
-+ */
-+static uint32_t calc_max_entries(size_t value_size, size_t size_of_block)
-+{
-+	return (size_of_block - sizeof(struct array_block)) / value_size;
-+}
-+
- static void array_block_prepare_for_write(struct dm_block_validator *v,
- 					  struct dm_block *b,
- 					  size_t size_of_block)
-@@ -54,6 +62,7 @@ static int array_block_check(struct dm_block_validator *v,
- 			     size_t size_of_block)
- {
- 	struct array_block *bh_le = dm_block_data(b);
-+	uint32_t nr_entries, max_entries, value_size;
- 	__le32 csum_disk;
- 
- 	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
-@@ -73,6 +82,26 @@ static int array_block_check(struct dm_block_validator *v,
- 		return -EILSEQ;
- 	}
- 
-+	nr_entries = le32_to_cpu(bh_le->nr_entries);
-+	max_entries = le32_to_cpu(bh_le->max_entries);
-+	value_size = le32_to_cpu(bh_le->value_size);
-+
-+	if (!value_size) {
-+		DMERR_LIMIT("%s failed: value_size is zero", __func__);
-+		return -EILSEQ;
-+	}
-+
-+	if (max_entries != calc_max_entries(value_size, size_of_block)) {
-+		DMERR_LIMIT("%s failed: max_entries %u invalid for value_size %u",
-+			    __func__, max_entries, value_size);
-+		return -EILSEQ;
-+	}
-+
-+	if (nr_entries > max_entries) {
-+		DMERR_LIMIT("%s failed: too many entries", __func__);
-+		return -EILSEQ;
-+	}
-+
- 	return 0;
- }
- 
-@@ -138,14 +167,6 @@ static void dec_ablock_entries(struct dm_array_info *info, struct array_block *a
- 		on_entries(info, ab, vt->dec);
- }
- 
--/*
-- * Each array block can hold this many values.
-- */
--static uint32_t calc_max_entries(size_t value_size, size_t size_of_block)
--{
--	return (size_of_block - sizeof(struct array_block)) / value_size;
--}
--
- /*
-  * Allocate a new array block.  The caller will need to unlock block.
-  */
+Bad extents are tracked per device as physical byte ranges, not as a
+filesystem-wide logical list and not as an ext4-style inode.
+
+What the prototype does
+-----------------------
+The series is against 6.12.  It adds fs/btrfs/bad-extents.c and hooks
+scrub, the read path, the write path, the allocator, the device tree, and
+the ioctl surface:
+
+  - scrub records the physical range of every initially failed sector.
+    An I/O error becomes "confirmed"; a checksum, header, or generation
+    failure becomes "suspect".  Adjacent ranges coalesce and a second
+    observation upgrades suspect to confirmed.
+
+  - A read that overlaps a confirmed range fails before device I/O.  The
+    failure goes through the normal read completion path, so btrfs retries
+    another mirror and returns -EIO only when no copy is left.  Suspect
+    ranges are read normally so they can still be verified and repaired.
+
+  - Repair writes into a confirmed range are dropped, so repair cannot
+    recreate a copy in known-bad media.
+
+  - find_free_dev_extent() trims confirmed ranges out of candidate holes.
+    New chunks never land there.  Suspect ranges remain allocatable.
+    Zoned devices are intentionally untouched.
+
+  - Ranges persist in the device tree as
+    (devid, BTRFS_DEV_BAD_EXTENT_KEY, physical_start) items holding
+    length, last logical offset, generation, state, and observation
+    count, under a new incompat bit.  Mount loads them after device
+    stats; add/remove/clear write through; SYNC commits a scrub report.
+    Removing the last range clears the bit in the same transaction.
+
+  - On RAID1/RAID1C3/RAID1C4/DUP/RAID10, an ordinary write whose stripe
+    falls in a confirmed range is aliased to a healthy mirror of the same
+    logical range inside btrfs_map_block().  All copies are still
+    submitted, so the healthy copy is updated and the bad sector is never
+    written.  If every copy is confirmed bad the write fails with -EIO.
+    Device replace is excluded because it manages its own stripe
+    duplication.  With the experimental raid-stripe-tree feature, the
+    existing ordered-extent completion path records the aliased stripe;
+    without RST the alias is per-write and reads rely on the existing
+    mirror retry.
+
+  - Data-relocation reads are exempt from fast-fail, because relocation
+    is exactly the operation that has to read the old copy before moving
+    it.
+
+  - A userspace command, dmq btrfs-relocate, coalesces the reported
+    ranges and drives BTRFS_IOC_BALANCE_V2 with
+    BTRFS_BALANCE_ARGS_DEVID | BTRFS_BALANCE_ARGS_DRANGE.  That selects
+    only chunks with a stripe on the affected device inside the bad
+    physical range.  It works without btrfs-progs knowing the new
+    incompat bit.  A companion userspace package also scans and persists
+    a sector map and feeds dm-linear/dm-quarantine for the non-btrfs and
+    boot paths.
+
+Test results
+------------
+On 6.12.116 with loop devices, the prototype passes:
+
+  - ioctl add/coalesce/upgrade/split/remove/clear;
+  - persistence across unmount/remount and the incompat bit lifecycle;
+  - scrub detection of a deliberately corrupted data sector, exact
+    physical offset, SYNC, remount;
+  - dmq import into a checksummed map and mount through dm-linear with
+    EIO for the bad range;
+  - fast-fail on a confirmed range, normal reads for a suspect range;
+  - RAID1 fallback, skipped repair write, and EIO when both copies are
+    confirmed;
+  - allocator exclusion of a 176 MiB confirmed range (ENOSPC for a
+    100 MiB write) with a suspect-range control;
+  - a RAID1 in-place NODATACOW rewrite against a dm-quarantine poison
+    range: the target's write counter stays at zero, the healthy mirror
+    holds the new data, and a control write after clearing the extent
+    does reach the poisoned range;
+  - targeted relocation: BTRFS_IOC_BALANCE_V2 completes, the payload is
+    unchanged, and a new copy appears outside the confirmed range.
+
+The userspace test suite (62 tests) covers the ioctl ABI, balance ABI
+packing, map import, and CLI behaviour.
+
+Known limitations / why this is an RFC
+--------------------------------------
+  - The on-disk format and the ioctl ABI are placeholders.
+  - btrfs-progs 6.14 does not know the incompat bit (btrfs check reports
+    unsupported features 0x8000) and does not expose raid-stripe-tree
+    (mkfs.btrfs -O list-all omits it), so the RST alias path could not be
+    exercised on loop devices.
+  - Fast-fail is whole-bio/chunk granular; more data than the bad sector
+    may be failed and retried on another mirror.
+  - Relocation is manual and chunk-granular.  It is not invoked from
+    scrub.
+  - Persisted items for a removed devid are not cleaned up.  Devids are
+    not reused, so they are ignored.
+  - Write redirection only covers mirror profiles.  Single-profile data
+    and metadata still fail; reallocating a single-profile write through
+    RST is a larger project.
+  - Boot-chain and LBA-0 handling are discussed in the userspace design,
+    not implemented here.
+
+Questions for the list
+----------------------
+  - Is a per-device physical extent list in the device tree the right
+    on-disk representation, or should this extend the raid-stripe tree or
+    use a dedicated tree?
+  - Should read fast-fail be per-sector instead of per-bio/chunk, and
+    should the I/O path record errors automatically or only scrub and
+    userspace imports?
+  - Is an incompat bit appropriate for a feature that changes read
+    semantics, or is a mount option / read-only toggle preferable?
+  - How should this interact with device replace and balance?  The
+    prototype excludes dev-replace writes and uses balance as the
+    relocation engine.
+  - What is the right policy for upgrading suspect to confirmed, and how
+    should transient errors be excluded?
+  - Is RST the right persistence mechanism for the write alias, or should
+    there be a separate logical-to-physical indirection?
+
+The userspace prototype and design notes, including the LBA-0 and
+bootloader discussion, are at:
+  https://gitlab.com/axet/kernel-badblocks
+
+The patch follows.
+
+Alexey Kuznetsov (1):
+  btrfs: track physical bad extents, fast-fail, persist, and relocate
+
+ fs/btrfs/Makefile               |   2 +-
+ fs/btrfs/accessors.h            |  12 +
+ fs/btrfs/bad-extents.c          | 825 ++++++++++++++++++++++++++++++++
+ fs/btrfs/bad-extents.h          |  46 ++
+ fs/btrfs/bio.c                  |  38 +-
+ fs/btrfs/disk-io.c              |   8 +
+ fs/btrfs/fs.h                   |   4 +
+ fs/btrfs/ioctl.c                |  96 ++++
+ fs/btrfs/scrub.c                |  32 ++
+ fs/btrfs/sysfs.c                |   2 +
+ fs/btrfs/volumes.c              |  29 ++
+ fs/btrfs/volumes.h              |   5 +
+ include/uapi/linux/btrfs.h      |  40 ++
+ include/uapi/linux/btrfs_tree.h |  22 +
+ 14 files changed, 1159 insertions(+), 2 deletions(-)
+ create mode 100644 fs/btrfs/bad-extents.c
+ create mode 100644 fs/btrfs/bad-extents.h
+
 -- 
-2.43.0
+2.47.3
 
