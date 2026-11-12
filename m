@@ -1,87 +1,82 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=37.230.196.243
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794481751;
-	b=eRPgWFKlRqLhHBpLD2ywwFnAWW6YqTECEePuXh6SR80ulJLs5i2Pf4hRKJL9PIt0jCp2
-	 hbwuZSC9X1CWO+2vu+CK2HYfv9dji0FrD5Vd3XOBpZgpsO5C+dLpmFO+MDbfkF7OqQayS
-	 xSUUwUQUnrgxODLO+z8g7/gLngCxV1MEQHTHXQdlzH+vH0LenPEE+Bq0bGCljFcyWBEHI
-	 32gx0PLhfZFKt2wqMrmTQ44R7Bz7QnyBNtu7IvXHiww3qBk45N6fO2lDxDWjUUI7nYoUB
-	 WlLJAa9Q7cNa7n1zMstCyUHQcDYLEZNCXb3d6FU/INMxmo+IaS+7M55/MdVWr667XrQ==
+	t=1794490931;
+	b=EPaMkBpzufHto87JObdL2k0mXeQP7hu7LRdMzaiXPAn8JpgxIp6dXx7+aREUvWPbZl3z
+	 q9Z6NQ9Wwwci3d2dxmOk0jC5Ox7B88frZdOkydIaltVd8AKtweSLWZAcxHREXe/OgwuNK
+	 Gc+SH7MH87+uE5UHFXn03W9gtPKEb3quf7GFa5jOoCyXkkbf6agw8zOOQJ4JAzsWeoDh/
+	 pm9cDd1rD0ZJw5xzYA2WHSJnWHHWtJ9vbjQBgzzqRGeoaPfoZJ5ilL0yiTto2MHzsUMGN
+	 9Xx+jKvrBOp4NgCgouRGpijzECGCXb92OHydJqym+S0+vnvk1Xyl1BEWjzEYQWapbPQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794481751;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
-	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=TjUTucK+fDwBhweUm3d5TAgFRX+xfgS/F2Y1mD/lATc=;
-	b=etxlwvR7ZFgI0X5JBg6Cy1hXPbqcM2S4klVHZoWnGjMd5sBH3gOn9NpokAj8/pm5EgQS
-	 BvrDMV454qRdrJO3ZRrJB6gtMv1I6AGGfy0ylCJJJv5cssFA3MCzvYH0x/5VKIX+lDZlN
-	 gfkNpArPhaYpXTZ7F/TTysiDf9krwBD/3qtFF22EDPntA+S5XQMgsoVMELHdyb2YsSxAv
-	 d+xy64AZMmxc7PUXWXMTTBAcgReny6pmvldS0vz2gKLV2vK93YPexotS9wI6aYtJo0541
-	 uzjV5YM5A82jOg1NUNpaXKURggXM8JeWy/c+VH/H2ScKep9ipmMkieX4AJ2/+4Vn2DQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794490931;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding:X-KSMG-AntiPhishing:X-KSMG-AntiSpam-Auth:
+	 X-KSMG-AntiSpam-Envelope-From:X-KSMG-AntiSpam-Info:
+	 X-KSMG-AntiSpam-Interceptor-Info:X-KSMG-AntiSpam-Lua-Profiles:
+	 X-KSMG-AntiSpam-Method:X-KSMG-AntiSpam-Rate:X-KSMG-AntiSpam-Status:
+	 X-KSMG-AntiSpam-Version:X-KSMG-AntiVirus:X-KSMG-AntiVirus-Status:
+	 X-KSMG-LinksScanning:X-KSMG-Message-Action:X-KSMG-Rule-ID;
+	bh=KAOxkN7k61kk5jB4lBPmNan8FcEwgZkxLh55eZiLZ1E=;
+	b=GkO6fWa0UgSKTMHbHRY+j4axO1/VhhhbqDvyUG4uIm/KAhHuemuXC7Lu662HXsAtGuEl
+	 ohjYn5W0mu9ZSAGhedsiVyWzVmsvhwWYrsHMCY9aH+lQxHec3uEnvZSfINaJ8oITpV6nS
+	 ZB4uPkX+ICDMgFbmW+e3KwNOTbi1IAkw99bhYTSYjcNTBh6coRsWRsFFElEYyzIjMMtKq
+	 MXfD+1leSqZ9c+JkWksOihrumgQJoRPHO3F7TcKLlraH+KaNlUpSHfMBWkAPYgYjXl4ht
+	 2bEFhF74aONkiVzQljvz5s0sP87x01G4NnGi5tL/wYZ+RFVdFpFCGpS3iw8GIynVLhQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=F3iK6cCK;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dmarc=pass header.from=astralinux.ru;
+	spf=pass smtp.mailfrom=astralinux.ru;
+	dkim=pass header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=xYl95GU3;
+	arc=none smtp.remote-ip=37.230.196.243
+Received: from mail-gw01.astralinux.ru (mail-gw01.astralinux.ru [37.230.196.243])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 145E1606A321
-	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 11:09:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 145E1606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0AB67606A31C
+	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 13:42:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0AB67606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=astralinux.ru
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=astralinux.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=F3iK6cCK
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794481749;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=TjUTucK+fDwBhweUm3d5TAgFRX+xfgS/F2Y1mD/lATc=;
-	b=F3iK6cCKB4GqVUZ4dzzxKJPWWRpWQ7QAa2gZDb8chXw+qh6Ez4ox2vAf0SjpIg5Xa7jTTv
-	AeN3q+zVK2tM0/ASpnuxh9GaAju/MaSwu2bd/J4rNWqCth3vwMbKKVmmSqZloVbZPS1Yyo
-	qcdo0PeeMPaxo6m3RGs747ZiTONaw2Y=
-Received: from mail-lf1-f70.google.com (mail-lf1-f70.google.com
- [209.85.167.70]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-616-gu_Zi9gINKKFYeP9QAGt9A-1; Thu, 12 Nov 2026 06:09:07 -0500
-X-MC-Unique: gu_Zi9gINKKFYeP9QAGt9A-1
-X-Mimecast-MFC-AGG-ID: gu_Zi9gINKKFYeP9QAGt9A_1794481746
-Received: by mail-lf1-f70.google.com with SMTP id 2adb3069b0e04-5be4b14ffd6so369330e87.1
-        for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 03:09:07 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794481746; x=1795086546;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=TjUTucK+fDwBhweUm3d5TAgFRX+xfgS/F2Y1mD/lATc=;
-        b=r6GX8NwEutGXDBroowlMO/fuhBOHY2ZLVqOS67yXcyiHj09Ly6hlR3EcP5s6yi6pm2
-         6oOM+XbPFbrKE6qOtcsP1dgU4Rl1W+bCUpNCvD9sBoX1qt8odU+x8D66LFhoW60zuXAm
-         tk0U4cBJdAzXOFDrL82WhfBIAaEKYh6cCBquxcd7nsWFKCgNinHsqMBqRqENPpEN0zEe
-         QwO1pd+ebDFredWcwvKYNwcT2CQco3M6ZSuNf3gJixRJVsn/vRrWe6SbW8BKnFQl0jYA
-         xeIOLEW0WeOmAn1nZQWj4VORBS190AoFFRaDtrEmtO6UVG8qfWVUcshWhhuiyRF0P2sX
-         GNRA==
-X-Forwarded-Encrypted: i=1; AL+hErE9AvVv28352AiV4rq9akVpPFgCLkuFdVr6lPaIIQixsT0mLeegKVvS9rPj8oNaic6N18jlrQ0v+Q==@lists.linux.dev
-X-Gm-Message-State: APuU4Z8H61Dwci69asP5Ezih4qTiDGnFbB+oRWM/xCjSmSbOWni+Tjfh
-	MfJc0M2uhqiFXEgjNw/RRKfpZAELIF3gXuCZuCRbw1svDGFpQsfRYTuTUymADot8Gj0Qa/2xw8/
-	8s5w87fTEqdcgJUXS3TwaEeDVGU3M1SC4N/usqpqFMx4QTOrWzhyVMJ2XrZajdO4+NBHkuGSu6s
-	yImtGfiwV+LGy6+2uuj/pv+STg6JqRbwInqw==
-X-Gm-Gg: AYBFou1BAJYSik5hbkbxoeWsU6Va0aMQVuvB3AE6+JaB/pwcGbzfRez9iIIfU7rUblQ
-	h3hRsrgCxH+YPeGJaYxxfMKA+q2BO0FvsaG/WYpeH09v2WjJ2JqSLKcS8zDuy3XXd0zlw+rTx1O
-	PodOeBfdTFO3jCJYvmUrbYNLpe1w3L7xnhZynzbE6JpZhHrwTtipwk++IxUIXWtWeXSSXwTiDch
-	KvfYwWFr/UsM8E1j8w9065Vt0r9X4bBAWwYXla+45/1pkXkvy0=
-X-Received: by 2002:a2e:a881:0:b0:3ac:4b79:573b with SMTP id 38308e7fff4ca-3ae1bf86ff2mr4320381fa.13.1794481745776;
-        Thu, 12 Nov 2026 03:09:05 -0800 (PST)
-X-Received: by 2002:a2e:a881:0:b0:3ac:4b79:573b with SMTP id
- 38308e7fff4ca-3ae1bf86ff2mr4320331fa.13.1794481745244; Thu, 12 Nov 2026
- 03:09:05 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=astralinux.ru header.i=@astralinux.ru header.a=rsa-sha256 header.s=mail header.b=xYl95GU3
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=astralinux.ru;
+	s=mail; t=1794490926;
+	bh=JFkgqyB9Qz4kgc74Z73hpp3q8ytJXtkelNU5Si7Ll8g=;
+	h=From:To:Cc:Subject:Date:From;
+	b=xYl95GU3amK1NcwLSA/KZrnbuXOde3M4NbVwP39PBTjGYaVCV0QtZmdCAuTgR0y0p
+	 PmY/qw7AIpdLVBjP8tajGwySo0ACOLfroXGbZJbuWaEU81chB1crZR8Mw10RLQQetR
+	 m8NLmA7tTDngwJqfVTlsBdNlgFY94THBNIku/kpOkTudn4PddUiw6b30AlKGvE39LG
+	 VMQaqNkTbc4z0/8W6iAOSLXzu4dw5lCY7UMwIQBoVhxvEks1m6hZaWjPXjhmtUF6ZJ
+	 8f7lloiTCu4Uf6q0wX6kmJyWQ1hf608S6obgF+GB83/iEBmP5wNG9i2BCWnqdnHw4d
+	 GiHQFHtD9rLlg==
+Received: from gca-sc-a-srv-ksmg01.astralinux.ru (localhost [127.0.0.1])
+	by mail-gw01.astralinux.ru (Postfix) with ESMTP id AC78D255EC;
+	Thu, 12 Nov 2026 16:42:06 +0300 (MSK)
+Received: from mail.astralinux.ru (unknown [10.205.207.5])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mail-gw01.astralinux.ru (Postfix) with ESMTPS;
+	Thu, 12 Nov 2026 16:42:00 +0300 (MSK)
+Received: from DESKTOP-D46TNHI (rbta-msk-lt-981255.astralinux.ru [10.198.28.246])
+	by mail.astralinux.ru (Postfix) with ESMTPA id 4jQM4m38XtzVQV;
+	Thu, 12 Nov 2026 16:42:00 +0300 (MSK)
+From: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
+To: stable@vger.kernel.org,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>,
+	Bryam Vargas <hexlabsecurity@proton.me>,
+	Ming-Hung Tsai <mtsai@redhat.com>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	lvc-project@linuxtesting.org
+Subject: [PATCH 5.10/5.15] dm array: validate array block headers on read
+Date: Thu, 12 Nov 2026 16:40:10 +0300
+Message-ID: <20261112134011.586-1-mdmitrichenko@astralinux.ru>
+X-Mailer: git-send-email 2.54.0.windows.1
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,81 +86,125 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <6a3e4a64-3719-3a3f-1d51-1a7b478e046e@redhat.com>
-In-Reply-To: <6a3e4a64-3719-3a3f-1d51-1a7b478e046e@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Thu, 12 Nov 2026 19:08:53 +0800
-X-Gm-Features: AclHuK-Jf4TXBUWDRbYEQcekUkOQHXezjZnl89GmACRGMZDTEKA_D-rGfUuqA90
-Message-ID: <CALjSBEsrtKKPFu4mjNcLOn11K_86ssiJ5pN5DMEQzHV1dEYCPQ@mail.gmail.com>
-Subject: Re: [PATCH] dm-thin: fix leak if __set_snapshot_details fails
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 2x-vi9aMdl2OGXQxsSwXKjLuf19JLgEfZmEor5H53xA_1794481746
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-KSMG-AntiPhishing: NotDetected
+X-KSMG-AntiSpam-Auth: dkim=none
+X-KSMG-AntiSpam-Envelope-From: mdmitrichenko@astralinux.ru
+X-KSMG-AntiSpam-Info: LuaCore: 134 0.3.134 ce9cca31102af372fedb0df49d70b90f771aea0b, {Tracking_from_domain_doesnt_match_to}, 127.0.0.199:7.1.2;d41d8cd98f00b204e9800998ecf8427e.com:7.1.1;mail.astralinux.ru:7.1.1;astralinux.ru:7.1.1, FromAlignment: s
+X-KSMG-AntiSpam-Interceptor-Info: scan successful
+X-KSMG-AntiSpam-Lua-Profiles: 207439 [Nov 12 2026]
+X-KSMG-AntiSpam-Method: none
+X-KSMG-AntiSpam-Rate: 0
+X-KSMG-AntiSpam-Status: not_detected
+X-KSMG-AntiSpam-Version: 6.1.1.27
+X-KSMG-AntiVirus: Kaspersky Secure Mail Gateway, version 2.1.0.7854, bases: 2026/11/12 10:50:00 #28857468
+X-KSMG-AntiVirus-Status: NotDetected, skipped
+X-KSMG-LinksScanning: NotDetected
+X-KSMG-Message-Action: skipped
+X-KSMG-Rule-ID: 1
 
-On Sat, Nov 7, 2026 at 2:49=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.com=
-> wrote:
->
-> If __set_snapshot_details fails, the variable td is leaked - this
-> prevents any other snapshot with the same id from being created.
->
-> Fix this by removing it from the list and freeing it.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Assisted-by: Claude:claude-opus-5
-> Cc: stable@vger.kernel.org
-> Fixes: 991d9fa02da0 ("dm: add thin provisioning target")
->
-> ---
->  drivers/md/dm-thin-metadata.c |    5 ++++-
->  1 file changed, 4 insertions(+), 1 deletion(-)
->
-> Index: linux-2.6/drivers/md/dm-thin-metadata.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-2.6.orig/drivers/md/dm-thin-metadata.c
-> +++ linux-2.6/drivers/md/dm-thin-metadata.c
-> @@ -1225,10 +1225,13 @@ static int __create_snap(struct dm_pool_
->         __close_device(td);
->
->         if (r)
-> -               goto bad;
-> +               goto bad2;
->
->         return 0;
->
-> +bad2:
-> +       list_del(&td->list);
-> +       kfree(td);
->  bad:
->         dm_btree_remove(&pmd->tl_info, pmd->root, &key, &pmd->root);
->         dm_btree_remove(&pmd->details_info, pmd->details_root,
->
->
+From: Bryam Vargas <hexlabsecurity@proton.me>
 
-The bug is hard to trigger. __set_snapshot_details() fails only when
-__open_device(origin) fails. There are three causes: the origin
-details are missing, the metadata read fails, or kmalloc() fails. All
-three are corner cases. Even so, the patch is still needed. Otherwise
-td stays on pmd->thin_devices with changed =3D 1. On the next metadata
-commit, __write_changed_details() writes this invalid device entry
-into the details tree, breaking consistency between the mapping tree
-and the details tree.
+commit 2965787723084835b18dfe993cd450ebf5bd4540 upstream.
 
-There is a separate issue in the same error path. The final
-dm_btree_remove(&pmd->details_info, ...) at the bad: label should be
-removed. The snapshot details are not in the details tree during
-__create_snap(), so this call always runs on a missing key and returns
--ENODATA. dm_btree_remove() skips the new_root update on -ENODATA, but
-create_snap's error path ignores this return code and commits the
-undefined metadata anyway. This leaves pmd->details_root dangling and
-leaks metadata blocks. I'll send a separate patch to drop the
-details_info remove.
+array_block_check() validates blocknr and csum and nothing else, while
+node_check(), next to it, has bounded the structural fields since both
+were written. dm_array_cursor_next() takes its loop bound from the
+on-disk nr_entries and element_at() is unguarded pointer arithmetic, so
+a count larger than the block holds keeps the cursor in one block while
+the index grows past it and the read walks off the dm-bufio buffer --
+dm_cache_load_mappings() drives it once per cache block at activation.
 
+Check the header against itself: reject a zero value_size, require
+max_entries to equal calc_max_entries() for that value_size and block
+size, and require nr_entries to fit. Equality rather than an upper bound,
+since a count below the real capacity trips BUG_ON() in fill_ablock() and
+trim_ablock(). Metadata dm-array writes satisfies all three.
+
+Fixes: 6513c29f44f2 ("dm persistent data: add transactional array")
+Suggested-by: Ming-Hung Tsai <mtsai@redhat.com>
+Cc: stable@vger.kernel.org
+Signed-off-by: Bryam Vargas <hexlabsecurity@proton.me>
 Reviewed-by: Ming-Hung Tsai <mtsai@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+[mdmitrichenko: Keep the existing non-const validator argument when
+ moving calc_max_entries() above array_block_prepare_for_write().]
+Signed-off-by: Mikhail Dmitrichenko <mdmitrichenko@astralinux.ru>
+---
+Backport fix for CVE-2026-89574
+
+ drivers/md/persistent-data/dm-array.c | 37 +++++++++++++++++++++------
+ 1 file changed, 29 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/md/persistent-data/dm-array.c b/drivers/md/persistent-data/dm-array.c
+index b7c82ad11bcc..c18349dd36d3 100644
+--- a/drivers/md/persistent-data/dm-array.c
++++ b/drivers/md/persistent-data/dm-array.c
+@@ -37,6 +37,14 @@ struct array_block {
+  */
+ #define CSUM_XOR 595846735
+ 
++/*
++ * Each array block can hold this many values.
++ */
++static uint32_t calc_max_entries(size_t value_size, size_t size_of_block)
++{
++	return (size_of_block - sizeof(struct array_block)) / value_size;
++}
++
+ static void array_block_prepare_for_write(struct dm_block_validator *v,
+ 					  struct dm_block *b,
+ 					  size_t size_of_block)
+@@ -54,6 +62,7 @@ static int array_block_check(struct dm_block_validator *v,
+ 			     size_t size_of_block)
+ {
+ 	struct array_block *bh_le = dm_block_data(b);
++	uint32_t nr_entries, max_entries, value_size;
+ 	__le32 csum_disk;
+ 
+ 	if (dm_block_location(b) != le64_to_cpu(bh_le->blocknr)) {
+@@ -73,6 +82,26 @@ static int array_block_check(struct dm_block_validator *v,
+ 		return -EILSEQ;
+ 	}
+ 
++	nr_entries = le32_to_cpu(bh_le->nr_entries);
++	max_entries = le32_to_cpu(bh_le->max_entries);
++	value_size = le32_to_cpu(bh_le->value_size);
++
++	if (!value_size) {
++		DMERR_LIMIT("%s failed: value_size is zero", __func__);
++		return -EILSEQ;
++	}
++
++	if (max_entries != calc_max_entries(value_size, size_of_block)) {
++		DMERR_LIMIT("%s failed: max_entries %u invalid for value_size %u",
++			    __func__, max_entries, value_size);
++		return -EILSEQ;
++	}
++
++	if (nr_entries > max_entries) {
++		DMERR_LIMIT("%s failed: too many entries", __func__);
++		return -EILSEQ;
++	}
++
+ 	return 0;
+ }
+ 
+@@ -138,14 +167,6 @@ static void dec_ablock_entries(struct dm_array_info *info, struct array_block *a
+ 		on_entries(info, ab, vt->dec);
+ }
+ 
+-/*
+- * Each array block can hold this many values.
+- */
+-static uint32_t calc_max_entries(size_t value_size, size_t size_of_block)
+-{
+-	return (size_of_block - sizeof(struct array_block)) / value_size;
+-}
+-
+ /*
+  * Allocate a new array block.  The caller will need to unlock block.
+  */
+-- 
+2.43.0
 
