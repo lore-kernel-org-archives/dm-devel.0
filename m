@@ -1,79 +1,66 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1794447330;
-	b=p4xbKn3oOA9Nc6oX7e/il/85Pi1fgbh6MIZDRXxXS9aNqFPixO42OOyKM726BSRyHMo4
-	 9YApk++R3ylXS08i7R7kq01wSv+lEXtzOcm93LBMx7/6YrRboDrCdUsEeaPQEb8ZKQO7k
-	 AWOiLWo3mljpWPYOfpDagdTccdUXZtKxj05FnKTa4XoJccJEHdSd4DAIZ2Rp+xlG8FFMs
-	 dMGDdEM86+kVbto1OWou/csowixdLBy/X1d219AktwJdYc4ERiZpW65T2ahTFFQankB2G
-	 xBjX8PJmRnI7WNsf8qEfI1/fuJmv33WAPH47ykEhwUcl5bbnNvYdrmoZvF/9+hHlCWA==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794447330;
-	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
-	 Content-Type:Message-Id:X-B4-Tracking:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=rxA4jyfNMVPQFbbS1u7H9tzqfv38oRGt+zsg1z662Sc=;
-	b=HML+4RZ1VpkIYnRzR/uBqCBPyEhD0iDrngA2lGnXbSm5eY3kNluv3Xa4h3vWAcBCvchB
-	 /J3vxYqjDg/xawOMop5JT1yM3gdWDSq+Vy7GoTk5gms+T9/6jYeNjCARx1d/T4IEXKNAI
-	 EKb0PvOSPYJYynMj4hkZkgSnuGrG7CGhuDKWSqyocehRo1OgASDIEVq+8pshE5l2okJCN
-	 pkUcWAf21+FVtkVN5X9p9ZiGtKvSpz82l5Bf6jGkWFEexfJVDaAgdovUu7lCDDdUAT8EN
-	 4Y0esQ+a3GU8UOf8cnH39w2qw9NICZ6VZgfytw0HO7MV6QLTvkEwjdFNFSS0rxUcJ2w==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NHmLpPGw;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 680BC606A332;
-	Thu, 12 Nov 2026 01:35:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NHmLpPGw
-Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
-ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
-	t=1794447330;
-	b=hzMzHQx5mcDhh+Lpr5TmVRTsnSdDxtaidIpVAYyw0+jwBvCk8WmBf+VI2ro/fyLxP12h
-	 DgRkHejXxU+c2QVoUuNuPJhUjZTLMqgMGS+p/1kZ1hHP7Abxneh07pTohdbXepXFDHop4
-	 o6N1M5y+xkkiqX0yAuB082Iiamjiz8/VrEQWFPGWQLIj24NJx2bmpajbWiYHtNt/rsJfX
-	 q6l/uhldtGU4uMSdo+R6FQRF4qdq0p5/O/le0iQxUwaJ9OmbjaBk+DNYhv50MJAWIBnVO
-	 lIOFIe4LMSamM3b9nX5Ft+P6hkDIcxTS36aCclLC2CX8SDah18gVtPjgXHZpO4cyHDg==
-ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
-	c=relaxed/relaxed; t=1794447330;
-	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
-	 Message-Id:X-B4-Tracking:To:Cc:X-Mailer:X-Developer-Signature:
-	 X-Developer-Key:X-Endpoint-Received:X-Original-From:Reply-To:
-	 Content-Transfer-Encoding;
-	bh=rxA4jyfNMVPQFbbS1u7H9tzqfv38oRGt+zsg1z662Sc=;
-	b=TPk7J6WgNOCTmDPGsVa2Ydmf+2e2rIf9UoCd3RPQV1qOuGewjLwEHf+yeXd5u+IYgzG7
-	 AdwU0uuQCyG0K+Imh5ElpehZnVTwA4Rb1ZyL01yBoBVAuArEmsVhYWvUE0+gj0yjek86v
-	 9wuSf+lgCukvL9AJM5bBfP6+TIgopOPrLxrQglMY80GLB/aqUFL02IG8ZRj+pWqlG/5K5
-	 PBcVVZBdlpkKGeZSRH1nB5lu17F7iXL3ivkegTVhN+PUw2+UU8xAWNTtByWO2wc9bW7bg
-	 dMo0LDNpPTKxmrawCA6Bs1aD9VVFgwWzgTGVJNVtKB/zUyFwnI4SPYzRaWRiznbnkLA==
-ARC-Authentication-Results: i=1; smtp.kernel.org; 
-	arc=none smtp.remote-ip=100.80.115.77
-Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=117.135.210.4
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1794447359;
+	b=kCqaRYvsXUcoLc8fJ1CIUXjFKtqGX5o+AWFGnR/HTIh8LgrFZ+j0oUVIi9BRU62rf2Bh
+	 r+9frS69ywfk9E3trKyz0aZb5NPZrvncxckpsV/+UsQvim75OLevJjjIwVZwc0A6cdznp
+	 9Ens/86W2/HyPiqfeTY7ZZHUorUSZo9aW4g/V/MqOpBS/XtXt5CZOFkV6xTG1WgPVDshm
+	 poVEWVZwUIPLxXNCdDODbW8xfOLDKFCFY+ggCI7TmgF00w3tpAOryddluUFphwujCFD/b
+	 56EHwRQcy4soUcdamJzREoy/G7+YYYMhAGjcXfh1pVSHaF1KxXAZWPR41ePr5/YVZjw==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794447359;
+	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
+	 Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding:
+	 X-CM-TRANSID:X-Coremail-Antispam:X-CM-SenderInfo;
+	bh=ELLqdcOAA9rFtchadf0YpKl1TUOHi1tEx6RNAEsB1Ng=;
+	b=yj6hFBfG26Lx8PxI8xEszxRkmutkV95HWiJuchVH55iE5zImRkUYi6gWFhRcMOHOMyj4
+	 yqqvzhg/8XYWlX4SbqpCOJ9N6EtIibczpACQqAMTe7kVIWAQmfx57Cd7xdDTVut8tqPS+
+	 ANhP3SgzxqdRVgMyECuCzLpUjfDDl/1Ihr+cYGuQ08qD4VjYdVJyWkZTwf50rSgAAMdqF
+	 HlHd9lrUzcjE2QIEiXa6MSZD6W9GEtsB2jZTfudSa6s2B6xNxuN4qs+2iFznSU5iqwclO
+	 voYKuCzr48O4kkQUVDbiE7drVKnqgWitdZokCnAWfeakYjyDiwefGuf491nVJxvzp1Q==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=163.com;
+	spf=pass smtp.mailfrom=163.com;
+	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=jnpUM+nz;
+	arc=none smtp.remote-ip=117.135.210.4
+Received: from m16.mail.163.com (m16.mail.163.com [117.135.210.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.kernel.org (Postfix) with ESMTPS id 53B701F00AD2;
-	Thu, 12 Nov 2026 01:35:29 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794447329;
-	bh=rxA4jyfNMVPQFbbS1u7H9tzqfv38oRGt+zsg1z662Sc=;
-	h=From:Date:Subject:To:Cc:Reply-To;
-	b=NHmLpPGwDTwPhKDcqGOsva+6joF6ezBl479S9UfF1xWyJY+55TIV4k1Nri/d1WNFA
-	 D9phpTog3jt//MBJD3dPIfkoMS6EFMvMSjKVUpCv4XwzDqvYSlFo+CUEm8Vgjpi+NF
-	 1JDgNlODqJRyLMG1iC+oHMlH6v81qnJNAnwwj2KLPJetUWweOhw8XIRnwlUtTeCMkA
-	 fP31Fq7AP42PX9zitEhgex1p356fO+fgR/9V3/i6d/SE8/RrKAc/5X7+n/nYBJHuEz
-	 qAcZxZaDsg7JpH3709HDM6XaXdP02H9m+x6pAugnMYmc6rS27iYYMGBdhyVBX69dzh
-	 65RXpUH4W7ZGA==
-Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
-	by lkml.kernel.org (Postfix) with ESMTP id A5138491B6;
-	Thu, 12 Nov 2026 01:35:28 +0000 (UTC)
-From: Daejun Park via B4 Relay <devnull+daejun7.park.samsung.com@kernel.org>
-Date: Thu, 12 Nov 2026 10:35:29 +0900
-Subject: [PATCH] dm: fail a REQ_PREFLUSH bio with data when its preflush
- fails
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B77AE606A335
+	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 01:35:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B77AE606A335
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=jnpUM+nz
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=EL
+	LqdcOAA9rFtchadf0YpKl1TUOHi1tEx6RNAEsB1Ng=; b=jnpUM+nz1+F/CW7Tu3
+	DAHsc0kE5QXayzPzFu9XS8WRwY+e0Wcbqf9ceGXoQehX7uADa6N6yfMe137Kcwae
+	RUbhVuHNJg9otWS/iVd4slqDLUr2C8CuGhIO73dFv4FTAYV443bFWZLf6NX++I4x
+	Ct5SxfU9FN32OBmYE5VvqP3QQ=
+Received: from localhost.localdomain (unknown [])
+	by gzga-smtp-mtada-g0-3 (Coremail) with SMTP id _____wCnA2zdF_VqvPswHA--.52798S2;
+	Thu, 12 Nov 2026 09:35:27 +0800 (CST)
+From: "Li Youhong" <dayou5941@163.com>
+To: song@kernel.org,
+	yukuai@fygo.io,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	magiclinan@didiglobal.com,
+	xiao@kernel.org,
+	linux-raid@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Li Youhong <liyouhong@kylinos.cn>,
+	syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com,
+	stable@vger.kernel.org
+Subject: [PATCH v5] md: fix sync_work vs array teardown races
+Date: Thu, 12 Nov 2026 09:35:23 +0800
+Message-Id: <20261112013523.120428-1-dayou5941@163.com>
+X-Mailer: git-send-email 2.25.1
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -83,92 +70,173 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Message-Id: <20261112-dm-flush-data-error-v1-1-c83d3f8f3ac4@samsung.com>
-X-B4-Tracking: v=1; b=H4sIAOAX9WoC/x2MQQqAIBAAvxJ7bkGLSvpKdBDdaqE01oog+nvS3
- OYw80AiYUrQFw8IXZw4hiy6LMAtNsyE7LNDpapWZ9BvOK1nWtDbwyKJRMGmNV1tGm+ccpDLXWj
- i+78O4/t+fAtuAWUAAAA=
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-Cc: Tejun Heo <tj@kernel.org>, Brian Foster <bfoster@redhat.com>, 
- linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
- stable@vger.kernel.org, Daejun Park <daejun7.park@samsung.com>
-X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1794447328; l=2208;
- i=daejun7.park@samsung.com; s=20261006; h=from:subject:message-id;
- bh=q6PUE0uUyF22bIWKZKcR0Enr0oPYObD9+qpBd6oRddE=;
- b=FH2KTDpAwuT5PIkA91LGgmDPbmmYYbqmsr8/Bs/at2zGx7QGekF57ryKj9WRohgYRm8rWTnRK
- y2C6XvoDU6fCbR5KP/Nlzpx/BOQa4ykhAf0f7/V7tnq4tA9iiVwKoNQ
-X-Developer-Key: i=daejun7.park@samsung.com; a=ed25519;
- pk=4yUfDqGRZTIj0Ik43z1GoMZRWCNm/rgX6uJuM9dtNIg=
-X-Endpoint-Received: by B4 Relay for daejun7.park@samsung.com/20261006 with
- auth_id=1122
-X-Original-From: Daejun Park <daejun7.park@samsung.com>
-Reply-To: daejun7.park@samsung.com
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_____wCnA2zdF_VqvPswHA--.52798S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW3Ary7Gr1DCw4fKryfAw1DJrb_yoWxWr18pr
+	WrJFn8Gr4Dt3yxZFZrK3WDua4Yvw1Sq3yDJryxWa4fAw1SyF47uFy09F1jvFWDJas3tayU
+	Zw4rJFZxuFyq9FJanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07jj_M-UUUUU=
+X-CM-SenderInfo: 5gd103ivzuiqqrwthudrp/xtbC3QAWxGr1F+CIuAAA3X
 
-From: Daejun Park <daejun7.park@samsung.com>
+From: Li Youhong <liyouhong@kylinos.cn>
 
-For a bio with REQ_PREFLUSH and data, dm core may send an empty flush
-first. If the flush fails, __dm_io_complete() still reissues the bio
-without REQ_PREFLUSH and drops the error. When that write succeeds,
-the XFS log keeps running and fsync() can return 0.
+dm-raid tears down arrays via md_stop(), which cleared mddev->pers
+without waiting for previously queued sync_work. That work could
+then call remove_spares() with pers == NULL, or keep using mddev
+after raid_dtr() frees it.
 
-End the bio with the flush error instead of writing the data, as
-blk-mq does.
+do_md_stop()/md_stop_writes() already call stop_sync_thread() before
+teardown. Do the same in md_stop(). Because md_start_sync() may still
+use mddev after unlocking / clearing MD_RECOVERY_RUNNING, flush
+sync_work whenever it is busy rather than only when work_pending().
 
-Fixes: 6a8736d10cb4 ("dm: relax ordering of bio-based flush implementation")
+Calling stop_sync_thread() from md_stop() can drop reconfig_mutex,
+which introduces two follow-on issues:
+
+- When nothing is in flight, keep reconfig_mutex if the caller held
+  it (gate the idle early-return with work_busy()). Otherwise clear
+  of an inactive array can race with do_md_run().
+
+- While the mutex is dropped, mddev->thread may run
+  md_reap_sync_thread() and queue event_work. Flush event_work on
+  the raid_ctr() error path before raid_set_free().
+
+Separately, the read-only path in md_check_recovery() queued
+sync_work without honouring MD_RECOVERY_FROZEN, unlike the
+read-write path. Check FROZEN there so freeze/stop cannot race
+with a new queue.
+
+Fixes: db5e653d7c9f ("md: delay choosing sync action to md_start_sync()")
+Fixes: 81e2ce1b3d5a ("md: delay remove_and_add_spares() for read only array to md_start_sync()")
+Reported-by: syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=a53c2918175b36cfd601
 Cc: stable@vger.kernel.org
-Signed-off-by: Daejun Park <daejun7.park@samsung.com>
+Signed-off-by: Li Youhong <liyouhong@kylinos.cn>
 ---
-Tested on v7.4-rc2: XFS on a two-device linear table whose second
-device (dm-flakey, no data) fails every flush. Before, 200 of 200
-fsyncs of one writer return 0. After, the log write fails with -EIO
-and XFS shuts down.
+v5:
+- Restore idle early-return in stop_sync_thread() gated by work_busy(),
+  so locked callers keep reconfig_mutex and do not race with do_md_run().
+- Flush event_work before raid_set_free() on the raid_ctr error path
+  (md_stop() may drop the mutex and let md_reap queue it).
+- v4: https://lore.kernel.org/linux-raid/20261111015027.4029184-1-dayou5941@163.com
 
-Kernels before v6.18 have a different condition here and need a
-separate backport.
+v4:
+- Always flush_work(&sync_work) in stop_sync_thread(); do not delay
+  clearing MD_RECOVERY_RUNNING (that can drop MD_RECOVERY_NEEDED via
+  md_check_recovery, and does not cover the successful sync_thread
+  registration path).
+- v3: https://lore.kernel.org/linux-raid/20261110063045.912703-1-dayou5941@163.com
 
-fstests xfs/438 uses dm-flakey targets around a linear target for the
-log to fail writes. dm-flakey fails the flush clones too. With this
-patch, XFS shuts down on the first log write with REQ_PREFLUSH after
-the errors start, before a metadata write fails. The test still
-passes. A series for fstests moves xfs/438 to the buf_ioerror error
-tag.
----
- drivers/md/dm.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+v3:
+- Honour MD_RECOVERY_FROZEN before queueing sync_work on the
+  read-only md_check_recovery() path.
+- (superseded) delayed MD_RECOVERY_RUNNING clear on not_running.
+- v2: https://lore.kernel.org/linux-raid/20261109023055.2164333-1-dayou5941@163.com
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1881d86111f..0f6934e0008 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -983,7 +983,7 @@ static void __dm_io_complete(struct dm_io *io, bool first_stage)
- 	if (requeued)
- 		return;
+v2:
+- Drop the pers NULL check in md_start_sync().
+- Call stop_sync_thread() from md_stop() before clearing pers,
+  matching do_md_stop()/md_stop_writes().
+- v1: https://lore.kernel.org/linux-raid/20261106083543.249267-1-dayou5941@163.com
+
+ drivers/md/dm-raid.c |  7 +++++++
+ drivers/md/md.c      | 41 ++++++++++++++++++++++++++++++++---------
+ 2 files changed, 39 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index ac019a0f5a92..f82c09d858de 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3319,6 +3319,13 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	md_stop(&rs->md);
+ 	mddev_unlock(&rs->md);
+ bad:
++	/*
++	 * md_stop() may drop reconfig_mutex so mddev->thread can run
++	 * md_reap_sync_thread() and queue event_work; wait for it before
++	 * freeing raid_set. Skip if INIT_WORK has not run yet.
++	 */
++	if (rs->md.event_work.func)
++		flush_work(&rs->md.event_work);
+ 	raid_set_free(rs);
  
--	if (unlikely(requeue_flush_with_data)) {
-+	if (unlikely(requeue_flush_with_data) && !io_error) {
- 		/*
- 		 * Preflush done for flush with data, reissue
- 		 * without REQ_PREFLUSH.
-@@ -991,7 +991,7 @@ static void __dm_io_complete(struct dm_io *io, bool first_stage)
- 		bio->bi_opf &= ~REQ_PREFLUSH;
- 		queue_io(md, bio);
- 	} else {
--		/* done with normal IO or empty flush */
-+		/* done with normal IO, empty flush or failed preflush */
- 		if (io_error)
- 			bio->bi_status = io_error;
- 		bio_endio(bio);
-
----
-base-commit: 7475ea8b58616b33c04afb976cf0fbaad9dd63fb
-change-id: 20261111-dm-flush-data-error-5687385d8c0c
-
-Best regards,
+ 	return r;
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 680b34a63cb3..79c564320f18 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5184,7 +5184,14 @@ static void stop_sync_thread(struct mddev *mddev, bool locked)
+ {
+ 	int sync_seq = atomic_read(&mddev->sync_seq);
+ 
+-	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
++	/*
++	 * If nothing is in flight, keep reconfig_mutex when locked so
++	 * callers such as do_md_stop() cannot race with do_md_run().
++	 * work_busy() is required: md_start_sync() may clear RUNNING and
++	 * still use mddev after unlocking.
++	 */
++	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
++	    !work_busy(&mddev->sync_work)) {
+ 		if (!locked)
+ 			mddev_unlock(mddev);
+ 		return;
+@@ -5192,14 +5199,20 @@ static void stop_sync_thread(struct mddev *mddev, bool locked)
+ 
+ 	mddev_unlock(mddev);
+ 
+-	set_bit(MD_RECOVERY_INTR, &mddev->recovery);
++	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
++		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
++		/*
++		 * Thread might be blocked waiting for metadata update which
++		 * will now never happen
++		 */
++		md_wakeup_thread_directly(&mddev->sync_thread);
++	}
+ 	/*
+-	 * Thread might be blocked waiting for metadata update which will now
+-	 * never happen
++	 * md_start_sync() may still use mddev after unlocking. Always
++	 * flush so teardown waits for that work to return; checking
++	 * work_pending() is not enough once the work is running.
+ 	 */
+-	md_wakeup_thread_directly(&mddev->sync_thread);
+-	if (work_pending(&mddev->sync_work))
+-		flush_work(&mddev->sync_work);
++	flush_work(&mddev->sync_work);
+ 
+ 	wait_event(resync_wait,
+ 		   !test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) ||
+@@ -7101,6 +7114,14 @@ void md_stop(struct mddev *mddev)
+ {
+ 	lockdep_assert_held(&mddev->reconfig_mutex);
+ 
++	/*
++	 * md_check_recovery() may have queued sync_work; that work accesses
++	 * pers. Wait for it here before __md_stop() clears pers, as
++	 * do_md_stop()/md_stop_writes() do.
++	 */
++	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	stop_sync_thread(mddev, true);
++
+ 	/* stop the array and free an attached data structures.
+ 	 * This is called from dm-raid
+ 	 */
+@@ -10494,9 +10515,11 @@ void md_check_recovery(struct mddev *mddev)
+ 
+ 			/*
+ 			 * Let md_start_sync() to remove and add rdevs to the
+-			 * array.
++			 * array. Honour MD_RECOVERY_FROZEN like the read-write
++			 * path so freeze/stop does not race with a new queue.
+ 			 */
+-			if (md_spares_need_change(mddev)) {
++			if (md_spares_need_change(mddev) &&
++			    !test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) {
+ 				set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+ 				queue_work(md_misc_wq, &mddev->sync_work);
+ 			}
 -- 
-Daejun Park <daejun7.park@samsung.com>
-
+2.25.1
 
