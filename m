@@ -1,96 +1,73 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.171
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795041309;
-	b=Tc3n+wkjePBJKoFID0sP7fIhCc+qDqbXbtY0b6jUiZ9KOOerTZntp2pV7D3tslNP06Hd
-	 F+5e7QXRP1+LFfWX9C/rK1VXS/TqHoBr3ykYD/kPopoNwmnY75Pfhbr3MdJtGDjuWDrl/
-	 Bo1MZ+Otgna1viTj4VKQfDQdRW9OvjE7fSH4TC5UYG+Jf1XW6QvUH051+PTsT+y7lX5hO
-	 i08MrkAiH5qItaYxlfZfnaiak8768Rfh+Bp+8mpEPW51nManCjVUn+LTWHDrDAUckVbKY
-	 Tp6FXWx7PCuATxW2ErCl3CojDcNxI373NC8d9FYIuha9HLOWJroDs9CBJLau88ydt1A==
+	t=1795052689;
+	b=ooaqyeiT6YfDCkK5l1N52iR2Br8Q91BdsouRKNmHtw952dQV51IaEts0kyr/81aVovP6
+	 KEKM/c0RAgJMEUH9d7NB1uWkOQ4gRJ6igVpHgXiIMO30QFiCc2HzzEr2aTzgT8SkNcWfG
+	 ClYEcTbrJ/vyx7uaknPBD5eZg/YRH+j6cQzigBeZV3npKbSQPjTTHsd2XinP1mB3lJbtB
+	 /u7+uUnfSk630qZTMcdCs8L3D/7YbhneE6WOmvNQDFeGdbPfg+nXDWSi0n0QeolwknngP
+	 s3MHSIQ+OzJMOwaIJ3Htf25eBICEZXc63L2DAVyEFjTi+4SgifYqAXf0uol0Ko359iw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795041309;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
-	b=quGDTFliwLbADmjVcV6QfLYDhd+IobHkxAhWeJeZrZtdD6V9Azm7vIE7OTlBVqD8Pf8D
-	 MQP/BjPOvjbQCQU4sKgCWAZEIV7yikpUliYC+prF/e2S9Ql7vVD4SZw3nlF32G8L6WwYw
-	 k0zIeF0CdU0tse4LO75gvUi3Kr4FB79AyR06jtn1ZEN2r1lfKdVdYCoQdu5AqYfU0faJ2
-	 BsE2XeEZxxu7nJigziIYgg6rao2nXcz/8HB/Hn6Q6/6NGjiQOrPuwBel+ThaCS/m/dYkS
-	 AzKlFh5Tpk3jy1kxQSj8fPFy0X0rup3J3Q8GrvncEjB4YilRSQROMoDpF8F7Xbs40jQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795052689;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:From:To:Cc:Subject:Date:
+	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Transfer-Encoding:content-type;
+	bh=pBploOhn4g6yNVDbs6FG1RfhgMGJUyZbXI+qPBgpBqE=;
+	b=dYgLmX5pAJFxSAAkwssFTix8D/dvH8eZ746VAbfh6djeHDrZbAfsb9onJyxG2I03k23b
+	 lqqTfWx5DTr2H4i/Di7uuVWmjWdIyqoj7aK3ib7oo6qhZ2BYZO3N/98WzlKS+QbpA1RRx
+	 TbzyXcz+/UgBGzAXQiuuoHyPNvEVfcnuPQdr39AY0Rh2ab9uVrVg3vFFNk4LBGRZkxUJR
+	 PR6GI5d140GGVJ02sv8+jOkTkb7sRdgzNkjC6Tx2BjAfHJk+cShBetO64SZF+su3IoSCo
+	 hyF0bZDrIq5JqhcW47tdmAf+Fz7MSEeLF04KohIfyjuLksC1IeMkIW8z6sXgPaJurug==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=purestorage.com;
-	spf=pass smtp.mailfrom=purestorage.com;
-	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=CT5rGIVz;
-	arc=none smtp.remote-ip=74.125.82.171
-Received: from mail-dy1-f171.google.com (mail-dy1-f171.google.com [74.125.82.171])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=XjyzRgvu;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A139606A320
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 22:35:08 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5A139606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 214AC606A32F
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 01:44:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 214AC606A32F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=CT5rGIVz
-Received: by mail-dy1-f171.google.com with SMTP id 5a478bee46e88-382c3c9671fso1920721eec.0
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 14:35:08 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=purestorage.com; s=google2022; t=1795041307; x=1795646107; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
-        b=CT5rGIVzhU8WOPUi1jN0mPkIrOjHlzKln1H8jmnNVIefAADzOqFQenyOSOKalk4Ujs
-         gB9XIWTmKT7i+p0+lSMaejWARJiyP7ZpPFsHh5sP8AI+IaBYnMuaFpFEP6qwFUosMXzb
-         jgu6uxE0xuzhawN0zKGByuXeHTlT+0FGhJRR3Fbm/8DYuXh1lxj3kJXV/og0XWuzHUZh
-         vqnNM44UADnBPKd5ILa01SGnL6t8Dmdlt04P72UvKMLeUukEe/0pPx7rbiSCzIb+C3aL
-         CCC1d86N0MY33zHGiBq/OPVKaV/Ekb3Trs0JWCIL0aGAKsVJHDC97P63KnW6oEv9TyGd
-         sEtQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795041307; x=1795646107;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
-        b=bd2v8Np4KqeoC+JGc3XY+zBvgjiqVhF3hU1cZ+RZTcAxZMUEE1c5t/rE4z67cRv3t/
-         KpTF0MlXlmVDAq3zovWZM9EHgEAjOnxOkanRx8opaLgUkDBef9/b8VNDf//st9rAy8We
-         0cGpSBCDAg4MLeNtgRip8iot0L6Hi+G4VJuCskea9rUW6gpKey2Pw4b6aMuRWERkoBBt
-         FokKcqbOm/3ua7LV/NpJt+1cdS2bbPpR0XlfotGQ4qZMERmabZbuVR8gEAp+tzQ+hr5a
-         CdIg+gpSbzFhBK4KeNDyDGFG+eJkiRsHa6IzDYJONHWhzalulAdo6hkyn/Igs7q7WtPM
-         UzjQ==
-X-Forwarded-Encrypted: i=1; AL+hErHp5dHnXtvpRltTl6N6uYHvK9rQFYg33wE2jOdEGOiHfHcbvyeJlbaQRaadtJmaIBcFNTA9dzxefQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z817QjB4eXu30OvMBJbqggvDUny9Fli4B4jvwc8NNHKpyVpPgyO
-	PjI0RzzlhgjZAdNnfTSzuG46H+iC7FJravQnNp3AUEzhRLqXnos+yD74XmMI9tTBJQg=
-X-Gm-Gg: AZFdTZd05Y1VxJmFoajbH74iwlIGc0QSN2FKAoXf4yzJDvMCI7G4se/86evG+cTMYz9
-	NYcl8zWaYaG3HOlCapLIBEDqOw8KBK/VOS/5nfXSkHdhYaKETSXXT6oLY5PP0S9ZarGpM2DyL5Q
-	W5Uht4G5PNJnNsX+21OX+G50PZ2k2ZdxJ8dfkxHJcFdT18zldvSklKWEdNyRo83roxeKmcDDTKD
-	yKP5mIdoTwp8sVLayIfdBItpY1hvQvwNBIELBgP7YuVw9oxyarhNVHhaKjdpDzpy+jJwBwNmLuR
-	wBiOEBEqlxOmAxPC9SwhDL2MSeA6J45msmcN5RQ2ro4rK7tJ7UF2wZqACp1j4jlzygn32MlEGbS
-	Puq78+VMm/dIpIJradl+JarTIC3/hI7FOdtH14qn1w1chLVY00hVDrum+NMNr3lRWMWOL6JBlla
-	PWzJ7EKExSwLR8MFeSFZwj7ajCNAXYBkeXVyL/195dFCczYvTOQlNX2wRo4YPygzPUopCdpZc0P
-	AZewh2fgo3xMsSMfWIuwbWG1WUp+/JEZWQDcAydKZa5ckGq8I8IZgynwAwdIBpkqFuuw1qo1FiC
-	qnFDgJGXjULmPXlUQXuS6oe8dB9xNCpGbrdf2gLDcvRIrIDzrWCprALUmAVhtCytib4tLOim6IS
-	K+8kRBLVnyKy19521wZORLeL9cz4KkAmYsQRvwuwnOOvM6Z6TAuNNlowOvbR1XmNo+xTC6A3noG
-	ykwZkO825cpGN9qzpApKNXeuKu
-X-Received: by 2002:a05:693c:88d3:20b0:37e:9a3b:76a3 with SMTP id 5a478bee46e88-3827fa88224mr3648654eec.11.1795041307021;
-        Wed, 18 Nov 2026 14:35:07 -0800 (PST)
-Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-382a172a0a8sm9405866eec.0.2026.11.18.14.35.06
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 18 Nov 2026 14:35:06 -0800 (PST)
-From: Brian Bunker <brian@purestorage.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>,
-	Martin Wilck <mwilck@suse.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH v4 1/1] multipathd: recheck WWIDs of re-added paths with the device
-Date: Wed, 18 Nov 2026 14:34:49 -0800
-Message-ID: <20261118223449.85519-1-brian@purestorage.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <1a6a0493ef4f510a047647db2385cf89f7424b68.camel@suse.com>
-References: <20261111181642.51912-1-brian@purestorage.com> <20261111181642.51912-2-brian@purestorage.com> <179452227264.147392.9708937185980533136.b4-review@b4> <avdQNjzddtu7o18n@redhat.com> <9259d20188a042cb280bad95f8be9783d1b9c1fd.camel@suse.com> <avtdexYN1B3pJLmL@redhat.com> <1a6a0493ef4f510a047647db2385cf89f7424b68.camel@suse.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=XjyzRgvu
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1795052688;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=pBploOhn4g6yNVDbs6FG1RfhgMGJUyZbXI+qPBgpBqE=;
+	b=XjyzRgvukTvD6xjKXaImf6lzV8hc2ItvbMKp3/Y37l8vU5A/Of/rn6md0MKn1E0gFJE39v
+	zD2aQl7+y+28fZpSDmLYI+cLt2wJXtfvzVtFW1FvEZEwtRAEhwIUMt2JigB5pcy5ZOStB8
+	ovYjRxX8G3zE9CKPp0Jvml/WCEm9Cok=
+Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-383-eH8q5MGcPQOV7pj0DbWGAw-1; Wed,
+ 18 Nov 2026 20:44:46 -0500
+X-MC-Unique: eH8q5MGcPQOV7pj0DbWGAw-1
+X-Mimecast-MFC-AGG-ID: eH8q5MGcPQOV7pj0DbWGAw_1795052686
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EC2B01800260;
+	Thu, 19 Nov 2026 01:44:45 +0000 (UTC)
+Received: from localhost.localdomain (unknown [10.74.64.3])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F31B4195608B;
+	Thu, 19 Nov 2026 01:44:43 +0000 (UTC)
+From: Ganesh Andhale <gandhale@redhat.com>
+To: christophe.varoqui@opensvc.com
+Cc: dm-devel@lists.linux.dev,
+	bmarzins@redhat.com,
+	mwilck@suse.com
+Subject: [PATCH] multipathd: cleanup global queues after threads exit
+Date: Thu, 12 Nov 2026 21:03:10 +0530
+Message-ID: <20261112153310.19652-1-gandhale@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -100,39 +77,166 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Q9OhK-GWWknKyEu9k5Rojc605a186N9Y_PcQnXwKjQ8_1795052686
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Martin, Ben,
+cleanup_global_uevq() and cleanup_global_purge_queue() were registered
+as pthread cleanup handlers in worker threads. During shutdown, these
+handlers could run as soon as their owning thread was cancelled, while
+another thread that also accessed the same global queue had not been
+joined yet.
 
-Thanks, both. Two points before I do a v5.
+This allowed the global uevent or purge queue to be cleaned while a
+producer or consumer thread could still touch it.
 
-On Mon, 2026-11-16, Benjamin Marzinski wrote:
-> If this code was only run when we got a wwid before and then it
-> changed, then requiring a matching WWID from the device seems much
-> more reasonable.
+Move the global queue cleanup to cleanup_queues(), which is called
+after cleanup_threads(), once all related threads have been joined.
+Keep the pthread cleanup handlers only for thread-local temporary lists
+and other resources owned by the cancelling thread.
 
-Agreed, and that changes my earlier position. With PATH_ADD_REINIT
-passed only from the changed-WWID branch, the check only runs when the
-path already had a WWID and udev now reports a different one. In that
-case, if the device doesn't confirm the new WWID, including when SG_IO
-fails, I'd keep the path out and let the checker retrigger, as for a
-mismatch.
+Export cleanup_global_uevq() from libmultipath so multipathd can call
+it during daemon shutdown.
 
-check_path_wwid_change() returns false both for a match and for an SG_IO
-failure, so v5 would need to tell those apart.
+Signed-off-by: Ganesh Andhale <gandhale@redhat.com>
+---
+ libmultipath/libmultipath.version |  1 +
+ libmultipath/uevent.c             |  4 +---
+ libmultipath/uevent.h             |  2 ++
+ multipathd/main.c                 | 12 ++++++++++++
+ multipathd/purge.c                |  4 +---
+ multipathd/purge.h                |  2 ++
+ 6 files changed, 19 insertions(+), 6 deletions(-)
 
-> we never reset pp->retriggers once we have a reasonable WWID
+diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
+index f631f453..93f213b6 100644
+--- a/libmultipath/libmultipath.version
++++ b/libmultipath/libmultipath.version
+@@ -203,6 +203,7 @@ global:
+ 	trigger_path_udev_change;
+ 	trigger_paths_udev_change;
+ 	udev;
++	cleanup_global_uevq;
+ 	uevent_dispatch;
+ 	uevent_get_dm_str;
+ 	uevent_get_env_positive_int;
+diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
+index b0c43340..e1c8aa72 100644
+--- a/libmultipath/uevent.c
++++ b/libmultipath/uevent.c
+@@ -503,7 +503,7 @@ static void cleanup_uevq(void *arg)
+ 	uevq_cleanup(arg);
+ }
+ 
+-static void cleanup_global_uevq(void *arg __attribute__((unused)))
++void cleanup_global_uevq(void)
+ {
+ 	pthread_mutex_lock(uevq_lockp);
+ 	uevq_cleanup(&uevq);
+@@ -726,7 +726,6 @@ int uevent_listen(struct udev *udev)
+ 		goto out;
+ 	}
+ 
+-	pthread_cleanup_push(cleanup_global_uevq, NULL);
+ 	pthread_cleanup_push(cleanup_uevq, &uevlisten_tmp);
+ 	while (1) {
+ 		int fdcount, events;
+@@ -755,7 +754,6 @@ int uevent_listen(struct udev *udev)
+ 		pthread_mutex_unlock(uevq_lockp);
+ 	}
+ 	pthread_cleanup_pop(1);
+-	pthread_cleanup_pop(1);
+ out:
+ 	pthread_cleanup_pop(1);
+ out_udev:
+diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
+index 69296789..f21419ea 100644
+--- a/libmultipath/uevent.h
++++ b/libmultipath/uevent.h
+@@ -28,6 +28,8 @@ struct uevent {
+ struct uevent *alloc_uevent(void);
+ int is_uevent_busy(void);
+ 
++void cleanup_global_uevq(void);
++
+ int uevent_listen(struct udev *udev);
+ int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
+ 		    void * trigger_data);
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9bce4d6b..11bd1d01 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -3812,6 +3812,17 @@ static void cleanup_vecs(void)
+ 	gvecs = NULL;
+ }
+ 
++static void cleanup_queues(void)
++{
++	/*
++	 * Shared queues must be cleaned only after every producer and
++	 * consumer has been joined. Worker cleanup handlers must not
++	 * free these globals while another thread may still access them.
++	 */
++	cleanup_global_purge_queue();
++	cleanup_global_uevq();
++}
++
+ static void cleanup_threads(void)
+ {
+ 	stop_io_err_stat_thread();
+@@ -3915,6 +3926,7 @@ static void cleanup_rcu(void)
+ static void cleanup_child(void)
+ {
+ 	cleanup_threads();
++	cleanup_queues();
+ 	cleanup_vecs();
+ 	cleanup_bindings();
+ 	if (poll_dmevents)
+diff --git a/multipathd/purge.c b/multipathd/purge.c
+index 68db8ced..078b4079 100644
+--- a/multipathd/purge.c
++++ b/multipathd/purge.c
+@@ -235,7 +235,7 @@ void cleanup_purge_list(void *arg)
+  * Cleanup handler for the global purge queue.
+  * Used during shutdown to free any remaining queued items.
+  */
+-static void cleanup_global_purge_queue(void *arg __attribute__((unused)))
++void cleanup_global_purge_queue(void)
+ {
+ 	pthread_mutex_lock(&purge_mutex);
+ 	cleanup_purge_list(&purge_queue);
+@@ -268,7 +268,6 @@ void *purgeloop(void *ap __attribute__((unused)))
+ 	 * Cleanup handler for global purge_queue.
+ 	 * This handles items that were queued but not yet moved to purge_list.
+ 	 */
+-	pthread_cleanup_push(cleanup_global_purge_queue, NULL);
+ 
+ 	while (1) {
+ 		LIST_HEAD(purge_list);
+@@ -320,7 +319,6 @@ void *purgeloop(void *ap __attribute__((unused)))
+ 		pthread_cleanup_pop(0);
+ 	}
+ 
+-	pthread_cleanup_pop(1);
+ 	pthread_cleanup_pop(1);
+ 	return NULL;
+ }
+diff --git a/multipathd/purge.h b/multipathd/purge.h
+index 1fe755f3..81ed952b 100644
+--- a/multipathd/purge.h
++++ b/multipathd/purge.h
+@@ -33,6 +33,8 @@ void build_purge_list(struct vectors *vecs, struct list_head *tmpq);
+  */
+ void cleanup_purge_list(void *arg);
+ 
++void cleanup_global_purge_queue(void);
++
+ /*
+  * Main purge thread loop
+  */
+-- 
+2.56.0
 
-On Mon, 2026-11-16, Martin Wilck wrote:
-> I don't see an issue with resetting retrigger_tries once the issues
-> with path's WWID are sorted out, in both cases.
-
-I'm fine with resetting pp->retriggers once a path has a confirmed WWID,
-so that "no WWID from udev" and "WWID didn't match" don't share one
-budget for the life of the path. Would you rather have that in this
-patch or as a separate one? I lean towards a separate patch, since it
-also changes the existing missing-udev handling.
-
-If you're both fine with this, I'll send v5.
-
-Brian
