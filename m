@@ -1,97 +1,88 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.41
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794516477;
-	b=TmH8lWfk2RUF1AJ00gilUCLED0a/2ak8BM8YSLIN4J9eEEo5WMy+8uI68S/7ff/aRQkm
-	 tJ9uVRY0IfyXo+jaRbn8IUIYWTYjMlkHQPxRfLgGn7HccH4ofBaiY1UA4Qth4oDqoPvTh
-	 AQ4lXWn5blaGZZyflYTPxcNwV0QpXDO57AWFBzptF2X+ImamHH4tZabHJTear/0IBRDXk
-	 1c5In81lwSiwJLthAMRsbip5jP9r15F4036E24eQdGsZ7CFzwnkvNpGFWzD1tYESitzzM
-	 BxSCOtWt9coV/JNZsarL/Xp9L0mTiQicMN9T09o2FLnfcFbiGIJ+1xlVn7VAJ25FGJA==
+	t=1794522178;
+	b=4/DrhSDcSOHvnM3TlE1t2mNURbnxmvkJrbblAyAQak4g8kl6LinZitLHZ6RWa/abedaO
+	 TKC22OMeIDpcOtQdlHsgJ4GlmXO2oRPcf+YWglJEETPLF4lkYneJ1dHEdq/jcQBigyJYQ
+	 EnmBwrcLddsb0JyEQxHhFgV+MV3vE0JVpaq4qJpxHEpV1NVKuaW09sJ97H6ou2M5WV/pO
+	 Qhh9Dss05megCDkcEBygk5y0es520aVxGk15wBMeQI+uzex78eRiqPyeZIsHx1+iFVkXm
+	 uPbaBBhvjzTXDC/MZb5WBJUnBqZNyTH4viVZYV06q6m8NY7f/WhgyZXkG93LLHDsj0Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794516477;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
-	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Rspamd-Queue-Id:X-Spam-Level:X-Rspamd-Server:X-Rspamd-Action:
-	 X-Spam-Flag:X-Spamd-Result:X-Spam-Score;
-	bh=8GAlIvu/7n9x7rn1wWVO1KYEgzha+ou77/lYlNohJbY=;
-	b=U4/Y+AbjmYzDEjMcWmDm+4Y/iIySXbqoCuw0nYh90N8k3kIlOgX+VxWfX4PUoe9hKjLu
-	 nhBTDM74MlC0Ol7I4iQh1MkCSpDKwq8gF3lSsaGI4P58hMifkRcjR0boz8Wr1keQ3fNzd
-	 eVy4fBifuP0nOoCDTTVsHgOhBWVHPBAbeSHeW/QAtmOai1q+SSZbKaP9U8qaRp5WXAVkW
-	 wSIkkFTdjO4b2pxh996e4idC4XqfFq7amOnlaXU3ZZ2Bfbazs9dzbviOTuxFu4N37c2Gm
-	 7OEVF6JR9xMbhKREWH2qmiPgkxokczd4myLue9eoEqBIJc3OsZybhcxpEjMrSpUIrmA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794522178;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Message-ID:Date:MIME-Version:User-Agent:Subject:To:Cc:References:
+	 Content-Language:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=FXTOhNrZ12I8y3GDlfhK3N8wnDJl6WeN76bC3bk11uk=;
+	b=jqS8x9u6euFKpx51oc/VkUQH9nH/KIy5WkTk9W9znmX4rb4o2HCnnIk+eSr9MugMwFic
+	 32MmiL3YU/ldPbD5+T27fNvxlX2N9iOUdKRH4x8rzLWD93I6F9Jsgo+ivV5lwQir5delV
+	 5c5VL2A2L3H8JTMgIswnStOPJknsEQ+2p1/zB1HQym4/tWcsOx2lIZoRqhKTClPcPNlEI
+	 GsGykhXVDeJq3QmPjnvz4y5ccQEI/1tTVxXK3UtlcYqkZSbVzMHm89I6m9vZyrchXY0hJ
+	 w2k68FOiTMDgDh+avXP6PydNiJFgzvwRiPAbN5L8oUdd9G0YmzKm3JZN7Wz+kUc6D+Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="HFJ/1KLd";
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="HFJ/1KLd";
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=oQRW1kpy;
+	arc=none smtp.remote-ip=209.85.128.41
+Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11D13606A32A
-	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 20:47:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 11D13606A32A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16648606A31C
+	for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 22:22:57 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 16648606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=HFJ/1KLd;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=HFJ/1KLd
-Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 25C732218F;
-	Thu, 12 Nov 2026 20:47:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794516475; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8GAlIvu/7n9x7rn1wWVO1KYEgzha+ou77/lYlNohJbY=;
-	b=HFJ/1KLdg9dxXHOj/quxvRJwPNlQWSV4Y8l5lUPjoSjXvhyTuQdnpDy0IuIhvPVZgH3/4m
-	q1sr6J7oHC3/0Jq0OVeb8mdmbwQazxAq/0ExIfRAtnBcoqLiaE3wK8ruGamMmYZCyCMNOQ
-	qufIU4w1IRebl7Iymkhv2DAtJwUSmL4=
-Authentication-Results: smtp-out1.suse.de;
-	dkim=pass header.d=suse.com header.s=susede1 header.b="HFJ/1KLd"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1794516475; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=8GAlIvu/7n9x7rn1wWVO1KYEgzha+ou77/lYlNohJbY=;
-	b=HFJ/1KLdg9dxXHOj/quxvRJwPNlQWSV4Y8l5lUPjoSjXvhyTuQdnpDy0IuIhvPVZgH3/4m
-	q1sr6J7oHC3/0Jq0OVeb8mdmbwQazxAq/0ExIfRAtnBcoqLiaE3wK8ruGamMmYZCyCMNOQ
-	qufIU4w1IRebl7Iymkhv2DAtJwUSmL4=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id B91F313432;
-	Thu, 12 Nov 2026 20:47:54 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id BFNZIvol9mobRwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Thu, 12 Nov 2026 20:47:54 +0000
-Message-ID: <b087c205fa86ccda6743ebcdafb7e5340234a4af.camel@suse.com>
-Subject: Re: udev / multipath-tools: WWID determination with SG_IO vs. sysfs
-From: Martin Wilck <mwilck@suse.com>
-To: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Brian Bunker <brian@purestorage.com>, Hannes Reinecke <hare@suse.com>, 
- Christophe Varoqui <christophe.varoqui@opensvc.com>,
- dm-devel@lists.linux.dev
-Date: Thu, 12 Nov 2026 21:47:54 +0100
-In-Reply-To: <avYaaRagjQOdhnyj@redhat.com>
-References: <20261109185556.27139-1-brian@purestorage.com>
-	 <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com>
-	 <20261111174259.41911-1-brian@purestorage.com>
-	 <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
-	 <20261111230535.12947-1-brian@purestorage.com>
-	 <83f73b9cb1506eb80220759e3e0aae18648f80c4.camel@suse.com>
-	 <avYaaRagjQOdhnyj@redhat.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=oQRW1kpy
+Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4a215e64962so4423205e9.1
+        for <dm-devel@lists.linux.dev>; Thu, 12 Nov 2026 14:22:57 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794522176; x=1795126976; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=FXTOhNrZ12I8y3GDlfhK3N8wnDJl6WeN76bC3bk11uk=;
+        b=oQRW1kpyx/16oOi6t/w5Gak+LNrQwm1TIX6qAWhmdCvN94/f6PW8xNG3knvXeTWBFF
+         SDEWPNjWsKTCWtF0aHdPct/M9RMnURnqofkZw+WWGmDog+ciN3RrWVJqREFhdbkrUWpy
+         EzutklOn+sHelRsAfomGEikMo/Ln+0tH0h2oj2bQucZw2/3nLFzSAOjjQLjZIM16DGMA
+         qucoebJRYGJ5u/JKv9ZSN7bNgfhVFP9oEaHEykXVCSjbL/Ij/07gomnZm+CTMKBPa4pN
+         Mhp1MHeeY4mbBQG6b/2lLl2r8jC+iWlNCB37gz0AWY7PEqoA50GuDg5xi5oJhr73iJWT
+         yYug==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794522176; x=1795126976;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=FXTOhNrZ12I8y3GDlfhK3N8wnDJl6WeN76bC3bk11uk=;
+        b=WIcycGYzY8lPTpH/LhXhUFGCEfCr72Xr8YmhkrPEEX3fQWZxlXRhiTt2QfpGI6GbO6
+         FI3xjo8zy8tomq/yNC4zdVkHGLA4kJNynvzD5ajngt7xO2Q4F6dteajV8XY/K6b5wXtQ
+         ppzP7TuLBHLDAeOmnmgnSc14aqFbo9XGLTeGN0G2bTuHjnQWcxRfuyVzRjMSp01ZfeUF
+         QSEhbmiuUSwyZEKPWmiS5cO4PNMcpgEFKQIbBTd3a4FUJhEZcQ5OG2xJ+8/0cQey2TX+
+         pJ52RYsHHWjK9PuOuiK5Sl5Wo+p9SZePTkD7NoFkIBKzqmETglHnEyFSjfCNgG+TTS5P
+         pKRQ==
+X-Forwarded-Encrypted: i=1; AL+hErESzupVCbnEjJSuzGdXejpR6/Y7Yk6fn4aKLoUq0qsrzhTKAh0zXuROuDIFHVJtlkj7J3zPNYqV4g==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+v50sXdxqprpbqqkWtk3TQYZueHGVsZqrBR+1+IQr7v0/qI3K/
+	acA7DUVvPSESTtYIT4fmNNYSIhuBCk2TXNm2xVCogg8fXWtFWRt4x49E
+X-Gm-Gg: AYBFou2t/TWIr7eC466UHkdEpDvF1Uyas6kUFyCrO/soIPW5p/AoMLXblwq7PG8peV0
+	5hWB4n4G8AaP4maVK4eayDF36EwXvKrR5ZRy8oqSCuupC777b/u/XMrQ2VinUgn9zcXTt46fAZ2
+	0An55RATN/zdOVIMsZUlZG1tgZImvZPyjaAB9aiO0gutiT4reMNn82AuxnblLFG6MXdH20bYpeo
+	DvA84qRJBtwRmYj+s/AvFgCenZTxhRPJAGjT1bvGuYxthMBUfmaT+x1Cp+n4d1ikJNXRB9/GZBE
+	CY5yU40KtpLI19S8GWX4rcdtgC9vkT698Rh03W3aX5cNIqeFSSpC6aj80cY1zrc6FUnvEJWP31E
+	KmaLILJGmihbxkvJ0qnU+DxvQ9WEnzbowST08oH8aGTnvHbw788qNft8ebzSp5sQpAxyNkQXhSd
+	aQXU1gajqvDC8Qm6Siao9kktPlwp0OxDoiDnwRH34JK2898RCrJJuY3hDHL5x7Te0/HJhCDRNes
+	gwj8DM/IQWc4qM4DeCzcN41E7hVlMNNLGqHiYAJSX2gGeHWhdcHj2ms2rJ9NiEmr0p4iAyyBR44
+	wRHw3M7zNf87h7VUsJ0yCuq7sEF9cqHlFe5CjqiMUaqRBFBkBNVZVg==
+X-Received: by 2002:a05:600c:8b05:b0:4a4:4d57:8462 with SMTP id 5b1f17b1804b1-4bb55a99ed0mr13271495e9.24.1794522176352;
+        Thu, 12 Nov 2026 14:22:56 -0800 (PST)
+Received: from [192.168.2.14] (85-70-151-113.rcd.o2.cz. [85.70.151.113])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb4e2842e6sm100830085e9.4.2026.11.12.14.22.55
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 12 Nov 2026 14:22:56 -0800 (PST)
+Message-ID: <01e0bd88-9033-4244-baea-9a1fda095b96@gmail.com>
+Date: Thu, 12 Nov 2026 23:22:55 +0100
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -101,64 +92,69 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Rspamd-Queue-Id: 25C732218F
-X-Spam-Level: 
-X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
-X-Rspamd-Action: no action
-X-Spam-Flag: NO
-X-Spamd-Result: default: False [-13.51 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	MX_GOOD(-0.01)[];
-	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	ARC_NA(0.00)[];
-	TO_DN_SOME(0.00)[];
-	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
-	MID_RHS_MATCH_FROM(0.00)[];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_FIVE(0.00)[5];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:dkim,suse.com:email];
-	DKIM_TRACE(0.00)[suse.com:+]
-X-Spam-Score: -13.51
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 1/2] crypto: x86 - remove aegis128 support
+To: Eric Biggers <ebiggers@kernel.org>, Ard Biesheuvel <ardb+git@google.com>
+Cc: linux-crypto@vger.kernel.org, herbert@gondor.apana.org.au,
+ Ard Biesheuvel <ardb@kernel.org>, Antonio Quartulli <antonio@mandelbit.com>,
+ =?UTF-8?B?T25kcmVqIE1vc27DocSNZWs=?= <omosnacek@gmail.com>,
+ dm-devel@lists.linux.dev
+References: <20261112164419.1769428-4-ardb+git@google.com>
+ <20261112164419.1769428-5-ardb+git@google.com>
+ <20261112202329.GA815040@google.com>
+Content-Language: en-US
+From: Milan Broz <gmazyland@gmail.com>
+In-Reply-To: <20261112202329.GA815040@google.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Thu, 2026-11-12 at 14:58 -0500, Benjamin Marzinski wrote:
-> On Thu, Nov 12, 2026 at 08:00:58PM +0100, Martin Wilck wrote:
->=20
-> =C2=A0
-> > Brian's patch would add more such ioctls and thus increase the
-> > likelihood of observing a stall. To be observed.
-> >=20
->=20
-> This is true, and unlike the existing recheck_wwids use and the
-> prioritizer, it won't be called right after the path checker
-> determined
-> a path to be up. We do also do SG_IO ioctls in pathinfo when DI_IOCTL
-> is
-> set (when we're adding a path, reconfiguring multipath, or
-> initializing
-> a partial path). In that case we do check if the path is up according
-> to
-> sysfs first, but we don't call the checker.
+On 11/12/26 9:23 PM, Eric Biggers wrote:
+> On Thu, Nov 12, 2026 at 05:44:17PM +0100, Ard Biesheuvel wrote:
+>> From: Ard Biesheuvel <ardb@kernel.org>
+>>
+>> Even the people that are invested in Aegis appear to have lost interest
+>> in aegis128: it did win the CAESAR competition but is no longer covered
+>> by RFC 10032, which does list some other variants that competed as well.
+>>
+>> So let's delete it.
+>>
+>> Signed-off-by: Ard Biesheuvel <ardb@kernel.org>
+> 
+> AEGIS-128 might be used by dm-crypt, e.g. if anyone passed
+> '-c aegis128-random' to cryptsetup.  I added dm-devel and Milan Broz to
+> Cc to comment on the feasibility of removing it.
 
-So, would you prefer making it conditional on something else but
-"recheck_wwid"?
+AEGIS was introduced to kernel for dm-crypt to have real AEAD mode,
+I do not think there is any other user.
 
-Martin
+At that time, there was nothing better.
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
+Unfortunately, I am afraid it is used in some systems and removing it
+completely could create issues for users. What you can do is to mark it
+obsolete and expect it can be phased out later...
+
+...
+
+> But clearly AEGIS-128 is a mistake.  It has a hardcoded amount of
+> parallelism that is much too small for current CPUs.  That was very
+> clear when I looked into optimizing it with AVX-512: it just does not
+> work, and it uses only a quarter of the CPU's resources.
+> 
+> That's resulted in AES-GCM now being much faster, as well as the people
+> promoting AEGIS having abandoned AEGIS-128 and now advocating entirely
+> for other variants like AEGIS-128X4 instead (despite that unfortunately
+> still having a hardcoded amount of parallelism).
+> 
+> AEGIS-128 doesn't fare super well on the nonce front either, with it not
+> being nonce-misuse-resistant, and its 128-bit nonce being only an
+> incremental upgrade over AES-GCM's 96-bit nonce.  (Compare to
+> XChaCha20Poly1305's or XAES-256-GCM's 192-bit nonce, or to AES-GCM-SIV
+> which is nonce-misuse-resistant.)
+
+AES-GCM is not good replacement due to that 96bit nonce.
+
+I think other modes cannot be used in dm-crypt for AEAD mode, we will need
+to check what is missing.
+
+Milan
+
