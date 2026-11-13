@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.43
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794574592;
-	b=vm1xCNOf6sAIC2Bh/FnjzEqkUYl/eiVNKL0o9ayhJ9uH7FcVNfd6/CxtZYTMJc5ojhc/
-	 s5N+tUceAZsv+HNFEdjMHbp+VrNZ4JGomYzAospgXJxCxZzORQF+j5cFNUlabGkjtWSeC
-	 gbITvDvUisW+oPhdEEzlcFP5i+EtNwsmW8d+gVY91yFCfiJzxg/6CCJpejLdYHIWxaOT6
-	 KsCPZyV0TYO1lCJoq7Q+60+TmifUog8zLkCXN9mhyd/ghWomg8gkks+pQWGpE+sexOxw5
-	 ki7k9GpaKaF3ua/Qj9gQ+ji6d8wA9ttxUfmCcseJ6WfDosHh6OQMiQJIwpQqQeHyoLg==
+	t=1794574594;
+	b=gyp1BDiNIpMRztfplsLuAMS+uhtGgLbvA/5qkRjCOvPQ7gYJbOQb7VSh1+7pVw1QabLD
+	 bNU3VARI5VW6el7FPtCxe8eKM3t1oJ9NWtfBVKyukSQRAihYsm7q5yxoid/87KwqBHKP5
+	 6wdCuywl6BbSNaoY8gnTMLA5F4HCy7y/NosJTDalHGFBxptFOEc5tb967gUa9x45uKOdV
+	 U5whlKm7MJqYsup4uFku6MwnLK0Jsl32X25oydhEOKwkaaq9sdJsqqsdrIUzG8iKarRJN
+	 VyPtKHBFyoUCYlc3vQgWmr6ouHdeKCYOpuAsYJ2rLSi8O4qvF7iiX4Zj2KV8Wz/6stA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794574592;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794574594;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:X-Patchwork-Bot:Content-Transfer-Encoding;
-	bh=yLxuAzYHnXNmYthXPgYm6Hl5b7kQFNHwTdF1Fu/UjhM=;
-	b=Bu9ytIvvlXWvtMdjn4ItEheZJ+LGXwbARnnD8n65L2UhZDGHSe8FuszgUPQ7T4ralCA6
-	 q392pD6T6vOX1bCbzctSL2ykJNqhiAYTnmWTEBpyIBCtS4c9UNIqyjivPIntK2REFhnNN
-	 hy8As8PP/dGlULma9MOCMXm59vXx/pd/HzMa2Y7ak6rweU3w2Kg+NU7049Y2GhaudLHrM
-	 yLHAmIjDGPnl3Wfb/CF6Y4D3D/37epAnCdjLYk68D9pYyC4pbgL6gVBnO89hWC3VQi1hF
-	 g+8pADS/siswS2G2AW02H5S/dISkqmvh47X3JVjNDUdT4Q8LUmWiZqvxqYL8k8S9FIw==
+	bh=q+v45zVyTweBKlYa/QX8dfmhr40G3Xbj6VT9d8E3uHg=;
+	b=U34sIaBZpt5sytnPrJWxmJVnmKR8v7XWEzorFqxSqIvvAsnTU94tpe0y594D+ofrXXL6
+	 pSA2IBjFZoguSDtGoOuMZsW+RxPfvAnxKaoMdQSfvADTWxp+ooWcps/xwEksOTBp/MAuV
+	 +/ehJHrhB9nnjm93Yp5OQcBW17T3b/NAozUaO+Sd61EzoCmx04Z/to/6tCmvkiYEBlUyU
+	 8KdrJ6viCn5bcVj4y+d6IFSsclEBsotw/S5kNuEggD5W/cmIts4L0wZTyhUaBMYAnhfdX
+	 hLX5Wn64KaWnutyWtp4/IXCjssh+D6WaGk95ddqd/25SnqoJrasIX/2bdxuXIqecHgg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VKDbGfZI;
-	arc=none smtp.remote-ip=209.85.128.45
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com [209.85.128.45])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=XSaxHYhP;
+	arc=none smtp.remote-ip=209.85.128.43
+Received: from mail-wm1-f43.google.com (mail-wm1-f43.google.com [209.85.128.43])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A5D8606A335
-	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 12:56:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2A5D8606A335
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 936E7606A327
+	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 12:56:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 936E7606A327
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VKDbGfZI
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-4a1bc97805eso1409505e9.2
-        for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 04:56:31 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=XSaxHYhP
+Received: by mail-wm1-f43.google.com with SMTP id 5b1f17b1804b1-4a599e9110eso3306525e9.0
+        for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 04:56:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794574590; x=1795179390; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1794574592; x=1795179392; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=yLxuAzYHnXNmYthXPgYm6Hl5b7kQFNHwTdF1Fu/UjhM=;
-        b=VKDbGfZIufBxsroR1fPkM5yKgvYmbRAG/KXhyr+LGjL+zB3STaZPIBuI1lOBLinDyI
-         YaE5b6M+/fT/ITt3fLLgGnFSqQo6e2SAs1xAW6Jx6aFrbyhQ8L32j89OI7AMsWQIE3uz
-         Q8m0p8ox0hg3QeBJvwvI4E0DT135nmWgPheE0T2n8m8bs2c+bxcgjJWujQ724DiPuHIt
-         nL5kezDpdm87+CpNMLrOe+EqMzJUFkjb6VDhlqhueFvALQMxGUtD5FsAbUM6ljh+XfGt
-         FNxjjFf89ETeP7O/iWjojUyqddSR1kCsr62aIGL2fCwYRQqOgtb0n/BOFXt+A5DYkpzy
-         dRgQ==
+        bh=q+v45zVyTweBKlYa/QX8dfmhr40G3Xbj6VT9d8E3uHg=;
+        b=XSaxHYhPHJmbQ+3N2jcBtSxiEJcc5X89kAZkdD1ihpJ6jF6IpPVfg8V0y8Db8ulA+E
+         1kaD6P/vM/LrU4exBJJ6ImgZQBCoMisBl5s3b853Dug/AHRyfsHDw+QbkPHE6XgkoglO
+         YrHnU/q4jP6WZzqYjyubTRZ8WpxvNcEsDFEN4ljF1y1KppOeuspatArBlv7QKGbTW1G4
+         vZthPGiSyuJ9ZlJNPk69tIv7WydUVOiUIwKY5IT7N/qxLvES8IdlQ62UGM23sHDBNZHg
+         kq77JzT7As/FY70kGJb50Dn6IRAiDa28SpSJ0oi010nMNlpY1G+mHYel+LtTOg23NyN/
+         KBRQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794574590; x=1795179390;
+        d=1e100.net; s=20260707; t=1794574592; x=1795179392;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=yLxuAzYHnXNmYthXPgYm6Hl5b7kQFNHwTdF1Fu/UjhM=;
-        b=Id+fzEeYHKLBoJ7eF9swUDH4NaHLNgqDBopu38a87Sm6fzG9vR7VN5kZ736NF+Gr18
-         rivcxydA4pkz+cnS2tSIE3Zq8hekbBq+myF8dubtyvIdTPZ9timLrmvdZeQ8vKxAV+wn
-         XPqKLBd7czv3blYgSeuWhivkCTZDWZtSNqHMnrFCimhbcFNA0D3lTH2993Df/fFoHSU0
-         5UHmKI76IoUKTey3YFic1X2WeujUj4z25jE9igM/8ELAm/JRfL+0GH0Wk4DOAdOhmfbP
-         hAbQXQLPq1Fs2MKfbMMRdT8X7Kzto12OzLQhlL9e2g2/HglUweMb7UcZWVRWg9C0iSjl
-         WzZw==
-X-Forwarded-Encrypted: i=1; AL+hErGd5M6fkwCGPgp7ZCCKdylQVF/d1iwSZvon9F/k6ZQdm4LJ2Xvwiddn0gyvZJdxKBnzLqbPXnkLhA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+dy/k2ZQWNNsKbSa5egZ+M2wGW0y6OG3IU1uKX64+S9CxL+p8X
-	I8t0CAYo7l4bTB1BKHBCZd+SimUGXa9oEnrRP1TS8uEeR9fO7VoTfZQ=
-X-Gm-Gg: AYBFou2c9pW6EGnv6aF26rJo1pxd+eP6vq8SLI8tLO7Sx9g77fUfQiawRInXO+4MBnq
-	CMCR1S/wETGkFe25MTbssSx1kWWdatNEKOir07GO2mIFK6e5ew0LXSTV9QxibQANfrwoCKe52Qr
-	+K+uMIzJ+RojUppjDgImwlxIKPV7Za2qzjGLEsuadTs5Z0F25KHhbC9OoB65YIO/DoWIt/I1eid
-	JkHqdkb6pXRBUENbg73XhHM+Rq0aM9YXc7a7gnAnRfAsO4pC67cHme6fE9i26UJA/Nj+g69+8fJ
-	lR2gOYBvSyWJ+XyD46+R6fBHJYC4f9a5CXvBbK79sATzeIrlCtYVYmhbFX+kce/qNFnwpYQb1zW
-	6WJSkWc5tx5PKZdT7tWyjUhFQ8h6JWbTQ+XUvPcV/mOjXPoKZSAOriJzYDr3xDxsse6UE5i1zSr
-	lsopnyuPAY5vC5IO+t/16PiEQxG0coYHc8eviG75B648CrOYtNTYYzlph7qLviN6wqTQ4Vj+H1q
-	GqJNJk+BftpJahfFWgplAMFOf+wvfZL5vU+M2WZtFxlbhhkqEJJhYIjydFcgELm4bFtxWlRhT9o
-	wzzbuQ9c6504LhWwelT33QHFtOTHnzYUVsTMGddaXS6JLJyL9B1KDF6A3JOEIaz3dQ==
-X-Received: by 2002:a05:600d:864b:10b0:4a1:e774:370d with SMTP id 5b1f17b1804b1-4bb55a34a55mr38114135e9.1.1794574590510;
-        Fri, 13 Nov 2026 04:56:30 -0800 (PST)
+        bh=q+v45zVyTweBKlYa/QX8dfmhr40G3Xbj6VT9d8E3uHg=;
+        b=x7Y4U1eueNqzGNRHN4PMNHZvUk5T51RMivsiRdZbP4X3Vg5esuw0eyKRAUhVxZWamk
+         v9b6ddL3R2MJHVJMRzpXjm3JdJYnJabyZdJMF/eKNVQbPhU2BRVolDMc7NkHzd6PrTQf
+         94FD9eljVSk8gDBunQUtnkVLfnWyI5v3gqEOaGx/yz+R1D8K7bwQ7LLETs82ROiGRca+
+         MTYN8n/UpksHSY61deg3fo98AvbYDO3rcSAiZ+gAUBNQGPWCmifE4NJhZPEpYY4ytPFE
+         aC9ue60IuLDI+2Je1Z6NTdD1wxHE/x0L7wAs31WCTT94ucQPu38iUyVpDRiPKZVR5aWn
+         kN/A==
+X-Forwarded-Encrypted: i=1; AL+hErHdm2ipR8OlCNxQZc1INFwQpx/YrfGfBRsn2r+pMpVdUEhhjYeincPpMa4mlZSei/Cu943zPDPxxA==@lists.linux.dev
+X-Gm-Message-State: APuU4Z9ox7ufUCim+TvdrdAAqBH2219Ca/DMuA9GAwUmSWYyjMCcKm9r
+	jQqA502+5ovL7sn6Aq0qm46/vMuUSvBEMtKtJwFGclMGGmypcKRcx5U=
+X-Gm-Gg: AYBFou1/TP4j1cDIIwlRcc9b44sOw+0qfXBEToMkpOjhSVqckYeGvi44GQ2Q2BFXPF9
+	L8StYaaQfBbRFFjvD5u/n7o+Ibf8uRgD9N8s6Wal+YYFx4A+LDe1jA7ckAl935UdmVcN/7D6QQp
+	a6wRgXlERO51GzZ0Y0dz3fbKGYUrHfBeoozIuydKXMFlDQ4bfPnF80lwlKKSb65hBjYxH41VE6g
+	gYiuTQarOFuQDYX7rT8yBpFyLCVPaUjPIPsiF/jKB/e1O95VV5rYKdk2XNcbnmeRMwPnZjIDeV2
+	WRErJ+SF45L9Qb9gupVmW0beUmc36o2000BF1GQfOJThQc1wzW52kk8k/mlXwpKed60CRS90ITQ
+	ULrBctT1p7Q3HmS04SObG6UTP+ug53lF6e+3EmlwmCUvb5sOpzKB7ZH4geTpOz1rL9TfU6AlO7p
+	lSP+/ZVJG3NM2YqMZ5CMR47/GUmZz3jfk166JaeZaW0gKOoH6Ds2xE/WRwBeMsTfqQdaxLwfmwI
+	TcMi3RlbpFqzGX/rhZYa/Hdwf6JOgiNsdos+zRzlQvIjApAWLNlA8ZHDgTFarEgJOPNQ3b3DH9Z
+	ezSDsI2Cn+GX9DOKP0Om0cOWKtj3y4ZvfT4n2wqddyeIK5H8Dz5QuknoEPS9EsQlDg==
+X-Received: by 2002:a05:6000:4617:b0:48a:f5c5:d067 with SMTP id ffacd0b85a97d-49c6da16d42mr5434625f8f.2.1794574591789;
+        Fri, 13 Nov 2026 04:56:31 -0800 (PST)
 Received: from localhost (69.red-80-39-28.staticip.rima-tde.net. [80.39.28.69])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb55a68c5asm59134375e9.1.2026.11.13.04.56.29
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-49c5f782396sm5322579f8f.24.2026.11.13.04.56.31
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Nov 2026 04:56:30 -0800 (PST)
+        Fri, 13 Nov 2026 04:56:31 -0800 (PST)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
@@ -85,9 +85,9 @@ Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 11/13] multipath-tools: hwtable: add Western Digital OpenFlex NVMe
-Date: Fri, 13 Nov 2026 13:55:43 +0100
-Message-ID: <20261113125549.504780-12-xose.vazquez@gmail.com>
+Subject: [PATCH v2 12/13] multipath-tools: add repology table to README.md
+Date: Fri, 13 Nov 2026 13:55:44 +0100
+Message-ID: <20261113125549.504780-13-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.56.1
 In-Reply-To: <20261113125549.504780-1-xose.vazquez@gmail.com>
 References: <20261113125549.504780-1-xose.vazquez@gmail.com>
@@ -103,8 +103,9 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Info from, page 9:
-https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/reference-arch/reference-architecture-high-performance-beegfs-filesystem.pdf
+Besides helping distro maintainers spot outdated packages, it gives
+users a quick overview of which versions are currently shipped across
+distros.
 
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
@@ -112,29 +113,25 @@ Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 9 +++++++++
- 1 file changed, 9 insertions(+)
+v2: use a compact multi-column layout, and exclude unsupported
+    distros. Small enough to stay at the top.
+---
+ README.md | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index ea21bc44..a37fa7d8 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1452,6 +1452,15 @@ static struct hwentry default_hw[] = {
- 		.product       = "VASTData",
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 	},
-+	/*
-+	 * Western Digital
-+	 */
-+	{
-+		// OpenFlex NVMe
-+		.vendor        = "NVME",
-+		.product       = "OpenFlex",
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+	},
- 	/*
- 	 * EOL
- 	 */
+diff --git a/README.md b/README.md
+index fea8ea99..cdfb2f38 100644
+--- a/README.md
++++ b/README.md
+@@ -5,6 +5,8 @@ multipath-tools for Linux
+ 
+ https://github.com/opensvc/multipath-tools
+ 
++[![Packaging status](https://repology.org/badge/vertical-allrepos/multipath-tools.svg?exclude_unsupported=1&columns=4)](https://repology.org/project/multipath-tools)
++
+ This package provides the following binaries to drive the Device Mapper multipathing driver:
+ 
+ * multipath - Device mapper target autoconfig.
 -- 
 2.56.1
 
