@@ -1,62 +1,61 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794548201;
-	b=V+nlyGZj3zDuyptZzgLWzQUJOYR1j8qB9UFMOdzgvWPX76gRawcIJNeRLLrDkoFh+o97
-	 SzFfIGNx8oURQdJFyqH6nOghOveoNCOUn9MSjwDYsvs0Zh7nYClfbKy/albF7naekpBBp
-	 /gLXNzRjRRdjqqItSVQC1Q/TJIIKwOTvNfkl+Yln3u3radIZ1phfoAtRcT15bFSNNPOGW
-	 j95CpsrLYKGAKwDNZQY0p3oYMQ2zJWR9vWOJTG/azxAMWiK/zOoGcBvjcsQJoz18GRqvz
-	 ZNhxrirk/UbjlJiQfz68Q0qr28kA59HcTsaen+QtysKg1PtcwoK6M3nMatQB7dD7SVw==
+	t=1794549326;
+	b=xMrhsjtyQRw4B8S87HeLgecHc19IR6FO1QZUk77hXkIam0rCtcGTdX/mCUjrj12HymqN
+	 VxV5OpMb45NtOTNvD4zZGVI8+N//7kTftlMgSjgZAPGBY4s0pICA0squCOatgsWMsqteB
+	 O4FHPCBvLFDnu7eCpw/1yWHZL9xcq143sqBVqdrKf296FX0yCMXp4NsWPboCCKHB1axQO
+	 a89ng0c8DM5z7MTN4kg7Vajr5w6EFeVRdQ6NK7WtN4BAVIbkUYGY4ZXt7tcG1N+0ay36h
+	 Ln7+0pp0bSGa604JTak7S9BAbGC7Qa7QSt+aymuK72hNhsIXZSAoQVYWgviqf+xbDzA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794548201;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794549326;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:
 	 Content-Transfer-Encoding:In-Reply-To;
-	bh=7iv80L9GcHiBzdrS+YiyDqm/6O/OQFrd70zOvsYzbsE=;
-	b=mb5WHxo0ohm+/GtfnqOiMqdz6Jq5USY/PISezKmLUqc8zBBRiWzeqZ5LY7epfF0chjSr
-	 xeQb4Psm3TOu89NbZS2wwrhpgLciA2bsH6I+zdpF7Pzzq6PAPsXMEwoGMDEpD8NFu5emT
-	 ap/u4JmwqvYcQf7WBtfN7kMFy/oOVNEA+pazAFQY7uPqLcrdEq6ur1QxKPnSdbAXO3Bc8
-	 enlLzjlCdkK8i92is6OTsHqLNqDjUCRS+9jCdoiL0s/Lsx2Fyrk5lCXKGYZw1pH+fQV5a
-	 UoxANgAIOaM/ZcM4OsMvCswq/cjHYBwRPw7isFePduIjVlQ+ICkwsiGnqX+p817u+yg==
+	bh=/01lbDODi7NDbVwmLDa+t/6qEZhc6k4Y0iSdWiv8IZE=;
+	b=aoj+kLc1RWfxSYdLxCXeQsawPVcv7ITfKHwsDZS6Kpfi2jye5ogQcZAESHL9rArul+J3
+	 lIRSfxQzPLdJjdOcAKUyJW2IXgBHitrwF/dibODj4YKqnXA8AVnnGCKv+wspEgt1ApA6O
+	 /W6Tm16SflZSj57GtdBmkrgfKaz4BTTMNUlpE30rqZjHXSZXJZEd0fLcYkcwYV/Dk0RDE
+	 SiSQVC2bAUdy7PqUgE12clrjDI8yRGiBGnO/6IeU8dHHqPxthsottLtHKSHyT2sZbrX+Q
+	 FxQrgjw38NbZNfqC28Cnq1KAhPVlp419fM4WtAOypo7CIIv/txmoW2Hv56Fae7cE0Ag==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hHCstTRW;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=inrMicjZ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1DE3E606A32A
-	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 05:36:41 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3D3F606A321
+	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 05:55:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hHCstTRW
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6FCF71F000C4;
-	Fri, 13 Nov 2026 05:36:40 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=inrMicjZ
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 223A31F000C4;
+	Fri, 13 Nov 2026 05:55:25 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794548200;
-	bh=7iv80L9GcHiBzdrS+YiyDqm/6O/OQFrd70zOvsYzbsE=;
+	s=k20260515; t=1794549325;
+	bh=/01lbDODi7NDbVwmLDa+t/6qEZhc6k4Y0iSdWiv8IZE=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=hHCstTRWvMQXjGxYd6Q+7s3w2xs+XzafQT1SGyI00E9D3lUEO+Gswboh0DxESoZ+p
-	 pjJIMIK3PyzChQO3aeo0v9RRzjRopsTz/IFmBKMikkRPoMZGraEohvotV2qZAKnZbg
-	 IobrgLEK/umrB876hXQENLYp3ez6c1VJYOUO29N4BPRvar/RzFJ05w5z2TnoGXMoWh
-	 Q/6NapM5xWbgAYqe7z/O8hvvHyZ4LLxj2scUk4CqOl8QzoUoPbmC+gRLeaZMV2RRhm
-	 dtQxrps5u81dddFxImjEeZxYXGpeMn0yiDGZljvoU3GTU7JQ+myD4e0QRlSLQcsr25
-	 BXtss7rDnsJfg==
-Date: Thu, 12 Nov 2026 21:36:39 -0800
+	b=inrMicjZVFVB2PlDeqt+iHdxPxcM56TAktw3wwxzaihgr4dIv7O9H8lC8fJ4zODqJ
+	 lSFGmT6aIxSvrSLOIjSCTm6Pq0aHYk5aJfmmJKBPEv89BWDYS/GiY1LWPUlMC6wg8d
+	 Uqjx45foRh700nNBNnYyl4OYvTjE44OG2RL4eO0SpVs3A9QmQVWmBxAfrh8Y7ptipx
+	 861LJ9GFW/ONL58s+hnRcUxaBMiakWIJWbnk2tzgqhxyev8jBvore13vTNP35yl1+v
+	 lN4YIIMjIaGLYNAApUMh8edP4uAthsLtAPQv0z7jZlY2KbV+5uJaZ5HHU5ovd/t7vK
+	 yA0fne7amgt9g==
+Date: Thu, 12 Nov 2026 21:55:23 -0800
 From: Eric Biggers <ebiggers@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: =?utf-8?B?5ZGo5Lyf5rGfIChXZWlqaWFuZyBaaG91KQ==?= <weijiang.zhou@unisoc.com>,
-	"dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
+To: =?utf-8?B?5ZGo5Lyf5rGfIChXZWlqaWFuZyBaaG91KQ==?= <weijiang.zhou@unisoc.com>
+Cc: "dm-devel@lists.linux.dev" <dm-devel@lists.linux.dev>,
 	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>,
 	Sami Tolvanen <samitolvanen@google.com>,
 	=?utf-8?B?6YeR57qi5a6HIChIb25neXUgSmluKQ==?= <hongyu.jin@unisoc.com>,
 	=?utf-8?B?5ZC056Wl56aEIChYaWFuZ2x1IFd1KQ==?= <Xianglu.Wu@unisoc.com>,
 	=?utf-8?B?5ZC05ZGo6ZWcIChKdXN0aW4gV3Up?= <Justin.Wu@unisoc.com>
-Subject: Re: [RFC PATCH 1/2] dm-verity: don't decode FEC into a dm_bufio page
- that is already in the cache
-Message-ID: <20261113053639.GA76778@sol>
+Subject: Re: [RFC PATCH 2/2] dm-verity: don't restart or panic on errors
+ during system shutdown
+Message-ID: <20261113055523.GB76778@sol>
 References: <8048c93b8cf24d83aa6aa536c2518201@zeshmbx08.spreadtrum.com>
- <27b2dc50d3bb497ea3f3f84e7e4b271c@zeshmbx08.spreadtrum.com>
- <5188c1e8-c08a-2a56-7e4c-1d84aba4df35@redhat.com>
+ <9cc9b5c7460d4b0db002e7954b2eb893@zeshmbx08.spreadtrum.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -69,69 +68,65 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <5188c1e8-c08a-2a56-7e4c-1d84aba4df35@redhat.com>
+In-Reply-To: <9cc9b5c7460d4b0db002e7954b2eb893@zeshmbx08.spreadtrum.com>
 
-On Tue, Nov 10, 2026 at 10:08:02PM +0100, Mikulas Patocka wrote:
-> On Tue, 10 Nov 2026, 周伟江 (Weijiang Zhou) wrote:
-> > Commit 51ba14fb368e ("dm-verity: do forward error correction on metadata
-> > I/O errors") handles a failed hash block read by allocating the block with
-> > dm_bufio_new() and decoding into it with verity_fec_decode().
-> > 
-> > dm_bufio_new() inserts the buffer into the v->bufio cache immediately, with
-> > no B_READING state and no read_error, i.e. indistinguishable from a
-> > successfully read block that merely has not been hash-verified yet. Its
-> > contents are whatever the allocator returned (all zeroes with init_on_alloc),
-> > and no I/O is ever submitted for it.
+On Tue, Nov 10, 2026 at 01:06:21PM +0000, 周伟江 (Weijiang Zhou) wrote:
+> Commit 252bd1256396 ("dm verity: skip verity work if I/O error when system
+> is shutting down") stopped I/O errors during shutdown from triggering a
+> restart, since devices may legitimately be gone by then. Errors that reach
+> verity_handle_err(), e.g. through a failed hash block read followed by a
+> failed FEC attempt, are not covered and still call kernel_restart() or
+> panic().
+>
+> During a reboot that is both wrong (nothing is corrupt) and harmful: it
+> races with the reboot already in progress and replaces its reason with
+> "dm-verity device corrupted", which bootloaders such as Android's treat as
+> a verity failure and switch the device to EIO mode.
 > 
-> I don't see why this should be a problem.
-> 
-> If the device returns random data, FEC is supposed to correct it.
-> 
-> If the device returns an I/O error and we create a buffer with random 
-> data, this is similar to the case where the device returned random data - 
-> and FEC should also correct it. It doesn't matter whether the random data 
-> came from the device or from uninitialized kernel memory.
-> 
-> So, it seems to me that this patch is just papering over the problem.
+> Apply the same shutdown check in verity_handle_err(). Corruption is still
+> logged, recorded in hash_failed and reported via uevent, and the I/O still
+> fails.
 
-dm-verity does use FEC to try to recover from I/O errors, but this
-doesn't mean that I/O errors and corruption are interchangeable and
-handled in the same way.  See the difference at the end of
-verity_handle_data_hash_mismatch(), for example.  It calls
-verity_handle_err() only on actual corruption, not an I/O error.  That
-triggers the corruption policy controlled by 'v->mode', which is
-different from the I/O error policy controlled by 'v->error_mode'.
+verity_handle_err() is supposed to be called only on corruption.  Just
+as established by patch 1, there is a bug where an I/O error is
+unnecessarily escalated to corruption.
 
-> > FEC then reads every other block of the RS codeword and, for blocks on the
-> > data device, calls verity_hash_for_block() on them to decide whether they
-> > are erasures. That walks the hash tree through the same v->bufio. If one of
-> > those data blocks is covered by the hash block being recovered (or by a
-> > descendant of it, when it is an upper level block), the nested
-> 
-> This is the real problem that should be fixed. Correcting a block 
-> shouldn't depend on the content of the block being corrected.
+This patch might still be worthwhile, to be robust against hypothetical
+storage devices that return successful reads with incorrect data while
+the system is shutting down.  Just the commit message and comments don't
+really match up with that.
 
-There does seem to be a bug where when FEC is trying to read data block
-hashes to correct a block, it can detect corruption in the hash tree and
-be unable to correct it due to FEC being non-recursive.  That triggers
-the corruption policy, when really it shouldn't and FEC should just
-consider erasure information unavailable.  That is fixable.
+>+/*
+>+ * Skip verity work in response to I/O error when system is shutting down.
+>+ */
+>+static inline bool verity_is_system_shutting_down(void)
+>+{
+>+return system_state == SYSTEM_HALT || system_state == SYSTEM_POWER_OFF
+>+|| system_state == SYSTEM_RESTART;
+>+}
 
-But it is not the root cause problem here.  The root cause problem is
-that the call to dm_bufio_new() injects uninitialized data into the hash
-block cache as if it came from a successful read.  That turns an I/O
-error into corruption, making the corruption policy take effect merely
-due to an I/O error.  This is not limited to FEC reading the data block
-erasures, either; any concurrent reader can trip over this corruption.
+The above comment is misleading.  This patch makes this function be
+called by verity_handle_err() which is for handling corruption.  It also
+occurs *during* the verity work.
 
-It seems that dm_bufio_new() was designed for writers that overwrite the
-full block without reading any of it while also excluding concurrent
-readers, e.g. using locks.  That just does not work here, unfortunately.
+> +/*
+> + * Devices may already be quiesced (e.g. UFS set offline by its
+> + * shutdown hook), so a failure here does not imply corruption.  Fail
+> + * the I/O but do not restart or panic, which would also override the
+> + * reboot reason of the shutdown already in progress.
+> + */
+> +if (verity_is_system_shutting_down())
+> +return 1;
 
-Using a kmalloc() buffer (this patch) kind of works but is a hack
-because it doesn't actually populate the cache at all.  I think the
-correct solution would be to have the FEC output initially just go into
-fio->output, then populate the cache atomically with the data.  Seems
-that dm-bufio.c will need a new function for that.
+Shouldn't this go earlier in the function?  By the time we get here,
+verity_handle_err() has already recorded the corruption in struct
+dm_verity (where DM_TABLE_STATUS can read it) and sent a uevent to
+userspace notifying them of the corruption.  That isn't very consistent
+with the idea that if verity_is_system_shutting_down() then corruption
+is not reliable and should not be reported.
+
+Side note: as Mikulas mentioned, your patches were also corrupted and do
+not apply.  You also should not include email footers telling people to
+delete your emails, as they may do what you ask.
 
 - Eric
