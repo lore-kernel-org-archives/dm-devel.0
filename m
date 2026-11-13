@@ -1,93 +1,145 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.48
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794574678;
-	b=x/jDVEhZ3ciobWVvZ+IHfvNOCfiNJOHiQX7QxLaxdXm/wLRAP59m341tl7nEKni8/Pa2
-	 1vKlvbgaJrNwlfjCsQ+jjWQnOhLb3ZkD83ueslHC8JHeRvbUFFRTLJZpX9cZVf3ggcJfw
-	 DHAWjXdJ1S6N1N/HN56moqjcIzZeMpWMznZdDfE4S/PLiR0ph77PJl3mXJSQP6ruxOQKX
-	 QAWEERRWbYVqo8pXq68qeQesFdqCipGxgKEt50rb/3kzZ9/lvgfBETdOQ1cMqWlwVCTYi
-	 3rh+2ru4JrPFqGHW4cz8PokpPEdoYN9f/x544VVAhmbhB/jXIIKZg8q1a/q0k8CeyIA==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794574678;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 X-Patchwork-Bot:Content-Transfer-Encoding;
-	bh=efR+s4LJDVQep7RV0zc8eCSphgxsWu8QlR7Oau/c+Os=;
-	b=X7GM8w9GvzNaachajWHBsbsk2BUrac26IbpP9Xd4lMGXxiIZUbhKgq7emjK1JBe1e8ze
-	 N0Mr5n8mRoNFmvT1FYKTxQ7pUAz+2vvSJCSTBWYCCqr7BmSKuIjNYn3X82oNqw+RQ8I00
-	 bAX3AkYw+GzVHzoc1CuRwraAgrJDDktXr5qeTUMwbfLy+eVMbR2kpZHa7cuOVPN4Mrtn8
-	 sIKRej6EuleDm6OWTuqeEXYEXhORb/ym9yz7aRkPO2p4LcJlX2bflpZf47s5bkfw00Lau
-	 XZ4xrGF6ovfq5WCi8WSL2fAyDvWs2YP39/ClG8vHkB9hRtekFV+WbkmHf1uMgq8VtBg==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VL2+Cn3K;
-	arc=none smtp.remote-ip=209.85.128.48
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=40.93.196.102
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1794575020;
+	b=4wawudanIzjLpQwdHYlF/wx41C3vXJcLxQeefixBd6V/fh6VWdYyQxzp1rrJpd6YPc+g
+	 JgQRehBv8gsyYTtmVmUWlzCe2/ayDJQAs+qzGCZfff2ECf4pFTABot4eNVZn++VYMTO0S
+	 0mgypus2xRLo9g29XCZzgHR9MhguaJd07mqq137cRHv/MTZZPeW/DJcvxhVR2EpgsaeNE
+	 Gs5/poukSgiwGOsB1Cfuix5rJLHiJ6ltqWfl/IUTMSBGdBOGDxrFOoSmXQGeg8NScDto9
+	 yh4Erpbsq23HKKcFik3AQZ1CSAL8KGZ7BZRMAdeRxVq3k+evZerKxa1k80DcthIbGEA==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794575020;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:CC:Subject:
+	 Thread-Topic:Thread-Index:Date:Message-ID:References:In-Reply-To:
+	 Accept-Language:Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
+	 x-ms-publictraffictype:x-ms-traffictypediagnostic:
+	 x-ms-office365-filtering-correlation-id:
+	 x-ms-exchange-atpmessageproperties:x-ms-exchange-senderadcheck:
+	 x-ms-exchange-antispam-relay:x-microsoft-antispam:
+	 x-microsoft-antispam-message-info:x-forefront-antispam-report:
+	 x-ms-exchange-antispam-messagedata-chunkcount:
+	 x-ms-exchange-antispam-messagedata-0:Content-Type:
+	 Content-Transfer-Encoding:MIME-Version:X-OriginatorOrg:
+	 X-MS-Exchange-CrossTenant-AuthAs:X-MS-Exchange-CrossTenant-AuthSource:
+	 X-MS-Exchange-CrossTenant-Network-Message-Id:
+	 X-MS-Exchange-CrossTenant-originalarrivaltime:
+	 X-MS-Exchange-CrossTenant-fromentityheader:
+	 X-MS-Exchange-CrossTenant-id:X-MS-Exchange-CrossTenant-mailboxtype:
+	 X-MS-Exchange-CrossTenant-userprincipalname:
+	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
+	bh=48GZs7YzT4skm5SopQPGdf+8fk7qFiA4NEeOmj/XnCg=;
+	b=f8VgLBKRm5axIyu/gc0aNsDr9AKb1D+HnE53KkwAQSiq9YSiG5iQvzseLder/bfYOgxl
+	 uD/ZyjSMR5K1Jjd2Zwv6jko44XB6oyPv/z9UlU+H5rs9c8Mm+ItH00sczn0bbf9whlOeH
+	 cJKivU7XhwK8VYNAmI4PxDBI2MFFaG9nspGCBL5jgzLHlDQQ7ppxJqpGgl/lsMIYrG869
+	 NfDz5R1ZRrQAiktVQuPD2uoKUqU3lFyZ/6iH4YrwVDsSqTK2XDlCaW2LaRrGrXqccrclg
+	 I1oaO6xZzLdonadeLtYlm73bS/cUvvwbpZrqzQraA80pVh1a669w3vfXwzKOAdtg6kg==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=Quantum.Com;
+	spf=pass smtp.mailfrom=Quantum.Com;
+	dkim=pass header.d=quantum.com header.i=@quantum.com header.a=rsa-sha256 header.s=selector2 header.b=DBJz7ZYD;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=40.93.196.102
+Received: from SA9PR02CU001.outbound.protection.outlook.com (mail-southcentralusazon11023102.outbound.protection.outlook.com [40.93.196.102])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E14D4606A327
-	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 12:57:57 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E14D4606A327
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B806606A323
+	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 13:03:39 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7B806606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=Quantum.Com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=Quantum.Com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=VL2+Cn3K
-Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-4bb5d38264aso278475e9.2
-        for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 04:57:57 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794574676; x=1795179476; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=efR+s4LJDVQep7RV0zc8eCSphgxsWu8QlR7Oau/c+Os=;
-        b=VL2+Cn3KQ80cQN0GgKZfgLsDPuQEPwd8MoV6CIyfCwV9cUCn8j3SNnhpwkFSiL0I6o
-         33fb4XbCweYzDUkXcfHhxlIaUhVzNK3Tv7yp/cy4Q1XZTBmMT5qDiYL++kSSo3t1kwZG
-         l/xOnw8988a70j7+CH69sB1E6sJsplcw+EC6aWmHuMMyrqmqjbGkGFguitQMdfgB0qkk
-         EJWnCGm1q1eq7YXnUkr8Zy0lTOCgXFoF7RWVBzjWZlOzgf1oaoHnNeIfXWN1i+sRELLA
-         WI2uLxl0TvPmiiU8bZYT1XuHQbtMdfSJXVekgmOdkHknwX1bTsL9GN1Pq0TeMnKQapVC
-         ZolA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794574676; x=1795179476;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=efR+s4LJDVQep7RV0zc8eCSphgxsWu8QlR7Oau/c+Os=;
-        b=ci/O0QGSTC3QjL4h3oI3DrB0uQ9Zg2JQeVp1kZO760TU2PrtVIFmLJY83NFk8KMfsq
-         9LC3/NseuhRb5rVX0A9dC5ZlDz76y6/xODrw67K3Mv0sDP5q8n9hYNgOYRiChkIl2kMV
-         xe+BHJkplVZXwMb8/HbTM340sXF98/JIh6LKZe9LRWQs70wcq0y9ng+o9fQTJi0uG2Vr
-         hiPsEVYkDxw6QoYFYUvvMxEG+HjYXsVhVlrzz7dD+iB9FeMCgUVLl6q8JsJLxMu8WzWK
-         GLhHfl23ntJAVpkJaY90nZnqzbT5Psigz74ZlmS+AEHFOZ0iw7ukH84jW7hGsiIh34Cy
-         gXig==
-X-Forwarded-Encrypted: i=1; AL+hErHf+gzozru9sCxm/D0jc1bTjSudyaYl8VrTpjtFGdAXZLWLXVTa7WDS28L52mZp6DoX77IF3zuo1w==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+s3skbsy/1xFukQVX2hLmj0y+UVVXnuqcvf1Ga1HN66Py8g+wr
-	PgDA1sU4tBq/OmChtiqD6UajgmbISevdHs61lauCJULP4xnUxCUSLno=
-X-Gm-Gg: AYBFou1vvnWmF6596xbFc8lpxce4eiE/0O8WAp5+YKg5OKDpfN//6dk8JtiOFCOuPmf
-	PjQpq9I50JPBqkNcz+WCKCsgapX+BbQWXeRZUGkk/Vmufd/HwzfydDcdSiQPNqhSMD24h+jYVLX
-	Lk8Qui2oib9Bv+KN6j5bPrGHWEto+VFipwG1X1wgsIvPujgTbhhweRsdDRuNMz0EHjZri8bJox8
-	NNfvvpMQ2lAdB2GqU6kkcsLIYlDBbSy5bXQiOujPGij8PKgfDetcCZkDEdUrmBkAQFkyX0ipUsc
-	WwLoKMZ6nLHeKAeyju4H1TEMFXYf/XneQRYmCpn5t+mL17vdItsTykFEhcdw2Kg0SMmbhd/J69l
-	Kp4DGSQjhX0xT0G1IhjuxhoTshukdmGkWcaGhszElMZS5WTWoBCxEFyZmcT3N3mo6RWfvqXGC/4
-	ZzPU/LuI1ZOuWimRe2i1hxzhmxxhyHGLkLtUzZiIc22CGv00csSzMI2zRvjEdjzhqbdrlHF8XkI
-	O7TeFmB6YWhHupp2z8dBNsIxfyGLenUoBvh8CxvkERL1pPC8Gw1IJRUL4tEq2vAkjFCmHhyX73H
-	Mzl9AqOcS7vP2eh+qJWoyqf37Q5e/rC48oYy+kOShODcIuwq0aS7XelBDbnD4iigcg==
-X-Received: by 2002:a05:600d:644d:20b0:4a1:b027:99ef with SMTP id 5b1f17b1804b1-4bb55a3f05cmr41433585e9.2.1794574676250;
-        Fri, 13 Nov 2026 04:57:56 -0800 (PST)
-Received: from localhost (69.red-80-39-28.staticip.rima-tde.net. [80.39.28.69])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb55ae5299sm67056285e9.11.2026.11.13.04.57.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Nov 2026 04:57:55 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 08/13] multipath-tools: hwtable: add EMC/Celerra
-Date: Fri, 13 Nov 2026 13:57:54 +0100
-Message-ID: <20261113125754.504990-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.56.1
+	dkim=pass (2048-bit key, unprotected) header.d=quantum.com header.i=@quantum.com header.a=rsa-sha256 header.s=selector2 header.b=DBJz7ZYD
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=Hwatn6FfPiR8l17JRFzocWF6194sv03raOtHVKB7nDNVxPyiZMp1oWi3qtY3+1q3WrAHhVv0PQ0vWUq9eWjV1lD5APGgYY4k1MSrzePGIu8iMVE1PUG12uJ0HWAUFD6IbgwUun+lYrV4hZEU5/AztegLF9/6pB2awYFP5QcssEnra4NWEGsFbkvIgWuguX/McW+De675OmuAqLX/TvYdWZexxhbN6fGsVMchX43iaw3kR6Bj+pQhGfFx4QN1dKlmY/LRcxFFPB2itsPY1t+6WAYeKyjcVuiNS/2qijTLDRcmrYbcJO3omDjkf0UOMUmIu36lUXcIuXiic/ekpu9eJw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=48GZs7YzT4skm5SopQPGdf+8fk7qFiA4NEeOmj/XnCg=;
+ b=faqz3hw3mVjB7ttSWlQFheDOYMpJJO/ZabFwACh712rDkTZ/j38tDhFrL8lGi2CkEWwRrNPcWh9gEvktiQ088bnsfHNyOBniJS0aLUPbqcNGW6rfqlZIwXUVCUMs1iD+AUcO41UGx8n35GQUBU8ONWhzeqHrX+p81HpOaEYao+ASysZo1O9K2pIgAHNvPs+hTf9xm2/f2bRFbvPXEGxx7zX4DQbTvGVmbRIYEUxBuDCSyybwXwiO5kjhC1Dy3gmm5xa3BOzBYzbGzOPjTQR9dFqI5phKBniTdsIB1H59lr8Fs379ZkWpzIH6oB3rQDV8uiUviL4ys+7/Ekaa/QwnMQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=quantum.com; dmarc=pass action=none header.from=quantum.com;
+ dkim=pass header.d=quantum.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=quantum.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=48GZs7YzT4skm5SopQPGdf+8fk7qFiA4NEeOmj/XnCg=;
+ b=DBJz7ZYDv8anECSk3azq2tdGSQelway/Tvegxjp0v2La3c8KIk0sbe+M2mkcjYn8+SKxwmndotFiRs0X72xI74Z9R8hmMj4s5R6uJgnYKfPfoSCCQvOZJpYoJjARZdTnbqKen8ZX1o6HvyJEs00X3W1VzAb78qJhqButv1OH9L0/vpWm66T2nk5BKSH1s1A7Xh7rU7hahg2D1ISKHtQYLyTRdwzNaU27ITphSuqJDqmpQ33U5D7UV6qi9Sx33ZI/FSkenvV5NdTNQuPBfJsbbV1lCDNxCrfyMs7VvNxbT6DBpRGAn6MA9h2p9qx3yRJeSlhM1JKAP3WZq0UbgLpplg==
+Received: from BL3PR14MB5577.namprd14.prod.outlook.com (2603:10b6:208:3b8::16)
+ by CH3PR14MB6915.namprd14.prod.outlook.com (2603:10b6:610:131::17) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.615.10; Fri, 13 Nov
+ 2026 13:03:33 +0000
+Received: from BL3PR14MB5577.namprd14.prod.outlook.com
+ ([fe80::8ad4:cb4d:6241:79ff]) by BL3PR14MB5577.namprd14.prod.outlook.com
+ ([fe80::8ad4:cb4d:6241:79ff%5]) with mapi id 15.21.0615.008; Fri, 13 Nov 2026
+ 13:03:33 +0000
+From: Bart Brooks <Bart.Brooks@Quantum.Com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+CC: Martin Wilck <mwilck@suse.com>, Benjamin Marzinski <bmarzins@redhat.com>,
+	Christophe Varoqui <christophe.varoqui@opensvc.com>, DM-DEVEL ML
+	<dm-devel@lists.linux.dev>
+Subject: RE: [PATCH 06/13] multipath-tools: hwtable: update Pivot3 maintainer
+ email address
+Thread-Topic: [PATCH 06/13] multipath-tools: hwtable: update Pivot3 maintainer
+ email address
+Thread-Index: AQHdc25huEqbWkqiBE6H48ZyUGDyVrcr97ZA
+Date: Fri, 13 Nov 2026 13:03:32 +0000
+Message-ID:
+ <BL3PR14MB5577651E43F52AA4ABE95A98F17F2@BL3PR14MB5577.namprd14.prod.outlook.com>
+References: <20261113125549.504780-1-xose.vazquez@gmail.com>
+ <20261113125549.504780-7-xose.vazquez@gmail.com>
+In-Reply-To: <20261113125549.504780-7-xose.vazquez@gmail.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+authentication-results: mx.microsoft.com 1; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=Quantum.Com;
+x-ms-publictraffictype: Email
+x-ms-traffictypediagnostic: BL3PR14MB5577:EE_|CH3PR14MB6915:EE_
+x-ms-office365-filtering-correlation-id: 166db8d0-5d62-42c5-d618-08df41868578
+x-ms-exchange-atpmessageproperties: SA
+x-ms-exchange-senderadcheck: 1
+x-ms-exchange-antispam-relay: 0
+x-microsoft-antispam:
+ BCL:0;ARA:13230040|1800799024|366016|376014|23010399003|38070700021|10067099003|4143699003|11063799006|56012099006|261026140227099003|261026121527099003|261022105027099003|261028144727099003|261021123027099003|261021121427099003|261021135927099003|261102123227099003|261009223027099003|55112099003|18002099003|22082099003|6133799003;
+x-microsoft-antispam-message-info:
+ YwIbneQz+0PnMmDto6SwpdCF99AsJEyWTasWxOsCJ0Ny0vhs9+EwXBCwjH+GgO+9UZfj8KA++7bS8nPS6IArFJovdzin5AuhGu/zet+vY5p2eRzL7lqQQ6+tUUlMPGGK+ITFAC6eMk+WrQSRIwk12T4nU7SvipicPYAbJLhg7b/lrdHN5DizxrDkBAfZflA5iZhpi/dZ7/bnNLJYNxNZrTTudsVmKxxZ523MjESD6SILce3k6Xys+I0HrrizflHh7YSkJ/9dHgrukQikdGkzojsXyJ8Gl4qh+0ujFCMae1sUnPkilqRWuFaJw37Q8iTKnFs7CApGUKkzBsWtaJziU1oQUuyQbe5fe7gpQpJbP+v/cDHC3k9YrAhnCI3ydcBE5+MlOm61n7z7qYY8UvQhtt/CZzf5lDBGvGQiDg7vW3bZcLffg+VXpWFXp1894VUXgbfi47DsM5SQtse0N8MR9FEPG5kAm8StFZknJHg4VNrXJyrS4XvUNCH7/6hvks1saLt1iaKKo7efTNk3Oj+uoo1pqS23gC4FvMty8SBJzuK2dy4OzTrmol78S2A/DnxE7SBuc9tL8eVF96wHN2j4Wrl7U3u4NjblSM/1rER/kMOK30W/NT8QsbItcAkQPQp+OKy7yVDLW9HnrVyrQ1sdOkRyWb6CiKsvl6cFBloG30PT4DG30i5u1jAqHArfKUPTW2R9cQp33UwYUOriaUau3ote5KiYBq+BJ3DI/uXEH+8=
+x-forefront-antispam-report:
+ CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:BL3PR14MB5577.namprd14.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(1800799024)(366016)(376014)(23010399003)(38070700021)(10067099003)(4143699003)(11063799006)(56012099006)(261026140227099003)(261026121527099003)(261022105027099003)(261028144727099003)(261021123027099003)(261021121427099003)(261021135927099003)(261102123227099003)(261009223027099003)(55112099003)(18002099003)(22082099003)(6133799003);DIR:OUT;SFP:1102;
+x-ms-exchange-antispam-messagedata-chunkcount: 1
+x-ms-exchange-antispam-messagedata-0:
+ =?us-ascii?Q?5b0gmq3xTA2wpJG3TBc4V1XTphe3ncAKcfrdByZFEuT1TbYlcymGkaoygrgD?=
+ =?us-ascii?Q?GIk04k23iIfF0ZcC3lDQNRm34hKNF2B2wpcCbP26i+TIGnrVUh5m7IhY0r88?=
+ =?us-ascii?Q?2I6mOwVoue5zQhtTutyC+Bwm46IC+Pqy/+xkMRABKmZoFKMYIHnjGWupBL/q?=
+ =?us-ascii?Q?iLR85pDNoJUQCRHb5c4ceakDYqqdaN6HUJyM9j/0x0wgZvPduPIx8ex2bAaP?=
+ =?us-ascii?Q?ltOMGzesUYZQnSHe3Dl5UG0dSg+Fs7G5eC/CoDqWbvJeCyRngQDfWFlFyLRT?=
+ =?us-ascii?Q?ugRJhZK6wiVg+sphXK9MG0Ff1Cy7qSo15Ucj3WC54jO/sYmXToYqX9W/gEgU?=
+ =?us-ascii?Q?eeaB8l65k73804XOTg3DTm/TtGCipbENXafEVX9y64x/gxEcPDjRizlWRyeN?=
+ =?us-ascii?Q?JYcU7Yi1H7B/myregJNY+pNqtMVMUSiSSQLJzMOkashS77ARMYAoUJ471+vB?=
+ =?us-ascii?Q?FJW4dDhOCWrs6xvJh7fXjj3l5VB4B/c3PaOgf3AHlOdamJXQSMkMB3YfXZqD?=
+ =?us-ascii?Q?yo+ceO9cQCR7DXyd21XfrvWYO+5hZ9KRwqk21U+eHGR1HBPssm/1HPeeF7i7?=
+ =?us-ascii?Q?Yb5SpXgWVAbzkQPbPVvt2y1oDX93wmg8YGYgaBnBE6EWornchzvsErEb1/dB?=
+ =?us-ascii?Q?ETWYFstgQI/RKWWLxvAHiTsZ0pdF6Pi4MoYnCXMPO2eARW9GIyBlSGKDTvgc?=
+ =?us-ascii?Q?jTXBU7vU/jLzQgaqdBZEsJAxrXH66UBLS/L7spUmJU0v+Lxx7xK6vqtrCllz?=
+ =?us-ascii?Q?2smVR3HWd6T/y7bLptHH0d1PcqjPeLGjrk/Oak6pe0FRH0JpBpfRHweTCqON?=
+ =?us-ascii?Q?xR0pMJV0nUGronGuKt2qA5oD8Tcy/jRayqzGaDgBz+ESqx1hBzILUIwdGRzi?=
+ =?us-ascii?Q?13FlWEnHzWAjX5XutiZBMfNztc3cNR1BqxUHWQs6Cgwy6IZLfDWN04AsV+Mu?=
+ =?us-ascii?Q?0bI4/6rIL+xdT0W7wTsWRCK1scHmGS29e0Q+I/lsfnqcM/w+wj3HK+HwU3lF?=
+ =?us-ascii?Q?6hXpcN1E29746PeOkY+9MMIDZOjgLo6ucRBV1xekktYR1cc5c3HfWkMZQVNT?=
+ =?us-ascii?Q?NEf5eAKa1OLHobW8l1WYbQPFsYPP4GOg9rLVqFf8LNkkszsTpp4DZ6bGKb80?=
+ =?us-ascii?Q?oZrggsky0vgCqxCAOgYmDKMzRqF4z5UtEkY3jbdKvH1s1EOjrZerb/GFCruE?=
+ =?us-ascii?Q?Ek9zQcFgH5Lu+jDKpPFhK2pdlCOeYxolBrYkW9NSwNI4nfQD+KEnYBzII4Tk?=
+ =?us-ascii?Q?Fys3hQBiLTdHU42YImZAvC5P7e+hNsUE1TJn6GK17zRTNqQ+tJSHevw9PRFp?=
+ =?us-ascii?Q?2PoZrWng6JxJLdQVcUMJzi6SNprj+2qHIXeHm2V3ayezmUzrcyS7i+jHoilZ?=
+ =?us-ascii?Q?lGtGAEL7gCOi/SR2BE0PQRGwfq6mLjq8X3oj/KTmlVlIEZ4fkNeu5XcodGjc?=
+ =?us-ascii?Q?/a8jARvBsrO3glBdmmwWVjqMLqcQ+Xi8liV8GzR+4zjBCreukbrnypeiLHUl?=
+ =?us-ascii?Q?Uul2K2rUisdWjwnOAphD9ulebE2vRzQp7zMMIYRicycw076Ah0cxDKuRm3U2?=
+ =?us-ascii?Q?SeqW9RXiSYiByIahbLZfL9Y1XJF6eeJzGAT28nS6ZkHVhX1wDP6wCwCwnMAr?=
+ =?us-ascii?Q?F/udQMjfPETY0AYbLsS0XbOE2MuGUdkLaFDoYn0iP7UPziXjlFWUs343935R?=
+ =?us-ascii?Q?gVLlZJPN9fE/hKSqZDpZs4F9kxSuaq+kjoY941kcgJrca5WY1J+zEnYvEnIE?=
+ =?us-ascii?Q?HQm3OLcxNg=3D=3D?=
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -97,43 +149,68 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+X-OriginatorOrg: quantum.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-AuthSource: BL3PR14MB5577.namprd14.prod.outlook.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 166db8d0-5d62-42c5-d618-08df41868578
+X-MS-Exchange-CrossTenant-originalarrivaltime: 13 Nov 2026 13:03:33.0117
+ (UTC)
+X-MS-Exchange-CrossTenant-fromentityheader: Hosted
+X-MS-Exchange-CrossTenant-id: 322a135f-14fb-4d72-aede-122272134ae0
+X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
+X-MS-Exchange-CrossTenant-userprincipalname: eJfTezZobSfe0lYTlgeFWY2FMCVEEWs1Sb878mXibEvVgW9xtamh5oZy16pPTYXoAOpXZpiH9pYKNKrTvVmpTg==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH3PR14MB6915
 
-From "Dell Technologies Host Connectivity Guide for Linux" (May 2024, #102):
-vendor "EMC"
-product "Celerra"
-path_grouping_policy "multibus"
-path_checker "tur"
-no_path_retry "30"
+Hi Xose,
 
+Thank you,
+Bart
+
+-----Original Message-----
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Sent: Friday, November 13, 2026 7:56 AM
+Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>; Bart Brooks <Bart.Brooks@Q=
+uantum.Com>; Martin Wilck <mwilck@suse.com>; Benjamin Marzinski <bmarzins@r=
+edhat.com>; Christophe Varoqui <christophe.varoqui@opensvc.com>; DM-DEVEL M=
+L <dm-devel@lists.linux.dev>
+Subject: [PATCH 06/13] multipath-tools: hwtable: update Pivot3 maintainer e=
+mail address
+
+[You don't often get email from xose.vazquez@gmail.com. Learn why this is i=
+mportant at https://aka.ms/LearnAboutSenderIdentification ]
+
+Cc: Bart Brooks <Bart.Brooks@Quantum.Com>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Cc: DM-DEVEL ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ libmultipath/hwtable.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index aab7bbd2..41e7e0a6 100644
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c index c9f12b26=
+..a0befb0a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -411,6 +411,13 @@ static struct hwentry default_hw[] = {
- 		.product       = "100E-00",
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
-+	},
-+		// EMC Celerra
-+	{
-+		.vendor        = "EMC",
-+		.product       = "Celerra",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
- 	},
- 	/*
- 	 * Fujitsu
--- 
+@@ -1013,7 +1013,7 @@ static struct hwentry default_hw[] =3D {
+        /*
+         * Pivot3
+         *
+-        * Maintainer: Bart Brooks <bartb@pivot3.com>
++        * Maintainer: Bart Brooks <Bart.Brooks@Quantum.Com>
+         */
+        {
+                /* Raige */
+--
 2.56.1
 
+The information contained in this transmission may be confidential. Any dis=
+closure, copying, or further distribution of confidential information is no=
+t permitted unless such privilege is explicitly granted in writing by Quant=
+um. Quantum reserves the right to have electronic communications, including=
+ email and attachments, sent across its networks filtered through security =
+software programs and retain such messages in order to comply with applicab=
+le data security and retention requirements. Quantum is not responsible for=
+ the proper and complete transmission of the substance of this communicatio=
+n or for any delay in its receipt.
